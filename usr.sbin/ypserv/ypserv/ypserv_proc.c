@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.11 1997/04/12 00:12:57 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.12 1997/04/12 16:38:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.11 1997/04/12 00:12:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.12 1997/04/12 16:38:06 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -169,7 +169,7 @@ ypproc_match_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG(
 	  "match_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
@@ -206,7 +206,7 @@ ypproc_first_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG( "first_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -242,7 +242,7 @@ ypproc_next_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG(
 	  "next_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
@@ -293,6 +293,7 @@ ypproc_xfr_2_svc(argp, rqstp)
 	  argp->port, argp->map_parms.map);
 
 	if (strchr(argp->map_parms.domain, '/') ||
+	    strchr(argp->map_parms.map, '/') ||
 	    ntohs(caller->sin_port) >= IPPORT_RESERVED) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
@@ -367,7 +368,7 @@ ypproc_all_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG( "all_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -419,7 +420,7 @@ ypproc_master_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG( "master_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -470,7 +471,7 @@ ypproc_order_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure = ypdb_secure(argp->domain,argp->map);
 
-	if (strchr(argp->domain, '/'))
+	if (strchr(argp->domain, '/') || strchr(argp->map, '/'))
 		goto bail;
 	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
@@ -684,7 +685,8 @@ ypproc_match_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
-	if (strchr(argp->ypmatch_req_domain, '/'))
+	if (strchr(argp->ypmatch_req_domain, '/') ||
+	    strchr(argp->ypmatch_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPMATCH_RESPTYPE;
 	res.ypmatch_resp_valptr = "";
@@ -738,7 +740,8 @@ ypproc_first_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
-	if (strchr(argp->ypfirst_req_domain, '/'))
+	if (strchr(argp->ypfirst_req_domain, '/') ||
+	    strchr(argp->ypfirst_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPFIRST_RESPTYPE;
 	res.ypfirst_resp_valptr  = res.ypfirst_resp_keyptr  = "";
@@ -789,7 +792,8 @@ ypproc_next_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
-	if (strchr(argp->ypnext_req_domain, '/'))
+	if (strchr(argp->ypnext_req_domain, '/') ||
+	    strchr(argp->ypnext_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPNEXT_RESPTYPE;
 	res.ypnext_resp_valptr  = res.ypnext_resp_keyptr  = "";
@@ -845,7 +849,8 @@ ypproc_poll_1_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 	int secure;
 
-	if (strchr(argp->yppoll_req_domain, '/'))
+	if (strchr(argp->yppoll_req_domain, '/') ||
+	    strchr(argp->yppoll_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPPOLL_RESPTYPE;
 	res.yppoll_resp_domain = argp->yppoll_req_domain;
@@ -896,7 +901,8 @@ ypproc_push_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	yppush_proc[] = YPPUSH_PROC;
 
-	if (strchr(argp->yppush_req_domain, '/'))
+	if (strchr(argp->yppush_req_domain, '/') ||
+	    strchr(argp->yppush_req_map, '/'))
 		goto bail;
 	if (argp->yp_reqtype != YPPUSH_REQTYPE) {
 		return(NULL);
@@ -946,7 +952,8 @@ ypproc_pull_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	ypxfr_proc[] = YPXFR_PROC;
 
-	if (strchr(argp->yppull_req_domain, '/'))
+	if (strchr(argp->yppull_req_domain, '/') ||
+	    strchr(argp->yppull_req_map, '/'))
 		goto bail;
 	if (argp->yp_reqtype != YPPULL_REQTYPE) {
 		return(NULL);
@@ -997,7 +1004,8 @@ ypproc_get_1_svc(argp, rqstp)
 	pid_t	pid;
 	char	ypxfr_proc[] = YPXFR_PROC;
 
-	if (strchr(argp->ypget_req_domain, '/'))
+	if (strchr(argp->ypget_req_domain, '/') ||
+	    strchr(argp->ypget_req_map, '/'))
 		goto bail;
 	if (argp->yp_reqtype != YPGET_REQTYPE) {
 		return(NULL);
