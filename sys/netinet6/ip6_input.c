@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.5 1999/12/30 17:28:20 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.6 2000/01/06 02:52:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1185,6 +1185,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPV6CTL_USE_DEPRECATED:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_use_deprecated);
+	case IPV6CTL_RR_PRUNE:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
 	default:
 		return EOPNOTSUPP;
 	}
