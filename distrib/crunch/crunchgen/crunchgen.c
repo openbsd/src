@@ -476,6 +476,12 @@ void fillin_program(prog_t *p)
     char path[MAXPATHLEN];
     char *srcparent;
     strlst_t *s;
+    int i;
+    char  *mf_name[] = {
+	"Makefile",
+	"Makefile.bsd-wrapper",
+	NULL
+    };
 
     sprintf(line, "filling in parms for %s", p->name);
     status(line);
@@ -502,9 +508,22 @@ void fillin_program(prog_t *p)
         }
     }
 
-    if(p->srcdir) sprintf(path, "%s/Makefile", p->srcdir);
-    if(!p->objs && p->srcdir && is_nonempty_file(path))
-	fillin_program_objs(p, path);
+    /* XXX - This should be runtime configurable */
+    // We have a sourcedir and no explict objs, try
+    // to get objs from makefile.
+    if (p->srcdir && !p->objs) {
+        for (i = 0; mf_name[i] != NULL; i++) {
+            sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
+            printf("*** Trying to find %s\n", path);
+            if (is_nonempty_file(path)) {
+                fillin_program_objs(p, path);
+                break;
+            }
+        }
+    }
+
+
+
 
     if(!p->objpaths && p->objdir && p->objs)
 	for(s = p->objs; s != NULL; s = s->next) {
