@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.12 2000/05/05 23:22:39 ho Exp $ */
+/* $OpenBSD: user.c,v 1.13 2000/05/05 23:54:51 ho Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -1069,16 +1069,17 @@ usermgmt_usage(char *prog)
 		(void) fprintf(stderr, "usage: %s -D [-b basedir] [-e expiry] "
 		    "[-f inactive] [-g group]\n\t\t[-r lowuid..highuid] "
 		    "[-s shell]\n", prog);
-		(void) fprintf(stderr, "usage: %s [-G group] [-b basedir] "
-		    "[-c comment] [-d homedir] [-e expiry]\n\t\t[-f inactive] "
-		    "[-g group] [-k skeletondir] [-m] [-o]\n\t\t[-p password] "
-		    "[-r lowuid..highuid] [-s shell] [-u uid]\n\t\t[-v] user\n",
-		    prog);
+		(void) fprintf(stderr, "usage: %s [-G group[,group,...]] "
+		    "[-b basedir] [-c comment] [-d homedir]\n\t\t"
+		    "[-e expiry] [-f inactive] [-g group] "
+		    "[-k skeletondir]\n\t\t[-m] [-o] [-p password] "
+		    "[-r lowuid..highuid]\n\t\t[-s shell] [-u uid] "
+		    "[-v] user\n", prog);
 	} else if (strcmp(prog, "usermod") == 0) {
-		(void) fprintf(stderr, "usage: %s [-G group] [-c comment] "
-		    "[-d homedir] [-e expire] [-f inactive]\n\t\t[-g group] "
-		    "[-l newname] [-m] [-o] [-p password]\n\t\t[-s shell] "
-		    "[-u uid] [-v] user\n", prog);
+		(void) fprintf(stderr, "usage: %s [-G group[,group,...]] "
+		    "[-c comment] [-d homedir] [-e expire]\n\t\t"
+		    "[-f inactive] [-g group] [-l newname] [-m] [-o]\n\t\t"
+		    "[-p password] [-s shell] [-u uid] [-v] user\n", prog);
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void) fprintf(stderr, "usage: %s -D [-p preserve]\n", prog);
 		(void) fprintf(stderr, "usage: %s [-p preserve] [-r] [-v] "
