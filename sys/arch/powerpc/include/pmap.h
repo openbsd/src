@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.20 2001/09/18 13:59:23 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.21 2001/11/06 02:55:51 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -106,6 +106,9 @@ int ptebits(paddr_t pa, int bit);
 #define PMAP_UNMAP_POOLPAGE(va)	((paddr_t)va)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
+
+void pmap_pinit __P((struct pmap *));
+void pmap_release __P((struct pmap *));
 
 void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
 void switchexit __P((struct proc *));
