@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.83 2004/06/11 05:54:55 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.84 2004/06/11 16:09:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.83 2004/06/11 05:54:55 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.84 2004/06/11 16:09:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,11 +155,15 @@ extern char *__progname;
 
 int verbose = 0;
 
+int ncpu;
+
 int
 main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
+	int mib[2];
+	size_t size;
 	int c, todo;
 	u_int interval;
 	int reps;
@@ -249,6 +253,11 @@ main(int argc, char *argv[])
 
 	setegid(getegid());
 	setgid(getgid());
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	(void) sysctl(mib, 2, &ncpu, &size, NULL, 0);
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
@@ -671,6 +680,7 @@ dkstats(void)
 	if (etime == 0)
 		etime = 1;
 	etime /= hz;
+	etime /= ncpu;
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;
