@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.74 2004/05/27 22:43:08 hshoexer Exp $
+.\" $OpenBSD: vpn.8,v 1.75 2004/06/02 14:24:02 pedro Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -221,6 +221,9 @@ block out log on { enc0, ne0 } all
 # Passing in encrypted traffic from security gateways
 pass in proto esp from $GATEWAY_B to $GATEWAY_A
 pass out proto esp from $GATEWAY_A to $GATEWAY_B
+
+# Need to allow ipencap traffic on enc0.
+pass in on enc0 proto ipencap all
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from $NETWORK_B to $NETWORK_A
