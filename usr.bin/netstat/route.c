@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.58 2003/10/04 21:18:57 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.59 2003/10/04 23:15:06 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.58 2003/10/04 21:18:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.59 2003/10/04 23:15:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -395,7 +395,7 @@ ntreestuff(void)
 		exit(1);
 	}
 	if ((buf = malloc(needed)) == NULL)
-		errx(1, NULL);
+		err(1, NULL);
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
 		perror("sysctl of routing table");
 		exit(1);
