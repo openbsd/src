@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.188 2002/01/08 12:04:43 tholo Exp $
+#	$OpenBSD: rc,v 1.189 2002/02/09 17:37:34 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -382,25 +382,25 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-if [ ! -f /etc/ssh_host_dsa_key ]; then
+if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
 	echo -n "ssh-keygen: generating new DSA host key... "
-	if /usr/bin/ssh-keygen -q -t dsa -f /etc/ssh_host_dsa_key -N ''; then
+	if /usr/bin/ssh-keygen -q -t dsa -f /etc/ssh/ssh_host_dsa_key -N ''; then
 		echo done.
 	else
 		echo failed.
 	fi
 fi
-if [ ! -f /etc/ssh_host_rsa_key ]; then
+if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
 	echo -n "ssh-keygen: generating new RSA host key... "
-	if /usr/bin/ssh-keygen -q -t rsa -f /etc/ssh_host_rsa_key -N ''; then
+	if /usr/bin/ssh-keygen -q -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''; then
 		echo done.
 	else
 		echo failed.
 	fi
 fi
-if [ ! -f /etc/ssh_host_key ]; then
+if [ ! -f /etc/ssh/ssh_host_key ]; then
 	echo -n "ssh-keygen: generating new RSA1 host key... "
-	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh_host_key -N ''; then
+	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh/ssh_host_key -N ''; then
 		echo done.
 	else
 		echo failed.

@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.38 2001/09/11 19:03:55 millert Exp $
+#	$OpenBSD: special,v 1.39 2002/02/09 17:37:34 deraadt Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -70,6 +70,7 @@ security	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skeykeys	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0600 uname=root gname=wheel
+ssh		type=dir mode=0755 uname=root gname=wheel optional ignore
 ssh_config	type=file mode=0644 uname=root gname=wheel
 ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
@@ -78,6 +79,7 @@ ssh_host_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_rsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 sshd_config	type=file mode=0644 uname=root gname=wheel
+..	#ssh
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
 weekly		type=file mode=0644 uname=root gname=wheel

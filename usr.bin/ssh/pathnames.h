@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.10 2001/12/08 17:49:28 stevesk Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.11 2002/02/09 17:37:34 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,25 +13,26 @@
  */
 
 #define ETCDIR				"/etc"
+#define SSHDIR				ETCDIR "/ssh"
 #define _PATH_SSH_PIDDIR		"/var/run"
 
 /*
  * System-wide file containing host keys of known hosts.  This file should be
  * world-readable.
  */
-#define _PATH_SSH_SYSTEM_HOSTFILE	ETCDIR "/ssh_known_hosts"
+#define _PATH_SSH_SYSTEM_HOSTFILE	SSHDIR "/ssh_known_hosts"
 /* backward compat for protocol 2 */
-#define _PATH_SSH_SYSTEM_HOSTFILE2	ETCDIR "/ssh_known_hosts2"
+#define _PATH_SSH_SYSTEM_HOSTFILE2	SSHDIR "/ssh_known_hosts2"
 
 /*
  * Of these, ssh_host_key must be readable only by root, whereas ssh_config
  * should be world-readable.
  */
-#define _PATH_SERVER_CONFIG_FILE	ETCDIR "/sshd_config"
-#define _PATH_HOST_CONFIG_FILE		ETCDIR "/ssh_config"
-#define _PATH_HOST_KEY_FILE		ETCDIR "/ssh_host_key"
-#define _PATH_HOST_DSA_KEY_FILE		ETCDIR "/ssh_host_dsa_key"
-#define _PATH_HOST_RSA_KEY_FILE		ETCDIR "/ssh_host_rsa_key"
+#define _PATH_SERVER_CONFIG_FILE	SSHDIR "/sshd_config"
+#define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh_config"
+#define _PATH_HOST_KEY_FILE		SSHDIR "/ssh_host_key"
+#define _PATH_HOST_DSA_KEY_FILE		SSHDIR "/ssh_host_dsa_key"
+#define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
 #define _PATH_DH_MODULI			ETCDIR "/moduli"
 /* Backwards compatibility */
 #define _PATH_DH_PRIMES			ETCDIR "/primes"
@@ -95,7 +96,7 @@
  * use.  xauth will be run if neither of these exists.
  */
 #define _PATH_SSH_USER_RC		".ssh/rc"
-#define _PATH_SSH_SYSTEM_RC		ETCDIR "/sshrc"
+#define _PATH_SSH_SYSTEM_RC		SSHDIR "/sshrc"
 
 /*
  * Ssh-only version of /etc/hosts.equiv.  Additionally, the daemon may use

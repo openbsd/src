@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.root,v 1.7 2001/09/21 22:14:03 deraadt Exp $
+#	$OpenBSD: 4.4BSD.root,v 1.8 2002/02/09 17:37:34 deraadt Exp $
 #	$NetBSD: 4.4BSD.root,v 1.2 1996/05/12 23:30:32 thorpej Exp $
 #
 #	   user: bostic
@@ -113,6 +113,12 @@ ppp      type=dir mode=0755
 /set type=file gname=wheel uname=root mode=0755
 sliphome        type=dir
 # ./etc/sliphome
+..
+
+# ./etc/ssh
+/set type=file gname=wheel uname=root mode=0755
+ssh		type=dir
+# ./etc/ssh
 ..
 
 # ./etc
