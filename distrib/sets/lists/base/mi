@@ -1806,3 +1806,6 @@
 ./usr/bin/skeyprune
 ./usr/sbin/adduser
 ./usr/share/man/cat8/adduser.0
+./usr/bin/otp-md4
+./usr/bin/otp-md5
+./usr/bin/otp-sha1

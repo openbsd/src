@@ -185,7 +185,6 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/vmparam.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/malloc.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/math.ph
-./usr/lib/perl5/sparc-openbsd/5.003/md2.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/md4.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/md5.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/memory.ph

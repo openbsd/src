@@ -807,3 +807,6 @@
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/x68k
 ./usr/share/man/cat8/skeyprune.0
+./usr/share/man/cat1/otp-md4.0
+./usr/share/man/cat1/otp-md5.0
+./usr/share/man/cat1/otp-sha1.0

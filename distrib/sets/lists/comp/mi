@@ -132,7 +132,6 @@
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/opti.h
 ./usr/include/dev/isa/pasreg.h
-./usr/include/dev/isa/pnpdevs.h
 ./usr/include/dev/isa/pssreg.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
@@ -536,7 +535,6 @@
 ./usr/include/locale.h
 ./usr/include/malloc.h
 ./usr/include/math.h
-./usr/include/md2.h
 ./usr/include/md4.h
 ./usr/include/md5.h
 ./usr/include/memory.h
@@ -2144,3 +2142,4 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/sha1.h
