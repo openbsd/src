@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.14 1999/04/19 20:53:05 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.83 1999/04/16 23:25:30 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.15 1999/04/20 11:32:21 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.84 1999/04/20 09:49:08 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -623,6 +623,6 @@ sa_flag (char *attr)
 void
 sa_mark_replaced (struct sa *sa)
 {
-  log_debug (LOG_SA, 60, "SA %p marked as replaced", sa);
+  log_debug (LOG_SA, 60, "sa_mark_replaced: SA %p marked as replaced", sa);
   sa->flags |= SA_FLAG_REPLACED;
 }
