@@ -320,12 +320,16 @@ void RMD160Update(context, data, nbytes)
 {
 	u_int32_t i, j, X[16];
 
-	(void)memset(X, 0, 16 * sizeof(u_int32_t));
+	(void)memset(X, 0, sizeof(X));
 
 	/* process all complete blocks */
 	for (i = 0; i < (nbytes >> 6); i++) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		(void)memcpy(X, data, sizeof(X));
+#else
 		for (j=0; j < 16; j++)
 			X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j));
+#endif
 		RMD160Transform(context->state, X);
 	}
 
