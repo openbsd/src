@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2003/10/16 05:03:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2003/10/21 17:05:16 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -821,7 +821,7 @@ dumpsys()
 }
 
 volatile int cpl, ipending, astpending;
-int imask[7];
+int imask[IPL_NUM];
 
 /*
  * this is a hack interface to allow zs to work better until
