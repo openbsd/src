@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.4 2001/09/23 20:03:01 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.5 2003/03/05 20:46:26 jason Exp $	*/
 /*	$NetBSD: hmereg.h,v 1.8 2001/04/30 12:22:42 bouyer Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@
 #define HME_MIFI_BB_DATA	(1*4)	/* bit-bang data */
 #define HME_MIFI_BB_OE		(2*4)	/* bit-bang output enable */
 #define HME_MIFI_FO		(3*4)	/* frame output */
-#define HME_MIFI_CFG		(4*4)	/*  */
+#define HME_MIFI_CFG		(4*4)	/* mif configuration */
 #define HME_MIFI_IMASK		(5*4)	/* Interrupt mask for status change */
 #define HME_MIFI_STAT		(6*4)	/* Status (ro, auto-clear) */
 #define HME_MIFI_SM		(7*4)	/* State machine (ro) */

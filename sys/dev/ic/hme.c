@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.25 2003/02/08 21:42:11 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.26 2003/03/05 20:46:26 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -248,12 +248,17 @@ hme_config(sc)
 	mii->mii_writereg = hme_mii_writereg;
 	mii->mii_statchg = hme_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK,
+	    hme_mediachange, hme_mediastatus);
 
 	hme_mifinit(sc);
 
-	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (sc->sc_tcvr == -1)
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, 0);
+	else
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, sc->sc_tcvr,
+		    MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -371,6 +376,9 @@ hme_stop(sc)
 	timeout_del(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 
+	/* Mask all interrupts */
+	bus_space_write_4(t, seb, HME_SEBI_IMASK, 0xffffffff);
+
 	/* Reset transmitter and receiver */
 	bus_space_write_4(t, seb, HME_SEBI_RESET,
 	    (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX));
@@ -475,7 +483,6 @@ hme_init(sc)
 	bus_space_handle_t etx = sc->sc_etx;
 	bus_space_handle_t erx = sc->sc_erx;
 	bus_space_handle_t mac = sc->sc_mac;
-	bus_space_handle_t mif = sc->sc_mif;
 	u_int8_t *ea;
 	u_int32_t v;
 
@@ -591,11 +598,7 @@ hme_init(sc)
 	/* step 11. XIF Configuration */
 	v = bus_space_read_4(t, mac, HME_MACI_XIF);
 	v |= HME_MAC_XIF_OE;
-	/* If an external transceiver is connected, enable its MII drivers */
-	if ((bus_space_read_4(t, mif, HME_MIFI_CFG) & HME_MIF_CFG_MDI1) != 0)
-		v |= HME_MAC_XIF_MIIENABLE;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
-
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
@@ -874,17 +877,31 @@ hme_mifinit(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
+	bus_space_handle_t mac = sc->sc_mac;
+	int phy;
 	u_int32_t v;
 
-	/* Configure the MIF in frame mode */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	v &= ~HME_MIF_CFG_BBMODE;
+	phy = HME_PHYAD_EXTERNAL;
+	if (v & HME_MIF_CFG_MDI1)
+		phy = sc->sc_tcvr = HME_PHYAD_EXTERNAL;
+	else if (v & HME_MIF_CFG_MDI0)
+		phy = sc->sc_tcvr = HME_PHYAD_INTERNAL;
+	else
+		sc->sc_tcvr = -1;
+
+	/* Configure the MIF in frame mode, no poll, current phy select */
+	v = 0;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 
-	if (v & HME_MIF_CFG_MDI1)
-		sc->sc_tcvr = HME_PHYAD_EXTERNAL;
-	else if (v & HME_MIF_CFG_MDI0)
-		sc->sc_tcvr = HME_PHYAD_INTERNAL;
+	/* If an external transceiver is selected, enable its MII drivers */
+	v = bus_space_read_4(t, mac, HME_MACI_XIF);
+	v &= ~HME_MAC_XIF_MIIENABLE;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 }
 
 /*
@@ -898,20 +915,27 @@ hme_mii_readreg(self, phy, reg)
 	struct hme_softc *sc = (struct hme_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
+	bus_space_handle_t mac = sc->sc_mac;
+	u_int32_t v, xif_cfg, mifi_cfg;
 	int n;
-	u_int32_t v;
 
-	if (sc->sc_tcvr != phy)
+	if (phy != HME_PHYAD_EXTERNAL && phy != HME_PHYAD_INTERNAL)
 		return (0);
 
 	/* Select the desired PHY in the MIF configuration register */
-	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	/* Clear PHY select bit */
+	v = mifi_cfg = bus_space_read_4(t, mif, HME_MIFI_CFG);
 	v &= ~HME_MIF_CFG_PHY;
 	if (phy == HME_PHYAD_EXTERNAL)
-		/* Set PHY select bit to get at external device */
 		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* Enable MII drivers on external transceiver */ 
+	v = xif_cfg = bus_space_read_4(t, mac, HME_MACI_XIF);
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	else
+		v &= ~HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT) |
@@ -924,12 +948,21 @@ hme_mii_readreg(self, phy, reg)
 	for (n = 0; n < 100; n++) {
 		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
-		if (v & HME_MIF_FO_TALSB)
-			return (v & HME_MIF_FO_DATA);
+		if (v & HME_MIF_FO_TALSB) {
+			v &= HME_MIF_FO_DATA;
+			goto out;
+		}
 	}
 
+	v = 0;
 	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
-	return (0);
+
+out:
+	/* Restore MIFI_CFG register */
+	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
+	/* Restore XIF register */
+	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
+	return (v);
 }
 
 static void
@@ -940,20 +973,28 @@ hme_mii_writereg(self, phy, reg, val)
 	struct hme_softc *sc = (void *)self;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_mif;
+	bus_space_handle_t mac = sc->sc_mac;
+	u_int32_t v, xif_cfg, mifi_cfg;
 	int n;
-	u_int32_t v;
 
-	if (sc->sc_tcvr != phy)
+	/* We can at most have two PHYs */
+	if (phy != HME_PHYAD_EXTERNAL && phy != HME_PHYAD_INTERNAL)
 		return;
 
 	/* Select the desired PHY in the MIF configuration register */
-	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	/* Clear PHY select bit */
+	v = mifi_cfg = bus_space_read_4(t, mif, HME_MIFI_CFG);
 	v &= ~HME_MIF_CFG_PHY;
 	if (phy == HME_PHYAD_EXTERNAL)
-		/* Set PHY select bit to get at external device */
 		v |= HME_MIF_CFG_PHY;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* Enable MII drivers on external transceiver */ 
+	v = xif_cfg = bus_space_read_4(t, mac, HME_MACI_XIF);
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	else
+		v &= ~HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT)	|
@@ -968,10 +1009,15 @@ hme_mii_writereg(self, phy, reg, val)
 		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB)
-			return;
+			goto out;
 	}
 
 	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
+out:
+	/* Restore MIFI_CFG register */
+	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);
+	/* Restore XIF register */
+	bus_space_write_4(t, mac, HME_MACI_XIF, xif_cfg);
 }
 
 static void
@@ -979,26 +1025,18 @@ hme_mii_statchg(dev)
 	struct device *dev;
 {
 	struct hme_softc *sc = (void *)dev;
-	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
-	int phy = sc->sc_phys[instance];
 	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	u_int32_t v;
 
 #ifdef HMEDEBUG
 	if (sc->sc_debug)
-		printf("hme_mii_statchg: status change: phy = %d\n", phy);
+		printf("hme_mii_statchg: status change\n", phy);
 #endif
 
-	/* Select the current PHY in the MIF configuration register */
-	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	v &= ~HME_MIF_CFG_PHY;
-	if (phy == HME_PHYAD_EXTERNAL)
-		v |= HME_MIF_CFG_PHY;
-	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
-
 	/* Set the MAC Full Duplex bit appropriately */
+	/* Apparently the hme chip is SIMPLE if working in full duplex mode,
+	   but not otherwise. */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0) {
 		v |= HME_MAC_TXCFG_FULLDPLX;
@@ -1008,13 +1046,6 @@ hme_mii_statchg(dev)
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
 	}
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
-
-	/* If an external transceiver is selected, enable its MII drivers */
-	v = bus_space_read_4(t, mac, HME_MACI_XIF);
-	v &= ~HME_MAC_XIF_MIIENABLE;
-	if (phy == HME_PHYAD_EXTERNAL)
-		v |= HME_MAC_XIF_MIIENABLE;
-	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 }
 
 int
@@ -1022,9 +1053,33 @@ hme_mediachange(ifp)
 	struct ifnet *ifp;
 {
 	struct hme_softc *sc = ifp->if_softc;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mif = sc->sc_mif;
+	bus_space_handle_t mac = sc->sc_mac;
+	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	int phy = sc->sc_phys[instance];
+	u_int32_t v;
 
+#ifdef HMEDEBUG
+	if (sc->sc_debug)
+		printf("hme_mediachange: phy = %d\n", phy);
+#endif
 	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
 		return (EINVAL);
+
+	/* Select the current PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	/* If an external transceiver is selected, enable its MII drivers */
+	v = bus_space_read_4(t, mac, HME_MACI_XIF);
+	v &= ~HME_MAC_XIF_MIIENABLE;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
 	return (mii_mediachg(&sc->sc_mii));
 }
