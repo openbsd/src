@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.235 2000/03/29 21:00:35 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.236 2000/04/04 09:59:25 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1045,6 +1045,8 @@
 #define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1360		/* 82806AA PCI64 */
 #define	PCI_PRODUCT_INTEL_82806AA_APIC	0x1161		/* 82806AA PCI64 APIC */
+#define	PCI_PRODUCT_INTEL_82802AB	0x89AD		/* 82802AB Firmware Hub 4Mbit */
+#define	PCI_PRODUCT_INTEL_82802AC	0x89AC		/* 82802AC Firmware Hub 8Mbit */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
