@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.4 1995/09/30 21:28:19 pk Exp $
+.\"	$NetBSD: link.5,v 1.5 1996/01/09 00:14:32 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
 .\" All rights reserved.
@@ -521,11 +521,13 @@ struct hints_header {
 #define HH_MAGIC	011421044151
 	long		hh_version;
 #define LD_HINTS_VERSION_1	1
+#define LD_HINTS_VERSION_2	2
 	long		hh_hashtab;
 	long		hh_nbucket;
 	long		hh_strtab;
 	long		hh_strtab_sz;
 	long		hh_ehints;
+	long		hh_dirlist;
 };
 .Ed
 .Bl -tag -width hh_strtab_sz
@@ -541,6 +543,13 @@ Offset of string table.
 Size of strings.
 .It Fa hh_ehints
 Maximum usable offset in hints file.
+.It Fa hh_dirlist
+Offset in string table of a colon-separated list of directories that was
+used in constructing the hints file. See also
+.Xr ldconfig 8 .
+This field is only available with interface version number
+.Dv LD_HINTS_VERSION_2
+and higher.
 .El
 .Pp
 .Bd -literal -offset indent
