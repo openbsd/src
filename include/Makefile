@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 1999/03/29 03:07:39 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.64 1999/05/09 00:21:13 millert Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -36,10 +36,10 @@ LDIRS=	dev net netinet netinet6 netccitt netiso netns netipx nfs sys ufs vm ddb 
 
 # Directories with an includes target
 RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
-        ../lib/libform ../lib/libmenu ../lib/libocurses ../lib/libossaudio \
-	../lib/libpanel ../lib/librpcsvc ../lib/libskey ../lib/libedit \
-	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
-	../sys/arch/${MACHINE}
+	../lib/libcurses++ ../lib/libform ../lib/libmenu ../lib/libocurses \
+	../lib/libossaudio ../lib/libpanel ../lib/librpcsvc ../lib/libskey \
+	../lib/libedit ../lib/libpcap ../lib/libutil ../lib/libwrap \
+	../lib/libz ../sys/arch/${MACHINE}
 
 # Places using Makefile that needs a prerequisite target met before includes
 PRDIRS=
