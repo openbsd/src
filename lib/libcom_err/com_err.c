@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_err.c,v 1.3 1997/07/25 20:30:27 mickey Exp $	*/
+/*	$OpenBSD: com_err.c,v 1.4 1998/05/13 17:53:25 art Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -48,16 +48,16 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-    "$Id: com_err.c,v 1.3 1997/07/25 20:30:27 mickey Exp $";
+    "$Id: com_err.c,v 1.4 1998/05/13 17:53:25 art Exp $";
 #endif	/* ! lint */
 
 static void
 #ifdef __STDC__
-    default_com_err_proc (const char *whoami, long code, const char *fmt, va_list args)
+    default_com_err_proc (const char *whoami, errcode_t code, const char *fmt, va_list args)
 #else
     default_com_err_proc (whoami, code, fmt, args)
     const char *whoami;
-    long code;
+    errcode_t code;
     const char *fmt;
     va_list args;
 #endif
@@ -88,13 +88,13 @@ static void
     fflush(stderr);
 }
 
-typedef void (*errf) __P((const char *, long, const char *, va_list));
+typedef void (*errf) __P((const char *, errcode_t, const char *, va_list));
 
 errf com_err_hook = default_com_err_proc;
 
 void com_err_va (whoami, code, fmt, args)
     const char *whoami;
-    long code;
+    errcode_t code;
     const char *fmt;
     va_list args;
 {
@@ -105,7 +105,7 @@ void com_err_va (whoami, code, fmt, args)
 
 #if ! VARARGS
 void com_err (const char *whoami,
-	      long code,
+	      errcode_t code,
 	      const char *fmt, ...)
 {
 #else
@@ -113,7 +113,7 @@ void com_err (va_alist)
     va_dcl
 {
     const char *whoami, *fmt;
-    long code;
+    errcode_t code;
 #endif
     va_list pvar;
 
@@ -122,7 +122,7 @@ void com_err (va_alist)
 #if VARARGS
     va_start (pvar);
     whoami = va_arg (pvar, const char *);
-    code = va_arg (pvar, long);
+    code = va_arg (pvar, errcode_t);
     fmt = va_arg (pvar, const char *);
 #else
     va_start(pvar, fmt);
