@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.12 2004/12/25 23:02:25 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -166,7 +166,7 @@ struct scsi_xfer *xs;
 		panic("ssh_scsicmd: busy");
 
 	s = splbio();
-	acb = sc->free_list.tqh_first;
+	acb = TAILQ_FIRST(&sc->free_list);
 	if (acb) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 	}
@@ -214,7 +214,7 @@ struct ssh_acb *acb;
 
 	s = splbio();
 	to = xs->timeout / 1000;
-	if (sc->nexus_list.tqh_first)
+	if (!TAILQ_EMPTY(&sc->nexus_list))
 		printf("%s: ssh_poll called with disconnected device\n",
 				 sc->sc_dev.dv_xname);
 	for (;;) {
@@ -275,12 +275,12 @@ struct ssh_softc *sc;
 		printf("%s: ssh_sched- nexus %x/%d ready %x/%d\n",
 				 sc->sc_dev.dv_xname, sc->sc_nexus,
 				 sc->sc_nexus->xs->sc_link->target,
-				 sc->ready_list.tqh_first,
-				 sc->ready_list.tqh_first->xs->sc_link->target);
+				 TAILQ_FIRST(&sc->ready_list),
+				 TAILQ_FIRST(&sc->ready_list)->xs->sc_link->target);
 		return;
 	}
 #endif
-	for (acb = sc->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->ready_list, chain) {
 		slp = acb->xs->sc_link;
 		i = slp->target;
 		if (!(sc->sc_tinfo[i].lubusy & (1 << slp->lun))) {
@@ -388,7 +388,7 @@ ssh_scsidone(acb, stat)
 	if (acb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		sc->sc_tinfo[slp->target].lubusy &= ~(1<<slp->lun);
-		if (sc->ready_list.tqh_first)
+		if (!TAILQ_EMPTY(&sc->ready_list))
 			dosched = 1;	/* start next command */
 		--sc->sc_active;
 		SSH_TRACE('d','a',stat,0)
@@ -397,8 +397,7 @@ ssh_scsidone(acb, stat)
 		SSH_TRACE('d','r',stat,0)
 	} else {
 		register struct ssh_acb *acb2;
-		for (acb2 = sc->nexus_list.tqh_first; acb2;
-			 acb2 = acb2->chain.tqe_next)
+		TAILQ_FOREACH(acb2, &sc->nexus_list, chain)
 			if (acb2 == acb) {
 				TAILQ_REMOVE(&sc->nexus_list, acb, chain);
 				sc->sc_tinfo[slp->target].lubusy
@@ -408,7 +407,7 @@ ssh_scsidone(acb, stat)
 			}
 		if (acb2)
 			;
-		else if (acb->chain.tqe_next) {
+		else if (TAILQ_NEXT(acb, chain) != NULL) {
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 			--sc->sc_active;
 		} else {
@@ -602,7 +601,7 @@ struct ssh_softc *sc;
 			sc->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
 		}
-		while ((acb = sc->nexus_list.tqh_first)) {
+		while ((acb = TAILQ_FIRST(&sc->nexus_list))) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(acb, acb->stat[0]);
 		}
@@ -769,7 +768,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	}
 #endif
 
-	if (sc->nexus_list.tqh_first == NULL) {
+	if (TAILQ_EMPTY(&sc->nexus_list)) {
 		if (rp->ssh_istat & SSH_ISTAT_CON)
 			printf("%s: ssh_select while connected?\n",
 					 sc->sc_dev.dv_xname);
@@ -909,7 +908,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			printf("%s: message was not COMMAND COMPLETE: %x\n",
 					 sc->sc_dev.dv_xname, acb->msg[0]);
 #endif
-		if (sc->nexus_list.tqh_first)
+		if (!TAILQ_EMPTY(&sc->nexus_list))
 			rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return 1;
 	}
@@ -989,7 +988,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 				printf ("Yikes, it's not busy now!\n");
 #if 0
 				*status = -1;
-				if (sc->nexus_list.tqh_first)
+				if (!TAILQ_EMPTY(&sc->nexus_list))
 					rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 				return 1;
 #endif
@@ -1003,7 +1002,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 #endif
 		*status = -1;
 		acb->xs->error = XS_SELTIMEOUT;
-		if (sc->nexus_list.tqh_first)
+		if (!TAILQ_EMPTY(&sc->nexus_list))
 			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 		return 1;
 	}
@@ -1023,7 +1022,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		sshabort (sc, rp, "sshchkintr");
 #endif
 		*status = STS_BUSY;
-		if (sc->nexus_list.tqh_first)
+		if (!TAILQ_EMPTY(&sc->nexus_list))
 			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 		return 1;
 	}
@@ -1142,7 +1141,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		if (sc->sc_nexus == NULL)
 			rp->ssh_dsp = sc->sc_scriptspa + Ent_wait_reselect;
 /* XXXX start another command ? */
-		if (sc->ready_list.tqh_first)
+		if (!TAILQ_EMPTY(&sc->ready_list))
 			ssh_sched(sc);
 		return (0);
 	}
@@ -1175,8 +1174,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		 * locate acb of reselecting device
 		 * set sc->sc_nexus to acb
 		 */
-		for (acb = sc->nexus_list.tqh_first; acb;
-			 acb = acb->chain.tqe_next) {
+		TAILQ_FOREACH(acb, &sc->nexus_list, chain) {
 			if (reselid != (acb->ds.scsi_addr >> 16) ||
 				 reselun != (acb->msgout[0] & 0x07))
 				continue;
@@ -1193,7 +1191,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		if (acb == NULL) {
 			printf("%s: target ID %02x reselect nexus_list %p\n",
 					 sc->sc_dev.dv_xname, reselid,
-					 sc->nexus_list.tqh_first);
+					 TAILQ_FIRST(&sc->nexus_list));
 			panic("unable to find reselecting device");
 		}
 		dma_cachectl ((caddr_t)acb, sizeof(*acb));
@@ -1512,25 +1510,25 @@ struct ssh_softc *sc;
 	s = splbio();
 	printf("%s@%x regs %x istat %x\n",
 			 sc->sc_dev.dv_xname, sc, rp, rp->ssh_istat);
-	if (acb = sc->free_list.tqh_first) {
+	if (acb = TAILQ_FIRST(&sc->free_list)) {
 		printf("Free list:\n");
 		while (acb) {
 			ssh_dump_acb(acb);
-			acb = acb->chain.tqe_next;
+			acb = TAILQ_NEXT(acb, chain);
 		}
 	}
-	if (acb = sc->ready_list.tqh_first) {
+	if (acb = TAILQ_FIRST(&sc->ready_list)) {
 		printf("Ready list:\n");
 		while (acb) {
 			ssh_dump_acb(acb);
-			acb = acb->chain.tqe_next;
+			acb = TAILQ_NEXT(acb, chain);
 		}
 	}
-	if (acb = sc->nexus_list.tqh_first) {
+	if (acb = TAILQ_FIRST(&sc->nexus_list)) {
 		printf("Nexus list:\n");
 		while (acb) {
 			ssh_dump_acb(acb);
-			acb = acb->chain.tqe_next;
+			acb = TAILQ_NEXT(acb, chain);
 		}
 	}
 	if (sc->sc_nexus) {

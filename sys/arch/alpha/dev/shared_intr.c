@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.12 2004/06/28 02:28:42 aaron Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.13 2004/12/25 23:02:23 miod Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -95,10 +95,8 @@ alpha_shared_intr_dispatch(intr, num)
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
 
-	ih = intr[num].intr_q.tqh_first;
 	handled = 0;
-	while (ih != NULL) {
-
+	TAILQ_FOREACH(ih, &intr[num].intr_q, ih_q) {
 		/*
 		 * The handler returns one of three values:
 		 *   0:	This interrupt wasn't for me.
@@ -110,7 +108,6 @@ alpha_shared_intr_dispatch(intr, num)
 			ih->ih_count.ec_count++;
 
 		handled = handled || (rv != 0);
-		ih = ih->ih_q.tqe_next;
 	}
 
 	return (handled);
@@ -150,7 +147,7 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE) {
-			if (intr[num].intr_q.tqh_first == NULL) {
+			if (TAILQ_EMPTY(&intr[num].intr_q)) {
 				printf("alpha_shared_intr_establish: %s %d: warning: using %s on %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
@@ -215,7 +212,7 @@ alpha_shared_intr_isactive(intr, num)
 	unsigned int num;
 {
 
-	return (intr[num].intr_q.tqh_first != NULL);
+	return (!TAILQ_EMPTY(&intr[num].intr_q));
 }
 
 void

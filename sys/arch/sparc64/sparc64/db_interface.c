@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2003/12/20 20:08:17 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2004/12/25 23:02:25 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -832,7 +832,7 @@ db_ctx_cmd(addr, have_addr, count, modif)
 	struct proc *p;
 
 	/* XXX LOCKING XXX */
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_stat) {
 			db_printf("process %p:", p);
 			db_printf("pid:%d pmap:%p ctx:%x tf:%p fpstate %p "
@@ -910,7 +910,7 @@ db_setpcb(addr, have_addr, count, modif)
 		return;
 	}
     
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
@@ -1062,7 +1062,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	char *modif;
 {
 
-	uvmhist_dump(uvm_histories.lh_first);
+	uvmhist_dump(LIST_FIRST(&uvm_histories));
 }
 #endif
 

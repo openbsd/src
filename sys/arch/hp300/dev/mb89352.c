@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.11 2004/12/22 21:11:12 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.12 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -341,7 +341,7 @@ spc_free_acb(struct spc_softc *sc, struct spc_acb *acb, int flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (acb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(acb, chain) == NULL)
 		wakeup(&sc->free_list);
 
 	splx(s);

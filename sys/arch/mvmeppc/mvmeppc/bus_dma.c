@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.16 2004/11/09 19:17:01 claudio Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.17 2004/12/25 23:02:25 miod Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -628,14 +628,14 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
          * Compute the location, size, and number of segments actually
          * returned by the VM code.
          */
-        m = mlist.tqh_first;
+        m = TAILQ_FIRST(&mlist);
         curseg = 0;
         lastaddr = VM_PAGE_TO_PHYS(m);
         segs[curseg].ds_addr = PHYS_TO_PCI_MEM(lastaddr);
         segs[curseg].ds_len = PAGE_SIZE;
-        m = m->pageq.tqe_next;
+	m = TAILQ_NEXT(m, pageq);
 
-        for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != TAILQ_END(&mlist); m = TAILQ_NEXT(m, pageq)) {
                 curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
                 if (curaddr < low || curaddr >= high) {

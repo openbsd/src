@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.13 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.14 2004/12/25 23:02:23 miod Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ fhpibdmadone(arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(hs->sc_dq);
 
-		hq = hs->sc_queue.tqh_first;
+		hq = TAILQ_FIRST(&hs->sc_queue);
 		(hq->hq_intr)(hq->hq_softc);
 	}
 	splx(s);
@@ -546,7 +546,7 @@ fhpibintr(arg)
 	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
 		printf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
-	hq = hs->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&hs->sc_queue);
 	if (hs->sc_flags & HPIBF_IO) {
 		if (hs->sc_flags & HPIBF_TIMO)
 			timeout_del(&sc->sc_dma_to);
@@ -651,7 +651,7 @@ fhpibppwatch(arg)
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
-	slave = (0x80 >> hs->sc_queue.tqh_first->hq_slave);
+	slave = (0x80 >> TAILQ_FIRST(&hs->sc_queue)->hq_slave);
 #ifdef DEBUG
 	if (!doppollint) {
 		if (fhpibppoll(hs) & slave) {

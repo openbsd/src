@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.8 2004/01/09 22:57:09 jmc Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.9 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -909,7 +909,7 @@ mesh_get_scb(sc)
 	int s;
 
 	s = splbio();
-	while ((scb = sc->free_scb.tqh_first) == NULL)
+	while ((scb = TAILQ_FIRST(&sc->free_scb)) == NULL)
 		tsleep(&sc->free_scb, PRIBIO, "meshscb", 0);
 	TAILQ_REMOVE(&sc->free_scb, scb, chain);
 	splx(s);
@@ -926,7 +926,7 @@ mesh_free_scb(sc, scb)
 
 	s = splbio();
 	TAILQ_INSERT_HEAD(&sc->free_scb, scb, chain);
-	if (scb->chain.tqe_next == NULL)
+	if (TAILQ_NEXT(&scb->chain) == NULL)
 		wakeup(&sc->free_scb);
 	splx(s);
 }
@@ -1005,23 +1005,17 @@ mesh_sched(sc)
 	struct scsi_link *sc_link;
 	struct mesh_scb *scb;
 
-	scb = sc->ready_scb.tqh_first;
-start:
-	if (scb == NULL)
-		return;
+	TAILQ_FOREACH(scb, &sc->ready_scb, chain) {
+		xs = scb->xs;
+		sc_link = xs->sc_link;
 
-	xs = scb->xs;
-	sc_link = xs->sc_link;
-
-	if (sc->sc_nexus == NULL) {
-		TAILQ_REMOVE(&sc->ready_scb, scb, chain);
-		sc->sc_nexus = scb;
-		mesh_select(sc, scb);
-		return;
+		if (sc->sc_nexus == NULL) {
+			TAILQ_REMOVE(&sc->ready_scb, scb, chain);
+			sc->sc_nexus = scb;
+			mesh_select(sc, scb);
+			return;
+		}
 	}
-
-	scb = scb->chain.tqe_next;
-	goto start;
 }
 
 int

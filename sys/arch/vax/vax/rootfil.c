@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.16 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.17 2004/12/25 23:02:26 miod Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -334,8 +334,7 @@ getdisk(str, len, defpart, devp)
 #ifdef RAMDISK_HOOKS
                 printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
-                for (dv = alldevs.tqh_first; dv != NULL;
-                    dv = dv->dv_list.tqe_next) {        
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
                         if (dv->dv_class == DV_DISK)
                                 printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -375,7 +374,7 @@ parsedisk(str, len, defpart, devp)
         }
 #endif
 
-        for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
                 if (dv->dv_class == DV_DISK &&
                     strcmp(str, dv->dv_xname) == 0) {
 #ifdef RAMDISK_HOOKS

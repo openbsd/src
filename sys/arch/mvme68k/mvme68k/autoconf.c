@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2004/07/30 22:29:48 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.28 2004/12/25 23:02:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -304,8 +304,7 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -338,7 +337,7 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 			majdev = findblkmajor(dv);

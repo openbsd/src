@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2004/09/15 20:11:29 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2004/12/25 23:02:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -295,8 +295,7 @@ getdisk(str, len, defpart, devp)
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -339,7 +338,7 @@ parsedisk(str, len, defpart, devp)
 		goto gotdisk;
 	}
 #endif
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 #ifdef RAMDISK_HOOKS

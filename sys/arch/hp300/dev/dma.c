@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.15 2004/12/16 16:48:44 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.16 2004/12/25 23:02:23 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -310,8 +310,7 @@ dmafree(dq)
 	 */
 	dc->dm_job = NULL;
 	chan = 1 << unit;
-	for (dn = sc->sc_queue.tqh_first; dn != NULL;
-	    dn = dn->dq_list.tqe_next) {
+	TAILQ_FOREACH(dn, &sc->sc_queue, dq_list) {
 		if (dn->dq_chan & chan) {
 			/* Found one... */
 			TAILQ_REMOVE(&sc->sc_queue, dn, dq_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.10 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.11 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ hpibreq(pdev, hq)
 	TAILQ_INSERT_TAIL(&sc->sc_queue, hq, hq_list);
 	splx(s);
 
-	if (sc->sc_queue.tqh_first == hq)
+	if (TAILQ_FIRST(&sc->sc_queue) == hq)
 		return (1);
 
 	return (0);
@@ -280,7 +280,7 @@ hpibfree(pdev, hq)
 	TAILQ_REMOVE(&sc->sc_queue, hq, hq_list);
 	splx(s);
 
-	if ((hq = sc->sc_queue.tqh_first) != NULL)
+	if ((hq = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		(*hq->hq_start)(hq->hq_softc);
 }
 
@@ -394,7 +394,7 @@ hpibstart(arg)
 	struct hpibbus_softc *sc = arg;
 	struct hpibqueue *hq;
 
-	hq = sc->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&sc->sc_queue);
 	(*hq->hq_go)(hq->hq_softc);
 }
 

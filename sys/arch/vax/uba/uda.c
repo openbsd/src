@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.11 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: uda.c,v 1.12 2004/12/25 23:02:25 miod Exp $	*/
 /*	$NetBSD: uda.c,v 1.25 1997/07/04 13:26:02 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -297,7 +297,7 @@ udago(usc, bp)
 	 * again. (Then we would trash the wait queue). Just queue the
 	 * buf and let the rest be done in udaready.
 	 */
-	if (sc->sc_bufq.sqh_first)
+	if (!SIMPLEQ_EMPTY(&sc->sc_bufq))
 		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp)
 	else {
 		if (ubaqueue(uu, bp))
@@ -322,7 +322,7 @@ udaready(uu)
 	struct uda_softc *sc = uu->uu_softc;
 	struct buf *bp;
 
-	while ((bp = sc->sc_bufq.sqh_first)) {
+	while ((bp = SIMPLEQ_FIRST(&sc->sc_bufq)) != NULL) {
 		if (ubaqueue(uu, bp)) {
 			BUFQ_REMOVE_HEAD(&sc->sc_bufq, bp);
 			mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |

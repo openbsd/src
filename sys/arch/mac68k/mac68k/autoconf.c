@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -164,8 +164,7 @@ getdisk(str, len, defpart, devp)
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -205,7 +204,7 @@ parsedisk(str, len, defpart, devp)
 	}
 #endif
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 #ifdef RAMDISK_HOOKS
@@ -502,7 +501,7 @@ findbootdev()
 	if (disk_count <= 0)
 		return;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK && major == findblkmajor(dv) &&
 		    unit == dv->dv_unit) {
 			booted_device = dv;

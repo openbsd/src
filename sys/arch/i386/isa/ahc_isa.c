@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.13 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.14 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -309,8 +309,7 @@ ahc_isa_probe(parent, match, aux)
 	 * Find this bus's state.  If we don't yet have a slot
 	 * marker, allocate and initialize one.
 	 */
-	for (as = ahc_isa_all_slots.lh_first; as != NULL;
-	    as = as->link.le_next)
+	LIST_FOREACH(as, &ahc_isa_all_slots, link)
 		if (as->bus == parent->dv_unit)
 			goto found_slot_marker;
 

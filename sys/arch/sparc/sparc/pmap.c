@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.137 2004/05/08 21:45:26 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.138 2004/12/25 23:02:25 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1215,7 +1215,8 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	struct segmap *sp;
 
 	/* try free list first */
-	if ((me = segm_freelist.tqh_first) != NULL) {
+	if (!TAILQ_EMPTY(&segm_freelist)) {
+		me = TAILQ_FIRST(&segm_freelist);
 		TAILQ_REMOVE(&segm_freelist, me, me_list);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
@@ -1245,7 +1246,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	}
 
 	/* no luck, take head of LRU list */
-	if ((me = segm_lru.tqh_first) == NULL)
+	if ((me = TAILQ_FIRST(&segm_lru)) == NULL)
 		panic("me_alloc: all pmegs gone");
 
 	pm = me->me_pmap;
@@ -1453,7 +1454,8 @@ region_alloc(mh, newpm, newvr)
 	struct regmap *rp;
 
 	/* try free list first */
-	if ((me = region_freelist.tqh_first) != NULL) {
+	if (!TAILQ_EMPTY(&region_freelist)) {
+		me = TAILQ_FIRST(&region_freelist);
 		TAILQ_REMOVE(&region_freelist, me, me_list);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
@@ -1475,7 +1477,7 @@ region_alloc(mh, newpm, newvr)
 	}
 
 	/* no luck, take head of LRU list */
-	if ((me = region_lru.tqh_first) == NULL)
+	if ((me = TAILQ_FIRST(&region_lru)) == NULL)
 		panic("region_alloc: all smegs gone");
 
 	pm = me->me_pmap;
@@ -3562,10 +3564,10 @@ pmap_release(pm)
 
 	if (CPU_ISSUN4OR4C) {
 #if defined(SUN4_MMU3L)
-		if (pm->pm_reglist.tqh_first)
+		if (!TAILQ_EMPTY(&pm->pm_reglist));
 			panic("pmap_release: region list not empty");
 #endif
-		if (pm->pm_seglist.tqh_first)
+		if (!TAILQ_EMPTY(&pm->pm_seglist));
 			panic("pmap_release: segment list not empty");
 
 		if ((c = pm->pm_ctx) != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 2004/08/03 21:46:58 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.27 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -460,8 +460,7 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -498,7 +497,7 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 			majdev = findblkmajor(dv);
@@ -683,8 +682,7 @@ setroot()
 			 * `root on nfs'.  Find the first network
 			 * interface.
 			 */
-			for (dd = dev_data_list.lh_first;
-			    dd != NULL; dd = dd->dd_list.le_next) {
+			LIST_FOREACH(dd, &dev_data_list, dd_list) {
 				if (dd->dd_dev->dv_class == DV_IFNET) {
 					/* Got it! */
 					break;
@@ -707,8 +705,7 @@ setroot()
 		snprintf(buf, sizeof buf, "%s%d", rootdevname,
 		    DISKUNIT(rootdev));
 		
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (strcmp(buf, dv->dv_xname) == 0) {
 				root_device = dv;
 				break;
@@ -842,8 +839,7 @@ findbootdev()
 	 * always starts at scode 0 and works its way up.
 	 */
 	if (netboot) {
-		for (dd = dev_data_list.lh_first; dd != NULL;
-		    dd = dd->dd_list.le_next) {
+		LIST_FOREACH(dd, &dev_data_list, dd_list) {
 			if (dd->dd_dev->dv_class == DV_IFNET) {
 				/*
 				 * Found it!
@@ -918,8 +914,8 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	/*
 	 * Find the booted controller.
 	 */
-	for (cdd = ddlist->lh_first; ctlr != 0 && cdd != NULL;
-	    cdd = cdd->dd_clist.le_next)
+	for (cdd = LIST_FIRST(ddlist); ctlr != 0 && cdd != LIST_END(ddlist);
+	    cdd = LIST_NEXT(cdd, dd_clist))
 		ctlr--;
 	if (cdd == NULL) {
 		/*
@@ -932,8 +928,7 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	 * Now find the device with the right slave/punit
 	 * that's a child of the controller.
 	 */
-	for (dd = dev_data_list.lh_first; dd != NULL;
-	    dd = dd->dd_list.le_next) {
+	LIST_FOREACH(dd, &dev_data_list, dd_list) {
 		/*
 		 * "sd" / "st" / "cd" -> "scsibus" -> "spc"
 		 * "hd" -> "hpibbus" -> "fhpib"
@@ -1015,8 +1010,9 @@ setbootdev()
 	 * "hd" -> "hpibbus" -> "fhpib"
 	 * "sd" / "cd" / "st" -> "scsibus" -> "spc"
 	 */
-	for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
-	    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
+	for (cdd = LIST_FIRST(&dev_data_list_hpib), ctlr = 0;
+	    cdd != LIST_END(&dev_data_list_hpib);
+	    cdd = LIST_NEXT(cdd, dd_clist), ctlr++) {
 		if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
 			/*
 			 * Found it!
@@ -1029,9 +1025,10 @@ setbootdev()
 
  out:
 	/* Don't need this anymore. */
-	for (dd = dev_data_list.lh_first; dd != NULL; ) {
+	for (dd = LIST_FIRST(&dev_data_list);
+	    dd != LIST_END(&dev_data_list); ) {
 		cdd = dd;
-		dd = dd->dd_list.le_next;
+		dd = LIST_NEXT(dd, dd_list);
 		free(cdd, M_DEVBUF);
 	}
 }
@@ -1045,7 +1042,7 @@ dev_data_lookup(dev)
 {
 	struct dev_data *dd;
 
-	for (dd = dev_data_list.lh_first; dd != NULL; dd = dd->dd_list.le_next)
+	LIST_FOREACH(dd, &dev_data_list, dd_list)
 		if (dd->dd_dev == dev)
 			return (dd);
 
@@ -1068,12 +1065,10 @@ dev_data_insert(dd, ddlist)
 	}
 #endif
 
-	de = ddlist->lh_first;
-
 	/*
 	 * Just insert at head if list is empty.
 	 */
-	if (de == NULL) {
+	if (LIST_EMPTY(ddlist)) {
 		LIST_INSERT_HEAD(ddlist, dd, dd_clist);
 		return;
 	}
@@ -1083,7 +1078,9 @@ dev_data_insert(dd, ddlist)
 	 * is greater than ours.  When we find it, insert ourselves
 	 * into the list before it.
 	 */
-	for (; de->dd_clist.le_next != NULL; de = de->dd_clist.le_next) {
+	for (de = LIST_FIRST(ddlist);
+	    LIST_NEXT(de, dd_clist) != LIST_END(ddlist);
+	    de = LIST_NEXT(de, dd_clist)) {
 		if (de->dd_scode > dd->dd_scode) {
 			LIST_INSERT_BEFORE(de, dd, dd_clist);
 			return;

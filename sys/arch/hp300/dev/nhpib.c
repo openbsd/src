@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.13 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.14 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ nhpibreadtimo(arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(hs->sc_dq);
 
-		hq = hs->sc_queue.tqh_first;
+		hq = TAILQ_FIRST(&hs->sc_queue);
 		(hq->hq_intr)(hq->hq_softc);
 	}
 	splx(s);
@@ -467,7 +467,7 @@ nhpibintr(arg)
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
 
-	hq = hs->sc_queue.tqh_first;
+	hq = TAILQ_FIRST(&hs->sc_queue);
 
 	if (hs->sc_flags & HPIBF_IO) {
 		hd->hpib_mim = 0;
@@ -545,7 +545,7 @@ nhpibppwatch(arg)
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
 again:
-	if (nhpibppoll(hs) & (0x80 >> hs->sc_queue.tqh_first->hq_slave))
+	if (nhpibppoll(hs) & (0x80 >> TAILQ_FIRST(&hs->sc_queue)->hq_slave))
        		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */

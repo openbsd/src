@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.35 2004/11/30 07:41:52 martin Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.36 2004/12/25 23:02:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -554,7 +554,7 @@ pmap_alloc_pv()
 		pv = &pvp->pvp_pv[0];
 	} else {
 		--pv_nfree;
-		pvp = pv_page_freelist.tqh_first;
+		pvp = TAILQ_FIRST(&pv_page_freelist);
 		if (--pvp->pvp_pgi.pgi_nfree == 0) {
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		}

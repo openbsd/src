@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.20 2004/07/07 23:10:46 deraadt Exp $	   */
+/*	$OpenBSD: uba.c,v 1.21 2004/12/25 23:02:25 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -711,7 +711,7 @@ ubarelse(uh, amr)
 		uh->uh_mrwant = 0;
 		wakeup((caddr_t)&uh->uh_mrwant);
 	}
-	while ((uu = uh->uh_resq.sqh_first)) {
+	while ((uu = SIMPLEQ_FIRST(&uh->uh_resq)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&uh->uh_resq, uu_resq);
 		if ((*uu->uu_ready)(uu) == 0)
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.59 2003/06/23 09:23:31 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.60 2004/12/25 23:02:25 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1847,8 +1847,7 @@ getdisk(str, len, defpart, devp)
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -1888,7 +1887,7 @@ parsedisk(str, len, defpart, devp)
 	}
 #endif
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 #ifdef RAMDISK_HOOKS
@@ -2150,8 +2149,7 @@ gotroot:
 	/*
 	 * Find mountroot hook and execute.
 	 */
-	for (mrhp = mrh_list.lh_first; mrhp != NULL;
-	     mrhp = mrhp->mr_link.le_next)
+	LIST_FOREACH(mrhp, &mrh_list, mr_link)
 		if (mrhp->mr_device == bootdv) {
 			if (findblkmajor(mrhp->mr_device) == major(rootdev)) 
 				(*mrhp->mr_func)(bootdv);
@@ -2217,7 +2215,7 @@ getdevunit(name, unit)
 	char *name;
 	int unit;
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 
@@ -2231,7 +2229,7 @@ getdevunit(name, unit)
 	strlcat(fullname, num, sizeof fullname);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;

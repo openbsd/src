@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.38 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.39 2004/12/25 23:02:25 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -788,7 +788,7 @@ fdstart(fd)
 	struct fd_softc *fd;
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
-	int active = fdc->sc_drives.tqh_first != 0;
+	int active = !TAILQ_EMPTY(&fdc->sc_drives);
 
 	/* Link into controller queue. */
 	fd->sc_q.b_active = 1;
@@ -812,7 +812,7 @@ fdfinish(fd, bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
-	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+	if (TAILQ_NEXT(fd, sc_drivechain) != NULL && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		if (bp->b_actf) {
@@ -861,7 +861,7 @@ fd_set_motor(fdc)
 
 	if (fdc->sc_flags & FDC_82077) {
 		status = FDO_FRST | FDO_FDMAEN;
-		if ((fd = fdc->sc_drives.tqh_first) != NULL)
+		if ((fd = TAILQ_FIRST(&fdc->sc_drives)) != NULL)
 			status |= fd->sc_drive;
 
 		for (n = 0; n < 4; n++)
@@ -903,7 +903,7 @@ fd_motor_on(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
+	if (fd == TAILQ_FIRST(&fdc->sc_drives) && fdc->sc_state == MOTORWAIT)
 		(void) fdcstate(fdc);
 	splx(s);
 }
@@ -1079,7 +1079,7 @@ fdcstatus(fdc, s)
 	struct fdc_softc *fdc;
 	char *s;
 {
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int n;
 
 	/* Just print last status */
@@ -1133,7 +1133,7 @@ fdctimeout(arg)
 	int s;
 
 	s = splbio();
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	if (fd == NULL) {
 		printf("%s: timeout but no I/O pending: statu %d, istatus=%d\n",
 		    fdc->sc_dev.dv_xname, fdc->sc_state, fdc->sc_istatus);
@@ -1303,7 +1303,7 @@ fdcstate(fdc)
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
  		return (0);
@@ -1682,7 +1682,7 @@ fdcretry(fdc)
 	struct buf *bp;
 	int error = EIO;
 
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	bp = fd->sc_q.b_actf;
 
 	fdc->sc_overruns = 0;

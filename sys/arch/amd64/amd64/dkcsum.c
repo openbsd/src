@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.2 2004/08/11 18:51:04 millert Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.3 2004/12/25 23:02:23 miod Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -76,7 +76,7 @@ dkcsumattach(void)
 	 */
 	bp = geteblk(bios_cksumlen * DEV_BSIZE);	/* XXX error check?  */
 
-	for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 
 		if (dv->dv_class != DV_DISK)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.15 2003/12/20 00:34:28 miod Exp $ */
+/*	$OpenBSD: sbic.c,v 1.16 2004/12/25 23:02:24 miod Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -374,7 +374,7 @@ sbic_scsicmd(xs)
 
     s = splbio();
 
-    if ( (acb = dev->free_list.tqh_first) != NULL )
+    if ( (acb = TAILQ_FIRST(&dev->free_list)) != NULL )
         TAILQ_REMOVE(&dev->free_list, acb, chain);
 
     splx(s);
@@ -482,7 +482,7 @@ sbic_sched(dev)
     /*
      * Loop through the ready list looking for work to do...
      */
-    for (acb = dev->ready_list.tqh_first; acb; acb = acb->chain.tqe_next) {
+    TAILQ_FOREACH(acb, &dev->ready_list, chain) {
         int     i, j;
 
         slp = acb->xs->sc_link;
@@ -641,7 +641,7 @@ sbic_scsidone(acb, stat)
 
         dev->sc_tinfo[slp->target].lubusy &= ~(1 << slp->lun);
 
-        if ( dev->ready_list.tqh_first )
+        if ( !TAILQ_EMPTY(&dev->ready_list) )
             dosched = 1;    /* start next command */
 
     } else
@@ -653,7 +653,7 @@ sbic_scsidone(acb, stat)
 
         register struct sbic_acb *a;
 
-        for (a = dev->nexus_list.tqh_first; a; a = a->chain.tqe_next) {
+	TAILQ_FOREACH(a, &dev->nexus_list, chain) {
             if ( a == acb ) {
                 TAILQ_REMOVE(&dev->nexus_list, acb, chain);
                 dev->sc_tinfo[slp->target].lubusy &= ~(1 << slp->lun);
@@ -663,7 +663,7 @@ sbic_scsidone(acb, stat)
 
         if ( a )
             ;
-        else if ( acb->chain.tqe_next ) {
+        else if ( TAILQ_NEXT(acb, chain) != NULL) {
             TAILQ_REMOVE(&dev->ready_list, acb, chain);
         } else {
             printf("%s: can't find matching acb\n", dev->sc_dev.dv_xname);
@@ -1075,7 +1075,7 @@ sbicselectbus(dev)
      * XXXSCW This is probably not necessary since we don't use use the
      * Select-and-Xfer-with-ATN command to initiate a selection...
      */
-    if ( !sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
+    if ( !sbic_enable_reselect && TAILQ_EMPTY(&dev->nexus_list))
         SET_SBIC_rselid (regs, 0);
     else
         SET_SBIC_rselid (regs, SBIC_RID_ER);
@@ -2492,8 +2492,7 @@ sbicnextstate(dev, csr, asr)
              * Loop through the nexus list until we find the saved entry
              * for the reselecting target...
              */
-            for (acb = dev->nexus_list.tqh_first; acb;
-                                                  acb = acb->chain.tqe_next) {
+	    TAILQ_FOREACH(acb, &dev->nexus_list, chain) {
 
                 if ( acb->xs->sc_link->target == newtarget &&
                      acb->xs->sc_link->lun    == newlun) {
@@ -2516,7 +2515,7 @@ sbicnextstate(dev, csr, asr)
                 printf("%s: reselect %s targ %d not in nexus_list %p\n",
                         dev->sc_dev.dv_xname,
                         csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget,
-                        &dev->nexus_list.tqh_first);
+                        &TAILQ_FIRST(&dev->nexus_list));
                 panic("bad reselect in sbic");
             }
 

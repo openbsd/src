@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2004/07/20 20:18:13 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1220,8 +1220,8 @@ pmap_alloc_pv(pmap, mode)
 
 	simple_lock(&pvalloc_lock);
 
-	if (pv_freepages.tqh_first != NULL) {
-		pvpage = pv_freepages.tqh_first;
+	if (!TAILQ_EMPTY(&pv_freepages)) {
+		pvpage = TAILQ_FIRST(&pv_freepages);
 		pvpage->pvinfo.pvpi_nfree--;
 		if (pvpage->pvinfo.pvpi_nfree == 0) {
 			/* nothing left in this one? */
@@ -1281,10 +1281,10 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if we need_entry and we've got unused pv_pages, allocate from there
 	 */
 
-	if (mode != ALLOCPV_NONEED && pv_unusedpgs.tqh_first != NULL) {
+	if (mode != ALLOCPV_NONEED && !TAILQ_EMPTY(&pv_unusedpgs)) {
 
 		/* move it to pv_freepages list */
-		pvpage = pv_unusedpgs.tqh_first;
+		pvpage = TAILQ_FIRST(&pv_unusedpgs);
 		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
 		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
 
@@ -1799,8 +1799,7 @@ pmap_steal_ptp(obj, offset)
 			we_locked = simple_lock_try(&curobj->vmobjlock);
 		}
 		if (caller_locked || we_locked) {
-			ptp = curobj->memq.tqh_first;
-			for (/*null*/; ptp != NULL; ptp = ptp->listq.tqe_next) {
+			TAILQ_FOREACH(ptp, &curobj->memq, listq) {
 
 				/*
 				 * might have found a PTP we can steal
@@ -2041,8 +2040,8 @@ pmap_release(pmap)
 	 * free any remaining PTPs
 	 */
 
-	while (pmap->pm_obj.memq.tqh_first != NULL) {
-		pg = pmap->pm_obj.memq.tqh_first;
+	while (!TAILQ_EMPTY(&pmap->pm_obj.memq)) {
+		pg = TAILQ_FIRST(&pmap->pm_obj.memq);
 #ifdef DIAGNOSTIC
 		if (pg->flags & PG_BUSY)
 			panic("pmap_release: busy page table page");
@@ -3407,8 +3406,7 @@ pmap_growkernel(maxkvaddr)
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
-		for (pm = pmaps.lh_first; pm != NULL;
-		     pm = pm->pm_list.le_next) {
+		LIST_FOREACH(pm, &pmaps, pm_list) {
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}

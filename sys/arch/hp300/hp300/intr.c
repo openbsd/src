@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.14 2004/12/24 22:50:29 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.15 2004/12/25 23:02:24 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -100,8 +100,7 @@ intr_computeipl()
 	    (PSL_S|PSL_IPL3);
 
 	for (ipl = 0; ipl < NISR; ipl++) {
-		for (isr = isr_list[ipl].lh_first; isr != NULL;
-		    isr = isr->isr_link.le_next) {
+		LIST_FOREACH(isr, &isr_list[ipl], isr_link) {
 			/*
 			 * Bump up the level for a given priority,
 			 * if necessary.
@@ -191,7 +190,7 @@ intr_establish(struct isr *isr, const char *name)
 	 * at the head of the list.
 	 */
 	list = &isr_list[isr->isr_ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_EMPTY(list)) {
 		LIST_INSERT_HEAD(list, isr, isr_link);
 		goto compute;
 	}
@@ -201,8 +200,9 @@ intr_establish(struct isr *isr, const char *name)
 	 * and place ourselves after any ISRs with our current (or
 	 * higher) priority.
 	 */
-	for (curisr = list->lh_first; curisr->isr_link.le_next != NULL;
-	    curisr = curisr->isr_link.le_next) {
+	for (curisr = LIST_FIRST(list);
+	    LIST_NEXT(curisr, isr_link) != LIST_END(list);
+	    curisr = LIST_NEXT(curisr, isr_link)) {
 		if (isr->isr_priority > curisr->isr_priority) {
 			LIST_INSERT_BEFORE(curisr, isr, isr_link);
 			goto compute;
@@ -254,7 +254,7 @@ intr_dispatch(evec)
 	uvmexp.intrs++;
 
 	list = &isr_list[ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_EMPTY(list)) {
 		printf("intr_dispatch: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("intr_dispatch: too many unexpected interrupts");
@@ -263,7 +263,7 @@ intr_dispatch(evec)
 
 	handled = 0;
 	/* Give all the handlers a chance. */
-	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next) {
+	LIST_FOREACH(isr, list, isr_link) {
 		rc = (*isr->isr_func)(isr->isr_arg);
 		if (rc > 0)
 			isr->isr_count.ec_count++;

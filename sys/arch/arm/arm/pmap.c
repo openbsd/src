@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2004/12/25 23:02:23 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4230,7 +4230,7 @@ pmap_postinit(void)
 			cpu_tlb_flushD_SE(va);
 
 			va += PAGE_SIZE;
-			m = m->pageq.tqe_next;
+			m = TAILQ_NEXT(m, pageq);
 		}
 
 #ifdef DIAGNOSTIC
