@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.16 1999/07/01 06:07:47 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.17 1999/07/01 13:18:59 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.14 1999/07/01 06:07:15 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.15 1999/07/01 13:18:21 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -62,6 +62,7 @@
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
+#define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
@@ -178,6 +179,11 @@
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_STR_LINKSYS_COMBO_ECARD	"Linksys Combo EthernetCard"
 
+/* Lucent technologies corporation */
+#define	PCMCIA_CIS_LUCENT_WAVELAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_WAVELAN	0x0002
+#define	PCMCIA_STR_LUCENT_WAVELAN	"Lucent WaveLAN"
+
 /* Megahertz Products */
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ4288	0x0023
@@ -229,23 +235,29 @@
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
 
 /* TDK Vendor ID also used by Xircom! */
-#define	PCMCIA_CIS_TDK_XIR_CE_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CE_10	0x0108
-#define	PCMCIA_STR_TDK_XIR_CE_10	"Xircom CreditCard Ethernet"
-#define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
-#define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
-#define	PCMCIA_CIS_TDK_XIR_CNW	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
-#define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
-#define	PCMCIA_CIS_TDK_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_TDK_XIR_CEM_10	0x110a
-#define	PCMCIA_STR_TDK_XIR_CEM_10	"Xircom CreditCard Ethernet + Modem"
+#define	PCMCIA_CIS_XIRCOM_XIR_CE_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XIR_CE_10	0x0108
+#define	PCMCIA_STR_XIRCOM_XIR_CE_10	"Xircom CreditCard Ethernet"
+#define	PCMCIA_CIS_XIRCOM_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XIR_PS_CE2_10	0x010b
+#define	PCMCIA_STR_XIRCOM_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
+#define	PCMCIA_CIS_XIRCOM_XIR_CNW	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XIR_CNW	0x0802
+#define	PCMCIA_STR_XIRCOM_XIR_CNW	"Xircom CreditCard Netwave"
+#define	PCMCIA_CIS_XIRCOM_XIR_CEM_10	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XIR_CEM_10	0x110a
+#define	PCMCIA_STR_XIRCOM_XIR_CEM_10	"Xircom CreditCard Ethernet + Modem"
+#define	PCMCIA_CIS_XIRCOM_XIR_CEM_28	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_XIR_CEM_28	0x110b
+#define	PCMCIA_STR_XIRCOM_XIR_CEM_28	"Xircom CreditCard Ethernet + Modem"
 
 /* NewMedia Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_CIS_NEWMEDIA_MULTIMEDIA	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA	0x100b
+#define	PCMCIA_STR_NEWMEDIA_MULTIMEDIA	"NewMedia Multimedia Sound/SCSI"
 #define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
 #define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
