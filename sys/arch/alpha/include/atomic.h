@@ -1,5 +1,5 @@
-/* $OpenBSD: atomic.h,v 1.2 2000/11/08 21:27:16 ericj Exp $ */
-/* $NetBSD: atomic.h,v 1.5 2000/06/08 02:54:55 thorpej Exp $ */
+/*	$OpenBSD: atomic.h,v 1.3 2002/02/15 15:31:58 art Exp $	*/
+/* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,9 +53,6 @@
 static __inline void
 atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
-#if 1
-	*ulp |= v;
-#else
 	unsigned long t0;
 
 	__asm __volatile(
@@ -69,9 +66,9 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_ulong"
-		: "=r" (t0), "=m" (*ulp)
-		: "r" (v), "1" (*ulp));
-#endif
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -82,9 +79,6 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 static __inline void
 atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
-#if 1
-	*ulp &= ~v;
-#else
 	unsigned long t0;
 
 	__asm __volatile(
@@ -98,9 +92,9 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_ulong"
-		: "=r" (t0), "=m" (*ulp)
-		: "r" (~v), "1" (*ulp));
-#endif
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (~v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -124,8 +118,9 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_add_ulong"
-		: "=r" (t0), "=m" (*ulp)
-		: "r" (v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -149,8 +144,9 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_sub_ulong"
-		: "=r" (t0), "=m" (*ulp)
-		: "r" (v), "1" (*ulp));
+		: "=&r" (t0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 }
 
 /*
@@ -174,8 +170,9 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_loadlatch_ulong"
-		: "=r" (t0), "=r" (v0), "=m" (*ulp)
-		: "r" (v), "2" (*ulp));
+		: "=&r" (t0), "=r" (v0), "=m" (*ulp)
+		: "r" (v), "m" (*ulp)
+		: "memory");
 
 	return (v0);
 }
