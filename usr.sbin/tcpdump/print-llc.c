@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.13 2001/06/25 19:56:11 itojun Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.14 2004/12/20 08:30:40 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.13 2001/06/25 19:56:11 itojun Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.14 2004/12/20 08:30:40 pascoe Exp $";
 #endif
 
 #include <sys/param.h>
@@ -97,6 +97,14 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		llc.ethertype[0] == 0x20 && llc.ethertype[1] == 0x00 ) {
 		    cdp_print( p, length, caplen, esrc, edst);
 		    return (1);
+	}
+
+	/* Shared Spanning Tree Protocol - SNAP & ether type 0x010b */
+	if (llc.ssap == LLCSAP_SNAP && llc.dsap == LLCSAP_SNAP &&
+	    llc.llcui == LLC_UI &&
+	    llc.ethertype[0] == 0x01 && llc.ethertype[1] == 0x0b) {
+		stp_print(p, length);
+		return(1);
 	}
 
 	if (llc.ssap == LLCSAP_ISONS && llc.dsap == LLCSAP_ISONS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.3 2003/06/03 00:21:04 jason Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.4 2004/12/20 08:30:40 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -68,7 +68,7 @@ struct rtentry;
 #define	STP_FLAGS_TC		0x01            /* Topology change */
 #define	STP_FLAGS_TCA		0x80            /* Topology change ack */
 
-static void stp_print_cbpdu(const u_char *, u_int);
+static void stp_print_cbpdu(const u_char *, u_int, int);
 static void stp_print_tbpdu(const u_char *, u_int);
 
 void
@@ -77,14 +77,21 @@ stp_print(p, len)
 	u_int len;
 {
 	u_int16_t id;
+	int cisco_sstp = 0;
 
 	if (len < 3)
 		goto truncated;
-	if (p[0] != LLCSAP_8021D || p[1] != LLCSAP_8021D || p[2] != LLC_UI) {
+	if (p[0] == LLCSAP_8021D && p[1] == LLCSAP_8021D && p[2] == LLC_UI)
+		printf("802.1d");
+	else if (p[0] == LLCSAP_SNAP && p[1] == LLCSAP_SNAP && p[2] == LLC_UI) {
+		cisco_sstp = 1;
+		printf("SSTP");
+		p += 5;
+		len -= 5;
+	} else {
 		printf("invalid protocol");
 		return;
 	}
-	printf("802.1d");
 	p += 3;
 	len -= 3;
 
@@ -106,7 +113,7 @@ stp_print(p, len)
 		goto truncated;
 	switch (*p) {
 	case STP_MSGTYPE_CBPDU:
-		stp_print_cbpdu(p, len);
+		stp_print_cbpdu(p, len, cisco_sstp);
 		break;
 	case STP_MSGTYPE_TBPDU:
 		stp_print_tbpdu(p, len);
@@ -123,9 +130,10 @@ truncated:
 }
 
 static void
-stp_print_cbpdu(p, len)
+stp_print_cbpdu(p, len, cisco_sstp)
 	const u_char *p;
 	u_int len;
+	int cisco_sstp;
 {
 	u_int32_t cost;
 	u_int16_t t;
@@ -212,6 +220,18 @@ stp_print_cbpdu(p, len)
 	printf(" fwdelay=%u/%u", p[0], p[1]);
 	p += 2;
 	len -= 2;
+
+	if (cisco_sstp) {
+		if (len < 7)
+			goto truncated;
+		p += 1;
+		len -= 1;
+		if (EXTRACT_16BITS(p) == 0 && EXTRACT_16BITS(p + 2) == 0x02) {
+			printf(" pvid=%u", EXTRACT_16BITS(p + 4));
+			p += 6;
+			len -= 6;
+		}
+	}
 
 	return;
 
