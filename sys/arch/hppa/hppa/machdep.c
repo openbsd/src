@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2002/02/02 21:10:56 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2002/02/03 03:25:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -366,8 +366,7 @@ hppa_init(start)
 	resvmem = ((vaddr_t)&kernel_text) / NBPG;
 
 	/* calculate HPT size */
-	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
-hptsize=256;	/* XXX one page for now */
+	for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2);
 	hptsize *= 16;	/* sizeof(hpt_entry) */
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
