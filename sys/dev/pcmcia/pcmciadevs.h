@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.9 1999/01/28 04:58:32 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.10 1999/01/31 11:28:39 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.8 1999/01/28 04:58:32 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -61,6 +61,7 @@
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
+#define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
@@ -141,6 +142,11 @@
 #define	PCMCIA_CIS_INTEL_EEPRO100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
 #define	PCMCIA_STR_INTEL_EEPRO100	"Intel EtherExpress PRO/100"
+
+/* Kingston */
+#define	PCMCIA_CIS_KINGSTON_KNE_PC2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_KINGSTON_KNE_PC2	0x0100
+#define	PCMCIA_STR_KINGSTON_KNE_PC2	"Kingston KNE-PC2"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }

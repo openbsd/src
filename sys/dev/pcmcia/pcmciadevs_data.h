@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.9 1999/01/28 04:58:32 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.10 1999/01/31 11:28:39 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.8 1999/01/28 04:58:32 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -165,6 +165,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "Intel EtherExpress PRO/100"	},
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
+	    PCMCIA_CIS_KINGSTON_KNE_PC2,
+	    0,
+	    "Kingston",
+	    "Kingston KNE-PC2"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -535,6 +542,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Compaq",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_KINGSTON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Kingston",
 	    NULL,
 	},
 	{

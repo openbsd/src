@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.6 1999/01/28 04:58:30 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.7 1999/01/31 11:28:39 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -216,6 +216,10 @@ struct ne2000dev {
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
       0, 0xd400, { 0x01, 0x03, 0xdc } },
 
+    { PCMCIA_STR_KINGSTON_KNE_PC2,
+      PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
+      PCMCIA_CIS_KINGSTON_KNE_PC2,
+      0, 0x0180, { 0x00, 0xc0, 0xf0 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -277,9 +281,6 @@ struct ne2000dev {
     { "Kingston KNE-PCM/x",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0xe2, 0x0c, 0x0f } },
-    { "Kingston KNE-PC2",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0180, { 0x00, 0xc0, 0xf0 } },
     { "Longshine LCS-8534",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0000, { 0x08, 0x00, 0x00 } },

@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.8 1999/01/28 04:58:32 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.9 1999/01/31 11:28:39 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -54,6 +54,7 @@ vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor COMPAQ2			0x0183	Compaq
+vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
 vendor COMPEX			0x8a01	Compex Corporation
@@ -98,6 +99,9 @@ product IODATA PCLAT		0x2216 I-O DATA PCLA/T
 
 /* Intel */
 product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
+
+/* Kingston */
+product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
 /* Linksys corporation */
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
