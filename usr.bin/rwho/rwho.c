@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.5 1997/01/15 23:43:10 millert Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.6 1997/03/26 18:02:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.5 1997/01/15 23:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.6 1997/03/26 18:02:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -91,6 +91,7 @@ main(argc, argv)
 	register struct myutmp *mp;
 	int f, n, i;
 	time_t time();
+	int nhosts = 0;
 
 	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
@@ -119,6 +120,7 @@ main(argc, argv)
 			(void) close(f);
 			continue;
 		}
+		nhosts++;
 		if (down(w,now)) {
 			(void) close(f);
 			continue;
@@ -142,6 +144,8 @@ main(argc, argv)
 		}
 		(void) close(f);
 	}
+	if (nhosts == 0)
+		errx(0, "no hosts in %s.", _PATH_RWHODIR);
 	qsort((char *)myutmp, nusers, sizeof (struct myutmp),
 	    (int (*)())utmpcmp);
 	mp = myutmp;
