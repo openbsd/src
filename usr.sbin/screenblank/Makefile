@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.5 2001/12/01 23:43:48 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/08/12 10:47:33 miod Exp $
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sun3"
+.if ${MACHINE} == "sun3"
 PROG=	screenblank
 
 DPADD=	${LIBM}
@@ -10,5 +10,5 @@ NOPROG=yes
 .endif
 
 MAN=screenblank.1
-MANSUBDIR=sparc sun3
+MANSUBDIR=sun3
 .include <bsd.prog.mk>
