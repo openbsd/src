@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.6 2000/08/24 16:00:19 deraadt Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.7 2000/08/24 16:20:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpc.c,v 1.6 2000/08/24 16:00:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lpc.c,v 1.7 2000/08/24 16:20:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -304,11 +304,11 @@ static int
 ingroup(grname)
 	char *grname;
 {
-	static struct group *gptr=NULL;
+	static struct group *gptr = NULL;
 	static gid_t groups[NGROUPS];
 	register gid_t gid;
 	register int i;
-	int maxgroups;
+	static int maxgroups;
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
