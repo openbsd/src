@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 1998/09/25 09:20:53 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 1999/05/01 06:28:20 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -112,6 +112,8 @@ cdev_decl(ch);
 dev_decl(filedesc,open);
 #include "asc.h"
 cdev_decl(asc);
+#include "ksyms.h"
+cdev_decl(ksyms);
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
@@ -162,7 +164,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_gen_ipf(NIPF,ipl),         /* 35: IP filter log */
 	cdev_audio_init(NASC,asc),      /* 36: ASC audio device */
-	cdev_notdef(),			/* 37 */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 37: Kernel symbols device */
 	cdev_notdef(),			/* 38 */
 	cdev_notdef(),			/* 39 */
 	cdev_notdef(),			/* 40 */
