@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.4 1995/06/05 16:26:23 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.5 1995/12/13 18:45:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -36,7 +36,6 @@
 #include "sys/param.h"
 #include "machine/cpu.h"
 #include "machine/sid.h"
-#include "machine/loconf.h"
 #include "sys/types.h"
 #include "sys/device.h"
 #include "sys/reboot.h"
@@ -44,12 +43,14 @@
 #include "machine/param.h"
 #include "machine/vmparam.h"
 #include "machine/nexus.h"
+#include "machine/ka750.h"
 #include "machine/../vax/gencons.h"
 #include "vm/vm.h"
 
 #define	BACKPLANE	0
 #define	BIBUSS		1
 #define	SBIBUSS		2
+
 struct bp_conf {
 	char *type;
 	int num;
@@ -61,19 +62,26 @@ extern int cold;
 int	cpu_notsupp(),cpu_notgen();
 #ifdef	VAX750
 int	ka750_mchk(),ka750_memerr(),ka750_clock(),ka750_conf();
+int	ka750_steal_pages();
 int	nexty750[]={ NEX_MEM16,	NEX_MEM16,	NEX_MEM16,	NEX_MEM16,
 		NEX_MBA,	NEX_MBA, 	NEX_MBA,	NEX_MBA,
 		NEX_UBA0,	NEX_UBA1,	NEX_ANY,	NEX_ANY,
 		NEX_ANY,	NEX_ANY,	NEX_ANY,	NEX_ANY};
 #endif
 #if VAX730
+int	ka750_steal_pages();
 int   nexty730[NNEX730] = {
 	NEX_MEM16,      NEX_ANY,	NEX_ANY,	NEX_ANY,
 	NEX_ANY,	NEX_ANY,	NEX_ANY,	NEX_ANY,
 };
 #endif
 #if VAX630
+int	uvaxII_steal_pages();
 int     uvaxII_mchk(), uvaxII_memerr(), uvaxII_clock(), uvaxII_conf();
+#endif
+#if VAX650
+int	uvaxIII_steal_pages();
+int     uvaxIII_mchk(), uvaxIII_memerr(), uvaxIII_clock(), uvaxIII_conf();
 #endif
 
 struct	cpu_dep	cpu_calls[VAX_MAX+1]={
@@ -85,12 +93,12 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
 #ifdef  VAX750	/* Type 2, 11/750 */
-	cpu_notgen,ka750_clock,ka750_mchk,ka750_memerr,ka750_conf,
+	ka750_steal_pages,ka750_clock,ka750_mchk,ka750_memerr,ka750_conf,
 #else
 	cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,
 #endif
 #ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	ka730_steal_pages,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
@@ -115,14 +123,16 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
 #ifdef  VAX630  /* Type 8, KA630 or KA410 (uVAX II) */
-	cpu_notgen,uvaxII_clock,uvaxII_mchk,uvaxII_memerr,uvaxII_conf,
+	uvaxII_steal_pages, uvaxII_clock, uvaxII_mchk, uvaxII_memerr,
+	    uvaxII_conf,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
 		/* Type 9, not used */
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #ifdef	VAX650  /* Type 10, KA65X (uVAX III) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	uvaxIII_steal_pages, uvaxIII_clock, uvaxIII_mchk, uvaxIII_memerr,
+	    uvaxIII_conf,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
@@ -160,7 +170,7 @@ configure()
 	 */
 	gencnslask(); /* XXX inte g|ras h{r */
 	swapconf();
-	cold=0;
+	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }
 
@@ -170,8 +180,9 @@ printut(aux, hej)
 	void *aux;
 	char *hej;
 {
-	if(hej) printf("printut %s\n",hej);
-	return(UNSUPP);
+	if (hej)
+		printf("printut %s\n",hej);
+	return (UNSUPP);
 }
 
 int
@@ -180,10 +191,11 @@ backplane_match(parent, cf, aux)
 	struct	cfdata	*cf;
 	void	*aux;
 {
-	if(cf->cf_unit==0&&strcmp(cf->cf_driver->cd_name,"backplane")==0)
+	if (cf->cf_unit == 0 &&
+	    strcmp(cf->cf_driver->cd_name, "backplane") == 0)
 		return 1; /* First (and only) backplane */
 
-	return(0);
+	return (0);
 }
 
 void
@@ -192,37 +204,38 @@ backplane_attach(parent, self, hej)
 	void	*hej;
 {
 	struct bp_conf bp;
-	int i,ccpu,cmem,cbi,csbi;
+	int i, ccpu, cmem, cbi, csbi;
 
 	printf("\n");
 
 	switch(cpunumber){
 	case VAX_750:
+	case VAX_650:
 	case VAX_78032:
-		cmem=cbi=0;
-		ccpu=csbi=1;
+		cmem = cbi = 0;
+		ccpu = csbi = 1;
 		break;
 	}
 
-	bp.partyp=BACKPLANE;
-	bp.type="cpu";
-	for(i=0;i<ccpu;i++){
-		bp.num=i;
+	bp.partyp = BACKPLANE;
+	bp.type = "cpu";
+	for (i = 0; i < ccpu; i++) {
+		bp.num = i;
 		config_found(self, &bp, printut);
 	}
-	bp.type="mem";
-	for(i=0;i<cmem;i++){
-		bp.num=i;
+	bp.type = "mem";
+	for (i = 0; i < cmem; i++) {
+		bp.num = i;
 		config_found(self, &bp, printut);
 	}
-	bp.type="bi";
-	for(i=0;i<cbi;i++){
-		bp.num=i;
+	bp.type = "bi";
+	for (i = 0; i < cbi; i++) {
+		bp.num = i;
 		config_found(self, &bp, printut);
 	}
-	bp.type="sbi";
-	for(i=0;i<csbi;i++){
-		bp.num=i;
+	bp.type = "sbi";
+	for(i = 0; i < csbi; i++) {
+		bp.num = i;
 		config_found(self, &bp, printut);
 	}
 }
@@ -233,21 +246,17 @@ cpu_match(parent, cf, aux)
 	struct  cfdata  *cf;
 	void    *aux;
 {
-	struct bp_conf *bp=aux;
+	struct bp_conf *bp = aux;
 
-	if(strcmp(cf->cf_driver->cd_name,"cpu"))
+	if (strcmp(cf->cf_driver->cd_name, "cpu"))
 		return 0;
 
 	switch (cpunumber) {
-#ifdef VAX750
+#if VAX750 || VAX630 || VAX650
 	case VAX_750:
-		if(cf->cf_unit==0&&bp->partyp==BACKPLANE)
-			return 1;
-		break;
-#endif
-#ifdef VAX630
 	case VAX_78032:
-		if(cf->cf_unit==0&&bp->partyp==BACKPLANE)
+	case VAX_650:
+		if(cf->cf_unit == 0 && bp->partyp == BACKPLANE)
 			return 1;
 		break;
 #endif
@@ -261,32 +270,10 @@ cpu_attach(parent, self, aux)
 	struct  device  *parent, *self;
 	void    *aux;
 {
-	extern int cpu_type;
-	extern char cpu_model[];
-
-	switch (cpunumber) {
-#ifdef	VAX750
-	case VAX_750:
-		printf(": 11/750, hardware rev %d, ucode rev %d\n",
-		V750HARDW(cpu_type), V750UCODE(cpu_type));
-		printf("cpu0 at backplane0: ");
-		if(mfpr(PR_ACCS)&0xff){
-			printf("FPA present, enabling\n");
-			mtpr(0x8000,PR_ACCS);
-		} else printf("no FPA\n");
-		strcpy(cpu_model,"VAX 11/750");
-		break;
-#endif
-#if VAX630
-	case VAX_78032:
-		printf(": MicroVAXII CPU\n");
-		strcpy(cpu_model, "MicroVAX 78032/78132");
-		break;
-#endif
-	};
+	(*cpu_calls[cpunumber].cpu_conf)(parent, self, aux);
 }
 
-int nmcr=0;
+int nmcr = 0;
 
 int
 mem_match(parent, cf, aux)
@@ -294,11 +281,11 @@ mem_match(parent, cf, aux)
 	struct  cfdata  *cf;
 	void    *aux;
 {
-	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
+	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
+	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
 		return 0; /* memory doesn't match spec's */
-	switch(sa->type){
+	switch (sa->type) {
 	case NEX_MEM16:
 		return 1;
 	}
@@ -310,12 +297,12 @@ mem_attach(parent, self, aux)
 	struct  device  *parent, *self;
 	void    *aux;
 {
-	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
+	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 
-	switch(cpunumber){
+	switch (cpunumber) {
 #ifdef VAX750
 	case VAX_750:
-		ka750_memenable(sa,self);
+		ka750_memenable(sa, self);
 		break;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1995/11/30 00:59:32 jtc Exp $	*/
+/*      $NetBSD: clock.c,v 1.9 1995/12/13 18:45:56 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -111,8 +111,9 @@ inittodr(fs_time)
 	    ((tmp_year % 4 && tmp_year != 32) ? 365 : 366);
 
 	switch (cpunumber) {
-#if VAX750
+#if VAX750 || VAX650
 	case VAX_750:
+	case VAX_650:
 		year_ticks = mfpr(PR_TODR);
 		clock_stopped = todrstopped;
 		break;
@@ -131,9 +132,10 @@ inittodr(fs_time)
 		printf(
 	"Internal clock not started. Using time from file system.\n");
 		switch (cpunumber) {
-#if VAX750
+#if VAX750 || VAX650
 		case VAX_750:
-			/*+1 so the clock won't be stopped */
+		case VAX_650:
+			/* +1 so the clock won't be stopped */
 			mtpr((fs_time - year) * 100 + 1, PR_TODR);
 			break;
 #endif
@@ -152,7 +154,8 @@ inittodr(fs_time)
 	} else if (year_ticks / 100 < fs_time - year) {
 		printf(
 		"WARNING: Clock has lost time - CHECK AND RESET THE DATE.\n");
-	} else sluttid = year + (year_ticks / 100);
+	} else
+		sluttid = year + (year_ticks / 100);
 	time.tv_sec = sluttid;
 }
 
@@ -191,20 +194,16 @@ resettodr()
  * (the x and y variables are used to confuse the optimizer enough to ensure
  *  that the code actually loops:-)
  */
-int
-todr()
+void
+delay(i)
+	int i;
 {
-      int delaycnt, x = 4, y = 4;
-      static int todr_val;
+	volatile int n;
 
-      if (cpunumber != VAX_78032)
-	      return (mfpr(PR_TODR));
+	n = i;
 
-      /*
-       * Loop for approximately 10msec and then return todr_val + 1.
-       */
-      delaycnt = 5000;
-      while (delaycnt > 0)
-	      delaycnt = delaycnt - x + 3 + y - 4;
-      return (++todr_val);
+	while (--n)
+		;
+
+	return;
 }

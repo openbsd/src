@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.6 1995/11/30 00:59:29 jtc Exp $ */
+/*	$NetBSD: tmscp.c,v 1.7 1995/12/13 19:02:53 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -192,7 +192,13 @@
 #include "vax/vax/tmscpinf.h"
 #include "vax/vax/mscpvar.h"
 
-void     tmscpstrategy __P((struct buf *));
+int	tmscp_match __P((struct device *, void *, void *));
+void	tmscp_attach __P((struct device *, struct device *, void *));
+void	tmscpstrategy __P((struct buf *));
+
+struct	cfdriver tmscpcd = {
+	NULL, "tmscp", tmscp_match, tmscp_attach, DV_DULL, sizeof(struct device)
+};
 
 /* Software state per controller */
 
@@ -2138,4 +2144,19 @@ tmserror(um, mp)
 		printf("\n");
 		}
 }
+
+tmscp_match(parent, match, aux)
+        struct device *parent;
+        void *match, *aux;
+{
+        return 0;
+}
+
+void
+tmscp_attach(parent, self, aux)
+        struct device *parent, *self;
+        void *aux;
+{
+}
+
 #endif

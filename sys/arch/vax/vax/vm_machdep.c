@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.17 1995/11/10 19:07:16 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.18 1995/12/13 18:47:59 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -65,15 +65,16 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	int size;
 {
-	u_int *fpte, *tpte,stor;
+	pt_entry_t *fpte, *tpte;
+	int	stor;
 
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 
-	stor = (size/NBPG) * sizeof(struct pte);
-	bcopy(fpte,tpte,stor);
-	bzero(fpte,stor);
-	mtpr(0,PR_TBIA);
+	stor = (size >> PGSHIFT) * sizeof(struct pte);
+	bcopy(fpte, tpte, stor);
+	bzero(fpte, stor);
+	mtpr(0, PR_TBIA);
 }
 
 #define VIRT2PHYS(x) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.5 1995/10/20 12:55:06 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.6 1995/12/13 18:56:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -175,15 +175,6 @@ static __inline__ int max(int a, int b){
         return a;
 }
 #endif
-
-#define	waitabit(tid)	\
-({	\
-	asm __volatile ("mfpr $27,r0;addl2 %0,r0;1:;mfpr $27,r1; \
-			cmpl r0,r1;bneq 1b;"	\
-			:		\
-			: "g"(tid)	\
-			: "r0","r1");	\
-})
 
 static __inline__ void blkcpy(const void*from, void*to, u_int len) {
 	asm __volatile("

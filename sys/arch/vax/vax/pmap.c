@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.18 1995/11/10 18:52:54 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.19 1995/12/13 18:50:20 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -97,9 +97,9 @@ void
 pmap_bootstrap()
 {
 	unsigned int junk, sysptsize, istack;
-	extern unsigned int proc0paddr, sigcode, esigcode, etext;
-	extern struct vmspace vmspace0;
-	struct pmap *p0pmap;
+	extern	unsigned int proc0paddr, sigcode, esigcode, etext;
+	extern	struct vmspace vmspace0;
+	struct	pmap *p0pmap;
 
 	p0pmap = &vmspace0.vm_pmap;
 
@@ -107,13 +107,17 @@ pmap_bootstrap()
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
 	 * First set them to their max values and then decrement them.
+	 * The need for kernel virtual memory is linear dependent of the
+	 * amount of physical memory also, therefore sysptsize is 
+	 * a variable here that is changed dependent of the physical
+	 * memory size.
 	 */
+	while (!badaddr(avail_end, 4)) /* Memory is in 64K hunks */
+		avail_end += NBPG * 128;
+	sysptsize += avail_end >> PGSHIFT;
 	virtual_avail = KERNBASE;
 	virtual_end = KERNBASE + sysptsize * NBPG;
 	avail_start = 0;
-	while (!badaddr(avail_end, 4)) /* Memory is in 64K hunks */
-		avail_end += NBPG * 128;
-
 	blkclr(Sysmap, sysptsize * 4); /* clear SPT before using it */
 	/*
 	 * Map kernel. Kernel code is always readable for user,
@@ -160,7 +164,6 @@ pmap_bootstrap()
 	MAPVIRT(vmmap, 2);
 	(pt_entry_t *)pte_cmap = kvtopte(vmmap);
 
-#ifdef VAX750
 	/*
 	 * We move SCB here from physical address 0 to an address
 	 * somewhere else, so that we can dynamically allocate
@@ -174,12 +177,7 @@ pmap_bootstrap()
 	mtpr(avail_start, PR_SCBB);
 	bzero(0, NBPG >> 1);
 	(cpu_calls[cpunumber].cpu_steal_pages)();
-#else
-#if VAX630
-        if (cpu_type == VAX_630)
-                avail_end -= 8 * NBPG;       /* Avoid console scratchpad */
-#endif
-#endif
+
 #ifdef DEBUG
         printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
         printf("etext %x\n", &etext);
@@ -210,7 +208,7 @@ pmap_bootstrap()
 /*
  * Now everything should be complete, start virtual memory.
  */
-        mtpr(SYSPTSIZE, PR_SLR);
+        mtpr(sysptsize, PR_SLR);
         mtpr(1, PR_MAPEN);
 }
 

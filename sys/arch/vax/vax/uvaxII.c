@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.3 1995/11/10 18:52:58 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.4 1995/12/13 18:50:11 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,8 +35,6 @@
  *      @(#)ka630.c     7.8 (Berkeley) 5/9/91
  */
 
-/* All bugs are subject to removal without further notice */
-
 #include "sys/param.h"
 #include "sys/types.h"
 #include "sys/device.h"
@@ -58,33 +56,30 @@ u_long	ka630_clkread();
 void	ka630_clkwrite();
 #endif
 
-extern int cpu_type;
-
-int
-uvaxII_conf()
+/*
+ * uvaxII_conf() is called by cpu_attach to do the cpu_specific setup.
+ */
+void
+uvaxII_conf(parent, self, aux)
+	struct	device *parent, *self;
+	void	*aux;
 {
 	extern char cpu_model[];
 
 	switch (cpu_type) {
 	case VAX_630:
-		strcpy(cpu_model,"MicroVAXII");
+		strcpy(cpu_model,"MicroVAX II");
 		break;
 	case VAX_410:
 		strcpy(cpu_model,"MicroVAX 2000");
 		break;
 	};
-	config_rootfound("backplane",(void*)75);
+	strcpy(cpu_model, "MicroVAX 78032/78132");
 }
 
-int
-conf_uvaxII(){
-
-	printf(": UvaxII CPU (78032/78132)\n");
-}
-
-uvaxII_clock(){
-
-	mtpr(0x40,PR_ICCS); /* Start clock and enable interrupt */
+uvaxII_clock()
+{
+	mtpr(0x40, PR_ICCS); /* Start clock and enable interrupt */
 	return 1;
 }
 
@@ -289,4 +284,11 @@ uvaxII_steal_pages()
 	 */
 	uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
 	    UVAXIIMSER_LEB);
+
+	/*
+	 * Set up cpu_type so that we can differ between 630 and 420.
+	 */
+        if (cpunumber == VAX_78032)
+                cpu_type = (((*UVAXIISID) >> 24) & 0xff) |
+		    (cpu_type & 0xff000000);
 }

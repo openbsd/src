@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.5 1995/11/12 14:37:22 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.6 1995/12/13 18:55:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,6 +35,8 @@
  *	@(#)nexus.h	7.3 (Berkeley) 5/9/91
  */
 
+#ifndef _VAX_NEXUS_H_
+#define _VAX_NEXUS_H_
 /*
  * Information about nexus's.
  *
@@ -174,3 +176,5 @@ extern caddr_t *nex_vec;
 #ifndef	ASSEMBLER
 struct	nexus *nexus;
 #endif
+
+#endif /* _VAX_NEXUS_H_ */

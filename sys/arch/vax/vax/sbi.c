@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.3 1995/11/10 19:14:43 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.4 1995/12/13 18:45:53 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -120,6 +120,12 @@ sbi_attach(parent, self, aux)
 		};
 		break;
 #endif
+#ifdef VAX650
+	case VAX_650:
+		maxnex = NNEX630; /* XXX */
+		printf(": Q22\n");
+		break;
+#endif
 #if VAX780 || VAX8600
 	case VAX_780:
 	case VAX_8600:
@@ -153,8 +159,9 @@ sbi_attach(parent, self, aux)
 			break;
 		}
 #endif
-#ifdef VAX630
+#if VAX630 || VAX650
 		case VAX_78032:
+		case VAX_650:
 			sa.type = NEX_UBA0;
 			break;
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.12 1995/06/05 17:17:57 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.13 1995/12/13 18:57:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -41,15 +41,16 @@
 #define	cpu_swapout(p)
 
 
-extern volatile int cpunumber;
+extern int cpunumber, cpu_type;
 extern struct cpu_dep cpu_calls[];
 
 struct	cpu_dep {
-	int	(*cpu_loinit)(); /* Locore init before everything else */
+	int	(*cpu_steal_pages)(); /* Pmap init before mm is on */
 	int	(*cpu_clock)();	 /* CPU dependent clock handling */
 	int	(*cpu_mchk)();   /* Machine check handling */
 	int	(*cpu_memerr)(); /* Memory subsystem errors */
 	int	(*cpu_conf)();	 /* Autoconfiguration */
+/*	int	(*cpu_cmrerr)(); /* Memory parity errors */
 };
 
 struct clockframe {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.3 1995/11/12 14:38:31 ragge Exp $	*/
+/*	$NetBSD: scb.h,v 1.4 1995/12/13 18:54:56 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,76 @@
  */
 
 
+/*
+ * Definition of the System Control Block. More about it can be
+ * found in the Vax Architecture Reference Manual, section 6.6.
+ */
 struct scb {
+	void	*scb_unused;	/* First unused vector */
+	void	*scb_mcheck;
+	void	*scb_kspinv;
+	void	*scb_powfail;
+	void	*scb_privinst;	/* 10 Privileged Instruction fault */
+	void	*scb_xfcinst;
+	void	*scb_resop;
+	void	*scb_resad;
+	void	*scb_accessv;	/* 20 Access Control violation fault */
+	void	*scb_transinv;
+	void	*scb_trace;
+	void	*scb_breakp;
+	void	*scb_compat;	/* 30 Compatibility instruction fault */
+	void	*scb_arith;
+	void	*scb_unused1;
+	void	*scb_unused2;
+	void	*scb_chmk;	/* 40 CHMK */
+	void	*scb_chme;
+	void	*scb_chms;
+	void	*scb_chmu;
+	void	*scb_sbisilo;	/* 50 SBI Silo compare */
+	void	*scb_cmrd;
+	void	*scb_sbialert;
+	void	*scb_sbifault;
+	void	*scb_memwtimo;	/* 60 Memory write timeout */
+	void	*scb_unused3;
+	void	*scb_unused4;
+	void	*scb_unused5;
+	void	*scb_unused6;	/* 70 unused */
+	void	*scb_unused7;
+	void	*scb_unused8;
+	void	*scb_unused9;
+	void	*scb_unused10;	/* 80 unused */
+	void	*scb_softint1;
+	void	*scb_softint2;
+	void	*scb_softint3;
+	void	*scb_softint4;	/* 90 Software interrupt level 4 */
+	void	*scb_softint5;
+	void	*scb_softint6;
+	void	*scb_softint7;
+	void	*scb_softint8;	/* A0 Software interrupt level 8 */
+	void	*scb_softint9;
+	void	*scb_softinta;
+	void	*scb_softintb;
+	void	*scb_softintc;	/* B0 Software interrupt level C */
+	void	*scb_softintd;
+	void	*scb_softinte;
+	void	*scb_softintf;
+	void	*scb_timer;	/* C0 Interval timer */
+	void	*scb_unused11;
+	void	*scb_unused12;
+	void	*scb_unused13;
+	void	*scb_unused14;	/* D0 Unused */
+	void	*scb_unused15;
+	void	*scb_unused16;
+	void	*scb_unused17;
+	void	*scb_unused18;	/* E0 Unused */
+	void	*scb_unused19;
+	void	*scb_unused20;
+	void	*scb_unused21;
+	void	*scb_csrint;
+	void	*scb_cstint;	/* F0 Console storage transmit interrupt */
+	void	*scb_ctrint;
+	void	*scb_cttint;
+	struct	ivec_dsp *scb_nexvec[4][16];	/* Nexus interrupt vectors */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.10 1995/12/01 19:22:56 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.11 1995/12/13 19:02:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -1132,6 +1132,15 @@ uba_attach(parent, self, aux)
 		};
 		break;
 #endif
+#if VAX650
+	case VAX_650:
+		sc->uh_mr = (void *)sa->nexaddr;
+		sc->uh_type = QBA;
+		sc->uh_physuba = (void*)QBAMAP630; /* XXX */
+		ubaphys = QMEM630; /* XXX */
+		ubaiophys = QIOPAGE630; /* XXX */
+		break;
+#endif
 	};
 	/*
 	 * Map uba space in kernel virtual; especially i/o space.
@@ -1140,9 +1149,9 @@ uba_attach(parent, self, aux)
 	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map(min + (UBAPAGES * NBPG), ubaiophys, ubaiophys + 
 	    (UBAIOPAGES * NBPG), VM_PROT_READ|VM_PROT_WRITE);
-#if VAX630
+#if VAX630 || VAX650
 	/* Enable access to local memory. */
-	if (cpu_type == VAX_630)
+	if (cpu_type == VAX_630 || cpunumber == VAX_650)
 		*((u_short *)(sc->uh_iopage + QIPCR)) = Q_LMEAE;
 #endif
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 1995/11/10 19:05:49 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.21 1995/12/13 18:45:54 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -87,7 +87,7 @@
 #include <sys/syscallargs.h>
 
 #include "ppp.h"	/* For NERISR_PPP */
-
+extern int virtual_avail, virtual_end;
 /*
  * We do these external declarations here, maybe they should be done
  * somewhere else...
@@ -130,15 +130,15 @@ cpu_startup()
 	vm_offset_t     minaddr, maxaddr;
 	vm_size_t       size;
 	extern int      cpu_type, boothowto, startpmapdebug;
-	extern unsigned int avail_end;
+	extern unsigned int avail_start, avail_end;
 
 	/*
 	 * Initialize error message buffer.
 	 */
 	msgbufmapped = 1;
 
-#ifdef VAX750
-	if (cpunumber == VAX_750)
+#if VAX750 || VAX650
+	if (cpunumber == VAX_750 || cpunumber == VAX_650)
 		if (!mfpr(PR_TODR))
 			mtpr(todrstopped = 1, PR_TODR);
 #endif
@@ -158,6 +158,7 @@ cpu_startup()
 	 * Find out how much space we need, allocate it, and then give
 	 * everything true virtual addresses.
 	 */
+
 	sz = (int) allocsys((caddr_t) 0);
 	if ((v = (caddr_t) kmem_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
@@ -209,7 +210,6 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size we
 	 * use the more space efficient malloc in place of kmem_alloc.
 	 */
-
 	mclrefcnt = (char *) malloc(NMBCLUSTERS + CLBYTES / MCLBYTES,
 				    M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES / MCLBYTES);

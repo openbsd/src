@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.7 1995/11/30 00:59:35 jtc Exp $	*/
+/*	$NetBSD: ka750.c,v 1.8 1995/12/13 18:50:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -42,30 +42,33 @@
 #include "sys/device.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
+
 #include "machine/ka750.h"
 #include "machine/pte.h"
+#include "machine/cpu.h"
 #include "machine/mtpr.h"
 #include "vax/uba/ubavar.h"
 #include "vax/uba/ubareg.h"
 
-#include "mba.h"
-#include "uba.h"
-
-int
-ka750_conf()
+/*
+ * ka750_conf() is called by cpu_attach to do the cpu_specific setup.
+ */
+void
+ka750_conf(parent, self, aux)
+	struct	device *parent, *self;
+	void	*aux;
 {
 	extern char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
-	config_rootfound("backplane",(void *)75);
-}
-
-int
-conf_750(){
-	extern int cpu_type;
-
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
-		V750HARDW(cpu_type), V750UCODE(cpu_type));
+	    V750HARDW(cpu_type), V750UCODE(cpu_type));
+	printf("%s: ", self->dv_xname);
+	if (mfpr(PR_ACCS) & 255) {
+		printf("FPA present, enabling.\n");
+		mtpr(0x8000, PR_ACCS);
+	} else
+		printf("no FPA\n");
 }
 
 /*
@@ -73,7 +76,8 @@ conf_750(){
  * register start counting.
  */
 int
-ka750_clock() {
+ka750_clock()
+{
 
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
@@ -88,16 +92,6 @@ ka750_clock() {
 
 }
 
-#if NMBA < 1
-/*
- * Dummy routine; should never be called.
- * Should also be somewhere else, but it doesn't matter right now :)
- */
-mbainterrupt(){return;}
-#endif
-
-
-#include "sys/param.h"
 
 extern volatile caddr_t mcraddr[];
 
