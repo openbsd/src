@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.9 2000/01/09 01:15:16 jason Exp $
+$OpenBSD: miidevs,v 1.10 2000/02/16 05:04:25 jason Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -43,6 +43,7 @@ $OpenBSD: miidevs,v 1.9 2000/01/09 01:15:16 jason Exp $
  */
 
 oui AMD				0x00001a	Advanced Micro Devices
+oui BROADCOM			0x001018	Broadcom Corporation
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
@@ -85,6 +86,9 @@ oui xxDEC			0x040440	Digital Clone
 /* Advanced Micro Devices PHYs */
 model xxAMD 79C873		0x0000 Am79C873 10/100 media interface
 model AMD 79C873phy		0x0036 Am79C873 internal PHY
+
+/* Broadcom Corp. PHYs */
+model BROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
