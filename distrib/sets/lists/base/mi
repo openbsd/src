@@ -266,6 +266,7 @@
 ./usr/bin/infotocap
 ./usr/bin/install
 ./usr/bin/install-info
+./usr/bin/instmodsh
 ./usr/bin/ipcrm
 ./usr/bin/ipcs
 ./usr/bin/join
@@ -341,7 +342,7 @@
 ./usr/bin/paste
 ./usr/bin/patch
 ./usr/bin/perl
-./usr/bin/perl5.8.2
+./usr/bin/perl5.8.3
 ./usr/bin/perlbug
 ./usr/bin/perlcc
 ./usr/bin/perldoc
@@ -362,6 +363,7 @@
 ./usr/bin/pr
 ./usr/bin/printenv
 ./usr/bin/printf
+./usr/bin/prove
 ./usr/bin/psbb
 ./usr/bin/psed
 ./usr/bin/pstruct
@@ -589,7 +591,9 @@
 ./usr/libdata/perl5/DB.pm
 ./usr/libdata/perl5/Devel
 ./usr/libdata/perl5/Devel/SelfStubber.pm
+./usr/libdata/perl5/Digest
 ./usr/libdata/perl5/Digest.pm
+./usr/libdata/perl5/Digest/base.pm
 ./usr/libdata/perl5/DirHandle.pm
 ./usr/libdata/perl5/Dumpvalue.pm
 ./usr/libdata/perl5/Encode
@@ -661,7 +665,6 @@
 ./usr/libdata/perl5/ExtUtils/Packlist.pm
 ./usr/libdata/perl5/ExtUtils/README
 ./usr/libdata/perl5/ExtUtils/TODO
-./usr/libdata/perl5/ExtUtils/instmodsh
 ./usr/libdata/perl5/ExtUtils/testlib.pm
 ./usr/libdata/perl5/ExtUtils/typemap
 ./usr/libdata/perl5/ExtUtils/xsubpp
@@ -747,7 +750,7 @@
 ./usr/libdata/perl5/Math/BigInt
 ./usr/libdata/perl5/Math/BigInt.pm
 ./usr/libdata/perl5/Math/BigInt/Calc.pm
-./usr/libdata/perl5/Math/BigInt/Scalar.pm
+./usr/libdata/perl5/Math/BigInt/CalcEmu.pm
 ./usr/libdata/perl5/Math/BigInt/Trace.pm
 ./usr/libdata/perl5/Math/BigRat.pm
 ./usr/libdata/perl5/Math/Complex.pm
@@ -983,6 +986,7 @@
 ./usr/libdata/perl5/overload.pm
 ./usr/libdata/perl5/perl5db.pl
 ./usr/libdata/perl5/pod
+./usr/libdata/perl5/pod/a2p.pod
 ./usr/libdata/perl5/pod/perl.pod
 ./usr/libdata/perl5/pod/perl5004delta.pod
 ./usr/libdata/perl5/pod/perl5005delta.pod
@@ -993,6 +997,8 @@
 ./usr/libdata/perl5/pod/perl572delta.pod
 ./usr/libdata/perl5/pod/perl573delta.pod
 ./usr/libdata/perl5/pod/perl581delta.pod
+./usr/libdata/perl5/pod/perl582delta.pod
+./usr/libdata/perl5/pod/perl583delta.pod
 ./usr/libdata/perl5/pod/perl58delta.pod
 ./usr/libdata/perl5/pod/perlaix.pod
 ./usr/libdata/perl5/pod/perlamiga.pod

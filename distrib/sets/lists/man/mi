@@ -411,6 +411,8 @@
 ./usr/share/man/cat1/perl572delta.0
 ./usr/share/man/cat1/perl573delta.0
 ./usr/share/man/cat1/perl581delta.0
+./usr/share/man/cat1/perl582delta.0
+./usr/share/man/cat1/perl583delta.0
 ./usr/share/man/cat1/perl58delta.0
 ./usr/share/man/cat1/perlapi.0
 ./usr/share/man/cat1/perlapio.0
@@ -430,7 +432,6 @@
 ./usr/share/man/cat1/perldebguts.0
 ./usr/share/man/cat1/perldebtut.0
 ./usr/share/man/cat1/perldebug.0
-./usr/share/man/cat1/perldelta.0
 ./usr/share/man/cat1/perldiag.0
 ./usr/share/man/cat1/perldoc.0
 ./usr/share/man/cat1/perldsc.0
@@ -481,6 +482,7 @@
 ./usr/share/man/cat1/perlref.0
 ./usr/share/man/cat1/perlreftut.0
 ./usr/share/man/cat1/perlrequick.0
+./usr/share/man/cat1/perlreref.0
 ./usr/share/man/cat1/perlretut.0
 ./usr/share/man/cat1/perlrun.0
 ./usr/share/man/cat1/perlsec.0
@@ -524,6 +526,7 @@
 ./usr/share/man/cat1/printenv.0
 ./usr/share/man/cat1/printf.0
 ./usr/share/man/cat1/procmap.0
+./usr/share/man/cat1/prove.0
 ./usr/share/man/cat1/ps.0
 ./usr/share/man/cat1/psbb.0
 ./usr/share/man/cat1/psed.0
@@ -749,6 +752,7 @@
 ./usr/share/man/cat3p/Devel::SelfStubber.0
 ./usr/share/man/cat3p/Digest.0
 ./usr/share/man/cat3p/Digest::MD5.0
+./usr/share/man/cat3p/Digest::base.0
 ./usr/share/man/cat3p/DirHandle.0
 ./usr/share/man/cat3p/Dumpvalue.0
 ./usr/share/man/cat3p/DynaLoader.0
@@ -874,7 +878,7 @@
 ./usr/share/man/cat3p/Math::BigFloat.0
 ./usr/share/man/cat3p/Math::BigInt.0
 ./usr/share/man/cat3p/Math::BigInt::Calc.0
-./usr/share/man/cat3p/Math::BigInt::Scalar.0
+./usr/share/man/cat3p/Math::BigInt::CalcEmu.0
 ./usr/share/man/cat3p/Math::BigRat.0
 ./usr/share/man/cat3p/Math::Complex.0
 ./usr/share/man/cat3p/Math::Trig.0
