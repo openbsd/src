@@ -1,3 +1,4 @@
+/*	$OpenBSD: phaser.c,v 1.2 1998/08/19 07:41:54 pjanzen Exp $	*/
 /*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
@@ -37,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $";
+static char rcsid[] = "$OpenBSD: phaser.c,v 1.2 1998/08/19 07:41:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
+#include "getpar.h"
 
 /* factors for phaser hits; see description below */
 
@@ -79,9 +82,9 @@ static char rcsid[] = "$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $";
 
 struct cvntab	Matab[] =
 {
-	"m",		"anual",		(int (*)())1,		0,
-	"a",		"utomatic",		0,		0,
-	0
+	{ "m",		"anual",	(cmdfun)1,	0 },
+	{ "a",		"utomatic",	(cmdfun)0,	0 },
+	{ NULL,		NULL,		NULL,		0 }
 };
 
 struct banks
@@ -92,8 +95,9 @@ struct banks
 };
 
 
-
-phaser()
+void
+phaser(v)
+	int v;
 {
 	register int		i;
 	int			j;
@@ -110,11 +114,20 @@ phaser()
 	struct cvntab		*ptr;
 
 	if (Ship.cond == DOCKED)
-		return(printf("Phasers cannot fire through starbase shields\n"));
+	{
+		printf("Phasers cannot fire through starbase shields\n");
+		return;
+	}
 	if (damaged(PHASER))
-		return (out(PHASER));
+	{
+		out(PHASER);
+		return;
+	}
 	if (Ship.shldup)
-		return (printf("Sulu: Captain, we cannot fire through shields.\n"));
+	{
+		printf("Sulu: Captain, we cannot fire through shields.\n");
+		return;
+	}
 	if (Ship.cloaked)
 	{
 		printf("Sulu: Captain, surely you must realize that we cannot fire\n");
@@ -199,7 +212,10 @@ phaser()
 	{
 		/* automatic distribution of power */
 		if (Etc.nkling <= 0)
-			return (printf("Sulu: But there are no Klingons in this quadrant\n"));
+		{
+			printf("Sulu: But there are no Klingons in this quadrant\n");
+			return;
+		}
 		printf("Phasers locked on target.  ");
 		while (flag)
 		{

@@ -1,3 +1,4 @@
+/*	$OpenBSD: getcodi.c,v 1.2 1998/08/19 07:41:35 pjanzen Exp $	*/
 /*	$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $	*/
 
 /*
@@ -37,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)getcodi.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $";
+static char rcsid[] = "$OpenBSD: getcodi.c,v 1.2 1998/08/19 07:41:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"getpar.h"
+#include "getpar.h"
+#include "trek.h"
 
 /*
 **  get course and distance
@@ -53,11 +55,11 @@ static char rcsid[] = "$NetBSD: getcodi.c,v 1.3 1995/04/22 10:58:55 cgd Exp $";
 **	(meaning to drop the request).
 */
 
+int
 getcodi(co, di)
-int	*co;
-double	*di;
+	int	*co;
+	double	*di;
 {
-
 	*co = getintpar("Course");
 
 	/* course must be in the interval [0, 360] */

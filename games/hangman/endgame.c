@@ -1,3 +1,4 @@
+/*	$OpenBSD: endgame.c,v 1.2 1998/08/19 07:40:30 pjanzen Exp $	*/
 /*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
 
 /*
@@ -37,16 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)endgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $";
+static char rcsid[] = "$OpenBSD: endgame.c,v 1.2 1998/08/19 07:40:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * endgame:
  *	Do what's necessary at the end of the game
  */
+void
 endgame()
 {
 	register char	ch;
@@ -67,7 +69,7 @@ endgame()
 		leaveok(stdscr, FALSE);
 		refresh();
 		if ((ch = readch()) == 'n')
-			die();
+			die(0);
 		else if (ch == 'y')
 			break;
 		mvaddstr(MESGY + 2, MESGX, "Please type 'y' or 'n'");
@@ -79,13 +81,3 @@ endgame()
 	deleteln();
 	deleteln();
 }
-
-
-
-
-
-
-
-
-
-

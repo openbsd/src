@@ -1,3 +1,4 @@
+/*	$OpenBSD: rxp.c,v 1.2 1998/08/19 07:41:00 pjanzen Exp $	*/
 /*	$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $	*/
 
 /*-
@@ -41,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $";
+static char rcsid[] = "$OpenBSD: rxp.c,v 1.2 1998/08/19 07:41:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,14 +91,14 @@ static int	 rxp__match __P((char *, int, Rxp_t *, Rxp_t *, char *));
 
 int
 rxp_compile(s)
-	register char *	s;
+	char *	s;
 {
 	return (rxp__compile(s, TRUE));
 }
 
 static int
 rxp__compile(s, first)
-	register char *s;
+	char *s;
 	int first;
 {
 	static Rxp_t *rp;
@@ -195,7 +196,7 @@ rxp__compile(s, first)
  */
 int
 rxp_match(s)
-	register char *	s;
+	char *	s;
 {
 	return (rxp__match(s, TRUE, NULL, NULL, NULL));
 }
@@ -210,8 +211,8 @@ rxp__match(s, first, j_succ, j_fail, sp_fail)
 {
 	static Rxp_t *rp;
 	static char *sp;
-	register int ch;
-	Rxp_t *grp_end;
+	int ch;
+	Rxp_t *grp_end = NULL;
 	int err;
 
 	if (first) {

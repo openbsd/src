@@ -1,3 +1,4 @@
+/*	$OpenBSD: ranf.c,v 1.2 1998/08/19 07:41:58 pjanzen Exp $	*/
 /*	$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $	*/
 
 /*
@@ -37,27 +38,30 @@
 #if 0
 static char sccsid[] = "@(#)ranf.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $";
+static char rcsid[] = "$OpenBSD: ranf.c,v 1.2 1998/08/19 07:41:58 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+int
 ranf(max)
-int	max;
+	int	max;
 {
 	register int	t;
 
 	if (max <= 0)
 		return (0);
-	t = rand() >> 5;
+	t = random() >> 5;
 	return (t % max);
 }
 
 
-double franf()
+double
+franf()
 {
 	double		t;
-	t = rand() & 077777;
+	t = random() & 077777;
 	return (t / 32767.0);
 }

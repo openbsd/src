@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rain.6,v 1.5 1998/03/12 09:06:46 pjanzen Exp $
+.\"	$OpenBSD: rain.6,v 1.6 1998/08/19 07:41:05 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,18 +38,18 @@
 .Os
 .Sh NAME
 .Nm rain 
-.Op Fl d Ar delay
 .Nd animated raindrops display
 .Sh SYNOPSIS
-.Nm /usr/games/rain
+.Nm
+.Op Fl d Ar delay
 .Sh DESCRIPTION
-.Nm Rain Ns 's
-display is modeled after the 
+.Nm Rain
+is modeled after the 
 .Tn VAX/VMS 
 program of the same name.
 To obtain the proper effect, either the terminal must be set for 9600 baud
 or the
-.Nm -d
+.Fl d
 option must be used to specify a delay, in milliseconds, between each update.  A
 reasonable delay is 120; the default is 0.
 .Pp

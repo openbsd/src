@@ -1,3 +1,4 @@
+/*	$OpenBSD: prword.c,v 1.2 1998/08/19 07:40:43 pjanzen Exp $	*/
 /*	$NetBSD: prword.c,v 1.3 1995/03/23 08:32:58 cgd Exp $	*/
 
 /*-
@@ -37,16 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)prword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prword.c,v 1.3 1995/03/23 08:32:58 cgd Exp $";
+static char rcsid[] = "$OpenBSD: prword.c,v 1.2 1998/08/19 07:40:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * prword:
  *	Print out the current state of the word
  */
+void
 prword()
 {
 	move(KNOWNY, KNOWNX + sizeof "Word: ");

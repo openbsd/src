@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.6 1998/03/12 09:09:05 pjanzen Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.7 1998/08/19 07:39:50 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.6 1998/03/12 09:09:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.7 1998/08/19 07:39:50 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ main(argc, argv)
 
 			for (p = keys = optarg; *p; ++p)
 				if (!strchr(keylist, *p))
-					errx(1,"unknown key.");
+					errx(1, "unknown key.");
 			nkeys = p - optarg;
 			break;
 		}

@@ -1,3 +1,4 @@
+/*	$OpenBSD: help.c,v 1.2 1998/08/19 07:41:39 pjanzen Exp $	*/
 /*	$NetBSD: help.c,v 1.3 1995/04/22 10:59:01 cgd Exp $	*/
 
 /*
@@ -37,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: help.c,v 1.3 1995/04/22 10:59:01 cgd Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.2 1998/08/19 07:41:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include <unistd.h>
+#include "trek.h"
 
 /*
 **  call starbase for help
@@ -66,22 +70,33 @@ static char rcsid[] = "$NetBSD: help.c,v 1.3 1995/04/22 10:59:01 cgd Exp $";
 char	*Cntvect[3] =
 {"first", "second", "third"};
 
-help()
+void
+help(v)
+	int v;
 {
 	register int		i;
 	double			dist, x;
-	register int		dx, dy;
-	int			j, l;
+	register int		dx = 0, dy = 0;
+	int			j, l = 0;
 
 	/* check to see if calling for help is reasonable ... */
 	if (Ship.cond == DOCKED)
-		return (printf("Uhura: But Captain, we're already docked\n"));
+	{
+		printf("Uhura: But Captain, we're already docked\n");
+		return;
+	}
 
 	/* or possible */
 	if (damaged(SSRADIO))
-		return (out(SSRADIO));
+	{
+		out(SSRADIO);
+		return;
+	}
 	if (Now.bases <= 0)
-		return (printf("Uhura: I'm not getting any response from starbase\n"));
+	{
+		printf("Uhura: I'm not getting any response from starbase\n");
+		return;
+	}
 
 	/* tut tut, there goes the score */
 	Game.helps += 1;
@@ -149,7 +164,7 @@ help()
 				Ship.sectx = dx;
 				Ship.secty = dy;
 				Sect[dx][dy] = Ship.ship;
-				dock();
+				dock(0);
 				compkldist(0);
 				return;
 			}

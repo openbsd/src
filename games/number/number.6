@@ -1,4 +1,4 @@
-.\"	$OpenBSD: number.6,v 1.2 1998/03/25 08:45:24 pjanzen Exp $
+.\"	$OpenBSD: number.6,v 1.3 1998/08/19 07:40:46 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,15 +40,16 @@
 .Nm number
 .Nd convert Arabic numerals to English
 .Sh SYNOPSIS
-.Nm number
+.Nm
+.Op Fl l
 .Op #
 .Sh DESCRIPTION
 The
-.Nm number
+.Nm
 utility prints the English equivalent of the number to the standard
 output, with each 10^3 magnitude displayed on a separate line.
 If no argument is specified,
-.Nm number
+.Nm
 reads lines from the standard input.
 .Pp
 The options are as follows:

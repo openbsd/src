@@ -1,3 +1,4 @@
+/*	$OpenBSD: getword.c,v 1.2 1998/08/19 07:40:34 pjanzen Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $";
+static char rcsid[] = "$OpenBSD: getword.c,v 1.2 1998/08/19 07:40:34 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +49,7 @@ static char rcsid[] = "$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $";
  * getword:
  *	Get a valid word out of the dictionary file
  */
+void
 getword()
 {
 	register FILE		*inf;
@@ -56,7 +58,7 @@ getword()
 
 	inf = Dict;
 	for (;;) {
-		pos = (double)rand() / (RAND_MAX + 1.0) * (double)Dict_size;
+		pos = (double) random() / (RAND_MAX + 1.0) * (double) Dict_size;
 		fseek(inf, pos, 0);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: play.c,v 1.2 1998/08/19 07:41:55 pjanzen Exp $	*/
 /*	$NetBSD: play.c,v 1.3 1995/04/22 10:59:18 cgd Exp $	*/
 
 /*
@@ -37,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: play.c,v 1.3 1995/04/22 10:59:18 cgd Exp $";
+static char rcsid[] = "$OpenBSD: play.c,v 1.2 1998/08/19 07:41:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
-# include	<setjmp.h>
+#include <stdio.h>
+#include <setjmp.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  INSTRUCTION READ AND MAIN PLAY LOOP
@@ -55,46 +57,45 @@ static char rcsid[] = "$NetBSD: play.c,v 1.3 1995/04/22 10:59:18 cgd Exp $";
 **	attack if the move was not free, and checkcond() to check up
 **	on how we are doing after the move.
 */
-extern int	abandon(), capture(), shield(), computer(), dcrept(),
-		destruct(), dock(), help(), impulse(), lrscan(),
-		warp(), dumpgame(), rest(), srscan(),
-		myreset(), torped(), visual(), setwarp(), undock(), phaser();
 
 struct cvntab	Comtab[] =
 {
-	"abandon",		"",			abandon,	0,
-	"ca",			"pture",		capture,	0,
-	"cl",			"oak",			shield,	-1,
-	"c",			"omputer",		computer,	0,
-	"da",			"mages",		dcrept,	0,
-	"destruct",		"",			destruct,	0,
-	"do",			"ck",			dock,		0,
-	"help",			"",			help,		0,
-	"i",			"mpulse",		impulse,	0,
-	"l",			"rscan",		lrscan,	0,
-	"m",			"ove",			warp,		0,
-	"p",			"hasers",		phaser,	0,
-	"ram",			"",			warp,		1,
-	"dump",			"",			dumpgame,	0,
-	"r",			"est",			rest,		0,
-	"sh",			"ield",			shield,	0,
-	"s",			"rscan",		srscan,	0,
-	"st",			"atus",			srscan,	-1,
-	"terminate",		"",			myreset,	0,
-	"t",			"orpedo",		torped,	0,
-	"u",			"ndock",		undock,	0,
-	"v",			"isual",		visual,	0,
-	"w",			"arp",			setwarp,	0,
-	0
+	{ "abandon",		"",		abandon,	0 },
+	{ "ca",			"pture",	capture,	0 },
+	{ "cl",			"oak",		shield,		-1 },
+	{ "c",			"omputer",	computer,	0 },
+	{ "da",			"mages",	dcrept,		0 },
+	{ "destruct",		"",		destruct,	0 },
+	{ "do",			"ck",		dock,		0 },
+	{ "help",		"",		help,		0 },
+	{ "i",			"mpulse",	impulse,	0 },
+	{ "l",			"rscan",	lrscan,		0 },
+	{ "m",			"ove",		dowarp,		0 },
+	{ "p",			"hasers",	phaser,		0 },
+	{ "ram",		"",		dowarp,		1 },
+	{ "dump",		"",		dumpgame,	0 },
+	{ "r",			"est",		rest,		0 },
+	{ "sh",			"ield",		shield,		0 },
+	{ "s",			"rscan",	srscan,		0 },
+	{ "st",			"atus",		srscan,		-1 },
+	{ "terminate",		"",		myreset,	0 },
+	{ "t",			"orpedo",	torped,		0 },
+	{ "u",			"ndock",	undock,		0 },
+	{ "v",			"isual",	visual,		0 },
+	{ "w",			"arp",		setwarp,	0 },
+	{ NULL,			NULL,		NULL,		0 }
 };
 
-myreset()
+void
+myreset(v)
+	int v;
 {
 	extern jmp_buf env;
 
 	longjmp(env, 1);
 }
 
+void
 play()
 {
 	struct cvntab		*r;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: primes.c,v 1.5 1998/08/19 07:40:52 pjanzen Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.5 1998/08/19 07:40:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +68,7 @@ static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
  * validation check: there are 664579 primes between 0 and 10^7
  */
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -75,6 +77,7 @@ static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "primes.h"
 
@@ -265,7 +268,7 @@ primes(start, stop)
 		for (p = &prime[0], factor = prime[0];
 		    factor < stop && p <= pr_limit; factor = *(++p)) {
 			if (factor >= start) {
-				printf("%u\n", factor);
+				printf("%lu\n", (unsigned long) factor);
 			}
 		}
 		/* return early if we are done */
@@ -328,7 +331,7 @@ primes(start, stop)
 		 */
 		for (q = table; q < tab_lim; ++q, start+=2) {
 			if (*q) {
-				printf("%u\n", start);
+				printf("%lu\n", (unsigned long) start);
 			}
 		}
 	}

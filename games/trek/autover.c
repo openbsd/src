@@ -1,3 +1,4 @@
+/*	$OpenBSD: autover.c,v 1.2 1998/08/19 07:41:12 pjanzen Exp $	*/
 /*	$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $	*/
 
 /*
@@ -37,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)autover.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $";
+static char rcsid[] = "$OpenBSD: autover.c,v 1.2 1998/08/19 07:41:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Automatic Override
@@ -61,6 +63,7 @@ static char rcsid[] = "$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $";
 **	quadrants, since that is all that is needed.
 */
 
+void
 autover()
 {
 	double			dist;

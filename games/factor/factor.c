@@ -1,3 +1,4 @@
+/*	$OpenBSD: factor.c,v 1.5 1998/08/19 07:40:28 pjanzen Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.3 (Berkeley) 3/30/94";
 #else
-static char rcsid[] = "$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.5 1998/08/19 07:40:28 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,12 +70,14 @@ static char rcsid[] = "$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $";
  * If no args are given, the list of numbers are read from stdin.
  */
 
+#include <sys/types.h>
 #include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "primes.h"
 

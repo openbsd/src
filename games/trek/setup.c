@@ -1,3 +1,4 @@
+/*	$OpenBSD: setup.c,v 1.2 1998/08/19 07:42:03 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -37,12 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.2 1998/08/19 07:42:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include <math.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <err.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  INITIALIZE THE GAME
@@ -57,31 +63,31 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $";
 
 struct cvntab	Lentab[] =
 {
-	"s",		"hort",			(int (*)())1,		0,
-	"m",		"edium",		(int (*)())2,		0,
-	"l",		"ong",			(int (*)())4,		0,
-	"restart",	"",			0,		0,
-	0
+	{ "s",		"hort",		(cmdfun)1,	0 },
+	{ "m",		"edium",	(cmdfun)2,	0 },
+	{ "l",		"ong",		(cmdfun)4,	0 },
+	{ "restart",	"",		(cmdfun)0,	0 },
+	{ NULL,		NULL,		NULL,		0 }
 };
 
 struct cvntab	Skitab[] =
 {
-	"n",		"ovice",		(int (*)())1,		0,
-	"f",		"air",			(int (*)())2,		0,
-	"g",		"ood",			(int (*)())3,		0,
-	"e",		"xpert",		(int (*)())4,		0,
-	"c",		"ommodore",		(int (*)())5,		0,
-	"i",		"mpossible",		(int (*)())6,		0,
-	0
+	{ "n",		"ovice",	(cmdfun)1,	0 },
+	{ "f",		"air",		(cmdfun)2,	0 },
+	{ "g",		"ood",		(cmdfun)3,	0 },
+	{ "e",		"xpert",	(cmdfun)4,	0 },
+	{ "c",		"ommodore",	(cmdfun)5,	0 },
+	{ "i",		"mpossible",	(cmdfun)6,	0 },
+	{ NULL,		NULL,		NULL,		0 }
 };
 
+void
 setup()
 {
 	struct cvntab		*r;
 	register int		i, j;
 	double			f;
 	int			d;
-	int			fd;
 	int			klump;
 	int			ix, iy;
 	register struct quad	*q;
@@ -103,7 +109,7 @@ setup()
 	Game.skill = (long) r->value;
 	Game.tourn = 0;
 	getstrpar("Enter a password", Game.passwd, 14, 0);
-	if (sequal(Game.passwd, "tournament"))
+	if (strcmp(Game.passwd, "tournament") == 0)
 	{
 		getstrpar("Enter tournament code", Game.passwd, 14, 0);
 		Game.tourn = 1;
@@ -165,7 +171,7 @@ setup()
 	for (i = j = 0; i < NDEV; i++)
 		j += Param.damprob[i];
 	if (j != 1000)
-		syserr("Device probabilities sum to %d", j);
+		errx(1, "Device probabilities sum to %d", j);
 	Param.dockfac = 0.5;
 	Param.regenfac = (5 - Game.skill) * 0.05;
 	if (Param.regenfac < 0.0)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: dock.c,v 1.2 1998/08/19 07:41:26 pjanzen Exp $	*/
 /*	$NetBSD: dock.c,v 1.3 1995/04/22 10:58:45 cgd Exp $	*/
 
 /*
@@ -37,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)dock.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dock.c,v 1.3 1995/04/22 10:58:45 cgd Exp $";
+static char rcsid[] = "$OpenBSD: dock.c,v 1.2 1998/08/19 07:41:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  DOCK TO STARBASE
@@ -58,14 +60,19 @@ static char rcsid[] = "$NetBSD: dock.c,v 1.3 1995/04/22 10:58:45 cgd Exp $";
 **	are docked.
 */
 
-dock()
+void
+dock(v)
+	int v;
 {
 	register int		i, j;
 	int			ok;
 	register struct event	*e;
 
 	if (Ship.cond == DOCKED)
-		return (printf("Chekov: But captain, we are already docked\n"));
+	{
+		printf("Chekov: But captain, we are already docked\n");
+		return;
+	}
 	/* check for ok to dock, i.e., adjacent to a starbase */
 	ok = 0;
 	for (i = Ship.sectx - 1; i <= Ship.sectx + 1 && !ok; i++)
@@ -84,7 +91,10 @@ dock()
 		}
 	}
 	if (!ok)
-		return (printf("Chekov: But captain, we are not adjacent to a starbase.\n"));
+	{
+		printf("Chekov: But captain, we are not adjacent to a starbase.\n");
+		return;
+	}
 
 	/* restore resources */
 	Ship.energy = Param.energy;
@@ -114,7 +124,6 @@ dock()
 			continue;
 		reschedule(e, (e->date - Now.date) * Param.dockfac);
 	}
-	return;
 }
 
 
@@ -125,7 +134,9 @@ dock()
 **	is to reschedule any damages so that they will take longer.
 */
 
-undock()
+void
+undock(v)
+	int v;
 {
 	register struct event	*e;
 	register int		i;
@@ -146,5 +157,4 @@ undock()
 			continue;
 		reschedule(e, (e->date - Now.date) / Param.dockfac);
 	}
-	return;
 }

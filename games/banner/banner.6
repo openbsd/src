@@ -1,4 +1,4 @@
-.\"	$OpenBSD: banner.6,v 1.3 1998/03/12 09:09:10 pjanzen Exp $
+.\"	$OpenBSD: banner.6,v 1.4 1998/08/19 07:40:12 pjanzen Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm banner 
 .Nd print large banner on printer
 .Sh SYNOPSIS
-.Nm banner
+.Nm
 .Op Fl w Ar width
 .Ar message ...
 .Sh DESCRIPTION
@@ -54,10 +54,7 @@ is given, the output is scrunched down from a width of 132 to
 suitable for a narrow terminal.
 .Pp
 The output should be printed on a hard-copy device, up to 132 columns wide,
-with no breaks between the pages. The volume is great enough that you 
-may want
-a printer or a fast hardcopy terminal, but if you are patient, a
-decwriter or other 300 baud terminal will do.
+with no breaks between the pages.
 .Sh BUGS
 Several ASCII characters are not defined, notably <, >, [, ], \\,
 ^, _, {, }, |, and ~.  Also, the characters ", ', and & are funny

@@ -1,3 +1,4 @@
+/*	$OpenBSD: io.c,v 1.4 1998/08/19 07:40:22 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -173,7 +174,7 @@ prhand(h, n, win, blank)
 	WINDOW *win;
 	BOOLEAN blank;
 {
-	register int i;
+	int i;
 
 	werase(win);
 	for (i = 0; i < n; i++)
@@ -192,7 +193,7 @@ infrom(hand, n, prompt)
 	int n;
 	char *prompt;
 {
-	register int i, j;
+	int i, j;
 	CARD crd;
 
 	if (n < 1) {
@@ -246,7 +247,7 @@ int
 incard(crd)
 	CARD *crd;
 {
-	register int i;
+	int i;
 	int rnk, sut;
 	char *line, *p, *p1;
 	BOOLEAN retval;
@@ -256,10 +257,10 @@ incard(crd)
 	if (!(line = getline()))
 		goto gotit;
 	p = p1 = line;
-	while (*p1 != ' ' && *p1 != NULL)
+	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
-	*p1++ = NULL;
-	if (*p == NULL)
+	*p1++ = '\0';
+	if (*p == '\0')
 		goto gotit;
 
 	/* IMPORTANT: no real card has 2 char first name */
@@ -295,17 +296,17 @@ incard(crd)
 	if (rnk == EMPTY)
 		goto gotit;
 	p = p1;
-	while (*p1 != ' ' && *p1 != NULL)
+	while (*p1 != ' ' && *p1 != '\0')
 		++p1;
-	*p1++ = NULL;
-	if (*p == NULL)
+	*p1++ = '\0';
+	if (*p == '\0')
 		goto gotit;
 	if (!strcmp("OF", p)) {
 		p = p1;
-		while (*p1 != ' ' && *p1 != NULL)
+		while (*p1 != ' ' && *p1 != '\0')
 			++p1;
-		*p1++ = NULL;
-		if (*p == NULL)
+		*p1++ = '\0';
+		if (*p == '\0')
 			goto gotit;
 	}
 	sut = EMPTY;
@@ -330,7 +331,7 @@ gotit:
 int
 getuchar()
 {
-	register int c;
+	int c;
 
 	c = readchar();
 	if (islower(c))
@@ -349,12 +350,12 @@ number(lo, hi, prompt)
 	int lo, hi;
 	char *prompt;
 {
-	register char *p;
-	register int sum;
+	char *p;
+	int sum;
 
 	for (sum = 0;;) {
 		msg(prompt);
-		if (!(p = getline()) || *p == NULL) {
+		if (!(p = getline()) || *p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
 			continue;
@@ -369,7 +370,7 @@ number(lo, hi, prompt)
 				++p;
 			}
 
-		if (*p != ' ' && *p != '\t' && *p != NULL)
+		if (*p != ' ' && *p != '\t' && *p != '\0')
 			sum = lo - 1;
 		if (sum >= lo && sum <= hi)
 			break;
@@ -447,8 +448,8 @@ void
 endmsg()
 {
 	static int lastline = 0;
-	register int len;
-	register char *mp, *omp;
+	int len;
+	char *mp, *omp;
 
 	/* All messages should start with uppercase */
 	mvaddch(lastline + Y_MSG_START, SCORE_X, ' ');
@@ -516,9 +517,9 @@ do_wait()
  */
 void
 wait_for(ch)
-	register int ch;
+	int ch;
 {
-	register char c;
+	char c;
 
 	if (ch == '\n')
 		while ((c = readchar()) != '\n')
@@ -535,7 +536,7 @@ wait_for(ch)
 int
 readchar()
 {
-	register int cnt;
+	int cnt;
 	char c;
 
 over:
@@ -563,9 +564,9 @@ over:
 char *
 getline()
 {
-	register char *sp;
-	register int c, oy, ox;
-	register WINDOW *oscr;
+	char *sp;
+	int c, oy, ox;
+	WINDOW *oscr;
 
 	oscr = stdscr;
 	stdscr = Msgwin;
@@ -578,7 +579,7 @@ getline()
 		else
 			if (c == erasechar()) {	/* process erase character */
 				if (sp > linebuf) {
-					register int i;
+					int i;
 
 					sp--;
 					for (i = strlen(unctrl(*sp)); i; i--)

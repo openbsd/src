@@ -1,3 +1,4 @@
+/*	$OpenBSD: lose.c,v 1.2 1998/08/19 07:41:46 pjanzen Exp $	*/
 /*	$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $	*/
 
 /*
@@ -37,12 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lose.c,v 1.3 1995/04/22 10:59:08 cgd Exp $";
+static char rcsid[] = "$OpenBSD: lose.c,v 1.2 1998/08/19 07:41:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	<setjmp.h>
+#include <stdio.h>
+#include <setjmp.h>
+#include <unistd.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  PRINT OUT LOSER MESSAGES
@@ -69,8 +73,9 @@ char	*Losemsg[] =
 	"Your last crew member died",
 };
 
+void
 lose(why)
-int	why;
+	int	why;
 {
 	extern jmp_buf	env;
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: capture.c,v 1.2 1998/08/19 07:41:13 pjanzen Exp $	*/
 /*	$NetBSD: capture.c,v 1.3 1995/04/22 10:58:32 cgd Exp $	*/
 
 /*
@@ -37,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: capture.c,v 1.3 1995/04/22 10:58:32 cgd Exp $";
+static char rcsid[] = "$OpenBSD: capture.c,v 1.2 1998/08/19 07:41:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Ask a Klingon To Surrender
@@ -56,13 +58,13 @@ static char rcsid[] = "$NetBSD: capture.c,v 1.3 1995/04/22 10:58:32 cgd Exp $";
 **	is a function of that Klingon's remaining power, our power,
 **	etc.
 */
-
-capture()
+void
+capture(v)
+	int v;
 {
 	register int		i;
 	register struct kling	*k;
 	double			x;
-	extern struct kling	*selectklingon();
 
 	/* check for not cloaked */
 	if (Ship.cloaked)
@@ -71,7 +73,10 @@ capture()
 		return;
 	}
 	if (damaged(SSRADIO))
-		return (out(SSRADIO));
+	{
+		out(SSRADIO);
+		return;
+	}
 	/* find out if there are any at all */
 	if (Etc.nkling <= 0)
 	{
@@ -122,7 +127,8 @@ capture()
 **	Cruddy, just takes one at random.  Should ask the captain.
 */
 
-struct kling	*selectklingon()
+struct kling *
+selectklingon()
 {
 	register int		i;
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: arithmetic.6,v 1.4 1995/03/21 11:59:31 cgd Exp $
+.\"	$OpenBSD: arithmetic.6,v 1.2 1998/08/19 07:39:48 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,12 @@
 .\"
 .Dd May 31, 1993
 .Dt ARITHMETIC 6
-.UC 4
+.Os BSD 4
 .Sh NAME
 .Nm arithmetic
 .Nd quiz on simple arithmetic
 .Sh SYNOPSIS
-.Nm arithmetic
+.Nm
 .Op Fl o Ar +\-x/
 .Op Fl r Ar range
 .Sh DESCRIPTION
@@ -70,7 +70,7 @@ will be asked correspondingly more often.
 If a
 .Ar range
 is supplied,
-.Nm arithmetic
+.Nm
 selects the numbers in its problems in the following way.
 For addition and multiplication, the numbers to be added or multiplied
 are between 0 and
@@ -80,14 +80,14 @@ For subtraction and division, both the required result and the number to
 divide by or subtract will be between 0 and
 .Ar range .
 (Of course,
-.Nm arithmetic
+.Nm
 will not ask you to divide by 0.)  The default
 .I range
 is 10.
 .El
 .Pp
 When you get a problem wrong,
-.Nm arithmetic
+.Nm
 will remember the numbers involved, and will tend to select those numbers
 more often than others, in problems of the same sort.
 Eventually it will forgive and forget.

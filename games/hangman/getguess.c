@@ -1,3 +1,4 @@
+/*	$OpenBSD: getguess.c,v 1.3 1998/08/19 07:40:32 pjanzen Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $";
+static char rcsid[] = "$OpenBSD: getguess.c,v 1.3 1998/08/19 07:40:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +49,7 @@ static char rcsid[] = "$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $";
  * getguess:
  *	Get another guess
  */
+void
 getguess()
 {
 	register int	i;
@@ -63,15 +65,16 @@ getguess()
 			if (isupper(ch))
 				ch = tolower(ch);
 			if (Guessed[ch - 'a'])
-				mvprintw(MESGY, MESGX, "Already guessed '%c'", ch);
+				mvprintw(MESGY, MESGX, "Already guessed '%c'",
+				    ch);
 			else
 				break;
-		}
-		else if (ch == CTRL('D'))
-			die();
-		else
-			mvprintw(MESGY, MESGX, "Not a valid guess: '%s'",
-				unctrl(ch));
+		} else
+			if (ch == CTRL('D'))
+				die(0);
+			else
+				mvprintw(MESGY, MESGX,
+				    "Not a valid guess: '%s'", unctrl(ch));
 	}
 	leaveok(stdscr, TRUE);
 	move(MESGY, MESGX);
@@ -92,23 +95,22 @@ getguess()
  * readch;
  *	Read a character from the input
  */
+int
 readch()
 {
-	register int	cnt, r;
-	auto char	ch;
+	int	cnt;
+	char	ch;
 
 	cnt = 0;
 	for (;;) {
-		if (read(0, &ch, sizeof ch) <= 0)
-		{
+		if (read(0, &ch, sizeof ch) <= 0) {
 			if (++cnt > 100)
-				die();
-		}
-		else if (ch == CTRL('L')) {
-			wrefresh(curscr);
-			mvcur(0, 0, curscr->_cury, curscr->_curx);
-		}
-		else
-			return ch;
+				die(0);
+		} else
+			if (ch == CTRL('L')) {
+				wrefresh(curscr);
+				mvcur(0, 0, curscr->_cury, curscr->_curx);
+			} else
+				return ch;
 	}
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: visual.c,v 1.2 1998/08/19 07:42:15 pjanzen Exp $	*/
 /*	$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $	*/
 
 /*
@@ -37,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)visual.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $";
+static char rcsid[] = "$OpenBSD: visual.c,v 1.2 1998/08/19 07:42:15 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  VISUAL SCAN
@@ -55,20 +58,22 @@ static char rcsid[] = "$NetBSD: visual.c,v 1.3 1995/04/22 10:59:39 cgd Exp $";
 /* This struct[] has the delta x, delta y for particular directions */
 struct xy	Visdelta[11] =
 {
-	-1,	-1,
-	-1,	 0,
-	-1,	 1,
-	 0,	 1,
-	 1,	 1,
-	 1,	 0,
-	 1,	-1,
-	 0,	-1,
-	-1,	-1,
-	-1,	 0,
-	-1,	 1
+	{ -1,	-1 },
+	{ -1,	 0 },
+	{ -1,	 1 },
+	{  0,	 1 },
+	{  1,	 1 },
+	{  1,	 0 },
+	{  1,	-1 },
+	{  0,	-1 },
+	{ -1,	-1 },
+	{ -1,	 0 },
+	{ -1,	 1 }
 };
 
-visual()
+void
+visual(z)
+	int z;
 {
 	register int		ix, iy;
 	int			co;

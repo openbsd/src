@@ -1,3 +1,4 @@
+/*	$OpenBSD: instr.c,v 1.6 1998/08/19 07:40:21 pjanzen Exp $	*/
 /*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $";
+static char rcsid[] = "$OpenBSD: instr.c,v 1.6 1998/08/19 07:40:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +47,7 @@ static char rcsid[] = "$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $";
 #include <sys/stat.h>
 
 #include <curses.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,11 +66,8 @@ instructions()
 	pid_t pid;
 	char *pager, *path;
 
-	if (stat(_PATH_INSTR, &sb)) {
-		(void)fprintf(stderr, "cribbage: %s: %s.\n", _PATH_INSTR,
-		    strerror(errno));
-		exit(1);
-	}
+	if (stat(_PATH_INSTR, &sb))
+		err(1, "stat %s", _PATH_INSTR);
 
 	if (!(path = getenv("PAGER")))
 		path = _PATH_MORE;
@@ -78,11 +77,10 @@ instructions()
 
 	switch (pid = vfork()) {
 	case -1:
-		(void)fprintf(stderr, "cribbage: %s.\n", strerror(errno));
-		exit(1);
+		err(1, "vfork");
 	case 0:
 		execlp(path, pager, _PATH_INSTR, NULL);
-		(void)fprintf(stderr, "cribbage: %s.\n", strerror(errno));
+		warn("%s", "");
 		_exit(1);
 	default:
 		do {

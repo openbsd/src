@@ -1,3 +1,4 @@
+/*	$OpenBSD: prdata.c,v 1.2 1998/08/19 07:40:41 pjanzen Exp $	*/
 /*	$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $	*/
 
 /*-
@@ -37,16 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)prdata.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $";
+static char rcsid[] = "$OpenBSD: prdata.c,v 1.2 1998/08/19 07:40:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * prdata:
  *	Print out the current guesses
  */
+void
 prdata()
 {
 	register bool	*bp;

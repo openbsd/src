@@ -1,3 +1,4 @@
+/*	$OpenBSD: attack.c,v 1.2 1998/08/19 07:41:10 pjanzen Exp $	*/
 /*	$NetBSD: attack.c,v 1.3 1995/04/22 10:58:26 cgd Exp $	*/
 
 /*
@@ -37,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)attack.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: attack.c,v 1.3 1995/04/22 10:58:26 cgd Exp $";
+static char rcsid[] = "$OpenBSD: attack.c,v 1.2 1998/08/19 07:41:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <math.h>
+#include "trek.h"
 
 /*
 **  Klingon Attack Routine
@@ -73,15 +76,16 @@ static char rcsid[] = "$NetBSD: attack.c,v 1.3 1995/04/22 10:58:26 cgd Exp $";
 **	Casualties can also occur.
 */
 
+void
 attack(resting)
-int	resting;	/* set if attack while resting */
+	int	resting;	/* set if attack while resting */
 {
-	register int		hit, i, l;
-	int			maxhit, tothit, shldabsb;
-	double			chgfac, propor, extradm;
-	double			dustfac, tothe;
-	int			cas;
-	int			hitflag;
+	register int	hit, i, l;
+	int		maxhit, tothit, shldabsb;
+	double		chgfac, propor, extradm;
+	double		dustfac, tothe;
+	int		cas;
+	int		hitflag;
 
 	if (Move.free)
 		return;
@@ -189,6 +193,4 @@ int	resting;	/* set if attack while resting */
 
 	/* allow Klingons to move after attacking */
 	klmove(1);
-
-	return;
 }

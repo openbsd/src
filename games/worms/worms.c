@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.7 1998/03/12 09:09:34 pjanzen Exp $	*/
+/*	$OpenBSD: worms.c,v 1.8 1998/08/19 07:42:24 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.7 1998/03/12 09:09:34 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.8 1998/08/19 07:42:24 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,16 +184,15 @@ static struct	worm {
 } *worm;
 
 int   fputchar __P((int));
+void	 nomem __P(());
 void	 onsig __P((int));
-void  nomem __P(());
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg, *UP;
+	extern char *UP;
 	register int x, y, h, n;
 	register struct worm *w;
 	register struct options *op;
@@ -203,7 +202,6 @@ main(argc, argv)
 	short **ref;
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
 	char *field, tcb[100], *mp;
-	long random();
 	u_int delay = 0;
 	struct termios ti;
 #ifdef TIOCGWINSZ

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.7 1998/03/12 09:09:43 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.8 1998/08/19 07:42:27 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.7 1998/03/12 09:09:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.8 1998/08/19 07:42:27 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,32 +113,32 @@ int arrow_num = NUMBER_OF_ARROWS;	/* arrow inventory */
 
 char answer[20];			/* user input */
 
-int     bats_nearby __P((void));
-void    cave_init __P((void));
-void    clear_things_in_cave __P((void));
-void    display_room_stats __P((void));
-int     getans __P((const char *));
-void    initialize_things_in_cave __P((void));
-void    instructions __P((void));
-int     int_compare __P((const void *, const void *));
-/* void    jump __P((int)); */
-void    kill_wump __P((void));
-int     main __P((int, char **));
-int     move_to __P((const char *));
-void    move_wump __P((void));
-void    no_arrows __P((void));
-void    pit_kill __P((void));
-void    pit_kill_bat __P((void));
-int     pit_nearby __P((void));
-void    pit_survive __P((void));
-int     shoot __P((char *));
-void    shoot_self __P((void));
-int     take_action __P((void));
-void    usage __P((void));
-void    wump_kill __P((void));
-void    wump_bat_kill __P((void));
-void    wump_walk_kill __P((void));
-int     wump_nearby __P((void));
+int	bats_nearby __P((void));
+void	cave_init __P((void));
+void	clear_things_in_cave __P((void));
+void	display_room_stats __P((void));
+int	getans __P((const char *));
+void	initialize_things_in_cave __P((void));
+void	instructions __P((void));
+int	int_compare __P((const void *, const void *));
+/* void	jump __P((int)); */
+void	kill_wump __P((void));
+int	main __P((int, char **));
+int	move_to __P((const char *));
+void	move_wump __P((void));
+void	no_arrows __P((void));
+void	pit_kill __P((void));
+void	pit_kill_bat __P((void));
+int	pit_nearby __P((void));
+void	pit_survive __P((void));
+int	shoot __P((char *));
+void	shoot_self __P((void));
+int	take_action __P((void));
+void	usage __P((void));
+void	wump_kill __P((void));
+void	wump_bat_kill __P((void));
+void	wump_walk_kill __P((void));
+int	wump_nearby __P((void));
 
 
 int
@@ -146,7 +146,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	int c;
 
 	/* revoke */
@@ -395,7 +394,7 @@ move_to(room_number)
 				wump_kill();
 			return(1);
 		}
-		if (cave[next_room].has_a_pit)
+		if (cave[next_room].has_a_pit) {
 			if (random() % 12 < 2) {
 				pit_survive();
 				return(0);
@@ -406,6 +405,7 @@ move_to(room_number)
 					pit_kill();
 				return(1);
 			}
+		}
 
 		if (cave[next_room].has_a_bat) {
 			(void)printf(
@@ -441,7 +441,7 @@ shoot(room_list)
 	 */
 	arrow_location = player_loc;
 	for (roomcnt = 1;; ++roomcnt, room_list = NULL) {
-		if (!(p = strtok(room_list, " \t\n")))
+		if (!(p = strtok(room_list, " \t\n"))) {
 			if (roomcnt == 1) {
 				(void)printf("Enter a list of rooms to shoot into:\n");
 				(void)fflush(stdout);
@@ -453,6 +453,7 @@ shoot(room_list)
 					}
 			} else
 				break;
+		}
 		if (roomcnt > 5) {
 			(void)printf(
 "The arrow wavers in its flight and and can go no further than room %d!\n",

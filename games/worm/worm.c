@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.5 1998/03/12 09:09:30 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.6 1998/08/19 07:42:21 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.5 1998/03/12 09:09:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.6 1998/08/19 07:42:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,8 @@ life()
 
 void
 display(pos, chr)
-struct body *pos;
-char chr;
+	struct body *pos;
+	char chr;
 {
 	wmove(tv, pos->y, pos->x);
 	waddch(tv, chr);
@@ -188,7 +188,7 @@ char chr;
 
 void
 leave(dummy)
-int dummy;
+	int dummy;
 {
 	endwin();
 	exit(0);
@@ -196,7 +196,7 @@ int dummy;
 
 void
 wake(dummy)
-int dummy;
+	int dummy;
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);
@@ -205,14 +205,14 @@ int dummy;
 
 int
 rnd(range)
-int range;
+	int range;
 {
 	return random() % range;
 }
 
 void
 newpos(bp)
-struct body * bp;
+	struct body * bp;
 {
 	do {
 		bp->y = rnd(LINES-3)+ 2;
@@ -234,7 +234,7 @@ prize()
 
 void
 process(ch)
-char ch;
+	char ch;
 {
 	register int x,y;
 	struct body *nh;
@@ -309,7 +309,7 @@ crash()
 
 void
 suspend(dummy)
-int dummy;
+	int dummy;
 {
 	move(LINES-1, 0);
 	refresh();

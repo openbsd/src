@@ -1,3 +1,4 @@
+/*	$OpenBSD: score.c,v 1.2 1998/08/19 07:42:02 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:59:24 cgd Exp $	*/
 
 /*
@@ -37,24 +38,25 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: score.c,v 1.3 1995/04/22 10:59:24 cgd Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.2 1998/08/19 07:42:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  PRINT OUT THE CURRENT SCORE
 */
 
-long score()
+long
+score()
 {
-	register int		u;
-	register int		t;
-	long			s;
-	double			r;
-	extern struct cvntab	Skitab[];
+	register int	u;
+	register int	t;
+	long		s;
+	double		r;
 
 	printf("\n*** Your score:\n");
 	s = t = Param.klingpwr / 4 * (u = Game.killk);

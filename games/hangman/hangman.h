@@ -1,3 +1,4 @@
+/*	$OpenBSD: hangman.h,v 1.2 1998/08/19 07:40:36 pjanzen Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -35,29 +36,31 @@
  *	@(#)hangman.h	8.1 (Berkeley) 5/31/93
  */
 
-# include	<curses.h>
-# include	<sys/types.h>
-# include	<sys/stat.h>
-# include	<ctype.h>
-# include	<signal.h>
-# include	<string.h>
-# include	"pathnames.h"
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<ctype.h>
+#include	<curses.h>
+#include	<signal.h>
+#include	<stdlib.h>
+#include	<string.h>
+#include	<unistd.h>
+#include	"pathnames.h"
 
-# define	MINLEN	6
-# define	MAXERRS	7
+#define	MINLEN	6
+#define	MAXERRS	7
 
-# define	MESGY	12
-# define	MESGX	0
-# define	PROMPTY	11
-# define	PROMPTX	0
-# define	KNOWNY	10
-# define	KNOWNX	1
-# define	NUMBERY	4
-# define	NUMBERX	(COLS - 1 - 26)
-# define	AVGY	5
-# define	AVGX	(COLS - 1 - 26)
-# define	GUESSY	2
-# define	GUESSX	(COLS - 1 - 26)
+#define	MESGY	12
+#define	MESGX	0
+#define	PROMPTY	11
+#define	PROMPTX	0
+#define	KNOWNY	10
+#define	KNOWNX	1
+#define	NUMBERY	4
+#define	NUMBERX	(COLS - 1 - 26)
+#define	AVGY	5
+#define	AVGX	(COLS - 1 - 26)
+#define	GUESSY	2
+#define	GUESSX	(COLS - 1 - 26)
 
 
 typedef struct {
@@ -65,18 +68,27 @@ typedef struct {
 	char	ch;
 } ERR_POS;
 
-extern bool	Guessed[];
+extern bool Guessed[];
 
-extern char	Word[], Known[], *Noose_pict[];
+extern char Word[], Known[], *Noose_pict[];
 
-extern int	Errors, Wordnum;
+extern int Errors, Wordnum;
 
-extern double	Average;
+extern double Average;
 
-extern ERR_POS	Err_pos[];
+extern ERR_POS Err_pos[];
 
-extern FILE	*Dict;
+extern FILE *Dict;
 
-extern off_t	Dict_size;
+extern off_t Dict_size;
 
-void	die();
+void	die __P((int));
+void	endgame __P((void));
+void	getguess __P((void));
+void	getword __P((void));
+void	playgame __P((void));
+void	prdata __P((void));
+void	prman __P((void));
+void	prword __P((void));
+int	readch __P((void));
+void	setup __P((void));

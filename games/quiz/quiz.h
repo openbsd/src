@@ -1,3 +1,4 @@
+/*	$OpenBSD: quiz.h,v 1.2 1998/08/19 07:40:59 pjanzen Exp $	*/
 /*	$NetBSD: quiz.h,v 1.4 1995/04/22 10:16:59 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.4 1998/08/19 07:40:37 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 1998/08/19 07:40:37 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,10 +53,11 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $";
 /*
  * This game written by Ken Arnold.
  */
-main()
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	void die();
-
 	/* revoke */
 	setegid(getgid());
 	setgid(getgid());
@@ -76,7 +78,8 @@ main()
  *	Die properly.
  */
 void
-die()
+die(dummy)
+	int dummy;
 {
 	mvcur(0, COLS - 1, LINES - 1, 0);
 	endwin();

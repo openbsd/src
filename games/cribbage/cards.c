@@ -1,3 +1,4 @@
+/*	$OpenBSD: cards.c,v 1.2 1998/08/19 07:40:17 pjanzen Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/21 15:08:41 cgd Exp $	*/
 
 /*-
@@ -34,7 +35,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$OpenBSD: cards.c,v 1.2 1998/08/19 07:40:17 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 #include <curses.h>
@@ -53,7 +58,7 @@ void
 makedeck(d)
 	CARD    d[];
 {
-	register int i, j, k;
+	int i, j, k;
 
 	i = time(NULL);
 	i = ((i & 0xff) << 8) | ((i >> 8) & 0xff) | 1;
@@ -74,7 +79,7 @@ void
 shuffle(d)
 	CARD d[];
 {
-	register int j, k;
+	int j, k;
 	CARD c;
 
 	for (j = CARDS; j > 0; --j) {
@@ -103,7 +108,7 @@ isone(a, b, n)
 	CARD a, b[];
 	int n;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < n; i++)
 		if (eq(a, b[i]))
@@ -119,7 +124,7 @@ cremove(a, d, n)
 	CARD a, d[];
 	int n;
 {
-	register int i, j;
+	int i, j;
 
 	for (i = j = 0; i < n; i++)
 		if (!eq(a, d[i]))
@@ -134,10 +139,10 @@ cremove(a, d, n)
  */
 void
 sorthand(h, n)
-	register CARD h[];
+	CARD h[];
 	int n;
 {
-	register CARD *cp, *endp;
+	CARD *cp, *endp;
 	CARD c;
 
 	for (endp = &h[n]; h < endp - 1; h++)

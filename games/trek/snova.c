@@ -1,3 +1,4 @@
+/*	$OpenBSD: snova.c,v 1.2 1998/08/19 07:42:07 pjanzen Exp $	*/
 /*	$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $	*/
 
 /*
@@ -37,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $";
+static char rcsid[] = "$OpenBSD: snova.c,v 1.2 1998/08/19 07:42:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "trek.h"
 
 /*
 **  CAUSE SUPERNOVA TO OCCUR
@@ -64,11 +67,12 @@ static char rcsid[] = "$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $";
 **	override mode.
 */
 
+void
 snova(x, y)
-int	x, y;
+	int	x, y;
 {
 	int			qx, qy;
-	register int		ix, iy;
+	register int		ix, iy = 0;
 	int			f;
 	int			dx, dy;
 	int			n;
@@ -146,12 +150,12 @@ int	x, y;
 		/* Enterprise caused supernova */
 		Game.kills += dy;
 		if (q->bases)
-			killb(qx, qy, -1);
+			killb(qx, qy);
 		Game.killk += dx;
 	}
 	else
 		if (q->bases)
-			killb(qx, qy, 0);
+			killb(qx, qy);
 	killd(qx, qy, (x >= 0));
 	q->stars = -1;
 	q->klings = 0;
@@ -160,5 +164,4 @@ int	x, y;
 		printf("Lucky devil, that supernova destroyed the last klingon\n");
 		win();
 	}
-	return;
 }

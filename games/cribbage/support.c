@@ -1,3 +1,4 @@
+/*	$OpenBSD: support.c,v 1.3 1998/08/19 07:40:26 pjanzen Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $";
+static char rcsid[] = "$OpenBSD: support.c,v 1.3 1998/08/19 07:40:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +63,7 @@ cchose(h, n, s)
 	CARD h[];
 	int n, s;
 {
-	register int i, j, l;
+	int i, j, l;
 
 	if (n <= 1)
 		return (0);
@@ -132,8 +133,8 @@ plyrhand(hand, s)
 	char   *s;
 {
 	static char prompt[BUFSIZ];
-	register int i, j;
-	register BOOLEAN win;
+	int i, j;
+	BOOLEAN win;
 
 	prhand(hand, CINHAND, Playwin, FALSE);
 	(void) sprintf(prompt, "Your %s scores ", s);
@@ -167,7 +168,7 @@ comphand(h, s)
 	CARD h[];
 	char *s;
 {
-	register int j;
+	int j;
 
 	j = scorehand(h, turnover, CINHAND, strcmp(s, "crib") == 0, FALSE);
 	prhand(h, CINHAND, Compwin, FALSE);
@@ -206,11 +207,11 @@ chkscr(scr, inc)
  */
 void
 prpeg(score, peg, myturn)
-	register int score;
+	int score;
 	int peg;
 	BOOLEAN myturn;
 {
-	register int y, x;
+	int y, x;
 
 	if (!myturn)
 		y = SCORE_Y + 2;
@@ -248,7 +249,7 @@ cdiscard(mycrib)
 	BOOLEAN mycrib;
 {
 	CARD    d[CARDS], h[FULLHAND], cb[2];
-	register int i, j, k;
+	int i, j, k;
 	int     nc, ns;
 	long    sums[15];
 	static int undo1[15] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
@@ -301,7 +302,7 @@ anymove(hand, n, sum)
 	CARD hand[];
 	int n, sum;
 {
-	register int i, j;
+	int i, j;
 
 	if (n < 1)
 		return (FALSE);
@@ -322,7 +323,7 @@ anysumto(hand, n, s, t)
 	CARD hand[];
 	int n, s, t;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < n; i++) {
 		if (s + VAL(hand[i].rank) == t)
@@ -339,7 +340,7 @@ numofval(h, n, v)
 	CARD h[];
 	int n, v;
 {
-	register int i, j;
+	int i, j;
 
 	j = 0;
 	for (i = 0; i < n; i++) {
@@ -357,7 +358,7 @@ makeknown(h, n)
 	CARD h[];
 	int n;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < n; i++)
 		known[knownum++] = h[i];

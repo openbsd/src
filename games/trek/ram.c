@@ -1,3 +1,4 @@
+/*	$OpenBSD: ram.c,v 1.2 1998/08/19 07:41:56 pjanzen Exp $	*/
 /*	$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $	*/
 
 /*
@@ -37,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)ram.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $";
+static char rcsid[] = "$OpenBSD: ram.c,v 1.2 1998/08/19 07:41:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "trek.h"
 
 /*
 **  RAM SOME OBJECT
@@ -54,8 +57,9 @@ static char rcsid[] = "$NetBSD: ram.c,v 1.3 1995/04/22 10:59:19 cgd Exp $";
 **	also rack up incredible damages.
 */
 
+void
 ram(ix, iy)
-int	ix, iy;
+	int	ix, iy;
 {
 	register int		i;
 	register char		c;

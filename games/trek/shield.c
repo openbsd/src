@@ -1,3 +1,4 @@
+/*	$OpenBSD: shield.c,v 1.2 1998/08/19 07:42:06 pjanzen Exp $	*/
 /*	$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $	*/
 
 /*
@@ -37,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $";
+static char rcsid[] = "$OpenBSD: shield.c,v 1.2 1998/08/19 07:42:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  SHIELD AND CLOAKING DEVICE CONTROL
@@ -63,21 +65,21 @@ static char rcsid[] = "$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $";
 
 struct cvntab Udtab[] =
 {
-	"u",		"p",			(int (*)())1,		0,
-	"d",		"own",			0,		0,
-	0
+	{ "u",		"p",		(cmdfun)1,	0 },
+	{ "d",		"own",		(cmdfun)0,	0 },
+	{ NULL,		NULL,		NULL,		0 }
 };
 
+void
 shield(f)
-int	f;
+	int	f;
 {
-	register int		i;
-	char			c;
-	struct cvntab		*r;
-	char			s[100];
-	char			*device, *dev2, *dev3;
-	int			ind;
-	char			*stat;
+	register int	i;
+	struct cvntab	*r;
+	char		s[100];
+	char		*device, *dev2, *dev3;
+	int		ind;
+	char		*stat;
 
 	if (f > 0 && (Ship.shldup || damaged(SRSCAN)))
 		return;
@@ -85,7 +87,10 @@ int	f;
 	{
 		/* cloaking device */
 		if (Ship.ship == QUEENE)
-			return (printf("Ye Faire Queene does not have the cloaking device.\n"));
+		{
+			printf("Ye Faire Queene does not have the cloaking device.\n");
+			return;
+		}
 		device = "Cloaking device";
 		dev2 = "is";
 		ind = CLOAK;
@@ -137,13 +142,14 @@ int	f;
 		return;
 	}
 	if (i)
+	{
 		if (f >= 0)
 			Ship.energy -= Param.shupengy;
 		else
 			Ship.cloakgood = 0;
+	}
 	Move.free = 0;
 	if (f >= 0)
 		Move.shldchg = 1;
 	*stat = i;
-	return;
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: externs.c,v 1.2 1998/08/19 07:41:34 pjanzen Exp $	*/
 /*	$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $	*/
 
 /*
@@ -37,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $";
+static char rcsid[] = "$OpenBSD: externs.c,v 1.2 1998/08/19 07:41:34 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include "trek.h"
 
 /*
 **	global variable definitions
@@ -49,22 +50,22 @@ static char rcsid[] = "$NetBSD: externs.c,v 1.3 1995/04/22 10:58:53 cgd Exp $";
 
 struct device	Device[NDEV] =
 {
-	"warp drive",		"Scotty",
-	"S.R. scanners",	"Scotty",
-	"L.R. scanners",	"Scotty",
-	"phasers",		"Sulu",
-	"photon tubes",		"Sulu",
-	"impulse engines",	"Scotty",
-	"shield control",	"Sulu",
-	"computer",		"Spock",
-	"subspace radio",	"Uhura",
-	"life support",		"Scotty",
-	"navigation system",	"Chekov",
-	"cloaking device",	"Scotty",
-	"transporter",		"Scotty",
-	"shuttlecraft",		"Scotty",
-	"*ERR 14*",		"Nobody",
-	"*ERR 15*",		"Nobody"
+	{ "warp drive",		"Scotty" },
+	{ "S.R. scanners",	"Scotty" },
+	{ "L.R. scanners",	"Scotty" },
+	{ "phasers",		"Sulu" },
+	{ "photon tubes",	"Sulu" },
+	{ "impulse engines",	"Scotty" },
+	{ "shield control",	"Sulu" },
+	{ "computer",		"Spock" },
+	{ "subspace radio",	"Uhura" },
+	{ "life support",	"Scotty" },
+	{ "navigation system",	"Chekov" },
+	{ "cloaking device",	"Scotty" },
+	{ "transporter",	"Scotty" },
+	{ "shuttlecraft",	"Scotty" },
+	{ "*ERR 14*",		"Nobody" },
+	{ "*ERR 15*",		"Nobody" }
 };
 
 char	*Systemname[NINHAB] =

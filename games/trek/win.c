@@ -1,3 +1,4 @@
+/*	$OpenBSD: win.c,v 1.2 1998/08/19 07:42:18 pjanzen Exp $	*/
 /*	$NetBSD: win.c,v 1.3 1995/04/22 10:59:41 cgd Exp $	*/
 
 /*
@@ -37,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: win.c,v 1.3 1995/04/22 10:59:41 cgd Exp $";
+static char rcsid[] = "$OpenBSD: win.c,v 1.2 1998/08/19 07:42:18 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
-# include	<setjmp.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <setjmp.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  Signal game won
@@ -58,13 +61,12 @@ static char rcsid[] = "$NetBSD: win.c,v 1.3 1995/04/22 10:59:41 cgd Exp $";
 **	pretty off the wall.
 */
 
+void
 win()
 {
 	long			s;
-	extern jmp_buf		env;
-	extern long		score();
-	extern struct cvntab	Skitab[];
-	register struct cvntab	*p;
+	register struct cvntab	*p = NULL;
+	extern jmp_buf	env;
 
 	sleep(1);
 	printf("\nCongratulations, you have saved the Federation\n");

@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.6 1998/08/19 07:41:49 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $	*/
 
 /*
@@ -43,14 +44,19 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/08/19 07:41:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	<stdio.h>
-# include	<setjmp.h>
-# include	<termios.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <setjmp.h>
+#include <termios.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
+#include "trek.h"
+#include "getpar.h"
 
 # define	PRIO		00	/* default priority */
 
@@ -157,10 +163,10 @@ jmp_buf env;
 
 int
 main(argc, argv)
-int	argc;
-char	**argv;
+	int	argc;
+	char	**argv;
 {
-	time_t			vect;
+	time_t			curtime;
 	/* extern FILE		*f_log; */
 	register char		opencode;
 	int			prio;
@@ -175,8 +181,8 @@ char	**argv;
 	av = argv;
 	ac = argc;
 	av++;
-	time(&vect);
-	srand(vect);
+	time(&curtime);
+	srandom((long)curtime);
 	opencode = 'w';
 	prio = PRIO;
 
@@ -225,7 +231,7 @@ char	**argv;
 		av++;
 	}
 	if (ac > 2)
-		syserr(0, "arg count");
+		errx(1, "arg count");
 		/*
 	if (ac > 1)
 		f_log = fopen(av[0], opencode);
@@ -245,4 +251,5 @@ char	**argv;
 	} while (getynpar("Another game"));
 
 	fflush(stdout);
+	return 0;
 }

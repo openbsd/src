@@ -1,3 +1,4 @@
+/*	$OpenBSD: setup.c,v 1.2 1998/08/19 07:40:45 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
 
 /*-
@@ -37,16 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.2 1998/08/19 07:40:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include <err.h>
+#include	"hangman.h"
 
 /*
  * setup:
  *	Set up the strings on the screen.
  */
+void
 setup()
 {
 	register char		**sp;
@@ -67,11 +70,10 @@ setup()
 		addstr(*sp);
 	}
 
-	srand(time(NULL) + getpid());
+	srandom(time(NULL) + getpid());
 	if ((Dict = fopen(_PATH_DICT, "r")) == NULL) {
-		perror(_PATH_DICT);
 		endwin();
-		exit(1);
+		err(1, "fopen %s", _PATH_DICT);
 	}
 	fstat(fileno(Dict), &sbuf);
 	Dict_size = sbuf.st_size;

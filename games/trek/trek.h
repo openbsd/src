@@ -1,3 +1,4 @@
+/*	$OpenBSD: trek.h,v 1.3 1998/08/19 07:42:12 pjanzen Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -35,6 +36,8 @@
  *	@(#)trek.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <sys/cdefs.h>
+
 /*
 **  Global Declarations
 **
@@ -53,26 +56,16 @@
 **	actually allocate stuff in "externs.c"
 */
 
-/* external function definitions */
-extern double	franf();	/* floating random number function */
-extern double	sqrt();		/* square root */
-extern double	sin(), cos();	/* trig functions */
-extern double	atan2();	/* fancy arc tangent function */
-extern double	log();		/* log base e */
-extern double	pow();		/* power function */
-extern double	fabs();		/* absolute value function */
-extern double	exp();		/* exponential function */
-
 /*********************  GALAXY  **************************/
 
 /* galactic parameters */
-# define	NSECTS		10	/* dimensions of quadrant in sectors */
-# define	NQUADS		8	/* dimension of galazy in quadrants */
-# define	NINHAB		32	/* number of quadrants which are inhabited */
+#define	NSECTS		10	/* dimensions of quadrant in sectors */
+#define	NQUADS		8	/* dimension of galazy in quadrants */
+#define	NINHAB		32	/* number of quadrants which are inhabited */
 
 struct quad		/* definition for each quadrant */
 {
-	char	bases;		/* number of bases in this quadrant */
+	unsigned char	bases;	/* number of bases in this quadrant */
 	char	klings;		/* number of Klingons in this quadrant */
 	char	holes;		/* number of black holes in this quadrant */
 	int	scanned;	/* star chart entry (see below) */
@@ -80,8 +73,8 @@ struct quad		/* definition for each quadrant */
 	char	qsystemname;	/* starsystem name (see below) */
 };
 
-# define	Q_DISTRESSED	0200
-# define	Q_SYSTEM	077
+#define	Q_DISTRESSED	0200
+#define	Q_SYSTEM	077
 
 /*  systemname conventions:
  *	1 -> NINHAB	index into Systemname table for live system.
@@ -104,14 +97,14 @@ extern char	*Systemname[NINHAB];
 struct quad	Quad[NQUADS][NQUADS];
 
 /* defines for sector map  (below) */
-# define	EMPTY		'.'
-# define	STAR		'*'
-# define	BASE		'#'
-# define	ENTERPRISE	'E'
-# define	QUEENE		'Q'
-# define	KLINGON		'K'
-# define	INHABIT		'@'
-# define	HOLE		' '
+#define	EMPTY		'.'
+#define	STAR		'*'
+#define	BASE		'#'
+#define	ENTERPRISE	'E'
+#define	QUEENE		'Q'
+#define	KLINGON		'K'
+#define	INHABIT		'@'
+#define	HOLE		' '
 
 /* current sector map */
 char	Sect[NSECTS][NSECTS];
@@ -119,23 +112,23 @@ char	Sect[NSECTS][NSECTS];
 
 /************************ DEVICES ******************************/
 
-# define	NDEV		16	/* max number of devices */
+#define	NDEV		16	/* max number of devices */
 
 /* device tokens */
-# define	WARP		0	/* warp engines */
-# define	SRSCAN		1	/* short range scanners */
-# define	LRSCAN		2	/* long range scanners */
-# define	PHASER		3	/* phaser control */
-# define	TORPED		4	/* photon torpedo control */
-# define	IMPULSE		5	/* impulse engines */
-# define	SHIELD		6	/* shield control */
-# define	COMPUTER	7	/* on board computer */
-# define	SSRADIO		8	/* subspace radio */
-# define	LIFESUP		9	/* life support systems */
-# define	SINS		10	/* Space Inertial Navigation System */
-# define	CLOAK		11	/* cloaking device */
-# define	XPORTER		12	/* transporter */
-# define	SHUTTLE		13	/* shuttlecraft */
+#define	WARP		0	/* warp engines */
+#define	SRSCAN		1	/* short range scanners */
+#define	LRSCAN		2	/* long range scanners */
+#define	PHASER		3	/* phaser control */
+#define	TORPED		4	/* photon torpedo control */
+#define	IMPULSE		5	/* impulse engines */
+#define	SHIELD		6	/* shield control */
+#define	COMPUTER	7	/* on board computer */
+#define	SSRADIO		8	/* subspace radio */
+#define	LIFESUP		9	/* life support systems */
+#define	SINS		10	/* Space Inertial Navigation System */
+#define	CLOAK		11	/* cloaking device */
+#define	XPORTER		12	/* transporter */
+#define	SHUTTLE		13	/* shuttlecraft */
 
 /* device names */
 struct device
@@ -148,29 +141,29 @@ struct device	Device[NDEV];
 
 /***************************  EVENTS  ****************************/
 
-# define	NEVENTS		12	/* number of different event types */
+#define	NEVENTS		12	/* number of different event types */
 
-# define	E_LRTB		1	/* long range tractor beam */
-# define	E_KATSB		2	/* Klingon attacks starbase */
-# define	E_KDESB		3	/* Klingon destroys starbase */
-# define	E_ISSUE		4	/* distress call is issued */
-# define	E_ENSLV		5	/* Klingons enslave a quadrant */
-# define	E_REPRO		6	/* a Klingon is reproduced */
-# define	E_FIXDV		7	/* fix a device */
-# define	E_ATTACK	8	/* Klingon attack during rest period */
-# define	E_SNAP		9	/* take a snapshot for time warp */
-# define	E_SNOVA		10	/* supernova occurs */
+#define	E_LRTB		1	/* long range tractor beam */
+#define	E_KATSB		2	/* Klingon attacks starbase */
+#define	E_KDESB		3	/* Klingon destroys starbase */
+#define	E_ISSUE		4	/* distress call is issued */
+#define	E_ENSLV		5	/* Klingons enslave a quadrant */
+#define	E_REPRO		6	/* a Klingon is reproduced */
+#define	E_FIXDV		7	/* fix a device */
+#define	E_ATTACK	8	/* Klingon attack during rest period */
+#define	E_SNAP		9	/* take a snapshot for time warp */
+#define	E_SNOVA		10	/* supernova occurs */
 
-# define	E_GHOST		0100	/* ghost of a distress call if ssradio out */
-# define	E_HIDDEN	0200	/* event that is unreportable because ssradio out */
-# define	E_EVENT		077	/* mask to get event code */
+#define	E_GHOST		0100	/* ghost of a distress call if ssradio out */
+#define	E_HIDDEN	0200	/* event that is unreportable because ssradio out */
+#define	E_EVENT		077	/* mask to get event code */
 
 struct event
 {
-	char	x, y;			/* coordinates */
-	double	date;			/* trap stardate */
-	char	evcode;			/* event type */
-	char	systemname;		/* starsystem name */
+	unsigned char	x, y;		/* coordinates */
+	double		date;		/* trap stardate */
+	char		evcode;		/* event type */
+	unsigned char	systemname;	/* starsystem name */
 };
 /* systemname conventions:
  *	1 -> NINHAB	index into Systemname table for reported distress calls
@@ -182,7 +175,7 @@ struct event
  *	0		unallocated
  */
 
-# define	MAXEVENTS	25	/* max number of concurrently pending events */
+#define	MAXEVENTS	25	/* max number of concurrently pending events */
 
 struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending event */
 
@@ -190,37 +183,40 @@ struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending even
 
 struct kling
 {
-	char	x, y;		/* coordinates */
+	unsigned char	x, y;	/* coordinates */
 	int	power;		/* power left */
 	double	dist;		/* distance to Enterprise */
 	double	avgdist;	/* average over this move */
 	char	srndreq;	/* set if surrender has been requested */
 };
 
-# define	MAXKLQUAD	9	/* maximum klingons per quadrant */
+#define	MAXKLQUAD	9	/* maximum klingons per quadrant */
 
 /********************** MISCELLANEOUS ***************************/
 
 /* condition codes */
-# define	GREEN		0
-# define	DOCKED		1
-# define	YELLOW		2
-# define	RED		3
+#define	GREEN		0
+#define	DOCKED		1
+#define	YELLOW		2
+#define	RED		3
 
 /* starbase coordinates */
-# define	MAXBASES	9	/* maximum number of starbases in galaxy */
+#define	MAXBASES	9	/* maximum number of starbases in galaxy */
 
 /*  distress calls  */
-# define	MAXDISTR	5	/* maximum concurrent distress calls */
+#define	MAXDISTR	5	/* maximum concurrent distress calls */
 
 /* phaser banks */
-# define	NBANKS		6	/* number of phaser banks */
+#define	NBANKS		6	/* number of phaser banks */
 
 struct xy
 {
-	char	x, y;		/* coordinates */
+	unsigned char	x, y;		/* coordinates */
 };
 
+
+extern struct cvntab	Skitab[];
+extern struct cvntab	Lentab[];
 
 /*
  *	note that much of the stuff in the following structs CAN NOT
@@ -247,7 +243,7 @@ struct
 	int	quady;		/* quadrant y coord */
 	int	sectx;		/* sector x coord */
 	int	secty;		/* sector y coord */
-	char	cond;		/* condition code */
+	unsigned char	cond;	/* condition code */
 	char	sinsbad;	/* Space Inertial Navigation System condition */
 	char	*shipname;	/* name of current starship */
 	char	ship;		/* current starship */
@@ -289,7 +285,7 @@ struct
 /* parametric information */
 struct
 {
-	char	bases;		/* number of starbases */
+	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
 	double	time;		/* time left */
@@ -325,7 +321,7 @@ struct
 /* other information kept in a snapshot */
 struct
 {
-	char	bases;		/* number of starbases */
+	unsigned char	bases;	/* number of starbases */
 	char	klings;		/* number of klingons */
 	double	date;		/* stardate */
 	double	time;		/* time left */
@@ -353,30 +349,184 @@ struct
  */
 
 /* Klingon move indicies */
-# define	KM_OB		0	/* Old quadrant, Before attack */
-# define	KM_OA		1	/* Old quadrant, After attack */
-# define	KM_EB		2	/* Enter quadrant, Before attack */
-# define	KM_EA		3	/* Enter quadrant, After attack */
-# define	KM_LB		4	/* Leave quadrant, Before attack */
-# define	KM_LA		5	/* Leave quadrant, After attack */
+#define	KM_OB		0	/* Old quadrant, Before attack */
+#define	KM_OA		1	/* Old quadrant, After attack */
+#define	KM_EB		2	/* Enter quadrant, Before attack */
+#define	KM_EA		3	/* Enter quadrant, After attack */
+#define	KM_LB		4	/* Leave quadrant, Before attack */
+#define	KM_LA		5	/* Leave quadrant, After attack */
 
 /* you lose codes */
-# define	L_NOTIME	1	/* ran out of time */
-# define	L_NOENGY	2	/* ran out of energy */
-# define	L_DSTRYD	3	/* destroyed by a Klingon */
-# define	L_NEGENB	4	/* ran into the negative energy barrier */
-# define	L_SUICID	5	/* destroyed in a nova */
-# define	L_SNOVA		6	/* destroyed in a supernova */
-# define	L_NOLIFE	7	/* life support died (so did you) */
-# define	L_NOHELP	8	/* you could not be rematerialized */
-# define	L_TOOFAST	9	/* pretty stupid going at warp 10 */
-# define	L_STAR		10	/* ran into a star */
-# define	L_DSTRCT	11	/* self destructed */
-# define	L_CAPTURED	12	/* captured by Klingons */
-# define	L_NOCREW	13	/* you ran out of crew */
+#define	L_NOTIME	1	/* ran out of time */
+#define	L_NOENGY	2	/* ran out of energy */
+#define	L_DSTRYD	3	/* destroyed by a Klingon */
+#define	L_NEGENB	4	/* ran into the negative energy barrier */
+#define	L_SUICID	5	/* destroyed in a nova */
+#define	L_SNOVA		6	/* destroyed in a supernova */
+#define	L_NOLIFE	7	/* life support died (so did you) */
+#define	L_NOHELP	8	/* you could not be rematerialized */
+#define	L_TOOFAST	9	/* pretty stupid going at warp 10 */
+#define	L_STAR		10	/* ran into a star */
+#define	L_DSTRCT	11	/* self destructed */
+#define	L_CAPTURED	12	/* captured by Klingons */
+#define	L_NOCREW	13	/* you ran out of crew */
 
 /******************  COMPILE OPTIONS  ***********************/
 
 /* Trace info */
-# define	xTRACE		1
+#define	xTRACE		1
 int	Trace;
+
+/* abandon.c */
+void abandon __P((int));
+
+/* attack.c */
+void attack __P((int));
+
+/* autover.c */
+void autover __P((void));
+
+/* capture.c */
+void capture __P((int));
+struct kling *selectklingon __P((void));
+
+/* cgetc.c */
+char cgetc __P((int));
+
+/* check_out.c */
+int check_out __P((int));
+
+/* checkcond.c */
+void checkcond __P((void));
+
+/* compkl.c */
+void compkldist __P((int));
+
+/* computer.c */
+void computer __P((int));
+
+/* damage.c */
+void damage __P((int, double));
+
+/* damaged.c */
+int damaged __P((int));
+
+/* dcrept.c */
+void dcrept __P((int));
+
+/* destruct.c */
+void destruct __P((int));
+
+/* dock.c */
+void dock __P((int));
+void undock __P((int));
+
+/* dumpgame.c */
+void dumpgame __P((int));
+int restartgame __P((void));
+
+/* dumpme.c */
+void dumpme __P((int));
+
+/* dumpssradio.c */
+int dumpssradio __P((void));
+
+/* events.c */
+int events __P((int));
+
+/* externs.c */
+
+/* getcodi.c */
+int getcodi __P((int *, double *));
+
+/* help.c */
+void help __P((int));
+
+/* impulse.c */
+void impulse __P((int));
+
+/* initquad.c */
+void initquad __P((int));
+void sector __P((int *, int *));
+
+/* kill.c */
+void killk __P((int, int ));
+void killb __P((int, int ));
+void kills __P((int, int , int));
+void killd __P((int, int , int));
+
+/* klmove.c */
+void klmove __P((int));
+
+/* lose.c */
+void lose __P((int));
+
+/* lrscan.c */
+void lrscan __P((int));
+
+/* move.c */
+double move __P((int, int, double, double));
+
+/* nova.c */
+void nova __P((int, int ));
+
+/* out.c */
+void out __P((int));
+
+/* phaser.c */
+void phaser __P((int));
+
+/* play.c */
+void myreset __P((int));
+void play __P((void));
+
+/* ram.c */
+void ram __P((int, int ));
+
+/* ranf.c */
+int ranf __P((int));
+double franf __P((void));
+
+/* rest.c */
+void rest __P((int));
+
+/* schedule.c */
+struct event *schedule __P((int, double, int, int , int));
+void reschedule __P((struct event *, double));
+void unschedule __P((struct event *));
+struct event *xsched __P((int, int, int, int , int ));
+void xresched __P((struct event *, int, int));
+
+/* score.c */
+long score __P((void));
+
+/* setup.c */
+void setup __P((void));
+
+/* setwarp.c */
+void setwarp __P((int));
+
+/* shield.c */
+void shield __P((int));
+
+/* snova.c */
+void snova __P((int, int ));
+
+/* srscan.c */
+void srscan __P((int));
+
+/* systemname.c */
+char *systemname __P((struct quad *));
+
+/* torped.c */
+void torped __P((int));
+
+/* visual.c */
+void visual __P((int));
+
+/* warp.c */
+void dowarp __P((int));
+void warp __P((int, int, double));
+
+/* win.c */
+void win __P((void));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: bcd.c,v 1.5 1998/08/19 07:40:15 pjanzen Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -43,7 +44,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
+#else
+static char rcsid[] = "$OpenBSD: bcd.c,v 1.5 1998/08/19 07:40:15 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -77,10 +82,10 @@ static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
  */
 
 #include <sys/types.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 u_short holes[256] = {
     0x0,	 0x0,	  0x0,	   0x0,	    0x0,     0x0,     0x0,     0x0,
@@ -122,6 +127,8 @@ u_short holes[256] = {
  */
 #define	bit(w,i)	((w)&(1<<(i)))
 
+void	printcard __P((char *));
+
 int
 main(argc, argv)
 	int argc;
@@ -149,12 +156,13 @@ main(argc, argv)
 
 #define	COLUMNS	48
 
+void
 printcard(str)
-	register char *str;
+	char *str;
 {
 	static char rowchars[] = "   123456789";
-	register int i, row;
-	register char *p;
+	register int	i, row;
+	register char	*p;
 
 	/* ruthlessly remove newlines and truncate at 48 characters. */
 	if ((p = strchr(str, '\n')))
@@ -181,7 +189,7 @@ printcard(str)
 	p = str;
 	putchar('/');
 	for (i = 1; *p; i++, p++)
-		if (holes[*p])
+		if (holes[(int)*p])
 			putchar(*p);
 		else
 			putchar(' ');
@@ -199,7 +207,7 @@ printcard(str)
 	for (row = 0; row <= 11; ++row) {
 		putchar('|');
 		for (i = 0, p = str; *p; i++, p++) {
-			if (bit(holes[*p], 11 - row))
+			if (bit(holes[(int)*p], 11 - row))
 				putchar(']');
 			else
 				putchar(rowchars[row]);

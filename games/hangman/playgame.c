@@ -1,3 +1,4 @@
+/*	$OpenBSD: playgame.c,v 1.3 1998/08/19 07:40:40 pjanzen Exp $	*/
 /*	$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $	*/
 
 /*-
@@ -37,16 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)playgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $";
+static char rcsid[] = "$OpenBSD: playgame.c,v 1.3 1998/08/19 07:40:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * playgame:
  *	play a game
  */
+void
 playgame()
 {
 	register bool	*bp;

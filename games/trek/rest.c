@@ -1,3 +1,4 @@
+/*	$OpenBSD: rest.c,v 1.2 1998/08/19 07:41:59 pjanzen Exp $	*/
 /*	$NetBSD: rest.c,v 1.3 1995/04/22 10:59:22 cgd Exp $	*/
 
 /*
@@ -37,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)rest.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rest.c,v 1.3 1995/04/22 10:59:22 cgd Exp $";
+static char rcsid[] = "$OpenBSD: rest.c,v 1.2 1998/08/19 07:41:59 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
-# include	"getpar.h"
+#include <stdio.h>
+#include "trek.h"
+#include "getpar.h"
 
 /*
 **  REST FOR REPAIRS
@@ -58,7 +60,9 @@ static char rcsid[] = "$NetBSD: rest.c,v 1.3 1995/04/22 10:59:22 cgd Exp $";
 **	rest period if anything momentous happens.
 */
 
-rest()
+void
+rest(v)
+	int v;
 {
 	double			t;
 	register int		percent;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: out.c,v 1.2 1998/08/19 07:41:52 pjanzen Exp $	*/
 /*	$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $	*/
 
 /*
@@ -37,24 +38,26 @@
 #if 0
 static char sccsid[] = "@(#)out.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: out.c,v 1.3 1995/04/22 10:59:16 cgd Exp $";
+static char rcsid[] = "$OpenBSD: out.c,v 1.2 1998/08/19 07:41:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  Announce Device Out
 */
 
+void
 out(dev)
-int	dev;
+	int	dev;
 {
 	register struct device	*d;
 
 	d = &Device[dev];
 	printf("%s reports %s ", d->person, d->name);
-	if (d->name[length(d->name) - 1] == 's')
+	if (d->name[strlen(d->name) - 1] == 's')
 		printf("are");
 	else
 		printf("is");

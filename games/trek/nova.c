@@ -1,3 +1,4 @@
+/*	$OpenBSD: nova.c,v 1.2 1998/08/19 07:41:51 pjanzen Exp $	*/
 /*	$NetBSD: nova.c,v 1.3 1995/04/22 10:59:14 cgd Exp $	*/
 
 /*
@@ -37,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)nova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: nova.c,v 1.3 1995/04/22 10:59:14 cgd Exp $";
+static char rcsid[] = "$OpenBSD: nova.c,v 1.2 1998/08/19 07:41:51 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"trek.h"
+#include <stdio.h>
+#include "trek.h"
 
 /*
 **  CAUSE A NOVA TO OCCUR
@@ -57,8 +59,9 @@ static char rcsid[] = "$NetBSD: nova.c,v 1.3 1995/04/22 10:59:14 cgd Exp $";
 **	If the zap is too much, it gets destroyed.
 */
 
+void
 nova(x, y)
-int	x, y;
+	int	x, y;
 {
 	register int		i, j;
 	register int		se;
@@ -71,7 +74,10 @@ int	x, y;
 		return;
 	}
 	if (ranf(100) < 5)
-		return (snova(x, y));
+	{
+		snova(x, y);
+		return;
+	}
 	printf("Spock: Star at %d,%d gone nova\n", x, y);
 
 	if (ranf(4) != 0)
@@ -120,6 +126,7 @@ int	x, y;
 			  case QUEENE:
 				se = 2000;
 				if (Ship.shldup)
+				{
 					if (Ship.shield >= se)
 					{
 						Ship.shield -= se;
@@ -130,6 +137,7 @@ int	x, y;
 						se -= Ship.shield;
 						Ship.shield = 0;
 					}
+				}
 				Ship.energy -= se;
 				if (Ship.energy <= 0)
 					lose(L_SUICID);
@@ -143,5 +151,4 @@ int	x, y;
 			}
 		}
 	}
-	return;
 }
