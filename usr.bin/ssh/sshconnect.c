@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.75 2000/06/17 19:24:34 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.76 2000/06/17 20:30:10 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -312,7 +312,7 @@ ssh_exchange_identification()
 	/* Read other side\'s version identification. */
 	for (;;) {
 		for (i = 0; i < sizeof(buf) - 1; i++) {
-			int len = read(connection_in, &buf[i], 1);
+			int len = atomicio(read, connection_in, &buf[i], 1);
 			if (len < 0)
 				fatal("ssh_exchange_identification: read: %.100s", strerror(errno));
 			if (len != 1)
@@ -328,7 +328,7 @@ ssh_exchange_identification()
 			}
 		}
 		buf[sizeof(buf) - 1] = 0;
-		if (strncmp(buf, "SSH-", 4))
+		if (strncmp(buf, "SSH-", 4) == 0)
 			break;
 		debug("ssh_exchange_identification: %s", buf);
 	}
