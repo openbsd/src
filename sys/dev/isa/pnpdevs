@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.88 1999/07/23 19:42:14 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.89 1999/08/04 03:30:15 jason Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -409,7 +409,7 @@ le		CSI2203	# Cabletron E22xx Adapter
 #ne		AXE2201	# Ethernet PnP ISA Card /S (PNP80D6)
 ne		@@@1980	# OvisLink LE-8019R
 we		SMC8416 # SMC EtherEZ
-#ec		TMC5051	# 3Com Fast EtherLink ISA
+ef		TCM5051	# 3Com Fast EtherLink ISA
 
 joy		@P@0001	# Avance Sound Chip
 joy		@P@1001	# ALS100+
