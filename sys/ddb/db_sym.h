@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.7 1996/05/11 07:44:43 niklas Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.8 1996/08/16 06:13:03 mickey Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -42,6 +42,7 @@
 typedef struct db_symtab {
 	TAILQ_ENTRY(db_symtab)	list;	/* all the tabs */
 	char		*name;		/* symtab name */
+	u_int		id;		/* id */
 	char		*start;		/* symtab location */
 	char		*end;
 	char		*private;	/* optional machdep pointer */
@@ -85,6 +86,8 @@ int db_add_symbol_table __P((char *, char *, char *, char *));
 void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
 db_symtab_t db_istab __P((size_t));
+db_symtab_t db_symiter __P((db_symtab_t));
+				/* iterate through all the symtabs, if any */
 
 boolean_t db_eqname __P((char *, char *, int));
 					/* strcmp, modulo leading char */

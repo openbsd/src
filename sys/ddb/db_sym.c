@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.13 1996/08/13 00:41:34 niklas Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.14 1996/08/16 06:13:02 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -77,6 +77,7 @@ db_add_symbol_table(start, end, name, ref)
 	new->end = end;
 	new->name = name;
 	new->private = ref;
+	new->id = db_nsymtabs;
 	TAILQ_INSERT_TAIL(&db_symtabs, new, list);
 
 	return ++db_nsymtabs;
@@ -89,9 +90,9 @@ void
 db_del_symbol_table(name)
 	char *name;
 {
-	db_symtab_t	p;
+	register db_symtab_t	p;
 
-	for (p = db_symtabs.tqh_first; p != NULL; p = p->list.tqe_next)
+	for (p = db_symiter(NULL); p != NULL; p = db_symiter(p))
 		if (!strcmp(name, p->name))
 			break;
 
@@ -111,10 +112,21 @@ db_istab(i)
 {
 	register db_symtab_t	p;
 
-	for (p = db_symtabs.tqh_first; i && p != NULL ; p = p->list.tqe_next)
+	for (p = db_symiter(NULL); i && p != NULL ; p = db_symiter(p))
 		i--;
 
 	return i? NULL : p;
+}
+
+db_symtab_t
+db_symiter(st)
+	db_symtab_t	st;
+{
+	if (st == NULL)
+		st = db_symtabs.tqh_first;
+	else
+		st = st->list.tqe_next;
+	return st;
 }
 
 /*
@@ -191,9 +203,9 @@ db_lookup(symstr)
 	for (cp = symstr; *cp; cp++)
 		if (*cp == ':') {
 			*cp = '\0';
-			for (st = db_symtabs.tqh_first;
+			for (st = db_symiter(NULL);
 			     st != NULL;
-			     st = st->list.tqe_next)
+			     st = db_symiter(st))
 				if (!strcmp(symstr, st->name))
 					break;
 			*cp = ':';
@@ -211,9 +223,7 @@ db_lookup(symstr)
 	if (st != NULL)
 		sp = X_db_lookup(st, symstr);
 	else
-		for (st = db_symtabs.tqh_first;
-		     st != NULL;
-		     st = st->list.tqe_next)
+		for (st = db_symiter(NULL); st != NULL; st = db_symiter(st))
 			if ((sp = X_db_lookup(st, symstr)) != NULL)
 				break;
 
@@ -242,7 +252,7 @@ db_symbol_is_ambiguous(sym)
 		return FALSE;
 
 	db_symbol_values(sym, &sym_name, 0);
-	for (st = db_symtabs.tqh_first; st != NULL; st = st->list.tqe_next) {
+	for (st = db_symiter(NULL); st != NULL; st = db_symiter(st)) {
 		if (X_db_lookup(st, sym_name) != NULL) {
 			if (found_once)
 				return TRUE;
@@ -270,7 +280,7 @@ db_search_symbol( val, strategy, offp)
 
 	newdiff = diff = -1;
 	db_last_symtab = 0;
-	for (st = db_symtabs.tqh_first; st != NULL; st = st->list.tqe_next) {
+	for (st = db_symiter(NULL); st != NULL; st = db_symiter(st)) {
 	    sym = X_db_search_symbol(st, val, strategy, &newdiff);
 	    if (newdiff < diff || diff < 0) {
 		db_last_symtab = st;
