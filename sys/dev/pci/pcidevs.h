@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.826 2005/01/23 07:27:45 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.827 2005/01/23 11:36:18 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1082,6 +1082,7 @@
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
 #define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
 #define	PCI_PRODUCT_DLINK_DFE690TXD	0x1340		/* DFE-690TXD */
+#define	PCI_PRODUCT_DLINK_DWL610	0x3300		/* DWL-610 */
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
 
