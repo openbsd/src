@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.60 1997/07/11 23:37:50 provos Exp $
+#	$OpenBSD: files,v 1.61 1997/07/23 04:35:32 denny Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -311,6 +311,12 @@ file netinet/ip_sha1.c			inet & ipsec
 file netinet/libdeslite/ecb_enc.c	inet & ipsec
 file netinet/libdeslite/set_key.c	inet & ipsec
 file netinet/libdeslite/ecb3_enc.c	inet & ipsec
+file netatalk/aarp.c			netatalk
+file netatalk/at_control.c		netatalk
+file netatalk/at_proto.c		netatalk
+file netatalk/ddp_input.c		netatalk
+file netatalk/ddp_output.c		netatalk
+file netatalk/ddp_usrreq.c		netatalk
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso
