@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.23 2003/11/07 21:32:47 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.24 2003/11/07 22:04:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -861,7 +861,7 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 		}
 		if (count == 0) {
 			/* should never reach this */
-			return (1);
+			return (0);
 		}
 		/* this should be a hash, like pf_hash() */
 		index = isaddr->s_addr % count;
@@ -889,11 +889,12 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 			    (IFF_UP|IFF_RUNNING) && ia->ia_ifp ==
 			    &vh->sc_ac.ac_if) {
 				*enaddr = vh->sc_ac.ac_enaddr;
+				return (1);
 			}
 		}
 	}
 
-	return (1);
+	return (0);
 }
 
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.50 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.51 2003/11/07 22:04:46 mcbride Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -561,8 +561,6 @@ in_arpinput(m)
 			if (carp_iamatch(ac->ac_if.if_carp, ia,
 			    &isaddr, &enaddr)) 
 				break;
-			else
-				goto out;
 		}
 #endif
 	}
