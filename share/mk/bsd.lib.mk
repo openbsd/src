@@ -1,12 +1,12 @@
-#	$OpenBSD: bsd.lib.mk,v 1.24 2000/09/03 18:41:23 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.25 2000/10/03 23:17:07 mickey Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
+
+.include <bsd.own.mk>				# for 'NOPIC' definition
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
-.include <bsd.own.mk>				# for 'NOPIC' definition
 
 .if exists(${.CURDIR}/shlib_version)
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
