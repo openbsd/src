@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.30 1998/11/12 21:46:36 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.32 1998/11/19 10:04:51 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -66,26 +66,27 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "SUP1381", "pccom" },
 	{ "GVC5000", "com" },
 	{ "GVC5000", "pccom" },
+	{ "@P@1001", "joy" },
+	{ "CSC0001", "joy" },
+	{ "CTL7002", "joy" },
+	{ "ESS0001", "joy" },
+	{ "@@@1980", "ne" },
+	{ "@X@0001", "sb" },
 	{ "ADS7150", "sb" },
 	{ "ADS7180", "sb" },
+	{ "CSC0000", "sb" },
 	{ "CTL0001", "sb" },
 	{ "CTL0031", "sb" },
 	{ "CTL0041", "sb" },
 	{ "CTL0042", "sb" },
+	{ "CTL0043", "sb" },
 	{ "CTL0044", "sb" },
 	{ "CTL0045", "sb" },
-	{ "@X@0001", "sb" },
+	{ "ESS1868", "sb" },
+	{ "ESS1869", "sb" },
+	{ "SMC8416", "we" },
 	{ "@@@1001", "ym" },
 	{ "YMH0021", "ym" },
-	{ "ESS1868", "sb" },
-	{ "SMC8416", "we" },
-	{ "@P@1001", "joy" },
-	{ "ESS0001", "joy" },
-	{ "CTL7002", "joy" },
-	{ "CSC0000", "sb" },
-	{ "CSC0001", "joy" },
-	{ "CTL0043", "sb" },
 	{ "YMH0021", "ym" },
-	{ "@@@1980", "ne" },
 	{ NULL, NULL, }
 };
