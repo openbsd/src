@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.1,v 1.3 1996/08/28 07:31:49 etheisen Exp $
+.\"	$OpenBSD: mkfifo.1,v 1.4 1996/08/30 07:04:32 etheisen Exp $
 .\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -42,15 +42,14 @@
 .Os BSD 4.4
 .Sh NAME
 .Nm mkfifo
-.Nd make fifos or sockets
+.Nd make fifos
 .Sh SYNOPSIS
 .Nm mkfifo
 .Op Fl m Ar mode
-.Op Fl s 
-.Ar filename  ...
+.Ar fifo_name  ...
 .Sh DESCRIPTION
 .Nm Mkfifo
-creates the fifos or AF_UNIX sockets requested, in the order specified,
+creates the fifos requested, in the order specified,
 using mode
 .Li \&0666 
 modified by the current
@@ -69,9 +68,6 @@ and
 .Dq -
 operators are interpreted relative to an assumed initial mode of 
 .Dq a=rw
-.It Fl s
-Create AF_UNIX socket names in the file system.
-This is a non-standard extension.
 .El
 .Pp
 .Nm Mkfifo
@@ -83,13 +79,9 @@ exits 0 if successful, and >0 if an error occurred.
 .Xr mkdir 1 ,
 .Xr mknod 1 ,
 .Xr rm 1 ,
-.Xr mkfifo 2 ,
-.Xr socket 2 ,
-.Xr bind 2
+.Xr mkfifo 2
 .Sh STANDARDS
-With the exception of the
-.Fl s
-flag, the
+The
 .Nm mkfifo
 utility is expected to be
 .St -p1003.2-92
