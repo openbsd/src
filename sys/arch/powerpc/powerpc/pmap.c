@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2002/07/15 17:01:25 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.73 2002/07/24 02:19:28 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -132,7 +132,8 @@ void pmap_remove_avail(paddr_t base, paddr_t end);
 void *pmap_steal_avail(size_t size, int align);
 
 /* asm interface */
-int pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t access_type);
+int pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t access_type,
+    int exec_fault);
 
 u_int32_t pmap_setusr(pmap_t pm, vaddr_t va);
 void pmap_popusr(u_int32_t oldsr);
@@ -497,8 +498,22 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	pte_insert(pted);
 
-        if (prot & VM_PROT_EXECUTE)
-        	pm->pm_exec[va >> ADDR_SR_SHIFT]++;
+        if (prot & VM_PROT_EXECUTE) {
+		u_int sn = VP_SR(va);
+
+        	pm->pm_exec[sn]++;
+		if (pm->pm_sr[sn] & SR_NOEXEC) {
+			pm->pm_sr[sn] &= ~SR_NOEXEC;
+
+			/* set the current sr if not kernel used segemnts
+			 * and this pmap is current active pmap
+			 */
+			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+				asm volatile ("mtsrin %0,%1"
+				    :: "r"(pm->pm_sr[sn]),
+				       "r"(sn << ADDR_SR_SHIFT) );
+		}
+	}
 
 	splx(s);
 
@@ -603,8 +618,21 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 	pmap_hash_remove(pted);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
-		pm->pm_exec[pted->pted_va >> ADDR_SR_SHIFT]--;
+		u_int sn = VP_SR(va);
+
 		pted->pted_va &= ~PTED_VA_EXEC_M;
+		pm->pm_exec[sn]--;
+		if (pm->pm_exec[sn] == 0) {
+			pm->pm_sr[sn] |= SR_NOEXEC;
+			
+			/* set the current sr if not kernel used segemnts
+			 * and this pmap is current active pmap
+			 */
+			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+				asm volatile ("mtsrin %0,%1"
+				    :: "r"(pm->pm_sr[sn]),
+				       "r"(sn << ADDR_SR_SHIFT) );
+		}
 	}
 
 	pted->pted_pte.pte_hi &= ~PTE_VALID;
@@ -675,8 +703,22 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pte_insert(pted);
 	pted->pted_va |= PTED_VA_WIRED_M;
 
-        if (prot & VM_PROT_EXECUTE)
-        	pm->pm_exec[va >> ADDR_SR_SHIFT]++;
+        if (prot & VM_PROT_EXECUTE) {
+		u_int sn = VP_SR(va);
+
+        	pm->pm_exec[sn]++;
+		if (pm->pm_sr[sn] & SR_NOEXEC) {
+			pm->pm_sr[sn] &= ~SR_NOEXEC;
+
+			/* set the current sr if not kernel used segemnts
+			 * and this pmap is current active pmap
+			 */
+			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+				asm volatile ("mtsrin %0,%1"
+				    :: "r"(pm->pm_sr[sn]),
+				       "r"(sn << ADDR_SR_SHIFT) );
+		}
+	}
 
 	splx(s);
 
@@ -725,8 +767,21 @@ pmap_kremove_pg(vaddr_t va)
 	pmap_hash_remove(pted);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
-		pm->pm_exec[pted->pted_va >> ADDR_SR_SHIFT]--;
+		u_int sn = VP_SR(va);
+
 		pted->pted_va &= ~PTED_VA_EXEC_M;
+		pm->pm_exec[sn]--;
+		if (pm->pm_exec[sn] == 0) {
+			pm->pm_sr[sn] |= SR_NOEXEC;
+
+			/* set the current sr if not kernel used segemnts
+			 * and this pmap is current active pmap
+			 */
+			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+				asm volatile ("mtsrin %0,%1"
+				    :: "r"(pm->pm_sr[sn]),
+				       "r"(sn << ADDR_SR_SHIFT) );
+		}
 	}
 
 	if (PTED_MANAGED(pted))
@@ -1010,7 +1065,7 @@ again:
 
 			seg = try << 4;
 			for (k = 0; k < 16; k++) {
-				pm->pm_sr[k] = seg + k;
+				pm->pm_sr[k] = (seg + k) | SR_NOEXEC;
 			}
 			return;
 		}
@@ -1081,7 +1136,7 @@ pmap_release(pmap_t pm)
 	int s;
 
 	pmap_vp_destroy(pm);
-	i = pm->pm_sr[0] >> 4;
+	i = (pm->pm_sr[0] & SR_VSID) >> 4;
 	tblidx = i / (8  * sizeof usedsr[0]);
 	tbloff = i % (8  * sizeof usedsr[0]);
 
@@ -1375,7 +1430,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		|= 1 << ((KERNEL_SEGMENT / 16) % (sizeof usedsr[0] * 8));
 #endif
 	for (i = 0; i < 16; i++) {
-		pmap_kernel()->pm_sr[i] = KERNEL_SEG0 + i;
+		pmap_kernel()->pm_sr[i] = (KERNEL_SEG0 + i) | SR_NOEXEC;
 		asm volatile ("mtsrin %0,%1"
 		    :: "r"( KERNEL_SEG0 + i), "r"(i << ADDR_SR_SHIFT) );
 	}
@@ -1867,17 +1922,15 @@ pmap_init()
  * "user" accesses.
  */
 int
-pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr)
+pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 {
 	pmap_t pm;
 	struct pte_desc *pted;
-	int retcode = 0;
 
 	/* 
 	 * This function only handles kernel faults, not supervisor copyins.
 	 */
 	if (!(msr & PSL_PR)) {
-		/* PSL_PR is clear for supervisor, right? - XXXXX */
 		/* lookup is done physical to prevent faults */
 		if (VP_SR(va) == USER_SR) {
 			return 0;
@@ -1889,26 +1942,32 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr)
 	}
 
 	pted = pmap_vp_lookup(pm, va);
-	if (pted != NULL) {
-		/* if the current mapping is RO and the access was a write
-		 * we return 0
-		 */
-		if (!PTED_VALID(pted) ||
-		    ((dsisr & (1 << (31-6)))
-		    && (pted->pted_pte.pte_lo & 0x1))) {
-			/* write fault and we have a readonly mapping */
-			retcode = 0;
-		} else {
-			retcode = 1;
-			pte_insert(pted);
-		}
+	if (pted == NULL) {
+		return 0;
 	}
 
-	return retcode;
+	/* if the current mapping is RO and the access was a write
+	 * we return 0
+	 */
+	if (!PTED_VALID(pted)) {
+		return 0;
+	} 
+	if ((dsisr & (1 << (31-6))) && (pted->pted_pte.pte_lo & 0x1)) {
+		/* write fault and we have a readonly mapping */
+		return 0;
+	}
+	if ((exec_fault != 0)
+	    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
+		/* attempted to execute non-executeable page */
+		return 0;
+	}
+	pte_insert(pted);
+
+	return 1;
 }
 
 int
-pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr)
+pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 {
 	struct pte_desc *pted;
 
@@ -1921,11 +1980,16 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr)
 	 * if the current mapping is RO and the access was a write
 	 * we return 0
 	 */
-	if (!PTED_VALID(pted) ||
-	    ((dsisr & (1 << (31-6))) && (pted->pted_pte.pte_lo & 0x1))) {
+	if (!PTED_VALID(pted)) {
+		return 0;
+	}
+	if ((dsisr & (1 << (31-6))) && (pted->pted_pte.pte_lo & 0x1)) {
 		/* write fault and we have a readonly mapping */
-		if (PTED_VALID(pted))
-			pmap_hash_remove(pted);
+		return 0;
+	}
+	if ((exec_fault != 0)
+	    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
+		/* attempted to execute non-executeable page */
 		return 0;
 	}
 	pte_insert(pted);

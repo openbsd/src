@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.27 2002/07/15 17:01:26 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.28 2002/07/24 02:19:28 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@ typedef u_int sr_t;
 #define	SR_TYPE		0x80000000
 #define	SR_SUKEY	0x40000000
 #define	SR_PRKEY	0x20000000
+#define SR_NOEXEC	0x10000000
 #define	SR_VSID		0x00ffffff
 /*
  * bit 
@@ -127,7 +128,7 @@ void pmap_release(struct pmap *);
 void pmap_real_memory(vm_offset_t *start, vm_size_t *size);
 void switchexit(struct proc *);
 
-int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr);
+int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr, int exec_fault);
 #define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;
 
 #endif	/* _KERNEL */
