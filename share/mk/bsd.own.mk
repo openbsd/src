@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.21.2.1 1995/10/12 06:27:48 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.23 1995/11/03 23:33:33 cgd Exp $
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes
@@ -56,11 +56,6 @@ STRIP?=		-s
 .if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "vax")
 NOPIC=
-.endif
-
-# Alpha doesn't have a working profiling support
-.if (${MACHINE_ARCH} == "alpha")
-NOPROFILE=
 .endif
 
 # No lint, for now.

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.65 1995/09/30 12:21:33 pk Exp $
+#	$NetBSD: bsd.lib.mk,v 1.66 1995/10/22 00:45:56 christos Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -223,3 +223,4 @@ realinstall: beforeinstall
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
+.include <bsd.sys.mk>

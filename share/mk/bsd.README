@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.12 1995/09/24 23:49:06 christos Exp $
+#	$NetBSD: bsd.README,v 1.13 1995/10/22 00:45:54 christos Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -271,6 +271,16 @@ listed in the variable SUBDIRS, the specified directory will be visited
 and the target made.  There is also a default target which allows the
 command "make subdir" where subdir is any directory listed in the variable
 SUBDIRS.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
+<bsd.lib.mk>.  It contains a set of rules for lex and yacc that
+can be used when multiple lex and yacc files are present in the
+same directory, and their respective targets are made in parallel.
+Since it renames the yacc output include files these rules are not
+used by default. They can be enabled by setting the PARALLEL variable
+in the Makefile.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
