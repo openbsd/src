@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.299 2003/05/11 17:27:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.300 2003/05/11 20:05:56 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -930,17 +930,10 @@ install_url() {
 
 	donetconfig
 
-	# Proxy the connections?
-	: ${_proxy_host:=none}
-
-	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
-	if [[ $resp == none ]]; then
-		unset _proxy_host ftp_proxy http_proxy
-	else
-		_proxy_host=$resp
-		export ftp_proxy=$_proxy_host
-		export http_proxy=$_proxy_host
-	fi
+	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
+	    "${ftp_proxy:-none}"
+	unset ftp_proxy http_proxy
+	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
 	# Provide a list of possible servers
 	: ${_ftp_getlist:=y}
