@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.37 2004/06/21 22:41:12 andreas Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.38 2004/06/25 08:41:19 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -523,7 +523,7 @@ db_command_loop()
 		db_output_line = 0;
 
 #ifdef MULTIPROCESSOR
-		db_printf("ddb{%d}> ", curcpu()->ci_dev.dv_unit);
+		db_printf("ddb{%d}> ", CPU_INFO_UNIT(curcpu()));
 #else
 		db_printf("ddb> ");
 #endif

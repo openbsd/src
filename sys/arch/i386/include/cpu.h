@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2004/06/21 23:12:14 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2004/06/25 08:41:19 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -169,6 +169,8 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
+
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev.dv_unit)
 
 #ifdef MULTIPROCESSOR
 
