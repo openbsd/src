@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2001/11/22 07:50:10 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.94 2001/11/22 08:11:23 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5254,7 +5254,6 @@ pmap_kremove4_4c(va, len)
  *
  * There may already be something else there, or we might just be
  * changing protections and/or wiring on an existing mapping.
- *	XXX	should have different entry points for changing!
  */
 
 int
@@ -6062,9 +6061,7 @@ pmap_zero_page4_4c(pa)
 	int pte;
 	struct pvlist *pv;
 
-	pv = pvhead(atop(pa));
-	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && pv &&
-	    pmap_initialized) {
+	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
@@ -6139,16 +6136,15 @@ pmap_zero_page4m(pa)
 	if (ptep == NULL)
 		ptep = getptep4m(pmap_kernel(), (va = (vaddr_t)vpage[0]));
 
-	pv = pvhead(atop(pa));
-	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && pv &&
-	    CACHEINFO.c_vactype != VAC_NONE &&
-	    pmap_initialized)
+	if (pmap_initialized && (pv = pvhead(atop(pa))) != NULL &&
+	    CACHEINFO.c_vactype != VAC_NONE) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
 		 */
 		pv_flushcache(pv);
+	}
 
 	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
 	       (atop(pa) << SRMMU_PPNSHIFT));
