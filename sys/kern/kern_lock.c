@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.9 1999/07/09 15:17:59 art Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.10 2001/11/07 02:44:10 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -318,8 +318,13 @@ lockmgr(lkp, flags, interlkp, p)
 			/*
 			 *	Recursive lock.
 			 */
-			if ((extflags & LK_CANRECURSE) == 0)
+			if ((extflags & LK_CANRECURSE) == 0) {
+				if (extflags & LK_RECURSEFAIL) {
+					error = EDEADLK;
+					break;
+				}
 				panic("lockmgr: locking against myself");
+			}
 			lkp->lk_exclusivecount++;
 			COUNT(p, 1);
 			break;
