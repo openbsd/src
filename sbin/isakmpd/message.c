@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.94 2005/02/22 21:42:14 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.95 2005/02/24 00:30:41 cloder Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1234,8 +1234,7 @@ message_recv(struct message *msg)
 	/* Messages shorter than an ISAKMP header are bad.  */
 	if (sz < ISAKMP_HDR_SZ || sz != GET_ISAKMP_HDR_LENGTH(buf)) {
 		log_print("message_recv: bad message length");
-		message_drop(msg, ISAKMP_NOTIFY_UNEQUAL_PAYLOAD_LENGTHS,
-		    0, 1, 1);
+		message_drop(msg, 0, 0, 1, 1);
 		return -1;
 	}
 #ifdef USE_DEBUG
