@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2002/04/01 16:15:32 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2002/04/01 16:19:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -379,6 +379,7 @@ pmap_bootstrap(vstart)
 {
 	extern char etext, etext1;
 	extern u_int totalphysmem, *ie_mem;
+	extern paddr_t hppa_vtop;
 	vaddr_t addr = hppa_round_page(vstart), t;
 	vsize_t size;
 #if 0 && (defined(HP7100LC_CPU) || defined(HP7300LC_CPU))
@@ -423,6 +424,7 @@ pmap_bootstrap(vstart)
 	 */
 
 	mtctl(addr, CR_VTOP);
+	hppa_vtop = addr;
 	bzero((void *)addr, (hppa_sid_max + 1) * 4);
 	fdcache(HPPA_SID_KERNEL, addr, (hppa_sid_max + 1) * 4);
 	printf("vtop: 0x%x @ 0x%x\n", (hppa_sid_max + 1) * 4, addr);

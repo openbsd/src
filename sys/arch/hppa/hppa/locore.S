@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.62 2002/03/24 07:52:24 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.63 2002/04/01 16:19:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -102,11 +102,20 @@
 
 	.section .bss
 	.export	pdc_stack, data
+	.align	NBPG
 pdc_stack			/* temp stack for PDC call, must be > 9k */
 	.comm	4*NBPG
 	.export	exit_stack, data
 exit_stack			/* temp stack used during exit2() */
 	.comm   2*NBPG
+	.export	emerge_stack, data
+emerge_stack			/* stack for HPMC/TOC/PWRF */
+	.comm	2*NBPG
+	.export	$trap_tmp_save, data
+$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
+	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	64
+	.export	kernelmapped, data
 kernelmapped			/* set when kernel is mapped */
 	.comm	4
 	.export fpu_csw, data
@@ -115,14 +124,17 @@ fpu_csw
 	.export	fpu_curpcb, data
 fpu_curpcb
 	.comm	4
+	.export fpu_enable, data
 fpu_enable
 	.comm	4
-$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
-	.align	2048
-	.block	TF_PHYS		/* XXX must be aligned to 64 */
-	.align	64
+
+	.data
+	.export hppa_vtop, data
+hppa_vtop
+	.word	0
 
 	.text
+	.import	$kernel_setup, entry
 
 /*
  * This is the starting location for the kernel
@@ -156,26 +168,6 @@ ENTRY($start,0)
 	ldo	NBPG-1(arg3), arg3
 	dep	r0, 31, PGSHIFT, arg3
 
-	/*
-	 * disable interrupts and turn off all bits in the psw so that
-	 * we start in a known state.
-	 */
-	rsm	RESET_PSW, r0
-
-	/*
-	 * to keep the spl() routines consistent we need to put the correct
-	 * spl level into eiem, and reset any pending interrupts
-	 */
-	ldi	-1, r1
-	mtctl	r0, eiem	/* IPL_NONE */
-	mtctl	r1, eirr
-
-	/*
-	 * set up the dp pointer so that we can do quick references off of it
-	 */
-	ldil	L%$global$,dp
-	ldo	R%$global$(dp),dp
-
 	/* zero fake trapframe and proc0 u-area */
 	copy	arg3, t2
 	ldi	NBPG+TRAPFRAME_SIZEOF, t1
@@ -195,7 +187,7 @@ $start_zero_tf
 	stw	r0, U_PCB+PCB_SPACE(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
 	stw	arg3, U_PCB+PCB_UVA(arg3)
 	ldil	L%USPACE, arg0
-	add	arg3, arg0, arg0
+	add	arg0, arg3, arg0
 	ldil	L%proc0paddr, t1
 	stw	arg3, R%proc0paddr(t1)
 	ldil	L%proc0, t2
@@ -208,73 +200,27 @@ $start_zero_tf
 	stw	arg3, TF_CR30-TRAPFRAME_SIZEOF(sp)
 
 	/*
-	 * We need to set the Q bit so that we can take TLB misses after we
-	 * turn on virtual memory.
-	 */
-	mtctl	r0, pcsq
-	mtctl	r0, pcsq
-	ldil	L%$qisnowon, t1
-	ldo	R%$qisnowon(t1), t1
-	mtctl	t1, pcoq
-	ldo	4(t1),t1
-	mtctl	t1, pcoq
-	ldi	PSW_Q|PSW_I, t1
-	mtctl	t1, ipsw
-	rfi
-	nop
-
-$qisnowon
-	/*
-	 * load address of interrupt vector table
-	 */
-	ldil	L%$ivaaddr,t2
-	ldo	R%$ivaaddr(t2),t2
-	mtctl	t2,iva
-
-	/*
-	 * Create a stack frame for us to call C with. Clear out the previous
-	 * sp marker to mark that this is the first frame on the stack.
-	 */
-	copy	sp, t1
-	stwm	r0, HPPA_FRAME_SIZE(sp)
-	copy	sp, r3
-	stwm	t1, HPPA_FRAME_SIZE(sp)
-
-	/*
 	 * disable all coprocessors
 	 */
 	mtctl	r0, ccr
 
+	copy	sp, arg1
+	ldil	L%$qisnowon, rp
+	ldo	R%$qisnowon(rp), rp
+	b	$kernel_setup
+	ldi	PSW_Q|PSW_I, arg2
+
+$qisnowon
 	/*
 	 * call C routine hppa_init() to initialize VM
 	 */
-	.import hppa_init, code
 	ldil	L%hppa_init, r1
 	ldo	R%hppa_init(r1), r1
+	.import hppa_init, code
 	.call
 	blr	r0, rp
 	bv,n	(r1)
 	nop
-
-	/*
-	 * go to virtual mode...
-	 * get things ready for the kernel to run in virtual mode
-	 */
-	ldi	HPPA_PID_KERNEL, r1
-	mtctl	r1, pidr1
-	mtctl	r1, pidr2
-#if pbably_not_worth_it
-	mtctl	r0, pidr3
-	mtctl	r0, pidr4
-#endif
-	mtsp	r0, sr0
-	mtsp	r0, sr1
-	mtsp	r0, sr2
-	mtsp	r0, sr3
-	mtsp	r0, sr4
-	mtsp	r0, sr5
-	mtsp	r0, sr6
-	mtsp	r0, sr7
 
 	/*
 	 * Cannot change the queues or IPSW with the Q-bit on
@@ -298,9 +244,8 @@ $qisnowon
 	nop
 
 $virtual_mode
-	addi	1, r0, t2
 	ldil	L%kernelmapped, t1
-	stw	t2, R%kernelmapped(t1)
+	stw	t1, R%kernelmapped(t1)
 
 #ifdef DDB
 	.import	Debugger, code
@@ -328,6 +273,80 @@ $callmain
 	bv	(rp)
 	nop
 EXIT($start)
+
+LEAF_ENTRY($kernel_setup)
+
+	/*
+	 * disable interrupts and turn off all bits in the psw so that
+	 * we start in a known state.
+	 */
+	rsm	RESET_PSW, r0
+
+	/* get things ready for the kernel to run in virtual mode */
+	ldi	HPPA_PID_KERNEL, r1
+	mtctl	r1, pidr1
+	mtctl	r1, pidr2
+#if pbably_not_worth_it
+	mtctl	r0, pidr3
+	mtctl	r0, pidr4
+#endif
+	mtsp	r0, sr0
+	mtsp	r0, sr1
+	mtsp	r0, sr2
+	mtsp	r0, sr3
+	mtsp	r0, sr4
+	mtsp	r0, sr5
+	mtsp	r0, sr6
+	mtsp	r0, sr7
+
+	/*
+	 * to keep the spl() routines consistent we need to put the correct
+	 * spl level into eiem, and reset any pending interrupts
+	 */
+	ldi	-1, r1
+	mtctl	r0, eiem	/* IPL_NONE */
+	mtctl	r1, eirr
+
+	/*
+	 * load address of interrupt vector table
+	 */
+	ldil	L%$ivaaddr, t2
+	ldo	R%$ivaaddr(t2), t2
+	mtctl	t2, iva
+
+	/*
+	 * set up the dp pointer so that we can do quick references off of it
+	 */
+	ldil	L%$global$,dp
+	ldo	R%$global$(dp),dp
+
+	/*
+	 * Create a stack frame for us to call C with. Clear out the previous
+	 * sp marker to mark that this is the first frame on the stack.
+	 */
+	copy	arg1, sp
+	ldo	0(arg1), r3
+	stw,ma	r0, HPPA_FRAME_SIZE(sp)
+	stw	r0, HPPA_FRAME_CRP(sp)
+	stw	r0, HPPA_FRAME_PSP(sp)
+	copy	r3, r1
+	copy	sp, r3
+	stw,ma	r1, HPPA_FRAME_SIZE(sp)
+
+	/*
+	 * We need to set the Q bit so that we can take TLB misses after we
+	 * turn on virtual memory.
+	 */
+	mtctl	r0, pcsq
+	mtctl	r0, pcsq
+	mtctl	rp, pcoq
+	ldo	4(rp), rp
+	mtctl	rp, pcoq
+	mtctl	arg2, ipsw
+	rfi
+	nop
+	nop
+EXIT($kernel_setup)
 
 /* int
  * pdc_call(func, pdc_flag, ...)
@@ -1016,25 +1035,6 @@ hpmc_v
 	ATRAP(unk63,63)
 					/* 64 */
 
-	.export	TLABEL(hpmc), entry
-ENTRY(TLABEL(hpmc),0)
-	/* TODO: save cpu context */
-	/* TODO: save PIM info */
-	/* TODO: call pdc appropriately */
-
-	.import	hpmc_dump, code
-	ldil	L%hpmc_dump, t1
-	ldo	R%hpmc_dump(t1), t1
-	.call
-	blr	r0, rp
-	bv,n	0(t1)
-	nop
-
-	/* never returns, but still */
-hpmc_never_dies
-	b	hpmc_never_dies
-	nop
-EXIT(TLABEL(hpmc))
 
 	.export TLABEL(emu), entry
 LEAF_ENTRY(TLABEL(emu))
@@ -1488,24 +1488,28 @@ EXIT(desidhash_l)
 
 $tlbd_l
 	TLB_PULL_L(1)
+	sync
 	IDTLBAF(17)
 	IDTLBPF(25)
+	nop
 	rfir
 	nop
 $itlbna_l
 $itlb_l
-#if 0			/* only needed for a separate i/d tlb */
 	TLB_PULL_L(0)
+	sync
 	IITLBAF(17)
 	IITLBPF(25)
+	nop
 	rfir
 	nop
-#endif
 $dtlbna_l
 $dtlb_l
 	TLB_PULL_L(0)
+	sync
 	IDTLBAF(17)
 	IDTLBPF(25)
+	nop
 	rfir
 	nop
 #endif /* HP7100LC_CPU */
@@ -1784,18 +1788,54 @@ $trap$all$end
 EXIT(TLABEL(all))
 
 /*
+ * High Priority Machine Check Interrupt
+ */
+	.export	TLABEL(hpmc), entry
+ENTRY(TLABEL(hpmc),0)
+
+	mtsp	r0, sr0
+	ldil	L%hppa_vtop, t1
+	ldw	R%hppa_vtop(t1), t1
+	mtctl	t1, CR_VTOP
+
+	.import	hpmc_dump, code
+	ldil	L%hpmc_dump, rp
+	ldo	R%hpmc_dump(rp), rp
+	ldil	L%kpsw, %arg2
+	ldw	R%kpsw(%arg2), %arg2
+	depi	0, PSW_I_POS, 1, %arg2
+	stw	%arg2, R%kpsw(t1)
+	b	$kernel_setup
+	ldil	L%emerge_stack, arg1
+
+	/* never returns, but still */
+hpmc_never_dies
+	b	hpmc_never_dies
+	nop
+EXIT(TLABEL(hpmc))
+
+/*
  * transfer of control handler
  */
 ENTRY(hppa_toc,0)
 
+	mtsp	r0, sr0
+	ldil	L%hppa_vtop, t1
+	ldw	R%hppa_vtop(t1), t1
+	mtctl	t1, CR_VTOP
+
+	/* TODO reload btlb */
+
 	.import	boot, code
-	ldil	L%boot, t1
-	ldo	R%boot(t1), t1
+	ldil	L%boot, rp
+	ldo	R%boot(rp), rp
+	ldil	L%kpsw, %arg2
+	ldw	R%kpsw(%arg2), %arg2
+	depi	0, PSW_I_POS, 1, %arg2
+	stw	%arg2, R%kpsw(t1)
 	ldi	0, arg0
-	.call
-	blr	r0, rp
-	bv,n	0(t1)
-	nop
+	b	$kernel_setup
+	ldil	L%emerge_stack, arg1
 
 ALTENTRY(hppa_toc_end)
 	.word	0
@@ -1806,14 +1846,23 @@ EXIT(hppa_toc)
  */
 ENTRY(hppa_pfr,0)
 
+	mtsp	r0, sr0
+	ldil	L%hppa_vtop, t1
+	ldw	R%hppa_vtop(t1), t1
+	mtctl	t1, CR_VTOP
+
+	/* TODO reload btlb */
+
 	.import	boot, code
-	ldil	L%boot, t1
-	ldo	R%boot(t1), t1
+	ldil	L%boot, rp
+	ldo	R%boot(rp), rp
+	ldil	L%kpsw, %arg2
+	ldw	R%kpsw(%arg2), %arg2
+	depi	0, PSW_I_POS, 1, %arg2
+	stw	%arg2, R%kpsw(t1)
 	ldi	RB_HALT|RB_POWERDOWN, arg0
-	.call
-	blr	r0, rp
-	bv,n	0(t1)
-	nop
+	b	$kernel_setup
+	ldil	L%emerge_stack, arg1
 
 ALTENTRY(hppa_pfr_end)
 	.word	0
