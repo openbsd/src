@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.4 2000/01/02 22:06:51 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.5 2000/01/16 01:35:18 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -41,7 +41,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.32 2000/01/01 16:49:54 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.35 2000/01/15 20:47:21 tom Exp $")
 
 /*
    some of the code in here was contributed by:
@@ -150,7 +150,7 @@ tgetnum(NCURSES_CONST char *id)
 	    const char *capname = ExtNumname(tp, i, numcodes);
 	    if (!strncmp(id, capname, 2)) {
 		if (!VALID_NUMERIC(tp->Numbers[i]))
-		    return ABSENT_NUMERIC;
+		    returnCode(ABSENT_NUMERIC);
 		returnCode(tp->Numbers[i]);
 	    }
 	}
@@ -177,10 +177,9 @@ tgetstr(NCURSES_CONST char *id, char **area)
 	TERMTYPE *tp = &(cur_term->type);
 	for_each_string(i, tp) {
 	    const char *capname = ExtStrname(tp, i, strcodes);
-	    T(("trying %s", capname));
 	    if (!strncmp(id, capname, 2)) {
-		T(("found match : %s", _nc_visbuf(tp->Strings[i])));
-		/* setupterm forces cancelled strings to null */
+		TR(TRACE_DATABASE,("found match : %s", _nc_visbuf(tp->Strings[i])));
+		/* setupterm forces canceled strings to null */
 		if (area != 0
 		    && *area != 0
 		    && VALID_STRING(tp->Strings[i])) {

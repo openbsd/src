@@ -1,7 +1,7 @@
-/*	$OpenBSD: tic.h,v 1.7 1999/11/28 17:59:28 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.8 2000/01/16 01:35:17 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -99,8 +99,21 @@ extern "C" {
 /* location of user's personal info directory */
 #define PRIVATE_INFO	"%s/.terminfo"	/* plug getenv("HOME") into %s */
 
+/*
+ * Some traces are designed to be used via tic's verbose option (and similar in
+ * infocmp and toe) rather than the 'trace()' function.  So we use the bits
+ * above the normal trace() parameter as a debug-level.
+ */
+
+#define MAX_DEBUG_LEVEL 15
+#define DEBUG_LEVEL(n)	((n) << 12)	/* see TRACE_MAXIMUM */
+
+#define set_trace_level(n) \
+ 	_nc_tracing &= DEBUG_LEVEL(MAX_DEBUG_LEVEL), \
+	_nc_tracing |= DEBUG_LEVEL(n)
+
 #ifdef TRACE
-#define DEBUG(n, a)	if (_nc_tracing & (1 << (n - 1))) _tracef a
+#define DEBUG(n, a)	if (_nc_tracing >= DEBUG_LEVEL(n)) _tracef a
 #else
 #define DEBUG(n, a)	/*nothing*/
 #endif

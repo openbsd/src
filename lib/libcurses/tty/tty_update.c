@@ -1,7 +1,7 @@
-/*	$OpenBSD: tty_update.c,v 1.4 1999/11/28 17:49:55 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.5 2000/01/16 01:35:18 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -75,7 +75,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.122 1999/11/28 03:07:38 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.123 2000/01/15 23:49:36 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -88,6 +88,7 @@ MODULE_ID("$From: tty_update.c,v 1.122 1999/11/28 03:07:38 tom Exp $")
  */
 #define CHECK_INTERVAL	5
 
+#define FILL_BCE() (SP->_coloron && !SP->_default_color && !back_color_erase)
 /*
  * Enable checking to see if doupdate and friends are tracking the true
  * cursor position correctly.  NOTE: this is a debugging hack which will
@@ -874,7 +875,7 @@ bool	needclear = FALSE;
 	    TPUTS_TRACE("clr_eol");
 	    if (SP->_el_cost > (screen_columns - SP->_curscol)
 #ifdef NCURSES_EXT_FUNCS
-	    || (SP->_coloron && !SP->_default_color && !back_color_erase)
+	    || FILL_BCE()
 #endif
 	    )
 	    {
@@ -901,7 +902,7 @@ int row, col;
 	col = SP->_curscol;
 
 #ifdef NCURSES_EXT_FUNCS
-	if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+	if (FILL_BCE()) {
 		int i, j, k = col;
 		for (i = row; i < screen_lines; i++) {
 			GoTo(i, k);
@@ -1377,18 +1378,29 @@ static void InsStr(chtype *line, int count)
 
 static void DelChar(int count)
 {
+	int n;
+
 	T(("DelChar(%d) called, position = (%d,%d)", count, newscr->_cury, newscr->_curx));
 
 	if (parm_dch) {
 		TPUTS_TRACE("parm_dch");
 		tputs(tparm(parm_dch, count), count, _nc_outch);
 	} else {
-		while (count--)
-		{
+		for (n = 0; n < count; n++) {
 			TPUTS_TRACE("delete_character");
 			putp(delete_character);
 		}
 	}
+#ifdef NCURSES_EXT_FUNCS
+	if (FILL_BCE()) {
+		chtype blank = ClrBlank(stdscr);
+		GoTo(SP->_cursrow, screen_columns - count);
+		UpdateAttrs(blank);
+		for (n = 0; n < count; n++) {
+			PutChar(blank);
+		}
+	}
+#endif
 }
 
 /*
@@ -1492,7 +1504,7 @@ static int scroll_csr_forward(int n, int top, int bot, int miny, int maxy, chtyp
 	return ERR;
 
 #ifdef NCURSES_EXT_FUNCS
-    if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+    if (FILL_BCE()) {
 	for (i = 0; i < n; i++) {
 	    GoTo(bot-i, 0);
 	    for (j = 0; j < screen_columns; j++)
@@ -1561,7 +1573,7 @@ static int scroll_csr_backward(int n, int top, int bot, int miny, int maxy, chty
 	return ERR;
 
 #ifdef NCURSES_EXT_FUNCS
-    if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+    if (FILL_BCE()) {
 	for (i = 0; i < n; i++) {
 	    GoTo(top+i, 0);
 	    for (j = 0; j < screen_columns; j++)
