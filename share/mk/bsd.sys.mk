@@ -1,8 +1,12 @@
-#	$OpenBSD: bsd.sys.mk,v 1.5 1996/03/05 11:13:04 mickey Exp $
+#	$OpenBSD: bsd.sys.mk,v 1.6 1996/05/13 12:44:44 niklas Exp $
 #	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
-# Overrides used for NetBSD source tree builds.
+#
+# Overrides used for OpenBSD source tree builds.
 
 #CFLAGS+= -Werror
+.if defined(DESTDIR)
+CPPFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
 
 .if defined(PARALLEL)
 # Lex
