@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.5 1998/02/15 18:48:58 niklas Exp $	*/
+/*	$OpenBSD: read.c,v 1.6 1998/02/15 21:08:31 niklas Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.5 1998/02/15 18:48:58 niklas Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.6 1998/02/15 21:08:31 niklas Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -1459,6 +1459,7 @@ symbolS *	symbolP;
 		    
 		    S_SET_VALUE(symbolP, exp.X_add_number + S_GET_VALUE(exp.X_add_symbol));
 		    symbolP->sy_frag = exp.X_add_symbol->sy_frag;
+		    symbolP->sy_aux = exp.X_add_symbol->sy_aux;
 		    break;
 		    
 	    case SEG_PASS1:		/* Not an error. Just try another pass. */
