@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.36 2001/06/08 08:08:55 art Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.37 2001/06/25 00:43:12 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -491,7 +491,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
-	extern int cold;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);

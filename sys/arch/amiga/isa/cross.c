@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.14 2000/05/28 03:28:42 art Exp $	*/
+/*	$OpenBSD: cross.c,v 1.15 2001/06/25 00:43:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -91,8 +91,6 @@ crossmatch(parent, match, aux)
 }
 
 #else
-
-extern int cold;
 
 int crossdebug = 0;
 

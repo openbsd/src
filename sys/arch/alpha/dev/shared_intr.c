@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.9 2000/11/08 21:27:13 ericj Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.10 2001/06/25 00:43:07 mickey Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -42,8 +42,6 @@
 #include <machine/intr.h>
 
 static const char *intr_typename __P((int));
-
-extern int cold;
 
 static const char *
 intr_typename(type)

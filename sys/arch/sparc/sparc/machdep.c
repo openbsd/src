@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2001/05/17 18:41:50 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2001/06/25 00:43:16 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -690,7 +690,6 @@ boot(howto)
 {
 	int i;
 	static char str[4];	/* room for "-sd\0" */
-	extern int cold;
 
 	if (cold) {
 		printf("halted\n\n");

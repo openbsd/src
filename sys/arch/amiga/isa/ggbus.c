@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.13 1999/01/19 10:04:54 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.14 2001/06/25 00:43:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -50,8 +50,6 @@
 #include <amiga/isa/isa_machdep.h>
 #include <amiga/isa/ggbusvar.h>
 #include <amiga/isa/ggbusreg.h>
-
-extern int cold;
 
 int ggdebug = 0;
 int ggstrayints = 0;

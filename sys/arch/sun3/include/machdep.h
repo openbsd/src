@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.12 2001/05/05 22:34:22 art Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.13 2001/06/25 00:43:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -60,7 +60,6 @@ struct trapframe;
 struct pmap;
 
 extern int cache_size;
-extern int cold;
 extern int fputype;
 
 extern label_t *nofault;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.9 2001/05/01 16:51:10 millert Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.10 2001/06/25 00:43:08 mickey Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -540,7 +540,6 @@ nhpibppwatch(arg)
 {
 	struct hpibbus_softc *hs = arg;
 	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
-	extern int cold;
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;

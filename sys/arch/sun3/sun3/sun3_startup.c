@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.16 2001/06/11 01:30:13 miod Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.17 2001/06/25 00:43:18 mickey Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -868,8 +868,6 @@ void
 sun3_bootstrap(keh)
 	struct exec keh;	/* kernel exec header */
 {
-	extern int cold;
-
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scb.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
+/*	$OpenBSD: scb.c,v 1.2 2001/06/25 00:43:19 mickey Exp $	*/
 /*	$NetBSD: scb.c,v 1.9 2000/01/24 02:40:34 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -49,7 +49,6 @@ static	void scb_stray __P((void *));
 
 static	struct ivec_dsp *scb_vec;
 static	volatile int vector, ipl, gotintr;
-extern	int cold;
 /*
  * Generates a new SCB.
  */

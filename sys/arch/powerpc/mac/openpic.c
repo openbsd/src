@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.10 2001/04/08 05:00:26 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.11 2001/06/25 00:43:15 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -239,7 +239,6 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
-	extern int cold;
 
 	fakehand.ih_next = NULL;
 	fakehand.ih_fun  = fakeintr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2001/05/05 22:33:57 art Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.13 2001/06/25 00:43:13 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -95,13 +95,6 @@
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
-
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-extern int cold;		/* if 1, still working on cold-start */
 
 struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	setroot __P((void));

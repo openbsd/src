@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/05/05 22:33:22 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/06/25 00:43:06 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -87,8 +87,6 @@ static int getstr __P((char *cp, int size));
 void
 cpu_configure()
 {
-	extern int cold;
-
 	parse_prom_bootdev();
 
         /*

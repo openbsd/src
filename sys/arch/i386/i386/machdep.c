@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.163 2001/06/08 08:08:51 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.164 2001/06/25 00:43:11 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1591,8 +1591,6 @@ void
 boot(howto)
 	int howto;
 {
-	extern int cold;
-
 	if (cold) {
 		howto |= RB_HALT;
 		goto haltsys;

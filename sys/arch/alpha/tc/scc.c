@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.8 2001/04/17 04:30:46 aaron Exp $	*/
+/*	$OpenBSD: scc.c,v 1.9 2001/06/25 00:43:07 mickey Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -232,7 +232,6 @@ void	scc_rr __P((char *, scc_regmap_t *));
  * console variables, for using serial console while still cold and
  * autoconfig has not attached the scc device.
  */
-extern  int cold;
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {

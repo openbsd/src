@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2001/05/05 22:33:44 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2001/06/25 00:43:11 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ void diskconf __P((void));
  * the configuration process, and are used in initializing
  * the machine.
  */
-extern int	cold;		/* cold start flag initialized in locore.s */
 dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
 
 /*

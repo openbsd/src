@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.40 2001/06/14 21:30:45 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.41 2001/06/25 00:43:14 mickey Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -172,7 +172,6 @@ volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
 
 int physmem;	  /* available physical memory, in pages */
-int cold;	  /* boot process flag */
 vm_offset_t avail_end, avail_start, avail_next;
 int foodebug = 0;    /* for size_memory() */
 int longformat = 1;  /* for regdump() */
@@ -2216,7 +2215,6 @@ regdump(struct trapframe *f)
 void
 mvme_bootstrap(void)
 {
-	extern int cold;
 	extern int kernelstart;
 	extern vm_offset_t size_memory(void);
 	extern struct consdev *cn_tab;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.8 2001/05/02 06:02:46 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.9 2001/06/25 00:43:15 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -243,7 +243,6 @@ macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
-	extern int cold;
 
 	fakehand.ih_next = NULL;
 	fakehand.ih_fun  = fakeintr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2001/06/05 16:13:15 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2001/06/25 00:43:09 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -844,8 +844,6 @@ void
 boot(howto)
 	int howto;
 {
-	extern int cold;
-
 #if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
 	(void)&howto;
 #endif

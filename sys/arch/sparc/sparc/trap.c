@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2001/05/10 10:34:49 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2001/06/25 00:43:17 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -87,8 +87,6 @@
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/cpuvar.h>
-
-extern int cold;
 
 #ifdef DEBUG
 int	rwindow_debug = 0;

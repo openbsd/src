@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.4 2001/04/01 16:51:40 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.5 2001/06/25 00:43:19 mickey Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -60,8 +60,6 @@ static int	ka680_mchk __P((caddr_t));
 static void	ka680_halt __P((void));
 static void	ka680_reboot __P((int));
  
-extern int cold;		/* cold-start flag */
-
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches
  * via IPRs.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2001/06/15 22:45:33 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2001/06/25 00:43:19 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -66,8 +66,6 @@ void	setroot __P((void));		/* rootfil.c */
 struct cpu_dep *dep_call;
 int	mastercpu;	/* chief of the system */
 struct device *booted_from;
-
-extern int cold; 	/* cold-start flag */
 
 #define MAINBUS	0
 
