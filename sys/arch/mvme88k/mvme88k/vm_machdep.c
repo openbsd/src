@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.56 2003/11/17 14:48:20 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.57 2004/01/02 17:08:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -60,6 +60,7 @@
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/cpu_number.h>
 #include <machine/locore.h>
 #include <machine/trap.h>
 
@@ -282,7 +283,7 @@ vmapbuf(bp, len)
 	 * new pages get mapped in.
 	 */
 
-	cmmu_flush_tlb(1, kva, len);
+	cmmu_flush_tlb(cpu_number(), 1, kva, len);
 
 	bp->b_data = (caddr_t)(kva + off);
 	while (len > 0) {
@@ -354,7 +355,7 @@ iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
 	if (error != 0)
 		return NULL;
 
-	cmmu_flush_tlb(1, iova, len);
+	cmmu_flush_tlb(cpu_number(), 1, iova, len);	/* necessary? */
 
 	ppa = trunc_page(ppa);
 

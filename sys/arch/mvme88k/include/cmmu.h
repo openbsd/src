@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.15 2003/11/09 00:32:00 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.16 2004/01/02 17:08:57 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -59,19 +59,15 @@ struct cmmu_p {
 	void (*cmmu_shutdown_now_func)(void);
 	void (*cmmu_parity_enable_func)(void);
 	unsigned (*cmmu_cpu_number_func)(void);
-	void (*cmmu_remote_set_sapr_func)(unsigned, unsigned);
+	void (*cmmu_set_sapr_func)(unsigned, unsigned);
 	void (*cmmu_set_uapr_func)(unsigned);
 	void (*cmmu_set_pair_batc_entry_func)(unsigned, unsigned, unsigned);
-	void (*cmmu_flush_remote_tlb_func)(unsigned, unsigned, vaddr_t, vsize_t);
-	void (*cmmu_flush_tlb_func)(unsigned, vaddr_t, vsize_t);
+	void (*cmmu_flush_tlb_func)(unsigned, unsigned, vaddr_t, vsize_t);
 	void (*cmmu_pmap_activate_func)(unsigned, unsigned,
 	    u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
-	void (*cmmu_flush_remote_cache_func)(int, paddr_t, psize_t);
-	void (*cmmu_flush_cache_func)(paddr_t, psize_t);
-	void (*cmmu_flush_remote_inst_cache_func)(int, paddr_t, psize_t);
-	void (*cmmu_flush_inst_cache_func)(paddr_t, psize_t);
-	void (*cmmu_flush_remote_data_cache_func)(int, paddr_t, psize_t);
-	void (*cmmu_flush_data_cache_func)(paddr_t, psize_t);
+	void (*cmmu_flush_cache_func)(int, paddr_t, psize_t);
+	void (*cmmu_flush_inst_cache_func)(int, paddr_t, psize_t);
+	void (*cmmu_flush_data_cache_func)(int, paddr_t, psize_t);
 	void (*dma_cachectl_func)(vaddr_t, vsize_t, int);
 	/* DDB only */
 	void (*cmmu_dump_config_func)(void);
@@ -90,18 +86,14 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_shutdown_now	(cmmu->cmmu_shutdown_now_func)
 #define	cmmu_parity_enable	(cmmu->cmmu_parity_enable_func)
 #define	cmmu_cpu_number		(cmmu->cmmu_cpu_number_func)
-#define	cmmu_remote_set_sapr(a, b)	(cmmu->cmmu_remote_set_sapr_func)(a, b)
+#define	cmmu_set_sapr(a, b)	(cmmu->cmmu_set_sapr_func)(a, b)
 #define	cmmu_set_uapr(a)	(cmmu->cmmu_set_uapr_func)(a)
 #define	cmmu_set_pair_batc_entry(a, b, c)	(cmmu->cmmu_set_pair_batc_entry_func)(a, b, c)
-#define	cmmu_flush_remote_tlb(a, b, c, d) 	(cmmu->cmmu_flush_remote_tlb_func)(a, b, c, d)
-#define	cmmu_flush_tlb(a, b, c)	(cmmu->cmmu_flush_tlb_func)(a, b, c)
+#define	cmmu_flush_tlb(a, b, c, d) 	(cmmu->cmmu_flush_tlb_func)(a, b, c, d)
 #define	cmmu_pmap_activate(a, b, c, d) 	(cmmu->cmmu_pmap_activate_func)(a, b, c, d)
-#define	cmmu_flush_remote_cache(a, b, c)	(cmmu->cmmu_flush_remote_cache_func)(a, b, c)
-#define	cmmu_flush_cache(a, b)	(cmmu->cmmu_flush_cache_func)(a, b)
-#define	cmmu_flush_remote_inst_cache(a, b, c)	(cmmu->cmmu_flush_remote_inst_cache_func)(a, b, c)
-#define	cmmu_flush_inst_cache(a, b)	(cmmu->cmmu_flush_inst_cache_func)(a, b)
-#define	cmmu_flush_remote_data_cache(a, b, c)	(cmmu->cmmu_flush_remote_data_cache_func)(a, b, c)
-#define	cmmu_flush_data_cache(a, b)	(cmmu->cmmu_flush_data_cache_func)(a, b)
+#define	cmmu_flush_cache(a, b, c)	(cmmu->cmmu_flush_cache_func)(a, b, c)
+#define	cmmu_flush_inst_cache(a, b, c)	(cmmu->cmmu_flush_inst_cache_func)(a, b, c)
+#define	cmmu_flush_data_cache(a, b, c)	(cmmu->cmmu_flush_data_cache_func)(a, b, c)
 #define	dma_cachectl(a, b, c)	(cmmu->dma_cachectl_func)(a, b, c)
 #define	cmmu_dump_config	(cmmu->cmmu_dump_config_func)
 #define	cmmu_show_translation(a, b, c, d)	(cmmu->cmmu_show_translation_func)(a, b, c, d)

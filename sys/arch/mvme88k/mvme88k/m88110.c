@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.12 2003/12/22 20:10:23 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.13 2004/01/02 17:08:57 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -95,19 +95,15 @@ void m88110_cpu_configuration_print(int);
 void m88110_cmmu_shutdown_now(void);
 void m88110_cmmu_parity_enable(void);
 unsigned m88110_cmmu_cpu_number(void);
-void m88110_cmmu_remote_set_sapr(unsigned, unsigned);
+void m88110_cmmu_set_sapr(unsigned, unsigned);
 void m88110_cmmu_set_uapr(unsigned);
 void m88110_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
-void m88110_cmmu_flush_remote_tlb(unsigned, unsigned, vaddr_t, vsize_t);
-void m88110_cmmu_flush_tlb(unsigned, vaddr_t, vsize_t);
+void m88110_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
 void m88110_cmmu_pmap_activate(unsigned, unsigned,
     u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
-void m88110_cmmu_flush_remote_cache(int, paddr_t, psize_t);
-void m88110_cmmu_flush_cache(paddr_t, psize_t);
-void m88110_cmmu_flush_remote_inst_cache(int, paddr_t, psize_t);
-void m88110_cmmu_flush_inst_cache(paddr_t, psize_t);
-void m88110_cmmu_flush_remote_data_cache(int, paddr_t, psize_t);
-void m88110_cmmu_flush_data_cache(paddr_t, psize_t);
+void m88110_cmmu_flush_cache(int, paddr_t, psize_t);
+void m88110_cmmu_flush_inst_cache(int, paddr_t, psize_t);
+void m88110_cmmu_flush_data_cache(int, paddr_t, psize_t);
 void m88110_dma_cachectl(vaddr_t, vsize_t, int);
 void m88110_cmmu_dump_config(void);
 void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
@@ -121,17 +117,13 @@ struct cmmu_p cmmu88110 = {
 	m88110_cmmu_shutdown_now,
 	m88110_cmmu_parity_enable,
 	m88110_cmmu_cpu_number,
-	m88110_cmmu_remote_set_sapr,
+	m88110_cmmu_set_sapr,
 	m88110_cmmu_set_uapr,
 	m88110_cmmu_set_pair_batc_entry,
-	m88110_cmmu_flush_remote_tlb,
 	m88110_cmmu_flush_tlb,
 	m88110_cmmu_pmap_activate,
-	m88110_cmmu_flush_remote_cache,
 	m88110_cmmu_flush_cache,
-	m88110_cmmu_flush_remote_inst_cache,
 	m88110_cmmu_flush_inst_cache,
-	m88110_cmmu_flush_remote_data_cache,
 	m88110_cmmu_flush_data_cache,
 	m88110_dma_cachectl,
 #ifdef DDB
@@ -316,7 +308,7 @@ m88110_cmmu_cpu_number(void)
 }
 
 void
-m88110_cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
+m88110_cmmu_set_sapr(unsigned cpu, unsigned ap)
 {
 	unsigned ictl, dctl;
 
@@ -391,7 +383,7 @@ m88110_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
  *	Some functionality mimiced in m88110_cmmu_pmap_activate.
  */
 void
-m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
+m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
     vsize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
@@ -407,17 +399,6 @@ m88110_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 	CMMU_UNLOCK;
 
 	splx(s);
-}
-
-/*
- *	flush my personal tlb
- */
-void
-m88110_cmmu_flush_tlb(unsigned kernel, vaddr_t vaddr, vsize_t size)
-{
-	int cpu = cpu_number();
-
-	m88110_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
 }
 
 /*
@@ -476,7 +457,7 @@ m88110_cmmu_pmap_activate(unsigned cpu, unsigned uapr,
  *	flush both Instruction and Data caches
  */
 void
-m88110_cmmu_flush_remote_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -485,24 +466,13 @@ m88110_cmmu_flush_remote_cache(int cpu, paddr_t physaddr, psize_t size)
 	if (mc88410_present())
 		mc88410_flush();
 	splx(s);
-}
-
-/*
- *	flush both Instruction and Data caches
- */
-void
-m88110_cmmu_flush_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-
-	m88110_cmmu_flush_remote_cache(cpu, physaddr, size);
 }
 
 /*
  *	flush Instruction caches
  */
 void
-m88110_cmmu_flush_remote_inst_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -510,19 +480,11 @@ m88110_cmmu_flush_remote_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 	splx(s);
 }
 
-void
-m88110_cmmu_flush_inst_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-
-	m88110_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
-}
-
 /*
  * flush data cache
  */
 void
-m88110_cmmu_flush_remote_data_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();	/* XXX really disable interrupts? */
 
@@ -530,14 +492,6 @@ m88110_cmmu_flush_remote_data_cache(int cpu, paddr_t physaddr, psize_t size)
 	if (mc88410_present())
 		mc88410_flush();
 	splx(s);
-}
-
-void
-m88110_cmmu_flush_data_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-
-	m88110_cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
 /*

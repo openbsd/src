@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.33 2003/12/21 13:23:32 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.34 2004/01/02 17:08:55 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -553,7 +553,7 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 	}
 	/* XXX test return value */
 	pmap_extract(pmap_kernel(), (vaddr_t)addr, &physaddr);
-	cmmu_flush_cache(physaddr, psize);
+	cmmu_flush_cache(cpu_number(), physaddr, psize);
 }
 
 /* to print a character to the console */

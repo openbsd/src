@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.25 2003/12/22 20:10:23 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.26 2004/01/02 17:08:57 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -107,19 +107,15 @@ void m8820x_cpu_configuration_print(int);
 void m8820x_cmmu_shutdown_now(void);
 void m8820x_cmmu_parity_enable(void);
 unsigned m8820x_cmmu_cpu_number(void);
-void m8820x_cmmu_remote_set_sapr(unsigned, unsigned);
+void m8820x_cmmu_set_sapr(unsigned, unsigned);
 void m8820x_cmmu_set_uapr(unsigned);
 void m8820x_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
-void m8820x_cmmu_flush_remote_tlb(unsigned, unsigned, vaddr_t, vsize_t);
-void m8820x_cmmu_flush_tlb(unsigned, vaddr_t, vsize_t);
+void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
 void m8820x_cmmu_pmap_activate(unsigned, unsigned,
     u_int32_t i_batc[BATC_MAX], u_int32_t d_batc[BATC_MAX]);
-void m8820x_cmmu_flush_remote_cache(int, paddr_t, psize_t);
-void m8820x_cmmu_flush_cache(paddr_t, psize_t);
-void m8820x_cmmu_flush_remote_inst_cache(int, paddr_t, psize_t);
-void m8820x_cmmu_flush_inst_cache(paddr_t, psize_t);
-void m8820x_cmmu_flush_remote_data_cache(int, paddr_t, psize_t);
-void m8820x_cmmu_flush_data_cache(paddr_t, psize_t);
+void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
+void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
+void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
 void m8820x_dma_cachectl(vaddr_t, vsize_t, int);
 void m8820x_cmmu_dump_config(void);
 void m8820x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
@@ -133,17 +129,13 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_shutdown_now,
 	m8820x_cmmu_parity_enable,
 	m8820x_cmmu_cpu_number,
-	m8820x_cmmu_remote_set_sapr,
+	m8820x_cmmu_set_sapr,
 	m8820x_cmmu_set_uapr,
 	m8820x_cmmu_set_pair_batc_entry,
-	m8820x_cmmu_flush_remote_tlb,
 	m8820x_cmmu_flush_tlb,
 	m8820x_cmmu_pmap_activate,
-	m8820x_cmmu_flush_remote_cache,
 	m8820x_cmmu_flush_cache,
-	m8820x_cmmu_flush_remote_inst_cache,
 	m8820x_cmmu_flush_inst_cache,
-	m8820x_cmmu_flush_remote_data_cache,
 	m8820x_cmmu_flush_data_cache,
 	m8820x_dma_cachectl,
 #ifdef DDB
@@ -1009,7 +1001,7 @@ m8820x_cmmu_cpu_number()
 }
 
 void
-m8820x_cmmu_remote_set_sapr(cpu, ap)
+m8820x_cmmu_set_sapr(cpu, ap)
 	unsigned cpu, ap;
 {
 	CMMU_LOCK;
@@ -1070,7 +1062,7 @@ m8820x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
  *	Some functionality mimiced in m8820x_cmmu_pmap_activate.
  */
 void
-m8820x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
+m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
     vsize_t size)
 {
 	int s = splhigh();
@@ -1102,16 +1094,6 @@ m8820x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- *	flush my personal tlb
- */
-void
-m8820x_cmmu_flush_tlb(unsigned kernel, vaddr_t vaddr, vsize_t size)
-{
-	int cpu = cpu_number();
-	m8820x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
 }
 
 /*
@@ -1175,7 +1157,7 @@ m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
  *	flush both Instruction and Data caches
  */
 void
-m8820x_cmmu_flush_remote_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -1210,20 +1192,10 @@ m8820x_cmmu_flush_remote_cache(int cpu, paddr_t physaddr, psize_t size)
 }
 
 /*
- *	flush both Instruction and Data caches
- */
-void
-m8820x_cmmu_flush_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-	m8820x_cmmu_flush_remote_cache(cpu, physaddr, size);
-}
-
-/*
  *	flush Instruction caches
  */
 void
-m8820x_cmmu_flush_remote_inst_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -1257,18 +1229,8 @@ m8820x_cmmu_flush_remote_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 	splx(s);
 }
 
-/*
- *	flush Instruction caches
- */
 void
-m8820x_cmmu_flush_inst_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-	m8820x_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
-}
-
-void
-m8820x_cmmu_flush_remote_data_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -1300,16 +1262,6 @@ m8820x_cmmu_flush_remote_data_cache(int cpu, paddr_t physaddr, psize_t size)
 
 	CMMU_UNLOCK;
 	splx(s);
-}
-
-/*
- * flush data cache
- */
-void
-m8820x_cmmu_flush_data_cache(paddr_t physaddr, psize_t size)
-{
-	int cpu = cpu_number();
-	m8820x_cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
 /*

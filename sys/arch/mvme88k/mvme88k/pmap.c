@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2003/12/30 06:45:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2004/01/02 17:08:58 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -316,7 +316,7 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 
 	while ((cpu = ff1(tusers)) != 32) {
 		if (cpu_sets[cpu]) { /* just checking to make sure */
-			cmmu_flush_remote_tlb(cpu, kernel, va, PAGE_SIZE);
+			cmmu_flush_tlb(cpu, kernel, va, PAGE_SIZE);
 		}
 		tusers &= ~(1 << cpu);
 	}
@@ -645,7 +645,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		pa = ptoa(PG_PFNUM(*pte));
 		for (cpu = 0; cpu < MAX_CPUS; cpu++)
 			if (cpu_sets[cpu])
-				cmmu_flush_remote_cache(cpu, pa, PAGE_SIZE);
+				cmmu_flush_cache(cpu, pa, PAGE_SIZE);
 	}
 	PMAP_UNLOCK(pmap, spl);
 }
@@ -1017,7 +1017,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
 			/* Invalidate entire kernel TLB. */
-			cmmu_flush_remote_tlb(i, 1, 0, -1);
+			cmmu_flush_tlb(i, 1, 0, -1);
 			/* still physical */
 			/*
 			 * Set valid bit to DT_INVALID so that the very first
@@ -1031,7 +1031,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			    phys_map_vaddr2 + (i << PAGE_SHIFT));
 			invalidate_pte(pte);
 			/* Load supervisor pointer to segment table. */
-			cmmu_remote_set_sapr(i, kernel_pmap->pm_apr);
+			cmmu_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 				printf("Processor %d running virtual.\n", i);
@@ -1111,7 +1111,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	SPLVM(spl);
 
-	cmmu_flush_tlb(TRUE, va, PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, va, PAGE_SIZE);
 	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_WT | CACHE_GLOBAL | PG_V | pa;
 
@@ -2360,7 +2360,7 @@ pmap_activate(struct proc *p)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
 		cmmu_set_uapr(pmap->pm_apr);
-		cmmu_flush_tlb(FALSE, 0, -1);
+		cmmu_flush_tlb(cpu, FALSE, 0, -1);
 #endif	/* PMAP_USE_BATC */
 
 		/*
@@ -2440,11 +2440,11 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	SPLVM(spl);
 
-	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, srcva, PAGE_SIZE);
 	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
 	    CACHE_WT | CACHE_GLOBAL | PG_V | src;
 
-	cmmu_flush_tlb(TRUE, dstva, PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, dstva, PAGE_SIZE);
 	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_WT | CACHE_GLOBAL | PG_V | dst;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.123 2003/12/22 23:29:33 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.124 2004/01/02 17:08:57 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -440,7 +440,7 @@ load_u_area(struct proc *p)
 		*t = p->p_md.md_upte[i];
 		va += NBPG;
 	}
-	cmmu_flush_tlb(1, va, USPACE);
+	cmmu_flush_tlb(cpu_number(), 1, va, USPACE);
 }
 
 /*
