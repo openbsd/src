@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.35 2002/05/10 15:54:03 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.36 2002/05/13 14:19:53 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -659,8 +659,10 @@ fxp_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
-			    m, BUS_DMA_NOWAIT) != 0)
+			    m, BUS_DMA_NOWAIT) != 0) {
+				m_freem(m);
 				break;
+			}
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
