@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.81 2001/12/05 21:04:11 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.82 2001/12/20 04:16:50 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.150 2001/11/27 03:25:16 enami Exp 
+ *		OpenBSD: pcmciadevs,v 1.80 2001/12/20 04:16:10 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -336,6 +336,8 @@
 /* Netgear */
 #define	PCMCIA_CIS_NETGEAR_FA410TXC	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA410TXC	0x4530
+#define	PCMCIA_CIS_NETGEAR_FA411	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_FA411	0x0411
 
 /* Nokia */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }
