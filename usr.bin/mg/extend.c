@@ -372,6 +372,45 @@ int kcount;
 	(VOID) doscan(curmap, c = *keys);
 	return remap(curmap, c, funct, pref_map);
 }
+
+#ifdef FKEYS
+/*
+ * Wrapper for bindkey() that converts escapes.
+ */
+int
+dobindkey(map, func, str)
+	KEYMAP *map;
+	char *func;
+	char *str;
+{
+	int i;
+
+	for (i = 0; *str && i < MAXKEY; i++) {
+		/* XXX - convert numbers w/ strol()? */
+		if (*str != '\\')
+			key.k_chars[i] = *str;
+		else {
+			switch(*++str) {
+			case 't': case 'T':
+				key.k_chars[i] = '\t';
+				break;
+			case 'n': case 'N':
+				key.k_chars[i] = '\n';
+				break;
+			case 'r': case 'R':
+				key.k_chars[i] = '\r';
+				break;
+			case 'e': case 'E':
+				key.k_chars[i] = CCHR('[');
+				break;
+			}
+		}
+		str++;
+	}
+	key.k_count = i;
+	return(bindkey(&map, func, key.k_chars, key.k_count));
+}
+#endif
 #endif
 
 /*

@@ -10,7 +10,6 @@
 #include	<term.h>
 
 #ifdef  FKEYS
-#include        "key.h"
 /*
  * Get keyboard character.  Very simple if you use keymaps and keys files.
  * Bob was right -- the old XKEYS code is not the right solution.
@@ -19,40 +18,6 @@
  */
 
 char	*keystrings[] = { NULL } ;
-
-int
-dobindkey(str, func)
-	char *str;
-	char *func;
-{
-	int i;
-	extern int bindkey(); /* XXX */
-
-	for (i = 0; *str && i < MAXKEY; i++) {
-		/* XXX - how to convert numbers? */
-		if (*str != '\\')
-			key.k_chars[i] = *str;
-		else {
-			switch(*++str) {
-			case 't': case 'T':
-				key.k_chars[i] = '\t';
-				break;
-			case 'n': case 'N':
-				key.k_chars[i] = '\n';
-				break;
-			case 'r': case 'R':
-				key.k_chars[i] = '\r';
-				break;
-			case 'e': case 'E':
-				key.k_chars[i] = CCHR('[');
-				break;
-			}
-		}
-		str++;
-	}
-	key.k_count = i;
-	return(bindkey(&map_table[0].p_map, func, key.k_chars, key.k_count));
-}
 #endif
 
 /*
@@ -64,27 +29,26 @@ extern	int	ttputc();
 
 ttykeymapinit()
 {
+	extern int dobindkey();	/* XXX */
 	char *cp;
 #ifdef FKEYS
 	/* Bind keypad function keys. */
 	if (key_left)
-		dobindkey(key_left, "backward-char");
-	if (key_left)
-		dobindkey(key_left, "backward-char");
+		dobindkey(map_table[0].p_map, "backward-char", key_left);
 	if (key_right)
-		dobindkey(key_right, "forward-char");
+		dobindkey(map_table[0].p_map, "forward-char", key_right);
 	if (key_up)
-		dobindkey(key_up, "previous-line");
+		dobindkey(map_table[0].p_map, "previous-line", key_up);
 	if (key_down)
-		dobindkey(key_down, "next-line");
+		dobindkey(map_table[0].p_map, "next-line", key_down);
 	if (key_beg)
-		dobindkey(key_beg, "beginning-of-line");
+		dobindkey(map_table[0].p_map, "beginning-of-line", key_beg);
 	if (key_end)
-		dobindkey(key_end, "end-of-line");
+		dobindkey(map_table[0].p_map, "end-of-line", key_end);
 	if (key_npage)
-		dobindkey(key_npage, "scroll-up");
+		dobindkey(map_table[0].p_map, "scroll-up", key_npage);
 	if (key_ppage)
-		dobindkey(key_ppage, "scroll-down");
+		dobindkey(map_table[0].p_map, "scroll-down", key_ppage);
 #endif
 #ifndef	NO_STARTUP
 	if (cp = gettermtype()) {
