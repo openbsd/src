@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.18 2002/04/08 21:40:29 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.19 2002/09/26 14:44:43 fgsch Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -123,10 +123,8 @@ Configuration specific devices
 .Pp
 .Sy Device\-names
 .Bl -tag -width indent -compact
-.It Ar ttyC0
-pccons console or pcvt screen 0
 .It Ar ttyC#
-pcvt console screens
+wscons console screens
 .It Ar tty#
 standard PC COM ports
 .It Ar cd#
