@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.3 2001/04/06 04:42:05 csapuntz Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.4 2001/04/14 04:44:01 aaron Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -94,6 +94,7 @@ unsigned int pcdisplay_mapchar_simple __P((void *, int));
 #endif
 int pcdisplay_mapchar __P((void *, int, unsigned int *));
 void	pcdisplay_putchar __P((void *, int, int, u_int, long));
+u_int16_t pcdisplay_getchar __P((void *, int, int));
 void	pcdisplay_copycols __P((void *, int, int, int,int));
 void	pcdisplay_erasecols __P((void *, int, int, int, long));
 void	pcdisplay_copyrows __P((void *, int, int, int));

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.8 2001/03/14 02:49:22 mickey Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.9 2001/04/14 04:44:02 aaron Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -114,6 +114,7 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *));
 	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
 	void	(*scrollback) __P((void *, void *, int));
+	u_int16_t (*getchar) __P((void *, int, int));
 	void	(*pollc) __P((void *, int));
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.22 2001/04/01 20:30:02 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.23 2001/04/14 04:44:01 aaron Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -120,11 +120,11 @@ void vga_init_screen __P((struct vga_config *, struct vgascreen *,
 			  int, long *));
 void vga_init __P((struct vga_config *, bus_space_tag_t,
 		   bus_space_tag_t));
-static void vga_setfont __P((struct vga_config *, struct vgascreen *));
+void vga_setfont __P((struct vga_config *, struct vgascreen *));
 
-static int vga_mapchar __P((void *, int, unsigned int *));
-static void vga_putchar __P((void *, int, int, u_int, long));
-static int	vga_alloc_attr __P((void *, int, int, int, long *));
+int vga_mapchar __P((void *, int, unsigned int *));
+void vga_putchar __P((void *, int, int, u_int, long));
+int vga_alloc_attr __P((void *, int, int, int, long *));
 void	vga_copyrows __P((void *, int, int, int));
 
 const struct wsdisplay_emulops vga_emulops = {
@@ -245,6 +245,7 @@ int	vga_show_screen __P((void *, void *, int,
 			     void (*) (void *, int, int), void *));
 int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
 void	vga_scrollback __P((void *, void *, int));
+u_int16_t vga_getchar __P((void *, int, int));
 
 void vga_doswitch __P((struct vga_config *));
 
@@ -255,7 +256,8 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_free_screen,
 	vga_show_screen,
 	vga_load_font,
-	vga_scrollback
+	vga_scrollback,
+	vga_getchar
 };
 
 /*
@@ -1235,7 +1237,7 @@ vga_mapchar(id, uni, index)
 	return (res1);
 }
 
-static void
+void
 vga_putchar(c, row, col, uc, attr)
 	void *c;
 	int row;
@@ -1250,6 +1252,16 @@ vga_putchar(c, row, col, uc, attr)
 
 	pcdisplay_putchar(c, row, col, uc, attr);
 }
+
+u_int16_t
+vga_getchar(c, row, col)
+	void *c;
+	int row, col;
+{
+	struct vga_config *vc = c;
+	
+	return (pcdisplay_getchar(vc->active, row, col));
+}	
 
 struct cfdriver vga_cd = {
 	NULL, "vga", DV_DULL

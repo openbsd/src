@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.8 2001/03/14 02:49:22 mickey Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.9 2001/04/14 04:44:01 aaron Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -73,8 +73,16 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
+#define WSCONS_EVENT_WSMOUSED_ON	12	/* wsmoused(8) active */
+#define WSCONS_EVENT_WSMOUSED_OFF	13	/* wsmoused(8) inactive */
 
-
+#define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
+			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
+			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Z))
+#define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
+			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
+#define IS_CTRL_EVENT(type) ((type == WSCONS_EVENT_WSMOUSED_ON) || \
+			     (type == WSCONS_EVENT_WSMOUSED_OFF))
 /*
  * Keyboard ioctls (0 - 31)
  */
@@ -350,6 +358,9 @@ struct wsdisplay_kbddata {
 	int idx;
 };
 #define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
+
+/* Mouse console support */
+#define WSDISPLAYIO_WSMOUSED	_IOW('W', 82, struct wscons_event)
 
 /* Misc control.  Not applicable to all display types. */
 struct wsdisplay_param {
