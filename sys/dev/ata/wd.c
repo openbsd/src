@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.31 2003/06/25 20:52:57 tedu Exp $ */
+/*	$OpenBSD: wd.c,v 1.32 2003/07/20 19:57:04 grange Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -564,6 +564,8 @@ __wdstart(wd, bp)
 	struct buf *bp;
 {
 	daddr_t p_offset;
+	daddr_t nblks;
+
 	if (WDPART(bp->b_dev) != RAW_PART)
 		p_offset =
 		    wd->sc_dk.dk_label->d_partitions[WDPART(bp->b_dev)].p_offset;
@@ -582,7 +584,10 @@ __wdstart(wd, bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
-	if (wd->sc_flags & WDF_LBA48)
+	nblks = bp->b_bcount / wd->sc_dk.dk_label->d_secsize;
+	if ((wd->sc_flags & WDF_LBA48) &&
+	    /* use LBA48 only if really need */
+	    ((wd->sc_wdc_bio.blkno + nblks - 1 > 0xfffffff) || (nblks > 0xff)))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
