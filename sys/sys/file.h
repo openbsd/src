@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 1998/03/01 19:33:54 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.5 2000/02/01 04:00:50 assar Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -78,5 +78,6 @@ LIST_HEAD(filelist, file);
 extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int nfiles;			/* actual number of open files */
+extern struct fileops vnops;		/* vnode operations for files */
 
 #endif /* _KERNEL */
