@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.7 1999/02/25 00:02:27 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.8 1999/02/25 10:21:25 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -60,6 +60,7 @@
 #include <paths.h>
 #include <sys/uio.h>
 #include <net/pfkeyv2.h>
+#include <netinet/ip_ipsp.h>
 
 #define ESP_OLD		0x01
 #define ESP_NEW		0x02
