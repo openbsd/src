@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.38 2004/02/27 22:09:47 deraadt Exp $ */
+/* $OpenBSD: wskbd.c,v 1.39 2004/03/14 11:13:04 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -202,6 +202,8 @@ struct wskbd_softc {
 	/* these should result in precise 0 or 1, see wskbd_translate() XXX */
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
+
+keysym_t ksym_upcase(keysym_t);
 
 int	wskbd_match(struct device *, void *, void *);
 void	wskbd_attach(struct device *, struct device *, void *);
@@ -1591,8 +1593,14 @@ wskbd_translate(id, type, value)
 	if ((id->t_modifiers & MOD_NUMLOCK) &&
 	    KS_GROUP(group[1]) == KS_GROUP_Keypad)
 		ksym = group[!MOD_ONESET(id, MOD_ANYSHIFT)];
-	else
-		ksym = group[MOD_ONESET(id, MOD_CAPSLOCK|MOD_ANYSHIFT)];
+	else {
+		/* CAPS alone should only affect letter keys */
+		if ((id->t_modifiers & (MOD_CAPSLOCK | MOD_ANYSHIFT)) ==
+		    MOD_CAPSLOCK) {
+			ksym = ksym_upcase(group[0]);
+		} else
+			ksym = group[MOD_ONESET(id, MOD_ANYSHIFT)];
+	}
 
 	/* Process compose sequence and dead accents */
 	res = KS_voidSymbol;
