@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd_root.c,v 1.1 1997/02/16 10:42:20 downsj Exp $	*/
+/*	$OpenBSD: rd_root.c,v 1.2 1997/02/16 17:54:39 downsj Exp $	*/
 /*	$NetBSD: rd_root.c,v 1.1 1996/05/20 01:17:31 chuck Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ rd_attach_hook(unit, rd)
 		rd->rd_addr = (caddr_t) rd_root_image;
 		rd->rd_size = (size_t)  rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("rd%d: fixed, %d blocks\n", unit, MINIROOTSIZE);
 	}
 }
 

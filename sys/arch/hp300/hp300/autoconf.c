@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 1997/02/16 14:37:10 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 1997/02/16 17:54:40 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
 
 /*
@@ -705,8 +705,8 @@ setroot()
 #endif
 		rootdevname = findblkname(major(rootdev));
 		if (rootdevname == NULL) {
-			printf("unknown root device major 0x%x\n", rootdev);
-			panic("setroot");
+			root_device = NULL;	/* no device */
+			return;
 		}
 		bzero(buf, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
@@ -718,17 +718,11 @@ setroot()
 				break;
 			}
 		}
-		if (dv == NULL) {
-			printf("device %s (0x%x) not configured\n",
-			    buf, rootdev);
-			panic("setroot");
-		}
-
+		root_device = dv;	/* NULL is fine. */
 		return;
 	}
 
 	root_device = rootdv;
-
 	switch (rootdv->dv_class) {
 #ifdef NFSCLIENT
 	case DV_IFNET:
@@ -992,6 +986,12 @@ setbootdev()
 	 * Start with a clean slate.
 	 */
 	bootdev = 0;
+
+	/*
+	 * If we don't have a saveable root_device, just punt.
+	 */
+	if (root_device == NULL)
+		goto out;
 
 	dd = dev_data_lookup(root_device);
 
