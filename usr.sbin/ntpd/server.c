@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.1 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: server.c,v 1.2 2004/06/18 04:51:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,9 +26,10 @@
 #include "ntp.h"
 
 int
-setup_listeners(struct servent *se, struct ntpd_conf *conf)
+setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 {
 	struct listen_addr	*la;
+	u_int			 new_cnt = 0;
 
 	if (TAILQ_EMPTY(&conf->listen_addrs)) {
 		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
@@ -49,6 +50,8 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf)
 	}
 
 	TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
+		new_cnt++;
+
 		switch (la->sa.ss_family) {
 		case AF_INET:
 			if (((struct sockaddr_in *)&la->sa)->sin_port == 0)
@@ -72,6 +75,8 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf)
 		    -1)
 			fatal("bind");
 	}
+
+	*cnt = new_cnt;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.7 2004/06/17 19:17:48 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.8 2004/06/18 04:51:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include "ntp.h"
 
 #define	PFD_PIPE_MAIN	0
+#define	PFD_MAX		1
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
@@ -53,14 +54,17 @@ pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 {
 	int			 nfds, i, j, idx_peers, timeout;
+	u_int			 pfd_elms = 0, idx2peer_elms = 0;
+	u_int			 listener_cnt, peer_cnt, new_cnt;
 	pid_t			 pid;
-	struct pollfd		 pfd[OPEN_MAX];
+	struct pollfd		*pfd = NULL;
 	struct passwd		*pw;
 	struct servent		*se;
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
-	struct ntp_peer		*idx2peer[OPEN_MAX];
+	struct ntp_peer		**idx2peer = NULL;
 	time_t			 nextaction;
+	void			*newp;
 
 	switch (pid = fork()) {
 	case -1:
@@ -84,7 +88,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 	setproctitle("ntp engine");
 
-	setup_listeners(se, conf);
+	setup_listeners(se, conf, &listener_cnt);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
@@ -106,9 +110,42 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 	log_info("ntp engine ready");
 
+	peer_cnt = 0;
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
+		peer_cnt++;
+
 	while (ntp_quit == 0) {
-		bzero(&pfd, sizeof(pfd));
-		bzero(idx2peer, sizeof(idx2peer));
+		if (peer_cnt > idx2peer_elms ||
+		    peer_cnt + IDX2PEER_RESERVE < idx2peer_elms) {
+			if ((newp = realloc(idx2peer, sizeof(void *) *
+			    peer_cnt + IDX2PEER_RESERVE)) == NULL) {
+				/* panic for now */
+				log_warn("could not resize idx2peer from %u -> "
+				    "%u entries", idx2peer_elms,
+				    peer_cnt + IDX2PEER_RESERVE);
+				fatalx("exiting");
+			}
+			idx2peer = newp;
+			idx2peer_elms = peer_cnt + IDX2PEER_RESERVE;
+		}
+
+		new_cnt = PFD_MAX + peer_cnt + listener_cnt;
+		if (new_cnt > pfd_elms ||
+		    new_cnt + PFD_RESERVE < pfd_elms) {
+			if ((newp = realloc(pfd, sizeof(void *) *
+			    new_cnt + PFD_RESERVE)) == NULL) {
+				/* panic for now */
+				log_warn("could not resize pfd from %u -> "
+				    "%u entries", pfd_elms,
+				    new_cnt + PFD_RESERVE);
+				fatalx("exiting");
+			}
+			pfd = newp;
+			pfd_elms = new_cnt + PFD_RESERVE;
+		}
+
+		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
+		bzero(idx2peer, sizeof(struct ntp_peer) * idx2peer_elms);
 		nextaction = time(NULL) + 240;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
@@ -120,8 +157,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 			pfd[i].fd = la->fd;
 			pfd[i].events = POLLIN;
 			i++;
-			if (i > OPEN_MAX)
-				fatal("i > OPEN_MAX");
 		}
 
 
@@ -138,8 +173,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				pfd[i].events = POLLIN;
 				idx2peer[i - idx_peers] = p;
 				i++;
-				if (i > OPEN_MAX)
-					fatal("i > OPEN_MAX");
 			}
 		}
 
