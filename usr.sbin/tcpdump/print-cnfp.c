@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.1 1998/06/25 19:42:46 mickey Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.2 1998/06/25 20:26:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -84,6 +84,9 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 	ip = (struct ip *)bp;
 	nh = (struct nfhdr *)cp;
 
+	if ((u_char *)(nh + 1) > snapend)
+		return;
+
 	nrecs = ntohl(nh->ver_cnt) & 0xffff;
 	ver = (ntohl(nh->ver_cnt) & 0xffff0000) >> 16;
 	t = ntohl(nh->utc_sec);
@@ -96,11 +99,15 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 	if (ver == 5) {
 		printf("#%u, ", htonl(nh->sequence));
 		nr = (struct nfrec *)&nh[1];
-	} else
+		snaplen -= 24;
+	} else {
 		nr = (struct nfrec *)&nh->sequence;
+		snaplen -= 16;
+	}
 
-	printf("%2u recs:", nrecs);
-	for (; nrecs--; nr++) {
+	printf("%2u recs", nrecs);
+
+	for (; nrecs-- && (u_char *)(nr + 1) <= snapend; nr++) {
 		char buf[5];
 		char asbuf[7];
 
