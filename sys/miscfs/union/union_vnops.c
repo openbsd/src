@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.5 1996/05/29 07:12:12 deraadt Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.6 1996/12/08 17:40:29 kstailey Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -1782,6 +1782,7 @@ union_advlock(v)
 	void *v;
 {
 	struct vop_advlock_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		caddr_t  a_id;
 		int  a_op;
