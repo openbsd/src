@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.25 2004/07/09 21:38:20 pedro Exp $	*/
+/*	$OpenBSD: iop.c,v 1.26 2005/01/06 11:06:13 miod Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -408,7 +408,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", 0, 0);
 
 	startuphook_establish((void (*)(void *))iop_config_interrupts, sc);
-	kthread_create_deferred(iop_create_reconf_thread, sc);
 	return;
 
  bail_out:
@@ -552,6 +551,7 @@ iop_config_interrupts(struct device *self)
 		return;
 	}
 	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL, curproc);
+	kthread_create_deferred(iop_create_reconf_thread, sc);
 }
 
 /*
