@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.8 2001/07/10 02:57:10 fgsch Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.9 2001/12/26 06:29:01 itojun Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,8 +71,8 @@
 #include "bpfilter.h"
 
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
-int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
-	register struct rtentry *));
+int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	struct rtentry *));
 static void faithrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 void faithattach __P((int));
@@ -86,8 +86,8 @@ void
 faithattach(faith)
 	int faith;
 {
-	register struct ifnet *ifp;
-	register int i;
+	struct ifnet *ifp;
+	int i;
 
 	for (i = 0; i < NFAITH; i++) {
 		ifp = &faithif[i];
@@ -111,12 +111,12 @@ faithattach(faith)
 int
 faithoutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
@@ -205,7 +205,7 @@ faithrtrequest(cmd, rt, info)
 		 * should be at least twice the MTU plus a little more for
 		 * overhead.
 		 */
-		rt->rt_rmx.rmx_recvpipe = 
+		rt->rt_rmx.rmx_recvpipe =
 			rt->rt_rmx.rmx_sendpipe = 3 * FAITHMTU;
 	}
 }
@@ -216,13 +216,13 @@ faithrtrequest(cmd, rt, info)
 /* ARGSUSED */
 static int
 faithioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
 
 	switch (cmd) {
 
