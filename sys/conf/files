@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.284 2003/12/12 20:05:45 cedric Exp $
+#	$OpenBSD: files,v 1.285 2003/12/24 22:40:15 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -110,6 +110,7 @@ file	dev/ic/wdc.c wdc_base
 device	ahc: scsi, smc93cx6
 file	dev/ic/aic7xxx.c		ahc
 file	dev/ic/aic7xxx_openbsd.c	ahc
+file	dev/ic/aic7xxx_seeprom.c	ahc
 
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi
