@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.62 2001/06/26 20:56:36 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.63 2001/06/26 21:47:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -703,15 +703,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETRULES: {
 		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_rule *rule;
+		struct pf_rule *tail;
 
 		s = splsoftnet();
-		pr->nr = 0;
-		rule = TAILQ_FIRST(pf_rules_active);
-		while (rule != NULL) {
-			pr->nr++;
-			rule = TAILQ_NEXT(rule, entries);
-		}
+		tail = TAILQ_LAST(pf_rules_active, pf_rulequeue);
+		pr->nr = tail ? tail->nr + 1 : 0;
 		pr->ticket = ticket_rules_active;
 		splx(s);
 		break;
@@ -720,19 +716,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCGETRULE: {
 		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
 		struct pf_rule *rule;
-		u_int32_t nr;
 
 		if (pr->ticket != ticket_rules_active) {
 			error = EBUSY;
 			break;
 		}
 		s = splsoftnet();
-		nr = 0;
 		rule = TAILQ_FIRST(pf_rules_active);
-		while ((rule != NULL) && (nr < pr->nr)) {
+		while ((rule != NULL) && (rule->nr != pr->nr))
 			rule = TAILQ_NEXT(rule, entries);
-			nr++;
-		}
 		if (rule == NULL) {
 			error = EBUSY;
 			splx(s);
@@ -809,8 +801,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_nat *pn = (struct pfioc_nat *)addr;
 		struct pf_nat *nat;
 
-		s = splsoftnet();
 		pn->nr = 0;
+		s = splsoftnet();
 		nat = TAILQ_FIRST(pf_nats_active);
 		while (nat != NULL) {
 			pn->nr++;
@@ -830,8 +822,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		s = splsoftnet();
 		nr = 0;
+		s = splsoftnet();
 		nat = TAILQ_FIRST(pf_nats_active);
 		while ((nat != NULL) && (nr < pn->nr)) {
 			nat = TAILQ_NEXT(nat, entries);
@@ -913,8 +905,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_rdr *pr = (struct pfioc_rdr *)addr;
 		struct pf_rdr *rdr;
 
-		s = splsoftnet();
 		pr->nr = 0;
+		s = splsoftnet();
 		rdr = TAILQ_FIRST(pf_rdrs_active);
 		while (rdr != NULL) {
 			pr->nr++;
@@ -934,8 +926,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		s = splsoftnet();
 		nr = 0;
+		s = splsoftnet();
 		rdr = TAILQ_FIRST(pf_rdrs_active);
 		while ((rdr != NULL) && (nr < pr->nr)) {
 			rdr = TAILQ_NEXT(rdr, entries);
@@ -953,11 +945,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCCLRSTATES: {
 		struct pf_state *state = TAILQ_FIRST(&pf_states);
+		s = splsoftnet();
 		while (state != NULL) {
 			state->expire = 0;
 			state = TAILQ_NEXT(state, entries);
 		}
 		purge_expired_states();
+		splx(s);
 		break;
 	}
 
@@ -967,6 +961,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t nr;
 
 		nr = 0;
+		s = splsoftnet();
 		state = TAILQ_FIRST(&pf_states);
 		while ((state != NULL) && (nr < ps->nr)) {
 			state = TAILQ_NEXT(state, entries);
@@ -974,9 +969,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		if (state == NULL) {
 			error = EBUSY;
+			splx(s);
 			break;
 		}
 		bcopy(state, &ps->state, sizeof(struct pf_state));
+		splx(s);
 		ps->state.creation = pftv.tv_sec - ps->state.creation;
 		if (ps->state.expire <= pftv.tv_sec)
 			ps->state.expire = 0;
@@ -1230,7 +1227,6 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r, *rm = NULL;
-	u_int16_t nr = 1, mnr = 0;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1270,12 +1266,10 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    (!r->src.port_op || match_port(r->src.port_op, r->src.port[0],
 		    r->src.port[1], th->th_sport)) ) {
 			rm = r;
-			mnr = nr;
 			if (r->quick)
 				break;
 		}
 		r = TAILQ_NEXT(r, entries);
-		nr++;
 	}
 
 	/* XXX will log packet before rewrite */
@@ -1378,7 +1372,6 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r, *rm = NULL;
-	u_int16_t nr = 1, mnr = 0;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1416,12 +1409,10 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    (!r->src.port_op || match_port(r->src.port_op, r->src.port[0],
 		    r->src.port[1], uh->uh_sport)) ) {
 			rm = r;
-			mnr = nr;
 			if (r->quick)
 				break;
 		}
 		r = TAILQ_NEXT(r, entries);
-		nr++;
 	}
 
 	/* XXX will log packet before rewrite */
@@ -1502,7 +1493,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
 	struct pf_rule *r, *rm = NULL;
-	u_int16_t nr = 1, mnr = 0;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1526,12 +1516,10 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    (!r->type || (r->type == ih->icmp_type + 1)) &&
 		    (!r->code || (r->code == ih->icmp_code + 1)) ) {
 			rm = r;
-			mnr = nr;
 			if (r->quick)
 				break;
 		}
 		r = TAILQ_NEXT(r, entries);
-		nr++;
 	}
 
 	/* XXX will log packet before rewrite */
