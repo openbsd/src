@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.45 1998/08/17 23:26:17 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.46 1998/09/27 03:23:47 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -247,7 +247,6 @@ sys_mount(p, v, retval)
 	vfs_busy(mp, LK_NOWAIT, 0, p);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
-	vfsp->vfc_refcount++;
 	mp->mnt_stat.f_type = vfsp->vfc_typenum;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
@@ -298,6 +297,7 @@ update:
 	 */
 	cache_purge(vp);
 	if (!error) {
+		vfsp->vfc_refcount++;
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
