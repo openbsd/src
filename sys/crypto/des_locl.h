@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.3 1997/02/24 14:06:51 niklas Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.1 2000/02/28 23:13:04 deraadt Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)

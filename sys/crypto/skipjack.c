@@ -12,7 +12,7 @@
 */
 
 #include <sys/param.h>
-#include <netinet/ip_skipjack.h>
+#include <crypto/skipjack.h>
 #include <sys/malloc.h>
 
 static const u_int8_t ftable[0x100] =

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_cast.c,v 1.3 1999/02/17 18:09:55 deraadt Exp $       */
+/*      $OpenBSD: cast.c,v 1.1 2000/02/28 23:13:04 deraadt Exp $       */
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>
@@ -7,8 +7,8 @@
  */
 
 #include <sys/types.h>
-#include <netinet/ip_cast.h>
-#include <netinet/ip_castsb.h>
+#include <crypto/cast.h>
+#include <crypto/castsb.h>
 
 /* Macros to access 8-bit bytes out of a 32-bit word */
 #define U_INT8_Ta(x) ( (u_int8_t) (x>>24) )

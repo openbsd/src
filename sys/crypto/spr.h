@@ -1,4 +1,4 @@
-/*	$OpenBSD: spr.h,v 1.2 1997/02/24 14:06:54 niklas Exp $	*/
+/*	$OpenBSD: spr.h,v 1.1 2000/02/28 23:13:05 deraadt Exp $	*/
 
 /* lib/des/spr.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)

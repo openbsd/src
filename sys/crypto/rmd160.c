@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_rmd160.c,v 1.5 1998/09/09 22:34:28 janjaap Exp $       */
+/*       $OpenBSD: rmd160.c,v 1.1 2000/02/28 23:13:05 deraadt Exp $       */
 /********************************************************************\
  *
  *      FILE:     rmd160.c
@@ -21,7 +21,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <netinet/ip_rmd160.h>
+#include <crypto/rmd160.h>
 
 /********************************************************************/
 
