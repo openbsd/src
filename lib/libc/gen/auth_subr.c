@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.20 2002/11/22 19:47:03 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.21 2002/11/22 23:27:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -848,6 +848,7 @@ auth_call(auth_session_t *as, char *path, ...)
 		as->index = 0;
 		_auth_spool(as, pfd[0]);
 		close(pfd[0]);
+		status = 0;
 		if (waitpid(pid, &status, 0) < 0) {
 			if (errno != ECHILD) {
 				syslog(LOG_ERR, "%s: waitpid: %m", path);
