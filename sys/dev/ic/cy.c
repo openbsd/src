@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.17 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: cy.c,v 1.18 2002/09/09 00:05:21 art Exp $	*/
 
 /*
  * cy.c
@@ -257,9 +257,7 @@ cy_attach(parent, self, aux)
 
 	} /* for(each CD1400 on a card... ) */
 
-#if CY_DEBUG
-	printf("cy: %d ports\n", port);
-#endif
+	printf(": %d ports\n", port);
 
 	/* ensure an edge for the next interrupt */
 	bus_space_write_1(sc->sc_memt, sc->sc_memh,
@@ -314,8 +312,9 @@ cyopen(dev, flag, mode, p)
 #endif
 
 	if (card >= cy_cd.cd_ndevs ||
-	    (sc = cy_cd.cd_devs[card]) == NULL)
+	    (sc = cy_cd.cd_devs[card]) == NULL) {
 		return (ENXIO);
+	}
 
 	cy = &sc->sc_ports[port];
 
