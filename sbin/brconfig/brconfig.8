@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.38 2002/09/06 21:36:52 deraadt Exp $
+.\"	$OpenBSD: brconfig.8,v 1.39 2002/12/06 16:28:48 markus Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -339,23 +339,23 @@ Configure the gif0 interface:
 Create Security Associations (SAs) between the external IP address of each
 bridge:
 .Bd -literal
-# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 \e\
+# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 \\
 	-enc 3des -auth md5 -keyfile keyfile1 -authkeyfile authkeyfile1
 .Ed
 .Pp
 .Bd -literal
-# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 \e\
+# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 \\
 	-enc 3des -auth md5 -keyfile keyfile2 -authkeyfile authkeyfile2
 .Ed
 .Pp
 Setup ingress flows so that traffic is allowed between the two bridges
 for the above associations:
 .Bd -literal
-(on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \e\
-	-transport etherip -require \e\
+(on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \\
+	-transport etherip -require \\
 	-addr 1.2.3.4 255.255.255.255 4.3.2.1 255.255.255.255
-(on bridge2) # ipsecadm flow -dst 1.2.3.4 -out \e\
-	-transport etherip -require \e\
+(on bridge2) # ipsecadm flow -dst 1.2.3.4 -out \\
+	-transport etherip -require \\
 	-addr 4.3.2.1 255.255.255.255 1.2.3.4 255.255.255.255
 .Ed
 .Pp
