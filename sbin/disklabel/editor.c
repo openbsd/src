@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.9 1997/10/06 03:49:08 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.10 1997/10/07 04:26:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.9 1997/10/06 03:49:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.10 1997/10/07 04:26:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ editor(lp, f)
 			puts("\tq         - quit and save changes.");
 			puts("\tx         - exit without saving changes.");
 			puts("\t?         - this message.\n");
-			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes,\n\t'm' for megabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.\nThe (optional) argument to p[rint] may be one of the aforementioned units.\n");
+			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t'g' for gigabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.\nThe (optional) argument to p[rint] may be one of the aforementioned units.\n");
 			break;
 
 		case 'a':
@@ -994,6 +994,10 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 					break;
 				case 'm':
 					mult = 1048576 / lp->d_secsize;
+					buf[--n] = '\0';
+					break;
+				case 'g':
+					mult = 1073741824 / lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				}
