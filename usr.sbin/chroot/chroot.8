@@ -1,5 +1,4 @@
-.\"	$OpenBSD: chroot.8,v 1.9 2003/02/01 16:29:52 jmc Exp $
-.\"	$NetBSD: chroot.8,v 1.9 2000/08/17 12:36:32 mrg Exp $
+.\"	$OpenBSD: chroot.8,v 1.10 2003/02/08 21:37:04 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +33,7 @@
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 25, 2002
+.Dd February 7, 2003
 .Dt CHROOT 8
 .Os
 .Sh NAME
@@ -43,9 +42,7 @@
 .Sh SYNOPSIS
 .Nm chroot
 .Op Fl u Ar user
-.Op Fl U Ar user
-.Op Fl g Ar group
-.Op Fl G Ar group,group,...
+.Op Fl g Ar group,group,...
 .Ar newroot
 .Op Ar command
 .Sh DESCRIPTION
@@ -66,32 +63,24 @@ The options are as follows:
 .It Fl u Ar user
 Set user ID to
 .Ar user
-(a user name or user ID).
-.It Fl U Ar user
-Set user, group and supplemental group IDs based on the
+(which must exist in the
 .Xr passwd 5
-database entry for
-.Ar user .
-The
-.Fl U
-option may not be specified in conjunction with any other options.
-.It Fl g Ar group
-Set group ID to
-.Ar group
-(a group name or group ID).
-If supplemental groups are specified via the
-.Fl G
-flag,
-.Ar group
-will be used as the first entry in the group vector.
+database).
+The primary and supplemental group IDs will be set based on the user's
+entries in the
+.Xr passwd 5
+and
+.Xr group 5
+databases unless overridden by the
+.Fl g
+option.
 .It Fl G Ar group,group,...
-Set the supplemental group IDs to a comma-separated list of
-group names or group IDs.
-If neither the
-.Fl G
-nor the
-.Fl U
-option is specified, the supplemental group list remains unchanged.
+Override the primary and supplemental group IDs.
+The primary group ID is set to the first group in the list.
+Any remaining groups are placed in the supplemental group ID vector.
+Each group listed must exist in the
+.Xr group 5
+databases.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width SHELL
@@ -113,8 +102,8 @@ is used.
 .Xr setgid 2 ,
 .Xr setgroups 2 ,
 .Xr setuid 2 ,
-.Xr getgrnam 3 ,
-.Xr getpwnam 3 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
 .Xr environ 7
 .Sh HISTORY
 The

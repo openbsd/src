@@ -1,5 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.8 2002/12/22 22:25:20 millert Exp $	*/
-/*	$NetBSD: chroot.c,v 1.11 2001/04/06 02:34:04 lukem Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.9 2003/02/08 21:37:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -45,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-static const char rcsid[] = "$OpenBSD: chroot.c,v 1.8 2002/12/22 22:25:20 millert Exp $";
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.9 2003/02/08 21:37:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,43 +66,28 @@ __dead void	usage(void);
 int
 main(int argc, char **argv)
 {
-	struct group	*gp;
+	struct group	*grp;
 	struct passwd	*pwd;
 	const char	*shell;
-	char		*fulluser, *user, *group, *grouplist, *endp, *p;
-	gid_t		gid, gidlist[NGROUPS_MAX];
-	uid_t		uid;
-	int		ch, gids;
-	unsigned long	ul;
+	char		*user, *group, *grouplist;
+	gid_t		gidlist[NGROUPS_MAX];
+	int		ch, ngids;
 
-	gid = 0;
-	uid = 0;
-	gids = 0;
+	ngids = 0;
 	pwd = NULL;
-	user = fulluser = group = grouplist = NULL;
-	while ((ch = getopt(argc, argv, "G:g:U:u:")) != -1) {
+	user = grouplist = NULL;
+	while ((ch = getopt(argc, argv, "g:u:")) != -1) {
 		switch(ch) {
-		case 'U':
-			fulluser = optarg;
-			if (*fulluser == '\0')
-				usage();
-			break;
 		case 'u':
 			user = optarg;
 			if (*user == '\0')
 				usage();
 			break;
 		case 'g':
-			group = optarg;
-			if (*group == '\0')
-				usage();
-			break;
-		case 'G':
 			grouplist = optarg;
 			if (*grouplist == '\0')
 				usage();
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -113,87 +97,45 @@ main(int argc, char **argv)
 
 	if (argc < 1)
 		usage();
-	if (fulluser && (user || group || grouplist))
-		errx(1,
-		    "the -U option may not be specified with any other option");
 
-	if (group != NULL) {
-		if ((gp = getgrnam(group)) != NULL)
-			gid = gp->gr_gid;
-		else if (isdigit((unsigned char)*group)) {
-			errno = 0;
-			ul = strtoul(group, &endp, 10);
-			if (*endp != '\0' ||
-			    (ul == ULONG_MAX && errno == ERANGE))
-				errx(1, "invalid group ID `%s'", group);
-			gid = (gid_t)ul;
-		} else
-			errx(1, "no such group `%s'", group);
-		if (grouplist != NULL)
-			gidlist[gids++] = gid;
-		if (setgid(gid) != 0)
-			err(1, "setgid");
-	}
+	if (user != NULL && (pwd = getpwnam(user)) == NULL)
+		errx(1, "no such user `%s'", user);
 
-	while ((p = strsep(&grouplist, ",")) != NULL && gids < NGROUPS_MAX) {
-		if (*p == '\0')
+	while ((group = strsep(&grouplist, ",")) != NULL) {
+		if (*group == '\0')
 			continue;
 
-		if ((gp = getgrnam(p)) != NULL)
-			gidlist[gids] = gp->gr_gid;
-		else if (isdigit((unsigned char)*p)) {
-			errno = 0;
-			ul = strtoul(p, &endp, 10);
-			if (*endp != '\0' ||
-			    (ul == ULONG_MAX && errno == ERANGE))
-				errx(1, "invalid group ID `%s'", p);
-			gidlist[gids] = (gid_t)ul;
-		} else
-			errx(1, "no such group `%s'", p);
-		/*
-		 * Ignore primary group if specified; we already added it above.
-		 */
-		if (group == NULL || gidlist[gids] != gid)
-			gids++;
-	}
-	if (p != NULL && gids == NGROUPS_MAX)
-		errx(1, "too many supplementary groups provided");
-	if (gids && setgroups(gids, gidlist) != 0)
-		err(1, "setgroups");
-
-	if (user != NULL) {
-		if ((pwd = getpwnam(user)) != NULL)
-			uid = pwd->pw_uid;
-		else if (isdigit((unsigned char)*user)) {
-			errno = 0;
-			ul = strtoul(user, &endp, 10);
-			if (*endp != '\0' ||
-			    (ul == ULONG_MAX && errno == ERANGE))
-				errx(1, "invalid user ID `%s'", user);
-			uid = (uid_t)ul;
-		} else
-			errx(1, "no such user `%s'", user);
+		if (ngids == NGROUPS_MAX)
+			errx(1, "too many supplementary groups provided");
+		if ((grp = getgrnam(group)) == NULL)
+			errx(1, "no such group `%s'", group);
+		gidlist[ngids++] = grp->gr_gid;
 	}
 
-	if (fulluser != NULL) {
-		if ((pwd = getpwnam(fulluser)) == NULL)
-			errx(1, "no such user `%s'", fulluser);
-		uid = pwd->pw_uid;
-		gid = pwd->pw_gid;
-		if (setgid(gid) != 0)
+	if (ngids != 0) {
+		if (setgid(gidlist[0]) != 0)
 			err(1, "setgid");
-		if (initgroups(fulluser, gid) == -1)
+		if (setgroups(ngids, gidlist) != 0)
+			err(1, "setgroups");
+	} else if (pwd != NULL) {
+		if (setgid(pwd->pw_gid) != 0)
+			err(1, "setgid");
+		if (initgroups(user, pwd->pw_gid) == -1)
 			err(1, "initgroups");
 	}
-
-	if (pwd != NULL && (getsid(0) == getpid() || setsid() != -1))
-		setlogin(pwd->pw_name);
 
 	if (chroot(argv[0]) != 0 || chdir("/") != 0)
 		err(1, "%s", argv[0]);
 
-	if ((user || fulluser) && setuid(uid) != 0)
-		err(1, "setuid");
+	if (pwd != NULL) {
+		/* only set login name if we are/can be a session leader */
+		if (getsid(0) == getpid() || setsid() != -1)
+			setlogin(pwd->pw_name);
+		if (setuid(pwd->pw_uid) != 0)
+			err(1, "setuid");
+		endgrent();
+		endpwent();
+	}
 
 	if (argv[1]) {
 		execvp(argv[1], &argv[1]);
@@ -212,7 +154,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-g group] [-G group,group,...] "
-	    "[-u user] [-U user] newroot [command]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-g group,group,...] [-u user] "
+	    "newroot [command]\n", __progname);
 	exit(1);
 }
