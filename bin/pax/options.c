@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.13 1997/01/24 19:41:23 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.14 1997/02/20 06:54:34 tholo Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.13 1997/01/24 19:41:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.14 1997/02/20 06:54:34 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,8 @@ static void pax_options __P((register int, register char **));
 static void pax_usage __P((void));
 static void tar_options __P((register int, register char **));
 static void tar_usage __P((void));
-#ifdef notdef
 static void cpio_options __P((register int, register char **));
 static void cpio_usage __P((void));
-#endif
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
@@ -127,6 +125,9 @@ FSUB fsub[] = {
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
 	rd_wrfile, wr_rdfile, bad_opt},
 };
+#define	F_OCPIO	0	/* format when called as cpio -6 */
+#define	F_ACPIO	1	/* format when called as cpio -c */
+#define	F_CPIO	3	/* format when called as cpio */
 #define F_TAR	5	/* format when called as tar */
 #define DEFLT	5	/* default write format from list above */
 
@@ -164,10 +165,8 @@ options(argc, argv)
 
 	if (strcmp(NM_TAR, argv0) == 0)
 		return(tar_options(argc, argv));
-#	ifdef notdef
 	else if (strcmp(NM_CPIO, argv0) == 0)
 		return(cpio_options(argc, argv));
-#	endif
 	/*
 	 * assume pax as the default
 	 */
@@ -856,7 +855,6 @@ tar_options(argc, argv)
 	}
 }
 
-#ifdef notdef
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -873,8 +871,247 @@ cpio_options(argc, argv)
 	register char **argv;
 #endif
 {
+	register int c, i;
+	size_t len;
+	char *str;
+        FSUB tmp;
+	FILE *fp;
+
+	kflag = 1;
+	pids = 1;
+	pmode = 1;
+	arcname = NULL;
+	dflag = 1;
+	act = -1;
+	while ((c=getopt(argc,argv,"abcdfiklmoprstuvzABC:E:F:H:I:LO:SZ6")) != EOF)
+		switch (c) {
+			case 'a':
+				/*
+				 * preserve access time on files read
+				 */
+				tflag = 1;
+				break;
+			case 'b':
+				/*
+				 * swap bytes and half-words when reading data
+				 */
+				break;
+			case 'c':
+				/*
+				 * ASCII cpio header
+				 */
+				frmt = &(fsub[F_ACPIO]);
+				break;
+			case 'd':
+				/*
+				 * create directories as needed
+				 */
+				break;
+			case 'f':
+				/*
+				 * invert meaning of pattern list
+				 */
+				cflag = 1;
+				break;
+			case 'i':
+				/*
+				 * restore an archive
+				 */
+				act = EXTRACT;
+				break;
+			case 'k':
+				break;
+			case 'l':
+				/*
+				 * use links instead of copies when possible
+				 */
+				lflag = 1;
+				break;
+			case 'm':
+				/*
+				 * preserve modification time
+				 */
+				pmtime = 1;
+				break;
+			case 'o':
+				/*
+				 * create an archive
+				 */
+				act = ARCHIVE;
+				frmt = &(fsub[F_CPIO]);
+				break;
+			case 'p':
+				/*
+				 * copy-pass mode
+				 */
+				act = COPY;
+				break;
+			case 'r':
+				/*
+				 * interactively rename files
+				 */
+				iflag = 1;
+				break;
+			case 's':
+				/*
+				 * swap bytes after reading data
+				 */
+				break;
+			case 't':
+				/*
+				 * list contents of archive
+				 */
+				act = LIST;
+				break;
+			case 'u':
+				/*
+				 * replace newer files
+				 */
+				kflag = 0;
+				break;
+			case 'v':
+				/*
+				 * verbose operation mode
+				 */
+				vflag = 1;
+				break;
+			case 'z':
+				/*
+				 * use gzip.  Non standard option.
+				 */
+				zflag = 1;
+				gzip_program = GZIP_CMD;
+				break;
+			case 'A':
+				/*
+				 * append mode
+				 */
+				act = APPND;
+				break;
+			case 'B':
+				/*
+				 * Use 5120 byte block size
+				 */
+				wrblksz = 5120;
+				break;
+			case 'C':
+				/*
+				 * set block size in bytes
+				 */
+				wrblksz = atoi(optarg);
+				break;
+			case 'E':
+				/*
+				 * file with patterns to extract or list
+				 */
+				if ((fp = fopen(optarg, "r")) == NULL) {
+					paxwarn(1, "Unable to open file '%s' for read", optarg);
+					cpio_usage();
+				}
+				while ((str = fgetln(fp, &len)) != NULL) {
+					str[len - 1] = '\0';
+					pat_add(str, NULL);
+				}
+				fclose(fp);
+				break;
+			case 'F':
+			case 'I':
+			case 'O':
+				/*
+				 * filename where the archive is stored
+				 */
+				if ((optarg[0] == '-') && (optarg[1]== '\0')) {
+					/*
+					 * treat a - as stdin
+					 */
+					arcname = NULL;
+					break;
+				}
+				arcname = optarg;
+				break;
+			case 'H':
+				/*
+				 * specify an archive format on write
+				 */
+				tmp.name = optarg;
+				if ((frmt = (FSUB *)bsearch((void *)&tmp, (void *)fsub,
+				    sizeof(fsub)/sizeof(FSUB), sizeof(FSUB), c_frmt)) != NULL)
+					break;
+				paxwarn(1, "Unknown -H format: %s", optarg);
+				(void)fputs("cpio: Known -H formats are:", stderr);
+				for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
+					(void)fprintf(stderr, " %s", fsub[i].name);
+				(void)fputs("\n\n", stderr);
+				cpio_usage();
+				break;
+			case 'L':
+				/*
+				 * follow symbolic links
+				 */
+				Lflag = 1;
+				break;
+			case 'S':
+				/*
+				 * swap halfwords after reading data
+				 */
+				break;
+			case 'Z':
+				/*
+				 * use compress.  Non standard option.
+				 */
+				zflag = 1;
+				gzip_program = COMPRESS_CMD;
+				break;
+			case '6':
+				/*
+				 * process Version 6 cpio format
+				 */
+				frmt = &(fsub[F_OCPIO]);
+				break;
+			case '?':
+			default:
+				cpio_usage();
+				break;
+		}
+	argc -= optind;
+	argv += optind;
+
+	/*
+	 * process the args as they are interpreted by the operation mode
+	 */
+	switch (act) {
+		case LIST:
+		case EXTRACT:
+			while (*argv != (char *)NULL)
+				if (pat_add(*argv++, NULL) < 0)
+					cpio_usage();
+			break;
+		case COPY:
+			if (optind >= argc) {
+				paxwarn(0, "Destination directory was not supplied");
+				cpio_usage();
+			}
+			--argc;
+			dirptr = argv[argc];
+			/* FALL THROUGH */
+		case ARCHIVE:
+		case APPND:
+			if (*argv != (char *)NULL)
+				cpio_usage();
+			/*
+			 * no read errors allowed on updates/append operation!
+			 */
+			maxflt = 0;
+			while ((str = fgetln(stdin, &len)) != NULL) {
+				str[len - 1] = '\0';
+				ftree_add(str, NULL);
+			}
+			break;
+		default:
+			cpio_usage();
+			break;
+	}
 }
-#endif
 
 /*
  * printflg()
@@ -1195,7 +1432,6 @@ tar_usage()
 	exit(1);
 }
 
-#ifdef notdef
 /*
  * cpio_usage()
  *	print the usage summary to the user
@@ -1209,6 +1445,10 @@ void
 cpio_usage()
 #endif
 {
+	(void)fputs("usage: cpio -o [-aABcLvVzZ] [-C bytes] [-H format] [-O archive]\n", stderr);
+	(void)fputs("               [-F archive] < name-list [> archive]\n", stderr);
+	(void)fputs("       cpio -i [-bBcdfmnrsStuvVzZ6] [-C bytes] [-E file] [-H format]\n", stderr);
+	(void)fputs("               [-I archive] [-F archive] [pattern...] [< archive]\n", stderr);
+	(void)fputs("       cpio -p [-adlLmuvV] destination-directory < name-list\n", stderr);
 	exit(1);
 }
-#endif
