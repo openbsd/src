@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.33 1998/08/08 23:01:06 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.34 1998/09/14 01:55:52 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1590,6 +1590,12 @@ wdcintr(arg)
 
 	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 	xfer = wdc->sc_xfer.tqh_first;
+	if (xfer == NULL) {
+#ifdef ATAPI_DEBUG
+		printf("wdcintr: null xfer\n");
+#endif
+		return 0;
+	}
 #if NATAPIBUS > 0 && NWD > 0
 	if (xfer->c_flags & C_ATAPI) {
 		(void)wdc_atapi_intr(wdc, xfer);
