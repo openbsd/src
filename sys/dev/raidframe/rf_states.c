@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_states.c,v 1.7 2001/12/29 21:51:18 tdeval Exp $	*/
+/*	$OpenBSD: rf_states.c,v 1.8 2002/05/28 23:38:10 tdeval Exp $	*/
 /*	$NetBSD: rf_states.c,v 1.15 2000/10/20 02:24:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -220,7 +220,8 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	/* wake up any pending IO */
 	raidstart(((RF_Raid_t *) desc->raidPtr));
 
-	/* printf("Calling biodone on 0x%x\n",desc->bp); */
+	/* printf("%s: Calling biodone on 0x%x\n", __func__, desc->bp); */
+	splassert(IPL_BIO);
 	biodone(desc->bp);	/* access came through ioctl */
 
 	if (callbackFunc)

@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.16 2002/03/14 03:16:07 millert Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.17 2002/05/28 23:38:10 tdeval Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -775,19 +775,21 @@ raidstrategy(bp)
 	struct disklabel *lp;
 	int wlabel;
 
+	s = splbio();
+
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-  		return;
+  		goto raidstrategy_end;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		goto raidstrategy_end;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
@@ -795,12 +797,12 @@ raidstrategy(bp)
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		goto raidstrategy_end;
 	}
 	if (bp->b_bcount == 0) {
 		db1_printf(("b_bcount is zero..\n"));
 		biodone(bp);
-		return;
+		goto raidstrategy_end;
 	}
 	lp = rs->sc_dkdev.dk_label;
 
@@ -815,10 +817,8 @@ raidstrategy(bp)
 			db1_printf(("Bounds check failed!!:%d %d\n",
 			    (int)bp->b_blkno, (int)wlabel));
 			biodone(bp);
-			return;
+			goto raidstrategy_end;
 		}
-
-	s = splbio();
 
 	bp->b_resid = 0;
 
@@ -828,6 +828,7 @@ raidstrategy(bp)
 
 	raidstart(raidPtrs[raidID]);
 
+raidstrategy_end:
 	splx(s);
 }
 
@@ -1808,6 +1809,9 @@ raidstart(raidPtr)
 			bp->b_error = ENOSPC;
 			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
+			/* db1_printf(("%s: Calling biodone on 0x%x\n",
+				    __func__, bp)); */
+			splassert(IPL_BIO);
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
@@ -1820,6 +1824,9 @@ raidstart(raidPtr)
 			bp->b_error = EINVAL;
 			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
+			/* db1_printf(("%s: Calling biodone on 0x%x\n",
+				    __func__, bp)); */
+			splassert(IPL_BIO);
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
@@ -2705,10 +2712,9 @@ rf_RewriteParityThread(raidPtr)
 	int retcode;
 	int s;
 
-	raidPtr->parity_rewrite_in_progress = 1;
 	s = splbio();
+	raidPtr->parity_rewrite_in_progress = 1;
 	retcode = rf_RewriteParity(raidPtr);
-	splx(s);
 	if (retcode) {
 		printf("raid%d: Error re-writing parity!\n",raidPtr->raidid);
 	} else {
@@ -2718,6 +2724,7 @@ rf_RewriteParityThread(raidPtr)
 		raidPtr->parity_good = RF_RAID_CLEAN;
 	}
 	raidPtr->parity_rewrite_in_progress = 0;
+	splx(s);
 
 	/* Anyone waiting for us to stop?  If so, inform them... */
 	if (raidPtr->waitShutdown) {
@@ -2735,11 +2742,11 @@ rf_CopybackThread(raidPtr)
 {
 	int s;
 
-	raidPtr->copyback_in_progress = 1;
 	s = splbio();
+	raidPtr->copyback_in_progress = 1;
 	rf_CopybackReconstructedData(raidPtr);
-	splx(s);
 	raidPtr->copyback_in_progress = 0;
+	splx(s);
 
 	/* That's all... */
 	kthread_exit(0);        /* does not return */
