@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.78 2004/09/24 14:35:15 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.79 2004/09/26 19:46:01 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.78 2004/09/24 14:35:15 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.79 2004/09/26 19:46:01 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -1240,16 +1240,16 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 
 	(void) printf("%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-	printf("%8d%c ", (int)msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-	printf("%8d%c ", (int)msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
-	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-	printf("%8d%c ", (int)rtm->rtm_rmx.rmx_mtu, lock(MTU));
+	printf("%8lu%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
+	printf("%8lu%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
+	printf("%8lu%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
+	printf("%8lu%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
+	printf("%8lu%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+	printf("%8lu%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+	printf("%8lu%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
 		rtm->rtm_rmx.rmx_expire -= time(0);
-	printf("%8d%c\n", (int)rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+	printf("%8lu%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 #undef lock
 #undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
