@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.46 2004/03/11 15:08:46 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.47 2004/03/11 16:39:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -710,11 +710,8 @@ show_rib_summary_msg(struct imsg *imsg)
 
 		asdata = imsg->data;
 		asdata += sizeof(struct ctl_show_rib);
-		aspath = malloc(aspath_strlen(asdata, rib->aspath_len) + 1);
-		if (aspath == NULL)
+		if (aspath_asprint(&aspath, asdata, rib->aspath_len) == -1)
 			err(1, NULL);
-		aspath_snprint(aspath, aspath_strlen(asdata,
-		    rib->aspath_len) + 1, asdata, rib->aspath_len);
 		if (strlen(aspath) > 0)
 			printf("%s ", aspath);
 
