@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.1 2004/07/14 03:33:09 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.2 2004/07/16 03:08:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -207,7 +207,8 @@ cvs_file_isignored(const char *file)
  * matching any of the ignore patterns.  The number of files found is
  * returned in <nfiles>.
  * Returns a pointer to a dynamically-allocated string vector on success,
- * or NULL on failure.
+ * or NULL on failure.  The returned vector should be freed with
+ * cvs_freeargv().
  */
 
 char**
@@ -258,21 +259,4 @@ cvs_file_getv(const char *dir, int *nfiles)
 	(void)close(fd);
 
 	return (fvec);
-}
-
-
-/*
- * cvs_file_freev()
- *
- * Free a file vector obtained with cvs_file_getv().
- */
-
-void
-cvs_file_freev(char **fvec, int nfiles)
-{
-	int i;
-
-	for (i = 0; i < nfiles; i++)
-		free(fvec[i]);
-	free(fvec);
 }
