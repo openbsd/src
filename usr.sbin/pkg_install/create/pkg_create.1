@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.23 2002/02/25 07:01:16 deraadt Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.24 2002/04/06 01:07:19 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -172,7 +172,7 @@ installation/deinstallation should proceed.
 Use
 .Ar template
 as the input to
-.Xr mktemp 3 .
+.Xr mkstemp 3 .
 By default, this is the string
 .Pa /tmp/instmp.XXXXXX ,
 but it may be necessary to override it in the situation where
@@ -182,7 +182,7 @@ directory is limited.
 Be sure to leave some number of
 .Dq X
 characters for
-.Xr mktemp 3
+.Xr mkstemp 3
  to fill in with a unique ID.
 .It Fl X Ar excludefile
 Pass
