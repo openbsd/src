@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.52 2004/07/15 16:56:18 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.53 2004/07/20 15:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.52 2004/07/15 16:56:18 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.53 2004/07/20 15:26:55 millert Exp $";
 #endif
 
 int  wi_getval(char *, struct wi_req *);
@@ -120,8 +120,11 @@ wi_getval(char *iface, struct wi_req *wreq)
 			break;
 	}
 
-	if (error == -1)
+	if (error == -1) {
 		warn("SIOCGWAVELAN (0x%x)", wreq->wi_type);
+		if (errno == ENXIO)
+			exit(1);
+	}
 	close(s);
 	return (error);
 }
