@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.40 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.41 2002/02/05 22:04:43 nordin Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -935,7 +935,9 @@ sosetopt(so, level, optname, m0)
 		switch (optname) {
 
 		case SO_LINGER:
-			if (m == NULL || m->m_len != sizeof (struct linger)) {
+			if (m == NULL || m->m_len != sizeof (struct linger) ||
+			    mtod(m, struct linger *)->l_linger < 0 ||
+			    mtod(m, struct linger *)->l_linger > SHRT_MAX) {
 				error = EINVAL;
 				goto bad;
 			}
