@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.32 2003/04/07 23:04:06 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.33 2003/04/08 00:12:00 mickey Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.32 2003/04/07 23:04:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.33 2003/04/08 00:12:00 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ kmem_setup(void)
 	if (kernel == NULL) {
 		if (kvm_read(kd_kern, current_nl[X_VERSION].n_value,
 		    vers, sizeof(vers)) == -1) {
-			syslog(LOG_ERR, "%s: kvm_read: version misread", dump_sys);
+			syslog(LOG_ERR, "%s: kvm_read: version misread", _PATH_UNIX);
 			exit(1);
 		}
 		vers[sizeof(vers) - 1] = '\0';
