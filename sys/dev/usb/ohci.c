@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.44 2004/08/11 04:05:29 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.45 2004/08/11 04:07:04 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1454,6 +1454,7 @@ ohci_softintr(void *v)
 			if (uedir == UE_DIR_IN &&
 			    xfer->status == USBD_NORMAL_COMPLETION)
 				xfer->actlen = actlen;
+			xfer->hcpriv = NULL;
 
 			s = splusb();
 			usb_transfer_complete(xfer);
@@ -1482,7 +1483,6 @@ ohci_device_ctrl_done(usbd_xfer_handle xfer)
 		panic("ohci_ctrl_done: not a request");
 	}
 #endif
-	xfer->hcpriv = NULL;
 }
 
 void
@@ -1496,8 +1496,6 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 
 	DPRINTFN(10,("ohci_intr_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
-
-	xfer->hcpriv = NULL;
 
 	if (xfer->pipe->repeat) {
 		data = opipe->tail.td;
@@ -1534,8 +1532,6 @@ ohci_device_bulk_done(usbd_xfer_handle xfer)
 {
 	DPRINTFN(10,("ohci_bulk_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
-
-	xfer->hcpriv = NULL;
 }
 
 void
@@ -1577,13 +1573,11 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 void
 ohci_root_intr_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 void
 ohci_root_ctrl_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 /*
@@ -3387,10 +3381,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 void
 ohci_device_isoc_done(usbd_xfer_handle xfer)
 {
-
 	DPRINTFN(1,("ohci_device_isoc_done: xfer=%p\n", xfer));
-
-	xfer->hcpriv = NULL;
 }
 
 usbd_status
