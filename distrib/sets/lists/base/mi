@@ -54,6 +54,11 @@
 ./etc/isakmpd/crls
 ./etc/isakmpd/keynote
 ./etc/isakmpd/private
+./etc/isakmpd/pubkeys
+./etc/isakmpd/pubkeys/fqdn
+./etc/isakmpd/pubkeys/ipv4
+./etc/isakmpd/pubkeys/ipv6
+./etc/isakmpd/pubkeys/ufqdn
 ./etc/mail
 ./etc/mtree
 ./etc/ppp
