@@ -1,0 +1,24 @@
+#	$OpenBSD: files.mii,v 1.1 1998/09/10 17:17:33 jason Exp $
+#	$NetBSD: files.mii,v 1.7 1998/08/12 08:46:20 thorpej Exp $
+
+file    dev/mii/mii.c				mii
+
+device tlphy
+attach tlphy at mii
+file dev/mii/tlphy.c				tlphy
+
+device nsphy
+attach nsphy at mii
+file dev/mii/nsphy.c				nsphy
+
+device qsphy
+attach qsphy at mii
+file dev/mii/qsphy.c				qsphy
+
+device inphy
+attach inphy at mii
+file dev/mii/inphy.c				inphy
+
+device exphy
+attach exphy at mii
+file dev/mii/exphy.c				exphy
