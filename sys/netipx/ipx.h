@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.8 2000/01/11 20:54:59 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.9 2000/01/13 04:36:40 fgsch Exp $	*/
 
 /*-
  *
@@ -231,20 +231,6 @@ int	ipx_usrreq __P((struct socket *so, int req, struct mbuf *m,
 void	ipx_watch_output __P((struct mbuf *m, struct ifnet *ifp));
 int	ipx_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	ipx_printhost __P((struct ipx_addr *addr));
-
-#ifdef	IPXDEBUG
-struct ipx_addr	ipx_addr __P((const char *));
-char		*ipx_ntoa __P((struct ipx_addr));
-#endif
-
-#else
-
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-struct ipx_addr	ipx_addr __P((const char *));
-char		*ipx_ntoa __P((struct ipx_addr));
-__END_DECLS
 
 #endif /* _KERNEL */
 

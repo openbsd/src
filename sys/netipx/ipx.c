@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.7 2000/01/11 21:10:33 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.8 2000/01/13 04:36:40 fgsch Exp $	*/
 
 /*-
  *
@@ -100,7 +100,7 @@ ipx_control(so, cmd, data, ifp)
 
 		if (ia == (struct ipx_ifaddr *)NULL) {
 			ia = (struct ipx_ifaddr *)
-				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
+				malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
 			if (ia == (struct ipx_ifaddr *)NULL)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
@@ -117,8 +117,10 @@ ipx_control(so, cmd, data, ifp)
 				(struct sockaddr *)&ia->ia_dstaddr;
 			if (ifp->if_flags & IFF_BROADCAST) {
 				ia->ia_broadaddr.sipx_family = AF_IPX;
-				ia->ia_broadaddr.sipx_len = sizeof(ia->ia_addr);
-				ia->ia_broadaddr.sipx_addr.ipx_host = ipx_broadhost;
+				ia->ia_broadaddr.sipx_len =
+				    sizeof(ia->ia_addr);
+				ia->ia_broadaddr.sipx_addr.ipx_host =
+				    ipx_broadhost;
 			}
 		}
 		break;
@@ -162,7 +164,8 @@ ipx_control(so, cmd, data, ifp)
 			ia->ia_flags &= ~IFA_ROUTE;
 		}
 		if (ifp->if_ioctl) {
-			error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, (void *)ia);
+			error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
+			    (void *)ia);
 			if (error)
 				return (error);
 		}
@@ -303,10 +306,12 @@ ipx_iaonnetof(dst)
 				compare = &satoipx_addr(ia->ia_dstaddr);
 				if (ipx_hosteq(*dst, *compare))
 					return (ia);
-				if (ipx_neteqnn(net, ia->ia_addr.sipx_addr.ipx_net))
+				if (ipx_neteqnn(net,
+				    ia->ia_addr.sipx_addr.ipx_net))
 					ia_maybe = ia;
 			} else {
-				if (ipx_neteqnn(net, ia->ia_addr.sipx_addr.ipx_net))
+				if (ipx_neteqnn(net,
+				    ia->ia_addr.sipx_addr.ipx_net))
 					return (ia);
 			}
 		}
@@ -374,36 +379,3 @@ register struct ipx_addr *addr;
 	printf("%s.%s%s", net, host, cport);
 }
 
-#ifdef	IPXDEBUG
-struct ipx_addr
-ipx_addr(str)
-	const char *str;
-{
-	struct ipx_addr	ret;
-
-
-	return ret;
-}
-
-char *
-ipx_ntoa(ipx)
-	struct ipx_addr	ipx;
-{
-	static char	bufs[4][4+1+(3*6)+5], *cbuf = bufs[4];
-
-	if (cbuf == bufs[4])
-		cbuf = bufs[0];
-	else
-		cbuf++;
-
-	sprintf(cbuf, "%04x.%02x:%02x:%02x:%02x:%02x:%02x.%u",
-		ipx.ipx_net.l_net,
-		ipx.ipx_host.c_host[0], ipx.ipx_host.c_host[1],
-		ipx.ipx_host.c_host[2], ipx.ipx_host.c_host[3],
-		ipx.ipx_host.c_host[4], ipx.ipx_host.c_host[5],
-		ipx.ipx_port);
-
-	return cbuf;
-}
-
-#endif
