@@ -48,7 +48,10 @@ static char rcsid[] = "$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <fcntl.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 struct betinfo {
@@ -75,7 +78,7 @@ main(argc, argv)
 		printf("Usage: cfscores [user]\n");
 		exit(1);
 	}
-	dbfd = open(_PATH_SCORE, 0);
+	dbfd = open(_PATH_SCORE, O_RDONLY);
 	if (dbfd < 0) {
 		perror(_PATH_SCORE);
 		exit(2);
@@ -124,7 +127,7 @@ printuser(pw, printfail)
 		printf("Bad uid %d\n", pw->pw_uid);
 		return;
 	}
-	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), 0);
+	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
 		perror("lseek");
 		return;

@@ -60,12 +60,14 @@ static char rcsid[] = "$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $";
 
 #include <sys/types.h>
 
-#include <curses.h>
-#include <termios.h>
 #include <ctype.h>
+#include <curses.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include "pathnames.h"
 
@@ -1330,7 +1332,7 @@ suspend()
 	move(21, 0);
 	refresh();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), 0);
+		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 	}
 	kill(getpid(), SIGTSTP);
@@ -1580,11 +1582,11 @@ initall()
 	initdeck(deck);
 	if (uid < 0)
 		uid = 0;
-	dbfd = open(_PATH_SCORE, 2);
+	dbfd = open(_PATH_SCORE, O_RDWR);
 	setegid(getgid());
 	if (dbfd < 0)
 		return;
-	i = lseek(dbfd, uid * sizeof(struct betinfo), 0);
+	i = lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
 		close(dbfd);
 		dbfd = -1;
@@ -1647,7 +1649,7 @@ cleanup()
 	status = NOBOX;
 	updatebettinginfo();
 	if (dbfd != -1) {
-		lseek(dbfd, uid * sizeof(struct betinfo), 0);
+		lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 		write(dbfd, (char *)&total, sizeof(total));
 		close(dbfd);
 	}
