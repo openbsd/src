@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2001/06/08 08:08:49 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2001/06/10 02:55:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -104,7 +104,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register paddr_t pa;
+	paddr_t pa;
 
 	while (size > 0) {
 		pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
