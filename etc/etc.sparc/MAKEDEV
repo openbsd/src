@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.22 1997/04/30 08:17:56 grr Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 1997/05/05 22:17:45 grr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -163,7 +163,9 @@ all)
 	sh ${this} ss0 ss1
 	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh ${this} ccd0 ccd1 ccd2 ccd3
-	sh ${this} bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
+	sh ${this} bpf0 bpf1 bpf2 bpf3
+#	sh ${this} ipl
+	sh ${this} bwtwo0 cgthree0 cgfour0 cgsix0
 	sh ${this} cgeight0
 	sh ${this} lkm random local
 	;;
@@ -239,10 +241,10 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-ipl)
-	mknod ipl c 59 0
-	chown root.wheel ipl
-	;;
+#ipl)
+#	mknod ipl c 59 0
+#	chown root.wheel ipl
+#	;;
 
 tun*)
 	rm -f tun$unit
@@ -416,8 +418,8 @@ pty*)
                 do
                         nam=$name`hex $n`
                         rm -rf {tty,pty}$n
-                        mknod tty$nam c 5 `add $offset $n`
-                        mknod pty$nam c 6 `add $offset $n`
+                        mknod tty$nam c 20 `add $offset $n`
+                        mknod pty$nam c 21 `add $offset $n`
                         n=`add $n 1`
                 done
 		umask 77
@@ -439,7 +441,7 @@ random|srandom|urandom|prandom|arandom)
 uk*)
 	unit=`trunc $i uk`
 	rm -f uk$unit
-	mknod uk$unit c 98 $unit
+	mknod uk$unit c 120 $unit
 	chown root.operator uk$unit
 	chmod 640 uk$unit
 	;;
@@ -447,7 +449,7 @@ uk*)
 ss*)
 	unit=`trunc $i ss`
 	rm -f ss$unit
-	mknod ss$unit c 99 $unit
+	mknod ss$unit c 121 $unit
 	chown root.operator ss$unit
 	chmod 440 ss$unit
 #	backwards compatibility with older PINTs
