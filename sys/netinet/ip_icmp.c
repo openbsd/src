@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.9 1998/05/18 21:10:48 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.10 1998/05/27 20:28:35 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -330,8 +330,7 @@ icmp_input(m, va_alist)
 
 	case ICMP_ECHO:
 		if (!icmpbmcastecho &&
-		    (m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
-		    IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0) {
 			icmpstat.icps_bmcastecho++;
 			break;
 		}
@@ -340,8 +339,7 @@ icmp_input(m, va_alist)
 
 	case ICMP_TSTAMP:
 		if (!icmpbmcastecho &&
-		    (m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
-		    IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0) {
 			icmpstat.icps_bmcastecho++;
 			break;
 		}
