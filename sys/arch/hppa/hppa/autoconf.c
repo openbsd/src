@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2002/02/08 03:43:30 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2002/02/12 06:42:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -67,7 +67,7 @@ void	dumpconf __P((void));
 
 static int findblkmajor __P((struct device *dv));
 
-void (*cold_hook) __P((void)); /* see below */
+void (*cold_hook) __P((int)); /* see below */
 register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
 
 /*
@@ -100,7 +100,7 @@ cpu_configure()
 	dumpconf();
 	cold = 0;
 	if (cold_hook)
-		(*cold_hook)();
+		(*cold_hook)(HPPA_COLD_HOT);
 
 #ifdef USELEDS
 	timeout_set(&heartbeat_tmo, heartbeat, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.6 2002/02/05 06:50:23 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.7 2002/02/12 06:42:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -47,6 +47,8 @@
 
 struct lasi_hwr {
 	u_int32_t lasi_power;
+#define	LASI_BLINK	0x01
+#define	LASI_ON		0x02
 	u_int32_t lasi_error;
 	u_int32_t lasi_version;
 	u_int32_t lasi_reset;
@@ -86,6 +88,7 @@ void lasi_intr_establish __P((void *v, u_int32_t mask));
 void lasi_intr_disestablish __P((void *v, u_int32_t mask));
 u_int32_t lasi_intr_check __P((void *v));
 void lasi_intr_ack __P((void *v, u_int32_t mask));
+void lasi_cold_hook __P((int on));
 
 
 int
@@ -150,8 +153,12 @@ lasiattach(parent, self, aux)
 	sc->ga.ga_ca = *ca;	/* clone from us */
 	if (sc->sc_dev.dv_unit)
 		config_defer(self, lasi_gsc_attach);
-	else
+	else {
+		extern void (*cold_hook) __P((int));
+
 		lasi_gsc_attach(self);
+		cold_hook = lasi_cold_hook;
+	}
 }
 
 void
@@ -163,6 +170,28 @@ lasi_gsc_attach(self)
 	sc->ga.ga_name = "gsc";
 	sc->ga.ga_ic = &sc->sc_ic;
 	config_found(self, &sc->ga, gscprint);
+}
+
+void
+lasi_cold_hook(on)
+	int on;
+{
+	register struct lasi_softc *sc = lasi_cd.cd_devs[0];
+
+	if (!sc)
+		return;
+
+	switch (on) {
+	case HPPA_COLD_COLD:
+		sc->sc_hw->lasi_power = LASI_BLINK;
+		break;
+	case HPPA_COLD_HOT:
+		sc->sc_hw->lasi_power = 0;
+		break;
+	case HPPA_COLD_OFF:
+		sc->sc_hw->lasi_power = LASI_BLINK;
+		break;
+	}
 }
 
 void
