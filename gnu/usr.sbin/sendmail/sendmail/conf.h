@@ -954,9 +954,6 @@ typedef int		pid_t;
 #   if __FreeBSD_version >= 222000	/* 2.2.2-release and later */
 #    define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
 #   endif /* __FreeBSD_version >= 222000 */
-#   if __FreeBSD_version >= 226000	/* 2.2.6-release and later */
-#    define HASARC4RANDOM	1	/* has arc4random(3) function */
-#   endif /* __FreeBSD_version >= 226000 */
 #   if __FreeBSD_version >= 330000	/* 3.3.0-release and later */
 #    ifndef HASSTRL
 #     define HASSTRL		1	/* has strlc{py,at}(3) functions */
@@ -974,7 +971,7 @@ typedef int		pid_t;
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 #  define HASSETLOGIN	1	/* has setlogin(2) */
-#  define HASARC4RANDOM	1	/* has arc4random(3) function */
+#  define HASSRANDOMDEV	1	/* has srandomdev(3) */
 #  if OpenBSD < 199912
 #   define HASSTRL	0	/* strlcat(3) is broken in 2.5 and earlier */
 #  else /* OpenBSD < 199912 */
@@ -2679,18 +2676,14 @@ typedef void		(*sigfunc_t) __P((int));
 
 
 /* random routine -- set above using #ifdef _osname_ or in Makefile */
-#if HASARC4RANDOM
-# define get_random()	(arc4random() & 0x7fffffff)
-#else
-# if HASRANDOM
-#  define get_random()	random()
-# else /* HASRANDOM */
-#  define get_random()	((long) rand())
-#  ifndef RANDOMSHIFT
-#   define RANDOMSHIFT	8
-#  endif /* RANDOMSHIFT */
-# endif /* HASRANDOM */
-#endif /* HASARC4RANDOM */
+#if HASRANDOM
+# define get_random()	random()
+#else /* HASRANDOM */
+# define get_random()	((long) rand())
+# ifndef RANDOMSHIFT
+#  define RANDOMSHIFT	8
+# endif /* RANDOMSHIFT */
+#endif /* HASRANDOM */
 
 /*
 **  Default to using scanf in readcf.
