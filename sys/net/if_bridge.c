@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.37 2000/10/18 04:31:14 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.38 2000/10/18 16:30:28 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -140,15 +140,6 @@ struct bridge_softc {
 	struct timeout			sc_brtimeout;	/* timeout state */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
-};
-
-/* SNAP LLC header */
-struct snap {
-	u_int8_t dsap;
-	u_int8_t ssap;
-	u_int8_t control;
-	u_int8_t org[3];
-	u_int16_t type;
 };
 
 struct bridge_softc bridgectl[NBRIDGE];
@@ -1666,7 +1657,7 @@ bridge_blocknonip(eh, m)
 	struct ether_header *eh;
 	struct mbuf *m;
 {
-	struct snap snap;
+	struct llc llc;
 	u_int16_t etype;
 
 	if (m->m_pkthdr.len < sizeof(struct ether_header))
@@ -1685,16 +1676,19 @@ bridge_blocknonip(eh, m)
 		return (1);
 
 	if (m->m_pkthdr.len <
-	    (sizeof(struct ether_header) + sizeof(struct snap)))
+	    (sizeof(struct ether_header) + LLC_SNAPFRAMELEN))
 		return (1);
 
-	m_copydata(m, sizeof(struct ether_header), sizeof(struct snap),
-	    (caddr_t)&snap);
+	m_copydata(m, sizeof(struct ether_header), LLC_SNAPFRAMELEN,
+	    (caddr_t)&llc);
 
-	etype = ntohs(snap.type);
-	if (snap.dsap == LLC_SNAP_LSAP && snap.ssap == LLC_SNAP_LSAP &&
-	    snap.control == LLC_UI &&
-	    snap.org[0] == 0 && snap.org[1] == 0 && snap.org[2] == 0 &&
+	etype = ntohs(llc.llc_snap.ether_type);
+	if (llc.llc_dsap == LLC_SNAP_LSAP &&
+	    llc.llc_ssap == LLC_SNAP_LSAP &&
+	    llc.llc_control == LLC_UI &&
+	    llc.llc_snap.org_code[0] == 0 &&
+	    llc.llc_snap.org_code[1] == 0 &&
+	    llc.llc_snap.org_code[2] == 0 &&
 	    (etype == ETHERTYPE_ARP ||
 	     etype == ETHERTYPE_REVARP ||
 	     etype == ETHERTYPE_IP ||
@@ -1790,14 +1784,6 @@ bridge_flushrule(bif)
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
 
 /*
- * Maximum sized IP header
- */
-union maxip {
-	struct ip ip;
-	u_int32_t _padding[16];
-};
-
-/*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
  * layer.  As a result, most of this code will look familiar to those
@@ -1810,7 +1796,7 @@ bridge_filter(sc, ifp, eh, m)
 	struct ether_header *eh;
 	struct mbuf *m;
 {
-	struct snap snap;
+	struct llc llc;
 	int hassnap = 0;
 	struct ip *ip;
 	int hlen;
@@ -1820,24 +1806,27 @@ bridge_filter(sc, ifp, eh, m)
 
 	if (eh->ether_type != htons(ETHERTYPE_IP)) {
 		if (eh->ether_type > ETHERMTU ||
-		    m->m_pkthdr.len < (sizeof(struct snap) +
+		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
 		    sizeof(struct ether_header)))
 			return (m);
 
 		m_copydata(m, sizeof(struct ether_header),
-		    sizeof(struct snap), (caddr_t)&snap);
+		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
 
-		if (snap.dsap != LLC_SNAP_LSAP || snap.ssap != LLC_SNAP_LSAP ||
-		    snap.control != LLC_UI ||
-		    snap.org[0] != 0 || snap.org[1] != 0 || snap.org[2] ||
-		    snap.type != htons(ETHERTYPE_IP))
+		if (llc.llc_dsap != LLC_SNAP_LSAP ||
+		    llc.llc_ssap != LLC_SNAP_LSAP ||
+		    llc.llc_control != LLC_UI ||
+		    llc.llc_snap.org_code[0] ||
+		    llc.llc_snap.org_code[1] ||
+		    llc.llc_snap.org_code[2] ||
+		    llc.llc_snap.ether_type != htons(ETHERTYPE_IP))
 			return (m);
 		hassnap = 1;
 	}
 
 	m_adj(m, sizeof(struct ether_header));
 	if (hassnap)
-		m_adj(m, sizeof(struct snap));
+		m_adj(m, LLC_SNAPFRAMELEN);
 
 	if (m->m_pkthdr.len < sizeof(struct ip))
 		goto dropit;
@@ -1896,10 +1885,10 @@ bridge_filter(sc, ifp, eh, m)
 
 	/* Reattach SNAP header */
 	if (hassnap) {
-		M_PREPEND(m, sizeof(snap), M_DONTWAIT);
+		M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
 		if (m == NULL)
 			goto dropit;
-		bcopy(&snap, mtod(m, caddr_t), sizeof(snap));
+		bcopy(&llc, mtod(m, caddr_t), LLC_SNAPFRAMELEN);
 	}
 
 	/* Reattach ethernet header */
