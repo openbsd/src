@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 14:28:17 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/05/28 21:53:16 espie Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -66,8 +66,8 @@ clean:
 		 $(IOSTREAM_SRCS:.cc=.so)
 	rm -f llib-lib$(LIBIOSTREAM).ln $(IOSTREAM_SRCS:.cc=.ln)
 
-includes:
-	install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++
+includes: _G_config.h
+	@install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++
 	@-cd $(.CURDIR); for i in *.h; do \
 		if [ -e $$i ]; then \
 			cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
@@ -75,6 +75,9 @@ includes:
 			    $$i $(DESTDIR)/usr/include/g++/$$i; \
 		fi \
 	done
+	@cmp -s _G_config.h $(DESTDIR)/usr/include/g++/_G_config.h || \
+			install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+			    _G_config.h $(DESTDIR)/usr/include/g++/_G_config.h
 
 install:
 	@echo "done"
