@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2001/11/06 18:41:09 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2001/11/08 23:57:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -85,12 +85,6 @@ extern const char *cpu_typename;
 /*
  * Exported definitions unique to hp700/PA-RISC cpu support.
  */
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#undef	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000
