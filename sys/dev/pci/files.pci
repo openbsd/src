@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.88 2001/01/11 18:52:52 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.89 2001/01/11 23:36:38 espie Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -89,6 +89,11 @@ file	dev/pci/auich.c			auich
 device	clcs: audio, auconv, mulaw, ac97
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
+
+# ESS Maestro
+device maestro: audio, auconv, mulaw, ac97
+attach maestro at pci
+file   dev/pci/maestro.c		maestro
 
 # Forte Media FM801
 device	fms: audio, auconv, mulaw, ac97, midibus
