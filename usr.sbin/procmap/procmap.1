@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.5 2004/03/18 13:50:36 jmc Exp $
+.\"	$OpenBSD: procmap.1,v 1.6 2004/03/19 04:47:55 tedu Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ the vm_map structure, followed by the individual map entries.
 $ procmap -d
 MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
         #ent=8, sz=34041856, ref=1, version=20, flags=0x21
-        procmap=0xcf44cee0(resident=\*(Ltunknown\*(Gt)
+        pmap=0xcf44cee0(resident=\*(Ltunknown\*(Gt)
  - 0xcfa3a358: 0x8048000-\*(Gt0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
         submap=F, cow=T, nc=T, prot(max)=5/7, inh=1, wc=0, adv=0
 \&...
