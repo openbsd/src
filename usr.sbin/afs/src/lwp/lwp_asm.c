@@ -97,7 +97,7 @@ RCSID("$arla: lwp_asm.c,v 1.27 2002/07/16 19:35:40 lha Exp $");
 #elif defined(__s390__)
 #define STACK_HEADROOM 24
 #elif defined(__m88k__)
-#define STACK_HEADROOM 4
+#define STACK_HEADROOM (32 / REGSIZE)
 #else
 #define STACK_HEADROOM 5		
 #endif
