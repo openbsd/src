@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.7 2001/01/08 21:27:44 mickey Exp $
+#     $OpenBSD: BSD.local.dist,v 1.8 2001/04/05 12:44:10 espie Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -128,7 +128,7 @@
             ..
 	    de_DE.ISO_8859-1
             ..
-	    el_GR.ISO-8859-7
+	    el_GR.ISO_8859-7
             ..
 	    en_AU.ISO_8859-1
             ..
