@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.39 2002/06/30 13:04:35 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.40 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -528,10 +528,10 @@ do {									\
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
 #define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
 
-struct ifnet_head ifnet;
-struct ifnet **ifindex2ifnet;
-struct ifnet *lo0ifp;
-int if_index;
+extern struct ifnet_head ifnet;
+extern struct ifnet **ifindex2ifnet;
+extern struct ifnet *lo0ifp;
+extern int if_index;
 
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);

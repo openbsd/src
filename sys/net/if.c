@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.62 2002/06/30 13:04:35 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.63 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,8 @@ ifinit()
 int if_index = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
+struct ifnet_head ifnet;
+struct ifnet *lo0ifp;
 
 /*
  * Attach an interface to the

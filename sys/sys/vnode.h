@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.50 2002/06/16 16:54:27 miod Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.51 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ extern struct vnodeop_desc *vnodeop_descs[];
 /*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
-struct simplelock mntvnode_slock;
+extern struct simplelock mntvnode_slock;
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.

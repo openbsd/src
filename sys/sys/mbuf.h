@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.65 2002/06/11 02:19:56 frantzen Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.66 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  *	@(#)mbuf.h	8.5 (Berkeley) 2/19/95
  */
 
-#ifndef M_WAITOK
+#ifndef _SYS_MALLOC_H_
 #include <sys/malloc.h>
 #endif
 #include <sys/pool.h>
@@ -533,10 +533,10 @@ struct	mbstat mbstat;
 extern	int nmbclust;			/* limit on the # of clusters */
 extern	int mblowat;			/* mbuf low water mark */
 extern	int mcllowat;			/* mbuf cluster low water mark */
-int	max_linkhdr;			/* largest link-level header */
-int	max_protohdr;			/* largest protocol header */
-int	max_hdr;			/* largest link+protocol header */
-int	max_datalen;			/* MHLEN - max_hdr */
+extern	int max_linkhdr;		/* largest link-level header */
+extern	int max_protohdr;		/* largest protocol header */
+extern	int max_hdr;			/* largest link+protocol header */
+extern	int max_datalen;		/* MHLEN - max_hdr */
 extern	int mbtypes[];			/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.37 2002/06/07 21:20:02 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.38 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -286,6 +286,8 @@ static int tickfixcnt;			/* accumulated fractional error */
 int	fixtick;			/* used by NTP for same */
 int	shifthz;
 #endif
+
+long cp_time[CPUSTATES];
 
 volatile struct	timeval time;
 volatile struct	timeval mono_time;

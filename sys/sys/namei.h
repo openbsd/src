@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.8 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: namei.h,v 1.9 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
-u_long	nextvnodeid;
+extern u_long nextvnodeid;
 int	namei(struct nameidata *ndp);
 int	lookup(struct nameidata *ndp);
 int	relookup(struct vnode *dvp, struct vnode **vpp,

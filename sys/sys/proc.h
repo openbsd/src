@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.60 2002/05/16 16:16:52 provos Exp $	*/
+/*	$OpenBSD: proc.h,v 1.61 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -349,11 +349,12 @@ extern struct pool session_pool;	/* memory pool for sessions */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 
 #define	NQS	32			/* 32 run queues. */
-int	whichqs;			/* Bit mask summary of non-empty Q's. */
+extern int whichqs;			/* Bit mask summary of non-empty Q's. */
 struct	prochd {
 	struct	proc *ph_link;		/* Linked list of running processes. */
 	struct	proc *ph_rlink;
-} qs[NQS];
+};
+extern struct prochd qs[NQS];
 
 struct simplelock;
 

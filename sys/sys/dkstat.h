@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstat.h,v 1.5 2001/05/14 07:12:23 angelos Exp $	*/
+/*	$OpenBSD: dkstat.h,v 1.6 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 
 #define	DK_NDRIVE	8
 #ifdef _KERNEL
-long cp_time[CPUSTATES];
+extern long cp_time[CPUSTATES];
 
-int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
+extern int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.25 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.26 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -158,13 +158,13 @@ struct	ipstat {
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* pmtu discovery, set DF */
 
-struct	  ipstat ipstat;
+extern struct ipstat ipstat;
 LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
-int	  ip_defttl;			/* default IP ttl */
+extern int ip_defttl;			/* default IP ttl */
 
-int   ip_mtudisc;		/* mtu discovery */
-u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
-struct rttimer_queue *ip_mtudisc_timeout_q;
+extern int ip_mtudisc;			/* mtu discovery */
+extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);

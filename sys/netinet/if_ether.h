@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.24 2002/06/14 21:35:00 todd Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.25 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -191,10 +191,10 @@ struct sockaddr_inarp {
 #define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
 
 #ifdef	_KERNEL
-u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
-struct	ifqueue arpintrq;
+extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+extern struct ifqueue arpintrq;
 
 void	arpwhohas(struct arpcom *, struct in_addr *);
 void	arpintr(void);

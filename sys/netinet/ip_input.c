@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.104 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.105 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -154,6 +154,8 @@ static __inline int ipq_lock_try(void);
 static __inline void ipq_unlock(void);
 
 struct pool ipqent_pool;
+
+struct ipstat ipstat;
 
 static __inline int
 ipq_lock_try()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.41 2002/05/23 15:31:57 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.42 2002/07/03 21:19:08 miod Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -187,14 +187,14 @@ struct cluster_info {
 };
 
 #ifdef _KERNEL
-int	nbuf;			/* The number of buffer headers */
-struct	buf *buf;		/* The buffer headers. */
-char	*buffers;		/* The buffer contents. */
-int	bufpages;		/* Number of memory pages in the buffer pool. */
+__BEGIN_DECLS
+extern int nbuf;		/* The number of buffer headers */
+extern struct buf *buf;		/* The buffer headers. */
+extern char *buffers;		/* The buffer contents. */
+extern int bufpages;		/* Number of memory pages in the buffer pool. */
 
 extern struct pool bufpool;
 
-__BEGIN_DECLS
 void	allocbuf(struct buf *, int);
 void	bawrite(struct buf *);
 void	bdwrite(struct buf *);
