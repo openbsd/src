@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.12 2003/12/28 21:53:01 otto Exp $	*/
+/*	$OpenBSD: externs.h,v 1.13 2004/01/03 23:36:14 pvalchev Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -190,6 +190,7 @@ void net_encrypt(void);
 int telnet_spin(void);
 char *telnet_getenv(const char *val);
 char *telnet_gets(char *prompt, char *result, int length, int echo);
+int Scheduler(int block);
 #endif
 
 /* commands.c */
