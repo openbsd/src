@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.2 2000/08/01 13:51:18 mickey Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.3 2000/11/13 15:35:17 aaron Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct wsmuxops wsmux_muxops = {
 void wsmux_setmax __P((int n));
 
 int nwsmux = 0;
-struct wsmux_softc **wsmuxdevs;
+struct wsmux_softc **wsmuxdevs = NULL;
 
 void
 wsmux_setmax(n)
@@ -114,13 +114,12 @@ wsmux_setmax(n)
 	if (n >= nwsmux) {
 		i = nwsmux;
 		nwsmux = n + 1;
-		if (nwsmux != 0)
-			wsmuxdevs = realloc(wsmuxdevs, 
-					    nwsmux * sizeof (*wsmuxdevs), 
-					    M_DEVBUF, M_NOWAIT);
-		else
-			wsmuxdevs = malloc(nwsmux * sizeof (*wsmuxdevs), 
-					   M_DEVBUF, M_NOWAIT);
+		if (nwsmux != 0) {
+			if (wsmuxdevs)
+				free(wsmuxdevs, M_DEVBUF);
+		}
+		wsmuxdevs = malloc(nwsmux * sizeof (*wsmuxdevs), 
+				   M_DEVBUF, M_NOWAIT);
 		if (wsmuxdevs == 0)
 			panic("wsmux_setmax: no memory\n");
 		for (; i < nwsmux; i++)
@@ -286,7 +285,7 @@ wsmuxioctl(dev, cmd, data, flag, p)
 }
 
 int
-wsmuxpoll(dev, events, p)
+wsmuxselect(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;
