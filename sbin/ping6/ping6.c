@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.12 2000/10/06 10:58:19 art Exp $	*/
-/*	$KAME: ping6.c,v 1.74 2000/08/14 02:48:14 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.13 2000/10/08 00:27:44 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -109,10 +109,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include <net/if.h>
 #include <net/route.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
@@ -123,7 +120,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <math.h>
 #endif
 #include <signal.h>
@@ -232,7 +229,7 @@ int timing;			/* flag to do timing */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
 #endif
 
@@ -675,7 +672,7 @@ main(argc, argv)
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
 			       sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
-#else  /* olad adv. API */
+#else  /* old adv. API */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
 			       sizeof(opton)))
 			err(1, "setsockopt(IPV6_DSTOPTS)");
@@ -784,7 +781,7 @@ main(argc, argv)
 
 			if ((error = getaddrinfo(argv[hops], NULL, &hints, &iaip)))
 				errx(1, gai_strerror(error));
-			if (SIN6(res->ai_addr)->sin6_family != AF_INET6)
+			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
 				errx(1,
 				     "bad addr family of an intermediate addr");
 
@@ -798,6 +795,7 @@ main(argc, argv)
 					    IPV6_RTHDR_LOOSE))
 				errx(1, "can't add an intermediate node");
 #endif /* USE_RFC2292BIS */
+			freeaddrinfo(iaip);
 		}
 
 #ifndef USE_RFC2292BIS
@@ -915,7 +913,9 @@ main(argc, argv)
 		pinger();
 
 	(void)signal(SIGINT, onint);
+#ifdef SIGINFO
 	(void)signal(SIGINFO, oninfo);
+#endif
 
 	if ((options & F_FLOOD) == 0) {
 		(void)signal(SIGALRM, onalrm);
@@ -1262,7 +1262,7 @@ pr_pack(buf, cc, mhdr)
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 			tsumsq += triptime * triptime;
 #endif
 			if (triptime < tmin)
@@ -1429,7 +1429,9 @@ pr_pack(buf, cc, mhdr)
 				}
 
 				if ((end - (u_char *)ni) < ICMP6_NIRLEN) {
-					/* case of refusion, unkown */
+					/* case of refusion, unknown */
+					/*(*/
+					putchar(')');
 					goto fqdnend;
 				}
 				ttl = (int32_t)ntohl(*(u_long *)&buf[off+ICMP6ECHOLEN+8]);
@@ -1607,10 +1609,11 @@ pr_rthdr(void *extbuf)
 		in6 = inet6_rth_getaddr(extbuf, i);
 		if (in6 == NULL)
 			printf("   [%d]<NULL>\n", i);
-		else
-			printf("   [%d]%s\n", i,
-			       inet_ntop(AF_INET6, in6,
-					 ntopbuf, sizeof(ntopbuf)));
+		else {
+			if (!inet_ntop(AF_INET6, in6, ntopbuf, sizeof(ntopbuf)))
+				strncpy(ntopbuf, "?", sizeof(ntopbuf));
+			printf("   [%d]%s\n", i, ntopbuf);
+		}
 	}
 
 	return;
@@ -1646,7 +1649,7 @@ pr_nodeaddr(ni, nilen)
 			(void)printf("unknown qtype");
 			break;
 		}
-		if (ni->ni_flags & NI_NODEADDR_FLAG_ALL)
+		if (ni->ni_flags & NI_NODEADDR_FLAG_TRUNCATE)
 			(void)printf(" truncated");
 	}
 	putchar('\n');
@@ -1764,7 +1767,7 @@ summary()
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 		double dev = sqrt(tsumsq / num - avg * avg);
 		(void)printf(
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
@@ -1906,12 +1909,14 @@ pr_icmph(icp, end)
 	case ND_REDIRECT:
 		red = (struct nd_redirect *)icp;
 		(void)printf("Redirect\n");
-		(void)printf("Destination: %s",
-			     inet_ntop(AF_INET6, &red->nd_rd_dst,
-				       ntop_buf, sizeof(ntop_buf)));
-		(void)printf("New Target: %s",
-			     inet_ntop(AF_INET6, &red->nd_rd_target,
-				       ntop_buf, sizeof(ntop_buf)));
+		if (!inet_ntop(AF_INET6, &red->nd_rd_dst, ntop_buf,
+		    sizeof(ntop_buf)))
+			strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		(void)printf("Destination: %s", ntop_buf);
+		if (!inet_ntop(AF_INET6, &red->nd_rd_target, ntop_buf,
+		    sizeof(ntop_buf)))
+			strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		(void)printf("New Target: %s", ntop_buf);
 		break;
 	case ICMP6_NI_QUERY:
 		(void)printf("Node Information Query");
@@ -2039,10 +2044,12 @@ pr_iph(ip6)
 	       (ip6->ip6_vfc & IPV6_VERSION_MASK) >> 4, tc, (int)ntohl(flow),
 	       ntohs(ip6->ip6_plen),
 	       ip6->ip6_nxt, ip6->ip6_hlim);
-	printf("%s->", inet_ntop(AF_INET6, &ip6->ip6_src,
-				  ntop_buf, sizeof(ntop_buf)));
-	printf("%s\n", inet_ntop(AF_INET6, &ip6->ip6_dst,
-				 ntop_buf, sizeof(ntop_buf)));
+	if (!inet_ntop(AF_INET6, &ip6->ip6_src, ntop_buf, sizeof(ntop_buf)))
+		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+	printf("%s->", ntop_buf);
+	if (!inet_ntop(AF_INET6, &ip6->ip6_dst, ntop_buf, sizeof(ntop_buf)))
+		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+	printf("%s\n", ntop_buf);
 }
 
 /*
@@ -2217,24 +2224,36 @@ nigroup(name)
 	char *name;
 {
 	char *p;
+	unsigned char *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
 	char l;
 	char hbuf[NI_MAXHOST];
 	struct in6_addr in6;
 
-	p = name;
-	while (p && *p && *p != '.')
-		p++;
-	if (p - name > 63)
-		return NULL;	/*label too long*/
+	p = strchr(name, '.');
+	if (!p)
+		p = name + strlen(name);
 	l = p - name;
+	if (l > 63)
+		return NULL;	/*label too long*/
+#ifdef DIAGNOSTIC
+	if (sizeof(hbuf) - 1 > l)
+		return NULL;	/*label too long*/
+#endif
+	strncpy(hbuf, name, l);
+	hbuf[(int)l] = '\0';
+
+	for (q = name; *q; q++) {
+		if (isupper(*q))
+			*q = tolower(*q);
+	}
 
 	/* generate 8 bytes of pseudo-random value. */
 	bzero(&ctxt, sizeof(ctxt));
 	MD5Init(&ctxt);
 	MD5Update(&ctxt, &l, sizeof(l));
-	MD5Update(&ctxt, name, p - name);
+	MD5Update(&ctxt, name, l);
 	MD5Final(digest, &ctxt);
 
 	if (inet_pton(AF_INET6, "ff02::2:0000:0000", &in6) != 1)
