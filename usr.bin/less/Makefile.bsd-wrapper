@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2003/04/14 14:33:57 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2003/04/16 17:54:20 millert Exp $
 
 #
 # less config
@@ -11,7 +11,7 @@ LESS_HLP=	more.help
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 MAN=		less.1 lesskey.1
 MLINKS=		less.1 more.1 less.1 page.1
-CLEANFILES=	config.cache config.log $(MAN)
+CLEANFILES=	config.cache config.log
 
 #
 # Wrapped flags
@@ -19,25 +19,6 @@ CLEANFILES=	config.cache config.log $(MAN)
 XCFLAGS= CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS} ${LDSTATIC}"
 
 all: config.status gnu_build
-
-#
-# XXX - This is needed because crunchgen wasn't 
-#       designed to work with wrappers.  The
-#	default sys.mk SUFFIX rules were being
-#	invoked accidentally and crunchgen
-#	couldn't figure out what objects were
-#	needed.
-#
-OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
-	command.o decode.o edit.o filename.o forwback.o \
-	help.o ifile.o input.o jump.o line.o linenum.o \
-	lsystem.o mark.o optfunc.o option.o opttbl.o os.o \
-	output.o position.o prompt.o search.o signal.o \
-	tags.o ttyin.o version.o
-.SUFFIXES: .o .c
-.c.o: config.status
-	@$(MAKE) ${XCFLAGS} LIBS=${LIBS} \
-		 datadir=${DATADIR} LESS_HLP=${LESS_HLP} ${.TARGET}
 
 .FORCE: .IGNORE
 
@@ -101,14 +82,6 @@ clean cleandir:
 afterinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/less.hlp ${DESTDIR}${DATADIR}/${LESS_HLP}
-
-#
-# Fix less manpage suffix 
-#
-.SUFFIXES: .nro .1 .2 .3 .4 .5 .6 .7 .8 .9
-
-.nro.1 .nro.2 .nro.3 .nro.4 .nro.5 .nro.6 .nro.7 .nro.8 .nro.9:
-	-@ln -sf ${.IMPSRC} ${.TARGET}
 
 depend:
 	# Nothing here so far...

@@ -1,0 +1,402 @@
+.\"	$OpenBSD: lesskey.1,v 1.1 2003/04/16 17:54:20 millert Exp $
+.\"
+.\" Copyright (C) 2000  Mark Nudelman
+.\"
+.\" lesskey is part of the GNU project and is free software;
+.\" you can redistribute it and/or modify it
+.\" under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation;
+.\" either version 2, or (at your option) any later version.
+.\"
+.\" lesskey is distributed in the hope that it will be useful, but
+.\" WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+.\" or FITNESS FOR A PARTICULAR PURPOSE.
+.\" See the GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with lesskey; see the file COPYING.
+.\" If not, write to the Free Software Foundation, 59 Temple Place,
+.\" Suite 330, Boston, MA  02111-1307, USA.
+.\"
+.Dd January 17, 2003
+.Dt LESSKEY 1
+.Os
+.Sh NAME
+.Nm lesskey
+.Nd specify key bindings for less
+.Sh SYNOPSIS
+.Nm lesskey
+.Op Fl o Ar output
+.Op Fl -
+.Op Ar input
+.Nm lesskey
+.Op Fl -output Ns No = Ns Ar output
+.Op Fl -
+.Op Ar input
+.Nm lesskey
+.Fl V
+.Nm lesskey
+.Fl -version
+.Sh DESCRIPTION
+.Nm
+is used to specify a set of key bindings to be used by
+.Xr less 1 .
+The input file is a text file which describes the key bindings.
+If the input file is "-", standard input is read.
+If no input file is specified, a standard filename is used
+as the name of the input file, which depends on the system being used:
+On Unix systems, $HOME/.lesskey is used.
+.\" on MS-DOS systems, $HOME/_lesskey is used;
+.\" and on OS/2 systems $HOME/lesskey.ini is used,
+.\" or $INIT/lesskey.ini if $HOME is undefined.
+The output file is a binary file which is used by less.
+If no output file is specified, and the environment variable
+.Ev LESSKEY
+is set, the value of LESSKEY is used as the name of the output file.
+Otherwise, a standard filename is used as the name of the output file,
+which depends on the system being used:
+On Unix and OS-9 systems, $HOME/.less is used.
+.\" on MS-DOS systems, $HOME/_less is used;
+.\" and on OS/2 systems, $HOME/less.ini is used,
+.\" or $INIT/less.ini if $HOME is undefined.
+If the output file already exists,
+.Nm
+will overwrite it.
+.Pp
+The -V or --version option causes
+.Nm
+to print its version number and immediately exit.
+If -V or --version is present, other options and arguments are ignored.
+.Pp
+The input file consists of one or more sections.
+Each section starts with a line that identifies the type of section.
+Possible sections are:
+.Bl -tag -width "#line-edit"
+.It #command
+Defines new command keys.
+.It #line-edit
+Defines new line-editing keys.
+.It #env
+Defines environment variables.
+.El
+.Pp
+Blank lines and lines which start with a pound sign (#) are ignored,
+except for the special section header lines.
+.Sh COMMAND SECTION
+The command section begins with the line
+.Pp
+.Dl #command
+.Pp
+If the command section is the first section in the file,
+this line may be omitted.
+The command section consists of lines of the form:
+.Pp
+.Xo
+.Ar \&	string No <whitespace>
+.Ar action No [extra-string] <newline>
+.Xc
+.Pp
+Whitespace is any sequence of one or more spaces and/or tabs.
+The
+.Ar string
+is the command key(s) which invoke the action.
+The
+.Ar string
+may be a single command key, or a sequence of up to 15 keys.
+The
+.Ar action
+is the name of the less action, from the list below.
+The characters in the
+.Ar string
+may appear literally, or be prefixed by a caret to indicate a control key.
+A backslash followed by one to three octal digits may be used to
+specify a character by its octal value.
+A backslash followed by certain characters specifies input
+characters as follows:
+.Bl -tag -width Ds
+.It \eb
+BACKSPACE
+.It \ee
+ESCAPE
+.It \en
+NEWLINE
+.It \er
+RETURN
+.It \et
+TAB
+.It \eku
+UP ARROW
+.It \ekd
+DOWN ARROW
+.It \ekr
+RIGHT ARROW
+.It \ekl
+LEFT ARROW
+.It \ekU
+PAGE UP
+.It \ekD
+PAGE DOWN
+.It \ekh
+HOME
+.It \eke
+END
+.It \ekx
+DELETE
+.El
+.Pp
+A backslash followed by any other character indicates that character is
+to be taken literally.
+Characters which must be preceded by backslash include
+caret, space, tab and the backslash itself.
+.Pp
+An action may be followed by an "extra" string.
+When such a command is entered while running less,
+the action is performed, and then the extra
+string is parsed, just as if it were typed in to less.
+This feature can be used in certain cases to extend
+the functionality of a command.
+For example, see the "{" and ":t" commands in the example below.
+The extra string has a special meaning for the "quit" action:
+when less quits,
+first character of the extra string is used as its exit status.
+.Sh EXAMPLE
+The following input file describes the set of
+default command keys used by less:
+.Pp
+.Bd -literal -offset indent
+#command
+\er	forw-line
+\en	forw-line
+e	forw-line
+j	forw-line
+\ekd	forw-line
+^E	forw-line
+^N	forw-line
+k	back-line
+y	back-line
+^Y	back-line
+^K	back-line
+^P	back-line
+J	forw-line-force
+K	back-line-force
+Y	back-line-force
+d	forw-scroll
+^D	forw-scroll
+u	back-scroll
+^U	back-scroll
+\e40	forw-screen
+f	forw-screen
+^F	forw-screen
+^V	forw-screen
+\ekD	forw-screen
+b	back-screen
+^B	back-screen
+\eev	back-screen
+\ekU	back-screen
+z	forw-window
+w	back-window
+\ee\e40	forw-screen-force
+F	forw-forever
+R	repaint-flush
+r	repaint
+^R	repaint
+^L	repaint
+\eeu	undo-hilite
+g	goto-line
+\ekh	goto-line
+<	goto-line
+\ee<	goto-line
+p	percent
+%	percent
+\ee[	left-scroll
+\ee]	right-scroll
+\ee(	left-scroll
+\ee)	right-scroll
+{	forw-bracket {}
+}	back-bracket {}
+(	forw-bracket ()
+)	back-bracket ()
+[	forw-bracket []
+]	back-bracket []
+\ee^F	forw-bracket
+\ee^B	back-bracket
+G	goto-end
+\ee>	goto-end
+>	goto-end
+\eke	goto-end
+=	status
+^G	status
+:f	status
+/	forw-search
+?	back-search
+\ee/	forw-search *
+\ee?	back-search *
+n	repeat-search
+\een	repeat-search-all
+N	reverse-search
+\eeN	reverse-search-all
+m	set-mark
+\'	goto-mark
+^X^X	goto-mark
+E	examine
+:e	examine
+^X^V	examine
+:n	next-file
+:p	prev-file
+t	next-tag
+T	prev-tag
+:x	index-file
+:d	remove-file
+-	toggle-option
+:t	toggle-option t
+s	toggle-option o
+_	display-option
+|	pipe
+v	visual
+!	shell
++	firstcmd
+H	help
+h	help
+V	version
+0	digit
+1	digit
+2	digit
+3	digit
+4	digit
+5	digit
+6	digit
+7	digit
+8	digit
+9	digit
+q	quit
+Q	quit
+:q	quit
+:Q	quit
+ZZ	quit
+.Ed
+.Sh PRECEDENCE
+Commands specified by
+.Nm
+take precedence over the default commands.
+A default command key may be disabled by including it in the
+input file with the action "invalid".
+Alternatively, a key may be defined
+to do nothing by using the action "noaction".
+"noaction" is similar to "invalid", but
+less will give an error beep for an "invalid" command,
+but not for a "noaction" command.
+In addition, ALL default commands may be disabled by
+adding this control line to the input file:
+.Pp
+.Dl #stop
+.Pp
+This will cause all default commands to be ignored.
+The #stop line should be the last line in that section of the file.
+.Pp
+Be aware that #stop can be dangerous.
+Since all default commands are disabled, you must provide sufficient
+commands before the #stop line to enable all necessary actions.
+For example, failure to provide a "quit" command can lead to frustration.
+.Sh LINE EDITING SECTION
+The line-editing section begins with the line:
+.Pp
+.Dl #line-edit
+.Pp
+This section specifies new key bindings for the line editing commands,
+in a manner similar to the way key bindings for
+ordinary commands are specified in the #command section.
+The line-editing section consists of a list of keys and actions,
+one per line as in the example below.
+.Sh EXAMPLE
+The following input file describes the set of
+default line-editing keys used by less:
+.Pp
+.Bd -literal -offset indent
+#line-edit
+\et	forw-complete
+\e17	back-complete
+\ee\et	back-complete
+^L	expand
+^V	literal
+^A	literal
+\eel	right
+\ekr	right
+\eeh	left
+\ekl	left
+\eeb	word-left
+\ee\ekl	word-left
+\eew	word-right
+\ee\ekr	word-right
+\eei	insert
+\eex	delete
+\ekx	delete
+\eeX	word-delete
+\eekx	word-delete
+\ee\eb	word-backspace
+\ee0	home
+\ekh	home
+\ee$	end
+\eke	end
+\eek	up
+\eku	up
+\eej	down
+.Ed
+.Sh LESS ENVIRONMENT VARIABLES
+The environment variable section begins with the line
+.Pp
+.Dl #env
+.Pp
+Following this line is a list of environment variable assignments.
+Each line consists of an environment variable name, an equals sign (=)
+and the value to be assigned to the environment variable.
+Whitespace before and after the equals sign is ignored.
+Variables assigned in this way are visible only to less.
+If a variable is specified in the system environment and also in a
+lesskey file, the value in the lesskey file takes precedence.
+Although the lesskey file can be used to override variables set in the
+environment, the main purpose of assigning variables in the lesskey file
+is simply to have all less configuration information stored in one file.
+.Sh EXAMPLE
+The following input file sets the -i option whenever less is run,
+and specifies the character set to be "latin1":
+.Pp
+.Bd -literal -offset indent
+#env
+LESS = -i
+LESSCHARSET = latin1
+.Ed
+.Sh SEE ALSO
+.Xr less 1
+.Sh WARNINGS
+It is not possible to specify special keys, such as uparrow,
+in a keyboard-independent manner.
+The only way to specify such keys is to specify the escape sequence
+which a particular keyboard sends when such a key is pressed.
+.\" .Pp
+.\" On MS-DOS and OS/2 systems, certain keys send a sequence of characters
+.\" which start with a NUL character (0).
+.\" This NUL character should be represented as \e340 in a lesskey file.
+.Sh COPYRIGHT
+Copyright (C) 2000  Mark Nudelman
+.Pp
+lesskey is part of the GNU project and is free software;
+you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by
+the Free Software Foundation;
+either version 2, or (at your option) any later version.
+.Pp
+lesskey is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+.Pp
+You should have received a copy of the GNU General Public License
+along with lesskey; see the file COPYING.
+If not, write to the Free Software Foundation, 59 Temple Place,
+Suite 330, Boston, MA  02111-1307, USA.
+.Sh AUTHOR
+.Pp
+Mark Nudelman <markn@greenwoodsoftware.com>
+.br
+Send bug reports or comments to the above address or to bug-less@gnu.org.
+
