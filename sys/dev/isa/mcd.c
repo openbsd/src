@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.25 1998/10/03 21:19:00 millert Exp $ */
+/*	$OpenBSD: mcd.c,v 1.26 1998/10/04 21:25:41 millert Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -200,8 +200,8 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void	mcdgetdefaultlabel __P((dev_t, struct mcd_softc *, struct disklabel *));
-void	mcdgetdisklabel __P((dev_t, struct mcd_softc *));
+void	mcdgetdisklabel __P((dev_t, struct mcd_softc *, struct disklabel *,
+			     struct cpu_disklabel *, int));
 int	mcd_get_parms __P((struct mcd_softc *));
 void	mcdstrategy __P((struct buf *));
 void	mcdstart __P((struct mcd_softc *));
@@ -370,7 +370,8 @@ mcdopen(dev, flag, fmt, p)
 				goto bad2;
 
 			/* Fabricate a disk label. */
-			mcdgetdisklabel(dev, sc);
+			mcdgetdisklabel(dev, sc, sc->sc_dk.dk_label,
+			    sc->sc_dk.dk_cpulabel, 0);
 		}
 	}
 
@@ -607,6 +608,13 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EIO;
 
 	switch (cmd) {
+	case DIOCGPDINFO: {
+			struct cpu_disklabel osdep;
+
+			mcdgetdisklabel(dev, sc, (struct disklabel *)addr,
+			    &osdep, 1);
+			return 0;
+		}
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
@@ -639,10 +647,6 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCWLABEL:
 		return EBADF;
 
-/*	case DIOCGDEFLABEL:
-		mcdgetdefaultlabel(dev, sc, (struct disklabel *)addr);
-		return 0;
-*/
 	case CDIOCPLAYTRACKS:
 		return mcd_playtracks(sc, (struct ioc_play_track *)addr);
 	case CDIOCPLAYMSF:
@@ -706,14 +710,17 @@ mcdioctl(dev, cmd, addr, flag, p)
 }
 
 void
-mcdgetdefaultlabel(dev, sc, lp)
+mcdgetdisklabel(dev, sc, lp, clp, spoofonly)
 	dev_t dev;
 	struct mcd_softc *sc;
 	struct disklabel *lp;
+	struct cpu_disklabel *clp;
+	int spoofonly;
 {
 	char *errstring;
 	
 	bzero(lp, sizeof(struct disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -722,7 +729,7 @@ mcdgetdefaultlabel(dev, sc, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	if (lp->d_secpercyl == 0) {
 		lp->d_secpercyl = 100;
-		/* as long as it's not 0 - readdisklabel divides by it (?) */
+		/* as long as it's not 0 - readdisklabel divides by it */
 	}
 
 	strncpy(lp->d_typename, "Mitsumi CD-ROM", 16);
@@ -746,28 +753,12 @@ mcdgetdefaultlabel(dev, sc, lp)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp,
-	    sc->sc_dk.dk_cpulabel, 0);
+	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp, clp,
+	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;
 	}
-}
-
-/*
- * This could have been taken from scsi/cd.c, but it is not clear
- * whether the scsi cd driver is linked in.
- */
-void
-mcdgetdisklabel(dev, sc)
-        dev_t dev;
-	struct mcd_softc *sc;
-{
-	struct disklabel *lp = sc->sc_dk.dk_label;
-	
-	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
-
-	mcdgetdefaultlabel(dev, sc, lp);
 }
 
 int
