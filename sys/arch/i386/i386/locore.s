@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.55 2001/05/05 23:25:37 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.56 2001/05/17 00:18:19 fgsch Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -735,38 +735,6 @@ ENTRY(fillw)
 	ret
 
 /*
- * bcopyb(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, one byte at a time.
- */
-ENTRY(bcopyb)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
-/*
  * kcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes, abort on fault.
  */
@@ -824,49 +792,6 @@ ENTRY(kcopy)
 	xorl	%eax,%eax
 	ret
 	
-/*
- * bcopyw(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes, two bytes at a time.
- */
-ENTRY(bcopyw)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping?
-	jnb	1f
-	cld				# no; copy forward
-	shrl	$1,%ecx			# copy by 16-bit words
-	rep
-	movsw
-	adc	%ecx,%ecx		# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$1,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 16-bit words
-	shrl	$1,%ecx
-	decl	%esi
-	decl	%edi
-	rep
-	movsw
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
 /*
  * bcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes.
