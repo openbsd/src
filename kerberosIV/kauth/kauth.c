@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauth.c,v 1.3 1998/08/12 23:58:50 art Exp $	*/
+/*	$OpenBSD: kauth.c,v 1.4 1998/10/28 17:57:09 art Exp $	*/
 /*	$KTH: kauth.c,v 1.81 1997/12/09 10:36:33 joda Exp $	*/
 
 /*
@@ -51,9 +51,9 @@
 #include <simple_exec.h>
 
 krb_principal princ;
-static char srvtab[MAXPATHLEN + 1];
+static char srvtab[MAXPATHLEN];
 static int lifetime = DEFAULT_TKT_LIFE;
-static char remote_tktfile[MAXPATHLEN + 1];
+static char remote_tktfile[MAXPATHLEN];
 static char remoteuser[100];
 static char *cell = 0;
 static char progname[] = "kauth";
@@ -187,13 +187,16 @@ main(int argc, char **argv)
 	    _kafs_debug = 1;
 	    break;
 	case 'f':
-	    strncpy(srvtab, optarg, sizeof(srvtab));
+	    strncpy(srvtab, optarg, sizeof(srvtab) - 1);
+	    srvtab[sizeof(srvtab) - 1] = '\0';
 	    break;
 	case 't':
-	    strncpy(remote_tktfile, optarg, sizeof(remote_tktfile));
+	    strncpy(remote_tktfile, optarg, sizeof(remote_tktfile) - 1);
+	    remote_tktfile[sizeof(remote_tktfile)] = '\0';
 	    break;
 	case 'r':
-	    strncpy(remoteuser, optarg, sizeof(remoteuser));
+	    strncpy(remoteuser, optarg, sizeof(remoteuser) - 1);
+	    remoteuser[sizeof(remoteuser) - 1] = '\0';
 	    break;
 	case 'l':
 	    lifetime = atoi(optarg);
@@ -262,7 +265,7 @@ main(int argc, char **argv)
 		     (unsigned)getuid(),
 		     (unsigned)(getpid()*time(0)));
 	    f = open(tf, O_CREAT|O_EXCL|O_RDWR);
-	}while(f < 0);
+	} while(f < 0);
 	close(f);
 	unlink(tf);
 	setenv("KRBTKFILE", tf, 1);
