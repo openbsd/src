@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.16 2001/08/03 23:03:59 miod Exp $
+#	$OpenBSD: MVME147,v 1.17 2001/11/08 23:53:10 miod Exp $
 
 machine		mvme68k m68k
 
@@ -55,8 +55,6 @@ cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 ss*	at scsibus? target ? lun ?
 uk*	at scsibus? target ? lun ?
-
-pseudo-device	rd 2
 
 #si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40
 #nxdc0	at vmes0 addr 0xff00ee80 ipl 2 vec 0x44
