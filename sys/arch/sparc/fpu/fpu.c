@@ -168,7 +168,7 @@ fpu_cleanup(p, fs)
 			break;
 
 		case NOTFPU:
-			trapsignal(p, SIGILL, 0, FPE_FLTINV, 0);
+			trapsignal(p, SIGILL, 0, ILL_COPROC, 0);
 			break;
 
 		default:
