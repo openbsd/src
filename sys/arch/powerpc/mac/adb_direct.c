@@ -1941,6 +1941,7 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
+		delay(20); /* completion occurs too soon? */
 		memcpy(time, output + 1, 4);
 		retcode = 0;
 		break;
