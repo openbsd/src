@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.10 1999/05/16 19:56:22 alex Exp $
+.\"	$OpenBSD: ep.4,v 1.11 1999/05/26 02:34:12 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -33,126 +33,106 @@
 .Os
 .Sh NAME
 .Nm ep
-.Nd Ethernet driver for 3Com 3c5x9 (Etherlink III)
+.Nd "3Com EtherLink III and Fast EtherLink III Ethernet device driver"
 .Sh SYNOPSIS
 .Cd "ep? at eisa? slot ?"
 .Cd "ep? at isa? port ? irq ?"
 .Cd "ep? at pci? dev ? function ?"
-.Cd "ep* at pcmcia? function ?"
+.Cd "ep? at pcmcia? port 0x300 size 0x10 irq 10 slot ?"
 .Cd "ep* at isapnp?"
 .Sh DESCRIPTION
 The
 .Nm ep
-device driver supports the 3Com Etherlink III family of ethernet cards.
-This includes, among others,
-the 3c509 (ISA), 3c579 (EISA), 3c589 (PCMCIA), and 3c590, 3c595.
+device driver supports the 3Com EtherLink III and Fast EtherLink III family
+of Ethernet cards. This includes, among others, the following models:
 .Pp
-Other models of 3Com hardware are supported by the
+.Bl -tag -width 3CXXXX -offset indent -compact
+.It 3C509
+EtherLink III ISA
+.It 3C579
+EtherLink III EISA
+.It 3C589
+EtherLink III LAN PC Card (PCMCIA)
+.It 3C590
+Fast EtherLink III PCI
+.It 3C595
+Fast EtherLink III 10/100 PCI
+.El
+.Pp
+Other models of 3Com network cards are supported by the
 .Xr ec 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
-.Xr ie 4
+.Xr ie 4 ,
 and
 .Xr xl 4
 drivers.
 .Pp
-Various models of these cards come with a different assortment of
-connectors:
+Category 3, 4 or 5 unshielded twisted-pair (UTP) cable should be used for
+RJ-45 (10baseT), thick Ethernet coaxial (RG59 B/U, 50 ohm) for AUI/DIX, and
+thin Ethernet coaxial (RG58 A/U or C/U, 50 ohm +/- 4) for BNC (10base2).
+Some 3Com NICs also support MII connectors (switchable 10/100Mbps UTP).
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It AUI/DIX
-Standard 15 pin connector
-.It 10Base2
-BNC, also known as thin-net
-.It 10BaseT
-10 Mbps UTP, also known as twisted pair
-.It MII
-UTP, switchable between 10 and 100 Mbps
+The following media types and options (as given to
+.Xr ifconfig 8 )
+are supported:
+.Pp
+.Bl -tag -width xxx -offset indent
+.It Cm media No autoselect
+Enable autoselection of media type and options.
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
+Set 100Mbps (fast Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
+Set 100Mbps (fast Ethernet) operation and force half-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No full-duplex
+Set 10baseT (UTP) operation and force full-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No half-duplex
+Set 10baseT (UTP) operation and force half-duplex mode.
+.It Cm media No 10base5
+Set 10base5 (thick-net) operation (half-duplex only).
+.It Cm media No 10base2
+Set 10base2 (thin-net) operation (half-duplex only).
 .El
 .Pp
-Various models of the
-.Nm
-support different media types or connectors.
-Therefore, the default media type varies based on the model of card.
-The supported media types are as follows.
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
-.It media autoselect
-Attempt to autoselect the media type
-.It media 100baseTX mediaopt full-duplex
-Use 100baseTX, full duplex
-.It media 100baseTX Op mediaopt half-duplex
-Use 100baseTX, half duplex
-.It media 10baseT mediaopt full-duplex
-Use 10baseT, full duplex
-.It media 10baseT Op mediaopt half-duplex
-Use 10baseT (UTP), half duplex
-.It media 10base5 Op mediaopt half-duplex
-Use 10base5 (Thin-net), half duplex
-.It media 10base2 Op mediaopt half-duplex
-Use 10base2 (Thick-net), half duplex
-.El
+Note that the 100baseTX media type is only available if supported by the
+adapter. For more information on configuring this device, see
+.Xr ifconfig 8 .
+To view a list of media types and options supported by your card try
+``ifconfig -m <device>''. For example, ``ifconfig -m ep0''.
 .Pp
-.Pp
-If there are multiple cards in the computer, they are searched for
+If more than one of the supported cards is installed, they are probed for
 in the following order:
-The PCI cards are found first based on PCI function# order.
-The EISA cards are found next based on EISA slot# order.
-Next, the 3c509 ISA cards are found based on in increasing ethernet
-address order.
-Then, the 3c509 ISA cards in Plug-and-Play mode will be probed
-for and matched in Plug-and-Play order.
-Finally, the PCMCIA cards are found based on PCMCIA controller
-slot# order.
-This is an example of how these will probe:
 .Pp
-ep0 at isa0 port 0x300-0x30f irq 3: 3Com 3C509 Ethernet: address 00:a0:24:29:a3:6b, utp (default utp)
+.Bl -item -offset indent -compact
+.It
+1.  PCI cards based on PCI function number order.
+.It
+2.  EISA cards based on EISA slot number order.
+.It
+3.  ISA cards based on increasing Ethernet address order.
+.It
+4.  Any ISA cards in Plug-and-Play mode, in Plug-and-Play order.
+.El
 .Pp
-ep0 at pci0 dev 12 function 0 "3Com 3c905 100Base-TX" rev 0x00: address 00:60:97:dd:fc:eb, mii default mii/autoselect isa irq 9
-.Pp
-You may specify the port and irq numbers that the cards are expected
-to be found at, but it is not necessary.
-The cards are sufficiently intelligent to tell us where they
-actually live on the ISA bus.
-.Pp
-.Sh NOTES
-The 3c509 card has no jumpers to set the address.
-3Com supplies software to set the address of the card in software.
-To find the card on the ISA bus, the kernel performs a complex
-scan operation at IO address 0x100.
-Beware!
-Avoid placing other cards at that address!
-.Pp
-Some models of 3c5x9 have all three connectors on them.
-In the case of these cards; you must configure the transceiver type
-with the 3Com supplied DOS configuration disk before the link0/link1
-flags will operate correctly.
-.Pp
-Do not specify link flags for the 3c905.
-If you can not get this card to work, try running the 3Com supplied DOS
-configuration program (available from their web site) and tell it to
-autoselect the connector type.
-.Pp
+You may specify the port and IRQ numbers where the cards are expected to
+be found, but it is not necessary. The cards are intelligent enough to
+let us know where they live on the bus.
 .Sh DIAGNOSTICS
-ep0: reset (status: %x)
-.in +4
-the driver has encountered a FIFO underrun or overrun. The driver will reset
+.Bl -diag
+.It ep0: reset (status: %x)
+The driver has encountered a FIFO underrun or overrun. The driver will reset
 the card and the packet will be lost. This is not fatal.
-.in -4
-ep0: eeprom failed to come ready
-.in +4
-The eeprom failed to come ready.  This probably means the card is wedged.
-.in -4
-ep0: 3c509 in test mode. Erase pencil mark!
-.in +4
+.It ep0: eeprom failed to come ready
+The EEPROM failed to come ready. This probably means the card is wedged.
+.It ep0: 3c509 in test mode. Erase pencil mark!
 This means that someone has scribbled with pencil in the test area on the
-card.  Erase the pencil mark and reboot.  (This is not a joke).
-.in -4
+card. Erase the pencil mark and reboot. (This is not a joke).
+.El
 .Sh SEE ALSO
+.Xr ec 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
 .Xr ie 4 ,
-.Xr intro 4 ,
-.Xr le 4 ,
-.Xr ne 4 ,
+.Xr ifmedia 4 ,
 .Xr xl 4 ,
 .Xr ifconfig 8

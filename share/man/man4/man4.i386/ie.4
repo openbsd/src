@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.3 1999/05/16 19:57:04 alex Exp $
+.\"	$OpenBSD: ie.4,v 1.4 1999/05/26 02:34:13 aaron Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -27,28 +27,42 @@
 .Os
 .Sh NAME
 .Nm ie 
-.Nd Ethernet driver for Intel 82586 Ethernet chip
+.Nd Intel 82586 chip Ethernet device driver
 .Sh SYNOPSIS
 .Cd "ie0 at isa? port 0x360 irq 7 iomem 0xd0000"
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to a 10 Mb/s Ethernet network via the
-Intel 82586 chips.  The Ethernet cards supported by the
-.Nm
-interface are:
+device driver supports Intel 82586-based Ethernet cards. This includes the
+following network adapters:
 .Pp
-.Bl -tag -width -offset indet -compact
+.Bl -tag -width -offset indent -compact
 .It AT&T StarLAN 10
 .It AT&T EN100
 .It AT&T StarLan Fiber
-.It 3Com 3c507
+.It 3Com 3C507
 .El
-.Sh SEE ALSO
-.Xr ed 4 ,
+.Pp
+Other models of 3Com network cards are supported by the
+.Xr ec 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
-.Xr intro 4 ,
-.Xr le 4 ,
-.Xr ifconfig 8 ,
+and
+.Xr xl 4
+drivers.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+To view a list of media types and options supported by your card try
+.Dq ifconfig -m <device> .
+For example,
+.Dq ifconfig -m ie0 .
+.Sh SEE ALSO
+.Xr ec 4 ,
+.Xr eg 4 ,
+.Xr el 4 ,
+.Xr ep 4 ,
+.Xr ifmedia 4 ,
+.Xr xl 4 ,
+.Xr ifconfig 8

@@ -1,7 +1,7 @@
-.\"	$OpenBSD: xl.4,v 1.8 1999/03/15 15:54:47 deraadt Exp $
+.\"	$OpenBSD: xl.4,v 1.9 1999/05/26 02:34:12 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998
-.\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
+.\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by Bill Paul.
+.\"     This product includes software developed by Bill Paul.
 .\" 4. Neither the name of the author nor the names of any co-contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"   without specific prior written permission.
@@ -30,101 +30,98 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$FreeBSD: xl.4,v 1.3 1998/12/05 09:36:15 rnordier Exp $
+.\"     $FreeBSD: xl.4,v 1.1 1998/08/16 17:19:58 wpaul Exp $
 .\"
 .Dd August 16, 1998
-.Dt XL 4
-.Os FreeBSD
+.Dt XL 4 i386
+.Os
 .Sh NAME
 .Nm xl
-.Nd
-3Com Etherlink XL and Fast Etherlink XL ethernet device driver
+.Nd "3Com EtherLink XL and Fast EtherLink XL Ethernet device driver"
 .Sh SYNOPSIS
 .Cd "xl* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
-.Nm
-driver provides support for PCI ethernet adapters and embedded
-controllers based on the 3Com "boomerang" and "cyclone" bus-master
-Etherlink XL chips. This includes the 3c900-TP, 3c900-COMBO,
-3c900B-TP, 3c900B-COMBO, 3c905-TX,
-3c905-T4, 3c905B-TP, 3c905B-FX, 3c905B-T4, 3c905B-TX, and embedded 3c905-TX
-and 3c905B-TX ethernet hardware in certain Dell Optiplex and Dell
-Precision desktop machines and in certain Dell Latitude laptop
-docking stations.
-.Pp
-Other models of 3Com hardware are supported by the
-.Xr ep 4 ,
-.Xr ec 4 ,
+.Nm xl
+device driver supports the 3Com EtherLink XL and Fast EtherLink XL family
+of Ethernet cards, and embedded controllers based on the 3Com
+.Dq boomerang
 and
-.Xr eg 4
+.Dq cyclone
+bus master EtherLink XL chips. This includes, among
+others, the following models:
+.Pp
+.Bl -tag -width 3CXXXX -offset indent -compact
+.It 3C900
+EtherLink XL PCI
+.It 3C900B
+EtherLink XL PCI
+.It 3C905
+Fast EtherLink XL PCI
+.It 3C905B
+Fast EtherLink XL PCI
+.El
+.Pp
+It also supports embedded 3C905-TX and 3C905B-TX Ethernet hardware found
+in certain Dell OptiPlex and Dell Precision desktop machines, as well as
+some Dell Latitude laptop docking stations. Other models of 3Com network
+cards are supported by the
+.Xr ec 4 ,
+.Xr eg 4 ,
+.Xr el 4 ,
+.Xr ep 4 ,
+and
+.Xr ie 4
 drivers.
 .Pp
-The Etherlink XL chips support built-in 10baseT, 10base2 and 10base5
-transceivers as well as an MII bus for externally attached PHY
-transceivers. The 3c905 series typically uses a National Semiconductor
-NS 83840A 10/100 PHY for 10/100 Mbps support in full or half-duplex.
-The 3c905B adapters have built-in autonegotiation logic mapped onto
-the MII for compatibility with previous drivers. Fast Etherlink XL
-adapters such as the 3c905-TX and 3c905B-TX are capable of 10 or
-100Mbps data rates in either full or half duplex and can be manually
-configured for any supported mode or automatically negotiate the highest
-possible mode with a link partner.  The 3c905B-FX and other similar cards
-are capable of 100 Mbps over fiber.
+Category 3, 4 or 5 unshielded twisted-pair (UTP) cable should be used for
+RJ-45 (10baseT), thick Ethernet coaxial (RG59 B/U, 50 ohm) for AUI/DIX,
+and thin Ethernet coaxial (RG58 A/U or C/U, 50 ohm +/- 4) for BNC (10base2).
+Some 3Com NICs also support MII connectors (switchable 10/100Mbps UTP).
+The 3C905B-FX and other similar cards are capable of 100Mbps over fiber.
 .Pp
-The
-.Nm
-driver supports the following media types:
+The following media types and options (as given to
+.Xr ifconfig 8 )
+are supported:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It autoselect
-Enable autoselection of the media type and options. Note that this
-option is only available with the 3c905 and 3c905B adapters with
-external PHYs or built-in autonegotiation logic. For 3c900 adapters,
-the driver will choose the mode specified in the EEPROM. The user can
-change this by adding media options to the appropriate
+.Bl -tag -width xxx -offset indent
+.It Cm media No autoselect
+Enable autoselection of media type and options. Note that this media type is
+only available with the 3C905 and 3C905B adapters with external PHYs or
+built-in autonegotiation logic. For 3C900 and 3C900B adapters, the driver
+will choose the mode specified in the EEPROM. You can change this by adding
+media options to the appropriate
 .Pa /etc/hostname.xlX
 file.
-.It 10baseT/UTP
-Set 10Mbps operation. The
-.Ar mediaopt
-option can also be used to select either
-.Ar full-duplex
-or
-.Ar half-duplex modes.
-.It 100baseTX
-Set 100Mbps (fast ethernet) operation. The
-.Ar mediaopt
-option can also be used to select either
-.Ar full-duplex
-or
-.Ar half-duplex modes.
-.It 100baseFX
-For those cards that support it, set 100 Mbps operation over fiber.
-.It 10base5/AUI
-Enable AUI transceiver (available only on COMBO cards).
-.It 10base2/BNC
-Enable BNC coax transceiver (available only on COMBO cards).
+.It Cm media No 100baseFX Cm mediaopt No full-duplex
+For those cards that support it, force full-duplex 100Mbps operation over fiber.
+.It Cm media No 100baseFX Cm mediaopt No half-duplex
+For those cards that support it, force half-duplex 100Mbps operation over fiber.
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
+Set 100Mbps (Fast Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
+Set 100Mbps (Fast Ethernet) operation and force half-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No full-duplex
+Set 10baseT (UTP) operation and force full-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No half-duplex
+Set 10baseT (UTP) operation and force half-duplex mode.
+.It Cm media No 10base5
+Set 10base5 (thick-net) operation (half-duplex only).
+.It Cm media No 10base2
+Set 10base2 (thin-net) operation (half-duplex only).
 .El
 .Pp
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It full-duplex
-Force full duplex operation
-.It half-duplex
-Force half duplex operation.
-.El
-.Pp
-Note that the 100baseTX media type is only available if supported
-by the adapter.
-For more information on configuring this device, see
+Note that the 100baseTX media type is only available if supported by the
+adapter. For more information on configuring this device, see
 .Xr ifconfig 8 .
+To view a list of media types and options supported by your card try
+.Dq ifconfig -m <device> .
+For example,
+.Dq ifconfig -m xl0 .
+.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "xl%d: couldn't map memory"
+.It "xl%d: couldn't map memory" 
 A fatal initialization error has occurred.
 .It "xl%d: couldn't map interrupt"
 A fatal initialization error has occurred.
@@ -134,23 +131,23 @@ the network connection (cable).
 .It "xl%d: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
 .It "xl%d: no memory for tx list"
-The driver failed to allocate an mbuf for the transmitter ring when
+The driver fauled to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
 .It "xl%d: command never completed!"
-Some commands issued to the 3c90x ASIC take time to complete: the
-driver is supposed to wait until the 'command in progress' bit in
+Some commands issued to the 3C90x ASIC take time to complete: the
+driver is supposed to wait until the ``command in progress'' bit in
 the status register clears before continuing. In rare instances, this
 bit may not clear. To avoid getting caught in an infinite wait loop,
-the driver only polls the bit for a finite number of times before
+the driver only polls the bit a finite number of times before
 giving up, at which point it issues this message. This message may
 be printed during driver initialization on slower machines. If you
 see this message but the driver continues to function normally, the
 message can probably be ignored.
 .It "xl%d: chip is in D3 power state -- setting to D0"
-This message applies only to 3c905B adapters, which support power
-management. Some operating systems place the 3c905B in low power
-mode when shutting down, and some PCI BIOSes fail to bring the chip
-out of this state before configuring it. The 3c905B loses all of
+This message applies only to 3C905B adapters, which support power
+management. Some operating systems place the 3C905B in low power
+mode when shutting down, and some PCI BIOSs fail to bring the chip
+out of this state before configuring it. The 3C905B loses all of
 its PCI configuration in the D3 state, so if the BIOS does not set
 it back to full power mode in time, it won't be able to configure it
 correctly. The driver tries to detect this condition and bring
@@ -166,29 +163,33 @@ operating system. If you power down your system prior to booting
 the card should be configured correctly.
 .It "xl%d: WARNING: no media options bits set in the media options register!"
 This warning may appear when using the driver on some Dell Latitude
-docking stations with built-in 3c905-TX adapters. For whatever the
-reason, the 'MII available' bit in the media options register on
+docking stations with built-in 3C905-TX adapters. For whatever the
+reason, the ``MII available'' bit in the media options register on
 this particular equipment is not set, even though it should be (the
-3c905-TX always uses an external PHY transceiver). The driver will
+3C905-TX always uses an external PHY transceiver). The driver will
 attempt to guess the proper media type based on the PCI device ID
 word. The driver makes a lot of noise about this condition because
 the author considers it a manufacturing defect.
 .El
 .Sh SEE ALSO
-.Xr arp 4 ,
-.Xr netintro 4 , 
+.Xr ec 4 ,
+.Xr eg 4 ,
+.Xr el 4 ,
+.Xr ep 4 ,
+.Xr ie 4 ,
+.Xr ifmedia 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
-The
+The 
 .Nm
 device driver first appeared in
 .Fx 3.0 ,
-and
+and 
 .Ox
 support was added in
 .Ox 2.4 .
 .Sh AUTHOR
-The
+The 
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
