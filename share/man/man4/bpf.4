@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.17 2003/06/23 21:19:52 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.18 2003/07/09 11:45:44 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .Nm bpf
 .Nd Berkeley Packet Filter
 .Sh SYNOPSIS
-.Cd pseudo-device bpfilter 8
+.Cd "pseudo-device bpfilter 8"
 .Sh DESCRIPTION
 The Berkeley Packet Filter provides a raw interface to data link layers in
 a protocol-independent fashion.
@@ -96,8 +96,7 @@ Currently, only writes to Ethernets and SLIP links are supported.
 The ioctl command codes below are defined in
 .Aq Pa net/bpf.h .
 All commands require these includes:
-.Pp
-.Bd -offset indent
+.Bd -unfilled -offset indent
 .Cd #include <sys/types.h>
 .Cd #include <sys/time.h>
 .Cd #include <sys/ioctl.h>
@@ -115,11 +114,11 @@ The (third) argument to the
 .Xr ioctl 2
 call should be a pointer to the type indicated.
 .Bl -tag -width Ds
-.It Dv BIOCGBLEN Pf ( Li int Ns No )
+.It Dv BIOCGBLEN ( Li int )
 Returns the required buffer length for reads on
 .Nm
 files.
-.It Dv BIOCSBLEN Pf ( Li u_int Ns No )
+.It Dv BIOCSBLEN ( Li u_int )
 Sets the buffer length for reads on
 .Nm
 files.
@@ -130,7 +129,7 @@ size will be set and returned in the argument.
 A read call will result in
 .Er EIO
 if it is passed a buffer that is not this size.
-.It Dv BIOCGDLT Pf ( Li u_int Ns No )
+.It Dv BIOCGDLT ( Li u_int )
 Returns the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified.
@@ -151,14 +150,14 @@ promiscuously are closed.
 Flushes the buffer of incoming packets and resets the statistics that are
 returned by
 .Dv BIOCGSTATS .
-.It Dv BIOCGETIF Pf ( Li "struct ifreq" Ns No )
+.It Dv BIOCGETIF ( Li "struct ifreq" )
 Returns the name of the hardware interface that the file is listening on.
 The name is returned in the
 .Fa ifr_name
 field of the
 .Li struct ifreq .
 All other fields are undefined.
-.It Dv BIOCSETIF Pf ( Li "struct ifreq" Ns No )
+.It Dv BIOCSETIF ( Li "struct ifreq" )
 Sets the hardware interface associated with the file.
 This command must be performed before any packets can be read.
 The device is indicated by name using the
@@ -167,9 +166,7 @@ field of the
 .Li struct ifreq .
 Additionally, performs the actions of
 .Dv BIOCFLUSH .
-.It Xo Dv BIOCSRTIMEOUT , Dv BIOCGRTIMEOUT (
-.Li struct timeval Ns No )
-.Xc
+.It Dv BIOCSRTIMEOUT , BIOCGRTIMEOUT ( Li "struct timeval" )
 Set or get the read timeout parameter.
 The
 .Ar timeval
@@ -177,9 +174,8 @@ specifies the length of time to wait before timing out on a read request.
 This parameter is initialized to zero by
 .Xr open 2 ,
 indicating no timeout.
-.It Dv BIOCGSTATS Pf ( Li "struct bpf_stat" Ns No )
+.It Dv BIOCGSTATS ( Li "struct bpf_stat" )
 Returns the following structure of packet statistics:
-.Pp
 .Bd -literal -offset indent
 struct bpf_stat {
 	u_int bs_recv;
@@ -188,7 +184,6 @@ struct bpf_stat {
 .Ed
 .Pp
 The fields are:
-.Pp
 .Bl -tag -width bs_recv
 .It Fa bs_recv
 Number of packets received by the descriptor since opened or reset (including
@@ -198,7 +193,7 @@ Number of packets which were accepted by the filter but dropped by the kernel
 because of buffer overflows (i.e., the application's reads aren't keeping up
 with the packet traffic).
 .El
-.It Dv BIOCIMMEDIATE Pf ( Li u_int Ns No )
+.It Dv BIOCIMMEDIATE ( Li u_int )
 Enable or disable
 .Dq immediate mode ,
 based on the truth value of the argument.
@@ -209,11 +204,10 @@ This is useful for programs like
 .Xr rarpd 8 ,
 which must respond to messages in real time.
 The default for a new file is off.
-.It Dv BIOCSETF Pf ( Li "struct bpf_program" Ns No )
+.It Dv BIOCSETF ( Li "struct bpf_program" )
 Sets the filter program used by the kernel to discard uninteresting packets.
 An array of instructions and its length are passed in using the following
 structure:
-.Pp
 .Bd -literal -offset indent
 struct bpf_program {
 	int bf_len;
@@ -235,7 +229,7 @@ are performed.
 See section
 .Sx FILTER MACHINE
 for an explanation of the filter language.
-.It Dv BIOCVERSION Pf ( Li "struct bpf_version" Ns No )
+.It Dv BIOCVERSION ( Li "struct bpf_version" )
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
 Before installing a filter, applications must check that the current version
@@ -243,7 +237,6 @@ is compatible with the running kernel.
 Version numbers are compatible if the major numbers match and the application
 minor is less than or equal to the kernel minor.
 The kernel version number is returned in the following structure:
-.Pp
 .Bd -literal -offset indent
 struct bpf_version {
 	u_short bv_major;
@@ -261,17 +254,13 @@ An incompatible filter may result in undefined behavior (most likely, an
 error returned by
 .Xr ioctl 2
 or haphazard packet matching).
-.It Xo Dv BIOCSRSIG , Dv BIOCGRSIG (
-.Li u_int Ns No )
-.Xc
+.It Dv BIOCSRSIG , BIOCGRSIG ( Li u_int )
 Set or get the receive signal.
 This signal will be sent to the process or process group specified by
 .Dv FIOSETOWN .
 It defaults to
 .Dv SIGIO .
-.It Xo Dv BIOCSHDRCMPLT , Dv BIOCGHDRCMPLT (
-.Li u_int Ns No )
-.Xc
+.It Dv BIOCSHDRCMPLT , BIOCGHDRCMPLT ( Li u_int )
 Set or get the status of the ``header complete'' flag.
 Set to zero if the link level source address should be filled in
 automatically by the interface output routine.
@@ -286,11 +275,11 @@ and/or non-blocking I/O to an open
 .Nm
 file descriptor.
 .Bl -tag -width Ds
-.It Dv FIONREAD Pf ( Li int Ns No )
+.It Dv FIONREAD ( Li int )
 Returns the number of bytes that are immediately available for reading.
-.It Dv SIOCGIFADDR Pf ( Li "struct ifreq" Ns No )
+.It Dv SIOCGIFADDR ( Li "struct ifreq" )
 Returns the address associated with the interface.
-.It Dv FIONBIO Pf ( Li int Ns No )
+.It Dv FIONBIO ( Li int )
 Set or clear non-blocking I/O.
 If the argument is non-zero, enable non-blocking I/O.
 If the argument is zero, disable non-blocking I/O.
@@ -304,7 +293,7 @@ to
 if no data is available.
 Note: setting this overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
-.It Dv FIOASYNC Pf ( Li int Ns No )
+.It Dv FIOASYNC ( Li int )
 Enable or disable asynchronous I/O.
 When enabled (argument is non-zero), the process or process group specified
 by
@@ -318,9 +307,7 @@ command in order for this to take effect, as the system will not do it by
 default.
 The signal may be changed via
 .Dv BIOCSRSIG .
-.It Xo Dv FIOSETOWN , Dv FIOGETOWN (
-.Li int Ns No )
-.Xc
+.It Dv FIOSETOWN , FIOGETOWN ( Li int )
 Set or get the process or process group (if negative) that should receive
 .Dv SIGIO
 when packets are available.
@@ -331,9 +318,7 @@ The signal may be changed using
 .Ss BPF header
 The following structure is prepended to each packet returned by
 .Xr read 2 :
-.Pp
 .Bd -literal -offset indent
-
 struct bpf_hdr {
 	struct bpf_timeval bh_tstamp;
 	u_int32_t	bh_caplen;
@@ -409,7 +394,6 @@ consists of an accumulator, index register, scratch memory store, and
 implicit program counter.
 .Pp
 The following structure defines the instruction format:
-.Pp
 .Bd -literal -offset indent
 struct bpf_insn {
 	u_int16_t	code;
@@ -453,7 +437,7 @@ unsigned byte (n=1).
 M[i] gives the i'th word in the scratch memory store, which is only addressed
 in word units.
 The memory store is indexed from 0 to
-.Dv BPF_MEMWORDS Ns No \-1 .
+.Dv BPF_MEMWORDS Ns \-1 .
 .Fa k ,
 .Fa jt ,
 and
@@ -461,7 +445,6 @@ and
 are the corresponding fields in the instruction definition.
 .Dq len
 refers to the length of the packet.
-.Pp
 .Bl -tag -width Ds
 .It Dv BPF_LD
 These instructions copy a value into the accumulator.
@@ -538,6 +521,7 @@ A <- len
 .It Dv BPF_LD No + Dv BPF_IMM
 .Sm on
 A <- k
+.Sm off
 .It Dv BPF_LD No + Dv BPF_MEM
 .Sm on
 A <- M[k]
@@ -807,15 +791,14 @@ A <- X
 The
 .Nm
 interface provides the following macros to facilitate array initializers:
+.Bd -filled -offset indent
+.Dv BPF_STMT ( Ns Ar opcode ,
+.Ar operand )
 .Pp
-.Bd -offset indent
-.Dv BPF_STMT Ns No ( Ns Ar opcode ,
-.Ar operand Ns No )
-.Pp
-.Dv BPF_JUMP Ns No ( Ns Ar opcode ,
+.Dv BPF_JUMP ( Ns Ar opcode ,
 .Ar operand ,
 .Ar true_offset ,
-.Ar false_offset Ns No )
+.Ar false_offset )
 .Ed
 .Sh FILES
 .Bl -tag -width /dev/bpf[0-9] -compact
@@ -825,7 +808,6 @@ BPF devices
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP daemon.
 It accepts only Reverse ARP requests.
-.Pp
 .Bd -literal -offset indent
 struct bpf_insn insns[] = {
 	BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
@@ -840,7 +822,6 @@ struct bpf_insn insns[] = {
 .Pp
 This filter accepts only IP packets between host 128.3.112.15 and
 128.3.112.35.
-.Pp
 .Bd -literal -offset indent
 struct bpf_insn insns[] = {
 	BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
@@ -863,7 +844,6 @@ The
 .Dv BPF_JSET
 instruction checks that the IP fragment offset is 0 so we are sure that we
 have a TCP header.
-.Pp
 .Bd -literal -offset indent
 struct bpf_insn insns[] = {
 	BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 12),
