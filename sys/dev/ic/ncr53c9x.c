@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.7 2000/06/12 06:10:45 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.8 2000/06/17 18:03:11 fgsch Exp $	*/
 /*	$NetBSD: ncr53c9x.c,v 1.26 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ const char *ncr53c9x_variant_names[] = {
 	"ESP406",
 	"FAS408",
 	"FAS216",
+	"AM53C974",
 };
 
 /*
@@ -221,18 +222,6 @@ ncr53c9x_attach(sc, adapter, dev)
 	 * Now try to attach all the sub-devices
 	 */
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-
-	/*
-	 * Enable interupts from the SCSI core
-	 */
-	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
-	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
-		NCR_PIOREGS(sc);
-		NCR_WRITE_REG(sc, NCR_CFG5, NCRCFG5_SINT |
-		    NCR_READ_REG(sc, NCR_CFG5));
-		NCR_SCSIREGS(sc);
-	}
-
 }
 
 /*
@@ -260,7 +249,9 @@ ncr53c9x_reset(sc)
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
-		NCR_SCSIREGS(sc);
+		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5 | NCRCFG5_SINT);
+		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
+	case NCR_VARIANT_AM53C974:
 	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
@@ -283,6 +274,9 @@ ncr53c9x_reset(sc)
 		NCR_WRITE_REG(sc, NCR_SYNCOFF, 0);
 		NCR_WRITE_REG(sc, NCR_TIMEOUT, sc->sc_timeout);
 	}
+
+	if (sc->sc_rev == NCR_VARIANT_AM53C974)
+		NCR_WRITE_REG(sc, NCR_AMDCFG4, sc->sc_cfg4);
 }
 
 /*
@@ -432,8 +426,23 @@ ncr53c9x_setsync(sc, ti)
 			 * put the chip in Fast SCSI mode.
 			 */
 			if (ti->period <= 50)
-				cfg3 |= NCRCFG3_FSCSI;
+				/*
+				 * There are (at least) 4 variations of the
+				 * configuration 3 register.  The drive attach
+				 * routine sets the appropriate bit to put the
+				 * chip into Fast SCSI mode so that it doesn't
+				 * have to be figured out here each time.
+				 */
+				cfg3 |= sc->sc_cfg3_fscsi;
 		}
+
+		/*
+		 * Am53c974 requires different SYNCTP values when the
+		 * FSCSI bit is off.
+		 */
+		if (sc->sc_rev == NCR_VARIANT_AM53C974 &&
+		    (cfg3 & NCRAMDCFG3_FSCSI) == 0)
+			synctp--;
 	} else {
 		syncoff = 0;
 		synctp = 0;
@@ -466,6 +475,7 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
+	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
 		   target, lun, ecb->cmd.cmd.opcode));
@@ -488,9 +498,46 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
-	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
-		size_t dmasize;
+	if (ecb->flags & ECB_SENSE) {
+		/*
+		 * For REQUEST SENSE, we should not send an IDENTIFY or
+		 * otherwise mangle the target.  There should be no MESSAGE IN
+		 * phase.
+		 */
+		if (ncr53c9x_dmaselect) {
+			/* setup DMA transfer for command */
+			dmasize = clen = ecb->clen;
+			sc->sc_cmdlen = clen;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd + 1;
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
+			    &dmasize);
 
+			/* Program the SCSI counter */
+			NCR_WRITE_REG(sc, NCR_TCL, dmasize);
+			NCR_WRITE_REG(sc, NCR_TCM, dmasize >> 8);
+			if (sc->sc_cfg2 & NCRCFG2_FE) {
+				NCR_WRITE_REG(sc, NCR_TCH, dmasize >> 16);
+			}
+
+			/* load the count in */
+			NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+			/* And get the targets attention */
+			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
+			NCRDMA_GO(sc);
+		} else {
+			/* Now the command into the FIFO */
+			cmd = (u_char *)&ecb->cmd.cmd;
+			clen = ecb->clen;
+			while (clen--)
+				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+
+			NCRCMD(sc, NCRCMD_SELNATN);
+		}
+		return;
+	}
+
+	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
 
@@ -1347,9 +1394,10 @@ ncr53c9x_msgout(sc)
  */
 int sdebug = 0;
 int
-ncr53c9x_intr(sc)
-	register struct ncr53c9x_softc *sc;
+ncr53c9x_intr(arg)
+	void *arg;
 {
+	register struct ncr53c9x_softc *sc = arg;
 	register struct ncr53c9x_ecb *ecb;
 	register struct scsi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
@@ -1362,12 +1410,13 @@ ncr53c9x_intr(sc)
 		return (0);
 
 again:
-	/* and what do the registers day... */
+	/* and what do the registers say... */
 	ncr53c9x_readregs(sc);
 
 	sc->sc_intrcnt.ev_count++;
 
 	/*
+	 * At the moment, only a SCSI Bus Reset or Illegal
 	 * Command are classed as errors. A disconnect is a
 	 * valid condition, and we let the code check is the
 	 * "NCR_BUSFREE_OK" flag was set before declaring it
@@ -1424,7 +1473,7 @@ again:
 				ecb->xs->error = XS_TIMEOUT;
 				ncr53c9x_done(sc, ecb);
 			}
-				return (1);
+			return (1);
 		}
 
 		if (sc->sc_espintr & NCRINTR_ILL) {
@@ -1610,7 +1659,7 @@ again:
 	case NCR_SBR:
 		printf("%s: waiting for SCSI Bus Reset to happen\n",
 			sc->sc_dev.dv_xname);
-			return (1);
+		return (1);
 
 	case NCR_RESELECTED:
 		/*
@@ -1693,7 +1742,7 @@ printf("<<RESELECT CONT'd>>");
 					sc->sc_espstat,
 					sc->sc_espstep,
 					sc->sc_prevphase);
-					ncr53c9x_init(sc, 1);
+				ncr53c9x_init(sc, 1);
 				return (1);
 			}
 			sc->sc_selid = NCR_READ_REG(sc, NCR_FIFO);
@@ -1781,8 +1830,8 @@ printf("<<RESELECT CONT'd>>");
 						break;
 				} else if ((NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) == 0) {
-						/* Hope for the best.. */
-						break;
+					/* Hope for the best.. */
+					break;
 				}
 				printf("(%s:%d:%d): selection failed;"
 					" %d left in FIFO "
@@ -1800,6 +1849,7 @@ printf("<<RESELECT CONT'd>>");
 			case 2:
 				/* Select stuck at Command Phase */
 				NCRCMD(sc, NCRCMD_FLUSH);
+				break;
 			case 4:
 				if (ncr53c9x_dmaselect &&
 				    sc->sc_cmdlen != 0)
@@ -1861,9 +1911,10 @@ printf("<<RESELECT CONT'd>>");
 			}
 			if ((NCR_READ_REG(sc, NCR_FFLAG)
 			    & NCRFIFO_FF) != 2) {
+				/* Drop excess bytes from the queue */
 				int i = (NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) - 2;
-				while (i--)
+				while (i-- > 0)
 					(void) NCR_READ_REG(sc, NCR_FIFO);
 			}
 			ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
@@ -2020,6 +2071,7 @@ printf("<<RESELECT CONT'd>>");
 		sc->sc_flags |= NCR_ICCS;
 		NCRCMD(sc, NCRCMD_ICCS);
 		sc->sc_prevphase = STATUS_PHASE;
+		goto shortcut;	/* i.e. expect status results soon */
 		break;
 	case INVALID_PHASE:
 		break;
