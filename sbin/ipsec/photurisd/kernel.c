@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.9 1998/05/24 14:17:11 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.10 1998/06/01 10:56:10 provos Exp $";
 #endif
 
 #include <time.h>
@@ -321,12 +321,14 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets)
      em->em_type = EMT_SETSPI;
      em->em_spi = htonl((SPI->SPI[0]<<24) + (SPI->SPI[1]<<16) + 
 			(SPI->SPI[2]<<8) + SPI->SPI[3]);
-     em->em_src.s_addr = inet_addr(SPI->local_address);
+     em->em_src.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
+				   SPI->address : SPI->local_address);
      em->em_dst.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
 				   SPI->local_address : SPI->address);
 	  
      if (SPI->flags & SPI_TUNNEL) {
-	  em->em_osrc.s_addr = inet_addr(SPI->local_address);
+	  em->em_osrc.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
+					 SPI->address : SPI->local_address);
 	  em->em_odst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
 					 SPI->local_address : SPI->address);
      }
@@ -424,13 +426,15 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      em->em_type = EMT_SETSPI;
      em->em_spi = htonl((SPI->SPI[0]<<24) + (SPI->SPI[1]<<16) + 
 			(SPI->SPI[2]<<8) + SPI->SPI[3]);
-     em->em_src.s_addr = inet_addr(SPI->local_address);
+     em->em_src.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
+				   SPI->address : SPI->local_address);
      em->em_dst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
 				   SPI->local_address : SPI->address);
      em->em_sproto = IPPROTO_ESP;
 	
      if (SPI->flags & SPI_TUNNEL) {
-	  em->em_osrc.s_addr = inet_addr(SPI->local_address);
+	  em->em_osrc.s_addr = inet_addr(SPI->flags & SPI_OWNER ? 
+					 SPI->address : SPI->local_address);
 	  em->em_odst.s_addr = inet_addr(SPI->flags & SPI_OWNER ?
 					 SPI->local_address : SPI->address);
      }
