@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.10 2003/03/13 05:00:41 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.11 2003/04/02 20:37:28 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.10 2003/03/13 05:00:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.11 2003/04/02 20:37:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 		exit(3);
 	}
 	while ((dp = readdir(dirp)) != NULL) {
-		strcpy(&name[len], dp->d_name);
+		strlcpy(&name[len], dp->d_name, sizeof name - len);
 		if (stat(name, &devstat) < 0) {
 			perror(name);
 			exit(4);
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	 * it's all we've got.
 	 */
 	name[len] = 'r';
-	strcpy(&name[len+1], dp->d_name);
+	strlcpy(&name[len+1], dp->d_name, sizeof name - (len+1));
 	closedir(dirp);
 	if (dp == NULL) {
 		printf("Cannot find dev 0%o corresponding to %s\n",
