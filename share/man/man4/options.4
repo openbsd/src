@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.145 2004/07/15 08:21:47 miod Exp $
+.\"	$OpenBSD: options.4,v 1.146 2004/07/15 13:48:26 mpech Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -860,15 +860,6 @@ Internet backbone routers to provide per-packet authentication for the TCP
 packets used to communicate BGP routing information.
 You will also need a
 routing daemon that supports this option in order to actually use it.
-.It Cd option PPP_FILTER
-This option turns on
-.Xr pcap 3
-based filtering for ppp connections.
-This option is used by
-.Xr pppd 8
-which needs to be compiled with
-.Em PPP_FILTER
-defined (the current default).
 .It Cd option PPP_BSDCOMP
 Enables BSD compressor for PPP connections.
 .It Cd option PPP_DEFLATE
