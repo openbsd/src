@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.12 2004/06/03 18:40:17 grange Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.13 2004/08/06 20:35:34 mickey Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.20 2004/04/11 18:05:23 millert Exp 
+.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.21 2004/08/06 20:34:04 mickey Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June  3, 2004
+.Dd August  6, 2004
 .Dt MAKEDEV 8 hppa
 .Os
 .Sh NAME
@@ -95,6 +95,10 @@ pseudo-disks, see
 .Dq file
 pseudo-disk devices, see
 .Xr vnd 4 .
+.It Ar wd*
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL, ...), see
+.Xr wd 4 .
 .El
 .Pp
 .Sy Tapes

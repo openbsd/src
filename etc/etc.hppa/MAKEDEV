@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.20 2004/04/11 18:05:23 millert Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.21 2004/08/06 20:34:04 mickey Exp 
 #	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -36,6 +36,7 @@
 #	sd*	SCSI disks, including flopticals
 #	rd*	"rd" pseudo-disks
 #	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 # Tapes:
 #	ch*	SCSI media changers
 #	st*	SCSI tape drives
@@ -436,11 +437,12 @@ all)
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
 	R ss1 ch0 ses0 ptm local wscons pci audio0 uk0 random lpa0
 	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto
-	R pf systrace std st0 st1 fd
+	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
-sd*|ccd*)
+wd*|sd*|ccd*)
 	case $i in
+	wd*) dodisk wd $U 8 39 $U 0;;
 	sd*) dodisk sd $U 4 10 $U 0;;
 	ccd*) dodisk ccd $U 1 7 $U 0;;
 	esac
