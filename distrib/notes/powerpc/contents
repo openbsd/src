@@ -70,7 +70,7 @@ enet   =      motherboard ethernet device
 Other Open Firmware command examples:
 -------------------------------------
 
-setenv auto-boot false
+setenv auto-boot? false
 
 		(force the machine to wait at Open Firmware
 		for user input at next reboot; options are true/false)
