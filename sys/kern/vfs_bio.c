@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.48 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.49 2001/11/09 15:32:22 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
@@ -97,6 +98,11 @@ TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
 int nobuffers;
 struct bio_ops bioops;
+
+/*
+ * Buffer pool for I/O buffers.
+ */
+struct pool bufpool;
 
 /*
  * Insq/Remq for the buffer free lists.
@@ -183,6 +189,8 @@ bufinit()
 	register int i;
 	int base, residual;
 
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
+	    NULL, NULL, M_DEVBUF);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
