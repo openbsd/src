@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2002/01/21 17:18:46 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.15 2002/01/21 17:20:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -84,7 +84,7 @@ splraise(int newcpl)
 	return(oldcpl);
 }
 
-static _volatile _inline void
+volatile static __inline void
 splx(int newcpl)
 {
 	__asm__ volatile("":::"memory");	/* reorder protect */
