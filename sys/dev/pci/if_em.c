@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.25 2004/09/06 08:49:19 markus Exp $ */
+/* $OpenBSD: if_em.c,v 1.26 2004/09/08 23:01:55 deraadt Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -583,7 +583,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->tx_desc_base = (struct em_tx_desc *)sc->txdma.dma_vaddr;
 
 	rsize = EM_ROUNDUP(sc->num_rx_desc * sizeof(struct em_rx_desc),
-	    EM_MAX_RXD * sizeof(struct em_tx_desc));
+	    EM_MAX_RXD * sizeof(struct em_rx_desc));
 	rsize = EM_ROUNDUP(rsize, PAGE_SIZE);
 
 	/* Allocate Receive Descriptor ring */
