@@ -1,5 +1,5 @@
 .\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
-.\"	 All rights reserved.
+.\"	All rights reserved.
 .\"
 .\" By using this file, you agree to the terms and conditions set
 .\" forth in the LICENSE file which can be found at the top level of
@@ -8,50 +8,57 @@
 .\"
 .\"	$Sendmail: praliases.8,v 8.14 2000/03/17 07:32:46 gshapiro Exp $
 .\"
-.TH PRALIASES 1 "April 25, 1996"
-.SH NAME
-.B praliases
-\- display system mail aliases
-.SH SYNOPSIS
-.B praliases
-.RB [ \-C
-.IR file ]
-.RB [ \-f
-.IR file ]
-.RB [\c
-.IR key
-.IR ... ]
-.SH DESCRIPTION
+.Dd April 25, 1996
+.Dt PRALIASES 1
+.Os
+.Sh NAME
+.Nm praliases
+.Nd display system mail aliases
+.Sh SYNOPSIS
+.Nm praliases
+.Op Fl C Ar file
+.Op Fl f Ar file
+.Op key ...
+.Sh DESCRIPTION
 The
-.B praliases
-utility displays the current system aliases, 
+.Nm praliases
+utility displays the current system aliases,
 one per line, in no particular order.
 The special internal @:@ alias will be displayed if present.
-.PP
+.Pp
 The options are as follows:
-.TP
-.B \-C
+.Bl -tag -width Ds
+.It Fl C
 Read the specified sendmail configuration file instead of the default
-.B sendmail
+.Nm sendmail
 configuration file.
-.TP 
-.B \-f
+.It Fl f
 Read the specified file instead of the configured
-.B sendmail
+.Nm sendmail
 system aliases file(s).
-.PP
+.El
+.Pp
 If one or more keys are specified on the command line,
 only entries which match those keys are displayed.
-.PP
+.Pp
 The
-.B praliases
+.Nm praliases
 utility exits 0 on success, and >0 if an error occurs.
-.SH FILES
-.TP 2.5i
-/etc/mail/sendmail.cf
+.Sh FILES
+.Bl -tag -width /etc/mail/sendmail.cf -compact
+.It Pa /etc/mail/sendmail.cf
 The default
-.B sendmail
+.Nm sendmail
 configuration file.
-.SH SEE ALSO
-mailq(1), 
-sendmail(8)
+.It Pa /etc/mail/aliases
+The default
+.Nm sendmail
+system aliases file.
+.It Pa /etc/mail/aliases.db
+The database version of the
+.Pa /etc/mail/aliases
+file.
+.El
+.Sh SEE ALSO
+.Xr mailq 1 ,
+.Xr sendmail 8

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
-.\"	 All rights reserved.
+.\" Copyright (c) 1998, 1999 Sendmail, Inc and its suppliers.
+.\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -11,31 +11,39 @@
 .\"
 .\"     $Sendmail: newaliases.1,v 8.15 1999/06/22 20:41:34 tony Exp $
 .\"
-.TH NEWALIASES 1 "$Date: 2000/04/02 19:48:35 $"
-.SH NAME
-.B newaliases
-\- rebuild the data base for the mail aliases file
-.SH SYNOPSIS
-.B newaliases
-.SH DESCRIPTION
-.B Newaliases
+.Dd June 22, 1999
+.Dt NEWALIASES 1
+.Os
+.Sh NAME
+.Nm newaliases
+.Nd rebuild the data base for the mail aliases file
+.Sh SYNOPSIS
+.Nm newaliases
+.Sh DESCRIPTION
+.Nm Newaliases
 rebuilds the random access data base for the mail aliases file
-/etc/mail/aliases.  It must be run each time this file is changed
+.Pa /etc/mail/aliases .
+It must be run each time this file is changed
 in order for the change to take effect.
-.PP
-.B Newaliases
-is identical to ``sendmail -bi''.
-.PP
+.Pp
+.Nm Newaliases
+is identical to
+.Dq Li "sendmail -bi" .
+.Pp
 The
-.B newaliases
+.Nm newaliases
 utility exits 0 on success, and >0 if an error occurs.
-.SH FILES
-.TP 2i
-/etc/mail/aliases
+.Sh FILES
+.Bl -tag -width /etc/mail/aliases -compact
+.It Pa /etc/mail/aliases
 The mail aliases file
-.SH SEE ALSO
-aliases(5), sendmail(8)
-.SH HISTORY
+.El
+.Sh SEE ALSO
+.Xr aliases 5 ,
+.Xr mailer.conf 5 ,
+.Xr sendmail 8
+.Sh HISTORY
 The
-.B newaliases
-command appeared in 4.0BSD.
+.Nm newaliases
+command appeared in
+.Bx 4.0 .
