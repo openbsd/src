@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.40 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.41 2005/02/19 13:08:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1808,8 +1808,7 @@ ipw_config(struct ipw_softc *sc)
 		return ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
 	}
 
-	IEEE80211_ADDR_COPY(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
