@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.57 2005/03/12 16:33:53 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.58 2005/03/25 17:51:16 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@
  *
  * Buffer scatter/gather policy by Niklas Hallqvist.
  */
-/*#define	CCDDEBUG */
+/* #define	CCDDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ ccdinit(ccd, cpaths, p)
 	struct ccd_softc *cs = &ccd_softc[ccd->ccd_unit];
 	struct ccdcinfo *ci = NULL;
 	size_t size;
-	int ix;
+	int ix, rpm;
 	struct vnode *vp;
 	struct vattr va;
 	size_t minsize;
@@ -316,6 +316,7 @@ ccdinit(ccd, cpaths, p)
 	 */
 	maxsecsize = 0;
 	minsize = 0;
+	rpm = 0;
 	for (ix = 0; ix < cs->sc_nccdisks; ix++) {
 		vp = ccd->ccd_vpp[ix];
 		ci = &cs->sc_cinfo[ix];
@@ -409,7 +410,9 @@ ccdinit(ccd, cpaths, p)
 			minsize = size;
 		ci->ci_size = size;
 		cs->sc_size += size;
+		rpm += dpart.disklab->d_rpm;
 	}
+	ccg->ccg_rpm = rpm / cs->sc_nccdisks;
 
 	/*
 	 * Don't allow the interleave to be smaller than
@@ -820,7 +823,7 @@ ccdstart(cs, bp)
 		/*
 		 * Fire off the requests
 		 */
-		for (i = 0; i < cs->sc_nccdisks; i++) {
+		for (i = 0; i < 2*cs->sc_nccdisks; i++) {
 			cbp = cbpp[i];
 			if (cbp) {
 				if ((cbp->cb_buf.b_flags & B_READ) == 0)
@@ -847,7 +850,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 	struct ccdcinfo *ci, *ci2 = NULL;
 	struct ccdbuf *cbp;
 	daddr_t cbn, cboff, sblk;
-	int ccdisk, off;
+	int ccdisk, ccdisk2, off;
 	long old_bcount, cnt;
 	struct ccdiinfo *ii;
 	struct buf *nbp;
@@ -894,10 +897,14 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		}
 		if (cs->sc_cflags & CCDF_MIRROR) {
 			/* Mirrored data */
-			ci2 = &cs->sc_cinfo[ccdisk + ii->ii_ndisk];
+			ccdisk2 = ccdisk + ii->ii_ndisk;
+			ci2 = &cs->sc_cinfo[ccdisk2];
 			/* spread the read over both parts */
-			if (bp->b_flags & B_READ && cbn & 1)
-				ccdisk += ii->ii_ndisk;
+			if (bp->b_flags & B_READ &&
+			    bcount > bp->b_bcount / 2 &&
+			    (!(ci2->ci_flags & CCIF_FAILED) ||
+			      ci->ci_flags & CCIF_FAILED))
+				ccdisk = ccdisk2;
 		}
 		cbn *= cs->sc_ileave;
 		ci = &cs->sc_cinfo[ccdisk];
@@ -965,16 +972,18 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		 * identical to the first.
 		 */
 		if ((cs->sc_cflags & CCDF_MIRROR) &&
+		    !(ci2->ci_flags & CCIF_FAILED) &&
 		    ((cbp->cb_buf.b_flags & B_READ) == 0)) {
-			cbp = getccdbuf();
-			*cbp = *cbpp[0];
-			cbp->cb_flags = CBF_MIRROR | (old_io ? CBF_OLD : 0);
-			cbp->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
-			cbp->cb_buf.b_vp = ci2->ci_vp;
-			LIST_INIT(&cbp->cb_buf.b_dep);
-			cbp->cb_comp = ci2 - cs->sc_cinfo;
-			cbp->cb_dep = cbpp[0];
-			cbpp[0]->cb_dep = cbpp[1] = cbp;
+			struct ccdbuf *cbp2;
+			cbpp[old_io? 1 : ccdisk2] = cbp2 = getccdbuf();
+			*cbp2 = *cbp;
+			cbp2->cb_flags = CBF_MIRROR | (old_io ? CBF_OLD : 0);
+			cbp2->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
+			cbp2->cb_buf.b_vp = ci2->ci_vp;
+			LIST_INIT(&cbp2->cb_buf.b_dep);
+			cbp2->cb_comp = ccdisk2;
+			cbp2->cb_dep = cbp;
+			cbp->cb_dep = cbp2;
 		}
 	} else {
 		/*
@@ -1048,7 +1057,7 @@ ccdiodone(vbp)
 	struct buf *bp = cbp->cb_obp;
 	struct ccd_softc *cs = cbp->cb_sc;
 	int old_io = cbp->cb_flags & CBF_OLD;
-	int cbflags, i;
+	int i;
 	long count = bp->b_bcount, off;
 	char *comptype;
 
@@ -1083,7 +1092,17 @@ ccdiodone(vbp)
 		printf("%s: error %d on component %d%s\n",
 		    cs->sc_xname, bp->b_error, cbp->cb_comp, comptype);
 	}
-	cbflags = cbp->cb_flags |= CBF_DONE;
+	cbp->cb_flags |= CBF_DONE;
+
+	if (cbp->cb_dep &&
+	    (cbp->cb_dep->cb_flags & CBF_DONE) != (cbp->cb_flags & CBF_DONE))
+		return;
+
+	if (cbp->cb_flags & CBF_MIRROR &&
+	    !(cbp->cb_dep->cb_flags & CBF_MIRROR)) {
+		cbp = cbp->cb_dep;
+		vbp = (struct buf *)cbp;
+	}
 
 	if (!old_io) {
 		/*
@@ -1108,10 +1127,6 @@ ccdiodone(vbp)
 		}
 	}
 	count = vbp->b_bcount;
-
-	if (cbp->cb_dep &&
-	    (cbp->cb_dep->cb_flags & CBF_DONE) != (cbflags & CBF_DONE))
-		return;
 
 	putccdbuf(cbp);
 	if (cbp->cb_dep)
@@ -1238,16 +1253,14 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_interleave = ccio->ccio_ileave;
 		ccd.ccd_flags = ccio->ccio_flags & CCDF_USERMASK;
 
-		/* new code seems to work now but enable it after a release */
+		/* XXX the new code is unstable still */
 		ccd.ccd_flags |= CCDF_OLD;
 
 		/*
 		 * Interleaving which is not a multiple of the click size
-		 * must use the old I/O code (by design), as must mirror
-		 * setups (until implemented in the new code).
+		 * must use the old I/O code (by design)
 		 */
-		if (ccio->ccio_ileave % (PAGE_SIZE / DEV_BSIZE) != 0 ||
-		    (ccd.ccd_flags & CCDF_MIRROR))
+		if (ccio->ccio_ileave % (PAGE_SIZE / DEV_BSIZE) != 0)
 			ccd.ccd_flags |= CCDF_OLD;
 
 		/*
@@ -1594,11 +1607,11 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	lp->d_ntracks = ccg->ccg_ntracks;
 	lp->d_ncylinders = ccg->ccg_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_rpm = ccg->ccg_rpm;
 
 	strncpy(lp->d_typename, "ccd", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_CCD;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdvar.h,v 1.7 2005/02/24 19:36:39 mickey Exp $	*/
+/*	$OpenBSD: ccdvar.h,v 1.8 2005/03/25 17:51:16 mickey Exp $	*/
 /*	$NetBSD: ccdvar.h,v 1.11 1996/02/28 01:08:32 thorpej Exp $	*/
 
 /*-
@@ -177,6 +177,7 @@ struct ccdgeom {
 	u_int32_t	ccg_nsectors;	/* # data sectors per track */
 	u_int32_t	ccg_ntracks;	/* # tracks per cylinder */
 	u_int32_t	ccg_ncylinders;	/* # cylinders per unit */
+	u_int16_t	ccg_rpm;
 };
 
 /*
