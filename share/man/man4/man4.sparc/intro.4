@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.9 1999/04/02 16:21:37 aaron Exp $
+.\"     $OpenBSD: intro.4,v 1.10 1999/04/18 12:38:12 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -169,6 +169,8 @@ with the following modules with only one CPU:
 75 Mhz SuperSPARC II with 1MB SuperCACHE
 .It SM81
 85 Mhz SuperSPARC II with 1MB SuperCACHE
+.It SM100
+Dual 40Mhz Cypress CY7C605/601 (only one processor will be used)
 .El
 .Pp
 .Ox
@@ -231,18 +233,20 @@ Sun Open boot PROM (what became IEEE 1275) configuration driver
 Quad 10BaseT SBus Ethernet controller
 .It qec
 Supported as a carrier for the
-.It qfe
-SBus QuadFastEthernet controllers
 .Nm be
 or
 .Nm qe
 Ethernet controllers.
+.It qfe
+SBus QuadFastEthernet controllers
 .It si
 NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
 .It sw
 NCR5380 obio (Sun 4/100) "SCSI Wierd" SCSI controller
 .It tcx
 8 or 24 bit SBus color graphics frame buffer
+.It xbox
+SBus Expansion Subsystem
 .It xd
 Xylogics 753/7053 VMEbus SMD disk controller
 .It xy
