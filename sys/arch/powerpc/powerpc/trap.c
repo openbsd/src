@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2001/11/29 04:47:41 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2002/01/13 05:30:17 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -572,13 +572,12 @@ for (i = 0; i < errnum; i++) {
 #endif /* PPC_VECTOR_SUPPORTED */
 
 	case EXC_AST|EXC_USER:
+		uvmexp.softs++;
 		/* This is just here that we trap */
 		break;
 	}
 
 	astpending = 0;		/* we are about to do it */
-
-	uvmexp.softs++;
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
