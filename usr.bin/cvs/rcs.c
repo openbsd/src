@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.27 2005/03/02 04:19:34 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.28 2005/03/03 21:02:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -213,13 +213,7 @@ rcs_open(const char *path, int flags, ...)
 	}
 	memset(rfp, 0, sizeof(*rfp));
 
-	if ((rfp->rf_head = rcsnum_parse(RCS_HEAD_INIT)) == NULL) {
-		free(rfp);
-		return (NULL);
-	}
-
 	if ((rfp->rf_branch = rcsnum_alloc()) == NULL) {
-		rcsnum_free(rfp->rf_head);
 		free(rfp);
 		return (NULL);
 	}
@@ -227,7 +221,6 @@ rcs_open(const char *path, int flags, ...)
 	if ((rfp->rf_path = strdup(path)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate RCS file path");
 		rcsnum_free(rfp->rf_branch);
-		rcsnum_free(rfp->rf_head);
 		free(rfp);
 		return (NULL);
 	}
@@ -324,7 +317,7 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_sym *symp;
 	struct rcs_delta *rdp;
 
-	if ((rfp->rf_flags & RCS_SYNCED) || (rfp->rf_ndelta == 0))
+	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
 
 	fp = fopen(rfp->rf_path, "w");
@@ -334,7 +327,11 @@ rcs_write(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rcsnum_tostr(rfp->rf_head, numbuf, sizeof(numbuf));
+	if (rfp->rf_head != NULL)
+		rcsnum_tostr(rfp->rf_head, numbuf, sizeof(numbuf));
+	else
+		numbuf[0] = '\0';
+
 	fprintf(fp, "head\t%s;\n", numbuf);
 	fprintf(fp, "access;\n");
 
@@ -718,6 +715,9 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 	BUF *rbuf;
 	struct rcs_delta *rdp = NULL;
 
+	if (rfp->rf_head == NULL)
+		return (NULL);
+
 	res = rcsnum_cmp(rfp->rf_head, rev, 0);
 	if (res == 1) {
 		cvs_log(LP_ERR, "sorry, can't travel in the future yet");
@@ -1094,6 +1094,11 @@ rcs_parse_admin(RCSFILE *rfp)
 			}
 
 			if (tok == RCS_TOK_HEAD) {
+				if (rfp->rf_head == NULL) {
+					rfp->rf_head = rcsnum_alloc();
+					if (rfp->rf_head == NULL)
+						return (-1);
+				}
 				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_head);
 			} else if (tok == RCS_TOK_BRANCH) {
