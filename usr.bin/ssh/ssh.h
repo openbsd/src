@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.h,v 1.66 2002/03/29 19:18:33 stevesk Exp $	*/
+/*	$OpenBSD: ssh.h,v 1.67 2002/05/07 19:54:36 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -90,7 +90,7 @@
  * sshd will change its pivileges to this user and its
  * primary group.
  */
-#define SSH_PRIVSEP_USER		"nobody"
+#define SSH_PRIVSEP_USER		"ssh"
 
 /* Minimum modulus size (n) for RSA keys. */
 #define SSH_RSA_MINIMUM_MODULUS_SIZE	768
