@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2001/08/23 14:01:03 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2001/08/24 00:05:19 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -744,7 +744,6 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if XXX
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -840,9 +839,8 @@ printf("sigreturn: pid %d nsaved %d\n",
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
+	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
-#endif
 	return (EJUSTRETURN);
 }
 
@@ -947,7 +945,7 @@ long	dumplo = 0;
 void
 dumpconf()
 {
-	register int nblks, dumpblks;
+	int nblks, dumpblks;
 
 	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
 		/* No usable dump device */
