@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.49 2001/05/14 16:51:48 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.50 2001/05/22 22:53:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -87,9 +87,12 @@ int	ubsec_process __P((struct cryptop *));
 void	ubsec_callback __P((struct ubsec_q *));
 int	ubsec_feed __P((struct ubsec_softc *));
 void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
-void	ubsec_callback2 __P((struct ubsec_q2 *));
+void	ubsec_callback2 __P((struct ubsec_softc *, struct ubsec_q2 *));
 int	ubsec_feed2 __P((struct ubsec_softc *));
 void	ubsec_rng __P((void *));
+void	ubsec_dma_free __P((struct ubsec_softc *, struct ubsec_dma_alloc *));
+int	ubsec_dma_malloc __P((struct ubsec_softc *, bus_size_t,
+    struct ubsec_dma_alloc *, int));
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))
@@ -98,6 +101,10 @@ void	ubsec_rng __P((void *));
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
 
 #define	SWAP32(x) (x) = swap32((x))
+
+#ifdef __alpha__
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#endif
 
 int
 ubsec_probe(parent, match, aux)
@@ -197,8 +204,31 @@ ubsec_attach(parent, self, aux)
 
 	if (sc->sc_flags & UBS_FLAGS_KEY) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
+		if (hz > 100)
+			sc->sc_rnghz = hz / 100;
+		else
+			sc->sc_rnghz = 1;
+
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
+		    &sc->sc_rng.rng_q.q_mcr, 0)) {
+			printf(": rng mcr alloc failed\n");
+			return;
+		}
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rngbypass),
+		    &sc->sc_rng.rng_q.q_ctx, 0)) {
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
+			printf(": rng ctx alloc failed\n");
+			return;
+		}
+		if (ubsec_dma_malloc(sc, sizeof(u_int32_t) * UBSEC_RNG_BUFSIZ,
+		    &sc->sc_rng.rng_buf, 0)) {
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_ctx);
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
+			printf(": rng buf alloc failed\n");
+			return;
+		}
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
-		timeout_add(&sc->sc_rngto, 1);
+		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		printf(", rng");
 	}
 
@@ -283,10 +313,17 @@ ubsec_intr(arg)
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip2)) {
 			q2 = SIMPLEQ_FIRST(&sc->sc_qchip2);
 
-			if ((q2->q_mcr->mcr_flags & UBS_MCR_DONE) == 0)
+			bus_dmamap_sync(sc->sc_dmat, q2->q_mcr.dma_map,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+			mcr = (struct ubsec_mcr *)q2->q_mcr.dma_vaddr;
+			if ((mcr->mcr_flags & UBS_MCR_DONE) == 0) {
+				bus_dmamap_sync(sc->sc_dmat, q2->q_mcr.dma_map,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 				break;
+			}
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip2, q2, q_next);
-			ubsec_callback2(q2);
+			ubsec_callback2(sc, q2);
 			ubsec_feed2(sc);
 		}
 	}
@@ -566,6 +603,7 @@ ubsec_process(crp)
 	int sskip, dskip, stheend, dtheend;
 	int16_t coffset;
 	struct ubsec_session *ses;
+	struct ubsec_pktctx ctx;
 
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
@@ -601,8 +639,8 @@ ubsec_process(crp)
 		q->q_src_m = (struct mbuf *)crp->crp_buf;
 		q->q_dst_m = (struct mbuf *)crp->crp_buf;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		q->q_src = (struct uio *)crp->crp_buf;
-		q->q_dst = (struct uio *)crp->crp_buf;
+		q->q_src_io = (struct uio *)crp->crp_buf;
+		q->q_dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
@@ -615,6 +653,7 @@ ubsec_process(crp)
 		goto errout;
 	}
 	bzero(q->q_mcr, sizeof(struct ubsec_mcr));
+	bzero(&ctx, sizeof(ctx));
 
 	q->q_mcr->mcr_pkts = 1;
 	q->q_mcr->mcr_flags = 0;
@@ -667,68 +706,60 @@ ubsec_process(crp)
 
 	if (enccrd) {
 		encoffset = enccrd->crd_skip;
-		q->q_ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
+		ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
+			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
+
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
 			else {
-				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
-				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
+				ctx.pc_iv[0] = ses->ses_iv[0];
+				ctx.pc_iv[1] = ses->ses_iv[1];
 			}
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(q->q_src_m, enccrd->crd_inject,
-					    8, (caddr_t)q->q_ctx.pc_iv);
+					    8, (caddr_t)ctx.pc_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV) {
 					if (crp->crp_iv == NULL) {
 						err = EINVAL;
 						goto errout;
 					}
 					bcopy(crp->crp_iv,
-					    (caddr_t)q->q_ctx.pc_iv, 8);
+					    (caddr_t)ctx.pc_iv, 8);
 				}
 			}
 		} else {
-			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
+			ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)ctx.pc_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
 				if (crp->crp_iv == NULL) {
 					err = EINVAL;
 					goto errout;
 				}
-				bcopy(crp->crp_iv, (caddr_t)q->q_ctx.pc_iv, 8);
+				bcopy(crp->crp_iv, (caddr_t)ctx.pc_iv, 8);
 			}
 		}
 
-		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
-		q->q_ctx.pc_deskey[1] = ses->ses_deskey[1];
-		q->q_ctx.pc_deskey[2] = ses->ses_deskey[2];
-		q->q_ctx.pc_deskey[3] = ses->ses_deskey[3];
-		q->q_ctx.pc_deskey[4] = ses->ses_deskey[4];
-		q->q_ctx.pc_deskey[5] = ses->ses_deskey[5];
-		SWAP32(q->q_ctx.pc_iv[0]);
-		SWAP32(q->q_ctx.pc_iv[1]);
+		SWAP32(ctx.pc_iv[0]);
+		SWAP32(ctx.pc_iv[1]);
 	}
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
 		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
-			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
+			ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
 		else
-			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
+			ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
 
-		for (i = 0; i < 5; i++) {
-			q->q_ctx.pc_hminner[i] = ses->ses_hminner[i];
-			q->q_ctx.pc_hmouter[i] = ses->ses_hmouter[i];
-		}
 	}
 
 	if (enccrd && maccrd) {
@@ -765,13 +796,13 @@ ubsec_process(crp)
 		cpoffset = cpskip + dtheend;
 		coffset = 0;
 	}
-	q->q_ctx.pc_offset = coffset >> 2;
+	ctx.pc_offset = coffset >> 2;
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
 		    q->q_src_packl, MAX_SCATTER, &nicealign);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
-		q->q_src_l = iov2pages(q->q_src, &q->q_src_npa, q->q_src_packp,
+		q->q_src_l = iov2pages(q->q_src_io, &q->q_src_npa, q->q_src_packp,
 		    q->q_src_packl, MAX_SCATTER, &nicealign);
 	if (q->q_src_l == 0) {
 		err = ENOMEM;
@@ -909,7 +940,7 @@ ubsec_process(crp)
 			q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
 			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
-			q->q_dst_l = iov2pages(q->q_dst, &q->q_dst_npa,
+			q->q_dst_l = iov2pages(q->q_dst_io, &q->q_dst_npa,
 			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
 
 #ifdef UBSEC_DEBUG
@@ -978,23 +1009,51 @@ ubsec_process(crp)
 #endif
 	}
 
+	/*
+	 * Put computed context into dma safe memory
+	 */
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_pktctx_long),
+	    &q->q_ctx_dma, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	q->q_mcr->mcr_cmdctxp = q->q_ctx_dma.dma_map->dm_segs[0].ds_addr;
 	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
-		/* transform small context into long context */
-		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctxl);
-		q->q_ctxl.pc_len = sizeof(struct ubsec_pktctx_long);
-		q->q_ctxl.pc_type = UBS_PKTCTX_TYPE_IPSEC;
-		q->q_ctxl.pc_flags = q->q_ctx.pc_flags;
-		q->q_ctxl.pc_offset = q->q_ctx.pc_offset;
-		for (i = 0; i < 6; i++)
-			q->q_ctxl.pc_deskey[i] = q->q_ctx.pc_deskey[i];
-		for (i = 0; i < 5; i++)
-			q->q_ctxl.pc_hminner[i] = q->q_ctx.pc_hminner[i];
-		for (i = 0; i < 5; i++)
-			q->q_ctxl.pc_hmouter[i] = q->q_ctx.pc_hmouter[i];   
-		q->q_ctxl.pc_iv[0] = q->q_ctx.pc_iv[0];
-		q->q_ctxl.pc_iv[1] = q->q_ctx.pc_iv[1];
-	} else
-		q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
+		struct ubsec_pktctx_long *cx;
+
+		cx = (struct ubsec_pktctx_long *)q->q_ctx_dma.dma_vaddr;
+		cx->pc_len = sizeof(struct ubsec_pktctx_long);
+		cx->pc_type = UBS_PKTCTX_TYPE_IPSEC;
+		cx->pc_flags = ctx.pc_flags;
+		cx->pc_offset = ctx.pc_offset;
+
+		if (enccrd)
+			for (i = 0; i < 6; i++)
+				cx->pc_deskey[i] = ses->ses_deskey[i];
+		if (maccrd) {
+			for (i = 0; i < 5; i++) {
+				cx->pc_hminner[i] = ses->ses_hminner[i];
+				cx->pc_hmouter[i] = ses->ses_hmouter[i];
+			}
+		}
+		cx->pc_iv[0] = ctx.pc_iv[0];
+		cx->pc_iv[1] = ctx.pc_iv[1];
+	} else {
+		struct ubsec_pktctx *cx;
+
+		cx = (struct ubsec_pktctx *)q->q_ctx_dma.dma_vaddr;
+		bcopy(&ctx, q->q_ctx_dma.dma_vaddr, sizeof(ctx));
+		if (enccrd)
+			for (i = 0; i < 6; i++)
+				cx->pc_deskey[i] = ses->ses_deskey[i];
+		if (maccrd) {
+			for (i = 0; i < 5; i++) {
+				ctx.pc_hminner[i] = ses->ses_hminner[i];
+				ctx.pc_hmouter[i] = ses->ses_hmouter[i];
+			}
+		}
+	}
+	bus_dmamap_sync(sc->sc_dmat, q->q_ctx_dma.dma_map, BUS_DMASYNC_PREREAD);
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1005,6 +1064,8 @@ ubsec_process(crp)
 
 errout:
 	if (q != NULL) {
+		if (q->q_ctx_dma.dma_map)
+			ubsec_dma_free(sc, &q->q_ctx_dma);
 		if (q->q_mcr)
 			free(q->q_mcr, M_DEVBUF);
 		if (q->q_dst_m && q->q_src_m != q->q_dst_m)
@@ -1023,14 +1084,17 @@ ubsec_callback(q)
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
 
+	bus_dmamap_sync(q->q_sc->sc_dmat, q->q_ctx_dma.dma_map,
+	    BUS_DMASYNC_POSTREAD);
+	ubsec_dma_free(q->q_sc, &q->q_ctx_dma);
+
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
 		crp->crp_buf = (caddr_t)q->q_dst_m;
 	}
 
 	/* copy out IV for future use */
-	if ((q->q_ctx.pc_flags & (UBS_PKTCTX_ENC_3DES | UBS_PKTCTX_INBOUND)) ==
-	    UBS_PKTCTX_ENC_3DES) {
+	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
 			    crd->crd_alg != CRYPTO_3DES_CBC)
@@ -1039,11 +1103,10 @@ ubsec_callback(q)
 				m_copydata((struct mbuf *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - 8, 8,
 				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
+			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - 8, 8,
 				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
-			}
 			break;
 		}
 	}
@@ -1120,7 +1183,7 @@ ubsec_feed2(sc)
 		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR2_FULL)
 			break;
 		q = SIMPLEQ_FIRST(&sc->sc_queue2);
-		WRITE_REG(sc, BS_MCR2, (u_int32_t)vtophys(q->q_mcr));
+		WRITE_REG(sc, BS_MCR2, q->q_mcr.dma_map->dm_segs[0].ds_addr);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue2, q, q_next);
 		--sc->sc_nqueue2;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip2, q, q_next);
@@ -1129,24 +1192,28 @@ ubsec_feed2(sc)
 }
 
 void
-ubsec_callback2(q)
+ubsec_callback2(sc, q)
+	struct ubsec_softc *sc;
 	struct ubsec_q2 *q;
 {
-	struct ubsec_softc *sc = q->q_sc;
-	struct ubsec_keyctx *ctx = q->q_ctx;
+	struct ubsec_ctx_keyop *ctx;
+
+	ctx = (struct ubsec_ctx_keyop *)q->q_ctx.dma_vaddr;
+	bus_dmamap_sync(sc->sc_dmat, q->q_ctx.dma_map, BUS_DMASYNC_POSTREAD);
 
 	switch (ctx->ctx_op) {
 	case UBS_CTXOP_RNGBYPASS: {
-		struct ubsec_rng *rng = q->q_private;
-		volatile u_int32_t *dat;
+		struct ubsec_q2_rng *rng = (struct ubsec_q2_rng *)q;
+		u_int32_t *p;
 		int i;
 
-		dat = rng->rng_buf;
-		for (i = 0; i < UBS_RNGBUFSZ; i++, dat++)
-			add_true_randomness(*dat);
-		free(rng, M_DEVBUF);
-		free(q, M_DEVBUF);
-		timeout_add(&sc->sc_rngto, 1);
+		bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map,
+		    BUS_DMASYNC_POSTWRITE);
+		p = (u_int32_t *)rng->rng_buf.dma_vaddr;
+		for (i = 0; i < UBSEC_RNG_BUFSIZ; p++, i++)
+			add_true_randomness(*p);
+		rng->rng_used = 0;
+		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		break;
 	}
 	default:
@@ -1161,46 +1228,64 @@ ubsec_rng(vsc)
 	void *vsc;
 {
 	struct ubsec_softc *sc = vsc;
-	struct ubsec_q2 *q;
-	struct ubsec_rng *rng;
+	struct ubsec_q2_rng *rng = &sc->sc_rng;
+	struct ubsec_mcr *mcr;
+	struct ubsec_ctx_rngbypass *ctx;
 	int s;
 
 	s = splnet();
 	sc->sc_nqueue2++;
-	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE) {
-		splx(s);
+	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
 		goto out;
+
+	if (rng->rng_q.q_mcr.dma_vaddr == NULL) {
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
+		    &rng->rng_q.q_mcr, 0))
+			goto out;
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rngbypass),
+		    &rng->rng_q.q_ctx, 0)) {
+			ubsec_dma_free(sc, &rng->rng_q.q_mcr);
+			rng->rng_q.q_mcr.dma_vaddr = NULL;
+			goto out;
+		}
+		if (ubsec_dma_malloc(sc, sizeof(u_int32_t) * UBSEC_RNG_BUFSIZ,
+		    &rng->rng_buf, 0)) {
+			ubsec_dma_free(sc, &rng->rng_q.q_ctx);
+			ubsec_dma_free(sc, &rng->rng_q.q_mcr);
+			rng->rng_q.q_mcr.dma_vaddr = NULL;
+			goto out;
+		}
 	}
-	splx(s);
-	
-	q = (struct ubsec_q2 *)malloc(sizeof(struct ubsec_q2), M_DEVBUF, M_NOWAIT);
-	if (q == NULL)
+		
+	if (rng->rng_used)
 		goto out;
 
-	rng = (struct ubsec_rng *)malloc(sizeof(struct ubsec_rng),
-	    M_DEVBUF, M_NOWAIT);
-	if (rng == NULL) {
-		free(q, M_DEVBUF);
-		goto out;
-	}
+	mcr = (struct ubsec_mcr *)rng->rng_q.q_mcr.dma_vaddr;
+	ctx = (struct ubsec_ctx_rngbypass *)rng->rng_q.q_ctx.dma_vaddr;
 
-	q->q_mcr = &rng->rng_mcr;
-	q->q_ctx = &rng->rng_ctx;
-	q->q_private = rng;
-	q->q_sc = sc;
+	mcr->mcr_pkts = 1;
+	mcr->mcr_flags = 0;
+	mcr->mcr_cmdctxp = rng->rng_q.q_ctx.dma_map->dm_segs[0].ds_addr;
+	mcr->mcr_ipktbuf.pb_addr = mcr->mcr_ipktbuf.pb_next = 0;
+	mcr->mcr_ipktbuf.pb_len = 0;
+	mcr->mcr_reserved = mcr->mcr_pktlen = 0;
+	mcr->mcr_opktbuf.pb_addr = rng->rng_buf.dma_map->dm_segs[0].ds_addr;
+	mcr->mcr_opktbuf.pb_len = ((sizeof(u_int32_t) * UBSEC_RNG_BUFSIZ)) &
+	    UBS_PKTBUF_LEN;
+	mcr->mcr_opktbuf.pb_next = 0;
 
-	bzero(rng, sizeof(*rng));
+	ctx->rbp_len = sizeof(struct ubsec_ctx_rngbypass);
+	ctx->rbp_op = UBS_CTXOP_RNGBYPASS;
 
-	rng->rng_mcr.mcr_pkts = 1;
-	rng->rng_mcr.mcr_cmdctxp = (u_int32_t)vtophys(&rng->rng_ctx);
-	rng->rng_ctx.rbp_len = sizeof(struct ubsec_rngbypass_ctx);
-	rng->rng_ctx.rbp_op = UBS_CTXOP_RNGBYPASS;
-	rng->rng_mcr.mcr_opktbuf.pb_addr = (u_int32_t)vtophys(&rng->rng_buf[0]);
-	rng->rng_mcr.mcr_opktbuf.pb_len = ((sizeof(u_int32_t) * UBS_RNGBUFSZ))
-	    & UBS_PKTBUF_LEN;
+	bus_dmamap_sync(sc->sc_dmat, rng->rng_q.q_mcr.dma_map,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, rng->rng_q.q_ctx.dma_map,
+	    BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map,
+	    BUS_DMASYNC_PREWRITE);
 
-	s = splnet();
-	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, q, q_next);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, (struct ubsec_q2 *)rng, q_next);
+	rng->rng_used = 1;
 	ubsec_feed2(sc);
 	splx(s);
 
@@ -1210,8 +1295,56 @@ out:
 	/*
 	 * Something weird happened, generate our own call back.
 	 */
-	s = splnet();
 	sc->sc_nqueue2--;
 	splx(s);
-	timeout_add(&sc->sc_rngto, 1);
+	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+}
+
+int
+ubsec_dma_malloc(sc, size, dma, mapflags)
+	struct ubsec_softc *sc;
+	bus_size_t size;
+	struct ubsec_dma_alloc *dma;
+	int mapflags;
+{
+        int r;
+
+	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	    &dma->dma_seg, 1, &dma->dma_nseg, 0)) != 0)
+		goto fail_0;
+
+	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
+	    size, &dma->dma_vaddr, mapflags | BUS_DMA_NOWAIT)) != 0)
+		goto fail_1;
+
+	if ((r = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT, &dma->dma_map)) != 0)
+		goto fail_2;
+
+	if ((r = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
+	    size, NULL, BUS_DMA_NOWAIT)) != 0)
+		goto fail_3;
+
+	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
+	return (0);
+
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+fail_0:
+	return (r);
+}
+
+void
+ubsec_dma_free(sc, dma)
+	struct ubsec_softc *sc;
+	struct ubsec_dma_alloc *dma;
+{
+	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_map->dm_mapsize);
+	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 }

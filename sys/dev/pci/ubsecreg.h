@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.11 2001/05/13 01:20:02 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.12 2001/05/22 22:53:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -135,7 +135,7 @@ struct ubsec_mcr_add {
 #define	UBS_MCR_ERROR		0x0002		/* error in processing */
 #define	UBS_MCR_ERRORCODE	0xff00		/* error type */
 
-struct ubsec_keyctx {
+struct ubsec_ctx_keyop {
 	volatile u_int16_t	ctx_len;	/* command length */
 	volatile u_int16_t	ctx_op;		/* operation code */
 	volatile u_int8_t	ctx_pad[60];	/* padding */
@@ -155,15 +155,8 @@ struct ubsec_keyctx {
 #define	UBS_CTXOP_MODEXP	0x47		/* modular exponentiation */
 #define	UBS_CTXOP_MODINV	0x48		/* modular inverse */
 
-struct ubsec_rngbypass_ctx {
+struct ubsec_ctx_rngbypass {
 	volatile u_int16_t	rbp_len;	/* command length, 64 */
 	volatile u_int16_t	rbp_op;		/* rng bypass, 0x41 */
 	volatile u_int8_t	rbp_pad[60];	/* padding */
-};
-
-#define UBS_RNGBUFSZ		16
-struct ubsec_rng {
-	struct ubsec_mcr		rng_mcr;
-	struct ubsec_rngbypass_ctx	rng_ctx;
-	volatile u_int32_t		rng_buf[UBS_RNGBUFSZ];
 };

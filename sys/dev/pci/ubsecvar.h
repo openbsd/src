@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.15 2001/05/14 02:45:19 deraadt Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.16 2001/05/22 22:53:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -27,6 +27,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct ubsec_dma_alloc {
+	u_int64_t		dma_paddr;
+	caddr_t			dma_vaddr;
+	bus_dmamap_t		dma_map;
+	bus_dma_segment_t	dma_seg;
+	int			dma_nseg;
+};
+
+struct ubsec_q2 {
+	SIMPLEQ_ENTRY(ubsec_q2)		q_next;
+	struct ubsec_dma_alloc		q_mcr;
+	struct ubsec_dma_alloc		q_ctx;
+};
+
+struct ubsec_q2_rng {
+	struct ubsec_q2			rng_q;
+	struct ubsec_dma_alloc		rng_buf;
+	int				rng_used;
+};
+#define UBSEC_RNG_BUFSIZ	16
+
+
 struct ubsec_softc {
 	struct	device		sc_dv;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
@@ -45,6 +67,8 @@ struct ubsec_softc {
 	int			sc_nsessions;	/* # of sessions */
 	struct ubsec_session	*sc_sessions;	/* sessions */
 	struct timeout		sc_rngto;	/* rng timeout */
+	int			sc_rnghz;	/* rng frequency */
+	struct ubsec_q2_rng	sc_rng;		/* rng structures */
 };
 
 #define	UBS_FLAGS_KEY		0x01		/* has key accelerator */
@@ -56,16 +80,16 @@ struct ubsec_q {
 	struct ubsec_mcr		*q_mcr;
 	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-	struct ubsec_pktctx		q_ctx;
-	struct ubsec_pktctx_long	q_ctxl;
+	struct ubsec_dma_alloc		q_ctx_dma;
 
 	struct ubsec_softc		*q_sc;
 	struct mbuf 		      	*q_src_m, *q_dst_m;
-	struct uio			*q_src, *q_dst;
+	struct uio			*q_src_io, *q_dst_io;
 
 	long				q_src_packp[MAX_SCATTER];
 	int				q_src_packl[MAX_SCATTER];
 	int				q_src_npa, q_src_l;
+	int				q_flags;
 
 	long				q_dst_packp[MAX_SCATTER];
 	int				q_dst_packl[MAX_SCATTER];
@@ -74,15 +98,7 @@ struct ubsec_q {
 	int				q_sesn;
 };
 
-struct ubsec_q2 {
-	SIMPLEQ_ENTRY(ubsec_q2)		q_next;
-	struct ubsec_softc		*q_sc;
-	struct ubsec_mcr		*q_mcr;
-	void				*q_ctx;
-	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
-	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-	void				*q_private;
-};
+#define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
 	u_int32_t	ses_used;
