@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpdebug.c,v 1.2 1997/12/25 09:22:40 downsj Exp $	*/
+/*	$OpenBSD: isapnpdebug.c,v 1.3 2002/12/15 13:17:04 henning Exp $	*/
 /*	$NetBSD: isapnpdebug.c,v 1.4 1997/08/03 08:12:23 mikel Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ isapnp_print_mem(str, mem)
 		"high-addr," : "range-len,",
 	    (mem->flags & ISAPNP_MEMATTR_CACHEABLE) ? "" : "non-",
 	    (mem->flags & ISAPNP_MEMATTR_WRITEABLE) ?
-		"writeable," : "read-only,");
+		"writable," : "read-only,");
 
 	switch (mem->flags & ISAPNP_MEMWIDTH_MASK) {
 	case ISAPNP_MEMWIDTH_8:
