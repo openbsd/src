@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.12 2001/02/07 13:12:29 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.13 2001/02/07 18:10:39 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -103,28 +103,29 @@ void
 help(void)
 {
 	printf("Available commands:\n");
-	printf("CD path                       Change remote directory to 'path'\n");
-	printf("LCD path                      Change local directory to 'path'\n");
-	printf("CHGRP grp path                Change group of file 'path' to 'grp'\n");
-	printf("CHMOD mode path               Change permissions of file 'path' to 'mode'\n");
-	printf("CHOWN own path                Change owner of file 'path' to 'own'\n");
-	printf("HELP                          Display this help text\n");
-	printf("GET remote-path [local-path]  Download file\n");
-	printf("LLS [ls options] [path]       Display local directory listing\n");
-	printf("LMKDIR path                   Create local directory\n");
-	printf("LPWD                          Print local working directory\n");
-	printf("LS [path]                     Display remote directory listing\n");
-	printf("LUMASK umask                  Set local umask to 'umask'\n");
-	printf("MKDIR path                    Create remote directory\n");
-	printf("PUT local-path [remote-path]  Upload file\n");
-	printf("PWD                           Display remote working directory\n");
-	printf("EXIT                          Quit sftp\n");
-	printf("QUIT                          Quit sftp\n");
-	printf("RENAME oldpath newpath        Rename remote file\n");
-	printf("RMDIR path                    Remove remote directory\n");
-	printf("RM path                       Delete remote file\n");
+	printf("cd path                       Change remote directory to 'path'\n");
+	printf("lcd path                      Change local directory to 'path'\n");
+	printf("chgrp grp path                Change group of file 'path' to 'grp'\n");
+	printf("chmod mode path               Change permissions of file 'path' to 'mode'\n");
+	printf("chown own path                Change owner of file 'path' to 'own'\n");
+	printf("help                          Display this help text\n");
+	printf("get remote-path [local-path]  Download file\n");
+	printf("lls [ls-options [path]]       Display local directory listing\n");
+	printf("lmkdir path                   Create local directory\n");
+	printf("lpwd                          Print local working directory\n");
+	printf("ls [path]                     Display remote directory listing\n");
+	printf("lumask umask                  Set local umask to 'umask'\n");
+	printf("mkdir path                    Create remote directory\n");
+	printf("put local-path [remote-path]  Upload file\n");
+	printf("pwd                           Display remote working directory\n");
+	printf("exit                          Quit sftp\n");
+	printf("quit                          Quit sftp\n");
+	printf("rename oldpath newpath        Rename remote file\n");
+	printf("rmdir path                    Remove remote directory\n");
+	printf("rm path                       Delete remote file\n");
 	printf("!command                      Execute 'command' in local shell\n");
 	printf("!                             Escape to local shell\n");
+	printf("?                             Synonym for help\n");
 }
 
 void
