@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.25 2001/02/05 14:47:17 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.26 2001/11/07 19:01:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.25 2001/02/05 14:47:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.26 2001/11/07 19:01:29 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -68,11 +68,11 @@ extern int (*ypresp_allfn)();
 extern void *ypresp_data;
 
 static int
-ypxfr_foreach(status,keystr,keylen,valstr,vallen,data)
-int status,keylen,vallen;
-char *keystr,*valstr,*data;
+ypxfr_foreach(status, keystr, keylen, valstr, vallen, data)
+int status, keylen, vallen;
+char *keystr, *valstr, *data;
 {
-	datum	key,val;
+	datum	key, val;
 
 	if (status == YP_NOMORE)
 		return(0);
@@ -85,7 +85,7 @@ char *keystr,*valstr,*data;
 
 	val.dptr = valstr;
 	val.dsize = strlen(valstr);
-	
+
 	ypdb_store(db, key, val, YPDB_INSERT);
 
 	return 0;
@@ -102,60 +102,55 @@ u_int32_t *lordernum;
 	char order[MAX_LAST_LEN+1];
 	struct stat finfo;
 	DBM *db;
-	datum k,v;
+	datum k, v;
 	int status;
 
 	/* This routine returns YPPUSH_SUCC or YPPUSH_NODOM */
-	
+
 	status = YPPUSH_SUCC;
-	
+
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) &&
-	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
+	    ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
 		fprintf(stderr, "%s: domain %s not found locally\n",
 		    __progname, domain);
 		status = YPPUSH_NODOM;
 	}
 
-	if(status > 0) {
+	if (status > 0) {
 		snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
 		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-		if(!(stat(map_path, &finfo) == 0)) {
+		if (!(stat(map_path, &finfo) == 0))
 			status = YPPUSH_NOMAP;
-		}
 	}
-	
-	if(status > 0) {
+
+	if (status > 0) {
 		snprintf(map_path, sizeof map_path, "%s/%s/%s",
 		    YP_DB_PATH, domain, map);
 		db = ypdb_open(map_path, O_RDONLY, 0444);
-		if(db == NULL) {
+		if (db == NULL)
 			status = YPPUSH_DBM;
-		}
-		
 	}
-		
-	if(status > 0) {
+
+	if (status > 0) {
 		k.dptr = (char *)&order_key;
 		k.dsize = YP_LAST_LEN;
 
 		v = ypdb_fetch(db,k);
 		ypdb_close(db);
-		
+
 		if (v.dptr == NULL) {
 			*lordernum = 0;
 		} else {
-	        	strncpy(order, v.dptr, sizeof order-1);
-			order[sizeof order-1] = '\0';
+	        	strlcpy(order, v.dptr, sizeof order);
 			*lordernum = (u_int32_t)atol(order);
 		}
 	}
 
-	if((status == YPPUSH_NOMAP) || (status == YPPUSH_DBM)) {
+	if (status == YPPUSH_NOMAP || status == YPPUSH_DBM) {
 		*lordernum = 0;
 		status = YPPUSH_SUCC;
 	}
-
 	return(status);
 
 }
@@ -173,13 +168,11 @@ u_int32_t *rordernum;
 	status = yp_order_host(client, domain, map, rordernum);
 
 	if (status == 0) {
-		if(*rordernum <= lordernum) {
+		if (*rordernum <= lordernum)
 			status = YPPUSH_AGE;
-		} else {
+		else
 			status = YPPUSH_SUCC;
-		}
-	} 
-
+	}
 	return status;
 }
 
@@ -232,7 +225,7 @@ DBM *db;
 u_int32_t ordernum;
 {
 	char	datestr[11];
-	datum	key,val;
+	datum	key, val;
 	char	keystr[] = YP_LAST_KEY;
 	int	status;
 
@@ -240,12 +233,12 @@ u_int32_t ordernum;
 
 	key.dptr = keystr;
 	key.dsize = strlen(keystr);
-	
+
 	val.dptr = datestr;
 	val.dsize = strlen(datestr);
-	
+
 	status = ypdb_store(db, key, val, YPDB_INSERT);
-	if(status >= 0) {
+	if (status >= 0) {
 		status = YPPUSH_SUCC;
 	} else {
 		status = YPPUSH_DBM;
@@ -263,29 +256,28 @@ DBM *db;
 	char	keystr[] = YP_MASTER_KEY;
 	char	*master;
 	int	status;
-	datum	key,val;
+	datum	key, val;
 
 	master = NULL;
 
 	/* Get MASTER */
 
 	status = yp_master_host(client, domain, map, &master);
-	
-	if(master != NULL) {
-	  key.dptr = keystr;
-	  key.dsize = strlen(keystr);
-	  
-	  val.dptr = master;
-	  val.dsize = strlen(master);
-	
-	  status = ypdb_store(db, key, val, YPDB_INSERT);
-	  if(status >= 0) {
-	  	status = YPPUSH_SUCC;
-	  } else {
-	  	status = YPPUSH_DBM;
-	  }
-	}
 
+	if (master != NULL) {
+		key.dptr = keystr;
+		key.dsize = strlen(keystr);
+
+		val.dptr = master;
+		val.dsize = strlen(master);
+
+		status = ypdb_store(db, key, val, YPDB_INSERT);
+		if (status >= 0) {
+			status = YPPUSH_SUCC;
+		} else {
+			status = YPPUSH_DBM;
+		}
+	}
 	return status;
 }
 
@@ -300,7 +292,7 @@ DBM *db;
 	char	*value;
 	int	vallen;
 	int	status;
-	datum	k,v;
+	datum	k, v;
 
 	/* Get INTERDOMAIN */
 
@@ -308,15 +300,14 @@ DBM *db;
 	k.dsize = strlen(keystr);
 
 	status = yp_match_host(client, domain, map,
-			       k.dptr, k.dsize, &value, &vallen);
-	
-	if(status == 0 && value) {
+	    k.dptr, k.dsize, &value, &vallen);
+	if (status == 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
-		
-		if(v.dptr != NULL) {
-			status = ypdb_store(db,k,v,YPDB_INSERT);
-			if(status >= 0) {
+
+		if (v.dptr != NULL) {
+			status = ypdb_store(db, k, v, YPDB_INSERT);
+			if (status >= 0) {
 				status = YPPUSH_SUCC;
 			} else {
 				status = YPPUSH_DBM;
@@ -338,7 +329,7 @@ DBM *db;
 	char	*value;
 	int	vallen;
 	int	status;
-	datum	k,v;
+	datum	k, v;
 
 	/* Get SECURE */
 
@@ -346,15 +337,14 @@ DBM *db;
 	k.dsize = strlen(keystr);
 
 	status = yp_match_host(client, domain, map,
-			       k.dptr, k.dsize, &value, &vallen);
-	
-	if(status == 0 && value) {
+	    k.dptr, k.dsize, &value, &vallen);
+	if (status == 0 && value) {
 		v.dptr = value;
 		v.dsize = vallen;
-		
-		if(v.dptr != NULL) {
-			status = ypdb_store(db,k,v,YPDB_INSERT);
-			if(status >= 0) {
+
+		if (v.dptr != NULL) {
+			status = ypdb_store(db, k, v, YPDB_INSERT);
+			if (status >= 0) {
 				status = YPPUSH_SUCC;
 			} else {
 				status = YPPUSH_DBM;
@@ -380,13 +370,9 @@ CLIENT *client;
 	tv.tv_usec = 0;
 
 	/* Send CLEAR */
-
-	r = clnt_call(client, YPPROC_CLEAR,
-		      xdr_void, 0, xdr_void, 0, tv);
-	if(r != RPC_SUCCESS) {
+	r = clnt_call(client, YPPROC_CLEAR, xdr_void, 0, xdr_void, 0, tv);
+	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_clear: clnt_call");
-	}
-
 	return status;
 
 }
@@ -408,13 +394,9 @@ u_long  tid;
 	resp.xfrstat = status;
 
 	/* Send CLEAR */
-
-	r = clnt_call(client, 1,
-		      xdr_ypresp_xfr, &resp, xdr_void, 0, tv);
-	if(r != RPC_SUCCESS) {
+	r = clnt_call(client, 1, xdr_ypresp_xfr, &resp, xdr_void, 0, tv);
+	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yppushresp_xdr: clnt_call");
-	}
-
 	return status;
 
 }
@@ -441,56 +423,56 @@ char *argv[];
 	u_int32_t ordernum, new_ordernum;
 	struct	 ypall_callback callback;
 	CLIENT   *client;
-	int	 status,xfr_status;
+	int	 status, xfr_status;
 	int	 srvport;
-	
+
 	status = YPPUSH_SUCC;
 	client = NULL;
 
 	yp_get_default_domain(&domain);
 
 	while ((ch = getopt(argc, argv, "cd:fh:s:C:")) != -1)
-	  switch (ch) {
-	  case 'c':
-	    cflag++;
-	    break;
-	  case 'd':
-	    if (strchr(optarg, '/'))	/* Ha ha, we are not listening */
-		break;
-	    domain = optarg;
-	    break;
-	  case 'f':
-	    fflag++;
-	    break;
-	  case 'h':
-	    host = optarg;
-	    break;
-	  case 's':
-	    if (strchr(optarg, '/'))	/* Ha ha, we are not listening */
-		break;
-	    srcdomain = optarg;
-	    break;
-	  case 'C':
-	    if (optind + 3 >= argc) {
-		usage++;
-		optind = argc;
-		break;
-	    }
-	    Cflag++;
-	    tid = optarg;
-	    prog = argv[optind++];
-	    ipadd = argv[optind++];
-	    port = argv[optind++];
-	    break;
-	  default:
-	    usage++;
-	    break;
-	  }
+		switch (ch) {
+		case 'c':
+			cflag++;
+			break;
+		case 'd':
+			if (strchr(optarg, '/')) /* Ha ha, we are not listening */
+				break;
+			domain = optarg;
+			break;
+		case 'f':
+			fflag++;
+			break;
+		case 'h':
+			host = optarg;
+			break;
+		case 's':
+			if (strchr(optarg, '/')) /* Ha ha, we are not listening */
+				break;
+			srcdomain = optarg;
+			break;
+		case 'C':
+			if (optind + 3 >= argc) {
+				usage++;
+				optind = argc;
+				break;
+			}
+			Cflag++;
+			tid = optarg;
+			prog = argv[optind++];
+			ipadd = argv[optind++];
+			port = argv[optind++];
+			break;
+		default:
+			usage++;
+			break;
+		}
 
-	if(optind + 1 != argc) {
-	  usage++;
+	if (optind + 1 != argc) {
+		usage++;
 	} else {
-	  map = argv[optind];
+		map = argv[optind];
 	}
 
 	if (usage) {
@@ -507,7 +489,7 @@ char *argv[];
 		yplog("ypxfr: Arguments:");
 		yplog("YP clear to local: %s", (cflag) ? "no" : "yes");
 		yplog("   Force transfer: %s", (fflag) ? "yes" : "no");
-		yplog("           domain: %s", domain); 
+		yplog("           domain: %s", domain);
 		yplog("             host: %s", host);
 		yplog("    source domain: %s", srcdomain);
 		yplog("          transid: %s", tid);
@@ -516,7 +498,7 @@ char *argv[];
 		yplog("            ipadd: %s", ipadd);
 		yplog("              map: %s", map);
 
-		if(fflag != 0) {
+		if (fflag != 0) {
 			ordernum = 0;
 		} else {
 			status = get_local_ordernum(domain, map, &ordernum);
@@ -524,43 +506,38 @@ char *argv[];
 	}
 
 	if (status > 0) {
-
 	        yplog("Get Master");
 
 		if (host == NULL) {
 			if (srcdomain == NULL) {
-				status = yp_master(domain,map,&host);
+				status = yp_master(domain, map, &host);
 		        } else {
-				status = yp_master(srcdomain,map,&host);
+				status = yp_master(srcdomain, map, &host);
 			}
-			if(status == 0) {
+			if (status == 0) {
 				status = YPPUSH_SUCC;
 			} else {
 				status = -status;
 			}
 		}
-	};
+	}
 
 	/* XXX this is raceable if portmap has holes! */
 	if (status > 0) {
-		
-	        yplog("Check for reserved port on host: %s", host); 
+	        yplog("Check for reserved port on host: %s", host);
 
-		srvport = getrpcport(host,YPPROG,YPVERS,IPPROTO_TCP);
+		srvport = getrpcport(host, YPPROG, YPVERS, IPPROTO_TCP);
 		if (srvport >= IPPORT_RESERVED)
 			status = YPPUSH_REFUSED;
-		
 	}
 
 	if (status > 0) {
-	  	
-	        yplog("Connect host: %s", host); 
+	        yplog("Connect host: %s", host);
 
-		client = yp_bind_host(host,YPPROG,YPVERS,0,1);
+		client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
 		status = get_remote_ordernum(client, domain, map,
-					     ordernum, &new_ordernum);
-		
+		    ordernum, &new_ordernum);
 	}
 
 	if (status == YPPUSH_SUCC) {
@@ -577,73 +554,62 @@ char *argv[];
 			close(fd);
 
 		if (status > 0) {
-			db = create_db(domain,map,tmpmapname);
-			if(db == NULL)
+			db = create_db(domain, map, tmpmapname);
+			if (db == NULL)
 				status = YPPUSH_DBM;
 		}
 
 	  	/* Add ORDER */
-		if(status > 0) {
+		if (status > 0)
 			status = add_order(db, new_ordernum);
-		}
-		
+
 		/* Add MASTER */
-		if(status > 0) {
-			status = add_master(client,domain,map,db);
-		}
-		
+		if (status > 0)
+			status = add_master(client, domain, map, db);
+
 	        /* Add INTERDOMAIN */
-		if(status > 0) {
-			status = add_interdomain(client,domain,map,db);
-		}
-		
+		if (status > 0)
+			status = add_interdomain(client, domain, map, db);
+
 	        /* Add SECURE */
-		if(status > 0) {
-			status = add_secure(client,domain,map,db);
-		}
-		
-		if(status > 0) {
-			callback.foreach=ypxfr_foreach;
-			status = get_map(client,domain,map,&callback);
-		}
-		
-		/* Close db */
-		if(db != NULL) {
-			ypdb_close(db);
+		if (status > 0)
+			status = add_secure(client, domain, map, db);
+
+		if (status > 0) {
+			callback.foreach = ypxfr_foreach;
+			status = get_map(client, domain, map, &callback);
 		}
 
+		/* Close db */
+		if (db != NULL)
+			ypdb_close(db);
+
 		/* Rename db */
-		if(status > 0) {
-			status = install_db(domain,map,tmpmapname);
+		if (status > 0) {
+			status = install_db(domain, map, tmpmapname);
 		} else {
 			unlink(tmpmapname);
 			status = YPPUSH_SUCC;
 		}
-		
 	}
-	
+
 	xfr_status = status;
 
-	if(client != NULL) {
+	if (client != NULL)
 		clnt_destroy(client);
-	}
 
 	/* YP_CLEAR */
 
-	if(!cflag) {
-		client = yp_bind_local(YPPROG,YPVERS);
+	if (!cflag) {
+		client = yp_bind_local(YPPROG, YPVERS);
 		status = send_clear(client);
 		clnt_destroy(client);
 	}
 
-	if(Cflag > 0) {
+	if (Cflag > 0) {
 		/* Send Response */
-		client = yp_bind_host(ipadd,
-				      atoi(prog),
-				      1,
-				      atoi(port),
-				      0);
-		status = send_reply(client,xfr_status,atoi(tid));
+		client = yp_bind_host(ipadd, atoi(prog), 1, atoi(port), 0);
+		status = send_reply(client, xfr_status, atoi(tid));
 		clnt_destroy(client);
 	}
 
