@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.2 1995/12/14 01:46:22 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.3 1996/09/11 19:15:36 deraadt Exp $";
 #endif
 
 #include <netdb.h>
@@ -1165,10 +1165,8 @@ char *argv[];
     int waittime;
     int seed;
 
-    if (geteuid() != 0) {
-	fprintf(stderr, "mtrace: must be root\n");
-	exit(1);
-    }
+    init_igmp();
+    setuid(getuid());
 
     argv++, argc--;
     if (argc == 0) goto usage;
@@ -1305,8 +1303,6 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
               [-S statint] [-t ttl] [-r resp_dest] [-i if_addr] source [receiver] [group]\n");
 	exit(1);
     }
-
-    init_igmp();
 
     /*
      * Set useful defaults for as many parameters as possible.

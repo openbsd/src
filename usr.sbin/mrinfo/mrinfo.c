@@ -336,12 +336,16 @@ main(argc, argv)
 	char *host;
 	int curaddr;
 
-	setlinebuf(stderr);
-
 	if (geteuid() != 0) {
 		fprintf(stderr, "mrinfo: must be root\n");
 		exit(1);
 	}
+
+	init_igmp();
+	setuid(getuid());
+
+	setlinebuf(stderr);
+
 	argv++, argc--;
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
@@ -388,8 +392,6 @@ main(argc, argv)
 	}
 	if (debug)
 		fprintf(stderr, "Debug level %u\n", debug);
-
-	init_igmp();
 
 	/* Check all addresses; mrouters often have unreachable interfaces */
 	for (curaddr = 0; hp->h_addr_list[curaddr] != NULL; curaddr++) {
