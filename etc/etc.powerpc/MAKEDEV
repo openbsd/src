@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.34 2000/10/13 21:31:15 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.35 2001/01/30 03:02:21 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -153,7 +153,7 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this rd0 ipl
-	sh $this ttyo0 ttyE0
+	sh $this ttyo0 ttyE0 ttyEcfg
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
@@ -492,14 +492,13 @@ utty*)
 	chmod 660 utty$unit
 	;;
 
+ 
 ttyEcfg)
-	type=Ecfg
 	major=67
-	minor=255 
-	unit=${i##ttyE}
-        rm -f tty$type$unit
-        mknod tty$type$unit c $major $minor
-        chown root.wheel tty$type$unit
+	minor=255
+	rm -f ttyEcfg
+	mknod ttyEcfg c $major $minor  
+	chown root.wheel ttyEcfg
         ;;
 
 ttyE*)
