@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.269 2002/12/21 18:53:48 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.270 2002/12/27 22:13:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -617,7 +617,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 		}
 		;
 
-scrubrule	: SCRUB dir interface af fromto scrub_opts
+scrubrule	: SCRUB dir logquick interface af fromto scrub_opts
 		{
 			struct pf_rule	r;
 
@@ -629,25 +629,31 @@ scrubrule	: SCRUB dir interface af fromto scrub_opts
 			r.action = PF_SCRUB;
 			r.direction = $2;
 
-			if ($3) {
-				if ($3->not) {
+			r.log = $3.log;
+			if ($3.quick) {
+				yyerror("scrub rules do not support 'quick'");
+				YYERROR;
+			}
+
+			if ($4) {
+				if ($4->not) {
 					yyerror("scrub rules do not support "
 					    "'! <if>'");
 					YYERROR;
 				}
 			}
-			r.af = $4;
-			if ($6.nodf)
+			r.af = $5;
+			if ($7.nodf)
 				r.rule_flag |= PFRULE_NODF;
-			if ($6.minttl)
-				r.min_ttl = $6.minttl;
-			if ($6.maxmss)
-				r.max_mss = $6.maxmss;
-			if ($6.fragcache)
-				r.rule_flag |= $6.fragcache;
+			if ($7.minttl)
+				r.min_ttl = $7.minttl;
+			if ($7.maxmss)
+				r.max_mss = $7.maxmss;
+			if ($7.fragcache)
+				r.rule_flag |= $7.fragcache;
 
-			expand_rule(&r, $3, NULL, NULL,
-			    $5.src.host, $5.src.port, $5.dst.host, $5.dst.port,
+			expand_rule(&r, $4, NULL, NULL,
+			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
 			    NULL, NULL, NULL);
 		}
 		;
