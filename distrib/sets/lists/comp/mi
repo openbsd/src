@@ -3,6 +3,7 @@
 ./usr/bin/as
 ./usr/bin/asa
 ./usr/bin/c++
+./usr/bin/c++filt
 ./usr/bin/cc
 ./usr/bin/f77
 ./usr/bin/flex
@@ -1579,6 +1580,7 @@
 ./usr/lib/apache/include/compat.h
 ./usr/lib/apache/include/conf.h
 ./usr/lib/apache/include/explain.h
+./usr/lib/apache/include/fdcache.h
 ./usr/lib/apache/include/fnmatch.h
 ./usr/lib/apache/include/hsregex.h
 ./usr/lib/apache/include/http_conf_globals.h

@@ -5,7 +5,6 @@
 ./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
-./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/lib/apache/modules/libproxy.so

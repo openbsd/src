@@ -1,7 +1,6 @@
 ./pcs750.bin
 ./sbin/kbd
 ./sbin/ldconfig
-./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.1
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.1/2.95.3

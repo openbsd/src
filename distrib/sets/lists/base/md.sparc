@@ -1,6 +1,5 @@
 ./sbin/kbd
 ./sbin/ldconfig
-./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so

@@ -1,5 +1,4 @@
 ./sbin/ldconfig
-./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
