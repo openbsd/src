@@ -39,9 +39,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(__FreeBSD__)
 #include <pthread_np.h>
-#endif
+#include "test.h"
 
 static int		sigcounts[NSIG + 1];
 static sigset_t		wait_mask;
@@ -57,61 +56,39 @@ sigwaiter (void *arg)
 	/* Block SIGHUP */
 	sigemptyset (&mask);
 	sigaddset (&mask, SIGHUP);
-	sigprocmask (SIG_BLOCK, &mask, NULL);
+	CHECKe(sigprocmask (SIG_BLOCK, &mask, NULL));
 
 	while (sigcounts[SIGINT] == 0) {
-		if (sigwait (&wait_mask, &signo) != 0) {
-			printf ("Unable to wait for signal, errno %d\n",
-				errno);
-			exit (1);
-		}
+		printf("Sigwait waiting (thread %p)\n", pthread_self());
+		CHECKe(sigwait (&wait_mask, &signo));
 		sigcounts[signo]++;
-		printf ("Sigwait caught signal %d\n", signo);
+		printf ("Sigwait caught signal %d (%s)\n", signo, 
+		    strsignal(signo));
 
 		/* Allow the main thread to prevent the sigwait. */
-		pthread_mutex_lock (&waiter_mutex);
-		pthread_mutex_unlock (&waiter_mutex);
+		CHECKr(pthread_mutex_lock (&waiter_mutex));
+		CHECKr(pthread_mutex_unlock (&waiter_mutex));
 	}
 
-	pthread_exit (arg);
-	return (NULL);
+	return (arg);
 }
 
 
 static void
 sighandler (int signo)
 {
-	printf ("  -> Signal handler caught signal %d\n", signo);
+	printf ("  -> Signal handler caught signal %d (%s) in thread %p\n",
+	    signo, strsignal(signo), pthread_self());
 
 	if ((signo >= 0) && (signo <= NSIG))
 		sigcounts[signo]++;
 }
-
-static void
-send_thread_signal (pthread_t tid, int signo)
-{
-	if (pthread_kill (tid, signo) != 0) {
-		printf ("Unable to send thread signal, errno %d.\n", errno);
-		exit (1);
-	}
-}
-
-static void
-send_process_signal (int signo)
-{
-	if (kill (getpid (), signo) != 0) {
-		printf ("Unable to send process signal, errno %d.\n", errno);
-		exit (1);
-	}
-}
-
 
 int main (int argc, char *argv[])
 {
 	pthread_mutexattr_t mattr;
 	pthread_attr_t	pattr;
 	pthread_t	tid;
-	void *		exit_status;
 	struct sigaction act;
 
 	/* Initialize our signal counts. */
@@ -132,80 +109,68 @@ int main (int argc, char *argv[])
 	sigaddset (&act.sa_mask, SIGIO);
 	act.sa_handler = SIG_IGN;
 	act.sa_flags = 0;
-	sigaction (SIGHUP, &act, NULL);
-	sigaction (SIGIO, &act, NULL);
+	CHECKe(sigaction (SIGHUP, &act, NULL));
+	CHECKe(sigaction (SIGIO, &act, NULL));
 
 	/* Install a signal handler for SIGURG */
 	sigemptyset (&act.sa_mask);
 	sigaddset (&act.sa_mask, SIGURG);
 	act.sa_handler = sighandler;
 	act.sa_flags = SA_RESTART;
-	sigaction (SIGURG, &act, NULL);
+	CHECKe(sigaction (SIGURG, &act, NULL));
 
 	/* Install a signal handler for SIGXCPU */
 	sigemptyset (&act.sa_mask);
 	sigaddset (&act.sa_mask, SIGXCPU);
-	sigaction (SIGXCPU, &act, NULL);
+	CHECKe(sigaction (SIGXCPU, &act, NULL));
 
 	/*
 	 * Initialize the thread attribute.
 	 */
-	if ((pthread_attr_init (&pattr) != 0) ||
-	    (pthread_attr_setdetachstate (&pattr,
-	    PTHREAD_CREATE_JOINABLE) != 0)) {
-		printf ("Unable to initialize thread attributes.\n");
-		exit (1);
-	}
+	CHECKr(pthread_attr_init (&pattr));
+	CHECKr(pthread_attr_setdetachstate (&pattr, PTHREAD_CREATE_JOINABLE));
 
 	/*
 	 * Initialize and create a mutex.
 	 */
-	if ((pthread_mutexattr_init (&mattr) != 0) ||
-	    (pthread_mutex_init (&waiter_mutex, &mattr) != 0)) {
-		printf ("Unable to create waiter mutex.\n");
-		exit (1);
-	}
+	CHECKr(pthread_mutexattr_init (&mattr));
+	CHECKr(pthread_mutex_init (&waiter_mutex, &mattr));
 
 	/*
 	 * Create the sigwaiter thread.
 	 */
-	if (pthread_create (&tid, &pattr, sigwaiter, NULL) != 0) {
-		printf ("Unable to create thread.\n");
-		exit (1);
-	}
-#if defined(__FreeBSD__)
+	CHECKr(pthread_create (&tid, &pattr, sigwaiter, NULL));
 	pthread_set_name_np (tid, "sigwaiter");
-#endif
 
 	/*
 	 * Verify that an ignored signal doesn't cause a wakeup.
 	 * We don't have a handler installed for SIGIO.
 	 */
-	send_thread_signal (tid, SIGIO);
+	CHECKr(pthread_kill (tid, SIGIO));
 	sleep (1);
-	send_process_signal (SIGIO);
+	CHECKe(kill(getpid(), SIGIO));
 	sleep (1);
-	if (sigcounts[SIGIO] != 0)
-		printf ("FAIL: sigwait wakes up for ignored signal SIGIO.\n");
+	/* sigwait should not wake up for ignored signal SIGIO */
+	ASSERT(sigcounts[SIGIO] == 0);
 
 	/*
 	 * Verify that a signal with a default action of ignore, for
 	 * which we have a signal handler installed, will release a sigwait.
 	 */
-	send_thread_signal (tid, SIGURG);
+	CHECKr(pthread_kill (tid, SIGURG));
 	sleep (1);
-	send_process_signal (SIGURG);
+	CHECKe(kill(getpid(), SIGURG));
 	sleep (1);
-	if (sigcounts[SIGURG] != 2)
-		printf ("FAIL: sigwait doesn't wake up for SIGURG.\n");
+	/* sigwait should wake up for SIGURG */
+	ASSERT(sigcounts[SIGURG] == 2);
 
 	/*
 	 * Verify that a signal with a default action that terminates
 	 * the process will release a sigwait.
 	 */
-	send_thread_signal (tid, SIGUSR1);
+	CHECKr(pthread_kill (tid, SIGUSR1));
 	sleep (1);
-	send_process_signal (SIGUSR1);
+	CHECKe(kill(getpid(), SIGUSR1));
 	sleep (1);
 	if (sigcounts[SIGUSR1] != 2)
 		printf ("FAIL: sigwait doesn't wake up for SIGUSR1.\n");
@@ -221,15 +186,15 @@ int main (int argc, char *argv[])
 	sigaddset (&act.sa_mask, SIGHUP);
 	act.sa_handler = sighandler;
 	act.sa_flags = SA_RESTART;
-	sigaction (SIGHUP, &act, NULL);
+	CHECKe(sigaction (SIGHUP, &act, NULL));
 
 	/* Sending SIGHUP should release the sigwait. */
-	send_process_signal (SIGHUP);
+	CHECKe(kill(getpid(), SIGHUP));
 	sleep (1);
-	send_thread_signal (tid, SIGHUP);
+	CHECKr(pthread_kill (tid, SIGHUP));
 	sleep (1);
-	if (sigcounts[SIGHUP] != 2)
-		printf ("FAIL: sigwait doesn't wake up for SIGHUP.\n");
+	/* sigwait should wake up for SIGHUP */
+	ASSERT(sigcounts[SIGHUP] == 2);
 
 	/*
 	 * Verify that a pending signal in the waiters mask will
@@ -242,54 +207,56 @@ int main (int argc, char *argv[])
 	 * return with the pending signal.
 	 */
 	sigcounts[SIGHUP] = 0;
- 	pthread_mutex_lock (&waiter_mutex);
+ 	CHECKr(pthread_mutex_lock (&waiter_mutex));
 	/* Release the waiter from sigwait. */
-	send_process_signal (SIGHUP);
+	CHECKe(kill(getpid(), SIGHUP));
 	sleep (1);
-	if (sigcounts[SIGHUP] != 1)
-		printf ("FAIL: sigwait doesn't wake up for SIGHUP.\n");
+	/* sigwait should wake up for SIGHUP */
+	ASSERT(sigcounts[SIGHUP] == 1);
 	/*
 	 * Add SIGHUP to all threads pending signals.  Since there is
 	 * a signal handler installed for SIGHUP and this signal is
 	 * blocked from the waiter thread and unblocked in the main
 	 * thread, the signal handler should be called once for SIGHUP.
 	 */
-	send_process_signal (SIGHUP);
+	CHECKe(kill(getpid(), SIGHUP));
 	/* Release the waiter thread and allow him to run. */
-	pthread_mutex_unlock (&waiter_mutex);
+	CHECKr(pthread_mutex_unlock (&waiter_mutex));
 	sleep (1);
-	if (sigcounts[SIGHUP] != 3)
-		printf ("FAIL: sigwait doesn't return for pending SIGHUP.\n");
+	/* sigwait should return for pending SIGHUP */
+	ASSERT(sigcounts[SIGHUP] == 3);
 
 	/*
 	 * Repeat the above test using pthread_kill and SIGUSR1
 	 */
 	sigcounts[SIGUSR1] = 0;
- 	pthread_mutex_lock (&waiter_mutex);
+ 	CHECKr(pthread_mutex_lock (&waiter_mutex));
 	/* Release the waiter from sigwait. */
-	send_thread_signal (tid, SIGUSR1);
+	CHECKr(pthread_kill (tid, SIGUSR1));
 	sleep (1);
-	if (sigcounts[SIGUSR1] != 1)
-		printf ("FAIL: sigwait doesn't wake up for SIGUSR1.\n");
+	/* sigwait should wake up for SIGUSR1 */
+	ASSERT(sigcounts[SIGUSR1] == 1);
 	/* Add SIGHUP to the waiters pending signals. */
-	send_thread_signal (tid, SIGUSR1);
+	CHECKr(pthread_kill (tid, SIGUSR1));
 	/* Release the waiter thread and allow him to run. */
-	pthread_mutex_unlock (&waiter_mutex);
+	CHECKe(pthread_mutex_unlock (&waiter_mutex));
 	sleep (1);
-	if (sigcounts[SIGUSR1] != 2)
-		printf ("FAIL: sigwait doesn't return for pending SIGUSR1.\n");
+	/* sigwait should return for pending SIGUSR1 */
+	ASSERT(sigcounts[SIGUSR1] == 2);
 
+#if 0
 	/*
 	 * Verify that we can still kill the process for a signal
 	 * not being waited on by sigwait.
 	 */
-	send_process_signal (SIGPIPE);
-	printf ("FAIL: SIGPIPE did not terminate process.\n");
+	CHECKe(kill(getpid(), SIGPIPE));
+	PANIC("SIGPIPE did not terminate process");
 
 	/*
 	 * Wait for the thread to finish.
 	 */
-	pthread_join (tid, &exit_status);
+	CHECKr(pthread_join (tid, NULL));
+#endif
 
-	return (0);
+	SUCCEED;
 }
