@@ -1,5 +1,5 @@
-/*	$OpenBSD: time.h,v 1.2 1996/02/29 13:57:31 niklas Exp $	*/
-/*	$NetBSD: time.h,v 1.16 1995/06/15 23:08:11 cgd Exp $	*/
+/*	$OpenBSD: time.h,v 1.3 1996/05/02 13:14:04 deraadt Exp $	*/
+/*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -141,6 +141,7 @@ void	microtime __P((struct timeval *tv));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
+int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
 int	setitimer __P((int, const struct itimerval *, struct itimerval *));
