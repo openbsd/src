@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2002/12/06 07:46:50 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2003/02/04 20:02:34 markus Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -493,11 +493,6 @@ conf_load_defaults (int tr)
   dflt = conf_get_trans_str (tr, "General", "Default-phase-1-ID");
   if (dflt)
     conf_set (tr, "Default-phase-1", "ID", dflt, 0, 1);
-
-  conf_set (tr, "Default-phase-1-configuration",
-            "EXCHANGE_TYPE", "ID_PROT", 0, 1);
-  conf_set (tr, "Default-phase-1-configuration", "Transforms",
-            "3DES-SHA-RSA_SIG", 0, 1);
 
    /* Quick modes */
   for (enc = 0; qm_enc[enc]; enc ++)
