@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.18 1999/08/17 09:13:13 millert Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.19 1999/12/10 20:06:48 deraadt Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.18 1999/08/17 09:13:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.19 1999/12/10 20:06:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: telnetd.c,v 1.18 1999/08/17 09:13:13 millert Ex
 #include <sys/cdefs.h>
 #define P __P
 
-void doit P((struct sockaddr_in *));
+void doit P((struct sockaddr *));
 void startslave P((char *, int, char *));
 int terminaltypeok P((char *));
 
@@ -178,7 +178,7 @@ char valid_opts[] = {
 main(argc, argv)
 	char *argv[];
 {
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int on = 1, fromlen;
 	register int ch;
 	extern char *optarg;
@@ -529,7 +529,7 @@ main(argc, argv)
 	}
 #endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
 	net = 0;
-	doit(&from);
+	doit((struct sockaddr *)&from);
 	/* NOTREACHED */
 	return (0);
 }  /* end of main */
@@ -797,13 +797,16 @@ extern void telnet P((int, int, char *));
  */
 	void
 doit(who)
-	struct sockaddr_in *who;
+	struct sockaddr *who;
 {
 	char *host = NULL, *inet_ntoa();
 	struct hostent *hp;
 	int level;
 	int ptynum;
 	char user_name[256];
+	char *ap;
+	size_t alen;
+	char hbuf[NI_MAXHOST];
 
 	/*
 	 * Find an available pty to use.
@@ -846,19 +849,36 @@ doit(who)
 #endif	/* _SC_CRAY_SECURE_SYS */
 
 	/* get name of connected client */
-	hp = gethostbyaddr((char *)&who->sin_addr, sizeof (struct in_addr),
-		who->sin_family);
+	switch (who->sa_family) {
+	case AF_INET:
+		ap = (char *)&((struct sockaddr_in *)who)->sin_addr;
+		alen = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		ap = (char *)&((struct sockaddr_in6 *)who)->sin6_addr;
+		alen = sizeof(struct in6_addr);
+		break;
+	default:
+		ap = NULL;
+		alen = 0;
+		break;
+	}
+	if (ap)
+		hp = gethostbyaddr(ap, alen, who->sa_family);
+	else
+		hp = NULL;
 
 	if (hp == NULL && registerd_host_only) {
 		fatal(net, "Couldn't resolve your address into a host name.\r\n\
 	 Please contact your net administrator");
-	} else if (hp &&
-	    (strlen(hp->h_name) <= (unsigned int)((utmp_len < 0) ? -utmp_len
-								 : utmp_len))) {
+	} else if (hp && (strlen(hp->h_name) <=
+	    (u_int)((utmp_len < 0) ? -utmp_len : utmp_len))) {
 		host = hp->h_name;
-	} else {
-		host = inet_ntoa(who->sin_addr);
+	} else if (getnameinfo(who, who->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST) != 0) {
+		fatal(net, "getnameinfo");
 	}
+
 	/*
 	 * We must make a copy because Kerberos is probably going
 	 * to also do a gethost* and overwrite the static data...
