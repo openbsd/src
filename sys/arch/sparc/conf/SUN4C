@@ -65,20 +65,6 @@ sbus0	at mainbus0
 audioamd0 at mainbus0
 auxreg0	at mainbus0
 
-# The system clock (and stat clock) may be set higher than 100 Hz
-# On sun4c and sun4m systems.  This is useful if you have a speedy
-# machine and need high accuracy timing for real-time oriented applications.
-# Note: running the system clock at a higher rate will cause the kernel
-#       to use proportionally CPU time handling clock interrupts, 
-#       and if set to ridiculously high values may cause problems.
-#
-# Note: 4/100 and 4/200 systems will only run the clocks at 100 Hz, 
-#       other values are ignored.
-#
-# On sparc, 1000000 modulo HZ must == 0.  If not, a warning is printed 
-#       at boot time, and HZ is reset to 100.
-#option          HZ=1000
-
 clock0	at mainbus0
 #clock0	at obio0 addr 0xf2000000
 #oclock0 at obio0 addr 0xf3000000

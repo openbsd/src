@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.19 1998/03/04 19:24:54 johns Exp $
+#	$OpenBSD: SUN4M,v 1.20 1998/03/04 19:49:08 johns Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -39,20 +39,6 @@ auxreg0	at obio0				# sun4m
 
 # Power status and control register found on Sun4m systems
 power0	at obio0
-
-# The system clock (and stat clock) may be set higher than 100 Hz
-# On sun4c and sun4m systems.  This is useful if you have a speedy
-# machine and need high accuracy timing for real-time oriented applications.
-# Note: running the system clock at a higher rate will cause the kernel
-#       to use proportionally CPU time handling clock interrupts, 
-#       and if set to ridiculously high values may cause problems.
-#
-# Note: 4/100 and 4/200 systems will only run the clocks at 100 Hz, 
-#       other values are ignored.
-#
-# On sparc, 1000000 modulo HZ must == 0.  If not, a warning is printed 
-#       at boot time, and HZ is reset to 100.
-#option          HZ=1000
 
 # Mostek clock found on 4/300, sun4c, and sun4m systems.
 clock0	at obio0				# sun4m
