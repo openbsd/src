@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.sh,v 1.5 1997/01/25 08:47:58 deraadt Exp $
+#	$OpenBSD: mkdep.sh,v 1.6 1997/01/25 14:27:44 niklas Exp $
 #	$NetBSD: mkdep.sh,v 1.3 1994/12/23 07:35:02 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ fi
 umask $um
 trap 'rm -rf $DTMP ; exit 1' 1 2 3 13 15
 
-cc -M $* |
+${CC:-cc} -M $* |
 sed "
 	s; \./; ;g
 	/\.c:$/d

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.ultrix,v 1.4 1997/01/25 08:47:58 deraadt Exp $
+#	$OpenBSD: mkdep.ultrix,v 1.5 1997/01/25 14:27:45 niklas Exp $
 #	$NetBSD: mkdep.ultrix,v 1.2 1994/12/23 07:35:04 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -97,7 +97,7 @@ _EOF_
 # sed -e 's/:[^"]*"\([^"]*\)".*/: \1/' -e 's/\.c/.o/' |
 
 # Ultrix has already used -M for something else.
-cc -Em $* |
+${CC:-cc} -Em $* |
 sed "
 	s; \./; ;g
 	$SED" |

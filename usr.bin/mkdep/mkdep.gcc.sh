@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.5 1997/01/25 08:47:56 deraadt Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.6 1997/01/25 14:27:44 niklas Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -81,9 +81,9 @@ umask $um
 trap 'rm -rf $DTMP ; exit 1' 1 2 3 13 15
 
 if [ x$pflag = x ]; then
-	cc -M "$@" | sed -e 's; \./; ;g' > $TMP
+	${CC:-cc} -M "$@" | sed -e 's; \./; ;g' > $TMP
 else
-	cc -M "$@" | sed -e 's;\.o :; :;' -e 's; \./; ;g' > $TMP
+	${CC:-cc} -M "$@" | sed -e 's;\.o :; :;' -e 's; \./; ;g' > $TMP
 fi
 
 if [ $? != 0 ]; then
