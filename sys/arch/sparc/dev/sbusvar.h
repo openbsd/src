@@ -71,3 +71,4 @@ struct sbus_softc {
 
 int	sbusdev_match __P((struct cfdata *, void *));
 void	sbus_establish __P((struct sbusdev *, struct device *));
+int	sbus_slavecheck __P((struct device *self, struct confargs *ca));

@@ -200,3 +200,24 @@ sbusreset(sbus)
 		}
 	}
 }
+
+/*
+ * Returns true if this device is in a slave slot, so that drivers
+ * can bail rather than fail.
+ */
+int
+sbus_slavecheck(self, ca)
+	struct device *self;
+	struct confargs *ca;
+{
+	int	slave_only;
+
+	slave_only = getpropint(findroot(), "slave-only", 8);
+
+	if (slave_only & (1<<ca->ca_slot)) {
+		printf("%s: slave sbus slot -- not supported\n",
+		    self->dv_xname);
+		return (1);
+	}
+	return (0);
+}
