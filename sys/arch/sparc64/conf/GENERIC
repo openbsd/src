@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 2002/06/11 11:02:38 jason Exp $
+#	$OpenBSD: GENERIC,v 1.66 2002/06/17 22:33:48 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -20,7 +20,7 @@ config		bsd	swap generic
 mainbus0 at root
 cpu0	at mainbus0
 
-upa0	at mainbus0 disable
+upa0	at mainbus0
 
 # Bus types found on SPARC systems.
 
