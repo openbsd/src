@@ -1,11 +1,11 @@
-.\"     $OpenBSD: log.9,v 1.2 1999/09/22 03:16:47 csapuntz Exp $
-.\"     $NetBSD: log.9,v 1.6 1999/08/17 05:24:06 enami Exp $
+.\"	$OpenBSD: vslock.9,v 1.1 1999/09/22 03:16:47 csapuntz Exp $
+.\"	$NetBSD: vslock.9,v 1.8 1999/03/16 00:40:48 garbled Exp $
 .\"
-.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Michael Graff.
+.\" by Paul Kranenburg.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -35,50 +35,34 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 1997
-.Dt LOG 9
+.Dd June 15, 1996
+.Dt VSLOCK 9
 .Os
 .Sh NAME
-.Nm log ,
-.Nm addlog
-.Nd log a message from the kernel through the
-.Pa /dev/klog
-device
+.Nm vslock ,
+.Nm vsunlock
+.Nd lock/unlock user space addresses in memory
 .Sh SYNOPSIS
-.Fd #include <sys/syslog.h>
 .Ft void
-.Fo "log"
-.Fa "int level"
-.Fa "const char *format"
-.Fa "..."
-.Fc
+.Fn vslock "struct proc *p" "caddr_t addr" "size_t len"
 .Ft void
-.Fn addlog "const char *format" ...
+.Fn vsunlock "struct proc *p" "caddr_t addr" "size_t len"
 .Sh DESCRIPTION
 The
-.Fn log
-function allows the kernel to send formatted messages to user processes 
-listening on
-.Pa /dev/klog .
-Usually
-.Xr syslogd 8
-monitors
-.Pa /dev/klog
-for these messages and writes them to a log file.
+.Fn vslock
+and
+.Fn vsunlock
+functions respectively lock and unlock a range of
+addresses belonging to the currently running process into memory.
+The actual amount of memory locked is a multiple of the machine's page size.
+The starting page number is computed by truncating
+.Fa addr
+to the nearest preceding page boundary, and by rounding up
+.Fa addr +
+.Fa len
+to the next page boundary.
+The process context to use for this operation is taken from
+.Fa p .
 .Pp
-All messages are formatted using
-.Xr printf 9 ,
-logged using facility
-.Dv LOG_KERN ,
-and priority level
-.Fa level .
-.Pp
-The 
-.Fn addlog
-function is used to build a log message in steps, by adding information
-to an initial call to
-.Fn log .
 .Sh SEE ALSO
-.Xr syslog 3 ,
-.Xr syslogd 8 ,
-.Xr printf 9 .
+.Xr physio 9

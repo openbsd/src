@@ -1,5 +1,5 @@
-.\"	$OpenBSD: disk.9,v 1.8 1999/09/02 17:28:06 espie Exp $
-.\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
+.\"	$OpenBSD: disk.9,v 1.9 1999/09/22 03:16:47 csapuntz Exp $
+.\"	$NetBSD: disk.9,v 1.10 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -35,7 +35,14 @@
 .Dt DISK 9
 .Os
 .Sh NAME
-.Nm disk
+.Nm disk ,
+.Nm disk_init ,
+.Nm disk_attach ,
+.Nm disk_detatch ,
+.Nm disk_busy ,
+.Nm disk_unbusy ,
+.Nm disk_find ,
+.Nm disk_resetstat
 .Nd generic disk framework
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -46,7 +53,7 @@
 .Ft void
 .Fn disk_attach "struct disk *"
 .Ft void
-.Fn disk_detatch "struct disk *"
+.Fn disk_detach "struct disk *"
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
@@ -56,12 +63,12 @@
 .Ft struct disk *
 .Fn disk_find "char *"
 .Sh DESCRIPTION
-The 
-.Ox
+The
+.Nx
 generic disk framework is designed to provide flexible,
 scalable, and consistent handling of disk state and metrics information.
 The fundamental component of this framework is the
-.Nm 
+.Nm disk
 structure, which is defined as follows:
 .Bd -literal
 struct disk {
@@ -81,7 +88,7 @@ struct disk {
 	int	  dk_busy;	/* busy counter */
 	u_int64_t dk_xfer;	/* total number of transfers */
 	u_int64_t dk_seek;	/* total independent seek operations */
-	u_int64_t dk_bytes;	/* total bytes transferred */
+	u_int64_t dk_bytes;	/* total bytes transfered */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
@@ -122,7 +129,7 @@ Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
 timestamp, insert the disk into the disklist, and intrement the
 system disk count.
-.It Fn disk_detatch
+.It Fn disk_detach
 Detatch a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.  If the count
 drops below zero, panic.
@@ -132,8 +139,7 @@ Increment the disk's
 If this counter goes from 0 to 1, set the timestamp corresponding to
 this transfer.
 .It Fn disk_unbusy
-Decrement a disk's busy counter.  If the count drops below zero, print
-a warning message.
+Decrement a disk's busy counter.  If the count drops below zero, panic.
 Get the current time, subtract it from the disk's timestamp, and add
 the difference to the disk's running total.  Set the disk's timestamp
 to the current time.  If the provided byte count is greater than 0,
@@ -148,7 +154,7 @@ or NULL if the disk does not exist.
 .Pp
 The functions typically called by device drivers are
 .Fn disk_attach ,
-.Fn disk_detatch ,
+.Fn disk_detach ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
 and
@@ -176,7 +182,7 @@ of the disk stucture, eg:
 .Bd -literal
 struct foo_softc {
 	struct	device *sc_dev;		/* generic device information */
-	struct	disk *sc_dk;		/* generic disk information */
+	struct	disk sc_dk;		/* generic disk information */
 	[ . . . more . . . ]
 };
 .Ed
@@ -293,7 +299,7 @@ foodone(xfer)
 	[ . . . ]
 
 	/*
-	 * Get number of bytes transferred.  If there is no buf
+	 * Get number of bytes transfered.  If there is no buf
 	 * associated with the xfer, we are being called at the
 	 * end of a non-I/O command.
 	 */
@@ -322,13 +328,20 @@ particular disk.  For this function, the
 .Fn disk_resetstat
 routine is provided.
 .Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual
+code implementing or utilizing the disk framework can be found.  All
+pathnames are relative to
+.Pa /usr/src .
+.Pp
 The disk framework itself is implemented within the file
 .Pa sys/kern/subr_disk.c .
 Data structures and function prototypes for the framework are located in
 .Pa sys/sys/disk.h .
 .Pp
-The 
-.Ox
+The
+.Nx
 machine-independent SCSI disk and CD-ROM drivers utilize the
 disk framework.  They are located in
 .Pa sys/scsi/sd.c
@@ -336,7 +349,7 @@ and
 .Pa sys/scsi/cd.c .
 .Pp
 The
-.Ox
+.Nx
 .Nm ccd
 and
 .Nm vnd
@@ -346,17 +359,16 @@ They are located in
 and
 .Pa sys/dev/vnd.c .
 .Sh AUTHOR
-The 
-.Ox
-generic disk framework was architected and implemented within 
+The
 .Nx
-by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+generic disk framework was architected and implemented by
+Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr vnd 4 ,
-.Xr spl 9 .
+.Xr spl 9
 .Sh HISTORY
-The 
-.Ox
-generic disk framework first appeared in 
-.Nx at version 1.1A.
+The
+.Nx
+generic disk framework appeared in
+.Nx 1.2 .

@@ -1,0 +1,1012 @@
+.\"	$OpenBSD: uvm.9,v 1.1 1999/09/22 03:16:47 csapuntz Exp $
+.\"	$NetBSD: uvm.9,v 1.7 1999/05/06 12:04:50 hwr Exp $
+.\"
+.\" Copyright (c) 1998 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" XXX this manual sets nS to 1 or 0 in the description, to obtain
+.\" synopsis-like function prototypes.  any better way?
+.\"
+.Dd April 10, 1998
+.Dt UVM 9
+.Os
+.Sh NAME
+.Nm UVM virtual memory system
+.Nd external interface
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <vm/vm.h>
+.Fd #include <uvm/uvm.h>
+.Sh DESCRIPTION
+The UVM virtual memory system manages access to the computer's memory
+resources.  User processes and the kernel access these resources through
+UVM's exteral interface.  UVM's external interface includes functions that:
+.Pp
+.Bl -hyphen -compact
+.It
+initialise UVM sub-systems
+.It
+manage virtual address spaces
+.It
+resolve page faults
+.It
+memory map files and devices
+.It
+perform uio-based I/O to virtual memory
+.It
+allocate and free kernel virtual memory
+.It
+allocate and free physical memory
+.El
+.Pp
+In addition to exporting these services, UVM has two kernel-level processes:
+pagedaemon and swapper.   The pagedaemon process sleeps until physical memory
+becomes scarce.  When that happens, pagedaemon is awoken.   It scans physical
+memory, paging out and freeing memory that has not been recently used.  The
+swapper process swaps in runnable processes that are currently swapped out,
+if there is room.
+.Pp
+There are also several miscellaneous functions.
+
+.Pp
+.Sh INITIALISATION
+
+.nr nS 1
+.Pp
+.Ft void
+.Fn uvm_init
+.Ft void
+.Fn uvm_init_limits "struct proc *p"
+.Ft void
+.Fn uvm_setpagesize
+.Ft void
+.Fn uvm_swap_init
+.nr nS 0
+
+.Pp
+.Fn uvm_init
+sets up the UVM system at system boot time, after the
+copyright has been printed.  It initialises
+global state, the page, map, kernel virtual memory state,
+machine-dependent physical map, kernel memory allocator,
+pager and anonymous memory sub-systems, and then enables
+paging of kernel objects.
+
+.Pp
+.Fn uvm_init_limits
+initialises process limits for the named process.  This is for use by
+the system startup for process zero, before any other processes are
+created.
+
+.Pp
+.Fn uvm_setpagesize
+initialises the uvmexp members pagesize (if not already done by
+machine-dependent code), pageshift and pagemask.  It should be called by
+machine-dependent code early in the
+.Xr pmap_init 9
+call.
+
+.Pp
+.Fn uvm_swap_init
+initialises the swap sub-system.
+
+.Pp
+.Sh VIRTUAL ADDRESS SPACE MANAGEMENT
+
+.Pp
+.nr nS 1
+.Ft int
+.Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "vaddr_t uoffset" "uvm_flag_t flags"
+.Ft int
+.Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable"
+.Ft boolean_t
+.Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
+.Ft int
+.Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
+.Ft int
+.Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
+
+.Ft struct vmspace *
+.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
+.Ft void
+.Fn uvmspace_exec "struct proc *p"
+.Ft struct vmspace *
+.Fn uvmspace_fork "struct vmspace *vm"
+.Ft void
+.Fn uvmspace_free "struct vmspace *vm1"
+.Ft void
+.Fn uvmspace_share "struct proc *p1" "struct proc *p2"
+.Ft void
+.Fn uvmspace_unshare "struct proc *p"
+.nr nS 0
+
+.Pp
+.Fn uvm_map
+establishes a valid mapping in map
+.Fa map ,
+which must be unlocked.  The new mapping has size
+.Fa size ,
+which must be in
+.Dv PAGE_SIZE
+units.  The
+.Fa uobj
+and
+.Fa uoffset
+arguments can have four meanings.  When
+.Fa uobj
+is
+.Dv NULL
+and
+.Fa uoffset
+is
+.Dv UVM_UNKNOWN_OFFSET ,
+.Fn uvm_map
+does not use the machine-dependant
+.Dv PMAP_PREFER
+function.  If
+.Fa uoffset
+is any other value, it is used as the hint to
+.Dv PMAP_PREFER .
+When
+.Fa uobj
+is not
+.Dv NULL
+and
+.Fa uoffset
+is
+.Dv UVM_UNKNOWN_OFFSET ,
+.Fn uvm_map
+finds the offset based upon the virtual address, passed as 
+.Fa startp .
+If
+.Fa uoffset
+is any other value, we are doing a normal mapping at this offset.  The
+start address of the map will be returned in
+.Fa startp .
+.Pp
+.Fa flags
+passed to
+.Fn uvm_map
+are typically created using the
+.Fn UVM_MAPFLAG "vm_prot_t prot" "vm_prot_t maxprot" "vm_inherit_t inh" "int advice" "int flags"
+macro, which uses the following values.
+The
+.Fa prot
+and
+.Fa maxprot
+can take are:
+.Bd -literal
+#define UVM_PROT_MASK   0x07    /* protection mask */
+#define UVM_PROT_NONE   0x00    /* protection none */
+#define UVM_PROT_ALL    0x07    /* everything */
+#define UVM_PROT_READ   0x01    /* read */
+#define UVM_PROT_WRITE  0x02    /* write */
+#define UVM_PROT_EXEC   0x04    /* exec */
+#define UVM_PROT_R      0x01    /* read */
+#define UVM_PROT_W      0x02    /* write */
+#define UVM_PROT_RW     0x03    /* read-write */
+#define UVM_PROT_X      0x04    /* exec */
+#define UVM_PROT_RX     0x05    /* read-exec */
+#define UVM_PROT_WX     0x06    /* write-exec */
+#define UVM_PROT_RWX    0x07    /* read-write-exec */
+.Ed
+.Pp
+The values that
+.Fa inh
+can take are:
+.Bd -literal
+#define UVM_INH_MASK    0x30    /* inherit mask */
+#define UVM_INH_SHARE   0x00    /* "share" */
+#define UVM_INH_COPY    0x10    /* "copy" */
+#define UVM_INH_NONE    0x20    /* "none" */
+#define UVM_INH_DONATE  0x30    /* "donate" << not used */
+.Ed
+.Pp
+The values that
+.Fa advice
+can take are:
+.Bd -literal
+#define UVM_ADV_NORMAL  0x0     /* 'normal' */
+#define UVM_ADV_RANDOM  0x1     /* 'random' */
+#define UVM_ADV_SEQUENTIAL 0x2  /* 'sequential' */
+#define UVM_ADV_MASK    0x7     /* mask */
+.Ed
+.Pp
+The values that
+.Fa flags
+can take are:
+.Bd -literal
+#define UVM_FLAG_FIXED   0x010000 /* find space */
+#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
+#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
+#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
+#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
+#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
+.Ed
+.Pp
+The
+.Dv UVM_MAPFLAG
+macro arguments can be combined with an or operator.  There are
+several special purpose macros for checking protection combinations, e.g. the
+.Dv UVM_PROT_WX
+macro.  There are also some additional macros to extract bits from
+the flags.  The
+.Dv UVM_PROTECTION ,
+.Dv UVM_INHERIT ,
+.Dv UVM_MAXPROTECTION
+and
+.Dv UVM_ADVICE
+macros return the protection, inheritance, maximum protection and advice,
+respectively.
+.Fn uvm_map
+returns a standard UVM return value.
+
+.Pp
+.Fn uvm_map_pageable
+changes the pageability of the pages in the range from
+.Fa start
+to
+.Fa end
+in map
+.Fa map
+to
+.Fa new_pageable .
+.Fn uvm_map_pageable
+returns a standard UVM return value.
+
+.Pp
+.Fn uvm_map_checkprot
+checks the protection of the range from
+.Fa start
+to
+.Fa end
+in map
+.Fa map
+against
+.Fa protection .
+This returns either
+.Dv TRUE
+or
+.Dv FALSE .
+
+.Pp
+.Fn uvm_map_protect
+changes the protection 
+.Fa start
+to
+.Fa end
+in map
+.Fa map
+to
+.Fa new_prot ,
+also setting the maximum protection to the region to
+.Fa new_prot
+if
+.Fa set_max
+is non-zero.  This function returns a standard UVM return value.
+
+.Pp
+.Fn uvm_deallocate
+deallocates kernel memory in map
+.Fa map
+from address
+.Fa start
+to
+.Fa start + size .
+
+.Pp
+.Fn uvmspace_alloc
+allocates and returns a new address space, with ranges from
+.Fa min
+to
+.Fa max ,
+setting the pageability of the address space to
+.Fa pageable.
+
+.Pp
+.Fn uvmspace_exec
+either reuses the address space of process
+.Fa p
+if there are no other references to it, or creates
+a new one with
+.Fn uvmspace_alloc .
+
+.Pp
+.Fn uvmspace_fork
+creates and returns a new address space based upon the
+.Fa vm1
+address space, typically used when allocating an address space for a
+child process.
+
+.Pp
+.Fn uvmspace_free
+lowers the reference count on the address space
+.Fa vm ,
+freeing the data structures if there are no other references.
+
+.Pp
+.Fn uvmspace_share
+causes process
+.Pa p2
+to share the address space of
+.Fa p1 .
+
+.Pp
+.Fn uvmspace_unshare
+ensures that process
+.Fa p
+has its own, unshared address space, by creating a new one if
+necessary by calling
+.Fn uvmspace_fork .
+
+.Pp
+.Sh PAGE FAULT HANDLING
+
+.Pp
+.nr nS 1
+.Ft int
+.Fn uvm_fault "vm_map_t orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
+.nr nS 0
+.Pp
+.Fn uvm_fault
+is the main entry point for faults.  It takes
+.Fa orig_map
+as the map the fault originated in, a
+.Fa vaddr
+offset into the map the fault occured,
+.Fa fault_type
+describing the type of fault, and
+.Fa access_type
+describing the type of access requested.
+.Fn uvm_fault
+returns a standard UVM return value.
+
+.Pp
+.Sh MEMORY MAPPING FILES AND DEVICES
+
+.Pp
+.nr nS 1
+.Ft struct uvm_object *
+.Fn uvn_attach "void *arg" "vm_prot_t accessprot"
+.Ft void
+.Fn uvm_vnp_setsize "struct vnode *vp" "u_quad_t newsize"
+.Ft void
+.Fn uvm_vnp_sync "struct mount *mp"
+.Ft void
+.Fn uvm_vnp_terminate "struct vnode *vp"
+.Ft boolean_t
+.Fn uvm_vnp_uncache "struct vnode *vp"
+.nr nS 0
+
+.Pp
+.Fn uvn_attach
+attaches a UVM object to vnode
+.Fa arg ,
+creating the object if necessary.  The object is returned.
+
+.Pp
+.Fn uvm_vnp_setsize
+sets the size of vnode
+.Fa vp
+to
+.Fa newsize .
+Caller must hold a reference to the vnode.  If the vnode shrinks, pages
+no longer used are discarded.  This function will be removed when the
+filesystem and VM buffer caches are merged.
+
+.Pp
+.Fn uvm_vnp_sync
+flushes dirty vnodes from either the mount point passed in
+.Fa mp ,
+or all dirty vnodes if
+.Fa mp
+is
+.Dv NULL .
+This function will be removed when the filesystem and VM buffer caches
+are merged.
+
+.Pp
+.Fn uvm_vnp_terminate
+frees all VM resources allocated to vnode
+.Fa vp .
+If the vnode still has references, it will not be destroyed; however
+all future operations using this vnode will fail.  This function will be
+removed when the filesystem and VM buffer caches are merged.
+
+.Pp
+.Fn uvm_vnp_uncache
+disables vnode
+.Fa vp
+from persisting when all references are freed.  This function will be
+removed when the file-system and UVM caches are unified.  Returns
+true if there is no active vnode.
+
+.Pp
+.Sh VIRTUAL MEMORY I/O
+
+.Pp
+.nr nS 1
+.Ft int
+.Fn uvm_io "vm_map_t map" "struct uio *uio"
+.nr nS 0
+
+.Pp
+.Fn uvm_io
+performs the I/O described in
+.Fa uio
+on the memory described in
+.Fa map .
+
+.Pp
+.Sh ALLOCATION OF KERNEL MEMORY
+
+.Pp
+.nr nS 1
+.Ft vaddr_t
+.Fn uvm_km_alloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_zalloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "boolean_t zeroit"
+.Ft vaddr_t
+.Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vsize_t size" "int flags"
+.Ft vaddr_t
+.Fn uvm_km_valloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_valloc_wait "vm_map_t map" "vsize_t size"
+.Ft struct vm_map *
+.Fn uvm_km_suballoc "vm_map_t map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
+.Ft void
+.Fn uvm_km_free "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.Ft void
+.Fn uvm_km_free_wakeup "vm_map_t map" "vaddr_t addr" "vsize_t size"
+.nr nS 0
+
+.Pp
+.Fn uvm_km_alloc
+and
+.Fn uvm_km_zalloc
+allocate
+.Fa size
+bytes of wired kernel memory in map
+.Fa map .
+In addition to allocation,
+.Fn uvm_km_zalloc
+zeros the memory.  Both of these functions are defined as macros in
+terms of
+.Fn uvm_km_alloc1 ,
+and should almost always be used in preference to
+.Fn uvm_km_alloc1 .
+
+.Pp
+.Fn uvm_km_alloc1
+allocates and returns
+.Fa size
+bytes of wired memory in the kernel map, zeroing the memory if the
+.Fa zeroit
+argument is non-zero.
+
+.Pp
+.Fn uvm_km_kmemalloc
+allocates and returns
+.Fa size
+bytes of wired kernel memory into
+.Fa obj .
+The flags can be any of:
+.Bd -literal
+#define UVM_KMF_NOWAIT  0x1                     /* matches M_NOWAIT */
+#define UVM_KMF_VALLOC  0x2                     /* allocate VA only */
+#define UVM_KMF_TRYLOCK UVM_FLAG_TRYLOCK        /* try locking only */
+.Ed
+.Pp
+.Dv UVM_KMF_NOWAIT
+causes
+.Fn uvm_km_kmemalloc
+to return immediately if no memory is available.
+.Dv UVM_KMF_VALLOC
+causes no pages to be allocated, only a virtual address.
+.Dv UVM_KMF_TRYLOCK
+causes
+.Fn uvm_km_kmemalloc
+to use
+.Fn simple_lock_try
+when locking maps.
+
+.Pp
+.Fn uvm_km_valloc
+and
+.Fn uvm_km_valloc_wait
+return a newly allocated zero-filled address in the kernel map of size
+.Fa size .
+.Fn uvm_km_valloc_wait
+will also wait for kernel memory to become available, if there is a
+memory shortage.
+
+.Pp
+.Sh ALLOCATION OF PHYSICAL MEMORY
+
+.Pp
+.nr nS 1
+.Ft struct vm_page *
+.Fn uvm_pagealloc "struct uvm_object *uobj" "vaddr_t off" "struct vm_anon *anon"
+.Ft void
+.Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "vaddr_t newoff"
+.Ft void
+.Fn uvm_pagefree "struct vm_page *pg"
+.Ft int
+.Fn uvm_pglistalloc "psize_t size" "paddr_t low" "paddr_t high" "paddr_t alignment" "paddr_t boundary" "struct pglist *rlist" "int nsegs" "int waitok"
+.Ft void
+.Fn uvm_pglistfree "struct pglist *list"
+.Ft void
+.Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end"
+.nr nS 0
+
+.Pp
+.Fn uvm_pagealloc
+allocates a page of memory at virtual address
+.Fa off
+in either the object
+.Fa uobj
+or the anonymous memory
+.Fa anon ,
+which must be locked by the caller.  Only one of
+.Fa off
+and
+.Fa uobj
+can be non
+.Dv NULL .
+Returns
+.Dv NULL
+when no page can be found.
+
+.Pp
+.Fn uvm_pagerealloc
+reallocates page
+.Fa pg
+to a new object
+.Fa newobj ,
+at a new offset
+.Fa newoff .
+
+.Pp
+.Fn uvm_pagefree
+free's the physical page
+.Fa pg .
+
+.Pp
+.Fn uvm_pglistalloc
+allocates a list of pages for size
+.Fa size
+byte under various constraints.
+.Fa low
+and
+.Fa high
+describe the lowest and highest addresses acceptable for the list.  If
+.Fa alignment
+is non-zero, it describes the required alignment of the list, in
+power-of-two notation.  If
+.Fa boundary
+is non-zero, no segment of the list may cross this power-of-two
+boundary, relative to zero.
+The
+.Fa nsegs
+and
+.Fa waitok
+arguments are currently ignored.
+
+.Pp
+.Fn uvm_pglistfree
+frees the list of pages pointed to by
+.Fa list .
+
+.Pp
+.Fn uvm_page_physload
+loads physical memory segments into VM space.  It must be called at system
+boot time to setup physical memory management pages.  The arguments describe
+the
+.Fa start
+and
+.Fa end
+of the physical addresses of the segment, and the available start and end
+addresses of pages not already in use.
+.\" XXX expand on "system boot time"!
+
+.Pp
+.Fn uvm_km_suballoc
+allocates submap from
+.Fa map ,
+creating a new map if
+.Fa submap
+is
+.Dv NULL .
+The addresses of the submap can be specified exactly by setting the
+.Fa fixed
+argument to non-zero, which causes the
+.Fa min
+argument specify the beginning of the address in thes submap.  If
+.Fa fixed
+is zero, any address of size
+.Fa size
+will be allocated from
+.Fa map
+and the start and end addresses returned in
+.Fa min
+and
+.Fa max .
+If
+.Fa pageable
+is non-zero, entries in the map may be paged out.
+
+.Pp
+.Fn uvm_km_free
+and
+.Fn uvm_km_free_wakeup
+free
+.Fa size
+bytes of memory in the kernal map, starting at address
+.Fa addr .
+.Fn uvm_km_free_wakeup
+calls
+.Fn thread_wakeup
+on the map before unlocking the map.
+
+.Pp
+.Sh PROCESSES
+
+.Pp
+.nr nS 1
+.Ft void
+.Fn uvm_pageout
+.Ft void
+.Fn uvm_scheduler
+.Ft void
+.Fn uvm_swapin "struct proc *p"
+.Ft void
+
+.Pp
+.Fn uvm_pageout
+is the main loop for the page daemon.
+
+.Pp
+.Fn uvm_scheduler
+is the process zero main loop, which is to be called after the
+system has finished starting other processes.  It handles the
+swapping in of runnable, swapped out processes in priority
+order.
+
+.Pp
+.Fn uvm_swapin
+swaps in the named process.
+
+.Pp
+.Sh MISCELLANEOUS FUNCTIONS
+
+.nr nS 1
+.Pp
+.Ft struct uvm_object *
+.Fn uao_create "vsize_t size" "int flags"
+.Ft void
+.Fn uao_detach "struct uvm_object *uobj"
+.Ft void
+.Fn uao_reference "struct uvm_object *uobj"
+
+.Ft boolean_t
+.Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw"
+.Ft void
+.Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw"
+.Ft boolean_t
+.Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
+
+.Ft void
+.Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len"
+.Ft void
+.Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
+
+.Ft void
+.Fn uvm_meter
+.Ft int
+.Fn uvm_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp " "size_t newlen" "struct proc *p"
+
+.Ft void
+.Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared"
+.Ft int
+.Fn uvm_grow "struct proc *p" "vaddr_t sp"
+.Ft int
+.Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
+.nr nS 0
+
+.Pp
+The
+.Fn uao_create ,
+.Fn uao_detach 
+and
+.Fn uao_reference
+functions operate on anonymous memory objects, such as those used to support
+System V shared memory.
+.Fn uao_create
+returns an object of size
+.Fa size
+with flags:
+.Bd -literal
+#define UAO_FLAG_KERNOBJ        0x1     /* create kernel object */
+#define UAO_FLAG_KERNSWAP       0x2     /* enable kernel swap */
+.Pp
+.Ed
+which can only be used once each at system boot time.
+.Fn uao_reference
+creates an additional reference to the named anonymous memory object.
+.Fn uao_detach
+removes a reference from the named anonymous memory object, destroying
+it if removing the last reference.
+
+.Pp
+.Fn uvm_chgkprot
+changes the protection of kernel memory from
+.Fa addr
+to
+.Fa addr + len
+to the value of
+.Fa rw .
+This is primarily useful for debuggers, for setting breakpoints.
+This function is only available with options
+.Dv KGDB .
+
+.Pp
+.Fn uvm_kernacc
+and
+.Fn uvm_useracc
+check the access at address
+.Fa addr
+to
+.Fa addr + len
+for
+.Fa rw
+access, in the kernel address space, and the current process'
+address space respectively.
+
+.Pp
+.Fn uvm_vslock
+and
+.Fn uvm_vsunlock
+control the wiring and unwiring of pages for process
+.Fa p
+from
+.Fa addr
+to
+.Fa addr + len .
+These functions are normally used to wire memory for I/O.
+
+.Pp
+.Fn uvm_meter
+calculates the load average and wakes up the swapper if necessary.
+
+.Pp
+.Fn uvm_sysctl
+provides support for the
+.Dv CTL_VM
+domain of the
+.Xr sysctl 3
+hierarchy.
+.Fn uvm_sysctl
+handles the
+.Dv VM_LOADAVG ,
+.Dv VM_METER
+and
+.Dv VM_UVMEXP
+calls, which return the current load averages, calculates current VM
+totals, and returns the uvmexp structure respectively.  The load averages
+are access from userland using the
+.Xr getloadavg 3
+function.  The uvmexp structure has all global state of the UVM system,
+and has the following members:
+.Bd -literal
+/* vm_page constants */
+int pagesize;   /* size of a page (PAGE_SIZE): must be power of 2 */
+int pagemask;   /* page mask */
+int pageshift;  /* page shift */
+
+/* vm_page counters */
+int npages;     /* number of pages we manage */
+int free;       /* number of free pages */
+int active;     /* number of active pages */
+int inactive;   /* number of pages that we free'd but may want back */
+int paging;     /* number of pages in the process of being paged out */
+int wired;      /* number of wired pages */
+int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
+int reserve_kernel; /* number of pages reserved for kernel */
+
+/* pageout params */
+int freemin;    /* min number of free pages */
+int freetarg;   /* target number of free pages */
+int inactarg;   /* target number of inactive pages */
+int wiredmax;   /* max number of wired pages */
+
+/* swap */
+int nswapdev;   /* number of configured swap devices in system */
+int swpages;    /* number of PAGE_SIZE'ed swap pages */
+int swpginuse;  /* number of swap pages in use */
+int nswget;     /* number of times fault calls uvm_swap_get() */
+int nanon;      /* number total of anon's in system */
+int nfreeanon;  /* number of free anon's */
+
+/* stat counters */
+int faults;             /* page fault count */
+int traps;              /* trap count */
+int intrs;              /* interrupt count */
+int swtch;              /* context switch count */
+int softs;              /* software interrupt count */
+int syscalls;           /* system calls */
+int pageins;            /* pagein operation count */
+                        /* pageouts are in pdpageouts below */
+int swapins;            /* swapins */
+int swapouts;           /* swapouts */
+int pgswapin;           /* pages swapped in */
+int pgswapout;          /* pages swapped out */
+int forks;              /* forks */
+int forks_ppwait;       /* forks where parent waits */
+int forks_sharevm;      /* forks where vmspace is shared */
+
+/* fault subcounters */
+int fltnoram;   /* number of times fault was out of ram */
+int fltnoanon;  /* number of times fault was out of anons */
+int fltpgwait;  /* number of times fault had to wait on a page */
+int fltpgrele;  /* number of times fault found a released page */
+int fltrelck;   /* number of times fault relock called */
+int fltrelckok; /* number of times fault relock is a success */
+int fltanget;   /* number of times fault gets anon page */
+int fltanretry; /* number of times fault retrys an anon get */
+int fltamcopy;  /* number of times fault clears "needs copy" */
+int fltnamap;   /* number of times fault maps a neighbor anon page */
+int fltnomap;   /* number of times fault maps a neighbor obj page */
+int fltlget;    /* number of times fault does a locked pgo_get */
+int fltget;     /* number of times fault does an unlocked get */
+int flt_anon;   /* number of times fault anon (case 1a) */
+int flt_acow;   /* number of times fault anon cow (case 1b) */
+int flt_obj;    /* number of times fault is on object page (2a) */
+int flt_prcopy; /* number of times fault promotes with copy (2b) */
+int flt_przero; /* number of times fault promotes with zerofill (2b) */
+
+/* daemon counters */
+int pdwoke;     /* number of times daemon woke up */
+int pdrevs;     /* number of times daemon rev'd clock hand */
+int pdswout;    /* number of times daemon called for swapout */
+int pdfreed;    /* number of pages daemon freed since boot */
+int pdscans;    /* number of pages daemon scaned since boot */
+int pdanscan;   /* number of anonymous pages scanned by daemon */
+int pdobscan;   /* number of object pages scanned by daemon */
+int pdreact;    /* number of pages daemon reactivated since boot */
+int pdbusy;     /* number of times daemon found a busy page */
+int pdpageouts; /* number of times daemon started a pageout */
+int pdpending;  /* number of times daemon got a pending pagout */
+int pddeact;    /* number of pages daemon deactivates */
+.Ed
+
+.Pp
+.Fn uvm_fork
+forks a virtual address space for process' (old)
+.Fa p1
+and (new)
+.Fa p2 .
+If the
+.Fa shared
+argument is non zero, p1 shares its address space with p2,
+otherwise a new address space is created.  This function
+currently has no return value, and thus cannot fail.  In
+the future, this function will changed to allowed it to
+fail in low memory conditions.
+
+.Pp
+.Fn uvm_grow
+increases the stack segment of process
+.Fa p
+to include
+.Fa sp .
+
+.Pp
+.Fn uvm_coredump
+generates a coredump on vnode
+.Fa vp
+for process
+.Fa p
+with credentials
+.Fa cred
+and core header description in
+.Fa chdr .
+
+.Sh STANDARD UVM RETURN VALUES
+This section documents the standard return values that callers of UVM
+functions can expect.  They are derived from the Mach VM values
+of the same function.  The full list of values can be seen below.
+.Bd -literal
+#define KERN_SUCCESS            0
+#define KERN_INVALID_ADDRESS    1
+#define KERN_PROTECTION_FAILURE 2
+#define KERN_NO_SPACE           3
+#define KERN_INVALID_ARGUMENT   4
+#define KERN_FAILURE            5
+#define KERN_RESOURCE_SHORTAGE  6
+#define KERN_NOT_RECEIVER       7
+#define KERN_NO_ACCESS          8
+#define KERN_PAGES_LOCKED       9
+.Ed
+.Pp
+Note that
+.Dv KERN_NOT_RECEIVER
+and
+.Dv KERN_PAGES_LOCKED
+values are not actually returned by the UVM code.
+
+.Sh NOTES
+These functions are only available with options
+.Dv UVM .
+.Pp
+.Fn uvm_chgkprot
+is only available if the kernel has been compiled with options
+.Dv KGDB .
+.Pp
+The include file
+.Pa <vm/vm.h>
+will be deprecated when then Mach VM system is obsoleted.  All structure
+and types whose names begin with ``vm_'' will be renamed to ``uvm_''.
+.Pp
+The
+.Xr pmap 9
+manual page is not yet written.
+
+.Sh HISTORY
+UVM is a new VM system developed at Washington University in St. Louis
+(Missouri).  UVM's roots lie partly in the Mach-based
+.Bx 4.4
+VM system, the FreeBSD VM system, and the SunOS4 VM system.  UVM's basic
+structure is based on the
+.Bx 4.4
+VM system.  UVM's new i386 machine-depenent layer includes several ideas
+from FreeBSD.  UVM's new anonymous memory system is based on the
+anonymous memory system found in SunOS4 VM (as described in papers by
+published Sun Microsystems, Inc.).  UVM also includes a number of feature
+new to BSD including page loanout, map entry passing, simplified
+copy-on-write, and clustered anonymous memory pageout.  UVM will be
+further documented in August 1998 in a dissertation by Charles D. Cranor.
+.Pp
+UVM appeared in
+.Nx 1.4 .
+
+.Sh AUTHOR
+Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
+.Pp
+Matthew Green <mrg@eterna.com.au> wrote the swap-space managemnt code
+and handled the logistical issues involed with merging UVM into the
+NetBSD source tree.
+.Pp
+Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
+UVM to support System V shared memory and process swapping.
+
+.Sh SEE ALSO
+.Xr getloadavg 3 ,
+.Xr kvm 3 ,
+.Xr sysctl 3 ,
+.Xr ddb 4 ,
+.Xr options 4

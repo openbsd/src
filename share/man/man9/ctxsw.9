@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mi_switch.9,v 1.1 1999/09/05 16:23:11 espie Exp $
+.\"	$OpenBSD: ctxsw.9,v 1.1 1999/09/22 03:16:47 csapuntz Exp $
 .\"	$NetBSD: ctxsw.9,v 1.10 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 24, 1996
-.Dt CONTEXT SWITCH 9
+.Dt CTXSW 9
 .Os
 .Sh NAME
 .Nm mi_switch ,
@@ -75,7 +75,7 @@ detection of a change in the signal disposition of the current process, or
 when a higher priority process might be available to run.
 The latter event is communicated by the machine-independent scheduling
 routines by calling the machine-dependent
-.Fn need_resched .
+.Fn need_resched "void" .
 .It
 In the signal handling code
 .Pq see Xr issignal 9
@@ -95,7 +95,7 @@ cause a
 After these administrative tasks are done,
 .Fn mi_switch
 hands over control to the machine dependent routine
-.Fn cpu_switch ,
+.Fn cpu_switch "void" ,
 which will perform the actual process context switch.
 .Pp
 .Fn cpu_switch
@@ -103,7 +103,7 @@ will make a choice amongst the processes which are ready to run from a
 priority queue data-structure.
 The priority queue consists of an array
 .Va qs[NQS]
-of queue header structures, each of which identifies a list of runnable
+of queue header structures each of which identifies a list of runnable
 processes of equal priority
 .Pq see Aq Pa sys/proc.h .
 A single word
@@ -139,10 +139,7 @@ and thus
 .Fn cpu_switch
 should be called at
 .Xr splhigh 9 .
-.Sh CODE_REFERENCES
-The
-.Fn mi_switch
-function is implemented in the file
-.Pa sys/kern/kern_synch.c .
+.Pp
 .Sh SEE ALSO
-.Xr sleep 9 .
+.Xr tsleep 9 ,
+.Xr wakeup 9

@@ -1,11 +1,11 @@
-.\"     $OpenBSD: log.9,v 1.2 1999/09/22 03:16:47 csapuntz Exp $
-.\"     $NetBSD: log.9,v 1.6 1999/08/17 05:24:06 enami Exp $
+.\"	$OpenBSD: access.9,v 1.1 1999/09/22 03:16:47 csapuntz Exp $
+.\"	$NetBSD: access.9,v 1.7 1999/03/16 00:40:46 garbled Exp $
 .\"
-.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Michael Graff.
+.\" by Paul Kranenburg.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -35,50 +35,50 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 1997
-.Dt LOG 9
+.Dd June 16, 1996
+.Dt ACCESS 9
 .Os
 .Sh NAME
-.Nm log ,
-.Nm addlog
-.Nd log a message from the kernel through the
-.Pa /dev/klog
-device
+.Nm access ,
+.Nm kernacc ,
+.Nm useracc
+.Nd check memory regions for accessability
 .Sh SYNOPSIS
-.Fd #include <sys/syslog.h>
-.Ft void
-.Fo "log"
-.Fa "int level"
-.Fa "const char *format"
-.Fa "..."
-.Fc
-.Ft void
-.Fn addlog "const char *format" ...
+.Ft int
+.Fn kernacc "caddr_t addr" "size_t len" "int rw"
+.Ft int
+.Fn useracc "caddr_t addr" "size_t len" "int rw"
 .Sh DESCRIPTION
 The
-.Fn log
-function allows the kernel to send formatted messages to user processes 
-listening on
-.Pa /dev/klog .
-Usually
-.Xr syslogd 8
-monitors
-.Pa /dev/klog
-for these messages and writes them to a log file.
+.Fn kernacc
+and
+.Fn useracc
+functions check whether operations of the type specified in
+.Fa rw
+are permitted in the range of virtual addresses given by
+.Fa addr
+and
+.Fa len .
+The possible values of
+.Fa rw
+are
+.Dv B_READ
+and
+.Dv B_WRITE .
+.Fn kernacc
+checks addresses in the kernel address space, while
+.Fn useracc
+considers
+.Fa addr
+to represent an user space address.
+The process context to use for this operation is taken from the global variable
+.Va curproc .
 .Pp
-All messages are formatted using
-.Xr printf 9 ,
-logged using facility
-.Dv LOG_KERN ,
-and priority level
-.Fa level .
+.Sh RETURN VALUES
+Both functions return 1 if the type of access specified by
+.Fa rw
+is permitted.
+Otherwise 0 is returned.
 .Pp
-The 
-.Fn addlog
-function is used to build a log message in steps, by adding information
-to an initial call to
-.Fn log .
-.Sh SEE ALSO
-.Xr syslog 3 ,
-.Xr syslogd 8 ,
-.Xr printf 9 .
+.Sh BUGS
+The process pointer should be passed in as an argument.

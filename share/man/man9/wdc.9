@@ -1,0 +1,413 @@
+.\"	$OpenBSD: wdc.9,v 1.1 1999/09/22 03:16:47 csapuntz Exp $
+.\"	$NetBSD: wdc.9,v 1.3 1999/03/16 00:40:48 garbled Exp $
+
+.\"
+.\" Copyright (c) 1998 Manuel Bouyer.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+
+.Dd October 18, 1998
+.Dt wdc 9
+.Os
+.Sh NAME
+.Nm wdc
+.Nd machine-indepedant IDE/ATAPI driver
+.Sh SYNOPSIS
+.Fd #include <dev/ata/atavar.h>
+.Fd #include <sys/dev/ic/wdcvar.h>
+.Ft int
+.Fn wdcprobe "struct channel_softc * chp"
+.Ft void
+.Fn wdcattach "struct channel_softc * chp"
+.Sh description
+The
+.Nm
+driver provides the machine independant core functions for driving IDE
+devices.
+IDE devices-specific drivers (
+.Nm wd
+or
+.Nm atapibus )
+will use services provided by
+.Nm wdc .
+.Pp
+The machine-dependant bus front-end provides informations to
+.Nm
+vith the 
+.Va wdc_softc
+and
+.Va channel_softc
+structures.
+The first one defines global controller properties, and the second contain
+per-channel informations.
+.Nm
+returns informations about the attached devices in the
+.Va ata_drive_datas
+structure.
+.Bd -literal
+struct wdc_softc { /* Per controller state */
+        struct device sc_dev;
+        int           cap;
+#define WDC_CAPABILITY_DATA16 0x0001    
+#define WDC_CAPABILITY_DATA32 0x0002    
+#define WDC_CAPABILITY_MODE   0x0004    
+#define WDC_CAPABILITY_DMA    0x0008    
+#define WDC_CAPABILITY_UDMA   0x0010    
+#define WDC_CAPABILITY_HWLOCK 0x0020    
+#define WDC_CAPABILITY_ATA_NOSTREAM 0x0040 
+#define WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 
+#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 
+        u_int8_t      pio_mode; 
+        u_int8_t      dma_mode; 
+        int nchannels;  
+        struct channel_softc *channels;
+
+        void            *dma_arg;
+        int            (*dma_init) __P((void *, int, int, void *, size_t,
+        void           (*dma_start) __P((void *, int, int, int));
+        int            (*dma_finish) __P((void *, int, int, int));
+#define WDC_DMA_READ 0x01
+#define WDC_DMA_POLL 0x02
+
+        int            (*claim_hw) __P((void *, int));
+        void            (*free_hw) __P((void *));
+};
+
+struct channel_softc { /* Per channel data */
+        int channel;
+        struct wdc_softc *wdc;
+        bus_space_tag_t       cmd_iot;
+        bus_space_handle_t    cmd_ioh;
+        bus_space_tag_t       ctl_iot;
+        bus_space_handle_t    ctl_ioh;
+        bus_space_tag_t       data32iot;
+        bus_space_handle_t    data32ioh;
+        int ch_flags;
+#define WDCF_ACTIVE   0x01      
+#define WDCF_IRQ_WAIT 0x10      
+        u_int8_t ch_status;
+        u_int8_t ch_error; 
+        struct ata_drive_datas ch_drive[2];
+        struct channel_queue *ch_queue;
+};
+
+struct ata_drive_datas {
+    u_int8_t drive;
+    u_int8_t drive_flags;
+#define DRIVE_ATA   0x01
+#define DRIVE_ATAPI 0x02
+#define DRIVE (DRIVE_ATA|DRIVE_ATAPI)
+#define DRIVE_CAP32 0x04
+#define DRIVE_DMA   0x08
+#define DRIVE_UDMA  0x10
+#define DRIVE_MODE 0x20
+    u_int8_t PIO_mode;
+    u_int8_t DMA_mode;
+    u_int8_t UDMA_mode;
+    u_int8_t state;
+
+    struct device *drv_softc;
+    void* chnl_softc;
+};
+
+.Ed
+
+The bus front-end needs to fill in the following elements of
+.Va wdc_softc :
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It cap
+supports one or more of the WDC_CAPABILITY flags
+.It nchannels
+number of  channels supported by this controller
+.It channels
+array of
+.Va struct channel_softc
+of size
+.Va nchannels
+properly initialised
+.El
+The following elements are optional:
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It pio_mode
+.It dma_mode
+.It dma_arg
+.It dma_init
+.It dma_start
+.It dma_finish
+.It claim_hw
+.It free_hw
+.El
+.Pp
+The
+.Va WDC_CAPABILITY_DATA16
+and
+.Va WDC_CAPABILITY_DATA32
+flags informs
+.Nm
+wether the controller supports 16 and 32 bits I/O accesses on the data port.
+If both are set, a test will be done for each drive using the ATA or
+ATAPI IDENTIFY command, to automatically select the working mode.
+.Pp
+The
+.Va WDC_CAPABILITY_DMA
+and
+.Va WDC_CAPABILITY_UDMA
+flags are set for controllers supporting the DMA and Utra-DMA modes.
+The bus front-end needs to provide the
+.Va dma_init ,
+.Va dma_start
+and
+.Va dma_finish
+functions.
+.Va dma_init
+is called just before issuing a DMA command to the IDE device.
+The arguments are, respectively:
+.Va dma_arg ,
+the channel number, the drive number on this channel,
+the virtual address of the DMA buffer, the size of the transfert, and the
+.Va WDC_DMA
+flags.
+.Va dma_start
+is called just after issuing a DMA command to the IDE device.
+The arguments are, respectively:
+.Va dma_arg ,
+the channel number, the drive number on this channel, and the
+.Va WDC_DMA
+flags.
+.Va dma_finish
+is called once the transfert is complete.
+The arguments are, respectively:
+.Va dma_arg ,
+the channel number, the drive number on this channel, and the
+.Va WDC_DMA
+flags.
+.Va WDC_DMA_READ
+indicates the direction of the data transfert, and
+.Va WDC_DMA_POLL
+indicates if the transfert will use (or used) interrupts.
+.Pp
+The
+.Va WDC_CAPABILITY_MODE
+flag means that the bus front-end can program the PIO and DMA modes, so
+.Nm
+needs to provide back the supported modes for each drives, and set the drives
+modes.
+The
+.Va pio_mode
+and
+.Va dma_mode
+needs to be set to the hightest PIO and DMA mode supported.
+If
+.Va WDC_CAPABILITY_UDMA
+is set, then
+.Va dma_mode 
+must be set to the hightest Ultra-DMA mode supported.
+If
+.Va WDC_CAPABILITY_MODE
+is not set,
+.Nm
+will not attempt to change the current drives settings, assuming the host's
+firmware has done it rigth.
+.Pp
+The
+.Va WDC_CAPABILITY_HWLOCK
+flag is set for controllers needing hardware looking before access to the
+I/O ports.
+If this flag is set, the bus front-end needs to provide the
+.Va claim_hw
+and
+.Va free_hw
+functions. 
+.Va claim_hw
+will be called when the driver wants to access the controller ports.
+The second parameter is set to 1 when it is possible to sleep wainting
+for the lock, 0 otherwise.
+It should return 1 when access has been granted, 0 otherwise.
+When access has not been granted and sleep is not allowed, the bus
+front-end shall call
+.Va wdcrestart()
+with the first argument passed to
+.Va claim_hw
+as argument.
+This arguments will also be the one passed to 
+.Va free_hw.
+This function is called once the transfert is complete, so that the lock can
+be released.
+.Pp
+Access to the data port are done by using the bus_space stream functions,
+unless the
+.Va WDC_CAPABILITY_ATA_NOSTREAM
+or
+.Va WDC_CAPABILITY_ATAPI_NOSTREAM
+flags are set.
+This should not be used, unless the data bus is not wired properly (which
+seems common on big-endian systems), and byte-order needs to be preserved
+for compatibility with the host's firmware.
+Also note that the IDE bus is a little-endian bus, so the bus_space
+functions used for the bus_space tag passed in the 
+.Va channel_softc
+have to do the apropriate byte-swapping for big-endian systems.
+.Pp
+.Va WDC_CAPABILITY_NO_EXTRA_RESETS
+avoid the controller reset at the end of the disks probe.
+This reset is needed for some controllers, and cause problems with some
+others.
+.Pp
+The bus front-end needs to fill in the following
+elements of
+.Va channel_softc :
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It channel
+The channel number on the controller
+.It wdc
+A pointer to the controller's wdc_softc
+.It cmd_iot, cmd_ioh
+Bus-space tag and handle for access to the command block registers (which
+includes the 16-bit data port)
+.It ctl_iot, ctl_ioh
+Bus-space tag and handle for access to the control block registers
+.It ch_queue
+A pointer to a
+.Va struct channel_queue .
+This will hold the queues of outstanding commands for this controller.
+.El
+The following elements are optional:
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It data32iot, data32ioh
+Bus-space tag and handle for 32-bit data accesses.
+Only needed if
+.Va WDC_CAPABILITY_DATA32
+is set in the controller's
+.Va wdc_softc .
+.El
+.Pp
+.Va ch_queue
+can point to a common
+.Va struct channel_queue
+if the controller doesn't support concurent access to his different channels.
+If each channels are independant, it his recommended that each channel have
+his own
+.Va ch_queue .
+Better performances will result.
+.Pp
+The bus-specific front-end can use the
+.Va wdcprobe()
+function, with a properly inithialised
+.Va struct channel_softc
+as argument (
+.Va wdc
+can be set to NULL.
+This allows
+.Va wdcprobe
+to be easily used in bus front-end probe functions).
+This function will return an integer where bit 0 will be set if the master
+device has been found, and 1 if the slave device has been found.
+.Pp
+The bus-specific's attach function has to call
+.Va wdcattach()
+for each channels, with a pointer to a properly initialised
+.Va channel softc
+as argument.
+This will probe devices attached to the IDE channel and attach them.
+Once this function returns, the
+.Va ch_drive
+array of the
+.Va channel_softc
+will contains the drive's capabilities.
+This can be used to properly initialise the controller's mode, or disable a
+channel without drives.
+.Pp
+The elements of interest in
+.Va ata_drive_datas
+for a bus front-end are:
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It drive
+The drive number
+.It drive_flags
+Flags indicating the drive capabilities.
+A null
+.Va drive_flags
+indicate either that no drive are here, or that no driver was
+found for this device.
+.It PIO_mode, DMA_mode, UDMA_mode
+the hightest supported modes for this drive compatible with the controller's
+capabilities.
+Needs to be reset to the mode to use by the drive, if known.
+.It drv_softc
+A pointer to the drive's softc.
+Can be used to print the drive's name.
+.El
+.Pp
+.Va drive_flags
+handles the following flags:
+.Bl -tag -compact -width "dma_finish" -offset "xxxx"
+.It DRIVE_ATA, DRIVE_ATAPI
+Gives the drive type, if any.
+The shortcut DRIVE can be used to just test the presence/absence of a drive.
+.It DRIVE_CAP32
+This drive works with 32-bit data I/O.
+.It DRIVE_DMA
+This drive supports DMA
+.It DRIVE_UDMA
+This drive supports Ultra-DMA
+.It DRIVE_MODE
+This drive properly reported its PIO and DMA mode.
+.El
+.Pp
+Once the controller has been initialised, it has to reset the
+.Va DRIVE_DMA
+and
+.Va DRIVE_UDMA ,
+as well as the values of
+.Va PIO_mode ,
+.Va DMA_mode
+and
+.Va  UDMA_mode
+if the modes to be used are not hightest ones supported by the drive.
+.Sh SEE ALSO
+.Xr wdc 4
+.Xr bus_space 9
+.Sh CODE REFERENCES
+The wdc core functions are implemented in
+.Pa sys/dev/ic/wdc.c .
+Low-level ATA and ATAPI support is provided by
+.Pa sys/dev/ata_wdc.c
+and
+.Pa sys/dev/scsipi/atapi_wdc.c
+respectively.
+.Pp
+An example of simple bus front-end can be found in
+.Pa sys/dev/isapnp/wdc_isapnp.c .
+A more complex one, with multiple channels and bus-master DMA support is
+.Pa sys/dev/pci/pciide.c .
+.Pa sys/arch/atari/dev/wdc_mb.c
+makes use of hardware locking, and also provides an example of bus-front
+end for a big-endian system, which needs byte-swapping bus_space functions.
