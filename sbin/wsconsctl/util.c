@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2003/02/11 19:49:45 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.19 2003/02/12 01:44:09 miod Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -68,7 +68,7 @@ static const struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_ADB,	"adb" },
 	{ WSKBD_TYPE_SUN,	"sun" },
 	{ WSKBD_TYPE_SUN5,	"sun5" },
-	{ WSKBD_TYPE_HIL,	"hil" },
+	{ WSKBD_TYPE_HIL,	"hil" }
 };
 
 static const struct nameint mstype_tab[] = {
@@ -80,7 +80,8 @@ static const struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_TPANEL,	"touch-pannel" },
 	{ WSMOUSE_TYPE_NEXT,	"NeXT" },
 	{ WSMOUSE_TYPE_ARCHIMEDES, "archimedes" },
-	{ WSMOUSE_TYPE_ADB,	"adb" }
+	{ WSMOUSE_TYPE_ADB,	"adb" },
+	{ WSMOUSE_TYPE_HIL,	"hil" }
 };
 
 static const struct nameint dpytype_tab[] = {
