@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.138 2004/03/18 15:09:31 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.139 2004/03/20 23:17:35 david Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -814,7 +814,7 @@ session_connect(struct peer *peer)
 
 	/*
 	 * we do not need the overcomplicated collision detection rfc1771
-	 * decribes; we simply make sure there is only ever one concurrent
+	 * describes; we simply make sure there is only ever one concurrent
 	 * tcp connection per peer.
 	 */
 	if (peer->sock != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.25 2004/03/12 21:53:07 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.26 2004/03/20 23:17:35 david Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -467,7 +467,7 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 
 	if (flags & ATTR_OPTIONAL && ! flags & ATTR_TRANSITIVE)
 		/*
-		 * We already know that we're not intrested in this attribute.
+		 * We already know that we're not interested in this attribute.
 		 * Currently only the MED is optional and non-transitive but
 		 * MED is directly stored in struct attr_flags.
 		 */

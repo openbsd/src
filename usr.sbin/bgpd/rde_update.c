@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.15 2004/03/19 10:30:15 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.16 2004/03/20 23:17:35 david Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -262,7 +262,7 @@ up_generate_updates(struct rde_peer *peer,
 			break;
 		}
 
-		/* well known communites */
+		/* well known communities */
 		if (rde_filter_community(&old->aspath->flags,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
 			return;
@@ -338,7 +338,7 @@ up_generate_updates(struct rde_peer *peer,
 			break;
 		}
 
-		/* well known communites */
+		/* well known communities */
 		if (rde_filter_community(&new->aspath->flags,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE)) {
 			up_generate_updates(peer, NULL, old);

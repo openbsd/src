@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.100 2004/03/15 11:48:04 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.101 2004/03/20 23:17:35 david Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1163,11 +1163,11 @@ rde_shutdown(void)
 				nasp = LIST_NEXT(asp, peer_l);
 				path_remove(asp);
 			}
-			/* finaly remove peer */
+			/* finally remove peer */
 			peer_remove(p);
 		}
 
-	/* free annoced network prefixes */
+	/* free announced network prefixes */
 	peerself.remote_bgpid = 0;
 	peerself.state = PEER_DOWN;
 	for (asp = LIST_FIRST(&peerself.path_h); asp != NULL; asp = nasp) {
