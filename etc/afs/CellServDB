@@ -680,10 +680,10 @@
 193.10.159.47			#blubb.pdc.kth.se
 >mr-afs.pdc.kth.se	   # PDC, MR-AFS
 130.237.232.70			#frog.pdc.kth.se
->stacken.kth.se                 # Stacken Computer Club
-130.237.234.43    #hot.stacken.kth.se
-130.237.234.44    #dog.stacken.kth.se
-130.237.234.3     #milko.stacken.kth.se
+>stacken.kth.se            # Stacken Computer Club
+130.237.234.3			#milko.stacken.kth.se
+130.237.234.43			#hot.stacken.kth.se
+130.237.237.230			#fishburger.stacken.kth.se
 >bcc.ac.uk                 # Bloomsbury Computing Consortium
 128.40.101.3			#rs6-svr-3.cls-1.bcc.ac.uk
 >athena.ox.ac.uk          #Oxford cell
