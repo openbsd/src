@@ -1,5 +1,5 @@
-.\" $OpenBSD: mixerctl.1,v 1.5 1998/05/02 22:28:06 millert Exp $
-.\" $NetBSD: mixerctl.1,v 1.6 1998/04/27 16:55:23 augustss Exp $
+.\" $OpenBSD: mixerctl.1,v 1.6 1998/06/02 09:02:23 provos Exp $
+.\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -59,13 +59,13 @@
 .Fl w
 .Ar name=value ...
 .Sh DESCRIPTION
-The 
+The
 .Nm
 command displays or sets various audio system mixing variables.
 If a list of variables is present on the command line, then
 .Nm
 prints the current value of those variables for the specified device.
-If the 
+If the
 .Fl a
 flag is specified, all variables for the device are printed.
 If the
@@ -84,7 +84,7 @@ to denote an increase or decrease respectively.
 The
 .Fl f
 flag can be used to give an alternative mixer device, the default is
-.Pa /dev/mixer.
+.Pa /dev/mixer .
 .Pp
 The
 .Fl n
@@ -95,6 +95,43 @@ The
 flag shows the possible values of enumeration and set valued
 variables.  Enumerated values are shown in [] and set values
 are shown in {}.
+.Pp
+The exact set of controls that can be manipulated depends on
+the mixer.  The general format (in both getting and setting a value)
+is
+.br
+.Va "class.name" = value
+.br
+The
+.Va class
+can have values like
+.Li inputs
+or
+.Li outputs
+indicating that the control affects the input resp. output to the
+mixer.  The
+.Va name
+indicates what part of the mixer the control affects.
+Continous mixer values, e.g., volume, have numeric values
+in the range 0-255.  If value can be set for each channel independently
+the values are printed separated by commas.  Discrete mixer values, e.g.,
+the recording source, have symbolic names.  Depending on the mixer it
+may either be an enumeration or a set.
+.Sh EXAMPLES
+The commmand
+.Dl "mixerctl -a -v"
+can produce
+.Bd -literal
+inputs.mic=0,0 volume
+inputs.mic.mute=off  [ off on ]
+inputs.cd=220,220 volume
+inputs.cd.mute=off  [ off on ]
+inputs.dac=220,220 volume
+inputs.dac.mute=off  [ off on ]
+record.record=220,220 volume
+record.record.source=mic  [ mic cd dac ]
+monitor.monitor=0 volume
+.Ed
 .Sh FILES
 .Bl -tag -width /dev/mixer
 .It Pa /dev/mixer
