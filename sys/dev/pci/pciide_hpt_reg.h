@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_hpt_reg.h,v 1.4 2003/02/21 20:10:33 grange Exp $	*/
+/*	$OpenBSD: pciide_hpt_reg.h,v 1.5 2003/06/18 20:21:50 grange Exp $	*/
 /*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
 
 /*
@@ -138,7 +138,7 @@ static u_int32_t hpt370_dma[] =
 	{0x26514e97, 0x26514e33, 0x26514e21};
 static u_int32_t hpt370_udma[] = 
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
-	 0x1a85f442};
+	 0x16454e31};
 
 static u_int32_t hpt374_pio[] =
 	{0x0ac1f48a, 0x0ac1f465, 0x0a81f454, 0x0a81f443, 0x0a81f442};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.131 2003/06/07 20:00:31 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.132 2003/06/18 20:21:50 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4321,12 +4321,6 @@ hpt_chip_map(sc, pa)
 				sc->sc_wdcdev.UDMA_cap = 6;
 			else
 				sc->sc_wdcdev.UDMA_cap = 5;
-			if (revision == HPT370_REV) {
-				/*
-				 * XXX disable udma5 for now.
-				 */
-				sc->sc_wdcdev.UDMA_cap = 4;
-			}
 		}
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
@@ -4361,6 +4355,16 @@ hpt_chip_map(sc, pa)
 	    revision == HPT372_REV)) ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374) {
+		/*
+		 * Turn off fast interrupts
+		 */
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT370_CTRL2(0),
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT370_CTRL2(0)) &
+		    ~(HPT370_CTRL2_FASTIRQ | HPT370_CTRL2_HIRQ));
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT370_CTRL2(1),
+		pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT370_CTRL2(1)) &
+		~(HPT370_CTRL2_FASTIRQ | HPT370_CTRL2_HIRQ));
+
 		/*
 		 * HPT370 and highter has a bit to disable interrupts,
 		 * make sure to clear it
