@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.60 2001/07/05 02:54:06 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.61 2001/10/26 01:35:20 nate Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,7 @@
 #	ccd*	concatenated disk devices
 #	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	raid*	RAIDframe disk driver
+#	fd*	"floppy" disk drives (3 1/2", 5 1/4")
 #
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -166,6 +167,8 @@ all)
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0 altq
 	sh $this usbs wscons ttyCcfg iop0 iop1
+	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
+	sh $this fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	;;
 
 raminst)
@@ -198,6 +201,11 @@ iop*)
 	mknod iop$unit c 54 $unit
 	chown root.wheel iop$unit
 	chmod 660 iop$unit
+	;;
+
+floppy)
+	sh $this std wt0 fd0 wd0 wd1 sd0 sd1 tty00 tty01
+	sh $this st0 cd0 ttyC0 random
 	;;
 
 usbs)
@@ -269,6 +277,67 @@ fd)
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
+	;;
+
+fd*)
+	umask 2
+	unit=${i##fd}
+	typnam=${unit#?}
+	unit=${unit%%[!0-9]}
+	case $typnam in
+	"")	typnum=0;;	# no type specified, assume A
+	A)	typnam=; typnum=0;;
+	B)	typnum=1;;
+	C)	typnum=2;;
+	D)	typnum=3;;
+	E)	typnum=4;;
+	F)	typnum=5;;
+	G)	typnum=6;;
+	H)	typnum=7;;
+	*)	echo bad type $typnam for $i; exit 1;;
+	esac
+	case $unit in
+	0|1)	blk=4; chr=37;;
+	*)	echo bad unit $unit for $i; exit 1;;
+	esac
+	nam=fd${unit}${typnam}
+	rm -f ${nam}? r${nam}?
+	basenum=$(( $unit * 128 + $typnum * 16 ))
+	mknod ${nam}a	b $blk $(( $basenum + 0 ))
+	mknod ${nam}b	b $blk $(( $basenum + 1 ))
+	mknod ${nam}c	b $blk $(( $basenum + 2 ))
+	#mknod ${nam}d	b $blk $(( $basenum + 3 ))
+	#mknod ${nam}e	b $blk $(( $basenum + 4 ))
+	#mknod ${nam}f	b $blk $(( $basenum + 5 ))
+	#mknod ${nam}g	b $blk $(( $basenum + 6 ))
+	#mknod ${nam}h	b $blk $(( $basenum + 7 ))
+	#mknod ${nam}i	b $blk $(( $basenum + 8 ))
+	#mknod ${nam}j	b $blk $(( $basenum + 9 ))
+	#mknod ${nam}k	b $blk $(( $basenum + 10 ))
+	#mknod ${nam}l	b $blk $(( $basenum + 11 ))
+	#mknod ${nam}m	b $blk $(( $basenum + 12 ))
+	#mknod ${nam}n	b $blk $(( $basenum + 13 ))
+	#mknod ${nam}o	b $blk $(( $basenum + 14 ))
+	#mknod ${nam}p	b $blk $(( $basenum + 15 ))
+	mknod r${nam}a	c $chr $(( $basenum + 0 ))
+	mknod r${nam}b	c $chr $(( $basenum + 1 ))
+	mknod r${nam}c	c $chr $(( $basenum + 2 ))
+	#mknod r${nam}d	c $chr $(( $basenum + 3 ))
+	#mknod r${nam}e	c $chr $(( $basenum + 4 ))
+	#mknod r${nam}f	c $chr $(( $basenum + 5 ))
+	#mknod r${nam}g	c $chr $(( $basenum + 6 ))
+	#mknod r${nam}h	c $chr $(( $basenum + 7 ))
+	#mknod r${nam}i	c $chr $(( $basenum + 8 ))
+	#mknod r${nam}j	c $chr $(( $basenum + 9 ))
+	#mknod r${nam}k	c $chr $(( $basenum + 10 ))
+	#mknod r${nam}l	c $chr $(( $basenum + 11 ))
+	#mknod r${nam}m	c $chr $(( $basenum + 12 ))
+	#mknod r${nam}n	c $chr $(( $basenum + 13 ))
+	#mknod r${nam}o	c $chr $(( $basenum + 14 ))
+	#mknod r${nam}p	c $chr $(( $basenum + 15 ))
+	chown root.operator ${nam}[a-p] r${nam}[a-p]
+	chmod 640 ${nam}[a-p] r${nam}[a-p]
+	umask 77
 	;;
 
 sd*|wd*|ccd*|rd*|raid*)
