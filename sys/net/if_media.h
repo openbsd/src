@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.14 2004/06/27 03:44:50 millert Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.15 2004/10/07 22:21:20 brad Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -181,6 +181,8 @@ int	ifmedia_baudrate(int);
 #define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
 #define	IFM_1000_TX	IFM_1000_T	/* for backwards compatibility */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
+
+#define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 
 /*
  * Token ring
@@ -466,6 +468,8 @@ struct ifmedia_description {
 	{ IFM_LOOP,			"loopback" },			\
 	{ IFM_LOOP,			"hw-loopback"},			\
 	{ IFM_LOOP,			"loop" },			\
+									\
+	{ IFM_ETHER|IFM_ETH_MASTER,	"master" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"EarlyTokenRelease" },		\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"ETR" },			\
