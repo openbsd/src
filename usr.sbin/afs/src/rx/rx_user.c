@@ -362,7 +362,7 @@ osi_Panic(const char *fmt, ...)
     va_end(ap);
     fflush(stderr);
     fflush(stdout);
-    abort();
+    exit(-1);
 }
 
 void

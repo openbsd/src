@@ -385,7 +385,7 @@ vld_create_entry (volume_handle *vol, struct mnode *parent, AFSFid *child,
 	ntype = NODE_REG;
 	break;
     default:
-	abort();
+	errx(-1, "vld_create_entry, bad type\n");
     }
 
     ret = vld_check_quota (vol, space_needed);
@@ -840,7 +840,13 @@ vld_create_volume (struct dp_part *dp, int32_t volid,
 
 	ret = VOLOP_IOPEN(vol,&vol->sino,O_RDWR,&fd);
 	if (ret)
-	    abort();
+	    VOLOP_IUNLINK(vol, &vol->fino);
+	    VOLOP_IUNLINK(vol, &vol->dino);
+	    VOLOP_IUNLINK(vol, &vol->sino);
+	    VOLOP_REMOVE (vol);
+	    dp_free (dp);
+	    return ret;
+	}
 
 	ret = vol_create (fd, volid, name, voltype, 0);
 	if (ret) {
@@ -880,9 +886,6 @@ vld_create_volume (struct dp_part *dp, int32_t volid,
 	if (fd < 0)
 	    ERR_OUT_VSTATUS(errno);
 
-	if (sizeof (vs.volinfoinode) != sizeof(vol->sino))
-	    abort();
-
 	vol->type = backstoretype;
 	vol->vol = volid;
 	vol->voldbtype = VOLDB_DEFAULT_TYPE;
@@ -907,7 +910,7 @@ vld_create_volume (struct dp_part *dp, int32_t volid,
     {
 	int fd;
 	ret = VOLOP_IOPEN(vol,&vol->fino,O_RDWR,&fd);
-	if (ret)
+	if (ret) 
 	    abort();
 	    
 	ret = voldb_create_header (fd, VOLDB_DEFAULT_TYPE, VOLDB_FILE);

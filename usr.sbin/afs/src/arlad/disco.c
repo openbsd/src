@@ -127,7 +127,7 @@ write_log_entry(uint16_t opcode, void *data, uint16_t size,
 {
     struct disco_header *h = data;
     uint32_t disco_id;
-    int sz;
+    int sz, nr; 
 
     assert(log_fd >= 0);
     assert(size >= sizeof(struct disco_header));
@@ -144,10 +144,10 @@ write_log_entry(uint16_t opcode, void *data, uint16_t size,
 	disco_id = lseek(log_fd, 0, SEEK_END);
     else
 	disco_id = lseek(log_fd, offset, SEEK_SET);
-
-    sz = write(log_fd, data, size);
-    if (sz != size)
-	abort();
+    sz = 0;
+    while (sz != size && (nr = write(log_fd, data + sz, size - sz)) != -1 
+	   && nr != 0)
+        sz += nr;
 
     modified_log++;
 
@@ -162,30 +162,49 @@ static int
 read_entry(uint32_t log_item, void *data, size_t *sz)
 {
     struct disco_header *h;
-    ssize_t ret;
+    ssize_t ret, nr;
+    char *cp = data;
     assert(log_fd >= 0);
 
+#if 0
+    /* XXX You have got to be fucking kidding me */
     assert ((((unsigned long)data) & 3) == 0); /* XXX */
+#endif
 
     lseek(log_fd, log_item, SEEK_SET);
 
-    ret = read(log_fd, data, sizeof(struct disco_header));
-    if (ret == 0)
-	return -1;
-    if (ret != sizeof(struct disco_header))
-	abort();
+    nr = 0;
+    while (nr != sizeof(struct disco_header)) {
+	ret = read(log_fd, cp + nr, sizeof(struct disco_header) - nr);
+	if (ret == 0)
+	    return -1;
+	else if (ret == -1) {
+	    if (errno != EINTR)
+		return(-1);
+	} else 
+	    nr += ret;
+    }
 
     h = data;
     if (h->size > *sz)
-	abort();
+	errx(-1, "read_entry: sz %d too small (need %d)\n", *sz, h->size);
     *sz = h->size;
 
-    ret = read(log_fd, h + 1, *sz - sizeof(struct disco_header));
-    if (ret < *sz - sizeof(struct disco_header))
-	return -1;
+    nr = 0;
+    while (nr != (*sz - sizeof(struct disco_header))) {
+	ret = read(log_fd, cp + sizeof(struct disco_header) + nr,
+		   *sz - sizeof(struct disco_header) - nr);
+	if (ret == 0)
+	    return -1;
+	else if (ret == -1) {
+	    if (errno != EINTR)
+		return(-1);
+	} else 
+	    nr += ret;
+    }
 
     if (!validate_item(data, *sz))
-	abort();
+	return(-1);
 
     return 0;
 }
@@ -218,8 +237,8 @@ nop_chain(uint32_t disco_id, VenusFid *newparent,
     while (disco_id) {
 	nop_id = disco_id;
 	sz = sizeof(buf);
-	if (read_entry(disco_id, buf, &sz))
-	    abort();
+	if (read_entry(disco_id, buf, &sz) != 0)
+	    errx(-1, "nop_chain: read entry failed");
 	disco_id = h->prev_id;
 
 	if (disco_id == 0) {

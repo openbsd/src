@@ -493,7 +493,8 @@ do_server (int port)
 	errx(1, "Cant create server");
 
     rx_StartServer(1) ;
-    abort();
+    /* NOTREACHED */
+    errx(1, "rx_Startserver return, should not happen");
 }
 
 /*
@@ -716,7 +717,7 @@ do_client (const char *server, int port, char *filename,
 	    }
 	    break;
 	default:
-	    abort();
+	    errx(-1, "do_client: unknown command %x", command); 
 	}
 
 	rx_EndCall (call, 0);

@@ -280,7 +280,7 @@ arlalib_get_cred_krb (const char *cell, const char *host,
 	    return ret;
 
 	if (kticket.length >= ticket_len)
-	    abort();
+	    errx(-1, "kticket length >= ticket_len");
 
 	ct->ViceId = getuid();
 	ct->AuthHandle = 0;

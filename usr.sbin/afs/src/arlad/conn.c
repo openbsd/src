@@ -421,7 +421,7 @@ add_connection(int32_t cell,
 	    securityobj = rxnull_NewClientSecurityObject ();
 	    break;
 	default :
-	    abort();
+	    errx(1, "Unknown credentials type %d\n", ce->type);
 	}
     } else {
 	securityobj = rxnull_NewClientSecurityObject ();

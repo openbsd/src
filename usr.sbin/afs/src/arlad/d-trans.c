@@ -84,19 +84,10 @@ transform_fid(VenusFid *fid)
  */
 
 static void
-add_fid_transform(VenusFid *dfid, VenusFid *cfid)
+add_fid_transform(VenusFid *dfid, VenusFid *cfid, struct transform_fid *f)
 {
-    struct transform_fid *f = find_fid_transform(dfid);
-    if (f)
-	abort();
-
-    f = malloc(sizeof(*f));
-    if (f == NULL)
-	abort();
-    
     f->cfid = *cfid;
     f->dfid = *dfid;
-    
     hashtabadd(transform_htab, f);
 }
 
@@ -153,6 +144,7 @@ disco_reintegrate(nnpfs_pag_t pag)
     AFSFetchStatus fetch_status;
     int ret, store_data;
     int old_conn_mode = connected_mode;
+    struct transform_fid *add_fid_f;
 
     transform_htab = hashtabnewf(0, tfid_cmp, tfid_hash, HASHTAB_GROW);
     if (transform_htab == NULL)
@@ -171,8 +163,10 @@ disco_reintegrate(nnpfs_pag_t pag)
     while(disco_next_entry(c, buf, sizeof(buf)) == 0) {
 	struct disco_header *h = (struct disco_header *)buf;
 
-	if (h->opcode >= DISCO_OP_MAX_OPCODE)
-	    abort();
+	if (h->opcode >= DISCO_OP_MAX_OPCODE) {
+	    arla_warnx(ADEBERROR, "opcode > DISCO_OP_MAX_OPCODE\n");
+	    goto next_entry;
+	}
 
 	dir_entry = NULL;
 	child_entry = NULL;
@@ -194,8 +188,14 @@ disco_reintegrate(nnpfs_pag_t pag)
 	    transform_fid(&f->parentfid);
 
 	    ce = cred_get(f->parentfid.Cell, pag, CRED_ANY);
-	    assert(ce);
-
+	    if (ce == NULL) {
+		arla_warnx(ADEBERROR, "create failed: (NULL cred_get)"
+			   "parent fid %d.%d.%d.%d name %s",
+			   f->parentfid.Cell, f->parentfid.fid.Volume,
+			   f->parentfid.fid.Vnode, f->parentfid.fid.Unique,
+			   f->name);
+		goto next_entry;
+	    }
 	    ret = fcache_find(&dir_entry, f->parentfid);
 	    if (ret != 0) {
 		arla_warnx(ADEBERROR, "create failed: (parent)"
@@ -219,7 +219,29 @@ disco_reintegrate(nnpfs_pag_t pag)
 		
 	    }
 
-	    /* XXX make summery of chain */
+	    /* check to make sure we aren't already in the transaction
+	     * database
+	     */
+	    if (find_fid_transform(&f->fid)) {
+		arla_warnx(ADEBERROR, "create failed (dfid exists already): "
+			   "parent fid %d.%d.%d.%d name %s",
+			   f->parentfid.Cell, f->parentfid.fid.Volume,
+			   f->parentfid.fid.Vnode, f->parentfid.fid.Unique,
+			   f->name);
+		goto next_entry;
+	    }
+
+	    /* allocate transform entry before create */
+	    add_fid_f = malloc(sizeof(*add_fid_f));
+	    if (add_fid_f == NULL) {
+		arla_warnx(ADEBERROR, "create failed (malloc failed): "
+			   "parent fid %d.%d.%d.%d name %s",
+			   f->parentfid.Cell, f->parentfid.fid.Volume,
+			   f->parentfid.fid.Vnode, f->parentfid.fid.Unique,
+			   f->name);
+		goto next_entry;
+	    }
+
 	    store_status = f->storestatus; /* XXX */
 
 	    ret = create_file(dir_entry, f->name, &store_status, &child_fid,
@@ -227,8 +249,7 @@ disco_reintegrate(nnpfs_pag_t pag)
 
 	    if (ret == 0) {
 		if (VenusFid_cmp(&f->fid, &child_fid) != 0) {
-		    add_fid_transform(&f->fid, &child_fid);
-
+		    add_fid_transform(&f->fid, &child_fid, add_fid_f);
 		    recon_hashtabdel(child_entry);
 		    child_entry->fid = child_fid;
 		    update_fid (f->fid, NULL, child_fid, child_entry);
@@ -241,6 +262,7 @@ disco_reintegrate(nnpfs_pag_t pag)
 		    store_data = 1;
 
 	    } else {
+		free(add_fid_f);
 		/* XXX invalidate name cache */
 		arla_warn(ADEBWARN, ret, "create failed (create_file): "
 			  "parent fid %d.%d.%d.%d name %s",

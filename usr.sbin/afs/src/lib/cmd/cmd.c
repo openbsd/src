@@ -183,7 +183,8 @@ print_usage (const char *name, struct cmd_syndesc *ts)
 	    printf ("%s <%s>+", name, help);
 	    break;
 	default:
-	    abort();
+	    errx(-1, "print_usage - unknown command type\n");
+	    /* NOTREACHED */
 	}
 	if ((ts->parms[i].flags & CMD_OPTIONAL) == CMD_OPTIONAL)
 	    printf ("]");
@@ -324,7 +325,7 @@ cmd_AddParm (struct cmd_syndesc *ts, const char *name,
     memset (p, 0, sizeof(*p));
 
     if (ts->nParams > CMD_HELPPARM)
-	abort();
+        return;
 
     p->name = strdup (name);
     if (p->name == NULL)
@@ -506,7 +507,8 @@ parse_options (int argc, char **argv, int *optind, struct cmd_syndesc *ts,
 	    }
 	    break;
 	default:
-	    abort();
+	    errx(-1, "parse_options - unknown command type\n");
+	    /* NOTREACHED */
 	}
     }
     if (argc < i)
@@ -554,11 +556,7 @@ parse_magic_options (int argc, char **argv, int *optind,
 		i++;
 	    }
 	} else {
-#if 0
-	    abort();
-#else
 	    break;
-#endif
 	}
     }
     if (argc < i)
@@ -752,7 +750,10 @@ cmd_PrintParams (struct cmd_syndesc *ts)
 	case CMD_LIST:
 	    printf ("Cm %s Ar %s ...\n", ts->parms[i].name, help);
 	    break;
-	default: abort(); break;
+	default:
+	    errx(-1, "cmd_PrintParams - unknown command type\n");
+	    /* NOTREACHED */
+
 	}
     }
 #if 0
@@ -972,7 +973,9 @@ cmd_PrintSyntax (const char *commandname)
 	    case CMD_FLAG: printf ("\t\ttype: flag\n"); break;
 	    case CMD_SINGLE: printf ("\t\ttype: single\n"); break;
 	    case CMD_LIST: printf ("\t\ttype: list\n"); break;
-	    default: abort(); break;
+	    default:
+	        errx(-1, "cmd_PrintSyntax - unknown command type\n");
+		/* NOTREACHED */
 	    }
 	    printf ("\t\thelp: %s\n", ts->parms[i].help);
 	    printf ("\t\tflags: ");

@@ -251,7 +251,7 @@ fvol_icreate (volume_handle *vol, onode_opaque *o, node_type type,
 	ret = 0;
 	break;
     default:
-	abort();
+        err(-1, "fvol_icreate: bad type %d\n", type);
     }
     return ret;
 }

@@ -396,8 +396,6 @@ randfilename(void)
 	case 2:
 	    base = TKT_ROOT;
 	    break;
-	default:
-	    abort();
 	}
 
 	if (base == NULL)

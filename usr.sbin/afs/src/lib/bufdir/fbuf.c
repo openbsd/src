@@ -358,6 +358,7 @@ malloc_truncate (fbuf *f, size_t new_len)
 
 fail:
     free (f->buf);
+    f->len = 0;
     return ret;
 }
 

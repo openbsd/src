@@ -382,7 +382,7 @@ IOMGR(char *dummy)
 		    if (fcntl(fds, F_GETFD, 0) < 0 && errno == EBADF) 
 			openMask |= (1<<fds);
 		}
-		abort();
+		exit(-1);
 	    }
 
 	    /* force a new gettimeofday call so FT_AGetTimeOfDay calls work */

@@ -375,16 +375,12 @@ volls_cmd (int argc, char **argv)
 	if (ret)
 	    errx (1, "volls: vld_db_uptodate: %d", ret);
 
-#if 1
 	n.fid.Vnode = vnode;
 	m.flags = VOLOP_GETSTATUS;
 
 	ret = vld_open_vnode (volh, &n, &m);
 	if (ret)
 	    errx (1, "volls: vld_open_vnode failed with %d", ret);
-#else
-	abort();
-#endif
 
 	printf ("mode=%o ino=%x dev=%x rdev=%x\n",
 		n.sb.st_mode, (int) n.sb.st_ino,

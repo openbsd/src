@@ -213,21 +213,21 @@ static DWORD LWP_INT_WAIT(HANDLE *cond, HANDLE *mutex)
 	DWORD err = GetLastError();
 	Debug(0, ("LWP_INT_WAIT(%d): ReleaseMutex failed: %ld error: "
 		  "%ld mutex\n", this_time, err, *mutex));
-	abort();
+	exit(-1);
     }      
     Debug(0, ("LWP_INT_WAIT(%d): mutex released, waiting", this_time));
     ret = WaitForSingleObject (*cond, INFINITE);
     if (ret != WAIT_OBJECT_0) {
 	Debug(0, ("LWP_INT_WAIT(%d): WaitForSingleObject(cond) failed: "
 		  "%ld mutex: %p\n", this_time, ret, *mutex));
-	abort();
+	exit(-1);
     }
     Debug(0, ("LWP_INT_WAIT(%d): got sem, waiting for mutex", this_time));
     ret = WaitForSingleObject (*mutex, INFINITE);
     if (ret != WAIT_OBJECT_0) {
 	Debug(0, ("LWP_INT_WAIT(%d): WaitForSingleObject(mutex) failed: "
 		  "%ld mutex: %p\n",  this_time, ret, *mutex));
-	abort();
+	exit(-1);
     }
     Debug(0, ("LWP_INT_WAIT(%d): got mutex: cond: %p mutex: %p",
 	      this_time, *cond, *mutex));
@@ -758,9 +758,9 @@ InitializeProcessSupport(int priority, PROCESS *pid)
     pthread_mutex_init(&ct_mutex, NULL);
 #elif defined(WINDOWS_THREADS_LWP)
     run_sem = CreateMutex (NULL, FALSE, "run_sem");
-    if (run_sem == NULL) abort();
+    if (run_sem == NULL) exit(-1);
     ct_mutex = CreateMutex (NULL, FALSE, "ct_mutex");
-    if (ct_mutex == NULL) abort();
+    if (ct_mutex == NULL) exit(-1);
 #endif
     lwp_cpptr = temp;
     Dispatcher();
@@ -1064,9 +1064,9 @@ Initialize_PCB(PROCESS temp, int priority, char *stack, int stacksize,
     pthread_cond_init(&temp->c, NULL);
 #elif defined(WINDOWS_THREADS_LWP)
     temp->m = CreateMutex (NULL, FALSE, NULL);
-    if (temp->m == NULL) abort();
+    if (temp->m == NULL) exit(-1);
     temp->c = CreateEvent (NULL, FALSE, FALSE, NULL);
-    if (temp->c == NULL) abort();
+    if (temp->c == NULL) exit(-1);
     Debug(0, ("Init_PCB: event = %p\n", temp->c));
 #endif
 
@@ -1136,6 +1136,6 @@ Cal_Highest_runnable_priority()
 	Highest_runnable_priority = i;
 #if 0
     else
-	abort();
+	exit(-1);
 #endif
 }

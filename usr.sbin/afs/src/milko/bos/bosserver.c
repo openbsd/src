@@ -481,8 +481,10 @@ theriper (char *no_arg)
 	    continue;
 	}
 	
-	if (dead_children < 0)
-	    abort();
+	if (dead_children < 0) {
+	    bosdebug ("theriper: called with negative dead child\n");
+	    exit(-1);
+	}
 
 	dead_children--;
 	    
@@ -663,7 +665,6 @@ main (int argc, char **argv)
     rx_SetMaxProcs(bosservice,5) ;
     rx_StartServer(1) ;
 
-    abort() ; /* should not get here */
-
-    return 0;
+    /* NOTREACHED */
+    return -1;
 }

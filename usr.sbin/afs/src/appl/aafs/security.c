@@ -56,7 +56,7 @@ sec_destruct(void *ptr, const char *name)
     case AAFS_SEC_ANY:
 	break;
     default:
-	abort();
+	exit(-1);
     }
 }
 

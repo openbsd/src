@@ -68,8 +68,11 @@ newhost(u_int32_t **hosts, int *len, char *host)
     assert (res->ai_family == PF_INET);
     
     ptr = realloc(*hosts, sizeof(u_int32_t) * ++*len);
-    if (ptr == NULL)
+    if (ptr == NULL) {
+	free(hosts);
+	hosts = NULL;
 	err(1, "realloc");
+    }
     
     *hosts = ptr;
     
@@ -265,7 +268,7 @@ main(int argc, char **argv)
 	    case NOWHERE:
 		usage();
 	    default:
-		abort();
+		exit(-1);
 	    }	
 	}
 	argc--;

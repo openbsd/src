@@ -187,7 +187,8 @@ printsysname(const char *sysname)
 	       sysname);
 	break;
     default:
-	abort();
+	errx(-1, "printsysname: unknown output type %d\n", output);
+	/* NOTREACHED */
     }
     
 }

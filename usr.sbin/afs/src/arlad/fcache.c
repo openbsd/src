@@ -108,8 +108,12 @@ set_recovered(u_long index)
 	maxrecovered = (index + 16) * 2;
 	p = realloc(recovered_map, maxrecovered);
 	if (p == NULL) {
+	    u_long m = maxrecovered;
+	    free(recovered_map);
+	    recovered_map = NULL; 
+	    maxrecovered = 0;
 	    arla_errx(1, ADEBERROR, "fcache: realloc %lu recovered_map failed",
-		      maxrecovered);
+		      m);
 	}
 	recovered_map = p;
 	memset(recovered_map + oldmax, 0, maxrecovered - oldmax);
@@ -951,7 +955,8 @@ cleaner (char *arg)
 		    goto out;
 		    break;
 		default:
-		    abort();
+		    errx(-1, "fcache.c: uknown state %d\n", state);
+		    /* NOTREACHED */
 		}
 		cleanerrun++;
 	    }

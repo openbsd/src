@@ -314,7 +314,7 @@ lwp_stackmalloc(size_t size)
 	     MAP_PRIVATE | MAP_ANON, fd, 0);
     if (p == MAP_FAILED) {
 	perror("mmap");
-	abort();
+	exit(-1);
     }
 
     p_before = p;
@@ -330,11 +330,11 @@ lwp_stackmalloc(size_t size)
 
     if (mprotect(p_before, pagesize, PROT_NONE) < 0) {
 	perror("mprotect before");
-	abort();
+	exit(-1);
     }
     if (mprotect(p_after, pagesize, PROT_NONE) < 0) {
 	perror("mprotect after");
-	abort();
+	exit(-1);
     }
     return p;
 }
@@ -348,21 +348,21 @@ lwp_stackfree(void *ptr, size_t len)
     size_t length;
 
     if (((size_t)ptr) % pagesize != 0)
-	abort();
+	exit(-1);
 
     realptr = ((char *)ptr) - pagesize;
 
     if (mprotect(realptr, pagesize, PROT_READ) < 0) {
 	perror("mprotect");
-	abort();
+	exit(-1);
     }
 
     magic = *((unsigned long *)realptr);
     if (magic != P_MAGIC)
-	abort();
+	exit(-1);
     length = *((unsigned long *)(realptr + P_SIZE_OFFSET));
     if (len != length - 2 * pagesize)
-	abort();
+	exit(-1);
 
     if (munmap(realptr, length) < 0) {
 	perror("munmap");
@@ -938,7 +938,7 @@ Dispose_of_Dead_PCB (PROCESS cur)
 static void
 Exit_LWP(void)
 {
-    abort();
+    exit(-1);
 }
 
 static void

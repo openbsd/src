@@ -157,7 +157,7 @@ local_create_name (struct dp_part *dp, int32_t num, char *name, size_t sz)
 		  (unsigned int) num & 0xff);
     
     if (i >= sz)
-	abort();
+	return(-1);
     return 0;
 }
 
@@ -167,15 +167,19 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
 {
     char name[MAXPATHLEN];
     char nodename[MAXPATHLEN];
-    int fd, ret;
+    int fd, ret, i;
     struct stat sb;
     
-    snprintf(nodename, sizeof(nodename), "%s/inodeXXXXXXXXXX", DP_NAME(dp));
+    i = snprintf(nodename, sizeof(nodename), "%s/inodeXXXXXXXXXX",
+		 DP_NAME(dp));
+    if (i > sizeof(nodename))
+	return(ENOMEM);
+    
     fd = mkstemp(nodename);
     if (fd == -1)
 	return errno;
     ret = fstat(fd, &sb);
-    if (ret < 0) {
+    if (ret == -1) {
 	close(fd);
 	unlink(nodename);
 	return errno;
@@ -189,26 +193,46 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
     } else {
 	close(fd);
     }
+ 
 
-    snprintf(name, sizeof(name), "%s/%02x", DP_NAME(dp), 
-	     (unsigned int) (sb.st_ino >> 24) & 0xff);
+
+    i = snprintf(name, sizeof(name), "%s/%02x", DP_NAME(dp), 
+		 (unsigned int) (sb.st_ino >> 24) & 0xff);
+    if (i > sizeof(name)) {
+	    ret = ENOMEM
+	    goto bad;
+    }
     mkdir(name, 0700);
-    snprintf(name, sizeof(name), "%s/%02x/%02x", DP_NAME(dp), 
+    i = snprintf(name, sizeof(name), "%s/%02x/%02x", DP_NAME(dp), 
 	     (unsigned int) (sb.st_ino >> 24) & 0xff, 
 	     (unsigned int) (sb.st_ino >> 16) & 0xff);
+    if (i > sizeof(name)) {
+	    ret = ENOMEM
+	    goto bad;
+    }
+
     mkdir(name, 0700);
-    snprintf(name, sizeof(name), "%s/%02x/%02x/%02x", DP_NAME(dp), 
+    i = snprintf(name, sizeof(name), "%s/%02x/%02x/%02x", DP_NAME(dp), 
 	     (unsigned int) (sb.st_ino >> 24) & 0xff, 
 	     (unsigned int) (sb.st_ino >> 16) & 0xff,
 	     (unsigned int) (sb.st_ino >> 8) & 0xff);
-    mkdir(name, 0700);
-    local_create_name (dp, sb.st_ino, name, sizeof(name));
+    if (i > sizeof(name)) {
+	    ret = ENOMEM
+	    goto bad;
+    }
+    if (mkdir(name, 0700) == -1) {
+	    ret = errno;
+	    goto bad;
+    }
+    if (local_create_name (dp, sb.st_ino, name, sizeof(name)) == -1) {
+	    ret = ENOMEM;
+	    goto bad;
+    }
 
     ret = rename(nodename, name);
     if (ret < 0) {
 	ret = errno;
-	unlink (nodename);
-	return ret;
+	goto bad;
     }
 
     ret = local_ino2opaque (&sb.st_ino, o);
@@ -217,7 +241,10 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
 	unlink (name);
 	return ret;
     }
-
     return 0;
+ bad:
+    unlink(nodename);
+    return(ret);
+	    
 }
 

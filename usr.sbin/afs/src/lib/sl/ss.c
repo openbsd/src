@@ -115,7 +115,7 @@ ss_listen (int index)
     char *prompt;
 
     if (asprintf(&prompt, "%s: ", subsystems[index].name) == -1) {
-	abort();
+	errx(-1, "ss_listen: malloc failed\n");
     }
     sl_loop(subsystems[index].table, prompt);
     free(prompt);

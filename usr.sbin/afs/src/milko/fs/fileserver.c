@@ -108,7 +108,8 @@ salvage_and_attach (volume_handle *vol, void *arg)
 	do_salvage (vol);
 	break;
     default:
-	abort();
+	errx(-1, "unknown salvage options %d\n", salvage_options);
+	/* NOTREACHED */
     }
     return 0;
 }
@@ -241,8 +242,6 @@ main(int argc, char **argv)
 
     rx_StartServer(1) ;
 
-    abort() ;
-    return 0;
+    /* NOTREACHED */
+    return -1;
 }
-
-

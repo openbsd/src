@@ -167,11 +167,11 @@ cm_check_consistency (void)
 
     if (calc_size != real_size) {
 	    log_operation ("consistency check not guaranteed "
-			   "(calc: %d, real: %d, diff %d), aborting\n", 
+			   "(calc: %d, real: %d, diff %d), exiting\n", 
 			   (int) calc_size, (int) real_size,
 			   (int)(calc_size - real_size));
 	    cm_store_state ();
-	    abort();
+	    exit(-1);
     }
     if (log_times % 100000 == 0) {
 	log_operation ("consistency check ok, rotating logs\n");

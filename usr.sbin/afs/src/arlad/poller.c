@@ -136,7 +136,8 @@ poller_add(PollerEntry *e, int host_dead, cell_entry *c)
     case POLLER_RUNNING:
 	break;
     default:
-	abort();
+	errx(-1, "poller_add: unknown poller_status %d\n", poller_status);
+	/* NOTREACHED */
     }
 }
 

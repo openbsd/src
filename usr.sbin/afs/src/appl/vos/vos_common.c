@@ -296,7 +296,7 @@ new_vlentry (struct rx_connection *conn, const char *cell, const char *host,
 	vldbN2vldb (nvldbentry, &vlentry);
 	error = VL_CreateEntry (conn, volname, &vlentry);
 #endif
-	abort();
+	exit(-1);
     }
     if (freeconnp)
 	arlalib_destroyconn(conn);

@@ -77,8 +77,7 @@ static char *Remove(queue *q)
     char *s;
 
     if (empty(q)) {
-	printf("Remove from empty queue");
-	abort();
+	errx(-1, "rw.c Remove: Remove from empty queue");
     }
 
     old = q -> next;

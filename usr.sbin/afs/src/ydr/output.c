@@ -204,7 +204,7 @@ print_type (char *name, Type *type, enum argtype argtype,
 	       fprintf (f, "char %s", name);
 	       break;
 	  default :
-	       abort();
+	       exit(-1);
      }
 }
 
@@ -452,7 +452,7 @@ encode_function (Type *type, EncodeType encodetype)
 	     break;
 	 }
      } else
-	  abort();
+	  exit(-1);
 }
 
 /*
@@ -1080,7 +1080,7 @@ encode_pointer (char *name, Type *type, FILE *f, EncodeType encodetype,
 		   "}\n");
 	  break;
      case DECODE_RX:
-	  abort();
+	  exit(-1);
      case DECODE_MEM:
 	  fprintf(f, "{ unsigned bool;\n");
 	  encode_type ("bool", &booltype, f, encodetype, side);
@@ -1155,7 +1155,7 @@ encode_type (char *name, Type *type, FILE *f, EncodeType encodetype,
 	       encode_pointer (name, type, f, encodetype, side);
 	       break;
 	  default :
-	       abort();
+	       exit(-1);
 	  }
 }
 
@@ -1200,7 +1200,7 @@ display_type (char *where, char *name, Type *type, FILE *f)
 	fprintf (f, "printf(\"printing TPOINTER\\n\");");
 	break;
     default :
-	abort();
+	exit(-1);
     }
 }
 
@@ -1241,7 +1241,7 @@ free_type (char *where, char *name, Type *type, FILE *f)
 	free_pointer (where, name, type, f);
 	break;
     default :
-	abort();
+	exit(-1);
     }
 }
 
@@ -1530,7 +1530,7 @@ encode_symbol (Symbol *s, char *name, FILE *f, EncodeType encodetype,
 	       encode_typedef (s, name, f, encodetype, side);
 	       break;
 	  default :
-	       abort();
+	       exit(-1);
 	  }
 }
 
@@ -1552,7 +1552,7 @@ print_symbol (char *where, Symbol *s, char *name, FILE *f)
 	       print_typedef (where, s, name, f);
 	       break;
 	  default :
-	       abort();
+	       exit(-1);
 	  }
 }
 
@@ -1573,7 +1573,7 @@ free_symbol (char *where, Symbol *s, char *name, FILE *f)
 	       free_typedef (where, s, name, f);
 	       break;
 	  default :
-	       abort();
+	       exit(-1);
 	  }
 }
 

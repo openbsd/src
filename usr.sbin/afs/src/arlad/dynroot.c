@@ -261,7 +261,8 @@ dynroot_update_entry (FCacheEntry *entry, int32_t filetype,
 	entry->status.UnixModeBits = 0644;
 	break;
     default:
-	abort();
+	errx(-1, "dynroot_update_entry: unknowrn file type %d\n", filetype);
+	/* NOTREACHED */
     }
     entry->status.ParentVnode	= DYNROOT_ROOTDIR;
     entry->status.ParentUnique	= DYNROOT_UNIQUE;

@@ -924,6 +924,7 @@ int
 cell_setthiscell (const char *cell)
 {
     cell_entry *data;
+    char * cp;
 
     data = cell_get_by_name(cell);
     if (data == NULL) {
@@ -931,11 +932,14 @@ cell_setthiscell (const char *cell)
 	return 1;
     }
 
+    cp = strdup (cell);
+    if (cp == NULL) {
+	log_log (cell_log, CDEBWARN, "setthiscell: malloc failed");
+	return 1;
+    }
     free (thiscell);
-    thiscell = strdup (cell);
-    if (thiscell == NULL)
-	abort();
-    
+    thiscell = cp;
+
     return 0;
 }
 
@@ -1163,7 +1167,7 @@ add_special_dynroot_cell (void)
 
     c = cell_get_by_id (0);
     if (c != NULL)
-	abort();
+	errx(-1, "add_special_dynroot_cell: cell id 0 already present\n");
 
     c = (cell_entry *)malloc (sizeof (*c));
     if (c == NULL)

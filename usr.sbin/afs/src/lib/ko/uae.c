@@ -85,7 +85,7 @@ uae_init (void)
     uae_len = 256 * 2;
     uae_array = malloc(uae_len * sizeof(uae_array[0]));
     if (uae_array == NULL)
-	abort();
+        errx(-1, "uae_init: malloc failed\n");
     
     /* guess we have a one to one mapping */
     for (i = 0; i < uae_len; i++)

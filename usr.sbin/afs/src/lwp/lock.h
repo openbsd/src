@@ -108,7 +108,11 @@ void Lock_Init(struct Lock *);
 #define GetTraceLine(lock) 0
 #endif
 
+#ifdef NDEBUG
+#define LOCK_CHECK_OWNER 0
+#else
 #define LOCK_CHECK_OWNER 1
+#endif
 
 #ifdef LOCK_CHECK_OWNER
 #define AssertNotLockOwner(lock,owner) do {				    \

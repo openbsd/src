@@ -178,7 +178,7 @@ read_conffile(const char *fname,
 	    else if (p->type == CONF_PARAM_INT64)
 		    *((int64_t *)partial_param->val) = val;
 	    else
-		    abort();
+		    errx(-1, "Unknown conf_param p->type");
 	    break;
 
 	case CONF_PARAM_STR:
@@ -198,11 +198,8 @@ read_conffile(const char *fname,
 			 fname, lineno, v);
 	    break;
 	default:
-	    abort();
+	    errx(-1, "read_conffile: Unknown type"); 
 	}
-
-
-
     }
     fclose(fp);
 }

@@ -88,7 +88,7 @@ state_store_fcache(const char *fn, store_fcache_fn func, void *ptr)
 	} else if (ret == STORE_DONE) {
 	    break;
 	} else
-	    abort();
+	    errx(-1, "state_store_fcache: unknown return %d\n", ret);
     }
     
     if(close (fd))
@@ -194,7 +194,7 @@ state_store_volcache(const char *fn, store_volcache_fn func, void *ptr)
 	} else if (ret == STORE_DONE) {
 	    break;
 	} else
-	    abort();
+	    errx(-1, "state_store_volcache: unknown return %d\n", ret);
     }
     
     if(close (fd))
