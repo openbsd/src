@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.8 2004/05/29 04:07:30 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.9 2004/05/30 08:17:17 grange Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -166,6 +166,7 @@ target(all, view0, 0, 1, 2, 3, 4, 5)dnl
 target(all, local)dnl
 target(all, gpr, 0)dnl
 target(all, ptm)dnl
+target(all, hotplug)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -547,4 +548,6 @@ _mkdev(adb, adb, {-M adb c major_adb_c 0-})dnl
 __devitem(pdc, pdc, PDC device)dnl
 __devitem(gpr, gpr*, GPR400 smartcard reader)dnl
 _mcdev(gpr, gpr*, gpr, {-major_gpr_c-})dnl
+__devitem(hotplug, hotplug, devices hot plugging)dnl
+_mkdev(hotplug, hotplug, {-M hotplug c major_hotplug_c $U 400-})dnl
 _mkdev(local, local, {-test -s $T.local && sh $T.local-})dnl
