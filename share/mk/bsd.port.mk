@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.19 1997/12/17 10:06:45 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.20 1997/12/20 01:24:08 todd Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -582,7 +582,8 @@ READLINK?=	/usr/bin/readlink
 RM?=		/bin/rm
 RMDIR?=		/bin/rmdir
 SED?=		/usr/bin/sed
-SETENV?=	/usr/bin/env PATH=${PATH}:${X11BASE}/bin:${LOCALBASE}/bin
+PORTSPATH?=	${PATH}:${X11BASE}/bin:${LOCALBASE}/bin
+SETENV?=	/usr/bin/env PATH=${PORTSPATH}
 SH?=		/bin/sh
 TR?=		/usr/bin/tr
 
@@ -1067,7 +1068,7 @@ do-configure:
 	    ${CONFIGURE_ENV} ./${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
 .endif
 .if defined(USE_IMAKE)
-	@(cd ${WRKSRC} && ${XMKMF})
+	@(cd ${WRKSRC} && ${SETENV} ${XMKMF})
 .endif
 .endif
 
@@ -1534,7 +1535,7 @@ DEPENDS_TMP+=	${RUN_DEPENDS}
 _DEPENDS_USE:	.USE
 .if defined(DEPENDS_TMP)
 .if !defined(NO_DEPENDS)
-	@for i in ${DEPENDS_TMP}; do \
+	@PATH=${PORTSPATH}; for i in ${DEPENDS_TMP}; do \
 		prog=`${ECHO} $$i | ${SED} -e 's/:.*//'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
 		if expr "$$dir" : '.*:' > /dev/null; then \
