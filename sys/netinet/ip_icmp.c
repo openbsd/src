@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.6 1997/02/11 22:23:23 kstailey Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.7 1997/06/05 15:05:41 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -348,8 +348,10 @@ icmp_input(m, va_alist)
 		 * We are not able to respond with all ones broadcast
 		 * unless we receive it over a point-to-point interface.
 		 */
-		if (icmplen < ICMP_MASKLEN)
+		if (icmplen < ICMP_MASKLEN) {
+			icmpstat.icps_badlen++;
 			break;
+		}
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 		    ip->ip_dst.s_addr == INADDR_ANY)
 			icmpdst.sin_addr = ip->ip_src;
