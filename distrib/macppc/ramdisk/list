@@ -1,8 +1,7 @@
-#	$OpenBSD: list,v 1.8 2002/02/14 03:40:13 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2002/04/19 23:23:56 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
-#SRCDIRS usr.bin/vi
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -28,7 +27,6 @@ LINK	instbin			bin/stty
 LINK	instbin			bin/sync
 LINK	instbin			bin/test bin/[
 LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/ancontrol
 LINK	instbin			sbin/pdisk
 LINK	instbin			sbin/fdisk
 LINK	instbin			sbin/fsck
@@ -47,22 +45,15 @@ LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/newfs
 LINK	instbin			sbin/newfs_msdos
 LINK	instbin			sbin/ping
-LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
-#LINK	instbin			sbin/slattach
-LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
 LINK	instbin			sbin/wicontrol
 LINK	instbin			usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin			usr/bin/ftp
 LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin			usr/bin/less usr/bin/more
-LINK	instbin			usr/bin/rsh
 LINK	instbin			usr/bin/sed
-LINK	instbin			usr/bin/sort
-LINK	instbin			usr/bin/tip
-LINK	instbin			usr/sbin/chat
-#SYMLINK ../../instbin           usr/bin/build usr/bin/vi
+SPECIAL /bin/rm instbin
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
