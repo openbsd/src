@@ -1,4 +1,5 @@
-/*	$OpenBSD: ip6_input.c,v 1.8 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.9 2000/03/22 03:50:35 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.72 2000/03/21 09:23:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -320,6 +321,35 @@ ip6_input(m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
+#if 1
+	/*
+	 * The following check is not documented in the spec.  Malicious party
+	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
+	 * bypass security checks (act as if it was from 127.0.0.1 by using
+	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		goto bad;
+	}
+#endif
+#if 0
+	/*
+	 * Reject packets with IPv4 compatible addresses (auto tunnel).
+	 *
+	 * The code forbids auto tunnel relay case in RFC1933 (the check is
+	 * stronger than RFC1933).  We may want to re-enable it if mech-xx
+	 * is revised to forbid relaying case.
+	 */
+	if (IN6_IS_ADDR_V4COMPAT(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badscope++;
+		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_addrerr);
+		goto bad;
+	}
+#endif
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
@@ -1106,6 +1136,115 @@ ip6_get_prevhdr(m, off)
 			return(&ip6e->ip6e_nxt);
 		else
 			return NULL;
+	}
+}
+
+/*
+ * get next header offset.  m will be retained.
+ */
+int
+ip6_nexthdr(m, off, proto, nxtp)
+	struct mbuf *m;
+	int off;
+	int proto;
+	int *nxtp;
+{
+	struct ip6_hdr ip6;
+	struct ip6_ext ip6e;
+	struct ip6_frag fh;
+
+	/* just in case */
+	if (m == NULL)
+		panic("ip6_nexthdr: m == NULL");
+	if ((m->m_flags & M_PKTHDR) == 0 || m->m_pkthdr.len < off)
+		return -1;
+
+	switch (proto) {
+	case IPPROTO_IPV6:
+		if (m->m_pkthdr.len < off + sizeof(ip6))
+			return -1;
+		m_copydata(m, off, sizeof(ip6), (caddr_t)&ip6);
+		if (nxtp)
+			*nxtp = ip6.ip6_nxt;
+		off += sizeof(ip6);
+		return off;
+
+	case IPPROTO_FRAGMENT:
+		/*
+		 * terminate parsing if it is not the first fragment,
+		 * it does not make sense to parse through it.
+		 */
+		if (m->m_pkthdr.len < off + sizeof(fh))
+			return -1;
+		m_copydata(m, off, sizeof(fh), (caddr_t)&fh);
+		if ((ntohs(fh.ip6f_offlg) & IP6F_OFF_MASK) != 0)
+			return -1;
+		if (nxtp)
+			*nxtp = fh.ip6f_nxt;
+		off += sizeof(struct ip6_frag);
+		return off;
+
+	case IPPROTO_AH:
+		if (m->m_pkthdr.len < off + sizeof(ip6e))
+			return -1;
+		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		if (nxtp)
+			*nxtp = ip6e.ip6e_nxt;
+		off += (ip6e.ip6e_len + 2) << 2;
+		return off;
+
+	case IPPROTO_HOPOPTS:
+	case IPPROTO_ROUTING:
+	case IPPROTO_DSTOPTS:
+		if (m->m_pkthdr.len < off + sizeof(ip6e))
+			return -1;
+		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		if (nxtp)
+			*nxtp = ip6e.ip6e_nxt;
+		off += (ip6e.ip6e_len + 1) << 3;
+		return off;
+
+	case IPPROTO_NONE:
+	case IPPROTO_ESP:
+	case IPPROTO_IPCOMP:
+		/* give up */
+		return -1;
+
+	default:
+		return -1;
+	}
+
+	return -1;
+}
+
+/*
+ * get offset for the last header in the chain.  m will be kept untainted.
+ */
+int
+ip6_lasthdr(m, off, proto, nxtp)
+	struct mbuf *m;
+	int off;
+	int proto;
+	int *nxtp;
+{
+	int newoff;
+	int nxt;
+
+	if (!nxtp) {
+		nxt = -1;
+		nxtp = &nxt;
+	}
+	while (1) {
+		newoff = ip6_nexthdr(m, off, proto, nxtp);
+		if (newoff < 0)
+			return off;
+		else if (newoff < off)
+			return -1;	/* invalid */
+		else if (newoff == off)
+			return newoff;
+
+		off = newoff;
+		proto = *nxtp;
 	}
 }
 

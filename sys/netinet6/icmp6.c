@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.9 2000/02/28 14:30:40 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.71 2000/02/28 09:25:42 jinmei Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.10 2000/03/22 03:50:35 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.75 2000/03/11 09:32:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@ icmp6_error(m, type, code, param)
 	struct icmp6_hdr *icmp6;
 	u_int preplen;
 	int off;
-	u_char nxt;
+	int nxt;
 
 	icmp6stat.icp6s_error++;
 
@@ -183,86 +183,41 @@ icmp6_error(m, type, code, param)
 		goto freeit;
 
 	/*
-	 * If the erroneous packet is also an ICMP error, discard it.
+	 * If we are about to send ICMPv6 against ICMPv6 error/redirect,
+	 * don't do it.
 	 */
-	off = sizeof(struct ip6_hdr);
-	nxt = oip6->ip6_nxt;
-	while (1) {		/* XXX: should avoid inf. loop explicitly? */
-		struct ip6_ext *ip6e;
+	nxt = -1;
+	off = ip6_lasthdr(m, sizeof(struct ip6_hdr), oip6->ip6_nxt, &nxt);
+	if (off >= 0 && nxt == IPPROTO_ICMPV6) {
 		struct icmp6_hdr *icp;
 
-		switch(nxt) {
-		case IPPROTO_IPV6:
-		case IPPROTO_IPV4:
-		case IPPROTO_UDP:
-		case IPPROTO_TCP:
-		case IPPROTO_ESP:
-		case IPPROTO_IPCOMP:
-		case IPPROTO_FRAGMENT:
-			/*
-			 * ICMPv6 error must not be fragmented.
-			 * XXX: but can we trust the sender?
-			 */
-		default:
-			/* What if unknown header followed by ICMP error? */
-			goto generate;
-		case IPPROTO_ICMPV6:
 #ifndef PULLDOWN_TEST
-			IP6_EXTHDR_CHECK(m, 0, off + sizeof(struct icmp6_hdr), );
-			icp = (struct icmp6_hdr *)(mtod(m, caddr_t) + off);
+		IP6_EXTHDR_CHECK(m, 0, off + sizeof(struct icmp6_hdr), );
+		icp = (struct icmp6_hdr *)(mtod(m, caddr_t) + off);
 #else
-			IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, off,
-				sizeof(*icp));
-			if (icp == NULL) {
-				icmp6stat.icp6s_tooshort++;
-				return;
-			}
-#endif
-			if (icp->icmp6_type < ICMP6_ECHO_REQUEST
-			 || icp->icmp6_type == ND_REDIRECT) {
-				/*
-				 * ICMPv6 error
-				 * Special case: for redirect (which is
-				 * informational) we must not send icmp6 error.
-				 */
-				icmp6stat.icp6s_canterror++;
-				goto freeit;
-			} else {
-				/* ICMPv6 informational */
-				goto generate;
-			}
-		case IPPROTO_HOPOPTS:
-		case IPPROTO_DSTOPTS:
-		case IPPROTO_ROUTING:
-		case IPPROTO_AH:
-#ifndef PULLDOWN_TEST
-			IP6_EXTHDR_CHECK(m, 0, off + sizeof(struct ip6_ext), );
-			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + off);
-#else
-			IP6_EXTHDR_GET(ip6e, struct ip6_ext *, m, off,
-				sizeof(*ip6e));
-			if (ip6e == NULL) {
-				/*XXX stat */
-				return;
-			}
-#endif
-			if (nxt == IPPROTO_AH)
-				off += (ip6e->ip6e_len + 2) << 2;
-			else
-				off += (ip6e->ip6e_len + 1) << 3;
-			nxt = ip6e->ip6e_nxt;
-			break;
+		IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, off,
+			sizeof(*icp));
+		if (icp == NULL) {
+			icmp6stat.icp6s_tooshort++;
+			return;
 		}
+#endif
+		if (icp->icmp6_type < ICMP6_ECHO_REQUEST ||
+		    icp->icmp6_type == ND_REDIRECT) {
+			/*
+			 * ICMPv6 error
+			 * Special case: for redirect (which is
+			 * informational) we must not send icmp6 error.
+			 */
+			icmp6stat.icp6s_canterror++;
+			goto freeit;
+		} else {
+			/* ICMPv6 informational - send the error */
+		}
+	} else {
+		/* non-ICMPv6 - send the error */
 	}
 
-  freeit:
-	/*
-	 * If we can't tell wheter or not we can generate ICMP6, free it.
-	 */
-	m_freem(m);
-	return;
-
-  generate:
 	oip6 = mtod(m, struct ip6_hdr *); /* adjust pointer */
 
 	/* Finally, do rate limitation check. */
@@ -303,6 +258,14 @@ icmp6_error(m, type, code, param)
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
+
+	return;
+
+  freeit:
+	/*
+	 * If we can't tell wheter or not we can generate ICMP6, free it.
+	 */
+	m_freem(m);
 }
 
 /*
