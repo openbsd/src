@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsgenkey.c,v 1.10 2000/06/20 18:15:57 aaron Exp $	*/
+/*	$OpenBSD: tcfsgenkey.c,v 1.11 2002/12/16 04:42:22 mickey Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -105,7 +105,7 @@ genkey_main(int argn, char *argv[])
 	if (!tcfs_putpwnam(user, userinfo, U_CHG))
 		tcfs_error(ER_CUSTOM, "Error: cannot generate key.");
 
-	tcfs_error(ER_CUSTOM, "\nKey succesfully generated.");
+	tcfs_error(ER_CUSTOM, "\nKey successfully generated.");
 
 	exit(0);
 }
