@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.23 1998/02/16 06:06:38 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.24 1998/02/22 00:51:46 niklas Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1802,7 +1802,18 @@ st_interpret_sense(xs)
 					printf("%s: %d-byte record too big\n",
 					    st->sc_dev.dv_xname,
 					    xs->datalen - info);
-				return EIO;
+				return (EIO);
+			} else if (info > xs->datalen) {
+				/*
+				 * huh? the residual is bigger than the request
+				 */
+				if ((xs->flags & SCSI_SILENT) == 0) {
+					printf(
+					    "%s: bad residual %d out of %d\n",
+					    st->sc_dev.dv_xname, info,
+					    xs->datalen);
+					return (EIO);
+				}
 			}
 			xs->resid = info;
 			if (bp)
