@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.49 2004/09/16 11:29:51 markus Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.50 2005/01/02 18:15:02 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -905,7 +905,7 @@ and packet length are printed.
 On the packet filter logging interface
 .Xr pflog 4 ,
 logging reason
-.Pq rule match, bad-offset, fragment, short, normalize, memory ,
+.Pq rule match, bad-offset, fragment, bad-timestamp, short, normalize, memory ,
 action taken
 .Pq pass/block ,
 direction
