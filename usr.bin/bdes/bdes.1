@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bdes.1,v 1.7 2004/05/31 18:42:58 otto Exp $
+.\"	$OpenBSD: bdes.1,v 1.8 2004/06/30 21:30:35 jmc Exp $
 .\"	$NetBSD: bdes.1,v 1.11 2003/08/07 11:13:11 agc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -248,59 +248,74 @@ does too, but this may be changed from the command line.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr getpass 3
-.Pp
-.Em "Data Encryption Standard" ,
-Federal Information Processing Standard #46,
-National Bureau of Standards,
-U.S. Department of Commerce,
-Washington DC
-(Jan. 1977).
-.Pp
-.Em "DES Modes of Operation" ,
-Federal Information Processing Standard #81,
-National Bureau of Standards,
-U.S. Department of Commerce
-Washington DC
-(Dec. 1980).
-.Pp
-Dorothy Denning,
-.Em "Cryptography and Data Security" ,
-Addison-Wesley Publishing Co.,
-Reading, MA
-\(co1982.
-.Pp
-Matt Bishop,
-.Em "Implementation Notes on bdes(1)" ,
-Technical Report PCS-TR-91-158,
-Department of Mathematics and Computer Science,
-Dartmouth College,
-Hanover, NH  03755
-(Apr. 1991).
-.Pp
-M.J. Wiener,
-.Em "Efficient DES Key Search" ,
-Technical Report 244,
-School of Computer Science,
-Carleton University
-(May 1994).
-.Pp
-Bruce Schneier,
-.Em "Applied Cryptography (2nd edition)" ,
-John Wiley \*[Am] Sons, Inc.,
-New York, NY
-\(co1996.
-.Pp
-M. Matsui,
-.Em "Linear Cryptanalysis Method for DES Cipher" ,
-Advances in Cryptology -- Eurocrypt '93 Proceedings,
-Springer-Verlag
-\(co1994.
-.Pp
-Blaze, Diffie, Rivest, Schneier, Shimomura, Thompson, and Wiener,
-.Em "Minimal Key Lengths for Symmetric Ciphers To Provide Adequate Commercial Security" ,
-Business Software Alliance,
-http://www.bsa.org/policy/encryption/cryptographers.html
-(January 1996).
+.Rs
+.%T Data Encryption Standard
+.%R Federal Information Processing Standard #46
+.%Q National Bureau of Standards, U.S. Department of Commerce
+.\" should be .%C as soon as it's supported.
+.%O Washington DC
+.%D January 1977
+.Re
+.Rs
+.%T DES Modes of Operation
+.%R Federal Information Processing Standard #81
+.%Q National Bureau of Standards, U.S. Department of Commerce
+.\" should be .%C as soon as it's supported.
+.%O Washington DC
+.%D December 1980
+.Re
+.Rs
+.%A Dorothy Denning
+.%T Cryptography and Data Security
+.%I Addison-Wesley Publishing Co.
+.\" should be .%C as soon as it's supported.
+.%O Reading, MA
+.%D 1982
+.Re
+.Rs
+.%A Matt Bishop
+.%T Implementation Notes on bdes(1)
+.%R Technical Report PCS-TR-91-158
+.%Q Department of Mathematics and Computer Science, Dartmouth College
+.\" should be .%C as soon as it's supported.
+.%O Hanover, NH 03755
+.%D April 1991
+.Re
+.Rs
+.%A M.J. Wiener
+.%T Efficient DES Key Search
+.%R Technical Report 244
+.%Q School of Computer Science, Carleton University
+.%D May 1994
+.Re
+.Rs
+.%A Bruce Schneier
+.%T Applied Cryptography (2nd edition)
+.%I John Wiley & Sons, Inc.
+.%O New York, NY
+.\" should be .%C as soon as it's supported.
+.%D 1996
+.Re
+.Rs
+.%A M. Matsui
+.%T Linear Cryptanalysis Method for DES Cipher
+.%R Advances in Cryptology \(em Eurocrypt '93 Proceedings
+.%I Springer-Verlag
+.%D 1994
+.Re
+.Rs
+.%A Blaze
+.%A Diffie
+.%A Rivest
+.%A Schneier
+.%A Shimomura
+.%A Thompson
+.%A Wiener
+.%T "Minimal Key Lengths for Symmetric Ciphers To Provide Adequate Commercial Security"
+.%I Business Software Alliance
+.%O http://www.bsa.org/policy/encryption/cryptographers.html
+.%D January 1996
+.Re
 .Sh BUGS
 When this document was originally written, there was a controversy
 raging over whether the DES would still be secure in a few years.
