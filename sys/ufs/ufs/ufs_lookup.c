@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.25 2004/01/09 03:01:03 tedu Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.26 2004/04/16 22:41:50 tedu Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -855,21 +855,33 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = DIRSIZ(FSFMT(dvp), ep);
+	dsize = ep->d_ino ? DIRSIZ(FSFMT(dvp), ep) : 0;
 	spacefree = ep->d_reclen - dsize;
 	for (loc = ep->d_reclen; loc < dp->i_count; ) {
 		nep = (struct direct *)(dirbuf + loc);
-		if (ep->d_ino) {
-			/* trim the existing slot */
-			ep->d_reclen = dsize;
-			ep = (struct direct *)((char *)ep + dsize);
-		} else {
-			/* overwrite; nothing there; header is ours */
-			spacefree += dsize;
+
+		/* Trim the existing slot (NB: dsize may be zero). */
+		ep->d_reclen = dsize;
+		ep = (struct direct *)((char *)ep + dsize);
+
+		/* Read nep->d_reclen now as the bcopy() may clobber it. */
+		loc += nep->d_reclen;
+		if (nep->d_ino == 0) {
+			/*
+			 * A mid-block unused entry. Such entries are
+			 * never created by the kernel, but fsck_ffs
+			 * can create them (and it doesn't fix them).
+			 *
+			 * Add up the free space, and initialise the
+			 * relocated entry since we don't bcopy it.
+			 */
+			spacefree += nep->d_reclen;
+			ep->d_ino = 0;
+			dsize = 0;
+			continue;
 		}
 		dsize = DIRSIZ(FSFMT(dvp), nep);
 		spacefree += nep->d_reclen - dsize;
-		loc += nep->d_reclen;
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL)
 			ufsdirhash_move(dp, nep,
@@ -883,6 +895,11 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
  			bcopy((caddr_t)nep, (caddr_t)ep, dsize);
 	}
 	/*
+	 * Here, `ep' points to a directory entry containing `dsize' in-use
+	 * bytes followed by `spacefree' unused bytes. If ep->d_ino == 0,
+	 * then the entry is completely unused (dsize == 0). The value
+	 * of ep->d_reclen is always indeterminate.
+	 *
 	 * Update the pointer fields in the previous entry (if any),
 	 * copy in the new entry, and write out the block.
 	 */
