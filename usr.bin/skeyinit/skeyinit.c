@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.15 1996/10/14 03:10:07 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.16 1996/10/23 18:09:27 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -72,6 +72,7 @@ main(argc, argv)
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
+	salt = pp->pw_passwd;
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
 		if (argv[i][2] == '\0') {
@@ -103,17 +104,23 @@ main(argc, argv)
 	if (argc - i  > 1) {
 		usage(argv[0]);
 	} else if (argv[i]) {
-		if ((pp = getpwnam(argv[i])) == NULL)
-			err(1, "User unknown");
+		if ((pp = getpwnam(argv[i])) == NULL) {
+			if (getuid() == 0) {
+				static struct passwd _pp;
 
-		if (strcmp(pp->pw_name, me) != 0) {
+				_pp.pw_name = argv[i];
+				pp = &_pp;
+				warnx("Warning, user unknown: %s", argv[i]);
+			} else {
+				errx(1, "User unknown: %s", argv[i]);
+			}
+		} else if (strcmp(pp->pw_name, me) != 0) {
 			if (getuid() != 0) {
 				/* Only root can change other's passwds */
 				errx(1, "Permission denied.");
 			}
 		}
 	}
-	salt = pp->pw_passwd;
 
 	if (getuid() != 0) {
 		pw = getpass("Password (or `s/key'):");
@@ -261,8 +268,6 @@ main(argc, argv)
 
 			(void)fputs("Again secret password: ", stderr);
 			readpass(passwd2, sizeof(passwd));
-			if (passwd2[0] == '\0')
-				exit(1);
 
 			if (strcmp(passwd, passwd2) == 0)
 				break;
