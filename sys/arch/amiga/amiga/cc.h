@@ -147,6 +147,8 @@ vm_offset_t chipmem_end;
 #define CHIPMEMTOP	(0x00200000)
 #define NCHIPMEMPG	btoc(CHIPMEMTOP - CHIPMEMBASE)
 
+typedef int (*handler_func_t)();
+
 /*
  * Prototypes.
  */
