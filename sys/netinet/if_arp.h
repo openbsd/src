@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.21 1996/02/13 23:41:17 christos Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.22 1996/05/11 12:59:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,7 +119,6 @@ struct	ether_arp {
 struct	arpcom {
 	struct	 ifnet ac_if;			/* network-visible interface */
 	u_int8_t ac_enaddr[ETHER_ADDR_LEN];	/* ethernet hardware address */
-	struct	 in_addr ac_ipaddr;		/* copy of ip address- XXX */
 	LIST_HEAD(, ether_multi) ac_multiaddrs;	/* list of ether multicast addrs */
 	int	 ac_multicnt;			/* length of ac_multiaddrs list */
 };
@@ -235,7 +234,6 @@ struct ether_multistep {
 #ifdef _KERNEL
 
 void arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-void arpwhohas __P((struct arpcom *, struct in_addr *));
 int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
 		    struct sockaddr *, u_char *));
 void arpintr __P((void));

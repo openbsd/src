@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ether.c,v 1.6 1996/05/10 12:31:19 deraadt Exp $	*/
-/*	$NetBSD: if_ether.c,v 1.30 1996/05/07 02:40:46 thorpej Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.7 1996/05/22 11:48:45 deraadt Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -261,17 +261,6 @@ arp_rtrequest(req, rt, sa)
 }
 
 /*
- * Broadcast an ARP packet, asking who has addr on interface ac.
- */
-void
-arpwhohas(ac, addr)
-	register struct arpcom *ac;
-	register struct in_addr *addr;
-{
-	arprequest(ac, &ac->ac_ipaddr.s_addr, &addr->s_addr, ac->ac_enaddr);
-}
-
-/*
  * Broadcast an ARP request. Caller specifies:
  *	- arp header source ip address
  *	- arp header target ip address
@@ -387,7 +376,10 @@ arpresolve(ac, rt, m, dst, desten)
 		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
 			rt->rt_expire = time.tv_sec;
 			if (la->la_asked++ < arp_maxtries)
-				arpwhohas(ac, &(SIN(dst)->sin_addr));
+				arprequest(ac,
+				    &(SIN(rt->rt_ifa->ifa_addr)->sin_addr.s_addr),
+				    &(SIN(dst)->sin_addr.s_addr),
+				    ac->ac_enaddr);
 			else {
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
@@ -614,9 +606,11 @@ arp_ifinit(ac, ifa)
 	struct ifaddr *ifa;
 {
 
-	ac->ac_ipaddr = IA_SIN(ifa)->sin_addr;
 	/* Warn the user if another station has this IP address. */
-	arpwhohas(ac, &ac->ac_ipaddr);
+	arprequest(ac,
+	    &(IA_SIN(ifa)->sin_addr.s_addr),
+	    &(IA_SIN(ifa)->sin_addr.s_addr),
+	    ac->ac_enaddr);
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CLONING;
 }
