@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.9 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.10 2003/08/24 01:27:07 avsm Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -37,14 +37,6 @@
 
 #ifndef	_CDEFS_H_
 #define	_CDEFS_H_
-
-/*
- * Gratuitous NetBSD gcc extensions we can do without.
- */
-
-#ifdef __KPRINTF_ATTRIBUTE__
-#undef __KPRINTF_ATTRIBUTE__
-#endif
 
 #include <machine/cdefs.h>
 
@@ -169,12 +161,6 @@
 #else
 #define __predict_true(exp)	((exp) != 0)
 #define __predict_false(exp)	((exp) != 0)
-#endif
-
-#ifdef __KPRINTF_ATTRIBUTE__
-#define __kprintf_attribute__(a) __attribute__(a)
-#else
-#define __kprintf_attribute__(a)
 #endif
 
 /* Delete pseudo-keywords wherever they are not available or needed. */

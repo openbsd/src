@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.13 2003/06/28 01:52:18 tedu Exp $ */
+/*	$OpenBSD: db_output.h,v 1.14 2003/08/24 01:27:07 avsm Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -37,7 +37,7 @@ void db_force_whitespace(void);
 void db_putchar(int);
 int db_print_position(void);
 int db_printf(const char *, ...)
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__kprintf__,1,2)));
 void db_end_line(int);
 
 extern int db_log;
