@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.6 2000/08/02 08:40:54 peter Exp $	*/
+/*	$OpenBSD: dc.c,v 1.7 2000/08/02 17:40:58 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -269,13 +269,10 @@ void dc_eeprom_width(sc)
 	/* Turn off EEPROM access mode. */
 	dc_eeprom_idle(sc);
 
-	if (i < 4 || i > 12) {
-		printf("forcing eeprom width to 12, ");
+	if (i < 4 || i > 12)
 		sc->dc_romwidth = 6;
-	} else {
-		printf("eeprom width is %d, ", i);
+	else
 		sc->dc_romwidth = i;
-	}
 
 	/* Enter EEPROM access mode. */
 	CSR_WRITE_4(sc, DC_SIO, DC_SIO_EESEL);
