@@ -67,7 +67,7 @@ proc libstdc++-v3-init { args } {
 
     set ld_library_path "."
     append ld_library_path ":${gccdir}"
-    set compiler ${gccdir}/g++
+    set compiler g++
     if { [is_remote host] == 0 && [which $compiler] != 0 } {
       foreach i "[exec $compiler --print-multi-lib]" {
 	set mldir ""
