@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.103 2003/05/13 06:11:11 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.104 2003/05/13 22:45:11 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -127,7 +127,9 @@ int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
 
+#if !defined(NO_PROPOLICE)
 long	__guard[8];
+#endif
 
 /* XXX return int so gcc -Werror won't complain */
 int	main(void *);
@@ -180,7 +182,9 @@ main(framep)
 	quad_t lim;
 	int s, i;
 	register_t rval[2];
+#if !defined(NO_PROPOLICE)
 	int *guard = (int *)&__guard[0];
+#endif
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start(void);
 	extern void disk_init(void);
@@ -368,8 +372,10 @@ main(framep)
 	kmstartup();
 #endif
 
+#if !defined(NO_PROPOLICE)
 	for (i = 0; i < sizeof(__guard) / 4; i++)
 		guard[i] = arc4random();
+#endif
 
 	/* Start the scheduler */
 	scheduler_start();

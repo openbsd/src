@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKSBC,v 1.2 2003/05/05 13:59:38 miod Exp $
+#	$OpenBSD: RAMDISKSBC,v 1.3 2003/05/13 22:45:10 miod Exp $
 #
 # RAMDISKSBC - bsd.rd configuration file (SBC version)
 
@@ -10,6 +10,7 @@ option		RAMDISK_HOOKS
 
 option		SCSITERSE
 option		SMALL_KERNEL
+option		NO_PROPOLICE
 option		TIMEZONE=0
 option		DST=0
 option		FFS		# UFS

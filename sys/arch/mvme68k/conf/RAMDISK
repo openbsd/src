@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.2 2002/04/28 14:47:09 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.3 2003/05/13 22:45:10 miod Exp $
 
 machine		mvme68k m68k
 
@@ -23,6 +23,7 @@ maxusers	32
 
 option		SCSITERSE
 option		SMALL_KERNEL
+option		NO_PROPOLICE
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
 #makeoptions	DEBUG="-g"	# compile full symbol table
