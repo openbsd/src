@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.31 2001/04/25 21:31:17 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.32 2001/06/04 15:11:47 provos Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ static int ufs_chmod __P((struct vnode *, int, struct ucred *, struct proc *));
 static int ufs_chown
 	__P((struct vnode *, uid_t, gid_t, struct ucred *, struct proc *));
 int filt_ufsread __P((struct knote *kn, long hint));
+int filt_ufswrite __P((struct knote *kn, long hint));
 int filt_ufsvnode __P((struct knote *kn, long hint));
 void filt_ufsdetach __P((struct knote *kn));
 
@@ -2210,6 +2211,8 @@ bad:
 
 struct filterops ufsread_filtops = 
 	{ 1, NULL, filt_ufsdetach, filt_ufsread };
+struct filterops ufswrite_filtops = 
+	{ 1, NULL, filt_ufsdetach, filt_ufswrite };
 struct filterops ufsvnode_filtops = 
 	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
 
@@ -2227,6 +2230,9 @@ ufs_kqfilter(v)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &ufsread_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &ufswrite_filtops;
 		break;
 	case EVFILT_VNODE:
 		kn->kn_fop = &ufsvnode_filtops;
@@ -2273,6 +2279,23 @@ filt_ufsread(struct knote *kn, long hint)
 
         kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
         return (kn->kn_data != 0);
+}
+
+
+int
+filt_ufswrite(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+        kn->kn_data = 0;
+        return (1);
 }
 
 int
