@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.80 2002/06/25 00:21:32 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.81 2002/06/25 00:21:58 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -112,7 +112,10 @@ int	udpcksum = 1;
 static	void udp_detach(struct inpcb *);
 static	void udp_notify(struct inpcb *, int);
 static	struct mbuf *udp_saveopt(caddr_t, int, int);
+
+#ifdef IPSEC
 int udp_check_ipsec(struct mbuf *, struct inpcb *, union sockaddr_union, int);
+#endif /* IPSEC */
 
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
