@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.6 1999/06/29 02:28:22 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.7 1999/09/15 01:17:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -69,29 +69,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 
-#ifdef __FreeBSD__
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <net/ethernet.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#include <vm/vm.h>		/* for vtophys */
-#include <vm/pmap.h>		/* for vtophys */
-#include <machine/clock.h>	/* for DELAY */
-#include <machine/bus_pio.h>
-#include <machine/bus_memio.h>
-#include <machine/bus.h>
-
-#include <pci/pcireg.h>
-#include <pci/pcivar.h>
-#endif /* FreeBSD */
-
-#ifdef __OpenBSD__
 #include <vm/vm.h>		/* for vtophys */
 #include <vm/pmap.h>		/* for vtophys */
 #include <sys/device.h>
@@ -115,7 +92,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#endif
 
 #define PN_USEIOSPACE
 
@@ -123,27 +99,7 @@
 
 #define PN_RX_BUG_WAR
 
-#ifdef __FreeBSD__
-#include <pci/if_pnreg.h>
-#else
 #include <dev/pci/if_pnreg.h>
-#endif
-
-#if !defined(lint) && defined(__FreeBSD__)
-static const char rcsid[] =
-	"$FreeBSD: if_pn.c,v 1.21 1999/05/28 18:43:10 wpaul Exp $";
-#endif
-
-#if defined(__FreeBSD__)
-/*
- * Various supported device vendors/types and their names.
- */
-static struct pn_type pn_devs[] = {
-	{ PN_VENDORID, PN_DEVICEID_PNIC,
-		"82c168/82c169 PNIC 10/100BaseTX" },
-	{ 0, 0, NULL }
-};
-#endif
 
 /*
  * Various supported PHY vendors/types and their names. Note that
@@ -151,7 +107,7 @@ static struct pn_type pn_devs[] = {
  * so failure to positively identify the chip is not a fatal error.
  */
 
-static struct pn_type pn_phys[] = {
+struct pn_type pn_phys[] = {
 	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
 	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
 	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
@@ -161,58 +117,47 @@ static struct pn_type pn_phys[] = {
 	{ 0, 0, "<MII-compliant physical interface>" }
 };
 
-#if defined(__FreeBSD__)
-static unsigned long pn_count = 0;
-static const char *pn_probe	__P((pcici_t, pcidi_t));
-static void pn_attach		__P((pcici_t, int));
-static void pn_intr		__P((void *));
-static void pn_shutdown		__P((int, void *));
-#elif defined(__OpenBSD__)
-static int pn_probe	__P((struct device *, void *, void *));
-static void pn_attach	__P((struct device *, struct device *, void *));
-static int pn_intr	__P((void *));
-static void pn_shutdown	__P((void *));
-#endif
+int pn_probe		__P((struct device *, void *, void *));
+void pn_attach		__P((struct device *, struct device *, void *));
+int pn_intr		__P((void *));
+void pn_shutdown	__P((void *));
 
-static int pn_newbuf		__P((struct pn_softc *,
-						struct pn_chain_onefrag *));
-static int pn_encap		__P((struct pn_softc *, struct pn_chain *,
+int pn_newbuf		__P((struct pn_softc *, struct pn_chain_onefrag *));
+int pn_encap		__P((struct pn_softc *, struct pn_chain *,
 						struct mbuf *));
 
 #ifdef PN_RX_BUG_WAR
-static void pn_rx_bug_war	__P((struct pn_softc *,
-						struct pn_chain_onefrag *));
+void pn_rx_bug_war	__P((struct pn_softc *, struct pn_chain_onefrag *));
 #endif
-static void pn_rxeof		__P((struct pn_softc *));
-static void pn_rxeoc		__P((struct pn_softc *));
-static void pn_txeof		__P((struct pn_softc *));
-static void pn_txeoc		__P((struct pn_softc *));
-static void pn_start		__P((struct ifnet *));
-static int pn_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void pn_init		__P((void *));
-static void pn_stop		__P((struct pn_softc *));
-static void pn_watchdog		__P((struct ifnet *));
-static int pn_ifmedia_upd	__P((struct ifnet *));
-static void pn_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void pn_rxeof		__P((struct pn_softc *));
+void pn_rxeoc		__P((struct pn_softc *));
+void pn_txeof		__P((struct pn_softc *));
+void pn_txeoc		__P((struct pn_softc *));
+void pn_start		__P((struct ifnet *));
+int pn_ioctl		__P((struct ifnet *, u_long, caddr_t));
+void pn_init		__P((void *));
+void pn_stop		__P((struct pn_softc *));
+void pn_watchdog	__P((struct ifnet *));
+int pn_ifmedia_upd	__P((struct ifnet *));
+void pn_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void pn_eeprom_getword	__P((struct pn_softc *, u_int8_t, u_int16_t *));
-static void pn_read_eeprom	__P((struct pn_softc *, caddr_t, int,
-							int, int));
-static u_int16_t pn_phy_readreg	__P((struct pn_softc *, int));
-static void pn_phy_writereg	__P((struct pn_softc *, u_int16_t, u_int16_t));
+void pn_eeprom_getword	__P((struct pn_softc *, u_int8_t, u_int16_t *));
+void pn_read_eeprom	__P((struct pn_softc *, caddr_t, int, int, int));
+void pn_phy_writereg	__P((struct pn_softc *, u_int16_t, u_int16_t));
+u_int16_t pn_phy_readreg	__P((struct pn_softc *, int));
 
-static void pn_autoneg_xmit	__P((struct pn_softc *));
-static void pn_autoneg_mii	__P((struct pn_softc *, int, int));
-static void pn_setmode_mii	__P((struct pn_softc *, int));
-static void pn_getmode_mii	__P((struct pn_softc *));
-static void pn_autoneg		__P((struct pn_softc *, int, int));
-static void pn_setmode		__P((struct pn_softc *, int));
-static void pn_setcfg		__P((struct pn_softc *, u_int32_t));
-static u_int32_t pn_calchash	__P((u_int8_t *));
-static void pn_setfilt		__P((struct pn_softc *));
-static void pn_reset		__P((struct pn_softc *));
-static int pn_list_rx_init	__P((struct pn_softc *));
-static int pn_list_tx_init	__P((struct pn_softc *));
+void pn_autoneg_xmit	__P((struct pn_softc *));
+void pn_autoneg_mii	__P((struct pn_softc *, int, int));
+void pn_setmode_mii	__P((struct pn_softc *, int));
+void pn_getmode_mii	__P((struct pn_softc *));
+void pn_autoneg		__P((struct pn_softc *, int, int));
+void pn_setmode		__P((struct pn_softc *, int));
+void pn_setcfg		__P((struct pn_softc *, u_int32_t));
+u_int32_t pn_calchash	__P((u_int8_t *));
+void pn_setfilt		__P((struct pn_softc *));
+void pn_reset		__P((struct pn_softc *));
+int pn_list_rx_init	__P((struct pn_softc *));
+int pn_list_tx_init	__P((struct pn_softc *));
 
 #define PN_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
@@ -225,7 +170,7 @@ static int pn_list_tx_init	__P((struct pn_softc *));
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void pn_eeprom_getword(sc, addr, dest)
+void pn_eeprom_getword(sc, addr, dest)
 	struct pn_softc		*sc;
 	u_int8_t		addr;
 	u_int16_t		*dest;
@@ -251,7 +196,7 @@ static void pn_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-static void pn_read_eeprom(sc, dest, off, cnt, swap)
+void pn_read_eeprom(sc, dest, off, cnt, swap)
 	struct pn_softc		*sc;
 	caddr_t			dest;
 	int			off;
@@ -273,7 +218,7 @@ static void pn_read_eeprom(sc, dest, off, cnt, swap)
 	return;
 }
 
-static u_int16_t pn_phy_readreg(sc, reg)
+u_int16_t pn_phy_readreg(sc, reg)
 	struct pn_softc		*sc;
 	int			reg;
 {
@@ -297,7 +242,7 @@ static u_int16_t pn_phy_readreg(sc, reg)
 	return(0);
 }
 
-static void pn_phy_writereg(sc, reg, data)
+void pn_phy_writereg(sc, reg, data)
 	struct pn_softc		*sc;
 	u_int16_t		reg;
 	u_int16_t		data;
@@ -318,7 +263,7 @@ static void pn_phy_writereg(sc, reg, data)
 #define PN_POLY		0xEDB88320
 #define PN_BITS		9
 
-static u_int32_t pn_calchash(addr)
+u_int32_t pn_calchash(addr)
 	u_int8_t		*addr;
 {
 	u_int32_t		idx, bit, data, crc;
@@ -337,7 +282,7 @@ static u_int32_t pn_calchash(addr)
 /*
  * Initiate an autonegotiation session.
  */
-static void pn_autoneg_xmit(sc)
+void pn_autoneg_xmit(sc)
 	struct pn_softc		*sc;
 {
 	u_int16_t		phy_sts;
@@ -357,7 +302,7 @@ static void pn_autoneg_xmit(sc)
 /*
  * Invoke autonegotiation on a PHY.
  */
-static void pn_autoneg_mii(sc, flag, verbose)
+void pn_autoneg_mii(sc, flag, verbose)
 	struct pn_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -501,7 +446,7 @@ static void pn_autoneg_mii(sc, flag, verbose)
 	return;
 }
 
-static void pn_getmode_mii(sc)
+void pn_getmode_mii(sc)
 	struct pn_softc		*sc;
 {
 	u_int16_t		bmsr;
@@ -560,7 +505,7 @@ static void pn_getmode_mii(sc)
 	return;
 }
 
-static void pn_autoneg(sc, flag, verbose)
+void pn_autoneg(sc, flag, verbose)
         struct pn_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -672,7 +617,7 @@ static void pn_autoneg(sc, flag, verbose)
 	return;
 }
 
-static void pn_setmode(sc, media)
+void pn_setmode(sc, media)
         struct pn_softc		*sc;
 	int			media;
 {
@@ -714,7 +659,7 @@ static void pn_setmode(sc, media)
 	return;
 }
 
-static void pn_setmode_mii(sc, media)
+void pn_setmode_mii(sc, media)
 	struct pn_softc		*sc;
 	int			media;
 {
@@ -789,13 +734,9 @@ void pn_setfilt(sc)
 {
 	struct pn_desc		*sframe;
 	u_int32_t		h, *sp;
-#ifdef __FreeBSD__
-	struct ifmultiaddr	*ifma;
-#else
 	struct arpcom *ac = &sc->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 	struct ifnet		*ifp;
 	int			i;
 
@@ -823,24 +764,12 @@ void pn_setfilt(sc)
 	if (ifp->if_flags & IFF_ALLMULTI)
 		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_RX_ALLMULTI);
 
-#ifdef __FreeBSD__
-	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-				ifma = ifma->ifma_link.le_next) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-		h = pn_calchash(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-		sp[h >> 4] |= 1 << (h & 0xF);
-	}
-#endif
-
-#ifdef __OpenBSD__
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		h = pn_calchash(enm->enm_addrlo);
 		sp[h >> 4] |= 1 << (h & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		h = pn_calchash(etherbroadcastaddr);
@@ -877,7 +806,7 @@ void pn_setfilt(sc)
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-static void pn_setcfg(sc, media)
+void pn_setcfg(sc, media)
 	struct pn_softc		*sc;
 	u_int32_t		media;
 {
@@ -936,7 +865,7 @@ static void pn_setcfg(sc, media)
 	return;
 }
 
-static void pn_reset(sc)
+void pn_reset(sc)
 	struct pn_softc		*sc;
 {
 	register int		i;
@@ -956,298 +885,10 @@ static void pn_reset(sc)
 	return;
 }
 
-#ifdef __FreeBSD__
-/*
- * Probe for a Lite-On PNIC chip. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-static const char *
-pn_probe(config_id, device_id)
-	pcici_t			config_id;
-	pcidi_t			device_id;
-{
-	struct pn_type		*t;
-	u_int32_t		rev;
-
-	t = pn_devs;
-
-	while(t->pn_name != NULL) {
-		if ((device_id & 0xFFFF) == t->pn_vid &&
-		    ((device_id >> 16) & 0xFFFF) == t->pn_did) {
-			if (t->pn_did == PN_DEVICEID_PNIC) {
-				rev = pci_conf_read(config_id,
-				    PN_PCI_REVISION) & 0xFF;
-				switch (rev & PN_REVMASK) {
-				case PN_REVID_82C168:
-					return (t->pn_name);
-					break;
-				case PN_REVID_82C169:
-					t++;
-					return (t->pn_name);
-				default:
-					printf("uknown PNIC rev: %x\n", rev);
-					break;
-				}
-			}
-			return(t->pn_name);
-		}
-		t++;
-	}
-
-	return(NULL);
-}
-
-/*
- * Attach the interface. Allocate softc structures, do ifmedia
- * setup and ethernet/BPF attach.
- */
-static void
-pn_attach(config_id, unit)
-	pcici_t			config_id;
-	int			unit;
-{
-	int			s, i;
-#ifndef PN_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
-	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
-	struct pn_softc		*sc;
-	struct ifnet		*ifp;
-	int			media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	unsigned int		round;
-	caddr_t			roundptr;
-	struct pn_type		*p;
-	u_int16_t		phy_vid, phy_did, phy_sts;
-#ifdef PN_RX_BUG_WAR
-	u_int32_t		revision = 0;
-#endif
-
-	s = splimp();
-
-	sc = malloc(sizeof(struct pn_softc), M_DEVBUF, M_NOWAIT);
-	if (sc == NULL) {
-		printf("pn%d: no memory for softc struct!\n", unit);
-		return;
-	}
-	bzero(sc, sizeof(struct pn_softc));
-
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	command = pci_conf_read(config_id, PN_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-
-		command = pci_conf_read(config_id, PN_PCI_PWRMGMTCTRL);
-		if (command & PN_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(config_id, PN_PCI_LOIO);
-			membase = pci_conf_read(config_id, PN_PCI_LOMEM);
-			irq = pci_conf_read(config_id, PN_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("pn%d: chip is in D%d power mode "
-			"-- setting to D0\n", unit, command & PN_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(config_id, PN_PCI_PWRMGMTCTRL, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(config_id, PN_PCI_LOIO, iobase);
-			pci_conf_write(config_id, PN_PCI_LOMEM, membase);
-			pci_conf_write(config_id, PN_PCI_INTLINE, irq);
-		}
-	}
-
-	/*
-	 * Map control/status registers.
-	 */
-	command = pci_conf_read(config_id, PCI_COMMAND_STATUS_REG);
-	command |= (PCIM_CMD_PORTEN|PCIM_CMD_MEMEN|PCIM_CMD_BUSMASTEREN);
-	pci_conf_write(config_id, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(config_id, PCI_COMMAND_STATUS_REG);
-
-#ifdef PN_USEIOSPACE
-	if (!(command & PCIM_CMD_PORTEN)) {
-		printf("pn%d: failed to enable I/O ports!\n", unit);
-		free(sc, M_DEVBUF);
-		goto fail;
-	}
-
-	if (!pci_map_port(config_id, PN_PCI_LOIO,
-					(u_short *)&(sc->pn_bhandle))) {
-		printf ("pn%d: couldn't map ports\n", unit);
-		goto fail;
-	}
-#ifdef __i386__
-	sc->pn_btag = I386_BUS_SPACE_IO;
-#endif
-#ifdef __alpha__
-	sc->pn_btag = ALPHA_BUS_SPACE_IO;
-#endif
-#else
-	if (!(command & PCIM_CMD_MEMEN)) {
-		printf("pn%d: failed to enable memory mapping!\n", unit);
-		goto fail;
-	}
-
-	if (!pci_map_mem(config_id, PN_PCI_LOMEM, &vbase, &pbase)) {
-		printf ("pn%d: couldn't map memory\n", unit);
-		goto fail;
-	}
-	sc->pn_bhandle = vbase;
-#ifdef __i386__
-	sc->pn_btag = I386_BUS_SPACE_MEM;
-#endif
-#ifdef __alpha__
-	sc->pn_btag = ALPHA_BUS_SPACE_MEM;
-#endif
-#endif
-
-	/* Allocate interrupt */
-	if (!pci_map_int(config_id, pn_intr, sc, &net_imask)) {
-		printf("pn%d: couldn't map interrupt\n", unit);
-		goto fail;
-	}
-
-	sc->pn_cachesize = pci_conf_read(config_id, PN_PCI_CACHELEN) & 0xFF;
-
-	/* Reset the adapter. */
-	pn_reset(sc);
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	pn_read_eeprom(sc, (caddr_t)&eaddr, 0, 3, 1);
-
-	/*
-	 * A PNIC chip was detected. Inform the world.
-	 */
-	printf("pn%d: Ethernet address: %6D\n", unit, eaddr, ":");
-
-	sc->pn_unit = unit;
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
-
-	sc->pn_ldata_ptr = malloc(sizeof(struct pn_list_data) + 8,
-				M_DEVBUF, M_NOWAIT);
-	if (sc->pn_ldata_ptr == NULL) {
-		free(sc, M_DEVBUF);
-		printf("pn%d: no memory for list buffers!\n", unit);
-		goto fail;
-	}
-
-	sc->pn_ldata = (struct pn_list_data *)sc->pn_ldata_ptr;
-	round = (unsigned int)sc->pn_ldata_ptr & 0xF;
-	roundptr = sc->pn_ldata_ptr;
-	for (i = 0; i < 8; i++) {
-		if (round % 8) {
-			round++;
-			roundptr++;
-		} else
-			break;
-	}
-	sc->pn_ldata = (struct pn_list_data *)roundptr;
-	bzero(sc->pn_ldata, sizeof(struct pn_list_data));
-
-#ifdef PN_RX_BUG_WAR
-	revision = pci_conf_read(config_id, PN_PCI_REVISION) & 0x000000FF;
-	if (revision == PN_169B_REV || revision == PN_169_REV ||
-	    (revision & 0xF0) == PN_168_REV) {
-		sc->pn_rx_war = 1;
-		sc->pn_rx_buf = malloc(PN_RXLEN * 5, M_DEVBUF, M_NOWAIT);
-		if (sc->pn_rx_buf == NULL) {
-			printf("pn%d: no memory for workaround buffer\n", unit);
-			goto fail;
-		}
-	} else {
-		sc->pn_rx_war = 0;
-	}
-#endif
-
-	ifp = &sc->arpcom.ac_if;
-	ifp->if_softc = sc;
-	ifp->if_unit = unit;
-	ifp->if_name = "pn";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = pn_ioctl;
-	ifp->if_output = ether_output;
-	ifp->if_start = pn_start;
-	ifp->if_watchdog = pn_watchdog;
-	ifp->if_init = pn_init;
-	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
-
-	ifmedia_init(&sc->ifmedia, 0, pn_ifmedia_upd, pn_ifmedia_sts);
-
-	if (bootverbose)
-		printf("pn%d: probing for a PHY\n", sc->pn_unit);
-	for (i = PN_PHYADDR_MIN; i < PN_PHYADDR_MAX + 1; i++) {
-		sc->pn_phy_addr = i;
-		pn_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-		DELAY(500);
-		while(pn_phy_readreg(sc, PHY_BMCR)
-				& PHY_BMCR_RESET);
-		if ((phy_sts = pn_phy_readreg(sc, PHY_BMSR)))
-			break;
-	}
-	if (phy_sts) {
-		phy_vid = pn_phy_readreg(sc, PHY_VENID);
-		phy_did = pn_phy_readreg(sc, PHY_DEVID);
-		p = pn_phys;
-		while(p->pn_vid) {
-			if (phy_vid == p->pn_vid &&
-				(phy_did | 0x000F) == p->pn_did) {
-				sc->pn_pinfo = p;
-				break;
-			}
-			p++;
-		}
-		if (sc->pn_pinfo == NULL)
-			sc->pn_pinfo = &pn_phys[PHY_UNKNOWN];
-		pn_getmode_mii(sc);
-		pn_autoneg_mii(sc, PN_FLAG_FORCEDELAY, 1);
-	} else {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-		    IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-		    IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		pn_autoneg(sc, PN_FLAG_FORCEDELAY, 1);
-	}
-
-	media = sc->ifmedia.ifm_media;
-	pn_stop(sc);
-	ifmedia_set(&sc->ifmedia, media);
-
-	/*
-	 * Call MI attach routines.
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-	at_shutdown(pn_shutdown, sc, SHUTDOWN_POST_SYNC);
-
-fail:
-	splx(s);
-	return;
-}
-#endif /* FreeBSD */
-
 /*
  * Initialize the transmit descriptors.
  */
-static int pn_list_tx_init(sc)
+int pn_list_tx_init(sc)
 	struct pn_softc		*sc;
 {
 	struct pn_chain_data	*cd;
@@ -1278,7 +919,7 @@ static int pn_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int pn_list_rx_init(sc)
+int pn_list_rx_init(sc)
 	struct pn_softc		*sc;
 {
 	struct pn_chain_data	*cd;
@@ -1316,7 +957,7 @@ static int pn_list_rx_init(sc)
  * MCLBYTES is 2048, so we have to subtract one otherwise we'll
  * overflow the field and make a mess.
  */
-static int pn_newbuf(sc, c)
+int pn_newbuf(sc, c)
 	struct pn_softc		*sc;
 	struct pn_chain_onefrag	*c;
 {
@@ -1406,7 +1047,7 @@ static int pn_newbuf(sc, c)
  */
 
 #define PN_WHOLEFRAME	(PN_RXSTAT_FIRSTFRAG|PN_RXSTAT_LASTFRAG)
-static void pn_rx_bug_war(sc, cur_rx)
+void pn_rx_bug_war(sc, cur_rx)
 	struct pn_softc		*sc;
 	struct pn_chain_onefrag	*cur_rx;
 {
@@ -1474,7 +1115,7 @@ static void pn_rx_bug_war(sc, cur_rx)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void pn_rxeof(sc)
+void pn_rxeof(sc)
 	struct pn_softc		*sc;
 {
 	struct ether_header	*eh;
@@ -1605,13 +1246,8 @@ static void pn_rxeof(sc)
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf) {
-#ifdef __FreeBSD__
-			bpf_mtap(ifp, m);
-#else
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-#endif
-		}
 #endif
 		/* Remove header from mbuf and pass it on. */
 		m_adj(m, sizeof(struct ether_header));
@@ -1639,7 +1275,7 @@ void pn_rxeoc(sc)
  * the list buffers.
  */
 
-static void pn_txeof(sc)
+void pn_txeof(sc)
 	struct pn_softc		*sc;
 {
 	struct pn_chain		*cur_tx;
@@ -1696,7 +1332,7 @@ static void pn_txeof(sc)
 /*
  * TX 'end of channel' interrupt handler.
  */
-static void pn_txeoc(sc)
+void pn_txeoc(sc)
 	struct pn_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -1719,19 +1355,13 @@ static void pn_txeoc(sc)
 	return;
 }
 
-#ifdef __OpenBSD__
-static int pn_intr(arg)
-#else
-static void pn_intr(arg)
-#endif
+int pn_intr(arg)
 	void			*arg;
 {
 	struct pn_softc		*sc;
 	struct ifnet		*ifp;
 	u_int32_t		status;
-#ifdef __OpenBSD__
 	int			claimed = 0;
-#endif
 
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
@@ -1739,11 +1369,7 @@ static void pn_intr(arg)
 	/* Supress unwanted interrupts. */
 	if (!(ifp->if_flags & IFF_UP)) {
 		pn_stop(sc);
-#ifdef __OpenBSD__
-		return claimed;
-#else
-		return;
-#endif
+		return (claimed);
 	}
 
 	/* Disable interrupts. */
@@ -1757,9 +1383,7 @@ static void pn_intr(arg)
 		if ((status & PN_INTRS) == 0)
 			break;
 
-#ifdef __OpenBSD__
 		claimed = 1;
-#endif
 
 		if (status & PN_ISR_RX_OK)
 			pn_rxeof(sc);
@@ -1804,18 +1428,14 @@ static void pn_intr(arg)
 		pn_start(ifp);
 	}
 
-#ifdef __OpenBSD__
-	return claimed;
-#else
-	return;
-#endif
+	return (claimed);
 }
 
 /*
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int pn_encap(sc, c, m_head)
+int pn_encap(sc, c, m_head)
 	struct pn_softc		*sc;
 	struct pn_chain		*c;
 	struct mbuf		*m_head;
@@ -1904,7 +1524,7 @@ static int pn_encap(sc, c, m_head)
  * physical addresses.
  */
 
-static void pn_start(ifp)
+void pn_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct pn_softc		*sc;
@@ -1950,11 +1570,7 @@ static void pn_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-#ifdef __FreeBSD__
-			bpf_mtap(ifp, cur_tx->pn_mbuf);
-#else
 			bpf_mtap(ifp->if_bpf, cur_tx->pn_mbuf);
-#endif
 #endif
 		PN_TXOWN(cur_tx) = PN_TXSTAT_OWN;
 		CSR_WRITE_4(sc, PN_TXSTART, 0xFFFFFFFF);
@@ -1979,7 +1595,7 @@ static void pn_start(ifp)
 	return;
 }
 
-static void pn_init(xsc)
+void pn_init(xsc)
 	void			*xsc;
 {
 	struct pn_softc		*sc = xsc;
@@ -2090,7 +1706,7 @@ static void pn_init(xsc)
 /*
  * Set media options.
  */
-static int pn_ifmedia_upd(ifp)
+int pn_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct pn_softc		*sc;
@@ -2120,7 +1736,7 @@ static int pn_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void pn_ifmedia_sts(ifp, ifmr)
+void pn_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -2177,7 +1793,7 @@ static void pn_ifmedia_sts(ifp, ifmr)
 	return;
 }
 
-static int pn_ioctl(ifp, command, data)
+int pn_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -2185,27 +1801,16 @@ static int pn_ioctl(ifp, command, data)
 	struct pn_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
-#ifdef __OpenBSD__
 	struct ifaddr		*ifa = (struct ifaddr *) data;
-#endif
 
 	s = splimp();
 
-#ifdef __OpenBSD__
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
-#endif
 
 	switch(command) {
-#ifdef __FreeBSD__
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, command, data);
-		break;
-#else
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -2220,7 +1825,6 @@ static int pn_ioctl(ifp, command, data)
 			break;
 		}
 		break;
-#endif
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			pn_init(sc);
@@ -2249,7 +1853,7 @@ static int pn_ioctl(ifp, command, data)
 	return(error);
 }
 
-static void pn_watchdog(ifp)
+void pn_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct pn_softc		*sc;
@@ -2284,7 +1888,7 @@ static void pn_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void pn_stop(sc)
+void pn_stop(sc)
 	struct pn_softc		*sc;
 {
 	register int		i;
@@ -2328,34 +1932,7 @@ static void pn_stop(sc)
 	return;
 }
 
-#ifdef __FreeBSD__
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-static void pn_shutdown(howto, arg)
-	int			howto;
-	void			*arg;
-{
-	struct pn_softc		*sc = (struct pn_softc *)arg;
-
-	pn_stop(sc);
-
-	return;
-}
-
-static struct pci_device pn_device = {
-	"pn",
-	pn_probe,
-	pn_attach,
-	&pn_count,
-	NULL
-};
-COMPAT_PCI_DRIVER(pn, pn_device);
-#endif /* __FreeBSD__ */
-
-#ifdef __OpenBSD__
-static int
+int
 pn_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -2373,7 +1950,7 @@ pn_probe(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 pn_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -2569,7 +2146,7 @@ fail:
 	splx(s);
 }
 
-static void
+void
 pn_shutdown(v)
 	void *v;
 {
@@ -2585,4 +2162,3 @@ struct cfattach pn_ca = {
 struct cfdriver pn_cd = {
 	0, "pn", DV_IFNET
 };
-#endif

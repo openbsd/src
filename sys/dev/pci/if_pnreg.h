@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pnreg.h,v 1.3 1999/06/29 02:28:22 jason Exp $	*/
+/*	$OpenBSD: if_pnreg.h,v 1.4 1999/09/15 01:17:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -471,10 +471,8 @@ struct pn_mii_frame {
 #define PN_FLAG_DELAYTIMEO	3	
 
 struct pn_softc {
-#ifdef __OpenBSD__
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
-#endif
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
 	bus_space_handle_t	pn_bhandle;	/* bus space handle */
