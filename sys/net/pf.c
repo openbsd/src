@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.12 2001/06/24 23:26:14 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.13 2001/06/24 23:29:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -115,7 +115,7 @@ int		 pfopen (dev_t dev, int flags, int fmt, struct proc *p);
 int		 pfclose (dev_t dev, int flags, int fmt, struct proc *p);
 int		 pfioctl (dev_t dev, u_long cmd, caddr_t addr, int flags,
 		    struct proc *p);
-u_short		 fix (u_short cksum, u_short old, u_short new);
+u_int16_t	 fix (u_int16_t cksum, u_int16_t old, u_int16_t new);
 void		 change_ap (u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t
 		    *pc, u_int32_t an, u_int16_t pn);
 void		 change_a (u_int32_t *a, u_int16_t *c, u_int32_t an);
@@ -217,7 +217,7 @@ tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 		if (*p == NULL) {
 			return 0;
 		}
-		memcpy(&(*p)->key, key, sizeof(struct tree_key));
+		bcopy(key, &(*p)->key, sizeof(struct tree_key));
 		(*p)->state = state;
 		(*p)->balance = 0;
 		(*p)->left = (*p)->right = NULL;
@@ -301,9 +301,9 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 
 			while ((*qq)->right != NULL)
 				qq = &(*qq)->right;
-			memcpy(&(*p)->key, &(*qq)->key, sizeof(struct tree_key));
+			bcopy(&(*qq)->key, &(*p)->key, sizeof(struct tree_key));
 			(*p)->state = (*qq)->state;
-			memcpy(&(*qq)->key, key, sizeof(struct tree_key));
+			bcopy(key, &(*qq)->key, sizeof(struct tree_key));
 			if (tree_remove(&(*p)->left, key)) {
 				(*p)->balance++;
 				if ((*p)->balance == 0)
@@ -543,7 +543,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ERROR_ALREADY_RUNNING;
 		else {
 			u_int32_t states = status.states;
-			memset(&status, 0, sizeof(struct status));
+			bzero(&status, sizeof(struct status));
 			status.running = 1;
 			status.states = states;
 			status.since = pftv.tv_sec;
@@ -576,7 +576,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = ERROR_MALLOC;
 				goto done;
 			}
-			memcpy(rule, rules + n, sizeof(struct rule));
+			bcopy(rules + n, rule, sizeof(struct rule));
 			rule->ifp = NULL;
 			if (rule->ifname[0]) {
 				rule->ifp = ifunit(rule->ifname);
@@ -601,7 +601,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct rule *rule = rulehead;
 		u_int16_t n = 0;
 		while ((rule != NULL) && (n < ub->entries)) {
-			memcpy(rules + n, rule, sizeof(struct rule));
+			bcopy(rule, rules + n, sizeof(struct rule));
 			n++;
 			rule = rule->next;
 		}
@@ -626,7 +626,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = ERROR_MALLOC;
 				goto done;
 			}
-			memcpy(nat, nats + n, sizeof(struct nat));
+			bcopy(nats + n, nat, sizeof(struct nat));
 			nat->ifp = ifunit(nat->ifname);
 			if (nat->ifp == NULL) {
 				pool_put(&pf_nat_pl, nat);
@@ -644,7 +644,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct nat *nat = nathead;
 		u_int16_t n = 0;
 		while ((nat != NULL) && (n < ub->entries)) {
-			memcpy(nats + n, nat, sizeof(struct nat));
+			bcopy(nat, nats + n, sizeof(struct nat));
 			n++;
 			nat = nat->next;
 		}
@@ -669,7 +669,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = ERROR_MALLOC;
 				goto done;
 			}
-			memcpy(rdr, rdrs + n, sizeof(struct rdr));
+			bcopy(rdrs + n, rdr, sizeof(struct rdr));
 			rdr->ifp = ifunit(rdr->ifname);
 			if (rdr->ifp == NULL) {
 				pool_put(&pf_rdr_pl, rdr);
@@ -687,7 +687,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct rdr *rdr = rdrhead;
 		u_int16_t n = 0;
 		while ((rdr != NULL) && (n < ub->entries)) {
-			memcpy(rdrs + n, rdr, sizeof(struct rdr));
+			bcopy(rdr, rdrs + n, sizeof(struct rdr));
 			n++;
 			rdr = rdr->next;
 		}
@@ -711,7 +711,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int16_t n = 0;
 		state = statehead;
 		while ((state != NULL) && (n < ub->entries)) {
-			memcpy(states + n, state, sizeof(struct state));
+			bcopy(state, states + n, sizeof(struct state));
 			states[n].creation = pftv.tv_sec - states[n].creation;
 			if (states[n].expire <= pftv.tv_sec)
 				states[n].expire = 0;
@@ -738,10 +738,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct status *st = (struct status *)kb;
 		u_int8_t running = status.running;
 		u_int32_t states = status.states;
-		memcpy(st, &status, sizeof(struct status));
+		bcopy(&status, st, sizeof(struct status));
 		st->since = st->since ? pftv.tv_sec - st->since : 0;
 		ub->entries = 1;
-		memset(&status, 0, sizeof(struct status));
+		bzero(&status, sizeof(struct status));
 		status.running = running;
 		status.states = states;
 		status.since = pftv.tv_sec;
@@ -763,10 +763,10 @@ done:
 	return error;
 }
 
-inline u_short
-fix(u_short cksum, u_short old, u_short new)
+inline u_int16_t
+fix(u_int16_t cksum, u_int16_t old, u_int16_t new)
 {
-	u_long l = cksum + old - new;
+	u_int32_t l = cksum + old - new;
 	l = (l >> 16) + (l & 65535); 
 	l = l & 65535;
 	return l ? l : 65535;
