@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1997/06/23 22:21:50 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1997/06/23 22:41:28 kstailey Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -82,7 +82,7 @@ x2p/cflags:
 
 .ifdef NOMAN
 maninstall:
-        @echo NOMAN is set
+	@echo NOMAN is set
 .endif
 
 install: ${MANALL} maninstall
