@@ -55,7 +55,7 @@ static char rcsid[] = "$NetBSD: flags.c,v 1.5 1995/02/02 02:09:19 jtc Exp $";
  */
 int
 __sflags(mode, optr)
-	register char *mode;
+	register const char *mode;
 	int *optr;
 {
 	register int ret, m, o;
