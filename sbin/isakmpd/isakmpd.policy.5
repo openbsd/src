@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.28 2003/01/19 21:02:15 deraadt Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.29 2003/01/20 19:52:36 deraadt Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -58,7 +58,7 @@ authenticating each other and establishing key material for
 encrypting/authenticating future communications between them.
 This step is typically only performed once for every pair of IKE daemons.
 .Pp
-In the second stage (also called Quick Mode), the two IKE daemon
+In the second stage (also called Quick Mode), the two IKE daemons
 create the pair of SAs for the parties that wish to communicate using
 IPsec.
 These parties may be the hosts the IKE daemons run on, a host
@@ -68,7 +68,7 @@ At this stage, the exact parameters of the SAs
 (e.g., algorithms to use, encapsulation mode, lifetime) and the
 identities of the communicating parties (hosts, networks, etc.) are
 specified.
-The reason for the existance of Quick Mode is to allow for fast
+The reason for the existence of Quick Mode is to allow for fast
 SA setup, once the more heavy-weight Main Mode has been completed.
 Generally, Quick Mode uses the key material derived from Main Mode to
 provide keys to the IPsec transforms to be used.
@@ -212,7 +212,7 @@ on how to specify what credentials to send in an IKE exchange.
 Passphrases that appear in the Licensees field are encoded as the
 string "passphrase:", followed by the passphrase itself
 (case-sensitive).
-Alternately (and preferably), they may be encoded using the
+Alternatively (and preferably), they may be encoded using the
 "passphrase-md5-hex:" or "passphrase-sha1-hex:" prefixes, followed
 by the
 .Xr md5 1
@@ -261,7 +261,7 @@ non-existent attributes without catastrophic failures (access may be
 denied, depending on the overall structure, but will not be
 accidentally granted).
 One reason for credentials referencing
-non-existant attributes is that they were defined within a specific
+non-existent attributes is that they were defined within a specific
 implementation or network only.
 .Pp
 In the following attribute set, IPv4 addresses are encoded as ASCII
