@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.6 1999/09/30 05:53:04 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.7 1999/09/30 14:05:41 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -122,7 +122,7 @@ detect_cbc_attack(const unsigned char *src,
    int cipher.h. */
 static char *cipher_names[] =
 {
-  "none",
+  "no none",
   "no idea",
   "no des",
   "3des",
@@ -138,7 +138,6 @@ static char *cipher_names[] =
 unsigned int cipher_mask()
 {
   unsigned int mask = 0;
-  mask |= 1 << SSH_CIPHER_NONE;
   mask |= 1 << SSH_CIPHER_3DES;	/* Mandatory */
   mask |= 1 << SSH_CIPHER_BLOWFISH;
   return mask;
@@ -205,6 +204,7 @@ void cipher_set_key(CipherContext *context, int cipher,
   switch (cipher)
     {
     case SSH_CIPHER_NONE:
+      /* Has to stay for authfile saving of private key with no passphrase */
       break;
 
     case SSH_CIPHER_3DES:

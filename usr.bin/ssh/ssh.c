@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.18 1999/09/30 05:53:04 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.19 1999/09/30 14:05:41 provos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -100,16 +100,9 @@ usage()
   fprintf(stderr, "  -f          Fork into background after authentication.\n");
   fprintf(stderr, "  -e char     Set escape character; ``none'' = disable (default: ~).\n");
 
-  fprintf(stderr, "  -c cipher   Select encryption algorithm: ");
-  for (i = 1; i <= 6; i++)
-    {
-      const char *t = cipher_name(i);
-      if (t[0] == 'n' && t[1] == 'o' && t[2] == ' ')
-	continue;
-      fprintf(stderr, "%s, ", t);
-    }
-  fprintf(stderr, "or none.\n");
-
+  fprintf(stderr, "  -c cipher   Select encryption algorithm: "
+		  "``3des'', "
+		  "``blowfish''\n");
   fprintf(stderr, "  -p port     Connect to this port.  Server must be on the same port.\n");
   fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
   fprintf(stderr, "  -L listen-port:host:port   Forward local port to remote address\n");
