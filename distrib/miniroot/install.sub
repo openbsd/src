@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.248 2002/07/18 00:36:44 krw Exp $
+#	$OpenBSD: install.sub,v 1.249 2002/07/22 00:13:01 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1739,12 +1739,12 @@ remount_fs() {
 #
 # Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _mp _fstype _rest _badfsck=0 _root=$1
+	local _dev _mp _fstype _rest _fail
 
 	echo "Checking non-root filesystems..."
 
 	while read _dev _mp _fstype _rest; do
-		[ "$_dev" != "$_root" ] || continue
+		[ "$_dev" != /dev/"$ROOTDEV" ] || continue
 		[ -f "/sbin/fsck_$_fstype" ] || continue
 		echo -n "fsck -p ${_dev}..."
 		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
