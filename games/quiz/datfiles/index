@@ -21,7 +21,7 @@
 /usr/share/games/quiz.db/murders:victim:killer
 /usr/share/games/quiz.db/poetry:poem{-}line:next:poem:author
 /usr/share/games/quiz.db/posneg:pos{itive}:neg{ative}
-/usr/share/games/quiz.db/pres:pres{ident}:term:succ{essor}
+/usr/share/games/quiz.db/pres:pres{ident}:term:vice:succ{essor}
 /usr/share/games/quiz.db/province:province:cap{ital}
 /usr/share/games/quiz.db/seq-easy:easy{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/seq-hard:hard{-}{seq{uence}}:next:name
