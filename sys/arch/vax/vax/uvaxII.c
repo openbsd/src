@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.4 1995/12/13 18:50:11 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.5 1996/01/28 11:45:07 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -75,6 +75,7 @@ uvaxII_conf(parent, self, aux)
 		break;
 	};
 	strcpy(cpu_model, "MicroVAX 78032/78132");
+	printf(": %s\n", cpu_model);
 }
 
 uvaxII_clock()
