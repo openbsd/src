@@ -16,10 +16,11 @@
  *
 \********************************************************************/
 
-/*  header files */
+/* header files */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <rmd160.h>
 
 /********************************************************************/
@@ -98,7 +99,8 @@
 
 /********************************************************************/
 
-void RMD160Init(context)
+void
+RMD160Init(context)
 	RMD160_CTX *context;
 {
 
@@ -114,7 +116,8 @@ void RMD160Init(context)
 
 /********************************************************************/
 
-void RMD160Transform(state, block)
+void
+RMD160Transform(state, block)
 	u_int32_t state[5];
 	const u_int32_t block[16];
 {
@@ -314,7 +317,8 @@ void RMD160Transform(state, block)
 
 /********************************************************************/
 
-void RMD160Update(context, data, nbytes)
+void
+RMD160Update(context, data, nbytes)
 	RMD160_CTX *context;
 	const u_char *data;
 	u_int32_t nbytes;
@@ -373,7 +377,8 @@ void RMD160Update(context, data, nbytes)
 
 /********************************************************************/
 
-void RMD160Final(digest, context)
+void
+RMD160Final(digest, context)
 	u_char digest[20];
 	RMD160_CTX *context;
 {
