@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.326 2000/09/28 18:37:35 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.327 2000/09/28 18:57:07 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1927,6 +1927,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS",
 	    "Maestro 2E",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
+	    0,
+	    "ESS",
+	    "Maestro 3",
 	},
 	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
