@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.3 2004/06/14 00:44:47 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -1263,7 +1263,6 @@ struct ahd_softc {
 	uint16_t		 *saved_stack;
 
 	/* Per-Unit descriptive information */
-	const char		 *description;
 	const char		 *bus_description;
 	char			 *name;
 	int			  unit;
@@ -1356,7 +1355,6 @@ typedef int (ahd_device_setup_t)(struct ahd_softc *, struct pci_attach_args *pa)
 struct ahd_pci_identity {
 	uint64_t		 full_id;
 	uint64_t		 id_mask;
-	char			*name;
 	ahd_device_setup_t	*setup;
 };
 extern struct ahd_pci_identity ahd_pci_ident_table [];

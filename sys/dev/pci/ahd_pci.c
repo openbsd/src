@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.4 2004/06/14 00:44:47 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *	aic7901 and aic7902 SCSI controllers
@@ -134,100 +134,84 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 	{
 		ID_AHA_29320A,
 		ID_ALL_MASK,
-		"Adaptec 29320A Ultra320 SCSI adapter",
 		ahd_aic7901_setup
 	},
 	{
 		ID_AHA_29320ALP,
 		ID_ALL_MASK,
-		"Adaptec 29320ALP Ultra320 SCSI adapter",
 		ahd_aic7901_setup
 	},
 	/* aic7901A based controllers */
 	{
 		ID_AHA_29320LP,
 		ID_ALL_MASK,
-		"Adaptec 29320LP Ultra320 SCSI adapter",
 		ahd_aic7901A_setup
 	},
 	/* aic7902 based controllers */	
 	{
 		ID_AHA_29320,
 		ID_ALL_MASK,
-		"Adaptec 29320 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_29320B,
 		ID_ALL_MASK,
-		"Adaptec 29320B Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320,
 		ID_ALL_MASK,
-		"Adaptec 39320 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320_B,
 		ID_ALL_MASK,
-		"Adaptec 39320 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320_B_DELL,
 		ID_ALL_MASK,
-		"Adaptec (Dell OEM) 39320 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320A,
 		ID_ALL_MASK,
-		"Adaptec 39320A Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320D,
 		ID_ALL_MASK,
-		"Adaptec 39320D Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320D_HP,
 		ID_ALL_MASK,
-		"Adaptec (HP OEM) 39320D Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320D_B,
 		ID_ALL_MASK,
-		"Adaptec 39320D Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	{
 		ID_AHA_39320D_B_HP,
 		ID_ALL_MASK,
-		"Adaptec (HP OEM) 39320D Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	},
 	/* Generic chip probes for devices we don't know 'exactly' */
 	{
 		ID_AIC7901 & ID_9005_GENERIC_MASK,
 		ID_9005_GENERIC_MASK,
-		"Adaptec AIC7901 Ultra320 SCSI adapter",
 		ahd_aic7901_setup
 	},
 	{
 		ID_AIC7901A & ID_DEV_VENDOR_MASK,
 		ID_DEV_VENDOR_MASK,
-		"Adaptec AIC7901A Ultra320 SCSI adapter",
 		ahd_aic7901A_setup
 	},
 	{
 		ID_AIC7902 & ID_9005_GENERIC_MASK,
 		ID_9005_GENERIC_MASK,
-		"Adaptec AIC7902 Ultra320 SCSI adapter",
 		ahd_aic7902_setup
 	}
 };
@@ -307,9 +291,6 @@ ahd_find_pci_device(id, subid)
 	for (i = 0; i < ahd_num_pci_devs; i++) {
 		entry = &ahd_pci_ident_table[i];
 		if (entry->full_id == (full_id & entry->id_mask)) {
-			/* Honor exclusion entries. */
-			if (entry->name == NULL)
-				return (NULL);
 			return (entry);
 		}
 	}
@@ -366,8 +347,6 @@ ahd_pci_attach(parent, self, aux)
 	entry = ahd_find_pci_device(pa->pa_id, subid);
 	if (entry == NULL)
 		return;
-
-	ahd->description = entry->name;
 
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahd_pci_busdata), M_DEVBUF, M_NOWAIT);
