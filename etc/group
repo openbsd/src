@@ -16,6 +16,7 @@ utmp:*:45:
 www:*:67:
 network:*:69:
 named:*:70:
+proxy:*:71:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
