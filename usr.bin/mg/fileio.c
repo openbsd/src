@@ -144,29 +144,8 @@ fbackupfile(fn) char *fn; {
 		return (ABORT);
 	}
 	(void) strcpy(nname, fn);
-/*
- * with BSD, just strcat the ~.  But SV has a max file name of 14, so
- * we have to check.
- */
-	lastpart = strrchr(nname, '/');
-	if (lastpart)
-		lastpart++;
-	else
-		lastpart = nname;
-	i = strlen(lastpart);
-	if (i > 13)
-		if (lastpart[13] == '~') {   /* already a backup name */
-			free(nname);
-			return(FALSE);
-		}
-		else
-			lastpart[13] = '~';
-	else {
-		lastpart[i] = '~';
-		lastpart[i+1] = 0;
-	}
-	(void) unlink(nname);			/* Ignore errors.	*/
-	if (link(fn, nname) != 0 || unlink(fn) != 0) {
+	(void) strcat(nname, "~");
+	if (rename(fn, nname) < 0) {
 		free(nname);
 		return (FALSE);
 	}
@@ -392,6 +371,7 @@ char *dirname;
 	ewprintf("Bad directory name");
 	return NULL;
     }
+    if(dirname[strlen(dirname)-1] != '/') (VOID) strcat(dirname, "/");
     if((bp = findbuffer(dirname)) == NULL) {
 	ewprintf("Could not create buffer");
 	return NULL;
