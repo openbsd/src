@@ -792,11 +792,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       
       if (sa2->tdb_flags & TDBF_INVALID) {
 	MALLOC(freeme, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-	if (freeme == NULL) {
-	    rval = ENOMEM;
-	    goto ret;
-	} 
-
 	bzero(freeme, sizeof(struct tdb));
 
 	{
@@ -902,11 +897,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       }
 
       MALLOC(freeme, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-      if (freeme == NULL) {
-	  rval = ENOMEM;
-	  goto ret;
-      } 
-
       bzero(freeme, sizeof(struct tdb));
 
       {
