@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.5 2003/06/02 20:37:14 mickey Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.6 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,6 +40,7 @@
 #include <string.h>
 
 #include "interface.h"
+#include "addrtoname.h"
 
 struct nfhdr {
 	u_int32_t	ver_cnt;	/* version [15], and # of records */
@@ -72,8 +73,7 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 	register const struct nfhdr *nh;
 	register const struct nfrec *nr;
 	register const struct ip *ip;
-	struct protoent *pent;
-	int nrecs, ver;
+	int nrecs, ver, proto;
 	time_t t;
 
 	ip = (struct ip *)bp;
@@ -131,14 +131,11 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 
 		printf(">> %s\n    ", inet_ntoa(nr->nhop_ina));
 
-		pent = getprotobynumber((ntohl(nr->proto_tos) >> 8) & 0xff);
-		if (!pent || nflag)
-			printf("%u ", (ntohl(nr->proto_tos) >> 8) & 0xff);
-		else
-			printf("%s ", pent->p_name);
+		proto = (ntohl(nr->proto_tos) >> 8) & 0xff;
+		printf("%s ", ipproto_string(proto));
 
 		/* tcp flags for tcp only */
-		if (pent && pent->p_proto == IPPROTO_TCP) {
+		if (proto == IPPROTO_TCP) {
 			int flags;
 			if (ver == 1)
 				flags = (ntohl(nr->asses) >> 24) & 0xff;

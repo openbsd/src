@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.h,v 1.9 2000/10/03 14:31:54 ho Exp $	*/
+/*	$OpenBSD: addrtoname.h,v 1.10 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.9 2000/10/03 14:31:54 ho Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.10 2004/01/28 19:44:55 canacar Exp $ (LBL)
  */
 
 #ifndef BYTE_ORDER
@@ -37,6 +37,7 @@ extern char *etheraddr_string(const u_char *);
 extern char *etherproto_string(u_short);
 extern char *tcpport_string(u_short);
 extern char *udpport_string(u_short);
+extern char *ipproto_string(u_int);
 extern char *getname(const u_char *);
 #ifdef INET6
 extern char *getname6(const u_char *);

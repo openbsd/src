@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,15 +23,17 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.15 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.16 2004/01/28 19:44:55 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#include <sys/limits.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -47,7 +49,7 @@ static const char rcsid[] =
 #include <unistd.h>
 
 #include "interface.h"
-
+#include "privsep.h"
 /*
  * Print out a filename (or other ascii string).
  * If ep is NULL, assume no truncation check is needed.
@@ -134,7 +136,7 @@ ts_print(register const struct bpf_timeval *tvp)
 		break;
 	case -2:
 		t=tvp->tv_sec;
-		strftime(buf, TSBUFLEN, "%b %d %T", localtime(&t));
+		strftime(buf, TSBUFLEN, "%b %d %T", priv_localtime(&t));
 		printf("%s.%06u ", buf, (u_int32_t)tvp->tv_usec);
 		break;
 	default:
@@ -230,46 +232,44 @@ warning(const char *fmt, ...)
 	}
 }
 
+
 /*
  * Copy arg vector into a new buffer, concatenating arguments with spaces.
  */
 char *
-copy_argv(register char **argv)
+copy_argv(char * const *argv)
 {
-	register char **p;
-	register u_int len = 0;
+	size_t len = 0, n;
 	char *buf;
-	char *src, *dst;
 
-	p = argv;
-	if (*p == 0)
-		return 0;
+	if (argv == NULL)
+		return (NULL);
 
-	while (*p)
-		len += strlen(*p++) + 1;
+	for (n = 0; argv[n]; n++)
+		len += strlen(argv[n])+1;
+	if (len == 0)
+		return (NULL);
 
-	buf = (char *)malloc(len);
+	buf = malloc(len);
 	if (buf == NULL)
-		error("copy_argv: malloc");
+		return (NULL);
 
-	p = argv;
-	dst = buf;
-	while ((src = *p++) != NULL) {
-		while ((*dst++ = *src++) != '\0')
-			;
-		dst[-1] = ' ';
+	strlcpy(buf, argv[0], len);
+	for (n = 1; argv[n]; n++) {
+		strlcat(buf, " ", len);
+		strlcat(buf, argv[n], len);
 	}
-	dst[-1] = '\0';
-
-	return buf;
+	return (buf);
 }
 
 char *
 read_infile(char *fname)
 {
-	register int fd, cc;
-	register char *cp;
-	struct stat buf;
+	struct stat	 buf;
+	int		 fd;
+	ssize_t		 cc;
+	size_t		 bs;
+	char		*cp;
 
 	fd = open(fname, O_RDONLY);
 	if (fd < 0)
@@ -278,13 +278,20 @@ read_infile(char *fname)
 	if (fstat(fd, &buf) < 0)
 		error("can't stat %s: %s", fname, pcap_strerror(errno));
 
-	cp = malloc((u_int)buf.st_size + 1);
-	cc = read(fd, cp, (int)buf.st_size);
-	if (cc < 0)
+	if (buf.st_size >= SSIZE_MAX)
+		error("file too long");
+
+	bs = buf.st_size;
+	cp = malloc(bs + 1);
+	if (cp == NULL)
+		err(1, NULL);
+	cc = read(fd, cp, bs);
+	if (cc == -1)
 		error("read %s: %s", fname, pcap_strerror(errno));
-	if (cc != buf.st_size)
-		error("short read %s (%d != %d)", fname, cc, (int)buf.st_size);
-	cp[(int)buf.st_size] = '\0';
+	if (cc != bs)
+		error("short read %s (%ld != %lu)", fname, (long)cc,
+		    (unsigned long)bs);
+	cp[bs] = '\0';
 
 	return (cp);
 }

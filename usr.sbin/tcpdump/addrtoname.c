@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.19 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.20 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.19 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.20 2004/01/28 19:44:55 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ struct rtentry;
 #include "interface.h"
 #include "addrtoname.h"
 #include "llc.h"
+#include "privsep.h"
 #include "savestr.h"
 #include "setsignal.h"
 
@@ -106,6 +107,7 @@ struct enamemem {
 struct enamemem enametable[HASHNAMESIZE];
 struct enamemem nsaptable[HASHNAMESIZE];
 struct enamemem bytestringtable[HASHNAMESIZE];
+static char *ipprototable[256];
 
 struct protoidmem {
 	u_int32_t p_oui;
@@ -160,7 +162,7 @@ static u_int32_t netmask;
 char *
 getname(const u_char *ap)
 {
-	register struct hostent *hp;
+	char host[MAXHOSTNAMELEN];
 	u_int32_t addr;
 	struct hnamemem *p;
 
@@ -222,11 +224,12 @@ getname(const u_char *ap)
 	    (addr & f_netmask) == f_localnet &&
 	    (aflag ||
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))) {
-		hp = gethostbyaddr((char *)&addr, 4, AF_INET);
-		if (hp) {
+		int n = priv_gethostbyaddr((char *)&addr, 4, AF_INET,
+		    host, sizeof(host));
+		if (n > 0) {
 			char *dotp;
 
-			p->name = savestr(hp->h_name);
+			p->name = savestr(host);
 			if (Nflag) {
 				/* Remove domain qualifications */
 				dotp = strchr(p->name, '.');
@@ -248,7 +251,7 @@ getname(const u_char *ap)
 char *
 getname6(const u_char *ap)
 {
-	register struct hostent *hp;
+	char host[MAXHOSTNAMELEN];
 	struct in6_addr addr;
 	struct h6namemem *p;
 	register char *cp;
@@ -280,11 +283,12 @@ getname6(const u_char *ap)
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))
 #endif
 	    ) {
-		hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
-		if (hp) {
+		int n = priv_gethostbyaddr((char *)&addr, sizeof(addr),
+		    AF_INET6, host, sizeof(host));
+		if (n > 0) {
 			char *dotp;
 
-			p->name = savestr(hp->h_name);
+			p->name = savestr(host);
 			if (Nflag) {
 				/* Remove domain qualifications */
 				dotp = strchr(p->name, '.');
@@ -463,7 +467,8 @@ etheraddr_string(register const u_char *ep)
 #ifdef HAVE_ETHER_NTOHOST
 	if (!nflag) {
 		char buf[MAXHOSTNAMELEN + 1];
-		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
+		if (priv_ether_ntohost(buf, sizeof(buf),
+		    (struct ether_addr *)ep) > 0) {
 			tp->e_name = savestr(buf);
 			return (tp->e_name);
 		}
@@ -649,20 +654,29 @@ udpport_string(register u_short port)
 	return (tp->name);
 }
 
+char *
+ipproto_string(u_int proto)
+{
+	return ipprototable[proto & 0xff];
+}
+
 static void
 init_servarray(void)
 {
-	struct servent *sv;
-	register struct hnamemem *table;
-	register int i;
+	struct hnamemem *table;
+	int i, port;
 	char buf[sizeof("0000000000")];
+	char service[BUFSIZ];
+	char protocol[sizeof("tcp")];
 
-	while ((sv = getservent()) != NULL) {
-		int port = ntohs(sv->s_port);
+	priv_getserventries();
+	while (priv_getserventry(service, sizeof(service), &port, protocol,
+	    sizeof(protocol)) != 0) {
+		port = ntohs(port);
 		i = port & (HASHNAMESIZE-1);
-		if (strcmp(sv->s_proto, "tcp") == 0)
+		if (strcmp(protocol, "tcp") == 0)
 			table = &tporttable[i];
-		else if (strcmp(sv->s_proto, "udp") == 0)
+		else if (strcmp(protocol, "udp") == 0)
 			table = &uporttable[i];
 		else
 			continue;
@@ -673,11 +687,29 @@ init_servarray(void)
 			(void)snprintf(buf, sizeof(buf), "%d", port);
 			table->name = savestr(buf);
 		} else
-			table->name = savestr(sv->s_name);
+			table->name = savestr(service);
 		table->addr = port;
 		table->nxt = newhnamemem();
 	}
-	endservent();
+}
+
+static void
+init_ipprotoarray(void)
+{
+	int i;
+	char buf[sizeof("000")];
+	char prot[BUFSIZ];
+
+	if (!nflag) {
+		priv_getprotoentries();
+		while (priv_getprotoentry(prot, sizeof(prot), &i) != 0)
+			ipprototable[i & 0xff] = savestr(prot);
+	}
+	for (i = 0; i < 256; i++)
+		if (ipprototable[i] == NULL) {
+			(void)snprintf(buf, sizeof(buf), "%d", i);
+			ipprototable[i] = savestr(buf);
+		}
 }
 
 /*XXX from libbpfc.a */
@@ -779,7 +811,8 @@ init_etherarray(void)
 
 #ifdef HAVE_ETHER_NTOHOST
                 /* Use yp/nis version of name if available */
-                if (ether_ntohost(name, (struct ether_addr *)el->addr) == 0) {
+                if (priv_ether_ntohost(name, sizeof(name),
+		    (struct ether_addr *)el->addr) > 0) {
                         tp->e_name = savestr(name);
 			continue;
 		}
@@ -844,6 +877,7 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 	init_eprotoarray();
 	init_llcsaparray();
 	init_protoidarray();
+	init_ipprotoarray();
 }
 
 char *

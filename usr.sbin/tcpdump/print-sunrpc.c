@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.14 2004/01/20 09:00:41 otto Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.15 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.14 2004/01/20 09:00:41 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.15 2004/01/28 19:44:55 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "privsep.h"
 
 static struct tok proc2str[] = {
 	{ PMAPPROC_NULL,	"null" },
@@ -105,17 +106,16 @@ static char *
 progstr(prog)
 	u_int32_t prog;
 {
-	register struct rpcent *rp;
+	char progname[32];
 	static char buf[32];
 	static int lastprog = 0;
 
 	if (lastprog != 0 && prog == lastprog)
 		return (buf);
 	lastprog = prog;
-	rp = getrpcbynumber(prog);
-	if (rp == NULL)
+        if (priv_getrpcbynumber(prog, progname, sizeof(progname)) == 0)
 		snprintf(buf, sizeof(buf), "#%u", prog);
 	else
-		strlcpy(buf, rp->r_name, sizeof(buf));
+		strlcpy(buf, progname, sizeof(buf));
 	return (buf);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.34 2003/09/25 13:32:58 jmc Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.35 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.34 2003/09/25 13:32:58 jmc Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.35 2004/01/28 19:44:55 canacar Exp $ (LBL)";
 #endif
 
 /*
@@ -62,6 +62,7 @@ static const char rcsid[] =
 #include <net/pfvar.h>
 #include "pfctl.h"
 #include "pfctl_parser.h"
+#include "privsep.h"
 
 int aflag;			/* translate network and broadcast addresses */
 int dflag;			/* print filter code */
@@ -80,7 +81,6 @@ int xflag;			/* print packet in hex */
 int Xflag;			/* print packet in emacs-hexl style */
 
 int packettype;
-
 
 char *program_name;
 
@@ -138,6 +138,16 @@ lookup_printer(int type)
 	/* NOTREACHED */
 }
 
+static int
+init_pfosfp(void)
+{
+	pf_osfp_initialize();
+	if (pfctl_file_fingerprints(-1,
+	    PF_OPT_QUIET|PF_OPT_NOACTION, PF_OSFP_FILE) == 0)
+		return 1;
+	return 0;
+}
+
 static pcap_t *pd;
 
 extern int optind;
@@ -149,9 +159,9 @@ main(int argc, char **argv)
 {
 	register int cnt, op, i;
 	bpf_u_int32 localnet, netmask;
-	register char *cp, *infile, *cmdbuf, *device, *RFileName, *WFileName;
+	register char *cp, *infile, *device, *RFileName, *WFileName;
 	pcap_handler printer;
-	struct bpf_program fcode;
+	struct bpf_program *fcode;
 	RETSIGTYPE (*oldhandler)(int);
 	u_char *pcap_userdata;
 	char ebuf[PCAP_ERRBUF_SIZE];
@@ -161,6 +171,11 @@ main(int argc, char **argv)
 	infile = NULL;
 	RFileName = NULL;
 	WFileName = NULL;
+
+	if (priv_init(argc, argv))
+		error("Failed to setup privsep");
+
+	/* state: STATE_INIT */
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
@@ -224,9 +239,6 @@ main(int argc, char **argv)
 			break;
 
 		case 'o':
-			pf_osfp_initialize();
-			if (pfctl_file_fingerprints(-1,
-			    PF_OPT_QUIET|PF_OPT_NOACTION, PF_OSFP_FILE) == 0)
 				oflag = 1;
 			break;
 
@@ -313,21 +325,12 @@ main(int argc, char **argv)
 	if (aflag && nflag)
 		error("-a and -n options are incompatible");
 
-	if (tflag > 0)
-		thiszone = gmt2local(0);
-
 	if (RFileName != NULL) {
-		/*
-		 * We don't need network access, so set it back to the user id.
-		 * Also, this prevents the user from reading anyone's
-		 * trace file.
-		 */
-		seteuid(getuid());
-		setuid(getuid());
-
-		pd = pcap_open_offline(RFileName, ebuf);
+		pd = priv_pcap_offline(RFileName, ebuf);
 		if (pd == NULL)
 			error("%s", ebuf);
+
+		/* state: STATE_BPF */
 		localnet = 0;
 		netmask = 0;
 		if (fflag != 0)
@@ -338,51 +341,45 @@ main(int argc, char **argv)
 			if (device == NULL)
 				error("%s", ebuf);
 		}
-		pd = pcap_open_live(device, snaplen, !pflag, 1000, ebuf);
+		pd = priv_pcap_live(device, snaplen, !pflag, 1000, ebuf);
 		if (pd == NULL)
 			error("%s", ebuf);
+
+		/* state: STATE_BPF */
 		i = pcap_snapshot(pd);
 		if (snaplen < i) {
 			warning("snaplen raised from %d to %d", snaplen, i);
 			snaplen = i;
 		}
-		if (pcap_lookupnet(device, &localnet, &netmask, ebuf) < 0) {
+
+		if (pcap_lookupnet(device, &localnet, &netmask, ebuf)) {
 			warning("%s", ebuf);
 			localnet = 0;
 			netmask = 0;
 		}
-
-		/*
-		 * Let user own process after socket has been opened.
-		 */
-		seteuid(getuid());
-		setuid(getuid());
 	}
-	if (infile)
-		cmdbuf = read_infile(infile);
-	else
-		cmdbuf = copy_argv(&argv[optind]);
 
-	if (pcap_compile(pd, &fcode, cmdbuf, Oflag, netmask) < 0)
+	fcode = priv_pcap_setfilter(pd, Oflag, netmask);
+	/* state: STATE_FILTER */
+	if (fcode == NULL)
 		error("%s", pcap_geterr(pd));
 	if (dflag) {
-		bpf_dump(&fcode, dflag);
+		bpf_dump(fcode, dflag);
 		exit(0);
 	}
 	init_addrtoname(localnet, netmask);
 
-	(void)setsignal(SIGTERM, cleanup);
-	(void)setsignal(SIGINT, cleanup);
-	/* Cooperate with nohup(1) */
+	setsignal(SIGTERM, cleanup);
+	setsignal(SIGINT, cleanup);
+	/* Cooperate with nohup(1) XXX is this still necessary/working? */
 	if ((oldhandler = setsignal(SIGHUP, cleanup)) != SIG_DFL)
 		(void)setsignal(SIGHUP, oldhandler);
 
-	if (pcap_setfilter(pd, &fcode) < 0)
-		error("%s", pcap_geterr(pd));
 	if (WFileName) {
 		pcap_dumper_t *p;
 
-		p = pcap_dump_open(pd, WFileName);
+		p = priv_pcap_dump_open(pd, WFileName);
+		/* state: STATE_RUN */
 		if (p == NULL)
 			error("%s", pcap_geterr(pd));
 		{
@@ -395,12 +392,21 @@ main(int argc, char **argv)
 	} else {
 		printer = lookup_printer(pcap_datalink(pd));
 		pcap_userdata = 0;
+		priv_init_done();
+		/* state: STATE_RUN */
 	}
 	if (RFileName == NULL) {
 		(void)fprintf(stderr, "%s: listening on %s\n",
 		    program_name, device);
 		(void)fflush(stderr);
 	}
+
+	if (oflag)
+		oflag = init_pfosfp();
+	if (tflag > 0)
+		thiszone = gmt2local(0);
+
+
 	if (pcap_loop(pd, cnt, printer, pcap_userdata) < 0) {
 		(void)fprintf(stderr, "%s: pcap_loop: %s\n",
 		    program_name, pcap_geterr(pd));

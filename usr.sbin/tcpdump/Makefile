@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2003/08/21 19:14:23 frantzen Exp $
+#	$OpenBSD: Makefile,v 1.43 2004/01/28 19:44:55 canacar Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,6 @@ PROG=	tcpdump
 MAN=	tcpdump.8
 
 CFLAGS+=-Wall -I${.CURDIR}/../../sbin/pfctl
-.PATH:	${.CURDIR}/../../sbin/pfctl
 
 CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DRETSIGTYPE=void -DHAVE_NET_SLIP_H -DHAVE_ETHER_NTOHOST -DINET6
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc") || \
@@ -35,7 +34,10 @@ CFLAGS+=-DLBL_ALIGN
 LDADD+=	-lpcap -ll -lcrypto
 DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
 
-SRCS=	tcpdump.c addrtoname.c \
+#BINMODE=4555
+#BINOWN= root
+
+SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \
 	print-atalk.c print-domain.c print-tftp.c print-bootp.c print-nfs.c \
 	print-icmp.c print-sl.c print-ppp.c print-rip.c print-timed.c \

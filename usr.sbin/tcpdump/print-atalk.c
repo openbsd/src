@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.20 2003/04/14 21:28:10 pvalchev Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.21 2004/01/28 19:44:55 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.20 2003/04/14 21:28:10 pvalchev Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.21 2004/01/28 19:44:55 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ struct rtentry;
 #include "extract.h"			/* must come after interface.h */
 #include "appletalk.h"
 #include "savestr.h"
+#include "privsep.h"
 
 static struct tok type2str[] = {
 	{ ddpRTMP,		"rtmp" },
@@ -553,6 +554,39 @@ struct hnamemem {
 
 static struct hnamemem hnametable[HASHNAMESIZE];
 
+/*
+ * see if there's an AppleTalk number to name map file.
+ */
+static void
+init_atalk(void)
+{
+	struct hnamemem *tp;
+	char nambuf[MAXHOSTNAMELEN + 20];
+	char line[BUFSIZ];
+	int i1, i2, i3;
+
+	priv_getlines(FTAB_APPLETALK);
+	while (priv_getline(line, sizeof(line)) > 0) {
+		if (line[0] == '\n' || line[0] == 0 || line[0] == '#')
+			continue;
+		if (sscanf(line, "%d.%d.%d %255s", &i1, &i2, &i3, nambuf) == 4)
+			/* got a hostname. */
+			i3 |= ((i1 << 8) | i2) << 8;
+		else if (sscanf(line, "%d.%d %255s", &i1, &i2, nambuf) == 3)
+			/* got a net name */
+			i3 = (((i1 << 8) | i2) << 8) | 255;
+		else
+			continue;
+		
+		for (tp = &hnametable[i3 & (HASHNAMESIZE-1)];
+		     tp->nxt; tp = tp->nxt)
+			;
+		tp->addr = i3;
+		tp->nxt = newhnamemem();
+		tp->name = savestr(nambuf);
+	}
+}
+
 static const char *
 ataddr_string(u_short atnet, u_char athost)
 {
@@ -560,41 +594,11 @@ ataddr_string(u_short atnet, u_char athost)
 	register int i = (atnet << 8) | athost;
 	char nambuf[MAXHOSTNAMELEN + 20];
 	static int first = 1;
-	FILE *fp;
 
-	/*
-	 * if this is the first call, see if there's an AppleTalk
-	 * number to name map file.
-	 */
-	if (first && (first = 0, !nflag)
-	    && (fp = fopen("/etc/atalk.names", "r"))) {
-		char line[256];
-		int i1, i2, i3;
-
-		while (fgets(line, sizeof(line), fp)) {
-			if (line[0] == '\n' || line[0] == 0 || line[0] == '#')
-				continue;
-			if (sscanf(line, "%d.%d.%d %255s", &i1, &i2, &i3,
-				     nambuf) == 4)
-				/* got a hostname. */
-				i3 |= ((i1 << 8) | i2) << 8;
-			else if (sscanf(line, "%d.%d %255s", &i1, &i2,
-					nambuf) == 3)
-				/* got a net name */
-				i3 = (((i1 << 8) | i2) << 8) | 255;
-			else
-				continue;
-
-			for (tp = &hnametable[i3 & (HASHNAMESIZE-1)];
-			     tp->nxt; tp = tp->nxt)
-				;
-			tp->addr = i3;
-			tp->nxt = newhnamemem();
-			tp->name = savestr(nambuf);
-		}
-		fclose(fp);
+	if (first) {
+		first = 0;
+		init_atalk();
 	}
-
 	for (tp = &hnametable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
