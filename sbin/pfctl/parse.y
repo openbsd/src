@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2002/06/08 08:44:09 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.84 2002/06/08 09:41:52 kjell Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -124,6 +124,7 @@ struct peer {
 int	rule_consistent(struct pf_rule *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
+void	expand_nat(struct pf_nat *, struct node_host *, struct node_host *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, u_int8_t, struct node_port *);
 void	expand_label_proto(const char *, char *, u_int8_t);
@@ -1178,10 +1179,6 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				YYERROR;
 			}
 			if ($7 != NULL) {
-				if ($7->next) {
-					yyerror("multiple nat ip addresses");
-					YYERROR;
-				}
 				if ($7->addr.addr_dyn != NULL) {
 					if (!nat.af) {
 						yyerror("address family (inet/"
@@ -1200,13 +1197,8 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				memcpy(&nat.smask, &$7->mask,
 				    sizeof(nat.smask));
 				nat.snot = $7->not;
-				free($7);
 			}
 			if ($9 != NULL) {
-				if ($9->next) {
-					yyerror("multiple nat ip addresses");
-					YYERROR;
-				}
 				if ($9->addr.addr_dyn != NULL) {
 					if (!nat.af) {
 						yyerror("address family (inet/"
@@ -1225,7 +1217,6 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				memcpy(&nat.dmask, &$9->mask,
 				    sizeof(nat.dmask));
 				nat.dnot = $9->not;
-				free($9);
 			}
 
 			if (nat.no) {
@@ -1257,7 +1248,7 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				free($10);
 			}
 
-			pfctl_add_nat(pf, &nat);
+			expand_nat(&nat, $7, $9);
 		}
 		;
 
@@ -1951,6 +1942,46 @@ expand_rule(struct pf_rule *r,
 	if (!added)
 		yyerror("rule expands to no valid combination");
 }
+
+void
+expand_nat(struct pf_nat *n, struct node_host *src_hosts,
+    struct node_host *dst_hosts)
+{
+	int af = n->af, added = 0;
+
+	CHECK_ROOT(struct node_host, src_hosts)
+;	CHECK_ROOT(struct node_host, dst_hosts);
+
+	LOOP_THROUGH(struct node_host, src_host, src_hosts,
+	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
+
+		n->af = af;
+	    	if ((n->af && src_host->af && n->af != src_host->af) ||
+		    (n->af && dst_host->af && n->af != dst_host->af) ||
+		    (src_host->af && dst_host->af &&
+		    src_host->af != dst_host->af))
+			continue;
+		if (!n->af && src_host->af)
+			n->af = src_host->af;
+		else if (!n->af && dst_host->af)
+			n->af = dst_host->af;
+		    
+ 	        n->saddr = src_host->addr;
+		n->smask = src_host->mask;
+ 	        n->daddr = dst_host->addr;
+		n->dmask = dst_host->mask;
+
+		pfctl_add_nat(pf, n);
+		added++;
+	));
+
+	FREE_LIST(struct node_host, src_hosts);
+	FREE_LIST(struct node_host, dst_hosts);
+
+	if (!added)
+		yyerror("nat rule expands to no valid AF combination");
+}
+
 
 #undef FREE_LIST
 #undef CHECK_ROOT
