@@ -45,6 +45,8 @@
 #include <sys/time.h>
 
 #ifdef sun
+#include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #endif
 
