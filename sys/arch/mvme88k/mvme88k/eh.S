@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.38 2003/09/07 01:00:29 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.39 2003/09/07 01:49:16 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1284,7 +1284,7 @@ ASLOCAL(have_pcb)
 	 * Save Pbus fault status register from data and inst CMMU.
 	 */
 #ifdef MVME188
-#if defined(MVME187) || defined(MVME197)
+#ifdef MVME187
 	/* check if it's a mvme188 */
 	or.u	TMP,  r0,   hi16(_C_LABEL(brdtyp))
 	ld	TMP2, TMP,  lo16(_C_LABEL(brdtyp))
@@ -1341,7 +1341,7 @@ ASLOCAL(have_pcb)
 	br	_ASM_LABEL(pfsr_done)
 5:
 #endif   /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
+#ifdef MVME187
 	/* it's a single processor SBC */
 	or.u	TMP,  r0,   hi16(SBC_CMMU_I)
 	ld	TMP2, TMP,  lo16(SBC_CMMU_I) + 0x108
