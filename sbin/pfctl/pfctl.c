@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.226 2004/12/27 15:47:07 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.227 2004/12/28 18:12:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,6 +59,7 @@ void	 usage(void);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
 int	 pfctl_clear_stats(int, int);
+int	 pfctl_clear_interface_flags(int, int);
 int	 pfctl_clear_rules(int, int, char *);
 int	 pfctl_clear_nat(int, int, char *);
 int	 pfctl_clear_altq(int, int);
@@ -250,6 +251,21 @@ pfctl_clear_stats(int dev, int opts)
 		err(1, "DIOCCLRSTATUS");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf: statistics cleared\n");
+	return (0);
+}
+
+int
+pfctl_clear_interface_flags(int dev, int opts)
+{
+	struct pfioc_iface	pi;
+
+	bzero(&pi, sizeof(pi));
+	pi.pfiio_flags = PFI_IFLAG_SETABLE_MASK;
+
+	if (ioctl(dev, DIOCCLRIFFLAG, &pi))
+		err(1, "DIOCCLRIFFLAG");
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "pf: interface flags reset\n");
 	return (0);
 }
 
@@ -1676,6 +1692,7 @@ main(int argc, char *argv[])
 				pfctl_clear_src_nodes(dev, opts);
 				pfctl_clear_stats(dev, opts);
 				pfctl_clear_fingerprints(dev, opts);
+				pfctl_clear_interface_flags(dev, opts);
 			}
 			break;
 		case 'o':
@@ -1694,6 +1711,10 @@ main(int argc, char *argv[])
 		    tblcmdopt, rulesopt, anchorname, opts);
 		rulesopt = NULL;
 	}
+
+	if ((rulesopt != NULL) && (!*anchorname))
+		if (pfctl_clear_interface_flags(dev, opts))
+			error = 1;
 
 	if (rulesopt != NULL)
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
