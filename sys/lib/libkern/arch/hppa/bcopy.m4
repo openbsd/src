@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.3 1999/09/14 00:51:19 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.4 1999/12/05 02:38:09 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -52,7 +52,7 @@ dnl
 dnl
 dnl
 define(`STWS',`ifelse($5, `u',dnl
-`ifelse($1, `1', `vshd     $4, t`$1', r31
+`ifelse($1, `1', `vshd	$4, t`$1', r31
 	stbys,B,m r31, F`'4($2, $3)',
 `0', `0', `vshd	t`'decr($1), t`$1', r31
 	stws,M	r31, F`'4($2, $3)')',dnl
@@ -66,7 +66,7 @@ define(`STWSS', `ifelse(`$3', `1', `dnl',
 ')dnl
 define(`LDWSS', `ifelse(`$3', `1', `dnl',
 `0', `0', `LDWSS($1, $2, eval($3 - 1))')
-	ldws,M  F`'4($1, $2), t`'$3`'dnl
+	ldws,M	F`'4($1, $2), t`'$3`'dnl
 ')dnl
 dnl
 dnl copy data in 4-words blocks
@@ -200,7 +200,7 @@ L($1, done)
 ifelse(NAME, `bcopy',
 `
 #if defined(LIBC_SCCS)
-        .text
+	.text
 	.asciz "versionmacro"
 #endif
 
@@ -239,30 +239,30 @@ ifelse(NAME, `spcopy',
 	.import	curproc, data
 	.import	copy_on_fault, code
 ENTRY(spcopy)
-	ldw     HPPA_FRAME_ARG(4)(sp), ret1
+	ldw	HPPA_FRAME_ARG(4)(sp), ret1
 	comb,>=,n r0, ret1, L(spcopy, ret)
 `
 	/* setup fault handler */
-	ldil    L%curproc, r31
-	ldw     R%curproc(r31), r31
-	ldil    L%copy_on_fault, t2
-	ldw     p_addr(r31), r31
-	ldo     R%copy_on_fault(t2), t2
-	stw     t2, pcb_onfault+u_pcb(r31)
+	ldil	L%curproc, r31
+	ldw	R%curproc(r31), r31
+	ldil	L%copy_on_fault, t2
+	ldw	p_addr(r31), r31
+	ldo	R%copy_on_fault(t2), t2
+	stw	t2, pcb_onfault+u_pcb(r31)
 '
-	mfctl   sr2, ret0       /* XXX need this?, sr1 is scratchable */
-	mtctl   arg0, sr1
-	mtctl   arg2, sr2
-	copy	ret1, arg0	/* ret1 is used in hppa_blcopy() */
+	mfsp	sr2, ret0	/* XXX need this?, sr1 is scratchable */
+	mtsp	arg0, sr1
+	mtsp	arg2, sr2
+	copy	ret1, arg0	/* ret1 is used in hppa`'_blcopy() */
 
 	hppa_copy(spcopy, sr1, arg1, sr2, arg3, ret1, `+')
 
 	/* reset fault handler */
-	stw     r0, pcb_onfault+u_pcb(r31)
-	mtctl   ret0, sr2
+	stw	r0, pcb_onfault+u_pcb(r31)
+	mtsp	ret0, sr2
 L(spcopy, ret)
-	bv      0(rp)
-	copy    r0, ret0
+	bv	0(rp)
+	copy	r0, ret0
 EXIT(spcopy)
 #endif
 ')dnl
