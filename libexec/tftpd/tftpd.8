@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
+.\"   $OpenBSD: tftpd.8,v 1.15 2004/01/12 12:07:41 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.14 2003/08/08 09:26:03 jmc Exp $
+.\"	$OpenBSD: tftpd.8,v 1.15 2004/01/12 12:07:41 jmc Exp $
 .\"
 .Dd June 11, 1997
 .Dt TFTPD 8
@@ -66,14 +66,24 @@ does not require an account or password on the remote system.
 Due to the lack of authentication information,
 .Nm
 will allow only publicly readable files to be accessed.
-Files may be written only if they already exist and are publicly writable.
+Files may be written only if they already exist and are publicly writable,
+unless the
+.Fl c
+flag is specified
+.Pq see below .
 Note that this extends the concept of
 .Dq public
 to include
 all users on all hosts that can be reached through the network;
 this may not be appropriate on all systems, and its implications
 should be considered before enabling tftp service.
-The server should have the user ID with the lowest possible privilege.
+.Pp
+The server should have the user ID with the lowest possible privilege,
+unless the
+.Fl s
+flag is specified
+.Pq see below ,
+in which case it must be started with user ID 0.
 .Pp
 Access to files may be restricted by invoking
 .Nm
@@ -83,6 +93,9 @@ as server program arguments in
 In this case access is restricted to files whose
 names are prefixed by one of the given directories.
 .Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
 If the
 .Fl c
 flag is used,
@@ -91,7 +104,7 @@ will allow new files to be created; otherwise uploaded files must already
 exist.
 Files are created with default permissions allowing anyone to read
 or write to them.
-.Pp
+.It Fl s
 When using the
 .Fl s
 flag with a directory name,
@@ -102,6 +115,7 @@ on startup; therefore the remote host is not expected to pass the directory
 as part of the file name to transfer.
 This option is intended primarily for
 compatibility with SunOS boot ROMs which do not include a directory name.
+.El
 .Sh SEE ALSO
 .Xr tftp 1 ,
 .Xr inetd 8
