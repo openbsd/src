@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2001/09/06 21:37:19 todd Exp $
+# $OpenBSD: Makefile,v 1.3 2001/09/07 17:04:31 todd Exp $
 
 NOMAN=
 NOPROG=
@@ -19,7 +19,7 @@ ${MAKEDEVARCHS}:
 	@exec cp ${ETCSRCDIR}/etc.${.TARGET}/MAKEDEV test.${.TARGET}
 	@exec ${SUDO} chown root.wheel test.${.TARGET}
 	@cd test.${.TARGET}; time ${SUDO} sh ./MAKEDEV all || true; \
-	( ls -l; ls -l fd/ ) | \
+	( ls -l; ls -l fd/; ls -l altq/ ) | \
 		awk '/^[bcps]/ {print $$1,$$2,$$3,$$4,$$5,$$6,$$10} \
 		     /^l/      {print $$1,$$2,$$3,$$4,$$5,$$9,$$10,$$11}' |\
 		sort +4 -n > ../t1.${.TARGET}.out
