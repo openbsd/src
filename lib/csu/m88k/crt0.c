@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.1 2001/06/26 22:42:55 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2001/06/26 22:42:55 miod Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -99,14 +99,21 @@ __crt0_real_start(int argc, char *argv[], char *envp[])
 	register char *ap;
 	volatile int a = 0;
 	extern int end;
+	char *s;
 
 	environ = envp; /* environ is for the user that can't get at 'envp' */
 
-	if (ap = argv[0])
+	if (ap = argv[0]) {
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else
 			++__progname;
+		for (s = __progname_storage; *__progname &&
+		    s < &__progname_storage[sizeof __progname_storage - 1]; )
+			*s++ = *__progname++;
+		*s = '\0';
+		__progname = __progname_storage;
+	}
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, environ));
 

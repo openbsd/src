@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.6 2002/09/17 21:16:01 deraadt Exp $	*/
+/*	$OpenBSD: common.h,v 1.7 2003/02/28 18:05:48 deraadt Exp $	*/
 /*	$NetBSD: common.h,v 1.3 1995/06/15 21:41:48 pk Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include <string.h>
+#include <limits.h>
 
 #ifdef DYNAMIC
 
@@ -92,6 +93,7 @@ char			**environ;
 int			errno;
 static char		empty[1];
 char			*__progname = empty;
+char			__progname_storage[NAME_MAX+1];
 #ifndef DYNAMIC
 #define _strrchr	strrchr
 #endif

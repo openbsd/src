@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.7 2002/09/17 21:16:01 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.8 2003/02/28 18:05:51 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.14 1995/06/03 13:16:11 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2002/09/17 21:16:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.8 2003/02/28 18:05:51 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@ start()
 	 */
 	register struct kframe *kfp;
 	register char **argv, *ap;
+	char *s;
 
 #ifdef lint
 	kfp = 0;
@@ -67,11 +68,17 @@ start()
 	argv = &kfp->kargv[0];
 	environ = argv + kfp->kargc + 1;
 
-	if (ap = argv[0])
+	if (ap = argv[0]) {
 		if ((__progname = _strrchr(ap, '/')) == NULL)
 			__progname = ap;
 		else
 			++__progname;
+		for (s = __progname_storage; *__progname &&
+		    s < &__progname_storage[sizeof __progname_storage - 1]; )
+			*s++ = *__progname++;
+		*s = '\0';
+		__progname = __progname_storage;
+	}
 
 #ifdef DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2003/01/16 19:15:38 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2003/02/28 18:05:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,13 +35,13 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2003/01/16 19:15:38 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2003/02/28 18:05:51 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdlib.h>
 #include <sys/syscall.h>
 #include <sys/fcntl.h>
 #include <sys/exec.h>
+#include <stdlib.h>
 #include <paths.h>
 
 #include "common.h"
@@ -75,6 +75,7 @@ __start(sp, cleanup, obj)
 {
 	struct ps_strings *arginfo = (struct ps_strings *)sp;
 	char **argv, *namep;
+	char *s;
 
 	__asm __volatile (".import $global$, data\n\t"
 			  "ldil L%%$global$, %%r27\n\t"
@@ -87,6 +88,11 @@ __start(sp, cleanup, obj)
 			__progname = namep;
 		else
 			__progname++;
+		for (s = __progname_storage; *__progname &&
+		    s < &__progname_storage[sizeof __progname_storage - 1]; )
+			*s++ = *__progname++;
+		*s = '\0';
+		__progname = __progname_storage;
 	}
 
 #ifdef MCRT0

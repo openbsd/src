@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2002/02/17 19:42:22 millert Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2003/02/28 18:05:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,11 +32,13 @@
  */
 
 #include <stdlib.h>
+#include <limits.h>
 
 static char	*_strrchr(char *, char);
 
 char	**environ;
 char	*__progname = "";
+char	__progname_storage[NAME_MAX+1];
 
 #ifdef MCRT0
 extern void	monstartup(u_long, u_long);
@@ -66,6 +68,7 @@ ___start(char **sp, void (*cleanup)(void), const void *obj)
 {
 	long argc;
 	char **argv, *namep;
+	char *s;
 
 	argc = *(long *)sp;
 	argv = sp + 1;
@@ -76,6 +79,11 @@ ___start(char **sp, void (*cleanup)(void), const void *obj)
 			__progname = namep;
 		else
 			__progname++;
+		for (s = __progname_storage; *__progname &&
+		    s < &__progname_storage[sizeof __progname_storage - 1]; )
+			*s++ = *__progname++;
+		*s = '\0';
+		__progname = __progname_storage;
 	}
 
 #ifdef MCRT0

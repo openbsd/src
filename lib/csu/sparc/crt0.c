@@ -36,6 +36,7 @@
  */
 
 #include <stdlib.h>
+#include <limits.h>
 
 void ___start(int, char **, char **, void (*cleanup)(void), void *);
 
@@ -62,6 +63,7 @@ _start:
 
 char **environ;
 char *__progname = "";
+char __progname_storage[NAME_MAX+1];
 
 #ifdef MCRT0
 extern void     monstartup(u_long, u_long);
@@ -75,6 +77,8 @@ void
 ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
 	void *obj)
 {
+	char *s;
+
 	environ = envp;
 
 	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
@@ -82,6 +86,11 @@ ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
 			__progname = argv[0];
 		else
 			__progname++;
+		for (s = __progname_storage; *__progname &&
+		    s < &__progname_storage[sizeof __progname_storage - 1]; )
+			*s++ = *__progname++;
+		*s = '\0';
+		__progname = __progname_storage;
 	}
 
 #ifdef MCRT0
