@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.37 2004/02/01 06:02:13 drahn Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.38 2004/06/22 19:50:01 pvalchev Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -116,17 +116,6 @@ CXXFLAGS+=	${CXXDIAGFLAGS}
 .endif
 CFLAGS+=	${COPTS}
 CXXFLAGS+=	${CXXOPTS}
-
-.if !defined(PICFLAG) && (${MACHINE_ARCH} != "mips")
-PICFLAG=-fpic
-.if ${MACHINE_ARCH} == "m68k"
-# Function CSE makes gas -k not recognize external function calls as lazily
-# resolvable symbols, thus sometimes making ld.so report undefined symbol
-# errors on symbols found in shared library members that would never be 
-# called.  Ask niklas@openbsd.org for details.
-PICFLAG+=-fno-function-cse
-.endif
-.endif
 
 _LIBS=lib${LIB}.a
 .if (${DEBUGLIBS:L} == "yes")

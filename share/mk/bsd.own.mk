@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.83 2004/06/01 20:43:44 mickey Exp $
+#	$OpenBSD: bsd.own.mk,v 1.84 2004/06/22 19:50:01 pvalchev Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -116,10 +116,20 @@ STATIC?=	-static
 NOPIC=
 .endif
 
-#pic relocation flags.
+# pic relocation flags.
 .if (${MACHINE_ARCH} == "sparc64")
 PICFLAG=-fPIC
+.else
+PICFLAG=-fpic
+. if ${MACHINE_ARCH} == "m68k"
+# Function CSE makes gas -k not recognize external function calls as lazily
+# resolvable symbols, thus sometimes making ld.so report undefined symbol
+# errors on symbols found in shared library members that would never be
+# called.  Ask niklas@openbsd.org for details.
+PICFLAG+=-fno-function-cse
+. endif
 .endif
+
 .if (${MACHINE_ARCH} == "sparc64") || (${MACHINE_ARCH} == "sparc")
 ASPICFLAG=-KPIC
 .elif (${ELF_TOOLCHAIN:L} == "no")
