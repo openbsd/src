@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2001/09/26 09:32:32 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2001/09/26 10:19:16 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -82,6 +82,19 @@
 #include "archdep.h"
 #include "resolve.h"
 
+void
+_dl_bcopy(const void *src, void *dest, int size)
+{
+	const unsigned char *psrc;
+	unsigned char *pdest;
+	int i;
+	psrc = src;
+	pdest = dest;
+	for (i = 0; i < size; i++) {
+		pdest[i] = psrc[i];
+	}
+}
+
 /*
  * The following table holds for each relocation type:
  *	- the width in bits of the memory location the relocation
@@ -124,7 +137,7 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/* PC10 */
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(10),	/* PC22 */
 	      _RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(2),		/* WPLT30 */
-				_RF_SZ(32) | _RF_RS(0),		/* COPY */
+	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* COPY */
 	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/* GLOB_DAT */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(64) | _RF_RS(0),		/* RELATIVE */
@@ -248,11 +261,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		if (type == R_TYPE(NONE))
 			continue;
 
-		if (type == R_TYPE(COPY)) {
-_dl_printf("COPY relocation\n");
-			continue;
-		}
-
 		if (type == R_TYPE(RELATIVE)) {
 			*where = (Elf_Addr)(loff + value);
 			continue;
@@ -269,6 +277,7 @@ _dl_printf("COPY relocation\n");
 			this = NULL;
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 			if (this == NULL) {
+resolve_failed:
 				_dl_printf("%s: %s :can't resolve reference '%s'\n",
 					_dl_progname, object->load_name, symn);
 				fails++;
@@ -281,7 +290,25 @@ _dl_printf("COPY relocation\n");
 		if (type == R_TYPE(JMP_SLOT)) {
 			if (relas->r_addend)
 				value -= relas->r_addend;
-			_dl_reloc_plt((Eld_Word *)where, value, relas);
+			_dl_reloc_plt((Elf_Word *)where, value, relas);
+			continue;
+		}
+
+		if (type == R_TYPE(COPY)) {
+			void *dstaddr = where;
+			const void *srcaddr;
+			const Elf_Sym *dstsym = sym, *srcsym = NULL;
+			const char *name = symn;
+			size_t size = dstsym->st_size;
+			Elf_Addr soff;
+
+			soff = _dl_find_symbol(symn, object->next, &srcsym,
+				0, 2);
+			if (srcsym == NULL)
+				goto resolve_failed;
+
+			srcaddr = (void *)(soff + srcsym->st_value);
+			_dl_bcopy(srcaddr, dstaddr, size);
 			continue;
 		}
 
