@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.6 2000/10/16 14:25:04 deraadt Exp $
+ *	$OpenBSD: SYS.h,v 1.7 2000/10/17 17:44:38 deraadt Exp $
  */
 
 #include <machine/asm.h>
@@ -43,16 +43,10 @@
 
 #ifdef __STDC__
 #define _CAT(x,y) x##y
-#define __ENTRY(p,x) \
-		.weak _C_LABEL(x); \
-		_C_LABEL(x) = _C_LABEL(p##x); \
-		ENTRY(p##x)
+#define __ENTRY(p,x) ENTRY(p##x)
 #else
 #define _CAT(x,y) x/**/y
-#define __ENTRY(p,x) \
-		.weak _C_LABEL(x); \
-		_C_LABEL(x) = _C_LABEL(p/**/x); \
-		ENTRY(p/**/x)
+#define __ENTRY(p,x) ENTRY(p/**/x)
 #endif
 
 /*
@@ -92,6 +86,7 @@
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
+#ifdef _THREAD_SAFE
 /*
  * For the thread_safe versions, we prepend _thread_sys_ to the function
  * name so that the 'C' wrapper can go around the real name.
@@ -100,4 +95,14 @@
 # define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
 # define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
 # define SYSENTRY(x)	__ENTRY(_thread_sys_,x)
+#else _THREAD_SAFE
+/*
+ * The non-threaded library defaults to traditional syscalls where
+ * the function name matches the syscall name.
+ */
+# define SYSCALL(x)	__SYSCALL(,x)
+# define RSYSCALL(x)	__RSYSCALL(,x)
+# define PSEUDO(x,y)	__PSEUDO(,x,y)
+# define SYSENTRY(x)	__ENTRY(,x)
+#endif _THREAD_SAFE
 	.globl	cerror
