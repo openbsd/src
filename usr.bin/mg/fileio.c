@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.22 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.23 2002/02/14 22:58:20 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -11,7 +11,6 @@ static FILE	*ffp;
 #include <sys/stat.h>
 #include <sys/dir.h>
 #include <string.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -466,19 +465,25 @@ dired_(dirname)
 	return bp;
 }
 
-int
-d_makename(lp, fn)
-	LINE  *lp;
-	char  *fn;
-{
-	char  *cp;
+#define NAME_FIELD	8
 
-	if (llength(lp) <= 56)
-		return ABORT;
-	(void) strcpy(fn, curbp->b_fname);
-	cp = fn + strlen(fn);
-	bcopy(&lp->l_text[56], cp, llength(lp) - 56);
-	cp[llength(lp) - 56] = '\0';
+int
+d_makename(LINE *lp, char *fn, int len)
+{
+	int i;
+	char *p, *np;
+	
+	strlcpy(fn, curbp->b_fname, len);
+	p = lp->l_text;
+	for (i = 0; i < NAME_FIELD; i++) {
+		np = strpbrk(p, "\t ");
+		if (np == NULL)
+			return ABORT;
+		p = np + 1;
+		while (*p != '\0' && strchr("\t ", *p))
+			p++;
+	}
+	strlcat(fn, p, len);
 	return lgetc(lp, 2) == 'd';
 }
 #endif				/* NO_DIRED */

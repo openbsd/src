@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.7 2001/05/24 03:05:21 mickey Exp $	*/
+/*	$OpenBSD: dired.c,v 1.8 2002/02/14 22:58:20 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -110,7 +110,7 @@ d_findfile(f, n)
 	int	s;
 	char	fname[NFILEN];
 
-	if ((s = d_makename(curwp->w_dotp, fname)) == ABORT)
+	if ((s = d_makename(curwp->w_dotp, fname, sizeof fname)) == ABORT)
 		return FALSE;
 	if ((bp = (s ? dired_(fname) : findbuffer(fname))) == NULL)
 		return FALSE;
@@ -132,7 +132,7 @@ d_ffotherwindow(f, n)
 	BUFFER *bp;
 	MGWIN  *wp;
 
-	if ((s = d_makename(curwp->w_dotp, fname)) == ABORT)
+	if ((s = d_makename(curwp->w_dotp, fname, sizeof fname)) == ABORT)
 		return FALSE;
 	if ((bp = (s ? dired_(fname) : findbuffer(fname))) == NULL)
 		return FALSE;
@@ -156,7 +156,7 @@ d_expunge(f, n)
 	for (lp = lforw(curbp->b_linep); lp != curbp->b_linep; lp = nlp) {
 		nlp = lforw(lp);
 		if (llength(lp) && lgetc(lp, 0) == 'D') {
-			switch (d_makename(lp, fname)) {
+			switch (d_makename(lp, fname, sizeof fname)) {
 			case ABORT:
 				ewprintf("Bad line in dired buffer");
 				return FALSE;
@@ -189,7 +189,7 @@ d_copy(f, n)
 	char	frname[NFILEN], toname[NFILEN];
 	int	stat;
 
-	if (d_makename(curwp->w_dotp, frname) != FALSE) {
+	if (d_makename(curwp->w_dotp, frname, sizeof frname) != FALSE) {
 		ewprintf("Not a file");
 		return FALSE;
 	}
@@ -207,7 +207,7 @@ d_rename(f, n)
 	char	frname[NFILEN], toname[NFILEN];
 	int	stat;
 
-	if (d_makename(curwp->w_dotp, frname) != FALSE) {
+	if (d_makename(curwp->w_dotp, frname, sizeof frname) != FALSE) {
 		ewprintf("Not a file");
 		return FALSE;
 	}
