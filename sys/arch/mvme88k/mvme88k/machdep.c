@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.101 2003/05/11 19:41:11 deraadt Exp $	*/
+/* $OpenBSD: machdep.c,v 1.102 2003/08/01 07:47:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -98,7 +98,6 @@
 #include <mvme88k/dev/pcctworeg.h>
 #include <mvme88k/dev/busswreg.h>
 
-#include "assym.h"			/* EF_EPSR, etc. */
 #include "ksyms.h"
 #if DDB
 #include <machine/db_machdep.h>
@@ -2399,6 +2398,7 @@ mvme_bootstrap()
 		last_addr = memsize187();
 		break;
 #endif
+#if defined(MVME188) || defined(MVME197)
 #ifdef MVME188
 	case BRD_188:
 #endif
@@ -2406,6 +2406,9 @@ mvme_bootstrap()
 	case BRD_197:
 #endif
 		last_addr = size_memory();
+		break;
+#endif
+	default:
 		break;
 	}
 	physmem = btoc(last_addr);
