@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
+/*      $OpenBSD: ac97.c,v 1.3 1999/10/05 18:58:22 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -355,8 +355,7 @@ static char *ac97feature[] = {
 int ac97_str_equal __P((char *, char *));
 void ac97_setup_source_info __P((struct ac97_softc *));
 
-#define AUDIO_DEBUG
-#define AC97_DEBUG 0
+#define AC97_DEBUG 10
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (ac97debug) printf x
