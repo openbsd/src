@@ -574,6 +574,7 @@ pm_intr_pm1()
 			printf("pm: PM is not ready. error code=%08x\n", rval);
 #endif
 		splx(s);
+		return;
 	}
 
 	if ((pmdata.data[2] & 0x10) == 0x10) {
@@ -831,26 +832,6 @@ pm_intr_pm2()
 
 	s = splhigh();
 
-	for (;;) {
-		u_int ifr;
-		ifr = read_via_reg(VIA1, vIFR);
-
-		if (ifr == 0)
-			break;
-
-		if (ifr & V1IF_ADBRDY) {
-			write_via_reg(VIA1, vIFR, V1IF_ADBRDY);
-			ifr &= ~V1IF_ADBRDY;
-			delay(120000); /* XXX */
-		} else if (ifr & V1IF_ADBCLK) {
-			write_via_reg(VIA1, vIFR, V1IF_ADBCLK);
-			ifr &= ~V1IF_ADBCLK;
-		}
-
-		if (ifr)
-			write_via_reg(VIA1, vIFR, ifr);
-	}
-
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
 						/* ask PM what happend */
 	pmdata.command = 0x78;
@@ -864,6 +845,7 @@ pm_intr_pm2()
 			printf("pm: PM is not ready. error code: %08x\n", rval);
 #endif
 		splx(s);
+		return;
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
@@ -906,6 +888,7 @@ pm_intr_pm2()
 		case 0x16:			/* ADB device event */
 		case 0x18:
 		case 0x1e:
+		case PMU_INT_WAKEUP:
 			pm_adb_get_ADB_data(&pmdata);
 			break;
 		default:
@@ -999,7 +982,7 @@ pm_adb_op(buffer, compRout, data, command)
 	int i;
 	int s;
 	int rval;
-	int delay;
+	int ndelay;
 	PMData pmdata;
 	struct adbCommand packet;
 
@@ -1063,10 +1046,14 @@ pm_adb_op(buffer, compRout, data, command)
 	adbWaiting = 1;
 	adbWaitingCmd = command;
 
+	{
+		delay (150000);
+	}
+
 	PM_VIA_INTR_ENABLE();
 
 	/* wait until the PM interrupt is occured */
-	delay = 0x80000;
+	ndelay = 0x80000;
 	while (adbWaiting == 1) {
 		if (read_via_reg(VIA1, vIFR) & 0x14)
 			pm_intr();
@@ -1077,7 +1064,7 @@ pm_adb_op(buffer, compRout, data, command)
 			(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0) {
+		if ((--ndelay) < 0) {
 			splx(s);
 			return 1;
 		}
