@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 1999/12/29 07:42:01 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2000/03/13 16:05:24 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -111,10 +111,6 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
-#if 0
-/* Does not belong here! */
-void		 pmap_bootstrap( /* machine dependent */ );
-#endif
 void		 pmap_change_wiring __P((pmap_t, vaddr_t, boolean_t));
 
 #if defined(PMAP_NEW)
