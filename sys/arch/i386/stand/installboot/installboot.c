@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 1997/08/29 20:08:36 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.8 1997/08/30 02:13:48 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -104,6 +104,7 @@ main(argc, argv)
 	struct disklabel dl;
 	struct dos_mbr mbr;
 	struct dos_partition *dp;
+	off_t startoff = 0;
 
 	nsectors = heads = -1;
 	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
@@ -204,30 +205,33 @@ main(argc, argv)
 	/* Sync filesystems (to clean in-memory superblock?) */
 	sync(); sleep(1);
 
-	if (lseek(devfd, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
-	    read(devfd, &mbr, sizeof(mbr)) < sizeof(mbr))
-		err(4, "can't read master boot record");
+	if (dl.d_type != 0 && dl.d_type < DTYPE_FLOPPY) {
+		if (lseek(devfd, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
+		    read(devfd, &mbr, sizeof(mbr)) < sizeof(mbr))
+			err(4, "can't read master boot record");
 
-	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
-		errx(1, "broken MBR");
+		if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
+			errx(1, "broken MBR");
 
-	/* Find OpenBSD partition. */
-	for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART]; dp++) {
-		if (dp->dp_size && dp->dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "using MBR partition %d: "
-				"type %d (0x%02x) offset %d (0x%x)\n",
-				dp - mbr.dmbr_parts,
-				dp->dp_typ, dp->dp_typ,
-				dp->dp_start, dp->dp_start);
-			break;
+		/* Find OpenBSD partition. */
+		for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART]; dp++) {
+			if (dp->dp_size && dp->dp_typ == DOSPTYP_OPENBSD) {
+				startoff = dp->dp_start * dl.d_secsize;
+				fprintf(stderr, "using MBR partition %d: "
+					"type %d (0x%02x) offset %d (0x%x)\n",
+					dp - mbr.dmbr_parts,
+					dp->dp_typ, dp->dp_typ,
+					dp->dp_start, dp->dp_start);
+				break;
+			}
 		}
+		/* don't check for old part number, that is ;-p */
+		if (dp >= &mbr.dmbr_parts[NDOSPART])
+			errx(1, "no OpenBSD partition");
 	}
-	/* don't check for old part number, that is ;-p */
-	if (dp >= &mbr.dmbr_parts[NDOSPART])
-		errx(1, "no OpenBSD partition");
 
 	if (!nowrite) {
-		if (lseek(devfd, dp->dp_start * dl.d_secsize, SEEK_SET) < 0 ||
+		if (lseek(devfd, startoff, SEEK_SET) < 0 ||
 		    write(devfd, protostore, protosize) != protosize)
 			err(1, "write bootstrap");
 	}
