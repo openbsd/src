@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.10 2000/11/09 17:53:12 aaron Exp $
+.\"	$OpenBSD: eeprom.8,v 1.11 2001/12/04 19:18:31 miod Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 .Li = Ns Ar value
 .Oc ...
 .Oc
-.Sh SPARC SYNOPSIS
+.Sh SPARC AND SPARC64 SYNOPSIS
 .Nm eeprom
 .Op Fl
 .Op Fl c
@@ -103,8 +103,8 @@ will ignore them and continue after displaying a warning.
 This flag is quietly ignored on systems with an OpenProm.
 .El
 .Pp
-The following options are valid only on the SPARC and will produce an
-error when used on a Sun 3:
+The following options are valid only on the sparc and sparc64 and will
+produce an error when used on a sun3:
 .Bl -tag -width indent
 .It Fl v
 On systems with an OpenProm, be verbose when setting a value.
@@ -359,7 +359,7 @@ It has a limited number of write cycles.
 .Pp
 The date parser isn't very intelligent.
 .Sh FILES
-.Bl -tag -width "/dev/openprom  "
+.Bl -tag -width "/dev/openprom"
 .It /dev/eeprom
 the EEPROM device on systems with an EEPROM
 .It /dev/openprom
