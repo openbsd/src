@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.213 2002/07/24 01:15:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.214 2002/07/31 02:30:29 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1462,19 +1462,17 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
+	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
 	frame.sf_signum = sig;
-
-	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -1554,7 +1552,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_nxpages > 0?
+	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
@@ -1933,8 +1932,9 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct trapframe *tf;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	struct trapframe *tf = p->p_md.md_regs;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
@@ -1950,7 +1950,6 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
 
-	tf = p->p_md.md_regs;
 	__asm("movw %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movw %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1958,7 +1957,8 @@ setregs(p, pack, stack, retval)
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
 	tf->tf_eip = pack->ep_entry;
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_nxpages > 0?
+	    LSEL(LUCODE1_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
@@ -2105,6 +2105,8 @@ init386(first_avail)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
 	    0, 0);
+	setsegment(&gdt[GUCODE1_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUCODE_SEL].sd, 0,
 	    i386_btop(VM_MAXUSER_ADDRESS - MAXSSIZ) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
@@ -2114,6 +2116,7 @@ init386(first_avail)
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
 	    SEL_UPL, GCODE_SEL);
+	ldt[LUCODE1_SEL] = gdt[GUCODE1_SEL];
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
 	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];

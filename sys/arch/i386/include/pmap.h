@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.26 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.27 2002/07/31 02:30:29 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -238,7 +238,7 @@
 
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
-/* PG_AVAIL3 not used */
+#define	PG_X		PG_AVAIL3	/* executable mapping */
 
 #ifdef _KERNEL
 /*
@@ -270,6 +270,7 @@ struct pmap {
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
+	int pm_nxpages;			/* # of executable pages on stack */
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */

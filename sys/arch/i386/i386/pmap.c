@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2002/07/31 02:30:29 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -574,6 +574,32 @@ pmap_unmap_ptes(pmap)
 	}
 }
 
+__inline static void
+pmap_nxstack_account(struct pmap *pmap, vaddr_t va,
+    pt_entry_t opte, pt_entry_t npte)
+{
+	if (((opte ^ npte) & PG_X) &&
+	    va < VM_MAXUSER_ADDRESS && va >= VM_MAXUSER_ADDRESS - MAXSSIZ) {
+		struct trapframe *tf = curproc->p_md.md_regs;
+		struct vm_map *map = &curproc->p_vmspace->vm_map;
+if (pmap != pmap_kernel()) printf("nxpages=%d npte=%x opte=%x", pmap->pm_nxpages, npte & 0xfff, opte & 0xfff);
+		if (npte & PG_X && !(opte & PG_X)) {
+			if (++pmap->pm_nxpages == 1 &&
+			    pmap == vm_map_pmap(map)) {
+				tf->tf_cs = GSEL(GUCODE1_SEL, SEL_UPL);
+				pmap_update_pg(va);
+			}
+		} else {
+			if (!--pmap->pm_nxpages &&
+			    pmap == vm_map_pmap(map)) {
+				tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+				pmap_update_pg(va);
+			}
+		}
+if (pmap != pmap_kernel()) printf("nxpages1=%d ", pmap->pm_nxpages);
+	}
+}
+
 /*
  * p m a p   k e n t e r   f u n c t i o n s
  *
@@ -706,14 +732,14 @@ pmap_bootstrap(kva_start)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
-	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW;		/* w-- */
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW;	/* wr- */
-	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
+	protection_codes[UVM_PROT_NONE] = 0;  			/* --- */
+	protection_codes[UVM_PROT_EXEC] = PG_X;			/* --x */
+	protection_codes[UVM_PROT_READ] = PG_RO;		/* -r- */
+	protection_codes[UVM_PROT_RX] = PG_X;			/* -rx */
+	protection_codes[UVM_PROT_WRITE] = PG_RW;		/* w-- */
+	protection_codes[UVM_PROT_WX] = PG_RW|PG_X;		/* w-x */
+	protection_codes[UVM_PROT_RW] = PG_RW;			/* wr- */
+	protection_codes[UVM_PROT_RWX] = PG_RW|PG_X;		/* wrx */
 
 	/*
 	 * now we init the kernel's pmap
@@ -1702,6 +1728,7 @@ pmap_pinit(pmap)
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_ptphint = NULL;
+	pmap->pm_nxpages = 0;
 	pmap->pm_flags = 0;
 
 	/* allocate PDP */
@@ -2192,6 +2219,8 @@ pmap_remove_pte(pmap, ptp, pte, va)
 
 	opte = *pte;			/* save the old PTE */
 	*pte = 0;			/* zap! */
+
+	pmap_nxstack_account(pmap, va, opte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2768,7 +2797,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 		spte = &ptes[i386_btop(sva)];
 		epte = &ptes[i386_btop(blockend)];
 
-		for (/*null */; spte < epte ; spte++) {
+		for (/*null */; spte < epte ; spte++, sva += PAGE_SIZE) {
 
 			if (!pmap_valid_entry(*spte))	/* no mapping? */
 				continue;
@@ -2776,6 +2805,9 @@ pmap_write_protect(pmap, sva, eva, prot)
 			npte = (*spte & ~PG_PROT) | md_prot;
 
 			if (npte != *spte) {
+				/* account for executable pages on the stack */
+				pmap_nxstack_account(pmap, sva, *spte, npte);
+
 				*spte = npte;		/* zap! */
 
 				if (prr) {    /* worried about tlb flushing? */
@@ -3513,6 +3545,7 @@ enter_now:
 	 */
 
 	npte = pa | protection_codes[prot] | PG_V;
+	pmap_nxstack_account(pmap, va, opte, npte);
 	if (pvh)
 		npte |= PG_PVLIST;
 	if (wired)

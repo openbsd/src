@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: segments.h,v 1.10 2002/07/31 02:30:29 mickey Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -217,21 +217,23 @@ void setsegment(struct segment_descriptor *, void *, size_t, int, int,
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
 #define	GLDT_SEL	3	/* Default LDT descriptor */
-#define	GUCODE_SEL	4	/* User code descriptor */
-#define	GUDATA_SEL	5	/* User data descriptor */
-#define	GAPM32CODE_SEL	6	/* 32 bit APM code descriptor */
-#define	GAPM16CODE_SEL	7	/* 16 bit APM code descriptor */
-#define	GAPMDATA_SEL	8	/* APM data descriptor */
-#define	GICODE_SEL	9	/* Interrupt code descriptor (same as Kernel code) */
-#define	NGDT		10
+#define	GUCODE1_SEL	4	/* User code descriptor */
+#define	GUCODE_SEL	5	/* User code descriptor (a stack short) */
+#define	GUDATA_SEL	6	/* User data descriptor */
+#define	GAPM32CODE_SEL	7	/* 32 bit APM code descriptor */
+#define	GAPM16CODE_SEL	8	/* 16 bit APM code descriptor */
+#define	GAPMDATA_SEL	9	/* APM data descriptor */
+#define	GICODE_SEL	10	/* Interrupt code descriptor (same as Kernel code) */
+#define	NGDT		11
 
 /*
  * Entries in the Local Descriptor Table (LDT)
  */
 #define	LSYS5CALLS_SEL	0	/* iBCS system call gate */
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
-#define	LUCODE_SEL	2	/* User code descriptor */
-#define	LUDATA_SEL	3	/* User data descriptor */
+#define	LUCODE1_SEL	2	/* User code descriptor */
+#define	LUCODE_SEL	3	/* User code descriptor (a stack short) */
+#define	LUDATA_SEL	4	/* User data descriptor */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 
