@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.7 1997/04/09 02:08:27 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.8 1997/04/10 10:50:29 deraadt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -1695,8 +1695,7 @@ digest_symbols()
 	 */
 
 	if (page_align_segments || page_align_data) {
-		int  text_end = text_size + N_TXTOFF(outheader);
-		text_pad = PALIGN(text_end, page_size) - text_end;
+		text_pad = PALIGN(text_size, page_size) - text_size;
 		text_size += text_pad;
 	}
 	outheader.a_text = text_size;
