@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.3 2002/02/15 14:41:38 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.4 2002/02/16 00:27:34 markus Exp $
 
 PORT=4242
 USER=`id -un`
@@ -50,7 +50,7 @@ cleanup ()
 
 trace ()
 {
-	if [ "X$DEBUG_SSH_TEST" = "Xyes" ]; then
+	if [ "X$TEST_DEBUG_SSH" = "Xyes" ]; then
 		echo "$@"
 	fi
 }
@@ -105,6 +105,7 @@ Host *
 	RhostsAuthentication	no
 	RhostsRSAAuthentication	no
 	BatchMode		yes
+	StrictHostKeyChecking	yes
 EOF
 
 trace "generate keys"
