@@ -31,7 +31,7 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-#define HANDLE_SYSV_PRAGMA
+/*	$OpenBSD: openbsd.h,v 1.2 1996/04/29 07:09:47 niklas Exp $	*/
 
 /* There are conflicting reports about whether this system uses
    a different assembler syntax.  wilson@cygnus.com says # is right.  */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: openbsd.h,v 1.3 1996/04/29 07:09:45 niklas Exp $	*/
+
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
    'wrapper' makefile with the GNU configure/build mechanism. The
@@ -64,16 +66,18 @@
  * Currently, we need the DECLARE_OBJECT_SIZE stuff.
  */
 
-/* Define the strings used for the special svr4 .type and .size directives.
-   These strings generally do not vary from one system running svr4 to
-   another, but if a given system (e.g. m88k running svr) needs to use
-   different pseudo-op names for these, they may be overridden in the
-   file which includes this one.  */
+/* Define the strings used for the .type, .size, and .set directives.
+   These strings generally do not vary from one system running openbsd
+   to another, but if a given system needs to use different pseudo-op
+   names for these, they may be overridden in the file which includes
+   this one.  */
 
 #undef TYPE_ASM_OP
 #undef SIZE_ASM_OP
+#undef SET_ASM_OP
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
+#define SET_ASM_OP	".set"
 
 /* This is how we tell the assembler that a symbol is weak.  */
 
