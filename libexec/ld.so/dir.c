@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.4 2002/07/24 04:11:10 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.5 2003/01/31 22:25:34 drahn Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,13 +67,13 @@ _dl_opendir(name)
 
 	int flags = DTF_HIDEW|DTF_NODUP;
 
-	if ((fd = _dl_open(name, O_RDONLY | O_NONBLOCK)) == -1)
+	if ((fd = _dl_open(name, O_RDONLY | O_NONBLOCK)) < 0)
 		return (NULL);
 	if (_dl_fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
 		_dl_close(fd);
 		return (NULL);
 	}
-	if (_dl_fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
+	if (_dl_fcntl(fd, F_SETFD, FD_CLOEXEC) < 0 ||
 	    (dirp = (DIR *)_dl_malloc(sizeof(DIR))) == NULL) {
 		_dl_close(fd);
 		return (NULL);
