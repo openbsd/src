@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.8 1999/02/26 03:56:30 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.9 1999/05/27 20:36:21 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ ffs_balloc(v)
 				    dbtofsb(fs, bp->b_blkno), ip->i_ffs_db[nb],
 				    fs->fs_bsize, osize, bp);
 
-			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
+			ip->i_ffs_size = lblktosize(fs, nb + 1);
 #if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 #else
@@ -140,7 +140,7 @@ ffs_balloc(v)
 	 */
 	if (lbn < NDADDR) {
 		nb = ip->i_ffs_db[lbn];
-		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
+		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
 			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
@@ -174,7 +174,7 @@ ffs_balloc(v)
                                             nsize, osize, bp);
 			}
 		} else {
-			if (ip->i_ffs_size < (lbn + 1) * fs->fs_bsize)
+			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
