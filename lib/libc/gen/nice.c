@@ -32,21 +32,21 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nice.c,v 1.4 2002/06/03 22:32:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nice.c,v 1.5 2003/05/19 20:11:05 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 
 /*
  * Backwards compatible nice().
  */
 int
-nice(incr)
-	int incr;
+nice(int incr)
 {
 	int prio;
 
@@ -57,5 +57,6 @@ nice(incr)
 	prio += incr;
 	if (setpriority(PRIO_PROCESS, 0, prio) != 0)
 		return (-1);
-	return (prio);
+	/* Valid range for prio is -NZERO to NZERO (inclusive).  */
+	return (prio < -NZERO ? -NZERO : prio > NZERO ? NZERO : prio);
 }
