@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.13 2003/04/06 00:45:12 deraadt Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.14 2003/04/26 03:26:43 krw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -201,7 +201,9 @@ main(int argc, char *argv[])
 				default:
 					goto usage;
 				}
-				strcpy((char*)OMSG.rip_tracefile, value);
+				strlcpy((char*)OMSG.rip_tracefile, value,
+				    (char*)&omsg_buf + sizeof omsg_buf -
+				    (char*)OMSG.rip_tracefile);
 				omsg_len += strlen(value) - sizeof(OMSG.ripun);
 			}
 			break;
