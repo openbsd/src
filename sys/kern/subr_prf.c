@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.49 2003/05/13 02:09:46 jason Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.50 2003/05/20 20:47:12 jason Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -261,7 +261,7 @@ splassert_fail(int wantipl, int haveipl, const char *func)
 void
 log(int level, const char *fmt, ...)
 {
-	register int s;
+	int s;
 	va_list ap;
 
 	s = splhigh();
@@ -283,8 +283,7 @@ log(int level, const char *fmt, ...)
  */
 
 void
-logpri(level)
-	int level;
+logpri(int level)
 {
 	char *p;
 	char snbuf[KPRINTF_BUFSIZE];
@@ -303,7 +302,7 @@ logpri(level)
 int
 addlog(const char *fmt, ...)
 {
-	register int s;
+	int s;
 	va_list ap;
 
 	s = splhigh();
@@ -328,10 +327,7 @@ addlog(const char *fmt, ...)
  *	for inspection later (e.g. dmesg/syslog)
  */
 void
-kputchar(c, flags, tp)
-	register int c;
-	int flags;
-	struct tty *tp;
+kputchar(int c, int flags, struct tty *tp)
 {
 	extern int msgbufmapped;
 	struct msgbuf *mbp;
@@ -381,7 +377,7 @@ kputchar(c, flags, tp)
 void
 uprintf(const char *fmt, ...)
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	va_list ap;
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -407,8 +403,7 @@ uprintf(const char *fmt, ...)
  */
 
 tpr_t
-tprintf_open(p)
-	register struct proc *p;
+tprintf_open(struct proc *p)
 {
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -423,8 +418,7 @@ tprintf_open(p)
  */
 
 void
-tprintf_close(sess)
-	tpr_t sess;
+tprintf_close(tpr_t sess)
 {
 
 	if (sess)
@@ -440,7 +434,7 @@ tprintf_close(sess)
 void
 tprintf(tpr_t tpr, const char *fmt, ...)
 {
-	register struct session *sess = (struct session *)tpr;
+	struct session *sess = (struct session *)tpr;
 	struct tty *tp = NULL;
 	int flags = TOLOG;
 	va_list ap;
@@ -525,9 +519,7 @@ printf(const char *fmt, ...)
  */
 
 void
-vprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+vprintf(const char *fmt, va_list ap)
 {
 	int savintr;
 
@@ -566,10 +558,7 @@ __warn_references(vsprintf,
  *	va_list]
  */
 int
-vsprintf(buf, fmt, ap)
-	char *buf;
-	const char *fmt;
-	va_list ap;
+vsprintf(char *buf, const char *fmt, va_list ap)
 {
 	int savintr;
 	int len;
@@ -609,11 +598,7 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
  * vsnprintf: print a message to a buffer [already have va_alist]
  */
 int
-vsnprintf(buf, size, fmt, ap)
-	char *buf;
-	size_t size;
-	const char *fmt;
-	va_list ap;
+vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 {
 	int retval;
 	char *p;
@@ -718,12 +703,7 @@ vsnprintf(buf, size, fmt, ap)
 } while(0)
 
 int
-kprintf(fmt0, oflags, vp, sbuf, ap)
-	const char *fmt0;
-	int oflags;
-	void *vp;
-	char *sbuf;
-	va_list ap;
+kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 {
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */
