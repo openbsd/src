@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2002/02/18 18:47:18 jason Exp $
+#	$OpenBSD: GENERIC,v 1.51 2002/03/14 03:35:15 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -180,6 +180,9 @@ wsdisplay*	at cgthree?
 
 audiocs*	at sbus? slot ? offset ?
 audio*		at audiocs?
+
+asio*		at sbus? slot ? offset ?	# Aurora 210SJ
+com*		at asio?
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux 	2
