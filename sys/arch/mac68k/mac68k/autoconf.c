@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1996/06/23 15:59:42 briggs Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1997/01/01 14:59:46 briggs Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.31 1996/06/19 03:21:03 scottr Exp $	*/
 
 /*
@@ -70,6 +70,8 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <ufs/ffs/ffs_extern.h>
 
 
 struct device	*booted_device;
@@ -236,16 +238,11 @@ setroot(void)
 	register int len;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct device *bootdv, *rootdv, *swapdv;
 	int bootpartition;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
 #endif
 
 	bootdv = booted_device;
