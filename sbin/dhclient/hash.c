@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.8 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: hash.c,v 1.9 2004/05/10 15:30:47 deraadt Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -48,6 +48,7 @@ struct hash_table *
 new_hash(void)
 {
 	struct hash_table *rv = new_hash_table(DEFAULT_HASH_SIZE);
+
 	if (!rv)
 		return (rv);
 	memset(&rv->buckets[0], 0,
@@ -58,9 +59,8 @@ new_hash(void)
 static int
 do_hash(unsigned char *name, int len, int size)
 {
-	int accum = 0;
 	unsigned char *s = name;
-	int i = len;
+	int accum = 0, i = len;
 
 	while (i--) {
 		/* Add the character in... */
@@ -75,8 +75,8 @@ do_hash(unsigned char *name, int len, int size)
 void add_hash(struct hash_table *table, unsigned char *name, int len,
     unsigned char *pointer)
 {
-	int hashno;
 	struct hash_bucket *bp;
+	int hashno;
 
 	if (!table)
 		return;
@@ -100,8 +100,8 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 unsigned char *
 hash_lookup(struct hash_table *table, unsigned char *name, int len)
 {
-	int hashno;
 	struct hash_bucket *bp;
+	int hashno;
 
 	if (!table)
 		return (NULL);
