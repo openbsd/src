@@ -663,8 +663,6 @@
 ./usr/share/man/cat1/znew.0
 ./usr/share/man/cat2
 ./usr/share/man/cat2/i386
-./usr/share/man/cat2/kevent.0
-./usr/share/man/cat2/kqueue.0
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amiga
@@ -1392,6 +1390,7 @@
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
+./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/powerpc
@@ -1629,6 +1628,7 @@
 ./usr/share/man/cat8/login_krb5.0
 ./usr/share/man/cat8/login_lchpass.0
 ./usr/share/man/cat8/login_passwd.0
+./usr/share/man/cat8/login_radius.0
 ./usr/share/man/cat8/login_reject.0
 ./usr/share/man/cat8/login_skey.0
 ./usr/share/man/cat8/login_snk.0

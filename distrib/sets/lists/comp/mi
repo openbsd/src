@@ -1710,6 +1710,7 @@
 ./usr/share/man/cat2/getgroups.0
 ./usr/share/man/cat2/getitimer.0
 ./usr/share/man/cat2/getlogin.0
+./usr/share/man/cat2/getpeereid.0
 ./usr/share/man/cat2/getpeername.0
 ./usr/share/man/cat2/getpgid.0
 ./usr/share/man/cat2/getpgrp.0
@@ -1726,7 +1727,9 @@
 ./usr/share/man/cat2/intro.0
 ./usr/share/man/cat2/ioctl.0
 ./usr/share/man/cat2/issetugid.0
+./usr/share/man/cat2/kevent.0
 ./usr/share/man/cat2/kill.0
+./usr/share/man/cat2/kqueue.0
 ./usr/share/man/cat2/ktrace.0
 ./usr/share/man/cat2/lchown.0
 ./usr/share/man/cat2/link.0
