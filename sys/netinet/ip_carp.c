@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.92 2005/01/06 09:29:21 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.93 2005/01/06 21:45:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -104,7 +104,7 @@ struct carp_mc_entry {
 struct carp_softc {
 	struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
-#define	sc_carpdev 	sc_ac.ac_if.if_carpdev
+#define	sc_carpdev	sc_ac.ac_if.if_carpdev
 	int if_flags;			/* current flags to treat UP/DOWN */
 	void *ah_cookie;
 	struct ip_moptions sc_imo;
@@ -199,8 +199,8 @@ void	carp_send_na(struct carp_softc *);
 int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
 int	carp_join_multicast6(struct carp_softc *);
 #endif
-int     carp_clone_create(struct if_clone *, int);
-int     carp_clone_destroy(struct ifnet *);
+int	carp_clone_create(struct if_clone *, int);
+int	carp_clone_destroy(struct ifnet *);
 int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
 int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 void	carp_ether_purgemulti(struct carp_softc *);
@@ -354,7 +354,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					    RTF_UP | RTF_HOST, NULL);
 				}
 				if (!hr_otherif || nr_ourif || !rt) {
-					if (nr_ourif && !(rt->rt_flags & 
+					if (nr_ourif && !(rt->rt_flags &
 					    RTF_CLONING))
 						rtrequest(RTM_DELETE, &sa,
 						    ifa->ifa_addr,
@@ -366,12 +366,12 @@ carp_setroute(struct carp_softc *sc, int cmd)
 					if (rtrequest(RTM_ADD, ifa->ifa_addr,
 					    ifa->ifa_addr, ifa->ifa_netmask, 0,
 					    NULL) == 0)
-		 				ifa->ifa_flags |= IFA_ROUTE;
+						ifa->ifa_flags |= IFA_ROUTE;
 				}
 				break;
 			case RTM_DELETE:
 				if (nr_ourif)
-					rtrequest(RTM_DELETE, &sa, 
+					rtrequest(RTM_DELETE, &sa,
 					    ifa->ifa_addr, ifa->ifa_netmask, 0,
 					    NULL);
 				break;
@@ -847,7 +847,7 @@ carp_send_ad_all(void)
 		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
 			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) &&
-			     vh->sc_state == MASTER)
+			    vh->sc_state == MASTER)
 				carp_send_ad(vh);
 		}
 	}
@@ -1657,7 +1657,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	 * to correct any inappropriate routes that it inserted.
 	 */
 	if (sc->ah_cookie == NULL)
-		sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0, 
+		sc->ah_cookie = hook_establish(sc->sc_if.if_addrhooks, 0,
 		    carp_addr_updated, sc);
 
 	return (0);
@@ -2017,7 +2017,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		/* Tag packet for carp_fix_lladdr if not already tagged */
 		mtag = m_tag_find(m, PACKET_TAG_CARP, NULL);
 		if (mtag == NULL) {
-			mtag = m_tag_get(PACKET_TAG_CARP, 
+			mtag = m_tag_get(PACKET_TAG_CARP,
 			    sizeof(struct ifnet *), M_NOWAIT);
 			if (mtag == NULL) {
 				m_freem(m);
@@ -2026,7 +2026,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				carpstats.carps_onomem++;
 				return (ENOBUFS);
 			}
-			bcopy(&ifp, (caddr_t)(mtag + 1), 
+			bcopy(&ifp, (caddr_t)(mtag + 1),
 			    sizeof(struct ifnet *));
 			m_tag_prepend(m, mtag);
 		}
