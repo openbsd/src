@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.3 2005/03/10 08:30:56 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.4 2005/03/13 18:32:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2028,10 +2028,13 @@ ar5k_ar5211_setKeyCacheEntryMac(hal, entry, mac)
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5211_KEYTABLE_SIZE);
 
 	offset = AR5K_AR5211_KEYCACHE_SIZE - 2;
+	low_id = high_id = 0;
 
-	/* XXX big endian problems? */
-	bcopy(mac, &low_id, 4);
-	bcopy(mac + 4, &high_id, 2);
+	/* MAC may be NULL if it's a broadcast key */
+	if (mac != NULL) {
+		bcopy(mac, &low_id, 4);
+		bcopy(mac + 4, &high_id, 2);
+	}
 
 	high_id = 0x0000ffff & htole32(high_id);
 
