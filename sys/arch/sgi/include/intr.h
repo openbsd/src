@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2004/09/24 14:22:48 deraadt Exp $ */
+/*	$OpenBSD: intr.h,v 1.9 2004/09/27 19:20:49 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -107,9 +107,9 @@
 #define spllowersoftclock()	spllower(SINT_CLOCKMASK)
 
 
-#define setsoftclock()  set_sint(SINT_CLOCKMASK);
-#define setsoftnet()    set_sint(SINT_NETMASK);
-#define setsofttty()    set_sint(SINT_TTYMASK);
+#define setsoftclock()  set_ipending(SINT_CLOCKMASK);
+#define setsoftnet()    set_ipending(SINT_NETMASK);
+#define setsofttty()    set_ipending(SINT_TTYMASK);
 
 void	splinit(void);
 
@@ -149,15 +149,15 @@ extern intrmask_t imask[NIPLS];
  */
 
 /* Inlines */
-static __inline void register_pending_int_handler(void (*)(void));
+static __inline void register_pending_int_handler(void (*)(int));
 static __inline void splx(int newcpl);
 static __inline int spllower(int newcpl);
 
-typedef void  (void_f) (void);
-extern void_f *pending_hand;
+typedef void  (int_f) (int);
+extern int_f *pending_hand;
 
 static __inline void
-register_pending_int_handler(void(*pending)(void))
+register_pending_int_handler(void(*pending)(int))
 {
 	pending_hand = pending;
 }
@@ -184,10 +184,10 @@ int splraise(int newcpl);
 static __inline void
 splx(int newcpl)
 {
-	cpl = newcpl;
-	if ((ipending & ~newcpl) && (pending_hand != NULL)) {
-		(*pending_hand)();
-	}
+	if (ipending & ~newcpl)
+		(*pending_hand)(newcpl);
+	else
+		cpl = newcpl;
 }
 
 static __inline int
@@ -196,17 +196,18 @@ spllower(int newcpl)
 	int oldcpl;
 
 	oldcpl = cpl;
-	cpl = newcpl;
-	if ((ipending & ~newcpl) && (pending_hand != NULL)) {
-		(*pending_hand)();
-	}
+	if (ipending & ~newcpl)
+		(*pending_hand)(newcpl);
+	else
+		cpl = newcpl;
 	return (oldcpl);
 }
 
 /*
  *  Atomically update ipending.
  */
-void set_sint(int pending);
+void set_ipending(int);
+void clr_ipending(int);
 
 /*
  * Interrupt control struct used by interrupt dispatchers
@@ -255,7 +256,7 @@ void *generic_intr_establish(void *, u_long, int, int,
 	    int (*) __P((void *)), void *, char *);
 void generic_intr_disestablish(void *, void *);
 void generic_intr_makemasks(void);
-void generic_do_pending_int(void);
+void generic_do_pending_int(int);
 intrmask_t generic_iointr(intrmask_t, struct trap_frame *);
 
 #endif /* _LOCORE */

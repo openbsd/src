@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2004/09/21 05:51:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2004/09/27 19:20:49 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -328,12 +328,12 @@
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
+extern int int_nest_cntr;
 #define clockframe trap_frame	/* Use normal trap frame */
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
-#define	CLKF_BASEPRI(framep)	((framep)->cpl == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(0)
+#define	CLKF_INTR(framep)	(int_nest_cntr > 0)
 
 /*
  * Preempt the current process if in interrupt from user mode,

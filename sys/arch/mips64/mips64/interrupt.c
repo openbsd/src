@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.7 2004/09/24 14:22:49 deraadt Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.8 2004/09/27 19:20:49 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,6 +56,9 @@
 #include <ddb/db_sym.h>
 #endif
 
+static struct evcount soft_count;
+static int soft_irq = 0;
+
 volatile intrmask_t cpl;
 volatile intrmask_t ipending, astpending;
 
@@ -69,7 +72,9 @@ struct {
 	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
 } cpu_int_tab[NLOWINT];
 
-void_f *pending_hand;
+void dummy_do_pending_int(int);
+
+int_f *pending_hand = &dummy_do_pending_int;
 
 int netisr;
 
@@ -136,7 +141,7 @@ interrupt(struct trap_frame *trapframe)
 	u_int32_t pending;
 	u_int32_t cause;
 	int i;
-	intrmask_t pcpl;
+	intrmask_t xcpl;
 
 	/*
 	 *  Paranoic? Perhaps. But if we got here with the enable
@@ -149,21 +154,20 @@ interrupt(struct trap_frame *trapframe)
 		return;
 	}
 
-	uvmexp.intrs++;
-	pcpl = splhigh() ;	/* Turn off all and get current SW mask */
-
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(trapframe, 0);
 #endif
 
-	pending = trapframe->cause & CR_IPEND;
-#ifdef IMASK_EXTERNAL
-	pending &= idle_mask << 8;
-#else
-	ipending |= (pending >> 8) & pcpl;
-	pending &= ~(pcpl << 8);
-#endif
+	uvmexp.intrs++;
+
+	/* Mask out interrupts from cause that are unmasked */
+	pending = trapframe->cause & CR_IPEND & trapframe->sr;
 	cause = pending;
+
+	if (cause & SOFT_INT_MASK_0) {
+		clearsoftintr0();
+		soft_count.ec_count++;
+	}
 
 	if (cause & CR_INT_PERF) {
 		rm7k_perfintr(trapframe);
@@ -187,19 +191,31 @@ printf("Unhandled interrupt %x:%x\n", cause, pending);
 	 *  Reenable all non served hardware levels.
 	 */
 #if 0
-	splx((trapframe->sr & ~cause & SR_INT_MASK) | SR_INT_ENAB);
+	/* XXX the following should, when req., change the IC reg as well */
+	setsr((trapframe->sr & ~pending) | SR_INT_ENAB);
 #endif
 
-	if (pending & SOFT_INT_MASK_0) {
-		clearsoftintr0();
-		uvmexp.softs++;
+	xcpl = splsoftnet();
+	if ((ipending & SINT_CLOCKMASK) & ~xcpl) {
+		clr_ipending(SINT_CLOCKMASK);
+		softclock();
+	}
+	if ((ipending & SINT_NETMASK) & ~xcpl) {
+		extern int netisr;
+		int isr = netisr;
+		netisr = 0;
+		clr_ipending(SINT_NETMASK);
+#define DONETISR(b,f)   if (isr & (1 << (b)))   f();
+#include <net/netisr_dispatch.h>
 	}
 
-#ifndef IMASK_EXTERNAL
-	trapframe->sr &= ~((pcpl << 8) & SR_INT_MASK);
-	trapframe->ic &= ~(pcpl & IC_INT_MASK);
+#ifdef NOTYET
+	if ((ipending & SINT_TTYMASK) & ~xcpl) {
+		clr_ipending(SINT_TTYMASK);
+		compoll(NULL);
+	}
 #endif
-	splx(pcpl);	/* Process pendings. */
+	cpl = xcpl;
 }
 
 
@@ -213,6 +229,8 @@ void
 set_intr(int pri, intrmask_t mask,
 	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *))
 {
+	if (!idle_mask & (SOFT_INT_MASK >> 8))
+		evcount_attach(&soft_count, "soft", (void *)&soft_irq, &evcount_intr);
 	if (pri < 0 || pri >= NLOWINT) {
 		panic("set_intr: to high priority");
 	}
@@ -458,31 +476,29 @@ generic_intr_makemasks()
 }
 
 void
-generic_do_pending_int()
+generic_do_pending_int(int newcpl)
 {
 	struct intrhand *ih;
 	int vector;
-	intrmask_t pcpl;
 	intrmask_t hwpend;
 	struct trap_frame cf;
-static volatile int processing;
+	static volatile int processing;
 
-	/* Don't recurse... */
-	if (processing)
+	/* Don't recurse... but change the mask. */
+	if (processing) {
+		cpl = newcpl;
 		return;
+	}
 	processing = 1;
-
-/* XXX interrupt vulnerable when changing ipending */
-	pcpl = splhigh();		/* Turn off all */
 
 	/* XXX Fake a trapframe for clock pendings... */
 	cf.pc = (int)&generic_do_pending_int;
 	cf.sr = 0;
-	cf.cpl = pcpl;
+	cf.cpl = cpl;
 
-	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+	hwpend = ipending & ~newcpl;	/* Do pendings being unmasked */
 	hwpend &= ~(SINT_ALLMASK);
-	ipending &= ~hwpend;
+	clr_ipending(hwpend);
 	intem |= hwpend;
 	while (hwpend) {
 		vector = ffs(hwpend) - 1;
@@ -496,28 +512,34 @@ static volatile int processing;
 			ih = ih->ih_next;
 		}
 	}
-	if ((ipending & SINT_CLOCKMASK) & ~pcpl) {
-		ipending &= ~SINT_CLOCKMASK;
+	if ((ipending & SINT_CLOCKMASK) & ~newcpl) {
+		clr_ipending(SINT_CLOCKMASK);
 		softclock();
 	}
-	if ((ipending & SINT_NETMASK) & ~pcpl) {
+	if ((ipending & SINT_NETMASK) & ~newcpl) {
 		int isr = netisr;
 		netisr = 0;
-		ipending &= ~SINT_NETMASK;
+		clr_ipending(SINT_NETMASK);
 #define	DONETISR(b,f)	if (isr & (1 << (b)))   f();
 #include <net/netisr_dispatch.h>
 	}
 
 #ifdef NOTYET
-	if ((ipending & SINT_TTYMASK) & ~pcpl) {
-		ipending &= ~SINT_TTYMASK;
+	if ((ipending & SINT_TTYMASK) & ~newcpl) {
+		clr_ipending(SINT_TTYMASK);
 		compoll(NULL);
 	}
 #endif
 
-	cpl = pcpl;		/* Don't use splx... we are here already! */
-	updateimask(pcpl);	/* Update CPU mask ins SR register */
+	cpl = newcpl;
+	updateimask(newcpl);	/* Update CPU mask ins SR register */
 	processing = 0;
+}
+
+void
+dummy_do_pending_int(int newcpl)
+{
+	/* Dummy handler */
 }
 
 /*
@@ -553,6 +575,11 @@ generic_iointr(intrmask_t pending, struct trap_frame *cf)
 
 	catched = 0;
 
+	set_ipending((pending >> 8) & cpl);
+	pending &= ~(cpl << 8);
+	cf->sr &= ~((ipending << 8) & SR_INT_MASK);
+	cf->ic &= ~(ipending & IC_INT_MASK);
+
 	for (v = 2, vm = 0x400; pending != 0 && v < 16 ; v++, vm <<= 1) {
 		if (pending & vm) {
 			ih = intrhand[v];
@@ -582,8 +609,4 @@ splraise(int newcpl)
 	__asm__ (" sync\n .set reorder\n");
 	return (oldcpl);
 }
-volatile intrmask_t cpl;
-volatile intrmask_t ipending, astpending;
-
-intrmask_t imask[NIPLS];
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.6 2004/09/19 20:24:38 pefo Exp $ */
+/*	$OpenBSD: exception.S,v 1.7 2004/09/27 19:20:49 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,14 +48,13 @@
 
 #include "assym.h"
 
-/*
- *  DDB stack backtrace uses 'jr ra' to find functions starts.
- *  Put this after functions which does not end with 'jr ra'.
- */
-#define	DDB_BARRIER \
-	jr ra; nop
-
 	.set	mips3
+
+	.data
+	.globl	int_nest_cntr
+int_nest_cntr:
+	.word	-1
+	.text
 
 k_exception_table:
 	PTR_VAL	k_intr
@@ -127,8 +126,6 @@ u_exception_table:
 
 	.set	noreorder		# Noreorder is default style!
 
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
-
 /*---------------------------------------------------------------- exception
  *	General exception handler dispatcher. This code is copied
  *	to the vector area and must thus be PIC and less than 128
@@ -151,7 +148,7 @@ exception:
         PTR_L   k1, tlbtrcptr
         PTR_ADDU k1, 4*REGSZ
         LI      k0, 0x100
-        nor     k0, zero, k0
+        not     k0, k0
         and     k1, k0
         LA      k0, tlbtrcptr
         PTR_S   k1, 0(k0)
@@ -184,7 +181,6 @@ k_exception:
 	.globl	e_exception
 e_exception:
 
-	DDB_BARRIER
 
 /*---------------------------------------------------------------- k_intr
  *	Handle an interrupt in kernel mode. This is easy since we
@@ -206,6 +202,10 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	LA	gp, _gp
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
+	LA	t1, int_nest_cntr
+	lw	t2, (t1)
+	addiu	t2, 1
+	sw	t2, (t1)
 	ITLBNOPFIX
 	PTR_S	a0, 0(sp)
 	jal	interrupt
@@ -215,6 +215,11 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG
+
+	LA	t1, int_nest_cntr
+	lw	t2, (t1)
+	addiu	t2, -1
+	sw	t2, (t1)
 
 	PTR_L	a0, CF_RA_OFFS + KERN_REG_SIZE(sp)
 	.set	noat
@@ -226,7 +231,6 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	PTR_ADDU sp, sp, FRAMESZ(KERN_EXC_FRAME_SIZE)
 	sync
 	eret
-	DDB_BARRIER
 	.set	at
 END(k_intr)
 
@@ -250,6 +254,10 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
+	LA	t1, int_nest_cntr
+	lw	t2, (t1)
+	addiu	t2, 1
+	sw	t2, (t1)
 	ITLBNOPFIX
 	PTR_S	a0, 0(sp)
 	jal	interrupt
@@ -316,11 +324,14 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG
-	ITLBNOPFIX
+
+	LA	t1, int_nest_cntr
+	lw	t2, (t1)
+	addiu	t2, -1
+	sw	t2, (t1)
 
 	ori	t0, SR_EXL		# restoring to user mode.
 	mtc0	t0, COP_0_STATUS_REG	# must set exeption level bit.
-	ITLBNOPFIX
 
 	PTR_L	k0, curprocpaddr
 	RESTORE_REG(a3, CPL, k0, 0)
@@ -337,24 +348,39 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	LI	k1, 0
 	sync
 	eret
-	DDB_BARRIER
 	.set	at
 END(u_intr)
 
-/*---------------------------------------------------------------- set_sint
- *  Atomic ipending update
+/*---------------------------------------------------------------- set_ipending
+ *  Atomic ipending set
  */
-LEAF(set_sint, 0)
-	LA	v1, ipending
+LEAF(set_ipending, 0)
+	LA	a1, ipending
 1:
-	ll	v0, 0(v1)
-	or	v0, a0
-	sc	v0, 0(v1)
-	beqz	v0, 1b
+	ll	v0, 0(a1)
+	or	v1, v0, a0
+	sc	v1, 0(a1)
+	beqz	v1, 1b
 	nop
 	j	ra
 	nop
-END(set_sint)
+END(set_ipending)
+
+/*---------------------------------------------------------------- set_ipending
+ *  Atomic ipending clear
+ */
+LEAF(clr_ipending, 0)
+	LA	a1, ipending
+	not	a0, a0
+1:
+	ll	v0, 0(a1)
+	and	v1, v0, a0
+	sc	v1, 0(a1)
+	beqz	v1, 1b
+	nop
+	j	ra
+	nop
+END(clr_ipending)
 
 /*---------------------------------------------------------------- k_general
  *	Handle a kernel general trap. This is very much like
@@ -398,7 +424,6 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	PTR_ADDU sp, sp, FRAMESZ(KERN_EXC_FRAME_SIZE)
 	sync
 	eret
-	DDB_BARRIER
 	.set	at
 END(k_general)
 
@@ -494,7 +519,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	LI	k1, 0
 	sync
 	eret
-	DDB_BARRIER
 	.set	at
 END(u_general)
 
@@ -606,7 +630,6 @@ NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
 	REG_L	ra, UADDR+U_PCB_REGS+(RA * REGSZ)
 	sync
 	eret
-	DDB_BARRIER
 	.set	at
 END(u_syscall)
 #endif
