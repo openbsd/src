@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.50 2001/01/29 01:34:38 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.51 2001/02/04 01:14:23 brian Exp $
  */
 
 #include <sys/param.h>
@@ -376,7 +376,7 @@ bundle_Close(struct bundle *bundle, const char *name, int how)
       switch (how) {
         case CLOSE_LCP:
           datalink_DontHangup(dl);
-          /* fall through */
+          break;
         case CLOSE_STAYDOWN:
           datalink_StayDown(dl);
           break;
