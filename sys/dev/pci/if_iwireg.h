@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.1 2004/10/20 12:50:48 deraadt Exp $ */
+/*	$Id: if_iwireg.h,v 1.2 2004/11/22 19:20:28 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -117,7 +117,7 @@ struct iwi_hdr {
 	u_int8_t	flags;
 #define IWI_HDR_FLAG_IRQ	0x04
 	u_int8_t	reserved;
-} __packet;
+} __attribute__((__packed__));
 
 struct iwi_notif {
 	u_int32_t	reserved[2];
