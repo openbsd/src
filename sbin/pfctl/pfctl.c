@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.14 2001/06/26 20:50:26 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.15 2001/06/26 22:18:17 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <err.h>
 
 #include "pfctl_parser.h"
 
@@ -454,8 +455,10 @@ main(int argc, char *argv[])
 		} else if (!strcmp(clearopt, "states")) {
 			if (pfctl_clear_states(dev))
 				error = 1;
-		} else
+		} else {
+			warnx("Unknown keyword '%s'", clearopt);
 			error = 1;
+		}
 	}
 
 	if (rulesopt != NULL)
@@ -479,8 +482,10 @@ main(int argc, char *argv[])
 		} else if (!strcmp(showopt, "status")) {
 			if (pfctl_show_status(dev))
 				error = 1;
-		} else
+		} else {
+			warnx("Unknown keyword '%s'", showopt);
 			error = 1;
+		}
 	}
 
 	if (logopt != NULL)
@@ -492,5 +497,6 @@ main(int argc, char *argv[])
 			error = 1;
 
 	close(dev);
-	return (error);
+
+	exit(error);
 }
