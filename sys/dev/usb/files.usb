@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.32 2003/05/17 06:07:57 nate Exp $
+#	$OpenBSD: files.usb,v 1.33 2003/10/26 15:34:16 drahn Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -187,3 +187,7 @@ file	dev/usb/uscanner.c		uscanner		needs-flag
 device	usscanner: scsi
 attach	usscanner at uhub
 file	dev/usb/usscanner.c		usscanner
+
+# Prism3 WI @ USB
+attach  wi at uhub with wi_usb
+file    dev/usb/if_wi_usb.c 		 wi_usb			needs-flag

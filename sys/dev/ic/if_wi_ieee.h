@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.18 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.19 2003/10/26 15:34:15 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -797,6 +797,8 @@ struct wi_scan_p2_hdr {
 #define	WI_NIC_P3_MINI_ATL	0x8023
 #define	WI_NIC_P3_MINI_ATS	0x8024
 
+#define	WI_NIC_P3_USB_NETGEAR	0x8026 	/* Prism3 USB */
+
 struct wi_card_ident {
 	const u_int16_t	card_id;
 	const char	*card_name;
@@ -931,6 +933,10 @@ struct wi_card_ident {
 	}, {								\
 		WI_NIC_P3_MINI_ATS,					\
 		"PRISM3 ISL37300P(PCI)",				\
+		WI_INTERSIL						\
+	}, {								\
+		WI_NIC_P3_USB_NETGEAR,					\
+		"PRISM3 (USB)",						\
 		WI_INTERSIL						\
 	}, {								\
 		0,							\

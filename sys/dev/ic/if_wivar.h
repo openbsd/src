@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.21 2003/09/06 20:53:57 drahn Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.22 2003/10/26 15:34:15 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -109,7 +109,18 @@ struct wi_softc	{
 		u_int16_t		wi_confbits_param0;
 	} wi_debug;
 	void				*sc_sdhook;
+	struct wi_usb_softc		*wi_usb_cdata;
+
+	struct wi_funcs			*sc_funcs;
 };
+#define wi_cmd		sc->sc_funcs->f_cmd
+#define wi_read_record	sc->sc_funcs->f_read_record
+#define wi_write_record	sc->sc_funcs->f_write_record
+#define wi_alloc_nicmem	sc->sc_funcs->f_alloc_nicmem
+#define wi_read_data	sc->sc_funcs->f_read_data
+#define wi_write_data	sc->sc_funcs->f_write_data
+#define wi_get_fid	sc->sc_funcs->f_get_fid
+#define wi_init		sc->sc_funcs->f_init
 
 /* Values for wi_flags. */
 #define WI_FLAGS_ATTACHED		0x0001
@@ -122,14 +133,40 @@ struct wi_softc	{
 #define WI_FLAGS_HAS_DIVERSITY		0x0080
 #define WI_FLAGS_HAS_HOSTAP		0x0100
 #define WI_FLAGS_BUS_PCMCIA		0x0200
+#define WI_FLAGS_BUS_USB		0x0400
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname
 
-int	wi_attach(struct wi_softc *);
+struct wi_funcs {
+	int (*f_cmd)(struct wi_softc *sc, int cmd, int val0, int val1,
+	    int val2);
+	int (*f_read_record)(struct wi_softc *sc, struct wi_ltv_gen *ltv);
+	int (*f_write_record)(struct wi_softc *sc,
+	    struct wi_ltv_gen *ltv);
+	int (*f_alloc_nicmem)(struct wi_softc *sc, int len, int *id);
+	int (*f_read_data)(struct wi_softc *sc, int id, int off,
+	    caddr_t buf, int len);
+	int (*f_write_data)(struct wi_softc *sc, int id, int off,
+	    caddr_t buf, int len);
+	int (*f_get_fid)(struct wi_softc *sc, int fid);
+	void (*f_init)(struct wi_softc *sc);
+
+	void (*f_start)(struct ifnet *ifp);
+	int (*f_ioctl)(struct ifnet *, u_long, caddr_t);
+	void (*f_watchdog)(struct ifnet *ifp);
+	void (*f_inquire)(void *xsc);
+};
+
+extern struct wi_funcs wi_func_io;
+
+int	wi_attach(struct wi_softc *, struct wi_funcs *);
 void	wi_detach(struct wi_softc *);
 int	wi_intr(void *);
-void	wi_init(struct wi_softc *);
 void	wi_stop(struct wi_softc *);
 void	wi_cor_reset(struct wi_softc *);
 int	wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
+
+void wi_update_stats(struct wi_softc *sc);
+void wi_rxeof(struct wi_softc *sc);
+void wi_txeof(struct wi_softc *sc, int status);

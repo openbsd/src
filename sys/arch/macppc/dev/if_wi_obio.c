@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.9 2003/10/26 15:34:16 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -129,7 +129,7 @@ wi_obio_attach(parent, self, aux)
 
 	wi_obio_enable(sc);
 
-	wi_attach(sc);
+	wi_attach(sc, &wi_func_io);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.43 2003/09/06 20:53:57 drahn Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.44 2003/10/26 15:34:16 drahn Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -391,7 +391,7 @@ wi_pcmcia_attach(parent, self, aux)
 		goto bad;
 	}
 
-	wi_attach(sc);
+	wi_attach(sc, &wi_func_io);
 	return;
 
 bad:
