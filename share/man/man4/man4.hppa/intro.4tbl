@@ -1,3 +1,4 @@
+.\" $OpenBSD: intro.4tbl,v 1.7 2003/01/07 20:37:10 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Paul Weissmann
 .\" All rights reserved.
@@ -111,14 +112,14 @@ Basic I/O
 .El
 .It
 SCSI I/O-processors:
-.Bl -tag -compact -width NCR53C700/710xx
-.It NCR53C700/710
+.Bl -tag -compact -width NCR53c700/710xx
+.It NCR53c700/710
 Narrow Single-Ended
-.It NCR53C720
+.It NCR53c720
 Fast Wide Differential
 .El
 .It
-Intel 82596/CA or /DX Ethernet controllers
+Intel i82596 CA/DX LAN coprocessors
 .It
 Venom, (H)CRX-8 and (H)CRX-24 video controllers
 .It
@@ -186,7 +187,7 @@ A180C:180:7300LC:64/64+1024:2 HSC/PCI
 B132L:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
 B132L+:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
 B160L:160:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
-B180L:180:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
+B180L+:180:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA
 C132L:132:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA,
  : : : :2 GSC/EISA
 C160L:160:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA,
@@ -213,8 +214,8 @@ The Central Processor itself, makes sure the machine does something useful.
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.
 .It Xr ie 4
-i82C5[89]6 LAN-processor. Found in every 700, either included in MBA or on
-external chip on mainboard.
+i82596 CA/DX LAN coprocessor. Found in every 700, either included in the MBA 
+or on an external chip on mainboard.
 .It Xr lasi 4
 LSI?, found in almost all
 .Tn HP9000/700
@@ -228,10 +229,10 @@ bus controller on most of the older 700 machines.
 .It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
 PROM for things like initial console output and such.
-.It Xr siop 4
+.It Xr osiop 4
 The
 .Tn SCSI
-I/O Procesor.
+I/O processor.
 .It Xr sti 4
 The system graphics driver.
 .It Xr wax 4
@@ -243,7 +244,7 @@ implementations for add-on devices.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
-.Xr config 8
+.Xr config 8 
 .Sh HISTORY
 The
 hppa

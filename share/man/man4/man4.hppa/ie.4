@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.4 2002/06/30 21:45:25 deraadt Exp $
+.\"	$OpenBSD: ie.4,v 1.5 2003/01/07 20:37:10 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Paul Weissmann
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm ie
-.Nd Intel i82C596 DX/CA LAN Coprocessor as found in HP9000 workstations
+.Nd Intel i82596 DX/CA LAN coprocessor as found in HP9000 workstations
 .Sh SYNOPSIS
 .Cd "ie0 at gsc? irq 8"
 .Sh DESCRIPTION
@@ -46,7 +46,7 @@ interface provides access to the 10 Mb/s
 .Tn Ethernet
 network via the 
 .Tn Intel
-i82C596 DX/CA 32-bit
+i82596 DX/CA 32-bit
 Local Area Network Coprocessor for Ethernet
 .Pp
 Each of the host's network addresses
@@ -61,17 +61,16 @@ to dynamically map between Internet and
 .Tn Ethernet
 addresses on the local network.
 .Pp
-The i82C596 Coprocessors come basically in two different flavors:
+The i82596 comes basically in two different flavors:
 .Pp
 .Bl -tag -width i82596DXxxx
 .It i82596DX
-Systems with a ASP or WAX Main Bus Adapter (MBA), e.g. 720, 735 etc.
+Systems with an ASP or WAX Main Bus Adapter (MBA), e.g. 720, 735 etc.
 These types of systems generally have only AUI or BNC and AUI connectors at
 the back. On the models with both you usually have to switch a big
 jumper-block on the mainboard to choose which one to activate.
 .It i82596CA
-Systems with LASI MBA, e.g. 712/*, 715/100.
-have the i82C59CA 
+Systems with LASI MBA, e.g. 712/*, 715/100 have the i82596CA 
 integrated on the LASI macrochip. They usually have TP and AUI 
 connectors and autodetect to which one the network is connected to.
 .El
@@ -94,7 +93,8 @@ Use the BNC connector
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr io 4
 .Rs
 "82596DX AND 82596SX High-Performance 32-bit Local Area Network Coprocessor"
 .br

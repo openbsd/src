@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.6 2002/04/07 10:14:31 mickey Exp $
+.\"	$OpenBSD: gsc.4,v 1.7 2003/01/07 20:37:10 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -74,14 +74,13 @@ RS-232 ports.
 .It Xr hil 4
 Human Interface Loop, for HP-proprietary input devices like keyboard and mice.
 .It Xr ie 4
-Intel i82C596 DX/CA 32-bit Ethernet interfaces.
+Intel i82596 DX/CA 32-bit LAN coprocessor
 .It Xr lpt 4
 Centronics printer port.
 .It Xr pckbc 4
 PC-style keyboard controller.
-.It Xr siop 4
-NCR 53C700/710 narrow, single-ended or 53C720 wide,
-differential SCSI I/O processor.
+.It Xr osiop 4
+SCSI I/O processor.
 .El
 .Pp
 Some of these 
