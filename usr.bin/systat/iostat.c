@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.6 1997/01/06 18:50:50 maja Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.7 1997/02/04 04:42:42 kstailey Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.6 1997/01/06 18:50:50 maja Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.7 1997/02/04 04:42:42 kstailey Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -107,10 +107,6 @@ labeliostat()
 {
 	int row;
 
-	if (dk_ndrive == 0) {
-		error("No drives defined.");
-		return;
-	}
 	row = 0;
 	wmove(wnd, row, 0); wclrtobot(wnd);
 	mvwaddstr(wnd, row++, INSET,
@@ -132,6 +128,10 @@ numlabels(row)
 {
 	int i, col, regions, ndrives;
 
+	if (dk_ndrive == 0) {
+		mvwaddstr(wnd, row++, INSET, "No drives attached.");
+		return (row);
+	}
 #define COLWIDTH	14
 #define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
@@ -171,6 +171,10 @@ barlabels(row)
 {
 	int i;
 
+	if (dk_ndrive == 0) {
+		mvwaddstr(wnd, row++, INSET, "No drives attached.");
+		return (row);
+	}
 	mvwaddstr(wnd, row++, INSET,
 	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
 	linesperregion = 2 + secs;
@@ -193,8 +197,6 @@ showiostat()
 	register u_int64_t t;
 	register int i, row, col;
 
-	if (dk_ndrive == 0)
-		return;
 	dkswap();
 
 	etime = 0;
@@ -211,6 +213,10 @@ showiostat()
 	 */ 
 	for (i = 0; i < CPUSTATES; i++)
 		stat1(row++, i);
+
+	if (dk_ndrive == 0)
+		return;
+
 	if (!numbers) {
 		row += 2;
 		for (i = 0; i < dk_ndrive; i++)
