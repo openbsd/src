@@ -1,4 +1,4 @@
-/*      $OpenBSD: md5.c,v 1.1 2002/03/19 17:23:30 markus Exp $  */
+/*      $OpenBSD: md5.c,v 1.2 2002/03/19 20:10:25 markus Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -104,7 +104,7 @@ getallowsoft(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CRYPTODEVALLOWSOFT;
 	if (sysctl(mib, 2, &old, &olen, NULL, 0) < 0)
-		err(1, "CRIOGET failed");
+		err(1, "sysctl failed");
 
 	return old;
 }
@@ -121,7 +121,7 @@ setallowsoft(int new)
 	mib[1] = KERN_CRYPTODEVALLOWSOFT;
 
 	if (sysctl(mib, 2, &old, &olen, &new, nlen) < 0)
-		err(1, "CRIOGET failed");
+		err(1, "sysctl failed");
 }
 
 /* test vectors from RFC 1321 */
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 			continue;
 		}
 		if (strcmp(md, test[i].md) == 0) {
-			printf("test ok '%s'\n", test[i].dat);
+			printf("md5 ok for '%s'\n", test[i].dat);
 			count++;
 		} else {
 			warnx("md5 failed for '%s': got '%s' expected '%s'",
