@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.1 1998/10/10 03:55:05 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.2 1998/11/11 05:24:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_tl.c,v 1.18 1998/10/08 15:45:36 wpaul Exp $
+ *	$FreeBSD: if_tl.c,v 1.19 1998/10/31 17:23:48 wpaul Exp $
  */
 
 /*
@@ -248,7 +248,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_tl.c,v 1.18 1998/10/08 15:45:36 wpaul Exp $";
+	"$FreeBSD: if_tl.c,v 1.19 1998/10/31 17:23:48 wpaul Exp $";
 #endif
 
 #ifdef TL_DEBUG
@@ -1903,12 +1903,12 @@ static int tl_list_rx_init(sc)
 	cd = &sc->tl_cdata;
 	ld = sc->tl_ldata;
 
-	for (i = 0; i < TL_TX_LIST_CNT; i++) {
+	for (i = 0; i < TL_RX_LIST_CNT; i++) {
 		cd->tl_rx_chain[i].tl_ptr =
 			(struct tl_list_onefrag *)&ld->tl_rx_list[i];
 		if (tl_newbuf(sc, &cd->tl_rx_chain[i]) == ENOBUFS)
 			return(ENOBUFS);
-		if (i == (TL_TX_LIST_CNT - 1)) {
+		if (i == (TL_RX_LIST_CNT - 1)) {
 			cd->tl_rx_chain[i].tl_next = NULL;
 			ld->tl_rx_list[i].tlist_fptr = 0;
 		} else {

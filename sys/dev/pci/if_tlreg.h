@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_tlreg.h,v 1.1 1998/10/10 03:55:05 jason Exp $
+ *	$FreeBSD: if_tlreg.h,v 1.7 1998/10/31 17:23:48 wpaul Exp $
  */
 
 
@@ -49,8 +49,8 @@ struct tl_type {
  */
 
 #define TL_MAXFRAGS		10
-#define TL_RX_LIST_CNT		10
-#define TL_TX_LIST_CNT		10
+#define TL_RX_LIST_CNT		20
+#define TL_TX_LIST_CNT		20
 #define TL_MIN_FRAMELEN		64
 
 struct tl_frag {
@@ -152,7 +152,7 @@ struct tl_softc {
 /*
  * Transmit interrupt threshold.
  */
-#define TX_THR		0x00000001
+#define TX_THR		0x00000004
 
 #define TL_FLAG_FORCEDELAY	1
 #define TL_FLAG_SCHEDDELAY	2
