@@ -1,0 +1,5 @@
+dnl	$OpenBSD: whatis,v 1.1 2004/02/07 21:29:10 deraadt Exp $
+For the MACHINE, OpenBSD OSREV brings greater stability and security,
+including a stricter memory permission scheme. As a side effect of the
+full security audit, many userland programs have been significantly
+cleaned up and debugged.
