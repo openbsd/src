@@ -50,6 +50,4 @@ about:
 	floppy driver for sun4m machines
 	interrupt driven SCSI driver for sun-4/100's and sun-4/200's
 
-The next release will hopefully run on many more machines.  In
-particular, some Sun4m support will be there.
 
