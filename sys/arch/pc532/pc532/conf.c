@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1998/09/25 09:20:54 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2000/03/22 08:34:16 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -49,6 +49,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 bdev_decl(sw);
 #include "st.h"
 #include "cd.h"
+#include "ch.h"
 #include "ss.h"
 #include "uk.h"
 #include "rd.h"
@@ -117,7 +118,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 13: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 14: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 15: network tunnel */
-	cdev_notdef(),			/* 16 */
+	cdev_ch_init(NCH,ch),		/* 16: SCSI media changer */
 	cdev_lpt_init(NLPT, lpt),	/* 17: Centronics */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_gen_ipf(NIPF,ipl),         /* 19: IP filter log */

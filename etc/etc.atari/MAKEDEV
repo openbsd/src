@@ -72,6 +72,7 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Special purpose devices:
+#	ch*	SCSI media changer
 #	grf*	Motherboard bitmapped video.
 #	kbd	Atari keyboard.
 #	view*	generic interface to graphic displays.
@@ -177,6 +178,16 @@ st*)
 		echo bad unit for tape in: $i
 		;;
 	esac
+	umask 77
+	;;
+
+ch*)
+	umask 2
+	name=ch; chr=33
+	rm -f $name$unit
+	mknod ${name}${unit}	c $chr $unit
+	chown root.operator ${name}${unit}
+	chmod 660 ${name}${unit}
 	umask 77
 	;;
 

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 2000/03/22 07:34:29 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 2000/03/22 08:34:16 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -49,6 +49,7 @@
 #	lpt*	Matthias's lp interface
 #
 # Special purpose devices:
+#	ch*	SCSI media changer
 #	fd	file descriptors
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
@@ -237,6 +238,16 @@ st*)
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
+	umask 77
+	;;
+
+ch*)
+	umask 2
+	name=ch; chr=16
+	rm -f $name$unit
+	mknod ${name}${unit}	c $chr $unit
+	chown root.operator ${name}${unit}
+	chmod 660 ${name}${unit}
 	umask 77
 	;;
 

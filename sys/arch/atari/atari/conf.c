@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1998/09/25 09:20:52 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2000/03/22 08:34:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -111,6 +111,7 @@ cdev_decl(sw);
 cdev_decl(zs);
 #include "ss.h"
 #include "uk.h"
+#include "ch.h"
 #include "grf.h"
 cdev_decl(grf);
 #include "ite.h"
@@ -175,7 +176,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 30: random data source */
 	cdev_uk_init(NUK,uk),		/* 31: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 32: SCSI scanner */
-	cdev_notdef(),			/* 33 */
+	cdev_ch_init(NCH,ch),		/* 33: SCSI media changer */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
 	cdev_notdef(),			/* 36 */
