@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.15 2003/05/16 23:55:00 jason Exp $	*/
+/*	$OpenBSD: intr.c,v 1.16 2003/05/17 03:53:39 jason Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -165,40 +165,15 @@ softnet(fp)
 struct intrhand soft01intr = { softintr, NULL, 1 };
 struct intrhand soft01net = { softnet, NULL, 1 };
 
-#if 1
 void 
 setsoftint() {
 	send_softint(-1, IPL_SOFTINT, &soft01intr);
 }
+
 void 
 setsoftnet() {
 	send_softint(-1, IPL_SOFTNET, &soft01net);
 }
-#endif
-
-/*
- * Level 15 interrupts are special, and not vectored here.
- * Only `prewired' interrupts appear here; boot-time configured devices
- * are attached via intr_establish() below.
- */
-struct intrhand *intrhand[16] = {
-	NULL,			/*  0 = error */
-	&soft01intr,		/*  1 = software level 1 + Sbus */
-	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
-	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
-	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
-	NULL,			/*  5 = Ethernet + Sbus level 4 (4m: Sbus L3) */
-	NULL,			/*  6 = software level 6 (not used) (4m: enet)*/
-	NULL,			/*  7 = video + Sbus level 5 */
-	NULL,			/*  8 = Sbus level 6 */
-	NULL,			/*  9 = Sbus level 7 */
-	NULL,			/* 10 = counter 0 = clock */
-	NULL,			/* 11 = floppy */
-	NULL,			/* 12 = zs hardware interrupt */
-	NULL,			/* 13 = audio chip */
-	NULL,			/* 14 = counter 1 = profiling timer */
-	NULL			/* 15 = async faults */
-};
 
 int fastvec = 0;
 
@@ -240,7 +215,7 @@ intr_establish(level, ih)
 	int level;
 	struct intrhand *ih;
 {
-	register struct intrhand **p, *q;
+	struct intrhand *q;
 	u_int64_t m, id;
 	int s;
 
@@ -253,9 +228,6 @@ intr_establish(level, ih)
 	ih->ih_busy = 0;    /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
-		continue;
-	*p = ih;
 
 	/*
 	 * Store in fast lookup table
