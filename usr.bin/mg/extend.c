@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.18 2001/07/05 17:36:05 matthieu Exp $	*/
+/*	$OpenBSD: extend.c,v 1.19 2002/02/13 03:21:12 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -495,20 +495,22 @@ localbind(f, n)
  */
 /* ARGSUSED */
 int
-define_key(f, n)
-	int f, n;
+define_key(int f, int n)
 {
-	static char	 buf[48] = "Define key map: ";
-	KEYMAP		*mp;
+	static char buf[48];
+	char tmp[32];
+	KEYMAP *mp;
 
-	buf[16] = '\0';
-	if (eread(buf, &buf[16], 48 - 16, EFNEW) != TRUE)
+	strlcpy(buf, "Define key map: ", sizeof buf);
+	if (eread(buf, tmp, sizeof tmp, EFNEW) != TRUE)
 		return FALSE;
-	if ((mp = name_map(&buf[16])) == NULL) {
-		ewprintf("Unknown map %s", &buf[16]);
+	strlcat(buf, tmp, sizeof buf);
+	if ((mp = name_map(tmp)) == NULL) {
+		ewprintf("Unknown map %s", tmp);
 		return FALSE;
 	}
-	(void)strncat(&buf[16], " key: ", 48 - 16 - 1);
+	strlcat(buf, "key: ", sizeof buf);
+
 	return dobind(mp, buf, FALSE);
 }
 
