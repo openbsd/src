@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.82 2003/06/25 21:11:48 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.83 2003/07/02 21:22:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.82 2003/06/25 21:11:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.83 2003/07/02 21:22:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.82 2003/06/25 21:11:48 de
 #include <unistd.h>
 #include <util.h>
 #include "pathnames.h"
+#include "extern.h"
 
 /*
  * Disklabel: read and write disklabels.

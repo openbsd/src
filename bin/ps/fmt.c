@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.3 2003/06/11 06:50:24 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.4 2003/07/02 21:19:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -29,11 +29,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/user.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
+#include "ps.h"
+#include "extern.h"
 
 void
 fmt_puts(char *s, int *leftp)

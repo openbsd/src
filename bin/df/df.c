@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.35 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.36 2003/07/02 21:19:33 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.35 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.36 2003/07/02 21:19:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,8 @@ void	 prtstat(struct statfs *, int, int, int);
 void	 posixprint(struct statfs *, long, int);
 int 	 bread(int, off_t, void *, int);
 void	 usage(void);
+void	 prthumanval(long long);
+void	 prthuman(struct statfs *sfsp, long);
 
 int		raw_df(char *, struct statfs *);
 extern int	ffs_df(int, char *, struct statfs *);

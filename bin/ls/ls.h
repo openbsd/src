@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.h,v 1.5 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: ls.h,v 1.6 2003/07/02 21:19:33 deraadt Exp $	*/
 /*	$NetBSD: ls.h,v 1.7 1995/03/21 09:06:33 cgd Exp $	*/
 
 /*
@@ -71,3 +71,5 @@ typedef struct {
 	char *flags;
 	char data[1];
 } NAMES;
+
+int	ls_main(int, char *[]);
