@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.12 1998/03/28 09:36:41 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.13 1998/03/28 19:16:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -641,6 +641,7 @@ vga_string(int number)
 		"TVGA 9100",
 		"TVGA 9200",
 		"TVGA 9440",
+		"TVGA 9660",
 		"unknown Trident",
 		"S3 911",
 		"S3 924",
