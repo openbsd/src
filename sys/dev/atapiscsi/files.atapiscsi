@@ -1,4 +1,4 @@
-#      $OpenBSD: files.atapiscsi,v 1.2 1999/07/18 22:43:00 csapuntz Exp $     
+#      $OpenBSD: files.atapiscsi,v 1.3 1999/07/18 23:21:54 csapuntz Exp $     
 # ATAPI transport for SCSI protocl
 #
 
@@ -6,3 +6,8 @@ device  atapiscsi: scsi
 attach  atapiscsi at atapi
 file    dev/atapiscsi/atapiscsi.c 	atapiscsi needs-flag
 
+# This is just so this whole ball of crud compiles
+# and links - do not try to use this device.
+device  acd: disk
+attach  acd at atapi
+file    dev/atapiscsi/acd_stub.c    acd needs-flag
