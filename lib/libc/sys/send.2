@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.11 1999/02/15 21:28:23 millert Exp $
+.\"	$OpenBSD: send.2,v 1.12 1999/02/17 03:31:08 deraadt Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -158,13 +158,27 @@ The destination address specified an unreachable host.
 The
 .Fa flags
 parameter is invalid.
+.It Bq Er EHOSTDOWN
+The destination address specified a host that is down.
+.It Bq Er ENETDOWN
+The destination address specified a network that is down.
+.It Bq Er ECONNREFUSED
+The destination host rejected the message (or a previous one). This error
+can only be returned by connected sockets.
+.It Bq Er ENOPROTOOPT
+There was a problem sending the message. This error can only be returned by
+connected sockets.
+.It Bq Er EDESTADDRREQ
+The socket is not connected, and no destination address was specified.
+.It Bq Er EISCONN
+The socket is already connected, and a destination address was specified.
 .El
 .Pp
 In addition,
 .Fn send
 and
 .Fn sendto
-may return following error:
+may return the following error:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa len   
@@ -174,7 +188,7 @@ was larger than
 .Pp
 Also,
 .Fn sendmsg
-may return following errors:
+may return the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The sum of the
