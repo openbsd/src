@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.7 2002/06/09 06:15:15 todd Exp $
+#	$OpenBSD: disktab,v 1.8 2002/08/03 16:37:10 hugh Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
@@ -354,7 +354,7 @@ ucbra81|UCBRA81|DEC UCBRA81 Winchester:\
 	:ph#193282:oh#49324:bh#4096:fh#512:
 #
 # RA82: standard, use a-b-h-g or a-b-h-d-e-f
-ra82|RA81|DEC RA82 Winchester:\
+ra82|RA82|DEC RA82 Winchester:\
 	:ty=winchester:ns#57:nt#15:nc#1423:\
 	:dt=MSCP:\
 	:pa#15884:oa#0:ba#8192:fa#1024:\
