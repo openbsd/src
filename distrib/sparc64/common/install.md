@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2002/09/24 23:45:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.15 2002/11/07 01:28:52 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -40,8 +40,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-# Machine-dependent install sets
-MDSETS=kernel
 MDTERM=sun
 MDXAPERTURE=1
 ARCH=ARCH

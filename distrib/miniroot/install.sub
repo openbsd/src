@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.269 2002/11/01 01:08:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.270 2002/11/07 01:28:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,6 +76,7 @@
 #	md_set_term()		  - set up terminal
 #
 # The following variables can be provided if required:
+#	MDSETS	    - list of files to add to THESETS
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDFSTYPE    - nothing assumed if not provided
 #	MDFSOPTS    - nothing assumed if not provided
@@ -818,8 +819,11 @@ enable_network() {
 
 # Do globbing on the selection and parse +/-. Update the global
 # GET_FILES appropriately.
+#
+# $1 = user's selection (e.g. 'x*', or '-games*')
+# $2 = list of sets available from current source
 glob_selection() {
-	local _selection=$1 _action _f
+	local _selection=$1 _sets=$2 _action _f
 
 	# Change +/- into add/remove, but ignore bare '+' or '-'
 	_action=addel
@@ -836,7 +840,7 @@ glob_selection() {
 	[ "$_selection" = "all" ] && _selection=*
 
 	set -o noglob
-	for _f in $SETS; do
+	for _f in $_sets; do
 		eval "case $_f in
 		$_selection)
 			GET_FILES=\`$_action $_f \$GET_FILES\`
@@ -846,78 +850,34 @@ glob_selection() {
 	set +o noglob
 }
 
-# Set global SETS to either
-#     1) a list of sets found in both $1 and $THESETS, where
-#        $2 is the location that generated the list of files in $1.
-# or
-#     2) a list of .tgz or .tar.gz files found in $2
-get_sets () {
-	local _f _file_list=$1 _src=$2
+# Set GET_FILES to the list of sets requested by the user.
+# $1 = list of files available in source directory or url.
+# $2 = source directory or url
+get_get_files () {
+	local _files=$1 _src=$2 _sets _f
 
-	SETS=
+	GET_FILES=
 
 	for _f in $THESETS ; do
-		if [ "$_f" = "kernel" ]; then
-			if isin bsd $_file_list; then
-				SETS="$SETS bsd"
-			fi
-		elif isin ${_f}${VERSION}.tar.gz $_file_list; then
-			SETS="$SETS ${_f}${VERSION}.tar.gz"
-		elif isin ${_f}${VERSION}.tgz $_file_list; then
-			SETS="$SETS ${_f}${VERSION}.tgz"
+		if isin $_f $_files ; then
+			_sets="$_sets $_f"
+			isin $_f $DEFAULTSETS && GET_FILES="$GET_FILES $_f"
 		fi
 	done
 
-	if [ -z "$SETS" ]; then
+	if [ -z "$_sets" ]; then
 		cat << __EOT
 No OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets were found in
 
     '${_src}'
 
+Valid set names would be:
 __EOT
-		ask "Search for other *.tar.gz and *.tgz files?" y
-		case $resp in
-		n*|N*)	return ;;
-		esac
-		# *.tar.gz and *.tgz are possible sets
-		for _f in $_file_list ; do
-			case $_f in
-			*.tar.gz|*.tgz)	SETS="$SETS ${_f}"
-			esac
+		for _f in $THESETS ; do
+			echo "   $_f"
 		done
-	fi
-
-	if [ -z "$SETS" ]; then
-		ask "There are no *.tar.gz or *.tgz files in ${_src}.\nSee a directory listing?" y
-		case $resp in
-		n*|N*)	return ;;
-		esac
-		echo "\n${_file_list}\n"
 		return
 	fi
-}
-
-# Set global GET_FILES to the list of sets requested by the user.
-# $1 = list of files available in source directory or url.
-# $2 = source directory or url
-get_get_files () {
-	local _files=$1 _src=$2
-
-	GET_FILES=
-
-	get_sets "$_files" "$_src"
-
-	[ "$SETS" ] || return
-
-	# Set the default list of files
-	for _f in $SETS ; do
-		# $SETS contains only .tgz and .tar.gz file names and 'bsd'.
-		case $_f in
-		base*|bsd|comp*|etc*|game*|man*|misc*)
-			isin $_f $SETSDONE || GET_FILES=`addel $_f $GET_FILES`
-			;;
-		esac
-	done
 
 	# Allow the user to select/de-select additional sets
 	while : ; do
@@ -928,22 +888,12 @@ all the sets, or 'done'. You may de-select a set by prepending a '-'
 to its name.
 
 __EOT
-		do_selection_list "$SETS" "$GET_FILES" "File Name?"
+		do_selection_list "$_sets" "$GET_FILES" "File Name?"
 
 		[ "$resp" = "done" ] && break
 
-		glob_selection "$resp"
+		glob_selection "$resp" "$_sets"
 	done
-}
-
-# Ensure that $1 (if present) is the last element in $GET_FILES.
-make_last_set () {
-	local _set=$1
-
-	if isin $_set $GET_FILES; then
-		GET_FILES=`rmel $_set $GET_FILES`
-		GET_FILES=`addel $_set $GET_FILES`
-	fi
 }
 
 # Install the list of files in the global GET_FILES from the source
@@ -957,24 +907,14 @@ install_get_files () {
 	n*|N*)	return ;;
 	esac
 	
-	# Ensure that siteXX.tgz and siteXX.tar.gz are the *last* sets
-	# installed so their contents overwrite the contents of the
-	# other sets, not the other way around. By selecting sets out
-	# of order, the user can cause a set other than siteXX to be
-	# the last set in GET_FILES.
-
-	make_last_set "site${VERSION}.tgz"
-	make_last_set "site${VERSION}.tar.gz"
-
 	echo
-	for _f in $GET_FILES ; do
+	for _f in $THESETS ; do
+		isin $_f $GET_FILES || continue
 		echo "Getting ${_f} ..."
 		case $_f in
-		*.tar.gz|*.tgz)
-			ftp ${_ftp_active} -o - -V -m "${_src}/${_f}" | tar zxpf - -C /mnt
+		*.tgz)	ftp ${_ftp_active} -o - -V -m "${_src}/${_f}" | tar zxpf - -C /mnt
 			;;
-		*)
-			ftp ${_ftp_active} -o "/mnt/${_f}" -V -m "${_src}/${_f}"
+		*)	ftp ${_ftp_active} -o "/mnt/${_f}" -V -m "${_src}/${_f}"
 			;;
 		esac
 		if [ $? -ne 0 ]; then
@@ -1523,17 +1463,6 @@ set_timezone() {
 	done
 }
 
-# Remove $1 from $SETSDONE, taking account of the different
-# possible suffixes - none for bsd, .tgz or .tar.gz for the
-# other sets.
-set_not_done () {
-	local _set=$1
-
-	SETSDONE=`rmel $_set $SETSDONE`
-	SETSDONE=`rmel ${_set}.tgz $SETSDONE`
-	SETSDONE=`rmel ${_set}.tar.tgz $SETSDONE`
-}
-
 # Check that required sets were successfully installed by checking
 # for the presence of a 'random' selection of their contents.
 #
@@ -1549,7 +1478,7 @@ sane_install() {
 	# Check if bsd is installed and >0 bytes in size.
 	if [[ ! -s /mnt/bsd ]]; then
 		_insane=y
-		set_not_done bsd
+		SETSDONE=`rmel bsd $SETSDONE`
 		cat << __EOT
 
 *** /bsd is not present in the installed system, or is 0 bytes long. OpenBSD
@@ -1560,7 +1489,7 @@ __EOT
 	# Check if baseXX is installed.
 	if [[ ! -x /mnt/bin/cat || ! -x /mnt/dev/MAKEDEV ]]; then
 		_insane=y
-		set_not_done base${VERSION}
+		SETSDONE=`rmel base${VERSION}.tgz $SETSDONE`
 		cat << __EOT
 
 *** One or both of the executable files /bin/cat and /dev/MAKEDEV are not
@@ -1572,7 +1501,7 @@ __EOT
 	# Check if etcXX is installed.
 	if [[ ! -d /mnt/etc || ! -d /mnt/usr/share/zoneinfo || ! -d /mnt/dev ]]; then
 		_insane=y
-		set_not_done etc${VERSION}
+		SETSDONE=`rmel etc${VERSION}.tgz $SETSDONE`
 		cat << __EOT
 
 *** One or more of the directories /etc, /usr/share/zoneinfo and /dev are not
@@ -1995,12 +1924,19 @@ IFDEVS=`get_ifdevs`
 # Devices created with makedev().
 DEVSMADE=
 
-# $MDSETS is the list of kernels for an architecture.
-# extra "site" set can be provided by person doing install or upgrade.
-THESETS="$MDSETS base etc misc comp man game xbase xshare xfont xserv site"
+# Selected sets will be installed in the order they are listed in $THESETS.
+# Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
+# the contents of the other sets, not the other way around.
+THESETS="bsd $MDSETS"
+DEFAULTSETS="bsd"
+for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
+       [[ $MODE == upgrade && $_set == etc ]] && continue
+       THESETS="$THESETS ${_set}${VERSION}.tgz"
+       isin $_set xbase xshare xfont xserv site && continue
+       DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
+done
 
 # Global variable using during sets installation
-SETS=
 SETSDIR=
 SETSDONE=
 GET_FILES=

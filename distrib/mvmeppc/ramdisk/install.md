@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2002/05/20 16:53:57 krw Exp $
+#	$OpenBSD: install.md,v 1.15 2002/11/07 01:28:52 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-# Machine-dependent install sets
-MDSETS=kernel
 MDTERM=vt100
 MDFSTYPE=msdos
 ARCH=ARCH

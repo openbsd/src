@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.18 2002/10/30 21:37:40 miod Exp $
+#       $OpenBSD: install.md,v 1.19 2002/11/07 01:28:52 krw Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -63,7 +63,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="bsd bsd-sbc"
+MDSETS="bsd.tgz bsd-sbc.tgz"
 MDTERM=vt100
 ARCH=ARCH
 

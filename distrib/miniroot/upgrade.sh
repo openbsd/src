@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.44 2002/11/01 00:39:19 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.45 2002/11/07 01:28:52 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -49,12 +49,6 @@ MODE=upgrade
 
 # include common subroutines and initialization code
 . install.sub
-
-# Remove 'etc' set from THESETS. It should be installed
-# manually, after the upgrade. Note that etc should not
-# be the first or last set in THESETS, or this won't
-# work!
-THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 
 # Have the user confirm that $ROOTDEV is the root filesystem.
 resp=
