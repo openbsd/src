@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.2 1996/10/08 01:20:14 michaels Exp $
+.\"   $OpenBSD: semop.2,v 1.3 1996/12/11 17:39:20 deraadt Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -90,7 +90,7 @@ is equal to 0. The calling process is blocked until the value of the
 specified semaphore reaches 0.
 .El
 
-The behaviour of each operation is influenced by the flags set in
+The behavior of each operation is influenced by the flags set in
 .Va sem_flg
 in the following way:
 .Bl -tag -width IPC_NOWAITX
