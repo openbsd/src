@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.183 2005/03/04 13:21:42 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.184 2005/03/09 11:14:37 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -948,12 +948,6 @@ after_listen:
 			opti.ts_ecr = 0;
 	}
 
-#ifdef TCP_SACK
-	if (tp->sack_enable) {
-		tp->rcv_laststart = th->th_seq; /* last rec'vd segment*/
-		tp->rcv_lastend = th->th_seq + tlen;
-	}
-#endif /* TCP_SACK */
 #ifdef TCP_ECN
 	/* if congestion experienced, set ECE bit in subsequent packets. */
 	if ((iptos & IPTOS_ECN_MASK) == IPTOS_ECN_CE) {
@@ -2011,7 +2005,7 @@ dodata:							/* XXX */
 		}
 #ifdef TCP_SACK
 		if (tp->sack_enable)
-			tcp_update_sack_list(tp);
+			tcp_update_sack_list(tp, th->th_seq, th->th_seq + tlen);
 #endif
 
 		/*
@@ -2372,8 +2366,8 @@ tcp_seq_subtract(a, b)
  * prediction mode), and it updates the ordered list of sacks.
  */
 void
-tcp_update_sack_list(tp)
-	struct tcpcb *tp;
+tcp_update_sack_list(struct tcpcb *tp, tcp_seq rcv_laststart,
+    tcp_seq rcv_lastend)
 {
 	/*
 	 * First reported block MUST be the most recent one.  Subsequent
@@ -2402,10 +2396,10 @@ tcp_update_sack_list(tp)
 	tp->rcv_numsacks -= count;
 	if (tp->rcv_numsacks == 0) { /* no sack blocks currently (fast path) */
 		tcp_clean_sackreport(tp);
-		if (SEQ_LT(tp->rcv_nxt, tp->rcv_laststart)) {
+		if (SEQ_LT(tp->rcv_nxt, rcv_laststart)) {
 			/* ==> need first sack block */
-			tp->sackblks[0].start = tp->rcv_laststart;
-			tp->sackblks[0].end = tp->rcv_lastend;
+			tp->sackblks[0].start = rcv_laststart;
+			tp->sackblks[0].end = rcv_lastend;
 			tp->rcv_numsacks = 1;
 		}
 		return;
@@ -2413,14 +2407,14 @@ tcp_update_sack_list(tp)
 	/* Otherwise, sack blocks are already present. */
 	for (i = 0; i < tp->rcv_numsacks; i++)
 		tp->sackblks[i] = temp[i]; /* first copy back sack list */
-	if (SEQ_GEQ(tp->rcv_nxt, tp->rcv_lastend))
+	if (SEQ_GEQ(tp->rcv_nxt, rcv_lastend))
 		return;     /* sack list remains unchanged */
 	/*
 	 * From here, segment just received should be (part of) the 1st sack.
 	 * Go through list, possibly coalescing sack block entries.
 	 */
-	firstsack.start = tp->rcv_laststart;
-	firstsack.end = tp->rcv_lastend;
+	firstsack.start = rcv_laststart;
+	firstsack.end = rcv_lastend;
 	for (i = 0; i < tp->rcv_numsacks; i++) {
 		sack = tp->sackblks[i];
 		if (SEQ_LT(sack.end, firstsack.start) ||

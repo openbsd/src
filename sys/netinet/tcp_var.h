@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.71 2005/03/04 13:21:42 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.72 2005/03/09 11:14:38 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -121,8 +121,6 @@ struct tcpcb {
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
 #if 1 /*def TCP_SACK*/
-	tcp_seq rcv_laststart;		/* start of last segment recd. */
-	tcp_seq rcv_lastend;		/* end of ... */
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	int	rcv_numsacks;		/* # distinct sack blks present */
 	struct sackblk sackblks[MAX_SACK_BLKS]; /* seq nos. of sack blocks */
@@ -612,7 +610,7 @@ void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 #ifdef TCP_SACK
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
-void	 tcp_update_sack_list(struct tcpcb *tp);
+void	 tcp_update_sack_list(struct tcpcb *tp, tcp_seq, tcp_seq);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
 void	 tcp_clean_sackreport(struct tcpcb *tp);
 void	 tcp_sack_adjust(struct tcpcb *tp);
