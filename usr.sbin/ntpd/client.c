@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.6 2004/07/05 20:41:34 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.7 2004/07/05 22:12:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,14 +135,20 @@ client_dispatch(struct ntp_peer *p)
 	T2 = lfp_to_d(msg.rectime);
 	T3 = lfp_to_d(msg.xmttime);
 
-	p->offset = ((T2 - T1) + (T3 - T4)) / 2;
-	p->delay = (T2 - T1) - (T3 - T4);
+	p->offset[p->shift] = ((T2 - T1) + (T3 - T4)) / 2;
+	p->delay[p->shift] = (T2 - T1) - (T3 - T4);
 
 	p->state = STATE_REPLY_RECEIVED;
 	p->next = time(NULL) + INTERVAL_QUERY;
 	p->deadline = 0;
 
-	log_debug("reply received: offset %f delay %f", p->offset, p->delay);
+	log_debug("reply received: offset %f delay %f", p->offset[p->shift],
+	    p->delay[p->shift]);
+
+	if (++p->shift >= OFFSET_ARRAY_SIZE) {
+		p->shift = 0;
+		p->valid = 1;
+	}
 
 	return (0);
 }

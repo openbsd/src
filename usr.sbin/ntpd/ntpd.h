@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.11 2004/07/05 20:41:35 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.12 2004/07/05 22:12:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,8 +37,9 @@
 #define	NTPD_OPT_VERBOSE2	0x0002
 
 #define	INTERVAL_ADJTIME	120	/* call adjtime every n seconds */
-#define	INTERVAL_QUERY		60	/* sync with peers every n seconds */
-#define	QUERYTIME_MAX		30	/* single query might take n secs max */
+#define	INTERVAL_QUERY		30	/* sync with peers every n seconds */
+#define	QUERYTIME_MAX		15	/* single query might take n secs max */
+#define	OFFSET_ARRAY_SIZE	8
 
 enum client_state {
 	STATE_NONE,
@@ -59,8 +60,10 @@ struct ntp_peer {
 	enum client_state		 state;
 	time_t				 next;
 	time_t				 deadline;
-	double				 offset;
-	double				 delay;
+	double				 offset[OFFSET_ARRAY_SIZE];
+	double				 delay[OFFSET_ARRAY_SIZE];
+	u_int8_t			 shift;
+	u_int8_t			 valid;
 };
 
 struct ntpd_conf {

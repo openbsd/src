@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.10 2004/07/05 07:46:16 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.11 2004/07/05 22:12:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,21 +285,21 @@ ntp_adjtime(struct ntpd_conf *conf)
 	struct ntp_peer	*p;
 	double		 offset_median = 0;
 	int		 offset_cnt = 0;
+	u_int8_t	 idx;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		if (p->state == STATE_NONE)
+		if (!p->valid)
 			continue;
 
-		offset_median += p->offset;
-		offset_cnt++;
+		for (idx = 0; idx < OFFSET_ARRAY_SIZE; idx++) {
+			offset_median += p->offset[idx];
+			offset_cnt++;
+		}
 	}
 
 	offset_median /= offset_cnt;
 
-	if (offset_median >= 0.001 || offset_median <= 0.001) {
+	if (offset_median >= 0.001 || offset_median <= 0.001)
 		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
 			    &offset_median, sizeof(offset_median));
-		TAILQ_FOREACH(p, &conf->ntp_peers, entry)
-			p->offset = 0;
-	}
 }
