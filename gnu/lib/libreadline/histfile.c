@@ -339,7 +339,7 @@ history_do_write (filename, nelements, overwrite)
 
     the_history = history_list ();
     /* Calculate the total number of bytes to write. */
-    for (buffer_size = 0, i = history_length - nelements; i < history_length; i++)
+    for (buffer_size = 1, i = history_length - nelements; i < history_length; i++)
       buffer_size += 1 + strlen (the_history[i]->line);
 
     /* Allocate the buffer, and fill it. */
@@ -352,7 +352,7 @@ history_do_write (filename, nelements, overwrite)
 	strlcat (buffer, "\n", buffer_size);
       }
 
-    write (file, buffer, buffer_size);
+    write (file, buffer, buffer_size - 1);
     free (buffer);
   }
 
