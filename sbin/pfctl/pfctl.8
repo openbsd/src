@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.14 2001/06/27 21:54:46 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.15 2001/06/29 21:24:07 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -38,6 +38,7 @@
 .Op Fl d
 .Op Fl e
 .Op Fl F Ar modifier
+.Op Fl h
 .Op Fl l Ar interface
 .Op Fl N Ar file
 .Op Fl n
@@ -86,16 +87,18 @@ Disable the packet filter
 Enable the packet filter
 .It Fl F Ar modifier
 Flush one of the following sets:
-.Bl -tag -width "Fn" -compact
-.It Fl "\Fn"
+.Bl -tag -width "F n" -compact
+.It Fl F Ar n
 Flush the NAT rules
-.It Fl "Fr"
+.It Fl F Ar r
 Flush the filter rules
-.It Fl "Fs"
+.It Fl F Ar s
 Flush the state table (NAT and filter)
-.It Fl "FS"
+.It Fl F Ar S
 Flush (zero) the filter statistics
 .El
+.It Fl h
+Help
 .It Fl l Ar interface
 Enable collection of packet and byte count statistics for interface named
 .Ar interface .
@@ -110,14 +113,14 @@ Load a NAT rules file
 Load a filter rules file into the filter
 .It Fl s Ar modifier
 Show filter parameters.
-.Bl -tag -width "sn" -compact
-.It Fl "sn"
+.Bl -tag -width "s n" -compact
+.It Fl s Ar n
 Show the currently loaded NAT rules
-.It Fl "sr"
+.It Fl s Ar r
 Show the currently loaded packet filter rules
-.It Fl "ss"
+.It Fl s Ar s
 Show the contents of the state table
-.It Fl "sS"
+.It Fl s Ar S
 Show filter statistics
 .El
 .It Fl v
