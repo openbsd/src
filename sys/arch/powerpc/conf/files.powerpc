@@ -1,15 +1,13 @@
 #
-# First try for powerpc-specific configuration info
+# V.I. powerpc-specific configuration info
 #
 maxpartitions 16
 
 maxusers 2 8 64
 
-#
-# Openfirmware support
-#
-include "../../../dev/ofw/files.ofw"
-major	{ofdisk = 0}
+# need some decl. from here...
+include	"../../../dev/atapi/files.atapi"                          
+major	{ acd = 5 }
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/autoconf.c
@@ -45,20 +43,34 @@ file    arch/powerpc/powerpc/db_disasm.c                ddb
 file    arch/powerpc/powerpc/db_interface.c             ddb
 file    arch/powerpc/powerpc/db_trace.c                 ddb
 
+file    arch/powerpc/powerpc/ofwreal.S
+
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+file	arch/powerpc/powerpc/mainbus.c	mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/powerpc/powerpc/cpu.c
+
 pseudo-device rd
-file dev/ramdisk.c                      rd needs-flag
-file arch/powerpc/powerpc/rd_root.c           ramdisk_hooks
+file dev/ramdisk.c			rd needs-flag
+file arch/powerpc/powerpc/rd_root.c	ramdisk_hooks
 major   {rd = 17}
 
-# FirePower specific code
-#device firepower: openfirm
-#attach firepower at root
+device	mpcpcibr {} : pcibus
+attach	mpcpcibr at mainbus
+file	arch/powerpc/pci/mpcpcibus.c
 
-#file	arch/powerpc/firepower/firedep.c	firepower needs-flag
-#file	arch/powerpc/firepower/fireirq.c	firepower
-
-# FirePower OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firepowerbugs
-
+device	isabr {} : isabus
+attach	isabr at mainbus
+file	arch/powerpc/isa/isabus.c	isabr
 include "../../../scsi/files.scsi"
+major	{sd = 0}
+major	{cd = 3}
 
+define	pcmcia {}			# XXX dummy decl...
+include	"../../../dev/pci/files.pci"
+include	"../../../dev/isa/files.isa"
+major	{ wd = 4 }

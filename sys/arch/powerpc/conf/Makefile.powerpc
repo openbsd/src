@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.powerpc,v 1.1 1996/09/30 16:34:18 ws Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.5 1997/10/13 09:39:32 pefo Exp $
 #
-# Makefile for NetBSD
+# Makefile for OpenBSD PowerPC
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -38,7 +38,7 @@ PPC=	$S/arch/powerpc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dpowerpc
+		-Dpowerpc -Dpower4e
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE
@@ -136,7 +136,8 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${CFILES} ${PPC}/powerpc/swapgeneric.c ioconf.c param.c | \
+		${PPC}/powerpc/Locore.c ${CFILES} ${PPC}/powerpc/swapgeneric.c \
+		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
 tags:

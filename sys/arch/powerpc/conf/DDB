@@ -7,66 +7,94 @@ machine		powerpc
 maxusers	32
 
 # Standard system options (should go into std.powerpc?)
-options		SWAPPAGER, VNODEPAGER, DEVPAGER
-options		MACHINE_NONCONTIG
-options		EXEC_ELF
-options		EXEC_SCRIPT
+option		SWAPPAGER, VNODEPAGER, DEVPAGER
+option		EXEC_ELF
+option		EXEC_SCRIPT
 
 # various hacks due to bugs in Openfirmware implementation
-options		FIREPOWERBUGS
+option		FIREPOWERBUGS
 
-#options		IPKDBUSERHACK
+#option		IPKDBUSERHACK
 #makeoptions	DEBUG="-g"
 
 options		DDB
 options		KTRACE
 options		SYSCALL_DEBUG
-options		TCP_COMPAT_42
-options		COMPAT_43
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_12
+#option		TCP_COMPAT_42
+#option		COMPAT_43
+#option		COMPAT_09
+#option		COMPAT_10
+#option		COMPAT_12
 
-options		FFS
-options		MFS
+option		FFS
+#option		MFS
 
-options		NFSCLIENT
-options		NFSSERVER
+option		NFSCLIENT
+option		NFSSERVER
 
-options		CD9660
-options		MSDOSFS
-options		FDESC
+option		CD9660
+option		MSDOSFS
+option		FDESC
 options		FIFO
 options		KERNFS
-options		NULLFS
-options		PORTAL
-options		PROCFS
-options		UMAPFS
-options		UNION
+option		NULLFS
+#option		PORTAL
+option		PROCFS
+#option		UMAPFS
+option		UNION
 
 options		INET
 options		NMBCLUSTERS=1024
 
-options		MAXUSERS=20
-#options		TARGET_ELF
-
 config		bsd	swap generic
 
-ofroot*		at root
+#
+#  Now the Machine specification
+#
+mainbus0	at root
+cpu*		at mainbus0
 
-ofbus*		at openfirm?
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+isabr*		at mainbus0	# ISA dev bridge.
 
-ofdisk*		at openfirm?
 
-ofnet*		at openfirm?
-#ipkdbif0	at ofnet?
+#### ISA Bus devices.
 
-ofcons*		at openfirm?
+isa*		at isabr?
 
-ofrtc*		at openfirm?
+com0		at isa? port 0x2e8 irq 5
+com1		at isa? port 0x3e8 irq 1
 
-pseudo-device	loop
-pseudo-device	pty	64
-pseudo-device	random	1
-pseudo-device	rd
-pseudo-device	vnd	1
+
+#### PCI Bus devices.
+
+pci*		at mpcpcibr?
+ncr*		at pci? dev ? function ?
+scsibus*	at ncr?
+de*		at pci? dev ? function ?
+#vme*		at pci? dev ? function ?
+
+
+#### SCSI Bus devices
+ 
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?            
+cd*		at scsibus? target ? lun ?
+ch*		at scsibus? target ? lun ?
+ss*		at scsibus? target ? lun ?
+uk*		at scsibus? target ? lun ?
+
+
+#### PSEUDO Devices
+
+pseudo-device	loop		 1	# network loopback
+pseudo-device	bpfilter	 8	# packet filter ports
+#pseudo-device	sl		 2	# serial-line IP ports
+#pseudo-device	ppp		 2	# serial-line PPP ports
+pseudo-device	tun		 2	# network tunneling over tty
+
+pseudo-device	pty		64	# pseudo ptys
+pseudo-device	random		 1
+pseudo-device	rd		 1	# ram disk
+pseudo-device	vnd		 4	# paging to files
+pseudo-device	ccd		 4	# concatenated disk devices
