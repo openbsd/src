@@ -1,4 +1,4 @@
-/*	$OpenBSD: header.h,v 1.10 2000/06/29 07:55:40 pjanzen Exp $	*/
+/*	$OpenBSD: header.h,v 1.11 2002/10/23 15:06:47 millert Exp $	*/
 /* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
@@ -325,7 +325,6 @@ struct sphere {
 #define DEMONLORD 57
 #define DEMONPRINCE 64
 
-#define NULL 0
 #define BUFBIG	4096		/* size of the output buffer */
 #define MAXIBUF	4096		/* size of the input buffer */
 #define LOGNAMESIZE 40		/* max size of the players name */
