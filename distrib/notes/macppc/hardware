@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.45 2005/02/21 22:01:20 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.46 2005/02/25 15:01:07 mickey Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -342,7 +342,7 @@ Supported devices {:-include-:}:
 			Terratec TerraTVplus
 			Video Highway XTreme
 			VideoLogic Captivator PCI
-			Zoltrix TV
+			Zoltrix TV and Genie TV/FM
 
 	Cryptography Accelerators
 		Hifn 6500 (lofn)

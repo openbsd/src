@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.35 2005/02/24 21:05:09 brad Exp $
+dnl	$OpenBSD: hardware,v 1.36 2005/02/25 15:01:07 mickey Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -728,7 +728,7 @@ dnl		    See above
 		    Terratec TerraTVplus
 		    Video Highway XTreme
 		    VideoLogic Captivator PCI
-		    Zoltrix TV
+		    Zoltrix TV and Genie TV/FM
 		Hardware monitoring sensors, including:
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
