@@ -391,7 +391,7 @@
            above. The reason just is that Apache pre-configures the installed
            configuration file for direct use (at least as long the APACI
            option --without-confadjust is not used). For using the official
-           ports (80 for HTTP and 443 for HTTPS) root priviledges are required
+           ports (80 for HTTP and 443 for HTTPS) root privileges are required
            under run-time, so APACI assumes that it has to use alternate ports
            (8080 for HTTP and 8443 for HTTPS) if the built and installation is
            done under non-root users.
