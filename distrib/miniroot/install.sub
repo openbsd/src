@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.209 2002/04/26 02:43:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.210 2002/04/27 19:12:57 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -818,7 +818,7 @@ glob_selection() {
 	+*)	_selection=${_selection#?}
 		;;
 	-*)	_selection=${_selection#?}
-		_action=remel
+		_action=rmel
 		;;
 	esac
 
