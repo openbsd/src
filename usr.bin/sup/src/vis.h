@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.1 1997/10/11 23:34:22 beck Exp $	*/
+/*	$OpenBSD: vis.h,v 1.2 2001/05/05 15:56:04 millert Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
@@ -74,14 +74,18 @@
  */
 #define	UNVIS_END	1	/* no more characters */
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-char	*vis __P((char *, int, int, int));
-int	strvis __P((char *, const char *, int));
-int	strvisx __P((char *, const char *, size_t, int));
-int	strunvis __P((char *, const char *));
-int	unvis __P((char *, char, int *, int));
-__END_DECLS
+#ifdef __STDC__
+char	*vis(char *, int, int, int);
+int	strvis(char *, const char *, int);
+int	strvisx(char *, const char *, size_t, int);
+int	strunvis(char *, const char *);
+int	unvis(char *, char, int *, int);
+#else
+char	*vis();
+int	strvis();
+int	strvisx();
+int	strunvis();
+int	unvis();
+#endif
 
 #endif /* !_VIS_H_ */

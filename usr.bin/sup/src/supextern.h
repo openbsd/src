@@ -1,4 +1,4 @@
-/*     $OpenBSD: supextern.h,v 1.4 2001/05/04 22:16:16 millert Exp $  */
+/*     $OpenBSD: supextern.h,v 1.5 2001/05/05 15:56:04 millert Exp $  */
 
 #ifndef __P
 #ifdef __STDC__
@@ -145,7 +145,7 @@ void prtime __P((void));
 int establishdir __P((char *));
 int makedir __P((char *, int, struct stat *));
 int estabd __P((char *, char *));
-void ugconvert __P((char *, char *, int *, int *, int *));
+void ugconvert __P((char *, char *, uid_t *, gid_t *, int *));
 void notify __P((char *, ...));
 void lockout __P((int));
 char *fmttime __P((time_t));

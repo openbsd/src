@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.9 2001/05/04 22:16:16 millert Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.10 2001/05/05 15:56:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -215,7 +215,9 @@ Llookup(table, name)
 void
 ugconvert(uname, gname, uid, gid, mode)
 	char *uname, *gname;
-	int *uid, *gid, *mode;
+	uid_t *uid;
+	gid_t *gid;
+	int *mode;
 {
 	LIST *u, *g;
 	struct passwd *pw;
@@ -232,14 +234,14 @@ ugconvert(uname, gname, uid, gid, mode)
 	}
 	pw = NULL;
 	if ((u = Llookup(uidL, uname)) != NULL)
-		*uid = u->Lnumber;
+		*uid = (uid_t) u->Lnumber;
 	else if ((pw = getpwnam(uname)) != NULL) {
 		Linsert(uidL, strdup(uname), pw->pw_uid);
 		*uid = pw->pw_uid;
 	}
 	if (u || pw) {
 		if ((g = Llookup(gidL, gname)) != NULL) {
-			*gid = g->Lnumber;
+			*gid = (gid_t) g->Lnumber;
 			return;
 		}
 		if ((gr = getgrnam(gname)) != NULL) {

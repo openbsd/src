@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.10 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.11 2001/05/05 15:56:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -141,7 +141,7 @@ glob(as)
 	if (*cs == '~' && home && pathp == path) {
 		if (addpath('~'))
 			goto endit;
-		for (cs++; isalnum(*cs) || *cs == '_' || *cs == '-';)
+		for (cs++; isalnum((unsigned char) *cs) || *cs == '_' || *cs == '-';)
 			if (addpath(*cs++))
 				goto endit;
 		if (!*cs || *cs == '/') {
