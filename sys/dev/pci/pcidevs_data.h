@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.142 1999/05/14 00:28:25 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.143 1999/05/27 09:16:28 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -444,13 +444,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
 	    0,
 	    "Advanced System Products",
-	    "",
+	    "1200A",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B,
 	    0,
 	    "Advanced System Products",
-	    "",
+	    "1200B",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA,
