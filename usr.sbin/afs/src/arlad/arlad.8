@@ -1,10 +1,10 @@
-.\"     $OpenBSD: arlad.8,v 1.2 2002/06/07 04:28:57 hin Exp $
+.\"     $OpenBSD: arlad.8,v 1.3 2002/06/07 07:25:22 hin Exp $
 .\"	$KTH: arlad.8,v 1.7.2.2 2001/05/06 22:49:03 ahltorp Exp $
 .Dd September 5, 1998
-.Dt ARLAD 1
+.Dt AFSD 8
 .Os
 .Sh NAME
-.Nm arlad
+.Nm afsd
 .Nd AFS cache manager for xfs
 .Sh SYNOPSIS
 .Nm
@@ -42,11 +42,9 @@ It is used to manage the file cache, fetch files
 from AFS servers, handle callbacks and manage the authentication information
 for users.
 .Pp
-In normal cases you will not need to run
+In normal cases
 .Nm
-by yourself, a system startup script will start
-.Nm
-or you can use startarla.
+will be started by enabling it in /etc/rc.conf.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -130,8 +128,8 @@ Print usage information.
 .El
 .Sh FILES
 .Bl -tag -width CellServDB -compact
-.It Pa arlad.conf
-default configuration for arlad
+.It Pa afsd.conf
+default configuration for afsd
 .It Pa CellServDB
 database with all known AFS servers
 .It Pa ThisCell
@@ -140,19 +138,19 @@ our default cell (where we get the root directory)
 .Pp
 It is highly recommended that the default cache directory be a separate
 file system.
-When enough memory is available this could be a mfs to
+If enough memory is available the cache filesystem could be a mfs to
 drastically improve performance.
 .Sh SEE ALSO
-.Xr arlad 1 ,
-.Xr mount_xfs 8 ,
-.Xr vos 8 ,
 .Xr fs 1 ,
 .Xr pts 1 ,
+.Xr afsd.conf 5 ,
 .Xr CellServDB 5 ,
 .Xr DynRootDB 5 ,
-.Xr ThisCell 5 ,
 .Xr SuidCells 5 ,
-.Xr arla.conf 5
+.Xr ThisCell 5 ,
+.Xr mount_mfs 8 ,
+.Xr mount_xfs 8 ,
+.Xr vos 8
 .Sh BUGS
 If
 .Nm
