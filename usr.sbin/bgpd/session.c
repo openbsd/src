@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.106 2004/01/31 21:09:15 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.107 2004/02/01 18:20:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1619,14 +1619,26 @@ session_up(struct peer *peer)
 	switch (peer->sa_local.ss_family) {
 	case AF_INET:
 		sup.local_addr.af = AF_INET;
-		sup.local_addr.v4 =
-		    ((struct sockaddr_in *)&peer->sa_local)->sin_addr;
+		memcpy(&sup.local_addr.v4,
+		    &((struct sockaddr_in *)&peer->sa_local)->sin_addr,
+		    sizeof(sup.local_addr.v4));
 		sup.remote_addr.af = AF_INET;
-		sup.remote_addr.v4 =
-		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr;
+		memcpy(&sup.remote_addr.v4,
+		    &((struct sockaddr_in *)&peer->sa_remote)->sin_addr,
+		    sizeof(sup.remote_addr.v4));
+		break;
+	case AF_INET6:
+		sup.local_addr.af = AF_INET6;
+		memcpy(&sup.local_addr.v6,
+		    &((struct sockaddr_in6 *)&peer->sa_local)->sin6_addr,
+		    sizeof(sup.local_addr.v6));
+		sup.remote_addr.af = AF_INET6;
+		memcpy(&sup.remote_addr.v6,
+		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		    sizeof(sup.remote_addr.v6));
 		break;
 	default:
-		fatalx("session_up: only AF_INET supported");
+		fatalx("session_up: unsupported address family");
 	}
 
 	peer->stats.last_updown = time(NULL);
