@@ -1993,6 +1993,7 @@
 ./usr/share/man/cat8/login_reject.0
 ./usr/share/man/cat8/login_skey.0
 ./usr/share/man/cat8/login_snk.0
+./usr/share/man/cat8/login_tis.0
 ./usr/share/man/cat8/login_token.0
 ./usr/share/man/cat8/logresolve.0
 ./usr/share/man/cat8/lpc.0
@@ -2211,6 +2212,7 @@
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/string2key.0
 ./usr/share/man/cat8/sudo.0
+./usr/share/man/cat8/sudoedit.0
 ./usr/share/man/cat8/suexec.0
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0

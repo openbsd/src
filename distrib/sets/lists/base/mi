@@ -431,6 +431,7 @@
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sudo
+./usr/bin/sudoedit
 ./usr/bin/sup
 ./usr/bin/systat
 ./usr/bin/tail
@@ -1642,6 +1643,7 @@
 ./usr/libexec/auth/login_reject
 ./usr/libexec/auth/login_skey
 ./usr/libexec/auth/login_snk
+./usr/libexec/auth/login_tis
 ./usr/libexec/auth/login_token
 ./usr/libexec/comsat
 ./usr/libexec/cpp

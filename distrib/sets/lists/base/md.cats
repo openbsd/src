@@ -2206,6 +2206,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
 ./usr/libexec/ld.so
+./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload

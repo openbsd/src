@@ -2154,6 +2154,7 @@
 ./usr/libdata/perl5/sparc64-openbsd/5.8.5/threads.pm
 ./usr/libdata/perl5/sparc64-openbsd/5.8.5/threads/shared.pm
 ./usr/libexec/ld.so
+./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/sparc64-openbsd
 ./usr/mdec/bootblk
 ./usr/mdec/installboot
