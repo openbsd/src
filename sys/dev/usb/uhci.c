@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.29 2003/07/08 13:19:09 nate Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.30 2003/08/23 15:16:07 fgsch Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2623,7 +2623,7 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 	uhci_soft_qh_t *sqh;
 	int i, npoll;
 
-	DPRINTFN(5, ("uhci_intr_done: length=%d\n", xfer->actlen));
+	DPRINTFN(5, ("uhci_device_intr_done: length=%d\n", xfer->actlen));
 
 	npoll = upipe->u.intr.npoll;
 	for(i = 0; i < npoll; i++) {
@@ -2684,7 +2684,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_ctrl_done: not a request");
+		panic("uhci_device_ctrl_done: not a request");
 #endif
 
 	if (!uhci_active_intr_info(ii))
@@ -2700,7 +2700,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 	if (upipe->u.ctl.length != 0)
 		uhci_free_std_chain(sc, ii->stdstart->link.std, ii->stdend);
 
-	DPRINTFN(5, ("uhci_ctrl_done: length=%d\n", xfer->actlen));
+	DPRINTFN(5, ("uhci_device_ctrl_done: length=%d\n", xfer->actlen));
 }
 
 /* Deallocate request data structures */
@@ -2711,7 +2711,7 @@ uhci_device_bulk_done(usbd_xfer_handle xfer)
 	uhci_softc_t *sc = ii->sc;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 
-	DPRINTFN(5,("uhci_device_ctrl_done: xfer=%p ii=%p sc=%p upipe=%p\n",
+	DPRINTFN(5,("uhci_device_bulk_done: xfer=%p ii=%p sc=%p upipe=%p\n",
 		    xfer, ii, sc, upipe));
 
 	if (!uhci_active_intr_info(ii))
@@ -2723,7 +2723,7 @@ uhci_device_bulk_done(usbd_xfer_handle xfer)
 
 	uhci_free_std_chain(sc, ii->stdstart, NULL);
 
-	DPRINTFN(5, ("uhci_bulk_done: length=%d\n", xfer->actlen));
+	DPRINTFN(5, ("uhci_device_bulk_done: length=%d\n", xfer->actlen));
 }
 
 /* Add interrupt QH, called with vflock. */
@@ -2775,16 +2775,16 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	int i, npoll, s;
 	u_int bestbw, bw, bestoffs, offs;
 
-	DPRINTFN(2, ("uhci_setintr: pipe=%p\n", upipe));
+	DPRINTFN(2, ("uhci_device_setintr: pipe=%p\n", upipe));
 	if (ival == 0) {
-		printf("uhci_setintr: 0 interval\n");
+		printf("uhci_device_setintr: 0 interval\n");
 		return (USBD_INVAL);
 	}
 
 	if (ival > UHCI_VFRAMELIST_COUNT)
 		ival = UHCI_VFRAMELIST_COUNT;
 	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
-	DPRINTFN(2, ("uhci_setintr: ival=%d npoll=%d\n", ival, npoll));
+	DPRINTFN(2, ("uhci_device_setintr: ival=%d npoll=%d\n", ival, npoll));
 
 	upipe->u.intr.npoll = npoll;
 	upipe->u.intr.qhs =
@@ -2803,7 +2803,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 			bestoffs = offs;
 		}
 	}
-	DPRINTFN(1, ("uhci_setintr: bw=%d offs=%d\n", bestbw, bestoffs));
+	DPRINTFN(1, ("uhci_device_setintr: bw=%d offs=%d\n", bestbw, bestoffs));
 
 	for(i = 0; i < npoll; i++) {
 		upipe->u.intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
@@ -2819,7 +2819,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 		uhci_add_intr(sc, upipe->u.intr.qhs[i]);
 	splx(s);
 
-	DPRINTFN(5, ("uhci_setintr: returns %p\n", upipe));
+	DPRINTFN(5, ("uhci_device_setintr: returns %p\n", upipe));
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -3474,7 +3474,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
-	DPRINTFN(3, ("uhci_root_intr_transfer: xfer=%p len=%d flags=%d\n",
+	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
 
 	if (sc->sc_dying)
