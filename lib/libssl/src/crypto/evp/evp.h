@@ -326,6 +326,7 @@ struct evp_cipher_st
 #define 	EVP_CTRL_SET_RC2_KEY_BITS	0x3
 #define 	EVP_CTRL_GET_RC5_ROUNDS		0x4
 #define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
+#define		EVP_CTRL_SET_ACSS_MODE		0x6
 
 typedef struct evp_cipher_info_st
 	{
@@ -662,6 +663,9 @@ const EVP_CIPHER *EVP_aes_256_ofb(void);
 #if 0
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 #endif
+#endif
+#ifndef OPENSSL_NO_ACSS
+const EVP_CIPHER *EVP_acss(void);
 #endif
 
 void OPENSSL_add_all_algorithms_noconf(void);

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/07/02 02:15:51 deraadt Exp $
+# $OpenBSD: Makefile,v 1.6 2004/01/23 17:02:25 hshoexer Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -161,6 +161,7 @@ MANALL=	\
 	SSL_want.cat3 \
 	SSL_write.cat3 \
 	blowfish.cat3 \
+	acss.cat3 \
 	bn.cat3 \
 	bn_internal.cat3 \
 	crypto.cat3 \
@@ -712,6 +713,7 @@ MLINKS+=\
 	SSL_want.3 SSL_want_read.3 \
 	SSL_want.3 SSL_want_write.3 \
 	SSL_want.3 SSL_want_x509_lookup.3 \
+	acss.3 acss_setkey.3 \
 	blowfish.3 BF_cbc.3 \
 	blowfish.3 BF_cbc_encrypt.3 \
 	blowfish.3 BF_cfb64_encrypt.3 \
