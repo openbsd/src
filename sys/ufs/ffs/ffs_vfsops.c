@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.13 1997/11/11 15:28:44 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.14 1997/12/09 04:54:42 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -164,7 +164,10 @@ ffs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			error = ffs_flushfiles(mp, flags, p);
+			if (mp->mnt_flag & MNT_SOFTDEP)
+				error = softdep_flushfiles(mp, flags, p);
+			else
+				error = ffs_flushfiles(mp, flags, p);
 			if (error == 0 &&
 			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
