@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ami.4,v 1.9 2002/01/30 20:38:10 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff.  All rights reserved.
 .\"
@@ -30,8 +30,6 @@ driver.
 Although the controllers are actual RAID controllers the driver makes them
 look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
-.Xr iop 4
-driver.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr iop 4 ,
@@ -47,3 +45,7 @@ The
 .Nm
 driver first appeared in
 .Ox 2.9 .
+.Sh BUGS
+The
+.Tn IDE
+versions of this controllers were not tested.
