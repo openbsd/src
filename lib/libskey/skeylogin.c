@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.34 1999/12/06 19:04:58 deraadt Exp $
+ * $OpenBSD: skeylogin.c,v 1.35 2000/06/23 17:29:41 markus Exp $
  */
 
 #include <sys/param.h>
@@ -129,6 +129,7 @@ skeylookup(mp, name)
 		if ((statbuf.st_mode & 0007777) != 0600)
 			fchmod(fileno(mp->keyfile), 0600);
 	} else {
+		mp->keyfile = NULL;
 		return(-1);
 	}
 
