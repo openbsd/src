@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.6 1996/05/07 10:05:20 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.7 1996/08/19 00:20:50 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -7,134 +7,136 @@
 include "std.amiga"
 
 maxusers	8
-options		TIMEZONE=300, DST=1
+option		TIMEZONE=300, DST=1
 
 #
 # processors this kernel should support
 #
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-#options		"M68030"	# support for 030
-#options		"M68020"	# support for 020/851
-options		FPCOPROC	# Support for MC6888[12] (Required)
+option		"M68040"	# support for 040
+option		FPSP		# MC68040 floating point support
+#option		"M68030"	# support for 030
+#option		"M68020"	# support for 020/851
+option		FPCOPROC	# Support for MC6888[12] (Required)
 
-options		SWAPPAGER	# Pager for processes (Required)
-options		VNODEPAGER	# Pager for vnodes (Required)
-options		DEVPAGER	# Pager for devices (Required)
-
-#
-# Networking options
-#
-options		INET		# IP networking support (Required)
-#options	ISO		# ISO Networking support
-#options	TPIP		# ARGO TP networking support
-#options	CCITT		# CCITT X.25
-#options	NS		# Xerox XNS
-#options	EON		# ISO CLNL over IP
-options		GATEWAY		# Packet forwarding
-#options	DIRECTED_BROADCAST	# Broadcast across subnets
-#options	NSIP		# XNS over IP
-options		NTP		# Network time protocol syscalls
+option		SWAPPAGER	# Pager for processes (Required)
+option		VNODEPAGER	# Pager for vnodes (Required)
+option		DEVPAGER	# Pager for devices (Required)
 
 #
-# File system related options
+# Networking option
 #
-#options		QUOTA		# Disk quotas for local disks
-options		NFSSERVER	# Network File System server side code
-options		NFSCLIENT	# Network File System client side code
+option		INET		# IP networking support (Required)
+#option		ISO		# ISO Networking support
+#option		TPIP		# ARGO TP networking support
+#option		CCITT		# CCITT X.25
+#option		NS		# Xerox XNS
+#option		EON		# ISO CLNL over IP
+option		GATEWAY		# Packet forwarding
+#option		DIRECTED_BROADCAST	# Broadcast across subnets
+#option		NSIP		# XNS over IP
+option		NTP		# Network time protocol syscalls
+
+#
+# File system related option
+#
+#option		QUOTA		# Disk quotas for local disks
+option		NFSSERVER	# Network File System server side code
+option		NFSCLIENT	# Network File System client side code
 
 #
 # File systems
 #
-options		FFS		# Berkeley fast file system
-options		MFS		# Memory based filesystem
-options		PROCFS		# Process filesystem
-options		KERNFS		# Kernel parameter filesystem (Recommended)
-options		FDESC		# /dev/fd filesystem
-options		NULLFS		# Loopback filesystem
-options		FIFO		# FIFO operations on vnodes (Recommended)
-options		ADOSFS		# AmigaDOS file system
-options		"CD9660"	# ISO 9660 file system, with Rock Ridge
-options		UNION           # union file system
-options		UMAPFS          # uid/gid remapping filesystem
-#options	PORTAL		# Portal filesystem
-options		MSDOSFS		# MS-DOS filesystem
+option		FFS		# Berkeley fast file system
+option		MFS		# Memory based filesystem
+option		PROCFS		# Process filesystem
+option		KERNFS		# Kernel parameter filesystem (Recommended)
+option		FDESC		# /dev/fd filesystem
+option		NULLFS		# Loopback filesystem
+option		FIFO		# FIFO operations on vnodes (Recommended)
+option		ADOSFS		# AmigaDOS file system
+option		"CD9660"	# ISO 9660 file system, with Rock Ridge
+option		UNION           # union file system
+option		UMAPFS          # uid/gid remapping filesystem
+#option		PORTAL		# Portal filesystem
+option		MSDOSFS		# MS-DOS filesystem
 
 
 #
-# Compatability options for various existing systems
+# Compatability option for various existing systems
 #
-options		"COMPAT_10"	# compatability with older NetBSD release
-options		"COMPAT_09"	# compatability with older NetBSD release
-options		"COMPAT_43"	# 4.3 BSD compatible system calls
-options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
-options		"COMPAT_NOMID"	# allow nonvalid machine id executables
-#options	COMPAT_HPUX	# HP300 compatability
+option		"COMPAT_10"	# compatability with older NetBSD release
+option		"COMPAT_09"	# compatability with older NetBSD release
+option		"COMPAT_43"	# 4.3 BSD compatible system calls
+option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+option		"COMPAT_NOMID"	# allow nonvalid machine id executables
+#option		COMPAT_HPUX	# HP300 compatability
 
 #
 # Support for System V IPC facilities.
 #
-options		SYSVSHM		# System V-like shared memory
-options		SYSVMSG		# System V-like messages
-options		SYSVSEM		# System V-like semaphores
+option		SYSVSHM		# System V-like shared memory
+option		SYSVMSG		# System V-like messages
+option		SYSVSEM		# System V-like semaphores
 
 #
-# Support for various kernel options
+# Support for various kernel option
 #
-#options		GENERIC		# Mini-root boot support
-options		LKM		# Loadable kernel modules
-options		KTRACE		# Add kernel tracing system call
-options		DIAGNOSTIC	# Add additional error checking code
-options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+#option		GENERIC		# Mini-root boot support
+option		LKM		# Loadable kernel modules
+option		KTRACE		# Add kernel tracing system call
+option		DIAGNOSTIC	# Add additional error checking code
+option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
-# Misc. debuging options
+# Misc. debuging option
 #
-options		PANICWAIT	# Require keystroke to dump/reboot
-options	DEBUG		# Add debugging statements
-options		DDB		# Kernel debugger
-#options	SYSCALL_DEBUG	# debug all syscalls.
-#options	SCSIDEBUG	# Add SCSI debugging statements
-#options	KGDB		# Kernel debugger (KGDB) support
-#options	PANICBUTTON	# Forced crash via keypress (???)
+option		PANICWAIT	# Require keystroke to dump/reboot
+option		DEBUG		# Add debugging statements
+option		DDB		# Kernel debugger
+#option		SYSCALL_DEBUG	# debug all syscalls.
+#option		SCSIDEBUG	# Add SCSI debugging statements
+#option		KGDB		# Kernel debugger (KGDB) support
+#option		PANICBUTTON	# Forced crash via keypress (???)
+option		BOOT_CONFIG	# Allow the user to override configuration at
+				# boottime
 makeoptions	DEBUG="-g"	# Build a debugging kernel
 
 #
-# Amiga specific options
+# Amiga specific option
 #
-options		MACHINE_NONCONTIG # Non-contiguous memory support
+option		MACHINE_NONCONTIG # Non-contiguous memory support
 
-options		RETINACONSOLE	# enable code to allow retina to be console
-#options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
-#options         CL5426CONSOLE   # Cirrus console
+option		RETINACONSOLE	# enable code to allow retina to be console
+#option		ULOWELLCONSOLE	# enable code to allow a2410 to be console
+#option         CL5426CONSOLE   # Cirrus console
 
-#options		GRF_ECS		# Enhanced Chip Set
-#options		GRF_NTSC	# NTSC
-options		GRF_PAL		# PAL
-#options		"GRF_A2024"	# Support for the A2024
-#options		GRF_AGA		# AGA Chip Set
-#options		GRF_CL5426	# Cirrus board support
-#options	"KFONT_8X11"	# 8x11 font
-#options		LEV6_DEFER	# Defer handling of level 6 interrupts
-options		IPL_REMAP_1	# Remap level 6 ints version 1
-#options		IPL_REMAP_2	# Remap level 6 ints version 2
+#option		GRF_ECS		# Enhanced Chip Set
+#option		GRF_NTSC	# NTSC
+option		GRF_PAL		# PAL
+#option		"GRF_A2024"	# Support for the A2024
+#option		GRF_AGA		# AGA Chip Set
+#option		GRF_CL5426	# Cirrus board support
+#option		"KFONT_8X11"	# 8x11 font
+#option		LEV6_DEFER	# Defer handling of level 6 interrupts
+option		IPL_REMAP_1	# Remap level 6 ints version 1
+#option		IPL_REMAP_2	# Remap level 6 ints version 2
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and don't need option setting
-#options	"ULOWELL_OSC1=36000000"
-#options	"ULOWELL_OSC2=66667000"
+#option		"ULOWELL_OSC1=36000000"
+#option		"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
-#options	RH_MEMCLK 61000000
+#option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
-#options	RH_64BIT_SPRITE
+#option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
-#options	RETINA_SPEED_HACK
+#option		RETINA_SPEED_HACK
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -231,9 +233,17 @@ lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wdc1	at isa? port 0x170 irq ?
+wd*	at wdc? drive ?
+
+atapibus* at wdc?
+acd*	at atapibus? drive ?
+
 # XXX should be ed0 but clashes with Zorro ed device
 isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
 						#   ethernetcards
+
 fd*	at fdc0 unit ?
 
 pseudo-device	sl			# slip
