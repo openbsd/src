@@ -358,7 +358,9 @@
 ./var/www/htdocs/manual/mod/mod_negotiation.html.html
 ./var/www/htdocs/manual/mod/mod_negotiation.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_proxy.html
-./var/www/htdocs/manual/mod/mod_rewrite.html
+./var/www/htdocs/manual/mod/mod_rewrite.html.en
+./var/www/htdocs/manual/mod/mod_rewrite.html.html
+./var/www/htdocs/manual/mod/mod_rewrite.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_setenvif.html.en
 ./var/www/htdocs/manual/mod/mod_setenvif.html.html
 ./var/www/htdocs/manual/mod/mod_setenvif.html.ja.jis
