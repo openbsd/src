@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.13 2001/06/22 14:10:59 deraadt Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.14 2001/10/24 16:27:20 mickey Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -126,6 +126,9 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_MPEG_L2_STREAM	15
 #define AUDIO_ENCODING_MPEG_L2_PACKETS	16
 #define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
+#define AUDIO_ENCODING_MPEG_L3_STREAM	18
+#define AUDIO_ENCODING_MPEG_L3_PACKETS	19
+#define AUDIO_ENCODING_MPEG_L3_SYSTEM	20
 
 typedef struct audio_encoding {
 	int	index;
@@ -297,6 +300,9 @@ typedef struct mixer_ctrl {
 #define AudioNdelay	"delay"
 #define AudioNselect	"select" /* select destination */
 #define AudioNvideo	"video"
+#define AudioNcenter	"center"
+#define AudioNdepth	"depth"
+#define AudioNlfe	"lfe"
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"
