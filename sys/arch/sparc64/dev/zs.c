@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.11 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: zs.c,v 1.12 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -253,7 +253,7 @@ zs_attach_mainbus(parent, self, aux)
 				return;
 			}
 			zsaddr[zs_unit] = (struct zsdevice *)
-				(unsigned long int)kvaddr;
+				bus_space_vaddr(sa->sa_bustag, kvaddr);
 		}
 	}
 	zsc->zsc_bustag = sa->sa_bustag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.2 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.3 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -128,7 +128,7 @@ uperf_ebus_attach(parent, self, aux)
 	char *model;
 	u_int32_t id;
 
-	sc->sc_bus_t = ea->ea_bustag;
+	sc->sc_bus_t = ea->ea_memtag;
 	sc->sc_usc.usc_cookie = sc;
 	sc->sc_usc.usc_getcntsrc = uperf_ebus_getcntsrc;
 	sc->sc_usc.usc_setcntsrc = uperf_ebus_setcntsrc;

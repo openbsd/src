@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.5 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: asio.c,v 1.6 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -182,7 +182,7 @@ asio_print(aux, name)
 	void *aux;
 	const char *name;
 {
-	struct asio_attach_args *aaa;
+	struct asio_attach_args *aaa = aux;
 
 	if (name != NULL)
 		printf("%s at %s", aaa->aaa_name, name);
@@ -231,7 +231,7 @@ com_asio_attach(parent, self, aux)
 
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_ioh = aaa->aaa_ioh;
-	sc->sc_iobase = sc->sc_ioh;
+	sc->sc_iobase = 0;   /* XXX WTF is iobase for? It used to be the lower 32 bits of ioh's vaddr... */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	sc->sc_frequency = BAUD_BASE;

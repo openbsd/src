@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.6 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.7 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -33,6 +33,17 @@
 #define _SPARC64_DEV_IOMMUVAR_H_
 
 /*
+ * per-Streaming Buffer state
+ */
+
+struct strbuf_ctl {
+	bus_space_tag_t		sb_bustag;	/* streaming buffer registers */
+	bus_space_handle_t	sb_sb;		/* Handle for our regs */
+	paddr_t			sb_flushpa;	/* to flush streaming buffers */
+	volatile int64_t	*sb_flush;
+};
+
+/*
  * per-IOMMU state
  */
 struct iommu_state {
@@ -41,17 +52,14 @@ struct iommu_state {
 	int			is_tsbsize;	/* 0 = 8K, ... */
 	u_int			is_dvmabase;
 	u_int			is_dvmaend;
-	int64_t			is_cr;		/* IOMMU control regiter value */
+	int64_t			is_cr;		/* IOMMU control register value */
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
 
-	paddr_t			is_flushpa;	/* used to flush the SBUS */
-	/* Needs to be volatile or egcs optimizes away loads */
-	volatile int64_t	is_flush[2];
+	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 
 	/* copies of our parents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
-	struct iommureg		*is_iommu;	/* IOMMU registers */
-	struct iommu_strbuf	*is_sb[2];	/* streaming buffer(s) */
+	bus_space_handle_t	is_iommu;	/* IOMMU registers */
 };
 
 /* interfaces for PCI/SBUS code */
@@ -79,4 +87,16 @@ int	iommu_dvmamem_map(bus_dma_tag_t, struct iommu_state *,
 void	iommu_dvmamem_unmap(bus_dma_tag_t, struct iommu_state *,
 	    caddr_t, size_t);
 
+#define IOMMUREG_READ(is, reg)				\
+	bus_space_read_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg))	
+
+#define IOMMUREG_WRITE(is, reg, v)			\
+	bus_space_write_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg),				\
+		(v))
+
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */
+

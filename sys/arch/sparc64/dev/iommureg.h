@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.4 2002/07/24 19:03:19 jason Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.5 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -66,6 +66,9 @@ struct iommu_strbuf {
 	volatile u_int64_t	strbuf_pgflush;	/* streaming buffer page flush */
 	volatile u_int64_t	strbuf_flushsync;/* streaming buffer flush sync */
 };
+
+#define IOMMUREG(x)     (offsetof(struct iommureg, x))
+#define STRBUFREG(x)    (offsetof(struct iommu_strbuf, x))
 
 /* streaming buffer control register */
 #define STRBUF_EN		0x000000000000000001LL
@@ -154,6 +157,8 @@ struct iommu_strbuf {
 #define INTSLOT(x)	(((x)>>3)&0x7)
 #define	INTPRI(x)	((x)&0x7)
 #define	INTINO(x)	((x)&INTMAP_INO)
+#define INTTID_SHIFT	26
+#define INTTID(x)	(((x) & INTMAP_TID) >> INTTID_SHIFT)
 
 #define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
 #define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */

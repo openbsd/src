@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.9 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.10 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -99,30 +99,31 @@ int	ebus_find_node(struct pci_attach_args *);
 /*
  * here are our bus space and bus dma routines.
  */
-static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static int _ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
-				bus_size_t, int, vaddr_t,
-				bus_space_handle_t *);
-static void *ebus_intr_establish(bus_space_tag_t, int, int, int,
-				int (*)(void *), void *);
-
-static int ebus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
-			  bus_size_t, struct proc *, int);
+static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+    off_t, int, int);
+static int _ebus_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
+static void *ebus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int,
+    int, int (*)(void *), void *);
+static int ebus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
 static void ebus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 static void ebus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-				  bus_size_t, int);
+    bus_size_t, int);
 int ebus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-			   bus_dma_segment_t *, int, int *, int);
+    bus_dma_segment_t *, int, int *, int);
 void ebus_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 int ebus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-			 caddr_t *, int);
+    caddr_t *, int);
 void ebus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+bus_space_tag_t ebus_alloc_mem_tag(struct ebus_softc *, bus_space_tag_t);
+bus_space_tag_t ebus_alloc_io_tag(struct ebus_softc *, bus_space_tag_t);
+bus_space_tag_t _ebus_alloc_bus_tag(struct ebus_softc *sc, const char *,
+    bus_space_tag_t, int);
+
 
 int
-ebus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char name[10];
@@ -161,9 +162,7 @@ ebus_match(parent, match, aux)
  * after the sbus code which does similar things.
  */
 void
-ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_softc *sc = (struct ebus_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -173,9 +172,8 @@ ebus_attach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_memtag = pa->pa_memt;
-	sc->sc_iotag = pa->pa_iot;
-	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
+	sc->sc_memtag = ebus_alloc_mem_tag(sc, pa->pa_memt);
+	sc->sc_iotag = ebus_alloc_io_tag(sc, pa->pa_iot);
 	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
 
 	node = PCITAG_NODE(pa->pa_tag);
@@ -235,10 +233,8 @@ ebus_attach(parent, self, aux)
 }
 
 int
-ebus_setup_attach_args(sc, node, ea)
-	struct ebus_softc	*sc;
-	int			node;
-	struct ebus_attach_args	*ea;
+ebus_setup_attach_args(struct ebus_softc *sc, int node,
+    struct ebus_attach_args *ea)
 {
 	int	n, rv;
 
@@ -249,7 +245,8 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_name[n] = '\0';
 
 	ea->ea_node = node;
-	ea->ea_bustag = sc->sc_childbustag;
+	ea->ea_memtag = sc->sc_memtag;
+	ea->ea_iotag = sc->sc_iotag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
 	rv = getprop(node, "reg", sizeof(struct ebus_regs), &ea->ea_nregs,
@@ -279,10 +276,8 @@ ebus_setup_attach_args(sc, node, ea)
 }
 
 void
-ebus_destroy_attach_args(ea)
-	struct ebus_attach_args	*ea;
+ebus_destroy_attach_args(struct ebus_attach_args *ea)
 {
-
 	if (ea->ea_name)
 		free((void *)ea->ea_name, M_DEVBUF);
 	if (ea->ea_regs)
@@ -294,9 +289,7 @@ ebus_destroy_attach_args(ea)
 }
 
 int
-ebus_print(aux, p)
-	void *aux;
-	const char *p;
+ebus_print(void *aux, const char *p)
 {
 	struct ebus_attach_args *ea = aux;
 	int i;
@@ -323,9 +316,7 @@ ebus_print(aux, p)
  * to give the INO for this interrupt.
  */
 void
-ebus_find_ino(sc, ea)
-	struct ebus_softc *sc;
-	struct ebus_attach_args *ea;
+ebus_find_ino(struct ebus_softc *sc, struct ebus_attach_args *ea)
 {
 	u_int32_t hi, lo, intr;
 	int i, j, k;
@@ -376,26 +367,41 @@ next_intr:;
 	}
 }
 
+bus_space_tag_t
+ebus_alloc_mem_tag(struct ebus_softc *sc, bus_space_tag_t parent)
+{
+        return (_ebus_alloc_bus_tag(sc, "mem", parent,
+            0x02));	/* 32-bit mem space (where's the #define???) */
+}
+
+bus_space_tag_t
+ebus_alloc_io_tag(struct ebus_softc *sc, bus_space_tag_t parent)
+{
+        return (_ebus_alloc_bus_tag(sc, "io", parent,
+            0x01));	/* IO space (where's the #define???) */
+}
 
 /*
  * bus space and bus dma below here
  */
 bus_space_tag_t
-ebus_alloc_bus_tag(sc, type)
-	struct ebus_softc *sc;
-	int type;
+_ebus_alloc_bus_tag(struct ebus_softc *sc, const char *name,
+    bus_space_tag_t parent, int ss)
 {
-	bus_space_tag_t bt;
+	struct sparc_bus_space_tag *bt;
 
-	bt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
 	if (bt == NULL)
 		panic("could not allocate ebus bus tag");
 
 	bzero(bt, sizeof *bt);
+	snprintf(bt->name, sizeof(bt->name), "%s_%s",
+		sc->sc_dev.dv_xname, name);
 	bt->cookie = sc;
-	bt->parent = sc->sc_memtag;
-	bt->type = type;
+	bt->parent = parent;
+	bt->default_type = ss;
+	bt->asi = parent->asi;
+	bt->sasi = parent->sasi;
 	bt->sparc_bus_map = _ebus_bus_map;
 	bt->sparc_bus_mmap = ebus_bus_mmap;
 	bt->sparc_intr_establish = ebus_intr_establish;
@@ -403,9 +409,7 @@ ebus_alloc_bus_tag(sc, type)
 }
 
 bus_dma_tag_t
-ebus_alloc_dma_tag(sc, pdt)
-	struct ebus_softc *sc;
-	bus_dma_tag_t pdt;
+ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 {
 	bus_dma_tag_t dt;
 
@@ -441,26 +445,33 @@ ebus_alloc_dma_tag(sc, pdt)
  * about PCI physical addresses, which also applies to ebus.
  */
 static int
-_ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_ebus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
 	bus_addr_t hi, lo;
-	int i, ss;
+	int i;
 
 	DPRINTF(EDB_BUSMAP,
-	    ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p",
-	    (int)t->type, (unsigned long long)offset, (int)size, (int)flags,
-	    (void *)vaddr));
+	    ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d",
+	    (int)t->default_type, (unsigned long long)offset, (int)size,
+	    (int)flags));
+
+	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
+		printf("\n_ebus_bus_map: invalid parent");
+		return (EINVAL);
+	}
+
+	t = t->parent;
+
+	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
+		return ((*t->sparc_bus_map)
+		    (t, t0, offset, size, flags, hp));
+	}
 
 	hi = offset >> 32UL;
 	lo = offset & 0xffffffff;
+
 	DPRINTF(EDB_BUSMAP, (" (hi %08x lo %08x)", (u_int)hi, (u_int)lo));
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t pciaddr;
@@ -472,49 +483,41 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		      (sc->sc_range[i].child_lo + sc->sc_range[i].size))
 			continue;
 
-		/* Isolate address space and find the right tag */
-		ss = (sc->sc_range[i].phys_hi>>24)&3;
-		switch (ss) {
-		case 1:	/* I/O space */
-			t = sc->sc_iotag;
-			break;
-		case 2:	/* Memory space */
-			t = sc->sc_memtag;
-			break;
-		case 0:	/* Config space */
-		case 3:	/* 64-bit Memory space */
-		default: /* WTF? */
-			/* We don't handle these */
-			panic("_ebus_bus_map: illegal space %x", ss);
-			break;
-		}
+		if(((sc->sc_range[i].phys_hi >> 24) & 3) != t->default_type)
+			continue;
+
 		pciaddr = ((bus_addr_t)sc->sc_range[i].phys_mid << 32UL) |
 				       sc->sc_range[i].phys_lo;
 		pciaddr += lo;
 		DPRINTF(EDB_BUSMAP,
-		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx pciaddr %qx\n",
-		    ss, (unsigned long long)offset, (unsigned long long)pciaddr));
+		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx "
+		    "pciaddr %qx\n", (int)t->default_type,
+		    (unsigned long long)offset, (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
-		return (bus_space_map2(t, 0, pciaddr, size, flags, vaddr, hp));
+                return ((*t->sparc_bus_map)(t, t0, pciaddr, size, flags, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
 	return (EINVAL);
 }
 
 static paddr_t
-ebus_bus_mmap(t, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+ebus_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
+    off_t off, int prot, int flags)
 {
 	bus_addr_t offset = paddr;
 	struct ebus_softc *sc = t->cookie;
 	int i;
 
+	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
+		printf("\nebus_bus_mmap: invalid parent");
+		return (-1);
+        }
+
+	t = t->parent;
+
 	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr = ((bus_addr_t)sc->sc_range[i].child_hi << 32) |
+		bus_addr_t paddr =
+		    ((bus_addr_t)sc->sc_range[i].child_hi << 32) |
 		    sc->sc_range[i].child_lo;
 
 		if (offset != paddr)
@@ -522,7 +525,7 @@ ebus_bus_mmap(t, paddr, off, prot, flags)
 
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_memtag, paddr, off, prot, flags));
+		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
 	}
 
 	return (-1);
@@ -532,15 +535,17 @@ ebus_bus_mmap(t, paddr, off, prot, flags)
  * install an interrupt handler for a PCI device
  */
 void *
-ebus_intr_establish(t, pri, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int flags;
-	int (*handler)(void *);
-	void *arg;
+ebus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
+    int flags, int (*handler)(void *), void *arg)
 {
-	return (bus_intr_establish(t->parent, pri, level, flags,
+	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
+		printf("\nebus_bus_mmap: invalid parent");
+		return (NULL);
+        }
+
+	t = t->parent;
+
+	return ((*t->sparc_intr_establish)(t, t0, pri, level, flags,
 	    handler, arg));
 }
 
@@ -548,77 +553,49 @@ ebus_intr_establish(t, pri, level, flags, handler, arg)
  * bus dma support
  */
 int
-ebus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+ebus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	return (bus_dmamap_load(t->_parent, map, buf, buflen, p, flags));
 }
 
 void
-ebus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+ebus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dmamap_unload(t->_parent, map);
 }
 
 void
-ebus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+ebus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
 }
 
 int
-ebus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+ebus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary, segs,
 	    nsegs, rsegs, flags));
 }
 
 void
-ebus_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+ebus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	bus_dmamem_free(t->_parent, segs, nsegs);
 }
 
 int
-ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+ebus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	return (bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags));
 }
 
 void
-ebus_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+ebus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 	return (bus_dmamem_unmap(t->_parent, kva, size));
 }

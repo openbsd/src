@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.11 2002/09/10 17:27:27 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.12 2003/02/17 01:29:19 henric Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -237,7 +237,7 @@ ce4231_attach(parent, self, aux)
 	sc->sc_last_format = 0xffffffff;
 
 	/* Pass on the bus tags */
-	sc->sc_bustag = ea->ea_bustag;
+	sc->sc_bustag = ea->ea_memtag;
 	sc->sc_dmatag = ea->ea_dmatag;
 
 	/* Make sure things are sane. */
@@ -251,13 +251,13 @@ ce4231_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_cih = bus_intr_establish(ea->ea_bustag, ea->ea_intrs[0],
+	sc->sc_cih = bus_intr_establish(sc->sc_bustag, ea->ea_intrs[0],
 	    IPL_AUDIO, 0, ce4231_cintr, sc);
 	if (sc->sc_cih == NULL) {
 		printf(": couldn't establish capture interrupt\n");
 		return;
 	}
-	sc->sc_pih = bus_intr_establish(ea->ea_bustag, ea->ea_intrs[1],
+	sc->sc_pih = bus_intr_establish(sc->sc_bustag, ea->ea_intrs[1],
 	    IPL_AUDIO, 0, ce4231_pintr, sc);
 	if (sc->sc_pih == NULL) {
 		printf(": couldn't establish play interrupt1\n");
@@ -266,28 +266,28 @@ ce4231_attach(parent, self, aux)
 
 	/* XXX what if prom has already mapped?! */
 
-	if (ebus_bus_map(ea->ea_bustag, 0,
+	if (ebus_bus_map(sc->sc_bustag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cshandle) != 0) {
 		printf(": couldn't map cs4231 registers\n");
 		return;
 	}
 
-	if (ebus_bus_map(ea->ea_bustag, 0,
+	if (ebus_bus_map(sc->sc_bustag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[1]), ea->ea_regs[1].size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_pdmahandle) != 0) {
 		printf(": couldn't map dma1 registers\n");
 		return;
 	}
 
-	if (ebus_bus_map(ea->ea_bustag, 0,
+	if (ebus_bus_map(sc->sc_bustag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[2]), ea->ea_regs[2].size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cdmahandle) != 0) {
 		printf(": couldn't map dma2 registers\n");
 		return;
 	}
 
-	if (ebus_bus_map(ea->ea_bustag, 0,
+	if (ebus_bus_map(sc->sc_bustag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[3]), ea->ea_regs[3].size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_auxhandle) != 0) {
 		printf(": couldn't map aux registers\n");
@@ -1480,7 +1480,7 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	for (p = sc->sc_dmas; p->addr != start; p = p->next)
 		/*EMPTY*/;
 	if (p == NULL) {
-		printf("%s: trigger_output: bad addr: %x\n",
+		printf("%s: trigger_output: bad addr: %p\n",
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}

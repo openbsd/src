@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.10 2002/12/22 16:13:30 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.11 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -197,7 +197,7 @@ comkbd_attach(parent, self, aux)
 
 	timeout_set(&sc->sc_bellto, comkbd_bellstop, sc);
 
-	sc->sc_iot = ea->ea_bustag;
+	sc->sc_iot = ea->ea_memtag;
 
 	sc->sc_rxget = sc->sc_rxput = sc->sc_rxbeg = sc->sc_rxbuf;
 	sc->sc_rxend = sc->sc_rxbuf + COMK_RX_RING;
@@ -215,23 +215,28 @@ comkbd_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_ih = bus_intr_establish(ea->ea_bustag,
+	/* Use prom address if available, otherwise map it. */
+	if (ea->ea_nvaddrs && bus_space_map(ea->ea_memtag, ea->ea_vaddrs[0], 0,
+	    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else {
+		printf(": can't map register space\n");
+                return;
+	}
+
+	sc->sc_ih = bus_intr_establish(sc->sc_iot,
 	    ea->ea_intrs[0], IPL_TTY, 0, comkbd_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": can't get hard intr\n");
 		return;
-	}
-
-	/* Use prom address if available, otherwise map it. */
-	if (ea->ea_nvaddrs)
-		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
-	else if (ebus_bus_map(sc->sc_iot, 0,
-			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-			      ea->ea_regs[0].size,
-			      BUS_SPACE_MAP_LINEAR,
-			      0, &sc->sc_ioh) != 0) {
-		printf(": can't map register space\n");
-                return;
 	}
 
 	if (console) {
@@ -240,9 +245,11 @@ comkbd_attach(parent, self, aux)
 		cn_tab->cn_pollc = wskbd_cnpollc;
 		cn_tab->cn_getc = wskbd_cngetc;
 		if (ISTYPE5(sc->sc_layout)) {
-			wskbd_cnattach(&comkbd_consops, sc, &sunkbd5_keymapdata);
+			wskbd_cnattach(&comkbd_consops, sc,
+			    &sunkbd5_keymapdata);
 		} else {
-			wskbd_cnattach(&comkbd_consops, sc, &sunkbd_keymapdata);
+			wskbd_cnattach(&comkbd_consops, sc,
+			    &sunkbd_keymapdata);
 		}
 		sc->sc_ier = IER_ETXRDY | IER_ERXRDY;
 		COM_WRITE(sc, com_ier, sc->sc_ier);

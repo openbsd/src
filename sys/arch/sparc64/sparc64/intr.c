@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.11 2002/07/23 13:58:23 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.12 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -61,6 +61,9 @@
 #include <machine/instr.h>
 #include <machine/trap.h>
 
+/* Grab interrupt map stuff (what is it doing there???) */
+#include <sparc64/dev/iommureg.h>
+
 /*
  * The following array is to used by locore.s to map interrupt packets
  * to the proper IPL to send ourselves a softint.  It should be filled
@@ -103,8 +106,8 @@ strayintr(fp, vectored)
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%b vecttored=%d\n",
-	    fp->tf_pil, (unsigned long long)fp->tf_pc,
+	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%b "
+	    "vecttored=%d\n", fp->tf_pil, (unsigned long long)fp->tf_pc,
 	    (unsigned long long)fp->tf_npc, fp->tf_tstate>>TSTATE_PSTATE_SHIFT,
 	    PSTATE_BITS, vectored);
 
@@ -238,6 +241,7 @@ intr_establish(level, ih)
 	struct intrhand *ih;
 {
 	register struct intrhand **p, *q;
+	u_int64_t m, id;
 	int s;
 
 	s = splhigh();
@@ -257,7 +261,7 @@ intr_establish(level, ih)
 	 */
 #ifdef NOT_DEBUG
 	if (!ih->ih_number) {
-		printf("\nintr_establish: NULL vector fun %p arg %p pil %p\n",
+		printf("\nintr_establish: NULL vector fun %p arg %p pil %p",
 			  ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil);
 		Debugger();
 	}
@@ -278,7 +282,7 @@ intr_establish(level, ih)
 		 * new interrupt handler and interpose it.
 		 */
 #ifdef DEBUG
-		printf("intr_establish: intr reused %x\n", ih->ih_number);
+		printf("\nintr_establish: intr reused %x", ih->ih_number);
 #endif
 
 		if (q->ih_fun != intr_list_handler) {
@@ -301,14 +305,31 @@ intr_establish(level, ih)
 		nih->ih_next = (struct intrhand *)q->ih_arg;
 		q->ih_arg = (void *)nih;
 	}
-
-#ifdef NOT_DEBUG
+#ifdef DEBUG
 	printf("\nintr_establish: vector %x pil %x mapintr %p "
-	    "clrintr %p fun %p arg %p\n",
+	    "clrintr %p fun %p arg %p target %d",
 	    ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
 	    (void *)ih->ih_clr, (void *)ih->ih_fun,
-	    (void *)ih->ih_arg);
+	    (void *)ih->ih_arg, (int)(ih->ih_map ? INTTID(*ih->ih_map) : -1));
 #endif
+
+	if(ih->ih_map) {
+		id = CPU_UPAID;
+		m = *ih->ih_map;
+		if(INTTID(m) != id) {
+			printf("\nintr_establish: changing map 0x%llx -> ", m);
+			m = (m & ~INTMAP_TID) | (id << INTTID_SHIFT);
+			*ih->ih_map = m;
+			printf("0x%llx (id=%llx) ", m, id);
+		}
+	}
+	else {
+#ifdef DEBUG
+		printf(	"\n**********************\n"
+			"********************** intr_establish: no map register\n"
+			"**********************\n");
+#endif
+	}
 
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: clock.c,v 1.15 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -103,6 +103,12 @@ struct rtc_info {
 	bus_space_handle_t rtc_bh;	/* */
 };
 
+struct clock_wenable_info {
+	bus_space_tag_t		cwi_bt;
+	bus_space_handle_t	cwi_bh;
+	bus_size_t		cwi_size;
+};
+
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
@@ -172,8 +178,7 @@ struct cfdriver timer_cd = {
 	NULL, "timer", DV_DULL
 };
 
-int sbus_wenable(struct todr_chip_handle *, int);
-int ebus_wenable(struct todr_chip_handle *, int);
+int clock_bus_wenable(struct todr_chip_handle *, int);
 struct chiptime;
 void myetheraddr(u_char *);
 struct idprom *getidprom(void);
@@ -252,13 +257,6 @@ clockmatch_rtc(parent, cf, aux)
  * a non-trivial operation.  
  */
 
-/* Somewhere to keep info that sbus_wenable() needs */
-struct sbus_info {
-	bus_space_tag_t		si_bt;
-	bus_space_handle_t	si_bh;
-	struct sbus_reg		si_reg;
-};
-
 /* ARGSUSED */
 static void
 clockattach_sbus(parent, self, aux)
@@ -268,7 +266,7 @@ clockattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t bt = sa->sa_bustag;
 	int sz;
-	static struct sbus_info sbi;
+	static struct clock_wenable_info cwi;
 
 	/* use sa->sa_regs[0].size? */
 	sz = 8192;
@@ -277,63 +275,54 @@ clockattach_sbus(parent, self, aux)
 			 sa->sa_slot,
 			 (sa->sa_offset & ~NBPG),
 			 sz,
-			 BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY,
-			 0,
-			 &sbi.si_bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
+			 0, &cwi.cwi_bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(sa->sa_node, bt, sbi.si_bh);
+	clockattach(sa->sa_node, bt, cwi.cwi_bh);
 
 	/* Save info for the clock wenable call. */
-	sbi.si_bt = bt;
-	sbi.si_reg = sa->sa_reg[0];
-	todr_handle->bus_cookie = &sbi;
-	todr_handle->todr_setwen = sbus_wenable;
+	cwi.cwi_bt = bt;
+	cwi.cwi_size = sz;
+	todr_handle->bus_cookie = &cwi;
+	todr_handle->todr_setwen = clock_bus_wenable;
 }
 
 /*
  * Write en/dis-able clock registers.  We coordinate so that several
  * writers can run simultaneously.
+ * XXX There is still a race here.  The page change and the "writers"
+ * change are not atomic.
  */
 int
-sbus_wenable(handle, onoff)
+clock_bus_wenable(handle, onoff)
 	struct todr_chip_handle *handle;
 	int onoff;
 {
-	register int s, err = 0;
-	register int prot;/* nonzero => change prot */
-	static int writers;
+	int s, err = 0;
+	int prot; /* nonzero => change prot */
+	volatile static int writers;
+	struct clock_wenable_info *cwi = handle->bus_cookie;
 
 	s = splhigh();
 	if (onoff)
-		prot = writers++ == 0 ? BUS_SPACE_MAP_LINEAR : 0;
+		prot = writers++ == 0 ?
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED : 0;
 	else
-		prot = --writers == 0 ? 
-			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY : 0;
+		prot = --writers == 0 ?
+		    VM_PROT_READ | PMAP_WIRED : 0;
 	splx(s);
-	if (prot) {
-		struct sbus_info *sbi = (struct sbus_info *)handle->bus_cookie;
-		bus_space_handle_t newaddr;
 
-		err = sbus_bus_map(sbi->si_bt, sbi->si_reg.sbr_slot,
-			(sbi->si_reg.sbr_offset & ~NBPG),
-			8192, prot, (vaddr_t)sbi->si_bh, &newaddr);
-		/* We can panic now or take a datafault later... */
-		if (sbi->si_bh != newaddr)
-			panic("sbus_wenable: address %p changed to %p",
-			      (void *)(u_long)sbi->si_bh,
-			      (void *)(u_long)newaddr);
+	if (prot) {
+		err = bus_space_protect(cwi->cwi_bt, cwi->cwi_bh, cwi->cwi_size,
+		    onoff ? 0 : BUS_SPACE_MAP_READONLY);
+		if (err)
+			printf("clock_wenable_info: WARNING -- cannot %s "
+			    "page protection\n", onoff ? "disable" : "enable");
 	}
 	return (err);
 }
-
-
-struct ebus_info {
-	bus_space_tag_t		ei_bt;
-	bus_space_handle_t	ei_bh;
-	struct ebus_regs	ei_reg;
-};
 
 /* ARGSUSED */
 static void
@@ -342,68 +331,35 @@ clockattach_ebus(parent, self, aux)
 	void *aux;
 {
 	struct ebus_attach_args *ea = aux;
-	bus_space_tag_t bt = ea->ea_bustag;
+	bus_space_tag_t bt;
 	int sz;
-	static struct ebus_info ebi;
+	static struct clock_wenable_info cwi;
 
 	/* hard code to 8K? */
 	sz = ea->ea_regs[0].size;
 
-	if (ebus_bus_map(bt,
-			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-			 sz,
-			 BUS_SPACE_MAP_LINEAR,
-			 0,
-			 &ebi.ei_bh) != 0) {
+	if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), sz, 0, 0, &cwi.cwi_bh) == 0) {
+		bt = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), sz,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
+	    0, &cwi.cwi_bh) == 0) {
+		bt = ea->ea_memtag;
+	} else {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(ea->ea_node, bt, ebi.ei_bh);
+
+	clockattach(ea->ea_node, bt, cwi.cwi_bh);
 
 	/* Save info for the clock wenable call. */
-	ebi.ei_bt = bt;
-	ebi.ei_reg = ea->ea_regs[0];
-	todr_handle->bus_cookie = &ebi;
-	todr_handle->todr_setwen = ebus_wenable;
+	cwi.cwi_bt = bt;
+	cwi.cwi_size = sz;
+	todr_handle->bus_cookie = &cwi;
+	todr_handle->todr_setwen = (ea->ea_memtag == bt) ? 
+	    clock_bus_wenable : NULL;
 }
-
-/*
- * Write en/dis-able clock registers.  We coordinate so that several
- * writers can run simultaneously.
- */
-int
-ebus_wenable(handle, onoff)
-	struct todr_chip_handle *handle;
-	int onoff;
-{
-	register int s, err = 0;
-	register int prot;/* nonzero => change prot */
-	static int writers;
-
-	s = splhigh();
-	if (onoff)
-		prot = writers++ == 0 ? BUS_SPACE_MAP_LINEAR : 0;
-	else
-		prot = --writers == 0 ? 
-			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY : 0;
-	splx(s);
-	if (prot) {
-		struct ebus_info *ebi = (struct ebus_info *)handle->bus_cookie;
-		bus_space_handle_t newaddr;
-
-		err = sbus_bus_map(ebi->ei_bt, 0,
-			EBUS_PADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
-			(vaddr_t)ebi->ei_bh, &newaddr);
-		/* We can panic now or take a datafault later... */
-		if (ebi->ei_bh != newaddr)
-			panic("ebus_wenable: address %p changed to %p",
-			      (void *)(u_long)ebi->ei_bh,
-			      (void *)(u_long)newaddr);
-	}
-	return (err);
-}
-
 
 static void
 clockattach(node, bt, bh)
@@ -430,7 +386,8 @@ clockattach(node, bt, bh)
 	if (idprom == NULL) {
 		idp = getidprom();
 		if (idp == NULL)
-			idp = (struct idprom *)((u_long)bh + IDPROM_OFFSET);
+			idp = (struct idprom *)(bus_space_vaddr(bt, bh) +
+			    IDPROM_OFFSET);
 		idprom = idp;
 	} else
 		idp = idprom;
@@ -494,23 +451,25 @@ clockattach_rtc(parent, self, aux)
 	void *aux;
 {
 	struct ebus_attach_args *ea = aux;
-	bus_space_tag_t bt = ea->ea_bustag;
+	bus_space_tag_t bt;
 	todr_chip_handle_t handle;
 	struct rtc_info *rtc;
 	char *model;
 	int sz;
-	static struct ebus_info ebi;
+	static struct clock_wenable_info cwi;
 
 	/* hard code to 8K? */
 	sz = ea->ea_regs[0].size;
 
-	if (ebus_bus_map(bt,
-			 0,
-			 EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-			 sz,
-			 BUS_SPACE_MAP_LINEAR,
-			 0,
-			 &ebi.ei_bh) != 0) {
+	if (ebus_bus_map(ea->ea_iotag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), sz, 0, 0, &cwi.cwi_bh) == 0) {
+		bt = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), sz,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
+	    0, &cwi.cwi_bh) == 0) {
+		bt = ea->ea_memtag;
+	} else {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
@@ -526,7 +485,7 @@ clockattach_rtc(parent, self, aux)
 	 * Turn interrupts off, just in case. (Although they shouldn't
 	 * be wired to an interrupt controller on sparcs).
 	 */
-	rtc_write_reg(bt, ebi.ei_bh, 
+	rtc_write_reg(bt, cwi.cwi_bh, 
 		MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	/* Setup our todr_handle */
@@ -541,15 +500,15 @@ clockattach_rtc(parent, self, aux)
 	handle->todr_settime = rtc_settime;
 	handle->todr_getcal = rtc_getcal;
 	handle->todr_setcal = rtc_setcal;
-	handle->todr_setwen = NULL;
 	rtc->rtc_bt = bt;
-	rtc->rtc_bh = ebi.ei_bh;
+	rtc->rtc_bh = cwi.cwi_bh;
 
 	/* Save info for the clock wenable call. */
-	ebi.ei_bt = bt;
-	ebi.ei_reg = ea->ea_regs[0];
-	handle->bus_cookie = &ebi;
-	handle->todr_setwen = ebus_wenable;
+	cwi.cwi_bt = bt;
+	cwi.cwi_size = sz;
+	handle->bus_cookie = &cwi;
+	handle->todr_setwen = (ea->ea_memtag == bt) ?
+	    clock_bus_wenable : NULL;
 	todr_handle = handle;
 }
 
@@ -575,9 +534,6 @@ timerattach(parent, self, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int *va = ma->ma_address;
-#if 0
-	volatile int64_t *cnt = NULL, *lim = NULL;
-#endif
 	
 	/*
 	 * What we should have are 3 sets of registers that reside on
@@ -592,11 +548,14 @@ timerattach(parent, self, aux)
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = (void *)&timerreg_4u.t_clrintr[0];
+	level10.ih_map = (void *)&timerreg_4u.t_mapintr[0];
 	intr_establish(10, &level10);
+
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = (void *)&timerreg_4u.t_clrintr[1];
-
+	level14.ih_map = (void *)&timerreg_4u.t_mapintr[1];
 	intr_establish(14, &level14);
+
 	printf(" irq vectors %lx and %lx", 
 	       (u_long)level10.ih_number, 
 	       (u_long)level14.ih_number);
@@ -701,8 +660,8 @@ cpu_initclocks()
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
 
-		printf("No counter-timer -- using %%tick at %ldMHz as system clock.\n",
-			(long)(cpu_clockrate/1000000));
+		printf("No counter-timer -- using %%tick at %ldMHz as "
+		    "system clock.\n", (long)(cpu_clockrate/1000000));
 		/* We don't have a counter-timer -- use %tick */
 		level0.ih_clr = 0;
 		/* 
@@ -719,7 +678,8 @@ cpu_initclocks()
 		/* set the next interrupt time */
 		tick_increment = cpu_clockrate / hz;
 #ifdef DEBUG
-		printf("Using %%tick -- intr in %ld cycles...", tick_increment);
+		printf("Using %%tick -- intr in %ld cycles...",
+		    tick_increment);
 #endif
 		next_tick(tick_increment);
 #ifdef DEBUG
@@ -816,8 +776,9 @@ clockintr(cap)
 		t = t * 1000000LL / cpu_clockrate;
 		if (t - clk > hz) {
 			printf("Clock lost an interrupt!\n");
-			printf("Actual: %llx Expected: %llx tick %llx tick_base %llx\n",
-			       (long long)t, (long long)clk, (long long)tk, (long long)tick_base);
+			printf("Actual: %llx Expected: %llx tick %llx "
+			    "tick_base %llx\n", (long long)t, (long long)clk,
+			    (long long)tk, (long long)tick_base);
 #ifdef DDB
 			Debugger();
 #endif
@@ -867,7 +828,7 @@ int
 statintr(cap)
 	void *cap;
 {
-	register u_long newint, r, var;
+	u_long newint, r, var;
 	struct cpu_info *ci = curcpu();
 
 #ifdef NOT_DEBUG
@@ -959,7 +920,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (waszero || deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 	printf(" -- CHECK AND RESET THE DATE!\n");

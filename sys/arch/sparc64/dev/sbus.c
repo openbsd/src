@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.14 2002/03/14 20:26:20 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.15 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -143,25 +143,19 @@ void sbusreset(int);
 static bus_space_tag_t sbus_alloc_bustag(struct sbus_softc *);
 static bus_dma_tag_t sbus_alloc_dmatag(struct sbus_softc *);
 static int sbus_get_intr(struct sbus_softc *, int,
-			      struct sbus_intr **, int *, int);
-int sbus_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
-			      int, bus_space_handle_t *);
+    struct sbus_intr **, int *, int);
 static int sbus_overtemp(void *);
-static int _sbus_bus_map(
-		bus_space_tag_t,
-		bus_type_t,
-		bus_addr_t,		/*offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *);
-static void *sbus_intr_establish(
-		bus_space_tag_t,
-		int,			/*Sbus interrupt level*/
-		int,			/*`device class' priority*/
-		int,			/*flags*/
-		int (*)(void *),	/*handler*/
-		void *);		/*handler arg*/
+static int _sbus_bus_map(bus_space_tag_t, bus_space_tag_t,
+    bus_addr_t,		/*offset*/
+    bus_size_t,		/*size*/
+    int,		/*flags*/
+    bus_space_handle_t *);
+static void *sbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
+    int,		/*Sbus interrupt level*/
+    int,		/*`device class' priority*/
+    int,		/*flags*/
+    int (*)(void *),	/*handler*/
+    void *);		/*handler arg*/
 
 
 /* autoconfiguration driver */
@@ -182,23 +176,19 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-int sbus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
-			  bus_size_t, struct proc *, int);
+int sbus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
 void sbus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-int sbus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int);
-void sbus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-			   bus_size_t, int);
-int sbus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
-			   bus_size_t alignment, bus_size_t boundary,
-			   bus_dma_segment_t *segs, int nsegs, int *rsegs,
-			   int flags);
-void sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			   int nsegs);
-int sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			 int nsegs, size_t size, caddr_t *kvap, int flags);
-void sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
-			    size_t size);
+int sbus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+    int, bus_size_t, int);
+void sbus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
+int sbus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags);
+void sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
+int sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags);
+void sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
 
 /*
  * Child devices receive the Sbus interrupt level in their attach
@@ -231,9 +221,7 @@ static int intr_sbus2ipl_4u[] = {
  * Return UNCONF (config_find ignores this if the device was configured).
  */
 int
-sbus_print(args, busname)
-	void *args;
-	const char *busname;
+sbus_print(void *args, const char *busname)
 {
 	struct sbus_attach_args *sa = args;
 	int i;
@@ -253,10 +241,7 @@ sbus_print(args, busname)
 }
 
 int
-sbus_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+sbus_match(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct mainbus_attach_args *ma = aux;
@@ -268,26 +253,28 @@ sbus_match(parent, vcf, aux)
  * Attach an Sbus.
  */
 void
-sbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	struct intrhand *ih;
+	struct sysioreg *sysio;
 	int ipl;
 	char *name;
 	int node = ma->ma_node;
-
 	int node0, error;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
-	sc->sc_sysio = (struct sysioreg*)(u_long)ma->ma_address[0];	/* Use prom mapping for sysio. */
-	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		/* Find interrupt group no */
+	/* Find interrupt group no */
+	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;
+
+	bus_space_map(sc->sc_bustag,
+	    ma->ma_address[0], sizeof(struct sysioreg),
+	    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_bh);
+	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 
 	/* Setup interrupt translation tables */
 	sc->sc_intr2ipl = intr_sbus2ipl_4u;
@@ -315,13 +302,24 @@ sbus_attach(parent, self, aux)
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
-	/* initailise the IOMMU */
+	/* initialize the IOMMU */
 
 	/* punch in our copies */
 	sc->sc_is.is_bustag = sc->sc_bustag;
-	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
-	sc->sc_is.is_sb[0] = &sc->sc_sysio->sys_strbuf;
-	sc->sc_is.is_sb[1] = NULL;
+	bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+	    offsetof(struct sysioreg, sys_iommu),
+	    sizeof(struct iommureg), &sc->sc_is.is_iommu);
+
+	/* initialize our strbuf_ctl */
+	sc->sc_is.is_sb[0] = &sc->sc_sb;
+	if (bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+	    offsetof(struct sysioreg, sys_strbuf),
+	    sizeof(struct iommu_strbuf), &sc->sc_sb.sb_sb) == 0) {
+		/* point sb_flush to our flush buffer */
+		sc->sc_sb.sb_flush = &sc->sc_flush;
+		sc->sc_sb.sb_bustag = sc->sc_bustag;
+	} else
+		sc->sc_is.is_sb[0] = NULL;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -336,11 +334,11 @@ sbus_attach(parent, self, aux)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		panic("couldn't malloc intrhand");
-	ih->ih_map = &sc->sc_sysio->therm_int_map;
-	ih->ih_clr = NULL; /* &sc->sc_sysio->therm_clr_int; */
+	ih->ih_map = &sysio->therm_int_map;
+	ih->ih_clr = NULL; /* &sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
 	ipl = 1;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = (1 << ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
@@ -354,8 +352,8 @@ sbus_attach(parent, self, aux)
 		u_long dummy;
 
 		if (extent_alloc_subregion(sc->sc_is.is_dvmamap,
-		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + NBPG,
-		    NBPG, NBPG, 0, 0, EX_NOWAIT|EX_BOUNDZERO,
+		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + NBPG, NBPG,
+		    NBPG, 0, 0, EX_NOWAIT | EX_BOUNDZERO,
 		    (u_long *)&dummy) != 0)
 			panic("sbus iommu: can't toss first dvma page");
 	}
@@ -381,17 +379,11 @@ sbus_attach(parent, self, aux)
 }
 
 int
-sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
-	struct sbus_softc	*sc;
-	bus_space_tag_t		bustag;
-	bus_dma_tag_t		dmatag;
-	int			node;
-	struct sbus_attach_args	*sa;
+sbus_setup_attach_args(struct sbus_softc *sc, bus_space_tag_t bustag,
+    bus_dma_tag_t dmatag, int node, struct sbus_attach_args *sa)
 {
-	/*struct	sbus_reg sbusreg;*/
-	/*int	base;*/
 	int	error;
-	int n;
+	int	n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
 	error = getprop(node, "name", 1, &n, (void **)&sa->sa_name);
@@ -436,8 +428,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 }
 
 void
-sbus_destroy_attach_args(sa)
-	struct sbus_attach_args	*sa;
+sbus_destroy_attach_args(struct sbus_attach_args *sa)
 {
 	if (sa->sa_name != NULL)
 		free(sa->sa_name, M_DEVBUF);
@@ -456,18 +447,23 @@ sbus_destroy_attach_args(sa)
 
 
 int
-_sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_sbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
+    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct sbus_softc *sc = t->cookie;
-	int64_t slot = btype;
+	int64_t slot = BUS_ADDR_IOSPACE(addr);
+	int64_t offset = BUS_ADDR_PADDR(addr);
 	int i;
+
+	if (t->parent == NULL || t->parent->sparc_bus_map == NULL) {
+		printf("\n_psycho_bus_map: invalid parent");
+		return (EINVAL);
+	}
+
+	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
+		return ((*t->parent->sparc_bus_map)(t, t0, addr,
+					size, flags, hp));
+	}
 
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t paddr;
@@ -477,53 +473,22 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 
 		/* We've found the connection to the parent bus */
 		paddr = sc->sc_range[i].poffset + offset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		DPRINTF(SDB_DVMA,
-("\n_sbus_bus_map: mapping paddr slot %lx offset %lx poffset %lx paddr %lx\n",
+		paddr |= ((bus_addr_t)sc->sc_range[i].pspace << 32);
+		DPRINTF(SDB_DVMA, ("_sbus_bus_map: mapping paddr "
+			"slot %lx offset %lx poffset %lx paddr %lx\n",
 		    (long)slot, (long)offset, (long)sc->sc_range[i].poffset,
 		    (long)paddr));
-		return (bus_space_map2(sc->sc_bustag, 0, paddr,
-					size, flags, vaddr, hp));
+		return ((*t->parent->sparc_bus_map)(t, t0, paddr,
+					size, flags, hp));
 	}
 
 	return (EINVAL);
 }
 
-int
-sbus_bus_mmap(t, btype, paddr, flags, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	int flags;
-	bus_space_handle_t *hp;
-{
-	bus_addr_t offset = paddr;
-	int slot = btype;
-	struct sbus_softc *sc = t->cookie;
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
-
-		if (sc->sc_range[i].cspace != slot)
-			continue;
-
-		paddr = sc->sc_range[i].poffset + offset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
-		    VM_PROT_READ|VM_PROT_WRITE, flags);
-	}
-
-	return (*hp == -1 ? -1 : 0);
-}
-
 bus_addr_t
-sbus_bus_addr(t, btype, offset)
-	bus_space_tag_t t;
-	u_int btype;
-	u_int offset;
+sbus_bus_addr(bus_space_tag_t t, u_int btype, u_int offset)
 {
-	bus_addr_t baddr;
+	bus_addr_t baddr = ~(bus_addr_t)0;
 	int slot = btype;
 	struct sbus_softc *sc = t->cookie;
 	int i;
@@ -533,7 +498,7 @@ sbus_bus_addr(t, btype, offset)
 			continue;
 
 		baddr = sc->sc_range[i].poffset + offset;
-		baddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
+		baddr |= (bus_addr_t)sc->sc_range[i].pspace << 32;
 	}
 
 	return (baddr);
@@ -545,12 +510,10 @@ sbus_bus_addr(t, btype, offset)
  * its sbusdev portion.
  */
 void
-sbus_establish(sd, dev)
-	register struct sbusdev *sd;
-	register struct device *dev;
+sbus_establish(struct sbusdev *sd, struct device *dev)
 {
-	register struct sbus_softc *sc;
-	register struct device *curdev;
+	struct sbus_softc *sc;
+	struct device *curdev;
 
 	/*
 	 * We have to look for the sbus by name, since it is not necessarily
@@ -579,10 +542,9 @@ sbus_establish(sd, dev)
  * Reset the given sbus.
  */
 void
-sbusreset(sbus)
-	int sbus;
+sbusreset(int sbus)
 {
-	register struct sbusdev *sd;
+	struct sbusdev *sd;
 	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
 	struct device *dev;
 
@@ -607,8 +569,7 @@ sbusreset(sbus)
  * The same needs to be done to PCI controller drivers.
  */
 int
-sbus_overtemp(arg)
-	void *arg;
+sbus_overtemp(void *arg)
 {
 	/* Should try a clean shutdown first */
 	printf("DANGER: OVER TEMPERATURE detected\nShutting down...\n");
@@ -622,12 +583,8 @@ sbus_overtemp(arg)
  * Get interrupt attributes for an Sbus device.
  */
 int
-sbus_get_intr(sc, node, ipp, np, slot)
-	struct sbus_softc *sc;
-	int node;
-	struct sbus_intr **ipp;
-	int *np;
-	int slot;
+sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
+    int slot)
 {
 	int *ipl;
 	int n, i;
@@ -681,7 +638,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 			 * Stuff the real vector in sbi_vec.
 			 */
 
-			ip[n].sbi_pri = pri|ipl[n];
+			ip[n].sbi_pri = pri | ipl[n];
 			ip[n].sbi_vec = ipl[n];
 		}
 		free(ipl, M_DEVBUF);
@@ -696,18 +653,16 @@ sbus_get_intr(sc, node, ipp, np, slot)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, pri, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int flags;
-	int (*handler)(void *);
-	void *arg;
+sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
+    int flags, int (*handler)(void *), void *arg)
 {
 	struct sbus_softc *sc = t->cookie;
+	struct sysioreg *sysio;
 	struct intrhand *ih;
 	int ipl;
 	long vec = pri; 
+
+	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
@@ -734,11 +689,11 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 		if ((vec & INTMAP_OBIO) == 0) {
 			/* We're in an SBUS slot */
 			/* Register the map and clear intr registers */
-
+			bus_space_handle_t maph;
 			int slot = INTSLOT(pri);
 
-			ih->ih_map = &(&sc->sc_sysio->sbus_slot0_int)[slot];
-			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[vec];
+			ih->ih_map = &(&sysio->sbus_slot0_int)[slot];
+			ih->ih_clr = &sysio->sbus0_clr_int[vec];
 #ifdef DEBUG
 			if (sbus_debug & SDB_INTR) {
 				int64_t intrmap = *ih->ih_map;
@@ -753,17 +708,26 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 			vec |= INTMAP_V;
 			/* Insert IGN */
 			vec |= sc->sc_ign;
-			bus_space_write_8(sc->sc_bustag,
-			    (bus_space_handle_t)(u_long)ih->ih_map, 0, vec);
+			/*
+			 * This would be cleaner if the underlying interrupt
+			 * infrastructure took a bus tag/handle pair.  Even
+			 * if not, the following could be done with a write
+			 * to the appropriate offset from sc->sc_bustag and
+			 * sc->sc_bh.
+			 */
+			bus_space_map(sc->sc_bustag, (bus_addr_t)ih->ih_map, 8,
+			    BUS_SPACE_MAP_PROMADDRESS, &maph);
+			bus_space_write_8(sc->sc_bustag, maph, 0, vec);
 		} else {
-			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
+			bus_space_handle_t maph;
+			volatile int64_t *intrptr = &sysio->scsi_int_map;
 			int64_t intrmap = 0;
 			int i;
 
 			/* Insert IGN */
 			vec |= sc->sc_ign;
 			for (i = 0; &intrptr[i] <=
-			    (int64_t *)&sc->sc_sysio->reserved_int_map &&
+			    (int64_t *)&sysio->reserved_int_map &&
 			    INTVEC(intrmap = intrptr[i]) != INTVEC(vec); i++)
 				;
 			if (INTVEC(intrmap) == INTVEC(vec)) {
@@ -772,12 +736,22 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				    vec, (long)intrmap, i));
 				/* Register the map and clear intr registers */
 				ih->ih_map = &intrptr[i];
-				intrptr = (int64_t *)&sc->sc_sysio->scsi_clr_int;
+				intrptr = (int64_t *)&sysio->scsi_clr_int;
 				ih->ih_clr = &intrptr[i];
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
-				bus_space_write_8(sc->sc_bustag,
-				    (bus_space_handle_t)(u_long)ih->ih_map, 0,
+				/*
+				 * This would be cleaner if the underlying
+				 * interrupt infrastructure took a bus tag/
+				 * handle pair.  Even if not, the following
+				 * could be done with a write to the
+				 * appropriate offset from sc->sc_bustag and
+				 * sc->sc_bh.
+				 */
+				bus_space_map(sc->sc_bustag,
+				    (bus_addr_t)ih->ih_map, 8,
+				    BUS_SPACE_MAP_PROMADDRESS, &maph);
+				bus_space_write_8(sc->sc_bustag, maph, 0,
 				    (u_long)intrmap);
 			} else
 				panic("IRQ not found!");
@@ -796,20 +770,22 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 }
 
 static bus_space_tag_t
-sbus_alloc_bustag(sc)
-	struct sbus_softc *sc;
+sbus_alloc_bustag(struct sbus_softc *sc)
 {
-	bus_space_tag_t sbt;
+	struct sparc_bus_space_tag *sbt;
 
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL)
 		return (NULL);
 
 	bzero(sbt, sizeof *sbt);
+	snprintf(sbt->name, sizeof(sbt->name), "%s",
+		sc->sc_dev.dv_xname);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->type = SBUS_BUS_SPACE;
+	sbt->default_type = SBUS_BUS_SPACE;
+	sbt->asi = ASI_PRIMARY;
+	sbt->sasi = ASI_PRIMARY;
 	sbt->sparc_bus_map = _sbus_bus_map;
 	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
@@ -818,8 +794,7 @@ sbus_alloc_bustag(sc)
 
 
 static bus_dma_tag_t
-sbus_alloc_dmatag(sc)
-	struct sbus_softc *sc;
+sbus_alloc_dmatag(struct sbus_softc *sc)
 {
 	bus_dma_tag_t sdt, psdt = sc->sc_dmatag;
 
@@ -851,59 +826,45 @@ sbus_alloc_dmatag(sc)
 }
 
 int
-sbus_dmamap_load(tag, map, buf, buflen, p, flags)
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+sbus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
-	return (iommu_dvmamap_load(tag, &sc->sc_is, map, buf, buflen, p, flags));
+	return (iommu_dvmamap_load(tag, &sc->sc_is, map, buf, buflen,
+	    p, flags));
 }
 
 int
-sbus_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+sbus_dmamap_load_raw(bus_dma_tag_t tag, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
-	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, flags, size));
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs,
+	    nsegs, flags, size));
 }
 
 void
-sbus_dmamap_unload(tag, map)
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
+sbus_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t map)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
 	iommu_dvmamap_unload(tag, &sc->sc_is, map);
 }
 
 void
-sbus_dmamap_sync(tag, map, offset, len, ops)
-	bus_dma_tag_t tag;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+sbus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
-	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
+	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
 		/* Flush the CPU then the IOMMU */
 		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
 		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
 	}
-	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
+	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) {
 		/* Flush the IOMMU then the CPU */
 		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
 		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
@@ -911,27 +872,18 @@ sbus_dmamap_sync(tag, map, offset, len, ops)
 }
 
 int
-sbus_dmamem_alloc(tag, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t tag;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+sbus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
 	return (iommu_dvmamem_alloc(tag, &sc->sc_is, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags));
 }
 
 void
-sbus_dmamem_free(tag, segs, nsegs)
-	bus_dma_tag_t tag;
-	bus_dma_segment_t *segs;
-	int nsegs;
+sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
@@ -939,24 +891,17 @@ sbus_dmamem_free(tag, segs, nsegs)
 }
 
 int
-sbus_dmamem_map(tag, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t tag;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
+	struct sbus_softc *sc = tag->_cookie;
 
-	return (iommu_dvmamem_map(tag, &sc->sc_is, segs, nsegs, size, kvap, flags));
+	return (iommu_dvmamem_map(tag, &sc->sc_is, segs, nsegs, size,
+	    kvap, flags));
 }
 
 void
-sbus_dmamem_unmap(tag, kva, size)
-	bus_dma_tag_t tag;
-	caddr_t kva;
-	size_t size;
+sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 

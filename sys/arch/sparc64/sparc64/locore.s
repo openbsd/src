@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.27 2003/01/11 07:07:49 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.28 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -70,6 +70,9 @@
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 #undef	SCHED_DEBUG
+
+.register %g2,
+.register %g3,
 
 #include "assym.h"
 #include "ksyms.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.10 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.11 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -226,7 +226,7 @@ espattach_sbus(parent, self, aux)
 		      sizeof (lsc->sc_dev.dv_xname));
 
 		/* Map dma registers */
-		if (bus_space_map2(sa->sa_bustag,
+		if (sbus_bus_map(sa->sa_bustag,
 		                   sa->sa_reg[0].sbr_slot,
 			           sa->sa_reg[0].sbr_offset,
 			           sa->sa_reg[0].sbr_size,
@@ -332,9 +332,16 @@ espattach_sbus(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs)
-		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
+	if (sa->sa_npromvaddrs) {
+		if (bus_space_map(sa->sa_bustag, sa->sa_promvaddrs[0],
+				 sa->sa_size,
+				 BUS_SPACE_MAP_PROMADDRESS | BUS_SPACE_MAP_LINEAR,
+				 &esc->sc_reg) != 0) {
+			printf("%s @ sbus: cannot map registers\n",
+				self->dv_xname);
+			return;
+		}
+	} else {
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 				 sa->sa_offset,
 				 sa->sa_size,
@@ -394,10 +401,18 @@ espattach_dma(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_npromvaddrs)
-		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
-		if (bus_space_map2(sa->sa_bustag,
+	if (sa->sa_npromvaddrs) {
+		if (bus_space_map(sa->sa_bustag,
+				   sa->sa_promvaddrs[0],
+				   sa->sa_size,		/* ??? */
+				   BUS_SPACE_MAP_PROMADDRESS | BUS_SPACE_MAP_LINEAR,
+				   &esc->sc_reg) != 0) {
+			printf("%s @ dma: cannot map registers\n",
+				self->dv_xname);
+			return;
+		}
+	} else {
+		if (sbus_bus_map(sa->sa_bustag,
 				   sa->sa_slot,
 				   sa->sa_offset,
 				   sa->sa_size,

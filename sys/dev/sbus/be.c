@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.9 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: be.c,v 1.10 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -251,8 +251,8 @@ beattach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-	    (bus_type_t)sa->sa_reg[0].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag,
+	    sa->sa_reg[0].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[0].sbr_offset,
 	    (bus_size_t)sa->sa_reg[0].sbr_size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
@@ -260,8 +260,8 @@ beattach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-	    (bus_type_t)sa->sa_reg[1].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag,
+	    sa->sa_reg[1].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[1].sbr_offset,
 	    (bus_size_t)sa->sa_reg[1].sbr_size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_br) != 0) {
@@ -269,8 +269,8 @@ beattach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(sa->sa_bustag,
-	    (bus_type_t)sa->sa_reg[2].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag,
+	    sa->sa_reg[2].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[2].sbr_offset,
 	    (bus_size_t)sa->sa_reg[2].sbr_size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tr) != 0) {

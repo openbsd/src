@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2002/11/20 04:26:44 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1005,7 +1005,7 @@ mainbus_attach(parent, dev, aux)
 	void *aux;
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
-extern struct sparc_bus_space_tag mainbus_space_tag;
+extern bus_space_tag_t mainbus_space_tag;
 
 	struct mainbus_attach_args ma;
 	char buf[32];
@@ -1061,7 +1061,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				continue;
 			if (strcmp(buf, "cpu") == 0) {
 				bzero(&ma, sizeof(ma));
-				ma.ma_bustag = &mainbus_space_tag;
+				ma.ma_bustag = mainbus_space_tag;
 				ma.ma_dmatag = &mainbus_dma_tag;
 				ma.ma_node = node;
 				ma.ma_name = "cpu";
@@ -1103,7 +1103,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			continue; /* an "early" device already configured */
 
 		bzero(&ma, sizeof ma);
-		ma.ma_bustag = &mainbus_space_tag;
+		ma.ma_bustag = mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = buf;
 		ma.ma_node = node;

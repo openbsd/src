@@ -1,8 +1,9 @@
-/*	$OpenBSD: psycho.c,v 1.26 2003/02/11 19:20:26 mickey Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.27 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
+ * Copyright (c) 2003 Henric Jungheim
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +63,7 @@
 #define PDB_BUSMAP	0x02
 #define PDB_INTR	0x04
 #define PDB_CONF	0x08
-int psycho_debug = 0;
+int psycho_debug = ~0;
 #define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -74,6 +75,8 @@ void psycho_get_bus_range(int, int *);
 void psycho_get_ranges(int, struct psycho_ranges **, int *);
 void psycho_set_intr(struct psycho_softc *, int, void *, 
     u_int64_t *, u_int64_t *);
+bus_space_tag_t _psycho_alloc_bus_tag(struct psycho_pbm *,
+    const char *, int, int, int);
 
 /* Interrupt handlers */
 int psycho_ue(void *);
@@ -91,12 +94,11 @@ void psycho_iommu_init(struct psycho_softc *, int);
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
-pcireg_t psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t, int);
-void psycho_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-paddr_t psycho_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-int _psycho_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
-    bus_size_t, int, vaddr_t, bus_space_handle_t *);
-void *psycho_intr_establish(bus_space_tag_t, int, int, int,
+paddr_t psycho_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
+    int, int);
+int _psycho_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
+void *psycho_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *);
 
 int psycho_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
@@ -112,6 +114,8 @@ void psycho_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 int psycho_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
     caddr_t *, int);
 void psycho_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+void psycho_map_psycho(struct psycho_softc *, int, bus_addr_t, bus_size_t,
+    bus_addr_t, bus_size_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -122,7 +126,6 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 int	psycho_match(struct device *, void *, void *);
 void	psycho_attach(struct device *, struct device *, void *);
 int	psycho_print(void *aux, const char *p);
-int	psycho_get_childspace(int);
 
 
 struct cfattach psycho_ca = {
@@ -185,10 +188,7 @@ struct psycho_type {
 };
 
 int
-psycho_match(parent, match, aux)
-	struct device	*parent;
-	void		*match;
-	void		*aux;
+psycho_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct psycho_type *ptype;
@@ -222,19 +222,15 @@ psycho_match(parent, match, aux)
  *	  just copy it's tags and addresses.
  */
 void
-psycho_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+psycho_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)self;
 	struct psycho_softc *osc = NULL;
 	struct psycho_pbm *pp;
 	struct pcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t bh;
 	u_int64_t csr;
 	int psycho_br[2], n;
-	struct pci_ctl *pci_ctl;
 	struct psycho_type *ptype;
 
 	printf("\n");
@@ -244,7 +240,7 @@ psycho_attach(parent, self, aux)
 	sc->sc_dmatag = ma->ma_dmatag;
 
 	/*
-	 * call the model-specific initialisation routine.
+	 * call the model-specific initialization routine.
 	 */
 
 	for (ptype = psycho_types; ptype->p_name != NULL; ptype++) {
@@ -276,26 +272,13 @@ psycho_attach(parent, self, aux)
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[2].ur_paddr;
 
 		if (ma->ma_naddress > 2) {
-			sc->sc_regs = (struct psychoreg *)
-			    (u_long)ma->ma_address[2];
-			pci_ctl = (struct pci_ctl *)
-			    (u_long)ma->ma_address[0];
+			psycho_map_psycho(sc, 0,
+			    ma->ma_address[2], sizeof(struct psychoreg),
+			    ma->ma_address[0], sizeof(struct pci_ctl));
 		} else if (ma->ma_nreg > 2) {
-			bus_space_handle_t handle;
-
-			/* We need to map this in ourselves. */
-			if (bus_space_map2(sc->sc_bustag, 0,
+			psycho_map_psycho(sc, 1,
 			    ma->ma_reg[2].ur_paddr, ma->ma_reg[2].ur_len,
-			    0, NULL, &handle))
-				panic("psycho_attach: cannot map regs");
-			sc->sc_regs = (struct psychoreg *)(u_long)handle;
-
-			if (bus_space_map2(sc->sc_bustag, 0,
-			    ma->ma_reg[0].ur_paddr, ma->ma_reg[0].ur_len,
-			    0, NULL, &handle))
-				panic("psycho_attach: cannot map ctl");
-/* XXX -- this is lost but never unmapped */
-			pci_ctl = (struct pci_ctl *)(u_long)handle;
+			    ma->ma_reg[0].ur_paddr, ma->ma_reg[0].ur_len);
 		} else
 			panic("psycho_attach: %d not enough registers",
 			    ma->ma_nreg);
@@ -303,25 +286,23 @@ psycho_attach(parent, self, aux)
 		sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
 
 		if (ma->ma_naddress) {
-			sc->sc_regs = (struct psychoreg *)
-			    (u_long)ma->ma_address[0];
-			pci_ctl = (struct pci_ctl *)&sc->sc_regs->psy_pcictl[0];
+			psycho_map_psycho(sc, 0,
+			    ma->ma_address[0], sizeof(struct psychoreg),
+			    ma->ma_address[0] +
+				offsetof(struct psychoreg, psy_pcictl[0]),
+			    sizeof(struct pci_ctl));
 		} else if (ma->ma_nreg) {
-			bus_space_handle_t handle;
-
-			/* We need to map this in ourselves. */
-			if (bus_space_map2(sc->sc_bustag, 0,
+			psycho_map_psycho(sc, 1,
 			    ma->ma_reg[0].ur_paddr, ma->ma_reg[0].ur_len,
-			    0, NULL, &handle))
-				panic("psycho_attach: cannot map regs");
-			sc->sc_regs = (struct psychoreg *)(u_long)handle;
-			pci_ctl = (struct pci_ctl *)&sc->sc_regs->psy_pcictl[0];
+			    ma->ma_reg[0].ur_paddr +
+				offsetof(struct psychoreg, psy_pcictl[0]),
+			    sizeof(struct pci_ctl));
 		} else
 			panic("psycho_attach: %d not enough registers",
 			    ma->ma_nreg);
 	}
 
-	csr = sc->sc_regs->psy_csr;
+	csr = psycho_psychoreg_read(sc, psy_csr);
 	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
@@ -351,21 +332,17 @@ psycho_attach(parent, self, aux)
 		break;
 	}
 
-
 	/* Oh, dear.  OK, lets get started */
 
 	/*
 	 * Setup the PCI control register
 	 */
-	csr = bus_space_read_8(sc->sc_bustag,
-	    (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
+	csr = psycho_pcictl_read(sc, pci_csr);
 	csr |= PCICTL_MRLM | PCICTL_ARB_PARK | PCICTL_ERRINTEN |
 	    PCICTL_4ENABLE;
 	csr &= ~(PCICTL_SERR | PCICTL_CPU_PRIO | PCICTL_ARB_PRIO |
 	    PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag,
-	    (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0, csr);
-
+	psycho_pcictl_write(sc, pci_csr, csr);
 
 	/*
 	 * Allocate our psycho_pbm
@@ -389,14 +366,14 @@ psycho_attach(parent, self, aux)
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
 
-	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
+	pp->pp_pcictl = sc->sc_pcictl;
 
 	/* allocate our tags */
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
 	pp->pp_iot = psycho_alloc_io_tag(pp);
 	pp->pp_dmat = psycho_alloc_dma_tag(pp);
 	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-	    (pp->pp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	                (pp->pp_iot ? PCI_FLAGS_IO_ENABLED  : 0);
 
 	/* allocate a chipset for this */
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
@@ -404,16 +381,16 @@ psycho_attach(parent, self, aux)
 	/* setup the rest of the psycho pbm */
 	pba.pba_pc = pp->pp_pc;
 
-	pba.pba_pc->conf_read = psycho_pci_conf_read;
-	pba.pba_pc->conf_write = psycho_pci_conf_write;
-
 	printf("\n");
 
 	/*
 	 * And finally, if we're a sabre or the first of a pair of psycho's to
 	 * arrive here, start up the IOMMU and get a config space tag.
 	 */
+
 	if (osc == NULL) {
+		uint64_t timeo;
+
 		/*
 		 * Establish handlers for interesting interrupts....
 		 *
@@ -424,33 +401,49 @@ psycho_attach(parent, self, aux)
 		 * is better than trying to sort through this mess.
 		 */
 		psycho_set_intr(sc, 15, psycho_ue,
-		    &sc->sc_regs->ue_int_map,
-		    &sc->sc_regs->ue_clr_int);
+		    psycho_psychoreg_vaddr(sc, ue_int_map),
+		    psycho_psychoreg_vaddr(sc, ue_clr_int));
 		psycho_set_intr(sc, 1, psycho_ce,
-		    &sc->sc_regs->ce_int_map,
-		    &sc->sc_regs->ce_clr_int);
+		    psycho_psychoreg_vaddr(sc, ce_int_map),
+		    psycho_psychoreg_vaddr(sc, ce_clr_int));
 		psycho_set_intr(sc, 15, psycho_bus_a,
-		    &sc->sc_regs->pciaerr_int_map,
-		    &sc->sc_regs->pciaerr_clr_int);
+		    psycho_psychoreg_vaddr(sc, pciaerr_int_map),
+		    psycho_psychoreg_vaddr(sc, pciaerr_clr_int));
 		psycho_set_intr(sc, 15, psycho_bus_b,
-		    &sc->sc_regs->pciberr_int_map,
-		    &sc->sc_regs->pciberr_clr_int);
+		    psycho_psychoreg_vaddr(sc, pciberr_int_map),
+		    psycho_psychoreg_vaddr(sc, pciberr_clr_int));
 #if 0
 		psycho_set_intr(sc, 15, psycho_powerfail,
-		    &sc->sc_regs->power_int_map, 
-		    &sc->sc_regs->power_clr_int);
+		    psycho_psychoreg_vaddr(sc, power_int_map),
+		    psycho_psychoreg_vaddr(sc, power_clr_int));
 #endif
 		psycho_set_intr(sc, 1, psycho_wakeup,
-		    &sc->sc_regs->pwrmgt_int_map, 
-		    &sc->sc_regs->pwrmgt_clr_int);
+		    psycho_psychoreg_vaddr(sc, pwrmgt_int_map),
+		    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int));
+
+		/*
+		 * Apparently a number of machines with psycho and psycho+
+		 * controllers have interrupt latency issues.  We'll try
+		 * setting the interrupt retry timeout to 0xff which gives us
+		 * a retry of 3-6 usec (which is what sysio is set to) for the
+		 * moment, which seems to help alleviate this problem.
+		 */
+		timeo = psycho_psychoreg_read(sc, intr_retry_timer);
+		if (timeo > 0xfff) {
+#ifdef DEBUG
+			printf("decreasing interrupt retry timeout "
+			    "from %lx to 0xff\n", (long)timeo);
+#endif
+			psycho_psychoreg_write(sc, intr_retry_timer, 0xff);
+		}
 
 		/*
 		 * Setup IOMMU and PCI configuration if we're the first
 		 * of a pair of psycho's to arrive here.
 		 *
-		 * We should calculate a TSB size based on amount of RAM
-		 * and number of bus controllers and number an type of
-		 * child devices.
+		 * We should calculate a TSB size based on the amount of RAM,
+		 * number of bus controllers, and number and type of child
+		 * devices.
 		 *
 		 * For the moment, 32KB should be more than enough.
 		 */
@@ -459,36 +452,69 @@ psycho_attach(parent, self, aux)
 		if (sc->sc_is == NULL)
 			panic("psycho_attach: malloc iommu_state");
 
+		memset(sc->sc_is, 0, sizeof *sc->sc_is);
 
-		sc->sc_is->is_sb[0] = NULL;
-		sc->sc_is->is_sb[1] = NULL;
-		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0)
-			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
+		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0) {
+			struct strbuf_ctl *sb = &pp->pp_sb;
+			vaddr_t va = (vaddr_t)pp->pp_flush[0x40];
+
+			/*
+			 * Initialize the strbuf_ctl.
+			 *
+			 * The flush sync buffer must be 64-byte aligned.
+			 */
+
+			sb->sb_flush = (void *)(va & ~0x3f);
+
+			sb->sb_bustag = sc->sc_bustag;
+			if (bus_space_subregion(sc->sc_bustag, sc->sc_pcictl,
+			    offsetof(struct pci_ctl, pci_strbuf),
+			    sizeof(struct iommu_strbuf),
+			    &sb->sb_sb)) {
+				sb->sb_flush = 0;
+			}
+
+			/* Point out iommu at the strbuf_ctl. */
+			sc->sc_is->is_sb[0] = sb;
+		}
 
 		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
-		if (bus_space_map2(sc->sc_bustag,
-		    PCI_CONFIG_BUS_SPACE, sc->sc_basepaddr + 0x01000000,
-		    0x0100000, 0, 0, &bh))
+		if (bus_space_map(sc->sc_configtag,
+		    sc->sc_basepaddr, 0x0100000, 0, &sc->sc_configaddr))
 			panic("could not map psycho PCI configuration space");
-		sc->sc_configaddr = (off_t)bh;
 	} else {
 		/* Just copy IOMMU state, config tag and address */
 		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 
-		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0)
-			sc->sc_is->is_sb[1] = &pci_ctl->pci_strbuf;
+		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0) {
+			struct strbuf_ctl *sb = &pp->pp_sb;
+			vaddr_t va = (vaddr_t)pp->pp_flush[0x40];
+
+			/*
+			 * Initialize the strbuf_ctl.
+			 *
+			 * The flush sync buffer must be 64-byte aligned.
+			 */
+
+			sb->sb_flush = (void *)(va & ~0x3f);
+
+			sb->sb_bustag = sc->sc_bustag;
+			if (bus_space_subregion(sc->sc_bustag, sc->sc_pcictl,
+			    offsetof(struct pci_ctl, pci_strbuf),
+			    sizeof(struct iommu_strbuf),
+			    &sb->sb_sb)) {
+				sb->sb_flush = 0;
+			}
+
+			/* Point out iommu at the strbuf_ctl. */
+			sc->sc_is->is_sb[1] = sb;
+		}
 		iommu_reset(sc->sc_is);
 	}
-
-	/*
-	 * XXX Linux magic, helps U30
-	 * "PROM sets the IRQ retry value too low, increase it."
-	 */
-	sc->sc_regs->intr_retry_timer = 0xff;
 
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
@@ -500,28 +526,51 @@ psycho_attach(parent, self, aux)
 	pba.pba_dmat = sc->sc_psycho_this->pp_dmat;
 	pba.pba_iot = sc->sc_psycho_this->pp_iot;
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
+	pba.pba_pc->bustag = sc->sc_configtag;
+	pba.pba_pc->bushandle = sc->sc_configaddr;
 
 	config_found(self, &pba, psycho_print);
 }
 
-int
-psycho_print(aux, p)
-	void *aux;
-	const char *p;
+void
+psycho_map_psycho(struct psycho_softc* sc, int do_map, bus_addr_t reg_addr,
+    bus_size_t reg_size, bus_addr_t pci_addr, bus_size_t pci_size)
 {
+	if (do_map) {
+		if (bus_space_map(sc->sc_bustag,
+		    reg_addr, reg_size, 0, &sc->sc_regsh))
+			panic("psycho_attach: cannot map regs");
 
+		if (pci_addr >= reg_addr &&
+		    pci_addr + pci_size <= reg_addr + reg_size) {
+			if (bus_space_subregion(sc->sc_bustag, sc->sc_regsh,
+			    pci_addr - reg_addr, pci_size, &sc->sc_pcictl))
+				panic("psycho_map_psycho: map ctl");
+		}
+		else if (bus_space_map(sc->sc_bustag, pci_addr, pci_size,
+		    0, &sc->sc_pcictl))
+			panic("psycho_map_psycho: cannot map pci");
+	} else {
+		if (bus_space_map(sc->sc_bustag, reg_addr, reg_size,
+		    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_regsh))
+			panic("psycho_map_psycho: cannot map ctl");
+		if (bus_space_map(sc->sc_bustag, pci_addr, pci_size,
+		    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_pcictl))
+			panic("psycho_map_psycho: cannot map pci");
+	}
+}
+
+int
+psycho_print(void *aux, const char *p)
+{
 	if (p == NULL)
 		return (UNCONF);
 	return (QUIET);
 }
 
 void
-psycho_set_intr(sc, ipl, handler, mapper, clearer)
-	struct psycho_softc *sc;
-	int ipl;
-	void *handler;
-	u_int64_t *mapper;
-	u_int64_t *clearer;
+psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
+    u_int64_t *mapper, u_int64_t *clearer)
 {
 	struct intrhand *ih;
 
@@ -533,12 +582,13 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
 	ih->ih_fun = handler;
-	ih->ih_pil = (1<<ipl);
+	ih->ih_pil = (1 << ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
 
 	DPRINTF(PDB_INTR, (
-	    "; installing handler %p arg %p with number %x pil %u\n",
-	    ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil));
+	    "\ninstalling handler %p arg %p for %s with number %x pil %u",
+	    ih->ih_fun, ih->ih_arg, sc->sc_dev.dv_xname, ih->ih_number,
+	    ih->ih_pil));
 
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
@@ -552,10 +602,7 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
  * allocate a PCI chipset tag and set it's cookie.
  */
 pci_chipset_tag_t
-psycho_alloc_chipset(pp, node, pc)
-	struct psycho_pbm *pp;
-	int node;
-	pci_chipset_tag_t pc;
+psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 	
@@ -584,19 +631,20 @@ psycho_get_bus_range(node, brp)
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
-	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n", node, brp[0], brp[1]));
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
+	    node, brp[0], brp[1]));
 }
 
 void
-psycho_get_ranges(node, rp, np)
-	int node;
-	struct psycho_ranges **rp;
-	int *np;
+psycho_get_ranges(int node, struct psycho_ranges **rp, int *np)
 {
 
 	if (getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
 		panic("could not get psycho ranges");
-	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: got `ranges' for node %08x: %d entries\n",
+	    node, *np));
 }
 
 /*
@@ -604,13 +652,11 @@ psycho_get_ranges(node, rp, np)
  */
 
 int
-psycho_ue(arg)
-	void *arg;
+psycho_ue(void *arg)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
-	struct psychoreg *regs = sc->sc_regs;
-	unsigned long long afsr = regs->psy_ue_afsr;
-	unsigned long long afar = regs->psy_ue_afar;
+	struct psycho_softc *sc = arg;
+	unsigned long long afsr = psycho_psychoreg_read(sc, psy_ue_afsr);
+	unsigned long long afar = psycho_psychoreg_read(sc, psy_ue_afar);
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
@@ -622,11 +668,9 @@ psycho_ue(arg)
 }
 
 int 
-psycho_ce(arg)
-	void *arg;
+psycho_ce(void *arg)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
-	struct psychoreg *regs = sc->sc_regs;
+	struct psycho_softc *sc = arg;
 
 	/*
 	 * It's correctable.  Dump the regs and continue.
@@ -634,20 +678,18 @@ psycho_ce(arg)
 
 	printf("%s: correctable DMA error AFAR %llx AFSR %llx\n",
 	    sc->sc_dev.dv_xname, 
-	    (long long)regs->psy_ce_afar, (long long)regs->psy_ce_afsr);
+	    (long long)psycho_psychoreg_read(sc, psy_ce_afar),
+	    (long long)psycho_psychoreg_read(sc, psy_ce_afsr));
 	return (1);
 }
 
 int
-psycho_bus_error(sc, bus)
-	struct psycho_softc *sc;
-	int bus;
+psycho_bus_error(struct psycho_softc *sc, int bus)
 {
-	struct psychoreg *regs = sc->sc_regs;
 	u_int64_t afsr, afar, bits;
 
-	afar = regs->psy_pcictl[bus].pci_afar;
-	afsr = regs->psy_pcictl[bus].pci_afsr;
+	afar = psycho_psychoreg_read(sc, psy_pcictl[bus].pci_afar);
+	afsr = psycho_psychoreg_read(sc, psy_pcictl[bus].pci_afsr);
 
 	bits = afsr & (PSY_PCIAFSR_PMA | PSY_PCIAFSR_PTA | PSY_PCIAFSR_PTRY |
 	    PSY_PCIAFSR_PPERR | PSY_PCIAFSR_SMA | PSY_PCIAFSR_STA |
@@ -664,33 +706,29 @@ psycho_bus_error(sc, bus)
 	    (long long)iommu_extract(sc->sc_is, (vaddr_t)afar),
 	    (long long)afsr);
 
-	regs->psy_pcictl[bus].pci_afsr = bits;
+	psycho_psychoreg_write(sc, psy_pcictl[bus].pci_afsr, bits);
 	return (1);
 }
 
 int 
-psycho_bus_a(arg)
-	void *arg;
+psycho_bus_a(void *arg)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
+	struct psycho_softc *sc = arg;
 
 	return (psycho_bus_error(sc, 0));
 }
 
 int 
-psycho_bus_b(arg)
-	void *arg;
+psycho_bus_b(void *arg)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
+	struct psycho_softc *sc = arg;
 
 	return (psycho_bus_error(sc, 1));
 }
 
 int 
-psycho_powerfail(arg)
-	void *arg;
+psycho_powerfail(void *arg)
 {
-
 	/*
 	 * We lost power.  Try to shut down NOW.
 	 */
@@ -700,10 +738,9 @@ psycho_powerfail(arg)
 }
 
 int
-psycho_wakeup(arg)
-	void *arg;
+psycho_wakeup(void *arg)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
+	struct psycho_softc *sc = arg;
 
 	/*
 	 * Gee, we don't really have a framework to deal with this
@@ -717,9 +754,7 @@ psycho_wakeup(arg)
  * initialise the IOMMU..
  */
 void
-psycho_iommu_init(sc, tsbsize)
-	struct psycho_softc *sc;
-	int tsbsize;
+psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 {
 	char *name;
 	struct iommu_state *is = sc->sc_is;
@@ -729,7 +764,9 @@ psycho_iommu_init(sc, tsbsize)
 
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
-	is->is_iommu = &sc->sc_regs->psy_iommu;
+	bus_space_subregion(sc->sc_bustag, sc->sc_regsh,
+	    offsetof(struct psychoreg, psy_iommu), sizeof(struct iommureg),
+	    &is->is_iommu);
 
 	/*
 	 * Separate the men from the boys.  Get the `virtual-dma'
@@ -743,7 +780,7 @@ psycho_iommu_init(sc, tsbsize)
 		(void **)&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
-#define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break
+#define	TSBCASE(x)	case 1 << ((x) + 23): tsbsize = (x); break
 		switch (vdma[1]) { 
 			TSBCASE(1); TSBCASE(2); TSBCASE(3);
 			TSBCASE(4); TSBCASE(5); TSBCASE(6);
@@ -752,6 +789,11 @@ psycho_iommu_init(sc, tsbsize)
 			TSBCASE(7);
 		}
 #undef TSBCASE
+		DPRINTF(PDB_CONF, ("psycho_iommu_init: iobase=0x%x\n", iobase));
+	}
+	else {
+		DPRINTF(PDB_CONF, ("psycho_iommu_init: getprop failed, "
+		    "iobase=0x%x\n", iobase));
 	}
 
 	/* give us a nice name.. */
@@ -766,32 +808,61 @@ psycho_iommu_init(sc, tsbsize)
 /*
  * below here is bus space and bus dma support
  */
+
 bus_space_tag_t
-psycho_alloc_bus_tag(pp, type)
-	struct psycho_pbm *pp;
-	int type;
+psycho_alloc_mem_tag(struct psycho_pbm *pp)
+{
+	return (_psycho_alloc_bus_tag(pp, "mem",
+	    0x02,	/* 32-bit mem space (where's the #define???) */
+	    ASI_PRIMARY, ASI_PRIMARY_LITTLE));
+}
+
+bus_space_tag_t
+psycho_alloc_io_tag(struct psycho_pbm *pp)
+{
+	return (_psycho_alloc_bus_tag(pp, "io",
+	    0x01,	/* IO space (where's the #define???) */
+	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
+}
+
+bus_space_tag_t
+psycho_alloc_config_tag(struct psycho_pbm *pp)
+{
+	return (_psycho_alloc_bus_tag(pp, "cfg",
+	    0x00,	/* Config space (where's the #define???) */
+	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
+}
+
+bus_space_tag_t
+_psycho_alloc_bus_tag(struct psycho_pbm *pp,
+    const char *name, int ss, int asi, int sasi)
 {
 	struct psycho_softc *sc = pp->pp_sc;
-	bus_space_tag_t bt;
+	struct sparc_bus_space_tag *bt;
 
-	bt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
 	if (bt == NULL)
 		panic("could not allocate psycho bus tag");
 
 	bzero(bt, sizeof *bt);
+	
+	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d-%2.2x)",
+	    	sc->sc_dev.dv_xname, name, ss, asi); 
+
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
-	bt->type = type;
+	bt->default_type = ss;
+	bt->asi = asi;
+	bt->sasi = sasi;
 	bt->sparc_bus_map = _psycho_bus_map;
 	bt->sparc_bus_mmap = psycho_bus_mmap;
 	bt->sparc_intr_establish = psycho_intr_establish;
+
 	return (bt);
 }
 
 bus_dma_tag_t
-psycho_alloc_dma_tag(pp)
-	struct psycho_pbm *pp;
+psycho_alloc_dma_tag(struct psycho_pbm *pp)
 {
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmatag;
@@ -828,56 +899,30 @@ psycho_alloc_dma_tag(pp)
  */
 
 int
-psycho_get_childspace(type)
-	int type;
-{
-	int ss;
-
-	switch (type) {
-	case PCI_CONFIG_BUS_SPACE:
-		ss = 0x00;
-		break;
-	case PCI_IO_BUS_SPACE:
-		ss = 0x01;
-		break;
-	case PCI_MEMORY_BUS_SPACE:
-		ss = 0x02;
-		break;
-#if 0
-	/* we don't do 64 bit memory space */
-	case PCI_MEMORY64_BUS_SPACE:
-		ss = 0x03;
-		break;
-#endif
-	default:
-		panic("psycho_get_childspace: unknown bus type");
-	}
-
-	return (ss);
-}
-
-int
-_psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
-	bus_size_t size;
-	int	flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+_psycho_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct psycho_pbm *pp = t->cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_map: type %d off %qx sz %qx flags %d va %p", t->type, (unsigned long long)offset, (unsigned long long)size, flags,
-	    (void *)vaddr));
+	DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: type %d off %qx sz %qx "
+	    "flags %d", t->default_type, (unsigned long long)offset,
+	    (unsigned long long)size, flags));
 
-	ss = psycho_get_childspace(t->type);
+	ss = t->default_type;
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
-	if (btype == 0)
-		btype = t->type;
+	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
+		printf("\n_psycho_bus_map: invalid parent");
+		return (EINVAL);
+	}
+
+	t = t->parent;
+
+	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
+		return ((*t->sparc_bus_map)
+		    (t, t0, offset, size, flags, hp));
+	}
 
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
@@ -886,34 +931,37 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 			continue;
 
 		paddr = pp->pp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: mapping paddr space %lx offset %lx paddr %qx\n",
+		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi << 32);
+		DPRINTF(PDB_BUSMAP,
+		    ("\n_psycho_bus_map: mapping paddr space %lx offset %lx "
+			"paddr %qx",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
-		return (bus_space_map2(sc->sc_bustag, btype, paddr,
-		    size, flags, vaddr, hp));
+		return ((*t->sparc_bus_map)(t, t0, paddr, size, flags, hp));
 	}
 	DPRINTF(PDB_BUSMAP, (" FAILED\n"));
 	return (EINVAL);
 }
 
 paddr_t
-psycho_bus_mmap(t, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
+    off_t off, int prot, int flags)
 {
 	bus_addr_t offset = paddr;
 	struct psycho_pbm *pp = t->cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 	int i, ss;
 
-	ss = psycho_get_childspace(t->type);
+	ss = t->default_type;
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %d flags %d pa %qx\n",
+	DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: prot %d flags %d pa %qx",
 	    prot, flags, (unsigned long long)paddr));
+
+	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
+		printf("\n_psycho_bus_mmap: invalid parent");
+		return (-1);
+	}
+
+	t = t->parent;
 
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
@@ -922,12 +970,12 @@ psycho_bus_mmap(t, paddr, off, prot, flags)
 			continue;
 
 		paddr = pp->pp_range[i].phys_lo + offset;
-		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
+		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi << 32);
 		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr "
-		    "space %lx offset %lx paddr %qx\n",
+		    "space %lx offset %lx paddr %qx",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_bustag, paddr, off, prot, flags));
+		return ((*t->sparc_bus_mmap)(t, t0, paddr, off, prot, flags));
 	}
 
 	return (-1);
@@ -937,13 +985,8 @@ psycho_bus_mmap(t, paddr, off, prot, flags)
  * install an interrupt handler for a PCI device
  */
 void *
-psycho_intr_establish(t, ihandle, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int ihandle;
-	int level;
-	int flags;
-	int (*handler)(void *);
-	void *arg;
+psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+    int level, int flags, int (*handler)(void *), void *arg)
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -969,12 +1012,14 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	 */
 
 
-	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
+	DPRINTF(PDB_INTR,
+	    ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
 	ino = INTINO(vec);
 	DPRINTF(PDB_INTR, (" ino %x", ino));
 
 	/* If the device didn't ask for an IPL, use the one encoded. */
-	if (level == IPL_NONE) level = INTLEV(vec);
+	if (level == IPL_NONE)
+		level = INTLEV(vec);
 	/* If it still has no level, print a warning and assign IPL 2 */
 	if (level == IPL_NONE) {
 		printf("ERROR: no IPL, setting IPL 2.\n");
@@ -983,27 +1028,32 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
 
-		DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
+		DPRINTF(PDB_INTR,
+		    ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 		    (long)ino, intrlev[ino]));
 
 		/* Hunt thru obio first */
-		for (intrmapptr = &sc->sc_regs->scsi_int_map,
-		    intrclrptr = &sc->sc_regs->scsi_clr_int;
-		    intrmapptr < &sc->sc_regs->ffb0_int_map;
+		for (intrmapptr = psycho_psychoreg_vaddr(sc, scsi_int_map),
+		    intrclrptr = psycho_psychoreg_vaddr(sc, scsi_clr_int);
+		    intrmapptr < (volatile u_int64_t *)
+			psycho_psychoreg_vaddr(sc, ffb0_int_map);
 		    intrmapptr++, intrclrptr++) {
 			if (INTINO(*intrmapptr) == ino)
 				goto found;
 		}
 
 		/* Now do PCI interrupts */
-		for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
-		    intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
-		    intrmapptr <= &sc->sc_regs->pcib_slot3_int;
+		for (intrmapptr = psycho_psychoreg_vaddr(sc, pcia_slot0_int),
+		    intrclrptr = psycho_psychoreg_vaddr(sc, pcia0_clr_int[0]);
+		    intrmapptr <= (volatile u_int64_t *)
+			psycho_psychoreg_vaddr(sc, pcib_slot3_int);
 		    intrmapptr++, intrclrptr += 4) {
 			/* Skip PCI-A Slot 2 and PCI-A Slot 3 on psycho's */
 			if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
-			    (intrmapptr == &sc->sc_regs->pcia_slot2_int ||
-			     intrmapptr == &sc->sc_regs->pcia_slot3_int))
+			    (intrmapptr ==
+				psycho_psychoreg_vaddr(sc, pcia_slot2_int) ||
+			    intrmapptr ==
+				psycho_psychoreg_vaddr(sc, pcia_slot3_int)))
 				continue;
 
 			if (((*intrmapptr ^ vec) & 0x3c) == 0) {
@@ -1034,7 +1084,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	ih->ih_number = ino | sc->sc_ign;
 
 	DPRINTF(PDB_INTR, (
-	    "; installing handler %p arg %p with number %x pil %u\n",
+	    "\ninstalling handler %p arg %p with number %x pil %u",
 	    ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil));
 
 	intr_establish(ih->ih_pil, ih);
@@ -1057,7 +1107,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx",
 			(unsigned long long)intrmap));
 		*intrmapptr = intrmap;
-		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx\n",
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)(intrmap = *intrmapptr)));
 	}
 	return (ih);
@@ -1067,55 +1117,40 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
  * hooks into the iommu dvma calls.
  */
 int
-psycho_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+psycho_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	return (iommu_dvmamap_load(t, sc->sc_is, map, buf, buflen, p, flags));
 }
 
 void
-psycho_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+psycho_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	iommu_dvmamap_unload(t, sc->sc_is, map);
 }
 
 int
-psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+psycho_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load_raw(t, sc->sc_is, map, segs, nsegs, flags, size));
+	return (iommu_dvmamap_load_raw(t, sc->sc_is, map, segs, nsegs, flags,
+	    size));
 }
 
 void
-psycho_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+psycho_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
@@ -1128,21 +1163,14 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 		iommu_dvmamap_sync(t, sc->sc_is, map, offset, len, ops);
 		bus_dmamap_sync(t->_parent, map, offset, len, ops);
 	}
-
 }
 
 int
-psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+psycho_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	return (iommu_dvmamem_alloc(t, sc->sc_is, size, alignment, boundary,
@@ -1150,98 +1178,31 @@ psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 }
 
 void
-psycho_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+psycho_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	iommu_dvmamem_free(t, sc->sc_is, segs, nsegs);
 }
 
 int
-psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+psycho_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamem_map(t, sc->sc_is, segs, nsegs, size, kvap, flags));
+	return (iommu_dvmamem_map
+	    (t, sc->sc_is, segs, nsegs, size, kvap, flags));
 }
 
 void
-psycho_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+psycho_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_pbm *pp = t->_cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
 	iommu_dvmamem_unmap(t, sc->sc_is, kva, size);
 }
 
-pcireg_t
-psycho_pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-{
-	struct psycho_pbm *pp = pc->cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-	pcireg_t val = (pcireg_t)~0;
-
-	DPRINTF(PDB_CONF, ("pci_conf_read: tag %lx reg %x ", 
-		(long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
-		DPRINTF(PDB_CONF, ("asi=%x addr=%qx (offset=%x) ...",
-			bus_type_asi[sc->sc_configtag->type],
-			(long long)(sc->sc_configaddr + 
-				PCITAG_OFFSET(tag) + reg),
-			(int)PCITAG_OFFSET(tag) + reg));
-
-		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
-			PCITAG_OFFSET(tag) + reg);
-	}
-#ifdef DEBUG
-	else DPRINTF(PDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
-	    (int)PCITAG_OFFSET(tag)));
-#endif
-	DPRINTF(PDB_CONF, (" returning %08x\n", (u_int)val));
-
-	return (val);
-}
-
-void
-psycho_pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
-{
-	struct psycho_pbm *pp = pc->cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	DPRINTF(PDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", 
-		(long)PCITAG_OFFSET(tag), reg, (int)data));
-	DPRINTF(PDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
-		bus_type_asi[sc->sc_configtag->type],
-		(long long)(sc->sc_configaddr + PCITAG_OFFSET(tag) + reg), 
-		(int)PCITAG_OFFSET(tag) + reg));
-
-	/* If we don't know it, just punt. */
-	if (PCITAG_NODE(tag) == -1) {
-		DPRINTF(PDB_CONF, ("pci_config_write: bad addr"));
-		return;
-	}
-
-	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, 
-		PCITAG_OFFSET(tag) + reg, data);
-}

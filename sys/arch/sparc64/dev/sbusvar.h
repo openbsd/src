@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.5 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
@@ -101,6 +101,7 @@
 struct sbus_softc {
 	struct	device		sc_dev;		/* base device */
 	bus_space_tag_t		sc_bustag;
+	bus_space_handle_t	sc_bh;
 	bus_dma_tag_t		sc_dmatag;
 	int			sc_clockfreq;	/* clock frequency (in Hz) */
 	struct sbusdev		*sc_sbdev;	/* list of all children */
@@ -110,11 +111,13 @@ struct sbus_softc {
 	int			*sc_intr2ipl;	/* Interrupt level translation */
 	int			*sc_intr_compat;/* `intr' property to sbus compat */
 
-	struct sysioreg		*sc_sysio;	/* SBUS control registers */
 	int			sc_ign;		/* Interrupt group number for this sysio */
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
+	struct strbuf_ctl	sc_sb;		/* Streaming buffer control */
+	int64_t			sc_flush;	/* Streaming buffer flush */
 };
 
 bus_addr_t sbus_bus_addr(bus_space_tag_t, u_int, u_int);
 
 #endif /* _SBUS_VAR_SPARC64_H_ */
+

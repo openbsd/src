@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.7 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.8 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -101,6 +101,7 @@ int	dmaprint_sbus(void *, const char *);
 
 void	*dmabus_intr_establish(
 		bus_space_tag_t,
+		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' level*/
 		int,			/*flags*/
@@ -172,18 +173,23 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Map registers */
-	if (sa->sa_npromvaddrs != 0)
-		sc->sc_regs = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 0, 0, &bh) != 0) {
+	if (sa->sa_npromvaddrs != 0) {
+		if (sbus_bus_map(sa->sa_bustag, 0, 
+		    sa->sa_promvaddrs[0],
+		    sa->sa_size,		/* ???? */
+		    BUS_SPACE_MAP_PROMADDRESS,
+		    0, &bh) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
-		sc->sc_regs = bh;
+	} else if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+	    sa->sa_offset,
+	    sa->sa_size,
+	    0, 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
 	}
+	sc->sc_regs = bh;
 
 	/*
 	 * Get transfer burst size from PROM and plug it into the
@@ -246,13 +252,14 @@ dmaattach_sbus(parent, self, aux)
 }
 
 void *
-dmabus_intr_establish(t, pri, level, flags, handler, arg)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int flags;
-	int (*handler)(void *);
-	void *arg;
+dmabus_intr_establish(
+	bus_space_tag_t t,
+	bus_space_tag_t t0,
+	int pri,
+	int level,
+	int flags,
+	int (*handler)(void *),
+	void *arg)
 {
 	struct lsi64854_softc *sc = t->cookie;
 
@@ -263,24 +270,32 @@ dmabus_intr_establish(t, pri, level, flags, handler, arg)
 		handler = lsi64854_enet_intr;
 		arg = sc;
 	}
-	return (bus_intr_establish(sc->sc_bustag, pri, level, flags,
-				   handler, arg));
+
+	for (t = t->parent; t; t = t->parent) {
+		if (t->sparc_intr_establish != NULL)
+			return ((*t->sparc_intr_establish)
+				(t, t0, pri, level, flags, handler, arg));
+
+	}
+
+	return (NULL);
 }
 
 bus_space_tag_t
 dma_alloc_bustag(sc)
 	struct dma_softc *sc;
 {
-	bus_space_tag_t sbt;
+	struct sparc_bus_space_tag *sbt;
 
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL)
 		return (NULL);
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_lsi64854.sc_bustag;
+	sbt->asi = sbt->parent->asi;
+	sbt->sasi = sbt->parent->sasi;
 	sbt->sparc_intr_establish = dmabus_intr_establish;
 	return (sbt);
 }

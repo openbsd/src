@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizovar.h,v 1.2 2002/07/18 16:45:08 jason Exp $	*/
+/*	$OpenBSD: schizovar.h,v 1.3 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -42,6 +42,8 @@ struct schizo_pbm {
 
 	bus_space_tag_t		sp_memt;
 	bus_space_tag_t		sp_iot;
+	bus_space_tag_t		sp_regt;
+	bus_space_handle_t	sp_regh;
 	bus_space_tag_t		sp_cfgt;
 	bus_space_handle_t	sp_cfgh;
 	bus_dma_tag_t		sp_dmat;
@@ -50,6 +52,8 @@ struct schizo_pbm {
 	int			sp_bus_a;
 	bus_addr_t		sp_confpaddr;
 	struct iommu_state	sp_is;
+	struct strbuf_ctl	sp_sb;
+	char			pp_flush[0x80];
 };
 
 struct schizo_softc {
@@ -57,9 +61,6 @@ struct schizo_softc {
 	int sc_node;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bust;
-	bus_space_tag_t sc_bustag;
-	struct iommu_state *sc_is;
 	bus_addr_t sc_ctrl;
 	bus_space_handle_t sc_ctrlh;
-	struct schizo_regs *sc_regs;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.2 2002/05/13 18:16:38 jason Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.3 2003/02/17 01:29:21 henric Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -99,7 +99,7 @@ lebufattach(parent, self, aux)
 	struct lebuf_softc *sc = (void *)self;
 	int node;
 	int sbusburst;
-	bus_space_tag_t sbt;
+	struct sparc_bus_space_tag *sbt;
 	bus_space_handle_t bh;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -140,13 +140,12 @@ lebufattach(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag), 
-	    M_DEVBUF, M_NOWAIT);
+	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL) {
 		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;
 	}
-	bzero(sbt, sizeof(struct sparc_bus_space_tag));
+	bzero(sbt, sizeof(*sbt));
 
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.9 2002/09/23 18:43:18 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.10 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -235,20 +235,26 @@ sab_attach(parent, self, aux)
 	u_int8_t r;
 	u_int i;
 
-	sc->sc_bt = ea->ea_bustag;
+	sc->sc_bt = ea->ea_memtag;
 	sc->sc_node = ea->ea_node;
 
 	/* Use prom mapping, if available. */
-	if (ea->ea_nvaddrs)
-		sc->sc_bh = (bus_space_handle_t)ea->ea_vaddrs[0];
-	else if (ebus_bus_map(sc->sc_bt, 0,
+	if (ea->ea_nvaddrs) {
+		if (bus_space_map(sc->sc_bt, ea->ea_vaddrs[0],
+		    0, BUS_SPACE_MAP_PROMADDRESS, &sc->sc_bh) != 0) {
+			printf(": can't map register space\n");
+			return;
+		}
+	} else if (ebus_bus_map(sc->sc_bt, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_bh) != 0) {
 		printf(": can't map register space\n");
 		return;
 	}
 
-	sc->sc_ih = bus_intr_establish(ea->ea_bustag, ea->ea_intrs[0],
+	BUS_SPACE_SET_FLAGS(sc->sc_bt, sc->sc_bh, BSHDB_NO_ACCESS);
+
+	sc->sc_ih = bus_intr_establish(sc->sc_bt, ea->ea_intrs[0],
 	    IPL_TTY, 0, sab_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": can't map interrupt\n");

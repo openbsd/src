@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychovar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: psychovar.h,v 1.5 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: psychovar.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -63,7 +63,10 @@ struct psycho_pbm {
 	int				pp_flags;
 
 	/* and pointers into the psycho regs for our bits */
-	struct pci_ctl			*pp_pcictl;
+	bus_space_handle_t		pp_pcictl;
+	struct strbuf_ctl		pp_sb;
+	/* area we can use for flushing our streaming buffer */
+	char				pp_flush[0x80];
 };
 
 /*
@@ -86,7 +89,8 @@ struct psycho_softc {
 	 * PSYCHO register.  we record the base physical address of these 
 	 * also as it is the base of the entire PSYCHO
 	 */
-	struct psychoreg		*sc_regs;
+	bus_space_handle_t		sc_regsh;
+	bus_space_handle_t		sc_pcictl;
 	paddr_t				sc_basepaddr;
 
 	/* Interrupt Group Number for this device */
@@ -111,16 +115,35 @@ struct psycho_softc {
 
 /* config space is per-psycho.  mem/io/dma are per-pci bus */
 bus_dma_tag_t psycho_alloc_dma_tag(struct psycho_pbm *);
-bus_space_tag_t psycho_alloc_bus_tag(struct psycho_pbm *, int);
 
-#define psycho_alloc_config_tag(pp) psycho_alloc_bus_tag((pp), PCI_CONFIG_BUS_SPACE)
-#define psycho_alloc_mem_tag(pp) psycho_alloc_bus_tag((pp), PCI_MEMORY_BUS_SPACE)
-#define psycho_alloc_io_tag(pp) psycho_alloc_bus_tag((pp), PCI_IO_BUS_SPACE)
+bus_space_tag_t psycho_alloc_mem_tag(struct psycho_pbm *);
+bus_space_tag_t psycho_alloc_io_tag(struct psycho_pbm *);
+bus_space_tag_t psycho_alloc_config_tag(struct psycho_pbm *);
 
 /* uperf attachment to psycho's */
 struct uperf_psycho_attach_args {
 	char *upaa_name;
 	struct perfmon *upaa_regs;
 };
+
+#define psycho_psychoreg_read(sc, reg)				\
+	bus_space_read_8((sc)->sc_bustag, (sc)->sc_regsh,	\
+	    offsetof(struct psychoreg, reg))
+
+#define psycho_psychoreg_write(sc, reg, v)			\
+	bus_space_write_8((sc)->sc_bustag, (sc)->sc_regsh,	\
+	    offsetof(struct psychoreg, reg), (v))
+
+#define psycho_psychoreg_vaddr(sc, reg)				\
+        (bus_space_vaddr((sc)->sc_bustag, (sc)->sc_regsh) +	\
+                offsetof(struct psychoreg, reg))
+
+#define psycho_pcictl_read(sc, reg)				\
+	bus_space_read_8((sc)->sc_bustag, (sc)->sc_pcictl,	\
+	     offsetof(struct pci_ctl, reg))
+
+#define psycho_pcictl_write(sc, reg, v)	\
+	bus_space_write_8((sc)->sc_bustag, (sc)->sc_pcictl,	\
+	    offsetof(struct pci_ctl, reg), (v))
 
 #endif /* _SPARC64_DEV_PSYCHOVAR_H_ */

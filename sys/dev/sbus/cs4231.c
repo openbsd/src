@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.15 2002/10/04 01:51:45 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.16 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -250,11 +250,11 @@ cs4231_attach(parent, self, aux)
 	}
 
 	if (sbus_bus_map(sa->sa_bustag,
-	    (bus_type_t)sa->sa_reg[0].sbr_slot,
+	    sa->sa_reg[0].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[0].sbr_offset,
 	    (bus_size_t)sa->sa_reg[0].sbr_size,
 	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_regs) != 0) {
-		printf(": couldn't map registers\n", self->dv_xname);
+		printf(": couldn't map registers\n");
 		return;
 	}
 
@@ -1548,7 +1548,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	for (p = sc->sc_dmas; p->addr != start; p = p->next)
 		/*EMPTY*/;
 	if (p == NULL) {
-		printf("%s: trigger_output: bad addr: %x\n",
+		printf("%s: trigger_output: bad addr: %p\n",
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
@@ -1613,7 +1613,7 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	for (p = sc->sc_dmas; p->addr != start; p = p->next)
 		/*EMPTY*/;
 	if (p == NULL) {
-		printf("%s: trigger_input: bad addr: %x\n",
+		printf("%s: trigger_input: bad addr: %p\n",
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.2 2002/06/11 11:03:07 jason Exp $	*/
+/*	$OpenBSD: upa.c,v 1.3 2003/02/17 01:29:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -33,10 +33,6 @@
  * Effort sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
- *
- */
-
-/*
  *
  */
 
@@ -92,14 +88,11 @@ struct cfdriver upa_cd = {
 
 int upa_print(void *, const char *);
 bus_space_tag_t upa_alloc_bus_tag(struct upa_softc *);
-int __upa_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
-    bus_size_t, int, vaddr_t, bus_space_handle_t *);
+int __upa_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
 
 int
-upa_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+upa_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -109,9 +102,7 @@ upa_match(parent, match, aux)
 }
 
 void
-upa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+upa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct upa_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -161,9 +152,7 @@ upa_attach(parent, self, aux)
 }
 
 int
-upa_print(args, name)
-	void *args;
-	const char *name;
+upa_print(void *args, const char *name)
 {
 	struct mainbus_attach_args *ma = args;
 
@@ -173,20 +162,21 @@ upa_print(args, name)
 }
 
 bus_space_tag_t
-upa_alloc_bus_tag(sc)
-	struct upa_softc *sc;
+upa_alloc_bus_tag(struct upa_softc *sc)
 {
-	bus_space_tag_t bt;
+	struct sparc_bus_space_tag *bt;
 
-	bt = (bus_space_tag_t)malloc(sizeof(struct sparc_bus_space_tag),
-	    M_DEVBUF, M_NOWAIT);
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT);
 	if (bt == NULL)
 		panic("upa: couldn't alloc bus tag");
 
 	bzero(bt, sizeof *bt);
+	snprintf(bt->name, sizeof(bt->name), "%s",
+			sc->sc_dev.dv_xname);
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;
-	bt->type = sc->sc_bt->type;
+	bt->asi = bt->parent->asi;
+	bt->sasi = bt->parent->sasi;
 	bt->sparc_bus_map = __upa_bus_map;
 	/* XXX bt->sparc_bus_mmap = upa_bus_mmap; */
 	/* XXX bt->sparc_intr_establish = upa_intr_establish; */
@@ -194,17 +184,23 @@ upa_alloc_bus_tag(sc)
 }
 
 int
-__upa_bus_map(t, btype, offset, size, flags, vaddr, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
-	bus_size_t size;
-	int flags;
-	vaddr_t vaddr;
-	bus_space_handle_t *hp;
+__upa_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct upa_softc *sc = t->cookie;
 	int i;
+
+	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
+		printf("\n__upa_bus_map: invalid parent");
+		return (EINVAL);
+	}
+
+	t = t->parent;
+
+        if (flags & BUS_SPACE_MAP_PROMADDRESS) {
+		return ((*t->sparc_bus_map)
+		    (t, t0, offset, size, flags, hp));
+	}
 
 	for (i = 0; i < sc->sc_nrange; i++) {
 		if (offset < sc->sc_range[i].ur_space)
@@ -220,6 +216,7 @@ __upa_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	offset -= sc->sc_range[i].ur_space;
 	offset += sc->sc_range[i].ur_addr;
 
-	return (bus_space_map2(sc->sc_bt, btype, offset, size,
-	    flags, vaddr, hp));
+
+	return ((*t->sparc_bus_map)(t, t0, offset, size, flags, hp));
 }
+

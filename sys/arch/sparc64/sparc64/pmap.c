@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2002/10/12 02:03:45 krw Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -134,17 +134,17 @@ static int pseg_set(struct pmap* pm, vaddr_t addr, int64_t tte, paddr_t spare) {
 	if (!(pdir = (paddr_t *)ldda(&pm->pm_segs[va_to_seg(addr)],
 	    ASI_PHYS_CACHED))) {
 		if (!spare) return (1);
-		stda(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
+		stxa_sync(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
 		pdir = spare;
 		spare = NULL;
 	}
 	if (!(ptbl = (paddr_t *)ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED))) {
 		if (!spare) return (1);
-		stda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
+		stxa_sync(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
 		ptbl = spare;
 		spare = NULL;
 	}
-	stda(&ptbl[va_to_pte(addr)], ASI_PHYS_CACHED, tte);
+	stxa_sync(&ptbl[va_to_pte(addr)], ASI_PHYS_CACHED, tte);
 	return (0);
 }
 
@@ -155,13 +155,13 @@ static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
 	if (!(pdir = (paddr_t *)ldda(&pm->pm_segs[va_to_seg(addr)],
 	    ASI_PHYS_CACHED))) {
 		if (!spare) return (1);
-		stda(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
+		stxa_sync(&pm->pm_segs[va_to_seg(addr)], ASI_PHYS_CACHED, spare);
 		pdir = spare;
 		spare = NULL;
 	}
 	if (!(ptbl = (paddr_t *)ldda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED))) {
 		if (!spare) return (1);
-		stda(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
+		stxa_sync(&pdir[va_to_dir(addr)], ASI_PHYS_CACHED, spare);
 		ptbl = spare;
 		spare = NULL;
 	}
@@ -1100,7 +1100,7 @@ remap_data:
 	bzero(tsb_immu, TSBSIZE);
 
 	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
-	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void *)tsb,
+	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void *)tsb_dmmu,
 	    (int)TSBSIZE));
 
 	first_phys_addr = mem->start;
@@ -2190,7 +2190,8 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	s = splvm();
 	simple_lock(&pm->pm_lock);
-	if ((tte.data = pseg_get(pm, va))<0) {
+	tte.data = pseg_get(pm, va);
+	if (tte.data & TLB_V) {
 		simple_unlock(&pm->pm_lock);
 		pmap_remove(pm, va, va+NBPG-1);
 		simple_lock(&pm->pm_lock);

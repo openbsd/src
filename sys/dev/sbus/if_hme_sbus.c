@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.4 2003/02/17 01:29:20 henric Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ hmeattach_sbus(parent, self, aux)
 	 *
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[0].sbr_slot,
+			 sa->sa_reg[0].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[0].sbr_offset,
 			 (bus_size_t)sa->sa_reg[0].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_seb) != 0) {
@@ -142,7 +142,7 @@ hmeattach_sbus(parent, self, aux)
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[1].sbr_slot,
+			 sa->sa_reg[1].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[1].sbr_offset,
 			 (bus_size_t)sa->sa_reg[1].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_etx) != 0) {
@@ -150,7 +150,7 @@ hmeattach_sbus(parent, self, aux)
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[2].sbr_slot,
+			 sa->sa_reg[2].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[2].sbr_offset,
 			 (bus_size_t)sa->sa_reg[2].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_erx) != 0) {
@@ -158,7 +158,7 @@ hmeattach_sbus(parent, self, aux)
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[3].sbr_slot,
+			 sa->sa_reg[3].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[3].sbr_offset,
 			 (bus_size_t)sa->sa_reg[3].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mac) != 0) {
@@ -166,7 +166,7 @@ hmeattach_sbus(parent, self, aux)
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
-			 (bus_type_t)sa->sa_reg[4].sbr_slot,
+			 sa->sa_reg[4].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[4].sbr_offset,
 			 (bus_size_t)sa->sa_reg[4].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mif) != 0) {

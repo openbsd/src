@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.4 2002/03/14 03:16:08 millert Exp $	*/
+/*	$OpenBSD: qec.c,v 1.5 2003/02/17 01:29:21 henric Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -60,13 +60,13 @@ void		qec_init(struct qec_softc *);
 
 static int qec_bus_map(
 		bus_space_tag_t,
-		bus_type_t,		/*slot*/
+		bus_space_tag_t,
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *);
 static void *qec_intr_establish(
+		bus_space_tag_t,
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
@@ -121,7 +121,7 @@ qecattach(parent, self, aux)
 	struct qec_softc *sc = (void *)self;
 	int node;
 	int sbusburst;
-	bus_space_tag_t sbt;
+	struct sparc_bus_space_tag *sbt;
 	bus_space_handle_t bh;
 	int error;
 
@@ -157,7 +157,7 @@ qecattach(parent, self, aux)
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_buffer = (caddr_t)(u_long)bh;
+	sc->sc_buffer = (caddr_t)bus_space_vaddr(sc->sc_bustag, bh);
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
 	/* Get number of on-board channels */
@@ -198,16 +198,18 @@ qecattach(parent, self, aux)
 	}
 
 	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	sbt = malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);
 	if (sbt == NULL) {
 		printf("%s: attach: out of memory\n", self->dv_xname);
 		return;
 	}
 
 	bzero(sbt, sizeof *sbt);
+	strlcpy(sbt->name, sc->sc_dev.dv_xname, sizeof(sbt->name));
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
+	sbt->asi = sbt->parent->asi;
+	sbt->sasi = sbt->parent->sasi;
 	sbt->sparc_bus_map = qec_bus_map;
 	sbt->sparc_intr_establish = qec_intr_establish;
 
@@ -238,22 +240,37 @@ qecattach(parent, self, aux)
 }
 
 int
-qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
+qec_bus_map(t, t0, addr, size, flags, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t offset;
+	bus_space_tag_t t0;
+	bus_addr_t addr;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct qec_softc *sc = t->cookie;
-	int slot = btype;
+	int slot = BUS_ADDR_IOSPACE(addr);
+	bus_addr_t offset = BUS_ADDR_PADDR(addr);
 	int i;
+
+	for (t = t->parent; t; t = t->parent) {
+		if (t->sparc_bus_map != NULL)
+			break;
+	}
+
+        if (t == NULL) {
+                printf("\nqec_bus_map: invalid parent");
+                return (EINVAL);
+        }
+
+        if (flags & BUS_SPACE_MAP_PROMADDRESS) {
+                return ((*t->sparc_bus_map)
+                    (t, t0, offset, size, flags, hp));
+        }
 
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t paddr;
-		bus_type_t iospace;
+		int iospace;
 
 		if (sc->sc_range[i].cspace != slot)
 			continue;
@@ -261,16 +278,17 @@ qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		/* We've found the connection to the parent bus */
 		paddr = sc->sc_range[i].poffset + offset;
 		iospace = sc->sc_range[i].pspace;
-		return (bus_space_map2(sc->sc_bustag, iospace, paddr,
-					size, flags, vaddr, hp));
+                return ((*t->sparc_bus_map)
+                    (t, t0, BUS_ADDR(iospace, paddr), size, flags, hp));
 	}
 
 	return (EINVAL);
 }
 
 void *
-qec_intr_establish(t, pri, level, flags, handler, arg)
+qec_intr_establish(t, t0, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	bus_space_tag_t t0;
 	int pri;
 	int level;
 	int flags;
@@ -292,7 +310,15 @@ qec_intr_establish(t, pri, level, flags, handler, arg)
 		pri = sc->sc_intr->sbi_pri;
 	}
 
-	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
+        if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
+                printf("\nebus_bus_mmap: invalid parent");
+                return (NULL);
+        }
+
+        t = t->parent;
+
+        return ((*t->sparc_intr_establish)(t, t0, pri, level, flags,
+            handler, arg));
 }
 
 void
