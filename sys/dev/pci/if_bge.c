@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.35 2004/11/11 18:35:41 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.36 2004/11/16 14:27:43 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1728,6 +1728,8 @@ bge_attach(parent, self, aux)
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 	/*
 	 * Do MII setup.
 	 */
@@ -2591,7 +2593,7 @@ bge_init(xsc)
 
 	/* Specify MTU. */
 	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&sc->arpcom.ac_enaddr[0];
