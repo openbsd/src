@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2004/09/30 19:08:42 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.18 2004/10/11 15:20:46 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -113,6 +113,7 @@ Supported devices {:-include-:}:
 	    Nokia C020 Wireless LAN PCMCIA
 	    Nokia C110/C111 Wireless LAN PCMCIA
 	    NTT-ME 11Mbps Wireless LAN PCMCIA
+	    Planex GW-NS11H Wireless LAN PCMCIA
 	    Proxim Harmony PCMCIA
 	    Proxim RangeLAN-DS PCMCIA
 	    RayLink Aviator2.4/Pro 802.11FH PCMCIA

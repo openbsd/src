@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.54 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.55 2004/10/11 15:17:56 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -199,6 +199,7 @@ Nokia C020 Wireless LAN:Prism-I:PCMCIA
 Nokia C110/C111 Wireless LAN:Prism-2:PCMCIA
 Nortel E-mobility 211818-A:Spectrum24:PCI
 NTT-ME 11Mbps Wireless LAN:Prism-2:PCMCIA
+Planex GW-NS11H:Prism-3:PCMCIA
 Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA

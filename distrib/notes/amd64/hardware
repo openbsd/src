@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2004/10/02 04:33:31 brad Exp $
+dnl	$OpenBSD: hardware,v 1.19 2004/10/11 15:20:46 mickey Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -398,6 +398,7 @@ dnl		    Netgear MA401RA PCMCIA
 dnl		    Nokia C020 Wireless LAN PCMCIA
 dnl		    Nokia C110/C111 Wireless LAN PCMCIA
 dnl		    NTT-ME 11Mbps Wireless LAN PCMCIA
+dnl		    Planex GW-NS11H Wireless LAN PCMCIA
 dnl		    Proxim Harmony PCMCIA
 dnl		    Proxim RangeLAN-DS PCMCIA
 dnl		    RayLink Aviator2.4/Pro 802.11FH PCMCIA

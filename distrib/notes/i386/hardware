@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.162 2004/10/02 04:33:31 brad Exp $
+dnl	$OpenBSD: hardware,v 1.163 2004/10/11 15:20:46 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -497,6 +497,7 @@ Supported hardware {:-include-:}:
 		    Nokia C020 Wireless LAN PCMCIA [A] [B] [C]
 		    Nokia C110/C111 Wireless LAN PCMCIA [A] [B] [C]
 		    NTT-ME 11Mbps Wireless LAN PCMCIA [A] [B] [C]
+		    Planex GW-NS11H Wireless LAN PCMCIA [A] [B] [C]
 		    Proxim Harmony PCMCIA [A] [B] [C]
 		    Proxim RangeLAN-DS PCMCIA [A] [B] [C]
 		    RayLink Aviator2.4/Pro 802.11FH PCMCIA [A] [B]

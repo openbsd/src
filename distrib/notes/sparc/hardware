@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.63 2004/03/26 08:56:10 tom Exp $
+dnl	$OpenBSD: hardware,v 1.64 2004/10/11 15:20:46 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -208,6 +208,7 @@ Supported devices {:-include-:}:
 	      Nokia C020 Wireless LAN PCMCIA
 	      Nokia C110/C111 Wireless LAN PCMCIA
 	      NTT-ME 11Mbps Wireless LAN PCMCIA
+	      Planex GW-NS11H Wireless LAN PCMCIA
 	      Proxim Harmony PCMCIA
 	      Proxim RangeLAN-DS PCMCIA
 	      Samsung MagicLAN SWL-2000N PCMCIA

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.74 2004/10/02 04:40:31 brad Exp $
+dnl	$OpenBSD: hardware,v 1.75 2004/10/11 15:20:46 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -204,6 +204,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Nokia C020 Wireless LAN PCMCIA
 		    Nokia C110/C111 Wireless LAN PCMCIA
 		    NTT-ME 11Mbps Wireless LAN PCMCIA
+		    Planex GW-NS11H Wireless LAN PCMCIA
 		    Proxim Harmony PCMCIA
 		    Proxim RangeLAN-DS PCMCIA
 		    Samsung MagicLAN SWL-2000N PCMCIA
