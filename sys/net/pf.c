@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.359 2003/05/18 18:33:28 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.360 2003/05/18 19:58:56 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -183,8 +183,11 @@ void			 pf_calc_skip_steps(struct pf_rulequeue *);
 void			 pf_rule_set_qid(struct pf_rulequeue *);
 u_int32_t		 pf_qname_to_qid(char *);
 struct pf_tag		*pf_get_tag(struct mbuf *);
+int			 pf_match_tag(struct mbuf *, struct pf_rule *,
+			     struct pf_rule *, struct pf_rule *,
+			     struct pf_tag *, int *);
 int			 pf_tag_packet(struct mbuf *, struct pf_tag *,
-			     u_int16_t);
+			     int);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
@@ -1359,11 +1362,31 @@ pf_get_tag(struct mbuf *m)
 }
 
 int
-pf_tag_packet(struct mbuf *m, struct pf_tag *pftag, u_int16_t tag)
+pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_rule *nat,
+    struct pf_rule *rdr, struct pf_tag *pftag, int *tag)
+{
+	if (*tag == -1) {	/* find mbuf tag */
+		pftag = pf_get_tag(m);
+		if (pftag != NULL)
+			*tag = pftag->tag;
+		else
+			*tag = 0;
+		if (nat != NULL && nat->tag)
+			*tag = nat->tag;
+		if (rdr != NULL && rdr->tag)
+			*tag = rdr->tag;
+	}
+
+	return ((!r->match_tag_not && r->match_tag == *tag) ||
+	    (r->match_tag_not && r->match_tag != *tag));
+}
+
+int
+pf_tag_packet(struct mbuf *m, struct pf_tag *pftag, int tag)
 {
 	struct m_tag	*mtag;
 
-	if (tag == 0)
+	if (tag <= 0)
 		return (0);
 
 	if (pftag == NULL) {
@@ -1979,14 +2002,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_ruleset	*ruleset = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	struct pf_tag		*pftag;
-	u_int16_t		 tag;
-
-	pftag = pf_get_tag(m);
-	if (pftag != NULL)
-		tag = pftag->tag;
-	else
-		tag = 0;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 
 	if (direction == PF_OUT) {
 		bport = nport = th->th_sport;
@@ -2011,11 +2028,6 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			rewrite++;
 		}
 	}
-
-	if (nat != NULL && nat->tag)
-		tag = nat->tag;
-	if (rdr != NULL && rdr->tag)
-		tag = rdr->tag;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -2060,8 +2072,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
-		    ((!r->match_tag_not && r->match_tag != tag) ||
-		    (r->match_tag_not && r->match_tag == tag)))
+		    !pf_match_tag(m, r, nat, rdr, pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->tag)
@@ -2301,14 +2312,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_ruleset	*ruleset = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	struct pf_tag		*pftag;
-	u_int16_t		 tag;
-
-	pftag = pf_get_tag(m);
-	if (pftag != NULL)
-		tag = pftag->tag;
-	else
-		tag = 0;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 
 	if (direction == PF_OUT) {
 		bport = nport = uh->uh_sport;
@@ -2333,11 +2338,6 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			rewrite++;
 		}
 	}
-
-	if (nat != NULL && nat->tag)
-		tag = nat->tag;
-	if (rdr != NULL && rdr->tag)
-		tag = rdr->tag;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -2378,8 +2378,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    gid))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
-		    ((!r->match_tag_not && r->match_tag != tag) ||
-		    (r->match_tag_not && r->match_tag == tag)))
+		    !pf_match_tag(m, r, nat, rdr, pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2544,17 +2543,11 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	sa_family_t		 af = pd->af;
 	u_int8_t		 icmptype, icmpcode;
 	int			 state_icmp = 0;
-	struct pf_tag		*pftag;
-	u_int16_t		 tag;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 #ifdef INET6
 	int			 rewrite = 0;
 #endif /* INET6 */
-
-	pftag = pf_get_tag(m);
-	if (pftag != NULL)
-		tag = pftag->tag;
-	else
-		tag = 0;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -2630,11 +2623,6 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 	}
 
-	if (nat != NULL && nat->tag)
-		tag = nat->tag;
-	if (rdr != NULL && rdr->tag)
-		tag = rdr->tag;
-
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
@@ -2660,8 +2648,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
-		    ((!r->match_tag_not && r->match_tag != tag) ||
-		    (r->match_tag_not && r->match_tag == tag)))
+		    !pf_match_tag(m, r, nat, rdr, pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2805,14 +2792,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_addr		 baddr, naddr;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
-	struct pf_tag		*pftag;
-	u_int16_t		 tag;
-
-	pftag = pf_get_tag(m);
-	if (pftag != NULL)
-		tag = pftag->tag;
-	else
-		tag = 0;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
@@ -2854,11 +2835,6 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 	}
 
-	if (nat != NULL && nat->tag)
-		tag = nat->tag;
-	if (rdr != NULL && rdr->tag)
-		tag = rdr->tag;
-
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
@@ -2880,8 +2856,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
-		    ((!r->match_tag_not && r->match_tag != tag) ||
-		    (r->match_tag_not && r->match_tag == tag)))
+		    !pf_match_tag(m, r, nat, rdr, pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -3042,14 +3017,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_ruleset	*ruleset = NULL;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
-	struct pf_tag		*pftag;
-	u_int16_t		 tag;
-
-	pftag = pf_get_tag(m);
-	if (pftag != NULL)
-		tag = pftag->tag;
-	else
-		tag = 0;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -3073,8 +3042,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    r->flagset || r->type || r->code)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag &&
-		    ((!r->match_tag_not && r->match_tag != tag) ||
-		    (r->match_tag_not && r->match_tag == tag)))
+		    !pf_match_tag(m, r, NULL, NULL, pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
