@@ -1,24 +1,32 @@
-/* $OpenBSD: ipsecadm.c,v 1.14 1998/04/04 22:48:28 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.15 1998/05/24 13:29:01 provos Exp $ */
 /*
- * The author of this code is John Ioannidis, ji@tla.org,
- * 	(except when noted otherwise).
+ * The authors of this code are John Ioannidis (ji@tla.org),
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written for BSD/OS in Athens, Greece, in November 1995.
+ * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
+ * in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.  Additional code written by
- * Niels Provos in Germany.
+ * by Angelos D. Keromytis.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
- * and Niels Provos
+ * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
+ * and Niels Provos.
  *
+ * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos.
+ *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software.
+ * modification of this software. 
+ * You may use this code under the GNU public license if you so wish. Please
+ * contribute changes back to the authors under this freer than GPL license
+ * so that we may further the use of strong encryption without limitations to
+ * all.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTY. IN PARTICULAR, NEITHER AUTHOR MAKES ANY
+ * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
@@ -52,18 +60,19 @@
 #include "netinet/ip_ipsp.h"
 #include "netinet/ip_esp.h"
 
-#define ESP_OLD   0x01
-#define ESP_NEW   0x02
-#define AH_OLD    0x04
-#define AH_NEW    0x08
+#define ESP_OLD		0x01
+#define ESP_NEW		0x02
+#define AH_OLD		0x04
+#define AH_NEW		0x08
 
-#define XF_ENC    0x10
-#define XF_AUTH   0x20
-#define DEL_SPI   0x30
-#define GRP_SPI   0x40
-#define ENC_IP    0x80
+#define XF_ENC		0x10
+#define XF_AUTH		0x20
+#define DEL_SPI		0x30
+#define GRP_SPI		0x40
+#define FLOW		0x50
+#define ENC_IP		0x80
 
-#define CMD_MASK  0xf0
+#define CMD_MASK	0xf0
 
 #define isencauth(x) ((x)&~CMD_MASK)
 #define iscmd(x,y)   (((x) & CMD_MASK) == (y))
@@ -74,19 +83,20 @@ typedef struct {
 }       transform;
 
 int xf_esp_new __P((struct in_addr, struct in_addr, u_int32_t, int, int, 
-		    u_char *, u_char *, u_char *, struct in_addr, 
-		    struct in_addr, int));
+    u_char *, u_char *, u_char *, struct in_addr, struct in_addr, int));
 int xf_esp_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
-		    u_char *, struct in_addr, struct in_addr)); 
+    u_char *, struct in_addr, struct in_addr)); 
 int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
-		   struct in_addr, struct in_addr));
+    struct in_addr, struct in_addr));
 int xf_ah_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
-		   struct in_addr, struct in_addr));
+    struct in_addr, struct in_addr));
 
 int xf_delspi __P((struct in_addr, u_int32_t, int, int));
 int xf_grp __P((struct in_addr, u_int32_t, int, struct in_addr, u_int32_t, int));
+int xf_flow __P((struct in_addr, u_int32_t, int, struct in_addr, 
+    struct in_addr, struct in_addr, struct in_addr, int, int, int, int, int));
 int xf_ip4 __P((struct in_addr, struct in_addr, u_int32_t, 
-		struct in_addr, struct in_addr));
+    struct in_addr, struct in_addr));
 
 transform xf[] = {
 	{"des", ALG_ENC_DES,   XF_ENC |ESP_OLD|ESP_NEW},
@@ -117,12 +127,13 @@ isvalid(char *option, int type, int mode)
      int i;
 
      for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
-	  if (!strcmp(option, xf[i].name))
+	  if (!strcmp(option, xf[i].name)) {
 	       if ((xf[i].flags & CMD_MASK) == type && 
 		   (xf[i].flags & mode))
 		    return xf[i].id;
 	       else
 		    return 0;
+	  }
      return 0;
 }
 
@@ -130,7 +141,7 @@ void
 usage()
 {
      fprintf( stderr, "usage: ipsecadm [command] <modifier...>\n"
-	      "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4\n"
+	      "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, flow\n"
 	      "\tPossible modifiers:\n"
 	      "\t\t-enc <alg>\t encryption algorithm\n"
 	      "\t\t-auth <alg>\t authentication algorithm\n"
@@ -144,6 +155,10 @@ usage()
 	      "\t\t-proto <val>\t security protocol\n"
 	      "\t\t-chain\t\t SPI chain delete\n"
 	      "\t\t-newpadding\t new style padding for new ESP\n"
+	      "\t\t-transport <val>\t protocol number for flow\n"
+	      "\t\t-addr <ip> <net> <ip> <net>\t subnets for flow\n"
+	      "\t\t-delete\t\t delete specified flow\n"
+	      "\t\t-local\t\t also create a local flow\n"
 	      "\talso: dst2, spi2, proto2\n"
 	  );
 }
@@ -157,12 +172,15 @@ main(argc, argv)
 	int mode = ESP_NEW, new = 1, flag = 0, newpadding = 0;
 	int auth = 0, enc = 0, ivlen = 0, klen = 0, alen = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
+	int dport = -1, sport = -1, tproto = -1;
+	int delete = 0, local = 0;
 	int chain = 0; 
 	u_int32_t spi = 0, spi2 = 0;
-	struct in_addr src, dst, dst2, osrc, odst;
+	struct in_addr src, dst, dst2, osrc, odst, osmask, odmask;
 	u_char *ivp = NULL, *keyp = NULL, *authp = NULL;
 
 	osrc.s_addr = odst.s_addr = src.s_addr = dst.s_addr = dst2.s_addr = 0;
+	osmask.s_addr = odmask.s_addr = 0;
 
 	if (argc < 2) {
 		usage();
@@ -188,6 +206,9 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i], "group") && flag < 2) {
 		  flag = 2;
 		  mode = GRP_SPI;
+	     } else if (!strcmp(argv[i], "flow") && flag < 2) {
+		  flag = 2;
+		  mode = FLOW;
 	     } else if (!strcmp(argv[i], "ip4") && flag < 2) {
 		  flag = 2;
 		  mode = ENC_IP;
@@ -255,12 +276,35 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "src") && i+1 < argc) {
 		  src.s_addr = inet_addr(argv[i+1]);
 		  i++;
-	     } else if (!strcmp(argv[i]+1, "newpadding")) {
+	     } else if (!strcmp(argv[i]+1, "newpadding") && (mode & ESP_NEW)) {
 		  newpadding = 1;
-	     } else if (!strcmp(argv[i]+1, "tunnel") && i+2 < argc) {
+	     } else if (!strcmp(argv[i]+1, "delete") && iscmd(mode, FLOW)) {
+		  delete = 1;
+	     } else if (!strcmp(argv[i]+1, "local") && iscmd(mode, FLOW)) {
+		  local = 1;
+	     } else if (!strcmp(argv[i]+1, "tunnel") &&
+			isencauth(mode) && i+2 < argc) {
 		  osrc.s_addr = inet_addr(argv[i+1]);
 		  i++;
 		  odst.s_addr = inet_addr(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "addr") &&
+			iscmd(mode, FLOW) && i+4 < argc) {
+		  osrc.s_addr = inet_addr(argv[i+1]); i++;
+		  osmask.s_addr = inet_addr(argv[i+1]); i++;
+		  odst.s_addr = inet_addr(argv[i+1]); i++;
+		  odmask.s_addr = inet_addr(argv[i+1]); i++;
+	     } else if (!strcmp(argv[i]+1, "transport") && 
+			iscmd(mode, FLOW) && i+1 < argc) {
+		  tproto = atoi(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "sport") && 
+			iscmd(mode, FLOW) && i+1 < argc) {
+		  sport = atoi(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "dport") && 
+			iscmd(mode, FLOW) && i+1 < argc) {
+		  dport = atoi(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "dst") && i+1 < argc) {
 		  dst.s_addr = inet_addr(argv[i+1]);
@@ -298,7 +342,7 @@ main(argc, argv)
 	} else if (isencauth(mode) && keyp == NULL) {
 	     fprintf(stderr, "%s: No key material specified\n", argv[0]);
 	     exit(1);
-	} else if ((mode & ESP_NEW) && auth & authp == NULL) {
+	} else if ((mode & ESP_NEW) && auth && authp == NULL) {
 	     fprintf(stderr, "%s: No auth key material specified\n", argv[0]);
 	     exit(1);
 	} else if (spi == 0) {
@@ -311,12 +355,14 @@ main(argc, argv)
 		    src.s_addr == 0) {
 	     fprintf(stderr, "%s: No source address specified\n", argv[0]);
 	     exit(1);
-	} else if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI)) 
-		   && proto == 0) {
-	     fprintf(stderr, "%s: No security protocol specified\n", argv[0]);
+	} else if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || 
+		   iscmd(mode, FLOW)) && 
+		   proto != IPPROTO_ESP && proto != IPPROTO_AH) {
+	     fprintf(stderr, "%s: Security protocol is neither AH or ESP\n", argv[0]);
 	     exit(1);
-	} else if (iscmd(mode, GRP_SPI) && proto2 == 0) {
-	     fprintf(stderr, "%s: No security protocol2 specified\n", argv[0]);
+	} else if (iscmd(mode, GRP_SPI) && 
+		   proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH) {
+	     fprintf(stderr, "%s: Security protocol2 is neither AH or ESP\n", argv[0]);
 	     exit(1);
 	} else if (dst.s_addr == 0) {
 	     fprintf(stderr, "%s: No destination address specified\n", 
@@ -327,12 +373,17 @@ main(argc, argv)
 	     fprintf(stderr, "%s: No tunnel addresses specified\n", 
 		     argv[0]);
 	     exit(1);
+	} else if (iscmd(mode, FLOW) && 
+		   (((odst.s_addr & odmask.s_addr) == 0) || 
+		    ((osrc.s_addr & osmask.s_addr) == 0))) {
+	     fprintf(stderr, "%s: No subnets for flow specified\n", 
+		     argv[0]);
+	     exit(1);
 	} else if (iscmd(mode, GRP_SPI) && dst2.s_addr == 0) {
 	     fprintf(stderr, "%s: No destination address2 specified\n", 
 		     argv[0]);
 	     exit(1);
 	}
-
 
 	if (isencauth(mode)) {
 	     switch(mode) {
@@ -360,6 +411,10 @@ main(argc, argv)
 		  break;
 	     case ENC_IP:
 		  xf_ip4(src, dst, spi, osrc, odst);
+		  break;
+	     case FLOW:
+		  xf_flow(dst, spi, proto, osrc, osmask, odst, odmask, tproto,
+			  sport, dport, delete, local);
 		  break;
 	     }
 	}

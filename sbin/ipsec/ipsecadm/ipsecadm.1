@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.9 1998/05/19 13:33:19 provos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.10 1998/05/24 13:29:00 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 The
 .Nm ipsecadm
 utility allows to setup security associations in the kernel
-to be used with 
+to be used with
 .Xr ipsec 4 .
 It can be used to specify the encryption and authentication
 algorithms and key material for the network layer security
@@ -53,7 +53,7 @@ The possible commands are:
 .Bl -tag -width new_esp
 .It new esp
 Setup a SPI which uses the new esp transforms.
-Encryption and authentication algorithms can be applied. 
+Encryption and authentication algorithms can be applied.
 This is the default mode.
 Allowed
 modifiers are:
@@ -76,7 +76,7 @@ encryption algorithms can be applied. Allowed modifiers are:
 .Fl spi ,
 .Fl tunnel ,
 .Fl enc ,
-.Fl iv 
+.Fl iv
 and
 .Fl key .
 .It new ah
@@ -117,9 +117,28 @@ Group two SA's together. Allowed modifiers are:
 .Fl spi2 ,
 and
 .Fl proto2 .
+.It flow
+Create a flow determining which packets are routed via which Security
+Association. Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl addr ,
+.Fl transport ,
+.Fl sport ,
+.Fl dport ,
+.FL local ,
+.Fl delete .
+The
+.Xr netstat 1
+command shows the existing flows.
 .El
 .Pp
-The modifiers have the following meanings: 
+If no command is given
+.Xr ipsecadm 1
+defaults to new esp mode.
+.Pp
+The modifiers have the following meanings:
 .Bl -tag -width newpadding -offset indent
 .It src
 The source IP address for the SPI.
@@ -130,11 +149,11 @@ The unique Security Parameter Index (SPI).
 .It tunnel
 The source and destination IP addresses for the external IP header.
 .It newpadding
-For new ESP, specify new style self-describing padding should be used. Ignored everywhere else.
+For new ESP, specify new style self-describing padding should be used.
 .It enc
 The encryption algorithm to be used with the SPI. Possible values
 are:
-.Nm des 
+.Nm des
 and
 .Nm 3des
 for both old and new esp.
@@ -154,7 +173,7 @@ for both old and new ah and also new esp. Also
 for both new ah and esp.
 .It key
 The secret symmetric key used for encryption and authentication. The size
-for 
+for
 .Nm des
 and
 .Nm 3des
@@ -164,7 +183,7 @@ or
 .Nm blf
 the key length can be variable.
 .It authkey
-The secret key material used for authentication 
+The secret key material used for authentication
 if additional authentication in new esp mode is required. For
 old or new ah the key material for authentication is passed with the
 .Nm key
@@ -176,15 +195,16 @@ the iv has to be eight bytes for
 .Nm cast
 and
 .Nm blf .
-The other transforms can either use an eight byte iv or will derive one 
+The other transforms can either use an eight byte iv or will derive one
 when none is specified with
 .Xr ipsecadm 1 .
 .It proto
 The security protocol needed by
-.Nm delspi
+.Nm delspi ,
+.Nm flow
 or
 .Nm group
-to uniquely specifiy the SA. 
+to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
 .It chain
@@ -198,18 +218,45 @@ The second SPI used by
 .It proto2
 The second security protocol used by
 .Nm group .
+It defaults to
+.Nm IPPROTO_AH .
+.It addr
+The source address, source network mask, destination address and destination
+network mask against which packets need to match to use the specified
+Security Association.
+.It transport
+The protocol number which packets need to match to use the specified
+Security Association. Per default the protocol number is not used for
+matching.
+.It sport
+The source port which packets have to match for the flow.
+Per default the source port is not used for matching.
+.It dport
+The destination port which packets have to match for the flow.
+Per default the source port is not used for matching.
+.It local
+The
+.Nm flow
+command also creates a flow which matches local packets. This is aquivalent
+to using a source address of 0.0.0.0 and a source network mask of
+255.255.255.0.
+.It delete
+Instead of creating a flow, an existing flow is deleted.
 .El
 .Sh EXAMPLE
 Setup a SPI which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
-.Pp
+.Bd -literal
 ipsecadm -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
 -key 638063806380638063806380638063806380638063806380 -authp 1234123412341234
+.Ed
 .Pp
 Setup a SPI for authentication with old ah only:
-.Pp
-ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 
+.Bd -literal
+ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
 -key 12341234deadbeef
+.Ed
 .Sh SEE ALSO
+.Xr netstat 1 ,
 .Xr ipsec 4 ,
 .Xr photurisd 8 .
