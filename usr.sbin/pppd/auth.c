@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.19 2001/06/23 15:34:02 lebel Exp $	*/
+/*	$OpenBSD: auth.c,v 1.20 2001/07/09 22:21:54 pjanzen Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.19 2001/06/23 15:34:02 lebel Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.20 2001/07/09 22:21:54 pjanzen Exp $";
 #endif
 #endif
 
@@ -1016,9 +1016,8 @@ get_pap_passwd(passwd)
     fclose(f);
     if (ret < 0)
 	return 0;
-    if (passwd != NULL) {
+    if (passwd != NULL)
 	strlcpy(passwd, secret, MAXSECRETLEN);
-    }
     BZERO(secret, sizeof(secret));
     return 1;
 }

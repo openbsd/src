@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.13 2001/06/23 15:34:02 lebel Exp $	*/
+/*	$OpenBSD: options.c,v 1.14 2001/07/09 22:21:54 pjanzen Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.13 2001/06/23 15:34:02 lebel Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.14 2001/07/09 22:21:54 pjanzen Exp $";
 #endif
 #endif
 
@@ -1725,9 +1725,8 @@ setipaddr(arg)
 		return -1;
 	    } else {
 		local = *(u_int32_t *)hp->h_addr;
-		if (our_name[0] == 0) {
+		if (our_name[0] == 0)
 		    strlcpy(our_name, arg, MAXNAMELEN);
-		}
 	    }
 	} else
 	    local = ina.s_addr;
@@ -1750,9 +1749,8 @@ setipaddr(arg)
 		return -1;
 	    } else {
 		remote = *(u_int32_t *)hp->h_addr;
-		if (remote_name[0] == 0) {
+		if (remote_name[0] == 0)
 		    strlcpy(remote_name, colon, MAXNAMELEN);
-		}
 	    }
 	} else
 	    remote = ina.s_addr;
