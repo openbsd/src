@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.9 2003/07/30 21:44:32 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.10 2005/03/29 16:25:20 miod Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -244,9 +244,14 @@ main(int argc, char *argv[])
 			if (dopct)
 				printf("%d\n",
 				    reply.batterystate.battery_life);
-			if (domin)
-				printf("%d\n",
-				    reply.batterystate.minutes_left);
+			if (domin) {
+				if (reply.batterystate.minutes_left ==
+				    (u_int)-1)
+					printf("unknown\n");
+				else
+					printf("%d\n",
+					    reply.batterystate.minutes_left);
+			}
 			if (doac)
 				printf("%d\n",
 				    reply.batterystate.ac_state);
@@ -273,8 +278,15 @@ main(int argc, char *argv[])
 				    "not available\n");
 			else
 #endif
-			printf("Battery life estimate: %d minutes\n",
-			    reply.batterystate.minutes_left);
+			{
+				printf("Battery life estimate: ");
+				if (reply.batterystate.minutes_left ==
+				    (u_int)-1)
+					printf("unknown\n");
+				else
+					printf("%d minutes\n",
+					    reply.batterystate.minutes_left);
+			}
 		}
 		if (doac)
 			printf("A/C adapter state: %s\n",
