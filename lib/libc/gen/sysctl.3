@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.11 1998/06/15 17:55:00 mickey Exp $
+.\"	$OpenBSD: sysctl.3,v 1.12 1999/05/19 16:27:41 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -487,6 +487,8 @@ The currently defined protocols and names are:
 .It tcp	rfc1323	integer	yes
 .It tcp	baddynamic	array	yes
 .It tcp	ident	structure	no
+.It tcp	sack	integer	yes
+.It tcp	mssdflt	integer	yes
 .It udp	checksum	integer	yes
 .It udp	baddynamic	array	yes
 .El
@@ -521,6 +523,11 @@ specifying a local and foreign endpoint of a tcp socket
 is filled in with the euid and ruid of the process that owns the socket.
 If no such socket exists then the euid and ruid values are both
 set to -1.
+.It Li tcp.sack
+Returns 1 if RFC2018 Selective Acknowledgements are enabled.
+.It Li tcp.mssdflt
+The maximum segement size that is used as default for non local
+connections.
 .It Li udp.checksum
 Returns 1 when UDP checksums are being computed and checked.
 Disabling UDP checksums is strongly discouraged.
