@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.13 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.14 2004/03/23 18:20:03 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -979,7 +979,6 @@ m_read_raw (int s, char *data, size_t maxlen)
   if (v > maxlen)
     return 1;
   r = read (s, data, v);
-  data[v - 1] = 0;
   return (r == -1);
 }
 
