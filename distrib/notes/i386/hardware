@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.188 2005/03/16 23:03:31 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.189 2005/03/16 23:38:49 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -281,7 +281,7 @@ Supported hardware {:-include-:}:
 		3Com 3c507 [A] [B] [C]
 		3Com 3c509, 3c579, and 3c59x (disabling PnP on 3c509B is
 		    recommended)
-		3Com 3c515 [B]
+		3Com 3c515 [B] [C]
 		3Com 3c9xx Etherlink XL adapters, including:
 		    3Com 3c900/3c900B PCI adapters
 		    3Com 3c905/3c905B/3c905C PCI adapters
@@ -484,12 +484,12 @@ Supported hardware {:-include-:}:
 		    Addtron AEF-360TX
 		    Hawking PN102TX
 		    D-Link DFE530TX
-		Winbond W89C840F Ethernet adapters, including: [A]
+		Winbond W89C840F Ethernet adapters, including: [A] [B] [C]
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
 		ADMtek ADM8211 based 802.11b CardBus/PCI adapters [A] [B] [C]
-		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B]
+		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B] [C]
 		Atheros AR521x based CardBus 802.11a/b/g adapters [A] [B] [C]
 		    3Com 3CRPAG175
 		    Aztech WL830PC
@@ -649,7 +649,7 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Ralink RT2500 based CardBus 802.11b/g adapters [A] [B] [C]
+		Ralink RT2500 based CardBus 802.11b/g adapters [A] [B]
 		    A-Link WL54PC
 		    Amigo AWI-914W
 		    AMIT WL531C
@@ -683,7 +683,7 @@ Supported hardware {:-include-:}:
 		    Unex MR054g-R02
 		    Zinwell ZWX-G160
 		    Zonet ZEW1500
-		Ralink RT2500 based PCI 802.11b/g adapters [A] [B] [C]
+		Ralink RT2500 based PCI 802.11b/g adapters [A] [B]
 		    A-Link WL54H
 		    Amigo AWI-922W mini-PCI
 		    Amigo AWI-926W
@@ -728,8 +728,8 @@ Supported hardware {:-include-:}:
 		    Zinwell ZWX-G360 mini-PCI
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
-		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B]
-		Realtek RTL8180L based CardBus 802.11b adapters [A] [B] [C]
+		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B] [C]
+		Realtek RTL8180L based CardBus 802.11b adapters [A] [B]
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]
