@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.6 1998/03/07 08:48:18 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.7 1998/03/16 20:49:50 provos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -154,6 +154,28 @@ int
 kernel_get_socket(void)
 {
      return sd;
+}
+
+void
+kernel_set_socket_policy(int sd)
+{
+     u_char level;
+
+     /*
+      * Need to bypass system security policy, so I can send and
+      * receive key management datagrams in the clear.
+      */
+
+     level = IPSEC_LEVEL_BYPASS;   /* Did I mention I'm privileged? */
+     if (setsockopt(sd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level,
+		    sizeof (u_char)) == -1)
+	  crit_error(1, "setsockopt: can not bypass ipsec authentication policy");
+     if (setsockopt(sd, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
+			(char *)&level, sizeof (u_char)) == -1)
+	  crit_error(1, "setsockopt: can not bypass ipsec esp transport policy");
+     if (setsockopt(sd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
+		    (char *)&level, sizeof (u_char)) == -1)
+	  crit_error(1, "setsockopt: can not bypass ipsec esp network policy");
 }
 
 int
