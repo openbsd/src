@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.2 2002/02/17 19:42:23 millert Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.3 2003/04/25 19:40:25 henning Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static const char rcsid[] = "$From: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_net_pton.c,v 1.2 2002/02/17 19:42:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inet_net_pton.c,v 1.3 2003/04/25 19:40:25 henning Exp $";
 #endif
 #endif
 
@@ -185,7 +185,7 @@ inet_net_pton_ipv4(src, dst, size)
 		else			/* Class A */
 			bits = 8;
 		/* If imputed mask is narrower than specified octets, widen. */
-		if (bits >= 8 && bits < ((dst - odst) * 8))
+		if (bits < ((dst - odst) * 8))
 			bits = (dst - odst) * 8;
 	}
 	/* Extend network to cover the actual mask. */
