@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.18 1999/09/03 18:02:28 art Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.19 2001/04/06 23:41:02 art Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -238,8 +238,7 @@ vmspace_alloc(min, max, pageable)
 	MALLOC(vm, struct vmspace *, sizeof(struct vmspace), M_VMMAP, M_WAITOK);
 	bzero(vm, (caddr_t) &vm->vm_startcopy - (caddr_t) vm);
 	vm_map_init(&vm->vm_map, min, max, pageable);
-	pmap_pinit(&vm->vm_pmap);
-	vm->vm_map.pmap = &vm->vm_pmap;		/* XXX */
+	vm->vm_map.pmap = pmap_create(0);
 	vm->vm_refcnt = 1;
 	return (vm);
 }
@@ -258,7 +257,7 @@ vmspace_free(vm)
 		vm_map_lock(&vm->vm_map);
 		(void) vm_map_delete(&vm->vm_map, vm->vm_map.min_offset,
 		    vm->vm_map.max_offset);
-		pmap_release(&vm->vm_pmap);
+		pmap_destroy(vm->vm_map.pmap);
 		FREE(vm, M_VMMAP);
 	}
 }
@@ -2211,7 +2210,6 @@ vmspace_fork(vm1)
 	vm_map_t	new_map;
 	vm_map_entry_t	old_entry;
 	vm_map_entry_t	new_entry;
-	pmap_t		new_pmap;
 
 	vm_map_lock(old_map);
 
@@ -2219,7 +2217,6 @@ vmspace_fork(vm1)
 	    old_map->entries_pageable);
 	bcopy(&vm1->vm_startcopy, &vm2->vm_startcopy,
 	    (caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
-	new_pmap = &vm2->vm_pmap;		/* XXX */
 	new_map = &vm2->vm_map;			/* XXX */
 
 	old_entry = old_map->header.next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.61 2001/04/02 21:43:11 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.62 2001/04/06 23:41:02 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -297,10 +297,9 @@ main(framep)
 #else
 	p->p_vmspace = &vmspace0;
 	vmspace0.vm_refcnt = 1;
-	pmap_pinit(&vmspace0.vm_pmap);
+	vmspace0.vm_map.pmap = pmap_create(0);
 	vm_map_init(&p->p_vmspace->vm_map, round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS), TRUE);
-	vmspace0.vm_map.pmap = &vmspace0.vm_pmap;
 #endif /* UVM */
 
 	p->p_addr = proc0paddr;				/* XXX */

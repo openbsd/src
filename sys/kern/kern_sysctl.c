@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.40 2001/03/23 23:36:39 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.41 2001/04/06 23:41:02 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -869,7 +869,6 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = 0;
 		ep->e_vm.vm_dsize = 0;
 		ep->e_vm.vm_ssize = 0;
-		/* ep->e_vm.vm_pmap = XXX; */
 	} else {
 		register struct vmspace *vm = p->p_vmspace;
 
@@ -877,9 +876,6 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
-#ifndef UVM
-		ep->e_vm.vm_pmap = *vm->vm_map.pmap;
-#endif
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
