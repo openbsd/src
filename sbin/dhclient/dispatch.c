@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.18 2004/03/02 12:43:09 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.19 2004/03/02 12:46:44 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -57,8 +57,6 @@ void (*bootp_packet_handler)(struct interface_info *,
      struct iaddr, struct hardware *);
 
 static int interface_status(struct interface_info *ifinfo);
-
-int quiet_interface_discovery;
 
 /*
  * Use getifaddrs() to get a list of all the attached interfaces.  For

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.21 2004/03/02 12:40:31 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.22 2004/03/02 12:46:44 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -236,7 +236,6 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			quiet = 1;
-			quiet_interface_discovery = 1;
 			break;
 		case 'u':
 			unknown_ok = 0;
