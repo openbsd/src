@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.104 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.105 2003/06/28 01:52:29 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1484,6 +1484,7 @@ More information is also available in
 .It Dv DBCTL_TABSTOP No "	integer	yes"
 .It Dv DBCTL_PANIC No "	integer	yes"
 .It Dv DBCTL_CONSOLE No "	integer	yes"
+.It Dv DBCTL_LOG No " integer yes"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1514,6 +1515,8 @@ kernel debugger.
 As described in
 .Xr securelevel 7 ,
 a security level greater than 1 blocks modification of this variable.
+.It Dv DBCTL_LOG
+When set, ddb output is also logged in the kernel message buffer.
 .El
 .Ss CTL_VM
 The string and integer information available for the
