@@ -1,5 +1,5 @@
-/*	$OpenBSD: ndp.c,v 1.6 2000/06/20 21:53:43 itojun Exp $	*/
-/*	$KAME: ndp.c,v 1.40 2000/06/20 21:50:17 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.7 2000/10/09 22:10:05 itojun Exp $	*/
+/*	$KAME: ndp.c,v 1.48 2000/10/09 22:08:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -84,6 +84,7 @@
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -126,7 +127,7 @@
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static int pid;
-static int fflag;
+static int cflag;
 static int nflag;
 static int tflag;
 static int32_t thiszone;	/* time difference with gmt */
@@ -172,7 +173,7 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
-	int aflag = 0, cflag = 0, dflag = 0, sflag = 0, Hflag = 0,
+	int aflag = 0, dflag = 0, sflag = 0, Hflag = 0,
 		pflag = 0, rflag = 0, Pflag = 0, Rflag = 0;
 
 	pid = getpid();
@@ -183,7 +184,6 @@ main(argc, argv)
 			aflag = 1;
 			break;
 		case 'c':
-			fflag = 1;
 			cflag = 1;
 			break;
 		case 'd':
@@ -528,10 +528,18 @@ delete:
 		return (1);
 	}
 	if (rtmsg(RTM_DELETE) == 0) {
-	       getnameinfo((struct sockaddr *)sin,
-			   sin->sin6_len, host_buf,
-			   sizeof(host_buf), NULL, 0,
-			   NI_WITHSCOPEID | (nflag ? NI_NUMERICHOST : 0));
+		struct sockaddr_in6 s6 = *sin; /* XXX: for safety */
+
+#ifdef __KAME__
+		if (IN6_IS_ADDR_LINKLOCAL(&s6.sin6_addr)) {
+			s6.sin6_scope_id = ntohs(*(u_int16_t *)&s6.sin6_addr.s6_addr[2]);
+			*(u_int16_t *)&s6.sin6_addr.s6_addr[2] = 0;
+		}
+#endif
+		getnameinfo((struct sockaddr *)&s6,
+			    s6.sin6_len, host_buf,
+			    sizeof(host_buf), NULL, 0,
+			    NI_WITHSCOPEID | (nflag ? NI_NUMERICHOST : 0));
 		printf("%s (%s) deleted\n", host, host_buf);
 	}
 
@@ -558,7 +566,7 @@ dump(addr)
 	char flgbuf[8];
 
 	/* Print header */
-	if (!tflag)
+	if (!tflag && !cflag)
 		printf("%-31.31s %-17.17s %6.6s %-9.9s %2s %4s %4s\n",
 		       "Neighbor", "Linklayer Address", "Netif", "Expire",
 		       "St", "Flgs", "Prbs");
@@ -593,24 +601,23 @@ again:;
 			found_entry = 1;
 		} else if (IN6_IS_ADDR_MULTICAST(&sin->sin6_addr))
 			continue;
-		if (fflag == 1) {
-			delete((char *)inet_ntop(AF_INET6, &sin->sin6_addr,
-						 ntop_buf, sizeof(ntop_buf)));
-			continue;
-		}
-
 		if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(&sin->sin6_addr)) {
 			/* XXX: should scope id be filled in the kernel? */
 			if (sin->sin6_scope_id == 0)
 				sin->sin6_scope_id = sdl->sdl_index;
-
-			/* XXX: KAME specific hack; removed the embedded id */
+#ifdef __KAME__
+			/* KAME specific hack; removed the embedded id */
 			*(u_int16_t *)&sin->sin6_addr.s6_addr[2] = 0;
+#endif
 		}
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
 			    sizeof(host_buf), NULL, 0,
 			    NI_WITHSCOPEID | (nflag ? NI_NUMERICHOST : 0));
+		if (cflag == 1) {
+			delete(host_buf);
+			continue;
+		}
 		gettimeofday(&time, 0);
 		if (tflag)
 			ts_print(&time);
@@ -632,8 +639,7 @@ again:;
 			if (nbi->expire > time.tv_sec) {
 				printf(" %-9.9s",
 				       sec2str(nbi->expire - time.tv_sec));
-			}
-			else if (nbi->expire == 0)
+			} else if (nbi->expire == 0)
 				printf(" %-9.9s", "permanent");
 			else
 				printf(" %-9.9s", "expired");
@@ -642,9 +648,11 @@ again:;
 			 case ND6_LLINFO_NOSTATE:
 				 printf(" N");
 				 break;
+#ifdef ND6_LLINFO_WAITDELETE
 			 case ND6_LLINFO_WAITDELETE:
 				 printf(" W");
 				 break;
+#endif
 			 case ND6_LLINFO_INCOMPLETE:
 				 printf(" I");
 				 break;
@@ -667,8 +675,7 @@ again:;
 
 			isrouter = nbi->isrouter;
 			prbs = nbi->asked;
-		}
-		else {
+		} else {
 			warnx("failed to get neighbor information");
 			printf("  ");
 		}
@@ -744,8 +751,7 @@ ether_str(sdl)
 		cp = (u_char *)LLADDR(sdl);
 		sprintf(ebuf, "%x:%x:%x:%x:%x:%x",
 			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-	}
-	else {
+	} else {
 		sprintf(ebuf, "(incomplete)");
 	}
 
@@ -1071,8 +1077,7 @@ plist()
 					 default:
 						 printf(" (unreachable)\n");
 					}
-				}
-				else
+				} else
 					printf(" (no neighbor state)\n");
 			}
 			if (PR.advrtrs > DRLSTSIZ)
