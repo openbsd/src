@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.34 2000/06/18 00:14:27 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.35 2000/06/20 06:49:04 art Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ int	if_mark_ignore __P((struct radix_node *, void *));
 int	if_mark_unignore __P((struct radix_node *, void *));
 
 int	ifqmaxlen = IFQ_MAXLEN;
-void	if_slowtimo __P((void *arg));
 
 #ifdef INET6
 /*
@@ -141,12 +140,16 @@ extern void nd6_setmtu __P((struct ifnet *));
 void
 ifinit()
 {
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
+	static struct timeout if_slowtim;
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		if (ifp->if_snd.ifq_maxlen == 0)
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	if_slowtimo(NULL);
+
+	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
+
+	if_slowtimo(&if_slowtim);
 }
 
 int if_index = 0;
@@ -660,7 +663,8 @@ void
 if_slowtimo(arg)
 	void *arg;
 {
-	register struct ifnet *ifp;
+	struct timeout *to = (struct timeout *)arg;
+	struct ifnet *ifp;
 	int s = splimp();
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
@@ -670,7 +674,7 @@ if_slowtimo(arg)
 			(*ifp->if_watchdog)(ifp);
 	}
 	splx(s);
-	timeout(if_slowtimo, NULL, hz / IFNET_SLOWHZ);
+	timeout_add(to, hz / IFNET_SLOWHZ);
 }
 
 /*
