@@ -1,5 +1,4 @@
 .
-./boot
 ./pcs750.bin
 ./sbin/ldconfig
 ./usr/bin/ldd
@@ -1821,6 +1820,7 @@
 ./usr/libdata/perl5/vax-openbsd/5.6.1/ops.pm
 ./usr/libdata/perl5/vax-openbsd/5.6.1/re.pm
 ./usr/local/libdata/perl5/site_perl/vax-openbsd
+./usr/mdec/boot
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
 ./usr/mdec/rdboot
