@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.1 1998/11/11 20:51:38 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.2 1998/11/13 19:39:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -212,7 +212,7 @@ static void rl_attach		__P((pcici_t, int));
 
 #ifdef __OpenBSD__
 
-#define bootverbose 1
+#define bootverbose 0
 static int rl_probe	__P((struct device *, void *, void *));
 static void rl_attach	__P((struct device *, struct device *, void *));
 static int rl_intr	__P((void *));
