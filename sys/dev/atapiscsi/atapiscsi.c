@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.17 1999/10/29 22:00:31 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.18 1999/11/02 01:43:40 deraadt Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -980,10 +980,11 @@ wdc_atapi_ctrl(chp, xfer, irq)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
-	int delay = (irq == 0) ? ATAPI_DELAY : 1;
+	int delay;
 
 	/* Ack interrupt done in wait_for_unbusy */
 again:
+	delay = (xfer->c_flags & C_POLL) ? 4000 : ((irq == 0) ? ATAPI_DELAY : 1);
 	WDCDEBUG_PRINT(("wdc_atapi_ctrl %s:%d:%d state %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive, drvp->state),
 	    DEBUG_INTR | DEBUG_FUNCS);
@@ -1004,7 +1005,7 @@ again:
 		   is about the most innocuous thing you can do
 		   that's guaranteed to be there */
 	case IDENTIFY:
-#if 0
+#if 1
 		wdccommandshort(chp, drvp->drive, ATAPI_IDENTIFY_DEVICE);
 		drvp->state = IDENTIFY_WAIT;
 		break;
