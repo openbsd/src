@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.17 2000/03/22 03:48:30 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.18 2000/10/06 05:52:00 itojun Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -45,12 +45,7 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
-#include <net/if_types.h>
 #include <net/route.h>
-#include "gif.h"
-#if NGIF > 0
-#include <net/if_gif.h>
-#endif
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -196,19 +191,6 @@ in_control(so, cmd, data, ifp)
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
 	int newifaddr;
-
-#if NGIF > 0
-	if (ifp && ifp->if_type == IFT_GIF) {
-		switch (cmd) {
-		case SIOCSIFPHYADDR:
-			if ((so->so_state & SS_PRIV) == 0)
-				return(EPERM);
-		case SIOCGIFPSRCADDR:
-		case SIOCGIFPDSTADDR:
-			return gif_ioctl(ifp, cmd, data);
-		}
-	}
-#endif
 
 	switch (cmd) {
 	case SIOCALIFADDR:
