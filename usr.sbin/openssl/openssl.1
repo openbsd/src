@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.27 2003/12/21 15:00:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.28 2003/12/29 13:44:43 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2783,13 +2783,13 @@ above.
 .Sh GENDSA
 .Nm openssl gendsa
 .Bk -words
+.Oo
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
+.Oc
+.Op Fl engine Ar id
 .Op Fl out Ar filename
 .Op Fl rand Ar file ...
-.Op Fl engine Ar id
-.Oo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
-.Oc
 .Op Ar paramfile
 .Ek
 .Pp
@@ -2803,19 +2803,13 @@ command).
 The options are as follows:
 .Bl -tag -width "XXXX"
 .It Xo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Xc
-These options encrypt the private key with the DES, triple DES,
-or the AES ciphers, respectively, before outputting it.
+These options encrypt the private key with the AES, DES,
+or the triple DES ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
-If none of these options is specified, no encryption is used.
-.It Fl rand Ar file ...
-A file or files containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
+If none of these options are specified, no encryption is used.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -2824,16 +2818,26 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl out Ar filename
+The output
+.Ar filename .
+If this argument is not specified, standard output is used.
 .It Ar paramfile
 This option specifies the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
 DSA parameters can be generated and examined using the
 .Nm openssl dsaparam
 command.
+.It Fl rand Ar file ...
+A file or files containing random data used to seed the random number
+generator, or an EGD socket (see
+.Xr RAND_egd 3 ) .
+Multiple files can be specified separated by a
+.Sq \&: .
 .El
 .Sh GENDSA NOTES
 DSA key generation is little more than random number generation so it is
-much quicker that RSA key generation for example.
+much quicker than RSA key generation, for example.
 .\"
 .\" GENRSA
 .\"
@@ -2841,14 +2845,14 @@ much quicker that RSA key generation for example.
 .Nm openssl genrsa
 .Bk -words
 .Oo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Oc
+.Op Fl engine Ar id
+.Op Fl 3 | f4
 .Op Fl out Ar filename
 .Op Fl passout Ar arg
-.Op Fl f4 | 3
 .Op Fl rand Ar file ...
-.Op Fl engine Ar id
 .Op Ar numbits
 .Ek
 .Pp
@@ -2858,38 +2862,17 @@ command generates an RSA private key.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl out Ar filename
-The output
-.Ar filename .
-If this argument is not specified then standard output is used.
-.It Fl passout Ar arg
-The output file password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Xo
-.Fl des | des3 | aes128 |
-.Fl aes192 | aes256
+.Fl aes128 | aes192 | aes256 |
+.Fl des | des3
 .Xc
-These options encrypt the private key with the DES, triple DES, or the
-AES ciphers, respectively, before outputting it.
-If none of these options is specified, no encryption is used.
-If encryption is used a pass phrase is prompted for,
+These options encrypt the private key with the AES, DES,
+or the triple DES ciphers, respectively, before outputting it.
+If none of these options are specified, no encryption is used.
+If encryption is used, a pass phrase is prompted for,
 if it is not supplied via the
 .Fl passout
 option.
-.It Fl F4 | 3
-The public exponent to use, either 65537 or 3.
-The default is 65537.
-.It Fl rand Ar file ...
-A file or files
-containing random data used to seed the random number
-generator, or an EGD socket (see
-.Xr RAND_egd 3 ) .
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -2898,10 +2881,31 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl 3 | f4
+The public exponent to use, either 3 or 65537.
+The default is 65537.
 .It Ar numbits
 The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 512.
+.It Fl out Ar filename
+The output
+.Ar filename .
+If this argument is not specified, standard output is used.
+.It Fl passout Ar arg
+The output file password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl rand Ar file ...
+A file or files
+containing random data used to seed the random number
+generator, or an EGD socket (see
+.Xr RAND_egd 3 ) .
+Multiple files can be specified separated by a
+.Sq \&: .
 .El
 .Sh GENRSA NOTES
 RSA private key generation essentially involves the generation of two prime
@@ -2916,8 +2920,8 @@ means a number has passed a single round of the Miller-Rabin primality test.
 A newline means that the number has passed all the prime tests
 .Pq the actual number depends on the key size .
 .Pp
-Because key generation is a random process the time taken to generate a key
-may vary somewhat.
+Because key generation is a random process,
+the time taken to generate a key may vary somewhat.
 .Sh GENRSA BUGS
 A quirk of the prime generation algorithm is that it cannot generate small
 primes.
