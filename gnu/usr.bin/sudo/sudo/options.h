@@ -1,3 +1,5 @@
+/*	$OpenBSD: options.h,v 1.7 1997/11/23 07:15:46 millert Exp $	*/
+
 /*
  *  CU sudo version 1.5.3
  *
@@ -17,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Id: options.h,v 1.6 1997/10/06 06:00:26 millert Exp $
+ *  Id: options.h,v 1.34 1996/11/14 03:50:03 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H

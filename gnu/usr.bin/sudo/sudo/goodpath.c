@@ -1,3 +1,5 @@
+/*	$OpenBSD: goodpath.c,v 1.3 1997/11/23 07:15:43 millert Exp $	*/
+
 /*
  *  CU sudo version 1.5.3
  *
@@ -29,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: goodpath.c,v 1.2 1996/11/17 16:33:57 millert Exp $";
+static char rcsid[] = "Id: goodpath.c,v 1.14 1996/11/14 02:37:16 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

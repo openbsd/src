@@ -1,3 +1,5 @@
+/*	$OpenBSD: ins_csops.h,v 1.3 1997/11/23 07:15:44 millert Exp $	*/
+
 /*
  *  CU sudo version 1.5.3
  *
@@ -17,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Id: ins_csops.h,v 1.2 1996/11/17 16:33:58 millert Exp $
+ *  Id: ins_csops.h,v 1.10 1996/11/14 02:37:16 millert Exp $
  */
 
 #ifndef _SUDO_INS_CSOPS_H

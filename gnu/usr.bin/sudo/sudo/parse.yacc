@@ -1,5 +1,6 @@
 %{
 
+/*	$OpenBSD: parse.yacc,v 1.6 1997/11/23 07:15:47 millert Exp $	*/
 /*
  *  CU sudo version 1.5.3
  *
@@ -27,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.yacc,v 1.5 1996/11/17 16:34:03 millert Exp $";
+static char rcsid[] = "Id: parse.yacc,v 1.102 1996/11/14 20:09:12 millert Exp millert $";
 #endif /* lint */
 
 #include "config.h"

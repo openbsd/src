@@ -1,3 +1,5 @@
+/*	$OpenBSD: check.c,v 1.5 1997/11/23 07:15:40 millert Exp $	*/
+
 /*
  * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
  *
@@ -36,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: check.c,v 1.4 1996/11/23 17:33:54 mickey Exp $";
+static char rcsid[] = "Id: check.c,v 1.122 1996/11/14 02:37:16 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

@@ -1,7 +1,16 @@
 .rn '' }`
-''' $RCSfile: sudo.8,v $$Revision: 1.2 $$Date: 1996/11/17 16:34:04 $
+''' $OpenBSD: sudo.8,v 1.3 1997/11/23 07:15:48 millert Exp $
+'''
+''' $RCSfile: sudo.8,v $$Revision: 1.3 $$Date: 1997/11/23 07:15:48 $
 '''
 ''' $Log: sudo.8,v $
+''' Revision 1.3  1997/11/23 07:15:48  millert
+''' OpenBSD tags (and preserve sudo tags)
+''' updates from my sudo source tree:
+''' logging.c: deal with maxfilelen < 0 case
+''' sudo.c: correct error message if mode/owner wrong and not statable by owner
+''' compat.h: fix seteuid macro
+'''
 ''' Revision 1.2  1996/11/17 16:34:04  millert
 ''' Updated to sudo 1.5.3
 '''

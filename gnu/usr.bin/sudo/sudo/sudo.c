@@ -1,3 +1,5 @@
+/*	$OpenBSD: sudo.c,v 1.5 1997/11/23 07:15:49 millert Exp $	*/
+
 /*
  * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
  *
@@ -51,7 +53,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sudo.c,v 1.4 1997/11/23 06:54:25 millert Exp $";
+static char rcsid[] = "Id: sudo.c,v 1.177 1997/11/23 06:53:37 millert Exp $";
 #endif /* lint */
 
 #define MAIN
@@ -783,7 +785,7 @@ static void load_cmnd(sudo_mode)
 static int check_sudoers()
 {
     struct stat statbuf;
-    int fd = -1;
+    int fd = -1, rootstat;
     char c;
     int rtn = ALL_SYSTEMS_GO;
 
@@ -792,35 +794,39 @@ static int check_sudoers()
      * Only works if filesystem is readable/writable by root.
      */
     set_perms(PERM_ROOT, 0);
-    if (!lstat(_PATH_SUDO_SUDOERS, &statbuf) && SUDOERS_UID == statbuf.st_uid) {
-	if (SUDOERS_MODE != 0400 && (statbuf.st_mode & 0007777) == 0400) {
-	    if (chmod(_PATH_SUDO_SUDOERS, SUDOERS_MODE) == 0) {
-		(void) fprintf(stderr, "%s: fixed mode on %s\n",
-		    Argv[0], _PATH_SUDO_SUDOERS);
-		if (statbuf.st_gid != SUDOERS_GID) {
-		    if (!chown(_PATH_SUDO_SUDOERS,GID_NO_CHANGE,SUDOERS_GID)) {
-			(void) fprintf(stderr, "%s: set group on %s\n",
-			    Argv[0], _PATH_SUDO_SUDOERS);
-			statbuf.st_gid = SUDOERS_GID;
-		    } else {
-			(void) fprintf(stderr,"%s: Unable to set group on %s: ",
-			    Argv[0], _PATH_SUDO_SUDOERS);
-			perror("");
-		    }
+    if ((rootstat = lstat(_PATH_SUDO_SUDOERS, &statbuf)) == 0 &&
+	SUDOERS_UID == statbuf.st_uid && SUDOERS_MODE != 0400 &&
+	(statbuf.st_mode & 0007777) == 0400) {
+
+	if (chmod(_PATH_SUDO_SUDOERS, SUDOERS_MODE) == 0) {
+	    (void) fprintf(stderr, "%s: fixed mode on %s\n",
+		Argv[0], _PATH_SUDO_SUDOERS);
+	    if (statbuf.st_gid != SUDOERS_GID) {
+		if (!chown(_PATH_SUDO_SUDOERS,GID_NO_CHANGE,SUDOERS_GID)) {
+		    (void) fprintf(stderr, "%s: set group on %s\n",
+			Argv[0], _PATH_SUDO_SUDOERS);
+		    statbuf.st_gid = SUDOERS_GID;
+		} else {
+		    (void) fprintf(stderr,"%s: Unable to set group on %s: ",
+			Argv[0], _PATH_SUDO_SUDOERS);
+		    perror("");
 		}
-	    } else {
-		(void) fprintf(stderr, "%s: Unable to fix mode on %s: ",
-		    Argv[0], _PATH_SUDO_SUDOERS);
-		perror("");
 	    }
+	} else {
+	    (void) fprintf(stderr, "%s: Unable to fix mode on %s: ",
+		Argv[0], _PATH_SUDO_SUDOERS);
+	    perror("");
 	}
     }
 
+    /*
+     * Sanity checks on sudoers file.  Must be done as sudoers
+     * file owner.  We already did a stat as root, so use that
+     * data if we can't stat as sudoers file owner.
+     */
     set_perms(PERM_SUDOERS, 0);
 
-    if ((fd = open(_PATH_SUDO_SUDOERS, O_RDONLY)) < 0 || read(fd, &c, 1) == -1)
-	rtn = NO_SUDOERS_FILE;
-    else if (lstat(_PATH_SUDO_SUDOERS, &statbuf))
+    if (lstat(_PATH_SUDO_SUDOERS, &statbuf) != 0 && rootstat != 0)
 	rtn = NO_SUDOERS_FILE;
     else if (!S_ISREG(statbuf.st_mode))
 	rtn = SUDOERS_NOT_FILE;
@@ -828,6 +834,9 @@ static int check_sudoers()
 	rtn = SUDOERS_WRONG_MODE;
     else if (statbuf.st_uid != SUDOERS_UID || statbuf.st_gid != SUDOERS_GID)
 	rtn = SUDOERS_WRONG_OWNER;
+    else if ((fd = open(_PATH_SUDO_SUDOERS, O_RDONLY)) == -1 ||
+	     read(fd, &c, 1) == -1)
+	rtn = NO_SUDOERS_FILE;
 
     if (fd != -1)
 	(void) close(fd);
