@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.15 2003/10/21 18:58:48 jmc Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.16 2004/08/05 07:58:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -149,14 +149,12 @@ struct an_mgmt_hdr {
  *
  * Each entry in the wi_sigcache has a unique macsrc.
  */
-#define MAXANCACHE      10
+#define MAXANCACHE      16
 
 struct an_sigcache {
-	char	macsrc[6];	/* unique MAC address for entry */
-	int	ipsrc;		/* ip address associated with packet */
-	int	signal;		/* signal strength of the packet */
-	int	noise;		/* noise value */
-	int	quality;	/* quality of the packet */
+	u_int8_t  macsrc[6];	/* unique MAC address for entry */
+	u_int16_t signal;	/* quality of the packet */
+	u_int32_t ipsrc;	/* ip address associated with packet */
 };
 
 struct an_ltv_key {
@@ -639,6 +637,7 @@ struct an_tx_ring_data {
 
 struct an_softc	{
 	struct device	sc_dev;
+	int	noise;		/* noise value */
 	struct arpcom	sc_arpcom;
 	struct ifmedia	an_ifmedia;
 	void		*sc_ih;
