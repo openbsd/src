@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.8 1999/09/27 19:13:21 smurph Exp $   */
+/*   $OpenBSD: eh.S,v 1.9 2000/12/28 21:21:24 smurph Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1873,27 +1873,28 @@ ENTRY(proc_do_uret)
    
 LABEL(return_from_exception_handler)
 LABEL(_return_from_main)
-   /*
-    * Regs r1-r30 are free. R31 is pointing at the word
-         * on the kernel stack where our pointer to the exception frame
-         * it stored. Reload it now.
-     *
-    * At this point, if EF_DMT0 is not zero, then
-    * this must have been an interrupt where the fault didn't
-    * get corrected above.  We'll do that now.
-    *
-    * We load it into r14 since it is preserved across function
-    * calls, and we may have to call some routines from within here.
-    *
-    * control is transfered here from obvious places in this file
-         * and thread_bootstrap in luna88k/locore.c.
-    *
-    */
+	/*
+	 * Regs r1-r30 are free. R31 is pointing at the word
+	 * on the kernel stack where our pointer to the exception frame
+	 * it stored. Reload it now.
+	 *
+	 * At this point, if EF_DMT0 is not zero, then
+	 * this must have been an interrupt where the fault didn't
+	 * get corrected above.  We'll do that now.
+	 *
+	 * We load it into r14 since it is preserved across function
+	 * calls, and we may have to call some routines from within here.
+	 *
+	 * control is transfered here from obvious places in this file
+	 * and thread_bootstrap in luna88k/locore.c.
+	 *
+	 */
+#ifdef MVME197	
 	or.u	r2, r0, hi16(_cputyp)
 	ld	r3, r2, lo16(_cputyp)
 	cmp	r2, r3, 0x197
 	bb1	eq, r2, m197_return_code
-
+#endif 
 #define FPTR    r14
 	ld	FPTR, r31, 0                 /* grab exception frame pointer */ 
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
@@ -1956,7 +1957,7 @@ LABEL(oops)
 	st   r0 , FPTR, REG_OFF(EF_DMT0)
    2:
 	br   _check_ast
-
+#ifdef MVME197
 LABEL(m197_return_code)
 #define FPTR    r14
 	ld	FPTR, r31, 0                 /* grab exception frame pointer */ 
@@ -2026,7 +2027,7 @@ LABEL(oops2)
  *   interrupts.
  *   If returning to user land, look for ASTs
  */
-
+#endif /* MVME197 */
 LABEL(_check_ast)
 
         ld      r2, FPTR, REG_OFF(EF_EPSR)   /* get pre-exception PSR */

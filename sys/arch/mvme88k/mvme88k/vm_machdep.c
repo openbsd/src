@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.14 2000/06/08 22:25:21 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.15 2000/12/28 21:21:25 smurph Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -75,28 +75,28 @@ extern vm_map_t   iomap_map;
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-#undef pcb_sp
 
-#ifdef __FORK_BRAINDAMAGE
-int
-#else
 void
-#endif
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 {
 	struct switchframe *p2sf;
 	int off, ssz;
-   int cpu;
+	int cpu;
 	struct ksigframe {
 		void (*func)(struct proc *);
 		void *proc;
 	} *ksfp;
+	extern struct pcb *curpcb;
 	extern void proc_do_uret(), child_return();
 	extern void proc_trampoline();
 	
 	cpu = cpu_number();
-   savectx(p1->p_addr);
-
+/*	
+	savectx(p1->p_addr->u_pcb);
+*/
+	savectx(curpcb);
+	
+	/* copy p1 pcb to p2 */
 	bcopy((void *)&p1->p_addr->u_pcb, (void *)&p2->p_addr->u_pcb, sizeof(struct pcb));
 	p2->p_addr->u_pcb.kernel_state.pcb_ipl = 0;
 
@@ -139,11 +139,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)ksfp;
 	p2->p_addr->u_pcb.kernel_state.pcb_pc = (u_int)proc_trampoline;
 
-#ifdef __FORK_BRAINDAMAGE
-	return(0);
-#else
 	return;
-#endif
 }
 
 void
@@ -178,7 +174,16 @@ cpu_exit(struct proc *p)
 	extern volatile void switch_exit();
 
 	(void) splimp();
+
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
+	cnt.v_swtch++;
+#endif
+
+#if 1
 	exit2(p);		/* XXX - can't be right! */
+#endif 
 	switch_exit(p);
 	/* NOTREACHED */
 }

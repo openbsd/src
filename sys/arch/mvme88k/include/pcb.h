@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
+/*	$OpenBSD: pcb.h,v 1.6 2000/12/28 21:21:24 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -89,7 +89,7 @@ struct m88100_pcb {
 
 struct m88100_saved_state {
     unsigned r[32];  /* 0 - 31 */
-#define pcb_sp r[31]
+#define   tf_sp r[31]
     unsigned epsr;   /* 32 */
     unsigned fpsr;
     unsigned fpcr;

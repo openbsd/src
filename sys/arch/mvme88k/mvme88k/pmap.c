@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2000/12/21 16:54:56 aaron Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2000/12/28 21:21:24 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -733,6 +733,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 #endif
 
       *pte = template.pte;
+#ifdef MVME197
       /* hack for MVME197 */
       if (cputyp == CPU_197) {
          if (i < 32) {
@@ -740,7 +741,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
             i++;
          }
       }
-
+#endif 
       virt += M88K_PGBYTES;
       template.bits += M88K_PGBYTES;
    }
