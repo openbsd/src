@@ -1,4 +1,4 @@
-$OpenBSD: diodevs,v 1.3 1997/03/07 23:44:39 downsj Exp $
+$OpenBSD: diodevs,v 1.4 2003/03/21 16:18:29 miod Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ device FRAMEBUFFER	0x39	1	bitmapped display
 
 framebuffer GATORBOX	0x01	1	98700/98710 (\"gatorbox\") display
 framebuffer TOPCAT	0x02	1	98544/98545/98547 (\"topcat\") display
-framebuffer RENASSIANCE	0x04	2	98720/98721 (\"renassiance\") display
+framebuffer RENAISSANCE	0x04	2	98720/98721 (\"renaissance\") display
 framebuffer LRCATSEYE	0x05	1	low-res catseye display
 framebuffer HRCCATSEYE	0x06	1	high-res color catseye display
 framebuffer HRMCATSEYE	0x07	1	high-res mono catseye display
