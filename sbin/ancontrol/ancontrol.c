@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.10 2001/02/27 08:38:36 tholo Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.11 2001/04/15 23:19:13 ericj Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -82,7 +82,7 @@ void an_readkeyinfo	__P((char *));
 void an_zerocache	__P((char *));
 void an_readcache	__P((char *));
 #endif
-void usage		__P((char *));
+static void usage	__P((void));
 int main		__P((int, char **));
 
 #define ACT_DUMPSTATS 1
@@ -124,6 +124,12 @@ int main		__P((int, char **));
 #define ACT_SET_KEY_TYPE 34
 #define ACT_SET_KEYS 35
 #define ACT_ENABLE_TX_KEY 36
+
+#ifdef ANCACHE
+#define OPTIONS "a:b:c:d:e:f:i:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQST:W:Z"
+#else
+#define OPTIONS "a:b:c:d:e:f:i:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NST:W:"
+#endif /* ANCACHE */
 
 void
 an_getval(iface, areq)
@@ -798,9 +804,8 @@ an_dumpconfig(iface)
 }
 
 
-void
-usage(p)
-	char			*p;
+static void
+usage()
 {
 	fprintf(stderr,
 	    "usage: ancontrol interface [-A] [-N] [-S] [-I] [-T] [-C] [-t 0|1|2|3|4]\n"
@@ -1173,7 +1178,7 @@ an_str2key(s, k)
 	char			*p;
 
 	/* Is this a hex string? */
-	if (s[0] = '0' && (s[1] == 'x' || s[1] == 'X')) {
+	if ((s[0] = '0' && (s[1] == 'x' || s[1] == 'X'))) {
 		/* Yes, convert to int */
 		n = 0;
 		p = (char *)&k->key[0];
@@ -1315,7 +1320,6 @@ main(argc, argv)
 	char			*iface = "an0";
 	int			modifier = 0;
 	void			*arg = NULL;
-	char			*p = argv[0];
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
@@ -1324,29 +1328,20 @@ main(argc, argv)
 		ifspecified = 1;
 	}
 
-	while ((ch = getopt(argc, argv,
-	    "i:ANISCTt:a:e:o:s:n:v:d:f:j:b:c:r:p:w:m:l:k:K:W:QZ")) != -1) {
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch(ch) {
-		case 'Z':
-#ifdef ANCACHE
-			act = ACT_ZEROCACHE;
-#else
-			errx(1, "ANCACHE not available");
-#endif
-			break;
-		case 'Q':
-#ifdef ANCACHE
-			act = ACT_DUMPCACHE;
-#else
-			errx(1, "ANCACHE not available");
-#endif
-			break;
-		case 'i':
-			if (!ifspecified)
-				iface = optarg;
-			break;
 		case 'A':
 			act = ACT_DUMPAP;
+			break;
+		case 'C':
+			act = ACT_DUMPCONFIG;
+			break;
+		case 'I':
+			act = ACT_DUMPCAPS;
+			break;
+		case 'K':
+			act = ACT_SET_KEY_TYPE;
+			arg = optarg;
 			break;
 		case 'N':
 			act = ACT_DUMPSSID;
@@ -1354,32 +1349,23 @@ main(argc, argv)
 		case 'S':
 			act = ACT_DUMPSTATUS;
 			break;
-		case 'I':
-			act = ACT_DUMPCAPS;
-			break;
 		case 'T':
 			act = ACT_DUMPSTATS;
 			break;
-		case 'C':
-			act = ACT_DUMPCONFIG;
-			break;
-		case 't':
-			act = ACT_SET_TXRATE;
+		case 'W':
+			act = ACT_ENABLE_WEP;
 			arg = optarg;
 			break;
-		case 's':
-			act = ACT_SET_PWRSAVE;
-			arg = optarg;
+#ifdef ANCACHE
+		case 'Q':
+			act = ACT_DUMPCACHE;
 			break;
-		case 'p':
-			act = ACT_SET_TXPWR;
-			arg = optarg;
+		case 'Z':
+			act = ACT_ZEROCACHE;
 			break;
-		case 'v':
-			modifier = atoi(optarg);
-			break;
+#endif /* ANCACHE */
 		case 'a':
-			switch(modifier) {
+			switch (modifier) {
 			case 0:
 			case 1:
 				act = ACT_SET_AP1;
@@ -1394,11 +1380,7 @@ main(argc, argv)
 				act = ACT_SET_AP4;
 				break;
 			default:
-				errx(1, "bad modifier %d: there "
-				    "are only 4 access point settings",
-				    modifier);
-				usage(p);
-				break;
+				errx(1, "bad modifier %d", modifier);
 			}
 			arg = optarg;
 			break;
@@ -1406,8 +1388,12 @@ main(argc, argv)
 			act = ACT_SET_BEACON_PERIOD;
 			arg = optarg;
 			break;
+		case 'c':
+			act = ACT_SET_FREQ;
+			arg = optarg;
+			break;
 		case 'd':
-			switch(modifier) {
+			switch (modifier) {
 			case 0:
 				act = ACT_SET_DIVERSITY_RX;
 				break;
@@ -1415,13 +1401,24 @@ main(argc, argv)
 				act = ACT_SET_DIVERSITY_TX;
 				break;
 			default:
-				errx(1, "must specift RX or TX diversity");
-				break;
+				errx(1, "must specify RX or TX diversity");
 			}
 			arg = optarg;
 			break;
+		case 'f':
+			act = ACT_SET_FRAG_THRESH;
+			arg = optarg;
+			break;
+		case 'i':
+			if (!ifspecified)
+				iface = optarg;
+			break;
 		case 'j':
 			act = ACT_SET_NETJOIN;
+			arg = optarg;
+			break;
+		case 'k':
+			act = ACT_SET_KEYS;
 			arg = optarg;
 			break;
 		case 'l':
@@ -1433,22 +1430,19 @@ main(argc, argv)
 			arg = optarg;
 			break;
 		case 'n':
-			switch(modifier) {
+			switch (modifier) {
 			case 0:
 			case 1:
 				act = ACT_SET_SSID1;
 				break;
 			case 2:
 				act = ACT_SET_SSID2;
-				break;
+				break;	
 			case 3:
-				act = ACT_SET_SSID3;
+				act = ACT_SET_SSID3;	
 				break;
 			default:
-				errx(1, "bad modifier %d: there"
-				    "are only 3 SSID settings", modifier);
-				usage(p);
-				break;
+				errx(1, "bad modifier %d", modifier);
 			}
 			arg = optarg;
 			break;
@@ -1456,12 +1450,8 @@ main(argc, argv)
 			act = ACT_SET_OPMODE;
 			arg = optarg;
 			break;
-		case 'c':
-			act = ACT_SET_FREQ;
-			arg = optarg;
-			break;
-		case 'f':
-			act = ACT_SET_FRAG_THRESH;
+		case 'p':
+			act = ACT_SET_TXPWR;
 			arg = optarg;
 			break;
 		case 'q':
@@ -1472,29 +1462,28 @@ main(argc, argv)
 			act = ACT_SET_RTS_THRESH;
 			arg = optarg;
 			break;
+		case 's':
+			act = ACT_SET_PWRSAVE;
+			arg = optarg;
+			break;
+		case 't':
+			act = ACT_SET_TXRATE;
+			arg = optarg;
+			break;
+		case 'v':
+			modifier = atoi(optarg);
+			break;
 		case 'w':
 			act = ACT_SET_WAKE_DURATION;
 			arg = optarg;
 			break;
-		case 'W':
-			act = ACT_ENABLE_WEP;
-			arg = optarg;
-			break;
-		case 'K':
-			act = ACT_SET_KEY_TYPE;
-			arg = optarg;
-			break;
-		case 'k':
-			act = ACT_SET_KEYS;
-			arg = optarg;
-			break;
 		default:
-			usage(p);
+			usage();
 		}
 	}
 
 	if (iface == NULL || !act)
-		usage(p);
+		usage();
 
 	switch(act) {
 	case ACT_DUMPSTATUS:
@@ -1550,4 +1539,3 @@ main(argc, argv)
 
 	exit(0);
 }
-
