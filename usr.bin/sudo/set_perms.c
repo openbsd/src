@@ -66,7 +66,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: set_perms.c,v 1.10 2002/01/15 22:47:29 millert Exp $";
+static const char rcsid[] = "$Sudo: set_perms.c,v 1.11 2002/01/16 21:27:09 millert Exp $";
 #endif /* lint */
 
 /*
@@ -106,6 +106,13 @@ set_perms_posix(perm, sudo_mode)
 				if (seteuid(user_uid))
 				    fatal("seteuid(user_uid)");
 			      	break;
+
+	case PERM_FULL_USER:
+				/* headed for exec() */
+				(void) setgid(user_gid);
+				if (setuid(user_uid))
+				    fatal("setuid(user_uid)");
+				break;
 				
 	case PERM_RUNAS:
 				/* headed for exec(), assume euid == 0 */
@@ -168,6 +175,13 @@ set_perms_fallback(perm, sudo_mode)
 				    fatal("setreuid(0, user_uid)");
 			      	break;
 				
+	case PERM_FULL_USER:
+				/* headed for exec() */
+    	    	    	        (void) setgid(user_gid);
+				if (setuid(user_uid))
+				    fatal("setuid(user_uid)");
+			      	break;
+				
 	case PERM_RUNAS:
 				/* headed for exec(), assume euid == 0 */
 				runas_setup();
@@ -226,6 +240,13 @@ set_perms_fallback(perm, sudo_mode)
     	    	    	        (void) setegid(user_gid);
 				if (seteuid(user_uid))
 				    fatal("seteuid(user_uid)");
+			      	break;
+				
+	case PERM_FULL_USER:
+				/* headed for exec() */
+    	    	    	        (void) setgid(user_gid);
+				if (setuid(user_uid))
+				    fatal("setuid(user_uid)");
 			      	break;
 				
 	case PERM_RUNAS:

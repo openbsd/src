@@ -1,4 +1,4 @@
-Installation instructions for Sudo 1.6.4
+Installation instructions for Sudo 1.6.5
 ========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
@@ -203,6 +203,12 @@ Special features/options:
         that only the newer BSD authentication API is supported.
         If you don't have /usr/include/bsd_auth.h then you cannot
         use this.
+
+  --disable-root-mailer
+        By default sudo will run the mailer as root when tattling
+        on a user so as to prevent that user from killing the mailer.
+        With this option, sudo will run the mailer as the invoking
+        user which some people consider to be safer.
 
   --disable-saved-ids
 	Disable use of POSIX saved IDs.  Normally, sudo will try to

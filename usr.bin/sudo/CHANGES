@@ -1483,3 +1483,12 @@ Sudo 1.6.4p1 released.
      "env_reset" option was set.
 
 Sudo 1.6.4p2 released.
+
+464) Added a configure option to cause mail sent by sudo to be run as
+     the invoking user instead of root.  Some people consider this to
+     be safer.
+
+465) If the mailer is being run as root, use a hard-coded environment
+     that is not influenced in any way by the invoking user's environment.
+
+Sudo 1.6.5 released.

@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.344 2002/01/15 22:47:29 millert Exp $
+dnl $Sudo: configure.in,v 1.346 2002/01/16 23:37:34 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.4)
+AC_INIT(sudo, 1.6.5)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6.4"
+echo "Configuring Sudo version 1.6.5"
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -964,9 +964,24 @@ AC_ARG_ENABLE(authentication,
   esac
 ], AC_MSG_RESULT(yes))
 
+AC_MSG_CHECKING(whether to disable running the mailer as root)
+AC_ARG_ENABLE(root-mailer,
+[  --disable-root-mailer   Don't run the mailer as root, run as the user],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(no)
+		;;
+    no)		AC_MSG_RESULT(yes)
+		AC_DEFINE(NO_ROOT_MAILER, 1, [Define to avoid runing the mailer as root.])
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-root-mailer: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
 AC_MSG_CHECKING(whether to disable use of POSIX saved ids)
 AC_ARG_ENABLE(saved-ids,
-[  --saved-ids             Don't try to use POSIX saved ids],
+[  --disable-saved-ids     Don't try to use POSIX saved ids],
 [ case "$enableval" in
     yes)	AC_MSG_RESULT(no)
 		;;
@@ -996,7 +1011,7 @@ AC_ARG_ENABLE(shadow,
 
 AC_MSG_CHECKING(whether root should be allowed to use sudo)
 AC_ARG_ENABLE(root-sudo,
-[  --disable-root-sudo     don't allow root to run sudo],
+[  --disable-root-sudo     Don't allow root to run sudo],
 [ case "$enableval" in  
     yes)	AC_MSG_RESULT(yes)
 		;;

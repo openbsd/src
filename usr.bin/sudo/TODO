@@ -98,3 +98,15 @@ TODO list (most will be addressed in sudo 2.0)
 
 36) Add a flag similar to '-l' but that spits out sudo commands in
     a format suitable for cut & paste (requires parser overhaul first).
+
+37) Someone wants a recursive version of the dir specifier.  Ie:
+    SOME_MODIFIER:/usr/local/ to allow anything under /usr/local to be run.
+
+38) An option to set the shell to the target user would make sense.
+    See other target user-related issues above.
+
+39) Add an option (-D) to dump the defaults after the sudoers file
+    has been parsed.  Should only be available to root and should
+    allow a -u user modifier.
+
+40) For sudo 1.7 wipe out the environment by default.

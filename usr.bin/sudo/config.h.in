@@ -355,6 +355,9 @@
    */
 #undef NO_LECTURE
 
+/* Define to avoid runing the mailer as root. */
+#undef NO_ROOT_MAILER
+
 /* Define if root should not be allowed to use sudo. */
 #undef NO_ROOT_SUDO
 

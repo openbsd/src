@@ -65,7 +65,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.152 2002/01/13 18:27:25 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.153 2002/01/16 21:28:25 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -439,6 +439,15 @@ send_mail(line)
     char *p;
     int pfd[2], pid, status;
     sigset_t set, oset;
+#ifndef NO_ROOT_MAILER
+    static char *root_envp[] = {
+	"HOME=/",
+	"PATH=/usr/bin:/bin",
+	"LOGNAME=root",
+	"USER=root",
+	NULL
+    };
+#endif
 
     /* Just return if mailer is disabled. */
     if (!def_str(I_MAILERPATH) || !def_str(I_MAILTO))
@@ -493,9 +502,17 @@ send_mail(line)
 		/* Close password file so we don't leak the fd. */
 		endpwent();
 
-		/* Run mailer as root so user cannot kill it. */
+		/*
+		 * Depending on the config, either run the mailer as root
+		 * (so user cannot kill it) or as the user (for the paranoid).
+		 */
+#ifndef NO_ROOT_MAILER
 		set_perms(PERM_FULL_ROOT, 0);
+		execve(mpath, argv, root_envp);
+#else
+		set_perms(PERM_FULL_USER, 0);
 		execv(mpath, argv);
+#endif /* NO_ROOT_MAILER */
 		_exit(127);
 	    }
 	    break;
