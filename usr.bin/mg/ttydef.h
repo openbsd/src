@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttydef.h,v 1.6 2002/02/21 00:02:05 deraadt Exp $	*/
+/*	$OpenBSD: ttydef.h,v 1.7 2004/07/08 22:15:42 deraadt Exp $	*/
 
 #ifndef TTYDEF_H
 #define TTYDEF_H
@@ -14,10 +14,6 @@
 /* #define	MOVE_STANDOUT	      *//* don't move in standout mode	 */
 #define STANDOUT_GLITCH			/* possible standout glitch	 */
 #define TERMCAP				/* for possible use in ttyio.c	 */
-
-#ifndef XKEYS
-#define ttykeymapinit() {}
-#endif
 
 #define	putpad(str, num)	tputs(str, num, ttputc)
 

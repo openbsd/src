@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.11 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.12 2004/07/08 22:15:42 deraadt Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -75,6 +75,13 @@ ttykeymaptidy(void)
 	if (keypad_local)
 		/* turn off keypad */
 		putpad(keypad_local, 1);
+}
+
+#else
+
+void
+ttykeymapinit(void)
+{
 }
 
 #endif /* XKEYS */
