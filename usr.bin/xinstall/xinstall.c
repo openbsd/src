@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.8 1995/08/10 04:20:57 ghudson Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.8 1995/08/10 04:20:57 ghudson Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,8 +243,19 @@ install(from_name, to_name, fset, flags)
 		copy(from_fd, from_name, to_fd, to_name, from_sb.st_size);
 		(void)close(from_fd);
 	}
-	if (dostrip)
+
+	if (dostrip) {
 		strip(to_name);
+
+		/*
+		 * Re-open our fd on the target, in case we used a strip
+		 *  that does not work in-place -- like gnu binutils strip.
+		 */
+		close(to_fd);
+		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
+		  err(1, "stripping %s", to_name);
+	}
+
 	/*
 	 * Set owner, group, mode for target; do the chown first,
 	 * chown may lose the setuid bits.
