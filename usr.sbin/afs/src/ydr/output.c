@@ -2126,7 +2126,7 @@ ydr_fopen (const char *name, const char *mode, ydr_file *f)
 {
      int streamfd;
 
-     asprintf (&f->curname, "%sXXXXXX", name);
+     asprintf (&f->curname, "%sXXXXXXXXXX", name);
      if (f->curname == NULL)
 	 err (1, "malloc");
 

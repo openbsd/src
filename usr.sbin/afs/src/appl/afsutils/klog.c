@@ -385,7 +385,7 @@ randfilename(void)
 #if defined(HAVE_KRB_GET_DEFAULT_TKT_ROOT)
 	base = krb_get_default_tkt_root ();
 #endif
-	asprintf (&filename, "%s_%u_XXXXXX", base, (unsigned)getuid());
+	asprintf (&filename, "%s_XXXXXXXXXX", base);
 	if (filename == NULL)
 	    dietx (1, "out of memory");
 

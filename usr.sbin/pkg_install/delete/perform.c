@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.13 2003/07/02 00:41:15 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2003/07/02 00:41:15 avsm Exp $";
 #endif
 
 /*
@@ -279,7 +279,7 @@ undepend(const char *deppkgname, char *pkg2delname, int unused)
 	 pwarnx("couldn't open dependency file `%s'", fname);
 	 return 0;
      }
-     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
+     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXXXXXX", fname);
      s = mkstemp(ftmp);
      if (s == -1) {
 	 fclose(fp);

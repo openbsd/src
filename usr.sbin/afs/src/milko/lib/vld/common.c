@@ -170,7 +170,7 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
     int fd, ret;
     struct stat sb;
     
-    snprintf(nodename, sizeof(nodename), "%s/inodeXXXXXX", DP_NAME(dp));
+    snprintf(nodename, sizeof(nodename), "%s/inodeXXXXXXXXXX", DP_NAME(dp));
     fd = mkstemp(nodename);
     if (fd == -1)
 	return errno;
