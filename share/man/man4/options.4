@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.74 2001/08/06 21:45:02 miod Exp $
+.\"	$OpenBSD: options.4,v 1.75 2001/08/07 14:19:44 heko Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -291,6 +291,14 @@ for details.
 Includes code implementing the Berkeley Fast File System
 .Em ( FFS ) .
 Most machines need this if they are not running diskless.
+.It Cd option ADOSFS
+Includes code implementing the AmigaDOS Fast File System
+.Em ( ADOSFS ) .
+Note that the Professional and Smart File Systems are 
+.Em not
+supported. See
+.Xr mount_ados 8
+for details.
 .It Cd option EXT2FS
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
