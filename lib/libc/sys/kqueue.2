@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.14 2004/07/22 21:31:21 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.15 2004/08/02 17:42:06 brad Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -401,7 +401,7 @@ even if the signal has been marked as
 Event notification happens after normal signal delivery processing.
 .Va data
 returns the number of times the signal has occurred since the last call to
-.Fn kqueue .
+.Fn kevent .
 This filter automatically sets the
 .Dv EV_CLEAR
 flag internally.
