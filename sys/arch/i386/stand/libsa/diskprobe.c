@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.2 1997/10/18 00:33:15 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.3 1997/10/22 23:34:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,23 +34,112 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/disklabel.h>
+#include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
 #include "biosdev.h"
 #include "libsa.h"
 
-
-extern struct BIOS_vars BIOS_vars;
-
 /* These get passed to kernel */
 bios_diskinfo_t bios_diskinfo[16];
 
+#if notyet
+/* Checksum given buffer */
+static u_int32_t
+bufsum(buf, len)
+	void *buf;
+	int len;
+{
+	u_int32_t sum = 0;
+	u_int8_t *p = buf;
+
+	while(len--){
+		sum += p[len];
+	}
+	return(sum);
+}
+
+/* Checksum given drive until different */
+void
+disksum(pos)
+	int pos;
+{
+	u_int32_t sum;
+	int len, i;
+}
+#endif
+
+/* Probe for all BIOS disks */
+void
+diskprobe()
+{
+	u_int drive, i = 0, rv;
+	struct disklabel label;
+	u_int unit, type;
+
+	printf("Probing disks:");
+
+	/* Floppies */
+	for(drive = 0; drive < 4; drive++) {
+		rv = bios_getinfo(drive, &bios_diskinfo[i]);
+
+		if( (rv & 0x00FF)) continue;
+		if(!(rv & 0xFF00)) continue;
+
+		printf(" fd%u", drive);
+
+		/* Fill out best we can - (fd?) */
+		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, drive, 0);
+#if 0
+		disksum(&bios_diskinfo[i]);
+#endif
+		i++;
+	}
+
+	/* Hard disks */
+	for(drive = 0x80; drive < 0x88; drive++) {
+		rv = bios_getinfo(drive, &bios_diskinfo[i]);
+
+		if( (rv & 0x00FF)) continue;
+		if(!(rv & 0xFF00)) continue;
+
+		unit = drive - 0x80;
+		printf(" hd%u%s", unit, (bios_diskinfo[i].bios_edd > 0?"+":""));
+
+		/* Try to find the label, to figure out device type */
+		if((bios_getdisklabel(drive, &label)) ) {
+			printf("*");
+			type = 0;	/* XXX let it be IDE */
+		} else {
+			/* Best guess */
+			if (label.d_type == DTYPE_SCSI)
+				type = 4;
+			else
+				type = 0;
+		}
+
+		/* Fill out best we can */
+		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(type, 0, 0, unit, 0);
+#if 0
+		disksum(&bios_diskinfo[i]);
+#endif
+		i++;
+	}
+
+	/* End of list */
+	bios_diskinfo[i].bios_number = -1;
+	addbootarg(BOOTARG_DISKINFO,
+		   (i + 1) * sizeof(bios_diskinfo[0]), bios_diskinfo);
+
+	printf("\n");
+}
 
 /* Find info on given BIOS disk */
 bios_diskinfo_t *
-diskfind(dev)
-	int dev;
+bios_dklookup(dev)
+	register int dev;
 {
-	int i;
+	register int i;
 
 	for(i = 0; bios_diskinfo[i].bios_number != -1; i++)
 		if(bios_diskinfo[i].bios_number == dev)
@@ -58,67 +147,3 @@ diskfind(dev)
 
 	return(NULL);
 }
-
-/* Probe for all BIOS disks */
-void
-diskprobe()
-{
-	int drive, i = 0;
-
-	printf("Probing disks:");
-
-	/* Floppies */
-	for(drive = 0; drive < 4; drive++){
-		u_int32_t p = biosdinfo(drive);
-
-		if(BIOSNSECTS(p) < 2) continue;
-		if(p){
-			u_int32_t t = biosdprobe(drive);
-			if(t & 0x00FF) continue;
-			if(!(t & 0xFF00)) continue;
-
-			printf(" fd%d", drive);
-
-			/* Fill out best we can */
-			bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, 0, 0);	/* fd? */
-			bios_diskinfo[i].bios_number = drive;
-			bios_diskinfo[i].bios_cylinders = BIOSNTRACKS(p);
-			bios_diskinfo[i].bios_heads = BIOSNHEADS(p);
-			bios_diskinfo[i].bios_sectors = BIOSNSECTS(p);
-
-			i++;
-		}
-	}
-
-	/* Hard disks */
-	for(drive = 0x80; drive < 0x88; drive++){
-		u_int32_t p = biosdinfo(drive);
-
-		if(BIOSNSECTS(p) < 2) continue;
-		if(p){
-			u_int32_t t = biosdprobe(drive);
-			if(t & 0x00FF) continue;
-			if(!(t & 0xFF00)) continue;
-
-			printf(" hd%d", drive - 128);
-
-			/* Fill out best we can */
-			bios_diskinfo[i].bsd_dev = -1;		/* XXX - fill in */
-			bios_diskinfo[i].bios_number = drive;
-			bios_diskinfo[i].bios_cylinders = BIOSNTRACKS(p);
-			bios_diskinfo[i].bios_heads = BIOSNHEADS(p);
-			bios_diskinfo[i].bios_sectors = BIOSNSECTS(p);
-
-			i++;
-		}
-	}
-
-	/* End of list */
-	bios_diskinfo[i].bios_number = -1;
-
-	/* XXX - This needs a better place! */
-	BIOS_vars.boot_data = bios_diskinfo;
-
-	printf("\n");
-}
-

@@ -1,7 +1,8 @@
-/*	$OpenBSD: installboot.c,v 1.20 1997/10/15 15:54:52 weingart Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.21 1997/10/22 23:34:41 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
+ * Copyright (c) 1997 Michael Shalayeff
  * Copyright (c) 1994 Paul Kranenburg
  * All rights reserved.
  *
@@ -138,6 +139,11 @@ main(argc, argv)
 	proto = argv[optind + 1];
 	realdev = dev = argv[optind + 2];
 
+	/* Open and check raw disk device */
+	if ((devfd = opendev(dev, (nowrite? O_RDONLY:O_RDWR),
+			     OPENDEV_PART, &realdev)) < 0)
+		err(1, "open: %s", realdev);
+
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_BIOS;
 	mib[2] = BIOS_DEV;
@@ -147,28 +153,24 @@ main(argc, argv)
 	    sysctl(mib, 3, &biosdev, &size, NULL, 0) != -1) {
 
 		if (biosdev & 0x80) {
-			u_int geo;
+			bios_diskinfo_t di;
 
-			mib[2] = BIOS_GEOMETRY;
-			size = sizeof(geo);
+			mib[2] = BIOS_DISKINFO;
+			mib[3] = 0xa0000004;
+			size = sizeof(di);
 
-			if (sysctl(mib, 3, &geo, &size, NULL, 0) == -1)
+			if (sysctl(mib, 4, &di, &size, NULL, 0) == -1)
 				err(1, "sysctl");
 
 			if (nheads == -1)
-				nheads = BIOSNHEADS(geo);
+				nheads = di.bios_heads;
 			if (nsectors == -1)
-				nsectors = BIOSNSECTS(geo);
+				nsectors = di.bios_sectors;
 		}
 	}
 
 	if (nheads == -1 || nsectors == -1)
 		errx(1, "Unable to get BIOS geometry, must specify -h and -s");
-
-	/* Open and check raw disk device */
-	if ((devfd = opendev(dev, (nowrite? O_RDONLY:O_RDWR),
-			     OPENDEV_PART, &realdev)) < 0)
-		err(1, "open: %s", realdev);
 
 	if (verbose) {
 		fprintf(stderr, "boot: %s\n", boot);
@@ -212,7 +214,8 @@ main(argc, argv)
 	/* Sync filesystems (to clean in-memory superblock?) */
 	sync(); sleep(1);
 
-	if (dl.d_type != 0 && dl.d_type < DTYPE_FLOPPY) {
+	if (dl.d_type != 0 && dl.d_type != DTYPE_FLOPPY &&
+	    dl.d_type != DTYPE_VND) {
 		if (lseek(devfd, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
 		    read(devfd, &mbr, sizeof(mbr)) < sizeof(mbr))
 			err(4, "can't read master boot record");
@@ -358,7 +361,7 @@ loadblocknums(boot, devfd, dl)
 	struct disklabel *dl;
 {
 	int		i, fd;
-	struct stat	statbuf;
+	struct stat	statbuf, sb;
 	struct statfs	statfsbuf;
 	struct partition *pl;
 	struct fs	*fs;
@@ -401,6 +404,13 @@ loadblocknums(boot, devfd, dl)
 
 	if (fstat(fd, &statbuf) != 0)
 		err(1, "fstat: %s", boot);
+
+	if (fstat(devfd, &sb) != 0)
+		err(1, "fstat: %s", realdev);
+
+	printf("%x,%x\n", statbuf.st_dev/MAXPARTITIONS, major(sb.st_rdev));
+	if (statbuf.st_rdev / MAXPARTITIONS != sb.st_rdev / MAXPARTITIONS)
+		/* errx(1, "cross-device install") */;
 
 	pl = &dl->d_partitions[DISKPART(statbuf.st_dev)];
 	close(fd);

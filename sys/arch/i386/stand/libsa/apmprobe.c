@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.1 1997/10/17 18:46:53 weingart Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.2 1997/10/22 23:34:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -57,11 +57,10 @@
  */
 
 #include "libsa.h"
+#include <stand/boot/bootarg.h>
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
 #include "debug.h"
-
-extern struct BIOS_vars	BIOS_vars;
 
 static __inline u_int
 apm_check()
@@ -99,7 +98,8 @@ apm_disconnect()
 }
 
 static __inline int
-apm_connect()
+apm_connect(ai)
+	bios_apminfo_t *ai;
 {
 	register u_int16_t f;
 	__asm __volatile (DOINT(0x15) "\n\t"
@@ -108,19 +108,19 @@ apm_connect()
 			  "movzwl %%ax, %%eax\n\tshll $4, %0\n\t"
 			  "movzwl %%cx, %%ecx\n\tshll $4, %2\n\t"
 			  "movzwl %%dx, %%edx\n\tshll $4, %3\n\t"
-			  : "=a" (BIOS_vars.bios_apm_code32_base),
+			  : "=a" (ai->apm_code32_base),
 			    "=b" (f),
-			    "=c" (BIOS_vars.bios_apm_code16_base),
-			    "=d" (BIOS_vars.bios_apm_data_base)
+			    "=c" (ai->apm_code16_base),
+			    "=d" (ai->apm_data_base)
 			  : "0" (APM_PROT32_CONNECT), "1" (APM_DEV_APM_BIOS)
 			  : "cc");
-	BIOS_vars.bios_apm_entry    = BIOS_regs.biosr_bx;
+	ai->apm_entry    = BIOS_regs.biosr_bx;
 #if 0
-	BIOS_vars.bios_apm_code_len = BIOS_regs.biosr_si & 0xffff;
-	BIOS_vars.bios_apm_data_len = BIOS_regs.biosr_di & 0xffff;
+	ai->apm_code_len = BIOS_regs.biosr_si & 0xffff;
+	ai->apm_data_len = BIOS_regs.biosr_di & 0xffff;
 #else
-	BIOS_vars.bios_apm_code_len = 0x10000;
-	BIOS_vars.bios_apm_data_len = 0x10000;
+	ai->apm_code_len = 0x10000;
+	ai->apm_data_len = 0x10000;
 #endif
 	return (f & 0xff)? f >> 8 : 0;
 }
@@ -128,25 +128,25 @@ apm_connect()
 void
 apmprobe()
 {
-	if ((BIOS_vars.bios_apm_detail = apm_check())) {
+	bios_apminfo_t ai;
+
+	if ((ai.apm_detail = apm_check())) {
 
 		printf("apm0");
 		apm_disconnect();
-		if (apm_connect() != 0)
+		if (apm_connect(&ai) != 0)
 			printf(": connect error\n");
 #ifdef DEBUG
 		printf(": %x text=%x/%x[%x] data=%x[%x] @ %x",
-		       BIOS_vars.bios_apm_detail,
-		       BIOS_vars.bios_apm_code32_base,
-		       BIOS_vars.bios_apm_code16_base,
-		       BIOS_vars.bios_apm_code_len,
-		       BIOS_vars.bios_apm_data_base,
-		       BIOS_vars.bios_apm_data_len,
-		       BIOS_vars.bios_apm_entry);
+		       ai.apm_detail, ai.apm_code32_base,
+		       ai.apm_code16_base, ai.apm_code_len,
+		       ai.apm_data_base, ai.apm_data_len,
+		       ai.apm_entry);
 #else
 		printf(" detected");
 #endif
 		putchar('\n');
+		addbootarg(BOOTARG_APMINFO, sizeof(ai), &ai);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.20 1997/10/18 00:33:16 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.21 1997/10/22 23:34:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -47,12 +47,15 @@ void *alloca __P((size_t));
 void machdep __P((void));
 void time_print __P((void));
 
-bios_diskinfo_t *diskfind __P((int));
-
-
 extern const char bdevs[][4];
 extern const int nbdevs;
 extern int bootdev; /* XXX pass through the global to exec_i386 */
 extern u_int cnvmem, extmem; /* XXX global pass memprobe()->machdep_start() */
+
+/* diskprobe.c */
+extern bios_diskinfo_t bios_diskinfo[];
+
+/* memprobe.c */
+extern bios_memmap_t *memory_map;
 
 #define MACHINE_CMD	cmd_machine /* we have i386 specific sommands */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.22 1997/10/17 15:03:22 weingart Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.23 1997/10/22 23:34:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -41,10 +41,12 @@ int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int biosopen __P((struct open_file *, ...));
 int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
-u_int32_t biosdinfo __P((int));
-u_int32_t biosdprobe __P((int));
-int biosd_rw __P((int, int, int, int, int, int, void*));
+int bios_getinfo __P((int, bios_diskinfo_t *));
+int biosd_io __P((int, int, int, int, int, int, void*));
+const char * bios_getdisklabel __P((int, struct disklabel *));
 
+/* diskprobe.c */
+bios_diskinfo_t *bios_dklookup __P((int));
 
 /* bioscons.c */
 void pc_probe __P((struct consdev *));

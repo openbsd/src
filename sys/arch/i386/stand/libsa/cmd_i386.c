@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.14 1997/10/21 02:42:31 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.15 1997/10/22 23:34:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -47,12 +47,6 @@ static int Xmemory __P((void));
 
 /* From gidt.S */
 int bootbuf __P((int, int));
-
-/* From probedisk.c */
-extern bios_diskinfo_t bios_diskinfo[];
-
-/* From probemem.c */
-extern bios_memmap_t *memory_map;
 
 const struct cmd_table cmd_machine[] = {
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
@@ -120,7 +114,7 @@ Xboot()
 	printf("[%x,%d]\n", dev, part);
 
 	/* Read boot sector from device */
-	st = biosd_rw(F_READ, dev, 0, 0, 1, 1, buf);
+	st = biosd_io(F_READ, dev, 0, 0, 1, 1, buf);
 	if(st) goto bad;
 
 	/* Frob boot flag in buffer from HD */

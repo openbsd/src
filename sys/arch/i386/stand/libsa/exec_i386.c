@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.17 1997/09/19 17:20:43 niklas Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.18 1997/10/22 23:34:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -38,6 +38,7 @@
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <dev/cons.h>
+#include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
 #include "libsa.h"
 
@@ -51,6 +52,8 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	char *startaddr, *loadaddr, *ssym, *esym;
 	int howto;
 {
+	size_t argc;
+	void *argv = makebootargs(&argc);
 #ifdef EXEC_DEBUG
 	struct exec *x;
 
@@ -61,17 +64,16 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
 	       x->a_entry, x->a_trsize, x->a_drsize);
 
-	printf("/bsd(%x,%x,%x,%x,%x,%x,%x)\n",
+	printf("/bsd(%x,%x,%x,%x,%x,%x,%d,%p)\n",
 	       howto, bootdev, BOOT_APIVER, round_to_size(esym),
-	       extmem, cnvmem, (int)&BIOS_vars, sizeof(BIOS_vars));
+	       extmem, cnvmem, argc, argv);
 	getchar();
 #endif
 	(int)startaddr &= 0xffffff;
 
-	printf("entry point at 0x%x\n", (int)startaddr);
+	printf("entry point at %p\n", startaddr);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)startaddr)(howto, bootdev, BOOT_APIVER,
-	    round_to_size(esym), extmem, cnvmem, (int)&BIOS_vars,
-	    sizeof (BIOS_vars));
+	    round_to_size(esym), extmem, cnvmem, argc, (int)argv);
 	/* not reached */
 }
