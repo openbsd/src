@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.9 2001/06/26 10:56:16 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.10 2001/06/26 12:06:31 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -656,7 +656,7 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			DPRINTF(("%s: scanning bus %d\n", sc->sc_dv.dv_xname,
 			    tid));
 
-			rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5*60*1000);
+			rv = iop_msg_post(sc, im, &mf, 5*60*1000);
 			iop_msg_free(sc, im);
 #ifdef I2ODEBUG
 			if (rv != 0)
@@ -1037,9 +1037,9 @@ int
 iop_hrt_get0(struct iop_softc *sc, struct i2o_hrt *hrt, int size)
 {
 	struct iop_msg *im;
-	int rv;
 	struct i2o_exec_hrt_get *mf;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+	int rv;
 
 	im = iop_msg_alloc(sc, NULL, IM_WAIT);
 	mf = (struct i2o_exec_hrt_get *)mb;
@@ -1049,7 +1049,7 @@ iop_hrt_get0(struct iop_softc *sc, struct i2o_hrt *hrt, int size)
 	mf->msgtctx = im->im_tctx;
 
 	iop_msg_map(sc, im, mb, hrt, size, 0);
-	rv = iop_msg_post(sc, im, mb, sizeof(*mf), 30000);
+	rv = iop_msg_post(sc, im, mb, 30000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	return (rv);
@@ -1124,8 +1124,7 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 #endif
 
 	iop_msg_map(sc, im, mb, lct, size, 0);
-	rv = iop_msg_post(sc, im, mb, sizeof(*mf),
-	    (chgind == 0 ? 120*1000 : 0));
+	rv = iop_msg_post(sc, im, mb, (chgind == 0 ? 120*1000 : 0));
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	return (rv);
@@ -1230,7 +1229,7 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1);
 	iop_msg_map(sc, im, mb, buf, size, write);
-	rv = iop_msg_post(sc, im, mb, sizeof(*mf), (ii == NULL ? 30000 : 0));
+	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
 		PRELE(curproc);
@@ -1273,7 +1272,7 @@ iop_simple_cmd(struct iop_softc *sc, int tid, int function, int ictx,
 	mf.msgictx = ictx;
 	mf.msgtctx = im->im_tctx;
 
-	rv = iop_msg_post(sc, im, &mf, sizeof(mf), timo);
+	rv = iop_msg_post(sc, im, &mf, timo);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1342,7 +1341,7 @@ iop_systab_set(struct iop_softc *sc)
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1);
-	rv = iop_msg_post(sc, im, mb, sizeof(*mf), 5000);
+	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	PRELE(curproc);
@@ -1970,12 +1969,10 @@ iop_post(struct iop_softc *sc, u_int32_t *mb, int size)
  * Post a message to the IOP and deal with completion.
  */
 int
-iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int size, int timo)
+iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
 {
-	u_int32_t *mb;
-	int rv, s;
-
-	mb = xmb;
+	u_int32_t *mb = xmb;
+	int rv, s, size = mb[0] >> 16;
 
 	/* Terminate the scatter/gather list chain. */
 	if ((im->im_flags & IM_SGLOFFADJ) != 0)
@@ -2249,7 +2246,7 @@ iop_util_claim(struct iop_softc *sc, struct iop_initiator *ii, int release,
 	mf.msgtctx = im->im_tctx;
 	mf.flags = flags;
 
-	rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5000);
+	rv = iop_msg_post(sc, im, &mf, 5000);
 	iop_msg_free(sc, im);
 	return (rv);
 }	
@@ -2273,7 +2270,7 @@ int iop_util_abort(struct iop_softc *sc, struct iop_initiator *ii, int func,
 	mf.flags = (func << 24) | flags;
 	mf.tctxabort = tctxabort;
 
-	rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5000);
+	rv = iop_msg_post(sc, im, &mf, 5000);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -2295,7 +2292,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 	mf.eventmask = mask;
 
 	/* This message is replied to only when events are signalled. */
-	return (iop_msg_post(sc, im, &mf, sizeof(mf), 0));
+	return (iop_msg_post(sc, im, &mf, 0));
 }
 
 int
@@ -2465,7 +2462,7 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt)
 		mapped = 1;
 	}
 
-	if ((rv = iop_msg_post(sc, im, mf, sizeof(*mf), pt->pt_timo)) != 0)
+	if ((rv = iop_msg_post(sc, im, mf, pt->pt_timo)) != 0)
 		goto bad;
 
 	i = (letoh32(im->im_rb->msgflags) >> 14) & ~3;
