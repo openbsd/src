@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.7 2004/08/26 18:39:18 otto Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.8 2004/12/03 03:06:36 djm Exp $	*/
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -110,6 +110,7 @@ z_streamp strm;
     state = (struct inflate_state FAR *)strm->state;
     strm->total_in = strm->total_out = state->total = 0;
     strm->msg = Z_NULL;
+    strm->adler = 1;        /* to support ill-conceived Java test suite */
     state->mode = HEAD;
     state->last = 0;
     state->havedict = 0;
@@ -910,8 +911,8 @@ int flush;
                 }
             }
 
-            if (state->mode == BAD)
-                break;
+            /* handle error breaks in while */
+            if (state->mode == BAD) break;
 
             /* build code tables */
             state->next = state->codes;

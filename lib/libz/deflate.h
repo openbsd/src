@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.h,v 1.5 2003/12/16 22:33:02 henning Exp $	*/
+/*	$OpenBSD: deflate.h,v 1.6 2004/12/03 03:06:36 djm Exp $	*/
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2002 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -95,7 +95,6 @@ typedef struct internal_state {
     Bytef *pending_out;  /* next pending byte to output to the stream */
     int   pending;       /* nb of bytes in the pending buffer */
     int   wrap;          /* bit 0 true for zlib, bit 1 true for gzip */
-    Byte  data_type;     /* UNKNOWN, BINARY or ASCII */
     Byte  method;        /* STORED (for zip only) or DEFLATED */
     int   last_flush;    /* value of flush param for previous deflate call */
 

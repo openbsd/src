@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzio.c,v 1.12 2003/12/16 22:33:02 henning Exp $	*/
+/*	$OpenBSD: gzio.c,v 1.13 2004/12/03 03:06:36 djm Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2003 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -455,6 +455,10 @@ int ZEXPORT gzread (file, buf, len)
                 s->z_eof = 1;
                 if (ferror(s->file)) {
                     s->z_err = Z_ERRNO;
+                    break;
+                }
+                if (feof(s->file)) {        /* avoid error for empty file */
+                    s->z_err = Z_STREAM_END;
                     break;
                 }
             }
