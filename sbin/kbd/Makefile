@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2002/08/12 10:46:54 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/11/23 23:52:21 miod Exp $
 
 .if (${MACHINE} == "alpha") || (${MACHINE} == "hppa") || \
     (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
@@ -7,7 +7,6 @@
 PROG=	kbd
 
 SRCS=	main.c kbd_wscons.c
-CFLAGS+=-I${.CURDIR}
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
 
