@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.9 1997/08/27 20:35:21 mickey Exp $
+$OpenBSD: README,v 1.10 1997/09/02 21:41:29 kstailey Exp $
 
 # hmm, no copyright
 
@@ -84,9 +84,9 @@ was with -DSAVE_MEMORY, I believe that the stuff in libsa/cread.c was
 not (and still is not with the define) being done right.  I suspect
 the inflateInit2(), which had a parameter changed from -15 to -11.
 The problem manifested itself by loading a corrupted kernel.  On the
-other hand, it checksumed ok though, so there might be a small bug in
+other hand, it checksummed ok though, so there might be a small bug in
 the libz stuff.  Also, I don't understand libz, but I do know that
-things work withouth -DSAVE_MEMORY, and don't with it defined.
+things work without -DSAVE_MEMORY, and don't with it defined.
 
 
 Mon Apr 21 15:25:42 EDT 1997
@@ -131,5 +131,5 @@ To get your /boot installed properly on a hardrive you have to load /bsd
 from that hd/partition (since only boot drive geometry is passed).
 The passed geometry will be used for all the drives, if you
 will try to installboot on other disks (floppies and pseudo-disks will
-honour the disklabel), that might be usefull on some bioses,
-esp. SCSI HAs wich use fixed translated geometry for all the drives.
+honor the disklabel), that might be useful on some bioses,
+esp. SCSI HAs which use fixed translated geometry for all the drives.
