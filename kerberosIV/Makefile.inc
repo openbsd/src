@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile.inc,v 1.10 2000/03/27 12:53:41 maja Exp $
+# $OpenBSD: Makefile.inc,v 1.11 2000/05/15 18:24:43 hin Exp $
 
 KRBVERSION = "krb4-1.0"
 
 KRBDIR	= ${.CURDIR}/${KRBDEPTH}
 KRBSRC	= ${.CURDIR}/${KRBDEPTH}/src
 
-CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" \
+CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" -DSBINDIR=\"/usr/sbin\" \
 	   -I${DESTDIR}/usr/include/kerberosIV \
 	   -I${KRBSRC}/include -I${KRBSRC}/lib/roken \
 	   -I${KRBDIR}/lib/roken -I${KRBSRC}/lib/sl 
