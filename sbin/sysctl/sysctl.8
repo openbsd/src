@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.53 2000/09/19 03:27:27 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.54 2000/09/25 10:00:28 provos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -101,7 +101,7 @@ For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
-.Bl -column net.inet.ip.forwardingxxxxxx integerxxx
+.Bl -column net.inet.ip.ipsec-expire-acquirexxxx integerxxx
 .It Sy Name	Type	Changeable
 .It kern.ostype	string	no
 .It kern.osrelease	string	no
@@ -173,6 +173,8 @@ privilege can change the value.
 .It net.inet.ip.ipsec-auth-alg	string	yes
 .It net.inet.ip.ipsec-expire-acquire	integer	yes
 .It net.inet.ip.ipsec-invalid-life	integer	yes
+.It net.inet.ip.mtudisc	integer	yes
+.It net.inet.ip.mtudisctimeout	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
 .It net.inet.ipip.allow	integer	yes
