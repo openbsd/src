@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2000/01/12 17:49:53 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2000/01/13 17:35:09 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 2000/01/12 17:49:53 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 2000/01/13 17:35:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,15 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 
 extern int optind;
 extern char *optarg;
+
+#define MAXRECORD 50
+static struct position {
+	char *name;
+	unsigned long line;
+} quotes[MAXRECORD], paren[MAXRECORD];
+
+static void record __P((struct position *, int));
+static void dump_stack __P((struct position *, int));
 
 static void macro __P((void));
 static void initkwds __P((void));
@@ -304,8 +313,11 @@ macro()
 			}
 		}
 		else if (t == EOF) {
-			if (sp > -1)
-				errx(1, "unexpected end of input");
+			if (sp > -1) {
+				warnx( "unexpected end of input, unclosed parenthesis:");
+				dump_stack(paren, PARLEV);
+				exit(1);
+			}
 			if (ilevel <= 0)
 				break;			/* all done thanks.. */
 			release_input(infile+ilevel--);
@@ -317,7 +329,8 @@ macro()
 	 * [the order of else if .. stmts is important.]
 	 */
 		else if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
-			nlpar = 1;
+			nlpar = 0;
+			record(quotes, nlpar++);
 			do {
 
 				l = gpbc();
@@ -325,13 +338,15 @@ macro()
 					nlpar--;
 					s = rquote;
 				} else if (LOOK_AHEAD(l,lquote)) {
-					nlpar++;
+					record(quotes, nlpar++);
 					s = lquote;
 				} else if (l == EOF) {
 					if (nlpar == 1)
-						errx(1, "missing right quote.");
+						warnx("unclosed quote:");
 					else
-						errx(1, "missing %d right quotes.", nlpar);
+						warnx("%d unclosed quotes:", nlpar);
+					dump_stack(quotes, nlpar);
+					exit(1);
 				} else {
 					chars[0] = l;
 					chars[1] = EOS;
@@ -370,7 +385,7 @@ macro()
 			while (isspace(l = gpbc()))
 				;		/* skip blank, tab, nl.. */
 			putback(l);
-			PARLEV++;
+			record(paren, PARLEV++);
 			break;
 
 		case RPAREN:
@@ -501,3 +516,30 @@ initkwds()
 	}
 }
 
+static void
+record(t, lev)
+	struct position *t;
+	int lev;
+{
+	if (lev < MAXRECORD) {
+		t[lev].name = CURRENT_NAME;
+		t[lev].line = CURRENT_LINE;
+	}
+}
+
+static void
+dump_stack(t, lev)
+	struct position *t;
+	int lev;
+{
+	int i;
+
+	for (i = 0; i < lev; i++) {
+		if (i == MAXRECORD) {
+			fprintf(stderr, "   ...\n");
+			break;
+		}
+		fprintf(stderr, "   %s at line %lu\n", 
+			t[i].name, t[i].line);
+	}
+}
