@@ -247,7 +247,7 @@ sunos_sys_mount(p, v, retval)
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		SCARG(uap, type) = STACKGAPBASE;
-		if (error = copyout("ufs", SCARG(uap, type), sizeof("ufs")))
+		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
 			return (error);
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct sunos_nfs_args sna;
