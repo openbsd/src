@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.159 2004/12/20 22:43:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.160 2004/12/21 01:43:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -87,13 +87,13 @@ sub can_install($$$)
 		return undef;
 	}
 
-	my $toreplace = $conflicts[0];
-	if (defined $state->{installed}->{$toreplace}) {
-		Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
+	require OpenBSD::Update;
+
+	if (!OpenBSD::Update::is_safe($plist, $state)) {
+		print "Can't safely update to $pkgname\n";
 		$errors++;
 		return undef;
 	}
-	require OpenBSD::Update;
 
 	if (!OpenBSD::Update::figure_out_libs($plist, $state, @libs)) {
 		print "Can't update to $pkgname because of collision with old libs\n";
@@ -101,21 +101,24 @@ sub can_install($$$)
 		return undef;
 	}
 
-	my $rplist = OpenBSD::Update::can_do($conflicts[0], $pkgname, $state);
-	if ($rplist) {
-		if (!OpenBSD::Update::is_safe($plist, $state)) {
-			print "Can't safely update $conflicts[0] to $pkgname\n";
+	for my $toreplace (@conflicts) {
+		if (defined $state->{installed}->{$toreplace}) {
+			Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
 			$errors++;
 			return undef;
 		}
-		$rplist->{dir} = installed_info($conflicts[0]);
+
+		my $rplist = OpenBSD::Update::can_do($toreplace, $pkgname, 
+		    $state, \%conflicts);
+		if (!$rplist) {
+			print "Can't update $toreplace into $pkgname\n";
+			$errors++;
+			return undef;
+		}
+		$rplist->{dir} = installed_info($toreplace);
 		push(@{$plist->{replacing}}, $rplist);
-		return 1;
-	} else {
-		print "Can't update $conflicts[0] into $pkgname\n";
-		$errors++;
-		return undef;
 	}
+	return 1;
 }
 
 

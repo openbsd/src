@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.46 2004/12/20 22:43:25 espie Exp $
+# $OpenBSD: Update.pm,v 1.47 2004/12/21 01:43:58 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -234,7 +234,7 @@ use OpenBSD::Error;
 
 sub can_do
 {
-	my ($toreplace, $replacement, $state) = @_;
+	my ($toreplace, $replacement, $state, $ignore) = @_;
 
 	$state->{okay} = 1;
 	$state->{libs_to_check} = [];
@@ -251,6 +251,7 @@ sub can_do
 	}
 	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list();
 	for my $wanting (@wantlist) {
+		next if defined $ignore->{$wanting};
 		print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
 		my $p2 = OpenBSD::PackingList->from_installation($wanting,
 		    \&OpenBSD::PackingList::DependOnly);
