@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.25 2004/09/15 01:11:12 henning Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.26 2004/10/24 18:47:43 henning Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -354,9 +354,9 @@ retry:
 		return (1);
 	}
 
-	if (data->version != NTP_VERSION) {
-		warnx("Received different NTP version than sent,"
-		      "packet rejected");
+	if (data->version > NTP_VERSION) {
+		warnx("Received NTP version %u, need %u or lower",
+		    data->version, NTP_VERSION);
 		return (1);
 	}
 
