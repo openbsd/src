@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2002/05/19 22:26:27 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2002/05/23 07:47:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -107,16 +107,13 @@ struct peer {
 	struct node_port	*port;
 };
 
-int			 rule_consistent(struct pf_rule *);
-int			 yyparse(void);
-struct pf_rule_addr	*new_addr(void);
-void			 ipmask(struct pf_addr *, u_int8_t);
-void			 expand_rule(struct pf_rule *,
-			    struct node_if *, struct node_proto *,
-			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *,
-			    struct node_uid *, struct node_gid *,
-			    struct node_icmp *);
+int	rule_consistent(struct pf_rule *);
+int	yyparse(void);
+void	ipmask(struct pf_addr *, u_int8_t);
+void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
+    struct node_host *, struct node_port *, struct node_host *,
+    struct node_port *, struct node_uid *, struct node_gid *,
+    struct node_icmp *);
 
 struct sym {
 	struct sym *next;
@@ -2083,18 +2080,6 @@ ipmask(struct pf_addr *m, u_int8_t b)
 		m->addr32[j] |= (1 << i);
 	if (b)
 		m->addr32[j] = htonl(m->addr32[j]);
-}
-
-struct pf_rule_addr *
-new_addr(void)
-{
-	struct pf_rule_addr *ra;
-
-	ra = malloc(sizeof(struct pf_rule_addr));
-	if (ra == NULL)
-		err(1, "new_addr: malloc failed");
-	memset(ra, 0, sizeof(*ra));
-	return (ra);
 }
 
 /*
