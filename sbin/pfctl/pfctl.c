@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.11 2001/06/25 22:14:07 smart Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.12 2001/06/26 00:18:30 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -410,6 +410,9 @@ main(int argc, char *argv[])
 	int error = 0;
 	int dev;
 	int ch;
+
+	if (argc < 2)
+		usage();
 
 	while ((ch = getopt(argc, argv, "c:del:n:r:s:")) != -1) {
 		switch (ch) {
