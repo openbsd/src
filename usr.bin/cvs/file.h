@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.12 2004/12/14 21:23:44 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.13 2004/12/15 07:03:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -113,9 +113,9 @@ struct cvs_dir {
 };
 
 
-#define CVS_DIR_ROOT(f)  (((f)->cf_type == DT_DIR) ? \
-	(f)->cf_ddat->cd_root : (((f)->cf_parent == NULL) ? \
-	NULL : (f)->cf_parent->cf_ddat->cd_root))
+#define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
+	((f)->cf_ddat->cd_root != NULL)) ? (f)->cf_ddat->cd_root : \
+	(((f)->cf_parent == NULL) ? NULL : (f)->cf_parent->cf_ddat->cd_root))
 
 #define CVS_DIR_ENTRIES(f)  (((f)->cf_type == DT_DIR) ? \
 	(f)->cf_ddat->cd_ent : (((f)->cf_parent == NULL) ? \
