@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.2 2004/04/15 08:34:20 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.3 2004/04/20 00:27:57 henning Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -47,7 +47,6 @@
 .Op Fl df
 .Op Fl c Ar config-file
 .Op Fl l Ar lease-file
-.Op Fl p Ar port
 .Op Ar if0 Op Ar ... ifN
 .Sh DESCRIPTION
 The Internet Software Consortium DHCP Server,
@@ -212,25 +211,6 @@ running
 in production, this option should be used
 .Em only
 for testing lease files in a non-production environment.
-.It Fl p Ar port
-Tell
-.Nm
-to listen on a port other than the standard (port 67).
-It should be followed by the UDP port number on which
-.Nm
-should listen.
-This is mostly useful for debugging purposes.
-The server will transmit responses to clients at a
-port number that is one greater than the one specified \- i.e., if you
-specify
-.Fl p
-67, then the server will listen on port 67 and transmit to port 68.
-Datagrams that must go through relay agents are sent to the port
-number specified with the
-.Fl p
-flag.
-If you wish to use alternate port numbers, you must configure
-any relay agents you are using to use the same alternate port numbers.
 .El
 .Sh CONFIGURATION
 The syntax of the

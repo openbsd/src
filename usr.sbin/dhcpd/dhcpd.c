@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.14 2004/04/18 00:43:27 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.15 2004/04/20 00:27:57 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -61,8 +61,7 @@ char *path_dhcpd_db = _PATH_DHCPD_DB;
 int
 main(int argc, char *argv[])
 {
-	int ch, status, cftest = 0, quiet = 0, daemonize = 1;
-	struct servent	*ent;
+	int ch, cftest = 0, quiet = 0, daemonize = 1;
 	struct passwd	*pw;
 	extern char *__progname;
 
@@ -70,7 +69,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:dfl:p:tq")) != -1)
+	while ((ch = getopt(argc, argv, "c:dfl:tq")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhcpd_conf = optarg;
@@ -84,12 +83,6 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			path_dhcpd_db = optarg;
-			break;
-		case 'p':
-			status = atoi(optarg);
-			if (status < 1 || status > 65535)
-				error("%s: not a valid UDP port", optarg);
-			local_port = htons(status);
 			break;
 		case 'q':
 			quiet = 1;
@@ -122,17 +115,9 @@ main(int argc, char *argv[])
 	if (quiet)
 		log_perror = 0;
 
-	/* Default to the DHCP/BOOTP port. */
-	if (!local_port) {
-		ent = getservbyname("dhcp", "udp");
-		if (!ent)
-			local_port = htons(67);
-		else
-			local_port = ent->s_port;
-		endservent();
-	}
+	local_port = htons(67);
+	remote_port = htons(68);
 
-	remote_port = htons(ntohs(local_port) + 1);
 	time(&cur_time);
 	if (!readconf())
 		error("Configuration file errors encountered -- exiting");
