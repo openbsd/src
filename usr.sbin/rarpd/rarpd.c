@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.14 1997/09/17 21:10:10 niklas Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.15 1997/09/18 08:05:47 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.14 1997/09/17 21:10:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.15 1997/09/18 08:05:47 deraadt Exp $";
 #endif
 
 
@@ -600,12 +600,12 @@ lookup_eaddr(ifname, eaddr)
 	char *ifname;
 	u_char *eaddr;
 {
-	char inbuf[8192];
+	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
 	int fd;
-	int i, len;
+	int i, len, inlen = 8192;
 
 	/* We cannot use SIOCGIFADDR on the BPF descriptor.
 	   We must instead get all the interfaces with SIOCGIFCONF
@@ -617,13 +617,24 @@ lookup_eaddr(ifname, eaddr)
 		/* NOTREACHED */
 	}
 
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		err(FATAL, "lookup_eaddr: SIOGIFCONF: %s", strerror(errno));
-		/* NOTREACHED */
+	while (1) {
+		ifc.ifc_len = inlen;
+		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
+		if (inbuf == NULL) {
+			close(fd);
+			err(FATAL, "init_all: malloc: %s", strerror(errno));
+		}
+		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
+			(void) close(fd);
+			free(inbuf);
+			err(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
+			/* NOTREACHED */
+		}
+		if (ifc.ifc_len + sizeof(*ifr) < inlen)
+			break;
+		inlen *= 2;
 	}
+
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
@@ -638,10 +649,12 @@ lookup_eaddr(ifname, eaddr)
 				fprintf(stderr, "%s: %x:%x:%x:%x:%x:%x\n",
 				    ifr->ifr_name, eaddr[0], eaddr[1],
 				    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
+			free(inbuf);
 			return;
 		}
 	}
 
+	free(inbuf);
 	err(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
 }
 /*
