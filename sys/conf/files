@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.296 2004/05/07 18:13:00 miod Exp $
+#	$OpenBSD: files,v 1.297 2004/05/20 03:04:37 marco Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -112,6 +112,11 @@ device	ahc: scsi, smc93cx6
 file	dev/ic/aic7xxx.c		ahc
 file	dev/ic/aic7xxx_openbsd.c	ahc
 file	dev/ic/aic7xxx_seeprom.c	ahc
+
+# Adaptec U320 SCSI controllers
+device	ahd: scsi
+file	dev/ic/aic79xx.c		ahd
+file	dev/ic/aic79xx_openbsd.c	ahd
 
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.151 2004/03/06 03:16:20 krw Exp $
+#	$OpenBSD: files.pci,v 1.152 2004/05/20 03:05:29 marco Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -39,6 +39,10 @@ file	dev/pci/cy82c693.c		cy82c693
 # device declaration in sys/conf/files
 attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
+
+# Adaptec U320 SCSI controllers
+attach	ahd at pci with ahd_pci
+file	dev/pci/ahd_pci.c		ahd_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
