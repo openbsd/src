@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1998/05/07 16:03:21 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1998/05/07 19:03:47 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1997/01/15 00:55:43 jonathan Exp $	*/
 
 /*
@@ -269,7 +269,6 @@ writedisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
-	struct disklabel *dlp;
 	int labelpart;
 	int error = 0;
 
@@ -287,28 +286,6 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
-	dlp = (struct disklabel *)bp->b_un.b_addr + LABELOFFSET;
-	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-	    dkcksum(dlp) == 0) {
-		*dlp = *lp;
-		bp->b_flags = B_WRITE;
-		(*strat)(bp);
-		error = biowait(bp);
-		goto done;
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
-	/* Write it in the regular place. */
 	*(struct disklabel *)(bp->b_data + LABELOFFSET) = *lp;
 	bp->b_flags = B_BUSY | B_WRITE;
 	(*strat)(bp);
