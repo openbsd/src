@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.10 2002/06/22 00:18:58 millert Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.11 2002/06/25 17:42:29 millert Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -103,8 +103,9 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 			buf = tbuf;
 		}
 		if ((cp = strchr(buf, '#')))
-			*cp = 0;	/* strip comment */
-		if ((cp = devname = strtok_r(buf, WSPACE, &toklast)) == NULL)
+			*cp = '\0';	/* strip comment */
+		if (buf[0] == '\0' ||
+		    (cp = devname = strtok_r(buf, WSPACE, &toklast)) == NULL)
 			continue;	/* empty or comment */
 		if (strncmp(devname, _PATH_DEV, sizeof(_PATH_DEV) - 1) != 0 ||
 		    (cp = strtok_r(NULL, WSPACE, &toklast)) == NULL ||
