@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.14 2000/10/14 18:10:37 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.15 2000/10/15 18:46:02 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2535,8 +2535,7 @@ xl_attach(sc)
 		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
 		ifmedia_add(ifm, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-			ifmedia_add(&sc->ifmedia,
-			    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+			ifmedia_add(ifm, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 	}
 
 	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
