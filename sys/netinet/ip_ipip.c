@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.1 2000/01/21 03:15:05 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.2 2000/01/21 03:16:24 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -186,7 +186,7 @@ ipip_input(struct mbuf *m, int iphlen)
             hlen = sizeof(struct ip6_hdr);
             break;
 #endif
-        default
+        default:
             m_freem(m);
             return /* EAFNOSUPPORT */;
     }
