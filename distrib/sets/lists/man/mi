@@ -1001,6 +1001,7 @@
 ./usr/share/man/cat4/i386/mms.0
 ./usr/share/man/cat4/i386/mtrr.0
 ./usr/share/man/cat4/i386/npx.0
+./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pctr.0
 ./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
