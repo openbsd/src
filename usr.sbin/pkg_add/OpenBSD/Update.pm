@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.36 2004/11/27 16:38:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.37 2004/12/02 00:15:15 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -241,7 +241,7 @@ sub can_do
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
 	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package contains unsafe operations\n";
+		Warn "Old package ", $plist->pkgname(), " contains unsafe operations\n";
 	}
 	if ($state->{forced}->{update}) {
 		$state->{okay} = 1;
@@ -277,7 +277,8 @@ sub is_safe
 	$state->{okay} = 1;
 	$plist->visit('can_update', 1, $state);
 	if ($state->{okay} == 0) {
-		Warn "New package contains unsafe operations\n";
+		Warn "New package ", $plist->pkgname(), 
+		    " contains unsafe operations\n";
 	}
 	return $state->{okay} || $state->{forced}->{update};
 }
@@ -435,7 +436,8 @@ sub is_needed
 	$oplist->visit('build_context', $old_context);
 	my $n = join(',', sort keys %$new_context);
 	my $o = join(',', sort keys %$old_context);
-	print "Comparing full signature $o vs. $n\n" if $state->{very_verbose};
+	print "Comparing full signature \"$o\" vs. \"$n\"\n" 
+	    if $state->{very_verbose};
 	return join(',', sort keys %$new_context) ne 
 	    join(',', sort keys %$old_context);
 }
