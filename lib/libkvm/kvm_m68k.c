@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.14 2004/07/03 19:57:37 miod Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.15 2004/09/15 19:31:31 miod Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.14 2004/07/03 19:57:37 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.15 2004/09/15 19:31:31 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,6 +57,7 @@ static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.14 2004/07/03 19:57:37 miod Exp $
 #include <sys/kcore.h>
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -196,7 +197,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 	cpu_kcore_hdr_t *cpu_kh;
 
 	cpu_kh = kd->cpu_data;
-	return (_kvm_vatop(kd, (u_long)cpu_kh->sysseg_pa, va, pa));
+	return (_kvm_vatop(kd, cpu_kh->sysseg_pa, va, pa));
 }
 
 /*

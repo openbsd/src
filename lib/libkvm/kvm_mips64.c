@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.1 2004/08/06 22:53:47 deraadt Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.2 2004/09/15 19:31:31 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.1 2004/08/06 22:53:47 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.2 2004/09/15 19:31:31 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,7 @@ static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.1 2004/08/06 22:53:47 deraadt E
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <nlist.h>
 #include <kvm.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.11 2004/06/15 03:52:59 deraadt Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.12 2004/09/15 19:31:31 miod Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.11 2004/06/15 03:52:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_file.c,v 1.12 2004/09/15 19:31:31 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,9 +78,9 @@ static int kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o,
 static int
 kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int nfiles)
 {
-	int buflen = kd->arglen, needed = buflen, error, n = 0;
-	char *where = kd->argspc, *start = where;
-	struct file *fp, file;
+	int buflen = kd->arglen, n = 0;
+	char *where = kd->argspc;
+	struct file *fp;
 	struct filelist filehead;
 
 	/*
