@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.3 2002/12/30 13:34:55 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.4 2002/12/30 15:39:18 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -861,6 +861,7 @@ pfr_walktree(struct radix_node *rn, void *arg)
 			bcopy(ke->pfrke_bytes, as.pfras_bytes,
 				sizeof(as.pfras_bytes));
 			splx(s);
+			as.pfras_tzero = ke->pfrke_tzero;
 
 			if (copyout(&as, w->pfrw_astats, sizeof(as)))
 				return (EFAULT);
