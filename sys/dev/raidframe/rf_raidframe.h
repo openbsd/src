@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raidframe.h,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
-/*	$NetBSD: rf_raidframe.h,v 1.5 1999/03/02 03:18:48 oster Exp $	*/
+/*	$OpenBSD: rf_raidframe.h,v 1.4 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,18 +43,6 @@
 #include "rf_configure.h"
 #include "rf_disks.h"
 #include "rf_raid.h"
-
-struct rf_test_acc {		/* used by RAIDFRAME_TEST_ACC ioctl */
-	RF_SectorNum_t startSector;	/* raidAddress */
-	RF_SectorCount_t numSector;	/* number of sectors to xfer */
-	char   *buf;		/* data buffer */
-	void   *returnBufs[10];	/* for async accs only, completed I/Os
-				 * returned */
-	struct rf_test_acc *next;	/* for making lists */
-	RF_IoType_t type;	/* (see rf_types.h for RF_IO_TYPE_*) */
-	struct rf_test_acc *myaddr;	/* user-address of this struct */
-	void   *bp;		/* used in-kernel: need not be set by user */
-};
 
 typedef RF_uint32 RF_ReconReqFlags_t;
 
@@ -108,7 +96,7 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_FAIL_DISK         _IOW ('r',  5, struct rf_recon_req)	/* fail a disk &
 									 * optionally start
 									 * recon */
-#define RAIDFRAME_CHECKRECON        _IOWR('r',  6, int)	/* get reconstruction %
+#define RAIDFRAME_CHECK_RECON_STATUS _IOWR('r',  6, int)	/* get reconstruction %
 							 * complete on indicated
 							 * row */
 #define RAIDFRAME_REWRITEPARITY     _IO  ('r',  7)	/* rewrite (initialize)
@@ -144,5 +132,7 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_SingleComponent_t)
 #define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
 #define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
-
+#define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
+#define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
+#define RAIDFRAME_CHECK_COPYBACK_STATUS _IOWR ('r', 27, int)
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

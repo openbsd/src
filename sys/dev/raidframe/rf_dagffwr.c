@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagffwr.c,v 1.2 1999/02/16 00:02:31 niklas Exp $	*/
-/*	$NetBSD: rf_dagffwr.c,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+/*	$OpenBSD: rf_dagffwr.c,v 1.3 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.4 1999/08/26 02:40:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -111,19 +111,9 @@ rf_CreateSmallWriteDAG(
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList)
 {
-#if RF_FORWARD > 0
-	rf_CommonCreateSmallWriteDAGFwd(raidPtr, asmap, dag_h, bp, flags, allocList,
-	    &rf_xorFuncs, NULL);
-#else				/* RF_FORWARD > 0 */
-#if RF_BACKWARD > 0
-	rf_CommonCreateSmallWriteDAGFwd(raidPtr, asmap, dag_h, bp, flags, allocList,
-	    &rf_xorFuncs, NULL);
-#else				/* RF_BACKWARD > 0 */
 	/* "normal" rollaway */
 	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    &rf_xorFuncs, NULL);
-#endif				/* RF_BACKWARD > 0 */
-#endif				/* RF_FORWARD > 0 */
 }
 
 void 
@@ -135,19 +125,9 @@ rf_CreateLargeWriteDAG(
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList)
 {
-#if RF_FORWARD > 0
-	rf_CommonCreateLargeWriteDAGFwd(raidPtr, asmap, dag_h, bp, flags, allocList,
-	    1, rf_RegularXorFunc, RF_TRUE);
-#else				/* RF_FORWARD > 0 */
-#if RF_BACKWARD > 0
-	rf_CommonCreateLargeWriteDAGFwd(raidPtr, asmap, dag_h, bp, flags, allocList,
-	    1, rf_RegularXorFunc, RF_TRUE);
-#else				/* RF_BACKWARD > 0 */
 	/* "normal" rollaway */
 	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    1, rf_RegularXorFunc, RF_TRUE);
-#endif				/* RF_BACKWARD > 0 */
-#endif				/* RF_FORWARD > 0 */
 }
 
 

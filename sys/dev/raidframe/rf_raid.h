@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raid.h,v 1.4 1999/08/04 13:10:55 peter Exp $	*/
-/*	$NetBSD: rf_raid.h,v 1.6 1999/07/08 00:45:24 oster Exp $	*/
+/*	$OpenBSD: rf_raid.h,v 1.5 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -181,14 +181,24 @@ struct RF_Raid_s {
 	RF_ThroughputStats_t throughputstats;
 #endif				/* !_KERNEL && !SIMULATE */
 	RF_CumulativeStats_t userstats;
+	int     parity_rewrite_stripes_done;
+	int     recon_stripes_done;
+	int     copyback_stripes_done;
+
+	int     recon_in_progress;
+	int     parity_rewrite_in_progress;
+	int     copyback_in_progress;
 
 	/*
          * Engine thread control
          */
-	        RF_DECLARE_MUTEX(node_queue_mutex)
-	        RF_DECLARE_COND(node_queue_cond)
+	RF_DECLARE_MUTEX(node_queue_mutex)
+	RF_DECLARE_COND(node_queue_cond)
 	RF_DagNode_t *node_queue;
+	RF_Thread_t parity_rewrite_thread;
+	RF_Thread_t copyback_thread;
 	RF_Thread_t engine_thread;
+	RF_Thread_t recon_thread;
 	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
 	int     dags_in_flight;	/* debug */
@@ -226,7 +236,6 @@ struct RF_Raid_s {
 	int     keep_acc_totals;
 
 	struct raidcinfo **raid_cinfo;	/* array of component info */
-	struct proc *proc;	/* XXX shouldn't be needed here.. :-p */
 
 	int     terminate_disk_queues;
 

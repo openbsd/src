@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagutils.c,v 1.2 1999/02/16 00:02:33 niklas Exp $	*/
-/*	$NetBSD: rf_dagutils.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$OpenBSD: rf_dagutils.c,v 1.3 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6 1999/12/09 02:26:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -44,7 +44,6 @@
 #include "rf_freelist.h"
 #include "rf_map.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #define SNUM_DIFF(_a_,_b_) (((_a_)>(_b_))?((_a_)-(_b_)):((_b_)-(_a_)))
 
@@ -1214,6 +1213,10 @@ rf_SelectMirrorDiskIdle(RF_DagNode_t * node)
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
 		} else
+			if (raidPtr->parity_good == RF_RAID_DIRTY) {
+				/* Trust only the main disk */
+				usemirror = 0;
+			} else
 			if (dataQueueLength < mirrorQueueLength) {
 				usemirror = 0;
 			} else
@@ -1271,8 +1274,13 @@ rf_SelectMirrorDiskPartition(RF_DagNode_t * node)
 	} else
 		if (RF_DEAD_DISK(disks[rowData][colData].status)) {
 			usemirror = 1;
+		} else 
+			if (raidPtr->parity_good == RF_RAID_DIRTY) {
+				/* Trust only the main disk */
+				usemirror = 0;
 		} else
-			if (data_pda->startSector < (disks[rowData][colData].numBlocks / 2)) {
+				if (data_pda->startSector < 
+				    (disks[rowData][colData].numBlocks / 2)) {
 				usemirror = 0;
 			} else {
 				usemirror = 1;

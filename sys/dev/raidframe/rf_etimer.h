@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_etimer.h,v 1.4 1999/08/04 13:10:54 peter Exp $	*/
-/*	$NetBSD: rf_etimer.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
+/*	$OpenBSD: rf_etimer.h,v 1.5 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_etimer.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

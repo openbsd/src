@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.2 1999/02/16 00:03:05 niklas Exp $	*/
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$OpenBSD: rf_paritylogDiskMgr.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -52,7 +52,6 @@
 #include "rf_dagutils.h"
 #include "rf_map.h"
 #include "rf_parityscan.h"
-#include "rf_sys.h"
 
 #include "rf_paritylogDiskMgr.h"
 

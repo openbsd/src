@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_decluster.c,v 1.2 1999/02/16 00:02:34 niklas Exp $	*/
-/*	$NetBSD: rf_decluster.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$OpenBSD: rf_decluster.c,v 1.3 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,7 +58,6 @@
 #include "rf_alloclist.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 extern int rf_copyback_in_progress;	/* debug only */
 

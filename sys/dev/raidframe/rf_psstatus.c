@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_psstatus.c,v 1.2 1999/02/16 00:03:12 niklas Exp $	*/
-/*	$NetBSD: rf_psstatus.c,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+/*	$OpenBSD: rf_psstatus.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,7 +45,6 @@
 #include "rf_freelist.h"
 #include "rf_psstatus.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #define Dprintf1(s,a)         if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)

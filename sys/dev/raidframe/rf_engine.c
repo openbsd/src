@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_engine.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
-/*	$NetBSD: rf_engine.c,v 1.5 1999/03/14 21:53:31 oster Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.4 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.6 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -103,10 +103,6 @@ rf_ShutdownEngine(arg)
 	raidPtr = (RF_Raid_t *) arg;
 	raidPtr->shutdown_engine = 1;
 	DO_SIGNAL(raidPtr);
-	/* XXX something is missing here... */
-#ifdef DEBUG
-	printf("IGNORING WAIT_STOP\n");
-#endif
 }
 
 int 
@@ -135,7 +131,7 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("[%d] Creating engine thread\n", tid);
 	}
-	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr)) {
+	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid")) {
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
 		return (ENOMEM);
 	}

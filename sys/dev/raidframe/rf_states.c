@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_states.c,v 1.4 1999/08/04 13:10:55 peter Exp $	*/
-/*	$NetBSD: rf_states.c,v 1.7 1999/07/08 00:45:24 oster Exp $	*/
+/*	$OpenBSD: rf_states.c,v 1.5 2000/01/07 14:50:23 peter Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.10 1999/12/12 20:52:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,14 +43,7 @@
 #include "rf_engine.h"
 #include "rf_map.h"
 #include "rf_etimer.h"
-
-#if defined(_KERNEL) && (DKUSAGE > 0)
-#include <sys/dkusage.h>
-#include <io/common/iotypes.h>
-#include <io/cam/dec_cam.h>
-#include <io/cam/cam.h>
-#include <io/cam/pdrv.h>
-#endif				/* _KERNEL && DKUSAGE > 0 */
+#include "rf_kintf.h"
 
 /* prototypes for some of the available states.
 
@@ -196,7 +189,6 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 	rf_ContinueRaidAccess(desc);
 }
 
-
 int 
 rf_State_LastState(RF_RaidAccessDesc_t * desc)
 {
@@ -205,31 +197,25 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 
 	callbackArg.p = desc->callbackArg;
 
-	if (!(desc->flags & RF_DAG_TEST_ACCESS)) {	/* don't biodone if this */
-#if DKUSAGE > 0
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid, (struct buf *) desc->bp);
-#else
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid);
-#endif				/* DKUSAGE > 0 */
+	/*
+         * If this is not an async request, wake up the caller
+         */
+	if (desc->async_flag == 0)
+		wakeup(desc->bp);
 
-		/*
-	         * If this is not an async request, wake up the caller
-	         */
-		if (desc->async_flag == 0)
-			wakeup(desc->bp);
+	/* 
+	 * Wakeup any requests waiting to go.
+	 */
 
-		/* 
-		 * Wakeup any requests waiting to go.
-		 */
+	RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	((RF_Raid_t *) desc->raidPtr)->openings++;
+	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 
-		RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-		((RF_Raid_t *) desc->raidPtr)->openings++;
-		wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
-		RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	/* wake up any pending IO */
+	raidstart(((RF_Raid_t *) desc->raidPtr));
 
-		/* printf("Calling biodone on 0x%x\n",desc->bp); */
-		biodone(desc->bp);	/* access came through ioctl */
-	}
+	/* printf("Calling biodone on 0x%x\n",desc->bp); */
+	biodone(desc->bp);	/* access came through ioctl */
 	if (callbackFunc)
 		callbackFunc(callbackArg);
 	rf_FreeRaidAccDesc(desc);

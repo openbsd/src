@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.5 1999/08/04 13:10:55 peter Exp $	*/
-/*	$NetBSD: rf_reconstruct.c,v 1.5 1999/03/02 03:18:49 oster Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.6 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.9 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,7 +64,6 @@
 #include "rf_utils.h"
 #include "rf_cpuutil.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #include "rf_kintf.h"
 
@@ -95,8 +94,10 @@
 #define DDprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define DDprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
+#if 0
 static RF_Thread_t recon_thr_handle;
 static int recon_thread_initialized = 0;
+#endif
 
 static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
@@ -212,10 +213,12 @@ rf_ConfigureReconstruction(listp)
 		rf_ShutdownReconstruction(NULL);
 		return (rc);
 	}
+#if 0
 	if (!recon_thread_initialized) {
-		RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL);
+		RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL, "raid_recon");
 		recon_thread_initialized = 1;
 	}
+#endif
 	return (0);
 }
 
@@ -256,7 +259,7 @@ rf_FreeReconDesc(reconDesc)
 	    reconDesc->numReconEventWaits, reconDesc->numReconExecDelays);
 #endif /* RF_RECON_STATS > 0 */
 
-	printf("RAIDframe: %qu max exec uSec\n", reconDesc->maxReconExecuSecs);
+	printf("RAIDframe: %qu max exec ticks\n", reconDesc->maxReconExecTicks);
 
 #if (RF_RECON_STATS > 0) || defined(_KERNEL)
 	printf("\n");
@@ -294,14 +297,14 @@ rf_ReconstructFailedDisk(raidPtr, row, col)
 		raidPtr->reconInProgress++;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		rc = rf_ReconstructFailedDiskBasic(raidPtr, row, col);
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	} else {
 		RF_ERRORMSG1("RECON: no way to reconstruct failed disk for arch %c\n",
 		    lp->parityConfig);
 		rc = EIO;
 	}
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->reconInProgress--;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
 	wakeup(&raidPtr->waitForReconCond);	/* XXX Methinks this will be
 						 * needed at some point... GO */
@@ -361,8 +364,8 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 	reconDesc->numReconEventWaits = 0;
 #endif				/* RF_RECON_STATS > 0 */
 	reconDesc->reconExecTimerRunning = 0;
-	reconDesc->reconExecuSecs = 0;
-	reconDesc->maxReconExecuSecs = 0;
+	reconDesc->reconExecTicks = 0;
+	reconDesc->maxReconExecTicks = 0;
 	rc = rf_ContinueReconstructFailedDisk(reconDesc);
 
 	if (!rc) {
@@ -459,6 +462,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			RF_WAIT_COND(raidPtr->waitForReconCond, raidPtr->mutex);
 		}
 
+		raidPtr->reconInProgress++;
+
 
 		/* first look for a spare drive onto which to reconstruct 
 		   the data.  spare disk descriptors are stored in row 0. 
@@ -473,6 +478,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 			RF_ERRORMSG2("Unable to reconstruct to disk at row %d col %d: operation not supported for RF_DISTRIBUTE_SPARE\n", row, col);
 
+			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}			
@@ -484,7 +490,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 		badDisk = &raidPtr->Disks[row][col];
 
-		proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+		proc = raidPtr->engine_thread;
 
 		/* This device may have been opened successfully the 
 		   first time. Close it before trying to open it again.. */
@@ -509,8 +515,8 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			       raidPtr->Disks[row][col].devname, retcode);
 
 			/* XXX the component isn't responding properly... 
-			   must be
-			   * still dead :-( */
+			   must be still dead :-( */
+			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return(retcode);
 
@@ -521,12 +527,14 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 			if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, 
 						   proc)) != 0) {
+				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
 			}
 			retcode = VOP_IOCTL(vp, DIOCGPART, (caddr_t) & dpart,
 					    FREAD, proc->p_ucred, proc);
 			if (retcode) {
+				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
 			}
@@ -559,8 +567,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		printf("       row %d col %d -> spare at row %d col %d\n", 
 		       row, col, row, col);
 
-		raidPtr->reconInProgress++;
-
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		
 		reconDesc = rf_AllocRaidReconDesc((void *) raidPtr, row, col, 
@@ -573,16 +579,20 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		reconDesc->numReconEventWaits = 0;
 #endif				/* RF_RECON_STATS > 0 */
 		reconDesc->reconExecTimerRunning = 0;
-		reconDesc->reconExecuSecs = 0;
-		reconDesc->maxReconExecuSecs = 0;
+		reconDesc->reconExecTicks = 0;
+		reconDesc->maxReconExecTicks = 0;
 		rc = rf_ContinueReconstructFailedDisk(reconDesc);
+
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	} else {
 		RF_ERRORMSG1("RECON: no way to reconstruct failed disk for arch %c\n",
 			     lp->parityConfig);
 		rc = EIO;
 	}
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->reconInProgress--;
 	
 	if (!rc) {
 		/* Need to set these here, as at this point it'll be claiming

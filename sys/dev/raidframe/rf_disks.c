@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_disks.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
-/*	$NetBSD: rf_disks.c,v 1.10 1999/06/04 02:02:39 oster Exp $	*/
+/*	$OpenBSD: rf_disks.c,v 1.4 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.13 1999/08/14 03:10:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,11 +72,7 @@
 #include "rf_utils.h"
 #include "rf_configure.h"
 #include "rf_general.h"
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include "rf_camlayer.h"
-#endif
 #include "rf_options.h"
-#include "rf_sys.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -378,7 +374,11 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-	proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+#if 0
+	proc = raidPtr->engine_thread;
+#else
+	proc = curproc;
+#endif
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;
@@ -444,8 +444,8 @@ rf_print_label_status( raidPtr, row, column, dev_name, ci_label )
 	printf("         Version: %d Serial Number: %d Mod Counter: %d\n",
 	       ci_label->version, ci_label->serial_number,
 	       ci_label->mod_counter);
-	printf("         Clean: %d Status: %d\n",
-	       ci_label->clean, ci_label->status );
+	printf("         Clean: %s Status: %d\n",
+	       ci_label->clean ? "Yes" : "No", ci_label->status );
 }
 
 static int rf_check_label_vitals( RF_Raid_t *, int, int, char *, 

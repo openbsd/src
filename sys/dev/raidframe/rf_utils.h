@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_utils.h,v 1.3 1999/08/03 13:56:38 peter Exp $	*/
-/*	$NetBSD: rf_utils.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$OpenBSD: rf_utils.h,v 1.4 2000/01/07 14:50:23 peter Exp $	*/
+/*	$NetBSD: rf_utils.h,v 1.4 1999/08/13 03:26:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -52,7 +52,9 @@ int     rf_atoi(char *p);
 int     rf_htoi(char *p);
 
 #define RF_USEC_PER_SEC 1000000
-#define RF_TIMEVAL_TO_US(_t_) (((_t_).tv_sec) * RF_USEC_PER_SEC + (_t_).tv_usec)
+#define RF_TIMEVAL_TO_US(_t_) (((_t_).tv_sec) \
+                * RF_USEC_PER_SEC + (_t_).tv_usec)
+
 #define RF_TIMEVAL_DIFF(_start_,_end_,_diff_) { \
 	if ((_end_)->tv_usec < (_start_)->tv_usec) { \
 		(_diff_)->tv_usec = ((_end_)->tv_usec + RF_USEC_PER_SEC) \

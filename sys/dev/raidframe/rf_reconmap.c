@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconmap.c,v 1.2 1999/02/16 00:03:21 niklas Exp $	*/
-/*	$NetBSD: rf_reconmap.c,v 1.4 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_reconmap.c,v 1.3 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.6 1999/08/14 21:44:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/time.h>
 #include "rf_general.h"
 #include "rf_utils.h"
-#include "rf_sys.h"
 
 /* special pointer values indicating that a reconstruction unit
  * has been either totally reconstructed or not at all.  Both
@@ -141,7 +140,7 @@ rf_ReconMapUpdate(raidPtr, mapPtr, startSector, stopSector)
 	RF_ReconMapListElem_t *p, *pt;
 
 	RF_LOCK_MUTEX(mapPtr->mutex);
-	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk && stopSector > startSector);
+	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk && stopSector >= startSector);
 
 	while (startSector <= stopSector) {
 		i = startSector / mapPtr->sectorsPerReconUnit;

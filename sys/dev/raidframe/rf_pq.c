@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_pq.c,v 1.3 1999/08/04 13:10:55 peter Exp $	*/
-/*	$NetBSD: rf_pq.c,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$OpenBSD: rf_pq.c,v 1.4 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.6 1999/08/15 03:44:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,7 +47,6 @@
 #include "rf_general.h"
 #include "rf_map.h"
 #include "rf_pq.h"
-#include "rf_sys.h"
 
 RF_RedFuncs_t rf_pFuncs = {rf_RegularONPFunc, "Regular Old-New P", rf_SimpleONPFunc, "Simple Old-New P"};
 RF_RedFuncs_t rf_pRecoveryFuncs = {rf_RecoveryPFunc, "Recovery P Func", rf_RecoveryPFunc, "Recovery P Func"};
@@ -118,7 +117,7 @@ rf_PQDagSelect(
 		switch (ndfail) {
 		case 0:
 			/* fault free read */
-			*createFunc = rf_CreateFaultFreeReadDAG;	/* same as raid 5 */
+			*createFunc = (RF_VoidFuncPtr) rf_CreateFaultFreeReadDAG;	/* same as raid 5 */
 			break;
 		case 1:
 			/* lost a single data unit */
@@ -127,22 +126,22 @@ rf_PQDagSelect(
 			 * reconstruct read using "q". */
 			if (ntfail == 2) {	/* also lost redundancy */
 				if (asmap->failedPDAs[1]->type == RF_PDA_TYPE_PARITY)
-					*createFunc = rf_PQ_110_CreateReadDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_110_CreateReadDAG;
 				else
-					*createFunc = rf_PQ_101_CreateReadDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_101_CreateReadDAG;
 			} else {
 				/* P and Q are ok. But is there a failure in
 				 * some unaccessed data unit? */
 				if (rf_NumFailedDataUnitsInStripe(raidPtr, asmap) == 2)
-					*createFunc = rf_PQ_200_CreateReadDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_200_CreateReadDAG;
 				else
-					*createFunc = rf_PQ_100_CreateReadDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_100_CreateReadDAG;
 			}
 			break;
 		case 2:
 			/* lost two data units */
 			/* *infoFunc = PQOneTwo; */
-			*createFunc = rf_PQ_200_CreateReadDAG;
+			*createFunc = (RF_VoidFuncPtr) rf_PQ_200_CreateReadDAG;
 			break;
 		}
 		return;
@@ -154,9 +153,9 @@ rf_PQDagSelect(
 		    (((asmap->numStripeUnitsAccessed <= (layoutPtr->numDataCol / 2)) && (layoutPtr->numDataCol != 1)) ||
 			(asmap->parityInfo->next != NULL) || (asmap->qInfo->next != NULL) || rf_CheckStripeForFailures(raidPtr, asmap))) {
 
-			*createFunc = rf_PQCreateSmallWriteDAG;
+			*createFunc = (RF_VoidFuncPtr) rf_PQCreateSmallWriteDAG;
 		} else {
-			*createFunc = rf_PQCreateLargeWriteDAG;
+			*createFunc = (RF_VoidFuncPtr) rf_PQCreateLargeWriteDAG;
 		}
 		break;
 
@@ -168,41 +167,41 @@ rf_PQDagSelect(
 										 * write. */
 				if (((asmap->numStripeUnitsAccessed <= (layoutPtr->numDataCol / 2)) || (asmap->numStripeUnitsAccessed == 1))
 				    || rf_NumFailedDataUnitsInStripe(raidPtr, asmap))
-					*createFunc = rf_PQ_001_CreateSmallWriteDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_001_CreateSmallWriteDAG;
 				else
-					*createFunc = rf_PQ_001_CreateLargeWriteDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_001_CreateLargeWriteDAG;
 			} else {/* parity died, small write only updating Q */
 				if (((asmap->numStripeUnitsAccessed <= (layoutPtr->numDataCol / 2)) || (asmap->numStripeUnitsAccessed == 1))
 				    || rf_NumFailedDataUnitsInStripe(raidPtr, asmap))
-					*createFunc = rf_PQ_010_CreateSmallWriteDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_010_CreateSmallWriteDAG;
 				else
-					*createFunc = rf_PQ_010_CreateLargeWriteDAG;
+					*createFunc = (RF_VoidFuncPtr) rf_PQ_010_CreateLargeWriteDAG;
 			}
 		} else {	/* data missing. Do a P reconstruct write if
 				 * only a single data unit is lost in the
 				 * stripe, otherwise a PQ reconstruct write. */
 			if (rf_NumFailedDataUnitsInStripe(raidPtr, asmap) == 2)
-				*createFunc = rf_PQ_200_CreateWriteDAG;
+				*createFunc = (RF_VoidFuncPtr) rf_PQ_200_CreateWriteDAG;
 			else
-				*createFunc = rf_PQ_100_CreateWriteDAG;
+				*createFunc = (RF_VoidFuncPtr) rf_PQ_100_CreateWriteDAG;
 		}
 		break;
 
 	case 2:		/* two disk faults */
 		switch (npfail) {
 		case 2:	/* both p and q dead */
-			*createFunc = rf_PQ_011_CreateWriteDAG;
+			*createFunc = (RF_VoidFuncPtr) rf_PQ_011_CreateWriteDAG;
 			break;
 		case 1:	/* either p or q and dead data */
 			RF_ASSERT(asmap->failedPDAs[0]->type == RF_PDA_TYPE_DATA);
 			RF_ASSERT((asmap->failedPDAs[1]->type == RF_PDA_TYPE_PARITY) || (asmap->failedPDAs[1]->type == RF_PDA_TYPE_Q));
 			if (asmap->failedPDAs[1]->type == RF_PDA_TYPE_Q)
-				*createFunc = rf_PQ_101_CreateWriteDAG;
+				*createFunc = (RF_VoidFuncPtr) rf_PQ_101_CreateWriteDAG;
 			else
-				*createFunc = rf_PQ_110_CreateWriteDAG;
+				*createFunc = (RF_VoidFuncPtr) rf_PQ_110_CreateWriteDAG;
 			break;
 		case 0:	/* double data loss */
-			*createFunc = rf_PQ_200_CreateWriteDAG;
+			*createFunc = (RF_VoidFuncPtr) rf_PQ_200_CreateWriteDAG;
 			break;
 		}
 		break;
@@ -216,6 +215,7 @@ rf_PQDagSelect(
 /*
    Used as a stop gap info function
 */
+#if 0
 static void 
 PQOne(raidPtr, nSucc, nAnte, asmap)
 	RF_Raid_t *raidPtr;
@@ -236,6 +236,8 @@ PQOneTwo(raidPtr, nSucc, nAnte, asmap)
 	*nSucc = 1;
 	*nAnte = 2;
 }
+#endif
+
 RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG)
 {
 	rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 2,
@@ -355,6 +357,8 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQCreateSmallWriteDAG)
 	rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pFuncs, &rf_qFuncs);
 }
 
+static void RegularQSubr(RF_DagNode_t *node, char   *qbuf);
+
 static void 
 RegularQSubr(node, qbuf)
 	RF_DagNode_t *node;
@@ -396,6 +400,8 @@ RegularQSubr(node, qbuf)
 /*
    used in degraded writes.
 */
+
+static void DegrQSubr(RF_DagNode_t *node);
 
 static void 
 DegrQSubr(node)
@@ -583,7 +589,8 @@ int
 rf_RecoveryPQFunc(node)
 	RF_DagNode_t *node;
 {
-	RF_PANIC();
+	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
+	printf("raid%d: Recovery from PQ not implemented.\n",raidPtr->raidid);
 	return (1);
 }
 /*
@@ -739,7 +746,10 @@ QDelta(
 	unsigned long a, d, new;
 	unsigned long a1, a2;
 	unsigned int *q = &(rf_qfor[28 - coeff][0]);
-	unsigned r = rf_rn[coeff + 1];
+	unsigned int r = rf_rn[coeff + 1];
+
+	r = a1 = a2 = new = d = a = 0; /* XXX for now... */
+	q = NULL; /* XXX for now */
 
 #ifdef _KERNEL
 	/* PQ in kernel currently not supported because the encoding/decoding

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_desc.h,v 1.3 1999/08/03 13:56:37 peter Exp $	*/
+/*	$OpenBSD: rf_desc.h,v 1.4 2000/01/07 14:50:21 peter Exp $	*/
 /*	$NetBSD: rf_desc.h,v 1.4 1999/02/05 00:06:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -54,8 +54,8 @@ struct RF_RaidReconDesc_s {
          */
 	RF_Etimer_t recon_exec_timer;
 	RF_uint64 reconExecTimerRunning;
-	RF_uint64 reconExecuSecs;
-	RF_uint64 maxReconExecuSecs;
+	RF_uint64 reconExecTicks;
+	RF_uint64 maxReconExecTicks;
 
 #if RF_RECON_STATS > 0
 	RF_uint64 hsStallCount;	/* head sep stall count */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagfuncs.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
-/*	$NetBSD: rf_dagfuncs.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
+/*	$OpenBSD: rf_dagfuncs.c,v 1.4 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.5 1999/08/26 02:40:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -294,9 +294,6 @@ rf_DiskReadFuncForThreads(node)
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_READ : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
-#if RF_BACKWARD > 0
-	caddr_t undoBuf;
-#endif
 
 	if (node->dagHdr->bp)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
@@ -304,14 +301,7 @@ rf_DiskReadFuncForThreads(node)
 	RF_ASSERT(!(lock && unlock));
 	flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
 	flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
-#if RF_BACKWARD > 0
-	/* allocate and zero the undo buffer. this is equivalent to copying
-	 * the original buffer's contents to the undo buffer prior to
-	 * performing the disk read. XXX hardcoded 512 bytes per sector! */
-	if (node->dagHdr->allocList == NULL)
-		rf_MakeAllocList(node->dagHdr->allocList);
-	RF_CallocAndAdd(undoBuf, 1, 512 * pda->numSector, (caddr_t), node->dagHdr->allocList);
-#endif				/* RF_BACKWARD > 0 */
+
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
@@ -346,58 +336,9 @@ rf_DiskWriteFuncForThreads(node)
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_WRITE : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t **dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
-#if RF_BACKWARD > 0
-	caddr_t undoBuf;
-#endif
 
 	if (node->dagHdr->bp)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
-
-#if RF_BACKWARD > 0
-	/* This area is used only for backward error recovery experiments
-	 * First, schedule allocate a buffer and schedule a pre-read of the
-	 * disk After the pre-read, proceed with the normal disk write */
-	if (node->status == rf_bwd2) {
-		/* just finished undo logging, now perform real function */
-		node->status = rf_fired;
-		RF_ASSERT(!(lock && unlock));
-		flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-		flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
-		req = rf_CreateDiskQueueData(iotype,
-		    pda->startSector, pda->numSector, buf, parityStripeID, which_ru,
-		    node->wakeFunc, (void *) node, NULL, node->dagHdr->tracerec,
-		    (void *) (node->dagHdr->raidPtr), flags, b_proc);
-
-		if (!req) {
-			(node->wakeFunc) (node, ENOMEM);
-		} else {
-			node->dagFuncData = (void *) req;
-			rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
-		}
-	} else {
-		/* node status should be rf_fired */
-		/* schedule a disk pre-read */
-		node->status = rf_bwd1;
-		RF_ASSERT(!(lock && unlock));
-		flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-		flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
-		if (node->dagHdr->allocList == NULL)
-			rf_MakeAllocList(node->dagHdr->allocList);
-		RF_CallocAndAdd(undoBuf, 1, 512 * pda->numSector, (caddr_t), node->dagHdr->allocList);
-		req = rf_CreateDiskQueueData(RF_IO_TYPE_READ,
-		    pda->startSector, pda->numSector, undoBuf, parityStripeID, which_ru,
-		    node->wakeFunc, (void *) node, NULL, node->dagHdr->tracerec,
-		    (void *) (node->dagHdr->raidPtr), flags, b_proc);
-
-		if (!req) {
-			(node->wakeFunc) (node, ENOMEM);
-		} else {
-			node->dagFuncData = (void *) req;
-			rf_DiskIOEnqueue(&(dqs[pda->row][pda->col]), req, priority);
-		}
-	}
-	return (0);
-#endif				/* RF_BACKWARD > 0 */
 
 	/* normal processing (rollaway or forward recovery) begins here */
 	RF_ASSERT(!(lock && unlock));
@@ -549,10 +490,6 @@ rf_RegularXorFunc(node)
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
 	int     i, retcode;
-#if RF_BACKWARD > 0
-	RF_PhysDiskAddr_t *pda;
-	caddr_t undoBuf;
-#endif
 
 	retcode = 0;
 	if (node->dagHdr->status == rf_enable) {
@@ -560,16 +497,6 @@ rf_RegularXorFunc(node)
 		RF_ETIMER_START(timer);
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
-#if RF_BACKWARD > 0
-				/* This section mimics undo logging for
-				 * backward error recovery experiments b
-				 * allocating and initializing a buffer XXX
-				 * 512 byte sector size is hard coded! */
-				pda = node->params[i].p;
-				if (node->dagHdr->allocList == NULL)
-					rf_MakeAllocList(node->dagHdr->allocList);
-				RF_CallocAndAdd(undoBuf, 1, 512 * pda->numSector, (caddr_t), node->dagHdr->allocList);
-#endif				/* RF_BACKWARD > 0 */
 				retcode = rf_XorIntoBuffer(raidPtr, (RF_PhysDiskAddr_t *) node->params[i].p,
 				    (char *) node->params[i + 1].p, (char *) node->results[0], node->dagHdr->bp);
 			}
@@ -590,26 +517,12 @@ rf_SimpleXorFunc(node)
 	int     i, retcode = 0;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
-#if RF_BACKWARD > 0
-	RF_PhysDiskAddr_t *pda;
-	caddr_t undoBuf;
-#endif
 
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
 		/* don't do the XOR if the input is the same as the output */
 		for (i = 0; i < node->numParams - 1; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
-#if RF_BACKWARD > 0
-				/* This section mimics undo logging for
-				 * backward error recovery experiments b
-				 * allocating and initializing a buffer XXX
-				 * 512 byte sector size is hard coded! */
-				pda = node->params[i].p;
-				if (node->dagHdr->allocList == NULL)
-					rf_MakeAllocList(node->dagHdr->allocList);
-				RF_CallocAndAdd(undoBuf, 1, 512 * pda->numSector, (caddr_t), node->dagHdr->allocList);
-#endif				/* RF_BACKWARD > 0 */
 				retcode = rf_bxor((char *) node->params[i + 1].p, (char *) node->results[0],
 				    rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[i].p)->numSector),
 				    (struct buf *) node->dagHdr->bp);
@@ -642,24 +555,12 @@ rf_RecoveryXorFunc(node)
 	char   *srcbuf, *destbuf;
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
-#if RF_BACKWARD > 0
-	caddr_t undoBuf;
-#endif
 
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
 		for (i = 0; i < node->numParams - 2; i += 2)
 			if (node->params[i + 1].p != node->results[0]) {
 				pda = (RF_PhysDiskAddr_t *) node->params[i].p;
-#if RF_BACKWARD > 0
-				/* This section mimics undo logging for
-				 * backward error recovery experiments b
-				 * allocating and initializing a buffer XXX
-				 * 512 byte sector size is hard coded! */
-				if (node->dagHdr->allocList == NULL)
-					rf_MakeAllocList(node->dagHdr->allocList);
-				RF_CallocAndAdd(undoBuf, 1, 512 * pda->numSector, (caddr_t), node->dagHdr->allocList);
-#endif				/* RF_BACKWARD > 0 */
 				srcbuf = (char *) node->params[i + 1].p;
 				suoffset = rf_StripeUnitOffset(layoutPtr, pda->startSector);
 				destbuf = ((char *) node->results[0]) + rf_RaidAddressToByte(raidPtr, suoffset - failedSUOffset);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_revent.c,v 1.6 1999/08/03 13:56:38 peter Exp $	*/
-/*	$NetBSD: rf_revent.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
+/*	$OpenBSD: rf_revent.c,v 1.7 2000/01/07 14:50:23 peter Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.5 1999/08/13 03:26:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -135,17 +135,17 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 
 		RF_ETIMER_STOP(reconDesc->recon_exec_timer);
 		RF_ETIMER_EVAL(reconDesc->recon_exec_timer);
-		reconDesc->reconExecuSecs += RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
-		if (reconDesc->reconExecuSecs > reconDesc->maxReconExecuSecs)
-			reconDesc->maxReconExecuSecs = reconDesc->reconExecuSecs;
-		if (reconDesc->reconExecuSecs >= MAX_RECON_EXEC_USECS) {
+		reconDesc->reconExecTicks += RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
+		if (reconDesc->reconExecTicks > reconDesc->maxReconExecTicks)
+			reconDesc->maxReconExecTicks = reconDesc->reconExecTicks;
+		if (reconDesc->reconExecTicks >= MAX_RECON_EXEC_USECS) {
 			/* we've been running too long - sleep */
 #if RF_RECON_STATS > 0
 			reconDesc->numReconExecDelays++;
 #endif /* RF_RECON_STATS > 0 */
-			status = tsleep(&reconDesc->reconExecuSecs, PRIBIO, "recon delay", RECON_TIMO);
+			status = tsleep(&reconDesc->reconExecTicks, PRIBIO, "recon delay", RECON_TIMO);
 			RF_ASSERT(status == EWOULDBLOCK);
-			reconDesc->reconExecuSecs = 0;
+			reconDesc->reconExecTicks = 0;
 		}
 	}
 	while (!rctrl->eventQueue) {
@@ -153,7 +153,7 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
 		DO_WAIT(rctrl);
-		reconDesc->reconExecuSecs = 0;	/* we've just waited */
+		reconDesc->reconExecTicks = 0;	/* we've just waited */
 	}
 
 	RF_ETIMER_START(reconDesc->recon_exec_timer);

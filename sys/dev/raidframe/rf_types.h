@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_types.h,v 1.2 1999/02/16 00:03:32 niklas Exp $	*/
-/*	$NetBSD: rf_types.h,v 1.4 1999/02/05 00:06:18 oster Exp $	*/
+/*	$OpenBSD: rf_types.h,v 1.3 2000/01/07 14:50:23 peter Exp $	*/
+/*	$NetBSD: rf_types.h,v 1.6 1999/09/05 03:05:55 oster Exp $	*/
 /*
  * rf_types.h
  */
@@ -47,12 +47,6 @@
 #include <sys/uio.h>
 #include <sys/param.h>
 #include <sys/lock.h>
-
-/* XXX not sure about these... */
-/* #define PZERO 0 *//* actually defined in <sys/param.h> */
-#define MS_LOCK_SIMPLE 1
-
-#define TRUE 1			/* XXX why isn't this done somewhere already!! */
 
 /*
  * First, define system-dependent types and constants.
@@ -140,11 +134,6 @@ typedef char RF_IoType_t;
 #define RF_IO_TYPE_NOP           'n'
 #define RF_IO_IS_R_OR_W(_type_) (((_type_) == RF_IO_TYPE_READ) \
                                 || ((_type_) == RF_IO_TYPE_WRITE))
-
-#ifdef SIMULATE
-typedef double RF_TICS_t;
-typedef int RF_Owner_t;
-#endif				/* SIMULATE */
 
 typedef void (*RF_VoidFuncPtr) (void *,...);
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_copyback.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
-/*	$NetBSD: rf_copyback.c,v 1.7 1999/03/02 03:18:49 oster Exp $	*/
+/*	$OpenBSD: rf_copyback.c,v 1.4 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.10 2000/01/05 02:57:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -53,7 +53,6 @@
 #include "rf_decluster.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 #define RF_COPYBACK_DATA   0
 #define RF_COPYBACK_PARITY 1
@@ -127,7 +126,7 @@ rf_CopybackReconstructedData(raidPtr)
 	}
 	badDisk = &raidPtr->Disks[frow][fcol];
 
-	proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+	proc = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
@@ -275,6 +274,8 @@ rf_ContinueCopyback(desc)
 	old_pctg = (-1);
 	while (1) {
 		stripeAddr = desc->stripeAddr;
+		desc->raidPtr->copyback_stripes_done = stripeAddr
+			/ desc->sectPerStripe;
 		if (rf_prReconSched) {
 			old_pctg = 100 * desc->stripeAddr / raidPtr->totalSectors;
 		}

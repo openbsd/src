@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_debugMem.c,v 1.2 1999/02/16 00:02:33 niklas Exp $	*/
-/*	$NetBSD: rf_debugMem.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$OpenBSD: rf_debugMem.c,v 1.3 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.6 1999/09/04 21:11:21 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,20 +38,14 @@
  */
 
 #include "rf_types.h"
-#include "rf_sys.h"
 
-#if RF_UTILITY == 0
 #include "rf_threadstuff.h"
 #include "rf_threadid.h"
 #include "rf_options.h"
-#else				/* RF_UTILITY == 0 */
-#include "rf_utility.h"
-#endif				/* RF_UTILITY == 0 */
-
 #include "rf_debugMem.h"
 #include "rf_general.h"
 
-static long tot_mem_in_use = 0, max_mem = 0;
+static long tot_mem_in_use = 0;
 
 /* Hash table of information about memory allocations */
 #define RF_MH_TABLESIZE 1000
@@ -70,275 +64,6 @@ RF_DECLARE_MUTEX(rf_debug_mem_mutex)
 
 	static void memory_hash_insert(void *addr, int size, int line, char *filen);
 	static int memory_hash_remove(void *addr, int sz);
-
-#ifndef _KERNEL			/* no redzones or "real_" routines in the
-				 * kernel */
-
-	static void rf_redzone_free_failed(void *ptr, int size, int line, char *file);
-
-	void   *rf_real_redzone_malloc(_size_)
-	int     _size_;
-{
-	char   *p;
-
-	rf_validate_mh_table();
-	p = malloc((_size_) + 16);
-	if (p == NULL)
-		return (p);
-	RF_ASSERT(p);
-	*((long *) p) = (_size_);
-	((char *) p)[(_size_) + 8] = '!';
-	((char *) p)[(_size_) + 15] = '!';
-	p += 8;
-	return (p);
-}
-
-void   *
-rf_real_redzone_calloc(_n_, _size_)
-	int     _n_, _size_;
-{
-	char   *p;
-	int     _sz_;
-
-	rf_validate_mh_table();
-	_sz_ = (_n_) * (_size_);
-	p = malloc((_sz_) + 16);
-	if (p == NULL)
-		return (p);
-	bzero(p, (_sz_) + 16);
-	*((long *) p) = (_sz_);
-	((char *) p)[(_sz_) + 8] = '!';
-	((char *) p)[(_sz_) + 15] = '!';
-	p += 8;
-	return (p);
-}
-
-void 
-rf_real_redzone_free(p, line, filen)
-	char   *p;
-	int     line;
-	char   *filen;
-{
-	unsigned long _size_;
-
-	rf_validate_mh_table();
-	p -= 8;
-	_size_ = *((long *) p);
-	if ((((char *) p)[(_size_) + 8] != '!') || (((char *) p)[(_size_) + 15] != '!'))
-		rf_redzone_free_failed(p, (_size_), line, filen);
-	free(p);
-}
-
-unsigned long rf_mem_alloc = 0;
-
-char   *
-rf_real_Malloc(size, line, file)
-	int     size;
-	int     line;
-	char   *file;
-{
-	void   *pp;
-	char   *p;
-	int     tid;
-
-	RF_LOCK_MUTEX(rf_debug_mem_mutex);
-	rf_redzone_malloc(pp, size);
-	p = pp;
-	if (p == NULL) {
-		RF_ERRORMSG3("Unable to malloc %d bytes at line %d file %s\n", size,
-		    line, file);
-	}
-	if (rf_memAmtDebug) {
-		rf_mem_alloc += size;
-		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
-	}
-#if RF_UTILITY == 0
-	if (rf_memDebug > 1) {
-		rf_get_threadid(tid);
-		printf("[%d] malloc 0x%lx - 0x%lx (%d) %s %d\n", tid, p, p + size, size,
-		    file, line);
-	}
-#endif				/* RF_UTILITY == 0 */
-	if (rf_memDebug)
-		rf_record_malloc(p, size, line, file);
-	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
-	return (p);
-}
-#if RF_UTILITY == 0
-char   *
-rf_real_MallocAndAdd(size, alist, line, file)
-	int     size;
-	RF_AllocListElem_t *alist;
-	int     line;
-	char   *file;
-{
-	void   *pp;
-	char   *p;
-	int     tid;
-
-	RF_LOCK_MUTEX(rf_debug_mem_mutex);
-	rf_redzone_malloc(pp, size);
-	p = pp;
-	if (p == NULL) {
-		RF_ERRORMSG3("Unable to malloc %d bytes at line %d file %s\n", size,
-		    line, file);
-	}
-	if (rf_memAmtDebug) {
-		rf_mem_alloc += size;
-		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
-	}
-	if (rf_memDebug > 1) {
-		rf_get_threadid(tid);
-		printf("[%d] malloc+add 0x%lx - 0x%lx (%d) %s %d\n", tid, p, p + size,
-		    size, file, line);
-	}
-	if (alist) {
-		rf_real_AddToAllocList(alist, pp, size, 0);
-	}
-	if (rf_memDebug)
-		rf_record_malloc(p, size, line, file);
-	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
-	return (p);
-}
-#endif				/* RF_UTILITY == 0 */
-
-char   *
-rf_real_Calloc(nel, elsz, line, file)
-	int     nel;
-	int     elsz;
-	int     line;
-	char   *file;
-{
-	int     tid, size;
-	void   *pp;
-	char   *p;
-
-	size = nel * elsz;
-	RF_LOCK_MUTEX(rf_debug_mem_mutex);
-	rf_redzone_calloc(pp, nel, elsz);
-	p = pp;
-	if (p == NULL) {
-		RF_ERRORMSG4("Unable to calloc %d objects of size %d at line %d file %s\n",
-		    nel, elsz, line, file);
-		return (NULL);
-	}
-	if (rf_memAmtDebug) {
-		rf_mem_alloc += size;
-		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
-	}
-#if RF_UTILITY == 0
-	if (rf_memDebug > 1) {
-		rf_get_threadid(tid);
-		printf("[%d] calloc 0x%lx - 0x%lx (%d,%d) %s %d\n", tid, p, p + size, nel,
-		    elsz, file, line);
-	}
-#endif				/* RF_UTILITY == 0 */
-	if (rf_memDebug) {
-		rf_record_malloc(p, size, line, file);
-	}
-	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
-	return (p);
-}
-#if RF_UTILITY == 0
-char   *
-rf_real_CallocAndAdd(nel, elsz, alist, line, file)
-	int     nel;
-	int     elsz;
-	RF_AllocListElem_t *alist;
-	int     line;
-	char   *file;
-{
-	int     tid, size;
-	void   *pp;
-	char   *p;
-
-	size = nel * elsz;
-	RF_LOCK_MUTEX(rf_debug_mem_mutex);
-	rf_redzone_calloc(pp, nel, elsz);
-	p = pp;
-	if (p == NULL) {
-		RF_ERRORMSG4("Unable to calloc %d objs of size %d at line %d file %s\n",
-		    nel, elsz, line, file);
-		return (NULL);
-	}
-	if (rf_memAmtDebug) {
-		rf_mem_alloc += size;
-		printf("%lu    size %d %s:%d\n", rf_mem_alloc, size, file, line);
-	}
-	if (rf_memDebug > 1) {
-		rf_get_threadid(tid);
-		printf("[%d] calloc+add 0x%lx - 0x%lx (%d,%d) %s %d\n", tid, p,
-		    p + size, nel, elsz, file, line);
-	}
-	if (alist) {
-		rf_real_AddToAllocList(alist, pp, size, 0);
-	}
-	if (rf_memDebug)
-		rf_record_malloc(p, size, line, file);
-	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
-	return (p);
-}
-#endif				/* RF_UTILITY == 0 */
-
-void 
-rf_real_Free(p, sz, line, file)
-	void   *p;
-	int     sz;
-	int     line;
-	char   *file;
-{
-	int     tid;
-
-#if RF_UTILITY == 0
-	if (rf_memDebug > 1) {
-		rf_get_threadid(tid);
-		printf("[%d] free 0x%lx - 0x%lx (%d) %s %d\n", tid, p, ((char *) p) + sz, sz,
-		    file, line);
-	}
-#endif				/* RF_UTILITY == 0 */
-	RF_LOCK_MUTEX(rf_debug_mem_mutex);
-	if (rf_memAmtDebug) {
-		rf_mem_alloc -= sz;
-		printf("%lu  - size %d %s:%d\n", rf_mem_alloc, sz, file, line);
-	}
-	if (rf_memDebug) {
-		rf_unrecord_malloc(p, sz);
-	}
-	rf_redzone_free(p);
-	RF_UNLOCK_MUTEX(rf_debug_mem_mutex);
-}
-
-void 
-rf_validate_mh_table()
-{
-	int     i, size;
-	struct mh_struct *p;
-	char   *cp;
-
-	return;
-	for (i = 0; i < RF_MH_TABLESIZE; i++) {
-		for (p = mh_table[i]; p; p = p->next)
-			if (p->allocated) {
-				cp = ((char *) p->address) - 8;
-				size = *((long *) cp);
-				if ((((char *) cp)[(size) + 8] != '!') || (((char *) cp)[(size) + 15] != '!')) {
-					rf_redzone_free_failed(cp, (size), __LINE__, __FILE__);
-				}
-			}
-	}
-}
-
-static void 
-rf_redzone_free_failed(ptr, size, line, file)
-	void   *ptr;
-	int     size;
-	int     line;
-	char   *file;
-{
-	RF_ERRORMSG4("Free of 0x%lx (recorded size %d) at %d of %s detected redzone overrun\n", ptr, size, line, file);
-	RF_ASSERT(0);
-}
-#endif				/* !_KERNEL */
 
 void 
 rf_record_malloc(p, size, line, filen)
@@ -474,10 +199,4 @@ memory_hash_remove(addr, sz)
 	}
 	p->allocated = 0;
 	return (p->size);
-}
-
-void 
-rf_ReportMaxMem()
-{
-	printf("Max memory used:  %d bytes\n", (int) max_mem);
 }

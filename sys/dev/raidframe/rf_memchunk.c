@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_memchunk.c,v 1.2 1999/02/16 00:02:57 niklas Exp $	*/
-/*	$NetBSD: rf_memchunk.c,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$OpenBSD: rf_memchunk.c,v 1.3 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_memchunk.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,6 @@
 #include "rf_general.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 
 typedef struct RF_ChunkHdr_s RF_ChunkHdr_t;
 struct RF_ChunkHdr_s {

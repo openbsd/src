@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_optnames.h,v 1.3 1999/08/04 13:10:55 peter Exp $	*/
-/*	$NetBSD: rf_optnames.h,v 1.4 1999/02/05 00:06:13 oster Exp $	*/
+/*	$OpenBSD: rf_optnames.h,v 1.4 2000/01/07 14:50:22 peter Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.6 1999/12/07 02:54:08 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -34,21 +34,14 @@
  * Don't protect against multiple inclusion here- we actually want this.
  */
 
-RF_DBG_OPTION(accSizeKB, 0)	/* if nonzero, the fixed access size to run */
 RF_DBG_OPTION(accessDebug, 0)
 RF_DBG_OPTION(accessTraceBufSize, 0)
-RF_DBG_OPTION(alignAccesses, 0)		/* whether accs should be aligned to
-					 * their size */
-RF_DBG_OPTION(camlayerIOs, 0)
-RF_DBG_OPTION(camlayerDebug, 0)		/* debug CAM activity */
 RF_DBG_OPTION(cscanDebug, 0)	/* debug CSCAN sorting */
 RF_DBG_OPTION(dagDebug, 0)
 RF_DBG_OPTION(debugPrintUseBuffer, 0)
 RF_DBG_OPTION(degDagDebug, 0)
 RF_DBG_OPTION(disableAsyncAccs, 0)
 RF_DBG_OPTION(diskDebug, 0)
-RF_DBG_OPTION(doDebug, 0)
-RF_DBG_OPTION(dtDebug, 0)
 RF_DBG_OPTION(enableAtomicRMW, 0)	/* this debug var enables locking of
 					 * the disk arm during small-write
 					 * operations.  Setting this variable
@@ -65,11 +58,7 @@ RF_DBG_OPTION(keepAccTotals, 0)		/* turn on keep_acc_totals */
 RF_DBG_OPTION(lockTableSize, RF_DEFAULT_LOCK_TABLE_SIZE)
 RF_DBG_OPTION(mapDebug, 0)
 RF_DBG_OPTION(maxNumTraces, -1)
-RF_DBG_OPTION(maxRandomSizeKB, 128)	/* if rf_accSizeKB==0, acc sizes are
-					 * uniform in [ (1/2)..maxRandomSizeKB
-					 * ] */
-RF_DBG_OPTION(maxTraceRunTimeSec, 0)
-RF_DBG_OPTION(memAmtDebug, 0)		/* trace amount of memory allocated */
+
 RF_DBG_OPTION(memChunkDebug, 0)
 RF_DBG_OPTION(memDebug, 0)
 RF_DBG_OPTION(memDebugAddress, 0)
@@ -88,8 +77,6 @@ RF_DBG_OPTION(raidSectorOffset, 0)	/* added to all incoming sectors to
 					 * debug alignment problems */
 RF_DBG_OPTION(reconDebug, 0)
 RF_DBG_OPTION(reconbufferDebug, 0)
-RF_DBG_OPTION(rewriteParityStripes, 0)		/* debug flag that causes
-						 * parity rewrite at startup */
 RF_DBG_OPTION(scanDebug, 0)	/* debug SCAN sorting */
 RF_DBG_OPTION(showXorCallCounts, 0)	/* show n-way Xor call counts */
 RF_DBG_OPTION(shutdownDebug, 0)		/* show shutdown calls */
@@ -98,22 +85,12 @@ RF_DBG_OPTION(sstfDebug, 0)	/* turn on debugging info for sstf queueing */
 RF_DBG_OPTION(stripeLockDebug, 0)
 RF_DBG_OPTION(suppressLocksAndLargeWrites, 0)
 RF_DBG_OPTION(suppressTraceDelays, 0)
-RF_DBG_OPTION(testDebug, 0)
 RF_DBG_OPTION(useMemChunks, 1)
 RF_DBG_OPTION(validateDAGDebug, 0)
 RF_DBG_OPTION(validateVisitedDebug, 1)		/* XXX turn to zero by
 						 * default? */
 RF_DBG_OPTION(verifyParityDebug, 0)
-RF_DBG_OPTION(warnLongIOs, 0)
 RF_DBG_OPTION(debugKernelAccess, 0)	/* DoAccessKernel debugging */
-#ifndef _KERNEL
-RF_DBG_OPTION(disableParityVerify, 0)		/* supress verification of
-						 * parity */
-RF_DBG_OPTION(interactiveScript, 0)	/* set as a debug option for now */
-RF_DBG_OPTION(looptestShowWrites, 0)		/* user-level loop test write
-						 * debugging */
-RF_DBG_OPTION(traceDebug, 0)
-#endif				/* !_KERNEL */
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 RF_DBG_OPTION(forceParityLogReint, 0)
@@ -126,6 +103,3 @@ RF_DBG_OPTION(totalInCoreLogCapacity, 1024 * 1024)	/* target bytes
 							 * logs */
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
-#if DFSTRACE > 0
-RF_DBG_OPTION(DFSTraceAccesses, 0)
-#endif				/* DFSTRACE > 0 */

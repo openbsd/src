@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_driver.c,v 1.5 1999/08/04 13:10:54 peter Exp $	*/
-/*	$NetBSD: rf_driver.c,v 1.12 1999/07/19 01:36:07 oster Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.6 2000/01/07 14:50:21 peter Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.19 1999/12/07 02:54:08 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -115,24 +115,12 @@
 #include "rf_nwayxor.h"
 #include "rf_debugprint.h"
 #include "rf_copyback.h"
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include "rf_camlayer.h"
-#endif
 #include "rf_driver.h"
 #include "rf_options.h"
 #include "rf_shutdown.h"
-#include "rf_sys.h"
 #include "rf_cpuutil.h"
 
 #include <sys/buf.h>
-
-#if DKUSAGE > 0
-#include <sys/dkusage.h>
-#include <io/common/iotypes.h>
-#include <io/cam/dec_cam.h>
-#include <io/cam/cam.h>
-#include <io/cam/pdrv.h>
-#endif				/* DKUSAGE > 0 */
 
 /* rad == RF_RaidAccessDesc_t */
 static RF_FreeList_t *rf_rad_freelist;
@@ -171,23 +159,12 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 #define WAIT_FOR_QUIESCENCE(_raid_) \
 	tsleep(&((_raid_)->accesses_suspended),PRIBIO,"raidframe quiesce", 0);
 
-#if DKUSAGE > 0
 #define IO_BUF_ERR(bp, err, unit) { \
 	bp->b_flags |= B_ERROR; \
 	bp->b_resid = bp->b_bcount; \
 	bp->b_error = err; \
-	RF_DKU_END_IO(unit, bp); \
 	biodone(bp); \
 }
-#else
-#define IO_BUF_ERR(bp, err, unit) { \
-	bp->b_flags |= B_ERROR; \
-	bp->b_resid = bp->b_bcount; \
-	bp->b_error = err; \
-	RF_DKU_END_IO(unit); \
-	biodone(bp); \
-}
-#endif				/* DKUSAGE > 0 */
 
 	static int configureCount = 0;	/* number of active configurations */
 	static int isconfigged = 0;	/* is basic raidframe (non per-array)
@@ -208,10 +185,6 @@ rf_BootRaidframe()
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-
-#if RF_DEBUG_ATOMIC > 0
-	rf_atent_init();
-#endif				/* RF_DEBUG_ATOMIC > 0 */
 
 	rf_setup_threadid();
 	rf_assign_threadid();
@@ -251,9 +224,6 @@ rf_UnbootRaidframe()
 		    __LINE__, rc);
 		RF_PANIC();
 	}
-#if RF_DEBUG_ATOMIC > 0
-	rf_atent_shutdown();
-#endif				/* RF_DEBUG_ATOMIC > 0 */
 	return (0);
 }
 /*
@@ -336,7 +306,7 @@ rf_UnconfigureVnodes( raidPtr )
 
 	/* We take this opportunity to close the vnodes like we should.. */
 
-	p = raidPtr->proc;	/* XXX */
+	p = raidPtr->engine_thread;
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
@@ -419,7 +389,6 @@ rf_Configure(raidPtr, cfgPtr)
 	RF_RowCol_t row, col;
 	int     i, rc;
 	int     unit;
-	struct proc *p;
 
 	if (raidPtr->valid) {
 		RF_ERRORMSG("RAIDframe configuration not shut down.  Aborting configure.\n");
@@ -456,9 +425,6 @@ rf_Configure(raidPtr, cfgPtr)
 		DO_INIT_CONFIGURE(rf_ConfigureNWayXor);
 		DO_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
 		DO_INIT_CONFIGURE(rf_ConfigureMCPair);
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-		DO_INIT_CONFIGURE(rf_ConfigureCamLayer);
-#endif
 		DO_INIT_CONFIGURE(rf_ConfigureDAGs);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGFuncs);
 		DO_INIT_CONFIGURE(rf_ConfigureDebugPrint);
@@ -477,10 +443,8 @@ rf_Configure(raidPtr, cfgPtr)
 	/* XXX this clearing should be moved UP to outside of here.... that,
 	 * or rf_Configure() needs to take more arguments... XXX */
 	unit = raidPtr->raidid;
-	p = raidPtr->proc;	/* XXX save these... */
 	bzero((char *) raidPtr, sizeof(RF_Raid_t));
 	raidPtr->raidid = unit;
-	raidPtr->proc = p;	/* XXX and then recover them.. */
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
 	 * value of memDebug will be set */
@@ -730,13 +694,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 	RF_RaidAccessDesc_t *desc;
 	caddr_t lbufPtr = bufPtr;
 	struct buf *bp = (struct buf *) bp_in;
-#if DFSTRACE > 0
-	struct {
-		RF_uint64 raidAddr;
-		int     numBlocks;
-		char    type;
-	}       dfsrecord;
-#endif				/* DFSTRACE > 0 */
 
 	raidAddress += rf_raidSectorOffset;
 
@@ -745,14 +702,6 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		IO_BUF_ERR(bp, EINVAL, raidPtr->raidid);
 		return (EINVAL);
 	}
-#if defined(_KERNEL) && DFSTRACE > 0
-	if (rf_DFSTraceAccesses) {
-		dfsrecord.raidAddr = raidAddress;
-		dfsrecord.numBlocks = numBlocks;
-		dfsrecord.type = type;
-		dfs_log(DFS_NOTE, (char *) &dfsrecord, sizeof(dfsrecord), 0);
-	}
-#endif				/* _KERNEL && DFSTRACE > 0 */
 
 	rf_get_threadid(tid);
 	if (rf_accessDebug) {
@@ -773,13 +722,8 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
 		    (u_long) raidAddress, (u_long) numBlocks, (u_long) raidPtr->totalSectors);
 
-		if (type == RF_IO_TYPE_READ) {
 			IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
 			return (ENOSPC);
-		} else {
-			IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
-			return (ENOSPC);
-		}
 	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
 	    numBlocks, lbufPtr, bp, paramDAG, paramASM,

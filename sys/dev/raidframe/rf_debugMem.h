@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_debugMem.h,v 1.3 1999/08/04 13:10:54 peter Exp $	*/
-/*	$NetBSD: rf_debugMem.h,v 1.4 1999/02/05 00:06:08 oster Exp $	*/
+/*	$OpenBSD: rf_debugMem.h,v 1.4 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.7 1999/09/05 01:58:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,58 +38,11 @@
 #ifndef _RF__RF_DEBUGMEM_H_
 #define _RF__RF_DEBUGMEM_H_
 
-#include "rf_archs.h"
 #include "rf_alloclist.h"
-#include "rf_options.h"
 
-#ifndef _KERNEL
-
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-void   *malloc(), *calloc();
-#endif
-RF_DECLARE_EXTERN_MUTEX(rf_debug_mem_mutex)
-/*
- * redzone malloc, calloc, and free allocate an extra 16 bytes on each
- * malloc/calloc call to allow tracking of overflows on free.
- */
-
-#if RF_MEMORY_REDZONES > 0
-#define rf_redzone_malloc(_p_,_size_)     _p_ = rf_real_redzone_malloc(_size_)
-#define rf_redzone_calloc(_p_,_n_,_size_) _p_ = rf_real_redzone_calloc(_n_,_size_)
-#define rf_redzone_free(_p_)              rf_real_redzone_free(_p_, __LINE__, __FILE__)
-#else				/* RF_MEMORY_REDZONES > 0 */
-#define rf_redzone_malloc(_p_,_size_)        _p_ = malloc(_size_)
-#define rf_redzone_calloc(_p_,_nel_,_size_)  _p_ = calloc(_nel_,_size_)
-#define rf_redzone_free(_ptr_)             free(_ptr_)
-#endif				/* RF_MEMORY_REDZONES > 0 */
-
-#define RF_Malloc(_p_, _size_, _cast_) { \
-      _p_ = _cast_ rf_real_Malloc(_size_, __LINE__, __FILE__); \
-}
-
-#define RF_MallocAndAdd(_p_, _size_, _cast_, _alist_) { \
-      _p_ = _cast_ rf_real_MallocAndAdd(_size_, _alist_, __LINE__, __FILE__); \
-}
-
-#define RF_Calloc(_p_, _nel_, _elsz_, _cast_) { \
-      _p_ = _cast_ rf_real_Calloc(_nel_, _elsz_, __LINE__, __FILE__); \
-}
-
-#define RF_CallocAndAdd(_p_, _nel_, _elsz_, _cast_, _alist_) { \
-      _p_ = _cast_ rf_real_CallocAndAdd(_nel_, _elsz_, _alist_, __LINE__, __FILE__); \
-}
-
-#define RF_Free(__p_, _sz_) { \
-      rf_real_Free(__p_, _sz_, __LINE__, __FILE__); \
-}
-
-#else				/* _KERNEL */
-
+#ifdef _KERNEL
 #include <sys/types.h>
-typedef u_int32_t U32;
 #include <sys/malloc.h>
-
-
 
 #define RF_Malloc(_p_, _size_, _cast_)                                      \
   {                                                                      \
@@ -107,7 +60,6 @@ typedef u_int32_t U32;
 #define RF_Calloc(_p_, _nel_, _elsz_, _cast_)                               \
   {                                                                      \
      RF_Malloc( _p_, (_nel_) * (_elsz_), _cast_);                           \
-     bzero( (_p_), (_nel_) * (_elsz_) );                                 \
    }
 
 #define RF_CallocAndAdd(__p,__nel,__elsz,__cast,__alist)                     \
@@ -119,29 +71,14 @@ typedef u_int32_t U32;
 #define RF_Free(_p_, _sz_)                                                   \
   {                                                                       \
 	free((void *)(_p_), M_RAIDFRAME);                                      \
-    if (rf_memDebug) rf_unrecord_malloc(_p_, (U32) (_sz_));                     \
+     if (rf_memDebug) rf_unrecord_malloc(_p_, (u_int32_t) (_sz_));          \
   }
 
 #endif				/* _KERNEL */
-
-#ifndef _KERNEL
-void   *rf_real_redzone_malloc(int size);
-void   *rf_real_redzone_calloc(int n, int size);
-void    rf_real_redzone_free(char *p, int line, char *filen);
-char   *rf_real_Malloc(int size, int line, char *file);
-char   *rf_real_Calloc(int nel, int elsz, int line, char *file);
-void    rf_real_Free(void *p, int sz, int line, char *file);
-void    rf_validate_mh_table(void);
-#if RF_UTILITY == 0
-char   *rf_real_MallocAndAdd(int size, RF_AllocListElem_t * alist, int line, char *file);
-char   *rf_real_CallocAndAdd(int nel, int elsz, RF_AllocListElem_t * alist, int line, char *file);
-#endif				/* RF_UTILITY == 0 */
-#endif				/* !KERNEL */
 
 void    rf_record_malloc(void *p, int size, int line, char *filen);
 void    rf_unrecord_malloc(void *p, int sz);
 void    rf_print_unfreed(void);
 int     rf_ConfigureDebugMem(RF_ShutdownList_t ** listp);
-void    rf_ReportMaxMem(void);
 
 #endif				/* !_RF__RF_DEBUGMEM_H_ */

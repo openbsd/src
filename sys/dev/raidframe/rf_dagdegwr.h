@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagdegwr.h,v 1.2 1999/02/16 00:02:30 niklas Exp $	*/
-/*	$NetBSD: rf_dagdegwr.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+/*	$OpenBSD: rf_dagdegwr.h,v 1.3 2000/01/07 14:50:20 peter Exp $	*/
+/*	$NetBSD: rf_dagdegwr.h,v 1.4 1999/08/15 02:36:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,19 +32,20 @@
 #define _RF__RF_DAGDEGWR_H_
 
 /* degraded write DAG creation routines */
-void 
-rf_CreateDegradedWriteDAG(RF_Raid_t * raidPtr,
+void rf_CreateDegradedWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
-void 
-rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t * raidPtr,
+
+void rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
     int nfaults, int (*redFunc) (RF_DagNode_t *), int allowBufferRecycle);
+
 	void    rf_WriteGenerateFailedAccessASMs(RF_Raid_t * raidPtr,
             RF_AccessStripeMap_t * asmap, RF_PhysDiskAddr_t ** pdap,
             int *nNodep, RF_PhysDiskAddr_t ** pqpdap,
             int *nPQNodep, RF_AllocListElem_t * allocList);
+
 	void    rf_DoubleDegSmallWrite(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
             RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
             RF_AllocListElem_t * allocList, char *redundantReadNodeName,
