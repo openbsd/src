@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.25 1999/11/07 03:59:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.25 1999/11/07 03:59:12 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -99,8 +99,6 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert 
 #include <unistd.h>
 #include <err.h>
 
-#define kbytes(size)  (((size) + 1023) >> 10)
-
 #define CE_COMPACT	0x01		/* Compact the achived log files */
 #define CE_BINARY	0x02		/* Logfile is in binary, don't add */
 					/* status messages */
@@ -109,8 +107,8 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.24 1999/11/06 21:02:05 millert 
         
 struct conf_entry {
         char    *log;           /* Name of the log */
-        int     uid;            /* Owner of log */
-        int     gid;            /* Group of log */
+        uid_t   uid;            /* Owner of log */
+        gid_t   gid;            /* Group of log */
         int     numlogs;        /* Number of logs to keep */
         int     size;           /* Size cutoff to trigger trimming the log */
         int     hours;          /* Hours between log trimming */
@@ -120,8 +118,6 @@ struct conf_entry {
 	char	*pidfile;	/* Path to file containg pid to HUP */
         struct conf_entry       *next; /* Linked list pointer */
 };
-
-extern const char *__progname;
 
 int     verbose = 0;            /* Print out what's going on */
 int     needroot = 1;           /* Root privs are necessary */
@@ -139,7 +135,7 @@ void PRS __P((int, char **));
 void usage __P((void));
 struct conf_entry *parse_file __P((void));
 char *missing_field __P((char *, char *));
-void dotrim __P((char *, int, int, int, int, int, int));
+void dotrim __P((char *, int, int, int, uid_t, gid_t, pid_t));
 int log_trim __P((char *));
 void compress_log __P((char *));
 int sizefile __P((char *));
@@ -152,23 +148,24 @@ FILE *openmail __P((void));
 void closemail __P((FILE *));
 void child_killer __P((int));
 
-int main(argc, argv)
+int
+main(argc, argv)
         int argc;
         char **argv;
 {
         struct conf_entry *p, *q;
 	int status;
         
-        PRS(argc,argv);
+        PRS(argc, argv);
         if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
         p = q = parse_file();
 	signal(SIGCHLD, child_killer);
         while (p) {
                 do_entry(p);
-                p=p->next;
+                p = p->next;
                 free(q);
-                q=p;
+                q = p;
         }
 
 	/* Wait for children to finish, then exit */
@@ -177,21 +174,24 @@ int main(argc, argv)
         exit(0);
 }
 
-void do_entry(ent)
+void
+do_entry(ent)
         struct conf_entry       *ent;
         
 {
-        int     size, modtime, pid;
+	int	modtime, size;
+	pid_t	pid;
         char    line[BUFSIZ];
         FILE    *f;
 
         /* First find the pid to HUP */
-        pid = -1;
-        if ((f = fopen(ent->pidfile,"r")) != NULL) {
-        	if (fgets(line,BUFSIZ,f))
+        pid = (pid_t)-1;
+        if ((f = fopen(ent->pidfile, "r")) != NULL) {
+        	if (fgets(line, sizeof(line), f))
                 	pid = atoi(line);
 		(void)fclose(f);
-	}
+	} else
+		warn("can't open %s", ent->pidfile);
         
 	if (verbose)
 		printf("%s <%d%s>: ", ent->log, ent->numlogs,
@@ -208,9 +208,9 @@ void do_entry(ent)
                         printf(" age (hr): %d [%d] ", modtime, ent->hours);
 		if (monitor && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
-                if (!monitor && ((ent->size > 0) && (size >= ent->size)) ||
+                if (!monitor && (((ent->size > 0) && (size >= ent->size)) ||
                     ((ent->hours > 0) && ((modtime >= ent->hours)
-                                        || (modtime < 0)))) {
+                                        || (modtime < 0))))) {
                         if (verbose)
                                 printf("--> trimming log....\n");
 			if (noaction && !verbose)
@@ -218,14 +218,13 @@ void do_entry(ent)
 					(ent->flags & CE_COMPACT) ? "Z" : "");
                         dotrim(ent->log, ent->numlogs, ent->flags,
                                ent->permissions, ent->uid, ent->gid, pid);
-                } else {
-                        if (verbose)
-                                printf("--> skipping\n");
-                }
+                } else if (verbose)
+			printf("--> skipping\n");
         }
 }
 
-void PRS(argc, argv)
+void
+PRS(argc, argv)
         int argc;
         char **argv;
 {
@@ -237,7 +236,7 @@ void PRS(argc, argv)
         daytime[15] = '\0';
 
         /* Let's get our hostname */
-        (void) gethostname(hostname, sizeof(hostname));
+        (void)gethostname(hostname, sizeof(hostname));
 
 	/* Truncate domain */
 	p = strchr(hostname, '.');
@@ -245,7 +244,7 @@ void PRS(argc, argv)
 		*p = '\0';
 
         optind = 1;             /* Start options parsing */
-        while ((c = getopt(argc,argv,"nrvmf:t:")) != -1) {
+        while ((c = getopt(argc, argv, "nrvmf:t:")) != -1) {
                 switch (c) {
                 case 'n':
                         noaction++; /* This implies needroot as off */
@@ -268,34 +267,39 @@ void PRS(argc, argv)
         }
 }
 
-void usage()
+void
+usage()
 {
-	fprintf(stderr, "usage: %s [-nrvm] [-f config-file]\n", __progname);
+	extern const char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-nrvm] [-f config-file]\n",
+	    __progname);
 	exit(1);
 }
 
 /* Parse a configuration file and return a linked list of all the logs
  * to process
  */
-struct conf_entry *parse_file()
+struct conf_entry *
+parse_file()
 {
         FILE    *f;
         char    line[BUFSIZ], *parse, *q;
-        char    *errline, *group;
+        char    *errline, *group, *tmp;
         struct conf_entry *first = NULL;
         struct conf_entry *working;
         struct passwd *pass;
         struct group *grp;
 
-        if (strcmp(conf,"-"))
-                f = fopen(conf,"r");
-        else
+        if (strcmp(conf, "-") == 0)
                 f = stdin;
-        if (!f)
-		err(1, conf);
+	else {
+                if ((f = fopen(conf, "r")) == NULL)
+			err(1, "can't open %s", conf);
+	}
 
-        while (fgets(line,BUFSIZ,f)) {
-                if ((line[0]== '\n') || (line[0] == '#'))
+        while (fgets(line, sizeof(line), f)) {
+                if ((line[0] == '\n') || (line[0] == '#'))
                         continue;
                 errline = strdup(line);
 		if (errline == NULL)
@@ -312,58 +316,58 @@ struct conf_entry *parse_file()
                         working = working->next;
                 }
 
-                q = parse = missing_field(sob(line),errline);
+                q = parse = missing_field(sob(line), errline);
                 *(parse = son(line)) = '\0';
                 working->log = strdup(q);
 		if (working->log == NULL)
 			err(1, "strdup");
 
-                q = parse = missing_field(sob(++parse),errline);
+                q = parse = missing_field(sob(++parse), errline);
                 *(parse = son(parse)) = '\0';
-                if ((group = strchr(q, '.')) != NULL) {
-                    *group++ = '\0';
-                    if (*q) {
-                        if (!(isnumberstr(q))) {
-                            if ((pass = getpwnam(q)) == NULL)
-				errx(1, "Error in config file; unknown user: %s", q);
-                            working->uid = pass->pw_uid;
-                        } else
-                            working->uid = atoi(q);
-                    } else
-                        working->uid = NONE;
-                    
-                    q = group;
-                    if (*q) {
-                        if (!(isnumberstr(q))) {
-                            if ((grp = getgrnam(q)) == NULL)
-				errx(1, "Error in config file; unknown group: %s", q);
-                            working->gid = grp->gr_gid;
-                        } else
-                            working->gid = atoi(q);
-                    } else
-                        working->gid = NONE;
-                    
-                    q = parse = missing_field(sob(++parse),errline);
-                    *(parse = son(parse)) = '\0';
-                } else 
-                    working->uid = working->gid = NONE;
+		if ((group = strchr(q, '.')) != NULL) {
+			*group++ = '\0';
+			if (*q) {
+				if (!(isnumberstr(q))) {
+					if ((pass = getpwnam(q)) == NULL)
+						errx(1, "Error in config file; unknown user: %s", q);
+					working->uid = pass->pw_uid;
+				} else
+					working->uid = atoi(q);
+			} else
+				working->uid = NONE;
+			
+			q = group;
+			if (*q) {
+				if (!(isnumberstr(q))) {
+					if ((grp = getgrnam(q)) == NULL)
+						errx(1, "Error in config file; unknown group: %s", q);
+					working->gid = grp->gr_gid;
+				} else
+					working->gid = atoi(q);
+			} else
+				working->gid = NONE;
+			
+			q = parse = missing_field(sob(++parse), errline);
+			*(parse = son(parse)) = '\0';
+		} else 
+			working->uid = working->gid = NONE;
 
-                if (!sscanf(q,"%o",&working->permissions))
+                if (!sscanf(q, "%o", &working->permissions))
 			errx(1, "Error in config file; bad permissions: %s", q);
 
-                q = parse = missing_field(sob(++parse),errline);
+                q = parse = missing_field(sob(++parse), errline);
                 *(parse = son(parse)) = '\0';
-                if (!sscanf(q,"%d",&working->numlogs) || working->numlogs < 0)
+                if (!sscanf(q, "%d", &working->numlogs) || working->numlogs < 0)
 			errx(1, "Error in config file; bad number: %s", q);
 
-                q = parse = missing_field(sob(++parse),errline);
+                q = parse = missing_field(sob(++parse), errline);
                 *(parse = son(parse)) = '\0';
                 if (isdigit(*q))
                         working->size = atoi(q);
                 else
                         working->size = -1;
                 
-                q = parse = missing_field(sob(++parse),errline);
+                q = parse = missing_field(sob(++parse), errline);
                 *(parse = son(parse)) = '\0';
                 if (isdigit(*q))
                         working->hours = atoi(q);
@@ -399,21 +403,31 @@ struct conf_entry *parse_file()
                 q = parse = sob(++parse); /* Optional field */
                 *(parse = son(parse)) = '\0';
 		if (q && *q != '\0') {
+			if (strlen(q) >= MAXPATHLEN)
+				errx(1, "%s: pathname too long", q);
 			working->pidfile = strdup(q);
 			if (working->pidfile == NULL)
 				err(1, "strdup");
 		}
+
+		/* Make sure we can't oflow MAXPATHLEN */
+		if (asprintf(&tmp, "%s.%d%s", working->log, working->numlogs,
+		    COMPRESS_POSTFIX) >= MAXPATHLEN)
+			errx(1, "%s: pathname too long", working->log);
                 
+                free(tmp);
                 free(errline);
         }
         if (working)
                 working->next = NULL;
-        (void) fclose(f);
+        (void)fclose(f);
         return(first);
 }
 
-char *missing_field(p, errline)
-        char    *p,*errline;
+char *
+missing_field(p, errline)
+        char    *p;
+	char    *errline;
 {
         if (!p || !*p) {
 		warnx("Missing field in config file line:");
@@ -423,14 +437,15 @@ char *missing_field(p, errline)
         return(p);
 }
 
-void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
+void
+dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         char    *log;
         int     numdays;
         int     flags;
         int     perm;
-        int     owner_uid;
-        int     group_gid;
-	int	daemon_pid;
+        uid_t   owner_uid;
+        gid_t   group_gid;
+	pid_t	daemon_pid;
 {
         char    file1[MAXPATHLEN], file2[MAXPATHLEN];
         char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
@@ -438,54 +453,57 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         struct  stat st;
 	int	days = numdays;
 
-        /* Remove oldest log */
-        (void) sprintf(file1,"%s.%d",log,numdays);
-        (void) strcpy(zfile1, file1);
-        (void) strcat(zfile1, COMPRESS_POSTFIX);
-
+        /* Remove oldest log (may not exist) */
+        (void)sprintf(file1, "%s.%d", log, numdays);
+        (void)strcpy(zfile1, file1);
+        (void)strcat(zfile1, COMPRESS_POSTFIX);
         if (noaction) {
                 printf("rm -f %s\n", file1);
                 printf("rm -f %s\n", zfile1);
         } else {
-                (void) unlink(file1);
-                (void) unlink(zfile1);
+                (void)unlink(file1);
+                (void)unlink(zfile1);
         }
 
         /* Move down log files */
         while (numdays--) {
-                (void) strcpy(file2,file1);
-                (void) sprintf(file1,"%s.%d",log,numdays);
-                (void) strcpy(zfile1, file1);
-                (void) strcpy(zfile2, file2);
+                (void)strcpy(file2, file1);
+                (void)sprintf(file1, "%s.%d", log, numdays);
+                (void)strcpy(zfile1, file1);
+                (void)strcpy(zfile2, file2);
                 if (lstat(file1, &st)) {
-                        (void) strcat(zfile1, COMPRESS_POSTFIX);
-                        (void) strcat(zfile2, COMPRESS_POSTFIX);
-                        if (lstat(zfile1, &st)) continue;
+                        (void)strcat(zfile1, COMPRESS_POSTFIX);
+                        (void)strcat(zfile2, COMPRESS_POSTFIX);
+                        if (lstat(zfile1, &st))
+                        	continue;
                 }
                 if (noaction) {
-                        printf("mv %s %s\n",zfile1,zfile2);
+                        printf("mv %s %s\n", zfile1, zfile2);
                         printf("chmod %o %s\n", perm, zfile2);
-                        printf("chown %d.%d %s\n",
+                        printf("chown %d:%d %s\n",
                                owner_uid, group_gid, zfile2);
                 } else {
-                        (void) rename(zfile1, zfile2);
-                        (void) chmod(zfile2, perm);
-                        (void) chown(zfile2, owner_uid, group_gid);
+                        if (rename(zfile1, zfile2))
+				warn("can't mv %s to %s", zfile1, zfile2);
+                        if (chmod(zfile2, perm))
+				warn("can't chmod %s", zfile2);
+                        if (chown(zfile2, owner_uid, group_gid))
+				warn("can't chown %s", zfile2);
                 }
         }
         if (!noaction && !(flags & CE_BINARY))
-                (void) log_trim(log);  /* Report the trimming to the old log */
+                (void)log_trim(log);  /* Report the trimming to the old log */
 
 	if (days == 0) {
 		if (noaction)
-			printf("rm %s\n",log);
-		else
-			(void) unlink(log);
+			printf("rm %s\n", log);
+		else if (unlink(log))
+			warn("can't rm %s", log);
 	} else {
 		if (noaction) 
-	                printf("mv %s to %s\n",log,file1);
-	        else
-	                (void) rename(log,file1);
+	                printf("mv %s to %s\n", log, file1);
+	        else if (rename(log, file1))
+			warn("can't to mv %s to %s", log, file1);
 	}
 
         if (noaction)  {
@@ -493,89 +511,97 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         } else {
                 fd = open(log, O_WRONLY|O_TRUNC|O_CREAT, perm);
                 if (fd < 0)
-			err(1, "can't start \'%s\' log", log);
+			err(1, "can't start '%s' log", log);
                 if (fchown(fd, owner_uid, group_gid))
-			err(1, "can't chown \'%s\' log file", log);
+			err(1, "can't chown '%s' log file", log);
                 if (fchmod(fd, perm))
-			err(1, "can't chmod \'%s\' log file", log, perm);
-                (void) close(fd);
-                if (!(flags & CE_BINARY))
-                        if (log_trim(log))	/* Add status message */
-                                err(1, "can't add status message to log \'%s\'", log);
+			err(1, "can't chmod '%s' log file", log);
+                (void)close(fd);
+		/* Add status message */
+                if (!(flags & CE_BINARY) && log_trim(log))
+			err(1, "can't add status message to log '%s'", log);
         }
         if (noaction)
-                printf("kill -HUP %d\n",daemon_pid);
-        else if (daemon_pid < MIN_PID)
-		warnx("preposterous process number: %d", daemon_pid);
-        else if (kill(daemon_pid,SIGHUP))
-		warnx("warning - could not HUP daemon");
+                (void)printf("kill -HUP %d\n", daemon_pid);
+	else if (daemon_pid != (pid_t)-1) {
+		if (daemon_pid < MIN_PID)
+			warnx("preposterous process number: %d", daemon_pid);
+		else if (kill(daemon_pid, SIGHUP))
+			warnx("warning - could not HUP daemon");
+	}
 	if (flags & CE_COMPACT) {
 		if (noaction)
-			printf("Compress %s.0\n",log);
+			(void)printf("Compress %s.0\n", log);
 		else
 			compress_log(log);
 	}
 }
 
 /* Log the fact that the logs were turned over */
-int log_trim(log)
+int
+log_trim(log)
 	char    *log;
 {
         FILE    *f;
-        if ((f = fopen(log,"a")) == NULL)
+
+        if ((f = fopen(log, "a")) == NULL)
                 return(-1);
-        fprintf(f,"%s %s newsyslog[%d]: logfile turned over\n",
-                daytime, hostname, getpid());
+        (void)fprintf(f, "%s %s newsyslog[%d]: logfile turned over\n",
+	    daytime, hostname, getpid());
         if (fclose(f) == EOF)
                 err(1, "log_trim: fclose");
         return(0);
 }
 
 /* Fork off compress or gzip to compress the old log file */
-void compress_log(log)
+void
+compress_log(log)
         char    *log;
 {
-        int     pid;
+        pid_t   pid;
         char    tmp[MAXPATHLEN];
         
         pid = fork();
-        (void) sprintf(tmp,"%s.0",log);
+        (void)sprintf(tmp, "%s.0", log);
         if (pid < 0) {
 		err(1, "fork");
         } else if (!pid) {
-                (void) execl(COMPRESS,"compress","-f",tmp,0);
+                (void)execl(COMPRESS, "compress", "-f", tmp, 0);
 		warn(COMPRESS);
 		_exit(1);
         }
 }
 
 /* Return size in kilobytes of a file */
-int sizefile(file)
+int
+sizefile(file)
         char    *file;
 {
         struct stat sb;
 
-        if (stat(file,&sb) < 0)
+        if (stat(file, &sb) < 0)
                 return(-1);
-        return(kbytes(dbtob(sb.st_blocks)));
+        return(sb.st_blocks / (1024.0 / DEV_BSIZE));
 }
 
-/* Return the age of old log file (file.0) or -1 if no old log file */
-int age_old_log(file)
+/* Return the age (in hours) of old log file (file.0), or -1 if none */
+int
+age_old_log(file)
         char    *file;
 {
         struct stat sb;
         char tmp[MAXPATHLEN];
 
-        (void) strcpy(tmp,file);
-        if (stat(strcat(tmp,".0"),&sb) < 0)
-            if (stat(strcat(tmp,COMPRESS_POSTFIX), &sb) < 0)
+        (void)strcpy(tmp, file);
+        if (stat(strcat(tmp, ".0"), &sb) < 0)
+            if (stat(strcat(tmp, COMPRESS_POSTFIX), &sb) < 0)
                 return(-1);
         return( (int) (timenow - sb.st_mtime + 1800) / 3600);
 }
 
 /* Skip Over Blanks */
-char *sob(p)
+char *
+sob(p)
         register char   *p;
 {
         while (p && *p && isspace(*p))
@@ -584,7 +610,8 @@ char *sob(p)
 }
 
 /* Skip Over Non-Blanks */
-char *son(p)
+char *
+son(p)
         register char   *p;
 {
         while (p && *p && !isspace(*p))
@@ -592,20 +619,20 @@ char *son(p)
         return(p);
 }
 
-        
 /* Check if string is actually a number */
-
-int isnumberstr(string)
+int
+isnumberstr(string)
 	char *string;
 {
-        while (*string != '\0') {
+        while (*string) {
             if (!isdigit(*string++))
 		return(0);
         }
         return(1);
 }
 
-void domonitor(log, whom)
+void
+domonitor(log, whom)
 	char *log, *whom;
 {
 	struct stat sb, tsb;
@@ -711,7 +738,8 @@ cleanup:
 		free(rb);
 }
 
-FILE *openmail()
+FILE *
+openmail()
 {
 	char *cmdbuf;
 	FILE *ret;
@@ -727,13 +755,15 @@ FILE *openmail()
 	return(ret);
 }
 
-void closemail(pfp)
+void
+closemail(pfp)
 	FILE *pfp;
 {
 	pclose(pfp);
 }
 
-void child_killer(signum)
+void
+child_killer(signum)
 	int signum;
 {
 	int status;
