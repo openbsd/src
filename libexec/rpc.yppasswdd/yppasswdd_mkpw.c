@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.6 1996/08/30 13:09:14 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.7 1996/08/30 15:10:02 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -53,10 +53,10 @@ int
 badchars(base)
 	char *base;
 {
-	char *s = match;
 	int ampr = 0;
+	char *s;
 
-	for (s = match; *s; s++) {
+	for (s = base; *s; s++) {
 		if (*s == '&')
 			ampr++;
 		if (!isprint(*s))
