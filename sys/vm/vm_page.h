@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.8 1999/02/26 01:48:51 art Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.9 1999/08/23 07:56:03 art Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -124,7 +124,7 @@ struct vm_page {
 #if !defined(UVM) /* uvm uses obju */
   vm_object_t		object;		/* which object am I in (O,P)*/
 #endif
-  vm_offset_t		offset;		/* offset into object (O,P) */
+  vaddr_t		offset;		/* offset into object (O,P) */
 
 #if defined(UVM)
   struct uvm_object	*uobject;	/* object (O,P) */
@@ -141,7 +141,7 @@ struct vm_page {
   u_short		flags;		/* see below */
 #endif
 
-  vm_offset_t		phys_addr;	/* physical address of page */
+  paddr_t		phys_addr;	/* physical address of page */
 #if defined(UVM) && defined(UVM_PAGE_TRKOWN)
   /* debugging fields to track page ownership */
   pid_t			owner;		/* proc that set PG_BUSY */
@@ -236,10 +236,10 @@ struct vm_page {
  * vm_physmemseg: describes one segment of physical memory
  */
 struct vm_physseg {
-	vm_offset_t start;		/* PF# of first page in segment */
-	vm_offset_t end;		/* (PF# of last page in segment) + 1 */
-	vm_offset_t avail_start;	/* PF# of first free page in segment */
-	vm_offset_t avail_end;		/* (PF# of last free page in segment) +1  */
+	vaddr_t start;			/* PF# of first page in segment */
+	vaddr_t end;			/* (PF# of last page in segment) + 1 */
+	vaddr_t avail_start;		/* PF# of first free page in segment */
+	vaddr_t avail_end;		/* (PF# of last free page in segment) +1  */
 #if defined(UVM)
 	int	free_list;		/* which free list they belong on */
 #endif
@@ -289,9 +289,9 @@ extern int vm_nphysseg;
 #if defined(MACHINE_NONCONTIG)
 /* OLD NONCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
 extern
-u_long	first_page;		/* first physical page number */
+u_long	first_page;			/* first physical page number */
 extern
-int	vm_page_count;		/* How many pages do we manage? */
+int	vm_page_count;			/* How many pages do we manage? */
 extern
 vm_page_t	vm_page_array;		/* First resident page in table */
 
@@ -300,14 +300,14 @@ vm_page_t	vm_page_array;		/* First resident page in table */
 #else 
 /* OLD CONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
 extern
-long	first_page;		/* first physical page number */
+long	first_page;			/* first physical page number */
 					/* ... represented in vm_page_array */
 extern
-long	last_page;		/* last physical page number */
+long	last_page;			/* last physical page number */
 					/* ... represented in vm_page_array */
 					/* [INCLUSIVE] */
 extern
-vm_offset_t first_phys_addr;	/* physical address for first_page */
+vm_offset_t first_phys_addr;		/* physical address for first_page */
 extern
 vm_offset_t last_phys_addr;		/* physical address for last_page */
 extern
@@ -324,10 +324,11 @@ vm_page_t	vm_page_array;		/* First resident page in table */
  */
 
 #if defined(MACHINE_NEW_NONCONTIG)
-static struct vm_page *PHYS_TO_VM_PAGE __P((vm_offset_t));
-static int vm_physseg_find __P((vm_offset_t, int *));
+static struct vm_page *PHYS_TO_VM_PAGE __P((paddr_t));
+static int vm_physseg_find __P((paddr_t, int *));
 #endif
 
+#if !defined(UVM)
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
 vm_offset_t	 vm_page_alloc_contig(vm_offset_t, vm_offset_t,
@@ -358,6 +359,7 @@ void		 vm_page_startup __P((vm_offset_t *, vm_offset_t *));
 void		 vm_page_unwire __P((vm_page_t));
 void		 vm_page_wire __P((vm_page_t));
 boolean_t	 vm_page_zero_fill __P((vm_page_t));
+#endif
 
 /*
  * macros and inlines
@@ -375,7 +377,7 @@ boolean_t	 vm_page_zero_fill __P((vm_page_t));
  */
 static __inline int
 vm_physseg_find(pframe, offp)
-	vm_offset_t pframe;
+	paddr_t pframe;
 	int	*offp;
 {
 #if VM_PHYSSEG_MAX == 1
@@ -457,9 +459,9 @@ vm_physseg_find(pframe, offp)
  */
 static __inline struct vm_page *
 PHYS_TO_VM_PAGE(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
-	vm_offset_t pf = atop(pa);
+	paddr_t pf = atop(pa);
 	int	off;
 	int	psi;
 
