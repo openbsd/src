@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.66 2000/01/10 04:30:52 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.67 2000/01/10 04:37:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -500,10 +500,13 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	puttdb(tdbp);
 
 	/* Setup a "silent" expiration (since TDBF_INVALID's set) */
-	tdbp->tdb_flags |= TDBF_TIMER;
-	tdbp->tdb_exp_timeout = time.tv_sec + ipsec_keep_invalid;
-	tdb_expiration(tdbp, TDBEXP_EARLY | TDBEXP_TIMEOUT);
-	
+	if (ipsec_keep_invalid > 0)
+	{
+		tdbp->tdb_flags |= TDBF_TIMER;
+		tdbp->tdb_exp_timeout = time.tv_sec + ipsec_keep_invalid;
+		tdb_expiration(tdbp, TDBEXP_EARLY | TDBEXP_TIMEOUT);
+	}
+
 	return spi;
     }
 
