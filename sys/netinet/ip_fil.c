@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.38 2001/01/17 04:47:12 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.39 2001/01/17 05:16:37 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -174,6 +174,7 @@ struct callout_handle ipfr_slowtimer_ch;
 struct callout ipfr_slowtimer_ch;
 #endif
 #if defined(__OpenBSD__)
+#include <sys/timeout.h>
 struct timeout ipfr_slowtimer_ch;
 #endif
 #if defined(__sgi) && defined(_KERNEL)
