@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.16 2003/06/10 22:20:54 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.17 2004/08/18 21:24:27 jmc Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.16 2003/06/10 22:20:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.17 2004/08/18 21:24:27 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -296,6 +296,6 @@ file(char *name)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: who [-mqTuH] [ file ]\n       who am i\n");
+	(void)fprintf(stderr, "usage: who [-HmqTu] [file]\n       who am i\n");
 	exit(1);
 }

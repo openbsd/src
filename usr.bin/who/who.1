@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.18 2003/09/02 18:50:07 jmc Exp $
+.\"	$OpenBSD: who.1,v 1.19 2004/08/18 21:24:27 jmc Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd display who is logged in
 .Sh SYNOPSIS
 .Nm who
-.Op Fl mqTuH
+.Op Fl HmqTu
 .Op Ar file
 .Nm who
 .Ar am i
@@ -51,6 +51,8 @@ hostname if not local.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl H
+Write column headings above the regular output.
 .It Fl m
 Only print information about the current terminal.
 This is the
@@ -74,8 +76,6 @@ and
 if a bad line is encountered.
 .It Fl u
 Print the idle time for each user.
-.It Fl H
-Write column headings above the regular output.
 .It Ar \&am I
 Returns the invoker's real user name.
 .It Ar file
@@ -125,6 +125,7 @@ For more information on the special characters, see
 .Xr last 1 ,
 .Xr mesg 1 ,
 .Xr users 1 ,
+.Xr w 1 ,
 .Xr getuid 2 ,
 .Xr utmp 5
 .Sh STANDARDS
