@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.23 2004/06/20 15:03:35 ho Exp $	 */
+/* $OpenBSD: monitor.c,v 1.24 2004/06/21 18:34:11 ho Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -195,7 +195,8 @@ FILE *
 monitor_fopen(const char *path, const char *mode)
 {
 	FILE	*fp;
-	int	 fd, flags = 0, mask, saved_errno;
+	int	 fd, flags = 0, saved_errno;
+	mode_t	 mask, cur_umask;
 
 	/* Only the child process is supposed to run this.  */
 	if (m_state.pid)
@@ -217,7 +218,10 @@ monitor_fopen(const char *path, const char *mode)
 		log_fatal("monitor_fopen: bad call");
 	}
 
+	cur_umask = umask(0);
+	(void)umask(cur_umask);
 	mask = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+	mask &= ~cur_umask;
 
 	fd = monitor_open(path, flags, mask);
 	if (fd < 0)
