@@ -4,7 +4,7 @@
  *
  * This code was written for BSD/OS in Athens, Greece, in November 1995.
  *
- * Ported to NetBSD, with additional transforms, in December 1996,
+ * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
  * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
@@ -47,7 +47,7 @@
 #include <paths.h>
 #include "net/encap.h"
 #include "netinet/ip_ipsp.h"
- 
+#include "netinet/ip_ip4.h" 
 
 #define IFT_ENC 0x37
 
@@ -61,29 +61,31 @@ char **argv;
 	int sd, len;
 
 	struct encap_msghdr *em;
+	struct ip4_xencap *xd;
 	
 	struct sockaddr_encap *dst, *msk, *gw;
 	struct sockaddr_dl *dl;
 	u_char *opts;
 
-	if (argc != 3)
-	  fprintf(stderr, "usage: %s dst spi\n", argv[0]), exit(1);
+	if (argc != 4)
+	  fprintf(stderr, "usage: %s dst spi ttl\n", argv[0]), exit(1);
 	sd = socket(AF_ENCAP, SOCK_RAW, AF_UNSPEC);
 	if (sd < 0)
 	  perror("socket"), exit(1);
 	
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN;
+	em->em_msglen = EMT_SETSPI_FLEN + sizeof(struct ip4_xencap);
 	em->em_version = 0;
 	em->em_type = EMT_SETSPI;
 	em->em_spi = htonl(strtol(argv[2], NULL, 16));
 	em->em_if = 1;
 	em->em_dst.s_addr = inet_addr(argv[1]);
 	em->em_alg = XF_IP4;
-	
+	xd = (struct ip4_xencap *)em->em_dat;
+	xd->ip4_ttl = atoi(argv[3]);
 
-	if (write(sd, buf, EMT_SETSPI_FLEN) != EMT_SETSPI_FLEN)
+	if (write(sd, buf, EMT_SETSPI_FLEN + sizeof(struct ip4_xencap)) != EMT_SETSPI_FLEN + sizeof(struct ip4_xencap))
 	  perror("write");
 }
 
