@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.3 1996/03/27 19:33:07 niklas Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.4 1996/12/11 17:14:22 robin Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_bsd.c,v 1.3 1996/03/27 19:33:07 niklas Exp $";
+static char rcsid[] = "$OpenBSD: sys_bsd.c,v 1.4 1996/12/11 17:14:22 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: sys_bsd.c,v 1.3 1996/03/27 19:33:07 niklas Exp 
 #include <signal.h>
 #include <errno.h>
 #include <arpa/telnet.h>
+#include <unistd.h>
 
 #include "ring.h"
 
