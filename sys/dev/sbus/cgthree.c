@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.1 2001/12/04 21:43:01 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.2 2001/12/05 05:34:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -102,7 +102,6 @@ void cgthree_free_screen __P((void *, void *));
 int cgthree_show_screen __P((void *, void *, int,
     void (*cb) __P((void *, int, int)), void *));
 paddr_t cgthree_mmap __P((void *, off_t, int));
-int cgthree_romcursoraddr __P((int **, int **));
 int cgthree_is_console __P((int));
 
 static int a2int __P((char *, int));
@@ -202,45 +201,36 @@ cgthreeattach(parent, self, aux)
 	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
 	sc->sc_raster.pixels = (void *)sc->sc_vid_regs;
 
-	sc->sc_rcons.rc_crow = sc->sc_rcons.rc_ccol = -1;
-	if (cgthree_romcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
+	if (console == 0 ||
+	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
+		sc->sc_rcons.rc_crow = sc->sc_rcons.rc_ccol = -1;
 		sc->sc_rcons.rc_crowp = &sc->sc_rcons.rc_crow;
 		sc->sc_rcons.rc_ccolp = &sc->sc_rcons.rc_ccol;
 	}
 
-#if 0
-	sc->sc_rcons.rc_font = &console_font;
-	sc->sc_rcons.rc_maxcol =
-	    sc->sc_raster.width / sc->sc_rcons.rc_font->width;
-	sc->sc_rcons.rc_maxrow =
-	    sc->sc_raster.height / sc->sc_rcons.rc_font->height;
-	sc->sc_rcons.rc_maxcol = min(sc->sc_rcons.rc_maxcol,
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-	sc->sc_rcons.rc_maxrow = min(sc->sc_rcons.rc_maxrow,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34));
-#else
 	sc->sc_rcons.rc_maxcol =
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 	sc->sc_rcons.rc_maxrow =
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
-#endif
 
-	rcons_init(&sc->sc_rcons, 160, 160);
+	rcons_init(&sc->sc_rcons,
+	    sc->sc_rcons.rc_maxrow, sc->sc_rcons.rc_maxcol);
 
 	cgthree_stdscreen.nrows = sc->sc_rcons.rc_maxrow;
 	cgthree_stdscreen.ncols = sc->sc_rcons.rc_maxcol;
 	cgthree_stdscreen.textops = &cgthree_emulops;
 	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, &defattr);
 
+	printf("\n");
+
+	if (console)
+		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rcons,
+		    *sc->sc_rcons.rc_ccolp, *sc->sc_rcons.rc_crowp, defattr);
+
 	waa.console = console;
 	waa.scrdata = &cgthree_screenlist;
 	waa.accessops = &cgthree_accessops;
 	waa.accesscookie = sc;
-
-	printf("\n");
-
-	wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rcons, 0, 0, defattr);
-
 	config_found(self, &waa, wsemuldisplaydevprint);
 
 	return;
@@ -312,7 +302,8 @@ cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 		return (ENOMEM);
 
 	*cookiep = &sc->sc_rcons;
-	*curxp = *curyp = 0;
+	*curyp = *sc->sc_rcons.rc_crowp;
+	*curxp = *sc->sc_rcons.rc_ccolp;
 	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, attrp);
 	sc->sc_nscreens++;
 	return (0);
@@ -357,29 +348,13 @@ cgthree_mmap(v, offset, prot)
 static int
 a2int(char *cp, int deflt)
 {
-	int i;
+	int i = 0;
 
 	if (*cp == '\0')
 		return (deflt);
 	while (*cp != '\0')
-		i = i * 10 + *cp++ - '\0';
+		i = i * 10 + *cp++ - '0';
 	return (i);
-}
-
-int
-cgthree_romcursoraddr(rowp, colp)
-	int **rowp, **colp;
-{
-	int rx, cx;
-
-	return (1);
-	/*
-	 * XXX these calls crash the machine... OF_interpret appears to
-	 * be broken.
-	 */
-	OF_interpret("addr line#", 1, &rx);
-	OF_interpret("addr column#", 1, &cx);
-	return (0);
 }
 
 int
