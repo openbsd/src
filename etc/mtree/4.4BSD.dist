@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.149 2003/03/17 07:38:13 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.150 2003/03/28 21:32:30 jmc Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1911,11 +1911,6 @@ standard
 # ./var/obj				XXX
 #..
 
-# ./var/preserve
-preserve
-# ./var/preserve
-..
-
 # ./var/quotas
 quotas            gname=operator mode=0750
 # ./var/quotas
@@ -1968,11 +1963,6 @@ hidden           mode=0111
 # ./var/spool/lock
 lock		uname=uucp gname=dialer mode=1775
 # ./var/spool/lock
-..
-
-# ./var/spool/lpd
-lpd		gname=daemon mode=0775
-# ./var/spool/lpd
 ..
 
 # ./var/spool/mqueue
@@ -2103,11 +2093,6 @@ users  type=dir uname=root gname=daemon mode=755
 ..
 
 #./www
-..
-
-#./var/ssyslog
-ssyslog	type=dir uname=root gname=daemon mode=700
-#./var/ssyslog
 ..
 
 #./var/audit
