@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.33 2003/07/22 01:16:01 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.34 2003/07/22 16:42:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.33 2003/07/22 01:16:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.34 2003/07/22 16:42:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,6 +70,7 @@ static struct option longopts[] = {
 	{ "ignore-all-space",		no_argument,		0,	'w' },
 	{ "exclude",			required_argument,	0,	'x' },
 	{ "exclude-from",		required_argument,	0,	'X' },
+	{ NULL,				0,			0,	'\0'}
 };
 
 __dead void usage(void);
