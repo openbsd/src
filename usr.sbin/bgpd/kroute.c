@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.100 2004/06/25 20:08:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.101 2004/06/29 20:13:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -184,6 +184,11 @@ kr_change(struct kroute *kroute)
 			return (0);
 	}
 
+	/* nexthop within 127/8 -> ignore silently */
+	if ((kroute->nexthop.s_addr & htonl(0xff000000)) ==
+	    inet_addr("127.0.0.0"))
+		return (0);
+
 	if (send_rtmsg(kr_state.fd, action, kroute) == -1)
 		return (-1);
 
@@ -215,6 +220,11 @@ kr_delete(struct kroute *kroute)
 		return (0);
 
 	if (!(kr->r.flags & F_BGPD_INSERTED))
+		return (0);
+
+	/* nexthop within 127/8 -> ignore silently */
+	if ((kroute->nexthop.s_addr & htonl(0xff000000)) ==
+	    inet_addr("127.0.0.0"))
 		return (0);
 
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, kroute) == -1)
