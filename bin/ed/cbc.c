@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.12 2003/10/18 19:15:43 jmc Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -40,7 +40,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.12 2003/10/18 19:15:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ init_des_cipher(void)
 
 	des_ct = des_n = 0;
 
-	/* initialize the initialization vctor */
+	/* initialize the initialization vector */
 	MEMZERO(ivec, 8);
 
 	/* initialize the padding vector */
