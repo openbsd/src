@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.13 2004/08/30 11:52:04 deraadt Exp $ */
+/*	$OpenBSD: config.c,v 1.14 2004/08/30 12:02:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@ host(const char *s, struct ntp_addr **hn)
 	if (h == NULL)
 		h = host_v6(s);
 
+	*hn = h;
 	if (h == NULL)
 		return (0);
 	return (1);
