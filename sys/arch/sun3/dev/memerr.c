@@ -197,13 +197,9 @@ memerr_interrupt(arg)
 	 * not much to be done.  Any error is fatal.
 	 */
 	if (sc->sc_type == ME_PAR) {
-		if (csr & ME_PAR_EMASK) {
-			/* true for Sun3/60, probably some others too */
-			printf("probably should replace SIMM %d\n",
-			       pa / 1048576 + 1);
+		if (csr & ME_PAR_EMASK)
 			/* Parity errors are fatal. */
 			goto die;
-		}
 		/* The IPEND bit was set, but no error bits. */
 		goto noerror;
 	}
