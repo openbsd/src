@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.7 1995/07/05 17:46:11 pk Exp $ */
-/*	$OpenBSD: types.h,v 1.10 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: types.h,v 1.11 2003/08/01 07:44:58 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct label_t {
-	int val[22];
+	int val[19];
 } label_t;
 #endif
 
