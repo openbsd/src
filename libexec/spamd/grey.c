@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.13 2004/06/21 17:05:43 itojun Exp $	*/
+/*	$OpenBSD: grey.c,v 1.14 2004/06/21 17:07:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -153,6 +153,7 @@ addwhiteaddr(char *addr)
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		/*for now*/
 	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
 	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
@@ -374,6 +375,7 @@ greyreader(void)
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		/*for now*/
 	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
 	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
