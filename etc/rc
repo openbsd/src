@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.248 2004/06/04 04:26:41 grange Exp $
+#	$OpenBSD: rc,v 1.249 2004/07/06 04:05:27 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -298,7 +298,7 @@ if [ X${amd} = X"YES" -a -e ${amd_master} ]; then
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
 fi
 
-# run rdate before timed
+# run rdate before timed/ntpd
 if [ X"${rdate_flags}" != X"NO" ]; then
 	echo -n ' rdate';	rdate -s ${rdate_flags}
 fi
@@ -307,6 +307,10 @@ fi
 # if $timed_flags == NO, timed isn't run.
 if [ "X${timed_flags}" != X"NO" ]; then
 	echo -n ' timed'; timed $timed_flags
+fi
+
+if [ "X${ntpd_flags}" != X"NO" ]; then
+	echo -n ' ntpd'; ntpd $ntpd_flags
 fi
 echo '.'
 
