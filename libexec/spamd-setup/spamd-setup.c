@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.9 2003/04/28 19:13:51 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.10 2003/05/16 01:01:33 beck Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -174,7 +174,9 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 	if (sscanf(buf, "%15[^/]/%u", astring, &maskbits) == 2) {
 		/* looks like a cidr */
 		struct cidr c;
-		if (inet_pton(AF_INET, astring, &c.addr) != 1)
+		memset(&c.addr, 0, sizeof(c.addr));
+		if (inet_net_pton(AF_INET, astring, &c.addr, sizeof(c.addr))
+		    == -1)
 			return(0);
 		c.addr = ntohl(c.addr);
 		if (maskbits > 32)
@@ -185,17 +187,23 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 	} else if (sscanf(buf, "%15[0123456789.]%*[ -]%15[0123456789.]",
 	    astring, astring2) == 2) {
 		/* looks like start - end */
-		if (inet_pton(AF_INET, astring, &start->addr) != 1)
+		memset(&start->addr, 0, sizeof(start->addr));
+		memset(&end->addr, 0, sizeof(end->addr));
+		if (inet_net_pton(AF_INET, astring, &start->addr,
+		    sizeof(start->addr)) == -1)
 			return(0);
 		start->addr = ntohl(start->addr);
-		if (inet_pton(AF_INET, astring2, &end->addr) != 1)
+		if (inet_net_pton(AF_INET, astring2, &end->addr,
+		    sizeof(end->addr)) == -1)
 			return(0);
 		end->addr = ntohl(end->addr) + 1;
 		if (start > end)
 			return(0);
 	} else if (sscanf(buf, "%15[0123456789.]", astring) == 1) {
 		/* just a single address */
-		if (inet_pton(AF_INET, astring, &start->addr) != 1)
+		memset(&start->addr, 0, sizeof(start->addr));
+		if (inet_net_pton(AF_INET, astring, &start->addr,
+		    sizeof(start->addr)) == -1)
 			return(0);
 		start->addr = ntohl(start->addr);
 		end->addr = start->addr + 1;
@@ -508,6 +516,8 @@ collapse_blacklist(struct bl *bl, int blc)
 	struct cidr ** cl;
 	u_int32_t bstart = 0;
 
+	if (blc == 0)
+		return(NULL);
 	cl = malloc((blc / 2) * sizeof(struct cidr));
 	if (cl == NULL) {
 		return (NULL);
@@ -762,20 +772,23 @@ main(int argc, char *argv[])
 	}
 	for (i = 0; i < blc; i++) {
 		struct cidr **cidrs, **tmp;
-		cidrs = collapse_blacklist(blists[i].bl, blists[i].blc);
-		if (cidrs == NULL)
-			errx(1, "malloc failed");
-		if (configure_spamd(ent->s_port, blists[i].name,
-		    blists[i].message, cidrs) == -1)
-			err(1, "Can't connect to spamd on port %d",
-			    ent->s_port);
-		if (configure_pf(cidrs) == -1)
-			err(1, "pfctl failed");
-		tmp = cidrs;
-		while (*tmp != NULL)
-			free(*tmp++);
-		free(cidrs);
-		free(blists[i].bl);
+		if (blists[i].blc > 0) {
+			cidrs = collapse_blacklist(blists[i].bl, 
+			   blists[i].blc);
+			if (cidrs == NULL)
+				errx(1, "malloc failed");
+			if (configure_spamd(ent->s_port, blists[i].name,
+					    blists[i].message, cidrs) == -1)
+				err(1, "Can't connect to spamd on port %d",
+				    ent->s_port);
+			if (configure_pf(cidrs) == -1)
+				err(1, "pfctl failed");
+			tmp = cidrs;
+			while (*tmp != NULL)
+				free(*tmp++);
+			free(cidrs);
+			free(blists[i].bl);
+		}
 	}
 	return (0);
 }
