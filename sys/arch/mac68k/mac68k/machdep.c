@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 1999/04/22 00:35:04 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 1999/04/23 05:15:28 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -86,6 +86,8 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -121,7 +123,9 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/kcore.h>
 #include <machine/bus.h>
+#include <machine/pmap.h>
 #include <net/netisr.h>
 
 void netintr __P((void));
@@ -235,12 +239,21 @@ struct	extent *iomem_ex;
 int	iomem_malloc_safe;
 
 /* XXX should be in locore.s for consistency */
-int	astpending=0;
-int	want_resched=0;
+int	astpending = 0;
+int	want_resched = 0;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
-void		dumpsys __P((void));
+
+int	cpu_dumpsize __P((void));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+void	cpu_init_kcore_hdr __P((void));
+void	dumpsys __P((void));
+
+/*
+ * Machine-dependent crash dump header info.
+ */
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
  * Console initialization: called early on from main,
@@ -287,6 +300,11 @@ cpu_startup(void)
 	vm_offset_t	minaddr, maxaddr;
 	vm_size_t	size = 0;	/* To avoid compiler warning */
 	int     	delay;
+
+	/*
+	 * Initialize the kernel crash dump header.
+	 */
+	cpu_init_kcore_hdr();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -643,25 +661,75 @@ boot(howto)
 }
 
 /*
+ * Initialize the kernel crash dump header.
+ */
+void
+cpu_init_kcore_hdr()
+{
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	int i;
+
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+
+	h->mmutype = mmutype;
+	h->kernel_pa = low[0];
+	h->sysseg_pa = pmap_kernel()->pm_stpa;
+
+	/*
+	 * mac68k has multiple RAM segments on some models.
+	 */
+	for (i = 0; i < numranges; i++) {
+		h->ram_segs[i].start = low[i];
+		h->ram_segs[i].size  = high[i] - low[i];
+	}
+}
+
+/*
+ * Compute the size of the machine-dependent crash dump header.
+ * Returns size in disk blocks.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	return (btodb(roundup(size, dbtob(1))));
+}
+
+/*
+ * Called by dumpsys() to dump the machine-dependent header.
+ */
+int
+cpu_dump(dump, blknop)
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	daddr_t *blknop;
+{
+	int buf[dbtob(1) / sizeof(int)];
+	cpu_kcore_hdr_t *chdr;
+	kcore_seg_t *kseg;
+	int error;
+
+	kseg = (kcore_seg_t *)buf;
+	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
+	    sizeof(int)];
+
+	/* Create the segment header. */
+	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+
+	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	*blknop += btodb(sizeof(buf));
+	return (error);
+}
+
+/*
  * These variables are needed by /sbin/savecore
  */
-u_long  dumpmag = 0x8fca0101;	/* magic number */
-int     dumpsize = 0;		/* pages */
-long    dumplo = 0;		/* blocks */
-
-static int	get_max_page __P((void));
-
-static int
-get_max_page()
-{
-	int     i, max = 0;
-
-	for (i = 0; i < numranges; i++) {
-		if (high[i] > max)
-			max = high[i];
-	}
-	return max;
-}
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
@@ -673,8 +741,11 @@ get_max_page()
 void
 dumpconf()
 {
-	int     nblks;
-	int     maj;
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	int chdrsize;	/* size of dump header */
+	int nblks;	/* size of dump area */
+	int maj;
+	int i;
 
 	if (dumpdev == NODEV)
 		return;
@@ -682,179 +753,131 @@ dumpconf()
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdevsw[maj].d_psize == NULL) {
+		printf ("dumpconf: returning for d_psize\n");
 		return;
-	nblks = (*bdevsw[maj].d_psize) (dumpdev);
-	if (nblks <= ctod(1))
+	}
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	chdrsize = cpu_dumpsize();
+
+	dumpsize = 0;
+	for (i = 0; h->ram_segs[i].size && i < NPHYS_RAM_SEGS; i++)
+		dumpsize += btoc(h->ram_segs[i].size);
+
+	/*
+	 * Check to see if we will fit.  Note we always skip the
+	 * first CLBYTES in case there is a disk label there.
+	 */
+	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
+		dumpsize = 0;
+		dumplo = -1;
 		return;
-
-	dumpsize = btoc(get_max_page());
-
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-#define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
-static vm_offset_t dumpspace;
-
-vm_offset_t	reserve_dumppages __P((vm_offset_t));
-static int	find_range __P((vm_offset_t));
-static int	find_next_range __P((vm_offset_t));
-
-vm_offset_t
-reserve_dumppages(p)
-	vm_offset_t p;
-{
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
-}
-
-static int
-find_range(pa)
-	vm_offset_t pa;
-{
-	int     i;
-
-	for (i = 0; i < numranges; i++) {
-		if (low[i] <= pa && pa < high[i])
-			return i;
 	}
-	return -1;
-}
 
-static int
-find_next_range(pa)
-	vm_offset_t pa;
-{
-	int     i, near, best, t;
-
-	near = -1;
-	best = 0x7FFFFFFF;
-	for (i = 0; i < numranges; i++) {
-		if (low[i] <= pa && pa < high[i])
-			return i;
-		t = low[i] - pa;
-		if (t > 0) {
-			if (t < best) {
-				near = i;
-				best = t;
-			}
-		}
-	}
-	return near;
+	/*
+	 * Put dump at the end of the partition.
+	 */
+	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
 }
 
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
-	int     range;
-	int     maddr, psize;
-	daddr_t blkno;
-	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	int     error = 0;
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	daddr_t blkno;		/* current block to write */
+				/* dump routine */
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int pg;			/* page being dumped */
+	vm_offset_t maddr;	/* PA being dumped */
+	int seg;		/* RAM segment being dumped */
+	int error;		/* error code from (*dump)() */
 
-	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
+	/* XXX initialized here because of gcc lossage */
+	seg = 0;
+	maddr = h->ram_segs[seg].start;
+	pg = 0;
+
+	/* Don't record dump msgs in msgbuf. */
+	msgbufmapped = 0;
+
+	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
-
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
+	if (dumpsize == 0) {
 		dumpconf();
-	if (dumplo < 0)
-		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
-
-	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
-	printf("dump ");
-	if (psize == -1) {
-		printf("area unavailable.\n");
+		if (dumpsize == 0)
+			return;
+	}
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
 	}
-	bytes = get_max_page();
-	maddr = 0;
-	range = find_range(0);
-	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
-	for (i = 0; i < bytes; i += n) {
-		/*
-		 * Avoid dumping "holes."
-		 */
-		if ((range == -1) || (i >= high[range])) {
-			range = find_next_range(i);
-			if (range == -1) {
-				error = EIO;
-				break;
+	blkno = dumplo;
+
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
+
+	printf("dump ");
+
+	/* Write the dump header. */
+	error = cpu_dump(dump, &blkno);
+	if (error)
+		goto bad;
+
+	for (pg = 0; pg < dumpsize; pg++) {
+#define NPGMB	(1024*1024/NBPG)
+		/* print out how many MBs we have dumped */
+		if (pg && (pg % NPGMB) == 0)
+			printf("%d ", pg / NPGMB);
+#undef NPGMB
+		while (maddr >=
+		    (h->ram_segs[seg].start + h->ram_segs[seg].size)) {
+			if (++seg >= NPHYS_RAM_SEGS ||
+			    h->ram_segs[seg].size == 0) {
+				error = EINVAL;		/* XXX ?? */
+				goto bad;
 			}
-			n = low[range] - i;
-			maddr += n;
-			blkno += btodb(n);
-			continue;
+			maddr = h->ram_segs[seg].start;
 		}
-		/* Print out how many MBs we have to go. */
-		n = bytes - i;
-		if (n && (n % (1024 * 1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		    VM_PROT_READ, TRUE);
 
-		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n = BYTES_PER_DUMP;
-
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
-		if (error)
+		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+ bad:
+		switch (error) {
+		case 0:
+			maddr += NBPG;
+			blkno += btodb(NBPG);
 			break;
-		maddr += n;
-		blkno += btodb(n);	/* XXX? */
+
+		case ENXIO:
+			printf("device bad\n");
+			return;
+
+		case EFAULT:
+			printf("device not ready\n");
+			return;
+
+		case EINVAL:
+			printf("area improper\n");
+			return;
+
+		case EIO:
+			printf("i/o error\n");
+			return;
+
+		case EINTR:
+			printf("aborted from console\n");
+			return;
+
+		default:
+			printf("error %d\n", error);
+			return;
+		}
 	}
-
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	case EINTR:
-		printf("aborted from console\n");
-		break;
-
-	case 0:
-		printf("succeeded\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-	}
-	printf("\n\n");
-	delay(5000000);		/* 5 seconds */
+	printf("succeeded\n");
 }
 
 /*

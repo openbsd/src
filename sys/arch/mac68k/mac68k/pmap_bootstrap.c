@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.10 1999/01/11 05:11:37 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.11 1999/04/23 05:15:28 downsj Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
 
 /* 
@@ -72,8 +72,6 @@ extern vm_offset_t avail_start, avail_next;
 extern vm_offset_t virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
-
-extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 
 /*
  * These are used to map the RAM:
@@ -552,7 +550,7 @@ pmap_bootstrap(nextpa, firstpa)
 		va += NBPG;
 		msgbufp = (struct msgbuf *)va;
 		va += NBPG;
-		virtual_avail = reserve_dumppages(va);
+		virtual_avail = va;
 	}
 }
 
