@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.24 2003/10/05 20:27:46 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.25 2003/12/28 22:12:34 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -47,13 +47,13 @@
 #define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(64*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
