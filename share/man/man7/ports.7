@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.17 2001/03/01 16:11:22 aaron Exp $
+.\" $OpenBSD: ports.7,v 1.18 2001/03/06 23:03:46 brad Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -34,14 +34,13 @@
 .Nd contributed applications
 .Sh DESCRIPTION
 The
-.Nm OpenBSD Ports Collection
+.Ox
+Ports Collection
 (shamelessly stolen from the
 .Fx
 Ports Collection) offers a simple way
 for users and administrators to install applications.
-Each
-.Em port
-contains any patches necessary to make the original
+Each port contains any patches necessary to make the original
 application source code compile and run on BSD.
 Compiling an application is as simple as typing
 .Ic make
@@ -56,16 +55,21 @@ If all goes well, simply type
 to install the application.
 .Pp
 For more information about using ports, see
-.Nm The OpenBSD Ports Mechanism
+The
+.Ox
+Ports Mechanism
 (http://www.openbsd.org/ports.html).
 For information about creating new ports, see
 .\" .Xr porting 7
 .\" and
-.Nm Building an OpenBSD Port
-(http://www.openbsd.org/porting.html).
+Building an
+.Ox
+Port (http://www.openbsd.org/porting.html).
 Other excellent resources are the ports and porting sections of the
-FreeBSD Handbook (http://www.freebsd.org/handbook/ports.html and
-http://www.freebsd.org/handbook/porting.html) as well as the NetBSD
+.Fx
+Handbook (http://www.freebsd.org/handbook/ports.html and
+http://www.freebsd.org/handbook/porting.html) as well as the
+.Nx
 Package System documentation
 (http://www.netbsd.org/Documentation/netbsd/Packages.txt).
 .Pp
@@ -179,8 +183,9 @@ to
 .Dv Yes
 will skip this step.
 Sometimes, distfiles change without warning.
-The main OpenBSD mirror should still hold a copy of old distfiles, indexed
-by checksum.
+The main
+.Ox
+mirror should still hold a copy of old distfiles, indexed by checksum.
 Using
 .Bd -literal -offset indent
 	make checksum REFETCH=true
@@ -268,11 +273,15 @@ and edit it.
 .It Ev MASTER_SITE_OPENBSD
 If set to
 .Dv Yes ,
-include the master OpenBSD site when fetching files.
+include the master
+.Ox
+site when fetching files.
 .It Ev MASTER_SITE_FREEBSD
 If set to
 .Dv Yes ,
-include the master FreeBSD site when fetching files.
+include the master
+.Fx
+site when fetching files.
 .It Ev MASTER_SITE_OVERRIDE
 Go to this site first for all files.
 .El
@@ -296,11 +305,9 @@ Location of the ports tree.
 This is
 .Pa /usr/ports
 on
-.\" .Fx
-FreeBSD
+.Fx
 and
-.\" .Ox ,
-OpenBSD
+.Ox
 and
 .Pa /usr/pkgsrc
 on
@@ -383,19 +390,31 @@ may now be remounted read-only.
 .Sh FILES
 .Bl -tag -width /usr/ports/xxxxxxxx -compact
 .It Pa /usr/ports
-The default ports directory (FreeBSD and OpenBSD).
+The default ports directory (
+.Fx
+and
+.Ox
+).
 .It Pa /usr/pkgsrc
-The default ports directory (NetBSD).
+The default ports directory (
+.Nx
+).
 .It Pa /usr/ports/Makefile
 Ports master Makefile.
 .It Pa /usr/ports/INDEX
 Ports index.
 .It Pa /usr/ports/infrastructure/mk/bsd.port.mk
-The ports main engine (OpenBSD).
+The ports main engine (
+.Ox
+).
 .It Pa /usr/ports/infrastructure/templates/network.conf.template
-Network configuration defaults (OpenBSD).
+Network configuration defaults (
+.Ox
+).
 .It Pa /usr/ports/infrastructure/db/network.conf
-Local network configuration (OpenBSD).
+Local network configuration (
+.Ox
+).
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr pkg_add 1 ,
@@ -405,7 +424,9 @@ Local network configuration (OpenBSD).
 .Xr bsd.port.mk 5 ,
 .Xr packages 7
 .Pp
-The FreeBSD handbook.
+The
+.Fx
+handbook.
 .Sh AUTHORS
 This man page was originated by
 David O'Brien, from the
