@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.36 1999/12/06 11:04:22 niklas Exp $	*/
+/*	$OpenBSD: inet.c,v 1.37 1999/12/06 11:17:26 niklas Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.36 1999/12/06 11:04:22 niklas Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.37 1999/12/06 11:17:26 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -699,6 +699,7 @@ esp_stats(off, name)
         p(esps_pdrops, "\t%u packet%s dropped due to policy\n");
         p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
         p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
+        p(esps_badenc, "\t%u packet%s with bad encryption received\n");
         p(esps_badauth, "\t%u packet%s that failed verification received\n");
         p(esps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");   
         p(esps_qfull, "\t%u packet%s were dropped due to full output queue\n");
