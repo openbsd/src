@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.58 2002/12/06 00:47:31 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.59 2002/12/15 15:41:59 margarida Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -45,7 +45,7 @@ The
 utility communicates with the packet filter device using the
 ioctl interface described in
 .Xr pf 4 .
-It allows rule set and parameter configuration and retrieval of status
+It allows ruleset and parameter configuration and retrieval of status
 information from the packet filter.
 .Pp
 Packet filtering restricts the types of packets that pass through
@@ -93,17 +93,17 @@ and
 .Fl s
 only to the rules in the specified
 .Pa anchor
-and optional named rule set
+and optional named ruleset
 .Ar ruleset .
-In addition to the main rule set,
+In addition to the main ruleset,
 .Nm
-can load and manipulate additional rule sets by name.
-Named rule sets are attached at
+can load and manipulate additional rulesets by name.
+Named rulesets are attached at
 .Pa anchor
 points, which are also referenced by name.
 Evaluation of
 .Pa anchor
-rules from the main rule set is described in
+rules from the main ruleset is described in
 .Xr pf.conf 5 .
 .It Fl A
 Load only the queue rules present in the rule file.
@@ -184,7 +184,7 @@ connection).
 Show the currently loaded anchors.
 If
 .Fl a
-is specified, the named rule sets currently loaded in the specified
+is specified, the named rulesets currently loaded in the specified
 anchor are shown instead.
 .It Fl s Ar state
 Show the contents of the state table.
