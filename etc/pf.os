@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.10 2003/09/06 01:37:07 frantzen Exp $
+# $OpenBSD: pf.os,v 1.11 2003/12/03 23:55:34 deraadt Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -140,8 +140,8 @@
 # Wnnn	   - window scaling option, value nnn (or * or %nnn)
 # Mnnn	   - maximum segment size option, value nnn (or * or %nnn)
 # S	   - selective ACK OK
-# T 	   - timestamp
-# T0 	   - timestamp with a zero value
+# T	   - timestamp
+# T0	   - timestamp with a zero value
 #
 # To denote no TCP options, use a single '.'.
 #
@@ -363,7 +363,7 @@ T30:128:1:48:M*,N,N,S:			Windows:98::Windows 98
 64512:128:1:44:M1414:			Windows:NT:4.0:Windows NT 4.0 SP6a
 8192:128:1:44:M*:			Windows:NT:4.0:Windows NT 4.0 (older)
 6144:128:1:52:M*,W0,N,S,N,N:		Windows:NT:4.0:Windows NT 4.0 (RFC1323)
- 
+
 # Windows XP and 2000. Most of the signatures that were
 # either dubious or non-specific (no service pack data)
 # were deleted and replaced with generics at the end.
