@@ -1,7 +1,7 @@
 package ExtUtils::MM_Unix;
 
-$VERSION = substr q$Revision: 1.1.1.1 $, 10;
-# $Id: MM_Unix.pm,v 1.1.1.1 1996/08/19 10:12:39 downsj Exp $
+$VERSION = substr q$Revision: 1.2 $, 10;
+# $Id: MM_Unix.pm,v 1.2 1996/10/04 08:51:44 downsj Exp $
 
 require Exporter;
 use Config;
@@ -2544,7 +2544,9 @@ realclean purge ::  clean
         push(@m, "	$self->{RM_F} \$(INST_DYNAMIC) \$(INST_BOOT)\n");
         push(@m, "	$self->{RM_F} \$(INST_STATIC)\n");
     }
-    push(@m, "	$self->{RM_F} " . join(" ", values %{$self->{PM}}) . "\n");
+    if ( values %{$self->{PM}} ){
+        push(@m, "	$self->{RM_F} " . join(" ", values %{$self->{PM}}) . "\n");
+    }
     my(@otherfiles) = ($self->{MAKEFILE},
 		       "$self->{MAKEFILE}.old"); # Makefiles last
     push(@otherfiles, $attribs{FILES}) if $attribs{FILES};
