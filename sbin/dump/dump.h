@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.11 2002/03/14 20:41:50 mickey Exp $	*/
+/*	$OpenBSD: dump.h,v 1.12 2002/05/22 07:56:51 deraadt Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -198,18 +198,4 @@ extern int errno;
 #endif
 #ifndef	_PATH_FSTAB
 #define	_PATH_FSTAB	"/etc/fstab"
-#endif
-
-#ifdef sunos
-extern char *calloc();
-extern char *malloc();
-extern long atol();
-extern char *strcpy();
-extern char *strncpy();
-extern char *strcat();
-extern time_t time();
-extern void endgrent();
-extern __dead void exit();
-extern off_t lseek();
-extern const char *strerror();
 #endif
