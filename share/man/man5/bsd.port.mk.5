@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.75 2002/10/14 09:58:01 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.76 2002/10/29 08:29:37 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -394,6 +394,11 @@ Comment used for a flavored package, if the non-flavored comment is
 inappropriate.
 .It Ev COMMENT-foo-vanilla
 Comment used for a sub-, flavored package.
+.It Ev COMES_WITH
+The first release where the port was made part of the standard
+distribution.
+If the current OpenBSD version is >= this version then a notice
+will be displayed instead of the port being built.
 .It Ev CONFIGURE_ARGS
 Arguments to pass to configure script.
 Defaults are empty, except for
@@ -656,6 +661,9 @@ such.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
 located, to be used in hand-crafted extraction targets (read-only).
+.It Ev IGNORE
+The port is ignored if set to
+.Sq Yes .
 .It Ev INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros to use to install a program, a script, a man page, or data (or the
 corresponding directory, respectively).
