@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.8 2000/04/18 20:17:54 mickey Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.9 2000/04/18 20:46:22 mickey Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -54,6 +54,16 @@ statistics
 displays statistics kept about
 .Tn NFS
 client and server activity.
+If niether
+.Fl M
+nor
+.Fl N
+option was specified statics will be obtained from the running system
+by calling
+.Xr sysctl 3
+routine. Otherwise specified core and system will be used to fetch
+data by means of
+.Xr kvm 3 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -73,6 +83,8 @@ second intervals.
 .It Fl s
 Display server statistics only.
 .It Fl c
+Display client statistics only.
+.El
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
 .It Pa /bsd
@@ -80,13 +92,13 @@ default kernel namelist
 .It Pa /dev/kmem
 default memory file
 .El
-Display client statistics only.
-.El
 .Sh SEE ALSO
 .Xr fstat 1 ,
 .Xr netstat 1 ,
 .Xr ps 1 ,
 .Xr systat 1 ,
+.Xr kvm 3 ,
+.Xr sysctl 3 ,
 .Xr iostat 8 ,
 .Xr pstat 8 ,
 .Xr vmstat 8
