@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.10 2003/03/02 11:22:31 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.11 2003/03/11 02:25:59 kjc Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -615,6 +615,13 @@ hfsc_enqueue(ifq, m, pktattr)
 	int len;
 
 	/* grab class set by classifier */
+	if ((m->m_flags & M_PKTHDR) == 0) {
+		/* should not happen */
+		printf("altq: packet for %s does not have pkthdr\n",
+		    ifq->altq_ifp->if_xname);
+		m_freem(m);
+		return (ENOBUFS);
+	}
 	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
 	if (t == NULL ||
 	    (cl = clh_to_clp(hif, ((struct altq_tag *)(t+1))->qid)) == NULL ||

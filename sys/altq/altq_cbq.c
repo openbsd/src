@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.13 2003/03/02 11:22:31 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.14 2003/03/11 02:25:59 kjc Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -492,6 +492,13 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	int		 len;
 
 	/* grab class set by classifier */
+	if ((m->m_flags & M_PKTHDR) == 0) {
+		/* should not happen */
+		printf("altq: packet for %s does not have pkthdr\n",
+		    ifq->altq_ifp->if_xname);
+		m_freem(m);
+		return (ENOBUFS);
+	}
 	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
 	if (t == NULL ||
 	    (cl = clh_to_clp(cbqp, ((struct altq_tag *)(t+1))->qid)) == NULL) {
