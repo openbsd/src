@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.1 2000/09/06 02:12:15 rahnds Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.2 2000/09/19 05:32:22 rahnds Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -32,8 +32,14 @@ struct vgafb_config {
 	/*
 	 * Filled in by front-ends.
 	 */
+	int vc_ofh; /* openfirmware handle */
 	bus_space_tag_t	vc_iot, vc_memt;
 	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh, vc_mmioh;
+	paddr_t		vc_paddr; /* physical address */
+	/* Colormap */
+	u_char vc_cmap_red[256];
+	u_char vc_cmap_green[256];
+	u_char vc_cmap_blue[256];
 
 	/*
 	 * Private to back-end.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.2 2000/09/07 03:25:53 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.3 2000/09/19 05:32:21 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ extern int cons_width;
 extern int cons_linebytes;
 extern int cons_height;
 extern int cons_depth;
+extern int cons_display_ofh;
 
 struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
@@ -227,6 +228,7 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 
         vc->vc_iot = iot;
         vc->vc_memt = memt;
+	vc->vc_paddr = membase;
 	printf("vgafb_common_setup\n");
 
 	if (iosize != 0) {
@@ -245,6 +247,7 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
         if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
+	vc->vc_ofh = cons_display_ofh;
 	printf("display_mem_h %x\n", cons_display_mem_h );
 
 #if 0
@@ -296,7 +299,8 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	vc->vc_so = 0;
 
 	/* clear screen, frob cursor, etc.? */
-	rcons_eraserows(vc, 0, vc->vc_nrow, 0);
+	/*
+	*/
 
 #if defined(alpha)
 	/*
@@ -349,10 +353,39 @@ vgafb_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	/*struct vgafb_config *vc = v;*/
+	struct vgafb_config *vc = v;
+	struct wsdisplay_fbinfo *wdf;
 
-	/* XXX */
-	return -1;
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIVGA;
+		return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = cons_height;
+		wdf->width  = cons_width;
+		wdf->depth  = cons_depth;
+		wdf->cmsize = 256;
+		return 0;
+
+	case WSDISPLAYIO_GETCMAP:
+		return vgafb_getcmap(vc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_PUTCMAP:
+		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_GCURSOR:
+	case WSDISPLAYIO_SCURSOR:
+		return -1; /* not supported yet */
+	}
+	
+        /* XXX */
+        return -1;
 }
 
 int
@@ -367,7 +400,9 @@ vgafb_mmap(v, offset, prot)
 
 	/* memsize... */
 	if (offset >= 0x00000 && offset < 0x800000)	/* 8MB of mem??? */
-		h = vc->vc_memh + offset;
+		h = vc->vc_paddr + offset;
+	/* XXX the following are probably wrong. we want physical addresses 
+	   here, not virtual ones */
 	else if (offset >= 0x10000000 && offset < 0x10040000 )
 		/* 256KB of iohb */
 		h = vc->vc_ioh_b;
@@ -469,4 +504,64 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	#endif
 	printf("vgafb_cnattach screen painted\n");
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
+}
+
+int
+vgafb_getcmap(vc, cm)
+	struct vgafb_config *vc;
+	struct wsdisplay_cmap *cm;
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 256 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	error = copyout(&vc->vc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&vc->vc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&vc->vc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+int
+vgafb_putcmap(vc, cm)
+	struct vgafb_config *vc;
+	struct wsdisplay_cmap *cm;
+{
+	int index = cm->index;
+	int count = cm->count;
+	int i;
+	u_char *r, *g, *b;
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+#ifdef UVM
+	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
+	    !uvm_useracc(cm->green, cm->count, B_READ) ||
+	    !uvm_useracc(cm->blue, cm->count, B_READ))
+		return EFAULT;
+#endif
+	copyin(cm->red,   &(vc->vc_cmap_red[index]),   count);
+	copyin(cm->green, &(vc->vc_cmap_green[index]), count);
+	copyin(cm->blue,  &(vc->vc_cmap_blue[index]),  count);
+
+	r = &(vc->vc_cmap_red[index]);
+	g = &(vc->vc_cmap_green[index]);
+	b = &(vc->vc_cmap_blue[index]);
+
+	printf("ofh = %x\n", vc->vc_ofh);
+	for (i = 0; i < count; i++) {
+		OF_call_method_1("color!", vc->vc_ofh, 4, *r, *g, *b, index);
+		r++, g++, b++, index++;
+	}
+	return 0;
 }
