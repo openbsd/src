@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.3 2004/02/17 21:08:37 jmc Exp $
+.\"	$OpenBSD: procmap.1,v 1.4 2004/02/23 21:07:59 tedu Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -400,14 +400,3 @@ entry.
 Some of the output modes can be or are wider than the standard 80
 columns of a terminal.
 Some sort of formatting might be nice.
-.Sh SECURITY CONSIDERATIONS
-The Solaris command controls access to processes the user does not own
-via the permissions of its
-.Pa /proc
-file system.
-Since
-.Nm
-uses
-.Xr kvm 3
-to read the requested data directly from kernel memory, no such
-limitation exists.
