@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.13 1996/05/09 22:42:53 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.14 1996/05/28 09:39:34 niklas Exp $
 #	$NetBSD: files.amiga,v 1.45 1996/05/07 00:34:17 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -274,8 +274,8 @@ include	"../../../dev/isa/files.isa"
 # XXX should really use if_ed instead, but can't for the moment due to
 # name clashes with the amiga variant.
 device	isaed: ifnet, ether
-attach	isaed at isa
-file	arch/amiga/isa/if_isaed.c	isaed
+attach	isaed at isa with isaed_isa
+file	arch/amiga/isa/if_isaed.c	isaed & isaed_isa needs-flag
 
 # list of standard files...
 file	dev/cons.c			ite | ser

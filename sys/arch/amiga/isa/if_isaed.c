@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_isaed.c,v 1.6 1996/05/09 22:41:38 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.7 1996/05/28 09:39:39 niklas Exp $	*/
 
 /*
- *	Derived from sys/dev/isa/if.ed.c:
-*	$NetBSD: if_ed.c,v 1.98 1996/05/07 01:55:13 thorpej Exp $
+ *	Derived from sys/dev/isa/if_ed.c:
+ *	$NetBSD: if_ed.c,v 1.98 1996/05/07 01:55:13 thorpej Exp $
  */
 
 /*
@@ -23,6 +23,7 @@
  */
 
 #include "bpfilter.h"
+#include "isaed.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +82,7 @@ struct ed_softc {
 
 	bus_chipset_tag_t sc_bc;  /* bus identifier */
 	bus_io_handle_t sc_ioh;   /* io handle */
-	bus_io_handle_t sc_delayioh; /* io handle for `delay port' XXX MI? */
+	bus_io_handle_t sc_delayioh; /* io handle for `delay port' */
 	bus_mem_handle_t sc_memh; /* bus memory handle */
 
 	bus_io_size_t	asic_base;	/* offset of ASIC I/O port */
@@ -155,9 +156,11 @@ void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
 void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
 u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
-struct cfattach isaed_ca = {
+#if NISAED_ISA > 0
+struct cfattach isaed_isa_ca = {
 	sizeof(struct ed_softc), edprobe, edattach
 };
+#endif
 
 struct cfdriver isaed_cd = {
 	NULL, "isaed", DV_IFNET
@@ -167,17 +170,19 @@ struct cfdriver isaed_cd = {
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-#define	NIC_PUT(bc, ioh, nic, reg, val)	\
-	bus_io_write_1((bc), (ioh), ((nic) + (reg)), (val))
-#define	NIC_GET(bc, ioh, nic, reg)	\
-	bus_io_read_1((bc), (ioh), ((nic) + (reg)))
+#if NISAED_PCMCIA > 0 
+#include <dev/pcmcia/pcmciavar.h>
 
-/*#include "pcmciabus.h"*/
-#if NPCMCIABUS > 0 
+int ed_pcmcia_match __P((struct device *, void *, void *));
+void ed_pcmcia_attach __P((struct device *, struct device *, void *));
+int ed_pcmcia_detach __P((struct device *));
 
-#include <dev/pcmcia/pcmciabus.h>
-static int ed_probe_pcmcia_ne __P((struct device *, void *,
-				   void *, struct pcmcia_link *));
+struct cfattach isaed_pcmcia_ca = {
+	sizeof(struct ed_softc), ed_pcmcia_match, edattach, ed_pcmcia_detach
+};
+
+static int ed_pcmcia_isa_attach __P((struct device *, void *,
+				     void *, struct pcmcia_link *));
 
 static int edmod __P((struct pcmcia_link *, struct device *,
 		      struct pcmcia_conf *, struct cfdata *cf));
@@ -186,7 +191,7 @@ static int ed_remove __P((struct pcmcia_link *, struct device *));
 
 /* additional setup needed for pcmcia devices */
 static int
-ed_probe_pcmcia_ne(parent, match, aux, pc_link)
+ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct device *parent;
 	void *match;
 	void *aux;
@@ -200,17 +205,18 @@ ed_probe_pcmcia_ne(parent, match, aux, pc_link)
 	extern int ifqmaxlen;
 	u_char enaddr[ETHER_ADDR_LEN];
 
-	if ((int)dev->param >= 0)
+	if ((int)dev->param != -1)
 		err = pcmcia_read_cis(pc_link, enaddr, 
 				      (int) dev->param, ETHER_ADDR_LEN);
 	else
 		err = 0;
 	if (err)
-		printf("Cannot read cis info %d\n", err);
+		printf("%s: attaching ed: cannot read cis info %d\n",
+		       parent->dv_xname, err);
 
-	if (ed_probe_Novell(sc, cf, ia)) {
+	if (ed_find_Novell(sc, cf, ia)) {
 		delay(100);
-		if ((int)dev->param >= 0) {
+		if ((int)dev->param != -1) {
 		    err = pcmcia_read_cis(pc_link, sc->sc_arpcom.ac_enaddr,
 				      (int) dev->param, ETHER_ADDR_LEN);
 		    if (err) {
@@ -230,8 +236,8 @@ ed_probe_pcmcia_ne(parent, match, aux, pc_link)
 		sc->type_str = dev->model;
 		sc->sc_arpcom.ac_if.if_snd.ifq_maxlen=ifqmaxlen;
 		return 1;
-	}
-	return 0;
+	} else
+	    return 0;
 }
 
 /* modify config entry */
@@ -243,16 +249,20 @@ edmod(pc_link, self, pc_cf, cf)
 	struct cfdata *cf;
 {
 	int err;
-	struct pcmciadevs *dev=pc_link->device;
-	struct ed_softc *sc = (void *)self;
-	int svec_card = strcmp(dev->manufacturer, "SVEC") == 0;
+/*	struct pcmciadevs *dev=pc_link->device;*/
+/*	struct ed_softc *sc = (void *)self;*/
+	int svec_card =  pc_cf->memwin  == 5;
 	int de650_0 = (pc_cf->memwin != 0) && !svec_card;
-	err = pc_link->adapter->bus_link->bus_config(pc_link, self, pc_cf, cf);
+	err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self, pc_cf, cf);
 	if (err)
 		return err;
 
 	if (svec_card) {
 		pc_cf->memwin = 0;
+#if 0
+		pc_cf->cfgid = 32;  /* Try this if it still doesn't work */
+		pc_cf->cfgid |= 32;  /* or Try this if it still doesn't work */
+#endif
 	}
 	if (de650_0) {
 		pc_cf->io[0].flags =
@@ -282,13 +292,15 @@ ed_remove(pc_link,self)
 	shutdownhook_disestablish(sc->sc_sh);
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_UP);
 	sc->spec_flags |= ED_NOTPRESENT;
-	return pc_link->adapter->bus_link->bus_unconfig(pc_link); 
+	isa_intr_disestablish(sc->sc_bc, sc->sc_ih);
+	return PCMCIA_BUS_UNCONFIG(pc_link->adapter, pc_link);
 }
 
 static struct pcmcia_dlink {
 	struct pcmcia_device pcd;
-} pcmcia_dlink= {
-	"PCMCIA Novell compatible", edmod, ed_probe_pcmcia_ne, NULL, ed_remove
+} pcmcia_dlink = {
+	{"PCMCIA Novell compatible", edmod, ed_pcmcia_isa_attach,
+	 NULL, ed_remove}
 };
 
 struct pcmciadevs pcmcia_ed_devs[]={
@@ -304,16 +316,61 @@ struct pcmciadevs pcmcia_ed_devs[]={
 	"Socket EA PCMCIA LAN Adapter Revision D", "Ethernet ID 000000000000",
 	NULL, (void *) -1,
 	(void *)&pcmcia_dlink },
-	/* probably not right for ethernet address--card does not seem to
-	   have it anywhere. */
+      /* something screwed up in ports requested */
       { "ed", 0, "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL,
-	(void *)0xb4, (void *)&pcmcia_dlink },
-      { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *) 0x110,
-        (void *)&pcmcia_dlink }, /* 0x110 is a guess */
+	(void *)-1, (void *)&pcmcia_dlink },
+#if 0
+      /* not quite right for ethernet adress */
+      { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *)-1,
+        (void *)&pcmcia_dlink },
+#endif
       { NULL }
 };
+
+#define ned_pcmcia_devs sizeof(pcmcia_ed_devs)/sizeof(pcmcia_ed_devs[0])
+
+int
+ed_pcmcia_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	return pcmcia_slave_match(parent, match, aux, pcmcia_ed_devs,
+				  ned_pcmcia_devs);
+}
+
+void
+ed_pcmcia_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcmcia_attach_args *paa = aux;
+	
+	printf("ed_pcmcia_attach %p %p %p\n", parent, self, aux);
+	delay(2000000);
+	if (!pcmcia_configure(parent, self, paa->paa_link)) {
+		struct ed_softc *sc = (void *)self;
+		sc->spec_flags |= ED_NOTPRESENT;
+		printf(": not attached\n");
+	}
+}
+
+/*
+ * No detach; network devices are too well linked into the rest of the
+ * kernel.
+ */
+int
+ed_pcmcia_detach(self)
+	struct device *self;
+{
+	return EBUSY;
+}
+
 #endif
 
+#define	NIC_PUT(bc, ioh, nic, reg, val)	\
+	bus_io_write_1((bc), (ioh), ((nic) + (reg)), (val))
+#define	NIC_GET(bc, ioh, nic, reg)	\
+	bus_io_read_1((bc), (ioh), ((nic) + (reg)))
 
 /*
  * Determine if the device is present.
@@ -338,6 +395,13 @@ ed_find(sc, cf, ia)
 	struct cfdata *cf;
 	struct isa_attach_args *ia;
 {
+
+	/*
+	 * As many NE2000 clones provide extra functionality such as shared
+	 * memory, they are susceptible to random thrashing by the other
+	 * probes, so place it first.  I don't know if this might hurt
+	 * WD/SMC or 3Com cards.  If so, please tell niklas@appli.se!
+	 */
 	if (ed_find_Novell(sc, cf, ia))
 		return (1);
 	if (ed_find_WD80x3(sc, cf, ia))
@@ -399,7 +463,6 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	/* XXX Read for 1.25 usec delay.  Is this MI?  */
 	bus_io_handle_t delayioh = ia->ia_delayioh;
 	bus_mem_handle_t memh;
 	u_int memsize;
@@ -739,7 +802,6 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 	    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
-	/* XXX 2.5 usec delay.  This code works on i386, but is it MI?  */
 	(void) bus_io_read_1(bc, delayioh, 0);
 	(void) bus_io_read_1(bc, delayioh, 0);
 
@@ -759,10 +821,6 @@ ed_find_WD80x3(sc, cf, ia)
 			if (isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			/*
-			 * XXX 2.5 usec delay.  This code works on i386,
-			 * but is it MI?
-			 */
 			(void) bus_io_read_1(bc, delayioh, 0);
 			(void) bus_io_read_1(bc, delayioh, 0);
 			goto out;
@@ -780,7 +838,6 @@ ed_find_WD80x3(sc, cf, ia)
 	if (isa16bit)
 		bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 		    sc->wd_laar_proto);
-	/* XXX 2.5 usec delay.  This code works on i386, but is it MI?  */
 	(void) bus_io_read_1(bc, delayioh, 0);
 	(void) bus_io_read_1(bc, delayioh, 0);
 
@@ -1356,7 +1413,6 @@ edattach(parent, self, aux)
 	ioh = sc->sc_ioh;		/* XXX */
 
 	asicbase = sc->asic_base;
-	/* XXX Read for 1.25 usec delay.  Is this MI?  */
 	sc->sc_delayioh = ia->ia_delayioh;
 
 	/* Set interface to stopped condition (reset). */
@@ -1755,10 +1811,6 @@ outloop:
 				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 			bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto | ED_WD_MSR_MENB);
-			/*
-			 * XXX 2.5 usec delay.  This code works on i386,
-			 * but is it MI?
-			 */
 			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
@@ -1785,10 +1837,6 @@ outloop:
 			if (sc->isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			/*
-			 * XXX 2.5 usec delay.  This code works on i386,
-			 * but is it MI?
-			 */
 			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
@@ -1885,10 +1933,9 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != bus_to_host_2(bc, packet_hdr.count)) {
-			printf("%s: length does not match next packet "
-			    "pointer\n", sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x first %02x "
-			    "curr %02x next %02x stop %02x\n",
+			printf("%s: length does not match next packet pointer\n",
+			    sc->sc_dev.dv_xname);
+			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname,
 			    bus_to_host_2(bc, packet_hdr.count), len,
 			    sc->rec_page_start, sc->next_packet, current,
@@ -2087,10 +2134,6 @@ edintr(arg)
 					bus_io_write_1(bc, ioh,
 					    asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto | ED_WD_MSR_MENB);
-					/*
-					 * XXX 2.5 usec delay.  This code
-					 * works on i386, but is it MI?
-					 */
 					(void) bus_io_read_1(bc,
 					    sc->sc_delayioh, 0);
 					(void) bus_io_read_1(bc,
@@ -2108,10 +2151,6 @@ edintr(arg)
 						bus_io_write_1(bc, ioh,
 						    asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto);
-					/*
-					 * XXX 2.5 usec delay.  This code
-					 * works on i386, but is it MI?
-					 */
 					(void) bus_io_read_1(bc,
 					    sc->sc_delayioh, 0);
 					(void) bus_io_read_1(bc,
