@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.29 1999/10/07 02:17:02 provos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.30 1999/10/28 03:40:08 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -528,6 +528,8 @@ The currently defined protocols and names are:
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
+.It ip4	allow	integer	yes
+.It etherip	allow	integer	yes
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	baddynamic	array	yes
@@ -563,6 +565,12 @@ packet sourced by
 the system.
 This value applies to normal transport protocols, not to
 .Tn ICMP .
+.It Li ip4.allow
+If set to 0, incoming IPv4-in-IPv4 packets will not be processed.
+If set to any other value, processing will occur.
+.It Li etherip.allow
+If set to 0, incoming Ethernet-in-IPv4 packets will not be processed.
+If set to any other value, processing will occur.
 .It Li icmp.maskrepl
 Returns 1 if
 .Tn ICMP
