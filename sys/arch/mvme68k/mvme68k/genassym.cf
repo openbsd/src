@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/03/31 00:24:11 downsj Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1997/11/20 20:35:17 etheisen Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -236,6 +236,7 @@ define	CPU_177			CPU_177
 define	MMU_68851		MMU_68851
 define	MMU_68030		MMU_68030
 define	MMU_68040		MMU_68040
+define	MMU_68060		MMU_68060
 
 define	CPU_68020		CPU_68020
 define	CPU_68030		CPU_68030
