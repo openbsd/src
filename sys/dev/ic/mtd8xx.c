@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.3 2003/11/17 13:21:29 espie Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -437,7 +437,7 @@ mtd_list_tx_init(struct mtd_softc *sc)
 
 	cd = &sc->mtd_cdata;
 	ld = sc->mtd_ldata;
-	for (i = 0; i < MTD_TX_LIST_CNT;) {
+	for (i = 0; i < MTD_TX_LIST_CNT; i++) {
 		cd->mtd_tx_chain[i].sd_mbuf = NULL;
 		ld->mtd_tx_list[i].td_tsw = 0;
 		ld->mtd_tx_list[i].td_tcw = 0;
@@ -445,7 +445,7 @@ mtd_list_tx_init(struct mtd_softc *sc)
 		ld->mtd_tx_list[i].td_next = htole32(
 		    sc->sc_listmap->dm_segs[0].ds_addr +
 		    offsetof(struct mtd_list_data,
-		    mtd_tx_list[++i % MTD_TX_LIST_CNT]));
+		    mtd_tx_list[(i + 1) % MTD_TX_LIST_CNT]));
 	}
 
 	cd->mtd_tx_prod = cd->mtd_tx_cons = cd->mtd_tx_cnt = 0;
@@ -465,13 +465,13 @@ mtd_list_rx_init(struct mtd_softc *sc)
 
 	ld = sc->mtd_ldata;
 
-	for (i = 0; i < MTD_RX_LIST_CNT;) {
+	for (i = 0; i < MTD_RX_LIST_CNT; i++) {
 		if (mtd_newbuf(sc, i, NULL))
 			return (1);
 		ld->mtd_rx_list[i].rd_next = htole32(
 		    sc->sc_listmap->dm_segs[0].ds_addr +
 		    offsetof(struct mtd_list_data,
-		    mtd_rx_list[++i % MTD_RX_LIST_CNT])
+		    mtd_rx_list[(i + 1) % MTD_RX_LIST_CNT])
 		);
 	}
 
