@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.5 2001/08/19 15:02:02 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.6 2001/08/19 15:19:28 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -1003,7 +1003,7 @@ main(int argc, char **argv)
 		    client_iob.alive ? "alive" : "dead",
 		    server_iob.alive ? "alive" : "dead");
 
-		fdsp = (fd_set *)calloc(howmany(maxfd+1, NFDBITS), 
+		fdsp = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS), 
 		    sizeof(fd_mask));
 		if (fdsp == NULL) {
 			syslog(LOG_NOTICE, "Insufficient memory");
@@ -1041,7 +1041,7 @@ main(int argc, char **argv)
 			tv.tv_usec = 0;
 
 		doselect:
-			switch (sval = select(FD_SETSIZE, fdsp, NULL, NULL,
+			switch (sval = select(maxfd + 1, fdsp, NULL, NULL,
 			    (tv.tv_sec == 0) ? NULL : &tv)) {
 			case 0:
 				/*
