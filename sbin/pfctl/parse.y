@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.459 2004/06/29 22:14:13 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.460 2004/09/21 16:59:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -401,7 +401,8 @@ typedef struct {
 %type	<v.number>		tos not yesno natpass
 %type	<v.i>			no dir log af fragcache sourcetrack
 %type	<v.i>			unaryop statelock
-%type	<v.b>			action nataction flags flag blockspec
+%type	<v.b>			action nataction scrubaction
+%type	<v.b>			flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
 %type	<v.proto>		proto proto_list proto_item
@@ -728,7 +729,16 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			free($5);
 		};
 
-scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
+scrubaction	: no SCRUB {
+			$$.b2 = $$.w = 0;
+			if ($1)
+				$$.b1 = PF_NOSCRUB;
+			else
+				$$.b1 = PF_SCRUB;
+		}
+		;
+
+scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
 		{
 			struct pf_rule	r;
 
@@ -737,7 +747,7 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 
 			memset(&r, 0, sizeof(r));
 
-			r.action = PF_SCRUB;
+			r.action = $1.b1;
 			r.direction = $2;
 
 			r.log = $3.log;
@@ -3500,6 +3510,7 @@ rule_consistent(struct pf_rule *r)
 	case PF_PASS:
 	case PF_DROP:
 	case PF_SCRUB:
+	case PF_NOSCRUB:
 		problems = filter_consistent(r);
 		break;
 	case PF_NAT:

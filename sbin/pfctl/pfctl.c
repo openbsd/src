@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.222 2004/08/26 16:35:36 jaredy Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.223 2004/09/21 16:59:11 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -839,6 +839,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 
 	switch (r->action) {
 	case PF_SCRUB:
+	case PF_NOSCRUB:
 		if ((loadopt & PFCTL_FLAG_FILTER) == 0)
 			return (0);
 		rs_num = PF_RULESET_SCRUB;

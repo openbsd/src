@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.202 2004/07/12 00:50:22 itojun Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.203 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,7 +49,7 @@ struct ip;
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
-enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
+enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
 enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
 	  PF_RULESET_BINAT, PF_RULESET_RDR, PF_RULESET_MAX };

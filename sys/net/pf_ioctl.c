@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.130 2004/09/09 22:08:42 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.131 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -257,6 +257,7 @@ pf_get_ruleset_number(u_int8_t action)
 {
 	switch (action) {
 	case PF_SCRUB:
+	case PF_NOSCRUB:
 		return (PF_RULESET_SCRUB);
 		break;
 	case PF_PASS:
