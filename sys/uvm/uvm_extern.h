@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.24 1999/04/11 04:04:11 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.27 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
  *
@@ -282,7 +282,8 @@ boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
 void			uvm_swapin __P((struct proc *));
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
-void			uvm_vslock __P((struct proc *, caddr_t, size_t));
+void			uvm_vslock __P((struct proc *, caddr_t, size_t,
+			    vm_prot_t));
 void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 
@@ -301,7 +302,7 @@ void			uvm_km_free_wakeup __P((vm_map_t, vaddr_t,
 vaddr_t			uvm_km_kmemalloc __P((vm_map_t, struct uvm_object *,
 						vsize_t, int));
 struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
-				vaddr_t *, vsize_t, boolean_t,
+				vaddr_t *, vsize_t, int,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));

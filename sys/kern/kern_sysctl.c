@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.32 2000/03/03 11:46:09 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.33 2000/03/16 22:11:03 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@ sys___sysctl(p, v, retval)
 		memlock.sl_lock = 1;
 		if (dolock)
 #if defined(UVM)
-			uvm_vslock(p, SCARG(uap, old), oldlen);
+			uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_NONE);
 #else
 			vslock(SCARG(uap, old), oldlen);
 #endif

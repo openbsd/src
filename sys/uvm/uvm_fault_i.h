@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.7 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.9 1999/06/04 23:38:41 thorpej Exp $	*/
 
 /*
  *
@@ -79,6 +79,39 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
 	if (amap)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, FALSE);
+}
+
+/*
+ * uvmfault_check_intrsafe: check for a virtual address managed by
+ * an interrupt-safe map.
+ *
+ * => caller must provide a uvm_faultinfo structure with the IN
+ *	params properly filled in
+ * => if we find an intersafe VA, we fill in ufi->map, and return TRUE
+ */
+
+static __inline boolean_t
+uvmfault_check_intrsafe(ufi)
+	struct uvm_faultinfo *ufi;
+{
+	struct vm_map_intrsafe *vmi;
+	int s;
+
+	s = vmi_list_lock();
+	for (vmi = LIST_FIRST(&vmi_list); vmi != NULL;
+	     vmi = LIST_NEXT(vmi, vmi_list)) {
+		if (ufi->orig_rvaddr >= vm_map_min(&vmi->vmi_map) &&
+		    ufi->orig_rvaddr < vm_map_max(&vmi->vmi_map))
+			break;
+	}
+	vmi_list_unlock(s);
+
+	if (vmi != NULL) {
+		ufi->map = &vmi->vmi_map;
+		return (TRUE);
+	}
+
+	return (FALSE);
 }
 
 /*

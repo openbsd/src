@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.7 1999/12/02 20:39:32 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.8 2000/03/16 22:11:04 art Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -184,7 +184,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			p->p_holdcnt++;
 #if defined(UVM)
-			uvm_vslock(p, bp->b_data, todo);
+                        uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
+				VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
 #else
 			vslock(bp->b_data, todo);
 #endif

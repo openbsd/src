@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.19 1999/04/30 21:23:50 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.23 1999/05/28 20:49:51 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -221,13 +221,15 @@ uvm_chgkprot(addr, len, rw)
  */
 
 void
-uvm_vslock(p, addr, len)
+uvm_vslock(p, addr, len, access_type)
 	struct proc *p;
 	caddr_t	addr;
 	size_t	len;
+	vm_prot_t access_type;
 {
+
 	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
-	    round_page(addr+len));
+	    round_page(addr+len), access_type);
 }
 
 /*
@@ -243,7 +245,7 @@ uvm_vsunlock(p, addr, len)
 	caddr_t	addr;
 	size_t	len;
 {
-	uvm_fault_unwire(p->p_vmspace->vm_map.pmap, trunc_page(addr), 
+	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page(addr), 
 		round_page(addr+len));
 }
 
@@ -282,9 +284,12 @@ uvm_fork(p1, p2, shared, stack, stacksize)
 	 * and the kernel stack.  Wired state is stored in p->p_flag's
 	 * P_INMEM bit rather than in the vm_map_entry's wired count
 	 * to prevent kernel_map fragmentation.
+	 *
+	 * Note the kernel stack gets read/write accesses right off
+	 * the bat.
 	 */
 	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE);
+	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
 	if (rv != KERN_SUCCESS)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
@@ -373,7 +378,8 @@ uvm_swapin(p)
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE);
+	uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	    VM_PROT_READ | VM_PROT_WRITE);
 
 	/*
 	 * Some architectures need to be notified when the user area has
@@ -586,7 +592,7 @@ uvm_swapout(p)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	addr = (vaddr_t)p->p_addr;
-	uvm_fault_unwire(kernel_map->pmap, addr, addr + USPACE); /* !P_INMEM */
+	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/*

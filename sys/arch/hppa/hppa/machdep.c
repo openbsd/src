@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2000/02/22 20:08:15 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2000/03/16 22:11:03 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -506,13 +506,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16*NCARGS, TRUE, FALSE, NULL);
+	    16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -522,7 +522,7 @@ cpu_startup()
 	    M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts

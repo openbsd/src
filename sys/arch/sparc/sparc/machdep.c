@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2000/02/22 19:28:01 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2000/03/16 22:11:02 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -301,7 +301,7 @@ cpu_startup()
 	 */
 #if defined(UVM)
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 #else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
@@ -347,7 +347,7 @@ cpu_startup()
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 #if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
-				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 #else
 	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);

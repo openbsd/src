@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.18 1999/03/26 17:34:15 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.20 1999/05/25 00:09:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -619,7 +619,7 @@ uao_reference(uobj)
  	 * kernel_object already has plenty of references, leave it alone.
  	 */
 
-	if (uobj->uo_refs == UVM_OBJ_KERN)
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		return;
 
 	simple_lock(&uobj->vmobjlock);
@@ -646,7 +646,7 @@ uao_detach(uobj)
 	/*
  	 * detaching from kernel_object is a noop.
  	 */
-	if (uobj->uo_refs == UVM_OBJ_KERN)
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		return;
 
 	simple_lock(&uobj->vmobjlock);

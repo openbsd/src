@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.18 1999/11/25 13:41:30 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.19 2000/03/16 22:11:03 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 
-static struct vm_map kmem_map_store;
+static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
 #endif
 
@@ -228,11 +228,11 @@ malloc(size, type, flags)
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
 
-		vm_map_lock_read(kmem_map);
+		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
 				       addr + sizeof(struct freelist),
 				       VM_PROT_WRITE);
-		vm_map_unlock_read(kmem_map);
+		vm_map_unlock(kmem_map);
 
 		if (!rv)
 #else
@@ -439,7 +439,7 @@ kmeminit()
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), 
-			FALSE, FALSE, &kmem_map_store);
+			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
 #else
 	kmemusage = (struct kmemusage *) kmem_alloc(kernel_map,
 		(vsize_t)(npg * sizeof(struct kmemusage)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.21 1999/05/23 06:27:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -113,28 +113,6 @@ sys_sstk(p, v, retval)
 #if 0
 	struct sys_sstk_args /* {
 		syscallarg(int) incr;
-	} */ *uap = v;
-#endif
-
-	return (ENOSYS);
-}
-
-/*
- * sys_madvise: give advice about memory usage.
- */
-
-/* ARGSUSED */
-int
-sys_madvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct sys_madvise_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) behav;
 	} */ *uap = v;
 #endif
 
@@ -687,6 +665,51 @@ sys_minherit(p, v, retval)
 	
 	switch (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
 			 inherit)) {
+	case KERN_SUCCESS:
+		return (0);
+	case KERN_PROTECTION_FAILURE:
+		return (EACCES);
+	}
+	return (EINVAL);
+}
+
+/*
+ * sys_madvise: give advice about memory usage.
+ */
+
+/* ARGSUSED */
+int
+sys_madvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_madvise_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) behav;
+	} */ *uap = v;
+	vaddr_t addr;
+	vsize_t size, pageoff;
+	int advice;
+	
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
+	advice = SCARG(uap, behav);
+
+	/*
+	 * align the address to a page boundary, and adjust the size accordingly
+	 */
+	pageoff = (addr & PAGE_MASK);
+	addr -= pageoff;
+	size += pageoff;
+	size = (vsize_t) round_page(size);
+
+	if ((int)size < 0)
+		return (EINVAL);
+	
+	switch (uvm_map_advice(&p->p_vmspace->vm_map, addr, addr+size,
+			 advice)) {
 	case KERN_SUCCESS:
 		return (0);
 	case KERN_PROTECTION_FAILURE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.14 1999/03/25 18:48:52 mrg Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.17 1999/06/03 00:05:45 thorpej Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
  *
  * there are 3 types of loans possible:
  *  O->K  uvm_object page to wired kernel page (e.g. mbuf data area)
- *  A->K  anon page to kernel wired kernel page (e.g. mbuf data area)
+ *  A->K  anon page to wired kernel page (e.g. mbuf data area)
  *  O->A  uvm_object to anon loan (e.g. vnode page to an anon)
  * note that it possible to have an O page loaned to both an A and K
  * at the same time.
@@ -68,10 +68,15 @@
  * a uvm_object and a vm_anon, but PQ_ANON will not be set.   this sort
  * of page is considered "owned" by the uvm_object (not the anon).
  *
- * each loan of a page to a wired kernel page bumps the pg->wire_count.
- * wired kernel mappings should be entered with pmap_kenter functions
- * so that pmap_page_protect() will not affect the kernel mappings.
- * (this requires the PMAP_NEW interface...).
+ * each loan of a page to the kernel bumps the pg->wire_count.  the
+ * kernel mappings for these pages will be read-only and wired.  since
+ * the page will also be wired, it will not be a candidate for pageout,
+ * and thus will never be pmap_page_protect()'d with VM_PROT_NONE.  a
+ * write fault in the kernel to one of these pages will not cause
+ * copy-on-write.  instead, the page fault is considered fatal.  this
+ * is because the kernel mapping will have no way to look up the
+ * object/anon which the page is owned by.  this is a good side-effect,
+ * since a kernel write to a loaned page is an error.
  *
  * owners that want to free their pages and discover that they are 
  * loaned out simply "disown" them (the page becomes an orphan).  these
@@ -96,7 +101,7 @@
  *
  * note that loaning a page causes all mappings of the page to become
  * read-only (via pmap_page_protect).   this could have an unexpected
- * effect on normal "wired" pages if one is not careful.
+ * effect on normal "wired" pages if one is not careful (XXX).
  */
 
 /*
@@ -219,6 +224,11 @@ uvm_loan(map, start, len, result, flags)
 	struct uvm_faultinfo ufi;
 	void **output;
 	int rv;
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("uvm_loan: intrsafe map");
+#endif
 
 	/*
 	 * ensure that one and only one of the flags is set
