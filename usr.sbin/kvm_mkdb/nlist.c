@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.31 2003/04/04 22:40:52 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.32 2003/04/06 23:21:41 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.31 2003/04/04 22:40:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nlist.c,v 1.32 2003/04/06 23:21:41 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,12 +171,14 @@ __aout_knlist(fd, db, ksyms)
 		p = strtab + nbuf._strx - sizeof(int);
 		if (*p != '_') {
 			len = strlen(p) + 1;
-			if (len >= snamesize)
-				sname = realloc(sname, len + 1024);
+			if (len >= snamesize) {
+				snamesize = len + 1024;
+				sname = realloc(sname, snamesize);
+			}
 			if (sname == NULL)
 				errx(1, "cannot allocate memory");
 			*sname = '_';
-			strlcpy(sname+1, p, len);
+			strlcpy(sname + 1, p, snamesize  - 1);
 			key.data = (u_char *)sname;
 			key.size = len;
 		} else {
@@ -448,7 +450,7 @@ __elf_knlist(fd, db, ksyms)
 			nbuf.n_type = N_FN;
 			break;
 		}
-		if(ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
+		if (ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
 			nbuf.n_type = N_EXT;
 
 		*buf = '_';
@@ -606,13 +608,15 @@ __ecoff_knlist(fd, db, ksyms)
 	for (sname = NULL, i = 0; i < nesyms; i++) {
 		/* Need to prepend a '_' */
 		len = strlen(&mappedfile[extstroff + esyms[i].es_strindex]) + 1;
-		if (len >= snamesize)
-			sname = realloc(sname, len + 1024);
+		if (len >= snamesize) {
+			snamesize = len + 1024;
+			sname = realloc(sname, snamesize);
+		}
 		if (sname == NULL)
 			errx(1, "cannot allocate memory");
 		*sname = '_';
 		strlcpy(sname+1, &mappedfile[extstroff + esyms[i].es_strindex],
-		    len - 1);
+		    snamesize - 1);
 
 		/* Fill in NLIST */
 		bzero(&nbuf, sizeof(nbuf));
