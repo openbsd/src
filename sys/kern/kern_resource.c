@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_resource.c,v 1.6 1996/07/27 11:07:30 deraadt Exp $	*/
-/*	$NetBSD: kern_resource.c,v 1.34.4.1 1996/06/13 23:31:14 jtc Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.7 1996/11/24 23:33:43 millert Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -70,7 +70,7 @@ sys_getpriority(curp, v, retval)
 		syscallarg(int) who;
 	} */ *uap = v;
 	register struct proc *p;
-	register int low = PRIO_MAX + 1;
+	register int low = NZERO + PRIO_MAX + 1;
 
 	switch (SCARG(uap, which)) {
 
@@ -110,9 +110,9 @@ sys_getpriority(curp, v, retval)
 	default:
 		return (EINVAL);
 	}
-	if (low == PRIO_MAX + 1)
+	if (low == NZERO + PRIO_MAX + 1)
 		return (ESRCH);
-	*retval = low;
+	*retval = low - NZERO;
 	return (0);
 }
 
@@ -192,6 +192,7 @@ donice(curp, chgp, n)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
+	n += NZERO;
 	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
@@ -232,6 +233,10 @@ dosetrlimit(p, which, limp)
 
 	if (which >= RLIM_NLIMITS)
 		return (EINVAL);
+
+	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
+		return (EINVAL);
+
 	alimp = &p->p_rlimit[which];
 	if (limp->rlim_cur > alimp->rlim_max || 
 	    limp->rlim_max > alimp->rlim_max)
