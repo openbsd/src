@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.4 1999/11/25 07:01:34 d Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.5 2000/01/06 07:17:01 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -59,7 +59,7 @@
  */
 struct	file_lock {
 	LIST_ENTRY(file_lock)	entry;	/* Entry if file list.       */
-	TAILQ_HEAD(lock_head, pthread)
+	V_TAILQ_HEAD(lock_head, pthread)
 				l_head;	/* Head of queue for threads */
 					/* waiting on this lock.     */
 	FILE		*fp;		/* The target file.          */
@@ -305,7 +305,6 @@ _ftrylockfile(FILE * fp)
 void 
 _funlockfile(FILE * fp)
 {
-	int	status;
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
 
