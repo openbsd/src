@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.82 2001/04/09 07:14:14 tholo Exp $
+#	$OpenBSD: files.i386,v 1.83 2001/05/01 17:39:01 aaron Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -143,17 +143,6 @@ attach	pc at isa
 device	pcconskbd
 attach	pcconskbd at pckbc
 file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
-
-# PC console support a la "pcvt"
-device	vt: tty, pckbcport
-attach	vt at isa
-file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_mouse.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	lms: wsmousedev
