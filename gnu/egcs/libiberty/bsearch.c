@@ -28,91 +28,48 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#include <errno.h>
-#ifdef NEED_DECLARATION_ERRNO
-extern int errno;
-#endif
-#if 0
-#include <stdlib.h>
-#endif
 #include "ansidecl.h"
-#include "safe-ctype.h"
-
-#ifndef ULONG_MAX
-#define	ULONG_MAX	((unsigned long)(~0L))		/* 0xFFFFFFFF */
-#endif
+#include <sys/types.h>		/* size_t */
+#include <stdio.h>
 
 /*
- * Convert a string to an unsigned long integer.
+ * Perform a binary search.
  *
- * Ignores `locale' stuff.  Assumes that the upper and lower case
- * alphabets and digits are each contiguous.
+ * The code below is a bit sneaky.  After a comparison fails, we
+ * divide the work in half by moving either left or right. If lim
+ * is odd, moving left simply involves halving lim: e.g., when lim
+ * is 5 we look at item 2, so we change lim to 2 so that we will
+ * look at items 0 & 1.  If lim is even, the same applies.  If lim
+ * is odd, moving right again involes halving lim, this time moving
+ * the base up one item past p: e.g., when lim is 5 we change base
+ * to item 3 and make lim 2 so that we will look at items 3 and 4.
+ * If lim is even, however, we have to shrink it by one before
+ * halving: e.g., when lim is 4, we still looked at item 2, so we
+ * have to make lim 3, then halve, obtaining 1, so that we will only
+ * look at item 3.
  */
-unsigned long
-strtoul(nptr, endptr, base)
-	const char *nptr;
-	char **endptr;
-	register int base;
+void *
+bsearch(key, base0, nmemb, size, compar)
+	register void *key;
+	void *base0;
+	size_t nmemb;
+	register size_t size;
+	register int (*compar)();
 {
-	register const char *s = nptr;
-	register unsigned long acc;
-	register int c;
-	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	register char *base = base0;
+	register int lim, cmp;
+	register void *p;
 
-	/*
-	 * See strtol for comments as to the logic used.
-	 */
-	do {
-		c = *s++;
-	} while (ISSPACE(c));
-	if (c == '-') {
-		neg = 1;
-		c = *s++;
-	} else if (c == '+')
-		c = *s++;
-	if ((base == 0 || base == 16) &&
-	    c == '0' && (*s == 'x' || *s == 'X')) {
-		c = s[1];
-		s += 2;
-		base = 16;
+	for (lim = nmemb; lim != 0; lim >>= 1) {
+		p = base + (lim >> 1) * size;
+		cmp = (*compar)(key, p);
+		if (cmp == 0)
+			return (p);
+		if (cmp > 0) {	/* key > p: move right */
+			base = (char *)p + size;
+			lim--;
+		} /* else move left */
 	}
-	if (base == 0)
-		base = c == '0' ? 8 : 10;
-	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
-	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
-		if (ISDIGIT(c))
-			c -= '0';
-		else if (ISALPHA(c))
-			c -= ISUPPER(c) ? 'A' - 10 : 'a' - 10;
-		else
-			break;
-		if (c >= base)
-			break;
-		if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-			any = -1;
-		else {
-			any = 1;
-			acc *= base;
-			acc += c;
-		}
-	}
-	if (any < 0) {
-		acc = ULONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
-		acc = -acc;
-	if (endptr != 0)
-		*endptr = (char *) (any ? s - 1 : nptr);
-	return (acc);
+	return (NULL);
 }
