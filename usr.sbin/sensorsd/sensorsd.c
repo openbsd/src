@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.3 2003/09/30 00:18:40 jose Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.4 2003/09/30 15:06:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	time_t		 next_report, last_report = 0;
 	time_t		 next_check;
 	int		 mib[3];
-	int		 i, sleeptime;
+	int		 i, sleeptime, watch_cnt;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
@@ -104,25 +104,30 @@ main(int argc, char *argv[])
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
 			err(1, "out of memory");
-	if (parse_config(configfile))
+	if ((watch_cnt = parse_config(configfile)) == -1)
 		errx(1, "error in config file");
+
+	if (watch_cnt == 0)
+		errx(1, "no watches defined");
 
 	if (daemon(0, 0) == -1)
 		err(1, "unable to fork");
 
 	signal(SIGHUP, reparse_cfg);
 
-	syslog(LOG_INFO, "startup, monitoring %d sensors", i);
+	syslog(LOG_INFO, "startup, %d watches for %d sensors", watch_cnt, i);
 
 	next_check = next_report = time(NULL);
 
 	for (;;) {
 		if (reload) {
-			if (parse_config(configfile))
+			if ((watch_cnt = parse_config(configfile)) == -1)
 				syslog(LOG_CRIT, "error in config file %s",
 				    configfile);
 			else
-				syslog(LOG_INFO, "configuration reloaded");
+				syslog(LOG_INFO,
+				    "configuration reloaded, %d watches",
+				    watch_cnt);
 			reload = 0;
 		}
 		if (next_check < time(NULL)) {
@@ -235,6 +240,7 @@ parse_config(char *cf)
 	char		 *buf = NULL, *ebuf = NULL;
 	char		  node[24];
 	char		**cfa;
+	int		  watch_cnt = 0;
 
 	cfa = calloc(2, sizeof(char *));
 	cfa[0] = cf;
@@ -247,6 +253,7 @@ parse_config(char *cf)
 			p->watch = 0;
 		else {
 			p->watch = 1;
+			watch_cnt++;
 			if (cgetstr(buf, "low", &ebuf) < 0)
 				ebuf = NULL;
 			p->lower = get_val(ebuf, 0, p->type);
@@ -258,7 +265,7 @@ parse_config(char *cf)
 		}
 	}
 	free(cfa);
-	return (0);
+	return (watch_cnt);
 }
 
 int64_t
