@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.7 1997/01/27 23:21:18 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.8 1997/02/12 03:35:11 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
@@ -102,19 +102,6 @@ int bpf_bufsize = BPF_BUFSIZE;
  */
 struct bpf_if	*bpf_iflist;
 struct bpf_d	bpf_dtab[NBPFILTER];
-
-#if BSD >= 199207 || NetBSD0_9 >= 2
-/*
- * bpfilterattach() is called at boot time in new systems.  We do
- * nothing here since old systems will not call this.
- */
-/* ARGSUSED */
-void
-bpfilterattach(n)
-	int n;
-{
-}
-#endif
 
 static int	bpf_allocbufs __P((struct bpf_d *));
 static int	bpf_allocbufs __P((struct bpf_d *));
@@ -317,6 +304,27 @@ bpf_detachd(d)
 #define D_ISFREE(d) ((d) == (d)->bd_next)
 #define D_MARKFREE(d) ((d)->bd_next = (d))
 #define D_MARKUSED(d) ((d)->bd_next = 0)
+
+#if BSD >= 199207 || NetBSD0_9 >= 2
+/*
+ * bpfilterattach() is called at boot time in new systems.  We do
+ * nothing here since old systems will not call this.
+ */
+/* ARGSUSED */
+void
+bpfilterattach(n)
+	int n;
+{
+	int i;
+
+	/*
+	 * Mark all the descriptors free if this hasn't been done.
+	 */
+	if (!D_ISFREE(&bpf_dtab[0]))
+		for (i = 0; i < NBPFILTER; ++i)
+			D_MARKFREE(&bpf_dtab[i]);
+}
+#endif
 
 /*
  * Open ethernet device.  Returns ENXIO for illegal minor device number,
@@ -1264,7 +1272,6 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 	u_int dlt, hdrlen;
 {
 	struct bpf_if *bp;
-	int i;
 #if BSD < 199103
 	static struct bpf_if bpf_ifs[NBPFILTER];
 	static int bpfifno;
@@ -1293,13 +1300,6 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 	 * performance reasons and to alleviate alignment restrictions).
 	 */
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
-
-	/*
-	 * Mark all the descriptors free if this hasn't been done.
-	 */
-	if (!D_ISFREE(&bpf_dtab[0]))
-		for (i = 0; i < NBPFILTER; ++i)
-			D_MARKFREE(&bpf_dtab[i]);
 
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
