@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.14 2001/11/27 18:12:03 mickey Exp $	*/
+/* $OpenBSD: if_wi_pcmcia.c,v 1.15 2001/12/05 21:04:11 mickey Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -223,6 +224,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
 	  "EMTAC A2424i 11Mbps WLAN Card"
+	},
+	{ PCMCIA_VENDOR_SIMPLETECH,
+	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
+	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
+	  "LA4111 Spectrum24 WLAN PC Card"
 	},
 	{ 0,
 	  0,

@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.80 2001/11/27 18:12:03 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.81 2001/12/05 21:04:11 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.77 2001/11/27 18:11:05 mickey Exp 
+ *	NetBSD: pcmciadevs,v 1.150 2001/11/27 03:25:16 enami Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -593,3 +593,5 @@
 #define	PCMCIA_PRODUCT_WISECOM_IPORT	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_GEMTEK_WLAN	{ "Intersil", "PRISM 2_5 PCMCIA ADAPTER", "ISL37300P", "Eval-RevA" }
 #define	PCMCIA_PRODUCT_GEMTEK_WLAN	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT	{ "Symbol Technologies", "LA4111 Spectrum24 Wireless LAN PC Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT	PCMCIA_PRODUCT_INVALID
