@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.2 2004/02/25 18:25:54 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.3 2004/02/25 18:34:30 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -241,7 +241,7 @@ iophy*	at mii? phy ?				# Intel 82553 PHYs
 #acphy*	at mii? phy ?				# Altima AC101 PHYs
 #amphy*	at mii? phy ?				# AMD 79C873 PHYs
 #tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
-#brgphy* at mii? phy ?				# Broadcom Gigabit PHYs
+brgphy* at mii? phy ?				# Broadcom Gigabit PHYs
 #eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 #xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 #bmtphy* at mii? phy ?				# Broadcom 10/100 PHYs
