@@ -363,7 +363,9 @@ fddi_output(ifp, m0, dst, rt0)
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
  	bcopy((caddr_t)edst, (caddr_t)fh->fddi_dhost, sizeof (edst));
+#if NBPFILTER > 0
   queue_it:
+#endif
  	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
 	    sizeof(fh->fddi_shost));
 	s = splimp();
