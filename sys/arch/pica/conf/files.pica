@@ -40,11 +40,10 @@ file	arch/pica/dev/lpt.c		lpt	needs-count
 
 #	Console driver on PC-style graphics
 device pc at pica
-file	arch/pica/dev/pccons.c		pc	needs-count
+device pms at pica
+file	arch/pica/dev/pccons.c		pc pms	needs-count
 
 #	PS2 type mouse driver.
-device pms at pica
-file	arch/pica/dev/pmsdummy.c		pms	needs-count
 
 # Floppy disk controller
 device	fdc at pica {drive = -1}
