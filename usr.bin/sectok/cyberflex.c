@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.4 2001/07/16 21:02:21 rees Exp $ */
+/* $Id: cyberflex.c,v 1.5 2001/07/16 23:09:36 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -30,6 +30,7 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +42,7 @@ such damages.
 #else /* __linux */
 #include <des.h>
 #endif
+#include <sha1.h>
 #include <sectok.h>
 #include <sc7816.h>
 
@@ -57,7 +59,7 @@ such damages.
 
 static unsigned char key_fid[] = {0x00, 0x11};
 static unsigned char DFLTATR[] = {0x81, 0x10, 0x06, 0x01};
-static unsigned char AUT0[] = {0xad, 0x9f, 0x61, 0xfe, 0xfa, 0x20, 0xce, 0x63};
+static unsigned char DFLTAUT0[] = {0xad, 0x9f, 0x61, 0xfe, 0xfa, 0x20, 0xce, 0x63};
 
 int aut0_vfyd;
 
@@ -86,14 +88,54 @@ char *filestruct[] = {
     "program",
 };
 
+static int
+get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
+{
+    int i, dflag = 0, xflag = 0;
+    SHA1_CTX ctx;
+    char *s;
+
+    optind = optreset = 1;
+    opterr = 0;
+
+    while ((i = getopt(ac, av, "dx:")) != -1) {
+	switch (i) {
+	case 'd':
+	    memmove(digest, DFLTAUT0, sizeof DFLTAUT0);
+	    dflag = 1;
+	    break;
+	case 'x':
+	    if (parse_input(optarg, digest, 8) != 8) {
+		printf("AUT0 must be length 8\n");
+		return -1;
+	    }
+	    xflag = 1;
+	    break;
+	}
+    }
+
+    if (!dflag && !xflag) {
+	SHA1Init(&ctx);
+	s = getpass(prompt);
+	SHA1Update(&ctx, s, strlen(s));
+	bzero(s, strlen(s));
+	SHA1Final(digest, &ctx);
+    }
+
+    return 0;
+}
+
 int jaut(int ac, char *av[])
 {
-    int i, r, vflag = 0;
+    int i, vflag = 0, sw;
+    unsigned char AUT0[20];
 
     if (fd < 0)
-	reset(ac, av);
+	reset(0, NULL);
 
-    while ((i = getopt(ac, av, "v")) != -1) {
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "dvx:")) != -1) {
 	switch (i) {
 	case 'v':
 	    vflag = 1;
@@ -101,14 +143,27 @@ int jaut(int ac, char *av[])
 	}
     }
 
-    cla = cyberflex_inq_class(fd);
-    if (vflag)
-	printf("Class %02x\n", cla);
+    if (get_AUT0(ac, av, "Enter AUT0 passphrase: ", AUT0) < 0)
+	return -1;
 
-    r = cyberflex_verify_AUT0(fd, cla, AUT0, sizeof AUT0);
-    if (r >= 0)
-	aut0_vfyd = 1;
-    return r;
+    cla = cyberflex_inq_class(fd);
+
+    if (vflag) {
+	printf("Class %02x\n", cla);
+	for (i = 0; i < 8; i++)
+	    printf("%02x ", AUT0[i]);
+	printf("\n");
+    }
+
+    sectok_apdu(fd, cla, 0x2a, 0, 0, 8, AUT0, 0, NULL, &sw);
+
+    if (!sectok_swOK(sw)) {
+	printf("AUT0 failed: %s\n", sectok_get_sw(sw));
+	aut0_vfyd = 0;
+	return -1;
+    }
+    aut0_vfyd = 1;
+    return 0;
 }
 
 int jdefault(int ac, char *av[])
@@ -670,7 +725,7 @@ int cyberflex_load_key (int fd, unsigned char *buf)
     /* Now let's do it. :) */
 
     /* add the AUT0 */
-    cyberflex_fill_key_block (data,    0, 1, AUT0);
+    cyberflex_fill_key_block (data, 0, 1, DFLTAUT0);
 
     /* add the applet sign key */
     cyberflex_fill_key_block (data+KEY_BLOCK_SIZE, 5, 0, app_key);
@@ -718,26 +773,19 @@ int cyberflex_load_key (int fd, unsigned char *buf)
 }
 
 /* download AUT0 key into 3f.00/00.11 */
-int load_AUT0(int fd, unsigned char *buf)
+int jsetpass(int ac, char *av[])
 {
-    int sw, rv, i, tmp;
+    int sw, rv;
     unsigned char data[MAX_BUF_SIZE];
-    unsigned char key[BLOCK_SIZE];
+    unsigned char AUT0[20];
 
-    if (!aut0_vfyd)
-	jaut(0, NULL);
+    if (!aut0_vfyd && jaut(0, NULL) < 0)
+	return -1;
 
-    printf ("ca_load_AUT0 buf=%s\n", buf);
+    if (get_AUT0(ac, av, "Enter new AUT0 passphrase: ", AUT0) < 0)
+	return -1;
 
-    /* Now let's do it. :) */
-
-    /* get the AUT0 */
-    printf ("input AUT0 : ");
-    for ( i = 0 ; i < BLOCK_SIZE ; i++ ) {
-	fscanf (cmdf, "%02x", &tmp);
-	key[i] = (unsigned char)tmp;
-    }
-    cyberflex_fill_key_block (data, 0, 1, key);
+    cyberflex_fill_key_block (data, 0, 1, AUT0);
 
 #if 0
     /* add the suffix */
@@ -745,9 +793,11 @@ int load_AUT0(int fd, unsigned char *buf)
     data[KEY_BLOCK_SIZE + 1] = 0;
 #endif
 
-    for ( i = 0 ; i < KEY_BLOCK_SIZE ; i++ )
+#ifdef DEBUG
+    for (i = 0; i < KEY_BLOCK_SIZE; i++)
 	printf ("%02x ", data[i]);
     printf ("\n");
+#endif
 
     /* select 3f.00 (root) */
     if (sectok_selectfile(fd, cla, root_fid, &sw) < 0)

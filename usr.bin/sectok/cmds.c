@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.4 2001/07/16 21:02:21 rees Exp $ */
+/* $Id: cmds.c,v 1.5 2001/07/16 23:09:36 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -74,11 +74,12 @@ struct {
     { "jdefault", "[ -d ]", jdefault },
     { "jatr", "", jatr },
     { "jdata", "", jdata },
-    { "jaut", "[ -v ]", jaut },
+    { "jaut", "[ -d ] [ -v ] [ -x hex-aut0 ]", jaut },
     { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] filename", jload },
     { "junload", "[ -p progID ] [ -c contID ]", junload },
     { "jselect", "[ -a aid ]", jselect },
     { "jdeselect", "", jdeselect },
+    { "setpass", "[ -d ] [ -x hex-aut0 ]", jsetpass },
     { NULL, NULL, NULL }
 };
 

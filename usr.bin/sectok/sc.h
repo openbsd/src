@@ -1,4 +1,4 @@
-/* $Id: sc.h,v 1.3 2001/07/16 21:02:22 rees Exp $ */
+/* $Id: sc.h,v 1.4 2001/07/16 23:09:37 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -60,3 +60,4 @@ int jload(int ac, char *av[]);
 int junload(int ac, char *av[]);
 int jselect(int ac, char *av[]);
 int jdeselect(int ac, char *av[]);
+int jsetpass(int ac, char *av[]);
