@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.28 1999/03/25 15:34:54 espie Exp $
+.\"	$OpenBSD: disklabel.8,v 1.29 1999/04/07 22:57:25 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -66,7 +66,6 @@
 .Nm disklabel
 .Fl E
 .Op Fl f Ar tempfile
-.Op Fl F
 .Op Fl n
 .Op Fl d Li \&| Fl r
 .Op Fl v
@@ -387,12 +386,10 @@ Exit the editor without saving any changes to the label.
 .El
 .Pp
 The
-.Fl F
-and
 .Fl f Ar tempfile
-flags to
+flag to
 .Nm
-are only valid when used in conjunction with the
+is only valid when used in conjunction with the
 .Fl E
 flag.  When the
 .Fl f
@@ -403,10 +400,7 @@ will write entries to
 in
 .Xr fstab 5
 format for any partitions for which mount point information has been
-specified.  The
-.Fl F
-flag indicates that the entire disk is to be used for
-.Ox .
+specified.
 .Pp
 The final three forms of
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.62 1999/04/07 08:17:21 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.63 1999/04/07 22:57:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.62 1999/04/07 08:17:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.63 1999/04/07 22:57:26 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ struct mountinfo {
 };
 
 void	edit_parms __P((struct disklabel *, u_int32_t *));
-int	editor __P((struct disklabel *, int, char *, char *, int));
+int	editor __P((struct disklabel *, int, char *, char *));
 void	editor_add __P((struct disklabel *, char **, u_int32_t *, char *));
 void	editor_change __P((struct disklabel *, u_int32_t *, char *));
 void	editor_countfree __P((struct disklabel *, u_int32_t *));
@@ -95,7 +95,7 @@ u_int32_t next_offset __P((struct disklabel *, struct partition *));
 int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
 void	getdisktype __P((struct disklabel *, char *, char *));
-void	find_bounds __P((struct disklabel *, struct disklabel *, int));
+void	find_bounds __P((struct disklabel *, struct disklabel *));
 void	set_bounds __P((struct disklabel *, u_int32_t *));
 struct diskchunk *free_chunks __P((struct disklabel *));
 char **	mpcopy __P((char **, char **));
@@ -134,7 +134,7 @@ extern	struct dos_partition *dosdp;	/* DOS partition, if found */
  * Simple partition editor.  Primarily intended for new labels.
  */
 int
-editor(lp, f, dev, fstabfile, whole_mode)
+editor(lp, f, dev, fstabfile)
 	struct disklabel *lp;
 	int f;
 	char *dev;
@@ -163,7 +163,7 @@ editor(lp, f, dev, fstabfile, whole_mode)
 	get_geometry(f, &disk_geop, &bios_geop);
 
 	/* How big is the OpenBSD portion of the disk?  */
-	find_bounds(&label, bios_geop, whole_mode);
+	find_bounds(&label, bios_geop);
 
 	/* Set freesectors based on bounds and initial label */
 	editor_countfree(&label, &freesectors);
@@ -1676,10 +1676,9 @@ free_chunks(lp)
  * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
  */
 void
-find_bounds(lp, bios_lp, whole_mode)
+find_bounds(lp, bios_lp)
 	struct disklabel *lp;
 	struct disklabel *bios_lp;
-	int whole_mode;
 {
 	struct partition *pp = &lp->d_partitions[RAW_PART];
 
@@ -1691,12 +1690,11 @@ find_bounds(lp, bios_lp, whole_mode)
 #ifdef DOSLABEL
 	/*
 	 * If we have an MBR, use values from the {Open,Free,Net}BSD partition
-	 * unless we are in whole disk mode (in which case we ignore the MBR).
 	 */
 	if (dosdp) {
 	    if (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		dosdp->dp_typ == DOSPTYP_FREEBSD ||
-		dosdp->dp_typ == DOSPTYP_NETBSD) {
+		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
+		    dosdp->dp_typ == DOSPTYP_NETBSD) {
 			u_int32_t i, new_end;
 
 			/* Set start and end based on fdisk partition bounds */
@@ -1748,7 +1746,7 @@ find_bounds(lp, bios_lp, whole_mode)
 			}
 		} else {
 			/* Don't trounce the MBR */
-			starting_sector = 32;
+			starting_sector = 63;
 		}
 
 		printf("\nTreating sectors %u-%u as the OpenBSD portion of the "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.62 1999/03/23 05:18:49 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.63 1999/04/07 22:57:25 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.62 1999/03/23 05:18:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.63 1999/04/07 22:57:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
 void	display_partition __P((FILE *, struct disklabel *, char **, int, char, int));
 int	width_partition __P((struct disklabel *, int));
-int	editor __P((struct disklabel *, int, char *, char *, int));
+int	editor __P((struct disklabel *, int, char *, char *));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
 char	*skip __P((char *));
@@ -146,7 +146,6 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, f, writeable, error = 0;
-	int whole_mode = 0;
 	char *fstabfile = NULL;
 	struct disklabel *lp;
 	FILE *t;
@@ -195,9 +194,6 @@ main(argc, argv)
 			if (op != UNSPEC)
 				usage();
 			op = EDITOR;
-			break;
-		case 'F':
-			whole_mode = 1;
 			break;
 		case 'f':
 			fstabfile = optarg;
@@ -274,7 +270,7 @@ main(argc, argv)
 			usage();
 		if ((lp = readlabel(f)) == NULL)
 			exit(1);
-		error = editor(lp, f, specname, fstabfile, whole_mode);
+		error = editor(lp, f, specname, fstabfile);
 		break;
 	case READ:
 		if (argc != 1)
@@ -1751,8 +1747,8 @@ usage()
 	    "  disklabel [-nv] [-r|-d] -e disk%s        (edit)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-d] [-F] [-f temp] -E disk%.*s  (simple editor)\n",
-	    strlen(blank) - 9, blank);
+	    "  disklabel [-nv] [-r|-d] [-f temp] -E disk%.*s  (simple editor)\n",
+	    strlen(blank) - 4, blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
 	    boot);
