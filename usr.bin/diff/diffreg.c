@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.33 2003/07/15 23:17:56 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.34 2003/07/16 21:39:06 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.33 2003/07/15 23:17:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.34 2003/07/16 21:39:06 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -705,6 +705,15 @@ check(char *file1, FILE *f1, char *file2, FILE *f2)
 			for (;;) {
 				c = getc(f1);
 				d = getc(f2);
+				/*
+				 * GNU diff ignores a missing newline
+				 * in one file if bflag || wflag.
+				 */
+				if ((bflag || wflag) &&
+				    ((c == EOF && d == '\n') ||
+				    (c == '\n' && d == EOF))) {
+					break;
+				}
 				ctold++;
 				ctnew++;
 				if (bflag && isspace(c) && isspace(d)) {
@@ -731,13 +740,13 @@ check(char *file1, FILE *f1, char *file2, FILE *f2)
 				if (chrtran[c] != chrtran[d]) {
 					jackpot++;
 					J[i] = 0;
-					if (c != '\n')
+					if (c != '\n' && c != EOF)
 						ctold += skipline(f1);
-					if (d != '\n')
+					if (d != '\n' && c != EOF)
 						ctnew += skipline(f2);
 					break;
 				}
-				if (c == '\n')
+				if (c == '\n' || c == EOF)
 					break;
 			}
 		} else {
@@ -747,13 +756,13 @@ check(char *file1, FILE *f1, char *file2, FILE *f2)
 				if ((c = getc(f1)) != (d = getc(f2))) {
 					/* jackpot++; */
 					J[i] = 0;
-					if (c != '\n')
+					if (c != '\n' && c != EOF)
 						ctold += skipline(f1);
-					if (d != '\n')
+					if (d != '\n' && c != EOF)
 						ctnew += skipline(f2);
 					break;
 				}
-				if (c == '\n')
+				if (c == '\n' || c == EOF)
 					break;
 			}
 		}
@@ -820,9 +829,8 @@ skipline(FILE *f)
 {
 	int i, c;
 
-	for (i = 1; (c = getc(f)) != '\n'; i++)
-		if (c < 0)
-			return (i);
+	for (i = 1; (c = getc(f)) != '\n' && c != EOF; i++)
+		continue;
 	return (i);
 }
 
@@ -866,8 +874,7 @@ output(char *file1, FILE *f1, char *file2, FILE *f2)
 	if (format == D_IFDEF) {
 		for (;;) {
 #define	c i0
-			c = getc(f1);
-			if (c < 0)
+			if ((c = getc(f1)) == EOF)
 				return;
 			putchar(c);
 		}
@@ -1043,12 +1050,15 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 			fputs(s, stdout);
 		col = 0;
 		for (j = 0; j < nc; j++) {
-			c = getc(lb);
-			if (c == '\t' && tflag)
-				do
+			if ((c = getc(lb)) == EOF) {
+				puts("\n\\ No newline at end of file");
+				return;
+			}
+			if (c == '\t' && tflag) {
+				do {
 					putchar(' ');
-				while (++col & 7);
-			else {
+				} while (++col & 7);
+			} else {
 				putchar(c);
 				col++;
 			}
@@ -1078,8 +1088,11 @@ readhash(FILE *f)
 	if (!bflag && !wflag) {
 		if (iflag)
 			for (shift = 0; (t = getc(f)) != '\n'; shift += 7) {
-				if (t == -1)
-					return (0);
+				if (t == EOF) {
+					if (shift == 0)
+						return (0);
+					break;
+				}
 				sum += (long)chrtran[t] << (shift
 #ifdef POW2
 				    &= HALFLONG - 1);
@@ -1089,8 +1102,11 @@ readhash(FILE *f)
 			}
 		else
 			for (shift = 0; (t = getc(f)) != '\n'; shift += 7) {
-				if (t == -1)
-					return (0);
+				if (t == EOF) {
+					if (shift == 0)
+						return (0);
+					break;
+				}
 				sum += (long)t << (shift
 #ifdef POW2
 				    &= HALFLONG - 1);
@@ -1101,8 +1117,6 @@ readhash(FILE *f)
 	} else {
 		for (shift = 0;;) {
 			switch (t = getc(f)) {
-			case -1:
-				return (0);
 			case '\t':
 			case ' ':
 				space++;
@@ -1120,6 +1134,10 @@ readhash(FILE *f)
 #endif
 				shift += 7;
 				continue;
+			case EOF:
+				if (shift == 0)
+					return (0);
+				/* FALLTHROUGH */
 			case '\n':
 				break;
 			}
