@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.4 2003/06/25 17:39:00 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.5 2003/06/25 19:21:19 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -381,7 +381,7 @@ tslot_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	printf("[io alloc %x]", size);
 #endif
 
-	pih->iot = 0;
+	pih->iot = &td->td_rr;
 	pih->ioh = (bus_space_handle_t)(td->td_space[TS102_RANGE_IO]);
 	pih->addr = start;
 	pih->size = size;
@@ -431,10 +431,12 @@ int
 tslot_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
     struct pcmcia_mem_handle *pmh)
 {
+	struct tslot_data *td = (struct tslot_data *)pch;
+
 #ifdef TSLOT_DEBUG
 	printf("[mem alloc %x]", size);
 #endif
-	pmh->memt = 0;
+	pmh->memt = &td->td_rr;
 	pmh->size = round_page(size);
 	pmh->addr = 0;
 	pmh->mhandle = 0;
