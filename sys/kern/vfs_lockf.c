@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.3 2001/06/20 23:23:14 gluk Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.4 2001/07/28 17:03:50 gluk Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -91,15 +91,6 @@ lf_advlock(head, size, id, op, fl, flags)
 	int error;
 
 	/*
-	 * Avoid the common case of unlocking when inode has no locks.
-	 */
-	if (*head == NULL) {
-		if (op != F_SETLK) {
-			fl->l_type = F_UNLCK;
-			return (0);
-		}
-	}
-	/*
 	 * Convert the flock structure into a start and end.
 	 */
 	switch (fl->l_whence) {
@@ -124,8 +115,21 @@ lf_advlock(head, size, id, op, fl, flags)
 		return (EINVAL);
 	if (fl->l_len == 0)
 		end = -1;
-	else
+	else {
 		end = start + fl->l_len - 1;
+		if (end < start)
+			return (EINVAL);
+	}
+
+	/*
+	 * Avoid the common case of unlocking when inode has no locks.
+	 */
+	if (*head == NULL) {
+		if (op != F_SETLK) {
+			fl->l_type = F_UNLCK;
+			return (0);
+		}
+	}
 
 	/*
 	 * Create the lockf structure.
