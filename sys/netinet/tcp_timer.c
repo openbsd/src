@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.25 2002/01/14 20:13:45 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.26 2002/01/15 19:18:01 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ tcp_timers(tp, timer)
 		while (q != NULL) {
 			p = q;
 			q = q->next;
-			free(p, M_PCB);
+			pool_put(&sackhl_pool, p);
 		}
 		tp->snd_holes = 0;
 #if defined(TCP_SACK) && defined(TCP_FACK)

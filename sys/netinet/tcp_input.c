@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.102 2002/01/14 20:09:42 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.103 2002/01/15 19:18:01 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2424,7 +2424,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			continue;
 		if (tp->snd_holes == NULL) { /* first hole */
 			tp->snd_holes = (struct sackhole *)
-			    malloc(sizeof(struct sackhole), M_PCB, M_NOWAIT);
+			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (tp->snd_holes == NULL) {
 				/* ENOBUFS, so ignore SACKed block for now*/
 				continue;  
@@ -2478,11 +2478,11 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 					/* Acks entire hole, so delete hole */
 					if (p != cur) {
 						p->next = cur->next;
-						free(cur, M_PCB);
+						pool_put(&sackhl_pool, cur);
 						cur = p->next;
 					} else {
 						cur = cur->next;
-						free(p, M_PCB);
+						pool_put(&sackhl_pool, p);
 						p = cur;
 						tp->snd_holes = p;
 					}
@@ -2520,8 +2520,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * ACKs some data in middle of a hole; need to 
 				 * split current hole
 				 */
-				temp = (struct sackhole *)malloc(sizeof(*temp),
-				    M_PCB,M_NOWAIT);
+				temp = (struct sackhole *)
+				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL) 
 					continue; /* ENOBUFS */
 #if defined(TCP_SACK) && defined(TCP_FACK)
@@ -2557,8 +2557,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			 * Need to append new hole at end.
 			 * Last hole is p (and it's not NULL).
 			 */
-			temp = (struct sackhole *) malloc(sizeof(*temp),
-			    M_PCB, M_NOWAIT);
+			temp = (struct sackhole *)
+			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (temp == NULL) 
 				continue; /* ENOBUFS */
 			temp->start = tp->rcv_lastsack;
@@ -2612,7 +2612,7 @@ tcp_del_sackholes(tp, th)
 			if (SEQ_LEQ(cur->end, lastack)) {
 				prev = cur;
 				cur = cur->next;
-				free(prev, M_PCB);
+				pool_put(&sackhl_pool, prev);
 				tp->snd_numholes--;
 			} else if (SEQ_LT(cur->start, lastack)) {
 				cur->start = lastack;

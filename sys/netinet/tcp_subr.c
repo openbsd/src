@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.54 2002/01/15 16:59:08 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.55 2002/01/15 19:18:01 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -144,6 +144,9 @@ extern int ip6_defhlim;
 #endif /* INET6 */
 
 struct pool tcpcb_pool;
+#ifdef TCP_SACK
+struct pool sackhl_pool;
+#endif
 
 struct tcpstat tcpstat;		/* tcp statistics */
 
@@ -158,6 +161,10 @@ tcp_init()
 #endif /* TCP_COMPAT_42 */
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    0, NULL, NULL, M_PCB);
+#ifdef TCP_SACK
+	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhlpl",
+	    0, NULL, NULL, M_PCB);
+#endif /* TCP_SACK */
 	in_pcbinit(&tcbtable, tcbhashsize);
 	tcp_now = arc4random() / 2;
 
@@ -680,7 +687,7 @@ tcp_close(tp)
 	q = p = tp->snd_holes;
 	while (p != 0) {
 		q = p->next;
-		free(p, M_PCB);
+		pool_put(&sackhl_pool, p);
 		p = q;
 	}
 #endif

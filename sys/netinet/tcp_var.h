@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.37 2001/06/23 06:03:13 angelos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.38 2002/01/15 19:18:01 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -326,6 +326,7 @@ extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default maximum segment size */
 #ifdef TCP_SACK
 extern	int tcp_do_sack;	/* SACK enabled/disabled */
+extern	struct pool sackhl_pool;
 #endif
 
 int	 tcp_attach __P((struct socket *));
