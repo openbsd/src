@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.3 1998/09/13 19:16:28 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.4 1998/10/08 04:20:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -86,7 +86,7 @@ const char *_nc_tic_dir(const char *path)
 		have_tic_directory = TRUE;
 	} else if (!have_tic_directory) {
 		char *envp;
-		if ((envp = getenv("TERMINFO")) != 0)
+		if (!issetugid() && (envp = getenv("TERMINFO")) != 0)
 			return _nc_tic_dir(envp);
 	}
 	return result;
@@ -303,12 +303,12 @@ char		ttn[MAX_ALIAS + 3];
 	 && _nc_read_tic_entry(filename, _nc_tic_dir(0), ttn, tp) == 1)
 		return 1;
 
-	if ((envp = getenv("TERMINFO")) != 0
+	if (!issetugid() && (envp = getenv("TERMINFO")) != 0
 	 && _nc_read_tic_entry(filename, _nc_tic_dir(envp), ttn, tp) == 1)
 		return 1;
 
 	/* this is an ncurses extension */
-	if ((envp = getenv("HOME")) != 0 &&
+	if (!issetugid() && (envp = getenv("HOME")) != 0 &&
 	    strlen(envp) + sizeof(PRIVATE_INFO) <= PATH_MAX)
 	{
 		char *home = malloc(strlen(envp) + sizeof(PRIVATE_INFO));
@@ -324,7 +324,7 @@ char		ttn[MAX_ALIAS + 3];
 	}
 
 	/* this is an ncurses extension */
-	if ((envp = getenv("TERMINFO_DIRS")) != 0)
+	if (!issetugid() && (envp = getenv("TERMINFO_DIRS")) != 0)
 		return _nc_read_terminfo_dirs(envp, filename, ttn, tp);
 
 	/* Try the system directory.  Note that the TERMINFO_DIRS value, if

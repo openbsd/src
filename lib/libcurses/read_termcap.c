@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.4 1998/09/13 19:16:29 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.5 1998/10/08 04:20:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -802,7 +802,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 	 * searched instead.  The path is found in the TERMPATH variable, or
 	 * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
 	 */
-	if (!is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
+	if (!issetugid() && !is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
 		if ((termpath = getenv("TERMPATH")) != 0) {
 			strlcpy(pathbuf, termpath, PBUFSIZ);
 		} else {
@@ -971,7 +971,7 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 	char	pathbuf[PATH_MAX];
 
 	termpaths[filecount] = 0;
-	if ((tc = getenv("TERMCAP")) != 0)
+	if (!issetugid() && (tc = getenv("TERMCAP")) != 0)
 	{
 		if (is_pathname(tc))	/* interpret as a filename */
 		{
@@ -1012,7 +1012,7 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 		else
 			ADD_TC("/usr/share/misc/termcap", filecount);
 
-		if ((h = getenv("HOME")) != NULL && strlen(h) + 9 < PATH_MAX)
+		if (!issetugid() && (h = getenv("HOME")) != NULL && strlen(h) + 9 < PATH_MAX)
 		{
 		    /* user's .termcap, if any, should override it */
 		    (void) strcpy(envhome, h);

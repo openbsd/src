@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.4 1998/08/16 05:17:53 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.5 1998/10/08 04:20:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.4 1998/08/16 05:17:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.5 1998/10/08 04:20:00 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -73,7 +73,7 @@ _nc_read_bsd_terminfo_entry(tn, tp)
     }
 
     /* Also check $HOME/.terminfo if it exists */
-    if ((p = getenv("HOME")) != NULL) {
+    if (!issetugid() && (p = getenv("HOME")) != NULL) {
 	len = snprintf(hometerm, sizeof(hometerm), "%s/.terminfo", p);
 	if (len < sizeof(hometerm))
 	    *fname++ = hometerm;
