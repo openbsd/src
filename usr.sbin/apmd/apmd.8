@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.3 1998/03/10 04:51:05 millert Exp $
+.\"	$Id: apmd.8,v 1.4 1998/07/18 02:42:27 marc Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -34,10 +34,7 @@
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
-.Op Fl s
-.Op Fl a
-.Op Fl q
+.Op Fl dsaqepm
 .Op Fl t Ar seconds
 .Op Fl S Ar sockname
 .Op Fl f Ar devname
@@ -104,6 +101,32 @@ If the
 flag is specified,
 .Nm
 does not announce suspend and standby requests on the speaker.
+.Pp
+If the
+.Fl m
+flag is specified,
+.Nm
+does not disable power status messages issued by the
+.Tn APM
+driver.  In normal operation these status messages are disabled as they are
+the same as the information collected by this daemon and reported via syslog.
+.Pp
+The
+.Fl e
+and
+.Fl p
+flags are used to re-enable
+.Tn APM
+driver power status messages.  In both cases
+.Nm
+exits immediately after setting the desired option.
+.Fl e
+unconditionally enables power status messages.
+.Fl p
+causes power status messages to be displayed only when the
+battery life expectancy changes.  This minimized message output
+for those devices that are constantly updating the estimated time
+remaining based upon current processor load.
 .Pp
 When a client requests a suspend or stand-by mode,
 .Nm
