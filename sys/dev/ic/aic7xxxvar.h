@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.9 1996/11/28 23:27:45 niklas Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.10 1997/04/10 22:52:20 deraadt Exp $	*/
 /*	$NetBSD: aic7xxxvar.h,v 1.10 1996/10/21 22:34:09 thorpej Exp $	*/
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -70,13 +70,13 @@
 #define	AHC_INB(ahc, port)	\
 	bus_space_read_1((ahc)->sc_iot, (ahc)->sc_ioh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
-	bus_space_read_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
+	bus_space_read_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int8_t *) valp, size)
 #define	AHC_OUTB(ahc, port, val)	\
 	bus_space_write_1((ahc)->sc_iot, (ahc)->sc_ioh, port, val)
 #define	AHC_OUTSB(ahc, port, valp, size)	\
-	bus_space_write_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int8_t *) valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_space_write_multi_4((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_4((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int32_t *) valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
@@ -199,7 +199,7 @@ struct scb {
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
 	scb_flag flags;
 	u_char	position;	/* Position in card's scbarray */
-	struct ahc_dma_seg ahc_dma[AHC_NSEG] __attribute__ ((packed));
+	struct ahc_dma_seg ahc_dma[AHC_NSEG];
 	struct scsi_sense sense_cmd;	/* SCSI command block */
 };
 
@@ -211,6 +211,8 @@ struct ahc_data {
 	void	*sc_ih;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	LIST_HEAD(, scsi_xfer) sc_xxxq;	/* XXX software request queue */
+	struct scsi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;
