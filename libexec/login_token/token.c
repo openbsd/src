@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.2 2000/12/20 01:52:12 millert Exp $	*/
+/*	$OpenBSD: token.c,v 1.3 2000/12/20 01:54:42 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -79,7 +79,7 @@ static	TOKEN_CBlock tokennumber;
  */
 
 static	long	tokenrandomnumber(void);
-static	void	tokenseed(des_cblock);
+static	void	tokenseed(des_cblock *);
 static	void	lcase(char *);
 static	void	h2d(char *);
 static	void	h2cb(char *, TOKEN_CBlock *);
@@ -91,13 +91,13 @@ static	void	cb2h(TOKEN_CBlock, char *);
  */
 
 static void
-tokenseed(des_cblock cb)
+tokenseed(des_cblock *cb)
 {
 	static int first_time = 1;
 
 	if (first_time) {
 		first_time = 0;
-		des_random_key(cb);
+		des_random_key(*cb);
 		des_init_random_number_generator(cb);
 	}
 	des_new_random_key(cb);
@@ -117,7 +117,7 @@ tokenrandomnumber(void)
 {
 	TOKEN_CBlock seed;
 
-	tokenseed(seed.cb);
+	tokenseed(&seed.cb);
 	return (((seed.ul[0] ^ seed.ul[1]) % 99999999));
 }
 
@@ -289,7 +289,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	 */
 
 	if ( (flags & TOKEN_GENSECRET) )
-		tokenseed(secret.cb);
+		tokenseed(&secret.cb);
 	else {
 		memset(&secret, 0, sizeof(secret));
 		memcpy(&secret, usecret, sizeof(des_cblock));
