@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.10 1998/10/28 17:58:43 downsj Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.11 2000/04/25 23:33:58 csapuntz Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -295,6 +295,7 @@ typedef struct mixer_ctrl {
 #define AudioNagc	"agc"
 #define AudioNdelay	"delay"
 #define AudioNselect	"select" /* select destination */
+#define AudioNvideo     "video"
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"
