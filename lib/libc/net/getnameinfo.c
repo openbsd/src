@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.10 2000/02/17 17:09:41 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.11 2000/03/13 02:18:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -266,10 +266,12 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		h_error = h_errno;
 
 		if (hp) {
+#if 0
 			if (flags & NI_NOFQDN) {
 				p = strchr(hp->h_name, '.');
 				if (p) *p = '\0';
 			}
+#endif
 			if (strlen(hp->h_name) > hostlen) {
 				return ENI_MEMORY;
 			}
