@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.3 2004/06/21 23:27:10 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.4 2004/06/30 10:07:13 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sysdep.h"
 
@@ -125,8 +126,8 @@ nat_t_setup_hashes(void)
 		hash->Final(nat_t_hashes[i], hash->ctx);
 
 		LOG_DBG((LOG_EXCHANGE, 50, "nat_t_setup_hashes: "
-		    "MD5(\"%s\") (%d bytes)", isakmp_nat_t_cap_text[i],
-		    nat_t_hashsize));
+		    "MD5(\"%s\") (%lu bytes)", isakmp_nat_t_cap_text[i],
+		    (unsigned long)nat_t_hashsize));
 		LOG_DBG_BUF((LOG_EXCHANGE, 50, "nat_t_setup_hashes",
 		    nat_t_hashes[i], nat_t_hashsize));
 	}
@@ -205,7 +206,8 @@ nat_t_check_vendor_payload(struct message *msg, struct payload *p)
 	vlen = GET_ISAKMP_GEN_LENGTH(pbuf) - ISAKMP_GEN_SZ;
 	if (vlen != nat_t_hashsize) {
 		LOG_DBG((LOG_EXCHANGE, 50, "nat_t_check_vendor_payload: "
-		    "bad size %d != %d", vlen, nat_t_hashsize));
+		    "bad size %lu != %lu", (unsigned long)vlen,
+		    (unsigned long)nat_t_hashsize));
 		return;
 	}
 
