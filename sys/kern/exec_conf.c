@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.10 1999/09/10 12:24:27 kstailey Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.11 2001/09/19 13:28:43 art Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct execsw execsw[] = {
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
 #ifdef _KERN_DO_ELF
-	{ sizeof(Elf32_Ehdr), exec_elf_makecmds, },	/* elf binaries */
+	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, },	/* elf binaries */
 #endif
 #ifdef _KERN_DO_ELF64
 	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, },	/* elf binaries */

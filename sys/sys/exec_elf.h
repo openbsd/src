@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.30 2001/08/19 15:20:25 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.31 2001/09/19 13:28:43 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -522,6 +522,7 @@ struct elf_args {
 #define Elf_Addr	Elf32_Addr
 #define Elf_Off		Elf32_Off
 #define Elf_Nhdr	Elf32_Nhdr
+#define Elf_Note	Elf32_Note
 
 #define ELF_R_SYM	ELF32_R_SYM
 #define ELF_R_TYPE	ELF32_R_TYPE
@@ -546,6 +547,7 @@ struct elf_args {
 #define Elf_Addr	Elf64_Addr
 #define Elf_Off		Elf64_Off
 #define Elf_Nhdr	Elf64_Nhdr
+#define Elf_Note	Elf64_Note
 
 #define ELF_R_SYM	ELF64_R_SYM
 #define ELF_R_TYPE	ELF64_R_TYPE
@@ -570,11 +572,13 @@ int elf64_os_pt_note __P((struct proc *, struct exec_package *, Elf64_Ehdr *,
 	char *, size_t, size_t));
 #endif
 #ifdef _KERN_DO_ELF
-int exec_elf_makecmds __P((struct proc *, struct exec_package *));
-void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
+int exec_elf32_makecmds __P((struct proc *, struct exec_package *));
+void *elf32_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
-int exec_elf_fixup __P((struct proc *, struct exec_package *));
-char *elf_check_brand __P((Elf32_Ehdr *));
+int exec_elf32_fixup __P((struct proc *, struct exec_package *));
+char *elf32_check_brand __P((Elf32_Ehdr *));
+int elf32_os_pt_note __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
+	char *, size_t, size_t));
 #endif
 
 #endif /* _KERNEL */
