@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.498 2002/04/02 13:00:11 nate Exp $
+	$OpenBSD: pcidevs,v 1.499 2002/04/08 01:48:58 frantzen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1152,6 +1152,7 @@ product ESSTECH ES1989		0x1988	ES1989
 product ESSTECH ES1989M		0x1989	ES1989 Modem
 product ESSTECH MAESTRO3	0x1998	Maestro 3
 product ESSTECH ES1983		0x1999	ES1983 Modem
+product ESSTECH MAESTRO3_2	0x199a	Maestro 3 Audio Accelerator
 product ESSTECH	ES336H_N	0x2808	ES366H Fax/Modem
 product ESSTECH SUPERLINK	0x2838	ES2838/2839 SuperLink Modem
 product ESSTECH 2898		0x2898	ES2898 Modem
