@@ -1,108 +1,129 @@
 .\"
+.\" Copyright (c) 1997 Jason L. Wright.  All rights reserved.
 .\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Jason L. Wright
+.\" 4. The name of Jason L. Wright may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
 .\"
-.TH KPROP 8 "Kerberos Version 4.0" "MIT Project Athena"
-.SH NAME
-kprop \- network utility for Kerberos database propagation
-.SH SYNOPSIS
-.B kadmin database slaves_file [-force] [-safe | -clear] [-realm realm]
-.SH DESCRIPTION
+.\" THIS SOFTWARE IS PROVIDED BY Jason L. Wright ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL Jason L. Wright BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 2, 1997
+.Dt KPROP 8
+.Sh NAME
+.Nm kprop
+.Nd network utility for Kerberos database propagation
+.Sh SYNOPSIS
+.Nm kadmin database slaves_file [-force] [-safe | -clear] [-realm realm]
+.Sh DESCRIPTION
 The
-.I kprop
+.Nm kprop
 daemon runs on a Kerberos master and propagates the Kerberos
-database to the Kerberos slaves, where it is received by the waiting kpropd
+database to the Kerberos slaves, where it is received by the waiting
+.Xr kpropd 8
 daemon.
-
+.Pp
 The first parameter, 
-.IR database ,
+.Nm database ,
 is the name of the file out of which data is
 extracted.  This file is not the db-formatted Kerberos database,
-.IR /etc/kerberosIV/principal.db .
+.Pa /etc/kerberosIV/principal.db .
 See the
-.I db(3)
+.Nm db(3)
 reference page for more
 information.  The database is a file created by the
-.B kdb_util slave dump
+.Nm kdb_util slave dump
 command.  It is an ASCII representation of the Kerberos database.
-
+.Pp
 The second parameter that must be supplied is 
-.IR slaves_file ,
+.Nm slaves_file ,
 the name of the
 file on the Kerberos master that lists the Kerberos slaves to which kprop
 propagates the Kerberos master database.  The slaves file contains one
 line for each host running a secondary server consisting on just the hostname
 of the machine.
-
+.Pp
 The Kerberos utility first determines whether the ASCII Kerberos database,
 database, was correctly dumped by
-.BR kdb_util .
+.Nm kdb_util .
 It accomplishes this by
 determining if database is older than the
-.B database.dump.ok
+.Pa database.dump.ok
 file created by
-.I kdb_util
+.Nm kdb_util
 during the slave dump operation.  If it is older, the dump did not
 succeed or is not yet finished.  If the dump did not complete successfully
 or has not yet completed, the master database is not transferred to any
 Kerberos slave.  Otherwise,
-.I kprop
+.Nm kprop
 determines, for each slave server listed
 in the slaves file, whether or not the database has changed since the last
 successful transfer to the slave.  It determines this for slave server
-.I cactus
+.Nm cactus
 by comparing the modification time of the
-.I cactus-last-prop
+.Pa cactus-last-prop
 file, which is stored in the same directory as the slaves file,
 with the modification time of database. If the
-.I /etc/cactus-last-prop
+.Pa /etc/kerberosIV/cactus-last-prop
 file
 is newer, then the database, need not be transferred to
-.IR cactus .
+.Nm cactus .
 Finally,
-.I kprop
+.Nm kprop
 propagates the database to those servers which need a new
 copy of the database and updates the modification time of the
-.I /etc/server-last-prop
+.Pa /etc/kerberosIV/server-last-prop
 file for these slave servers.
-.PP
-If the
-.B \-safe
-option is specified, the data sent over the network is guaranteed to be
-authenticated at the destination and protected against modifications
-in transit.  That is, kprop and kpropd, which are Kerberos princi-
-pals, become Kerberos-authenticated to each other and send messages
-formatted by krb_mk_safe.
-.PP
-If the
-.B \-clear
-option is specified, all of the data will be sent in cleartext (unencrypted).
-This switch is useful when first setting up the Kerberos environment.
-.PP
-If the
-.B \-realm
-option is specified, its argument is used as the current realm name rather
-than the default specified in
-.B krb.conf(5)
-file.
-.PP
-If the
-.B \-force
-option is specified,
-.B kprop
-is forced to propagate the Kerberos database to the slaves, even if there are
-no recent changes to the database.  Without the force flag, the Kerberos
-database is not propagated if the database file has not changed since the last
-successful transfer.
-.SH BUGS
-This utility does not support the transfer of encrypted data.
-
-The
-.B -clear
+.Ss Parameters
+.Bl -tag -width Fl
+.It Fl safe
+Data sent over the network will be authenticated at the destination
+and protected against modifications in transit.  In other words,
+.Nm kprop
 and
-.B -safe
+.Nm kpropd
+will become Kerberos authenticated to each other and send messages formatted
+with
+.Xr krb_mk_safe 3 .
+.It Fl clear
+Data will be sent in cleartext (not encrypted).  This switch is useful when
+first setting up the Kerberos environment.
+.It Fl realm
+Use the specified realm instead of the default from
+.Xr krb.conf 5 .
+.It Fl force
+Force propagation to slaves even if there have been no recent changes to
+the master database.  Normally, propagation only takes place if the database
+file has changed since the last transfer.
+.Sh BUGS
+This utility does not support the transfer of encrypted data.
+.Pp
+The
+.Nm -clear
+and
+.Nm -safe
 options are not implemented.
-
-.SH "SEE ALSO"
-kerberos(1), kpropd(8)
-.br
-``A Subsystem Utilities Package for UNIX'' by Ken Raeburn
+.Sh SEE ALSO
+.Xr kerberos 1 ,
+.Xr kpropd 8 ,
+.Xr kdb_util 8
