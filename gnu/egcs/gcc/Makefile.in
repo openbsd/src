@@ -68,9 +68,10 @@ ALLOCA_FINISH = true
 # TCFLAGS is used for compilations with the GCC just built.
 XCFLAGS =
 TCFLAGS =
-CFLAGS = -g @stage1_warn_cflags@
+# -W -Wall warnings are disabled for releases.
+CFLAGS = -g
 BOOT_CFLAGS = -O2 $(CFLAGS)
-WARN_CFLAGS = -W -Wall
+#WARN_CFLAGS = -W -Wall
 # These exists to be overridden by the x-* and t-* files, respectively.
 X_CFLAGS =
 T_CFLAGS =
@@ -166,7 +167,7 @@ INSTALL_ASSERT_H = install-assert-h
 # The GCC to use for compiling libgcc2.a, enquire, and libgcc1-test.
 # Usually the one we just built.
 # Don't use this as a dependency--use $(GCC_PASSES) or $(GCC_PARTS).
-GCC_FOR_TARGET = ./xgcc -B./ -B$(build_tooldir)/bin/
+GCC_FOR_TARGET = ./xgcc -B./ -B$(build_tooldir)/bin/ -I$(build_tooldir)/include
 
 # This is used instead of ALL_CFLAGS when compiling with GCC_FOR_TARGET.
 # It omits XCFLAGS, and specifies -B./.
@@ -2247,6 +2248,8 @@ stmp-fixproto: fixhdr.ready fixproto stmp-headers
 	else \
 	  : This line works around a 'make' bug in BSDI 1.1.; \
 	  FIXPROTO_DEFINES="$(FIXPROTO_DEFINES)"; export FIXPROTO_DEFINES; \
+	  mkinstalldirs="$(SHELL) $(srcdir)/mkinstalldirs"; \
+	    export mkinstalldirs; \
 	  if [ -d $(SYSTEM_HEADER_DIR) ] ; then \
 	    $(SHELL) ${srcdir}/fixproto include include $(SYSTEM_HEADER_DIR); \
 	  else true; fi; \

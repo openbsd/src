@@ -53,7 +53,7 @@ AC_MSG_RESULT($library_path_setting)
 if test "$library_path_setting" != "ok"; then
 AC_MSG_ERROR([
 *** LIBRARY_PATH shouldn't contain the current directory when
-*** building egcs. Please change the environment variable
+*** building gcc. Please change the environment variable
 *** and run configure again.])
 fi
 
@@ -79,7 +79,7 @@ AC_MSG_RESULT($gcc_exec_prefix_setting)
 if test "$gcc_exec_prefix_setting" != "ok"; then
 AC_MSG_ERROR([
 *** GCC_EXEC_PREFIX shouldn't contain the current directory when
-*** building egcs. Please change the environment variable
+*** building gcc. Please change the environment variable
 *** and run configure again.])
 fi
 
@@ -743,6 +743,7 @@ changequote([,])dnl
 		tm_file=arm/netbsd.h
 		xm_file="arm/xm-netbsd.h ${xm_file}"
 		tmake_file="t-netbsd arm/t-netbsd"
+       use_collect2=yes
 		;;
 	arm*-*-linux-gnuaout*)		# ARM GNU/Linux with a.out
 		cpu_type=arm
@@ -1137,9 +1138,9 @@ changequote([,])dnl
 changequote(,)dnl
 	i[34567]86-*-freebsdelf*)
 changequote([,])dnl
-		tm_file="i386/i386.h i386/att.h linux.h i386/freebsd-elf.h i386/perform.h"
+		tm_file="i386/i386.h i386/att.h svr4.h i386/freebsd-elf.h i386/perform.h"
 		extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
-		tmake_file=i386/t-freebsd
+		tmake_file=t-freebsd
 		gas=yes
 		gnu_ld=yes
 		stabs=yes
@@ -1148,13 +1149,14 @@ changequote(,)dnl
 	i[34567]86-*-freebsd*)
 changequote([,])dnl
 		tm_file=i386/freebsd.h
-		tmake_file=i386/t-freebsd
+		tmake_file=t-freebsd
 		;;
 changequote(,)dnl
 	i[34567]86-*-netbsd*)
 changequote([,])dnl
 		tm_file=i386/netbsd.h
 		tmake_file=t-netbsd
+       use_collect2=yes
 		;;
 changequote(,)dnl
 	i[34567]86-*-openbsd*)
@@ -1446,6 +1448,7 @@ changequote([,])dnl
 		tmake_file="i386/t-crtpic i386/t-udk"
 		xmake_file=x-svr4
 		extra_parts="crtbegin.o crtend.o"
+		install_headers_dir=install-headers-cpio
 		;;
 changequote(,)dnl
 	i[34567]86-*-osf1*)		# Intel 80386's running OSF/1 1.3+
@@ -1861,7 +1864,6 @@ changequote([,])dnl
 		;;
 	m68k-hp-bsd4.4*)		# HP 9000/3xx running 4.4bsd
 		tm_file=m68k/hp3bsd44.h
-		xmake_file=m68k/x-hp3bsd44
 		use_collect2=yes
 		extra_headers=math-68881.h
 		float_format=m68k
@@ -2030,6 +2032,7 @@ changequote([,])dnl
 		tm_file=m68k/netbsd.h
 		tmake_file=t-netbsd
 		float_format=m68k
+       use_collect2=yes
 		;;
 	m68k*-*-openbsd*)
 		float_format=m68k
@@ -2709,6 +2712,7 @@ changequote([,])dnl
 		xm_file="ns32k/xm-netbsd.h ${xm_file}"
 		# On NetBSD, the headers are already okay, except for math.h.
 		tmake_file=t-netbsd
+       use_collect2=yes
 		;;
         pdp11-*-bsd)
 		tm_file="${tm_file} pdp11/2bsd.h"
@@ -3016,6 +3020,7 @@ changequote([,])dnl
 	sparc-*-netbsd*)
 		tm_file=sparc/netbsd.h
 		tmake_file=t-netbsd
+       use_collect2=yes
 		;;
 	sparc-*-openbsd*)
 		# we need collect2 until our bug is fixed...
@@ -3248,6 +3253,7 @@ changequote([,])dnl
 		tm_file="${tm_file} netbsd.h vax/netbsd.h"
 		tmake_file=t-netbsd
 		float_format=vax
+       use_collect2=yes
 		;;
 	vax-*-openbsd*)
 		tmake_file="${tmake_file} vax/t-openbsd"
@@ -3326,7 +3332,7 @@ changequote([,])dnl
 	alpha*-*-*)
 		case $machine in
 			alphaev6*)
-				target_cpu_default2="MASK_CPU_EV6|MASK_BWX|MASK_CIX|MASK_MAX"
+				target_cpu_default2="MASK_CPU_EV6|MASK_BWX|MASK_MAX|MASK_FIX"
 				;;
 			alphapca56*)
 				target_cpu_default2="MASK_CPU_EV5|MASK_BWX|MASK_MAX"
@@ -3928,7 +3934,55 @@ changequote([,])dnl
 	fi
 elif test x$host = x$target; then
 	# Native build.
-	gcc_cv_as=as$host_exeext
+	# Search the same directories that the installed compiler will
+	# search.  Else we may find the wrong assembler and lose.  If we
+	# do not find a suitable assembler binary, then try the user's
+	# path.
+	#
+	# Also note we have to check MD_EXEC_PREFIX before checking the
+	# user's path.  Unfortunately, there is no good way to get at the
+	# value of MD_EXEC_PREFIX here.  So we do a brute force search
+	# through all the known MD_EXEC_PREFIX values.  Ugh.  This needs
+	# to be fixed as part of the make/configure rewrite too.
+
+	if test "x$exec_prefix" = xNONE; then
+		if test "x$prefix" = xNONE; then
+			test_prefix=/usr/local
+		else
+			test_prefix=$prefix
+		fi
+	else
+		test_prefix=$exec_prefix
+	fi
+
+	# If the loop below does not find an assembler, then use whatever
+	# one we can find in the users's path.
+	# user's path.
+	as=as$host_exeext
+
+	test_dirs="$test_prefix/lib/gcc-lib/$target/$gcc_version \
+		   $test_prefix/lib/gcc-lib/$target \
+		   /usr/lib/gcc/$target/$gcc_version \
+		   /usr/lib/gcc/$target \
+		   $test_prefix/$target/bin/$target/$gcc_version \
+		   $test_prefix/$target/bin \
+		   /usr/libexec \
+		   /usr/ccs/gcc \
+		   /usr/ccs/bin \
+		   /udk/usr/ccs/bin \
+		   /bsd43/usr/lib/cmplrs/cc \
+		   /usr/cross64/usr/bin \
+		   /usr/lib/cmplrs/cc \
+		   /sysv/usr/lib/cmplrs/cc \
+		   /svr4/usr/lib/cmplrs/cc \
+		   /usr/bin"
+
+	for dir in $test_dirs; do
+		if test -f $dir/as$host_exeext; then
+			gcc_cv_as=$dir/as$host_exeext
+			break;
+		fi
+	done
 fi
 if test x$gcc_cv_as != x; then
 	# Check if we have .balign and .p2align
