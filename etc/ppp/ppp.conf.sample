@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.10 1998/11/03 23:12:09 aaron Exp $
+# $OpenBSD: ppp.conf.sample,v 1.11 1999/03/28 00:24:52 brian Exp $
 #
 #################################################################
 
@@ -307,8 +307,8 @@ direct-server:
 compuserve:
  set phone 1234567
  set parity even
- set login "TIMEOUT 10 \"\" \"\" Name: CIS ID: 99999,9999/go:pppconnect \
-            word: XXXXXXXX"
+ set login "TIMEOUT 100 \"\" \"\" Name: CIS ID: 999999,9999/go:pppconnect \
+            word: XXXXXXXX PPP"
  set timeout 300
  set ifaddr 10.0.0.1/0 10.0.0.2/0 255.255.255.0 0.0.0.0
  delete ALL
