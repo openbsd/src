@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.16 1998/02/26 10:50:24 johns Exp $
+#	$OpenBSD: SUN4,v 1.17 1998/03/04 12:42:25 johns Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -30,6 +30,10 @@ cpu0	at mainbus0
 obio0	at mainbus0				# sun4 and sun4m
 vmes0	at mainbus0				# sun4
 vmel0	at mainbus0				# sun4
+
+
+# Note: sun4 system will only run the clocks at 100 Hz, other values
+#       are ignored.  The HZ option has no effect for sun4.
 
 # Mostek clock found on 4/300, sun4c, and sun4m systems.
 # The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
