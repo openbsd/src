@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.30 2001/04/04 07:29:50 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.31 2001/04/30 21:17:41 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -67,11 +67,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * CODE UNTESTED IN THE CURRENT REVISION:
- *   
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -110,7 +105,6 @@ void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
 void  wdc_kill_pending __P((struct channel_softc *));
-
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -310,40 +304,16 @@ atapi_print(aux, pnp)
 
 void
 wdc_disable_intr(chp)
-	struct channel_softc *chp;
+        struct channel_softc *chp;
 {
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
+        CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
 }
 
 void
 wdc_enable_intr(chp)
-	struct channel_softc *chp;
+        struct channel_softc *chp;
 {
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
-}
-
-int
-wdc_select_drive(chp, drive, howlong)
-	struct channel_softc *chp;
-	int drive;
-	int howlong;
-{
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
-	
-	delay(1);
-
-	if (wdcwait(chp, WDCS_DRQ, 0, howlong)) {
-		WDCDEBUG_PRINT(("wdc_select_drive %s:%d:%d waiting for %d"
-				"after\n",
-				chp->wdc->sc_dev.dv_xname, chp->channel, drive,
-				howlong),
-			       DEBUG_SDRIVE);
-		
-		
-		return -1;
-	}
-
-	return 0;
+        CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 }
 
 int
@@ -354,7 +324,7 @@ wdc_floating_bus(chp, drive)
 {
 	u_int8_t cumulative_status, status;
 	int      iter;
-	
+
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 	delay(10);
 
@@ -514,7 +484,7 @@ wdcprobe(chp)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
-
+	
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
@@ -523,6 +493,8 @@ wdcprobe(chp)
 	    (chp->wdc &&
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask |= DEBUG_PROBE;
+
+	
 #endif
 
 	if (chp->wdc == NULL ||
@@ -642,6 +614,9 @@ wdcattach(chp)
 	struct ataparams params;
 	static int inited = 0;
 	extern int cold;
+#ifdef WDCDEBUG
+	int    savedmask = wdcdebug_mask;
+#endif
 
 	if (!cold)
 		at_poll = AT_WAIT;
@@ -667,6 +642,11 @@ wdcattach(chp)
 #ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_mask |= DEBUG_PROBE;
+
+	if ((chp->ch_drive[0].drive_flags & DRIVE_ATAPI) ||
+	    (chp->ch_drive[1].drive_flags & DRIVE_ATAPI)) {
+		wdcdebug_mask = DEBUG_PROBE;
+	}
 #endif
 
 	/* initialise global data */
@@ -708,7 +688,8 @@ wdcattach(chp)
 			    chp->wdc->sc_dev.dv_xname,
 			    chp->channel, i), DEBUG_PROBE);
 
-			if (!wdc_preata_drive(chp, i))
+			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) && 
+			    !wdc_preata_drive(chp, i))
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 		}
 	}
@@ -772,27 +753,6 @@ wdcattach(chp)
 			chp->ch_drive[i].state = 0;
 	}
 
-	/*
-	 * Reset channel. The probe, with some combinations of ATA/ATAPI
-	 * devices keep it in a mostly working, but strange state (with busy
-	 * led on)
-	 */
-	if ((chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
-		wdcreset(chp, VERBOSE);
-		/*
-		 * Read status registers to avoid spurious interrupts.
-		 */
-		for (i = 1; i >= 0; i--) {
-			if (chp->ch_drive[i].drive_flags & DRIVE) {
-				CHP_WRITE_REG(chp,
-				    wdr_sdh, WDSD_IBM | (i << 4));
-				if (wait_for_unbusy(chp, 10000) < 0)
-					printf("%s:%d:%d: device busy\n",
-					    chp->wdc->sc_dev.dv_xname,
-					    chp->channel, i);
-			}
-		}
-	}
 #ifndef __OpenBSD__
 	wdc_delref(chp);
 #endif
@@ -801,6 +761,8 @@ wdcattach(chp)
 #ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_mask &= ~DEBUG_PROBE;
+
+	wdcdebug_mask = savedmask;
 #endif
 	return;
 }
@@ -1037,22 +999,14 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 	timeout = timeout * 1000 / WDCDELAY; /* delay uses microseconds */
 
 	for (;;) {
-#ifdef TEST_ALTSTS
-		chp->ch_status = status = CHP_READ_REG(chp, wdr_altsts);
-#else
 		chp->ch_status = status = CHP_READ_REG(chp, wdr_status);
-#endif
+
 		if (status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
 			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
-#ifdef TEST_ALTSTS
-			chp->ch_status = status = 
-			    CHP_READ_REG(chp, wdr_altsts);
-#else
 			chp->ch_status = status = 
 			    CHP_READ_REG(chp, wdr_status);
-#endif
 		}
-		if ((status & WDCS_BSY) == 0 && (status & mask) == bits) 
+		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
 		if (++time > timeout) {
 			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
@@ -1063,10 +1017,6 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 		}
 		delay(WDCDELAY);
 	}
-#ifdef TEST_ALTSTS
-	/* Acknowledge any pending interrupts */
-	CHP_READ_REG(chp, wdr_status);
-#endif
 	if (status & WDCS_ERR) {
 		chp->ch_error = CHP_READ_REG(chp, wdr_error);
 		WDCDEBUG_PRINT(("wdcwait: error %x\n", chp->ch_error),
@@ -1141,7 +1091,7 @@ wdc_probe_caps(drvp, params)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	struct wdc_softc *wdc = chp->wdc;
-	int i, printed;
+	int i, valid_mode_found;
 	int cf_flags = drvp->cf_flags;
 
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
@@ -1176,13 +1126,16 @@ wdc_probe_caps(drvp, params)
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
 
+	WDCDEBUG_PRINT(("wdc_probe_caps: wdc_cap %d cf_flags %d\n", 
+		    wdc->cap, cf_flags), DEBUG_PROBE);
+
 	/*
 	 * It's not in the specs, but it seems that some drive 
 	 * returns 0xffff in atap_extensions when this field is invalid
 	 */
 	if (params->atap_extensions != 0xffff &&
 	    (params->atap_extensions & WDC_EXT_MODES)) {
-		printed = 0;
+		valid_mode_found = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
@@ -1192,35 +1145,36 @@ wdc_probe_caps(drvp, params)
 		for (i = 7; i >= 0; i--) {
 			if ((params->atap_piomode_supp & (1 << i)) == 0)
 				continue;
-			if (i > 4) {
+			if (i > 4)
 				return;
+
+			valid_mode_found = 1;
+
+			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0) {
+				drvp->PIO_cap = i + 3;
+				continue;
 			}
 
-			/*
+                        /*
 			 * See if mode is accepted.
 			 * If the controller can't set its PIO mode,
-			 * assume the defaults are good, so don't try
-			 * to set it
+			 * assume the BIOS set it up correctly
 			 */
-			if ((wdc->cap & WDC_CAPABILITY_MODE) != 0)
-				if (ata_set_mode(drvp, 0x08 | (i + 3),
-				   at_poll) != CMD_OK)
-					continue;
-			if (!printed) { 
-				printed = 1;
-			}
+			if (ata_set_mode(drvp, 0x08 | (i + 3),
+				at_poll) != CMD_OK)
+				continue;
+
 			/*
 			 * If controller's driver can't set its PIO mode,
-			 * get the highter one for the drive.
+			 * set the highest one the controller supports
 			 */
-			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0 ||
-			    wdc->PIO_cap >= i + 3) {
+			if (wdc->PIO_cap >= i + 3) {
 				drvp->PIO_mode = i + 3;
 				drvp->PIO_cap = i + 3;
 				break;
 			}
 		}
-		if (!printed) {
+		if (!valid_mode_found) {
 			/* 
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
@@ -1234,7 +1188,7 @@ wdc_probe_caps(drvp, params)
 		    (wdc->cap & WDC_CAPABILITY_NO_ATAPI_DMA))
 			return;
 
-		printed = 0;
+		valid_mode_found = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params->atap_dmamode_supp & (1 << i)) == 0)
 				continue;
@@ -1243,9 +1197,9 @@ wdc_probe_caps(drvp, params)
 				if (ata_set_mode(drvp, 0x20 | i, at_poll)
 				    != CMD_OK)
 					continue;
-			if (!printed) {
-				printed = 1;
-			}
+
+			valid_mode_found = 1;
+
 			if (wdc->cap & WDC_CAPABILITY_DMA) {
 				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 				    wdc->DMA_cap < i)
@@ -1416,10 +1370,16 @@ wdc_print_current_modes(chp)
 		drvp = &chp->ch_drive[drive];
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		printf("%s(%s:%d:%d): using PIO mode %d",
-		    drvp->drive_name,
-		    chp->wdc->sc_dev.dv_xname,
-		    chp->channel, drive, drvp->PIO_mode);
+
+		printf("%s(%s:%d:%d):",
+ 		    drvp->drive_name,
+		    chp->wdc->sc_dev.dv_xname, chp->channel, drive);
+
+		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0 &&
+		    !(drvp->cf_flags & ATA_CONFIG_PIO_SET))
+			printf(" using BIOS timings");
+		else
+			printf(" using PIO mode %d", drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
 			printf(", DMA mode %d", drvp->DMA_mode);
 		if (drvp->drive_flags & DRIVE_UDMA)
@@ -1557,17 +1517,17 @@ __wdccommand_start(chp, xfer)
 	/*
 	 * Disable interrupts if we're polling
 	 */
-#if 0
 	if (xfer->c_flags & C_POLL) {
 		wdc_disable_intr(chp);
 	}
-#endif
+
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	DELAY(1);
+
 	/*
 	 * For resets, we don't really care to make sure that
 	 * the bus is free
 	 */
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
-
 	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
 		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
 		    wdc_c->timeout) != 0) {
@@ -1655,11 +1615,11 @@ __wdccommand_done(chp, xfer)
 		/* XXX CHP_READ_REG(chp, wdr_precomp); - precomp
 		   isn't a readable register */
 	}
-#if 0
+
 	if (xfer->c_flags & C_POLL) {
 		wdc_enable_intr(chp);
 	}
-#endif
+
 	wdc_free_xfer(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_done before callback\n"), DEBUG_INTR);
 
@@ -1832,38 +1792,267 @@ wdcbit_bucket(chp, size)
 	CHP_READ_RAW_MULTI_2(chp, NULL, size);
 }
 
-#ifndef __OpenBSD__
-int
-wdc_addref(chp)
-	struct channel_softc *chp;
-{
-	struct wdc_softc *wdc = chp->wdc; 
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
-	int s, error = 0;
 
+#include <sys/ataio.h>
+#include <sys/file.h>
+#include <sys/buf.h>
+
+/*
+ * Glue necessary to hook ATAIOCCOMMAND into physio
+ */
+
+struct wdc_ioctl {
+	LIST_ENTRY(wdc_ioctl) wi_list;
+	struct buf wi_bp;
+	struct uio wi_uio;
+	struct iovec wi_iov;
+	atareq_t wi_atareq;
+	struct ata_drive_datas *wi_drvp;
+};
+
+struct	wdc_ioctl *wdc_ioctl_find __P((struct buf *));
+void	wdc_ioctl_free __P((struct wdc_ioctl *));
+struct	wdc_ioctl *wdc_ioctl_get __P((void));
+void	wdc_ioctl_strategy __P((struct buf *));
+
+LIST_HEAD(, wdc_ioctl) wi_head;
+
+/*
+ * Allocate space for a ioctl queue structure.  Mostly taken from
+ * scsipi_ioctl.c
+ */
+struct wdc_ioctl *
+wdc_ioctl_get()
+{
+	struct wdc_ioctl *wi;
+	int s;
+
+	wi = malloc(sizeof(struct wdc_ioctl), M_TEMP, M_WAITOK);
+	bzero(wi, sizeof (struct wdc_ioctl));
 	s = splbio();
-	if (adapter->scsipi_refcnt++ == 0 &&
-	    adapter->scsipi_enable != NULL) {
-		error = (*adapter->scsipi_enable)(wdc, 1);
-		if (error)
-			adapter->scsipi_refcnt--;
-	}
+	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
-	return (error);
+	return (wi);
 }
 
+/*
+ * Free an ioctl structure and remove it from our list
+ */
+
 void
-wdc_delref(chp)
-	struct channel_softc *chp;
+wdc_ioctl_free(wi)
+	struct wdc_ioctl *wi;
 {
-	struct wdc_softc *wdc = chp->wdc;
-	struct scsipi_adapter *adapter = &wdc->sc_atapi_adapter;
 	int s;
 
 	s = splbio();
-	if (adapter->scsipi_refcnt-- == 1 &&
-	    adapter->scsipi_enable != NULL)
-		(void) (*adapter->scsipi_enable)(wdc, 0);
+	LIST_REMOVE(wi, wi_list);
 	splx(s);
+	free(wi, M_TEMP);
 }
-#endif
+
+/*
+ * Find a wdc_ioctl structure based on the struct buf.
+ */
+
+struct wdc_ioctl *
+wdc_ioctl_find(bp)
+	struct buf *bp;
+{
+	struct wdc_ioctl *wi;
+	int s;
+
+	s = splbio();
+	for (wi = wi_head.lh_first; wi != 0; wi = wi->wi_list.le_next)
+		if (bp == &wi->wi_bp)
+			break;
+	splx(s);
+	return (wi);
+}
+
+/*
+ * Ioctl pseudo strategy routine
+ *
+ * This is mostly stolen from scsipi_ioctl.c:scsistrategy().  What
+ * happens here is:
+ *
+ * - wdioctl() queues a wdc_ioctl structure.
+ *
+ * - wdioctl() calls physio/wdc_ioctl_strategy based on whether or not
+ *   user space I/O is required.  If physio() is called, physio() eventually
+ *   calls wdc_ioctl_strategy().
+ *
+ * - In either case, wdc_ioctl_strategy() calls wdc_exec_command()
+ *   to perform the actual command
+ *
+ * The reason for the use of the pseudo strategy routine is because
+ * when doing I/O to/from user space, physio _really_ wants to be in
+ * the loop.  We could put the entire buffer into the ioctl request
+ * structure, but that won't scale if we want to do things like download
+ * microcode.
+ */
+
+void
+wdc_ioctl_strategy(bp)
+	struct buf *bp;
+{
+	struct wdc_ioctl *wi;
+	struct wdc_command wdc_c;
+	int error = 0;
+
+	wi = wdc_ioctl_find(bp);
+	if (wi == NULL) {
+		printf("user_strat: No ioctl\n");
+		error = EINVAL;
+		goto bad;
+	}
+
+	bzero(&wdc_c, sizeof(wdc_c));
+
+	/*
+	 * Abort if physio broke up the transfer
+	 */
+
+	if (bp->b_bcount != wi->wi_atareq.datalen) {
+		printf("physio split wd ioctl request... cannot proceed\n");
+		error = EIO;
+		goto bad;
+	}
+
+	/*
+	 * Make sure a timeout was supplied in the ioctl request
+	 */
+
+	if (wi->wi_atareq.timeout == 0) {
+		error = EINVAL;
+		goto bad;
+	}
+
+	if (wi->wi_atareq.flags & ATACMD_READ)
+		wdc_c.flags |= AT_READ;
+	else if (wi->wi_atareq.flags & ATACMD_WRITE)
+		wdc_c.flags |= AT_WRITE;
+
+	if (wi->wi_atareq.flags & ATACMD_READREG)
+		wdc_c.flags |= AT_READREG;
+
+	wdc_c.flags |= AT_WAIT;
+
+	wdc_c.timeout = wi->wi_atareq.timeout;
+	wdc_c.r_command = wi->wi_atareq.command;
+	wdc_c.r_head = wi->wi_atareq.head & 0x0f;
+	wdc_c.r_cyl = wi->wi_atareq.cylinder;
+	wdc_c.r_sector = wi->wi_atareq.sec_num;
+	wdc_c.r_count = wi->wi_atareq.sec_count;
+	wdc_c.r_precomp = wi->wi_atareq.features;
+	if (wi->wi_drvp->drive_flags & DRIVE_ATAPI) {
+		wdc_c.r_st_bmask = 0;
+		wdc_c.r_st_pmask = 0;
+		if (wdc_c.r_command == WDCC_IDENTIFY)
+			wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
+	} else {
+		wdc_c.r_st_bmask = WDCS_DRDY;
+		wdc_c.r_st_pmask = WDCS_DRDY;
+	}
+	wdc_c.data = wi->wi_bp.b_data;
+	wdc_c.bcount = wi->wi_bp.b_bcount;
+
+	if (wdc_exec_command(wi->wi_drvp, &wdc_c) != WDC_COMPLETE) {
+		wi->wi_atareq.retsts = ATACMD_ERROR;
+		goto bad;
+	}
+
+	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		if (wdc_c.flags & AT_ERROR) {
+			wi->wi_atareq.retsts = ATACMD_ERROR;
+			wi->wi_atareq.error = wdc_c.r_error;
+		} else if (wdc_c.flags & AT_DF)
+			wi->wi_atareq.retsts = ATACMD_DF;
+		else
+			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
+	} else {
+		wi->wi_atareq.retsts = ATACMD_OK;
+		if (wi->wi_atareq.flags & ATACMD_READREG) {
+			wi->wi_atareq.head = wdc_c.r_head ;
+			wi->wi_atareq.cylinder = wdc_c.r_cyl;
+			wi->wi_atareq.sec_num = wdc_c.r_sector;
+			wi->wi_atareq.sec_count = wdc_c.r_count; 
+			wi->wi_atareq.features = wdc_c.r_precomp; 
+			wi->wi_atareq.error = wdc_c.r_error; 
+		}
+	}
+
+	bp->b_error = 0;
+	biodone(bp);
+	return;
+bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_error = error;
+	biodone(bp);
+}
+
+int
+wdc_ioctl(drvp, xfer, addr, flag)
+	struct ata_drive_datas *drvp;
+	u_long xfer;
+	caddr_t addr;
+	int flag;
+{
+	int error = 0;
+
+	switch (xfer) {
+	case ATAIOCCOMMAND:
+		/*
+		 * Make sure this command is (relatively) safe first
+		 */
+		if ((((atareq_t *) addr)->flags & ATACMD_READ) == 0 &&
+		    (flag & FWRITE) == 0) {
+			error = EBADF;
+			goto exit;
+		}
+		{
+		struct wdc_ioctl *wi;
+		atareq_t *atareq = (atareq_t *) addr;
+
+		wi = wdc_ioctl_get();
+		wi->wi_drvp = drvp;
+		wi->wi_atareq = *atareq;
+
+		if (atareq->datalen && atareq->flags &
+		    (ATACMD_READ | ATACMD_WRITE)) {
+			wi->wi_iov.iov_base = atareq->databuf;
+			wi->wi_iov.iov_len = atareq->datalen;
+			wi->wi_uio.uio_iov = &wi->wi_iov;
+			wi->wi_uio.uio_iovcnt = 1;
+			wi->wi_uio.uio_resid = atareq->datalen;
+			wi->wi_uio.uio_offset = 0;
+			wi->wi_uio.uio_segflg = UIO_USERSPACE;
+			wi->wi_uio.uio_rw =
+			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
+			wi->wi_uio.uio_procp = curproc;
+			error = physio(wdc_ioctl_strategy, &wi->wi_bp, 0,
+			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
+			    minphys, &wi->wi_uio);
+		} else {
+			/* No need to call physio if we don't have any
+			   user data */
+			wi->wi_bp.b_flags = 0;
+			wi->wi_bp.b_data = 0;
+			wi->wi_bp.b_bcount = 0;
+			wi->wi_bp.b_dev = 0;
+			wi->wi_bp.b_proc = curproc;
+			wdc_ioctl_strategy(&wi->wi_bp);
+			error = wi->wi_bp.b_error;
+		}
+		*atareq = wi->wi_atareq;
+		wdc_ioctl_free(wi);
+		goto exit;
+		}
+	default:
+		error = ENOTTY;
+		goto exit;
+	}
+
+ exit:
+	return (error);
+}

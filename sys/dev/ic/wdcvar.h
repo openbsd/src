@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.17 2001/04/04 07:29:50 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.18 2001/04/30 21:17:41 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -38,9 +38,6 @@
  */
 
 #include <sys/timeout.h>
-
-#define	WAITTIME    (10 * hz)    /* time to wait for a completion */
-	/* this is a lot for hard drives, but not for cdroms */
 
 struct channel_queue {  /* per channel queue (may be shared) */
 	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
@@ -293,3 +290,5 @@ void wdc_output_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
 void wdc_input_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
 
 void wdc_print_current_modes __P((struct channel_softc *));
+
+int wdc_ioctl __P((struct ata_drive_datas *, u_long, caddr_t, int));
