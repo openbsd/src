@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.30 2002/07/12 20:17:03 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.31 2003/05/17 18:31:03 krw Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -859,7 +859,7 @@ vga_load_font(v, cookie, data)
 		f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
 	if (!f)
 		return (ENOMEM);
-	strncpy(f->name, data->name, sizeof(f->name));
+	strlcpy(f->name, data->name, sizeof(f->name));
 	f->height = data->fontheight;
 	f->encoding = data->encoding;
 #ifdef notyet
