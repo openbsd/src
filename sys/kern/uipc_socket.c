@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.8 1996/12/16 14:30:17 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.9 1997/02/28 02:56:50 angelos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -91,6 +91,9 @@ socreate(dom, aso, type, proto)
 		so->so_state = SS_PRIV;
 	so->so_uid = p->p_ucred->cr_uid;
 	so->so_proto = prp;
+	so->so_seclevel[SL_AUTH] = IPSEC_AUTH_LEVEL_DEFAULT;
+	so->so_seclevel[SL_ESP_TRANS] = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
+	so->so_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 	error =
 	    (*prp->pr_usrreq)(so, PRU_ATTACH, NULL, (struct mbuf *)(long)proto,
 			      NULL);
@@ -158,6 +161,9 @@ sofree(so)
 			panic("sofree dq");
 		so->so_head = 0;
 	}
+#ifdef IPSEC
+	/* XXX Free TDBs/routing entries if necessary */
+#endif
 	sbrelease(&so->so_snd);
 	sorflush(so);
 	FREE(so, M_SOCKET);
