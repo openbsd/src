@@ -32,7 +32,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.10 1998/07/15 18:46:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.11 1998/07/15 18:59:04 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -212,7 +212,7 @@ _mcleanup()
 		proffile = "gmon.out";
 	}
 
-	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0644);
+	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0664);
 	if (fd < 0) {
 		perror( proffile );
 		return;
