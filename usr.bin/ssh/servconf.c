@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.112 2002/06/23 09:46:51 deraadt Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.113 2002/07/30 17:03:55 markus Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>
@@ -87,6 +87,7 @@ initialize_server_options(ServerOptions *options)
 	options->kbd_interactive_authentication = -1;
 	options->challenge_response_authentication = -1;
 	options->permit_empty_passwd = -1;
+	options->permit_user_env = -1;
 	options->use_login = -1;
 	options->compression = -1;
 	options->allow_tcp_forwarding = -1;
@@ -204,6 +205,8 @@ fill_default_server_options(ServerOptions *options)
 		options->challenge_response_authentication = 1;
 	if (options->permit_empty_passwd == -1)
 		options->permit_empty_passwd = 0;
+	if (options->permit_user_env == -1)
+		options->permit_user_env = 0;
 	if (options->use_login == -1)
 		options->use_login = 0;
 	if (options->compression == -1)
@@ -259,7 +262,7 @@ typedef enum {
 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
 	sStrictModes, sEmptyPasswd, sKeepAlives,
-	sUseLogin, sAllowTcpForwarding, sCompression,
+	sPermitUserEnvironment, sUseLogin, sAllowTcpForwarding, sCompression,
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
@@ -319,6 +322,7 @@ static struct {
 	{ "xauthlocation", sXAuthLocation },
 	{ "strictmodes", sStrictModes },
 	{ "permitemptypasswords", sEmptyPasswd },
+	{ "permituserenvironment", sPermitUserEnvironment },
 	{ "uselogin", sUseLogin },
 	{ "compression", sCompression },
 	{ "keepalive", sKeepAlives },
@@ -670,6 +674,10 @@ parse_flag:
 
 	case sEmptyPasswd:
 		intptr = &options->permit_empty_passwd;
+		goto parse_flag;
+
+	case sPermitUserEnvironment:
+		intptr = &options->permit_user_env;
 		goto parse_flag;
 
 	case sUseLogin:
