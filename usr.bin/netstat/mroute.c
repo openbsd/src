@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.10 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.11 2003/07/07 21:36:52 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #include <stdlib.h>
 #include "netstat.h"
 
-char *
+static char *
 pktscale(u_long n)
 {
 	static char buf[8];

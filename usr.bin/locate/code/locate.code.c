@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.10 2003/06/03 02:56:10 millert Exp $
+ *	$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.10 2003/06/03 02:56:10 millert Exp $
+ * 	$Id: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $
  */
 
 #ifndef lint
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.10 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,9 +124,7 @@ extern int optind;
 extern int optopt;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_char *cp, *oldpath, *path;
 	int ch, code, count, diffcount, oldcount;
@@ -251,8 +249,7 @@ main(argc, argv)
 
 #ifndef LOOKUP
 int
-bgindex(bg)			/* Return location of bg in bigrams or -1. */
-	char *bg;
+bgindex(char *bg)			/* Return location of bg in bigrams or -1. */
 {
 	char bg0, bg1, *p;
 
@@ -266,7 +263,7 @@ bgindex(bg)			/* Return location of bg in bigrams or -1. */
 #endif /* !LOOKUP */
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: locate.code common_bigrams < list > squozen_list\n");

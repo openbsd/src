@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.65 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.66 2003/07/07 21:36:52 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.65 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.66 2003/07/07 21:36:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -521,7 +521,7 @@ struct rpcnams {
 	char	*rpcname;
 };
 
-char *
+static char *
 getrpcportnam(in_port_t port, int proto)
 {
 	struct sockaddr_in server_addr;

@@ -53,6 +53,7 @@
 static unsigned lineno = 1;
 void error_message(char *, ...);
 int getstring(void);
+int yylex(void);
 
 %}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: username.c,v 1.12 2003/06/19 22:40:45 millert Exp $	 */
+/* $OpenBSD: username.c,v 1.13 2003/07/07 21:36:52 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -53,6 +53,7 @@
 #include <pwd.h>
 
 #include "top.local.h"
+#include "top.h"
 #include "utils.h"
 
 struct hash_el {

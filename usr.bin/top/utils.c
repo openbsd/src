@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.12 2003/06/20 16:53:15 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.13 2003/07/07 21:36:52 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include "top.h"
+#include "utils.h"
 
 int
 atoiwi(char *str)

@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.35 2003/06/18 08:36:31 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.36 2003/07/07 21:36:52 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -146,7 +146,7 @@ static int      pageshift;	/* log base 2 of the pagesize */
 
 unsigned int	maxslp;
 
-int
+static int
 getstathz(void)
 {
 	struct clockinfo cinf;
@@ -260,7 +260,7 @@ get_system_info(struct system_info *si)
 
 static struct handle handle;
 
-struct kinfo_proc *
+static struct kinfo_proc *
 getprocs(int op, int arg, int *cnt)
 {
 	size_t size = sizeof(int);
@@ -374,7 +374,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 char fmt[MAX_COLS];	/* static area where result is built */
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid)())
+format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 {
 	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
 	struct kinfo_proc *pp;
@@ -470,7 +470,7 @@ static unsigned char sorted_state[] =
 	if ((result = PROCSIZE(p2) - PROCSIZE(p1)) == 0)
 
 /* compare_cpu - the comparison function for sorting by cpu percentage */
-int
+static int
 compare_cpu(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
@@ -494,7 +494,7 @@ compare_cpu(const void *v1, const void *v2)
 }
 
 /* compare_size - the comparison function for sorting by total memory usage */
-int
+static int
 compare_size(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
@@ -518,7 +518,7 @@ compare_size(const void *v1, const void *v2)
 }
 
 /* compare_res - the comparison function for sorting by resident set size */
-int
+static int
 compare_res(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
@@ -542,7 +542,7 @@ compare_res(const void *v1, const void *v2)
 }
 
 /* compare_time - the comparison function for sorting by CPU time */
-int
+static int
 compare_time(const void *v1, const void *v2)
 {
 	struct proc **pp1 = (struct proc **) v1;
@@ -566,7 +566,7 @@ compare_time(const void *v1, const void *v2)
 }
 
 /* compare_prio - the comparison function for sorting by CPU time */
-int
+static int
 compare_prio(const void *v1, const void *v2)
 {
 	struct proc   **pp1 = (struct proc **) v1;

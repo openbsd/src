@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.7 2003/06/03 20:49:29 deraadt Exp $	*/
+/*	$OpenBSD: socks.c,v 1.8 2003/07/07 21:36:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -46,9 +46,12 @@
 #define SOCKS_MAXCMDSZ	10
 
 int	remote_connect(char *, char *, struct addrinfo);
+int	socks_connect(char *host, char *port, struct addrinfo hints,
+	    char *proxyhost, char *proxyport, struct addrinfo proxyhints,
+	    int socksv);
 
 static in_addr_t
-decode_addr (const char *s)
+decode_addr(const char *s)
 {
 	struct hostent *hp = gethostbyname (s);
 	struct in_addr retval;
@@ -61,7 +64,7 @@ decode_addr (const char *s)
 }
 
 static in_port_t
-decode_port (const char *s)
+decode_port(const char *s)
 {
 	struct servent *sp;
 	in_port_t port;
@@ -79,7 +82,7 @@ decode_port (const char *s)
 }
 
 int
-socks_connect (char *host, char *port, struct addrinfo hints,
+socks_connect(char *host, char *port, struct addrinfo hints,
     char *proxyhost, char *proxyport, struct addrinfo proxyhints,
     int socksv)
 {

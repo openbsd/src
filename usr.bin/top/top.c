@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.26 2003/06/19 22:40:45 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.27 2003/07/07 21:36:52 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -75,13 +75,13 @@ extern int      (*proc_compares[])(const void *, const void *);
 int order_index;
 
 /* pointers to display routines */
-void            (*d_loadave) () = i_loadave;
-void            (*d_procstates) () = i_procstates;
-void            (*d_cpustates) () = i_cpustates;
-void            (*d_memory) () = i_memory;
-void            (*d_message) () = i_message;
-void            (*d_header) () = i_header;
-void            (*d_process) () = i_process;
+void            (*d_loadave) (int, double *) = i_loadave;
+void            (*d_procstates) (int, int *) = i_procstates;
+void            (*d_cpustates) (int *) = i_cpustates;
+void            (*d_memory) (int *) = i_memory;
+void            (*d_message) (void) = i_message;
+void            (*d_header) (char *) = i_header;
+void            (*d_process) (int, char *) = i_process;
 
 int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
@@ -121,7 +121,7 @@ char topn_specified = No;
 #define CMD_system	15
 #define CMD_order       16
 
-void
+static void
 usage(void)
 {
 	extern char *__progname;
@@ -131,7 +131,7 @@ usage(void)
 	    __progname);
 }
 
-void
+static void
 parseargs(int ac, char **av)
 {
 	char *endp;
@@ -231,7 +231,7 @@ int
 main(int argc, char *argv[])
 {
 	char *uname_field = "USERNAME", *header_text, *env_top;
-	char *(*get_userid)() = username, **preset_argv, **av;
+	char *(*get_userid)(uid_t) = username, **preset_argv, **av;
 	int preset_argc = 0, ac, active_procs, i;
 	sigset_t mask, oldmask;
 	time_t curr_time;

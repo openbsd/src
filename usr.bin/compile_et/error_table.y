@@ -45,6 +45,7 @@ long name2number(const char *str);
 void error_message(char *, ...);
 
 extern char *yytext;
+int yyparse(void);
 
 /* This is for bison */
 
