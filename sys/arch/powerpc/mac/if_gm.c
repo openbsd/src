@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.7 2000/10/16 13:51:00 deraadt Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.8 2000/10/18 23:24:42 drahn Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -234,6 +234,7 @@ gmac_attach(parent, self, aux)
 	}
 #endif
 
+#if 0
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": unable to map interrupt\n");
@@ -248,6 +249,26 @@ gmac_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
+#endif 
+#if 1
+	sprintf(intrstrbuf, "irq %d\n", pa->pa_intrline);
+	intrstr = intrstrbuf;
+	/*
+	if (pci_intr_establish(pa->pa_pc, pa->pa_intrline, IPL_NET,
+	* Someone explain how to get the interrupt line correctly from the
+	* pci info? pa_intrline returns 60, not 1 like the hardware expects
+	* on uni-north G4 system.
+	*/
+	if (pci_intr_establish(pa->pa_pc, pa->pa_intrline, IPL_NET,
+		gmac_intr, sc, "gmac") == NULL)
+	{
+		printf(": unable to establish interrupt");
+		if (intrstr)
+			printf(" at %x", pa->pa_intrline);
+		printf("\n");
+		return;
+	}
+#endif 
 
 	/* Setup packet buffers and dma descriptors. */
 	p = malloc((NRXBUF + NTXBUF) * 2048 + 3 * 0x800, M_DEVBUF, M_NOWAIT);
