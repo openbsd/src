@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_prefix.c,v 1.8 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$OpenBSD: in6_prefix.c,v 1.9 2001/03/25 06:46:00 csapuntz Exp $	*/
 /*	$KAME: in6_prefix.c,v 1.45 2001/02/08 11:33:32 itojun Exp $	*/
 
 /*
@@ -952,8 +952,10 @@ delete_each_prefix(struct rr_prefix *rpp, u_char origin)
 
 		s = splnet();
 		rap = LIST_FIRST(&rpp->rp_addrhead);
-		if (rap == NULL)
+		if (rap == NULL) {
+			splx(s);
 			break;
+		}
 		LIST_REMOVE(rap, ra_entry);
 		splx(s);
 		if (rap->ra_addr == NULL) {
