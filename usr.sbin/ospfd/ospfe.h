@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.9 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.10 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -133,6 +133,7 @@ struct nbr {
 	u_int32_t		 dd_pending;
 	u_int32_t		 peerid;	/* unique ID in DB */
 	u_int32_t		 ls_req_cnt;
+	u_int32_t		 crypt_seq_num;
 
 	int			 state;
 	u_int8_t		 link_state;
@@ -144,8 +145,14 @@ struct nbr {
 };
 
 /* auth.c */
-int	 auth_validate(struct ospf_hdr *, const struct iface *);
-int	 auth_gen(void *, u_int16_t, const struct iface *);
+int		 auth_validate(void *buf, u_int16_t len, struct iface *,
+		     struct nbr *);
+int		 auth_gen(void *, u_int16_t, struct iface *);
+void		 md_list_init(struct iface *);
+void		 md_list_add(struct iface *, u_int8_t, char *);
+void		 md_list_clr(struct iface *);
+int		 md_list_empty(struct iface *);
+struct auth_md	*md_list_find(struct iface *, u_int8_t);
 
 /* database.c */
 int	 send_db_description(struct nbr *);

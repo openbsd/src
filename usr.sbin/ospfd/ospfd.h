@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.23 2005/03/29 17:26:35 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.24 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/tree.h>
+#include <md5.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <event.h>
@@ -258,6 +259,12 @@ static const char * const path_type_names[] = {
 	"Type 2 ext"
 };
 
+struct auth_md {
+	TAILQ_ENTRY(auth_md)	 entry;
+	char			 key[MD5_DIGEST_LENGTH];
+	u_int8_t		 keyid;
+};
+
 /* lsa list used in RDE and OE */
 TAILQ_HEAD(lsa_head, lsa_entry);
 
@@ -268,6 +275,7 @@ struct iface {
 	struct event		 lsack_tx_timer;
 
 	LIST_HEAD(, nbr)	 nbr_list;
+	TAILQ_HEAD(, auth_md)	 auth_md_list;
 	struct lsa_head		 ls_ack_list;
 
 	char			 name[IF_NAMESIZE];
@@ -284,6 +292,7 @@ struct iface {
 	u_int32_t		 baudrate;
 	u_int32_t		 dead_interval;
 	u_int32_t		 ls_ack_cnt;
+	u_int32_t		 crypt_seq_num;
 	unsigned int		 ifindex;
 	int			 fd;
 	int			 state;
@@ -295,6 +304,7 @@ struct iface {
 	u_int16_t		 metric;
 	enum iface_type		 type;
 	enum auth_type		 auth_type;
+	u_int8_t		 auth_keyid;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
 	u_int8_t		 passive;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2005/03/29 17:26:35 norby Exp $ */
+/*	$OpenBSD: config.c,v 1.5 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -82,6 +82,7 @@ void
 show_interface(struct iface *iface)
 {
 	struct nbr	*nbr = NULL;
+	struct auth_md	*md;
 
 	log_debug("  interface: %s", iface->name);
 	log_debug("    type: %s", if_type_name(iface->type));
@@ -107,11 +108,11 @@ show_interface(struct iface *iface)
 	log_debug("    metric: %d", iface->metric);
 	log_debug("    rxmt interval: %d", iface->rxmt_interval);
 	log_debug("    auth type: %s", if_auth_name(iface->auth_type));
-	if (iface->auth_type == AUTH_TYPE_SIMPLE) {
-		log_debug("    auth key: '%s'", iface->auth_key);
-	} else {
-		log_debug("    auth key:" );
-	}
+	log_debug("    auth_key: '%s'", iface->auth_key);
+	log_debug("    auth keyid: %d", iface->auth_keyid);
+
+	TAILQ_FOREACH(md, &iface->auth_md_list, entry)
+		log_debug("      keyid: %d key: %s", md->keyid, md->key);
 
 	log_debug("    mtu: %d", iface->mtu);
 	log_debug("    fd: %d", iface->fd);

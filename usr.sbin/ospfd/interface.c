@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.13 2005/03/29 17:26:35 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.14 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -165,6 +165,9 @@ if_new(struct kif *kif)
 
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->ls_ack_list);
+	md_list_init(iface);
+
+	iface->crypt_seq_num = arc4random();
 
 	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
 
@@ -236,6 +239,8 @@ if_del(struct iface *iface)
 	}
 
 	ls_ack_list_clr(iface);
+	md_list_clr(iface);
+	free(iface->auth_key);
 
 	return (-1);
 }

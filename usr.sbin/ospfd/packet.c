@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2005/02/16 15:23:33 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <md5.h>
 #include <stdlib.h>
 #include <strings.h>
 
@@ -63,6 +64,11 @@ send_packet(struct iface *iface, char *pkt, int len, struct sockaddr_in *dst)
 		    "interface %s", iface->name);
 		return (-1);
 	}
+
+	/* XXX I don't like this */
+	/* MD5 digest is _not_ part of the OSPF packet len */
+	if (iface->auth_type == AUTH_CRYPT)
+		len += MD5_DIGEST_LENGTH;
 
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
@@ -161,15 +167,20 @@ recv_packet(int fd, short event, void *bula)
 	if ((l = ospf_hdr_sanity_check(&ip_hdr, ospf_hdr, len, iface)) == -1)
 		goto done;
 
+	nbr = nbr_find_id(iface, ospf_hdr->rtr_id);
+	if (ospf_hdr->type != PACKET_TYPE_HELLO && nbr == NULL) {
+		log_debug("recv_packet: unknown neighbor ID");
+		goto done;
+	}
+
+	if (auth_validate(buf, len, iface, nbr)) {
+		log_warnx("recv_packet: authentication error, "
+		    "interface %s", iface->name);
+		goto done;
+	}
+
 	buf += sizeof(*ospf_hdr);
 	len = l - sizeof(*ospf_hdr);
-
-	if (ospf_hdr->type != PACKET_TYPE_HELLO)
-		/* find neighbor */
-		if ((nbr = nbr_find_id(iface, ospf_hdr->rtr_id)) == NULL) {
-			log_debug("recv_packet: unknown neighbor ID");
-			goto done;
-		}
 
 	/* switch OSPF packet type */
 	switch (ospf_hdr->type) {
@@ -257,12 +268,6 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 			    if_state_name(iface->state), iface->name);
 			return (-1);
 		}
-	}
-
-	if (auth_validate(ospf_hdr, iface)) {
-		log_warnx("recv_packet: authentication error, interface %s",
-		    iface->name);
-		return (-1);
 	}
 
 	return (ntohs(ospf_hdr->len));

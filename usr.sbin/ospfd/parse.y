@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2005/03/29 17:26:35 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.11 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -99,7 +99,7 @@ typedef struct {
 
 %token	AREA INTERFACE ROUTERID FIBUPDATE
 %token	SPFDELAY SPFHOLDTIME
-%token	AUTHKEY AUTHTYPE
+%token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
 %token	RETRANSMITINTERVAL ROUTERDEADTIME ROUTERPRIORITY
@@ -251,6 +251,30 @@ conf_main	: METRIC number {
 		}
 		;
 
+authmd		: AUTHMD number STRING {
+			if (iface != NULL) {
+				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
+					yyerror("keyid out of range "
+					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
+					free($3);
+					YYERROR;
+				}
+				md_list_add(iface, $2, $3);
+			}
+			free($3);
+		}
+
+authmdkeyid	: AUTHMDKEYID number {
+			if (iface != NULL) {
+				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
+					yyerror("keyid out of range "
+					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
+					YYERROR;
+				}
+				iface->auth_keyid = $2;
+			}
+		}
+
 authtype	: AUTHTYPE STRING {
 			enum auth_type	type;
 
@@ -259,7 +283,7 @@ authtype	: AUTHTYPE STRING {
 			else if (!strcmp($2, "simple"))
 				type = AUTH_SIMPLE;
 			else if (!strcmp($2, "crypt"))
-				type = AUTH_SIMPLE;
+				type = AUTH_CRYPT;
 			else {
 				yyerror("unknown auth-type");
 				free($2);
@@ -387,7 +411,9 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl
 		| interfaceoptsl
 		;
 
-interfaceoptsl	: authkey nl
+interfaceoptsl	: authmd nl
+		| authkey nl
+		| authmdkeyid nl
 		| authtype nl
 		| PASSIVE nl		{ iface->passive = 1; }
 		| METRIC number nl {
@@ -478,6 +504,8 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{"area",		AREA},
 		{"auth-key",		AUTHKEY},
+		{"auth-md",		AUTHMD},
+		{"auth-md-keyid",	AUTHMDKEYID},
 		{"auth-type",		AUTHTYPE},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.9 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.10 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -67,6 +67,9 @@
 #define MIN_SPF_HOLDTIME	1
 #define MAX_SPF_HOLDTIME	5
 
+#define MIN_MD_ID		0
+#define MAX_MD_ID		255
+
 /* OSPF compatibility flags */
 #define OSPF_OPTION_E		0x02
 #define OSPF_OPTION_MC		0x04
@@ -103,6 +106,13 @@
 #define MAX_SEQ_NUM		0x7fffffff
 
 /* OSPF header */
+struct crypt {
+	u_int16_t		dummy;
+	u_int8_t		keyid;
+	u_int8_t		len;
+	u_int32_t		seq_num;
+};
+
 struct ospf_hdr {
 	u_int8_t		version;
 	u_int8_t		type;
@@ -113,7 +123,7 @@ struct ospf_hdr {
 	u_int16_t		auth_type;
 	union {
 		char		simple[8];
-		u_int64_t	crypt;
+		struct crypt	crypt;
 	} auth_key;
 };
 

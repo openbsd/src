@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.6 2005/03/11 23:34:41 norby Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.7 2005/03/31 19:32:10 norby Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -130,6 +130,13 @@ Interface specific parameters are listed below.
 .It Ic auth-key Ar key
 Set the authentication key.
 If the auth-type is set to simple, up to 8 characters can be specified.
+.It Ic auth-md Ar key-id Ar key
+Set the crypt authentication key.
+If the auth-type is set to crypt, up to 16 characters can be specified.
+Multiple keys may be specified.
+.It Ic auth-md-keyid Ar key-id
+Configure which key-id to use when using crypt authentication.
+The default key-id is 0.
 .It Xo
 .Ic auth-type
 .Po Ic none Ns \&| Ns

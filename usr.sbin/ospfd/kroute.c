@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2005/03/26 13:35:16 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2005/03/31 19:32:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -320,7 +320,7 @@ kr_ifinfo(char *ifname, pid_t pid)
 			main_imsg_compose_ospfe(IMSG_CTL_IFINFO,
 			    pid, &kif->k, sizeof(kif->k));
 		}
-	
+
 	main_imsg_compose_ospfe(IMSG_CTL_END, pid, NULL, 0);
 }
 
