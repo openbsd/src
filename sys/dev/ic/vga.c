@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.36 2004/12/26 21:22:13 miod Exp $ */
+/* $OpenBSD: vga.c,v 1.37 2005/01/05 23:04:25 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -599,13 +599,15 @@ vga_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = vc->vc_type;
 		/* XXX should get detailed hardware information here */
-		return 0;
+		break;
+
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
+		break;
 
 	case WSDISPLAYIO_GINFO:
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -615,7 +617,7 @@ vga_ioctl(v, cmd, data, flag, p)
 		return ENOTTY;
 	}
 
-	return -1;
+	return (0);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.26 2004/11/29 22:07:36 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.27 2005/01/05 23:04:24 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -367,6 +367,8 @@ cgthree_ioctl(v, cmd, data, flags, p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.23 2004/03/17 15:47:59 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.24 2005/01/05 23:04:24 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -263,14 +263,9 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * bad accellerated X servers that does not restore
 		 * the correct palette.
 		 */
-
 		if (cons_depth == 8)
 			vgafb_restore_default_colors(vc);
-
-		/* now that we have done our work, let the wscons
-		 * layer handle this ioctl
-		 */
-		return -1;
+		break;
 
 	case WSDISPLAYIO_GETPARAM:
 	{
@@ -322,6 +317,8 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -331,8 +328,7 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return -1; /* not supported yet */
 	}
 	
-        /* XXX */
-        return -1;
+        return (0);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.45 2004/11/29 22:07:40 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.46 2005/01/05 23:04:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -374,6 +374,7 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
 	default:
 		return -1; /* not supported */
         }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.30 2004/11/29 22:07:40 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.31 2005/01/05 23:04:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -243,6 +243,8 @@ creator_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 	default:

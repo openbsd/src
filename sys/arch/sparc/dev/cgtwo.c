@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.30 2004/11/29 22:07:36 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.31 2005/01/05 23:04:25 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -294,6 +294,8 @@ cgtwo_ioctl(v, cmd, data, flags, p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:

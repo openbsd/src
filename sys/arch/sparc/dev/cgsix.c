@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.30 2004/11/29 22:07:36 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.31 2005/01/05 23:04:24 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -416,6 +416,8 @@ cgsix_ioctl(dev, cmd, data, flags, p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:

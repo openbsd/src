@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.37 2004/11/03 19:18:47 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.38 2005/01/05 23:04:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -697,6 +697,8 @@ sti_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:

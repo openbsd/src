@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.6 2005/01/05 19:12:47 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.7 2005/01/05 23:04:23 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -605,7 +605,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN; /* XXX */
-		return 0;
+		break;
 
 	case WSDISPLAYIO_GINFO:
 		wsdisp_info = (struct wsdisplay_fbinfo *)data;
@@ -614,7 +614,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wsdisp_info->width = sc->geometry->panel_width;
 		wsdisp_info->depth = 16; /* XXX */
 		wsdisp_info->cmsize = 0;
-		return 0;
+		break;
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -622,6 +622,8 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+		break;
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -630,7 +632,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return -1;	/* not implemented */
 	}
 
-	return -1;
+	return (0);
 }
 
 paddr_t

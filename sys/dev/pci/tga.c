@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.23 2004/02/21 19:38:19 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.24 2005/01/05 23:04:25 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -570,7 +570,7 @@ tga_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_TGA;
-		return (0);
+		break;
 
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
@@ -584,7 +584,7 @@ tga_ioctl(v, cmd, data, flag, p)
 			TGAWREG(dc, TGA_REG_VVBR, 1);
 			break;			
 		}
-		return (0);
+		break;
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
@@ -593,30 +593,22 @@ tga_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
 		wsd_fbip->cmsize = 1024;		/* XXX ??? */
 #undef wsd_fbip
-		return (0);
+		break;
 
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_dc->dc_rowbytes;
-		return 0;
+		break;
+
 	case WSDISPLAYIO_GETCMAP:
 		return (*dcrf->ramdac_get_cmap)(dcrc,
 		    (struct wsdisplay_cmap *)data);
-
 	case WSDISPLAYIO_PUTCMAP:
 		return (*dcrf->ramdac_set_cmap)(dcrc,
 		    (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_SVIDEO:
-		if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
-			tga_blank(sc->sc_dc);
-		else
-			tga_unblank(sc->sc_dc);
-		return (0);
-
 	case WSDISPLAYIO_GVIDEO:
-		*(u_int *)data = dc->dc_blanked ?
-		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
-		return (0);
+		break;
 
 	case WSDISPLAYIO_GCURPOS:
 		return (*dcrf->ramdac_get_curpos)(dcrc,
@@ -637,8 +629,12 @@ tga_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return (*dcrf->ramdac_set_cursor)(dcrc,
 		    (struct wsdisplay_cursor *)data);
+
+	default:
+		return (-1);
 	}
-	return (-1);
+
+	return (0);
 }
 
 int
