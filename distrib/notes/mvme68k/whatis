@@ -1,3 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.8 2004/09/10 19:11:52 miod Exp $
-OpenBSD/MACHINE is a port of OpenBSD to the Motorola 680x0
-processor-based VME boards and systems built upon them.
+dnl	$OpenBSD: whatis,v 1.9 2005/03/18 13:29:46 miod Exp $
+
+OpenBSD/MACHINE runs on the Motorola 680x0 processor-based VME boards
+and systems built upon them.

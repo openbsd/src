@@ -1,6 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.10 2004/09/10 19:11:51 miod Exp $
-dnl Nothing worth saying, so cut the crap.
-dnl For the MACHINE, OpenBSD OSREV brings greater stability and security,
-dnl including a stricter memory permission scheme. As a side effect of the
-dnl full security audit, many userland programs have been significantly
-dnl cleaned up and debugged.
+dnl	$OpenBSD: whatis,v 1.11 2005/03/18 13:29:46 miod Exp $
+
+OpenBSD/MACHINE runs on standard PC computers and clones, based on Intel
+i386 and compatible processors.

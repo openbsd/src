@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.40 2004/03/27 23:33:06 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.41 2005/03/18 13:29:44 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -26,18 +26,19 @@ of-service, data destruction, and information-gathering problems.
 In addition to bug fixing, OpenBSD has integrated strong cryptography
 into the base system.  A fully functional IPsec implementation is
 provided as well as support for common protocols such as SSL and SSH.
-Network filtering and monitoring tools such as packet filtering, NAT, and
-bridging are also standard.  For high performance demands, support for
+Network filtering and monitoring tools such as packet filtering, NAT,
+and bridging are also standard, as well as several routing services,
+such as BGP and OSPF.  For high performance demands, support for
 hardware cryptography has also been added to the base system.  Because
 security is often seen as a tradeoff with usability, OpenBSD provides
 as many security options as possible to allow the user to enjoy secure
 computing without feeling burdened by it.
 
 To integrate more smoothly in other environments, OpenBSD OSREV also
-provides several binary emulation subsystems (which includes
-iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix compatibility),
-aiming at making the emulation as accurate as possible so that it is
-transparent to the user.
+provides, on some platforms, several binary emulation subsystems
+(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix
+compatibility), aiming at making the emulation as accurate as possible
+so that it is transparent to the user.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
 (such as OpenSSH, IPsec, and Kerberos) to the world is not restricted.
@@ -48,7 +49,12 @@ an FTP server in the US if you are outside of Canada and the US.)
 
 A comprehensive list of the improvements brought by the OSREV release
 is available on the web at http://www.OpenBSD.org/OSrev.html.
-
+dnl
+dnl MACHINE/whatis
+dnl A few descriptive words about the port to MACHINE (i.e. what kind
+dnl of hardware it runs on, without too much details - MACHINE/hardware
+dnl will take care of this).
+dnl Needs to start with a blank line if non empty.
 includeit(whatis)dnl
 
 
@@ -104,19 +110,20 @@ Getting source code for your OpenBSD System:
 Now that your OpenBSD system is up and running, you probably want to get
 access to source code so that you can recompile pieces of the system.
 
-A few methods are provided.  If you have an OpenBSD CD-ROM, the source code
-is provided.  Otherwise, you can get the pieces over the Internet using
-ANONCVS, CTM, or FTP.  For more information, see
+A few methods are provided.  If you have an OpenBSD CD-ROM, the source
+code is provided.  Otherwise, you can get the pieces over the Internet
+using anonymous CVS, CTM, CVSync or FTP.  For more information, see
 
 	http://www.OpenBSD.org/anoncvs.html
 	http://www.OpenBSD.org/ctm.html
+	http://www.OpenBSD.org/cvsync.html
 	http://www.OpenBSD.org/ftp.html
 
 
 Using online OpenBSD documentation:
 -----------------------------------
 
-Documentation is available if you first install the manual
+Documentation is available if you first install the manual pages
 distribution set.  Traditionally, the UN*X "man pages" (documentation)
 are denoted by 'name(section)'.  Some examples of this are
 
@@ -156,7 +163,7 @@ related man pages will be displayed.
 
 
 Adding third party software; ``packages'' and ``ports'':
--------------------------------------------------------
+--------------------------------------------------------
 
 includeit(packages)
 
@@ -187,3 +194,7 @@ mailing lists.  Instead, put the material you would have sent up
 for FTP somewhere, then mail the appropriate list about it, or, if
 you'd rather not do that, mail the list saying you'll send the data
 to those who want it.
+
+For more information about reporting bugs, see
+
+	http://www.OpenBSD.org/report.html

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.4 2004/09/10 19:11:52 miod Exp $
-dnl Nothing worth mentioning here, so cut the crap
-dnl For MACHINE, OpenBSD OSREV adds support for the newest Apple machines, as
-dnl well as improved stability, and better X11 support.
+dnl	$OpenBSD: whatis,v 1.5 2005/03/18 13:29:46 miod Exp $
+
+OpenBSD/MACHINE runs on the ``New World'' 32 bit PowerPC-based Apple
+Macintosh systems (i.e. from the iMac onwards).
