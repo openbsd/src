@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.3 2001/02/18 16:03:02 pjanzen Exp $	*/
+/*	$OpenBSD: snake.c,v 1.4 2001/11/18 23:53:29 deraadt Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.3 2001/02/18 16:03:02 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.4 2001/11/18 23:53:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,7 @@ void	winnings __P((int));
 void	logit   __P((char *));
 #endif
 
+int	wantstop;
 
 int
 main(argc, argv)
@@ -155,6 +156,7 @@ main(argc, argv)
 	int	ch, i;
 	char	*p, **av;
 	time_t	tv;
+	struct sigaction sa;
 
 	/* don't create the score file if it doesn't exist. */
 	rawscores = open(_PATH_RAWSCORES, O_RDWR, 0664);
@@ -250,7 +252,10 @@ main(argc, argv)
 	i += 2;
 	chunk = (675.0 / (i + 6)) + 2.5;	/* min screen edge */
 
-	signal(SIGINT, stop);
+	memset(&sa, 0, sizeof sa);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = stop;
+	sigaction(SIGINT, &sa, NULL);
 
 	snrand(&finish);
 	snrand(&you);
@@ -274,6 +279,12 @@ mainloop()
 	int repeat = 1;
 
 	for (;;) {
+		if (wantstop) {
+			endwin();
+			length(moves);
+			exit(0);
+		}
+
 		/* Highlight you, not left & above */
 		move(you.line + 1, you.col + 1);
 		refresh();
@@ -953,10 +964,7 @@ void
 stop(dummy)
 	int	dummy;
 {
-	signal(SIGINT, SIG_IGN);
-	endwin();
-	length(moves);
-	exit(0);
+	wantstop = 1;
 }
 
 void
