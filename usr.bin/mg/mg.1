@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.19 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.20 2004/07/26 16:25:10 mjc Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -28,6 +28,9 @@ The options are as follows:
 .It Ar +number
 Go to the line specified by number (do not insert
 a space between the "+" sign and the number).
+If a negative number is specified, the line number counts
+backwards from the end of the file i.e. +-1 will be the last
+line of the file, +-2 will be second last, and so on.
 .It Fl f Ar <mode>
 Run the mode command for all buffers created from
 arguments on the command line, including the
