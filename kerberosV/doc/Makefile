@@ -1,0 +1,38 @@
+# $Id: Makefile,v 1.1 2001/06/21 23:45:27 hin Exp $
+
+KRBDEPTH=..
+.include "../Makefile.inc"
+
+.PATH:	${KRB5SRC}/doc
+
+MAKEINFO = /usr/bin/makeinfo
+INSTALL-INFO = /usr/bin/install-info
+
+infodir = ${DESTDIR}/usr/share/info
+
+INSTALL = /usr/bin/install
+
+info = heimdal.info
+
+SRCS = 	heimdal.texi intro.texi install.texi setup.texi kerberos4.texi
+
+
+all: $(info)
+
+install: $(info)
+	$(INSTALL-INFO) ${.OBJDIR}/$(info) $(infodir)/dir 
+	${INSTALL} ${INSTALL_COPY} -m 444 -o ${BINOWN} -g ${BINGRP} -p ${.OBJDIR}/$(info) $(infodir)
+
+$(info): $(SRCS)
+	${MAKEINFO} -I${KRB5SRC}/doc -o ${.OBJDIR}/$@ ${KRB5SRC}/doc/heimdal.texi
+
+clean:
+	(cd ${.OBJDIR} ; rm -f *.aux *.cp *.cps *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr *.info)
+
+cleandir: clean
+
+
+.PHONY: install all clean cleandir
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
