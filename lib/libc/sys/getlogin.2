@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.9 2000/10/18 05:12:09 aaron Exp $
+.\"	$OpenBSD: getlogin.2,v 1.10 2001/02/01 01:43:24 deraadt Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -99,7 +99,7 @@ Login names are limited to
 .Dv MAXLOGNAME
 (from
 .Ao Pa sys/param.h Ac )
-characters, currently 12.
+characters, currently 32.
 .It Bq Er EPERM
 The caller tried to set the login name and was not the superuser.
 .El
