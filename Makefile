@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2001/09/14 06:03:11 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.79 2001/09/17 01:18:34 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -114,21 +114,25 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		HOSTCC=cc
 CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 
-.if (${TARGET} == "sparc64")
-CROSSENV+= CPPFLAGS=-D__arch64__
-CPPFLAGS=-D__arch64__
-.endif
-
 cross-env:
-	@echo ${CROSSENV} DESTDIR=${CROSSDIR}
+	@echo ${CROSSENV} DESTDIR=${CROSSDIR} MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`
 
 cross-helpers:
 	@-mkdir -p ${CROSSDIR}
-	echo _MACHINE_ARCH | \
-	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
-	    ${CPP} ${CPPFLAGS} -E -I${.CURDIR}/sys/arch | \
-	    sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
-	eval `grep '^osr=' sys/conf/newvers.sh`; \
+	@case ${TARGET} in \
+		sparc|i386|m68k|alpha|hppa|powerpc|sparc64|m88k|vax) \
+			echo ${TARGET} ;;\
+		amiga|sun3|mac68k|hp300|mvme68k) \
+			echo m68k ;;\
+		mvme88k) \
+			echo m88k ;;\
+		mvmeppc|macppc) \
+			echo powerpc ;;\
+		*) \
+			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
+	esac > ${CROSSDIR}/TARGET_ARCH
+	@echo TARGET_ARCH is `cat ${CROSSDIR}/TARGET_ARCH`
+	@eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
 	   ${CROSSDIR}/TARGET_CANON
 
@@ -161,7 +165,7 @@ cross-includes:	cross-dirs
 	    ${MAKE} DESTDIR=${CROSSDIR} includes
 
 .if ${TARGET} == "macppc" || ${TARGET} == "alpha" || ${TARGET} == "hppa" || \
-    ${TARGET} == "sparc64"|| ${TARGET} == "mvmeppc" 
+    ${TARGET} == "sparc64"|| ${TARGET} == "mvmeppc"
 cross-binutils: cross-binutils-new cross-binutils-links
 .else
 cross-binutils: cross-binutils-old cross-binutils-links
@@ -199,9 +203,9 @@ cross-gas:	cross-dirs
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
-	    TARGET_MACHINE_ARCH=${TARGET} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} depend all; \
-	    TARGET_MACHINE_ARCH=${TARGET} \
+	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} depend all; \
+	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/as \
@@ -212,9 +216,9 @@ cross-ld:	cross-dirs
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
-	    TARGET_MACHINE_ARCH=${TARGET} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} NOMAN= depend all; \
-	    TARGET_MACHINE_ARCH=${TARGET} \
+	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN= depend all; \
+	    TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ld \
@@ -248,9 +252,11 @@ cross-strip:	cross-dirs
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN= depend all; \
+	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    NOMAN= depend all; \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN= install)
+	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/strip \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/strip
 
@@ -260,7 +266,8 @@ cross-size:	cross-dirs
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN= depend all; \
+	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    NOMAN= depend all; \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/size \
@@ -272,7 +279,8 @@ cross-nm:	cross-dirs
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN= depend all; \
+	    ${MAKE} TARGET_MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
+	    NOMAN= depend all; \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/nm \
