@@ -1,0 +1,13 @@
+Privilege violation: Illegal instruction 
+Privilege violation: Illegal instruction 
+Privilege violation: Illegal instruction 
+Alternate system call: Bad system call 
+Alternate system call: Bad system call 
+DDB breakpoint: Illegal instruction 
+DDB trace: Illegal instruction 
+DDB entry: Illegal instruction 
+System call: Bad system call 
+BUG: 
+Software divide by zero: Floating point exception 
+Single step: Trace trap 
+Breakpoint: Trace trap 
