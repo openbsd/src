@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.18 2001/07/13 18:13:05 aaron Exp $
+#	$OpenBSD: na.phone,v 1.19 2001/07/13 18:29:28 aaron Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -101,8 +101,6 @@
 402:Lincoln:Nebraska:NE
 402:Omaha:Nebraska:NE
 403:Calgary:Alberta:AB
-734:Ann Arbor:Michigan:MI
-780:Edmonton:Alberta:AB
 403:Whitehorse:Yukon:YT
 403:Yellowknife:Northwest Territories:NT
 404:Atlanta(metro):Georgia:GA
@@ -279,6 +277,7 @@
 724:Uniontown:Pennsylvania:PA
 724:Washington:Pennsylvania:PA
 732::New Jersey:NJ
+734:Ann Arbor:Michigan:MI
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
 765:Kokomo:Indiana:IN
@@ -288,6 +287,7 @@
 770:Marietta:Georgia:GA
 770:Norcross:Georgia:GA
 773:Chicago:Illinois:IL
+780:Edmonton:Alberta:AB
 781:Lynn:Massachusetts:MA
 781:Waltham:Massachusetts:MA
 781:Weymouth:Massachusetts:MA
@@ -350,8 +350,8 @@
 878:Uniontown:Pennsylvania:PA
 878:Washington:Pennsylvania:PA
 901:Memphis:Tennessee:TN
-902::Prince Edward Island:PE
 902::Nova Scotia:NS
+902::Prince Edward Island:PE
 903:Paris:Texas:TX
 903:Tyler:Texas:TX
 904:Apalachicola:Florida:FL
