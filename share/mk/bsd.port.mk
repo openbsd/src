@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.38 1998/07/17 04:10:20 form Exp $
+#	$OpenBSD: bsd.port.mk,v 1.39 1998/07/28 15:25:24 espie Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -79,6 +79,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # variables without defaults are *mandatory*.
 #
 # WRKDIR 		- A temporary working directory that gets *clobbered* on clean
+# beware! unless NOCLEANDEPENDS,  dependencies are also nuked on clean.
 #				  (default: ${.CURDIR}/work).
 # WRKSRC		- A subdirectory of ${WRKDIR} where the distribution actually
 #				  unpacks to.  (Default: ${WRKDIR}/${DISTNAME} unless
@@ -137,6 +138,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NO_WRKDIR		- There's no work directory at all; port does this someplace
 #				  else.
 # NO_DEPENDS	- Don't verify build of dependencies.
+# NOCLEANDEPENDS - Don't nuke dependent dirs on make clean.
 # BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
 # USE_GMAKE		- Says that the port uses gmake.
