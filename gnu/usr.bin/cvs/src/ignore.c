@@ -250,8 +250,9 @@ ign_add (ign, hold)
     }
 }
 
-/* Set to 1 if ignore file patterns should be matched in a case-insensitive
-   fashion.  */
+/* Set to 1 if filenames should be matched in a case-insensitive
+   fashion.  Note that, contrary to the name and placement in ignore.c,
+   this is no longer just for ignore patterns.  */
 int ign_case;
 
 /* Return 1 if the given filename should be ignored by update or import. */

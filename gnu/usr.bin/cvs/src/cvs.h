@@ -516,6 +516,11 @@ void rename_file PROTO((const char *from, const char *to));
 extern void expand_wild PROTO ((int argc, char **argv, 
                                 int *pargc, char ***pargv));
 
+#ifdef SERVER_SUPPORT
+extern int cvs_casecmp PROTO ((char *, char *));
+extern int fopen_case PROTO ((char *, char *, FILE **, char **));
+#endif
+
 void strip_trailing_slashes PROTO((char *path));
 void update_delproc PROTO((Node * p));
 void usage PROTO((const char *const *cpp));

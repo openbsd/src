@@ -70,12 +70,13 @@ dnl
 AC_MSG_CHECKING([for evidence of shadow passwords])
 if test -f /etc/shadow \
    || test -f /etc/security/passwd.adjunct ; then
-  echo "yup"
+  found="yes"
   AC_CHECK_LIB(sec, getspnam)
   AC_CHECK_FUNCS(getspnam)
 else
-  echo "nope"
+  found="no"
 fi
+AC_MSG_RESULT([$found])
 
 AC_CHECK_FUNC(re_exec, :, LIBOBJS="$LIBOBJS regex.o")
 AC_FUNC_UTIME_NULL
