@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.27 2001/05/30 04:49:33 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.28 2001/05/30 14:41:59 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -102,7 +102,7 @@
 #define	TXP_CMD_RX_FILTER_READ			0x06
 #define	TXP_CMD_READ_STATISTICS			0x07
 #define	TXP_CMD_CYCLE_STATISTICS		0x08
-#define	TXP_CMD_ERROR_READ			0x09
+#define	TXP_CMD_CLEAR_STATISTICS		0x09
 #define	TXP_CMD_MEMORY_READ			0x0a
 #define	TXP_CMD_MEMORY_WRITE_SINGLE		0x0b
 #define	TXP_CMD_VARIABLE_SECTION_READ		0x0c

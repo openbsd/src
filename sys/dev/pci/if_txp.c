@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.38 2001/05/30 05:30:17 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.39 2001/05/30 14:41:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -614,7 +614,6 @@ txp_rx_reclaim(sc, r)
 		m->m_pkthdr.len = m->m_len = rxd->rx_len;
 
 		eh = mtod(m, struct ether_header *);
-		ifp->if_ipackets++;
 
 #ifdef __STRICT_ALIGNMENT
 		{
@@ -1116,7 +1115,7 @@ txp_ioctl(ifp, command, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
@@ -1184,7 +1183,7 @@ txp_init(sc)
 
 	txp_stop(sc);
 
-	s = splimp();
+	s = splnet();
 
 	txp_set_filter(sc);
 
@@ -1213,12 +1212,39 @@ txp_tick(vsc)
 	void *vsc;
 {
 	struct txp_softc *sc = vsc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct txp_rsp_desc *rsp = NULL;
+	struct txp_ext_desc *ext;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	txp_rxbuf_reclaim(sc);
-	timeout_add(&sc->sc_tick, hz);
+
+	if (txp_command2(sc, TXP_CMD_READ_STATISTICS, 0, 0, 0, NULL, 0,
+	    &rsp, 1))
+		goto out;
+	if (rsp->rsp_numdesc != 6)
+		goto out;
+	if (txp_command(sc, TXP_CMD_CLEAR_STATISTICS, 0, 0, 0,
+	    NULL, NULL, NULL, 1))
+		goto out;
+	ext = (struct txp_ext_desc *)(rsp + 1);
+
+	ifp->if_ierrors += ext[3].ext_2 + ext[3].ext_3 + ext[3].ext_4 +
+	    ext[4].ext_1 + ext[4].ext_4;
+	ifp->if_oerrors += ext[0].ext_1 + ext[1].ext_1 + ext[1].ext_4 +
+	    ext[2].ext_1;
+	ifp->if_collisions += ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 +
+	    ext[1].ext_3;
+	ifp->if_opackets += rsp->rsp_par2;
+	ifp->if_ipackets += ext[2].ext_3;
+
+out:
+	if (rsp != NULL)
+		free(rsp, M_DEVBUF);
+
 	splx(s);
+	timeout_add(&sc->sc_tick, hz);
 }
 
 void
@@ -1492,8 +1518,6 @@ txp_response(sc, ridx, id, seq, rspp)
 
 		switch (rsp->rsp_id) {
 		case TXP_CMD_CYCLE_STATISTICS:
-			printf("%s: stats\n", TXP_DEVNAME(sc));
-			break;
 		case TXP_CMD_MEDIA_STATUS_READ:
 			break;
 		case TXP_CMD_HELLO_RESPONSE:
