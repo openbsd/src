@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.9 1998/12/14 00:57:59 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.10 1999/04/20 19:47:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -88,10 +88,10 @@
  */
 
 #define	IODC_MAXSIZE	(16 * 1024)	/* maximum size of IODC */
-#define	MINIOSIZ	64		/* minimum buffer size for IODC call */
-#define	MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
+#define	IODC_MINIOSIZ	64		/* minimum buffer size for IODC call */
+#define	IODC_MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
-#define	PDC_ALIGNMENT	__attribute__ ((aligned(8)))
+#define	PDC_ALIGNMENT	__attribute__ ((aligned(64)))
 
 /*
  * The PDC Entry Points and their arguments...
@@ -119,12 +119,17 @@
 #define	PDC_MODEL_MODEL		3	/* return system model information */
 #define	PDC_MODEL_ENSPEC	4	/* enable product-specific instrs */
 #define	PDC_MODEL_DISPEC	5	/* disable product-specific instrs */
+#define	PDC_MODEL_CPUID		6	/* return CPU versions */
+#define	PDC_MODEL_CPBALITIES	7	/* return capabilites */
+#define	PDC_MODEL_GETBOOTSTOPTS	8	/* return boot test options */
+#define	PDC_MODEL_SETBOOTSTOPTS	9	/* set boot test options */
 
 #define	PDC_CACHE	5	/* return cache and TLB params */
 #define	PDC_CACHE_DFLT		0
 
 #define	PDC_HPA		6	/* return HPA of processor */
 #define	PDC_HPA_DFLT		0
+#define	PDC_HPA_MODULES		1
 
 #define	PDC_COPROC	7	/* return co-processor configuration */
 #define	PDC_COPROC_DFLT		0
@@ -213,6 +218,11 @@
 #define PDC_TLB_NEXTPDE		5	/* cr28 points to next pde on miss */
 #define PDC_TLB_WORD3		7	/* cr28 is word 3 of 16 byte pde */
 
+#define	PDC_PSW		21	/* manage default values of configurable psw bits */
+#define	PDC_PSW_GETMASK		0	/* get mask */
+#define	PDC_PSW_DEFAULTS	1	/* get default bits values */
+#define	PDC_PSW_SETDEFAULTS	2	/* set default bits values */
+
 #define	PDC_SOFT_POWER		23	/* support for soft power switch */
 #define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
 #define	PDC_SOFT_POWER_ENABLE	1	/* enable/disable soft power switch */
@@ -257,7 +267,13 @@ struct pdc_pim {	/* PDC_PIM */
 
 struct pdc_model {	/* PDC_MODEL */
 	u_int	hvers;		/* hardware version */
-	u_int	svers;		/* software version */
+	u_int	rev : 4;	/* zero for all native processors */
+	u_int	model : 20;	/* 4 for all native processors */
+	u_int	sh : 1;		/* shadow registers are present */
+	u_int	reserved : 2;	/* reserved */
+	u_int	mc : 1;		/* module category (A - 0, B - 1) */
+	u_int	reserved1 : 2;	/* reserved */
+	u_int	pa_lvl : 2;	/* PA-RISC level */
 	u_int	hw_id;		/* unique processor hardware identifier */
 	u_int	boot_id;	/* same as hw_id */
 	u_int	sw_id;		/* software security and licensing */
@@ -267,6 +283,13 @@ struct pdc_model {	/* PDC_MODEL */
 	u_int	curr_key;	/* current key */
 	int	filler1;
 	u_int	filler2[22];
+};
+
+struct pdc_cpuid {	/* PDC_MODEL, PDC_CPUID */
+	u_int	reserved : 20;
+	u_int	version  :  7;	/* CPU version */
+	u_int	revision :  5;	/* CPU revision */
+	u_int	filler[31];
 };
 
 struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
@@ -484,6 +507,13 @@ struct boot_err {
 		be_fixed : 6,	/* module that produced error */
 		be_chas : 16;	/* error code (interpret as 4 hex digits) */
 };
+
+#define	HPBE_HBOOT_CORRECTABLE	0	/* hard-boot corrctable error */
+#define	HPBE_HBOOT_UNCORRECTBL	1	/* hard-boot uncorrectable error */
+#define	HPBE_SBOOT_CORRECTABLE	2	/* soft-boot correctable error */
+#define	HPBE_SBOOT_UNCORRECTBL	3	/* soft-boot uncorrectable error */
+#define	HPBE_ETEST_MODUNUSABLE	4	/* ENTRY_TEST err: module's unusable */
+#define	HPBE_ETEST_MODDEGRADED	5	/* ENTRY_TEST err: module in degraded mode */
 
 
 /*
