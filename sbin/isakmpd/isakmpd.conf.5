@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.19 1999/07/03 02:11:07 aaron Exp $
-.\" $EOM: isakmpd.conf.5,v 1.23 1999/06/02 06:26:41 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.20 1999/07/07 22:07:00 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.26 1999/07/07 19:17:31 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -78,6 +78,10 @@ accepted values, inclusive.
 .It Em General
 Generic global configuration parameters
 .Bl -tag -width 12n
+.It Em Policy-File
+The name of the file that contains
+.Xr KeyNote 4
+policies.
 .It Em Retransmits
 How many times should a message be retransmitted before giving up.
 .It Em Check-interval
@@ -89,7 +93,7 @@ before we give up.
 A list of IP-addresses OK to listen on.  This list is used as
 a filter for the set of addresses the interfaces configured
 provides.  This means that we won't see if an address given
-here does not exist on this host, thus no error is given for
+here does not exist on this host, and thus no error is given for
 that case.
 .It Em Shared-SADB
 If this tag is defined, whatever the value is, some semantics of
@@ -155,10 +159,8 @@ Authentication data for this specific peer.  In the case of
 preshared key, this is the key value itself.
 .It Em Flags
 A comma-separated list of flags controlling the further
-handling of the IPSec SA.  Currently only one flag is defined:
-.Dv Stayalive ,
-which means that after the expiration of an ISAKMP SA, the initiator
-side will automatically renegotiate for a new SA of the same name.
+handling of the ISAKMP SA.  Currently there are no specific 
+ISAKMP SA flags defined.
 .It Em Next-hop
 A Linux FreeS/WAN specific value which should be the IP address of the
 next hop along the path to reach the peer, usually a router.
@@ -240,11 +242,8 @@ It is also used  when we act as responders to find out what
 Look at <IPSec-ID> below.
 .It Em Flags
 A comma-separated list of flags controlling the further
-handling of the IPSec SA.  Currently these flags are defined:
+handling of the IPSec SA.  Currently only one flag is defined:
 .Bl -tag -width 12n
-.It Em Stayalive
-This means that after the expiration of an IPSec SA, a new SA of the same name
-will automatically be renegotiated.
 .It Em Active-only
 If this flag is given and this <IPSec-connection> is part of the phase 2
 connections we automatically keep up, it will not automatically be used for
@@ -338,6 +337,7 @@ An example of a configuration file:
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
+Policy-File=		/etc/isakmpd.policy
 Retransmits=		5
 Exchange-max-time=	120
 Listen-on=		10.1.0.2
