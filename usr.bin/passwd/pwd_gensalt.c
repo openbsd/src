@@ -66,24 +66,21 @@ pwd_gensalt(salt, max, pwd, type)
 	if (!strcmp(now, "old")) {
 		if( max < 3 )
 			return 0;
-		(void) srandom((int) time((time_t *) NULL));
-		to64(&salt[0], random(), 2);
+		to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (!strcmp(now, "newsalt")) {
 		if( max < 10 )
 			return 0;
-		(void) srandom((int) time((time_t *) NULL));
 		salt[0] = _PASSWORD_EFMT1;
 		to64(&salt[1], (long) (29 * 25), 4);
-		to64(&salt[5], random(), 4);
+		to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (!strcmp(now, "md5")) {
 		if( max < 13 )  /* $1$8salt$\0 */
 			return 0;
 		strcpy(salt, "$1$");
-		(void) srandom((int) time((time_t *) NULL));
-		to64(&salt[3], random(), 4);
-		to64(&salt[7], random(), 4);
+		to64(&salt[3], arc4random(), 4);
+		to64(&salt[7], arc4random(), 4);
 		strcpy(&salt[11], "$");
 	} else if (!strcmp(now, "blowfish")) {
 		int     rounds = atoi(next);
