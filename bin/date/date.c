@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.15 2000/09/15 07:13:43 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.16 2000/11/09 23:31:56 aaron Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.15 2000/09/15 07:13:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.16 2000/11/09 23:31:56 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,8 @@ setthetime(p)
 	}
 
 	lt = localtime(&tval);
+
+	lt->tm_isdst = -1;			/* correct for DST */
 
 	if (dot != NULL) {			/* .SS */
 		*dot++ = '\0';
