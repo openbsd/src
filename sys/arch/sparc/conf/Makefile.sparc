@@ -93,7 +93,7 @@ SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o \
 		${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@${LD} ${LDX} -p -N -e start -T f8004000 -o $@ \
+SYSTEM_LD=	@${LD} ${LDX} -N -e start -Ttext f8004000 -o $@ \
 		    ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@echo rearranging symbols; size $@; chmod 755 $@
 #.if ${DEBUG} == "-g"
