@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.47 2004/12/07 11:53:29 espie Exp $	*/
+/*	$OpenBSD: diff.c,v 1.48 2004/12/09 18:56:10 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.47 2004/12/07 11:53:29 espie Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.48 2004/12/09 18:56:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.47 2004/12/07 11:53:29 espie E
 int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, pflag, rflag;
 int	 sflag, tflag, Tflag, wflag;
 int	 format, context, status;
-char	*start, *ifdefname, *diffargs, *label, *ignore_pats;
+char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 regex_t	 ignore_re;
@@ -149,7 +149,12 @@ main(int argc, char **argv)
 			iflag = 1;
 			break;
 		case 'L':
-			label = optarg;
+			if (label[0] == NULL)
+				label[0] = optarg;
+			else if (label[1] == NULL)
+				label[1] = optarg;
+			else
+				usage();
 			break;
 		case 'l':
 			lflag = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.60 2004/11/27 19:16:25 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.61 2004/12/09 18:56:10 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.60 2004/11/27 19:16:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.61 2004/12/09 18:56:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -214,6 +214,7 @@ static void unravel(int);
 static void unsort(struct line *, int, int *);
 static void change(char *, FILE *, char *, FILE *, int, int, int, int);
 static void sort(struct line *, int);
+static void print_header(const char *, const char *);
 static int  ignoreline(char *);
 static int  asciifile(FILE *);
 static int  fetch(long *, int, int, FILE *, int, int);
@@ -1048,16 +1049,7 @@ proceed:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
-			if (label != NULL)
-				printf("%s %s\n",
-				    format == D_CONTEXT ? "***" : "---", label);
-			else
-				printf("%s %s\t%s",
-				    format == D_CONTEXT ? "***" : "---", file1,
-				    ctime(&stb1.st_mtime));
-			printf("%s %s\t%s",
-			    format == D_CONTEXT ? "---" : "+++", file2,
-			    ctime(&stb2.st_mtime));
+			print_header(file1, file2);
 			anychange = 1;
 		} else if (a > context_vec_ptr->b + (2 * context) + 1 &&
 		    c > context_vec_ptr->d + (2 * context) + 1) {
@@ -1509,4 +1501,21 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	fetch(ixnew, d + 1, upd, f2, ' ', 0);
 
 	context_vec_ptr = context_vec_start - 1;
+}
+
+static void
+print_header(const char *file1, const char *file2)
+{
+	if (label[0] != NULL)
+		printf("%s %s\n", format == D_CONTEXT ? "***" : "---",
+		    label[0]);
+	else
+		printf("%s %s\t%s", format == D_CONTEXT ? "***" : "---",
+		    file1, ctime(&stb1.st_mtime));
+	if (label[1] != NULL)
+		printf("%s %s\n", format == D_CONTEXT ? "---" : "+++",
+		    label[1]);
+	else
+		printf("%s %s\t%s", format == D_CONTEXT ? "---" : "+++",
+		    file2, ctime(&stb2.st_mtime));
 }
