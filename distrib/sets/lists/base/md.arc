@@ -17,8 +17,6 @@
 ./usr/lib/libdes.so.5.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.0.0
-./usr/lib/libg++.so.27.1
-./usr/lib/libiberty.so.0.0
 ./usr/lib/libkadm.so.4.0
 ./usr/lib/libkafs.so.4.0
 ./usr/lib/libkdb.so.4.0
@@ -32,7 +30,6 @@
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.0.2
 ./usr/lib/libss.so.4.0
-./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.2.0
