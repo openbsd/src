@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.11 2003/07/18 22:58:56 david Exp $	*/
+/*	$OpenBSD: measure.c,v 1.12 2003/08/19 19:41:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <signal.h>
+#include <poll.h>
 
 #define MSEC_DAY	(SECDAY*1000)
 
@@ -66,7 +67,7 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 	int measure_status;
 	int rcvcount, trials;
 	int cc, count;
-	fd_set ready;
+	struct pollfd pfd[1];
 	long sendtime, recvtime, histime1, histime2;
 	long idelta, odelta, total;
 	long min_idelta, min_odelta;
@@ -94,11 +95,11 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 	/*
 	 * empty the icmp input queue
 	 */
-	FD_ZERO(&ready);
+	pfd[0].fd = sock_raw;
+	pfd[0].events = POLLIN;
 	for (;;) {
 		tout.tv_sec = tout.tv_usec = 0;
-		FD_SET(sock_raw, &ready);
-		if (select(sock_raw+1, &ready, 0,0, &tout)) {
+		if (poll(pfd, 1, tout.tv_sec * 1000)) {
 			length = sizeof(struct sockaddr_in);
 			siginterrupt(SIGINT, 1);
 			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
@@ -127,8 +128,6 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 	oicp->icmp_rtime = 0;
 	oicp->icmp_ttime = 0;
 	oicp->icmp_seq = seqno;
-
-	FD_ZERO(&ready);
 
 	(void)gettimeofday(&tdone, 0);
 	mstotvround(&tout, maxmsec);
@@ -177,9 +176,7 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 			if (tout.tv_sec < 0)
 				tout.tv_sec = 0;
 
-			FD_SET(sock_raw, &ready);
-			count = select(sock_raw+1, &ready, (fd_set *)0,
-				       (fd_set *)0, &tout);
+			count = poll(pfd, 1, tout.tv_sec * 1000);
 			(void)gettimeofday(&tcur, (struct timezone *)0);
 			if (count <= 0)
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.13 2003/06/12 21:09:48 deraadt Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.14 2003/08/19 19:41:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -73,7 +73,7 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 {
 	int length;
 	socklen_t salength;
-	fd_set ready;
+	struct pollfd pfd[1];
 	static struct tsplist *head = &msgslist;
 	static struct tsplist *tail = &msgslist;
 	static int msgcnt = 0;
@@ -161,13 +161,12 @@ again:
 	/*
 	 * If the message was not in the linked list, it may still be
 	 * coming from the network. Set the timer and wait
-	 * on a select to read the next incoming message: if it is the
+	 * on a poll to read the next incoming message: if it is the
 	 * right one, return it, otherwise insert it in the linked list.
 	 */
 
 	(void)gettimeofday(&rtout, 0);
 	timeradd(&rtout, intvl, &rtout);
-	FD_ZERO(&ready);
 	for (;;) {
 		(void)gettimeofday(&rtime, 0);
 		timersub(&rtout, &rtime, &rwait);
@@ -191,9 +190,9 @@ again:
 				traceoff("Tracing ended for cause at %s\n");
 		}
 
-		FD_SET(sock, &ready);
-		if (!select(sock+1, &ready, (fd_set *)0, (fd_set *)0,
-			   &rwait)) {
+		pfd[0].fd = sock;
+		pfd[0].events = POLLIN;
+		if (!poll(pfd, 1, rwait.tv_sec * 1000)) {
 			if (rwait.tv_sec == 0 && rwait.tv_usec == 0)
 				return(0);
 			continue;

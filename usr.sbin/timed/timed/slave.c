@@ -1,4 +1,4 @@
-/*	$OpenBSD: slave.c,v 1.10 2003/06/26 21:36:40 deraadt Exp $	*/
+/*	$OpenBSD: slave.c,v 1.11 2003/08/19 19:41:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -682,7 +682,6 @@ answerdelay(void)
 	timeout.tv_sec = 0;
 	timeout.tv_usec = casual(1, 100 * 1000);
 
-	(void)select(0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL,
-	    &timeout);
+	(void)select(0, NULL, NULL, NULL, &timeout);
 	return;
 }
