@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.13 1996/12/24 20:14:28 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.14 1997/03/26 18:45:31 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -79,28 +79,28 @@
 #include <vm/vm_pageout.h>
 
 /*
- *	Virtual memory objects maintain the actual data
- *	associated with allocated virtual memory.  A given
- *	page of memory exists within exactly one object.
+ * Virtual memory objects maintain the actual data
+ * associated with allocated virtual memory.  A given
+ * page of memory exists within exactly one object.
  *
- *	An object is only deallocated when all "references"
- *	are given up.  Only one "reference" to a given
- *	region of an object should be writeable.
+ * An object is only deallocated when all "references"
+ * are given up.  Only one "reference" to a given
+ * region of an object should be writeable.
  *
- *	Associated with each object is a list of all resident
- *	memory pages belonging to that object; this list is
- *	maintained by the "vm_page" module, and locked by the object's
- *	lock.
+ * Associated with each object is a list of all resident
+ * memory pages belonging to that object; this list is
+ * maintained by the "vm_page" module, and locked by the object's
+ * lock.
  *
- *	Each object also records a "pager" routine which is
- *	used to retrieve (and store) pages to the proper backing
- *	storage.  In addition, objects may be backed by other
- *	objects from which they were virtual-copied.
+ * Each object also records a "pager" routine which is
+ * used to retrieve (and store) pages to the proper backing
+ * storage.  In addition, objects may be backed by other
+ * objects from which they were virtual-copied.
  *
- *	The only items within the object structure which are
- *	modified after time of creation are:
- *		reference count		locked by object's lock
- *		pager routine		locked by object's lock
+ * The only items within the object structure which are
+ * modified after time of creation are:
+ *	reference count		locked by object's lock
+ *	pager routine		locked by object's lock
  *
  */
 
@@ -128,7 +128,7 @@ boolean_t vm_object_collapse_allowed = TRUE;
 int	vmdebug = VMDEBUG;
 #endif
 
-static void	_vm_object_allocate __P((vm_size_t, vm_object_t));
+void		_vm_object_allocate __P((vm_size_t, vm_object_t));
 int		vm_object_collapse_aux __P((vm_object_t));
 int		vm_object_bypass __P((vm_object_t));
 void		vm_object_set_shadow __P((vm_object_t, vm_object_t));
@@ -136,9 +136,9 @@ int		vm_object_remove_from_pager
 		    __P((vm_object_t, vm_offset_t, vm_offset_t));
 
 /*
- *	vm_object_init:
+ * vm_object_init:
  *
- *	Initialize the VM objects module.
+ * Initialize the VM objects module.
  */
 void
 vm_object_init(size)
@@ -163,9 +163,9 @@ vm_object_init(size)
 }
 
 /*
- *	vm_object_allocate:
+ * vm_object_allocate:
  *
- *	Returns a new object with the given size.
+ * Returns a new object with the given size.
  */
 vm_object_t
 vm_object_allocate(size)
@@ -173,15 +173,15 @@ vm_object_allocate(size)
 {
 	register vm_object_t	result;
 
-	result = (vm_object_t)
-		malloc((u_long)sizeof *result, M_VMOBJ, M_WAITOK);
+	result = (vm_object_t)malloc((u_long)sizeof *result,
+	    M_VMOBJ, M_WAITOK);
 
 	_vm_object_allocate(size, result);
 
 	return(result);
 }
 
-static void
+void
 _vm_object_allocate(size, object)
 	vm_size_t		size;
 	register vm_object_t	object;
@@ -213,9 +213,9 @@ _vm_object_allocate(size, object)
 }
 
 /*
- *	vm_object_reference:
+ * vm_object_reference:
  *
- *	Gets another reference to the given object.
+ * Gets another reference to the given object.
  */
 void
 vm_object_reference(object)
@@ -230,48 +230,48 @@ vm_object_reference(object)
 }
 
 /*
- *	vm_object_deallocate:
+ * vm_object_deallocate:
  *
- *	Release a reference to the specified object,
- *	gained either through a vm_object_allocate
- *	or a vm_object_reference call.  When all references
- *	are gone, storage associated with this object
- *	may be relinquished.
+ * Release a reference to the specified object,
+ * gained either through a vm_object_allocate
+ * or a vm_object_reference call.  When all references
+ * are gone, storage associated with this object
+ * may be relinquished.
  *
- *	No object may be locked.
+ * No object may be locked.
  */
 void
 vm_object_deallocate(object)
 	register vm_object_t	object;
 {
 	/*
-	 *	While "temp" is used for other things as well, we
-	 *	initialize it to NULL here for being able to check
-	 *	if we are in the first revolution of the loop.
+	 * While "temp" is used for other things as well, we
+	 * initialize it to NULL here for being able to check
+	 * if we are in the first revolution of the loop.
 	 */
 	vm_object_t	temp = NULL;
 
 	while (object != NULL) {
 
 		/*
-		 *	The cache holds a reference (uncounted) to
-		 *	the object; we must lock it before removing
-		 *	the object.
+		 * The cache holds a reference (uncounted) to
+		 * the object; we must lock it before removing
+		 * the object.
 		 */
 
 		vm_object_cache_lock();
 
 		/*
-		 *	Lose the reference
+		 * Lose the reference
 		 */
 		vm_object_lock(object);
 		if (--(object->ref_count) != 0) {
 			/*
-			 *	If this is a deallocation of a shadow
-			 *	reference (which it is unless it's the
-			 *	first time round) and this operation made
-			 *	us singly-shadowed, try to collapse us
-			 *	with our shadower.
+			 * If this is a deallocation of a shadow
+			 * reference (which it is unless it's the
+			 * first time round) and this operation made
+			 * us singly-shadowed, try to collapse us
+			 * with our shadower.
 			 */
 			vm_object_unlock(object);
 			if (temp != NULL &&
@@ -283,23 +283,22 @@ vm_object_deallocate(object)
 			}
 
 			/*
-			 *	If there are still references, then
-			 *	we are done.
+			 * If there are still references, then
+			 * we are done.
 			 */
 			vm_object_cache_unlock();
 			return;
 		}
 
 		/*
-		 *	See if this object can persist.  If so, enter
-		 *	it in the cache, then deactivate all of its
-		 *	pages.
+		 * See if this object can persist.  If so, enter
+		 * it in the cache, then deactivate all of its
+		 * pages.
 		 */
-
 		if (object->flags & OBJ_CANPERSIST) {
 
 			TAILQ_INSERT_TAIL(&vm_object_cached_list, object,
-				cached_list);
+			    cached_list);
 			vm_object_cached++;
 			vm_object_cache_unlock();
 
@@ -311,7 +310,7 @@ vm_object_deallocate(object)
 		}
 
 		/*
-		 *	Make sure no one can look us up now.
+		 * Make sure no one can look us up now.
 		 */
 		vm_object_remove(object->pager);
 		vm_object_cache_unlock();
@@ -325,10 +324,10 @@ vm_object_deallocate(object)
 
 
 /*
- *	vm_object_terminate actually destroys the specified object, freeing
- *	up all previously used resources.
+ * vm_object_terminate actually destroys the specified object, freeing
+ * up all previously used resources.
  *
- *	The object must be locked.
+ * The object must be locked.
  */
 void
 vm_object_terminate(object)
@@ -353,8 +352,8 @@ vm_object_terminate(object)
 	}
 
 	/*
-	 *	Detach the object from its shadow if we are the shadow's
-	 *	copy.
+	 * Detach the object from its shadow if we are the shadow's
+	 * copy.
 	 */
 	if ((shadow_object = object->shadow) != NULL) {
 		vm_object_lock(shadow_object);
@@ -411,21 +410,21 @@ vm_object_terminate(object)
 }
 
 /*
- *	vm_object_page_clean
+ * vm_object_page_clean
  *
- *	Clean all dirty pages in the specified range of object.
- *	If syncio is TRUE, page cleaning is done synchronously.
- *	If de_queue is TRUE, pages are removed from any paging queue
- *	they were on, otherwise they are left on whatever queue they
- *	were on before the cleaning operation began.
+ * Clean all dirty pages in the specified range of object.
+ * If syncio is TRUE, page cleaning is done synchronously.
+ * If de_queue is TRUE, pages are removed from any paging queue
+ * they were on, otherwise they are left on whatever queue they
+ * were on before the cleaning operation began.
  *
- *	Odd semantics: if start == end, we clean everything.
+ * Odd semantics: if start == end, we clean everything.
  *
- *	The object must be locked.
+ * The object must be locked.
  *
- *	Returns TRUE if all was well, FALSE if there was a pager error
- *	somewhere.  We attempt to clean (and dequeue) all pages regardless
- *	of where an error occurs.
+ * Returns TRUE if all was well, FALSE if there was a pager error
+ * somewhere.  We attempt to clean (and dequeue) all pages regardless
+ * of where an error occurs.
  */
 boolean_t
 vm_object_page_clean(object, start, end, syncio, de_queue)
@@ -454,8 +453,7 @@ vm_object_page_clean(object, start, end, syncio, de_queue)
 
 			vm_object_unlock(object);
 			pager = vm_pager_allocate(PG_DFLT, (caddr_t)0,
-						  object->size, VM_PROT_ALL,
-						  (vm_offset_t)0);
+			    object->size, VM_PROT_ALL, (vm_offset_t)0);
 			if (pager)
 				vm_object_setpager(object, pager, 0, FALSE);
 			vm_object_lock(object);
@@ -555,12 +553,12 @@ again:
 }
 
 /*
- *	vm_object_deactivate_pages
+ * vm_object_deactivate_pages
  *
- *	Deactivate all pages in the specified object.  (Keep its pages
- *	in memory even though it is no longer referenced.)
+ * Deactivate all pages in the specified object.  (Keep its pages
+ * in memory even though it is no longer referenced.)
  *
- *	The object must be locked.
+ * The object must be locked.
  */
 void
 vm_object_deactivate_pages(object)
@@ -578,7 +576,7 @@ vm_object_deactivate_pages(object)
 }
 
 /*
- *	Trim the object cache to size.
+ * Trim the object cache to size.
  */
 void
 vm_object_cache_trim()
@@ -601,13 +599,13 @@ vm_object_cache_trim()
 }
 
 /*
- *	vm_object_pmap_copy:
+ * vm_object_pmap_copy:
  *
- *	Makes all physical pages in the specified
- *	object range copy-on-write.  No writeable
- *	references to these pages should remain.
+ * Makes all physical pages in the specified
+ * object range copy-on-write.  No writeable
+ * references to these pages should remain.
  *
- *	The object must *not* be locked.
+ * The object must *not* be locked.
  */
 void
 vm_object_pmap_copy(object, start, end)
@@ -631,12 +629,12 @@ vm_object_pmap_copy(object, start, end)
 }
 
 /*
- *	vm_object_pmap_remove:
+ * vm_object_pmap_remove:
  *
- *	Removes all physical pages in the specified
- *	object range from all physical maps.
+ * Removes all physical pages in the specified
+ * object range from all physical maps.
  *
- *	The object must *not* be locked.
+ * The object must *not* be locked.
  */
 void
 vm_object_pmap_remove(object, start, end)
@@ -657,15 +655,15 @@ vm_object_pmap_remove(object, start, end)
 }
 
 /*
- *	vm_object_copy:
+ * vm_object_copy:
  *
- *	Create a new object which is a copy of an existing
- *	object, and mark all of the pages in the existing
- *	object 'copy-on-write'.  The new object has one reference.
- *	Returns the new object.
+ * Create a new object which is a copy of an existing
+ * object, and mark all of the pages in the existing
+ * object 'copy-on-write'.  The new object has one reference.
+ * Returns the new object.
  *
- *	May defer the copy until later if the object is not backed
- *	up by a non-default pager.
+ * May defer the copy until later if the object is not backed
+ * up by a non-default pager.
  */
 void
 vm_object_copy(src_object, src_offset, size,
@@ -685,7 +683,7 @@ vm_object_copy(src_object, src_offset, size,
 
 	if (src_object == NULL) {
 		/*
-		 *	Nothing to copy
+		 * Nothing to copy
 		 */
 		*dst_object = NULL;
 		*dst_offset = 0;
@@ -694,10 +692,10 @@ vm_object_copy(src_object, src_offset, size,
 	}
 
 	/*
-	 *	If the object's pager is null_pager or the
-	 *	default pager, we don't have to make a copy
-	 *	of it.  Instead, we set the needs copy flag and
-	 *	make a shadow later.
+	 * If the object's pager is null_pager or the
+	 * default pager, we don't have to make a copy
+	 * of it.  Instead, we set the needs copy flag and
+	 * make a shadow later.
 	 */
 
 	vm_object_lock(src_object);
@@ -705,12 +703,12 @@ vm_object_copy(src_object, src_offset, size,
 	    (src_object->flags & OBJ_INTERNAL)) {
 
 		/*
-		 *	Make another reference to the object
+		 * Make another reference to the object
 		 */
 		src_object->ref_count++;
 
 		/*
-		 *	Mark all of the pages copy-on-write.
+		 * Mark all of the pages copy-on-write.
 		 */
 		for (p = src_object->memq.tqh_first; p; p = p->listq.tqe_next)
 			if (src_offset <= p->offset &&
@@ -722,33 +720,33 @@ vm_object_copy(src_object, src_offset, size,
 		*dst_offset = src_offset;
 		
 		/*
-		 *	Must make a shadow when write is desired
+		 * Must make a shadow when write is desired
 		 */
 		*src_needs_copy = TRUE;
 		return;
 	}
 
 	/*
-	 *	Try to collapse the object before copying it.
+	 * Try to collapse the object before copying it.
 	 */
 	vm_object_collapse(src_object);
 
 	/*
-	 *	If the object has a pager, the pager wants to
-	 *	see all of the changes.  We need a copy-object
-	 *	for the changed pages.
+	 * If the object has a pager, the pager wants to
+	 * see all of the changes.  We need a copy-object
+	 * for the changed pages.
 	 *
-	 *	If there is a copy-object, and it is empty,
-	 *	no changes have been made to the object since the
-	 *	copy-object was made.  We can use the same copy-
-	 *	object.
+	 * If there is a copy-object, and it is empty,
+	 * no changes have been made to the object since the
+	 * copy-object was made.  We can use the same copy-
+	 * object.
 	 */
 
-    Retry1:
+Retry1:
 	old_copy = src_object->copy;
 	if (old_copy != NULL) {
 		/*
-		 *	Try to get the locks (out of order)
+		 * Try to get the locks (out of order)
 		 */
 		if (!vm_object_lock_try(old_copy)) {
 			vm_object_unlock(src_object);
@@ -761,8 +759,8 @@ vm_object_copy(src_object, src_offset, size,
 		if (old_copy->resident_page_count == 0 &&
 		    old_copy->pager == NULL) {
 			/*
-			 *	Return another reference to
-			 *	the existing copy-object.
+			 * Return another reference to
+			 * the existing copy-object.
 			 */
 			old_copy->ref_count++;
 			vm_object_unlock(old_copy);
@@ -777,27 +775,27 @@ vm_object_copy(src_object, src_offset, size,
 	vm_object_unlock(src_object);
 
 	/*
-	 *	If the object has a pager, the pager wants
-	 *	to see all of the changes.  We must make
-	 *	a copy-object and put the changed pages there.
+	 * If the object has a pager, the pager wants
+	 * to see all of the changes.  We must make
+	 * a copy-object and put the changed pages there.
 	 *
-	 *	The copy-object is always made large enough to
-	 *	completely shadow the original object, since
-	 *	it may have several users who want to shadow
-	 *	the original object at different points.
+	 * The copy-object is always made large enough to
+	 * completely shadow the original object, since
+	 * it may have several users who want to shadow
+	 * the original object at different points.
 	 */
 
 	new_copy = vm_object_allocate(src_object->size);
 
-    Retry2:
+Retry2:
 	vm_object_lock(src_object);
 	/*
-	 *	Copy object may have changed while we were unlocked
+	 * Copy object may have changed while we were unlocked
 	 */
 	old_copy = src_object->copy;
 	if (old_copy != NULL) {
 		/*
-		 *	Try to get the locks (out of order)
+		 * Try to get the locks (out of order)
 		 */
 		if (!vm_object_lock_try(old_copy)) {
 			vm_object_unlock(src_object);
@@ -805,17 +803,17 @@ vm_object_copy(src_object, src_offset, size,
 		}
 
 		/*
-		 *	Consistency check
+		 * Consistency check
 		 */
 		if (old_copy->shadow != src_object ||
 		    old_copy->shadow_offset != (vm_offset_t) 0)
 			panic("vm_object_copy: copy/shadow inconsistency");
 
 		/*
-		 *	Make the old copy-object shadow the new one.
-		 *	It will receive no more pages from the original
-		 *	object.  Locking of new_copy not needed.  We
-		 *	have the only pointer.
+		 * Make the old copy-object shadow the new one.
+		 * It will receive no more pages from the original
+		 * object.  Locking of new_copy not needed.  We
+		 * have the only pointer.
 		 */
 		src_object->ref_count--;	/* remove ref. from old_copy */
 		vm_object_set_shadow(old_copy, new_copy);
@@ -824,11 +822,11 @@ vm_object_copy(src_object, src_offset, size,
 		vm_object_unlock(old_copy);	/* done with old_copy */
 	}
 
-	new_start = (vm_offset_t) 0;	/* always shadow original at 0 */
-	new_end   = (vm_offset_t) new_copy->size; /* for the whole object */
+	new_start = (vm_offset_t)0;	/* always shadow original at 0 */
+	new_end   = (vm_offset_t)new_copy->size; /* for the whole object */
 
 	/*
-	 *	Point the new copy at the existing object.
+	 * Point the new copy at the existing object.
 	 */
 
 	vm_object_set_shadow(new_copy, src_object);
@@ -837,8 +835,8 @@ vm_object_copy(src_object, src_offset, size,
 	src_object->copy = new_copy;
 
 	/*
-	 *	Mark all the affected pages of the existing object
-	 *	copy-on-write.
+	 * Mark all the affected pages of the existing object
+	 * copy-on-write.
 	 */
 	for (p = src_object->memq.tqh_first; p != NULL; p = p->listq.tqe_next)
 		if ((new_start <= p->offset) && (p->offset < new_end))
@@ -852,16 +850,16 @@ vm_object_copy(src_object, src_offset, size,
 }
 
 /*
- *	vm_object_shadow:
+ * vm_object_shadow:
  *
- *	Create a new object which is backed by the
- *	specified existing object range.  The source
- *	object reference is deallocated.
+ * Create a new object which is backed by the
+ * specified existing object range.  The source
+ * object reference is deallocated.
  *
- *	The new object and offset into that object
- *	are returned in the source parameters.
+ * The new object and offset into that object
+ * are returned in the source parameters.
  *
- *	The old object should not be locked.
+ * The old object should not be locked.
  */
 void
 vm_object_shadow(object, offset, length)
@@ -875,37 +873,37 @@ vm_object_shadow(object, offset, length)
 	source = *object;
 
 	/*
-	 *	Allocate a new object with the given length
+	 * Allocate a new object with the given length
 	 */
 	if ((result = vm_object_allocate(length)) == NULL)
 		panic("vm_object_shadow: no object for shadowing");
 
 	/*
-	 *	The new object shadows the source object, adding
-	 *	a reference to it.  Our caller changes his reference
-	 *	to point to the new object, removing a reference to
-	 *	the source object.  Net result: no change of reference
-	 *	count.
+	 * The new object shadows the source object, adding
+	 * a reference to it.  Our caller changes his reference
+	 * to point to the new object, removing a reference to
+	 * the source object.  Net result: no change of reference
+	 * count.
 	 */
 	vm_object_lock(source);
 	vm_object_set_shadow(result, source);
 	vm_object_unlock(source);
 	
 	/*
-	 *	Store the offset into the source object,
-	 *	and fix up the offset into the new object.
+	 * Store the offset into the source object,
+	 * and fix up the offset into the new object.
 	 */
 	result->shadow_offset = *offset;
 
 	/*
-	 *	Return the new things
+	 * Return the new things
 	 */
 	*offset = 0;
 	*object = result;
 }
 
 /*
- *	Set the specified object's pager to the specified pager.
+ * Set the specified object's pager to the specified pager.
  */
 void
 vm_object_setpager(object, pager, paging_offset, read_only)
@@ -925,15 +923,15 @@ vm_object_setpager(object, pager, paging_offset, read_only)
 }
 
 /*
- *	vm_object_hash hashes the pager/id pair.
+ * vm_object_hash hashes the pager/id pair.
  */
 
 #define vm_object_hash(pager) \
 	(((unsigned long)pager)%VM_OBJECT_HASH_COUNT)
 
 /*
- *	vm_object_lookup looks in the object cache for an object with the
- *	specified pager and paging id.
+ * vm_object_lookup looks in the object cache for an object with the
+ * specified pager and paging id.
  */
 vm_object_t
 vm_object_lookup(pager)
@@ -967,8 +965,8 @@ vm_object_lookup(pager)
 }
 
 /*
- *	vm_object_enter enters the specified object/pager/id into
- *	the hash table.
+ * vm_object_enter enters the specified object/pager/id into
+ * the hash table.
  */
 
 void
@@ -980,8 +978,8 @@ vm_object_enter(object, pager)
 	register vm_object_hash_entry_t	entry;
 
 	/*
-	 *	We don't cache null objects, and we can't cache
-	 *	objects with the null pager.
+	 * We don't cache null objects, and we can't cache
+	 * objects with the null pager.
 	 */
 
 	if (object == NULL)
@@ -1001,12 +999,12 @@ vm_object_enter(object, pager)
 }
 
 /*
- *	vm_object_remove:
+ * vm_object_remove:
  *
- *	Remove the pager from the hash table.
- *	Note:  This assumes that the object cache
- *	is locked.  XXX this should be fixed
- *	by reorganizing vm_object_deallocate.
+ * Remove the pager from the hash table.
+ * Note:  This assumes that the object cache
+ * is locked.  XXX this should be fixed
+ * by reorganizing vm_object_deallocate.
  */
 void
 vm_object_remove(pager)
@@ -1031,7 +1029,7 @@ vm_object_remove(pager)
 }
 
 /*
- *	vm_object_cache_clear removes all objects from the cache.
+ * vm_object_cache_clear removes all objects from the cache.
  *
  */
 void
@@ -1040,8 +1038,8 @@ vm_object_cache_clear()
 	register vm_object_t	object;
 
 	/*
-	 *	Remove each object in the cache by scanning down the
-	 *	list of cached objects.
+	 * Remove each object in the cache by scanning down the
+	 * list of cached objects.
 	 */
 	vm_object_cache_lock();
 	while ((object = vm_object_cached_list.tqh_first) != NULL) {
@@ -1063,10 +1061,10 @@ vm_object_cache_clear()
 }
 
 /*
- *	vm_object_remove_from_pager:
+ * vm_object_remove_from_pager:
  *
- *	Tell object's pager that it needn't back the page
- *	anymore.  If the pager ends up empty, deallocate it.
+ * Tell object's pager that it needn't back the page
+ * anymore.  If the pager ends up empty, deallocate it.
  */
 int
 vm_object_remove_from_pager(object, from, to)
@@ -1081,7 +1079,7 @@ vm_object_remove_from_pager(object, from, to)
 
 	cnt = vm_pager_remove(pager, from, to);
 
-	/*	If pager became empty, remove it.	*/
+	/* If pager became empty, remove it.	*/
 	if (cnt > 0 && vm_pager_count(pager) == 0) {
 		vm_pager_deallocate(pager);
 		object->pager = NULL;
@@ -1090,12 +1088,12 @@ vm_object_remove_from_pager(object, from, to)
 }
 
 /*
- *	vm_object_collapse_aux:
+ * vm_object_collapse_aux:
  *
- *	Internal function to vm_object_collapse called when
- *	it has been shown that a collapse operation is likely
- *	to succeed.  We know that the backing object is only
- *	referenced by me and that paging is not in progress.
+ * Internal function to vm_object_collapse called when
+ * it has been shown that a collapse operation is likely
+ * to succeed.  We know that the backing object is only
+ * referenced by me and that paging is not in progress.
  */
 int
 vm_object_collapse_aux(object)
@@ -1113,28 +1111,28 @@ vm_object_collapse_aux(object)
 #endif
 
 	/*
-	 *	The algorithm used is roughly like this:
-	 *	(1)	Trim a potential pager in the backing
-	 *		object so it'll only hold pages in reach.
-	 *	(2)	Loop over all the resident pages in the
-	 *		shadow object and either remove them if
-	 *		they are shadowed or move them into the
-	 *		shadowing object.
-	 *	(3)	Loop over the paged out pages in the
-	 *		shadow object.  Start pageins on those
-	 *		that aren't shadowed, and just deallocate
-	 *		the others.  In each iteration check if
-	 *		other users of these objects have caused
-	 *		pageins resulting in new resident pages.
-	 *		This can happen while we are waiting for
-	 *		a pagein of ours.  If such resident pages
-	 *		turn up, restart from (2).
+	 * The algorithm used is roughly like this:
+	 * (1)	Trim a potential pager in the backing
+	 * 	object so it'll only hold pages in reach.
+	 * (2)	Loop over all the resident pages in the
+	 * 	shadow object and either remove them if
+	 * 	they are shadowed or move them into the
+	 * 	shadowing object.
+	 * (3)	Loop over the paged out pages in the
+	 * 	shadow object.  Start pageins on those
+	 * 	that aren't shadowed, and just deallocate
+	 * 	the others.  In each iteration check if
+	 * 	other users of these objects have caused
+	 * 	pageins resulting in new resident pages.
+	 * 	This can happen while we are waiting for
+	 * 	a pagein of ours.  If such resident pages
+	 * 	turn up, restart from (2).
 	 */
 
 	/*
-	 *	As a first measure we know we can discard
-	 *	everything that the shadowing object doesn't
-	 *	shadow.
+	 * As a first measure we know we can discard
+	 * everything that the shadowing object doesn't
+	 * shadow.
 	 */
 	if (backing_object->pager != NULL) {
 		if (backing_offset > 0)
@@ -1146,28 +1144,28 @@ vm_object_collapse_aux(object)
 	}
 
 	/*
-	 *	This is the outer loop, iterating until all resident and
-	 *	paged out pages in the shadow object are drained.
+	 * This is the outer loop, iterating until all resident and
+	 * paged out pages in the shadow object are drained.
 	 */
 	paged_offset = 0;
 	while (backing_object->memq.tqh_first != NULL ||
 	    backing_object->pager != NULL) {
 		/*
-		 *	First of all get rid of resident pages in the
-		 *	backing object.  We can guarantee to remove
-		 *	every page thus we can write the while-test
-		 *	like this.
+		 * First of all get rid of resident pages in the
+		 * backing object.  We can guarantee to remove
+		 * every page thus we can write the while-test
+		 * like this.
 		 */
 		while ((backing_page = backing_object->memq.tqh_first) !=
 		    NULL) {
 			/*
-			 *	If the page is outside the shadowing object's
-			 *	range or if the page is shadowed (either by a
-			 *	resident "non-fake" page or a paged out one) we
-			 *	can discard it right away.  Otherwise we need
-			 *	to move the page to the shadowing object,
-			 *	perhaps waking up waiters for "fake" pages
-			 *	first.
+			 * If the page is outside the shadowing object's
+			 * range or if the page is shadowed (either by a
+			 * resident "non-fake" page or a paged out one) we
+			 * can discard it right away.  Otherwise we need
+			 * to move the page to the shadowing object,
+			 * perhaps waking up waiters for "fake" pages
+			 * first.
 			 */
 			if (backing_page->offset < backing_offset ||
 			    (offset = backing_page->offset - backing_offset) >=
@@ -1178,16 +1176,16 @@ vm_object_collapse_aux(object)
 			    vm_pager_has_page(object->pager, offset))) {
 
 				/*
-				 *	Just discard the page, noone needs it.
+				 * Just discard the page, noone needs it.
 				 */
 				vm_page_lock_queues();
 				vm_page_free(backing_page);
 				vm_page_unlock_queues();
 			} else {
 				/*
-				 *	If a "fake" page was found, someone may
-				 *	be waiting for it.  Wake her up and
-				 *	then remove the page.
+				 * If a "fake" page was found, someone may
+				 * be waiting for it.  Wake her up and
+				 * then remove the page.
 				 */
 				if (page) {
 					PAGE_WAKEUP(page);
@@ -1197,14 +1195,14 @@ vm_object_collapse_aux(object)
 				}
 
 				/*
-				 *	If the backing page was ever paged out,
-				 *	it was due to it being dirty at one
-				 *	point.  Unless we have no pager
-				 *	allocated to the front object (thus
-				 *	will move forward the shadow's one),
-				 *	mark it dirty again so it won't be
-				 *	thrown away without being paged out to
-				 *	the front pager.
+				 * If the backing page was ever paged out,
+				 * it was due to it being dirty at one
+				 * point.  Unless we have no pager
+				 * allocated to the front object (thus
+				 * will move forward the shadow's one),
+				 * mark it dirty again so it won't be
+				 * thrown away without being paged out to
+				 * the front pager.
 				 */
 				if (object->pager != NULL &&
 				    vm_object_remove_from_pager(backing_object,
@@ -1212,22 +1210,22 @@ vm_object_collapse_aux(object)
 				    backing_page->offset + PAGE_SIZE))
 					backing_page->flags &= ~PG_CLEAN;
 
-				/*	Move the page up front.	*/
+				/* Move the page up front.	*/
 				vm_page_rename(backing_page, object, offset);
 			}
 		}
 
 		/*
-		 *	If there isn't a pager in the shadow object, we're
-		 *	ready.  Take the easy way out.
+		 * If there isn't a pager in the shadow object, we're
+		 * ready.  Take the easy way out.
 		 */
 		if (backing_object->pager == NULL)
 			break;
 
 		/*
-		 *	If the shadowing object doesn't have a pager
-		 *	the easiest thing to do now is to just move the
-		 *	backing pager up front and everything is done.  
+		 * If the shadowing object doesn't have a pager
+		 * the easiest thing to do now is to just move the
+		 * backing pager up front and everything is done.  
 		 */
 		if (object->pager == NULL) {
 			object->pager = backing_object->pager;
@@ -1238,29 +1236,29 @@ vm_object_collapse_aux(object)
 		}
 
 		/*
-		 *	What's left to do is to find all paged out
-		 *	pages in the backing pager and either discard
-		 *	or move it to the front object.  We need to
-		 *	recheck the resident page set as a pagein might
-		 *	have given other threads the chance to, via
-		 *	readfaults, page in another page into the
-		 *	resident set.  In this case the outer loop must
-		 *	get reentered.  That is also the case if some other
-		 *	thread removes the front pager, a case that has
-		 *	been seen...
+		 * What's left to do is to find all paged out
+		 * pages in the backing pager and either discard
+		 * or move it to the front object.  We need to
+		 * recheck the resident page set as a pagein might
+		 * have given other threads the chance to, via
+		 * readfaults, page in another page into the
+		 * resident set.  In this case the outer loop must
+		 * get reentered.  That is also the case if some other
+		 * thread removes the front pager, a case that has
+		 * been seen...
 		 */
 		while (backing_object->memq.tqh_first == NULL &&
 		    backing_object->pager != NULL && object->pager != NULL &&
 		    (paged_offset = vm_pager_next(backing_object->pager,
 		     paged_offset)) < backing_object->size) {
 			/*
-			 *	If the shadowing object has this page, get
-			 *	rid of it from the backing pager.  Trust
-			 *	the loop condition to get us out of here
-			 *	quickly if we remove the last paged out page.
+			 * If the shadowing object has this page, get
+			 * rid of it from the backing pager.  Trust
+			 * the loop condition to get us out of here
+			 * quickly if we remove the last paged out page.
 			 *
-			 *	XXX Would clustering several pages at a time
-			 *	be a win in this situation?
+			 * XXX Would clustering several pages at a time
+			 * be a win in this situation?
 			 */
 			if (((page = vm_page_lookup(object,
 			    paged_offset - backing_offset)) == NULL ||
@@ -1268,9 +1266,9 @@ vm_object_collapse_aux(object)
 			    !vm_pager_has_page(object->pager,
 			    paged_offset - backing_offset)) {
 				/*
-				 *	If a "fake" page was found, someone
-				 *	may be waiting for it.  Wake her up
-				 *	and then remove the page.
+				 * If a "fake" page was found, someone
+				 * may be waiting for it.  Wake her up
+				 * and then remove the page.
 				 */
 				if (page) {
 					PAGE_WAKEUP(page);
@@ -1279,8 +1277,8 @@ vm_object_collapse_aux(object)
 					vm_page_unlock_queues();
 				}
 				/*
-				 *	Suck the page from the pager and give
-				 *	it to the shadowing object.
+				 * Suck the page from the pager and give
+				 * it to the shadowing object.
 				 */
 #ifdef DEBUG
 				if (vmdebug & VMDEBUG_COLLAPSE_PAGEIN)
@@ -1289,9 +1287,9 @@ vm_object_collapse_aux(object)
 #endif
 
 				/*
-				 *	First allocate a page and mark it
-				 *	busy so another thread won't try
-				 *	to start another pagein.
+				 * First allocate a page and mark it
+				 * busy so another thread won't try
+				 * to start another pagein.
 				 */
 				for (;;) {
 					backing_page =
@@ -1304,12 +1302,12 @@ vm_object_collapse_aux(object)
 				backing_page->flags |= PG_BUSY;
 
 				/*
-				 *	Second, start paging it in.  If this
-				 *	fails, what can we do but punt?
-				 *	Even though the shadowing object
-				 *	isn't exactly paging we say so in
-				 *	order to not get simultaneous
-				 *	cascaded collapses.
+				 * Second, start paging it in.  If this
+				 * fails, what can we do but punt?
+				 * Even though the shadowing object
+				 * isn't exactly paging we say so in
+				 * order to not get simultaneous
+				 * cascaded collapses.
 				 */
 				object->paging_in_progress++;
 				backing_object->paging_in_progress++;
@@ -1324,11 +1322,11 @@ vm_object_collapse_aux(object)
 				cnt.v_pgpgin++;
 
 				/*
-				 *	A fault might have issued other
-				 *	pagein operations.  We must wait for
-				 *	them to complete, then we get to
-				 *	wakeup potential other waiters as
-				 *	well.
+				 * A fault might have issued other
+				 * pagein operations.  We must wait for
+				 * them to complete, then we get to
+				 * wakeup potential other waiters as
+				 * well.
 				 */
 				while (backing_object->paging_in_progress != 1
 				    || object->paging_in_progress != 1) {
@@ -1348,11 +1346,11 @@ vm_object_collapse_aux(object)
 				thread_wakeup(object);
 
 				/*
-				 *	During the pagein vm_object_terminate
-				 *	might have slept on our front object in
-				 *	order to remove it.  If this is the
-				 *	case, we might as well stop all the
-				 *	collapse work right here.
+				 * During the pagein vm_object_terminate
+				 * might have slept on our front object in
+				 * order to remove it.  If this is the
+				 * case, we might as well stop all the
+				 * collapse work right here.
 				 */
 				if (object->flags & OBJ_FADING) {
 					PAGE_WAKEUP(backing_page);
@@ -1360,26 +1358,26 @@ vm_object_collapse_aux(object)
 				}
 
 				/*
-				 *	Third, relookup in case pager changed
-				 *	page.  Pager is responsible for
-				 *	disposition of old page if moved.
+				 * Third, relookup in case pager changed
+				 * page.  Pager is responsible for
+				 * disposition of old page if moved.
 				 */
 				backing_page = vm_page_lookup(backing_object,
 				    paged_offset);
 
 				/*
-				 *	This page was once dirty, otherwise
-				 *	it hadn't been paged out in this
-				 *	shadow object.  As we now remove the
-				 *	persistant store of the page, make
-				 *	sure it will be paged out in the
-				 *	front pager by dirtying it.
+				 * This page was once dirty, otherwise
+				 * it hadn't been paged out in this
+				 * shadow object.  As we now remove the
+				 * persistant store of the page, make
+				 * sure it will be paged out in the
+				 * front pager by dirtying it.
 				 */
 				backing_page->flags &= ~(PG_FAKE|PG_CLEAN);
 
 				/*
-				 *	Fourth, move it up front, and wake up
-				 *	potential waiters.
+				 * Fourth, move it up front, and wake up
+				 * potential waiters.
 				 */
 				vm_page_rename(backing_page, object,
 				    paged_offset - backing_offset);
@@ -1393,10 +1391,10 @@ vm_object_collapse_aux(object)
 	}
 
 	/*
-	 *	I've seen this condition once in an out of VM situation.
-	 *	For the moment I don't know why it occurred, although I suspect
-	 *	vm_object_page_clean can create a pager even if it won't use
-	 *	it.
+	 * I've seen this condition once in an out of VM situation.
+	 * For the moment I don't know why it occurred, although I suspect
+	 * vm_object_page_clean can create a pager even if it won't use
+	 * it.
 	 */
 	if (backing_object->pager != NULL &&
 	    vm_pager_count(backing_object->pager) == 0) {
@@ -1410,9 +1408,9 @@ vm_object_collapse_aux(object)
 #endif
 
 	/*
-	 *	Object now shadows whatever backing_object did.
-	 *	Note that the reference to backing_object->shadow
-	 *	moves from within backing_object to within object.
+	 * Object now shadows whatever backing_object did.
+	 * Note that the reference to backing_object->shadow
+	 * moves from within backing_object to within object.
 	 */
 	if(backing_object->shadow)
 		vm_object_lock(backing_object->shadow);
@@ -1425,7 +1423,7 @@ vm_object_collapse_aux(object)
 	if (object->shadow != NULL && object->shadow->copy != NULL)
 		panic("vm_object_collapse_aux: we collapsed a copy-object!");
 
-	/*	Fast cleanup is the only thing left now.	*/
+	/* Fast cleanup is the only thing left now.	*/
 	vm_object_unlock(backing_object);
 
 	simple_lock(&vm_object_list_lock);
@@ -1440,12 +1438,12 @@ vm_object_collapse_aux(object)
 }
 
 /*
- *	vm_object_bypass:
+ * vm_object_bypass:
  *
- *	Internal function to vm_object_collapse called when collapsing
- *	the object with its backing one is not allowed but there may
- *	be an opportunity to bypass the backing object and shadow the
- *	next object in the chain instead.
+ * Internal function to vm_object_collapse called when collapsing
+ * the object with its backing one is not allowed but there may
+ * be an opportunity to bypass the backing object and shadow the
+ * next object in the chain instead.
  */
 int
 vm_object_bypass(object)
@@ -1457,23 +1455,23 @@ vm_object_bypass(object)
 	register vm_page_t	p, pp;
 
 	/*
-	 *	If all of the pages in the backing object are
-	 *	shadowed by the parent object, the parent
-	 *	object no longer has to shadow the backing
-	 *	object; it can shadow the next one in the
-	 *	chain.
+	 * If all of the pages in the backing object are
+	 * shadowed by the parent object, the parent
+	 * object no longer has to shadow the backing
+	 * object; it can shadow the next one in the
+	 * chain.
 	 *
-	 *	The backing object must not be paged out - we'd
-	 *	have to check all of the paged-out pages, as
-	 *	well.
+	 * The backing object must not be paged out - we'd
+	 * have to check all of the paged-out pages, as
+	 * well.
 	 */
 
 	if (backing_object->pager != NULL)
 		return KERN_FAILURE;
 
 	/*
-	 *	Should have a check for a 'small' number
-	 *	of pages here.
+	 * Should have a check for a 'small' number
+	 * of pages here.
 	 */
 
 	for (p = backing_object->memq.tqh_first; p != NULL;
@@ -1481,29 +1479,29 @@ vm_object_bypass(object)
 		new_offset = p->offset - backing_offset;
 
 		/*
-		 *	If the parent has a page here, or if
-		 *	this page falls outside the parent,
-		 *	keep going.
+		 * If the parent has a page here, or if
+		 * this page falls outside the parent,
+		 * keep going.
 		 *
-		 *	Otherwise, the backing_object must be
-		 *	left in the chain.
+		 * Otherwise, the backing_object must be
+		 * left in the chain.
 		 */
 
 		if (p->offset >= backing_offset && new_offset < object->size &&
 		    ((pp = vm_page_lookup(object, new_offset)) == NULL ||
 		    (pp->flags & PG_FAKE))) {
 			/*
-			 *	Page still needed.  Can't go any further.
+			 * Page still needed.  Can't go any further.
 			 */
 			return KERN_FAILURE;
 		}
 	}
 
 	/*
-	 *	Make the parent shadow the next object
-	 *	in the chain.  Deallocating backing_object
-	 *	will not remove it, since its reference
-	 *	count is at least 2.
+	 * Make the parent shadow the next object
+	 * in the chain.  Deallocating backing_object
+	 * will not remove it, since its reference
+	 * count is at least 2.
 	 */
 
 	vm_object_lock(object->shadow);
@@ -1517,17 +1515,17 @@ vm_object_bypass(object)
 	object->shadow_offset += backing_object->shadow_offset;
 
 	/*
-	 *	Backing object might have had a copy pointer
-	 *	to us.  If it did, clear it. 
+	 * Backing object might have had a copy pointer
+	 * to us.  If it did, clear it. 
 	 */
 
 	if (backing_object->copy == object)
 		backing_object->copy = NULL;
 
-	/*	Drop the reference count on backing_object.
-	 *	Since its ref_count was at least 2, it
-	 *	will not vanish; so we don't need to call
-	 *	vm_object_deallocate.
+	/* Drop the reference count on backing_object.
+	 * Since its ref_count was at least 2, it
+	 * will not vanish; so we don't need to call
+	 * vm_object_deallocate.
 	 */
 	backing_object->ref_count--;
 	vm_object_unlock(backing_object);
@@ -1536,14 +1534,14 @@ vm_object_bypass(object)
 }
 
 /*
- *	vm_object_collapse:
+ * vm_object_collapse:
  *
- *	Collapse an object with the object backing it.
- *	Pages in the backing object are moved into the
- *	parent, and the backing object is deallocated.
+ * Collapse an object with the object backing it.
+ * Pages in the backing object are moved into the
+ * parent, and the backing object is deallocated.
  *
- *	Requires that the object be locked and the page
- *	queues be unlocked.
+ * Requires that the object be locked and the page
+ * queues be unlocked.
  *
  */
 void
@@ -1558,16 +1556,16 @@ vm_object_collapse(object)
 
 	while (TRUE) {
 		/*
-		 *	Verify that the conditions are right for collapse:
+		 * Verify that the conditions are right for collapse:
 		 *
-		 *	The object exists and no pages in it are currently
-		 *	being paged out.
+		 * The object exists and no pages in it are currently
+		 * being paged out.
 		 */
 		if (object == NULL || object->paging_in_progress)
 			return;
 
 		/*
-		 *		There is a backing object, and
+		 * 	There is a backing object, and
 		 */
 	
 		if ((backing_object = object->shadow) == NULL)
@@ -1575,11 +1573,11 @@ vm_object_collapse(object)
 	
 		vm_object_lock(backing_object);
 		/*
-		 *	...
-		 *		The backing object is not read_only,
-		 *		and no pages in the backing object are
-		 *		currently being paged out.
-		 *		The backing object is internal.
+		 * ...
+		 * 	The backing object is not read_only,
+		 * 	and no pages in the backing object are
+		 * 	currently being paged out.
+		 * 	The backing object is internal.
 		 */
 	
 		if ((backing_object->flags & OBJ_INTERNAL) == 0 ||
@@ -1589,14 +1587,14 @@ vm_object_collapse(object)
 		}
 	
 		/*
-		 *	The backing object can't be a copy-object:
-		 *	the shadow_offset for the copy-object must stay
-		 *	as 0.  Furthermore (for the 'we have all the
-		 *	pages' case), if we bypass backing_object and
-		 *	just shadow the next object in the chain, old
-		 *	pages from that object would then have to be copied
-		 *	BOTH into the (former) backing_object and into the
-		 *	parent object.
+		 * The backing object can't be a copy-object:
+		 * the shadow_offset for the copy-object must stay
+		 * as 0.  Furthermore (for the 'we have all the
+		 * pages' case), if we bypass backing_object and
+		 * just shadow the next object in the chain, old
+		 * pages from that object would then have to be copied
+		 * BOTH into the (former) backing_object and into the
+		 * parent object.
 		 */
 		if (backing_object->shadow != NULL &&
 		    backing_object->shadow->copy != NULL) {
@@ -1605,9 +1603,9 @@ vm_object_collapse(object)
 		}
 
 		/*
-		 *	If there is exactly one reference to the backing
-		 *	object, we can collapse it into the parent,
-		 *	otherwise we might be able to bypass it completely.
+		 * If there is exactly one reference to the backing
+		 * object, we can collapse it into the parent,
+		 * otherwise we might be able to bypass it completely.
 		 */
 	
 		if (backing_object->ref_count == 1) {
@@ -1622,18 +1620,18 @@ vm_object_collapse(object)
 			}
 
 		/*
-		 *	Try again with this object's new backing object.
+		 * Try again with this object's new backing object.
 		 */
 	}
 }
 
 /*
- *	vm_object_page_remove: [internal]
+ * vm_object_page_remove: [internal]
  *
- *	Removes all physical pages in the specified
- *	object range from the object's list of pages.
+ * Removes all physical pages in the specified
+ * object range from the object's list of pages.
  *
- *	The object must be locked.
+ * The object must be locked.
  */
 void
 vm_object_page_remove(object, start, end)
@@ -1658,26 +1656,26 @@ vm_object_page_remove(object, start, end)
 }
 
 /*
- *	Routine:	vm_object_coalesce
- *	Function:	Coalesces two objects backing up adjoining
- *			regions of memory into a single object.
+ * Routine:	vm_object_coalesce
+ * Function:	Coalesces two objects backing up adjoining
+ * 		regions of memory into a single object.
  *
- *	returns TRUE if objects were combined.
+ * returns TRUE if objects were combined.
  *
- *	NOTE:	Only works at the moment if the second object is NULL -
- *		if it's not, which object do we lock first?
+ * NOTE:	Only works at the moment if the second object is NULL -
+ * 	if it's not, which object do we lock first?
  *
- *	Parameters:
- *		prev_object	First object to coalesce
- *		prev_offset	Offset into prev_object
- *		next_object	Second object into coalesce
- *		next_offset	Offset into next_object
+ * Parameters:
+ * 	prev_object	First object to coalesce
+ * 	prev_offset	Offset into prev_object
+ * 	next_object	Second object into coalesce
+ * 	next_offset	Offset into next_object
  *
- *		prev_size	Size of reference to prev_object
- *		next_size	Size of reference to next_object
+ * 	prev_size	Size of reference to prev_object
+ * 	next_size	Size of reference to next_object
  *
- *	Conditions:
- *	The object must *not* be locked.
+ * Conditions:
+ * The object must *not* be locked.
  */
 boolean_t
 vm_object_coalesce(prev_object, next_object,
@@ -1706,39 +1704,36 @@ vm_object_coalesce(prev_object, next_object,
 	vm_object_lock(prev_object);
 
 	/*
-	 *	Try to collapse the object first
+	 * Try to collapse the object first
 	 */
 	vm_object_collapse(prev_object);
 
 	/*
-	 *	Can't coalesce if:
-	 *	. more than one reference
-	 *	. paged out
-	 *	. shadows another object
-	 *	. has a copy elsewhere
-	 *	(any of which mean that the pages not mapped to
-	 *	prev_entry may be in use anyway)
+	 * Can't coalesce if:
+	 * . more than one reference
+	 * . paged out
+	 * . shadows another object
+	 * . has a copy elsewhere
+	 * (any of which mean that the pages not mapped to
+	 * prev_entry may be in use anyway)
 	 */
 
-	if (prev_object->ref_count > 1 ||
-		prev_object->pager != NULL ||
-		prev_object->shadow != NULL ||
-		prev_object->copy != NULL) {
+	if (prev_object->ref_count > 1 || prev_object->pager != NULL ||
+	    prev_object->shadow != NULL || prev_object->copy != NULL) {
 		vm_object_unlock(prev_object);
 		return(FALSE);
 	}
 
 	/*
-	 *	Remove any pages that may still be in the object from
-	 *	a previous deallocation.
+	 * Remove any pages that may still be in the object from
+	 * a previous deallocation.
 	 */
 
-	vm_object_page_remove(prev_object,
-			prev_offset + prev_size,
-			prev_offset + prev_size + next_size);
+	vm_object_page_remove(prev_object, prev_offset + prev_size,
+	    prev_offset + prev_size + next_size);
 
 	/*
-	 *	Extend the object if necessary.
+	 * Extend the object if necessary.
 	 */
 	newsize = prev_offset + prev_size + next_size;
 	if (newsize > prev_object->size)
@@ -1749,7 +1744,7 @@ vm_object_coalesce(prev_object, next_object,
 }
 
 /*
- *	vm_object_print:	[ debug ]
+ * vm_object_print:	[ debug ]
  */
 void
 vm_object_print(object, full)
@@ -1775,14 +1770,15 @@ _vm_object_print(object, full, pr)
 		return;
 
 	iprintf(pr, "Object 0x%lx: size=0x%lx, res=%d, ref=%d, ",
-		(long) object, (long) object->size,
+		(long)object, (long)object->size,
 		object->resident_page_count, object->ref_count);
 	(*pr)("pager=0x%lx+0x%lx, shadow=(0x%lx)+0x%lx\n",
-	       (long) object->pager, (long) object->paging_offset,
-	       (long) object->shadow, (long) object->shadow_offset);
+	       (long)object->pager, (long)object->paging_offset,
+	       (long)object->shadow, (long)object->shadow_offset);
 	(*pr)("shadowers=(");
 	delim = "";
-	for (o = object->shadowers.lh_first; o; o = o->shadowers_list.le_next) {
+	for (o = object->shadowers.lh_first; o;
+	    o = o->shadowers_list.le_next) {
 		(*pr)("%s0x%x", delim, o);
 		delim = ", ";
 	};
@@ -1815,13 +1811,13 @@ _vm_object_print(object, full, pr)
 }
 
 /*
- *	vm_object_set_shadow:
+ * vm_object_set_shadow:
  *
- *	Maintain the shadow graph so that back-link consistency is
- *	always kept.
+ * Maintain the shadow graph so that back-link consistency is
+ * always kept.
  *
- *	Assumes both objects as well as the old shadow to be locked
- *	(unless NULL of course).
+ * Assumes both objects as well as the old shadow to be locked
+ * (unless NULL of course).
  */
 void
 vm_object_set_shadow(object, shadow)
