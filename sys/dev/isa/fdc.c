@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.2 1996/10/16 12:46:25 deraadt Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.3 1996/10/26 06:22:38 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -70,12 +70,14 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/fdreg.h>
+#include <dev/isa/fdreg.h>
 
+#if defined(i386)
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
+#endif
 
-#include <i386/isa/fdlink.h>
+#include <dev/isa/fdlink.h>
 
 #include "fd.h"
 
