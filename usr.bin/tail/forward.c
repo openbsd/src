@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.16 2003/07/01 11:12:59 henning Exp $	*/
+/*	$OpenBSD: forward.c,v 1.17 2003/07/14 08:06:06 otto Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.16 2003/07/01 11:12:59 henning Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.17 2003/07/14 08:06:06 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -260,7 +260,7 @@ rlines(FILE *fp, long off, struct stat *sbp)
 
 	/*
 	 * Position before char.
-	 * Last char is special, ignore if whether newline or not.
+	 * Last char is special, ignore it whether newline or not.
 	 */
 	pos -= 2;
 	ch = EOF;
