@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.11 2004/10/05 18:36:04 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.12 2005/03/02 21:34:58 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -125,7 +125,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	u_int8_t cr;
 
-        iobase = ia->ipa_io[0].base;
+	iobase = ia->ipa_io[0].base;
 	iot = sc->it_iot = ia->ia_iot;
 
 	if (bus_space_map(iot, iobase, 8, 0, &sc->it_ioh)) {
@@ -189,31 +189,31 @@ it_setup_volt(struct it_softc *sc, int start, int n)
 	}
 
 	sc->sensors[start + 0].rfact = 10000;
-	snprintf(sc->sensors[start + 0].desc, sizeof(sc->sensors[0].desc), 
+	snprintf(sc->sensors[start + 0].desc, sizeof(sc->sensors[0].desc),
 	    "VCORE_A");
 	sc->sensors[start + 1].rfact = 10000;
-	snprintf(sc->sensors[start + 1].desc, sizeof(sc->sensors[1].desc), 
+	snprintf(sc->sensors[start + 1].desc, sizeof(sc->sensors[1].desc),
 	    "VCORE_B");
 	sc->sensors[start + 2].rfact = 10000;
-	snprintf(sc->sensors[start + 2].desc, sizeof(sc->sensors[2].desc), 
+	snprintf(sc->sensors[start + 2].desc, sizeof(sc->sensors[2].desc),
 	    "+3.3V");
 	sc->sensors[start + 3].rfact = (int)(( 16.8 / 10) * 10000);
-	snprintf(sc->sensors[start + 3].desc, sizeof(sc->sensors[3].desc), 
+	snprintf(sc->sensors[start + 3].desc, sizeof(sc->sensors[3].desc),
 	    "+5V");
 	sc->sensors[start + 4].rfact = (int)(( 40 / 10) * 10000);
-	snprintf(sc->sensors[start + 4].desc, sizeof(sc->sensors[4].desc), 
+	snprintf(sc->sensors[start + 4].desc, sizeof(sc->sensors[4].desc),
 	    "+12V");
 	sc->sensors[start + 5].rfact = (int)(( 31.0 / 10) * 10000);
-	snprintf(sc->sensors[start + 5].desc, sizeof(sc->sensors[5].desc), 
+	snprintf(sc->sensors[start + 5].desc, sizeof(sc->sensors[5].desc),
 	    "Unused");
 	sc->sensors[start + 6].rfact = (int)(( 103.0 / 20) * 10000);
-	snprintf(sc->sensors[start + 6].desc, sizeof(sc->sensors[6].desc), 
+	snprintf(sc->sensors[start + 6].desc, sizeof(sc->sensors[6].desc),
 	    "-12V");
 	sc->sensors[start + 7].rfact = (int)(( 16.8 / 10) * 10000);
-	snprintf(sc->sensors[start + 7].desc, sizeof(sc->sensors[7].desc), 
+	snprintf(sc->sensors[start + 7].desc, sizeof(sc->sensors[7].desc),
 	    "+5VSB");
 	sc->sensors[start + 8].rfact = 10000;
-	snprintf(sc->sensors[start + 8].desc, sizeof(sc->sensors[8].desc), 
+	snprintf(sc->sensors[start + 8].desc, sizeof(sc->sensors[8].desc),
 	    "VBAT");
 
 	/* Enable voltage monitoring */
@@ -227,12 +227,12 @@ it_setup_temp(struct it_softc *sc, int start, int n)
 
 	for (i = 0; i < n; ++i) {
 		sc->sensors[start + i].type = SENSOR_TEMP;
-		snprintf(sc->sensors[start + i].desc, 
+		snprintf(sc->sensors[start + i].desc,
 		    sizeof(sc->sensors[start + i].desc),
 		    "Temp%d", i + 1);
 	}
 
-	/* Enable temperature monitoring 
+	/* Enable temperature monitoring
 	 * bits 7 and 8 are reserved, so we don't change them */
 	i = it_readreg(sc, ITD_TEMPENABLE) & 0xc0;
 	it_writereg(sc, ITD_TEMPENABLE, i | 0x38);
@@ -245,7 +245,7 @@ it_setup_fan(struct it_softc *sc, int start, int n)
 
 	for (i = 0; i < n; ++i) {
 		sc->sensors[start + i].type = SENSOR_FANRPM;
-		snprintf(sc->sensors[start + i].desc, 
+		snprintf(sc->sensors[start + i].desc,
 		    sizeof(sc->sensors[start + i].desc),
 		    "Fan%d", i + 1);
 	}
@@ -281,11 +281,11 @@ it_generic_svolt(struct it_softc *sc, struct sensor *sensors)
 		/* rfact is (factor * 10^4) */
 		sensors[i].value *= sensors[i].rfact;
 		/* these two values are negative and formula is different */
-		if (i == 5) 
-			sensors[i].value -= 
+		if (i == 5)
+			sensors[i].value -=
 			    (int) (21.0 / 10 * IT_VREF * 10000);
-		if (i == 6) 
-			sensors[i].value -= 
+		if (i == 6)
+			sensors[i].value -=
 			    (int) (83.0 / 20 * IT_VREF * 10000);
 		/* division by 10 gets us back to uVDC */
 		sensors[i].value /= 10;
