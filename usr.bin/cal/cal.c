@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.2 1996/06/26 05:31:43 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.3 1996/08/11 00:46:44 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.2 1996/06/26 05:31:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.3 1996/08/11 00:46:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,8 @@ char *month_names[12] = {
 	"July", "August", "September", "October", "November", "December",
 };
 
-char *day_headings = " S  M Tu  W Th  F  S";
-char *j_day_headings = "  S   M  Tu   W  Th   F   S";
+char *day_headings = "Su Mo Tu We Th Fr Sa";
+char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
