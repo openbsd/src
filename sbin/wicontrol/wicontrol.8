@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.27 2002/04/01 06:58:24 deraadt Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.28 2002/04/01 07:00:34 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -257,8 +257,8 @@ Frequencies in the table are specified in Mhz.
 7	2442	2442	-	2442
 8	2447	2447	-	2447
 9	2452	2452	-	2452
-10	2457	2457	2457	2457
-11	2462	2462	2462*	2462
+10	2457*	2457	2457	2457
+11	2462*	2462	2462*	2462
 12	-	2467	2467	2467
 13	-	2472	2472	2472
 14	-	-	-	2484*
@@ -266,7 +266,8 @@ Frequencies in the table are specified in Mhz.
 .Ed
 .Pp
 If an illegal channel is specified, the
-NIC will revert to its default channel, indicated above with a *.
+NIC will revert to its default channel, normally one of those indicated
+above with a *.
 Note that two stations must be set to the same channel in order to
 communicate.
 Note also that the channels do overlap; the bandwidth required for
