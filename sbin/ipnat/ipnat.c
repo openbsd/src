@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.17 1997/07/08 13:15:21 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.18 1997/09/22 05:11:43 millert Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -142,9 +142,9 @@ char *argv[];
  * of bits.
  */
 int	countbits(ip)
-u_long	ip;
+u_int	ip;
 {
-	u_long	ipn;
+	u_int	ipn;
 	int	cnt = 0, i, j;
 
 	ip = ipn = ntohl(ip);
@@ -349,18 +349,18 @@ char	*name, *proto;
 }
 
 
-u_long	hostmask(msk)
+u_int	hostmask(msk)
 char	*msk;
 {
 	int	bits = -1;
-	u_long	mask;
+	u_int	mask;
 
 	if (!isdigit(*msk))
-		return (u_long)-1;
+		return (u_int)-1;
 	if (strchr(msk, '.'))
 		return inet_addr(msk);
 	if (strchr(msk, 'x'))
-		return (u_long)strtol(msk, NULL, 0);
+		return (u_int)strtol(msk, NULL, 0);
 	/*
 	 * set x most significant bits
 	 */
@@ -374,9 +374,9 @@ char	*msk;
 
 /* 
  * get_if_addr(): given a string containing an interface name (e.g. "ppp0")
- *		  return the IP address it represents as an unsigned long
+ *		  return the IP address it represents as an unsigned int
  */
-u_long	if_addr(name)
+u_int	if_addr(name)
 char	*name;
 {
 	struct ifconf ifc;
@@ -433,10 +433,10 @@ if_addr_lose:
 }
 
 /*
- * returns an ip address as a long var as a result of either a DNS lookup or
+ * returns an ip address as an int var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	hostnum(host, resolved)
+u_int	hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -451,7 +451,7 @@ int	*resolved;
 
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
-			u_long addr;
+			u_int addr;
 			if ((addr = if_addr(host)) != INADDR_NONE)
 				return addr;
 			*resolved = -1;
