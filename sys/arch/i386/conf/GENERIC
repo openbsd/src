@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.226 2001/01/28 17:45:19 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.227 2001/01/28 20:34:38 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -53,7 +53,6 @@ option		PCIVERBOSE
 option		EISAVERBOSE
 #option		PCMCIAVERBOSE
 option		USBVERBOSE
-#option		PCIBIOSVERBOSE
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
