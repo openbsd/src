@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.7 2001/05/31 13:47:20 art Exp $ */
+/*	$OpenBSD: library.c,v 1.8 2001/08/06 15:09:58 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,15 +71,6 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 	struct sod sodp;
 	char *hint;
 
-	_dl_build_sod(libname, &sodp);
-	if ((hint = _dl_findhint((char *)sodp.sod_name, sodp.sod_major,
-		sodp.sod_minor, NULL)) != NULL)
-	{
-		object = _dl_tryload_shlib(hint, type);
-		return(object);
-		
-	}
-
 	if(_dl_strchr(libname, '/')) {
 		object = _dl_tryload_shlib(libname, type);
 		return(object);
@@ -145,6 +136,16 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 			pp = 0;
 		}
 	}
+
+	_dl_build_sod(libname, &sodp);
+	if ((hint = _dl_findhint((char *)sodp.sod_name, sodp.sod_major,
+		sodp.sod_minor, NULL)) != NULL)
+	{
+		object = _dl_tryload_shlib(hint, type);
+		return(object);
+		
+	}
+
 
 	/*
 	 *  Check '/usr/lib'
