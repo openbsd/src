@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.h,v 1.7 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 2003/05/16 18:49:46 jsyn Exp $	*/
 
-/* config.h.  Generated automatically by configure.  */
-/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* config.h.  NOT generated automatically. */
+
 /*
  * This file, acconfig.h, which is a part of pdksh (the public domain ksh),
  * is placed in the public domain.  It comes with no licence, warranty
@@ -10,7 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -24,7 +23,6 @@
 
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
-
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
@@ -174,6 +172,9 @@
 /* Define if opendir() will open non-directory files */
 /* #undef OPENDIR_DOES_NONDIR */
 
+/* Define if you have a dup2() function in your C library */
+#define	HAVE_DUP2 1
+
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
 
@@ -192,44 +193,44 @@
 /* Define if your OS maps references to /dev/fd/n to file descriptor n */
 #define HAVE_DEV_FD 1
 
-/* Default PATH (see comments in configure.in for more details) */
+/* Default PATH */
 #define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
 
 /* Define if your C library's getwd/getcwd function dumps core in unreadable
  * directories.  */
 /* #undef HPUX_GETWD_BUG */
 
-/* Include ksh features? (see comments in configure.in for more details) */
+/* Include ksh features? */
 /* #define KSH 1 */
 
-/* Include emacs editing? (see comments in configure.in for more details) */
+/* Include emacs editing? */
 #define EMACS 1
 
-/* Include vi editing? (see comments in configure.in for more details) */
+/* Include vi editing? */
 #define VI 1
 
-/* Include job control? (see comments in configure.in for more details) */
+/* Include job control? */
 #define JOBS 1
 
-/* Include brace-expansion? (see comments in configure.in for more details) */
+/* Include brace-expansion? */
 #define BRACE_EXPAND 1
 
-/* Include any history? (see comments in configure.in for more details) */
+/* Include any history? */
 #define HISTORY 1
 
-/* Include complex history? (see comments in configure.in for more details) */
+/* Include complex history? */
 #define COMPLEX_HISTORY
 
-/* Strict POSIX behaviour? (see comments in configure.in for more details) */
+/* Strict POSIX behaviour? */
 /* #undef POSIXLY_CORRECT */
 
-/* Specify default $ENV? (see comments in configure.in for more details) */
+/* Specify default $ENV? */
 /* #undef DEFAULT_ENV */
 
-/* Include shl(1) support? (see comments in configure.in for more details) */
+/* Include shl(1) support? */
 /* #undef SWTCH */
 
-/* Include game-of-life? (see comments in configure.in for more details) */
+/* Include game-of-life? */
 /* #undef SILLY */
 
 /* The number of bytes in a int.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: missing.c,v 1.4 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: missing.c,v 1.5 2003/05/16 18:49:46 jsyn Exp $	*/
 
 /*
  * Routines which may be missing on some machines
@@ -7,7 +7,6 @@
 #include "sh.h"
 #include "ksh_stat.h"
 #include "ksh_dir.h"
-
 
 #ifndef HAVE_MEMSET
 void *
@@ -50,7 +49,6 @@ memmove(d, s, n)
 	return d;
 }
 #endif /* !HAVE_MEMMOVE && !HAVE_BCOPY */
-
 
 #ifndef HAVE_STRCASECMP
 /*
@@ -124,7 +122,6 @@ strncasecmp(s1, s2, n)
 }
 #endif /* HAVE_STRCASECMP */
 
-
 #ifndef HAVE_STRSTR
 char *
 strstr(s, p)
@@ -140,8 +137,7 @@ strstr(s, p)
 
 	return 0;
 }
-#endif /* HAVE_STRSTR */
-
+#endif /* !HAVE_STRSTR */
 
 #ifndef HAVE_STRERROR
 char *
@@ -189,7 +185,6 @@ strerror(err)
 # endif /* HAVE_SYS_ERRLIST */
 }
 #endif /* !HAVE_STRERROR */
-
 
 #ifdef TIMES_BROKEN
 # include "ksh_time.h"
@@ -292,4 +287,4 @@ dup2(oldd, newd)
 
 	return fcntl(oldd, F_DUPFD, newd);
 }
-#endif /* !HAVE_MEMSET */
+#endif /* !HAVE_DUP2 */
