@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.h,v 1.6 1998/03/01 00:38:24 niklas Exp $	*/
+/*	$OpenBSD: vm_pager.h,v 1.7 1999/08/18 14:05:39 art Exp $	*/
 /*	$NetBSD: vm_pager.h,v 1.10 1995/03/26 20:39:15 jtc Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #ifndef	_VM_PAGER_
 #define	_VM_PAGER_
 
+#if !defined(UVM)
 TAILQ_HEAD(pagerlst, pager_struct);
 
 struct	pager_struct {
@@ -102,6 +103,7 @@ struct	pagerops {
 	int		(*pgo_count)		/* How many pages in pager? */
 			    __P((vm_pager_t));
 };
+#endif /* !UVM */
 
 /*
  * get/put return values
@@ -124,7 +126,7 @@ struct	pagerops {
 #define VM_PAGER_UNLOCK		6
 #define VM_PAGER_REFAULT	7
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(UVM)
 extern struct pagerops *dfltpagerops;
 
 vm_pager_t	vm_pager_allocate
@@ -159,6 +161,6 @@ void		vm_pager_unmap_pages __P((vm_offset_t, int));
  */
 int		vm_pager_get __P((vm_pager_t, vm_page_t, boolean_t));
 int		vm_pager_put __P((vm_pager_t, vm_page_t, boolean_t));
-#endif
+#endif /* _KERNEL && !UVM */
 
 #endif	/* _VM_PAGER_ */
