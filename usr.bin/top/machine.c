@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.40 2004/06/11 01:32:11 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.41 2004/06/11 05:29:28 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -140,6 +140,8 @@ static int      pageshift;	/* log base 2 of the pagesize */
 /* define pagetok in terms of pageshift */
 #define pagetok(size) ((size) << pageshift)
 
+int		ncpu;
+
 unsigned int	maxslp;
 
 static int
@@ -159,7 +161,13 @@ getstathz(void)
 int
 machine_init(struct statics *statics)
 {
-	int pagesize;
+	size_t size = sizeof(ncpu);
+	int mib[2], pagesize;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
+		return (-1);
 
 	stathz = getstathz();
 	if (stathz == -1)
@@ -369,8 +377,12 @@ state_abbr(struct kinfo_proc2 *pp)
 {
 	static char buf[10];
 
-	snprintf(buf, sizeof buf, "%s/%d",
-	    state_abbrev[(unsigned char)pp->p_stat], pp->p_cpuid);
+	if (ncpu > 1)
+		snprintf(buf, sizeof buf, "%s/%d",
+		    state_abbrev[(unsigned char)pp->p_stat], pp->p_cpuid);
+	else
+		snprintf(buf, sizeof buf, "%s",
+		    state_abbrev[(unsigned char)pp->p_stat]);
 	return buf;
 }
 
