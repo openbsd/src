@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2000/05/15 06:10:20 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2002/05/30 20:46:04 espie Exp $
 
 EGCS_DIR= $(.CURDIR)/..
 .if defined(OBJMACHINE)
@@ -12,6 +12,8 @@ EGCS_OBJDIR!=	if [ -d $(EGCS_DIR)/$(OBJDIR) ]; then \
 			echo $(EGCS_DIR); \
 		fi
 
+# for libfrtbegin
+SUBDIR=libF77
 #SUBDIR=libF77 libI77 libU77
 LIB=g2c
 
@@ -37,7 +39,7 @@ DEFS=-DAllow_TYQUAD -DSTDC_HEADERS=1 -D_POSIX_SOURCE=1 -DHAVE_TEMPNAM=1 \
 -DRETSIGTYPE=void -DIEEE_drem=1 -DHAVE_CONFIG_H \
 -IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR}
 
-MISC =	F77_aloc.c main.c s_rnge.c abort_.c getarg_.c iargc_.c\
+MISC =	F77_aloc.c s_rnge.c abort_.c getarg_.c iargc_.c\
 	getenv_.c signal_.c s_stop.c s_paus.c system_.c cabs.c\
 	derf_.c derfc_.c erf_.c erfc_.c sig_die.c exit_.c setarg.c setsig.c
 POW =	pow_ci.c pow_dd.c pow_di.c pow_hh.c pow_ii.c  pow_ri.c pow_zi.c pow_zz.c \
