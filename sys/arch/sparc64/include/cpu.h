@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2002/08/02 04:22:04 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2003/02/10 10:47:58 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -230,8 +230,8 @@ int	want_resched;		/* resched() was called */
  *
  * XXX this must be per-cpu (eventually)
  */
-struct	proc *fpproc;		/* FPU owner */
-int	foundfpu;		/* true => we have an FPU */
+extern	struct proc *fpproc;	/* FPU owner */
+extern	int foundfpu;		/* true => we have an FPU */
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
