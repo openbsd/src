@@ -1,4 +1,4 @@
-/*     $OpenBSD: kerberos5.c,v 1.2 2001/05/25 10:23:07 hin Exp $       */
+/*     $OpenBSD: kerberos5.c,v 1.3 2001/06/28 14:22:16 hin Exp $       */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@
 #define Authenticator k5_Authenticator
 #include <kerberosV/krb5.h>
 #undef Authenticator
-
+#include <err.h>
 
 #include "encrypt.h"
 #include "auth.h"
