@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2003/01/06 17:04:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2003/05/05 11:12:07 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -12,6 +12,8 @@
 #include	"macro.h"
 #endif	/* NO_MACRO */
 
+#include <err.h>
+
 int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
@@ -22,21 +24,31 @@ MGWIN		*curwp;				/* current window	*/
 MGWIN		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
-static void	 edinit(void);
+static void	 edinit(PF);
 
 int
 main(int argc, char **argv)
 {
-	char	*cp;
+	char	*cp, *init_fcn_name = NULL;
+	PF init_fcn = NULL;
+	int o;
 
-	vtinit();		/* Virtual terminal.		*/
-#ifndef NO_DIR
-	dirinit();		/* Get current directory.	*/
-#endif	/* !NO_DIR */
-	edinit();		/* Buffers, windows.		*/
+	while ((o = getopt(argc, argv, "f:")) != -1)
+		switch (o) {
+		case 'f':
+			if (init_fcn_name != NULL)
+				errx(1, "cannot specify more than one "
+				    "initial function");
+			init_fcn_name = optarg;
+			break;
+		default:
+			errx(1, "usage: mg [-f <mode>] [files...]");
+		}
+	argc -= optind;
+	argv += optind;
+
 	maps_init();		/* Keymaps and modes.		*/
 	funmap_init();		/* Functions.			*/
-	ttykeymapinit();	/* Symbols, bindings.		*/
 
 	/*
 	 * This is where we initialize standalone extensions that should
@@ -48,7 +60,19 @@ main(int argc, char **argv)
 
 		grep_init();
 		theo_init();
+		mail_init();
 	}
+
+	if (init_fcn_name &&
+	    (init_fcn = name_function(init_fcn_name)) == NULL)
+		errx(1, "Unknown function `%s'", init_fcn_name);
+
+	vtinit();		/* Virtual terminal.		*/
+#ifndef NO_DIR
+	dirinit();		/* Get current directory.	*/
+#endif	/* !NO_DIR */
+	edinit(init_fcn);	/* Buffers, windows.		*/
+	ttykeymapinit();	/* Symbols, bindings.		*/
 
 	/*
 	 * doing update() before reading files causes the error messages from
@@ -62,9 +86,7 @@ main(int argc, char **argv)
 	if ((cp = startupfile(NULL)) != NULL)
 		(void)load(cp);
 #endif	/* !NO_STARTUP */
-	while (--argc > 0) {
-		argv++;
-
+	while (argc > 0) {
 		if (argv[0][0] == '+' && strlen(argv[0]) >= 2) {
 			long lval;
 			char *ep;
@@ -78,16 +100,19 @@ main(int argc, char **argv)
 			    (lval > INT_MAX || lval < INT_MIN))
 				goto notnum;
 			startrow = (int)lval;
-			continue;
-		}
+		} else {
 notnum:
-
-		cp = adjustname(*argv);
-		if (cp != NULL) {
-			curbp = findbuffer(cp);
-			(void)showbuffer(curbp, curwp, 0);
-			(void)readin(cp);
+			cp = adjustname(*argv);
+			if (cp != NULL) {
+				curbp = findbuffer(cp);
+				(void)showbuffer(curbp, curwp, 0);
+				(void)readin(cp);
+				if (init_fcn_name)
+					init_fcn();
+			}
 		}
+		argc--;
+		argv++;
 	}
 
 	/* fake last flags */
@@ -125,7 +150,7 @@ notnum:
  * Initialize default buffer and window.
  */
 static void
-edinit(void)
+edinit(PF init_fcn)
 {
 	BUFFER	*bp;
 	MGWIN	*wp;
@@ -151,6 +176,9 @@ edinit(void)
 	wp->w_ntrows = nrow - 2;		/* 2 = mode, echo.	 */
 	wp->w_force = 0;
 	wp->w_flag = WFMODE | WFHARD;		/* Full.		 */
+
+	if (init_fcn)
+		init_fcn();
 }
 
 /*
@@ -184,5 +212,5 @@ quit(int f, int n)
 int
 ctrlg(int f, int n)
 {
-	return ABORT;
+	return (ABORT);
 }
