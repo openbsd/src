@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.32 1998/09/19 23:00:50 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.33 1998/12/13 21:01:29 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.32 1998/09/19 23:00:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.33 1998/12/13 21:01:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1167,6 +1167,13 @@ reinit:
 			    sizeof(data_addr)) < 0) {
 			if (errno == EINTR)
 				continue;
+			if (activefallback) {
+				(void)close(data);
+				data = -1;
+				passivemode = 0;
+				activefallback = 0;
+				goto reinit;
+			}
 			warn("connect");
 			goto bad;
 		}
