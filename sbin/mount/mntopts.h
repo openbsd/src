@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.5 1997/03/10 04:27:41 millert Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.6 2000/06/17 18:27:07 niklas Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ struct mntopt {
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0 }
 
 /* Control flags. */
-#define MOPT_FORCE		{ "force",	1, MNT_FORCE }
+#define MOPT_FORCE		{ "force",	0, MNT_FORCE }
 #define MOPT_UPDATE		{ "update",	0, MNT_UPDATE }
 #define MOPT_RELOAD		{ "reload",	0, MNT_RELOAD }
 
