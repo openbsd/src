@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 1997/04/14 18:47:59 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 1997/04/24 00:54:34 gene Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2868,14 +2868,9 @@ bus_probe(t, bsh, offset, sz)
 	int i;
 	label_t faultbuf;
 
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
+	nofault = (int *)&faultbuf;
+	if (setjmp((label_t *)nofault)) {
+		nofault = (int *)0;
 		return (0);
 	}
 
@@ -2895,10 +2890,10 @@ bus_probe(t, bsh, offset, sz)
 #ifdef DIAGNOSTIC
 		printf("bus_probe: unsupported data size %d\n", sz);
 #endif
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		return (0);
 	}
 
-	nofault = (int *) 0;
+	nofault = (int *)0;
 	return (1);
 }
