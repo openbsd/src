@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gomoku.6,v 1.8 2001/06/06 20:52:19 pjanzen Exp $
+.\"	$OpenBSD: gomoku.6,v 1.9 2001/08/18 03:27:17 pjanzen Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,8 @@
 .Sh DESCRIPTION
 .Nm
 is a two player game where the object is to get 5 in a row horizontally,
-vertically or diagonally on a 19 by 19 grid. By convention, black always
-moves first.
+vertically or diagonally on a 19 by 19 grid.
+By convention, black always moves first.
 With no arguments,
 .Nm
 will display a playing board and prompt for moves from the user.
@@ -78,30 +78,33 @@ can be used to restore a saved game.
 The options are:
 .Bl -tag -width Ds
 .It Fl b
-This option sets background mode. Input moves are read from standard input,
-the computer picks a move, and prints it to standard output. The first
-input line should be either
+This option sets background mode.
+Input moves are read from standard input,
+the computer picks a move, and prints it to standard output.
+The first input line should be either
 .Dq black
 or
 .Dq white
 to specify whether
 .Nm
-has the first move or not respectively. This
-option was intended for game tournaments where a referee program handles
-the board display and pits one program against another.
+has the first move or not respectively.
+This option was intended for game tournaments where a referee program
+handles the board display and pits one program against another.
 .It Fl c
 Computer versus computer.
 .Nm
-will play a game against itself. This is mostly used for testing.
+will play a game against itself.
+This is mostly used for testing.
 .It Fl d
-Print debugging information. Repeating this option more than
-once yields more detailed information.
+Print debugging information.
+Repeating this option more than once yields more detailed information.
 .It Fl D Ar debugfile
 Print the debug information to
 .Ar debugfile
 instead of to the standard output.
 .It Fl u
-User versus user. This is mostly used for testing.
+User versus user.
+This is mostly used for testing.
 .El
 .Sh AUTHOR
 Ralph Campbell

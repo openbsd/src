@@ -1,4 +1,4 @@
-.\"	$OpenBSD: monop.6,v 1.6 2001/06/06 20:52:20 pjanzen Exp $
+.\"	$OpenBSD: monop.6,v 1.7 2001/08/18 03:27:17 pjanzen Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -73,7 +73,8 @@ It is not possible to input a negative number, nor is it ever necessary.
 .Em A Summary of Commands :
 .Bl -tag -width item
 .It Ic quit
-quit game.  It asks you if you're sure.
+quit game.
+It asks you if you're sure.
 .It Ic print
 print current board.
 The columns have the following meanings (column headings are the same for the
@@ -101,7 +102,8 @@ If the property is a Utility or Railroad, this is the number
 of such owned by the owner.
 If the property is land, this is the number of houses on it.
 .It Rent
-Current rent on the property.  If it is not owned, there is no rent.
+Current rent on the property.
+If it is not owned, there is no rent.
 .El
 .It Ic where
 tell where players are.

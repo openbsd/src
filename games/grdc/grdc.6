@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grdc.6,v 1.4 1999/05/23 14:11:07 aaron Exp $
+.\"	$OpenBSD: grdc.6,v 1.5 2001/08/18 03:27:17 pjanzen Exp $
 .Dd August 4, 1997
 .Dt GRDC 6
 .Os
@@ -12,14 +12,16 @@
 .Sh DESCRIPTION
 .Nm
 runs a digital clock made of reverse-video blanks on a curses
-compatible VDU screen.  With an optional numeric argument
+compatible VDU screen.
+With an optional numeric argument
 .Ar number
 it stops after
 .Ar number
 seconds (defaulting to never).
 The optional
 .Fl s
-flag makes digits scroll as they change.  In this curses mode implementation,
+flag makes digits scroll as they change.
+In this curses mode implementation,
 the scrolling option has trouble keeping up.
 .Sh AUTHOR
 Amos Shapir, modified for curses by John Lupien.

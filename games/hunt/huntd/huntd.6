@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.11 2000/01/03 20:04:24 pjanzen Exp $
+.\"	$OpenBSD: huntd.6,v 1.12 2001/08/18 03:27:17 pjanzen Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -33,10 +33,11 @@ The
 .Fl s
 option is for running
 .Nm
-forever (server mode).
+forever
+.Pq server mode .
 This is similar to running it under the control of
 .Xr inetd 8
-(see below),
+.Pq see below ,
 but it consumes a process table entry when no one is playing,
 and monitor clients are not disconnected.
 .Pp
@@ -48,7 +49,7 @@ process and thus allows for private games of
 .Pp
 The
 .Fl a Ar addr
-option is used to cause the server to listen only on a 
+option is used to cause the server to listen only on a
 specific interface address.
 The
 .Ar addr
@@ -56,15 +57,18 @@ argument must be given as an IP address.
 .Pp
 Options given with
 .Fl D
-override those read from configuration files (see
+override those read from configuration files
+.Po
+see
 .Sx CONFIGURATION ,
-below).
+below
+.Pc .
 .Ss INETD
 To run
 .Nm
 from
 .Xr inetd 8 ,
-you'll need to 
+you'll need to
 add this line to
 .Pa /etc/inetd.conf :
 .Pp
@@ -79,8 +83,8 @@ on a private port, change the port listed in
 .Ss "NETWORK RENDEZVOUS"
 When
 .Xr hunt 6
-starts up, it broadcasts on attached networks
-(using the broadcast or point-to-point destination address for each interface)
+starts up, it broadcasts on attached networks,
+using the broadcast or point-to-point destination address for each interface,
 to find a
 .Nm hunt
 game in progress.
@@ -103,8 +107,11 @@ starts, it looks for configuration files that determine
 game parameters.
 Each line of a configuration file is of the form
 .Ar var No = Ar value .
-Comments start with a hash sign (`#').
-The configuration files loaded in order (if they exist) are:
+Comments start with a hash sign
+.Pq Sq # .
+The configuration files loaded in order
+.Pq if they exist
+are:
 .Pa /etc/hunt.conf ,
 .Pa "$HOME/.hunt.conf" ,
 and
@@ -116,96 +123,140 @@ The complete list of configurable variables is as follows.
 .Pp
 .Bl -tag -width pdroneabsorb -compact
 .It Va random
-enable dispersion doors (default 1)
+enable dispersion doors
+.Pq default 1
 .It Va reflect
-enable generation of reflection walls (default 1)
+enable generation of reflection walls
+.Pq default 1
 .It Va monitor
-enable monitors (default 1)
+enable monitors
+.Pq default 1
 .It Va ooze
-enable slime shots (default 1)
+enable slime shots
+.Pq default 1
 .It Va fly
-enable flight (default 1)
+enable flight
+.Pq default 1
 .It Va volcano
-enable volcanoes (default 1)
+enable volcanoes
+.Pq default 1
 .It Va drone
-enable drone (default 1)
+enable drone
+.Pq default 1
 .It Va boots
-enable boots (default 1)
+enable boots
+.Pq default 1
 .It Va scan
-enable scanning (default 1)
+enable scanning
+.Pq default 1
 .It Va cloak
-enable cloaking (default 1)
+enable cloaking
+.Pq default 1
 .It Va logerr
-errors to stderr (default 1)
+errors to stderr
+.Pq default 1
 .It Va syslog
 errors to
 .Xr syslog 8
-(default 0)
+.Pq default 0
 .It Va scoredecay
-nr deaths before nr kills begins to decay (default 15)
+nr deaths before nr kills begins to decay
+.Pq default 15
 .It Va maxremove
-Maximum number of holes in the maze wall (default 40)
+Maximum number of holes in the maze wall
+.Pq default 40
 .It Va linger
-Seconds to keep game open with no players. \&-1 means forever. (default 90)
+Seconds to keep game open with no players. \&-1 means forever
+.Pq default 90
 .It Va flytime
-max time flying (default 20)
+max time flying
+.Pq default 20
 .It Va flystep
-max displacement each flying time unit (default 5)
+max displacement each flying time unit
+.Pq default 5
 .It Va volcano_max
-max size of volcano (default 50)
+max size of volcano
+.Pq default 50
 .It Va ptrip_face
-percentage chance of tripping a grenade on pickup (default 2)
+percentage chance of tripping a grenade on pickup
+.Pq default 2
 .It Va ptrip_back
-percentage chance of same when backing onto it (default 95)
+percentage chance of same when backing onto it
+.Pq default 95
 .It Va ptrip_side
-percentage chance of same when walking sideways into it (default 50)
+percentage chance of same when walking sideways into it
+.Pq default 50
 .It Va prandom
-percentage of time dispersion doors appear (default 1)
+percentage of time dispersion doors appear
+.Pq default 1
 .It Va preflect
-percentage of time reflection walls appear (default 1)
+percentage of time reflection walls appear
+.Pq default 1
 .It Va pshot_coll
-percentage chance of shots colliding (default 5)
+percentage chance of shots colliding
+.Pq default 5
 .It Va pgren_coll
-percentage chance of grenades colliding (default 10)
+percentage chance of grenades colliding
+.Pq default 10
 .It Va pgren_catch
-facing player chance of catching grenade (default 10)
+facing player chance of catching grenade
+.Pq default 10
 .It Va pmiss
-percentage chance of bullet missing player (default 5)
+percentage chance of bullet missing player
+.Pq default 5
 .It Va pdroneabsorb
-percentage chance of absorbing a drone (default 1)
+percentage chance of absorbing a drone
+.Pq default 1
 .It Va fall_frac
-divisor of damage used for fall damage (default 5)
+divisor of damage used for fall damage
+.Pq default 5
 .It Va bulspd
-speed of bullets (default 5)
+speed of bullets
+.Pq default 5
 .It Va ishots
-initial ammo for player (default 15)
+initial ammo for player
+.Pq default 15
 .It Va nshots
-ammo boost for all when new player joins (default 5)
+ammo boost for all when new player joins
+.Pq default 5
 .It Va maxncshot
-max number of simultaneous shots per player (default 2)
+max number of simultaneous shots per player
+.Pq default 2
 .It Va maxdam
-the initial shield for each player (default 10)
+the initial shield for each player
+.Pq default 10
 .It Va mindam
-minimum damage from one unit of ammo (default 5)
+minimum damage from one unit of ammo
+.Pq default 5
 .It Va stabdam
-damage from stabbing (default 2)
+damage from stabbing
+.Pq default 2
 .It Va killgain
-shield gained from killing someone (default 2)
+shield gained from killing someone
+.Pq default 2
 .It Va slimefactor
-charge multiplier for slime (default 3)
+charge multiplier for slime
+.Pq default 3
 .It Va slimespeed
-speed of slime (default 5)
+speed of slime
+.Pq default 5
 .It Va lavaspeed
-speed of volcano lava (default 1)
+speed of volcano lava
+.Pq default 1
 .It Va cloaklen
-duration of a cloak (default 20)
+duration of a cloak
+.Pq default 20
 .It Va scanlen
-duration of a scan (default 20)
+duration of a scan
+.Pq default 20
 .It Va mindshot
-minimum shot class needed to make a drone (default 2)
+minimum shot class needed to make a drone
+.Pq default 2
 .It Va simstep
-maximum simulation step in microseconds. Zero means traditional blocking
-behaviour. Try 55000 for something reasonable (default 0)
+maximum simulation step in microseconds.
+Zero means traditional blocking behaviour.
+Try 55000 for something reasonable
+.Pq default 0
 .El
 .Sh "FILES"
 .Bl -tag -width Pa -compact
@@ -222,5 +273,5 @@ Conrad Huang, Ken Arnold, and Greg Couch;
 .br
 University of California, San Francisco, Computer Graphics Lab
 .Pp
-David Leonard tidied up, added configuration file.
+David Leonard tidied up, and added the configuration file.
 .\"Sh BUGS
