@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:42 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/12/23 07:14:12 mickey Exp $
 
 NOMAN=
+NOOBJ=
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
