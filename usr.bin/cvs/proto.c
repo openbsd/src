@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.37 2004/12/22 00:38:25 david Exp $	*/
+/*	$OpenBSD: proto.c,v 1.38 2005/01/14 20:54:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -567,6 +568,8 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 	char buf[4096];
 	struct stat st;
 
+	cvs_log(LP_TRACE, "Sending file `%s' to server", basename(path));
+
 	if (stat(path, &st) == -1) {
 		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
 		return (-1);
@@ -577,12 +580,19 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 
 	fd = open(path, O_RDONLY, 0);
 	if (fd == -1) {
+		cvs_log(LP_ERRNO, "failed to open `%s'", path);
 		return (-1);
 	}
 
-	cvs_sendln(root, buf);
+	if (cvs_sendln(root, buf) < 0) {
+		(void)close(fd);
+		return (-1);
+	}
 	snprintf(buf, sizeof(buf), "%lld\n", st.st_size);
-	cvs_sendln(root, buf);
+	if (cvs_sendln(root, buf) < 0) {
+		(void)close(fd);
+		return (-1);
+	}
 
 	while ((ret = read(fd, buf, sizeof(buf))) != 0) {
 		if (ret == -1) {
@@ -591,7 +601,10 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 			return (-1);
 		}
 
-		cvs_sendraw(root, buf, (size_t)ret);
+		if (cvs_sendraw(root, buf, (size_t)ret) < 0) {
+			(void)close(fd);
+			return (-1);
+		}
 
 	}
 
@@ -922,6 +935,7 @@ cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
 	if (cvs_server_inlog != NULL)
 		fwrite(src, sizeof(char), len, cvs_server_inlog);
 	if (fwrite(src, sizeof(char), len, out) < len) {
+		cvs_log(LP_ERR, "failed to send data");
 		return (-1);
 	}
 
