@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2001/07/01 22:27:37 drahn Exp $
+# $OpenBSD: Makefile,v 1.13 2001/07/03 02:16:18 niklas Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -177,7 +177,7 @@ SRCS=	add_et_list.c \
 	init_creds_pw.c \
 	keyblock.c \
 	keytab.c \
-	keytab_any.c \
+	keytab_any.c \
 	keytab_file.c \
 	keytab_memory.c \
 	keytab_krb4.c \
