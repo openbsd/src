@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2004/08/05 20:56:24 pefo Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -718,6 +718,8 @@ badaddr(char *addr, u_int32_t len)
 		v = *((volatile u_int8_t *)addr);
 		break;
 	}
+	/* Make sure all loads retire before turning off fault handling!! */
+	__asm__ volatile ("sync");
 	curpcb->pcb_onfault = oldh;
 	return(0);
 }
