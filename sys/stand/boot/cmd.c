@@ -1,7 +1,7 @@
-/*	$OpenBSD: cmd.c,v 1.37 1998/04/18 07:40:03 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.38 1998/05/25 19:17:40 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997,1998 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,48 +37,29 @@
 #include <sys/reboot.h>
 #include "cmd.h"
 
-extern int debug;
-
 #define CTRL(c)	((c)&0x1f)
 
-static int Xaddr __P((void));
 static int Xboot __P((void));
-static int Xdevice __P((void));
-#ifdef DEBUG
-static int Xdebug __P((void));
-#endif
+static int Xecho __P((void));
 static int Xhelp __P((void));
-static int Ximage __P((void));
 static int Xls __P((void));
 static int Xnop __P((void));
 static int Xreboot __P((void));
-static int Xset __P((void));
 static int Xstty __P((void));
-static int Xhowto __P((void));
-static int Xtty __P((void));
 static int Xtime __P((void));
-static int Xecho __P((void));
 #ifdef MACHINE_CMD
 static int Xmachine __P((void));
 extern const struct cmd_table MACHINE_CMD[];
 #endif
+extern int Xset __P((void));
+extern int Xenv __P((void));
 
-const struct cmd_table cmd_set[] = {
-	{"addr",   CMDT_VAR, Xaddr},
-	{"howto",  CMDT_VAR, Xhowto},
-#ifdef DEBUG	
-	{"debug",  CMDT_VAR, Xdebug},
-#endif
-	{"device", CMDT_VAR, Xdevice},
-	{"tty",    CMDT_VAR, Xtty},
-	{"image",  CMDT_VAR, Ximage},
-	{NULL,0}
-};
-
+extern const struct cmd_table cmd_set[];
 const struct cmd_table cmd_table[] = {
 	{"#",      CMDT_CMD, Xnop},  /* XXX must be first */
 	{"boot",   CMDT_CMD, Xboot},
 	{"echo",   CMDT_CMD, Xecho},
+	{"env",    CMDT_CMD, Xenv},
 	{"help",   CMDT_CMD, Xhelp},
 	{"ls",     CMDT_CMD, Xls},
 #ifdef MACHINE_CMD
@@ -91,11 +72,9 @@ const struct cmd_table cmd_table[] = {
 	{NULL, 0},
 };
 
-extern const char version[];
 static void ls __P((char *, register struct stat *));
 static int readline __P((register char *, int));
 char *nextword __P((register char *));
-static int bootparse __P((int));
 static char *whatcmd
 	__P((register const struct cmd_table **ct, register char *));
 static int docmd __P((void));
@@ -307,20 +286,6 @@ nextword(p)
 	return p;
 }
 
-#ifdef DEBUG
-static int
-Xdebug()
-{
-	if (cmd.argc !=2)
-		printf(debug? "on": "off");
-	else
-		debug = (cmd.argv[1][0] == '0' ||
-			 (cmd.argv[1][0] == 'o' && cmd.argv[1][1] == 'f'))?
-			 0: 1;
-	return 0;
-}
-#endif
-
 static void
 print_help(register const struct cmd_table *ct)
 {
@@ -361,21 +326,6 @@ Xecho()
 	return 0;
 }
 
-/* called only w/ no arguments */
-static int
-Xset()
-{
-	register const struct cmd_table *ct;
-
-	printf("OpenBSD boot[%s]\n", version);
-	for (ct = cmd_set; ct->cmd_name != NULL; ct++) {
-		printf("%s\t ", ct->cmd_name);
-		(*ct->cmd_exec)();
-		putchar('\n');
-	}
-	return 0;
-}
-
 static int
 Xstty()
 {
@@ -402,57 +352,6 @@ Xstty()
 		}
 	}
 
-	return 0;
-}
-
-static int
-Xdevice()
-{
-	if (cmd.argc != 2)
-		printf(cmd.bootdev);
-	else
-		strncpy(cmd.bootdev, cmd.argv[1], sizeof(cmd.bootdev));
-	return 0;
-}
-
-static int
-Ximage()
-{
-	if (cmd.argc != 2)
-		printf(cmd.image);
-	else
-		strncpy(cmd.image, cmd.argv[1], sizeof(cmd.image));
-	return 0;
-}
-
-static int
-Xaddr()
-{
-	if (cmd.argc != 2)
-		printf("%p", cmd.addr);
-	else
-		cmd.addr = (void *)strtol(cmd.argv[1], NULL, 0);
-	return 0;
-}
-
-static int
-Xtty()
-{
-	dev_t dev;
-
-	if (cmd.argc == 1)
-		printf(ttyname(0));
-	else {
-		dev = ttydev(cmd.argv[1]);
-		if (dev == NODEV)
-			printf("%s not a console device\n", cmd.argv[1]);
-		else {
-			printf("switching console to %s\n", cmd.argv[1]);
-			if (cnset(dev))
-				printf("%s console not present\n",
-				       cmd.argv[1]);
-		}
-	}
 	return 0;
 }
 
@@ -539,28 +438,6 @@ Xnop()
 }
 
 static int
-Xhowto()
-{
-	if (cmd.argc < 2) {
-		if (cmd.boothowto) {
-			putchar('-');
-			if (cmd.boothowto & RB_ASKNAME)
-				putchar('a');
-			if (cmd.boothowto & RB_HALT)
-				putchar('b');
-			if (cmd.boothowto & RB_CONFIG)
-				putchar('c');
-			if (cmd.boothowto & RB_SINGLE)
-				putchar('s');
-			if (cmd.boothowto & RB_KDB)
-				putchar('d');
-		}
-	} else
-		bootparse(1);
-	return 0;
-}
-
-static int
 Xboot()
 {
 	if (cmd.argc > 1 && cmd.argv[1][0] != '-') {
@@ -594,47 +471,6 @@ qualify(name)
 	else
 		sprintf(cmd.path, "%s:%s", cmd.bootdev, name);
 	return cmd.path;
-}
-
-static int
-bootparse(i)
-	int i;
-{
-	register char *cp;
-	int howto = cmd.boothowto;
-
-	for (; i < cmd.argc; i++) {
-		cp = cmd.argv[i];
-		if (*cp == '-') {
-			while (*++cp) {
-				switch (*cp) {
-				case 'a':
-					howto |= RB_ASKNAME;
-					break;
-				case 'b':
-					howto |= RB_HALT;
-					break;
-				case 'c':
-					howto |= RB_CONFIG;
-					break;
-				case 's':
-					howto |= RB_SINGLE;
-					break;
-				case 'd':
-					howto |= RB_KDB;
-					break;
-				default:
-					printf("howto: bad option: %c\n", *cp);
-					return 1;
-				}
-			}
-		} else {
-			printf("boot: illegal argument %s\n", cmd.argv[i]);
-			return 1;
-		}
-	}
-	cmd.boothowto = howto;
-	return 0;
 }
 
 static int
