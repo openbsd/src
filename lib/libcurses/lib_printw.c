@@ -40,7 +40,7 @@ char buf[BUFSIZ];
 	T(("printw(%s,...) called", _nc_visbuf(fmt)));
 
 	va_start(argp, fmt);
-	vsprintf(buf, fmt, argp);
+	vnsprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(waddstr(stdscr, buf));
 }
@@ -55,7 +55,7 @@ char buf[BUFSIZ];
 	T(("wprintw(%p,%s,...) called", win, _nc_visbuf(fmt)));
 
 	va_start(argp, fmt);
-	vsprintf(buf, fmt, argp);
+	vnsprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(waddstr(win, buf));
 }
@@ -68,7 +68,7 @@ va_list argp;
 char buf[BUFSIZ];
 
 	va_start(argp, fmt);
-	vsprintf(buf, fmt, argp);
+	vsnprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(move(y, x) == OK ? waddstr(stdscr, buf) : ERR);
 }
@@ -81,7 +81,7 @@ va_list argp;
 char buf[BUFSIZ];
 
 	va_start(argp, fmt);
-	vsprintf(buf, fmt, argp);
+	vsnprintf(buf, sizeof buf, fmt, argp);
 	va_end(argp);
 	return(wmove(win, y, x) == OK ? waddstr(win, buf) : ERR);
 }
@@ -90,6 +90,6 @@ int vwprintw(WINDOW *win, const char *fmt, va_list argp)
 {
 char buf[BUFSIZ];
 
-	vsprintf(buf, fmt, argp);
+	vsnprintf(buf, sizeof buf, fmt, argp);
 	return(waddstr(win, buf));
 }
