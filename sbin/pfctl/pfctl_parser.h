@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.48 2003/02/16 14:04:34 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.49 2003/02/18 21:59:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -97,7 +97,7 @@ int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 void	pfctl_clear_pool(struct pf_pool *);
 
-int	pfctl_set_timeout(struct pfctl *, const char *, int);
+int	pfctl_set_timeout(struct pfctl *, const char *, int, int);
 int	pfctl_set_optimization(struct pfctl *, const char *);
 int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
 int	pfctl_set_logif(struct pfctl *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.152 2003/02/17 15:33:07 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.153 2003/02/18 21:59:34 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1017,61 +1017,70 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 	struct pfioc_limit pl;
 	int i;
 
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) == 0)
+		return (0);
+
 	memset(&pl, 0, sizeof(pl));
-	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
-		for (i = 0; pf_limits[i].name; i++) {
-			if (strcasecmp(opt, pf_limits[i].name) == 0) {
-				pl.index = i;
-				pl.limit = limit;
-				if ((pf->opts & PF_OPT_NOACTION) == 0) {
-					if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
-						if (errno == EBUSY) {
-							warnx("Current pool "
-							    "size exceeds "
-							    "requested "
-							    "hard limit");
-							return (1);
-						} else
-							err(1, "DIOCSETLIMIT");
-					}
+	for (i = 0; pf_limits[i].name; i++) {
+		if (strcasecmp(opt, pf_limits[i].name) == 0) {
+			pl.index = i;
+			pl.limit = limit;
+			if ((pf->opts & PF_OPT_NOACTION) == 0) {
+				if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
+					if (errno == EBUSY) {
+						warnx("Current pool "
+						    "size exceeds requested "
+						    "hard limit");
+						return (1);
+					} else
+						err(1, "DIOCSETLIMIT");
 				}
-				break;
 			}
-		}
-		if (pf_limits[i].name == NULL) {
-			warnx("Bad pool name.");
-			return (1);
+			break;
 		}
 	}
+	if (pf_limits[i].name == NULL) {
+		warnx("Bad pool name.");
+		return (1);
+	}
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set limit %s %d\n", opt, limit);
+
 	return (0);
 }
 
 int
-pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds)
+pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
 {
 	struct pfioc_tm pt;
 	int i;
 
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) == 0)
+		return (0);
+
 	memset(&pt, 0, sizeof(pt));
-	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
-		for (i = 0; pf_timeouts[i].name; i++) {
-			if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
-				pt.timeout = pf_timeouts[i].timeout;
-				break;
-			}
-		}
-
-		if (pf_timeouts[i].name == NULL) {
-			warnx("Bad timeout name.");
-			return (1);
-		}
-
-		pt.seconds = seconds;
-		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			if (ioctl(pf->dev, DIOCSETTIMEOUT, &pt))
-				err(1, "DIOCSETTIMEOUT");
+	for (i = 0; pf_timeouts[i].name; i++) {
+		if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
+			pt.timeout = pf_timeouts[i].timeout;
+			break;
 		}
 	}
+
+	if (pf_timeouts[i].name == NULL) {
+		warnx("Bad timeout name.");
+		return (1);
+	}
+
+	pt.seconds = seconds;
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCSETTIMEOUT, &pt))
+			err(1, "DIOCSETTIMEOUT");
+	}
+
+	if (pf->opts & PF_OPT_VERBOSE && ! quiet)
+		printf("set timeout %s %d\n", opt, seconds);
+
 	return (0);
 }
 
@@ -1081,22 +1090,27 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 	const struct pf_hint *hint;
 	int i, r;
 
-	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
-		for (i = 0; pf_hints[i].name; i++)
-			if (strcasecmp(opt, pf_hints[i].name) == 0)
-				break;
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) == 0)
+		return (0);
 
-		hint = pf_hints[i].hint;
-		if (hint == NULL) {
-			warnx("Bad hint name.");
-			return (1);
-		}
+	for (i = 0; pf_hints[i].name; i++)
+		if (strcasecmp(opt, pf_hints[i].name) == 0)
+			break;
 
-		for (i = 0; hint[i].name; i++)
-			if ((r = pfctl_set_timeout(pf, hint[i].name,
-			    hint[i].timeout)))
-				return (r);
+	hint = pf_hints[i].hint;
+	if (hint == NULL) {
+		warnx("Bad hint name.");
+		return (1);
 	}
+
+	for (i = 0; hint[i].name; i++)
+		if ((r = pfctl_set_timeout(pf, hint[i].name,
+		    hint[i].timeout, 1)))
+			return (r);
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set optimization %s\n", opt);
+
 	return (0);
 }
 
@@ -1105,20 +1119,25 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 {
 	struct pfioc_if pi;
 
+	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) == 0)
+		return (0);
+
 	memset(&pi, 0, sizeof(pi));
-	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
-		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			if (!strcmp(ifname, "none"))
-				bzero(pi.ifname, sizeof(pi.ifname));
-			else {
-				if (strlcpy(pi.ifname, ifname,
-				    sizeof(pi.ifname)) >= sizeof(pi.ifname))
-					errx(1, "pfctl_set_logif: strlcpy");
-			}
-			if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi))
-				err(1, "DIOCSETSTATUSIF");
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (!strcmp(ifname, "none"))
+			bzero(pi.ifname, sizeof(pi.ifname));
+		else {
+			if (strlcpy(pi.ifname, ifname,
+			    sizeof(pi.ifname)) >= sizeof(pi.ifname))
+				errx(1, "pfctl_set_logif: strlcpy");
 		}
+		if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi))
+			err(1, "DIOCSETSTATUSIF");
 	}
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set loginterface %s\n", ifname);
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.322 2003/02/17 14:36:46 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.323 2003/02/18 21:59:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -417,8 +417,6 @@ ruleset		: /* empty */
 		;
 
 option		: SET OPTIMIZATION STRING		{
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set optimization %s\n", $3);
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
 			if (pfctl_set_optimization(pf, $3) != 0) {
@@ -431,8 +429,6 @@ option		: SET OPTIMIZATION STRING		{
 		| SET LIMIT limit_spec
 		| SET LIMIT '{' limit_list '}'
 		| SET LOGINTERFACE STRING		{
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set loginterface %s\n", $3);
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
 			if (pfctl_set_logif(pf, $3) != 0) {
@@ -2629,11 +2625,9 @@ route		: /* empty */			{
 
 timeout_spec	: STRING number
 		{
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set timeout %s %u\n", $1, $2);
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
-			if (pfctl_set_timeout(pf, $1, $2) != 0) {
+			if (pfctl_set_timeout(pf, $1, $2, 0) != 0) {
 				yyerror("unknown timeout %s", $1);
 				YYERROR;
 			}
@@ -2646,8 +2640,6 @@ timeout_list	: timeout_list comma timeout_spec
 
 limit_spec	: STRING number
 		{
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set limit %s %u\n", $1, $2);
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
 			if (pfctl_set_limit(pf, $1, $2) != 0) {
