@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2002/06/08 22:40:32 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2002/06/09 02:47:10 kjell Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -124,6 +124,8 @@ struct peer {
 int	rule_consistent(struct pf_rule *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
+void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_host *,
+    struct node_host *);
 void	expand_nat(struct pf_nat *, struct node_host *, struct node_host *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
@@ -1374,7 +1376,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(rdr.ifname, $3->ifname,
 				    sizeof(rdr.ifname));
 				rdr.ifnot = $3->not;
-				free($3);
 			}
 			if ($5 != NULL) {
 				rdr.proto = $5->proto;
@@ -1385,10 +1386,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				YYERROR;
 			}
 			if ($7 != NULL) {
-				if ($7->next) {
-					yyerror("multiple rdr ip addresses");
-					YYERROR;
-				}
 				if ($7->addr.addr_dyn != NULL) {
 					if (!rdr.af) {
 						yyerror("address family (inet/"
@@ -1407,13 +1404,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.smask, &$7->mask,
 				    sizeof(rdr.smask));
 				rdr.snot  = $7->not;
-				free($7);
 			}
 			if ($9 != NULL) {
-				if ($9->next) {
-					yyerror("multiple rdr ip addresses");
-					YYERROR;
-				}
 				if ($9->addr.addr_dyn != NULL) {
 					if (!rdr.af) {
 						yyerror("address family (inet/"
@@ -1432,7 +1424,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.dmask, &$9->mask,
 				    sizeof(rdr.dmask));
 				rdr.dnot  = $9->not;
-				free($9);
 			}
 
 			rdr.dport  = $10.a;
@@ -1477,7 +1468,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				YYERROR;
 			}
 
-			pfctl_add_rdr(pf, &rdr);
+			expand_rdr(&rdr, $3, $7, $9);
 		}
 		;
 
@@ -1979,9 +1970,66 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 	FREE_LIST(struct node_host, dst_hosts);
 
 	if (!added)
-		yyerror("nat rule expands to no valid AF combination");
+		yyerror("nat rule expands to no valid combinations");
 }
 
+void
+expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
+    struct node_host *src_hosts,
+    struct node_host *dst_hosts)
+{
+	int af = r->af, added = 0;
+	char ifname[IF_NAMESIZE];
+
+	CHECK_ROOT(struct node_if, interfaces);
+	CHECK_ROOT(struct node_host, src_hosts);
+	CHECK_ROOT(struct node_host, dst_hosts);
+
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+	LOOP_THROUGH(struct node_host, src_host, src_hosts,
+	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
+
+		r->af = af;
+	    	if ((r->af && src_host->af && r->af != src_host->af) ||
+		    (r->af && dst_host->af && r->af != dst_host->af) ||
+		    (src_host->af && dst_host->af &&
+		    src_host->af != dst_host->af) ||
+		    (src_host->ifindex && dst_host->ifindex &&
+		    src_host->ifindex != dst_host->ifindex) ||
+		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
+		    src_host->ifindex != if_nametoindex(interface->ifname)) ||
+		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
+  		    dst_host->ifindex != if_nametoindex(interface->ifname)))
+			continue;
+
+ 	        if (!r->af && src_host->af)
+			r->af = src_host->af;
+		else if (!r->af && dst_host->af)
+			r->af = dst_host->af;
+
+		if (if_indextoname(src_host->ifindex, ifname))
+			memcpy(r->ifname, ifname, sizeof(r->ifname));
+		else if (if_indextoname(dst_host->ifindex, ifname))
+			memcpy(r->ifname, ifname, sizeof(r->ifname));
+		else
+			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+
+ 	        r->saddr = src_host->addr;
+		r->smask = src_host->mask;
+ 	        r->daddr = dst_host->addr;
+		r->dmask = dst_host->mask;
+
+		pfctl_add_rdr(pf, r);
+		added++;
+	)));
+
+	FREE_LIST(struct node_if, interfaces);
+	FREE_LIST(struct node_host, src_hosts);
+	FREE_LIST(struct node_host, dst_hosts);
+
+	if (!added)
+		yyerror("rdr rule expands to no valid combination");
+}
 
 #undef FREE_LIST
 #undef CHECK_ROOT
