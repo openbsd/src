@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.86 2003/03/06 03:49:50 david Exp $
+.\" $OpenBSD: pfctl.8,v 1.87 2003/03/07 13:27:12 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdehnNqrROvz
+.Op Fl AdeghnNqrROvz
 .Op Fl a Ar anchor Ns Op Ar :ruleset
 .Op Fl D Ar macro=value
 .Op Fl f Ar file
@@ -165,6 +165,8 @@ Flush the tables.
 .It Fl F Ar all
 Flush all of the above.
 .El
+.It Fl g
+Include output helpful for debugging. 
 .It Fl k Ar host
 Kill all of the state entries originating from the specified
 .Ar host .
