@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.2 1998/09/29 07:30:59 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.3 1998/10/30 19:41:14 mickey Exp $	*/
 /*	$NOWHERE: dev_hppa.c,v 2.1 1998/06/17 20:51:54 mickey Exp $	*/
 
 /*
@@ -120,11 +120,11 @@ devboot(dev, p)
 
 		switch (PAGE0->mem_boot.pz_class) {
 		case PCL_RANDOM:
-			type = 0;
+			type = 1;
 			unit = PAGE0->mem_boot.pz_layers[0];
 			break;
 		case PCL_SEQU:
-			type = 1;
+			type = 0;
 			unit = PAGE0->mem_boot.pz_layers[0];
 			break;
 		case PCL_NET_MASK|PCL_SEQU:
