@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.11 2000/08/30 01:46:34 mickey Exp $	*/
+/*	$OpenBSD: csh.c,v 1.12 2000/09/04 19:33:58 mickey Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.11 2000/08/30 01:46:34 mickey Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.12 2000/09/04 19:33:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ main(argc, argv)
     if ((tcp = getenv("PATH")) == NULL)
 	setq(STRpath, defaultpath(), &shvhed);
     else
-	importpath(SAVE(tcp));
+	importpath(str2short(tcp));
 
     set(STRshell, Strsave(STR_SHELLPATH));
 
@@ -642,7 +642,7 @@ importpath(cp)
 	    dp++;
 	}
     pv[i] = 0;
-    set1(STRpath, pv, &shvhed);
+    setq(STRpath, pv, &shvhed);
 }
 
 /*
