@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.5 1997/07/23 07:02:02 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.6 1997/07/24 03:43:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -43,9 +43,12 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/wait.h>
 
 extern char *__progname;
 
+void notify __P((char *, uid_t, gid_t, int, int));
+FILE *runsendmail __P((char *, uid_t, gid_t, int *));
 void usage __P((void));
 
 int
@@ -55,12 +58,19 @@ main(argc, argv)
 {
 	struct passwd *pw;
 	struct skey key;
-	int ch, errs, left = 0, iflag = 0, limit = 12;
-	char *name, hostname[MAXHOSTNAMELEN];
-	FILE *out;
+	int ch, errs = 0, left = 0, aflag = 0, iflag = 0, limit = 12;
+	char *name;
 
-	while ((ch = getopt(argc, argv, "il:")) != -1)
+	if (geteuid() != 0)
+		errx(1, "must be setuid root");
+
+	while ((ch = getopt(argc, argv, "ail:")) != -1)
 		switch(ch) {
+		case 'a':
+			aflag = 1;
+			if (getuid() != 0)
+				errx(1, "only root may use the -a flag");
+			break;
 		case 'i':
 			iflag = 1;
 			break;
@@ -80,47 +90,74 @@ main(argc, argv)
 	if (argc - optind > 0)
 		usage();
 
-	if ((pw = getpwuid(getuid())) == NULL)
-		errx(1, "no passwd entry for uid %u", getuid());
-	if ((name = strdup(pw->pw_name)) == NULL)
-		err(1, "cannot allocate memory");
-	sevenbit(name);
+	/* Need key.keyfile zero'd at the very least */
+	(void)memset(&key, 0, sizeof(key));
 
-	errs = skeylookup(&key, name);
-	switch (errs) {
-		case 0:		/* Success! */
+	if (aflag) {
+		while ((ch = skeygetnext(&key)) == 0) {
 			left = key.n - 1;
-			break;
-		case -1:	/* File error */
-			warnx("cannot open %s", _PATH_SKEYKEYS);
-			break;
-		case 1:		/* Unknown user */
-			warnx("%s is not listed in %s", name, _PATH_SKEYKEYS);
+			if ((pw = getpwnam(key.logname)) == NULL)
+				continue;
+			if (left >= limit)
+				continue;
+			notify(key.logname, pw->pw_uid, pw->pw_gid, left, iflag);
+		}
+		if (ch == -1)
+			errx(-1, "cannot open %s", _PATH_SKEYKEYS);
+		else
+			(void)fclose(key.keyfile);
+	} else {
+		if ((pw = getpwuid(getuid())) == NULL)
+			errx(1, "no passwd entry for uid %u", getuid());
+		if ((name = strdup(pw->pw_name)) == NULL)
+			err(1, "cannot allocate memory");
+		sevenbit(name);
+
+		errs = skeylookup(&key, name);
+		switch (errs) {
+			case 0:		/* Success! */
+				left = key.n - 1;
+				break;
+			case -1:	/* File error */
+				errx(errs, "cannot open %s", _PATH_SKEYKEYS);
+				break;
+			case 1:		/* Unknown user */
+				warnx("%s is not listed in %s", name,
+				    _PATH_SKEYKEYS);
+		}
+		(void)fclose(key.keyfile);
+
+		if (!errs && left < limit)
+			notify(name, pw->pw_uid, pw->pw_gid, left, iflag);
 	}
-	(void)fclose(key.keyfile);
+		
+	exit(errs);
+}
 
-	/* Run sendmail as user not root */
-	seteuid(getuid());
-	setuid(getuid());
+void
+notify(user, uid, gid, seq, interactive)
+	char *user;
+	uid_t uid;
+	gid_t gid;
+	int seq;
+	int interactive;
+{
+	static char hostname[MAXHOSTNAMELEN];
+	int pid;
+	FILE *out;
 
-	if (errs || left >= limit)
-		exit(errs);
-
-	if (gethostname(hostname, sizeof(hostname)) == -1)
+	/* Only set this once */
+	if (hostname[0] == '\0' && gethostname(hostname, sizeof(hostname)) == -1)
 		strcpy(hostname, "unknown");
 
-	if (iflag) {
+	if (interactive)
 		out = stdout;
-	} else {
-		char cmd[sizeof(_PATH_SENDMAIL) + 3];
+	else
+		out = runsendmail(user, uid, gid, &pid);
 
-		sprintf(cmd, "%s -t", _PATH_SENDMAIL);
-		out = popen(cmd, "w");
-	}
-
-	if (!iflag)
+	if (!interactive)
 		(void)fprintf(out,
-		    "To: %s\nSubject: IMPORTANT action required\n", name);
+		    "To: %s\nSubject: IMPORTANT action required\n", user);
 
 	(void)fprintf(out,
 "\nYou are nearing the end of your current S/Key sequence for account\n\
@@ -128,16 +165,55 @@ main(argc, argv)
 Your S/key sequence number is now %d.  When it reaches zero\n\
 you will no longer be able to use S/Key to login into the system.\n\n\
 Type \"skeyinit -s\" to reinitialize your sequence number.\n\n",
-name, hostname, left - 1);
+user, hostname, seq);
 
-	if (iflag)
-		(void)fclose(out);
-	else
-		(void)pclose(out);
-	
-	exit(0);
+	(void)fclose(out);
+	if (!interactive)
+		(void)waitpid(pid, NULL, 0);
 }
 
+FILE *
+runsendmail(user, uid, gid, pidp)
+	char *user;
+	uid_t uid;
+	gid_t gid;
+	int *pidp;
+{
+	FILE *fp;
+	int pfd[2], pid;
+
+	if (pipe(pfd) < 0)
+		return(NULL);
+
+	switch (pid = fork()) {
+	case -1:			/* fork(2) failed */
+		(void)close(pfd[0]);
+		(void)close(pfd[1]);
+		return(NULL);
+	case 0:				/* In child */
+		(void)close(pfd[1]);
+		(void)dup2(pfd[0], STDIN_FILENO);
+		(void)close(pfd[0]);
+
+		/* Run sendmail as target user not root */
+		initgroups(user, gid);
+		setegid(gid);
+		setgid(gid);
+		seteuid(uid);
+		setuid(uid);
+
+		execl(_PATH_SENDMAIL, "sendmail", "-t", NULL);
+		warn("cannot run \"%s -t\"", _PATH_SENDMAIL);
+		_exit(127);
+	}
+
+	/* In parent */
+	*pidp = pid;
+	fp = fdopen(pfd[1], "w");
+	(void)close(pfd[0]);
+
+	return(fp);
+}
 void
 usage()
 {
