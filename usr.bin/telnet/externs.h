@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.6 2001/05/25 10:24:25 hin Exp $	*/
+/*	$OpenBSD: externs.h,v 1.7 2001/07/04 15:21:02 pvalchev Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -142,7 +142,7 @@ extern int (*decrypt_input) (int);
 #define	set_my_want_state_wont(opt)	{options[opt] &= ~MY_WANT_STATE_WILL;}
 
 /*
- * Make everything symetrical
+ * Make everything symmetrical
  */
 
 #define	HIS_STATE_WILL			MY_STATE_DO
