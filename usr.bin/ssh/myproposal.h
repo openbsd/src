@@ -29,7 +29,7 @@
 	"rijndael128-cbc,rijndael192-cbc,rijndael256-cbc," \
 	"rijndael-cbc@lysator.liu.se"
 #define	KEX_DEFAULT_MAC		"hmac-sha1,hmac-md5,hmac-ripemd160@openssh.com"
-#define	KEX_DEFAULT_COMP	"zlib,none"
+#define	KEX_DEFAULT_COMP	"none,zlib"
 #define	KEX_DEFAULT_LANG	""
 
 
