@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 1996/09/30 12:30:18 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 1996/10/25 11:14:45 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -153,13 +153,9 @@
  * smaller units (fragments) only in the last direct block.  MAXBSIZE
  * primarily determines the size of buffers in the buffer pool.  It may be
  * made larger without any effect on existing file systems; however making
- * it smaller make make some file systems unmountable.
+ * it smaller makes some file systems unmountable.
  */
-#if defined(__i386__)
-#define	MAXBSIZE	16384		/* XXX MAXPHYS */
-#else
 #define	MAXBSIZE	MAXPHYS
-#endif
 #define MAXFRAG 	8
 
 /*
