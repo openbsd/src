@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.62 2002/07/10 05:08:03 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.63 2002/07/30 23:30:08 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2269,7 +2269,7 @@ icmp6_redirect_input(m, off)
 	struct in6_addr reddst6;
 	union nd_opts ndopts;
 
-	if (!m || !ifp)
+	if (!ifp)
 		return;
 
 	/* XXX if we are router, we don't update route by icmp6 redirect */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.21 2002/06/09 14:38:39 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.22 2002/07/30 23:30:08 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -648,6 +648,11 @@ defrouter_delreq(dr)
 	struct sockaddr_in6 def, mask, gw;
 	struct rtentry *oldrt = NULL;
 
+#ifdef DIAGNOSTIC
+	if (!dr)
+		panic("dr == NULL in defrouter_delreq");
+#endif
+
 	Bzero(&def, sizeof(def));
 	Bzero(&mask, sizeof(mask));
 	Bzero(&gw, sizeof(gw));	/* for safety */
@@ -661,7 +666,7 @@ defrouter_delreq(dr)
 #endif
 
 	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
-	    dr ? (struct sockaddr *)&gw : NULL,
+	    (struct sockaddr *)&gw,
 	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
 		nd6_rtmsg(RTM_DELETE, oldrt);
@@ -675,8 +680,7 @@ defrouter_delreq(dr)
 		}
 	}
 
-	if (dr)
-		dr->installed = 0;
+	dr->installed = 0;
 }
 
 /*
