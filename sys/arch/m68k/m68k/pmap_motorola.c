@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.29 2003/10/13 18:41:11 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.30 2003/11/02 13:47:28 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1997,7 +1997,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	struct pv_entry *pv, *npv;
+	struct pv_entry *pv, *prev, *cur;
 	pmap_t ptpmap;
 	st_entry_t *ste;
 	int s, bits;
@@ -2143,29 +2143,28 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		ste = pv->pv_ptste;
 		ptpmap = pv->pv_ptpmap;
-		npv = pv->pv_next;
-		if (npv) {
-			npv->pv_flags = pv->pv_flags;
-			*pv = *npv;
-			pmap_free_pv(npv);
+		cur = pv->pv_next;
+		if (cur != NULL) {
+			cur->pv_flags = pv->pv_flags;
+			*pv = *cur;
+			pmap_free_pv(cur);
 		} else
 			pv->pv_pmap = NULL;
 	} else {
-		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if (pmap == npv->pv_pmap && va == npv->pv_va)
+		prev = pv;
+		for (cur = pv->pv_next; cur != NULL; cur = cur->pv_next) {
+			if (pmap == cur->pv_pmap && va == cur->pv_va)
 				break;
-			pv = npv;
+			prev = cur;
 		}
 #ifdef DEBUG
-		if (npv == NULL)
+		if (cur == NULL)
 			panic("pmap_remove: PA not in pv_tab");
 #endif
-		ste = npv->pv_ptste;
-		ptpmap = npv->pv_ptpmap;
-		pv->pv_next = npv->pv_next;
-		pmap_free_pv(npv);
-		pg = PHYS_TO_VM_PAGE(pa);
-		pv = pg_to_pvh(pg);
+		ste = cur->pv_ptste;
+		ptpmap = cur->pv_ptpmap;
+		prev->pv_next = cur->pv_next;
+		pmap_free_pv(cur);
 	}
 #ifdef M68K_MMU_HP
 
