@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)indent.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: indent.c,v 1.1.1.1 1995/10/18 08:45:25 deraadt Exp $";
+static char rcsid[] = "$Id: indent.c,v 1.2 1996/05/21 21:51:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static char rcsid[] = "$Id: indent.c,v 1.1.1.1 1995/10/18 08:45:25 deraadt Exp $
 #include "indent_globs.h"
 #include "indent_codes.h"
 #include <ctype.h>
+#include <errno.h>
 
 char       *in_name = "Standard Input";	/* will always point to name of input
 					 * file */
@@ -1174,9 +1175,6 @@ bakcopy()
 err(msg)
 	char *msg;
 {
-	extern int errno;
-	char *strerror();
-
 	(void)fprintf(stderr, "indent: %s: %s\n", msg, strerror(errno));
 	exit(1);
 }
