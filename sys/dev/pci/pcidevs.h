@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp 
+ *		OpenBSD: pcidevs,v 1.350 2000/11/29 21:28:33 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -904,6 +904,7 @@
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* PCI-ISA */
 #define	PCI_PRODUCT_COMPAQ_OHCI	0xa0f8		/* USB OpenHost */
+#define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE3	0xae29		/* PCI-ISA */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISAPNP	0xae2b		/* PCI-ISAPnP */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
@@ -986,6 +987,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI */
+#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
 
 /* Delta Electronics products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 */

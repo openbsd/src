@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp 
+ *		OpenBSD: pcidevs,v 1.350 2000/11/29 21:28:33 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1617,6 +1617,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "USB OpenHost",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
+	    0,
+	    "Compaq",
+	    "SMART2P RAID",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE3,
 	    0,
 	    "Compaq",
@@ -1963,6 +1969,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "DEC",
 	    "DECchip 21154 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_CPQ42XX,
+	    0,
+	    "DEC",
+	    "Compaq SMART RAID 42xx",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
