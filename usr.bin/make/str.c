@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.11 1999/12/09 18:18:24 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.12 2000/06/23 16:41:53 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.11 1999/12/09 18:18:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.12 2000/06/23 16:41:53 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -51,48 +51,38 @@ static char rcsid[] = "$OpenBSD: str.c,v 1.11 1999/12/09 18:18:24 espie Exp $";
 
 /*-
  * str_concat --
- *	concatenate the two strings, inserting a space or slash between them,
- *	freeing them if requested.
+ *	concatenate the two strings, possibly inserting a separator
  *
  * returns --
  *	the resulting string in allocated space.
  */
 char *
-str_concat(s1, s2, flags)
-	char *s1, *s2;
-	int flags;
+str_concat(s1, s2, sep)
+    const char *s1, *s2;
+    char sep;
 {
-	register int len1, len2;
-	register char *result;
+    size_t len1, len2;
+    char *result;
 
-	/* get the length of both strings */
-	len1 = strlen(s1);
-	len2 = strlen(s2);
+    /* get the length of both strings */
+    len1 = strlen(s1);
+    len2 = strlen(s2);
 
-	/* allocate length plus separator plus EOS */
-	result = emalloc((u_int)(len1 + len2 + 2));
+    /* space for separator */
+    if (sep)
+	len1++;
+    result = emalloc(len1 + len2 + 1);
 
-	/* copy first string into place */
-	memcpy(result, s1, len1);
+    /* copy first string into place */
+    memcpy(result, s1, len1);
 
-	/* add separator character */
-	if (flags & STR_ADDSPACE) {
-		result[len1] = ' ';
-		++len1;
-	} else if (flags & STR_ADDSLASH) {
-		result[len1] = '/';
-		++len1;
-	}
+    /* add separator character */
+    if (sep) 
+	result[len1-1] = sep;
 
-	/* copy second string plus EOS into place */
-	memcpy(result + len1, s2, len2 + 1);
-
-	/* free original strings */
-	if (flags & STR_DOFREE) {
-		(void)free(s1);
-		(void)free(s2);
-	}
-	return(result);
+    /* copy second string plus EOS into place */
+    memcpy(result + len1, s2, len2 + 1);
+    return result;
 }
 
 /*-

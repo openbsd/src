@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.26 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.27 2000/06/23 16:41:53 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ const char *Parse_Getfilename __P((void));
 /* str.c */
 void str_init __P((void));
 void str_end __P((void));
-char *str_concat __P((char *, char *, int));
+char *str_concat __P((const char *, const char *, char));
 char **brk_string __P((char *, int *, Boolean, char **));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.51 2000/06/23 16:40:50 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.52 2000/06/23 16:41:53 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.51 2000/06/23 16:40:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.52 2000/06/23 16:41:53 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1601,7 +1601,7 @@ ParseLookupIncludeFile(spec, endSpec, isSystem)
 	    char *base, *newName;
 
 	    base = interval_dup(Parse_Getfilename(), slash);
-	    newName = str_concat(base, file, STR_ADDSLASH);
+	    newName = str_concat(base, file, '/');
 	    free(base);
 	    fullname = Dir_FindFile(newName, &parseIncPath);
 	    if (fullname == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.32 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.33 2000/06/23 16:41:53 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.32 2000/06/23 16:20:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.33 2000/06/23 16:41:53 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2433,7 +2433,7 @@ Job_Init(maxproc, maxlocal)
 	 * All default shells are located in _PATH_DEFSHELLDIR.
 	 */
 	shellName = commandShell->name;
-	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
+	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, '/');
     }
 
     if (commandShell->exit == NULL) {

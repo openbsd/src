@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.22 2000/06/23 16:15:49 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2000/06/23 16:41:52 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.22 2000/06/23 16:15:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.23 2000/06/23 16:41:52 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -379,8 +379,7 @@ DirMatchFiles (pattern, p, expansions)
 	{
 	    Lst_AtEnd(expansions,
 			    (isDot ? estrdup(entry->name) :
-			     str_concat(p->name, entry->name,
-					STR_ADDSLASH)));
+			     str_concat(p->name, entry->name, '/')));
 	}
     }
     return (0);
@@ -749,7 +748,7 @@ Dir_FindFile (name, path)
 		    continue;
 		}
 	    }
-	    file = str_concat (p->name, cp, STR_ADDSLASH);
+	    file = str_concat(p->name, cp, '/');
 	    if (DEBUG(DIR)) {
 		printf("returning %s\n", file);
 	    }
@@ -806,7 +805,7 @@ Dir_FindFile (name, path)
 	while ((ln = Lst_Next (path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p != dot) {
-		file = str_concat (p->name, name, STR_ADDSLASH);
+		file = str_concat(p->name, name, '/');
 	    } else {
 		/*
 		 * Checking in dot -- DON'T put a leading ./ on the thing.
@@ -1135,22 +1134,18 @@ Dir_MakeFlags(flag, path)
     char	  *flag;  /* flag which should precede each directory */
     Lst	    	  path;	  /* list of directories */
 {
-    char	  *str;	  /* the string which will be returned */
-    char	  *tstr;  /* the current directory preceded by 'flag' */
     LstNode	  ln;	  /* the node of the current directory */
-    Path	  *p;	  /* the structure describing the current directory */
+    BUFFER	  buf;
 
-    str = estrdup("");
+    Buf_Init(&buf, 0);
 
-    Lst_Open(path);
-    while ((ln = Lst_Next(path)) != NULL) {
-	p = (Path *)Lst_Datum(ln);
-	tstr = str_concat(flag, p->name, 0);
-	str = str_concat(str, tstr, STR_ADDSPACE | STR_DOFREE);
+    for (ln = Lst_First(path); ln != NULL; ln = Lst_Adv(ln)) {
+	    Buf_AddString(&buf, flag);
+	    Buf_AddString(&buf, ((Path *)Lst_Datum(ln))->name);
+	    Buf_AddSpace(&buf);
     }
-    Lst_Close(path);
 
-    return str;
+    return Buf_Retrieve(&buf);
 }
 
 /*-
