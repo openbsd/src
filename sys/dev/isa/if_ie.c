@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_ie.c,v 1.11 1996/05/26 00:27:21 deraadt Exp $       */
+/*    $OpenBSD: if_ie.c,v 1.12 1996/05/27 07:56:14 deraadt Exp $       */
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -421,7 +421,7 @@ sl_probe(sc, ia)
 
 	default:
 		/* Anything else is not recognized or cannot be used. */
-#ifdef DIAGNOSTIC
+#if 0
 		printf("%s: unknown AT&T board type code %d\n",
 		    sc->sc_dev.dv_xname, SL_BOARD(c));
 #endif
