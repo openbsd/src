@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.h,v 1.6 2002/05/04 11:30:06 fgsch Exp $	*/
+/*	$OpenBSD: mii.h,v 1.7 2004/10/07 22:18:48 brad Exp $	*/
 /*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
 
 /*
@@ -125,6 +125,13 @@
 #define ANAR_10		0x0020	/* local device supports 10bT */
 #define	ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
 
+#define	ANAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
+#define	ANAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
+#define	ANAR_X_PAUSE_NONE	(0 << 10)
+#define	ANAR_X_PAUSE_SYM	(1 << 10)
+#define	ANAR_X_PAUSE_ASYM	(2 << 10)
+#define	ANAR_X_PAUSE_TOWARDS	(3 << 10)
+
 #define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
 #define ANLPAR_NP	0x8000	/* Next page (ro) */
@@ -137,6 +144,14 @@
 #define ANLPAR_10_FD	0x0040	/* link partner supports 10bT FD */
 #define ANLPAR_10	0x0020	/* link partner supports 10bT */
 #define	ANLPAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+
+#define	ANLPAR_X_FD	0x0020	/* local device supports 1000BASE-X FD */
+#define	ANLPAR_X_HD	0x0040	/* local device supports 1000BASE-X HD */
+#define	ANLPAR_X_PAUSE_MASK	(3 << 10)
+#define	ANLPAR_X_PAUSE_NONE	(0 << 10)
+#define	ANLPAR_X_PAUSE_SYM	(1 << 10)
+#define	ANLPAR_X_PAUSE_ASYM	(2 << 10)
+#define	ANLPAR_X_PAUSE_TOWARDS	(3 << 10)
 
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
