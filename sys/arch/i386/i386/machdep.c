@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 1998/08/17 18:15:02 csapuntz Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.93 1998/08/30 07:30:13 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -240,8 +240,8 @@ int allowaperture = 0;
 #endif
 #endif
 
-void	cyrix6x86_cpu_setup __P((const char *));
-void	intel586_cpu_setup __P((const char *));
+void	cyrix6x86_cpu_setup __P((const char *, int));
+void	intel586_cpu_setup __P((const char *, int));
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -735,30 +735,42 @@ struct cpu_cpuid_feature i386_cpuid_features[] = {
 };
 
 void
-cyrix6x86_cpu_setup(cpu_device)
+cyrix6x86_cpu_setup(cpu_device, model)
 	const char *cpu_device;
+	int model;
 {
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	/* set up various cyrix registers */
-	/* Enable suspend on halt */
-	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
-	/* enable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
-	/* cyrix's workaround  for the "coma bug" */
-	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
-	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
-	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
-	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
-	/* disable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+	extern int cpu_feature;
 
-	printf("%s: xchg bug workaround performed\n", cpu_device);
+	switch (model) {
+	case 2:	/* M1 */
+		/* set up various cyrix registers */
+		/* Enable suspend on halt */
+		cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+		/* enable access to ccr4/ccr5 */
+		cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
+		/* cyrix's workaround  for the "coma bug" */
+		cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
+		cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
+		cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
+		cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
+		/* disable access to ccr4/ccr5 */
+		cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+
+		printf("%s: xchg bug workaround performed\n", cpu_device);
+		break;	/* fallthrough? */
+	case 4:	/* GXm */
+		/* Unset the TSC bit until calibrate_delay() gets fixed. */
+		cpu_feature &= ~CPUID_TSC;
+		break;
+	}
 #endif
 }
 
 void
-intel586_cpu_setup(cpu_device)
+intel586_cpu_setup(cpu_device, model)
 	const char *cpu_device;
+	int model;
 {
 #if defined(I586_CPU)
 	fix_f00f();
@@ -777,7 +789,7 @@ identifycpu()
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	struct cpu_cpuid_nameclass *cpup = NULL;
-	void (*cpu_setup) __P((const char *));
+	void (*cpu_setup) __P((const char *, int));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -851,6 +863,11 @@ identifycpu()
 	else
 		sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier,
 			name, classnames[class]);
+
+	/* configure the CPU if needed */
+	if (cpu_setup != NULL)
+		cpu_setup(cpu_device, model);
+
 	printf("%s: %s", cpu_device, cpu_model);
 
 #if defined(I586_CPU) || defined(I686_CPU)
@@ -922,10 +939,6 @@ identifycpu()
 	default:
 		break;
 	}
-
-	/* configure the CPU if needed */
-	if (cpu_setup != NULL)
-		cpu_setup(cpu_device);
 
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
