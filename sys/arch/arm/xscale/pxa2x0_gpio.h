@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.h,v 1.3 2005/01/14 00:55:11 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.h,v 1.4 2005/02/22 23:54:28 drahn Exp $ */
 /*	$wasabi$	*/
 
 /*
@@ -64,5 +64,6 @@ void pxa2x0_gpio_clear_intr(u_int gpio);
 void *pxa2x0_gpio_intr_establish(u_int, int, int, int (*)(void *), void *,
     char *);
 void pxa2x0_gpio_intr_disestablish(void *);
+const char *pxa2x0_gpio_intr_string(void *cookie);
 
 #endif /* _PXA2X0_GPIO_H */

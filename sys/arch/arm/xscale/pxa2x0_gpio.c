@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.14 2005/02/17 22:05:56 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.15 2005/02/22 23:54:28 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -329,6 +329,20 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 
 	FREE(gh, M_DEVBUF);
 }
+
+const char *
+pxa2x0_gpio_intr_string(void *cookie)
+{
+	static char irqstr[32];
+	struct gpio_irq_handler *gh = cookie;
+
+	if (gh == NULL)
+		snprintf(irqstr, sizeof irqstr, "couldn't establish interrupt");
+	else 
+		snprintf(irqstr, sizeof irqstr, "irq %ld", gh->gh_irq);
+	return(irqstr);
+}
+
 
 static int
 gpio_intr0(void *arg)
