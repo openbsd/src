@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.13 1999/04/19 21:04:41 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.101 1999/04/17 23:20:29 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.14 1999/04/27 21:05:18 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.103 1999/04/27 09:42:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -76,20 +76,32 @@ struct ipsec_decode_arg {
   struct proto *proto;
 };
 
+/* These variables hold the contacted peers ADT state.  */
+struct contact {
+  struct sockaddr *addr;
+  socklen_t len;
+} *contacts = 0;
+size_t contact_cnt = 0, contact_limit = 0;
+
+static int addr_cmp (const void *, const void *);
+static int ipsec_add_contact (struct message *msg);
+static int ipsec_contacted (struct message *msg);
 static int ipsec_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
 static void ipsec_delete_spi (struct sa *, struct proto *, int);
 static u_int16_t *ipsec_exchange_script (u_int8_t);
 static void ipsec_finalize_exchange (struct message *);
-static void ipsec_set_network (u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static void ipsec_free_exchange_data (void *);
 static void ipsec_free_proto_data (void *);
 static void ipsec_free_sa_data (void *);
 static struct keystate *ipsec_get_keystate (struct message *);
 static u_int8_t *ipsec_get_spi (size_t *, u_int8_t, struct message *);
+static int ipsec_handle_leftover_payload (struct message *, u_int8_t,
+					   struct payload *);
 static int ipsec_initiator (struct message *);
 static void ipsec_proto_init (struct proto *, char *);
 static int ipsec_responder (struct message *);
 static void ipsec_setup_situation (u_int8_t *);
+static void ipsec_set_network (u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static size_t ipsec_situation_size (void);
 static u_int8_t ipsec_spi_size (u_int8_t);
 static int ipsec_validate_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
@@ -115,6 +127,7 @@ static struct doi ipsec_doi = {
   ipsec_free_sa_data,
   ipsec_get_keystate,
   ipsec_get_spi,
+  ipsec_handle_leftover_payload,
   ipsec_is_attribute_incompatible,
   ipsec_proto_init,
   ipsec_setup_situation,
@@ -237,10 +250,8 @@ ipsec_finalize_exchange (struct message *msg)
   struct ipsec_exch *ie = exchange->data;
   struct sa *sa = 0, *old_sa;
   struct proto *proto, *last_proto = 0;
-  struct timeval expiration;
   struct sockaddr *addr;
   int len;
-  u_int64_t seconds;
 
   switch (exchange->phase)
     {
@@ -264,47 +275,7 @@ ipsec_finalize_exchange (struct message *msg)
 
       /* If a lifetime was negotiated setup the expiration timers.  */
       if (isakmp_sa->seconds)
-	{
-	  /* 
-	   * Decrease lifetime by random 0-5% to break strictly synchronized
-	   * renegotiations. Works better when the randomization is of the
-	   * order of processing plus network-roundtrip times, or larger.
-	   * I.e depends on configuration and negotiated lifetimes.
-	   * XXX Better scheme to come?
-	   */
-	  seconds = isakmp_sa->seconds * (950 + sysdep_random () % 51) / 1000;
-
-	  log_debug (LOG_TIMER, 95, 
-		     "ipsec_finalize_exchange: "
-		     "ISAKMP SA lifetime reset from %qd to %qd seconds",
-		     isakmp_sa->seconds, seconds);
-
-	  gettimeofday (&expiration, 0);
-	  expiration.tv_sec += seconds * 9 / 10;
-	  isakmp_sa->soft_death
-	    = timer_add_event ("sa_soft_expire",
-			       (void (*) (void *))sa_soft_expire, isakmp_sa,
-			       &expiration);
-	  if (!isakmp_sa->soft_death)
-	    {
-	      /* If we don't give up we might start leaking... */
-	      sa_delete (isakmp_sa, 1);
-	      return;
-	    }
-
-	  gettimeofday(&expiration, 0);
-	  expiration.tv_sec += seconds;
-	  isakmp_sa->death
-	    = timer_add_event ("sa_hard_expire",
-			       (void (*) (void *))sa_hard_expire, isakmp_sa,
-			       &expiration);
-	  if (!isakmp_sa->death)
-	    {
-	      /* If we don't give up we might start leaking... */
-	      sa_delete (isakmp_sa, 1);
-	      return;
-	    }
-	}
+	sa_setup_expirations (isakmp_sa);
       break;
 
     case 2:
@@ -845,6 +816,11 @@ static enum transform from_ike_crypto (u_int16_t crypto)
   return crypto;
 }
 
+/*
+ * Find out whether the attribute of type TYPE with a LEN length value
+ * pointed to by VALUE is incompatible with what we can handle.
+ * VMSG is a pointer to the current message.
+ */
 int
 ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 				 u_int16_t len, void *vmsg)
@@ -927,6 +903,10 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
   return 1;
 }
 
+/*
+ * Log the attribute of TYPE with a LEN length value pointed to by VALUE
+ * in human-readable form.  VMSG is a pointer to the current message.
+ */
 int
 ipsec_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 		       void *vmsg)
@@ -949,6 +929,11 @@ ipsec_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
   return 0;
 }
 
+/*
+ * Decode the attribute of type TYPE with a LEN length value pointed to by
+ * VALUE.  VIDA is a pointer to a context structure where we can find the
+ * current message, SA and protocol.
+ */
 int
 ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 			void *vida)
@@ -1156,6 +1141,10 @@ ipsec_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   sysdep_ipsec_delete_spi (sa, proto, incoming);
 }
 
+/*
+ * Store BUF into the g^x entry of the exchange that message MSG belongs to.
+ * PEER is non-zero when the value is our peer's, and zero when it is ours.
+ */
 static int
 ipsec_g_x (struct message *msg, int peer, u_int8_t *buf)
 {
@@ -1259,6 +1248,51 @@ ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
     }
 }
 
+/*
+ * We have gotten a payload PAYLOAD of type TYPE, which did not get handled
+ * by the logic of the exchange MSG takes part in.  Now is the time to deal
+ * with such a payload if we know how to, if we don't, return -1, otherwise
+ * 0.
+ */
+int
+ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
+			       struct payload *payload)
+{
+  struct sockaddr *dst;
+  socklen_t dstlen;
+  struct sa *sa;
+
+  /* So far, the only thing we handle is an INITIAL-CONTACT NOTIFY.  */
+  switch (type)
+    {
+    case ISAKMP_PAYLOAD_NOTIFY:
+      switch (GET_ISAKMP_NOTIFY_MSG_TYPE (payload->p))
+	{
+	case IPSEC_NOTIFY_INITIAL_CONTACT:
+	  /*
+	   * Find out who is sending this and then delete every SA that is
+	   * ready.  Exchanges will timeout themselves and then the
+	   * non-ready SAs will disappear too.
+	   */
+	  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+	  while ((sa = sa_lookup_by_peer (dst, dstlen)) != 0)
+	    {
+	      log_debug (LOG_SA, 30,
+			 "ipsec_handle_leftover_payload: "
+			 "INITIAL-CONTACT made us delete SA %p",
+			 sa);
+	      sa_delete (sa, 0);
+	    }
+
+	  payload->flags |= PL_MARK;
+	  return 0;
+	  break;
+	}
+    }
+  return -1;
+}
+
+/* Return the encryption keylength in octets of the ESP protocol PROTO.  */
 int
 ipsec_esp_enckeylength (struct proto *proto)
 {
@@ -1282,6 +1316,7 @@ ipsec_esp_enckeylength (struct proto *proto)
     }
 }
 
+/* Return the authentication keylength in octets of the ESP protocol PROTO.  */
 int
 ipsec_esp_authkeylength (struct proto *proto)
 {
@@ -1298,6 +1333,7 @@ ipsec_esp_authkeylength (struct proto *proto)
     }
 }
 
+/* Return the authentication keylength in octets of the AH protocol PROTO.  */
 int
 ipsec_ah_keylength (struct proto *proto)
 {
@@ -1312,6 +1348,7 @@ ipsec_ah_keylength (struct proto *proto)
     }
 }
 
+/* Return the total keymaterial length of the protocol PROTO.  */
 int
 ipsec_keymat_length (struct proto *proto)
 {
@@ -1500,4 +1537,111 @@ ipsec_proto_init (struct proto *proto, char *section)
   if (proto->sa->phase == 2 && section)
     iproto->replay_window
       = conf_get_num (section, "ReplayWindow", DEFAULT_REPLAY_WINDOW);
+}
+
+/*
+ * Add a notification payload of type INITIAL CONTACT to MSG if this is
+ * the first contact we have made to our peer.
+ */
+int
+ipsec_initial_contact (struct message *msg)
+{
+  u_int8_t *buf;
+
+  if (ipsec_contacted (msg))
+    return 0;
+
+  buf = malloc (ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN);
+  if (!buf)
+    {
+      log_error ("ike_phase_1_initial_contact: malloc (%d) failed",
+		 ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN);
+      return -1;
+    }
+  SET_ISAKMP_NOTIFY_DOI (buf, IPSEC_DOI_IPSEC);
+  SET_ISAKMP_NOTIFY_PROTO (buf, ISAKMP_PROTO_ISAKMP);
+  SET_ISAKMP_NOTIFY_SPI_SZ (buf, ISAKMP_HDR_COOKIES_LEN);
+  SET_ISAKMP_NOTIFY_MSG_TYPE (buf, IPSEC_NOTIFY_INITIAL_CONTACT);
+  memcpy (buf + ISAKMP_NOTIFY_SPI_OFF, msg->isakmp_sa->cookies,
+	  ISAKMP_HDR_COOKIES_LEN);
+  if (message_add_payload (msg, ISAKMP_PAYLOAD_NOTIFY, buf,
+			   ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN, 1))
+    {
+      free (buf);
+      return -1;
+    }
+
+  return ipsec_add_contact (msg);
+}
+
+/*
+ * Compare the two contacts pointed to by A and B.  Return negative if
+ * *A < *B, 0 if they are equal, and positive if *A is the largest of them.
+ */
+static int
+addr_cmp (const void *a, const void *b)
+{
+  const struct contact *x = a, *y = b;
+  int minlen = MIN (x->len, y->len);
+  int rv = memcmp (x->addr, y->addr, minlen);
+
+  return rv ? rv : (x->len - y->len);
+}
+
+/*
+ * Add the peer that MSG is bound to as an address we don't want to send
+ * INITIAL CONTACT too from now on.  Do not call this function with a
+ * specific address duplicate times. We want fast lookup, speed of insertion
+ * is unimportant, if this is to scale.
+ */
+static int
+ipsec_add_contact (struct message *msg)
+{
+  struct contact *new_contacts;
+  struct sockaddr *dst, *addr;
+  socklen_t dstlen;
+
+  if (contact_cnt == contact_limit)
+    {
+      new_contacts = realloc (contacts,
+			      contact_limit ? 2 * contact_limit : 64);
+      if (!new_contacts)
+	{
+	  log_error ("ipsec_add_contact: realloc (%p, %d) failed", contacts,
+		     2 * contact_limit);
+	  return -1;
+	}
+      contact_limit *= 2;
+      contacts = new_contacts;
+    }
+  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+  addr = malloc (dstlen);
+  if (!addr)
+    {
+      log_error ("ipsec_add_contact: malloc (%d) failed", dstlen);
+      return -1;
+    }
+  memcpy (addr, dst, dstlen);
+  contacts[contact_cnt].addr = addr;
+  contacts[contact_cnt++].len = dstlen;
+
+  /*
+   * XXX There are better algorithms for already mostly-sorted data like
+   * this, but only qsort is standard.  I will someday do this inline.
+   */
+  qsort (contacts, contact_cnt, sizeof *contacts, addr_cmp);
+  return 0;
+}
+
+/* Return true if the recipient of MSG has already been contacted.  */
+static int
+ipsec_contacted (struct message *msg)
+{
+  struct contact contact;
+
+  msg->transport->vtbl->get_dst (msg->transport, &contact.addr, &contact.len);
+  return contacts
+    ? (bsearch (&contact, contacts, contact_cnt, sizeof *contacts, addr_cmp)
+       != 0)
+    : 0;
 }
