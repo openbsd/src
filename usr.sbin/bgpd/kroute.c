@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.82 2004/01/30 15:44:46 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.83 2004/02/07 00:16:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1155,12 +1155,10 @@ dispatch_rtmsg(void)
 				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 				sa_in = (struct sockaddr_in *)
 				    rti_info[RTAX_NETMASK];
-				if (sa_in != NULL) {
-					if (sa_in->sin_family != AF_INET)
-						continue;
+				if (sa_in != NULL)
 					prefixlen = mask2prefixlen(
 					    sa_in->sin_addr.s_addr);
-				} else if (rtm->rtm_flags & RTF_HOST)
+				else if (rtm->rtm_flags & RTF_HOST)
 					prefixlen = 32;
 				else
 					prefixlen =
