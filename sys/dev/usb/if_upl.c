@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.7 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.8 2002/06/07 06:26:28 fgsch Exp $ */
 /*	$NetBSD: if_upl.c,v 1.15 2001/06/14 05:44:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -596,7 +596,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		    __FUNCTION__, m->m_len));
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	IF_INPUT(ifp, m);
 #else
 	upl_input(ifp, m);
