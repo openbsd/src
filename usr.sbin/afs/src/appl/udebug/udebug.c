@@ -69,7 +69,7 @@ newhost(u_int32_t **hosts, int *len, char *host)
     
     ptr = realloc(*hosts, sizeof(u_int32_t) * ++*len);
     if (ptr == NULL) {
-	free(hosts);
+	free(*hosts);
 	hosts = NULL;
 	err(1, "realloc");
     }
