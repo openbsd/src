@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.17 2001/06/23 03:30:37 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.18 2001/06/24 04:18:41 matthieu Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -405,10 +405,6 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		goto done;
 	}
 
-	if (!(flag & FWRITE))
-		return EPERM;
-
-
 	tag = pci_make_tag(pc, io->pi_sel.pc_bus, io->pi_sel.pc_dev,
 			   io->pi_sel.pc_func);
 
@@ -433,6 +429,9 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case PCIOCWRITE:
+		if (!(flag & FWRITE))
+			return EPERM;
+
 		switch(io->pi_width) {
 		case 4:
 			/* Make sure the register is properly aligned */
