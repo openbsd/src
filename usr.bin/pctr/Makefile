@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2000/05/27 05:51:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/07/19 00:03:52 david Exp $
 
 MAN=pctr.1
-MANSUBDIR=/i386
+MANSUBDIR=i386
 
 .if ${MACHINE} == "i386"
 PROG=	pctr
