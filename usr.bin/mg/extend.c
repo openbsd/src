@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.17 2001/05/24 10:43:17 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.18 2001/07/05 17:36:05 matthieu Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -647,7 +647,7 @@ load(fname)
 	char *fname;
 {
 	int	 s = TRUE;
-	int	 nbytes;
+	int	 nbytes = 0;
 	char	 excbuf[128];
 
 	if ((fname = adjustname(fname)) == NULL)
