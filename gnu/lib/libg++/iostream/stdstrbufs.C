@@ -53,9 +53,17 @@
 #define vt_filebuf __vtbl__7filebuf
 extern char vt_filebuf[1];
 #elif _G_DOLLAR_IN_LABEL
+#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+extern char vt_filebuf[1] asm(UNDERSCORE "_vt$7filebuf");
+#else
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt$filebuf");
+#endif
+#else
+#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+extern char vt_filebuf[1] asm(UNDERSCORE "_vt.7filebuf");
 #else
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt.filebuf");
+#endif
 #endif
 #endif /* !defined(vt_filebuf) */
 
@@ -85,9 +93,17 @@ DEF_FILEBUF(__std_filebuf_2, 2, (streambuf*)&__std_filebuf_1,
 #define vt_stdiobuf __vtbl__8stdiobuf
 extern char vt_stdiobuf[1];
 #elif _G_DOLLAR_IN_LABEL
+#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt$8stdiobuf");
+#else
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt$stdiobuf");
+#endif
+#else
+#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt.8stdiobuf");
 #else
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt.stdiobuf");
+#endif
 #endif
 #endif /* !defined(vt_stdiobuf) */
 

@@ -144,7 +144,8 @@ void strstreambuf::init_static(char *ptr, int size, char *pstart)
 	// This can lose in pathological cases (ptr near the end
 	// of the address space).  A better solution might be to
 	// adjust the size on underflow/overflow.  FIXME.
-	for (int s; s = 2*size, s > 0 && ptr + s > ptr && s < 0x4000000L; )
+	int s;
+	for (; s = 2*size, s > 0 && ptr + s > ptr && s < 0x4000000L; )
 	    size = s;
 	size = s;
 #else
