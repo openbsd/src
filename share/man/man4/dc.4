@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.22 2001/10/05 19:08:14 nate Exp $
+.\"	$OpenBSD: dc.4,v 1.23 2002/02/17 05:16:36 nate Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm dc
-.Nd DEC/Intel 21143 and clone 10/100 Ethernet driver
+.Nd DEC/Intel 21140, 21143 and clone 10/100 Ethernet driver
 .Sh SYNOPSIS
 .Cd "dc* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -47,6 +47,8 @@ driver provides support for several PCI and CardBus Fast Ethernet adapters
 and embedded controllers based on the following chipsets:
 .Pp
 .Bl -bullet -compact -offset indent
+.It
+DEC 21140 PCI
 .It
 DEC/Intel 21143 PCI and CardBus
 .It
@@ -70,7 +72,7 @@ Xircom X3201-based CardBus
 All of these chips have the same general register layout, DMA
 descriptor format and method of operation.
 All of the clone chips are based on the 21143 design with
-various modifications.
+various modifications.  (The 21140 is an older version of the 21143.)
 The 21143 itself has support for 10baseT, BNC, AUI, MII and symbol
 media attachments, 10 and 100Mbps speeds in full or half duplex,
 built in NWAY autonegotiation and wake on LAN.
