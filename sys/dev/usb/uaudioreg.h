@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudioreg.h,v 1.10 2002/07/25 04:07:32 nate Exp $ */
-/*	$NetBSD: uaudioreg.h,v 1.9 2002/07/11 21:14:27 augustss Exp $	*/
+/*	$OpenBSD: uaudioreg.h,v 1.11 2003/05/19 05:27:00 nate Exp $ */
+/*	$NetBSD: uaudioreg.h,v 1.11 2002/10/23 02:32:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 
 #define UAUDIO_VERSION		0x100
 
-#define UDESC_CS_DEVICE		0x21
 #define UDESC_CS_CONFIG		0x22
 #define UDESC_CS_STRING		0x23
 #define UDESC_CS_INTERFACE	0x24
@@ -126,6 +125,14 @@ struct usb_audio_cluster {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 } UPACKED;
+
+/* Shared by all units and terminals */
+struct usb_audio_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bUnitId;
+};
 
 /* UDESCSUB_AC_INPUT */
 struct usb_audio_input_terminal {

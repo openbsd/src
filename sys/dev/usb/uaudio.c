@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.15 2003/05/07 04:33:33 deraadt Exp $ */
-/*	$NetBSD: uaudio.c,v 1.60 2002/05/18 15:14:39 kent Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.16 2003/05/19 05:27:00 nate Exp $ */
+/*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct as_info {
 };
 
 struct chan {
-	void	(*intr)(void *);	/* dma completion intr handler */
+	void	(*intr)(void *);	/* DMA completion intr handler */
 	void	*arg;		/* arg for intr() */
 	usbd_pipe_handle pipe;
 
@@ -143,6 +143,7 @@ struct chan {
 		usbd_xfer_handle xfer;
 		u_char		*buffer;
 		u_int16_t	sizes[UAUDIO_NFRAMES];
+		u_int16_t	offsets[UAUDIO_NFRAMES];
 		u_int16_t	size;
 	} chanbufs[UAUDIO_NCHANBUFS];
 
@@ -187,6 +188,7 @@ struct uaudio_softc {
 #define UAC_OUTPUT 0
 #define UAC_INPUT  1
 #define UAC_EQUAL  2
+#define UAC_NCLASSES 3
 
 Static usbd_status	uaudio_identify_ac(struct uaudio_softc *sc,
 					   usb_config_descriptor_t *cdesc);
@@ -198,6 +200,8 @@ Static usbd_status	uaudio_process_as(struct uaudio_softc *sc,
 
 Static void		uaudio_add_alt(struct uaudio_softc *sc,
 				       struct as_info *ai);
+Static void		uaudio_mixer_alias_ctl(struct uaudio_softc *sc,
+			     struct mixerctl *mp, const char *ctl);
 
 Static usb_interface_descriptor_t *uaudio_find_iface(char *buf,
 			    int size, int *offsp, int subtype);
@@ -250,7 +254,7 @@ Static usbd_status	uaudio_chan_alloc_buffers(struct uaudio_softc *,
 Static void		uaudio_chan_free_buffers(struct uaudio_softc *,
 						 struct chan *);
 Static void		uaudio_chan_init(struct chan *, int,
-					 const struct audio_params *);
+					 const struct audio_params *, int);
 Static void		uaudio_chan_set_param(struct chan *ch, u_char *start,
 			    u_char *end, int blksize);
 Static void		uaudio_chan_ptransfer(struct chan *ch);
@@ -411,6 +415,8 @@ USB_ATTACH(uaudio)
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_playchan.sc = sc->sc_recchan.sc = sc;
+	sc->sc_playchan.altidx = -1;
+	sc->sc_recchan.altidx = -1;
 
 	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
 		sc->sc_altflags |= UA_NOFRAC;
@@ -429,6 +435,16 @@ USB_ATTACH(uaudio)
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
+
+/*
+ * Macros to help sync OpenBSD to NetBSD
+ */
+#if defined(__OpenBSD__)
+#define hw_channels channels
+#define hw_sample_rate sample_rate
+#define hw_precision precision
+#define hw_encoding encoding
+#endif
 
 int
 uaudio_activate(device_ptr_t self, enum devact act)
@@ -605,6 +621,15 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 			 mc->minval, mc->maxval));
 	}
 #endif
+}
+
+void
+uaudio_mixer_alias_ctl(struct uaudio_softc *sc, struct mixerctl *mc,
+		     const char *name)
+{
+	/* XXX mark as alias? */
+	strcpy(mc->ctlname, name);
+	uaudio_mixer_add_ctl(sc, mc);
 }
 
 char *
@@ -841,47 +866,51 @@ uaudio_add_feature(struct uaudio_softc *sc, usb_descriptor_t *v,
 			continue;
 		}
 #undef GET
-		mix.class = -1;	/* XXX */
+		mix.class = UAC_OUTPUT;	/* XXX we don't really know this */
 		switch (ctl) {
 		case MUTE_CONTROL:
 			mix.type = MIX_ON_OFF;
+			mix.ctlunit = "";
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNmute);
 			snprintf(mix.ctlname, sizeof mix.ctlname,
 				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmute);
-			mix.ctlunit = "";
 			break;
 		case VOLUME_CONTROL:
 			mix.type = MIX_SIGNED_16;
+			mix.ctlunit = AudioNvolume;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNmaster);
 			snprintf(mix.ctlname, sizeof mix.ctlname,
 				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmaster);
-			mix.ctlunit = AudioNvolume;
 			break;
 		case BASS_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNbass;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNbass);
 			snprintf(mix.ctlname, sizeof mix.ctlname,
 				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNbass);
-			mix.ctlunit = AudioNbass;
 			break;
 		case MID_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNmid;
 			snprintf(mix.ctlname, sizeof mix.ctlname,
 				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNmid);
-			mix.ctlunit = AudioNmid;
 			break;
 		case TREBLE_CONTROL:
 			mix.type = MIX_SIGNED_8;
+			mix.ctlunit = AudioNtreble;
+			uaudio_mixer_alias_ctl(sc, &mix, AudioNtreble);
 			snprintf(mix.ctlname, sizeof mix.ctlname,
 				"fea%d-%s-%s", unit,
 				uaudio_id_name(sc, dps, srcId),
 				AudioNtreble);
-			mix.ctlunit = AudioNtreble;
 			break;
 		case GRAPHIC_EQUALIZER_CONTROL:
 			continue; /* XXX don't add anything */
@@ -1211,7 +1240,6 @@ usbd_status
 uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 {
 	usb_interface_descriptor_t *id;
-	usbd_status err;
 	char *buf;
 	int size, offs;
 
@@ -1235,7 +1263,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 			sc->sc_nullalt = id->bAlternateSetting;
 			break;
 		case 1:
-			err = uaudio_process_as(sc, buf, &offs, size, id);
+			uaudio_process_as(sc, buf, &offs, size, id);
 			break;
 		default:
 #ifdef UAUDIO_DEBUG
@@ -1382,33 +1410,33 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 	n = mi->index;
 	nctls = sc->sc_nctls;
 
-	if (n < 0 || n >= nctls) {
-		switch (n - nctls) {
-		case UAC_OUTPUT:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_OUTPUT;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strlcpy(mi->label.name, AudioCoutputs,
-			    sizeof mi->label.name);
-			return (0);
-		case UAC_INPUT:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_INPUT;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strlcpy(mi->label.name, AudioCinputs,
-			    sizeof mi->label.name);
-			return (0);
-		case UAC_EQUAL:
-			mi->type = AUDIO_MIXER_CLASS;
-			mi->mixer_class = nctls + UAC_EQUAL;
-			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strlcpy(mi->label.name, AudioCequalization,
-			    sizeof mi->label.name);
-			return (0);
-		default:
-			return (ENXIO);
-		}
+	switch (n) {
+	case UAC_OUTPUT:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_OUTPUT;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCoutputs);
+		return (0);
+	case UAC_INPUT:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_INPUT;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCinputs);
+		return (0);
+	case UAC_EQUAL:
+		mi->type = AUDIO_MIXER_CLASS;
+		mi->mixer_class = UAC_EQUAL;
+		mi->next = mi->prev = AUDIO_MIXER_LAST;
+		strcpy(mi->label.name, AudioCequalization);
+		return (0);
+	default:
+		break;
 	}
+
+	n -= UAC_NCLASSES;
+	if (n < 0 || n >= nctls)
+		return (ENXIO);
+
 	mc = &sc->sc_ctls[n];
 	strlcpy(mi->label.name, mc->ctlname, sizeof mi->label.name);
 	mi->mixer_class = mc->class;
@@ -1721,7 +1749,7 @@ uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 	if (sc->sc_dying)
 		return (EIO);
 
-	n = cp->dev;
+	n = cp->dev - UAC_NCLASSES;
 	if (n < 0 || n >= sc->sc_nctls)
 		return (ENXIO);
 	mc = &sc->sc_ctls[n];
@@ -1761,7 +1789,7 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	if (sc->sc_dying)
 		return (EIO);
 
-	n = cp->dev;
+	n = cp->dev - UAC_NCLASSES;
 	if (n < 0 || n >= sc->sc_nctls)
 		return (ENXIO);
 	mc = &sc->sc_ctls[n];
@@ -2081,13 +2109,8 @@ uaudio_chan_rtransfer(struct chan *ch)
 	total = 0;
 	for (i = 0; i < UAUDIO_NFRAMES; i++) {
 		size = ch->bytes_per_frame;
-		residue += ch->fraction;
-		if (residue >= USB_FRAMES_PER_SECOND) {
-			if ((ch->sc->sc_altflags & UA_NOFRAC) == 0)
-				size += ch->sample_size;
-			residue -= USB_FRAMES_PER_SECOND;
-		}
 		cb->sizes[i] = size;
+		cb->offsets[i] = total;
 		total += size;
 	}
 	ch->residue = residue;
@@ -2119,7 +2142,7 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct chanbuf *cb = priv;
 	struct chan *ch = cb->chan;
 	u_int32_t count;
-	int s, n;
+	int s, i, n, frsize;
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -2129,16 +2152,10 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTFN(5,("uaudio_chan_rintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 
-	if (count < cb->size) {
-		/* if the device fails to keep up, copy last byte */
-		u_char b = count ? cb->buffer[count-1] : 0;
-		while (count < cb->size)
-			cb->buffer[count++] = b;
-	}
-
+	/* count < cb->size is normal for asynchronous source */
 #ifdef DIAGNOSTIC
-	if (count != cb->size) {
-		printf("uaudio_chan_rintr: count(%d) != size(%d)\n",
+	if (count > cb->size) {
+		printf("uaudio_chan_rintr: count(%d) > size(%d)\n",
 		       count, cb->size);
 	}
 #endif
@@ -2147,18 +2164,22 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	 * Transfer data from channel buffer to upper layer buffer, taking
 	 * care of wrapping the upper layer buffer.
 	 */
-	n = min(count, ch->end - ch->cur);
-	memcpy(ch->cur, cb->buffer, n);
-	ch->cur += n;
-	if (ch->cur >= ch->end)
-		ch->cur = ch->start;
-	if (count > n) {
-		memcpy(ch->cur, cb->buffer + n, count - n);
-		ch->cur += count - n;
+	for(i = 0; i < UAUDIO_NFRAMES; i++) {
+		frsize = cb->sizes[i];
+		n = min(frsize, ch->end - ch->cur);
+		memcpy(ch->cur, cb->buffer + cb->offsets[i], n);
+		ch->cur += n;
+		if (ch->cur >= ch->end)
+			ch->cur = ch->start;
+		if (frsize > n) {
+			memcpy(ch->cur, cb->buffer + cb->offsets[i] + n,
+			    frsize - n);
+			ch->cur += frsize - n;
+		}
 	}
 
 	/* Call back to upper layer */
-	ch->transferred += cb->size;
+	ch->transferred += count;
 	s = splaudio();
 	while (ch->transferred >= ch->blksize) {
 		ch->transferred -= ch->blksize;
@@ -2173,17 +2194,23 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param)
+uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
+    int maxpktsize)
 {
 	int samples_per_frame, sample_size;
 
 	ch->altidx = altidx;
-	sample_size = param->precision * param->factor * param->channels / 8;
-	samples_per_frame = param->sample_rate / USB_FRAMES_PER_SECOND;
-	ch->fraction = param->sample_rate % USB_FRAMES_PER_SECOND;
+	sample_size = param->precision * param->factor * param->hw_channels / 8;
+	samples_per_frame = param->hw_sample_rate / USB_FRAMES_PER_SECOND;
 	ch->sample_size = sample_size;
-	ch->sample_rate = param->sample_rate;
-	ch->bytes_per_frame = samples_per_frame * sample_size;
+	ch->sample_rate = param->hw_sample_rate;
+	if (maxpktsize == 0) {
+		ch->fraction = param->hw_sample_rate % USB_FRAMES_PER_SECOND;
+		ch->bytes_per_frame = samples_per_frame * sample_size;
+	} else {
+		ch->fraction = 0;
+		ch->bytes_per_frame = maxpktsize;
+	}
 	ch->residue = 0;
 }
 
@@ -2213,11 +2240,11 @@ uaudio_get_minmax_rates(int nalts, const struct as_info *alts,
 		a1d = alts[i].asf1desc;
 		if (alts[i].sc_busy)
 			continue;
-		if (p->channels != a1d->bNrChannels)
+		if (p->hw_channels != a1d->bNrChannels)
 			continue;
-		if (p->precision != a1d->bBitResolution)
+		if (p->hw_precision != a1d->bBitResolution)
 			continue;
-		if (p->encoding != alts[i].encoding)
+		if (p->hw_encoding != alts[i].encoding)
 			continue;
 		if (mode != UE_GET_DIR(alts[i].edesc->bEndpointAddress))
 			continue;
@@ -2249,23 +2276,23 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 	struct usb_audio_streaming_type1_descriptor *a1d;
 
 	DPRINTF(("uaudio_match_alt_sub: search for %luHz %dch\n",
-		 rate, p->channels));
+		 rate, p->hw_channels));
 	for (i = 0; i < nalts; i++) {
 		a1d = alts[i].asf1desc;
 		if (alts[i].sc_busy)
 			continue;
-		if (p->channels != a1d->bNrChannels)
+		if (p->hw_channels != a1d->bNrChannels)
 			continue;
-		if (p->precision != a1d->bBitResolution)
+		if (p->hw_precision != a1d->bBitResolution)
 			continue;
-		if (p->encoding != alts[i].encoding)
+		if (p->hw_encoding != alts[i].encoding)
 			continue;
 		if (mode != UE_GET_DIR(alts[i].edesc->bEndpointAddress))
 			continue;
 		if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
 			DPRINTFN(2,("uaudio_match_alt_sub: cont %d-%d\n",
 				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
-			if (UA_SAMP_LO(a1d) < rate && rate < UA_SAMP_HI(a1d))
+			if (UA_SAMP_LO(a1d) <= rate && rate <= UA_SAMP_HI(a1d))
 				return i;
 		} else {
 			for (j = 0; j < a1d->bSamFreqType; j++) {
@@ -2290,7 +2317,7 @@ uaudio_match_alt_chan(int nalts, const struct as_info *alts,
 
 	/* Exact match */
 	DPRINTF(("uaudio_match_alt_chan: examine %ldHz %dch %dbit.\n",
-		 p->sample_rate, p->channels, p->precision));
+		 p->sample_rate, p->hw_channels, p->hw_precision));
 	i = uaudio_match_alt_sub(nalts, alts, p, mode, p->sample_rate);
 	if (i >= 0)
 		return i;
@@ -2304,20 +2331,20 @@ uaudio_match_alt_chan(int nalts, const struct as_info *alts,
 	while ((rate = p->sample_rate * n++) <= max) {
 		i = uaudio_match_alt_sub(nalts, alts, p, mode, rate);
 		if (i >= 0) {
-			p->sample_rate = rate;
+			p->hw_sample_rate = rate;
 			return i;
 		}
 	}
 	if (p->sample_rate >= min) {
 		i = uaudio_match_alt_sub(nalts, alts, p, mode, max);
 		if (i >= 0) {
-			p->sample_rate = max;
+			p->hw_sample_rate = max;
 			return i;
 		}
 	} else {
 		i = uaudio_match_alt_sub(nalts, alts, p, mode, min);
 		if (i >= 0) {
-			p->sample_rate = min;
+			p->hw_sample_rate = min;
 			return i;
 		}
 	}
@@ -2336,7 +2363,7 @@ uaudio_match_alt(int nalts, const struct as_info *alts,
 		return i;
 
 	for (n = p->channels + 1; n <= AUDIO_MAX_CHANNELS; n++) {
-		p->channels = n;
+		p->hw_channels = n;
 		i = uaudio_match_alt_chan(nalts, alts, p, mode);
 		if (i >= 0)
 			return i;
@@ -2344,7 +2371,7 @@ uaudio_match_alt(int nalts, const struct as_info *alts,
 
 	if (p->channels != 2)
 		return -1;
-	p->channels = 1;
+	p->hw_channels = 1;
 	return uaudio_match_alt_chan(nalts, alts, p, mode);
 }
 
@@ -2364,8 +2391,8 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_dying)
 		return (EIO);
 
-	if ((mode == AUMODE_RECORD && sc->sc_recchan.pipe != NULL)
-	    || (mode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
+	if ((usemode == AUMODE_RECORD && sc->sc_recchan.pipe != NULL)
+	    || (usemode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
 		return (EBUSY);
 
 	if (usemode & AUMODE_PLAY && sc->sc_playchan.altidx != -1)
@@ -2402,7 +2429,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 					enc = AUDIO_ENCODING_ULINEAR_LE;
 				} else if (flags & HAS_16) {
 					factor = 2;
-					p->precision = 16;
+					p->hw_precision = 16;
 					if (mode == AUMODE_PLAY)
 						swcode = linear8_to_linear16_le;
 					else
@@ -2429,7 +2456,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 					enc = AUDIO_ENCODING_SLINEAR_LE;
 				} else if (flags & HAS_16) {
 					factor = 2;
-					p->precision = 16;
+					p->hw_precision = 16;
 					enc = AUDIO_ENCODING_SLINEAR_LE;
 					if (mode == AUMODE_PLAY)
 						swcode = ulinear8_to_slinear16_le;
@@ -2448,7 +2475,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 					swcode = slinear16_to_mulaw_le;
 				factor = 2;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-				p->precision = 16;
+				p->hw_precision = 16;
 			} else if (flags & HAS_8U) {
 				if (mode == AUMODE_PLAY)
 					swcode = mulaw_to_ulinear8;
@@ -2471,7 +2498,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				swcode = alaw_to_slinear16_le;
 				factor = 2;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-				p->precision = 16;
+				p->hw_precision = 16;
 			} else if (flags & HAS_8U) {
 				if (mode == AUMODE_PLAY)
 					swcode = alaw_to_ulinear8;
@@ -2493,9 +2520,9 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		/* XXX do some other conversions... */
 
 		DPRINTF(("uaudio_set_params: chan=%d prec=%d enc=%d rate=%ld\n",
-			 p->channels, p->precision, enc, p->sample_rate));
+			 p->channels, p->hw_precision, enc, p->sample_rate));
 
-		p->encoding = enc;
+		p->hw_encoding = enc;
 		i = uaudio_match_alt(sc->sc_nalts, sc->sc_alts, p, mode);
 		if (i < 0)
 			return (EINVAL);
@@ -2515,11 +2542,12 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 	if ((usemode & AUMODE_PLAY) /*&& paltidx != sc->sc_playchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_playchan, paltidx, play);
+		uaudio_chan_init(&sc->sc_playchan, paltidx, play, 0);
 	}
 	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
+		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n",
