@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_mouse.c,v 1.1 1999/01/18 19:09:52 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.2 1999/01/31 20:17:09 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,7 +38,7 @@
  * devices.
  *
  * The first method used is xterm's internal mouse-tracking facility.
- * The second (not yet implemented) will be Alessandro Rubini's GPM server.
+ * The second is Alessandro Rubini's GPM server.
  *
  * Notes for implementors of new mouse-interface methods:
  *
@@ -86,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.41 1998/12/02 15:03:22 juergen Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.42 1999/01/31 01:17:53 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -225,10 +225,14 @@ server_state(const int state)
 /* FIXME: The list of names should be configurable */
 static int is_xterm(const char *name)
 {
-    return (!strncmp(name, "xterm", 5)
-      ||    !strncmp(name, "rxvt",  4)
-      ||    !strncmp(name, "kterm", 5)
-      ||    !strncmp(name, "color_xterm", 11));
+    while (*name != 0) {
+      if (!strncmp(name, "xterm", 5)
+       || !strncmp(name, "rxvt",  4)
+       || !strncmp(name, "kterm", 5))
+	    return TRUE;
+	name++;
+    }
+    return FALSE;
 }
 
 static int initialized;

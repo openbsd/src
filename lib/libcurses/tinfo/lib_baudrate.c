@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_baudrate.c,v 1.1 1999/01/18 19:10:16 millert Exp $	*/
+/*	$OpenBSD: lib_baudrate.c,v 1.2 1999/01/31 20:17:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 #include <term.h>	/* cur_term, pad_char */
 #include <termcap.h>	/* ospeed */
 
-MODULE_ID("$From: lib_baudrate.c,v 1.14 1999/01/03 01:31:45 tom Exp $")
+MODULE_ID("$From: lib_baudrate.c,v 1.15 1999/01/31 03:05:25 tom Exp $")
 
 /*
  *	int
@@ -103,16 +103,25 @@ static struct speed const speeds[] = {
 
 int _nc_baudrate(int OSpeed)
 {
-	int result = ERR;
+	static int last_OSpeed;
+	static int last_baudrate;
+
+	int result;
 	unsigned i;
 
-	if (OSpeed >= 0) {
-		for (i = 0; i < SIZEOF(speeds); i++) {
-			if (speeds[i].s == (speed_t)OSpeed) {
-				result = speeds[i].sp;
-				break;
+	if (OSpeed == last_OSpeed) {
+		result = last_baudrate;
+	} else {
+		result = ERR;
+		if (OSpeed >= 0) {
+			for (i = 0; i < SIZEOF(speeds); i++) {
+				if (speeds[i].s == (speed_t)OSpeed) {
+					result = speeds[i].sp;
+					break;
+				}
 			}
 		}
+		last_baudrate = result;
 	}
 	return (result);
 }

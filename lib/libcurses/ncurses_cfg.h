@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.8 1999/01/18 19:09:03 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.9 1999/01/31 20:17:07 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -100,6 +100,7 @@
 #define HAVE_USLEEP 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_VSSCANF 1
+#define HAVE_TCGETPGRP 1
 #define HAVE_BSD_CGETENT 1
 #define NCURSES_EXT_FUNCS 1
 #define NCURSES_NO_PADDING 1

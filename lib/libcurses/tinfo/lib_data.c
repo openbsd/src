@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_data.c,v 1.1 1999/01/18 19:10:17 millert Exp $	*/
+/*	$OpenBSD: lib_data.c,v 1.2 1999/01/31 20:17:10 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_data.c,v 1.13 1998/02/11 12:14:00 tom Exp $")
+MODULE_ID("$From: lib_data.c,v 1.14 1999/01/31 01:34:33 Ilya.Zakharevich Exp $")
 
 /*
  * OS/2's native linker complains if we don't initialize public data when
@@ -82,5 +82,5 @@ void _nc_set_screen(SCREEN *sp)
 	my_screen = sp;
 }
 #else
-SCREEN *SP;
+SCREEN *SP = NULL;		/* Some linkers require initialized data... */
 #endif

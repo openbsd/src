@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tstp.c,v 1.1 1999/01/18 19:10:26 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.2 1999/01/31 20:17:10 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -50,7 +50,7 @@
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("$From: lib_tstp.c,v 1.15 1998/02/11 12:13:57 tom Exp $")
+MODULE_ID("$From: lib_tstp.c,v 1.17 1999/01/31 01:06:14 tom Exp $")
 
 /*
  * Note: This code is fragile!  Its problem is that different OSs
@@ -101,12 +101,25 @@ static void tstp(int dummy GCC_UNUSED)
 	sigset_t mask, omask;
 	sigaction_t act, oact;
 
+#ifdef SIGTTOU
+	int sigttou_blocked;
+#endif
+
 	T(("tstp() called"));
 
 	/*
 	 * The user may have changed the prog_mode tty bits, so save them.
+	 *
+	 * But first try to detect whether we still are in the foreground
+	 * process group - if not, an interactive shell may already have
+	 * taken ownership of the tty and modified the settings when our
+	 * parent was stopped before us, and we would likely pick up the
+	 * settings already modified by the shell.
 	 */
-	def_prog_mode();
+#if HAVE_TCGETPGRP
+	if (tcgetpgrp(STDIN_FILENO) == getpgrp())
+#endif
+	    def_prog_mode();
 
 	/*
 	 * Block window change and timer signals.  The latter
@@ -120,6 +133,15 @@ static void tstp(int dummy GCC_UNUSED)
 #endif
 	(void)sigprocmask(SIG_BLOCK, &mask, &omask);
 
+#ifdef SIGTTOU
+	sigttou_blocked = sigismember(&omask, SIGTTOU);
+	if (!sigttou_blocked) {
+	    (void)sigemptyset(&mask);
+	    (void)sigaddset(&mask, SIGTTOU);
+	    (void)sigprocmask(SIG_BLOCK, &mask, NULL);
+	}
+#endif
+
 	/*
 	 * End window mode, which also resets the terminal state to the
 	 * original (pre-curses) modes.
@@ -129,6 +151,12 @@ static void tstp(int dummy GCC_UNUSED)
 	/* Unblock SIGTSTP. */
 	(void)sigemptyset(&mask);
 	(void)sigaddset(&mask, SIGTSTP);
+#ifdef SIGTTOU
+	if (!sigttou_blocked) {
+            /* Unblock this too if it wasn't blocked on entry */
+	    (void)sigaddset(&mask, SIGTTOU);
+	}
+#endif
 	(void)sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 	/* Now we want to resend SIGSTP to this process and suspend it */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.1 1999/01/18 19:10:27 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.2 1999/01/31 20:17:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -77,7 +77,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.109 1998/10/03 19:08:33 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.110 1999/01/31 01:45:37 Alexander.V.Lukyanov Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -101,7 +101,7 @@ static inline chtype ClrBlank ( WINDOW *win );
 static int ClrBottom(int total);
 static int InsStr( chtype *line, int count );
 static void ClearScreen( chtype blank );
-static void ClrUpdate( WINDOW *win );
+static void ClrUpdate( void );
 static void DelChar( int count );
 static void TransformLine( int const lineno );
 
@@ -682,19 +682,11 @@ struct tms before, after;
 #endif	/* USE_XMC_SUPPORT */
 
 	nonempty = 0;
-	if (curscr->_clear) {		/* force refresh ? */
-		/* yes, clear all & update */
-		T(("clearing and updating curscr"));
-		if (is_wintouched(newscr))
-			ClrUpdate(newscr);
-		else
-			ClrUpdate(curscr);
+	if (curscr->_clear || newscr->_clear) {		/* force refresh ? */
+		T(("clearing and updating from scratch"));
+		ClrUpdate();
 		curscr->_clear = FALSE;	/* reset flag */
 		newscr->_clear = FALSE;	/* reset flag */
-	} else if (newscr->_clear) {
-		T(("clearing and updating newscr"));
-		ClrUpdate(newscr);
-		newscr->_clear = FALSE;
 	} else {
 		int changedlines = CHECK_INTERVAL;
 
@@ -802,28 +794,19 @@ chtype	blank = BLANK;
 }
 
 /*
-**	ClrUpdate(win)
+**	ClrUpdate()
 **
 **	Update by clearing and redrawing the entire screen.
 **
 */
 
-static void ClrUpdate(WINDOW *win)
+static void ClrUpdate(void)
 {
 	int i;
-	chtype blank = ClrBlank(win);
+	chtype blank = ClrBlank(stdscr);
 	int nonempty = min(screen_lines, newscr->_maxy+1);
 
 	T(("ClrUpdate() called"));
-
-	if (win == curscr) {
-		/* discard updates */
-		for (i = 0; i < screen_lines ; i++) {
-			memcpy( newscr->_line[i].text,
-				curscr->_line[i].text,
-				screen_columns * sizeof(chtype));
-		}
-	}
 
 	ClearScreen(blank);
 
