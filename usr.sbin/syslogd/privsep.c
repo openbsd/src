@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2003/09/24 23:35:45 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.7 2003/10/22 19:37:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -116,10 +116,16 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		err(1, "fork() failed");
 
 	if (!child_pid) {
+		gid_t gidset[1];
+
 		/* Child - drop privileges and return */
 		if (chroot(pw->pw_dir) != 0)
 			err(1, "unable to chroot");
 		chdir("/");
+		
+		gidset[0] = pw->pw_gid;
+		if (setgroups(1, gidset) == -1)
+			err(1, "setgroups() failed");
 		if (setegid(pw->pw_gid) == -1)
 			err(1, "setegid() failed");
 		if (setgid(pw->pw_gid) == -1)
