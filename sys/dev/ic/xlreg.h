@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.15 2002/12/02 22:04:39 jason Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.16 2003/06/29 16:39:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -575,7 +575,6 @@ struct xl_softc {
 	bus_space_tag_t		xl_funct;
 	struct xl_type		*xl_info;	/* 3Com adapter info */
 	u_int8_t		xl_hasmii;	/* whether we have mii or not */
-	u_int8_t		xl_unit;	/* interface number */
 	u_int8_t		xl_type;
 	u_int32_t		xl_xcvr;
 	u_int16_t		xl_media;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.49 2003/03/24 17:40:00 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.50 2003/06/29 16:39:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -235,7 +235,7 @@ void xl_wait(sc)
 
 #ifdef DIAGNOSTIC
 	if (i == XL_TIMEOUT)
-		printf("xl%d: command never completed!\n", sc->xl_unit);
+		printf("%s: command never completed!\n", sc->sc_dev.dv_xname);
 #endif
 
 	return;
@@ -530,7 +530,7 @@ int xl_eeprom_wait(sc)
 	}
 
 	if (i == 100) {
-		printf("xl%d: eeprom failed to come ready\n", sc->xl_unit);
+		printf("%s: eeprom failed to come ready\n", sc->sc_dev.dv_xname);
 		return(1);
 	}
 
@@ -919,21 +919,21 @@ void xl_mediacheck(sc)
 		if (sc->xl_xcvr <= XL_XCVR_AUTO)
 			return;
 		else {
-			printf("xl%d: bogus xcvr value "
-			"in EEPROM (%x)\n", sc->xl_unit, sc->xl_xcvr);
-			printf("xl%d: choosing new default based "
-				"on card type\n", sc->xl_unit);
+			printf("%s: bogus xcvr value "
+			"in EEPROM (%x)\n", sc->sc_dev.dv_xname, sc->xl_xcvr);
+			printf("%s: choosing new default based "
+				"on card type\n", sc->sc_dev.dv_xname);
 		}
 	} else {
 		if (sc->xl_type == XL_TYPE_905B &&
 		    sc->xl_media & XL_MEDIAOPT_10FL)
 			return;
-		printf("xl%d: WARNING: no media options bits set in "
-			"the media options register!!\n", sc->xl_unit);
-		printf("xl%d: this could be a manufacturing defect in "
-			"your adapter or system\n", sc->xl_unit);
-		printf("xl%d: attempting to guess media type; you "
-			"should probably consult your vendor\n", sc->xl_unit);
+		printf("%s: WARNING: no media options bits set in "
+			"the media options register!!\n", sc->sc_dev.dv_xname);
+		printf("%s: this could be a manufacturing defect in "
+			"your adapter or system\n", sc->sc_dev.dv_xname);
+		printf("%s: attempting to guess media type; you "
+			"should probably consult your vendor\n", sc->sc_dev.dv_xname);
 	}
 
 	xl_choose_xcvr(sc, 1);
@@ -958,28 +958,28 @@ void xl_choose_xcvr(sc, verbose)
 		sc->xl_media = XL_MEDIAOPT_BT;
 		sc->xl_xcvr = XL_XCVR_10BT;
 		if (verbose)
-			printf("xl%d: guessing 10BaseT transceiver\n",
-			    sc->xl_unit);
+			printf("%s: guessing 10BaseT transceiver\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_BOOMERANG_10BT_COMBO:	/* 3c900-COMBO */
 	case TC_DEVICEID_KRAKATOA_10BT_COMBO:	/* 3c900B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
 		sc->xl_xcvr = XL_XCVR_10BT;
 		if (verbose)
-			printf("xl%d: guessing COMBO (AUI/BNC/TP)\n",
-			    sc->xl_unit);
+			printf("%s: guessing COMBO (AUI/BNC/TP)\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_KRAKATOA_10BT_TPC:	/* 3c900B-TPC */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC;
 		sc->xl_xcvr = XL_XCVR_10BT;
 		if (verbose)
-			printf("xl%d: guessing TPC (BNC/TP)\n", sc->xl_unit);
+			printf("%s: guessing TPC (BNC/TP)\n", sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_CYCLONE_10FL:		/* 3c900B-FL */
 		sc->xl_media = XL_MEDIAOPT_10FL;
 		sc->xl_xcvr = XL_XCVR_AUI;
 		if (verbose)
-			printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
+			printf("%s: guessing 10baseFL\n", sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
 	case TC_DEVICEID_HURRICANE_555:		/* 3c555 */
@@ -988,14 +988,14 @@ void xl_choose_xcvr(sc, verbose)
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
 		if (verbose)
-			printf("xl%d: guessing MII\n", sc->xl_unit);
+			printf("%s: guessing MII\n", sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_BOOMERANG_100BT4:	/* 3c905-T4 */
 	case TC_DEVICEID_CYCLONE_10_100BT4:	/* 3c905B-T4 */
 		sc->xl_media = XL_MEDIAOPT_BT4;
 		sc->xl_xcvr = XL_XCVR_MII;
 		if (verbose)
-			printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
+			printf("%s: guessing 100BaseT4/MII\n", sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_HURRICANE_10_100BT:	/* 3c905B-TX */
 	case TC_DEVICEID_HURRICANE_10_100BT_SERV:/* 3c980-TX */
@@ -1006,15 +1006,15 @@ void xl_choose_xcvr(sc, verbose)
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		sc->xl_xcvr = XL_XCVR_AUTO;
 		if (verbose)
-			printf("xl%d: guessing 10/100 internal\n",
-			    sc->xl_unit);
+			printf("%s: guessing 10/100 internal\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_CYCLONE_10_100_COMBO:	/* 3c905B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BTX|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
 		sc->xl_xcvr = XL_XCVR_AUTO;
 		if (verbose)
-			printf("xl%d: guessing 10/100 plus BNC/AUI\n",
-			    sc->xl_unit);
+			printf("%s: guessing 10/100 plus BNC/AUI\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case TC_DEVICEID_3C575_CARDBUS:
 	case TC_DEVICEID_3CCFE575BT_CARDBUS:
@@ -1026,8 +1026,8 @@ void xl_choose_xcvr(sc, verbose)
 		sc->xl_xcvr = XL_XCVR_MII;
 		break;
 	default:
-		printf("xl%d: unknown device ID: %x -- "
-			"defaulting to 10baseT\n", sc->xl_unit, devid);
+		printf("%s: unknown device ID: %x -- "
+			"defaulting to 10baseT\n", sc->sc_dev.dv_xname, devid);
 		sc->xl_media = XL_MEDIAOPT_BT;
 		break;
 	}
@@ -1271,8 +1271,8 @@ again:
 		 * If not, something truly strange has happened.
 		 */
 		if (!(rxstat & XL_RXSTAT_UP_CMPLT)) {
-			printf("xl%d: bad receive status -- "
-			    "packet dropped", sc->xl_unit);
+			printf("%s: bad receive status -- "
+			    "packet dropped", sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 			cur_rx->xl_ptr->xl_status = htole32(0);
 			continue;
@@ -1483,8 +1483,8 @@ void xl_txeoc(sc)
 			txstat & XL_TXSTATUS_JABBER ||
 			txstat & XL_TXSTATUS_RECLAIM) {
 			if (txstat != 0x90) {
-				printf("xl%d: transmission error: %x\n",
-				    sc->xl_unit, txstat);
+				printf("%s: transmission error: %x\n",
+				    sc->sc_dev.dv_xname, txstat);
 			}
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 			xl_wait(sc);
@@ -1511,8 +1511,8 @@ void xl_txeoc(sc)
 			    sc->xl_tx_thresh < XL_PACKET_SIZE) {
 				sc->xl_tx_thresh += XL_MIN_FRAMELEN;
 #ifdef notdef
-				printf("xl%d: tx underrun, increasing tx start"
-				    " threshold to %d\n", sc->xl_unit,
+				printf("%s: tx underrun, increasing tx start"
+				    " threshold to %d\n", sc->sc_dev.dv_xname,
 				    sc->xl_tx_thresh);
 #endif
 			}
@@ -2058,8 +2058,8 @@ void xl_init(xsc)
 #endif
 	/* Init circular RX list. */
 	if (xl_list_rx_init(sc) == ENOBUFS) {
-		printf("xl%d: initialization failed: no "
-			"memory for rx buffers\n", sc->xl_unit);
+		printf("%s: initialization failed: no "
+			"memory for rx buffers\n", sc->sc_dev.dv_xname);
 		xl_stop(sc);
 		splx(s);
 		return;
@@ -2329,7 +2329,7 @@ void xl_ifmedia_sts(ifp, ifmr)
 		ifmr->ifm_active = IFM_ETHER|IFM_100_FX;
 		break;
 	default:
-		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit, icfg);
+		printf("%s: unknown XCVR type: %d\n", sc->sc_dev.dv_xname, icfg);
 		break;
 	}
 
@@ -2461,11 +2461,11 @@ void xl_watchdog(ifp)
 	ifp->if_oerrors++;
 	XL_SEL_WIN(4);
 	status = CSR_READ_2(sc, XL_W4_MEDIA_STATUS);
-	printf("xl%d: watchdog timeout\n", sc->xl_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	if (status & XL_MEDIASTAT_CARRIER)
-		printf("xl%d: no carrier - transceiver cable problem?\n",
-								sc->xl_unit);
+		printf("%s: no carrier - transceiver cable problem?\n",
+								sc->sc_dev.dv_xname);
 	xl_txeoc(sc);
 	xl_txeof(sc);
 	xl_rxeof(sc);
@@ -2576,7 +2576,6 @@ xl_attach(sc)
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifmedia *ifm;
 
-	sc->xl_unit = sc->sc_dev.dv_unit;
 	i = splimp();
 	xl_reset(sc, 1);
 	splx(i);
@@ -2825,7 +2824,7 @@ xl_attach(sc)
 		xl_setmode(sc, media);
 		break;
 	default:
-		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit,
+		printf("%s: unknown XCVR type: %d\n", sc->sc_dev.dv_xname,
 							sc->xl_xcvr);
 		/*
 		 * This will probably be wrong, but it prevents

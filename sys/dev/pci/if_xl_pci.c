@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.15 2003/01/13 00:37:12 henning Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.16 2003/06/29 16:39:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -148,7 +148,6 @@ xl_pci_attach(parent, self, aux)
 	u_int32_t command;
 
 	sc->sc_dmat = pa->pa_dmat;
-	sc->xl_unit = sc->sc_dev.dv_unit;
 
 	sc->xl_flags = 0;
 
