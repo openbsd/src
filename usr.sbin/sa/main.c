@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.2 1996/04/21 23:41:57 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1998/12/18 20:47:19 deraadt Exp $";
 #endif
 
 /*
@@ -84,93 +84,93 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
 		switch (ch) {
-			case 'a':
-				/* print all commands */
-				aflag = 1;
-				break;
-			case 'b':
-				/* sort by per-call user/system time average */
-				bflag = 1;
-				sa_cmp = cmp_avgusrsys;
-				break;
-			case 'c':
-				/* print percentage total time */
-				cflag = 1;
-				break;
-			case 'd':
-				/* sort by averge number of disk I/O ops */
-				dflag = 1;
-				sa_cmp = cmp_avgdkio;
-				break;
-			case 'D':
-				/* print and sort by total disk I/O ops */
-				Dflag = 1;
-				sa_cmp = cmp_dkio;
-				break;
-			case 'f':
-				/* force no interactive threshold comprison */
-				fflag = 1;
-				break;
-			case 'i':
-				/* do not read in summary file */
-				iflag = 1;
-				break;
-			case 'j':
-				/* instead of total minutes, give sec/call */
-				jflag = 1;
-				break;
-			case 'k':
-				/* sort by cpu-time average memory usage */
-				kflag = 1;
-				sa_cmp = cmp_avgcpumem;
-				break;
-			case 'K':
-				/* print and sort by cpu-storage integral */
-				sa_cmp = cmp_cpumem;
-				Kflag = 1;
-				break;
-			case 'l':
-				/* seperate system and user time */
-				lflag = 1;
-				break;
-			case 'm':
-				/* print procs and time per-user */
-				mflag = 1;
-				break;
-			case 'n':
-				/* sort by number of calls */
-				sa_cmp = cmp_calls;
-				break;
-			case 'q':
-				/* quiet; error messages only */
-				qflag = 1;
-				break;
-			case 'r':
-				/* reverse order of sort */
-				rflag = 1;
-				break;
-			case 's':
-				/* merge accounting file into summaries */
-				sflag = 1;
-				break;
-			case 't':
-				/* report ratio of user and system times */
-				tflag = 1;
-				break;
-			case 'u':
-				/* first, print uid and command name */
-				uflag = 1;
-				break;
-			case 'v':
-				/* cull junk */
-				vflag = 1;
-				cutoff = atoi(optarg);
-				break;
-			case '?':
-	                default:
-				(void)fprintf(stderr,   
-				    "usage: sa [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n");
-				exit(1);
+		case 'a':
+			/* print all commands */
+			aflag = 1;
+			break;
+		case 'b':
+			/* sort by per-call user/system time average */
+			bflag = 1;
+			sa_cmp = cmp_avgusrsys;
+			break;
+		case 'c':
+			/* print percentage total time */
+			cflag = 1;
+			break;
+		case 'd':
+			/* sort by averge number of disk I/O ops */
+			dflag = 1;
+			sa_cmp = cmp_avgdkio;
+			break;
+		case 'D':
+			/* print and sort by total disk I/O ops */
+			Dflag = 1;
+			sa_cmp = cmp_dkio;
+			break;
+		case 'f':
+			/* force no interactive threshold comprison */
+			fflag = 1;
+			break;
+		case 'i':
+			/* do not read in summary file */
+			iflag = 1;
+			break;
+		case 'j':
+			/* instead of total minutes, give sec/call */
+			jflag = 1;
+			break;
+		case 'k':
+			/* sort by cpu-time average memory usage */
+			kflag = 1;
+			sa_cmp = cmp_avgcpumem;
+			break;
+		case 'K':
+			/* print and sort by cpu-storage integral */
+			sa_cmp = cmp_cpumem;
+			Kflag = 1;
+			break;
+		case 'l':
+			/* seperate system and user time */
+			lflag = 1;
+			break;
+		case 'm':
+			/* print procs and time per-user */
+			mflag = 1;
+			break;
+		case 'n':
+			/* sort by number of calls */
+			sa_cmp = cmp_calls;
+			break;
+		case 'q':
+			/* quiet; error messages only */
+			qflag = 1;
+			break;
+		case 'r':
+			/* reverse order of sort */
+			rflag = 1;
+			break;
+		case 's':
+			/* merge accounting file into summaries */
+			sflag = 1;
+			break;
+		case 't':
+			/* report ratio of user and system times */
+			tflag = 1;
+			break;
+		case 'u':
+			/* first, print uid and command name */
+			uflag = 1;
+			break;
+		case 'v':
+			/* cull junk */
+			vflag = 1;
+			cutoff = atoi(optarg);
+			break;
+		case '?':
+		default:
+			(void)fprintf(stderr,   
+			    "usage: sa [-abcdDfijkKlmnqrstu] [-v cutoff] [file ...]\n");
+			exit(1);
 		}
 
 	argc -= optind;
