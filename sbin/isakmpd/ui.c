@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.10 1999/08/05 22:41:08 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.34 1999/08/05 14:58:00 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.11 1999/08/26 22:29:57 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.36 1999/08/20 12:54:51 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "sysdep.h"
 
@@ -64,11 +65,21 @@ int ui_socket;
 void
 ui_init ()
 {
+  struct stat st;
+
   /* -f- means control messages comes in via stdin.  */
   if (strcmp (ui_fifo, "-") == 0)
     ui_socket = 0;
   else
     {
+      /* Don't overwrite a file, i.e '-f /etc/isakmpd/isakmpd.conf'.  */
+      if (lstat (ui_fifo, &st) == 0)
+	if ((st.st_mode & S_IFMT) == S_IFREG)
+	  {
+	    errno = EEXIST;
+	    log_fatal ("could not create FIFO \"%s\"", ui_fifo);
+	  }
+
       /* No need to know about errors.  */
       unlink (ui_fifo);
       if (mkfifo (ui_fifo, 0600) == -1)
