@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.27 1998/02/07 21:23:06 deraadt Exp $
+$OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -974,6 +974,7 @@ product WD 90C		0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
+product WINBOND W89C940F 0x0940	Linksys EtherPCI LAN Card II
 
 /* Zeinet products */
 product ZEINET 1221	0x0001	1221
