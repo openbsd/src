@@ -238,7 +238,6 @@
 ./usr/bin/indent
 ./usr/bin/indxbib
 ./usr/bin/info
-./usr/bin/info_mkdb
 ./usr/bin/infotocap
 ./usr/bin/install
 ./usr/bin/install-info
