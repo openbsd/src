@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.43 2004/01/08 17:14:04 pvalchev Exp $	*/
+/*	$OpenBSD: locore.s,v 1.44 2004/04/23 04:18:17 marc Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2492,7 +2492,7 @@ textfault:
 	stx	%g6, [%sp + CC64FSZ + BIAS + TF_G + (6*8)]	! sneak in g6
 	rdpr	%tnpc, %g3
 	stx	%g7, [%sp + CC64FSZ + BIAS + TF_G + (7*8)]	! sneak in g7
-	rd	%y, %g7					! save y
+	rd	%y, %g4					! save y
 
 	/* Finish stackframe, call C trap handler */
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
@@ -2517,7 +2517,7 @@ textfault:
 	/* Use trap type to see what handler to call */
 	cmp	%o1, T_INST_ERROR
 	be,pn	%xcc, text_error
-	 st	%g7, [%sp + CC64FSZ + BIAS + TF_Y]		! set tf.tf_y
+	 st	%g4, [%sp + CC64FSZ + BIAS + TF_Y]		! set tf.tf_y
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
 	call	_C_LABEL(text_access_fault)	! mem_access_fault(&tf, type, pc, sfsr)
@@ -4895,6 +4895,7 @@ _C_LABEL(sigcode):
 	ldx	[%fp + BIAS + 128 + 8], %o1	! siginfo
 	call	%g1			! (*sa->sa_handler)(sig, sip, scp)
 	 add	%fp, BIAS + 128 + 16, %o2	! scp
+	wr	%l1, %g0, %y		! in any case, restore %y
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
@@ -4914,7 +4915,7 @@ _C_LABEL(sigcode):
 	ldda	[%l0] ASI_BLK_P, %f16
 1:
 	bz,pt	%icc, 2f
-	 wr	%l1, %g0, %y		! in any case, restore %y
+	 nop
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	inc	2*BLOCK_SIZE, %l0	! and skip what we already loaded
