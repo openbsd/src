@@ -1,4 +1,4 @@
-/*	$Id: kpropd.c,v 1.2 1995/12/14 08:43:50 tholo Exp $	*/
+/*	$Id: kpropd.c,v 1.3 1996/09/16 18:48:56 millert Exp $	*/
 
 /*-
  * Copyright 1987 by the Massachusetts Institute of Technology.
@@ -68,20 +68,21 @@ recv_auth (int in, int out, int private, struct sockaddr_in *remote, struct sock
     n = krb_net_read (in, (char *)&length, sizeof length);
     if (n == 0) break;
     if (n < 0) {
-      sprintf (errmsg, "kpropd: read: %s", strerror(errno));
+      snprintf (errmsg, sizeof(errmsg), "kpropd: read: %s", strerror(errno));
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
     length = ntohl (length);
     if (length > sizeof buf) {
-      sprintf (errmsg, "kpropd: read length %ld, bigger than buf %d",
-	       length, (int)(sizeof(buf)));
+      snprintf (errmsg, sizeof(errmsg),
+		"kpropd: read length %ld, bigger than buf %d",
+	        length, (int)(sizeof(buf)));
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
     n = krb_net_read(in, buf, length);
     if (n < 0) {
-      sprintf(errmsg, "kpropd: read: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: read: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -92,7 +93,7 @@ recv_auth (int in, int out, int private, struct sockaddr_in *remote, struct sock
       kerror = krb_rd_safe (buf, n, &ad->session,
 			    remote, local, &msg_data);
     if (kerror != KSUCCESS) {
-      sprintf (errmsg, "kpropd: %s: %s",
+      snprintf (errmsg, sizeof(errmsg), "kpropd: %s: %s",
 	       private ? "krb_rd_priv" : "krb_rd_safe",
 	       krb_err_txt[kerror]);
       klog (L_KRB_PERR, errmsg);
@@ -100,7 +101,7 @@ recv_auth (int in, int out, int private, struct sockaddr_in *remote, struct sock
     }
     if (write(out, msg_data.app_data, msg_data.app_length) != 
 	msg_data.app_length) {
-      sprintf(errmsg, "kpropd: write: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: write: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -116,12 +117,12 @@ recv_clear (int in, int out)
     n = read (in, buf, sizeof buf);
     if (n == 0) break;
     if (n < 0) {
-      sprintf (errmsg, "kpropd: read: %s", strerror(errno));
+      snprintf (errmsg, sizeof(errmsg), "kpropd: read: %s", strerror(errno));
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
     if (write(out, buf, n) != n) {
-      sprintf(errmsg, "kpropd: write: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: write: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -204,12 +205,12 @@ main(int argc, char **argv)
   sin.sin_family = AF_INET;
 
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    sprintf(errmsg, "kpropd: socket: %s", strerror(errno));
+    snprintf(errmsg, sizeof(errmsg), "kpropd: socket: %s", strerror(errno));
     klog(L_KRB_PERR, errmsg);
     SlowDeath();
   }
   if (bind(s, (struct sockaddr*)&sin, sizeof sin) < 0) {
-    sprintf(errmsg, "kpropd: bind: %s", strerror(errno));
+    snprintf(errmsg, sizeof(errmsg), "kpropd: bind: %s", strerror(errno));
     klog(L_KRB_PERR, errmsg);
     SlowDeath();
   }
@@ -217,7 +218,7 @@ main(int argc, char **argv)
   if (!rflag) {
     kerror = krb_get_lrealm(my_realm,1);
     if (kerror != KSUCCESS) {
-      sprintf (errmsg, "kpropd: Can't get local realm. %s",
+      snprintf(errmsg, sizeof(errmsg), "kpropd: Can't get local realm. %s",
 	       krb_err_txt[kerror]);
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
@@ -234,7 +235,7 @@ main(int argc, char **argv)
   for (;;) {
     from_len = sizeof from;
     if ((s2 = accept(s, (struct sockaddr *) &from, &from_len)) < 0) {
-      sprintf(errmsg, "kpropd: accept: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: accept: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       continue;
     }
@@ -246,7 +247,8 @@ main(int argc, char **argv)
       strcpy(hostname, hp->h_name);
     }
 
-    sprintf(errmsg, "Connection from %s, %s", hostname, from_str);
+    snprintf(errmsg, sizeof(errmsg), "Connection from %s, %s", hostname,
+	     from_str);
     klog(L_KRB_PERR, errmsg);
 
     /* for krb_rd_{priv, safe} */
@@ -262,17 +264,17 @@ main(int argc, char **argv)
     }
 
     if ((fdlock = open(local_temp, O_WRONLY | O_CREAT, 0600)) < 0) {
-      sprintf(errmsg, "kpropd: open: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: open: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
     if (flock(fdlock, LOCK_EX | LOCK_NB)) {
-      sprintf(errmsg, "kpropd: flock: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: flock: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
     if ((fd = creat(local_temp, 0600)) < 0) {
-      sprintf(errmsg, "kpropd: creat: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: creat: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -283,7 +285,7 @@ main(int argc, char **argv)
     }
     if (strncmp (buf, kprop_version, sizeof (kprop_version))
 	!= 0) {
-      sprintf (errmsg, "kpropd: unsupported version %s", buf);
+      snprintf (errmsg, sizeof(errmsg), "kpropd: unsupported version %s", buf);
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -304,14 +306,14 @@ main(int argc, char **argv)
 			  session_sched,
 			  version);
     if (kerror != KSUCCESS) {
-      sprintf (errmsg, "kpropd: %s: Calling getkdata", 
-	       krb_err_txt[kerror]);
+      snprintf (errmsg, sizeof(errmsg), "kpropd: %s: Calling getkdata", 
+	        krb_err_txt[kerror]);
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
 	
-    sprintf (errmsg, "kpropd: Connection from %s.%s@%s",
-	     auth_dat.pname, auth_dat.pinst, auth_dat.prealm);
+    snprintf (errmsg, sizeof(errmsg), "kpropd: Connection from %s.%s@%s",
+	      auth_dat.pname, auth_dat.pinst, auth_dat.prealm);
     klog (L_KRB_PERR, errmsg);
 
     /* AUTHORIZATION is done here.  We might want to expand this to
@@ -342,7 +344,8 @@ main(int argc, char **argv)
       recv_clear (s2, fd);
       break;
     default: 
-      sprintf (errmsg, "kpropd: bad transfer mode %d", transfer_mode);
+      snprintf (errmsg, sizeof(errmsg), "kpropd: bad transfer mode %d",
+		transfer_mode);
       klog (L_KRB_PERR, errmsg);
       SlowDeath();
     }
@@ -372,20 +375,21 @@ main(int argc, char **argv)
     klog(L_KRB_PERR, "File received.");
 
     if (rename(local_temp, local_file) < 0) {
-      sprintf(errmsg, "kpropd: rename: %s", strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: rename: %s", strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
     klog(L_KRB_PERR, "Temp file renamed to %s", local_file);
 
     if (flock(fdlock, LOCK_UN)) {
-      sprintf(errmsg, "kpropd: flock (unlock): %s",
-	      strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: flock (unlock): %s",
+	       strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }
     close(fdlock);
-    sprintf(cmd, "%s load %s %s\n", kdb_util_path, local_file, local_db);
+    snprintf(cmd, sizeof(cmd), "%s load %s %s\n", kdb_util_path, local_file,
+	     local_db);
     if (system (cmd) != 0) {
       klog (L_KRB_PERR, "Couldn't load database");
       SlowDeath();
@@ -406,8 +410,8 @@ unsigned long get_data_checksum(fd, key_sched)
 
   while (n = read(fd, buf, sizeof buf)) {
     if (n < 0) {
-      sprintf(errmsg, "kpropd: read (in checksum test): %s",
-	      strerror(errno));
+      snprintf(errmsg, sizeof(errmsg), "kpropd: read (in checksum test): %s",
+	       strerror(errno));
       klog(L_KRB_PERR, errmsg);
       SlowDeath();
     }

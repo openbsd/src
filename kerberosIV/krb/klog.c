@@ -90,7 +90,7 @@ klog(type, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a0)
         logtype_array[L_ERR_UNK] = 1;
     }
 
-    (void) sprintf(logtxt,format,a1,a2,a3,a4,a5,a6,a7,a8,a9,a0);
+    (void) snprintf(logtxt,sizeof(logtxt),format,a1,a2,a3,a4,a5,a6,a7,a8,a9,a0);
 
     if (!logtype_array[type])
 	return(logtxt);

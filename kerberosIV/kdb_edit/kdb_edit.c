@@ -1,4 +1,4 @@
-/*	$Id: kdb_edit.c,v 1.1.1.1 1995/12/14 06:52:42 tholo Exp $	*/
+/*	$Id: kdb_edit.c,v 1.2 1996/09/16 18:48:53 millert Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -130,9 +130,10 @@ change_principal(void)
 	principal_data[0].key_version = 0; /* bumped up later */
     }
     tp = k_localtime(&principal_data[0].exp_date);
-    (void) sprintf(principal_data[0].exp_date_txt, "%4d-%02d-%02d",
-		   tp->tm_year > 1900 ? tp->tm_year : tp->tm_year + 1900,
-		   tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
+    (void) snprintf(principal_data[0].exp_date_txt,
+		    sizeof(principal_data[0].exp_date_txt), "%4d-%02d-%02d",
+		    tp->tm_year > 1900 ? tp->tm_year : tp->tm_year + 1900,
+		    tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
     for (i = 0; i < j; i++) {
 	for (;;) {
 	    fprintf(stdout,

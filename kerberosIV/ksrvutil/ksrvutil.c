@@ -1,4 +1,4 @@
-/*	$Id: ksrvutil.c,v 1.2 1995/12/14 08:43:56 tholo Exp $	*/
+/*	$Id: ksrvutil.c,v 1.3 1996/09/16 18:49:03 millert Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -325,7 +325,8 @@ main(int argc, char **argv)
     (void) bzero((char *)backup_keyfile, sizeof(backup_keyfile));
     (void) bzero((char *)local_realm, sizeof(local_realm));
     
-    (void) sprintf(change_tkt, "/tmp/tkt_ksrvutil.%d", (int)getpid());
+    (void) snprintf(change_tkt, sizeof(change_tkt), "/tmp/tkt_ksrvutil.%d",
+		    (int)getpid());
     krb_set_tkt_string(change_tkt);
 
     /* This is used only as a default for adding keys */

@@ -62,7 +62,8 @@ tkt_string()
 	} else {
 	    /* 32 bits of signed integer will always fit in 11 characters
 	     (including the sign), so no need to worry about overflow */
-	    (void) sprintf(krb_ticket_string, "%s%d",TKT_ROOT,(int)getuid());
+	    (void) snprintf(krb_ticket_string, sizeof(krb_ticket_string),
+	    		    "%s%d", TKT_ROOT, (int)getuid());
         }
     }
     return krb_ticket_string;

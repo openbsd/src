@@ -185,7 +185,8 @@ krb_life_to_atime(life)
     when /= 60;
     hours = when%24;
     when /= 24;
-    sprintf(atime, "%d+%02d:%02d:%02d", (int)when, hours, mins, secs);
+    snprintf(atime, sizeof(atime), "%d+%02d:%02d:%02d", (int)when, hours,
+	     mins, secs);
     return(atime);
 }
 

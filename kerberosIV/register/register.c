@@ -1,4 +1,4 @@
-/*	$Id: register.c,v 1.3 1996/09/04 05:10:23 deraadt Exp $	*/
+/*	$Id: register.c,v 1.4 1996/09/16 18:49:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -279,9 +279,8 @@ setup_key(local)
 	char	namebuf[MAXPATHLEN];
 	extern int errno;
 
-	(void) sprintf(namebuf, "%s%s",
-		CLIENT_KEYFILE,
-		inet_ntoa(local.sin_addr));
+	(void) snprintf(namebuf, sizeof(namebuf), "%s%s", CLIENT_KEYFILE,
+			inet_ntoa(local.sin_addr));
 
 	fd = open(namebuf, O_RDONLY);
 	if (fd < 0) {

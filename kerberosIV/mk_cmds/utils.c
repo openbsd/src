@@ -1,4 +1,4 @@
-/*	$Id: utils.c,v 1.1.1.1 1995/12/14 06:52:48 tholo Exp $	*/
+/*	$Id: utils.c,v 1.2 1996/09/16 18:49:05 millert Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by MIT Student Information Processing Board
@@ -71,7 +71,7 @@ char * generate_rqte(func_name, info_string, cmds, options)
     size += strlen(var_name)+7; /* "quux, " */
     size += strlen(func_name)+7; /* "foo, " */
     size += strlen(info_string)+9; /* "\"Info!\", " */
-    sprintf(numbuf, "%d", options);
+    snprintf(numbuf, sizeof(numbuf), "%d", options);
     size += strlen(numbuf);
     size += 4;		/* " }," + NL */
     string = malloc(size * sizeof(char *));

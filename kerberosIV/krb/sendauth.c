@@ -171,7 +171,7 @@ krb_sendauth(options, fd, ticket, service, inst, realm, checksum,
 #ifdef ATHENA_COMPAT
     /* this is only for compatibility with old servers */
     if (options & KOPT_DO_OLDSTYLE) {
-	(void) sprintf(buf,"%d ",ticket->length);
+	(void) snprintf(buf, sizeof(buf), "%d ", ticket->length);
 	(void) write(fd, buf, strlen(buf));
 	(void) write(fd, (char *) ticket->dat, ticket->length);
 	return(rem);

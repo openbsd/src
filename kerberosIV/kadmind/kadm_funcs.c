@@ -1,4 +1,4 @@
-/*	$Id: kadm_funcs.c,v 1.1.1.1 1995/12/14 06:52:49 tholo Exp $	*/
+/*	$Id: kadm_funcs.c,v 1.2 1996/09/16 18:48:49 millert Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -38,17 +38,18 @@ check_access(char *pname, char *pinst, char *prealm, enum acl_types acltype)
     char checkname[MAX_K_NAME_SZ];
     char filename[MAXPATHLEN];
 
-    (void) sprintf(checkname, "%s.%s@%s", pname, pinst, prealm);
+    (void) snprintf(checkname, sizeof(checkname), "%s.%s@%s", pname, pinst,
+		    prealm);
     
     switch (acltype) {
     case ADDACL:
-	(void) sprintf(filename, "%s%s", acldir, ADD_ACL_FILE);
+	(void) snprintf(filename, sizeof(filename), "%s%s", acldir, ADD_ACL_FILE);
 	break;
     case GETACL:
-	(void) sprintf(filename, "%s%s", acldir, GET_ACL_FILE);
+	(void) snprintf(filename, sizeof(filename), "%s%s", acldir, GET_ACL_FILE);
 	break;
     case MODACL:
-	(void) sprintf(filename, "%s%s", acldir, MOD_ACL_FILE);
+	(void) snprintf(filename, sizeof(filename), "%s%s", acldir, MOD_ACL_FILE);
 	break;
     }
     return(acl_check(filename, checkname));

@@ -1,4 +1,4 @@
-/*	$Id: registerd.c,v 1.3 1996/04/17 07:23:35 tholo Exp $	*/
+/*	$Id: registerd.c,v 1.4 1996/09/16 18:49:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -106,27 +106,26 @@ main(argc, argv)
 
 	/* get encryption key */
 
-	(void) sprintf(keyfile, "%s/%s",
-		SERVER_KEYDIR,
-		inet_ntoa(sina.sin_addr));
+	(void) snprintf(keyfile, sizeof(keyfile), "%s/%s",
+			SERVER_KEYDIR, inet_ntoa(sina.sin_addr));
 
 	if ((kf = open(keyfile, O_RDONLY)) < 0) {
 		syslog(LOG_ERR,
 		    "error opening Kerberos update keyfile (%s): %m", keyfile);
-		(void) sprintf(msgbuf,
-		    "couldn't open session keyfile for your host");
+		(void) snprintf(msgbuf, sizeof(msgbuf),
+				"couldn't open session keyfile for your host");
 		send_packet(msgbuf, CLEAR);
 		exit(1);
 	}
 
 	if (read(kf, keybuf, KBUFSIZ) != KBUFSIZ) {
 		syslog(LOG_ERR, "wrong read size of Kerberos update keyfile");
-		(void) sprintf(msgbuf,
+		(void) snprintf(msgbuf, sizeof(msgbuf),
 			"couldn't read session key from your host's keyfile");
 		send_packet(msgbuf, CLEAR);
 		exit(1);
 	}
-	(void) sprintf(msgbuf, GOTKEY_MSG);
+	(void) snprintf(msgbuf, sizeof(msgbuf), GOTKEY_MSG);
 	send_packet(msgbuf, CLEAR);
 	kfile = (struct keyfile_data *) keybuf;
 	key_sched(&kfile->kf_key, schedule);
@@ -159,10 +158,11 @@ main(argc, argv)
 
 	code = (u_char) retval; 
 	if (code != KSUCCESS) {
-		(void) sprintf(msgbuf, "%s", krb_err_txt[code]);
+		(void) snprintf(msgbuf, sizeof(msgbuf), "%s",
+				krb_err_txt[code]);
 		send_packet(msgbuf, RCRYPT);
 	} else {
-		(void) sprintf(msgbuf, "Update complete.");
+		(void) snprintf(msgbuf, sizeof(msgbuf), "Update complete.");
 		send_packet(msgbuf, RCRYPT);
 	}
 	cleanup();

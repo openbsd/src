@@ -108,8 +108,8 @@ fGetParameterSet(fp, parm, parmcount)
             for (i=0; i<parmcount; i++) {
                 if (strcmp(strutol(keyword),parm[i].keyword)==0) {
                     if (parm[i].value) {
-                        sprintf(ErrorMsg,"duplicate keyword \"%s\" found",
-                                keyword);
+                        snprintf(ErrorMsg, sizeof(ErrorMsg),
+				 "duplicate keyword \"%s\" found", keyword);
                         return(PS_BAD_KEYWORD);
                     }
                     parm[i].value = strsave( value );
@@ -117,14 +117,14 @@ fGetParameterSet(fp, parm, parmcount)
                 }
             }
             if (i >= parmcount) {
-                sprintf(ErrorMsg, "unrecognized keyword \"%s\" found",
-			keyword);
+                snprintf(ErrorMsg, sizeof(ErrorMsg),
+			 "unrecognized keyword \"%s\" found", keyword);
                 return(PS_BAD_KEYWORD);
             }
             break;
 
         default:
-            sprintf(ErrorMsg,
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
 		    "panic: bad return (%d) from fGetToken()",rc);
             break;
         }
@@ -213,14 +213,16 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
             return(KV_EOF);
 
         case GTOK_BAD_QSTRING:
-            sprintf(ErrorMsg,"unterminated string \"%s found",keyword);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "unterminated string \"%s found",keyword);
             return(KV_SYNTAX);
 
         case GTOK_PUNK:
             if (strcmp("\n",keyword)==0) {
                 return(KV_EOL);
             } else if (strcmp(",",keyword)!=0) {
-                sprintf(ErrorMsg,"expecting rvalue, found \'%s\'",keyword);
+                snprintf(ErrorMsg, sizeof(ErrorMsg),
+			 "expecting rvalue, found \'%s\'", keyword);
             }
             break;
 
@@ -231,7 +233,8 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
             break;
 
         default:
-            sprintf(ErrorMsg,"panic: bad return (%d) from fGetToken()",rc);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "panic: bad return (%d) from fGetToken()", rc);
             return(KV_SYNTAX);
         }
 
@@ -253,9 +256,9 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
             break;
 
         case GTOK_BAD_QSTRING:
-            sprintf(ErrorMsg,
-		    "expecting \'=\', found unterminated string \"%s",
-                    value);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "expecting \'=\', found unterminated string \"%s",
+                     value);
             return(KV_SYNTAX);
 
         case GTOK_PUNK:
@@ -263,11 +266,12 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
                 gotit = TRUE;
             } else {
                 if (strcmp("\n",value)==0) {
-                    sprintf(ErrorMsg,"expecting \"=\", found newline");
+                    snprintf(ErrorMsg, sizeof(ErrorMsg),
+			     "expecting \"=\", found newline");
                     fUngetChar('\n',fp);
                 } else {
-                    sprintf(ErrorMsg,
-			    "expecting rvalue, found \'%s\'",keyword);
+                    snprintf(ErrorMsg, sizeof(ErrorMsg),
+			     "expecting rvalue, found \'%s\'",keyword);
                 }
                 return(KV_SYNTAX);
             }
@@ -276,16 +280,17 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
         case GTOK_STRING:
         case GTOK_QSTRING:
         case GTOK_NUMBER:
-            sprintf(ErrorMsg,"expecting \'=\', found \"%s\"",value);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "expecting \'=\', found \"%s\"", value);
             return(KV_SYNTAX);
 
         case GTOK_EOF:
-            sprintf(ErrorMsg,"expecting \'=\', found EOF");
+            snprintf(ErrorMsg, sizeof(ErrorMsg), "expecting \'=\', found EOF");
             return(KV_SYNTAX);
 
         default:
-            sprintf(ErrorMsg,
-		    "panic: bad return (%d) from fGetToken()",rc);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "panic: bad return (%d) from fGetToken()",rc);
             return(KV_SYNTAX);
         }
 
@@ -306,20 +311,22 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
             break;
 
         case GTOK_EOF:
-            sprintf(ErrorMsg,"expecting rvalue, found EOF");
+            snprintf(ErrorMsg, sizeof(ErrorMsg), "expecting rvalue, found EOF");
             return(KV_SYNTAX);
 
         case GTOK_BAD_QSTRING:
-            sprintf(ErrorMsg,"unterminated quoted string \"%s",value);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "unterminated quoted string \"%s", value);
             return(KV_SYNTAX);
 
         case GTOK_PUNK:
             if (strcmp("\n",value)==0) {
-                sprintf(ErrorMsg,"expecting rvalue, found newline");
+                snprintf(ErrorMsg, sizeof(ErrorMsg),
+			 "expecting rvalue, found newline");
                 fUngetChar('\n',fp);
             } else {
-                sprintf(ErrorMsg,
-			"expecting rvalue, found \'%s\'",value);
+                snprintf(ErrorMsg, sizeof(ErrorMsg),
+			 "expecting rvalue, found \'%s\'",value);
             }
             return(KV_SYNTAX);
             break;
@@ -331,8 +338,8 @@ fGetKeywordValue(fp, keyword, klen, value, vlen)
             return(KV_OKAY);
 
         default:
-            sprintf(ErrorMsg,
-		    "panic: bad return (%d) from fGetToken()",rc);
+            snprintf(ErrorMsg, sizeof(ErrorMsg),
+		     "panic: bad return (%d) from fGetToken()",rc);
             return(KV_SYNTAX);
         }
 
