@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.16 1999/08/15 00:07:44 pjanzen Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.17 1999/09/05 22:20:45 tholo Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -179,6 +179,15 @@ schedcpu(arg)
 	register struct proc *p;
 	register int s;
 	register unsigned int newcpu;
+	int phz;
+
+	/*
+	 * If we have a statistics clock, use that to calculate CPU
+	 * time, otherwise revert to using the profiling clock (which,
+	 * in turn, defaults to hz if there is no separate profiling
+	 * clock available)
+	 */
+	phz = stathz ? stathz : profhz;
 
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		/*
@@ -200,15 +209,15 @@ schedcpu(arg)
 		/*
 		 * p_pctcpu is only for ps.
 		 */
-		KASSERT(profhz);
+		KASSERT(phz);
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (profhz == 100)?
+		p->p_pctcpu += (phz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / profhz;
+				<< (FSHIFT - CCPU_SHIFT)) / phz;
 #else
 		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / profhz)) >> FSHIFT;
+			(p->p_cpticks * FSCALE / phz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
