@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.9 1997/02/16 04:42:50 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.10 1997/06/27 02:23:22 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -279,7 +279,6 @@ udp_input(m, va_alist)
 				goto bad;
 			}
 			*ip = save_ip;
-			ip->ip_len += iphlen;
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}
