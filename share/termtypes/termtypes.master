@@ -1,7 +1,7 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
 #	Version 10.2.5
-#	$Date: 1998/12/20 18:41:27 $
+#	$Date: 1998/12/20 18:58:44 $
 #	master syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -1749,7 +1749,7 @@ xterm-8bit|xterm terminal emulator 8-bit controls (X Window System),
 	u9=\E[c, vpa=\233%i%p1%dd, 
 
 # This is xterm for ncurses.
-xterm|xterm terminal emulator (X Window System), 
+xterm|vs100|xterms|xterm terminal emulator (X Window System),
 	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	kmous=\E[M, u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?1;2c, u9=\E[c, 
 	use=xterm-r6, 
