@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: zs.c,v 1.7 2002/09/06 13:56:51 drahn Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -79,15 +79,12 @@
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
 
-#define	PCLK	(9600 * 384)
-
 #include "zsc.h"	/* get the # of zs chips defined */
 
 /*
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -96,13 +93,6 @@ int zs_major = 12;
  */
 #define ZSABORT_DELAY 3000000
 
-/* The layout of this is hardware-dependent (padding, order). */
-struct zschan {
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx0[15];
-	volatile u_char	zc_data;	/* data */
-	u_char		zc_xxx1[15];
-};
 struct zsdevice {
 	/* Yes, they are backwards. */
 	struct	zschan zs_chan_b;
@@ -128,7 +118,7 @@ int	zs_cons_canabort = 0;
 /* device to which the console is attached--if serial. */
 /* Mac stuff */
 
-static int zs_get_speed(struct zs_chanstate *);
+int zs_get_speed(struct zs_chanstate *);
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -169,6 +159,10 @@ int	zsc_match(struct device *, void *, void *);
 void	zsc_attach(struct device *, struct device *, void *);
 int	zsc_print(void *, const char *name);
 
+/* Power management hooks */
+int  zs_enable (struct zs_chanstate *);
+void zs_disable (struct zs_chanstate *);
+
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
 };
@@ -178,7 +172,7 @@ extern struct cfdriver zsc_cd;
 int zshard(void *);
 int zssoft(void *);
 #ifdef ZS_TXDMA
-static int zs_txdma_int(void *);
+int zs_txdma_int(void *);
 #endif
 
 void zscnprobe(struct consdev *);
@@ -224,12 +218,15 @@ zsc_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
+	struct xzs_chanstate *xcs;
 	struct zs_chanstate *cs;
 	struct zsdevice *zsd;
-	int channel;
+	int zsc_unit, channel;
 	int s, theflags;
 	int node, intr[3][3];
 	u_int regs[16];
+
+	zsc_unit = zsc->zsc_dev.dv_unit;
 
 	zsd = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
 	node = OF_child(ca->ca_node);	/* ch-a */
@@ -267,8 +264,10 @@ zsc_attach(parent, self, aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[0][channel];
-		cs = &zsc->zsc_cs[channel];
+		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		xcs = &zsc->xzsc_xcs_store[channel];
+		cs  = &xcs->xzs_cs;
+		zsc->zsc_cs[channel] = cs;
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
@@ -283,12 +282,25 @@ zsc_attach(parent, self, aux)
 		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		/* Current BAUD rate generator clock. */
-		cs->cs_brg_clk = PCLK / 16;	/* RTxC is 230400*16, so use 230400 */
+		/* RTxC is 230400*16, so use 230400 */
+		cs->cs_brg_clk = PCLK / 16;
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[0][channel];
-#ifdef NOTYET
+			cs->cs_defspeed =
+			    zs_defspeed[zsc_unit][channel];
+		cs->cs_defcflag = zs_def_cflag;
+
+		/* Make these correspond to cs_defcflag (-crtscts) */
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+		cs->cs_rr0_cts = 0;
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = 0;
+
+#ifdef __notyet__
+		cs->cs_slave_type = ZS_SLAVE_NONE;
+#endif
+
 		/* Define BAUD rate stuff. */
 		xcs->cs_clocks[0].clk = PCLK;
 		xcs->cs_clocks[0].flags = ZSC_RTXBRG | ZSC_RTXDIV;
@@ -316,13 +328,22 @@ zsc_attach(parent, self, aux)
 			xcs->cs_clocks[1].clk = 0;
 			xcs->cs_clocks[2].clk = 0;
 		}
+		if (xcs->cs_clocks[1].clk)
+			zsc_args.hwflags |= ZS_HWFLAG_NO_DCD;
+		if (xcs->cs_clocks[2].clk)
+			zsc_args.hwflags |= ZS_HWFLAG_NO_CTS;
 
 		/* Set defaults in our "extended" chanstate. */
 		xcs->cs_csource = 0;
 		xcs->cs_psource = 0;
 		xcs->cs_cclk_flag = 0;  /* Nothing fancy by default */
 		xcs->cs_pclk_flag = 0;
-#endif
+
+		if (theflags & ZSMAC_RAW) {
+			zsc_args.hwflags |= ZS_HWFLAG_RAW;
+			printf(" (raw defaults)");
+		}
+
 		/*
 		 * XXX - This might be better done with a "stub" driver
 		 * (to replace zstty) that ignores LocalTalk for now.
@@ -341,6 +362,16 @@ zsc_attach(parent, self, aux)
 		}
 
 		/*
+		 * We used to disable chip interrupts here, but we now
+		 * do that in zscnprobe, just in case MacOS left the chip on.
+		 */
+		
+		xcs->cs_chip = 0;
+		
+		/* Stash away a copy of the final H/W flags. */
+		xcs->cs_hwflags = zsc_args.hwflags;
+		
+		/*
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
@@ -356,27 +387,31 @@ zsc_attach(parent, self, aux)
 
 	/* XXX - Now safe to install interrupt handlers. */
 	mac_intr_establish(parent, intr[0][0], IST_LEVEL, IPL_TTY,
-	    zshard, NULL, "zs");
+	    zshard, NULL, "zs0");
 	mac_intr_establish(parent, intr[1][0], IST_LEVEL, IPL_TTY,
-	    zshard, NULL, "zs");
+	    zshard, NULL, "zs1");
 #ifdef ZS_TXDMA
 	mac_intr_establish(parent, intr[0][1], IST_LEVEL, IPL_TTY,
-	    zs_txdma_int, (void *)0, "zs");
+	    zs_txdma_int, (void *)0, "zsdma0");
 	mac_intr_establish(parent, intr[1][1], IST_LEVEL, IPL_TTY,
-	    zs_txdma_int, (void *)1, "zs");
+	    zs_txdma_int, (void *)1, "zsdma1");
 #endif
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
 	 * (common to both channels, do it on A)
 	 */
-	cs = &zsc->zsc_cs[0];
+	cs = zsc->zsc_cs[0];
 	s = splzs();
 	/* interrupt vector */
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
+
+	/* connect power management for port 0 */
+	cs->enable = zs_enable;
+	cs->disable = zs_disable;
 }
 
 int
@@ -445,7 +480,7 @@ zshard(arg)
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
-		if (zsc->zsc_cs->cs_softreq)
+		if (zsc->zsc_cs[0]->cs_softreq)
 		{
 			/* zsc_req_softint(zsc); */
 			/* We are at splzs here, so no need to lock. */
@@ -555,6 +590,247 @@ zs_get_speed(cs)
 	return TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 }
 
+#ifndef ZS_TOLERANCE
+#define ZS_TOLERANCE 51
+/* 5% in tenths of a %, plus 1 so that exactly 5% will be ok. */
+#endif
+
+/*
+ * Search through the signal sources in the channel, and
+ * pick the best one for the baud rate requested. Return
+ * a -1 if not achievable in tolerance. Otherwise return 0
+ * and fill in the values.
+ *
+ * This routine draws inspiration from the Atari port's zs.c
+ * driver in NetBSD 1.1 which did the same type of source switching.
+ * Tolerance code inspired by comspeed routine in isa/com.c.
+ *
+ * By Bill Studenmund, 1996-05-12
+ */
+int
+zs_set_speed(cs, bps)
+	struct zs_chanstate *cs;
+	int bps;	/* bits per second */
+{
+	struct xzs_chanstate *xcs = (void *)cs;
+	int i, tc, tc0 = 0, tc1, s, sf = 0;
+	int src, rate0, rate1, err, tol;
+
+	if (bps == 0)
+		return (0);
+
+	src = -1;		/* no valid source yet */
+	tol = ZS_TOLERANCE;
+
+	/*
+	 * Step through all the sources and see which one matches
+	 * the best. A source has to match BETTER than tol to be chosen.
+	 * Thus if two sources give the same error, the first one will be
+	 * chosen. Also, allow for the possability that one source might run
+	 * both the BRG and the direct divider (i.e. RTxC).
+	 */
+	for (i = 0; i < xcs->cs_clock_count; i++) {
+		if (xcs->cs_clocks[i].clk <= 0)
+			continue;	/* skip non-existent or bad clocks */
+		if (xcs->cs_clocks[i].flags & ZSC_BRG) {
+			/* check out BRG at /16 */
+			tc1 = BPS_TO_TCONST(xcs->cs_clocks[i].clk >> 4, bps);
+			if (tc1 >= 0) {
+				rate1 = TCONST_TO_BPS(xcs->cs_clocks[i].clk >> 4, tc1);
+				err = abs(((rate1 - bps)*1000)/bps);
+				if (err < tol) {
+					tol = err;
+					src = i;
+					sf = xcs->cs_clocks[i].flags & ~ZSC_DIV;
+					tc0 = tc1;
+					rate0 = rate1;
+				}
+			}
+		}
+		if (xcs->cs_clocks[i].flags & ZSC_DIV) {
+			/*
+			 * Check out either /1, /16, /32, or /64
+			 * Note: for /1, you'd better be using a synchronized
+			 * clock!
+			 */
+			int b0 = xcs->cs_clocks[i].clk, e0 = abs(b0-bps);
+			int b1 = b0 >> 4, e1 = abs(b1-bps);
+			int b2 = b1 >> 1, e2 = abs(b2-bps);
+			int b3 = b2 >> 1, e3 = abs(b3-bps);
+
+			if (e0 < e1 && e0 < e2 && e0 < e3) {
+				err = e0;
+				rate1 = b0;
+				tc1 = ZSWR4_CLK_X1;
+			} else if (e0 > e1 && e1 < e2  && e1 < e3) {
+				err = e1;
+				rate1 = b1;
+				tc1 = ZSWR4_CLK_X16;
+			} else if (e0 > e2 && e1 > e2 && e2 < e3) {
+				err = e2;
+				rate1 = b2;
+				tc1 = ZSWR4_CLK_X32;
+			} else {
+				err = e3;
+				rate1 = b3;
+				tc1 = ZSWR4_CLK_X64;
+			}
+
+			err = (err * 1000)/bps;
+			if (err < tol) {
+				tol = err;
+				src = i;
+				sf = xcs->cs_clocks[i].flags & ~ZSC_BRG;
+				tc0 = tc1;
+				rate0 = rate1;
+			}
+		}
+	}
+#ifdef ZSMACDEBUG
+	zsprintf("Checking for rate %d. Found source #%d.\n",bps, src);
+#endif
+	if (src == -1)
+		return (EINVAL); /* no can do */
+
+	/*
+	 * The M.I. layer likes to keep cs_brg_clk current, even though
+	 * we are the only ones who should be touching the BRG's rate.
+	 *
+	 * Note: we are assuming that any ZSC_EXTERN signal source comes in
+	 * on the RTxC pin. Correct for the mac68k obio zsc.
+	 */
+	if (sf & ZSC_EXTERN)
+		cs->cs_brg_clk = xcs->cs_clocks[i].clk >> 4;
+	else
+		cs->cs_brg_clk = PCLK / 16;
+
+	/*
+	 * Now we have a source, so set it up.
+	 */
+	s = splzs();
+	xcs->cs_psource = src;
+	xcs->cs_pclk_flag = sf;
+	bps = rate0;
+	if (sf & ZSC_BRG) {
+		cs->cs_preg[4] = ZSWR4_CLK_X16;
+		cs->cs_preg[11]= ZSWR11_RXCLK_BAUD | ZSWR11_TXCLK_BAUD;
+		if (sf & ZSC_PCLK) {
+			cs->cs_preg[14] = ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK;
+		} else {
+			cs->cs_preg[14] = ZSWR14_BAUD_ENA;
+		}
+		tc = tc0;
+	} else {
+		cs->cs_preg[4] = tc0;
+		if (sf & ZSC_RTXDIV) {
+			cs->cs_preg[11] = ZSWR11_RXCLK_RTXC | ZSWR11_TXCLK_RTXC;
+		} else {
+			cs->cs_preg[11] = ZSWR11_RXCLK_TRXC | ZSWR11_TXCLK_TRXC;
+		}
+		cs->cs_preg[14]= 0;
+		tc = 0xffff;
+	}
+	/* Set the BAUD rate divisor. */
+	cs->cs_preg[12] = tc;
+	cs->cs_preg[13] = tc >> 8;
+	splx(s);
+
+#ifdef ZSMACDEBUG
+	zsprintf("Rate is %7d, tc is %7d, source no. %2d, flags %4x\n", \
+	    bps, tc, src, sf);
+	zsprintf("Registers are: 4 %x, 11 %x, 14 %x\n\n",
+		cs->cs_preg[4], cs->cs_preg[11], cs->cs_preg[14]);
+#endif
+
+	cs->cs_preg[5] |= ZSWR5_RTS;	/* Make sure the drivers are on! */
+
+	/* Caller will stuff the pending registers. */
+	return (0);
+}
+
+int
+zs_set_modes(cs, cflag)
+	struct zs_chanstate *cs;
+	int cflag;	/* bits per second */
+{
+	struct xzs_chanstate *xcs = (void*)cs;
+	int s;
+
+	/*
+	 * Make sure we don't enable hfc on a signal line we're ignoring.
+	 * As we enable CTS interrupts only if we have CRTSCTS or CDTRCTS,
+	 * this code also effectivly turns off ZSWR15_CTS_IE.
+	 *
+	 * Also, disable DCD interrupts if we've been told to ignore
+	 * the DCD pin. Happens on mac68k because the input line for
+	 * DCD can also be used as a clock input.  (Just set CLOCAL.)
+	 *
+	 * If someone tries to turn an invalid flow mode on, Just Say No
+	 * (Suggested by gwr)
+	 */
+	if (xcs->cs_hwflags & ZS_HWFLAG_NO_DCD) {
+		if (cflag & MDMBUF)
+		printf(" opps\n");
+		if (cflag & MDMBUF)
+			return (EINVAL);
+		cflag |= CLOCAL;
+	}
+#if 0
+	if ((xcs->cs_hwflags & ZS_HWFLAG_NO_CTS) && (cflag & CRTSCTS))
+		return (EINVAL);
+#endif
+
+	/*
+	 * Output hardware flow control on the chip is horrendous:
+	 * if carrier detect drops, the receiver is disabled, and if
+	 * CTS drops, the transmitter is stoped IN MID CHARACTER!
+	 * Therefore, NEVER set the HFC bit, and instead use the
+	 * status interrupt to detect CTS changes.
+	 */
+	s = splzs();
+	if ((cflag & (CLOCAL | MDMBUF)) != 0)
+		cs->cs_rr0_dcd = 0;
+	else
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+	/*
+	 * The mac hardware only has one output, DTR (HSKo in Mac
+	 * parlance). In HFC mode, we use it for the functions
+	 * typically served by RTS and DTR on other ports, so we
+	 * have to fake the upper layer out some.
+	 *
+	 * CRTSCTS we use CTS as an input which tells us when to shut up.
+	 * We make no effort to shut up the other side of the connection.
+	 * DTR is used to hang up the modem.
+	 *
+	 * In CDTRCTS, we use CTS to tell us to stop, but we use DTR to
+	 * shut up the other side.
+	 */
+	if ((cflag & CRTSCTS) != 0) {
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = 0;
+		cs->cs_rr0_cts = ZSRR0_CTS;
+#if 0
+	} else if ((cflag & CDTRCTS) != 0) {
+		cs->cs_wr5_dtr = 0;
+		cs->cs_wr5_rts = ZSWR5_DTR;
+		cs->cs_rr0_cts = ZSRR0_CTS;
+#endif
+	} else if ((cflag & MDMBUF) != 0) {
+		cs->cs_wr5_dtr = 0;
+		cs->cs_wr5_rts = ZSWR5_DTR;
+		cs->cs_rr0_cts = ZSRR0_DCD;
+	} else {
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = 0;
+		cs->cs_rr0_cts = 0;
+	}
+	splx(s);
+
+	/* Caller will stuff the pending registers. */
+	return (0);
+}
+
+
 /*
  * Read or write the chip with suitable delays.
  * MacII hardware has the delay built in.
@@ -627,6 +903,33 @@ void  zs_write_data(cs, val)
 	ZS_DELAY();
 }
 
+/*
+ * Power management hooks for zsopen() and zsclose().
+ * We use them to power on/off the ports, if necessary.
+ * This should be modified to turn on/off modem in PBG4, etc.
+ */
+void macobio_modem_power(int enable);
+int zs_enable(struct zs_chanstate *cs);
+void zs_disable(struct zs_chanstate *cs);
+
+int
+zs_enable(cs)
+	struct zs_chanstate *cs;
+{
+	macobio_modem_power(1); /* Whee */
+	cs->enabled = 1;
+	return(0);
+}
+ 
+void
+zs_disable(cs)
+	struct zs_chanstate *cs;
+{
+	macobio_modem_power(0); /* Whee */
+	cs->enabled = 0;
+}
+
+
 /****************************************************************
  * Console support functions (powermac specific!)
  * Note: this code is allowed to know about the layout of
@@ -635,11 +938,10 @@ void  zs_write_data(cs, val)
  * XXX - Well :-P  :-)  -wrs
  ****************************************************************/
 
-#define zscnpollc	nullcnpollc
 cons_decl(zs);
 
-static void	zs_putc(register volatile struct zschan *, int);
-static int	zs_getc(register volatile struct zschan *);
+void	zs_putc(register volatile struct zschan *, int);
+int	zs_getc(register volatile struct zschan *);
 extern int	zsopen( dev_t dev, int flags, int mode, struct proc *p);
 
 static int stdin, stdout;
@@ -753,24 +1055,13 @@ zscnputc(dev, c)
 	}
 }
 
-extern int ofccngetc(dev_t);
-extern void ofccnputc(dev_t, int);
-
-struct consdev consdev_zs = {
-	zscnprobe,
-	zscninit,
-	zscngetc,
-	zscnputc,
-	zscnpollc,
-	NULL,
-};
-
 void
 zscnprobe(cp)
 	struct consdev *cp;
 {
 	int chosen, pkg;
 	int unit = 0;
+	int maj;
 	char name[16];
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
@@ -798,15 +1089,22 @@ zscnprobe(cp)
 	if (strcmp(name, "ch-b") == 0)
 		unit = 1;
 
-	cp->cn_dev = makedev(zs_major, unit);
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == zsopen)
+			break;
+
+	cp->cn_dev = makedev(maj, unit);
 	cp->cn_pri = CN_REMOTE;
 }
+
 
 void
 zscninit(cp)
 	struct consdev *cp;
 {
-	int escc, escc_ch, obio, zs_offset, zs_size;
+	int escc, escc_ch, obio;
+	unsigned int zs_offset, zs_size;
 	int ch = 0;
 	u_int32_t reg[5];
 	char name[16];
@@ -821,7 +1119,7 @@ zscninit(cp)
 	if (strcmp(name, "ch-b") == 0)
 		ch = 1;
 
-	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 4)
+	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 8)
 		return;
 	zs_offset = reg[0];
 	zs_size   = reg[1];
@@ -837,7 +1135,29 @@ zscninit(cp)
 }
 
 void
-zs_abort()
+zs_abort(struct zs_chanstate *channel)
 {
 
 }
+
+/* copied from sparc - XXX? */
+void
+zscnpollc(dev, on)
+        dev_t dev;
+	int on;  
+{
+	/*
+	 * Need to tell zs driver to acknowledge all interrupts or we get
+	 * annoying spurious interrupt messages.  This is because mucking
+	 * with spl() levels during polling does not prevent interrupts from
+	 * being generated.
+	 */
+
+#if 0
+	if (on)
+		swallow_zsintrs++;
+	else
+		swallow_zsintrs--;
+#endif
+}
+

@@ -1,5 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
-/*	$NetBSD: z8530var.h,v 1.1 1998/05/15 10:15:57 tsubai Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -46,8 +45,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <dev/ic/z8530sc.h>
-#include <machine/bus.h>
+#include <macppc/dev/z8530sc.h>
 #include <macppc/dev/dbdma.h>
 
 /*
@@ -98,7 +96,9 @@ struct xzs_chanstate {
 
 struct zsc_softc {
 	struct	device zsc_dev;		/* required first: base device */
-	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
+	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	/* Machine-dependent part follows... */
+	struct xzs_chanstate xzsc_xcs_store[2];
 	dbdma_regmap_t *zsc_txdmareg[2];
 	dbdma_command_t *zsc_txdmacmd[2];
 	/* XXX tx only, for now */
@@ -116,28 +116,40 @@ struct zsc_softc {
  * XXX - no one seems to want to try and check this -wrs
  */
 
-u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
-u_char zs_read_csr(struct zs_chanstate *cs);
-u_char zs_read_data(struct zs_chanstate *cs);
+u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
+u_char zs_read_csr __P((struct zs_chanstate *cs));
+u_char zs_read_data __P((struct zs_chanstate *cs));
 
-void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
-void  zs_write_csr(struct zs_chanstate *cs, u_char val);
-void  zs_write_data(struct zs_chanstate *cs, u_char val);
+void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
+void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* XXX - Could define splzs() here instead of in psl.h */
 #define splzs spltty
 
 /* Hook for MD ioctl support */
-int	zsmdioctl(struct zs_chanstate *cs, u_long cmd, caddr_t data);
+int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
 /* XXX - This is a bit gross... */
-#define ZS_MD_IOCTL zsmdioctl(cs, cmd, data)
+/*
+#define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
+*/
 
 /* Callback for "external" clock sources */
-void zsmd_setclock(struct zs_chanstate *cs);
+void zsmd_setclock  __P((struct zs_chanstate *cs));
 #define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
 
-#define	zsc_req_softint(zsc)	(void)(zsc)
+#define PCLK	(9600 * 384)	/* PCLK pin input clock rate */
 
-void	zs_abort(void);
+/* The layout of this is hardware-dependent (padding, order). */
+struct zschan {
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0[15];
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1[15];
+};
+void	zs_kgdb_init (void);
 
-#define	ZSTTY_MAJOR	7
+#ifndef ZSCCF_CHANNEL
+#define ZSCCF_CHANNEL 0
+#define ZSCCF_CHANNEL_DEFAULT -1
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.4 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.5 2002/09/06 13:56:51 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -57,6 +57,8 @@ struct macobio_softc {
 	struct device sc_dev;
 	int sc_node;
 	struct ppc_bus_space sc_membus_space;
+	int	sc_id; /* copy of the PCI pa_id */
+	u_int8_t *obiomem;
 };
 struct cfdriver macobio_cd = {
 	NULL, "macobio", DV_DULL,
@@ -110,6 +112,8 @@ macobio_attach(parent, self, aux)
 	char name[32];
 	int need_interrupt_controller = 0;
 
+	sc->sc_id = pa->pa_id; /* save of type for later */
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	/* XXX should not use name */
@@ -141,6 +145,11 @@ macobio_attach(parent, self, aux)
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
+		if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg))
+			== (sizeof (reg[0]) * 5))
+		{
+			 sc->obiomem = mapiodev(reg[2], 0x100);
+		}
 
 		break;
 	default:
@@ -270,4 +279,32 @@ mac_intr_disestablish(lcp, arg)
 	void *arg;
 {
 	(*mac_intr_disestablish_func)(lcp, arg);
+}
+
+void macobio_modem_power(int enable);
+void
+macobio_modem_power(int enable)
+{
+	u_int32_t val;
+	struct macobio_softc *sc = macobio_cd.cd_devs[0];
+	if (PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
+		val = in32rb(sc->obiomem + 0x40);
+		if (enable)
+			val = val & ~((u_int32_t)1<<25);
+		else 
+			val = val | ((u_int32_t)1<<25);
+		out32rb(sc->obiomem + 0x40, val);
+	}
+	if (PCI_PRODUCT(sc->sc_id) == PCI_PRODUCT_APPLE_PANGEA_MACIO) {
+		if (enable) {
+			/* set reset */
+			out8(sc->obiomem + 0x006a + 0x03, 0x04);
+			/* power modem on */
+			out8(sc->obiomem + 0x006a + 0x02, 0x04);
+			/* unset reset */
+			out8(sc->obiomem + 0x006a + 0x03, 0x05);
+		}  else {
+			/* disable it how? */
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.12 2002/08/20 02:50:43 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.13 2002/09/06 13:56:51 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -369,14 +369,17 @@ ofwconprobe()
 		return;
 	}
 	if (strcmp(type, "serial") == 0) {
-		/* serial console not supported, forcing to screen for now */
-		OF_stdout = OF_open("screen");
-		OF_stdin = OF_open("keyboard");
-
-		/* cross fingers that this works. */
-		of_display_console();
+#if NZSTTY > 0
+		/* zscnprobe/zscninit do all the required initialization */
 		return;
+#endif
 	}
+
+	OF_stdout = OF_open("screen");
+	OF_stdin = OF_open("keyboard");
+
+	/* cross fingers that this works. */
+	of_display_console();
 
 	return;
 }
