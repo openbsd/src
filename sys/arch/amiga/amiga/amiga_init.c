@@ -1,4 +1,4 @@
-/*    $OpenBSD: amiga_init.c,v 1.5 1996/02/26 21:24:51 niklas Exp $	*/
+/*    $OpenBSD: amiga_init.c,v 1.6 1996/03/24 15:59:41 niklas Exp $	*/
 /*    $NetBSD: amiga_init.c,v 1.35 1996/02/24 07:43:14 chopps Exp $   */
 
 /*
@@ -564,9 +564,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * movec d0,TC
 		 */
 		asm volatile ("movel %0,a0; .word 0x4e7b,0x8807"
-		    : : "a" (Sysseg_pa));
+		    : : "a" (Sysseg_pa) : "a0");
 		asm volatile (".word 0xf518" : : );
-		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : );
+		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003"
+		    : : : "d0");
 	} else
 #endif
 	{
