@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 1996/12/11 00:39:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.37 1997/04/14 05:39:14 millert Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -150,6 +150,7 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
