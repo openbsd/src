@@ -208,17 +208,20 @@ print_arelt_descr (file, abfd, verbose)
 /* Return the name of a temporary file in the same directory as FILENAME.  */
 
 char *
-make_tempname (filename)
+make_tempname (filename, isdir)
      char *filename;
+     int isdir;
 {
   static char template[] = "stXXXXXX";
   char *tmpname;
   char *slash = strrchr (filename, '/');
+  char c;
 
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
   {
     /* We could have foo/bar\\baz, or foo\\bar, or d:bar.  */
     char *bslash = strrchr (filename, '\\');
+
     if (bslash > slash)
       slash = bslash;
     if (slash == NULL && filename[0] != '\0' && filename[1] == ':')
@@ -228,8 +231,6 @@ make_tempname (filename)
 
   if (slash != (char *) NULL)
     {
-      char c;
-
       c = *slash;
       *slash = 0;
       tmpname = xmalloc (strlen (filename) + sizeof (template) + 2);
@@ -243,15 +244,44 @@ make_tempname (filename)
 #endif
       strcat (tmpname, "/");
       strcat (tmpname, template);
-      mktemp (tmpname);
-      *slash = c;
     }
   else
     {
       tmpname = xmalloc (sizeof (template));
       strcpy (tmpname, template);
-      mktemp (tmpname);
     }
+
+  if (isdir)
+    {
+#ifdef HAVE_MKDTEMP
+      if (mkdtemp (tmpname) != (char *) NULL)
+#else
+      mktemp (tmpname);
+#if defined (_WIN32) && !defined (__CYGWIN32__)
+      if (mkdir (tmpname) != 0)
+#else
+      if (mkdir (tmpname, 0700) != 0)
+#endif
+#endif
+	tmpname = NULL;
+    }
+  else
+    {
+      int fd;
+
+#ifdef HAVE_MKSTEMP
+      fd = mkstemp (tmpname);
+      if (fd == -1)
+	tmpname = NULL;
+      else
+	close (fd);
+#else
+      mktemp (tmpname);
+#endif
+    }
+  if (slash != (char *) NULL)
+    *slash = c;
+
   return tmpname;
 }
 
