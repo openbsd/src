@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.21 1999/06/10 22:38:01 pjanzen Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.22 1999/08/21 22:49:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -85,7 +85,7 @@ Xdisk(cmd, disk, mbr, tt, offset)
 	/* Print out disk info */
 	DISK_printmetrics(disk);
 
-#ifdef __powerpc__
+#if defined (__powerpc__) || defined (__mips__)
 	maxcyl  = 9999999;
 	maxhead = 9999999;
 	maxsec  = 9999999;

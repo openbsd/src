@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.8 1999/08/10 23:10:16 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.9 1999/08/21 22:49:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -70,7 +70,7 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &mbr->part[3]);
 
-#if defined(__powerpc__)
+#if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC. */
 	mbr->part[0].flag = DOSACTIVE;	/* Boot from dos part */
 	mbr->part[3].flag = 0;
@@ -79,7 +79,7 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 	mbr->part[3].ns -= mbr->part[3].bs;
 	PRT_fix_CHS(disk, &mbr->part[3]);
 	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
-		/* align the parition on a cylinder boundary */
+		/* align the partition on a cylinder boundary */
 		mbr->part[3].shead = 0;
 		mbr->part[3].ssect = 1;
 		mbr->part[3].scyl += 1;
