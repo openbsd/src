@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.13 2001/08/05 10:05:36 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.14 2001/08/11 09:47:12 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -559,6 +559,12 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/*
+	 * VScom PCI-200L has 2 x 16550 UARTS.
+	 * The board has a jumper which allows you to select a clock speed
+	 * of either 14.7456MHz or 1.8432MHz. By default it runs at the
+	 * latter.  If pins 2 & 3 are shorted, use COM_FREQ * 8 instead.
+	 */
 	{   /* "VScom PCI-200L with 2 x 16550 UARTS" */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,	0, 0	},
 	    {	0xffff, 0xffff,					    	0, 0	},
