@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2001/08/30 22:10:52 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2001/08/31 00:37:20 miod Exp $
 #	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $
 
 #
@@ -53,6 +53,7 @@ include <machine/control.h>
 include <machine/cpu.h>
 include <machine/dvma.h>
 include <machine/pcb.h>
+include <machine/psl.h>
 include <machine/pte.h>
 include <machine/machdep.h>
 include <machine/mon.h>
@@ -76,6 +77,12 @@ define	INTERSIL_INTER_CSECONDS	INTERSIL_INTER_CSECONDS
 # bus error
 define	BUSERR_REG		BUSERR_REG
 define	BUSERR_MMU		BUSERR_MMU
+
+# PSL values
+define	PSL_S			PSL_S
+define	PSL_IPL7		PSL_IPL7
+define	PSL_LOWIPL		PSL_LOWIPL
+define	PSL_USER		PSL_USER
 
 # magic
 define	FC_CONTROL		FC_CONTROL

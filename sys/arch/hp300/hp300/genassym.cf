@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2001/08/30 22:10:47 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2001/08/31 00:37:20 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -51,6 +51,7 @@ include <uvm/uvm_extern.h>
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
+include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
 
@@ -150,6 +151,11 @@ define	SSLEEP			SSLEEP
 define UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
 # PSL values
+define	PSL_S			PSL_S
+define	PSL_IPL7		PSL_IPL7
+define	PSL_LOWIPL		PSL_LOWIPL
+define	PSL_USER		PSL_USER
+define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.27 2001/08/13 00:01:47 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.28 2001/08/31 00:37:20 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -76,6 +76,7 @@
 #include "ksyms.h"
 #include <machine/asm.h>
 #include <machine/prom.h>
+#include <machine/trap.h>
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.

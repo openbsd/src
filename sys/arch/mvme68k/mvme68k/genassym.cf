@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2001/08/30 22:10:50 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2001/08/31 00:37:20 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -78,6 +78,7 @@ include <vm/vm.h>
 include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
+include <machine/psl.h>
 include <machine/nvram.h>
 include <machine/reg.h>
 include <machine/autoconf.h>
@@ -98,6 +99,10 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
 # PSL values
+define	PSL_S			PSL_S
+define	PSL_IPL7		PSL_IPL7
+define	PSL_LOWIPL		PSL_LOWIPL
+define	PSL_USER		PSL_USER
 define	SPL1			PSL_S | PSL_IPL1
 
 # magic

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2001/08/30 22:08:44 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2001/08/31 00:37:20 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -74,6 +74,7 @@ include <sys/types.h>
 include <sys/user.h>
 
 include <machine/cpu.h>
+include <machine/psl.h>
 
 # general constants
 define	NBPG			NBPG
@@ -89,6 +90,9 @@ define	SRUN			SRUN
 
 # magic
 define	FC_USERD		FC_USERD
+
+# PSL values
+define	PSL_HIGHIPL		PSL_HIGHIPL
 
 # pcb fields
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
