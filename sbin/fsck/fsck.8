@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.9 1998/09/23 01:20:23 aaron Exp $
+.\"	$OpenBSD: fsck.8,v 1.10 1998/10/07 02:57:17 deraadt Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -70,6 +70,8 @@ Cause
 to assume
 .Dq no
 as the answer to all operator questions, except "CONTINUE?".
+This is assumed to be the default when dealing with filesystems currently
+mounted writeable.
 .It Fl p
 Enter preen mode.
 .It Fl t Ar fstype
