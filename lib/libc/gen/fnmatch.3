@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fnmatch.3,v 1.5 1999/05/25 13:06:45 aaron Exp $
+.\"	$OpenBSD: fnmatch.3,v 1.6 1999/05/29 16:08:55 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm fnmatch
-.Nd match filename or pathname using shell glob rules
+.Nd match filename or pathname using shell globbing rules
 .Sh SYNOPSIS
 .Fd #include <fnmatch.h>
 .Ft int
@@ -64,15 +64,14 @@ and
 .Fa string .
 The value of
 .Fa flags
-is the bitwise inclusive
-.Tn OR
+is the bitwise inclusive OR
 of any of the following
 constants, which are defined in the include file
-.Pa fnmatch.h .
+.Aq Pa fnmatch.h .
 .Bl -tag -width FNM_PATHNAME
 .It Dv FNM_NOESCAPE
 Normally, every occurrence of a backslash
-.Pq Ql \e
+.Pq Sq \e
 followed by a character in
 .Fa pattern
 is replaced by that character.
@@ -97,15 +96,13 @@ The definition of
 .Dq leading
 is related to the specification of
 .Dv FNM_PATHNAME .
-A period is always
-.Dq leading
+A period is always leading
 if it is the first character in
-.Ar string .
+.Fa string .
 Additionally, if
 .Dv FNM_PATHNAME
 is set,
-a period is
-.Dq leading
+a period is leading
 if it immediately follows a slash.
 .It Dv FNM_LEADING_DIR
 Ignore
@@ -114,7 +111,7 @@ rest after successful
 .Fa pattern
 matching.
 .It Dv FNM_CASEFOLD
-Ignore  case  distinctions in both the
+Ignore case distinctions in both the
 .Fa pattern
 and the
 .Fa string .

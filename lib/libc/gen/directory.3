@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.6 1999/05/23 14:10:59 aaron Exp $
+.\"	$OpenBSD: directory.3,v 1.7 1999/05/29 16:08:54 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,24 +66,26 @@ The
 function
 opens the directory named by
 .Fa filename ,
-associates a
-.Em directory stream
+associates a directory stream
 with it
 and
 returns a pointer to be used to identify the
-.Em directory stream
+directory stream
 in subsequent operations.  The pointer
 .Dv NULL
 is returned if
 .Fa filename
-cannot be accessed, or if it cannot
+cannot be accessed, or if
 .Xr malloc 3
-enough memory to hold the whole thing.
+cannot allocate enough memory to hold the entire structure.
 .Pp
 The
 .Fn readdir
 function
-returns a pointer to the next directory entry.  It returns
+returns a pointer to the next directory entry in the named directory
+stream
+.Fa dirp .
+It returns
 .Dv NULL
 upon reaching the end of the directory or detecting an invalid
 .Fn seekdir
@@ -93,18 +95,18 @@ The
 .Fn telldir
 function
 returns the current location associated with the named
-.Em directory stream .
+directory stream
+.Fa dirp .
 .Pp
 The
 .Fn seekdir
 function
 sets the position of the next
 .Fn readdir
-operation on the
-.Em directory stream .
+operation on the named directory stream
+.Fa dirp .
 The new position reverts to the one associated with the
-.Em directory stream
-when the
+directory stream when the
 .Fn telldir
 operation was performed.  Values returned by
 .Fn telldir
@@ -127,19 +129,19 @@ The
 .Fn rewinddir
 function
 resets the position of the named
-.Em directory stream
+directory stream
+.Fa dirp
 to the beginning of the directory.
 .Pp
 The
 .Fn closedir
 function
-closes the named
-.Em directory stream
+closes the named directory stream
 and frees the structure associated with the
 .Fa dirp
 pointer,
 returning 0 on success.
-On failure, \-1 is returned and the global variable
+On failure, -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Pp
@@ -147,11 +149,14 @@ The
 .Fn dirfd
 function
 returns the integer file descriptor associated with the named
-.Em directory stream ,
-see
-.Xr open 2 .
-.Pp
-Sample code which searchs a directory for entry ``name'' is:
+directory stream
+.Fa dirp
+(see
+.Xr open 2 ) .
+.Sh EXAMPLES
+Sample code which searches a directory for entry
+.Dq name
+is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");

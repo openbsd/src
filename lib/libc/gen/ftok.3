@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftok.3,v 1.4 1998/11/15 19:19:55 deraadt Exp $
+.\"	$OpenBSD: ftok.3,v 1.5 1999/05/29 16:08:55 aaron Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Dt ftok 3
 .Sh NAME
 .Nm ftok
-.Nd create IPC indentifier from path name
+.Nd create IPC indentifier from a pathname
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/ipc.h>
@@ -51,7 +51,7 @@ of an existing file and a user-selectable
 .Pp
 The specified
 .Fa path
-must specify an existing file that is accessible to the calling process
+must refer to an existing file that is accessible to the calling process
 or the call will fail.  Also, note that links to files will return the
 same key, given the same
 .Fa id .
@@ -74,9 +74,7 @@ The
 function originated with System V and is typically used by programs
 that use the System V IPC routines.
 .Sh AUTHOR
-.Bl -tag
 Thorsten Lockert <tholo@sigmasoft.com>
-.El
 .Sh BUGS
 The returned key is computed based on the device and inode of the
 specified

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: confstr.3,v 1.6 1999/05/27 20:49:33 aaron Exp $
+.\"	$OpenBSD: confstr.3,v 1.7 1999/05/29 16:08:54 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@ The
 .Fa name
 argument specifies the system variable to be queried.
 Symbolic constants for each name value are found in the include file
-.Li <unistd.h> .
+.Aq Pa unistd.h .
 The
 .Fa len
 argument specifies the size of the buffer referenced by the
@@ -66,13 +66,16 @@ If
 .Fa len
 is non-zero,
 .Fa buf
-is a non-null pointer, and
+is a
+.Pf non- Dv NULL
+pointer, and
 .Fa name
-has a value, up to
+has a value; up to
 .Fa len
 \- 1 bytes of the value are copied into the buffer 
 .Fa buf .
-The copied value is always null terminated.
+The copied value is always 
+.Dv NULL Ns -terminated.
 .Pp
 The available values are as follows:
 .Pp
@@ -104,7 +107,7 @@ was truncated.
 The
 .Nm
 function may fail and set
-.Va error
+.Va errno
 for any of the errors specified for the library functions
 .Xr malloc 3
 and

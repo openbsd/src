@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.5 1999/05/23 14:10:59 aaron Exp $
+.\"	$OpenBSD: err.3,v 1.6 1999/05/29 16:08:54 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,13 +69,16 @@ and
 .Fn warn
 family of functions display a formatted error message on the standard
 error output.
-In all cases, the last component of the program name, a colon character,
-and a space are output.
-If the
-.Va fmt
-argument is not NULL, the formatted error message, a colon character,
-and a space are output.  The
-.Va fmt
+In all cases, the last component of the program name, followed by
+a colon
+.Pq Sq \&:
+character and a space, are output, provided
+that
+.Fa fmt
+is not
+.Dv NULL .
+The
+.Fa fmt
 argument (and associated arguments) may be any format allowed by
 .Xr printf 3
 or a simple string.

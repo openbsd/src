@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.5 1999/05/16 19:54:51 alex Exp $
+.\"	$OpenBSD: exec.3,v 1.6 1999/05/29 16:08:54 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@
 .Sh DESCRIPTION
 The
 .Nm exec
-family of functions replaces the current process image with a
+family of functions replace the current process image with a
 new process image.
 The functions described in this manual page are front-ends for the function
 .Xr execve 2 .
@@ -79,11 +79,12 @@ and subsequent ellipses in the
 and
 .Fn execle
 functions can be thought of as
-.Em arg0 ,
-.Em arg1 ,
+.Fa arg0 ,
+.Fa  arg1 ,
 \&...,
-.Em argn .
-Together they describe a list of one or more pointers to null-terminated
+.Fa argn .
+Together they describe a list of one or more pointers to
+.Dv NULL Ns -terminated
 strings that represent the argument list available to the executed program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -98,12 +99,14 @@ The
 .Fn execv ,
 and
 .Fn execvp
-functions provide an array of pointers to null-terminated strings that
+functions provide an array of pointers to
+.Dv NULL Ns -terminated
+strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the file name associated
 with the file begin executed.
 The array of pointers
-.Sy must
+.Em must
 be terminated by a
 .Dv NULL
 pointer.
@@ -116,13 +119,16 @@ functions also specify the environment of the executed process by following
 the
 .Dv NULL
 pointer that terminates the list of arguments in the parameter list
-or the pointer to the argv array with an additional parameter.
-This additional parameter is an array of pointers to null-terminated strings
+or the pointer to the
+.Va argv
+array with an additional parameter.
+This additional parameter is an array of pointers to 
+.Dv NULL Ns -terminated strings
 and
 .Em must
 be terminated by a
 .Dv NULL
-pointer.
+pointer itself.
 The other functions take the environment for the new process image from the
 external variable
 .Va environ
@@ -136,15 +142,14 @@ and
 .Fn execvp
 will duplicate the actions of the shell in searching for an executable file
 if the specified file name does not contain a slash
-.Dq Li /
+.Pq Sq \&/
 character.
 The search path is the path specified in the environment by
-.Dq Ev PATH
+.Ev PATH
 variable.
 If this variable isn't specified, the default path
-.Dq Ev /bin:/usr/bin:
-is
-used.
+.Pa /bin:/usr/bin:\&.
+is used.
 In addition, certain errors are treated specially.
 .Pp
 If permission is denied for a file (the attempted
@@ -180,14 +185,14 @@ executes a file with the program tracing facilities enabled (see
 .Sh RETURN VALUES
 If any of the
 .Xr exec
-functions returns, an error will have occurred.
-The return value is \-1, and the global variable
+functions return, an error has occurred.
+The return value is -1, and the global variable
 .Va errno
 will be set to indicate the error.
 .Sh FILES
 .Bl -tag -width /bin/sh -compact
 .It Pa /bin/sh
-The shell.
+default shell program
 .El
 .Sh ERRORS
 .Fn execl ,
@@ -222,7 +227,7 @@ Historically, the default path for the
 and
 .Fn execvp
 functions was
-.Dq Pa :/bin:/usr/bin .
+.Pa \&.:/bin:/usr/bin .
 This was changed to place the current directory last to enhance system
 security.
 .Pp

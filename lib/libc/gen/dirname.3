@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: dirname.3,v 1.5 1999/05/28 22:00:20 espie Exp $
+.\" $OpenBSD: dirname.3,v 1.6 1999/05/29 16:08:54 aaron Exp $
 .\"
 .Dd August 17, 1997
 .Dt DIRNAME 3
@@ -44,12 +44,20 @@ is the converse of
 .Xr basename 3 ;
 it returns a pointer to the parent directory of the pathname pointed to by
 .Ar path .
-Any trailing '/' characters are not counted as part of the directory
+Any trailing
+.Sq \&/
+characters are not counted as part of the directory
 name.  If
 .Ar path
-is a NULL pointer, the empty string, or contains no '/' characters,
+is a
+.Dv NULL
+pointer, the empty string, or contains no
+.Sq \&/
+characters,
 .Fn dirname
-returns a pointer to the string ".", signifying the current directory.
+returns a pointer to the string
+.Qq \&. ,
+signifying the current directory.
 .Sh RETURN VALUES
 On successful completion,
 .Fn dirname
@@ -58,7 +66,9 @@ returns a pointer to the parent directory of
 .Pp
 If
 .Fn dirname
-fails, a NULL pointer is returned and the global variable
+fails, a
+.Dv NULL
+pointer is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -66,8 +76,8 @@ The following error codes may be set in
 .Va errno :
 .Bl -tag -width Er
 .It Bq Er ENAMETOOLONG
-the path component to be returned was larger than
-.Va MANPATHLEN .
+The path component to be returned was larger than
+.Dv MAXPATHLEN .
 .El
 .Sh WARNINGS
 .Fn dirname
@@ -88,6 +98,4 @@ The
 function first appeared in
 .Ox 2.2 .
 .Sh AUTHOR
-.nf
 Todd C. Miller <Todd.Miller@courtesan.com>
-.fi
