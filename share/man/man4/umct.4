@@ -1,4 +1,4 @@
-.\" $OpenBSD: umct.4,v 1.1 2002/06/11 07:55:35 nate Exp $
+.\" $OpenBSD: umct.4,v 1.2 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: umct.4,v 1.5 2002/02/07 03:15:09 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm umct
 .Nd USB support for MCT USB-RS232 serial adapters driver
 .Sh SYNOPSIS
-.Cd "umct*  at uhub?"
+.Cd "umct*  at uhub? port ? configuration ?"
 .Cd "ucom*  at umct?"
 .Sh HARDWARE
 The
@@ -68,6 +68,7 @@ driver which makes it behave like a
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr ucom 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

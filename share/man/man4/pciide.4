@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.23 2002/09/26 07:52:47 miod Exp $
+.\"	$OpenBSD: pciide.4,v 1.24 2002/09/26 22:09:53 miod Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -39,8 +39,12 @@
 .Nd PCI IDE controller driver
 .Sh SYNOPSIS
 .Cd "pciide* at pci ? dev ? function ? flags 0x0000"
+.Pp
 .Cd "option PCIIDE_CMD064x_DISABLE"
 .Cd "option PCIIDE_CMD0646U_ENABLEUDMA"
+.Pp
+.Cd "atapiscsi* at pciide? channel ? flags 0x0000"
+.Cd "wd* at pciide? channel ? drive ? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm

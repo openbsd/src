@@ -1,4 +1,4 @@
-.\" $OpenBSD: umidi.4,v 1.1 2002/06/11 07:56:13 nate Exp $
+.\" $OpenBSD: umidi.4,v 1.2 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: umidi.4,v 1.4 2002/02/07 03:15:09 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 .Nm umidi
 .Nd USB support for MIDI devices
 .Sh SYNOPSIS
-.Cd "umidi* at uhub?"
+.Cd "umidi* at uhub? port ? configuration ?"
 .Cd "midi*  at umidi?"
 .Sh DESCRIPTION
 The
@@ -61,6 +61,7 @@ driver is accessible through the
 driver.
 .Sh SEE ALSO
 .Xr midi 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

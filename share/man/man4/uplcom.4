@@ -1,4 +1,4 @@
-.\" $OpenBSD: uplcom.4,v 1.1 2001/10/02 03:45:10 millert Exp $
+.\" $OpenBSD: uplcom.4,v 1.2 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: uplcom.4,v 1.6 2001/05/22 00:21:25 jhawk Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm uplcom
 .Nd USB support for Prolific PL-2303 serial adapters driver
 .Sh SYNOPSIS
-.Cd "uplcom* at uhub? port ?"
+.Cd "uplcom* at uhub? port ? configuration ?"
 .Cd "ucom*   at uplcom? portno ?"
 .Sh HARDWARE
 The
@@ -67,6 +67,7 @@ driver which makes it behave like a
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr ucom 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

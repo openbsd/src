@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.14 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: vnd.4,v 1.15 2002/09/26 22:09:53 miod Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -82,6 +82,23 @@ There is a run-time utility that is used for configuring
 See
 .Xr vnconfig 8
 for more information.
+.Sh FILES
+/dev/{,r}{,s}vnd* - vnd device special files.
+.Sh SEE ALSO
+.Xr disklabel 5 ,
+.Xr MAKEDEV 8 ,
+.Xr config 8 ,
+.Xr disklabel 8 ,
+.Xr fsck 8 ,
+.Xr fdisk 8 ,
+.Xr mount 8 ,
+.Xr newfs 8 ,
+.Xr vnconfig 8
+.Sh HISTORY
+The vnode disk driver was originally written at the University of
+Utah.
+The svnd variant was first seen in
+.Ox 2.1 .
 .Sh BUGS
 The
 .Nm
@@ -89,17 +106,3 @@ driver does not work if the file does not reside in a local filesystem.
 However the
 .Nm svnd
 variant does.
-.Sh FILES
-/dev/{,r}{,s}vnd* - vnd device special files.
-.Sh HISTORY
-The vnode disk driver was originally written at the University of
-Utah.
-The svnd variant was first seen in
-.Ox 2.1 .
-.Sh SEE ALSO
-.Xr MAKEDEV 8 ,
-.Xr config 8 ,
-.Xr fsck 8 ,
-.Xr mount 8 ,
-.Xr newfs 8 ,
-.Xr vnconfig 8

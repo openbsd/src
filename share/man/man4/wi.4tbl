@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.23 2002/09/10 22:22:02 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.24 2002/09/26 22:09:53 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -39,8 +39,11 @@
 .Nm wi
 .Nd WaveLAN/IEEE, PRISM-II and Spectrum24 802.11DS wireless network driver
 .Sh SYNOPSIS
+.Cd "# i386/macppc/sparc64"
 .Cd "wi* at pci? dev ? function ?"
 .Cd "wi* at pcmcia? function ?"
+.Pp
+.Cd "# macppc"
 .Cd "wi* at macobio?"
 .Sh DESCRIPTION
 The
@@ -281,8 +284,12 @@ command.
 .Sh SEE ALSO
 .Xr an 4 ,
 .Xr arp 4 ,
-.Xr netintro 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
+.\" .Xr macobio 4
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr pcmcia 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8

@@ -1,4 +1,4 @@
-.\" $OpenBSD: uyap.4,v 1.2 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: uyap.4,v 1.3 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD:  $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm uyap
 .Nd USB YAP phone firmware loader
 .Sh SYNOPSIS
-.Cd "uyap* at uhub?"
+.Cd "uyap* at uhub? port ? configuration ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,8 +53,10 @@ two audio pipes (handled by
 and an HID device (handled by
 .Xr uhid 4 ) .
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr uaudio 4 ,
 .Xr uhid 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

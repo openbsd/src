@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.6 2002/07/20 15:59:49 fgsch Exp $
+.\"	$OpenBSD: wdc.4,v 1.7 2002/09/26 22:09:53 miod Exp $
 .\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -39,11 +39,17 @@
 .Nm wdc
 .Nd WD100x compatible hard disk controller driver
 .Sh SYNOPSIS
+.Cd "# alpha/amiga/i386"
 .Cd "wdc0 at isa? port 0x1f0 irq 14 flags 0x00"
-.Cd "wdc0 at isa? port 0x170 irq 15 flags 0x00"
+.Cd "wdc1 at isa? port 0x170 irq 15 flags 0x00"
 .Cd "wdc* at isapnp?"
 .Cd "wdc* at pcmcia? function ?"
-.Cd "wd* at wdc? drive ?"
+.Pp
+.Cd "# macppc"
+.Cd "wdc* at macobio? flags 0x01"
+.Pp
+.Cd "atapiscsi* at wdc?* channel ? flags 0x0000"
+.Cd "wd* at wdc? drive ? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,7 +69,11 @@ For the ISA front-end, setting
 to 0x01 enables 32-bit I/O negotiation.
 This is known to cause problems with some motherboards.
 .Sh SEE ALSO
+.Xr atapiscsi 4 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
 .Xr pciide 4 ,
+.Xr pcmcia 4 ,
 .Xr scsi 4 ,
 .Xr wd 4

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ugen.4,v 1.7 2002/09/26 22:09:53 miod Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm ugen
 .Nd USB generic device support
 .Sh SYNOPSIS
-.Cd "ugen* at uhub?"
+.Cd "ugen* at uhub? port ? configuration ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -279,6 +279,8 @@ and
 should be set to
 .Dv USB_CURRENT_ALT_INDEX .
 .Sh SEE ALSO
+.Xr intro 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

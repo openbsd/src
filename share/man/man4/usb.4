@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.17 2002/09/25 22:46:27 drahn Exp $
+.\"	$OpenBSD: usb.4,v 1.18 2002/09/26 22:09:53 miod Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,11 +47,10 @@
 .Cd "usb*    at uhci? flags 0x00"
 .Cd "usb*    at ohci? flags 0x00"
 .Cd "uhub*   at usb?"
-.Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
-.Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
+.Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ?"
 .Pp
-.Cd "#include <dev/usb/usb.h>"
-.Cd "#include <dev/usb/usbhid.h>"
+.Fd "#include <dev/usb/usb.h>"
+.Fd "#include <dev/usb/usbhid.h>"
 .Sh DESCRIPTION
 .Ox
 provides machine-independent bus support and drivers for Universal Serial Bus
@@ -112,44 +111,86 @@ before getting the root prompt on
 .Ox
 includes machine-independent
 .Tn USB
-drivers, sorted by driver name:
-.Pp
-.Bl -tag -width speakerxx -offset ind -compact
+drivers, sorted by device type and driver name:
+.Ss Storage devices
+.Bl -tag -width 10n -offset ind -compact
+.It Xr umass 4
+.Tn USB
+Mass Storage Devices, e.g., external disk drives.
+.El
+.Ss Ethernet adapters
+.Bl -tag -width 10n -offset ind -compact
 .It Xr aue 4
 AN986 Pegasus-based Ethernet interfaces.
 .It Xr cue 4
 CATC USB-EL1201A-based Ethernet interfaces.
 .It Xr kue 4
 Kawasaki LSI KL5KUSB101B-based Ethernet interfaces.
+.It Xr url 4
+Realtek RTL8150L-based Ethernet interfaces.
+.El
+.Ss Serial and parallel interfaces
+.Bl -tag -width 10n -offset ind -compact
 .It Xr ucom 4
 Serial port-like devices.
+.It Xr uftdi 4
+FTDI FT8U100AX-based serial adapters.
+.It Xr ulpt 4
+.Tn USB
+Printers.
+.It Xr umct 4
+MCT USB-RS232 serial adapters.
+.It Xr umodem 4
+.Tn USB
+Modems.
+.It Xr uplcom 4
+Prolific PL-2303 serial adapters.
+.El
+.Ss Audio devices
+.Bl -tag -width 10n -offset ind -compact
 .It Xr uaudio 4
 Audio devices.
+.It Xr umidi 4
+.Tn USB
+MIDI devices.
+.It Xr urio 4
+Diamond Multimedia Rio MP3 players.
+.El
+.Ss Radio receiver devices
+.Bl -tag -width 10n -offset ind -compact
 .It udsbr
 driver for D-Link DSB-R100 USB radio.
+.El
+.Ss Human Interface Devices
+.Bl -tag -width 10n -offset ind -compact
+.It Xr uhid 4
+Generic driver for Human Interface Devices.
+.It Xr uhidev 4
+Base driver for all Human Interface Devices.
+.It Xr ukbd 4
+.Tn USB
+keyboards that follow the boot protocol.
+.It Xr ums 4
+.Tn USB
+mouse devices.
+.El
+.Ss Miscellaneous devices
+.Bl -tag -width 10n -offset ind -compact
 .It Xr ugen 4
 Generic driver for unknown
 .Tn USB
 devices.
-.It Xr uhid 4
-Generic driver for Human Interface Devices.
-.It Xr ukbd 4
+.It Xr upl 4
+Prolific based host-to-host adapters.
+.It Xr uscanner 4
 .Tn USB
-keyboards that follow the boot protocol.
-.It Xr ulpt 4
-.Tn USB
-Printers.
-.It Xr umass 4
-.Tn USB
-Mass Storage Devices, e.g., external disk drives.
-.It Xr umodem 4
-.Tn USB
-Modems.
-.It Xr ums 4
-.Tn USB
-mouse devices.
+scanners.
+.It Xr usscanner 4
+SCSI-over-USB scanners.
 .It Xr uvisor 4
 Handspring Visor.
+.It Xr uyap 4
+YAP phone firmware loader.
 .El
 .Sh INTRODUCTION TO USB
 The
@@ -239,9 +280,7 @@ driver can attach.
 Use the following to get access to the
 .Tn USB
 specific structures and defines.
-.Bd -literal
-#include <sys/dev/usb.h>
-.Ed
+.Fd #include <sys/dev/usb.h>
 .Pp
 The
 .Pa /dev/usbN
@@ -368,12 +407,39 @@ similarly contains the definitions for
 Human Interface Devices
 .Pq Tn HID .
 .Sh SEE ALSO
+.Xr aue 4 ,
 .Xr cardbus 4 ,
+.Xr cue 4 ,
+.Xr eisa 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr kue 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
+.Xr uaudio 4 ,
+.Xr ucom 4 ,
+.Xr udsbr 4 ,
+.Xr uftdi 4 ,
+.Xr ugen 4 ,
+.Xr uhid 4 ,
+.Xr uhidev 4 ,
+.Xr uhub 4 ,
+.Xr ukbd 4 ,
+.Xr ulpt 4 ,
+.Xr umass 4 ,
+.Xr umct 4 ,
+.Xr umidi 4 ,
+.Xr umodem 4 ,
+.Xr ums 4 ,
+.Xr upl 4 ,
+.Xr uplcom 4 ,
+.Xr urio 4 ,
+.Xr url 4 ,
+.Xr uscanner 4 ,
+.Xr usscanner 4 ,
+.Xr uvisor 4 ,
+.Xr uyap 4 ,
 .Xr usbdevs 8
 .Pp
 The

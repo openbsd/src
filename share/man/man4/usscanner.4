@@ -1,4 +1,4 @@
-.\" $OpenBSD: usscanner.4,v 1.1 2001/01/28 16:31:25 aaron Exp $
+.\" $OpenBSD: usscanner.4,v 1.2 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: usscanner.4,v 1.1 2001/01/11 06:10:01 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm usscanner
 .Nd driver for some SCSI-over-USB scanners
 .Sh SYNOPSIS
-.Cd "usscanner* at uhub?"
+.Cd "usscanner* at uhub? port ? configuration ?"
 .Cd "scsibus*   at usscanner?"
 .Sh DESCRIPTION
 The
@@ -58,8 +58,11 @@ driver works with the following scanners:
 .It HP ScanJet 5300C
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr scsi 4 ,
+.Xr ss 4 ,
 .Xr uscanner 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

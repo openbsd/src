@@ -1,4 +1,4 @@
-.\" $OpenBSD: pms.4,v 1.6 2002/09/26 07:55:40 miod Exp $
+.\" $OpenBSD: pms.4,v 1.7 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: pms.4,v 1.4 2000/07/05 15:45:34 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -37,7 +37,8 @@
 .Dt PMS 4
 .Os
 .Sh NAME
-.Nm pms
+.Nm pms ,
+.Nm pmsi
 .Nd PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
 .Cd "pms* at pckbc?"
@@ -46,7 +47,7 @@
 .Cd "wsmouse* at pmsi?"
 .Sh DESCRIPTION
 The
-.Nm
+.Nm pms
 drivers provide an interface to PS/2 auxiliary port mice within the
 .Xr wscons 4
 framework.

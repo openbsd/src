@@ -1,4 +1,4 @@
-.\" $OpenBSD: uvisor.4,v 1.2 2000/10/18 02:46:07 aaron Exp $
+.\" $OpenBSD: uvisor.4,v 1.3 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: uvisor.4,v 1.2 2000/03/31 13:08:01 hubertf Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm uvisor
 .Nd USB support for the Handspring Visor
 .Sh SYNOPSIS
-.Cd "uvisor* at uhub?"
+.Cd "uvisor* at uhub? port ? configuration ?"
 .Cd "ucom*   at uvisor?"
 .Sh DESCRIPTION
 The
@@ -55,8 +55,10 @@ driver which makes it behave like a
 .Xr tty 4 .
 The usual Pilot tools can be used to access the Visor.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr tty 4 ,
 .Xr ucom 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The

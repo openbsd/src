@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhidev.4,v 1.1 2002/05/09 15:25:32 nate Exp $
+.\" $OpenBSD: uhidev.4,v 1.2 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: uhidev.4,v 1.2 2001/12/29 03:06:41 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm uhidev
 .Nd USB Human Interface Device support
 .Sh SYNOPSIS
-.Cd "uhidev* at uhub?"
+.Cd "uhidev* at uhub? port ? configuration ?"
 .Cd "uhid*   at uhidev? reportid ?"
 .Cd "ukbd*   at uhidev? reportid ?"
 .Cd "ums*    at uhidev? reportid ?"
@@ -59,6 +59,7 @@ kinds of devices and
 .Nm
 only dispatches data to them based on the report id.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr uhid 4 ,
 .Xr ukbd 4 ,
 .Xr ums 4 ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: umodem.4,v 1.3 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: umodem.4,v 1.4 2002/09/26 22:09:53 miod Exp $
 .\" $NetBSD: umodem.4,v 1.4 2000/01/25 08:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm umodem
 .Nd USB modem support
 .Sh SYNOPSIS
-.Cd "umodem* at uhub?"
+.Cd "umodem* at uhub? port ? configuration ?"
 .Cd "ucom*   at umodem?"
 .Sh DESCRIPTION
 The
@@ -64,6 +64,7 @@ driver which makes it behave like a
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr ucom 4 ,
+.Xr uhub 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
