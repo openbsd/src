@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.736 2004/05/14 18:24:32 nate Exp $
+$OpenBSD: pcidevs,v 1.737 2004/05/18 18:24:49 marco Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -456,8 +456,21 @@ product ADP2 ASR2120S		0x0286	ASR-2120S
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 AAC3642		0x0365	AAC-3642
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
-/* XXX guess */
-product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
+
+product ADP2 AIC7901            0x800f  AIC-7901 U320
+product ADP2 AHA29320A          0x8000  AHA-29320A U320
+product ADP2 AHA29320LP         0x8017  AHA-29320LP U320
+product ADP2 AIC7901A           0x801e  AIC-7901A U320
+product ADP2 AHA29320           0x8012  AHA-29320 U320
+product ADP2 AHA29320B          0x8013  AHA-29320B U320
+product ADP2 AHA29320LP2        0x8014  AHA-29320LP U320
+product ADP2 AIC7902            0x801f  AIC-7902 U320
+product ADP2 AIC7902_B          0x801d  AIC-7902B U320
+product ADP2 AHA39320           0x8010  AHA-39320 U320
+product ADP2 AHA39320B          0x8015  AHA-39320B U320
+product ADP2 AHA39320A          0x8016  AHA-39320A U320
+product ADP2 AHA39320D          0x8011  AHA-39320D U320
+product ADP2 AHA39320DB         0x801c  AHA-39320DB U320
 
 /* Advanced System Products */
 product ADVSYS 1200A		0x1100	1200A
