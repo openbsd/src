@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.23 2004/05/09 14:37:37 matthieu Exp $
+.\"	$OpenBSD: sk.4,v 1.24 2004/08/15 22:52:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -38,15 +38,15 @@
 .Sh NAME
 .Nm sk ,
 .Nm skc
-.Nd SysKonnect XMAC II and Marvell GMAC based gigabit ethernet
+.Nd SysKonnect XMAC II and Marvell GMAC based gigabit Ethernet
 .Sh SYNOPSIS
 .Cd "skc* at pci? dev ? function ?"
 .Cd "sk* at skc?"
 .Sh DESCRIPTION
 The
 .Nm sk
-driver provides support for SysKonnect based gigabit ethernet adapters
-and Marvell based gigabit ethernet adapters, including the following:
+driver provides support for SysKonnect based gigabit Ethernet adapters
+and Marvell based gigabit Ethernet adapters, including the following:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
