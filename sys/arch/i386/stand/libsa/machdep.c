@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1998/02/24 22:06:55 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1998/03/11 02:12:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -61,7 +61,7 @@ machdep()
 	apmprobe();   CKPT('6');
 	pciprobe();   CKPT('7');
 	smpprobe();   CKPT('8');
-	printf("\n\n");
+	printf("\n");
 #endif
 	CKPT('Z');
 }
