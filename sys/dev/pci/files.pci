@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.94 2001/02/15 04:07:57 krw Exp $
+#	$OpenBSD: files.pci,v 1.95 2001/02/20 19:12:48 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -208,7 +208,7 @@ attach	mx at pci
 file	dev/pci/if_mx.c			mx
 
 # Via Rhine
-device	vr: ether, ifnet, ifmedia
+device	vr: ether, ifnet, mii, ifmedia
 attach	vr at pci
 file	dev/pci/if_vr.c			vr
 
