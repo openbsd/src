@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.12 2002/01/09 00:51:00 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.13 2002/02/19 18:38:02 mpech Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.12 2002/01/09 00:51:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.13 2002/02/19 18:38:02 mpech Exp $";
 #endif
 
 #include "cron.h"
@@ -396,7 +396,7 @@ child_process(entry *e, user *u) {
 				char	mailcmd[MAX_COMMAND];
 				char	hostname[MAXHOSTNAMELEN];
 
-				gethostname(hostname, MAXHOSTNAMELEN);
+				gethostname(hostname, sizeof(hostname));
 				if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
 				    MAILARG) >= sizeof mailcmd) {
 					fprintf(stderr, "mailcmd too long\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.56 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.57 2002/02/19 18:38:02 mpech Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.56 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.57 2002/02/19 18:38:02 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -642,12 +642,12 @@ inetname(inp)
 	static char line[50];
 	struct hostent *hp;
 	struct netent *np;
-	static char domain[MAXHOSTNAMELEN + 1];
+	static char domain[MAXHOSTNAMELEN];
 	static int first = 1;
 
 	if (first && !nflag) {
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
+		if (gethostname(domain, sizeof(domain)) == 0 &&
 		    (cp = strchr(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.18 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.19 2002/02/19 18:38:02 mpech Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.18 2002/02/16 21:27:50 millert Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.19 2002/02/19 18:38:02 mpech Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1046,7 +1046,7 @@ inet6name(in6p)
 	char *cp;
 	static char line[NI_MAXHOST];
 	struct hostent *hp;
-	static char domain[MAXHOSTNAMELEN + 1];
+	static char domain[MAXHOSTNAMELEN];
 	static int first = 1;
 	char hbuf[NI_MAXHOST];
 	struct sockaddr_in6 sin6;
@@ -1058,7 +1058,7 @@ inet6name(in6p)
 
 	if (first && !nflag) {
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
+		if (gethostname(domain, sizeof(domain)) == 0 &&
 		    (cp = index(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else

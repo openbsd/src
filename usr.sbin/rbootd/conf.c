@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2001/12/01 23:27:23 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2002/02/19 18:38:02 mpech Exp $	*/
 /*	$NetBSD: conf.c,v 1.5 1995/10/06 05:12:13 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: conf.c,v 1.3 2001/12/01 23:27:23 miod Exp $";
+static char rcsid[] = "$OpenBSD: conf.c,v 1.4 2002/02/19 18:38:02 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ static char rcsid[] = "$OpenBSD: conf.c,v 1.3 2001/12/01 23:27:23 miod Exp $";
 **	simplify the boot file search code.
 */
 
-char	MyHost[MAXHOSTNAMELEN+1];		/* host name */
+char	MyHost[MAXHOSTNAMELEN];			/* host name */
 int	DebugFlg = 0;				/* set true if debugging */
 int	BootAny = 0;				/* set true if we boot anyone */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.11 2001/11/23 03:45:51 deraadt Exp $	*/
+/*	$OpenBSD: timed.c,v 1.12 2002/02/19 18:38:02 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.11 $"
+#ident "$Revision: 1.12 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -298,7 +298,7 @@ main(int argc, char **argv)
 	if (0 != goodgroup || 0 != goodhosts)
 		Mflag = 1;
 
-	if (gethostname(hostname, sizeof(hostname) - 1) < 0) {
+	if (gethostname(hostname, sizeof(hostname)) < 0) {
 		perror("gethostname");
 		exit(1);
 	}

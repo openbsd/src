@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.9 2001/07/08 21:18:12 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.9 2001/07/08 21:18:12 deraadt Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -85,7 +85,7 @@ main(argc, argv)
 		exit(1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
-	if (gethostname(hostname, sizeof (hostname) - 1) < 0) {
+	if (gethostname(hostname, sizeof (hostname)) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.28 2002/02/19 18:38:01 mpech Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.27 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.28 2002/02/19 18:38:01 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -242,7 +242,7 @@ login(host, user, pass)
 			else
 				user = pw->pw_name;
 		}
-		gethostname(hostname, MAXHOSTNAMELEN);
+		gethostname(hostname, sizeof(hostname));
 #ifndef DONT_CHEAT_ANONPASS
 		/*
 		 * Every anonymous FTP server I've encountered

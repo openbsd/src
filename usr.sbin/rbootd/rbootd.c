@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.9 2001/12/01 23:27:23 miod Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.9 2001/12/01 23:27:23 miod Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.10 2002/02/19 18:38:02 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ main(argc, argv)
 	/*
 	 *  Grab our host name and pid.
 	 */
-	if (gethostname(MyHost, MAXHOSTNAMELEN) < 0) {
+	if (gethostname(MyHost, sizeof(MyHost)) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		Exit(0);
 	}
