@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.1 1998/09/11 07:53:57 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.2 1998/12/15 07:12:57 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -1042,7 +1042,8 @@ pcic_wait_ready(h)
 	}
 
 #ifdef DIAGNOSTIC
-	printf("pcic_wait_ready ready never happened\n");
+	printf("pcic_wait_ready: ready never happened, status = %02x\n",
+	    pcic_read(h, PCIC_IF_STATUS));
 #endif
 }
 
@@ -1067,27 +1068,26 @@ pcic_chip_socket_enable(pch)
 
 	/* power up the socket */
 
-	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE);
+	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV
+			   | PCIC_PWRCTL_PWR_ENABLE);
 
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
+	 *
+	 * some machines require some more time to be settled
+	 * (another 200ms is added here).
 	 */
-	delay((100 + 20) * 1000);
+	delay((100 + 20 + 200) * 1000);
 
-	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
+	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
+			   | PCIC_PWRCTL_PWR_ENABLE);
+	pcic_write(h, PCIC_INTR, 0);
 
-#if 0
 	/*
 	 * hold RESET at least 10us.
 	 */
 	delay(10);
-#else
-	/*
-	 * at least one card i've tested needs this. -fgsch
-	 */
-	delay(250 * 1000);
-#endif
 
 	/* clear the reset flag */
 
