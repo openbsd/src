@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2004/07/27 17:15:00 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2004/07/29 15:41:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -272,7 +272,7 @@ struct cvs_file*
 cvs_file_get(const char *path, int flags)
 {
 	int cwd;
-	size_t dlen;
+	size_t len;
 	char buf[32];
 	struct stat st;
 	struct tm lmtm;
@@ -300,17 +300,24 @@ cvs_file_get(const char *path, int flags)
 		cfp->cf_cvstat = (cwd == 1) ?
 		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
 	else {
-		if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
+		/* always show directories as up-to-date */
+		if (ent->ce_type == CVS_ENT_DIR)
+			cfp->cf_cvstat = CVS_FST_UPTODATE;
+		else if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
 			cfp->cf_cvstat = CVS_FST_ADDED;
 		else {
 			/* check last modified time */
-			if ((gmtime_r((time_t *)&(st.st_atime), &lmtm) == NULL) ||
+			if ((gmtime_r((time_t *)&(st.st_mtime), &lmtm) == NULL) ||
 			    (asctime_r(&lmtm, buf) == NULL)) {
 				cvs_log(LP_ERR,
 				    "failed to generate file timestamp");
 				/* fake an up to date file */
 				strlcpy(buf, ent->ce_timestamp, sizeof(buf));
 			}
+			len = strlen(buf);
+			if ((len > 0) && (buf[len - 1] == '\n'))
+				buf[--len] = '\0';
+
 			if (strcmp(buf, ent->ce_timestamp) == 0)
 				cfp->cf_cvstat = CVS_FST_UPTODATE;
 			else
@@ -342,6 +349,48 @@ cvs_file_get(const char *path, int flags)
 		}
 
 		memcpy(cfp->cf_stat, &st, sizeof(struct stat));
+	}
+
+	return (cfp);
+}
+
+
+/*
+ * cvs_file_getspec()
+ *
+ * Load a specific set of files whose paths are given in the vector <fspec>,
+ * whose size is given in <fsn>.
+ * Returns a pointer to the lowest common subdirectory to all specified
+ * files.
+ */
+
+CVSFILE*
+cvs_file_getspec(char **fspec, int fsn, int flags)
+{
+	int i, c;
+	char common[MAXPATHLEN];
+	struct cvs_file *cfp;
+
+	/* first find the common subdir */
+	strlcpy(common, fspec[0], sizeof(common));
+	for (i = 1; i < fsn; i++) {
+		for (c = 0; ; c++) {
+			if (common[c] != fspec[i][c]) {
+				printf("backtracking!\n");
+				/* go back to last dir */
+				while ((c > 0) && (common[--c] != '/'))
+					common[c] = '\0';
+				break;
+			}
+		}
+	}
+	printf("common part = `%s'\n", common);
+	if (*common == '\0')
+		strlcpy(common, ".", sizeof(common));
+
+	/* first load the common subdirectory */
+	cfp = cvs_file_get(common, flags);
+	for (i = 0; i < fsn; i++) {
 	}
 
 	return (cfp);

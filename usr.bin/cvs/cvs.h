@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.11 2004/07/28 01:53:29 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.12 2004/07/29 15:41:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -274,6 +274,7 @@ struct cvsroot {
 #define CVS_FST_ADDED     3
 #define CVS_FST_REMOVED   4
 #define CVS_FST_CONFLICT  5
+#define CVS_FST_PATCHED   6
 
 typedef struct cvs_file {
 	char            *cf_path;
@@ -412,6 +413,7 @@ int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
 CVSFILE* cvs_file_create  (const char *, u_int, mode_t);
 CVSFILE* cvs_file_get     (const char *, int);
+CVSFILE* cvs_file_getspec (char **, int, int);
 void     cvs_file_free    (struct cvs_file *);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
