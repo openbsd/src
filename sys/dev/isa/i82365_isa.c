@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.6 1999/01/07 02:28:15 niklas Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.7 1999/01/28 07:51:36 fgsch Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,7 @@
 #include <dev/isa/i82365_isavar.h>
 
 #ifdef PCICISADEBUG
-int	pcicisa_debug = 1 /* XXX */ ;
-#define	DPRINTF(arg) if (pcicisa_debug) printf arg;
+#define	DPRINTF(arg)	printf arg;
 #else
 #define	DPRINTF(arg)
 #endif
@@ -216,15 +215,13 @@ pcic_isa_attach(parent, self, aux)
 	 */
 
 	if ((sc->irq = ia->ia_irq) == IRQUNK) {
-		int ist = IST_EDGE;
-
 		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) ==
-			    2)
+			if (isa_intr_check(ic, pcic_isa_intr_list[i],
+			    IST_EDGE) == 2)
 				goto found;
 		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) ==
-			    1)
+			if (isa_intr_check(ic, pcic_isa_intr_list[i],
+			    IST_EDGE) == 1)
 				goto found;
 		printf("%s: no irq\n", sc->dev.dv_xname);
 		return;
