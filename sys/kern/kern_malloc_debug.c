@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.3 2000/06/07 08:29:34 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.4 2000/06/07 09:38:46 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -92,6 +92,7 @@ void debug_malloc_init __P((void));
 
 void malloc_deb_allocate_free __P((int));
 void debug_malloc_print __P((void));
+void debug_malloc_printit __P((int (*) __P((const char *, ...))));
 
 struct malloc_deb_entry {
 	TAILQ_ENTRY(malloc_deb_entry) md_list;
@@ -293,20 +294,27 @@ malloc_deb_allocate_free(wait)
 void
 debug_malloc_print()
 {
+	debug_malloc_printit(printf);
+}
+
+void
+debug_malloc_printit(pr)
+        int (*pr) __P((const char *, ...));
+{
 	struct malloc_deb_entry *md;
 
-	printf("allocs: %d\n", malloc_deb_allocs);
-	printf("frees: %d\n", malloc_deb_frees);
-	printf("pages used: %d\n", malloc_deb_pages);
-	printf("chunks on freelist: %d\n", malloc_deb_chunks_on_freelist);
+	(*pr)("allocs: %d\n", malloc_deb_allocs);
+	(*pr)("frees: %d\n", malloc_deb_frees);
+	(*pr)("pages used: %d\n", malloc_deb_pages);
+	(*pr)("chunks on freelist: %d\n", malloc_deb_chunks_on_freelist);
 
-	printf("\taddr:\tsize:\n");
-	printf("free chunks:\n");
+	(*pr)("\taddr:\tsize:\n");
+	(*pr)("free chunks:\n");
 	TAILQ_FOREACH(md, &malloc_deb_free, md_list)
-		printf("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
-	printf("used chunks:\n");
+		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
+	(*pr)("used chunks:\n");
 	TAILQ_FOREACH(md, &malloc_deb_used, md_list)
-		printf("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
+		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
 }
 
 
