@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.38 2004/03/09 20:39:56 matthieu Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.39 2004/04/09 21:52:17 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -793,11 +793,8 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list -- "
-			    "packet dropped!\n", sc_if->sk_dev.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		/* Allocate the jumbo buffer */
 		MCLGET(m_new, M_DONTWAIT);
@@ -1692,9 +1689,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
-				printf("%s: no receive buffers "
-				    "available -- packet dropped!\n",
-				    sc_if->sk_dev.dv_xname);
 				ifp->if_ierrors++;
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.26 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.27 2004/04/09 21:52:17 henning Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1108,19 +1108,12 @@ nge_newbuf(sc, c, m)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			       "-- packet dropped!\n", sc->sc_dv.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		/* Allocate the jumbo buffer */
 		buf = nge_jalloc(sc);
 		if (buf == NULL) {
-#ifdef NGE_VERBOSE
-			printf("%s: jumbo allocation failed "
-			       "-- packet dropped!\n", sc->sc_dv.dv_xname);
-#endif
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -1355,9 +1348,6 @@ nge_rxeof(sc)
 			    ETHER_ALIGN, ifp, NULL);
 			nge_newbuf(sc, cur_rx, m);
 			if (m0 == NULL) {
-				printf("%s: no receive buffers "
-				    "available -- packet dropped!\n",
-				    sc->sc_dv.dv_xname);
 				ifp->if_ierrors++;
 				continue;
 			}

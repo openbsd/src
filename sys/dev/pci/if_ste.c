@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.20 2003/06/29 17:20:03 avsm Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.21 2004/04/09 21:52:17 henning Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1017,15 +1017,10 @@ int ste_newbuf(sc, c, m)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list -- "
-			    "packet dropped\n", sc->sc_dev.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list -- "
-			    "packet dropped\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}

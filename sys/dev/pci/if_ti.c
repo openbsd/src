@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.48 2003/12/16 08:20:44 deraadt Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.49 2004/04/09 21:52:17 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -756,16 +756,11 @@ int ti_newbuf_std(sc, i, m, dmamap)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: mbuf allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: cluster allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -829,11 +824,8 @@ int ti_newbuf_mini(sc, i, m, dmamap)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: mbuf allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 		m_new->m_len = m_new->m_pkthdr.len = MHLEN;
 		m_adj(m_new, ETHER_ALIGN);
 
@@ -875,18 +867,13 @@ int ti_newbuf_jumbo(sc, i, m)
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: mbuf allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		/* Allocate the jumbo buffer */
 		buf = ti_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
-			printf("%s: jumbo allocation failed "
-			    "-- packet dropped!\n", sc->sc_dv.dv_xname);
 			return(ENOBUFS);
 		}
 

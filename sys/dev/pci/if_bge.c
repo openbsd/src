@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.23 2004/02/27 16:03:06 niklas Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.24 2004/04/09 21:52:16 henning Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -764,8 +764,6 @@ bge_newbuf_jumbo(sc, i, m)
 		buf = bge_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
-			printf("%s: jumbo allocation failed "
-			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
