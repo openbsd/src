@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.53 2005/02/03 10:53:33 dtucker Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.54 2005/03/23 10:42:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,7 @@ struct msgbuf {
 };
 
 struct buf_read {
-	ssize_t			 wpos;
+	size_t			 wpos;
 	u_char			 buf[READ_BUF_SIZE];
 	u_char			*rptr;
 };
