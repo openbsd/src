@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.22 2002/06/27 19:02:40 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.23 2002/07/31 22:08:42 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.22 2002/06/27 19:02:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.23 2002/07/31 22:08:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: edit.c,v 1.22 2002/06/27 19:02:40 deraadt Exp $
 
 #include "chpass.h"
 
-void
+int
 edit(tempname, pw)
 	char *tempname;
 	struct passwd *pw;
@@ -67,19 +67,20 @@ edit(tempname, pw)
 
 	for (;;) {
 		if (lstat(tempname, &begin) == -1 || S_ISLNK(begin.st_mode))
-			pw_error(tempname, 1, 1);
+			return (EDIT_ERROR);
 		pw_edit(1, tempname);
 		if (lstat(tempname, &end) == -1 || S_ISLNK(end.st_mode))
-			pw_error(tempname, 1, 1);
+			return (EDIT_ERROR);
 		if (begin.st_mtime == end.st_mtime &&
 		    begin.st_size == end.st_size) {
 			warnx("no changes made");
-			pw_error(NULL, 0, 0);
+			return (EDIT_NOCHANGE);
 		}
 		if (verify(tempname, pw))
 			break;
 		pw_prompt();
 	}
+	return(EDIT_OK);
 }
 
 /*

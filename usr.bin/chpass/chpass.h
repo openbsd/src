@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.h,v 1.6 2002/06/27 22:02:08 deraadt Exp $	*/
+/*	$OpenBSD: chpass.h,v 1.7 2002/07/31 22:08:42 millert Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*
@@ -51,12 +51,17 @@ typedef struct _entry {
 #define	E_NAME		7
 #define	E_SHELL		12
 
+/* edit() return values. */
+#define	EDIT_OK		0
+#define	EDIT_NOCHANGE	1
+#define	EDIT_ERROR	-1
+
 extern ENTRY list[];
 extern uid_t uid;
 
 int	 atot(char *, time_t *);
 void	 display(char *, int, struct passwd *);
-void	 edit(char *, struct passwd *);
+int	 edit(char *, struct passwd *);
 char    *ok_shell(char *);
 int	 p_change(char *, struct passwd *, ENTRY *);
 int	 p_class(char *, struct passwd *, ENTRY *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.25 2002/06/27 22:02:08 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.26 2002/07/31 22:08:41 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.25 2002/06/27 22:02:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.26 2002/07/31 22:08:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,14 +178,27 @@ main(int argc, char *argv[])
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+		int edit_status;
 
 		dfd = mkstemp(tempname);
 		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
 			pw_error(tempname, 1, 1);
 		display(tempname, dfd, pw);
-		edit(tempname, pw);
+		edit_status = edit(tempname, pw);
 		close(dfd);
 		unlink(tempname);
+
+		switch (edit_status) {
+		case EDIT_OK:
+			break;
+		case EDIT_NOCHANGE:
+			pw_error(NULL, 0, 0);
+			break;
+		case EDIT_ERROR:
+		default:
+			pw_error(tempname, 1, 1);
+			break;
+		}
 	}
 
 	/* Drop user's real uid and block all signals to avoid a DoS. */
