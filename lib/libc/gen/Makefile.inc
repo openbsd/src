@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.29 2001/07/31 06:03:22 krw Exp $
+#	$OpenBSD: Makefile.inc,v 1.30 2001/10/31 14:21:09 fgsch Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -119,7 +119,8 @@ MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigismember.3
 MLINKS+=strtofflags.3 fflagstostr.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
-	syslog.3 vsyslog.3
+	syslog.3 vsyslog.3 syslog.3 syslog_r.3 syslog.3 closelog_r.3 \
+	syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 syslog.3 vsyslog_r.3
 MLINKS+=tolower.3 _tolower.3
 MLINKS+=toupper.3 _toupper.3
 MLINKS+=ttyname.3 ttyname_r.3 ttyname.3 isatty.3 ttyname.3 ttyslot.3
