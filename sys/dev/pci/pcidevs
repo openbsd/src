@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.391 2001/04/30 04:50:00 jason Exp $
+	$OpenBSD: pcidevs,v 1.392 2001/04/30 12:13:15 lebel Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1302,6 +1302,7 @@ product LUCENT LTMODEM_0459	0x0459	LTMODEM
 product LUCENT LTMODEM_045A	0x045a	LTMODEM
 product LUCENT VENUSMODEM	0x0480	Venus Modem
 product LUCENT USBHC		0x5801	USB
+product LUCENT USBQBUS		0x5803  USB QuadraBus
 
 /* LuxSonor */
 product LUXSONOR LS242		0x0020	LS242 DVD Decoder
