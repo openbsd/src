@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.5 1998/09/02 06:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.6 2001/09/03 16:35:19 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1998/09/02 06:36:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.6 2001/09/03 16:35:19 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1998/09/02 06:36:07 pjanzen Exp $
 #include <stdlib.h>
 #include "hdr.h"	/* SEED lives in there; keep them coordinated. */
 
-#define USAGE "Usage: setup file > data.c (file is typically glorkz)"
+#define USAGE "Usage: setup file > data.c (file is typically glorkz)\n"
 
 #define YES 1
 #define NO  0
@@ -84,8 +84,10 @@ main(argc, argv)
 	FILE	*infile;
 	int	c, count, linestart;
 
-	if (argc != 2)
-		errx(1, USAGE);
+	if (argc != 2) {
+		fprintf(stderr, USAGE);
+		exit(1);
+	}
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
 		err(1, "Can't read file %s", argv[1]);
