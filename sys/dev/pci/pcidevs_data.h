@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.345 2000/11/16 01:10:12 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.347 2000/11/20 14:24:45 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2599,6 +2599,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA USB2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACM,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 Modem",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562,
