@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.7 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.8 2002/05/08 16:31:05 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -124,7 +124,7 @@ which also sets any environment variables requested by the login script
 login script if the authentication was not successful.
 It returns the final state of the authentication request.
 A return value of 0 implies the user was not authenticated.
-A non-zero return value is made up the 1 or more of the following values
+A non-zero return value is made up of 1 or more of the following values
 ORed together:
 .Bl -tag -width AUTH_ROOTOKAYXX
 .It Li AUTH_OKAY
