@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.278 2003/01/05 22:20:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.279 2003/01/06 11:30:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1113,6 +1113,9 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				r.rt = $5.rt;
 				r.rpool.opts = $5.pool_opts;
+				if ($5.key != NULL)
+					memcpy(&r.rpool.key, $5.key,
+					    sizeof(struct pf_poolhashkey));
 			}
 
 			if (r.rt && r.rt != PF_FASTROUTE) {
@@ -2236,10 +2239,9 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 				}
 			}
 
-			if ($8.key != NULL) {
+			if ($8.key != NULL)
 				memcpy(&nat.rpool.key, $8.key,
 				    sizeof(struct pf_poolhashkey));
-			}
 
 			expand_nat(&nat, $3, $5, $6.src.host, $6.src.port,
 			    $6.dst.host, $6.dst.port,
@@ -2478,10 +2480,9 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 				}
 			}
 
-			if ($12.key != NULL) {
+			if ($12.key != NULL)
 				memcpy(&rdr.rpool.key, $12.key,
 				    sizeof(struct pf_poolhashkey));
-			}
 
 			expand_rdr(&rdr, $3, $5, $7, $9,
 			    $11 == NULL ? NULL : $11->host);
@@ -2572,18 +2573,21 @@ route		: /* empty */			{
 		| ROUTETO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_ROUTETO;
+			$$.pool_opts = $3.type;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
 		| REPLYTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_REPLYTO;
+			$$.pool_opts = $3.type;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
 		| DUPTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_DUPTO;
+			$$.pool_opts = $3.type;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
