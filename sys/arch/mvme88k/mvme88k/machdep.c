@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.29 2001/03/12 22:59:02 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.30 2001/03/16 00:08:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -131,7 +131,6 @@ void dumpsys __P((void));
 void configure __P((void));
 void consinit __P((void));
 void kdb_init __P((void));
-int badwordaddr __P((void *addr));
 
 volatile unsigned char *ivec[] = {
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
@@ -2093,12 +2092,6 @@ spl0(void)
 	setipl(0);
 
 	return (x);
-}
-
-int
-badwordaddr(void *addr)
-{
-	return badaddr((vm_offset_t)addr, 4);
 }
 
 void
