@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.55 2004/04/28 00:56:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.56 2004/05/01 17:08:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -284,7 +284,6 @@ show_summary_msg(struct imsg *imsg)
 		break;
 	case IMSG_CTL_END:
 		return (1);
-		break;
 	default:
 		break;
 	}
@@ -362,7 +361,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		}
 		printf("\n");
 		if (getnameinfo((struct sockaddr *)&p->sa_local,
-		    p->sa_local.ss_len,
+		    (socklen_t)p->sa_local.ss_len,
 		    buf, sizeof(buf), pbuf, sizeof(pbuf),
 		    NI_NUMERICHOST | NI_NUMERICSERV)) {
 			strlcpy(buf, "(unknown)", sizeof(buf));
@@ -371,7 +370,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		printf("  Local host:  %20s, Local port:  %5s\n", buf, pbuf);
 
 		if (getnameinfo((struct sockaddr *)&p->sa_remote,
-		    p->sa_remote.ss_len,
+		    (socklen_t)p->sa_remote.ss_len,
 		    buf, sizeof(buf), pbuf, sizeof(pbuf),
 		    NI_NUMERICHOST | NI_NUMERICSERV)) {
 			strlcpy(buf, "(unknown)", sizeof(buf));
@@ -440,8 +439,8 @@ print_neighbor_timers(struct peer *p)
 	print_timer("IdleHoldTimer:", p->IdleHoldTimer, p->IdleHoldTime);
 	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer,
 	    INTERVAL_CONNECTRETRY);
-	print_timer("HoldTimer:", p->HoldTimer, p->holdtime);
-	print_timer("KeepaliveTimer:", p->KeepaliveTimer, p->holdtime/3);
+	print_timer("HoldTimer:", p->HoldTimer, (u_int)p->holdtime);
+	print_timer("KeepaliveTimer:", p->KeepaliveTimer, (u_int)p->holdtime/3);
 }
 
 void
