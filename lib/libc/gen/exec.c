@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.13 2002/07/30 00:15:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.14 2002/12/31 01:06:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -212,6 +212,7 @@ retry:		(void)execve(bp, argv, environ);
 		switch(errno) {
 		case E2BIG:
 			goto done;
+		case EISDIR:
 		case ELOOP:
 		case ENAMETOOLONG:
 		case ENOENT:
