@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.47 2001/11/17 19:49:41 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.48 2001/12/02 02:23:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.47 2001/11/17 19:49:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.48 2001/12/02 02:23:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,6 @@ main(argc, argv)
 	int ch, i, fklog, len, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
-	sigset_t blockmask;
 	fd_set *fdsr = NULL;
 	char *p, *line;
 	FILE *fp;
@@ -296,8 +295,6 @@ main(argc, argv)
 	linesize++;
 	line = malloc(linesize);
 
-	sigemptyset(&blockmask);
-	sigaddset(&blockmask, SIGHUP);
 	(void)signal(SIGHUP, doinit);
 	(void)signal(SIGTERM, dodie);
 	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
@@ -386,12 +383,10 @@ main(argc, argv)
 		if (WantDie)
 			die(WantDie);
 
-		sigprocmask(SIG_BLOCK, &blockmask, NULL);
 		if (DoInit) {
 			init();
 			DoInit = 0;
 		}
-		sigprocmask(SIG_UNBLOCK, &blockmask, NULL);
 
 		bzero(fdsr, howmany(fdsrmax+1, NFDBITS) *
 		    sizeof(fd_mask));
@@ -866,8 +861,8 @@ void
 reapchild(signo)
 	int signo;
 {
-	int status;
 	int save_errno = errno;
+	int status;
 
 	while (waitpid(-1, &status, WNOHANG) > 0)
 		;
@@ -988,7 +983,6 @@ init()
 	char *p;
 	char cline[LINE_MAX];
  	char prog[NAME_MAX+1];
-	int save_errno = errno;
 
 	dprintf("init\n");
 
@@ -1026,7 +1020,6 @@ init()
 		(*nextp)->f_next = (struct filed *)calloc(1, sizeof(*f));
 		cfline("*.PANIC\t*", (*nextp)->f_next, "*");
 		Initialized = 1;
-		errno = save_errno;
 		return;
 	}
 
@@ -1112,7 +1105,6 @@ init()
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName,
 	    ADDDATE);
 	dprintf("syslogd: restarted\n");
-	errno = save_errno;
 }
 
 /*
@@ -1212,8 +1204,7 @@ cfline(line, f, prog)
 	while (*p == '\t')
 		p++;
 
-	switch (*p)
-	{
+	switch (*p) {
 	case '@':
 		if (!InetInuse)
 			break;
