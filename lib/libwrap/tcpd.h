@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.7 1999/07/21 18:27:41 form Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.8 2000/10/14 00:56:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -49,7 +49,7 @@
 struct host_info {
     char    name[STRING_LENGTH];	/* access via eval_hostname(host) */
     char    addr[STRING_LENGTH];	/* access via eval_hostaddr(host) */
-    struct sockaddr_in *sin;		/* socket address or 0 */
+    struct sockaddr *sin;		/* socket address or 0 */
     struct t_unitdata *unit;		/* TLI transport address or 0 */
     struct request_info *request;	/* for shared information */
 };
@@ -108,7 +108,7 @@ extern int hosts_ctl __P((char *, char *, char *, char *));
 extern void shell_cmd __P((char *));
 extern char *percent_m __P((char *, char *));
 extern char *percent_x __P((char *, int, char *, struct request_info *));
-extern void rfc931 __P((struct sockaddr_in *, struct sockaddr_in *, char *));
+extern void rfc931 __P((struct sockaddr *, struct sockaddr *, char *));
 extern void clean_exit __P((struct request_info *));
 extern void refuse __P((struct request_info *));
 #ifdef _STDIO_H_

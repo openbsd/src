@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.3 1999/06/06 15:34:57 deraadt Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.4 2000/10/14 00:56:14 itojun Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.3 1999/06/06 15:34:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.4 2000/10/14 00:56:14 itojun Exp $";
 #endif
 #endif
 
@@ -28,6 +28,9 @@ static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.3 1999/06/06 15:34:57 deraadt Exp
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef INET6
+#include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -331,15 +334,25 @@ char   *list;
     char   *cp;
     char   *host;
     int     clients = 0;
+#ifdef INET6
+    int l;
+#endif
 
     strcpy(buf, list);
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
+#ifdef INET6
+	l = strlen(cp);
+	if (cp[0] == '[' && cp[l - 1] == ']') {
+	    cp[l - 1] = '\0';
+	    cp++;
+	}
+#endif
 	if (STR_EQ(cp, "EXCEPT")) {
 	    clients = 0;
 	} else {
 	    clients++;
-	    if ((host = split_at(cp + 1, '@'))) {	/* user@host */
+	    if ((host = split_at(cp + 1, '@')) != NULL) {	/* user@host */
 		check_user(cp);
 		check_host(host);
 	    } else {
@@ -430,8 +443,23 @@ char   *pat;
 	tcpd_warn("netgroup support disabled");
 #endif
 #endif
-    } else if ((mask = split_at(pat, '/'))) {	/* network/netmask */
-	if (!dot_quad_addr_new(pat, NULL) || !dot_quad_addr_new(mask, NULL))
+    } else if ((mask = split_at(pat, '/')) != NULL) {	/* network/netmask */
+#ifdef INET6
+	struct in6_addr in6;
+#endif
+	if (dot_quad_addr_new(pat, NULL)
+	    && dot_quad_addr_new(mask, NULL))
+	    ; /*okay*/
+#ifdef INET6
+	else if (inet_pton(AF_INET6, pat, &in6) == 1
+	      && inet_pton(AF_INET6, mask, &in6) == 1)
+	    ; /*okay*/
+	else if (inet_pton(AF_INET6, pat, &in6) == 1
+	      && strchr(mask, ':') == NULL
+	      && 0 <= atoi(mask) && atoi(mask) <= 128)
+	    ; /*okay*/
+#endif
+	else
 	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
     } else if (STR_EQ(pat, "FAIL")) {		/* obsolete */
 	tcpd_warn("FAIL is no longer recognized");

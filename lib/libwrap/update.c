@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.1 1997/02/26 03:06:59 downsj Exp $	*/
+/*	$OpenBSD: update.c,v 1.2 2000/10/14 00:56:16 itojun Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -19,7 +19,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.1 1997/02/26 03:06:59 downsj Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.2 2000/10/14 00:56:16 itojun Exp $";
 #endif
 #endif
 
@@ -53,10 +53,10 @@ va_list ap;
 	    request->fd = va_arg(ap, int);
 	    continue;
 	case RQ_CLIENT_SIN:
-	    request->client->sin = va_arg(ap, struct sockaddr_in *);
+	    request->client->sin = va_arg(ap, struct sockaddr *);
 	    continue;
 	case RQ_SERVER_SIN:
-	    request->server->sin = va_arg(ap, struct sockaddr_in *);
+	    request->server->sin = va_arg(ap, struct sockaddr *);
 	    continue;
 
 	    /*

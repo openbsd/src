@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.2 1997/06/01 05:22:08 downsj Exp $	*/
+/*	$OpenBSD: socket.c,v 1.3 2000/10/14 00:56:15 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-static char rcsid[] = "$OpenBSD: socket.c,v 1.2 1997/06/01 05:22:08 downsj Exp $";
+static char rcsid[] = "$OpenBSD: socket.c,v 1.3 2000/10/14 00:56:15 itojun Exp $";
 #endif
 #endif
 
@@ -79,8 +79,8 @@ char   *name;
 void    sock_host(request)
 struct request_info *request;
 {
-    static struct sockaddr_in client;
-    static struct sockaddr_in server;
+    static struct sockaddr_storage client;
+    static struct sockaddr_storage server;
     int     len;
     char    buf[BUFSIZ];
     int     fd = request->fd;
@@ -94,6 +94,8 @@ struct request_info *request;
      * really should verify that client.sin_family gets the value AF_INET,
      * but this program has already caused too much grief on systems with
      * broken library code.
+     *
+     * XXX the last sentence is untrue as we support AF_INET6 as well :-)
      */
 
     len = sizeof(client);
@@ -109,7 +111,7 @@ struct request_info *request;
 	memset(buf, 0 sizeof(buf));
 #endif
     }
-    request->client->sin = &client;
+    request->client->sin = (struct sockaddr *)&client;
 
     /*
      * Determine the server binding. This is used for client username
@@ -122,7 +124,7 @@ struct request_info *request;
 	tcpd_warn("getsockname: %m");
 	return;
     }
-    request->server->sin = &server;
+    request->server->sin = (struct sockaddr *)&server;
 }
 
 /* sock_hostaddr - map endpoint address to printable form */
@@ -130,10 +132,28 @@ struct request_info *request;
 void    sock_hostaddr(host)
 struct host_info *host;
 {
-    struct sockaddr_in *sin = host->sin;
+    struct sockaddr *sa = host->sin;
+    int alen, af;
+    char *ap;
 
-    if (sin != 0)
-	STRN_CPY(host->addr, inet_ntoa(sin->sin_addr), sizeof(host->addr));
+    if (!sa)
+	return;
+    switch (af = sa->sa_family) {
+    case AF_INET:
+	ap = (char *)&((struct sockaddr_in *)sa)->sin_addr;
+	alen = sizeof(struct in_addr);
+	break;
+#ifdef INET6
+    case AF_INET6:
+	ap = (char *)&((struct sockaddr_in6 *)sa)->sin6_addr;
+	alen = sizeof(struct in6_addr);
+	break;
+#endif
+    default:
+	return;
+    }
+    host->addr[0] = '\0';
+    inet_ntop(af, ap, host->addr, sizeof(host->addr));
 }
 
 /* sock_hostname - map endpoint address to host name */
@@ -141,9 +161,12 @@ struct host_info *host;
 void    sock_hostname(host)
 struct host_info *host;
 {
-    struct sockaddr_in *sin = host->sin;
+    struct sockaddr *sin = host->sin;
     struct hostent *hp;
     int     i;
+    int af, alen;
+    char *ap;
+    char hbuf[MAXHOSTNAMELEN];
 
     /*
      * On some systems, for example Solaris 2.3, gethostbyaddr(0.0.0.0) does
@@ -152,9 +175,31 @@ struct host_info *host;
      * have to special-case 0.0.0.0, in order to avoid false alerts from the
      * host name/address checking code below.
      */
-    if (sin != 0 && sin->sin_addr.s_addr != 0
-	&& (hp = gethostbyaddr((char *) &(sin->sin_addr),
-			       sizeof(sin->sin_addr), AF_INET)) != 0) {
+    if (!sin)
+	return;
+    switch (af = sin->sa_family) {
+    case AF_INET:
+	if (((struct sockaddr_in *)sin)->sin_addr.s_addr == 0)
+	    return;
+	ap = (char *)&((struct sockaddr_in *)sin)->sin_addr;
+	alen = sizeof(struct in_addr);
+	break;
+#ifdef INET6
+    case AF_INET6:
+	ap = (char *)&((struct sockaddr_in6 *)sin)->sin6_addr;
+	alen = sizeof(struct in6_addr);
+	/* special case on reverse lookup: mapped addr.  I hate it */
+	if (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
+	    af = AF_INET;
+	    ap += (sizeof(struct in6_addr) - sizeof(struct in_addr));
+	    alen = sizeof(struct in_addr);
+	}
+	break;
+#endif
+    default:
+	return;
+    }
+    if ((hp = gethostbyaddr(ap, alen, af)) != 0) {
 
 	STRN_CPY(host->name, hp->h_name, sizeof(host->name));
 
@@ -171,15 +216,15 @@ struct host_info *host;
 	 * we're in big trouble anyway.
 	 */
 
-	if ((hp = gethostbyname(host->name)) == 0) {
+	if ((hp = gethostbyname2(host->name, af)) == 0) {
 
 	    /*
 	     * Unable to verify that the host name matches the address. This
 	     * may be a transient problem or a botched name server setup.
 	     */
 
-	    tcpd_warn("can't verify hostname: gethostbyname(%s) failed",
-		      host->name);
+	    tcpd_warn("can't verify hostname: gethostbyname2(%s, %d) failed",
+		      host->name, af);
 
 	} else if (STR_NE(host->name, hp->h_name)
 		   && STR_NE(host->name, "localhost")) {
@@ -203,9 +248,7 @@ struct host_info *host;
 	     */
 
 	    for (i = 0; hp->h_addr_list[i]; i++) {
-		if (memcmp(hp->h_addr_list[i],
-			   (char *) &sin->sin_addr,
-			   sizeof(sin->sin_addr)) == 0)
+		if (memcmp(hp->h_addr_list[i], (char *) ap, alen) == 0)
 		    return;			/* name is good, keep it */
 	    }
 
@@ -216,7 +259,8 @@ struct host_info *host;
 	     */
 
 	    tcpd_warn("host name/address mismatch: %s != %.*s",
-		      inet_ntoa(sin->sin_addr), STRING_LENGTH, hp->h_name);
+		      inet_ntop(af, ap, hbuf, sizeof(hbuf)),
+		      STRING_LENGTH, hp->h_name);
 	}
 	strcpy(host->name, paranoid);		/* name is bad, clobber it */
     }
@@ -228,7 +272,7 @@ static void sock_sink(fd)
 int     fd;
 {
     char    buf[BUFSIZ];
-    struct sockaddr_in sin;
+    struct sockaddr_storage sin;
     int     size = sizeof(sin);
 
     /*

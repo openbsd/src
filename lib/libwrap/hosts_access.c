@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_access.c,v 1.5 2000/02/01 03:23:17 deraadt Exp $	*/
+/*	$OpenBSD: hosts_access.c,v 1.6 2000/10/14 00:56:15 itojun Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -23,7 +23,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.5 2000/02/01 03:23:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.6 2000/10/14 00:56:15 itojun Exp $";
 #endif
 #endif
 
@@ -31,6 +31,9 @@ static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.5 2000/02/01 03:23:17 deraad
 
 #include <sys/types.h>
 #include <sys/param.h>
+#ifdef INET6
+#include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -89,6 +92,10 @@ static int client_match();
 static int host_match();
 static int string_match();
 static int masked_match();
+static int masked_match4();
+#ifdef INET6
+static int masked_match6();
+#endif
 
 /* Size of logical line buffer. */
 
@@ -195,6 +202,7 @@ struct request_info *request;
 int   (*match_fn) ();
 {
     char   *tok;
+    int l;
 
     /*
      * Process tokens one at a time. We have exhausted all possible matches
@@ -206,6 +214,11 @@ int   (*match_fn) ();
     for (tok = strtok(list, sep); tok != 0; tok = strtok((char *) 0, sep)) {
 	if (STR_EQ(tok, "EXCEPT"))		/* EXCEPT: give up */
 	    return (NO);
+	l = strlen(tok);
+	if (*tok == '[' && tok[l - 1] == ']') {
+	    tok[l - 1] = '\0';
+	    tok++;
+	}
 	if (match_fn(tok, request)) {		/* YES: look for exceptions */
 	    while ((tok = strtok((char *) 0, sep)) && STR_NE(tok, "EXCEPT"))
 		 /* VOID */ ;
@@ -317,6 +330,23 @@ char   *net_tok;
 char   *mask_tok;
 char   *string;
 {
+#ifndef INET6
+    return masked_match4(net_tok, mask_tok, string);
+#else
+    if (dot_quad_addr_new(net_tok, NULL)
+     && dot_quad_addr_new(mask_tok, NULL)
+     && dot_quad_addr_new(string, NULL)) {
+	return masked_match4(net_tok, mask_tok, string);
+    } else
+	return masked_match6(net_tok, mask_tok, string);
+#endif
+}
+
+static int masked_match4(net_tok, mask_tok, string)
+char   *net_tok;
+char   *mask_tok;
+char   *string;
+{
     in_addr_t net;
     in_addr_t mask;
     in_addr_t addr;
@@ -336,3 +366,69 @@ char   *string;
     }
     return ((addr & mask) == net);
 }
+
+#ifdef INET6
+/* Ugly because it covers IPv4 mapped address.  I hate mapped addresses. */
+static int masked_match6(net_tok, mask_tok, string)
+char   *net_tok;
+char   *mask_tok;
+char   *string;
+{
+    struct in6_addr net;
+    struct in6_addr mask;
+    struct in6_addr addr;
+    int masklen;
+    int fail;
+    int i;
+    int maskoff;
+    int netaf;
+    const int sizoff64 = sizeof(struct in6_addr) - sizeof(struct in_addr);
+
+    memset(&addr, 0, sizeof(addr));
+    if (inet_pton(AF_INET6, string, &addr) == 1)
+	; /* okay */
+    else if (inet_pton(AF_INET, string, &addr.s6_addr[sizoff64]) == 1)
+	addr.s6_addr[10] = addr.s6_addr[11] = 0xff;
+    else
+	return NO;
+
+    memset(&net, 0, sizeof(net));
+    if (inet_pton(AF_INET6, net_tok, &net) == 1) {
+	netaf = AF_INET6;
+	maskoff = 0;
+    } else if (inet_pton(AF_INET, net_tok, &net.s6_addr[sizoff64]) == 1) {
+	netaf = AF_INET;
+	maskoff = sizoff64;
+	net.s6_addr[10] = net.s6_addr[11] = 0xff;
+    } else
+	return NO;
+
+    fail = 0;
+    if (mask_tok[strspn(mask_tok, "0123456789")] == '\0') {
+	masklen = atoi(mask_tok) + maskoff * 8;
+	if (0 <= masklen && masklen <= 128) {
+	    memset(&mask, 0, sizeof(mask));
+	    memset(&mask, 0xff, masklen / 8);
+	    if (masklen % 8) {
+		((u_char *)&mask)[masklen / 8] =
+			(0xff00 >> (masklen % 8)) & 0xff;
+	    }
+	} else
+	    fail++;
+    } else if (netaf == AF_INET6 && inet_pton(AF_INET6, mask_tok, &mask) == 1)
+	; /* okay */
+    else if (netaf == AF_INET
+	  && inet_pton(AF_INET, mask_tok, &mask.s6_addr[12]) == 1) {
+	memset(&mask, 0xff, sizoff64);
+    } else
+	fail++;
+    if (fail) {
+	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
+	return (NO);				/* not tcpd_jump() */
+    }
+
+    for (i = 0; i < sizeof(addr); i++)
+	addr.s6_addr[i] &= mask.s6_addr[i];
+    return (memcmp(&addr, &net, sizeof(addr)) == 0);
+}
+#endif
