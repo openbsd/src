@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.2 1999/09/12 14:15:17 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.3 1999/09/19 13:59:22 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -46,6 +46,7 @@
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -180,7 +181,7 @@ elf64_check_header(ehdr, type)
 {
         /*
 	 * We need to check magic, class size, endianess, and version before
-	 * we look at the rest of the Elf32_Ehdr structure. These few elements
+	 * we look at the rest of the Elf64_Ehdr structure. These few elements
 	 * are represented in a machine independant fashion.
 	 */
 	if (!IS_ELF(*ehdr) ||
@@ -217,7 +218,7 @@ olf64_check_header(ehdr, type, os)
 
         /*
 	 * We need to check magic, class size, endianess, version, and OS
-	 * before we look at the rest of the Elf32_Ehdr structure. These few
+	 * before we look at the rest of the Elf64_Ehdr structure. These few
 	 * elements are represented in a machine independant fashion.
 	 */
 	if (!IS_OLF(*ehdr) ||
@@ -290,7 +291,7 @@ elf64_load_psection(vcset, vp, ph, addr, size, prot)
 
 	/*
 	 * Because the pagedvn pager can't handle zero fill of the last
-	 * data page if it's not page aligned we map the las page readvn.
+	 * data page if it's not page aligned we map the last page readvn.
 	 */
 	if(ph->p_flags & PF_W) {
 		psize = trunc_page(*size);
@@ -362,12 +363,12 @@ elf64_load_file(p, path, epp, ap, last)
 {
 	int error, i;
 	struct nameidata nd;
+	struct vnode *vp;
 	Elf64_Ehdr eh;
 	Elf64_Phdr *ph = NULL;
 	u_long phsize;
 	char *bp = NULL;
 	u_long addr = *last;
-	struct vnode *vp;
 	u_int8_t os;			/* Just a dummy in this routine */
 
 	bp = path;
@@ -380,14 +381,17 @@ elf64_load_file(p, path, epp, ap, last)
 		error = EACCES;
 		goto bad;
 	}
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+		goto bad;
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
 		goto bad;
 	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
 		error = EACCES;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) != 0)
-		goto bad1;
+	if ((vp->v_mount->mnt_flag & MNT_NOSUID) ||
+	    (p->p_flag & P_TRACED) || p->p_fd->fd_refcnt > 1)
+		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
 	if ((error = elf64_read_from(p, nd.ni_vp, 0,
 				    (caddr_t)&eh, sizeof(eh))) != 0)
 		goto bad1;
@@ -412,8 +416,8 @@ elf64_load_file(p, path, epp, ap, last)
 		u_long size = 0;
 		int prot = 0;
 #if defined(__mips__)
-		if (*last == ELF32_NO_ADDR)
-			addr = ELF32_NO_ADDR;	/* GRRRRR!!!!! */
+		if (*last == ELF64_NO_ADDR)
+			addr = ELF64_NO_ADDR;	/* GRRRRR!!!!! */
 #endif
 
 		switch (ph[i].p_type) {
@@ -516,7 +520,16 @@ exec_elf64_makecmds(p, epp)
 			     pp->p_offset, (caddr_t)interp,
 			     pp->p_filesz)) != 0)
 				goto bad;
-			break;
+		}
+		if (pp->p_type == PT_NOTE) {
+			int max_brand = (EI_NIDENT - 1) - EI_BRAND;
+
+			if ((error = elf64_read_from(p, epp->ep_vp,
+			     pp->p_offset + 12, (caddr_t)&eh->e_ident[EI_BRAND],
+			     pp->p_filesz - 12 <= max_brand ?
+			     pp->p_filesz - 12 : max_brand)) != 0)
+				goto bad;
+			eh->e_ident[EI_NIDENT - 1] = '\0';
 		}
 	}
 
@@ -594,9 +607,9 @@ exec_elf64_makecmds(p, epp)
 			goto bad;
 
 		case PT_INTERP:
-			/* Already did this one */
-		case PT_DYNAMIC:
 		case PT_NOTE:
+			/* Already did these */
+		case PT_DYNAMIC:
 			break;
 
 		case PT_PHDR:
@@ -700,8 +713,9 @@ exec_elf64_fixup(p, epp)
 		kill_vmcmds(&epp->ep_vmcmds);
 		return (error);
 	}
+
 	/*
-	 * We have to do this ourselfs...
+	 * We have to do this ourselves...
 	 */
 	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;

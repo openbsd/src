@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.2 1999/09/17 22:14:09 kstailey Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.3 1999/09/19 13:59:22 kstailey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -97,10 +97,15 @@ netbsd_elf64_probe(p, epp, itp, pos, os)
 	u_long *pos;
 	u_int8_t *os;
 {
-	char *bp;
+	Elf64_Ehdr *eh = epp->ep_hdr;
+	char *bp, *brand;
 	int error;
 	size_t len;
 
+
+	brand = elf64_check_brand(eh);
+	if (brand == NULL || strcmp(brand, "NetBSD"))
+		return (EINVAL);
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, netbsd_emul_path, itp, &bp, 0)))
 			return (error);
