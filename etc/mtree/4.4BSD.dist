@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.112 2001/09/09 16:50:14 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.113 2001/09/11 19:03:55 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2021,6 +2021,11 @@ rwho
 # ./var/spool
 spool
 
+# ./var/spool/clientmqueue
+clientmqueue	mode=0770 uname=smmsp gname=smmsp
+# ./var/spool/clientmqueue
+..
+
 # ./var/spool/ftp
 ftp		mode=0555
 
@@ -2058,7 +2063,7 @@ lpd
 ..
 
 # ./var/spool/mqueue
-mqueue
+mqueue		mode=0700
 # ./var/spool/mqueue
 ..
 
