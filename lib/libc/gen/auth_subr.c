@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.19 2002/10/30 14:54:34 drahn Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.20 2002/11/22 19:47:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -504,7 +504,7 @@ auth_setoption(auth_session_t *as, char *n, char *v)
 
 	opt->opt = (char *)(opt + 1);
 
-	sprintf(opt->opt, "%s=%s", n, v);
+	snprintf(opt->opt, i, "%s=%s", n, v);
 	opt->next = as->optlist;
 	as->optlist = opt;
 	return(0);

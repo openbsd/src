@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.13 2002/10/09 20:36:19 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.14 2002/11/22 19:47:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -523,8 +523,8 @@ gsetrl(lc, what, name, type)
 	if (lc->lc_cap == NULL)
 		return (0);
 
-	sprintf(name_cur, "%s-cur", name);
-	sprintf(name_max, "%s-max", name);
+	snprintf(name_cur, sizeof name_cur, "%s-cur", name);
+	snprintf(name_max, sizeof name_max, "%s-max", name);
 
 	if (getrlimit(what, &r)) {
 		syslog(LOG_ERR, "getting resource limit: %m");
