@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.6 2000/07/04 11:44:21 fgsch Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.7 2000/08/26 20:08:39 nate Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -978,8 +978,12 @@ USB_DETACH(aue)
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
 #endif
+#endif
+
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
+
+#if defined(__NetBSD__)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif

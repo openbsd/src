@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.15 2000/06/02 02:17:37 bjc Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.16 2000/08/26 20:08:39 nate Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -462,12 +462,10 @@ xe_pcmcia_detach(dev, flags)
 	struct xe_pcmcia_softc *psc = (struct xe_pcmcia_softc *)dev;
 	struct xe_softc *sc = &psc->sc_xe;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mii_softc *msc;
 	int rv = 0;
 
-	for (msc = LIST_FIRST(&sc->sc_mii.mii_phys); msc;
-	    msc = LIST_FIRST(&sc->sc_mii.mii_phys))
-		rv |= mii_detach(msc, flags);
+	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.16 2000/07/04 11:44:25 fgsch Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.17 2000/08/26 20:08:39 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -229,7 +229,6 @@ __CONCAT(dname,_detach)(self, flags) \
 
 typedef int usb_malloc_type;
 
-#define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
 #define IF_INPUT(ifp, m) do {						\
