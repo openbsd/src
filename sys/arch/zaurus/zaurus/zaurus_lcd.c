@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.4 2005/01/05 18:11:57 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.5 2005/01/05 19:12:48 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -70,18 +70,21 @@ int	lcdintr(void *);
 struct pxa2x0_wsscreen_descr
 lcd_bpp16_screen = {
 	{
-		"std" /* "bpp16" */
+		"std" /* "bpp16" */, 0, 0,
+		&pxa2x0_lcd_emulops,
 	},
 	16				/* bits per pixel */
 #ifdef notyet
 }, lcd_bpp8_screen = {
 	{
-		"bpp8"
+		"bpp8", 0, 0,
+		&pxa2x0_lcd_emulops,
 	},
 	8				/* bits per pixel */
 }, lcd_bpp4_screen = {
 	{
-		"bpp4"
+		"bpp4", 0, 0,
+		&pxa2x0_lcd_emulops,
 	},
 	4				/* bits per pixel */
 #endif
@@ -131,7 +134,7 @@ lcd_match(struct device *parent, void *cf, void *aux)
 	return 1;
 }
 
-#define CURRENT_DISPLAY &sharp_zaurus_C3000
+#define CURRENT_DISPLAY sharp_zaurus_C3000
 
 static const struct lcd_panel_geometry sharp_zaurus_C3000 =
 {
@@ -158,13 +161,13 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
 
-	pxa2x0_lcd_attach_sub(sc, aux, CURRENT_DISPLAY);
+	pxa2x0_lcd_attach_sub(sc, aux, &CURRENT_DISPLAY);
 
 	/* make wsdisplay screen list */
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp16_screen, CURRENT_DISPLAY, NULL);
+	pxa2x0_lcd_setup_wsscreen(&lcd_bpp16_screen, &CURRENT_DISPLAY, NULL);
 #ifdef notyet
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp8_screen, CURRENT_DISPLAY, NULL);
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp4_screen, CURRENT_DISPLAY, NULL);
+	pxa2x0_lcd_setup_wsscreen(&lcd_bpp8_screen, &CURRENT_DISPLAY, NULL);
+	pxa2x0_lcd_setup_wsscreen(&lcd_bpp4_screen, &CURRENT_DISPLAY, NULL);
 #endif
 
 	aa.console = 0;			/* XXX */

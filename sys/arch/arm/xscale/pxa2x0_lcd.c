@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.5 2005/01/05 18:11:54 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.6 2005/01/05 19:12:47 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -472,8 +472,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
  * raster operation subsystem.
  */
 int
-pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *sc,
-    struct pxa2x0_wsscreen_descr *descr,
+pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *descr,
     const struct lcd_panel_geometry *geom,
     const char *fontname)
 {
@@ -508,16 +507,9 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *sc,
 
 	rasops_init(&rinfo, 100, 100);
 
-	/*
-	 * Since we will use a rasops structure per screen, we need to
-	 * keep a copy of the emulops (which will always be the same)
-	 * in the softc, so as not to require an extra indirection layer.
-	 */
-	sc->emulops = rinfo.ri_ops;
 	descr->c.nrows = rinfo.ri_rows;
 	descr->c.ncols = rinfo.ri_cols;
 	descr->c.capabilities = rinfo.ri_caps;
-	descr->c.textops = &sc->emulops;
 
 	return cookie;
 }
@@ -571,7 +563,7 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 
 	scr->rinfo.ri_ops.alloc_attr(&scr->rinfo, 0, 0, 0, attrp);
 
-	*cookiep = &scr->rinfo;
+	*cookiep = scr;
 	*curxp = 0;
 	*curyp = 0;
 
@@ -660,3 +652,83 @@ pxa2x0_lcd_mmap(void *v, off_t offset, int prot)
 	return (bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
 	    offset, prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT));
 }
+
+static void
+pxa2x0_lcd_cursor(void *cookie, int on, int row, int col)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.cursor)(&scr->rinfo, on, row, col);
+}
+
+static int
+pxa2x0_lcd_mapchar(void *cookie, int c, unsigned int *cp)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	return (* scr->rinfo.ri_ops.mapchar)(&scr->rinfo, c, cp);
+}
+
+static void
+pxa2x0_lcd_putchar(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.putchar)(&scr->rinfo,
+	    row, col, uc, attr);
+}
+
+static void
+pxa2x0_lcd_copycols(void *cookie, int row, int src, int dst, int num)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.copycols)(&scr->rinfo,
+	    row, src, dst, num);
+}
+
+static void
+pxa2x0_lcd_erasecols(void *cookie, int row, int col, int num, long attr)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.erasecols)(&scr->rinfo,
+	    row, col, num, attr);
+}
+
+static void
+pxa2x0_lcd_copyrows(void *cookie, int src, int dst, int num)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.copyrows)(&scr->rinfo,
+	    src, dst, num);
+}
+
+static void
+pxa2x0_lcd_eraserows(void *cookie, int row, int num, long attr)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	(* scr->rinfo.ri_ops.eraserows)(&scr->rinfo,
+	    row, num, attr);
+}
+
+static int
+pxa2x0_lcd_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
+{
+	struct pxa2x0_lcd_screen *scr = cookie;
+
+	return scr->rinfo.ri_ops.alloc_attr(&scr->rinfo, fg, bg, flg, attr);
+}
+
+const struct wsdisplay_emulops pxa2x0_lcd_emulops = {
+	pxa2x0_lcd_cursor,
+	pxa2x0_lcd_mapchar,
+	pxa2x0_lcd_putchar,
+	pxa2x0_lcd_copycols,
+	pxa2x0_lcd_erasecols,
+	pxa2x0_lcd_copyrows,
+	pxa2x0_lcd_eraserows,
+	pxa2x0_lcd_alloc_attr
+};
