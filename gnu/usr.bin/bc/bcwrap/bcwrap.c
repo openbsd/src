@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.4 1996/12/16 15:57:16 deraadt Exp $	*/
+/*	$OpenBSD: bcwrap.c,v 1.5 1997/09/11 22:59:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -70,7 +70,7 @@ main(argc, argv)
 	pid = fork();
 	switch(pid) {
 	case -1:
-		perror("vfork");
+		perror("fork");
 		exit(1);
 	case 0:
 		dup2(pd[0], 0);		/* stdin = pipe */
