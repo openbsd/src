@@ -1,0 +1,9 @@
+$OpenBSD: README,v 1.1 1999/03/02 15:01:10 niklas Exp $
+$EOM: README,v 1.1 1999/03/02 14:44:03 niklas Exp $
+
+In order to find system dependent files for your favourite operating system, go to
+ftp.gsnig.net or ftp.appli.se and visit pub/isakmpd.  In there you will find packages
+for other systems isakmpd has been ported to.  We chose not to ship these as part of the
+OpenBSD tree as some of them are quite big.  Sorry for the inconvenience.
+
+Niklas Hallqvist

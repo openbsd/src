@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.6 1999/02/26 03:30:11 niklas Exp $
-$EOM: README,v 1.15 1999/02/25 14:18:33 niklas Exp $
+$OpenBSD: README,v 1.7 1999/03/02 15:01:09 niklas Exp $
+$EOM: README,v 1.17 1999/03/02 14:44:01 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -17,9 +17,14 @@ modified for patent reasons.  Look at http://www.openbsd.org/ for
 details on how to get OpenBSD source.
 
 Isakmpd is being developed under OpenBSD, with OpenBSD as its primary
-target, soon enough however, a Linux effort will be started.  Until
-then the makefile support assumes a BSD environment.
+target, however, a Linux effort has be started.  The makefile support
+assumes a BSD environment noneheless as it is not too hard to get such
+an environment to work under other operating systems.  For example,
+Red Hat 5.2 ships with pmake installed.  Read sysdep/README for further
+details about this issue.
 
+First edit the Makefile in a manner you see fit.  Specifically the OS
+define is important to get right of course.
 Assuming you have an OpenBSD /usr/share/mk and use the OpenBSD (or
 similar) make(1), you build isakmpd this way:
 
