@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.8 1996/05/16 11:12:23 pefo Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/05/17 03:47:30 dm Exp $
 #	$NetBSD: Makefile,v 1.28 1996/04/05 01:44:24 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck ncheck
 
-SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init ipf \
-	ipfstat kbd mknod modload modunload mount mountd nfsd nfsiod nologin \
+SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init ipf ipfstat \
+	ipnat kbd mknod modload modunload mount mountd nfsd nfsiod nologin \
 	ping quotacheck reboot route routed savecore shutdown slattach \
 	swapon ttyflags umount
 
