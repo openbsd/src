@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.24 2004/06/22 03:23:33 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.25 2004/07/29 10:29:44 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.24 2004/06/22 03:23:33 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.25 2004/07/29 10:29:44 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -617,7 +617,7 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 {
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
   	struct notification_payload *np = (struct notification_payload *)buf;
-	u_int32_t *replay;
+	u_int32_t *replay, *seq;
 	u_int8_t *attr;
 
 	if (len < sizeof (struct notification_payload)) {
@@ -642,7 +642,7 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 	switch (np->type) {
 
 	case NOTIFY_IPSEC_RESPONDER_LIFETIME:
-		printf("RESPONDER LIFETIME");
+		printf("RESPONDER LIFETIME ");
 		if (np->spi_size == 16)
 			printf("(%s)", ike_get_cookie (&np->data[0],
 			    &np->data[8]));
@@ -672,6 +672,21 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 		printf("INITIAL CONTACT (%s)", ike_get_cookie (&np->data[0],
 		    &np->data[8]));
 		break;
+
+	case NOTIFY_STATUS_DPD_R_U_THERE:
+	case NOTIFY_STATUS_DPD_R_U_THERE_ACK:
+		printf("STATUS_DPD_R_U_THERE%s ",
+		    np->type == NOTIFY_STATUS_DPD_R_U_THERE ? "" : "_ACK");
+		if (np->spi_size != 16 ||
+		    len < sizeof(struct notification_payload) +
+		    sizeof(u_int32_t))
+			printf("[bad notify]");
+		else {
+			seq = (u_int32_t *)&np->data[np->spi_size];
+			printf("seq %u", ntohl(*seq));
+		}
+		break;
+		
 
 	default:
 	  	printf("%d (unknown)", np->type);

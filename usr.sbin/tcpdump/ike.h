@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.8 2004/06/22 03:23:33 ho Exp $ */
+/* $OpenBSD: ike.h,v 1.9 2004/07/29 10:29:44 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -170,7 +170,6 @@
 	  "AGGRESSIVE",		/* 4 */			\
 	  "INFO",		/* 5 */			\
 	  "TRANSACTION",	/* 6 (ikecfg) */	\
-	  "DPD",		/* 7 */			\
 	  /* step up to type 32 with unknowns */	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
@@ -178,6 +177,7 @@
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
+	  "unknown",					\
 	  "QUICK_MODE",		/* 32 */		\
 	  "NEW_GROUP_MODE",	/* 33 */		\
 	}
@@ -267,6 +267,10 @@
 #define NOTIFY_IPSEC_RESPONDER_LIFETIME	24576
 #define NOTIFY_IPSEC_REPLAY_STATUS	24577
 #define NOTIFY_IPSEC_INITIAL_CONTACT	24578
+
+/* RFC 3706, Dead Peer Detection */
+#define NOTIFY_STATUS_DPD_R_U_THERE	36136
+#define NOTIFY_STATUS_DPD_R_U_THERE_ACK	36137
 
 #define IPSEC_ID_RESERVED		0
 #define IPSEC_ID_IPV4_ADDR		1
