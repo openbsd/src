@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.93 2004/01/13 08:36:57 deraadt Exp $
+#	$OpenBSD: netstart,v 1.94 2004/01/14 04:41:02 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -278,7 +278,6 @@ fi
 if [ "$ip6kernel" = "YES" ]; then
 	# this is to make sure DAD is completed before going further.
 	sleep `sysctl -n net.inet6.ip6.dad_count`
-	sleep 1
 fi
 
 # /etc/mygate, if it exists, contains the name of my gateway host
