@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.3 2001/02/16 05:28:17 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.4 2001/03/30 01:35:20 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -164,9 +164,22 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 }
 
 void
+_dl_load_list_free(load_list_t *load_list)
+{
+	load_list_t *next;
+
+	while(load_list != NULL) {
+		next = load_list->next;
+		_dl_free(load_list);
+		load_list = next;
+	}
+}
+
+void
 _dl_unload_shlib(elf_object_t *object)
 {
 	if(--object->refcount == 0) {
+		_dl_load_list_free(object->load_list);
 		_dl_munmap((void *)object->load_addr, object->load_size);
 		_dl_remove_object(object);
 	}
@@ -188,6 +201,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	Elf32_Addr loff;
 	int	align = _dl_pagesz - 1;
 	elf_object_t *object;
+	load_list_t *next_load, *load_list = NULL;
 
 	object = _dl_lookup_object(libname);
 	if(object) {
@@ -254,6 +268,7 @@ _dl_tryload_shlib(const char *libname, int type)
 
 	loff = libaddr - minva;
 	phdp = (Elf32_Phdr *)(hbuf + ehdr->e_phoff);
+
 	for(i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if(phdp->p_type == PT_LOAD) {
 			int res;
@@ -262,17 +277,27 @@ _dl_tryload_shlib(const char *libname, int type)
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 					MAP_FIXED|MAP_COPY, libfile,
 					phdp->p_offset & ~align);
+			next_load = (load_list_t *)_dl_malloc(
+					sizeof(load_list_t));
+			next_load->next = load_list;
+			load_list = next_load;
+			next_load->start = start;
+			next_load->size = size;
+			next_load->prot = PFLAGS(phdp->p_flags);
 			if(_dl_check_error(res)) {
 				_dl_printf("%s: rtld mmap failed mapping %s.\n",
 						_dl_progname, libname);
 				_dl_close(libfile);
 				_dl_errno = DL_CANT_MMAP;
 				_dl_munmap((void *)libaddr, maxva - minva);
+				_dl_load_list_free(load_list);
 				return(0);
 			}
 			if(phdp->p_flags & PF_W) {
-				_dl_memset(start + size, 0,
-					_dl_pagesz - (size & align));
+				if(size & align) {
+					_dl_memset(start + size, 0,
+						_dl_pagesz - (size & align));
+				}
 				start = start + ((size + align) & ~align);
 				size  = size - (phdp->p_vaddr & align);
 				size  = phdp->p_memsz - size;
@@ -286,6 +311,7 @@ _dl_tryload_shlib(const char *libname, int type)
 					_dl_close(libfile);
 					_dl_errno = DL_CANT_MMAP;
 					_dl_munmap((void *)libaddr, maxva - minva);
+					_dl_load_list_free(load_list);
 					return(0);
 				}
 			}
@@ -297,9 +323,11 @@ _dl_tryload_shlib(const char *libname, int type)
 	object = _dl_add_object(libname, dynp, 0, type, libaddr, loff);
 	if(object) {
 		object->load_size = maxva - minva;	/*XXX*/
+		object->load_list = load_list;
 	}
 	else {
 		_dl_munmap((void *)libaddr, maxva - minva);
+		_dl_load_list_free(load_list);
 	}
 	return(object);
 }

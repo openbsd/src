@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2000/10/06 17:39:30 rahnds Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2001/03/30 01:35:21 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -35,6 +35,7 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include <nlist.h>
 #include <link.h>
@@ -61,6 +62,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	i;
 	int	numrela;
 	int	fails = 0;
+	load_list_t *load_list;
 	Elf32_Addr loff;
 	Elf32_Rela  *relas;
 	/* for jmp table relocations */
@@ -119,6 +121,19 @@ _dl_printf("md_reloc: plttable %x\n", plttable);
 	} else {
 		first_rela = NULL;
 	}
+
+	/*
+	 * Change protection of all write protected segments in the object
+	 * so we can do relocations such as REL24, REL16 etc. After
+	 * relocation restore protection.
+	 */
+	load_list = object->load_list;
+	while(load_list != NULL) {
+		_dl_mprotect(load_list->start, load_list->size,
+			load_list->prot|PROT_WRITE);
+		load_list = load_list->next;
+	}
+
 
 	for(i = 0; i < numrela; i++, relas++) {
 		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
@@ -246,26 +261,61 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 		case RELOC_GLOB_DAT:
 			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
-#ifdef DL_PRINTF_DEBUG
+#if 1
 		/* should not be supported ??? */
 		case RELOC_REL24:
-			{
+		  {
 			Elf32_Addr val = ooff + this->st_value +
 				relas->r_addend - (Elf32_Addr)r_addr;
 			if ((val & 0xfe000000 != 0) &&
-				(val & 0xfe000000 != 0xfe000000))
-			{
+				(val & 0xfe000000 != 0xfe000000)) {
 				/* invalid offset */
 				_dl_exit(20);
 			}
 			val &= ~0xfc000003;
 			val |=  (*r_addr & 0xfc000003);
 			*r_addr = val;	
-				
-			_dl_dcbf(r_addr);
-			}
+
+_dl_dcbf(r_addr);
+		  }
+		break;
 #endif
-			break;
+#if 1
+		case RELOC_16_LO:
+		  {
+			Elf32_Addr val;
+
+			val = loff + relas->r_addend;
+			*(Elf32_Half *)r_addr = val;
+
+			_dl_dcbf(r_addr);
+		  }
+		break;
+#endif
+#if 1
+		case RELOC_16_HI:
+		  {
+			Elf32_Addr val;
+
+			val = loff + relas->r_addend;
+			*(Elf32_Half *)r_addr = (val >> 16);
+
+			_dl_dcbf(r_addr);
+		  }
+		break;
+#endif
+#if 1
+		case RELOC_16_HA:
+		  {
+			Elf32_Addr val;
+
+			val = loff + relas->r_addend;
+			*(Elf32_Half *)r_addr = ((val + 0x8000) >> 16);
+
+			_dl_dcbf(r_addr);
+		  }
+		break;
+#endif                      
 		case RELOC_REL14_TAKEN:
 			/* val |= 1 << (31-10) XXX? */
 		case RELOC_REL14:
@@ -350,6 +400,11 @@ _dl_printf(" found other symbol at %x size %d\n",
 		}
 	}
 	object->status |= STAT_RELOC_DONE;
+	load_list = object->load_list;
+	while(load_list != NULL) {
+		_dl_mprotect(load_list->start, load_list->size, load_list->prot);
+		load_list = load_list->next;
+	}
 	return(fails);
 }
 
@@ -373,16 +428,16 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 void
 _dl_syncicache(char *from, size_t len)
 {
-        int l = len;
 	unsigned int off = 0;
+	int l = len + ((int)from & (CACHELINESIZE-1));
 
-	while (off < len) {
-                asm volatile ("dcbst %1,%0" :: "r"(from), "r"(off));
+	while (off < l) {
+		asm volatile ("dcbst %1,%0" :: "r"(from), "r"(off));
 		asm volatile ("sync");
-                asm volatile ("icbi 0,%0" :: "r"(from), "r"(off));
+		asm volatile ("icbi %1, %0" :: "r"(from), "r"(off));
 		asm volatile ("sync");
 		asm volatile ("isync");
 
-                off += CACHELINESIZE;
-        }
+		off += CACHELINESIZE;
+	}
 }
