@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.13 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.14 1999/08/08 02:42:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -860,10 +860,11 @@ bridgeintr(void)
  * bridge members.
  */
 struct mbuf *
-bridge_input(ifp, eh, m)
+bridge_input(ifp, eh, m, forme)
 	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
+	int *forme;
 {
 	struct bridge_softc *sc;
 	int s;
@@ -912,6 +913,7 @@ bridge_input(ifp, eh, m)
 			ac = (struct arpcom *)ifl->ifp;
 			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
 			    ETHER_ADDR_LEN) == 0) {
+				*forme = 1;
 				return (m);
 			}
 			ifl = LIST_NEXT(ifl, next);

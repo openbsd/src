@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.29 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.30 1999/08/08 02:42:58 niklas Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ ether_input(ifp, eh, m)
 {
 	register struct ifqueue *inq;
 	u_int16_t etype;
-	int s, llcfound = 0;
+	int s, llcfound = 0, forme = 0;
 	register struct llc *l;
 	struct arpcom *ac = (struct arpcom *)ifp;
 
@@ -534,7 +534,7 @@ ether_input(ifp, eh, m)
 	 * gets processed as normal.
 	 */
 	if (ifp->if_bridge) {
-		m = bridge_input(ifp, eh, m);
+		m = bridge_input(ifp, eh, m, &forme);
 		if (m == NULL)
 			return;
 	}
@@ -543,7 +543,7 @@ ether_input(ifp, eh, m)
 	 * If packet is unicast and we're in promiscuous mode, make sure it
 	 * is for us.  Drop otherwise.
 	 */
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	if (!forme && (m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC)) {
 		if (bcmp(ac->ac_enaddr, (caddr_t)eh->ether_dhost,
 		    ETHER_ADDR_LEN)) {

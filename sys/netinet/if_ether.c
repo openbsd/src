@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.17 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.18 1999/08/08 02:42:59 niklas Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -464,7 +464,9 @@ in_arpinput(m)
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-		if (ia->ia_ifp == &ac->ac_if) {
+		if (ia->ia_ifp == &ac->ac_if ||
+		    (ia->ia_ifp->if_bridge &&
+		    ia->ia_ifp->if_bridge == ac->ac_if.if_bridge)) {
 			maybe_ia = ia;
 			if (itaddr.s_addr == ia->ia_addr.sin_addr.s_addr ||
 			    isaddr.s_addr == ia->ia_addr.sin_addr.s_addr)
