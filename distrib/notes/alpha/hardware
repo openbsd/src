@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.50 2005/02/12 05:44:46 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.51 2005/02/12 10:21:04 jsg Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -373,14 +373,21 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			SMC EZ Connect USB
 			SOHOware NUB100
 		ASIX Electronics AX88172 USB Ethernet adapters, including:
-		    Buffalo(MELCO) LUA-U2-KTX
-		    Corega FEther USB2-TX
-		    D-Link DUBE100
-		    LinkSys USB200M
-		    Netgear FA120
-		    Sitecom LN-029
-		    SnapPort USB 2.0 LAN Adapter
-		    System TALKS SGC-X2UL
+			ATEN UC210T
+			Billionton Systems USB2AR
+			Buffalo(MELCO) LUA-U2-KTX
+			Corega FEther USB2-TX
+			D-Link DUBE100
+			Hawking UF200
+			Intellinet USB 2.0 to Ethernet (rev A)
+			LinkSys USB200M
+			Netgear FA120
+			Sitecom LN-029
+			SnapPort USB 2.0 LAN Adapter
+			ST Lab USB 2.0 Fast Ethernet
+			Surecom EP-1427X-2
+			System TALKS SGC-X2UL
+			TRENDnet TU2-ET100
 		AMD LANCE and PCnet-based PCI adapters (le), including: [*]
 			BOCALANcard/PCI
 			AT&T StarLAN 10, EN100, and StarLAN Fiber

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2005/02/12 05:44:46 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.16 2005/02/12 10:21:04 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -101,14 +101,21 @@ Supported devices {:-include-:}:
 		    SMC EZ Connect USB
 		    SOHOware NUB100
 		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		    ATEN UC210T
+		    Billionton Systems USB2AR
 		    Buffalo(MELCO) LUA-U2-KTX
 		    Corega FEther USB2-TX
 		    D-Link DUBE100
+		    Hawking UF200
+		    Intellinet USB 2.0 to Ethernet (rev A)
 		    LinkSys USB200M
 		    Netgear FA120
 		    Sitecom LN-029
 		    SnapPort USB 2.0 LAN Adapter
+		    ST Lab USB 2.0 Fast Ethernet
+		    Surecom EP-1427X-2
 		    System TALKS SGC-X2UL
+		    TRENDnet TU2-ET100
 		CATC USB-EL1210A-based USB adapters, including:
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
