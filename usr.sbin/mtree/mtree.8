@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.17 2001/08/10 02:33:46 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.18 2001/10/01 16:48:18 jakob Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm mtree
-.Op Fl cdeinqrUux
+.Op Fl cdeilnqrUux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
@@ -86,6 +86,22 @@ Use the
 .Dq type
 keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
+.It Fl l
+Do 
+.Dq loose
+permissions checks, in which more stringent permissions
+will match less stringent ones.
+For example, a file marked mode 0444 will pass a check for mode 0644.
+.Dq Loose
+checks apply only to read, write and execute permissions -- in
+particular, if other bits like the sticky bit or suid/sgid bits are
+set either in the specification or the file, exact checking will be
+performed.
+This flag may not be set at the same time as the
+.Fl u
+or
+.Fl U
+flags.
 .It Fl n
 Do not emit pathname comments when creating a specification.
 Normally

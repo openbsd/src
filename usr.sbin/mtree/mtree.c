@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.12 2001/08/10 02:37:14 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.13 2001/10/01 16:48:19 jakob Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: mtree.c,v 1.12 2001/08/10 02:37:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mtree.c,v 1.13 2001/10/01 16:48:19 jakob Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,8 @@ static const char rcsid[] = "$OpenBSD: mtree.c,v 1.12 2001/08/10 02:37:14 miller
 extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, iflag, nflag, qflag, rflag, sflag, tflag, uflag, Uflag;
+int cflag, dflag, eflag, iflag, lflag, nflag, qflag, rflag, sflag, tflag,
+    uflag, Uflag;
 u_int keys;
 char fullpath[MAXPATHLEN];
 
@@ -79,7 +80,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:np:qrs:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:lnp:qrs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -107,6 +108,9 @@ main(argc, argv)
 			while ((p = strsep(&optarg, " \t,")) != NULL)
 				if (*p != '\0')
 					keys |= parsekey(p, NULL);
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
@@ -154,6 +158,9 @@ main(argc, argv)
 	if ((cflag || sflag) && !getcwd(fullpath, sizeof fullpath))
 		error("getcwd: %s", strerror(errno));
 
+	if (lflag == 1 && uflag == 1)
+		error("-l and -u flags are mutually exclusive");
+
 	if (cflag) {
 		cwalk();
 		exit(0);
@@ -168,6 +175,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: mtree [-cdeinqrtUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
+"usage: mtree [-cdeilnqrtUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }
