@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.11 1997/02/28 02:03:33 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.12 1997/02/28 02:14:58 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -66,10 +66,6 @@
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 
-#define SO_IPSEC_AUTH_LEVEL           0x0400  /* Authentication used */
-#define SO_IPSEC_ESP_TRANS_LEVEL      0x0800  /* Transport encryption */
-#define SO_IPSEC_ESP_NETWORK_LEVEL    0x1000  /* Full-packet encryption */
-
 /*
  * Additional options, not kept in so_options.
  */
@@ -81,6 +77,17 @@
 #define SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
+#define SO_IPSEC_AUTH_LEVEL           0x1009  /* Authentication used */
+#define SO_IPSEC_ESP_TRANS_LEVEL      0x100a  /* Transport encryption */
+#define SO_IPSEC_ESP_NETWORK_LEVEL    0x100b  /* Full-packet encryption */
+
+/*
+ * Just for compatibility with the draft
+ */
+
+#define IPSEC_AUTH_LEVEL            SO_IPSEC_AUTH_LEVEL
+#define IPSEC_ESP_TRANS_LEVEL       SO_IPSEC_ESP_TRANS_LEVEL
+#define IPSEC_ESP_NETWORK_LEVEL     SO_IPSEC_ESP_NETWORK_LEVEL
 
 /*
  * Security levels
