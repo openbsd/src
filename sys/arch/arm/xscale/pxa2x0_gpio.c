@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.13 2005/01/24 13:32:14 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.14 2005/02/17 22:05:56 dlg Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 #endif
 #endif
 
-	if (!GPIO_IS_GPIO_IN(pxa2x0_gpio_get_function(gpio)))
+	if (GPIO_FN_IS_OUT(pxa2x0_gpio_get_function(gpio)) != GPIO_IN)
 		panic("pxa2x0_gpio_intr_establish: Pin %d not GPIO_IN", gpio);
 
 	switch (level) {
