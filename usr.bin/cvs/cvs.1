@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.56 2005/03/02 09:50:15 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.57 2005/03/04 09:13:38 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1191,9 +1191,7 @@ Aliases:
 .It Ic rlog
 Print out history information for a module.
 .It Xo Ic rtag
-.Op Fl aFflnR
-.Op Fl b
-.Op Fl d
+.Op Fl abdFflnR
 .Oo Fl D Ar date \*(Ba
 .Fl r Ar rev Oc
 .Ar symbolic_tag
@@ -1307,37 +1305,47 @@ Aliases:
 .Ic st ,
 .Ic stat .
 .It Xo Ic tag
-.Op Fl bdlR
-.Op Fl r Ar old_tag
+.Op Fl bcdflR
+.Oo Fl D Ar date \*(Ba
+.Fl r Ar rev Oc
 .Op Ar symbolic_tag
 .Op Ar file ...
 .Xc
 .Pp
-Add a symbolic tag to a checked out version of
-.Ar file .
+The
+.Ic tag
+command adds a symbolic tag to a checked out version of one or more files.
 .Pp
 The
 .Ic tag
 command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl b
-Specify a branch tag.
+Create a branch.
+.It Fl c
+Check that working files are not modified.
+.It Fl D Ar date
+Tag the most recent revision before
+.Ar date .
 .It Fl d
 Delete tag.
+.It Fl F
+Move tag if it already exists.
+If this option is not used and a tag is used a second time,
+.Nm
+will not execute the action.
+.It Fl f
+Force the use of the head revision if the specified
+revision or date is not found.
 .It Fl l
 Limit the scope of the search to the local directory
 only and disable recursive behaviour.
 .It Fl R
 Enable recursive behaviour.
 This is the default.
-.It Fl r Ar old_tag
-.Nm
-will only tag the files with
-.Ar symbolic_tag
-if they are already tagged with
-.Ar old_tag .
-When done, it will remove the old tag
-leaving only the new tag behind on exactly the same files.
+.It Fl r Ar rev
+Tag at revision
+.Ar rev .
 .El
 .Pp
 Aliases:
