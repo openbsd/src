@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.63 2000/07/08 01:57:27 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.64 2000/08/01 18:52:50 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.63 2000/07/08 01:57:27 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.64 2000/08/01 18:52:50 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -609,9 +609,15 @@ main(argc, argv, envp)
 }
 
 int
-dg_badinput(sin)
-	struct sockaddr_in *sin;
+dg_badinput(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin;
+
+	if (sa->sa_family != AF_INET)
+		return (0);
+
+	sin = (struct sockaddr_in *)sa;
 	if (ntohs(sin->sin_port) < IPPORT_RESERVED)
 		return (1);
 	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST))
@@ -1742,14 +1748,15 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 {
 	char buffer[BUFSIZE];
 	int i, size;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
 
-	size = sizeof(sa);
-	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size)) < 0)
+	size = sizeof(ss);
+	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss,
+	    &size)) < 0)
 		return;
-	if (dg_badinput((struct sockaddr_in *)&sa))
+	if (dg_badinput((struct sockaddr *)&ss))
 		return;
-	(void) sendto(s, buffer, i, 0, &sa, sizeof(sa));
+	(void) sendto(s, buffer, i, 0, (struct sockaddr *)&ss, size);
 }
 
 /* ARGSUSED */
@@ -1835,7 +1842,7 @@ chargen_dg(s, sep)		/* Character generator */
 	int s;
 	struct servtab *sep;
 {
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
 	static char *rs;
 	int len, size;
 	char text[LINESIZ+2];
@@ -1845,10 +1852,11 @@ chargen_dg(s, sep)		/* Character generator */
 		rs = ring;
 	}
 
-	size = sizeof(sa);
-	if (recvfrom(s, text, sizeof(text), 0, &sa, &size) < 0)
+	size = sizeof(ss);
+	if (recvfrom(s, text, sizeof(text), 0, (struct sockaddr *)&ss,
+	    &size) < 0)
 		return;
-	if (dg_badinput((struct sockaddr_in *)&sa))
+	if (dg_badinput((struct sockaddr *)&ss))
 		return;
 
 	if ((len = endring - rs) >= LINESIZ)
@@ -1861,7 +1869,7 @@ chargen_dg(s, sep)		/* Character generator */
 		rs = ring;
 	text[LINESIZ] = '\r';
 	text[LINESIZ + 1] = '\n';
-	(void) sendto(s, text, sizeof(text), 0, &sa, sizeof(sa));
+	(void) sendto(s, text, sizeof(text), 0, (struct sockaddr *)&ss, size);
 }
 
 /*
@@ -1903,19 +1911,18 @@ machtime_dg(s, sep)
 	struct servtab *sep;
 {
 	u_int result;
-	struct sockaddr sa;
-	struct sockaddr_in *sin;
+	struct sockaddr_storage ss;
 	int size;
 
-	size = sizeof(sa);
-	if (recvfrom(s, (char *)&result, sizeof(result), 0, &sa, &size) < 0)
+	size = sizeof(ss);
+	if (recvfrom(s, (char *)&result, sizeof(result), 0,
+	    (struct sockaddr *)&ss, &size) < 0)
 		return;
-	sin = (struct sockaddr_in *)&sa;
-	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST) || 
-	    ntohs(sin->sin_port) < IPPORT_RESERVED/2)
+	if (dg_badinput((struct sockaddr *)&ss))
 		return;
 	result = machtime();
-	(void) sendto(s, (char *) &result, sizeof(result), 0, &sa, sizeof(sa));
+	(void) sendto(s, (char *) &result, sizeof(result), 0,
+	    (struct sockaddr *)&ss, size);
 }
 
 /* ARGSUSED */
@@ -1941,18 +1948,20 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 {
 	char buffer[256];
 	time_t time(), clock;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
 	int size;
 
 	clock = time((time_t *) 0);
 
-	size = sizeof(sa);
-	if (recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size) < 0)
+	size = sizeof(ss);
+	if (recvfrom(s, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss,
+	    &size) < 0)
 		return;
-	if (dg_badinput((struct sockaddr_in *)&sa))
+	if (dg_badinput((struct sockaddr *)&ss))
 		return;
 	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
-	(void) sendto(s, buffer, strlen(buffer), 0, &sa, sizeof(sa));
+	(void) sendto(s, buffer, strlen(buffer), 0, (struct sockaddr *)&ss,
+	    size);
 }
 
 /*
