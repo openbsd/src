@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.8 2002/01/07 07:50:48 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.9 2002/01/07 21:58:54 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -106,6 +106,7 @@ _mkdev(all,{-all-},{-dnl
 _dl({-std-},{-std-},
 {-fdesc-},{-fd-},
 {-sd-},{-sd0 sd1 sd2 sd3 sd4-},
+{-aflo-},{-sd5 sd6 sd7 sd8 sd9-},
 {-pty-},{-pty0 pty1-},
 {-st-},{-st0 st1-},
 {-ch-},{-ch0-},
@@ -123,6 +124,7 @@ _dl({-std-},{-std-},
 {-rd-},{-rd0-},
 {-flo-},{-fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H-},
 {-flo-},{-fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H-},
+{-aflo-},{-fd0 fd1 fd2 fd3-},
 {-bpf-},{-bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9-},
 {-tun-},{-tun0 tun1 tun2 tun3-},
 {-pctr-},{-pctr-},
@@ -132,7 +134,8 @@ _dl({-std-},{-std-},
 {-cry-},{-crypto-},
 {-apm-},{-apm-},
 {-tth-},{-ttyh0 ttyh1-},
-{-ttyB-},{-ttyB0 ttyB1-},
+{-ttyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5-},
+{-attyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4-},
 {-tty0-},{-tty00 tty01 tty02 tty03-},
 {-tzs-},{-ttya ttyb ttyc ttyd-},
 {-czs-},{-cuaa cuab cuac cuad-},
@@ -149,6 +152,7 @@ _dl({-std-},{-std-},
 {-wdt-},{-wdt0-},
 {-ttyc-},{-ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7-},
 {-com-},{-tty00 tty01 tty02 tty03-},
+{-ttye-},{-ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6-},
 {-xfs-},{-xfs0-},
 {-au-},{-audio0-},
 {-music-},{-music0-},
@@ -156,7 +160,14 @@ _dl({-std-},{-std-},
 {-tuner-},{-tuner0-},
 {-rmidi-},{-rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7-},
 {-usbs-},{-usbs-},
+{-pci-},{-pci-},
 {-wsmouse-},{-wscons-},
+{-grf-},{-grf0 grf1 grf2 grf3 grf4 grf5 grf6-},
+{-par-},{-par0-},
+{-amouse-},{-mouse0 mouse1-},
+{-akbd-},{-kbd-},
+{-ppi-},{-ppi0-},
+{-view-},{-view00 view01-},
 {-local-},{-local-})-})dnl
 __devitem(floppy,floppy,devices to be put on install floppies)dnl
 __devitem(std,{-std-},standard devices)dnl
@@ -553,8 +564,6 @@ __devitem(view,view*,generic interface to graphic displays)dnl
 __devitem(aconf,aconf,{-autoconfig information (not yet)-})dnl
 __devitem(mouse-,mouse-*,"mouse link")dnl
 __devitem(mouse,mouse,mouse (provides events, for X11))dnl
-__devitem(mouse_atari,mouse*,Atari mice)dnl
-_cdev(mouse,mouse,30,0,666)dnl
 __devitem(amouse,mouse*,Amiga mice)dnl
 __devitem(lkm,lkm,loadable kernel modules interface)dnl
 _cdev(lkm,lkm,{-major_lkm_c-},0,640,kmem)dnl
