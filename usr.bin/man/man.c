@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.18 2001/08/18 21:59:37 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.19 2001/11/17 03:09:44 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.18 2001/08/18 21:59:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.19 2001/11/17 03:09:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,8 @@ static void	 jump __P((char **, char *, char *));
 static int	 manual __P((char *, TAG *, glob_t *));
 static void	 onsig __P((int));
 static void	 usage __P((void));
+
+sigset_t	blocksigs;
 
 int
 main(argc, argv)
@@ -322,6 +324,10 @@ main(argc, argv)
 	(void)signal(SIGINT, onsig);
 	(void)signal(SIGHUP, onsig);
 
+	sigemptyset(&blocksigs);
+	sigaddset(&blocksigs, SIGINT);
+	sigaddset(&blocksigs, SIGHUP);
+
 	memset(&pg, 0, sizeof(pg));
 	for (found = 0; *argv; ++argv)
 		if (manual(*argv, defp, &pg))
@@ -500,6 +506,10 @@ next:				anyfound = 1;
 
 	/* If not found, enter onto the missing list. */
 	if (!anyfound) {
+		sigset_t osigs;
+
+		sigprocmask(SIG_BLOCK, &blocksigs, &osigs);
+
 		if ((missp = getlist("_missing")) == NULL)
 			missp = addlist("_missing");
 		if ((ep = malloc(sizeof(ENTRY))) == NULL ||
@@ -509,6 +519,7 @@ next:				anyfound = 1;
 			exit(1);
 		}
 		TAILQ_INSERT_TAIL(&missp->list, ep, q);
+		sigprocmask(SIG_SETMASK, &osigs, NULL);
 	}
 	return (anyfound);
 }
@@ -527,6 +538,7 @@ build_page(fmt, pathp)
 	int fd, n;
 	char *p, *b;
 	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
+	sigset_t osigs;
 
 	/* Let the user know this may take awhile. */
 	if (!warned) {
@@ -558,8 +570,10 @@ build_page(fmt, pathp)
 
 
 	/* Add a remove-when-done list. */
+	sigprocmask(SIG_BLOCK, &blocksigs, &osigs);
 	if ((intmpp = getlist("_intmp")) == NULL)
 		intmpp = addlist("_intmp");
+	sigprocmask(SIG_SETMASK, &osigs, NULL);
 
 	/* Move to the printf(3) format string. */
 	for (; *fmt && isspace(*fmt); ++fmt)
@@ -740,7 +754,7 @@ onsig(signo)
 	(void)kill(getpid(), signo);
 
 	/* NOTREACHED */
-	exit (1);
+	_exit(1);
 }
 
 /*
