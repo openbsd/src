@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.11 1997/09/09 22:55:55 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.12 1998/03/01 12:53:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -204,7 +204,7 @@ ggbus_unmap(bst, handle, sz)
 	return (0);
 }
 
-static ggbus_int_map[] = {
+static int ggbus_int_map[] = {
     0, 0, 0, 0, GG2_IRQ3, GG2_IRQ4, GG2_IRQ5, GG2_IRQ6, GG2_IRQ7, 0,
     GG2_IRQ9, GG2_IRQ10, GG2_IRQ11, GG2_IRQ12, 0, GG2_IRQ14, GG2_IRQ15
 };

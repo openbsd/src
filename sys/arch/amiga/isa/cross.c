@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.11 1997/09/09 22:55:55 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.12 1998/03/01 12:53:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -283,7 +283,7 @@ cross_mem_unmap(bst, handle, sz)
 	return (0);
 }
 
-static cross_int_map[] = {
+static int cross_int_map[] = {
     0, 0, 0, 0, CROSS_IRQ3, CROSS_IRQ4, CROSS_IRQ5, CROSS_IRQ6, CROSS_IRQ7, 0,
     CROSS_IRQ9, CROSS_IRQ10, CROSS_IRQ11, CROSS_IRQ12, 0, CROSS_IRQ14,
     CROSS_IRQ15
