@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2002/08/06 13:43:33 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2002/08/12 19:36:04 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -627,11 +627,15 @@ ipspec		: ANY				{ $$ = NULL; }
 
 host_list	: xhost				{ $$ = $1; }
 		| host_list comma xhost		{
-			/* both $1 and $3 may be lists, so join them */
-			$$ = $3;
-			while ($3->next)
-				$3 = $3->next;
-			$3->next = $1;
+			if ($3 == NULL)
+				$$ = $1;
+			else {
+				/* both $1 and $3 may be lists, so join them */
+				$$ = $3;
+				while ($3->next)
+					$3 = $3->next;
+				$3->next = $1;
+			}
 		}
 		;
 
