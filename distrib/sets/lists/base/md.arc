@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.8/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.25.4
+./usr/lib/libc.so.26.0
 ./usr/lib/libcrypto.so.3.0
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
@@ -52,7 +52,7 @@
 ./usr/lib/libssl.so.3.0
 ./usr/lib/libtermcap.so.5.0
 ./usr/lib/libtermlib.so.5.0
-./usr/lib/libutil.so.5.0
+./usr/lib/libutil.so.6.0
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3
 ./usr/lib/perl5/mips-openbsd

@@ -30,8 +30,8 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.8/2.95.3/include
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.25.4
-./usr/lib/libc_r.so.3.3
+./usr/lib/libc.so.26.0
+./usr/lib/libc_r.so.4.0
 ./usr/lib/libcrypto.so.3.0
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -44,7 +44,7 @@
 ./usr/lib/libkafs.so.6.0
 ./usr/lib/libkdb.so.6.0
 ./usr/lib/libkrb.so.9.0
-./usr/lib/libkvm.so.5.1
+./usr/lib/libkvm.so.6.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libobjc.so.0.0
@@ -59,7 +59,7 @@
 ./usr/lib/libstdc++.so.30.0
 ./usr/lib/libtermcap.so.8.0
 ./usr/lib/libtermlib.so.8.0
-./usr/lib/libutil.so.5.0
+./usr/lib/libutil.so.6.0
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3
 ./usr/libdata/perl5/i386-openbsd
@@ -702,8 +702,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/hifn7751var.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/isesreg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/if_levar.ph
@@ -722,6 +720,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/if_wxreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/if_wxvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/ncrreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/neo-coeff.ph
@@ -865,6 +865,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/if_cuereg.ph
@@ -874,6 +875,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ukbdvar.ph
@@ -889,6 +891,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wscons/ascii.ph
@@ -1070,6 +1073,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pccons.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pctr.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcvt_ioctl.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcvt_mouse.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pmap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/proc.ph
@@ -1236,11 +1241,11 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_ah.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_auth.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_fil.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_frag.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/netinet/ip_icmp.ph
@@ -1561,6 +1566,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kernel.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lkm.ph
@@ -1756,13 +1762,9 @@
 ./usr/sbin/apm
 ./usr/sbin/apmd
 ./usr/sbin/bad144
+./usr/sbin/fdformat
 ./usr/sbin/memconfig
 ./usr/sbin/moused
-./usr/sbin/zzz
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/kgdb.ph
-./usr/sbin/fdformat
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ezload.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ugraphire_rdesc.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uyap_firmware.ph
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/sbin/zzz

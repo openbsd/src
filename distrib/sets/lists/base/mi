@@ -151,7 +151,6 @@
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
-./sbin/wsconsctl
 ./stand
 ./tmp
 ./usr
