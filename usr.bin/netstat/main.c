@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2005/03/30 08:23:47 jaredy Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2005/03/30 17:45:51 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.54 2005/03/30 08:23:47 jaredy Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.55 2005/03/30 17:45:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,127 +65,101 @@ static char *rcsid = "$OpenBSD: main.c,v 1.54 2005/03/30 08:23:47 jaredy Exp $";
 #include "netstat.h"
 
 struct nlist nl[] = {
-#define	N_MBSTAT	0
+#define N_MBSTAT	0
 	{ "_mbstat" },
-#define	N_IPSTAT	1
+#define N_IPSTAT	1
 	{ "_ipstat" },
-#define	N_TCBTABLE	2
+#define N_TCBTABLE	2
 	{ "_tcbtable" },
-#define	N_TCPSTAT	3
+#define N_TCPSTAT	3
 	{ "_tcpstat" },
-#define	N_UDBTABLE	4
+#define N_UDBTABLE	4
 	{ "_udbtable" },
-#define	N_UDPSTAT	5
+#define N_UDPSTAT	5
 	{ "_udpstat" },
-#define	N_IFNET		6
+#define N_IFNET		6
 	{ "_ifnet" },
-#define	N_IMP		7
-	{ "_imp_softc" },
-#define	N_ICMPSTAT	8
+#define N_ICMPSTAT	7
 	{ "_icmpstat" },
-#define	N_RTSTAT	9
+#define N_RTSTAT	8
 	{ "_rtstat" },
-#define	N_UNIXSW	10
+#define N_UNIXSW	9
 	{ "_unixsw" },
-#define N_IDP		11
+#define N_IDP		10
 	{ "_nspcb"},
-#define N_IDPSTAT	12
+#define N_IDPSTAT	11
 	{ "_idpstat"},
-#define N_SPPSTAT	13
+#define N_SPPSTAT	12
 	{ "_spp_istat"},
-#define N_NSERR		14
+#define N_NSERR		13
 	{ "_ns_errstat"},
-#define	N_CLNPSTAT	15
-	{ "_clnp_stat"},
-#define	IN_NOTUSED	16
-	{ "_tp_inpcb" },
-#define	ISO_NOTUSED	16
-	{ "_tp_refinfo" },
-#define	N_TPSTAT	18
-	{ "_tp_stat" },
-#define	N_ESISSTAT	19
-	{ "_esis_stat"},
-#define N_NIMP		20
-	{ "_nimp"},
-#define N_RTREE		21
+#define N_RTREE		14
 	{ "_rt_tables"},
-#define N_CLTP		22
-	{ "_cltb"},
-#define N_CLTPSTAT	23
-	{ "_cltpstat"},
-#define	N_NFILE		24
-	{ "_nfile" },
-#define	N_FILE		25
+#define N_FILE		15
 	{ "_file" },
-#define N_IGMPSTAT	26
+#define N_IGMPSTAT	16
 	{ "_igmpstat" },
-#define N_MRTPROTO	27
+#define N_MRTPROTO	17
 	{ "_ip_mrtproto" },
-#define N_MRTSTAT	28
+#define N_MRTSTAT	18
 	{ "_mrtstat" },
-#define N_MFCHASHTBL	29
+#define N_MFCHASHTBL	19
 	{ "_mfchashtbl" },
-#define	N_MFCHASH	30
+#define N_MFCHASH	20
 	{ "_mfchash" },
-#define N_VIFTABLE	31
+#define N_VIFTABLE	21
 	{ "_viftable" },
-#define N_IPX		32
+#define N_IPX		22
 	{ "_ipxcbtable"},
-#define N_IPXSTAT	33
+#define N_IPXSTAT	23
 	{ "_ipxstat"},
-#define N_SPXSTAT	34
+#define N_SPXSTAT	24
 	{ "_spx_istat"},
-#define N_IPXERR	35
-	{ "_ipx_errstat"},
-#define N_AHSTAT	36
+#define N_AHSTAT	25
 	{ "_ahstat"},
-#define N_ESPSTAT	37
+#define N_ESPSTAT	26
 	{ "_espstat"},
-#define N_IP4STAT	38
+#define N_IP4STAT	27
 	{ "_ipipstat"},
-#define N_DDPSTAT	39
+#define N_DDPSTAT	28
 	{ "_ddpstat"},
-#define N_DDPCB		40
+#define N_DDPCB		29
 	{ "_ddpcb"},
-#define N_ETHERIPSTAT	41
+#define N_ETHERIPSTAT	30
 	{ "_etheripstat"},
-#define N_IP6STAT	42
+#define N_IP6STAT	31
 	{ "_ip6stat" },
-#define N_ICMP6STAT	43
+#define N_ICMP6STAT	32
 	{ "_icmp6stat" },
-#define N_IPSECSTAT	44
-	{ "_ipsecstat" },
-#define N_IPSEC6STAT	45
-	{ "_ipsec6stat" },
-#define N_PIM6STAT	46
+#define N_PIM6STAT	33
 	{ "_pim6stat" },
-#define N_MRT6PROTO	47
+#define N_MRT6PROTO	34
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	48
+#define N_MRT6STAT	35
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	49
+#define N_MF6CTABLE	36
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	50
+#define N_MIF6TABLE	37
 	{ "_mif6table" },
-#define N_MBPOOL	51
+#define N_MBPOOL	38
 	{ "_mbpool" },
-#define N_MCLPOOL	52
+#define N_MCLPOOL	39
 	{ "_mclpool" },
-#define N_IPCOMPSTAT	53
+#define N_IPCOMPSTAT	40
 	{ "_ipcompstat" },
-#define N_RIP6STAT	54
+#define N_RIP6STAT	41
 	{ "_rip6stat" },
-#define N_CARPSTAT	55
+#define N_CARPSTAT	42
 	{ "_carpstats" },
-#define	N_RAWIPTABLE	56
+#define N_RAWIPTABLE	43
 	{ "_rawcbtable" },
-#define	N_RAWIP6TABLE	57
+#define N_RAWIP6TABLE	44
 	{ "_rawin6pcbtable" },
-#define N_PFSYNCSTAT	58
+#define N_PFSYNCSTAT	45
 	{ "_pfsyncstats" },
-#define N_PIMSTAT	59
+#define N_PIMSTAT	46
 	{ "_pimstat" },
-	{ ""},
+	{ ""}
 };
 
 struct protox {
