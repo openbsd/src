@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.102 2004/07/20 19:07:34 mickey Exp $
+$OpenBSD: usbdevs,v 1.103 2004/08/04 01:50:22 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -601,6 +601,7 @@ product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
 product COMPAQ W100		0x0033	W100
+product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 
 /* Concord Camera products */
