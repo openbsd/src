@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.288 2002/01/23 18:44:12 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.289 2002/01/24 22:37:58 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -186,10 +186,12 @@ mms1	at isa? port 0x238 irq 5
 wsmouse*	at lms? mux 0
 wsmouse*	at mms? mux 0
 
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? disable port 0x334 irq ? drq ? # BusLogic [57]4X SCSI controllers
-bt2	at isa? disable port ? irq ?
-scsibus* at bt?
+bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bha1	at isa? disable port 0x334 irq ? drq ? # BusLogic [57]4X SCSI controllers
+bha2	at isa? disable port ? irq ?
+bha*	at pci? dev ? function ?
+#bha*	at eisa? slot ?			# XXX eisa still runs in isa-compat
+scsibus* at bha?
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha*	at isapnp?

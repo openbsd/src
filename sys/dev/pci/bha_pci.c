@@ -1,5 +1,5 @@
-/*	$OpenBSD: bha_eisa.c,v 1.2 2002/01/24 22:38:03 mickey Exp $	*/
-/*	$NetBSD: bha_eisa.c,v 1.16 1998/08/15 10:10:49 mycroft Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.1 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,60 +48,20 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <dev/eisa/eisavar.h>
-#include <dev/eisa/eisadevs.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/bhareg.h>
 #include <dev/ic/bhavar.h>
 
-#define BHA_EISA_SLOT_OFFSET	0x0c80
-#define	BHA_EISA_IOSIZE		0x0010
-#define	BHA_ISA_IOSIZE		0x0004
+#define	PCI_CBIO	0x10
 
-#define	BHA_EISA_IOCONF		0x0c
+int	bha_pci_match __P((struct device *, void *, void *));
+void	bha_pci_attach __P((struct device *, struct device *, void *));
 
-int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
-int	bha_eisa_match __P((struct device *, void *, void *));
-void	bha_eisa_attach __P((struct device *, struct device *, void *));
-
-struct cfattach bha_eisa_ca = {
-	sizeof(struct bha_softc), bha_eisa_match, bha_eisa_attach
+struct cfattach bha_pci_ca = {
+	sizeof(struct bha_softc), bha_pci_match, bha_pci_attach
 };
-
-int
-bha_eisa_address(iot, ioh, portp)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int *portp;
-{
-	int port;
-
-	switch (bus_space_read_1(iot, ioh, BHA_EISA_IOCONF) & 0x07) {
-	case 0x00:
-		port = 0x330;
-		break;
-	case 0x01:
-		port = 0x334;
-		break;
-	case 0x02:
-		port = 0x230;
-		break;
-	case 0x03:
-		port = 0x234;
-		break;
-	case 0x04:
-		port = 0x130;
-		break;
-	case 0x05:
-		port = 0x134;
-		break;
-	default:
-		return (1);
-	}
-
-	*portp = port;
-	return (0);
-}
 
 /*
  * Check the slots looking for a board we recognise
@@ -109,36 +69,29 @@ bha_eisa_address(iot, ioh, portp)
  * the actual probe routine to check it out.
  */
 int
-bha_eisa_match(parent, match, aux)
+bha_pci_match(parent, match, aux)
 	struct device *parent;
-	void *aux, *match;
+	void *match, *aux;
 {
-	struct eisa_attach_args *ea = aux;
-	bus_space_tag_t iot = ea->ea_iot;
-	bus_space_handle_t ioh, ioh2;
-	int port;
+	struct pci_attach_args *pa = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_size_t iosize;
 	int rv;
 
-	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "BUS4201") &&
-	    strcmp(ea->ea_idstring, "BUS4202"))
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BUSLOGIC)
 		return (0);
 
-	if (bus_space_map(iot,
-	    EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE,
-	    0, &ioh))
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		return (0);
 
-	if (bha_eisa_address(iot, ioh, &port) ||
-	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
-		bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	    NULL, &iosize, 0))
 		return (0);
-	}
 
-	rv = bha_find(iot, ioh2, NULL);
-
-	bus_space_unmap(iot, ioh2, BHA_ISA_IOSIZE);
-	bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
+	rv = bha_find(iot, ioh, NULL);
+	bus_space_unmap(iot, ioh, iosize);
 
 	return (rv);
 }
@@ -147,65 +100,68 @@ bha_eisa_match(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-bha_eisa_attach(parent, self, aux)
+bha_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct eisa_attach_args *ea = aux;
+	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;
-	bus_space_tag_t iot = ea->ea_iot;
-	bus_space_handle_t ioh, ioh2;
-	int port;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_size_t iosize;
 	struct bha_probe_data bpd;
-	eisa_chipset_tag_t ec = ea->ea_ec;
-	eisa_intr_handle_t ih;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	pcireg_t csr;
 	const char *model, *intrstr;
 
-	if (!strcmp(ea->ea_idstring, "BUS4201"))
-		model = EISA_PRODUCT_BUS4201;
-	else if (!strcmp(ea->ea_idstring, "BUS4202"))
-		model = EISA_PRODUCT_BUS4202;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC)
+		model = "BusLogic 9xxC SCSI";
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
+		model = "BusLogic 9xxC SCSI";
 	else
 		model = "unknown model!";
 
-	if (bus_space_map(iot,
-	    EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE,
-	    0, &ioh)) {
-		printf(": could not map EISA slot\n");
-		return;
-	}
-
-	if (bha_eisa_address(iot, ioh, &port) ||
-	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
-		printf(": could not map ISA address\n");
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+	    NULL, &iosize, 0)) {
+		printf(": unable to map I/O space\n");
 		return;
 	}
 
 	sc->sc_iot = iot;
-	sc->sc_ioh = ioh2;
-	sc->sc_dmat = ea->ea_dmat;
-	if (!bha_find(iot, ioh2, &bpd)) {
+	sc->sc_ioh = ioh;
+	sc->sc_dmat = pa->pa_dmat;
+	if (!bha_find(iot, ioh, &bpd)) {
 		printf(": bha_find failed\n");
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 
 	sc->sc_dmaflags = 0;
 
-	if (eisa_intr_map(ec, bpd.sc_irq, &ih)) {
-		printf(": couldn't map interrupt (%d)\n", bpd.sc_irq);
+	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
+
+	if (pci_intr_map(pa, &ih)) {
+		printf(": couldn't map interrupt\n");
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
-	intrstr = eisa_intr_string(ec, ih);
-	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
-	    bha_intr, sc, sc->sc_dev.dv_xname);
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, bha_intr, sc,
+	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	printf(": %s, %s\n", intrstr, model);
 
 	bha_attach(sc, &bpd);
+
+	bha_disable_isacompat(sc);
 }

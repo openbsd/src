@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.41 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: aha.c,v 1.42 2002/01/24 22:38:03 mickey Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -193,7 +193,7 @@ struct cfdriver aha_cd = {
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
-#include "bt.h"
+#include "bha.h"
 
 /*
  * aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
@@ -348,7 +348,7 @@ ahaprobe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct isa_attach_args *ia = aux;
-#if NBT > 0
+#if NBHA > 0
 	extern int btports[], nbtports;
 	int i;
 
