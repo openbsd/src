@@ -2951,6 +2951,7 @@
 ./usr/share/man/cat3/com_err.0
 ./usr/share/man/cat3/compress.0
 ./usr/share/man/cat3/compress2.0
+./usr/share/man/cat3/compressBound.0
 ./usr/share/man/cat3/confstr.0
 ./usr/share/man/cat3/copysign.0
 ./usr/share/man/cat3/copysignf.0
@@ -3045,11 +3046,13 @@
 ./usr/share/man/cat3/default_colors.0
 ./usr/share/man/cat3/define_key.0
 ./usr/share/man/cat3/deflate.0
+./usr/share/man/cat3/deflateBound.0
 ./usr/share/man/cat3/deflateCopy.0
 ./usr/share/man/cat3/deflateEnd.0
 ./usr/share/man/cat3/deflateInit.0
 ./usr/share/man/cat3/deflateInit2.0
 ./usr/share/man/cat3/deflateParams.0
+./usr/share/man/cat3/deflatePrime.0
 ./usr/share/man/cat3/deflateReset.0
 ./usr/share/man/cat3/deflateSetDictionary.0
 ./usr/share/man/cat3/del_curterm.0
@@ -3414,6 +3417,7 @@
 ./usr/share/man/cat3/gmtime_r.0
 ./usr/share/man/cat3/group_from_gid.0
 ./usr/share/man/cat3/gtty.0
+./usr/share/man/cat3/gzclearerr.0
 ./usr/share/man/cat3/gzclose.0
 ./usr/share/man/cat3/gzdopen.0
 ./usr/share/man/cat3/gzeof.0
@@ -3430,6 +3434,7 @@
 ./usr/share/man/cat3/gzseek.0
 ./usr/share/man/cat3/gzsetparams.0
 ./usr/share/man/cat3/gztell.0
+./usr/share/man/cat3/gzungetc.0
 ./usr/share/man/cat3/gzwrite.0
 ./usr/share/man/cat3/halfdelay.0
 ./usr/share/man/cat3/has_colors.0
@@ -3526,6 +3531,10 @@
 ./usr/share/man/cat3/inet_ntop.0
 ./usr/share/man/cat3/inet_pton.0
 ./usr/share/man/cat3/inflate.0
+./usr/share/man/cat3/inflateBack.0
+./usr/share/man/cat3/inflateBackEnd.0
+./usr/share/man/cat3/inflateBackInit.0
+./usr/share/man/cat3/inflateCopy.0
 ./usr/share/man/cat3/inflateEnd.0
 ./usr/share/man/cat3/inflateInit.0
 ./usr/share/man/cat3/inflateInit2.0
@@ -4769,6 +4778,7 @@
 ./usr/share/man/cat3/ypclnt.0
 ./usr/share/man/cat3/yperr_string.0
 ./usr/share/man/cat3/ypprot_err.0
+./usr/share/man/cat3/zlibCompileFlags.0
 ./usr/share/man/cat3/zlibVersion.0
 ./usr/share/man/cat9/FREE.0
 ./usr/share/man/cat9/FREF.0
