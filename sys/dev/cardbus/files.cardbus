@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.10 2004/11/20 20:07:54 brad Exp $
+#	$OpenBSD: files.cardbus,v 1.11 2004/12/07 05:42:41 dlg Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -62,10 +62,16 @@ attach	atw at cardbus with atw_cardbus
 file	dev/cardbus/if_atw_cardbus.c		atw_cardbus
 
 #
+# EHCI USB controller
+#
+attach	ehci at cardbus with ehci_cardbus
+file	dev/cardbus/ehci_cardbus.c		ehci_cardbus needs-flag
+
+#
 # OHCI USB controller
 #
-#attach	ohci at cardbus with ohci_cardbus
-#file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
+attach	ohci at cardbus with ohci_cardbus
+file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
 
 #
 # Adaptec ADP-1480 SCSI controller
