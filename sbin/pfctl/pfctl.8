@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.92 2003/03/11 09:59:37 david Exp $
+.\" $OpenBSD: pfctl.8,v 1.93 2003/04/03 10:21:40 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -386,8 +386,7 @@ packet statistics for the whole table:
 As we can see here, only one packet - the initial ping request - matched the
 table; but all packets passing as the result of the state are correctly
 accounted for.
-Reloading the table(s) will not affect packet accounting in any way; however,
-the state accounting will stop if the rules are reloaded or flushed.
+Reloading the table(s) or ruleset will not affect packet accounting in any way.
 The two
 .Ar XPass
 counters are incremented instead of the
