@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.17 2001/02/27 09:07:54 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.18 2001/03/04 06:46:31 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1069,6 +1069,7 @@ softdep_initialize()
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
 	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
+	timeout_set(&proc_waiting_timeout, pause_timer, 0);
 }
 
 /*
@@ -4609,10 +4610,8 @@ request_cleanup(resource, islocked)
 	if (islocked == 0)
 		ACQUIRE_LOCK(&lk);
 	proc_waiting += 1;
-	if (!timeout_initialized(&proc_waiting_timeout)) {
-		timeout_set(&proc_waiting_timeout, pause_timer, 0);
+	if (!timeout_pending(&proc_waiting_timeout))
 		timeout_add(&proc_waiting_timeout, tickdelay > 2 ? tickdelay : 2);
-	}
 
 	FREE_LOCK_INTERLOCKED(&lk);
 	(void) tsleep((caddr_t)&proc_waiting, PPAUSE, "softupdate", 0);
@@ -4636,8 +4635,6 @@ pause_timer(arg)
 	wakeup_one(&proc_waiting);
 	if (proc_waiting > 0)
 		timeout_add(&proc_waiting_timeout, tickdelay > 2 ? tickdelay : 2);
-	else
-		timeout_del(&proc_waiting_timeout);
 }
 
 /*
