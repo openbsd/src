@@ -3,5 +3,5 @@
 ./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
-./usr/share/man/cat8/installboot.0
+./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/ldconfig.0
