@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2005/02/02 19:08:42 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -53,6 +53,7 @@ static const struct token t_show_iface[];
 static const struct token t_show_db[];
 static const struct token t_show_area[];
 static const struct token t_show_nbr[];
+static const struct token t_show_rib[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
@@ -66,6 +67,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"database",	SHOW_DB,	t_show_db},
 	{KEYWORD,	"neighbor",	SHOW_NBR,	t_show_nbr},
 /*	{KEYWORD,	"summary",	SHOW_SUMMARY,	NULL}, */
+	{KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -91,6 +93,12 @@ static const struct token t_show_area[] = {
 static const struct token t_show_nbr[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"detail",	SHOW_NBR_DTAIL,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_rib[] = {
+	{NOTOKEN,	"",		NONE,		NULL},
+	{KEYWORD,	"detail",	SHOW_RIB_DTAIL,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

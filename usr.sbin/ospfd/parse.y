@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2005/03/12 10:49:12 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>

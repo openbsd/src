@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2005/03/12 10:49:12 norby Exp $ */
+/*	$OpenBSD: control.c,v 1.4 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,6 +241,11 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_SHOW_NBR:
 			ospfe_nbr_ctl(c);
+			break;
+		case IMSG_CTL_SHOW_RIB:
+			c->ibuf.pid = imsg.hdr.pid;
+			ospfe_imsg_compose_rde(imsg.hdr.type, 0, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:
 			log_debug("control_dispatch_imsg: "

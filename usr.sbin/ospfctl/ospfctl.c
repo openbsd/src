@@ -1,8 +1,8 @@
-/*	$OpenBSD: ospfctl.c,v 1.5 2005/03/12 10:49:12 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.6 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
- * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
+ * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -54,6 +54,9 @@ int		 show_database_msg(struct imsg *);
 int		 show_nbr_msg(struct imsg *);
 const char	*print_ospf_options(u_int8_t);
 int		 show_nbr_detail_msg(struct imsg *);
+int		 show_rib_msg(struct imsg *);
+void		 show_rib_head(struct in_addr, u_int8_t, u_int8_t);
+int		 show_rib_detail_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
@@ -132,6 +135,12 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1,
 		    &res->addr, sizeof(res->addr));
 		break;
+	case SHOW_RIB:
+		printf("%-20s %-17s %-12s %-9s %-7s\n", "Destination",
+		    "Nexthop", "Path Type", "Type", "Cost");
+	case SHOW_RIB_DTAIL:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1, NULL, 0);
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
@@ -171,6 +180,12 @@ main(int argc, char *argv[])
 			case SHOW_DB:
 			case SHOW_DBBYAREA:
 				done = show_database_msg(&imsg);
+				break;
+			case SHOW_RIB:
+				done = show_rib_msg(&imsg);
+				break;
+			case SHOW_RIB_DTAIL:
+				done = show_rib_detail_msg(&imsg);
 				break;
 			case NONE:
 			case RELOAD:
@@ -541,6 +556,152 @@ show_nbr_detail_msg(struct imsg *imsg)
 		printf("  Link State Request List %d\n", nbr->ls_req_lst_cnt);
 		printf("  Link State Retransmission List %d\n",
 		    nbr->ls_retrans_lst_cnt);
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_rib_msg(struct imsg *imsg)
+{
+	struct ctl_rt	*rt;
+	char		*dstnet;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_RIB:
+		rt = imsg->data;
+		switch (rt->d_type) {
+		case DT_NET:
+			if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
+			    rt->prefixlen) == -1)
+				err(1, NULL);
+			break;
+		case DT_RTR:
+			if (asprintf(&dstnet, "%s",
+			    inet_ntoa(rt->prefix)) == -1)
+				err(1, NULL);
+			break;
+		default:
+			errx(1, "Invalid route type");
+		}
+
+		printf("%-20s %-17s %-12s %-9s %-7d\n", dstnet,
+		    inet_ntoa(rt->nexthop), path_type_names[rt->p_type],
+		    dst_type_names[rt->d_type], rt->cost);
+		free(dstnet);
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+void
+show_rib_head(struct in_addr aid, u_int8_t d_type, u_int8_t p_type)
+{
+	char	*header, *format;
+
+	switch (p_type) {
+	case PT_INTRA_AREA:
+	case PT_INTER_AREA:
+		switch (d_type) {
+		case DT_NET:
+			format = "Network Routing Table";
+			break;
+		case DT_RTR:
+			format = "Router Routing Table";
+			break;
+		default:
+			errx(1, "unknown route type");
+		}
+		break;
+	case PT_TYPE1_EXT:
+	case PT_TYPE2_EXT:
+		format = NULL;
+		if ((header = strdup("External Routing Table")) == NULL)
+			err(1, NULL);
+		break;
+	default:
+		errx(1, "unknown route type");
+	}
+
+	if (p_type != PT_TYPE1_EXT && p_type != PT_TYPE2_EXT)
+		if (asprintf(&header, "%s (Area %s)", format,
+		    inet_ntoa(aid)) == -1)
+			err(1, NULL);
+
+	printf("\n%-15s %s\n", "", header);
+	free(header);
+
+	printf("\n%-20s %-17s %-17s %-12s %-8s\n",
+	    "Destination", "Nexthop", "Adv Router", "Path type", "Cost");
+
+}
+
+int
+show_rib_detail_msg(struct imsg *imsg)
+{
+	static struct in_addr	 area_id;
+	struct ctl_rt		*rt;
+	struct area		*area;
+	char			*dstnet;
+	static u_int8_t		 lasttype;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_RIB:
+		rt = imsg->data;
+
+		switch (rt->p_type) {
+		case PT_INTRA_AREA:
+		case PT_INTER_AREA:
+			switch (rt->d_type) {
+			case DT_NET:
+				if (lasttype != RIB_NET)
+					show_rib_head(rt->area, rt->d_type,
+					     rt->p_type);
+				if (asprintf(&dstnet, "%s/%d",
+				    inet_ntoa(rt->prefix), rt->prefixlen) == -1)
+					err(1, NULL);
+				lasttype = RIB_NET;
+				break;
+			case DT_RTR:
+				if (lasttype != RIB_RTR)
+					show_rib_head(rt->area, rt->d_type,
+					     rt->p_type);
+				if (asprintf(&dstnet, "%s",
+				    inet_ntoa(rt->prefix)) == -1)
+					err(1, NULL);
+				lasttype = RIB_RTR;
+				break;
+			default:
+				errx(1, "unknown route type");
+			}
+			printf("%-20s %-17s ", dstnet, inet_ntoa(rt->nexthop));
+			printf("%-17s %-12s %-7d\n", inet_ntoa(rt->adv_rtr),
+			    path_type_names[rt->p_type], rt->cost);
+			free(dstnet);
+			break;
+		case PT_TYPE1_EXT:
+		case PT_TYPE2_EXT:
+			/* XXX TODO */
+			break;
+		default:
+			errx(1, "unknown route type");
+		}
+		break;
+	case IMSG_CTL_AREA:
+		area = imsg->data;
+		area_id = area->id;
 		break;
 	case IMSG_CTL_END:
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.6 2005/03/08 20:12:18 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.7 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -60,6 +60,7 @@ struct rt_node {
 	struct in_addr		 prefix;
 	struct in_addr		 nexthop;
 	struct in_addr		 area;
+	struct in_addr		 adv_rtr;
 	u_int32_t		 cost;
 	enum path_type		 p_type;
 	enum dst_type		 d_type;
@@ -117,6 +118,7 @@ struct rt_node	*rt_find(in_addr_t, u_int8_t);
 int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
+void		 rt_dump(struct in_addr, pid_t, u_int8_t);
 
 struct lsa_rtr_link	*get_rtr_link(struct vertex *, int);
 struct lsa_net_link	*get_net_link(struct vertex *, int);

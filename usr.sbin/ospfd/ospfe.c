@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.10 2005/03/12 10:49:12 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.11 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -523,6 +523,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			nbr_fsm(nbr, NBR_EVT_BAD_LS_REQ);
 			break;
 		case IMSG_CTL_SHOW_DATABASE:
+		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_AREA:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);

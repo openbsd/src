@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.13 2005/03/08 20:12:18 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.14 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -91,6 +91,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_DATABASE,
 	IMSG_CTL_SHOW_NBR,
+	IMSG_CTL_SHOW_RIB,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_AREA,
@@ -240,6 +241,12 @@ enum path_type {
 	PT_TYPE2_EXT
 };
 
+enum rib_type {
+	RIB_NET = 1,
+	RIB_RTR,
+	RIB_EXT
+};
+
 static const char * const path_type_names[] = {
 	"Intra-Area",
 	"Inter-Area",
@@ -383,6 +390,17 @@ struct ctl_nbr {
 	int			 iface_state;
 	u_int8_t		 priority;
 	u_int8_t		 options;
+};
+
+struct ctl_rt {
+	struct in_addr		 prefix;
+	struct in_addr		 nexthop;
+	struct in_addr		 area;
+	struct in_addr		 adv_rtr;
+	u_int32_t		 cost;
+	enum path_type		 p_type;
+	enum dst_type		 d_type;
+	u_int8_t		 prefixlen;
 };
 
 void		 show_config(struct ospfd_conf *xconf);

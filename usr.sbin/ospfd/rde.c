@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.8 2005/03/08 20:12:18 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.9 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -453,6 +453,19 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 						lsa_dump(&rdeconf->lsa_tree,
 						    imsg.hdr.pid);
 				}
+			}
+			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
+			    -1, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_RIB:
+			LIST_FOREACH(area, &rdeconf->area_list, entry) {
+				imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
+				    0, imsg.hdr.pid, -1, area,
+				    sizeof(*area));
+
+				rt_dump(area->id, imsg.hdr.pid, RIB_RTR);
+				rt_dump(area->id, imsg.hdr.pid, RIB_NET);
+				rt_dump(area->id, imsg.hdr.pid, RIB_EXT);
 			}
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    -1, NULL, 0);

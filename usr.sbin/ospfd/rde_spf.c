@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.4 2005/03/12 10:49:12 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.5 2005/03/12 11:03:05 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -35,15 +35,15 @@ RB_PROTOTYPE(rt_tree, rt_node, entry, rt_compare)
 RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
-void	 spf_dump(struct area *);	/* XXX */
-void	 rt_dump(void);			/* XXX */
-void	 cand_list_dump(void);		/* XXX */
-void	 calc_next_hop(struct vertex *, struct vertex *);
-void	 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
-	     struct in_addr, u_int8_t, u_int8_t);
-void	 rt_invalidate(void);
-bool	 linked(struct vertex *, struct vertex *);
-u_int8_t mask2prefixlen(in_addr_t);
+void		 spf_dump(struct area *);	/* XXX */
+void		 rt_dump_debug(void);		/* XXX */
+void		 cand_list_dump(void);		/* XXX */
+void		 calc_next_hop(struct vertex *, struct vertex *);
+void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
+		     struct in_addr, struct in_addr, u_int8_t, u_int8_t);
+void		 rt_invalidate(void);
+bool		 linked(struct vertex *, struct vertex *);
+u_int8_t	 mask2prefixlen(in_addr_t);
 
 void
 spf_dump(struct area *area)
@@ -77,12 +77,12 @@ spf_dump(struct area *area)
 }
 
 void
-rt_dump(void)
+rt_dump_debug(void)
 {
 	struct rt_node	*r;
 	int		 i = 0;
 
-	log_debug("rt_dump:");
+	log_debug("rt_dump_debug:");
 
 	RB_FOREACH(r, rt_tree, &rt) {
 		log_debug("net: %s/%d", inet_ntoa(r->prefix), r->prefixlen);
@@ -105,7 +105,7 @@ spf_calc(struct area *area)
 	struct lsa_net_link	*net_link = NULL;
 	u_int32_t		 d;
 	int			 i;
-	struct in_addr		 addr;
+	struct in_addr		 addr, adv_rtr;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -235,12 +235,20 @@ spf_calc(struct area *area)
 					continue;
 
 				addr.s_addr = rtr_link->id;
+				adv_rtr.s_addr = htonl(v->adv_rtr);
 
 				rt_update(addr, mask2prefixlen(rtr_link->data),
 				    v->nexthop, v->cost +
-				    ntohs(rtr_link->metric), area->id,
+				    ntohs(rtr_link->metric), area->id, adv_rtr,
 				    PT_INTRA_AREA, DT_NET);
 			}
+
+			/* routers */
+			addr.s_addr = htonl(v->ls_id);
+			adv_rtr.s_addr = htonl(v->adv_rtr);
+
+			rt_update(addr, 0, v->nexthop, v->cost, area->id,
+			    adv_rtr, PT_INTRA_AREA, DT_RTR);
 			break;
 		case LSA_TYPE_NETWORK:
 			if ((v->cost == LS_INFINITY) ||
@@ -248,9 +256,10 @@ spf_calc(struct area *area)
 				continue;
 
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
+			adv_rtr.s_addr = htonl(v->adv_rtr);
 			rt_update(addr, mask2prefixlen(v->lsa->data.net.mask),
-			    v->nexthop, v->cost, area->id, PT_INTRA_AREA,
-			    DT_NET);
+			    v->nexthop, v->cost, area->id, adv_rtr,
+			    PT_INTRA_AREA, DT_NET);
 			break;
 		case LSA_TYPE_SUM_NETWORK:
 			if (rdeconf->flags & OSPF_RTR_B)
@@ -269,9 +278,10 @@ spf_calc(struct area *area)
 				continue;
 
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.sum.mask;
+			adv_rtr.s_addr = htonl(v->adv_rtr);
 			rt_update(addr, mask2prefixlen(v->lsa->data.sum.mask),
-			    v->nexthop, v->cost, area->id, PT_INTER_AREA,
-			    DT_NET);
+			    v->nexthop, v->cost, area->id, adv_rtr,
+			    PT_INTER_AREA, DT_NET);
 			break;
 		case LSA_TYPE_SUM_ROUTER:
 			/* XXX */
@@ -285,7 +295,7 @@ spf_calc(struct area *area)
 	}
 
 	spf_dump(area);
-	rt_dump();
+	rt_dump_debug();
 	log_debug("spf_calc: calculation ended, area ID %s",
 	    inet_ntoa(area->id));
 
@@ -477,6 +487,9 @@ spf_timer(int fd, short event, void *arg)
 		}
 
 		RB_FOREACH(r, rt_tree, &rt) {
+			if (r->d_type != DT_NET)
+				continue;
+
 			if (r->invalid)
 				rde_send_delete_kroute(r);
 			else
@@ -516,6 +529,7 @@ start_spf_timer(struct ospfd_conf *conf)
 		conf->spf_state = SPF_HOLDQUEUE;
 		break;
 	case SPF_HOLDQUEUE:
+		/* ignore */
 		break;
 	default:
 		fatalx("start_spf_timer: invalid spf_state");
@@ -633,8 +647,52 @@ rt_clear(void)
 }
 
 void
+rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
+{
+	static struct ctl_rt	 rtctl;
+	struct rt_node		*r;
+
+	RB_FOREACH(r, rt_tree, &rt) {
+		if (r->area.s_addr != area.s_addr)
+			continue;
+
+		switch (r_type) {
+		case RIB_RTR:
+			if (r->d_type != DT_RTR)
+				continue;
+			break;
+		case RIB_NET:
+			if (r->d_type != DT_NET)
+				continue;
+			break;
+		case RIB_EXT:
+			if (r->p_type != PT_TYPE1_EXT ||
+			    r->p_type != PT_TYPE2_EXT)
+				continue;
+			break;
+		default:
+			fatalx("rt_dump: invalid RIB type");
+		}
+
+		rtctl.prefix.s_addr = r->prefix.s_addr;
+		rtctl.nexthop.s_addr = r->nexthop.s_addr;
+		rtctl.area.s_addr = r->area.s_addr;
+		rtctl.adv_rtr.s_addr = r->adv_rtr.s_addr;
+		rtctl.cost = r->cost;
+		rtctl.p_type = r->p_type;
+		rtctl.d_type = r->d_type;
+		rtctl.prefixlen = r->prefixlen;
+
+		rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid, &rtctl,
+		    sizeof(rtctl));
+	}
+}
+
+
+void
 rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
-     u_int32_t cost, struct in_addr area, u_int8_t p_type, u_int8_t d_type)
+     u_int32_t cost, struct in_addr area, struct in_addr adv_rtr,
+     u_int8_t p_type, u_int8_t d_type)
 {
 	struct rt_node	*rte;
 
@@ -649,6 +707,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		rte->prefix.s_addr = prefix.s_addr;
 		rte->prefixlen = prefixlen;
 		rte->nexthop.s_addr = nexthop.s_addr;
+		rte->adv_rtr.s_addr = adv_rtr.s_addr;
 		rte->cost = cost;
 		rte->area = area;
 		rte->p_type = p_type;
@@ -663,6 +722,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		if (rte->invalid) {
 			/* invalidated entry - just update */
 			rte->nexthop.s_addr = nexthop.s_addr;
+			rte->adv_rtr.s_addr = adv_rtr.s_addr;
 			rte->cost = cost;
 			rte->area = area;
 			rte->p_type = p_type;
@@ -672,6 +732,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 			/* consider intra vs. inter */
 			if (cost < rte->cost) {
 				rte->nexthop.s_addr = nexthop.s_addr;
+				rte->adv_rtr.s_addr = adv_rtr.s_addr;
 				rte->cost = cost;
 				rte->area = area;
 				rte->p_type = p_type;
