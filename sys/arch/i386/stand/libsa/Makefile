@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.12 1997/04/30 18:10:08 mickey Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/06/23 23:45:17 kstailey Exp $
 
 
 LIB=	sa
 
 S=${.CURDIR}/../../../..
+SADIR=${.CURDIR}/..
 DIR_SA=	$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
