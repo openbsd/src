@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.7 1997/09/11 05:26:14 millert Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.8 1998/08/30 13:42:14 pefo Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -157,9 +157,13 @@ procfs_rwmem(p, uio)
 		 */
 		if (!error && writing && object->shadow) {
 			m = vm_page_lookup(object, off);
-			if (m == 0 || (m->flags & PG_COPYONWRITE))
+			if (m == 0 || (m->flags & PG_COPYONWRITE)) {
+#ifdef __i386__
+				pmap_prefault(map, uva, 4);
+#endif
 				error = vm_fault(map, pageno,
 							VM_PROT_WRITE, FALSE);
+				}
 		}
 
 		/* Find space in kernel_map for the page we're interested in */
