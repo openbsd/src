@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.82 2004/01/29 12:47:18 tdeval Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.83 2004/01/29 13:46:25 tdeval Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ scsibusattach(parent, self, aux)
 	if (cold)
 		delay(1000000 * SCSI_DELAY);
 	else
-		tsleep(sb, curproc->p_priority, NULL, SCSI_DELAY * hz);
+		tsleep(sb, PRIBIO, NULL, SCSI_DELAY * hz);
 
 	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
 }
