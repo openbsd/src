@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_unix.c,v 1.14 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_unix.c,v 1.13 2000/06/27 17:29:36 mrg Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.15 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.17 2000/09/07 05:01:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,8 +77,8 @@ sys_obreak(p, v, retval)
 	} */ *uap = v;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
+	ssize_t diff;
 	int rv;
-	long diff;
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
@@ -197,12 +197,13 @@ uvm_coredump(p, vp, cred, chdr)
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
 	vm_map_entry_t entry;
-	vaddr_t start, end;
+	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
@@ -253,7 +254,7 @@ uvm_coredump(p, vp, cred, chdr)
 
 		offset += chdr->c_seghdrsize;
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
+		    (caddr_t)(u_long)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)

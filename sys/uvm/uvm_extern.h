@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.26 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.45 2000/06/27 16:16:43 mrg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.27 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.48 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /*
  *
@@ -173,17 +173,6 @@ typedef int		vm_prot_t;
  */
 
 #define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
-
-/*
- *	Enumeration of valid values for vm_inherit_t.
- */
-
-#define	VM_INHERIT_SHARE	((vm_inherit_t)0)	/* share with child */
-#define	VM_INHERIT_COPY		((vm_inherit_t)1)	/* copy into child */
-#define	VM_INHERIT_NONE		((vm_inherit_t)2)	/* absent from child */
-#define	VM_INHERIT_DONATE_COPY	((vm_inherit_t)3)	/* copy and delete */
-
-#define VM_INHERIT_DEFAULT	VM_INHERIT_COPY
 
 /* advice: matches MADV_* from sys/mman.h */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
@@ -496,6 +485,8 @@ struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
+vaddr_t			uvm_km_valloc_prefer_wait __P((vm_map_t, vsize_t,
+					voff_t));
 vaddr_t			uvm_km_alloc_poolpage1 __P((vm_map_t,
 				struct uvm_object *, boolean_t));
 void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
@@ -552,7 +543,7 @@ void			uvm_page_physload __P((paddr_t, paddr_t,
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */
-void			uvm_pageout __P((void));
+void			uvm_pageout __P((void *));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,

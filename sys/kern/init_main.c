@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.79 2001/10/11 08:07:12 gluk Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.80 2001/11/06 13:36:52 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ struct	timeval runtime;
 int	main __P((void *));
 void	check_console __P((struct proc *));
 void	start_init __P((void *));
-void	start_pagedaemon __P((void *));
 void	start_cleaner __P((void *));
 void	start_update __P((void *));
 void	start_reaper __P((void *));
@@ -407,7 +406,7 @@ main(framep)
 	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
-	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	if (kthread_create(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
 	/* Create process 3, the reaper daemon kernel thread. */
@@ -601,14 +600,6 @@ start_init(arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
-}
-
-void
-start_pagedaemon(arg)
-	void *arg;
-{
-	uvm_pageout();
-	/* NOTREACHED */
 }
 
 void

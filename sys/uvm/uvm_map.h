@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.11 2001/11/06 00:27:01 art Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.19 2000/06/26 17:18:40 mrg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.12 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.21 2000/08/16 16:32:06 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -240,7 +240,6 @@ struct vm_map {
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 
 /* XXX: number of kernel maps and entries to statically allocate */
-#define MAX_KMAP	10
 
 #if !defined(MAX_KMAPENT)
 #if (50 + (2 * NPROC) > 1000)
@@ -425,11 +424,9 @@ vm_map_lock(map)
 
  try_again:
 	simple_lock(&map->flags_lock);
-	if (map->flags & VM_MAP_BUSY) {
+	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		simple_unlock(&map->flags_lock);
-		(void) tsleep(&map->flags, PVM, "vmmapbsy", 0);
-		goto try_again;
+		ltsleep(&map->flags, PVM, "vmmapbsy", 0, &map->flags_lock);
 	}
 
 	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,

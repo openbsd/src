@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.15 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.21 2000/06/27 17:29:33 mrg Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.16 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -170,6 +170,10 @@ uvmpd_tune()
 	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
 	uvmexp.freemin = min(uvmexp.freemin, (512*1024) >> PAGE_SHIFT);
 
+	/* Make sure there's always a user page free. */
+	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
+		uvmexp.freemin = uvmexp.reserve_kernel + 1;
+
 	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
 	if (uvmexp.freetarg <= uvmexp.freemin)
 		uvmexp.freetarg = uvmexp.freemin + 1;
@@ -186,7 +190,7 @@ uvmpd_tune()
  */
 
 void
-uvm_pageout()
+uvm_pageout(void *arg)
 {
 	int npages = 0;
 	int s;

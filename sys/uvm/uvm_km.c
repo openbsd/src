@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.17 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.37 2000/06/27 17:29:24 mrg Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.18 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.38 2000/07/24 20:10:53 jeffs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -805,12 +805,13 @@ uvm_km_valloc(map, size)
  */
 
 vaddr_t
-uvm_km_valloc_wait(map, size)
+uvm_km_valloc_prefer_wait(map, size, prefer)
 	vm_map_t map;
 	vsize_t size;
+	voff_t prefer;
 {
 	vaddr_t kva;
-	UVMHIST_FUNC("uvm_km_valloc_wait"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_km_valloc_prefer_wait"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x)", map, size, 0,0);
 
@@ -832,7 +833,7 @@ uvm_km_valloc_wait(map, size)
 		 */
 
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
-		    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL,
+		    prefer, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0))
 		    == KERN_SUCCESS)) {
 			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
@@ -847,6 +848,14 @@ uvm_km_valloc_wait(map, size)
 		tsleep((caddr_t)map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/
+}
+
+vaddr_t
+uvm_km_valloc_wait(map, size)
+	vm_map_t map;
+	vsize_t size;
+{
+	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
 
 /* Sanity; must specify both or none. */

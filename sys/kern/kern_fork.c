@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.44 2001/10/14 14:39:03 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.45 2001/11/06 13:36:52 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/sched.h>
 #include <dev/rndvar.h>
 #include <sys/pool.h>
+#include <sys/mman.h>
 
 #include <sys/syscallargs.h>
 
@@ -349,7 +350,7 @@ again:
 		/* share as much address space as possible */
 		(void) uvm_map_inherit(&p1->p_vmspace->vm_map,
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
-		    VM_INHERIT_SHARE);
+		    MAP_INHERIT_SHARE);
 	}
 
 	p2->p_addr = (struct user *)uaddr;

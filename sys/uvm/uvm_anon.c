@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.12 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.7 2000/06/27 17:29:18 mrg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.13 2001/11/06 13:36:52 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.9 2000/08/06 00:21:57 thorpej Exp $	*/
 
 /*
  *
@@ -478,10 +478,13 @@ anon_pagein(anon)
 	struct uvm_object *uobj;
 	int rv;
 	UVMHIST_FUNC("anon_pagein"); UVMHIST_CALLED(pdhist);
-	
+
 	/* locked: anon */
 	rv = uvmfault_anonget(NULL, NULL, anon);
-	/* unlocked: anon */
+	/*
+	 * if rv == VM_PAGER_OK, anon is still locked, else anon
+	 * is unlocked
+	 */
 
 	switch (rv) {
 	case VM_PAGER_OK:
@@ -498,9 +501,11 @@ anon_pagein(anon)
 
 		return FALSE;
 
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("anon_pagein: uvmfault_anonget -> %d", rv);
+#else
+		return FALSE;
 #endif
 	}
 
