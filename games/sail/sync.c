@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.6 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: sync.c,v 1.7 2003/07/06 02:03:13 avsm Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: sync.c,v 1.6 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: sync.c,v 1.7 2003/07/06 02:03:13 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -393,9 +393,8 @@ sync_update(type, ship, astr, a, b, c, d)
 		break;
 		}
 	case W_CAPTAIN:
-		(void) strncpy(ship->file->captain, astr,
-			sizeof ship->file->captain - 1);
-		ship->file->captain[sizeof ship->file->captain - 1] = 0;
+		(void) strlcpy(ship->file->captain, astr,
+			sizeof ship->file->captain);
 		break;
 	case W_CAPTURED:
 		if (a < 0)
@@ -432,9 +431,8 @@ sync_update(type, ship, astr, a, b, c, d)
 		ship->specs->hull = a;
 		break;
 	case W_MOVE:
-		(void) strncpy(ship->file->movebuf, astr,
-			sizeof ship->file->movebuf - 1);
-		ship->file->movebuf[sizeof ship->file->movebuf - 1] = 0;
+		(void) strlcpy(ship->file->movebuf, astr,
+			sizeof ship->file->movebuf);
 		break;
 	case W_PCREW:
 		ship->file->pcrew = a;

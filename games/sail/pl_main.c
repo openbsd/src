@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.9 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.10 2003/07/06 02:03:13 avsm Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.9 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.10 2003/07/06 02:03:13 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ reprint:
 		ms->shipname, mc->guns, classname[mc->class],
 		qualname[mc->qual]);
 	if ((nameptr = (char *) getenv("SAILNAME")) && *nameptr)
-		(void) strncpy(captain, nameptr, sizeof captain);
+		(void) strlcpy(captain, nameptr, sizeof captain);
 	else {
 		(void) printf("Your name, Captain? ");
 		(void) fflush(stdout);
