@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.15 2004/07/07 01:27:06 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.16 2004/07/07 16:55:08 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ struct cfdriver ehci_cd = {
 #endif
 
 #ifdef EHCI_DEBUG
-#define DPRINTF(x)	if (ehcidebug) printf x
-#define DPRINTFN(n,x)	if (ehcidebug>(n)) printf x
+#define DPRINTF(x)	do { if (ehcidebug) printf x; } while(0)
+#define DPRINTFN(n,x)	do { if (ehcidebug>(n)) printf x; } while (0)
 int ehcidebug = 0;
 #ifndef __NetBSD__
 #define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
