@@ -112,6 +112,7 @@
 ./usr/include/hp300/ansi.h
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/autoconf.h
+./usr/include/hp300/bus.h
 ./usr/include/hp300/cdefs.h
 ./usr/include/hp300/cpu.h
 ./usr/include/hp300/db_machdep.h
@@ -120,6 +121,7 @@
 ./usr/include/hp300/exec.h
 ./usr/include/hp300/float.h
 ./usr/include/hp300/frame.h
+./usr/include/hp300/hil_machdep.h
 ./usr/include/hp300/hp300spu.h
 ./usr/include/hp300/hpux_machdep.h
 ./usr/include/hp300/ieee.h

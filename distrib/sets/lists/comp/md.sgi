@@ -183,6 +183,7 @@
 ./usr/include/mips64/reg.h
 ./usr/include/mips64/regdef.h
 ./usr/include/mips64/regnum.h
+./usr/include/mips64/rm7000.h
 ./usr/include/mips64/setjmp.h
 ./usr/include/mips64/signal.h
 ./usr/include/mips64/spinlock.h
@@ -229,7 +230,6 @@
 ./usr/include/sgi/reg.h
 ./usr/include/sgi/regdef.h
 ./usr/include/sgi/regnum.h
-./usr/include/sgi/rm7000.h
 ./usr/include/sgi/setjmp.h
 ./usr/include/sgi/signal.h
 ./usr/include/sgi/spinlock.h
