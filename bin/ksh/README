@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.9 1999/07/14 13:37:23 millert Exp $
+$OpenBSD: README,v 1.10 2003/03/10 03:48:16 david Exp $
 
 Last updated Jul '99 for pdksh-5.2.14.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
@@ -147,7 +147,7 @@ The following is a list of machines that pdksh is reported to work on:
     -/PC Interactive/Sunsoft 3.0.1 and 4.1 (note that problems have been
 	    reported with isc3.2 - see the BUG-REPORTS file)
     -/PC OS/2
-    Commadore/Amiga NetBSD 1.0
+    Commodore/Amiga NetBSD 1.0
     Dec/alpha OSF/1 v2.x, v3.x
     Dec/alpha NetBSD 1.1B
     Dec/pmax Ultrix 4.2

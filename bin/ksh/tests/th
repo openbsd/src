@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-#	$OpenBSD: th,v 1.8 2001/01/28 23:04:56 niklas Exp $
+#	$OpenBSD: th,v 1.9 2003/03/10 03:48:16 david Exp $
 
 
 #
@@ -124,7 +124,7 @@
 #			- empty: the initial blank line is stripped.
 #			- a lone !: the last newline in the value is stripped;
 #	M	value can be multiple lines (prefixed by a tab) and consists
-#		of multiple fields, delimited by a field seperator character.
+#		of multiple fields, delimited by a field separator character.
 #		The value must start and end with the f-s-c.
 #	p	tag takes parameters (used with m).
 #	s	tag can be used several times.

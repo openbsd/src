@@ -210,7 +210,7 @@ Tue Jan 12 12:28:41 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
 	* sh.h: OS2: changed EXECSHELL, EXECSHELL_STR.
 	* jobs.c(exchild): set XINTACT.
 	* os2/config.h: added HAVE_TERMIOS_H.
-	* os2/configure.cmd: changed test for existance of sed & gcc.
+	* os2/configure.cmd: changed test for existence of sed & gcc.
 
 	Fixes from Ilya Zakharevich.
 
@@ -527,7 +527,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.13 2003/02/28 09:45:09 jmc Exp $
+$OpenBSD: ChangeLog,v 1.14 2003/03/10 03:48:16 david Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

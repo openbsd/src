@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.11 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: eval.c,v 1.12 2003/03/10 03:48:16 david Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -957,7 +957,7 @@ glob(cp, wp, markdirs)
 }
 
 #define GF_NONE		0
-#define GF_EXCHECK	BIT(0)		/* do existance check on file */
+#define GF_EXCHECK	BIT(0)		/* do existence check on file */
 #define GF_GLOBBED	BIT(1)		/* some globbing has been done */
 #define GF_MARKDIR	BIT(2)		/* add trailing / to directories */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.11 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: io.c,v 1.12 2003/03/10 03:48:16 david Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -452,7 +452,7 @@ coproc_write_close(fd)
 	}
 }
 
-/* Called to check for existance of/value of the co-process file descriptor.
+/* Called to check for existence of/value of the co-process file descriptor.
  * (Used by check_fd() and by c_read/c_print to deal with -p option).
  */
 int
