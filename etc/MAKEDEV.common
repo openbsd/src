@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.4 2004/03/12 04:54:04 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.5 2004/03/12 18:25:15 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -204,7 +204,6 @@ _mkdev(st, st*, {-n=Mult($U, 16)
 		M ${pre}rst$U	c major_st_c $n 660 operator
 		n=Add($n, 1)
 	done-})dnl
-__devitem(ct, ct*, HP300 HP-IB cartridge tape drives)dnl
 __devitem(mt, mt*, (Magnetic) 9-track reel tape drives)dnl
 __devitem(ht, ht*, MASSBUS TM03 and TU?? devices)dnl
 __devitem(tm, tm*, UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11))dnl
