@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.8 1997/10/01 15:31:03 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.9 1998/02/16 07:54:29 deraadt Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.8 1997/10/01 15:31:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.9 1998/02/16 07:54:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,11 +133,11 @@ main(argc, argv)
 	if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
 		argv++;
 		argc--;
-		goal_length = number;
+		goal_length = abs(number);
 		if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
 			argv++;
 			argc--;
-			max_length = number;
+			max_length = abs(number);
 		}
 	}
 	if (max_length <= goal_length)
