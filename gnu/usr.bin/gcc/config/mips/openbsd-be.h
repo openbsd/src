@@ -278,7 +278,7 @@ do {									 \
       }									\
   } while (0)
 
-/* Since gas and gld are standard on NetBSD, we don't need these */
+/* Since gas and gld are standard on OpenBSD, we don't need these */
 #undef ASM_FINAL_SPEC
 #undef STARTFILE_SPEC
 
