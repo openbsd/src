@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.10 1999/08/26 22:30:58 niklas Exp $	*/
-/*	$EOM: init.c,v 1.18 1999/08/26 11:21:49 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2000/01/26 15:21:08 niklas Exp $	*/
+/*	$EOM: init.c,v 1.19 1999/10/10 22:48:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -70,6 +70,9 @@ init ()
   ipsec_init ();
   isakmp_doi_init ();
   libcrypto_init ();
+
+  tzset ();
+
   timer_init ();
 
   /* The following group are depending on timer_init having run.  */

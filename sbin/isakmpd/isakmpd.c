@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.15 1999/10/01 14:09:20 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.38 1999/09/20 19:57:50 angelos Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.16 2000/01/26 15:21:08 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.39 1999/10/10 22:48:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -176,6 +176,9 @@ reinit (void)
 
   /* Reread config file. */
   conf_reinit ();
+
+  /* Set timezone */
+  tzset ();
 
 #if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
   /* Reread the policies. */
