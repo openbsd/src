@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.8 2000/04/11 16:28:49 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.9 2000/04/18 21:37:29 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -168,8 +168,12 @@ va_dcl
 	else
 	    m->m_flags |= M_BCAST;
     }
+
     if (m->m_flags & (M_BCAST|M_MCAST))
 	m->m_pkthdr.rcvif->if_imcasts++;
+
+    /* Trim the beginning of the mbuf, to remove the ethernet header */
+    m_adj(m, sizeof(struct ether_header));
 
 #if NBRIDGE > 0
     /*
