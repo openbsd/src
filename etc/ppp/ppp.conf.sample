@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.17 2000/03/26 18:35:05 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.18 2000/08/17 14:37:53 brian Exp $
 #
 #################################################################
 
@@ -507,6 +507,7 @@ mloop:
  load loop
  set mode interactive
  set mrru 1500
+ set mru 1504			# Room for the MP header
  clone 1 2 3
  link deflink remove
  # dial
@@ -518,3 +519,4 @@ mloop-in:
  set log tun phase
  allow mode direct
  set mrru 1500
+ set mru 1504			# Room for the MP header
