@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.278 2002/11/29 00:24:58 krw Exp $
+#	$OpenBSD: install.sub,v 1.279 2002/12/01 16:51:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -571,6 +571,7 @@ send host-name "$HOSTNAME";
 request subnet-mask, broadcast-address, routers,
 	domain-name, domain-name-servers, host-name;
 __EOT
+		kill_dhclient
 		dhclient -1 ${_if_name}
 
 		set -- `ifconfig $_if_name | sed -n '
@@ -592,6 +593,7 @@ initial-interval 1;
 request subnet-mask, broadcast-address, routers,
 	domain-name, domain-name-servers, host-name;
 __EOT
+			kill_dhclient
 			dhclient -1 ${_if_name}
 			set -- `ifconfig $_if_name | sed -n '
 				1s/.*<UP,.*$/UP/p
@@ -711,6 +713,7 @@ enable_network() {
 				[ "$mask" = "NONE" ] && mask=
 				[ "$bcaddr" = "NONE" ] && bcaddr=
 				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
+				kill_dhclient
 				cmd="dhclient $if"
 				;;
 			"up")
@@ -1603,26 +1606,12 @@ __EOT
 	done < /etc/fstab
 }
 
-# Script is exiting. Clean up as much as possible.
-cleanup_on_exit() {
-	echo "\nCleaning up..."
-
-	# Kill any running dhclient, so a restart will not
-	# find /dev/bpf0 busy.
-
-	if [ -f /var/run/dhclient.pid ]; then
-		echo "Stopping dhclient"
-		kill -HUP `sed -ne "1p" /var/run/dhclient.pid` > /dev/null 2>&1
+# Try to kill a running dhclient.
+kill_dhclient () {
+	if [[ -f /var/run/dhclient.pid ]]; then
+		kill -HUP $(sed -ne "1p" /var/run/dhclient.pid) > /dev/null 2>&1
 		rm -f /var/run/dhclient.pid
 	fi
-
-	if [ -f /etc/fstab ]; then
-		umount -av
-	elif [ ! "`df /`" = "`df /mnt`" ]; then
-		umount -v /mnt
-	fi
-
-	echo "Done."
 }
 
 # Remount all filesystems in /etc/fstab with the options from
@@ -1844,10 +1833,6 @@ finish_up() {
 
 	[ -x /mnt/${MODE}.site ] && /mnt/usr/sbin/chroot /mnt /${MODE}.site
 
-	# Disable trap(s) that do cleanup on exit. With success comes a
-	# reboot which washes away all sins.
-	trap - HUP INT QUIT TERM EXIT
-
 	# Pat on the back.
 	cat << __EOT
 
@@ -1916,9 +1901,9 @@ if [ -z "$EDITOR" ] ; then
 	export EDITOR
 fi
 
-# Cleanup if the script exit prematurely.
-trap 'cleanup_on_exit' EXIT
-trap 'exit 2' HUP INT QUIT TERM
+# umount all filesystems, just in case we are re-running install or upgrade. 
+[[ -f /etc/fstab ]] && umount -av 1>/dev/null 2>&1
+umount -v /mnt 1>/dev/null 2>&1
 
 # Introduce ourselves.
 welcome
