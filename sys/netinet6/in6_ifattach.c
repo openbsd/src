@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.25 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.26 2002/06/07 04:34:45 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -254,8 +254,7 @@ get_ifid(ifp0, altifp, in6)
 
 	/* first, try to get it from the interface itself */
 	if (get_hw_ifid(ifp0, in6) == 0) {
-		nd6log((LOG_DEBUG,
-		    "%s: got interface identifier from itself\n",
+		nd6log((LOG_DEBUG, "%s: got interface identifier from itself\n",
 		    ifp0->if_xname));
 		goto success;
 	}
@@ -299,13 +298,10 @@ get_ifid(ifp0, altifp, in6)
 	return -1;
 
 success:
-	nd6log((LOG_INFO, "%s: ifid: "
-		"%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
-		ifp0->if_xname,
-		in6->s6_addr[8], in6->s6_addr[9],
-		in6->s6_addr[10], in6->s6_addr[11],
-		in6->s6_addr[12], in6->s6_addr[13],
-		in6->s6_addr[14], in6->s6_addr[15]));
+	nd6log((LOG_INFO, "%s: ifid: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
+	    ifp0->if_xname, in6->s6_addr[8], in6->s6_addr[9], in6->s6_addr[10],
+	    in6->s6_addr[11], in6->s6_addr[12], in6->s6_addr[13],
+	    in6->s6_addr[14], in6->s6_addr[15]));
 	return 0;
 }
 
@@ -801,8 +797,8 @@ in6_ifdetach(ifp)
 				ia->ia_next = oia->ia_next;
 			else {
 				nd6log((LOG_ERR, 
-				    "%s: didn't unlink in6ifaddr from "
-				    "list\n", ifp->if_xname));
+				    "%s: didn't unlink in6ifaddr from list\n",
+				    ifp->if_xname));
 			}
 		}
 
