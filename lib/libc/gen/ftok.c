@@ -36,9 +36,13 @@ static char *rcsid = "$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $";
 #include <sys/ipc.h>
 
 key_t
+#if __STDC__
+ftok(const char *path, char id)
+#else
 ftok(path, id)
 	const char *path;
 	char id;
+#endif
 {
 	struct stat st;
 
