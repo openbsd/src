@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.21 2003/01/15 09:42:52 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.22 2003/01/15 10:42:48 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -268,15 +268,13 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		pfr_destroy_kentries(&workq);
 	if (nadd != NULL)
 		*nadd = xadd;
-	if (tmpkt != NULL)
-		pfr_destroy_ktable(tmpkt, 0);
+	pfr_destroy_ktable(tmpkt, 0);
 	return (0);
 _bad:
 	pfr_destroy_kentries(&workq);
 	if (flags & PFR_FLAG_FEEDBACK)
 		pfr_reset_feedback(addr, size);
-	if (tmpkt != NULL)
-		pfr_destroy_ktable(tmpkt, 0);
+	pfr_destroy_ktable(tmpkt, 0);
 	return (rv);
 }
 
@@ -442,15 +440,13 @@ _skip:
 		*nchange = xchange;
 	if ((flags & PFR_FLAG_FEEDBACK) && *size2)
 		*size2 = size+xdel;
-	if (tmpkt != NULL)
-		pfr_destroy_ktable(tmpkt, 0);
+	pfr_destroy_ktable(tmpkt, 0);
 	return (0);
 _bad:
 	pfr_destroy_kentries(&addq);
 	if (flags & PFR_FLAG_FEEDBACK)
 		pfr_reset_feedback(addr, size);
-	if (tmpkt != NULL)
-		pfr_destroy_ktable(tmpkt, 0);
+	pfr_destroy_ktable(tmpkt, 0);
 	return (rv);
 }
 
@@ -1311,7 +1307,8 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (!(flags & PFR_FLAG_ADDRSTOO))
 		shadow->pfrkt_cnt = NO_ADDRESSES;
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		pfr_destroy_ktable(kt->pfrkt_shadow, 1);
+		if (kt->pfrkt_shadow != NULL)
+			pfr_destroy_ktable(kt->pfrkt_shadow, 1);
 		kt->pfrkt_flags |= PFR_TFLAG_INACTIVE;
 		pfr_insert_ktables(&tableq);
 		kt->pfrkt_shadow = shadow;
@@ -1427,7 +1424,7 @@ pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 	clrflag = (kt->pfrkt_flags & ~setflag) & PFR_TFLAG_USRMASK;
 	setflag |= PFR_TFLAG_ACTIVE;
 	clrflag |= PFR_TFLAG_INACTIVE;
-	pfr_destroy_ktable(kt->pfrkt_shadow, 0);
+	pfr_destroy_ktable(shadow, 0);
 	kt->pfrkt_shadow = NULL;
 	pfr_setflags_ktable(kt, setflag, clrflag);
 }
@@ -1569,8 +1566,6 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 {
 	struct pfr_kentryworkq	 addrq;
 
-	if (kt == NULL)
-		return;
 	if (flushaddr) {
 		pfr_enqueue_addrs(kt, &addrq, NULL, 0);
 		pfr_destroy_kentries(&addrq);
@@ -1579,7 +1574,8 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 		free((caddr_t)kt->pfrkt_ip4, M_RTABLE);
 	if (kt->pfrkt_ip6 != NULL)
 		free((caddr_t)kt->pfrkt_ip6, M_RTABLE);
-	pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
+	if (kt->pfrkt_shadow != NULL)
+		pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
 	pool_put(&pfr_ktable_pl, kt);
 }
 
