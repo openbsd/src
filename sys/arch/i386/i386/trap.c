@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.59 2003/06/24 22:45:33 espie Exp $	*/
+/*	$OpenBSD: trap.c,v 1.60 2003/07/28 19:59:18 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -368,7 +368,7 @@ trap(frame)
 		goto out;
 
 	case T_DNA|T_USER: {
-#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
+#if defined(GPL_MATH_EMULATE)
 		int rv;
 		if ((rv = math_emulate(&frame)) == 0) {
 			if (frame.tf_eflags & PSL_T)
@@ -503,7 +503,7 @@ trap(frame)
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
 		break;
 	case T_TRCTRAP|T_USER:		/* trace trap */
-#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
+#if defined(GPL_MATH_EMULATE)
 	trace:
 #endif
 		sv.sival_int = rcr2();
