@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.4 2000/06/10 03:49:29 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.5 2000/06/10 03:54:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -208,7 +208,7 @@ ubsec_intr(arg)
 		--sc->sc_nqueue;
 		if (q) {
 			SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
-			WRITE_REG(sc, BS_MCR1, (u_int32_t)&q->q_mcr);
+			WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
 		}
 	}
 
