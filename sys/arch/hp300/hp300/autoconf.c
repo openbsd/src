@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1995/12/28 19:16:45 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1995/12/30 18:25:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ configure()
 			found = find_controller(hw);
 		else
 			found = find_device(hw);
-#ifdef DEBUG
+
 		if (!found) {
 			int sc = patosc(hw->hw_pa);
 
@@ -122,7 +122,6 @@ configure()
 			else
 				printf("csr at %x\n", sc);
 		}
-#endif
 	}
 
 #if GENERIC
