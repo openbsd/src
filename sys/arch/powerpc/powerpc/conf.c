@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1996/12/28 06:21:41 rahnds Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 1997/02/06 04:36:41 rahnds Exp $	*/
 /*	$NetBSD: conf.c,v 1.2 1996/10/16 17:26:19 ws Exp $	*/
 
 /*
@@ -43,12 +43,34 @@
 bdev_decl(ofd);
 bdev_decl(sw);
 
+#include "rd.h"
+bdev_decl(rd);
+
+#include "vnd.h"
+bdev_decl(vnd);
+#include "ccd.h"
+bdev_decl(ccd);
+
 struct bdevsw bdevsw[] = {
 	bdev_notdef(),                  /* 0 */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
 	bdev_notdef(),                  /* 2 SCSI tape */
 	bdev_notdef(),                  /* 3 SCSI CD-ROM */
 	bdev_disk_init(NOFDISK,ofd),	/* 4: Openfirmware disk */
+	bdev_notdef(),                  /* 5 unknown*/
+	bdev_notdef(),                  /* 6 unknown*/
+	bdev_notdef(),                  /* 7 unknown*/
+	bdev_lkm_dummy(),		/* 8 */
+	bdev_lkm_dummy(),		/* 9 */
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
+	bdev_lkm_dummy(),		/* 13 */
+	bdev_disk_init(NVND,vnd),	/* 14 vnode disk driver*/
+	bdev_notdef(),                  /* 15 unknown*/
+	bdev_disk_init(NCCD,ccd),	/* 16 concatenated disk driver*/
+	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
+	bdev_notdef(),                  /* 18 unknown*/
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -75,12 +97,12 @@ cdev_decl(ofrtc);
 #include <sd.h>
 #include <st.h>
 #include <cd.h>
-#include <vnd.h>
 cdev_decl(st);  
 cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(vnd);
 cdev_decl(ccd);
+cdev_decl(rd);  
 
 dev_decl(filedesc,open);
 
@@ -131,8 +153,8 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 14 */
         cdev_notdef(),                  /* 15 */
         cdev_notdef(),                  /* 16 */
-	cdev_rtc_init(NOFRTC,ofrtc),	/* 17: Openfirmware RTC */
-        cdev_notdef(),                  /* 18 */
+	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
+	cdev_rtc_init(NOFRTC,ofrtc),	/* 18: Openfirmware RTC */
         cdev_disk_init(NVND,vnd),       /* 19: vnode disk */
         cdev_tape_init(NST,st),         /* 20: SCSI tape */
         cdev_fd_init(1,filedesc),       /* 21: file descriptor pseudo-dev */
@@ -205,11 +227,11 @@ static int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 10 */	NODEV,
-	/* 10 */	NODEV,
-	/* 10 */	NODEV,
-	/* 10 */	NODEV,
-	/* 10 */	NODEV,
+	/* 17 */	17,
+	/* 18 */	NODEV,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
 };
 
 /*

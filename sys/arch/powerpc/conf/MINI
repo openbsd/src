@@ -20,7 +20,7 @@ options		FIREPOWERBUGS
 
 #options		DDB
 #options		KTRACE
-options		SYSCALL_DEBUG
+#options		SYSCALL_DEBUG
 options		TCP_COMPAT_42
 options		COMPAT_43
 options		COMPAT_09
@@ -50,7 +50,12 @@ options		NMBCLUSTERS=1024
 options		MAXUSERS=20
 #options		TARGET_ELF
 
-config		bsd	swap generic
+# needed for rd miniroot support
+options 	MINIROOTSIZE=4096
+options 	RAMDISK_HOOKS
+
+
+config		bsd	swap on ofdisk0 and ofdisk1 and ofdisk2 root rd0a
 
 ofroot*		at root
 
@@ -68,3 +73,4 @@ ofrtc*		at openfirm?
 pseudo-device	loop
 pseudo-device	pty	64
 pseudo-device	random	1
+pseudo-device	rd

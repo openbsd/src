@@ -68,3 +68,5 @@ ofrtc*		at openfirm?
 pseudo-device	loop
 pseudo-device	pty	64
 pseudo-device	random	1
+pseudo-device	rd
+pseudo-device	vnd	1

@@ -45,6 +45,11 @@ file    arch/powerpc/powerpc/db_disasm.c                ddb
 file    arch/powerpc/powerpc/db_interface.c             ddb
 file    arch/powerpc/powerpc/db_trace.c                 ddb
 
+pseudo-device rd
+file dev/ramdisk.c                      rd needs-flag
+file arch/powerpc/powerpc/rd_root.c           ramdisk_hooks
+major   {rd = 17}
+
 # FirePower specific code
 #device firepower: openfirm
 #attach firepower at root

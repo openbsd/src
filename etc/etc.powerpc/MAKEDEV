@@ -40,6 +40,7 @@
 #	cd*	SCSI compact discs
 #	ch*	SCSI changers
 #	vnd*	vnode pseudo-disks
+#	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk driver
 #
 # Terminal ports:
@@ -81,7 +82,7 @@ all)
 raminst)
 	sh MAKEDEV std
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV grf0 grf1 ttye0
+	sh MAKEDEV rd0
 	sh MAKEDEV tty00 tty01 pty0
 	;;
 
@@ -117,8 +118,9 @@ sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=13;;
-	vnd*) name=vnd; blk=8; chr=19;;
-	ccd*) name=ccd; blk=9; chr=20;;
+	vnd*) name=vnd; blk=14; chr=19;;
+	ccd*) name=ccd; blk=16; chr=20;;
+	rd*)  name=rd;  blk=17; chr=17;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
