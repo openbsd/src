@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.2 2002/04/07 10:33:12 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.3 2002/04/20 22:42:42 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -56,30 +56,30 @@ l l l l l l l l
 _ _ _ _ _ _ _ _
 l l l l l l l l .
 CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
-   :  :Mhz:y/n:      :   :    :
-7000:1.1a:66 :No : :64?:4 I:705,710,720
-    :    :   :   : :   :4 D:730,750
-7100:1.1b:100:Yes: 1MB L2I:120:16:715/33/50/75
-    :    :   :   : 2MB L2D:   :  :725/50/75
-    :    :   :   :        :   :  :735/100,755/100
-7150:1.1b:125?:Yes: 1MB L2I:120?:16:735/125,755/125
-    :    :    :   : 2MB L2D:    :  :
-7100LC:1.1c:100:Yes: 1KB L1I:64:8:712/60/80/100
-      :    :   :   : 1MB L2I:  : :715/64/80/100
-      :    :   :   : 1MB L2D:  : :715/100XC
+   :  :Mhz:y/n:  KB  :   :    :
+7000:1.1a:66 :No : 256 L1I:96:4 I:705,710,720
+    :    :   :   : 256 L1D:   :4 D:730,750
+7100:1.1b:100:Yes:1024 L1I:120:16:715/33/50/75
+    :    :   :   :2048 L1D:   :  :725/50/75
+    :    :   :   :        :   :  :{735,755}/100
+7150:1.1b:125:Yes:1024 L1I:120:16:{735,755}/125
+    :    :   :   :2048 L1D:   :  :
+7100LC:1.1c:100:Yes:   1 L1I:64:8:712/60/80/100
+      :    :   :   :1024 L2I:  : :715/64/80/100
+      :    :   :   :1024 L2D:  : :715/100XC
       :    :   :   :        :  : :725/64/100
-7200:1.1d:140:Yes: 2KB L1 :120:16:C100,C110
-    :    :   :   : 1MB L2I:   :  :J200,J210
-    :    :   :   : 1MB L2D:   :  :
-7300LC:1.1e:180:Yes:64KB L1I:96:8:A180,A180C
-      :    :   :   :64KB L1D:  : :B132,B160,B180
-      :    :   :   : 1MB L2 :  : :C132L,C160L
+7200:1.1d:140:Yes:   2 L1 :120:16:C100,C110
+    :    :   :   :1024 L2I:   :  :J200,J210
+    :    :   :   :1024 L2D:   :  :
+7300LC:1.1e:180:Yes:  64 L1I:96:8:A180,A180C
+       :    :   :  :  64 L1D:  : :B132,B160,B180
+       :    :   :  :8192 L2 :  : :C132L,C160L
 .TE
 .in -\n(dIu
 .Pp
 .Sh FLOATING-POINT COPROCESSOR
 The following table summarizes available floating-point coprocessor
-models for the 32 bit
+models for the 32-bit
 .Tn PA-RISC
 processors.
 .Pp
@@ -100,9 +100,57 @@ Rolex:
 HARP-I:
 Tornado:
 PA-50 (Hitachi):
-PCXL:712/80/80/100
+PCXL:712/60/80/100
 .TE
 .in -\n(dIu
+.Pp
+.Sh SUPERSCALAR EXECUTION
+The following table summarizes the superscalar execution capabilities of 32-bit
+.Tn PA-RISC
+processors.
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;   
+l l l
+_ _ _
+l l l .
+CPU:Units:Bundles
+7100:1INT,1FP:load-store/fp
+    :        :int/fp 
+    :        :branch/*
+7100LC:2INT,1FP:load-store/int
+      :        :load-store/fp
+      :        :int/fp
+      :        :branch/*
+7200:2INT,1FP:load-store/int
+    :        :load-store/fp
+    :        :int/int
+    :        :int/fp 
+    :        :branch/*
+7300LC:2INT,1FP:load-store/int
+      :        :load-store/fp
+      :        :int/fp
+      :        :branch/*
+.TE
+.in -\n(dIu
+.Pp
+Concluding, all of the above CPUs are dual-issue, or 2-way superscalar,
+with the exception that on CPUs with two INT units only one of these units 
+is capable of doing shift, load/store and test operations.
+Additionally there are several kinds of restrictions placed upon the superscalar
+execution:
+.Pp
+.Bl -bullet -compact
+.It
+functional unit contention
+.It
+data dependency restrictions
+.It
+control flow restrictions
+.It
+special intruction restrictions
+.El
 .Pp
 .Sh PERFORMANCE MONITOR COPROCESSOR
 The performance monitor coprocessor is an optional,
@@ -118,16 +166,29 @@ The debug SFU is currently defined only for Level 0 processors.
 .Sh SEE ALSO
 .Xr asp 4 ,
 .Xr intro 4 ,
-.Xr lasi 4
+.Xr lasi 4 ,
 .Xr wax 4
 .Pp
-.Bl -tag -width PA7100LCxERSxx -compact
-.It PA-RISC 1.1 Architecture and Instruction Set Reference Manual
+.Rs
+"PA-RISC 1.1 Architecture and Instruction Set Reference Manual"
+.br
 Hewlett-Packard, May 15, 1996
-.It PA7100LC ERS
+.Re
+.Rs
+"PA7100LC ERS"
+.br
 Hewlett-Packard, March 30 1999, Public version 1.0
-.It PA7300LC ERS
+.Re
+.Rs
+"Design of the PA7200 CPU"
+.br
+Hewlett-Packard Journal, February 1996
+.Re
+.Rs
+"PA7300LC ERS"
+.br
 Hewlett-Packard, March 18 1996, Version 1.0
+.Re
 .Sh HISTORY
 The
 .Nm
