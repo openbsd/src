@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.18 2000/04/07 22:05:48 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.25 2000/04/07 19:01:39 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.19 2000/10/07 06:58:07 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.28 2000/10/06 23:43:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -188,11 +188,20 @@ ike_phase_1_initiator_send_SA (struct message *msg)
 				      ike_duration_cst, IKE_ATTR_LIFE_TYPE,
 				      &attr);
 
-	      /* XXX Does only handle 16-bit entities!  */
+              /* XXX Deals with 16 and 32 bit lifetimes only */
 	      value = conf_get_num (life->field, "LIFE_DURATION", 0);
-	      if (value)
-		attr
-		  = attribute_set_basic (attr, IKE_ATTR_LIFE_DURATION, value);
+              if (value)
+                {
+	          if (value <= 0xffff)
+		    attr = attribute_set_basic (attr, IKE_ATTR_LIFE_DURATION,
+						value);
+                  else
+                    {
+                      value = htonl (value);
+		      attr = attribute_set_var (attr, IKE_ATTR_LIFE_DURATION,
+                                                (char *)&value, sizeof value);
+                    }
+                }
 	    }
 	  conf_free_list (life_conf);
 	}
@@ -240,7 +249,7 @@ ike_phase_1_initiator_send_SA (struct message *msg)
 			 transform_len[i] - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 			 exchange->doi->is_attribute_incompatible, msg))
 	{
-	  log_error ("ike_phase_1_initiator_send_SA: "
+	  log_print ("ike_phase_1_initiator_send_SA: "
 		     "section [%s] has unsupported attribute(s)",
 		     xf->field);
 	  goto bail_out;
@@ -403,7 +412,7 @@ ike_phase_1_initiator_recv_SA (struct message *msg)
   /* XXX I don't like exchange-specific stuff in here.  */
   if (exchange->type != ISAKMP_EXCH_AGGRESSIVE)
     ie->group = group_get (isa->group_desc);
- 
+
   /* Mark the SA as handled.  */
   sa_p->flags |= PL_MARK;
 
@@ -672,7 +681,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
     {
       u_int16_t len, keylen;
       u_int8_t *key, *p;
-      
+
       prf = prf_alloc (ie->prf_type, hash->type, ie->skeyid_e, ie->skeyid_len);
       if (!prf)
 	{
@@ -698,7 +707,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
       prf->Update (prf->prfctx, "\0", 1);
       prf->Final (key, prf->prfctx);
 
-      for (len = prf->blocksize, p = key; len < exchange->key_length; 
+      for (len = prf->blocksize, p = key; len < exchange->key_length;
 	   len += prf->blocksize, p += prf->blocksize)
 	{
 	  prf->Init (prf->prfctx);
@@ -812,7 +821,7 @@ ike_phase_1_send_ID (struct message *msg)
 	  break;
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
-	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"), 
+	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"),
 		  sz - ISAKMP_ID_DATA_OFF);
 	  break;
 	default:
@@ -945,7 +954,7 @@ ike_phase_1_recv_AUTH (struct message *msg)
       message_drop (msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1, 0);
       return -1;
     }
-  
+
   /* Allocate the prf and start calculating his HASH.  */
   prf = prf_alloc (ie->prf_type, hash->type, ie->skeyid, ie->skeyid_len);
   if (!prf)
@@ -1031,7 +1040,7 @@ ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
 	      for (tag = TAILQ_FIRST (&tags->fields); tag;
 		   tag = TAILQ_NEXT (tag, link))
 		/*
-		 * XXX Should we care about attributes we have, they do not 
+		 * XXX Should we care about attributes we have, they do not
 		 * provide?
 		 */
 		for (node = LIST_FIRST (&vs.attrs); node;
@@ -1115,7 +1124,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       if (!str)
 	{
 	  /* This attribute does not exist in this policy.  */
-	  log_print ("attribute_unacceptable: attr %s does not exist in %s", 
+	  log_print ("attribute_unacceptable: attr %s does not exist in %s",
 		     tag, xf->field);
 	  return 1;
 	}
@@ -1156,7 +1165,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       life_conf = conf_get_list (xf->field, "Life");
       if (life_conf && !strcmp (conf_get_str (xf->field, "Life"), "ANY"))
 	return 0;
-	
+
       rv = 1;
       if (!life_conf)
 	{
