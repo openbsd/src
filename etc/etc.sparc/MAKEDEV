@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.38 1998/03/02 14:20:32 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 1998/03/02 14:32:26 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -480,8 +480,21 @@ tty[a-z])
 	*) echo unknown tty device $i ;;
 	esac
 	mknod tty$unit c 12 $n
+	chown uucp.wheel tty$unit
+	;;
+
+cua[a-z])
+	unit=`expr $i : 'cua\([a-z]\)'`
+	rm -f cua$unit
+	case $unit in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=4 ;;
+	d) n=5 ;;
+	*) echo unknown cua device $i ;;
+	esac
 	mknod cua$unit c 12 `add $n 128`
-	chown uucp.wheel tty$unit cua$unit
+	chown uucp.wheel cua$unit
 	;;
 
 pty*)
