@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.106 2002/07/20 18:01:18 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.107 2002/09/06 19:46:52 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.106 2002/07/20 18:01:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.107 2002/09/06 19:46:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1660,7 +1660,8 @@ void
 echo_dg(int s, struct servtab *sep)
 {
 	char buffer[BUFSIZE];
-	int i, size;
+	int i;
+	socklen_t size;
 	struct sockaddr_storage ss;
 
 	size = sizeof(ss);
@@ -1749,7 +1750,8 @@ chargen_dg(int s, struct servtab *sep)
 {
 	struct sockaddr_storage ss;
 	static char *rs;
-	int len, size;
+	int len;
+	socklen_t size;
 	char text[LINESIZ+2];
 
 	if (endring == 0) {
@@ -1813,7 +1815,7 @@ machtime_dg(int s, struct servtab *sep)
 {
 	u_int32_t result;
 	struct sockaddr_storage ss;
-	int size;
+	socklen_t size;
 
 	size = sizeof(ss);
 	if (recvfrom(s, (char *)&result, sizeof(result), 0,

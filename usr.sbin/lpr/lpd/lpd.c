@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.37 2002/06/23 03:07:19 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.38 2002/09/06 19:46:52 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.37 2002/06/23 03:07:19 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.38 2002/09/06 19:46:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -344,7 +344,8 @@ main(int argc, char **argv)
 	memset(&frominet, 0, sizeof(frominet));
 	memset(&fromunix, 0, sizeof(fromunix));
 	for (;;) {
-		int domain, nfds, s, fromlen;
+		int domain, nfds, s;
+		socklen_t fromlen;
 		fd_set readfds;
 		short sleeptime = 10;	/* overflows in about 2 hours */
 

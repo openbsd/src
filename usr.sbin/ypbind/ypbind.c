@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.46 2002/07/20 12:14:51 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.47 2002/09/06 19:46:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.46 2002/07/20 12:14:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.47 2002/09/06 19:46:53 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -344,7 +344,8 @@ main(int argc, char *argv[])
 	struct sockaddr_in sin;
 	struct timeval tv;
 	fd_set fdsr;
-	int width, lockfd, len, lsock;
+	int width, lockfd, lsock;
+	socklen_t len;
 	int evil = 0, one = 1;
 	DIR *dirp;
 	struct dirent *dent;
@@ -849,7 +850,8 @@ enum clnt_stat
 handle_replies(void)
 {
 	char buf[1400];
-	int fromlen, inlen;
+	int inlen;
+	socklen_t fromlen;
 	struct _dom_binding *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;
@@ -899,7 +901,8 @@ enum clnt_stat
 handle_ping(void)
 {
 	char buf[1400];
-	int fromlen, inlen;
+	int inlen;
+	socklen_t fromlen;
 	struct _dom_binding *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;

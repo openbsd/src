@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.24 2002/07/14 03:52:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.25 2002/09/06 19:46:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -237,7 +237,8 @@ handleread(int s)
 	struct stat st;
 	char path[64];
 	struct whod wd;
-	int cc, whod, len = sizeof(from);
+	int cc, whod;
+	socklen_t len = sizeof(from);
 
 	cc = recvfrom(s, (char *)&wd, sizeof(struct whod), 0,
 	    (struct sockaddr *)&from, &len);
