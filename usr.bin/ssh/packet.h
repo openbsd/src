@@ -13,7 +13,7 @@ Interface for the packet protocol functions.
 
 */
 
-/* RCSID("$Id: packet.h,v 1.2 1999/09/28 04:45:36 provos Exp $"); */
+/* RCSID("$Id: packet.h,v 1.3 1999/11/15 21:38:54 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -44,7 +44,7 @@ void packet_close(void);
    are encrypted independently of each other.  Cipher types are
    defined in ssh.h. */
 void packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
-			       int cipher_type, int is_client);
+			       int cipher_type);
 
 /* Sets remote side protocol flags for the current connection.  This can
    be called at any time. */

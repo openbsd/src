@@ -11,12 +11,12 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.7 1999/10/02 19:14:54 deraadt Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.8 1999/11/15 21:38:54 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
 
-#include <des.h>
+#include <ssl/des.h>
 #include <ssl/blowfish.h>
 
 /* Cipher types.  New types can be added, but old types should not be removed
@@ -26,8 +26,8 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 #define SSH_CIPHER_IDEA		1 /* IDEA CFB */
 #define SSH_CIPHER_DES		2 /* DES CBC */
 #define SSH_CIPHER_3DES		3 /* 3DES CBC */
-#define SSH_CIPHER_TSS		4 /* TRI's Simple Stream encryption CBC */
-#define SSH_CIPHER_RC4		5 /* Alleged RC4 */
+#define SSH_CIPHER_BROKEN_TSS	4 /* TRI's Simple Stream encryption CBC */
+#define SSH_CIPHER_BROKEN_RC4	5 /* Alleged RC4 */
 #define SSH_CIPHER_BLOWFISH	6
 
 typedef struct {

@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.29 1999/11/15 20:53:25 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.30 1999/11/15 21:38:54 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1377,8 +1377,7 @@ void ssh_login(int host_key_valid,
   debug("Sent encrypted session key.");
   
   /* Set the encryption key. */
-  packet_set_encryption_key(session_key, SSH_SESSION_KEY_LENGTH, 
-			    options.cipher, 1);
+  packet_set_encryption_key(session_key, SSH_SESSION_KEY_LENGTH, options.cipher);
 
   /* We will no longer need the session key here.  Destroy any extra copies. */
   memset(session_key, 0, sizeof(session_key));

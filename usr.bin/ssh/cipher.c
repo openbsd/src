@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.13 1999/11/02 19:42:35 markus Exp $");
+RCSID("$Id: cipher.c,v 1.14 1999/11/15 21:38:53 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -230,7 +230,7 @@ void cipher_set_key(CipherContext *context, int cipher,
       break;
 
     default:
-      fatal("cipher_set_key: unknown cipher: %d", cipher);
+      fatal("cipher_set_key: unknown cipher: %s", cipher_name(cipher));
     }
   memset(padded, 0, sizeof(padded));
 }
