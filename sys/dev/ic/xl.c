@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.38 2002/06/15 05:14:41 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.39 2002/06/15 19:35:29 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2470,7 +2470,7 @@ xl_freetxrx(sc)
 	 * Free data in the RX lists.
 	 */
 	for (i = 0; i < XL_RX_LIST_CNT; i++) {
-		if (sc->xl_cdata.xl_rx_chain[i].map->dm_segs != 0) {
+		if (sc->xl_cdata.xl_rx_chain[i].map->dm_nsegs != 0) {
 			bus_dmamap_t map = sc->xl_cdata.xl_rx_chain[i].map;
 
 			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
@@ -2488,7 +2488,7 @@ xl_freetxrx(sc)
 	 * Free the TX list buffers.
 	 */
 	for (i = 0; i < XL_TX_LIST_CNT; i++) {
-		if (sc->xl_cdata.xl_tx_chain[i].map->dm_segs != 0) {
+		if (sc->xl_cdata.xl_tx_chain[i].map->dm_nsegs != 0) {
 			bus_dmamap_t map = sc->xl_cdata.xl_tx_chain[i].map;
 
 			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
