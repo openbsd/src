@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.172 2003/05/17 02:46:22 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.173 2003/05/18 20:25:15 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -542,7 +542,7 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 		    "p", "sa", "sp", "da", "dp" };
 		int i;
 
-		printf("[ Skip steps: ");
+		printf("  [ Skip steps: ");
 		for (i = 0; i < PF_SKIP_COUNT; ++i) {
 			if (rule->skip[i].nr == rule->nr + 1)
 				continue;
@@ -554,12 +554,12 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 		}
 		printf("]\n");
 
-		printf("[ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
+		printf("  [ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
 		    rule->qname, rule->qid, rule->pqname, rule->pqid);
 	}
 	if (opts & PF_OPT_VERBOSE)
-		printf("[ Evaluations: %-8llu  Packets: %-8llu  "
-			    "Bytes: %-10llu  States: %-6u]\n\n",
+		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
+			    "Bytes: %-10llu  States: %-6u]\n",
 			    rule->evaluations, rule->packets,
 			    rule->bytes, rule->states);
 }
