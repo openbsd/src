@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.15 2004/01/01 11:44:49 markus Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.16 2004/04/26 05:16:41 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -348,11 +348,12 @@ struct sis_desc {
 #define SIS_TXSTAT_UNDERRUN	0x02000000
 #define SIS_TXSTAT_TX_ABORT	0x04000000
 
-#define SIS_RX_LIST_CNT		64
+#define SIS_RX_LIST_CNT_MIN	4
+#define SIS_RX_LIST_CNT_MAX	64
 #define SIS_TX_LIST_CNT		128
 
 struct sis_list_data {
-	struct sis_desc		sis_rx_list[SIS_RX_LIST_CNT];
+	struct sis_desc		sis_rx_list[SIS_RX_LIST_CNT_MAX];
 	struct sis_desc		sis_tx_list[SIS_TX_LIST_CNT];
 };
 
@@ -434,6 +435,7 @@ struct sis_softc {
 	bus_dmamap_t		sc_rx_sparemap;
 	bus_dmamap_t		sc_tx_sparemap;
 	int			sis_stopped;
+	int			sc_rxbufs;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.37 2004/04/09 21:52:17 henning Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.38 2004/04/26 05:16:41 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1090,7 +1090,7 @@ void sis_attach(parent, self, aux)
 	sc->sis_ldata = (struct sis_list_data *)sc->sc_listkva;
 	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
 
-	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+	for (i = 0; i < SIS_RX_LIST_CNT_MAX; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &sc->sis_ldata->sis_rx_list[i].map) != 0) {
 			printf(": can't create rx map\n");
@@ -1209,17 +1209,22 @@ int sis_list_rx_init(sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i;
 	bus_addr_t		next;
+	int			i;
 
 	ld = sc->sis_ldata;
 	cd = &sc->sis_cdata;
 
-	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+	if (sc->arpcom.ac_if.if_flags & IFF_UP)
+		sc->sc_rxbufs = SIS_RX_LIST_CNT_MAX;
+	else
+		sc->sc_rxbufs = SIS_RX_LIST_CNT_MIN;
+
+	for (i = 0; i < sc->sc_rxbufs; i++) {
 		if (sis_newbuf(sc, &ld->sis_rx_list[i], NULL) == ENOBUFS)
 			return(ENOBUFS);
 		next = sc->sc_listmap->dm_segs[0].ds_addr;
-		if (i == (SIS_RX_LIST_CNT - 1)) {
+		if (i == (sc->sc_rxbufs - 1)) {
 			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[0];
 			next +=
 			    offsetof(struct sis_list_data, sis_rx_list[0]);
@@ -1318,7 +1323,7 @@ void sis_rxeof(sc)
 		m = cur_rx->sis_mbuf;
 		cur_rx->sis_mbuf = NULL;
 		total_len = SIS_RXBYTES(cur_rx);
-		SIS_INC(i, SIS_RX_LIST_CNT);
+		SIS_INC(i, sc->sc_rxbufs);
 
 
 		/*
@@ -2039,7 +2044,7 @@ void sis_stop(sc)
 	/*
 	 * Free data in the RX lists.
 	 */
-	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+	for (i = 0; i < SIS_RX_LIST_CNT_MAX; i++) {
 		if (sc->sis_ldata->sis_rx_list[i].map->dm_nsegs != 0) {
 			bus_dmamap_t map = sc->sis_ldata->sis_rx_list[i].map;
 
