@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.48 2001/04/09 22:09:52 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.49 2001/04/19 20:12:44 niklas Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1209,7 +1209,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       /* Setup the source ID, if provided */
       if (srcid)
         {
-	  sid = calloc (PF_KEY_V2_ROUND (srcid_len) + sizeof *sid,
+	  sid = calloc (PF_KEY_V2_ROUND (srcid_len + 1) + sizeof *sid,
 			sizeof (u_int8_t));
 	  if (!sid)
 	    goto cleanup;
@@ -1231,7 +1231,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       /* Setup the destination ID, if provided */
       if (dstid)
         {
-	  sid = calloc (PF_KEY_V2_ROUND (dstid_len) + sizeof *sid,
+	  sid = calloc (PF_KEY_V2_ROUND (dstid_len + 1) + sizeof *sid,
 			sizeof (u_int8_t));
 	  if (!sid)
 	    goto cleanup;
@@ -1387,7 +1387,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   bzero (&tprotocol, sizeof tprotocol);
   tprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
   tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
-  tprotocol.sadb_protocol_proto = tproto;;
+  tprotocol.sadb_protocol_proto = tproto;
 
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&tprotocol, 0) == -1)
     goto cleanup;

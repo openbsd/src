@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.52 2001/03/28 19:15:43 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.53 2001/04/19 20:12:45 niklas Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -102,7 +102,7 @@ transform xf[] = {
     {"rmd160", SADB_AALG_RIPEMD160HMAC, XF_AUTH|AH_NEW|ESP_NEW},
 };
 
-#define ROUNDUP(x) (x % 8 ? (x + 8) - (x % 8) : x)
+#define ROUNDUP(x) (((x) + sizeof(u_int64_t) - 1) & ~(sizeof(u_int64_t) - 1))
 
 void
 xf_set(struct iovec *iov, int cnt, int len)
@@ -874,14 +874,14 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    srcid = calloc(ROUNDUP(strlen(argv[i + 1])), sizeof(char));
+	    srcid = calloc(ROUNDUP(strlen(argv[i + 1]) + 1), sizeof(char));
             if (srcid == NULL)
             {
                 fprintf(stderr, "%s: malloc failed\n", argv[0]);
                 exit(1);
             }
             strcpy(srcid, argv[i + 1]);
-	    sid1.sadb_ident_len += ROUNDUP(strlen(srcid)) / sizeof(u_int64_t);
+	    sid1.sadb_ident_len += ROUNDUP(strlen(srcid) + 1) / sizeof(u_int64_t);
 	    i++;
 	    continue;
 	}
@@ -897,14 +897,14 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    dstid = calloc(ROUNDUP(strlen(argv[i + 1])), sizeof(char));
+	    dstid = calloc(ROUNDUP(strlen(argv[i + 1]) + 1), sizeof(char));
             if (dstid == NULL)
             {
                 fprintf(stderr, "%s: malloc failed\n", argv[0]);
                 exit(1);
             }
             strcpy(dstid, argv[i + 1]);
-	    sid2.sadb_ident_len += ROUNDUP(strlen(dstid)) / sizeof(u_int64_t);
+	    sid2.sadb_ident_len += ROUNDUP(strlen(dstid) + 1) / sizeof(u_int64_t);
 	    i++;
 	    continue;
 	}
@@ -1517,7 +1517,7 @@ main(int argc, char **argv)
 	    iov[cnt++].iov_len = sizeof(sid1);
 	    /* SRC identity */
 	    iov[cnt].iov_base = srcid;
-	    iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
+	    iov[cnt++].iov_len = ROUNDUP(strlen(srcid) + 1);
 	    smsg.sadb_msg_len += sid1.sadb_ident_len;
 	}
 
@@ -1527,7 +1527,7 @@ main(int argc, char **argv)
 	    iov[cnt++].iov_len = sizeof(sid2);
 	    /* DST identity */
 	    iov[cnt].iov_base = dstid;
-	    iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
+	    iov[cnt++].iov_len = ROUNDUP(strlen(dstid) + 1);
 	    smsg.sadb_msg_len += sid2.sadb_ident_len;
 	}
 
@@ -1770,7 +1770,7 @@ main(int argc, char **argv)
 		     iov[cnt++].iov_len = sizeof(sid1);
 		     /* SRC identity */
 		     iov[cnt].iov_base = srcid;
-		     iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
+		     iov[cnt++].iov_len = ROUNDUP(strlen(srcid) + 1);
 		     smsg.sadb_msg_len += sid1.sadb_ident_len;
 		 }
 
@@ -1781,7 +1781,7 @@ main(int argc, char **argv)
 		     iov[cnt++].iov_len = sizeof(sid2);
 		     /* DST identity */
 		     iov[cnt].iov_base = dstid;
-		     iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
+		     iov[cnt++].iov_len = ROUNDUP(strlen(dstid) + 1);
 		     smsg.sadb_msg_len += sid2.sadb_ident_len;
 		 }
 
