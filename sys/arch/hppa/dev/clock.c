@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1999/06/24 00:10:56 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1999/08/14 03:56:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -45,6 +45,13 @@
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
 
+#if defined(DDB)
+#include <vm/vm.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
+
 struct timeval time;
 
 void startrtclock __P((void));
@@ -66,6 +73,30 @@ cpu_initclocks()
 	/* Start the interval timer. */
 	mfctl(CR_ITMR, time_inval);
 	mtctl(time_inval + cpu_hzticks, CR_ITMR);
+}
+
+int
+clock_intr (v)
+	void *v;
+{
+	struct trapframe *frame = v;
+
+/*	printf ("#"); */
+
+	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
+	   frame->tf_iioq_head, curproc); */
+
+	cpu_initclocks();
+	hardclock(frame);
+
+#if 0
+	ddb_regs = *frame;
+	db_show_regs(NULL, 0, 0, NULL);
+#endif
+
+	/* printf ("clock out 0x%x\n", t); */
+
+	return 1;
 }
 
 
