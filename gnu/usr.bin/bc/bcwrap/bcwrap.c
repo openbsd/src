@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.1 1996/06/20 14:29:49 deraadt Exp $	*/
+/*	$OpenBSD: bcwrap.c,v 1.2 1996/07/22 10:10:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -35,6 +35,9 @@
  * GNU bc wants to print it's copyright, if in interactive mode. The
  * copyright demands it. That's stupid, ugly, and I think looks very
  * gross.
+ *
+ * As a side effect, the special ^C handling in gnubc goes away,
+ * bringing us back to the familiar handling.
  *
  * Oh well, with this wrapper it's never in interactive mode.
  */
