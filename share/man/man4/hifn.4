@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.36 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: hifn.4,v 1.37 2003/09/24 05:39:56 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -35,8 +35,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hifn 7751, Hifn 7951, Hifn 7811,
-or Hifn 9751 chipsets, such as
+driver supports various cards containing the Hifn 7751, Hifn 7811, Hifn 7951,
+Hifn 7955, Hifn 7956, or Hifn 9751 chipsets, such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
 No longer being made.
@@ -60,6 +60,9 @@ Supports the most IPsec sessions, with 1MB SRAM.
 See
 .Pa http://www.soekris.com/ .
 Contains a 7951 and supports symmetric and random number operations.
+.It Soekris Engineering vpn1401 and vpn1411
+Contains a 7955 and supports symmetric (including AES) and random number
+operations.
 .It Hifn 9751
 Reference board with 512KB SRAM.
 This is really a Hifn 7751 which only supports compression.
@@ -100,3 +103,6 @@ unlock the cryptographic functionality of the chip.
 It is possible for vendors to make boards which have a lock ID not known
 to the driver, but all vendors currently just use the obvious ID which is
 13 bytes of 0.
+.Pp
+The 7955 and 7956 have an RNG, support for AES, and public key operations,
+none of which are supported yet.
