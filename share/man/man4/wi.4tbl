@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.45 2004/05/15 03:02:23 tedu Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.46 2004/06/01 17:35:58 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -145,6 +145,7 @@ Actiontec HWU01170:Prism-3:USB
 Addtron AWP-100:Prism-2:PCMCIA
 Agere Orinoco:Hermes:PCMCIA
 Apple Airport:Hermes:macobio
+Adaptec AWN-8030:Prism-2.5:PCMCIA
 Buffalo AirStation:Prism-2:PCMCIA
 Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
