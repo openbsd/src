@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.7 1997/09/12 04:01:37 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.8 2001/11/14 20:52:39 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -83,7 +83,8 @@ static	char *rmtpeer;
 
 static	int okname __P((char *));
 static	int rmtcall __P((char *, char *));
-static	void rmtconnaborted __P((/* int, int */));
+static	void rmtconnaborted __P((void));
+static	void sigrmtconnaborted __P((int));
 static	int rmtgetb __P((void));
 static	void rmtgetconn __P((void));
 static	void rmtgets __P((char *, int));
@@ -99,7 +100,7 @@ rmthost(host)
 		strcpy(rmtpeer, host);
 	else
 		rmtpeer = host;
-	signal(SIGPIPE, rmtconnaborted);
+	signal(SIGPIPE, sigrmtconnaborted);
 	rmtgetconn();
 	if (rmtape < 0)
 		return (0);
@@ -107,7 +108,15 @@ rmthost(host)
 }
 
 static void
-rmtconnaborted()
+sigrmtconnaborted(int sig)
+{
+
+	warnx("Lost connection to remote host.");
+	_exit(1);
+}
+
+static void
+rmtconnaborted(void)
 {
 
 	errx(1, "Lost connection to remote host.");
