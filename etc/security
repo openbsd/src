@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.61 2003/07/01 21:52:39 millert Exp $
+#	$OpenBSD: security,v 1.62 2003/07/01 22:12:50 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -138,7 +138,7 @@ for i in $list ; do
 	if [ -s $i ] ; then
 		awk '{
 		    if ($1 == "umask") {
-			 if ($2 % 100 ~ /^[0145]/)
+			 if ($2 % 100 / 10 ~ /^[0145]/)
 			    print "Root umask is group writable";
 			 if ($2 % 10 ~ /^[0145]/)
 			    print "Root umask is other writable";
