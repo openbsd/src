@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.32 2004/10/28 08:43:03 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.33 2004/11/17 03:22:31 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1428,8 +1428,8 @@ nd6_prefix_onlink(pr)
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0) {
 		nd6log((LOG_ERR,
 		    "nd6_prefix_onlink: %s/%d is already on-link\n",
-		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen);
-		return (EEXIST));
+		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen));
+		return (EEXIST);
 	}
 
 	/*
