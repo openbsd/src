@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.146 2004/11/11 10:35:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.147 2004/11/11 13:06:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,8 +17,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 
 #include <errno.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <pwd.h>
 #include <poll.h>
@@ -68,6 +70,7 @@ void		 rde_update_queue_runner(void);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
+void		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
@@ -82,6 +85,7 @@ void		 network_dump_upcall(struct pt_entry *, void *);
 void		 network_flush(int);
 
 void		 rde_shutdown(void);
+int		 sa_cmp(struct bgpd_addr *, struct sockaddr *);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
@@ -1837,6 +1841,68 @@ peer_remove(struct rde_peer *peer)
 }
 
 void
+peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
+{
+	struct ifaddrs	*ifap, *ifa, *match;
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	for (match = ifap; match != NULL; match = match->ifa_next)
+		if (sa_cmp(laddr, match->ifa_addr) == 0)
+			break;
+
+	if (match == NULL)
+		fatalx("peer_localaddrs: local address not found");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == AF_INET &&
+		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
+			if (ifa->ifa_addr->sa_family ==
+			    match->ifa_addr->sa_family)
+				ifa = match;
+			peer->local_v4_addr.af = AF_INET;
+			peer->local_v4_addr.v4.s_addr =
+			    ((struct sockaddr_in *)ifa->ifa_addr)->
+			    sin_addr.s_addr;
+			break;
+		}
+	}
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
+			/*
+			 * only accept global scope addresses except explicitly
+			 * specified.
+			 */
+			if (ifa->ifa_addr->sa_family ==
+			    match->ifa_addr->sa_family)
+				ifa = match;
+			else {
+				if (IN6_IS_ADDR_LINKLOCAL(
+				    &((struct sockaddr_in6 *)ifa->
+				    ifa_addr)->sin6_addr) ||
+				    IN6_IS_ADDR_SITELOCAL(
+				    &((struct sockaddr_in6 *)ifa->
+				    ifa_addr)->sin6_addr))
+					continue;
+			}
+			peer->local_v6_addr.af = AF_INET6;
+			memcpy(&peer->local_v6_addr.v6,
+			    &((struct sockaddr_in6 *)ifa->ifa_addr)->
+			    sin6_addr, sizeof(struct in6_addr));
+			peer->local_v6_addr.scope_id =
+			    ((struct sockaddr_in6 *)ifa->ifa_addr)->
+			    sin6_scope_id;
+			break;
+		}
+	}
+
+	freeifaddrs(ifap);
+}
+
+void
 peer_up(u_int32_t id, struct session_up *sup)
 {
 	struct rde_peer	*peer;
@@ -1850,9 +1916,11 @@ peer_up(u_int32_t id, struct session_up *sup)
 	if (peer->state != PEER_DOWN && peer->state != PEER_NONE)
 		fatalx("peer_up: bad state");
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
-	memcpy(&peer->local_addr, &sup->local_addr, sizeof(peer->local_addr));
 	memcpy(&peer->remote_addr, &sup->remote_addr,
 	    sizeof(peer->remote_addr));
+
+	peer_localaddrs(peer, &sup->local_addr);
+
 	peer->state = PEER_UP;
 	up_init(peer);
 
@@ -2080,5 +2148,34 @@ rde_shutdown(void)
 	pt_shutdown();
 	peer_shutdown();
 	free(mrt);
+}
+
+int
+sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
+{
+	struct sockaddr_in	*in_b;
+	struct sockaddr_in6	*in6_b;
+
+	if (a->af != b->sa_family)
+		return (1);
+
+	switch (a->af) {
+	case AF_INET:
+		in_b = (struct sockaddr_in *)b;
+		if (a->v4.s_addr != in_b->sin_addr.s_addr)
+			return (1);
+		break;
+	case AF_INET6:
+		in6_b = (struct sockaddr_in6 *)b;
+		if (bcmp(&a->v6, &in6_b->sin6_addr,
+		    sizeof(struct in6_addr)))
+			return (1);
+		break;
+	default:
+		fatal("king bula sez: unknown address family");
+		/* not reached */
+	}
+
+	return (0);
 }
 

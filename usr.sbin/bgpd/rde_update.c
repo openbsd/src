@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.31 2004/09/28 12:09:31 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.32 2004/11/11 13:06:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -590,11 +590,11 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/* nexthop, already network byte order */
 	if (peer->conf.ebgp == 0) {
 		/*
-		 * If directly connected use peer->local_addr
+		 * If directly connected use peer->local_v4_addr
 		 * this is only true for announced networks.
 		 */
 		if (a->nexthop == NULL)
-			nexthop = peer->local_addr.v4.s_addr;
+			nexthop = peer->local_v4_addr.v4.s_addr;
 		else if (a->nexthop->exit_nexthop.v4.s_addr ==
 		    peer->remote_addr.v4.s_addr)
 			/*
@@ -602,7 +602,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 			 * the nexthop set the nexthop to our local address.
 			 * This reduces the risk of routing loops.
 			 */
-			nexthop = peer->local_addr.v4.s_addr;
+			nexthop = peer->local_v4_addr.v4.s_addr;
 		else
 			nexthop = a->nexthop->exit_nexthop.v4.s_addr;
 	} else if (peer->conf.distance == 1) {
@@ -616,9 +616,9 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				/* nexthop and peer are in the same net */
 				nexthop = a->nexthop->exit_nexthop.v4.s_addr;
 			else
-				nexthop = peer->local_addr.v4.s_addr;
+				nexthop = peer->local_v4_addr.v4.s_addr;
 		} else
-			nexthop = peer->local_addr.v4.s_addr;
+			nexthop = peer->local_v4_addr.v4.s_addr;
 	} else
 		/* ebgp multihop */
 		/*
@@ -626,7 +626,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		 * NEXTHOP_CONNECTED set so it should be possible to unify the
 		 * two ebgp cases. But this is save and RFC compliant.
 		 */
-		nexthop = peer->local_addr.v4.s_addr;
+		nexthop = peer->local_v4_addr.v4.s_addr;
 
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
 	    ATTR_NEXTHOP, &nexthop, 4)) == -1)

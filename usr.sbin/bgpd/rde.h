@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.59 2004/11/11 10:35:15 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.60 2004/11/11 13:06:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -54,7 +54,8 @@ struct rde_peer {
 	u_int32_t			 prefix_cnt;
 	u_int32_t			 remote_bgpid;
 	struct bgpd_addr		 remote_addr;
-	struct bgpd_addr		 local_addr;
+	struct bgpd_addr		 local_v4_addr;
+	struct bgpd_addr		 local_v6_addr;
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
 	u_int32_t			 up_nlricnt;
