@@ -2110,3 +2110,4 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/bt458reg.ph

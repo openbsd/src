@@ -1,3 +1,4 @@
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/bt458reg.ph
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl

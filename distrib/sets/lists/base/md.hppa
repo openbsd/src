@@ -2031,3 +2031,4 @@
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/bt458reg.ph
