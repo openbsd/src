@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.4 1996/10/15 09:58:37 mickey Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.5 1996/10/16 14:18:36 mickey Exp $	*/
 /*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#include <string.h>
 
 #include <nfs/rpcv2.h>
 

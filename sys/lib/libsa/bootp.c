@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.4 1996/10/15 09:58:29 mickey Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.5 1996/10/16 14:18:35 mickey Exp $	*/
 /*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
 
 /*
@@ -43,8 +43,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#include <string.h>
 
 #include "stand.h"
 #include "net.h"
