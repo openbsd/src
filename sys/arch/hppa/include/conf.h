@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2002/03/16 00:34:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,6 +40,10 @@ struct termios;
 cdev_decl(pdc);
 int pdcparam(struct tty *, struct termios *);
 void pdcstart(struct tty *);
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 cdev_decl(fd);
 bdev_decl(fd);

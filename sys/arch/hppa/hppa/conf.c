@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2002/03/15 22:50:05 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2002/03/16 00:34:56 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -92,9 +92,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl),(dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
 #include "pty.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
