@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.25 2004/08/05 07:54:14 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.26 2004/08/17 19:26:01 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -43,6 +43,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <arpa/inet.h>
 
 #include <dev/ic/anvar.h>
 
@@ -1075,6 +1076,7 @@ an_readcache(void)
 	struct an_sigcache	*sc;
 	char *			pt;
 	int			i;
+	struct in_addr		iaddr;
 
 	bzero((char *)&areq, sizeof(areq));
 	areq.an_len = AN_MAX_DATALEN;
@@ -1087,12 +1089,14 @@ an_readcache(void)
 	pt += sizeof(int);
 	sc = (struct an_sigcache *) pt;
 
-	for (i = 0; i < *an_sigitems; i++, sc++)
+	for (i = 0; i < *an_sigitems; i++, sc++) {
+		iaddr.s_addr = sc->ipsrc;
 		printf("[%d/%d]: %02x:%02x:%02x:%02x:%02x:%02x, %s, sig: %d\n",
 		    i + 1, *an_sigitems,
 		    sc->macsrc[0], sc->macsrc[1], sc->macsrc[2],
 		    sc->macsrc[3], sc->macsrc[4], sc->macsrc[5],
-		    inet_ntoa(sc->ipsrc), sc->signal);
+		    inet_ntoa(iaddr), sc->signal);
+	}
 }
 #endif /* ANCACHE */
 
