@@ -28,32 +28,32 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 			 IS_PRFRAG(x) )
 
 #define CREATE_IPV6_MAPPED(v6, v4) { \
-	v6.in6a_words[0] = 0; \
-	v6.in6a_words[1] = 0; \
-	v6.in6a_words[2] = htonl(0xffff); \
-	v6.in6a_words[3] = v4; }
+	v6.s6_addr32[0] = 0; \
+	v6.s6_addr32[1] = 0; \
+	v6.s6_addr32[2] = htonl(0xffff); \
+	v6.s6_addr32[3] = v4; }
 
 #if BYTE_ORDER ==  BIG_ENDIAN
 
-#define SET_IN6_ALLNODES(a)  {(a).in6a_words[0]=0xff000000;(a).in6a_words[3]=1;\
-                              (a).in6a_words[1]=0;(a).in6a_words[2]=0;}
-#define SET_IN6_ALLROUTERS(a)  {(a).in6a_words[0]=0xff000000;(a).in6a_words[3]=2;\
-                              (a).in6a_words[1]=0;(a).in6a_words[2]=0;}
+#define SET_IN6_ALLNODES(a)  {(a).s6_addr32[0]=0xff000000;(a).s6_addr32[3]=1;\
+                              (a).s6_addr32[1]=0;(a).s6_addr32[2]=0;}
+#define SET_IN6_ALLROUTERS(a)  {(a).s6_addr32[0]=0xff000000;(a).s6_addr32[3]=2;\
+                              (a).s6_addr32[1]=0;(a).s6_addr32[2]=0;}
 
-#define SET_IN6_MCASTSCOPE(a,bits) {(a).in6a_words[0]&=0xfff0ffff;\
-                                    (a).in6a_words[0]|=(bits<<16);}
-#define GET_IN6_MCASTSCOPE(a) ( ((a).in6a_words[0] & 0x000f0000) >> 16  )
+#define SET_IN6_MCASTSCOPE(a,bits) {(a).s6_addr32[0]&=0xfff0ffff;\
+                                    (a).s6_addr32[0]|=(bits<<16);}
+#define GET_IN6_MCASTSCOPE(a) ( ((a).s6_addr32[0] & 0x000f0000) >> 16  )
 
 #else   /* BYTE_ORDER == LITTLE_ENDIAN */
 
-#define SET_IN6_ALLNODES(a)  {(a).in6a_words[0]=0xff;(a).in6a_words[3]=0x01000000;\
-                              (a).in6a_words[1] = 0; (a).in6a_words[2] = 0;}
-#define SET_IN6_ALLROUTERS(a)  {(a).in6a_words[0]=0xff;(a).in6a_words[3]=0x02000000;\
-                              (a).in6a_words[1] = 0; (a).in6a_words[2] = 0;}
+#define SET_IN6_ALLNODES(a)  {(a).s6_addr32[0]=0xff;(a).s6_addr32[3]=0x01000000;\
+                              (a).s6_addr32[1] = 0; (a).s6_addr32[2] = 0;}
+#define SET_IN6_ALLROUTERS(a)  {(a).s6_addr32[0]=0xff;(a).s6_addr32[3]=0x02000000;\
+                              (a).s6_addr32[1] = 0; (a).s6_addr32[2] = 0;}
 
-#define SET_IN6_MCASTSCOPE(a,bits) {(a).in6a_words[0]&=0xfffff0ff;\
-                                    (a).in6a_words[0]|=(bits<<8);}
-#define GET_IN6_MCASTSCOPE(a)  ( ((a).in6a_words[0] & 0x00000f00) >>8)
+#define SET_IN6_MCASTSCOPE(a,bits) {(a).s6_addr32[0]&=0xfffff0ff;\
+                                    (a).s6_addr32[0]|=(bits<<8);}
+#define GET_IN6_MCASTSCOPE(a)  ( ((a).s6_addr32[0] & 0x00000f00) >>8)
 
 #endif  /* BYTE_ORDER == {BIG,LITTLE}_ENDIAN */
 

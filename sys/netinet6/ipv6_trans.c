@@ -347,7 +347,7 @@ ipv6_trans_output(outgoing, v4dst, v6rt)
 	{
 	  printf("Oooh boy, v6-in-v4 tunnel ( trans_output() ) trouble!!!\n");
 	}
-      ip->ip_dst.s_addr = ipv6->ipv6_dst.in6a_words[3];
+      ip->ip_dst.s_addr = ipv6->ipv6_dst.s6_addr32[3];
     }
 
   ip->ip_src.s_addr = INADDR_ANY;

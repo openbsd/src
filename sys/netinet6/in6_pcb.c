@@ -251,7 +251,7 @@ in6_pcbbind(inp, nam)
 	  sin.sin_port = 0;
 	  sin.sin_len = sizeof(sin);
 	  sin.sin_family = AF_INET;
-	  sin.sin_addr.s_addr = sin6->sin6_addr.in6a_words[3];
+	  sin.sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
 	  bzero(&sin.sin_zero,8);
 
 	  sin6->sin6_port = 0;  /* Yechhhh, because of upcoming call to
@@ -284,7 +284,7 @@ in6_pcbbind(inp, nam)
 	  if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 	    {
 	      fa.s_addr = 0;
-	      la.s_addr = sin6->sin6_addr.in6a_words[3];
+	      la.s_addr = sin6->sin6_addr.s6_addr32[3];
 	      wild &= ~INPLOOKUP_IPV6;
 
 #if __FreeBSD__
@@ -337,13 +337,13 @@ in6_pcbbind(inp, nam)
        * might be during a *_pcbconnect(), which then sets the local address
        * ANYWAY.
        */
-      if (inp->inp_laddr6.in6a_words[0] == 0 && 
-	  inp->inp_laddr6.in6a_words[1] == 0)
+      if (inp->inp_laddr6.s6_addr32[0] == 0 && 
+	  inp->inp_laddr6.s6_addr32[1] == 0)
 	{
-	  if (inp->inp_laddr6.in6a_words[2] == ntohl(0xffff))
+	  if (inp->inp_laddr6.s6_addr32[2] == ntohl(0xffff))
 	    inp->inp_flags |= INP_IPV6_MAPPED;
-	  if (inp->inp_laddr6.in6a_words[2] == 0 &&
-	      inp->inp_laddr6.in6a_words[3] == 0)
+	  if (inp->inp_laddr6.s6_addr32[2] == 0 &&
+	      inp->inp_laddr6.s6_addr32[3] == 0)
 	    inp->inp_flags |= INP_IPV6_UNDEC;
 	}
     }
@@ -365,7 +365,7 @@ in6_pcbbind(inp, nam)
 #endif /* __NetBSD__ || __OpenBSD__ */
 
     if (inp->inp_flags & INP_IPV6_MAPPED) {
-      la.s_addr = inp->inp_laddr6.in6a_words[3];
+      la.s_addr = inp->inp_laddr6.s6_addr32[3];
       fa.s_addr = 0;
       wild &= ~INPLOOKUP_IPV6;
     };
@@ -527,8 +527,8 @@ portloop:
 
 #if __FreeBSD__ 
 #if 0
-	 inp->inp_laddr.s_addr = inp->inp_laddr6.in6a_words[3]
-	                       ^ inp->inp_laddr6.in6a_words[1];
+	 inp->inp_laddr.s_addr = inp->inp_laddr6.s6_addr32[3]
+	                       ^ inp->inp_laddr6.s6_addr32[1];
   	/* 
 	 * If this is FreeBSD then it requires the inpcb structure to be 
 	 * inserted into various hash-tables.  Right now this is copies 
@@ -612,7 +612,7 @@ in6_pcbladdr(inp, nam, plocal_sin)
       sin->sin_len = sizeof(*sin);
       sin->sin_family = AF_INET;
       sin->sin_port = sin6->sin6_port;
-      sin->sin_addr.s_addr = sin6->sin6_addr.in6a_words[3];
+      sin->sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
 
       /* CHANGE */
       rc = in_pcbladdr(inp, (struct sockaddr *) sin, &ifaddr);
@@ -621,8 +621,8 @@ in6_pcbladdr(inp, nam, plocal_sin)
 
       if (rc == 0)
 	{
-	  inp->inp_laddr6.in6a_words[2] = htonl(0xffff);
-	  inp->inp_faddr6.in6a_words[2] = htonl(0xffff);
+	  inp->inp_laddr6.s6_addr32[2] = htonl(0xffff);
+	  inp->inp_faddr6.s6_addr32[2] = htonl(0xffff);
 	  inp->inp_flags |= INP_IPV6_MAPPED;
 	  inp->inp_flags &= ~INP_IPV6_UNDEC;
 	}
@@ -904,7 +904,7 @@ in6_pcbconnect(inp, nam)
       sin->sin_len = sizeof(*sin);
       sin->sin_family = AF_INET;
       sin->sin_port = sin6->sin6_port;
-      sin->sin_addr.s_addr = sin6->sin6_addr.in6a_words[3];
+      sin->sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
 
 #if __FreeBSD__
   {
@@ -923,8 +923,8 @@ in6_pcbconnect(inp, nam)
 
       if (rc == 0)
 	{
-	  inp->inp_laddr6.in6a_words[2] = htonl(0xffff);
-	  inp->inp_faddr6.in6a_words[2] = htonl(0xffff);
+	  inp->inp_laddr6.s6_addr32[2] = htonl(0xffff);
+	  inp->inp_faddr6.s6_addr32[2] = htonl(0xffff);
 	  inp->inp_flags |= INP_IPV6_MAPPED;
 	  inp->inp_flags &= ~INP_IPV6_UNDEC;
 	}
@@ -1168,8 +1168,8 @@ in6_pcbconnect(inp, nam)
    * hash on. 
    */
 #if 0
-  inp->inp_laddr.s_addr = inp->inp_laddr6.in6a_words[3]
-                        ^ inp->inp_laddr6.in6a_words[1];
+  inp->inp_laddr.s_addr = inp->inp_laddr6.s6_addr32[3]
+                        ^ inp->inp_laddr6.s6_addr32[1];
 #endif /* 0 */
   in_pcbrehash(inp);
 #endif /* __FreeBSD__ */

@@ -105,10 +105,10 @@ send_rsolicit(ifp)
   else
     header->ipv6_src = i6a->i6a_addr.sin6_addr;
   
-  header->ipv6_dst.in6a_words[0] = htonl(0xff020000);
-  header->ipv6_dst.in6a_words[1] = 0;
-  header->ipv6_dst.in6a_words[2] = 0;
-  header->ipv6_dst.in6a_words[3] = htonl(2);
+  header->ipv6_dst.s6_addr32[0] = htonl(0xff020000);
+  header->ipv6_dst.s6_addr32[1] = 0;
+  header->ipv6_dst.s6_addr32[2] = 0;
+  header->ipv6_dst.s6_addr32[3] = htonl(2);
 
   header->ipv6_versfl = htonl(0x6f000000);
   header->ipv6_hoplimit = 255;  /* Guaranteed to be intra-link if arrives with

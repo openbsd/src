@@ -777,9 +777,9 @@ in6_ifinit(ifp, i6a, sin6, scrub, useDAD)
       {
         struct in6_addr addr = IN6ADDR_SN_PREFIX_INIT;
 
-	addr.s6_addr[13] = i6a->i6a_addr.sin6_addr.in6a_words[13];
-	addr.s6_addr[14] = i6a->i6a_addr.sin6_addr.in6a_words[14];
-	addr.s6_addr[15] = i6a->i6a_addr.sin6_addr.in6a_words[15];
+	addr.s6_addr[13] = i6a->i6a_addr.sin6_addr.s6_addr32[13];
+	addr.s6_addr[14] = i6a->i6a_addr.sin6_addr.s6_addr32[14];
+	addr.s6_addr[15] = i6a->i6a_addr.sin6_addr.s6_addr32[15];
 
         DDO(IDL_EVENT, dump_in6_addr(&addr));
 
@@ -787,10 +787,10 @@ in6_ifinit(ifp, i6a, sin6, scrub, useDAD)
       };
 
 #if 0
-      addr.in6a_words[0] = htonl(0xff020000);
-      addr.in6a_words[1] = 0;
-      addr.in6a_words[2] = htonl(1);
-      addr.in6a_words[3] = i6a->i6a_addr.sin6_addr.in6a_words[3] | htonl(0xff000000);
+      addr.s6_addr32[0] = htonl(0xff020000);
+      addr.s6_addr32[1] = 0;
+      addr.s6_addr32[2] = htonl(1);
+      addr.s6_addr32[3] = i6a->i6a_addr.sin6_addr.s6_addr32[3] | htonl(0xff000000);
 #endif /* 0 */
     }
 

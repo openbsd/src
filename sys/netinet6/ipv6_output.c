@@ -1237,19 +1237,19 @@ ipv6_ctloutput (op, so, level, optname, mp)
 		new_flags &= ~(INP_IPV6 | INP_IPV6_MAPPED);
 	      }
 	    } else {
-	      new_faddru.iau_addr6.in6a_words[0] = 0;
-	      new_faddru.iau_addr6.in6a_words[1] = 0;
-	      new_laddru.iau_addr6.in6a_words[0] = 0;
-	      new_laddru.iau_addr6.in6a_words[1] = 0;
+	      new_faddru.iau_addr6.s6_addr32[0] = 0;
+	      new_faddru.iau_addr6.s6_addr32[1] = 0;
+	      new_laddru.iau_addr6.s6_addr32[0] = 0;
+	      new_laddru.iau_addr6.s6_addr32[1] = 0;
 	      
 	      if (new_laddru.iau_a4u.inaddr.s_addr == INADDR_ANY) {
 		new_flags |= (INP_IPV6 | INP_IPV6_MAPPED | INP_IPV6_UNDEC);
-	        new_faddru.iau_addr6.in6a_words[2] = 0;
-	        new_laddru.iau_addr6.in6a_words[2] = 0;
+	        new_faddru.iau_addr6.s6_addr32[2] = 0;
+	        new_laddru.iau_addr6.s6_addr32[2] = 0;
 	      } else {
 		new_flags |= (INP_IPV6 | INP_IPV6_MAPPED);
-	        new_faddru.iau_addr6.in6a_words[2] = htonl(0xffff);
-	        new_faddru.iau_addr6.in6a_words[2] = htonl(0xffff);
+	        new_faddru.iau_addr6.s6_addr32[2] = htonl(0xffff);
+	        new_faddru.iau_addr6.s6_addr32[2] = htonl(0xffff);
 	      }
 	    }
 

@@ -339,10 +339,10 @@ ipv6_setrtifa(rt)
   /*
    * If v4-compatible, use v4-compatible source address.
    */
-  if (ifa == NULL && (sin6->sin6_addr.in6a_words[0] == 0 && 
-		      sin6->sin6_addr.in6a_words[1] == 0 &&
-		      sin6->sin6_addr.in6a_words[2] == 0 &&
-		      sin6->sin6_addr.in6a_words[3] != htonl(1) &&
+  if (ifa == NULL && (sin6->sin6_addr.s6_addr32[0] == 0 && 
+		      sin6->sin6_addr.s6_addr32[1] == 0 &&
+		      sin6->sin6_addr.s6_addr32[2] == 0 &&
+		      sin6->sin6_addr.s6_addr32[3] != htonl(1) &&
 		      (mask == NULL || mask->sin6_len >= 
 		            sizeof(*mask) - sizeof(struct in_addr))))
     {

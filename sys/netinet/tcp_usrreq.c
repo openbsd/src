@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.32 1999/01/11 02:01:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.33 1999/03/24 02:28:21 cmetz Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -245,8 +245,8 @@ tcp_usrreq(so, req, m, nam, control)
 			if (IN6_IS_ADDR_UNSPECIFIED(in6_addr) ||
 			    IN6_IS_ADDR_MULTICAST(in6_addr) ||
 			    (IN6_IS_ADDR_V4MAPPED(in6_addr) &&
-			    ((in6_addr->in6a_words[3] == INADDR_ANY) ||
-			    IN_MULTICAST(in6_addr->in6a_words[3]) ||
+			    ((in6_addr->s6_addr32[3] == INADDR_ANY) ||
+			    IN_MULTICAST(in6_addr->s6_addr32[3]) ||
 			    in_broadcast(sin->sin_addr, NULL)))) {
 				error = EINVAL;
 				break;

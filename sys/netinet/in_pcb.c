@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.30 1999/02/24 22:32:57 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.31 1999/03/24 02:28:21 cmetz Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -102,8 +102,8 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 	ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
 
 #define	IN6PCBHASH(table, faddr, fport, laddr, lport) \
-	&(table)->inpt_hashtbl[(ntohl((faddr)->in6a_words[0] ^ \
-	(faddr)->in6a_words[3]) + ntohs((fport)) + ntohs((lport))) & \
+	&(table)->inpt_hashtbl[(ntohl((faddr)->s6_addr32[0] ^ \
+	(faddr)->s6_addr32[3]) + ntohs((fport)) + ntohs((lport))) & \
 	(table->inpt_hash)]
 
 void
