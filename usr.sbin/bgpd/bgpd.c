@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.22 2003/12/24 13:28:01 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.23 2003/12/24 19:22:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -350,18 +350,18 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 			if (idx != PFD_PIPE_ROUTE)
 				fatal("route request not from RDE", 0);
 			if (kroute_add(rfd, imsg.data))
-				fatal("kroute bytes left", 0);
+				fatal("kroute_add error", errno);
 			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatal("route request not from RDE", 0);
 			if (kroute_change(rfd, imsg.data))
-				fatal("kroute bytes left", 0);
+				fatal("kroute_change error", errno);
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatal("route request not from RDE", 0);
 			if (kroute_delete(rfd, imsg.data))
-				fatal("kroute bytes left", 0);
+				fatal("kroute_delete error", errno);
 			break;
 		case IMSG_SHUTDOWN_DONE:
 			if (idx == PFD_PIPE_ROUTE)
