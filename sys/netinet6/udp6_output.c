@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.10 2004/06/11 08:09:29 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.11 2004/06/11 14:27:13 deraadt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -262,8 +262,10 @@ udp6_output(in6p, m, addr6, control)
 		}
 
 		flags = 0;
+#ifdef IN6P_MINMTU
 		if (in6p->in6p_flags & IN6P_MINMTU)
 			flags |= IPV6_MINMTU;
+#endif
 
 		udp6stat.udp6s_opackets++;
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,

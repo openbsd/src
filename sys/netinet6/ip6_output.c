@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.83 2004/06/11 08:09:29 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.84 2004/06/11 14:27:13 deraadt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1318,7 +1318,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
-			case IPV6_USE_MIN_MTU:
 				if (optlen != sizeof(int)) {
 					error = EINVAL;
 					break;
@@ -1375,10 +1374,6 @@ do { \
 
 				case IPV6_FAITH:
 					OPTSET(IN6P_FAITH);
-					break;
-
-				case IPV6_USE_MIN_MTU:
-					OPTSET(IN6P_MINMTU);
 					break;
 
 				case IPV6_V6ONLY:
@@ -1548,7 +1543,6 @@ do { \
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 			case IPV6_PORTRANGE:
-			case IPV6_USE_MIN_MTU:
 				switch (optname) {
 
 				case IPV6_UNICAST_HOPS:
@@ -1610,10 +1604,6 @@ do { \
 						optval = 0;
 					break;
 				    }
-
-				case IPV6_USE_MIN_MTU:
-					optval = OPTBIT(IN6P_MINMTU);
-					break;
 				}
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(int);
