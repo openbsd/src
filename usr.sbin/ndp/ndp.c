@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.17 2002/05/29 18:40:21 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.18 2002/05/29 22:22:20 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.86 2002/05/26 01:16:10 itojun Exp $	*/
 
 /*
@@ -87,17 +87,11 @@
 #include <sys/queue.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
-#ifndef __NetBSD__
-#include <netinet/if_ether.h>
-#endif
 
 #include <netinet/icmp6.h>
 #include <netinet6/in6_var.h>
@@ -791,18 +785,17 @@ static char *
 ether_str(sdl)
 	struct sockaddr_dl *sdl;
 {
-	static char ebuf[32];
+	static char hbuf[NI_MAXHOST];
 	u_char *cp;
 
 	if (sdl->sdl_alen) {
 		cp = (u_char *)LLADDR(sdl);
-		snprintf(ebuf, sizeof(ebuf), "%x:%x:%x:%x:%x:%x",
+		snprintf(hbuf, sizeof(hbuf), "%x:%x:%x:%x:%x:%x",
 			cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-	} else {
-		snprintf(ebuf, sizeof(ebuf), "(incomplete)");
-	}
+	} else
+		snprintf(hbuf, sizeof(hbuf), "(incomplete)");
 
-	return(ebuf);
+	return(hbuf);
 }
 
 int
