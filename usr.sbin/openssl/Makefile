@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2003/11/12 21:15:03 markus Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/01/28 17:46:05 deraadt Exp $
 
 PROG=	openssl
 LDADD=	-lssl -lcrypto
@@ -9,8 +9,9 @@ SSLEAYDIST= lib/libssl/src
 SSLEAY_SRC= ${.CURDIR}/../../${SSLEAYDIST}/apps
 SSLEAY_SRC_TOP= ${.CURDIR}/../../${SSLEAYDIST}
 
-.if (${MACHINE_ARCH} == "arc") || (${MACHINE_ARCH} == "i386") || \
-    (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "pmax")
+.if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64") || \
+    (${MACHINE_ARCH} == "vax")
+
 CFLAGS+= -DL_ENDIAN
 .else
 .if ${MACHINE_ARCH} == "alpha"
