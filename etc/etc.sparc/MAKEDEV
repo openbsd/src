@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.64 2001/04/10 03:03:53 brad Exp $
+#	$OpenBSD: MAKEDEV,v 1.65 2001/05/14 07:51:41 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -225,27 +225,27 @@ ramdisk)
 	;;
 
 std)
-	rm -f console drum mem kmem xf86 null zero io tty klog stdin stdout stderr ksyms
+	rm -f console drum mem kmem null zero tty klog stdin stdout stderr ksyms
 	rm -f eeprom openprom tty[abcd] cua[abcd] fb mouse kbd
 	mknod console		c 0 0
-	mknod tty		c 2 0	; chmod 666 tty
-	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod drum		c 7 0	; chmod 640 drum ; chown root.kmem drum
 	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
+	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod null		c 3 2	; chmod 666 null
 	mknod zero		c 3 12	; chmod 666 zero
-	mknod eeprom		c 3 11  ; chmod 640 eeprom ; chown root.kmem eeprom
-	mknod openprom		c 70 0  ; chmod 644 openprom
-	mknod drum		c 7 0	; chmod 640 drum ; chown root.kmem drum
+	mknod tty		c 2 0	; chmod 666 tty
 	mknod klog		c 16 0	; chmod 600 klog
 	mknod stdin		c 24 0	; chmod 666 stdin
 	mknod stdout		c 24 1	; chmod 666 stdout
 	mknod stderr		c 24 2	; chmod 666 stderr
+	mknod ksyms		c 122 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	mknod eeprom		c 3 11  ; chmod 640 eeprom ; chown root.kmem eeprom
+	mknod openprom		c 70 0  ; chmod 644 openprom
 	sh $this ttya ttyb ttyc ttyd
 	sh $this cuaa cuab cuac cuad
 	mknod fb		c 22 0 ; chmod 666 fb
 	mknod mouse		c 13 0 ; chmod 666 mouse
 	mknod kbd		c 29 0 ; chmod 666 kbd
-	mknod ksyms		c 122 0  ; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
 fd)
@@ -304,7 +304,7 @@ audio*)
 	sound=sound$unit
 	mixer=mixer$unit
 	audioctl=audioctl$unit
-	rm -f $audio $sound $mixer $audioctl
+	rm -f $sound $audio $mixer $audioctl
 	mknod $sound	c $major $unit
 	mknod $audio	c $major `add $unit 128`
 	mknod $mixer	c $major `add $unit 16`
@@ -660,6 +660,7 @@ magma*)
 
 bpp*)
 	unit=`expr $i : 'bpp\(.*\)'`
+	rm -f bpp${unit}
 	mknod bpp${unit} c 104 `add $unit 0`
 	;;
 
