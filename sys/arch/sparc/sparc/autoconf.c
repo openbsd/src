@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.50 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.51 2002/04/11 05:40:51 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -137,6 +137,10 @@ struct mountroot_hook {
 	void	(*mr_func)(struct device *);
 };
 LIST_HEAD(, mountroot_hook) mrh_list;
+
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -1794,6 +1798,9 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
+#ifdef RAMDISK_HOOKS
+		printf(" %s[a-p]", fakerdrootdev.dv_xname);
+#endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
@@ -1828,9 +1835,19 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
+#ifdef RAMDISK_HOOKS
+	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+		dv = &fakerdrootdev;
+		goto gotdisk;
+	}
+#endif
+
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
+#ifdef RAMDISK_HOOKS
+gotdisk:
+#endif
 			majdev = findblkmajor(dv);
 			unit = dv->dv_unit;
 			if (majdev < 0)
@@ -1895,7 +1912,11 @@ setroot()
 #endif
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
+#ifdef RAMDISK_HOOKS
+	bootdv = &fakerdrootdev;
+#else
 	bootdv = (bp == NULL) ? NULL : bp->dev;
+#endif
 
 	/*
 	 * (raid) device auto-configuration could have returned
@@ -2027,6 +2048,9 @@ gotswap:
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
+		if (bootdv->dv_class == DV_DISK)
+			printf("root on %s%c\n", bootdv->dv_xname,
+			    part + 'a');
 		majdev = major(rootdev);
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
