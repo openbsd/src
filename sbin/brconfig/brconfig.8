@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.27 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: brconfig.8,v 1.28 2001/12/05 09:57:20 deraadt Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -216,22 +216,22 @@ Defaults to 128, minimum of 0, maximum of 255.
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig
-.It Cm brconfig bridge0 add rl0 add xl0 up
+.It Cm # brconfig bridge0 add rl0 add xl0 up
 Add the Ethernet interfaces rl0 and xl0 to the bridge bridge0, and
 start the bridge forwarding packets.
-.It Cm brconfig bridge0
+.It Cm # brconfig bridge0
 Retrieve a list of interfaces that are members of bridge0, and the addresses
 learned by the bridge.
-.It Cm brconfig bridge0 down
+.It Cm # brconfig bridge0 down
 Stop bridge0 from forwarding packets.
-.It Cm brconfig bridge0 delete xl0
+.It Cm # brconfig bridge0 delete xl0
 Remove the interface xl0 from the bridge bridge0.
-.It Cm brconfig bridge0 flush
+.It Cm # brconfig bridge0 flush
 Flush all dynamically learned addresses from the address cache.
-.It Cm brconfig bridge0 flushall
+.It Cm # brconfig bridge0 flushall
 Remove all addresses, including static addresses, from the address cache.
-.It Cm brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
-.It Cm brconfig bridge0 -discover xl0
+.It Cm # brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
+.It Cm # brconfig bridge0 -discover xl0
 The examples above mark the xl0 interface so that it will not learn
 addresses and adds a static entry for the host 8:0:20:1e:2f:2b on the xl0
 segment.
@@ -242,10 +242,10 @@ and means that bogus MAC addresses seen by the xl0 side of the bridge
 will not be propagated to the rest of the network.
 Also, no packets will be sent on xl0 segment by the bridge unless they are
 broadcast packets or are for 8:0:20:1e:2f:2b.
-.It Cm "brconfig bridge0 rule pass in on fxp0 src 0:1:2:3:4:5 dst 5:4:3:2:1:0"
-.It Cm "brconfig bridge0 rule pass out on fxp0 src 5:4:3:2:1:0 dst 0:1:2:3:4:5"
-.It Cm brconfig bridge0 rule block in on fxp0
-.It Cm brconfig bridge0 rule block out on fxp0
+.It Cm "# brconfig bridge0 rule pass in on fxp0 src 0:1:2:3:4:5 dst 5:4:3:2:1:0"
+.It Cm "# brconfig bridge0 rule pass out on fxp0 src 5:4:3:2:1:0 dst 0:1:2:3:4:5"
+.It Cm # brconfig bridge0 rule block in on fxp0
+.It Cm # brconfig bridge0 rule block out on fxp0
 The above commands will set up a filter so that 0:1:2:3:4:5 can send frames
 through fxp0 only to 5:4:3:2:1, and 5:4:3:2:1:0 can return frames through
 fxp0 to 0:1:2:3:4:5.
