@@ -430,18 +430,20 @@ smfi_setmlreply(ctx, rcode, xcode, va_alist)
 
 		tl = strlen(txt);
 		if (tl > MAXREPLYLEN)
-			return MI_FAILURE;
+			break;
 
 		/* this text, reply codes, \r\n */
 		len += tl + 2 + rlen;
 		if (++args > MAXREPLIES)
-			return MI_FAILURE;
+			break;
 
 		/* XXX check also for unprintable chars? */
 		if (strpbrk(txt, "\r\n") != NULL)
-			return MI_FAILURE;
+			break;
 	}
 	SM_VA_END(ap);
+	if (txt != NULL)
+		return MI_FAILURE;
 
 	/* trailing '\0' */
 	++len;

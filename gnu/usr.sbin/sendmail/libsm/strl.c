@@ -229,6 +229,7 @@ sm_strlcpyn(dst, len, n, va_alist)
 		i = 0;
 		while (n-- > 0)
 			i += strlen(SM_VA_ARG(ap, char *));
+		SM_VA_END(ap);
 		return i;
 	}
 
@@ -251,9 +252,11 @@ sm_strlcpyn(dst, len, n, va_alist)
 			j += strlen(str + i);
 			while (n-- > 0)
 				j += strlen(SM_VA_ARG(ap, char *));
+			SM_VA_END(ap);
 			return j;
 		}
 	}
+	SM_VA_END(ap);
 
 	dst[j] = '\0';	/* terminate dst; there is space since j < len */
 	return j;
