@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.7 1996/06/12 07:58:41 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.8 1996/06/17 02:21:53 downsj Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -126,11 +126,13 @@ main(argc, argv)
 	else
 		progname = argv[0];
 
-	if (strcmp(progname, "eject") == 0)
+	if (strcmp(progname, "eject") == 0) {
 		eject = 1;
-
-	if ((tape = getenv("TAPE")) == NULL)
-		tape = DEFTAPE;
+		tape = NULL;
+	} else {
+		if ((tape = getenv("TAPE")) == NULL)
+			tape = DEFTAPE;
+	}
 
 	while ((ch = getopt(argc, argv, "f:t:")) != -1) {
 		switch (ch) {
@@ -155,6 +157,9 @@ main(argc, argv)
 		if (argc != 0)
 			usage();
 	} else if (argc < 1 || argc > 2)
+		usage();
+
+	if (tape == NULL)
 		usage();
 
 	if (strchr(tape, ':')) {
