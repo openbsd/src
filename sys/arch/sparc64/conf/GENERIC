@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.115 2004/12/30 13:06:58 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.116 2005/01/14 12:21:02 grange Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -144,6 +144,7 @@ scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
+#ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 
 #### Standard system devices -- all required for a given architecture

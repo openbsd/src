@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2005/01/06 21:32:56 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.19 2005/01/14 12:21:02 grange Exp $
 #
 # GENERIC machine description file
 #
@@ -216,6 +216,7 @@ scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
+#ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 
 # Audio Devices

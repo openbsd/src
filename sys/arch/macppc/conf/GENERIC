@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.66 2005/01/03 21:42:54 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.67 2005/01/14 12:21:02 grange Exp $g
 #
 # PPC GENERIC config file
 #
@@ -223,6 +223,7 @@ scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
+#ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 
 # CardBus bus support
