@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2001/03/01 23:19:34 drahn Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 2001/03/29 19:56:33 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -183,6 +183,9 @@ cdev_decl(ucom);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#include "audio.h"
+cdev_decl(audio);
+
 
 struct cdevsw cdevsw[] = {
         cdev_cn_init(1,cn),             /* 0: virtual console */
@@ -229,7 +232,7 @@ struct cdevsw cdevsw[] = {
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
-        cdev_notdef(),                  /* 44 */
+	cdev_audio_init(NAUDIO,audio),  /* 44: generic audio I/O */
         cdev_notdef(),                  /* 45 */
         cdev_notdef(),                  /* 46 */
         cdev_notdef(),                  /* 47 */
