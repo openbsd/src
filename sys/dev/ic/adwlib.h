@@ -1,5 +1,5 @@
-/*	$OpenBSD: adwlib.h,v 1.3 2000/04/29 21:12:31 krw Exp $ */
-/*      $NetBSD: adwlib.h,v 1.7 2000/02/03 20:29:16 dante Exp $        */
+/*	$OpenBSD: adwlib.h,v 1.4 2000/06/29 00:04:31 krw Exp $ */
+/*      $NetBSD: adwlib.h,v 1.13 2000/05/27 18:24:50 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -43,10 +43,10 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- *     
- * Copyright (c) 1995-1996 Advanced System Products, Inc.
+ * 
+ * Copyright (c) 1995-2000 Advanced System Products, Inc.
  * All Rights Reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that redistributions of source
  * code retain the above copyright notice and this comment without
@@ -62,11 +62,18 @@
  */
 
 #define ADW_LIB_VERSION_MAJOR	5
-#define ADW_LIB_VERSION_MINOR	2
+#define ADW_LIB_VERSION_MINOR	8
+
+
+/* If the result wraps when calculating tenths, return 0. */
+#define ADW_TENTHS(num, den) \
+	(((10 * ((num)/(den))) > (((num) * 10)/(den))) ? \
+	0 : ((((num) * 10)/(den)) - (10 * ((num)/(den)))))
+
 
 /*
  * Define Adv Reset Hold Time grater than 25 uSec.
- * See AdvResetSCSIBus() for more info.
+ * See AdwResetSCSIBus() for more info.
  */
 #define ASC_SCSI_RESET_HOLD_TIME_US  60
 
@@ -101,8 +108,7 @@
  *  this field may be set, but later if a device is found to be incapable
  *  of the feature, the field is cleared.
  *
- * Default values are maintained in a_init.c in the structure
- * Default_EEPROM_Config.
+ * Default values are maintained in the structure Default_EEPROM_Config.
  */
 #define ADV_EEPROM_BIG_ENDIAN          0x8000   /* EEPROM Bit 15 */
 #define ADV_EEPROM_BIOS_ENABLE         0x4000   /* EEPROM Bit 14 */
@@ -114,7 +120,20 @@
 #define ADV_EEPROM_TERM_POL            0x2000   /* EEPROM Bit 13 */
 #define ADV_EEPROM_CIS_LD              0x2000   /* EEPROM Bit 13 */
 
-typedef struct adw_eep_3550_config
+/*
+ * ASC38C1600 Bit 11
+ *
+ * If EEPROM Bit 11 is 0 for Function 0, then Function 0 will specify
+ * INT A in the PCI Configuration Space Int Pin field. If it is 1, then
+ * Function 0 will specify INT B.
+ *
+ * If EEPROM Bit 11 is 0 for Function 1, then Function 1 will specify
+ * INT B in the PCI Configuration Space Int Pin field. If it is 1, then
+ * Function 1 will specify INT A.
+ */
+#define ADW_EEPROM_INTAB               0x0800   /* EEPROM Bit 11 */
+
+typedef struct adw_eeprom
 {                              
 						/* Word Offset, Description */
 
@@ -122,80 +141,13 @@ typedef struct adw_eep_3550_config
 						/*  bit 13 set - Term Polarity Control */
 						/*  bit 14 set - BIOS Enable */
 						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused	   */
+	u_int16_t	cfg_msw;		/* 01 unused	*/
 	u_int16_t	disc_enable;		/* 02 disconnect enable */
 	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
-	u_int16_t	sdtr_able;		/* 04 Synchronous DTR able */
-	u_int16_t	start_motor;		/* 05 send start up motor */
-	u_int16_t	tagqng_able;		/* 06 tag queuing able */
-	u_int16_t	bios_scan;		/* 07 BIOS device control */
-	u_int16_t	scam_tolerant;		/* 08 no scam */
-
-	u_int8_t	adapter_scsi_id;	/* 09 Host Adapter ID */
-	u_int8_t	bios_boot_delay;	/*    power up wait */
-
-	u_int8_t	scsi_reset_delay;	/* 10 reset delay */
-	u_int8_t	bios_id_lun;		/*    first boot device scsi id & lun */
-						/*    high nibble is lun */
-						/*    low nibble is scsi id */
-
-	u_int8_t	termination;  		 /* 11 0 - automatic */
-						/*    1 - low off / high off */
-						/*    2 - low off / high on */
-						/*    3 - low on  / high on */
-						/*    There is no low on  / high off */
-
-	u_int8_t	reserved1;		/*    reserved byte (not used) */
-
-	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  set: BIOS don't act as initiator. */
-						/*  bit 1  set: BIOS > 1 GB support */
-						/*  bit 2  set: BIOS > 2 Disk Support */
-						/*  bit 3  set: BIOS don't support removables */
-						/*  bit 4  set: BIOS support bootable CD */
-						/*  bit 5  set: */
-						/*  bit 6  set: BIOS support multiple LUNs */
-						/*  bit 7  set: BIOS display of message */
-						/*  bit 8  set: */
-						/*  bit 9  set: Reset SCSI bus during init. */
-						/*  bit 10 set: */
-						/*  bit 11 set: No verbose initialization. */
-						/*  bit 12 set: SCSI parity enabled */
-						/*  bit 13 set: */
-						/*  bit 14 set: */
-						/*  bit 15 set: */
-	u_int16_t	ultra_able;		/* 13 ULTRA speed able */
-	u_int16_t	reserved2;		/* 14 reserved */
-	u_int8_t	max_host_qng;		/* 15 maximum host queuing */
-	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
-	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
-	u_int16_t	bug_fix;		/* 17 control bit for bug fix */
-	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
-	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
-	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
-	u_int16_t	check_sum;		/* 21 EEP check sum */
-	u_int8_t	oem_name[16];		/* 22 OEM name */
-	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
-	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
-	u_int16_t	adv_err_addr;		/* 32 last uc error address */
-	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code   */
-	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address	 */
-	u_int16_t	num_of_err;		/* 36 number of error */
-} ADW_EEP_3550_CONFIG; 
-
-typedef struct adw_eep_38C0800_config
-{
-						/* Word Offset, Description */
-
-	u_int16_t	cfg_lsw;		/* 00 power up initialization */
-						/*  bit 13 set - Load CIS */
-						/*  bit 14 set - BIOS Enable */
-						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused      */
-	u_int16_t	disc_enable;		/* 02 disconnect enable */
-	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
-	u_int16_t	sdtr_speed1;		/* 04 SDTR Speed TID 0-3 */
+	union {
+		u_int16_t	sdtr_able;	/* 04 Synchronous DTR able */
+		u_int16_t	sdtr_speed1;	/* 04 SDTR Speed TID 0-3 */
+	} sdtr1;
 	u_int16_t	start_motor;		/* 05 send start up motor */
 	u_int16_t	tagqng_able;		/* 06 tag queuing able */
 	u_int16_t	bios_scan;		/* 07 BIOS device control */
@@ -222,68 +174,54 @@ typedef struct adw_eep_38C0800_config
 						/*    There is no low on  / high off */
 
 	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  set: BIOS don't act as initiator. */
-						/*  bit 1  set: BIOS > 1 GB support */
-						/*  bit 2  set: BIOS > 2 Disk Support */
-						/*  bit 3  set: BIOS don't support removables */
-						/*  bit 4  set: BIOS support bootable CD */
-						/*  bit 5  set: BIOS scan enabled */
-						/*  bit 6  set: BIOS support multiple LUNs */
-						/*  bit 7  set: BIOS display of message */
-						/*  bit 8  set: */
-						/*  bit 9  set: Reset SCSI bus during init. */
-						/*  bit 10 set: */
-						/*  bit 11 set: No verbose initialization. */
-						/*  bit 12 set: SCSI parity enabled */
-						/*  bit 13 set: */
-						/*  bit 14 set: */
-						/*  bit 15 set: */
-	u_int16_t	sdtr_speed2;		/* 13 SDTR speed TID 4-7 */
-	u_int16_t	sdtr_speed3;		/* 14 SDTR speed TID 8-11 */
-	u_int8_t	max_host_qng;		/* 15 maximum host queueing */
+						  	  /*  bit 0  BIOS don't act as initiator. */
+						/*  bit 1  BIOS > 1 GB support */
+						/*  bit 2  BIOS > 2 Disk Support */
+						/*  bit 3  BIOS don't support removables */
+						/*  bit 4  BIOS support bootable CD */
+						/*  bit 5  BIOS scan enabled */
+						/*  bit 6  BIOS support multiple LUNs */
+						/*  bit 7  BIOS display of message */
+						/*  bit 8  SCAM disabled */
+						/*  bit 9  Reset SCSI bus during init. */
+						/*  bit 10 */
+						/*  bit 11 No verbose initialization. */
+						/*  bit 12 SCSI parity enabled */
+						/*  bit 13 */
+						/*  bit 14 */
+						/*  bit 15 */
+	union {
+		u_int16_t	ultra_able;	/* 13 ULTRA speed able */
+		u_int16_t	sdtr_speed2;	/* 13 SDTR speed TID 4-7 */
+	} sdtr2;
+	union {
+		u_int16_t	reserved2;	/* 14 reserved */
+		u_int16_t	sdtr_speed3;	/* 14 SDTR speed TID 8-11 */
+	} sdtr3;
+	u_int8_t	max_host_qng;		/* 15 maximum host queuing */
 	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
 	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
-	u_int16_t	sdtr_speed4;		/* 17 SDTR speed 4 TID 12-15 */
-	u_int16_t 	serial_number_word1;	/* 18 Board serial number word 1 */
-	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
-	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
+	union {
+		u_int16_t	bug_fix;	/* 17 control bit for bug fix */
+		u_int16_t	sdtr_speed4;	/* 17 SDTR speed 4 TID 12-15 */
+	} sdtr4;
+	u_int16_t	serial_number[3];	/* 18 - 20 Board serial number */
 	u_int16_t	check_sum;		/* 21 EEP check sum */
 	u_int8_t	oem_name[16];		/* 22 OEM name */
 	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
 	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
 	u_int16_t	adv_err_addr;		/* 32 last uc error address */
-	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code   */
+	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
 	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address         */
-	u_int16_t	reserved36;		/* 36 reserved */
-	u_int16_t	reserved37;		/* 37 reserved */
-	u_int16_t	reserved38;	   	/* 38 reserved */
-	u_int16_t	reserved39;	   	/* 39 reserved */
-	u_int16_t	reserved40;	   	/* 40 reserved */
-	u_int16_t	reserved41;	   	/* 41 reserved */
-	u_int16_t	reserved42;	   	/* 42 reserved */
-	u_int16_t	reserved43;	   	/* 43 reserved */
-	u_int16_t	reserved44;	   	/* 44 reserved */
-	u_int16_t	reserved45;	   	/* 45 reserved */
-	u_int16_t	reserved46;	   	/* 46 reserved */
-	u_int16_t	reserved47;	   	/* 47 reserved */
-	u_int16_t	reserved48;	   	/* 48 reserved */
-	u_int16_t	reserved49;	   	/* 49 reserved */
-	u_int16_t	reserved50;	   	/* 50 reserved */
-	u_int16_t	reserved51;	   	/* 51 reserved */
-	u_int16_t	reserved52;	   	/* 52 reserved */
-	u_int16_t	reserved53;	   	/* 53 reserved */
-	u_int16_t	reserved54;	   	/* 54 reserved */
-	u_int16_t	reserved55;	   	/* 55 reserved */
-	u_int16_t	cisptr_lsw;	   	/* 56 CIS PTR LSW */
-	u_int16_t	cisprt_msw;	   	/* 57 CIS PTR MSW */
+	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
+	u_int16_t	reserved1[20];		/* 36 - 55 reserved */
+	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
+	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
 	u_int16_t	subsysvid;		/* 58 SubSystem Vendor ID */
 	u_int16_t	subsysid;		/* 59 SubSystem ID */
-	u_int16_t	reserved60;	   	/* 60 reserved */
-	u_int16_t	reserved61;	   	/* 61 reserved */
-	u_int16_t	reserved62;	   	/* 62 reserved */
-	u_int16_t	reserved63;	   	/* 63 reserved */
-} ADW_EEP_38C0800_CONFIG;
+	u_int16_t	reserved2[4];		/* 60 - 63 reserved */
+} ADW_EEPROM;
+
 
 /*
  * EEPROM Commands
@@ -311,16 +249,17 @@ typedef struct adw_eep_38C0800_config
 #define BIOS_CTRL_RESET_SCSI_BUS     0x0200
 #define BIOS_CTRL_INIT_VERBOSE       0x0800
 #define BIOS_CTRL_SCSI_PARITY        0x1000
+#define BIOS_CTRL_AIPP_DIS           0x2000
 
-#define ADV_3550_MEMSIZE             0x2000	/* 8 KB Internal Memory */
-#define ADV_3550_IOLEN               0x40	/* I/O Port Range in bytes */
+#define ADW_3550_MEMSIZE             0x2000	/* 8 KB Internal Memory */
+#define ADW_3550_IOLEN               0x40	/* I/O Port Range in bytes */
 
-#define ADV_38C0800_MEMSIZE          0x4000	/* 16 KB Internal Memory */
-#define ADV_38C0800_IOLEN            0x100	/* I/O Port Range in bytes */
+#define ADW_38C0800_MEMSIZE          0x4000	/* 16 KB Internal Memory */
+#define ADW_38C0800_IOLEN            0x100	/* I/O Port Range in bytes */
 
-#define ADV_38C1600_MEMSIZE          0x4000	/* 16 KB Internal Memory */
-#define ADV_38C1600_IOLEN            0x100	/* I/O Port Range 256 bytes */
-#define ADV_38C1600_MEMLEN           0x1000	/* Memory Range 4KB bytes */
+#define ADW_38C1600_MEMSIZE          0x8000	/* 32 KB Internal Memory */
+#define ADW_38C1600_IOLEN            0x100	/* I/O Port Range 256 bytes */
+#define ADW_38C1600_MEMLEN           0x1000	/* Memory Range 4KB bytes */
 
 /*
  * Byte I/O register address from base of 'iop_base'.
@@ -532,6 +471,14 @@ typedef struct adw_eep_38C0800_config
 
 /*
  * Addendum for ASC-38C0800 Chip
+ *
+ * The ASC-38C1600 Chip uses the same definitions except that the
+ * bus mode override bits [12:10] have been moved to byte register
+ * offset 0xE (IOPB_SOFT_OVER_WR) bits [12:10]. The [12:10] bits in
+ * SCSI_CFG1 are read-only and always available. Bit 14 (DIS_TERM_DRV)
+ * is not needed. The [12:10] bits in IOPB_SOFT_OVER_WR are write-only.
+ * Also each ASC-38C1600 function or channel uses only cable bits [5:4]
+ * and [1:0]. Bits [14], [7:6], [3:2] are unused.
  */
 #define ADW_DIS_TERM_DRV    0x4000  /* 1: Read c_det[3:0], 0: cannot read */
 #define ADW_HVD_LVD_SE      0x1C00  /* Device Detect Bits */
@@ -640,6 +587,37 @@ typedef struct adw_eep_38C0800_config
 #define PRE_TEST_VALUE        0x05
 #define NORMAL_VALUE          0x00
 
+/*
+ * ASC38C1600 Definitions
+ *
+ * IOPB_PCI_INT_CFG Bit Field Definitions
+ */
+
+#define INTAB_LD	0x80    /* Value loaded from EEPROM Bit 11. */
+
+/*
+ * Bit 1 can be set to change the interrupt for the Function to operate in
+ * Totem Pole mode. By default Bit 1 is 0 and the interrupt operates in
+ * Open Drain mode. Both functions of the ASC38C1600 must be set to the same
+ * mode, otherwise the operating mode is undefined.
+ */
+#define TOTEMPOLE	0x02
+
+/*
+ * Bit 0 can be used to change the Int Pin for the Function. The value is
+ * 0 by default for both Functions with Function 0 using INT A and Function
+ * B using INT B. For Function 0 if set, INT B is used. For Function 1 if set,
+ * INT A is used.
+ *
+ * EEPROM Word 0 Bit 11 for each Function may change the initial Int Pin
+ * value specified in the PCI Configuration Space.
+ */
+#define INTAB		0x01
+
+
+#define ADW_MAX_TID                     15 /* max. target identifier */
+#define ADW_MAX_LUN                     7  /* max. logical unit number */
+
 
 /*
  * Adv Library Status Definitions
@@ -653,76 +631,31 @@ typedef struct adw_eep_38C0800_config
 
 
 /*
- * ASC_DVC_VAR 'warn_code' values
+ * Warning code values for AdwInitFrom*EEP() functions
  */
-#define ASC_WARN_BUSRESET_ERROR         0x0001 /* SCSI Bus Reset error */
-#define ASC_WARN_EEPROM_CHKSUM          0x0002 /* EEP check sum error */
-#define ASC_WARN_EEPROM_TERMINATION     0x0004 /* EEP termination bad field */
-#define ASC_WARN_SET_PCI_CONFIG_SPACE   0x0080 /* PCI config space set error */
-#define ASC_WARN_ERROR                  0xFFFF /* ADW_ERROR return */
-
-#define ADW_MAX_TID                     15 /* max. target identifier */
-#define ADW_MAX_LUN                     7  /* max. logical unit number */
-
+#define ADW_WARN_BUSRESET_ERROR         0x0001 /* SCSI Bus Reset error */
+#define ADW_WARN_EEPROM_CHKSUM          0x0002 /* EEP check sum error */
+#define ADW_WARN_EEPROM_TERMINATION     0x0004 /* EEP termination bad field */
+#define ADW_WARN_SET_PCI_CONFIG_SPACE   0x0080 /* PCI config space set error */
+#define ADW_WARN_ERROR                  0xFFFF /* ADW_ERROR return */
 
 /*
- * AscInitGetConfig() and AscInitAsc1000Driver() Definitions
- *
- * Error code values are set in ASC_DVC_VAR 'err_code'.
+ * Error code values for AdwInitAsc*Driver() functions
  */
-#define ASC_IERR_WRITE_EEPROM       0x0001 /* write EEPROM error */
-#define ASC_IERR_MCODE_CHKSUM       0x0002 /* micro code check sum error */
-#define ASC_IERR_NO_CARRIER         0x0004 /* No more carrier memory. */
-#define ASC_IERR_START_STOP_CHIP    0x0008 /* start/stop chip failed */
-#define ASC_IERR_CHIP_VERSION       0x0040 /* wrong chip version */
-#define ASC_IERR_SET_SCSI_ID        0x0080 /* set SCSI ID failed */
-#define ASC_IERR_HVD_DEVICE         0x0100 /* HVD attached to LVD connector. */
-#define ASC_IERR_BAD_SIGNATURE      0x0200 /* signature not found */
-#define ASC_IERR_ILLEGAL_CONNECTION 0x0400 /* Illegal cable connection */
-#define ASC_IERR_SINGLE_END_DEVICE  0x0800 /* Single-end used w/differential */
-#define ASC_IERR_REVERSED_CABLE     0x1000 /* Narrow flat cable reversed */
-#define ASC_IERR_BIST_PRE_TEST      0x2000 /* BIST pre-test error */
-#define ASC_IERR_BIST_RAM_TEST      0x4000 /* BIST RAM test error */
-#define ASC_IERR_BAD_CHIPTYPE       0x8000 /* Invalid 'chip_type' setting. */
-
-/*
- * Fixed locations of microcode operating variables.
- */
-#define ASC_MC_CODE_BEGIN_ADDR          0x0028 /* microcode start address */
-#define ASC_MC_CODE_END_ADDR            0x002A /* microcode end address */
-#define ASC_MC_CODE_CHK_SUM             0x002C /* microcode code checksum */
-#define ASC_MC_VERSION_DATE             0x0038 /* microcode version */
-#define ASC_MC_VERSION_NUM              0x003A /* microcode number */
-#define ASC_MC_BIOSMEM                  0x0040 /* BIOS RISC Memory Start */
-#define ASC_MC_BIOSLEN                  0x0050 /* BIOS RISC Memory Length */
-#define ASC_MC_BIOS_SIGNATURE           0x0058 /* BIOS Signature 0x55AA */
-#define ASC_MC_BIOS_VERSION             0x005A /* BIOS Version (2 bytes) */
-#define ASC_MC_SDTR_SPEED1              0x0090 /* SDTR Speed for TID 0-3 */
-#define ASC_MC_SDTR_SPEED2              0x0092 /* SDTR Speed for TID 4-7 */
-#define ASC_MC_SDTR_SPEED3              0x0094 /* SDTR Speed for TID 8-11 */
-#define ASC_MC_SDTR_SPEED4              0x0096 /* SDTR Speed for TID 12-15 */
-#define ASC_MC_CHIP_TYPE                0x009A
-#define ASC_MC_INTRB_CODE               0x009B
-#define ASC_MC_WDTR_ABLE                0x009C
-#define ASC_MC_SDTR_ABLE                0x009E
-#define ASC_MC_TAGQNG_ABLE              0x00A0
-#define ASC_MC_DISC_ENABLE              0x00A2
-#define ASC_MC_IDLE_CMD_STATUS          0x00A4
-#define ASC_MC_IDLE_CMD                 0x00A6
-#define ASC_MC_IDLE_CMD_PARAMETER       0x00A8
-#define ASC_MC_DEFAULT_SCSI_CFG0        0x00AC
-#define ASC_MC_DEFAULT_SCSI_CFG1        0x00AE
-#define ASC_MC_DEFAULT_MEM_CFG          0x00B0
-#define ASC_MC_DEFAULT_SEL_MASK         0x00B2
-#define ASC_MC_SDTR_DONE                0x00B6
-#define ASC_MC_NUMBER_OF_QUEUED_CMD     0x00C0
-#define ASC_MC_NUMBER_OF_MAX_CMD        0x00D0
-#define ASC_MC_DEVICE_HSHK_CFG_TABLE    0x0100
-#define ASC_MC_CONTROL_FLAG             0x0122 /* Microcode control flag. */
-#define ASC_MC_WDTR_DONE                0x0124
-#define ASC_MC_CAM_MODE_MASK            0x015E /* CAM mode TID bitmask. */
-#define ASC_MC_ICQ                      0x0160
-#define ASC_MC_IRQ                      0x0164
+#define ADW_IERR_WRITE_EEPROM       0x0001 /* write EEPROM error */
+#define ADW_IERR_MCODE_CHKSUM       0x0002 /* micro code check sum error */
+#define ADW_IERR_NO_CARRIER         0x0004 /* No more carrier memory. */
+#define ADW_IERR_START_STOP_CHIP    0x0008 /* start/stop chip failed */
+#define ADW_IERR_CHIP_VERSION       0x0040 /* wrong chip version */
+#define ADW_IERR_SET_SCSI_ID        0x0080 /* set SCSI ID failed */
+#define ADW_IERR_HVD_DEVICE         0x0100 /* HVD attached to LVD connector. */
+#define ADW_IERR_BAD_SIGNATURE      0x0200 /* signature not found */
+#define ADW_IERR_ILLEGAL_CONNECTION 0x0400 /* Illegal cable connection */
+#define ADW_IERR_SINGLE_END_DEVICE  0x0800 /* Single-end used w/differential */
+#define ADW_IERR_REVERSED_CABLE     0x1000 /* Narrow flat cable reversed */
+#define ADW_IERR_BIST_PRE_TEST      0x2000 /* BIST pre-test error */
+#define ADW_IERR_BIST_RAM_TEST      0x4000 /* BIST RAM test error */
+#define ADW_IERR_BAD_CHIPTYPE       0x8000 /* Invalid 'chip_type' setting. */
 
 /*
  * BIOS LRAM variable absolute offsets.
@@ -733,46 +666,11 @@ typedef struct adw_eep_38C0800_config
 #define BIOS_VERSION    0x5A
 
 /*
- * Microcode Control Flags
- *
- * Flags set by the Adv Library in RISC variable 'control_flag' (0x122)
- * and handled by the microcode.
+ * Chip Type flag values
  */
-#define CONTROL_FLAG_IGNORE_PERR        0x0001 /* Ignore DMA Parity Errors */
-
-/*
- * ASC_MC_DEVICE_HSHK_CFG_TABLE microcode table or HSHK_CFG register format
- */
-#define HSHK_CFG_WIDE_XFR       0x8000
-#define HSHK_CFG_RATE           0x0F00
-#define HSHK_CFG_OFFSET         0x001F
-
-#define ASC_DEF_MAX_HOST_QNG    0xFD /* Max. number of host commands (253) */
-#define ASC_DEF_MIN_HOST_QNG    0x10 /* Min. number of host commands (16) */
-#define ASC_DEF_MAX_DVC_QNG     0x3F /* Max. number commands per device (63) */
-#define ASC_DEF_MIN_DVC_QNG     0x04 /* Min. number commands per device (4) */
-
-#define ASC_QC_DATA_CHECK  0x01 /* Require ASC_QC_DATA_OUT set or clear. */
-#define ASC_QC_DATA_OUT    0x02 /* Data out DMA transfer. */
-#define ASC_QC_START_MOTOR 0x04 /* Send auto-start motor before request. */
-#define ASC_QC_NO_OVERRUN  0x08 /* Don't report overrun. */
-#define ASC_QC_FREEZE_TIDQ 0x10 /* Freeze TID queue after request. XXX TBD */
-
-#define ASC_QSC_NO_DISC     0x01 /* Don't allow disconnect for request. */
-#define ASC_QSC_NO_TAGMSG   0x02 /* Don't allow tag queuing for request. */
-#define ASC_QSC_NO_SYNC     0x04 /* Don't use Synch. transfer on request. */
-#define ASC_QSC_NO_WIDE     0x08 /* Don't use Wide transfer on request. */
-#define ASC_QSC_REDO_DTR    0x10 /* Renegotiate WDTR/SDTR before request. */
-/*
- * Note: If a Tag Message is to be sent and neither ASC_QSC_HEAD_TAG or
- * ASC_QSC_ORDERED_TAG is set, then a Simple Tag Message (0x20) is used.
- */
-#define ASC_QSC_HEAD_TAG    0x40 /* Use Head Tag Message (0x21). */
-#define ASC_QSC_ORDERED_TAG 0x80 /* Use Ordered Tag Message (0x22). */
-
-#define ADV_CHIP_ASC3550          0x01   /* Ultra-Wide IC */
-#define ADV_CHIP_ASC38C0800       0x02   /* Ultra2-Wide/LVD IC */
-#define ADV_CHIP_ASC38C1600       0x03   /* Ultra3-Wide/LVD2 IC */
+#define ADW_CHIP_ASC3550          0x01   /* Ultra-Wide IC */
+#define ADW_CHIP_ASC38C0800       0x02   /* Ultra2-Wide/LVD IC */
+#define ADW_CHIP_ASC38C1600       0x03   /* Ultra3-Wide/LVD2 IC */
 
 /*
  * Adapter temporary configuration structure
@@ -788,15 +686,16 @@ typedef struct adw_eep_38C0800_config
 typedef struct adw_dvc_cfg {
 	u_int16_t	disc_enable;	/* enable disconnection */
 	u_int8_t	chip_version;	/* chip version */
-	u_int8_t	termination;	/* Term. Ctrl. bits 6-5 of SCSI_CFG1 register */
+	u_int8_t	termination;	/* Term. Ctrl. bits 6-5 of SCSI_CFG1 */
 	u_int16_t	pci_device_id;	/* PCI device code number */
 	u_int16_t	lib_version;	/* Adv Library version number */
 	u_int16_t	control_flag;	/* Microcode Control Flag */
 	u_int16_t	mcode_date;	/* Microcode date */
 	u_int16_t	mcode_version;	/* Microcode version */
-	u_int16_t	pci_slot_info;	/* high byte device/function number */
-					/* bits 7-3 device num., bits 2-0 function num. */
-					/* low byte bus num. */
+	u_int16_t	pci_slot_info;	/* high byte device/function number
+					   bits 7-3 device num.,
+					   bits 2-0 function num.
+					   low byte bus num. */
 	u_int16_t	serial1;	/* EEPROM serial number word 1 */
 	u_int16_t	serial2;	/* EEPROM serial number word 2 */
 	u_int16_t	serial3;	/* EEPROM serial number word 3 */
@@ -834,10 +733,6 @@ typedef struct adw_sg_block {
 #define	CCB_HASH_SHIFT	9
 #define CCB_HASH(x)	((((x)) >> CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
-#define	CARRIER_HASH_SIZE	32	/* hash table size for phystokv */
-#define	CARRIER_HASH_SHIFT	9
-#define CARRIER_HASH(x)	((((x)) >> CARRIER_HASH_SHIFT) & (CARRIER_HASH_SIZE - 1))
-
 typedef int (* ADW_CALLBACK) (int);
 
 typedef struct adw_softc {
@@ -853,17 +748,19 @@ typedef struct adw_softc {
 
 	struct adw_control	*sc_control; /* control structures */
 
-	struct adw_carrier	*sc_carrhash[CARRIER_HASH_SIZE];
 	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
+	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
 	struct scsi_link	sc_link;     /* prototype for devs */
 	struct scsi_adapter	sc_adapter;
 
 	LIST_HEAD(, scsi_xfer)  sc_queue;
 	struct scsi_xfer	*sc_queuelast;
 
-	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdvISR() */
-	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdvISR() */
+	int			sc_freeze_dev[ADW_MAX_TID + 1];
+
+	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdwISR() */
+	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdwISR() */
 	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
 	u_int16_t	wdtr_able;	/* try WDTR for a device */
 	u_int16_t	sdtr_able;	/* try SDTR for a device */
@@ -873,6 +770,7 @@ typedef struct adw_softc {
 	u_int16_t	sdtr_speed3;	/* EEPROM SDTR Speed for TID 8-11  */
 	u_int16_t	sdtr_speed4;	/* EEPROM SDTR Speed for TID 12-15 */
 	u_int16_t	tagqng_able;	/* try tagged queuing with a device */
+	u_int16_t	ppr_able;	/* PPR message capable per TID bitmask. */
 	u_int16_t	start_motor;	/* start motor command allowed */
 	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
 	u_int8_t	scsi_reset_wait; /* delay in seconds after scsi bus reset */
@@ -905,26 +803,26 @@ typedef struct adw_softc {
  * coordinating the change with the microcode.
  */
 typedef struct adw_scsi_req_q {
-	u_int8_t	cntl;		/* Ucode flags and state (ASC_MC_QC_*). */
+	u_int8_t	cntl;		/* Ucode flags and state (ADW_MC_QC_*). */
 	u_int8_t	target_cmd;
 	u_int8_t	target_id;	/* Device target identifier. */
 	u_int8_t	target_lun;	/* Device target logical unit number. */
 	u_int32_t	data_addr;	/* Data buffer physical address. */
 	u_int32_t	data_cnt;	/* Data count. Ucode sets to residual. */
 	u_int32_t	sense_addr;	/* Sense buffer physical address. */
-	u_int32_t	carr_pa;	/* Carrier p-address */
+	u_int32_t	carr_ba;	/* Carrier p-address */
 	u_int8_t	mflag;		/* Adv Library flag field. */
 	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
-	u_int8_t	cdb_len;	/* SCSI CDB length. */
+	u_int8_t	cdb_len;	/* SCSI CDB length. Must <= 16 bytes. */
 	u_int8_t	scsi_cntl;
-	u_int8_t	done_status;	/* Completion status. */
+	u_int8_t	done_status;	/* Completion status. (see below) */
 	u_int8_t	scsi_status;	/* SCSI status byte. (see below) */
-	u_int8_t	host_status;	/* Ucode host status. */
-	u_int8_t	sg_working_ix;	/* Ucode working SG variable. */
-	u_int8_t	cdb[12];	/* SCSI command block. */
+	u_int8_t	host_status;	/* ,uCode host status. (see below) */
+	u_int8_t	sg_working_ix;	/* ,uCode working SG variable. */
+	u_int8_t	cdb[12];	/* SCSI CDB bytes 0-11. */
 	u_int32_t	sg_real_addr;	/* SG list physical address. */
 	u_int32_t	scsiq_rptr;	/* Iternal pointer to ADW_SCSI_REQ_Q */
-	u_int32_t	sg_working_data_cnt;
+	u_int8_t	cdb16[4];	/* SCSI CDB bytes 12-15. */
 	u_int32_t	ccb_ptr;	/* CCB Physical Address */
 	u_int32_t	carr_va;	/* Carrier v-address (unused) */
 	/*
@@ -933,9 +831,61 @@ typedef struct adw_scsi_req_q {
 	 */
 	struct scsi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
 	u_char		*vdata_addr;	/* Data buffer virtual address. */
-	u_int8_t	orig_sense_len;	/* Original length of sense buffer. */
-	u_int8_t	pads[3];	/* padding bytes (align to long) */
 } ADW_SCSI_REQ_Q;
+
+/*
+ * ASC_SCSI_REQ_Q 'done_status' return values.
+ */
+#define QD_NO_STATUS         0x00       /* Request not completed yet. */
+#define QD_NO_ERROR          0x01
+#define QD_ABORTED_BY_HOST   0x02
+#define QD_WITH_ERROR        0x04
+
+/*
+ * ASC_SCSI_REQ_Q 'host_status' return values.
+ */
+#define QHSTA_NO_ERROR              0x00
+#define QHSTA_M_SEL_TIMEOUT         0x11
+#define QHSTA_M_DATA_OVER_RUN       0x12
+#define QHSTA_M_UNEXPECTED_BUS_FREE 0x13
+#define QHSTA_M_QUEUE_ABORTED       0x15
+#define QHSTA_M_SXFR_SDMA_ERR       0x16 /* SXFR_STATUS SCSI DMA Error */
+#define QHSTA_M_SXFR_SXFR_PERR      0x17 /* SXFR_STATUS SCSI Bus Parity Error */
+#define QHSTA_M_RDMA_PERR           0x18 /* RISC PCI DMA parity error */
+#define QHSTA_M_SXFR_OFF_UFLW       0x19 /* SXFR_STATUS Offset Underflow */
+#define QHSTA_M_SXFR_OFF_OFLW       0x20 /* SXFR_STATUS Offset Overflow */
+#define QHSTA_M_SXFR_WD_TMO         0x21 /* SXFR_STATUS Watchdog Timeout */
+#define QHSTA_M_SXFR_DESELECTED     0x22 /* SXFR_STATUS Deselected */
+/* Note: QHSTA_M_SXFR_XFR_OFLW is identical to QHSTA_M_DATA_OVER_RUN. */
+#define QHSTA_M_SXFR_XFR_OFLW       0x12 /* SXFR_STATUS Transfer Overflow */
+#define QHSTA_M_SXFR_XFR_PH_ERR     0x24 /* SXFR_STATUS Transfer Phase Error */
+#define QHSTA_M_SXFR_UNKNOWN_ERROR  0x25 /* SXFR_STATUS Unknown Error */
+#define QHSTA_M_SCSI_BUS_RESET      0x30 /* Request aborted from SBR */
+#define QHSTA_M_SCSI_BUS_RESET_UNSOL 0x31 /* Request aborted from unsol. SBR */
+#define QHSTA_M_BUS_DEVICE_RESET    0x32 /* Request aborted from BDR */
+#define QHSTA_M_DIRECTION_ERR       0x35 /* Data Phase mismatch */
+#define QHSTA_M_DIRECTION_ERR_HUNG  0x36 /* Data Phase mismatch and bus hang */
+#define QHSTA_M_WTM_TIMEOUT         0x41
+#define QHSTA_M_BAD_CMPL_STATUS_IN  0x42
+#define QHSTA_M_NO_AUTO_REQ_SENSE   0x43
+#define QHSTA_M_AUTO_REQ_SENSE_FAIL 0x44
+#define QHSTA_M_INVALID_DEVICE      0x45 /* Bad target ID */
+#define QHSTA_M_FROZEN_TIDQ         0x46 /* TID Queue frozen. */
+#define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
+
+/*
+ * ASC_SCSI_REQ_Q 'scsi_status' return values.
+ */
+#define SCSI_STATUS_GOOD		0x00
+#define SCSI_STATUS_CHECK_CONDITION	0x02
+#define SCSI_STATUS_CONDITION_MET	0x04
+#define SCSI_STATUS_TARGET_BUSY		0x08
+#define SCSI_STATUS_INTERMID		0x10
+#define SCSI_STATUS_INTERMID_COND_MET	0x14
+#define SCSI_STATUS_RSERV_CONFLICT	0x18
+#define SCSI_STATUS_CMD_TERMINATED	0x22
+#define SCSI_STATUS_QUEUE_FULL		0x28
+
 
 /*
  * Microcode idle loop commands
@@ -954,7 +904,7 @@ typedef struct adw_scsi_req_q {
 #define IDLE_CMD_STATUS_FAILURE      0x0002
 
 /*
- * AdvSendIdleCmd() flag definitions.
+ * AdwSendIdleCmd() flag definitions.
  */
 #define ADW_NOWAIT     0x01
 
@@ -989,6 +939,10 @@ typedef struct adw_scsi_req_q {
 /* Write word (2 bytes) to a register. */
 #define ADW_WRITE_WORD_REGISTER(iot, ioh, reg_off, word) \
 	bus_space_write_2((iot), (ioh), (reg_off), (word))
+
+/* Write double word (4 bytes) to a register. */
+#define ADW_WRITE_DWORD_REGISTER(iot, ioh, reg_off, dword) \
+	bus_space_write_4((iot), (ioh), (reg_off), (dword))
 
 /* Read byte from LRAM. */
 #define ADW_READ_BYTE_LRAM(iot, ioh, addr, byte) \
@@ -1071,7 +1025,7 @@ do { \
  *      ADW_FALSE(0) - Queue was not found on the active queue list.
  */
 #define ADW_ABORT_CCB(sc, ccb_ptr) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey)
+	AdwSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey)
 
 /*
  * Send a Bus Device Reset Message to the specified target ID.
@@ -1085,7 +1039,7 @@ do { \
  *                     are not purged.
  */
 #define ADW_RESET_DEVICE(sc, target_id) \
-	AdvSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, (target_id), 0)
+	AdwSendIdleCmd((sc), (u_int16_t) IDLE_CMD_DEVICE_RESET, (target_id), 0)
 
 /*
  * SCSI Wide Type definition.
@@ -1104,46 +1058,12 @@ do { \
 #define ADW_TID_TO_TIDMASK(tid)   (0x01 << ((tid) & ADW_MAX_TID))
 
 /*
- * ASC_SCSI_REQ_Q 'done_status' and 'host_status' return values.
+ * SCSI Inquiry structure
  */
 
-#define QD_NO_STATUS         0x00       /* Request not completed yet. */
-#define QD_NO_ERROR          0x01
-#define QD_ABORTED_BY_HOST   0x02
-#define QD_WITH_ERROR        0x04
-
-#define QHSTA_NO_ERROR              0x00
-#define QHSTA_M_SEL_TIMEOUT         0x11
-#define QHSTA_M_DATA_OVER_RUN       0x12
-#define QHSTA_M_UNEXPECTED_BUS_FREE 0x13
-#define QHSTA_M_QUEUE_ABORTED       0x15
-#define QHSTA_M_SXFR_SDMA_ERR       0x16 /* SXFR_STATUS SCSI DMA Error */
-#define QHSTA_M_SXFR_SXFR_PERR      0x17 /* SXFR_STATUS SCSI Bus Parity Error */
-#define QHSTA_M_RDMA_PERR           0x18 /* RISC PCI DMA parity error */
-#define QHSTA_M_SXFR_OFF_UFLW       0x19 /* SXFR_STATUS Offset Underflow */
-#define QHSTA_M_SXFR_OFF_OFLW       0x20 /* SXFR_STATUS Offset Overflow */
-#define QHSTA_M_SXFR_WD_TMO         0x21 /* SXFR_STATUS Watchdog Timeout */
-#define QHSTA_M_SXFR_DESELECTED     0x22 /* SXFR_STATUS Deselected */
-/* Note: QHSTA_M_SXFR_XFR_OFLW is identical to QHSTA_M_DATA_OVER_RUN. */
-#define QHSTA_M_SXFR_XFR_OFLW       0x12 /* SXFR_STATUS Transfer Overflow */
-#define QHSTA_M_SXFR_XFR_PH_ERR     0x24 /* SXFR_STATUS Transfer Phase Error */
-#define QHSTA_M_SXFR_UNKNOWN_ERROR  0x25 /* SXFR_STATUS Unknown Error */
-#define QHSTA_M_SCSI_BUS_RESET      0x30 /* Request aborted from SBR */
-#define QHSTA_M_SCSI_BUS_RESET_UNSOL 0x31 /* Request aborted from unsol. SBR */
-#define QHSTA_M_BUS_DEVICE_RESET    0x32 /* Request aborted from BDR */
-#define QHSTA_M_DIRECTION_ERR       0x35 /* Data Phase mismatch */
-#define QHSTA_M_DIRECTION_ERR_HUNG  0x36 /* Data Phase mismatch and bus hang */
-#define QHSTA_M_WTM_TIMEOUT         0x41
-#define QHSTA_M_BAD_CMPL_STATUS_IN  0x42
-#define QHSTA_M_NO_AUTO_REQ_SENSE   0x43
-#define QHSTA_M_AUTO_REQ_SENSE_FAIL 0x44
-#define QHSTA_M_INVALID_DEVICE      0x45 /* Bad target ID */
-#define QHSTA_M_FROZEN_TIDQ         0x46 /* TID Queue frozen. */
-#define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
-
-/*
- * SCSI Iquiry structure
- */
+#define INQ_CLOCKING_ST_ONLY    0x0
+#define INQ_CLOCKING_DT_ONLY    0x1
+#define INQ_CLOCKING_ST_AND_DT  0x3
 
 typedef struct {
 	u_int8_t	peri_dvc_type	: 5;	/* peripheral device type */
@@ -1162,16 +1082,23 @@ typedef struct {
 	u_int8_t	TemIOP   : 1;	     	/* terminate I/O process bit (see 5.6.22) */
 	u_int8_t	aenc	 : 1;	     	/* asynch. event notification (processor) */
 	u_int8_t	add_len;		/* additional length */
-	u_int8_t	res2;			/* reserved */
-	u_int8_t	res3;			/* reserved */
-	u_int8_t	StfRe	: 1;	    	/* soft reset implemented */
-	u_int8_t	CmdQue  : 1;	    	/* command queuing */
-	u_int8_t	res4	: 1;	    	/* reserved */
-	u_int8_t	Linked  : 1;	    	/* linked command for this logical unit */
-	u_int8_t	Sync	: 1;	    	/* synchronous data transfer */
-	u_int8_t	WBus16  : 1;	    	/* wide bus 16 bit data transfer */
-	u_int8_t	WBus32  : 1;	    	/* wide bus 32 bit data transfer */
-	u_int8_t	RelAdr  : 1;	    	/* relative addressing mode */
+	u_int8_t	res2     : 7;		/* reserved */
+        u_int8_t        SCC      : 1;
+        u_int8_t        Addr16   : 1;
+	u_int8_t	res3     : 2;		/* reserved */
+	u_int8_t        MChngr   : 1;
+        u_int8_t        MultiPort: 1;
+        u_int8_t        res4     : 1;
+	u_int8_t        EncServ  : 1;
+        u_int8_t        BaseQue  : 1;
+	u_int8_t	StfRe	 : 1;	    	/* soft reset implemented */
+	u_int8_t	CmdQue   : 1;	    	/* command queuing */
+	u_int8_t	res5	 : 1;	    	/* reserved */
+	u_int8_t	Linked   : 1;	    	/* linked command for this logical unit */
+	u_int8_t	Sync	 : 1;	    	/* synchronous data transfer */
+	u_int8_t	WBus16   : 1;	    	/* wide bus 16 bit data transfer */
+	u_int8_t	WBus32   : 1;	    	/* wide bus 32 bit data transfer */
+	u_int8_t	RelAdr   : 1;	    	/* relative addressing mode */
 	u_int8_t	vendor_id[8];		/* vendor identification */
 	u_int8_t	product_id[16];		/* product identification */
 	u_int8_t	product_rev_level[4];	/* product revision level */
@@ -1179,90 +1106,23 @@ typedef struct {
 	u_int8_t	IUS	 : 1;		/* information unit supported */
 	u_int8_t	QAS	 : 1;		/* quick arbitrate supported */
 	u_int8_t	Clocking : 2;		/* clocking field */
-	u_int8_t	res5	 : 4;		/* reserved */
-	u_int8_t	res6;			/* reserved */
-} ADW_SCSI_INQUIRY; /* 58 bytes */
-
-#define SS_GOOD              0x00
-#define SS_CHK_CONDITION     0x02
-#define SS_CONDITION_MET     0x04
-#define SS_TARGET_BUSY       0x08
-#define SS_INTERMID          0x10
-#define SS_INTERMID_COND_MET 0x14
-#define SS_RSERV_CONFLICT    0x18
-#define SS_CMD_TERMINATED    0x22
-#define SS_QUEUE_FULL        0x28
-#define MS_CMD_DONE    0x00
-#define MS_EXTEND      0x01
-#define MS_SDTR_LEN    0x03
-#define MS_SDTR_CODE   0x01
-#define MS_WDTR_LEN    0x02
-#define MS_WDTR_CODE   0x03
-#define MS_MDP_LEN    0x05
-#define MS_MDP_CODE   0x00
-#define M1_SAVE_DATA_PTR        0x02
-#define M1_RESTORE_PTRS         0x03
-#define M1_DISCONNECT           0x04
-#define M1_INIT_DETECTED_ERR    0x05
-#define M1_ABORT                0x06
-#define M1_MSG_REJECT           0x07
-#define M1_NO_OP                0x08
-#define M1_MSG_PARITY_ERR       0x09
-#define M1_LINK_CMD_DONE        0x0A
-#define M1_LINK_CMD_DONE_WFLAG  0x0B
-#define M1_BUS_DVC_RESET        0x0C
-#define M1_ABORT_TAG            0x0D
-#define M1_CLR_QUEUE            0x0E
-#define M1_INIT_RECOVERY        0x0F
-#define M1_RELEASE_RECOVERY     0x10
-#define M1_KILL_IO_PROC         0x11
-#define M2_QTAG_MSG_SIMPLE      0x20
-#define M2_QTAG_MSG_HEAD        0x21
-#define M2_QTAG_MSG_ORDERED     0x22
-#define M2_IGNORE_WIDE_RESIDUE  0x23
-
-
-#define ASC_MAX_SENSE_LEN   32
-#define ASC_MIN_SENSE_LEN   14
-
-typedef struct asc_req_sense {
-	u_int8_t	err_code:7;
-	u_int8_t	info_valid:1;
-	u_int8_t	segment_no;
-	u_int8_t	sense_key:4;
-	u_int8_t	reserved_bit:1;
-	u_int8_t	sense_ILI:1;
-	u_int8_t	sense_EOM:1;
-	u_int8_t	file_mark:1;
-	u_int8_t	info1[4];
-	u_int8_t	add_sense_len;
-	u_int8_t	cmd_sp_info[4];
-	u_int8_t	asc;
-	u_int8_t	ascq;
-	u_int8_t	fruc;
-	u_int8_t	sks_byte0:7;
-	u_int8_t	sks_valid:1;
-	u_int8_t	sks_bytes[2];
-	u_int8_t	notused[2];
-	u_int8_t	ex_sense_code;
-	u_int8_t	info2[4];
-} ASC_REQ_SENSE;
-
+	u_int8_t	res6	 : 4;		/* reserved */
+	u_int8_t	res7;			/* reserved */
+	u_int8_t	version_descriptor[8][2];
+} ADW_SCSI_INQUIRY; /* 74 bytes */
 
 /*
  * Adv Library functions available to drivers.
  */
 
-int	AdvInitAsc3550Driver __P((ADW_SOFTC *));
-int	AdvInitAsc38C0800Driver __P((ADW_SOFTC *));
-int	AdvInitFrom3550EEP __P((ADW_SOFTC *));
-int	AdvInitFrom38C0800EEP __P((ADW_SOFTC *));
-int	AdvExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-int	AdvISR __P((ADW_SOFTC *));
-void	AdvResetChip __P((bus_space_tag_t, bus_space_handle_t));
-int	AdvSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
-int	AdvResetSCSIBus __P((ADW_SOFTC *));
-int	AdvResetCCB __P((ADW_SOFTC *));
+int	AdwInitFromEEPROM __P((ADW_SOFTC *));
+int	AdwInitDriver __P((ADW_SOFTC *));
+int	AdwExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+int	AdwISR __P((ADW_SOFTC *));
+void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
+int	AdwSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
+int	AdwResetSCSIBus __P((ADW_SOFTC *));
+int	AdwResetCCB __P((ADW_SOFTC *));
 
 #define offsetof(type, member) ((size_t)(&((type *)0)->member))
 

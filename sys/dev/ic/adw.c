@@ -1,5 +1,5 @@
-/*	$OpenBSD: adw.c,v 1.6 2000/04/29 21:05:32 krw Exp $ */
-/* $NetBSD: adw.c,v 1.14 2000/02/12 19:19:42 thorpej Exp $	*/
+/*	$OpenBSD: adw.c,v 1.7 2000/06/29 00:04:31 krw Exp $ */
+/* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -49,6 +49,7 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -61,6 +62,7 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/ic/adwlib.h>
+#include <dev/ic/adwmcode.h>
 #include <dev/ic/adw.h>
 
 #ifndef DDB
@@ -75,8 +77,6 @@ static struct scsi_xfer *adw_dequeue __P((ADW_SOFTC *));
 
 static int adw_alloc_controls __P((ADW_SOFTC *));
 static int adw_alloc_carriers __P((ADW_SOFTC *));
-static int adw_create_carriers __P((ADW_SOFTC *));
-static int adw_init_carrier __P((ADW_SOFTC *, ADW_CARRIER *));
 static int adw_create_ccbs __P((ADW_SOFTC *, ADW_CCB *, int));
 static void adw_free_ccb __P((ADW_SOFTC *, ADW_CCB *));
 static void adw_reset_ccb __P((ADW_CCB *));
@@ -91,8 +91,11 @@ static void adwminphys __P((struct buf *));
 static void adw_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 static void adw_async_callback __P((ADW_SOFTC *, u_int8_t));
 
+static void adw_print_info __P((ADW_SOFTC *, int));
+
 static int adw_poll __P((ADW_SOFTC *, struct scsi_xfer *, int));
 static void adw_timeout __P((void *));
+static void adw_reset_bus __P((ADW_SOFTC *));
 
 
 /******************************************************************************/
@@ -102,7 +105,7 @@ struct cfdriver adw_cd = {
 	NULL, "adw", DV_DULL
 };
 
-/* the below structure is so we have a default dev struct for out link struct */
+/* the below structure is so we have a default dev struct for our link struct */
 struct scsi_device adw_dev =
 {
 	NULL,			/* Use default error handler */
@@ -110,10 +113,6 @@ struct scsi_device adw_dev =
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
-
-
-#define ADW_ABORT_TIMEOUT       10000	/* time to wait for abort (mSec) */
-#define ADW_WATCH_TIMEOUT       10000	/* time to wait for watchdog (mSec) */
 
 
 /******************************************************************************/
@@ -162,7 +161,7 @@ adw_dequeue(sc)
 }
 
 /******************************************************************************/
-/*                                Control Blocks routines                     */
+/*                       DMA Mapping for Control Blocks                       */
 /******************************************************************************/
 
 
@@ -222,23 +221,23 @@ adw_alloc_carriers(sc)
 	/*
          * Allocate the control structure.
          */
-	sc->sc_control->carriers = malloc(ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
+	sc->sc_control->carriers = malloc(sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
 			M_DEVBUF, M_WAITOK);
 	if(!sc->sc_control->carriers) {
-		printf("%s: malloc() failed in allocating carrier structures,"
-		       " error = %d\n", sc->sc_dev.dv_xname, error);
-		return (error);
+		printf("%s: malloc() failed in allocating carrier structures\n",
+		       sc->sc_dev.dv_xname);
+		return (ENOMEM);
 	}
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
-			NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
+			0x10, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate carrier structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
+			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
 			(caddr_t *) &sc->sc_control->carriers,
 			BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map carrier structures,"
@@ -250,8 +249,8 @@ adw_alloc_carriers(sc)
          * Create and load the DMA map used for the control blocks.
          */
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER, 1,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER, 0, BUS_DMA_NOWAIT,
+			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 1,
+			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 0,BUS_DMA_NOWAIT,
 			&sc->sc_dmamap_carrier)) != 0) {
 		printf("%s: unable to create carriers DMA map,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);
@@ -259,20 +258,10 @@ adw_alloc_carriers(sc)
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 			sc->sc_dmamap_carrier, sc->sc_control->carriers,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER, NULL,
+			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, NULL,
 			BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to load carriers DMA map,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);
-		return (error);
-	}
-
-	error = bus_dmamap_create(sc->sc_dmat, ADW_CARRIER_SIZE* ADW_MAX_CARRIER,
-			1, ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
-			0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-			&sc->sc_control->dmamap_xfer);
-	if (error) {
-		printf("%s: unable to create Carrier DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 
@@ -280,88 +269,9 @@ adw_alloc_carriers(sc)
 }
 
 
-/*
- * Create a set of Carriers and add them to the free list.  Called once
- * by adw_init().  We return the number of Carriers successfully created.
- */
-static int
-adw_create_carriers(sc)
-	ADW_SOFTC	*sc;
-{
-	ADW_CARRIER	*carr;
-	u_int32_t	carr_next = NULL;
-	int		i, error;
-
-	for(i=0; i < ADW_MAX_CARRIER; i++) {
-		carr = (ADW_CARRIER *)(((u_int8_t *)sc->sc_control->carriers) +
-				(ADW_CARRIER_SIZE * i));
-		if ((error = adw_init_carrier(sc, carr)) != 0) {
-			printf("%s: unable to initialize carrier, error = %d\n",
-			       sc->sc_dev.dv_xname, error);
-			return (i);
-		}
-		carr->next_vpa = carr_next;
-		carr_next = carr->carr_pa;
-		carr->id = i;
-	}
-	sc->carr_freelist = carr;
-	return (i);
-}
-
-
-static int
-adw_init_carrier(sc, carr)
-	ADW_SOFTC	*sc;
-	ADW_CARRIER	*carr;
-{
-	u_int32_t	carr_pa;
-	int		/*error, */hashnum;
-
-	/*
-         * Create the DMA map for all of the Carriers.
-         */
-/*	error = bus_dmamap_create(sc->sc_dmat, ADW_CARRIER_SIZE,
-			1, ADW_CARRIER_SIZE,
-			0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-			&carr->dmamap_xfer);
-	if (error) {
-		printf("%s: unable to create Carrier DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return (error);
-	}
-*/
-	/*
-	 * put in the phystokv hash table
-	 * Never gets taken out.
-	 */
-	carr_pa = ADW_CARRIER_ADDR(sc, carr);
-	carr->carr_pa = carr_pa;
-	hashnum = CARRIER_HASH(carr_pa);
-	carr->nexthash = sc->sc_carrhash[hashnum];
-	sc->sc_carrhash[hashnum] = carr;
-
-	return(0);
-}
-
-
-/*
- * Given a physical address, find the Carrier that it corresponds to.
- */
-ADW_CARRIER *
-adw_carrier_phys_kv(sc, carr_phys)
-	ADW_SOFTC	*sc;
-	u_int32_t	carr_phys;
-{
-	int hashnum = CARRIER_HASH(carr_phys);
-	ADW_CARRIER *carr = sc->sc_carrhash[hashnum];
-
-	while (carr) {
-		if (carr->carr_pa == carr_phys)
-			break;
-		carr = carr->nexthash;
-	}
-	return (carr);
-}
+/******************************************************************************/
+/*                           Control Blocks routines                          */
+/******************************************************************************/
 
 
 /*
@@ -455,6 +365,7 @@ adw_init_ccb(sc, ccb)
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
+	timeout_set( &ccb->to, adw_timeout, ccb );
 	adw_reset_ccb(ccb);
 	return (0);
 }
@@ -528,14 +439,15 @@ adw_queue_ccb(sc, ccb, retry)
 	ADW_CCB        *ccb;
 	int		retry;
 {
-	int		errcode;
+	int		errcode = ADW_SUCCESS;
 
-	if(!retry)
+	if(!retry) {
 		TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
+	}
 
 	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
 
-		errcode = AdvExeScsiQueue(sc, &ccb->scsiq);
+		errcode = AdwExeScsiQueue(sc, &ccb->scsiq);
 		switch(errcode) {
 		case ADW_SUCCESS:
 			break;
@@ -551,9 +463,10 @@ adw_queue_ccb(sc, ccb, retry)
 		}
 
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
+		TAILQ_INSERT_TAIL(&sc->sc_pending_ccb, ccb, chain);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
-			timeout(adw_timeout, ccb, (ccb->timeout * hz) / 1000);
+			timeout_add(&ccb->to, (ccb->timeout * hz) / 1000);
 	}
 
 	return(errcode);
@@ -561,7 +474,7 @@ adw_queue_ccb(sc, ccb, retry)
 
 
 /******************************************************************************/
-/*                           SCSI layer interfacing routines                  */
+/*                       SCSI layer interfacing routines                      */
 /******************************************************************************/
 
 
@@ -583,17 +496,15 @@ adw_init(sc)
 	if (ADW_FIND_SIGNATURE(sc->sc_iot, sc->sc_ioh) == 0) {
 		panic("adw_init: adw_find_signature failed");
 	} else {
-		AdvResetChip(sc->sc_iot, sc->sc_ioh);
+		AdwResetChip(sc->sc_iot, sc->sc_ioh);
 
-		warn_code = (sc->chip_type == ADV_CHIP_ASC3550)?
-				AdvInitFrom3550EEP(sc) :
-				AdvInitFrom38C0800EEP(sc);
+		warn_code = AdwInitFromEEPROM(sc);
 
-		if (warn_code & ASC_WARN_EEPROM_CHKSUM)
+		if (warn_code & ADW_WARN_EEPROM_CHKSUM)
 			printf("%s: Bad checksum found. "
 			       "Setting default values\n",
 			       sc->sc_dev.dv_xname);
-		if (warn_code & ASC_WARN_EEPROM_TERMINATION)
+		if (warn_code & ADW_WARN_EEPROM_TERMINATION)
 			printf("%s: Bad bus termination setting."
 			       "Using automatic termination.\n",
 			       sc->sc_dev.dv_xname);
@@ -602,7 +513,7 @@ adw_init(sc)
 	sc->isr_callback = (ADW_CALLBACK) adw_isr_callback;
 	sc->async_callback = (ADW_CALLBACK) adw_async_callback;
 
-	return (0);
+	return 0;
 }
 
 
@@ -615,6 +526,7 @@ adw_attach(sc)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
+	TAILQ_INIT(&sc->sc_pending_ccb);
 	LIST_INIT(&sc->sc_queue);
 
 
@@ -648,53 +560,57 @@ adw_attach(sc)
 	if (error)
 		return; /* (error) */ ;
 
-	bzero(sc->sc_control->carriers, ADW_CARRIER_SIZE * ADW_MAX_CARRIER);
-
-	i = adw_create_carriers(sc);
-	if (i == 0) {
-		printf("%s: unable to create Carriers\n",
-		       sc->sc_dev.dv_xname);
-		return; /* (ENOMEM) */ ;
-	} else if (i != ADW_MAX_CARRIER) {
-		printf("%s: WARNING: only %d of %d Carriers created\n",
-		       sc->sc_dev.dv_xname, i, ADW_MAX_CARRIER);
-	}
-
+	/*
+	 * Zero's the freeze_device status
+	 */
+	 bzero(sc->sc_freeze_dev, sizeof(sc->sc_freeze_dev));
 
 	/*
-	 * Initialize the ASC3550.
+	 * Initialize the adapter
 	 */
-	error = (sc->chip_type == ADV_CHIP_ASC3550)?
-			AdvInitAsc3550Driver(sc) :
-			AdvInitAsc38C0800Driver(sc);
-	switch (error) {
-	case ASC_IERR_MCODE_CHKSUM:
+	switch (AdwInitDriver(sc)) {
+	case ADW_IERR_BIST_PRE_TEST:
+		panic("%s: BIST pre-test error",
+		      sc->sc_dev.dv_xname);
+		break;
+
+	case ADW_IERR_BIST_RAM_TEST:
+		panic("%s: BIST RAM test error",
+		      sc->sc_dev.dv_xname);
+		break;
+
+	case ADW_IERR_MCODE_CHKSUM:
 		panic("%s: Microcode checksum error",
 		      sc->sc_dev.dv_xname);
 		break;
 
-	case ASC_IERR_ILLEGAL_CONNECTION:
+	case ADW_IERR_ILLEGAL_CONNECTION:
 		panic("%s: All three connectors are in use",
 		      sc->sc_dev.dv_xname);
 		break;
 
-	case ASC_IERR_REVERSED_CABLE:
+	case ADW_IERR_REVERSED_CABLE:
 		panic("%s: Cable is reversed",
 		      sc->sc_dev.dv_xname);
 		break;
 
-	case ASC_IERR_SINGLE_END_DEVICE:
+	case ADW_IERR_HVD_DEVICE:
+		panic("%s: HVD attached to LVD connector",
+		      sc->sc_dev.dv_xname);
+		break;
+
+	case ADW_IERR_SINGLE_END_DEVICE:
 		panic("%s: single-ended device is attached to"
 		      " one of the connectors",
 		      sc->sc_dev.dv_xname);
 		break;
 
-	case ASC_IERR_NO_CARRIER:
-		panic("%s: no carrier",
+	case ADW_IERR_NO_CARRIER:
+		panic("%s: unable to create Carriers",
 		      sc->sc_dev.dv_xname);
 		break;
 
-	case ASC_WARN_BUSRESET_ERROR:
+	case ADW_WARN_BUSRESET_ERROR:
 		printf("%s: WARNING: Bus Reset Error\n",
 		      sc->sc_dev.dv_xname);
 		break;
@@ -752,10 +668,20 @@ adw_scsi_cmd(xs)
          * called with the first queue entry as our argument.
          */
 	if (xs == sc->sc_queue.lh_first) {
+ 		if(sc->sc_freeze_dev[xs->sc_link->target]) {
+			splx(s);
+			return (TRY_AGAIN_LATER);
+		}
+
 		xs = adw_dequeue(sc);
 		fromqueue = 1;
 		nowait = 1;
 	} else {
+ 		if(sc->sc_freeze_dev[xs->sc_link->target]) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
 
 		/* Polled requests can't be queued for later. */
 		dontqueue = xs->flags & SCSI_POLL;
@@ -827,7 +753,6 @@ retryagain:
 		case ADW_ERROR:
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
-			
 		}
 
 		/*
@@ -879,8 +804,13 @@ adw_build_req(xs, ccb, flags)
 
 	/*
 	 * Set CDB length and copy it to the request structure.
+	 * For wide  boards a CDB length maximum of 16 bytes
+	 * is supported.
 	 */
-	bcopy(xs->cmd, &scsiqp->cdb, scsiqp->cdb_len = xs->cmdlen);
+	bcopy(xs->cmd, &scsiqp->cdb, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
+			xs->cmdlen : 12 );
+	if(xs->cmdlen > 12)
+		bcopy(&(xs->cmd[12]),  &scsiqp->cdb16, xs->cmdlen - 12);
 
 	scsiqp->target_id = sc_link->target;
 	scsiqp->target_lun = sc_link->lun;
@@ -888,9 +818,7 @@ adw_build_req(xs, ccb, flags)
 	scsiqp->vsense_addr = &ccb->scsi_sense;
 	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
-/*	scsiqp->sense_addr = ccb->hashkey +
-	    offsetof(struct adw_ccb, scsi_sense);
-*/	scsiqp->sense_len = sizeof(struct scsi_sense_data);
+	scsiqp->sense_len = sizeof(struct scsi_sense_data);
 
 	/*
 	 * Build ADW_SCSI_REQ_Q for a scatter-gather buffer command.
@@ -1003,6 +931,11 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 }
 
 
+/******************************************************************************/
+/*                       Interrupts and TimeOut routines                      */
+/******************************************************************************/
+
+
 int
 adw_intr(arg)
 	void           *arg;
@@ -1011,7 +944,7 @@ adw_intr(arg)
 	struct scsi_xfer *xs;
 
 
-	if(AdvISR(sc) != ADW_FALSE) {
+	if(AdwISR(sc) != ADW_FALSE) {
 		/*
 	         * If there are queue entries in the software queue, try to
 	         * run the first one.  We should be more or less guaranteed
@@ -1067,43 +1000,200 @@ adw_timeout(arg)
 
 	s = splbio();
 
-	/*
-         * If it has been through before, then a previous abort has failed,
-         * don't try abort again, reset the bus instead.
-         */
 	if (ccb->flags & CCB_ABORTED) {
 	/*
 	 * Abort Timed Out
-	 * Lets try resetting the bus!
+	 *
+	 * No more opportunities. Lets try resetting the bus and
+	 * reinitialize the host adapter.
 	 */
+		timeout_del( &ccb->to );
 		printf(" AGAIN. Resetting SCSI Bus\n");
-		ccb->flags &= ~CCB_ABORTED;
-		/* AdvResetSCSIBus() will call sbreset_callback() */
-		AdvResetSCSIBus(sc);
+		adw_reset_bus(sc);
+		splx(s);
+		return;
+	} else if (ccb->flags & CCB_ABORTING) {
+	/*
+	 * Abort the operation that has timed out.
+	 *
+	 * Second opportunity.
+	 */
+		printf("\n");
+		xs->error = XS_TIMEOUT;
+		ccb->flags |= CCB_ABORTED;
+#if 0
+		/*
+		 * - XXX - 3.3a microcode is BROKEN!!!
+		 *
+		 * We cannot abort a CCB, so we can only hope the command
+		 * get completed before the next timeout, otherwise a
+		 * Bus Reset will arrive inexorably.
+		 */
+		/*
+		 * ADW_ABORT_CCB() makes the board to generate an interrupt
+		 *
+		 * - XXX - The above assertion MUST be verified (and this
+		 *         code changed as well [callout_*()]), when the
+		 *         ADW_ABORT_CCB will be working again
+		 */
+		ADW_ABORT_CCB(sc, ccb);
+#endif
+		/*
+		 * waiting for multishot callout_reset() let's restart it
+		 * by hand so the next time a timeout event will occour
+		 * we will reset the bus.
+		 */
+		timeout_add( &ccb->to, (ccb->timeout * hz) / 1000);
 	} else {
 	/*
-	 * Abort the operation that has timed out
+	 * Abort the operation that has timed out.
+	 *
+	 * First opportunity.
 	 */
 		printf("\n");
 		xs->error = XS_TIMEOUT;
 		ccb->flags |= CCB_ABORTING;
-		/* ADW_ABORT_CCB() will implicitly call isr_callback() */
+#if 0
+		/*
+		 * - XXX - 3.3a microcode is BROKEN!!!
+		 *
+		 * We cannot abort a CCB, so we can only hope the command
+		 * get completed before the next 2 timeout, otherwise a
+		 * Bus Reset will arrive inexorably.
+		 */
+		/*
+		 * ADW_ABORT_CCB() makes the board to generate an interrupt
+		 *
+		 * - XXX - The above assertion MUST be verified (and this
+		 *         code changed as well [callout_*()]), when the
+		 *         ADW_ABORT_CCB will be working again
+		 */
 		ADW_ABORT_CCB(sc, ccb);
+#endif
+		/*
+		 * waiting for multishot callout_reset() let's restart it
+		 * by hand so to give a second opportunity to the command
+		 * which timed-out.
+		 */
+		timeout_add( &ccb->to, (ccb->timeout * hz) / 1000);
 	}
 
 	splx(s);
 }
 
 
+static void
+adw_reset_bus(sc) 
+	ADW_SOFTC		*sc;
+{
+	ADW_CCB	*ccb;
+	int	 s;
+
+	s = splbio();
+	AdwResetSCSIBus(sc);
+	while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
+			adw_pending_ccb)) != NULL) {
+	        timeout_del( &ccb->to );
+		TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+		TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
+	}
+	adw_queue_ccb(sc, TAILQ_FIRST(&sc->sc_waiting_ccb), 1);
+	splx(s);
+}
+
+
 /******************************************************************************/
-/*                           WIDE boards Interrupt callbacks                  */
+/*              Host Adapter and Peripherals Information Routines             */
+/******************************************************************************/
+
+
+static void
+adw_print_info(sc, tid)
+	ADW_SOFTC	*sc;
+	int		 tid;
+{
+#ifdef ADW_DEBUG
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int16_t wdtr_able, wdtr_done, wdtr;
+    	u_int16_t sdtr_able, sdtr_done, sdtr, period;
+	static int wdtr_reneg = 0, sdtr_reneg = 0;
+
+	if (tid == 0){
+		wdtr_reneg = sdtr_reneg = 0;
+	}
+#endif
+
+	printf("%s: target %d ", sc->sc_dev.dv_xname, tid);
+
+#ifdef ADW_DEBUG
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, wdtr_able);
+	if(wdtr_able & ADW_TID_TO_TIDMASK(tid)) {
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE, wdtr_done);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_DEVICE_HSHK_CFG_TABLE +
+			(2 * tid), wdtr);
+		printf("using %d-bits wide, ", (wdtr & 0x8000)? 16 : 8);
+		if((wdtr_done & ADW_TID_TO_TIDMASK(tid)) == 0)
+			wdtr_reneg = 1;
+	} else {
+		printf("wide transfers disabled, ");
+	}
+
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	if(sdtr_able & ADW_TID_TO_TIDMASK(tid)) {
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE, sdtr_done);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_DEVICE_HSHK_CFG_TABLE +
+			(2 * tid), sdtr);
+		sdtr &=  ~0x8000;
+		if((sdtr & 0x1F) != 0) {
+			if((sdtr & 0x1F00) == 0x1100){
+				printf("80.0 MHz");
+			} else if((sdtr & 0x1F00) == 0x1000){
+				printf("40.0 MHz");
+			} else {
+				/* <= 20.0 MHz */
+				period = (((sdtr >> 8) * 25) + 50)/4;
+				if(period == 0) {
+					/* Should never happen. */
+					printf("? MHz");
+				} else {
+					printf("%d.%d MHz", 250/period,
+						ADW_TENTHS(250, period));
+				}
+			}
+			printf(" synchronous transfers\n");
+		} else {
+			printf("asynchronous transfers\n");
+		}
+		if((sdtr_done & ADW_TID_TO_TIDMASK(tid)) == 0)
+			sdtr_reneg = 1;
+	} else {
+		printf("synchronous transfers disabled\n");
+	}
+
+	if(wdtr_reneg || sdtr_reneg) {
+		printf("%s: target %d %s", sc->sc_dev.dv_xname, tid,
+			(wdtr_reneg)? ((sdtr_reneg)? "wide/sync" : "wide") :
+			((sdtr_reneg)? "sync" : "") );
+		printf(" renegotiation pending before next command.\n");
+	}
+#endif	
+}	
+
+
+/******************************************************************************/
+/*                        WIDE boards Interrupt callbacks                     */
 /******************************************************************************/
 
 
 /*
- * adw_isr_callback() - Second Level Interrupt Handler called by AdvISR()
+ * adw_isr_callback() - Second Level Interrupt Handler called by AdwISR()
  *
  * Interrupt callback function for the Wide SCSI Adv Library.
+ *
+ * Notice:
+ * Interrupts are disabled by the caller (AdwISR() function), and will be
+ * enabled at the end of the caller.
  */
 static void
 adw_isr_callback(sc, scsiq)
@@ -1114,23 +1204,12 @@ adw_isr_callback(sc, scsiq)
 	ADW_CCB        *ccb;
 	struct scsi_xfer *xs;
 	struct scsi_sense_data *s1, *s2;
-//	int		 s;
 
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
-	untimeout(adw_timeout, ccb);
+	timeout_del( &ccb->to );
 
-/*	if(ccb->flags & CCB_ABORTING) {
-		printf("Retrying request\n");
-		ccb->flags &= ~CCB_ABORTING;
-		ccb->flags |= CCB_ABORTED;
-		s = splbio();
-		adw_queue_ccb(sc, ccb);
-		splx(s);
-		return;
-	}
-*/
 	xs = ccb->xs;
 
 	/*
@@ -1143,90 +1222,162 @@ adw_isr_callback(sc, scsiq)
 			 BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
+
 	if ((ccb->flags & CCB_ALLOC) == 0) {
 		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
-	/*
-	 * Check for an underrun condition.
-	 */
-	/*
-	 * if (xs->request_bufflen != 0 && scsiqp->data_cnt != 0) {
-	 * ASC_DBG1(1, "adw_isr_callback: underrun condition %lu bytes\n",
-	 * scsiqp->data_cnt); underrun = ASC_TRUE; }
-	 */
+
 	/*
 	 * 'done_status' contains the command's ending status.
+	 * 'host_status' conatins the host adapter status.
+	 * 'scsi_status' contains the scsi peripheral status.
 	 */
-	switch (scsiq->done_status) {
-	case QD_NO_ERROR:
+	if ((scsiq->host_status == QHSTA_NO_ERROR) &&
+	   ((scsiq->done_status == QD_NO_ERROR) ||
+	    (scsiq->done_status == QD_WITH_ERROR))) {
 		switch (scsiq->host_status) {
-		case QHSTA_NO_ERROR:
-			xs->error = XS_NOERROR;
-			xs->resid = 0;
-			break;
-		default:
-			/* QHSTA error occurred. */
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
-		break;
-
-	case QD_WITH_ERROR:
-		switch (scsiq->host_status) {
-		case QHSTA_NO_ERROR:
-			switch(scsiq->scsi_status) {
-			case SS_CHK_CONDITION:
-			case SS_CMD_TERMINATED:
-				s1 = &ccb->scsi_sense;
-				s2 = &xs->sense;
-				*s2 = *s1;
-				xs->error = XS_SENSE;
-				break;
-			case SS_TARGET_BUSY:
-			case SS_RSERV_CONFLICT:
-			case SS_QUEUE_FULL:
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			case SS_CONDITION_MET:
-			case SS_INTERMID:
-			case SS_INTERMID_COND_MET:
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			case SS_GOOD:
-				break;
+		case SCSI_STATUS_GOOD:
+			if ((scsiq->cdb[0] == INQUIRY) &&
+			    (scsiq->target_lun == 0)) {
+				adw_print_info(sc, scsiq->target_id);
 			}
+			xs->error = XS_NOERROR;
+			xs->resid = scsiq->data_cnt;
+			sc->sc_freeze_dev[scsiq->target_id] = 0;
 			break;
 
+		case SCSI_STATUS_CHECK_CONDITION:
+		case SCSI_STATUS_CMD_TERMINATED:
+			s1 = &ccb->scsi_sense;
+			s2 = &xs->sense;
+			*s2 = *s1;
+			xs->error = XS_SENSE;
+			sc->sc_freeze_dev[scsiq->target_id] = 1;
+			break;
+
+		default:
+			xs->error = XS_BUSY;
+			sc->sc_freeze_dev[scsiq->target_id] = 1;
+			break;
+		}
+	} else if (scsiq->done_status == QD_ABORTED_BY_HOST) {
+		xs->error = XS_DRIVER_STUFFUP;
+	} else {
+		switch (scsiq->host_status) {
 		case QHSTA_M_SEL_TIMEOUT:
+			xs->error = XS_SELTIMEOUT;
+			break;
+
+		case QHSTA_M_SXFR_OFF_UFLW:
+		case QHSTA_M_SXFR_OFF_OFLW:
+		case QHSTA_M_DATA_OVER_RUN:
+			printf("%s: Overrun/Overflow/Underflow condition\n",
+				sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SXFR_DESELECTED:
+		case QHSTA_M_UNEXPECTED_BUS_FREE:
+			printf("%s: Unexpected BUS free\n",sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SCSI_BUS_RESET:
+		case QHSTA_M_SCSI_BUS_RESET_UNSOL:
+			printf("%s: BUS Reset\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_BUS_DEVICE_RESET:
+			printf("%s: Device Reset\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_QUEUE_ABORTED:
+			printf("%s: Queue Aborted\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SXFR_SDMA_ERR:
+		case QHSTA_M_SXFR_SXFR_PERR:
+		case QHSTA_M_RDMA_PERR:
+			/*
+			 * DMA Error. This should *NEVER* happen!
+			 *
+			 * Lets try resetting the bus and reinitialize
+			 * the host adapter.
+			 */
+			printf("%s: DMA Error. Reseting bus\n",
+				sc->sc_dev.dv_xname);
+			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+			adw_reset_bus(sc);
+			xs->error = XS_BUSY;
+			goto done;
+			
+		case QHSTA_M_WTM_TIMEOUT:
+		case QHSTA_M_SXFR_WD_TMO:
+			/* The SCSI bus hung in a phase */
+			printf("%s: Watch Dog timer expired. Reseting bus\n",
+				sc->sc_dev.dv_xname);
+			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+			adw_reset_bus(sc);
+			xs->error = XS_BUSY;
+			goto done;
+
+		case QHSTA_M_SXFR_XFR_PH_ERR:
+			printf("%s: Transfer Error\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_BAD_CMPL_STATUS_IN:
+			/* No command complete after a status message */
+			printf("%s: Bad Completion Status\n",
+				sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_AUTO_REQ_SENSE_FAIL:
+			printf("%s: Auto Sense Failed\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_INVALID_DEVICE:
+			printf("%s: Invalid Device\n", sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_NO_AUTO_REQ_SENSE:
+			/*
+			 * User didn't request sense, but we got a
+			 * check condition.
+			 */
+			printf("%s: Unexpected Check Condition\n",
+					sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+
+		case QHSTA_M_SXFR_UNKNOWN_ERROR:
+			printf("%s: Unknown Error\n", sc->sc_dev.dv_xname);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
 		default:
-			/* Some other QHSTA error occurred. */
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
+			panic("%s: Unhandled Host Status Error %x",
+			      sc->sc_dev.dv_xname, scsiq->host_status);
 		}
-		break;
-
-	case QD_ABORTED_BY_HOST:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
-
-	default:
-		xs->error = XS_DRIVER_STUFFUP;
-		break;
 	}
 
-	adw_free_ccb(sc, ccb);
+	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
+done:	adw_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
 
 
 /*
- * adv_async_callback() - Adv Library asynchronous event callback function.
+ * adw_async_callback() - Adv Library asynchronous event callback function.
  */
 static void
 adw_async_callback(sc, code)
@@ -1235,25 +1386,30 @@ adw_async_callback(sc, code)
 {
 	switch (code) {
 	case ADV_ASYNC_SCSI_BUS_RESET_DET:
-		/*
-		 * The firmware detected a SCSI Bus reset.
-		 */
+		/* The firmware detected a SCSI Bus reset. */
+		printf("%s: SCSI Bus reset detected\n", sc->sc_dev.dv_xname);
 		break;
 
 	case ADV_ASYNC_RDMA_FAILURE:
 		/*
 		 * Handle RDMA failure by resetting the SCSI Bus and
-		 * possibly the chip if it is unresponsive. Log the error
-		 * with a unique code.
+		 * possibly the chip if it is unresponsive.
 		 */
-		AdvResetSCSIBus(sc);
+		printf("%s: RDMA failure. Resetting the SCSI Bus and"
+				" the adapter\n", sc->sc_dev.dv_xname);
+		AdwResetSCSIBus(sc);
 		break;
 
 	case ADV_HOST_SCSI_BUS_RESET:
-               /*
-                * Host generated SCSI bus reset occurred.
-                */
-              break;
+		/* Host generated SCSI bus reset occurred. */
+		printf("%s: Host generated SCSI bus reset occurred\n",
+				sc->sc_dev.dv_xname);
+		break;
+
+	case ADV_ASYNC_CARRIER_READY_FAILURE:
+		/* Carrier Ready failure. */
+		printf("%s: Carrier Ready failure!\n", sc->sc_dev.dv_xname);
+		break;
 
 	default:
 		break;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: adw.h,v 1.4 2000/04/29 20:15:59 krw Exp $ */
-/*      $NetBSD: adw.h,v 1.5 2000/02/03 20:29:15 dante Exp $        */
+/*	$OpenBSD: adw.h,v 1.5 2000/06/29 00:04:31 krw Exp $ */
+/*      $NetBSD: adw.h,v 1.9 2000/05/26 15:13:43 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -49,47 +49,6 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
 
 
 /*
- * Every adw_carrier structure _MUST_ always be aligned on a 16 bytes boundary
- */
-struct adw_carrier {
-/* ---------- the microcode wants the field below ---------- */
-	u_int32_t	unused;	  /* Carrier Virtual Address -UNUSED- */
-	u_int32_t	carr_pa;  /* Carrier Physical Address */
-	u_int32_t	areq_vpa; /* ADW_SCSI_REQ_Q Physical Address */
-	/*
-	 * next_vpa [31:4]	Carrier Physical Next Pointer
-	 *
-	 * next_vpa [3:1]	Reserved Bits
-	 * next_vpa [0]		Done Flag set in Response Queue.
-	 */
-	u_int32_t	next_vpa;
-/* ----------                                     ---------- */
-	struct adw_carrier	*nexthash;	/* Carrier Virtual Address */
-
-	int			id;
-	/*
-	 * This DMA map maps the buffer involved in the carrier transfer.
-	 */
-//	bus_dmamap_t	dmamap_xfer;
-};
-
-typedef struct adw_carrier ADW_CARRIER;
-
-#define ADW_CARRIER_SIZE	((((int)((sizeof(ADW_CARRIER)-1)/16))+1)*16)
-
-
-/*
- * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
- */
-#define ASC_NEXT_VPA_MASK       0xFFFFFFF0
-
-#define ASC_RQ_DONE             0x00000001
-#define ASC_CQ_STOPPER          0x00000000
-
-#define ASC_GET_CARRP(carrp) ((carrp) & ASC_NEXT_VPA_MASK)
-
-
-/*
  * per request scatter-gather element limit
  * We could have up to 256 SG lists.
  */
@@ -110,8 +69,6 @@ struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
 	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
-	ADW_CARRIER		*carr_list;	/* carriers involved */
-
 	struct scsi_sense_data  scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
@@ -122,6 +79,8 @@ struct adw_ccb {
 	int			flags;	/* see below */
 
 	int			timeout;
+	struct timeout          to;
+
 	/*
 	 * This DMA map maps the buffer involved in the transfer.
 	 */
@@ -136,20 +95,13 @@ typedef struct adw_ccb ADW_CCB;
 #define CCB_ABORTED	0x04
 
 
-#define ADW_MAX_CARRIER	20	/* Max. number of host commands (253) */
-#define ADW_MAX_CCB	16	/* Max. number commands per device (63) */
+#define ADW_MAX_CCB	63	/* Max. number commands per device (63) */
 
 struct adw_control {
 	ADW_CCB		ccbs[ADW_MAX_CCB];	/* all our control blocks */
 	ADW_CARRIER	*carriers;		/* all our carriers */
-	bus_dmamap_t	dmamap_xfer;
 };
 
-/*
- * Offset of a carrier from the beginning of the carriers DMA mapping.
- */
-#define	ADW_CARRIER_ADDR(sc, x)	((sc)->sc_dmamap_carrier->dm_segs[0].ds_addr + \
-			(((u_long)x) - ((u_long)(sc)->sc_control->carriers)))
 /*
  * Offset of a CCB from the beginning of the control DMA mapping.
  */
@@ -162,7 +114,6 @@ int adw_init __P((ADW_SOFTC *sc));
 void adw_attach __P((ADW_SOFTC *sc));
 int adw_intr __P((void *arg));
 ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_int32_t));
-ADW_CARRIER *adw_carrier_phys_kv __P((ADW_SOFTC *, u_int32_t));
 
 /******************************************************************************/
 
