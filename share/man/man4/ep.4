@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.7 1998/11/27 08:51:27 deraadt Exp $
+.\"	$OpenBSD: ep.4,v 1.8 1998/12/17 05:50:25 fgsch Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -99,8 +99,10 @@ The PCI cards are found first based on PCI function# order.
 The EISA cards are found next based on EISA slot# order.
 Next, the 3c509 ISA cards are found based on in increasing ethernet
 address order.
-Finally, the 3c509 ISA cards in Plug-and-Play mode will be probed
+Then, the 3c509 ISA cards in Plug-and-Play mode will be probed
 for and matched in Plug-and-Play order.
+Finally, the PCMCIA cards are found based on PCMCIA controller
+slot# order.
 This is an example of how these will probe:
 .Pp
 ep0 at isa0 port 0x300-0x30f irq 3: 3Com 3C509 Ethernet: address 00:a0:24:29:a3:6b, utp (default utp)
