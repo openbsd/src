@@ -1,5 +1,5 @@
-/*	$OpenBSD: prefix.c,v 1.4 2002/02/16 21:28:02 millert Exp $	*/
-/*	$KAME: prefix.c,v 1.9 2001/07/02 14:36:49 itojun Exp $	*/
+/*	$OpenBSD: prefix.c,v 1.5 2002/06/24 06:06:25 itojun Exp $	*/
+/*	$KAME: prefix.c,v 1.11 2001/11/13 12:38:45 jinmei Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -55,11 +55,7 @@ static void config_show(void);
 #endif
 
 struct config *config_list = NULL;
-#ifdef NI_WITHSCOPEID
-const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 const int niflags = NI_NUMERICHOST;
-#endif
 
 static int
 prefix_set(s, prefix, slash)

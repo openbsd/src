@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp.c,v 1.8 2002/06/07 00:18:05 itojun Exp $	*/
-/*	$KAME: ftp.c,v 1.14 2002/04/24 08:17:23 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.9 2002/06/24 06:06:25 itojun Exp $	*/
+/*	$KAME: ftp.c,v 1.18 2002/06/23 14:41:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -84,27 +84,25 @@ ftp_relay(int ctl6, int ctl4)
 
 		FD_ZERO(&readfds);
 		FD_SET(ctl4, &readfds);
+		maxfd = ctl4;
 		FD_SET(ctl6, &readfds);
+		maxfd = (ctl6 > maxfd) ? ctl6 : maxfd;
 		if (0 <= port4) {
 			FD_SET(port4, &readfds);
-			if (port4 > maxfd)
-				maxfd = port4;
+			maxfd = (port4 > maxfd) ? port4 : maxfd;
 		}
 		if (0 <= port6) {
 			FD_SET(port6, &readfds);
-			if (port6 > maxfd)
-				maxfd = port6;
+			maxfd = (port6 > maxfd) ? port6 : maxfd;
 		}
 #if 0
 		if (0 <= wport4) {
 			FD_SET(wport4, &readfds);
-			if (wport4 > maxfd)
-				maxfd = wport4;
+			maxfd = (wport4 > maxfd) ? wport4 : maxfd;
 		}
 		if (0 <= wport6) {
 			FD_SET(wport6, &readfds);
-			if (wport6 > maxfd)
-				maxfd = wport6;
+			maxfd = (wport6 > maxfd) ? wport6 : maxfd;
 		}
 #endif
 		tv.tv_sec = FAITH_TIMEOUT;
@@ -129,16 +127,13 @@ ftp_relay(int ctl6, int ctl4)
 			 */
 			error = ftp_copycommand(ctl6, ctl4, &state);
 
-			switch (error) {
-			case -1:
+			if (error < 0)
 				goto bad;
-			case 0:
+			else if (error == 0) {
 				close(ctl4);
 				close(ctl6);
 				exit_success("terminating ftp control connection");
 				/*NOTREACHED*/
-			default:
-				break;
 			}
 		}
 		if (FD_ISSET(ctl4, &readfds)) {
@@ -148,16 +143,13 @@ ftp_relay(int ctl6, int ctl4)
 			 */
 			error = ftp_copyresult(ctl4, ctl6, state);
 
-			switch (error) {
-			case -1:
+			if (error < 0)
 				goto bad;
-			case 0:
+			else if (error == 0) {
 				close(ctl4);
 				close(ctl6);
 				exit_success("terminating ftp control connection");
 				/*NOTREACHED*/
-			default:
-				break;
 			}
 		}
 		if (0 <= port4 && 0 <= port6 && FD_ISSET(port4, &readfds)) {
@@ -494,6 +486,7 @@ passivefail:
 			n = snprintf(sbuf, sizeof(sbuf),
 				"500 could not translate from PASV\r\n");
 			if (n < 0 || n >= sizeof(sbuf))
+				n = 0;
 			if (n)
 				write(src, sbuf, n);
 			return n;
