@@ -276,12 +276,7 @@ main(argc, argv)
 		dprintf("cannot create %s (%d)\n", LogName, errno);
 		die(0);
 	}
-	if (!SecureMode)
-		finet = socket(AF_INET, SOCK_DGRAM, 0);
-	else {
-		finet = -1;
-		inetm = 0;
-	}
+	finet = socket(AF_INET, SOCK_DGRAM, 0);
 	if (finet >= 0) {
 		struct servent *sp;
 
@@ -361,11 +356,15 @@ main(argc, argv)
 			len = sizeof(frominet);
 			i = recvfrom(finet, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				printline(cvthname(&frominet), line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom inet");
+			if (SecureMode) {
+				/* silently drop it */
+			} else {
+				if (i > 0) {
+					line[i] = '\0';
+					printline(cvthname(&frominet), line);
+				} else if (i < 0 && errno != EINTR)
+					logerror("recvfrom inet");
+			}
 		} 
 	}
 }
