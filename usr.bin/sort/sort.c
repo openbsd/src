@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.16 2001/02/04 21:27:01 ericj Exp $	*/
+/*	$OpenBSD: sort.c,v 1.17 2001/11/17 19:51:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.16 2001/02/04 21:27:01 ericj Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.17 2001/11/17 19:51:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,7 +265,7 @@ main(argc, argv)
 		outfile = outpath = toutpath;
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
-		struct sigaction act = {0, SIG_BLOCK, 6};
+		struct sigaction act;
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
 		int outfd;
@@ -275,7 +275,6 @@ main(argc, argv)
 
 		if (access(outpath, W_OK))
 			err(2, "%s", outpath);
-		act.sa_handler = onsig;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXXXXXX",
 		    outpath);
 		/* use default umask to try and avoid one syscall */
@@ -289,6 +288,9 @@ main(argc, argv)
 		outfile = toutpath;
 
 		(void)atexit(cleanup);
+		sigfillset(&act.sa_mask);
+		act.sa_flags = SA_RESTART;
+		act.sa_handler = onsig;
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
 			sigaction(sigtable[i], &act, 0);
 	} else
