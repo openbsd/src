@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.15 2001/01/31 02:12:28 aaron Exp $ */
+/* $OpenBSD: vga.c,v 1.16 2001/01/31 16:38:00 aaron Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -240,7 +240,7 @@ const struct wsscreen_list vga_screenlist = {
 };
 
 int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-u_long	vga_mmap __P((void *, off_t, int));
+paddr_t	vga_mmap __P((void *, off_t, int));
 int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 			      void **, int *, int *, long *));
 void	vga_free_screen __P((void *, void *));
@@ -647,7 +647,7 @@ vga_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-u_long
+paddr_t
 vga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
