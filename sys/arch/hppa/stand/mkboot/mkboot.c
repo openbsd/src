@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.5 1998/09/29 07:12:58 mickey Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.6 1999/05/03 22:47:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.5 1998/09/29 07:12:58 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.6 1999/05/03 22:47:05 mickey Exp $";
 #endif /* not lint */
 #endif
 
@@ -63,9 +63,9 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.5 1998/09/29 07:12:58 mickey Exp $
 
 #ifndef hppa
 /* hack for cross compile XXX */
-#include "../../include/lifvar.h"
+#include "../../include/disklabel.h"
 #else
-#include <machine/lifvar.h>
+#include <sys/disklabel.h>
 #endif
 
 #include <stdio.h>
@@ -142,10 +142,10 @@ main(argc, argv)
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 
 	/* record volume info */
-	lifv->vol_id = htobe16(VOL_ID);
+	lifv->vol_id = htobe16(LIF_VOL_ID);
 	strncpy(lifv->vol_label, "BOOT44", 6);
 	lifv->vol_addr = htobe32(btolifs(LIF_DIRSTART));
-	lifv->vol_oct = htobe16(VOL_OCT);
+	lifv->vol_oct = htobe16(LIF_VOL_OCT);
 	lifv->vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
 	lifv->vol_version = htobe16(1);
 	lifv->vol_lastvol = lifv->vol_number =  htobe16(1);
@@ -167,17 +167,17 @@ main(argc, argv)
 		if (lifv->ipl_entry == 0) {
 			lifv->ipl_entry = htobe32(loadpoint + entry);
 			lifv->ipl_size = htobe32(lifstob(n));
-			lifd[optind].dir_type = htobe16(DIR_ISL);
+			lifd[optind].dir_type = htobe16(LIF_DIR_ISL);
 			lifd[optind].dir_implement = 0;
 		} else {
-			lifd[optind].dir_type = htobe16(DIR_TYPE);
+			lifd[optind].dir_type = htobe16(LIF_DIR_TYPE);
 			lifd[1].dir_implement = htobe32(loadpoint + entry);
 		}
 
 		strcpy(lifd[optind].dir_name, lifname(argv[optind]));
 		lifd[optind].dir_length = htobe32(n);
 		bcddate(argv[optind], lifd[optind].dir_toc);
-		lifd[optind].dir_flag = htobe16(DIR_FLAG);
+		lifd[optind].dir_flag = htobe16(LIF_DIR_FLAG);
 
 		lifv->vol_length += n;
 		pos += lifstob(n);
@@ -206,7 +206,7 @@ putfile(from_file, to)
 	register int n, total;
 	char buf[2048];
 	int from, check_sum = 0;
-	struct load load;
+	struct lif_load load;
 
 	if ((from = open(from_file, O_RDONLY)) < 0)
 		err(1, from_file);
@@ -218,7 +218,6 @@ putfile(from_file, to)
 	entry = ex.a_entry;
 	if (N_GETMAGIC(ex) == OMAGIC || N_GETMAGIC(ex) == NMAGIC)
 		entry += sizeof(ex);
-
 	else if (IS_ELF(*(Elf32_Ehdr *)&ex)) {
 		Elf32_Ehdr elf_header;
 		Elf32_Phdr *elf_segments;
@@ -308,6 +307,8 @@ putfile(from_file, to)
 		total += sizeof(buf);
 	} else
 		total += n;
+
+	/* TODO should pad here to the 65k boundary for tape boot */
 
 	if (verbose)
 		warnx("checksum is 0x%08x", -check_sum);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1999/04/20 20:01:02 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1999/05/03 22:46:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,11 +31,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 #include <sys/reboot.h>
 #include "libsa.h"
 #include <machine/iomod.h>
 #include <machine/pdc.h>
-#include <machine/lifvar.h>
 
 #include "dev_hppa.h"
 

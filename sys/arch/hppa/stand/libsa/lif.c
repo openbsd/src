@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.3 1999/01/25 20:15:23 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.4 1999/05/03 22:46:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,9 +31,8 @@
  */
 
 #include <sys/param.h>
-#include <lib/libsa/stand.h>
-
-#include <machine/lifvar.h>
+#include <sys/disklabel.h>
+#include "libsa.h"
 
 extern int debug;
 
@@ -59,7 +58,7 @@ lif_open (path, f)
 	register struct file *fp;
 	register struct lifdir *dp;
 	register char *p = NULL, *q = NULL; /* XXX shut up gcc */
-	struct load load;
+	struct lif_load load;
 	int err, buf_size, l;
 
 #ifdef LIFDEBUG
@@ -75,7 +74,7 @@ lif_open (path, f)
 		if (debug)
 			printf("lif_open: unable to read LIF header (%d)\n", err);
 #endif
-	} else if ((fp->f_lp = (struct lifvol *)fp->f_buf)->vol_id == VOL_ID) {
+	} else if ((fp->f_lp = (struct lifvol *)fp->f_buf)->vol_id == LIF_VOL_ID) {
 		f->f_fsdata = fp;
 		fp->f_ld = (struct lifdir *)(fp->f_buf + LIF_DIRSTART);
 		fp->f_seek = 0;
