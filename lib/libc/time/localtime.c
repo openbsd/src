@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.75";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.21 2002/04/04 19:12:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.22 2003/03/13 15:47:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -302,9 +302,9 @@ register struct state * const	sp;
 				return -1;
 			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
 				return -1;
-			(void) strcpy(fullname, p);
-			(void) strcat(fullname, "/");
-			(void) strcat(fullname, name);
+			(void) strlcpy(fullname, p, sizeof fullname);
+			(void) strlcat(fullname, "/", sizeof fullname);
+			(void) strlcat(fullname, name, sizeof fullname);
 			/*
 			** Set doaccess if '.' (as in "../") shows up in name.
 			*/
@@ -972,7 +972,7 @@ tzset_basic P((void))
 		return;
 	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
-		(void) strcpy(lcl_TZname, name);
+		(void) strlcpy(lcl_TZname, name, sizeof lcl_TZname);
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
@@ -993,7 +993,7 @@ tzset_basic P((void))
 		lclptr->ttis[0].tt_isdst = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
-		(void) strcpy(lclptr->chars, gmt);
+		(void) strlcpy(lclptr->chars, gmt, sizeof lclptr->chars);
 	} else if (tzload(name, lclptr) != 0)
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
 			(void) gmtload(lclptr);

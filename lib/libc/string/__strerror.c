@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.8 2001/12/08 20:37:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.9 2003/03/13 15:47:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -98,9 +98,9 @@ __strerror(num, buf)
 #ifdef NLS
 		strlcpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX);
 #else
-		strcpy(buf, UPREFIX);
+		strlcpy(buf, UPREFIX, NL_TEXTMAX);
 #endif
-		strncat(buf, itoa(errnum), NL_TEXTMAX-strlen(buf)-1);
+		strlcat(buf, itoa(errnum), NL_TEXTMAX);
 		errno = EINVAL;
 	}
 
