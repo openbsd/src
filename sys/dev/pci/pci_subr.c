@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.12 2001/05/08 20:13:18 mickey Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.13 2002/01/03 20:52:24 nate Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -280,6 +280,25 @@ struct pci_known_product {
 
 #include <dev/pci/pcidevs_data.h>
 #endif /* PCIVERBOSE */
+
+const char *
+pci_findvendor(pcireg_t id_reg)
+{
+#ifdef PCIVERBOSE
+	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
+	const struct pci_known_vendor *kdp;
+
+	kdp = pci_known_vendors;
+        while (kdp->vendorname != NULL) {	/* all have vendor name */
+                if (kdp->vendor == vendor)
+                        break;
+		kdp++;
+	}
+        return (kdp->vendorname);
+#else
+	return (NULL);
+#endif
+}
 
 void
 pci_devinfo(id_reg, class_reg, showclass, cp)

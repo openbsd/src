@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.21 2001/08/19 05:17:37 art Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.22 2002/01/03 20:52:24 nate Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -189,4 +189,10 @@ void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
 const struct pci_quirkdata *
 	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
+
+/*
+ * Misc.
+ */
+const char   *pci_findvendor __P((pcireg_t));
+
 #endif /* _DEV_PCI_PCIVAR_H_ */
