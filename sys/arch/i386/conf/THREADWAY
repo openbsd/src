@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.6 1996/07/13 21:23:13 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.7 1996/07/13 22:18:42 downsj Exp $
 #
 
 machine		i386
@@ -40,6 +40,8 @@ option		COMPAT_SVR4
 option		COMPAT_IBCS2
 option		COMPAT_LINUX
 option		COMPAT_FREEBSD
+
+option		BOOT_CONFIG
 
 option		VM86
 option		USER_LDT
