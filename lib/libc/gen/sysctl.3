@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.121 2004/01/08 00:49:01 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.122 2004/01/08 05:56:14 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1372,10 +1372,10 @@ The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
 (That is, their values must be divided by the tcp.slowhz value to get times
 in seconds.)
-.It Li tcp.syncachelimit
-The maximum number of entries allowed in the TCP syn cache.
 .It Li tcp.synbucketlimit
 The maximum number of entries allowed per hash bucket in the TCP syn cache.
+.It Li tcp.syncachelimit
+The maximum number of entries allowed in the TCP syn cache.
 .It Li udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
@@ -1777,9 +1777,9 @@ Some filesystems may contain settings.
 .It Dv FFS_ASYNCFREE No "	integer	yes"
 .It Dv FFS_CLUSTERREAD No "	integer	yes"
 .It Dv FFS_CLUSTERWRITE No "	integer	yes"
-.It Dv FFS_DIRHASH_DIRSIZE No "	integer yes"
-.It Dv FFS_DIRHASH_MAXMEM No "	integer yes"
-.It Dv FFS_DIRHASH_MEM No "	integer no"
+.It Dv FFS_DIRHASH_DIRSIZE No "	integer	yes"
+.It Dv FFS_DIRHASH_MAXMEM No "	integer	yes"
+.It Dv FFS_DIRHASH_MEM No "	integer	no"
 .It Dv FFS_MAXSOFTDEPS No "	integer	yes"
 .It Dv FFS_REALLOCBLOCKS No "	integer	yes"
 .It Dv FFS_SD_BLK_LIMIT_HIT No "	integer	yes"
