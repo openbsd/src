@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.21 2001/02/17 22:55:07 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.22 2001/02/17 23:01:40 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -9,8 +9,6 @@
  * This is the machine-dependent module for OpenBSD
  * Tested on:
  *	i386
- *
- * LIBS: -lkvm
  *
  * TERMCAP: -ltermlib
  *
@@ -35,7 +33,6 @@
 #include <limits.h>
 #include <err.h>
 #include <math.h>
-#include <kvm.h>
 #include <unistd.h>
 #include <sys/errno.h>
 #include <sys/sysctl.h>
@@ -95,10 +92,6 @@ char *state_abbrev[] = {
 	"", "start", "run\0\0\0", "sleep", "stop", "zomb",
 };
 
-
-static kvm_t *kd;
-
-/* these are retrieved from the kernel in _init */
 
 static int stathz;
 
@@ -173,13 +166,6 @@ machine_init(statics)
 	char    errbuf[_POSIX2_LINE_MAX];
 	int pagesize, i = 0;
 
-	if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == NULL) {
-		warnx("%s", errbuf);
-		return (-1);
-	}
-	setegid(getgid());
-	setgid(getgid());
-
 	stathz = getstathz();
 	if (stathz == -1)
 		return (-1);
@@ -237,22 +223,16 @@ get_system_info(si)
 	int total, i;
 	size_t  size;
 
-#if 1
 	size = sizeof(cp_time);
 	if (sysctl(cp_time_mib, 2, &cp_time, &size, NULL, 0) < 0) {
 		warn("sysctl kern.cp_time failed");
 		total = 0;
 	}
-#else
-	/* get the cp_time array */
-	(void) getkval(cp_time_offset, (int *) cp_time, sizeof(cp_time),
-	    "_cp_time");
-#endif
 
 	size = sizeof(sysload);
 	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0) {
 		warn("sysctl failed");
-		bzero(&total, sizeof(total));
+		total = 0;
 	}
 	infoloadp = si->load_avg;
 	for (i = 0; i < 3; i++)
@@ -289,6 +269,39 @@ get_system_info(si)
 
 static struct handle handle;
 
+struct kinfo_proc *
+getprocs(op, arg, cnt)
+	int op, arg;
+	int *cnt;
+{
+	size_t size = 0;
+	int mib[4] = {CTL_KERN, KERN_PROC, op, arg};
+	int st, nprocs;
+	struct kinfo_proc *procbase;
+
+	st = sysctl(mib, 4, NULL, &size, NULL, 0);
+	if (st == -1) {
+		/* _kvm_syserr(kd, kd->program, "kvm_getprocs"); */
+		return (0);
+	}
+	procbase = (struct kinfo_proc *)malloc(size);
+	if (procbase == NULL)
+		return (0);
+	st = sysctl(mib, 4, procbase, &size, NULL, 0);
+	if (st == -1) {
+		/* _kvm_syserr(kd, kd->program, "kvm_getprocs"); */
+		return (0);
+	}
+	if (size % sizeof(struct kinfo_proc) != 0) {
+		/* _kvm_err(kd, kd->program,
+		    "proc size mismatch (%d total, %d chunks)",
+		    size, sizeof(struct kinfo_proc)); */
+		return (0);
+	}
+	*cnt = size / sizeof(struct kinfo_proc);
+	return (procbase);
+}
+
 caddr_t 
 get_process_info(si, sel, compare)
 	struct system_info *si;
@@ -300,8 +313,8 @@ get_process_info(si, sel, compare)
 	int total_procs, active_procs, i;
 	struct kinfo_proc **prefp, *pp;
 
-	if ((pbase = kvm_getprocs(kd, KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
-		warnx("%s", kvm_geterr(kd));
+	if ((pbase = getprocs(KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
+		/* warnx("%s", kvm_geterr(kd)); */
 		quit(23);
 	}
 	if (nproc > onproc)
@@ -456,14 +469,14 @@ static unsigned char sorted_state[] =
 
 #define ORDERKEY_PCTCPU \
 	if (lresult = (pctcpu)PP(p2, p_pctcpu) - (pctcpu)PP(p1, p_pctcpu), \
-           (result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
+	    (result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
 #define ORDERKEY_CPUTIME \
 	if ((result = PP(p2, p_rtime.tv_sec) - PP(p1, p_rtime.tv_sec)) == 0) \
 		if ((result = PP(p2, p_rtime.tv_usec) - \
 		     PP(p1, p_rtime.tv_usec)) == 0)
 #define ORDERKEY_STATE \
 	if ((result = sorted_state[(unsigned char) PP(p2, p_stat)] - \
-                      sorted_state[(unsigned char) PP(p1, p_stat)])  == 0)
+	    sorted_state[(unsigned char) PP(p1, p_stat)])  == 0)
 #define ORDERKEY_PRIO \
 	if ((result = PP(p2, p_priority) - PP(p1, p_priority)) == 0)
 #define ORDERKEY_RSSIZE \
@@ -644,10 +657,12 @@ proc_compare(v1, v2)
 			if ((result = sorted_state[(unsigned char) PP(p2, p_stat)] -
 				sorted_state[(unsigned char) PP(p1, p_stat)]) == 0) {
 				/* use priority to break the tie */
-				if ((result = PP(p2, p_priority) - PP(p1, p_priority)) == 0) {
+				if ((result = PP(p2, p_priority) -
+				    PP(p1, p_priority)) == 0) {
 					/* use resident set size (rssize) to
 					 * break the tie */
-					if ((result = VP(p2, vm_rssize) - VP(p1, vm_rssize)) == 0) {
+					if ((result = VP(p2, vm_rssize) -
+					    VP(p1, vm_rssize)) == 0) {
 						/* use total memory to break
 						 * the tie */
 						result = PROCSIZE(p2) - PROCSIZE(p1);
@@ -658,7 +673,6 @@ proc_compare(v1, v2)
 	} else {
 		result = lresult < 0 ? -1 : 1;
 	}
-
 	return (result);
 }
 #endif
