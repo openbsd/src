@@ -324,7 +324,9 @@ arg_printusage (struct getargs *args,
 static void
 add_string(getarg_strings *s, char *value)
 {
-    s->strings = realloc(s->strings, (s->num_strings + 1) * sizeof(*s->strings));
+    if ((s->strings = realloc(s->strings, (s->num_strings + 1) *
+      sizeof(*s->strings))) == NULL)
+	err(1, "realloc");
     s->strings[s->num_strings] = value;
     s->num_strings++;
 }
