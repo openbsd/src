@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1998/06/29 13:01:20 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1998/06/29 13:24:30 deraadt Exp $
 
 SUBDIR=bcwrap
 
 MAN=	doc/bc.1 doc/dc.1
-#CLEANFILES=
 LDFLAGS+=	-s ${LDSTATIC}
 GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
 
@@ -44,7 +43,6 @@ install: maninstall
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
-	rm -f ${CLEANFILES}
 
 depend:
 	# Nothing here so far...
