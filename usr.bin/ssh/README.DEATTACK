@@ -1,0 +1,109 @@
+============================================================================
+
+                              CORE SDI S.A.
+                         Buenos Aires, Argentina
+                          <http://www.core-sdi.com>
+ 
+ 
+                     SSH insertion attack detection
+============================================================================
+
+
+Crc32 Compensation attack detector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This document describes the scope and characteristics of SSH crc32 
+compensation attack detector engine. It will inspect an encrypted SSH protocol
+1.5 stream for suspicious patterns. If either the server or client is under
+attack, the detector closes the conection and logs the attack.
+ 
+
+Attack characteristics
+~~~~~~~~~~~~~~~~~~~~~~
+An attacker, with sniffing and spoofing capabilities on the SSH network stream, may perform an active network attack by constructing a packet using a 
+known cipher/plaintext pair and computing addditional data to fill the packet
+in a way that will produce a valid CRC-32 field and pass as a valid packet when
+decryped and integrity checked on the server side.
+ If the attack succeeds, arbitrary commands will get executed on the server.
+
+  This attack doesnt affect the confidential security characteristics of the
+products using this protocols. However, integrity and authentication 
+of packets can no longer be trusted.
+
+Solution
+~~~~~~~~
+  This is not an implementation bug, but a protocol design vulnerability. The
+protocol must be updated to use cryptographic strong message authentication
+codes. SSH Protocol version 2 as published in [1] includes the use of a real
+strong MAC.
+  However, this will require to update all clients and servers simultaneusly
+while disabling compatibility with protocol version 1.5. On many installations
+this is not practical.
+
+  A mid-term solution exists, that will help protecting the server from the
+auth/integrity vulnerabilities.  On most scenarios it will be enough to upgrade
+only the servers. 
+
+  This approach is based on the fact that an attacker will need to exploit some
+of the linear characteristics of the integrity function in order to implement
+the attack. In that context, the constructed packets will follow certain 
+patterns that could be detected on the encrypted stream.
+
+  This is not a general solution, but a countermeasure against a model of all
+of the possible attacks that exploits this vulnerabilities. 
+
+  The provided patch looks for patterns of repeated ciphered blocks in
+each SSH packet received, the performance loss in speed is less 2% in an
+uncompressed stream compared to an unpatched server. Memory usage increases 
+in about 8k per conection.
+  The chances of reporting a false attack in a 32GB file transfer is around
+1 in 2**51.
+
+Contact information
+~~~~~~~~~~~~~~~~~~~
+
+   These vulnerabilities were discovered by Ariel Futoransky
+   and Emiliano Kargieman.
+ 
+   Comments and questions regarding this vulnerability and the fix
+   should be sent to:
+ 
+       Ariel Futoransky <futo@core-sdi.com>
+       Emiliano Kargieman <ek@core-sdi.com>
+ 
+  For more information about CORE SDI S.A.  contact <core@core-sdi.com>
+  or visit <http://www.core-sdi.com>
+
+  For more information about this problem and related ones visit:
+
+   <http://www.core-sdi.com/ssh>
+			
+  You can contact CORE SDI S.A. at <corelabs@core-sdi.com> using the
+  the following PGP key:
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.3ia
+Comment: Requires PGP version 2.6 or later.
+ 
+mQCNAzVgfMgAAAEEAJSfJNdvCwIAc4AK0ckeimubLIwzsRVDRhjPQIOYt/7kxxio
+DZybr53fwMEjyT8cHXRL08i0R9rcuFeCNAez6XcalbhqUKXDcLL/cZK80CCDSCs5
+tRCZGGOEBnXQIoyvbvi4gNYhBS5wUvmh3b/mvRFTvhmRrUy9m/nO/LnPTgz1AAUR
+tCBDT1JFTEFCUyA8Y29yZWxhYnNAY29yZS1zZGkuY29tPokAlQMFEDVgfMn5zvy5
+z04M9QEBC6ED/0Szt3f54JTvkZG3ezQ8G60HvAw4/A5Ti6i3oze6jsXxzGp6pA1x
+i0jaZpKaUSpo0MLc7BcijMKneuUHnN3XtN5YxtFt0aEoot1MIvv4BsdeUb3x257G
+3+vr8SxGk44Vm4tfuN8F/2dNo/00yYP9rd3zQ8Tl+gmr5VxnLViZIDuh
+=ulRg
+-----END PGP PUBLIC KEY BLOCK-----
+
+Copyright
+~~~~~~~~~
+
+This file, deattack.c and deattack.h  are copyright (c) 1998
+CORE SDI S.A., Buenos Aires, Argentina. All rights reserved.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that this copyright notice is retained.
+
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES
+ARE DISCLAIMED. IN NO EVENT SHALL CORE SDI S.A. BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES RESULTING
+FROM THE USE OR MISUSE OF THIS SOFTWARE.
+
