@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.35 2001/06/25 01:50:16 fgsch Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.36 2001/06/25 02:52:18 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -289,11 +289,8 @@ m_prepend(m, len, how)
 		m_freem(m);
 		return (NULL);
 	}
-	if (m->m_flags & M_PKTHDR) {
+	if (m->m_flags & M_PKTHDR)
 		M_COPY_PKTHDR(mn, m);
-		m->m_flags &= ~M_PKTHDR;
-		m_tag_init(m);
-	}
 	mn->m_next = m;
 	m = mn;
 	if (len < MHLEN)
@@ -594,11 +591,8 @@ m_pullup(n, len)
 		if (m == NULL)
 			goto bad;
 		m->m_len = 0;
-		if (n->m_flags & M_PKTHDR) {
+		if (n->m_flags & M_PKTHDR)
 			M_COPY_PKTHDR(m, n);
-			n->m_flags &= ~M_PKTHDR;
-			m_tag_init(n);
-		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
 	do {
@@ -666,8 +660,8 @@ m_pullup2(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			/* Too many adverse side effects. */
 			/* M_COPY_PKTHDR(m, n); */
-			M_COPY_HDR(m, n);
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
+			M_COPY_HDR(m, n);
 			/* n->m_data is cool. */
 		}
 	}
