@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/10/01 23:20:25 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.6 1999/10/02 00:06:50 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -122,7 +122,8 @@ SBINFILES= \
 
 MAN+=  src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1 \
 	src/support/ab.8 src/support/apachectl.8 src/support/logresolve.8 \
-	httpd.8 src/support/rotatelogs.8
+	httpd.8 src/support/rotatelogs.8 src/support/apxs.8 \
+	src/support/suexec.8
 
 INCFILES= \
 	src/include/alloc.h  \
@@ -450,7 +451,7 @@ includes: prereq
 		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_INCLUDEDIR}/xml; \
 	done
 
-install:
+install: maninstall
 	@-for i in ${BINFILES}; do \
 		j=`basename $$i`; \
 		echo "Installing ${DESTDIR}${HTTPD_BINDIR}/$$j"; \
