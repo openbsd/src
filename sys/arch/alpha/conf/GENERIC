@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.68 2001/03/18 14:58:04 nate Exp $
+#	$OpenBSD: GENERIC,v 1.69 2001/03/19 05:12:03 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -36,59 +36,48 @@ option		DISKLABEL_ALL	# All of the ones mentined below
 option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 option		TCVERBOSE		# recognize "unknown" TC devices
-#option		USBVERBOSE
+option		USBVERBOSE
 
 config		bsd	swap generic
 
 mainbus0 at	root
 cpu*	at	mainbus0
 
-# !!!UNTESTED!!!
-# USB devices are untested on alpha
-
 # PCI USB Controllers
-uhci*	at pci? disable			# Universal Host Controller (Intel)
-ohci*	at pci? disable			# Open Host Controller
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
 
 # USB bus support
 usb*	at uhci?
 usb*	at ohci?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
-
-# USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
-
-# USB Printers
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Mass Storage devices
-umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
-
-# USB Modems
-umodem*	at uhub? port ? configuration ?
+uhub*	at usb?				# USB Hubs
+uhub*	at uhub? port ? configuration ?	# USB Hubs
+uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
+umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
-
-# USB Audio
-uaudio* at uhub? port ? configuration ?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
-cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# Handspring Visor
-uvisor*	at uhub? port ? configuration ?
+uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
-
-# USB Generic driver
-ugen*	at uhub? port ? configuration ? interface ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+uaudio* at uhub? port ? configuration ?	# USB Audio
+ulpt*	at uhub? port ? configuration ? # USB Printers
+ukbd*	at uhub? port ? configuration ?	# USB Keyboards
+wskbd*	at ukbd? console ? mux 1
+umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus* at umass?
+ums*	at uhub? port ? configuration ?	# USB Mice
+wsmouse* at ums? mux 0
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+uscanner* at uhub? port ?		# USB Scanners
+usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+scsibus* at usscanner?
+#uyap*	at uhub? port ?			# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
