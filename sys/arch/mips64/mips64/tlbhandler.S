@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.8 2004/09/27 19:13:25 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.9 2004/09/27 20:39:27 pefo Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -213,9 +213,10 @@ NLEAF(k_tlb_inv, 0)
 	PTR_SRL	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, sys_stk_chk		# No. check for valid stack
-	PTR_SLL	k0, k0, 2			# compute offset from index
+	nop
 
 	PTR_L	k1, Sysmap
+	PTR_SLL	k0, k0, 2			# compute offset from index
 	tlbp					# Probe the invalid entry
 	PTR_ADDU k1, k1, k0
 	and	k0, k0, 4			# check even/odd page
