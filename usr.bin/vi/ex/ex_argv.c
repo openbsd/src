@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_argv.c	10.25 (Berkeley) 8/13/96";
+static const char sccsid[] = "@(#)ex_argv.c	10.26 (Berkeley) 9/20/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -325,7 +325,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 {
 	EX_PRIVATE *exp;
 	char *bp, *t;
-	size_t blen, len, tlen;
+	size_t blen, len, off, tlen;
 
 	/* Replace file name characters. */
 	for (bp = *bpp, blen = *blenp, len = *lenp; cmdlen > 0; --cmdlen, ++cmd)
@@ -340,7 +340,9 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 				return (1);
 			}
 			len += tlen = strlen(exp->lastbcomm);
+			off = p - bp;
 			ADD_SPACE_RET(sp, bp, blen, len);
+			p = bp + off;
 			memcpy(p, exp->lastbcomm, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
@@ -353,7 +355,9 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			}
 			tlen = strlen(t);
 			len += tlen;
+			off = p - bp;
 			ADD_SPACE_RET(sp, bp, blen, len);
+			p = bp + off;
 			memcpy(p, t, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
@@ -365,7 +369,9 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 				return (1);
 			}
 			len += tlen = strlen(t);
+			off = p - bp;
 			ADD_SPACE_RET(sp, bp, blen, len);
+			p = bp + off;
 			memcpy(p, t, tlen);
 			p += tlen;
 			F_SET(excp, E_MODIFY);
@@ -385,13 +391,17 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			/* FALLTHROUGH */
 		default:
 ins_ch:			++len;
+			off = p - bp;
 			ADD_SPACE_RET(sp, bp, blen, len);
+			p = bp + off;
 			*p++ = *cmd;
 		}
 
 	/* Nul termination. */
 	++len;
+	off = p - bp;
 	ADD_SPACE_RET(sp, bp, blen, len);
+	p = bp + off;
 	*p = '\0';
 
 	/* Return the new string length, buffer, buffer length. */

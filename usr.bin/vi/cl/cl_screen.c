@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_screen.c	10.48 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,12 +148,12 @@ cl_quit(gp)
 		rval = 1;
 
 	/* Really leave vi mode. */
-	if (F_ISSET(gp, G_STDIN_TTY) &&
+	if (F_ISSET(clp, CL_STDIN_TTY) &&
 	    F_ISSET(clp, CL_SCR_VI_INIT) && cl_vi_end(gp))
 		rval = 1;
 
 	/* Really leave ex mode. */
-	if (F_ISSET(gp, G_STDIN_TTY) &&
+	if (F_ISSET(clp, CL_STDIN_TTY) &&
 	    F_ISSET(clp, CL_SCR_EX_INIT) && cl_ex_end(gp))
 		rval = 1;
 
@@ -193,7 +193,7 @@ cl_vi_init(sp)
 		goto fast;
 
 	/* Curses vi always reads from (and writes to) a terminal. */
-	if (!F_ISSET(gp, G_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
+	if (!F_ISSET(clp, CL_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
 		msgq(sp, M_ERR,
 		    "016|Vi's standard input and output must be a terminal");
 		return (1);
@@ -436,7 +436,7 @@ cl_ex_init(sp)
 		goto fast;
 
 	/* If not reading from a file, we're done. */
-	if (!F_ISSET(sp->gp, G_STDIN_TTY))
+	if (!F_ISSET(clp, CL_STDIN_TTY))
 		return (0);
 
 	/* Get the ex termcap/terminfo strings. */

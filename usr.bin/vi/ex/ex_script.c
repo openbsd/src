@@ -13,7 +13,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_script.c	10.29 (Berkeley) 5/12/96";
+static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,7 +193,7 @@ err:		if (sc->sh_master != -1)
 		return (1);
 
 	F_SET(sp, SC_SCRIPT);
-	F_SET(sp->gp, G_SCRIPT);
+	F_SET(sp->gp, G_SCRWIN);
 	return (0);
 }
 
@@ -619,10 +619,10 @@ sscr_check(sp)
 	gp = sp->gp;
 	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
 		if (F_ISSET(sp, SC_SCRIPT)) {
-			F_SET(gp, G_SCRIPT);
+			F_SET(gp, G_SCRWIN);
 			return;
 		}
-	F_CLR(gp, G_SCRIPT);
+	F_CLR(gp, G_SCRWIN);
 }
 
 #ifdef HAVE_SYS5_PTY

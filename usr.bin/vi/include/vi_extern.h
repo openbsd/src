@@ -116,6 +116,7 @@ void vs_home __P((SCR *));
 void vs_update __P((SCR *, const char *, const char *));
 void vs_msg __P((SCR *, mtype_t, char *, size_t));
 int vs_ex_resolve __P((SCR *, int *));
+int vs_resolve __P((SCR *, int));
 int vs_repaint __P((SCR *, EVENT *));
 int vs_refresh __P((SCR *, int));
 int vs_column __P((SCR *, size_t *));

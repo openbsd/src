@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_line.c	10.18 (Berkeley) 5/13/96";
+static const char sccsid[] = "@(#)vs_line.c	10.19 (Berkeley) 9/26/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -221,7 +221,9 @@ empty:					(void)gp->scr_addstr(sp,
 		offset_in_line = smp->c_sboff;
 		offset_in_char = smp->c_scoff;
 		p = &p[offset_in_line];
-		if (skip_cols > cols_per_screen)
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		if (O_ISSET(sp, O_LEFTRIGHT) || skip_cols > cols_per_screen)
 			cols_per_screen = sp->cols;
 		goto display;
 	}
@@ -241,7 +243,9 @@ empty:					(void)gp->scr_addstr(sp,
 		smp->c_sboff = offset_in_line;
 		smp->c_scoff = offset_in_char;
 		p = &p[offset_in_line];
-		if (skip_cols > cols_per_screen)
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		if (O_ISSET(sp, O_LEFTRIGHT) || skip_cols > cols_per_screen)
 			cols_per_screen = sp->cols;
 		goto display;
 	}
@@ -258,6 +262,9 @@ empty:					(void)gp->scr_addstr(sp,
 			if ((scno += chlen) >= skip_cols)
 				break;
 		}
+
+		/* Set cols_per_screen to 2nd and later line length. */
+		cols_per_screen = sp->cols;
 
 		/* Put starting info for this line in the cache. */
 		if (scno != skip_cols) {
@@ -280,10 +287,7 @@ empty:					(void)gp->scr_addstr(sp,
 				continue;
 			scno -= cols_per_screen;
 
-			/*
-			 * Reset the cols_per_screen to second and subsequent
-			 * line length.
-			 */
+			/* Set cols_per_screen to 2nd and later line length. */
 			cols_per_screen = sp->cols;
 
 			/*

@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)api.c	8.23 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)api.c	8.24 (Berkeley) 9/18/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -410,13 +410,16 @@ api_unmap(sp, name)
 /*
  * api_opts_get --
  *	Return a option value as a string, in allocated memory.
+ *	If the option is of type boolean, boolvalue is (un)set
+ *	according to the value; otherwise boolvalue is -1.
  *
- * PUBLIC: int api_opts_get __P((SCR *, char *, char **));
+ * PUBLIC: int api_opts_get __P((SCR *, char *, char **, int *));
  */
 int
-api_opts_get(sp, name, value)
+api_opts_get(sp, name, value, boolvalue)
 	SCR *sp;
 	char *name, **value;
+	int *boolvalue;
 {
 	int offset;
 	OPTLIST const *op;
@@ -425,12 +428,16 @@ api_opts_get(sp, name, value)
 		return (1);
 
 	offset = op - optlist;
+	if (boolvalue != NULL)
+		*boolvalue = -1;
 	switch (op->type) {
 	case OPT_0BOOL:
 	case OPT_1BOOL:
 		MALLOC_RET(sp, *value, char *, strlen(op->name) + 2 + 1);
 		(void)sprintf(*value,
 		    "%s%s", O_ISSET(sp, offset) ? "" : "no", op->name);
+		if (boolvalue != NULL)
+			*boolvalue = O_ISSET(sp, offset);
 		break;
 	case OPT_NUM:
 		MALLOC_RET(sp, *value, char *, 20);

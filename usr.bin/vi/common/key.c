@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)key.c	10.32 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -561,7 +561,7 @@ retry:	istimeout = remap_cnt = 0;
 		 * If we're reading new characters, check any scripting
 		 * windows for input.
 		 */
-		if (F_ISSET(gp, G_SCRIPT) && sscr_input(sp))
+		if (F_ISSET(gp, G_SCRWIN) && sscr_input(sp))
 			return (1);
 loop:		if (gp->scr_event(sp, argp,
 		    LF_ISSET(EC_INTERRUPT | EC_QUOTED | EC_RAW), timeout))

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)gs.h	10.33 (Berkeley) 7/12/96
+ *	@(#)gs.h	10.34 (Berkeley) 9/24/96
  */
 
 #define	TEMPORARY_FILE_STRING	"/tmp"	/* Default temporary file name. */
@@ -139,10 +139,10 @@ struct _gs {
 #define	G_BELLSCHED	0x0002		/* Bell scheduled. */
 #define	G_INTERRUPTED	0x0004		/* Interrupted. */
 #define	G_RECOVER_SET	0x0008		/* Recover system initialized. */
-#define	G_SCRIPT	0x0010		/* Scripting windows running. */
-#define	G_SNAPSHOT	0x0020		/* Always snapshot files. */
-#define	G_SRESTART	0x0040		/* Screen restarted. */
-#define	G_STDIN_TTY	0x0080		/* Standard input is a tty. */
+#define	G_SCRIPTED	0x0010		/* Ex script session. */
+#define	G_SCRWIN	0x0020		/* Scripting windows running. */
+#define	G_SNAPSHOT	0x0040		/* Always snapshot files. */
+#define	G_SRESTART	0x0080		/* Screen restarted. */
 #define	G_TMP_INUSE	0x0100		/* Temporary buffer in use. */
 	u_int32_t flags;
 

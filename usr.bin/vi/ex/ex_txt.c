@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_txt.c	10.15 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)ex_txt.c	10.16 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,15 +101,16 @@ newtp:		if ((tp = text_init(sp, NULL, 0, 32)) == NULL)
 	 * practice, but not 'cause it's easier.
 	 */
 	gp = sp->gp;
-	if (F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(gp, G_SCRIPTED))
+		LF_CLR(TXT_AUTOINDENT);
+	else {
 		if (LF_ISSET(TXT_AUTOINDENT)) {
 			LF_SET(TXT_EOFCHAR);
 			if (v_txt_auto(sp, sp->lno, NULL, 0, tp))
 				goto err;
 		}
 		txt_prompt(sp, tp, prompt, flags);
-	} else
-		LF_CLR(TXT_AUTOINDENT);
+	}
 
 	for (carat_st = C_NOTSET;;) {
 		if (v_event_get(sp, &ev, 0, 0))

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)options.c	10.49 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)options.c	10.50 (Berkeley) 10/1/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -394,8 +394,8 @@ opts_init(sp, oargs)
 	OI(O_WINDOW, b1);
 
 	/*
-	 * Set boolean default values, and copy all settings into the
-	 * the default information.
+	 * Set boolean default values, and copy all settings into the default
+	 * information.  OS_NOFREE is set, we're copying, not replacing.
 	 */
 	for (op = optlist, cnt = 0; op->name != NULL; ++op, ++cnt)
 		switch (op->type) {
@@ -409,8 +409,8 @@ opts_init(sp, oargs)
 			o_set(sp, cnt, OS_DEF, NULL, O_VAL(sp, cnt));
 			break;
 		case OPT_STR:
-			if (O_STR(sp, cnt) != NULL && o_set(sp,
-			    cnt, OS_DEF | OS_STRDUP, O_STR(sp, cnt), 0))
+			if (O_STR(sp, cnt) != NULL && o_set(sp, cnt,
+			    OS_DEF | OS_NOFREE | OS_STRDUP, O_STR(sp, cnt), 0))
 				goto err;
 			break;
 		default:
@@ -696,7 +696,7 @@ badnum:				p = msg_print(sp, name, &nf);
 			}
 
 			/* Set the value. */
-			if (o_set(sp, offset, OS_FREE | OS_STRDUP, sep, 0))
+			if (o_set(sp, offset, OS_STRDUP, sep, 0))
 				rval = 1;
 			break;
 		default:
@@ -734,23 +734,21 @@ o_set(sp, opt, flags, str, val)
 		return (1);
 	}
 
-
 	/* Free the previous string, if requested, and set the value. */
-	if LF_ISSET(OS_DEF) {
-		if (LF_ISSET(OS_FREE) && op->o_def.str != NULL)
-			free(op->o_def.str);
-		if (LF_ISSET(OS_STR | OS_STRDUP))
+	if LF_ISSET(OS_DEF)
+		if (LF_ISSET(OS_STR | OS_STRDUP)) {
+			if (!LF_ISSET(OS_NOFREE) && op->o_def.str != NULL)
+				free(op->o_def.str);
 			op->o_def.str = str;
-		else
+		} else
 			op->o_def.val = val;
-	} else {
-		if (LF_ISSET(OS_FREE) && op->o_cur.str != NULL)
-			free(op->o_cur.str);
-		if (LF_ISSET(OS_STR | OS_STRDUP))
+	else
+		if (LF_ISSET(OS_STR | OS_STRDUP)) {
+			if (!LF_ISSET(OS_NOFREE) && op->o_cur.str != NULL)
+				free(op->o_cur.str);
 			op->o_cur.str = str;
-		else
+		} else
 			op->o_cur.val = val;
-	}
 	return (0);
 }
 
@@ -1085,20 +1083,20 @@ opts_copy(orig, sp)
 		 * screens referencing the same memory.
 		 */
 		if (rval || O_STR(sp, cnt) == NULL) {
-			o_set(sp, cnt, OS_STR, NULL, 0);
-			o_set(sp, cnt, OS_DEF | OS_STR, NULL, 0);
+			o_set(sp, cnt, OS_NOFREE | OS_STR, NULL, 0);
+			o_set(sp, cnt, OS_DEF | OS_NOFREE | OS_STR, NULL, 0);
 			continue;
 		}
 
 		/* Copy the current string. */
-		if (o_set(sp, cnt, OS_STRDUP, O_STR(sp, cnt), 0)) {
-			o_set(sp, cnt, OS_DEF | OS_STR, NULL, 0);
+		if (o_set(sp, cnt, OS_NOFREE | OS_STRDUP, O_STR(sp, cnt), 0)) {
+			o_set(sp, cnt, OS_DEF | OS_NOFREE | OS_STR, NULL, 0);
 			goto nomem;
 		}
 
 		/* Copy the default string. */
-		if (O_D_STR(sp, cnt) != NULL &&
-		    o_set(sp, cnt, OS_DEF | OS_STRDUP, O_D_STR(sp, cnt), 0)) {
+		if (O_D_STR(sp, cnt) != NULL && o_set(sp, cnt,
+		    OS_DEF | OS_NOFREE | OS_STRDUP, O_D_STR(sp, cnt), 0)) {
 nomem:			msgq(orig, M_SYSERR, NULL);
 			rval = 1;
 		}

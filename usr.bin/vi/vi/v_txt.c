@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.83 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)v_txt.c	10.86 (Berkeley) 9/20/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -535,14 +535,14 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	/*
 	 * !!!
 	 * If the first character of the input is a nul, replay the previous
-	 * input.  Note, it was okay to replay non-existent input.  This was
-	 * not documented as far as I know, and is a great test of vi clones.
+	 * input.  (Historically, it's okay to replay non-existent input.)
+	 * This was not documented as far as I know, and is a great test of vi
+	 * clones.
 	 */
-	if (!LF_ISSET(TXT_REPLAY) && evp->e_c == '\0') {
+	if (rcol == 0 && !LF_ISSET(TXT_REPLAY) && evp->e_c == '\0') {
 		if (vip->rep == NULL)
 			goto done;
 
-		rcol = 0;
 		abb = AB_NOTSET;
 		LF_CLR(TXT_RECORD);
 		LF_SET(TXT_REPLAY);
@@ -1951,24 +1951,20 @@ txt_dent(sp, tp, isindent)
 
 	/*
 	 * Back up over any previous <blank> characters, changing them into
-	 * overwrite characters (including any ai characters).
+	 * overwrite characters (including any ai characters).  Then figure
+	 * out the current screen column.
 	 */
-	for (; tp->cno > tp->offset; --tp->cno, ++tp->owrite)
-		if (tp->lb[tp->cno - 1] == ' ')
-			--current;
-		else if (tp->lb[tp->cno - 1] == '\t') {
-			off = COL_OFF(current, ts);
-			if (current > off)
-				current -= off;
-			else
-				current = 0;
-		} else
-			break;
+	for (; tp->cno > tp->offset &&
+	    (tp->lb[tp->cno - 1] == ' ' || tp->lb[tp->cno - 1] == '\t');
+	    --tp->cno, ++tp->owrite);
+	for (current = cno = 0; cno < tp->cno; ++cno)
+		current += tp->lb[cno] == '\t' ?
+		    COL_OFF(current, ts) : KEY_LEN(sp, tp->lb[cno]);
 
 	/*
 	 * If we didn't move up to or past the target, it's because there
 	 * weren't enough characters to delete, e.g. the first character
-	 * of the line was an tp->offset character, and the user entered
+	 * of the line was a tp->offset character, and the user entered
 	 * ^D to move to the beginning of a line.  An example of this is:
 	 *
 	 *	:set ai sw=4<cr>i<space>a<esc>i^T^D

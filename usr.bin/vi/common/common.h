@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)common.h	10.12 (Berkeley) 5/24/96
+ *	@(#)common.h	10.13 (Berkeley) 9/25/96
  */
 
 /*
@@ -93,4 +93,4 @@ typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 #include "log.h"
 #include "mem.h"
 
-#include "common_extern.h"
+#include "com_extern.h"

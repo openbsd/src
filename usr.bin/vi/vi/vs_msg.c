@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_msg.c	10.75 (Berkeley) 8/17/96";
+static const char sccsid[] = "@(#)vs_msg.c	10.76 (Berkeley) 9/26/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -648,6 +648,8 @@ vs_ex_resolve(sp, continuep)
  *
  * This routine is called from the main vi loop to periodically ensure that
  * the user has seen any messages that have been displayed.
+ *
+ * PUBLIC: int vs_resolve __P((SCR *, int));
  */
 int
 vs_resolve(sp, forcewait)

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)cl.h	10.18 (Berkeley) 9/15/96
+ *	@(#)cl.h	10.19 (Berkeley) 9/24/96
  */
 
 typedef struct _cl_private {
@@ -47,6 +47,7 @@ typedef struct _cl_private {
 #define	CL_SIGINT	0x0040	/* SIGINT arrived. */
 #define	CL_SIGTERM	0x0080	/* SIGTERM arrived. */
 #define	CL_SIGWINCH	0x0100	/* SIGWINCH arrived. */
+#define	CL_STDIN_TTY	0x0200	/* Talking to a terminal. */
 	u_int32_t flags;
 } CL_PRIVATE;
 

@@ -1,3 +1,15 @@
+1.76 -> 1.78 (10/01/96)
+	+ Fix bugs when both the leftright scrolling and number edit options
+	  were on.
+	+ Fix bug where splitting in the middle of the screen could repaint
+	  incorrectly.
+	+ Fix first-nul in input bug, where random garbage was inserted.
+	+ Correct search and mark-as-motion-command bug, it's a line mode
+	  action if the search starts at or before the first non<blank>.
+	+ Fix bug autoindent bug, where ^D could shift too far in the line.
+	+ Fix core dump where ! command called from the .exrc file.
+	+ Add the -S command-line option, which initializes vi to have the
+	  secure edit option preset.
 1.75 -> 1.76 (09/15/96)
 	+ Fix bug where ^V didn't keep input mapping from happening.
 	+ Fix a core dump bug in the R command.

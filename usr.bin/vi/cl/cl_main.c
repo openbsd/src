@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_main.c	10.33 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)cl_main.c	10.35 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -28,7 +28,7 @@ static const char sccsid[] = "@(#)cl_main.c	10.33 (Berkeley) 8/11/96";
 #include <unistd.h>
 
 #include "../common/common.h"
-#ifdef notyet
+#ifdef RUNNING_IP
 #include "../ip/ip.h"
 #endif
 #include "cl.h"
@@ -73,7 +73,7 @@ main(argc, argv)
 	 * no way to portably call getopt twice, so arguments parsed here must
 	 * be removed from the argument list.
 	 */
-#ifdef notyet
+#ifdef RUNNING_IP
 	ip_arg = NULL;
 	for (p_av = t_av = argv;;) {
 		if (*t_av == NULL) {
@@ -229,17 +229,21 @@ cl_init(gp)
 	gp->cl_private = clp;
 
 	/*
-	 * Set the G_STDIN_TTY flag.  It's purpose is to avoid setting and
-	 * resetting the tty if the input isn't from there.
+	 * Set the CL_STDIN_TTY flag.  It's purpose is to avoid setting
+	 * and resetting the tty if the input isn't from there.  We also
+	 * use the same test to determine if we're running a script or
+	 * not.
 	 */
 	if (isatty(STDIN_FILENO))
-		F_SET(gp, G_STDIN_TTY);
+		F_SET(clp, CL_STDIN_TTY);
+	else
+		F_SET(gp, G_SCRIPTED);
 
 	/*
 	 * We expect that if we've lost our controlling terminal that the
 	 * open() (but not the tcgetattr()) will fail.
 	 */
-	if (F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(clp, CL_STDIN_TTY)) {
 		if (tcgetattr(STDIN_FILENO, &clp->orig) == -1)
 			goto tcfail;
 	} else if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {

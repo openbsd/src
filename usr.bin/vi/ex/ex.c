@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex.c	10.54 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)ex.c	10.55 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ ex(spp)
 	}
 
 	/* If reading from a file, errors should have name and line info. */
-	if (!F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(gp, G_SCRIPTED)) {
 		gp->excmd.if_lno = 1;
 		gp->excmd.if_name = "script";
 	}
@@ -130,7 +130,7 @@ ex(spp)
 		}
 		F_INIT(&gp->excmd, E_NRSEP);
 
-		if (ex_cmd(sp) && !F_ISSET(gp, G_STDIN_TTY))
+		if (ex_cmd(sp) && F_ISSET(gp, G_SCRIPTED))
 			return (1);
 
 		if (INTERRUPTED(sp)) {
@@ -1336,7 +1336,7 @@ addr_verify:
 	 */
 	if (F_ISSET(ecp, E_NRSEP)) {
 		if (sp->ep != NULL &&
-		    F_ISSET(sp, SC_EX) && F_ISSET(gp, G_STDIN_TTY) &&
+		    F_ISSET(sp, SC_EX) && !F_ISSET(gp, G_SCRIPTED) &&
 		    (F_ISSET(ecp, E_USELASTCMD) || ecp->cmd == &cmds[C_SCROLL]))
 			gp->scr_ex_adjust(sp, EX_TERM_SCROLL);
 		F_CLR(ecp, E_NRSEP);
@@ -1349,7 +1349,7 @@ addr_verify:
 	 * Interrupts behave like errors, for now.
 	 */
 	if (ecp->cmd->fn(sp, ecp) || INTERRUPTED(sp)) {
-		if (!F_ISSET(gp, G_STDIN_TTY))
+		if (F_ISSET(gp, G_SCRIPTED))
 			F_SET(sp, SC_EXIT_FORCE);
 		goto err;
 	}

@@ -8,16 +8,16 @@
 .\"
 .\" See the LICENSE file for redistribution information.
 .\"
-.\"     @(#)vi.1	8.49 (Berkeley) 8/20/96
+.\"     @(#)vi.1	8.50 (Berkeley) 9/23/96
 .\"
-.TH VI 1 "August 20, 1996"
+.TH VI 1 "September 23, 1996"
 .UC
 .SH NAME
 ex, vi, view \- text editors
 .SH SYNOPSIS
 .B ex
 [\c
-.B -eFRrsv\c
+.B -eFRrSsv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -28,7 +28,7 @@ ex, vi, view \- text editors
 .br
 .B vi
 [\c
-.B -eFlRrv\c
+.B -eFlRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -39,7 +39,7 @@ ex, vi, view \- text editors
 .br
 .B view
 [\c
-.B -eFRrv\c
+.B -eFRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -135,6 +135,11 @@ If no recoverable files by the specified name exist,
 the file is edited as if the
 .B \-r
 option had not been specified.
+.TP
+.B \-S
+Run with the
+.B secure
+edit option set, disallowing all access to external programs.
 .TP
 .B \-s
 Enter batch mode; applicable only to

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_split.c	10.29 (Berkeley) 8/19/96";
+static const char sccsid[] = "@(#)vs_split.c	10.30 (Berkeley) 9/20/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ vs_split(sp, new, ccl)
 	gp = sp->gp;
 
 	/* Check to see if it's possible. */
+	/* XXX: The IS_ONELINE fix will change this, too. */
 	if (sp->rows < 4) {
 		msgq(sp, M_ERR,
 		    "222|Screen must be larger than %d lines to split", 4 - 1);
@@ -88,7 +89,8 @@ vs_split(sp, new, ccl)
 	 * with the cursor on the colon command line.  Then split the screen
 	 * in half and update the shared information.
 	 */
-	splitup = !ccl && (vs_sm_cursor(sp, &smp) ? 0 : smp - HMAP) > half;
+	splitup =
+	    !ccl && (vs_sm_cursor(sp, &smp) ? 0 : (smp - HMAP) + 1) >= half;
 	if (splitup) {				/* Old is bottom half. */
 		new->rows = sp->rows - half;	/* New. */
 		new->woff = sp->woff;

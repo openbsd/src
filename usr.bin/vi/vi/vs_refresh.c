@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_refresh.c	10.41 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)vs_refresh.c	10.43 (Berkeley) 9/26/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,23 +82,7 @@ vs_refresh(sp, forcepaint)
 				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
 	/*
-	 * 2: Paint any missing status lines.
-	 *
-	 * XXX
-	 * This is fairly evil.  Status lines are written using the vi message
-	 * mechanism, since we have no idea how long they are.  Since we may be
-	 * painting screens other than the current one, we don't want to make
-	 * the user wait.  We depend heavily on there not being any other lines
-	 * currently waiting to be displayed and the message truncation code in
-	 * the msgq_status routine working.
-	 */
-	for (tsp = sp->gp->dq.cqh_first;
-	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
-		if (F_ISSET(tsp, SC_STATUS))
-			vs_resolve(tsp, 0);
-
-	/*
-	 * 3: Related or dirtied screens, or screens with messages.
+	 * 2: Related or dirtied screens, or screens with messages.
 	 *
 	 * If related screens share a view into a file, they may have been
 	 * modified as well.  Refresh any screens that aren't exiting that
@@ -122,7 +106,7 @@ vs_refresh(sp, forcepaint)
 		}
 
 	/*
-	 * 4: Refresh the current screen.
+	 * 3: Refresh the current screen.
 	 *
 	 * Always refresh the current screen, it may be a cursor movement.
 	 * Also, always do it last -- that way, SC_SCR_REDRAW can be set
@@ -131,6 +115,22 @@ vs_refresh(sp, forcepaint)
 	if (vs_paint(sp, UPDATE_CURSOR | (!forcepaint &&
 	    F_ISSET(sp, SC_SCR_VI) && KEYS_WAITING(sp) ? 0 : UPDATE_SCREEN)))
 		return (1);
+
+	/*
+	 * 4: Paint any missing status lines.
+	 *
+	 * XXX
+	 * This is fairly evil.  Status lines are written using the vi message
+	 * mechanism, since we have no idea how long they are.  Since we may be
+	 * painting screens other than the current one, we don't want to make
+	 * the user wait.  We depend heavily on there not being any other lines
+	 * currently waiting to be displayed and the message truncation code in
+	 * the msgq_status routine working.
+	 */
+	for (tsp = sp->gp->dq.cqh_first;
+	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+		if (F_ISSET(tsp, SC_STATUS))
+			vs_resolve(tsp, 0);
 
 	/*
 	 * A side-effect of refreshing the screen is that it's now ready
@@ -160,7 +160,7 @@ vs_paint(sp, flags)
 	VI_PRIVATE *vip;
 	recno_t lastline, lcnt;
 	size_t cwtotal, cnt, len, notused, off, y;
-	int ch, didpaint, isempty, leftright_warp, shifted;
+	int ch, didpaint, isempty, leftright_warp;
 	char *p;
 
 #define	 LNO	sp->lno			/* Current file line. */
@@ -579,34 +579,36 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 	 * first screen as compared to subsequent ones.
 	 */
 	if (O_ISSET(sp, O_LEFTRIGHT)) {
-		/* Get the screen column for this character. */
+		/*
+		 * Get the screen column for this character, and correct
+		 * for the number option offset.
+		 */
 		cnt = vs_columns(sp, NULL, LNO, &CNO, NULL);
-
-		shifted = 0;
+		if (O_ISSET(sp, O_NUMBER))
+			cnt -= O_NUMBER_LENGTH;
 
 		/* Adjust the window towards the beginning of the line. */
 		off = smp->coff;
 		if (off >= cnt) {
-			while (off >= cnt)
+			do {
 				if (off >= O_VAL(sp, O_SIDESCROLL))
 					off -= O_VAL(sp, O_SIDESCROLL);
 				else {
 					off = 0;
 					break;
 				}
-			shifted = 1;
+			} while (off >= cnt);
+			goto shifted;
 		}
 
 		/* Adjust the window towards the end of the line. */
 		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
 		    off != 0 && off + sp->cols < cnt) {
-			while (off + sp->cols < cnt)
+			do {
 				off += O_VAL(sp, O_SIDESCROLL);
-			shifted = 1;
-		}
+			} while (off + sp->cols < cnt);
 
-		/* Fill in screen map with the new offset. */
-		if (shifted) {
+shifted:		/* Fill in screen map with the new offset. */
 			if (F_ISSET(sp, SC_TINPUT_INFO))
 				smp->coff = off;
 			else {

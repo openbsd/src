@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vi.c	10.55 (Berkeley) 8/17/96";
+static const char sccsid[] = "@(#)vi.c	10.56 (Berkeley) 9/25/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -39,7 +39,7 @@ static gcret_t	v_cmd __P((SCR *, VICMD *, VICMD *, VICMD *, int *, int *));
 static int	v_count __P((SCR *, ARG_CHAR_T, u_long *));
 static void	v_dtoh __P((SCR *));
 static int	v_init __P((SCR *));
-static gcret_t	v_key __P((SCR *, int, EVENT *, u_int));
+static gcret_t	v_key __P((SCR *, int, EVENT *, u_int32_t));
 static int	v_keyword __P((SCR *));
 static int	v_motion __P((SCR *, VICMD *, VICMD *, int *));
 

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)options.h	10.17 (Berkeley) 7/2/96
+ *	@(#)options.h	10.18 (Berkeley) 10/1/96
  */
 
 /*
@@ -41,7 +41,7 @@
 
 /* Flags to o_set(). */
 #define	OS_DEF		0x01		/* Set the default value. */
-#define	OS_FREE		0x02		/* Free old string if set. */
+#define	OS_NOFREE	0x02		/* Don't free the old string. */
 #define	OS_STR		0x04		/* Set to the str value. */
 #define	OS_STRDUP	0x08		/* Copy and set to the str value. */
 
