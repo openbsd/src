@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.58 2003/10/03 19:48:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.59 2003/10/06 19:18:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -123,8 +123,7 @@ static struct hostent *getanswer(const querybuf *, int, const char *, int);
 extern int h_errno;
 
 int
-_hokchar(p)
-	const char *p;
+_hokchar(const char *p)
 {
 	char c;
 
@@ -150,11 +149,7 @@ _hokchar(p)
 }
 
 static struct hostent *
-getanswer(answer, anslen, qname, qtype)
-	const querybuf *answer;
-	int anslen;
-	const char *qname;
-	int qtype;
+getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	const HEADER *hp;
@@ -370,7 +365,7 @@ getanswer(answer, anslen, qname, qtype)
 				}
 			}
 			if (!haveanswer) {
-				register int nn;
+				int nn;
 
 				host.h_name = bp;
 				nn = strlen(bp) + 1;	/* for the \0 */
@@ -444,12 +439,8 @@ getanswer(answer, anslen, qname, qtype)
  */
 
 struct hostent *
-gethostbyname_r(name, hp, buf, buflen, errorp)
-	const char * name;
-	struct hostent * hp;
-	char * buf;
-	int buflen;
-	int * errorp;
+gethostbyname_r(const char *name, struct hostent *hp, char *buf, int buflen,
+    int *errorp)
 {
 	struct hostent *res;
 
@@ -465,13 +456,8 @@ gethostbyname_r(name, hp, buf, buflen, errorp)
  * XXX This is an extremely bogus implementation.
  */
 struct hostent *
-gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
-	const char *addr;	/* XXX should have been def'd as u_char! */
-	int len, af;
-	struct hostent * he;
-	char * buf;
-	int buflen;
-	int * errorp;
+gethostbyaddr_r(const char *addr, int len, int af, struct hostent *he,
+    char *buf, int buflen, int *errorp)
 {
 	struct hostent * res;
 
@@ -487,12 +473,11 @@ gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
 #endif
 
 struct hostent *
-gethostbyname(name)
-	const char *name;
+gethostbyname(const char *name)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	struct hostent *hp;
-	extern struct hostent *_gethtbyname2();
+	extern struct hostent *_gethtbyname2(const char *, int);
 
 	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		hp = _gethtbyname2(name, AF_INET);
@@ -508,18 +493,17 @@ gethostbyname(name)
 }
 
 struct hostent *
-gethostbyname2(name, af)
-	const char *name;
-	int af;
+gethostbyname2(const char *name, int af)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	querybuf *buf;
-	register const char *cp;
+	const char *cp;
 	char *bp, *ep;
 	int n, size, type, i;
-	extern struct hostent *_gethtbyname2(), *_yp_gethtbyname();
-	register struct hostent *hp;
+	struct hostent *hp;
 	char lookups[MAXDNSLUS];
+	extern struct hostent *_gethtbyname2(const char *, int);
+	extern struct hostent *_yp_gethtbyname(const char *);
 
 	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return (_gethtbyname2(name, af));
@@ -656,19 +640,18 @@ gethostbyname2(name, af)
 }
 
 struct hostent *
-gethostbyaddr(addr, len, af)
-	const char *addr;	/* XXX should have been def'd as u_char! */
-	int len, af;
+gethostbyaddr(const char *addr, int len, int af)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	const u_char *uaddr = (const u_char *)addr;
 	int n, size, i;
 	querybuf *buf;
-	register struct hostent *hp;
+	struct hostent *hp;
 	char qbuf[MAXDNAME+1], *qp, *ep;
-	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
 	char lookups[MAXDNSLUS];
 	struct hostent *res;
+	extern struct hostent *_gethtbyaddr(const char *, int, int);
+	extern struct hostent *_yp_gethtbyaddr(const char *);
 	
 	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		res = _gethtbyaddr(addr, len, af);
@@ -792,8 +775,7 @@ gethostbyaddr(addr, len, af)
 }
 
 void
-_sethtent(f)
-	int f;
+_sethtent(int f)
 {
 	if (hostf == NULL)
 		hostf = fopen(_PATH_HOSTS, "r" );
@@ -803,7 +785,7 @@ _sethtent(f)
 }
 
 void
-_endhtent()
+_endhtent(void)
 {
 	if (hostf && !stayopen) {
 		(void) fclose(hostf);
@@ -812,11 +794,10 @@ _endhtent()
 }
 
 struct hostent *
-_gethtent()
+_gethtent(void)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	char *p;
-	register char *cp, **q;
+	char *p, *cp, **q;
 	int af;
 	size_t len;
 
@@ -895,12 +876,11 @@ _gethtent()
 }
 
 struct hostent *
-_gethtbyname(name)
-	const char *name;
+_gethtbyname(const char *name)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	extern struct hostent *_gethtbyname2();
 	struct hostent *hp;
+	extern struct hostent *_gethtbyname2(const char *, int);
 
 	if (_resp->options & RES_USE_INET6) {
 		hp = _gethtbyname2(name, AF_INET6);
@@ -911,12 +891,10 @@ _gethtbyname(name)
 }
 
 struct hostent *
-_gethtbyname2(name, af)
-	const char *name;
-	int af;
+_gethtbyname2(const char *name, int af)
 {
-	register struct hostent *p;
-	register char **cp;
+	struct hostent *p;
+	char **cp;
 	
 	_sethtent(0);
 	while ((p = _gethtent())) {
@@ -934,11 +912,9 @@ _gethtbyname2(name, af)
 }
 
 struct hostent *
-_gethtbyaddr(addr, len, af)
-	const char *addr;
-	int len, af;
+_gethtbyaddr(const char *addr, int len, int af)
 {
-	register struct hostent *p;
+	struct hostent *p;
 
 	host.h_length = len;
 	host.h_addrtype = af;
@@ -953,8 +929,7 @@ _gethtbyaddr(addr, len, af)
 
 #ifdef YP
 struct hostent *
-_yphostent(line)
-	char *line;
+_yphostent(char *line)
 {
 	static struct in_addr host_addrs[MAXADDRS];
 	char *p = line;
@@ -1028,8 +1003,7 @@ done:
 }
 
 struct hostent *
-_yp_gethtbyaddr(addr)
-	const char *addr;
+_yp_gethtbyaddr(const char *addr)
 {
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
@@ -1056,8 +1030,7 @@ _yp_gethtbyaddr(addr)
 }
 
 struct hostent *
-_yp_gethtbyname(name)
-	const char *name;
+_yp_gethtbyname(const char *name)
 {
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;
@@ -1083,9 +1056,7 @@ _yp_gethtbyname(name)
 #endif
 
 static void
-map_v4v6_address(src, dst)
-	const char *src;
-	char *dst;
+map_v4v6_address(const char *src, char *dst)
 {
 	u_char *p = (u_char *)dst;
 	char tmp[INADDRSZ];
@@ -1103,10 +1074,7 @@ map_v4v6_address(src, dst)
 }
 
 static void
-map_v4v6_hostent(hp, bpp, ep)
-	struct hostent *hp;
-	char **bpp;
-	char *ep;
+map_v4v6_hostent(struct hostent *hp, char **bpp, char *ep)
 {
 	char **ap;
 
@@ -1130,16 +1098,14 @@ map_v4v6_hostent(hp, bpp, ep)
 }
 
 struct hostent *
-gethostent()
+gethostent(void)
 {
 	return (_gethtent());
 }
 
 #ifdef RESOLVSORT
 static void
-addrsort(ap, num)
-	char **ap;
-	int num;
+addrsort(char **ap, int num)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int i, j;
@@ -1151,7 +1117,8 @@ addrsort(ap, num)
 	for (i = 0; i < num; i++, p++) {
 		for (j = 0 ; (unsigned)j < _resp->nsort; j++)
 			if (_resp->sort_list[j].addr.s_addr == 
-			    (((struct in_addr *)(*p))->s_addr & _resp->sort_list[j].mask))
+			    (((struct in_addr *)(*p))->s_addr & 
+			    _resp->sort_list[j].mask))
 				break;
 		aval[i] = j;
 		if (needsort == 0 && i > 0 && j < aval[i-1])
