@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.1 1998/07/14 03:29:08 mickey Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.2 2000/05/30 21:59:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -77,7 +77,45 @@ aout_load(fd, xp)
 	xp->data.size = x->a_data;
 	xp->bss.size = x->a_bss;
 	xp->sym.size = x->a_syms;
-	xp->str.size = 0;	/* will be hacked later in exec() */
+	xp->str.size = 0;	/* will be hacked later in aout_ldsym() */
+
+	return 0;
+}
+
+int
+aout_ldsym(fd, xp)
+	int fd;
+	register struct x_param *xp;
+{
+	char *pa;
+	u_int i;
+
+        /* Symbols */
+	if (xp->sym.size) {
+		pa = (char *)xp->xp_end;
+
+		*(u_int *)pa = xp->sym.size;
+		pa += sizeof(u_int);
+		printf("+[%u", xp->sym.size);
+		if (read(fd, pa, xp->sym.size) != (ssize_t)xp->sym.size)
+			return -1;
+		pa += xp->sym.size;
+
+		if (read(fd, pa, sizeof(u_int)) != sizeof(u_int))
+			return -1;
+
+		if ((i = *(u_int *)pa)) {
+			pa += sizeof(u_int);
+			i -= sizeof(u_int);
+			if (read(fd, pa, i) != i)
+                		return -1;
+			pa += i;
+		}
+
+		/* and that many bytes of string table */
+		printf("+%d]", i);
+		xp->xp_end = (u_long)pa;
+	}
 
 	return 0;
 }

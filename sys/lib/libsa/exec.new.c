@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.new.c,v 1.4 1998/08/27 20:36:00 mickey Exp $	*/
+/*	$OpenBSD: exec.new.c,v 1.5 2000/05/30 21:59:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -53,7 +53,6 @@ exec(path, loadaddr, howto)
 	union x_header hdr;
 	register u_char *pa;
 	register int save_err;
-	u_int sz;
 
 	if ((fd = open(path, 0)) < 0 || fstat(fd, &sb))
 		return;
@@ -109,45 +108,14 @@ exec(path, loadaddr, howto)
 	printf("+%u", param.bss.size);
 	bzero (pa + param.bss.addr, param.bss.size);
 
-	if (!param.sym.size)
-		pa += param.bss.addr + param.bss.size;
-	else {
-		*(u_int *)(pa + param.sym.addr) = param.sym.size;
-		param.sym.addr += sizeof(u_int);
-		printf("+[%u", param.sym.size);
-		if (lseek(fd, param.sym.foff, SEEK_SET) <= 0 ||
-		    read(fd,pa+param.sym.addr,param.sym.size) != param.sym.size)
-			goto err;
-
-		/* .str */
-		if (param.str.foff && lseek(fd, param.str.foff, SEEK_SET) <= 0)
-			goto err;
-
-		pa += param.sym.addr + param.sym.size;
-		sz = param.str.size;
-
-		/* special hack for a.out, where .str size is it's first int */
-		if (param.str.foff && !sz) {
-			if (read(fd, pa, sizeof(u_int)) != sizeof(u_int))
-				goto err;
-			else {
-				sz = param.str.size = *(u_int*)pa;
-				pa += sizeof(u_int);
-				sz -= sizeof(u_int);
-			}
-		}
-		if (sz) {
-			if (sz && read(fd, pa, sz) != sz)
-				goto err;
-		}
-		printf("+%u]", sz);
-		pa += sz;
+	param.xp_end = (int)pa + param.bss.addr + param.bss.size;
+	if (sw->ldsym && sw->ldsym(fd, &param)) {
+		errno = errno? errno : EFTYPE;
+		goto err;
 	}
 
-	/* round to int */
-	param.xp_end = ((u_int)pa + sizeof(int) - 1) & ~(sizeof(int) - 1);
-
-	printf(" total=0x%x start=0x%x\n", param.xp_end, param.xp_entry);
+	/* ldsym will adjust the xp_end */
+	printf("=0x%x start=0x%x\n", param.xp_end, param.xp_entry);
 
 	/* call the joker */
 	machdep_exec(&param, howto, loadaddr);
