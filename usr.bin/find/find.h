@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.6 1996/12/23 04:58:09 millert Exp $*/
+/* *	$OpenBSD: find.h,v 1.7 1997/11/13 08:30:33 deraadt Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,10 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
-	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR,
-	N_EXPR, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MAXDEPTH,
+	N_AMIN, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CTIME, N_DEPTH,
+	N_EMPTY, N_EXEC, N_EXECDIR,
+	N_EXPR, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS,
+	N_MMIN, N_MAXDEPTH,
 	N_MINDEPTH, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER,
 	N_OK, N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRUNE,
 	N_SIZE, N_TYPE, N_USER, N_XDEV,

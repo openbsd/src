@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.10 1997/09/01 02:44:19 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.11 1997/11/13 08:30:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.10 1997/09/01 02:44:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.11 1997/11/13 08:30:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,6 +136,37 @@ find_parsenum(plan, option, vp, endch)
 		++((p)->t_data);
 
 /*
+ * -amin n functions --
+ *
+ *     True if the difference between the file access time and the
+ *     current time is n min periods.
+ */
+int
+f_amin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_atime +
+	    60 - 1) / 60, plan->t_data);
+}
+
+PLAN *
+c_amin(arg)
+	char *arg;
+{
+	PLAN *new;
+
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_AMIN, f_amin);
+	new->t_data = find_parsenum(new, "-amin", arg, NULL);
+	TIME_CORRECT(new, N_AMIN);
+	return (new);
+}
+
+/*
  * -atime n functions --
  *
  *	True if the difference between the file access time and the
@@ -164,6 +195,38 @@ c_atime(arg)
 	TIME_CORRECT(new, N_ATIME);
 	return (new);
 }
+
+/*
+ * -cmin n functions --
+ *
+ *     True if the difference between the last change of file
+ *     status information and the current time is n min periods.
+ */
+int
+f_cmin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_ctime +
+	    60 - 1) / 60, plan->t_data);
+}
+
+PLAN *
+c_cmin(arg)
+	char *arg;
+{
+	PLAN *new;
+
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_CMIN, f_cmin);
+	new->t_data = find_parsenum(new, "-cmin", arg, NULL);
+	TIME_CORRECT(new, N_CMIN);
+	return (new);
+}
+
 /*
  * -ctime n functions --
  *
@@ -766,6 +829,37 @@ c_mtime(arg)
 	new = palloc(N_MTIME, f_mtime);
 	new->t_data = find_parsenum(new, "-mtime", arg, NULL);
 	TIME_CORRECT(new, N_MTIME);
+	return (new);
+}
+
+/*
+ * -mmin n functions --
+ *
+ *     True if the difference between the file modification time and the
+ *     current time is n min periods.
+ */
+int
+f_mmin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_mtime + 60 - 1) /
+	    60, plan->t_data);
+}
+
+PLAN *
+c_mmin(arg)
+	char *arg;
+{
+	PLAN *new;
+
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_MMIN, f_mmin);
+	new->t_data = find_parsenum(new, "-mmin", arg, NULL);
+	TIME_CORRECT(new, N_MMIN);
 	return (new);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.14 1997/11/04 08:19:32 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.15 1997/11/13 08:30:33 deraadt Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -129,12 +129,25 @@ than that of the file from which the descent began.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
+.It Ic -amin Ar n 
+True if the difference between the file last access time and the time
+.Nm find
+was started, rounded up to the next full minutes period, is
+.Ar n
+minutes periods.
 .It Ic -atime Ar n 
 True if the difference between the file last access time and the time
 .Nm find
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
+.It Ic -cmin Ar n 
+True if the difference between the time of last change of file status
+information and the time
+.Nm find
+was started, rounded up to the next full minutes period, is
+.Ar n
+minutes periods.
 .It Ic -ctime Ar n 
 True if the difference between the time of last change of file status
 information and the time
@@ -209,6 +222,12 @@ True if the current search depth is less than or equal to what is specified in
 .It Ic -mindepth Ar n
 True if the current search depth is at least what is specified in
 .Ar n .
+.It Ic -mmin Ar n 
+True if the difference between the file last modification time and the time
+.Nm find
+was started, rounded up to the next full minutes period, is
+.Ar n
+minutes periods.
 .It Ic -mtime Ar n 
 True if the difference between the file last modification time and the time
 .Nm find
