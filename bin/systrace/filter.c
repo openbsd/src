@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.24 2002/12/09 07:24:56 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.25 2003/04/24 09:49:06 mpech Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -541,7 +541,8 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				}
 			}
 
-			fgets(line, sizeof(line), stdin);
+			if (fgets(line, sizeof(line), stdin) == NULL)
+				errx(1, "EOF");
 			p = line;
 			strsep(&p, "\n");
 		} else if (!first) {
