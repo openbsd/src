@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/06/08 08:08:43 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2001/06/08 13:32:54 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.80 1999/09/16 14:52:06 chs Exp $	*/
 
 /*-
@@ -1675,7 +1675,8 @@ pmap_extract(pmap, va, pap)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("%lx\n", pa));
 
-	*pap = pa;
+	if (pap)
+		*pap = pa;
 	return (TRUE);
 }
 
