@@ -1,0 +1,7 @@
+#	$OpenBSD: pf.filter,v 1.1 2001/06/26 13:23:20 dhartmei Exp $
+#
+# See pfctl(8) for syntax and examples
+
+# pass all packets in and out (these are the implicit last two rules)
+# pass in all
+# pass out all
