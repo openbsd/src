@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.9 1998/06/28 02:22:13 angelos Exp $	*/
+/*	$OpenBSD: common.c,v 1.10 2001/04/04 13:10:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.9 1998/06/28 02:22:13 angelos Exp $";
+static char rcsid[] = "$OpenBSD: common.c,v 1.10 2001/04/04 13:10:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,8 +260,10 @@ getq(namelist)
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
 		seteuid(euid);
-		if (stat(d->d_name, &stbuf) < 0)
+		if (stat(d->d_name, &stbuf) < 0) {
+			seteuid(uid);
 			continue;	/* Doesn't exist */
+		}
 		seteuid(uid);
 		q = (struct queue *)malloc(sizeof(time_t)+strlen(d->d_name)+1);
 		if (q == NULL)
