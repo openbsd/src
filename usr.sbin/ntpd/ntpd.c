@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.26 2004/12/20 15:10:05 moritz Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.27 2004/12/22 16:04:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -306,7 +306,8 @@ ntpd_adjtime(double d)
 {
 	struct timeval	tv;
 
-	if (d >= (double)LOG_NEGLIGEE / 1000)
+	if (d >= (double)LOG_NEGLIGEE / 1000 ||
+	    d <= -1 * (double)LOG_NEGLIGEE / 1000)
 		log_info("adjusting local clock by %fs", d);
 	else
 		log_debug("adjusting local clock by %fs", d);
