@@ -16,10 +16,10 @@ const
    */
 
 #ifndef lint
-static char rcsid[] = "$Id: version.c,v 1.1.1.1 1995/10/18 08:39:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: version.c,v 1.2 1997/01/11 00:12:17 niklas Exp $";
 #endif
 
-char version_string[] = "GNU assembler version 1.92.3, NetBSD $Revision: 1.1.1.1 $\n";
+char version_string[] = "GNU assembler version 1.92.3, OpenBSD $Revision: 1.2 $\n";
 
 #ifdef HO_VMS
 dummy3()
