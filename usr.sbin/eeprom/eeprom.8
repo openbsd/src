@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.13 2003/04/14 06:51:49 jmc Exp $
+.\"	$OpenBSD: eeprom.8,v 1.14 2004/08/24 08:15:04 jmc Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm eeprom
-.Nd display or modify contents of the EEPROM or OpenProm
+.Nd display or modify contents of the EEPROM or OpenPROM
 .Sh SYNOPSIS
 .Nm eeprom
 .Op Fl
@@ -57,7 +57,7 @@
 .Sh DESCRIPTION
 .Nm eeprom
 provides an interface for displaying and changing the contents of the
-EEPROM or OpenProm.
+EEPROM or OpenPROM.
 Without any arguments,
 .Nm eeprom
 will list all of the known fields and their corresponding values.
@@ -66,7 +66,7 @@ When given the name of a specific field,
 will display that value or set it if the field name is followed by
 .Dq =
 and a value.
-Only the superuser may modify the contents of the EEPROM or OpenProm.
+Only the superuser may modify the contents of the EEPROM or OpenPROM.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -75,13 +75,13 @@ Commands are taken from stdin and displayed on stdout.
 .It Fl c
 .Nm eeprom
 will fix incorrect checksum values and exit.
-This flag is quietly ignored on systems with an OpenProm.
+This flag is quietly ignored on systems with an OpenPROM.
 .It Fl f Ar device
 On systems with an EEPROM, use
 .Ar device
 instead of the default
 .Pa /dev/eeprom .
-On systems with an OpenProm, use
+On systems with an OpenPROM, use
 .Ar device
 instead of the default
 .Pa /dev/openprom .
@@ -89,9 +89,9 @@ instead of the default
 If checksum values are incorrect,
 .Nm eeprom
 will ignore them and continue after displaying a warning.
-This flag is quietly ignored on systems with an OpenProm.
+This flag is quietly ignored on systems with an OpenPROM.
 .It Fl v
-On systems with an OpenProm, be verbose when setting a value.
+On systems with an OpenPROM, be verbose when setting a value.
 Systems with an EEPROM are always verbose.
 .It Fl N Ar system
 Use the system image
@@ -198,17 +198,17 @@ and
 .Ar password
 fields are not currently supported.
 .Pp
-Since the OpenProm is designed such that the field names are arbitrary,
+Since the OpenPROM is designed such that the field names are arbitrary,
 explaining them here is dubious.
 Below are field names and values that
-one is likely to see on a system with an OpenProm.
+one is likely to see on a system with an OpenPROM.
 NOTE: this list
 may be incomplete or incorrect due to differences between revisions
-of the OpenProm.
+of the OpenPROM.
 .Bl -tag -width "last-hardware-update  "
 .It Ar sunmon-compat?
 If true, the old EEPROM-style interface will be used while in the monitor,
-rather than the OpenProm-style interface.
+rather than the OpenPROM-style interface.
 .It Ar selftest-#megs
 A 32-bit integer specifying the number of megabytes of memory to
 test upon power-up.
@@ -321,31 +321,44 @@ describing when the CPU was last updated.
 If true, the system will boot and run in diagnostic mode.
 .It Ar local-mac-address?
 When set to
-.Em false
-all Ethernet devices will use same system default MAC address.
+.Em false ,
+all Ethernet devices will use the same system default MAC address.
 When
 .Em true ,
 Ethernet devices which have a unique MAC address will use it
 rather than the system default MAC address.
+This option only really affects FCode-based Ethernet devices.
+In reality,
+this means that on Sparc machines with an OpenPROM,
+only
+.Xr hme 4
+Ethernet devices respect this setting.
+On Sparc64, all on-board devices,
+as well as plug-in
+.Xr hme 4
+boards, will respect this setting;
+other hardware will not.
 .El
-.Sh WARNINGS
+.Sh FILES
+.Bl -tag -width "/dev/openprom" -compact
+.It /dev/eeprom
+the EEPROM device on systems with an EEPROM
+.It /dev/openprom
+the OpenPROM device on systems with an OpenPROM
+.El
+.Sh SEE ALSO
+.Xr openprom 4
+.Sh CAVEATS
 The fields and their values are not necessarily well defined on
-systems with an OpenProm.
+systems with an OpenPROM.
 Your mileage may vary.
 .Pp
 There are a few fields known to exist in some revisions of the EEPROM
-and/or OpenProm that are not yet supported.
+and/or OpenPROM that are not yet supported.
 Most notable are those
-relating to password protection of the EEPROM or OpenProm.
+relating to password protection of the EEPROM or OpenPROM.
 .Pp
 Avoid gratuitously changing the contents of the EEPROM.
 It has a limited number of write cycles.
 .Pp
 The date parser isn't very intelligent.
-.Sh FILES
-.Bl -tag -width "/dev/openprom"
-.It /dev/eeprom
-the EEPROM device on systems with an EEPROM
-.It /dev/openprom
-the OpenProm device on systems with an OpenProm
-.El
