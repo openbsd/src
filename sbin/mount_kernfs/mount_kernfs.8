@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_kernfs.8,v 1.7 1998/12/15 01:20:35 aaron Exp $
+.\"	$OpenBSD: mount_kernfs.8,v 1.8 1998/12/21 16:16:48 mickey Exp $
 .\"	$NetBSD: mount_kernfs.8,v 1.6 1995/03/18 14:57:24 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -76,6 +76,16 @@ See the
 .Xr mount 8
 man page for possible options and their meanings.
 .El
+.Pp
+Statistics reported by
+.Xr df 1
+on the /kern filesystem will indicate the amount of
+unwired/physical memory instead of
+.Sq disk space ,
+and the number of vnodes
+used/allocated instead of
+.Sq inodes .
+The filesystem's block size is the system's page size.
 .Sh FILES
 .Bl -tag -width copyright -compact
 .It Pa boottime

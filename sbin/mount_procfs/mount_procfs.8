@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.9 1998/12/15 01:20:39 aaron Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.10 1998/12/21 16:16:47 mickey Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -212,6 +212,14 @@ The child process will receive a
 .Dv SIGTRAP
 immediately after the call to exec (see
 .Xr execve 2 ).
+.Pp
+Statistics reported by
+.Xr df 1
+on a procfs filesystem will indicate virtual memory used/available instead of
+.Sq disk space ,
+and the number of process slots used/allocated instead of
+.Sq inodes .
+The block size of the filesystem is the system page size.
 .Sh FILES
 .Bl -tag -width /proc/curproc -compact
 .It Pa /proc/#
