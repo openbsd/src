@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.3 2002/03/06 23:13:58 nate Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.4 2002/04/08 21:46:23 nate Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: if_bgereg.h,v 1.4 2002/04/04 06:01:31 wpaul Exp $
  */
 
 /*
@@ -218,6 +218,13 @@
 #define BGE_ASICREV_BCM5700_B2		0x71030000
 #define BGE_ASICREV_BCM5700_ALTIMA	0x71040000
 #define BGE_ASICREV_BCM5700_C0		0x72000000
+#define BGE_ASICREV_BCM5701_A0		0x00000000	/* grrrr */
+#define BGE_ASICREV_BCM5701_B0		0x01000000
+#define BGE_ASICREV_BCM5701_B2		0x01020000
+#define BGE_ASICREV_BCM5701_B5		0x01050000
+
+/* shorthand one */
+#define BGE_ASICREV_BCM5700		0x71000000
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -1809,10 +1816,31 @@ struct bge_status_block {
 #define SK_SUBSYSID_9D41		0x4441
 
 /*
+ * Altima PCI vendor/device ID.
+ */
+#define ALTIMA_VENDORID			0x173b
+#define ALTIMA_DEVICE_AC1000		0x03e8
+
+/*
  * Offset of MAC address inside EEPROM.
  */
 #define BGE_EE_MAC_OFFSET		0x7C
 #define BGE_EE_HWCFG_OFFSET		0xC8
+
+#define BGE_HWCFG_VOLTAGE		0x00000003
+#define BGE_HWCFG_PHYLED_MODE		0x0000000C
+#define BGE_HWCFG_MEDIA			0x00000030
+
+#define BGE_VOLTAGE_1POINT3		0x00000000
+#define BGE_VOLTAGE_1POINT8		0x00000001
+
+#define BGE_PHYLEDMODE_UNSPEC		0x00000000
+#define BGE_PHYLEDMODE_TRIPLELED	0x00000004
+#define BGE_PHYLEDMODE_SINGLELED	0x00000008
+
+#define BGE_MEDIA_UNSPEC		0x00000000
+#define BGE_MEDIA_COPPER		0x00000010
+#define BGE_MEDIA_FIBER			0x00000020
 
 #define BGE_PCI_READ_CMD		0x06000000
 #define BGE_PCI_WRITE_CMD		0x70000000
@@ -2134,6 +2162,7 @@ struct bge_softc {
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
 	bus_dma_tag_t		bge_dmatag;
+	u_int32_t		bge_asicrev;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
