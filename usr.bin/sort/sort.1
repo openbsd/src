@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.11 2000/07/06 04:06:56 aaron Exp $
+.\"	$OpenBSD: sort.1,v 1.12 2000/10/18 05:24:12 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility
-sorts text files by lines.
+utility sorts text files by lines.
 Comparisons are based on one or more sort keys extracted
 from each line of input, and are performed lexicographically.
 By default, if keys are not given,
@@ -72,8 +71,7 @@ The options are as follows:
 Check that the single input file is sorted.
 If the file is not sorted,
 .Nm
-produces the appropriate error messages and exits with code 1;
-otherwise,
+produces the appropriate error messages and exits with code 1; otherwise,
 .Nm
 returns 0.
 .Nm
@@ -85,10 +83,8 @@ Merge only; the input files are assumed to be pre-sorted.
 .It Fl o Ar output
 The argument given is the name of an
 .Ar output
-file to
-be used instead of the standard output.
-This file
-can be the same as one of the input files.
+file to be used instead of the standard output.
+This file can be the same as one of the input files.
 .It Fl T Ar dir
 Use
 .Ar dir
@@ -101,12 +97,10 @@ if
 .Ev TMPDIR
 does not exist.
 .It Fl u
-Unique: suppress all but one in each set of lines
-having equal keys.
+Unique: suppress all but one in each set of lines having equal keys.
 If used with the
 .Fl c
-option,
-check that there are no lines with duplicate keys.
+option, check that there are no lines with duplicate keys.
 .El
 .Pp
 The following options override the default ordering rules.
@@ -122,18 +116,15 @@ all global ordering options for that key.
 Only blank space and alphanumeric characters
 .\" according
 .\" to the current setting of LC_CTYPE
-are used
-in making comparisons.
+are used in making comparisons.
 .It Fl f
 Considers all lowercase characters that have uppercase
-equivalents to be the same for purposes of
-comparison.
+equivalents to be the same for purposes of comparison.
 .It Fl i
 Ignore all non-printable characters.
 .It Fl n
-An initial numeric string, consisting of optional
-blank space, optional minus sign, and zero or more
-digits (including decimal point)
+An initial numeric string, consisting of optional blank space, optional
+minus sign, and zero or more digits (including decimal point)
 .\" with
 .\" optional radix character and thousands
 .\" separator
@@ -141,8 +132,7 @@ digits (including decimal point)
 is sorted by arithmetic value.
 (The
 .Fl n
-option no longer implies
-the
+option no longer implies the
 .Fl b
 option.)
 .It Fl r
@@ -152,8 +142,7 @@ Use a merge sort instead of a radix sort.
 This options should be used for files larger than 60Mb.
 .El
 .Pp
-The treatment of field separators can be altered using these
-options:
+The treatment of field separators can be altered using these options:
 .Bl -tag -width indent
 .It Fl b
 Ignores leading blank space when determining the start
@@ -167,23 +156,20 @@ option applies globally to all
 options.
 Otherwise, the
 .Fl b
-option can be
-attached independently to each
+option can be attached independently to each
 .Ar field
 argument of the
 .Fl k
 option (see below).
 Note that the
 .Fl b
-option
-has no effect unless key fields are specified.
+option has no effect unless key fields are specified.
 .It Fl t Ar char
 .Ar char
 is used as the field separator character.
 The initial
 .Ar char
-is not considered to be part of a field when determining
-key offsets.
+is not considered to be part of a field when determining key offsets.
 Each occurrence of
 .Ar char
 is significant (for example,
@@ -224,16 +210,14 @@ The following operands are available:
 The pathname of a file to be sorted, merged, or checked.
 If no
 .Ar file
-operands are specified, or if
-a
+operands are specified, or if a
 .Ar file
 operand is
 .Fl ,
 the standard input is used.
 .El
 .Pp
-A field is
-defined as a maximal sequence of characters other than the
+A field is defined as a maximal sequence of characters other than the
 field separator and record separator
 .Pq newline by default .
 Initial blank spaces are included in the field unless
@@ -246,8 +230,7 @@ is specified).
 For example, by default all blank spaces at the beginning of a line are
 considered to be part of the first field.
 .Pp
-Fields are specified
-by the
+Fields are specified by the
 .Fl k Ar field1[,field2]
 argument.
 A missing
@@ -284,18 +267,15 @@ means
 .Ql \&.1 ,
 indicating the first character of the
 .Em m Ns th
-field;
-if the
+field; if the
 .Fl b
 option is in effect,
 .Em n
-is counted from the first
-non-blank character in the
+is counted from the first non-blank character in the
 .Em m Ns th
 field;
 .Em m Ns \&.1b
-refers to the first
-non-blank character in the
+refers to the first non-blank character in the
 .Em m Ns th
 field.
 .No 1\&. Ns Em n
@@ -310,8 +290,7 @@ A
 .Ar field2
 position specified by
 .Em m.n
-is interpreted as
-the
+is interpreted as the
 .Em n Ns th
 character (including separators) of the
 .Em m Ns th
@@ -386,16 +365,6 @@ already exists
 .Xr comm 1 ,
 .Xr join 1 ,
 .Xr uniq 1
-.Sh BUGS
-Lines longer than 65522 characters are discarded and processing continues.
-To sort files larger than 60Mb, use
-.Nm
-.Fl H ;
-files larger than 704Mb must be sorted in smaller pieces, then merged.
-To protect data
-.Nm
-.Fl o
-calls link and unlink, and thus fails in protected directories.
 .Sh HISTORY
 A
 .Nm
@@ -403,8 +372,8 @@ command appeared in
 .At v5 .
 .Sh NOTES
 The current sort command uses lexicographic radix sorting, which requires
-that sort keys be kept in memory (as opposed to previous versions which used quick
-and merge sorts and did not).
+that sort keys be kept in memory (as opposed to previous versions which
+used quick and merge sorts and did not).
 Thus performance depends highly on efficient choice of sort keys, and the
 .Fl b
 option and the
@@ -419,3 +388,13 @@ is equivalent to
 .Nm
 .Fl f
 and may take twice as long.
+.Sh BUGS
+Lines longer than 65522 characters are discarded and processing continues.
+To sort files larger than 60Mb, use
+.Nm
+.Fl H ;
+files larger than 704Mb must be sorted in smaller pieces, then merged.
+To protect data
+.Nm
+.Fl o
+calls link and unlink, and thus fails in protected directories.
