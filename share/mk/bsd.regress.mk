@@ -54,7 +54,7 @@ regress:
 	@if cd ${.CURDIR} && (ulimit -t ${REGRESSMAXTIME} ; ${MAKE} ${RT}); then \
 	    echo -n "SUCCESS " >> ${REGRESSLOG} ; \
 	else \
-	    echo -n "FAIL (timeout) " >> ${REGRESSLOG} ; \
+	    echo -n "FAIL (possible timeout) " >> ${REGRESSLOG} ; \
 	    echo FAILED ; \
 	fi
 .   endif
