@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1995/12/03 14:32:39 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1995/12/16 21:45:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -80,7 +80,7 @@
 
 #if NZS > 0
 
-#define PCLK	(8000000)	/* PCLK pin input clock rate */
+#define PCLK	(8053976)	/* PCLK pin input clock rate */
 
 #define splzs	spl5
 
