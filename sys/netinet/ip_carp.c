@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.100 2005/02/28 00:26:47 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.101 2005/03/01 19:04:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1120,63 +1120,37 @@ carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 }
 
 int
-carp_iamatch(void *v, struct in_ifaddr *ia,
-    struct in_addr *isaddr, u_int8_t **enaddr)
+carp_iamatch(struct in_ifaddr *ia, u_char *src,
+    u_int32_t *count, u_int32_t index)
 {
-	struct carp_if *cif = v;
-	struct carp_softc *vh;
-	int index, count = 0;
-	struct ifaddr *ifa;
+	struct carp_softc *sc = ia->ia_ifp->if_softc;
 
 	if (carp_opts[CARPCTL_ARPBALANCE]) {
 		/*
-		 * XXX proof of concept implementation.
 		 * We use the source ip to decide which virtual host should
 		 * handle the request. If we're master of that virtual host,
 		 * then we respond, otherwise, just drop the arp packet on
 		 * the floor.
 		 */
-		count = carp_addrcount(cif, ia, CARP_COUNT_RUNNING);
-		if (count == 0) {
-			/* should never reach this */
+
+		/* Count the elegible carp interfaces with this address */
+		if (*count == 0)
+			*count = carp_addrcount(
+			    (struct carp_if *)ia->ia_ifp->if_carpdev->if_carp,
+			    ia, CARP_COUNT_RUNNING);
+
+		/* This should never happen, but... */
+		if (*count == 0)
 			return (0);
-		}
 
 		/* this should be a hash, like pf_hash() */
-		index = isaddr->s_addr % count;
-		count = 0;
-
-		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-			    (IFF_UP|IFF_RUNNING)) {
-				TAILQ_FOREACH(ifa, &vh->sc_if.if_addrlist,
-				    ifa_list) {
-					if (ifa->ifa_addr->sa_family ==
-					    AF_INET &&
-					    ia->ia_addr.sin_addr.s_addr ==
-					    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
-						if (count == index) {
-							if (vh->sc_state ==
-							    MASTER) {
-								*enaddr = vh->sc_ac.ac_enaddr;
-								return (1);
-							} else
-								return (0);
-						}
-						count++;
-					}
-				}
-			}
+		if (ia->ia_addr.sin_addr.s_addr % *count == index - 1 &&
+                    sc->sc_state == MASTER) {
+			return (1);
 		}
 	} else {
-		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-			    (IFF_UP|IFF_RUNNING) && ia->ia_ifp ==
-			    &vh->sc_if && vh->sc_state == MASTER) {
-				*enaddr = vh->sc_ac.ac_enaddr;
-				return (1);
-			}
-		}
+		if (sc->sc_state == MASTER)
+			return (1);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.57 2005/01/04 10:30:01 pascoe Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.58 2005/03/01 19:04:56 mcbride Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -521,6 +521,9 @@ in_arpinput(m)
 #if NBRIDGE > 0
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
+#if NCARP > 0
+	u_int32_t count = 0, index = 0;
+#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -546,8 +549,19 @@ in_arpinput(m)
 		if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
 			continue;
 
-		if (ia->ia_ifp == m->m_pkthdr.rcvif)
-			break;
+#if NCARP > 0
+		if (ia->ia_ifp->if_type == IFT_CARP &&
+		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING))) {
+			index++;
+			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			    carp_iamatch(ia, ea->arp_sha,
+			    &count, index)) 
+				break;
+		} else 
+#endif
+			if (ia->ia_ifp == m->m_pkthdr.rcvif)
+				break;
 #if NBRIDGE > 0
 		/*
 		 * If the interface we received the packet on
@@ -578,7 +592,7 @@ in_arpinput(m)
 		}
 	}
 
-	if (ia == NULL) {
+	if (ia == NULL && m->m_pkthdr.rcvif->if_type != IFT_CARP) {
 		struct ifaddr *ifa;
 
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
@@ -682,6 +696,9 @@ reply:
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
+		if (rt->rt_ifp->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_type != IFT_CARP)
+			goto out;
 		bcopy(ea->arp_sha, ea->arp_tha, sizeof(ea->arp_sha));
 		sdl = SDL(rt->rt_gateway);
 		bcopy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
