@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.22 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.23 2002/05/23 06:56:16 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -433,14 +433,7 @@ in6_ifattach_addaddr(ifp, ia)
 		(void)in6_addmulti(&llsol, ifp, &error);
 
 		/* XXX should we run DAD on other interface types? */
-		switch (ifp->if_type) {
-#if 1
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-#else
-		default:
-#endif
+		if (in6if_do_dad(ifp)) {
 			/* mark the address TENTATIVE, if needed. */
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			/* nd6_dad_start() will be called in in6_if_up */

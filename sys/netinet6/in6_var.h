@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.14 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.15 2002/05/23 06:56:16 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -564,6 +564,7 @@ extern void in6_len2mask(struct in6_addr *, int);
 int	in6_control(struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *);
 void	in6_purgeaddr(struct ifaddr *, struct ifnet *);
+int	in6if_do_dad(struct ifnet *);
 void	in6_savemkludge(struct in6_ifaddr *);
 void	in6_setmaxmtu(void);
 void	in6_restoremkludge(struct in6_ifaddr *, struct ifnet *);

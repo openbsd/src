@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.32 2002/03/23 00:50:59 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.33 2002/05/23 06:56:16 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -772,27 +772,10 @@ in6_control(so, cmd, data, ifp, p)
 
 		/*
 		 * Perform DAD, if needed.
-		 * XXX It may be of use, if we can administratively
-		 * disable DAD.
 		 */
-		switch (ifp->if_type) {
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-#if 0
-		case IFT_ATM:
-		case IFT_SLIP:
-		case IFT_PPP:
-#endif
+		if (in6if_do_dad(ifp)) {
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			nd6_dad_start((struct ifaddr *)ia, NULL);
-			break;
-		case IFT_DUMMY:
-		case IFT_FAITH:
-		case IFT_GIF:
-		case IFT_LOOP:
-		default:
-			break;
 		}
 
 		if (hostIsNew) {
@@ -2117,6 +2100,40 @@ in6_if_up(ifp)
 		ia = (struct in6_ifaddr *)ifa;
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE)
 			nd6_dad_start(ifa, &dad_delay);
+	}
+}
+
+int
+in6if_do_dad(ifp)
+	struct ifnet *ifp;
+{
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+		return(0);
+
+	switch (ifp->if_type) {
+	case IFT_FAITH:
+		/*
+		 * These interfaces do not have the IFF_LOOPBACK flag,
+		 * but loop packets back.  We do not have to do DAD on such
+		 * interfaces.  We should even omit it, because loop-backed
+		 * NS would confuse the DAD procedure.
+		 */
+		return(0);
+	default:
+		/*
+		 * Our DAD routine requires the interface up and running.
+		 * However, some interfaces can be up before the RUNNING
+		 * status.  Additionaly, users may try to assign addresses
+		 * before the interface becomes up (or running).
+		 * We simply skip DAD in such a case as a work around.
+		 * XXX: we should rather mark "tentative" on such addresses,
+		 * and do DAD after the interface becomes ready.
+		 */
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			return(0);
+
+		return(1);
 	}
 }
 
