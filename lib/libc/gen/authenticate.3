@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.6 2003/04/30 06:28:10 jmc Exp $
+.\"	$OpenBSD: authenticate.3,v 1.7 2003/05/30 14:00:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -69,7 +69,7 @@
 .Sh DESCRIPTION
 These functions provide a simplified interface to the BSD Authentication
 system
-.Pq see Xr bsd_auth 3 Ns .
+.Pq see Xr bsd_auth 3 .
 The
 .Fn auth_userokay
 function provides a single function call interface.
@@ -239,7 +239,7 @@ The
 function is a front end to the
 .Fn auth_call
 function
-.Pq see Xr auth_subr 3 Ns .
+.Pq see Xr auth_subr 3 .
 It will open a BSD Authentication session, if needed, and will set
 the style and user name based on the
 .Ar style
@@ -257,7 +257,7 @@ The variable arguments are passed to
 via the
 .Fn auth_set_va_list
 function
-.Pq see Xr auth_subr 3 Ns .
+.Pq see Xr auth_subr 3 .
 The, possibly created, BSD Authentication session is returned.
 The
 .Fn auth_getstate
@@ -280,6 +280,10 @@ when it is no longer needed.
 A value of
 .Dv NULL
 is returned if no memory was available for the new copy of the string.
+.Sh SEE ALSO
+.Xr auth_subr 3 ,
+.Xr getpwent 3 ,
+.Xr pw_dup 3
 .Sh CAVEATS
 The
 .Fn auth_approval ,
@@ -308,7 +312,3 @@ which can then be passed to
 .Fn auth_approval
 or
 .Fn auth_usercheck .
-.Sh SEE ALSO
-.Xr auth_subr 3 ,
-.Xr getpwent 3 ,
-.Xr pw_dup 3
