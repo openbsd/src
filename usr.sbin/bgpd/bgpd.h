@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.50 2004/01/03 20:37:34 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.51 2004/01/04 18:51:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,16 @@ struct msgbuf {
 	u_int32_t		 queued;
 	int			 sock;
 	TAILQ_HEAD(bufs, buf)	 bufs;
+};
+
+struct bgpd_addr {
+	sa_family_t	af;
+	union {
+		struct in_addr		v4;
+		struct in6_addr		v6;
+	} ba;		    /* 128-bit address */
+#define v4	ba.v4
+#define v6	ba.v6
 };
 
 struct bgpd_config {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.59 2004/01/04 17:19:41 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.60 2004/01/04 18:51:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -77,8 +77,6 @@ int	parse_keepalive(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
-
-struct peer	*getpeerbyip(in_addr_t);
 
 struct bgpd_config	*conf, *nconf = NULL;
 struct peer		*npeers;

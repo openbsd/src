@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2004/01/03 20:22:07 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.8 2004/01/04 18:51:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -173,6 +173,7 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 	struct ctl_conn		*c;
 	int			 n;
 	struct peer		*p;
+	struct bgpd_addr	*addr;
 
 	if ((c = control_connbyfd(pfd->fd)) == NULL) {
 		log_err("control_dispatch_msg: fd %d: not found", pfd->fd);
@@ -195,9 +196,19 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHOW_NEIGHBOR:
-			for (p = peers; p != NULL; p = p->next)
-				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
-				    0, p, sizeof(struct peer));
+			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			    sizeof(struct bgpd_addr)) {
+				addr = imsg.data;
+				p = getpeerbyip(addr->v4.s_addr);
+				if (p != NULL)
+					imsg_compose(&c->ibuf,
+					    IMSG_CTL_SHOW_NEIGHBOR,
+					    0, p, sizeof(struct peer));
+			} else
+				for (p = peers; p != NULL; p = p->next)
+					imsg_compose(&c->ibuf,
+					    IMSG_CTL_SHOW_NEIGHBOR,
+					    0, p, sizeof(struct peer));
 			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, NULL, 0);
 			break;
 		default:

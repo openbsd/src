@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.10 2004/01/04 17:55:19 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.11 2004/01/04 18:51:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,7 @@ void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_neighbor_msg(struct imsg *);
 static char	*fmt_timeframe(time_t t);
+int		 parse_addr(const char *, struct bgpd_addr *);
 
 struct imsgbuf	ibuf;
 
@@ -64,6 +65,7 @@ main(int argc, char *argv[])
 	int			 fd, n, done;
 	struct imsg		 imsg;
 	enum actions		 action = SHOW_SUMMARY;
+	struct bgpd_addr	 addr;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		err(1, "control_init: socket");
@@ -102,7 +104,13 @@ again:
 		break;
 	case SHOW_NEIGHBOR:
 		/* get ip address of neighbor, limit query to that */
-		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+		if (argc >= 4) {
+			if (!parse_addr(argv[3], &addr))
+				errx(1, "%s: not an IP address", argv[3]);
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0,
+			    &addr, sizeof(addr));
+		} else
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 		break;
 	}
 
@@ -262,4 +270,21 @@ fmt_timeframe(time_t t)
 		snprintf(buf, TF_LEN, "%02u:%02u:%02u", hrs, min, sec);
 
 	return (buf);
+}
+
+int
+parse_addr(const char *word, struct bgpd_addr *addr)
+{
+	struct in_addr	ina;
+
+	bzero(addr, sizeof(struct bgpd_addr));
+	bzero(&ina, sizeof(ina));
+
+	if (inet_pton(AF_INET, word, &ina)) {
+		addr->af = AF_INET;
+		addr->v4 = ina;
+		return (1);
+	}
+
+	return (0);	
 }
