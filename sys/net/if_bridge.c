@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.96 2002/06/11 04:27:11 art Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.97 2002/06/15 02:26:39 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -63,8 +63,11 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_ipsp.h>
 #include <netinet/ip_icmp.h>
+#endif
+
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
 
 #include <net/if_enc.h>
 #endif
@@ -162,6 +165,9 @@ void	bridge_fragment(struct bridge_softc *, struct ifnet *,
 #ifdef INET
 void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *, int, struct llc *, int, int);
+#endif
+#ifdef IPSEC
+int bridge_ipsec(int, int, int, struct mbuf *);
 #endif
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
@@ -2058,7 +2064,199 @@ bridge_flushrule(bif)
 	return (0);
 }
 
-#if NPF > 0
+#ifdef IPSEC
+int
+bridge_ipsec(dir, af, hlen, m)
+	int dir, af, hlen;
+	struct mbuf *m;
+{
+	union sockaddr_union dst;
+	struct timeval tv;
+	struct tdb *tdb;
+	u_int32_t spi;
+	u_int16_t cpi;
+	int error, off;
+	u_int8_t proto = 0;
+#ifdef INET
+	struct ip *ip;
+#endif /* INET */
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif /* INET6 */
+
+	if (dir == BRIDGE_IN) {
+		switch (af) {
+#ifdef INET
+		case AF_INET:
+			if (m->m_pkthdr.len - hlen < 2 * sizeof(u_int32_t))
+				break;
+
+			ip = mtod(m, struct ip *);
+			proto = ip->ip_p;
+			off = offsetof(struct ip, ip_p);
+
+			if (proto != IPPROTO_ESP && proto != IPPROTO_AH &&
+			    proto != IPPROTO_IPCOMP)
+				goto skiplookup;
+
+			bzero(&dst, sizeof(union sockaddr_union));
+			dst.sa.sa_family = AF_INET;
+			dst.sin.sin_len = sizeof(struct sockaddr_in);
+			m_copydata(m, offsetof(struct ip, ip_dst),
+			    sizeof(struct in_addr),
+			    (caddr_t)&(dst.sin.sin_addr));
+
+			if (ip->ip_p == IPPROTO_ESP)
+				m_copydata(m, hlen, sizeof(u_int32_t),
+				    (caddr_t)&spi);
+			else if (ip->ip_p == IPPROTO_AH)
+				m_copydata(m, hlen + sizeof(u_int32_t),
+				    sizeof(u_int32_t), (caddr_t)&spi);
+			else if (ip->ip_p == IPPROTO_IPCOMP) {
+				m_copydata(m, hlen + sizeof(u_int16_t),
+				    sizeof(u_int16_t), (caddr_t)&cpi);
+				spi = ntohl(htons(cpi));
+			}
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			if (m->m_pkthdr.len - hlen < 2 * sizeof(u_int32_t))
+				break;
+
+			ip6 = mtod(m, struct ip6_hdr *);
+
+			/* XXX We should chase down the header chain */
+			proto = ip6->ip6_nxt;
+			off = offsetof(struct ip6_hdr, ip6_nxt);
+
+			if (proto != IPPROTO_ESP && proto != IPPROTO_AH &&
+			    proto != IPPROTO_IPCOMP)
+				goto skiplookup;
+
+			bzero(&dst, sizeof(union sockaddr_union));
+			dst.sa.sa_family = AF_INET6;
+			dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
+			m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt),
+			    sizeof(struct in6_addr),
+			    (caddr_t)&(dst.sin6.sin6_addr));
+
+			if (proto == IPPROTO_ESP)
+				m_copydata(m, hlen, sizeof(u_int32_t),
+				    (caddr_t)&spi);
+			else if (proto == IPPROTO_AH)
+				m_copydata(m, hlen + sizeof(u_int32_t),
+				    sizeof(u_int32_t), (caddr_t)&spi);
+			else if (proto == IPPROTO_IPCOMP) {
+				m_copydata(m, hlen + sizeof(u_int16_t),
+				    sizeof(u_int16_t), (caddr_t)&cpi);
+				spi = ntohl(htons(cpi));
+			}
+			break;
+#endif /* INET6 */
+		default:
+			return (0);
+		}
+
+		if (proto == 0)
+			goto skiplookup;
+
+		tdb = gettdb(spi, &dst, proto);
+		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
+		    tdb->tdb_xform != NULL) {
+			if (tdb->tdb_first_use == 0) {
+				int pri;
+
+				pri = splhigh();
+				tdb->tdb_first_use = time.tv_sec;
+				splx(pri);
+
+				tv.tv_usec = 0;
+
+				/* Check for wrap-around. */
+				if (tdb->tdb_exp_first_use + tdb->tdb_first_use
+				    < tdb->tdb_first_use)
+					tv.tv_sec = ((unsigned long)-1) / 2;
+				else
+					tv.tv_sec = tdb->tdb_exp_first_use +
+					    tdb->tdb_first_use;
+
+				if (tdb->tdb_flags & TDBF_FIRSTUSE)
+					timeout_add(&tdb->tdb_first_tmo,
+					    hzto(&tv));
+
+				/* Check for wrap-around. */
+				if (tdb->tdb_first_use +
+				    tdb->tdb_soft_first_use
+				    < tdb->tdb_first_use)
+					tv.tv_sec = ((unsigned long)-1) / 2;
+				else
+					tv.tv_sec = tdb->tdb_first_use +
+					    tdb->tdb_soft_first_use;
+
+				if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+					timeout_add(&tdb->tdb_sfirst_tmo,
+					    hzto(&tv));
+			}
+
+			(*(tdb->tdb_xform->xf_input))(m, tdb, hlen, off);
+			return (1);
+		} else {
+ skiplookup:
+			/* XXX do an input policy lookup */
+			return (0);
+		}
+	} else { /* Outgoing from the bridge. */
+		tdb = ipsp_spd_lookup(m, af, hlen, &error,
+		    IPSP_DIRECTION_OUT, NULL, NULL);
+		if (tdb != NULL) {
+			/*
+			 * We don't need to do loop detection, the
+			 * bridge will do that for us.
+			 */
+#if NFP > 0
+			switch (af) {
+#ifdef INET
+			case AF_INET:
+				if (pf_test(dir, &encif[0].sc_if,
+				    &m) != PF_PASS) {
+					m_freem(m);
+					return (1);
+				}
+				break;
+#endif /* INET */
+#ifdef INET6
+			case AF_INET6:
+				if (pf_test6(dir, &encif[0].sc_if,
+				    &m) != PF_PASS) {
+					m_freem(m);
+					return (1);
+				}
+				break;
+#endif /* INET6 */
+			}
+			if (m == NULL)
+				return (1);
+#endif /* NPF */
+#ifdef INET
+			if (af == AF_INET) {
+				ip = mtod(m, struct ip *);
+				HTONS(ip->ip_len);
+				HTONS(ip->ip_id);
+				HTONS(ip->ip_off);
+			}
+#endif /* INET */
+			error = ipsp_process_packet(m, tdb, af, 0);
+			return (1);
+		} else
+			return (0);
+	}
+
+	return (0);
+}
+#endif /* IPSEC */
+
+#if NPF > 0 || defined(IPSEC)
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
@@ -2121,17 +2319,18 @@ bridge_filter(sc, dir, ifp, eh, m)
 			return (NULL);
 		}
 		ip = mtod(m, struct ip *);
-		
+
 		if (ip->ip_v != IPVERSION) {
 			ipstat.ips_badvers++;
 			goto dropit;
 		}
-		
+
 		hlen = ip->ip_hl << 2;	/* get whole header length */
 		if (hlen < sizeof(struct ip)) {
 			ipstat.ips_badhlen++;
 			goto dropit;
 		}
+
 		if (hlen > m->m_len) {
 			if ((m = m_pullup(m, hlen)) == NULL) {
 				ipstat.ips_badhlen++;
@@ -2139,18 +2338,18 @@ bridge_filter(sc, dir, ifp, eh, m)
 			}
 			ip = mtod(m, struct ip *);
 		}
-		
+
 		if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
 			ipstat.ips_badsum++;
 			goto dropit;
 		}
-		
+
 		NTOHS(ip->ip_len);
 		if (ip->ip_len < hlen)
 			goto dropit;
 		NTOHS(ip->ip_id);
 		NTOHS(ip->ip_off);
-		
+
 		if (m->m_pkthdr.len < ip->ip_len)
 			goto dropit;
 		if (m->m_pkthdr.len > ip->ip_len) {
@@ -2160,14 +2359,22 @@ bridge_filter(sc, dir, ifp, eh, m)
 			} else
 				m_adj(m, ip->ip_len - m->m_pkthdr.len);
 		}
-		
+
+#ifdef IPSEC
+		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
+		    bridge_ipsec(dir, AF_INET, hlen, m))
+			return (NULL);
+#endif /* IPSEC */
+
+#if NPF > 0
 		/* Finally, we get to filter the packet! */
 		m->m_pkthdr.rcvif = ifp;
 		if (pf_test(dir, ifp, &m) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			goto dropit;
-		
+#endif /* NPF */
+
 		/* Rebuild the IP header */
 		if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))
 			return (NULL);
@@ -2193,29 +2400,39 @@ bridge_filter(sc, dir, ifp, eh, m)
 				return (NULL);
 			}
 		}
-		
+
 		ip6 = mtod(m, struct ip6_hdr *);
-		
+
 		if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 			ip6stat.ip6s_badvers++;
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 			goto dropit;
 		}
 
+#ifdef IPSEC
+		hlen = sizeof(struct ip6_hdr);
+
+		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
+		    bridge_ipsec(dir, AF_INET6, hlen, m))
+			return (NULL);
+#endif /* IPSEC */
+
+#if NPF > 0
 		if (pf_test6(dir, ifp, &m) != PF_PASS)
 			goto dropit;
 		if (m == NULL)
 			return (NULL);
-		
+#endif /* NPF */
+
 		break;
 	}
 #endif /* INET6 */
-		
+
 	default:
 		goto dropit;
 		break;
 	}
-	
+
 	/* Reattach SNAP header */
 	if (hassnap) {
 		M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
