@@ -338,18 +338,18 @@ loop:
 			(void)chgproccnt(p->p_cred->p_ruid, -1);
 
 			/*
+			 * Release reference to text vnode
+			 */
+			if (p->p_textvp)
+				vrele(p->p_textvp);
+
+			/*
 			 * Free up credentials.
 			 */
 			if (--p->p_cred->p_refcnt == 0) {
 				crfree(p->p_cred->pc_ucred);
 				FREE(p->p_cred, M_SUBPROC);
 			}
-
-			/*
-			 * Release reference to text vnode
-			 */
-			if (p->p_textvp)
-				vrele(p->p_textvp);
 
 			/*
 			 * Finally finished with old proc entry.
