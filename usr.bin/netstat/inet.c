@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.19 1997/07/01 20:32:14 provos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.20 1997/07/14 21:31:33 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.19 1997/07/01 20:32:14 provos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.20 1997/07/14 21:31:33 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -615,6 +615,9 @@ ah_stats(off, name)
         p(ahs_replay, "\t%u possibly replayed packet%s received\n");
         p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
 	p(ahs_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(ahs_ibytes, "\t%qu input byte%s\n");
+	p(ahs_obytes, "\t%qu output byte%s\n");
+
 #undef p
 }
 
@@ -628,6 +631,7 @@ esp_stats(off, name)
 {
         struct espstat espstat;
 
+	
         if (off == 0)
                 return;
         kread(off, (char *)&espstat, sizeof (espstat));
@@ -648,6 +652,8 @@ esp_stats(off, name)
         p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
         p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
 	p(esps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(esps_ibytes, "\t%qu input byte%s\n");
+	p(esps_obytes, "\t%qu output byte%s\n");
 
 #undef p
 }
@@ -675,6 +681,8 @@ ip4_stats(off, name)
         p(ip4s_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ip4s_notip4, "\t%u packet%s with internal header not IPv4 received\n");
         p(ip4s_qfull, "\t%u packet%s were dropped due to full output queue\n");
+	p(ip4s_ibytes, "\t%qu input byte%s\n");
+	p(ip4s_obytes, "\t%qu output byte%s\n");
 
 #undef p
 }
