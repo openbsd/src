@@ -104,6 +104,7 @@ static int overload = FALSE;
 
 struct worker {
     char name[10];
+    char pad[6]; /* make sure we're aligned for the data */
     char data[MAX_XMSG_SIZE];
     PROCESS pid;
     int  msg_length;
