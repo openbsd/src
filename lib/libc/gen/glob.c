@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.23 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.24 2004/10/07 16:34:04 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -566,7 +566,7 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
     Char *pattern, Char *pattern_last, Char *restpattern,
     Char *restpattern_last, glob_t *pglob, size_t *limitp)
 {
-	register struct dirent *dp;
+	struct dirent *dp;
 	DIR *dirp;
 	int err;
 	char buf[MAXPATHLEN];
@@ -604,8 +604,8 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 	else
 		readdirfunc = (struct dirent *(*)(void *))readdir;
 	while ((dp = (*readdirfunc)(dirp))) {
-		register u_char *sc;
-		register Char *dc;
+		u_char *sc;
+		Char *dc;
 
 		/* Initial DOT must be matched literally. */
 		if (dp->d_name[0] == DOT && *pattern != DOT)
@@ -655,8 +655,8 @@ glob3(Char *pathbuf, Char *pathbuf_last, Char *pathend, Char *pathend_last,
 static int
 globextend(const Char *path, glob_t *pglob, size_t *limitp)
 {
-	register char **pathv;
-	register int i;
+	char **pathv;
+	int i;
 	u_int newsize, len;
 	char *copy;
 	const Char *p;
@@ -719,11 +719,10 @@ match(Char *name, Char *pat, Char *patend)
 		case M_ALL:
 			if (pat == patend)
 				return(1);
-			do
+			do {
 			    if (match(name, pat, patend))
 				    return(1);
-			while (*name++ != EOS)
-				;
+			} while (*name++ != EOS);
 			return(0);
 		case M_ONE:
 			if (*name++ == EOS)
@@ -758,8 +757,8 @@ match(Char *name, Char *pat, Char *patend)
 void
 globfree(glob_t *pglob)
 {
-	register int i;
-	register char **pp;
+	int i;
+	char **pp;
 
 	if (pglob->gl_pathv != NULL) {
 		pp = pglob->gl_pathv + pglob->gl_offs;
@@ -838,7 +837,7 @@ g_Ctoc(const Char *str, char *buf, u_int len)
 static void
 qprintf(const char *str, Char *s)
 {
-	register Char *p;
+	Char *p;
 
 	(void)printf("%s:\n", str);
 	for (p = s; *p; p++)
