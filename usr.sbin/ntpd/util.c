@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2004/07/04 11:01:49 alexander Exp $ */
+/*	$OpenBSD: util.c,v 1.2 2004/07/04 18:07:15 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -23,21 +23,18 @@
 double
 gettime(void)
 {
-	struct timeval tv;
-	double ret;
+	struct timeval	tv;
 
 	if (gettimeofday(&tv, NULL) == -1)
 		fatal("gettimeofday");
 
-	ret = tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec;
-
-	return (ret);
+	return (tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec);
 }
 
 double
 lfp_to_d(struct l_fixedpt lfp)
 {
-	double ret;
+	double	ret;
 
 	lfp.int_part = ntohl(lfp.int_part);
 	lfp.fraction = ntohl(lfp.fraction);
@@ -50,8 +47,8 @@ lfp_to_d(struct l_fixedpt lfp)
 struct l_fixedpt
 d_to_lfp(double d)
 {
-	struct l_fixedpt lfp;
-	
+	struct l_fixedpt	lfp;
+
 	lfp.int_part = htonl(d);
 	lfp.fraction = htonl((d - lfp.int_part) * UINT_MAX);
 

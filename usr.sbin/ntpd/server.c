@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 2004/06/29 18:34:00 alexander Exp $ */
+/*	$OpenBSD: server.c,v 1.4 2004/07/04 18:07:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 int
 setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 {
-	char 			 ntopbuf[INET6_ADDRSTRLEN];
+	char			 ntopbuf[INET6_ADDRSTRLEN];
 	struct listen_addr	*la;
 	struct ifaddrs		*ifap;
 	struct sockaddr		*sap;
@@ -64,29 +64,23 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 
 		switch (la->sa.ss_family) {
 		case AF_INET:
-
 			if (((struct sockaddr_in *)sap)->sin_port == 0)
 				((struct sockaddr_in *)sap)->sin_port =
 				    se->s_port;
-
 			inet_ntop(AF_INET,
-				  &((struct sockaddr_in *)sap)->sin_addr,
-				  ntopbuf, sizeof(ntopbuf));
-
+			    &((struct sockaddr_in *)sap)->sin_addr,
+			    ntopbuf, sizeof(ntopbuf));
 			break;
 		case AF_INET6:
-
 			if (((struct sockaddr_in6 *)sap)->sin6_port == 0)
 				((struct sockaddr_in6 *)sap)->sin6_port =
 				    se->s_port;
-
 			inet_ntop(AF_INET6,
-		       		  &((struct sockaddr_in6 *)sap)->sin6_addr,
-				  ntopbuf, sizeof(ntopbuf));
+			    &((struct sockaddr_in6 *)sap)->sin6_addr,
+			    ntopbuf, sizeof(ntopbuf));
 			break;
 		default:
 			fatalx("king bula sez: af borked");
-
 		}
 
 		log_debug("adding listener on %s", ntopbuf);
