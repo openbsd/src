@@ -1107,8 +1107,9 @@ ccdioctl(dev, cmd, data, flag, p)
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
 			    p->p_ucred, p);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
-			free(cs->sc_itable[i].ii_index, M_DEVBUF);
 		}
+		for (i = 0; cs->sc_itable[i].ii_ndisk; ++i)
+			free(cs->sc_itable[i].ii_index, M_DEVBUF);
 		free(cs->sc_cinfo, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
 		bzero(cs, sizeof(struct ccd_softc));
