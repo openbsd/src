@@ -1,8 +1,0 @@
-Package: openbsd
-Version: 3.7
-Priority: optional
-Maintainer: uwe@openbsd.org
-Architecture: arm
-Section: Communications
-Description: OpenBSD boot loader and kernel image
-Installed-Size: 4.1M

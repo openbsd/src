@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2005/03/19 00:28:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2005/03/19 20:23:09 uwe Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -30,13 +30,23 @@ ${IPK}:
 	    ${.OBJDIR}/data/opt/QtPalmtop/pics
 	cd ${.OBJDIR}/data && tar -czf ../data.tar.gz .
 	install -o ${BINOWN} -g ${BINGRP} -m 755 -d ${.OBJDIR}/control
-
-	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.CURDIR}/controlfile \
-	    ${.OBJDIR}/control/control;
 	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.CURDIR}/postinst \
 	    ${.OBJDIR}/control;
 	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.CURDIR}/postrm \
 	    ${.OBJDIR}/control;
+
+	echo "Package: openbsd" > ${.OBJDIR}/control/control
+	echo "Version: ${OSREV}" >> ${.OBJDIR}/control/control
+	echo "Priority: optional" >> ${.OBJDIR}/control/control
+	echo "Section: Misc" >> ${.OBJDIR}/control/control
+	echo "Architecture: arm" >> ${.OBJDIR}/control/control
+	echo "Maintainer: uwe@openbsd.org" >> ${.OBJDIR}/control/control
+	echo "Filename: ${IPK}" >> ${.OBJDIR}/control/control
+	echo "Installed-Size:" \
+	    `/usr/bin/du -hs ${.OBJDIR}/data | awk '{print $$1}'` \
+	    >> ${.OBJDIR}/control/control
+	echo "Description: OpenBSD ${OSREV} boot loader and kernel" \
+	    >> ${.OBJDIR}/control/control
 
 	cd ${.OBJDIR}/data/ && find . -type f | sed 's,^\.,,' > ../control/openbsd.list
 	cd ${.OBJDIR}/control && tar -czf ../control.tar.gz .
@@ -44,16 +54,8 @@ ${IPK}:
 	tar -czf ${IPK} ./debian-binary ./data.tar.gz ./control.tar.gz
 
 Packages: ${IPK}
-	echo "Package: openbsd" > ${.OBJDIR}/Packages
-	echo "Version: ${OSREV}" >> ${.OBJDIR}/Packages
-	echo "Priority: optional" >> ${.OBJDIR}/Packages
-	echo "Section: Misc" >> ${.OBJDIR}/Packages
-	echo "Architecture: arm" >> ${.OBJDIR}/Packages
-	echo "Maintainer: uwe@openbsd.org" >> ${.OBJDIR}/Packages
-	echo "Filename: ${IPK}" >> ${.OBJDIR}/Packages
+	cp ${.OBJDIR}/control/control Packages
 	echo "Size:" `/bin/ls -l ${IPK} | awk '{print $$5}'` \
-	    >> ${.OBJDIR}/Packages
-	echo "Description: OpenBSD ${OSREV} boot loader and kernel" \
 	    >> ${.OBJDIR}/Packages
 
 install: ${IPK} Packages
