@@ -20,8 +20,8 @@ options		FIREPOWERBUGS
 options		DDB
 options		KTRACE
 options		SYSCALL_DEBUG
-#options		TCP_COMPAT_42
-#options		COMPAT_43
+options		TCP_COMPAT_42
+options		COMPAT_43
 #options		COMPAT_09
 #options		COMPAT_10
 #options		COMPAT_12
