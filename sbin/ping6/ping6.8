@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.1 1999/12/11 08:43:19 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.2 1999/12/11 08:44:48 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -39,7 +39,8 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm
-.Op Fl AdEfnqRrvw
+.\" .Op Fl AdEfnqRrvw
+.Op Fl dfnqRrvw
 .Op Fl a Ar addrtype
 .Op Fl b Ar bufsiz
 .Op Fl c Ar count
@@ -53,8 +54,8 @@ packets to network hosts
 .Ar host
 .Sh DESCRIPTION
 .Bl -tag -width Ds
-.It Fl A
-Enables transport-mode IPsec authentication header. (experimental)
+.\" .It Fl A
+.\" Enables transport-mode IPsec authentication header. (experimental)
 .It Fl a Ar addrtype
 Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 .Ar addrtype
@@ -89,8 +90,8 @@ packets.
 Set the
 .Dv SO_DEBUG
 option on the socket being used.
-.It Fl E
-Enables transport-mode IPsec encapsulated security payload. (experimental)
+.\" .It Fl E
+.\" Enables transport-mode IPsec encapsulated security payload. (experimental)
 .It Fl f
 Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
