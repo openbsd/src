@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.5 2001/01/27 12:03:38 niklas Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.6 2001/06/12 21:46:47 niklas Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -135,6 +135,16 @@ main (void)
   return 1;
 }
 
+ void
+dump_buf (u_int8_t *buf, size_t len)
+{
+  int i;
+
+  for (i = 0; i < len; i++)
+    printf ("%02x ", buf[i]);
+  printf ("\n");
+}
+
 void
 test_crypto (enum transform which)
 {
@@ -156,6 +166,7 @@ test_crypto (enum transform which)
   SET_KEY (buf, sizeof (buf));
   crypto_init_iv (ks, buf, xf->blocksize);
   crypto_encrypt (ks, buf, sizeof (buf));
+  dump_buf (buf, sizeof buf);
   crypto_decrypt (ks, buf, sizeof (buf));
   if (!verify_buf (buf, sizeof (buf)))
     printf ("FAILED ");
