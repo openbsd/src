@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.19 1999/01/07 06:14:48 niklas Exp $	*/
+/*	$OpenBSD: pas.c,v 1.20 1999/01/24 15:58:54 mickey Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.4 1999/01/02 00:02:48 niklas Exp $ */
+/* $OpenBSD: ym.c,v 1.5 1999/01/24 15:58:54 mickey Exp $ */
 
 
 /*
@@ -41,7 +41,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

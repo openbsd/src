@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.19 1999/01/02 00:02:45 niklas Exp $	*/
+/*	$OpenBSD: gus.c,v 1.20 1999/01/24 15:58:53 mickey Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -113,7 +113,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.18 1999/01/07 06:14:49 niklas Exp $	*/
+/*	$OpenBSD: sb.c,v 1.19 1999/01/24 15:58:54 mickey Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

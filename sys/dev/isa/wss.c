@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.19 1999/01/11 01:57:53 millert Exp $	*/
+/*	$OpenBSD: wss.c,v 1.20 1999/01/24 15:58:54 mickey Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

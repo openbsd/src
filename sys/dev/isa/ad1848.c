@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.15 1999/01/07 06:14:46 niklas Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.16 1999/01/24 15:58:53 mickey Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <vm/vm.h>
