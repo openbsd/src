@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_input.c,v 1.16 2000/06/18 06:27:15 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.94 2000/06/13 10:06:19 jinmei Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.17 2000/07/02 10:10:55 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.95 2000/07/02 07:49:37 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -473,16 +473,25 @@ ip6_input(m)
 	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 =
 			(struct in6_ifaddr *)ip6_forward_rt.ro_rt->rt_ifa;
-		/* packet to tentative address must not be received */
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ANYCAST6;
+		/*
+		 * packets to a tentative, duplicated, or somehow invalid
+		 * address must not be accepted.
+		 */
 		if (!(ia6->ia6_flags & IN6_IFF_NOTREADY)) {
-			/* this interface is ready */
+			/* this address is ready */
 			ours = 1;
 			deliverifp = ia6->ia_ifp;	/* correct? */
 			goto hbhcheck;
 		} else {
-			/* this interface is not ready, fall through */
+			/* address is not ready, so discard the packet. */
+			log(LOG_INFO,
+			    "ip6_input: packet to an unready address %s->%s",
+			    ip6_sprintf(&ip6->ip6_src),
+			    ip6_sprintf(&ip6->ip6_dst));
+
+			goto bad;
 		}
 	}
 
