@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.13 2002/07/12 22:50:55 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.14 2002/07/16 19:42:48 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -58,8 +58,8 @@ Faster version of the BCM5820.
 .Pp
 The
 .Nm
-driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
-and SHA1-HMAC96 operations in
+driver registers itself to accelerate DES, Triple-DES, MD5-HMAC,
+and SHA1-HMAC operations in
 .Xr ipsec 4 .
 On all models except the Bluesteel 5501, the driver also registers
 itself to provide random data to the
