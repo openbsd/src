@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.22 1997/02/13 02:45:43 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.23 1997/02/14 17:20:09 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -600,6 +600,7 @@ sys_getfsstat(p, v, retval)
 	register struct statfs *sp;
 	caddr_t sfsp;
 	long count, maxcount, error;
+	struct statfs sb;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
@@ -618,6 +619,11 @@ sys_getfsstat(p, v, retval)
 			    (error = VFS_STATFS(mp, sp, p)))
 				continue;
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			if (suser(p->p_ucred, &p->p_acflag)) {
+				bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+				sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
+				sp = &sb;
+			}
 			error = copyout((caddr_t)sp, sfsp, sizeof(*sp));
 			if (error)
 				return (error);
