@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.85 1998/09/17 00:50:01 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.86 1998/09/17 01:25:16 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -438,13 +438,13 @@ addhostent() {
 	# $2 - symbolic name
 
 	# Create an entry in the hosts table.  If no host table
-	# exists, create one.  If the IP address already exists,
+	# exists, create one.  If the symbolic name already exists,
 	# replace it's entry.
 	if [ ! -f /tmp/hosts ]; then
 		echo "127.0.0.1 localhost" > /tmp/hosts
 	fi
 
-	sed "/^$1 /d" < /tmp/hosts > /tmp/hosts.new
+	sed "/ $2 $2.$FQDN\$/d" < /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
@@ -462,7 +462,7 @@ addifconfig() {
 		echo "dhcp" > /tmp/hostname.$1
 		addhostent 127.0.0.1 $2
 	else
-		echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
+		echo "inet $3 $4 NONE $5" > /tmp/hostname.$1
 		addhostent $3 $2
 	fi
 }
