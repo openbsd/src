@@ -199,7 +199,7 @@ void if_register_receive (info)
 	info -> rbuf = malloc (info -> rbuf_max);
 	if (!info -> rbuf)
 		error ("Can't allocate %d bytes for bpf input buffer.",
-		    info -> rbuf);
+		    info -> rbuf_max);
 	info -> rbuf_offset = 0;
 	info -> rbuf_len = 0;
 
