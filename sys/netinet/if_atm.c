@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.3 1996/06/26 04:17:08 chuck Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.4 1996/06/29 20:05:42 chuck Exp $       */
 
 /*
  *
@@ -153,7 +153,7 @@ atm_rtrequest(req, rt, sa)
 		 * let the lower level know this circuit is active
 		 */
 		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
-		api.asock = NULL;
+		api.rxhand = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA, 
 							(caddr_t)&api) != 0) {
 			printf("atm: couldn't add VC\n");
@@ -196,7 +196,7 @@ failed:
 		 */
 
 		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
-		api.asock = NULL;
+		api.rxhand = NULL;
 		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS, 
 							(caddr_t)&api);
 

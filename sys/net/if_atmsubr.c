@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.4 1996/06/27 04:33:10 chuck Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.5 1996/06/29 20:05:41 chuck Exp $       */
 
 /*
  *
@@ -201,11 +201,11 @@ bad:
  * the packet is in the mbuf chain m.
  */
 void
-atm_input(ifp, ah, m, so)
+atm_input(ifp, ah, m, rxhand)
 	struct ifnet *ifp;
 	register struct atm_pseudohdr *ah;
 	struct mbuf *m;
-	struct socket *so;
+	void *rxhand;
 {
 	register struct ifqueue *inq;
 	u_int16_t etype = ETHERTYPE_IP; /* default */
@@ -218,11 +218,15 @@ atm_input(ifp, ah, m, so)
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
-	if (so) {
+	if (rxhand) {
 #ifdef NATM
+	  struct natmpcb *npcb = rxhand;
+	  s = splimp();			/* in case 2 atm cards @ diff lvls */
+	  npcb->npcb_inq++;			/* count # in queue */
+	  splx(s);
 	  schednetisr(NETISR_NATM);
 	  inq = &natmintrq;
-	  m->m_pkthdr.rcvif = (struct ifnet *) so; /* XXX: overload */
+	  m->m_pkthdr.rcvif = rxhand; /* XXX: overload */
 #else
 	  printf("atm_input: NATM detected but not configured in kernel\n");
 	  m_freem(m);
