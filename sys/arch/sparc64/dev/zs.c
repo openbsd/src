@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.3 2001/08/21 21:42:30 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
-#include <dev/ic/z8530reg.h>
+#include <sparc64/dev/z8530reg.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
 #include <ddb/db_output.h>
 
@@ -76,6 +76,10 @@
 #include "kbd.h"	/* NKBD */
 #include "ms.h"		/* NMS */
 #include "zs.h" 	/* NZS */
+
+struct cfdriver zs_cd = {
+	NULL, "zs", DV_TTY
+};
 
 /* Make life easier for the initialized arrays here. */
 #if NZS < 3
@@ -156,7 +160,7 @@ struct consdev zs_consdev = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int  zs_match_mainbus __P((struct device *, struct cfdata *, void *));
+static int  zs_match_mainbus __P((struct device *, void *, void *));
 static void zs_attach_mainbus __P((struct device *, struct device *, void *));
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
@@ -193,11 +197,12 @@ void zs_disable __P((struct zs_chanstate *));
  * Is the zs chip present?
  */
 static int
-zs_match_mainbus(parent, cf, aux)
+zs_match_mainbus(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
+	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
 
 	if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
@@ -237,7 +242,7 @@ zs_attach_mainbus(parent, self, aux)
 			 */
 			zsaddr[zs_unit] = 
 				(struct zsdevice *)
-				(uintptr_t)sa->sa_promvaddrs[0];
+				(unsigned long int)sa->sa_promvaddrs[0];
 		} else {
 			bus_space_handle_t kvaddr;
 
@@ -251,7 +256,7 @@ zs_attach_mainbus(parent, self, aux)
 				return;
 			}
 			zsaddr[zs_unit] = (struct zsdevice *)
-				(uintptr_t)kvaddr;
+				(unsigned long int)kvaddr;
 		}
 	}
 	zsc->zsc_bustag = sa->sa_bustag;
@@ -290,7 +295,9 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
+#if (NKBD > 0) || (NMS > 0)
 		extern struct cfdriver zstty_cd; /* in ioconf.c */
+#endif
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -407,8 +414,7 @@ zs_attach(zsc, zsd, pri)
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt\n");
 
-	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    zsc->zsc_dev.dv_xname, "intr");
+	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
 
 
 	/*
@@ -591,10 +597,12 @@ zs_set_modes(cs, cflag)
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = ZSWR5_RTS;
 		cs->cs_rr0_cts = ZSRR0_CTS;
+#if 0 /* JLW */
 	} else if ((cflag & CDTRCTS) != 0) {
 		cs->cs_wr5_dtr = 0;
 		cs->cs_wr5_rts = ZSWR5_DTR;
 		cs->cs_rr0_cts = ZSRR0_CTS;
+#endif
 	} else if ((cflag & MDMBUF) != 0) {
 		cs->cs_wr5_dtr = 0;
 		cs->cs_wr5_rts = ZSWR5_DTR;

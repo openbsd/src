@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.3 2001/08/21 21:42:30 jason Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.4 2000/11/08 23:41:42 eeh Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <machine/bus.h>
-#include <dev/ic/z8530sc.h>
+#include <sparc64/dev/z8530sc.h>
 
 /*
  * Need to override cn_console_dev() for zstty and zskbd.

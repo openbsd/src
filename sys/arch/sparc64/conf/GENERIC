@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2001/08/21 16:21:47 jason Exp $
+#	$OpenBSD: GENERIC,v 1.9 2001/08/21 21:42:30 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -23,6 +23,9 @@ cpu0	at mainbus0
 sbus0	at mainbus0				# Ultra 1
 
 #### Standard system devices -- all required for a given architecture
+
+zs*	at sbus? slot ? offset ?
+zstty*	at zs? channel ?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0				# PROM console
