@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,7 @@
 
 #define CORE_PRIVATE
 #include "httpd.h"
+#include "http_conf_globals.h"
 #include "http_config.h"
 #include "http_core.h"
 #include "http_log.h"
@@ -206,14 +207,15 @@ static void open_error_log(server_rec *s, pool *p)
 	    fname++;
 	    for (fac = facilities; fac->t_name; fac++) {
 		if (!strcasecmp(fname, fac->t_name)) {
-		    openlog("httpd", LOG_NDELAY|LOG_CONS|LOG_PID, fac->t_val);
+		    openlog(ap_server_argv0, LOG_NDELAY|LOG_CONS|LOG_PID,
+			    fac->t_val);
 		    s->error_log = NULL;
 		    return;
 		}
 	    }
 	}
 	else
-	    openlog("httpd", LOG_NDELAY|LOG_CONS|LOG_PID, LOG_LOCAL7);
+	    openlog(ap_server_argv0, LOG_NDELAY|LOG_CONS|LOG_PID, LOG_LOCAL7);
 
 	s->error_log = NULL;
     }
@@ -222,7 +224,8 @@ static void open_error_log(server_rec *s, pool *p)
 	fname = ap_server_root_relative(p, s->error_fname);
         if (!(s->error_log = ap_pfopen(p, fname, "a"))) {
             perror("fopen");
-            fprintf(stderr,"httpd: could not open error log file %s.\n", fname);
+            fprintf(stderr, "%s: could not open error log file %s.\n",
+		    ap_server_argv0, fname);
             exit(1);
 	}
     }
@@ -319,7 +322,8 @@ static void log_error_core(const char *file, int line, int level,
     }
 
     if (logf) {
-	len = ap_snprintf(errstr, sizeof(errstr), "[%s] ", ap_get_time());
+	len = ap_snprintf(errstr, sizeof(errstr), "%s: [%s] ",
+			  ap_server_argv0, ap_get_time());
     } else {
 	len = 0;
     }
@@ -393,7 +397,8 @@ static void log_error_core(const char *file, int line, int level,
 	     */
 	    nErrorCode = GetLastError();
 	    len += ap_snprintf(errstr + len, sizeof(errstr) - len,
-		"(FormatMessage failed with code %d): ", nErrorCode);
+			       "(FormatMessage failed with code %d): ",
+			       nErrorCode);
 	}
 	else {
 	    /* FormatMessage put the message in the buffer, but it may
@@ -481,14 +486,15 @@ void ap_log_pid(pool *p, char *fname)
        */
       ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL,
 		   ap_psprintf(p,
-			       "pid file %s overwritten -- Unclean shutdown of previous apache run?",
+			       "pid file %s overwritten -- Unclean shutdown of previous Apache run?",
 			       fname)
 		   );
     }
 
     if(!(pid_file = fopen(fname, "w"))) {
 	perror("fopen");
-        fprintf(stderr, "httpd: could not log pid to file %s\n", fname);
+        fprintf(stderr, "%s: could not log pid to file %s\n",
+		ap_server_argv0, fname);
         exit(1);
     }
     fprintf(pid_file, "%ld\n", (long)mypid);

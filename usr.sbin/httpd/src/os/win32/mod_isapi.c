@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -463,7 +463,7 @@ BOOL WINAPI ServerSupportFunction (HCONN hConn, DWORD dwHSERequest,
 	    while (*value && ap_isspace(*value)) ++value;
 
 	    /* Check all the special-case headers. Similar to what
-	     * scan_script_header() does (see that function for
+	     * ap_scan_script_header_err() does (see that function for
 	     * more detail)
 	     */
 

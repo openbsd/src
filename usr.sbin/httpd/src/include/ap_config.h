@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,6 +84,27 @@ stat() properly */
 #include <sys/types.h>
 #include <sys/stat.h>
 
+/* So that we can use inline on some critical functions, and use
+ * GNUC attributes (such as to get -Wall warnings for printf-like
+ * functions).  Only do this in gcc 2.7 or later ... it may work
+ * on earlier stuff, but why chance it.
+ *
+ * We've since discovered that the gcc shipped with NeXT systems
+ * as "cc" is completely broken.  It claims to be __GNUC__ and so
+ * on, but it doesn't implement half of the things that __GNUC__
+ * means.  In particular it's missing inline and the __attribute__
+ * stuff.  So we hack around it.  PR#1613. -djg
+ */
+#if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 7 || defined(NEXT)
+#define ap_inline
+#define __attribute__(__x)
+#define ENUM_BITFIELD(e,n,w)  signed int n : w
+#else
+#define ap_inline __inline__
+#define USE_GNU_INLINE
+#define ENUM_BITFIELD(e,n,w)  e n : w
+#endif
+
 #ifdef WIN32
 /* include process.h first so we can override spawn[lv]e* properly */
 #include <process.h>
@@ -92,7 +113,7 @@ stat() properly */
 #include "os.h"
 #endif
 
-#if !defined(QNX) && !defined(MPE) && !defined(WIN32)
+#if !defined(QNX) && !defined(MPE) && !defined(WIN32) && !defined(TPF)
 #include <sys/param.h>
 #endif
 
@@ -436,11 +457,6 @@ typedef int pid_t;
 #define HAVE_MMAP 1
 #define USE_MMAP_FILES
 
-/* glibc 2.1 and later finally define rlim_t */
-#if !defined(__GLIBC__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 1)
-typedef int rlim_t;
-#endif
-
 /* flock is faster ... but hasn't been tested on 1.x systems */
 #define USE_FLOCK_SERIALIZED_ACCEPT
 
@@ -456,6 +472,11 @@ typedef int rlim_t;
 #undef NEED_STRDUP
 #include <sys/time.h>
 #define HAVE_SYSLOG 1
+
+/* glibc 2.1 and later finally define rlim_t */
+#if !defined(__GLIBC__) || __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 1)
+typedef int rlim_t;
+#endif
 
 #elif defined(SCO)
 #undef HAVE_GMTOFF
@@ -541,13 +562,18 @@ extern char *crypt();
 #define NEED_INITGROUPS
 #define NEED_HASHBANG_EMUL /* execve() doesn't start shell scripts by default */
 #undef HAVE_SHMGET
+#undef NEED_STRCASECMP
+#undef NEED_STRNCASECMP
 #undef USE_SHMGET_SCOREBOARD
 #undef bzero
 #endif /*_OSD_POSIX*/
 
 #elif defined(UW)
+#if UW < 700
+#define USE_FCNTL_SERIALIZED_ACCEPT
 #define NO_LINGCLOSE
 #define NO_KILLPG
+#endif
 #undef  NO_SETSID
 #undef NEED_STRDUP
 #define NEED_STRCASECMP
@@ -564,14 +590,18 @@ extern char *crypt();
 #endif
 #define NET_SIZE_T size_t
 #define HAVE_SYSLOG 1
-#define USE_FCNTL_SERIALIZED_ACCEPT
 
 #elif defined(DGUX)
 #define NO_KILLPG
 #undef  NO_SETSID
 #undef NEED_STRDUP
+#ifdef _IX86_DG
+#undef NEED_STRCASECMP
+#undef NEED_STRNCASECMP
+#else
 #define NEED_STRCASECMP
 #define NEED_STRNCASECMP
+#endif
 #define bzero(a,b) memset(a,0,b)
 /* A lot of SVR4 systems need this */
 #define USE_FCNTL_SERIALIZED_ACCEPT
@@ -588,11 +618,13 @@ extern char *crypt();
 #endif
 #ifndef DEFAULT_GROUP
 #define DEFAULT_GROUP "nogroup"
+#endif
 #define HAVE_SHMGET 1
 #define HAVE_MMAP 1
 #define USE_MMAP_SCOREBOARD
 #define USE_MMAP_FILES
-#endif
+#define USE_FLOCK_SERIALIZED_ACCEPT
+#define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
 
 #elif defined(UTS21)
 #undef HAVE_GMTOFF
@@ -795,9 +827,44 @@ typedef int rlim_t;
 #define NO_KILLPG
 #define NEED_INITGROUPS
 
+#elif defined(_CX_SX)
+#define JMP_BUF sigjmp_buf
+#include <sys/types.h>
+#include <sys/time.h>
+
 #elif defined(WIN32)
 
 /* All windows stuff is now in os/win32/os.h */
+
+#elif defined(TPF) /* IBM Transaction Processing Facility operating system */
+
+#include <tpfeq.h>
+#include <tpfio.h>
+#include <sysapi.h>
+#include <sysgtime.h>
+#define PRIMECRAS 0x010000
+#define JMP_BUF jmp_buf
+#define NEED_INITGROUPS
+#define NEED_STRCASECMP
+#define NEED_STRDUP
+#define NEED_STRNCASECMP
+#define NO_DBM_REWRITEMAP
+#define NO_GETTIMEOFDAY
+#define NO_KILLPG
+#define NO_LINGCLOSE
+#define NO_MMAP
+#define NO_OTHER_CHILD
+#define NO_RELIABLE_PIPED_LOGS
+#define NO_SETSID
+#define NO_SHMGET
+#define NO_SLACK
+#define NO_TIMES
+#define NO_USE_SIGACTION
+#define NO_WRITEV
+#define USE_LONGJMP
+#define USE_TPF_SELECT
+#undef  offsetof
+#define offsetof(s_type,field) ((size_t)&(((s_type*)0)->field))
 
 #else
 /* Unknown system - Edit these to match */
@@ -847,36 +914,15 @@ typedef int rlim_t;
 #define CORE_EXPORT_NONSTD	API_EXPORT_NONSTD
 #endif
 
-/* On OpenStep and Rhapsody, symbols that conflict with loaded dylibs
+/* On Mac OS X Server, symbols that conflict with loaded dylibs
  * (eg. System framework) need to be declared as private symbols with
  * __private_extern__.
  * For other systems, make that a no-op.
  */
-#if defined(RHAPSODY) || defined(NEXT)
+#if defined(RHAPSODY)
 #define ap_private_extern __private_extern__
 #else
 #define ap_private_extern
-#endif
-
-/* So that we can use inline on some critical functions, and use
- * GNUC attributes (such as to get -Wall warnings for printf-like
- * functions).  Only do this in gcc 2.7 or later ... it may work
- * on earlier stuff, but why chance it.
- *
- * We've since discovered that the gcc shipped with NeXT systems
- * as "cc" is completely broken.  It claims to be __GNUC__ and so
- * on, but it doesn't implement half of the things that __GNUC__
- * means.  In particular it's missing inline and the __attribute__
- * stuff.  So we hack around it.  PR#1613. -djg
- */
-#if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 7 || defined(NEXT)
-#define ap_inline
-#define __attribute__(__x)
-#define ENUM_BITFIELD(e,n,w)  signed int n : w
-#else
-#define ap_inline __inline__
-#define USE_GNU_INLINE
-#define ENUM_BITFIELD(e,n,w)  e n : w
 #endif
 
 /*
@@ -904,7 +950,7 @@ typedef int rlim_t;
 #include <stdlib.h>
 #include <string.h>
 #include "ap_ctype.h"
-#if !defined(MPE) && !defined(WIN32)
+#if !defined(MPE) && !defined(WIN32) && !defined(TPF)
 #include <sys/file.h>
 #endif
 #ifndef WIN32
@@ -912,10 +958,12 @@ typedef int rlim_t;
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif /* HAVE_SYS_SELECT_H */
+#ifndef TPF
 #include <netinet/in.h>
+#endif /* TPF */
 #include <netdb.h>
 #include <sys/ioctl.h>
-#if !defined(MPE) && !defined(BEOS)
+#if !defined(MPE) && !defined(BEOS) && !defined(TPF)
 #include <arpa/inet.h>		/* for inet_ntoa */
 #endif
 #include <sys/wait.h>
@@ -936,9 +984,12 @@ typedef int rlim_t;
 #endif /* ndef WIN32 */
 
 #include <time.h>		/* for ctime */
+#ifdef WIN32
+#define strftime(s,max,format,tm)  os_strftime(s,max,format,tm)
+#endif
 #include <signal.h>
 #include <errno.h>
-#if !defined(QNX) && !defined(CONVEXOS11) && !defined(NEXT)
+#if !defined(QNX) && !defined(CONVEXOS11) && !defined(NEXT) && !defined(TPF)
 #include <memory.h>
 #endif
 
@@ -1042,6 +1093,8 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #ifdef SELECT_NEEDS_CAST
 #define ap_select(_a, _b, _c, _d, _e)	\
     select((_a), (int *)(_b), (int *)(_c), (int *)(_d), (_e))
+#elif defined(USE_TPF_SELECT)
+#define ap_select   tpf_select
 #else
 #define ap_select	select
 #endif

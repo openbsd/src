@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -181,10 +181,34 @@
  *                        (for implementing better error reporting).
  * 19980906 (1.3.2-dev) - added ap_md5_binary()
  * 19980917 (1.3.2-dev) - bs2000: changed os_set_authfile() to os_set_account()
+ * 19981108 (1.3.4-dev) - added ap_method_number_of()
+ *                      - changed value of M_INVALID and added WebDAV methods
+ * 19981108.1           - ap_exists_config_define() is now public (minor bump)
+ * 19981204             - scoreboard changes -- added generation, changed
+ *                        exit_generation to running_generation.  Somewhere
+ *                        earlier vhostrec was added, but it's only safe to use
+ *                        as of this rev.  See scoreboard.h for documentation.
+ * 19981211             - DSO changes -- added ap_single_module_configure()
+ *                                    -- added ap_single_module_init()
+ * 19981229             - mod_negotiation overhaul -- added ap_make_etag()
+ *                        and added vlist_validator to request_rec.
+ * 19990101             - renamed macro escape_uri() to ap_escape_uri()
+ *                      - added MODULE_MAGIC_COOKIE to identify module structs
+ * 19990103 (1.3.4-dev) - added ap_array_pstrcat()
+ * 19990105 (1.3.4-dev) - added ap_os_is_filename_valid()
+ * 19990106 (1.3.4-dev) - Move MODULE_MAGIC_COOKIE to the end of the
+ *                        STANDARD_MODULE_STUFF macro so the version
+ *                        numbers and file name remain at invariant offsets
+ * 19990108 (1.3.4-dev) - status_drops_connection -> ap_status_drops_connection
+ *                        scan_script_header -> ap_scan_script_header_err
+ *                      - reordered entries in request_rec that were waiting
+ *                        for a non-binary-compatible release.
  */
 
+#define MODULE_MAGIC_COOKIE 0x41503133UL /* "AP13" */
+
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
-#define MODULE_MAGIC_NUMBER_MAJOR 19980917
+#define MODULE_MAGIC_NUMBER_MAJOR 19990108
 #endif
 #define MODULE_MAGIC_NUMBER_MINOR 0                     /* 0...n */
 #define MODULE_MAGIC_NUMBER MODULE_MAGIC_NUMBER_MAJOR	/* backward compat */

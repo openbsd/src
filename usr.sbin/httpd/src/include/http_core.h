@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -133,6 +133,7 @@ API_EXPORT(const char *) ap_get_server_name(const request_rec *r);
 API_EXPORT(unsigned) ap_get_server_port(const request_rec *r);
 API_EXPORT(unsigned long) ap_get_limit_req_body(const request_rec *r);
 API_EXPORT(void) ap_custom_response(request_rec *r, int status, char *string);
+API_EXPORT(int) ap_exists_config_define(char *name);
 
 /* Authentication stuff.  This is one of the places where compatibility
  * with the old config files *really* hurts; they don't discriminate at
@@ -156,7 +157,7 @@ API_EXPORT(const array_header *) ap_requires (request_rec *);
 /*
  * Core is also unlike other modules in being implemented in more than
  * one file... so, data structures are declared here, even though most of
- * the code that cares really is in http_core.c.  Also, anothre accessor.
+ * the code that cares really is in http_core.c.  Also, another accessor.
  */
 
 char *ap_response_code_string (request_rec *r, int error_index);

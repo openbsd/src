@@ -16,6 +16,9 @@
  * part of the header
  */
 #define INLINE extern ap_inline
+
+INLINE int ap_os_is_path_absolute(const char *file);
+
 #include "os-inline.c"
 #endif
 
@@ -23,12 +26,17 @@
 /* Compiler does not support inline, so prototype the inlineable functions
  * as normal
  */
-extern int ap_os_is_path_absolute(const char *f);
+extern int ap_os_is_path_absolute(const char *file);
 #endif
+
+/* Other ap_os_ routines not used by this platform */
+
+#define ap_os_is_filename_valid(f)          (1)
 
 /* Sorry if this is ugly, but the include order doesn't allow me
  * to use request_rec here... */
 struct request_rec;
 extern int ap_checkconv(struct request_rec *r);
+extern pid_t os_fork(void);
 
 #endif /*! APACHE_OS_H*/

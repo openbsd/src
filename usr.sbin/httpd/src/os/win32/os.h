@@ -93,6 +93,8 @@ __inline int ap_os_is_path_absolute(const char *file)
 #define stat(f,ps)  os_stat(f,ps)
 API_EXPORT(int) os_stat(const char *szPath,struct stat *pStat);
 
+API_EXPORT(int) os_strftime(char *s, size_t max, const char *format, const struct tm *tm);
+
 #define _spawnv(mode,cmdname,argv)	    os_spawnv(mode,cmdname,argv)
 #define spawnv(mode,cmdname,argv)	    os_spawnv(mode,cmdname,argv)
 API_EXPORT(int) os_spawnv(int mode,const char *cmdname,const char *const *argv);
@@ -102,6 +104,10 @@ API_EXPORT(int) os_spawnve(int mode,const char *cmdname,const char *const *argv,
 #define _spawnle			    os_spawnle
 #define spawnle				    os_spawnle
 API_EXPORT(int) os_spawnle(int mode,const char *cmdname,...);
+
+/* OS-dependent filename routines in util_win32.c */
+
+API_EXPORT(int) ap_os_is_filename_valid(const char *file);
 
 /* Abstractions for dealing with shared object files (DLLs on Win32).
  * These are used by mod_so.c

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -198,10 +198,14 @@ typedef struct module_struct {
 				 */
 
     const char *name;
-
     void *dynamic_load_handle;
 
     struct module_struct *next;
+
+    unsigned long magic;        /* Magic Cookie to identify a module structure;
+                                 * It's mainly important for the DSO facility
+                                 * (see also mod_so).
+                                 */
 
     /* init() occurs after config parsing, but before any children are
      * forked.
@@ -286,7 +290,8 @@ typedef struct module_struct {
 				-1, \
 				__FILE__, \
 				NULL, \
-				NULL
+				NULL, \
+				MODULE_MAGIC_COOKIE
 
 /* Generic accessors for other modules to get at their own module-specific
  * data
@@ -336,6 +341,11 @@ extern module *ap_prelinked_modules[];
 extern module *ap_preloaded_modules[];
 extern API_VAR_EXPORT module **ap_loaded_modules;
 
+/* For mod_so.c... */
+
+void ap_single_module_configure(pool *p, server_rec *s, module *m);
+void ap_single_module_init(pool *p, server_rec *s, module *m);
+
 /* For http_main.c... */
 
 server_rec *ap_read_config(pool *conf_pool, pool *temp_pool, char *config_name);
@@ -361,10 +371,10 @@ CORE_EXPORT(const char *) ap_init_virtual_host(pool *p, const char *hostname,
 				server_rec *main_server, server_rec **);
 void ap_process_resource_config(server_rec *s, char *fname, pool *p, pool *ptemp);
 
-/* check_cmd_context() definitions: */
+/* ap_check_cmd_context() definitions: */
 API_EXPORT(const char *) ap_check_cmd_context(cmd_parms *cmd, unsigned forbidden);
 
-/* check_cmd_context():                  Forbidden in: */
+/* ap_check_cmd_context():              Forbidden in: */
 #define  NOT_IN_VIRTUALHOST     0x01 /* <Virtualhost> */
 #define  NOT_IN_LIMIT           0x02 /* <Limit> */
 #define  NOT_IN_DIRECTORY       0x04 /* <Directory> */

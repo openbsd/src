@@ -1014,30 +1014,17 @@ register struct parse *p;
 		nbytes = nc / CHAR_BIT * css;
 		if (p->g->sets == NULL)
 			p->g->sets = (cset *)malloc(nc * sizeof(cset));
-		else {
-		        cset *tmp;
-			tmp = (cset *)realloc((char *)p->g->sets,
-					      nc * sizeof(cset));
-			if (tmp == NULL) 
-			      free(p->g->sets);
-			
-			p->g->sets = tmp;
-		}
+		else
+			p->g->sets = (cset *)realloc((char *)p->g->sets,
+							nc * sizeof(cset));
 		if (p->g->setbits == NULL)
 			p->g->setbits = (uch *)malloc(nbytes);
 		else {
-		        uch *tmp;
-			tmp = (uch *)realloc((char *)p->g->setbits,
-					     nbytes);
-			if (tmp == NULL) {
-				free(p->g->setbits);
-				p->g->setbits = tmp;
-			}
-			else {
-				p->g->setbits = tmp;
-				for (i = 0; i < no; i++)
-					p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
-			}
+			p->g->setbits = (uch *)realloc((char *)p->g->setbits,
+								nbytes);
+			/* xxx this isn't right if setbits is now NULL */
+			for (i = 0; i < no; i++)
+				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
 		}
 		if (p->g->sets != NULL && p->g->setbits != NULL)
 			(void) memset((char *)p->g->setbits + (nbytes - css),
@@ -1173,13 +1160,8 @@ register char *cp;
 	cs->smultis += strlen(cp) + 1;
 	if (cs->multis == NULL)
 		cs->multis = malloc(cs->smultis);
-	else {
-		char *tmp;
-		tmp = realloc(cs->multis, cs->smultis);
-		if (tmp == NULL)
-			free(cs->multis);
-		cs->multis = tmp;
-	}
+	else
+		cs->multis = realloc(cs->multis, cs->smultis);
 	if (cs->multis == NULL) {
 		SETERROR(REG_ESPACE);
 		return;

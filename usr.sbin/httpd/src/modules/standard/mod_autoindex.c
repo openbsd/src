@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,6 +98,10 @@ module MODULE_VAR_EXPORT autoindex_module;
 #define K_PAD 1
 #define K_NOPAD 0
 
+#define K_NOADJUST 0
+#define K_ADJUST 1
+#define K_UNSET 2
+
 /*
  * Define keys for sorting.
  */
@@ -137,6 +141,7 @@ typedef struct autoindex_config_struct {
     int name_adjust;
     int icon_width;
     int icon_height;
+    char *default_order;
 
     array_header *icon_list, *alt_list, *desc_list, *ign_list;
     array_header *hdr_list, *rdme_list;
@@ -368,8 +373,8 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 	    }
 	}
 	else if (!strncasecmp(w, "IconWidth=", 10)) {
-	    if (action != '\0') {
-		return "Cannot combine '+' or '-' with IconWidth=n";
+	    if (action == '-') {
+		return "Cannot combine '-' with IconWidth=n";
 	    }
 	    d_cfg->icon_width = atoi(&w[10]);
 	}
@@ -382,8 +387,8 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 	    }
 	}
 	else if (!strncasecmp(w, "IconHeight=", 11)) {
-	    if (action != '\0') {
-		return "Cannot combine '+' or '-' with IconHeight=n";
+	    if (action == '-') {
+		return "Cannot combine '-' with IconHeight=n";
 	    }
 	    d_cfg->icon_height = atoi(&w[11]);
 	}
@@ -393,14 +398,14 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 		       "'-NameWidth'";
 	    }
 	    d_cfg->name_width = DEFAULT_NAME_WIDTH;
-	    d_cfg->name_adjust = 0;
+	    d_cfg->name_adjust = K_NOADJUST;
 	}
 	else if (!strncasecmp(w, "NameWidth=", 10)) {
-	    if (action != '\0') {
-		return "Cannot combine '+' or '-' with NameWidth=n";
+	    if (action == '-') {
+		return "Cannot combine '-' with NameWidth=n";
 	    }
 	    if (w[10] == '*') {
-		d_cfg->name_adjust = 1;
+		d_cfg->name_adjust = K_ADJUST;
 	    }
 	    else {
 		int width = atoi(&w[10]);
@@ -409,6 +414,7 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 		    return "NameWidth value must be greater than 1";
 		}
 		d_cfg->name_width = width;
+		d_cfg->name_adjust = K_NOADJUST;
 	    }
 	}
 	else {
@@ -437,6 +443,48 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
     return NULL;
 }
 
+static const char *set_default_order(cmd_parms *cmd, void *m, char *direction,
+				     char *key)
+{
+    char temp[4];
+    autoindex_config_rec *d_cfg = (autoindex_config_rec *) m;
+
+    ap_cpystrn(temp, "k=d", sizeof(temp));
+    if (!strcasecmp(direction, "Ascending")) {
+	temp[2] = D_ASCENDING;
+    }
+    else if (!strcasecmp(direction, "Descending")) {
+	temp[2] = D_DESCENDING;
+    }
+    else {
+	return "First keyword must be 'Ascending' or 'Descending'";
+    }
+
+    if (!strcasecmp(key, "Name")) {
+	temp[0] = K_NAME;
+    }
+    else if (!strcasecmp(key, "Date")) {
+	temp[0] = K_LAST_MOD;
+    }
+    else if (!strcasecmp(key, "Size")) {
+	temp[0] = K_SIZE;
+    }
+    else if (!strcasecmp(key, "Description")) {
+	temp[0] = K_DESC;
+    }
+    else {
+	return "Second keyword must be 'Name', 'Date', 'Size', or "
+	    "'Description'";
+    }
+
+    if (d_cfg->default_order == NULL) {
+	d_cfg->default_order = ap_palloc(cmd->pool, 4);
+	d_cfg->default_order[3] = '\0';
+    }
+    ap_cpystrn(d_cfg->default_order, temp, sizeof(temp));
+    return NULL;
+}
+
 #define DIR_CMD_PERMS OR_INDEXES
 
 static const command_rec autoindex_cmds[] =
@@ -455,6 +503,8 @@ static const command_rec autoindex_cmds[] =
      "alternate descriptive text followed by one or more content encodings"},
     {"IndexOptions", add_opts, NULL, DIR_CMD_PERMS, RAW_ARGS,
      "one or more index options"},
+    {"IndexOrderDefault", set_default_order, NULL, DIR_CMD_PERMS, TAKE2,
+     "{Ascending,Descending} {Name,Size,Description,Date}"},
     {"IndexIgnore", add_ignore, NULL, DIR_CMD_PERMS, ITERATE,
      "one or more file extensions"},
     {"AddDescription", add_desc, BY_PATH, DIR_CMD_PERMS, ITERATE2,
@@ -477,7 +527,7 @@ static void *create_autoindex_config(pool *p, char *dummy)
     new->icon_width = 0;
     new->icon_height = 0;
     new->name_width = DEFAULT_NAME_WIDTH;
-    new->name_adjust = 0;
+    new->name_adjust = K_UNSET;
     new->icon_list = ap_make_array(p, 4, sizeof(struct item));
     new->alt_list = ap_make_array(p, 4, sizeof(struct item));
     new->desc_list = ap_make_array(p, 4, sizeof(struct item));
@@ -487,6 +537,7 @@ static void *create_autoindex_config(pool *p, char *dummy)
     new->opts = 0;
     new->incremented_opts = 0;
     new->decremented_opts = 0;
+    new->default_order = NULL;
 
     return (void *) new;
 }
@@ -551,9 +602,22 @@ static void *merge_autoindex_configs(pool *p, void *basev, void *addv)
 	new->opts |= new->incremented_opts;
 	new->opts &= ~new->decremented_opts;
     }
-    new->name_width = add->name_width;
-    new->name_adjust = add->name_adjust;
+    /*
+     * Inherit the NameWidth settings if there aren't any specific to
+     * the new location; otherwise we'll end up using the defaults set in the
+     * config-rec creation routine.
+     */
+    if (add->name_adjust == K_UNSET) {
+	new->name_width = base->name_width;
+	new->name_adjust = base->name_adjust;
+    }
+    else {
+	new->name_width = add->name_width;
+	new->name_adjust = add->name_adjust;
+    }
 
+    new->default_order = (add->default_order != NULL)
+	? add->default_order : base->default_order;
     return new;
 }
 
@@ -1030,7 +1094,7 @@ static void output_directories(struct ent **ar, int n,
     }
 
     name_width = d->name_width;
-    if (d->name_adjust) {
+    if (d->name_adjust == K_ADJUST) {
 	for (x = 0; x < n; x++) {
 	    int t = strlen(ar[x]->name);
 	    if (t > name_width) {
@@ -1160,7 +1224,8 @@ static void output_directories(struct ent **ar, int n,
 		    ap_rputs(time_str, r);
 		}
 		else {
-		    ap_rputs("                 ", r);
+		    /*Length="22-Feb-1998 23:42  " (see 4 lines above) */
+		    ap_rputs("                   ", r);
 		}
 	    }
 	    if (!(autoindex_opts & SUPPRESS_SIZE)) {
@@ -1300,31 +1365,33 @@ static int index_directory(request_rec *r,
 
     /*
      * Figure out what sort of indexing (if any) we're supposed to use.
+     *
+     * If no QUERY_STRING was specified or column sorting has been
+     * explicitly disabled, we use the default specified by the
+     * IndexOrderDefault directive (if there is one); otherwise,
+     * we fall back to ascending by name.
      */
-    if (autoindex_opts & SUPPRESS_COLSORT) {
+    qstring = r->args;
+    if ((autoindex_opts & SUPPRESS_COLSORT)
+	|| ((qstring == NULL) || (*qstring == '\0'))) {
+	qstring = autoindex_conf->default_order;
+    }
+    /*
+     * If there is no specific ordering defined for this directory,
+     * default to ascending by filename.
+     */
+    if ((qstring == NULL) || (*qstring == '\0')) {
 	keyid = K_NAME;
 	direction = D_ASCENDING;
     }
     else {
-	qstring = r->args;
-
-	/*
-	 * If no QUERY_STRING was specified, we use the default: ascending
-	 * by name.
-	 */
-	if ((qstring == NULL) || (*qstring == '\0')) {
-	    keyid = K_NAME;
-	    direction = D_ASCENDING;
+	keyid = *qstring;
+	ap_getword(r->pool, &qstring, '=');
+	if (qstring != '\0') {
+	    direction = *qstring;
 	}
 	else {
-	    keyid = *qstring;
-	    ap_getword(r->pool, &qstring, '=');
-	    if (qstring != '\0') {
-		direction = *qstring;
-	    }
-	    else {
-		direction = D_ASCENDING;
-	    }
+	    direction = D_ASCENDING;
 	}
     }
 

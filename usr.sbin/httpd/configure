@@ -1,6 +1,6 @@
 #!/bin/sh
 ## ====================================================================
-## Copyright (c) 1998 The Apache Group.  All rights reserved.
+## Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@
 ##
 ##  configure -- Apache Autoconf-style Interface (APACI) 
 ##
-##  Written by Ralf S. Engelschall <rse@apache.org>
+##  Initially written by Ralf S. Engelschall <rse@apache.org>
 ##
 
 #   default input separator chars: <space><tab><cr>
@@ -68,19 +68,21 @@ DIFS='
 ##
 ##  the paths to the Apache source tree
 ##
-
 top=.
 mkf=Makefile
 src=src
 aux=src/helpers
 sedsubst=src/.apaci.sedsubst
 addconf=src/.apaci.addconf
+tplconf=src/.apaci.tplconf
+pldconf=src/.apaci.pldconf
+configlayout=config.layout
 configstatus=config.status
+shadow=''
 
 ##
 ##  pre-determine runtime modes
 ##
-
 help=no
 quiet=no
 verbose=no
@@ -94,7 +96,6 @@ esac
 ##
 ##  display version information
 ##
-
 if [ ".$quiet" = .no ]; then
     APV=`cat $src/include/httpd.h |\
          grep "#define SERVER_BASEVERSION" |\
@@ -105,7 +106,6 @@ fi
 ##
 ##  important hint for the first-time users
 ##
-
 if [ $# -eq 0 ]; then
     echo " + Warning: Configuring Apache with default settings."
     echo " + This is probably not what you really want."
@@ -117,7 +117,6 @@ fi
 ##
 ##  determine path to (optional) Perl interpreter
 ##
-
 PERL=no-perl-on-this-system
 perlpath="`$aux/PrintPath perl5 perl miniperl`"
 if [ ".$perlpath" != . ]; then
@@ -130,7 +129,6 @@ fi
 ##  and if it then is still broken we give a warning message.
 ##  If it works set the `Safe Echo Option' (SEO) variable.
 ##
-
 SEO='' # CHANGE THIS VARIABLE HERE IF YOU HAVE PROBLEMS WITH ECHO!
 bytes=`echo $SEO '\1' | wc -c | awk '{ printf("%s", $1); }'`
 if [ ".$bytes" != .3 ]; then
@@ -152,7 +150,6 @@ fi
 ##  standard Awks are really braindead and cause 
 ##  problems for our scripts under some platforms.
 ##
-
 AWK=awk
 awkpath="`$aux/PrintPath nawk gawk awk`"
 if [ ".$awkpath" != . ]; then
@@ -164,54 +161,37 @@ fi
 ##
 
 #   default paths
-prefix='/usr/local/apache'
-exec_prefix='$prefix'
-bindir='$exec_prefix/bin'
-sbindir='$exec_prefix/sbin'
-libexecdir='$exec_prefix/libexec'
-mandir='$prefix/man'
-sysconfdir='$prefix/etc'
-datadir='$prefix/share'
-includedir='$prefix/include'
-localstatedir='$prefix/var'
-runtimedir='$localstatedir/run'
-logfiledir='$localstatedir/log'
-proxycachedir='$localstatedir/proxy'
+prefix=UNSET
 
-#   customization flags for
-#   automatic "apache" suffix 
-customized_sysconfdir=0
-customized_datadir=0
-customized_localstatedir=0
-customized_includedir=0
-
-#   check and debug
-layout=0
+#   layout configuration
+with_layout=0
+show_layout=0
 
 #   suexec defaults
 suexec=0
 suexec_ok=0
+suexec_docroot='$datadir/htdocs'
+suexec_logexec='$logfiledir/suexec_log'
 suexec_caller=www
 suexec_userdir=public_html
 suexec_uidmin=100
 suexec_gidmin=100
 suexec_safepath="/usr/local/bin:/usr/bin:/bin"
 
-#   with support tools
+#   various other flags
 support=1
-
-#   with adjustments
 confadjust=1
+permute=''
 
 #   determine rules
-rules=""
-rulelist=""
+rules=''
+rulelist=''
 OIFS="$IFS" IFS='
 '
 for rule in `grep '^Rule' $src/Configuration.tmpl`; do
-    rule=`echo "$rule" | sed -e 's/^Rule[ ]*//'`
+    rule=`echo "$rule" | sed -e 's/^Rule[ 	]*//'`
     name=`echo "$rule" | sed -e 's/=.*$//'`
-    namelow=`echo "$name" | tr "A-Z" "a-z"`
+    namelow=`echo "$name" | tr 'A-Z' 'a-z'`
     arg=`echo "$rule" | sed -e 's/^.*=//'`
     eval "rule_$namelow=$arg"
     rules="$rules:$namelow"
@@ -221,13 +201,11 @@ IFS="$OIFS"
 rules=`echo $rules | sed -e 's/^://'`
 
 #   determine modules
-rm -f $addconf 2>/dev/null
-touch $addconf
-modules=""
-modulelist=""
+modules=''
+modulelist=''
 OIFS="$IFS" IFS='
 '
-for module in `egrep '^[# ]*(Add|Shared)Module' $src/Configuration.tmpl`; do
+for module in `egrep '^[# 	]*(Add|Shared)Module' $src/Configuration.tmpl`; do
     add=yes
     share=no
     if [ ".`echo $module | grep '^#'`" != . ]; then
@@ -239,6 +217,7 @@ for module in `egrep '^[# ]*(Add|Shared)Module' $src/Configuration.tmpl`; do
     module=`echo "$module" |\
             sed -e 's%^.*/\(.*\)$%\1%' \
                 -e 's/\.[oa]$//' \
+                -e 's/\.module$//' \
                 -e 's/^mod_//' \
                 -e 's/^lib//'`
     eval "module_$module=$add"
@@ -252,7 +231,7 @@ done
 IFS="$OIFS"
 modules=`echo $modules | sed -e 's/^://'`
 
-#   backward compatibility from old src/Configuration.tmpl
+#   backward compatibility for old src/Configuration.tmpl
 #   parameter names to the canonical Autoconf-style shell
 #   variable names.
 OIFS="$IFS" IFS="$DIFS"
@@ -266,50 +245,29 @@ for var in CFLAGS LDFLAGS LIBS INCLUDES DEPS; do
 done
 IFS="$OIFS"
 
-#   create a config status script for restoring
-#   the configuration via a simple shell script
-if [ ".$help" = .no ]; then
-    rm -f $configstatus 2>/dev/null
-    echo "#!/bin/sh" >$configstatus
-    echo "##" >>$configstatus
-    echo "##  $configstatus -- APACI auto-generated configuration restore script" >>$configstatus
-    echo "##" >>$configstatus
-    echo "##  Use this shell script to re-run the APACI configure script for" >>$configstatus
-    echo "##  restoring your configuration. Additional parameters can be supplied." >>$configstatus
-    echo "##" >>$configstatus
-    echo "" >>$configstatus
-    for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
-               LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB; do
-        eval "val=\"\$$var\""
-        if [ ".$val" != . ]; then
-            echo "$var=$val" |\
-            sed -e 's:\(["$\\]\):\\\1:g' \
-                -e 's:\([A-Z]*=\):\1":' \
-                -e 's:$:" \\:' >>$configstatus
+##
+##  support for the default layout
+##
+case "$*" in
+    *--with-layout=* ) 
+        ;;
+    * ) 
+        if [ ".$*" = . ]; then
+            set -- '--with-layout=Apache'
+        else
+            set -- '--with-layout=Apache' "$@"
         fi
-    done
-    if [ $# -eq 0 ]; then
-        echo "./configure" >>$configstatus
-    else
-        echo $SEO "./configure \\" >>$configstatus
-        for arg
-        do
-            echo "$arg" |\
-            sed -e 's:\(["$\\]\):\\\1:g' \
-                -e 's:^:":' \
-                -e 's:$:" \\:' >>$configstatus
-        done
-    fi
-    echo '"$@"' >>$configstatus
-    echo '' >>$configstatus
-    chmod a+x $configstatus
-fi
+        ;;
+esac
 
 ##
-##  parse argument line options
+##  Iterate over the command line options the first time.
 ##
-
-apc_prev=""
+##  This time we pre-process options which need high priority 
+##  on the command line independent of their position, so they 
+##  can be overridden by others.
+##
+apc_prev=''
 OIFS1="$IFS" IFS="$DIFS"
 for apc_option
 do
@@ -324,16 +282,178 @@ do
         -*=*) apc_optarg=`echo "$apc_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
            *) apc_optarg= ;;
     esac
+    #  pre-process only a few options now
+    case "$apc_option" in
+        --help | -h | -help )
+            echo "Usage: configure [options]"
+            echo "Options: [defaults in brackets after descriptions]"
+            echo "General options:"
+            echo " --quiet, --silent      do not print messages"
+            echo " --verbose, -v          print even more messages"
+            echo " --shadow[=DIR]         switch to a shadow tree (under DIR) for building"
+            echo ""
+            echo "Stand-alone options:"
+            echo " --help, -h             print this message"
+            echo " --show-layout          print installation path layout (check and debug)"
+            echo ""
+            echo "Installation layout options:"
+            echo " --with-layout=[F:]ID   use installation path layout ID (from file F)"
+            echo " --target=TARGET        install name-associated files using basename TARGET"
+            echo " --prefix=PREFIX        install architecture-independent files in PREFIX"
+            echo " --exec-prefix=EPREFIX  install architecture-dependent files in EPREFIX"
+            echo " --bindir=DIR           install user     executables in DIR"
+            echo " --sbindir=DIR          install sysadmin executables in DIR"
+            echo " --libexecdir=DIR       install program  executables in DIR"
+            echo " --mandir=DIR           install manual pages in DIR"
+            echo " --sysconfdir=DIR       install configuration files in DIR"
+            echo " --datadir=DIR          install read-only  data files in DIR"
+            echo " --includedir=DIR       install includes files in DIR"
+            echo " --localstatedir=DIR    install modifiable data files in DIR"
+            echo " --runtimedir=DIR       install runtime data in DIR"
+            echo " --logfiledir=DIR       install logfile data in DIR"
+            echo " --proxycachedir=DIR    install proxy cache data in DIR"
+            echo ""
+            echo "Configuration options:"
+            echo " --enable-rule=NAME     enable  a particular Rule named 'NAME'"
+            echo " --disable-rule=NAME    disable a particular Rule named 'NAME'"
+            $aux/ppl.sh $rulelist
+            echo " --add-module=FILE      on-the-fly copy & activate a 3rd-party Module"
+            echo " --activate-module=FILE on-the-fly activate existing 3rd-party Module"
+            echo " --permute-module=N1:N2 on-the-fly permute module 'N1' with module 'N2'"
+            echo " --enable-module=NAME   enable  a particular Module named 'NAME'"
+            echo " --disable-module=NAME  disable a particular Module named 'NAME'"
+            $aux/ppl.sh $modulelist
+            echo " --enable-shared=NAME   enable  build of Module named 'NAME' as a DSO"
+            echo " --disable-shared=NAME  disable build of Module named 'NAME' as a DSO"
+            echo " --with-perl=FILE       path to the optional Perl interpreter"
+            echo " --without-support      disable the build and installation of support tools"
+            echo " --without-confadjust   disable the user/situation adjustments in config"
+            echo ""
+            echo "suEXEC options:"
+            echo " --enable-suexec        enable the suEXEC feature"
+            echo " --suexec-caller=NAME   set the suEXEC username of the allowed caller [$suexec_caller]"
+            echo " --suexec-docroot=DIR   set the suEXEC root directory [PREFIX/share/htdocs]"
+            echo " --suexec-logfile=FILE  set the suEXEC logfile [PREFIX/var/log/suexec_log]"
+            echo " --suexec-userdir=DIR   set the suEXEC user subdirectory [$suexec_userdir]"
+            echo " --suexec-uidmin=UID    set the suEXEC minimal allowed UID [$suexec_uidmin]"
+            echo " --suexec-gidmin=GID    set the suEXEC minimal allowed GID [$suexec_gidmin]"
+            echo " --suexec-safepath=PATH set the suEXEC safe PATH [$suexec_safepath]"
+            echo ""
+            echo "Deprecated options:"
+            echo " --layout               backward compat only: use --show-layout"
+            echo " --compat               backward compat only: use --with-layout=Apache"
+            exit 0
+            ;;
+        --with-layout=*|--compat)
+            if [ ".$apc_option" = ".--compat" ]; then
+                apc_optarg="Apache"
+            fi
+            case $apc_optarg in
+                *:* ) 
+                    file=`echo $apc_optarg | sed -e 's/:.*//'`
+                    name=`echo $apc_optarg | sed -e 's/.*://'`
+                    ;;
+                * ) 
+                    name=$apc_optarg
+                    file=$configlayout
+                    ;;
+            esac
+            if [ ! -f "$file" ]; then
+                echo "configure:Error: Path layout definition file $file not found" 1>&2
+                exit 1
+            fi
+            sed -e "1,/[ 	]*<[Ll]ayout[ 	]*$name[ 	]*>[ 	]*/d" \
+                -e '/[ 	]*<\/Layout>[ 	]*/,$d' \
+                -e "s/^[ 	]*//g" \
+                -e "s/:[ 	]*/=\'/g" \
+                -e "s/[ 	]*$/'/g" \
+                $file >$pldconf
+            . $pldconf
+            OIFS="$IFS" IFS="$DIFS"
+            for var in prefix exec_prefix bindir sbindir libexecdir mandir \
+                       sysconfdir datadir includedir localstatedir runtimedir \
+                       logfiledir proxycachedir; do
+                eval "val=\"\$$var\""
+                case $val in
+                    *+ )
+                        val=`echo $val | sed -e 's;\+$;;'`
+                        eval "$var=\"\$val\""
+                        eval "autosuffix_$var=yes"
+                        ;;
+                    * )
+                        eval "autosuffix_$var=no"
+                        ;;
+                esac
+            done
+            IFS="$OIFS"
+            rm -f $pldconf 2>/dev/null
+            if [ ".$prefix" = .UNSET ]; then
+                echo "configure:Error: Path layout definition not found or incorrect" 1>&2
+                exit 1
+            fi
+            if [ ".$quiet" = .no ]; then
+                echo " + using installation path layout: $name ($file)"
+            fi
+            with_layout=1
+            ;;
+        *)
+            ;;
+    esac
+done
 
+##
+##  Iterate over the command line options the second time.
+##
+##  This time we parse the standard options.
+##
+addconf_created=0
+apc_prev=''
+OIFS1="$IFS" IFS="$DIFS"
+for apc_option
+do
+    #   if previous option needs an argument, assign it.
+    if [ ".$apc_prev" != . ]; then
+        eval "$apc_prev=\$apc_option"
+        apc_prev=""
+        continue
+    fi
+    #   split out arguments
+    case "$apc_option" in
+        -*=*) apc_optarg=`echo "$apc_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+           *) apc_optarg= ;;
+    esac
     #  accept only the most important GNU Autoconf-style options
     case "$apc_option" in
+        --help|-h|-help|--with-layout=*|-compat)
+            #   just ignore already parsed options
+            ;;
         --quiet | --silent) 
             quiet=yes
             ;;
         --verbose | -v)
             verbose=yes
             ;;
-        --shadow)
+        --shadow*)
+            #   if we use an external shadow tree, first shadow all of ourself
+            #   to this tree and switch over to to it for internal (=platform)
+            #   shadowing...
+            case "$apc_option" in
+                --shadow=*)
+                    shadow="$apc_optarg"
+                    if [ .$quiet = .no ]; then
+                        echo " + creating external package shadow tree ($shadow)"
+                    fi
+                    rm -rf $shadow 2>/dev/null
+                    $aux/mkshadow.sh . $shadow
+                    for file in $mkf $sedsubst $addconf $tplconf $pldconf $configstatus; do
+                        rm -f $shadow/$file 2>/dev/null
+                    done
+                    if [ .$quiet = .no ]; then
+                        echo " + switching to external package shadow tree ($shadow)"
+                    fi
+                    cd $shadow
+                    ;;
+            esac
             #   determine GNU platform triple
             gnutriple=`$aux/GuessOS | sed -e 's:/:-:g' | $AWK '{ printf("%s",$1); }'`
             #   create Makefile wrapper (the first time only)
@@ -345,10 +465,15 @@ do
                 echo "##  Apache Makefile (shadow wrapper)" >> Makefile
                 echo "##" >> Makefile
                 echo "" >> Makefile
+                if [ ".$shadow" != . ]; then
+                    echo "SHADOW=$shadow" >> Makefile
+                else
+                    echo "SHADOW=." >> Makefile
+                fi
                 echo "GNUTRIPLE=\`$aux/GuessOS | sed -e 's:/:-:g' | $AWK '{ printf(\"%s\",\$\$1); }'\`" >> Makefile
                 echo "" >> Makefile
                 echo "all build install install-quiet clean distclean:" >> Makefile
-                echo "	@\$(MAKE) -f Makefile.\$(GNUTRIPLE) \$(MFLAGS) \$@" >> Makefile
+                echo "	@cd \$(SHADOW); \$(MAKE) -f Makefile.\$(GNUTRIPLE) \$(MFLAGS) \$@" >> Makefile
                 echo "" >> Makefile
             fi
             #   set shadow paths
@@ -357,9 +482,10 @@ do
             shadowaux="src.$gnutriple/helpers"
             shadowsedsubst="src.$gnutriple/.apaci.sedsubst"
             shadowaddconf="src.$gnutriple/.apaci.addconf"
+            shadowtplconf="src.$gnutriple/.apaci.tplconf"
             #   (re)create shadow tree
             if [ .$quiet = .no ]; then
-                echo " + create shadow tree ($shadowsrc)"
+                echo " + creating internal platform shadow tree ($shadowsrc)"
             fi
             rm -rf $shadowsrc
             $aux/mkshadow.sh $src $shadowsrc
@@ -368,127 +494,66 @@ do
             src=$shadowsrc
             aux=$shadowaux
             sedsubst=$shadowsedsubst
-            rm -f $addconf 2>/dev/null
             addconf=$shadowaddconf
-            rm -f $addconf 2>/dev/null
-            touch $addconf
+            tplconf=$shadowtplconf
             ;;
-        --help | -h | -help )
-            echo "Usage: configure [options]"
-            echo "Options: [defaults in brackets after descriptions]"
-            echo "General options:"
-            echo " --quiet, --silent      do not print messages"
-            echo " --verbose, -v          print even more messages"
-            echo " --shadow               switch to a shadow tree for building"
-            echo ""
-            echo "Stand-alone options:"
-            echo " --help, -h             print this message"
-            echo " --layout               print installation layout (check and debug)"
-            echo ""
-            echo "Installation layout options:"
-            echo " --prefix=PREFIX        install architecture-independent files in PREFIX"
-            echo " --exec-prefix=EPREFIX  install architecture-dependent files in EPREFIX"
-            echo " --bindir=DIR           install user     executables in DIR  [EPREFIX/bin]"
-            echo " --sbindir=DIR          install sysadmin executables in DIR  [EPREFIX/sbin]"
-            echo " --libexecdir=DIR       install program  executables in DIR  [EPREFIX/libexec]"
-            echo " --mandir=DIR           install manual pages in DIR          [PREFIX/man]"
-            echo " --sysconfdir=DIR       install configuration files in DIR   [PREFIX/etc]"
-            echo " --datadir=DIR          install read-only  data files in DIR [PREFIX/share]"
-            echo " --includedir=DIR       install includes files in DIR        [PREFIX/include]"
-            echo " --localstatedir=DIR    install modifiable data files in DIR [PREFIX/var]"
-            echo " --runtimedir=DIR       install runtime data in DIR          [PREFIX/var/run]"
-            echo " --logfiledir=DIR       install logfile data in DIR          [PREFIX/var/log]"
-            echo " --proxycachedir=DIR    install proxy cache data in DIR      [PREFIX/var/proxy]"
-            echo " --compat               install with old Apache 1.2 installation paths"
-            echo ""
-            echo "Configuration options:"
-            echo " --enable-rule=NAME     enable  a particular Rule named 'NAME'"
-            echo " --disable-rule=NAME    disable a particular Rule named 'NAME'"
-            $aux/ppl.sh $rulelist
-            echo " --add-module=FILE      on-the-fly copy & activate a third-party Module source"
-            echo " --activate-module=FILE on-the-fly activate existing third-party Module source"
-            echo " --enable-module=NAME   enable  a particular Module named 'NAME'"
-            echo " --disable-module=NAME  disable a particular Module named 'NAME'"
-            $aux/ppl.sh $modulelist
-            echo " --enable-shared=NAME   enable  build of Module named 'NAME' as a shared object"
-            echo " --disable-shared=NAME  disable build of Module named 'NAME' as a shared object"
-            echo " --with-perl=FILE       set the path to the optional Perl interpreter to use"
-            echo " --without-support      disable the build and installation of support tools"
-            echo " --without-confadjust   disable some build user/situation adjustments to config files"
-            echo ""
-            echo "suEXEC options:"
-            echo " --enable-suexec        enable the suEXEC feature"
-            echo " --suexec-caller=NAME   set the suEXEC username of the allowed caller [$suexec_caller]"
-            echo " --suexec-userdir=DIR   set the suEXEC user subdirectory [$suexec_userdir]"
-            echo " --suexec-uidmin=UID    set the suEXEC minimal allowed UID [$suexec_uidmin]"
-            echo " --suexec-gidmin=GID    set the suEXEC minimal allowed GID [$suexec_gidmin]"
-            echo " --suexec-safepath=PATH set the suEXEC safe PATH [$suexec_safepath]"
-            echo ""
-            exit 0
+        --show-layout|--layout)
+            show_layout=1
             ;;
-        --layout)
-            layout=1
+        --target=*)
+            TARGET="$apc_optarg"
             ;;
         --prefix=*)
             prefix="$apc_optarg"
+            autosuffix_prefix=no
             ;;
         --exec-prefix=*)
             exec_prefix="$apc_optarg"
+            autosuffix_exec_prefix=no
             ;;
         --bindir=*)       
             bindir="$apc_optarg"
+            autosuffix_bindir=no
             ;;
         --sbindir=*)       
             sbindir="$apc_optarg"
+            autosuffix_sbindir=no
             ;;
         --libexecdir=*)
             libexecdir="$apc_optarg"    
+            autosuffix_libexecdir=no
             ;;
         --mandir=*)        
             mandir="$apc_optarg"        
+            autosuffix_mandir=no
             ;;
         --sysconfdir=*)    
             sysconfdir="$apc_optarg"    
-            customized_sysconfdir=1
+            autosuffix_sysconfdir=no
             ;;
         --datadir=*)       
             datadir="$apc_optarg"       
-            customized_datadir=1
+            autosuffix_datadir=no
             ;;
         --includedir=*)       
             includedir="$apc_optarg"       
-            customized_includedir=1
+            autosuffix_includedir=no
             ;;
         --localstatedir=*) 
             localstatedir="$apc_optarg" 
-            customized_localstatedir=1
+            autosuffix_localstatedir=no
             ;;
         --runtimedir=*) 
             runtimedir="$apc_optarg" 
+            autosuffix_runtimedir=no
             ;;
         --logfiledir=*) 
             logfiledir="$apc_optarg" 
+            autosuffix_logfiledir=no
             ;;
         --proxycachedir=*) 
             proxycachedir="$apc_optarg" 
-            ;;
-        --compat) 
-            exec_prefix='$prefix'
-            bindir='$exec_prefix/bin'
-            sbindir='$exec_prefix/bin'
-            libexecdir='$exec_prefix/libexec'
-            mandir='$prefix/man'
-            sysconfdir='$prefix/conf'
-            datadir='$prefix'
-            includedir='$prefix/include'
-            localstatedir='$prefix'
-            runtimedir='$localstatedir/logs'
-            logfiledir='$localstatedir/logs'
-            proxycachedir='$localstatedir/proxy'
-            customized_sysconfdir=1
-            customized_datadir=1
-            customized_localstatedir=1
-            customized_includedir=1
+            autosuffix_proxycachedir=no
             ;;
         --add-module=*) 
             file="$apc_optarg"
@@ -504,6 +569,11 @@ do
             modfileo=`echo $file | sed -e 's;^.*/;;' -e 's;\.c$;.o;'`
             if [ ".$file" != ".$src/modules/extra/$modfilec" ]; then
                 cp $file $src/modules/extra/$modfilec
+            fi
+            if [ ".$addconf_created" = .0 ]; then
+                addconf_created=1
+                rm -f $addconf 2>/dev/null
+                touch $addconf 2>/dev/null
             fi
             echo "" >>$addconf
             echo "## On-the-fly added module" >>$addconf
@@ -531,6 +601,11 @@ do
                     ;;
             esac
             modfile=`echo $file | sed -e 's;^src/;;'`
+            if [ ".$addconf_created" = .0 ]; then
+                addconf_created=1
+                rm -f $addconf 2>/dev/null
+                touch $addconf 2>/dev/null
+            fi
             echo "" >>$addconf
             echo "## On-the-fly activated module" >>$addconf
             echo "## (configure --activate-module=$file)" >>$addconf
@@ -693,6 +768,29 @@ do
                     ;;
             esac
             ;;
+        --permute-module=*:*)
+            mod1=`echo $apc_optarg | sed -e 's/:.*//'`
+            mod2=`echo $apc_optarg | sed -e 's/.*://'`
+            for mod in $mod1 $mod2; do
+                case $mod in
+                    BEGIN|END)
+                        ;;
+                    *)  eval "exists=\$module_${mod}" 
+                        if [ ".$exists" = . ]; then
+                            echo "configure:Error: No such module named '${mod}'" 1>&2
+                            exit 1
+                        fi
+                        ;;
+                esac
+            done
+            case $mod1:$mod2 in
+                BEGIN:END|*:BEGIN|END:*)
+                    echo "configure:Error: Invalid combination of pseudo module identifiers" 1>&2
+                    exit 1
+                    ;;
+            esac
+            permute="${permute},${mod1}:${mod2}"
+            ;;
         --with-perl=*)
             PERL="$apc_optarg"
             ;;
@@ -704,6 +802,14 @@ do
             ;;
         --suexec-caller=*)
             suexec_caller="$apc_optarg"
+            suexec_ok=1
+            ;;
+        --suexec-docroot=*)
+            suexec_docroot="$apc_optarg"
+            suexec_ok=1
+            ;;
+        --suexec-logfile=*)
+            suexec_logexec="$apc_optarg"
             suexec_ok=1
             ;;
         --suexec-userdir=*)
@@ -733,9 +839,48 @@ if [ ".$apc_prev" != . ]; then
     echo "configure:Error: missing argument to --`echo $apc_prev | sed 's/_/-/g'`" 1>&2
     exit 1
 fi
+if [ ".$addconf_created" = .0 ]; then
+    rm -f $addconf 2>/dev/null
+    touch $addconf 2>/dev/null
+fi
 
 ##
-##  a few errors
+##   create a config status script for restoring
+##   the configuration via a simple shell script
+##
+rm -f $configstatus 2>/dev/null
+echo "#!/bin/sh" >$configstatus
+echo "##" >>$configstatus
+echo "##  $configstatus -- APACI auto-generated configuration restore script" >>$configstatus
+echo "##" >>$configstatus
+echo "##  Use this shell script to re-run the APACI configure script for" >>$configstatus
+echo "##  restoring your configuration. Additional parameters can be supplied." >>$configstatus
+echo "##" >>$configstatus
+echo "" >>$configstatus
+for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
+           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET; do
+    eval "val=\"\$$var\""
+    if [ ".$val" != . ]; then
+        echo "$var=$val" |\
+        sed -e 's:\(["$\\]\):\\\1:g' \
+            -e 's:\([A-Z]*=\):\1":' \
+            -e 's:$:" \\:' >>$configstatus
+    fi
+done
+echo $SEO "./configure \\" >>$configstatus
+for arg
+do
+    echo "$arg" |\
+    sed -e 's:\(["$\\]\):\\\1:g' \
+        -e 's:^:":' \
+        -e 's:$:" \\:' >>$configstatus
+done
+echo '"$@"' >>$configstatus
+echo '' >>$configstatus
+chmod a+x $configstatus
+
+##
+##  a few errors and warnings
 ##
 if [ ".$suexec" = .1 ]; then
     if [ ".$suexec_ok" = .0 ]; then
@@ -746,12 +891,6 @@ if [ ".$suexec" = .1 ]; then
         echo "                 and htdocs/manual/suexec.html documents first."
         exit 1
     fi
-fi
-
-##
-##  a few warnings
-##
-if [ ".$suexec" = .1 ]; then
     if [ ".`id | grep root`" = . ]; then
         echo " + Warning: You enabled the suEXEC feature. Be aware that you need" 1>&2
         echo " + root privileges for this, at the latest at the installation step." 1>&2
@@ -765,30 +904,34 @@ if [ ".$PERL" = .no-perl-on-this-system ]; then
 fi
 
 ##
+##  target name
+##
+if [ ".$TARGET" != . ]; then
+    thetarget=$TARGET
+else
+    thetarget=httpd
+fi
+
+##
 ##  expand path variables and make sure
 ##  they do not end with a backslash
 ##
 OIFS="$IFS" IFS="$DIFS"
-for var in prefix exec_prefix bindir sbindir \
-           libexecdir mandir sysconfdir datadir \
-           includedir localstatedir runtimedir \
-           logfiledir proxycachedir; do
+for var in prefix exec_prefix bindir sbindir libexecdir mandir \
+           sysconfdir datadir includedir localstatedir runtimedir \
+           logfiledir proxycachedir suexec_docroot suexec_logexec; do
     eval "val=\"\$$var\"";
     val=`echo $val | sed -e 's:/*$::'`
     eval "$var=\"$val\""
-    case $var in
-       libexecdir|sysconfdir|datadir|localstatedir|includedir ) 
-           eval "val=\$$var"
-           case $val in
-               *apache | *apache* ) ;;
-               * ) eval "customized=\$customized_$var"
-                   if [ ".$customized" = .0 ]; then
-                       eval "$var=\"\$$var/apache\""
-                   fi
-                   ;;
-           esac
-           ;;
-    esac
+    #   expand value
+    eval "val=\$$var"
+    #   add target suffix when requested
+    if [ ".`echo $val | grep $thetarget`" = . ]; then
+        eval "autosuffix=\$autosuffix_$var"
+        if [ ".$autosuffix" = .yes ]; then
+            eval "$var=\"\$$var/$thetarget\""
+        fi
+    fi
 done
 IFS="$OIFS"
 
@@ -796,15 +939,15 @@ IFS="$OIFS"
 ##  determine special configurable Makefile targets
 ##
 if [ ".$support" = .1 ]; then
-      build_support=build-support
-    install_support=install-support
-      clean_support=clean-support
-  distclean_support=distclean-support
+    build_support='build-support'
+    install_support='install-support'
+    clean_support='clean-support'
+    distclean_support='distclean-support'
 else
-      build_support=
-    install_support=
-      clean_support=
-  distclean_support=
+    build_support=''
+    install_support=''
+    clean_support=''
+    distclean_support=''
 fi
 
 ##
@@ -846,7 +989,7 @@ libexecdir_relative=`echo $libexecdir | sed -e "s:^$prefix/*::" -e 's:\(.\)$:\1/
 ##
 ##  check and debug
 ##
-if [ ".$layout" = .1 ]; then
+if [ ".$show_layout" = .1 ]; then
     echo ""
     echo "Installation paths:"
     echo "               prefix: $prefix"
@@ -865,18 +1008,29 @@ if [ ".$layout" = .1 ]; then
     echo ""
     echo "Compilation paths:"
     echo "           HTTPD_ROOT: $prefix"
-    echo "           SUEXEC_BIN: $sbindir/suexec"
     echo "      SHARED_CORE_DIR: $libexecdir"
-    echo "       DEFAULT_PIDLOG: ${runtimedir_relative}httpd.pid"
-    echo "   DEFAULT_SCOREBOARD: ${runtimedir_relative}httpd.scoreboard"
-    echo "     DEFAULT_LOCKFILE: ${runtimedir_relative}httpd.lock"
+    echo "       DEFAULT_PIDLOG: ${runtimedir_relative}${thetarget}.pid"
+    echo "   DEFAULT_SCOREBOARD: ${runtimedir_relative}${thetarget}.scoreboard"
+    echo "     DEFAULT_LOCKFILE: ${runtimedir_relative}${thetarget}.lock"
     echo "      DEFAULT_XFERLOG: ${logfiledir_relative}access_log"
     echo "     DEFAULT_ERRORLOG: ${logfiledir_relative}error_log"
     echo "    TYPES_CONFIG_FILE: ${sysconfdir_relative}mime.types"
-    echo "   SERVER_CONFIG_FILE: ${sysconfdir_relative}httpd.conf"
+    echo "   SERVER_CONFIG_FILE: ${sysconfdir_relative}${thetarget}.conf"
     echo "   ACCESS_CONFIG_FILE: ${sysconfdir_relative}access.conf"
     echo " RESOURCE_CONFIG_FILE: ${sysconfdir_relative}srm.conf"
     echo ""
+    if [ ".$suexec" = .1 ]; then
+        echo "suEXEC setup:"
+        echo "        suexec binary: $sbindir/suexec"
+        echo "        document root: $suexec_docroot"
+        echo "       userdir suffix: $suexec_userdir"
+        echo "              logfile: $suexec_logexec"
+        echo "            safe path: $suexec_safepath"
+        echo "            caller ID: $suexec_caller"
+        echo "      minimum user ID: $suexec_uidmin"
+        echo "     minimum group ID: $suexec_gidmin"
+        echo ""
+    fi
     exit 0
 fi
 
@@ -888,10 +1042,10 @@ if [ .$quiet = .no ]; then
 fi
 sed <Makefile.tmpl >$mkf \
 -e "s%@PERL@%$PERL%g" \
--e "s%@TOP@%$top%g" \
 -e "s%@SRC@%$src%g" \
 -e "s%@MKF@%$mkf%g" \
 -e "s%@AUX@%$aux%g" \
+-e "s%@TARGET@%$thetarget%g" \
 -e "s%@prefix@%$prefix%g" \
 -e "s%@exec_prefix@%$exec_prefix%g" \
 -e "s%@bindir@%$bindir%g" \
@@ -908,6 +1062,8 @@ sed <Makefile.tmpl >$mkf \
 -e "s%@proxycachedir@%$proxycachedir%g" \
 -e "s%@suexec@%$suexec%g" \
 -e "s%@suexec_caller@%$suexec_caller%g" \
+-e "s%@suexec_docroot@%$suexec_docroot%g" \
+-e "s%@suexec_logexec@%$suexec_logexec%g" \
 -e "s%@suexec_userdir@%$suexec_userdir%g" \
 -e "s%@suexec_uidmin@%$suexec_uidmin%g" \
 -e "s%@suexec_gidmin@%$suexec_gidmin%g" \
@@ -932,13 +1088,13 @@ echo "## WITHOUT DISTURBING THE KNOWN MAKE BUILD PROCESS DISPLAY" >>$src/apaci
 echo "echo '-DHTTPD_ROOT=\"$prefix\"'" >>$src/apaci
 echo "echo '-DSUEXEC_BIN=\"$sbindir/suexec\"'" >>$src/apaci
 echo "echo '-DSHARED_CORE_DIR=\"$libexecdir\"'" >>$src/apaci
-echo "echo '-DDEFAULT_PIDLOG=\"${runtimedir_relative}httpd.pid\"'" >>$src/apaci
-echo "echo '-DDEFAULT_SCOREBOARD=\"${runtimedir_relative}httpd.scoreboard\"'" >>$src/apaci
-echo "echo '-DDEFAULT_LOCKFILE=\"${runtimedir_relative}httpd.lock\"'" >>$src/apaci
+echo "echo '-DDEFAULT_PIDLOG=\"${runtimedir_relative}${thetarget}.pid\"'" >>$src/apaci
+echo "echo '-DDEFAULT_SCOREBOARD=\"${runtimedir_relative}${thetarget}.scoreboard\"'" >>$src/apaci
+echo "echo '-DDEFAULT_LOCKFILE=\"${runtimedir_relative}${thetarget}.lock\"'" >>$src/apaci
 echo "echo '-DDEFAULT_XFERLOG=\"${logfiledir_relative}access_log\"'" >>$src/apaci
 echo "echo '-DDEFAULT_ERRORLOG=\"${logfiledir_relative}error_log\"'" >>$src/apaci
 echo "echo '-DTYPES_CONFIG_FILE=\"${sysconfdir_relative}mime.types\"'" >>$src/apaci
-echo "echo '-DSERVER_CONFIG_FILE=\"${sysconfdir_relative}httpd.conf\"'" >>$src/apaci
+echo "echo '-DSERVER_CONFIG_FILE=\"${sysconfdir_relative}${thetarget}.conf\"'" >>$src/apaci
 echo "echo '-DACCESS_CONFIG_FILE=\"${sysconfdir_relative}access.conf\"'" >>$src/apaci
 echo "echo '-DRESOURCE_CONFIG_FILE=\"${sysconfdir_relative}srm.conf\"'" >>$src/apaci
 chmod a+x $src/apaci
@@ -956,7 +1112,7 @@ touch $sedsubst
 #   generate settings from imported environment variables
 OIFS="$IFS" IFS="$DIFS"
 for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
-           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS; do
+           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET; do
     eval "val=\"\$$var\"";
     if [ ".$val" != . ]; then
         case $var in 
@@ -1008,22 +1164,94 @@ if [ ".$shared_so" = .yes ]; then
     exit 1
 fi
 
+#   module permutation support
+if [ ".$permute" != . ]; then
+    sed -e '/## mod_mmap_static/,$d' <src/Configuration.tmpl >$tplconf
+    OIFS="$IFS" IFS='
+'
+    for line in `cat src/Configuration.tmpl $addconf | egrep '^[# ]*(Add|Shared)Module'`; do
+        name=`echo "$line" |\
+              sed -e 's%^.*/\(.*\)$%\1%' \
+                  -e 's/\.[oa]$//' \
+                  -e 's/\.module$//' \
+                  -e 's/^mod_//' \
+                  -e 's/^lib//'`
+        echo "${name}:${line}"
+    done |\
+    $AWK -F: '
+        BEGIN { 
+            n = 0; 
+        }
+        { 
+            module_pos[$1]  = n; 
+            module_list[n]  = $1; 
+            module_line[$1] = $2;
+            n++; 
+        }
+        END {
+            pn = split(permute, perm, ",");
+            for (p = 1; p <= pn; p++) {
+                split(perm[p], m, ":")
+                m1 = m[1];
+                m2 = m[2];
+                if (m1 == "BEGIN") {
+                    for (i = module_pos[m2]-1; i >= 0; i--) {
+                        n1 = module_list[i];
+                        n2 = module_list[i+1];
+                        module_list[i]   = n2;
+                        module_list[i+1] = n1;
+                        module_pos[n1]   = i+1;
+                        module_pos[n2]   = i;
+                    }
+                }
+                else if (m2 == "END") {
+                    for (i = module_pos[m1]; i < n-1; i++) {
+                        n1 = module_list[i];
+                        n2 = module_list[i+1];
+                        module_list[i]   = n2;
+                        module_list[i+1] = n1;
+                        module_pos[n1]   = i+1;
+                        module_pos[n2]   = i;
+                    }
+                }
+                else {
+                    p1 = module_pos[m1];
+                    p2 = module_pos[m2];
+                    n1 = module_list[p1];
+                    n2 = module_list[p2];
+                    module_list[p1] = n2;
+                    module_list[p2] = n1;
+                    module_pos[m1] = p2;
+                    module_pos[m2] = p1;
+                }
+            }
+            for (i = 0; i < n; i++) {
+                name = module_list[i];
+                printf("%s\n", module_line[name]);
+            }
+        }
+    ' "permute=$permute" >>$tplconf
+    IFS="$OIFS"
+else
+    cat $src/Configuration.tmpl $addconf >$tplconf
+fi
+
 #   generate module directives
 OIFS="$IFS" IFS=':'
 for module in $modules; do
     eval "add=\$module_$module"
     if [ $add = yes ]; then
-        echo $SEO "s%^.*\\(AddModule.*$module\\..*\\)%\\1%g" >>$sedsubst
-        echo $SEO "s%^.*\\(SharedModule.*$module\\..*\\)%\\1%g" >>$sedsubst
+        echo $SEO "s%^.*\\(AddModule.*[_b/]$module\\..*\\)%\\1%g" >>$sedsubst
+        echo $SEO "s%^.*\\(SharedModule.*[_b/]$module\\..*\\)%\\1%g" >>$sedsubst
         m="yes [static]"
     else
-        echo $SEO "s%^.*\\(AddModule.*$module\\..*\\)%# \\1%g" >>$sedsubst
-        echo $SEO "s%^.*\\(SharedModule.*$module\\..*\\)%# \\1%g" >>$sedsubst
+        echo $SEO "s%^.*\\(AddModule.*[_b/]$module\\..*\\)%# \\1%g" >>$sedsubst
+        echo $SEO "s%^.*\\(SharedModule.*[_b/]$module\\..*\\)%# \\1%g" >>$sedsubst
         m=no
     fi
     eval "share=\$shared_$module"
     if [ $share = yes ]; then
-        echo $SEO "s%^\\(.*\\)AddModule\\(.*$module\\.\\)[oa]\\(.*\\)%\\1SharedModule\\2so\\3%g" >>$sedsubst
+        echo $SEO "s%^\\(.*\\)AddModule\\(.*[_b/]$module\\.\\)[oam].*\\(.*\\)%\\1SharedModule\\2so\\3%g" >>$sedsubst
         m="yes [shared]"
     fi
     if [ $verbose = yes ]; then
@@ -1056,11 +1284,12 @@ IFS="$OIFS"
 
 #   and finally translate the config template 
 #   according to our defined configuration
-eval "cat $src/Configuration.tmpl $addconf | $substcmd >$src/Configuration.apaci"
+eval "cat $tplconf | $substcmd >$src/Configuration.apaci"
 
 #   cleanup
 rm -f $sedsubst $sedsubst.[0-9] 2>/dev/null
 rm -f $addconf 2>/dev/null
+rm -f $tplconf 2>/dev/null
 
 ##
 ##  create all other Makefiles by running the proprietary 
@@ -1073,5 +1302,21 @@ else
      sed -e '/^Using config file:.*/d' \
          -e "s:Makefile in :Makefile in $src\\/:" \
          -e "s:Makefile\$:Makefile in $src:")
+fi
+
+##
+##  final hints
+##
+if [ .$quiet = .no ]; then
+    if [ ".$shadow" != . ]; then
+        echo "Hint: You now have to build inside $shadow."
+        echo "This can be done either by running the canonical commands"
+        echo "  \$ cd $shadow"
+        echo "  \$ make"
+        echo "  \$ make install"
+        echo "or by running this alternative commands"
+        echo "  \$ make -f $shadow/Makefile"
+        echo "  \$ make -f $shadow/Makefile install"
+    fi
 fi
 

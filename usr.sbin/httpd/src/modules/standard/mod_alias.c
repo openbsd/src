@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -305,7 +305,7 @@ static char *try_alias_list(request_rec *r, array_header *aliases, int doesc, in
 		    found = ap_pregsub(r->pool, p->real, r->uri,
 				    p->regexp->re_nsub + 1, regm);
 		    if (found && doesc) {
-			found = escape_uri(r->pool, found);
+			found = ap_escape_uri(r->pool, found);
 		    }
 		}
 		else {

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -262,7 +262,7 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
 #endif
 
     ap_table_addn(e, "PATH", env_path);
-    ap_table_setn(e, "SERVER_SIGNATURE", ap_psignature("", r));
+    ap_table_addn(e, "SERVER_SIGNATURE", ap_psignature("", r));
     ap_table_addn(e, "SERVER_SOFTWARE", ap_get_server_version());
     ap_table_addn(e, "SERVER_NAME", ap_get_server_name(r));
     ap_table_addn(e, "SERVER_PORT",
@@ -396,7 +396,7 @@ API_EXPORT(void) ap_add_cgi_vars(request_rec *r)
 	 */
 	request_rec *pa_req;
 
-	pa_req = ap_sub_req_lookup_uri(escape_uri(r->pool, r->path_info), r);
+	pa_req = ap_sub_req_lookup_uri(ap_escape_uri(r->pool, r->path_info), r);
 
 	if (pa_req->filename) {
 #ifdef WIN32
@@ -1052,7 +1052,16 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
              */ 
             CloseHandle(pi.hProcess);
             CloseHandle(pi.hThread);
-        }
+        } else {
+	    if (is_script) {
+		/* since we are doing magic to find what we are executing
+		 * if running a script, log what we think we should have
+		 * executed
+		 */
+		ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_WIN32ERROR, r,
+			     "could not run script interpreter: %s", pCommand);
+	    }
+	}
 #if 0
 	if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
 	    if (is_exe || is_binary) {

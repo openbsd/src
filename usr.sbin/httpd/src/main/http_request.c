@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -179,7 +179,7 @@ static int get_path_info(request_rec *r)
     char *last_cp = NULL;
     int rv;
 #ifdef WIN32
-    char buf[5];
+    BOOL bStripSlash=TRUE;
 #endif
 
     if (r->finfo.st_mode) {
@@ -188,22 +188,39 @@ static int get_path_info(request_rec *r)
     }
 
 #ifdef WIN32
-    /* If the path is x:/, then convert it to x:/., coz that's what stat
-     * needs to work properly
+    /* If the directory is x:\, then we don't want to strip
+     * the trailing slash since x: is not a valid directory.
      */
-    if (strlen(path) == 3 && path[1] == ':') {
-	strcpy(buf,path);
-	buf[3]='.';
-	buf[4]='\0';
-	path=buf;
-	end=buf+4;
+    if (strlen(path) == 3 && path[1] == ':' && path[2] == '/')
+        bStripSlash = FALSE;
+
+
+    /* If UNC name == //machine/share/, do not 
+     * advance over the trailing slash.  Any other
+     * UNC name is OK to strip the slash.
+     */
+    cp = end;
+    if (strlen(path) > 2 && path[0] == '/' && path[1] == '/' && 
+        path[2] != '/' && cp[-1] == '/') {
+        char *p;
+        int iCount=0;
+        p = path;
+        while (p = strchr(p,'/')) {
+            p++;
+            iCount++;
+        }
+    
+        if (iCount == 4)
+            bStripSlash = FALSE;
     }
+
+    if (bStripSlash)
 #endif
-
-    /* Advance over trailing slashes ... NOT part of filename */
-
-    for (cp = end; cp > path && cp[-1] == '/'; --cp)
-        continue;
+        /* Advance over trailing slashes ... NOT part of filename 
+         * if file is not a UNC name (Win32 only).
+         */
+        for (cp = end; cp > path && cp[-1] == '/'; --cp)
+            continue;
 
 
     while (cp > path) {
@@ -212,8 +229,21 @@ static int get_path_info(request_rec *r)
 
         *cp = '\0';
 
-        errno = 0;
-        rv = stat(path, &r->finfo);
+        /* We must not stat() filenames that may cause os-specific system
+         * problems, such as "/file/aux" on DOS-abused filesystems.
+         * So pretend that they do not exist by returning an ENOENT error.
+         * This will force us to drop that part of the path and keep
+         * looking back for a "real" file that exists, while still allowing
+         * the "invalid" path parts within the PATH_INFO.
+         */
+        if (!ap_os_is_filename_valid(path)) {
+            errno = ENOENT;
+            rv = -1;
+        }
+        else {
+            errno = 0;
+            rv = stat(path, &r->finfo);
+        }
 
         if (cp != end)
             *cp = '/';
@@ -293,7 +323,7 @@ static int directory_walk(request_rec *r)
     char *test_filename;
     char *test_dirname;
     int res;
-    unsigned i, num_dirs;
+    unsigned i, num_dirs, iStart;
     int j, test_filename_len;
 
     /*
@@ -359,15 +389,24 @@ static int directory_walk(request_rec *r)
         return OK;
     }
 
+    r->filename   = ap_os_case_canonical_filename(r->pool, r->filename);
+
+    res = get_path_info(r);
+    if (res != OK) {
+        return res;
+    }
+
     r->filename   = ap_os_canonical_filename(r->pool, r->filename);
+
     test_filename = ap_pstrdup(r->pool, r->filename);
 
     ap_no2slash(test_filename);
     num_dirs = ap_count_dirs(test_filename);
 
-    res = get_path_info(r);
-    if (res != OK) {
-        return res;
+    if (!ap_os_is_filename_valid(r->filename)) {
+        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+                      "Filename is not valid: %s", r->filename);
+        return HTTP_FORBIDDEN;
     }
 
     if ((res = check_safe_file(r))) {
@@ -390,9 +429,18 @@ static int directory_walk(request_rec *r)
      */
     test_dirname = ap_palloc(r->pool, test_filename_len + 2);
 
+    iStart = 1;
+#ifdef WIN32
+    /* If the name is a UNC name, then do not walk through the
+     * machine and share name (e.g. \\machine\share\)
+     */
+    if (num_dirs > 3 && test_filename[0] == '/' && test_filename[1] == '/')
+        iStart = 4;
+#endif
+
     /* j keeps track of which section we're on, see core_reorder_directories */
     j = 0;
-    for (i = 1; i <= num_dirs; ++i) {
+    for (i = iStart; i <= num_dirs; ++i) {
         int overrides_here;
         core_dir_config *core_dir = (core_dir_config *)
             ap_get_module_config(per_dir_defaults, &core_module);
@@ -464,10 +512,12 @@ static int directory_walk(request_rec *r)
             if (res)
                 return res;
 
-            if (htaccess_conf)
-                per_dir_defaults =
-                    ap_merge_per_dir_configs(r->pool, per_dir_defaults,
-                                          htaccess_conf);
+            if (htaccess_conf) {
+                per_dir_defaults = ap_merge_per_dir_configs(r->pool,
+							    per_dir_defaults,
+							    htaccess_conf);
+		r->per_dir_config = per_dir_defaults;
+	    }
         }
     }
 
@@ -690,7 +740,7 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
         ap_parse_uri(rnew, new_file);
     else {
         udir = ap_make_dirstr_parent(rnew->pool, r->uri);
-        udir = escape_uri(rnew->pool, udir);    /* re-escape it */
+        udir = ap_escape_uri(rnew->pool, udir);    /* re-escape it */
         ap_parse_uri(rnew, ap_make_full_path(rnew->pool, udir, new_file));
     }
 
@@ -776,7 +826,7 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
 
         rnew->uri = ap_make_full_path(rnew->pool, udir, new_file);
         rnew->filename = ap_make_full_path(rnew->pool, fdir, new_file);
-	ap_parse_uri(rnew, rnew->uri);    /* fill in parsed_uri values */
+        ap_parse_uri(rnew, rnew->uri);    /* fill in parsed_uri values */
         if (stat(rnew->filename, &rnew->finfo) < 0) {
             rnew->finfo.st_mode = 0;
         }
@@ -830,14 +880,7 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
          * file may not have a uri associated with it -djg
          */
         rnew->uri = "INTERNALLY GENERATED file-relative req";
-#ifdef WIN32
-        rnew->filename = ((new_file[0] == '/'
-                           || (ap_isalpha(new_file[0])
-                               && new_file[1] == ':'
-                               && new_file[2] == '/')) ?
-#else
-        rnew->filename = ((new_file[0] == '/') ?
-#endif
+        rnew->filename = ((ap_os_is_path_absolute(new_file)) ?
                           ap_pstrdup(rnew->pool, new_file) :
                           ap_make_full_path(rnew->pool, fdir, new_file));
         rnew->per_dir_config = r->server->lookup_defaults;
@@ -869,7 +912,14 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
 
 API_EXPORT(int) ap_run_sub_req(request_rec *r)
 {
+#ifndef CHARSET_EBCDIC
     int retval = ap_invoke_handler(r);
+#else /*CHARSET_EBCDIC*/
+    /* Save the EBCDIC conversion setting of the caller across subrequests */
+    int convert = ap_bgetflag(r->connection->client, B_EBCDIC2ASCII);
+    int retval  = ap_invoke_handler(r);
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, convert);
+#endif /*CHARSET_EBCDIC*/
     ap_finalize_sub_req_protocol(r);
     return retval;
 }
@@ -929,7 +979,7 @@ API_EXPORT(void) ap_die(int type, request_rec *r)
      * (if any) has been read.
      */
     if ((r->status != HTTP_NOT_MODIFIED) && (r->status != HTTP_NO_CONTENT)
-        && !status_drops_connection(r->status)
+        && !ap_status_drops_connection(r->status)
         && r->connection && (r->connection->keepalive != -1)) {
 
         (void) ap_discard_request_body(r);
@@ -1250,6 +1300,7 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
     new->no_cache        = r->no_cache;
     new->no_local_copy   = r->no_local_copy;
     new->read_length     = r->read_length;     /* We can only read it once */
+    new->vlist_validator = r->vlist_validator;
 
     ap_table_setn(new->subprocess_env, "REDIRECT_STATUS",
 	ap_psprintf(r->pool, "%d", r->status));

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1996-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1996-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -192,11 +192,11 @@ module MODULE_VAR_EXPORT rewrite_module = {
    hook_uri2file,               /* [#1] URI to filename translation    */
    NULL,                        /* [#4] validate user id from request  */
    NULL,                        /* [#5] check if the user is ok _here_ */
-   NULL,                        /* [#2] check access by host address   */
+   NULL,                        /* [#3] check access by host address   */
    hook_mimetype,               /* [#6] determine MIME type            */
    hook_fixup,                  /* [#7] pre-run fixups                 */
    NULL,                        /* [#9] log a transaction              */
-   NULL,                        /* [#3] header parser                  */
+   NULL,                        /* [#2] header parser                  */
    init_child,                  /* child_init                          */
    NULL,                        /* child_exit                          */
    NULL                         /* [#0] post read-request              */
@@ -501,6 +501,12 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, char *a1,
         else if (strcmp(a2+4, "toupper") == 0) {
             new->func = rewrite_mapfunc_toupper;
         }
+        else if (strcmp(a2+4, "escape") == 0) {
+            new->func = rewrite_mapfunc_escape;
+        }
+        else if (strcmp(a2+4, "unescape") == 0) {
+            new->func = rewrite_mapfunc_unescape;
+        }
         else if (sconf->state == ENGINE_ENABLED) {
             return ap_pstrcat(cmd->pool, "RewriteMap: internal map not found:",
                               a2+4, NULL);
@@ -708,6 +714,7 @@ static const char *cmd_rewriterule(cmd_parms *cmd, rewrite_perdir_conf *dconf,
     char *a3;
     char *cp;
     const char *err;
+    int mode;
 
     sconf = (rewrite_server_conf *)
             ap_get_module_config(cmd->server->module_config, &rewrite_module);
@@ -726,16 +733,32 @@ static const char *cmd_rewriterule(cmd_parms *cmd, rewrite_perdir_conf *dconf,
                           "'\n", NULL);
     }
 
+    /* arg3: optional flags field */
+    new->forced_mimetype     = NULL;
+    new->forced_responsecode = HTTP_MOVED_TEMPORARILY;
+    new->flags  = RULEFLAG_NONE;
+    new->env[0] = NULL;
+    new->skip   = 0;
+    if (a3 != NULL) {
+        if ((err = cmd_rewriterule_parseflagfield(cmd->pool, new,
+                                                  a3)) != NULL) {
+            return err;
+        }
+    }
+
     /*  arg1: the pattern
      *  try to compile the regexp to test if is ok
      */
-    new->flags = RULEFLAG_NONE;
     cp = a1;
     if (cp[0] == '!') {
         new->flags |= RULEFLAG_NOTMATCH;
         cp++;
     }
-    if ((regexp = ap_pregcomp(cmd->pool, cp, REG_EXTENDED)) == NULL) {
+    mode = REG_EXTENDED;
+    if (new->flags & RULEFLAG_NOCASE) {
+        mode |= REG_ICASE;
+    }
+    if ((regexp = ap_pregcomp(cmd->pool, cp, mode)) == NULL) {
         return ap_pstrcat(cmd->pool,
                           "RewriteRule: cannot compile regular expression '",
                           a1, "'\n", NULL);
@@ -748,18 +771,6 @@ static const char *cmd_rewriterule(cmd_parms *cmd, rewrite_perdir_conf *dconf,
      *  used Regular Expression library
      */
     new->output = ap_pstrdup(cmd->pool, a2);
-
-    /* arg3: optional flags field */
-    new->forced_mimetype = NULL;
-    new->forced_responsecode = HTTP_MOVED_TEMPORARILY;
-    new->env[0] = NULL;
-    new->skip = 0;
-    if (a3 != NULL) {
-        if ((err = cmd_rewriterule_parseflagfield(cmd->pool, new,
-                                                  a3)) != NULL) {
-            return err;
-        }
-    }
 
     /* now, if the server or per-dir config holds an
      * array of RewriteCond entries, we take it for us
@@ -916,6 +927,10 @@ static const char *cmd_rewriterule_setflag(pool *p, rewriterule_entry *cfg,
     else if (   strcasecmp(key, "qsappend") == 0
              || strcasecmp(key, "QSA") == 0   ) {
         cfg->flags |= RULEFLAG_QSAPPEND;
+    }
+    else if (   strcasecmp(key, "nocase") == 0
+             || strcasecmp(key, "NC") == 0    ) {
+        cfg->flags |= RULEFLAG_NOCASE;
     }
     else {
         return ap_pstrcat(p, "RewriteRule: unknown flag '", key, "'\n", NULL);
@@ -1145,7 +1160,7 @@ static int hook_uri2file(request_rec *r)
                 ;
             if (*cp != '\0') {
                 rewritelog(r, 1, "escaping %s for redirect", r->filename);
-                cp2 = escape_uri(r->pool, cp);
+                cp2 = ap_escape_uri(r->pool, cp);
                 *cp = '\0';
                 r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
             }
@@ -1434,7 +1449,7 @@ static int hook_fixup(request_rec *r)
             if (*cp != '\0') {
                 rewritelog(r, 1, "[per-dir %s] escaping %s for redirect",
                            dconf->directory, r->filename);
-                cp2 = escape_uri(r->pool, cp);
+                cp2 = ap_escape_uri(r->pool, cp);
                 *cp = '\0';
                 r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
             }
@@ -2877,12 +2892,13 @@ static char *lookup_map_dbmfile(request_rec *r, char *file, char *key)
     char buf[MAX_STRING_LEN];
 
     dbmkey.dptr  = key;
-    dbmkey.dsize = (strlen(key) < sizeof(buf) - 1 ?
-                    strlen(key) : sizeof(buf)-1);
+    dbmkey.dsize = strlen(key);
     if ((dbmfp = dbm_open(file, O_RDONLY, 0666)) != NULL) {
         dbmval = dbm_fetch(dbmfp, dbmkey);
         if (dbmval.dptr != NULL) {
-            memcpy(buf, dbmval.dptr, dbmval.dsize);
+            memcpy(buf, dbmval.dptr, 
+                   dbmval.dsize < sizeof(buf)-1 ? 
+                   dbmval.dsize : sizeof(buf)-1  );
             buf[dbmval.dsize] = '\0';
             value = ap_pstrdup(r->pool, buf);
         }
@@ -2963,6 +2979,23 @@ static char *rewrite_mapfunc_tolower(request_rec *r, char *key)
          cp++) {
         *cp = ap_tolower(*cp);
     }
+    return value;
+}
+
+static char *rewrite_mapfunc_escape(request_rec *r, char *key)
+{
+    char *value;
+
+    value = ap_escape_uri(r->pool, key);
+    return value;
+}
+
+static char *rewrite_mapfunc_unescape(request_rec *r, char *key)
+{
+    char *value;
+
+    value = ap_pstrdup(r->pool, key);
+    ap_unescape_url(value);
     return value;
 }
 

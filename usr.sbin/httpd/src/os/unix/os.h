@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,6 +73,9 @@
  * part of the header
  */
 #define INLINE extern ap_inline
+
+INLINE int ap_os_is_path_absolute(const char *file);
+
 #include "os-inline.c"
 
 #else
@@ -80,8 +83,12 @@
 /* Compiler does not support inline, so prototype the inlineable functions
  * as normal
  */
-extern int ap_os_is_path_absolute(const char *f);
+extern int ap_os_is_path_absolute(const char *file);
 #endif
+
+/* Other ap_os_ routines not used by this platform */
+
+#define ap_os_is_filename_valid(f)          (1)
 
 /*
  *  Abstraction layer for loading
@@ -121,7 +128,9 @@ const char *dlerror(void);
 #define RTLD_GLOBAL 0
 #endif
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#if (defined(__FreeBSD__) ||\
+     defined(__OpenBSD__) ||\
+     defined(__NetBSD__)     ) && !defined(__ELF__)
 #define DLSYM_NEEDS_UNDERSCORE
 #endif
 

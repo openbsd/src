@@ -31,6 +31,7 @@ MANUALFILES= \
 	manual/header.html \
 	manual/index.html \
 	manual/install.html \
+	manual/install-tpf.html \
 	manual/invoking.html \
 	manual/keepalive.html \
 	manual/location.html \
@@ -41,9 +42,11 @@ MANUALFILES= \
 	manual/new_features_1_2.html \
 	manual/new_features_1_3.html \
 	manual/process-model.html \
+	manual/readme-tpf.html \
 	manual/sections.html \
 	manual/sourcereorg.html \
 	manual/stopping.html \
+	manual/suexec_1_2.html \
 	manual/suexec.html \
 	manual/unixware.html \
 	manual/upgrading_to_1_3.html \
@@ -156,7 +159,23 @@ ICONFILES= \
 	icons/box2.gif icons/generic.gif icons/pdf.gif			\
 	icons/script.gif icons/broken.gif icons/generic.red.gif		\
 	icons/pie0.gif icons/sound1.gif icons/burst.gif			\
-	icons/generic.sec.gif icons/pie1.gif icons/sound2.gif
+	icons/generic.sec.gif icons/pie1.gif icons/sound2.gif		\
+	icons/small/uu.gif icons/small/back.gif icons/small/binary.gif	\
+	icons/small/binhex.gif icons/small/blank.gif 			\
+	icons/small/broken.gif icons/small/burst.gif 			\
+	icons/small/comp1.gif icons/small/comp2.gif 			\
+	icons/small/compressed.gif icons/small/continued.gif		\
+	icons/small/dir.gif icons/small/dir2.gif 			\
+	icons/small/forward.gif icons/small/generic.gif			\
+	icons/small/generic2.gif icons/small/generic3.gif		\
+	icons/small/image.gif icons/small/image2.gif 			\
+	icons/small/index.gif icons/small/key.gif icons/small/movie.gif \
+	icons/small/rainbow.gif icons/small/sound.gif			\
+	icons/small/sound2.gif icons/small/tar.gif icons/small/text.gif \
+	icons/small/transfer.gif icons/small/unknown.gif		\
+	icons/small/README.txt
+
+
 
 distribution:
 	@-for i in ${CONFFILES}; do \

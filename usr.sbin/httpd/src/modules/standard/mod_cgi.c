@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -386,12 +386,15 @@ static int cgi_handler(request_rec *r)
     /* Allow for cgi files without the .EXE extension on them under OS/2 */
     if (r->finfo.st_mode == 0) {
 	struct stat statbuf;
+	char *newfile;
 
-	r->filename = ap_pstrcat(r->pool, r->filename, ".EXE", NULL);
+	newfile = ap_pstrcat(r->pool, r->filename, ".EXE", NULL);
 
-	if ((stat(r->filename, &statbuf) != 0) || (!S_ISREG(statbuf.st_mode))) {
+	if ((stat(newfile, &statbuf) != 0) || (!S_ISREG(statbuf.st_mode))) {
 	    return log_scripterror(r, conf, NOT_FOUND, 0,
 				   "script not found or unable to stat");
+	} else {
+	    r->filename = newfile;
 	}
     }
 #else

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +85,7 @@ static int asis_handler(request_rec *r)
 	return FORBIDDEN;
     }
 
-    scan_script_header(r, f);
+    ap_scan_script_header_err(r, f, NULL);
     location = ap_table_get(r->headers_out, "Location");
 
     if (location && location[0] == '/' &&

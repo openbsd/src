@@ -13,6 +13,7 @@ ap_allow_options
 ap_allow_overrides
 ap_append_arrays
 ap_array_cat
+ap_array_pstrcat
 ap_auth_name
 ap_auth_type
 ap_basic_http_header
@@ -95,6 +96,7 @@ ap_escape_path_segment
 ap_escape_quotes
 ap_escape_shell_cmd
 ap_excess_requests_per_child
+ap_exists_config_define
 ap_exists_scoreboard_image
 ap_extended_status
 ap_finalize_request_protocol
@@ -175,6 +177,7 @@ ap_make_array
 ap_make_dirstr
 ap_make_dirstr_parent
 ap_make_dirstr_prefix
+ap_make_etag
 ap_make_full_path
 ap_make_sub_pool
 ap_make_table
@@ -185,7 +188,9 @@ ap_md5contextTo64
 ap_md5digest
 ap_meets_conditions
 ap_merge_per_dir_configs
+ap_method_number_of
 ap_month_snames
+ap_my_generation
 ap_no2slash
 ap_note_auth_failure
 ap_note_basic_auth_failure
@@ -198,6 +203,7 @@ ap_null_cleanup
 ap_open_logs
 ap_open_piped_log
 ap_os_escape_path
+ap_os_is_filename_valid
 ap_os_is_path_absolute
 ap_overlay_tables
 ap_overlap_tables
@@ -300,6 +306,8 @@ ap_should_client_block
 ap_show_directives
 ap_show_modules
 ap_signal
+ap_single_module_configure
+ap_single_module_init
 ap_slack
 ap_snprintf
 ap_soft_timeout

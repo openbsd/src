@@ -5,10 +5,7 @@
 # Apache, it follows under Apache's regular licensing
 # (see http://www.apache.org/docs/LICENSE)  with one specific
 # addition: Any changes or additions to this script should be
-# Emailed to the Apache group (apache@apache.org) in general
-# and to Jim Jagielski (jim@apache.org) in specific.
-#
-# Blame Jim; he wrote it (plus a cast of dozens)
+# Emailed to the Apache group (apache@apache.org).
 #
 # Be as similar to the output of config.guess/config.sub
 # as possible.
@@ -204,11 +201,11 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	;;
 
     SINIX-?:* | ReliantUNIX-?:*)
-	echo "${MACHINE}-sni-sysv4"; exit 0
+	echo "${MACHINE}-siemens-sysv4"; exit 0
 	;;
 
     POSIX*BS2000)
-	echo "${MACHINE}-sni-sysv4"; exit 0
+	echo "${MACHINE}-siemens-sysv4"; exit 0
 	;;
 
     machten:*)
@@ -222,6 +219,11 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
     UNIX_SV:*:*:maxion)
 	echo "${MACHINE}-ccur-sysv4"; exit 0;
 	;;
+
+    PowerMAX_OS:*:*:Night_Hawk)
+        MACHINE=`uname -p`
+        echo "${MACHINE}-concurrent-powermax"; exit 0;
+        ;;
     
     UNIX_SV:*)
 	if [ -d /usr/nec ];then
@@ -268,6 +270,13 @@ esac
 if [ -d /usr/apollo ]; then
     echo "whatever-apollo-whatever"
     exit 0
+fi
+
+# Apache is not compiled on the TPF platform
+# therefore an environment variable is used
+if [ "$TPF" = "YES" ]; then
+    echo "TPF"
+    exit 0	
 fi
 
 # Now NeXT

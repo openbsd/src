@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1996-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1996-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -397,7 +397,7 @@ static int proxy_handler(request_rec *r)
     if (strcasecmp(scheme, "ftp") == 0)
 	return ap_proxy_ftp_handler(r, cr, url);
     else
-	return NOT_IMPLEMENTED;
+	return HTTP_FORBIDDEN;
 }
 
 /* -------------------------------------------------------------- */

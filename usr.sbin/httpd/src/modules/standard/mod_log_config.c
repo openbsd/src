@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -407,12 +407,13 @@ static const char *log_request_duration(request_rec *r, char *a)
  */
 static const char *log_virtual_host(request_rec *r, char *a)
 {
-    return ap_get_server_name(r);
+    return r->server->server_hostname;
 }
 
 static const char *log_server_port(request_rec *r, char *a)
 {
-    return ap_psprintf(r->pool, "%u", ap_get_server_port(r));
+    return ap_psprintf(r->pool, "%u",
+	r->server->port ? r->server->port : ap_default_port(r));
 }
 
 static const char *log_child_pid(request_rec *r, char *a)
@@ -913,7 +914,7 @@ static config_log_state *open_config_log(server_rec *s, pool *p,
         char *fname = ap_server_root_relative(p, cls->fname);
         if ((cls->log_fd = ap_popenf(p, fname, xfer_flags, xfer_mode)) < 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, s,
-                         "httpd: could not open transfer log file %s.", fname);
+                         "could not open transfer log file %s.", fname);
             exit(1);
         }
     }

@@ -20,7 +20,7 @@
 
   <H1 ALIGN="CENTER">Apache Server Frequently Asked Questions</H1>
   <P>
-  $Revision: 1.2 $ ($Date: 1998/10/11 19:45:05 $)
+  $Revision: 1.3 $ ($Date: 1999/03/01 01:05:09 $)
   </P>
   <P>
   The latest version of this FAQ is always available from the main
@@ -85,6 +85,8 @@
 <!--   (A: you can't but "satisfy any; allow from all" can be close -->
 <!-- - '400 malformed request' on Win32 might mean stale proxy; see -->
 <!--   PR #2300.                                                    -->
+<!-- - "expected </Directory> saw </Directory" due to buggy AIX     -->
+<!--   compiler.                                                    -->
 <UL>
  <LI><STRONG>Background</STRONG>
   <OL START=1>
@@ -193,9 +195,6 @@
         working correctly?</A>
    </LI>
    <LI><A HREF="#SSL-i">Why doesn't Apache include SSL?</A>
-   </LI>
-   <LI><A HREF="#HPUX-core">Why do I get core dumps under HPUX using
-        HP's ANSI C compiler?</A>
    </LI>
    <LI><A HREF="#midi">How do I get Apache to send a MIDI file so the
         browser can play it?</A>
@@ -732,6 +731,12 @@
   whatever language you <EM>are</EM> using (<EM>e.g.</EM>, for C, call
   <CODE>fflush()</CODE> after writing the headers).
   </P>
+  <P>
+  Another cause for the &quot;premature end of script headers&quot;
+  message are the RLimitCPU and RLimitMEM directives. You may
+  get the message if the CGI script was killed due to a
+  resource limit.
+  </P>
   <HR>
  </LI>
 
@@ -1242,7 +1247,7 @@
   The simple answer is that it was becoming too difficult to keep the
   version being included with Apache synchronized with the master copy
   at the
-  <A HREF="http://www.fastcgi.com/servers/apache/"
+  <A HREF="http://www.fastcgi.com/"
   >FastCGI web site</A>.  When a new version of Apache was released, the
   version of the FastCGI module included with it would soon be out of date.
   </P>
@@ -1432,18 +1437,6 @@
   article about
   <A HREF="http://www.apacheweek.com/features/ssl" REL="Help"
   ><CITE>Apache and Secure Transactions</CITE></A>.
-  </P>
-  <HR>
- </LI>
-
- <LI><A NAME="HPUX-core">
-       <STRONG>Why do I get core dumps under HPUX using HP's ANSI
-       C compiler?</STRONG>
-      </A>
-  <P>
-  We have had numerous reports of Apache dumping core when compiled
-  with HP's ANSI C compiler using optimization.  Disabling the compiler
-  optimization has fixed these problems.
   </P>
   <HR>
  </LI>
@@ -1717,7 +1710,7 @@
     <BR>
     AuthUserFile /usr/local/apache/conf/htpasswd.users
     <BR>
-    AuthName special directory
+    AuthName "special directory"
     <BR>
     require valid-user
     <BR>

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -125,6 +125,7 @@
  */
 
 
+#define CORE_PRIVATE
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
@@ -246,11 +247,21 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
      * symbol name.
      */
     if (!(modp = (module *)(ap_os_dso_sym(modhandle, modname)))) {
-	return ap_pstrcat(cmd->pool, "Can't find module ", modname,
-		       " in file ", filename, ":", ap_os_dso_error(), NULL);
+	return ap_pstrcat(cmd->pool, "Can't locate API module structure `", modname,
+		       "' in file ", szModuleFile, ": ", ap_os_dso_error(), NULL);
     }
     modi->modp = modp;
     modp->dynamic_load_handle = modhandle;
+
+    /* 
+     * Make sure the found module structure is really a module structure
+     * 
+     */
+    if (modp->magic != MODULE_MAGIC_COOKIE) {
+        return ap_pstrcat(cmd->pool, "API module structure `", modname,
+                          "' in file ", szModuleFile, " is garbled -"
+                          " perhaps this is not an Apache module DSO?", NULL);
+    }
 
     /* 
      * Add this module to the Apache core structures
@@ -266,15 +277,9 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
 		     (void (*)(void*))unload_module, ap_null_cleanup);
 
     /* 
-     * Finally we need to run the configuration functions 
-     * in new modules now.
+     * Finally we need to run the configuration process for the module
      */
-    if (modp->create_server_config)
-      ((void**)cmd->server->module_config)[modp->module_index] =
-	(*modp->create_server_config)(cmd->pool, cmd->server);
-    if (modp->create_dir_config)
-      ((void**)cmd->server->lookup_defaults)[modp->module_index] =
-	(*modp->create_dir_config)(cmd->pool, NULL);
+    ap_single_module_configure(cmd->pool, cmd->server, modp);
 
     return NULL;
 }

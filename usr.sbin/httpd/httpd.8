@@ -1,6 +1,7 @@
-.TH httpd 8 "February 1997"
+.TH httpd 8 "February 1999"
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
-.\" Copyright (c) 1997 The Apache Group. All rights reserved.
+.\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
+.\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -53,7 +54,9 @@ httpd \- Apache hypertext transfer protocol server
 .SH SYNOPSIS
 .B httpd 
 [
-.B \-hlvVSt?
+.B \-X
+] [
+.BI \-R " libexecdir"
 ] [
 .BI \-d " serverroot"
 ] [
@@ -62,7 +65,30 @@ httpd \- Apache hypertext transfer protocol server
 .BI \-C " directive"
 ] [
 .BI \-c " directive"
+] [
+.BI \-D " parameter"
 ]
+
+.B httpd 
+[
+.B \-h
+] 
+[
+.B \-l
+] 
+[
+.B \-L
+] 
+[
+.B \-v
+] 
+[
+.B \-V
+] 
+[
+.B \-S
+] 
+
 .SH DESCRIPTION
 .B httpd
 is the Apache HyperText Transfer Protocol (HTTP) server program. It is
@@ -84,16 +110,15 @@ Paths in this manual page  reflect those
 compiled into httpd by default with OpenBSD.
 .SH OPTIONS
 .TP 12
-.BI \-c " directive" 
-Process directive "directive" 
-.BI after
-reading config files.
-.TP
-.BI \-C " directive" 
-Process directive "directive" 
-.BI before
-reading config files.
-.TP
+.BI \-R " libexecdir"
+This option is only available if Apache was built with
+the 
+.I SHARED_CORE
+rule enabled which forces the Apache core code to be
+placed into a dynamic shared object (DSO) file. This file
+is searched in a hardcoded path under ServerRoot per default. Use this
+option if you want to override it.
+.TP 12
 .BI \-d " serverroot"
 Set the initial value for the ServerRoot directive to \fIserverroot\fP. This
 can be overridden by the ServerRoot command in the configuration file. The
@@ -104,27 +129,50 @@ Execute the commands in the file \fIconfig\fP on startup. If \fIconfig\fP
 does not begin with a /, then it is taken to be a path relative to
 the ServerRoot. The default is \fBconf/httpd.conf\fP.
 .TP
+.BI \-C " directive"
+Process the configuration \fIdirective\fP before reading config files.
+.TP
+.BI \-c " directive"
+Process the configuration \fIdirective\fP after reading config files.
+.TP
+.BI \-D " parameter"
+Sets a configuration \fIparameter\fP which can be used with
+<IfDefine>...</IfDefine> sections in the configuration files
+to conditionally skip or process commands.
+.TP
 .B \-h
-Output a list of directives together with expected arguments and
-places where the directive is valid.
+Output a short summary of available command line options.
 .TP
 .B \-l
 Output a list of modules compiled into the server.
 .TP
+.B \-L
+Output a list of directives together with expected arguments and
+places where the directive is valid.
+.TP
 .B \-S
-Print the parsed settings (currently only vhost settings), and then exit.
+Show the settings as parsed from the config file (currently only shows the
+virtualhost settings).
 .TP
 .B \-t
-Run a syntax test for the configuration files, and then exit.
+Run syntax tests for configuration files only. The program immediately exits
+after these syntax parsing with either a return code of 0 (Syntax OK) or
+return code not equal to 0 (Syntax Error).
+.TP
+.B \-X
+Run in single-process mode, for internal debugging purposes only; the daemon
+does not detach from the terminal or fork any children. Do NOT use this mode
+to provide ordinary web service.
 .TP
 .B \-v
-Print the version of httpd, and then exit.
+Print the version of 
+.B httpd
+, and then exit.
 .TP
 .B \-V
-Print the compiled in settings for httpd, and then exit.
-.TP
-.B \-?
-Print a list of the httpd options, and then exit.
+Print the version and build parameters of 
+.B httpd
+, and then exit.
 .SH FILES
 .PD 0
 .B /var/www/conf/httpd.conf

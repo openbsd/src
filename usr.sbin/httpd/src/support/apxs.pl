@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 ## ====================================================================
-## Copyright (c) 1998 The Apache Group.  All rights reserved.
+## Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
@@ -68,6 +68,7 @@ package apxs;
 ##  Configuration
 ##
 
+my $CFG_TARGET        = '@TARGET@';        # substituted via Makefile.tmpl 
 my $CFG_CC            = '@CC@';            # substituted via Makefile.tmpl
 my $CFG_CFLAGS        = '@CFLAGS@';        # substituted via Makefile.tmpl
 my $CFG_CFLAGS_SHLIB  = '@CFLAGS_SHLIB@';  # substituted via Makefile.tmpl
@@ -90,11 +91,11 @@ $CFG_CFLAGS =~ s|\s+`.+apaci`||;
 ##
 ##  Initial shared object support check
 ##
-if (not grep(/mod_so/, `$CFG_SBINDIR/httpd -l`)) {
+if (not grep(/mod_so/, `$CFG_SBINDIR/$CFG_TARGET -l`)) {
     print STDERR "apxs:Error: Sorry, no shared object support for Apache\n";
     print STDERR "apxs:Error: available under your platform. Make sure\n";
     print STDERR "apxs:Error: the Apache module mod_so is compiled into\n";
-    print STDERR "apxs:Error: your server binary `$CFG_SBINDIR/httpd'.\n";
+    print STDERR "apxs:Error: your server binary `$CFG_SBINDIR/$CFG_TARGET'.\n";
     exit(1);
 }
 
@@ -111,6 +112,7 @@ my @opt_D = ();
 my @opt_I = ();
 my @opt_L = ();
 my @opt_l = ();
+my @opt_W = ();
 my $opt_i = 0;
 my $opt_a = 0;
 my $opt_A = 0;
@@ -185,14 +187,15 @@ sub usage {
     print STDERR "Usage: apxs -g -n <modname>\n";
     print STDERR "       apxs -q <query> ...\n";
     print STDERR "       apxs -c [-o <dsofile>] [-D <name>[=<value>]] [-I <incdir>]\n";
-    print STDERR "               [-L <libdir>] [-l <libname>] <files> ...\n";
-    print STDERR "       apxs -i [-a] [-n <modname>] <dsofile> ...\n";
+    print STDERR "               [-L <libdir>] [-l <libname>] [-Wc,<flags>] [-Wl,<flags>]\n";
+    print STDERR "               <files> ...\n";
+    print STDERR "       apxs -i [-a] [-A] [-n <modname>] <dsofile> ...\n";
     exit(1);
 }
 
 #   option handling
 my $rc;
-($rc, @ARGV) = &Getopts("qn:gco:I+D+L+l+iaA", @ARGV);
+($rc, @ARGV) = &Getopts("qn:gco:I+D+L+l+W+iaA", @ARGV);
 &usage if ($rc == 0);
 &usage if ($#ARGV == -1 and not $opt_g);
 &usage if (not $opt_q and not ($opt_g and $opt_n) and not $opt_i and not $opt_c);
@@ -234,6 +237,7 @@ if ($opt_g) {
 
     my $data = join('', <DATA>);
     $data =~ s|%NAME%|$name|sg;
+    $data =~ s|%TARGET%|$CFG_TARGET|sg;
 
     my ($mkf, $src) = ($data =~ m|^(.+)-=#=-\n(.+)|s);
 
@@ -263,7 +267,7 @@ if ($opt_q) {
         my $ok = 0;
         my $name;
         foreach $name (qw(
-            CC LD_SHLIB CFLAGS CFLAGS_SHLIB LDFLAGS_SHLIB 
+            TARGET CC CFLAGS CFLAGS_SHLIB LD_SHLIB LDFLAGS_SHLIB LIBS_SHLIB
             PREFIX SBINDIR INCLUDEDIR LIBEXECDIR SYSCONFDIR
         )) {
             if ($arg eq $name or $arg eq lc($name)) {
@@ -322,7 +326,10 @@ if ($opt_c) {
     #   create compilation commands
     my @cmds = ();
     my $opt = '';
-    my ($opt_I, $opt_D);
+    my ($opt_Wc, $opt_I, $opt_D);
+    foreach $opt_Wc (@opt_W) {
+        $opt .= "$1 " if ($opt_Wc =~ m|^\s*c,(.*)$|);
+    }
     foreach $opt_I (@opt_I) {
         $opt .= "-I$opt_I ";
     }
@@ -345,7 +352,10 @@ if ($opt_c) {
         $cmd .= " $o";
     }
     $opt = '';
-    my ($opt_L, $opt_l);
+    my ($opt_Wl, $opt_L, $opt_l);
+    foreach $opt_Wl (@opt_W) {
+        $opt .= " $1" if ($opt_Wl =~ m|^\s*l,(.*)$|);
+    }
     foreach $opt_L (@opt_L) {
         $opt .= " -L$opt_L";
     }
@@ -430,17 +440,17 @@ if ($opt_i) {
 
     #   activate module via LoadModule/AddModule directive
     if ($opt_a or $opt_A) {
-        if (not -f "$CFG_SYSCONFDIR/httpd.conf") {
-            print "apxs:Error: Config file $CFG_SYSCONFDIR/httpd.conf not found\n";
+        if (not -f "$CFG_SYSCONFDIR/$CFG_TARGET.conf") {
+            print "apxs:Error: Config file $CFG_SYSCONFDIR/$CFG_TARGET.conf not found\n";
             exit(1);
         }
 
-        open(FP, "<$CFG_SYSCONFDIR/httpd.conf") || die;
+        open(FP, "<$CFG_SYSCONFDIR/$CFG_TARGET.conf") || die;
         my $content = join('', <FP>);
         close(FP);
 
         if ($content !~ m|\n#?\s*LoadModule\s+|) {
-            print STDERR "apxs:Error: Activation failed for custom $CFG_SYSCONFDIR/httpd.conf file.\n";
+            print STDERR "apxs:Error: Activation failed for custom $CFG_SYSCONFDIR/$CFG_TARGET.conf file.\n";
             print STDERR "apxs:Error: At least one `LoadModule' directive already has to exist.\n";
             exit(1);
         }
@@ -455,7 +465,7 @@ if ($opt_i) {
                  $update = 1;
                  $lmd =~ m|LoadModule\s+(.+?)_module.*|;
                  my $what = $opt_A ? "preparing" : "activating";
-                 print STDERR "[$what module `$1' in $CFG_SYSCONFDIR/httpd.conf]\n";
+                 print STDERR "[$what module `$1' in $CFG_SYSCONFDIR/$CFG_TARGET.conf]\n";
             }
         }
         my $amd;
@@ -468,12 +478,12 @@ if ($opt_i) {
             }
         }
         if ($update) {
-            open(FP, ">$CFG_SYSCONFDIR/httpd.conf.new") || die;
+            open(FP, ">$CFG_SYSCONFDIR/$CFG_TARGET.conf.new") || die;
             print FP $content;
             close(FP);
-            system("cp $CFG_SYSCONFDIR/httpd.conf $CFG_SYSCONFDIR/httpd.conf.bak && " .
-                   "cp $CFG_SYSCONFDIR/httpd.conf.new $CFG_SYSCONFDIR/httpd.conf && " .
-                   "rm $CFG_SYSCONFDIR/httpd.conf.new");
+            system("cp $CFG_SYSCONFDIR/$CFG_TARGET.conf $CFG_SYSCONFDIR/$CFG_TARGET.conf.bak && " .
+                   "cp $CFG_SYSCONFDIR/$CFG_TARGET.conf.new $CFG_SYSCONFDIR/$CFG_TARGET.conf && " .
+                   "rm $CFG_SYSCONFDIR/$CFG_TARGET.conf.new");
         }
     }
 }
@@ -481,7 +491,7 @@ if ($opt_i) {
 ##EOF##
 __DATA__
 ##
-##  Makefile -- Apache for sample %NAME% module
+##  Makefile -- Build procedure for sample %NAME% Apache module
 ##  Autogenerated via ``apxs -n %NAME% -g''.
 ##
 
@@ -537,10 +547,10 @@ stop:
 **
 **    $ apxs -c -i mod_%NAME%.c
 **
-**  Then activate it in Apache's httpd.conf file for instance
+**  Then activate it in Apache's %TARGET%.conf file for instance
 **  for the URL /%NAME% in as follows:
 **
-**    #   httpd.conf
+**    #   %TARGET%.conf
 **    LoadModule %NAME%_module libexec/mod_%NAME%.so
 **    <Location /%NAME%>
 **    SetHandler %NAME%
@@ -559,7 +569,7 @@ stop:
 **
 **    HTTP/1.1 200 OK
 **    Date: Tue, 31 Mar 1998 14:42:22 GMT
-**    Server: Apache/1.3b6-dev
+**    Server: Apache/1.3.4 (Unix)
 **    Connection: close
 **    Content-Type: text/html
 **  
@@ -568,7 +578,8 @@ stop:
 
 #include "httpd.h"
 #include "http_config.h"
-#include "conf.h"
+#include "http_protocol.h"
+#include "ap_config.h"
 
 /* The sample content handler */
 static int %NAME%_handler(request_rec *r)
@@ -599,11 +610,11 @@ module MODULE_VAR_EXPORT %NAME%_module = {
     NULL,                  /* [#1] URI to filename translation    */
     NULL,                  /* [#4] validate user id from request  */
     NULL,                  /* [#5] check if the user is ok _here_ */
-    NULL,                  /* [#2] check access by host address   */
+    NULL,                  /* [#3] check access by host address   */
     NULL,                  /* [#6] determine MIME type            */
     NULL,                  /* [#7] pre-run fixups                 */
     NULL,                  /* [#9] log a transaction              */
-    NULL,                  /* [#3] header parser                  */
+    NULL,                  /* [#2] header parser                  */
     NULL,                  /* child_init                          */
     NULL,                  /* child_exit                          */
     NULL                   /* [#0] post read-request              */

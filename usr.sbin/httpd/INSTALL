@@ -79,12 +79,11 @@
         platform-dependend. The current state is this:
 
         o Out-of-the-box supported platforms are:
-           - Linux     - IRIX
-           - FreeBSD   - HPUX
-           - OpenBSD   - Digital UNIX
-           - NetBSD    - UnixWare
-           - SunOS     - AIX
-           - Solaris   - SCO
+           - Linux     - SunOS         - UnixWare    
+           - FreeBSD   - Solaris       - AIX         
+           - OpenBSD   - IRIX          - SCO         
+           - NetBSD    - HPUX        
+           - BSDI      - Digital Unix
 
         o Entirely unsupported platforms are:
            - Ultrix
@@ -135,37 +134,37 @@
 
      Reference:
 
-     $ [CC=...]        [CFLAGS_SHLIB=...]         
+     $ [CC=...]        [CFLAGS_SHLIB=...]           [TARGET=...]
        [OPTIM=...]     [LD_SHLIB=...]
        [CFLAGS=...]    [LDFLAGS_SHLIB=...]        
        [INCLUDES=...]  [LDFLAGS_SHLIB_EXPORT=...] 
        [LDFLAGS=...]   [RANLIB=...]  
-       [LIBS=...] 
-       ./configure [--quiet]   [--prefix=DIR]         [--enable-rule=NAME]    
-                   [--verbose] [--exec-prefix=PREFIX] [--disable-rule=NAME]   
-                   [--shadow]  [--bindir=EPREFIX]     [--add-module=FILE]     
-                   [--help]    [--sbindir=DIR]        [--activate-module=FILE]
-                   [--layout]  [--libexecdir=DIR]     [--enable-module=NAME]  
-                               [--mandir=DIR]         [--disable-module=NAME] 
-                               [--sysconfdir=DIR]     [--enable-shared=NAME]  
-                               [--datadir=DIR]        [--disable-shared=NAME] 
-                               [--includedir=DIR]     
-                               [--localstatedir=DIR]  [--enable-suexec]     
-                               [--runtimedir=DIR]     [--suexec-caller=UID] 
-                               [--logfiledir=DIR]     [--suexec-userdir=DIR]
-                               [--proxycachedir=DIR]  [--suexec-uidmin=UID]
-                               [--compat]             [--suexec-gidmin=GID]
-                                                      [--suexec-safepath=PATH] 
-
-                                                      [--with-perl=FILE]   
-                                                      [--without-support]  
-                                                      [--without-confadjust]
+       [LIBS=...]      [DEPS=...]
+       ./configure
+           [--quiet]         [--prefix=DIR]            [--enable-rule=NAME]    
+           [--verbose]       [--exec-prefix=PREFIX]    [--disable-rule=NAME]   
+           [--shadow[=DIR]]  [--bindir=EPREFIX]        [--add-module=FILE]     
+           [--show-layout]   [--sbindir=DIR]           [--activate-module=FILE]
+           [--help]          [--libexecdir=DIR]        [--enable-module=NAME]  
+                             [--mandir=DIR]            [--disable-module=NAME] 
+                             [--sysconfdir=DIR]        [--enable-shared=NAME]  
+                             [--datadir=DIR]           [--disable-shared=NAME] 
+                             [--includedir=DIR]        [--permute-module=N1:N2]
+                             [--localstatedir=DIR]
+                             [--runtimedir=DIR]        [--enable-suexec]
+                             [--logfiledir=DIR]        [--suexec-caller=UID]
+                             [--proxycachedir=DIR]     [--suexec-docroot=DIR]
+                             [--with-layout=[FILE:]ID] [--suexec-logfile=FILE]
+                                                       [--suexec-userdir=DIR]
+                             [--with-perl=FILE]        [--suexec-uidmin=UID]
+                             [--without-support]       [--suexec-gidmin=GID]
+                             [--without-confadjust]    [--suexec-safepath=PATH]
 
      Use the CC, OPTIM, CFLAGS, INCLUDES, LDFLAGS, LIBS, CFLAGS_SHLIB,
-     LD_SHLIB, LDFLAGS_SHLIB, LDFLAGS_SHLIB_EXPORT and RANLIB environment
-     variables to override the corresponding default entries in the
-     src/Configuration.tmpl file (see there for more information about their
-     usage).
+     LD_SHLIB, LDFLAGS_SHLIB, LDFLAGS_SHLIB_EXPORT, RANLIB, DEPS and TARGET
+     environment variables to override the corresponding default entries in
+     the src/Configuration.tmpl file (see there for more information about
+     their usage).
 
          Note: The syntax ``KEY=VALUE ./configure ...'' (one single line!) is
                the GNU Autoconf compatible way of specifying defines and can
@@ -213,11 +212,17 @@
                make sure the paths fit your situation by checking the finally
                chosen paths via the --layout option.
 
-     Use the --compat option to install Apache into a installation tree which
-     has a similar layout than the one used with Apache 1.2.
+     Use the --with-layout=[F:]ID option to select a particular installation
+     path base-layout. You always _HAVE_ to select a base-layout. There are
+     currently two layouts pre-defined in the file config.layout: `Apache' for
+     the classical Apache path layout and `GNU' for a path layout conforming
+     to the GNU `standards' document. When you want to use your own custom
+     layout FOO, either add a corresponding "<Layout FOO>...</Layout>" section
+     to config.layout and use --with-layout=FOO or place it into your own
+     file, say config.mypaths, and use --with-layout=config.mypaths:FOO.
  
-     Use the --layout option to check the final installation path layout while
-     fiddling with the options above.
+     Use the --show-layout option to check the final installation path layout
+     while fiddling with the options above.
  
      Use the --enable-rule=NAME and --disable-rule=NAME options to enable or
      disable a particular Rule from the Apache src/Configuration.tmpl file. The
@@ -282,6 +287,7 @@
      HTTP response
       (-) mod_headers ...... Arbitrary HTTP response headers (configured)
       (-) mod_cern_meta .... Arbitrary HTTP response headers (CERN-style files)
+      (-) mod_expires ...... Expires HTTP responses 
       (+) mod_asis ......... Raw HTTP responses 
      Scripting
       (+) mod_include ...... Server Side Includes (SSI) support
@@ -298,8 +304,8 @@
      Miscellaneous
       (+) mod_imap ......... Server-side Image Map support
       (-) mod_proxy ........ Caching Proxy Module (HTTP, HTTPS, FTP)
-     Experimental
       (-) mod_so ........... Dynamic Shared Object (DSO) bootstrapping
+     Experimental
       (-) mod_mmap_static .. Caching of frequently served pages via mmap()
      Development
       (-) mod_example ...... Apache API demonstration (developers only)
@@ -340,6 +346,15 @@
                  have to enable the SHARED_CORE rule. For more details please
                  read the document `htdocs/manual/dso.html'.
 
+     Use the --permute-module=N1:N2 option to permutate the AddModule lines of
+     modules mod_N1 and mod_N2 in the Configuration file. This way one can
+     give modules different priorities.  Two special and important variants
+     are supported for the option argument: first BEGIN:N which permutes
+     module mod_N with the begin of the module list, i.e. it `moves' the
+     module to the begin of the list (gives it lowest priority).  And second
+     N:END which permutes mod_N with the end of the module list, i.e. it
+     `moves' the module to the end of the list (gives it highest priority).
+
      Use the --with-perl=FILE option to select a particular Perl interpreter
      executable to be used with Apache. Per default APACI tries to find it
      automatically. But if multiple Perl instances exist on your system you
@@ -357,12 +372,14 @@
  
      Use the --enable-suexec option to enable the suEXEC feature by building
      and installing the "suexec" support program. Use --suexec-caller=UID to
-     set the allowed caller user id, the --suexec-userdir=DIR to set the user
-     subdirectory, the --suexec-uidmin=UID/--suexec-gidmin=GID to set the
-     minimal allowed UID/GID and --suexec-safepath=PATH to set the safe shell
-     PATH for the suEXEC feature. At least one --suexec-xxxxx option has
-     to be provided together with --enable-suexec option to let APACI accept
-     your request for using the suEXEC feature.
+     set the allowed caller user id, --suexec-userdir=DIR to set the user
+     subdirectory, --suexec-docroot=DIR to set the suexec root directory,
+     --suexec-uidmin=UID/--suexec-gidmin=GID to set the minimal allowed
+     UID/GID, --suexec-logfile=FILE to set the logfile and
+     --suexec-safepath=PATH to set the safe shell PATH for the suEXEC
+     feature. At least one --suexec-xxxxx option has to be provided together
+     with the --enable-suexec option to let APACI accept your request for
+     using the suEXEC feature.
 
      CAUTION: FOR DETAILS ABOUT THE SUEXEC FEATURE WE HIGHLY RECOMMEND YOU TO
               FIRST READ THE DOCUMENT htdocs/manual/suexec.html BEFORE USING
@@ -380,7 +397,8 @@
      Use the --shadow option to let APACI create a shadow source tree of the
      sources for building. This is useful when you want to build for different
      platforms in parallel (usually through a NFS, AFS or DFS mounted
-     filesystem).
+     filesystem).  You may specify a directory to the --shadow option into
+     which the shadow tree will be created.
  
      Use the --quiet option to disable all configuration verbose messages.
  

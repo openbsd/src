@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -305,7 +305,7 @@ API_EXPORT(int) ap_set_keepalive(request_rec *r)
         (r->server->keep_alive_timeout > 0) &&
         ((r->server->keep_alive_max == 0) ||
          (r->server->keep_alive_max > r->connection->keepalives)) &&
-        !status_drops_connection(r->status) &&
+        !ap_status_drops_connection(r->status) &&
         !wimpy &&
         !ap_find_token(r->pool, conn, "close") &&
         (!ap_table_get(r->subprocess_env, "nokeepalive") ||
@@ -469,7 +469,7 @@ API_EXPORT(int) ap_meets_conditions(request_rec *r)
  * could be modified again in as short an interval.  We rationalize the
  * modification time we're given to keep it from being in the future.
  */
-API_EXPORT(void) ap_set_etag(request_rec *r)
+API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)
 {
     char *etag;
     char *weak;
@@ -487,11 +487,11 @@ API_EXPORT(void) ap_set_etag(request_rec *r)
      * would be incorrect.
      */
     
-    weak = (r->request_time - r->mtime > 1) ? "" : "W/";
+    weak = ((r->request_time - r->mtime > 1) && !force_weak) ? "" : "W/";
 
     if (r->finfo.st_mode != 0) {
-	etag = ap_psprintf(r->pool,
-		    "%s\"%lx-%lx-%lx\"", weak,
+        etag = ap_psprintf(r->pool,
+                    "%s\"%lx-%lx-%lx\"", weak,
                     (unsigned long) r->finfo.st_ino,
                     (unsigned long) r->finfo.st_size,
                     (unsigned long) r->mtime);
@@ -499,6 +499,50 @@ API_EXPORT(void) ap_set_etag(request_rec *r)
     else {
         etag = ap_psprintf(r->pool, "%s\"%lx\"", weak,
                     (unsigned long) r->mtime);
+    }
+
+    return etag;
+}
+
+API_EXPORT(void) ap_set_etag(request_rec *r)
+{
+    char *etag;
+    char *variant_etag, *vlv;
+    int vlv_weak;
+
+    if (!r->vlist_validator) {
+        etag = ap_make_etag(r, 0);
+    }
+    else {
+        /* If we have a variant list validator (vlv) due to the
+         * response being negotiated, then we create a structured
+         * entity tag which merges the variant etag with the variant
+         * list validator (vlv).  This merging makes revalidation
+         * somewhat safer, ensures that caches which can deal with
+         * Vary will (eventually) be updated if the set of variants is
+         * changed, and is also a protocol requirement for transparent
+         * content negotiation.
+         */
+
+        /* if the variant list validator is weak, we make the whole
+         * structured etag weak.  If we would not, then clients could
+         * have problems merging range responses if we have different
+         * variants with the same non-globally-unique strong etag.
+         */
+
+        vlv = r->vlist_validator;
+        vlv_weak = (vlv[0] == 'W');
+               
+        variant_etag = ap_make_etag(r, vlv_weak);
+
+        /* merge variant_etag and vlv into a structured etag */
+
+        variant_etag[strlen(variant_etag) - 1] = '\0';
+        if (vlv_weak)
+            vlv += 3;
+        else
+            vlv++;
+        etag = ap_pstrcat(r->pool, variant_etag, ";", vlv, NULL);
     }
 
     ap_table_setn(r->headers_out, "ETag", etag);
@@ -515,6 +559,72 @@ API_EXPORT(void) ap_set_last_modified(request_rec *r)
 
     ap_table_setn(r->headers_out, "Last-Modified",
               ap_gm_timestr_822(r->pool, mod_time));
+}
+
+/* Get the method number associated with the given string, assumed to
+ * contain an HTTP method.  Returns M_INVALID if not recognized.
+ *
+ * This is the first step toward placing method names in a configurable
+ * list.  Hopefully it (and other routines) can eventually be moved to
+ * something like a mod_http_methods.c, complete with config stuff.
+ */
+API_EXPORT(int) ap_method_number_of(const char *method)
+{
+    switch (*method) {
+        case 'H':
+           if (strcmp(method, "HEAD") == 0)
+               return M_GET;   /* see header_only in request_rec */
+           break;
+        case 'G':
+           if (strcmp(method, "GET") == 0)
+               return M_GET;
+           break;
+        case 'P':
+           if (strcmp(method, "POST") == 0)
+               return M_POST;
+           if (strcmp(method, "PUT") == 0)
+               return M_PUT;
+           if (strcmp(method, "PATCH") == 0)
+               return M_PATCH;
+           if (strcmp(method, "PROPFIND") == 0)
+               return M_PROPFIND;
+           if (strcmp(method, "PROPPATCH") == 0)
+               return M_PROPPATCH;
+           break;
+        case 'D':
+           if (strcmp(method, "DELETE") == 0)
+               return M_DELETE;
+           break;
+        case 'C':
+           if (strcmp(method, "CONNECT") == 0)
+               return M_CONNECT;
+           if (strcmp(method, "COPY") == 0)
+               return M_COPY;
+           break;
+        case 'M':
+           if (strcmp(method, "MKCOL") == 0)
+               return M_MKCOL;
+           if (strcmp(method, "MOVE") == 0)
+               return M_MOVE;
+           break;
+        case 'O':
+           if (strcmp(method, "OPTIONS") == 0)
+               return M_OPTIONS;
+           break;
+        case 'T':
+           if (strcmp(method, "TRACE") == 0)
+               return M_TRACE;
+           break;
+        case 'L':
+           if (strcmp(method, "LOCK") == 0)
+               return M_LOCK;
+           break;
+        case 'U':
+           if (strcmp(method, "UNLOCK") == 0)
+               return M_UNLOCK;
+           break;
+    }
+    return M_INVALID;
 }
 
 /* Get a line of protocol input, including any continuation lines
@@ -678,26 +788,11 @@ static int read_request_line(request_rec *r)
     uri = ap_getword_white(r->pool, &ll);
 
     /* Provide quick information about the request method as soon as known */
-    if (!strcmp(r->method, "HEAD")) {
+
+    r->method_number = ap_method_number_of(r->method);
+    if (r->method_number == M_GET && r->method[0] == 'H') {
         r->header_only = 1;
-        r->method_number = M_GET;
     }
-    else if (!strcmp(r->method, "GET"))
-        r->method_number = M_GET;
-    else if (!strcmp(r->method, "POST"))
-        r->method_number = M_POST;
-    else if (!strcmp(r->method, "PUT"))
-        r->method_number = M_PUT;
-    else if (!strcmp(r->method, "DELETE"))
-        r->method_number = M_DELETE;
-    else if (!strcmp(r->method, "CONNECT"))
-        r->method_number = M_CONNECT;
-    else if (!strcmp(r->method, "OPTIONS"))
-        r->method_number = M_OPTIONS;
-    else if (!strcmp(r->method, "TRACE"))
-        r->method_number = M_TRACE;
-    else
-        r->method_number = M_INVALID;   /* Will eventually croak. */
 
     ap_parse_uri(r, uri);
 
@@ -1056,7 +1151,7 @@ API_EXPORT(int) ap_get_basic_auth_pw(request_rec *r, const char **pw)
  * and must be listed in order.
  */
 
-static char *status_lines[] = {
+static char *status_lines[RESPONSE_CODES] = {
     "100 Continue",
     "101 Switching Protocols",
     "102 Processing",
@@ -1103,18 +1198,19 @@ static char *status_lines[] = {
     "421 unused",
     "422 Unprocessable Entity",
     "423 Locked",
-#define LEVEL_500 43
+    "424 Failed Dependency",
+#define LEVEL_500 44
     "500 Internal Server Error",
     "501 Method Not Implemented",
     "502 Bad Gateway",
     "503 Service Temporarily Unavailable",
     "504 Gateway Time-out",
     "505 HTTP Version Not Supported",
-    "506 Variant Also Negotiates"
-    "507 unused",
+    "506 Variant Also Negotiates",
+    "507 Insufficient Storage",
     "508 unused",
     "509 unused",
-    "510 Not Extended",
+    "510 Not Extended"
 };
 
 /* The index is found by its offset from the x00 code of each level.
@@ -1237,13 +1333,22 @@ static void terminate_header(BUFF *client)
 static char *make_allow(request_rec *r)
 {
     return 2 + ap_pstrcat(r->pool,
-                       (r->allowed & (1 << M_GET)) ? ", GET, HEAD" : "",
-                       (r->allowed & (1 << M_POST)) ? ", POST" : "",
-                       (r->allowed & (1 << M_PUT)) ? ", PUT" : "",
-                       (r->allowed & (1 << M_DELETE)) ? ", DELETE" : "",
-                       (r->allowed & (1 << M_OPTIONS)) ? ", OPTIONS" : "",
-                       ", TRACE",
-                       NULL);
+                   (r->allowed & (1 << M_GET))       ? ", GET, HEAD" : "",
+                   (r->allowed & (1 << M_POST))      ? ", POST"      : "",
+                   (r->allowed & (1 << M_PUT))       ? ", PUT"       : "",
+                   (r->allowed & (1 << M_DELETE))    ? ", DELETE"    : "",
+                   (r->allowed & (1 << M_CONNECT))   ? ", CONNECT"   : "",
+                   (r->allowed & (1 << M_OPTIONS))   ? ", OPTIONS"   : "",
+                   (r->allowed & (1 << M_PATCH))     ? ", PATCH"     : "",
+                   (r->allowed & (1 << M_PROPFIND))  ? ", PROPFIND"  : "",
+                   (r->allowed & (1 << M_PROPPATCH)) ? ", PROPPATCH" : "",
+                   (r->allowed & (1 << M_MKCOL))     ? ", MKCOL"     : "",
+                   (r->allowed & (1 << M_COPY))      ? ", COPY"      : "",
+                   (r->allowed & (1 << M_MOVE))      ? ", MOVE"      : "",
+                   (r->allowed & (1 << M_LOCK))      ? ", LOCK"      : "",
+                   (r->allowed & (1 << M_UNLOCK))    ? ", UNLOCK"    : "",
+                   ", TRACE",
+                   NULL);
 }
 
 API_EXPORT(int) ap_send_http_trace(request_rec *r)
@@ -2297,19 +2402,23 @@ void ap_send_error_response(request_rec *r, int recursive_error)
 		      ap_escape_html(r->pool, r->uri),
 		      " evaluated to false.<P>\n", NULL);
 	    break;
-	case NOT_IMPLEMENTED:
+	case HTTP_NOT_IMPLEMENTED:
 	    ap_bvputs(fd, ap_escape_html(r->pool, r->method), " to ",
 		      ap_escape_html(r->pool, r->uri),
 		      " not supported.<P>\n", NULL);
+	    if ((error_notes = ap_table_get(r->notes, "error-notes")) != NULL) {
+		ap_bvputs(fd, error_notes, "<P>\n", NULL);
+	    }
 	    break;
 	case BAD_GATEWAY:
 	    ap_bputs("The proxy server received an invalid\015\012", fd);
 	    ap_bputs("response from an upstream server.<P>\015\012", fd);
 	    break;
 	case VARIANT_ALSO_VARIES:
-	    ap_bvputs(fd, "A variant for the requested entity  ",
-		      ap_escape_html(r->pool, r->uri), " is itself a ",
-		      "transparently negotiable resource.<P>\n", NULL);
+	    ap_bvputs(fd, "A variant for the requested resource\n<PRE>\n",
+		      ap_escape_html(r->pool, r->uri),
+		      "\n</PRE>\nis itself a negotiable resource. "
+		      "This indicates a configuration error.<P>\n", NULL);
 	    break;
 	case HTTP_REQUEST_TIME_OUT:
 	    ap_bputs("I'm tired of waiting for your request.\n", fd);
@@ -2363,6 +2472,18 @@ void ap_send_error_response(request_rec *r, int recursive_error)
 	             "The lock must be released or proper identification\n"
 	             "given before the method can be applied.\n", fd);
 	    break;
+	case HTTP_FAILED_DEPENDENCY:
+	    ap_bputs("The method could not be performed on the resource\n"
+	             "because the requested action depended on another\n"
+	             "action and that other action failed.\n", fd);
+	    break;
+	case HTTP_INSUFFICIENT_STORAGE:
+	    ap_bputs("The method could not be performed on the resource\n"
+	             "because the server is unable to store the\n"
+	             "representation needed to successfully complete the\n"
+	             "request.  There is insufficient free space left in\n"
+	             "your storage allocation.\n", fd);
+	    break;
 	case HTTP_SERVICE_UNAVAILABLE:
 	    ap_bputs("The server is temporarily unable to service your\n"
 	             "request due to maintenance downtime or capacity\n"
@@ -2384,10 +2505,22 @@ void ap_send_error_response(request_rec *r, int recursive_error)
 	             ap_escape_html(r->pool, r->server->server_admin),
 	             " and inform them of the time the error occurred,\n"
 	             "and anything you might have done that may have\n"
-	             "caused the error.<P>\n", NULL);
-	    if ((error_notes = ap_table_get(r->notes, "error-notes")) != NULL) {
-		ap_bvputs(fd, error_notes, "<P>\n", NULL);
-	    }
+	             "caused the error.<P>\n"
+		     "More information about this error may be available\n"
+		     "in the server error log.<P>\n", NULL);
+	 /*
+	  * It would be nice to give the user the information they need to
+	  * fix the problem directly since many users don't have access to
+	  * the error_log (think University sites) even though they can easily
+	  * get this error by misconfiguring an htaccess file.  However, the
+	  * error notes tend to include the real file pathname in this case,
+	  * which some people consider to be a breach of privacy.  Until we
+	  * can figure out a way to remove the pathname, leave this commented.
+	  *
+	  * if ((error_notes = ap_table_get(r->notes, "error-notes")) != NULL) {
+	  *     ap_bvputs(fd, error_notes, "<P>\n", NULL);
+	  * }
+	  */
 	    break;
 	}
 

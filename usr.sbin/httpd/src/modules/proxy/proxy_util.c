@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1996-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1996-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -263,11 +263,14 @@ char *
 	    if (!ap_isdigit(strp[i]))
 		break;
 
-	if (i == 0 || strp[i] != '\0')
+	/* if (i == 0) the no port was given; keep default */
+	if (strp[i] != '\0') {
 	    return "Bad port number in URL";
-	*port = atoi(strp);
-	if (*port > 65535)
-	    return "Port number in URL > 65535";
+	} else if (i > 0) {
+	    *port = atoi(strp);
+	    if (*port > 65535)
+		return "Port number in URL > 65535";
+	}
     }
     ap_str_tolower(host);		/* DNS names are case-insensitive */
     if (*host == '\0')
@@ -674,10 +677,10 @@ int ap_proxy_liststr(const char *list, const char *val)
     return 0;
 }
 
-#ifdef WIN32
+#ifdef CASE_BLIND_FILESYSTEM
 
 /*
- * On NT, the file system is NOT case sensitive. So, a == A
+ * On some platforms, the file system is NOT case sensitive. So, a == A
  * need to map to smaller set of characters
  */
 void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
@@ -775,7 +778,7 @@ void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
     val[i + 22 - k] = '\0';
 }
 
-#endif /* WIN32 */
+#endif /* CASE_BLIND_FILESYSTEM */
 
 /*
  * Converts 8 hex digits to a time integer

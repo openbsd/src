@@ -32,8 +32,6 @@ trap 'rm -f Makefile dummy dummy.exe testfunc.c testfunc testfunc.exe; exit $exs
 # located) if you want to test it out. Configure must
 # also call it as './helpers/TestCompile'
 #
-# Blame Jim; he wrote it (along with a cast of dozens).
-#
 # This script falls under the Apache License.
 # See http://www.apache.org/docs/LICENSE
 
@@ -145,7 +143,7 @@ testfunc:
 EOF
 
 # Now run that Makefile
-eval "make $TARGET >/dev/null $ERRDIR"
+eval "${MAKE} ${TARGET} >/dev/null $ERRDIR"
 
 # And see if dummy exists and is executable, if so, then we
 # assume the condition we are testing for is good

@@ -63,6 +63,11 @@ EXTRA_DEPS=
 #RANLIB=
 
 ################################################################
+# Name of the installed Apache HTTP webserver.
+#
+#TARGET=
+
+################################################################
 # Dynamic Shared Object (DSO) support
 #
 # There is experimental support for compiling the Apache core and
@@ -159,7 +164,7 @@ Rule SHARED_CHAIN=default
 Rule SOCKS4=no
 Rule SOCKS5=no
 Rule IRIXNIS=no
-Rule IRIXN32=no
+Rule IRIXN32=yes
 Rule PARANOID=no
 
 # The following rules should be set automatically by Configure. However, if
@@ -178,7 +183,7 @@ Rule PARANOID=no
 #  out the Rule. The "default" action is "yes" unless overruled
 #  by OS specifics
 
-Rule WANTHSREGEX=no
+Rule WANTHSREGEX=default
 
 ################################################################
 # Module configuration
@@ -323,8 +328,8 @@ AddModule modules/standard/mod_auth.o
 ## "gdbm" package if not and possibly adjust EXTRA_LIBS. (This may be
 ## done by Configure at a later date)
 
-AddModule modules/standard/mod_auth_dbm.o
-AddModule modules/standard/mod_auth_db.o
+# AddModule modules/standard/mod_auth_dbm.o
+# AddModule modules/standard/mod_auth_db.o
 
 ## "digest" implements HTTP Digest Authentication rather than the less 
 ## secure Basic Auth used by the other modules.

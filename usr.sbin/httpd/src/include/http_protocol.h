@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,6 +115,7 @@ void ap_send_error_response(request_rec *r, int recursive_error);
 API_EXPORT(int) ap_set_content_length(request_rec *r, long length);
 API_EXPORT(int) ap_set_keepalive(request_rec *r);
 API_EXPORT(time_t) ap_rationalize_mtime(request_rec *r, time_t mtime);
+API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak);
 API_EXPORT(void) ap_set_etag(request_rec *r);
 API_EXPORT(void) ap_set_last_modified(request_rec *r);
 API_EXPORT(int) ap_meets_conditions(request_rec *r);
@@ -208,6 +209,11 @@ void ap_finalize_sub_req_protocol(request_rec *sub_r);
 /* This is also useful for putting sub_reqs and internal_redirects together */
 
 CORE_EXPORT(void) ap_parse_uri(request_rec *r, const char *uri);
+
+/* Get the method number associated with the given string, assumed to
+ * contain an HTTP method.  Returns M_INVALID if not recognized.
+ */
+API_EXPORT(int) ap_method_number_of(const char *method);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -688,13 +688,41 @@ static int handle_include(FILE *in, request_rec *r, const char *error, int noexe
                     "in parsed file %s";
             }
             if (error_fmt == NULL) {
+		/* try to avoid recursive includes.  We do this by walking
+		 * up the r->main list of subrequests, and at each level
+		 * walking back through any internal redirects.  At each
+		 * step, we compare the filenames and the URIs.  
+		 *
+		 * The filename comparison catches a recursive include
+		 * with an ever-changing URL, eg.
+		 * <!--#include virtual=
+		 *      "$REQUEST_URI/$QUERY_STRING?$QUERY_STRING/x"-->
+		 * which, although they would eventually be caught because
+		 * we have a limit on the length of files, etc., can 
+		 * recurse for a while.
+		 *
+		 * The URI comparison catches the case where the filename
+		 * is changed while processing the request, so the 
+		 * current name is never the same as any previous one.
+		 * This can happen with "DocumentRoot /foo" when you
+		 * request "/" on the server and it includes "/".
+		 * This only applies to modules such as mod_dir that 
+		 * (somewhat improperly) mess with r->filename outside 
+		 * of a filename translation phase.
+		 */
+		int founddupe = 0;
                 request_rec *p;
+                for (p = r; p != NULL && !founddupe; p = p->main) {
+		    request_rec *q;
+		    for (q = p; q != NULL; q = q->prev) {
+			if ( (strcmp(q->filename, rr->filename) == 0) ||
+			     (strcmp(q->uri, rr->uri) == 0) ){
+			    founddupe = 1;
+			    break;
+			}
+		    }
+		}
 
-                for (p = r; p != NULL; p = p->main) {
-                    if (strcmp(p->filename, rr->filename) == 0) {
-                        break;
-                    }
-                }
                 if (p != NULL) {
                     error_fmt = "Recursive include of \"%s\" "
                         "in parsed file %s";
@@ -768,7 +796,7 @@ static int include_cmd_child(void *arg, child_info *pinfo)
 
         ap_table_setn(env, "PATH_INFO", ap_escape_shell_cmd(r->pool, r->path_info));
 
-        pa_req = ap_sub_req_lookup_uri(escape_uri(r->pool, r->path_info), r);
+        pa_req = ap_sub_req_lookup_uri(ap_escape_uri(r->pool, r->path_info), r);
         if (pa_req->filename) {
             ap_table_setn(env, "PATH_TRANSLATED",
                       ap_pstrcat(r->pool, pa_req->filename, pa_req->path_info,
@@ -805,7 +833,7 @@ static int include_cmd_child(void *arg, child_info *pinfo)
     fprintf(dbg, "Exec failed\n");
 #endif
     ap_snprintf(err_string, sizeof(err_string),
-                "httpd: exec of %s failed, reason: %s (errno = %d)\n",
+                "exec of %s failed, reason: %s (errno = %d)\n",
                 SHELL_PATH, strerror(errno), errno);
     write(STDERR_FILENO, err_string, strlen(err_string));
     exit(0);
@@ -924,10 +952,10 @@ static int handle_perl(FILE *in, request_rec *r, const char *error)
     SV *sub = Nullsv;
     AV *av = newAV();
 
-    if (!(ap_allow_options(r) & OPT_INCLUDES)) {
+    if (ap_allow_options(r) & OPT_INCNOEXEC) {
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                    "httpd: #perl SSI disallowed by IncludesNoExec in %s",
-                    r->filename);
+		      "#perl SSI disallowed by IncludesNoExec in %s",
+		      r->filename);
         return DECLINED;
     }
     while (1) {
@@ -2176,8 +2204,8 @@ static void send_parsed_content(FILE *f, request_rec *r)
             if (!strcmp(directive, "exec")) {
                 if (noexec) {
                     ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                                "httpd: exec used but not allowed in %s",
-                                r->filename);
+				  "exec used but not allowed in %s",
+				  r->filename);
                     if (printing) {
                         ap_rputs(error, r);
                     }
@@ -2215,9 +2243,9 @@ static void send_parsed_content(FILE *f, request_rec *r)
 #endif
             else {
                 ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                            "httpd: unknown directive \"%s\" "
-                            "in parsed doc %s",
-                            directive, r->filename);
+			      "unknown directive \"%s\" "
+			      "in parsed doc %s",
+			      directive, r->filename);
                 if (printing) {
                     ap_rputs(error, r);
                 }
@@ -2225,8 +2253,8 @@ static void send_parsed_content(FILE *f, request_rec *r)
             }
             if (ret) {
                 ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                            "httpd: premature EOF in parsed file %s",
-                            r->filename);
+			      "premature EOF in parsed file %s",
+			      r->filename);
                 return;
             }
         }

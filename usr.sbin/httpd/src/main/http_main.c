@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,7 +116,7 @@ int ap_main(int argc, char *argv[]);
 #endif
 #ifdef WIN32
 #include "../os/win32/getopt.h"
-#elif !defined(BEOS)
+#elif !defined(BEOS) && !defined(TPF)
 #include <netinet/tcp.h>
 #endif
 
@@ -247,7 +247,7 @@ int ap_daemons_limit;
 time_t ap_restart_time;
 int ap_suexec_enabled = 0;
 int ap_listenbacklog;
-int ap_dump_settings;
+int ap_dump_settings = 0;
 API_VAR_EXPORT int ap_extended_status = 0;
 
 /*
@@ -978,15 +978,15 @@ static void usage(char *bin)
 	pad[i] = ' ';
     pad[i] = '\0';
 #ifdef SHARED_CORE
-    fprintf(stderr, "Usage: %s [-L directory] [-d directory] [-f file]\n", bin);
+    fprintf(stderr, "Usage: %s [-R directory] [-d directory] [-f file]\n", bin);
 #else
     fprintf(stderr, "Usage: %s [-d directory] [-f file]\n", bin);
 #endif
     fprintf(stderr, "       %s [-C \"directive\"] [-c \"directive\"]\n", pad);
-    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-S] [-t]\n", pad);
+    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t]\n", pad);
     fprintf(stderr, "Options:\n");
 #ifdef SHARED_CORE
-    fprintf(stderr, "  -L directory     : specify an alternate location for shared object files\n");
+    fprintf(stderr, "  -R directory     : specify an alternate location for shared object files\n");
 #endif
     fprintf(stderr, "  -D name          : define a name for use in <IfDefine name> directives\n");
     fprintf(stderr, "  -d directory     : specify an alternate initial ServerRoot\n");
@@ -995,8 +995,9 @@ static void usage(char *bin)
     fprintf(stderr, "  -c \"directive\"   : process directive after  reading config files\n");
     fprintf(stderr, "  -v               : show version number\n");
     fprintf(stderr, "  -V               : show compile settings\n");
-    fprintf(stderr, "  -h               : list available configuration directives\n");
+    fprintf(stderr, "  -h               : list available command line options (this page)\n");
     fprintf(stderr, "  -l               : list compiled-in modules\n");
+    fprintf(stderr, "  -L               : list available configuration directives\n");
     fprintf(stderr, "  -S               : show parsed settings (currently only vhost settings)\n");
     fprintf(stderr, "  -t               : run syntax test for configuration files only\n");
 #ifdef WIN32
@@ -1044,14 +1045,14 @@ static void timeout(int sig)
 	if (sig == SIGPIPE) {
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 			current_conn->server,
-			"(client %s) stopped connection before %s completed",
+			"[client %s] stopped connection before %s completed",
 			current_conn->remote_ip,
 			timeout_name ? timeout_name : "request");
 	}
 	else {
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 			current_conn->server,
-			"(client %s) %s timed out",
+			"[client %s] %s timed out",
 			current_conn->remote_ip,
 			timeout_name ? timeout_name : "request");
 	}
@@ -1096,6 +1097,7 @@ static void timeout(int sig)
     }
 }
 
+#ifndef TPF
 /*
  * These two called from alloc.c to protect its critical sections...
  * Note that they can nest (as when destroying the sub_pools of a pool
@@ -1129,7 +1131,7 @@ API_EXPORT(void) ap_unblock_alarms(void)
 	}
     }
 }
-
+#endif /* TPF */
 
 static APACHE_TLS void (*volatile alarm_fn) (int) = NULL;
 #ifdef WIN32
@@ -1611,16 +1613,19 @@ static void setup_shared_mem(pool *p)
 
     m = (caddr_t) create_shared_heap("\\SHAREMEM\\SCOREBOARD", SCOREBOARD_SIZE);
     if (m == 0) {
-	fprintf(stderr, "httpd: Could not create OS/2 Shared memory pool.\n");
+	fprintf(stderr, "%s: Could not create OS/2 Shared memory pool.\n",
+		ap_server_argv0);
 	exit(APEXIT_INIT);
     }
 
     rc = _uopen((Heap_t) m);
     if (rc != 0) {
-	fprintf(stderr, "httpd: Could not uopen() newly created OS/2 Shared memory pool.\n");
+	fprintf(stderr,
+		"%s: Could not uopen() newly created OS/2 Shared memory pool.\n",
+		ap_server_argv0);
     }
     ap_scoreboard_image = (scoreboard *) m;
-    ap_scoreboard_image->global.exit_generation = 0;
+    ap_scoreboard_image->global.running_generation = 0;
 }
 
 static void reopen_scoreboard(pool *p)
@@ -1630,7 +1635,8 @@ static void reopen_scoreboard(pool *p)
 
     m = (caddr_t) get_shared_heap("\\SHAREMEM\\SCOREBOARD");
     if (m == 0) {
-	fprintf(stderr, "httpd: Could not find existing OS/2 Shared memory pool.\n");
+	fprintf(stderr, "%s: Could not find existing OS/2 Shared memory pool.\n",
+		ap_server_argv0);
 	exit(APEXIT_INIT);
     }
 
@@ -1676,30 +1682,37 @@ static void cleanup_shared_mem(void *d)
 
 static void setup_shared_mem(pool *p)
 {
+    char buf[512];
     caddr_t m;
     int fd;
 
     fd = shm_open(ap_scoreboard_fname, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1) {
-	perror("httpd: could not open(create) scoreboard");
+	ap_snprintf(buf, sizeof(buf), "%s: could not open(create) scoreboard",
+		    ap_server_argv0);
+	perror(buf);
 	exit(APEXIT_INIT);
     }
     if (ltrunc(fd, (off_t) SCOREBOARD_SIZE, SEEK_SET) == -1) {
-	perror("httpd: could not ltrunc scoreboard");
+	ap_snprintf(buf, sizeof(buf), "%s: could not ltrunc scoreboard",
+		    ap_server_argv0);
+	perror(buf);
 	shm_unlink(ap_scoreboard_fname);
 	exit(APEXIT_INIT);
     }
     if ((m = (caddr_t) mmap((caddr_t) 0,
 			    (size_t) SCOREBOARD_SIZE, PROT_READ | PROT_WRITE,
 			    MAP_SHARED, fd, (off_t) 0)) == (caddr_t) - 1) {
-	perror("httpd: cannot mmap scoreboard");
+	ap_snprintf(buf, sizeof(buf), "%s: cannot mmap scoreboard",
+		    ap_server_argv0);
+	perror(buf);
 	shm_unlink(ap_scoreboard_fname);
 	exit(APEXIT_INIT);
     }
     close(fd);
     ap_register_cleanup(p, NULL, cleanup_shared_mem, ap_null_cleanup);
     ap_scoreboard_image = (scoreboard *) m;
-    ap_scoreboard_image->global.exit_generation = 0;
+    ap_scoreboard_image->global.running_generation = 0;
 }
 
 static void reopen_scoreboard(pool *p)
@@ -1737,14 +1750,14 @@ static void setup_shared_mem(pool *p)
 	int fd = mkstemp(mfile);
 	if (fd == -1) {
 	    perror("open");
-	    fprintf(stderr, "httpd: Could not open %s\n", mfile);
+	    fprintf(stderr, "%s: Could not open %s\n", ap_server_argv0, mfile);
 	    exit(APEXIT_INIT);
 	}
 	m = mmap((caddr_t) 0, SCOREBOARD_SIZE,
 		PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (m == (caddr_t) - 1) {
 	    perror("mmap");
-	    fprintf(stderr, "httpd: Could not mmap %s\n", mfile);
+	    fprintf(stderr, "%s: Could not mmap %s\n", ap_server_argv0, mfile);
 	    exit(APEXIT_INIT);
 	}
 	close(fd);
@@ -1756,7 +1769,7 @@ static void setup_shared_mem(pool *p)
 #endif
     if (m == (caddr_t) - 1) {
 	perror("mmap");
-	fprintf(stderr, "httpd: Could not mmap memory\n");
+	fprintf(stderr, "%s: Could not mmap memory\n", ap_server_argv0);
 	exit(APEXIT_INIT);
     }
 #else
@@ -1766,20 +1779,20 @@ static void setup_shared_mem(pool *p)
     fd = open("/dev/zero", O_RDWR);
     if (fd == -1) {
 	perror("open");
-	fprintf(stderr, "httpd: Could not open /dev/zero\n");
+	fprintf(stderr, "%s: Could not open /dev/zero\n", ap_server_argv0);
 	exit(APEXIT_INIT);
     }
     m = mmap((caddr_t) 0, SCOREBOARD_SIZE,
 	     PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (m == (caddr_t) - 1) {
 	perror("mmap");
-	fprintf(stderr, "httpd: Could not mmap /dev/zero\n");
+	fprintf(stderr, "%s: Could not mmap /dev/zero\n", ap_server_argv0);
 	exit(APEXIT_INIT);
     }
     close(fd);
 #endif
     ap_scoreboard_image = (scoreboard *) m;
-    ap_scoreboard_image->global.exit_generation = 0;
+    ap_scoreboard_image->global.running_generation = 0;
 }
 
 static void reopen_scoreboard(pool *p)
@@ -1801,8 +1814,9 @@ static void setup_shared_mem(pool *p)
 #ifdef LINUX
 	if (errno == ENOSYS) {
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_EMERG, server_conf,
-		    "httpd: Your kernel was built without CONFIG_SYSVIPC\n"
-		    "httpd: please consult the Apache FAQ for details");
+			 "Your kernel was built without CONFIG_SYSVIPC\n"
+			 "%s: Please consult the Apache FAQ for details",
+			 ap_server_argv0);
 	}
 #endif
 	ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
@@ -1870,7 +1884,7 @@ static void setup_shared_mem(pool *p)
 	    "sbrk() could not move break back");
     }
 #endif
-    ap_scoreboard_image->global.exit_generation = 0;
+    ap_scoreboard_image->global.running_generation = 0;
 }
 
 static void reopen_scoreboard(pool *p)
@@ -1937,16 +1951,16 @@ void reopen_scoreboard(pool *p)
 /* Called by parent process */
 static void reinit_scoreboard(pool *p)
 {
-    int exit_gen = 0;
+    int running_gen = 0;
     if (ap_scoreboard_image)
-	exit_gen = ap_scoreboard_image->global.exit_generation;
+	running_gen = ap_scoreboard_image->global.running_generation;
 
 #ifndef SCOREBOARD_FILE
     if (ap_scoreboard_image == NULL) {
 	setup_shared_mem(p);
     }
     memset(ap_scoreboard_image, 0, SCOREBOARD_SIZE);
-    ap_scoreboard_image->global.exit_generation = exit_gen;
+    ap_scoreboard_image->global.running_generation = running_gen;
 #else
     ap_scoreboard_image = &_scoreboard_image;
     ap_scoreboard_fname = ap_server_root_relative(p, ap_scoreboard_fname);
@@ -1960,7 +1974,7 @@ static void reinit_scoreboard(pool *p)
     ap_register_cleanup(p, NULL, cleanup_scoreboard_file, ap_null_cleanup);
 
     memset((char *) ap_scoreboard_image, 0, sizeof(*ap_scoreboard_image));
-    ap_scoreboard_image->global.exit_generation = exit_gen;
+    ap_scoreboard_image->global.running_generation = running_gen;
     force_write(scoreboard_fd, ap_scoreboard_image, sizeof(*ap_scoreboard_image));
 #endif
 }
@@ -2055,8 +2069,20 @@ int ap_update_child_status(int child_num, int status, request_rec *r)
 					       r->assbackwards ? NULL : " ", r->protocol, NULL),
 				       sizeof(ss->request));
 	    }
-	    ap_cpystrn(ss->vhost, r->server->server_hostname, sizeof(ss->vhost));
+	    ss->vhostrec =  r->server;
 	}
+    }
+    if (status == SERVER_STARTING && r == NULL) {
+	/* clean up the slot's vhostrec pointer (maybe re-used)
+	 * and mark the slot as belonging to a new generation.
+	 */
+	ss->vhostrec = NULL;
+	ap_scoreboard_image->parent[child_num].generation = ap_my_generation;
+#ifdef SCOREBOARD_FILE
+	lseek(scoreboard_fd, XtOffsetOf(scoreboard, parent[child_num]), 0);
+	force_write(scoreboard_fd, &ap_scoreboard_image->parent[child_num],
+	    sizeof(parent_score));
+#endif
     }
     put_scoreboard_info(child_num, ss);
 
@@ -2542,7 +2568,7 @@ static void usr1_handler(int sig)
 static int volatile shutdown_pending;
 static int volatile restart_pending;
 static int volatile is_graceful;
-static int volatile generation;
+ap_generation_t volatile ap_my_generation;
 
 #ifdef WIN32
 /*
@@ -2781,14 +2807,14 @@ static void detach(void)
     int x;
 
     chdir("/");
-#if !defined(MPE) && !defined(OS2)
+#if !defined(MPE) && !defined(OS2) && !defined(TPF)
 /* Don't detach for MPE because child processes can't survive the death of
    the parent. */
     if ((x = fork()) > 0)
 	exit(0);
     else if (x == -1) {
 	perror("fork");
-	fprintf(stderr, "httpd: unable to fork new process\n");
+	fprintf(stderr, "%s: unable to fork new process\n", ap_server_argv0);
 	exit(1);
     }
     RAISE_SIGSTOP(DETACH);
@@ -2796,16 +2822,16 @@ static void detach(void)
 #ifndef NO_SETSID
     if ((pgrp = setsid()) == -1) {
 	perror("setsid");
-	fprintf(stderr, "httpd: setsid failed\n");
+	fprintf(stderr, "%s: setsid failed\n", ap_server_argv0);
 	exit(1);
     }
 #elif defined(NEXT) || defined(NEWSOS)
     if (setpgrp(0, getpid()) == -1 || (pgrp = getpgrp(0)) == -1) {
 	perror("setpgrp");
-	fprintf(stderr, "httpd: setpgrp or getpgrp failed\n");
+	fprintf(stderr, "%s: setpgrp or getpgrp failed\n", ap_server_argv0);
 	exit(1);
     }
-#elif defined(OS2)
+#elif defined(OS2) || defined(TPF)
     /* OS/2 don't support process group IDs */
     pgrp = getpid();
 #elif defined(MPE)
@@ -2814,15 +2840,15 @@ static void detach(void)
 #else
     if ((pgrp = setpgrp(getpid(), 0)) == -1) {
 	perror("setpgrp");
-	fprintf(stderr, "httpd: setpgrp failed\n");
+	fprintf(stderr, "%s: setpgrp failed\n", ap_server_argv0);
 	exit(1);
     }
 #endif
 
     /* close out the standard file descriptors */
     if (freopen("/dev/null", "r", stdin) == NULL) {
-	fprintf(stderr, "httpd: unable to replace stdin with /dev/null: %s\n",
-		strerror(errno));
+	fprintf(stderr, "%s: unable to replace stdin with /dev/null: %s\n",
+		ap_server_argv0, strerror(errno));
 	/* continue anyhow -- note we can't close out descriptor 0 because we
 	 * have nothing to replace it with, and if we didn't have a descriptor
 	 * 0 the next file would be created with that value ... leading to
@@ -2830,8 +2856,8 @@ static void detach(void)
 	 */
     }
     if (freopen("/dev/null", "w", stdout) == NULL) {
-	fprintf(stderr, "httpd: unable to replace stdout with /dev/null: %s\n",
-		strerror(errno));
+	fprintf(stderr, "%s: unable to replace stdout with /dev/null: %s\n",
+		ap_server_argv0, strerror(errno));
     }
     /* stderr is a tricky one, we really want it to be the error_log,
      * but we haven't opened that yet.  So leave it alone for now and it'll
@@ -3532,7 +3558,7 @@ static void child_main(int child_num_arg)
     /* Only try to switch if we're running as root */
     if (!geteuid() && (
 #ifdef _OSD_POSIX
-	os_init_job_environment(server_conf, ap_user_name) != 0 || 
+	os_init_job_environment(server_conf, ap_user_name, one_process) != 0 || 
 #endif
 	setuid(ap_user_id) == -1)) {
 	ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
@@ -3590,7 +3616,7 @@ static void child_main(int child_num_arg)
 	ap_clear_pool(ptrans);
 
 	ap_sync_scoreboard_image();
-	if (ap_scoreboard_image->global.exit_generation >= generation) {
+	if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 	    clean_child_exit(0);
 	}
 
@@ -3731,7 +3757,7 @@ static void child_main(int child_num_arg)
 	     * without reliable signals
 	     */
 	    ap_sync_scoreboard_image();
-	    if (ap_scoreboard_image->global.exit_generation >= generation) {
+	    if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 		clean_child_exit(0);
 	    }
 	}
@@ -3836,7 +3862,7 @@ static void child_main(int child_num_arg)
 				       (request_rec *) NULL);
 
 	    ap_sync_scoreboard_image();
-	    if (ap_scoreboard_image->global.exit_generation >= generation) {
+	    if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 		ap_bclose(conn_io);
 		clean_child_exit(0);
 	    }
@@ -3904,7 +3930,13 @@ static int make_child(server_rec *s, int slot, time_t now)
     Explain1("Starting new child in slot %d", slot);
     (void) ap_update_child_status(slot, SERVER_STARTING, (request_rec *) NULL);
 
+
+#ifndef _OSD_POSIX
     if ((pid = fork()) == -1) {
+#else /*_OSD_POSIX*/
+    /* BS2000 requires a "special" version of fork() before a setuid() call */
+    if ((pid = os_fork()) == -1) {
+#endif /*_OSD_POSIX*/
 	ap_log_error(APLOG_MARK, APLOG_ERR, s, "fork: Unable to fork new process");
 
 	/* fork didn't succeed. Fix the scoreboard or else
@@ -4097,7 +4129,17 @@ static void perform_idle_server_maintenance(void)
 		    idle_count, total_non_dead);
 	    }
 	    for (i = 0; i < free_length; ++i) {
+#ifdef TPF
+        if(make_child(server_conf, free_slots[i], now) == -1) {
+            if(free_length == 1) {
+                shutdown_pending = 1;
+                ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
+                "No active child processes: shutting down");
+            }
+        }
+#else
 		make_child(server_conf, free_slots[i], now);
+#endif /* TPF */
 	    }
 	    /* the next time around we want to spawn twice as many if this
 	     * wasn't good enough, but not if we've just done a graceful
@@ -4141,27 +4183,27 @@ static void process_child_status(int pid, ap_wait_t status)
 #ifdef WCOREDUMP
 	    if (WCOREDUMP(status)) {
 		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
-		    server_conf,
-		    "httpd: child pid %d exit signal %s (%d), "
-		    "possible coredump in %s",
-		    pid, (WTERMSIG(status) >= NumSIG) ? "" : 
-		    SYS_SIGLIST[WTERMSIG(status)], WTERMSIG(status),
-		    ap_coredump_dir);
+			     server_conf,
+			     "child pid %d exit signal %s (%d), "
+			     "possible coredump in %s",
+			     pid, (WTERMSIG(status) >= NumSIG) ? "" : 
+			     SYS_SIGLIST[WTERMSIG(status)], WTERMSIG(status),
+			     ap_coredump_dir);
 	    }
 	    else {
 #endif
 		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
-		    server_conf,
-		    "httpd: child pid %d exit signal %s (%d)",
-		    pid, SYS_SIGLIST[WTERMSIG(status)], WTERMSIG(status));
+			     server_conf,
+			     "child pid %d exit signal %s (%d)", pid,
+			     SYS_SIGLIST[WTERMSIG(status)], WTERMSIG(status));
 #ifdef WCOREDUMP
 	    }
 #endif
 #else
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
-		server_conf,
-		"httpd: child pid %d exit signal %d",
-		pid, WTERMSIG(status));
+			 server_conf,
+			 "child pid %d exit signal %d",
+			 pid, WTERMSIG(status));
 #endif
 	}
     }
@@ -4186,7 +4228,6 @@ static void standalone_main(int argc, char **argv)
     ap_standalone = 1;
 
     is_graceful = 0;
-    ++generation;
 
     if (!one_process) {
 	detach();
@@ -4347,12 +4388,12 @@ static void standalone_main(int argc, char **argv)
 		if ( pidfile != NULL && unlink(pidfile) == 0)
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 				 server_conf,
-				 "httpd: removed PID file %s (pid=%ld)",
+				 "removed PID file %s (pid=%ld)",
 				 pidfile, (long)getpid());
 	    }
 
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
-			"httpd: caught SIGTERM, shutting down");
+			"caught SIGTERM, shutting down");
 	    clean_parent_exit(0);
 	}
 
@@ -4365,16 +4406,18 @@ static void standalone_main(int argc, char **argv)
 	    clean_parent_exit(0);
 	}
 
+	/* advance to the next generation */
+	/* XXX: we really need to make sure this new generation number isn't in
+	 * use by any of the children.
+	 */
+	++ap_my_generation;
+	ap_scoreboard_image->global.running_generation = ap_my_generation;
+	update_scoreboard_global();
+
 	if (is_graceful) {
 #ifndef SCOREBOARD_FILE
 	    int i;
 #endif
-
-	    /* USE WITH CAUTION:  Graceful restarts are not known to work
-	     * in various configurations on the architectures we support. */
-	    ap_scoreboard_image->global.exit_generation = generation;
-	    update_scoreboard_global();
-
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
 			"SIGUSR1 received.  Doing graceful restart");
 
@@ -4405,7 +4448,6 @@ static void standalone_main(int argc, char **argv)
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
 			"SIGHUP received.  Attempting to restart");
 	}
-	++generation;
     } while (restart_pending);
 
     /*add_common_vars(NULL);*/
@@ -4422,7 +4464,10 @@ int REALMAIN(int argc, char *argv[])
 {
     int c;
     int configtestonly = 0;
-
+    int sock_in;
+    int sock_out;
+    char *s;
+    
 #ifdef SecureWare
     if (set_auth_parameters(argc, argv) < 0)
 	perror("set_auth_parameters");
@@ -4441,14 +4486,21 @@ int REALMAIN(int argc, char *argv[])
 
     common_init();
     
-    ap_server_argv0 = argv[0];
+    if ((s = strrchr(argv[0], '/')) != NULL) {
+	ap_server_argv0 = ++s;
+    }
+    else {
+	ap_server_argv0 = argv[0];
+    }
+    
     ap_cpystrn(ap_server_root, HTTPD_ROOT, sizeof(ap_server_root));
     ap_cpystrn(ap_server_confname, SERVER_CONFIG_FILE, sizeof(ap_server_confname));
 
     ap_setup_prelinked_modules();
 
+#ifndef TPF
     while ((c = getopt(argc, argv,
-				    "D:C:c:Xd:f:vVhlL:St"
+				    "D:C:c:Xd:f:vVlLR:Sth"
 #ifdef DEBUG_SIGSTOP
 				    "Z:"
 #endif
@@ -4482,11 +4534,11 @@ int REALMAIN(int argc, char *argv[])
 	    ap_set_version();
 	    show_compile_settings();
 	    exit(0);
-	case 'h':
-	    ap_show_directives();
-	    exit(0);
 	case 'l':
 	    ap_show_modules();
+	    exit(0);
+	case 'L':
+	    ap_show_directives();
 	    exit(0);
 	case 'X':
 	    ++one_process;	/* Weird debugging mode. */
@@ -4497,7 +4549,7 @@ int REALMAIN(int argc, char *argv[])
 	    break;
 #endif
 #ifdef SHARED_CORE
-	case 'L':
+	case 'R':
 	    /* just ignore this option here, because it has only
 	     * effect when SHARED_CORE is used and then it was
 	     * already handled in the Shared Core Bootstrap
@@ -4511,16 +4563,22 @@ int REALMAIN(int argc, char *argv[])
 	case 't':
 	    configtestonly = 1;
 	    break;
+	case 'h':
+	    usage(argv[0]);
 	case '?':
 	    usage(argv[0]);
 	}
     }
+#endif /* TPF */
 
     ap_suexec_enabled = init_suexec();
     server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
 
     if (configtestonly) {
         fprintf(stderr, "Syntax OK\n");
+        exit(0);
+    }
+    if (ap_dump_settings) {
         exit(0);
     }
 
@@ -4540,8 +4598,10 @@ int REALMAIN(int argc, char *argv[])
 	BUFF *cio;
 	NET_SIZE_T l;
 
+	ap_set_version();
 	/* Yes this is called twice. */
 	ap_init_modules(pconf, server_conf);
+	version_locked++;
 	ap_open_logs(server_conf, pconf);
 	ap_init_modules(pconf, server_conf);
 	set_group_privs();
@@ -4570,33 +4630,46 @@ int REALMAIN(int argc, char *argv[])
 	    exit(0);
 	}
 
+#ifdef TPF
+    signal(SIGALRM, alrm_handler);
+    ecbptr()->ebrout = PRIMECRAS;
+#endif /* TPF */
+
+#ifdef TPF
+/* TPF only passes the incoming socket number from the internet daemon
+   in ebw000 */
+    sock_in = * (int*)(&(ecbptr()->ebw000));
+    sock_out = * (int*)(&(ecbptr()->ebw000));
+#elif defined(MPE)
+/* HP MPE 5.5 inetd only passes the incoming socket as stdin (fd 0), whereas
+   HPUX inetd passes the incoming socket as stdin (fd 0) and stdout (fd 1).
+   Go figure.  SR 5003355016 has been submitted to request that the existing
+   functionality be documented, and then to enhance the functionality to be
+   like HPUX. */
+    sock_in = fileno(stdin);
+    sock_out = fileno(stdin);
+#else
+    sock_in = fileno(stdin);
+    sock_out = fileno(stdout);
+#endif
+
 	l = sizeof(sa_client);
-	if ((getpeername(fileno(stdin), &sa_client, &l)) < 0) {
+	if ((getpeername(sock_in, &sa_client, &l)) < 0) {
 /* get peername will fail if the input isn't a socket */
 	    perror("getpeername");
 	    memset(&sa_client, '\0', sizeof(sa_client));
 	}
 
 	l = sizeof(sa_server);
-	if (getsockname(fileno(stdin), &sa_server, &l) < 0) {
+	if (getsockname(sock_in, &sa_server, &l) < 0) {
 	    perror("getsockname");
 	    fprintf(stderr, "Error getting local address\n");
 	    exit(1);
 	}
 	server_conf->port = ntohs(((struct sockaddr_in *) &sa_server)->sin_port);
 	cio = ap_bcreate(ptrans, B_RDWR | B_SOCKET);
-#ifdef MPE
-/* HP MPE 5.5 inetd only passes the incoming socket as stdin (fd 0), whereas
-   HPUX inetd passes the incoming socket as stdin (fd 0) and stdout (fd 1).
-   Go figure.  SR 5003355016 has been submitted to request that the existing
-   functionality be documented, and then to enhance the functionality to be
-   like HPUX. */
-
-	cio->fd = fileno(stdin);
-#else
-	cio->fd = fileno(stdout);
-#endif
-	cio->fd_in = fileno(stdin);
+        cio->fd = sock_out;
+        cio->fd_in = sock_in;
 	conn = new_connection(ptrans, server_conf, cio,
 			          (struct sockaddr_in *) &sa_client,
 			          (struct sockaddr_in *) &sa_server, -1);
@@ -5103,7 +5176,7 @@ void worker_main(void)
 
     my_pid = getpid();
 
-    ++generation;
+    ++ap_my_generation;
 
     copy_listeners(pconf);
     ap_restart_time = time(NULL);
@@ -5483,7 +5556,6 @@ int master_main(int argc, char **argv)
     processes_to_create = nchild;
 
     is_graceful = 0;
-    ++generation;
 
     ap_snprintf(signal_prefix_string, sizeof(signal_prefix_string),
 	        "ap%d", getpid());
@@ -5644,7 +5716,7 @@ int master_main(int argc, char **argv)
  			"SetEvent for child process in slot #%d", i);
 	    }
 	}
-	++generation;
+	++ap_my_generation;
     } while (restart_pending);
 
     /* If we dropped out of the loop we definitly want to die completely. We need to
@@ -5654,8 +5726,6 @@ int master_main(int argc, char **argv)
     APD2("*** main process shutdown, processes=%d ***", current_live_processes);
 
 die_now:
-    CloseHandle(signal_restart_event);
-    CloseHandle(signal_shutdown_event);
 
     tmstart = time(NULL);
     while (current_live_processes && ((tmstart+60) > time(NULL))) {
@@ -5676,6 +5746,9 @@ die_now:
 	TerminateProcess((HANDLE) process_handles[i], 1);
     }
 
+    CloseHandle(signal_restart_event);
+    CloseHandle(signal_shutdown_event);
+
     /* cleanup pid file on normal shutdown */
     {
 	const char *pidfile = NULL;
@@ -5683,7 +5756,7 @@ die_now:
 	if ( pidfile != NULL && unlink(pidfile) == 0)
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 			 server_conf,
-			 "httpd: removed PID file %s (pid=%ld)",
+			 "removed PID file %s (pid=%ld)",
 			 pidfile, (long)getpid());
     }
 
@@ -5761,10 +5834,16 @@ int REALMAIN(int argc, char *argv[])
     int install = 0;
     int configtestonly = 0;
     char *signal_to_send = NULL;
+    char *s;
     
     common_init();
 
-    ap_server_argv0 = argv[0];
+    if ((s = strrchr(argv[0], '/')) != NULL) {
+	ap_server_argv0 = ++s;
+    }
+    else {
+	ap_server_argv0 = argv[0];
+    }
 
     /* Get the serverroot from the registry, if it exists. This can be
      * overridden by a command line -d argument.
@@ -5785,7 +5864,7 @@ int REALMAIN(int argc, char *argv[])
 
     ap_setup_prelinked_modules();
 
-    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVhlZ:iusStk:")) != -1) {
+    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLZ:iusSthk:")) != -1) {
         char **new;
 	switch (c) {
 	case 'c':
@@ -5843,11 +5922,11 @@ int REALMAIN(int argc, char *argv[])
 	    ap_set_version();
 	    show_compile_settings();
 	    exit(0);
-	case 'h':
-	    ap_show_directives();
-	    exit(0);
 	case 'l':
 	    ap_show_modules();
+	    exit(0);
+	case 'L':
+	    ap_show_directives();
 	    exit(0);
 	case 'X':
 	    ++one_process;	/* Weird debugging mode. */
@@ -5855,6 +5934,8 @@ int REALMAIN(int argc, char *argv[])
 	case 't':
 	    configtestonly = 1;
 	    break;
+	case 'h':
+	    usage(argv[0]);
 	case '?':
 	    usage(argv[0]);
 	}
@@ -5887,11 +5968,11 @@ int REALMAIN(int argc, char *argv[])
     set_group_privs();
 
 #ifdef OS2
-    printf("%s \n", ap_get_server_version());
+    printf("%s running...\n", ap_get_server_version());
 #endif
 #ifdef WIN32
     if (!child) {
-	printf("%s \n", ap_get_server_version());
+	printf("%s running...\n", ap_get_server_version());
     }
 #endif
 
@@ -5971,7 +6052,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifndef SHARED_CORE_EXECUTABLE_PROGRAM
-#define SHARED_CORE_EXECUTABLE_PROGRAM "libhttpd.ep"
+#define SHARED_CORE_EXECUTABLE_PROGRAM "lib" TARGET ".ep"
 #endif
 
 extern char *optarg;
@@ -5992,7 +6073,7 @@ int main(int argc, char *argv[], char *envp[])
      * but only handle the -L option 
      */
     llp_dir = SHARED_CORE_DIR;
-    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVhlL:SZ:t")) != -1) {
+    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLR:SZ:th")) != -1) {
 	switch (c) {
 	case 'D':
 	case 'C':
@@ -6002,14 +6083,15 @@ int main(int argc, char *argv[], char *envp[])
 	case 'f':
 	case 'v':
 	case 'V':
-	case 'h':
 	case 'l':
+	case 'L':
 	case 'S':
 	case 'Z':
 	case 't':
+	case 'h':
 	case '?':
 	    break;
-	case 'L':
+	case 'R':
 	    llp_dir = strdup(optarg);
 	    break;
 	}
@@ -6052,8 +6134,8 @@ int main(int argc, char *argv[], char *envp[])
      */
     if (execve(prog, argv, envp) == -1) {
 	fprintf(stderr, 
-		"httpd: Unable to exec Shared Core Executable Program `%s'\n",
-		prog);
+		"%s: Unable to exec Shared Core Executable Program `%s'\n",
+		argv[0], prog);
 	return 1;
     }
     else

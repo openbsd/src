@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1996-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1996-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -202,6 +202,7 @@
 #define RULEFLAG_FORBIDDEN          1<<9
 #define RULEFLAG_GONE               1<<10
 #define RULEFLAG_QSAPPEND           1<<11
+#define RULEFLAG_NOCASE             1<<12
 
 #define MAPTYPE_TXT                 1<<0
 #define MAPTYPE_DBM                 1<<1
@@ -427,6 +428,8 @@ static char *lookup_map_internal(request_rec *r,
                                  char *key);
 static char *rewrite_mapfunc_toupper(request_rec *r, char *key);
 static char *rewrite_mapfunc_tolower(request_rec *r, char *key);
+static char *rewrite_mapfunc_escape(request_rec *r, char *key);
+static char *rewrite_mapfunc_unescape(request_rec *r, char *key);
 static char *select_random_value_part(request_rec *r, char *value);
 static void  rewrite_rand_init(void);
 static int   rewrite_rand(int l, int h);

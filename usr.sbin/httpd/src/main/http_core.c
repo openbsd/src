@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -418,6 +418,8 @@ void ap_core_reorder_directories(pool *p, server_rec *s)
     qsort(sortbin, nelts, sizeof(*sortbin), reorder_sorter);
 
     /* and now build a new array */
+    /* XXX: uh I don't see why we can't reuse the old array, what
+     * was I thinking? -djg */
     sec = ap_make_array(p, nelts, sizeof(void *));
     for (i = 0; i < nelts; ++i) {
 	*(void **)ap_push_array(sec) = sortbin[i].elt;
@@ -886,15 +888,23 @@ static const char *set_error_document(cmd_parms *cmd, core_dir_config *conf,
         return ap_pstrcat(cmd->pool, "Unsupported HTTP response code ",
 			  w, NULL);
     }
-                
-    /* Store it... */
 
-    if (conf->response_code_strings == NULL) {
-	conf->response_code_strings =
-	    ap_pcalloc(cmd->pool,
-		       sizeof(*conf->response_code_strings) * RESPONSE_CODES);
+    /* The entry should be ignored if it is a full URL for a 401 error */
+
+    if (error_number == 401 &&
+	line[0] != '/' && line[0] != '"') { /* Ignore it... */
+	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, NULL,
+		     "cannot use a full URL in a 401 ErrorDocument "
+		     "directive --- ignoring!");
     }
-    conf->response_code_strings[index_number] = ap_pstrdup(cmd->pool, line);
+    else { /* Store it... */
+    	if (conf->response_code_strings == NULL) {
+	    conf->response_code_strings =
+		ap_pcalloc(cmd->pool,
+			   sizeof(*conf->response_code_strings) * RESPONSE_CODES);
+        }
+        conf->response_code_strings[index_number] = ap_pstrdup(cmd->pool, line);
+    }   
 
     return NULL;
 }
@@ -1068,28 +1078,18 @@ CORE_EXPORT_NONSTD(const char *) ap_limit_section(cmd_parms *cmd, void *dummy,
     
     while (limited_methods[0]) {
         char *method = ap_getword_conf(cmd->pool, &limited_methods);
-	if (!strcmp(method, "GET")) {
-	    limited |= (1 << M_GET);
-	}
-	else if (!strcmp(method, "PUT")) {
-	    limited |= (1 << M_PUT);
-	}
-	else if (!strcmp(method, "POST")) {
-	    limited |= (1 << M_POST);
-	}
-	else if (!strcmp(method, "DELETE")) {
-	    limited |= (1 << M_DELETE);
-	}
-        else if (!strcmp(method, "CONNECT")) {
-	    limited |= (1 << M_CONNECT);
-	}
-	else if (!strcmp(method, "OPTIONS")) {
-	    limited |= (1 << M_OPTIONS);
-	}
-	else {
-	    return ap_pstrcat(cmd->pool, "unknown method \"",
-			      method, "\" in <Limit>", NULL);
-	}
+        int  methnum = ap_method_number_of(method);
+
+        if (methnum == M_TRACE) {
+            return "TRACE cannot be controlled by <Limit>";
+        }
+        else if (methnum == M_INVALID) {
+            return ap_pstrcat(cmd->pool, "unknown method \"",
+                              method, "\" in <Limit>", NULL);
+        }
+        else {
+            limited |= (1 << methnum);
+        }
     }
 
     cmd->limited = limited;
@@ -1149,6 +1149,15 @@ static const char *end_nested_section(cmd_parms *cmd, void *dummy)
     return cmd->end_token;
 }
 
+/*
+ * Report a missing-'>' syntax error.
+ */
+static char *unclosed_directive(cmd_parms *cmd)
+{
+    return ap_pstrcat(cmd->pool, cmd->cmd->name,
+		      "> directive missing closing '>'", NULL);
+}
+
 static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
 {
     const char *errmsg;
@@ -1167,9 +1176,11 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
         return err;
     }
 
-    if (endp) {
-        *endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
 #ifdef OS2
@@ -1238,9 +1249,11 @@ static const char *urlsection(cmd_parms *cmd, void *dummy, const char *arg)
         return err;
     }
 
-    if (endp) {
-        *endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
     cmd->override = OR_ALL|ACCESS_CONF;
@@ -1304,9 +1317,11 @@ static const char *filesection(cmd_parms *cmd, core_dir_config *c,
         return err;
     }
 
-    if (endp) {
-        *endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
     /* Only if not an .htaccess file */
@@ -1376,9 +1391,12 @@ static const char *start_ifmod(cmd_parms *cmd, void *dummy, char *arg)
     module *found;
     int nest = 1;
 
-    if (endp) {
-        *endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
+
     if (not) {
         arg++;
     }
@@ -1405,7 +1423,7 @@ static const char *start_ifmod(cmd_parms *cmd, void *dummy, char *arg)
     return NULL;
 }
 
-static int ap_exists_config_define(char *name)
+API_EXPORT(int) ap_exists_config_define(char *name)
 {
     char **defines;
     int i;
@@ -1433,9 +1451,12 @@ static const char *start_ifdefine(cmd_parms *cmd, void *dummy, char *arg)
     int nest = 1;
 
     endp = strrchr(arg, '>');
-    if (endp) {
-	*endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
+
     if (arg[0] == '!') {
         not = 1;
 	arg++;
@@ -1477,9 +1498,11 @@ static const char *virtualhost_section(cmd_parms *cmd, void *dummy, char *arg)
         return err;
     }
 
-    if (endp) {
-        *endp = '\0';
+    if (endp == NULL) {
+	return unclosed_directive(cmd);
     }
+
+    *endp = '\0';
     
     /* FIXME: There's another feature waiting to happen here -- since you
 	can now put multiple addresses/names on a single <VirtualHost>
@@ -1665,6 +1688,11 @@ static const char *set_send_buffer_size(cmd_parms *cmd, void *dummy, char *arg)
 
 static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 {
+#ifdef WIN32
+    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, cmd->server,
+		 "User directive has no affect on Win32");
+    cmd->server->server_uid = ap_user_id = 1;
+#else
     const char *err = ap_check_cmd_context(cmd, NOT_IN_DIR_LOC_FILE|NOT_IN_LIMIT);
     if (err != NULL) {
         return err;
@@ -1700,6 +1728,7 @@ static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 	exit (1);
     }
 #endif
+#endif /* WIN32 */
 
     return NULL;
 }
@@ -2557,10 +2586,10 @@ static const command_rec core_cmds[] = {
   "Whether persistent connections should be On or Off" },
 { "IdentityCheck", set_idcheck, NULL, RSRC_CONF|ACCESS_CONF, FLAG,
   "Enable identd (RFC 1413) user lookups - SLOW" },
-{ "ContentDigest", set_content_md5, NULL, RSRC_CONF|ACCESS_CONF|OR_AUTHCFG,
+{ "ContentDigest", set_content_md5, NULL, OR_OPTIONS,
   FLAG, "whether or not to send a Content-MD5 header with each request" },
 { "UseCanonicalName", set_use_canonical_name, NULL,
-  RSRC_CONF|ACCESS_CONF|OR_AUTHCFG, FLAG,
+  OR_OPTIONS, FLAG,
   "Whether or not to always use the canonical ServerName : Port when "
   "constructing URLs" },
 { "StartServers", set_daemons_to_start, NULL, RSRC_CONF, TAKE1,
@@ -2637,7 +2666,7 @@ static const command_rec core_cmds[] = {
   "Limit (0 = unlimited) on max number of header fields in a request message"},
 { "LimitRequestBody", set_limit_req_body,
   (void*)XtOffsetOf(core_dir_config, limit_req_body),
-  RSRC_CONF|ACCESS_CONF|OR_ALL, TAKE1,
+  OR_ALL, TAKE1,
   "Limit (in bytes) on maximum size of request message body" },
 { NULL },
 };
@@ -2754,7 +2783,7 @@ static int default_handler(request_rec *r)
 	else {
 	    emsg = ap_pstrcat(r->pool, emsg, r->filename, r->path_info, NULL);
 	}
-	ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r, emsg);
+	ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r, "%s", emsg);
 	return HTTP_NOT_FOUND;
     }
     if (r->method_number != M_GET) {
@@ -2879,6 +2908,7 @@ static int default_handler(request_rec *r)
 
 static const handler_rec core_handlers[] = {
 { "*/*", default_handler },
+{ "default-handler", default_handler },
 { NULL }
 };
 

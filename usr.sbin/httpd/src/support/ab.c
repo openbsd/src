@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,8 +155,8 @@ struct data {
     int time;                   /* time in ms for connection */
 };
 
-#define min(a,b) ((a)<(b))?(a):(b)
-#define max(a,b) ((a)>(b))?(a):(b)
+#define ap_min(a,b) ((a)<(b))?(a):(b)
+#define ap_max(a,b) ((a)>(b))?(a):(b)
 
 /* --------------------- GLOBALS ---------------------------- */
 
@@ -320,10 +320,10 @@ static void output_results(void)
 
         for (i = 0; i < requests; i++) {
             struct data s = stats[i];
-            mincon = min(mincon, s.ctime);
-            mintot = min(mintot, s.time);
-            maxcon = max(maxcon, s.ctime);
-            maxtot = max(maxtot, s.time);
+            mincon = ap_min(mincon, s.ctime);
+            mintot = ap_min(mintot, s.time);
+            maxcon = ap_max(maxcon, s.ctime);
+            maxtot = ap_max(maxtot, s.time);
             totalcon += s.ctime;
             total += s.time;
         }
@@ -339,7 +339,7 @@ static void output_results(void)
 
 /* --------------------------------------------------------- */
 
-/* start asnchronous non-blocking connection */
+/* start asynchronous non-blocking connection */
 
 static void start_connect(struct connection *c)
 {
@@ -688,7 +688,7 @@ static void copyright(void)
 {
     printf("This is ApacheBench, Version %s\n", VERSION);
     printf("Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/\n");
-    printf("Copyright (c) 1998 The Apache Group, http://www.apache.org/\n");
+    printf("Copyright (c) 1998-1999 The Apache Group, http://www.apache.org/\n");
     printf("\n");
 }
 

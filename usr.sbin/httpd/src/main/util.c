@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -210,6 +210,14 @@ API_EXPORT(struct tm *) ap_get_gmtoff(int *tz)
 }
 #endif
 
+/* Roy owes Rob beer. */
+/* Rob owes Roy dinner. */
+
+/* These legacy comments would make a lot more sense if Roy hadn't
+ * replaced the old later_than() routine with util_date.c.
+ *
+ * Well, okay, they still wouldn't make any sense.
+ */
 
 /* Match = 0, NoMatch = 1, Abort = -1
  * Based loosely on sections of wildmat.c by Rich Salz
@@ -424,6 +432,13 @@ API_EXPORT(void) ap_no2slash(char *name)
     char *d, *s;
 
     s = d = name;
+
+#ifdef WIN32
+    /* Check for UNC names.  Leave leading two slashes. */
+    if (s[0] == '/' && s[1] == '/')
+        *d++ = *s++;
+#endif
+
     while (*s) {
 	if ((*d++ = *s) == '/') {
 	    do {
@@ -746,6 +761,14 @@ API_EXPORT(configfile_t *) ap_pcfg_openfile(pool *p, const char *name)
         return NULL;
     }
 
+    if (!ap_os_is_filename_valid(name)) {
+        ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
+                    "Access to config file %s denied: not a valid filename",
+                    name);
+	errno = EACCES;
+        return NULL;
+    }
+
     file = ap_pfopen(p, name, "r");
 #ifdef DEBUG
     saved_errno = errno;
@@ -759,11 +782,13 @@ API_EXPORT(configfile_t *) ap_pcfg_openfile(pool *p, const char *name)
 
     if (fstat(fileno(file), &stbuf) == 0 &&
         !S_ISREG(stbuf.st_mode) &&
-#ifdef WIN32
-        strcasecmp(name, "nul") != 0) {
+#if defined(WIN32) || defined(OS2)
+        !(strcasecmp(name, "nul") == 0 ||
+          (strlen(name) >= 4 &&
+           strcasecmp(name + strlen(name) - 4, "/nul") == 0))) {
 #else
         strcmp(name, "/dev/null") != 0) {
-#endif
+#endif /* WIN32 || OS2 */
 	saved_errno = errno;
         ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
                     "Access to file %s denied by server: not a regular file",
@@ -1236,7 +1261,7 @@ API_EXPORT(char *) ap_os_escape_path(pool *p, const char *path, int partial)
     return copy;
 }
 
-/* escape_uri is now a macro for os_escape_path */
+/* ap_escape_uri is now a macro for os_escape_path */
 
 API_EXPORT(char *) ap_escape_html(pool *p, const char *s)
 {
@@ -1251,7 +1276,8 @@ API_EXPORT(char *) ap_escape_html(pool *p, const char *s)
 	    j += 4;
 
     if (j == 0)
-	return ap_pstrdup(p, s);
+	return ap_pstrndup(p, s, i);
+
     x = ap_palloc(p, i + j + 1);
     for (i = 0, j = 0; s[i] != '\0'; i++, j++)
 	if (s[i] == '<') {
@@ -1428,7 +1454,7 @@ char *strstr(char *s1, char *s2)
 #ifdef NEED_INITGROUPS
 int initgroups(const char *name, gid_t basegid)
 {
-#if defined(QNX) || defined(MPE) || defined(BEOS) || defined(_OSD_POSIX)
+#if defined(QNX) || defined(MPE) || defined(BEOS) || defined(_OSD_POSIX) || defined(TPF)
 /* QNX, MPE and BeOS do not appear to support supplementary groups. */
     return 0;
 #else /* ndef QNX */
@@ -1517,7 +1543,7 @@ API_EXPORT(uid_t) ap_uname2id(const char *name)
 	return (atoi(&name[1]));
 
     if (!(ent = getpwnam(name))) {
-	fprintf(stderr, "httpd: bad user name %s\n", name);
+	fprintf(stderr, "%s: bad user name %s\n", ap_server_argv0, name);
 	exit(1);
     }
     return (ent->pw_uid);
@@ -1535,7 +1561,7 @@ API_EXPORT(gid_t) ap_gname2id(const char *name)
 	return (atoi(&name[1]));
 
     if (!(ent = getgrnam(name))) {
-	fprintf(stderr, "httpd: bad group name %s\n", name);
+	fprintf(stderr, "%s: bad group name %s\n", ap_server_argv0, name);
 	exit(1);
     }
     return (ent->gr_gid);
@@ -1626,7 +1652,8 @@ char *ap_get_local_host(pool *a)
     }
     str[MAXHOSTNAMELEN] = '\0';
     if ((!(p = gethostbyname(str))) || (!(server_hostname = find_fqdn(a, p)))) {
-	fprintf(stderr, "httpd: cannot determine local host name.\n");
+	fprintf(stderr, "%s: cannot determine local host name.\n",
+		ap_server_argv0);
 	fprintf(stderr, "Use the ServerName directive to set it manually.\n");
 	exit(1);
     }
