@@ -129,5 +129,6 @@ make_desktop(hfsvol *vol, int end)
 	/* set DB file attributes */
 	if (hfs_setattr(vol, DF, &ent) < 0)
 	    perr(hfs_error);
+	return 0;
 }
 #endif /* APPLE_HYB */ 
