@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.12 2002/10/22 00:39:23 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.13 2002/10/25 15:18:20 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,7 +165,8 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	    a->rule_flag != b->rule_flag ||
 	    a->min_ttl != b->min_ttl ||
 	    a->tos != b->tos ||
-	    a->allow_opts != b->allow_opts)
+	    a->allow_opts != b->allow_opts ||
+	    a->ifnot != b->ifnot)
 		return (1);
 	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
 	    PF_ANEQ(&a->src.mask, &b->src.mask, a->af) ||
@@ -181,9 +182,8 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	    a->dst.not != b->dst.not ||
 	    a->dst.port_op != b->dst.port_op)
 		return (1);
-	if (strcmp(a->ifname, b->ifname))
-		return (1);
-	if (a->ifnot != b->ifnot)
+	if (strcmp(a->ifname, b->ifname) ||
+	    strcmp(a->label, b->label))
 		return (1);
 	return (0);
 }
