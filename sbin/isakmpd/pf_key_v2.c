@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.143 2004/06/21 15:15:38 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.144 2004/06/21 18:41:06 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -859,7 +859,6 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #endif
 #if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
 	struct sadb_x_udpencap udpencap;
-	const char *errstr;
 #endif
 #ifdef USE_DEBUG
 	char           *addr_str;
@@ -1135,18 +1134,10 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
 		udpencap.sadb_x_udpencap_len =
 		    sizeof udpencap / PF_KEY_V2_CHUNK;
-		udpencap.sadb_x_udpencap_port =
-		    strtonum(udp_encap_default_port ? udp_encap_default_port :
-			UDP_ENCAP_DEFAULT_PORT_STR, 0, USHRT_MAX, &errstr);
-		if (errstr)
-			log_print("pf_key_v2_set_spi: bad port for UDPENCAP");
-		else {
-			udpencap.sadb_x_udpencap_port =
-			    htons(udpencap.sadb_x_udpencap_port);
-			if (pf_key_v2_msg_add(update,
-			    (struct sadb_ext *)&udpencap, 0) == -1)
-				goto cleanup;
-		}
+		udpencap.sadb_x_udpencap_port = sockaddr_port(dst);
+		if (pf_key_v2_msg_add(update, (struct sadb_ext *)&udpencap, 0)
+		    == -1)
+			goto cleanup;
 	}
 #endif
 
