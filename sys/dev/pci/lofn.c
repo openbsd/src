@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.8 2001/07/08 18:05:43 brad Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.9 2001/08/12 20:03:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -42,11 +42,9 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <vm/vm.h>
-#include <vm/vm_extern.h>
-#include <vm/pmap.h>
-#include <machine/pmap.h>
 #include <sys/device.h>
+
+#include <vm/vm.h>
 
 #include <crypto/cryptodev.h>
 #include <dev/rndvar.h>

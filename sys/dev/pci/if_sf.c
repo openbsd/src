@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.12 2001/06/27 06:34:48 kjc Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.13 2001/08/12 20:03:49 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -110,7 +110,6 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
 
 #include <sys/device.h>
 

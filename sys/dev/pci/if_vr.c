@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.18 2001/06/27 06:34:50 kjc Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.19 2001/08/12 20:03:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -88,7 +88,6 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

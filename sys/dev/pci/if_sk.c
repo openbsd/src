@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.13 2001/06/25 02:18:47 fgsch Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.14 2001/08/12 20:03:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -101,9 +101,7 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
 #include <vm/vm_kern.h>
-#include <vm/vm_extern.h>
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>

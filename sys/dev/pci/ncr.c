@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.57 2001/06/12 15:40:32 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.58 2001/08/12 20:03:49 mickey Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -224,7 +224,6 @@
 #include <machine/clock.h>
 #endif
 #include <vm/vm.h>
-#include <vm/pmap.h>
 #include <vm/vm_extern.h>
 #endif /* KERNEL */
 
@@ -1464,7 +1463,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.57 2001/06/12 15:40:32 niklas Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.58 2001/08/12 20:03:49 mickey Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11

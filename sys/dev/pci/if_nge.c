@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.6 2001/07/06 06:18:43 angelos Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.7 2001/08/12 20:03:49 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -109,9 +109,7 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
 #include <vm/vm_kern.h>
-#include <vm/vm_extern.h>
 
 #define NGE_USEIOSPACE
 

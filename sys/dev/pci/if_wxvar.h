@@ -169,7 +169,6 @@ typedef	unsigned long intptr_t;
 #include <net/ethernet.h>
 #include <net/if_arp.h>
 #include <vm/vm.h>
-#include <vm/pmap.h>
 #include <machine/clock.h>
 #include <pci/pcivar.h>
 #include <pci/pcireg.h>
