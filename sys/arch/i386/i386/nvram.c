@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.1 2004/10/03 21:28:34 jcs Exp $ */
+/*	$OpenBSD: nvram.c,v 1.2 2004/10/12 16:17:14 naddy Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -64,7 +64,7 @@ nvramattach(int num)
 	if (nvram_initialized || nvram_csum_valid()) {
 #ifdef NVRAM_DEBUG
 		printf("nvram: initialized\n");
-#endif NVRAM_DEBUG
+#endif
 
 		nvram_initialized = 1;
 		nvram_opened = 0;
