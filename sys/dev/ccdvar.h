@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdvar.h,v 1.6 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: ccdvar.h,v 1.7 2005/02/24 19:36:39 mickey Exp $	*/
 /*	$NetBSD: ccdvar.h,v 1.11 1996/02/28 01:08:32 thorpej Exp $	*/
 
 /*-
@@ -88,11 +88,11 @@
  * A concatenated disk is described at initialization time by this structure.
  */
 struct ccddevice {
+	struct vnode	**ccd_vpp;	/* array of component vnodes */
+	char		**ccd_cpp;	/* array of component pathnames */
 	int		ccd_unit;	/* logical unit of this ccd */
 	int		ccd_interleave;	/* interleave (DEV_BSIZE blocks) */
 	int		ccd_flags;	/* misc. information */
-	struct vnode	**ccd_vpp;	/* array of component vnodes */
-	char		**ccd_cpp;	/* array of component pathnames */
 	int		ccd_ndev;	/* number of component devices */
 };
 
@@ -113,9 +113,12 @@ struct ccd_ioctl {
 #define CCDF_UNIFORM	0x02	/* use LCCD of sizes for uniform interleave */
 #define CCDF_MIRROR	0x04	/* enable data mirroring */
 #define CCDF_OLD	0x08	/* use slower but less restrictive I/O code */
+#define	CCDF_BITS \
+    "\020\01swap\02uniform\03mirror\04old"
 
 /* Mask of user-settable ccd flags. */
-#define CCDF_USERMASK	(CCDF_SWAP|CCDF_UNIFORM|CCDF_MIRROR|CCDF_OLD)
+#define CCDF_USERMASK \
+    (CCDF_SWAP|CCDF_UNIFORM|CCDF_MIRROR|CCDF_OLD)
 
 /*
  * Component info table.
@@ -123,11 +126,14 @@ struct ccd_ioctl {
  */
 struct ccdcinfo {
 	struct vnode	*ci_vp;			/* device's vnode */
-	dev_t		ci_dev;			/* XXX: device's dev_t */
-	size_t		ci_size; 		/* size */
 	char		*ci_path;		/* path to component */
+	size_t		ci_size; 		/* size */
 	size_t		ci_pathlen;		/* length of component path */
+	dev_t		ci_dev;			/* XXX: device's dev_t */
+	int		ci_flags;		/* see below */
 };
+
+#define	CCIF_FAILED	0x01	/* had a B_ERROR on this one */
 
 /*
  * Interleave description table.
@@ -156,10 +162,11 @@ struct ccdcinfo {
  * 2 starting at offset 5.
  */
 struct ccdiinfo {
-	int	ii_ndisk;	/* # of disks range is interleaved over */
 	daddr_t	ii_startblk;	/* starting scaled block # for range */
 	daddr_t	ii_startoff;	/* starting component offset (block #) */
 	int	*ii_index;	/* ordered list of components in range */
+	int	*ii_parity;	/* list of parity shifts */
+	int	ii_ndisk;	/* # of disks range is interleaved over */
 };
 
 /*
@@ -176,18 +183,17 @@ struct ccdgeom {
  * A concatenated disk is described after initialization by this structure.
  */
 struct ccd_softc {
-	int		 sc_unit;		/* logical unit number */
-	int		 sc_flags;		/* flags */
-	int		 sc_cflags;		/* configuration flags */
-	size_t		 sc_size;		/* size of ccd */
-	int		 sc_ileave;		/* interleave */
-#define	CCD_MAXNDISKS	65536
-	u_int		 sc_nccdisks;		/* number of components */
-	struct ccdcinfo	 *sc_cinfo;		/* component info */
-	struct ccdiinfo	 *sc_itable;		/* interleave table */
-	struct ccdgeom   sc_geom;		/* pseudo geometry info */
-	char		 sc_xname[8];		/* XXX external name */
-	struct disk	 sc_dkdev;		/* generic disk device info */
+	struct disk	sc_dkdev;		/* generic disk device info */
+	struct ccdgeom	sc_geom;		/* pseudo geometry info */
+	struct ccdcinfo	*sc_cinfo;		/* component info */
+	struct ccdiinfo	*sc_itable;		/* interleave table */
+	char		sc_xname[8];		/* XXX external name */
+	size_t		sc_size;		/* size of ccd */
+	int		sc_flags;		/* flags */
+	int		sc_cflags;		/* copy of ccd_flags */
+	int		sc_ileave;		/* interleave */
+	u_int		sc_nccdisks;		/* # of components */
+	u_int		sc_nccunits;		/* # of components for data */
 };
 
 /* sc_flags */

@@ -1,9 +1,10 @@
-/*	$OpenBSD: ccd.c,v 1.55 2004/02/15 02:45:46 tedu Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.56 2005/02/24 19:36:39 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * Copyright (c) 1997 Niklas Hallqvist.
+ * Copyright (c) 2005 Michael Shalayeff.
  * All rights reserved.
  * 
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,6 +93,7 @@
  *
  * Buffer scatter/gather policy by Niklas Hallqvist.
  */
+/*#define	CCDDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +101,7 @@
 #include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/namei.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -140,27 +143,27 @@ int ccddebug = 0x00;
 #endif
 
 #define	ccdunit(x)	DISKUNIT(x)
-
-struct ccdseg {
-	caddr_t		cs_sgaddr;	/* scatter/gather segment addresses */
-	long		cs_sglen;	/* scatter/gather segment lengths */
-};
+#define CCDLABELDEV(dev)	\
+	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 struct ccdbuf {
 	struct buf	cb_buf;		/* new I/O buf */
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
-	int		cb_unit;	/* target unit */
+	struct ccd_softc*cb_sc;		/* point back to the device */
+	struct ccdbuf	*cb_dep;	/* mutual ptrs for mirror part */
 	int		cb_comp;	/* target component */
 	int		cb_flags;	/* misc. flags */
 #define CBF_MIRROR	0x01		/* we're for a mirror component */
 #define CBF_OLD		0x02		/* use old I/O protocol */
+#define CBF_DONE	0x04		/* this buffer is done */
 
 	int		cb_sgcnt;	/* scatter/gather segment count */
-	struct ccdseg	*cb_sg;		/* scatter/gather segments */
+#define	CCD_SGMAX	(MAXBSIZE >> PAGE_SHIFT)
+	struct ccdseg {
+		caddr_t	cs_sgaddr;	/* scatter/gather segment addresses */
+		long	cs_sglen;	/* scatter/gather segment lengths */
+	} cb_sg[1];
 };
-
-#define CCDLABELDEV(dev)	\
-	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 /* called by main() at boot time */
 void	ccdattach(int);
@@ -170,13 +173,14 @@ void	ccdiodone(struct buf *);
 int	ccdsize(dev_t);
 
 void	ccdstart(struct ccd_softc *, struct buf *);
-void	ccdinterleave(struct ccd_softc *, int);
+void	ccdinterleave(struct ccd_softc *);
 void	ccdintr(struct ccd_softc *, struct buf *);
 int	ccdinit(struct ccddevice *, char **, struct proc *);
 int	ccdlookup(char *, struct proc *p, struct vnode **);
 long	ccdbuffer(struct ccd_softc *, struct buf *, daddr_t, caddr_t,
     long, struct ccdbuf **, int);
-void	ccdgetdisklabel(dev_t);
+void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *,
+    struct cpu_disklabel *, int);
 void	ccdmakedisklabel(struct ccd_softc *);
 int	ccdlock(struct ccd_softc *);
 void	ccdunlock(struct ccd_softc *);
@@ -191,28 +195,35 @@ void	printiinfo(struct ccdiinfo *);
 struct	ccd_softc *ccd_softc;
 struct	ccddevice *ccddevs;
 int	numccd = 0;
+int	ccdbufsizeof;
 
-/* A separate map so that locking on kernel_map won't happen in interrupts */
-static struct vm_map *ccdmap;
+/*
+ * A separate map so that locking on kernel_map won't happen in interrupts
+ * (XXX due to fragmentation this might fail easy and panic the kernel)
+ */
+struct vm_map *ccdmap;
 
 /*
  * Set when a process need some kvm.
  * XXX should we fallback to old I/O policy instead when out of ccd kvm?
  */
-static int ccd_need_kvm = 0;
+int ccd_need_kvm = 0;
+
+/*
+ * struct ccdbuf allocator
+ */
+struct pool	ccdbufpl;
 
 /*
  * Manage the ccd buffer structures.
  */
 INLINE struct ccdbuf *
-getccdbuf()
+getccdbuf(void)
 {
 	struct ccdbuf *cbp;
 
-	cbp = malloc(sizeof (struct ccdbuf), M_DEVBUF, M_WAITOK);
-	bzero(cbp, sizeof (struct ccdbuf));
-	cbp->cb_sg = malloc(sizeof (struct ccdseg) * MAXBSIZE >> PAGE_SHIFT,
-	    M_DEVBUF, M_WAITOK);
+	if ((cbp = pool_get(&ccdbufpl, PR_WAITOK)))
+		bzero(cbp, ccdbufsizeof);
 	return (cbp);
 }
 
@@ -220,8 +231,7 @@ INLINE void
 putccdbuf(cbp)
 	struct ccdbuf *cbp;
 {
-	free((caddr_t)cbp->cb_sg, M_DEVBUF);
-	free((caddr_t)cbp, M_DEVBUF);
+	pool_put(&ccdbufpl, cbp);
 }
 
 /*
@@ -238,6 +248,12 @@ ccdattach(num)
 #endif
 		return;
 	}
+
+	ccdbufsizeof = sizeof(struct ccdbuf) +
+	    (CCD_SGMAX - 1) * sizeof(struct ccdseg);
+	pool_init(&ccdbufpl, ccdbufsizeof, 0, 0, 0, "ccdbufpl", NULL);
+	pool_setlowat(&ccdbufpl, 16);
+	pool_sethiwat(&ccdbufpl, 1024);
 
 	ccd_softc = (struct ccd_softc *)malloc(num * sizeof(struct ccd_softc),
 	    M_DEVBUF, M_NOWAIT);
@@ -277,7 +293,8 @@ ccdinit(ccd, cpaths, p)
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-		printf("ccdinit: unit %d\n", ccd->ccd_unit);
+		printf("ccdinit: unit %d cflags %b\n",
+		    ccd->ccd_unit, ccd->ccd_flags, CCDF_BITS);
 #endif
 
 	cs->sc_size = 0;
@@ -442,42 +459,42 @@ ccdinit(ccd, cpaths, p)
 	 * If uniform interleave is desired set all sizes to that of
 	 * the smallest component.
 	 */
+	ccg->ccg_ntracks = cs->sc_nccunits = cs->sc_nccdisks;
 	if (ccd->ccd_flags & CCDF_UNIFORM) {
 		for (ci = cs->sc_cinfo;
 		     ci < &cs->sc_cinfo[cs->sc_nccdisks]; ci++)
 			ci->ci_size = minsize;
 
 		if (ccd->ccd_flags & CCDF_MIRROR)
-			cs->sc_size = (cs->sc_nccdisks / 2) * minsize;
-		else
-			cs->sc_size = cs->sc_nccdisks * minsize;
+			cs->sc_nccunits = ccg->ccg_ntracks /= 2;
+		cs->sc_size = ccg->ccg_ntracks * minsize;
 	}
+
+	cs->sc_cflags = ccd->ccd_flags;	/* So we can find out later... */
 
 	/*
 	 * Construct the interleave table.
 	 */
-	ccdinterleave(cs, ccd->ccd_unit);
+	ccdinterleave(cs);
 
 	/*
 	 * Create pseudo-geometry based on 1MB cylinders.  It's
 	 * pretty close.
 	 */
 	ccg->ccg_secsize = DEV_BSIZE;
-	ccg->ccg_ntracks = 1;
-	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
-	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
+	ccg->ccg_nsectors = cs->sc_ileave? cs->sc_ileave :
+	    1024 * (1024 / ccg->ccg_secsize);
+	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_ntracks /
+	    ccg->ccg_nsectors;
 
 	cs->sc_flags |= CCDF_INITED;
-	cs->sc_cflags = ccd->ccd_flags;	/* So we can find out later... */
-	cs->sc_unit = ccd->ccd_unit;
 
 	return (0);
 }
 
 void
-ccdinterleave(cs, unit)
+ccdinterleave(cs)
 	struct ccd_softc *cs;
-	int unit;
 {
 	struct ccdcinfo *ci, *smallci;
 	struct ccdiinfo *ii;
@@ -564,7 +581,7 @@ ccdinterleave(cs, unit)
 		 */
 		ix = 0;
 		for (ci = cs->sc_cinfo;
-		    ci < &cs->sc_cinfo[cs->sc_nccdisks]; ci++)
+		    ci < &cs->sc_cinfo[cs->sc_nccunits]; ci++)
 			if (ci->ci_size >= smallci->ci_size)
 				ii->ii_index[ix++] = ci - cs->sc_cinfo;
 		ii->ii_ndisk = ix;
@@ -612,7 +629,7 @@ ccdopen(dev, flags, fmt, p)
 	 * the in-core disklabel.
 	 */
 	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
-		ccdgetdisklabel(dev);
+		ccdgetdisklabel(dev, cs, lp, cs->sc_dkdev.dk_cpulabel, 0);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART) {
@@ -746,11 +763,12 @@ ccdstart(cs, bp)
 	caddr_t addr;
 	daddr_t bn;
 	struct partition *pp;
-	int i, old_io = ccddevs[cs->sc_unit].ccd_flags & CCDF_OLD;
+	int i, old_io = cs->sc_cflags & CCDF_OLD;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdstart(%p, %p)\n", cs, bp);
+		printf("ccdstart(%p, %p, %s)\n", cs, bp,
+		    bp->b_flags & B_READ? "read" : "write");
 #endif
 
 	/* Instrumentation. */
@@ -786,9 +804,6 @@ ccdstart(cs, bp)
 				cbpp[0]->cb_buf.b_vp->v_numoutput++;
 			VOP_STRATEGY(&cbpp[0]->cb_buf);
 
-			/*
-			 * Mirror requires additional write.
-			 */
 			if ((cs->sc_cflags & CCDF_MIRROR) &&
 			    ((cbpp[0]->cb_buf.b_flags & B_READ) == 0)) {
 				cbpp[1]->cb_buf.b_vp->v_numoutput++;
@@ -839,8 +854,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf("ccdbuffer(%p, %p, %d, %p, %ld)\n", cs, bp, bn, addr,
-		    bcount);
+		printf("ccdbuffer(%p, %p, %d, %p, %ld, %p)\n",
+		    cs, bp, bn, addr, bcount, cbpp);
 #endif
 
 	/*
@@ -874,22 +889,23 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			ccdisk = ii->ii_index[0];
 			cbn = ii->ii_startoff + off;
 		} else {
-			if (cs->sc_cflags & CCDF_MIRROR) {
-				ccdisk =
-				    ii->ii_index[off % (ii->ii_ndisk / 2)];
-				cbn = ii->ii_startoff +
-				    (off / (ii->ii_ndisk / 2));
-				/* Mirrored data */
-				ci2 =
-				    &cs->sc_cinfo[ccdisk + (ii->ii_ndisk / 2)];
-			} else {
-				/* Normal case. */
-				ccdisk = ii->ii_index[off % ii->ii_ndisk];
-				cbn = ii->ii_startoff + off / ii->ii_ndisk;
-			}
+			ccdisk = ii->ii_index[off % ii->ii_ndisk];
+			cbn = ii->ii_startoff + off / ii->ii_ndisk;
+		}
+		if (cs->sc_cflags & CCDF_MIRROR) {
+			/* Mirrored data */
+			ci2 = &cs->sc_cinfo[ccdisk + ii->ii_ndisk];
+			/* spread the read over both parts */
+			if (bp->b_flags & B_READ && cbn & 1)
+				ccdisk += ii->ii_ndisk;
 		}
 		cbn *= cs->sc_ileave;
 		ci = &cs->sc_cinfo[ccdisk];
+#ifdef DEBUG
+		if (ccddebug & CCDB_IO)
+			printf("ccdisk %d cbn %d ci %p ci2 %p\n",
+			    ccdisk, cbn, ci, ci2);
+#endif
 	}
 
 	/* Limit the operation at next component border */
@@ -920,7 +936,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		 * context for ccdiodone
 		 */
 		cbp->cb_obp = bp;
-		cbp->cb_unit = cs->sc_unit;
+		cbp->cb_sc = cs;
 		cbp->cb_comp = ccdisk;
 
 		/* Deal with the different algorithms */
@@ -957,7 +973,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			cbp->cb_buf.b_vp = ci2->ci_vp;
 			LIST_INIT(&cbp->cb_buf.b_dep);
 			cbp->cb_comp = ci2 - cs->sc_cinfo;
-			cbpp[1] = cbp;
+			cbp->cb_dep = cbpp[0];
+			cbpp[0]->cb_dep = cbpp[1] = cbp;
 		}
 	} else {
 		/*
@@ -1029,8 +1046,7 @@ ccdiodone(vbp)
 {
 	struct ccdbuf *cbp = (struct ccdbuf *)vbp;
 	struct buf *bp = cbp->cb_obp;
-	int unit = cbp->cb_unit;
-	struct ccd_softc *cs = &ccd_softc[unit];
+	struct ccd_softc *cs = cbp->cb_sc;
 	int old_io = cbp->cb_flags & CBF_OLD;
 	int cbflags, i;
 	long count = bp->b_bcount, off;
@@ -1054,6 +1070,7 @@ ccdiodone(vbp)
 #endif
 
 	if (vbp->b_flags & B_ERROR) {
+		cs->sc_cinfo[cbp->cb_comp].ci_flags |= CCIF_FAILED;
 		if (cbp->cb_flags & CBF_MIRROR)
 			comptype = " (mirror)";
 		else {
@@ -1066,7 +1083,7 @@ ccdiodone(vbp)
 		printf("%s: error %d on component %d%s\n",
 		    cs->sc_xname, bp->b_error, cbp->cb_comp, comptype);
 	}
-	cbflags = cbp->cb_flags;
+	cbflags = cbp->cb_flags |= CBF_DONE;
 
 	if (!old_io) {
 		/*
@@ -1091,21 +1108,26 @@ ccdiodone(vbp)
 		}
 	}
 	count = vbp->b_bcount;
-	putccdbuf(cbp);
 
-	if ((cbflags & CBF_MIRROR) == 0) {
-		/*
-		 * If all done, "interrupt".
-		 *
-		 * Note that mirror component buffers aren't counted against
-		 * the original I/O buffer.
-		 */
-		if (count > bp->b_resid)
-			panic("ccdiodone: count");
-		bp->b_resid -= count;
-		if (bp->b_resid == 0)
-			ccdintr(&ccd_softc[unit], bp);
-	}
+	if (cbp->cb_dep &&
+	    (cbp->cb_dep->cb_flags & CBF_DONE) != (cbflags & CBF_DONE))
+		return;
+
+	putccdbuf(cbp);
+	if (cbp->cb_dep)
+		putccdbuf(cbp->cb_dep);
+
+	/*
+	 * If all done, "interrupt".
+	 *
+	 * Note that mirror component buffers aren't counted against
+	 * the original I/O buffer.
+	 */
+	if (count > bp->b_resid)
+		panic("ccdiodone: count");
+	bp->b_resid -= count;
+	if (bp->b_resid == 0)
+		ccdintr(cs, bp);
 }
 
 /* ARGSUSED */
@@ -1186,17 +1208,27 @@ ccdioctl(dev, cmd, data, flag, p)
 
 	if (unit >= numccd)
 		return (ENXIO);
+
 	cs = &ccd_softc[unit];
+	if (cmd != CCDIOCSET && !(cs->sc_flags & CCDF_INITED))
+		return (ENXIO);
+
+	/* access control */
+	switch (cmd) {
+	case CCDIOCSET:
+	case CCDIOCCLR:
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
 
 	bzero(&ccd, sizeof(ccd));
-
 	switch (cmd) {
 	case CCDIOCSET:
 		if (cs->sc_flags & CCDF_INITED)
 			return (EBUSY);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
@@ -1206,7 +1238,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccd.ccd_interleave = ccio->ccio_ileave;
 		ccd.ccd_flags = ccio->ccio_flags & CCDF_USERMASK;
 
-		/* XXX the new code is unstable still */
+		/* new code seems to work now but enable it after a release */
 		ccd.ccd_flags |= CCDF_OLD;
 
 		/*
@@ -1307,19 +1339,13 @@ ccdioctl(dev, cmd, data, flag, p)
 		disk_attach(&cs->sc_dkdev);
 
 		/* Try and read the disklabel. */
-		ccdgetdisklabel(dev);
+		ccdgetdisklabel(dev, cs, cs->sc_dkdev.dk_label,
+		    cs->sc_dkdev.dk_cpulabel, 0);
 
 		ccdunlock(cs);
-
 		break;
 
 	case CCDIOCCLR:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
@@ -1382,20 +1408,26 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccdunlock(cs);
 		bzero(cs, sizeof(struct ccd_softc));
 		splx(s);
-
 		break;
 
-	case DIOCGDINFO:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
+	case DIOCGPDINFO: {
+		struct cpu_disklabel osdep;
 
+		if ((error = ccdlock(cs)) != 0)
+			return (error);
+
+		ccdgetdisklabel(dev, cs, (struct disklabel *)data,
+		    &osdep, 1);
+
+		ccdunlock(cs);
+		break;
+	}
+
+	case DIOCGDINFO:
 		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);
 		break;
 
 	case DIOCGPART:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
 		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
 		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
@@ -1403,12 +1435,6 @@ ccdioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = ccdlock(cs)) != 0)
 			return (error);
 
@@ -1432,11 +1458,6 @@ ccdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case DIOCWLABEL:
-		if ((cs->sc_flags & CCDF_INITED) == 0)
-			return (ENXIO);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 		if (*(int *)data != 0)
 			cs->sc_flags |= CCDF_WLABEL;
 		else
@@ -1556,15 +1577,11 @@ ccdlookup(path, p, vpp)
  * up.
  */
 void
-ccdgetdisklabel(dev)
-	dev_t dev;
+ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
+    struct cpu_disklabel *clp, int spoofonly)
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
-	char *errstring;
-	struct disklabel *lp = cs->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
 	struct ccdgeom *ccg = &cs->sc_geom;
+	char *errstring;
 
 	bzero(lp, sizeof(*lp));
 	bzero(clp, sizeof(*clp));
@@ -1596,7 +1613,7 @@ ccdgetdisklabel(dev)
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, 0);
+	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, spoofonly);
 	if (errstring)
 		ccdmakedisklabel(cs);
 
