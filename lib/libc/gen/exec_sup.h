@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_sup.c,v 1.2 1996/05/28 14:11:21 etheisen Exp $	*/
+/*	$OpenBSD: exec_sup.h,v 1.1 1996/05/28 14:11:21 etheisen Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -25,36 +25,44 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "exec_sup.h"
 
-/*
- * __elf_is_okay__ - Determine if ehdr really
- * is ELF and valid for the target platform.
- *
- * WARNING:  This is NOT a ELF ABI function and
- * as such it's use should be restricted.
- */
-int
-__elf_is_okay__(ehdr)
-        register Elf32_Ehdr *ehdr;
-{
-        register int retval = 0;
-        
-        /*
-         * We need to check magic, class size, endianess,
-         * and version before we look at the rest of the
-         * Elf32_Ehdr structure.  These few elements are
-         * represented in a machine independant fashion.
-         */
-        if(IS_ELF(*ehdr) &&
-           ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
-           ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
-           ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
+#ifndef _EXEC_SUP_H_
+#define _EXEC_SUP_H_
 
-                /* Now check the machine dependant header */
-                if(ehdr->e_machine == ELF_TARG_MACH &&
-                   ehdr->e_version == ELF_TARG_VER)
-                        retval = 1;
-        }
-        return retval;
-} /* end __elf_is_okay__() */
+#define DO_AOUT                 /* Always do a.out */
+
+#if defined (__i386__) || defined (__mips__)
+#define DO_ELF
+#define ELF_TARG_VER            1 /* The ver for which this code is intended */
+#include <elf_abi.h>
+int __elf_is_okay__ (Elf32_Ehdr *ehdr); /* XXX - should this be hidden??? */
+#endif /* ELF machines */
+
+#if defined (__i386__)
+  #define ELF_TARG_CLASS	ELFCLASS32
+  #define ELF_TARG_DATA		ELFDATA2LSB
+  #define ELF_TARG_MACH		EM_386
+
+#elif defined (__mips__)
+  #define ELF_TARG_CLASS	ELFCLASS32
+  #define ELF_TARG_DATA		ELFDATA2LSB
+  #define ELF_TARG_MACH		EM_MIPS
+
+#elif defined (__alpha__)
+  #define DO_ECOFF
+
+#elif defined (pica)
+  #define DO_ECOFF
+
+#endif /* Machines */
+
+#ifdef DO_AOUT
+#include <sys/types.h>
+#include <a.out.h>
+#endif
+
+#ifdef DO_ECOFF
+#include <sys/exec_ecoff.h>
+#endif
+
+#endif /* _EXEC_SUP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.7 1996/05/24 10:59:00 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.8 1996/05/28 14:11:21 etheisen Exp $ */
 /*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
 
 /*
@@ -35,14 +35,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.7 1996/05/24 10:59:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.8 1996/05/28 14:11:21 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#define DO_AOUT			/* always do a.out */
-#if defined(__alpha__) || defined(pica)
-#define DO_ECOFF
-#endif
-#define	DO_ELF
+#include "exec_sup.h"           /* determine targ OMFs for a given machine */
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -50,13 +46,6 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.7 1996/05/24 10:59:00 deraadt Exp $
 #include <sys/file.h>
 
 #include <errno.h>
-#include <a.out.h>
-#ifdef DO_ECOFF
-#include <sys/exec_ecoff.h>
-#endif
-#ifdef DO_ELF
-#include <elf_abi.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -274,7 +263,7 @@ __elf_fdnlist(fd, list)
 
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
 	    read(fd, &eh, sizeof(eh)) != sizeof(eh) ||
-	    !IS_ELF(eh) ||
+	    !__elf_is_okay__(&eh) ||
 	    fstat(fd, &st) < 0)
 		return (-1);
 

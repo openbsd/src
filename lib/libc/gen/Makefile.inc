@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/04/29 04:53:27 etheisen Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1996/05/28 14:11:20 etheisen Exp $
 #	$NetBSD: Makefile.inc,v 1.71 1996/04/15 23:44:53 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
@@ -6,19 +6,20 @@
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
 SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
-	ctype_.c daemon.c devname.c disklabel.c err.c errx.c errlist.c \
-	errno.c exec.c fnmatch.c fstab.c ftok.c fts.c getbsize.c getcap.c \
-	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
-	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
-	initgroups.c isatty.c isctype.c nice.c nlist.c opendir.c pause.c \
-	popen.c psignal.c pwcache.c raise.c readdir.c rewinddir.c scandir.c \
-	seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
-	setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
-	sigsetops.c sleep.c sysconf.c sysctl.c syslog.c telldir.c \
-	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
-	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
-	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
+	ctype_.c daemon.c devname.c disklabel.c elf_hash.c err.c \
+	errx.c errlist.c errno.c exec.c fnmatch.c fstab.c ftok.c fts.c \
+	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c \
+	getgrouplist.c gethostname.c getloadavg.c getlogin.c getmntinfo.c \
+	getnetgrent.c getpagesize.c getpass.c getpwent.c getsubopt.c \
+	getttyent.c getusershell.c glob.c initgroups.c isatty.c isctype.c \
+	nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c raise.c \
+	readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
+	sethostname.c setjmperr.c setmode.c setproctitle.c siginterrupt.c \
+	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
+	syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+	ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c utime.c \
+	valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c \
+	vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \

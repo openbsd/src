@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_sup.c,v 1.2 1996/05/28 14:11:21 etheisen Exp $	*/
+/*	$OpenBSD: elf_hash.c,v 1.1 1996/05/28 14:11:20 etheisen Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -25,36 +25,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "exec_sup.h"
+#include <elf_abi.h>
 
 /*
- * __elf_is_okay__ - Determine if ehdr really
- * is ELF and valid for the target platform.
- *
- * WARNING:  This is NOT a ELF ABI function and
- * as such it's use should be restricted.
+ * Standard ELF ABI hash function.
+ * DO NOT MODIFY THIS FUNCTION -- INVALID
+ * HASH TABLES WILL BE GENERATED!
  */
-int
-__elf_is_okay__(ehdr)
-        register Elf32_Ehdr *ehdr;
+unsigned long
+elf_hash(name)
+        const unsigned char *name;
 {
-        register int retval = 0;
-        
-        /*
-         * We need to check magic, class size, endianess,
-         * and version before we look at the rest of the
-         * Elf32_Ehdr structure.  These few elements are
-         * represented in a machine independant fashion.
-         */
-        if(IS_ELF(*ehdr) &&
-           ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
-           ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
-           ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
+        register unsigned long h = 0, g;
 
-                /* Now check the machine dependant header */
-                if(ehdr->e_machine == ELF_TARG_MACH &&
-                   ehdr->e_version == ELF_TARG_VER)
-                        retval = 1;
+        while(*name)
+        {
+                h = (h << 4) + *name++;
+                if (g = h & 0xf0000000)
+                        h ^= g >> 24;
+                h &= ~g;
         }
-        return retval;
-} /* end __elf_is_okay__() */
+        return h;
+} /* end elf_hash() */
