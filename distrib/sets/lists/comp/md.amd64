@@ -27,6 +27,7 @@
 ./usr/include/amd64/i82093reg.h
 ./usr/include/amd64/i82093var.h
 ./usr/include/amd64/i82489reg.h
+./usr/include/amd64/i82489var.h
 ./usr/include/amd64/i8259.h
 ./usr/include/amd64/ieee.h
 ./usr/include/amd64/ieeefp.h
@@ -37,6 +38,7 @@
 ./usr/include/amd64/kcore.h
 ./usr/include/amd64/limits.h
 ./usr/include/amd64/loadfile_machdep.h
+./usr/include/amd64/lock.h
 ./usr/include/amd64/mcontext.h
 ./usr/include/amd64/mpbiosreg.h
 ./usr/include/amd64/mpbiosvar.h

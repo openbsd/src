@@ -2017,6 +2017,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/evcount.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/exec.ph

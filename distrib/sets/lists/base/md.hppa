@@ -1959,6 +1959,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/evcount.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/exec.ph

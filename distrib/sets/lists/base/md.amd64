@@ -617,6 +617,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82093reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82093var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82489reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i82489var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/i8259.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ieee.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ieeefp.ph
@@ -627,6 +628,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/kcore.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/limits.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/loadfile_machdep.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/lock.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mcontext.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpbiosreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpbiosvar.ph
@@ -1981,6 +1983,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/evcount.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/exec.ph

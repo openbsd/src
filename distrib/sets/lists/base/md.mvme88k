@@ -1920,6 +1920,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/evcount.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/exec.ph

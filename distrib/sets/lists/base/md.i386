@@ -1974,6 +1974,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/domain.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/endian.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/errno.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/evcount.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/event.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/eventvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/exec.ph
