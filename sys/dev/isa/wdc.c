@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.35 1998/09/15 01:40:08 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.36 1999/01/11 01:57:52 millert Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -390,7 +390,7 @@ wdcstart(wdc)
 	}
 #ifdef DIAGNOSTIC
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) != 0)
-		panic("wdcstart: controller waiting for irq\n");
+		panic("wdcstart: controller waiting for irq");
 #endif
 	/*
 	 * XXX
@@ -1895,7 +1895,7 @@ wdc_get_xfer(c_link,flags)
 		splx(s);
 #ifdef DIAGNOSTIC
 		if ((xfer->c_flags & C_INUSE) != 0)
-			panic("wdc_get_xfer: xfer already in use\n");
+			panic("wdc_get_xfer: xfer already in use");
 #endif
 	} else {
 		splx(s);
@@ -1916,7 +1916,7 @@ wdc_get_xfer(c_link,flags)
 	}
 #ifdef DIAGNOSTIC
 	if ((xfer->c_flags & C_INUSE) != 0)
-		panic("wdc_get_xfer: xfer already in use\n");
+		panic("wdc_get_xfer: xfer already in use");
 #endif
 	bzero(xfer, sizeof(struct wdc_xfer));
 	xfer->c_flags = C_INUSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.18 1999/01/02 00:02:48 niklas Exp $	*/
+/*	$OpenBSD: wss.c,v 1.19 1999/01/11 01:57:53 millert Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ mad_read(sc, port)
 	pwd = M_PASSWD_931;
 	break;
     default:
-	panic("mad_read: Bad chip type=%d\n", sc->mad_chip_type);
+	panic("mad_read: Bad chip type=%d", sc->mad_chip_type);
     }
     s = splaudio();		/* don't want an interrupt between outb&inb */
     bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
@@ -414,7 +414,7 @@ mad_write(sc, port, value)
 	pwd = M_PASSWD_931;
 	break;
     default:
-	panic("mad_write: Bad chip type=%d\n", sc->mad_chip_type);
+	panic("mad_write: Bad chip type=%d", sc->mad_chip_type);
     }
     s = splaudio();
     bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);

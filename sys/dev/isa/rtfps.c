@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.17 1997/07/07 16:38:22 niklas Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.18 1999/01/11 01:57:52 millert Exp $       */
 /*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ rtfpsattach(parent, self, aux)
 		    COM_NPORTS, 0, &sc->sc_slaveioh[i]))
 			panic("rtfpsattach: couldn't map slave %d", i);
 	if (bus_space_map(iot, sc->sc_irqport, 1, 0, &sc->sc_irqioh))
-		panic("rtfpsattach: couldn't map irq port at 0x%x\n",
+		panic("rtfpsattach: couldn't map irq port at 0x%x",
 		    sc->sc_irqport);
 
 	bus_space_write_1(iot, sc->sc_irqioh, 0, 0);
