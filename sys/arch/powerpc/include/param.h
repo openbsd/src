@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 1998/08/18 21:28:21 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 1999/11/28 23:20:23 rahnds Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages.
  */
 #ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(128 * 1024 * 1024 / CLBYTES)
+#define	NKMEMCLUSTERS	(16 * 1024 * 1024 / CLBYTES)
 #endif
 
 /*
