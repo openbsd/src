@@ -1,0 +1,396 @@
+#!/bin/sh -
+#
+# THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
+# generated from:
+#
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.1 2004/04/21 18:23:44 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.7 2004/04/11 18:14:59 millert Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
+#
+#
+# Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Device "make" file.  Valid arguments:
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
+#	ramdisk	Ramdisk kernel devices
+#	std	Standard devices
+#	local	Configuration specific devices
+# Disks:
+#	ccd*	Concatenated disk devices
+#	cd*	ATAPI and SCSI CD-ROM drives
+#	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks, including flopticals
+#	vnd*	"file" pseudo-disk devices
+# Tapes:
+#	ch*	SCSI media changers
+#	st*	SCSI tape drives
+# Terminal ports:
+#	ttya	On-board serial console port
+# Pseudo terminals:
+#	ptm	pty master device
+#	pty*	Set of 62 master pseudo terminals
+#	tty*	Set of 62 slave pseudo terminals
+# Console ports:
+#	ttyC0	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
+# Special purpose devices:
+#	bpf*	Berkeley Packet Filter
+#	fd	fd/* nodes for fdescfs
+#	lkm	Loadable kernel modules interface
+#	pf*	Packet Filter
+#	*random	In-kernel random data source
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	SCSI unknown devices
+#	xfs*	XFS filesystem node
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+T=$0
+
+# set this to echo for Echo-Only debugging
+[ "$eo" ] || eo=
+
+hex()
+{
+	case $1 in
+	[0-9]) echo -n $1;;
+	10) echo -n a;;
+	11) echo -n b;;
+	12) echo -n c;;
+	13) echo -n d;;
+	14) echo -n e;;
+	15) echo -n f;;
+	esac
+}
+
+alph2d()
+{
+	local t="$1"  
+	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	local sub=${p%${t}*}
+	echo ${#sub}
+}
+
+h2d()
+{
+	local s="$1"
+	local f=${s%*[0-9a-f]} n=${s#[0-9a-f]*}
+
+	echo $(($(_h2d $f)*16+ $(_h2d $n) ))
+}
+
+_h2d()
+{
+	case $1 in
+	[0-9]) echo -n $1;;
+	a) echo -n 10;;
+	b) echo -n 11;;
+	c) echo -n 12;;
+	d) echo -n 13;;
+	e) echo -n 14;;
+	f) echo -n 15;;
+	esac
+}
+
+unt()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg="$1"
+	tmp="${arg#[a-zA-Z]*}"
+	tmp="${tmp%*[a-zA-Z]}"
+	while [ "$tmp" != "$arg" ]
+	do
+		arg=$tmp
+		tmp="${arg#[a-zA-Z]*}"
+		tmp="${tmp%*[a-zA-Z]}"
+	done
+	echo $arg
+}
+
+dodisk()
+{
+	[ "$DEBUG" ] && set -x
+	n=$(($((${5}*${7:-16}))+${6})) count=0
+	RMlist="$RMlist $1$2? r$1$2?"
+	[ 0$7 -ne 8 ] && l="i j k l m n o p"
+	for d in a b c d e f g h $l
+	do
+		M $1$2$d	b $3 $(($n+$count)) 640
+		M r$1$2$d	c $4 $(($n+$count)) 640
+		let count=count+1
+	done
+	MKlist="$MKlist;chown root:operator $1$2? r$1$2?"
+}
+
+dodisk2()
+{
+	n=$(($(($5*${7:-16}))+$6))
+	M $1$2a b $3 $n 640 operator
+	M r$1$2a c $4 $n 640 operator
+	n=$(($n+2))
+	M $1$2c b $3 $n 640 operator
+	M r$1$2c c $4 $n 640 operator
+}
+
+# M name b/c major minor [mode] [group]
+RMlist="rm -f"
+MKlist=":"
+
+mkl() {
+	[ "${mklist[$1]}" ] && {
+		mklist[$1]="${mklist[$1]};mknod -m $1 $2 $3 $4 $5"
+	} || {
+		mklist[$1]="mknod -m $1 $2 $3 $4 $5"
+		modes="$modes $1"
+	}
+}
+
+M() {
+	RMlist="$RMlist $1"
+	mkl ${5-666} $1 $2 $3 $4
+	mklist="$mklist $1"
+	G=${6:-wheel}
+	[ "$7" ] && {
+		MKlist="$MKlist;chown $7:$G $1"
+	} || {
+		case $G in
+		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
+		esac
+		[ "${grplist[$g]}" ] && {
+			grplist[$g]="${grplist[$g]} $1"
+		} || {
+			groups="$groups $g"
+			grplist[$g]="chgrp $G $1"
+		}
+	}
+	return 0
+}
+
+R() {
+[ "$DEBUG" ] && set -x
+for i in "$@"
+do
+U=`unt $i`
+[ "$U" ] || U=0
+
+case $i in
+std)
+	M console	c 0 0 600
+	M tty		c 1 0
+	M mem		c 2 0 640 kmem
+	M kmem		c 2 1 640 kmem
+	M null		c 2 2
+	M zero		c 2 12
+	M stdin		c 21 0
+	M stdout	c 21 1
+	M stderr	c 21 2
+	M ksyms		c 43 0 640 kmem
+	M drum		c 3 0 640 kmem
+	M klog		c 6 0 600
+	;;
+
+
+xfs*)
+	M xfs$U c 51 $U 600
+	;;
+
+uk*)
+	M uk$U c 41 $U 640 operator
+	;;
+
+tun*)
+	M tun$U c 23 $U 600
+	;;
+
+systrace)
+	M systrace c 50 0 644
+	;;
+
+ss*)
+	M ss$U c 42 $(($U*16)) 640 operator
+	M nss$U c 42 $(($(($U*16))+1)) 640 operator
+	M enss$U c 42 $(($(($U*16))+3)) 640 operator
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
+	;;
+
+*random)
+	n=0
+	for pre in " " s u p a
+	do
+		M ${pre}random c 40 $n 644
+		n=$(($n+1))
+	done
+	;;
+
+pf*)
+	M pf c 39 0 600
+	;;
+
+lkm)
+	M lkm c 24 0 640 _lkm
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
+	;;
+
+bpf*)
+	M bpf$U c 22 $U 600
+	;;
+
+wsmouse*)
+	M wsmouse$U c 15 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 16 0 600
+	M wskbd c 16 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 14 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 13 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 13 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
+pty*)
+	if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A letters p q r s t u v w x y z P Q R S T
+	set -A suffixes 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q \
+	    r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X \
+	    Y Z
+
+	name=${letters[$U]}
+	n=0
+	while [ $n -lt 62 ]
+	do
+		nam=$name${suffixes[$n]}
+		off=$(($U*62))
+		M tty$nam c 4 $(($off+$n))
+		M pty$nam c 5 $(($off+$n))
+		n=$(($n+1))
+	done
+	;;
+
+ptm)
+	M ptm c 52 0 666
+	;;
+
+ttya)
+		M ttya c 12 0 660 dialer uucp
+	M cuaa c 12 128 660 dialer uucp 
+	;;
+
+st*)
+	n=$(($U*16))
+	for pre in " " n e en
+	do
+		M ${pre}st$U	b 5 $n 660 operator
+		M ${pre}rst$U	c 20 $n 660 operator
+		n=$(($n+1))
+	done
+	;;
+
+ch*)
+	M ch$U c 44 $U 660 operator
+	;;
+
+vnd*)
+	dodisk vnd $U 8 19 $U 0
+	dodisk svnd $U 8 19 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 7 18 $U 0
+	;;
+
+cd*)
+	dodisk2 cd $U 6 9 $U 0
+	;;
+
+local)
+	test -s $T.local && sh $T.local
+	;;
+
+ramdisk)
+	R pty0 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4 bpf0 std
+	;;
+
+all)
+	R ttya ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
+	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3
+	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ch0 ptm local
+	R wscons uk0 random lkm pf systrace std st0 st1 fd
+	;;
+
+sd*|ccd*)
+	case $i in
+	sd*) dodisk sd $U 4 8 $U 0;;
+	ccd*) dodisk ccd $U 9 17 $U 0;;
+	esac
+	;;
+
+*)
+	echo $i: unknown device
+	;;
+esac
+done
+}
+R "$@"
+list="$RMlist"
+for mode in $modes; do
+	list="$list;${mklist[$mode]}"
+done
+for group in $groups; do
+	list="$list;${grplist[$group]}"
+done
+list="$list;$MKlist"
+if [ "$eo" = "echo" ]; then
+	$eo "$list"
+else
+	echo "$list" | sh
+fi
