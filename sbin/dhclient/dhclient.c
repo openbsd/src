@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.27 2004/03/02 15:41:44 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.28 2004/03/02 15:52:40 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -630,17 +630,6 @@ state_bound(void *ipp)
 
 	/* Send the first packet immediately. */
 	send_request(ip);
-}
-
-int
-commit_leases(void)
-{
-	return (0);
-}
-
-void
-db_startup(void)
-{
 }
 
 void
@@ -1718,9 +1707,6 @@ write_client_lease(struct interface_info *ip, struct client_lease *lease,
 			    pretty_print_option(i, lease->options[i].data,
 			    lease->options[i].len, 1, 1));
 
-	/* Note: the following is not a Y2K bug - it's a Y1.9K bug.   Until
-	   somebody invents a time machine, I think we can safely disregard
-	   it. */
 	t = gmtime(&lease->renewal);
 	fprintf(leaseFile, "  renew %d %d/%d/%d %02d:%02d:%02d;\n",
 	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
@@ -1737,9 +1723,6 @@ write_client_lease(struct interface_info *ip, struct client_lease *lease,
 	fflush(leaseFile);
 }
 
-/* Variables holding name of script and file pointer for writing to
-   script.   Needless to say, this is not reentrant - only one script
-   can be invoked at a time. */
 char scriptName[256];
 FILE *scriptFile;
 
@@ -1781,13 +1764,6 @@ script_write_params(struct interface_info *ip, char *prefix,
 
 	script_set_env(ip->client, prefix, "ip_address",
 	    piaddr(lease->address));
-
-	/* For the benefit of Linux (and operating systems which may
-	   have similar needs), compute the network address based on
-	   the supplied ip address and netmask, if provided.  Also
-	   compute the broadcast address (the host address all ones
-	   broadcast address, not the host address all zeroes
-	   broadcast address). */
 
 	if (lease->options[DHO_SUBNET_MASK].len &&
 	    (lease->options[DHO_SUBNET_MASK].len <
@@ -2094,10 +2070,6 @@ check_option(struct client_lease *l, int option)
 	case DHO_NETBIOS_DD_SERVER :
 	case DHO_FONT_SERVERS :
 	case DHO_DHCP_SERVER_IDENTIFIER :
-		/* These should be a list of one or more IP addresses,
-		 * separated by spaces. If they aren't, this lease is not
-		 * valid.
-		 */
 		if (!ipv4addrs(opbuf)) {
 			warn("Invalid IP address in option: %s", opbuf);
 			return (0);
@@ -2106,7 +2078,6 @@ check_option(struct client_lease *l, int option)
 	case DHO_HOST_NAME :
 	case DHO_DOMAIN_NAME :
 	case DHO_NIS_DOMAIN :
-		/* This has to be a valid internet domain name */
 		if (!res_hnok(sbuf)) {
 			warn("Bogus Host Name option %d: %s (%s)", option,
 			    sbuf, opbuf);
@@ -2156,7 +2127,6 @@ check_option(struct client_lease *l, int option)
 	case DHO_DHCP_CLIENT_IDENTIFIER :
 	case DHO_DHCP_USER_CLASS_ID :
 	case DHO_END :
-		/* do nothing */
 		return (1);
 	default:
 		warn("unknown dhcp option value 0x%x", option);
@@ -2212,8 +2182,6 @@ ipv4addrs(char * buf)
 }
 
 
-/* Format the specified option as a string */
-
 char *
 option_as_string(unsigned int code, unsigned char *data, int len)
 {
@@ -2222,7 +2190,6 @@ option_as_string(unsigned int code, unsigned char *data, int len)
 	int opleft = sizeof(optbuf);
 	unsigned char *dp = data;
 
-	/* Code should be between 0 and 255. */
 	if (code > 255)
 		error("option_as_string: bad code %d\n", code);
 
