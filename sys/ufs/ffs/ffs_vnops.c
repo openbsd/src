@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.15 2001/03/20 17:30:07 gluk Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.16 2001/03/22 00:11:36 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 
@@ -264,7 +265,7 @@ ffs_fsync(v)
 		softdep_fsync_mountdev(vp);
 
 	/*
-	 * Flush all dirty buffers associated with a vnode
+	 * Flush all dirty buffers associated with a vnode.
 	 */
 	passes = NIADDR + 1;
 	skipmeta = 0;
@@ -357,8 +358,8 @@ ffs_reclaim(v)
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
-	FREE(vp->v_data, VFSTOUFS(vp->v_mount)->um_devvp->v_tag == VT_MFS ?
-	    M_MFSNODE : M_FFSNODE);
+	/* XXX - same for for both mfs and ffs */
+	pool_put(&ffs_ino_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }

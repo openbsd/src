@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.11 2001/02/21 23:24:31 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.12 2001/03/22 00:11:36 art Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -167,3 +167,5 @@ extern int (**ffs_fifoop_p) __P((void *));
 #else
 #define FFS_FIFOOPS NULL
 #endif
+
+extern struct pool ffs_ino_pool;

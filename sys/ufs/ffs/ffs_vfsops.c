@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.32 2001/03/14 18:46:18 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.33 2001/03/22 00:11:36 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#include <sys/pool.h>
 
 #include <dev/rndvar.h>
 
@@ -89,6 +90,8 @@ extern u_long nextgennumber;
 /*
  * Called by main() when ufs is going to be mounted as root.
  */
+
+struct pool ffs_ino_pool;
 
 int
 ffs_mountroot()
@@ -967,7 +970,7 @@ ffs_vget(mp, ino, vpp)
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
-	int type, error;
+	int error;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -984,8 +987,8 @@ retry:
 #ifdef LOCKDEBUG
 	vp->v_flag |= VLOCKSWORK;
 #endif
-	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
-	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
+	/* XXX - we use the same pool for ffs and mfs */
+	ip = pool_get(&ffs_ino_pool, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
@@ -1199,6 +1202,9 @@ int
 ffs_init(vfsp)
 	struct vfsconf *vfsp;
 {
+
+	pool_init(&ffs_ino_pool, sizeof(struct inode), 0, 0, 0, "ffsino",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
 	softdep_initialize();
 	return (ufs_init(vfsp));
 }
