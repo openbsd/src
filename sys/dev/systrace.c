@@ -523,6 +523,8 @@ systraceioctl(dev, cmd, data, flag, p)
 
 		if (suser(p->p_ucred, &p->p_acflag) == 0)
 			fst->issuser = 1;
+		fst->p_ruid = p->p_cred->p_ruid;
+		fst->p_rgid = p->p_cred->p_rgid;
 
 		error = falloc(p, &f, &fd);
 		if (error) {
@@ -638,7 +640,7 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	struct str_process *strp;
 	struct str_policy *strpolicy;
 	struct fsystrace *fst = NULL;
-	int policy, error = 0, report = 0;
+	int policy, error = 0, report = 0, maycontrol = 0;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -654,10 +656,21 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
 	systrace_unlock();
 
-	if ((p->p_flag & P_SUGID) && !fst->issuser) {
-		/* We can not monitor a SUID process unless we are root,
-		 * but we wait until it executes something unprivileged.
-		 */
+	/*
+	 * We can not monitor a SUID process unless we are root,
+	 * but we wait until it executes something unprivileged.
+	 * A non-root user may only monitor if the real uid and
+	 * real gid match the monitored process.  Changing the
+	 * uid or gid causes P_SUGID to be set.
+	 */
+	if (fst->issuser)
+		maycontrol = 1;
+	else if (!(p->p_flag & P_SUGID)) {
+		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
+		    fst->p_rgid == p->p_cred->p_rgid;
+	}
+
+	if (!maycontrol) {
 		policy = SYSTR_POLICY_PERMIT;
 	} else {
 		/* Find out current policy */

@@ -163,6 +163,8 @@ struct fsystrace {
 	int npolicies;
 
 	int issuser;
+	uid_t p_ruid;
+	gid_t p_rgid;
 
 	/* cwd magic */
 	pid_t fd_pid;
