@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.2 1999/08/04 23:14:38 jason Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.3 1999/08/05 18:06:28 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -71,6 +71,8 @@
 #include <dev/isa/isadmavar.h>
 #include <dev/ic/elink3reg.h>
 
+#undef EF_DEBUG
+
 struct ef_softc {
 	struct device		sc_dv;
 	bus_space_tag_t		sc_iot;
@@ -80,7 +82,6 @@ struct ef_softc {
 	int			sc_tx_start_thresh;
 	int			sc_tx_succ_ok;
 	int			sc_busmaster;
-	int			sc_full_duplex;
 };
 
 #define	ETHER_MIN_LEN		64
@@ -127,9 +128,14 @@ void eftxstat __P((struct ef_softc *));
 void efread __P((struct ef_softc *));
 struct mbuf *efget __P((struct ef_softc *, int totlen));
 
+#if 0
+/*
+ * XXX not used (yet)
+ */
 int ef_mii_write __P((struct ef_softc *, int, int, int));
 int ef_mii_read __P((struct ef_softc *, int, int));
 void ef_mii_writeb __P((struct ef_softc *, int));
+#endif
 
 struct cfdriver ef_cd = {
 	NULL, "ef", DV_IFNET
@@ -183,13 +189,6 @@ ef_isapnp_attach(parent, self, aux)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	if (efbusyeeprom(sc))
-		return;
-	bus_space_write_2(iot, ioh, EF_W0_EEPROM_COMMAND, EF_EEPROM_READ | 16);
-	if (efbusyeeprom(sc))
-		return;
-	x = bus_space_read_2(iot, ioh, EF_W0_EEPROM_DATA);
-
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
@@ -241,7 +240,7 @@ efstart(ifp)
 	int fillcnt = 0;
 	u_int32_t filler = 0;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 startagain:
@@ -484,9 +483,7 @@ efstop(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
+	efcompletecmd(sc, EP_COMMAND, RX_DISCARD_TOP_PACK);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
@@ -574,17 +571,21 @@ eftxstat(sc)
 
 		if (i & TXS_JABBER) {
 			sc->sc_arpcom.ac_if.if_oerrors++;
+#ifdef EF_DEBUG
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				    sc->sc_dv.dv_xname, i);
+#endif
 			efreset(sc);
 		}
 		else if (i & TXS_UNDERRUN) {
 			sc->sc_arpcom.ac_if.if_oerrors++;
+#ifdef EF_DEBUG
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				    sc->sc_dv.dv_xname, i,
 				    sc->sc_tx_start_thresh);
+#endif
 			if (sc->sc_tx_succ_ok < 100)
 				sc->sc_tx_start_thresh = min(ETHER_MAX_LEN,
 				    sc->sc_tx_start_thresh + 20);
@@ -675,6 +676,7 @@ efread(sc)
 
 	len = bus_space_read_2(iot, ioh, EF_W1_RX_STATUS);
 
+#ifdef EF_DEBUG
 	if (ifp->if_flags & IFF_DEBUG) {
 		int err = len & ERR_MASK;
 		char *s = NULL;
@@ -697,6 +699,7 @@ efread(sc)
 		if (s)
 			printf("%s: %s\n", sc->sc_dv.dv_xname, s);
 	}
+#endif
 
 	if (len & ERR_INCOMPLETE)
 		return;
@@ -790,6 +793,10 @@ efget(sc, totlen)
 	return (top);
 }
 
+#if 0
+/*
+ * XXX not used (yet)
+ */
 #define MII_SET(sc, x) \
 	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, EP_W4_CTRLR_STATUS, \
 	    bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, EP_W4_CTRLR_STATUS) \
@@ -931,3 +938,4 @@ ef_mii_write(sc, phy, reg, val)
 
 	return (0);
 }
+#endif
