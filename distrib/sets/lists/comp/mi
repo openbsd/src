@@ -4831,6 +4831,7 @@
 ./usr/share/man/cat9/bus_space_set_region_8.0
 ./usr/share/man/cat9/bus_space_subregion.0
 ./usr/share/man/cat9/bus_space_unmap.0
+./usr/share/man/cat9/bus_space_vaddr.0
 ./usr/share/man/cat9/bus_space_write_1.0
 ./usr/share/man/cat9/bus_space_write_2.0
 ./usr/share/man/cat9/bus_space_write_4.0
