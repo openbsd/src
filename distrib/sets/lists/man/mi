@@ -1028,6 +1028,7 @@
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pci.0
+./usr/share/man/cat4/pchb.0
 ./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pcmcia.0
