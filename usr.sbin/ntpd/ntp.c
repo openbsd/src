@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.47 2005/01/27 10:32:29 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.48 2005/01/27 14:44:00 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,6 +143,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
 	for (a = 0; b > 1; a--, b >>= 1);
 	conf->status.precision = a;
+	conf->scale = QSCALE_FACTOR;
 
 	log_info("ntp engine ready");
 
@@ -199,8 +200,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			if (p->deadline > 0 && p->deadline < nextaction)
 				nextaction = p->deadline;
 			if (p->deadline > 0 && p->deadline <= time(NULL)) {
-				timeout = scale_interval(
-				    INTERVAL_QUERY_PATHETIC, 0.0);
+				timeout = error_interval();
 				log_debug("no reply from %s received in time, "
 				    "next query %ds", log_sockaddr(
 				    (struct sockaddr *)&p->addr->ss), timeout);
@@ -412,6 +412,7 @@ priv_adjtime(void)
 		conf->status.reftime = gettime();
 		conf->status.leap = LI_NOWARNING;
 		conf->status.stratum++;	/* one more than selected peer */
+		update_scale(offset_median);
 
 		if (peers[offset_cnt / 2]->addr->ss.ss_family == AF_INET)
 			conf->status.refid = ((struct sockaddr_in *)
@@ -456,3 +457,30 @@ priv_host_dns(char *name, u_int32_t peerid)
 	dlen = strlen(name) + 1;
 	imsg_compose(ibuf_main, IMSG_HOST_DNS, peerid, 0, name, dlen);
 }
+
+void
+update_scale(double offset)
+{
+        if (offset < 0)
+                offset = -offset;
+  
+        if (offset > QSCALE_OFF_MAX)
+                conf->scale = QSCALE_FACTOR;
+        else if (offset < QSCALE_OFF_MIN)
+                conf->scale = QSCALE_FACTOR * QSCALE_OFF_MAX / QSCALE_OFF_MIN;
+        else
+                conf->scale = QSCALE_FACTOR * QSCALE_OFF_MAX / offset;
+}
+
+time_t
+scale_interval(time_t requested)
+{
+        return (requested * conf->scale / QSCALE_FACTOR);
+}
+   
+time_t
+error_interval(void)  
+{
+        return (INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN);
+}
+

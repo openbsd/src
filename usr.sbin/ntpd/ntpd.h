@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.49 2005/01/27 10:32:29 dtucker Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.50 2005/01/27 14:44:00 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,7 @@
 
 #define	QSCALE_OFF_MIN			0.05
 #define	QSCALE_OFF_MAX			0.50
+#define	QSCALE_FACTOR			1000
 
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
@@ -122,6 +123,7 @@ struct ntpd_conf {
 	u_int8_t				listen_all;
 	u_int8_t				settime;
 	u_int8_t				debug;
+	u_int32_t				scale;
 };
 
 struct buf {
@@ -237,7 +239,9 @@ int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *, u_int8_t);
-time_t	scale_interval(time_t, double);
+void	update_scale(double);
+time_t	scale_interval(time_t);
+time_t	error_interval(void);
 void	set_next(struct ntp_peer *, time_t);
 
 /* util.c */

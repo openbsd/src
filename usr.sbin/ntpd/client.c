@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.52 2005/01/27 10:32:29 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.53 2005/01/27 14:44:00 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,20 +41,6 @@ set_deadline(struct ntp_peer *p, time_t t)
 {
 	p->deadline = time(NULL) + t;
 	p->next = 0;
-}
-
-time_t
-scale_interval(time_t requested, double offset)
-{
-	if (offset < 0)
-		offset = -offset;
-
-	if (offset > QSCALE_OFF_MAX)
-		return (requested);
-	else if (offset < QSCALE_OFF_MIN)
-		return (requested * (QSCALE_OFF_MAX / QSCALE_OFF_MIN));
-	else
-		return (requested * (QSCALE_OFF_MAX / offset));
 }
 
 int
@@ -128,7 +114,7 @@ client_query(struct ntp_peer *p)
 	int	tos = IPTOS_LOWDELAY;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		set_next(p, INTERVAL_QUERY_PATHETIC);
+		set_next(p, error_interval());
 		return (-1);
 	}
 
@@ -142,7 +128,7 @@ client_query(struct ntp_peer *p)
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH) {
 				client_nextaddr(p);
-				set_next(p, INTERVAL_QUERY_PATHETIC);
+				set_next(p, error_interval());
 				return (-1);
 			} else
 				fatal("client_query connect");
@@ -197,8 +183,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		    errno == ENETDOWN || errno == ECONNREFUSED) {
 			log_warn("recvfrom %s",
 			    log_sockaddr((struct sockaddr *)&p->addr->ss));
-			interval = scale_interval(INTERVAL_QUERY_PATHETIC, 0.0);
-			set_next(p, interval);
+			set_next(p, error_interval());
 			return (0);
 		} else
 			fatal("recvfrom");
@@ -214,7 +199,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	if ((msg.status & LI_ALARM) == LI_ALARM || msg.stratum == 0 ||
 	    msg.stratum > NTP_MAXSTRATUM) {
-		interval = scale_interval(INTERVAL_QUERY_PATHETIC, 0.0);
+		interval = error_interval();
 		set_next(p, interval);
 		log_info("reply from %s: not synced, next query %ds",
 		    log_sockaddr((struct sockaddr *)&p->addr->ss), interval);
@@ -260,8 +245,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
 		interval = INTERVAL_QUERY_AGRESSIVE;
 	else
-		interval = scale_interval(INTERVAL_QUERY_NORMAL,
-		    p->reply[p->shift].offset);
+		interval = scale_interval(INTERVAL_QUERY_NORMAL);
 
 	set_next(p, interval);
 	p->state = STATE_REPLY_RECEIVED;
