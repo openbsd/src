@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.11 2002/03/02 17:17:37 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.12 2002/03/02 17:27:18 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -416,6 +416,7 @@ intr_calculatemasks()
 		imen_o = ~irqs;
 	}
 }
+int o_virq_inited = 0;
 /*
  * Map 64 irqs into 32 (bits).
  */
@@ -424,6 +425,20 @@ mapirq(irq)
 	int irq;
 {
 	int v;
+	int i;
+
+	if (o_virq_inited == 0) {
+		o_virq_max = 0;
+		for (i = 0; i < ICU_LEN; i++) {
+			o_virq[i] = -1;
+		}
+		o_virq_inited = 1;
+	}
+
+	/* irq in table already? */
+	if (o_virq[irq] != -1) {
+		return o_virq[irq];
+	}
 
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
