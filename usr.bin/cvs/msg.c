@@ -1,46 +1,123 @@
-/*	$OpenBSD: msg.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: msg.c,v 1.2 2004/07/25 03:21:11 jfb Exp $	*/
 /*
- * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * Copyright (c) 2002 Matthieu Herrb
+ * Copyright (c) 2001 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2004 Jean-Francois Brousseau
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * This code was adapted from the tcpdump source
  */
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <pwd.h>
-#include <grp.h>
-#include <poll.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
 #include <string.h>
 
 #include "log.h"
 #include "cvsd.h"
 
+/*
+ * cvsd_sendfd()
+ *
+ * Pass a file descriptor <fd> to the other endpoint of the socket <sock>.
+ */
 
+int
+cvsd_sendfd(int sock, int fd)
+{
+	struct msghdr msg;
+	char tmp[CMSG_SPACE(sizeof(int))];
+	struct cmsghdr *cmsg;
+	struct iovec vec;
+	int result = 0;
+	ssize_t n;
+
+	memset(&msg, 0, sizeof(msg));
+
+	if (fd >= 0) {
+		msg.msg_control = (caddr_t)tmp;
+		msg.msg_controllen = CMSG_LEN(sizeof(int));
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = fd;
+	} else
+		result = errno;
+
+	vec.iov_base = &result;
+	vec.iov_len = sizeof(int);
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+
+	if ((n = sendmsg(sock, &msg, 0)) == -1) {
+		cvs_log(LP_ERRNO, "failed to pass file descriptor");
+		return (-1);
+	}
+	if (n != sizeof(int))
+		cvs_log(LP_WARN, "unexpected return count from sendmsg()");
+	return (0);
+}
+
+/*
+ * cvsd_recvfd()
+ *
+ * Receive a file descriptor over the socket <sock>.  Returns the descriptor
+ * on success, or -1 on failure.
+ */
+
+int
+cvsd_recvfd(int sock)
+{
+	struct msghdr msg;
+	char tmp[CMSG_SPACE(sizeof(int))];
+	struct cmsghdr *cmsg;
+	struct iovec vec;
+	ssize_t n;
+	int result;
+	int fd;
+
+	memset(&msg, 0, sizeof(msg));
+	vec.iov_base = &result;
+	vec.iov_len = sizeof(int);
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = tmp;
+	msg.msg_controllen = sizeof(tmp);
+
+	if ((n = recvmsg(sock, &msg, 0)) == -1)
+		cvs_log(LP_ERRNO, "failed to receive descriptor");
+	if (n != sizeof(int))
+		cvs_log(LP_WARN, "recvmsg: expected received 1 got %ld",
+		    (long)n);
+	if (result == 0) {
+		cmsg = CMSG_FIRSTHDR(&msg);
+		if (cmsg->cmsg_type != SCM_RIGHTS)
+			cvs_log(LP_WARN,
+			    "unexpected message type in descriptor reception");
+		fd = (*(int *)CMSG_DATA(cmsg));
+		return (fd);
+	} else {
+		errno = result;
+		return (-1);
+	}
+}
 
 
 
@@ -56,6 +133,7 @@
 int
 cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
 {
+	int cnt;
 	struct iovec iov[2];
 	struct cvsd_msg msg;
 
@@ -64,17 +142,30 @@ cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
 		return (-1);
 	}
 
-	msg.cm_type = type;
-	msg.cm_len = len;
+	memset(&msg, 0, sizeof(msg));
 
+	cnt = 1;
 	iov[0].iov_base = &msg;
 	iov[0].iov_len = sizeof(msg);
-	iov[1].iov_base = (void *)data;
-	iov[1].iov_len = len;
+	msg.cm_type = type;
 
-	if (writev(fd, iov, 2) == -1) {
+	if (type != CVSD_MSG_PASSFD) {
+		msg.cm_len = len;
+		iov[1].iov_base = (void *)data;
+		iov[1].iov_len = len;
+		cnt = 2;
+	}
+	else
+		msg.cm_len = sizeof(int);	/* dummy */
+
+	if (writev(fd, iov, cnt) == -1) {
 		cvs_log(LP_ERRNO, "failed to send message");
 		return (-1);
+	}
+
+	if (type == CVSD_MSG_PASSFD) {
+		/* pass the file descriptor for real */
+		cvsd_sendfd(fd, *(int *)data);
 	}
 
 	return (0);
@@ -94,6 +185,7 @@ cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
 int
 cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 {
+	int sfd;
 	ssize_t ret;
 	struct cvsd_msg msg;
 
@@ -107,12 +199,24 @@ cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 		return (-1);
 	}
 
-	ret = read(fd, dst, msg.cm_len);
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to read message");
-		return (-1);
+	if (msg.cm_type == CVSD_MSG_PASSFD) {
+		sfd = cvsd_recvfd(fd);
+		if (sfd == -1)
+			return (-1);
+
+		*(int *)dst = sfd;
+		*len = sizeof(sfd);
 	}
-	else if (ret == 0) {
+	else {
+		ret = read(fd, dst, msg.cm_len);
+		if (ret == -1) {
+			cvs_log(LP_ERRNO, "failed to read message");
+			return (-1);
+		}
+		else if (ret == 0) {
+		}
+
+		*len = (size_t)ret;
 	}
 
 	*type = msg.cm_type;
