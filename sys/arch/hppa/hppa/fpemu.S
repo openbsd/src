@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.1 2000/01/11 09:47:25 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.2 2000/01/11 10:14:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -184,7 +184,7 @@ $fpemu0c_0_4	/* fsqrt */
 	
 $fpemu0c_0_5	/* frnd */
 	/* quad not implemented */
-	FP_TABLE2(frnd,sgl,dbl,invalid,invalid)
+	FP_TABLE2(frnd,sgl,dbl,invalid,quad)
 
 $fpemu0c_1
 	extru	t4, 18, 2, t2
