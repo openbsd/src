@@ -1,7 +1,5 @@
 #!/bin/sh -
-#
-#	$OpenBSD: MAKEDEV,v 1.31 2000/06/19 01:44:56 miod Exp $
-#	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2000/06/21 21:16:28 miod Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,58 +35,152 @@
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
+#
 # Tapes:
 #	st*	SCSI tapes
+#
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	xy*	Xylogics 450/451 disks
+#	xy*	Xylogic 450/451 disks
 #	rd*	"ramdisk" pseudo-disks
+#	xd*	Xylogic 753/7053 disks
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+#
 # Printers:
-# Call units:
+#
+# Terminal ports:
+#	tty[a-b]	onboard zs serial ports
+#
 # Special purpose devices:
+#	uk*	SCSI Unknown device
+#	ss*	SCSI scanners
 #	bwtwo*	
 #	cgtwo*	
 #	cgfour*	
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	*random	inkernal random data source
-#	uk*	SCSI Unknown device
-#	ss*	SCSI scanners
+#	xfs*	XFS filesystem devices
+#	ipl 	IP filter log
 
-# XXX - Keep /usr/etc so SunOS can find chown
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
 umask 77
 
-# set this to echo for Echo-Only debugging
-eo=
+if ! [ "$os" ]; then
+	os=OpenBSD
+fi
 
-# mk name b/c major minor [mode] [group]
-mk() {
-	$eo rm -f $1
-	$eo mknod $1 $2 $3 $4
-	$eo chmod ${5-666} $1
-	test -n "$6" && $eo chgrp $6 $1
-	return 0
-}
+# SunOS shell support functions
+if [ "$os" = "SunOS" ]
+then
+PATH=$PATH:/usr/etc # SunOS has chown is /usr/etc
+	add ()
+	{
+		expr $1 + $2
+	}
+	mult ()
+	{
+		expr $1 '*' $2
+	}
+	hex ()
+	{
+		case $1 in
+			[0-9]) echo -n $1;;
+			10) echo -n a;;
+			11) echo -n b;;
+			12) echo -n c;;
+			13) echo -n d;;
+			14) echo -n e;;
+			15) echo -n f;;
+		esac
+	}
+	trunc ()
+	{
+		expr $1 : $2'\(.*\)'
+	}
+	unt ()
+	{
+		expr $1 : '[a-z]*\([0-9]*\)[a-p]*'
+	}
+fi
+# OpenBSD shell support functions
+if [ "$os" = "OpenBSD" ]
+then
+	add ()	
+	{
+		tmp=0
+		while [ "$1" ]
+		do
+			tmp=$(( $1 + $tmp ))
+			shift
+		done
+		echo $tmp
+	}
+	mult ()
+	{
+		echo "$(( $1 * $2 ))"
+	}
+	hex ()
+	{
+		case $1 in
+			[0-9]) echo -n $1;;
+			10) echo -n a;;
+			11) echo -n b;;
+			12) echo -n c;;
+			13) echo -n d;;
+			14) echo -n e;;
+			15) echo -n f;;
+		esac
+	}
+	trunc ()
+	{
+		# XXX pdksh can't seem to deal with locally scoped variables
+		# in ${foo#$bar} expansions
+		arg1="$1"
+		arg2="$2"
+		echo ${arg1#$arg2}
+	}
+	unt ()
+	{
+		# XXX pdksh can't seem to deal with locally scoped variables
+		# in ${foo#$bar} expansions
+		arg1="$1"
+		tmp="${arg1#[a-z]*}"
+		while [ "$tmp" != "$arg1" ]
+		do
+			arg1=$tmp
+			tmp="${arg1#[a-z]*}"
+		done
+		tmp="${arg1%*[a-z]}"
+		while [ "$tmp" != "$arg1" ]
+		do
+			arg1=$tmp
+			tmp="${arg1%*[a-z]}"
+		done
+		echo $arg1
+	}
+fi
 
-for arg
+for i
 do
 
-unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
+unit=`unt $i`
 [ "$unit" ] || unit=0
 
-case $arg in
+case $i in
 
 all)
-	sh $this std fd sd0 sd1 sd2 sd3 sd4 xy0 xy1 xy2 xy3
+	sh $this std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
 	sh $this cd0 st0 st1 rd0
 	sh $this uk0 uk1
 	sh $this ss0 ss1
@@ -104,57 +196,227 @@ all)
 ramdisk)
 	sh $this std random
 	sh $this sd0 sd1 sd2 sd3 sd4 rd0 cd0 st0 st1
-#	sh $this xy0 xy1 xy2 xy3
+#	sh $this xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
 	sh $this bpf0
 	;;
 
 std)
-	mk console	c 0 0 622
-	mk kd		c 1 0 622
-	mk tty		c 2 0
-
-	mk mem		c 3 0 640 kmem
-	mk kmem		c 3 1 640 kmem
-	mk null		c 3 2
-	mk eeprom	c 3 11 640 kmem
-	mk zero		c 3 12
-	mk drum		c 7 0 640 kmem
-
-	mk ttya		c 12 0 666 tty
-	mk ttyb		c 12 1 666 tty
-	mk mouse	c 13 0
-	mk klog		c 16 0 600
-	mk fb		c 22 0
-	mk kbd		c 29 0
-	mk leds		c 3 13 644
-	mk stdin        c 23 0
-	mk stdout       c 23 1
-	mk stderr       c 23 2
-	mk ksyms        c 37 0 640 kmem
+	rm -f console drum mem kmem xf86 null zero io tty klog stdin stdout stderr ksyms
+	rm -f eeprom kd ttya ttyb fb mouse kbd leds
+	rm -f vme16d16 vme24d16 vme32d16 vme16d32 vme24d32 vme32d32 vme16 vme24 vme32
+	mknod console		c 0 0
+	mknod kd		c 1 0
+	mknod tty		c 2 0	; chmod 666 tty
+	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
+	mknod null		c 3 2
+	mknod vme16d16		c 3 5	; chmod 600 vme16d16
+	ln -s vme16d16 vme16
+	mknod vme24d16		c 3 6	; chmod 600 vme24d16
+	ln -s vme24d16 vme24
+	mknod vme32d16		c 3 7	; chmod 600 vme32d16
+	mknod vme16d32		c 3 8	; chmod 600 vme16d32
+	mknod vme24d32		c 3 9	; chmod 600 vme24d32
+	mknod vme32d32		c 3 10	; chmod 600 vme32d32
+	ln -s vme32d32 vme32
+	mknod zero		c 3 12	; chmod 666 zero
+	mknod eeprom		c 3 11	; chmod 640 eeprom ; chown root.kmem eeprom
+	mknod leds		c 3 13	; chmod 644 leds
+	mknod drum		c 7 0	; chmod 640 drum ; chown root.kmem drum
+	mknod klog		c 16 0	; chmod 600 klog
+	mknod stdin		c 23 0	; chmod 666 stdin
+	mknod stdout		c 23 1	; chmod 666 stdout
+	mknod stderr		c 23 2	; chmod 666 stderr
+	sh $this ttya ttyb
+	mknod fb		c 22 0	; chmod 666 fb
+	mknod mouse		c 13 0	; chmod 666 mouse
+	mknod kbd		c 29 0	; chmod 666 kbd
+	mknod ksyms		c 37 0	; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
 fd)
-	mkdir fd >/dev/null 2>&1
-	i=0 ; while [ $i != 64 ]
-	do
-		mk fd/$i c 23 $i
-		i=`expr $i + 1`
-	done
+	rm -f fd/*
+	mkdir fd > /dev/null 2>&1
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 23 $n; n=`add $n 1`; done )
+	chown -R root.wheel fd
+	chmod 555 fd
+	chmod 666 fd/*
+	;;
+
+bwtwo*)
+	rm -f bwtwo$unit
+	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
+	;;
+
+cgtwo*)
+	rm -f cgtwo$unit
+	mknod cgtwo$unit	c 31 $unit; chmod 666 cgtwo$unit
+	;;
+
+cgfour[0-9]*)
+	rm -f cgfour$unit
+	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
+	;;
+
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
 	;;
 
 bpf*)
-	mk bpf$unit c 36 $unit 600
+	rm -f bpf$unit
+	mknod bpf$unit c 36 $unit
+	chmod 600 bpf$unit
+	chown root.wheel bpf$unit
 	;;
 
 ipl)
-	mk ipl c 75 0 600
-	mk ipnat c 75 1 600
-	mk ipstate c 75 2 600
-	mk ipauth c 75 3 600
+	rm -f ipl ipnat ipstate ipauth
+	mknod ipl c 75 0
+	mknod ipnat c 75 1
+	mknod ipstate c 75 2
+	mknod ipauth c 75 3
+	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 tun*)
-	mk tun$unit c 24 $unit 600
+	rm -f tun$unit
+	mknod tun$unit c 24 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
+	;;
+
+ccd*|sd*|xd*|xy*|cd*)
+	umask 2
+	unit=`unt $i`
+	if [ 0$unit -gt 15 ]
+	then
+		echo bad disk unit: $i - $unit
+		exit 127
+	fi
+	case $i in
+	ccd*) name=ccd; blk=9; chr=33;;
+	sd*) name=sd; blk=7; chr=17;;
+	xd*) name=xd; blk=10; chr=42;;
+	xy*) name=xy; blk=3; chr=9;;
+	cd*)  name=cd; blk=18; chr=58;;
+	*) echo bad unit for disk in: $i;;
+	esac
+	if [ "$unit" = "" ]
+	then
+		n=0
+		while [ $n -lt 32 ]
+		do
+			sh $this $name$n
+			n=`add $n 1`
+		done
+	fi
+	rm -f $name$unit? r$name$unit?
+	minor=`mult $unit 16`
+	for slice in a b c d e f g h i j k l m n o p
+	do
+		dev=$name$unit$slice
+		mknod $dev b $blk $minor
+		mknod r$dev c $chr $minor
+		minor=`add $minor 1`
+	done
+	chown root.operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	umask 77
+	;;
+
+vnd*)
+	umask 2
+	unit=`unt $i`
+	if [ 0$unit -gt 15 ]
+	then
+		echo bad disk unit: $i - $unit
+		exit 127
+	fi
+	blk=5; chr=19;
+	for name in vnd svnd; do
+		case $name in
+		vnd) off=0;;
+		svnd) off=128;;
+		esac
+		if [ "$unit" = "" ]
+		then
+			n=0
+			while [ $n -lt 32 ]
+			do
+				sh $this $name$n
+				n=`add $n 1`
+			done
+		fi
+		rm -f $name$unit? r$name$unit?
+		minor=`mult $unit 16`
+		minor=`add $minor $off`
+		for slice in a b c d e f g h i j k l m n o p
+		do
+			dev=$name$unit$slice
+			mknod $dev b $blk $minor
+			mknod r$dev c $chr $minor
+			minor=`add $minor 1`
+		done
+		chown root.operator $name$unit? r$name$unit?
+		chmod 640 $name$unit? r$name$unit?
+	done
+	umask 77
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	rm -f rd${unit}* rrd${unit}*
+	mknod rd${unit}a b 13 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 13 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 52 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 52 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
+	;;
+
+st*)
+	umask 2
+	case $i in
+	st*) name=st; blk=11; chr=18;;
+	esac
+	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	sixt=`mult $unit 16`
+	mknod $name$unit	b $blk `add $sixt 0`
+	mknod n$name$unit	b $blk `add $sixt 1`
+	mknod e$name$unit	b $blk `add $sixt 2`
+	mknod en$name$unit	b $blk `add $sixt 3`
+	mknod r$name$unit	c $chr `add $sixt 0`
+	mknod nr$name$unit	c $chr `add $sixt 1`
+	mknod er$name$unit	c $chr `add $sixt 2`
+	mknod enr$name$unit	c $chr `add $sixt 3`
+	chown root.operator $name$unit n$name$unit \
+		e$name$unit en$name$unit \
+		r$name$unit nr$name$unit \
+		er$name$unit enr$name$unit 
+	chmod 660 $name$unit n$name$unit \
+		e$name$unit en$name$unit \
+		r$name$unit nr$name$unit \
+		er$name$unit enr$name$unit 
+	umask 77
+	;;
+
+tty[a-z])
+	unit=`expr $i : 'tty\([a-z]\)'`
+	rm -f tty$unit
+	case $unit in
+	a) n=0 ;;
+	b) n=1 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	mknod tty$unit c 12 $n
+	chown uucp.dialer tty$unit
+	chmod 660 tty$unit
 	;;
 
 pty*)
@@ -175,110 +437,61 @@ pty*)
 	13) offset=208 name=R;;
 	14) offset=224 name=S;;
 	15) offset=240 name=T;;
-	*) echo bad unit for pty in: $arg;;
-	esac
-	for pair in 0.0 1.1 2.2 3.3 4.4 5.5 6.6 7.7 \
-		8.8 9.9 a.10 b.11 c.12 d.13 e.14 f.15
-	do
-	(
-		tmp="$IFS" ; IFS="$IFS."
-		set -- $pair
-		IFS="$tmp" ; unset tmp
-		minor=`expr $offset + $2`
-		mk tty$name$1 c 20 $minor
-		mk pty$name$1 c 21 $minor
-	)
-	done
-	;;
-
-cd*|sd*|xy*|ccd*|rd*|vnd*)
-	case $arg in
-	  cd*) name=cd; blk=18; chr=58;;
-	  sd*) name=sd; blk=7; chr=17;;
-	  xy*) name=xy; blk=3; chr=9 ;;
-	  ccd*) name=ccd; blk=9; chr=33;;
-	  rd*) name=rd; blk=13; chr=52;;
-	  vnd*) name=vnd; blk=5; chr=19;
+	*) echo bad unit for pty in: $i;;
 	esac
 	case $unit in
-	  0|1|2|3|4) offset=`expr $unit \* 8`;;
-	  *) echo bad unit for $name in: $arg;;
+	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
+		umask 0
+		n=0
+		while [ $n -lt 16 ]
+                do
+                        nam=$name`hex $n`
+                        rm -f {tty,pty}$nam
+                        mknod tty$nam c 20 `add $offset $n`
+                        mknod pty$nam c 21 `add $offset $n`
+                        n=`add $n 1`
+                done
+		umask 77
+		;;
 	esac
-	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7
-	do
-	(
-		tmp="$IFS" ; IFS="$IFS."
-		set -- $part
-		IFS="$tmp" ; unset tmp
-		minor=`expr $offset + $2`
-		mk  $name$unit$1 b $blk $minor 640 operator
-		mk r$name$unit$1 c $chr $minor 640 operator
-		if [ $name = vnd ]; then
-		    sminor=`expr $minor + 128`
-		    mk  s$name$unit$1 b $blk $sminor 640 operator
-		    mk rs$name$unit$1 c $chr $sminor 640 operator
-		fi
-	)
-	done
-	;;
-
-st*)
-	name=st; blk=11; chr=18;
-	offset=`expr $unit \* 16`;
-	mk   r$name$unit c $chr `expr $offset + 0` 660 operator
-	mk  nr$name$unit c $chr `expr $offset + 1` 660 operator
-	mk  er$name$unit c $chr `expr $offset + 2` 660 operator
-	mk enr$name$unit c $chr `expr $offset + 3` 660 operator
-	;;
-
-bwtwo*)
-	mk bwtwo$unit c 27 $unit
-	;;
-
-cgtwo*)
-	mk cgtwo$unit c 31 $unit
-	;;
-
-cgfour*)
-	mk cgfour$unit c 39 $unit
-	;;
-
-rd*)
-	mk  rd$unit b 13 $unit
-#	mk rrd$unit b 13 `expr $unit + 16`
-	mk rd${unit}c b 13 `expr $unit + 16`
 	;;
 
 random|srandom|urandom|prandom|arandom)
-	mk  random c 72 0
-	mk srandom c 72 1
-	mk urandom c 72 2
-	mk prandom c 72 3
-	mk arandom c 72 4
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 72 0
+	mknod srandom c 72 1
+	mknod urandom c 72 2
+	mknod prandom c 72 3
+	mknod arandom c 72 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 uk*)
-	mk uk$unit c 98 $unit 640 operator
+	unit=`trunc $i uk`
+	rm -f uk$unit
+	mknod uk$unit c 98 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
 	;;
 
 ss*)
-	mk ss$unit c 99 $unit 440 operator
+	unit=`trunc $i ss`
+	rm -f ss$unit
+	mknod ss$unit c 99 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
 #	backwards compatibility with older PINTs
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
 	;;
 
-xfs*)
-	mk xfs$unit c 51 $unit 600 wheel
-	;;
-
 local)
 	umask 0
-	test -s $this.local && sh $this.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 *)
-	echo $arg: unknown device
+	echo $i: unknown device
 	;;
-
 esac
 done
