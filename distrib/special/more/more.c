@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.11 2003/05/28 19:11:34 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.11 2003/05/28 19:11:34 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,7 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
-#include "pathnames.h"
+#include <paths.h>
 
 #define Fopen(s,m)	(Currline = 0, file_pos=0, fopen(s,m))
 #define Ftell(f)	(file_pos)
@@ -99,6 +98,11 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert
 #define	DUM_PROMPT	"[Press space to continue, 'q' to quit.]"
 #define	DUM_ERROR	"[Press 'h' for instructions.]"
 #define	QUIT_IT		"[Use q or Q to quit]"
+
+const char *more_help[] = {
+#include "morehelp.h"
+	NULL
+};
 
 struct termios	otty, osavetty;
 long		file_pos, file_size;
@@ -892,9 +896,9 @@ command(char *filename, FILE *f)
 	int retval;
 	char c;
 	char colonch;
-	FILE *helpf;
 	int done;
 	char comchar, cmdbuf[80], *p;
+	const char **q;
 
 #define ret(val) retval=val;done++;break
 
@@ -1071,12 +1075,10 @@ command(char *filename, FILE *f)
 			break;
 		case '?':
 		case 'h':
-			if ((helpf = fopen(HELPFILE, "r")) == NULL)
-				error("Can't open help file");
 			if (noscroll)
 				doclear();
-			copy_file(helpf);
-			fclose(helpf);
+			for (q = more_help; *q; q++)
+				puts(*q);
 			prompt(filename);
 			break;
 		case 'v':	/* This case should go right before default */
