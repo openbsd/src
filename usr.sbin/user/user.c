@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.40 2002/12/10 20:49:28 millert Exp $ */
+/* $OpenBSD: user.c,v 1.41 2003/04/03 16:03:06 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -513,7 +513,7 @@ append_group(char *user, int ngroups, char **groups)
 				while (isspace(buf[cc - 1]))
 					cc--;
 				buf[(j = cc)] = '\0';
-				if (*(colon + 1) != '\0')
+				if (buf[strlen(buf) - 1] != ':')
 					strlcat(buf, ",", sizeof(buf));
 				cc = strlcat(buf, user, sizeof(buf)) + 1;
 				if (cc >= sizeof(buf)) {
