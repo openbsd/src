@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.88 2000/02/15 16:52:57 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.89 2000/02/28 19:40:23 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1755,8 +1755,9 @@ do_authenticated(struct passwd * pw)
 				xauthfile = NULL;
 				goto fail;
 			}
-			restore_uid();
 			strlcat(xauthfile, "/cookies", MAXPATHLEN);
+			open(xauthfile, O_RDWR|O_CREAT|O_EXCL, 0600);
+			restore_uid();
 			fatal_add_cleanup(xauthfile_cleanup_proc, NULL);
 			break;
 #else /* XAUTH_PATH */
