@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.12 2003/08/11 06:51:45 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.13 2004/11/22 18:41:41 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -36,7 +36,7 @@ const char *
 dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 {
 	char buf[DEV_BSIZE];
-	int ret;
+	size_t ret;
 
 	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret))
 		if (ret != DEV_BSIZE)

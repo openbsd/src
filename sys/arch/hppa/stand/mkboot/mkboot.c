@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.14 2003/08/11 06:51:45 mickey Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.15 2004/11/22 18:41:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.14 2003/08/11 06:51:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.15 2004/11/22 18:41:42 mickey Exp $";
 #endif /* not lint */
 #endif
 
@@ -224,8 +224,8 @@ putfile(from_file, to)
 		if (n != sizeof (elf_header))
 			err(1, "%s: reading ELF header", from_file);
 		header_count = ntohs(elf_header.e_phnum);
-		memory_needed = header_count * sizeof (Elf32_Phdr);
-		elf_segments = (Elf32_Phdr *)malloc(memory_needed);
+		memory_needed = header_count * sizeof (*elf_segments);
+		elf_segments = malloc(memory_needed);
 		if (elf_segments == NULL)
 			err(1, "malloc");
 		(void) lseek(from, ntohl(elf_header.e_phoff), SEEK_SET);

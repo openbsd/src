@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.9 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.10 2004/11/22 18:41:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -55,7 +55,8 @@ lif_open (path, f)
 	struct lifdir *dp;
 	char *p, *q;
 	struct lif_load load;
-	int err, buf_size, l;
+	size_t buf_size;
+	int err, l;
 
 #ifdef LIFDEBUG
 	if (debug)
