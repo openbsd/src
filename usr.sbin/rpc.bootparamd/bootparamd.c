@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.3 1996/08/31 01:20:48 deraadt Exp $
+ * $Id: bootparamd.c,v 1.4 1996/10/05 07:23:03 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -335,7 +335,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 #endif
 			/* See if this line's client is the one we are
 			 * looking for */
-			if (strcmp(word, client) != 0) {
+			if (strcasecmp(word, client) != 0) {
 				/*
 				 * If it didn't match, try getting the
 				 * canonical host name of the client
@@ -343,7 +343,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 				 * the client we are looking for
 				 */
 				struct hostent *hp = gethostbyname(word);
-				if (hp == NULL || strcmp(hp->h_name, client))
+				if (hp == NULL || strcasecmp(hp->h_name, client))
 					continue;
 			}
 			contin *= -1;
