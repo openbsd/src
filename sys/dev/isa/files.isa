@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.50 1999/01/19 01:29:19 niklas Exp $
+#	$OpenBSD: files.isa,v 1.51 1999/01/20 18:23:52 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -135,9 +135,14 @@ file	dev/isa/wt.c			wt needs-flag
 # ISA networking drivers
 #
 
+# Novell NE1000, NE2000, and clones
+# Must be before the WD/SMC probe which it is hurt by.
+attach	ne at isa with ne_isa: rtl80x9
+file	dev/isa/if_ne_isa.c		ne_isa
+
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
-# MUST be first: probe is non invasive, and registers are clobbered
-# by other drivers's probe
+# MUST be second: probe is hurting some NE2k clones but otherwise kind,
+# and registers are clobbered by other drivers' probes
 device	we: ether, ifnet, dp8390nic, ifmedia
 attach	we at isa with we_isa
 file	dev/isa/if_we.c			we & (we_isa | we_isapnp) needs-flag
@@ -214,10 +219,6 @@ file	dev/isa/if_ex.c			ex needs-flag
 attach	le at isa with le_isa
 file	dev/isa/if_le.c			le_isa | le_pci
 file	dev/isa/if_le_isa.c		le_isa
-
-# Novell NE1000, NE2000, and clones
-attach	ne at isa with ne_isa: rtl80x9
-file	dev/isa/if_ne_isa.c		ne_isa
 
 # SMC91Cxx Ethernet Controllers 
 attach	sm at isa with sm_isa
