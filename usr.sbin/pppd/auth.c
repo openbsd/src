@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.17 2001/01/01 09:30:42 angelos Exp $	*/
+/*	$OpenBSD: auth.c,v 1.18 2001/01/02 04:15:58 angelos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.17 2001/01/01 09:30:42 angelos Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.18 2001/01/02 04:15:58 angelos Exp $";
 #endif
 #endif
 
@@ -1236,9 +1236,8 @@ ip_addr_check(addr, addrs)
 	}
 
 	hp = gethostbyname(ptr_word);
-	if (hp != NULL && hp->h_addrtype == AF_INET && hp->h_name != NULL) {
+	if (hp != NULL && hp->h_addrtype == AF_INET) {
 	    ina.s_addr = *(u_int32_t *)hp->h_addr;
-	    mask = ~ (u_int32_t) 0;	/* are we sure we want this? */
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET)
