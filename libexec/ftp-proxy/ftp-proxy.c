@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.8 2001/08/19 17:20:34 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.9 2001/08/19 17:33:12 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -582,41 +582,20 @@ out:
 	    strlen("port ")) == 0) {
 		unsigned int values[6];
 		int byte_number;
-		u_char *tailptr, ch;
+		u_char *tailptr;
 
 		debuglog(1, "Got a PORT command\n");
 
 		tailptr = &client->line_buffer[strlen("port ")];
 		byte_number = 0;
 		values[0] = 0;
-		while ((ch = *tailptr) == ',' || isdigit(ch)) {
-			if (isdigit(ch)) {
-				values[byte_number] = values[byte_number]
-				  * 10 + ch - '0';
-				if (values[byte_number] > 255) {
-					syslog(LOG_NOTICE, "%s %s %s",
-					    "ERROR - byte value greater",
-					    "than 255 in PORT command",
-					    "- terminating session");
-					exit(EX_DATAERR);
-				}
-			} else if (ch == ',') {
-				byte_number += 1;
-				if (byte_number < 6)
-					values[byte_number] = 0;
-				else {
-					syslog(LOG_NOTICE, "%s %s",
-					    "too many byte values in PORT",
-					    "command - terminating session");
-					exit(EX_DATAERR);
-				}
-			}
-			tailptr += 1;
-		}
 
-		if (byte_number != 5) {
-			syslog(LOG_NOTICE, "Too few byte values in %s",
-			    "PORT command - session terminated");
+		i = sscanf(tailptr, "%u,%u,%u,%u,%u,%u", &values[0],
+		    &values[1], &values[2], &values[3], &values[4],
+		    &values[5]);
+		if (i != 6) { 
+			syslog(LOG_INFO, "malformed PORT command (%s)", 
+			    client->line_buffer);
 			exit(EX_DATAERR);
 		}
 
