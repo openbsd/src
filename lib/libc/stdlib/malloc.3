@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.28 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: malloc.3,v 1.29 2003/09/18 22:49:13 tedu Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -143,23 +143,29 @@ When using
 one must be careful to avoid the following idiom:
 .Pp
 .Bd -literal -offset indent
-if ((p = realloc(p, nsize)) == NULL)
-	return NULL;
+size += 50;
+if ((p = realloc(p, size)) == NULL)
+	return (NULL);
 .Ed
 .Pp
-In most cases, this will result in a leak of memory.
+Do not adjust the variable describing how much memory has been allocated
+until one knows the allocation has been successful.
+This can cause aberrant program behavior if the incorrect size value is used.
+In most cases, the above sample will also result in a leak of memory.
 As stated earlier, a return value of
 .Dv NULL
 indicates that the old object still remains allocated.
 Better code looks like this:
 .Bd -literal -offset indent
-if ((p2 = realloc(p, nsize)) == NULL) {
+newsize = size + 50;
+if ((p2 = realloc(p, newsize)) == NULL) {
 	if (p)
 		free(p);
 	p = NULL;
-	return NULL;
+	return (NULL);
 }
 p = p2;
+size = newsize;
 .Ed
 .Pp
 Malloc will first look for a symbolic link called
