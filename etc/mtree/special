@@ -1,4 +1,5 @@
-#	$NetBSD: special,v 1.3 1995/04/21 00:22:04 cgd Exp $
+#	$OpenBSD: special,v 1.3 1996/05/26 10:26:06 deraadt Exp $
+#	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -142,7 +143,7 @@ ls		type=file mode=555 uname=root gname=wheel
 etc		type=dir mode=0755 uname=root gname=wheel
 group		type=file mode=644 uname=root gname=wheel
 localtime	type=file mode=644 uname=root gname=wheel
-master.passwd	type=file mode=644 uname=root gname=wheel
+master.passwd	type=file mode=600 uname=root gname=wheel
 passwd		type=file mode=644 uname=root gname=wheel
 ..	#var/spool/ftp/etc
 hidden		type=dir mode=0111 uname=root gname=wheel ignore
