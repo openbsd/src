@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.9 2002/06/06 21:52:25 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.10 2002/10/04 15:25:01 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -144,7 +144,6 @@
 09/25	John Bonham (Led Zeppelin) dies of alcohol poisoning, 1980
 09/26	Bela Bartok dies in New York, 1945
 09/26	George Gershwin born in Brooklyn, NY
-10/04	Janis Joplin O.D.s, 1970
 10/04	Janis Joplin dies of a heroin overdose in Hollywood, 1970
 10/05	Steve Miller is born in Dallas, 1943
 10/07	First Bandstand (later, American Bandstand) broadcast, 1957
