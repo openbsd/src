@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.7 1996/08/12 22:18:39 niklas Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.8 1996/08/12 23:42:12 niklas Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -1114,7 +1114,7 @@ swap_pager_remove(pager, from, to)
 	 *	swap block as well.
 	 */
 	for (swb = &swp->sw_blocks[blk], mask = (1 << bit) - 1;
-	    blk < to_blk || blk == to_blk && to_bit;
+	    blk < to_blk || (blk == to_blk && to_bit);
 	    blk++, swb++, mask = 0) {
 
 		/*	Don't bother if the block is already cleared.  */
