@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.4 2004/02/05 13:33:22 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.5 2004/02/05 13:39:32 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -193,7 +193,7 @@ routehandler(struct protocol *p)
 		break;
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		if ((ip = isours(ifam->ifam_index)) == 0)
+		if ((ip = isours(ifam->ifam_index)) == NULL)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
@@ -201,7 +201,7 @@ routehandler(struct protocol *p)
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		if ((ip = isours(ifm->ifm_index)) == 0)
+		if ((ip = isours(ifm->ifm_index)) == NULL)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			goto die;
