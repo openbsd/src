@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channel-tcpfwd.c,v 1.1 2001/05/30 12:55:08 markus Exp $");
+RCSID("$OpenBSD: channel-tcpfwd.c,v 1.2 2001/05/30 16:22:46 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -97,7 +97,7 @@ channel_request_forwarding(
     int gateway_ports, int remote_fwd)
 {
 	Channel *c;
-	int success, sock, on = 1, ctype;
+	int success, sock, on = 1, type;
 	struct addrinfo hints, *ai, *aitop;
 	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
 	const char *host;
@@ -107,10 +107,10 @@ channel_request_forwarding(
 
 	if (remote_fwd) {
 		host = listen_address;
-		ctype = SSH_CHANNEL_RPORT_LISTENER;
+		type = SSH_CHANNEL_RPORT_LISTENER;
 	} else {
 		host = host_to_connect;
-		ctype  =SSH_CHANNEL_PORT_LISTENER;
+		type = SSH_CHANNEL_PORT_LISTENER;
 	}
 
 	if (strlen(host) > SSH_CHANNEL_PATH_LEN - 1) {
@@ -170,7 +170,7 @@ channel_request_forwarding(
 			continue;
 		}
 		/* Allocate a channel number for the socket. */
-		c = channel_new("port listener", ctype, sock, sock, -1,
+		c = channel_new("port listener", type, sock, sock, -1,
 		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
 		    0, xstrdup("port listener"), 1);
 		if (c == NULL) {
