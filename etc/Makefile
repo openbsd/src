@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.202 2004/04/21 18:23:40 miod Exp $
+#	$OpenBSD: Makefile,v 1.203 2004/05/01 18:16:45 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -22,11 +22,11 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	shells spamd.conf syslog.conf weekly etc.${MACHINE}/disktab \
 	dhclient.conf mailer.conf
 
-.if ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || ${MACHINE} == "macppc" || \
-    ${MACHINE} == "pegasos" || ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "cats"
+.if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
+    ${MACHINE} == "cats" || ${MACHINE} == "hppa" || \
+    ${MACHINE} == "i386" || ${MACHINE} == "luna88k" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || ${MACHINE} == "pegasos"
 BIN1+=	wsconsctl.conf
 .endif
 
@@ -378,7 +378,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.202 2004/04/21 18:23:40 miod Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.203 2004/05/01 18:16:45 miod Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
