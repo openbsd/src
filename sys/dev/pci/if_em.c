@@ -31,8 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.31 2004/10/01 19:08:04 grange Exp $ */
+/* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
+/* $OpenBSD: if_em.c,v 1.32 2004/11/16 14:39:14 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -91,7 +91,7 @@ struct em_softc *em_adapter_list = NULL;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "1.7.25";
+char em_driver_version[] = "1.7.35";
 
 #ifdef __FreeBSD__
 /*********************************************************************
@@ -954,7 +954,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 #endif /* __FreeBSD__ */
 	default:
-		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%x)\n", (int)command);
+		IOCTL_DEBUGOUT1("ioctl received: UNKNOWN (0x%x)", (int)command);
 		error = EINVAL;
 	}
 
@@ -1009,6 +1009,8 @@ em_init_locked(struct em_softc *sc)
 {
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
+	uint32_t	pba;
+
 	INIT_DEBUGOUT("em_init: begin");
 
         mtx_assert(&sc->mtx, MA_OWNED);
@@ -1023,6 +1025,35 @@ em_init_locked(struct em_softc *sc)
 		sc->num_rx_desc = EM_MIN_RXD;
 	}
 
+	/* Packet Buffer Allocation (PBA)
+	 * Writing PBA sets the receive portion of the buffer
+	 * the remainder is used for the transmit buffer.
+	 *
+	 * Devices before the 82547 had a Packet Buffer of 64K.
+	 *   Default allocation: PBA=48K for Rx, leaving 16K for Tx.
+	 * After the 82547 the buffer was reduced to 40K.
+	 *   Default allocation: PBA=30K for Rx, leaving 10K for Tx.
+	 *   Note: default does not leave enough room for Jumbo Frame >10k.
+	 */
+	if(sc->hw.mac_type < em_82547) {
+		/* Total FIFO is 64K */
+		if(sc->rx_buffer_len > EM_RXBUFFER_8192)
+			pba = E1000_PBA_40K; /* 40K for Rx, 24K for Tx */
+		else
+			pba = E1000_PBA_48K; /* 48K for Rx, 16K for Tx */
+	} else {
+		/* Total FIFO is 40K */
+		if(sc->hw.max_frame_size > EM_RXBUFFER_8192) {
+			pba = E1000_PBA_22K; /* 22K for Rx, 18K for Tx */
+		} else {
+		        pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
+		}
+		sc->tx_fifo_head = 0;
+		sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
+		sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
+	}
+	INIT_DEBUGOUT1("em_init: pba=%dK",pba);
+	E1000_WRITE_REG(&sc->hw, PBA, pba);
 
 #ifdef __FreeBSD__
         /* Get the latest mac address, User can use a LAA */
@@ -1393,10 +1424,6 @@ em_tx_cb(void *arg, bus_dma_segment_t *seg, int nsegs, bus_size_t mapsize, int e
 }
 #endif /* __FreeBSD__ */
 
-#define EM_FIFO_HDR		 0x10
-#define EM_82547_PKT_THRESH	 0x3e0
-#define EM_82547_TX_FIFO_SIZE	 0x2800
-#define EM_82547_TX_FIFO_BEGIN	 0xf00
 /*********************************************************************
  *
  *  This routine maps the mbufs to tx descriptors.
@@ -1607,7 +1634,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 
 		if(eop) {
 			if (em_82547_fifo_workaround(sc, length)) {
-				sc->tx_fifo_wrk++;
+				sc->tx_fifo_wrk_cnt++;
 #ifdef __FreeBSD__
                                 callout_reset(&sc->tx_fifo_timer, 1,
                                         em_82547_move_tail, sc);
@@ -1644,7 +1671,7 @@ em_82547_fifo_workaround(struct em_softc *sc, int len)
 	fifo_pkt_len = EM_ROUNDUP(len + EM_FIFO_HDR, EM_FIFO_HDR);
 
 	if (sc->link_duplex == HALF_DUPLEX) {
-		fifo_space = EM_82547_TX_FIFO_SIZE - sc->tx_fifo_head;
+		fifo_space = sc->tx_fifo_size - sc->tx_fifo_head;
 
 		if (fifo_pkt_len >= (EM_82547_PKT_THRESH + fifo_space)) {
 			if (em_82547_tx_fifo_reset(sc)) {
@@ -1666,8 +1693,8 @@ em_82547_update_fifo_head(struct em_softc *sc, int len)
 
 	/* tx_fifo_head is always 16 byte aligned */
 	sc->tx_fifo_head += fifo_pkt_len;
-	if (sc->tx_fifo_head >= EM_82547_TX_FIFO_SIZE) {
-		sc->tx_fifo_head -= EM_82547_TX_FIFO_SIZE;
+	if (sc->tx_fifo_head >= sc->tx_fifo_size) {
+		sc->tx_fifo_head -= sc->tx_fifo_size;
 	}
 
 	return;
@@ -1692,17 +1719,17 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, TCTL, tctl & ~E1000_TCTL_EN);
 
 		/* Reset FIFO pointers */
-		E1000_WRITE_REG(&sc->hw, TDFT, EM_82547_TX_FIFO_BEGIN);
-		E1000_WRITE_REG(&sc->hw, TDFH, EM_82547_TX_FIFO_BEGIN);
-		E1000_WRITE_REG(&sc->hw, TDFTS, EM_82547_TX_FIFO_BEGIN);
-		E1000_WRITE_REG(&sc->hw, TDFHS, EM_82547_TX_FIFO_BEGIN);
+		E1000_WRITE_REG(&sc->hw, TDFT, sc->tx_head_addr);
+		E1000_WRITE_REG(&sc->hw, TDFH, sc->tx_head_addr);
+		E1000_WRITE_REG(&sc->hw, TDFTS, sc->tx_head_addr);
+		E1000_WRITE_REG(&sc->hw, TDFHS, sc->tx_head_addr);
 
 		/* Re-enable TX unit */
 		E1000_WRITE_REG(&sc->hw, TCTL, tctl);
 		E1000_WRITE_FLUSH(&sc->hw);
 
 		sc->tx_fifo_head = 0;
-		sc->tx_fifo_reset++;
+		sc->tx_fifo_reset_cnt++;
 
 		return(TRUE);
 	}
@@ -1716,13 +1743,24 @@ em_set_promisc(struct em_softc * sc)
 {
 
 	u_int32_t	reg_rctl;
+	u_int32_t	ctrl;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
 	reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
+	ctrl = E1000_READ_REG(&sc->hw, CTRL);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		reg_rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
+
+#if 0
+		/* Disable VLAN stripping in promiscous mode 
+		 * This enables bridging of vlan tagged frames to occur 
+		 * and also allows vlan tags to be seen in tcpdump
+		 */
+		ctrl &= ~E1000_CTRL_VME; 
+		E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
+#endif
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
 		reg_rctl |= E1000_RCTL_MPE;
 		reg_rctl &= ~E1000_RCTL_UPE;
@@ -1743,6 +1781,7 @@ em_disable_promisc(struct em_softc * sc)
 	reg_rctl &=  (~E1000_RCTL_MPE);
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 
+	/* em_enable_vlans(sc); */
 	return;
 }
 
@@ -3624,7 +3663,7 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.rxerrc +
 	sc->stats.crcerrs +
 	sc->stats.algnerrc +
-	sc->stats.rlec + sc->stats.rnbc + 
+	sc->stats.rlec +
 	sc->stats.mpc + sc->stats.cexterr;
 
 	/* Tx Errors */
@@ -3647,6 +3686,10 @@ em_print_debug_info(struct em_softc *sc)
 	uint8_t *hw_addr = sc->hw.hw_addr;
 
         printf("%s: Adapter hardware address = %p \n", unit, hw_addr);
+	printf("%s:CTRL  = 0x%x\n", unit, 
+		E1000_READ_REG(&sc->hw, CTRL)); 
+	printf("%s:RCTL  = 0x%x PS=(0x8402)\n", unit, 
+		E1000_READ_REG(&sc->hw, RCTL));
         printf("%s:tx_int_delay = %d, tx_abs_int_delay = %d\n", unit,
               E1000_READ_REG(&sc->hw, TIDV),
               E1000_READ_REG(&sc->hw, TADV));
@@ -3661,8 +3704,8 @@ em_print_debug_info(struct em_softc *sc)
 	       sc->clean_tx_interrupts);
 #endif
 	printf("%s: fifo workaround = %lld, fifo_reset = %lld\n", unit,
-		(long long)sc->tx_fifo_wrk,
-		(long long)sc->tx_fifo_reset);
+		(long long)sc->tx_fifo_wrk_cnt,
+		(long long)sc->tx_fifo_reset_cnt);
 	printf("%s: hw tdh = %d, hw tdt = %d\n", unit,
 		E1000_READ_REG(&sc->hw, TDH),
 		E1000_READ_REG(&sc->hw, TDT));
