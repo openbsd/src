@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.68 2005/03/15 21:26:50 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.69 2005/03/21 22:29:45 miod Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -67,10 +67,10 @@ ost="OpenBSD"
 osr="3.7"
 
 cat >vers.c <<eof
-#define STATUS ""			/* release */
+#define STATUS "-current"
 #if 0
 #define STATUS "-beta"
-#define STATUS "-current"
+#define STATUS ""			/* release */
 #endif
 
 const char ostype[] = "${ost}";
