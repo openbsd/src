@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.37 2001/05/30 04:49:32 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.38 2001/05/30 05:30:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1368,57 +1368,13 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	u_int32_t in2, in3, *out2, *out3;
 	int wait;
 {
-	struct txp_hostvar *hv = sc->sc_hostvar;
-	struct txp_cmd_desc *cmd;
 	struct txp_rsp_desc *rsp = NULL;
-	u_int32_t idx, i;
-	u_int16_t seq;
 
-	if (txp_cmd_desc_numfree(sc) == 0) {
-		printf("%s: no free cmd descriptors\n", TXP_DEVNAME(sc));
+	if (txp_command2(sc, id, in1, in2, in3, NULL, 0, &rsp, wait))
 		return (-1);
-	}
-
-	idx = sc->sc_cmdring.lastwrite;
-	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
-	bzero(cmd, sizeof(*cmd));
-
-	cmd->cmd_numdesc = 0;
-	cmd->cmd_seq = seq = sc->sc_seq++;
-	cmd->cmd_id = id;
-	cmd->cmd_par1 = in1;
-	cmd->cmd_par2 = in2;
-	cmd->cmd_par3 = in3;
-	cmd->cmd_flags = CMD_FLAGS_TYPE_CMD |
-	    (wait ? CMD_FLAGS_RESP : 0) | CMD_FLAGS_VALID;
-
-	idx += sizeof(struct txp_cmd_desc);
-	if (idx == sc->sc_cmdring.size)
-		idx = 0;
-	sc->sc_cmdring.lastwrite = idx;
-
-	WRITE_REG(sc, TXP_H2A_2, sc->sc_cmdring.lastwrite);
 
 	if (!wait)
 		return (0);
-
-	for (i = 0; i < 10000; i++) {
-		idx = hv->hv_resp_read_idx;
-		if (idx != hv->hv_resp_write_idx) {
-			rsp = NULL;
-			if (txp_response(sc, idx, cmd->cmd_id, seq, &rsp))
-				return (-1);
-			if (rsp != NULL)
-				break;
-		}
-		DELAY(50);
-	}
-	if (i == 1000 || rsp == NULL) {
-		printf("%s: 0x%x command failed\n", TXP_DEVNAME(sc), id);
-		if (rsp != NULL)
-			free(rsp, M_DEVBUF);
-		return (-1);
-	}
 
 	if (out1 != NULL)
 		*out1 = rsp->rsp_par1;
@@ -1426,9 +1382,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 		*out2 = rsp->rsp_par2;
 	if (out3 != NULL)
 		*out3 = rsp->rsp_par3;
-
 	free(rsp, M_DEVBUF);
-
 	return (0);
 }
 
@@ -1490,7 +1444,7 @@ txp_command2(sc, id, in1, in2, in3, in_extp, in_extn, rspp, wait)
 		idx = hv->hv_resp_read_idx;
 		if (idx != hv->hv_resp_write_idx) {
 			*rspp = NULL;
-			if (txp_response(sc, idx, cmd->cmd_id, seq, rspp))
+			if (txp_response(sc, idx, id, seq, rspp))
 				return (-1);
 			if (*rspp != NULL)
 				break;
