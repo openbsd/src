@@ -39,11 +39,12 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.71 2000/11/06 23:13:26 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.72 2000/11/12 19:50:38 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -210,8 +211,9 @@ rsh_connect(char *host, char *user, Buffer * command)
 	exit(1);
 }
 
-int ssh_session(void);
-int ssh_session2(void);
+int	ssh_session(void);
+int	ssh_session2(void);
+int	guess_identity_file_type(const char *filename);
 
 /*
  * Main program for the ssh client.
@@ -349,14 +351,13 @@ main(int ac, char **av)
 		case 'i':
 			if (stat(optarg, &st) < 0) {
 				fprintf(stderr, "Warning: Identity file %s does not exist.\n",
-					optarg);
+				    optarg);
 				break;
 			}
 			if (options.num_identity_files >= SSH_MAX_IDENTITY_FILES)
 				fatal("Too many identity files specified (max %d)",
-				      SSH_MAX_IDENTITY_FILES);
-			options.identity_files[options.num_identity_files++] =
-				xstrdup(optarg);
+				    SSH_MAX_IDENTITY_FILES);
+			options.identity_files[options.num_identity_files++] = xstrdup(optarg);
 			break;
 		case 't':
 			tty_flag = 1;
@@ -466,6 +467,7 @@ main(int ac, char **av)
 		usage();
 
 	SSLeay_add_all_algorithms();
+	ERR_load_crypto_strings();
 
 	/* Initialize the command to execute on remote host. */
 	buffer_init(&command);
@@ -540,20 +542,6 @@ main(int ac, char **av)
 	/* reinit */
 	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 0);
 
-	/* check if RSA support exists */
-	if ((options.protocol & SSH_PROTO_1) &&
-	    rsa_alive() == 0) {
-		log("%s: no RSA support in libssl and libcrypto.  See ssl(8).",
-		    __progname);
-		log("Disabling protocol version 1");
-		options.protocol &= ~ (SSH_PROTO_1|SSH_PROTO_1_PREFERRED);
-	}
-	if (! options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
-		fprintf(stderr, "%s: No protocol version available.\n",
-		    __progname);
- 		exit(1);
-	}
-
 	if (options.user == NULL)
 		options.user = xstrdup(pw->pw_name);
 
@@ -609,7 +597,7 @@ main(int ac, char **av)
 	if (ok && (options.protocol & SSH_PROTO_1)) {
 		Key k;
 		host_private_key = RSA_new();
-		k.type = KEY_RSA;
+		k.type = KEY_RSA1;
 		k.rsa = host_private_key;
 		if (load_private_key(HOST_KEY_FILE, "", &k, NULL))
 			host_private_key_loaded = 1;
@@ -656,23 +644,23 @@ main(int ac, char **av)
 		}
 		exit(1);
 	}
-	/* Expand ~ in options.identity_files. */
+	/* Expand ~ in options.identity_files, known host file names. */
 	/* XXX mem-leaks */
-	for (i = 0; i < options.num_identity_files; i++)
+	for (i = 0; i < options.num_identity_files; i++) {
 		options.identity_files[i] =
-			tilde_expand_filename(options.identity_files[i], original_real_uid);
-	for (i = 0; i < options.num_identity_files2; i++)
-		options.identity_files2[i] =
-			tilde_expand_filename(options.identity_files2[i], original_real_uid);
-	/* Expand ~ in known host file names. */
-	options.system_hostfile = tilde_expand_filename(options.system_hostfile,
-	    original_real_uid);
-	options.user_hostfile = tilde_expand_filename(options.user_hostfile,
-	    original_real_uid);
-	options.system_hostfile2 = tilde_expand_filename(options.system_hostfile2,
-	    original_real_uid);
-	options.user_hostfile2 = tilde_expand_filename(options.user_hostfile2,
-	    original_real_uid);
+		    tilde_expand_filename(options.identity_files[i], original_real_uid);
+		options.identity_files_type[i] = guess_identity_file_type(options.identity_files[i]);
+		debug("identity file %s type %d", options.identity_files[i],
+		    options.identity_files_type[i]);
+	}
+	options.system_hostfile =
+	    tilde_expand_filename(options.system_hostfile, original_real_uid);
+	options.user_hostfile =
+	    tilde_expand_filename(options.user_hostfile, original_real_uid);
+	options.system_hostfile2 =
+	    tilde_expand_filename(options.system_hostfile2, original_real_uid);
+	options.user_hostfile2 =
+	    tilde_expand_filename(options.user_hostfile2, original_real_uid);
 
 	/* Log into the remote system.  This never returns if the login fails. */
 	ssh_login(host_private_key_loaded, host_private_key,
@@ -1022,4 +1010,24 @@ ssh_session2(void)
 	     ssh_session2_callback, (void *)0);
 
 	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
+}
+
+int
+guess_identity_file_type(const char *filename)
+{
+	struct stat st;
+	Key *public;
+	int type = KEY_RSA1; /* default */
+
+	if (stat(filename, &st) < 0) {
+		perror(filename);
+		return KEY_UNSPEC;
+	}
+	public = key_new(type);
+	if (!load_public_key(filename, public, NULL)) {
+		/* ok, so we will assume this is 'some' key */
+		type = KEY_UNSPEC;
+	}
+	key_free(public);
+	return type;
 }
