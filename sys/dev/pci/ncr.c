@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.36 1998/03/17 15:59:46 pefo Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.37 1998/03/22 17:27:44 pefo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -237,7 +237,7 @@
 #include <dev/pci/ncrreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#if !defined(__alpha__) && !defined(__mips__)
+#if !defined(__alpha__) && !defined(__mips__) && !defined(__powerpc__)
 #define DELAY(x)	delay(x)
 #endif
 #include <scsi/scsi_all.h>
@@ -1468,7 +1468,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.36 1998/03/17 15:59:46 pefo Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.37 1998/03/22 17:27:44 pefo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3394,8 +3394,9 @@ static void ncr_script_copy_and_bind (ncb_p np, ncrcmd *src, ncrcmd *dst, int le
 				offset += 4;
 			}
 		} else {
-			WRITESCRIPT_OFF(dst, offset, *src++);
+			WRITESCRIPT_OFF(dst, offset, *src);
 			offset += 4;
+			src++;
 		}
 
 	};
@@ -7430,7 +7431,7 @@ static	int	ncr_scatter
 	bzero (&phys->data, sizeof (phys->data));
 	if (!datalen) return (0);
 
-	paddr = NCR_KVATOPHYS (np, vaddr);
+	paddr = NCR_KVATOPHYS (np, (void *)vaddr);
 
 	/*
 	**	insert extra break points at a distance of chunk.
@@ -7488,7 +7489,7 @@ static	int	ncr_scatter
 			vaddr   += size;
 			csize   -= size;
 			datalen -= size;
-			paddr    = NCR_KVATOPHYS (np, vaddr);
+			paddr    = NCR_KVATOPHYS (np, (void *)vaddr);
 		};
 
 		if(DEBUG_FLAGS & DEBUG_SCATTER)
