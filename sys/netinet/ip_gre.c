@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.20 2003/04/22 02:52:28 itojun Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.21 2003/05/03 01:43:07 itojun Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -214,6 +214,7 @@ gre_input2(m , hlen, proto)
                  */
                 struct mbuf m0;
 
+		m0.m_flags = 0;
                 m0.m_next = m;
                 m0.m_len = 4;
                 m0.m_data = (char *) &af;
@@ -361,6 +362,7 @@ gre_mobile_input(struct mbuf *m, ...)
                 struct mbuf m0;
 		u_int af = AF_INET;
 
+		m0.m_flags = 0;
                 m0.m_next = m;
                 m0.m_len = 4;
                 m0.m_data = (char *) &af;

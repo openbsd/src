@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.26 2003/01/07 09:00:33 kjc Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.27 2003/05/03 01:43:07 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ looutput(ifp, m, dst, rt)
 		struct mbuf m0;
 		u_int32_t af = htonl(dst->sa_family);
 
+		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = sizeof(af);
 		m0.m_data = (char *)&af;

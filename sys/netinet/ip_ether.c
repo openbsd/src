@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.43 2003/03/06 11:54:06 markus Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.44 2003/05/03 01:43:07 itojun Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -246,6 +246,7 @@ etherip_input(struct mbuf *m, ...)
 		struct mbuf m0;
 		u_int32_t af = sdst.sa.sa_family;
 
+		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;

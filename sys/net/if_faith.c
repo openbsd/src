@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.12 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.13 2003/05/03 01:43:07 itojun Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -141,6 +141,7 @@ faithoutput(ifp, m, dst, rt)
 		struct mbuf m0;
 		u_int32_t af = dst->sa_family;
 
+		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
