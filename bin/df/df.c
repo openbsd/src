@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.42 2005/01/28 16:44:17 mickey Exp $	*/
+/*	$OpenBSD: df.c,v 1.43 2005/02/20 01:34:56 pedro Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.42 2005/01/28 16:44:17 mickey Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.43 2005/02/20 01:34:56 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ void	 posixprint(struct statfs *, long, int);
 int 	 bread(int, off_t, void *, int);
 void	 usage(void);
 void	 prthumanval(long long);
-void	 prthuman(struct statfs *sfsp, long);
+void	 prthuman(struct statfs *sfsp, unsigned long);
 
 int		raw_df(char *, struct statfs *);
 extern int	ffs_df(int, char *, struct statfs *);
@@ -306,7 +306,7 @@ prthumanval(long long bytes)
 }
 
 void
-prthuman(struct statfs *sfsp, long used)
+prthuman(struct statfs *sfsp, unsigned long used)
 {
 	prthumanval((long long)sfsp->f_blocks * (long long)sfsp->f_bsize);
 	prthumanval((long long)used * (long long)sfsp->f_bsize);
@@ -328,7 +328,7 @@ void
 prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 {
 	u_int32_t used, inodes;
-	int32_t availblks;
+	int64_t availblks;
 
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
