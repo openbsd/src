@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.10 1996/09/25 17:06:26 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.11 1996/09/30 12:22:10 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -350,16 +350,10 @@ while [ $part_used -lt $partition ]; do
 				;;
 		esac
 	done
+	# XXX we skip partition d to avoid incredible user confusion
 	if [ "$ename" = "" ]; then
-		dname=$part_name
-		offset=`expr $part_offset + $root + $swap`
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:pd#${_size}:od#${_offset}" >> $DT
-		echo ":td=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
-		offset=`expr $offset + $part_size`
-	elif [ "$ename" = "" ]; then
 		ename=$part_name
+		offset=`expr $part_offset + $root + $swap`
 		_size=`expr $part_size \* $sizemult`
 		_offset=`expr $offset \* $sizemult`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
@@ -487,13 +481,6 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
-if [ "$dname" != "" ]; then
-	echo	""
-	echo	"Initializing $dname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}d $name
-	$DONTDOIT mkdir -p /mnt/$dname
-	$DONTDOIT mount -v /dev/${drivename}d /mnt/$dname
-fi
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -587,9 +574,6 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
-if [ "$dname" != "" ]; then
-	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
-fi
 if [ "$ename" != "" ]; then
 	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
