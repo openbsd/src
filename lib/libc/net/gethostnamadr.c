@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.15 1997/04/02 08:22:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.16 1997/04/03 05:52:35 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -88,7 +88,11 @@ static char *__ypdomain;
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
 static char hostbuf[BUFSIZ+1];
-static u_char host_addr[16];		/* IPv4 or IPv6 */
+static union {
+	struct in_addr _host_in_addr;
+	u_char _host_addr[16];		/* IPv4 or IPv6 */
+} _host_addr_u;
+#define host_addr _host_addr_u._host_addr
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
