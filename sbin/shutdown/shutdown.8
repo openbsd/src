@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.19 2000/04/15 11:45:58 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.20 2000/06/18 17:12:57 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -53,18 +53,25 @@ to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
 would otherwise not bother with such niceties.
 .Pp
-Available friendlinesses:
+The options are as follows:
 .Bl -tag -width time
 .It Fl d
-The system will perform a crash dump.
+Causes system to perform a dump before rebooting.
+This option is useful for debugging system dump procedures or capturing the
+state of a corrupted or misbehaving system.
+See
+.Xr savecore 8
+for information on how to recover this dump.
 .It Fl f
-.Nm
-arranges, in the manner of
-.Xr fastboot 8 ,
-for the file systems
+Create the file
+.Pa /fastboot
+so that the file systems will
 .Em not
-to be
-checked on reboot.
+be checked by
+.Xr fsck 8
+during the next boot.
+(See
+.Xr rc 8 ) .
 .It Fl h
 The system is halted at the specified
 .Ar time
@@ -153,17 +160,19 @@ and should be used to
 inform the users about when the system will be back up
 and why it is going down (or anything else).
 .Sh FILES
-.Bl -tag -width /etc/nologin -compact
+.Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
 tells login not to let anyone log in
 .It Pa /fastboot
 tells
 .Xr rc 8
-not to run fsck when rebooting
+not to run
+.Xr fsck 8
+during the next boot
 .It Pa /etc/rc.shutdown
-Run by
+run by
 .Xr rc 8
-before the system is shutdown.
+before the system is shutdown
 .El
 .Sh SEE ALSO
 .Xr login 1 ,
@@ -171,7 +180,7 @@ before the system is shutdown.
 .Xr halt 8 ,
 .Xr reboot 8 ,
 .Xr rc.shutdown 8
-.Sh BACKWARD COMPATIBILITY
+.Sh COMPATIBILITY
 The hours and minutes in the second time format may be separated by
 a colon
 .Pq Sq \&:
