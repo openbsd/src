@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.83 2001/07/04 06:46:58 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.84 2001/09/03 21:22:38 pjanzen Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.83 2001/07/04 06:46:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.84 2001/09/03 21:22:38 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -719,7 +719,7 @@ void
 doreap(void)
 {
 	pid_t pid;
-	int save_errno = errno, status;
+	int status;
 	register struct servtab *sep;
 
 	if (debug)
@@ -750,7 +750,6 @@ doreap(void)
 					    sep->se_service, sep->se_fd);
 			}
 	}
-	errno = save_errno;
 }
 
 int setconfig __P((void));
