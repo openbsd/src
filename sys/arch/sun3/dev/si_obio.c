@@ -1,4 +1,4 @@
-/*	$OpenBSD: si_obio.c,v 1.6 1997/01/16 04:03:53 kstailey Exp $	*/
+/*	$OpenBSD: si_obio.c,v 1.7 1997/04/29 13:09:25 kstailey Exp $	*/
 /*	$NetBSD: si_obio.c,v 1.7 1996/11/20 18:57:00 gwr Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ struct cfattach si_obio_ca = {
 
 /* Options.  Interesting values are: 1,3,7 */
 /* XXX: Using 1 for now to mask a (pmap?) bug not yet found... */
-int si_obio_options = 1;	/* XXX */
+int si_obio_options = 0;	/* XXX */
 
 
 static int
