@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.4 1996/07/20 12:02:04 joshd Exp $	*/
+/*	$OpenBSD: auth.c,v 1.5 1996/12/15 23:20:33 millert Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: auth.c,v 1.4 1996/07/20 12:02:04 joshd Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.5 1996/12/15 23:20:33 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -1068,8 +1068,9 @@ ip_addr_check(addr, addrs)
     u_int32_t addr;
     struct wordlist *addrs;
 {
-    u_int32_t a, mask, ah;
-    int accept;
+    u_int32_t mask, ah;
+    struct in_addr ina;
+    int accept, r = 1;
     char *ptr_word, *ptr_mask;
     struct hostent *hp;
     struct netent *np;
@@ -1111,17 +1112,17 @@ ip_addr_check(addr, addrs)
 
 	hp = gethostbyname(ptr_word);
 	if (hp != NULL && hp->h_addrtype == AF_INET) {
-	    a    = *(u_int32_t *)hp->h_addr;
+	    ina.s_addr = *(u_int32_t *)hp->h_addr;
 	    mask = ~ (u_int32_t) 0;	/* are we sure we want this? */
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET)
-		a = htonl (*(u_int32_t *)np->n_net);
+		ina.s_addr = htonl (*(u_int32_t *)np->n_net);
 	    else
-		a = inet_addr (ptr_word);
+		r = inet_aton (ptr_word, &ina);
 	    if (ptr_mask == NULL) {
 		/* calculate appropriate mask for net */
-		ah = ntohl(a);
+		ah = ntohl(ina.s_addr);
 		if (IN_CLASSA(ah))
 		    mask = IN_CLASSA_NET;
 		else if (IN_CLASSB(ah))
@@ -1134,12 +1135,12 @@ ip_addr_check(addr, addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-        if (a == -1L)
+        if (r == 0)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
 	else
-	    if (((addr ^ a) & htonl(mask)) == 0)
+	    if (((addr ^ ina.s_addr) & htonl(mask)) == 0)
 		return accept;
     }
     return 0;			/* not in list => can't have it */
