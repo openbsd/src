@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.7 1998/09/09 21:35:46 maja Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.8 1998/09/09 22:06:57 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -164,7 +164,9 @@
  * driver will use memory mapped I/O, which may be faster but which
  * might not work on some devices.
  */
+#if defined(__i386__)
 #define XL_USEIOSPACE
+#endif
 
 #if defined(__FreeBSD__)
 #include <pci/if_xlreg.h>
@@ -2883,7 +2885,6 @@ xl_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	bus_space_tag_t iot = pa->pa_iot;
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t command;
@@ -2938,12 +2939,12 @@ xl_attach(parent, self, aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
+#ifdef XL_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		printf("%s: failed to enable i/o ports\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-
 	/*
 	 * Map control/status registers.
 	 */
@@ -2951,11 +2952,28 @@ xl_attach(parent, self, aux)
 		printf(": can't find i/o space\n");
 		return;
 	}
-	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_sh)) {
+	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sc_sh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->sc_st = iot;
+	sc->sc_st = pa->pa_iot;
+#else
+	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
+		printf("%s: failed to enable memory mapping\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (pci_mem_find(pc, pa->pa_tag, XL_PCI_LOMEM, &iobase, &iosize, NULL)){
+		printf(": can't find mem space\n");
+		return;
+	}
+	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
+		printf(": can't map mem space\n");
+		return;
+	}
+	sc->csr = (volatile caddr_t)&iobase;
+	sc->sc_st = pa->pa_memt;
+#endif
 
 	/*
 	 * Allocate our interrupt.
@@ -2975,6 +2993,7 @@ xl_attach(parent, self, aux)
 			printf(" at %s", intrstr);
 		return;
 	}
+	printf(": %s", intrstr);
 
 	xl_reset(sc);
 

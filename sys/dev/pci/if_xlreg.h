@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.4 1998/09/08 03:02:58 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.5 1998/09/09 22:06:57 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -641,7 +641,7 @@ struct xl_stats {
 	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, csr)
 #define CSR_READ_1(sc, csr) \
 	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, csr)
-#endif /* __NetBSD__ */
+#endif /* __OpenBSD__ */
 
 #define XL_SEL_WIN(x)	\
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_WINSEL | x)
