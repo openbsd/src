@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.63 2004/01/18 12:26:16 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.64 2004/04/07 09:43:00 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.63 2004/01/18 12:26:16 markus Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.64 2004/04/07 09:43:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -811,23 +811,23 @@ newroute(int argc, char **argv)
 		}
 		if (ret == 0)
 			(void) printf("\n");
-	}
-	if (ret != 0) {
-		switch (oerrno) {
-		case ESRCH:
-			err = "not in table";
-			break;
-		case EBUSY:
-			err = "entry in use";
-			break;
-		case ENOBUFS:
-			err = "routing table overflow";
-			break;
-		default:
-			err = strerror(oerrno);
-			break;
+		if (ret != 0) {
+			switch (oerrno) {
+			case ESRCH:
+				err = "not in table";
+				break;
+			case EBUSY:
+				err = "entry in use";
+				break;
+			case ENOBUFS:
+				err = "routing table overflow";
+				break;
+			default:
+				err = strerror(oerrno);
+				break;
+			}
+			(void) printf(": %s\n", err);
 		}
-		(void) printf(": %s\n", err);
 	}
 	return (ret != 0);
 }
