@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.10 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.11 2003/06/26 00:13:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -66,10 +66,12 @@ char		*env_get(char *, char **),
 		**env_copy(char **),
 		**env_set(char **, char *);
 
+void		mkprint(char *, unsigned char *, int);
+
 user		*load_user(int, struct passwd *, const char *),
 		*find_user(cron_db *, const char *);
 
-entry		*load_entry(FILE *, void (*)(), struct passwd *, char **);
+entry		*load_entry(FILE *, void (*)(const char *), struct passwd *, char **);
 
 FILE		*cron_popen(char *, char *, struct passwd *);
 
