@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.13 2002/04/07 22:13:01 miod Exp $
+dnl	$OpenBSD: prep,v 1.14 2002/05/02 23:13:40 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -68,44 +68,35 @@ Using the SRM console:
     will boot the "bsd" kernel with the "ac" flags on dka0.
 
 
-dnl Change back when TC support is back
-dnl On systems with no framebuffer supported, including all
-dnl TurboChannel-based machines, OpenBSD/MACHINE must be used with a
-dnl serial console.  Setting an Alpha system to use a serial console
-dnl is system-specific.  The procedure for most common hardware is:
-dnl
-dnl	DEC 3000/[4-9]00's:
-dnl		Flip the appropriate switch on the back of the machine.
-dnl
-dnl	DEC 3000/300 family machines:
-dnl		Boot the machine with the keyboard/mouse connector
-dnl		unplugged.
-dnl
-dnl	Other machines running the SRM console on local display:
-dnl		Get to the SRM console prompt.  Enter "set console serial",
-dnl		then enter "init" or cycle power.
-dnl
-On systems with no framebuffer supported, OpenBSD/MACHINE must be used
-with a serial console.  Setting an Alpha system to use a serial console
-is system-specific.  From the SRM console on local display, enter
-	set console serial
-at the SRM prompt, then enter
-	init
-or cycle power.
+On systems with no framebuffer supported, including all
+TURBOchannel-based machines, OpenBSD/MACHINE must be used with a
+serial console.  Setting an Alpha system to use a serial console
+is system-specific.  The procedure for most common hardware is:
+
+	DEC 3000/[4-9]00's:
+		Flip the appropriate switch on the back of the machine.
+
+	DEC 3000/300 family machines:
+		Boot the machine with the keyboard/mouse connector
+		unplugged.
+
+	Other machines running the SRM console on local display:
+		From the SRM console, enter
+			set console serial
+		at the SRM prompt, then enter
+			init
+		or cycle power.
 
 See your owner's manual for more details on how to set your machine
 to use a serial console.
 
-dnl Uncomment when TC support is back
-dnl Note that some MACHINE computers currently *require* a serial console
-dnl and can't be used from a regular keyboard/display console, even though
-dnl the motherboard has appropriate connectors.
-dnl Currently, only the TurboChannel MACHINE computers (DEC 3000) require use
-dnl of a serial console.
-dnl
+Note that some MACHINE computers currently *require* a serial console
+and can't be used from a regular keyboard/display console, even though
+the motherboard has appropriate connectors.
+Currently, only the TURBOchannel MACHINE computers (DEC 3000) require use
+of a serial console.
+
 If booting using the regular console aborts with ``not configured to use
 display && keyboard console'', then you need to use a serial console.
-dnl If your machine was not listed in the list above, please report this on
-dnl <alpha@openbsd.org>.
-If this is the case, please report this on <alpha@openbsd.org>.
-
+If your machine was not listed in the list above, please report this on
+<alpha@openbsd.org>.

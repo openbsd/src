@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.23 2002/04/14 01:30:07 miod Exp $
+dnl	$OpenBSD: hardware,v 1.24 2002/05/02 23:13:40 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -6,9 +6,8 @@ here, please send mail to <alpha@openbsd.org> with as much information
 as possible.
 
 Supported hardware:
-	XP1000, DS10, DS20, 264DP, and other single processor EV6 machines
-	using the Tsunami chipset (only one processor on the DS20 will be
-	used)
+    XP1000, DS10, DS20, 264DP, and other single processor EV6 machines
+    using the Tsunami chipset (only one processor on the DS20 will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21143 ethernet.
@@ -21,8 +20,8 @@ Supported hardware:
 	  Unsupported devices:
 		Floppy drive.
 		ISA devices that require DMA operation.
-	API UP1000 machines and other EV6 machines using the Irongate
-	chipset
+
+    API UP1000 machines and other EV6 machines using the Irongate chipset
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -31,7 +30,8 @@ Supported hardware:
 	  Unsupported devices:
 		Floppy drive.
 		ISA devices that require DMA operation.
-	Digital Personal Workstation (Miata)
+
+    Digital Personal Workstation (Miata)
 	Some of these machines are known not to function properly (random
 	hangs or crashes).  At the moment, there is no known method to
 	detect which machines will run stably and which will not, apart from
@@ -47,8 +47,8 @@ Supported hardware:
 		Floppy drive.
 		Built-in audio.
 		ISA devices that require DMA operation.
-	EB164 based machines (including PC164, 164SX, 164LX, but NOT the
-	164UX)
+
+    EB164 based machines (including PC164, 164SX, 164LX, but NOT the 164UX)
 	Some of these machines are known not to function properly (random
 	hangs or crashes).  At the moment, there is no known method to
 	detect which machines will run stably and which will not, apart from
@@ -63,7 +63,8 @@ Supported hardware:
 		Floppy drive.
 		ISA IDE controller on the EB164.
 		ISA devices that require DMA operation.
-	Alphastation 500 and 600
+
+    Alphastation 500 and 600
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -75,7 +76,8 @@ Supported hardware:
 		Floppy drive.
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
-	Alphastation 200, 250, 255 and 400
+
+    Alphastation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -87,7 +89,8 @@ Supported hardware:
 		Floppy drive.
 		Built-in audio.
 		ISA devices that require DMA operation.
-	AXPpci based machines (including ``Noname'', UDB, Multia)
+
+    AXPpci based machines (including ``Noname'', UDB, Multia)
 	  Supported devices:
 		Built-in serial and parallel ports.
 		Built-in DEC21040 ethernet.
@@ -99,33 +102,34 @@ Supported hardware:
 	  Unsupported devices:
 		Floppy drive.
 		ISA devices that require DMA operation.
-dnl uncomment when support is back
-dnl    DEC 3000 models 300{,L,X,LX}
-dnl       These systems should work, but we need to hear from people about
-dnl       them.
-dnl          Supported devices:
-dnl               Built-in serial ports.
-dnl               Built-in LANCE ethernet.
-dnl               Built-in SCSI (53C94).
-dnl               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
-dnl          Unsupported devices:
-dnl               Built-in ISDN/audio chip.
-dnl               Built-in framebuffer.
-dnl               Other TurboChannel cards.
-dnl    DEC 3000 models 400,500,500X,600,700,800,900 
-dnl       These systems should work, but we need to hear from people about
-dnl       them.
-dnl          Supported devices:
-dnl               Built-in serial ports.
-dnl               Built-in LANCE ethernet.
-dnl               Built-in SCSI (53C94 or 53CF94-2), although both scsi
-dnl                 controlers may not work at the same time.
-dnl               TurboChannel LANCE ethernet cards (PMAD-A). (untested)
-dnl          Unsupported devices:
-dnl               Built-in ISDN/audio chip.
-dnl               Built-in framebuffer.
-dnl               Other TurboChannel cards.
-	At this time none of the following systems are supported:
+
+    DEC 3000 models 300{,L,X,LX}
+          Supported devices:
+		Built-in serial ports.
+		Built-in LANCE ethernet.
+		Built-in SCSI (53C94).
+		TURBOchannel LANCE ethernet cards (PMAD-A).
+		TURBOchannel SCSI (53C94) (PMAZ-A).
+		TURBOchannel DEFTA FDDI cards (PMAF-FA).
+	  Unsupported devices:
+		Built-in ISDN/audio chip.
+		Built-in framebuffer.
+		Other TURBOchannel cards.
+
+    DEC 3000 models 400,500,500X,600,700,800,900 
+	  Supported devices:
+		Built-in serial ports.
+		Built-in LANCE ethernet.
+		Built-in SCSI (53C94 or 53CF94-2).
+		TURBOchannel LANCE ethernet cards (PMAD-A).
+		TURBOchannel SCSI (53C94) (PMAZ-A).
+		TURBOchannel DEFTA FDDI cards (PMAF-FA).
+	  Unsupported devices:
+		Built-in ISDN/audio chip.
+		Built-in framebuffer.
+		Other TURBOchannel cards.
+
+    At this time none of the following systems are supported:
 	  API UP2000, UP2000+ (mostly because we don't have any to test on)
 	  DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
 	  AlphaServer systems, other than models 400 and 500, which seem to
@@ -136,8 +140,6 @@ dnl               Other TurboChannel cards.
 	Samsung 164BX/UX (no SRM)
 	Multiprocessor alpha systems
 	VME Alpha systems
-dnl Remove when support is back
-	TurboChannel systems (DEC 3000 series)
                
 Supported Peripherals:
                
@@ -197,6 +199,7 @@ Supported Peripherals:
 			Znyx ZX3xx
 			Cogent EM100FX and EM440TX
 			Digital PCI DE435, EISA DE425, DE450, DE500
+			Asante 21140A
 			D-Link DFE-570TX Quad port
 			Almost all other variants work.
 		Intel i8255x-based (except the i82556) PCI adapters (fxp),
@@ -421,11 +424,7 @@ Drivers for hardware marked with "[-]" are NOT available on the installation
 floppies, or the cdrom installation kernel, but are available in the GENERIC
 kernel which will be installed.
 
-dnl change back when TC support is back
-dnl Console frame buffers and keyboards are only supported on systems
-dnl explicitly mentioned above.  On other systems, including all
-dnl TurboChannel-based machines, OpenBSD/MACHINE *must* be used with a
-dnl serial console.
 Console frame buffers and keyboards are only supported on systems
-explicitly mentioned above.  On other systems, OpenBSD/MACHINE *must* be
-used with a serial console.
+explicitly mentioned above.  On other systems, including all
+TURBOchannel-based machines, OpenBSD/MACHINE *must* be used with a
+serial console.
