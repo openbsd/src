@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.35 2004/10/17 08:42:41 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.36 2004/10/17 08:58:56 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -308,5 +308,18 @@ void wdc_input_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 void wdc_print_current_modes(struct channel_softc *);
 
 int wdc_ioctl(struct ata_drive_datas *, u_long, caddr_t, int, struct proc *);
+
+u_int8_t wdc_default_read_reg(struct channel_softc *,
+		enum wdc_regs);
+void     wdc_default_write_reg(struct channel_softc *,
+		enum wdc_regs, u_int8_t);
+void     wdc_default_read_raw_multi_2(struct channel_softc *,
+		void *, unsigned int);
+void     wdc_default_write_raw_multi_2(struct channel_softc *,
+		void *, unsigned int);
+void     wdc_default_read_raw_multi_4(struct channel_softc *,
+		void *, unsigned int);
+void     wdc_default_write_raw_multi_4(struct channel_softc *,
+		void *, unsigned int);
 
 #endif	/* !_DEV_IC_WDCVAR_H_ */

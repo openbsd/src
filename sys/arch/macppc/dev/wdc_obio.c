@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.22 2004/08/17 22:20:55 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.23 2004/10/17 08:58:56 grange Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -77,14 +77,6 @@ struct wdc_obio_softc {
 
 u_int8_t wdc_obio_read_reg(struct channel_softc *, enum wdc_regs);
 void wdc_obio_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
-void wdc_default_read_raw_multi_2(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_write_raw_multi_2(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_read_raw_multi_4(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_write_raw_multi_4(struct channel_softc *,
-    void *, unsigned int);
 
 struct channel_softc_vtbl wdc_obio_vtbl = {
 	wdc_obio_read_reg,

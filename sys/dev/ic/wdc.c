@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.84 2004/09/15 17:58:25 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.85 2004/10/17 08:58:56 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -132,17 +132,6 @@ int wdc_nxfer = 0;
 #endif /* WDCDEBUG */
 
 int at_poll = AT_POLL;
-
-u_int8_t wdc_default_read_reg(struct channel_softc *, enum wdc_regs);
-void wdc_default_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
-void wdc_default_read_raw_multi_2(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_write_raw_multi_2(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_read_raw_multi_4(struct channel_softc *,
-    void *, unsigned int);
-void wdc_default_write_raw_multi_4(struct channel_softc *,
-    void *, unsigned int);
 
 int wdc_floating_bus(struct channel_softc *, int);
 int wdc_preata_drive(struct channel_softc *, int);
