@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.9 2000/12/31 00:19:22 angelos Exp $
+.\"	$OpenBSD: gif.4,v 1.10 2000/12/31 00:25:38 angelos Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -132,3 +132,12 @@ and your node will generate packets with a spoofed source address.
 .Pp
 If the outer protocol is IPv6, path MTU discovery for encapsulated packet
 may affect communication over the interface.
+.Pp
+When used in conjunction with the
+.Xr bridge 4 ,
+only one bridge tunnel may be operational for every pair of
+source/destination addresses.
+If more than one
+.Nm gif
+interface is configured with the same pair of outer addresses, the
+one with the lowest index number will receive all traffic.
