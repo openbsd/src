@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.82 2001/03/15 18:28:41 danh Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.83 2001/07/04 06:46:58 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.82 2001/03/15 18:28:41 danh Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.83 2001/07/04 06:46:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -154,6 +154,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.82 2001/03/15 18:28:41 danh Exp $";
 #include <arpa/inet.h>
 
 #include <errno.h>
+#include <ctype.h>
 #include <signal.h>
 #include <netdb.h>
 #include <syslog.h>
@@ -292,7 +293,7 @@ sig_atomic_t wantreap;
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
 char	**Argv;
-char 	*LastArg;
+char	*LastArg;
 char	*progname;
 
 void logpid __P((void));
@@ -661,11 +662,8 @@ dg_badinput(sa)
 	struct sockaddr *sa;
 {
 	struct in_addr in;
-#ifdef INET6
 	struct in6_addr *in6;
-#endif
 	u_int16_t port;
-	int i;
 
 	switch (sa->sa_family) {
 	case AF_INET:
@@ -680,7 +678,6 @@ dg_badinput(sa)
 		}
 		/* XXX check for subnet broadcast using getifaddrs(3) */
 		break;
-#ifdef INET6
 	case AF_INET6:
 		in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
 		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
@@ -698,7 +695,6 @@ dg_badinput(sa)
 			goto v4chk;
 		}
 		break;
-#endif
 	default:
 		/* XXX unsupported af, is it safe to assume it to be safe? */
 		return 0;
