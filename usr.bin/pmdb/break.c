@@ -1,4 +1,4 @@
-/*	$OpenBSD: break.c,v 1.5 2002/07/31 02:34:30 art Exp $	*/
+/*	$OpenBSD: break.c,v 1.6 2002/10/07 23:02:34 vincent Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -64,10 +64,10 @@ bkpt_find_at_pc(struct pstate *ps, reg pc)
 {
 	struct breakpoint *bkpt;
 
-	TAILQ_FOREACH(bkpt, &ps->ps_bkpts, bkpt_list)
+	TAILQ_FOREACH(bkpt, &ps->ps_bkpts, bkpt_list) {
 		if (bkpt->bkpt_pc == pc)
 			break;
-
+	}
 	return (bkpt);
 }
 
@@ -108,6 +108,7 @@ bkpt_add_cb(struct pstate *ps, reg pc, int (*fun)(struct pstate *, void *),
 		TAILQ_INSERT_TAIL(&ps->ps_bkpts, bkpt, bkpt_list);
 		bkpt->bkpt_pc = pc;
 		if (bkpt_enable(ps, bkpt)) {
+			TAILQ_REMOVE(&ps->ps_bkpts, bkpt, bkpt_list);
 			free(bkpt);
 			return (-1);
 		}
