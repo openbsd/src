@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.12 2000/09/22 20:09:31 aaron Exp $
+.\"	$OpenBSD: inet.3,v 1.13 2001/02/17 23:13:26 pjanzen Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -100,7 +100,7 @@ The
 routine interprets the specified character string as an Internet address,
 placing the address into the structure provided.
 It returns 1 if the string was successfully interpreted,
-or 0 if the string is invalid.
+or 0 if the string was invalid.
 The
 .Fn inet_addr
 and
@@ -202,7 +202,7 @@ In order to support scoped IPv6 addresses,
 .Xr getaddrinfo 3
 and
 .Xr getnameinfo 3
-are recommeded than functions presented here.
+are recommended rather than the functions presented here.
 .Pp
 The presentation format of an IPv6 address is given in [RFC1884 2.2]:
 .Pp
