@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.14 2002/02/17 19:42:25 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.15 2002/06/08 22:32:36 art Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.14 2002/02/17 19:42:25 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.15 2002/06/08 22:32:36 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -698,6 +698,54 @@ kvm_doargv(kd, kp, nchr, info)
 	return (ap);
 }
 
+static char **
+kvm_arg_sysctl(kvm_t *kd, const struct kinfo_proc *kp, int nchr, int env)
+{
+	int mib[4];
+	size_t len, orglen;
+	int ret;
+	char **argv, *arg;
+	char *buf;
+
+	orglen = kd->nbpg;
+	if (kd->argbuf == NULL &&
+	    (kd->argbuf = _kvm_malloc(kd, orglen)) == NULL)
+		return (NULL);
+
+	for (;;) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC_ARGS;
+		mib[2] = (int)kp->kp_proc.p_pid;
+		mib[3] = env ? KERN_PROC_ENV : KERN_PROC_ARGV;
+
+		len = orglen;
+		ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
+		if (ret && errno == ENOMEM) {
+			orglen += kd->nbpg;
+			buf = _kvm_realloc(kd, kd->argbuf, orglen);
+			if (buf == NULL)
+				return (NULL);
+			ret = 0;
+		} else
+			break;
+
+		if (ret) {
+			free(kd->argbuf);
+			kd->argbuf = NULL;
+			_kvm_syserr(kd, kd->program, "kvm_arg_sysctl");
+			return (NULL);
+		}
+	}
+
+#if 0
+	for (argv = (char **)kd->argbuf; *argv != NULL; argv++)
+		if (strlen(*argv) > nchr)
+			*argv[nchr] = '\0';
+#endif
+
+	return (char **)(kd->argbuf);
+}
+
 /*
  * Get the command args.  This code is now machine independent.
  */
@@ -707,6 +755,8 @@ kvm_getargv(kd, kp, nchr)
 	const struct kinfo_proc *kp;
 	int nchr;
 {
+	if (ISALIVE(kd))
+		return (kvm_arg_sysctl(kd, kp, nchr, 0));
 	return (kvm_doargv(kd, kp, nchr, ps_str_a));
 }
 
@@ -716,6 +766,8 @@ kvm_getenvv(kd, kp, nchr)
 	const struct kinfo_proc *kp;
 	int nchr;
 {
+	if (ISALIVE(kd))
+		return (kvm_arg_sysctl(kd, kp, nchr, 1));
 	return (kvm_doargv(kd, kp, nchr, ps_str_e));
 }
 
