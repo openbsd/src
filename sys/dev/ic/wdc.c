@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.10 1999/10/09 03:42:04 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.11 1999/10/28 19:59:27 fgsch Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1043,6 +1043,16 @@ wdc_downgrade_mode(drvp)
 	    (cf_flags & ATA_CONFIG_DMA_SET) ||
 	    (cf_flags & ATA_CONFIG_UDMA_SET))
 		return 0;
+
+	/*
+	 * If we were using Ultra-DMA mode > 2, downgrade to mode 2 first.
+	 * Maybe we didn't properly notice the cable type
+	 */
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode > 2) {
+		drvp->UDMA_mode = 2;
+		printf("%s: transfer error, downgrading to DMA mode %d\n",
+		    drv_dev->dv_xname, drvp->UDMA_mode);
+	}
 
 	/*
 	 * If we were using ultra-DMA, don't downgrade to multiword DMA
