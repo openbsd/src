@@ -1,9 +1,9 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.24 1997/07/28 19:31:47 kstailey Exp $
+#	$OpenBSD: netstart,v 1.25 1997/07/30 21:35:15 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
-routed_flags=-q
+routed_flags=NO		# for 'normal' use: routed_flags=-q
 mrouted_flags=NO	# for 'normal' use: mrouted_flags=""
 rarpd_flags=NO		# for 'normal' use: rarpd_flags="-a"
 bootparamd_flags=NO	# for 'normal' use: bootparamd_flags=""
