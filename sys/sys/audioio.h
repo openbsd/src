@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.5 1996/04/21 22:31:28 deraadt Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.6 1997/07/11 22:24:32 provos Exp $	*/
 /*	$NetBSD: audioio.h,v 1.6 1996/04/09 20:55:22 cgd Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
  *
  */
 
-#ifndef _AUDIOIO_H_
-#define _AUDIOIO_H_
+#ifndef _SYS_AUDIOIO_H_
+#define _SYS_AUDIOIO_H_
 
 /*
  * Audio device
@@ -253,4 +253,4 @@ typedef struct mixer_ctrl {
 #define AudioCMonitor	"Monitor"
 #define AudioCEqualization	"Equalization"
 
-#endif /* _AUDIOIO_H_ */
+#endif /* _SYS_AUDIOIO_H_ */
