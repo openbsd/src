@@ -1,9 +1,10 @@
-/*	$OpenBSD: dest6.c,v 1.4 2001/02/16 08:22:04 itojun Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.5 2001/02/16 08:48:05 itojun Exp $	*/
+/*	$KAME: dest6.c,v 1.23 2001/01/23 13:32:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -116,5 +117,5 @@ dest6_input(mp, offp, proto)
 
   bad:
 	m_freem(m);
-	return(IPPROTO_DONE);
+	return (IPPROTO_DONE);
 }

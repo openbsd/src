@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.10 2001/02/16 08:22:06 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.11 2001/02/16 08:48:05 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.44 2000/07/27 13:43:21 itojun Exp $	*/
 
 /*
@@ -438,8 +438,8 @@ ip6_forward(m, srcrt)
 	 * destinaion can appear, if the originating node just sends the
 	 * packet to us (without address resolution for the destination).
 	 * Since both icmp6_error and icmp6_redirect_output fill the embedded
-	 * link identifiers, we can do this stuff after make a copy for
-	 * returning error.
+	 * link identifiers, we can do this stuff after making a copy for
+	 * returning an error.
 	 */
 	if ((rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0) {
 		/*

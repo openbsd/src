@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.24 2001/02/08 15:07:27 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.25 2001/02/16 08:48:06 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.114 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
@@ -196,19 +196,19 @@ nd6_setmtu(ifp)
 	u_long oldmaxmtu = ndi->maxmtu;
 	u_long oldlinkmtu = ndi->linkmtu;
 
-	switch(ifp->if_type) {
-	 case IFT_ARCNET:	/* XXX MTU handling needs more work */
-		 ndi->maxmtu = MIN(60480, ifp->if_mtu);
-		 break;
-	 case IFT_ETHER:
-		 ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
-		 break;
-	 case IFT_ATM:
-		 ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
-		 break;
-	 default:
-		 ndi->maxmtu = ifp->if_mtu;
-		 break;
+	switch (ifp->if_type) {
+	case IFT_ARCNET:	/* XXX MTU handling needs more work */
+		ndi->maxmtu = MIN(60480, ifp->if_mtu);
+		break;
+	case IFT_ETHER:
+		ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
+		break;
+	case IFT_ATM:
+		ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
+		break;
+	default:
+		ndi->maxmtu = ifp->if_mtu;
+		break;
 	}
 
 	if (oldmaxmtu != ndi->maxmtu) {
@@ -1098,10 +1098,10 @@ nd6_rtrequest(req, rt, info)
 		 *   (7.2.6 paragraph 4), however, it also says that we
 		 *   SHOULD provide a mechanism to prevent multicast NA storm.
 		 *   we don't have anything like it right now.
-		 *   note that the mechanism need a mutual agreement
+		 *   note that the mechanism needs a mutual agreement
 		 *   between proxies, which means that we need to implement
-		 *   a new protocol, or new kludge.
-		 * - from RFC2461 6.2.4, host MUST NOT send unsolicited NA.
+		 *   a new protocol, or a new kludge.
+		 * - from RFC2461 6.2.4, host MUST NOT send an unsolicited NA.
 		 *   we need to check ip6forwarding before sending it.
 		 *   (or should we allow proxy ND configuration only for
 		 *   routers?  there's no mention about proxy ND from hosts)

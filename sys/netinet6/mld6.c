@@ -1,10 +1,10 @@
-/*	$OpenBSD: mld6.c,v 1.7 2001/02/16 08:22:06 itojun Exp $	*/
-/*	$KAME: mld6.c,v 1.16 2000/02/22 14:04:27 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.8 2001/02/16 08:48:06 itojun Exp $	*/
+/*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -452,16 +452,16 @@ mld6_sendpkt(in6m, type, dst)
 	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		switch(type) {
-		 case MLD6_LISTENER_QUERY:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldquery);
-			 break;
-		 case MLD6_LISTENER_REPORT:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldreport);
-			 break;
-		 case MLD6_LISTENER_DONE:
-			 icmp6_ifstat_inc(outif, ifs6_out_mlddone);
-			 break;
+		switch (type) {
+		case MLD6_LISTENER_QUERY:
+			icmp6_ifstat_inc(outif, ifs6_out_mldquery);
+			break;
+		case MLD6_LISTENER_REPORT:
+			icmp6_ifstat_inc(outif, ifs6_out_mldreport);
+			break;
+		case MLD6_LISTENER_DONE:
+			icmp6_ifstat_inc(outif, ifs6_out_mlddone);
+			break;
 		}
 	}
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6.c,v 1.4 2001/02/16 08:22:07 itojun Exp $	*/
-/*	$KAME: route6.c,v 1.21 2000/09/20 23:00:49 itojun Exp $	*/
+/*	$OpenBSD: route6.c,v 1.5 2001/02/16 08:48:07 itojun Exp $	*/
+/*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,7 +44,8 @@
 
 #include <netinet/icmp6.h>
 
-static int ip6_rthdr0 __P((struct mbuf *, struct ip6_hdr *, struct ip6_rthdr0 *));
+static int ip6_rthdr0 __P((struct mbuf *, struct ip6_hdr *,
+    struct ip6_rthdr0 *));
 
 int
 route6_input(mp, offp, proto)
@@ -69,31 +70,44 @@ route6_input(mp, offp, proto)
 	}
 #endif
 
-	switch(rh->ip6r_type) {
-	 case IPV6_RTHDR_TYPE_0:
-		 rhlen = (rh->ip6r_len + 1) << 3;
+	switch (rh->ip6r_type) {
+	case IPV6_RTHDR_TYPE_0:
+		rhlen = (rh->ip6r_len + 1) << 3;
 #ifndef PULLDOWN_TEST
-		 IP6_EXTHDR_CHECK(m, off, rhlen, IPPROTO_DONE);
+		/*
+		 * note on option length:
+		 * due to IP6_EXTHDR_CHECK assumption, we cannot handle
+		 * very big routing header (max rhlen == 2048).
+		 */
+		IP6_EXTHDR_CHECK(m, off, rhlen, IPPROTO_DONE);
 #else
-		 IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
-		 if (rh == NULL) {
+		/*
+		 * note on option length:
+		 * maximum rhlen: 2048
+		 * max mbuf m_pulldown can handle: MCLBYTES == usually 2048
+		 * so, here we are assuming that m_pulldown can handle
+		 * rhlen == 2048 case.  this may not be a good thing to
+		 * assume - we may want to avoid pulling it up altogether.
+		 */
+		IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
+		if (rh == NULL) {
 			ip6stat.ip6s_tooshort++;
 			return IPPROTO_DONE;
-		 }
+		}
 #endif
-		 if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
-			 return(IPPROTO_DONE);
-		 break;
-	 default:
-		 /* unknown routing type */
-		 if (rh->ip6r_segleft == 0) {
-			 rhlen = (rh->ip6r_len + 1) << 3;
-			 break;	/* Final dst. Just ignore the header. */
-		 }
-		 ip6stat.ip6s_badoptions++;
-		 icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			     (caddr_t)&rh->ip6r_type - (caddr_t)ip6);
-		 return(IPPROTO_DONE);
+		if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
+			return(IPPROTO_DONE);
+		break;
+	default:
+		/* unknown routing type */
+		if (rh->ip6r_segleft == 0) {
+			rhlen = (rh->ip6r_len + 1) << 3;
+			break;	/* Final dst. Just ignore the header. */
+		}
+		ip6stat.ip6s_badoptions++;
+		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
+			    (caddr_t)&rh->ip6r_type - (caddr_t)ip6);
+		return(IPPROTO_DONE);
 	}
 
 	*offp += rhlen;

@@ -1,9 +1,10 @@
-/*	$OpenBSD: pim6.h,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: pim6.h,v 1.2 2001/02/16 08:48:06 itojun Exp $	*/
+/*	$KAME: pim6.h,v 1.3 2000/03/25 07:23:58 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -59,7 +60,7 @@ struct pim {
 #define PIM_MINLEN	8		/* The header min. length is 8    */
 #define PIM6_REG_MINLEN	(PIM_MINLEN+40)	/* Register message + inner IP6 header */
 
-/* 
+/*
  * Message types
  */
 #define PIM_REGISTER	1	/* PIM Register type is 1 */

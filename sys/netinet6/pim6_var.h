@@ -1,9 +1,10 @@
-/*	$OpenBSD: pim6_var.h,v 1.2 2000/06/07 00:20:32 itojun Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.3 2001/02/16 08:48:06 itojun Exp $	*/
+/*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: pim6_var.h,v 1.2 1999/08/01 15:58:13 itojun Exp */
 
 #ifndef _NETINET6_PIM6_VAR_H_
 #define _NETINET6_PIM6_VAR_H_
@@ -67,5 +67,4 @@ int pim6_input __P((struct mbuf **, int*, int));
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }
-
 #endif /* _NETINET6_PIM6_VAR_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: net_osdep.h,v 1.5 2001/02/08 14:51:21 itojun Exp $	*/
-/*	$KAME: net_osdep.h,v 1.36 2001/02/08 10:21:27 itojun Exp $	*/
+/*	$OpenBSD: net_osdep.h,v 1.6 2001/02/16 08:48:03 itojun Exp $	*/
+/*	$KAME: net_osdep.h,v 1.40 2001/02/14 17:07:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,10 +55,10 @@
  *	FreeBSD[234]: delete all protocol-cloned routes underneath the route.
  *		      note that cloned routes from an interface direct route
  *		      still remain.
- *	NetBSD: official release versions (the latest is 1.5 as of Jan. 2001)
- *		have no side effects.  KAME for NetBSD has the same effects
- *		as of BSDI.
- *	OpenBSD: no side effects.
+ *	NetBSD: 1.5 have no side effects.  KAME/netbsd15, and 1.5R, have
+ *		the same effects as of BSDI.
+ *	OpenBSD: 2.8 have no side effects.  KAME/openbsd28, and 2.9 have
+ *		the same effects as of BSDI.
  *
  * - privileged process
  *	NetBSD, FreeBSD 3
@@ -78,11 +78,13 @@
  *		needs to give struct proc * as argument
  *	OpenBSD, BSDI [34], FreeBSD 2
  *		do not need struct proc *
+ *
  * - bpf:
  *	OpenBSD, NetBSD 1.5, BSDI [34]
  *		need caddr_t * (= if_bpf **) and struct ifnet *
  *	FreeBSD 2, FreeBSD 3, NetBSD 1.6? (1.5N and later)
  *		need only struct ifnet * as argument
+ *
  * - struct ifnet
  *			use queue.h?	member names	if name
  *			---		---		---
@@ -91,25 +93,30 @@
  *	OpenBSD		yes		standard	if_xname
  *	NetBSD		yes		standard	if_xname
  *	BSDI [34]	no		old standard	if_name+unit
+ *
  * - usrreq
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		single function with PRU_xx, arguments are mbuf
  *	FreeBSD 3
  *		separates functions, non-mbuf arguments
+ *
  * - {set,get}sockopt
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		manipulation based on mbuf
  *	FreeBSD 3
  *		non-mbuf manipulation using sooptcopy{in,out}()
+ *
  * - timeout() and untimeout()
  *	NetBSD 1.4.x, OpenBSD, BSDI [34], FreeBSD 2
  *		timeout() is a void function
  *	FreeBSD 3
  *		timeout() is non-void, must keep returned value for untimeout()
+ *		callout_xx is also available (sys/callout.h)
  *	NetBSD 1.5
  *		timeout() is obsoleted, use callout_xx (sys/callout.h)
  *	OpenBSD 2.8
  *		timeout_{add,set,del} is encouraged (sys/timeout.h)
+ *
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
@@ -123,6 +130,7 @@
  *		2nd argument is u_long cmd
  *	FreeBSD 2
  *		2nd argument is int cmd
+ *
  * - if attach routines
  *	NetBSD
  *		void xxattach(int);
@@ -133,6 +141,7 @@
  * - ovbcopy()
  *	in NetBSD 1.4 or later, ovbcopy() is not supplied in the kernel.
  *	bcopy() is safe against overwrites.
+ *
  * - splnet()
  *	NetBSD 1.4 or later requires splsoftnet().
  *	other operating systems use splnet().
@@ -164,8 +173,11 @@
  *	FreeBSD4: struct ipprotosw in netinet/ipprotosw.h
  *	others: struct protosw in sys/protosw.h
  *
- * - protosw.  NetBSD 1.5 has extra member for ipfilter.  NetBSD 1.5 requires
- *   PR_LISTEN flag bit with protocols that permit listen/accept (like tcp).
+ * - protosw in general.
+ *	NetBSD 1.5 has extra member for ipfilter (netbsd-current dropped
+ *	it so it will go away in 1.6).
+ *	NetBSD 1.5 requires PR_LISTEN flag bit with protocols that permit
+ *	listen/accept (like tcp).
  *
  * - header files with defopt (opt_xx.h)
  *	FreeBSD3: opt_{inet,ipsec,ip6fw,altq}.h
@@ -179,6 +191,11 @@
  *
  * - (m->m_flags & M_EXT) != 0 does *not* mean that the max data length of
  *   the mbuf == MCLBYTES.
+ *
+ * - sys/kern/uipc_mbuf.c:m_dup()
+ *	freebsd[34]: copies the whole mbuf chain.
+ *	netbsd: similar arg with m_copym().
+ *	others: no m_dup().
  *
  * - ifa_refcnt (struct ifaddr) management (IFAREF/IFAFREE).
  *	NetBSD 1.5: always use IFAREF whenever reference gets added.

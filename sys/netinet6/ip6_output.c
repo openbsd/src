@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.22 2001/02/16 08:22:06 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.23 2001/02/16 08:48:06 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -133,6 +133,10 @@ static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
  * This function may modify ver and hlim only.
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
+ *
+ * type of "mtu": rt_rmx.rmx_mtu is u_long, ifnet.ifr_mtu is int, and
+ * nd_ifinfo.linkmtu is u_int32_t.  so we use u_long to hold largest one,
+ * which is rt_rmx.rmx_mtu.
  */
 int
 ip6_output(m0, opt, ro, flags, im6o, ifpp)
