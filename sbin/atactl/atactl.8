@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.19 2002/12/19 01:14:45 deraadt Exp $
+.\"	$OpenBSD: atactl.8,v 1.20 2002/12/19 01:42:02 grange Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -422,6 +422,10 @@ powerdown
 The
 .Xr wd 4
 driver performs a cache flush automatically before shutdown.
+.Pp
+.It Cm dump
+Extracts the records about issued ATA commands from the log buffer.
+The log buffer is cleared after extraction.
 .El
 .Pp
 .Sh EXAMPLES
