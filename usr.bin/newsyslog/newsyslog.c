@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.16 1999/01/04 19:24:17 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.17 1999/01/05 00:43:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.16 1999/01/04 19:24:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.17 1999/01/05 00:43:44 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -130,7 +130,6 @@ int	monitor = 0;		/* Don't do monitoring by default */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
 #define MIN_PID		4
-#define MAX_PID		99999
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
@@ -516,21 +515,21 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
                 (void) chmod(log,perm);
         if (noaction)
                 printf("kill -HUP %d\n",daemon_pid);
-        else if (daemon_pid < MIN_PID || daemon_pid > MAX_PID)
+        else if (daemon_pid < MIN_PID)
 		warnx("preposterous process number: %d", daemon_pid);
         else if (kill(daemon_pid,SIGHUP))
-                        warnx("warning - could not HUP daemon");
-        if (flags & CE_COMPACT) {
-                if (noaction)
-                        printf("Compress %s.0\n",log);
-                else
-                        compress_log(log);
-        }
+		warnx("warning - could not HUP daemon");
+	if (flags & CE_COMPACT) {
+		if (noaction)
+			printf("Compress %s.0\n",log);
+		else
+			compress_log(log);
+	}
 }
 
 /* Log the fact that the logs were turned over */
 int log_trim(log)
-        char    *log;
+	char    *log;
 {
         FILE    *f;
         if ((f = fopen(log,"a")) == NULL)
