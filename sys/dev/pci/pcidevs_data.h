@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.375 2001/03/12 23:12:22 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.376 2001/03/14 04:42:23 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2797,6 +2797,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_RM861HA,
 	    "RM861HA",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,
+	    "VScom PCI 800-H",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,
+	    "VScom PCI 800-H",
 	},
 	{
 	    PCI_VENDOR_PE, PCI_PRODUCT_PE_GNIC2,
@@ -6105,6 +6113,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_LAVA,
 	    "Lava",
+	},
+	{
+	    PCI_VENDOR_OXFORD,
+	    "Oxford",
 	},
 	{
 	    PCI_VENDOR_INVERTEX,
