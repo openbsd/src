@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.13 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.14 2001/09/19 18:06:17 art Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -83,10 +83,8 @@ procfs_domem(curp, p, pfs, uio)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;  /* XXX */
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
 	return error;
