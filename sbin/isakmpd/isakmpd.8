@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.21 2001/03/13 14:05:18 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.22 2001/04/05 23:22:57 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -283,9 +283,11 @@ The directory where IKE certificates can be found, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
 .It Pa /etc/isakmpd/isakmpd.conf
-The configuration file.
+The configuration file. As this file can contain sensitive information
+it must not be readable by anyone but the user running isakmpd.
 .It Pa /etc/isakmpd/isakmpd.policy
-The keynote policy configuration file.
+The keynote policy configuration file. Same mode requirements as
+for isakmpd.conf.
 .It Pa /etc/isakmpd/private/local.key
 A local private key for certificate based authentication.  There has
 to be a certificate for this key in the cerifcate directory mentioned
