@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp $
+	$OpenBSD: pcidevs,v 1.446 2001/09/21 23:07:10 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -679,16 +679,17 @@ product ALI M1521		0x1521	M1523 Host-PCI
 product ALI M1531		0x1531	M1531 Host-PCI
 product ALI M1541		0x1541	M1543 Host-PCI
 product ALI M1621		0x1621	M1621 Host-PCI
-product ALI M4803		0x5215	M4803
 product ALI M1523		0x1523	M1523 PCI-ISA
 product ALI M1543		0x1533	M1543 PCI-ISA
+product ALI M1647		0x1647	M1647 PCI
+product ALI M3309		0x3309	M3309 MPEG Accelerator
+product ALI M4803		0x5215	M4803
 product ALI M5219		0x5219	M5219 UDMA IDE
 product ALI M5229		0x5229	M5229 UDMA IDE
 product ALI M5237		0x5237	M5237 USB
 product ALI M5247		0x5247	M5247 AGP/PCI-PCI
 product ALI M5243		0x5243	M5243 AGP/PCI-PCI
 product ALI M7101		0x7101	M7101 Power Mgmt
-product ALI M3309		0x3309	M3309 MPEG Accelerator
 
 /* ADMtek products */
 product ADMTEK AL981		0x0981	AL981
@@ -768,10 +769,10 @@ product AMD ELANSC520		0x3000	ElanSC520 Host-PCI
 product AMD SC751_SC		0x7006	751 System Controller
 product AMD SC751_PPB		0x7007	751 PCI-PCI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/24462.pdf */
-product AMD 762_PCHB		0x700C	762 Host-PCI
-product AMD 762_PPB		0x700D	762 PCI-PCI
-product AMD 761_PCHB		0x700E	761 Host-PCI
-product AMD 761_PPB		0x700F	761 PCI-PCI
+product AMD 762_PCHB		0x700c	762 Host-PCI
+product AMD 762_PPB		0x700d	762 PCI-PCI
+product AMD 761_PCHB		0x700e	761 Host-PCI
+product AMD 761_PPB		0x700f	761 PCI-PCI
 product AMD 755_ISA		0x7400	755 PCI-ISA
 product AMD 755_IDE		0x7401	755 IDE
 product AMD 755_PMC		0x7403	755 Power Mgmt
@@ -1066,7 +1067,6 @@ product DEC KZPSA		0x0008	KZPSA
 product DEC 21140		0x0009	21140
 product DEC PBXGB		0x000d	TGA2
 product DEC DEFPA		0x000f	DEFPA
-/* product DEC ???		0x0010	??? VME Interface */
 product DEC 21041		0x0014	21041
 product DEC DGLPB		0x0016	DGLPB (OPPO)
 product DEC 21142		0x0019	21142/3
@@ -1188,6 +1188,7 @@ product INITIO INIC950		0x9500	INIC-950 SCSI
 product IMS 8849		0x8849	8849
 
 /* Intel products */
+product INTEL EESISA		0x0008	EES ISA
 product INTEL PCEB		0x0482	82375EB PCI-EISA
 product INTEL CDC		0x0483	82424ZX Cache/DRAM
 product INTEL SIO		0x0484	82378IB PCI-ISA
@@ -1403,9 +1404,6 @@ product LUCENT USBQBUS		0x5803  USB QuadraBus
 /* LuxSonor */
 product LUXSONOR LS242		0x0020	LS242 DVD Decoder
 
-/* Kawasaki */
-/* product KAWASAKI HUH		0xff01	No idea */
-
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 98713
 product MACRONIX MX98715	0x0531	PMAC 98715
@@ -1415,6 +1413,9 @@ product MACRONIX MX86250	0x8625	MX86250
 /* Madge Networks products */
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
 product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
+
+/* Martin-Marietta */
+product MARTINMARIETTA I740	0x00d1	i740 PCI
 
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
