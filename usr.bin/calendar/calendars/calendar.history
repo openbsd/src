@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.31 2004/04/19 16:10:10 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.32 2004/05/04 21:16:05 hshoexer Exp $
  */
 
 #ifndef _calendar_history_
@@ -121,6 +121,8 @@
 04/20	Supreme Court unanimously rules in favor of busing, 1971
 04/21	Lyrid meteor shower
 04/23	Hank Aaron hits his first home run, 1954
+04/23	Reinheitsgebot enacted by the bavarian dukes Wilhelm IV. and Ludwig X.,
+	1516
 04/26	William Shakespeare baptized in Stratford-on-Avon, England, 1564,
 	birthdate less certain
 04/27	Magellan killed in Philippines, 1521
