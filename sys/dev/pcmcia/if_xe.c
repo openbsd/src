@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.1 1999/05/18 19:18:21 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.2 1999/05/18 22:19:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -1102,8 +1102,8 @@ xe_start(ifp)
 		if (m->m_len & 1)
 			bus_space_write_1(bst, bsh, offset + EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
-				MFREE(m, m0);
-				m = m0;
+		MFREE(m, m0);
+		m = m0;
 	}
 	for (; pad > 0; pad--)
 		bus_space_write_1(bst, bsh, offset + EDP, 0);
