@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.53 2003/11/21 01:28:01 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.54 2003/11/22 18:02:44 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.53 2003/11/21 01:28:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.54 2003/11/22 18:02:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -354,10 +354,9 @@ diffreg(char *ofile1, char *ofile2, int flags)
 
 	if (!asciifile(f1) || !asciifile(f2)) {
 		rval = D_BINARY;
+		status |= 1;
 		goto closem;
 	}
-	if (format == D_BRIEF)
-		goto closem;
 	if (lflag) {
 		/* redirect stdout to pr */
 		int pfd[2];
@@ -1023,6 +1022,8 @@ restart:
 		anychange = 1;
 	switch (format) {
 
+	case D_BRIEF:
+		return;
 	case D_NORMAL:
 	case D_EDIT:
 		range(a, b, ",");
