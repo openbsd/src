@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.1 2001/06/26 21:57:59 smurph Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/21 17:44:16 miod Exp $
 
       
 S=	${.CURDIR}/../../../..
@@ -17,7 +17,7 @@ CLEANFILES+=bootsd
 
 SRCS=   boot.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/06/26 21:58:09 smurph Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/21 17:44:19 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -20,7 +20,7 @@ SRCS=   boot.c version.c
 #SRCS+=	if_ie.c 
 #SRCS+=  if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
-LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
+LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
 LDFLAGS+= -s -X -N -Ttext ${STAGE1_RELOC} -e _start 
 #LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
 
