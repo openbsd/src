@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2001/06/29 04:12:01 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2001/06/29 04:52:22 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 {
   char buf[NI_MAXHOST];
   char *token, *bstart, *p;
-  int c_pre = 0, c_post = 0;
+  int addrlen, c_pre = 0, c_post = 0;
 
 #ifdef HAVE_GETNAMEINFO
   if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
@@ -309,9 +309,11 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
     switch (sa->sa_family)
       {
       case AF_INET:
-	*address = malloc (16);
-	if (*address == NULL)
+	addrlen = sizeof "000.000.000.000";
+	*address = malloc (addrlen);
+	if (!*address)
 	  return -1;
+	buf[addrlen] = '\0'; /* Terminate */
 	bstart = buf; **address = '\0';
 	while ((token = strsep (&bstart, ".")) != NULL)
 	  {
@@ -327,17 +329,20 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 	  }
 	break;
       case AF_INET6:
-	*address = malloc (40);
-	if (!address)
+	addrlen = sizeof "0000:0000:0000:0000:0000:0000:0000:0000";
+	*address = malloc (addrlen);
+	if (!*address)
 	  return -1;
 	bstart = buf; **address = '\0';
-	buf[40] = '\0'; /* Make sure buf is terminated. */
+	buf[addrlen] = '\0'; /* Terminate */
 	while ((token = strsep (&bstart, ":")) != NULL)
 	  {
 	    if (strlen (token) == 0)
 	      {
-		/* Encountered a '::'. Fill out the string. */
-		/* XXX Isn't there a library function for this somewhere? */
+		/* 
+		 * Encountered a '::'. Fill out the string.
+		 * XXX Isn't there a library function for this somewhere?
+		 */
 		for (p = buf; p < token - 1; p++)
 		  if (*p == 0)
 		    c_pre++;
