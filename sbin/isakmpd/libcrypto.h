@@ -1,8 +1,9 @@
-/*	$OpenBSD: libcrypto.h,v 1.3 2000/01/31 08:19:13 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.9 2000/01/31 05:50:59 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.4 2000/02/01 02:46:18 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.10 2000/01/31 22:33:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

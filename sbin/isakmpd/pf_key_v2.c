@@ -1,8 +1,9 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.22 2000/01/31 08:38:29 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.35 2000/01/31 08:39:45 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.23 2000/02/01 02:46:18 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.36 2000/01/31 22:33:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

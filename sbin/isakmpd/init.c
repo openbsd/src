@@ -1,8 +1,9 @@
-/*	$OpenBSD: init.c,v 1.12 2000/01/31 08:19:05 niklas Exp $	*/
-/*	$EOM: init.c,v 1.21 2000/01/31 05:28:50 angelos Exp $	*/
+/*	$OpenBSD: init.c,v 1.13 2000/02/01 02:46:18 niklas Exp $	*/
+/*	$EOM: init.c,v 1.22 2000/01/31 22:33:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,9 +1,10 @@
-/*	$OpenBSD: ike_auth.c,v 1.19 1999/10/01 14:10:54 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.40 1999/09/28 16:35:48 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.20 2000/02/01 02:46:18 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.41 2000/01/31 22:33:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

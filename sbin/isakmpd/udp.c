@@ -1,8 +1,9 @@
-/*	$OpenBSD: udp.c,v 1.17 2000/01/26 15:22:17 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.45 2000/01/25 06:51:20 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.18 2000/02/01 02:46:19 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.46 2000/01/31 22:33:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

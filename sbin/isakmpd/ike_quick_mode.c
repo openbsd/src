@@ -1,8 +1,9 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.27 2000/01/31 08:38:28 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.109 2000/01/31 08:39:44 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.28 2000/02/01 02:46:17 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.110 2000/01/31 22:33:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

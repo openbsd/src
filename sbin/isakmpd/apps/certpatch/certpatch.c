@@ -1,8 +1,9 @@
-/*	$OpenBSD: certpatch.c,v 1.6 2000/01/26 15:22:41 niklas Exp $	*/
-/*	$EOM: certpatch.c,v 1.5 2000/01/10 22:02:00 angelos Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.7 2000/02/01 02:46:17 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.6 2000/01/31 22:33:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
