@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.7 2005/01/02 19:50:30 kettenis Exp $
+#	$OpenBSD: files.sgi,v 1.8 2005/03/05 23:58:43 tdeval Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -117,11 +117,6 @@ include "dev/wscons/files.wscons"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
-
-#
-# Machine-independent IEEE1394 drivers
-#
-include "dev/ieee1394/files.ieee1394"
 
 #
 # Specials.

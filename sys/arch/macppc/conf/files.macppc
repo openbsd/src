@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.22 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.macppc,v 1.23 2005/03/05 23:58:43 tdeval Exp $
 
 #
 # macppc-specific configuration info
@@ -231,11 +231,6 @@ include "dev/pcmcia/files.pcmcia"
 # Machine-independent USB drivers
 #
 include "dev/usb/files.usb"
-
-#
-# Machine-independent IEEE1394 drivers
-#
-include "dev/ieee1394/files.ieee1394"
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia

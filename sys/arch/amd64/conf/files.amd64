@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.7 2004/10/08 13:04:35 grange Exp $
+#	$OpenBSD: files.amd64,v 1.8 2005/03/05 23:58:43 tdeval Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -138,11 +138,6 @@ file	dev/isa/fd.c			fd needs-flag
 # USB
 #
 include "dev/usb/files.usb"
-
-#
-# FireWire
-#
-include "dev/ieee1394/files.ieee1394"
 
 #
 # device major numbers

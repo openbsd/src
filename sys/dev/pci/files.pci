@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.171 2005/02/15 20:51:22 damien Exp $
+#	$OpenBSD: files.pci,v 1.172 2005/03/05 23:58:44 tdeval Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -496,14 +496,6 @@ file	dev/pci/amdpm.c			amdpm
 device	viaenv
 attach	viaenv at pci
 file	dev/pci/viaenv.c		viaenv
-
-# OHCI IEEE 1394 controller
-attach	fwohci at pci with fwohci_pci
-file	dev/pci/fwohci_pci.c		fwohci_pci
-
-# IEEE 1394 TI "Lynx" controller
-attach	fwlynx at pci with fwlynx_pci
-file	dev/pci/fwlynx_pci.c		fwlynx_pci
 
 # Broadcom BCM4401 gigabit ethernet
 device	bce: ether, ifnet, mii, ifmedia, mii_phy
