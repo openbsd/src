@@ -1,4 +1,4 @@
-/* $OpenBSD: base64.c,v 1.6 1999/10/26 22:31:37 angelos Exp $ */
+/* $OpenBSD: base64.c,v 1.7 2000/06/13 19:16:15 angelos Exp $ */
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -257,7 +257,7 @@ unsigned int targsize;
     tarindex = 0;
 
     while ((ch = *src++) != '\0') {
-	if (isspace(ch))	/* Skip whitespace anywhere. */
+	if (isspace((int) ch))	/* Skip whitespace anywhere. */
 	  continue;
 
 	if (ch == Pad64)
@@ -340,7 +340,7 @@ unsigned int targsize;
 	    case 2:		/* Valid, means one byte of info */
 		/* Skip any number of spaces. */
 		for (; ch != '\0'; ch = *src++)
-		  if (!isspace(ch))
+		  if (!isspace((int) ch))
 		    break;
 		/* Make sure there is another trailing = sign. */
 		if (ch != Pad64)

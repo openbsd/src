@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.11 2000/05/18 17:22:44 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.12 2000/06/13 19:16:15 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -935,7 +935,7 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 	else
 	  flag = 0;
 
-	if (!isspace(buffer[i]))
+	if (!isspace((int) buffer[i]))
 	  valid = 1;
     }
 
