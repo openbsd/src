@@ -1,0 +1,13 @@
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char *sccsid = "from: @(#)strlen.c	5.5 (Berkeley) 1/26/91";*/
+static char *rcsid = "$Id: strrchr.co,v 1.1 1998/12/15 07:10:32 smurph Exp $";
+#endif /* LIBC_SCCS and not lint */
+
+#include <string.h>
+
+char *
+strrchr(str, c)
+	const char *str;
+{
+	rindex(str, c);
+}
