@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.76 2000/01/21 03:15:05 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.77 2000/01/27 08:09:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -140,19 +140,12 @@ struct xformsw xformsw[] = {
       ipe4_attach,       ipe4_init,       ipe4_zeroize,
       (struct mbuf * (*)(struct mbuf *, struct tdb *, int, int))ipe4_input, 
       ipip_output, },
-    { XF_OLD_AH,         XFT_AUTH,	 "Keyed Authentication, RFC 1828/1852",
-      ah_old_attach,     ah_old_init,     ah_old_zeroize,
-      ah_old_input,      ah_old_output, },
-    { XF_OLD_ESP,        XFT_CONF,        "Simple Encryption, RFC 1829/1851",
-      esp_old_attach,    esp_old_init,    esp_old_zeroize,
-      esp_old_input,     esp_old_output, },
-    { XF_NEW_AH,	 XFT_AUTH,	  "HMAC Authentication",
-      ah_new_attach,	 ah_new_init,     ah_new_zeroize,
-      ah_new_input,	 ah_new_output, },
-    { XF_NEW_ESP,	 XFT_CONF|XFT_AUTH,
-      "Encryption + Authentication + Replay Protection",
-      esp_new_attach,	 esp_new_init,  esp_new_zeroize,
-      esp_new_input,	 esp_new_output, },
+    { XF_AH,	 XFT_AUTH,	    "IPsec AH",
+      ah_attach,	ah_init,   ah_zeroize,
+      ah_input,	 	ah_output, },
+    { XF_ESP,	 XFT_CONF|XFT_AUTH, "IPsec ESP",
+      esp_attach,	esp_init,  esp_zeroize,
+      esp_input,	esp_output, },
 #ifdef TCP_SIGNATURE
     { XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
       tcp_signature_tdb_attach, 	tcp_signature_tdb_init,
@@ -1501,6 +1494,26 @@ ipsp_kern(int off, char **bufp, int len)
 			i = 1;
 
 		      l += sprintf(buffer + l, "tunneling");
+		  }
+
+		  if (tdb->tdb_flags & TDBF_NOREPLAY)
+		  {
+		      if (i)
+			l += sprintf(buffer + l, ", ");
+		      else
+			i = 1;
+
+		      l += sprintf(buffer + l, "noreplay");
+		  }
+
+		  if (tdb->tdb_flags & TDBF_RANDOMPADDING)
+		  {
+		      if (i)
+			l += sprintf(buffer + l, ", ");
+		      else
+			i = 1;
+
+		      l += sprintf(buffer + l, "random padding");
 		  }
 
 		  l += sprintf(buffer + l, ">\n");

@@ -179,6 +179,12 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 
 	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
 	  tdb->tdb_flags |= TDBF_TUNNELING;
+
+	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_RANDOMPADDING)
+	  tdb->tdb_flags |= TDBF_RANDOMPADDING;
+
+	if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_NOREPLAY)
+	  tdb->tdb_flags |= TDBF_NOREPLAY;
     }
 
     if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
@@ -216,6 +222,12 @@ export_sa(void **p, struct tdb *tdb)
 
     if (tdb->tdb_flags & TDBF_TUNNELING)
       sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
+
+    if (tdb->tdb_flags & TDBF_RANDOMPADDING)
+      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_RANDOMPADDING;
+
+    if (tdb->tdb_flags & TDBF_NOREPLAY)
+      sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
 
     *p += sizeof(struct sadb_sa);
 }
@@ -807,26 +819,24 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
     switch (satype)
     {
 	case SADB_SATYPE_AH:
-	case SADB_X_SATYPE_AH_OLD:
 	    if (!ah_enable)
 	      return EOPNOTSUPP;
 
 	    *sproto = IPPROTO_AH;
 
 	    if(alg != NULL) 
-	      *alg = satype == SADB_SATYPE_AH ? XF_NEW_AH : XF_OLD_AH;
+	      *alg = satype = XF_AH;
 
 	    break;
 
 	case SADB_SATYPE_ESP:
-	case SADB_X_SATYPE_ESP_OLD:
 	    if (!esp_enable)
 	      return EOPNOTSUPP;
 
 	    *sproto = IPPROTO_ESP;
 
 	    if(alg != NULL) 
-	      *alg = satype == SADB_SATYPE_ESP ? XF_NEW_ESP : XF_OLD_ESP;
+	      *alg = satype = XF_ESP;
 
 	    break;
 
@@ -1307,8 +1317,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
-		case SADB_X_SATYPE_AH_OLD:
-		case SADB_X_SATYPE_ESP_OLD:
 		case SADB_X_SATYPE_IPIP:
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
@@ -1356,8 +1364,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    struct rtentry *rt;
 	
 	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
-	    sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
-						sizeof(struct sadb_address));
+
+	    if (headers[SADB_EXT_ADDRESS_DST])
+	      sunionp = (union sockaddr_union *)
+			(headers[SADB_EXT_ADDRESS_DST] +
+			 sizeof(struct sadb_address));
+	    else
+	      sunionp = NULL;
 
 	    /*
 	     * SADB_X_SAFLAGS_REPLACEFLOW set means we should remove any
@@ -1410,6 +1423,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if (!delflag || ingress)
 	    {
+		if ((ssa == NULL) || (sunionp == NULL))
+		{
+		    rval = EINVAL;
+		    goto splxret;
+		}
+
 		/* Find the relevant SA */
 		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
 			     SADB_GETSPROTO(smsg->sadb_msg_satype));
@@ -1463,8 +1482,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    else
 	      if (ingress)
 	      {
-		  /* If we're deleting a flow... */
-		  flow = find_flow(src, dst, srcmask, dstmask, sproto,
+		  /* If we're deleting an ingress flow... */
+		  flow = find_flow(src, srcmask, dst, dstmask, sproto,
 				   sa2, FLOW_INGRESS);
 		  if (flow == NULL)
 		  {
@@ -1481,6 +1500,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    encapdst.sen_family = PF_KEY;
 	    switch (flow->flow_src.sa.sa_family)
 	    {
+#ifdef INET
 		case AF_INET:
 		    encapdst.sen_len = SENT_IP4_LEN;
 		    encapdst.sen_type = SENT_IP4;
@@ -1496,8 +1516,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    encapnetmask.sen_ip_src = flow->flow_srcmask.sin.sin_addr;
 		    encapnetmask.sen_ip_dst = flow->flow_dstmask.sin.sin_addr;
 		    break;
+#endif /* INET */
 
-#if INET6
+#ifdef INET6
 		case AF_INET6:
 		    encapdst.sen_len = SENT_IP6_LEN;
 		    encapdst.sen_type = SENT_IP6;
@@ -1522,6 +1543,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    {
 		switch (sa2->tdb_dst.sa.sa_family)
 		{
+#ifdef INET
 		    case AF_INET:
 			encapgw.sen_len = SENT_IPSP_LEN;
 			encapgw.sen_family = PF_KEY;
@@ -1541,6 +1563,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			      encapnetmask.sen_dport = 0xffff;
 			}
 			break;
+#endif /* INET */
 
 #if INET6
 		    case AF_INET6:

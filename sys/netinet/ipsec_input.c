@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.17 2000/01/25 17:18:59 espie Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.18 2000/01/27 08:09:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -106,9 +106,9 @@ int
 ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
-#define IPSEC_NAME (sproto == IPPROTO_ESP ? (af == AF_INET ? "esp_input()" :\
+#define IPSEC_NAME (sproto == IPPROTO_ESP ? (af == AF_INET ? "esp4_input()" :\
 					                     "esp6_input()") :\
-                                            (af == AF_INET ? "ah_input()" :\
+                                            (af == AF_INET ? "ah4_input()" :\
                                                              "ah6_input()"))
     union sockaddr_union src_address, dst_address, src2, dst2;
     caddr_t sport = 0, dport = 0;
@@ -633,7 +633,7 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
 #ifdef INET
 /* IPv4 AH wrapper */
 void
-ah_input(struct mbuf *m, ...)
+ah4_input(struct mbuf *m, ...)
 {
     struct ifqueue *ifq = &ipintrq;
     struct mbuf *mp = m;
@@ -662,7 +662,7 @@ ah_input(struct mbuf *m, ...)
 	m_freem(mp);
 	ahstat.ahs_qfull++;
 	splx(s);
-	DPRINTF(("ah_input(): dropped packet because of full IP queue\n"));
+	DPRINTF(("ah4_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 
@@ -673,7 +673,7 @@ ah_input(struct mbuf *m, ...)
 
 /* IPv4 ESP wrapper */
 void
-esp_input(struct mbuf *m, ...)
+esp4_input(struct mbuf *m, ...)
 {
     struct ifqueue *ifq = &ipintrq;
     struct mbuf *mp = m;
@@ -702,7 +702,7 @@ esp_input(struct mbuf *m, ...)
 	m_freem(mp);
 	espstat.esps_qfull++;
 	splx(s);
-	DPRINTF(("esp_input(): dropped packet because of full IP queue\n"));
+	DPRINTF(("esp4_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 

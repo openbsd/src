@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.36 2000/01/09 23:42:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.33 2000/01/27 08:09:08 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,10 +35,6 @@
  * PURPOSE.
  */
 
-/*
- * Based on RFC 2085.
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -57,6 +53,7 @@
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/raw_cb.h>
+#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -70,6 +67,9 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <net/pfkeyv2.h>
+#include <net/if_enc.h>
+
+#include "bpfilter.h"
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -84,47 +84,50 @@
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
+extern struct auth_hash auth_hash_key_md5;
+extern struct auth_hash auth_hash_key_sha1;
 
-struct auth_hash *ah_new_hash[] = {
+struct auth_hash *ah_hash[] = {
     &auth_hash_hmac_md5_96,
     &auth_hash_hmac_sha1_96,
-    &auth_hash_hmac_ripemd_160_96
+    &auth_hash_hmac_ripemd_160_96,
+    &auth_hash_key_md5,
+    &auth_hash_key_sha1,
 };
 
 /*
- * ah_new_attach() is called from the transformation initialization code
+ * ah_attach() is called from the transformation initialization code
  */
 int
-ah_new_attach()
+ah_attach()
 {
     return 0;
 }
 
 /*
- * ah_new_init() is called when an SPI is being set up.
+ * ah_init() is called when an SPI is being set up.
  */
-
 int
-ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
+ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
     struct auth_hash *thash = NULL;
     int i;
 
-    for (i = sizeof(ah_new_hash) / sizeof(ah_new_hash[0]) - 1; i >= 0; i--)
-      if (ii->ii_authalg == ah_new_hash[i]->type)
+    for (i = sizeof(ah_hash) / sizeof(ah_hash[0]) - 1; i >= 0; i--)
+      if (ii->ii_authalg == ah_hash[i]->type)
 	break;
 
     if (i < 0) 
     {
-	DPRINTF(("ah_new_init(): unsupported authentication algorithm %d specified\n", ii->ii_authalg));
+	DPRINTF(("ah_init(): unsupported authentication algorithm %d specified\n", ii->ii_authalg));
 	return EINVAL;
     }
 
-    thash = ah_new_hash[i];
+    thash = ah_hash[i];
 
-    if (ii->ii_authkeylen != thash->keysize)
+    if ((ii->ii_authkeylen != thash->keysize) && (thash->keysize != 0))
     {
-	DPRINTF(("ah_new_init(): keylength %d doesn't match algorithm %s keysize (%d)\n", ii->ii_authkeylen, thash->name, thash->keysize));
+	DPRINTF(("ah_init(): keylength %d doesn't match algorithm %s keysize (%d)\n", ii->ii_authkeylen, thash->name, thash->keysize));
 	return EINVAL;
     }
 
@@ -133,29 +136,47 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     tdbp->tdb_bitmap = 0;
     tdbp->tdb_rpl = AH_HMAC_INITIAL_RPL;
 
-    DPRINTF(("ah_new_init(): initialized TDB with hash algorithm %s\n",
+    DPRINTF(("ah_init(): initialized TDB with hash algorithm %s\n",
 	     thash->name));
 
-    /* Precompute the I and O pads of the HMAC */
-    for (i = 0; i < ii->ii_authkeylen; i++)
-      ii->ii_authkey[i] ^= HMAC_IPAD_VAL;
+    tdbp->tdb_amxkeylen = ii->ii_authkeylen;
+    MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen, M_XDATA,
+	   M_WAITOK);
 
-    MALLOC(tdbp->tdb_ictx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
-    bzero(tdbp->tdb_ictx, thash->ctxsize);
-    thash->Init(tdbp->tdb_ictx);
-    thash->Update(tdbp->tdb_ictx, ii->ii_authkey, ii->ii_authkeylen);
-    thash->Update(tdbp->tdb_ictx, hmac_ipad_buffer,
-		  HMAC_BLOCK_LEN - ii->ii_authkeylen);
+    bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
-    for (i = 0; i < ii->ii_authkeylen; i++)
-      ii->ii_authkey[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
+    /* "Old" AH */
+    if ((thash->type == SADB_X_AALG_MD5) || (thash->type == SADB_X_AALG_SHA1))
+    {
+	MALLOC(tdbp->tdb_ictx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
+	bzero(tdbp->tdb_ictx, thash->ctxsize);
+	thash->Init(tdbp->tdb_ictx);
+	thash->Update(tdbp->tdb_ictx, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+	thash->Final(NULL, tdbp->tdb_ictx);
+    }
+    else  /* HMAC */
+    {
+	/* Precompute the I and O pads of the HMAC */
+	for (i = 0; i < ii->ii_authkeylen; i++)
+	  ii->ii_authkey[i] ^= HMAC_IPAD_VAL;
 
-    MALLOC(tdbp->tdb_octx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
-    bzero(tdbp->tdb_octx, thash->ctxsize);
-    thash->Init(tdbp->tdb_octx);
-    thash->Update(tdbp->tdb_octx, ii->ii_authkey, ii->ii_authkeylen);
-    thash->Update(tdbp->tdb_octx, hmac_opad_buffer,
-		  HMAC_BLOCK_LEN - ii->ii_authkeylen);
+	MALLOC(tdbp->tdb_ictx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
+	bzero(tdbp->tdb_ictx, thash->ctxsize);
+	thash->Init(tdbp->tdb_ictx);
+	thash->Update(tdbp->tdb_ictx, ii->ii_authkey, ii->ii_authkeylen);
+	thash->Update(tdbp->tdb_ictx, hmac_ipad_buffer,
+		      HMAC_BLOCK_LEN - ii->ii_authkeylen);
+
+	for (i = 0; i < ii->ii_authkeylen; i++)
+	  ii->ii_authkey[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
+
+	MALLOC(tdbp->tdb_octx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
+	bzero(tdbp->tdb_octx, thash->ctxsize);
+	thash->Init(tdbp->tdb_octx);
+	thash->Update(tdbp->tdb_octx, ii->ii_authkey, ii->ii_authkeylen);
+	thash->Update(tdbp->tdb_octx, hmac_opad_buffer,
+		      HMAC_BLOCK_LEN - ii->ii_authkeylen);
+    }
 
     bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
 
@@ -164,8 +185,15 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 /* Free memory */
 int
-ah_new_zeroize(struct tdb *tdbp)
+ah_zeroize(struct tdb *tdbp)
 {
+    if (tdbp->tdb_amxkey)
+    {
+	bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+	FREE(tdbp->tdb_amxkey, M_XDATA);
+	tdbp->tdb_amxkey = NULL;
+    }
+
     if (tdbp->tdb_ictx)
     {
 	if (tdbp->tdb_authalgxform)
@@ -188,20 +216,20 @@ ah_new_zeroize(struct tdb *tdbp)
 }
 
 /*
- * ah_new_input() gets called to verify that an input packet
+ * ah_input() gets called to verify that an input packet
  * passes authentication
  */
 
 struct mbuf *
-ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
+ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
-    unsigned char calcauth[AH_MAX_HASHLEN];
-    int len, count, off, roff;
+    unsigned char calcauth[AH_MAX_HASHLEN], savauth[AH_MAX_HASHLEN];
+    int len, count, off, roff, rplen;
     struct mbuf *m0, *m1;
     unsigned char *ptr;
     union authctx ctx;
-    struct ah_new ah;
+    struct ah ah;
     
 #ifdef INET
     struct ip ipo;
@@ -213,11 +241,19 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     int last;
 #endif /* INET6 */
 
-    /* Save the AH header, we use it throughout */
-    m_copydata(m, skip, sizeof(ah), (unsigned char *) &ah);
+    if (!(tdb->tdb_flags & TDBF_NOREPLAY))
+      rplen = sizeof(u_int32_t);
+    else
+      rplen = 0;
 
-    /* Replay window checking */
-    if (tdb->tdb_wnd > 0)
+    /* Save the AH header, we use it throughout */
+    m_copydata(m, skip, AH_FLENGTH + rplen, (unsigned char *) &ah);
+
+    /* Save the Authenticator too */
+    m_copydata(m, skip + AH_FLENGTH + rplen, ahx->authsize, savauth);
+
+    /* Replay window checking, if applicable */
+    if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY)))
     {
 	switch (checkreplaywindow32(ntohl(ah.ah_rpl), 0, &(tdb->tdb_rpl),
 				    tdb->tdb_wnd, &(tdb->tdb_bitmap)))
@@ -226,20 +262,20 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		break;
 
 	    case 1:
-		DPRINTF(("ah_new_input(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		DPRINTF(("ah_input(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_wrap++;
 		m_freem(m);
 		return NULL;
 
 	    case 2:
 	    case 3:
-		DPRINTF(("ah_new_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		DPRINTF(("ah_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_replay++;
 		m_freem(m);
 		return NULL;
 
 	    default:
-                DPRINTF(("ah_new_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+                DPRINTF(("ah_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_replay++;
                 m_freem(m);
                 return NULL;
@@ -247,9 +283,9 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     }
 
     /* Verify AH header length */
-    if (ah.ah_hl * sizeof(u_int32_t) != AH_HMAC_HASHLEN + AH_HMAC_RPLENGTH)
+    if (ah.ah_hl * sizeof(u_int32_t) != ahx->authsize + rplen)
     {
-	DPRINTF(("ah_new_input(): bad authenticator length %d for packet in SA %s/%08x\n", ah.ah_hl * sizeof(u_int32_t), ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_input(): bad authenticator length %d for packet in SA %s/%08x\n", ah.ah_hl * sizeof(u_int32_t), ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_badauthl++;
 	m_freem(m);
 	return NULL;
@@ -293,7 +329,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	    m = m_pullup(m, skip);
 	    if (m == NULL)
 	    {
-		DPRINTF(("ah_new_input(): m_pullup() failed, SA %s/%08x\n",
+		DPRINTF(("ah_input(): m_pullup() failed, SA %s/%08x\n",
 			 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_hdrops++;
 		return NULL;
@@ -308,7 +344,12 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	    ipo.ip_len += skip;     /* adjusted in ip_intr() */
 	    HTONS(ipo.ip_len);
 	    HTONS(ipo.ip_id);
-	    ipo.ip_off = 0;
+
+	    if ((ahx->type == SADB_X_AALG_MD5) ||
+		(ahx->type == SADB_X_AALG_SHA1))
+	      ipo.ip_off = htons(ipo.ip_off & IP_DF);
+	    else
+	      ipo.ip_off = 0;
 	    ipo.ip_ttl = 0;
 	    ipo.ip_sum = 0;
 
@@ -339,7 +380,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			/* Sanity check for zero-length options */
 			if (ptr[off + 1] == 0)
 			{
-			    DPRINTF(("ah_new_input(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    DPRINTF(("ah_input(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			    ahstat.ahs_hdrops++;
 			    m_freem(m);
 			    return NULL;
@@ -357,7 +398,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		/* Sanity check */
 		if (off > skip)
 		{
-		    DPRINTF(("ah_new_input(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    DPRINTF(("ah_input(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		    ahstat.ahs_hdrops++;
 		    m_freem(m);
 		    return NULL;
@@ -375,7 +416,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	    /* We don't do IPv6 Jumbograms */
 	    if (ip6.ip6_plen == 0)
 	    {
-		DPRINTF(("ah_new_input(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		DPRINTF(("ah_input(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_hdrops++;
 		m_freem(m);
 		return NULL;
@@ -433,7 +474,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			  if (count + sizeof(struct ip6_ext) > len +
 			      ((ip6e->ip6e_len + 1) << 3))
 			  {
-			      DPRINTF(("ah_new_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      DPRINTF(("ah_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			      ahstat.ahs_hdrops++;
 			      m_freem(m);
 
@@ -470,7 +511,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			  /* Sanity check */
 			  if (count > skip - sizeof(struct ip6_hdr))
 			  {
-			      DPRINTF(("ah_new_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      DPRINTF(("ah_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			      ahstat.ahs_hdrops++;
 			      m_freem(m);
 
@@ -500,7 +541,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		      break;
 
 		  default:
-		      DPRINTF(("ah_new_input(): unexpected IPv6 header type %d in SA %s/%08x\n", off, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));   
+		      DPRINTF(("ah_input(): unexpected IPv6 header type %d in SA %s/%08x\n", off, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));   
 		      len = skip - sizeof(struct ip6_hdr);
 		      break;
 	      }
@@ -516,7 +557,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 #endif /* INET6 */
 
 	default:
-	    DPRINTF(("ah_new_input(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_input(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
@@ -528,7 +569,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     if (m1 == NULL)
     {
-	DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n",
+	DPRINTF(("ah_input(): bad mbuf chain for packet in SA %s/%08x\n",
 		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_hdrops++;
 	m_freem(m);
@@ -539,36 +580,36 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     /* Skip the AH header */
     for (len = 0, m0 = m1;
-	 m0 && (len + m0->m_len <= AH_NEW_FLENGTH + roff);
+	 m0 && (len + m0->m_len <= AH_FLENGTH + rplen + ahx->authsize + roff);
 	 m0 = m0->m_next)
       len += m0->m_len;
 
     if (m0 == NULL)
     {
-	DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n",
+	DPRINTF(("ah_input(): bad mbuf chain for packet in SA %s/%08x\n",
 		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_hdrops++;
 	m_freem(m);
 	return NULL;
     }
     else
-      off = (AH_NEW_FLENGTH + roff) - len;
+      off = (AH_FLENGTH + rplen + ahx->authsize + roff) - len;
 
     /* Include the AH header (minus the authenticator) in the computation */
-    ahx->Update(&ctx, (unsigned char *) &ah, AH_NEW_FLENGTH - AH_HMAC_HASHLEN);
+    ahx->Update(&ctx, (unsigned char *) &ah, AH_FLENGTH + rplen);
 
     /* All-zeroes for the authenticator */
-    ahx->Update(&ctx, ipseczeroes, AH_HMAC_HASHLEN);
+    ahx->Update(&ctx, ipseczeroes, ahx->authsize);
 
     /* Amount of data to be verified */
-    len = m->m_pkthdr.len - skip - AH_NEW_FLENGTH;
+    len = m->m_pkthdr.len - skip - AH_FLENGTH - rplen - ahx->authsize;
 
     /* Loop through the mbuf chain computing the HMAC */
     while (len > 0)
     {
 	if (m0 == NULL)
 	{
-	    DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_input(): bad mbuf chain for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
@@ -583,23 +624,33 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m0 = m0->m_next;
     }
 
-    /* Finish HMAC computation */
-    ahx->Final(calcauth, &ctx);
-    bcopy(tdb->tdb_octx, &ctx, ahx->ctxsize);
-    ahx->Update(&ctx, calcauth, ahx->hashsize);
-    ahx->Final(calcauth, &ctx);
+    /* Finish computation */
+    if ((ahx->type == SADB_X_AALG_MD5) || (ahx->type == SADB_X_AALG_SHA1))
+    {
+	ahx->Update(&ctx, (unsigned char *) tdb->tdb_amxkey,
+		    tdb->tdb_amxkeylen);
+	ahx->Final(calcauth, &ctx);
+    }
+    else
+    {
+	/* Finish HMAC computation */
+	ahx->Final(calcauth, &ctx);
+	bcopy(tdb->tdb_octx, &ctx, ahx->ctxsize);
+	ahx->Update(&ctx, calcauth, ahx->hashsize);
+	ahx->Final(calcauth, &ctx);
+    }
 
     /* Verify */
-    if (bcmp(&(ah.ah_data), calcauth, AH_HMAC_HASHLEN))
+    if (bcmp(savauth, calcauth, ahx->authsize))
     {
-	DPRINTF(("ah_new_input(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_input(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
     }
 
     /* Fix the Next Protocol field */
-    m_copyback(m, protoff, 1, (u_char *) &(ah.ah_nh));
+    m_copyback(m, protoff, sizeof(u_int8_t), (u_char *) &(ah.ah_nh));
 
     /*
      * Remove the AH header from the mbuf.
@@ -607,25 +658,27 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     if (roff == 0) 
     {
 	/* The AH header was conveniently at the beginning of the mbuf */
-	m_adj(m1, AH_NEW_FLENGTH);
+	m_adj(m1, AH_FLENGTH + rplen + ahx->authsize);
 	if (!(m1->m_flags & M_PKTHDR))
-	  m->m_pkthdr.len -= AH_NEW_FLENGTH;
+	  m->m_pkthdr.len -= AH_FLENGTH + rplen + ahx->authsize;
     }
     else
-      if (roff + AH_NEW_FLENGTH >= m1->m_len)
+      if (roff + AH_FLENGTH + rplen + ahx->authsize >= m1->m_len)
       {
 	  /*
 	   * Part or all of the AH header is at the end of this mbuf, so first
 	   * let's remove the remainder of the AH header from the
 	   * beginning of the remainder of the mbuf chain, if any.
 	   */
-	  if (roff + AH_NEW_FLENGTH > m1->m_len)
+	  if (roff + AH_FLENGTH + rplen + ahx->authsize > m1->m_len)
 	  {
 	      /* Adjust the next mbuf by the remainder */
-	      m_adj(m1->m_next, roff + AH_NEW_FLENGTH - m1->m_len);
+	      m_adj(m1->m_next, roff + AH_FLENGTH + rplen +
+		    ahx->authsize - m1->m_len);
 
 	      /* The second mbuf is guaranteed not to have a pkthdr... */
-	      m->m_pkthdr.len -= (roff + AH_NEW_FLENGTH - m1->m_len);
+	      m->m_pkthdr.len -= (roff + AH_FLENGTH + rplen +
+				  ahx->authsize - m1->m_len);
 	  }
 
 	  /* Now, let's unlink the mbuf chain for a second...*/
@@ -647,27 +700,27 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	   * overlapping copy of the remainder of the mbuf over the ESP
 	   * header.
 	   */
-	  bcopy(mtod(m1, u_char *) + roff + AH_NEW_FLENGTH,
+	  bcopy(mtod(m1, u_char *) + roff + AH_FLENGTH + rplen + ahx->authsize,
 		mtod(m1, u_char *) + roff,
-		m1->m_len - (roff + AH_NEW_FLENGTH));
-	  m1->m_len -= AH_NEW_FLENGTH;
-	  m->m_pkthdr.len -= AH_NEW_FLENGTH;
+		m1->m_len - (roff + AH_FLENGTH + rplen + ahx->authsize));
+	  m1->m_len -= AH_FLENGTH + rplen + ahx->authsize;
+	  m->m_pkthdr.len -= AH_FLENGTH + rplen + ahx->authsize;
       }
 
     return m;
 }
 
 int
-ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
+ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	      int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     unsigned char calcauth[AH_MAX_HASHLEN];
-    int len, off, count;
+    int len, off, count, rplen;
     unsigned char *ptr;
-    struct ah_new *ah;
     union authctx ctx;
     struct mbuf *mo;
+    struct ah *ah;
 
 #ifdef INET
     struct ip ipo;
@@ -679,28 +732,74 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     int last;
 #endif /* INET6 */
 
+#if NBPFILTER > 0
+    {
+	struct ifnet *ifn;
+	struct enchdr hdr;
+	struct mbuf m1;
+
+	bzero (&hdr, sizeof(hdr));
+
+	hdr.af = tdb->tdb_dst.sa.sa_family;
+	hdr.spi = tdb->tdb_spi;
+	hdr.flags |= M_AUTH;
+
+	m1.m_next = m;
+	m1.m_len = ENC_HDRLEN;
+	m1.m_data = (char *) &hdr;
+
+	if (tdb->tdb_interface)
+	  ifn = (struct ifnet *) tdb->tdb_interface;
+	else
+	  ifn = &(encif[0].sc_if);
+
+	if (ifn->if_bpf)
+	  bpf_mtap(ifn->if_bpf, &m1);
+    }
+#endif
+
     ahstat.ahs_output++;
 
     /* Check for replay counter wrap-around in automatic (not manual) keying */
-    if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0))
+    if ((tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0) &&
+	(!(tdb->tdb_flags & TDBF_NOREPLAY)))
     {
-	DPRINTF(("ah_new_output(): SA %s/%08x should have expired\n",
+	DPRINTF(("ah_output(): SA %s/%08x should have expired\n",
 		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_wrap++;
 	return NULL;
     }
 
+    if (!(tdb->tdb_flags & TDBF_NOREPLAY))
+      rplen = sizeof(u_int32_t);
+    else
+      rplen = 0;
+
 #ifdef INET
-    if (AH_NEW_FLENGTH + m->m_pkthdr.len > IP_MAXPACKET)
+    if ((tdb->tdb_dst.sa.sa_family == AF_INET) &&
+	(AH_FLENGTH + rplen + ahx->authsize + m->m_pkthdr.len > IP_MAXPACKET))
     {
-	DPRINTF(("ah_new_output(): packet in SA %s/%08x got too big\n",
+	DPRINTF(("ah_output(): packet in SA %s/%08x got too big\n",
 		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_toobig++;
         return EMSGSIZE;
     }
-#endif /* INET  */
+#endif /* INET */
+
+#ifdef INET6
+    if ((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
+	(AH_FLENGTH + rplen + ahx->authsize + m->m_pkthdr.len >
+	 IPV6_MAXPACKET))
+    {
+	DPRINTF(("ah_output(): packet in SA %s/%08x got too big\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	m_freem(m);
+	ahstat.ahs_toobig++;
+        return EMSGSIZE;
+    }
+#endif /* INET6 */
 
     /* Update the counters */
     tdb->tdb_cur_bytes += m->m_pkthdr.len - skip;
@@ -776,7 +875,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    m = m_pullup(m, skip);
 	    if (m == NULL)
 	    {
-		DPRINTF(("ah_new_output(): m_pullup() failed, SA %s/%08x\n",
+		DPRINTF(("ah_output(): m_pullup() failed, SA %s/%08x\n",
 			 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_hdrops++;
 		return ENOBUFS;
@@ -788,11 +887,16 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		  sizeof(struct ip));
 
 	    ipo.ip_tos = 0;
-	    ipo.ip_off = 0;
+	    if ((ahx->type == SADB_X_AALG_MD5) ||
+		(ahx->type == SADB_X_AALG_SHA1))
+	      ipo.ip_off = htons(ntohs(ipo.ip_off) & IP_DF);
+	    else
+	      ipo.ip_off = 0;
 	    ipo.ip_ttl = 0;
 	    ipo.ip_sum = 0;
 	    ipo.ip_p = IPPROTO_AH;
-	    ipo.ip_len = htons(ntohs(ipo.ip_len) + AH_NEW_FLENGTH);
+	    ipo.ip_len = htons(ntohs(ipo.ip_len) + AH_FLENGTH + rplen +
+			       ahx->authsize);
 
 	    /* 
 	     * If we have a loose or strict routing option, we are
@@ -815,7 +919,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    if ((ptr[off] != IPOPT_EOL) && (ptr[off] != IPOPT_NOP) &&
 			(ptr[off + 1] == 0))
 		    {
-			DPRINTF(("ah_new_output(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("ah_output(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_hdrops++;
 			m_freem(m);
 			return EMSGSIZE;
@@ -828,7 +932,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			    /* Sanity check for length */
 			    if (ptr[off + 1] < 2 + sizeof(struct in_addr))
 			    {
-				DPRINTF(("ah_new_output(): malformed LSRR or SSRR IPv4 option header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+				DPRINTF(("ah_output(): malformed LSRR or SSRR IPv4 option header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 				ahstat.ahs_hdrops++;
 				m_freem(m);
 				return EMSGSIZE;
@@ -856,7 +960,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    /* Sanity check */
 		    if (off > skip)
 		    {
-			DPRINTF(("ah_new_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			DPRINTF(("ah_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_hdrops++;
 			m_freem(m);
 			return EMSGSIZE;
@@ -900,7 +1004,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		/* Sanity check */
 		if (off > skip)
 		{
-		    DPRINTF(("ah_new_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    DPRINTF(("ah_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		    ahstat.ahs_hdrops++;
 		    m_freem(m);
 		    return EMSGSIZE;
@@ -917,7 +1021,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    /* We don't do IPv6 Jumbograms */
 	    if (ip6.ip6_plen == 0)
 	    {
-		DPRINTF(("ah_new_output(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		DPRINTF(("ah_output(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ahstat.ahs_hdrops++;
 		m_freem(m);
 		return EMSGSIZE;
@@ -983,7 +1087,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			  if (count + sizeof(struct ip6_ext) > len +
 			      ((ip6e->ip6e_len + 1) << 3))
 			  {
-			      DPRINTF(("ah_new_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      DPRINTF(("ah_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			      ahstat.ahs_hdrops++;
 			      m_freem(m);
 
@@ -1014,7 +1118,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			  /* Sanity check */
 			  if (count > skip - sizeof(struct ip6_hdr))
 			  {
-			      DPRINTF(("ah_new_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      DPRINTF(("ah_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			      ahstat.ahs_hdrops++;
 			      m_freem(m);
 
@@ -1052,17 +1156,17 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #endif /* INET6 */
 
 	default:
-	    DPRINTF(("ah_new_output(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_output(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_nopf++;
 	    m_freem(m);
 	    return EPFNOSUPPORT;
     }
 
     /* Inject AH header */
-    (*mp) = m_inject(m, skip, AH_NEW_FLENGTH, M_WAITOK);
+    (*mp) = m_inject(m, skip, AH_FLENGTH + rplen + ahx->authsize, M_WAITOK);
     if ((*mp) == NULL)
     {
-	DPRINTF(("ah_new_output(): failed to inject AH header for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_output(): failed to inject AH header for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_wrap++;
 	return ENOBUFS;
@@ -1072,32 +1176,34 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
      * The AH header is guaranteed by m_inject() to be in contiguous memory,
      * at the beginning of the returned mbuf.
      */
-    ah = mtod((*mp), struct ah_new *);
+    ah = mtod((*mp), struct ah *);
     
     /* Initialize the AH header */
-    m_copydata(m, protoff, 1, &(ah->ah_nh)); /* Save Next Protocol field */
-    ah->ah_hl = ((AH_HMAC_RPLENGTH + AH_HMAC_HASHLEN) >> 2);
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &ah->ah_nh);
+    ah->ah_hl = (rplen + ahx->authsize) / sizeof(u_int32_t);
     ah->ah_rv = 0;
     ah->ah_spi = tdb->tdb_spi;
-    ah->ah_rpl = htonl(tdb->tdb_rpl++);
+
+    if (!(tdb->tdb_flags & TDBF_NOREPLAY))
+      ah->ah_rpl = htonl(tdb->tdb_rpl++);
 
     /* Update the Next Protocol field in the IP header */
     len = IPPROTO_AH;
-    m_copyback(m, protoff, 1, (unsigned char *) &len);
+    m_copyback(m, protoff, sizeof(u_int8_t), (caddr_t) &len);
 
     /* Include the header AH in the authenticator computation */
-    ahx->Update(&ctx, (unsigned char *) ah, AH_NEW_FLENGTH - AH_HMAC_HASHLEN);
-    ahx->Update(&ctx, ipseczeroes, AH_HMAC_HASHLEN);
+    ahx->Update(&ctx, (unsigned char *) ah, AH_FLENGTH + rplen);
+    ahx->Update(&ctx, ipseczeroes, ahx->authsize);
 
     /* Calculate the authenticator over the rest of the packet */
-    len = m->m_pkthdr.len - (skip + AH_NEW_FLENGTH);
-    off = AH_NEW_FLENGTH;
+    len = m->m_pkthdr.len - (skip + AH_FLENGTH + rplen + ahx->authsize);
+    off = AH_FLENGTH + rplen + ahx->authsize;
 
     while (len > 0)
     {
 	if ((*mp) == 0)
 	{
-	    DPRINTF(("ah_new_output(): bad mbuf chain for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_output(): bad mbuf chain for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    (*mp) = NULL;
@@ -1113,14 +1219,21 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	(*mp) = (*mp)->m_next;
     }
 
-    /* Finish computing the authenticator */
-    ahx->Final(calcauth, &ctx);
-    bcopy(tdb->tdb_octx, &ctx, ahx->ctxsize);
-    ahx->Update(&ctx, calcauth, ahx->hashsize);
+    if ((ahx->type == SADB_X_AALG_MD5) || (ahx->type == SADB_X_AALG_SHA1))
+      ahx->Update(&ctx, (unsigned char *) tdb->tdb_amxkey,
+		  tdb->tdb_amxkeylen);
+    else
+    {
+	/* HMAC */
+	ahx->Final(calcauth, &ctx);
+	bcopy(tdb->tdb_octx, &ctx, ahx->ctxsize);
+	ahx->Update(&ctx, calcauth, ahx->hashsize);
+    }
+
     ahx->Final(calcauth, &ctx);
 
     /* Copy the authenticator */
-    bcopy(calcauth, ah->ah_data, AH_HMAC_HASHLEN);
+    bcopy(calcauth, ((caddr_t) ah) + AH_FLENGTH + rplen, ahx->authsize);
 
     *mp = m;
 	

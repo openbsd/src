@@ -160,9 +160,7 @@ struct sadb_protocol {
 };
     
 #define SADB_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
-                              (x) == SADB_X_SATYPE_AH_OLD ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
-                                  (x) == SADB_X_SATYPE_ESP_OLD ? IPPROTO_ESP :\
                                     (x) == SADB_X_SATYPE_BYPASS ? IPPROTO_IP :\
                                       IPPROTO_IPIP )
 
@@ -199,12 +197,10 @@ struct sadb_protocol {
 #define SADB_SATYPE_OSPFV2		 4
 #define SADB_SATYPE_RIPV2		 5
 #define SADB_SATYPE_MIP			 6
-#define SADB_X_SATYPE_AH_OLD		 7
-#define SADB_X_SATYPE_ESP_OLD		 8
-#define SADB_X_SATYPE_IPIP		 9
-#define SADB_X_SATYPE_TCPSIGNATURE	10
-#define SADB_X_SATYPE_BYPASS		11
-#define SADB_SATYPE_MAX			11
+#define SADB_X_SATYPE_IPIP		 7
+#define SADB_X_SATYPE_TCPSIGNATURE	 8
+#define SADB_X_SATYPE_BYPASS		 9
+#define SADB_SATYPE_MAX			 9
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1
@@ -230,12 +226,14 @@ struct sadb_protocol {
 #define SADB_X_EALG_SKIPJACK  5
 #define SADB_EALG_MAX         5
 
-#define SADB_SAFLAGS_PFS         	0x01    /* perfect forward secrecy */
-#define SADB_X_SAFLAGS_HALFIV    	0x02    /* Used for ESP-old */
-#define SADB_X_SAFLAGS_TUNNEL	 	0x04    /* Force tunneling */
-#define SADB_X_SAFLAGS_CHAINDEL  	0x08    /* Delete whole SA chain */
-#define SADB_X_SAFLAGS_REPLACEFLOW	0x20    /* Replace existing flow */
-#define SADB_X_SAFLAGS_INGRESS_FLOW     0x40    /* Ingress ACL entry */
+#define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
+#define SADB_X_SAFLAGS_HALFIV    	0x002    /* Used for ESP-old */
+#define SADB_X_SAFLAGS_TUNNEL	 	0x004    /* Force tunneling */
+#define SADB_X_SAFLAGS_CHAINDEL  	0x008    /* Delete whole SA chain */
+#define SADB_X_SAFLAGS_REPLACEFLOW	0x020    /* Replace existing flow */
+#define SADB_X_SAFLAGS_INGRESS_FLOW     0x040    /* Ingress ACL entry */
+#define SADB_X_SAFLAGS_RANDOMPADDING    0x080    /* Random ESP padding */
+#define SADB_X_SAFLAGS_NOREPLAY         0x100    /* No replay counter */
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1

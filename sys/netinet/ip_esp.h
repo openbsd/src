@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.30 2000/01/13 05:03:45 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.31 2000/01/27 08:09:10 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,32 +35,10 @@
  * PURPOSE.
  */
 
-/*
- * Encapsulation Security Payload Processing
- * Per RFC1827 (Atkinson, 1995)
- */
-
 #ifndef _NETINET_ESP_H_
 #define _NETINET_ESP_H_
 
-/* Various defines for the "new" ESP */
-#define ESP_NEW_ALEN		12	/* 96bits authenticator */
-
-struct esp_old
-{
-    u_int32_t	esp_spi;	/* Security Parameters Index */
-    u_int8_t	esp_iv[8];	/* iv[4] may actually be data! */
-};
-
-#define ESP_OLD_FLENGTH    12
-#define ESP_NEW_FLENGTH    16
-
-struct esp_new
-{
-    u_int32_t   esp_spi;        /* Security Parameter Index */
-    u_int32_t   esp_rpl;        /* Sequence Number, Replay Counter */
-    u_int8_t    esp_iv[8];      /* Data may start already at iv[0]! */
-};
+#define ESP_ALEN	12	/* 96-bit authenticator */
 
 struct espstat
 {
@@ -96,14 +74,6 @@ struct espstat
 }
 
 #ifdef _KERNEL
-void	esp_input __P((struct mbuf *, ...));
-int	esp_output __P((struct mbuf *, struct tdb *, struct mbuf **));
-int	esp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-
-#ifdef INET6
-int	esp6_input __P((struct mbuf **, int *, int));
-#endif /* INET6 */
-
 extern int esp_enable;
 struct espstat espstat;
 #endif /* _KERNEL */

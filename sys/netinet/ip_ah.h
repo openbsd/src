@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.23 2000/01/13 05:03:45 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.24 2000/01/27 08:09:08 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,24 +35,8 @@
  * PURPOSE.
  */
 
-/*
- * Authentication Header Processing
- * Per RFC1826 (Atkinson, 1995)
- */
-
 #ifndef _NETINET_AH_H_
 #define _NETINET_AH_H_
-
-struct ah_old
-{
-    u_int8_t	ah_nh;			/* Next header (protocol) */
-    u_int8_t	ah_hl;			/* AH length, in 32-bit words */
-    u_int16_t	ah_rv;			/* reserved, must be 0 */
-    u_int32_t	ah_spi;			/* Security Parameters Index */
-    u_int8_t	ah_data[1];		/* More, really */
-};
-
-#define AH_OLD_FLENGTH		8	/* size of fixed part */
 
 struct ahstat
 {
@@ -75,17 +59,17 @@ struct ahstat
     u_int32_t	ahs_pdrops;	/* packet blocked due to policy */
 };
 
-struct ah_new
+struct ah
 {
-    u_int8_t        ah_nh;                  /* Next header (protocol) */
-    u_int8_t        ah_hl;                  /* AH length, in 32-bit words */
-    u_int16_t       ah_rv;                  /* reserved, must be 0 */
-    u_int32_t       ah_spi;                 /* Security Parameters Index */
-    u_int32_t       ah_rpl;                 /* Replay prevention */
-    u_int8_t        ah_data[AH_HMAC_HASHLEN];/* Authenticator */
+    u_int8_t   ah_nh;
+    u_int8_t   ah_hl;
+    u_int16_t  ah_rv;
+    u_int32_t  ah_spi;
+    u_int32_t  ah_rpl;  /* We may not use this, if we're using old xforms */
 };
 
-#define AH_NEW_FLENGTH		(sizeof(struct ah_new))
+/* Length of base AH header */
+#define AH_FLENGTH		8
 
 /* Size of the largest hash function output used in AH-new, in bytes */
 #define AH_MAX_HASHLEN		20
@@ -102,14 +86,6 @@ struct ah_new
 }
 
 #ifdef _KERNEL
-void	ah_input __P((struct mbuf *, ...));
-int	ah_output __P((struct mbuf *, struct tdb *, struct mbuf **));
-int	ah_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-
-#ifdef INET6
-int	ah6_input __P((struct mbuf **, int *, int));
-#endif /* INET6 */
-
 extern int ah_enable;
 struct ahstat ahstat;
 #endif /* _KERNEL */

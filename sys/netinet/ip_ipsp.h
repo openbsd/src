@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.59 2000/01/21 03:15:05 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.60 2000/01/27 08:09:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -273,6 +273,9 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_SOFT_FIRSTUSE    0x00400	/* Soft expiration */
 #define TDBF_PFS              0x00800	/* Ask for PFS from Key Mgmt. */
 #define TDBF_TUNNELING        0x01000	/* Force IP-IP encapsulation */
+#define TDBF_NOREPLAY         0x02000   /* No replay counter present */
+#define TDBF_RANDOMPADDING    0x04000   /* Random data in the ESP padding */
+
     u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
 
     TAILQ_ENTRY(tdb)  tdb_expnext;	/* Expiration cluster list link */
@@ -297,12 +300,12 @@ struct tdb				/* tunnel descriptor block */
 					   * tdb_exp_first_use <= curtime */
 
     u_int32_t	      tdb_spi;    	/* SPI */
-    u_int16_t         tdb_amxkeylen;    /* AH-old only */
+    u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
+    u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
     u_int16_t         tdb_ivlen;        /* IV length */
     u_int8_t	      tdb_sproto;	/* IPsec protocol */
     u_int8_t          tdb_wnd;          /* Replay window */
     u_int8_t          tdb_satype;       /* SA type (RFC2367, PF_KEY) */
-    u_int8_t          tdb_FILLER;       /* Padding */
     
     union sockaddr_union tdb_dst;	/* Destination address for this SA */
     union sockaddr_union tdb_src;	/* Source address for this SA */
@@ -313,7 +316,8 @@ struct tdb				/* tunnel descriptor block */
     u_int8_t         *tdb_octx;
     u_int8_t         *tdb_srcid;        /* Source ID for this SA */
     u_int8_t         *tdb_dstid;        /* Destination ID for this SA */
-    u_int8_t         *tdb_amxkey;       /* AH-old only */
+    u_int8_t         *tdb_amxkey;       /* Raw authentication key */
+    u_int8_t         *tdb_emxkey;       /* Raw encryption key */
 
     union
     {
@@ -367,6 +371,7 @@ struct auth_hash {
     char *name;
     u_int16_t keysize;
     u_int16_t hashsize; 
+    u_int16_t authsize;
     u_int16_t ctxsize;
     void (*Init)(void *);
     void (*Update)(void *, u_int8_t *, u_int16_t);
@@ -409,11 +414,9 @@ struct xformsw
 
 /* xform IDs */
 #define XF_IP4		1	/* IP inside IP */
-#define XF_OLD_AH	2	/* RFCs 1828 & 1852 */
-#define XF_OLD_ESP	3	/* RFCs 1829 & 1851 */
-#define XF_NEW_AH	4	/* AH HMAC 96bits */
-#define XF_NEW_ESP	5	/* ESP + auth 96bits + replay counter */
-#define XF_TCPSIGNATURE	6	/* TCP MD5 Signature option, RFC 2358 */
+#define XF_AH		2	/* AH */
+#define XF_ESP		3	/* ESP */
+#define XF_TCPSIGNATURE	5	/* TCP MD5 Signature option, RFC 2358 */
 
 /* xform attributes */
 #define XFT_AUTH	0x0001
@@ -564,37 +567,39 @@ extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **,
 			  int, int);
 extern void etherip_input __P((struct mbuf *, ...));
 
-/* XF_OLD_AH */
-extern int ah_old_attach(void);
-extern int ah_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
-extern int ah_old_zeroize(struct tdb *);
-extern int ah_old_output(struct mbuf *, struct tdb *, struct mbuf **,
+/* XF_AH */
+extern int ah_attach(void);
+extern int ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+extern int ah_zeroize(struct tdb *);
+extern int ah_output(struct mbuf *, struct tdb *, struct mbuf **,
 			 int, int);
-extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *, int, int);
+extern struct mbuf *ah_input(struct mbuf *, struct tdb *, int, int);
+extern int ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-/* XF_NEW_AH */
-extern int ah_new_attach(void);
-extern int ah_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
-extern int ah_new_zeroize(struct tdb *);
-extern int ah_new_output(struct mbuf *, struct tdb *, struct mbuf **,
-			 int, int);
-extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *, int, int);
+#ifdef INET
+extern void ah4_input __P((struct mbuf *, ...));
+#endif /* INET */
 
-/* XF_OLD_ESP */
-extern int esp_old_attach(void);
-extern int esp_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
-extern int esp_old_zeroize(struct tdb *);
-extern int esp_old_output(struct mbuf *, struct tdb *, struct mbuf **,
-			  int, int);
-extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *, int, int);
+#ifdef INET6
+int     ah6_input __P((struct mbuf **, int *, int));
+#endif /* INET6 */
 
-/* XF_NEW_ESP */
-extern int esp_new_attach(void);
-extern int esp_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
-extern int esp_new_zeroize(struct tdb *);
-extern int esp_new_output(struct mbuf *, struct tdb *, struct mbuf **,
-			  int, int);
-extern struct mbuf *esp_new_input(struct mbuf *, struct tdb *, int, int);
+/* XF_ESP */
+extern int esp_attach(void);
+extern int esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+extern int esp_zeroize(struct tdb *);
+extern int esp_output(struct mbuf *, struct tdb *, struct mbuf **,
+		      int, int);
+extern struct mbuf *esp_input(struct mbuf *, struct tdb *, int, int);
+extern int esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+#ifdef INET
+extern void esp4_input __P((struct mbuf *, ...));
+#endif /* INET */
+
+#ifdef INET6
+int     esp6_input __P((struct mbuf **, int *, int));
+#endif /* INET6 */
 
 /* XF_TCPSIGNATURE */
 extern int tcp_signature_tdb_attach __P((void));

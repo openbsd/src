@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.24 2000/01/21 03:15:05 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.25 2000/01/27 08:09:08 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -154,8 +154,6 @@ void	iplinit __P((void));
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip_ah.h>
-#include <netinet/ip_esp.h>
 #include <netinet/ip_ether.h>
 #endif
 
@@ -258,12 +256,12 @@ struct protosw inetsw[] = {
 #endif /* NSIP */
 #ifdef IPSEC
 { SOCK_RAW,   &inetdomain,    IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
-  ah_input,   rip_output,     0,              rip_ctloutput,
+  ah4_input,   rip_output,     0,              rip_ctloutput,
   rip_usrreq,
   0,          0,              0,              0,		ah_sysctl
 },
 { SOCK_RAW,   &inetdomain,    IPPROTO_ESP,    PR_ATOMIC|PR_ADDR,
-  esp_input,  rip_output,     0,              rip_ctloutput,
+  esp4_input,  rip_output,     0,              rip_ctloutput,
   rip_usrreq,
   0,          0,              0,              0,		esp_sysctl
 },
