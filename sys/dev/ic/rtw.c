@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.18 2005/02/19 03:33:30 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.19 2005/02/22 09:16:51 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -2125,9 +2125,11 @@ rtw_disable(struct rtw_softc *sc)
 		return;
 
 	/* turn off PHY */
-	if ((rc = rtw_pwrstate(sc, RTW_OFF)) != 0)
+	if ((sc->sc_flags & RTW_F_INVALID) == 0 &&
+	    (rc = rtw_pwrstate(sc, RTW_OFF)) != 0) {
 		printf("%s: failed to turn off PHY (%d)\n",
 		    sc->sc_dev.dv_xname, rc);
+	}
 
 	if (sc->sc_disable != NULL)
 		(*sc->sc_disable)(sc);
@@ -3927,6 +3929,8 @@ int
 rtw_detach(struct rtw_softc *sc)
 {
 	int pri;
+
+	sc->sc_flags |= RTW_F_INVALID;
 
 	switch (sc->sc_attach_state) {
 	case FINISHED:
