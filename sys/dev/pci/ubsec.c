@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.84 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.85 2002/04/22 21:24:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -222,13 +222,13 @@ ubsec_attach(parent, self, aux)
 		q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
 		    M_DEVBUF, M_NOWAIT);
 		if (q == NULL) {
-			printf("Warning can't allocate queue buffers for ubsec\n");
+			printf(": can't allocate queue buffers\n");
 			break;
 		}
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_dmachunk),
 		    &dmap->d_alloc, 0)) {
-			printf("Warning can't allocate dma buffers for ubsec\n");
+			printf(": can't allocate dma buffers\n");
 			free(q, M_DEVBUF);
 			break;
 		}
@@ -261,7 +261,8 @@ ubsec_attach(parent, self, aux)
 	 */
 	ubsec_init_board(sc);
 
-	
+	printf(": %s", intrstr);
+
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_KEY) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
@@ -295,7 +296,7 @@ skip_rng:
 	}
 #endif /* UBSEC_NO_RNG */
 
-	printf(": %s\n", intrstr);
+	printf("\n");
 }
 
 /*
