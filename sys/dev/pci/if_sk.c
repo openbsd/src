@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.50 2004/11/16 17:45:54 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.51 2004/11/16 19:34:58 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1118,7 +1118,7 @@ void sk_reset(struct sk_softc *sc)
 	 * register represents 18.825ns, so to specify a timeout in
 	 * microseconds, we have to multiply by 54.
 	 */
-        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(200));
+        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
         sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
 	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
         sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
