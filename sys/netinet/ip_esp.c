@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.45 2000/06/14 04:42:10 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.46 2000/06/15 00:30:12 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -305,7 +305,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	plen = m->m_pkthdr.len - (skip + hlen + alen);
 	if ((plen & (espx->blocksize - 1)) || (plen <= 0))
 	{
-	    DPRINTF(("esp_input(): payload not a multiple of %d octets, SA %s/%08x\n", espx->blocksize, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	    DPRINTF(("esp_input(): payload of %d octets not a multiple of %d octets, SA %s/%08x\n", plen, espx->blocksize, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    espstat.esps_badilen++;
 	    m_freem(m);
 	    return EINVAL;
