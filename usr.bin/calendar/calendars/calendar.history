@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.9 1999/12/17 10:37:13 pjanzen Exp $
+ * $OpenBSD: calendar.history,v 1.10 2001/12/04 12:26:45 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -424,9 +424,9 @@
 12/03	First successful human heart transplant led by Dr. Barnard, 1967
 12/03	The Montreux Casino burns down during a Frank Zappa concert, 1971
 12/04	Washington takes leave of his officers at Fraunce's Tavern, NYC, 1783
-12/05	End of Prohibition, 1933 (at least the alcohol part)
 12/05	Phi Beta Kappa founded, 1776
-12/05	The Eighteenth Amendment repealed, ending Prohibition, 1933
+12/05	The Eighteenth Amendment repealed,
+	ending the Prohibition of alcohol, 1933
 12/07	Japan bombs Pearl Harbor, 1941
 12/09	Ball-bearing roller skates patented, 1884
 12/10	Metric system established in France, 1799
