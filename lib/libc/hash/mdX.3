@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.8 2004/08/24 19:38:17 millert Exp $
+.\" 	$OpenBSD: mdX.3,v 1.9 2004/08/24 20:10:33 millert Exp $
 .\"
 .Dd April 29, 2004
 .Dt MDX 3
@@ -210,7 +210,8 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Sh BUGS
 Collisions have been found for the full versions of both MD4 and MD5.
 The use of
-.Xr sha1 3
+.Xr sha1 3 ,
+.Xr sha2 3 ,
 or
-.Xr sha2 3
+.Xr rmd160 3
 is recommended instead.
