@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2000/03/29 23:11:06 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -119,8 +119,8 @@ inittodr(t)
 
 		if (dt < 2 * SECDAY)
 			return;
-		printf ("WARNING: clock %s %d days",
-			time.tv_sec < t? "lost" : "gained", dt / SECDAY);
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < t? "lost" : "gained", dt / SECDAY);
 	}
 
 	printf (" -- CHECK AND RESET THE DATE!\n");
@@ -132,7 +132,7 @@ inittodr(t)
 void
 resettodr()
 {
-	static struct pdc_tod tod;
+	struct pdc_tod tod PDC_ALIGNMENT;
 
 	tod.sec = time.tv_sec;
 	tod.usec = time.tv_usec;
