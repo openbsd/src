@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.23 2000/01/27 05:21:13 itojun Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.24 2000/03/09 15:03:29 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -282,7 +282,7 @@ doit(f, fromp)
 
 #ifdef	KERBEROS
 	if (use_kerberos) {
-		retval = do_krb_login(fromp);
+		retval = do_krb_login((struct sockaddr_in *)fromp);
 		if (retval == 0)
 			authenticated++;
 		else if (retval > 0)
@@ -299,29 +299,28 @@ doit(f, fromp)
 			fatal(f, "Permission denied", 0);
 		}
 #ifdef IP_OPTIONS
-		if (fromp->sa_family == AF_INET)
-		{
-		struct ipoption opts;
-		int optsize = sizeof(opts), ipproto, i;
-		struct protoent *ip;
+		if (fromp->sa_family == AF_INET) {
+			struct ipoption opts;
+			int optsize = sizeof(opts), ipproto, i;
+			struct protoent *ip;
 
-		if ((ip = getprotobyname("ip")) != NULL)
-			ipproto = ip->p_proto;
-		else
-			ipproto = IPPROTO_IP;
-		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)&opts,
-		    &optsize) == 0 && optsize != 0) {
-			for (i = 0; (void *)&opts.ipopt_list[i] - (void *)&opts <
-			    optsize; ) {
-				u_char c = (u_char)opts.ipopt_list[i];
-				if (c == IPOPT_LSRR || c == IPOPT_SSRR)
-					exit(1);
-				if (c == IPOPT_EOL)
-					break;
-				i += (c == IPOPT_NOP) ? 1 :
-				    (u_char)opts.ipopt_list[i+1];
+			if ((ip = getprotobyname("ip")) != NULL)
+				ipproto = ip->p_proto;
+			else
+				ipproto = IPPROTO_IP;
+			if (getsockopt(0, ipproto, IP_OPTIONS, (char *)&opts,
+			    &optsize) == 0 && optsize != 0) {
+				for (i = 0; (void *)&opts.ipopt_list[i] -
+				    (void *)&opts < optsize; ) {
+					u_char c = (u_char)opts.ipopt_list[i];
+					if (c == IPOPT_LSRR || c == IPOPT_SSRR)
+						exit(1);
+					if (c == IPOPT_EOL)
+						break;
+					i += (c == IPOPT_NOP) ? 1 :
+					    (u_char)opts.ipopt_list[i+1];
+				}
 			}
-		}
 		}
 #endif
 		if (do_rlogin(fromp) == 0)
