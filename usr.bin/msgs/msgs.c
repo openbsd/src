@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.9 1997/04/28 05:48:32 downsj Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.10 1997/04/28 06:03:51 downsj Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.9 1997/04/28 05:48:32 downsj Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.10 1997/04/28 06:03:51 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,6 @@ static char rcsid[] = "$OpenBSD: msgs.c,v 1.9 1997/04/28 05:48:32 downsj Exp $";
  *	<num>	print message number <num>
  */
 
-#define V7		/* will look for TERM in the environment */
 #define OBJECT		/* will object to messages without Subjects */
 #define REJECT	/* will reject messages without Subjects
 			   (OBJECT must be defined also) */
@@ -445,19 +444,22 @@ main(argc, argv)
 		fflush(msgsrc);
 	}
 
-#ifdef V7
 	if (totty) {
 		struct winsize win;
 		if (ioctl(fileno(stdout), TIOCGWINSZ, &win) != -1)
 			Lpp = win.ws_row;
 		if (Lpp <= 0) {
-			if (tgetent(inbuf, getenv("TERM")) <= 0
-			    || (Lpp = tgetnum("li")) <= 0) {
+			char *ttype = getenv("TERM");
+
+			if (ttype != (char *)NULL) {
+				if (tgetent(NULL, ttype) <= 0
+				    || (Lpp = tgetnum("li")) <= 0) {
+					Lpp = NLINES;
+				}
+			} else
 				Lpp = NLINES;
-			}
 		}
 	}
-#endif
 	Lpp -= 6;	/* for headers, etc. */
 
 	already = NO;
