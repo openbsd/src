@@ -85,8 +85,8 @@ rd_teardown:
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-rdsetroot:	${TOP}/common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
+rdsetroot:	${TOP}/../common/rdsetroot.c
+	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../common/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
