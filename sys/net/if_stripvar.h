@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.2 1996/05/19 22:09:45 jonathan Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.2.4.1 1996/08/05 20:37:51 jtc Exp $	*/
 
 /*
  * Definitions for SLIP interface data structures
@@ -17,10 +17,6 @@ struct st_softc {
 	u_char	*sc_rxbuf;		/* input destuffing buffer */
 	u_char	*sc_txbuf;		/* output stuffing buffer */
 	u_int	sc_flags;		/* see below */
-	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
-	long	sc_lasttime;		/* last time a char arrived */
-	long	sc_abortcount;		/* number of abort esacpe chars */
-	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
 #ifdef NetBSD
@@ -30,11 +26,22 @@ struct st_softc {
 #ifdef INET				/* XXX */
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
+
+	int sc_state;			/* Radio reset state-machine */
+#define ST_ALIVE	0x0		/*    answered  probe */
+#define ST_PROBE_SENT	0x1		/*    probe sent, answer pending */
+#define ST_DEAD		0x2		/*    no answer to probe; do reset */
+
+	long sc_statetimo;		/* When (secs) current state ends */
+
 	caddr_t	sc_bpf;			/* BPF data */
 };
 
-/* internal flags */
-#define	SC_ERROR	0x0001		/* had an input error */
+
+/* Internal flags */
+#define	SC_ERROR	0x0001		/* Incurred error reading current pkt*/
+
+#define SC_TIMEOUT	0x00000400	/* timeout is currently pending */
 
 /* visible flags */
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */

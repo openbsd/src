@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.2.4.2 1996/06/26 22:37:00 jtc Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ typedef char ttychar_t;
  *
  * SLMTU is a hard limit on output packet size.  To insure good
  * interactive response, SLMTU wants to be the smallest size that
- * amortizes the header cost.  (Remember that even with
+ * amortizes the header cost.  Remember that even with
  * type-of-service queuing, we have to wait for any in-progress
  * packet to finish.  I.e., we wait, on the average, 1/2 * mtu /
  * cps, where cps is the line speed in characters per second.
@@ -193,10 +193,16 @@ typedef char ttychar_t;
 #endif
 #define	SLMAX		(MCLBYTES - BUFOFFSET)
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
-#define SLMTU		1200 /*XXX*/
+#define SLMTU		1100 /* XXX -- appromaximated. 1024 may be safer. */
 
 #define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
+
+
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
+
+/* This is a NetBSD-1.0 or later kernel. */
+#define CCOUNT(q)	((q)->c_cc)
+
 
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))	/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
@@ -259,26 +265,22 @@ static void RecvErr __P((char *msg, struct st_softc *sc));
 static void RecvErr_Message __P((struct st_softc *strip_info,
 				u_char *sendername, u_char *msg));
 void	strip_resetradio __P((struct st_softc *sc, struct tty *tp));
+void	strip_proberadio __P((struct st_softc *sc, struct tty *tp));
 void	strip_watchdog __P((struct ifnet *ifp));
-void	strip_esc __P((struct st_softc *sc, struct mbuf *m));
+void	strip_sendbody __P((struct st_softc *sc, struct mbuf *m));
 int	strip_newpacket __P((struct st_softc *sc, u_char *ptr, u_char *end));
 struct mbuf * strip_send __P((struct st_softc *sc, struct mbuf *m0));
 
+static void strip_timeout __P((void *x));
+
+
 
 #ifdef DEBUG
-void ipdump __P((const char *msg, u_char *p, int len));
-void stripdump __P((const char *msg, u_char *p, int len));
-void stripdumpm __P((const char *msg, struct mbuf *m, int len));
 #define DPRINTF(x)	printf x
-#define TXPRINTF(x)	printf x/* causes outrageous delays */
-#define RXPRINTF(x)	printf x /* causes outrageous delays */
 #else
 #define DPRINTF(x)
-#define TXPRINTF(x)
-#define RXPRINTF(x)
 #endif
 
-#define XDPRINTF(x)	/* really verbose debugging */
 
 
 /*
@@ -293,17 +295,42 @@ void stripdumpm __P((const char *msg, struct mbuf *m, int len));
  * respond with an error, the driver knows to reset the radio.
  */
 
-#define FORCE_RESET(sc) \
- do {\
-    printf("strip: XXX: reset state-machine not yet implemented in *BSD\n"); \
-    (sc)->sc_if.if_timer = 0; \
- } while (0)
+/* Radio-reset finite state machine (if_watchdog) callback rate, in seconds */
+#define STRIP_WATCHDOG_INTERVAL	5
 
+/* Period between intrusive radio probes, in seconds */
+#define ST_PROBE_INTERVAL 10
+
+/* Grace period for radio to answer probe, in seconds */
+#define ST_PROBERESPONSE_INTERVAL 2
+
+/* Be less agressive about repeated resetting. */
+#define STRIP_RESET_INTERVAL 5
+
+/*
+ * We received a response from the radio that indicates it's in
+ * star mode.  Clear any pending probe or reset timer.
+ * Don't  probe radio again for standard polling interval.
+ */
 #define CLEAR_RESET_TIMER(sc) \
  do {\
-    printf("strip: clearing  reset timeout: not yet implemented in *BSD\n"); \
-    (sc)->sc_if.if_timer = 0; \
+    (sc)->sc_state = ST_ALIVE;	\
+    (sc)->sc_statetimo = time.tv_sec + ST_PROBE_INTERVAL;	\
 } while (0)
+
+/*
+ * we received a response from the radio that indicates it's crashed
+ * out of starmode into Hayse mode. Reset it ASAP.
+ */
+#define FORCE_RESET(sc) \
+ do {\
+    (sc)->sc_statetimo = time.tv_sec - 1; \
+    (sc)->sc_state = ST_DEAD;	\
+    /*(sc)->sc_if.if_timer = 0;*/ \
+ } while (0)
+
+#define RADIO_PROBE_TIMEOUT(sc) \
+	 ((sc)-> sc_statetimo > time.tv_sec)
 
 
 
@@ -334,7 +361,7 @@ stripattach(n)
 		sc->sc_fastq.ifq_maxlen = 32;
 
 		sc->sc_if.if_watchdog = strip_watchdog;
-		sc->sc_if.if_timer = 15; /* seconds */ 
+		sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
@@ -353,31 +380,34 @@ stripinit(sc)
 		if (p)
 			sc->sc_ep = (u_char *)p + SLBUFSIZE;
 		else {
-			printf("sl%d: can't allocate buffer\n", sc - st_softc);
+			printf("%s: can't allocate buffer\n",
+			       sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
 
-	/* get buffer in which to unstuff input */
+	/* Get contiguous buffer in which to de-bytestuff/rll-decode input */
 	if (sc->sc_rxbuf == (u_char *) 0) {
 		MCLALLOC(p, M_WAIT);
 		if (p)
 			sc->sc_rxbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("sl%d: can't allocate buffer\n", sc - st_softc);
+			printf("%s: can't allocate input buffer\n",
+			       sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
 
-	/* get buffer in which to stuff output */
+	/* Get contiguous buffer in which to bytestuff/rll-encode output */
 	if (sc->sc_txbuf == (u_char *) 0) {
 		MCLALLOC(p, M_WAIT);
 		if (p)
 			sc->sc_txbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("sl%d: can't allocate buffer\n", sc - st_softc);
+			printf("%s: can't allocate buffer\n",
+				sc->sc_if.if_xname);
 			
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
@@ -387,6 +417,10 @@ stripinit(sc)
 	sc->sc_buf = sc->sc_ep - SLMAX;
 	sc->sc_mp = sc->sc_buf;
 	sl_compress_init(&sc->sc_comp, -1);
+
+	/* Initialize radio probe/reset state machine */
+	sc->sc_state = ST_DEAD;		/* assumet the worst. */
+	sc->sc_statetimo = time.tv_sec; /* do reset immediately */
 
 	return (1);
 }
@@ -458,7 +492,7 @@ stripopen(dev, tp)
 
 /*
  * Line specific close routine.
- * Detach the tty from the sl unit.
+ * Detach the tty from the strip unit.
  */
 void
 stripclose(tp)
@@ -469,7 +503,6 @@ stripclose(tp)
 
 	ttywflush(tp);
 
-	DPRINTF(("stripclose: closing\n"));
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
 	tp->t_line = 0;
 	sc = (struct st_softc *)tp->t_sc;
@@ -485,6 +518,11 @@ stripclose(tp)
 		sc->sc_buf = 0;
 		sc->sc_rxbuf = 0;
 		sc->sc_txbuf = 0;
+
+		if (sc->sc_flags & SC_TIMEOUT) {
+			untimeout(strip_timeout, (void *) sc);
+			sc->sc_flags &= ~SC_TIMEOUT;
+		}
 	}
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* if necessary, install a new outq buffer of the appropriate size */
@@ -526,7 +564,7 @@ striptioctl(tp, cmd, data, flag)
  * byte-stuff (escape) it, and enqueue it on the tty send queue.
  */
 void
-strip_esc(sc, m)
+strip_sendbody(sc, m)
 	struct st_softc  *sc;
 	struct mbuf *m;
 {
@@ -539,7 +577,9 @@ strip_esc(sc, m)
 	while (m) {
 		/*
 		 * Byte-stuff/run-length encode this mbuf's data into the
-		 * output buffer.  XXX note that chained calls to stuffdata()
+		 * output buffer.
+		 * XXX
+		 * Note that chained calls to stuffdata()
 		 * require that the stuffed data be left in the
 		 * output buffer until the entire packet is encoded.
 		 */
@@ -555,6 +595,9 @@ strip_esc(sc, m)
 	len = dp - sc->sc_txbuf;
 	if (b_to_q((ttychar_t *)sc->sc_txbuf,
 			   len, &tp->t_outq)) {
+			if (sc->sc_if.if_flags & IFF_DEBUG)
+				addlog("%s: tty output overflow\n",
+					 sc->sc_if.if_xname);
 			goto bad;
 		}
 		sc->sc_if.if_obytes += len;
@@ -571,7 +614,8 @@ bad:
  *  Prepend a STRIP header to the packet.
  * (based on 4.4bsd if_ppp)
  *
- * XXX manipulates tty queues with putc
+ * XXX manipulates tty queues with putc.
+ * must be called at spl >= spltty.
  */
 struct mbuf *
 strip_send(sc, m0)
@@ -586,8 +630,11 @@ strip_send(sc, m0)
 	 */
 	hdr = mtod(m0, struct st_header *);
 	if (b_to_q((ttychar_t *)hdr, STRIP_HDRLEN, &tp->t_outq)) {
-	  	TXPRINTF(("prepend: outq overflow\n"));
+		if (sc->sc_if.if_flags & IFF_DEBUG)
+		  	addlog("%s: outq overflow writing header\n",
+				 sc->sc_if.if_xname);
 		m_freem(m0);
+		return 0;
 	}
 
 	/* The header has been enqueued in clear;  undo the M_PREPEND() of the header. */
@@ -598,10 +645,14 @@ strip_send(sc, m0)
 	}
 #ifdef DIAGNOSTIC
 	 else
-		addlog("strip_send: not pkthdr, %d remains\n", m0->m_len); /*XXX*/
+		addlog("%s: strip_send: missing pkthdr, %d remains\n",
+		sc->sc_if.if_xname,  m0->m_len); /*XXX*/
 #endif
 
-	/* If M_PREPEND() had to prepend a new mbuf, it is now empty. Discard it. */
+	/*
+	 * If M_PREPEND() had to prepend a new mbuf, it is now empty.
+	 * Discard it.
+	 */
 	if (m0->m_len == 0) {
 		register struct mbuf *m;
 		MFREE(m0, m);
@@ -609,7 +660,7 @@ strip_send(sc, m0)
 	}
 
 	/* Byte-stuff and run-length encode the remainder of the packet. */
-	strip_esc(sc, m0);
+	strip_sendbody(sc, m0);
 
 	if (putc(STRIP_FRAME_END, &tp->t_outq)) {
 		/*
@@ -626,6 +677,14 @@ strip_send(sc, m0)
 		++sc->sc_if.if_obytes;
 		sc->sc_if.if_opackets++;
 	}
+
+	/*
+	 * If a radio  probe is due now, append it to this packet  rather
+	 * than waiting until  the watchdog routine next runs.
+	 */
+	if (time.tv_sec >= sc->sc_statetimo && sc->sc_state == ST_ALIVE)
+		strip_proberadio(sc, tp);
+
 	return(m0);
 }
 
@@ -682,7 +741,6 @@ stripoutput(ifp, m, dst, rt)
 	switch (dst->sa_family) {
 
             case AF_INET:
-		/* XXX untested */
 
                 if (rt != NULL && rt->rt_gwroute != NULL)
                         rt = rt->rt_gwroute;
@@ -767,7 +825,6 @@ stripoutput(ifp, m, dst, rt)
  	bcopy((caddr_t)dldst, (caddr_t)shp->starmode_addr,
 		sizeof (shp->starmode_addr));
 
-	TXPRINTF(("strip address is %16s\n", (char *)shp));
 
 	s = splimp();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
@@ -776,7 +833,7 @@ stripoutput(ifp, m, dst, rt)
 		/* if output's been stalled for too long, and restart */
 		timersub(&time, &sc->sc_if.if_lastchange, &tv);
 		if (tv.tv_sec > 0) {
- /*XXX*/  		DPRINTF(("stripoutput: stalled, resetting\n"));
+			DPRINTF(("stripoutput: stalled, resetting\n"));
 			sc->sc_otimeout++;
 			stripstart(sc->sc_ttyp);
 		}
@@ -786,17 +843,20 @@ stripoutput(ifp, m, dst, rt)
 		m_freem(m);
 		splx(s);
 		sc->sc_if.if_oerrors++;
- /*XXX*/  	TXPRINTF(("stripoutput: ifq full\n"));
 		return (ENOBUFS);
 	}
 	IF_ENQUEUE(ifq, m);
 	sc->sc_if.if_lastchange = time;
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
- /*XXX*/  		TXPRINTF(("stripoutput: enqueued pkt, restarting\n"));
 		stripstart(sc->sc_ttyp);
 	}
-/* XXX FIXME */
-	stripstart(sc->sc_ttyp);
+
+	/*
+	 * slip doesn't call its start routine unconditionally (again)
+	 * here, but doing so apepars to reduce latency.
+	 */
+	 stripstart(sc->sc_ttyp);
+
 	splx(s);
 	return (0);
 }
@@ -823,30 +883,34 @@ stripstart(tp)
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 	extern int cfreecount;
 #endif
-	for (;;) {
-/*XXX*/		TXPRINTF(("stripstart\n"));
-		/*
-		 * If there is more in the output queue, just send it now.
-		 * We are being called in lieu of ttstart and must do what
-		 * it would.
-		 */
-		if (tp->t_outq.c_cc != 0) {
+
+
+	/*
+	 * Ppp checks that strip is still the line discipline,
+	 * and if not, calls t_oproc here.  sl.c  does not.
+	 * PPP is newer...
+	 */
+
+	if (((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
+	    || sc == NULL || tp != (struct tty *) sc->sc_ttyp) {
+		if (tp->t_oproc != NULL)
 			(*tp->t_oproc)(tp);
-			if (tp->t_outq.c_cc > SLIP_HIWAT) {
-			  	TXPRINTF(("stripstart: outq past SLIP_HIWAT\n"));
-#if 0
-				/* XXX can't  just stop output on
-				 *  framed  packet-radio links!
-				 */
-				return;
-#endif
-			}
-		}
+		if (sc && (sc->sc_if.if_flags & IFF_DEBUG))
+			addlog("%s: late call to stripstart\n ",
+			       sc->sc_if.if_xname);
+	}
+
+	/* Start any pending output asap */
+	if (CCOUNT(&tp->t_outq) != 0) {
+		(*tp->t_oproc)(tp);
+	}
+
+	while (CCOUNT(&tp->t_outq) < SLIP_HIWAT) {
+
 		/*
 		 * This happens briefly when the line shuts down.
 		 */
 		if (sc == NULL) {
-		  	TXPRINTF(("(shutdown)\n"));
 			return;
 		}
 
@@ -857,8 +921,10 @@ stripstart(tp)
 		 * current serial output queue, with a packet full of
 		 * escapes this could be as bad as STRIP_MTU_ONWIRE
 		 * (for slip, SLMTU*2+2, for STRIP, header + 20 bytes).
+		 * Also allow  4 bytes in case we need to send a probe
+		 * to the radio.
 		 */
-		if (tp->t_outq.c_cn - tp->t_outq.c_cc < STRIP_MTU_ONWIRE)
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc < STRIP_MTU_ONWIRE + 4)
 			return;
 #endif /* __NetBSD__ */
 		/*
@@ -872,7 +938,6 @@ stripstart(tp)
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
 		if (m == NULL) {
-/*XXX*/			TXPRINTF(("(empty q)\n"));
 			return;
 		}
 		/*
@@ -938,11 +1003,43 @@ stripstart(tp)
 		}
 #endif /* !__NetBSD__ */
 
-
 		if (strip_send(sc, m) == NULL) {
-/*XXX*/	 	 	DPRINTF(("stripsend: failed to send pkt\n"));
+	 	 	DPRINTF(("stripsend: failed to send pkt\n")); /*XXX*/
 		}
 	}
+
+
+#if 0
+	/* schedule timeout to start output */
+	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
+		timeout(strip_timeout, (void *) sc, HZ);
+		sc->sc_flags |= SC_TIMEOUT;
+	}
+#endif
+
+#if 0
+	/*
+	 * This timeout is needed for operation on a pseudo-tty,
+	 * because the pty code doesn't call our start routine
+	 * after it has drained the t_outq.
+	 */
+	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
+		timeout(strip_timeout, (void *) sc, HZ);
+		sc->sc_flags |= SC_TIMEOUT;
+	}
+#endif
+
+    /*
+     * XXX ppp calls oproc at the end of its loop, but slip
+     * does it at the beginning.  We do both.
+     */
+
+    /*
+     * If there is stuff in the output queue, send it now.
+     * We are being called in lieu of ttstart and must do what it would.
+     */
+    if (tp->t_oproc != NULL)
+	(*tp->t_oproc)(tp);
 }
 
 
@@ -981,9 +1078,6 @@ strip_btom(sc, len)
 		sc->sc_ep = mtod(m, u_char *) + SLBUFSIZE;
 		m->m_data = (caddr_t)sc->sc_buf;
 		m->m_ext.ext_buf = (caddr_t)((long)sc->sc_buf &~ MCLOFSET);
-		TXPRINTF(("strip_btom: new cluster for sc_buf\n"));
-		XDPRINTF(("XXX 1: sc_buf %x end %x hardlim %x\n",
-			 sc->sc_buf, sc->sc_mp, sc->sc_ep));
 	} else
 		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
 
@@ -1028,141 +1122,149 @@ stripinput(c, tp)
 
 	++sc->sc_if.if_ibytes;
 
+	/*
+	 * Accumulate characters until we see a frame terminator (\r).
+	 */
 	switch (c) {
 
-#ifdef notanymore
-	case 0x0a:
-	/* (leading newline characters are ignored) */
+	case '\n':
+		/*
+		 * Error message strings from the modem are terminated with
+		 * \r\n. This driver interprets the  \r as a packet terminator.
+		 * If the first character in a packet is a \n, drop it.
+		 * (it can never be the first char of a vaild frame).
+		 */
 		if (sc->sc_mp - sc->sc_buf == 0)
-		  return;
-#endif
+			break;
 
+	/* Fall through to */
+
+	default:
+		if (sc->sc_mp < sc->sc_ep) {
+			*sc->sc_mp++ = c;
+		} else {
+			sc->sc_flags |= SC_ERROR;
+			goto error;
+		}
+		return;
 
 	case STRIP_FRAME_END:
-		len = sc->sc_mp - sc->sc_buf;
+		break;
+	}
+
+
+	/*
+	 * We only reach here if we see a CR delimiting a packet.
+	 */
+
+
+	len = sc->sc_mp - sc->sc_buf;
 
 #ifdef XDEBUG
-	 	if (len < 15 || sc->sc_flags & SC_ERROR)
-		  	printf("stripinput: end of pkt, len %d, err %d\n",
-				 len, sc->sc_flags & SC_ERROR); /*XXX*/
+ 	if (len < 15 || sc->sc_flags & SC_ERROR)
+	  	printf("stripinput: end of pkt, len %d, err %d\n",
+			 len, sc->sc_flags & SC_ERROR); /*XXX*/
 #endif
-		if(sc->sc_flags & SC_ERROR) {
-			sc->sc_flags &= ~SC_ERROR;
-			goto newpack;
-		}
-
-		/*
-		 * We have a frame.
-		 * Process an IP packet, ARP packet, AppleTalk packet,
-		 * AT command resposne, or Starmode error.
-		 */
-		len = strip_newpacket(sc, sc->sc_buf, sc->sc_mp);
-		if (len <= 1)
-			/* less than min length packet - ignore */
-			goto newpack;
-#if DEBUG > 1
-		ipdump("after destuff", sc->sc_buf, len);
-#endif /* DEBUG */		
-
-
-
-#if NBPFILTER > 0
-		if (sc->sc_bpf) {
-			/*
-			 * Save the compressed header, so we
-			 * can tack it on later.  Note that we
-			 * will end up copying garbage in some
-			 * cases but this is okay.  We remember
-			 * where the buffer started so we can
-			 * compute the new header length.
-			 */
-			bcopy(sc->sc_buf, chdr, CHDR_LEN);
-		}
-#endif
-
-		if ((c = (*sc->sc_buf & 0xf0)) != (IPVERSION << 4)) {
-			if (c & 0x80)
-				c = TYPE_COMPRESSED_TCP;
-			else if (c == TYPE_UNCOMPRESSED_TCP)
-				*sc->sc_buf &= 0x4f; /* XXX */
-			/*
-			 * We've got something that's not an IP packet.
-			 * If compression is enabled, try to decompress it.
-			 * Otherwise, if `auto-enable' compression is on and
-			 * it's a reasonable packet, decompress it and then
-			 * enable compression.  Otherwise, drop it.
-			 */
-			if (sc->sc_if.if_flags & SC_COMPRESS) {
-				len = sl_uncompress_tcp(&sc->sc_buf, len,
-							(u_int)c, &sc->sc_comp);
-				if (len <= 0)
-					goto error;
-			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
-			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-				len = sl_uncompress_tcp(&sc->sc_buf, len,
-							(u_int)c, &sc->sc_comp);
-				if (len <= 0)
-					goto error;
-				sc->sc_if.if_flags |= SC_COMPRESS;
-			} else
-				goto error;
-		}
-#if NBPFILTER > 0
-		if (sc->sc_bpf) {
-			/*
-			 * Put the SLIP pseudo-"link header" in place.
-			 * We couldn't do this any earlier since
-			 * decompression probably moved the buffer
-			 * pointer.  Then, invoke BPF.
-			 */
-			register u_char *hp = sc->sc_buf - SLIP_HDRLEN;
-
-			hp[SLX_DIR] = SLIPDIR_IN;
-			bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN);
-		}
-#endif
-		m = strip_btom(sc, len);
-		if (m == NULL)
-			goto error;
-
-		sc->sc_if.if_ipackets++;
-		sc->sc_if.if_lastchange = time;
-		s = splimp();
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
-			DPRINTF(("stripinput: ipintrq full\n"));
-			sc->sc_if.if_ierrors++;
-			sc->sc_if.if_iqdrops++;
-			m_freem(m);
-		} else {
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
-		}
-		splx(s);
+	if(sc->sc_flags & SC_ERROR) {
+		sc->sc_flags &= ~SC_ERROR;
+		addlog("%s: sc error flag set. terminating packet\n",
+			sc->sc_if.if_xname);
 		goto newpack;
 	}
 
-	if (sc->sc_mp < sc->sc_ep) {
-		*sc->sc_mp++ = c;
-		/*sc->sc_escape = 0;*/
-		return;
+	/*
+	 * We have a frame.
+	 * Process an IP packet, ARP packet, AppleTalk packet,
+	 * AT command resposne, or Starmode error.
+	 */
+	len = strip_newpacket(sc, sc->sc_buf, sc->sc_mp);
+	if (len <= 1)
+		/* less than min length packet - ignore */
+		goto newpack;
+
+
+#if NBPFILTER > 0
+	if (sc->sc_bpf) {
+		/*
+		 * Save the compressed header, so we
+		 * can tack it on later.  Note that we
+		 * will end up copying garbage in some
+		 * cases but this is okay.  We remember
+		 * where the buffer started so we can
+		 * compute the new header length.
+		 */
+		bcopy(sc->sc_buf, chdr, CHDR_LEN);
+	}
+#endif
+
+	if ((c = (*sc->sc_buf & 0xf0)) != (IPVERSION << 4)) {
+		if (c & 0x80)
+			c = TYPE_COMPRESSED_TCP;
+		else if (c == TYPE_UNCOMPRESSED_TCP)
+			*sc->sc_buf &= 0x4f; /* XXX */
+		/*
+		 * We've got something that's not an IP packet.
+		 * If compression is enabled, try to decompress it.
+		 * Otherwise, if `auto-enable' compression is on and
+		 * it's a reasonable packet, decompress it and then
+		 * enable compression.  Otherwise, drop it.
+		 */
+		if (sc->sc_if.if_flags & SC_COMPRESS) {
+			len = sl_uncompress_tcp(&sc->sc_buf, len,
+						(u_int)c, &sc->sc_comp);
+			if (len <= 0)
+				goto error;
+		} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
+		    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
+			len = sl_uncompress_tcp(&sc->sc_buf, len,
+						(u_int)c, &sc->sc_comp);
+			if (len <= 0)
+				goto error;
+			sc->sc_if.if_flags |= SC_COMPRESS;
+		} else
+			goto error;
 	}
 
-	/* can't put lower; would miss an extra frame */
-	sc->sc_flags |= SC_ERROR;
-	DPRINTF(("stripinput: overran buf\n"));
-	goto quiet_error;
+#if NBPFILTER > 0
+	if (sc->sc_bpf) {
+		/*
+		 * Put the SLIP pseudo-"link header" in place.
+		 * We couldn't do this any earlier since
+		 * decompression probably moved the buffer
+		 * pointer.  Then, invoke BPF.
+		 */
+		register u_char *hp = sc->sc_buf - SLIP_HDRLEN;
+
+		hp[SLX_DIR] = SLIPDIR_IN;
+		bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
+		bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN);
+	}
+#endif
+	m = strip_btom(sc, len);
+	if (m == NULL) {
+		goto error;
+	}
+
+	sc->sc_if.if_ipackets++;
+	sc->sc_if.if_lastchange = time;
+	s = splimp();
+	if (IF_QFULL(&ipintrq)) {
+		IF_DROP(&ipintrq);
+		sc->sc_if.if_ierrors++;
+		sc->sc_if.if_iqdrops++;
+		m_freem(m);
+	} else {
+		IF_ENQUEUE(&ipintrq, m);
+		schednetisr(NETISR_IP);
+	}
+	splx(s);
+	goto newpack;
 
 error:
-	RXPRINTF(("stripinput: error\n"));
-quiet_error:
 	sc->sc_if.if_ierrors++;
-	goto quiet_newpack;
 
 newpack:
-	/*DPRINTF(("stripinput: newpack\n"));*/	 /* XXX */
-quiet_newpack:
+
 	sc->sc_mp = sc->sc_buf = sc->sc_ep - SLMAX;
 }
 
@@ -1223,6 +1325,8 @@ stripioctl(ifp, cmd, data)
 	splx(s);
 	return (error);
 }
+
+
 /*
  * Strip subroutines
  */
@@ -1241,28 +1345,28 @@ strip_resetradio(sc, tp)
 		"\r\n\r\n\r\nat\r\n\r\n\r\nate0dt**starmode\r\n**\r\n";
 #else
 	static ttychar_t InitString[] =
-		"\r\rat\r\r\rate0q1dt**starmode\r*\r";
+		"\r\rat\r\r\rate0q1dt**starmode\r**\r";
 #endif
 	register int i;
 
-
-	DPRINTF(("strip: resetting radio\n"));
 	/*
 	 * XXX Perhaps flush  tty output queue?
 	 */
+
 	if ((i = b_to_q(InitString, sizeof(InitString) - 1, &tp->t_outq))) {
 		printf("resetradio: %d chars didn't fit in tty queue\n", i);
 		return;
 	}
 	sc->sc_if.if_obytes += sizeof(InitString) - 1;
 
-#ifdef linux /*XXX*/
-	/* reset the watchdog counter */
-	sc->watchdog_doprobe = jiffies + 10 * HZ;
-	sc->watchdog_doreset = jiffies + 1 * HZ;
-#endif
-
+	/*
+	 * Assume the radio is still dead, so we can detect repeated
+	 * resets (perhaps the radio is disconnected, powered off, or
+	 * is so badlyhung it needs  powercycling.
+	 */
+	sc->sc_state = ST_DEAD;
 	sc->sc_if.if_lastchange = time;
+	sc->sc_statetimo = time.tv_sec + STRIP_RESET_INTERVAL;
 
 	/*
 	 * XXX Does calling the tty output routine now help resets?
@@ -1270,34 +1374,175 @@ strip_resetradio(sc, tp)
 	(*sc->sc_ttyp->t_oproc)(tp);
 }
 
+
+/*
+ * Send an invalid starmode packet to the radio, to induce an error message
+ * indicating the radio is in starmode.
+ * Update the state machine to indicate a response is expected.
+ * Either the radio answers, which will be caught by the parser,
+ * or the watchdog will start resetting.
+ *
+ * NOTE: drops chars directly on the tty output queue.
+ * should be caled at spl >= spltty.
+ */
+void
+strip_proberadio(sc, tp)
+	register struct st_softc *sc;
+	register struct tty *tp;
+{
+
+	int overflow;
+	const char *strip_probestr = "**";
+
+	if (sc->sc_if.if_flags & IFF_DEBUG)
+		addlog("%s: attempting to probe radio\n", sc->sc_if.if_xname);
+
+	overflow = b_to_q((ttychar_t *)strip_probestr, 2, &tp->t_outq);
+	if (overflow == 0) {
+		if (sc->sc_if.if_flags & IFF_DEBUG)
+			addlog("%s:: sent probe  to radio\n",
+			       sc->sc_if.if_xname);
+		/* Go to probe-sent state, set timeout accordingly. */
+		sc->sc_state = ST_PROBE_SENT;
+		sc->sc_statetimo = time.tv_sec + ST_PROBERESPONSE_INTERVAL;
+	} else {
+		addlog("%s: incomplete probe, tty queue %d bytes overfull\n",
+			sc->sc_if.if_xname, overflow);
+	}
+}
+
+
+#ifdef DEBUG
+static char *strip_statenames[] = {
+	"Alive",
+	"Probe sent, awaiting answer",
+	"Probe not answered, resetting"
+};
+#endif
+
+
+/*
+ * Timeout routine -- try to start more output.
+ * Will be needed to make strip work on ptys.
+ */
+static void
+strip_timeout(x)
+    void *x;
+{
+    struct st_softc *sc = (struct st_softc *) x;
+    struct tty *tp =  sc->sc_ttyp;
+    int s;
+
+    s = spltty();
+    sc->sc_flags &= ~SC_TIMEOUT;
+    stripstart(tp);
+    splx(s);
+}
+
+	
 /*
  * Strip watchdog routine.
- * The radio hardware is balky and sometimes crashes doesn't reste properly,
- * or crashes and reboots into Hayes-emulation mode.
- * If we don't hear a starmode-only response from the radio within a
- *  given time, reset it.
+ * The radio hardware is balky. When sent long packets or bursts of small
+ * packets, the radios crash and reboots into Hayes-emulation mode.
+ * The transmit-side machinery, the error parser, and strip_watchdog()
+ * implement a simple finite state machine.
+ *
+ * We attempt to send a probe to the radio every ST_PROBE seconds. There
+ * is no direct way to tell if the radio is in starmode, so we send it a
+ * malformed starmode packet -- a frame with no destination address --
+ * and expect to an "name missing" error response from the radio within
+ * 1 second. If we hear such a response, we assume the radio is alive
+ * for the next ST_PROBE seconds.
+ * If we don't hear a starmode-error response from  the radio, we reset it.
+ *
+ * Probes, and parsing of error responses,  are normally done inside the send
+ * and receive side respectively. This watchdog routine examines the
+ * state-machine variables. If there are no packets to send to the radio
+ * during an entire probe interval, strip_output  will not be called,
+ * so we send a probe on its behalf.
  */
 void
 strip_watchdog(ifp)
 	struct ifnet *ifp;
 {
 	register struct st_softc *sc = ifp->if_softc;
+	struct tty *tp =  sc->sc_ttyp;
 
+#ifdef DEBUG
+	if (ifp->if_flags & IFF_DEBUG)
+		addlog("\n%s: in watchdog, state %s timeout %ld\n",
+		       ifp->if_xname,
+ 		       ((unsigned) sc->sc_state < 3) ?
+		       strip_statenames[sc->sc_state] : "<<illegal state>>",
+		       sc->sc_statetimo - time.tv_sec);
+#endif
 
-	if (0) {
-		addlog("%s: watchdog\n", ifp->if_xname);
-		strip_resetradio(sc, sc->sc_ttyp);
-		++ifp->if_oerrors;
+	/*
+	 * If time in this state hasn't yet expired, return.
+	 */
+	if ((ifp->if_flags & IFF_UP) ==  0 || sc->sc_statetimo > time.tv_sec) {
+		goto done;
 	}
 
-	sc->sc_if.if_timer = 15; /* seconds */ 
+	/*
+	 * The time in the current state has expired.
+	 * Take appropriate action and advance FSA to the next state.
+	 */
+	switch (sc->sc_state) {
+	      case ST_ALIVE:
+		/*
+		 * A probe is due but we haven't piggybacked one on a packet.
+		 * Send a probe now.
+		 */
+		strip_proberadio(sc, sc->sc_ttyp);
+		(*tp->t_oproc)(tp);
+		break;
+
+	      case ST_PROBE_SENT:
+		/*
+		 * Probe sent but no response within timeout. Reset.
+		 */
+		addlog("%s: no answer to probe, resetting radio\n",
+		       ifp->if_xname);
+		strip_resetradio(sc, sc->sc_ttyp);
+		ifp->if_oerrors++;
+		break;
+
+	      case ST_DEAD:
+		/*
+		 * The radio has been sent a reset but didn't respond.
+		 * XXX warn user to remove AC adaptor and battery,
+		 * wait  5 secs, and replace.
+		 */
+		addlog("%s: radio reset but not responding, Trying again\n",
+		       ifp->if_xname);
+		strip_resetradio(sc, sc->sc_ttyp);
+		ifp->if_oerrors++;
+		break;
+
+	      default:
+		/* Cannot happen. To be safe, do  a reset. */
+		addlog("%s: %s %d, resetting\n",
+		       sc->sc_if.if_xname,
+		       "radio-reset finite-state machine in invalid state",
+		       sc->sc_state);
+		strip_resetradio(sc, sc->sc_ttyp);
+		sc->sc_state = ST_DEAD;
+		break;
+	}
+
+      done:
+	ifp->if_timer = STRIP_WATCHDOG_INTERVAL;
 	return;
 }
 
 
 /*
- * The following is taken, with permission of the author, from
- * the LInux strip  driver. 
+ * The following bytestuffing and run-length encoding/decoding
+ * fucntions are  taken, with permission from Stuart Cheshire,
+ * from  the MosquitonNet strip  driver for Linux.
+ * XXX Linux style left intact, to ease folding in updates from
+ * the Mosquitonet group.
  */
 
 
@@ -1328,11 +1573,11 @@ strip_newpacket(sc, ptr, end)
 	if (*ptr != '*') {
 		/* Catch other error messages */
 		if (ptr[0] == 'E' && ptr[1] == 'R' && ptr[2] == 'R' && ptr[3] == '_')
-			RecvErr_Message(sc, NULL, ptr);
+			RecvErr_Message(sc, NULL, ptr+4);
 			 /* XXX what should the message above be? */
 		else {
 			RecvErr("No initial *", sc);
-			addlog("(len = %d\n", len);
+			addlog("(len = %d)\n", len);
 		     }
 		return 0;
 	}
@@ -1348,8 +1593,6 @@ strip_newpacket(sc, ptr, end)
 	/* Check for end of address marker, and skip over it */
 	if (ptr == end) {
 		RecvErr("No second *", sc);
-		XDPRINTF(("XXX 3: sc_buf %x ptr %x end %x mp %x hardlim %x\n",
-			 sc->sc_buf, ptr, end, sc->sc_mp, sc->sc_ep));
 		return 0;
 	}
 	name_end = ptr++;
@@ -1359,7 +1602,7 @@ strip_newpacket(sc, ptr, end)
 		if (ptr[0] == 'E' && ptr[1] == 'R' && ptr[2] == 'R' &&
 		    ptr[3] == '_') { 
 			*name_end = 0;
-			RecvErr_Message(sc, name, ptr);
+			RecvErr_Message(sc, name, ptr+4);
 		 }
 		else RecvErr("No SRIP key", sc);
 		return 0;
@@ -1368,12 +1611,16 @@ strip_newpacket(sc, ptr, end)
 
 	/* Decode start of the IP packet header */
 	ptr = UnStuffData(ptr, end, sc->sc_rxbuf, 4);
-	if (!ptr) {
+	if (ptr == 0) {
 		RecvErr("Runt packet (hdr)", sc);
 		return 0;
 	}
 
-	/* XXX is this the IP header length, or what? */
+	/*
+	 * The STRIP bytestuff/RLL encoding has no explicit length
+	 * of the decoded packet.  Decode start of IP header, get the
+	 * IP header length and decode that many bytes in total.
+	 */
 	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
@@ -1385,7 +1632,7 @@ strip_newpacket(sc, ptr, end)
 
 	/* Decode remainder of the IP packer */
 	ptr = UnStuffData(ptr, end, sc->sc_rxbuf+4, packetlen-4);
-	if (!ptr) {
+	if (ptr == 0) {
 		RecvErr("Short packet", sc);
 		return 0;
 	}
@@ -1546,35 +1793,36 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 /*
  * UnStuffData decodes the data at "src", up to (but not including)
  * "end".  It writes the decoded data into the buffer pointed to by
- * "dest", up to a  maximum of "dest_length", and returns the new
+ * "dst", up to a  maximum of "dst_length", and returns the new
  * value of "src" so that a follow-on call can read more data,
  * continuing from where the first left off. 
  *
  * There are three types of results:
- * 1. The source data runs out before extracting "dest_length" bytes:
+ * 1. The source data runs out before extracting "dst_length" bytes:
  *    UnStuffData returns NULL to indicate failure.
- * 2. The source data produces exactly "dest_length" bytes:
+ * 2. The source data produces exactly "dst_length" bytes:
  *    UnStuffData returns new_src = end to indicate that all bytes
  *    were consumed. 
- * 3. "dest_length" bytes are extracted, with more
+ * 3. "dst_length" bytes are extracted, with more
  *     remaining. UnStuffData returns new_src < end to indicate that
  *     there are more bytes to be read.
  *
- * Note: The decoding may be destructive, in that it may alter the
+ * Note: The decoding may be dstructive, in that it may alter the
  * source data in the process of decoding it (this is necessary to
  * allow a follow-on  call to resume correctly).
  */
 
 static u_char*
-UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
+UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 {
-	u_char *dest_end = dest + dest_length;
+	u_char *dst_end = dst + dst_length;
 
 	/* Sanity check */
-	if (!src || !end || !dest || !dest_length)
+	if (!src || !end || !dst || !dst_length)
 		return(NULL);
 
-	while (src < end && dest < dest_end) {
+	while (src < end && dst < dst_end)
+	{
 		int count = (*src ^ Stuff_Magic) & Stuff_CountMask;
 		switch ((*src ^ Stuff_Magic) & Stuff_CodeMask)
 			{
@@ -1582,11 +1830,14 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 				if (src+1+count >= end)
 					return(NULL);
 				do
-					*dest++ = *++src ^ Stuff_Magic;
-				while(--count >= 0 && dest < dest_end);
+				{
+					*dst++ = *++src ^ Stuff_Magic;
+				}
+				while(--count >= 0 && dst < dst_end);
 				if (count < 0)
 					src += 1;
-				else if (count == 0)
+				else
+				 if (count == 0)
 					*src = Stuff_Same ^ Stuff_Magic;
 				else
 					*src = (Stuff_Diff + count) ^ Stuff_Magic;
@@ -1595,8 +1846,10 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 				if (src+1+count >= end)
 					return(NULL);
 				do
-					*dest++ = *++src ^ Stuff_Magic;
-				while(--count >= 0 && dest < dest_end);
+				{
+					*dst++ = *++src ^ Stuff_Magic;
+				}
+				while(--count >= 0 && dst < dst_end);
 				if (count < 0)
 					*src = Stuff_Zero ^ Stuff_Magic;
 				else
@@ -1606,8 +1859,10 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 				if (src+1 >= end)
 					return(NULL);
 				do
-					*dest++ = src[1] ^ Stuff_Magic;
-				while(--count >= 0 && dest < dest_end);
+				{
+					*dst++ = src[1] ^ Stuff_Magic;
+				}
+				while(--count >= 0 && dst < dst_end);
 				if (count < 0)
 					src += 2;
 				else
@@ -1615,8 +1870,10 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 				break;
 			case Stuff_Zero:
 				do
-					*dest++ = 0;
-				while(--count >= 0 && dest < dest_end);
+				{
+					*dst++ = 0;
+				}
+				while(--count >= 0 && dst < dst_end);
 				if (count < 0)
 					src += 1;
 				else
@@ -1625,7 +1882,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 			}
 	}
 
-	if (dest < dest_end)
+	if (dst < dst_end)
 		return(NULL);
 	else
 		return(src);
@@ -1662,12 +1919,15 @@ RecvErr(msg, sc)
 
 	if (ptr == end) *p++ = '\"';
 	*p++ = 0;
-	addlog("%13s : %s\n", msg, pkt_text);
+	addlog("%s: %13s : %s\n", sc->sc_if.if_xname, msg, pkt_text);
 
 	sc->sc_if.if_ierrors++;
 }
 
 
+/*
+ * Parse an error message from the radio.
+ */
 static void
 RecvErr_Message(strip_info, sendername, msg)
 	struct st_softc *strip_info;
@@ -1690,13 +1950,13 @@ RecvErr_Message(strip_info, sendername, msg)
 
 	if (!strncmp(msg, ERR_001, sizeof(ERR_001)-1))
 	{
-		RecvErr("Error Msg:", strip_info);
+		RecvErr("radio error message:", strip_info);
 		addlog("%s: Radio %s is not in StarMode\n",
 			if_name, sendername);
 	}
 	else if (!strncmp(msg, ERR_002, sizeof(ERR_002)-1))
 	{
-		RecvErr("Error Msg:", strip_info);
+		RecvErr("radio error message:", strip_info);
 #ifdef notyet		/*Kernel doesn't have scanf!*/
 		int handle;
 		u_char newname[64];
@@ -1707,94 +1967,49 @@ RecvErr_Message(strip_info, sendername, msg)
 	}
 	else if (!strncmp(msg, ERR_003, sizeof(ERR_003)-1))
 	{
-		RecvErr("Error Msg:", strip_info);
+		RecvErr("radio error message:", strip_info);
 		addlog("%s: Destination radio name is unknown\n", if_name);
 	}
-	else if (!strncmp(msg, ERR_004, sizeof(ERR_004)-1))
-	{
-#ifdef notyet /* FIXME jrs */ 
-        	strip_info->watchdog_doreset = jiffies + LONG_TIME;
-		if (!strip_info->working)
-		{
-			strip_info->working = 1;
-			addlog("%s: Radio now in starmode\n", if_name);
+	else if (!strncmp(msg, ERR_004, sizeof(ERR_004)-1)) {
+		/*
+		 * The radio reports it got a badly-framed starmode packet
+		 * from us; so it must me in starmode.
+		 */
+		if (strip_info->sc_if.if_flags & IFF_DEBUG)
+			addlog("%s: radio responded to probe\n", if_name);
+		if (strip_info->sc_state == ST_DEAD) {
+			/* A successful reset... */
+			addlog("%s: Radio back in starmode\n", if_name);
 		}
-#endif
+		CLEAR_RESET_TIMER(strip_info);
 	}
 	else if (!strncmp(msg, ERR_005, sizeof(ERR_005)-1))
-        	RecvErr("Error Msg:", strip_info);
+        	RecvErr("radio error message:", strip_info);
 	else if (!strncmp(msg, ERR_006, sizeof(ERR_006)-1))
-        	RecvErr("Error Msg:", strip_info);
+        	RecvErr("radio error message:", strip_info);
 	else if (!strncmp(msg, ERR_007, sizeof(ERR_007)-1))
 	 {
 		/*
 		 *	Note: This error knocks the radio back into
 		 *	command mode.
 		 */
-		RecvErr("Error Msg:", strip_info);
+		RecvErr("radio error message:", strip_info);
 		printf("%s: Error! Packet size too big for radio.",
 			if_name);
-#ifdef FIXME /* FIXME jrs */ 
-		strip_info->watchdog_doreset = jiffies;		/* Do reset ASAP */
-#endif
+		FORCE_RESET(strip_info);
 	}
 	else if (!strncmp(msg, ERR_008, sizeof(ERR_008)-1))
 	{
-		RecvErr("Error Msg:", strip_info);
+		RecvErr("radio error message:", strip_info);
 		printf("%s: Radio name contains illegal character\n",
 			if_name);
 	}
 	else if (!strncmp(msg, ERR_009, sizeof(ERR_009)-1))
-        	RecvErr("Error Msg:", strip_info);
-	else
-		RecvErr("Error Msg:", strip_info);
-}
-
-#ifdef DEBUG
-void
-stripdumpm(msg, m, len)
-     	const char *msg;
-	struct mbuf *m;
-{
-  stripdump(msg, mtod(m, u_char*), len);
-  /*XXX*/
-}
-
-void
-stripdump(msg, p, len)
-	const char *msg;
-	u_char *p;
-	int len;
-{
-	register int i;
-
-
-	printf(msg);
-	for (i = 0; i < STRIP_HDRLEN; i++)
-		printf("%c", p[i]);
-	printf("\n");
-
-	p += STRIP_HDRLEN;
-	for (i = 0; i < 32; i++) {
-	  	printf("%02x ", p[i]);
+        	RecvErr("radio error message:", strip_info);
+	else {
+		addlog("failed to parse ]%3s[\n", msg);
+		RecvErr("unparsed radio error message:", strip_info);
 	}
-		printf("\n");
 }
 
-void
-ipdump(msg, p, len)
-	const char *msg;
-	u_char *p;
-	int len;
-{
-	register int i;
-
-	printf(msg);
-	for (i = 0; i < 32; i++) {
-	  	printf("%02x ", p[i]);
-	}
-		printf("\n");
-}
-
-#endif /* DEBUG */
 #endif /* NSTRIP > 0 */
