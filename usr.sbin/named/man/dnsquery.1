@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dnsquery.1,v 1.3 1997/03/12 10:42:12 downsj Exp $
+.\"	$OpenBSD: dnsquery.1,v 1.4 1997/07/03 09:26:13 deraadt Exp $
 .TH DNSQUERY 1 "10 March 1990"
 .UC 6
 .SH NAME
@@ -14,7 +14,7 @@ dnsquery \- query domain name servers using resolver
 [-r 
 .I retry] 
 [-p 
-.I retry period] 
+.I retry_period] 
 [-d] [-s] [-v] host
 .SH DESCRIPTION
 The
@@ -112,8 +112,6 @@ not responding.  (default:  4)
 .TP 1i
 .B \-p
 Period to wait before timing out.  (default:  RES_TIMEOUT)
-.IR options
-field.  (default:  any answer)
 .TP 1i
 .B \-d
 Turn on debugging.  This sets the RES_DEBUG bit of the resolver's
