@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.22 2001/08/17 21:52:16 deraadt Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.23 2001/08/19 15:11:26 miod Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -1280,6 +1280,7 @@ struct cb_poll_str {
 
 static struct cb_poll_str cb_poll[10];
 static int cb_poll_n = 0;
+static struct timeout cb_poll_timeout;
 
 void cb_pcmcia_poll __P((void *arg));
 
@@ -1293,7 +1294,8 @@ cb_pcmcia_poll(arg)
 	int s;
 	u_int32_t spsr;		       /* socket present-state reg */
 
-	timeout(cb_pcmcia_poll, arg, hz / 10);
+	timeout_set(&cb_poll_timeout, cb_pcmcia_poll, arg);
+	timeout_add(&cb_poll_timeout, hz / 10);
 	switch (poll->level) {
 	case IPL_NET:
 		s = splnet();
@@ -2677,6 +2679,7 @@ struct pccbb_poll_str {
 
 static struct pccbb_poll_str pccbb_poll[10];
 static int pccbb_poll_n = 0;
+static struct timeout pccbb_poll_timeout;
 
 void pccbb_pcmcia_poll __P((void *arg));
 
@@ -2690,7 +2693,8 @@ pccbb_pcmcia_poll(arg)
 	int s;
 	u_int32_t spsr;		       /* socket present-state reg */
 
-	timeout(pccbb_pcmcia_poll, arg, hz * 2);
+	timeout_set(&pccbb_poll_timeout, pccbb_pcmcia_poll, arg);
+	timeout_add(&pccbb_poll_timeout, hz * 2);
 	switch (poll->level) {
 	case IPL_NET:
 		s = splnet();
