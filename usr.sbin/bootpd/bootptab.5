@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.1.1.1 1995/10/18 08:47:26 deraadt Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.2 1996/06/23 10:22:25 deraadt Exp $
 .\"
 .TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
 .UC 6
@@ -19,17 +19,21 @@ in which two-character case-sensitive tag symbols are used to
 represent host parameters.  These parameter declarations are separated by
 colons (:), with a general format of:
 .PP
-.I "	hostname:tg=value. . . :tg=value. . . :tg=value. . . ."
+.I "	hostname:tg=value:tg=value:tg=value:"
 .PP
 where
 .I hostname
 is the actual name of a bootp client (or a "dummy entry"), and
 .I tg
-is a two-character tag symbol.  Dummy entries have an invalid hostname
+is a two-character tag symbol.  Replies are returned to clients
+only if an entry with the client's Ethernet or IP address exists
+in the
+.I booptab
+file.  Dummy entries have an invalid hostname
 (one with a "." as the first character) and are used to provide
 default values used by other entries via the
 .B tc=.dummy-entry
-mechanism.  Most tags must be followed by an equals-sign
+mechanism.  Most tags must be followed by an equal sign
 and a value as above.  Some may also appear in a boolean form with no
 value (i.e.
 .RI : tg :).
@@ -196,18 +200,27 @@ and
 symbols determine how the server fills in the bootfile field of the bootp
 reply packet.
 .PP
-If the client provides a file name it is left as is.
-Otherwise, if the
+If the
 .B bf
-option is specified its value is copied into the reply packet.
+option is specified, its value is copied into the reply packet.
+Otherwise, the name supplied in the client request is used.
 If the
 .B hd
-option is specified as well, its value is prepended to the
-boot file copied into the reply packet.
-The existence of the boot file is checked only if the
+option is specified, its value is prepended to the
+boot file in the reply packet, otherwise the path
+supplied in the client request is used.
+The existence of the boot file is NOT verified by
+.I bootpd
+because the boot file may be on some other machine.
+.PP
+The
+.B bs
+option specified the size of the boot file.
+It can be written as
 .BR bs =auto
-option is used (to determine the boot file size).
-A reply may be sent whether or not the boot file exists.
+which causes
+.I bootpd
+to determine the boot file size automatically.
 .PP
 Some newer versions of
 .I tftpd

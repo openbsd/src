@@ -45,3 +45,49 @@ not a fully specified path.
 	:td=/tftpboot:	(or)
 	:hd=/usr/boot:	(for example)
 
+My HP Laserjet 4 gets an error during boot: "80 service (xxxx)"
+Here is an explanation of the problem from a fellow at HP:
+
+	Date: Mon, 16 Oct 95 10:16:29 MDT
+	From: James Clough <clough@hpbs3651.boi.hp.com>
+	Subject: Re: problems bootp-2.4.3 and JetDirect
+	To: bootp@andrew.cmu.edu
+	
+	> I installed bootp-2.4.3 with the DHCP-patches.
+	> All went oke, except the JetDirect cards, build in in
+	> several HP Laserjet 4's. They stopped while initialising
+	> with error message '80 service (01E0)' or
+	> '... (0009)'. The DUTH HP service support did not know
+	> what the error-message was.
+	
+	This problem has surfaced here more than once--each time with a
+	different hypothesized cause and proposed fix.
+	
+	The real cause of this problem is the byte alignment in the vendor
+	extensions portion of the bootp packet.  Here are a few workarounds
+	that I've either used myself or heard tell of others using with
+	success:
+	
+		1.  Change the name of the printer.  If the name in your
+			bootptab entry has an even number of characters,
+			change it to a name with an odd number of
+			characters.  If it's odd, make it even.
+	
+		2.  Remove the logserver (lg) capability from the
+			bootptab entries for the affected printers.
+	
+		3.  Use the vendor sort patches posted here in June by
+			Ron Stanonik.  They make bootpd sort the vendor
+			extensions into RFC numeric order.  It just
+			so happens that this causes them to be aligned
+			correctly.
+	
+	Really, anything that changes the byte alignment in the vendor
+	tags section of the packet can work, including removing null
+	terminators from string capabilities.
+	
+	James Clough
+	--
+	clough@boi.hp.com
+
+(Perhaps we need a "pad for alignment" option in bootpd. -gwr)

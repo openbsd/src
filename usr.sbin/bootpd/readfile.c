@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: readfile.c,v 1.1.1.1 1995/10/18 08:47:27 deraadt Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.2 1996/06/23 10:22:26 deraadt Exp $";
 #endif
 
 
@@ -446,7 +446,7 @@ readtab(force)
 			if (hash_Insert(hwhashtable, hashcode, hwinscmp, hp, hp) < 0) {
 				report(LOG_NOTICE, "duplicate %s address: %s",
 					   netname(hp->htype),
-					   haddrtoa(hp->haddr, hp->htype));
+					   haddrtoa(hp->haddr, haddrlength(hp->htype)));
 				free_host((hash_datum *) hp);
 				continue;
 			}
@@ -796,7 +796,6 @@ eval_symbol(symbol, hp)
 {
 	char tmpstr[MAXSTRINGLEN];
 	byte *tmphaddr;
-	struct shared_string *ss;
 	struct symbolmap *symbolptr;
 	u_int32 value;
 	int32 timeoff;
@@ -1271,7 +1270,7 @@ process_generic(src, dest, tagvalue)
 	if ((*src)[0] == '"') {		/* ASCII data */
 		newlength = sizeof(tmpbuf) - 2;	/* Set maximum allowed length */
 		(void) get_string(src, (char *) str, &newlength);
-		newlength++;			/* null terminator */
+		/* Do NOT include the terminating null. */
 	} else {					/* Numeric data */
 		newlength = 0;
 		while (newlength < sizeof(tmpbuf) - 2) {
@@ -1807,7 +1806,7 @@ prs_haddr(src, htype)
 
 	hap = haddr;
 	while (hap < haddr + hal) {
-		if (*p == '.')
+		if ((*p == '.') || (*p == ':'))
 			p++;
 		if (interp_byte(&p, hap++) < 0) {
 			return NULL;
