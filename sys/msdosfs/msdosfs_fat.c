@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.11 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.12 2003/10/22 19:04:23 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -232,6 +232,11 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			bp_bn = bn;
 		}
 		prevcn = cn;
+		if (bo >= bsize) {
+			if (bp)
+				brelse(bp);
+			return (EIO);
+		}
 		if (FAT32(pmp))
 			cn = getulong(&bp->b_data[bo]);
 		else
