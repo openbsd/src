@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.29 2004/06/22 21:02:19 avsm Exp $	*/
+/*	$OpenBSD: entry.c,v 1.30 2005/01/30 20:44:50 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.29 2004/06/22 21:02:19 avsm Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.30 2005/01/30 20:44:50 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -71,7 +71,8 @@ free_entry(entry *e) {
  * otherwise return a pointer to a new entry.
  */
 entry *
-load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw, char **envp) {
+load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
+    char **envp) {
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
 	 * NULL if for any reason the entry can't be read and parsed.
