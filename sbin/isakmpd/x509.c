@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.37 2001/01/26 12:12:52 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.38 2001/01/26 16:40:52 niklas Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -856,73 +856,6 @@ x509_from_asn (u_char *asn, u_int len)
 }
 
 /*
- * Check that a certificate has a subjectAltName and that it matches our ID.
- */
-int
-x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
-{
-  u_int8_t *altname;
-  u_int32_t altlen;
-  int type, idtype, ret;
-
-  type = x509_cert_subjectaltname (scert, &altname, &altlen);
-  if (!type)
-    {
-      log_print ("x509_check_subjectaltname: can't access subjectAltName");
-      return 0;
-    }
-
-  /* 
-   * Now that we have the X509 certicate in native form, get the
-   * subjectAltName extension and verify that it matches our ID.
-   */
-
-  /* XXX Get type of ID.  */
-  idtype = id[0];
-  id += ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
-  id_len -= ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
-
-  ret = 0;
-  switch (idtype)
-    {
-    case IPSEC_ID_IPV4_ADDR:
-      if (type == X509v3_IP_ADDR) 
-	ret = 1;
-      break;
-    case IPSEC_ID_FQDN:
-      if (type == X509v3_DNS_NAME) 
-	ret = 1;
-      break;
-    case IPSEC_ID_USER_FQDN:
-      if (type == X509v3_RFC_NAME) 
-	ret = 1;
-      break;
-    default:
-      ret = 0;
-      break;
-    }
-
-  if (!ret)
-    {
-      LOG_DBG ((LOG_CRYPTO, 50,
-		"x509_check_subjectaltname: "
-		"our ID type (%d) does not match X509 cert ID type (%d)",
-		idtype, type));
-      return 0;
-    }
-
-  if (altlen != id_len || memcmp (altname, id, id_len) != 0)
-    {
-      LOG_DBG ((LOG_CRYPTO, 50,
-		"x509_check_subjectaltname: "
-		"our ID does not match X509 cert ID"));
-      return 0;
-    }
-
-  return 1;
-}
-
-/*
  * Obtain a certificate from an acceptable CA.
  * XXX We don't check if the certificate we find is from an accepted CA.
  */
@@ -948,13 +881,6 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   scert = x509_hash_find (id, id_len);
   if (!scert)
     return 0;
-
-  if (!x509_check_subjectaltname (id, id_len, scert))
-    {
-      log_print ("x509_cert_obtain: subjectAltName does not match id");
-      free (*cert);
-      return 0;
-    }
 
   *certlen = LC (i2d_X509, (scert, NULL));
   p = *cert = malloc (*certlen);
@@ -990,8 +916,7 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
   if (!subjectaltname || !subjectaltname->value
       || !subjectaltname->value->data || subjectaltname->value->length < 4)
     {
-      log_print ("x509_check_subjectaltname: "
-		 "invalid subjectaltname extension");
+      log_print ("x509_cert_subjectaltname: invalid subjectaltname extension");
       return 0;
     }
 
@@ -1003,7 +928,7 @@ x509_cert_subjectaltname (X509 *scert, u_int8_t **altname, u_int32_t *len)
 
   if (sanlen + 4 != subjectaltname->value->length) 
     {
-      log_print ("x509_check_subjectaltname: subjectaltname invalid length");
+      log_print ("x509_cert_subjectaltname: subjectaltname invalid length");
       return 0;
     }
   
@@ -1030,7 +955,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
   *id_len = 0;
 
   /*
-   * XXX I *think* the subjectAltName can be a collection, but for now
+   * XXX There can be a collection of subjectAltNames, but for now
    * I only return the subjectName and a single subjectAltName.
    */
   *cnt = 2;

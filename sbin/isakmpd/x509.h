@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.h,v 1.8 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$OpenBSD: x509.h,v 1.9 2001/01/26 16:40:52 niklas Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ void x509_free_aca (void *);
 
 int x509_cert_insert (int, void *);
 int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
-int x509_check_subjectaltname (u_char *, u_int, X509 *);
 X509 *x509_from_asn (u_char *, u_int);
 int x509_generate_kn(X509 *);
 int x509_read_from_dir (X509_STORE *, char *, int);
