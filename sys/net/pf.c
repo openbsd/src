@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.212 2002/05/31 20:58:25 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.213 2002/06/01 04:06:47 hugh Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1089,6 +1089,10 @@ pf_print_flags(u_int8_t f)
 		printf("A");
 	if (f & TH_URG)
 		printf("U");
+	if (f & TH_ECE)
+		printf("E");
+	if (f & TH_CWR)
+		printf("W");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.70 2002/05/24 13:48:44 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.71 2002/06/01 04:06:47 hugh Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -812,7 +812,7 @@ flag		: STRING			{
 		;
 
 flags		: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
-		| FLAGS flag			{ $$.b1 = $2.b1; $$.b2 = 63; }
+		| FLAGS flag			{ $$.b1 = $2.b1; $$.b2 = PF_TH_ALL; }
 		| FLAGS flag "/" flag		{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
 		| FLAGS "/" flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;

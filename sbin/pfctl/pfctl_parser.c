@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.74 2002/05/27 10:33:32 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.75 2002/06/01 04:06:47 hugh Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -64,7 +64,7 @@ void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
 void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
 void		 print_flags (u_int8_t);
 
-char *tcpflags = "FSRPAU";
+char *tcpflags = "FSRPAUEW";
 
 struct icmptypeent icmp_type[] = {
 	{ "echoreq",	ICMP_ECHO },
@@ -420,7 +420,7 @@ print_flags(u_int8_t f)
 {
 	int i;
 
-	for (i = 0; i < 6; ++i)
+	for (i = 0; tcpflags[i]; ++i)
 		if (f & (1 << i))
 			printf("%c", tcpflags[i]);
 }
@@ -882,7 +882,7 @@ parse_flags(char *s)
 		else
 			f |= 1 << (q - tcpflags);
 	}
-	return (f ? f : 63);
+	return (f ? f : PF_TH_ALL);
 }
 
 struct hostent *
