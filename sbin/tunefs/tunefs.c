@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.22 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.23 2003/07/10 00:00:58 david Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
 static const char rcsid[] =
-	"$OpenBSD: tunefs.c,v 1.22 2003/06/02 20:06:17 millert Exp $";
+	"$OpenBSD: tunefs.c,v 1.23 2003/07/10 00:00:58 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <paths.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /* the optimization warning string template */

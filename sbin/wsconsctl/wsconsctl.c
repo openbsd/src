@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.12 2002/12/11 16:58:51 deraadt Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.13 2003/07/10 00:00:58 david Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "wsconsctl.h"
 

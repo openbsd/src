@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.8 2002/12/17 07:10:25 mickey Exp $	*/
+/*	$OpenBSD: display.c,v 1.9 2003/07/10 00:00:58 david Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -42,6 +42,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <errno.h>
 #include <err.h>
+#include <string.h>
 #include "wsconsctl.h"
 
 int dpytype;
