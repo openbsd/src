@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.3 1998/07/13 13:53:16 csapuntz Exp $ */
+/*      $OpenBSD: sv.c,v 1.4 1998/10/05 20:47:45 niklas Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -422,7 +422,8 @@ sv_dumpregs(sc)
 
   { int idx;
   for (idx = 0; idx < 0x50; idx += 4) {
-    printf ("%02x = %x\n", idx, pci_conf_read(pa->pa_pc, pa->pa_tag, idx));
+    printf ("%02x = %x\n", idx, pci_conf_read(sc->sc_pci_chipset_tag,
+            sc->sc_pci_tag, idx));
   }
   }
 
