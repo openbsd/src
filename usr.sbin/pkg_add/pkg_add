@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.146 2004/12/17 11:30:28 espie Exp $
+# $OpenBSD: pkg_add,v 1.147 2004/12/18 13:20:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -95,14 +95,35 @@ sub can_install($$$)
 		}
 	}
 
-	@conflicts = keys %conflicts;
-	if (!$state->{replace} || @conflicts >= 2) {
-		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
+	my @libs = ();
+	@conflicts = ();
+	for my $k (keys %conflicts) {
+		if ($k =~ m/^\.libs\-/) {
+			push(@libs, $k);
+		} else {
+			push(@conflicts, $k);
+		}
+	}
+
+	if (!$state->{replace}) {
+		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
+		$errors++;
+		return undef;
+	}
+
+	if (@conflicts >= 2) {
+		print "Can't install $pkgname because of conflicts (",join(',', @conflicts, @libs), ")\n";
 		$errors++;
 		return undef;
 	}
 
 	require OpenBSD::Update;
+
+	if (!OpenBSD::Update::figure_out_libs($plist, $state, @libs)) {
+		print "Can't update to $pkgname because of collision with old libs\n";
+		$errors++;
+		return undef;
+	}
 
 	my $rplist = OpenBSD::Update::can_do($conflicts[0], $pkgname, $state);
 	if ($rplist) {
@@ -267,10 +288,12 @@ sub really_add($$)
 	$state->{archive} = $handle;
 	$plist->{dir} = $dir;
 	$state->set_pkgname($pkgname);
+	$state->{replacing} = 0;
 	if (defined $plist->{replacing}) {
 		$state->{replacing} = 1;
-	} else {
-		$state->{replacing} = 0;
+	} 
+	if (defined $plist->{old_libs}) {
+		$state->{replacing} = 1;
 	}
 
 	my $header = $pkgname;
@@ -302,11 +325,15 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	if (defined $plist->{replacing}) {
+	if ($state->{replacing} == 1) {
 		require OpenBSD::Update;
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
-		OpenBSD::Update::save_old_libraries($plist, $state);
+
+		if (defined $plist->{replacing}) {
+			OpenBSD::Update::save_old_libraries($plist, $state);
+		}
+
 		my $donesize = 0;
 		$plist->{done} = [];
 		for my $item (@{$plist->{items}}) {
@@ -329,19 +356,22 @@ sub really_add($$)
 			    "Installation of $pkgname failed");
 		}
 
-		OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
-		$state->set_pkgname($plist->{replacing}->pkgname());
-		require OpenBSD::Delete;
-		try {
-		    OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
-		} catchall {
-			Warn $_;
-			OpenBSD::Add::borked_installation($plist, $dir, 
-			    "Deinstallation of ", 
-			    $plist->{replacing}->pkgname(), " failed");
-		};
+		if (defined $plist->{replacing}) {
+			OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
+			$state->set_pkgname($plist->{replacing}->pkgname());
+			require OpenBSD::Delete;
+			try {
+			    OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
+			} catchall {
+				Warn $_;
+				OpenBSD::Add::borked_installation($plist, $dir, 
+				    "Deinstallation of ", 
+				    $plist->{replacing}->pkgname(), " failed");
+			};
 
-		delete_installed($plist->{replacing}->pkgname());
+			delete_installed($plist->{replacing}->pkgname());
+		}
+		# Here there should be code to handle old libs
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
 		$state->set_pkgname($pkgname);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.40 2004/12/15 01:07:10 espie Exp $
+# $OpenBSD: Update.pm,v 1.41 2004/12/18 13:20:54 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -442,4 +442,68 @@ sub is_needed
 	return join(',', sort keys %$new_context) ne 
 	    join(',', sort keys %$old_context);
 }
+
+sub figure_out_libs
+{
+	my ($plist, $state, @libs) = @_;
+
+	my $has = {};
+	my $result = [];
+
+	for my $item (@{$plist->{items}}) {
+		$has->{$item->fullname()} = 1;
+	}
+
+	for my $oldlib (@libs) {
+		print "Checking for collisions with $oldlib... " 
+		    if $state->{verbose};
+
+#		require OpenBSD::RequiredBy;
+#
+#		if (OpenBSD::RequiredBy->new($oldlib)->list() == 0) {
+#			require OpenBSD::Delete;
+#
+#			OpenBSD::Delete::delete_package($oldlib, $state);
+#			delete_installed($oldlib);
+#			next;
+#		}
+
+		my $p = OpenBSD::PackingList->from_installation($oldlib);
+		my $n = [];
+		my $delete = [];
+		my $empty = 1;
+		my $doit = 0;
+		for my $file (@{$p->{items}}) {
+			if ($file->IsFile()) {
+				if ($has->{$file->fullname()}) {
+					$doit = 1;
+					push(@$delete, $file);
+					next;
+				} else {
+					$empty = 0;
+				}
+			}
+			push(@$n, $file);
+		}
+		$p->{items} = $n;
+		if ($doit) {
+			print "some found\n" if $state->{verbose};
+			my $dummy = {items => $delete};
+			push(@$result, 
+			    { plist => $p, 
+			      todelete => $dummy,
+			      empty => $empty});
+			require OpenBSD::Delete;
+			OpenBSD::Delete::validate_plist($dummy, $state);
+		} else {
+			print "none found\n" if $state->{verbose};
+		}
+	}
+	if (@$result) {
+		$plist->{old_libs} = $result;
+		return 0;
+	}
+	return 1;
+}
+
 1;
