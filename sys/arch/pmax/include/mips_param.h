@@ -1,5 +1,8 @@
 /*	$NetBSD: mips_param.h,v 1.1 1996/05/19 17:52:18 jonathan Exp $	*/
 
+#ifndef __MIPS_PARAM_H__
+#define __MIPS_PARAM_H__
+
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
  * data types (int, long, ...).   The result is u_int and must be cast to
@@ -81,3 +84,5 @@ extern void delay __P((int n));
 
 #endif	/* _LOCORE */
 #endif	/* _KERNEL */
+
+#endif /* __MIPS_PARAM_H__ */
