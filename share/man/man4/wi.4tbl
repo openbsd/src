@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.65 2005/01/15 03:59:39 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.66 2005/02/12 07:57:18 dlg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -200,6 +200,7 @@ Netgear MA111 (version 1 only):Prism-3:USB
 Netgear MA311:Prism-2.5:PCI
 Netgear MA401:Prism-2:PCMCIA
 Netgear MA401RA:Prism-2.5:PCMCIA
+Netgear MA701:Prism-2.5:CF
 Nokia C020 Wireless LAN:Prism-I:PCMCIA
 Nokia C110/C111 Wireless LAN:Prism-2:PCMCIA
 Nortel E-mobility 211818-A:Spectrum24:PCI
