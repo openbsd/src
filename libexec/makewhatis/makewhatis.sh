@@ -6,7 +6,7 @@
 #
 # Public domain.
 #
-# $OpenBSD: makewhatis.sh,v 1.7 1999/09/19 23:15:02 alex Exp $
+# $OpenBSD: makewhatis.sh,v 1.8 1999/09/20 19:31:40 alex Exp $
 #
 
 PATH=/usr/bin:/bin; export PATH
@@ -47,7 +47,11 @@ for MANDIR in $MANDIRS; do
 
 	sort -u -o $WHATIS $WHATIS
 
-	install -o root -g bin -m 444 $WHATIS "$MANDIR/whatis.db"
+	if expr `id -u` \= 0 >/dev/null; then
+		install -o root -g bin -m 444 $WHATIS "$MANDIR/whatis.db"
+	else
+		install -m 444 $WHATIS "$MANDIR/whatis.db"
+	fi
 done
 
 rm -f $LIST $WHATIS
