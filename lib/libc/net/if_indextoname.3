@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: if_indextoname.3,v 1.1 1999/07/03 20:22:21 deraadt Exp $
+.\"	$Id: if_indextoname.3,v 1.2 1999/07/03 21:43:12 deraadt Exp $
 .\"
 .Dd May 21, 1998
 .Dt IF_NAMETOINDEX 3
@@ -39,6 +39,7 @@
 .Nm if_nametoindex ,
 .Nm if_indextoname ,
 .Nm if_nameindex ,
+.Nm if_freenameindex
 .Nd convert interface index to name, and vice versa
 .Sh SYNOPSIS
 .Fd #include <net/if.h>
@@ -49,6 +50,7 @@
 .Ft "struct if_nameindex *"
 .Fn if_nameindex "void"
 .Ft "void"
+.Fn if_freenameindex "struct if_nameindex *ptr"
 .Sh DESCRIPTION
 The functions map interface index to readable interface name
 .Po
@@ -112,8 +114,15 @@ names pointed to by the
 .Fa if_name
 members is obtained dynamically.
 This memory is freed by the
-.Xr free 3
+.Fn if_freenameindex
 function.
+.Pp
+.Fn if_freenameindex
+takes a pointer that was returned by
+.Fn if_nameindex
+as argument
+.Pq Fa ptr ,
+and it reclaims the region allocated.
 .Sh DIAGNOSTICS
 .Fn if_nametoindex
 returns 0 on error, positive integer on success.

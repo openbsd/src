@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.23 1999/07/03 20:26:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 1999/07/03 21:43:12 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -25,15 +25,11 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
-MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
-	getservent.3 inet.3 inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \
-	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3 \
-	getnameinfo.3 getaddrinfo.3 if_indextoname.3
+MAN+=	byteorder.3 ethers.3 getaddrinfo.3 gethostbyname.3 getnameinfo.3 \
+	getnetent.3 getprotoent.3 getservent.3 inet.3 if_indextoname.3 \
+	inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \
+	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3
 
-MLINKS+= getaddrinfo.3 freeaddrinfo.3
-MLINKS+= getaddrinfo.3 gai_strerror.3
-MLINKS+= if_indextoname.3 if_nametoindex.3
-MLINKS+= if_indextoname.3 if_nameindex.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
@@ -42,6 +38,7 @@ MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 swap16.3 byteorder.3 swap32.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3 ethers.3 ether_addr.3
+MLINKS+= getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3
 MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
 	gethostbyname.3 sethostent.3 gethostbyname.3 gethostent.3 \
 	gethostbyname.3 herror.3 gethostbyname.3 gethostbyname2.3 \
@@ -52,6 +49,8 @@ MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
 	getprotoent.3 getprotobynumber.3 getprotoent.3 setprotoent.3
 MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservbyport.3 getservent.3 setservent.3
+MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
+	if_indextoname.3 if_freenameindex.3
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
