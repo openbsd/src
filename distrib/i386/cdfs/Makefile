@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2004/08/11 06:51:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/08/24 20:37:15 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -16,7 +16,7 @@ ${CDROM}:
 	echo "set image /${OSREV}/i386/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
 	cp ${.OBJDIR}/../ramdisk_cd/${BSDRD} ${.OBJDIR}/cd-dir/${OSREV}/i386
 	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/i386
-	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/cdboot
+	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/i386/cdboot
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
 	    -A "OpenBSD ${OSREV} i386 bootonly CD" \
 	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
