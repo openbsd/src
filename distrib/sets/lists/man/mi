@@ -1563,6 +1563,8 @@
 ./usr/share/man/cat5/mvme68k
 ./usr/share/man/cat5/mvme88k
 ./usr/share/man/cat5/mvmeppc
+./usr/share/man/cat5/mygate.0
+./usr/share/man/cat5/myname.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0

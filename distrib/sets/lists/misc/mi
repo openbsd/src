@@ -269,6 +269,16 @@
 ./usr/share/doc/usd/07.mail/maila.nr
 ./usr/share/doc/usd/08.mh
 ./usr/share/doc/usd/09.edtut
+./usr/share/doc/usd/09.edtut/Makefile
+./usr/share/doc/usd/09.edtut/e.mac
+./usr/share/doc/usd/09.edtut/e0
+./usr/share/doc/usd/09.edtut/e1
+./usr/share/doc/usd/09.edtut/e2
+./usr/share/doc/usd/09.edtut/e3
+./usr/share/doc/usd/09.edtut/e4
+./usr/share/doc/usd/09.edtut/e5
+./usr/share/doc/usd/09.edtut/e6
+./usr/share/doc/usd/09.edtut/e7
 ./usr/share/doc/usd/10.edadv
 ./usr/share/doc/usd/11.edit
 ./usr/share/doc/usd/12.vi
