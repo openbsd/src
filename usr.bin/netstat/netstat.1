@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.20 2000/04/15 02:15:12 aaron Exp $
+.\"	$OpenBSD: netstat.1,v 1.21 2000/04/16 16:24:32 aaron Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -72,11 +72,12 @@
 .Op Fl I Ar Interface
 .Sh DESCRIPTION
 The
-.Nm netstat
+.Nm
 command symbolically displays the contents of various network-related
 data structures.
 There are a number of output formats,
 depending on the options for the information presented.
+.Pp
 The first form of the command displays a list of active sockets for
 each protocol.
 The second form presents the contents of one of the other network
@@ -84,7 +85,7 @@ data structures according to the option selected.
 Using the third form, with a
 .Ar wait
 interval specified,
-.Nm netstat
+.Nm
 will continuously display the information regarding packet
 traffic on the configured network interfaces.
 The fourth form displays statistics about the named protocol.
@@ -110,36 +111,22 @@ show the number of dropped packets.
 Limit statistics or address control block reports to those
 of the specified
 .Ar address_family .
-The following address families
-are recognized:
-.Ar inet ,
-for
-.Dv AF_INET ,
-.Ar inet6 ,
-for
-.Dv AF_INET6 ,
-.Ar ipx ,
-for
-.Dv AF_IPX ,
-.Ar atalk ,
-for
-.Dv AF_APPLETALK ,
-.Ar ns ,
-for
-.Dv AF_NS ,
-.Ar iso ,
-for
-.Dv AF_ISO ,
-.Ar encap ,
-for
-.Dv PF_KEY ,
-.Ar local ,
-for
-.Dv AF_LOCAL ,
-and
-.Ar unix ,
-for
-.Dv AF_UNIX .
+.Pp
+The following address families are recognized:
+.Pp
+.Bl -column "Address Family" "AF_APPLETA" "Description" -offset indent -compact
+.It Sy "Address Family" Ta Sy "Constant" Ta Sy "Description"
+.It "inet" Dv Ta "AF_INET" Ta "IP Version 4"
+.It "inet6" Dv Ta "AF_INET6" Ta "IP Version 6"
+.It "ipx" Dv Ta "AF_IPX" Ta "Novell IPX"
+.It "atalk" Dv Ta "AF_APPLETALK" Ta "AppleTalk"
+.It "ns" Dv Ta "AF_NS" Ta "Xerox NS Protocols"
+.It "iso" Dv Ta "AF_ISO" Ta "ISO Protocol Family"
+.It "encap" Dv Ta "PF_KEY" Ta "IPsec"
+.It "local" Dv Ta "AF_LOCAL" Ta "Local to Host (i.e., pipes)"
+.It "unix" Dv Ta "AF_UNIX" Ta "Local to Host (i.e., pipes)"
+.El
+.Pp
 .It Fl g
 Show information related to multicast (group address) routing.
 By default, show the IP Multicast virtual-interface and routing tables.
@@ -147,33 +134,36 @@ If the
 .Fl s
 option is also present, show multicast routing statistics.
 .It Fl I Ar interface
-Show information about the specified interface;
+Show information about the specified
+.Ar interface ;
 used with a
 .Ar wait
 interval as described below.
+.Pp
 If the
 .Fl f Ar address_family
 option (with the
 .Fl s
 option) or the
 .Fl p Ar protocol
-option is present, show per-interface statistics on the
-.Ar interface
-for the specfied
+option is present, show per-interface statistics on the given interface
+for the specified
 .Ar address_family
 or
 .Ar protocol ,
 respectively.
 .It Fl i
 Show the state of interfaces which have been auto-configured
-(interfaces statically configured into a system, but not
-located at boot time are not shown).
+(interfaces statically configured into a system but not
+located at boot-time are not shown).
+.Pp
 If the
 .Fl a
-options is also present, multicast addresses currently in use are shown
+option is also present, multicast addresses currently in use are shown
 for each Ethernet interface and for each IP interface address.
 Multicast addresses are shown on separate lines following the interface
 address with which they are associated.
+.Pp
 If the
 .Fl f Ar address_family
 option (with the
@@ -181,7 +171,7 @@ option (with the
 option) or the
 .Fl p Ar protocol
 option is present, show per-interface statistics on all interfaces
-for the specfied
+for the specified
 .Ar address_family
 or
 .Ar protocol ,
@@ -198,15 +188,15 @@ Extract the name list from the specified system instead of the default
 .Pa /bsd .
 .It Fl n
 Show network addresses as numbers (normally
-.Nm netstat
+.Nm
 interprets addresses and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
 .It Fl p Ar protocol
 Show statistics about
 .Ar protocol ,
-which is either a well-known name for a protocol or an alias for it.  Some
-protocol names and aliases are listed in the file
+which is either a well-known name for a protocol or an alias for it.
+Some protocol names and aliases are listed in the file
 .Pa /etc/protocols .
 A null response typically means that there are no interesting numbers to
 report.
@@ -218,9 +208,9 @@ Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.
 .It Fl r
 Show the routing tables.
-When
+If the
 .Fl s
-is also present, show routing statistics instead.
+option is also specified, show routing statistics instead.
 .It Fl v
 Be verbose.
 Avoids truncation of long addresses.
@@ -233,45 +223,55 @@ seconds.
 The default display, for active sockets, shows the local
 and remote addresses, send and receive queue sizes (in bytes), protocol,
 and the internal state of the protocol.
-Address formats are of the form ``host.port'' or ``network.port''
+.Pp
+Address formats are of the form
+.Dq host.port
+or
+.Dq network.port
 if a socket's address specifies a network but no specific host address.
-When known the host and network addresses are displayed symbolically
-according to the data bases
+When known, the host and network addresses are displayed symbolically
+according to the databases
 .Pa /etc/hosts
 and
 .Pa /etc/networks ,
-respectively.  If a symbolic name for an address is unknown, or if
-the
+respectively.
+If a symbolic name for an address is unknown, or if the
 .Fl n
 option is specified, the address is printed numerically, according
 to the address family.
-For more information regarding
-the Internet ``dot format,''
+.Pp
+For more information regarding the Internet
+.Dq dot format ,
 refer to
 .Xr inet 3 .
-Unspecified,
-or ``wildcard'' addresses and ports appear as ``*''.
+Unspecified, or
+.Dq wildcard
+addresses and ports appear as a single
+.Dq \&* .
 If a local port number is registered as being in use for RPC by
 .Xr portmap 8 ,
 its RPC service name or RPC service number will be printed in
-``[]'' immediately after the port number.
+.Dq []
+immediately after the port number.
 .Pp
 The interface display provides a table of cumulative
 statistics regarding packets transferred, errors, and collisions.
 The network addresses of the interface
-and the maximum transmission unit (``MTU'') are also displayed.
+and the maximum transmission unit (MTU) are also displayed.
 .Pp
-The routing table display indicates the available routes and their
-status.  Each route consists of a destination host or network and
-a gateway to use in forwarding packets.  If the destination is a
-network in numeric format, the netmask (in /24 style format) is
-appended.  The flags field shows a collection of information about
-the route stored as binary choices.  The individual flags are
-discussed in more detail in the
+The routing table display indicates the available routes and their status.
+Each route consists of a destination host or network and
+a gateway to use in forwarding packets.
+If the destination is a
+network in numeric format, the netmask (in /24 style format) is appended.
+The flags field shows a collection of information about
+the route stored as binary choices.
+The individual flags are discussed in more detail in the
 .Xr route 8
 and
 .Xr route 4
 manual pages.
+.Pp
 The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
 1	RTF_PROTO1	Protocol specific routing flag #1.
@@ -289,25 +289,23 @@ U	RTF_UP	Route usable.
 X	RTF_XRESOLVE	External daemon translates proto to link address.
 .El
 .Pp
-Direct routes are created for each
-interface attached to the local host;
+Direct routes are created for each interface attached to the local host;
 the gateway field for such entries shows the address of the outgoing interface.
-The refcnt field gives the
-current number of active uses of the route.  Connection oriented
-protocols normally hold on to a single route for the duration of
-a connection while connectionless protocols obtain a route while sending
-to the same destination.
-The use field provides a count of the number of packets
-sent using that route.  The MTU entry shows the MTU associated with
-that route.  This MTU value is used as the basis for the TCP maximum
-segment size (MSS).  A
+The refcnt field gives the current number of active uses of the route.
+Connection oriented protocols normally hold on to a single route for the
+duration of a connection while connectionless protocols obtain a route while
+sending to the same destination.
+The use field provides a count of the number of packets sent using that route.
+The MTU entry shows the MTU associated with that route.
+This MTU value is used as the basis for the TCP maximum segment size (MSS).
+A
 .Sq -
 indicates that the MTU for this route has not been set, and a default
-TCP maximum segment size will be used.  The interface entry indicates
-the network interface utilized for the route.
+TCP maximum segment size will be used.
+The interface entry indicates the network interface utilized for the route.
 .Pp
 When
-.Nm netstat
+.Nm
 is invoked with the
 .Fl w
 option and a
@@ -323,11 +321,12 @@ The primary interface may be replaced with another interface with the
 .Fl I
 option.
 The first line of each screen of information contains a summary since the
-system was last rebooted.  Subsequent lines of output show values
-accumulated over the preceding interval.
+system was last rebooted.
+Subsequent lines of output show values accumulated over the preceding interval.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
+.Xr netintro 4 ,
 .Xr hosts 5 ,
 .Xr networks 5 ,
 .Xr protocols 5 ,
@@ -338,7 +337,7 @@ accumulated over the preceding interval.
 .Xr vmstat 8
 .Sh HISTORY
 The
-.Nm netstat
+.Nm
 command appeared in
 .Bx 4.2 .
 IPv6 support was added by WIDE/KAME project.
