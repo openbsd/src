@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.31 2000/09/27 16:13:46 mickey Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.32 2000/10/12 09:58:05 itojun Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1031,17 +1031,24 @@ sockargs(mp, buf, buflen, type)
 	register struct mbuf *m;
 	int error;
 
-	if (buflen > MLEN) {
-#ifdef COMPAT_OLDSOCK
-		if (type == MT_SONAME && buflen <= 112)
-			buflen = MLEN;		/* unix domain compat. hack */
-		else
-#endif
+	/*
+	 * We can't allow socket names > UCHAR_MAX in length, since that
+	 * will overflow sa_len.
+	 */
+	if (type == MT_SONAME && (u_int)buflen > UCHAR_MAX)
 		return (EINVAL);
-	}
+	if ((u_int)buflen > MCLBYTES)
+		return (EINVAL);
+
+	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
-	if (m == NULL)
-		return (ENOBUFS);
+	if ((u_int)buflen > MLEN) {
+		MCLGET(m, M_WAITOK);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return ENOBUFS;
+		}
+	}
 	m->m_len = buflen;
 	error = copyin(buf, mtod(m, caddr_t), buflen);
 	if (error) {
