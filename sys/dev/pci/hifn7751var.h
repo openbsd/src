@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.36 2001/08/28 18:52:16 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.37 2001/08/28 21:40:54 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -230,8 +230,7 @@ struct hifn_command {
 	u_int16_t base_masks, cry_masks, mac_masks;
 	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
-	int sloplen;		/* length of end buffer */
-	caddr_t slop;		/* pointer to end buffer */
+	int sloplen, slopidx;
 
 	union {
 		struct mbuf *src_m;
