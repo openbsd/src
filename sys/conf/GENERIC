@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 1999/07/06 20:41:54 cmetz Exp $
+#	$OpenBSD: GENERIC,v 1.53 1999/09/29 00:01:49 angelos Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -66,6 +66,7 @@ option		IPSEC		# IPsec
 #option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
+#option		NETATALK	# AppleTalk
 #option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
 option		IPFILTER_LOG	# use /dev/ipl to log IPF
