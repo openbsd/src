@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 1997/09/06 03:53:58 millert Exp $
+#	$OpenBSD: install.md,v 1.14 1997/09/21 14:16:00 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,9 @@ md_get_partition_range() {
 
 md_installboot() {
 	echo "Installing boot block..."
-	disklabel -B $1
+	cp /usr/mdec/boot /mnt/boot
+	sync; sync; sync
+	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot /dev/r${1}c
 }
 
 md_native_fstype() {
