@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_cue.c,v 1.13 2002/06/26 11:29:55 espie Exp $ */
-/*	$NetBSD: if_cue.c,v 1.38 2001/12/12 15:36:08 augustss Exp $	*/
+/*	$OpenBSD: if_cue.c,v 1.14 2002/07/09 16:44:15 nate Exp $ */
+/*	$NetBSD: if_cue.c,v 1.39 2002/07/08 17:46:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
