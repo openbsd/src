@@ -5,8 +5,8 @@
 # We have to check the byte order flag to see what byte order all the
 # other stuff in the header is in.
 #
-# Byte order is probably big-endian for MIPS RS3000 and Amdahl.
-# MIPS RS3000 may also be for MIPS RS2000.
+# Byte order is probably big-endian for MIPS R3000 and Amdahl.
+# MIPS R3000 may also be for MIPS R2000.
 #
 # updated by Daniel Quinlan (quinlan@yggdrasil.com)
 0	string		\177ELF		ELF
@@ -29,7 +29,7 @@
 >>18	leshort		5		Motorola 88000 - invalid byte order,
 >>18	leshort		6		Intel 80486,
 >>18	leshort		7		Intel 80860,
->>18	leshort		8		MIPS RS3000,
+>>18	leshort		8		MIPS R3000,
 >>18	leshort		9		Amdahl,
 >>20	lelong		0		invalid version
 >>20	lelong		1		version 1
@@ -49,7 +49,7 @@
 >>18	beshort		5		Motorola 88000,
 >>18	beshort		6		Intel 80486 - invalid byte order,
 >>18	beshort		7		Intel 80860,
->>18	beshort		8		MIPS RS3000,
+>>18	beshort		8		MIPS R3000,
 >>18	leshort		9		Amdahl,
 >>20	belong		0		invalid version
 >>20	belong		1		version 1
