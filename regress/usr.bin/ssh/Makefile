@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2002/03/27 00:03:37 markus Exp $
+#	$OpenBSD: Makefile,v 1.12 2002/03/27 22:40:27 markus Exp $
 
 REGRESSTARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -28,7 +28,7 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
 		ls.copy
 
-#LTESTS+=	ssh-com ssh-com-client
+#LTESTS+=	ssh-com ssh-com-client ssh-com-keygen
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
