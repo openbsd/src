@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.19 2000/11/07 16:58:01 art Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.20 2001/05/14 07:16:12 angelos Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -67,6 +67,10 @@
  */
 struct	disklist_head disklist;	/* TAILQ_HEAD */
 int	disk_count;		/* number of drives in global disklist */
+int	disk_change;		/* set if a disk has been attached/detached
+				 * since last we looked at this variable. This
+				 * is reset by hw_sysctl()
+				 */
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -244,7 +248,7 @@ disk_init()
 {
 
 	TAILQ_INIT(&disklist);
-	disk_count = 0;
+	disk_count = disk_change = 0;
 }
 
 /*
@@ -319,6 +323,7 @@ disk_attach(diskp)
 	 */
 	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
 	++disk_count;
+	disk_change = 1;
 }
 
 /*
@@ -339,6 +344,7 @@ disk_detach(diskp)
 	 * Remove from the disklist.
 	 */
 	TAILQ_REMOVE(&disklist, diskp, dk_link);
+	disk_change = 1;
 	if (--disk_count < 0)
 		panic("disk_detach: disk_count < 0");
 }
