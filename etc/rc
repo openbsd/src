@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.112 1999/09/27 23:40:25 deraadt Exp $
+#	$OpenBSD: rc,v 1.113 1999/09/27 23:41:18 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -101,7 +101,7 @@ if [ ! -f /var/db/host.random ]; then
 else
 	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
 	    > /dev/null 2>&1
-	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 >
+	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
 	    > /dev/null 2>&1
 fi
 
