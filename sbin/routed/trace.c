@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.3 1996/09/05 14:31:52 mickey Exp $	*/
+/*	$OpenBSD: trace.c,v 1.4 1996/09/06 13:05:02 deraadt Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.3 1996/09/05 14:31:52 mickey Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.4 1996/09/06 13:05:02 deraadt Exp $";
 #endif
 
 #define	RIPCMDS
@@ -207,7 +207,7 @@ trace_on(char *filename,
 		}
 		filename = savetracename;
 
-	} else if (stat(filename, &stbuf) >= 0) {
+	} else if (lstat(filename, &stbuf) >= 0) {
 		if (!trusted) {
 			msglog("trace file \"%s\" already exists");
 			return;
@@ -227,6 +227,7 @@ trace_on(char *filename,
 		}
 	}
 
+	/* XXX lstat -> fopen race */
 	n_ftrace = fopen(filename, "a");
 	if (n_ftrace == 0) {
 		msglog("failed to open trace file \"%s\" %s",
