@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplelock.h,v 1.7 1999/01/19 20:44:42 art Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.8 1999/07/09 15:17:59 art Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
@@ -21,12 +21,24 @@ struct simplelock {
 #define NCPUS 1
 #endif
 
+#define SLOCK_LOCKED 1
+#define SLOCK_UNLOCKED 0
+
+/*
+ * We can't debug locks when we use them in real life.
+ */
+#if (NCPUS != 1) && defined(LOCKDEBUG)
+#undef LOCKDEBUG
+#endif
+
 #if NCPUS == 1
 
-#if !defined(SIMPLELOCK_DEBUG)
-#define	simple_lock(alp)
-#define	simple_lock_try(alp)	(1)	/* always succeeds */
-#define	simple_unlock(alp)
+#ifndef LOCKDEBUG
+
+#define	simple_lock(lkp)
+#define	simple_lock_try(lkp)	(1)	/* always succeeds */
+#define	simple_unlock(lkp)
+#define simple_lock_assert(lkp)
 
 static __inline void simple_lock_init __P((struct simplelock *));
 
@@ -35,20 +47,23 @@ simple_lock_init(lkp)
 	struct simplelock *lkp;
 {
 
-	lkp->lock_data = 0;
+	lkp->lock_data = SLOCK_UNLOCKED;
 }
 
 #else
 
 void _simple_unlock __P((__volatile struct simplelock *, const char *, int));
-#define simple_unlock(alp) _simple_unlock(alp, __FILE__, __LINE__)
 int _simple_lock_try __P((__volatile struct simplelock *, const char *, int));
-#define simple_lock_try(alp) _simple_lock_try(alp, __FILE__, __LINE__)
 void _simple_lock __P((__volatile struct simplelock *, const char *, int));
-#define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
-void simple_lock_init __P((struct simplelock *alp));
+void _simple_lock_assert __P((__volatile struct simplelock *, int, const char *, int));
 
-#endif /* !defined(SIMPLELOCK_DEBUG) */
+void simple_lock_init __P((struct simplelock *));
+#define simple_unlock(lkp) _simple_unlock(lkp, __FILE__, __LINE__)
+#define simple_lock_try(lkp) _simple_lock_try(lkp, __FILE__, __LINE__)
+#define simple_lock(lkp) _simple_lock(lkp, __FILE__, __LINE__)
+#define simple_lock_assert(lkp, state) _simple_lock_assert(lkp, state, __FILE__, __LINE__)
+
+#endif /* !defined(LOCKDEBUG) */
 
 #else  /* NCPUS >  1 */
 

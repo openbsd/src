@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.8 1999/01/11 05:12:22 millert Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.9 1999/07/09 15:17:59 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -451,54 +451,85 @@ lockmgr_printinfo(lkp)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(SIMPLELOCK_DEBUG) && NCPUS == 1
+#if defined(LOCKDEBUG)
+
+int lockdebug_print = 0;
+int lockdebug_debugger = 0;
 
 /*
  * Simple lock functions so that the debugger can see from whence
  * they are being called.
  */
 void
-simple_lock_init(alp)
-	struct simplelock *alp;
+simple_lock_init(lkp)
+	struct simplelock *lkp;
 {
 
-	alp->lock_data = 0;
+	lkp->lock_data = SLOCK_UNLOCKED;
 }
 
 void
-_simple_lock(alp, id, l)
-	__volatile struct simplelock *alp;
+_simple_lock(lkp, id, l)
+	__volatile struct simplelock *lkp;
 	const char *id;
 	int l;
 {
 
-	if (alp->lock_data)
-		printf("%s:%d simple_lock: lock held...\n", id, l);
-	alp->lock_data = 1;
+	if (lkp->lock_data == SLOCK_LOCKED) {
+		if (lockdebug_print)
+			printf("%s:%d simple_lock: lock held...\n", id, l);
+		if (lockdebug_debugger)
+			Debugger();
+	}
+	lkp->lock_data = SLOCK_LOCKED;
 }
 
 
 int
-_simple_lock_try(alp, id, l)
-	__volatile struct simplelock *alp;
+_simple_lock_try(lkp, id, l)
+	__volatile struct simplelock *lkp;
 	const char *id;
 	int l;
 {
 
-	if (alp->lock_data)
-		printf("%s:%d simple_lock: lock held...\n", id, l);
-	return alp->lock_data = 1;
+	if (lkp->lock_data == SLOCK_LOCKED) {
+		if (lockdebug_print)
+			printf("%s:%d simple_lock: lock held...\n", id, l);
+		if (lockdebug_debugger)
+			Debugger();
+	}
+	return lkp->lock_data = SLOCK_LOCKED;
 }
 
 void
-_simple_unlock(alp, id, l)
-	__volatile struct simplelock *alp;
+_simple_unlock(lkp, id, l)
+	__volatile struct simplelock *lkp;
 	const char *id;
 	int l;
 {
 
-	if (!alp->lock_data)
-		printf("%s:%d simple_unlock: lock not held...\n", id, l);
-	alp->lock_data = 0;
+	if (lkp->lock_data == SLOCK_UNLOCKED) {
+		if (lockdebug_print)
+			printf("%s:%d simple_unlock: lock not held...\n",
+			       id, l);
+		if (lockdebug_debugger)
+			Debugger();
+	}
+	lkp->lock_data = SLOCK_UNLOCKED;
 }
-#endif /* SIMPLELOCK_DEBUG && NCPUS == 1 */
+
+void
+_simple_lock_assert(lkp, state, id, l)
+	__volatile struct simplelock *lkp;
+	const char *id;
+	int l;
+{
+	if (lkp->lock_data != state) {
+		if (lockdebug_print)
+			printf("%s:%d simple_lock_assert: wrong state: %d",
+			       id, l, lkp->lock_data);
+		if (lockdebug_debugger)
+			Debugger();
+	}
+}
+#endif /* LOCKDEBUG */
