@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttinit.c,v 1.3 1997/02/25 00:04:24 downsj Exp $	*/
+/*	$OpenBSD: ttinit.c,v 1.4 1998/04/26 22:49:07 millert Exp $	*/
 /*	$NetBSD: ttinit.c,v 1.3 1995/09/28 10:34:50 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttinit.c,v 1.3 1997/02/25 00:04:24 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ttinit.c,v 1.4 1998/04/26 22:49:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ ttinit()
 	 * Set output buffer size to about 1 second of output time.
 	 */
 	i = MIN(wwbaud/10, 512);
-	if ((tt_ob = malloc((unsigned) i)) == 0) {
+	if ((tt_ob = malloc(i)) == 0) {
 		wwerrno = WWE_NOMEM;
 		return -1;
 	}
@@ -102,7 +102,7 @@ ttinit()
 		p++;
 	for (q = p; *q && *q != '|' && *q != ':'; q++)
 		;
-	if (q != p && (t = malloc((unsigned) (q - p + 1))) != 0) {
+	if (q != p && (t = malloc(q - p + 1)) != 0) {
 		wwterm = t;
 		while (p < q)
 			*t++ = *p++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwalloc.c,v 1.3 1997/02/25 00:04:38 downsj Exp $	*/
+/*	$OpenBSD: wwalloc.c,v 1.4 1998/04/26 22:49:03 millert Exp $	*/
 /*	$NetBSD: wwalloc.c,v 1.3 1995/09/28 10:35:10 tls Exp $	*/
 
 /*
@@ -41,21 +41,24 @@
 #if 0
 static char sccsid[] = "@(#)wwalloc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwalloc.c,v 1.3 1997/02/25 00:04:38 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwalloc.c,v 1.4 1998/04/26 22:49:03 millert Exp $";
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "ww.h"
 
 char **
 wwalloc(row, col, nrow, ncol, size)
+	int row, col, nrow, ncol;
+	size_t size;
 {
 	register char *p, **pp;
 	register int i;
 
 	/* fast, call malloc only once */
 	pp = (char **)
-		malloc((unsigned) sizeof (char **) * nrow + size * nrow * ncol);
+		malloc(sizeof (char **) * nrow + size * nrow * ncol);
 	if (pp == 0) {
 		wwerrno = WWE_NOMEM;
 		return 0;

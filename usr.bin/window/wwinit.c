@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwinit.c,v 1.6 1997/02/25 01:18:27 downsj Exp $	*/
+/*	$OpenBSD: wwinit.c,v 1.7 1998/04/26 22:49:08 millert Exp $	*/
 /*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwinit.c,v 1.6 1997/02/25 01:18:27 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwinit.c,v 1.7 1998/04/26 22:49:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ wwinit()
 	else if (wwavailmodes & WWM_UL)
 		wwcursormodes = WWM_UL;
 
-	if ((wwib = malloc((unsigned) 512)) == 0)
+	if ((wwib = malloc(512)) == 0)
 		goto bad;
 	wwibe = wwib + 512;
 	wwibq = wwibp = wwib;
@@ -254,7 +254,7 @@ wwinit()
 			goto bad;
 	}
 
-	wwtouched = malloc((unsigned) wwnrow);
+	wwtouched = malloc(wwnrow);
 	if (wwtouched == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;
@@ -262,7 +262,7 @@ wwinit()
 	for (i = 0; i < wwnrow; i++)
 		wwtouched[i] = 0;
 
-	wwupd = (struct ww_update *) malloc((unsigned) wwnrow * sizeof *wwupd);
+	wwupd = (struct ww_update *) malloc(wwnrow * sizeof *wwupd);
 	if (wwupd == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwsize.c,v 1.5 1997/02/25 00:05:08 downsj Exp $	*/
+/*	$OpenBSD: wwsize.c,v 1.6 1998/04/26 22:49:02 millert Exp $	*/
 /*	$NetBSD: wwsize.c,v 1.5 1996/02/08 20:45:11 mycroft Exp $	*/
 
 /*
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwsize.c,v 1.5 1997/02/25 00:05:08 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwsize.c,v 1.6 1998/04/26 22:49:02 millert Exp $";
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "ww.h"
 
 /*
@@ -79,7 +80,7 @@ register struct ww *w;
 		if (buf == 0)
 			goto bad;
 	}
-	nvis = (short *)malloc((unsigned) nrow * sizeof (short));
+	nvis = (short *)malloc(nrow * sizeof (short));
 	if (nvis == 0) {
 		wwerrno = WWE_NOMEM;
 		goto bad;

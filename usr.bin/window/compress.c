@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.3 1997/02/25 00:04:01 downsj Exp $	*/
+/*	$OpenBSD: compress.c,v 1.4 1998/04/26 22:49:04 millert Exp $	*/
 /*	$NetBSD: compress.c,v 1.3 1995/09/28 10:34:13 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)compress.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compress.c,v 1.3 1997/02/25 00:04:01 downsj Exp $";
+static char rcsid[] = "$OpenBSD: compress.c,v 1.4 1998/04/26 22:49:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,30 +241,29 @@ ccinit()
 #endif
 #undef C
 	if ((cc_output = (struct cc **)
-	     malloc((unsigned) cc_bufsize * sizeof *cc_output)) == 0)
+	     malloc(cc_bufsize * sizeof *cc_output)) == 0)
 		goto nomem;
 	if ((cc_hashcodes = (short *)
-	     malloc((unsigned) cc_bufsize * sizeof *cc_hashcodes)) == 0)
+	     malloc(cc_bufsize * sizeof *cc_hashcodes)) == 0)
 		goto nomem;
 	if ((cc_htab = (struct cc **) malloc(HSIZE * sizeof *cc_htab)) == 0)
 		goto nomem;
 	if ((cc_tokens = (struct cc **)
-	     malloc((unsigned)
-	            (cc_ntoken + tt.tt_token_max - tt.tt_token_min + 1) *
+	     malloc((cc_ntoken + tt.tt_token_max - tt.tt_token_min + 1) *
 		    sizeof *cc_tokens)) == 0)
 		goto nomem;
 	if ((cc_undo = (struct cc_undo *)
-	     malloc((unsigned) cc_bufsize * sizeof *cc_undo)) == 0)
+	     malloc(cc_bufsize * sizeof *cc_undo)) == 0)
 		goto nomem;
 	for (i = tt.tt_token_min; i <= tt.tt_token_max; i++)
 		if ((cc_places[i] = (short *)
-		     malloc((unsigned) cc_bufsize * sizeof **cc_places)) == 0)
+		     malloc(cc_bufsize * sizeof **cc_places)) == 0)
 			goto nomem;
 	cc_q0a.qforw = cc_q0a.qback = &cc_q0a;
 	cc_q0b.qforw = cc_q0b.qback = &cc_q0b;
 	cc_q1a.qforw = cc_q1a.qback = &cc_q1a;
 	cc_q1b.qforw = cc_q1b.qback = &cc_q1b;
-	if ((p = (struct cc *) malloc((unsigned) cc_ntoken * sizeof *p)) == 0)
+	if ((p = (struct cc *) malloc(cc_ntoken * sizeof *p)) == 0)
 		goto nomem;
 	for (i = 0; i < tt.tt_ntoken; i++) {
 		p->code = i;
@@ -286,7 +285,7 @@ ccinit()
 	}
 	cc_tt_ob = tt_ob;
 	cc_tt_obe = tt_obe;
-	if ((cc_buffer = malloc((unsigned) cc_bufsize)) == 0)
+	if ((cc_buffer = malloc(cc_bufsize)) == 0)
 		goto nomem;
 	return 0;
 nomem:

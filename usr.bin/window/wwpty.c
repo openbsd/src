@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwpty.c,v 1.3 1997/02/25 00:05:02 downsj Exp $	*/
+/*	$OpenBSD: wwpty.c,v 1.4 1998/04/26 22:49:00 millert Exp $	*/
 /*	$NetBSD: wwpty.c,v 1.3 1995/09/28 10:35:45 tls Exp $	*/
 
 /*
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)wwpty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwpty.c,v 1.3 1997/02/25 00:05:02 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwpty.c,v 1.4 1998/04/26 22:49:00 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
+#include <string.h>
 #include <fcntl.h>
 #if !defined(OLD_TTY) && !defined(TIOCPKT)
 #include <sys/ioctl.h>
