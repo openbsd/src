@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.10 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.11 2002/10/15 21:25:31 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.10 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.11 2002/10/15 21:25:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -315,7 +315,7 @@ grp_match(register ARCHD *arcn)
  * trng_add()
  *	add a time range match to the time range list.
  *	This is a non-standard pax option. Lower and upper ranges are in the
- *	format: [yy[mm[dd[hh]]]]mm[.ss] and are comma separated.
+ *	format: [[[[yy]mm]dd]hh]mm[.ss] and are comma separated.
  *	Time ranges are based on current time, so 1234 would specify a time of
  *	12:34 today.
  * Return:
@@ -375,7 +375,7 @@ trng_add(register char *str)
 	}
 
 	/*
-	 * by default we only will check file mtime, but usee can specify
+	 * by default we only will check file mtime, but user can specify
 	 * mtime, ctime (inode change time) or both.
 	 */
 	if ((flgpt == NULL) || (*flgpt == '\0'))
@@ -451,7 +451,7 @@ trng_add(register char *str)
 	return(0);
 
     out:
-	paxwarn(1, "Time range format is: [yy[mm[dd[hh]]]]mm[.ss][/[c][m]]");
+	paxwarn(1, "Time range format is: [[[[yy]mm]dd]hh]mm[.ss][/[c][m]]");
 	return(-1);
 }
 
@@ -525,7 +525,7 @@ trng_match(register ARCHD *arcn)
 
 /*
  * str_sec()
- *	Convert a time string in the format of [yy[mm[dd[hh]]]]mm[.ss] to gmt
+ *	Convert a time string in the format of [[[[yy]mm]dd]hh]mm[.ss] to gmt
  *	seconds. Tval already has current time loaded into it at entry.
  * Return:
  *	0 if converted ok, -1 otherwise
