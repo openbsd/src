@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17.2.1 1995/10/20 10:30:08 chopps Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1995/11/28 05:40:18 jtc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.

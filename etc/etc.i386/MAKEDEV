@@ -135,10 +135,17 @@ fd)
 	;;
 
 wt*)
-	umask 2
-	rm -f wt0 rwt0
-	mknod wt0	b 3 0;	chown root.operator wt0
-	mknod rwt0	c 10 0;	chown root.operator rwt0
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	wt*) name=wt;  chr=10; blk=3;;
+	esac
+	rm -f $name$unit n$name$unit r$name$unit nr$name$unit
+	mknod $name$unit	b $blk `expr $unit '*' 8 + 0`
+	mknod n$name$unit	b $blk `expr $unit '*' 8 + 4`
+	mknod r$name$unit	c $chr `expr $unit '*' 8 + 0`
+	mknod nr$name$unit	c $chr `expr $unit '*' 8 + 4`
+	chgrp operator $name$unit n$name$unit r$name$unit nr$name$unit
+	chmod 640 $name$unit n$name$unit r$name$unit nr$name$unit
 	umask 77
 	;;
 
@@ -211,22 +218,18 @@ st*)
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
+	mknod $name$unit	b $blk `expr $unit '*' 16 + 0`
+	mknod n$name$unit	b $blk `expr $unit '*' 16 + 1`
+	mknod e$name$unit	b $blk `expr $unit '*' 16 + 2`
+	mknod en$name$unit	b $blk `expr $unit '*' 16 + 3`
+	mknod r$name$unit	c $chr `expr $unit '*' 16 + 0`
+	mknod nr$name$unit	c $chr `expr $unit '*' 16 + 1`
+	mknod er$name$unit	c $chr `expr $unit '*' 16 + 2`
+	mknod enr$name$unit	c $chr `expr $unit '*' 16 + 3`
+	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	umask 77
 	;;
 
@@ -236,9 +239,9 @@ ch*)
 	ch*) name=ch;  chr=17;;
 	esac
 	rm -f $name$unit
-	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
-	chmod 640 ${name}${unit}
+	mknod $name$unit	c $chr `expr $unit '*' 16 + 0`
+	chgrp operator $name$unit
+	chmod 640 $name$unit
 	umask 77
 	;;
 
@@ -258,33 +261,26 @@ cd*|mcd*)
 	umask 77
 	;;
 
-lpa*)
-	unit=`expr $i : 'lpa\(.*\)'`
-	rm -f lpa$unit
-	mknod lpa$unit c 16 `expr $unit + 128`
-	chown root.wheel lpa$unit
+lpt*|lpa*)
+	unit=`expr $i : '...\(.*\)'`
+	case $i in
+	lpt*) name=lpt; flags=0;;
+	lpa*) name=lpa; flags=128;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c 16 `expr $unit + $flags`
+	chown root.wheel $name$unit
 	;;
 
-lpt*)
-	unit=`expr $i : 'lpt\(.*\)'`
-	rm -f lpt$unit
-	mknod lpt$unit c 16 $unit
-	chown root.wheel lpt$unit
-	;;
-
-bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
-	rm -f bpf$unit
-	mknod bpf$unit c 23 $unit
-	chown root.wheel bpf$unit
-	;;
-
-tun*)
-	unit=`expr $i : 'tun\(.*\)'`
-	rm -f tun$unit
-	mknod tun$unit c 40 $unit
-	chmod 600 tun$unit
-	chown root.wheel tun$unit
+bpf*|tun*)
+	unit=`expr $i : '...\(.*\)'`
+	case $i in
+	bpf*) name=bpf; chr=23;;
+	tun*) name=tun; chr=40;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown root.wheel $name$unit
 	;;
 
 speaker)					# (XXX - installed)
@@ -300,25 +296,16 @@ lkm)
 	chmod 640 lkm
 	;;
 
-mms*)
-	unit=`expr $i : 'mms\(.*\)'`
-	rm -f mms$unit
-	mknod mms$unit c 35 $unit
-	chown root.wheel mms$unit
-	;;
-
-lms*)
-	unit=`expr $i : 'lms\(.*\)'`
-	rm -f lms$unit
-	mknod lms$unit c 36 $unit
-	chown root.wheel lms$unit
-	;;
-
-pms*)
-	unit=`expr $i : 'pms\(.*\)'`
-	rm -f pms$unit
-	mknod pms$unit c 37 $unit
-	chown root.wheel pms$unit
+mms*|lms*|pms*)
+	unit=`expr $i : '.ms\(.*\)'`
+	case $i in
+	mms*) name=mms; chr=35;;
+	lms*) name=lms; chr=36;;
+	pms*) name=pms; chr=37;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown root.wheel $name$unit
 	;;
 
 mouse*)						# (XXX)

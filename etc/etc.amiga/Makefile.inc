@@ -1,7 +1,7 @@
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
-#	$NetBSD: Makefile.inc,v 1.6.2.2 1995/11/24 19:44:36 chopps Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1995/11/28 05:40:21 jtc Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-install

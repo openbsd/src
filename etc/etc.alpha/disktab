@@ -1,10 +1,10 @@
-#	$NetBSD: disktab,v 1.1 1995/02/23 05:59:32 cgd Exp $
+#	$NetBSD: disktab,v 1.2 1995/10/13 03:09:39 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
 # the end, etc.  A good setup to make a disk image from...
 rz25|RZ25|DEC RZ25 SCSI:\
 	:ty=winchester:dt=SCSI:ns#62:nt#9:nc#1476:\
-	:pa#139500:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
-	:pb#139500:ob#139500:tb=swap:\
+	:pa#111600:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#111600:ob#111600:tb=swap:\
 	:pc#823608:oc#0:\
-	:pd#544608:od#279000:bd#8192:fd#1024:td=4.2BSD:
+	:pd#600408:od#223200:bd#8192:fd#1024:td=4.2BSD:

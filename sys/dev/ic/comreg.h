@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.6 1995/06/28 04:31:30 cgd Exp $	*/
+/*	$NetBSD: comreg.h,v 1.7 1995/10/15 19:43:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,19 +66,19 @@
 #define	FIFO_TRIGGER_8	0x80
 #define	FIFO_TRIGGER_14	0xc0
 
-/* character format control register */
-#define	CFCR_DLAB	0x80
-#define	CFCR_SBREAK	0x40
-#define	CFCR_PZERO	0x30
-#define	CFCR_PONE	0x20
-#define	CFCR_PEVEN	0x10
-#define	CFCR_PODD	0x00
-#define	CFCR_PENAB	0x08
-#define	CFCR_STOPB	0x04
-#define	CFCR_8BITS	0x03
-#define	CFCR_7BITS	0x02
-#define	CFCR_6BITS	0x01
-#define	CFCR_5BITS	0x00
+/* line control register */
+#define	LCR_DLAB	0x80
+#define	LCR_SBREAK	0x40
+#define	LCR_PZERO	0x30
+#define	LCR_PONE	0x20
+#define	LCR_PEVEN	0x10
+#define	LCR_PODD	0x00
+#define	LCR_PENAB	0x08
+#define	LCR_STOPB	0x04
+#define	LCR_8BITS	0x03
+#define	LCR_7BITS	0x02
+#define	LCR_6BITS	0x01
+#define	LCR_5BITS	0x00
 
 /* modem control register */
 #define	MCR_LOOPBACK	0x10
