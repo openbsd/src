@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.106 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.107 2004/08/19 10:38:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -740,15 +740,13 @@ knexthop_validate(struct knexthop_node *kn)
 				if (was_valid)
 					send_nexthop_update(&n);
 			} else {				/* valid */
-				if (!was_valid) {
-					n.valid = 1;
-					n.connected = kr->r.flags & F_CONNECTED;
-					if ((n.gateway.v4.s_addr =
-					    kr->r.nexthop.s_addr) != 0)
-						n.gateway.af = AF_INET;
-					memcpy(&n.kr, &kr->r, sizeof(n.kr));
-					send_nexthop_update(&n);
-				}
+				n.valid = 1;
+				n.connected = kr->r.flags & F_CONNECTED;
+				if ((n.gateway.v4.s_addr =
+				    kr->r.nexthop.s_addr) != 0)
+					n.gateway.af = AF_INET;
+				memcpy(&n.kr, &kr->r, sizeof(n.kr));
+				send_nexthop_update(&n);
 			}
 			kroute_attach_nexthop(kn, kr);
 		}
