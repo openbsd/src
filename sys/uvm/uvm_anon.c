@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.19 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.15 2001/02/18 21:19:08 chs Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.20 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
  *
@@ -103,13 +103,15 @@ uvm_anon_add(count)
 	if (needed <= 0) {
 		return 0;
 	}
+ 
 	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed);
+
+	/* XXX Should wait for VM to free up. */
 	if (anon == NULL) {
-		simple_lock(&uvm.afreelock);
-		uvmexp.nanonneeded -= count;
-		simple_unlock(&uvm.afreelock);
-		return ENOMEM;
+		printf("uvm_anon_add: can not allocate %d anons\n", needed);
+		panic("uvm_anon_add");
 	}
+
 	MALLOC(anonblock, void *, sizeof(*anonblock), M_UVMAMAP, M_WAITOK);
 
 	anonblock->count = needed;
@@ -149,8 +151,6 @@ uvm_anon_remove(count)
 
 /*
  * allocate an anon
- *
- * => new anon is returned locked!
  */
 struct vm_anon *
 uvm_analloc()
@@ -165,8 +165,6 @@ uvm_analloc()
 		a->an_ref = 1;
 		a->an_swslot = 0;
 		a->u.an_page = NULL;		/* so we can free quickly */
-		LOCK_ASSERT(simple_lock_held(&a->an_lock) == 0);
-		simple_lock(&a->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return(a);
@@ -187,9 +185,6 @@ uvm_anfree(anon)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_anfree"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(anon=0x%x)", anon, 0,0,0);
-
-	KASSERT(anon->an_ref == 0);
-	LOCK_ASSERT(simple_lock_held(&anon->an_lock) == 0);
 
 	/*
 	 * get page
@@ -320,8 +315,6 @@ uvm_anon_lockloanpg(anon)
 {
 	struct vm_page *pg;
 	boolean_t locked = FALSE;
-
-	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
 	/*
 	 * loop while we have a resident page that has a non-zero loan count.
@@ -477,10 +470,7 @@ anon_pagein(anon)
 	int rv;
 
 	/* locked: anon */
-	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
-
 	rv = uvmfault_anonget(NULL, NULL, anon);
-
 	/*
 	 * if rv == VM_PAGER_OK, anon is still locked, else anon
 	 * is unlocked
@@ -500,6 +490,13 @@ anon_pagein(anon)
 		 */
 
 		return FALSE;
+
+	default:
+#ifdef DIAGNOSTIC
+		panic("anon_pagein: uvmfault_anonget -> %d", rv);
+#else
+		return FALSE;
+#endif
 	}
 
 	/*

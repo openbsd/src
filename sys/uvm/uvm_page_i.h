@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.13 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_page_i.h,v 1.16 2001/01/28 23:30:45 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.14 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -194,12 +194,11 @@ uvm_pageunwire(pg)
 }
 
 /*
- * uvm_pagedeactivate: deactivate page
+ * uvm_pagedeactivate: deactivate page -- no pmaps have access to page
  *
  * => caller must lock page queues
  * => caller must check to make sure page is not wired
  * => object that page belongs to must be locked (so we can adjust pg->flags)
- * => caller must clear the reference on the page before calling
  */
 
 PAGE_INLINE void

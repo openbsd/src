@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.39 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.51 2001/03/09 01:02:12 chs Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.40 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -187,11 +187,11 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-	if (UVM_OBJ_IS_VTEXT(pg->uobject)) {
-		uvmexp.vtextpages--;
-	} else if (UVM_OBJ_IS_VNODE(pg->uobject)) {
-		uvmexp.vnodepages--;
+#ifdef UBC
+	if (pg->uobject->pgops == &uvm_vnodeops) {
+		uvm_pgcnt_vnode--;
 	}
+#endif
 
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
@@ -895,10 +895,6 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
-
-	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
-	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
-
 	s = uvm_lock_fpageq();
 
 	/*
@@ -1024,7 +1020,9 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
-		uvmexp.anonpages++;
+#ifdef UBC
+		uvm_pgcnt_anon++;
+#endif
 	} else {
 		if (obj)
 			uvm_pageinsert(pg);
@@ -1181,10 +1179,11 @@ uvm_pagefree(pg)
 		pg->wire_count = 0;
 		uvmexp.wired--;
 	}
-
+#ifdef UBC
 	if (pg->uanon) {
-		uvmexp.anonpages--;
+		uvm_pgcnt_anon--;
 	}
+#endif
 
 	/*
 	 * and put on free queue
@@ -1248,8 +1247,6 @@ uvm_page_unbusy(pgs, npgs)
 			}
 		} else {
 			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
-			KASSERT(pg->wire_count ||
-				(pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)));
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}

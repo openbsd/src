@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.18 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.30 2001/02/18 21:19:09 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.19 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
  *
@@ -255,7 +255,6 @@ amap_free(amap)
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
@@ -458,8 +457,6 @@ amap_share_protect(entry, prot)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
 
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
-
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_pageoff + slots;
 
@@ -502,8 +499,6 @@ amap_wipeout(amap)
 	struct vm_anon *anon;
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
-
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
@@ -792,7 +787,6 @@ ReStart:
 			 */
 			nanon = uvm_analloc();
 			if (nanon) {
-				/* nanon is locked! */
 				npg = uvm_pagealloc(NULL, 0, nanon, 0);
 			} else
 				npg = NULL;	/* XXX: quiet gcc warning */
@@ -804,8 +798,7 @@ ReStart:
 				 * we can't ...
 				 */
 				if (nanon) {
-					nanon->an_ref--;
-					simple_unlock(&nanon->an_lock);
+					simple_lock(&nanon->an_lock);
 					uvm_anfree(nanon);
 				}
 				simple_unlock(&anon->an_lock);
@@ -832,7 +825,6 @@ ReStart:
 			uvm_lock_pageq();
 			uvm_pageactivate(npg);
 			uvm_unlock_pageq();
-			simple_unlock(&nanon->an_lock);
 		}
 
 		simple_unlock(&anon->an_lock);

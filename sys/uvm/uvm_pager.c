@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.29 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.41 2001/02/18 19:26:50 chs Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.30 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
  *
@@ -187,8 +187,7 @@ enter:
 		KASSERT(pp);
 		KASSERT(pp->flags & PG_BUSY);
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    prot, PMAP_WIRED | ((pp->flags & PG_FAKE) ? prot :
-					VM_PROT_READ));
+		    prot, PMAP_WIRED | prot);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
@@ -315,6 +314,11 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	/*
 	 * attempt to cluster around the left [backward], and then 
 	 * the right side [forward].    
+	 *
+	 * note that for inactive pages (pages that have been deactivated)
+	 * there are no valid mappings and PG_CLEAN should be up to date.
+	 * [i.e. there is no need to query the pmap with pmap_is_modified
+	 * since there are no mappings].
 	 */
 
 	for (forward  = 0 ; forward <= 1 ; forward++) {
@@ -328,28 +332,23 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			if (pclust == NULL) {
 				break;			/* no page */
 			}
+			/* handle active pages */
+			/* NOTE: inactive pages don't have pmap mappings */
+			if ((pclust->pqflags & PQ_INACTIVE) == 0) {
+				if ((flags & PGO_DOACTCLUST) == 0) {
+					/* dont want mapped pages at all */
+					break;
+				}
 
-			if ((flags & PGO_DOACTCLUST) == 0) {
-				/* dont want mapped pages at all */
-				break;
-			}
-
-			/*
-			 * get an up-to-date view of the "clean" bit.
-			 * note this isn't 100% accurate, but it doesn't
-			 * have to be.  if it's not quite right, the
-			 * worst that happens is we don't cluster as
-			 * aggressively.  we'll sync-it-for-sure before
-			 * we free the page, and clean it if necessary.
-			 */
-			if ((pclust->flags & PG_CLEANCHK) == 0) {
-				if ((pclust->flags & (PG_CLEAN|PG_BUSY))
-				    == PG_CLEAN &&
-				   pmap_is_modified(pclust))
-					pclust->flags &= ~PG_CLEAN;
-
-				/* now checked */
-				pclust->flags |= PG_CLEANCHK;
+				/* make sure "clean" bit is sync'd */
+				if ((pclust->flags & PG_CLEANCHK) == 0) {
+					if ((pclust->flags & (PG_CLEAN|PG_BUSY))
+					   == PG_CLEAN &&
+					   pmap_is_modified(pclust))
+						pclust->flags &= ~PG_CLEAN;
+					/* now checked */
+					pclust->flags |= PG_CLEANCHK;
+				}
 			}
 
 			/* is page available for cleaning and does it need it */
@@ -862,7 +861,6 @@ uvm_aio_aiodone(bp)
 			pgs[i]->flags |= PG_CLEAN;
 			pgs[i]->flags &= ~PG_FAKE;
 		}
-		uvm_pageactivate(pg);
 		if (swap) {
 			if (pg->pqflags & PQ_ANON) {
 				simple_unlock(&pg->uanon->an_lock);

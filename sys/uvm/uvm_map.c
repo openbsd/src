@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.35 2001/12/19 08:58:07 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.93 2001/02/11 01:34:23 eeh Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.36 2002/01/02 22:23:25 miod Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2439,6 +2439,8 @@ uvm_map_pageable_all(map, flags, limit)
  * => we may sleep while cleaning if SYNCIO [with map read-locked]
  */
 
+int	amap_clean_works = 1;	/* XXX for now, just in case... */
+
 int
 uvm_map_clean(map, start, end, flags)
 	vm_map_t map;
@@ -2476,10 +2478,8 @@ uvm_map_clean(map, start, end, flags)
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ARGUMENT);
 		}
-		if (end <= current->end) {
-			break;
-		}
-		if (current->end != current->next->start) {
+		if (end > current->end && (current->next == &map->header ||
+		    current->end != current->next->start)) {
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ADDRESS);
 		}
@@ -2487,7 +2487,7 @@ uvm_map_clean(map, start, end, flags)
 
 	error = KERN_SUCCESS;
 
-	for (current = entry; start < end; current = current->next) {
+	for (current = entry; current->start < end; current = current->next) {
 		amap = current->aref.ar_amap;	/* top layer */
 		uobj = current->object.uvm_obj;	/* bottom layer */
 		KASSERT(start >= current->start);
@@ -2501,6 +2501,10 @@ uvm_map_clean(map, start, end, flags)
 		 */
 
 		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
+			goto flush_object;
+
+		/* XXX for now, just in case... */
+		if (amap_clean_works == 0)
 			goto flush_object;
 
 		amap_lock(amap);
@@ -2555,8 +2559,15 @@ uvm_map_clean(map, start, end, flags)
 				}
 				KASSERT(pg->uanon == anon);
 
+#ifdef UBC
 				/* ...and deactivate the page. */
 				pmap_clear_reference(pg);
+#else
+				/* zap all mappings for the page. */
+				pmap_page_protect(pg, VM_PROT_NONE);
+
+				/* ...and deactivate the page. */
+#endif
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();
