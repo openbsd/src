@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2003/02/10 15:47:02 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2003/02/12 05:30:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1184,7 +1184,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */
-	stack = hppa_round_page(stack);
+	stack = (stack + 0x1f) & ~0x1f;
 	tf->tf_r3 = stack;
 	tf->tf_sp = stack += HPPA_FRAME_SIZE;
 	zero = 0;
