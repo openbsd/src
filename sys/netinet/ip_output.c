@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.78 2000/06/21 17:25:04 form Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.79 2000/07/29 22:51:22 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -258,7 +258,8 @@ ip_output(m0, va_alist)
 		}
 
 		/* Set the source IP address */
-		ip->ip_src = ia->ia_addr.sin_addr;
+                if (!IN_MULTICAST(ip->ip_dst.s_addr))
+		        ip->ip_src = ia->ia_addr.sin_addr;
 	}
 
 #ifdef IPSEC
