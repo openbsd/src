@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2004/09/16 09:35:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.13 2004/10/01 04:15:14 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -272,6 +272,8 @@ lpt1	at isa? port 0x278 irq 5
 #ne0	at isa? port 0x280 irq 9
 #ne1	at isa? port 0x300 irq 10
 ep*	at isa?
+lc0 at isa? port 0x200 irq ?
+lc1 at isa? port 0x280 irq ?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
