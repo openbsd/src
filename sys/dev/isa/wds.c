@@ -1,6 +1,6 @@
 /*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
 
-#define	WDSDIAG
+#undef	WDSDIAG
 #define	integrate
 
 /*
@@ -48,7 +48,8 @@
  *      workstations and seems to include an -ASC as well as floppy
  *      and ESDI interfaces.
  *
- * Loosely based on Theo Deraadt's unfinished attempt.
+ * Loosely based on Theo Deraadt's unfinished attempt says the NetBSD group
+ * so they decided to delete the copyright that file had on it.
  */
 
 #include <sys/types.h>

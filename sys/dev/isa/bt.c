@@ -1,6 +1,6 @@
 /*	$NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp $	*/
 
-#define BTDIAG
+#undef BTDIAG
 #define integrate
 
 /*
