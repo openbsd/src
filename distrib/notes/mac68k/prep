@@ -5,21 +5,18 @@ of the ones that have been tried and seem to work are:
 	HD SC Setup from Apple
 	I/O Formatter from Diversified (?)
 	Silverlining from LaCie
-	APS Disk Tools
-
-The last can be found on any A/UX ftp site--for example:
-jagubox.gsfc.nasa.gov:/pub/mac/APS273.sit.hqx, or
-dunkin.princeton.edu:/pub/jagubox/mac/APS273.sit.hqx.
 
 ** First, be sure you have a reliable backup of any data
-** which you may want to keep.  Repartitioning your hard
-** drive is an excellent way to destroy important data.
+** which you may want to keep.  All information on the hard
+** drive you will be repartitioning will be lost.
 
-Second, use your favorite partitioning utility to make
-at least an A/UX "Root & Usr" partition and an A/UX "Swap"
+That done, use your favorite partitioning utility to make
+at least one A/UX "Root & Usr" partition and an A/UX "Swap"
 partition.  The "Root & Usr" partition should be _at least_
-50MB in size if you wish to install everything.  Generally,
-you should allocate twice as much swap space as you have real
+50MB in size if you wish to install all the sets.  This partition
+will be the root partition of your OpenBSD system.
+
+Generally, you should allocate twice as much swap space as you have real
 memory (so, if you have 8MB of RAM, specify 16MB of swap space).
 Systems that will be heavily used or that are low on real
 memory should have more swap space allocated.  Systems that
