@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.6 1999/03/31 20:29:10 niklas Exp $
-$EOM: BUGS,v 1.24 1999/03/31 20:24:50 niklas Exp $
+$OpenBSD: BUGS,v 1.7 1999/04/19 19:55:30 niklas Exp $
+$EOM: BUGS,v 1.28 1999/04/17 15:48:24 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -18,7 +18,7 @@ file:
 
 * If a phase 1 SA negotiation terminates with a cause that is to be sent in
   a NOTIFY to the peer, we get multiple free calls on the cleanup of the
-  informational exchange.
+  informational exchange. [fixed]
 
 * IKE mandates that a HASH should be added to informational exchanges in
   phase 2.
@@ -61,8 +61,13 @@ file:
 
 * ISAKMP SAs does not get removed after rekeying. [fixed]
 
-* On-demand PF_ENCAP SAs does not get reestablished.
+* On-demand PF_ENCAP SAs does not get reestablished. [fixed]
 
 * Rekeying is now done automatically on expirations, it should not.  The
   SAs should be brought up on-demand just like the first time.
 
+* Notifications regarding exchange errors seems to not have the right SPI,
+  at least not in phase 1, in NO_PROPOSAL_CHOSEN.
+
+* Outgoing informational exchanges when we use INVALID_PAYLOAD_TYPE
+  cause a DOI error.
