@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2002/02/23 01:25:11 art Exp $
+# $OpenBSD: Makefile,v 1.3 2002/11/13 21:52:11 fgsch Exp $
 
-SUBDIR+= libstrong libweak prog
+SUBDIR+= libstrong libweak prog prog2
 
 install:
 
