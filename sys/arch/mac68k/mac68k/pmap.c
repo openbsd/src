@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 1999/07/18 16:23:47 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 1999/07/18 16:45:51 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.28 1996/10/21 05:42:27 scottr Exp $	*/
 
 /* 
@@ -792,13 +792,13 @@ pmap_reference(pmap)
 }
 
 void	loadustp __P((vm_offset_t));
-void	pmap_activate __P((register pmap_t));
 
 void
-pmap_activate(pmap)
-	register pmap_t pmap;
+pmap_activate(p)
+	struct proc *p;
 {
 	struct pcb *pcbp = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 	if (pmap == NULL)
 		return;
@@ -811,11 +811,9 @@ pmap_activate(pmap)
 	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
 }
 
-void	pmap_deactivate __P((register pmap_t));
-
 void
-pmap_deactivate(pmap)
-	register pmap_t pmap;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
