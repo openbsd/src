@@ -16,12 +16,14 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$Id: skeleton.c,v 1.1.1.1 1995/10/18 08:47:06 deraadt Exp $\";",
+    "static char yyrcsid[] = \"$Id: skeleton.c,v 1.2 1995/12/22 01:41:55 niklas Exp $\";",
     "#endif",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",
     "#define YYMINOR 9",
-    "#define yyclearin (yychar=(-1))",
+    "#define YYLEX yylex()",
+    "#define YYEMPTY -1",
+    "#define yyclearin (yychar=(YYEMPTY))",
     "#define yyerrok (yyerrflag=0)",
     "#define YYRECOVERING (yyerrflag!=0)",
     0
