@@ -1,7 +1,7 @@
-/* nodemenu.c -- Produce a menu of all visited nodes.
-   $Id: nodemenu.c,v 1.2 1999/01/11 16:38:08 espie Exp $
+/* nodemenu.c -- produce a menu of all visited nodes.
+   $Id: nodemenu.c,v 1.3 2000/02/09 02:18:40 espie Exp $
 
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -168,7 +168,9 @@ get_visited_nodes (filter_func)
       /* Delete duplicates. */
       for (i = 0, newlen = 1; i < lines_index - 1; i++)
         {
-          if (strcmp (lines[i], lines[i + 1]) == 0)
+	  /* Use FILENAME_CMP here, since the most important piece
+	     of info in each line is the file name of the node.  */
+          if (FILENAME_CMP (lines[i], lines[i + 1]) == 0)
             {
               free (lines[i]);
               lines[i] = (char *)NULL;

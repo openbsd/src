@@ -360,7 +360,7 @@ installcheck: installcheck-am
 install-exec-am:
 install-exec: install-exec-am
 
-install-data-am: install-info-am install-man install-data-local
+install-data-am: install-info-am install-data-local
 install-data: install-data-am
 
 install-am: all-am
@@ -386,17 +386,17 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-mostlyclean-am:  mostlyclean-vti mostlyclean-vti.1 mostlyclean-aminfo \
+mostlyclean-am:  mostlyclean-vti mostlyclean-aminfo \
 		mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
-clean-am:  clean-vti clean-vti.1 clean-aminfo clean-generic \
+clean-am:  clean-vti clean-aminfo clean-generic \
 		mostlyclean-am
 
 clean: clean-am
 
-distclean-am:  distclean-vti distclean-vti.1 distclean-aminfo \
+distclean-am:  distclean-vti distclean-aminfo \
 		distclean-generic clean-am
 
 distclean: distclean-am

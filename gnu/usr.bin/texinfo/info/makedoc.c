@@ -1,10 +1,7 @@
-/* makedoc.c -- Make doc.c and funs.h from input files.
-   $Id: makedoc.c,v 1.2 1999/01/11 16:38:08 espie Exp $
+/* makedoc.c -- make doc.c and funs.h from input files.
+   $Id: makedoc.c,v 1.3 2000/02/09 02:18:40 espie Exp $
 
-   This file is part of GNU Info, a program for reading online documentation
-   stored in Info format.
-
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 97, 98, 99 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -96,6 +93,15 @@ main (argc, argv)
   int tags_only = 0;
   FILE *funs_stream, *doc_stream;
 
+#if STRIP_DOT_EXE
+  {
+    char *dot = strrchr (argv[0], '.');
+
+    if (dot && FILENAME_CMP (dot, ".exe") == 0)
+      *dot = 0;
+  }
+#endif
+
   for (i = 1; i < argc; i++)
     if (strcmp (argv[i], "-tags") == 0)
       {
@@ -105,8 +111,8 @@ main (argc, argv)
 
   if (tags_only)
     {
-      funs_filename = "/dev/null";
-      doc_filename = "/dev/null";
+      funs_filename = NULL_DEVICE;
+      doc_filename = NULL_DEVICE;
     }
   
   funs_stream = must_fopen (funs_filename, "w");
@@ -157,7 +163,7 @@ main (argc, argv)
 
   if (tags_only)
     maybe_dump_tags (stdout);
-  exit (0);
+  xexit (0);
 }
 
 /* Dumping out the contents of an Emacs tags table. */
@@ -166,6 +172,12 @@ maybe_dump_tags (stream)
      FILE *stream;
 {
   register int i;
+
+  /* Emacs needs its TAGS file to be in Unix text format (i.e., only
+     newline at end of every line, no CR), so when we generate a
+     TAGS table, we must switch the output stream to binary mode.
+     (If the table is written to a terminal, this is obviously not needed.) */
+  SET_BINARY (fileno (stream));
 
   /* Print out the information for each block. */
   for (i = 0; i < emacs_tags_index; i++)
@@ -261,7 +273,10 @@ process_one_file (filename, doc_stream, funs_stream)
 
   file_size = (long) finfo.st_size;
   buffer = (char *)xmalloc (1 + file_size);
-  read (descriptor, buffer, file_size);
+  /* On some systems, the buffer will actually contain
+     less characters than the full file's size, because
+     the CR characters are removed from line endings.  */
+  file_size = read (descriptor, buffer, file_size);
   close (descriptor);
 
   offset = 0;
@@ -448,7 +463,7 @@ fatal_file_error (filename)
      char *filename;
 {
   fprintf (stderr, _("Couldn't manipulate the file %s.\n"), filename);
-  exit (2);
+  xexit (2);
 }
 
 static FILE *

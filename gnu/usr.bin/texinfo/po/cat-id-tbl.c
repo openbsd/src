@@ -58,408 +58,552 @@ Go to the next matching index item from the last `\\[index-search]' command", 38
   {"\
 \n\
 * Menu: Nodes whoses indices contain \"%s\":\n", 48},
-  {"Try --help for more information.", 49},
+  {"Try --help for more information.\n", 49},
   {"\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n", 50},
-  {"no entries found\n", 51},
-  {"There is no menu in this node.", 52},
-  {"There is no menu item \"%s\" in this node.", 53},
-  {"Unable to find the node referenced by \"%s\".", 54},
+  {"no index entries found for `%s'\n", 51},
   {"\
-Usage: %s [OPTION]... [INFO-FILE [MENU-ITEM...]]\n\
+Usage: %s [OPTION]... [MENU-ITEM...]\n\
 \n\
 Read documentation in Info format.\n\
-For more complete documentation on how to use Info, run `info info \
-options'.\n\
 \n\
 Options:\n\
---directory DIR              add DIR to INFOPATH.\n\
---dribble FILENAME           remember user keystrokes in FILENAME.\n\
---file FILENAME              specify Info file to visit.\n\
---node NODENAME              specify nodes in first visited Info file.\n\
---output FILENAME            output selected nodes to FILENAME.\n\
---restore FILENAME           read initial keystrokes from FILENAME.\n\
---subnodes                   recursively output menu items.\n\
---help                       display this help and exit.\n\
---version                    display version information and exit.\n\
+ --apropos=SUBJECT        look up SUBJECT in all indices of all manuals.\n\
+ --directory=DIR          add DIR to INFOPATH.\n\
+ --dribble=FILENAME       remember user keystrokes in FILENAME.\n\
+ --file=FILENAME          specify Info file to visit.\n\
+ --help                   display this help and exit.\n\
+ --index-search=STRING    go to node pointed by index entry STRING.\n\
+ --node=NODENAME          specify nodes in first visited Info file.\n\
+ --output=FILENAME        output selected nodes to FILENAME.\n\
+ --restore=FILENAME       read initial keystrokes from FILENAME.\n\
+ --show-options, --usage  go to command-line options node.\n\
+ --subnodes               recursively output menu items.\n\
+%s --vi-keys                use vi-like and less-like key bindings.\n\
+ --version                display version information and exit.\n\
 \n\
-The first argument, if present, is the name of the Info file to read.\n\
+The first non-option argument, if present, is the menu entry to start from;\n\
+it is searched for in all `dir' files along INFOPATH.\n\
+If it is not present, info merges all `dir' files and shows the result.\n\
 Any remaining arguments are treated as the names of menu\n\
-items in the initial node visited.  For example, `info emacs buffers'\n\
-moves to the node `buffers' in the info file `emacs'.\n\
+items relative to the initial node visited.\n\
 \n\
-Email bug reports to bug-texinfo@gnu.org.", 55},
-  {"Basic Commands in Info Windows", 56},
+Examples:\n\
+  info                       show top-level dir menu\n\
+  info emacs                 start at emacs node from top-level dir\n\
+  info emacs buffers         start at buffers node within emacs manual\n\
+  info --show-options emacs  start at node with emacs' command line options\n\
+  info -f ./foo.info         show file ./foo.info, not searching dir\n\
+\n\
+Email bug reports to bug-texinfo@gnu.org,\n\
+general questions and discussion to help-texinfo@gnu.org.\n", 52},
+  {"Cannot find node `%s'.", 53},
+  {"Cannot find node `(%s)%s'.", 54},
+  {"Cannot find a window!", 55},
+  {"Point doesn't appear within this window's node!", 56},
+  {"Cannot delete the last window.", 57},
+  {"No menu in this node.", 58},
+  {"No footnotes in this node.", 59},
+  {"No cross references in this node.", 60},
+  {"No `%s' pointer for this node.", 61},
+  {"Unknown Info command `%c'; try `?' for help.", 62},
+  {"Terminal type `%s' is not smart enough to run Info.", 63},
+  {"You are already at the last page of this node.", 64},
+  {"You are already at the first page of this node.", 65},
+  {"Only one window.", 66},
+  {"Resulting window would be too small.", 67},
+  {"Not enough room for a help window, please delete a window.", 68},
+  {"Basic Commands in Info Windows\n", 69},
+  {"******************************\n", 70},
+  {"  %-10s  Quit this help.\n", 71},
+  {"  %-10s  Quit Info altogether.\n", 72},
+  {"  %-10s  Invoke the Info tutorial.\n", 73},
+  {"Moving within a node:\n", 74},
+  {"---------------------\n", 75},
+  {"  %-10s  Scroll forward a page.\n", 76},
+  {"  %-10s  Scroll backward a page.\n", 77},
+  {"  %-10s  Go to the beginning of this node.\n", 78},
+  {"  %-10s  Go to the end of this node.\n", 79},
+  {"  %-10s  Scroll forward 1 line.\n", 80},
+  {"  %-10s  Scroll backward 1 line.\n", 81},
+  {"Selecting other nodes:\n", 82},
+  {"----------------------\n", 83},
+  {"  %-10s  Move to the `next' node of this node.\n", 84},
+  {"  %-10s  Move to the `previous' node of this node.\n", 85},
+  {"  %-10s  Move `up' from this node.\n", 86},
+  {"  %-10s  Pick menu item specified by name.\n", 87},
+  {"              Picking a menu item causes another node to be selected.\n", 88},
+  {"  %-10s  Follow a cross reference.  Reads name of reference.\n", 89},
+  {"  %-10s  Move to the last node seen in this window.\n", 90},
+  {"  %-10s  Skip to next hypertext link within this node.\n", 91},
+  {"  %-10s  Follow the hypertext link under cursor.\n", 92},
+  {"  %-10s  Move to the `directory' node.  Equivalent to `g (DIR)'.\n", 93},
+  {"  %-10s  Move to the Top node.  Equivalent to `g Top'.\n", 94},
+  {"Other commands:\n", 95},
+  {"---------------\n", 96},
+  {"  %-10s  Pick first ... ninth item in node's menu.\n", 97},
+  {"  %-10s  Pick last item in node's menu.\n", 98},
+  {"\
+  %-10s  Search for a specified string in the index entries of this Info\n", 99},
+  {"\
+              file, and select the node referenced by the first entry \
+found.\n", 100},
+  {"  %-10s  Move to node specified by name.\n", 101},
+  {"\
+              You may include a filename as well, as in (FILENAME)NODENAME.\n", 102},
+  {"\
+  %-10s  Search forward through this Info file for a specified string,\n", 103},
+  {"\
+              and select the node in which the next occurrence is found.\n", 104},
+  {"  %-10s  Search backward in this Info file for a specified string,\n", 105},
+  {"The current search path is:\n", 106},
+  {"\
+Commands available in Info windows:\n\
+\n", 107},
+  {"\
+Commands available in the echo area:\n\
+\n", 108},
   {"\
 The following commands can only be invoked via M-x:\n\
-\n", 57},
-  {"--- Use `\\[history-node]' or `\\[kill-node]' to exit ---\n", 58},
-  {"Display help message", 59},
-  {"Visit Info node `(info)Help'", 60},
-  {"Print documentation for KEY", 61},
-  {"Describe key: %s", 62},
-  {"ESC %s is undefined.", 63},
-  {"%s is undefined.", 64},
-  {"%s is defined to %s.", 65},
-  {"Where is command: ", 66},
-  {"`%s' is not on any keys", 67},
-  {"%s can only be invoked via %s.", 68},
-  {"%s can be invoked via %s.", 69},
-  {"There is no function named `%s'", 70},
-  {"Read the name of an Info command and describe it", 71},
-  {"Describe command: ", 72},
-  {"Read a command name in the echo area and execute it", 73},
-  {"Cannot execute an `echo-area' command here.", 74},
-  {"Set the height of the displayed window", 75},
-  {"Set screen height to (%d): ", 76},
+\n", 109},
+  {"--- Use `\\[history-node]' or `\\[kill-node]' to exit ---\n", 110},
+  {"Display help message", 111},
+  {"Visit Info node `(info)Help'", 112},
+  {"Print documentation for KEY", 113},
+  {"Describe key: %s", 114},
+  {"ESC %s is undefined.", 115},
+  {"%s is undefined.", 116},
+  {"%s is defined to %s.", 117},
+  {"Show what to type to execute a given command", 118},
+  {"Where is command: ", 119},
+  {"`%s' is not on any keys", 120},
+  {"%s can only be invoked via %s.", 121},
+  {"%s can be invoked via %s.", 122},
+  {"There is no function named `%s'", 123},
+  {"Read the name of an Info command and describe it", 124},
+  {"Describe command: ", 125},
+  {"Read a command name in the echo area and execute it", 126},
+  {"Cannot execute an `echo-area' command here.", 127},
+  {"Set the height of the displayed window", 128},
+  {"Set screen height to (%d): ", 129},
   {"\
    Source files groveled to make this file include:\n\
-\n", 77},
-  {"Couldn't manipulate the file %s.\n", 78},
+\n", 130},
+  {"Couldn't manipulate the file %s.\n", 131},
   {"\
 \n\
 * Menu:\n\
   (File)Node                        Lines   Size   Containing File\n\
-  ----------                        -----   ----   ---------------", 79},
+  ----------                        -----   ----   ---------------", 132},
   {"\
 Here is the menu of nodes you have recently visited.\n\
-Select one from this menu, or use `\\[history-node]' in another window.\n", 80},
-  {"Make a window containing a menu of all of the currently visited nodes", 81},
-  {"Select a node which has been previously visited in a visible window", 82},
-  {"Select visited node: ", 83},
-  {"The reference disappeared! (%s).", 84},
+Select one from this menu, or use `\\[history-node]' in another window.\n", 133},
+  {"Make a window containing a menu of all of the currently visited nodes", 134},
+  {"Select a node which has been previously visited in a visible window", 135},
+  {"Select visited node: ", 136},
+  {"The reference disappeared! (%s).", 137},
   {"\
-Welcome to Info version %s. \"\\[get-help-window]\" for help, \
-\"\\[menu-item]\" for menu item.", 85},
-  {"Move down to the next line", 86},
-  {"Move up to the previous line", 87},
-  {"Move to the end of the line", 88},
-  {"Move to the start of the line", 89},
-  {" times", 90},
-  {"%d times", 91},
-  {"No \"Next\" pointer for this node.", 92},
-  {"Following \"Next\" node...", 93},
-  {"Next", 94},
-  {"Selecting first menu item...", 95},
-  {"Selecting \"Next\" node...", 96},
-  {"Up", 97},
-  {"No more nodes.", 98},
-  {"No \"Prev\" for this node.", 99},
-  {"Moving \"Prev\" in this window.", 100},
-  {"Prev", 101},
-  {"No \"Prev\" or \"Up\" for this node.", 102},
-  {"Moving \"Up\" in this window.", 103},
-  {"Moving to \"Prev\"'s last menu item.", 104},
-  {"Move forwards or down through node structure", 105},
-  {"Move backwards or up through node structure", 106},
-  {"Scroll forward in this window", 107},
-  {"Scroll backward in this window", 108},
-  {"Move to the start of this node", 109},
-  {"Move to the end of this node", 110},
-  {"Select the next window", 111},
-  {"Select the previous window", 112},
-  {"Split the current window", 113},
-  {"Delete the current window", 114},
-  {"Cannot delete a permanent window", 115},
-  {"Delete all other windows", 116},
-  {"Scroll the other window", 117},
-  {"Grow (or shrink) this window", 118},
-  {"Divide the available screen space among the visible windows", 119},
-  {"Toggle the state of line wrapping in the current window", 120},
-  {"Select the `Next' node", 121},
-  {"Select the `Prev' node", 122},
-  {"Select the `Up' node", 123},
-  {"Select the last node in this file", 124},
-  {"This window has no additional nodes", 125},
-  {"Select the first node in this file", 126},
-  {"Select the last item in this node's menu", 127},
-  {"Select this menu item", 128},
-  {"There aren't %d items in this menu.", 129},
-  {"Menu item (%s): ", 130},
-  {"Menu item: ", 131},
-  {"Follow xref (%s): ", 132},
-  {"Follow xref: ", 133},
-  {"Read a menu item and select its node", 134},
-  {"Read a footnote or cross reference and select its node", 135},
-  {"Move to the start of this node's menu", 136},
-  {"Visit as many menu items at once as possible", 137},
-  {"Read a node name and select it", 138},
-  {"Goto Node: ", 139},
-  {"Read a manpage reference and select it", 140},
-  {"Get Manpage: ", 141},
-  {"Select the node `Top' in this file", 142},
-  {"Top", 143},
-  {"Select the node `(dir)'", 144},
-  {"Kill node (%s): ", 145},
-  {"Cannot kill node `%s'", 146},
-  {"Cannot kill the last node", 147},
-  {"Select the most recently selected node", 148},
-  {"Kill this node", 149},
-  {"Read the name of a file and select it", 150},
-  {"Find file: ", 151},
-  {"Cannot find \"%s\".", 152},
-  {"Could not create output file \"%s\".", 153},
-  {"Done.", 154},
-  {"Writing node \"(%s)%s\"...", 155},
-  {"Writing node \"%s\"...", 156},
-  {"Pipe the contents of this node through INFO_PRINT_COMMAND", 157},
-  {"Cannot open pipe to \"%s\".", 158},
-  {"Printing node \"(%s)%s\"...", 159},
-  {"Printing node \"%s\"...", 160},
-  {"Searching subfile \"%s\"...", 161},
-  {"Read a string and search for it", 162},
-  {"%s for string [%s]: ", 163},
-  {"Search backward", 164},
-  {"Search", 165},
-  {"Search failed.", 166},
-  {"Search interactively for a string as you type it", 167},
-  {"I-search backward: ", 168},
-  {"I-search: ", 169},
-  {"Failing ", 170},
-  {"No cross references in this node.", 171},
-  {"Move to the previous cross reference", 172},
-  {"Move to the next cross reference", 173},
-  {"Select reference or menu item appearing on this line", 174},
-  {"Cancel current operation", 175},
-  {"Quit", 176},
-  {"Move to the cursor to a specific line of the window", 177},
-  {"Redraw the display", 178},
-  {"Quit using Info", 179},
-  {"Unknown command (%s).", 180},
-  {"\"\" is invalid", 181},
-  {"\"%s\" is invalid", 182},
-  {"Add this digit to the current numeric argument", 183},
-  {"Start (or multiply by 4) the current numeric argument", 184},
-  {"Internally used by \\[universal-argument]", 185},
-  {"readline: Out of virtual memory!\n", 186},
-  {"When \"On\", footnotes appear and disappear automatically", 187},
-  {"When \"On\", creating or deleting a window resizes other windows", 188},
-  {"When \"On\", flash the screen instead of ringing the bell", 189},
-  {"When \"On\", errors cause the bell to ring", 190},
-  {"When \"On\", Info garbage collects files which had to be uncompressed", 191},
-  {"When \"On\", the portion of the matched search string is highlighted", 192},
-  {"Controls what happens when scrolling is requested at the end of a node", 193},
-  {"The number lines to scroll when the cursor moves out of the window", 194},
-  {"When \"On\", Info accepts and displays ISO Latin characters", 195},
-  {"Explain the use of a variable", 196},
-  {"Describe variable: ", 197},
-  {"Set the value of an Info variable", 198},
-  {"Set variable: ", 199},
-  {"Set %s to value (%d): ", 200},
-  {"Set %s to value (%s): ", 201},
-  {"--*** Tags out of Date ***", 202},
-  {"-----Info: (), lines ----, ", 203},
-  {"-%s---Info: %s, %d lines --%s--", 204},
-  {"-%s%s-Info: (%s)%s, %d lines --%s--", 205},
-  {" Subfile: %s", 206},
-  {"%s: option `%s' is ambiguous\n", 207},
-  {"%s: option `--%s' doesn't allow an argument\n", 208},
-  {"%s: option `%c%s' doesn't allow an argument\n", 209},
-  {"%s: option `%s' requires an argument\n", 210},
-  {"%s: unrecognized option `--%s'\n", 211},
-  {"%s: unrecognized option `%c%s'\n", 212},
-  {"%s: illegal option -- %c\n", 213},
-  {"%s: invalid option -- %c\n", 214},
-  {"%s: option requires an argument -- %c\n", 215},
-  {"%s: option `-W %s' is ambiguous\n", 216},
-  {"%s: option `-W %s' doesn't allow an argument\n", 217},
-  {"%s:%d: warning: ", 218},
-  {"Too many errors!  Gave up.\n", 219},
-  {"%s: %s arg must be numeric, not `%s'.\n", 220},
-  {"Couldn't open macro expansion output `%s'", 221},
-  {"Cannot specify more than one macro expansion output", 222},
-  {"%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n", 223},
-  {"%s: --footnote-style arg must be `separate' or `end', not `%s'.\n", 224},
-  {"%s: missing file argument.\n", 225},
-  {"Try `%s --help' for more information.\n", 226},
+Welcome to Info version %s. Type \\[get-help-window] for help, \\[menu-item] \
+for menu item.", 138},
+  {"Move down to the next line", 139},
+  {"Move up to the previous line", 140},
+  {"Move to the end of the line", 141},
+  {"Move to the start of the line", 142},
+  {"Next", 143},
+  {"Following Next node...", 144},
+  {"Selecting first menu item...", 145},
+  {"Selecting Next node...", 146},
+  {"Moving Up %d time(s), then Next.", 147},
+  {"No more nodes within this document.", 148},
+  {"No `Prev' for this node.", 149},
+  {"Moving Prev in this window.", 150},
+  {"No `Prev' or `Up' for this node within this document.", 151},
+  {"Moving Up in this window.", 152},
+  {"Moving to `Prev's last menu item.", 153},
+  {"Move forwards or down through node structure", 154},
+  {"Move backwards or up through node structure", 155},
+  {"Scroll forward in this window", 156},
+  {"Scroll forward in this window and set default window size", 157},
+  {"Scroll backward in this window", 158},
+  {"Scroll backward in this window and set default window size", 159},
+  {"Move to the start of this node", 160},
+  {"Move to the end of this node", 161},
+  {"Scroll down by lines", 162},
+  {"Scroll up by lines", 163},
+  {"Scroll down by half screen size", 164},
+  {"Scroll up by half screen size", 165},
+  {"Select the next window", 166},
+  {"Select the previous window", 167},
+  {"Split the current window", 168},
+  {"Delete the current window", 169},
+  {"Cannot delete a permanent window", 170},
+  {"Delete all other windows", 171},
+  {"Scroll the other window", 172},
+  {"Scroll the other window backward", 173},
+  {"Grow (or shrink) this window", 174},
+  {"Divide the available screen space among the visible windows", 175},
+  {"Toggle the state of line wrapping in the current window", 176},
+  {"Select the Next node", 177},
+  {"Select the Prev node", 178},
+  {"Select the Up node", 179},
+  {"Select the last node in this file", 180},
+  {"This window has no additional nodes", 181},
+  {"Select the first node in this file", 182},
+  {"Select the last item in this node's menu", 183},
+  {"Select this menu item", 184},
+  {"There aren't %d items in this menu.", 185},
+  {"Menu item (%s): ", 186},
+  {"Menu item: ", 187},
+  {"Follow xref (%s): ", 188},
+  {"Follow xref: ", 189},
+  {"Read a menu item and select its node", 190},
+  {"Read a footnote or cross reference and select its node", 191},
+  {"Move to the start of this node's menu", 192},
+  {"Visit as many menu items at once as possible", 193},
+  {"Read a node name and select it", 194},
+  {"Goto node: ", 195},
+  {"No menu in node `%s'.", 196},
+  {"No menu item `%s' in node `%s'.", 197},
+  {"Unable to find node referenced by `%s' in `%s'.", 198},
+  {"Read a list of menus starting from dir and follow them", 199},
+  {"Follow menus: ", 200},
+  {"Find the node describing program invocation", 201},
+  {"Find Invocation node of [%s]: ", 202},
+  {"Read a manpage reference and select it", 203},
+  {"Get Manpage: ", 204},
+  {"Select the node `Top' in this file", 205},
+  {"Select the node `(dir)'", 206},
+  {"Kill node (%s): ", 207},
+  {"Cannot kill node `%s'", 208},
+  {"Cannot kill the last node", 209},
+  {"Select the most recently selected node", 210},
+  {"Kill this node", 211},
+  {"Read the name of a file and select it", 212},
+  {"Find file: ", 213},
+  {"Cannot find `%s'.", 214},
+  {"Could not create output file `%s'.", 215},
+  {"Done.", 216},
+  {"Writing node %s...", 217},
+  {"Pipe the contents of this node through INFO_PRINT_COMMAND", 218},
+  {"Cannot open pipe to `%s'.", 219},
+  {"Printing node %s...", 220},
+  {"Searching subfile %s ...", 221},
+  {"Read a string and search for it case-sensitively", 222},
+  {"Read a string and search for it", 223},
+  {"Read a string and search backward for it", 224},
+  {"%s%sfor string [%s]: ", 225},
+  {"Search backward", 226},
+  {"Search", 227},
+  {" case-sensitively ", 228},
+  {" ", 229},
+  {"Search failed.", 230},
+  {"Repeat last search in the same direction", 231},
+  {"No previous search string", 232},
+  {"Repeat last search in the reverse direction", 233},
+  {"Search interactively for a string as you type it", 234},
+  {"I-search backward: ", 235},
+  {"I-search: ", 236},
+  {"Failing ", 237},
+  {"Move to the previous cross reference", 238},
+  {"Move to the next cross reference", 239},
+  {"Select reference or menu item appearing on this line", 240},
+  {"Cancel current operation", 241},
+  {"Quit", 242},
+  {"Move the cursor to a specific line of the window", 243},
+  {"Redraw the display", 244},
+  {"Quit using Info", 245},
+  {"Unknown command (%s).", 246},
+  {"\"\" is invalid", 247},
+  {"\"%s\" is invalid", 248},
+  {"Add this digit to the current numeric argument", 249},
+  {"Start (or multiply by 4) the current numeric argument", 250},
+  {"Internally used by \\[universal-argument]", 251},
+  {"readline: Out of virtual memory!\n", 252},
+  {"When \"On\", footnotes appear and disappear automatically", 253},
+  {"When \"On\", creating or deleting a window resizes other windows", 254},
+  {"When \"On\", flash the screen instead of ringing the bell", 255},
+  {"When \"On\", errors cause the bell to ring", 256},
+  {"When \"On\", Info garbage collects files which had to be uncompressed", 257},
+  {"When \"On\", the portion of the matched search string is highlighted", 258},
+  {"Controls what happens when scrolling is requested at the end of a node", 259},
+  {"The number lines to scroll when the cursor moves out of the window", 260},
+  {"When \"On\", Info accepts and displays ISO Latin characters", 261},
+  {"Explain the use of a variable", 262},
+  {"Describe variable: ", 263},
+  {"Set the value of an Info variable", 264},
+  {"Set variable: ", 265},
+  {"Set %s to value (%d): ", 266},
+  {"Set %s to value (%s): ", 267},
+  {"--*** Tags out of Date ***", 268},
+  {"-----Info: (), lines ----, ", 269},
+  {"-%s---Info: %s, %d lines --%s--", 270},
+  {"-%s%s-Info: (%s)%s, %d lines --%s--", 271},
+  {" Subfile: %s", 272},
+  {"%s: option `%s' is ambiguous\n", 273},
+  {"%s: option `--%s' doesn't allow an argument\n", 274},
+  {"%s: option `%c%s' doesn't allow an argument\n", 275},
+  {"%s: option `%s' requires an argument\n", 276},
+  {"%s: unrecognized option `--%s'\n", 277},
+  {"%s: unrecognized option `%c%s'\n", 278},
+  {"%s: illegal option -- %c\n", 279},
+  {"%s: invalid option -- %c\n", 280},
+  {"%s: option requires an argument -- %c\n", 281},
+  {"%s: option `-W %s' is ambiguous\n", 282},
+  {"%s: option `-W %s' doesn't allow an argument\n", 283},
+  {"January", 284},
+  {"February", 285},
+  {"March", 286},
+  {"April", 287},
+  {"May", 288},
+  {"June", 289},
+  {"July", 290},
+  {"August", 291},
+  {"September", 292},
+  {"October", 293},
+  {"November", 294},
+  {"December", 295},
+  {"unlikely character %c in @var", 296},
+  {"@sc argument all uppercase, thus no effect", 297},
+  {"%c%s is obsolete", 298},
+  {"@sp requires a positive numeric argument, not `%s'", 299},
+  {"Bad argument to %c%s", 300},
+  {"asis", 301},
+  {"none", 302},
+  {"Missing `}' in @def arg", 303},
+  {"Function", 304},
+  {"Macro", 305},
+  {"Special Form", 306},
+  {"Variable", 307},
+  {"User Option", 308},
+  {"Instance Variable", 309},
+  {"Method", 310},
+  {"of", 311},
+  {"on", 312},
+  {"Must be in `%s' insertion to use `%sx'", 313},
+  {"%s: getwd: %s, %s\n", 314},
+  {"`%c%s' needs an argument `{...}', not just `%s'", 315},
+  {"No closing brace for footnote `%s'", 316},
+  {"Footnote defined without parent node", 317},
+  {"Footnotes", 318},
+  {"Untitled", 319},
+  {"Unknown index `%s'", 320},
+  {"Index `%s' already exists", 321},
+  {"Unknown index `%s' and/or `%s' in @synindex", 322},
+  {"Unknown index `%s' in @printindex", 323},
+  {"Entry for index `%s' outside of any node", 324},
+  {"(outside of any node)", 325},
+  {"Broken-Type in insertion_type_pname", 326},
+  {"Enumeration stack overflow", 327},
+  {"lettering overflow, restarting at %c", 328},
+  {"%s requires an argument: the formatter for %citem", 329},
+  {"`@end' expected `%s', but saw `%s'", 330},
+  {"No matching `%cend %s'", 331},
+  {"%s requires letter or digit", 332},
+  {"@menu seen before first @node, creating `Top' node", 333},
+  {"\
+perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?", 334},
+  {"@detailmenu seen before first node, creating `Top' node", 335},
+  {"Unmatched `%c%s'", 336},
+  {"`%c%s' needs something after it", 337},
+  {"Bad argument to `%s', `%s', using `%s'", 338},
+  {"@%s not meaningful inside `@%s' block", 339},
+  {"@itemx not meaningful inside `%s' block", 340},
+  {"%c%s found outside of an insertion block", 341},
+  {"%s is not a valid ISO 639 language code", 342},
+  {"%c%s expects `i' or `j' as argument, not `%c'", 343},
+  {"%c%s expects a single character `i' or `j' as argument", 344},
+  {"macro `%s' previously defined", 345},
+  {"here is the previous definition of `%s'", 346},
+  {"\\ in macro expansion followed by `%s' instead of \\ or parameter name", 347},
+  {"Macro `%s' called on line %d with too many args", 348},
+  {"%cend macro not found", 349},
+  {"@quote-arg only useful for single-argument macros", 350},
+  {"mismatched @end %s with @%s", 351},
+  {"%s:%d: warning: ", 352},
+  {"Too many errors!  Gave up.\n", 353},
+  {"Misplaced %c", 354},
+  {"Try `%s --help' for more information.\n", 355},
   {"\
 Usage: %s [OPTION]... TEXINFO-FILE...\n\
 \n\
-Translate Texinfo source documentation to a format suitable for reading\n\
-with GNU Info.\n\
+Translate Texinfo source documentation to various other formats:\n\
+Info files suitable for reading online with Emacs or standalone GNU Info\n\
+(by default); plain text (with --no-headers); or HTML (with --html).\n\
 \n\
 Options:\n\
--D VAR                 define a variable, as with @set.\n\
--E MACRO-OFILE         process macros only, output texinfo source.\n\
--I DIR                 append DIR to the @include directory search path.\n\
--P DIR                 prepend DIR to the @include directory search path.\n\
--U VAR                 undefine a variable, as with @clear.\n\
---error-limit NUM      quit after NUM errors (default %d).\n\
---fill-column NUM      break lines at NUM characters (default %d).\n\
---footnote-style STYLE output footnotes according to STYLE:\n\
-                         `separate' to place footnotes in their own node,\n\
-                         `end' to place the footnotes at the end of\n\
-                         the node in which they are defined (the default).\n\
---force                preserve output even if errors.\n\
---help                 display this help and exit.\n\
---no-validate          suppress node cross-reference validation.\n\
---no-warn              suppress warnings (but not errors).\n\
---no-split             suppress splitting of large files.\n\
---no-headers           suppress node separators and Node: Foo headers.\n\
---output FILE, -o FILE output to FILE, and ignore any @setfilename.\n\
---paragraph-indent VAL indent paragraphs with VAL spaces (default %d).\n\
-                         if VAL is `none', do not indent; if VAL is `asis',\n\
-                         preserve any existing indentation.\n\
---reference-limit NUM  complain about at most NUM references (default %d).\n\
---verbose              report about what is being done.\n\
---version              display version information and exit.\n\
+ --commands-in-node-names  allow @ commands in node names.\n\
+ -D VAR                    define a variable, as with @set.\n\
+ -E, --macro-expand FILE   output macro-expanded source to FILE.\n\
+ --error-limit=NUM         quit after NUM errors (default %d).\n\
+ --fill-column=NUM         break Info lines at NUM characters (default %d).\n\
+ --footnote-style=STYLE    output footnotes according to STYLE:\n\
+                            `separate' to place footnotes in their own \
+node,\n\
+                            `end' to place the footnotes at the end of the\n\
+                             node in which they are defined (the default).\n\
+ --force                   preserve output even if errors.\n\
+ --help                    display this help and exit.\n\
+ --html                    output HTML rather than Info format;\n\
+ -I DIR                    append DIR to the @include search path.\n\
+ --ifhtml                  process @ifhtml and @html text even when not\n\
+                             generating HTML.\n\
+ --ifinfo                  process @ifinfo text even when generating HTML.\n\
+ --iftex                   process @iftex and @tex text.\n\
+                             implies --no-split.\n", 356},
+  {"\
+ --no-headers              suppress Info node separators and Node: lines \
+and\n\
+                             write to standard output without --output.\n\
+ --no-ifhtml               do not process @ifhtml and @html text.\n\
+ --no-ifinfo               do not process @ifinfo text.\n\
+ --no-iftex                do not process @iftex and @tex text.\n\
+ --no-split                suppress splitting of large Info output files or\n\
+                           generation of one HTML file per node.\n\
+ --no-validate             suppress node cross-reference validation.\n\
+ --no-warn                 suppress warnings (but not errors).\n\
+ --number-sections         include chapter, section, etc. numbers in \
+output.\n\
+ -o, --output=FILE         output to FILE, ignoring any @setfilename.\n\
+ -P DIR                    prepend DIR to the @include search path.\n\
+ --paragraph-indent=VAL    indent Info paragraphs by VAL spaces (default \
+%d).\n\
+                             if VAL is `none', do not indent;\n\
+                             if VAL is `asis', preserve existing \
+indentation.\n\
+ --reference-limit=NUM     warn about at most NUM references (default %d).\n\
+ -U VAR                    undefine a variable, as with @clear.\n\
+ -v, --verbose             explain what is being done.\n\
+ --version                 display version information and exit.\n", 357},
+  {"\
 \n\
-Email bug reports to bug-texinfo@gnu.org.\n", 227},
-  {"%s: getwd: %s, %s\n", 228},
-  {"Expected `%s'", 229},
-  {"No `%s' found in `%s'", 230},
-  {"%s: Skipping macro expansion to stdout as Info output is going there.\n", 231},
-  {"Making %s file `%s' from `%s'.\n", 232},
-  {"This is Info file %s, produced by Makeinfo version %d.%d", 233},
-  {" from the input file %s.\n", 234},
+The defaults for the @if... conditionals depend on the output format:\n\
+if generating HTML, --ifhtml is on and the others are off;\n\
+if generating Info or plain text, --ifinfo is on and the others are off.\n\
+\n\
+Examples:\n\
+  makeinfo foo.texi                    write Info to foo's @setfilename\n\
+  makeinfo --html foo.texi             write HTML to foo's @setfilename\n\
+  makeinfo --no-headers -o - foo.texi  write plain text to standard output\n\
+  makeinfo --number-sections foo.texi  write Info with numbered sections\n\
+  makeinfo --no-split foo.texi         write one Info file however big\n\
+\n\
+Email bug reports to bug-texinfo@gnu.org,\n\
+general questions and discussion to help-texinfo@gnu.org.", 358},
+  {"%s: %s arg must be numeric, not `%s'.\n", 359},
+  {"Couldn't open macro expansion output `%s'", 360},
+  {"Cannot specify more than one macro expansion output", 361},
+  {"%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n", 362},
+  {"%s: --footnote-style arg must be `separate' or `end', not `%s'.\n", 363},
+  {"%s: missing file argument.\n", 364},
+  {"Expected `%s'", 365},
+  {"No `%s' found in `%s'", 366},
+  {"%s: Skipping macro expansion to stdout as Info output is going there.\n", 367},
+  {"Making %s file `%s' from `%s'.\n", 368},
+  {"This is %s, produced by makeinfo version %s from %s.\n", 369},
   {"\
-%s: Removing macro output file `%s' due to errors; use --force to preserve.\n", 235},
-  {"%s: Removing output file `%s' due to errors; use --force to preserve.\n", 236},
-  {"Misplaced %c", 237},
-  {"Unknown command `%s'", 238},
-  {"NO_NAME!", 239},
-  {"%c%s expected `{...}'", 240},
-  {"Unmatched }", 241},
-  {"%c%s missing close brace", 242},
-  {"Broken-Type in insertion_type_pname", 243},
-  {"Enumeration stack overflow", 244},
-  {"lettering overflow, restarting at %c", 245},
-  {"* Menu:\n", 246},
-  {"%s requires an argument: the formatter for %citem", 247},
-  {"`%cend' expected `%s', but saw `%s'", 248},
-  {"No matching `%cend %s'", 249},
-  {"How did @%s end up in cm_special_char?\n", 250},
-  {"%c%s expects `i' or `j' as argument, not `%c'", 251},
-  {"%c%s expects a single character `i' or `j' as argument", 252},
-  {"January", 253},
-  {"February", 254},
-  {"March", 255},
-  {"April", 256},
-  {"May", 257},
-  {"June", 258},
-  {"July", 259},
-  {"August", 260},
-  {"September", 261},
-  {"October", 262},
-  {"November", 263},
-  {"December", 264},
-  {"%c%s expects a single character as an argument", 265},
-  {"%c%s is obsolete", 266},
-  {"Node with %ctop as a section already exists", 267},
-  {"Here is the %ctop node", 268},
-  {"%ctop used before %cnode, defaulting to %s", 269},
-  {"%c%s is obsolete; use %c%s instead", 270},
-  {"Node `%s' multiply defined (line %d is first definition at)", 271},
-  {"Formatting node %s...\n", 272},
-  {"Node `%s' requires a sectioning command (e.g. %c%s)", 273},
-  {"Node `%s''s Next field not pointed back to", 274},
-  {"This node (`%s') is the one with the bad `Prev'", 275},
-  {"Node `%s's Prev field not pointed back to", 276},
-  {"This node (`%s') has the bad Next", 277},
-  {"Node `%s' missing Up field", 278},
-  {"`%s' has an Up field of `%s', but `%s' has no menu item for `%s'", 279},
-  {"node `%s' has been referenced %d times", 280},
-  {"unreferenced node `%s'", 281},
-  {"%s reference to nonexistent node `%s'", 282},
-  {"%cmenu seen before first node", 283},
-  {"creating `Top' node", 284},
-  {"`.' or `,' must follow cross reference, not %c", 285},
-  {"@image file `%s' unreadable: %s", 286},
-  {"@image missing filename argument", 287},
-  {"%s requires letter or digit", 288},
-  {"Unmatched `%c%s'", 289},
-  {"`%c%s' needs something after it", 290},
-  {"Bad argument to `%s', `%s', using `%s'", 291},
-  {"{No Value For \"%s\"}", 292},
-  {"%c%s requires a name", 293},
-  {"Reached eof before matching @end %s", 294},
-  {"The `%c%s' command is meaningless within a `@%s' block", 295},
-  {"%citemx is not meaningful inside of a `%s' block", 296},
-  {"%c%s found outside of an insertion block", 297},
-  {"Missing `}' in %cdef arg", 298},
-  {"Function", 299},
-  {"Macro", 300},
-  {"Special Form", 301},
-  {"Variable", 302},
-  {"User Option", 303},
-  {"Instance Variable", 304},
-  {"Method", 305},
-  {"Must be in a `%s' insertion in order to use `%s'x", 306},
-  {"%csp requires a positive numeric argument", 307},
-  {"asis", 308},
-  {"none", 309},
-  {"Bad argument to %c%s", 310},
-  {"Unknown index `%s'", 311},
-  {"Index `%s' already exists", 312},
-  {"Unknown index `%s' and/or `%s' in @synindex", 313},
-  {"Unknown index `%s' in @printindex", 314},
-  {"\
-* Menu:\n\
-\n", 315},
-  {"`%c%s' needs an argument `{...}', not just `%s'", 316},
-  {"No closing brace for footnote `%s'", 317},
-  {"Footnote defined without parent node", 318},
-  {"-Footnotes", 319},
-  {"\
----------- Footnotes ----------\n\
-\n", 320},
-  {"macro `%s' previously defined", 321},
-  {"here is the previous definition of `%s'", 322},
-  {"Macro `%s' called with too many args", 323},
-  {"%cend macro not found", 324},
-  {"%cquote-arg only useful when the macro takes a single argument", 325},
-  {"ignoring stray text `%s' after @multitable", 326},
-  {"Too many columns in multitable item (max %d)", 327},
-  {"multitable item not in active multitable", 328},
-  {"Cannot select column #%d in multitable", 329},
-  {"ignoring @tab outside of multitable", 330},
-  {"** Multicolumn output from last row:\n", 331},
-  {"* column #%d: output = %s\n", 332},
-  {"virtual memory exhausted", 333},
-  {"%s: warning: ", 334},
-  {" for %s", 335},
-  {"\tTry `%s --help' for a complete list of options.\n", 336},
+%s: Removing macro output file `%s' due to errors; use --force to preserve.\n", 370},
+  {"%s: Removing output file `%s' due to errors; use --force to preserve.\n", 371},
+  {"Unknown command `%s'", 372},
+  {"Use braces to give a command as an argument to @%s", 373},
+  {"%c%s expected `{...}'", 374},
+  {"Unmatched }", 375},
+  {"NO_NAME!", 376},
+  {"%c%s missing close brace", 377},
+  {"see ", 378},
+  {"See ", 379},
+  {"`.' or `,' must follow cross reference, not %c", 380},
+  {"No .png or .jpg for `%s'", 381},
+  {"@image file `%s' unreadable: %s", 382},
+  {"@image missing filename argument", 383},
+  {"{No value for `%s'}", 384},
+  {"%c%s requires a name", 385},
+  {"Reached eof before matching @end %s", 386},
+  {"Missing } in @multitable template", 387},
+  {"ignoring stray text `%s' after @multitable", 388},
+  {"Too many columns in multitable item (max %d)", 389},
+  {"Cannot select column #%d in multitable", 390},
+  {"ignoring @tab outside of multitable", 391},
+  {"** Multicolumn output from last row:\n", 392},
+  {"* column #%d: output = %s\n", 393},
+  {"Node `%s' previously defined at line %d", 394},
+  {"Formatting node %s...\n", 395},
+  {"Node `%s' requires a sectioning command (e.g. %c%s)", 396},
+  {"No node name specified for `%c%s' command", 397},
+  {"Node:", 398},
+  {"Next:", 399},
+  {"Previous:", 400},
+  {"Up:", 401},
+  {"%s reference to nonexistent node `%s'", 402},
+  {"Menu", 403},
+  {"Cross", 404},
+  {"Next field of node `%s' not pointed to", 405},
+  {"This node (%s) has the bad Prev", 406},
+  {"Prev", 407},
+  {"Prev field of node `%s' not pointed to", 408},
+  {"This node (%s) has the bad Next", 409},
+  {"`%s' has no Up field", 410},
+  {"Up", 411},
+  {"Node `%s' lacks menu item for `%s' despite being its Up target", 412},
+  {"node `%s' has been referenced %d times", 413},
+  {"unreferenced node `%s'", 414},
+  {"Appendix %c ", 415},
+  {"Internal error (search_sectioning) \"%s\"!", 416},
+  {"%c%s is obsolete; use %c%s instead", 417},
+  {"Node with %ctop as a section already exists", 418},
+  {"Here is the %ctop node", 419},
+  {"%ctop used before %cnode, defaulting to %s", 420},
+  {"Table of Contents", 421},
+  {"Short Contents", 422},
+  {"%s: TOC should be here, but it was not found", 423},
+  {"%s: warning: ", 424},
+  {"virtual memory exhausted", 425},
+  {" for %s", 426},
+  {"\tTry `%s --help' for a complete list of options.\n", 427},
   {"\
 Usage: %s [OPTION]... [INFO-FILE [DIR-FILE]]\n\
 \n\
-Install INFO-FILE in the Info directory file DIR-FILE.\n\
+Install or delete dir entries from INFO-FILE in the Info directory file\n\
+DIR-FILE.\n\
 \n\
 Options:\n\
---delete          Delete existing entries in INFO-FILE;\n\
-                    don't insert any new entries.\n\
---dir-file=NAME   Specify file name of Info directory file.\n\
-                    This is equivalent to using the DIR-FILE argument.\n\
---entry=TEXT      Insert TEXT as an Info directory entry.\n\
-                    TEXT should have the form of an Info menu item line\n\
-                    plus zero or more extra lines starting with whitespace.\n\
-                    If you specify more than one entry, they are all added.\n\
-                    If you don't specify any entries, they are determined\n\
-                    from information in the Info file itself.\n\
---help            Display this help and exit.\n\
---info-file=FILE  Specify Info file to install in the directory.\n\
-                    This is equivalent to using the INFO-FILE argument.\n\
---info-dir=DIR    Same as --dir-file=DIR/dir.\n\
---item=TEXT       Same as --entry TEXT.\n\
-                    An Info directory entry is actually a menu item.\n\
---quiet           Suppress warnings.\n\
---remove          Same as --delete.\n\
---section=SEC     Put this file's entries in section SEC of the directory.\n\
-                    If you specify more than one section, all the entries\n\
-                    are added in each of the sections.\n\
-                    If you don't specify any sections, they are determined\n\
-                    from information in the Info file itself.\n\
---version         Display version information and exit.\n\
+ --delete          delete existing entries for INFO-FILE from DIR-FILE;\n\
+                     don't insert any new entries.\n\
+ --dir-file=NAME   specify file name of Info directory file.\n\
+                     This is equivalent to using the DIR-FILE argument.\n\
+ --entry=TEXT      insert TEXT as an Info directory entry.\n\
+                     TEXT should have the form of an Info menu item line\n\
+                     plus zero or more extra lines starting with \
+whitespace.\n\
+                     If you specify more than one entry, they are all \
+added.\n\
+                     If you don't specify any entries, they are determined\n\
+                     from information in the Info file itself.\n\
+ --help            display this help and exit.\n\
+ --info-file=FILE  specify Info file to install in the directory.\n\
+                     This is equivalent to using the INFO-FILE argument.\n\
+ --info-dir=DIR    same as --dir-file=DIR/dir.\n\
+ --item=TEXT       same as --entry TEXT.\n\
+                     An Info directory entry is actually a menu item.\n\
+ --quiet           suppress warnings.\n\
+ --remove          same as --delete.\n\
+ --section=SEC     put this file's entries in section SEC of the directory.\n\
+                     If you specify more than one section, all the entries\n\
+                     are added in each of the sections.\n\
+                     If you don't specify any sections, they are determined\n\
+                     from information in the Info file itself.\n\
+ --version         display version information and exit.\n\
 \n\
-Email bug reports to bug-texinfo@gnu.org.\n", 337},
+Email bug reports to bug-texinfo@gnu.org,\n\
+general questions and discussion to help-texinfo@gnu.org.\n", 428},
   {"\
 This is the file .../info/dir, which contains the\n\
 topmost node of the Info hierarchy, called (dir)Top.\n\
 The first time you invoke Info you start off looking at this node.\n\
 \n\
-File: dir,\tNode: Top,\tThis is the top of the INFO tree\n\
+%s\tThis is the top of the INFO tree\n\
 \n\
   This (the Directory node) gives a menu of major topics.\n\
   Typing \"q\" exits, \"?\" lists all Info commands, \"d\" returns here,\n\
@@ -469,37 +613,39 @@ File: dir,\tNode: Top,\tThis is the top of the INFO tree\n\
   In Emacs, you can click mouse button 2 on a menu item or cross reference\n\
   to select it.\n\
 \n\
-* Menu:\n", 338},
-  {"%s: could not read (%s) and could not create (%s)\n", 339},
-  {"%s: Specify the Info directory only once.\n", 340},
-  {"%s: Specify the Info file only once.\n", 341},
-  {"excess command line argument `%s'", 342},
-  {"No input file specified; try --help for more information.", 343},
-  {"No dir file specified; try --help for more information.", 344},
-  {"START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY", 345},
-  {"END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY", 346},
-  {"no info dir entry in `%s'", 347},
-  {"menu item `%s' already exists, for file `%s'", 348},
-  {"no entries found for `%s'; nothing deleted", 349},
-  {"keep temporary files around after processing", 350},
-  {"do not keep temporary files around after processing (default)", 351},
-  {"send output to FILE", 352},
-  {"display version information and exit", 353},
-  {"display this help and exit", 354},
-  {"Usage: %s [OPTION]... FILE...\n", 355},
-  {"Generate a sorted index for each TeX output FILE.\n", 356},
-  {"Usually FILE... is `foo.??' for a document `foo.texi'.\n", 357},
+* Menu:\n", 429},
+  {"%s: could not read (%s) and could not create (%s)\n", 430},
+  {"%s: empty file", 431},
+  {"START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY", 432},
+  {"END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY", 433},
+  {"%s: Specify the Info directory only once.\n", 434},
+  {"%s: Specify the Info file only once.\n", 435},
+  {"excess command line argument `%s'", 436},
+  {"No input file specified; try --help for more information.", 437},
+  {"No dir file specified; try --help for more information.", 438},
+  {"no info dir entry in `%s'", 439},
+  {"menu item `%s' already exists, for file `%s'", 440},
+  {"no entries found for `%s'; nothing deleted", 441},
+  {"display this help and exit", 442},
+  {"keep temporary files around after processing", 443},
+  {"do not keep temporary files around after processing (default)", 444},
+  {"send output to FILE", 445},
+  {"display version information and exit", 446},
+  {"Usage: %s [OPTION]... FILE...\n", 447},
+  {"Generate a sorted index for each TeX output FILE.\n", 448},
+  {"Usually FILE... is specified as `foo.%c%c' for a document `foo.texi'.\n", 449},
   {"\
 \n\
-Options:\n", 358},
+Options:\n", 450},
   {"\
 \n\
-Email bug reports to bug-texinfo@gnu.org.", 359},
-  {"%s: not a texinfo index file", 360},
-  {"failure reopening %s", 361},
-  {"entry %s follows an entry with a secondary name", 362},
-  {"%s; for file `%s'.\n", 363},
-  {"Virtual memory exhausted in %s ()!  Needed %d bytes.", 364},
+Email bug reports to bug-texinfo@gnu.org,\n\
+general questions and discussion to help-texinfo@gnu.org.\n", 451},
+  {"%s: not a texinfo index file", 452},
+  {"failure reopening %s", 453},
+  {"No page number in %s", 454},
+  {"entry %s follows an entry with a secondary name", 455},
+  {"%s; for file `%s'.\n", 456},
 };
 
-int _msg_tbl_length = 364;
+int _msg_tbl_length = 456;

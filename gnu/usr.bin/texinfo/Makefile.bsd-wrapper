@@ -1,11 +1,13 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 1999/06/07 00:45:37 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 2000/02/09 02:18:36 espie Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
 CLEANFILES=	makeinfo/makeinfo.info info/info.info info/info-stnd.info \
-	info/funs.h info/doc.c
+	info/funs.h info/doc.c intl/libintl.h
 
-NOMAN=		# info.1 manpage passed into obsolescence
+MAN=	doc/info.1 doc/install-info.1 doc/makeinfo.1 doc/texi2dvi.1 
+MAN+= doc/texindex.1 doc/info.5 doc/texinfo.5
+
 SUBDIRS=	intl lib info makeinfo po util doc
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
 FSFMAKE=	${MAKE} SUBDIRS="${SUBDIRS}" ${GNUCFLAGS} ${INFODIR} \
@@ -30,13 +32,15 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
+		/bin/sh ${.CURDIR}/configure --prefix=/usr --disable-nls ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
+		/bin/sh ${.CURDIR}/configure --prefix=/usr --disable-nls ${CF}
 
 .ifdef NOMAN
 maninstall:
@@ -51,7 +55,7 @@ install:	maninstall
 
 clean cleandir:
 	rm -f ${CLEANFILES}
-	-@if [ -e Makefile ]; then \
+	if [ -e ${.OBJDIR}/Makefile ]; then \
 		$(FSFMAKE) distclean; fi
 
 depend:

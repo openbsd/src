@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: gen-dir-node,v 1.2 1999/01/11 16:38:15 espie Exp $
+# $Id: gen-dir-node,v 1.3 2000/02/09 02:18:42 espie Exp $
 # Generate the top-level Info node, given a directory of Info files
 # and (optionally) a skeleton file.  The output will be suitable for a
 # top-level dir file.  The skeleton file contains info topic names in the
@@ -33,6 +33,8 @@ skip=
 if [ $# -gt 2 ] ; then
   echo usage: $0 info-directory [ skeleton-file ] 1>&2
   exit 1
+elif [ -z "${INFODIR}" ] ; then
+  INFODIR="%%DEFAULT_INFO_DIR%%"
 else
   true
 fi
@@ -49,18 +51,20 @@ echo "This version was generated on `date`"
 echo "by `whoami`@`hostname` for `(cd ${INFODIR}; pwd)`"
 
 cat << moobler
-
+\$Id: gen-dir-node,v 1.3 2000/02/09 02:18:42 espie Exp $
 This is the file .../info/dir, which contains the topmost node of the
 Info hierarchy.  The first time you invoke Info you start off
 looking at that node, which is (dir)Top.
 
 File: dir	Node: Top	This is the top of the INFO tree
+
   This (the Directory node) gives a menu of major topics. 
-  Typing "d" returns here, "q" exits, "?" lists all INFO commands, "h" 
-  gives a primer for first-timers, "mTexinfo<Return>" visits Texinfo topic,
-  etc.
-  Or click mouse button 2 on a menu item or cross reference to select it.
-  --- PLEASE ADD DOCUMENTATION TO THIS TREE. (See INFO topic first.) ---
+  Typing "q" exits, "?" lists all Info commands, "d" returns here,
+  "h" gives a primer for first-timers,
+  "mEmacs<Return>" visits the Emacs topic, etc.
+
+  In Emacs, you can click mouse button 2 on a menu item or cross reference
+  to select it.
 
 * Menu: The list of major topics begins on the next line.
 
@@ -75,7 +79,7 @@ moobler
 ### then generate entries for those in the same way, putting the info for 
 ### those at the end....
 
-infofiles=`(cd ${INFODIR}; ls | egrep -v '\-|^dir$|^dir\.info$|^dir\.orig$')`
+infofiles=`(cd ${INFODIR}; /bin/ls | grep -v '\-[0-9]*$' | egrep -v '^dir$|^dir\.info$|^dir\.orig$')`
 
 # echoing gets clobbered by backquotes; we do it the hard way...
 lines=`wc $SKELETON | awk '{print $1}'`
@@ -139,14 +143,12 @@ while [ $lines -ge $line ] ; do
           if [ ! -z "${entry}" ] ; then
             echo "${entry}"
           else
-            echo "* ${infoname}: (${fname})."
+            echo "* ${infoname}: (${infoname})."
           fi
         fi
 
         # remove the name from the directory listing
-        infofiles=`echo ${infofiles} | sed -e "s/ ${fname} / /" \
-					 -e "s/^${fname} //" \
-					 -e "s/ ${fname}$//"`
+	infofiles=`echo "" ${infofiles} "" | sed -e "s/ ${fname} / /" -e "s/  / /g"`
 
       fi
 
@@ -159,23 +161,53 @@ done
 
 if [ -z "${infofiles}" ] ; then
   exit 0
-else
+elif [ $lines -gt 0 ]; then
   echo
 fi
 
-for file in ${infofiles}; do
-  case $file in
-    *.gz) zcat=zcat; file=`echo $file|sed 's/\.gz$//'`; gz=.gz;;
-    *) zcat=cat; gz=;;
-  esac
+# Sort remaining files by INFO-DIR-SECTION.
+prevsect=
+filesectdata=`(cd ${INFODIR}; fgrep INFO-DIR-SECTION /dev/null ${infofiles} | \
+	      fgrep -v 'INFO-DIR-SECTION Miscellaneous' | \
+	      sort -t: -k2 -k1 | tr ' ' '_')`
+for sectdata in ${filesectdata}; do
+  file=`echo ${sectdata} | cut -d: -f1`
+  section=`sed -n -e 's/^INFO-DIR-SECTION //p' ${INFODIR}/${file}`
+  infofiles=`echo "" ${infofiles} "" | sed -e "s/ ${file} / /" -e "s/  / /g"`
+
+  if [ "${prevsect}" != "${section}" ] ; then
+    if [ ! -z "${prevsect}" ] ; then
+      echo ""
+    fi
+    echo "${section}"
+    prevsect="${section}"
+  fi
+
   infoname=`echo $file | sed 's/\.info$//'`
-  entry=`$zcat ${INFODIR}/${file}$gz \
-           |sed -e '1,/START-INFO-DIR-ENTRY/d' \
-		-e '/END-INFO-DIR-ENTRY/,$d'`
+  entry=`sed -e '1,/START-INFO-DIR-ENTRY/d' \
+	-e '/END-INFO-DIR-ENTRY/,$d' ${INFODIR}/${file}`
+  if [ ! -z "${entry}" ] ; then
+    echo "${entry}"
+  elif [ ! -d "${INFODIR}/${file}" ] ; then
+    echo "* ${infoname}: (${infoname})."
+  fi
+done
+
+# Process miscellaneous files.
+for file in ${infofiles}; do
+  if [ ! -z "${prevsect}" ] ; then
+    echo ""
+    echo "Miscellaneous"
+    prevsect=""
+  fi
+
+  infoname=`echo $file | sed 's/\.info$//'`
+  entry=`sed -e '1,/START-INFO-DIR-ENTRY/d' \
+	-e '/END-INFO-DIR-ENTRY/,$d' ${INFODIR}/${file}`
 
   if [ ! -z "${entry}" ] ; then
     echo "${entry}"
-  else
-    echo "* ${infoname}: (${file})."
+  elif [ ! -d "${INFODIR}/${file}" ] ; then
+    echo "* ${infoname}: (${infoname})."
   fi
 done
