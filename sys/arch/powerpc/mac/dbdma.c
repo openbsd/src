@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.1 1999/11/08 23:46:00 rahnds Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.2 2000/05/02 03:04:27 rahnds Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -47,11 +47,7 @@ dbdma_start(dmap, commands)
 	if (addr & 0xf)
 		panic("dbdma_start command structure not 16-byte aligned");
 
-#if 1
-	dmap->d_intselect = 0xff;  /* Endian magic - clear out interrupts */
-#else
 	DBDMA_ST4_ENDIAN(&dmap->d_intselect,  DBDMA_CLEAR_CNTRL( (0xffff)));
-#endif
 	DBDMA_ST4_ENDIAN(&dmap->d_control, 
 			 DBDMA_CLEAR_CNTRL( (DBDMA_CNTRL_ACTIVE	|
 					     DBDMA_CNTRL_DEAD	|
