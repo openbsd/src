@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.13 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.14 2005/01/30 20:45:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.13 2004/06/17 22:11:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.14 2005/01/30 20:45:58 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -87,7 +87,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 	new_db.head = new_db.tail = NULL;
 
 	pending = 0;
-	while ((file = readdir(atdir))) {
+	while ((file = readdir(atdir)) != NULL) {
 		if (stat(file->d_name, &statbuf) != 0 ||
 		    !S_ISREG(statbuf.st_mode))
 			continue;
@@ -113,6 +113,9 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 				job = job->next;
 				free(tjob);
 			}
+			closedir(atdir);
+			fchdir(cwd);
+			close(cwd);
 			return (0);
 		}
 		job->uid = statbuf.st_uid;
