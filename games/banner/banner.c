@@ -1040,7 +1040,7 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	while ((ch = getopt(argc, argv, "w:td")) != EOF)
+	while ((ch = getopt(argc, argv, "w:td")) != -1)
 		switch(ch) {
 		case 'w':
 			width = atoi(optarg);

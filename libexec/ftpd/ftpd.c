@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.30 1997/01/05 21:28:07 bitblt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.31 1997/01/15 23:40:58 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ main(argc, argv, envp)
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, argstr)) != EOF) {
+	while ((ch = getopt(argc, argv, argstr)) != -1) {
 		switch (ch) {
 		case 'A':
 			anon_only = 1;

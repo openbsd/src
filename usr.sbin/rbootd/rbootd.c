@@ -98,7 +98,7 @@ main(argc, argv)
 	/*
 	 *  Parse any arguments.
 	 */
-	while ((c = getopt(argc, argv, "adi:")) != EOF)
+	while ((c = getopt(argc, argv, "adi:")) != -1)
 		switch(c) {
 		    case 'a':
 			BootAny++;

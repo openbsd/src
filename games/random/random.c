@@ -78,7 +78,7 @@ main(argc, argv)
 	setgid(getgid());
 
 	random_exit = unbuffer_output = 0;
-	while ((ch = getopt(argc, argv, "er")) != EOF)
+	while ((ch = getopt(argc, argv, "er")) != -1)
 		switch (ch) {
 		case 'e':
 			random_exit = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.4 1996/07/22 09:20:59 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.5 1997/01/15 23:41:38 millert Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.4 1996/07/22 09:20:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.5 1997/01/15 23:41:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ main(argc, argv)
 	} else
 		howto = 0;
 	lflag = nflag = qflag = 0;
-	while ((ch = getopt(argc, argv, "lnqd")) != EOF)
+	while ((ch = getopt(argc, argv, "lnqd")) != -1)
 		switch(ch) {
 		case 'l':		/* Undocumented; used by shutdown. */
 			lflag = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.2 1996/06/26 05:31:39 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.3 1997/01/15 23:42:13 millert Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.2 1996/06/26 05:31:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.3 1997/01/15 23:42:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ main(ac, av)
 
 	/* process the argument list */
 	kflag = 0;
-	while ((i = getopt(argc, argv, "abdF:f:k:m:o:pv:")) != EOF)
+	while ((i = getopt(argc, argv, "abdF:f:k:m:o:pv:")) != -1)
 		switch(i) {
 		case 'a':		/* key is ASCII */
 			keybase = KEY_ASCII;

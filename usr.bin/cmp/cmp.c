@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.4 1996/08/01 00:29:10 michaels Exp $      */
+/*      $OpenBSD: cmp.c,v 1.5 1997/01/15 23:42:19 millert Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.4 1996/08/01 00:29:10 michaels Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.5 1997/01/15 23:42:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ls")) != EOF)
+	while ((ch = getopt(argc, argv, "ls")) != -1)
 		switch (ch) {
 		case 'l':		/* print all differences */
 			lflag = 1;

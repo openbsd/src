@@ -1389,7 +1389,7 @@ main (argc, argv)
 
 /* If your shitbox doesn't have getopt, step into the nineties already. */
 /* optarg, optind = next-argv-component [i.e. flag arg]; optopt = last-char */
-  while ((x = getopt (argc, argv, "ae:g:G:hi:lno:p:rs:tuvw:z")) != EOF) {
+  while ((x = getopt (argc, argv, "ae:g:G:hi:lno:p:rs:tuvw:z")) != -1) {
 /* Debug (("in go: x now %c, optarg %x optind %d", x, optarg, optind)) */
     switch (x) {
       case 'a':

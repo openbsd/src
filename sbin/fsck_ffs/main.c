@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1996/10/20 08:36:35 tholo Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/01/15 23:41:46 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/10/20 08:36:35 tholo Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/01/15 23:41:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "dfpnNyYb:c:l:m:")) != EOF) {
+	while ((ch = getopt(argc, argv, "dfpnNyYb:c:l:m:")) != -1) {
 		switch (ch) {
 		case 'p':
 			preen++;

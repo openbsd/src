@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.3 1996/08/11 00:46:44 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.4 1997/01/15 23:42:15 millert Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.3 1996/08/11 00:46:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.4 1997/01/15 23:42:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ main(argc, argv)
 	int ch, month, year, yflag;
 
 	yflag = 0;
-	while ((ch = getopt(argc, argv, "jy")) != EOF)
+	while ((ch = getopt(argc, argv, "jy")) != -1)
 		switch(ch) {
 		case 'j':
 			julian = 1;

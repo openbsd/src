@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.2 1996/06/26 05:38:54 deraadt Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.3 1997/01/15 23:43:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.2 1996/06/26 05:38:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.3 1997/01/15 23:43:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 	char *interval();
 
 	aflg = 0;
-	while ((ch = getopt(argc, argv, "alrut")) != EOF)
+	while ((ch = getopt(argc, argv, "alrut")) != -1)
 		switch((char)ch) {
 		case 'a':
 			aflg = 1;

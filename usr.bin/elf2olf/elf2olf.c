@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.3 1996/12/09 07:10:14 deraadt Exp $	*/
+/*      $OpenBSD: elf2olf.c,v 1.4 1997/01/15 23:42:46 millert Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.3 1996/12/09 07:10:14 deraadt Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.4 1997/01/15 23:42:46 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -85,7 +85,7 @@ main(int argc, char*argv[])
      * Process cmdline
      */
     opstring = olf2elf ? "v" : "vo:";
-    while((ch = getopt(argc, argv, opstring)) != EOF)
+    while((ch = getopt(argc, argv, opstring)) != -1)
 	switch(ch) {
 	case 'v':
 	    verbose = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.5 1996/08/12 23:42:12 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.6 1997/01/15 23:44:15 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.5 1996/08/12 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.6 1997/01/15 23:44:15 millert Exp $";
 #endif
 
 
@@ -125,7 +125,7 @@ main(argc, argv)
 	openlog(name, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "adf")) != EOF) {
+	while ((op = getopt(argc, argv, "adf")) != -1) {
 		switch (op) {
 		case 'a':
 			++aflag;

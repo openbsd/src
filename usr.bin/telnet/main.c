@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/07/03 14:01:56 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:43:20 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/07/03 14:01:56 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/15 23:43:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ main(argc, argv)
 	rlogin = (strncmp(prompt, "rlog", 4) == 0) ? '~' : _POSIX_VDISABLE;
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "8EKLS:X:ab:cde:fFk:l:n:rt:x")) != EOF) {
+	while ((ch = getopt(argc, argv, "8EKLS:X:ab:cde:fFk:l:n:rt:x")) != -1) {
 		switch(ch) {
 		case '8':
 			eight = 3;	/* binary output and input */

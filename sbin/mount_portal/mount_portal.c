@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.4 1996/06/25 21:31:26 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.5 1997/01/15 23:41:24 millert Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.4 1996/06/25 21:31:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.5 1997/01/15 23:41:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ main(argc, argv)
 	 */
 	int ch;
 
-	while ((ch = getopt(argc, argv, "o:")) != EOF) {
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.2 1996/10/26 20:10:20 millert Exp $
+ *	$Id: fsinfo.c,v 1.3 1997/01/15 23:43:47 millert Exp $
  */
 
 #ifndef lint
@@ -104,7 +104,7 @@ char *v[];
 	if (!progname)
 		progname = "fsinfo";
 
-	while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != EOF)
+	while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != -1)
 	switch (ch) {
 	case 'a':
 		autodir = optarg;

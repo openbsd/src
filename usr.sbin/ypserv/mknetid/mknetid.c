@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.2 1996/05/30 09:53:09 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.3 1997/01/15 23:44:33 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mknetid.c,v 1.2 1996/05/30 09:53:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mknetid.c,v 1.3 1997/01/15 23:44:33 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -537,7 +537,7 @@ char *argv[];
 	qflag = usage = 0;
 	domain = NULL;
 	
-	while ((ch = getopt(argc, argv, "d:g:h:m:p:q")) != EOF)
+	while ((ch = getopt(argc, argv, "d:g:h:m:p:q")) != -1)
 		switch (ch) {
 			case 'd':
 				domain = optarg;

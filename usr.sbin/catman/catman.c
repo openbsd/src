@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.1.1.1 1995/10/18 08:47:29 deraadt Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.2 1997/01/15 23:43:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "knpswM:")) != EOF) {
+	while ((c = getopt(argc, argv, "knpswM:")) != -1) {
 		switch (c) {
 		case 'k':
 			f_ignerr = 1;

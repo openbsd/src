@@ -1,4 +1,4 @@
-/*	$OpenBSD: whereis.c,v 1.2 1996/06/26 05:42:56 deraadt Exp $	*/
+/*	$OpenBSD: whereis.c,v 1.3 1997/01/15 23:43:38 millert Exp $	*/
 /*	$NetBSD: whereis.c,v 1.6 1995/08/31 21:54:52 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char *rcsid = "$OpenBSD: whereis.c,v 1.2 1996/06/26 05:42:56 deraadt Exp $";
+static char *rcsid = "$OpenBSD: whereis.c,v 1.3 1997/01/15 23:43:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 	int ch, sverrno, mib[2];
 	char *p, *t, *std, path[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.10 1996/12/24 19:28:03 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.11 1997/01/15 23:44:35 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.10 1996/12/24 19:28:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.11 1997/01/15 23:44:35 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -464,7 +464,7 @@ char *argv[];
 
 	yp_get_default_domain(&domain);
 
-	while ((ch = getopt(argc, argv, "cd:fh:s:C:")) != EOF)
+	while ((ch = getopt(argc, argv, "cd:fh:s:C:")) != -1)
 	  switch (ch) {
 	  case 'c':
 	    cflag++;

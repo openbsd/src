@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.2 1996/05/01 22:15:24 niklas Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.3 1997/01/15 23:44:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.2 1996/05/01 22:15:24 niklas Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.3 1997/01/15 23:44:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	seteuid(getuid());
 	kmemf = NULL;
 	system = NULL;
-	while ((ch = getopt(argc, argv, "M:N:bhpr")) != EOF) {
+	while ((ch = getopt(argc, argv, "M:N:bhpr")) != -1) {
 		switch((char)ch) {
 
 		case 'M':

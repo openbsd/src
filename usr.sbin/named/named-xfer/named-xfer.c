@@ -181,9 +181,9 @@ main(argc, argv)
 	openlog(ProgName, LOG_PID);
 #endif
 #ifdef STUBS
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != -1)
 #else
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != -1)
 #endif
 	    switch (c) {
 #ifdef GEN_AXFR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.3 1996/06/23 14:31:16 deraadt Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.4 1997/01/15 23:41:17 millert Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.3 1996/06/23 14:31:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.4 1997/01/15 23:41:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 	char *dev, *dir;
 
 	mntflags = opts = 0;
-	while ((ch = getopt(argc, argv, "ego:r")) != EOF)
+	while ((ch = getopt(argc, argv, "ego:r")) != -1)
 		switch (ch) {
 		case 'e':
 			opts |= ISOFSMNT_EXTATT;

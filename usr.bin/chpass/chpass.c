@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.6 1996/10/20 23:45:50 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.7 1997/01/15 23:42:18 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.6 1996/10/20 23:45:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.7 1997/01/15 23:42:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(argc, argv)
 #endif
 
 	op = EDITENTRY;
-	while ((ch = getopt(argc, argv, "a:s:ly")) != EOF)
+	while ((ch = getopt(argc, argv, "a:s:ly")) != -1)
 		switch(ch) {
 		case 'a':
 			op = LOADENTRY;

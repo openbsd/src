@@ -1,4 +1,4 @@
-/*	$Id: admin_server.c,v 1.1.1.1 1995/12/14 06:52:49 tholo Exp $	*/
+/*	$Id: admin_server.c,v 1.2 1997/01/15 23:40:51 millert Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -380,7 +380,7 @@ main(int argc, char **argv)		/* admin_server main routine */
 
     bzero(krbrlm, sizeof(krbrlm));
 
-    while ((c = getopt(argc, argv, "f:hnd:a:r:")) != EOF)
+    while ((c = getopt(argc, argv, "f:hnd:a:r:")) != -1)
 	switch(c) {
 	case 'f':			/* Syslog file name change */
 	    prm.sysfile = optarg;

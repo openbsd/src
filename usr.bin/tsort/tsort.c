@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsort.c,v 1.3 1996/06/26 05:42:00 deraadt Exp $	*/
+/*	$OpenBSD: tsort.c,v 1.4 1997/01/15 23:43:26 millert Exp $	*/
 /*	$NetBSD: tsort.c,v 1.11 1996/01/17 20:37:53 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tsort.c,v 1.3 1996/06/26 05:42:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tsort.c,v 1.4 1997/01/15 23:43:26 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,7 +125,7 @@ main(argc, argv)
 	int bsize, ch, nused;
 	BUF bufs[2];
 
-	while ((ch = getopt(argc, argv, "dlq")) != EOF)
+	while ((ch = getopt(argc, argv, "dlq")) != -1)
 		switch (ch) {
 		case 'd':
 			debug = 1;

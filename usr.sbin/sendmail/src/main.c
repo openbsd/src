@@ -249,7 +249,7 @@ main(argc, argv, envp)
 # define OPTIONS	"B:b:C:cd:e:F:f:h:IiM:mN:nO:o:p:q:R:r:sTtUV:vX:"
 #endif
 	opterr = 0;
-	while ((j = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((j = getopt(argc, argv, OPTIONS)) != -1)
 	{
 		switch (j)
 		{

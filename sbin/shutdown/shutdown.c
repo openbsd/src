@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.6 1996/12/22 02:59:53 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.7 1997/01/15 23:41:42 millert Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.6 1996/12/22 02:59:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.7 1997/01/15 23:41:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(argc, argv)
 #endif
 	nosync = NULL;
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknr")) != EOF)
+	while ((ch = getopt(argc, argv, "-fhknr")) != -1)
 		switch (ch) {
 		case '-':
 			readstdin = 1;

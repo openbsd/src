@@ -216,7 +216,7 @@ main(argc, argv)
 	FILE *fp;
 	char *p, line[MSG_BSIZE + 1];
 
-	while ((ch = getopt(argc, argv, "duf:m:p:")) != EOF)
+	while ((ch = getopt(argc, argv, "duf:m:p:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;

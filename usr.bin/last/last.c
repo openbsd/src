@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.2 1996/06/26 05:34:51 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.3 1997/01/15 23:42:41 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.2 1996/06/26 05:34:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.3 1997/01/15 23:42:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ main(argc, argv)
 	char *p;
 
 	maxrec = -1;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789f:h:t:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':

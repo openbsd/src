@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/10/02 06:51:45 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1997/01/15 23:41:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1996/10/02 06:51:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/01/15 23:41:12 millert Exp $";
 #endif
 
 #include "defs.h"
@@ -120,7 +120,7 @@ main(int argc,
 	(void)gethostname(myname, sizeof(myname)-1);
 	(void)gethost(myname, &myaddr);
 
-	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != EOF) {
+	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != -1) {
 		switch (n) {
 		case 's':
 			supplier = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.8 1996/10/10 07:08:16 niklas Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.9 1997/01/15 23:41:50 millert Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.19.4.2 1996/08/03 00:51:46 jtc Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbcC:DhI:km:n:ptsSVZ")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbcC:DhI:km:n:ptsSVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;

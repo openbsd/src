@@ -109,7 +109,7 @@ char *argv[];
 	char *map = NULL;
 	int kbfd;
 	
-	while((c = getopt(argc, argv, "Rd:lm:opr:st:x")) != EOF)
+	while((c = getopt(argc, argv, "Rd:lm:opr:st:x")) != -1)
 	{
 		switch(c)
 		{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ados.c,v 1.4 1996/12/16 17:11:36 deraadt Exp $	*/
+/*	$OpenBSD: mount_ados.c,v 1.5 1997/01/15 23:41:16 millert Exp $	*/
 /*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.4 1996/12/16 17:11:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.5 1997/01/15 23:41:16 millert Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "u:g:m:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "u:g:m:o:")) != -1) {
 		switch (c) {
 		case 'u':
 			args.uid = a_uid(optarg);

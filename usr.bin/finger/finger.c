@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.4 1996/12/08 13:29:19 downsj Exp $	*/
+/*	$OpenBSD: finger.c,v 1.5 1997/01/15 23:42:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.4 1996/12/08 13:29:19 downsj Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.5 1997/01/15 23:42:28 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -87,7 +87,7 @@ main(argc, argv)
 	char domain[256];
 	time_t time();
 
-	while ((ch = getopt(argc, argv, "lmMps")) != EOF)
+	while ((ch = getopt(argc, argv, "lmMps")) != -1)
 		switch(ch) {
 		case 'l':
 			lflag = 1;		/* long format */

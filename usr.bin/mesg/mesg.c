@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.2 1996/06/26 05:37:05 deraadt Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.3 1997/01/15 23:42:53 millert Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
 #endif
-static char rcsid[] = "$OpenBSD: mesg.c,v 1.2 1996/06/26 05:37:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mesg.c,v 1.3 1997/01/15 23:42:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ main(argc, argv)
 	char *tty;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.2 1996/06/26 05:42:20 deraadt Exp $	*/
+/*	$OpenBSD: users.c,v 1.3 1997/01/15 23:43:30 millert Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: users.c,v 1.2 1996/06/26 05:42:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: users.c,v 1.3 1997/01/15 23:43:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 	struct utmp utmp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:

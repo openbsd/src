@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.3 1996/12/06 02:09:22 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.4 1997/01/15 23:43:31 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.3 1996/12/06 02:09:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.4 1997/01/15 23:43:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -114,7 +114,7 @@ main(argc, argv)
 
 	opterr = iflag = 0;
 	interval = -1;
-	while ((ch = getopt(argc, argv, "a:Iir:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))))

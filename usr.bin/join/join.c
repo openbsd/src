@@ -1,4 +1,4 @@
-/* $Id: join.c,v 1.5 1996/08/12 16:37:00 michaels Exp $
+/* $Id: join.c,v 1.6 1997/01/15 23:42:38 millert Exp $
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static char rcsid[] = "$Id: join.c,v 1.5 1996/08/12 16:37:00 michaels Exp $";
+static char rcsid[] = "$Id: join.c,v 1.6 1997/01/15 23:42:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ main(argc, argv)
 
 	aflag = vflag = 0;
 	obsolete(argv);
-	while ((ch = getopt(argc, argv, "\01a:e:j:1:2:o:t:v:")) != EOF) {
+	while ((ch = getopt(argc, argv, "\01a:e:j:1:2:o:t:v:")) != -1) {
 		switch (ch) {
 		case '\01':		/* See comment in obsolete(). */
 			aflag = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.5 1997/01/14 10:33:00 downsj Exp $	*/
+/*	$OpenBSD: strip.c,v 1.6 1997/01/15 23:43:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.5 1997/01/14 10:33:00 downsj Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.6 1997/01/15 23:43:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ main(argc, argv)
 	char *fn;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "dx")) != EOF)
+	while ((ch = getopt(argc, argv, "dx")) != -1)
 		switch(ch) {
                 case 'x':
                         xflag = 1;

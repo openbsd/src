@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.11 1996/12/04 04:11:44 millert Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.12 1997/01/15 23:41:02 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -130,7 +130,7 @@ main(argc, argv)
 	openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
+	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
 		switch (ch) {
 		case 'a':
 			/* check_all = 1; */

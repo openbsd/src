@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.2 1996/06/26 05:37:50 deraadt Exp $	*/
+/*	$OpenBSD: paste.c,v 1.3 1997/01/15 23:43:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.2 1996/06/26 05:37:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.3 1997/01/15 23:43:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ main(argc, argv)
 	int ch, seq;
 
 	seq = 0;
-	while ((ch = getopt(argc, argv, "d:s")) != EOF)
+	while ((ch = getopt(argc, argv, "d:s")) != -1)
 		switch(ch) {
 		case 'd':
 			delimcnt = tr(delim = optarg);

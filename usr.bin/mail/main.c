@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/09/16 02:26:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:42:50 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/06/08 19:48:31 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/09/16 02:26:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/15 23:42:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(argc, argv)
 	bcc = NIL;
 	smopts = NIL;
 	subject = NOSTR;
-	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != EOF) {
+	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
 			/*

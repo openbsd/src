@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsiod.c,v 1.3 1996/08/02 11:05:09 deraadt Exp $	*/
+/*	$OpenBSD: nfsiod.c,v 1.4 1997/01/15 23:41:35 millert Exp $	*/
 /*	$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ main(argc, argv)
 #define	MAXNFSDCNT      20
 #define	DEFNFSDCNT       1
 	num_servers = DEFNFSDCNT;
-	while ((ch = getopt(argc, argv, "n:")) != EOF)
+	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch (ch) {
 		case 'n':
 			num_servers = atoi(optarg);

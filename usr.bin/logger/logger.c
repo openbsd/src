@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.2 1996/06/26 05:35:58 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.3 1997/01/15 23:42:45 millert Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.2 1996/06/26 05:35:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: logger.c,v 1.3 1997/01/15 23:42:45 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -78,7 +78,7 @@ main(argc, argv)
 	tag = NULL;
 	pri = LOG_NOTICE;
 	logflags = 0;
-	while ((ch = getopt(argc, argv, "f:ip:st:")) != EOF)
+	while ((ch = getopt(argc, argv, "f:ip:st:")) != -1)
 		switch((char)ch) {
 		case 'f':		/* file to log */
 			if (freopen(optarg, "r", stdin) == NULL) {

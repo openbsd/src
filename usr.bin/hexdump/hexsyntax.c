@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.2 1996/06/26 05:34:20 deraadt Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.2 1996/06/26 05:34:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ newsyntax(argc, argvp)
 	char *p, **argv;
 
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "bcde:f:n:os:vx")) != EOF)
+	while ((ch = getopt(argc, argv, "bcde:f:n:os:vx")) != -1)
 		switch (ch) {
 		case 'b':
 			add("\"%07.7_Ax\n\"");

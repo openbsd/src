@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.5 1996/12/14 12:17:41 mickey Exp $	*/
+/*	$OpenBSD: printf.c,v 1.6 1997/01/15 23:40:22 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.5 1996/12/14 12:17:41 mickey Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.6 1997/01/15 23:40:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ main(argc, argv)
 	int ch, end, fieldwidth, precision;
 	char convch, nextch, *format, *fmt, *start;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		default:
 			usage();

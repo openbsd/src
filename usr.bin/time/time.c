@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.3 1996/10/12 20:36:06 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.4 1997/01/15 23:43:21 millert Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.3 1996/10/12 20:36:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.4 1997/01/15 23:43:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ main(argc, argv)
 	struct rusage ru;
 
 	lflag = 0;
-	while ((ch = getopt(argc, argv, "lp")) != EOF)
+	while ((ch = getopt(argc, argv, "lp")) != -1)
 		switch((char)ch) {
 		case 'p':
 			portableflag = 1;

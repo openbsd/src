@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.6 1996/08/06 18:17:22 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.7 1997/01/15 23:42:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -133,7 +133,7 @@ main(argc, argv)
 	int modnum = -1;
 	char *modname = NULL;
 
-	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
 			modnum = atoi(optarg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.2 1996/06/26 05:41:47 deraadt Exp $	*/
+/*	$OpenBSD: tput.c,v 1.3 1997/01/15 23:43:23 millert Exp $	*/
 /*	$NetBSD: tput.c,v 1.8 1995/08/31 22:11:37 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.2 1996/06/26 05:41:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.3 1997/01/15 23:43:23 millert Exp $";
 #endif /* not lint */
 
 #include <termios.h>
@@ -72,7 +72,7 @@ main(argc, argv)
 	char *cptr, *p, *term, buf[1024], tbuf[1024];
 
 	term = NULL;
-	while ((ch = getopt(argc, argv, "T:")) != EOF)
+	while ((ch = getopt(argc, argv, "T:")) != -1)
 		switch(ch) {
 		case 'T':
 			term = optarg;

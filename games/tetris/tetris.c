@@ -130,7 +130,7 @@ main(argc, argv)
 	egid = getegid();
 	setegid(gid);
 
-	while ((ch = getopt(argc, argv, "k:l:s")) != EOF)
+	while ((ch = getopt(argc, argv, "k:l:s")) != -1)
 		switch(ch) {
 		case 'k':
 			if (strlen(keys = optarg) != 6)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.7 1996/12/07 08:00:45 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.8 1997/01/15 23:42:56 millert Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.7 1996/12/07 08:00:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.8 1997/01/15 23:42:56 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -199,7 +199,7 @@ PRS(argc,argv)
 	}
 
         optind = 1;             /* Start options parsing */
-        while ((c=getopt(argc,argv,"nrvf:t:")) != EOF)
+        while ((c = getopt(argc,argv,"nrvf:t:")) != -1)
                 switch (c) {
                 case 'n':
                         noaction++; /* This implies needroot as off */

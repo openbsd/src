@@ -63,7 +63,7 @@ main(argc, argv)
   u_char  cval;
   
 
-  while ((c = getopt (argc, argv, "a:bwlr:s:o:")) != EOF)
+  while ((c = getopt (argc, argv, "a:bwlr:s:o:")) != -1)
     switch (c)
       {
       case 'a':

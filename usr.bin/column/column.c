@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.2 1996/06/26 05:32:16 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.3 1997/01/15 23:42:21 millert Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.2 1996/06/26 05:32:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.3 1997/01/15 23:42:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,7 @@ main(argc, argv)
 		termwidth = win.ws_col;
 
 	tflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "c:s:tx")) != EOF)
+	while ((ch = getopt(argc, argv, "c:s:tx")) != -1)
 		switch(ch) {
 		case 'c':
 			termwidth = atoi(optarg);

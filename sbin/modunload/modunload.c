@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.4 1996/08/05 11:05:21 mickey Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.5 1997/01/15 23:41:14 millert Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ main(argc, argv)
 	char *modname = NULL;
 	struct lmc_unload ulbuf;
 
-	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
 			modnum = atoi(optarg);

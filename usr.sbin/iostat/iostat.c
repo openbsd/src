@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.6 1996/12/22 03:28:56 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.7 1997/01/15 23:44:01 millert Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ main(argc, argv)
 	int ch, hdrcnt;
 	struct timeval	tv;
 
-	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != EOF)
+	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)

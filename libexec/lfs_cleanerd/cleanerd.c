@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.2 1996/07/01 11:04:56 downsj Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.3 1997/01/15 23:41:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.2 1996/07/01 11:04:56 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.3 1997/01/15 23:41:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,7 +169,7 @@ main(argc, argv)
 	cmd_err = nodaemon = 0;
 	clean_opts = 0;
 	segs_per_clean = 1;
-	while ((opt = getopt(argc, argv, "bdmn:r:s")) != EOF) {
+	while ((opt = getopt(argc, argv, "bdmn:r:s")) != -1) {
 		switch (opt) {
 			case 'b':	/*
 					 * Use live bytes to determine

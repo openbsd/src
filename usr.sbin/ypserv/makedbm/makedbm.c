@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.4 1996/06/26 21:26:35 maja Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.5 1997/01/15 23:44:32 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.4 1996/06/26 21:26:35 maja Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.5 1997/01/15 23:44:32 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -327,7 +327,7 @@ main (argc,argv)
 	aflag = uflag = bflag = lflag = sflag = 0;
 	infile = outfile = NULL;
 	
-	while ((ch = getopt(argc, argv, "blsui:o:m:d:")) != EOF)
+	while ((ch = getopt(argc, argv, "blsui:o:m:d:")) != -1)
 		switch (ch) {
 			case 'b':
 		  		bflag++;

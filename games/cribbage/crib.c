@@ -71,7 +71,7 @@ main(argc, argv)
 	egid = getegid();
 	setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "eqr")) != EOF)
+	while ((ch = getopt(argc, argv, "eqr")) != -1)
 		switch (ch) {
 		case 'e':
 			explain = TRUE;

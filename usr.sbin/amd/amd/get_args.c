@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: get_args.c,v 1.2 1997/01/15 23:43:45 millert Exp $
  */
 
 /*
@@ -111,7 +111,7 @@ char *v[];
 	char *logfile = 0;
 	char *sub_domain = 0;
 
-	while ((opt_ch = getopt(c, v, "mnprva:c:d:h:k:l:t:w:x:y:C:D:")) != EOF)
+	while ((opt_ch = getopt(c, v, "mnprva:c:d:h:k:l:t:w:x:y:C:D:")) != -1)
 	switch (opt_ch) {
 	case 'a':
 		if (*optarg != '/') {

@@ -86,7 +86,7 @@ main(argc, argv)
 	char block[DEV_BSIZE];
 
 	makebootfile = 0;
-	while ((i = getopt(argc, argv, "b")) != EOF)
+	while ((i = getopt(argc, argv, "b")) != -1)
 		switch(i) {
 		case 'b':
 			makebootfile = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.3 1996/06/26 05:42:05 deraadt Exp $	*/
+/*	$OpenBSD: ul.c,v 1.4 1997/01/15 23:43:27 millert Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.3 1996/06/26 05:42:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ul.c,v 1.4 1997/01/15 23:43:27 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -100,7 +100,7 @@ main(argc, argv)
 	termtype = getenv("TERM");
 	if (termtype == NULL || (argv[0][0] == 'c' && !isatty(1)))
 		termtype = "lpr";
-	while ((c=getopt(argc, argv, "it:T:")) != EOF)
+	while ((c=getopt(argc, argv, "it:T:")) != -1)
 		switch(c) {
 
 		case 't':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.23 1996/12/14 19:19:09 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.24 1997/01/15 23:43:59 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.23 1996/12/14 19:19:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.24 1997/01/15 23:43:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -289,7 +289,7 @@ main(argc, argv, envp)
 	progname = strrchr(argv[0], '/');
 	progname = progname ? progname + 1 : argv[0];
 
-	while ((ch = getopt(argc, argv, "d")) != EOF)
+	while ((ch = getopt(argc, argv, "d")) != -1)
 		switch(ch) {
 		case 'd':
 			debug = 1;

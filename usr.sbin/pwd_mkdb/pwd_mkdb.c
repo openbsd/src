@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.8 1996/10/16 09:16:14 downsj Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.9 1997/01/15 23:44:14 millert Exp $	*/
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.8 1996/10/16 09:16:14 downsj Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.9 1997/01/15 23:44:14 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ main(argc, argv)
 	DBT ypdata, ypkey;
 
 	makeold = 0;
-	while ((ch = getopt(argc, argv, "cpvd:")) != EOF)
+	while ((ch = getopt(argc, argv, "cpvd:")) != -1)
 		switch(ch) {
 		case 'c':			/* verify only */
 			cflag = 1;

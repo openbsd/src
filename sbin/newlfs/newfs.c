@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.5 1996/12/04 08:39:31 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.6 1997/01/15 23:41:33 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.5 1996/12/04 08:39:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.6 1997/01/15 23:41:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ main(argc, argv)
 		opstring += 2;
 
 	debug = lfs = segsize = 0;
-	while ((ch = getopt(argc, argv, opstring)) != EOF)
+	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case 'B':	/* LFS segment size */
 			if ((segsize = atoi(optarg)) < LFS_MINSEGSIZE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 1996/10/30 22:40:31 niklas Exp $ */
+/*	$OpenBSD: installboot.c,v 1.5 1997/01/15 23:41:48 millert Exp $ */
 /*	$NetBSD: installboot.c,v 1.2 1995/12/20 00:17:49 cgd Exp $ */
 
 /*
@@ -83,7 +83,7 @@ main(argc, argv)
 	int	mib[2];
 	size_t	size;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vn")) != -1) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */

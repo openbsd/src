@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1996/11/30 21:08:59 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/01/15 23:42:51 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1996/11/30 21:08:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/01/15 23:42:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ MainParseArgs(argc, argv)
 #else
 # define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #endif
-rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
+rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);

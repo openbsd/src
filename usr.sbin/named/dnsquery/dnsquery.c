@@ -44,7 +44,7 @@ char *argv[];
 	}
 
 	/* handle args */
-	while ((c = getopt(argc, argv, "c:dh:n:p:r:st:u:v")) != EOF) {
+	while ((c = getopt(argc, argv, "c:dh:n:p:r:st:u:v")) != -1) {
 		switch (c) {
 
 		case 'r' :	_res.retry = atoi(optarg);

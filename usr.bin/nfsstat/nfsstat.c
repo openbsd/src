@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.5 1996/12/22 03:25:59 tholo Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.6 1997/01/15 23:42:57 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.5 1996/12/22 03:25:59 tholo Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.6 1997/01/15 23:42:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ main(argc, argv)
 
 	interval = 0;
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:w:sc")) != EOF)
+	while ((ch = getopt(argc, argv, "M:N:w:sc")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;

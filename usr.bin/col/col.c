@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.2 1996/06/26 05:32:10 deraadt Exp $	*/
+/*	$OpenBSD: col.c,v 1.3 1997/01/15 23:42:20 millert Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.2 1996/06/26 05:32:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.3 1997/01/15 23:42:20 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -135,7 +135,7 @@ main(argc, argv)
 
 	max_bufd_lines = 128;
 	compress_spaces = 1;		/* compress spaces into tabs */
-	while ((opt = getopt(argc, argv, "bfhl:x")) != EOF)
+	while ((opt = getopt(argc, argv, "bfhl:x")) != -1)
 		switch (opt) {
 		case 'b':		/* do not output backspaces */
 			no_backspaces = 1;

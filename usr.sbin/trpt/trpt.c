@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trpt.c	5.14 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: trpt.c,v 1.4 1996/12/22 03:29:10 deraadt Exp $";
+static char rcsid[] = "$Id: trpt.c,v 1.5 1997/01/15 23:44:26 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ main(argc, argv)
 	off_t lseek();
 
 	jflag = npcbs = 0;
-	while ((ch = getopt(argc, argv, "afjp:st")) != EOF)
+	while ((ch = getopt(argc, argv, "afjp:st")) != -1)
 		switch (ch) {
 		case 'a':
 			++aflag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 1996/06/26 05:32:56 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 1997/01/15 23:42:26 millert Exp $	*/
 /*
  * file - find type of a file or files - main program.
  *
@@ -26,7 +26,7 @@
  * 4. This notice may not be removed or altered.
  */
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.3 1996/06/26 05:32:56 deraadt Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.4 1997/01/15 23:42:26 millert Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -97,7 +97,7 @@ char *argv[];
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
 
-	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != EOF)
+	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != -1)
 		switch (c) {
 		case 'v':
 			(void) fprintf(stdout, "%s-%d.%d\n", progname,

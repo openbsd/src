@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_union.c,v 1.3 1996/06/23 14:31:43 deraadt Exp $	*/
+/*	$OpenBSD: mount_union.c,v 1.4 1997/01/15 23:41:27 millert Exp $	*/
 /*	$NetBSD: mount_union.c,v 1.3 1996/04/13 01:32:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_union.c,v 1.3 1996/06/23 14:31:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_union.c,v 1.4 1997/01/15 23:41:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(argc, argv)
 
 	mntflags = 0;
 	args.mntflags = UNMNT_ABOVE;
-	while ((ch = getopt(argc, argv, "bo:r")) != EOF)
+	while ((ch = getopt(argc, argv, "bo:r")) != -1)
 		switch (ch) {
 		case 'b':
 			args.mntflags &= ~UNMNT_OPMASK;

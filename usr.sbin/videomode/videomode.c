@@ -61,7 +61,7 @@ main(argc, argv)
 		dump_mode(0);
 		return (0);
 	}
-	while ((c = getopt(argc, argv, "as:")) != EOF) {
+	while ((c = getopt(argc, argv, "as:")) != -1) {
 		switch (c) {
 		case 'a':
 			if (optind < argc)

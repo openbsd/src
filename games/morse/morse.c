@@ -107,7 +107,7 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	while ((ch = getopt(argc, argv, "s")) != EOF)
+	while ((ch = getopt(argc, argv, "s")) != -1)
 		switch((char)ch) {
 		case 's':
 			sflag = 1;

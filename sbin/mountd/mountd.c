@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.13 1996/12/10 07:26:45 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.14 1997/01/15 23:41:28 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ main(argc, argv)
 	SVCXPRT *udptransp, *tcptransp;
 	int c;
 
-	while ((c = getopt(argc, argv, "dnr")) != EOF)
+	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
 		case 'd':
 			debug = 1;

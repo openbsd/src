@@ -502,7 +502,7 @@ main(int argc, char **argv)
 		err(1,"Default regular expression argument to -I is botched");
 	flag_ignore = 1;
 
-	while ((i = getopt(argc,argv,"D:I:B:qv")) != EOF)
+	while ((i = getopt(argc,argv,"D:I:B:qv")) != -1)
 		switch (i) {
 		case 'D':
 			damage_limit = strtol(optarg,0,0);

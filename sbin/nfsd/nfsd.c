@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.3 1996/09/16 20:41:28 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.4 1997/01/15 23:41:34 millert Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ main(argc, argv, envp)
 #define	GETOPT	"n:rtu"
 #define	USAGE	"[-rtu] [-n num_servers]"
 #endif
-	while ((ch = getopt(argc, argv, GETOPT)) != EOF)
+	while ((ch = getopt(argc, argv, GETOPT)) != -1)
 		switch (ch) {
 		case 'n':
 			nfsdcnt = atoi(optarg);

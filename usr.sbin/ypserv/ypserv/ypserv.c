@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.6 1996/10/02 23:44:56 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.7 1997/01/15 23:44:34 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.6 1996/10/02 23:44:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.7 1997/01/15 23:44:34 millert Exp $";
 #endif
 
 #include "yp.h"
@@ -246,7 +246,7 @@ char *argv[];
 	int	 ch;
 	extern	 char *optarg;
 	
-	while ((ch = getopt(argc, argv, "a:dx")) != EOF)
+	while ((ch = getopt(argc, argv, "a:dx")) != -1)
 		switch (ch) {
 		case 'a':
 			aclfile = optarg;

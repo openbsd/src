@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.1 1996/06/12 11:21:43 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.2 1997/01/15 23:41:41 millert Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ void procargs(int *argc_p, char ***argv_p)
 	fflag = 0;
 	commandflag = 0;
 	debugflag = 0;
-	while ((ch = getopt(argc, argv, "ceprvf:d:b:t:l:z:m:P:s:")) != EOF) {
+	while ((ch = getopt(argc, argv, "ceprvf:d:b:t:l:z:m:P:s:")) != -1) {
 		switch (ch) {
 #ifdef SCIOCADDR
 		case 'p':

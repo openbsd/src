@@ -2,7 +2,7 @@
 #if 0
 static char	elsieid[] = "@(#)zic.c	7.80";
 #else
-static char rcsid[] = "$OpenBSD: zic.c,v 1.5 1997/01/14 03:16:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.6 1997/01/15 23:40:55 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -478,7 +478,7 @@ char *	argv[];
 	(void) textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT - 0 */
 	progname = argv[0];
-	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF)
+	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != -1)
 		switch (c) {
 			default:
 				usage();

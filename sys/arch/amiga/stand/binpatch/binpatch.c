@@ -1,4 +1,4 @@
-/*	$OpenBSD: binpatch.c,v 1.2 1996/10/04 23:09:54 niklas Exp $	*/
+/*	$OpenBSD: binpatch.c,v 1.3 1997/01/15 23:41:49 millert Exp $	*/
 /*	$NetBSD: binpatch.c,v 1.6 1995/08/18 15:28:28 chopps Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
   u_char  cval;
   
  
-  while ((c = getopt (argc, argv, "H:a:bwlr:s:o:")) != EOF)
+  while ((c = getopt (argc, argv, "H:a:bwlr:s:o:")) != -1)
     switch (c)
       {
       case 'H':

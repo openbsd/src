@@ -101,7 +101,7 @@ main(argc, argv)
 	setgid(getgid());
 
 	lflag = 0;
-	while ((ch = getopt(argc, argv, "l")) != EOF)
+	while ((ch = getopt(argc, argv, "l")) != -1)
 		switch (ch) {
 		case 'l':
 			lflag = 1;

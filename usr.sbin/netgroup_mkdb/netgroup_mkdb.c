@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$Id: netgroup_mkdb.c,v 1.2 1996/05/01 13:32:21 deraadt Exp $";
+static char *rcsid = "$Id: netgroup_mkdb.c,v 1.3 1997/01/15 23:44:08 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -104,7 +104,7 @@ main(argc, argv)
 	char		 *fname = _PATH_NETGROUP;
 
 
-	while ((ch = getopt(argc, argv, "do:")) != EOF)
+	while ((ch = getopt(argc, argv, "do:")) != -1)
 		switch (ch) {
 #ifdef DEBUG_NG
 		case 'd':

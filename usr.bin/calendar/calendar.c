@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.5 1996/12/05 06:04:38 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.6 1997/01/15 23:42:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.5 1996/12/05 06:04:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.6 1997/01/15 23:42:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(argc, argv)
 
 	(void) setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "?-af:t:A:B:")) != EOF)
+	while ((ch = getopt(argc, argv, "?-af:t:A:B:")) != -1)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':

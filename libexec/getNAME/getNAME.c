@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getNAME.c	5.4 (Berkeley) 1/20/91";*/
-static char rcsid[] = "$Id: getNAME.c,v 1.1.1.1 1995/10/18 08:43:16 deraadt Exp $";
+static char rcsid[] = "$Id: getNAME.c,v 1.2 1997/01/15 23:40:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -61,7 +61,7 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "it")) != EOF)
+	while ((ch = getopt(argc, argv, "it")) != -1)
 		switch(ch) {
 		case 'i':
 			intro = 1;

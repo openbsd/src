@@ -1,4 +1,4 @@
-/*	$OpenBSD: logname.c,v 1.2 1996/06/26 05:36:04 deraadt Exp $	*/
+/*	$OpenBSD: logname.c,v 1.3 1997/01/15 23:42:47 millert Exp $	*/
 /*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
 #endif
-static char rcsid[] = "$OpenBSD: logname.c,v 1.2 1996/06/26 05:36:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: logname.c,v 1.3 1997/01/15 23:42:47 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:

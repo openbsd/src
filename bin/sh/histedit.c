@@ -1,4 +1,4 @@
-/*	$OpenBSD: histedit.c,v 1.6 1996/10/20 00:54:50 millert Exp $	*/
+/*	$OpenBSD: histedit.c,v 1.7 1997/01/15 23:40:28 millert Exp $	*/
 /*	$NetBSD: histedit.c,v 1.8 1995/05/11 21:29:12 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: histedit.c,v 1.6 1996/10/20 00:54:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: histedit.c,v 1.7 1997/01/15 23:40:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ histcmd(argc, argv)
 
 	optreset = 1; optind = 1; /* initialize getopt */
 	while (not_fcnumber(argv[optind]) &&
-	      (ch = getopt(argc, argv, ":e:lnrs")) != EOF)
+	      (ch = getopt(argc, argv, ":e:lnrs")) != -1)
 		switch ((char)ch) {
 		case 'e':
 			editor = optarg;

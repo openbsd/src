@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.2 1996/06/26 05:38:29 deraadt Exp $	*/
+/*	$OpenBSD: rev.c,v 1.3 1997/01/15 23:43:05 millert Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rev.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: rev.c,v 1.2 1996/06/26 05:38:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rev.c,v 1.3 1997/01/15 23:43:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ main(argc, argv)
 	size_t len;
 	int ch, rval;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:

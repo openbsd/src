@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.2 1996/06/26 05:36:06 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.3 1997/01/15 23:42:48 millert Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.2 1996/06/26 05:36:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.3 1997/01/15 23:42:48 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -109,7 +109,7 @@ main(argc, argv)
 
 	file = _PATH_WORDS;
 	termchar = '\0';
-	while ((ch = getopt(argc, argv, "dft:")) != EOF)
+	while ((ch = getopt(argc, argv, "dft:")) != -1)
 		switch(ch) {
 		case 'd':
 			dflag = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1997/01/09 11:22:16 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1997/01/15 23:42:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/01/09 11:22:16 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1997/01/15 23:42:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 	autologin = 1;
 	mark = HASHBYTES;
 
-	while ((ch = getopt(argc, argv, "p:r:dgintv")) != EOF) {
+	while ((ch = getopt(argc, argv, "p:r:dgintv")) != -1) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;

@@ -85,7 +85,7 @@ char *argv[];
 	int fd;
 	char *device = NULL;
 
-	while( (c = getopt(argc, argv, "vcd:")) != EOF)
+	while( (c = getopt(argc, argv, "vcd:")) != -1)
 	{
 		switch(c)
 		{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.2 1996/06/26 05:31:18 deraadt Exp $	*/
+/*	$OpenBSD: ar.c,v 1.3 1997/01/15 23:42:11 millert Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.2 1996/06/26 05:31:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.3 1997/01/15 23:42:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(argc, argv)
 		argv[1] = p;
 	}
 
-	while ((c = getopt(argc, argv, "abcdilmopqrTtuvx")) != EOF) {
+	while ((c = getopt(argc, argv, "abcdilmopqrTtuvx")) != -1) {
 		switch(c) {
 		case 'a':
 			options |= AR_A;

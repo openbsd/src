@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.3 1996/06/26 05:37:33 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.4 1997/01/15 23:42:59 millert Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.3 1996/06/26 05:37:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.4 1997/01/15 23:42:59 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ main(argc, argv)
 	extern int optind;
 	int ch, errors;
 
-	while ((ch = getopt(argc, argv, "agnopruw")) != EOF) {
+	while ((ch = getopt(argc, argv, "agnopruw")) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;

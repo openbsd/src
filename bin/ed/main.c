@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/12/14 12:17:56 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/01/15 23:40:23 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/12/14 12:17:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/01/15 23:40:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(argc, argv)
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
-	while ((c = getopt(argc, argv, "p:sx")) != EOF)
+	while ((c = getopt(argc, argv, "p:sx")) != -1)
 		switch(c) {
 		case 'p':				/* set prompt */
 			prompt = optarg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.3 1996/10/18 18:16:07 millert Exp $	*/
+/*	$OpenBSD: du.c,v 1.4 1997/01/15 23:42:25 millert Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.3 1996/10/18 18:16:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.4 1997/01/15 23:42:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 	Hflag = Lflag = Pflag = aflag = cflag = kflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPacksx")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPacksx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;

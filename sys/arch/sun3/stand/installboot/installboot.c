@@ -89,7 +89,7 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 
-	while ((c = getopt(argc, argv, "vnh")) != EOF) {
+	while ((c = getopt(argc, argv, "vnh")) != -1) {
 		switch (c) {
 		case 'h':
 			/* Don't strip a.out header */

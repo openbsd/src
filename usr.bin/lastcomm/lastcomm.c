@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.3 1996/06/26 05:34:54 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.4 1997/01/15 23:42:41 millert Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.3 1996/06/26 05:34:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.4 1997/01/15 23:42:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ main(argc, argv)
 	char *acctfile;
 
 	acctfile = _PATH_ACCT;
-	while ((ch = getopt(argc, argv, "f:")) != EOF)
+	while ((ch = getopt(argc, argv, "f:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			acctfile = optarg;

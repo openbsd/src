@@ -1,4 +1,4 @@
-/*	$Id: kpropd.c,v 1.3 1996/09/16 18:48:56 millert Exp $	*/
+/*	$Id: kpropd.c,v 1.4 1997/01/15 23:40:53 millert Exp $	*/
 
 /*-
  * Copyright 1987 by the Massachusetts Institute of Technology.
@@ -162,7 +162,7 @@ main(int argc, char **argv)
   if (argv[argc - 1][0] == 'k' && isdigit(argv[argc - 1][1])) {
     argc--;			/* ttys file hack */
   }
-  while ((c = getopt(argc, argv, "r:s:d:l:p:P:")) != EOF) {
+  while ((c = getopt(argc, argv, "r:s:d:l:p:P:")) != -1) {
     switch(c) {
     case 'r':
       rflag++;

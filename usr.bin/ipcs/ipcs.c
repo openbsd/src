@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.6 1996/12/22 03:25:54 tholo Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.7 1997/01/15 23:42:37 millert Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ main(argc, argv)
 	char	errbuf[_POSIX2_LINE_MAX];
 	int     i;
 
-	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != EOF)
+	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
 		case 'M':
 			display = SHMTOTAL;

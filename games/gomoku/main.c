@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/12/22 20:01:16 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/01/15 23:40:49 millert Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ main(argc, argv)
 	else
 		prog = argv[0];
 
-	while ((ch = getopt(argc, argv, "bcdD:u")) != EOF) {
+	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
 		switch (ch) {
 		case 'b':	/* background */
 			interactive = 0;

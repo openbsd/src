@@ -1,4 +1,4 @@
-/*	$Id: kerberos.c,v 1.3 1996/09/17 23:29:37 deraadt Exp $	*/
+/*	$Id: kerberos.c,v 1.4 1997/01/15 23:40:52 millert Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -627,7 +627,7 @@ main(int argc, char **argv)
 
     progname = argv[0];
 
-    while ((c = getopt(argc, argv, "snmp:a:l:r:")) != EOF) {
+    while ((c = getopt(argc, argv, "snmp:a:l:r:")) != -1) {
 	switch(c) {
 	case 's':
 	    /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/09/16 02:32:34 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/01/15 23:41:38 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.11 1996/03/15 22:39:39 scottr Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ main(argc, argv)
 	if ((inputdev = getenv("TAPE")) == NULL)
 		inputdev = _PATH_DEFTAPE;
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != EOF)
+	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != -1)
 		switch(ch) {
 		case 'b':
 			/* Change default tape blocksize. */

@@ -114,9 +114,9 @@ editor(gp, argc, argv)
 	F_SET(gp, G_SNAPSHOT);
 
 #ifdef DEBUG
-	while ((ch = getopt(argc, argv, "c:D:eFlRrSsT:t:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "c:D:eFlRrSsT:t:vw:")) != -1)
 #else
-	while ((ch = getopt(argc, argv, "c:eFlRrSst:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "c:eFlRrSst:vw:")) != -1)
 #endif
 		switch (ch) {
 		case 'c':		/* Run the command. */

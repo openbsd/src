@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.7 1996/09/16 02:26:18 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.8 1997/01/15 23:43:36 millert Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.7 1996/09/16 02:26:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.8 1997/01/15 23:43:36 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -97,7 +97,7 @@ main(argc, argv)
 	char line[sizeof(utmp.ut_line) + 1];
 	struct wallgroup *g;
 
-	while ((ch = getopt(argc, argv, "ng:")) != EOF)
+	while ((ch = getopt(argc, argv, "ng:")) != -1)
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */

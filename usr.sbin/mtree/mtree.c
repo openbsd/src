@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.4 1997/01/03 21:40:50 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.5 1997/01/15 23:44:03 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.4 1997/01/03 21:40:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.5 1997/01/15 23:44:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:tUux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;

@@ -52,7 +52,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.2 $";
+const char version[] = "$Revision: 1.3 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -86,7 +86,7 @@ char	**argv;
 
 	kparam.boothowto = RB_SINGLE;
 
-	while ((ch = getopt(argc, argv, "abdhstVwDo:S:T:")) != EOF) {
+	while ((ch = getopt(argc, argv, "abdhstVwDo:S:T:")) != -1) {
 		switch (ch) {
 		case 'a':
 			kparam.boothowto &= ~(RB_SINGLE);

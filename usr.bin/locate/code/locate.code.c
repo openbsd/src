@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.6 1996/10/20 00:52:53 michaels Exp $
+ *	$OpenBSD: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.6 1996/10/20 00:52:53 michaels Exp $
+ * 	$Id: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $
  */
 
 #ifndef lint
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.6 1996/10/20 00:52:53 michaels Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.7 1997/01/15 23:42:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 	FILE *fp;
 	register int i, j;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		default:
 			usage();

@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.8 1996/12/22 02:57:51 tholo Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.9 1997/01/15 23:40:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -124,7 +124,7 @@ main(argc, argv)
 	char *targ, *shell;
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
 		switch(ch) {			/* User-visible flags. */
 		case 'K':
 #ifdef KERBEROS

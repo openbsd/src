@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.2 1996/06/26 05:31:13 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.3 1997/01/15 23:42:09 millert Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.2 1996/06/26 05:31:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.3 1997/01/15 23:42:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ main(argc, argv)
 	debug = 0;
 	magic = '%';		/* Default magic char is `%'. */
 	nargs = -1;
-	while ((ch = getopt(argc, argv, "a:d0123456789")) != EOF)
+	while ((ch = getopt(argc, argv, "a:d0123456789")) != -1)
 		switch (ch) {
 		case 'a':
 			if (optarg[1] != '\0')

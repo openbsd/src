@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.4 1996/06/23 14:32:53 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.5 1997/01/15 23:41:45 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.4 1996/06/23 14:32:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.5 1997/01/15 23:41:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 	sync();
 
 	all = 0;
-	while ((ch = getopt(argc, argv, "aFfh:t:v")) != EOF)
+	while ((ch = getopt(argc, argv, "aFfh:t:v")) != -1)
 		switch (ch) {
 		case 'a':
 			all = 1;

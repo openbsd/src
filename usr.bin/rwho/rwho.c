@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.4 1996/08/30 15:15:26 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.5 1997/01/15 23:43:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.4 1996/08/30 15:15:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.5 1997/01/15 23:43:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ main(argc, argv)
 	int f, n, i;
 	time_t time();
 
-	while ((ch = getopt(argc, argv, "a")) != EOF)
+	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
 		case 'a':
 			aflg = 1;

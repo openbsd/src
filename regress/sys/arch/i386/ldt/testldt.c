@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((ch = getopt(argc, argv, "v")) != EOF) {
+	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
 		case 'v':
 		    verbose++;

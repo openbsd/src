@@ -1,4 +1,4 @@
-/*	$Id: kadmin.c,v 1.3 1996/09/15 23:30:52 millert Exp $	*/
+/*	$Id: kadmin.c,v 1.4 1997/01/15 23:40:50 millert Exp $	*/
 
 /* 
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -318,7 +318,7 @@ do_init(int argc, char **argv)
 	else
 	    strcpy(krbrlm, default_realm);
 
-	while ((c = getopt(argc, argv, OPTION_STRING)) != EOF) 
+	while ((c = getopt(argc, argv, OPTION_STRING)) != -1) 
 	    switch (c) {
 	      case 'u':
 		strncpy(myname, optarg, sizeof(myname) - 1);

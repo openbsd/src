@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.4 1996/09/03 11:16:47 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.5 1997/01/15 23:43:13 millert Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.4 1996/09/03 11:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.5 1997/01/15 23:43:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "w")) != EOF)
+	while ((ch = getopt(argc, argv, "w")) != -1)
 		switch(ch) {
 		case 'w':
 			ignore_bad_archive_entries = 0;

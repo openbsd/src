@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.3 1996/12/22 03:00:49 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.4 1997/01/15 23:41:10 millert Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.3 1996/12/22 03:00:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.4 1997/01/15 23:41:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ main(argc, argv)
 	char buf[5];
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "M:N:")) != EOF)
+	while ((ch = getopt(argc, argv, "M:N:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_null.c,v 1.3 1996/06/23 14:31:29 deraadt Exp $	*/
+/*	$OpenBSD: mount_null.c,v 1.4 1997/01/15 23:41:23 millert Exp $	*/
 /*	$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_null.c,v 1.3 1996/06/23 14:31:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_null.c,v 1.4 1997/01/15 23:41:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(argc, argv)
 	char target[MAXPATHLEN];
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch(ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);

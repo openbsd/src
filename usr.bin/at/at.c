@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.5 1996/10/26 20:06:50 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.6 1997/01/15 23:42:12 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.5 1996/10/26 20:06:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.6 1997/01/15 23:42:12 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -495,7 +495,7 @@ main(argc, argv)
 
 	/* process whatever options we can process */
 	opterr = 1;
-	while ((c = getopt(argc, argv, options)) != EOF)
+	while ((c = getopt(argc, argv, options)) != -1)
 		switch (c) {
 		case 'v':	/* verify time settings */
 			atverify = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapon.c,v 1.2 1996/06/23 14:32:46 deraadt Exp $	*/
+/*	$OpenBSD: swapon.c,v 1.3 1997/01/15 23:41:43 millert Exp $	*/
 /*	$NetBSD: swapon.c,v 1.7 1995/03/18 15:01:18 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)swapon.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: swapon.c,v 1.2 1996/06/23 14:32:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swapon.c,v 1.3 1997/01/15 23:41:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ main(argc, argv)
 	int ch, doall;
 
 	doall = 0;
-	while ((ch = getopt(argc, argv, "a")) != EOF)
+	while ((ch = getopt(argc, argv, "a")) != -1)
 		switch((char)ch) {
 		case 'a':
 			doall = 1;

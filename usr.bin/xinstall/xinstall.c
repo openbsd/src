@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.9 1996/12/06 02:14:56 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.10 1997/01/15 23:43:41 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.9 1996/12/06 02:14:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.10 1997/01/15 23:43:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ main(argc, argv)
 	char *flags, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "Ccdf:g:m:o:pSs")) != EOF)
+	while ((ch = getopt(argc, argv, "Ccdf:g:m:o:pSs")) != -1)
 		switch((char)ch) {
 		case 'C':
 			docompare = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.12 1996/12/22 03:00:52 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.13 1997/01/15 23:41:36 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.12 1996/12/22 03:00:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.13 1997/01/15 23:41:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ main(argc, argv)
 
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct timeval)];
-	while ((ch = getopt(argc, argv, "DI:LRS:c:dfh:i:l:np:qrs:T:t:vw:")) != EOF)
+	while ((ch = getopt(argc, argv, "DI:LRS:c:dfh:i:l:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
 		case 'c':
 			npackets = strtol(optarg, 0, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: moptrace.c,v 1.2 1996/09/21 19:12:39 maja Exp $ */
+/*	$OpenBSD: moptrace.c,v 1.3 1997/01/15 23:44:30 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: moptrace.c,v 1.2 1996/09/21 19:12:39 maja Exp $";
+static char rcsid[] = "$OpenBSD: moptrace.c,v 1.3 1997/01/15 23:44:30 millert Exp $";
 #endif
 
 /*
@@ -95,7 +95,7 @@ main(argc, argv)
 	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "34ad")) != EOF) {
+	while ((op = getopt(argc, argv, "34ad")) != -1) {
 		switch (op) {
 		case '3':
 			Not3Flag++;

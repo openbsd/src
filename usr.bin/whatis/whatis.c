@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.2 1996/06/26 05:42:54 deraadt Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.3 1997/01/15 23:43:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -76,7 +76,7 @@ main(argc, argv)
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
-	while ((ch = getopt(argc, argv, "C:M:m:P:")) != EOF)
+	while ((ch = getopt(argc, argv, "C:M:m:P:")) != -1)
 		switch (ch) {
 		case 'C':
 			conffile = optarg;

@@ -137,7 +137,7 @@ main(argc, argv)
 	minlength = 3;
 	tlimit = 180;		/* 3 minutes is standard */
 
-	while ((ch = getopt(argc, argv, "bds:t:w:")) != EOF)
+	while ((ch = getopt(argc, argv, "bds:t:w:")) != -1)
 		switch(ch) {
 		case 'b':
 			batch = 1;

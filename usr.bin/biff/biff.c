@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.2 1996/06/26 05:31:41 deraadt Exp $	*/
+/*	$OpenBSD: biff.c,v 1.3 1997/01/15 23:42:14 millert Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: biff.c,v 1.2 1996/06/26 05:31:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: biff.c,v 1.3 1997/01/15 23:42:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ main(argc, argv)
 	char *name;
 
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_kernfs.c,v 1.3 1996/06/23 14:31:22 deraadt Exp $	*/
+/*	$OpenBSD: mount_kernfs.c,v 1.4 1997/01/15 23:41:21 millert Exp $	*/
 /*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.3 1996/06/23 14:31:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.4 1997/01/15 23:41:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ main(argc, argv)
 	int ch, mntflags;
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);

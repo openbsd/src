@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.2 1996/06/26 05:33:27 deraadt Exp $	*/
+/*	$OpenBSD: from.c,v 1.3 1997/01/15 23:42:29 millert Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.2 1996/06/26 05:33:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.3 1997/01/15 23:42:29 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ main(argc, argv)
 #endif
 
 	file = sender = NULL;
-	while ((ch = getopt(argc, argv, "f:s:")) != EOF)
+	while ((ch = getopt(argc, argv, "f:s:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			file = optarg;

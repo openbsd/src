@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.15 1996/12/22 03:26:09 tholo Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.16 1997/01/15 23:43:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -191,7 +191,7 @@ main(argc, argv)
 
 	memf = nlistf = NULL;
 	interval = reps = todo = 0;
-	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != EOF) {
+	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.2 1996/08/29 03:32:19 deraadt Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.3 1997/01/15 23:43:44 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -226,7 +226,7 @@ main(argc, argv)
 	int c;
 
 	fp = NULL;
-	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != EOF) {
+	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != -1) {
 		switch (c) {
 #ifdef DEBUG
 		case 'D':

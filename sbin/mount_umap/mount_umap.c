@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.4 1996/06/23 14:31:40 deraadt Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.5 1997/01/15 23:41:26 millert Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.4 1996/06/23 14:31:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.5 1997/01/15 23:41:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 
 	mntflags = 0;
 	umapfile = gmapfile = NULL;
-	while ((ch = getopt(argc, argv, "g:o:u:")) != EOF)
+	while ((ch = getopt(argc, argv, "g:o:u:")) != -1)
 		switch (ch) {
 		case 'g':
 			gmapfile = optarg;

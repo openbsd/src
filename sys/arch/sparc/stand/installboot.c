@@ -95,7 +95,7 @@ main(argc, argv)
 	int	mib[2];
 	size_t	size;
 
-	while ((c = getopt(argc, argv, "a:vnh")) != EOF) {
+	while ((c = getopt(argc, argv, "a:vnh")) != -1) {
 		switch (c) {
 		case 'a':
 			karch = optarg;

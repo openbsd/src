@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.3 1996/10/02 06:51:49 mickey Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.4 1997/01/15 23:41:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -114,7 +114,7 @@ main(int argc,
 	OMSG.rip_nets[0].n_metric = htonl(HOPCNT_INFINITY);
 
 	pgmname = argv[0];
-	while ((ch = getopt(argc, argv, "np1w:r:t:")) != EOF)
+	while ((ch = getopt(argc, argv, "np1w:r:t:")) != -1)
 		switch (ch) {
 		case 'n':
 			not_trace = 1;

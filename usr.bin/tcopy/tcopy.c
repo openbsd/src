@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcopy.c,v 1.2 1996/06/26 05:40:29 deraadt Exp $	*/
+/*	$OpenBSD: tcopy.c,v 1.3 1997/01/15 23:43:19 millert Exp $	*/
 /*	$NetBSD: tcopy.c,v 1.4 1995/08/31 22:17:24 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$OpenBSD: tcopy.c,v 1.2 1996/06/26 05:40:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tcopy.c,v 1.3 1997/01/15 23:43:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ main(argc, argv)
 	char *buff, *inf;
 
 	guesslen = 1;
-	while ((ch = getopt(argc, argv, "cs:vx")) != EOF)
+	while ((ch = getopt(argc, argv, "cs:vx")) != -1)
 		switch((char)ch) {
 		case 'c':
 			op = COPYVERIFY;

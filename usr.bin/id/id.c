@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.2 1996/06/26 05:34:24 deraadt Exp $	*/
+/*	$OpenBSD: id.c,v 1.3 1997/01/15 23:42:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.2 1996/06/26 05:34:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.3 1997/01/15 23:42:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 	int Gflag, ch, gflag, id, nflag, pflag, rflag, uflag;
 
 	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
-	while ((ch = getopt(argc, argv, "Ggnpru")) != EOF)
+	while ((ch = getopt(argc, argv, "Ggnpru")) != -1)
 		switch(ch) {
 		case 'G':
 			Gflag = 1;

@@ -65,7 +65,7 @@ main(argc, argv)
 	int ch;
 	char path[MAXPATHLEN], *prefix;
 
-	while ((ch = getopt(argc, argv, "m:")) != EOF)
+	while ((ch = getopt(argc, argv, "m:")) != -1)
 		switch(ch) {
 		case 'm':
 			monsterfile = optarg;
