@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.99 2004/03/21 20:58:10 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.100 2004/04/14 05:34:15 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -278,6 +278,10 @@ udp_input(struct mbuf *m, ...)
 		/*
 		 * In IPv6, the UDP checksum is ALWAYS used.
 		 */
+		if (uh->uh_sum == 0) {
+			udpstat.udps_nosum++;
+			goto bad;
+		}
 		if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP, iphlen, len))) {
 			udpstat.udps_badsum++;
 			goto bad;
@@ -540,6 +544,7 @@ udp_input(struct mbuf *m, ...)
 			}
 #ifdef INET6
 			if (ip6) {
+				uh->uh_sum = savesum;
 				icmp6_error(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_NOPORT,0);
 			} else
