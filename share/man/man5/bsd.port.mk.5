@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.4 2000/06/10 22:32:55 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.5 2000/06/13 02:17:09 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -87,6 +87,10 @@ without guessing wrong.
 .El
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev ALL_TARGET
+Target used to build software. Default is 
+.Sq all .
+Can be set to empty, to yield a package's default target.
 .It Ev ARCH
 Current machine architecture (read-only).
 .It Ev AUTOCONF
@@ -169,6 +173,9 @@ if autoconf needs to be rerun first.
 If
 .Sq imake ,
 assume port configures using X11 ports Imakefile framework.
+Add
+.Sq noman
+if port has no man pages the Imakefile should try installing.
 If
 .Sq simple ,
 there is a configure script, but it does not fit the normal gnu configure
@@ -231,6 +238,10 @@ located, to be used in hand-crafted extraction targets (read-only).
 .It Ev INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros to use to install a program, a script, a man page, or data (or the
 corresponding directory, respectively).
+.It Ev INSTALL_TARGET
+Target invoked to install the software, during fake installation.
+Default is 
+.Sq install .
 .It Ev IS_INTERACTIVE
 Set to
 .Sq Yes
@@ -247,6 +258,8 @@ Arguments to pass to libtool. If USE_LIBTOOL is set, the environment variable
 LIBTOOL is set to ${LIBTOOL} ${LIBTOOL_FLAGS}.
 .It Ev LOCALBASE
 where other ports have already been installed (default: /usr/local)
+.It Ev MAINTAINER
+E-mail address of the port's maintainer. Defaults to ports@openbsd.org.
 .It Ev MAKE_ENV
 Environment variables passed to make invocations. Sets at least
 PATH, PREFIX, LOCALBASE, X11BASE, CFLAGS, TRUEPREFIX, DESTDIR and the
@@ -291,6 +304,10 @@ Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
 .It Ev PATCHDIR
 Location for patches applied by patch target (default: patches.${ARCH} or
 patches).
+.It Ev PATCH_DEBUG
+If set to 
+.Sq Yes ,
+the make patch stage will output extra debug information.
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
 Note that filenames ending in .orig, or ~ are never applied.
@@ -301,6 +318,10 @@ Root of the ports tree (default: /usr/ports).
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, port
 short description). Default: pkg.${ARCH} or pkg.
+.It Ev PKGNAME
+Name of the created package.  Default is ${DISTNAME} for the main package,
+and ${DISTNAME}${SUBPACKAGE} for multi-packages ports.  This is automatically
+altered to include flavors, so it is unwise to base other variables on it.
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference. Defaults
 is 
@@ -433,6 +454,13 @@ instead.
 Use
 .Ev CONFIGURE_STYLE 
 instead.
+.It Ev MASTERDIR
+From
+.Fx .
+Used to organize a collection of ports that share most files. 
+.Ox
+uses a single port with flavors or multi-packages to produce 
+package variations instead.
 .It Ev MD5_FILE
 Use
 .Ev CHECKSUM_FILE
@@ -442,6 +470,10 @@ If ${FILESDIR}/configure does not exist, no automatic configuration will
 be done anyway.
 .It Ev NO_EXTRACT
 Set EXTRACT_ONLY=  instead.
+.It Ev NO_INSTALL_MANPAGES
+Use 
+.Ev CONFIGURE_STYLE
+instead.
 .It Ev NO_MTREE
 Starting with
 .Ox 2.7 ,
@@ -497,7 +529,9 @@ does not give a specific name to the generated file. It is not recommended
 to try to access them directly.
 .It Ev PLIST_SUBST
 From
-.Nx .
+.Nx 
+and
+.Fx .
 Use SUBST_VARS instead.  
 .Ox
 does not allow general substitutions of the form VAR=value, but uses
