@@ -1,7 +1,7 @@
-/*	$OpenBSD: SigAction.h,v 1.2 1999/06/27 08:15:19 millert Exp $	*/
+/*	$OpenBSD: SigAction.h,v 1.3 2001/01/22 18:01:32 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
  ****************************************************************************/
 
 /*
- * $From: SigAction.h,v 1.5 1999/06/19 23:00:54 tom Exp $
+ * $From: SigAction.h,v 1.6 2000/12/10 02:36:10 tom Exp $
  *
  * This file exists to handle non-POSIX systems which don't have <unistd.h>,
  * and usually no sigaction() nor <termios.h>
@@ -107,12 +107,12 @@ typedef unsigned long sigset_t;
 #undef  sigaddset
 #define sigaddset   _nc_sigaddset
 
-extern int sigaction (int sig, sigaction_t * sigact, sigaction_t *  osigact);
-extern int sigprocmask (int how, sigset_t *mask, sigset_t *omask);
-extern int sigemptyset (sigset_t *mask);
-extern int sigsuspend (sigset_t *mask);
-extern int sigdelset (sigset_t *mask, int sig);
-extern int sigaddset (sigset_t *mask, int sig);
+extern NCURSES_EXPORT(int) sigaction (int sig, sigaction_t * sigact, sigaction_t *  osigact);
+extern NCURSES_EXPORT(int) sigprocmask (int how, sigset_t *mask, sigset_t *omask);
+extern NCURSES_EXPORT(int) sigemptyset (sigset_t *mask);
+extern NCURSES_EXPORT(int) sigsuspend (sigset_t *mask);
+extern NCURSES_EXPORT(int) sigdelset (sigset_t *mask, int sig);
+extern NCURSES_EXPORT(int) sigaddset (sigset_t *mask, int sig);
 
 #endif /* HAVE_SIGVEC */
 #endif /* HAVE_SIGACTION */

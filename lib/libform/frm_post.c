@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_post.c,v 1.3 1999/05/17 03:04:17 millert Exp $	*/
+/*	$OpenBSD: frm_post.c,v 1.4 2001/01/22 18:02:15 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,7 @@
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_post.c,v 1.4 1999/05/16 17:21:39 juergen Exp $")
+MODULE_ID("$From: frm_post.c,v 1.5 2000/12/10 02:09:37 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -48,7 +48,8 @@ MODULE_ID("$From: frm_post.c,v 1.4 1999/05/16 17:21:39 juergen Exp $")
 |                    E_NO_ROOM         - form doesn't fit into subwindow
 |                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-int post_form(FORM * form)
+NCURSES_EXPORT(int)
+post_form (FORM * form)
 {
   WINDOW *formwin;
   int err;
@@ -95,7 +96,8 @@ int post_form(FORM * form)
 |                    E_NOT_POSTED    - form isn't posted
 |                    E_BAD_STATE     - called from a hook routine
 +--------------------------------------------------------------------------*/
-int unpost_form(FORM * form)
+NCURSES_EXPORT(int)
+unpost_form (FORM * form)
 {
   if (!form)
     RETURN(E_BAD_ARGUMENT);

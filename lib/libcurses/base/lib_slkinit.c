@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slkinit.c,v 1.1 1999/01/18 19:10:03 millert Exp $	*/
+/*	$OpenBSD: lib_slkinit.c,v 1.2 2001/01/22 18:01:46 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,14 +40,14 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkinit.c,v 1.3 1998/02/11 12:13:56 tom Exp $")
+MODULE_ID("$From: lib_slkinit.c,v 1.5 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 slk_init(int format)
 {
-	T((T_CALLED("slk_init(%d)"), format));
-	if (format < 0 || format > 3)
-		returnCode(ERR);
-	_nc_slk_format = 1 + format;
-	returnCode(OK);
+    T((T_CALLED("slk_init(%d)"), format));
+    if (format < 0 || format > 3)
+	returnCode(ERR);
+    _nc_slk_format = 1 + format;
+    returnCode(OK);
 }

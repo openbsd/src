@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_napms.c,v 1.6 2000/06/19 03:53:50 millert Exp $	*/
+/*	$OpenBSD: lib_napms.c,v 1.7 2001/01/22 18:01:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -60,9 +60,9 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_napms.c,v 1.9 2000/04/29 23:42:56 tom Exp $")
+MODULE_ID("$From: lib_napms.c,v 1.11 2000/12/10 02:55:07 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 napms(int ms)
 {
     T((T_CALLED("napms(%d)"), ms));

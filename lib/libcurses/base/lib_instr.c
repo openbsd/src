@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_instr.c,v 1.1 1999/01/18 19:09:50 millert Exp $	*/
+/*	$OpenBSD: lib_instr.c,v 1.2 2001/01/22 18:01:41 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
 **	lib_instr.c
 **
@@ -43,33 +42,33 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_instr.c,v 1.8 1998/02/11 12:13:54 tom Exp $")
+MODULE_ID("$From: lib_instr.c,v 1.10 2000/12/10 02:43:27 tom Exp $")
 
-int winnstr(WINDOW *win, char *str, int n)
+NCURSES_EXPORT(int)
+winnstr(WINDOW *win, char *str, int n)
 {
-	int	i=0, row, col;
+    int i = 0, row, col;
 
-	T((T_CALLED("winnstr(%p,%p,%d)"), win, str, n));
+    T((T_CALLED("winnstr(%p,%p,%d)"), win, str, n));
 
-	if (!str)
-	  returnCode(0);
-	
-	if (win) {
-	  getyx(win, row, col);
+    if (!str)
+	returnCode(0);
 
-	  if (n < 0)
+    if (win) {
+	getyx(win, row, col);
+
+	if (n < 0)
 	    n = win->_maxx - win->_curx + 1;
 
-	  for (; i < n;) {
+	for (; i < n;) {
 	    str[i++] = TextOf(win->_line[row].text[col]);
 	    if (++col > win->_maxx) {
-	      col = 0;
-	      if (++row > win->_maxy)
-		break;
+		col = 0;
+		if (++row > win->_maxy)
+		    break;
 	    }
-	  }
 	}
-	str[i] = '\0';	/* SVr4 does not seem to count the null */
-	returnCode(i);
+    }
+    str[i] = '\0';		/* SVr4 does not seem to count the null */
+    returnCode(i);
 }
-

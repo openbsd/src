@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_insstr.c,v 1.3 2000/06/19 03:53:42 millert Exp $	*/
+/*	$OpenBSD: lib_insstr.c,v 1.4 2001/01/22 18:01:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,9 +43,9 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_insstr.c,v 1.14 2000/04/29 21:16:41 tom Exp $")
+MODULE_ID("$From: lib_insstr.c,v 1.17 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 winsnstr(WINDOW *win, const char *s, int n)
 {
     int code = ERR;
@@ -64,7 +64,7 @@ winsnstr(WINDOW *win, const char *s, int n)
 		_nc_waddch_nosync(win, (chtype) (*cp));
 	    else if (is7bits(*cp) && iscntrl(*cp)) {
 		winsch(win, ' ' + (chtype) (*cp));
-		winsch(win, '^');
+		winsch(win, (chtype) '^');
 		win->_curx += 2;
 	    } else {
 		winsch(win, (chtype) (*cp));

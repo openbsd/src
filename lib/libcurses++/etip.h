@@ -1,6 +1,6 @@
 // * This makes emacs happy -*-Mode: C++;-*-
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,7 +31,7 @@
  *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1997                 *
  ****************************************************************************/
 
-// $From: etip.h.in,v 1.13 1999/09/12 02:01:59 tom Exp $
+// $From: etip.h.in,v 1.14 2000/12/10 03:10:39 tom Exp $
 
 #ifndef _ETIP_H
 #define _ETIP_H
@@ -104,6 +104,19 @@
 #  include <string.h>
 #endif
 
+#if !defined(NCURSES_IMPEXP)
+#  define NCURSES_IMPEXP /* nothing */
+#endif
+#if !defined(NCURSES_API)
+#  define NCURSES_API /* nothing */
+#endif
+#if !defined(NCURSES_EXPORT)
+#  define NCURSES_EXPORT(type) NCURSES_IMPEXP type NCURSES_API
+#endif
+#if !defined(NCURSES_EXPORT_VAR)
+#  define NCURSES_EXPORT_VAR(type) NCURSES_IMPEXP type
+#endif
+
 extern "C" {
 #if HAVE_VALUES_H
 #  include <values.h>
@@ -122,11 +135,11 @@ extern "C" {
 #endif
 
 // Forward Declarations
-class NCursesPanel;
-class NCursesMenu;
-class NCursesForm;
+class NCURSES_IMPEXP NCursesPanel;
+class NCURSES_IMPEXP NCursesMenu;
+class NCURSES_IMPEXP NCursesForm;
 
-class NCursesException
+class NCURSES_IMPEXP NCursesException
 {
 public:
   const char *message;
@@ -145,7 +158,7 @@ public:
   }
 };
 
-class NCursesPanelException : public NCursesException
+class NCURSES_IMPEXP NCursesPanelException : public NCursesException
 {
 public:
   const NCursesPanel* p;
@@ -179,7 +192,7 @@ public:
 
 };
 
-class NCursesMenuException : public NCursesException
+class NCURSES_IMPEXP NCursesMenuException : public NCursesException
 {
 public:
   const NCursesMenu* m;
@@ -213,7 +226,7 @@ public:
 
 };
 
-class NCursesFormException : public NCursesException
+class NCURSES_IMPEXP NCursesFormException : public NCursesException
 {
 public:
   const NCursesForm* f;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newwin.c,v 1.3 2000/06/19 03:53:43 millert Exp $	*/
+/*	$OpenBSD: lib_newwin.c,v 1.4 2001/01/22 18:01:42 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,13 +42,14 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_newwin.c,v 1.24 2000/04/29 18:49:51 tom Exp $")
+MODULE_ID("$From: lib_newwin.c,v 1.27 2000/12/10 02:43:27 tom Exp $")
 
-void
+NCURSES_EXPORT(int)
 _nc_freewin(WINDOW *win)
 {
     WINDOWLIST *p, *q;
     int i;
+    int result = ERR;
 
     if (win != 0) {
 	for (p = _nc_windows, q = 0; p != 0; q = p, p = p->next) {
@@ -73,15 +74,18 @@ _nc_freewin(WINDOW *win)
 		if (win == newscr)
 		    newscr = 0;
 
+		result = OK;
 		T(("...deleted win=%p", win));
 		break;
 	    }
 	}
     }
+    return result;
 }
 
-WINDOW *
-newwin(int num_lines, int num_columns, int begy, int begx)
+NCURSES_EXPORT(WINDOW *)
+newwin
+(int num_lines, int num_columns, int begy, int begx)
 {
     WINDOW *win;
     chtype *ptr;
@@ -106,11 +110,11 @@ newwin(int num_lines, int num_columns, int begy, int begx)
     for (i = 0; i < num_lines; i++) {
 	win->_line[i].text = typeCalloc(chtype, (unsigned) num_columns);
 	if (win->_line[i].text == 0) {
-	    _nc_freewin(win);
+	    (void) _nc_freewin(win);
 	    returnWin(0);
 	}
 	for (ptr = win->_line[i].text; ptr < win->_line[i].text +
-	    num_columns;)
+	     num_columns;)
 	    *ptr++ = ' ';
     }
 
@@ -119,15 +123,16 @@ newwin(int num_lines, int num_columns, int begy, int begx)
     returnWin(win);
 }
 
-WINDOW *
-derwin(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
+NCURSES_EXPORT(WINDOW *)
+derwin
+(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
 {
     WINDOW *win;
     int i;
     int flags = _SUBWIN;
 
     T((T_CALLED("derwin(%p,%d,%d,%d,%d)"), orig, num_lines, num_columns,
-	    begy, begx));
+       begy, begx));
 
     /*
        ** make sure window fits inside the original one
@@ -148,7 +153,7 @@ derwin(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
 	flags |= _ISPAD;
 
     if ((win = _nc_makenew(num_lines, num_columns, orig->_begy + begy,
-		orig->_begx + begx, flags)) == 0)
+			   orig->_begx + begx, flags)) == 0)
 	returnWin(0);
 
     win->_pary = begy;
@@ -166,8 +171,9 @@ derwin(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
     returnWin(win);
 }
 
-WINDOW *
-subwin(WINDOW *w, int l, int c, int y, int x)
+NCURSES_EXPORT(WINDOW *)
+subwin
+(WINDOW *w, int l, int c, int y, int x)
 {
     T((T_CALLED("subwin(%p, %d, %d, %d, %d)"), w, l, c, y, x));
     T(("parent has begy = %d, begx = %d", w->_begy, w->_begx));
@@ -182,8 +188,9 @@ dimension_limit(int value)
     return (test == value && value > 0);
 }
 
-WINDOW *
-_nc_makenew(int num_lines, int num_columns, int begy, int begx, int flags)
+NCURSES_EXPORT(WINDOW *)
+_nc_makenew
+(int num_lines, int num_columns, int begy, int begx, int flags)
 {
     int i;
     WINDOWLIST *wp;
@@ -218,8 +225,8 @@ _nc_makenew(int num_lines, int num_columns, int begy, int begx, int flags)
     win->_attrs = A_NORMAL;
     win->_bkgd = BLANK;
 
-    win->_clear = is_pad ? FALSE : (num_lines == screen_lines && num_columns
-	== screen_columns);
+    win->_clear = is_pad ? FALSE : (num_lines == screen_lines
+				    && num_columns == screen_columns);
     win->_idlok = FALSE;
     win->_idcok = TRUE;
     win->_scroll = FALSE;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_def.c,v 1.5 1999/05/17 03:04:16 millert Exp $	*/
+/*	$OpenBSD: frm_def.c,v 1.6 2001/01/22 18:02:14 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_def.c,v 1.9 1999/05/16 17:20:43 juergen Exp $")
+MODULE_ID("$From: frm_def.c,v 1.10 2000/12/10 02:09:38 tom Exp $")
 
 /* this can't be readonly */
 static FORM default_form = {
@@ -62,7 +62,7 @@ static FORM default_form = {
   NULL                                  /* fieldterm  */
 };
 
-FORM *_nc_Default_Form = &default_form;
+NCURSES_EXPORT_VAR(FORM *) _nc_Default_Form = &default_form;
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -271,7 +271,8 @@ INLINE static int Associate_Fields(FORM  *form, FIELD **fields)
 |
 |   Return Values :  Pointer to form. NULL if error occured.
 +--------------------------------------------------------------------------*/
-FORM *new_form(FIELD ** fields)
+NCURSES_EXPORT(FORM *)
+new_form (FIELD ** fields)
 {	
   int err = E_SYSTEM_ERROR;
 
@@ -303,7 +304,8 @@ FORM *new_form(FIELD ** fields)
 |                    E_BAD_ARGUMENT - invalid form pointer
 |                    E_POSTED       - form is posted
 +--------------------------------------------------------------------------*/
-int free_form(FORM * form)
+NCURSES_EXPORT(int)
+free_form (FORM * form)
 {
   if ( !form )	
     RETURN(E_BAD_ARGUMENT);
@@ -329,7 +331,8 @@ int free_form(FORM * form)
 |                    E_BAD_ARGUMENT    - invalid form pointer
 |                    E_POSTED          - form is posted
 +--------------------------------------------------------------------------*/
-int set_form_fields(FORM  * form, FIELD ** fields)
+NCURSES_EXPORT(int)
+set_form_fields (FORM  * form, FIELD ** fields)
 {
   FIELD **old;
   int res;
@@ -357,7 +360,8 @@ int set_form_fields(FORM  * form, FIELD ** fields)
 |
 |   Return Values :  Pointer to field array
 +--------------------------------------------------------------------------*/
-FIELD **form_fields(const FORM * form)
+NCURSES_EXPORT(FIELD **)
+form_fields (const FORM * form)
 {
   return (Normalize_Form( form )->field);
 }
@@ -370,7 +374,8 @@ FIELD **form_fields(const FORM * form)
 |
 |   Return Values :  Number of fields, -1 if none are defined
 +--------------------------------------------------------------------------*/
-int field_count(const FORM * form)
+NCURSES_EXPORT(int)
+field_count (const FORM * form)
 {
   return (Normalize_Form( form )->maxfield);
 }

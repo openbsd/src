@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_hook.c,v 1.5 1999/05/17 03:04:23 millert Exp $	*/
+/*	$OpenBSD: m_hook.c,v 1.6 2001/01/22 18:02:03 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,11 +39,11 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_hook.c,v 1.8 1999/05/16 17:25:24 juergen Exp $")
+MODULE_ID("$From: m_hook.c,v 1.9 2000/12/10 02:16:48 tom Exp $")
 
 /* "Template" macro to generate function to set application specific hook */
 #define GEN_HOOK_SET_FUNCTION( typ, name ) \
-int set_ ## typ ## _ ## name (MENU *menu, Menu_Hook func )\
+NCURSES_IMPEXP int NCURSES_API set_ ## typ ## _ ## name (MENU *menu, Menu_Hook func )\
 {\
    (Normalize_Menu(menu) -> typ ## name = func );\
    RETURN(E_OK);\
@@ -51,7 +51,7 @@ int set_ ## typ ## _ ## name (MENU *menu, Menu_Hook func )\
 
 /* "Template" macro to generate function to get application specific hook */
 #define GEN_HOOK_GET_FUNCTION( typ, name ) \
-Menu_Hook typ ## _ ## name ( const MENU *menu )\
+NCURSES_IMPEXP Menu_Hook NCURSES_API typ ## _ ## name ( const MENU *menu )\
 {\
    return (Normalize_Menu(menu) -> typ ## name);\
 }

@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.17 2000/10/10 15:10:29 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.18 2001/01/22 18:01:33 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: ncurses.3x,v 1.44 2000/10/08 01:39:26 tom Exp $
+.\" $From: ncurses.3x,v 1.46 2000/11/25 21:58:45 tom Exp $
 .TH ncurses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo

@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_pad.c,v 1.3 1999/05/17 03:04:25 millert Exp $	*/
+/*	$OpenBSD: m_pad.c,v 1.4 2001/01/22 18:02:05 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_pad.c,v 1.4 1999/05/16 17:27:17 juergen Exp $")
+MODULE_ID("$From: m_pad.c,v 1.5 2000/12/10 02:16:48 tom Exp $")
 
 /* Macro to redraw menu if it is posted and changed */
 #define Refresh_Menu(menu) \
@@ -60,7 +60,8 @@ MODULE_ID("$From: m_pad.c,v 1.4 1999/05/16 17:27:17 juergen Exp $")
 |   Return Values :  E_OK              - success
 |                    E_BAD_ARGUMENT    - an invalid value has been passed
 +--------------------------------------------------------------------------*/
-int set_menu_pad(MENU *menu, int pad)
+NCURSES_EXPORT(int)
+set_menu_pad (MENU *menu, int pad)
 {
   bool do_refresh = (menu != (MENU*)0);
 
@@ -84,7 +85,8 @@ int set_menu_pad(MENU *menu, int pad)
 |
 |   Return Values :  The pad character
 +--------------------------------------------------------------------------*/
-int menu_pad(const MENU * menu)
+NCURSES_EXPORT(int)
+menu_pad (const MENU * menu)
 {
   return (Normalize_Menu( menu ) -> pad);
 }

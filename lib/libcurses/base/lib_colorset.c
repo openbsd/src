@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_colorset.c,v 1.3 2000/10/08 22:46:58 millert Exp $	*/
+/*	$OpenBSD: lib_colorset.c,v 1.4 2001/01/22 18:01:38 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -42,10 +42,11 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_colorset.c,v 1.6 2000/07/29 16:37:19 tom Exp $")
+MODULE_ID("$From: lib_colorset.c,v 1.7 2000/12/10 01:24:50 tom Exp $")
 
-int
-wcolor_set(WINDOW *win, short color_pair_number, void *opts)
+NCURSES_EXPORT(int)
+wcolor_set
+(WINDOW *win, short color_pair_number, void *opts)
 {
     T((T_CALLED("wcolor_set(%p,%d)"), win, color_pair_number));
     if (win

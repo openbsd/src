@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_echo.c,v 1.1 1999/01/18 19:09:42 millert Exp $	*/
+/*	$OpenBSD: lib_echo.c,v 1.2 2001/01/22 18:01:39 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
  *	echo.c
  *
@@ -45,18 +44,20 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_echo.c,v 1.3 1998/10/12 13:15:33 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_echo.c,v 1.5 2000/12/10 02:43:27 tom Exp $")
 
-int echo(void)
+NCURSES_EXPORT(int)
+echo(void)
 {
-	T((T_CALLED("echo()")));
-	SP->_echo = TRUE;
-	returnCode(OK);
+    T((T_CALLED("echo()")));
+    SP->_echo = TRUE;
+    returnCode(OK);
 }
 
-int noecho(void)
+NCURSES_EXPORT(int)
+noecho(void)
 {
-	T((T_CALLED("noecho()")));
-	SP->_echo = FALSE;
-	returnCode(OK);
+    T((T_CALLED("noecho()")));
+    SP->_echo = FALSE;
+    returnCode(OK);
 }

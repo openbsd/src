@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.6 2000/10/22 18:27:23 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.7 2001/01/22 18:01:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_tparm.c,v 1.48 2000/10/14 17:45:00 Sergei.Ivanov Exp $")
+MODULE_ID("$From: lib_tparm.c,v 1.51 2000/12/10 02:55:08 tom Exp $")
 
 /*
  *	char *
@@ -128,7 +128,7 @@ static size_t out_size;
 static size_t out_used;
 
 #if NO_LEAKS
-void
+NCURSES_EXPORT(void)
 _nc_free_tparm(void)
 {
     if (out_buff != 0) {
@@ -288,7 +288,7 @@ parse_format(const char *s, char *format, int *len)
 	    }
 	    break;
 	default:
-	    if (isdigit(*s)) {
+	    if (isdigit(CharOf(*s))) {
 		value = (value * 10) + (*s - '0');
 		if (value > 10000)
 		    err = TRUE;
@@ -726,8 +726,9 @@ tparam_internal(const char *string, va_list ap)
     return (out_buff);
 }
 
-char *
-tparm(NCURSES_CONST char *string,...)
+NCURSES_EXPORT(char *)
+tparm
+(NCURSES_CONST char *string,...)
 {
     va_list ap;
     char *result;

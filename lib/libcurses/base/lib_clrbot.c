@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_clrbot.c,v 1.2 2000/06/19 03:53:39 millert Exp $	*/
+/*	$OpenBSD: lib_clrbot.c,v 1.3 2001/01/22 18:01:38 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_clrbot.c,v 1.15 2000/04/29 21:15:26 tom Exp $")
+MODULE_ID("$From: lib_clrbot.c,v 1.17 2000/12/10 02:43:26 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 wclrtobot(WINDOW *win)
 {
     int code = ERR;
@@ -57,7 +57,7 @@ wclrtobot(WINDOW *win)
 	chtype blank = _nc_background(win);
 
 	T(("clearing from y = %d to y = %d with maxx =  %d",
-		win->_cury, win->_maxy, win->_maxx));
+	   win->_cury, win->_maxy, win->_maxx));
 
 	for (y = win->_cury; y <= win->_maxy; y++) {
 	    struct ldat *line = &(win->_line[y]);

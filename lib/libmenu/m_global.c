@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_global.c,v 1.5 1999/05/17 03:04:22 millert Exp $	*/
+/*	$OpenBSD: m_global.c,v 1.6 2001/01/22 18:02:03 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,9 +39,9 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_global.c,v 1.11 1999/05/16 17:25:14 juergen Exp $")
+MODULE_ID("$From: m_global.c,v 1.12 2000/12/10 02:16:48 tom Exp $")
 
-MENU _nc_Default_Menu = {
+NCURSES_EXPORT_VAR(MENU) _nc_Default_Menu = {
   16,				  /* Nr. of chars high */
   1,				  /* Nr. of chars wide */
   16,				  /* Nr. of items high */
@@ -80,7 +80,7 @@ MENU _nc_Default_Menu = {
   0			          /* status */	    
 };
 
-ITEM _nc_Default_Item = {
+NCURSES_EXPORT_VAR(ITEM) _nc_Default_Item = {
   { (char *)0, 0 },		  /* name */
   { (char *)0, 0 },		  /* description */
   (MENU *)0,		          /* Pointer to parent menu */
@@ -163,7 +163,8 @@ INLINE static void ResetConnectionInfo(MENU *menu, ITEM **items)
 |   Return Values :  TRUE       - successfull connection
 |                    FALSE      - connection failed
 +--------------------------------------------------------------------------*/
-bool _nc_Connect_Items(MENU *menu, ITEM **items)
+NCURSES_EXPORT(bool)
+_nc_Connect_Items (MENU *menu, ITEM **items)
 {
   ITEM **item;
   unsigned int ItemCount = 0;
@@ -224,7 +225,8 @@ bool _nc_Connect_Items(MENU *menu, ITEM **items)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-void _nc_Disconnect_Items(MENU * menu)
+NCURSES_EXPORT(void)
+_nc_Disconnect_Items (MENU * menu)
 {
   if (menu && menu->items)
     ResetConnectionInfo( menu, menu->items );
@@ -239,7 +241,8 @@ void _nc_Disconnect_Items(MENU * menu)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-void _nc_Calculate_Item_Length_and_Width(MENU * menu)
+NCURSES_EXPORT(void)
+_nc_Calculate_Item_Length_and_Width (MENU * menu)
 {
   int l;
   
@@ -267,7 +270,8 @@ void _nc_Calculate_Item_Length_and_Width(MENU * menu)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-void _nc_Link_Items(MENU * menu)
+NCURSES_EXPORT(void)
+_nc_Link_Items (MENU * menu)
 {
   if (menu && menu->items && *(menu->items))
     {
@@ -393,7 +397,8 @@ void _nc_Link_Items(MENU * menu)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-void _nc_Show_Menu(const MENU *menu)
+NCURSES_EXPORT(void)
+_nc_Show_Menu (const MENU *menu)
 {
   WINDOW *win;
   int maxy, maxx;
@@ -432,8 +437,9 @@ void _nc_Show_Menu(const MENU *menu)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-void _nc_New_TopRow_and_CurrentItem(MENU *menu, int new_toprow,
-				    ITEM *new_current_item)
+NCURSES_EXPORT(void)
+_nc_New_TopRow_and_CurrentItem
+(MENU *menu, int new_toprow, ITEM *new_current_item)
 {
   ITEM *cur_item;
   bool mterm_called = FALSE;

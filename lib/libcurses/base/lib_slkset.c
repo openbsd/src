@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slkset.c,v 1.1 1999/01/18 19:10:04 millert Exp $	*/
+/*	$OpenBSD: lib_slkset.c,v 1.2 2001/01/22 18:01:46 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *

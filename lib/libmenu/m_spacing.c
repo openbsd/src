@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_spacing.c,v 1.4 1999/05/17 03:04:25 millert Exp $	*/
+/*	$OpenBSD: m_spacing.c,v 1.5 2001/01/22 18:02:06 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_spacing.c,v 1.11 1999/05/16 17:28:09 juergen Exp $")
+MODULE_ID("$From: m_spacing.c,v 1.12 2000/12/10 02:16:48 tom Exp $")
 
 #define MAX_SPC_DESC ((TABSIZE) ? (TABSIZE) : 8)
 #define MAX_SPC_COLS ((TABSIZE) ? (TABSIZE) : 8)
@@ -53,7 +53,9 @@ MODULE_ID("$From: m_spacing.c,v 1.11 1999/05/16 17:28:09 juergen Exp $")
 |
 |   Return Values :  E_OK                 - on success
 +--------------------------------------------------------------------------*/
-int set_menu_spacing(MENU *menu, int s_desc, int s_row, int s_col )
+NCURSES_EXPORT(int)
+set_menu_spacing
+(MENU *menu, int s_desc, int s_row, int s_col )
 {
   MENU *m; /* split for ATAC workaround */
   m = Normalize_Menu(menu);
@@ -84,7 +86,8 @@ int set_menu_spacing(MENU *menu, int s_desc, int s_row, int s_col )
 |
 |   Return Values :  E_OK             - on success
 +--------------------------------------------------------------------------*/
-int menu_spacing( const MENU *menu, int* s_desc, int* s_row, int* s_col)
+NCURSES_EXPORT(int)
+menu_spacing ( const MENU *menu, int* s_desc, int* s_row, int* s_col)
 {
   const MENU *m; /* split for ATAC workaround */
   m = Normalize_Menu(menu);

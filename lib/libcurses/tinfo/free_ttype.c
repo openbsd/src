@@ -1,4 +1,4 @@
-/*	$OpenBSD: free_ttype.c,v 1.4 2000/07/10 03:06:16 millert Exp $	*/
+/*	$OpenBSD: free_ttype.c,v 1.5 2001/01/22 18:01:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
@@ -32,7 +32,6 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
  ****************************************************************************/
 
-
 /*
  * free_ttype.c -- allocation functions for TERMTYPE
  *
@@ -46,9 +45,10 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: free_ttype.c,v 1.5 2000/07/08 00:43:58 tom Exp $")
+MODULE_ID("$From: free_ttype.c,v 1.7 2000/12/10 02:55:07 tom Exp $")
 
-void _nc_free_termtype(TERMTYPE *ptr)
+NCURSES_EXPORT(void)
+_nc_free_termtype(TERMTYPE * ptr)
 {
     FreeIfNeeded(ptr->str_table);
     FreeIfNeeded(ptr->term_names);
@@ -63,9 +63,10 @@ void _nc_free_termtype(TERMTYPE *ptr)
 }
 
 #if NCURSES_XNAMES
-bool _nc_user_definable = TRUE;
+NCURSES_EXPORT_VAR(bool) _nc_user_definable = TRUE;
 
-int use_extended_names(bool flag)
+NCURSES_EXPORT(int)
+use_extended_names(bool flag)
 {
     int oldflag = _nc_user_definable;
     _nc_user_definable = flag;

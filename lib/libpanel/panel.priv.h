@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.priv.h,v 1.6 2000/10/08 22:47:07 millert Exp $	*/
+/*	$OpenBSD: panel.priv.h,v 1.7 2001/01/22 18:02:11 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
  * authorization.                                                           *
  ****************************************************************************/
 
-/* $From: panel.priv.h,v 1.14 2000/09/02 18:22:23 tom Exp $ */
+/* $From: panel.priv.h,v 1.15 2000/12/10 00:27:20 tom Exp $ */
 
 #ifndef _PANEL_PRIV_H
 #define _PANEL_PRIV_H
@@ -49,8 +49,8 @@
 #  include <dbmalloc.h>   /* Conor Cahill's library */
 #endif
 
-#include <nc_panel.h>
 #include "panel.h"
+#include <nc_panel.h>
 
 #if ( CC_HAS_INLINE_FUNCS && !defined(TRACE) )
 #  define INLINE inline
@@ -66,18 +66,18 @@
 
 
 #ifdef TRACE
-   extern const char *_nc_my_visbuf(const void *);
+   extern NCURSES_EXPORT(const char *) _nc_my_visbuf (const void *);
 #  ifdef TRACE_TXT
 #    define USER_PTR(ptr) _nc_visbuf((const char *)ptr)
 #  else
 #    define USER_PTR(ptr) _nc_my_visbuf((const char *)ptr)
 #  endif
 
-   extern void _nc_dPanel(const char*, const PANEL*);
-   extern void _nc_dStack(const char*, int, const PANEL*);
-   extern void _nc_Wnoutrefresh(const PANEL*);
-   extern void _nc_Touchpan(const PANEL*);
-   extern void _nc_Touchline(const PANEL*, int, int);
+   extern NCURSES_EXPORT(void) _nc_dPanel (const char*, const PANEL*);
+   extern NCURSES_EXPORT(void) _nc_dStack (const char*, int, const PANEL*);
+   extern NCURSES_EXPORT(void) _nc_Wnoutrefresh (const PANEL*);
+   extern NCURSES_EXPORT(void) _nc_Touchpan (const PANEL*);
+   extern NCURSES_EXPORT(void) _nc_Touchline (const PANEL*, int, int);
 
 #  define dBug(x) _tracef x
 #  define dPanel(text,pan) _nc_dPanel(text,pan)

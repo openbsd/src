@@ -1,4 +1,4 @@
-/*	$OpenBSD: add_tries.c,v 1.2 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: add_tries.c,v 1.3 2001/01/22 18:01:50 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -41,12 +41,12 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: add_tries.c,v 1.2 2000/03/18 22:23:56 tom Exp $")
+MODULE_ID("$From: add_tries.c,v 1.4 2000/12/10 02:55:07 tom Exp $")
 
 #define SET_TRY(dst,src) if ((dst->ch = *src++) == 128) dst->ch = '\0'
 #define CMP_TRY(a,b) ((a)? (a == b) : (b == 128))
 
-void
+NCURSES_EXPORT(void)
 _nc_add_to_try(struct tries **tree, const char *str, unsigned short code)
 {
     static bool out_of_memory = FALSE;
@@ -63,7 +63,7 @@ _nc_add_to_try(struct tries **tree, const char *str, unsigned short code)
 	    unsigned char cmp = *txt;
 
 	    while (!CMP_TRY(ptr->ch, cmp)
-		&& ptr->sibling != 0)
+		   && ptr->sibling != 0)
 		ptr = ptr->sibling;
 
 	    if (CMP_TRY(ptr->ch, cmp)) {

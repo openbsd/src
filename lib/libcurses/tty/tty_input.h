@@ -1,7 +1,7 @@
-/*	$OpenBSD: tty_input.h,v 1.1 1999/01/18 19:10:27 millert Exp $	*/
+/*	$OpenBSD: tty_input.h,v 1.2 2001/01/22 18:02:00 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,19 +29,19 @@
  ****************************************************************************/
 
 /*
- * $From: tty_input.h,v 1.1 1998/12/19 22:42:57 tom Exp $
+ * $From: tty_input.h,v 1.2 2000/12/10 02:26:51 tom Exp $
  */
 
 #ifndef TTY_INPUT_H
 #define TTY_INPUT_H 1
 
-extern bool _nc_tty_mouse_mask(mmask_t);
-extern bool _nc_tty_pending(void);
-extern int  _nc_tty_next_event(int);
-extern void _nc_tty_flags_changed(void);
-extern void _nc_tty_flush(void);
-extern void _nc_tty_input_resume(void);
-extern void _nc_tty_input_suspend(void);
+extern NCURSES_EXPORT(bool) _nc_tty_mouse_mask (mmask_t);
+extern NCURSES_EXPORT(bool) _nc_tty_pending (void);
+extern NCURSES_EXPORT(int)  _nc_tty_next_event (int);
+extern NCURSES_EXPORT(void) _nc_tty_flags_changed (void);
+extern NCURSES_EXPORT(void) _nc_tty_flush (void);
+extern NCURSES_EXPORT(void) _nc_tty_input_resume (void);
+extern NCURSES_EXPORT(void) _nc_tty_input_suspend (void);
 
 struct tty_input_data {
 	int             _ifd;           /* input file ptr for screen        */

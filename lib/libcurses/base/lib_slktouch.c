@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slktouch.c,v 1.1 1999/01/18 19:10:04 millert Exp $	*/
+/*	$OpenBSD: lib_slktouch.c,v 1.2 2001/01/22 18:01:47 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,16 +40,16 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slktouch.c,v 1.3 1998/02/11 12:13:56 tom Exp $")
+MODULE_ID("$From: lib_slktouch.c,v 1.5 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 slk_touch(void)
 {
-	T((T_CALLED("slk_touch()")));
+    T((T_CALLED("slk_touch()")));
 
-	if (SP == NULL || SP->_slk == NULL)
-		returnCode(ERR);
-	SP->_slk->dirty = TRUE;
+    if (SP == NULL || SP->_slk == NULL)
+	returnCode(ERR);
+    SP->_slk->dirty = TRUE;
 
-	returnCode(OK);
+    returnCode(OK);
 }

@@ -29,8 +29,8 @@
 #
 # Author: Thomas E. Dickey <dickey@clark.net> 1997
 #
-# $OpenBSD: MKexpanded.sh,v 1.2 2000/10/08 22:47:04 millert Exp $
-# $From: MKexpanded.sh,v 1.9 2000/09/02 22:55:21 tom Exp $
+# $OpenBSD: MKexpanded.sh,v 1.3 2001/01/22 18:01:59 millert Exp $
+# $From: MKexpanded.sh,v 1.10 2000/12/10 00:24:33 tom Exp $
 #
 # Script to generate 'expanded.c', a dummy source that contains functions
 # corresponding to complex macros used in this library.  By making functions,
@@ -69,23 +69,23 @@ cat >$TMP <<EOF
 #undef FALSE
 /* this is a marker */
 IGNORE
-void _nc_toggle_attr_on(attr_t *S, attr_t at)
+NCURSES_EXPORT(void) _nc_toggle_attr_on (attr_t *S, attr_t at)
 {
 	toggle_attr_on(*S,at);
 }
-void _nc_toggle_attr_off(attr_t *S, attr_t at) 
+NCURSES_EXPORT(void) _nc_toggle_attr_off (attr_t *S, attr_t at) 
 {
 	toggle_attr_off(*S,at);
 }
-int _nc_DelCharCost(int count)
+NCURSES_EXPORT(int) _nc_DelCharCost (int count)
 {
 	return DelCharCost(count);
 }
-int _nc_InsCharCost(int count)
+NCURSES_EXPORT(int) _nc_InsCharCost (int count)
 {
 	return InsCharCost(count);
 }
-void _nc_UpdateAttrs(chtype c)
+NCURSES_EXPORT(void) _nc_UpdateAttrs (chtype c)
 {
 	UpdateAttrs(c);
 }
@@ -95,6 +95,6 @@ $preprocessor $TMP 2>/dev/null | sed -e '1,/^IGNORE$/d'
 
 cat <<EOF
 #else /* ! NCURSES_EXPANDED */
-void _nc_expanded(void) { }
+NCURSES_EXPORT(void) _nc_expanded (void) { }
 #endif /* NCURSES_EXPANDED */
 EOF

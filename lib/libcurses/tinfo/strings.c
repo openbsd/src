@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.1 2000/10/08 22:47:03 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.2 2001/01/22 18:01:57 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -38,15 +38,16 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id")
+MODULE_ID("$From: strings.c,v 1.3 2000/12/10 02:55:08 tom Exp $")
 
 /****************************************************************************
  * Useful string functions (especially for mvcur)
  ****************************************************************************/
 
 #if !HAVE_STRSTR
-char *
-_nc_strstr(const char *haystack, const char *needle)
+NCURSES_EXPORT(char *)
+_nc_strstr
+(const char *haystack, const char *needle)
 {
     size_t len1 = strlen(haystack);
     size_t len2 = strlen(needle);
@@ -66,8 +67,9 @@ _nc_strstr(const char *haystack, const char *needle)
 /*
  * Initialize the descriptor so we can append to it.
  */
-string_desc *
-_nc_str_init(string_desc * dst, char *src, size_t len)
+NCURSES_EXPORT(string_desc *)
+_nc_str_init
+(string_desc * dst, char *src, size_t len)
 {
     if (dst != 0) {
 	dst->s_head = src;
@@ -82,8 +84,9 @@ _nc_str_init(string_desc * dst, char *src, size_t len)
 /*
  * Initialize the descriptor for only tracking the amount of memory used.
  */
-string_desc *
-_nc_str_null(string_desc * dst, size_t len)
+NCURSES_EXPORT(string_desc *)
+_nc_str_null
+(string_desc * dst, size_t len)
 {
     return _nc_str_init(dst, 0, len);
 }
@@ -91,8 +94,9 @@ _nc_str_null(string_desc * dst, size_t len)
 /*
  * Copy a descriptor
  */
-string_desc *
-_nc_str_copy(string_desc * dst, string_desc * src)
+NCURSES_EXPORT(string_desc *)
+_nc_str_copy
+(string_desc * dst, string_desc * src)
 {
     *dst = *src;
     return dst;
@@ -101,7 +105,7 @@ _nc_str_copy(string_desc * dst, string_desc * src)
 /*
  * Replaces strcat into a fixed buffer, returning false on failure.
  */
-bool
+NCURSES_EXPORT(bool)
 _nc_safe_strcat(string_desc * dst, const char *src)
 {
     if (src != 0) {
@@ -122,7 +126,7 @@ _nc_safe_strcat(string_desc * dst, const char *src)
 /*
  * Replaces strcpy into a fixed buffer, returning false on failure.
  */
-bool
+NCURSES_EXPORT(bool)
 _nc_safe_strcpy(string_desc * dst, const char *src)
 {
     if (src != 0) {

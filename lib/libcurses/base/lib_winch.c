@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_winch.c,v 1.2 2000/10/08 22:46:59 millert Exp $	*/
+/*	$OpenBSD: lib_winch.c,v 1.3 2001/01/22 18:01:48 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -41,9 +41,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_winch.c,v 1.2 2000/07/29 16:41:44 tom Exp $")
+MODULE_ID("$From: lib_winch.c,v 1.4 2000/12/10 02:43:28 tom Exp $")
 
-chtype
+NCURSES_EXPORT(chtype)
 winch(WINDOW *win)
 {
     T((T_CALLED("winch(%p)"), win));

@@ -36,7 +36,7 @@
 #include "internal.h"
 #include <string.h>
 
-MODULE_ID("$From: cursslk.cc,v 1.6 2000/07/15 21:07:50 tom Exp $")
+MODULE_ID("$From: cursslk.cc,v 1.7 2000/12/09 23:46:12 tom Exp $")
 
 void Soft_Label_Key_Set::Soft_Label_Key::operator=(char *text)  {
   delete[] label;
@@ -47,7 +47,7 @@ void Soft_Label_Key_Set::Soft_Label_Key::operator=(char *text)  {
 long Soft_Label_Key_Set::count      = 0L;
 int  Soft_Label_Key_Set::num_labels = 0;
 
-Soft_Label_Key_Set::Label_Layout
+Soft_Label_Key_Set::Label_Layout 
   Soft_Label_Key_Set::format = None;
 
 void Soft_Label_Key_Set::init() {

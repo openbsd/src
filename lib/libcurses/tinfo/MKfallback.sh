@@ -1,6 +1,6 @@
 #!/bin/sh
-# $OpenBSD: MKfallback.sh,v 1.2 1999/06/27 08:14:21 millert Exp $
-# $From: MKfallback.sh,v 1.9 1999/06/15 22:57:45 tom Exp $
+# $OpenBSD: MKfallback.sh,v 1.3 2001/01/22 18:01:50 millert Exp $
+# $From: MKfallback.sh,v 1.10 2000/12/10 00:14:39 tom Exp $
 #
 # MKfallback.sh -- create fallback table for entry reads
 #
@@ -51,7 +51,7 @@ EOF
 fi
 
 cat <<EOF
-const TERMTYPE *_nc_fallback(const char *name GCC_UNUSED)
+NCURSES_EXPORT(const TERMTYPE *) _nc_fallback (const char *name GCC_UNUSED)
 {
 EOF
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.11 2000/10/08 22:46:59 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.12 2001/01/22 18:01:42 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -49,7 +49,7 @@
 #include <term.h>		/* clear_screen, cup & friends, cur_term */
 #include <tic.h>
 
-MODULE_ID("$From: lib_newterm.c,v 1.48 2000/09/02 18:11:42 tom Exp $")
+MODULE_ID("$From: lib_newterm.c,v 1.50 2000/12/10 02:43:27 tom Exp $")
 
 #ifndef ONLCR			/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -88,14 +88,15 @@ _nc_initscr(void)
  */
 static int filter_mode = FALSE;
 
-void
+NCURSES_EXPORT(void)
 filter(void)
 {
     filter_mode = TRUE;
 }
 
-SCREEN *
-newterm(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
+NCURSES_EXPORT(SCREEN *)
+newterm
+(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
 {
     int errret;
     int slk_format = _nc_slk_format;
@@ -140,7 +141,7 @@ newterm(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
     if (num_labels <= 0 || !SLK_STDFMT(slk_format))
 	if (slk_format) {
 	    if (ERR == _nc_ripoffline(-SLK_LINES(slk_format),
-		    _nc_slk_initialize))
+				      _nc_slk_initialize))
 		return 0;
 	}
     /* this actually allocates the screen structure, and saves the
@@ -162,7 +163,7 @@ newterm(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
     typeahead(fileno(ifp));
 #ifdef TERMIOS
     SP->_use_meta = ((cur_term->Ottyb.c_cflag & CSIZE) == CS8 &&
-	!(cur_term->Ottyb.c_iflag & ISTRIP));
+		     !(cur_term->Ottyb.c_iflag & ISTRIP));
 #else
     SP->_use_meta = FALSE;
 #endif
@@ -173,8 +174,8 @@ newterm(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
      * will be useless.
      */
     SP->_scrolling = ((scroll_forward && scroll_reverse) ||
-	((parm_rindex || parm_insert_line || insert_line) &&
-	    (parm_index || parm_delete_line || delete_line)));
+		      ((parm_rindex || parm_insert_line || insert_line) &&
+		       (parm_index || parm_delete_line || delete_line)));
 
     baudrate();			/* sets a field in the SP structure */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_clreol.c,v 1.2 2000/06/19 03:53:40 millert Exp $	*/
+/*	$OpenBSD: lib_clreol.c,v 1.3 2001/01/22 18:01:38 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_clreol.c,v 1.16 2000/04/29 21:14:54 tom Exp $")
+MODULE_ID("$From: lib_clreol.c,v 1.19 2000/12/10 02:43:26 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 wclrtoeol(WINDOW *win)
 {
     int code = ERR;
@@ -62,7 +62,7 @@ wclrtoeol(WINDOW *win)
 	 * If we have just wrapped the cursor, the clear applies to the
 	 * new line, unless we are at the lower right corner.
 	 */
-	if (win->_flags & _WRAPPED
+	if ((win->_flags & _WRAPPED) != 0
 	    && y < win->_maxy) {
 	    win->_flags &= ~_WRAPPED;
 	}
@@ -71,7 +71,7 @@ wclrtoeol(WINDOW *win)
 	 * There's no point in clearing if we're not on a legal
 	 * position, either.
 	 */
-	if (win->_flags & _WRAPPED
+	if ((win->_flags & _WRAPPED) != 0
 	    || y > win->_maxy
 	    || x > win->_maxx)
 	    returnCode(ERR);

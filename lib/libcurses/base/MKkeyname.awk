@@ -1,7 +1,7 @@
-# $OpenBSD: MKkeyname.awk,v 1.2 1999/02/24 06:31:07 millert Exp $
-# $From: MKkeyname.awk,v 1.17 1999/02/18 11:18:06 tom Exp $
+# $OpenBSD: MKkeyname.awk,v 1.3 2001/01/22 18:01:36 millert Exp $
+# $From: MKkeyname.awk,v 1.18 2000/12/10 02:25:23 tom Exp $
 ##############################################################################
-# Copyright (c) 1999 Free Software Foundation, Inc.                          #
+# Copyright (c) 1999,2000 Free Software Foundation, Inc.                     #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -46,7 +46,7 @@ BEGIN {
 END {
 	printf "\t{ 0, 0 }};\n"
 	print ""
-	print "NCURSES_CONST char *keyname(int c)"
+	print "NCURSES_EXPORT(NCURSES_CONST char *) keyname (int c)"
 	print "{"
 	print "int i;"
 	print "static char name[20];"

@@ -1,7 +1,7 @@
-/*	$OpenBSD: resizeterm.c,v 1.1 1999/01/18 19:10:07 millert Exp $	*/
+/*	$OpenBSD: resizeterm.c,v 1.2 2001/01/22 18:01:48 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,7 +43,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: resizeterm.c,v 1.7 1998/09/19 19:27:43 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: resizeterm.c,v 1.9 2000/12/10 02:43:28 tom Exp $")
 
 /*
  * This function reallocates NCURSES window structures.  It is invoked in
@@ -53,71 +53,74 @@ MODULE_ID("$From: resizeterm.c,v 1.7 1998/09/19 19:27:43 Alexander.V.Lukyanov Ex
  * Because this performs memory allocation, it should not (in general) be
  * invoked directly from the signal handler.
  */
-int
+NCURSES_EXPORT(int)
 resizeterm(int ToLines, int ToCols)
 {
-	int stolen = screen_lines - SP->_lines_avail;
-	int bottom = screen_lines + SP->_topstolen - stolen;
+    int stolen = screen_lines - SP->_lines_avail;
+    int bottom = screen_lines + SP->_topstolen - stolen;
 
-	T((T_CALLED("resizeterm(%d,%d) old(%d,%d)"),
-		ToLines, ToCols,
-		screen_lines, screen_columns));
+    T((T_CALLED("resizeterm(%d,%d) old(%d,%d)"),
+       ToLines, ToCols,
+       screen_lines, screen_columns));
 
-	SP->_sig_winch = FALSE;
+    SP->_sig_winch = FALSE;
 
-	if (ToLines != screen_lines
-	 || ToCols  != screen_columns) {
-		WINDOWLIST *wp;
+    if (ToLines != screen_lines
+	|| ToCols != screen_columns) {
+	WINDOWLIST *wp;
 
 #if USE_SIGWINCH
-		ungetch(KEY_RESIZE);	/* so application can know this */
-		clearok(curscr, TRUE);	/* screen contents are unknown */
+	ungetch(KEY_RESIZE);	/* so application can know this */
+	clearok(curscr, TRUE);	/* screen contents are unknown */
 #endif
 
-		for (wp = _nc_windows; wp != 0; wp = wp->next) {
-			WINDOW *win = wp->win;
-			int myLines = win->_maxy + 1;
-			int myCols  = win->_maxx + 1;
+	for (wp = _nc_windows; wp != 0; wp = wp->next) {
+	    WINDOW *win = wp->win;
+	    int myLines = win->_maxy + 1;
+	    int myCols = win->_maxx + 1;
 
-			/* pads aren't treated this way */
-			if (win->_flags & _ISPAD)
-				continue;
+	    /* pads aren't treated this way */
+	    if (win->_flags & _ISPAD)
+		continue;
 
-			if (win->_begy >= bottom) {
-				win->_begy += (ToLines - screen_lines);
-			} else {
-				if (myLines == screen_lines - stolen
-				 && ToLines != screen_lines)
-				 	myLines = ToLines - stolen;
-				else
-				if (myLines == screen_lines
-				 && ToLines != screen_lines)
-				 	myLines = ToLines;
-			}
+	    if (win->_begy >= bottom) {
+		win->_begy += (ToLines - screen_lines);
+	    } else {
+		if (myLines == screen_lines - stolen
+		    && ToLines != screen_lines)
+		    myLines = ToLines - stolen;
+		else if (myLines == screen_lines
+			 && ToLines != screen_lines)
+		    myLines = ToLines;
+	    }
 
-			if (myCols  == screen_columns
-			 && ToCols  != screen_columns)
-			 	myCols = ToCols;
+	    if (myCols == screen_columns
+		&& ToCols != screen_columns)
+		myCols = ToCols;
 
-			if (wresize(win, myLines, myCols) != OK)
-				returnCode(ERR);
-		}
-
-		screen_lines   = lines    = ToLines;
-		screen_columns = columns  = ToCols;
-
-		SP->_lines_avail = lines - stolen;
-
-		if (SP->oldhash) { FreeAndNull(SP->oldhash); }
-		if (SP->newhash) { FreeAndNull(SP->newhash); }
+	    if (wresize(win, myLines, myCols) != OK)
+		returnCode(ERR);
 	}
 
-	/*
-	 * Always update LINES, to allow for call from lib_doupdate.c which
-	 * needs to have the count adjusted by the stolen (ripped off) lines.
-	 */
-	LINES = ToLines - stolen;
-	COLS  = ToCols;
+	screen_lines = lines = ToLines;
+	screen_columns = columns = ToCols;
 
-	returnCode(OK);
+	SP->_lines_avail = lines - stolen;
+
+	if (SP->oldhash) {
+	    FreeAndNull(SP->oldhash);
+	}
+	if (SP->newhash) {
+	    FreeAndNull(SP->newhash);
+	}
+    }
+
+    /*
+     * Always update LINES, to allow for call from lib_doupdate.c which
+     * needs to have the count adjusted by the stolen (ripped off) lines.
+     */
+    LINES = ToLines - stolen;
+    COLS = ToCols;
+
+    returnCode(OK);
 }

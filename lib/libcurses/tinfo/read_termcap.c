@@ -55,7 +55,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.51 2000/10/21 00:34:11 Philip.Guenther Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.55 2000/12/10 02:55:08 tom Exp $")
 
 #if !PURE_TERMINFO
 
@@ -784,7 +784,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
     pvec = pathvec;
     tbuf = bp;
     p = pathbuf;
-    cp = use_terminfo_vars() ? getenv("TERMCAP") : NULL;
+    cp = use_terminfo_vars()? getenv("TERMCAP") : NULL;
 
     /*
      * TERMCAP can have one of two things in it.  It can be the name of a file
@@ -821,10 +821,10 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 
     *fname++ = pathbuf;		/* tokenize path into vector of names */
     while (*++p) {
-	if (*p == ' ' || *p == ':') {
+	if (*p == ' ' || *p == NCURSES_PATHSEP) {
 	    *p = '\0';
 	    while (*++p)
-		if (*p != ' ' && *p != ':')
+		if (*p != ' ' && *p != NCURSES_PATHSEP)
 		    break;
 	    if (*p == '\0')
 		break;
@@ -917,8 +917,9 @@ add_tc(char *termpaths[], char *path, int count)
 #define ADD_TC(path, count) filecount = add_tc(termpaths, path, count)
 #endif /* !USE_GETCAP */
 
-int
-_nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
+NCURSES_EXPORT(int)
+_nc_read_termcap_entry
+(const char *const tn, TERMTYPE * const tp)
 {
     int found = FALSE;
     ENTRY *ep;
@@ -989,7 +990,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
 	    char *cp;
 
 	    for (cp = tc; *cp; cp++) {
-		if (*cp == ':')
+		if (*cp == NCURSES_PATHSEP)
 		    *cp = '\0';
 		else if (cp == tc || cp[-1] == '\0') {
 		    ADD_TC(cp, filecount);
@@ -1102,8 +1103,10 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
     return (found);
 }
 #else
-extern void _nc_read_termcap(void);
-void
+extern
+NCURSES_EXPORT(void)
+_nc_read_termcap(void);
+NCURSES_EXPORT(void)
 _nc_read_termcap(void)
 {
 }

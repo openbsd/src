@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_nl.c,v 1.4 2000/03/10 01:35:02 millert Exp $	*/
+/*	$OpenBSD: lib_nl.c,v 1.5 2001/01/22 18:01:42 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -44,13 +44,13 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_nl.c,v 1.6 2000/02/13 00:59:39 tom Exp $")
+MODULE_ID("$From: lib_nl.c,v 1.8 2000/12/10 02:43:27 tom Exp $")
 
 #ifdef __EMX__
 #include <io.h>
 #endif
 
-int
+NCURSES_EXPORT(int)
 nl(void)
 {
     T((T_CALLED("nl()")));
@@ -65,7 +65,7 @@ nl(void)
     returnCode(OK);
 }
 
-int
+NCURSES_EXPORT(int)
 nonl(void)
 {
     T((T_CALLED("nonl()")));

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_termname.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
+/*	$OpenBSD: lib_termname.c,v 1.3 2001/01/22 18:01:53 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,20 +29,22 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <tic.h>	/* for MAX_ALIAS */
+#include <tic.h>		/* for MAX_ALIAS */
 
-MODULE_ID("$From: lib_termname.c,v 1.2 1999/07/24 21:02:40 tom Exp $")
+MODULE_ID("$From: lib_termname.c,v 1.6 2000/12/10 02:55:08 tom Exp $")
 
-char *termname(void)
+NCURSES_EXPORT(char *)
+termname(void)
 {
-char	*name = getenv("TERM");
-static char	ret[MAX_ALIAS+1];
+    char *name = getenv("TERM");
+    static char ret[MAX_ALIAS + 1];
 
-	T(("termname() called"));
+    T(("termname() called"));
 
-	if (name != 0) {
-		(void) strncpy(ret, name, sizeof(ret) - 1);
-		name = ret;
-	}
-	return name;
+    if (name != 0) {
+	ret[0] = '\0';
+	(void) strncat(ret, name, sizeof(ret) - 1);
+	name = ret;
+    }
+    return name;
 }

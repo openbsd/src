@@ -1,7 +1,7 @@
-/*	$OpenBSD: termcap.h,v 1.7 2000/10/22 18:27:19 millert Exp $	*/
+/*	$OpenBSD: termcap.h,v 1.8 2001/01/22 18:01:35 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,13 +33,26 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: termcap.h.in,v 1.12 2000/10/08 01:06:37 tom Exp $ */
+/* $From: termcap.h.in,v 1.15 2000/12/10 02:01:50 tom Exp $ */
 
 #ifndef _NCU_TERMCAP_H
 #define _NCU_TERMCAP_H	1
 
 #undef  NCURSES_VERSION
 #define NCURSES_VERSION "5.2"
+
+#if !defined(NCURSES_IMPEXP)
+#  define NCURSES_IMPEXP /* nothing */
+#endif
+#if !defined(NCURSES_API)
+#  define NCURSES_API /* nothing */
+#endif
+#if !defined(NCURSES_EXPORT)
+#  define NCURSES_EXPORT(type) NCURSES_IMPEXP type NCURSES_API
+#endif
+#if !defined(NCURSES_EXPORT_VAR)
+#  define NCURSES_EXPORT_VAR(type) NCURSES_IMPEXP type
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -51,18 +64,21 @@ extern "C"
 #undef  NCURSES_CONST 
 #define NCURSES_CONST  
 
-extern char PC;
-extern char *UP;
-extern char *BC;
-extern short ospeed; 
+#undef  NCURSES_OSPEED 
+#define NCURSES_OSPEED short 
+
+extern NCURSES_EXPORT_VAR(char) PC;
+extern NCURSES_EXPORT_VAR(char *) UP;
+extern NCURSES_EXPORT_VAR(char *) BC;
+extern NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed; 
 
 #if !defined(_NCU_TERM_H)
-extern char *tgetstr(NCURSES_CONST char *, char **);
-extern char *tgoto(const char *, int, int);
-extern int tgetent(char *, const char *);
-extern int tgetflag(NCURSES_CONST char *);
-extern int tgetnum(NCURSES_CONST char *);
-extern int tputs(const char *, int, int (*)(int));
+extern NCURSES_EXPORT(char *) tgetstr (NCURSES_CONST char *, char **);
+extern NCURSES_EXPORT(char *) tgoto (const char *, int, int);
+extern NCURSES_EXPORT(int) tgetent (char *, const char *);
+extern NCURSES_EXPORT(int) tgetflag (NCURSES_CONST char *);
+extern NCURSES_EXPORT(int) tgetnum (NCURSES_CONST char *);
+extern NCURSES_EXPORT(int) tputs (const char *, int, int (*)(int));
 #endif
 
 #ifdef __cplusplus

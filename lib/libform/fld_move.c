@@ -1,7 +1,7 @@
-/*	$OpenBSD: fld_move.c,v 1.3 1999/05/17 03:04:14 millert Exp $	*/
+/*	$OpenBSD: fld_move.c,v 1.4 2001/01/22 18:02:13 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_move.c,v 1.4 1999/05/16 17:38:51 juergen Exp $")
+MODULE_ID("$From: fld_move.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -47,7 +47,8 @@ MODULE_ID("$From: fld_move.c,v 1.4 1999/05/16 17:38:51 juergen Exp $")
 |                    E_BAD_ARGUMENT  - invalid argument passed
 |                    E_CONNECTED     - field is connected
 +--------------------------------------------------------------------------*/
-int move_field(FIELD *field, int frow, int fcol)
+NCURSES_EXPORT(int)
+move_field (FIELD *field, int frow, int fcol)
 {
   if ( !field || (frow<0) || (fcol<0) ) 
     RETURN(E_BAD_ARGUMENT);

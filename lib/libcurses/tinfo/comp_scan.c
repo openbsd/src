@@ -50,7 +50,7 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.47 2000/09/24 01:15:17 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.52 2000/12/10 02:55:07 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -60,14 +60,22 @@ MODULE_ID("$From: comp_scan.c,v 1.47 2000/09/24 01:15:17 tom Exp $")
 
 #define iswhite(ch)	(ch == ' '  ||  ch == '\t')
 
-int _nc_syntax = 0;		/* termcap or terminfo? */
-long _nc_curr_file_pos = 0;	/* file offset of current line */
-long _nc_comment_start = 0;	/* start of comment range before name */
-long _nc_comment_end = 0;	/* end of comment range before name */
-long _nc_start_line = 0;	/* start line of current entry */
+NCURSES_EXPORT_VAR(int)
+_nc_syntax = 0;			/* termcap or terminfo? */
+NCURSES_EXPORT_VAR(long)
+_nc_curr_file_pos = 0;		/* file offset of current line */
+NCURSES_EXPORT_VAR(long)
+_nc_comment_start = 0;		/* start of comment range before name */
+NCURSES_EXPORT_VAR(long)
+_nc_comment_end = 0;		/* end of comment range before name */
+NCURSES_EXPORT_VAR(long)
+_nc_start_line = 0;		/* start line of current entry */
 
-struct token _nc_curr_token =
-{0, 0, 0};
+NCURSES_EXPORT_VAR(struct token)
+_nc_curr_token =
+{
+    0, 0, 0
+};
 
 /*****************************************************************************
  *
@@ -81,18 +89,18 @@ static int pushtype;		/* type of pushback token */
 static char pushname[MAX_NAME_SIZE + 1];
 
 #if NCURSES_EXT_FUNCS
-bool _nc_disable_period = FALSE;	/* used by tic -a option */
+NCURSES_EXPORT_VAR(bool) _nc_disable_period = FALSE;	/* used by tic -a option */
 #endif
 
-static int last_char(void);
-static int next_char(void);
-static long stream_pos(void);
-static bool end_of_stream(void);
-static void push_back(char c);
+     static int last_char(void);
+     static int next_char(void);
+     static long stream_pos(void);
+     static bool end_of_stream(void);
+     static void push_back(char c);
 
 /* Assume we may be looking at a termcap-style continuation */
-static inline int
-eat_escaped_newline(int ch)
+     static inline int
+       eat_escaped_newline(int ch)
 {
     if (ch == '\\')
 	while ((ch = next_char()) == '\n' || iswhite(ch))
@@ -133,7 +141,7 @@ eat_escaped_newline(int ch)
  *
  */
 
-int
+NCURSES_EXPORT(int)
 _nc_get_token(void)
 {
     static const char terminfo_punct[] = "@%&*!#";
@@ -203,7 +211,7 @@ _nc_get_token(void)
 #endif
 	    && !strchr(terminfo_punct, (char) ch)) {
 	    _nc_warning("Illegal character (expected alphanumeric or %s) - %s",
-			terminfo_punct, unctrl(ch));
+			terminfo_punct, unctrl((chtype) ch));
 	    _nc_panic_mode(separator);
 	    goto start_token;
 	}
@@ -296,7 +304,7 @@ _nc_get_token(void)
 	     * dangerous due to shell expansion.
 	     */
 	    for (ptr = buffer; ptr < desc; ptr++) {
-		if (isspace(*ptr)) {
+		if (isspace(CharOf(*ptr))) {
 		    _nc_warning("whitespace in name or alias field");
 		    break;
 		} else if (*ptr == '/') {
@@ -338,7 +346,7 @@ _nc_get_token(void)
 	    case '@':
 		if ((ch = next_char()) != separator)
 		    _nc_warning("Missing separator after `%s', have %s",
-				buffer, unctrl(ch));
+				buffer, unctrl((chtype) ch));
 		_nc_curr_token.tk_name = buffer;
 		type = CANCEL;
 		break;
@@ -376,7 +384,7 @@ _nc_get_token(void)
 	    default:
 		/* just to get rid of the compiler warning */
 		type = UNDEF;
-		_nc_warning("Illegal character - %s", unctrl(ch));
+		_nc_warning("Illegal character - %s", unctrl((chtype) ch));
 	    }
 	}			/* end else (first_column == FALSE) */
     }				/* end else (ch != EOF) */
@@ -454,11 +462,11 @@ _nc_get_token(void)
  *
  */
 
-char
+NCURSES_EXPORT(char)
 _nc_trans_string(char *ptr, char *last)
 {
     int count = 0;
-    int number;
+    int number = 0;
     int i, c;
     chtype ch, last_ch = '\0';
     bool ignored = FALSE;
@@ -608,7 +616,7 @@ _nc_trans_string(char *ptr, char *last)
  *	get_token() call.
  */
 
-void
+NCURSES_EXPORT(void)
 _nc_push_token(int tokclass)
 {
     /*
@@ -627,7 +635,7 @@ _nc_push_token(int tokclass)
 /*
  * Panic mode error recovery - skip everything until a "ch" is found.
  */
-void
+NCURSES_EXPORT(void)
 _nc_panic_mode(char ch)
 {
     int c;
@@ -661,7 +669,7 @@ static FILE *yyin;		/* scanner's input file descriptor */
  *	non-null.
  */
 
-void
+NCURSES_EXPORT(void)
 _nc_reset_input(FILE * fp, char *buf)
 {
     pushtype = NO_PUSHBACK;
@@ -684,7 +692,7 @@ last_char(void)
 {
     size_t len = strlen(bufptr);
     while (len--) {
-	if (!isspace(bufptr[len]))
+	if (!isspace(CharOf(bufptr[len])))
 	    return bufptr[len];
     }
     return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tgoto.c,v 1.1 2000/10/08 22:47:02 millert Exp $	*/
+/*	$OpenBSD: lib_tgoto.c,v 1.2 2001/01/22 18:01:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <termcap.h>
 
-MODULE_ID("$From: lib_tgoto.c,v 1.2 2000/09/24 00:19:14 tom Exp $")
+MODULE_ID("$From: lib_tgoto.c,v 1.5 2000/12/10 01:33:16 tom Exp $")
 
 #if !PURE_TERMINFO
 static bool
@@ -45,20 +45,24 @@ is_termcap(const char *string)
 {
     bool result = TRUE;
 
-    while ((*string != '\0') && result) {
-	if (*string == '%') {
-	    switch (*++string) {
-	    case 'p':
+    if (string == 0 || *string == '\0') {
+	result = FALSE;		/* tparm() handles empty strings */
+    } else {
+	while ((*string != '\0') && result) {
+	    if (*string == '%') {
+		switch (*++string) {
+		case 'p':
+		    result = FALSE;
+		    break;
+		case '\0':
+		    string--;
+		    break;
+		}
+	    } else if (string[0] == '$' && string[1] == '<') {
 		result = FALSE;
-		break;
-	    case '\0':
-		string--;
-		break;
 	    }
-	} else if (string[0] == '$' && string[1] == '<') {
-	    result = FALSE;
+	    string++;
 	}
-	string++;
     }
     return result;
 }
@@ -110,7 +114,7 @@ tgoto_internal(const char *string, int x, int y)
 		*value %= 1000;
 		break;
 	    case '+':
-		*value += (*++string & 0xff);
+		*value += CharOf(*++string);
 		/* FALLTHRU */
 	    case '.':
 		/*
@@ -183,8 +187,9 @@ tgoto_internal(const char *string, int x, int y)
  * Retained solely for upward compatibility.  Note the intentional reversing of
  * the last two arguments when invoking tparm().
  */
-char *
-tgoto(const char *string, int x, int y)
+NCURSES_EXPORT(char *)
+tgoto
+(const char *string, int x, int y)
 {
     char *result;
 

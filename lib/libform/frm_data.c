@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_data.c,v 1.5 1999/05/17 03:04:16 millert Exp $	*/
+/*	$OpenBSD: frm_data.c,v 1.6 2001/01/22 18:02:14 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_data.c,v 1.6 1999/05/16 17:20:29 juergen Exp $")
+MODULE_ID("$From: frm_data.c,v 1.7 2000/12/10 02:09:38 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -46,7 +46,8 @@ MODULE_ID("$From: frm_data.c,v 1.6 1999/05/16 17:20:29 juergen Exp $")
 |   Return Values :  TRUE   - there are off-screen data behind
 |                    FALSE  - there are no off-screen data behind
 +--------------------------------------------------------------------------*/
-bool data_behind(const FORM *form)
+NCURSES_EXPORT(bool)
+data_behind (const FORM *form)
 {
   bool result = FALSE;
 
@@ -103,7 +104,8 @@ static char * After_Last_Non_Pad_Position(char *buffer, int len, int pad)
 |   Return Values :  TRUE   - there are off-screen data ahead
 |                    FALSE  - there are no off-screen data ahead
 +--------------------------------------------------------------------------*/
-bool data_ahead(const FORM *form)
+NCURSES_EXPORT(bool)
+data_ahead (const FORM *form)
 {
   bool result = FALSE;
 

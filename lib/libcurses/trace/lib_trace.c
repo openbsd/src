@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_trace.c,v 1.5 2000/04/04 16:49:59 millert Exp $	*/
+/*	$OpenBSD: lib_trace.c,v 1.6 2001/01/22 18:01:58 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,17 +42,20 @@
 
 #include <ctype.h>
 
-MODULE_ID("$From: lib_trace.c,v 1.34 2000/04/01 20:25:47 tom Exp $")
+MODULE_ID("$From: lib_trace.c,v 1.38 2000/12/10 03:02:45 tom Exp $")
 
-unsigned _nc_tracing = 0;	/* always define this */
+NCURSES_EXPORT_VAR(unsigned)
+_nc_tracing = 0;		/* always define this */
 
 #ifdef TRACE
-const char *_nc_tputs_trace = "";
-long _nc_outchars = 0;
+NCURSES_EXPORT_VAR(const char *)
+_nc_tputs_trace = "";
+NCURSES_EXPORT_VAR(long)
+_nc_outchars = 0;
 
-static FILE *tracefp;		/* default to writing to stderr */
+     static FILE *tracefp;	/* default to writing to stderr */
 
-void
+NCURSES_EXPORT(void)
 trace(const unsigned int tracelevel GCC_UNUSED)
 {
     static bool been_here = FALSE;
@@ -63,7 +66,7 @@ trace(const unsigned int tracelevel GCC_UNUSED)
 	been_here = TRUE;
 
 	if (_nc_access(my_name, W_OK) < 0
-	    || (tracefp = fopen(my_name, "w")) == 0) {
+	    || (tracefp = fopen(my_name, "wb")) == 0) {
 	    perror("curses: Can't open 'trace' file: ");
 	    exit(EXIT_FAILURE);
 	}
@@ -76,13 +79,12 @@ trace(const unsigned int tracelevel GCC_UNUSED)
 #elif HAVE_SETBUF		/* POSIX */
 	(void) setbuffer(tracefp, (char *) 0);
 #endif
-	_tracef("TRACING NCURSES version %s (%d)",
-	    NCURSES_VERSION, NCURSES_VERSION_PATCH);
+	_tracef("TRACING NCURSES version %s", curses_version());
     }
 }
 #endif
 
-const char *
+NCURSES_EXPORT(const char *)
 _nc_visbuf2(int bufnum, const char *buf)
 /* visibilize a given string */
 {
@@ -99,9 +101,9 @@ _nc_visbuf2(int bufnum, const char *buf)
     tp = vbuf = _nc_trace_buf(bufnum, (strlen(buf) * 4) + 5);
 #else
     {
-    static char *mybuf[2];
-    mybuf[bufnum] = _nc_doalloc(mybuf[bufnum], (strlen(buf) * 4) + 5);
-    tp = vbuf = mybuf[bufnum];
+	static char *mybuf[2];
+	mybuf[bufnum] = _nc_doalloc(mybuf[bufnum], (strlen(buf) * 4) + 5);
+	tp = vbuf = mybuf[bufnum];
     }
 #endif
     *tp++ = '"';
@@ -128,7 +130,7 @@ _nc_visbuf2(int bufnum, const char *buf)
 	    *tp++ = '^';
 	    *tp++ = '@' + c;
 	} else {
-	    sprintf(tp, "\\%03o", c & 0xff);
+	    sprintf(tp, "\\%03o", CharOf(c));
 	    tp += strlen(tp);
 	}
     }
@@ -137,14 +139,14 @@ _nc_visbuf2(int bufnum, const char *buf)
     return (vbuf);
 }
 
-const char *
+NCURSES_EXPORT(const char *)
 _nc_visbuf(const char *buf)
 {
     return _nc_visbuf2(0, buf);
 }
 
 #ifdef TRACE
-void
+NCURSES_EXPORT(void)
 _tracef(const char *fmt,...)
 {
     static const char Called[] = T_CALLED("");
@@ -193,7 +195,7 @@ _tracef(const char *fmt,...)
 }
 
 /* Trace 'int' return-values */
-int
+NCURSES_EXPORT(int)
 _nc_retrace_int(int code)
 {
     T((T_RETURN("%d"), code));
@@ -201,7 +203,7 @@ _nc_retrace_int(int code)
 }
 
 /* Trace 'char*' return-values */
-char *
+NCURSES_EXPORT(char *)
 _nc_retrace_ptr(char *code)
 {
     T((T_RETURN("%s"), _nc_visbuf(code)));
@@ -209,7 +211,7 @@ _nc_retrace_ptr(char *code)
 }
 
 /* Trace 'WINDOW *' return-values */
-WINDOW *
+NCURSES_EXPORT(WINDOW *)
 _nc_retrace_win(WINDOW *code)
 {
     T((T_RETURN("%p"), code));

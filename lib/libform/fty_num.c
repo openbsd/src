@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_num.c,v 1.5 1999/05/17 03:04:18 millert Exp $	*/
+/*	$OpenBSD: fty_num.c,v 1.6 2001/01/22 18:02:17 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_num.c,v 1.13 1999/05/16 17:23:30 juergen Exp $")
+MODULE_ID("$From: fty_num.c,v 1.14 2000/12/09 23:46:12 tom Exp $")
 
 #if HAVE_LOCALE_H
 #include <locale.h>
@@ -192,6 +192,6 @@ static FIELDTYPE typeNUMERIC = {
   NULL
 };
 
-FIELDTYPE* TYPE_NUMERIC = &typeNUMERIC;
+NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_NUMERIC = &typeNUMERIC;
 
 /* fty_num.c ends here */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: unctrl.h,v 1.7 2000/10/22 18:27:21 millert Exp $	*/
+/*	$OpenBSD: unctrl.h,v 1.8 2001/01/22 18:01:35 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +41,7 @@
  * as ^?. Printable characters are displayed as is.
  */
 
-/* $From: unctrl.h.in,v 1.8 1998/02/11 12:13:45 tom Exp $ */
+/* $From: unctrl.h.in,v 1.9 2000/12/10 02:02:15 tom Exp $ */
 
 #ifndef _UNCTRL_H
 #define _UNCTRL_H	1
@@ -56,7 +56,7 @@ extern "C" {
 #include <curses.h>
 
 #undef unctrl
-extern NCURSES_CONST char *unctrl(chtype);
+NCURSES_EXPORT(NCURSES_CONST char *) unctrl (chtype);
 
 #ifdef __cplusplus
 }

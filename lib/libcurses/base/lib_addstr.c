@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_addstr.c,v 1.3 2000/10/08 22:46:58 millert Exp $	*/
+/*	$OpenBSD: lib_addstr.c,v 1.4 2001/01/22 18:01:37 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,10 +42,11 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_addstr.c,v 1.18 2000/07/29 16:42:41 tom Exp $")
+MODULE_ID("$From: lib_addstr.c,v 1.19 2000/12/10 01:24:50 tom Exp $")
 
-int
-waddnstr(WINDOW *win, const char *const astr, int n)
+NCURSES_EXPORT(int)
+waddnstr
+(WINDOW *win, const char *const astr, int n)
 {
     unsigned const char *str = (unsigned const char *) astr;
     int code = ERR;
@@ -72,8 +73,9 @@ waddnstr(WINDOW *win, const char *const astr, int n)
     returnCode(code);
 }
 
-int
-waddchnstr(WINDOW *win, const chtype * const astr, int n)
+NCURSES_EXPORT(int)
+waddchnstr
+(WINDOW *win, const chtype * const astr, int n)
 {
     NCURSES_SIZE_T y = win->_cury;
     NCURSES_SIZE_T x = win->_curx;

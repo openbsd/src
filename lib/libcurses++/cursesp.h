@@ -1,6 +1,6 @@
 // * This makes emacs happy -*-Mode: C++;-*-
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 #ifndef _CURSESP_H
 #define _CURSESP_H
 
-// $From: cursesp.h,v 1.12 1999/10/31 00:00:02 tom Exp $
+// $From: cursesp.h,v 1.13 2000/12/10 03:10:39 tom Exp $
 
 #include <cursesw.h>
 
@@ -42,7 +42,7 @@ extern "C" {
 #  include <panel.h>
 }
 
-class NCursesPanel : public NCursesWindow {
+class NCURSES_IMPEXP NCursesPanel : public NCursesWindow {
 protected:
   PANEL *p;
   static NCursesPanel *dummy;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_options.c,v 1.8 2000/10/08 22:47:01 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.9 2001/01/22 18:01:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -44,9 +44,9 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_options.c,v 1.40 2000/09/02 18:02:05 tom Exp $")
+MODULE_ID("$From: lib_options.c,v 1.42 2000/12/10 02:55:07 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 idlok(WINDOW *win, bool flag)
 {
     T((T_CALLED("idlok(%p,%d)"), win, flag));
@@ -58,7 +58,7 @@ idlok(WINDOW *win, bool flag)
 	returnCode(ERR);
 }
 
-void
+NCURSES_EXPORT(void)
 idcok(WINDOW *win, bool flag)
 {
     T((T_CALLED("idcok(%p,%d)"), win, flag));
@@ -69,7 +69,7 @@ idcok(WINDOW *win, bool flag)
     returnVoid;
 }
 
-int
+NCURSES_EXPORT(int)
 halfdelay(int t)
 {
     T((T_CALLED("halfdelay(%d)"), t));
@@ -82,7 +82,7 @@ halfdelay(int t)
     returnCode(OK);
 }
 
-int
+NCURSES_EXPORT(int)
 nodelay(WINDOW *win, bool flag)
 {
     T((T_CALLED("nodelay(%p,%d)"), win, flag));
@@ -97,7 +97,7 @@ nodelay(WINDOW *win, bool flag)
 	returnCode(ERR);
 }
 
-int
+NCURSES_EXPORT(int)
 notimeout(WINDOW *win, bool f)
 {
     T((T_CALLED("notimout(%p,%d)"), win, f));
@@ -109,7 +109,7 @@ notimeout(WINDOW *win, bool f)
 	returnCode(ERR);
 }
 
-void
+NCURSES_EXPORT(void)
 wtimeout(WINDOW *win, int delay)
 {
     T((T_CALLED("wtimeout(%p,%d)"), win, delay));
@@ -119,7 +119,7 @@ wtimeout(WINDOW *win, int delay)
     }
 }
 
-int
+NCURSES_EXPORT(int)
 keypad(WINDOW *win, bool flag)
 {
     T((T_CALLED("keypad(%p,%d)"), win, flag));
@@ -131,7 +131,7 @@ keypad(WINDOW *win, bool flag)
 	returnCode(ERR);
 }
 
-int
+NCURSES_EXPORT(int)
 meta(WINDOW *win GCC_UNUSED, bool flag)
 {
     /* Ok, we stay relaxed and don't signal an error if win is NULL */
@@ -151,7 +151,7 @@ meta(WINDOW *win GCC_UNUSED, bool flag)
 
 /* curs_set() moved here to narrow the kernel interface */
 
-int
+NCURSES_EXPORT(int)
 curs_set(int vis)
 {
     int cursor = SP->_cursor;
@@ -193,7 +193,7 @@ curs_set(int vis)
     returnCode(cursor == -1 ? 1 : cursor);
 }
 
-int
+NCURSES_EXPORT(int)
 typeahead(int fd)
 {
     T((T_CALLED("typeahead(%d)"), fd));
@@ -218,10 +218,10 @@ has_key_internal(int keycode, struct tries *tp)
 	return (TRUE);
     else
 	return (has_key_internal(keycode, tp->child)
-	    || has_key_internal(keycode, tp->sibling));
+		|| has_key_internal(keycode, tp->sibling));
 }
 
-int
+NCURSES_EXPORT(int)
 has_key(int keycode)
 {
     T((T_CALLED("has_key(%d)"), keycode));
@@ -236,7 +236,7 @@ has_key(int keycode)
  * flush, then the next wgetch may get the escape sequence that corresponds to
  * the terminal state _before_ switching modes.
  */
-int
+NCURSES_EXPORT(int)
 _nc_keypad(bool flag)
 {
     if (flag && keypad_xmit) {

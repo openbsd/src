@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_isendwin.c,v 1.1 1999/01/18 19:09:51 millert Exp $	*/
+/*	$OpenBSD: lib_isendwin.c,v 1.2 2001/01/22 18:01:41 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
 **	lib_endwin.c
 **
@@ -43,11 +42,12 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_isendwin.c,v 1.4 1998/04/11 22:52:32 tom Exp $")
+MODULE_ID("$From: lib_isendwin.c,v 1.6 2000/12/10 02:43:27 tom Exp $")
 
-bool isendwin(void)
+NCURSES_EXPORT(bool)
+isendwin(void)
 {
-	if (SP == NULL)
-		return FALSE;
-	return SP->_endwin;
+    if (SP == NULL)
+	return FALSE;
+    return SP->_endwin;
 }

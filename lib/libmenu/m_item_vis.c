@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_item_vis.c,v 1.5 1999/05/17 03:04:25 millert Exp $	*/
+/*	$OpenBSD: m_item_vis.c,v 1.6 2001/01/22 18:02:05 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_vis.c,v 1.10 1999/05/16 17:26:34 juergen Exp $")
+MODULE_ID("$From: m_item_vis.c,v 1.11 2000/12/10 02:16:48 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -51,7 +51,8 @@ MODULE_ID("$From: m_item_vis.c,v 1.10 1999/05/16 17:26:34 juergen Exp $")
 |   Return Values :  TRUE  if visible
 |                    FALSE if invisible
 +--------------------------------------------------------------------------*/
-bool item_visible(const ITEM * item)
+NCURSES_EXPORT(bool)
+item_visible (const ITEM * item)
 {
   MENU *menu;
   

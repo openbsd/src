@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_sub.c,v 1.3 1999/05/17 03:04:26 millert Exp $	*/
+/*	$OpenBSD: m_sub.c,v 1.4 2001/01/22 18:02:06 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_sub.c,v 1.4 1999/05/16 17:28:20 juergen Exp $")
+MODULE_ID("$From: m_sub.c,v 1.5 2000/12/10 02:16:48 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -50,7 +50,8 @@ MODULE_ID("$From: m_sub.c,v 1.4 1999/05/16 17:28:20 juergen Exp $")
 |   Return Values :  E_OK           - success
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
-int set_menu_sub(MENU *menu, WINDOW *win)
+NCURSES_EXPORT(int)
+set_menu_sub (MENU *menu, WINDOW *win)
 {
   if (menu)
     {
@@ -73,7 +74,8 @@ int set_menu_sub(MENU *menu, WINDOW *win)
 |
 |   Return Values :  NULL on error, otherwise a pointer to the window
 +--------------------------------------------------------------------------*/
-WINDOW *menu_sub(const MENU * menu)
+NCURSES_EXPORT(WINDOW *)
+menu_sub (const MENU * menu)
 {
   const MENU* m = Normalize_Menu(menu);
   return Get_Menu_Window(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.11 2000/10/22 18:27:19 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.12 2001/01/22 18:01:34 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -33,7 +33,7 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.37 2000/03/12 02:40:07 tom Exp $ */
+/* $From: MKterm.h.awk.in,v 1.38 2000/12/09 23:54:00 tom Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -48,6 +48,20 @@
 
 #undef  NCURSES_VERSION
 #define NCURSES_VERSION "5.2"
+
+#if !defined(NCURSES_IMPEXP)
+#  define NCURSES_IMPEXP /* nothing */
+#endif
+#if !defined(NCURSES_API)
+#  define NCURSES_API /* nothing */
+#endif
+#if !defined(NCURSES_EXPORT)
+#  define NCURSES_EXPORT(type) NCURSES_IMPEXP type NCURSES_API
+#endif
+#if !defined(NCURSES_EXPORT_VAR)
+#  define NCURSES_EXPORT_VAR(type) NCURSES_IMPEXP type
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -724,7 +738,7 @@ typedef struct term {		/* describe an actual terminal */
     int		_baudrate;	/* used to compute padding */
 } TERMINAL;
 
-extern TERMINAL	*cur_term;
+extern NCURSES_EXPORT_VAR(TERMINAL *) cur_term;
 
 #if BROKEN_LINKER
 #define boolnames  _nc_boolnames()
@@ -737,66 +751,66 @@ extern TERMINAL	*cur_term;
 #define strcodes   _nc_strcodes()
 #define strfnames  _nc_strfnames()
 
-extern NCURSES_CONST char * const *_nc_boolnames(void);
-extern NCURSES_CONST char * const *_nc_boolcodes(void);
-extern NCURSES_CONST char * const *_nc_boolfnames(void);
-extern NCURSES_CONST char * const *_nc_numnames(void);
-extern NCURSES_CONST char * const *_nc_numcodes(void);
-extern NCURSES_CONST char * const *_nc_numfnames(void);
-extern NCURSES_CONST char * const *_nc_strnames(void);
-extern NCURSES_CONST char * const *_nc_strcodes(void);
-extern NCURSES_CONST char * const *_nc_strfnames(void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_boolnames (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_boolcodes (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_boolfnames (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_numnames (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_numcodes (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_numfnames (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_strnames (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_strcodes (void);
+extern NCURSES_EXPORT(NCURSES_CONST char * const *) _nc_strfnames (void);
 
 #else
 
-extern NCURSES_CONST char *const boolnames[];
-extern NCURSES_CONST char *const boolcodes[];
-extern NCURSES_CONST char *const boolfnames[];
-extern NCURSES_CONST char *const numnames[];
-extern NCURSES_CONST char *const numcodes[];
-extern NCURSES_CONST char *const numfnames[];
-extern NCURSES_CONST char *const strnames[];
-extern NCURSES_CONST char *const strcodes[];
-extern NCURSES_CONST char *const strfnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) boolnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) boolcodes[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) boolfnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) numnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) numcodes[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) numfnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) strnames[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) strcodes[];
+extern NCURSES_EXPORT_VAR(NCURSES_CONST char * const ) strfnames[];
 
 #endif
 
 /* internals */
-extern int _nc_set_tty_mode(TTY *buf);
-extern int _nc_get_tty_mode(TTY *buf);
-extern int _nc_read_entry(const char * const, char * const, TERMTYPE *const);
-extern int _nc_read_file_entry(const char *const, TERMTYPE *);
-extern char *_nc_first_name(const char *const);
-extern int _nc_name_match(const char *const, const char *const, const char *const);
-extern int _nc_read_termcap_entry(const char *const, TERMTYPE *const);
-extern const TERMTYPE *_nc_fallback(const char *);
+extern NCURSES_EXPORT(int) _nc_set_tty_mode (TTY *buf);
+extern NCURSES_EXPORT(int) _nc_get_tty_mode (TTY *buf);
+extern NCURSES_EXPORT(int) _nc_read_entry (const char * const, char * const, TERMTYPE *const);
+extern NCURSES_EXPORT(int) _nc_read_file_entry (const char *const, TERMTYPE *);
+extern NCURSES_EXPORT(char *) _nc_first_name (const char *const);
+extern NCURSES_EXPORT(int) _nc_name_match (const char *const, const char *const, const char *const);
+extern NCURSES_EXPORT(int) _nc_read_termcap_entry (const char *const, TERMTYPE *const);
+extern NCURSES_EXPORT(const TERMTYPE *) _nc_fallback (const char *);
 
 /* entry points */
-extern TERMINAL *set_curterm(TERMINAL *);
-extern int del_curterm(TERMINAL *);
+extern NCURSES_EXPORT(TERMINAL *) set_curterm (TERMINAL *);
+extern NCURSES_EXPORT(int) del_curterm (TERMINAL *);
 
 /* miscellaneous entry points */
-extern int restartterm(NCURSES_CONST char *, int, int *);
-extern int setupterm(NCURSES_CONST char *,int,int *);
+extern NCURSES_EXPORT(int) restartterm (NCURSES_CONST char *, int, int *);
+extern NCURSES_EXPORT(int) setupterm (NCURSES_CONST char *,int,int *);
 
 /* terminfo entry points, also declared in curses.h */
 #if !defined(__NCURSES_H)
-extern char *tigetstr(NCURSES_CONST char *);
-extern char *tparm(NCURSES_CONST char *, ...);
-extern char ttytype[];
-extern int putp(const char *);
-extern int tigetflag(NCURSES_CONST char *);
-extern int tigetnum(NCURSES_CONST char *);
+extern NCURSES_EXPORT(char *) tigetstr (NCURSES_CONST char *);
+extern NCURSES_EXPORT(char *) tparm (NCURSES_CONST char *, ...);
+extern NCURSES_EXPORT_VAR(char) ttytype[];
+extern NCURSES_EXPORT(int) putp (const char *);
+extern NCURSES_EXPORT(int) tigetflag (NCURSES_CONST char *);
+extern NCURSES_EXPORT(int) tigetnum (NCURSES_CONST char *);
 #endif /* __NCURSES_H */
 
 /* termcap database emulation (XPG4 uses const only for 2nd param of tgetent) */
 #if !defined(_NCU_TERMCAP_H)
-extern char *tgetstr(NCURSES_CONST char *, char **);
-extern char *tgoto(const char *, int, int);
-extern int tgetent(char *, const char *);
-extern int tgetflag(NCURSES_CONST char *);
-extern int tgetnum(NCURSES_CONST char *);
-extern int tputs(const char *, int, int (*)(int));
+extern NCURSES_EXPORT(char *) tgetstr (NCURSES_CONST char *, char **);
+extern NCURSES_EXPORT(char *) tgoto (const char *, int, int);
+extern NCURSES_EXPORT(int) tgetent (char *, const char *);
+extern NCURSES_EXPORT(int) tgetflag (NCURSES_CONST char *);
+extern NCURSES_EXPORT(int) tgetnum (NCURSES_CONST char *);
+extern NCURSES_EXPORT(int) tputs (const char *, int, int (*)(int));
 #endif /* _NCU_TERMCAP_H */
 
 #ifdef __cplusplus

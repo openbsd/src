@@ -2,7 +2,7 @@
 #ifndef _CURSESW_H
 #define _CURSESW_H
 
-// $From: cursesw.h,v 1.18 1999/10/23 15:16:53 tom Exp $
+// $From: cursesw.h,v 1.20 2000/12/10 03:22:35 tom Exp $
 
 #include <etip.h>
 #include <stdio.h>
@@ -118,7 +118,7 @@ inline int UNDEF(clearok)(WINDOW* win, bool bf)  { return clearok(win, bf); }
 #undef clearok
 #define clearok UNDEF(clearok)
 #else
-extern "C" int clearok(WINDOW*, bool);
+extern "C" NCURSES_IMPEXP int NCURSES_API clearok(WINDOW*, bool);
 #endif
 
 #ifdef clrtobot
@@ -301,7 +301,7 @@ inline int UNDEF(leaveok)(WINDOW* win, bool bf)  { return leaveok(win, bf); }
 #undef leaveok
 #define leaveok UNDEF(leaveok)
 #else
-extern "C" int leaveok(WINDOW* win, bool bf);
+extern "C" NCURSES_IMPEXP int NCURSES_API leaveok(WINDOW* win, bool bf);
 #endif
 
 #ifdef move
@@ -340,9 +340,9 @@ inline int UNDEF(scrollok)(WINDOW* win, bool bf)  { return scrollok(win, bf); }
 #define scrollok UNDEF(scrollok)
 #else
 #if	defined(__NCURSES_H)
-extern "C" int scrollok(WINDOW*, bool);
+extern "C" NCURSES_IMPEXP int NCURSES_API scrollok(WINDOW*, bool);
 #else
-extern "C" int scrollok(WINDOW*, char);
+extern "C" NCURSES_IMPEXP int NCURSES_API scrollok(WINDOW*, char);
 #endif
 #endif
 
@@ -671,7 +671,7 @@ inline void UNDEF(bkgdset)(chtype ch) { bkgdset(ch); }
  *
  */
 
-class NCursesWindow
+class NCURSES_IMPEXP NCursesWindow
 {
   friend class NCursesMenu;
   friend class NCursesForm;
@@ -1207,7 +1207,7 @@ public:
 // -------------------------------------------------------------------------
 // We leave this here for compatibility reasons.
 // -------------------------------------------------------------------------
-class NCursesColorWindow : public NCursesWindow {
+class NCURSES_IMPEXP NCursesColorWindow : public NCursesWindow {
 public:
   NCursesColorWindow(WINDOW* &window)   // useful only for stdscr
     : NCursesWindow(window) {
@@ -1251,7 +1251,7 @@ public:
 // Pad Support. We allow an association of a pad with a "real" window
 // through which the pad may be viewed.
 // -------------------------------------------------------------------------
-class NCursesPad : public NCursesWindow {
+class NCURSES_IMPEXP NCursesPad : public NCursesWindow {
 private:
   NCursesWindow* viewWin;       // the "viewport" window
   NCursesWindow* viewSub;       // the "viewport" subwindow
@@ -1343,7 +1343,7 @@ public:
 // A FramedPad is constructed always with a viewport window. This viewport
 // will be framed (by a box() command) and the interior of the box is the
 // viewport subwindow. On the frame we display scrollbar sliders.
-class NCursesFramedPad : public NCursesPad {
+class NCURSES_IMPEXP NCursesFramedPad : public NCursesPad {
 protected:
   virtual void OnOperation(int pad_req);
 

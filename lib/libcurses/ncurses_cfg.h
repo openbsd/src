@@ -50,7 +50,6 @@
 #define CC_HAS_INLINE_FUNCS 1
 #define CC_HAS_PROTOS 1
 #define CPP_HAS_PARAM_INIT 1
-#define ETIP_NEEDS_MATH_H 1
 #define GCC_NORETURN __attribute__((__noreturn__))
 #define GCC_PRINTF 1
 #define GCC_SCANF 1
@@ -121,6 +120,7 @@
 #define MIXEDCASE_FILENAMES 1
 #define NCURSES_EXT_FUNCS 1
 #define NCURSES_NO_PADDING 1
+#define NCURSES_PATHSEP ':'
 #define NDEBUG 1
 #define RETSIGTYPE void
 #define STDC_HEADERS 1

@@ -1,6 +1,6 @@
 #!/bin/sh
-# $OpenBSD: MKcaptab.awk,v 1.2 1999/01/24 20:06:47 millert Exp $
-# $From: MKcaptab.awk,v 1.11 1999/01/24 02:46:42 Jeffrey.C.Honig Exp $
+# $OpenBSD: MKcaptab.awk,v 1.3 2001/01/22 18:01:49 millert Exp $
+# $From: MKcaptab.awk,v 1.12 2000/12/10 00:14:12 tom Exp $
 AWK=${1-awk}
 DATA=${2-../include/Caps}
 
@@ -12,6 +12,7 @@ cat <<'EOF'
  */
 
 #include <ncurses_cfg.h>
+#include <curses.priv.h>
 #include <tic.h>
 #include <term.h>
 
@@ -59,12 +60,12 @@ cat <<'EOF'
 	{(char *)NULL, (char *)NULL, (char *)NULL}
 };
 
-const struct name_table_entry *_nc_get_table(bool termcap)
+NCURSES_EXPORT(const struct name_table_entry *) _nc_get_table (bool termcap)
 {
 	return termcap ? _nc_cap_table: _nc_info_table ;
 }
 
-const struct name_table_entry * const * _nc_get_hash_table(bool termcap)
+NCURSES_EXPORT(const struct name_table_entry * const *) _nc_get_hash_table (bool termcap)
 {
 	return termcap ? _nc_cap_hash_table: _nc_info_hash_table ;
 }

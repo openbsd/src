@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_touch.c,v 1.1 1999/01/18 19:10:05 millert Exp $	*/
+/*	$OpenBSD: lib_touch.c,v 1.2 2001/01/22 18:01:47 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -45,45 +45,49 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_touch.c,v 1.6 1998/04/11 22:55:02 tom Exp $")
+MODULE_ID("$From: lib_touch.c,v 1.9 2000/12/10 02:43:27 tom Exp $")
 
-bool is_linetouched(WINDOW *win, int line)
+NCURSES_EXPORT(bool)
+is_linetouched(WINDOW *win, int line)
 {
-	T((T_CALLED("is_linetouched(%p,%d)"), win, line));
+    T((T_CALLED("is_linetouched(%p,%d)"), win, line));
 
-	/* XSI doesn't define any error */
-	if (!win || (line > win->_maxy) || (line < 0))
-		returnCode(ERR);
+    /* XSI doesn't define any error */
+    if (!win || (line > win->_maxy) || (line < 0))
+	returnCode((bool) ERR);
 
-	returnCode(win->_line[line].firstchar != _NOCHANGE ? TRUE : FALSE);
+    returnCode(win->_line[line].firstchar != _NOCHANGE ? TRUE : FALSE);
 }
 
-bool is_wintouched(WINDOW *win)
+NCURSES_EXPORT(bool)
+is_wintouched(WINDOW *win)
 {
-int i;
+    int i;
 
-	T((T_CALLED("is_wintouched(%p)"), win));
+    T((T_CALLED("is_wintouched(%p)"), win));
 
-	if (win)
-	        for (i = 0; i <= win->_maxy; i++)
-		        if (win->_line[i].firstchar != _NOCHANGE)
-			        returnCode(TRUE);
-	returnCode(FALSE);
+    if (win)
+	for (i = 0; i <= win->_maxy; i++)
+	    if (win->_line[i].firstchar != _NOCHANGE)
+		returnCode(TRUE);
+    returnCode(FALSE);
 }
 
-int wtouchln(WINDOW *win, int y, int n, int changed)
+NCURSES_EXPORT(int)
+wtouchln(WINDOW *win, int y, int n, int changed)
 {
-int i;
+    int i;
 
-	T((T_CALLED("wtouchln(%p,%d,%d,%d)"), win, y, n, changed));
+    T((T_CALLED("wtouchln(%p,%d,%d,%d)"), win, y, n, changed));
 
-	if (!win || (n<0) || (y<0) || (y>win->_maxy))
-	  returnCode(ERR);
+    if (!win || (n < 0) || (y < 0) || (y > win->_maxy))
+	returnCode(ERR);
 
-	for (i = y; i < y+n; i++) {
-	        if (i>win->_maxy) break;
-		win->_line[i].firstchar = changed ? 0 : _NOCHANGE;
-		win->_line[i].lastchar = changed ? win->_maxx : _NOCHANGE;
-	}
-	returnCode(OK);
+    for (i = y; i < y + n; i++) {
+	if (i > win->_maxy)
+	    break;
+	win->_line[i].firstchar = changed ? 0 : _NOCHANGE;
+	win->_line[i].lastchar = changed ? win->_maxx : _NOCHANGE;
+    }
+    returnCode(OK);
 }

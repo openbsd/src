@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_driver.c,v 1.6 1999/05/17 03:04:16 millert Exp $	*/
+/*	$OpenBSD: frm_driver.c,v 1.7 2001/01/22 18:02:15 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,7 @@
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_driver.c,v 1.35 1999/05/16 17:20:52 juergen Exp $")
+MODULE_ID("$From: frm_driver.c,v 1.37 2000/12/10 02:09:38 tom Exp $")
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority
@@ -560,8 +560,8 @@ static bool Field_Grown(FIELD * field, int amount)
 |                    E_SYSTEM_ERROR    - form has no current field or
 |                                        field-window
 +--------------------------------------------------------------------------*/
-int
-_nc_Position_Form_Cursor(FORM * form)
+NCURSES_EXPORT(int)
+_nc_Position_Form_Cursor (FORM * form)
 {
   FIELD  *field;
   WINDOW *formwin;
@@ -601,8 +601,8 @@ _nc_Position_Form_Cursor(FORM * form)
 |                    E_BAD_ARGUMENT    - invalid form pointer
 |                    E_SYSTEM_ERROR    - general error
 +--------------------------------------------------------------------------*/
-int
-_nc_Refresh_Current_Field(FORM * form)
+NCURSES_EXPORT(int)
+_nc_Refresh_Current_Field (FORM * form)
 {
   WINDOW *formwin;
   FIELD  *field;
@@ -959,7 +959,8 @@ static int Synchronize_Linked_Fields(FIELD * field)
 |                    E_BAD_ARGUMENT   - invalid field pointer
 |                    E_SYSTEM_ERROR   - some severe basic error
 +--------------------------------------------------------------------------*/
-int _nc_Synchronize_Attributes(FIELD * field)
+NCURSES_EXPORT(int)
+_nc_Synchronize_Attributes (FIELD * field)
 {
   FORM *form;
   int res = E_OK;
@@ -1017,8 +1018,9 @@ int _nc_Synchronize_Attributes(FIELD * field)
 |                    E_BAD_ARGUMENT      - invalid field pointer 
 |                    E_SYSTEM_ERROR      - some severe basic error
 +--------------------------------------------------------------------------*/
-int
-_nc_Synchronize_Options(FIELD *field, Field_Options newopts)
+NCURSES_EXPORT(int)
+_nc_Synchronize_Options
+(FIELD *field, Field_Options newopts)
 {
   Field_Options oldopts;
   Field_Options changed_opts;
@@ -1115,8 +1117,9 @@ _nc_Synchronize_Options(FIELD *field, Field_Options newopts)
 |                    E_BAD_ARGUMENT      - invalid form or field pointer 
 |                    E_SYSTEM_ERROR      - some severe basic error
 +--------------------------------------------------------------------------*/
-int
-_nc_Set_Current_Field(FORM  *form, FIELD *newfield)
+NCURSES_EXPORT(int)
+_nc_Set_Current_Field
+(FORM  *form, FIELD *newfield)
 {
   FIELD  *field;
   WINDOW *new_window;
@@ -2688,8 +2691,8 @@ static bool Check_Field(FIELDTYPE *typ, FIELD *field, TypeArgument *argp)
 |   Return Values :  TRUE  - field is valid
 |                    FALSE - field is invalid
 +--------------------------------------------------------------------------*/
-bool
-_nc_Internal_Validation(FORM *form)
+NCURSES_EXPORT(bool)
+_nc_Internal_Validation (FORM *form)
 {
   FIELD *field;
 
@@ -2778,8 +2781,8 @@ INLINE static FIELD *Next_Field_On_Page(FIELD * field)
 |
 |   Return Values :  Pointer to calculated field.
 +--------------------------------------------------------------------------*/
-FIELD*
-_nc_First_Active_Field(FORM * form)
+NCURSES_EXPORT(FIELD*)
+_nc_First_Active_Field (FORM * form)
 {
   FIELD **last_on_page = &form->field[form->page[form->curpage].pmax];
   FIELD *proposed = Next_Field_On_Page(*last_on_page);
@@ -3285,8 +3288,9 @@ static int FN_Down_Field(FORM * form)
 |   Return Values :  E_OK                - success
 |                    != E_OK             - error from subordinate call
 +--------------------------------------------------------------------------*/
-int
-_nc_Set_Form_Page(FORM * form, int page, FIELD * field)
+NCURSES_EXPORT(int)
+_nc_Set_Form_Page
+(FORM * form, int page, FIELD * field)
 {
   int res = E_OK;
 
@@ -3639,7 +3643,8 @@ static const Binding_Info bindings[MAX_FORM_COMMAND - MIN_FORM_COMMAND + 1] =
 |                    E_REQUEST_DENIED  - request failed
 |                    E_UNKNOWN_COMMAND - command not known
 +--------------------------------------------------------------------------*/
-int form_driver(FORM * form, int  c)
+NCURSES_EXPORT(int)
+form_driver (FORM * form, int  c)
 {
   const Binding_Info* BI = (Binding_Info *)0;
   int res = E_UNKNOWN_COMMAND;
@@ -3738,7 +3743,9 @@ int form_driver(FORM * form, int  c)
 |                    E_BAD_ARGUMENT  - invalid argument
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
-int set_field_buffer(FIELD * field, int buffer, const char * value)
+NCURSES_EXPORT(int)
+set_field_buffer
+(FIELD * field, int buffer, const char * value)
 {
   char *s, *p;
   int res = E_OK;
@@ -3780,7 +3787,7 @@ int set_field_buffer(FIELD * field, int buffer, const char * value)
 	      unsigned int i;
 	  
 	      for(i=len; i<vlen; i++)
-		if (!isprint(value[i]))
+		if (!isprint((unsigned char)value[i]))
 		  RETURN(E_BAD_ARGUMENT);
 	    }
 	  len = vlen;
@@ -3834,7 +3841,8 @@ int set_field_buffer(FIELD * field, int buffer, const char * value)
 |
 |   Return Values :  Pointer to buffer or NULL if arguments were invalid.
 +--------------------------------------------------------------------------*/
-char *field_buffer(const FIELD * field, int  buffer)
+NCURSES_EXPORT(char *)
+field_buffer (const FIELD * field, int  buffer)
 {
   if (field && (buffer >= 0) && (buffer <= field->nbuf))
     return Address_Of_Nth_Buffer(field,buffer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.13 2000/10/10 15:10:32 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.14 2001/01/22 18:02:01 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.146 2000/10/07 01:11:44 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.150 2001/01/14 00:16:22 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -527,7 +527,7 @@ callPutChar(chtype const ch)
 		win->_line[row].lastchar = _NOCHANGE; \
 		if_USE_SCROLL_HINTS(win->_line[row].oldindex = row)
 
-int
+NCURSES_EXPORT(int)
 doupdate(void)
 {
     int i;
@@ -769,20 +769,20 @@ doupdate(void)
 
 	    /* mark line changed successfully */
 	    if (i <= newscr->_maxy) {
-		MARK_NOCHANGE(newscr, i)
+		MARK_NOCHANGE(newscr, i);
 	    }
 	    if (i <= curscr->_maxy) {
-		MARK_NOCHANGE(curscr, i)
+		MARK_NOCHANGE(curscr, i);
 	    }
 	}
     }
 
     /* put everything back in sync */
     for (i = nonempty; i <= newscr->_maxy; i++) {
-	MARK_NOCHANGE(newscr, i)
+	MARK_NOCHANGE(newscr, i);
     }
     for (i = nonempty; i <= curscr->_maxy; i++) {
-	MARK_NOCHANGE(curscr, i)
+	MARK_NOCHANGE(curscr, i);
     }
 
     if (!newscr->_leaveok) {
@@ -1284,7 +1284,7 @@ ClearScreen(chtype blank)
 #if NCURSES_EXT_FUNCS
     if (SP->_coloron
 	&& !SP->_default_color) {
-	_nc_do_color(COLOR_PAIR(SP->_current_attr), 0, FALSE, _nc_outch);
+	_nc_do_color((int) COLOR_PAIR(SP->_current_attr), 0, FALSE, _nc_outch);
 	if (!back_color_erase) {
 	    fast_clear = FALSE;
 	}
@@ -1419,7 +1419,7 @@ DelChar(int count)
 **	Emit a string without waiting for update.
 */
 
-void
+NCURSES_EXPORT(void)
 _nc_outstr(const char *str)
 {
     (void) putp(str);
@@ -1612,8 +1612,9 @@ scroll_idl(int n, int del, int ins, chtype blank)
     return OK;
 }
 
-int
-_nc_scrolln(int n, int top, int bot, int maxy)
+NCURSES_EXPORT(int)
+_nc_scrolln
+(int n, int top, int bot, int maxy)
 /* scroll region from top to bot by n lines */
 {
     chtype blank = ClrBlank(stdscr);
@@ -1734,7 +1735,7 @@ _nc_scrolln(int n, int top, int bot, int maxy)
     return (OK);
 }
 
-void
+NCURSES_EXPORT(void)
 _nc_screen_resume(void)
 {
     /* make sure terminal is in a sane known state */
@@ -1760,14 +1761,14 @@ _nc_screen_resume(void)
 	putp(auto_right_margin ? enter_am_mode : exit_am_mode);
 }
 
-void
+NCURSES_EXPORT(void)
 _nc_screen_init(void)
 {
     _nc_screen_resume();
 }
 
 /* wrap up screen handling */
-void
+NCURSES_EXPORT(void)
 _nc_screen_wrap(void)
 {
     UpdateAttrs(A_NORMAL);
@@ -1788,7 +1789,7 @@ _nc_screen_wrap(void)
 }
 
 #if USE_XMC_SUPPORT
-void
+NCURSES_EXPORT(void)
 _nc_do_xmc_glitch(attr_t previous)
 {
     attr_t chg = XMC_CHANGES(previous ^ SP->_current_attr);

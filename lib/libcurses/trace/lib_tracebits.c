@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tracebits.c,v 1.7 2000/10/08 22:47:04 millert Exp $	*/
+/*	$OpenBSD: lib_tracebits.c,v 1.8 2001/01/22 18:01:58 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -36,7 +36,7 @@
 #include <curses.priv.h>
 #include <term.h>		/* cur_term */
 
-MODULE_ID("$From: lib_tracebits.c,v 1.7 2000/09/02 18:08:37 tom Exp $")
+MODULE_ID("$From: lib_tracebits.c,v 1.9 2000/12/10 03:02:45 tom Exp $")
 
 #if SVR4_TERMIO && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
@@ -83,7 +83,7 @@ lookup_bits(char *buf, const BITNAMES * table, const char *label, unsigned int v
     (void) strcat(buf, "} ");
 }
 
-char *
+NCURSES_EXPORT(char *)
 _nc_tracebits(void)
 /* describe the state of the terminal control bits exactly */
 {
@@ -139,11 +139,11 @@ _nc_tracebits(void)
     };
 
     buf = _nc_trace_buf(0,
-	8 + sizeof(iflags) +
-	8 + sizeof(oflags) +
-	8 + sizeof(cflags) +
-	8 + sizeof(lflags) +
-	8);
+			8 + sizeof(iflags) +
+			8 + sizeof(oflags) +
+			8 + sizeof(cflags) +
+			8 + sizeof(lflags) +
+			8);
 
     if (cur_term->Nttyb.c_iflag & ALLIN)
 	lookup_bits(buf, iflags, "iflags", cur_term->Nttyb.c_iflag);
@@ -231,7 +231,7 @@ _nc_tracebits(void)
     };
 
     buf = _nc_trace_buf(0,
-	8 + sizeof(cflags));
+			8 + sizeof(cflags));
 
     if (cur_term->Nttyb.sg_flags & ALLCTRL) {
 	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.sg_flags);
@@ -240,7 +240,7 @@ _nc_tracebits(void)
     return (buf);
 }
 #else
-char *
+NCURSES_EXPORT(char *)
 _nc_tracebits(void)
 {
     static char tmp[] = "";

@@ -2,8 +2,8 @@
 #
 # MKlib_gen.sh -- generate sources from curses.h macro definitions
 #
-# $OpenBSD: MKlib_gen.sh,v 1.2 2000/10/08 22:46:58 millert Exp $
-# ($From: MKlib_gen.sh,v 1.12 2000/07/29 16:30:11 tom Exp $)
+# $OpenBSD: MKlib_gen.sh,v 1.3 2001/01/22 18:01:36 millert Exp $
+# ($From: MKlib_gen.sh,v 1.13 2000/12/10 00:30:25 tom Exp $)
 #
 # The XSI Curses standard requires all curses entry points to exist as
 # functions, even though many definitions would normally be shadowed
@@ -227,7 +227,9 @@ BEGIN	{
 }
 EOF1
 
-sed -n -f $ED1 | sed -f $ED2 \
+sed -n -f $ED1 \
+| sed -e 's/NCURSES_EXPORT(\(.*\)) \(.*\) (\(.*\))/\1 \2(\3)/' \
+| sed -f $ED2 \
 | $AWK -f $AW1 ) \
 | sed \
 	-e '/^\([a-z_][a-z_]*\) /s//\1 gen_/' >$TMP
@@ -256,5 +258,7 @@ BEGIN		{
 | sed -f $ED3 \
 | sed \
 	-e 's/^.*T_CALLED.*returnCode( \([a-z].*) \));/	return \1;/' \
-	-e 's/^.*T_CALLED.*returnCode( \((wmove.*) \));/	return \1;/'
+	-e 's/^.*T_CALLED.*returnCode( \((wmove.*) \));/	return \1;/' \
+| sed \
+	-e 's/^\(.*\) \(.*\) (\(.*\))$/NCURSES_EXPORT(\1) \2 (\3)/'
 

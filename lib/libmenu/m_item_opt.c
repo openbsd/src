@@ -1,7 +1,7 @@
-/*	$OpenBSD: m_item_opt.c,v 1.7 1999/05/17 03:04:24 millert Exp $	*/
+/*	$OpenBSD: m_item_opt.c,v 1.8 2001/01/22 18:02:04 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_item_opt.c,v 1.10 1999/05/16 17:25:52 juergen Exp $")
+MODULE_ID("$From: m_item_opt.c,v 1.11 2000/12/10 02:16:48 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -52,7 +52,8 @@ MODULE_ID("$From: m_item_opt.c,v 1.10 1999/05/16 17:25:52 juergen Exp $")
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid item options
 +--------------------------------------------------------------------------*/
-int set_item_opts(ITEM *item, Item_Options opts)
+NCURSES_EXPORT(int)
+set_item_opts (ITEM *item, Item_Options opts)
 { 
   opts &= ALL_ITEM_OPTS;
 
@@ -92,7 +93,8 @@ int set_item_opts(ITEM *item, Item_Options opts)
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid options
 +--------------------------------------------------------------------------*/
-int item_opts_off(ITEM *item, Item_Options  opts)
+NCURSES_EXPORT(int)
+item_opts_off (ITEM *item, Item_Options  opts)
 { 
   ITEM *citem = item; /* use a copy because set_item_opts must detect
                          NULL item itself to adjust its behaviour */
@@ -116,7 +118,8 @@ int item_opts_off(ITEM *item, Item_Options  opts)
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid options
 +--------------------------------------------------------------------------*/
-int item_opts_on(ITEM *item, Item_Options opts)
+NCURSES_EXPORT(int)
+item_opts_on (ITEM *item, Item_Options opts)
 {
   ITEM *citem = item; /* use a copy because set_item_opts must detect
                          NULL item itself to adjust its behaviour */
@@ -140,7 +143,8 @@ int item_opts_on(ITEM *item, Item_Options opts)
 |
 |   Return Values :  Items options
 +--------------------------------------------------------------------------*/
-Item_Options item_opts(const ITEM * item)
+NCURSES_EXPORT(Item_Options)
+item_opts (const ITEM * item)
 {
   return (ALL_ITEM_OPTS & Normalize_Item(item)->opt);
 }

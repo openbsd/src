@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_enum.c,v 1.8 2000/10/22 18:27:24 millert Exp $	*/
+/*	$OpenBSD: fty_enum.c,v 1.9 2001/01/22 18:02:17 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_enum.c,v 1.14 2000/10/18 09:28:19 juergen Exp $")
+MODULE_ID("$From: fty_enum.c,v 1.15 2000/12/09 23:46:12 tom Exp $")
 
 typedef struct {
   char **kwds;
@@ -292,6 +292,6 @@ static FIELDTYPE typeENUM = {
   Previous_Enum
 };
 
-FIELDTYPE* TYPE_ENUM = &typeENUM;
+NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_ENUM = &typeENUM;
 
 /* fty_enum.c ends here */

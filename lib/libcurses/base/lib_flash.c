@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_flash.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
+/*	$OpenBSD: lib_flash.c,v 1.3 2001/01/22 18:01:39 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
  *	flash.c
  *
@@ -42,9 +41,9 @@
  */
 
 #include <curses.priv.h>
-#include <term.h>	/* beep, flash */
+#include <term.h>		/* beep, flash */
 
-MODULE_ID("$From: lib_flash.c,v 1.4 1999/10/22 21:39:06 tom Exp $")
+MODULE_ID("$From: lib_flash.c,v 1.6 2000/12/10 02:43:27 tom Exp $")
 
 /*
  *	flash()
@@ -54,22 +53,23 @@ MODULE_ID("$From: lib_flash.c,v 1.4 1999/10/22 21:39:06 tom Exp $")
  *
  */
 
-int flash(void)
+NCURSES_EXPORT(int)
+flash(void)
 {
-	int res = ERR;
+    int res = ERR;
 
-	T((T_CALLED("flash()")));
+    T((T_CALLED("flash()")));
 
-	/* FIXME: should make sure that we are not in altchar mode */
-	if (flash_screen) {
-		TPUTS_TRACE("flash_screen");
-		res = putp(flash_screen);
-		_nc_flush();
-	} else if (bell) {
-		TPUTS_TRACE("bell");
-		res = putp(bell);
-		_nc_flush();
-	}
+    /* FIXME: should make sure that we are not in altchar mode */
+    if (flash_screen) {
+	TPUTS_TRACE("flash_screen");
+	res = putp(flash_screen);
+	_nc_flush();
+    } else if (bell) {
+	TPUTS_TRACE("bell");
+	res = putp(bell);
+	_nc_flush();
+    }
 
-	returnCode(res);
+    returnCode(res);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_scrreg.c,v 1.2 2000/06/19 03:53:45 millert Exp $	*/
+/*	$OpenBSD: lib_scrreg.c,v 1.3 2001/01/22 18:01:44 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_scrreg.c,v 1.8 2000/04/29 21:13:04 tom Exp $")
+MODULE_ID("$From: lib_scrreg.c,v 1.10 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 wsetscrreg(WINDOW *win, int top, int bottom)
 {
     T((T_CALLED("wsetscrreg(%p,%d,%d)"), win, top, bottom));

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_immedok.c,v 1.1 1999/01/18 19:09:47 millert Exp $	*/
+/*	$OpenBSD: lib_immedok.c,v 1.2 2001/01/22 18:01:40 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
 **	lib_immedok.c
 **
@@ -43,14 +42,15 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_immedok.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: lib_immedok.c,v 1.4 2000/12/10 02:43:27 tom Exp $")
 
-void immedok(WINDOW *win, bool flag)
+NCURSES_EXPORT(void)
+immedok(WINDOW *win, bool flag)
 {
-	T((T_CALLED("immedok(%p,%d)"), win, flag));
+    T((T_CALLED("immedok(%p,%d)"), win, flag));
 
-	if (win)
-	  win->_immed = flag;
+    if (win)
+	win->_immed = flag;
 
-	returnVoid;
+    returnVoid;
 }

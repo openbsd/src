@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slklab.c,v 1.1 1999/01/18 19:10:03 millert Exp $	*/
+/*	$OpenBSD: lib_slklab.c,v 1.2 2001/01/22 18:01:46 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,14 +40,14 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slklab.c,v 1.4 1998/02/11 12:13:54 tom Exp $")
+MODULE_ID("$From: lib_slklab.c,v 1.6 2000/12/10 02:43:27 tom Exp $")
 
-char*
+NCURSES_EXPORT(char *)
 slk_label(int n)
 {
-	T((T_CALLED("slk_label(%d)"), n));
+    T((T_CALLED("slk_label(%d)"), n));
 
-	if (SP == NULL || SP->_slk == NULL || n < 1 || n > SP->_slk->labcnt)
-		returnPtr(0);
-	returnPtr(SP->_slk->ent[n-1].text);
+    if (SP == NULL || SP->_slk == NULL || n < 1 || n > SP->_slk->labcnt)
+	returnPtr(0);
+    returnPtr(SP->_slk->ent[n - 1].text);
 }

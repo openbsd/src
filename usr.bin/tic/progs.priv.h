@@ -1,4 +1,4 @@
-/*	$OpenBSD: progs.priv.h,v 1.7 2000/10/08 22:47:10 millert Exp $	*/
+/*	$OpenBSD: progs.priv.h,v 1.8 2001/01/22 18:02:20 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -32,7 +32,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997,1998                   *
  ****************************************************************************/
 /*
- * $From: progs.priv.h,v 1.24 2000/10/01 01:33:34 tom Exp $
+ * $From: progs.priv.h,v 1.26 2000/11/05 00:22:05 tom Exp $
  *
  *	progs.priv.h
  *
@@ -167,10 +167,12 @@ extern int optind;
 #if !HAVE_ISASCII
 # undef isascii
 # if ('z'-'a' == 25) && ('z' < 127) && ('Z'-'A' == 25) && ('Z' < 127) && ('9' < 127)
-#  define isascii(c) (((c) & 0xff) <= 127)
+#  define isascii(c) (CharOf(c) <= 127)
 # else
 #  define isascii(c) 1	/* not really ascii anyway */
 # endif
 #endif
+
+#define CharOf(c)    ((unsigned char)(c))
 
 #define SIZEOF(v) (sizeof(v)/sizeof(v[0]))

@@ -1,7 +1,7 @@
-/*	$OpenBSD: fld_opts.c,v 1.4 1999/05/17 03:04:14 millert Exp $	*/
+/*	$OpenBSD: fld_opts.c,v 1.5 2001/01/22 18:02:13 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,7 @@
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_opts.c,v 1.6 1999/05/16 17:19:06 juergen Exp $")
+MODULE_ID("$From: fld_opts.c,v 1.7 2000/12/10 02:09:38 tom Exp $")
 
 /*----------------------------------------------------------------------------
   Field-Options manipulation routines
@@ -51,7 +51,8 @@ MODULE_ID("$From: fld_opts.c,v 1.6 1999/05/16 17:19:06 juergen Exp $")
 |                    E_BAD_ARGUMENT  - invalid options
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
-int set_field_opts(FIELD * field, Field_Options opts)
+NCURSES_EXPORT(int)
+set_field_opts (FIELD * field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
   opts &= ALL_FIELD_OPTS;
@@ -68,7 +69,8 @@ int set_field_opts(FIELD * field, Field_Options opts)
 |
 |   Return Values :  The options.
 +--------------------------------------------------------------------------*/
-Field_Options field_opts(const FIELD * field)
+NCURSES_EXPORT(Field_Options)
+field_opts (const FIELD * field)
 {
   return ALL_FIELD_OPTS & Normalize_Field( field )->opts;
 }
@@ -85,7 +87,8 @@ Field_Options field_opts(const FIELD * field)
 |                    E_BAD_ARGUMENT  - invalid options
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
-int field_opts_on(FIELD * field, Field_Options opts)
+NCURSES_EXPORT(int)
+field_opts_on (FIELD * field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
 
@@ -110,7 +113,8 @@ int field_opts_on(FIELD * field, Field_Options opts)
 |                    E_BAD_ARGUMENT  - invalid options
 |                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
-int field_opts_off(FIELD  * field, Field_Options opts)
+NCURSES_EXPORT(int)
+field_opts_off (FIELD  * field, Field_Options opts)
 {
   int res = E_BAD_ARGUMENT;
 

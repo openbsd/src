@@ -1,7 +1,7 @@
-/*	$OpenBSD: nc_panel.h,v 1.2 1998/07/23 21:19:56 millert Exp $	*/
+/*	$OpenBSD: nc_panel.h,v 1.3 2001/01/22 18:01:34 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: nc_panel.h,v 1.2 1998/02/11 12:13:45 tom Exp $
+ * $From: nc_panel.h,v 1.3 2000/12/10 02:04:35 tom Exp $
  *
  *	nc_panel.h
  *
@@ -59,7 +59,7 @@ struct panelhook {
 };
 
 /* Retrieve the panelhook of the current screen */
-extern struct panelhook* _nc_panelhook(void);
+extern NCURSES_EXPORT(struct panelhook*) _nc_panelhook (void);
 
 #ifdef __cplusplus
 }

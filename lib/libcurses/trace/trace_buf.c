@@ -1,7 +1,7 @@
-/*	$OpenBSD: trace_buf.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: trace_buf.c,v 1.3 2001/01/22 18:01:58 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -37,46 +37,47 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: trace_buf.c,v 1.7 1999/02/27 19:50:58 tom Exp $")
+MODULE_ID("$From: trace_buf.c,v 1.9 2000/12/10 03:02:45 tom Exp $")
 
 typedef struct {
-	char *text;
-	size_t size;
+    char *text;
+    size_t size;
 } LIST;
 
-char * _nc_trace_buf(int bufnum, size_t want)
+NCURSES_EXPORT(char *)
+_nc_trace_buf(int bufnum, size_t want)
 {
-	static LIST *list;
-	static size_t have;
+    static LIST *list;
+    static size_t have;
 
 #if NO_LEAKS
-	if (bufnum < 0) {
-		if (have) {
-			while (have--) {
-				free(list[have].text);
-			}
-			free(list);
-		}
-		return 0;
+    if (bufnum < 0) {
+	if (have) {
+	    while (have--) {
+		free(list[have].text);
+	    }
+	    free(list);
 	}
+	return 0;
+    }
 #endif
 
-	if ((size_t)(bufnum+1) > have) {
-		size_t need = (bufnum + 1) * 2;
-		if ((list = typeRealloc(LIST, need, list)) == 0)
-			return(0);
-		while (need > have)
-			list[have++].text = 0;
-	}
+    if ((size_t) (bufnum + 1) > have) {
+	size_t need = (bufnum + 1) * 2;
+	if ((list = typeRealloc(LIST, need, list)) == 0)
+	    return (0);
+	while (need > have)
+	    list[have++].text = 0;
+    }
 
-	if (list[bufnum].text == 0
-	 || want > list[bufnum].size)
-	{
-		if ((list[bufnum].text = typeRealloc(char, want, list[bufnum].text)) != 0)
-			list[bufnum].size = want;
-	}
+    if (list[bufnum].text == 0
+	|| want > list[bufnum].size) {
+	if ((list[bufnum].text = typeRealloc(char, want, list[bufnum].text))
+	    != 0)
+	      list[bufnum].size = want;
+    }
 
-	if (list[bufnum].text != 0)
-		*(list[bufnum].text) = '\0';
-	return list[bufnum].text;
+    if (list[bufnum].text != 0)
+	*(list[bufnum].text) = '\0';
+    return list[bufnum].text;
 }

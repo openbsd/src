@@ -1,7 +1,7 @@
-/*	$OpenBSD: fld_ftlink.c,v 1.3 1999/05/17 03:04:14 millert Exp $	*/
+/*	$OpenBSD: fld_ftlink.c,v 1.4 2001/01/22 18:02:12 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_ftlink.c,v 1.4 1999/05/16 17:17:33 juergen Exp $")
+MODULE_ID("$From: fld_ftlink.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -50,7 +50,9 @@ MODULE_ID("$From: fld_ftlink.c,v 1.4 1999/05/16 17:17:33 juergen Exp $")
 |
 |   Return Values :  Fieldtype pointer or NULL if error occured.
 +--------------------------------------------------------------------------*/
-FIELDTYPE *link_fieldtype(FIELDTYPE * type1, FIELDTYPE * type2)
+NCURSES_EXPORT(FIELDTYPE *)
+link_fieldtype 
+(FIELDTYPE * type1, FIELDTYPE * type2)
 {
   FIELDTYPE *nftyp = (FIELDTYPE *)0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.12 2000/10/22 18:27:22 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.13 2001/01/22 18:01:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -86,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.55 2000/10/10 00:07:28 Ilya.Zakharevich Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.57 2000/12/10 02:43:27 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -867,7 +867,7 @@ _nc_mouse_resume(SCREEN * sp GCC_UNUSED)
  *
  **************************************************************************/
 
-int
+NCURSES_EXPORT(int)
 getmouse(MEVENT * aevent)
 /* grab a copy of the current mouse event */
 {
@@ -890,7 +890,7 @@ getmouse(MEVENT * aevent)
     returnCode(ERR);
 }
 
-int
+NCURSES_EXPORT(int)
 ungetmouse(MEVENT * aevent)
 /* enqueue a synthesized mouse event to be seen by the next wgetch() */
 {
@@ -904,7 +904,7 @@ ungetmouse(MEVENT * aevent)
     return ungetch(KEY_MOUSE);
 }
 
-mmask_t
+NCURSES_EXPORT(mmask_t)
 mousemask(mmask_t newmask, mmask_t * oldmask)
 /* set the mouse event mask */
 {
@@ -937,7 +937,7 @@ mousemask(mmask_t newmask, mmask_t * oldmask)
     returnCode(result);
 }
 
-bool
+NCURSES_EXPORT(bool)
 wenclose(const WINDOW *win, int y, int x)
 /* check to see if given window encloses given screen location */
 {
@@ -951,7 +951,7 @@ wenclose(const WINDOW *win, int y, int x)
     return FALSE;
 }
 
-int
+NCURSES_EXPORT(int)
 mouseinterval(int maxclick)
 /* set the maximum mouse interval within which to recognize a click */
 {
@@ -970,14 +970,15 @@ mouseinterval(int maxclick)
 
 /* This may be used by other routines to ask for the existence of mouse
    support */
-int
+NCURSES_EXPORT(int)
 _nc_has_mouse(void)
 {
     return (mousetype == M_NONE ? 0 : 1);
 }
 
-bool
-wmouse_trafo(const WINDOW *win, int *pY, int *pX, bool to_screen)
+NCURSES_EXPORT(bool)
+wmouse_trafo
+(const WINDOW *win, int *pY, int *pX, bool to_screen)
 {
     bool result = FALSE;
 

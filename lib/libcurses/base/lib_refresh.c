@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_refresh.c,v 1.3 2000/06/19 03:53:44 millert Exp $	*/
+/*	$OpenBSD: lib_refresh.c,v 1.4 2001/01/22 18:01:43 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_refresh.c,v 1.25 2000/04/29 21:17:08 tom Exp $")
+MODULE_ID("$From: lib_refresh.c,v 1.28 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 wrefresh(WINDOW *win)
 {
     int code;
@@ -69,7 +69,7 @@ wrefresh(WINDOW *win)
     returnCode(code);
 }
 
-int
+NCURSES_EXPORT(int)
 wnoutrefresh(WINDOW *win)
 {
     NCURSES_SIZE_T limit_x;
@@ -77,7 +77,9 @@ wnoutrefresh(WINDOW *win)
     NCURSES_SIZE_T begx;
     NCURSES_SIZE_T begy;
     NCURSES_SIZE_T m, n;
+#if USE_SCROLL_HINTS
     bool wide;
+#endif
 
     T((T_CALLED("wnoutrefresh(%p)"), win));
 #ifdef TRACE
@@ -102,6 +104,7 @@ wnoutrefresh(WINDOW *win)
     /* merge in change information from all subwindows of this window */
     wsyncdown(win);
 
+#if USE_SCROLL_HINTS
     /*
      * For pure efficiency, we'd want to transfer scrolling information
      * from the window to newscr whenever the window is wide enough that
@@ -117,6 +120,7 @@ wnoutrefresh(WINDOW *win)
      * merely change the costs of various update cases.
      */
     wide = (begx <= 1 && win->_maxx >= (newscr->_maxx - 1));
+#endif
 
     win->_flags &= ~_HASMOVED;
 
@@ -134,8 +138,8 @@ wnoutrefresh(WINDOW *win)
 	limit_x = win->_maxx;
 
     for (i = 0, m = begy + win->_yoffset;
-	i <= win->_maxy && m <= newscr->_maxy;
-	i++, m++) {
+	 i <= win->_maxy && m <= newscr->_maxy;
+	 i++, m++) {
 	register struct ldat *nline = &newscr->_line[m];
 	register struct ldat *oline = &win->_line[i];
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: comp_error.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
+/*	$OpenBSD: comp_error.c,v 1.3 2001/01/22 18:01:50 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,7 +32,6 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
-
 
 /*
  *	comp_error.c -- Error message routines

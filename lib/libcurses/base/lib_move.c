@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_move.c,v 1.2 2000/06/19 03:53:43 millert Exp $	*/
+/*	$OpenBSD: lib_move.c,v 1.3 2001/01/22 18:01:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_move.c,v 1.9 2000/04/29 21:11:19 tom Exp $")
+MODULE_ID("$From: lib_move.c,v 1.11 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 wmove(WINDOW *win, int y, int x)
 {
     T((T_CALLED("wmove(%p,%d,%d)"), win, y, x));

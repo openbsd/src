@@ -1,6 +1,6 @@
 // * This makes emacs happy -*-Mode: C++;-*-
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,14 +31,14 @@
  *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1997                 *
  ****************************************************************************/
 
-// $From: cursesapp.h,v 1.5 1999/05/16 17:29:59 juergen Exp $
+// $From: cursesapp.h,v 1.6 2000/12/10 03:10:39 tom Exp $
 
 #ifndef _CURSESAPP_H
 #define _CURSESAPP_H
 
 #include <cursslk.h>
 
-class NCursesApplication {
+class NCURSES_IMPEXP NCursesApplication {
 public:
   typedef struct _slk_link {          // This structure is used to maintain
     struct _slk_link* prev;           // a stack of SLKs

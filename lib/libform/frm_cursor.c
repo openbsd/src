@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_cursor.c,v 1.3 1999/05/17 03:04:16 millert Exp $	*/
+/*	$OpenBSD: frm_cursor.c,v 1.4 2001/01/22 18:02:14 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,7 @@
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_cursor.c,v 1.4 1999/05/16 17:20:19 juergen Exp $")
+MODULE_ID("$From: frm_cursor.c,v 1.5 2000/12/10 02:09:38 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -49,7 +49,8 @@ MODULE_ID("$From: frm_cursor.c,v 1.4 1999/05/16 17:20:19 juergen Exp $")
 |                    E_BAD_ARGUMENT            - Invalid form pointer
 |                    E_NOT_POSTED              - Form is not posted
 +--------------------------------------------------------------------------*/
-int pos_form_cursor(FORM * form)
+NCURSES_EXPORT(int)
+pos_form_cursor (FORM * form)
 {
   int res;
 

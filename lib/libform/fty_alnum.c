@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_alnum.c,v 1.5 1999/05/17 03:04:18 millert Exp $	*/
+/*	$OpenBSD: fty_alnum.c,v 1.6 2001/01/22 18:02:16 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_alnum.c,v 1.9 1999/05/16 17:22:49 juergen Exp $")
+MODULE_ID("$From: fty_alnum.c,v 1.10 2000/12/09 23:46:12 tom Exp $")
 
 typedef struct {
   int width;
@@ -134,6 +134,6 @@ static FIELDTYPE typeALNUM = {
   NULL
 };
 
-FIELDTYPE* TYPE_ALNUM = &typeALNUM;
+NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_ALNUM = &typeALNUM;
 
 /* fty_alnum.c ends here */

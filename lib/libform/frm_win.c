@@ -1,7 +1,7 @@
-/*	$OpenBSD: frm_win.c,v 1.5 1999/05/17 03:04:17 millert Exp $	*/
+/*	$OpenBSD: frm_win.c,v 1.6 2001/01/22 18:02:16 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_win.c,v 1.8 1999/05/16 17:22:32 juergen Exp $")
+MODULE_ID("$From: frm_win.c,v 1.9 2000/12/10 02:09:37 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -45,7 +45,8 @@ MODULE_ID("$From: frm_win.c,v 1.8 1999/05/16 17:22:32 juergen Exp $")
 |   Return Values :  E_OK       - success
 |                    E_POSTED   - form is posted
 +--------------------------------------------------------------------------*/
-int set_form_win(FORM * form, WINDOW * win)
+NCURSES_EXPORT(int)
+set_form_win (FORM * form, WINDOW * win)
 {
   if (form && (form->status & _POSTED))	
     RETURN(E_POSTED);
@@ -62,7 +63,8 @@ int set_form_win(FORM * form, WINDOW * win)
 |
 |   Return Values :  The pointer to the Window or stdscr if there is none.
 +--------------------------------------------------------------------------*/
-WINDOW *form_win(const FORM * form)
+NCURSES_EXPORT(WINDOW *)
+form_win (const FORM * form)
 {
   const FORM* f = Normalize_Form( form );
   return (f->win ? f->win : stdscr);

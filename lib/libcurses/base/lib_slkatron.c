@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_slkatron.c,v 1.1 1999/01/18 19:10:01 millert Exp $	*/
+/*	$OpenBSD: lib_slkatron.c,v 1.2 2001/01/22 18:01:44 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,18 +40,16 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkatron.c,v 1.4 1998/03/11 19:26:07 juergen Exp $")
+MODULE_ID("$From: lib_slkatron.c,v 1.6 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 slk_attron(const chtype attr)
 {
-  T((T_CALLED("slk_attron(%s)"), _traceattr(attr)));
+    T((T_CALLED("slk_attron(%s)"), _traceattr(attr)));
 
-  if (SP!=0 && SP->_slk!=0)
-    {
-      toggle_attr_on(SP->_slk->attr,attr);
-      returnCode(OK);
-    }
-  else
-    returnCode(ERR);
+    if (SP != 0 && SP->_slk != 0) {
+	toggle_attr_on(SP->_slk->attr, attr);
+	returnCode(OK);
+    } else
+	returnCode(ERR);
 }

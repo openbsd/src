@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_hline.c,v 1.3 2000/07/10 03:06:14 millert Exp $	*/
+/*	$OpenBSD: lib_hline.c,v 1.4 2001/01/22 18:01:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,9 +42,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_hline.c,v 1.6 2000/07/04 14:08:09 Philippe.Blain Exp $")
+MODULE_ID("$From: lib_hline.c,v 1.8 2000/12/10 02:43:27 tom Exp $")
 
-int
+NCURSES_EXPORT(int)
 whline(WINDOW *win, chtype ch, int n)
 {
     int code = ERR;
