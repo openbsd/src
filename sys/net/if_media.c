@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.5 2000/08/26 20:04:16 nate Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.6 2000/11/28 15:09:41 art Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -405,7 +405,7 @@ ifmedia_delete_instance(ifm, inst)
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_DEVBUF);
+			free(ife, M_IFADDR);
 		}
 	}
 }
