@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.39 2001/12/15 08:40:56 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.40 2002/04/28 02:21:06 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -83,7 +83,7 @@ Before forwarding a frame, the bridge will check to see if the packet
 contains an
 .Xr ip 4
 or
-.Xr ip 6
+.Xr ip6 4
 datagram; if so, the datagram is run through the
 .Xr pf 4
 interface so that it can be filtered.
@@ -540,8 +540,10 @@ are filtered statefully.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
+.Xr arp 4 ,
 .Xr gif 4 ,
 .Xr ip 4 ,
+.Xr ip6 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
 .Xr bridgename.if 5 ,
