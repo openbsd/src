@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.9 2001/07/15 13:10:48 assar Exp $
+#	$OpenBSD: Makefile.hppa,v 1.10 2002/01/04 08:51:55 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -23,40 +23,31 @@
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH} != "hppa"
-CROSSDIR?=     /usr/cross/hppa
-
-.BEGIN:
-	CBIN=${CROSSDIR}/usr/bin; export CBIN; \
-	MACHINE="hppa" MACHINE_ARCH="hppa" AR=$$CBIN/ar AS=$$CBIN/as \
-	CC=$$CBIN/cc HOSTCC=cc LD=$$CBIN/ld NM=$$CBIN/nm LORDER=$$CBIN/lorder \
-	RANLIB=$$CBIN/ranlib STRIP=$$CBIN/strip SIZE=$$CBIN/size ${MAKE} ${.TARGET}
-
-all:
-
-.else
-
+AS?=	as
 CC?=	cc
-HOSTCC?=${CC}
+CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
-COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
-S?=	../../../..
-HPPA?=	${S}/arch/hppa
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+HPPA=	$S/arch/hppa
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-space-regs \
-		-mfast-indirect-calls -mportable-runtime -mno-space-regs
+CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs
+COPTS?=		-O2
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000 -Map bsd.map
-STRIPFLAGS=	-g
-
+STRIPFLAGS=	-g -X -x
 
 .if ${IDENT:M-DDDB} != ""
 CFLAGS+=	-fno-omit-frame-pointer
@@ -85,9 +76,12 @@ LIBSPMATH=	${SPMATH_PROF}
 .endif
 .endif
 
-HOSTED_CC=	${HOSTCC}
+HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
+
+# this line must be there because libkern needs assym.h generated early
+depend:: .NOTMAIN .depend
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -111,7 +105,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -119,7 +113,8 @@ HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %SFILES
 
-SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT} ${LIBSPMATH}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} \
+		${LIBKERN} ${LIBCOMPAT} ${LIBSPMATH}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
@@ -139,8 +134,8 @@ LINKFLAGS+=	-S
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${HPPA}/hppa/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${HPPA}/hppa/genassym.cf > assym.h.tmp && \
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${HPPA}/hppa/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -180,7 +175,6 @@ links:
 
 SRCS=	${HPPA}/hppa/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${HPPA}/hppa/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
@@ -221,5 +215,3 @@ install-kernel-${MACHINE_NAME}:
 .endif
 
 %RULES
-
-.endif
