@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.32 2002/06/11 02:27:19 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.33 2002/06/11 03:22:04 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -114,23 +114,23 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int);
 
-#define DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) { printf("%s: ", __func__); printf x ;}
+#define	DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) \
+			    { printf("%s: ", __func__); printf x ;}
 
 #if NPFLOG > 0
-#define PFLOG_PACKET(i,x,a,b,c,d,e) \
-        do { \
-                if (b == AF_INET) { \
-                        HTONS(((struct ip *)x)->ip_len); \
-                        HTONS(((struct ip *)x)->ip_off); \
-                        pflog_packet(i,a,b,c,d,e); \
-                        NTOHS(((struct ip *)x)->ip_len); \
-                        NTOHS(((struct ip *)x)->ip_off); \
-                } else { \
-                        pflog_packet(i,a,b,c,d,e); \
-                } \
-        } while (0)
+#define	PFLOG_PACKET(i,x,a,b,c,d,e) \
+	do { \
+		if (b == AF_INET) { \
+			HTONS(((struct ip *)x)->ip_len); \
+			HTONS(((struct ip *)x)->ip_off); \
+			pflog_packet(i,a,b,c,d,e); \
+			NTOHS(((struct ip *)x)->ip_len); \
+			NTOHS(((struct ip *)x)->ip_off); \
+		} else \
+			pflog_packet(i,a,b,c,d,e); \
+	} while (0)
 #else
-#define		 PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
+#define	PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
 #endif
 
 /* Globals */
@@ -175,7 +175,7 @@ pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
 		return (-1);
 	else if (a->fr_dst.s_addr > b->fr_dst.s_addr)
 		return (1);
-	return 0;
+	return (0);
 }
 
 void
