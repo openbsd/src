@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.49 2001/03/13 06:44:03 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.50 2001/03/23 06:27:57 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -69,6 +69,8 @@ vendor BAY			0x01eb	Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor FARALLON			0x0200	Farallon Communications
 vendor NOKIA			0x023d	Nokia Communications
+vendor SAMSUNG			0x0250	Samsung
+vendor IODATA2			0x028a	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor LASAT			0x3401	Lasat
@@ -87,6 +89,7 @@ vendor ELSA			0xd601	Elsa
  * List of known products.  Grouped by vendor.
  */
 /* 3COM */
+product 3COM 3CRWE737A		0x0001 3Com AirConnect Wireless LAN
 product 3COM 3CXM056BNW		0x002f 3Com/NoteWorthy 3CXM056-BNW
 product 3COM 3CXEM556B		0x003d 3Com 3CXEM556B-INT
 product 3COM 3CXEM556		0x0035 3Com 3CXEM556
@@ -117,6 +120,7 @@ product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
+product CONTEC FX_DS110_PCC	0x0008 Contec FLEXLAN/FX-DS110-PCC
 
 /* Compex */
 product COMPEX AMP_WIRELESS	0x0066 AMP
@@ -156,6 +160,7 @@ product IBM ETHERJET		0x003f IBM EtherJet
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 
 /* Intel */
 product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
@@ -227,6 +232,9 @@ product RAYTHEON WLAN		0x0000 WLAN Adapter
 /* RATOC System Inc. */
 product RATOC REX_R280		0x0001 RATOC REX-R280
 
+/* Samsung */
+product	SAMSUNG SWL_2000N	0x0002 Samsung MagicLAN SWL-2000N
+
 /* Sandisk */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash
 
@@ -250,6 +258,7 @@ product SYMBOL SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX
 product TDK DFL9610		0x0d0a TDK DFL9610
 product TDK LAK_CF010		0x0900 TDK LAC-CF010
+product TDK LAK_CD011WL		0x0000 TDK LAK-CD011WL
 
 /* US Robotics */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4
@@ -275,6 +284,7 @@ vendor EDIMAX			-1	Edimax
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
 vendor ICOM			-1	ICOM Inc
+vendor INTERSIL			-1	Intersil
 vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex
 vendor PREMAX			-1	Premax
@@ -333,3 +343,6 @@ product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spA
 product ZOOM AIR4000		{ "Zoom", "Air-4000", NULL, NULL }
 product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
 product SARAMNCOM NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
+product	COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL }
+product	INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version&sp01.02", NULL }
+product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01", NULL }
