@@ -14,7 +14,7 @@ Functions for returning the canonical host name of the remote site.
 */
 
 #include "includes.h"
-RCSID("$Id: canohost.c,v 1.3 1999/09/30 05:53:04 deraadt Exp $");
+RCSID("$Id: canohost.c,v 1.4 1999/11/14 22:30:58 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -99,7 +99,7 @@ char *get_remote_hostname(int socket)
 
  check_ip_options:
   
-  /* If IP options are supported, make sure there are none (log and clear
+  /* If IP options are supported, make sure there are none (log and disconnect
      them if any are found).  Basically we are worried about source routing;
      it can be used to pretend you are somebody (ip-address) you are not.
      That itself may be "almost acceptable" under certain circumstances,
