@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.9 2001/02/04 14:23:28 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.10 2001/11/19 21:29:06 deraadt Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -340,9 +340,9 @@ void
 onintr(signo)
 	int signo;
 {
-	scr_clear();
-	scr_end();
-	exit(0);
+	scr_clear();		/* XXX signal race */
+	scr_end();		/* XXX signal race */
+	_exit(0);
 }
 
 void
