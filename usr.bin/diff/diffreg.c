@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.17 2003/06/25 22:14:43 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.18 2003/06/25 22:38:11 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -1165,23 +1165,23 @@ dump_unified_vec(void)
 
 		switch (ch) {
 		case 'c':
-			fetch(ixold, lowa, a - 1, input[0], "  ", 0);
-			fetch(ixold, a, b, input[0], "- ", 0);
-			fetch(ixnew, c, d, input[1], "+ ", 0);
+			fetch(ixold, lowa, a - 1, input[0], " ", 0);
+			fetch(ixold, a, b, input[0], "-", 0);
+			fetch(ixnew, c, d, input[1], "+", 0);
 			break;
 		case 'd':
-			fetch(ixold, lowa, a - 1, input[0], "  ", 0);
-			fetch(ixold, a, b, input[0], "- ", 0);
+			fetch(ixold, lowa, a - 1, input[0], " ", 0);
+			fetch(ixold, a, b, input[0], "-", 0);
 			break;
 		case 'a':
-			fetch(ixnew, lowc, c - 1, input[1], "  ", 0);
-			fetch(ixnew, c, d, input[1], "+ ", 0);
+			fetch(ixnew, lowc, c - 1, input[1], " ", 0);
+			fetch(ixnew, c, d, input[1], "+", 0);
 			break;
 		}
 		lowa = b + 1;
 		lowc = d + 1;
 	}
-	fetch(ixnew, d + 1, upd, input[1], "  ", 0);
+	fetch(ixnew, d + 1, upd, input[1], " ", 0);
 
 	context_vec_ptr = context_vec_start - 1;
 }
