@@ -8,10 +8,9 @@ option		KMEMSTATS
 option		SUN4U
 option		_LP64
 
-# XXX - remove this later.
 #option		DEBUG
+option		DDB
 option		DDB_SAFE_CONSOLE
-# XXX - remove this later.
 
 maxusers	64
 
