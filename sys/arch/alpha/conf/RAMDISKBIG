@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.35 2002/09/24 19:08:14 nate Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.36 2002/09/26 21:44:37 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -181,7 +181,7 @@ sis*	at pci? dev ? function ?	# SiS 900/7016 ethernet
 en*	at pci? dev ? function ?	# ENI PCI ATM (untested)
 tl*	at pci? dev ? function ?	# Compaq Thunderlan ethernet
 le*	at pci? dev ? function ?	# PCI LANCE Ethernet (untested)
-#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/T3/HSSI
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/T3/HSSI
 wb*	at pci? dev ? function ?	# Winbond W89C840F ethernet
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 ethernet
 ste*	at pci? dev ? function ?	# Sundance ST201 ethernet

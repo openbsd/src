@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.46 2002/09/23 04:37:33 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.47 2002/09/26 21:44:37 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -501,7 +501,7 @@ pseudo-device	loop		2	# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
-#pseudo-device	sppp			# Sync PPP/HDLC
+pseudo-device	sppp			# Sync PPP/HDLC
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	enc		1	# IPSEC needs the encapsulation interface
 pseudo-device	gre		1	# GRE encapsulation interface

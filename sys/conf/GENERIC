@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.90 2002/09/23 04:37:33 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.91 2002/09/26 21:44:37 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -81,7 +81,7 @@ pseudo-device	loop	2	# network loopback
 pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
-#pseudo-device	sppp	1	# Sync PPP/HDLC
+pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	tun	2	# network tunneling over tty
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
 pseudo-device	bridge	2	# network bridging support
