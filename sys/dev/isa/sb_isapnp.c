@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.9 1999/01/11 03:03:42 downsj Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.10 1999/01/11 04:15:18 downsj Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -115,19 +115,11 @@ sb_isapnp_attach(parent, self, aux)
 		sc->sc_mpu_sc.iobase = 0;
 #endif
 
-        /*
-         * isapnp is a child if isa, and we need isa for the dma
-         * routines
-         */
-        sc->sc_isa = parent->dv_parent;
-
 	if (!sbmatch(sc)) {
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ia->ipa_devident,
-	       ia->ipa_devclass);
-
+        sc->sc_isa = parent->dv_parent;
 	sbattach(sc);
 }
