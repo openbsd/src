@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.65 1999/02/18 19:22:45 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.66 1999/02/21 00:01:30 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.65 1999/02/18 19:22:45 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.66 1999/02/21 00:01:30 marc Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -2119,6 +2119,10 @@ print-package-depends:
 .if !target(fake-pkg)
 fake-pkg:
 	@if [ ! -f ${PLIST} -o ! -f ${COMMENT} -o ! -f ${DESCR} ]; then ${ECHO} "** Missing package files for ${PKGNAME} - installation not recorded."; exit 1; fi
+	@if [ `/bin/ls -l ${COMMENT} | ${AWK} '{print $$5}'` -gt 60 ]; then \
+	    ${ECHO} "** ${COMMENT} too large - installation not recorded."; \
+	    exit 1; \
+	 fi
 	@if [ ! -d ${PKG_DBDIR} ]; then ${RM} -f ${PKG_DBDIR}; ${MKDIR} ${PKG_DBDIR}; fi
 .if defined(FORCE_PKG_REGISTER)
 	@${RM} -rf ${PKG_DBDIR}/${PKGNAME}
