@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.7 1997/07/23 14:32:37 kstailey Exp $	*/
+/*	$OpenBSD: cp.c,v 1.8 1997/08/23 00:01:38 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.7 1997/07/23 14:32:37 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.8 1997/08/23 00:01:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.7 1997/07/23 14:32:37 kstailey Exp $";
 
 #define	STRIP_TRAILING_SLASH(p) {					\
 	while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
-		*--(p).p_end = 0;					\
+		*--(p).p_end = '\0';					\
 }
 
 PATH_T to = { to.p_path, "" };
@@ -107,7 +107,7 @@ main(argc, argv)
 	struct stat to_stat, tmp_stat;
 	enum op type;
 	int Hflag, Lflag, Pflag, ch, fts_options, r;
-	char *target;
+	char *p, **av;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1) 
@@ -179,21 +179,28 @@ main(argc, argv)
 	(void)umask(myumask);
 
 	/* Save the target base in "to". */
-	target = argv[--argc];
-	if (strlen(target) > MAXPATHLEN)
-		errx(1, "%s: name too long", target);
-	(void)strcpy(to.p_path, target);
+	p = argv[--argc];
+	if (strlen(p) >= sizeof(to.p_path))
+		errx(1, "%s: name too long", p);
+	(void)strcpy(to.p_path, p);
 	to.p_end = to.p_path + strlen(to.p_path);
 	if (to.p_path == to.p_end) {
 		*to.p_end++ = '.';
-		*to.p_end = 0;
+		*to.p_end = '\0';
 	}
 	STRIP_TRAILING_SLASH(to);
 	to.target_end = to.p_end;
 
 	/* Set end of argument list for fts(3). */
 	argv[argc] = NULL;     
-	
+
+	/* Strip trailing slashes from source files */
+	for (av = argv; *av != NULL; av++) {
+		p = *av + strlen(*av);
+		while (p > *av + 1 && p[-1] == '/')
+			*--p = '\0';
+	}
+
 	/*
 	 * Cp has two distinct cases:
 	 *
@@ -320,8 +327,8 @@ copy(argv, type, fts_options)
 			target_mid = to.target_end;
 			if (*p != '/' && target_mid[-1] != '/')
 				*target_mid++ = '/';
-			*target_mid = 0;
-			if (target_mid - to.p_path + nlen > MAXPATHLEN) {
+			*target_mid = '\0';
+			if (target_mid - to.p_path + nlen >= MAXPATHLEN) {
 				warnx("%s%s: name too long (not copied)", 
 				    to.p_path, p);
 				rval = 1;
@@ -329,7 +336,7 @@ copy(argv, type, fts_options)
 			}
 			(void)strncat(target_mid, p, nlen);
 			to.p_end = target_mid + nlen;
-			*to.p_end = 0;
+			*to.p_end = '\0';
 			STRIP_TRAILING_SLASH(to);
 		}
 
