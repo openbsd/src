@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.10 1997/06/06 05:56:04 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.11 1997/06/06 16:03:13 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.10 1997/06/06 05:56:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.11 1997/06/06 16:03:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -766,12 +766,11 @@ set_ids(fnm, uid, gid)
 	if (chown(fnm, uid, gid) < 0) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
-		 * note that errno may get clobbered by geteuid(2).
 		 * if running as pax, POSIX requires a warning.
 		 */
 		if (strcmp(NM_PAX, argv0) == 0 || errno != EPERM || vflag ||
 		    geteuid() == 0)
-			syswarn(1, EPERM, "Unable to set file uid/gid of %s",
+			syswarn(1, errno, "Unable to set file uid/gid of %s",
 			    fnm);
 		return(-1);
 	}
@@ -799,12 +798,11 @@ set_lids(fnm, uid, gid)
 	if (lchown(fnm, uid, gid) < 0) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
-		 * note that errno may get clobbered by geteuid(2).
 		 * if running as pax, POSIX requires a warning.
 		 */
 		if (strcmp(NM_PAX, argv0) == 0 || errno != EPERM || vflag ||
 		    geteuid() == 0)
-			syswarn(1, EPERM, "Unable to set file uid/gid of %s",
+			syswarn(1, errno, "Unable to set file uid/gid of %s",
 			    fnm);
 		return(-1);
 	}
