@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.5 2001/12/21 19:52:00 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.6 2002/01/26 20:52:59 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -46,6 +46,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/pcb.h>
 #include <machine/bat.h>
 #include <machine/powerpc.h>
 
@@ -831,11 +832,14 @@ mpc_conf_read(cpv, tag, offset)
 	int offset;
 {
 	struct pcibr_config *cp = cpv;
-
 	pcireg_t data;
 	u_int32_t reg;
 	int s;
 	int daddr = 0;
+	faultbuf env;
+	void *oldh;
+
+
 
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
 #ifdef DEBUG_CONFIG 
@@ -856,11 +860,20 @@ mpc_conf_read(cpv, tag, offset)
 
 	s = splhigh();
 
+	oldh = curpcb->pcb_onfault;
+	if (setfault(env)) {
+		/* we faulted during the read? */
+		curpcb->pcb_onfault = oldh;
+		return 0xffffffff;
+	}
+
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 	data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+
+	curpcb->pcb_onfault = oldh;
 
 	splx(s);
 #ifdef DEBUG_CONFIG
