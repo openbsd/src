@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.21 2001/07/09 07:04:42 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.22 2001/08/18 21:37:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -45,7 +45,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.21 2001/07/09 07:04:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.22 2001/08/18 21:37:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ main(argc, argv)
 		case 'f':
 		case 'r':		/* backward compatible */
 			if (from)
-			    err(FATAL, "multiple -f options");
+				merr(FATAL, "multiple -f options");
 			from = optarg;
 			break;
 		case 'l':
@@ -109,12 +109,12 @@ main(argc, argv)
 	/* Support -H flag for backwards compat */
 	if (holdme) {
 		execl(_PATH_LOCKSPOOL, "lockspool", (char *)NULL);
-		err(FATAL, "execl: lockspool: %s", strerror(errno));
+		merr(FATAL, "execl: lockspool: %s", strerror(errno));
 	} else {
 		if (!*argv)
 			usage();
 		if (geteuid() != 0)
-			err(FATAL, "may only be run by the superuser");
+			merr(FATAL, "may only be run by the superuser");
 	}
 
 	/*
@@ -137,16 +137,16 @@ int
 store(from)
 	char *from;
 {
-	FILE *fp;
+	FILE *fp = NULL;
 	time_t tval;
 	int fd, eline;
 	size_t len;
 	char *line, *tbuf;
 
 	if ((tbuf = strdup(_PATH_LOCTMP)) == NULL)
-		err(FATAL, "unable to allocate memory");
+		merr(FATAL, "unable to allocate memory");
 	if ((fd = mkstemp(tbuf)) == -1 || !(fp = fdopen(fd, "w+")))
-		err(FATAL, "unable to open temporary file");
+		merr(FATAL, "unable to open temporary file");
 	(void)unlink(tbuf);
 	free(tbuf);
 
@@ -160,7 +160,7 @@ store(from)
 		else {
 			/* No trailing newline, so alloc space and copy */
 			if ((tbuf = malloc(len + 1)) == NULL)
-				err(FATAL, "unable to allocate memory");
+				merr(FATAL, "unable to allocate memory");
 			memcpy(tbuf, line, len);
 			tbuf[len++] = '\0';
 			line = tbuf;
@@ -184,7 +184,7 @@ store(from)
 	(void)putc('\n', fp);
 	(void)fflush(fp);
 	if (ferror(fp))
-		err(FATAL, "temporary file write error");
+		merr(FATAL, "temporary file write error");
 	return(fd);
 }
 
@@ -205,7 +205,7 @@ deliver(fd, name, lockfile)
 	 * handled in the sendmail aliases file.
 	 */
 	if (!(pw = getpwnam(name))) {
-		err(NOTFATAL, "unknown name: %s", name);
+		merr(NOTFATAL, "unknown name: %s", name);
 		return(1);
 	}
 
@@ -221,7 +221,7 @@ deliver(fd, name, lockfile)
 retry:
 	if (lstat(path, &sb)) {
 		if (errno != ENOENT) {
-			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			merr(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
 		}
 		if ((mbfd = open(path, O_APPEND|O_CREAT|O_EXCL|O_WRONLY|O_EXLOCK,
@@ -230,7 +230,7 @@ retry:
 				/* file appeared since lstat */
 				goto retry;
 			} else {
-				err(NOTFATAL, "%s: %s", path, strerror(errno));
+				merr(NOTFATAL, "%s: %s", path, strerror(errno));
 				goto bad;
 			}
 		}
@@ -241,32 +241,32 @@ retry:
 		 * was a reason for doing so.
 		 */
 		if (fchown(mbfd, pw->pw_uid, pw->pw_gid) < 0) {
-			err(NOTFATAL, "chown %u:%u: %s",
+			merr(NOTFATAL, "chown %u:%u: %s",
 			    pw->pw_uid, pw->pw_gid, name);
 			goto bad;
 		}
 	} else {
 		if (sb.st_nlink != 1 || !S_ISREG(sb.st_mode)) {
-			err(NOTFATAL, "%s: linked or special file", path);
+			merr(NOTFATAL, "%s: linked or special file", path);
 			goto bad;
 		}
 		if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
 		    S_IRUSR|S_IWUSR)) < 0) {
-			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			merr(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
 		}
 		if (fstat(mbfd, &fsb)) {
 			/* relating error to path may be bad style */
-			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			merr(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
 		}
 		if (sb.st_dev != fsb.st_dev || sb.st_ino != fsb.st_ino) {
-			err(NOTFATAL, "%s: changed after open", path);
+			merr(NOTFATAL, "%s: changed after open", path);
 			goto bad;
 		}
 		/* paranoia? */
 		if (fsb.st_nlink != 1 || !S_ISREG(fsb.st_mode)) {
-			err(NOTFATAL, "%s: linked or special file", path);
+			merr(NOTFATAL, "%s: linked or special file", path);
 			goto bad;
 		}
 	}
@@ -274,14 +274,14 @@ retry:
 	curoff = lseek(mbfd, 0, SEEK_END);
 	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
-		err(FATAL, "temporary file: %s", strerror(errno));
+		merr(NOTFATAL, "temporary file: %s", strerror(errno));
 		goto bad;
 	}
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr;  off += nw)
 			if ((nw = write(mbfd, buf + off, nr - off)) < 0) {
-				err(NOTFATAL, "%s: %s", path, strerror(errno));
+				merr(NOTFATAL, "%s: %s", path, strerror(errno));
 				(void)ftruncate(mbfd, curoff);
 				goto bad;
 			}
@@ -289,8 +289,8 @@ retry:
 	if (nr == 0) {
 		rval = 0;
 	} else {
-		err(FATAL, "temporary file: %s", strerror(errno));
 		(void)ftruncate(mbfd, curoff);
+		merr(FATAL, "temporary file: %s", strerror(errno));
 	}
 
 bad:
@@ -324,7 +324,7 @@ notifybiff(msg)
 		if (!(sp = getservbyname("biff", "udp")))
 			return;
 		if (!(hp = gethostbyname("localhost"))) {
-			err(NOTFATAL, "localhost: %s", strerror(errno));
+			merr(NOTFATAL, "localhost: %s", strerror(errno));
 			return;
 		}
 		addr.sin_len = sizeof(struct sockaddr_in);
@@ -333,17 +333,17 @@ notifybiff(msg)
 		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
 	}
 	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-		err(NOTFATAL, "socket: %s", strerror(errno));
+		merr(NOTFATAL, "socket: %s", strerror(errno));
 		return;
 	}
 	len = strlen(msg) + 1;
 	if (sendto(f, msg, len, 0, (struct sockaddr *)&addr, sizeof(addr))
 	    != len)
-		err(NOTFATAL, "sendto biff: %s", strerror(errno));
+		merr(NOTFATAL, "sendto biff: %s", strerror(errno));
 }
 
 void
 usage()
 {
-	err(FATAL, "usage: mail.local [-lL] [-f from] user ...");
+	merr(FATAL, "usage: mail.local [-lL] [-f from] user ...");
 }

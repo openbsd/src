@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.2 1998/08/15 23:11:30 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.3 2001/08/18 21:37:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: locking.c,v 1.2 1998/08/15 23:11:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: locking.c,v 1.3 2001/08/18 21:37:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ getlock(name, pw)
 				break;
 again:
 			if (tries > 10) {
-				err(NOTFATAL, "%s: %s", lpath,
+				merr(NOTFATAL, "%s: %s", lpath,
 				    strerror(errno));
 				seteuid(0);
 				return(-1);
@@ -131,7 +131,7 @@ again:
 			    S_IRUSR|S_IWUSR)) != -1)
 				break;
 			if (tries > 9) {
-				err(NOTFATAL, "%s: %s", lpath, strerror(errno));
+				merr(NOTFATAL, "%s: %s", lpath, strerror(errno));
 				return(-1);
 			}
 			sleep(1 << tries);
@@ -155,7 +155,7 @@ baditem(path)
 	if (rename(path, npath) == -1)
 		unlink(npath);
 	else
-		err(NOTFATAL, "nasty spool item %s renamed to %s",
+		merr(NOTFATAL, "nasty spool item %s renamed to %s",
 		    path, npath);
 	/* XXX if we fail to rename, another attempt will happen later */
 }
@@ -168,9 +168,9 @@ baditem(path)
 
 void
 #ifdef __STDC__
-err(int isfatal, const char *fmt, ...)
+merr(int isfatal, const char *fmt, ...)
 #else
-err(isfatal, fmt)
+merr(isfatal, fmt)
 	int isfatal;
 	char *fmt;
 	va_dcl

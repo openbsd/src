@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.3 2001/01/17 19:22:20 deraadt Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.4 2001/08/18 21:37:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: lockspool.c,v 1.3 2001/01/17 19:22:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lockspool.c,v 1.4 2001/08/18 21:37:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/signal.h>
@@ -108,5 +108,5 @@ void
 usage()
 {
 
-	err(FATAL, "usage: %s [username]", __progname);
+	err(1, "usage: %s [username]", __progname);
 }

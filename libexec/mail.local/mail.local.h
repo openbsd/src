@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.h,v 1.1 1998/08/15 21:04:35 millert Exp $	*/
+/*	$OpenBSD: mail.local.h,v 1.2 2001/08/18 21:37:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 void	baditem	__P((char *));
 int	deliver __P((int, char *, int));
-void	err __P((int, const char *, ...));
+void	merr __P((int, const char *, ...));
 int	getlock __P((char *, struct passwd *));
 void	notifybiff __P((char *));
 void	rellock __P((void));
