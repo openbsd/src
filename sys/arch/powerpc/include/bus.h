@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1998/01/20 18:40:24 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1998/08/25 07:43:40 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -66,6 +66,9 @@ extern struct p4e_bus_space p4e_isa_io, p4e_isa_mem;
     ((*(bshp) = (t)->bus_base + (addr)), 0)
 
 #define bus_space_unmap(t, bsh, size)
+
+#define bus_space_addr(bshp, offs)					      \
+    ((vm_offset_t)((bshp) + (offs)))
 
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
