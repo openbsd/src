@@ -1,3 +1,4 @@
+/*	$OpenBSD: adwmcode.c,v 1.3 2000/04/29 21:12:31 krw Exp $ */
 /*      $NetBSD: adwmcode.c,v 1.2 2000/02/03 20:29:16 dante Exp $        */
 
 /*

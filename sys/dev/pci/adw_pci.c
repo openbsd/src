@@ -1,3 +1,4 @@
+/*	$OpenBSD: adw_pci.c,v 1.5 2000/04/29 21:14:51 krw Exp $ */
 /* $NetBSD: adw_pci.c,v 1.4 2000/02/04 13:16:22 dante Exp $	*/
 
 /*
