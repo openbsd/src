@@ -1,21 +1,18 @@
 divert(-1)
 #
-# Sendmail 8 configuration file for lists.openbsd.org
+# Sendmail configuration file for lists.openbsd.org
 #
-# This machine handles all mail for openbsd.{org,com,net}
+# This config handles incoming mail for openbsd.{org,com,net}
+# Mailing list fanout is handled by a separate exploder running on
+# port 24 that is fed by mj2.
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.13 2002/06/25 22:38:34 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.14 2002/07/03 16:06:19 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
 define(`confSMTP_LOGIN_MSG', `openbsd.org Sendmail $v/$Z/millert ready willing and able at $b')dnl
-dnl
-dnl Define relays, since not everyone uses internet addresses, even now
-define(`UUCP_RELAY', `rutgers.edu')dnl
-define(`BITNET_RELAY', `interbit.cren.net')dnl
-define(`DECNET_RELAY', `vaxf.colorado.edu')dnl
 dnl
 dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings, nobodyreturn')dnl
@@ -43,7 +40,7 @@ dnl Reduce ClassFactor
 define(`confWORK_CLASS_FACTOR', `1000')dnl
 dnl
 dnl Always use fully qualified domains
-FEATURE(always_add_domain)
+FEATURE(always_add_domain)dnl
 dnl
 dnl Need to add domo and mj2 as "trusted users" to rewrite From lines
 define(`confTRUSTED_USERS', `domo mj2')dnl
@@ -58,10 +55,6 @@ dnl Shared memory key used to stash disk usage stats so they
 dnl don't have to be checked by each sendmail process.
 define(`confSHARED_MEMORY_KEY', `666666')dnl
 dnl
-dnl Keep up to 4 cached connections around to speed up delivery to
-dnl recipients on the same host.
-define(`confMCI_CACHE_SIZE', `4')dnl
-dnl
 dnl SSL certificate paths
 define(`CERT_DIR', `MAIL_SETTINGS_DIR`'certs')dnl
 define(`confCACERT_PATH', `CERT_DIR')dnl
@@ -71,9 +64,12 @@ define(`confSERVER_KEY', `CERT_DIR/mykey.pem')dnl
 define(`confCLIENT_CERT', `CERT_DIR/mycert.pem')dnl
 define(`confCLIENT_KEY', `CERT_DIR/mykey.pem')dnl
 dnl
+dnl List of hostname we treat as local
+FEATURE(use_cw_file)dnl
+dnl
 dnl Make mail appear to be from openbsd.org
-MASQUERADE_AS(openbsd.org)
-FEATURE(masquerade_envelope)
+MASQUERADE_AS(openbsd.org)dnl
+FEATURE(masquerade_envelope)dnl
 dnl
 dnl Need this for OpenBSD mailing lists
 FEATURE(stickyhost)dnl
@@ -87,26 +83,15 @@ FEATURE(`no_default_msa')dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 dnl
-dnl In addition to the normal MTA and MSA sockets, we also run a localhost-only
-dnl connection on port 24 with hostname canonification disabled.  This is used
-dnl to speed up mail injection via majordomo.
-DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Port=24, Name=NCMSA, M=EC')dnl
-DAEMON_OPTIONS(`Family=inet6, address=::1, Port=24, Name=NCMSA6, M=O, M=EC')dnl
+dnl We don't bother with the MSA sockets since they are not used here.
+dnl Note that there is another sendmail daemon listening on port 24.
 DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
-DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Port=587, Name=MSA, M=EC')dnl
-DAEMON_OPTIONS(`Family=inet6, address=::, Port=587, Name=MSA6, M=O, M=EC')dnl
 CLIENT_OPTIONS(`Family=inet6, Address=::')dnl
 CLIENT_OPTIONS(`Family=inet, Address=0.0.0.0')dnl
 dnl
 dnl Finally, we have the local cf-style goo
 LOCAL_CONFIG
-# Treat mail to openbsd.{org,net,com} as local
-Cw openbsd.org
-Cw openbsd.net
-Cw openbsd.com
-Cw openssh.org
-Cw anonopenbsd.cs.colorado.edu
 #
 #  Regular expression to reject:
 #    * numeric-only localparts from aol.com and msn.com
