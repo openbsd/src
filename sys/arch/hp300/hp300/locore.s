@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.34 2002/02/10 23:15:05 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.35 2002/04/25 22:32:51 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ Lnot68030:
 	movc	cacr,d0			| read it back
 	tstl	d0			| zero?
 	beq	Lis68020		| yes, we have 68020
-	moveq	#0,d0			| now turn it back off
+	moveq	#CACHE40_OFF,d0			| now turn it back off
 	movec	d0,cacr			|   before we access any data
 
 	/*
@@ -469,7 +469,7 @@ Lhighcode:
 	.word	0xf518			| pflusha
 	movl	#0x8000,d0
 	.long	0x4e7b0003		| movc d0,tc
-	movl	#0x80008000,d0
+	movl	#CACHE40_ON,d0
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
@@ -1478,10 +1478,10 @@ ENTRY(TBIS)
 	jne	Lmotommu4		| no, skip
 	movl	sp@(4),a0
 	movc	dfc,d1
-	moveq	#1,d0			| user space
+	moveq	#FC_USERD,d0		| user space
 	movc	d0,dfc
 	.word	0xf508			| pflush a0@
-	moveq	#5,d0			| super space
+	moveq	#FC_SUPERD,d0		| super space
 	movc	d0,dfc
 	.word	0xf508			| pflush a0@
 	movc	d1,dfc
