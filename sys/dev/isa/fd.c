@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.36 1997/11/12 07:33:10 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.37 1998/01/18 18:48:41 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -698,8 +698,8 @@ loop:
 		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #else
-		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		isadma_start(bp->b_data + fd->sc_skip, fd->sc_nbytes,
+		    fdc->sc_drq, read);
 #endif
 		bus_space_write_1(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -768,7 +768,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_abort(fdc->sc_drq);
 #else
-		isa_dmaabort(fdc->sc_drq);
+		isadma_abort(fdc->sc_drq);
 #endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
@@ -785,7 +785,7 @@ loop:
 #ifdef NEWCONFIG
 			at_dma_abort(fdc->sc_drq);
 #else
-			isa_dmaabort(fdc->sc_drq);
+			isadma_abort(fdc->sc_drq);
 #endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
@@ -800,8 +800,7 @@ loop:
 		at_dma_terminate(fdc->sc_drq);
 #else
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-		isa_dmadone(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		isadma_done(fdc->sc_drq);
 #endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,

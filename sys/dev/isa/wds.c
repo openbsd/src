@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.12 1997/07/07 17:02:07 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.13 1998/01/18 18:48:40 niklas Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -290,7 +290,7 @@ wdsattach(parent, self, aux)
 	wds_init(sc);
 
 	if (sc->sc_drq != DRQUNK)
-		isa_dmacascade(sc->sc_drq);
+		isadma_cascade(sc->sc_drq);
 
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.25 1997/12/10 23:02:01 rees Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.26 1998/01/18 18:48:40 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -538,10 +538,10 @@ wdc_ata_start(wdc, xfer)
 			 * Start the DMA channel and bounce the buffer if
 			 * necessary.
 			 */
-			isa_dmastart(xfer->c_flags & B_READ ?
-			    DMAMODE_READ : DMAMODE_WRITE,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_nbytes, wdc->sc_drq);
+			isadma_start(xfer->databuf + xfer->c_skip,
+			    xfer->c_nbytes, wdc->sc_drq,
+			    xfer->c_flags & B_READ ?
+			    DMAMODE_READ : DMAMODE_WRITE);
 			break;
 #endif
 
@@ -641,10 +641,7 @@ wdc_ata_intr(wdc, xfer)
 #if NISADMA > 0
 	/* Turn off the DMA channel and unbounce the buffer. */
 	if (d_link->sc_mode == WDM_DMA)
-		isa_dmadone(xfer->c_flags & B_READ ?
-		    DMAMODE_READ : DMAMODE_WRITE,
-		    xfer->databuf + xfer->c_skip, xfer->c_nbytes,
-		    wdc->sc_drq);
+		isadma_done(wdc->sc_drq);
 #endif
 
 	/* Have we an error? */
