@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.14 1999/07/26 21:29:45 aaron Exp $	*/
+/*	$OpenBSD: mv.c,v 1.15 1999/12/24 22:38:06 angelos Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.14 1999/07/26 21:29:45 aaron Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.15 1999/12/24 22:38:06 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -324,6 +324,18 @@ err:		if (unlink(to))
 	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
+
+	/*
+	 * XXX
+	 * NFS doesn't support chflags; ignore errors unless there's reason
+	 * to believe we're losing bits.  (Note, this still won't be right
+	 * if the server supports flags and we were trying to *remove* flags
+	 * on a file that we copied, i.e., that we didn't create.)
+	 */
+	errno = 0;
+	if (fchflags(to_fd, sbp->st_flags))
+		if (errno != EOPNOTSUPP || sbp->st_flags != 0)
+			warn("%s: set flags", to);
 
 	tval[0].tv_sec = sbp->st_atime;
 	tval[1].tv_sec = sbp->st_mtime;
