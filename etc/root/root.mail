@@ -3,7 +3,7 @@ Return-Path: root
 Date: Wed Apr  8 04:50:00 MDT 1998
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.3
+Subject: Welcome to OpenBSD 2.4
 
 This message attempts to describe the most basic first questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -25,11 +25,11 @@ Binary packages of the following packages are available on most architectures:
 	screen-3.7.4		tcsh-6.07.02		unzip-5.3.1
 The files are in the directory
 	CD2:/packages/   (ie. mount /dev/cd0a /cdrom; cd /cdrom/packages)
-or	ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
+or	ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
    # mount /dev/cd0a /cdrom; pkg_add /cdrom/packages/i386/emacs-20.2.tgz
-or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/i386/emacs-20.2.tgz
+or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/i386/emacs-20.2.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
@@ -60,7 +60,7 @@ wonderful process to continue.  For more information on how you can help,
 please see www.OpenBSD.org/goals.html and visit www.OpenBSD.org/donations.html
 to see a list of those who have donated money, equipment, or other resources
 to ensure OpenBSD continues.  (Thus far, most of those who have donated have
-been developers themselves.)
+been developers themselves).
 
 If you wish ensure that OpenBSD runs better on your machines, please do us
 a favor (after you have your mail system setup!) and type
