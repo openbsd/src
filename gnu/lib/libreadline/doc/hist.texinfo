@@ -11,7 +11,7 @@
 @ifinfo
 @dircategory Libraries
 @direntry
-* History: (history).       The GNU history library API
+* History: (history).         The GNU history library API
 @end direntry
 
 This document describes the GNU History library, a programming tool that
