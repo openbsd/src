@@ -339,6 +339,12 @@ PASSWD[[:blank:]]*:	{
 			    return(COMMENT);
 			}			/* return comments */
 
+<GOTRUNAS,GOTDEFS,GOTCMND,STARTDEFS,INDEFS><<EOF>> {
+			    BEGIN INITIAL;
+			    LEXTRACE("EOF ");
+			    return(ERROR);
+			}	/* premature EOF */
+
 <*>.			{
 			    LEXTRACE("ERROR ");
 			    return(ERROR);
