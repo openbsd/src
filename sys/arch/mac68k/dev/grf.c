@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.7 1997/03/12 13:36:57 briggs Exp $	*/
+/*	$OpenBSD: grf.c,v 1.8 1998/11/20 23:57:24 deraadt Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ grfaddr(gp, off)
 	register struct grfmode *gm = gp->sc_grfmode;
 	u_long	addr;
 
-	if (off < mac68k_round_page(gm->fbsize + gm->fboff)) {
+	if (off >= 0 && off < mac68k_round_page(gm->fbsize + gm->fboff)) {
 		addr = (u_long)(*gp->sc_phys)(gp, (vm_offset_t)gm->fbbase)+off;
 		return mac68k_btop(addr);
 	}
