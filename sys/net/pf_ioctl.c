@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.63 2003/05/12 17:43:29 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.64 2003/05/13 17:45:24 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -83,10 +83,17 @@ void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+u_int16_t		 pf_tagname2tag(char *);
+void			 pf_tag_unref(u_int16_t);
+void			 pf_tag_purge(void);
 
 extern struct timeout	 pf_expire_to;
 
 struct pf_rule		 pf_default_rule;
+
+#define	TAGID_MAX	 50000
+static u_int16_t	 tagid = 0;
+TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
@@ -397,6 +404,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		rule->entries.tqe_prev = NULL;
 		rule->nr = -1;
 	}
+	pf_tag_unref(rule->tag);
+	pf_tag_unref(rule->match_tag);
 	if (rule->states > 0 || rule->entries.tqe_prev != NULL)
 		return;
 	pf_dynaddr_remove(&rule->src.addr);
@@ -405,6 +414,70 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pf_tbladdr_remove(&rule->dst.addr);
 	pf_empty_pool(&rule->rpool.list);
 	pool_put(&pf_rule_pl, rule);
+}
+
+u_int16_t
+pf_tagname2tag(char *tagname)
+{
+	struct pf_tagname	*tag, *p;
+	int			 wrapped = 0;
+
+	TAILQ_FOREACH(tag, &pf_tags, entries)
+		if (strcmp(tagname, tag->name) == 0) {
+			tag->ref++;
+			return (tag->tag);
+		}
+	/* new entry */
+	if (++tagid > TAGID_MAX)	/* > 50000 reserved for special use */
+		tagid = wrapped = 1;
+	for (p = TAILQ_FIRST(&pf_tags); p != NULL; p = TAILQ_NEXT(p, entries))
+		if (p->tag == tagid) {
+			if (++tagid > TAGID_MAX) {
+				if (wrapped)
+					return (0);
+				else
+					tagid = wrapped = 1;
+			}
+			p = TAILQ_FIRST(&pf_tags);
+		}
+
+	tag = (struct pf_tagname *)malloc(sizeof(struct pf_tagname),
+	    M_TEMP, M_NOWAIT);
+	if (tag == NULL)
+		return (0);
+	bzero(tag, sizeof(struct pf_tagname));
+	strlcpy(tag->name, tagname, sizeof(tag->name));
+	tag->tag = tagid;
+	tag->ref++;
+	TAILQ_INSERT_TAIL(&pf_tags, tag, entries);
+	return (tag->tag);
+}
+
+void
+pf_tag_unref(u_int16_t tag)
+{
+	struct pf_tagname	*p;
+
+	if (tag > 0)
+		TAILQ_FOREACH(p, &pf_tags, entries)
+			if (tag == p->tag) {
+				p->ref--;
+				return;
+			}
+}
+
+void
+pf_tag_purge(void)
+{
+	struct pf_tagname	*p;
+
+	TAILQ_FOREACH_REVERSE(p, &pf_tags, entries, pf_tagnames)
+		if (p->ref == 0) {
+			if (p->tag == tagid)
+				tagid--;
+			TAILQ_REMOVE(&pf_tags, p, entries);
+			free(p, M_TEMP);
+		}
 }
 
 int
@@ -606,6 +679,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 
+		if (rule->tagname[0])
+			if ((rule->tag = pf_tagname2tag(rule->tagname)) == 0)
+				error = EBUSY;
+		if (rule->match_tagname[0])
+			if ((rule->match_tag =
+			    pf_tagname2tag(rule->match_tagname)) == 0)
+				error = EBUSY;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
@@ -678,6 +758,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_rm_rule(old_rules, rule);
 		pf_remove_if_empty_ruleset(ruleset);
 		pf_update_anchor_rules();
+		pf_tag_purge();
 		splx(s);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.146 2003/05/12 22:11:18 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.147 2003/05/13 17:45:24 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -345,6 +345,10 @@ struct pf_rule {
 	char			 pqname[PF_QNAME_SIZE];
 #define	PF_ANCHOR_NAME_SIZE	 16
 	char			 anchorname[PF_ANCHOR_NAME_SIZE];
+#define	PF_TAG_NAME_SIZE	 16
+	char			 tagname[PF_TAG_NAME_SIZE];
+	char			 match_tagname[PF_TAG_NAME_SIZE];
+
 	TAILQ_ENTRY(pf_rule)	 entries;
 	struct pf_pool		 rpool;
 
@@ -365,6 +369,8 @@ struct pf_rule {
 	u_int16_t		 return_icmp;
 	u_int16_t		 return_icmp6;
 	u_int16_t		 max_mss;
+	u_int16_t		 tag;
+	u_int16_t		 match_tag;
 
 	struct pf_rule_uid	 uid;
 	struct pf_rule_gid	 gid;
@@ -754,6 +760,19 @@ struct pf_altq {
 
 	u_int32_t		 qid;		/* return value */
 };
+
+struct pf_tag {
+	u_int16_t	tag;		/* tag id */
+};
+
+struct pf_tagname {
+	TAILQ_ENTRY(pf_tagname)	entries;
+	char			name[PF_TAG_NAME_SIZE];
+	u_int16_t		tag;
+	int			ref;
+};
+
+TAILQ_HEAD(pf_tagnames, pf_tagname);
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */

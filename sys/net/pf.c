@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.348 2003/05/12 22:53:47 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.349 2003/05/13 17:45:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -99,6 +99,7 @@ struct pf_palist	 pf_pabuf;
 struct pf_altqqueue	*pf_altqs_active;
 struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
+struct pf_tagnames	 pf_tagnames;
 struct ifnet		*status_ifp;
 
 u_int32_t		 ticket_altqs_active;
@@ -180,6 +181,7 @@ void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
 void			 pf_rule_set_qid(struct pf_rulequeue *);
 u_int32_t		 pf_qname_to_qid(char *);
+int			 pf_match_tag(struct mbuf *, struct pf_rule *);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
@@ -1343,6 +1345,20 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 	return (pf_match(op, a1, a2, g));
 }
 
+int
+pf_match_tag(struct mbuf *m, struct pf_rule *r)
+{
+	struct m_tag	*mtag;
+	struct pf_tag	*pftag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL) {
+		pftag = (struct pf_tag *)(mtag + 1);
+		if (pftag->tag == r->match_tag)
+			return (1);
+	}
+	return (0);
+}
+
 #define PF_STEP_INTO_ANCHOR(r, a, s, n)					\
 	do {								\
 		if ((r) == NULL || (r)->anchor == NULL ||		\
@@ -2012,6 +2028,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->match_tag && !pf_match_tag(m, r))
+			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->anchor == NULL) {
 				*rm = r;
@@ -2270,6 +2288,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
+		else if (r->match_tag && !pf_match_tag(m, r))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -2526,6 +2546,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->match_tag && !pf_match_tag(m, r))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -2720,6 +2742,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->match_tag && !pf_match_tag(m, r))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -2890,6 +2914,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code)
+			r = TAILQ_NEXT(r, entries);
+		else if (r->match_tag && !pf_match_tag(m, r))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -4392,6 +4418,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
 	u_short		 action, reason = 0, log = 0;
 	struct mbuf	*m = *m0;
+	struct m_tag	*mtag;
 	struct ip	*h;
 	struct pf_rule	*a = NULL, *r = &pf_default_rule;
 	struct pf_state	*s = NULL;
@@ -4571,6 +4598,20 @@ done:
 		    ("pf: dropping packet with ip options\n"));
 	}
 
+	if (action != PF_DROP && r->tag) {
+		struct pf_tag	*pftag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
+		if (mtag == NULL) {
+			action = PF_DROP;
+			REASON_SET(&reason, PFRES_MEMORY);
+		} else {
+			pftag = (struct pf_tag *)(mtag + 1);
+			pftag->tag = r->tag;
+			m_tag_prepend(m, mtag);
+		}
+	}
+
 #ifdef ALTQ
 	if (action != PF_DROP && r->qid) {
 		struct m_tag	*mtag;
@@ -4608,6 +4649,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
 	u_short		 action, reason = 0, log = 0;
 	struct mbuf	*m = *m0;
+	struct m_tag	*mtag;
 	struct ip6_hdr	*h;
 	struct pf_rule	*a = NULL, *r = &pf_default_rule;
 	struct pf_state	*s = NULL;
@@ -4784,6 +4826,20 @@ done:
 		    r->dst.not);
 
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
+
+	if (action != PF_DROP && r->tag) {
+		struct pf_tag	*pftag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
+		if (mtag == NULL) {
+			action = PF_DROP;
+			REASON_SET(&reason, PFRES_MEMORY);
+		} else {
+			pftag = (struct pf_tag *)(mtag + 1);
+			pftag->tag = r->tag;
+			m_tag_prepend(m, mtag);
+		}
+	}
 
 #ifdef ALTQ
 	if (action != PF_DROP && r->qid) {
