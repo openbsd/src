@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.15 2000/03/29 15:44:34 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.16 2000/03/29 15:47:43 millert Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -51,7 +51,7 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	RSA_sign_ASN1_OCTET_STRING.cat3 DH_new.cat3 RSA_size.cat3 DH_set_method.cat3 \
 	blowfish.cat3 DH_size.cat3 bn.cat3 DSA_SIG_new.cat3 bn_internal.cat3 \
 	DSA_do_sign.cat3 buffer.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
-	DSA_generate_parameters.cat3 d2i_RSAPublicKey.cat3 \
+	DSA_generate_parameters.cat3 d2i_DHparams.cat3 d2i_RSAPublicKey.cat3 \
 	DSA_get_ex_new_index.cat3 des_modes.cat3 DSA_new.cat3 dh.cat3 \
 	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 hmac.cat3 \
 	ERR_GET_LIB.cat3 lh_stats.cat3 ERR_clear_error.cat3 lhash.cat3 \
