@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.7 2000/04/20 06:32:00 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.8 2000/05/24 15:14:59 deraadt Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -86,10 +86,5 @@ int     dofileread __P((struct proc *, int, struct file *, void *, size_t,
             off_t *, register_t *));
 int     dofilewrite __P((struct proc *, int, struct file *, const void *,
             size_t, off_t *, register_t *));
-
-int     dofilereadv __P((struct proc *, int, struct file *,
-            const struct iovec *, int, off_t *, register_t *));
-int     dofilewritev __P((struct proc *, int, struct file *,
-            const struct iovec *, int, off_t *, register_t *));
 
 #endif /* _KERNEL */

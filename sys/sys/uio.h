@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.8 2000/04/20 06:34:17 deraadt Exp $	*/
+/*	$OpenBSD: uio.h,v 1.9 2000/05/24 15:14:59 deraadt Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -83,7 +83,13 @@ ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
 #else
-int ureadc __P((int c, struct uio *));
+int	ureadc __P((int c, struct uio *));
+
+int	dofilereadv __P((struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, register_t *));
+int	dofilewritev __P((struct proc *, int, struct file *,
+	    const struct iovec *, int, off_t *, register_t *));
+
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_UIO_H_ */
