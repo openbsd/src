@@ -224,7 +224,7 @@ SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *s, UCHAR *id, int idlen)
 
     /* and fetch it from the DBM file */
     ssl_mutex_on(s);
-    ap_server_strip_chroot(mc->szSessionCacheDataFile);
+    ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
     if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                             O_RDONLY, SSL_DBM_FILE_MODE)) == NULL) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
