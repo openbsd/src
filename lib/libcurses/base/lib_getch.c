@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_getch.c,v 1.2 1999/03/11 21:03:55 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.3 2000/01/23 04:57:41 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.43 1999/03/08 02:35:10 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.44 2000/01/17 19:58:18 tom Exp $")
 
 #include <fifo_defs.h>
 
@@ -58,23 +58,31 @@ int nums = SP->_ifd+1;
 
 	for (;;) {
 		FD_ZERO(&fdset);
-		FD_SET(SP->_checkfd, &fdset);
+		FD_SET(SP->_ifd, &fdset);
+		if (SP->_checkfd >= 0) {
+			FD_SET(SP->_checkfd, &fdset);
+			if (SP->_checkfd >= nums)
+				nums = SP->_checkfd + 1;
+		}
 		if (SP->_mouse_fd >= 0) {
 			FD_SET(SP->_mouse_fd, &fdset);
-			if (SP->_mouse_fd > SP->_checkfd)
-				nums = SP->_mouse_fd+1;
+			if (SP->_mouse_fd >= nums)
+				nums = SP->_mouse_fd + 1;
 		}
 		if (select(nums, &fdset, NULL, NULL, NULL) >= 0) {
 			int n;
 
-			if (FD_ISSET(SP->_mouse_fd, &fdset)) /* Prefer mouse */
+			if (SP->_mouse_fd >= 0
+			 && FD_ISSET(SP->_mouse_fd, &fdset)) { /* Prefer mouse */
 				n = read(SP->_mouse_fd, p, 1);
-			else
+			} else {
 				n = read(SP->_ifd, p, 1);
+			}
 			return n;
 		}
-		if (errno != EINTR)
+		if (errno != EINTR) {
 			return -1;
+		}
 	}
 }
 #endif  /* USE_EMX_MOUSE */
