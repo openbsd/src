@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.13 2004/08/13 12:47:54 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.14 2004/08/13 12:58:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -453,7 +453,11 @@ cvs_ent_write(CVSENTRIES *ef)
 			putc('D', ef->cef_file);
 
 		rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
-		ctime_r(&(ent->ce_mtime), timebuf);
+
+		if (ent->ce_mtime == CVS_DATE_DMSEC)
+			strlcpy(timebuf, CVS_DATE_DUMMY, sizeof(timebuf));
+		else
+			ctime_r(&(ent->ce_mtime), timebuf);
 		len = strlen(timebuf);
 		if ((len > 0) && (timebuf[len - 1] == '\n'))
 			timebuf[--len] = '\0';
