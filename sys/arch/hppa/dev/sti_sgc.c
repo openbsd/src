@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.17 2003/09/25 22:17:40 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.18 2003/10/30 19:25:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -146,7 +146,7 @@ sti_sgc_probe(parent, match, aux)
 			romh = rom;
 			romunmapped++;
 		} else {
-			/* in this case i have no freaking idea */
+			/* in this case nobody has no freaking idea */
 			return 0;
 		}
 	}

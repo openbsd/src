@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.1 2003/09/29 19:30:23 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.2 2003/10/30 19:25:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -1515,6 +1515,6 @@ dinoattach(parent, self, aux)
 	pba.pba_bus = 0;
 	config_found(self, &pba, dinoprint);
 
-	/* now enable interrupts that all the devices are there */
+	/* enable interrupts now that all the devices are there */
 	r->imr = sc->sc_imr;
 }

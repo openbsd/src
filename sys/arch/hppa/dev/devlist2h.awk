@@ -1,4 +1,4 @@
-#	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.5 2003/10/30 19:25:12 mickey Exp $
 
 #
 # Copyright (c) 1998-2001 Michael Shalayeff
@@ -115,7 +115,7 @@ NR > 1 {
 
 END	{
 	if (busted) {
-		print("unteminated comment at the EOF\n");
+		print("unterminated comment at the EOF\n");
 		exit(1);
 	}
 	printf("{ -1 }\n") > cpud;
