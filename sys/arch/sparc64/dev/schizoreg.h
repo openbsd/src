@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.4 2002/07/18 16:45:08 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.5 2002/07/24 19:10:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,14 +31,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 struct schizo_pbm_regs {
-	u_int64_t	unused1[64];
+	u_int64_t	_unused1[64];
 	struct iommureg	iommu;
 	u_int64_t	iommu_ctxflush;
-	u_int64_t	unused2[5228];
+	u_int64_t	_unused2[1212];
+	struct iommu_strbuf strbuf;
+	u_int64_t	strbuf_ctxflush;
+	u_int64_t	_unused3[4012];
 	u_int64_t	iommu_tag;
-	u_int64_t	unused3[15];
+	u_int64_t	_unused4[15];
 	u_int64_t	iommu_data;
-	u_int64_t	unusedN[125759];
+	u_int64_t	_unused5[2879];
+	u_int64_t	strbuf_ctxmatch;
+	u_int64_t	_unusedN[122879];
 };
 
 struct schizo_regs {
@@ -82,10 +87,22 @@ struct schizo_regs {
 #define	SCZ_CE_AFSR			0x10040
 #define	SCZ_CE_AFAR			0x10048
 
-#define	SCZ_PCI_IMAP_BASE		0x1000
-#define	SCZ_PCI_ICLR_BASE		0x1400
-#define	SCZ_PCI_AFSR			0x2010
-#define	SCZ_PCI_AFAR			0x2018
+/* These are relative to the PBM */
+#define	SCZ_PCI_IOMMU_CTRL		0x00200
+#define	SCZ_PCI_IOMMU_TSBBASE		0x00208
+#define	SCZ_PCI_IOMMU_FLUSH		0x00210
+#define	SCZ_PCI_IOMMU_CTXFLUSH		0x00218
+#define	SCZ_PCI_IMAP_BASE		0x01000
+#define	SCZ_PCI_ICLR_BASE		0x01400
+#define	SCZ_PCI_AFSR			0x02010
+#define	SCZ_PCI_AFAR			0x02018
+#define	SCZ_PCI_STRBUF_CTRL		0x02800
+#define	SCZ_PCI_STRBUF_FLUSH		0x02808
+#define	SCZ_PCI_STRBUF_FSYNC		0x02810
+#define	SCZ_PCI_STRBUF_CTXFLUSH		0x02818
+#define	SCZ_PCI_IOMMU_TAG		0x0a580
+#define	SCZ_PCI_IOMMU_DATA		0x0a600
+#define	SCZ_PCI_STRBUF_CTXMATCH		0x10000
 
 #define	SCZ_ECCCTRL_EE			0x8000000000000000UL
 #define	SCZ_ECCCTRL_UE			0x4000000000000000UL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.4 2002/07/18 16:45:08 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.5 2002/07/24 19:10:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -215,11 +215,21 @@ schizo_init_iommu(sc, pbm)
 	char *name;
 
 	is->is_bustag = pbm->sp_sc->sc_bust;
-	is->is_sb[0] = is->is_sb[1] = NULL;
-	if (pbm->sp_bus_a)
+	if (pbm->sp_bus_a) {
 		is->is_iommu = &pbm->sp_sc->sc_regs->pbm_a.iommu;
-	else
+		is->is_sb[0] = &pbm->sp_sc->sc_regs->pbm_a.strbuf;
+	} else {
 		is->is_iommu = &pbm->sp_sc->sc_regs->pbm_b.iommu;
+		is->is_sb[0] = &pbm->sp_sc->sc_regs->pbm_b.strbuf;
+	}
+
+#if 1
+	/* XXX disable the streaming buffers for now */
+	is->is_sb[0]->strbuf_ctl &= ~STRBUF_EN;
+	is->is_sb[0] = NULL;
+#endif
+	is->is_sb[1] = NULL;
+	printf("buffers %p & %p\n", is->is_sb[0], is->is_sb[1]);
 
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
