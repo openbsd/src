@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.7 1997/09/26 02:37:17 millert Exp $
+#	$Id: install.sh,v 1.8 1998/11/03 04:17:20 aaron Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -311,7 +311,7 @@ while [ $part_used -lt $partition ]; do
 			[1-9]*)
 				total=`expr $part_used + $resp`
 				if [ $total -gt $partition ]; then
-					echo -n	"That would make the parition"
+					echo -n	"That would make the partition"
 					echo	"too large to fit!"
 				else
 					part_size=$resp

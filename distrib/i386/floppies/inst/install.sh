@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.19 1997/09/26 02:37:15 millert Exp $
+#	$OpenBSD: install.sh,v 1.20 1998/11/03 04:17:20 aaron Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -341,7 +341,7 @@ while [ $part_used -lt $partition ]; do
 		[1-9]*)
 			total=`expr $part_used + $resp`
 			if [ $total -gt $partition ]; then
-				echo "That would make the parition too large to fit!"
+				echo "That would make the partition too large to fit!"
 			else
 				part_size=$resp
 				part_used=$total
