@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.21 1997/02/02 00:32:02 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.22 1997/02/13 02:45:43 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -526,6 +526,7 @@ sys_statfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 	struct nameidata nd;
+	struct statfs sb;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -536,6 +537,12 @@ sys_statfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	/* Don't let non-root see filesystem id (for NFS security) */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
+		sp = &sb;
+	}
 	return (copyout((caddr_t)sp, (caddr_t)SCARG(uap, buf), sizeof(*sp)));
 }
 
@@ -557,6 +564,7 @@ sys_fstatfs(p, v, retval)
 	struct mount *mp;
 	register struct statfs *sp;
 	int error;
+	struct statfs sb;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -565,6 +573,12 @@ sys_fstatfs(p, v, retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	/* Don't let non-root see filesystem id (for NFS security) */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
+		sp = &sb;
+	}
 	return (copyout((caddr_t)sp, (caddr_t)SCARG(uap, buf), sizeof(*sp)));
 }
 
