@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1997/08/01 20:12:30 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 1997/08/01 20:14:31 kstailey Exp $
 
 #
 # less config
@@ -51,14 +51,14 @@ CF=
 
 config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
-        -rm -f config.cache
+	-rm -f config.cache
 .endif
-        INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-                /bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		/bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
 
 config.status:
-        INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-                /bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		/bin/sh ${.CURDIR}/configure --prefix=/usr $(CF)
 
 gnu_build:
 	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \
