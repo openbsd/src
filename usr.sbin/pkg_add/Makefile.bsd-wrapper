@@ -3,7 +3,9 @@
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
 depend Makefile:
-	perl ${.CURDIR}/Makefile.PL
+	perl ${.CURDIR}/Makefile.PL \
+	    INSTALLSCRIPT='$${DESTDIR}/usr/sbin' \
+	    INSTALLPRIVLIB='$${DESTDIR}/usr/libdata/perl5/'
 
 all: Makefile
 	cd ${.OBJDIR} && exec ${MAKE}
