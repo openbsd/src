@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.20 1999/08/05 22:42:04 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.93 1999/07/25 09:12:36 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.21 1999/08/26 22:30:21 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.97 1999/08/26 11:21:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
 #include <keynote.h>
 #endif
 
@@ -55,9 +55,11 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
+#include "policy.h"
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
+#include "x509.h"
 
 static void gen_g_xy (struct message *);
 static int initiator_send_HASH_SA_NONCE (struct message *);
@@ -68,8 +70,8 @@ static int responder_recv_HASH_SA_NONCE (struct message *);
 static int responder_send_HASH_SA_NONCE (struct message *);
 static int responder_recv_HASH (struct message *);
 
-#ifdef USE_KEYNOTE
-static int check_policy (struct exchange *, struct sa *);
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+static int check_policy (struct exchange *, struct sa *, struct sa *);
 #endif
 
 int (*ike_quick_mode_initiator[]) (struct message *) = {
@@ -84,12 +86,13 @@ int (*ike_quick_mode_responder[]) (struct message *) = {
   responder_recv_HASH
 };
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
 
-/* Policy session ID and other necessary globals */
+/* Policy session ID and other necessary globals.  XXX Why not in policy.h?  */
 extern int keynote_sessid;
 extern struct exchange *policy_exchange;
 extern struct sa *policy_sa;
+extern struct sa *policy_isakmp_sa;
 
 /* How many return values will policy handle -- true/false for now */
 #define RETVALUES_NUM 2
@@ -99,54 +102,95 @@ extern struct sa *policy_sa;
  * acceptable.
  */
 static int
-check_policy (struct exchange *exchange, struct sa *sa)
+check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
   char *return_values[RETVALUES_NUM];
+  struct keynote_deckey dc;
   char *principal = NULL;
   int result;
+  RSA *key;
 
-  /* If there is no policy setup, everything fails */
+  /* If there is no policy setup, everything fails.  */
   if (keynote_sessid < 0)
     return 0;
 
-  /* Initialize -- we'll let the callback do all the work */
+  /* Initialize -- we'll let the callback do all the work.  */
   policy_exchange = exchange;
   policy_sa = sa;
+  policy_isakmp_sa = isakmp_sa;
 
-  /* Set the return values; true/false for now at least */
-  return_values[0] = "false"; /* Order of values in array is important */
+  /* Set the return values; true/false for now at least.  */
+  return_values[0] = "false"; /* Order of values in array is important.  */
   return_values[1] = "true";
 
-  /* XXX Create a principal (authorizer) for the SA/ID request. */
-  principal = "dontmatter";
+  /* Create a principal (authorizer) for the SA/ID request.  */
+  switch (isakmp_sa->recv_certtype)
+    {
+    case ISAKMP_CERTENC_NONE:
+      /* For shared keys, just duplicate the passphrase.  */
+      principal = strdup (isakmp_sa->recv_cert);
+      if (principal == NULL)
+	return 0;
+      break;
+
+    case ISAKMP_CERTENC_X509_SIG:
+      /* Retrieve key from certificate.  */
+      if (!x509_cert_get_key (isakmp_sa->recv_cert, &key))
+	{
+	  log_print ("check_policy: failed to get key from X509 cert");
+	  return 0;
+	}
+
+      /* XXX RSA-specific.  */
+      dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
+      dc.dec_key = (void *) key;
+      principal = LK (kn_encode_key, (&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
+				      KEYNOTE_PUBLIC_KEY));
+      if (LKV (keynote_errno) == ERROR_MEMORY)
+	log_fatal ("check_policy: failed to get memory for public key");
+      if (principal == NULL)
+	return 0;
+      LC (RSA_free, (key));
+      break;
+	
+    /* XXX Eventually handle these.  */
+    case ISAKMP_CERTENC_PKCS:
+    case ISAKMP_CERTENC_PGP:	
+    case ISAKMP_CERTENC_DNS:
+    case ISAKMP_CERTENC_X509_KE:
+    case ISAKMP_CERTENC_KERBEROS:
+    case ISAKMP_CERTENC_CRL:
+    case ISAKMP_CERTENC_ARL:
+    case ISAKMP_CERTENC_SPKI:
+    case ISAKMP_CERTENC_X509_ATTR:
+#if 0
+    case ISAKMP_CERTENC_KEYNOTE:
+#endif
+    default:
+      log_print ("check_policy: "
+		 "unknown/unsupported certificate/authentication method %d",
+		 isakmp_sa->recv_certtype);
+      return 0;
+    }
 
   /* 
    * Add the authorizer (who is requesting the SA/ID);
    * this may be a public or a secret key, depending on
    * what mode of authentication we used in Phase 1.
    */
-  if (kn_add_authorizer (keynote_sessid, principal) == -1)
+  if (LK (kn_add_authorizer, (keynote_sessid, principal)) == -1)
     return 0;
 
-  /*
-   * XXX If doing X509 certificates, create a fake KeyNote assertion,
-   * delegating from the CA to the actual pubkey.
-   */
+  /* Ask policy.  */
+  result = LK (kn_do_query, (keynote_sessid, return_values, RETVALUES_NUM));
 
-  /* Ask policy */
-  result = kn_do_query (keynote_sessid, return_values, RETVALUES_NUM);
-
-  /* Remove authorizer from the session */
-  kn_remove_authorizer (keynote_sessid, principal);
-
-#if 0
+  /* Remove authorizer from the session.  */
+  LK (kn_remove_authorizer, (keynote_sessid, principal));
   free (principal);
-#endif
 
-  /* Check what policy said */
+  /* Check what policy said.  */
   if (result < 0)
     {
-      /* XXX Some sort of debug message about failure */
       log_debug (LOG_MISC, 40, "check_policy: kn_do_query returned %d",
 		 result);
       return 0;
@@ -998,10 +1042,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   struct proto *proto;
   struct sockaddr *src, *dst;
   socklen_t srclen, dstlen;
-
-#ifndef USE_KEYNOTE
   char *name;
-#endif
 
   hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
   hash = hashp->p;
@@ -1147,8 +1188,11 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
     }
 
-#ifdef USE_KEYNOTE  
+#if defined (USE_KEYNOTE)
   if (message_negotiate_sa (msg, check_policy))
+    goto cleanup;
+#elif defined (HAVE_DLOPEN)
+  if (message_negotiate_sa (msg, libkeynote ? check_policy : 0))
     goto cleanup;
 #else
   if (message_negotiate_sa (msg, 0))
@@ -1209,11 +1253,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   if (kep && ipsec_save_g_x (msg))
     goto cleanup;
 
-#ifndef USE_KEYNOTE
   /*
-   * XXX This code is no longer necessary, as policy determines acceptance
-   * XXX of IDs/SAs. (angelos@openbsd.org)
-   * XXX Keep it if not USE_KEYNOTE for now, though. 
+   * Try to find and set the connection name on the exchange.
    */
 
   /*
@@ -1221,19 +1262,34 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
    * name and set it on the exchange.
    */
   name = connection_passive_lookup_by_ids (ie->id_ci, ie->id_cr);
-  if (!name)
+  if (name)
     {
+      exchange->name = strdup (name);
+      if (!exchange->name)
+	{
+	  log_error ("responder_recv_HASH_SA_NONCE: strdup (\"%s\") failed", 
+		     name);
+	  goto cleanup;
+	}
+    }
+#ifndef USE_KEYNOTE
+#ifdef HAVE_DLOPEN
+  else if (!libkeynote)
+#else
+  else
+#endif
+    {
+      /*
+       * This code is no longer necessary, as policy determines acceptance
+       * of IDs/SAs. (angelos@openbsd.org)
+       *
+       * XXX Keep it if not USE_KEYNOTE for now, though. 
+       */
+
       /* XXX Notify peer and log.  */
       goto cleanup;
     }
-
-  exchange->name = strdup (name);
-  if (!exchange->name)
-    {
-      log_error ("responder_recv_HASH_SA_NONCE: strdup (\"%s\") failed", name);
-      goto cleanup;
-    }
-#endif
+#endif /* USE_KEYNOTE */
 
   return retval;
 
