@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.68 2004/10/28 20:34:20 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.69 2004/11/16 18:13:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -984,7 +984,8 @@ carp_send_arp(struct carp_softc *sc)
 {
 	struct ifaddr *ifa;
 	in_addr_t in;
-
+	int s = splsoftnet();
+	
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -994,6 +995,7 @@ carp_send_arp(struct carp_softc *sc)
 		arprequest(sc->sc_ifp, &in, &in, sc->sc_ac.ac_enaddr);
 		DELAY(1000);	/* XXX */
 	}
+	splx(s);
 }
 
 #ifdef INET6
@@ -1003,6 +1005,7 @@ carp_send_na(struct carp_softc *sc)
 	struct ifaddr *ifa;
 	struct in6_addr *in6;
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
+	int s = splsoftnet();
 
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 
@@ -1014,6 +1017,7 @@ carp_send_na(struct carp_softc *sc)
 		    ND_NA_FLAG_OVERRIDE, 1, NULL);
 		DELAY(1000);	/* XXX */
 	}
+	splx(s);
 }
 #endif /* INET6 */
 
