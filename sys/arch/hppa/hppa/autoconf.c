@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2003/12/09 14:35:03 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2003/12/20 21:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -84,10 +84,10 @@ struct device *bootdv;
  */
 #ifdef USELEDS
 #include <sys/dkstat.h>
+#include <sys/kernel.h>
 
 struct timeout heartbeat_tmo;
 void heartbeat(void *);
-extern int hz;
 #endif
 
 #include "cd.h"
@@ -396,7 +396,7 @@ setroot(void)
 {
 	struct swdevt *swp;
 	struct device *dv;
-	int len, majdev, unit, part;
+	int len, majdev, part;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
@@ -492,6 +492,7 @@ setroot(void)
 			}
 		}
 gotswap:
+		majdev = major(nrootdev);
 		rootdev = nrootdev;
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
@@ -559,7 +560,7 @@ gotswap:
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    unit == DISKUNIT(swp->sw_dev)) {
+		    DISKUNIT(rootdev) == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
@@ -691,7 +692,7 @@ pdc_scanbus(self, ca, maxmod)
 					    pdc_addr.size << PGSHIFT;
 
 					if (autoconf_verbose)
-						printf(" 0x%x[0x%x]",
+						printf(" 0x%lx[0x%x]",
 						    nca.ca_addrs[ia].addr,
 						    nca.ca_addrs[ia].size);
 				}
@@ -704,7 +705,7 @@ pdc_scanbus(self, ca, maxmod)
 			continue;
 
 		if (autoconf_verbose)
-			printf(">> HPA 0x%x[0x%x]\n",
+			printf(">> HPA 0x%lx[0x%x]\n",
 			    nca.ca_hpa, nca.ca_hpasz);
 
 		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
@@ -725,7 +726,7 @@ pdc_scanbus(self, ca, maxmod)
 			    nca.ca_dp.dp_bc[0], nca.ca_dp.dp_bc[1],
 			    nca.ca_dp.dp_bc[2], nca.ca_dp.dp_bc[3],
 			    nca.ca_dp.dp_bc[4], nca.ca_dp.dp_bc[5]);
-			printf("mod %x hpa %x type %x sv %x\n",
+			printf("mod %x hpa %lx type %x sv %x\n",
 			    nca.ca_dp.dp_mod, nca.ca_hpa,
 			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}

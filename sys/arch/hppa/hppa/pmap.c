@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2003/12/01 23:56:30 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2003/12/20 21:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -308,21 +308,21 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 		    !(pd = pmap_sdir_get(sp)))
 			continue;
 
-		for (pdemask = 1, va = sva? sva: 0; va < VM_MAX_KERNEL_ADDRESS;
-		    va += PAGE_SIZE) {
+		for (pdemask = 1, va = sva ? sva : 0;
+		    va < VM_MAX_KERNEL_ADDRESS; va += PAGE_SIZE) {
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
 				if (!(pde = pmap_pde_get(pd, va))) {
 					va += ~PDE_MASK + 1 - PAGE_SIZE;
 					continue;
 				}
-				printf("%x:0x%08x:\n", sp, pde);
+				printf("%x:%8p:\n", sp, pde);
 			}
 
 			if (!(pte = pmap_pte_get(pde, va)))
 				continue;
 
-			printf("0x%08x-0x%08x:%b\n", va, pte & ~PAGE_MASK,
+			printf("0x%08lx-0x%08x:%b\n", va, pte & ~PAGE_MASK,
 			    TLB_PROT(pte & PAGE_MASK), TLB_BITS);
 		}
 	}
@@ -337,7 +337,7 @@ pmap_dump_pv(paddr_t pa)
 	pg = PHYS_TO_VM_PAGE(pa);
 	simple_lock(&pg->mdpage.pvh_lock);
 	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next)
-		printf("%x:%x\n", pve->pv_pmap->pm_space, pve->pv_va);
+		printf("%x:%lx\n", pve->pv_pmap->pm_space, pve->pv_va);
 	simple_unlock(&pg->mdpage.pvh_lock);
 }
 #endif
@@ -670,7 +670,7 @@ pmap_destroy(pmap)
 
 #ifdef DIAGNOSTIC
 	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
-		printf("pmap_destroy: unaccounted ptp 0x%x count %d\n",
+		printf("pmap_destroy: unaccounted ptp 0x%lx count %d\n",
 		    VM_PAGE_TO_PHYS(pg), pg->wire_count);
 		if (pg->flags & PG_BUSY)
 			panic("pmap_destroy: busy page table page");
@@ -874,7 +874,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
-	for(pdemask = 1; sva < eva; sva += PAGE_SIZE) {
+	for (pdemask = 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
@@ -973,7 +973,7 @@ pmap_unwire(pmap, va)
 
 #ifdef DIAGNOSTIC
 	if (!pte)
-		panic("pmap_unwire: invalid va 0x%x", va);
+		panic("pmap_unwire: invalid va 0x%lx", va);
 #endif
 }
 
@@ -1136,10 +1136,10 @@ pmap_kenter_pa(va, pa, prot)
 
 	if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap_kernel(), va, NULL)))
-		panic("pmap_kenter_pa: cannot allocate pde for va=0x%x", va);
+		panic("pmap_kenter_pa: cannot allocate pde for va=0x%lx", va);
 #ifdef DIAGNOSTIC
 	if ((pte = pmap_pte_get(pde, va)))
-		panic("pmap_kenter_pa: 0x%x is already mapped %p:0x%x",
+		panic("pmap_kenter_pa: 0x%lx is already mapped %p:0x%x",
 		    va, pde, pte);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.53 2003/09/29 19:23:02 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.54 2003/12/20 21:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -87,7 +87,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 
 	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
-		panic("mbus_add_mapping: mapping real memory @0x%x", bpa);
+		panic("mbus_add_mapping: mapping real memory @0x%lx", bpa);
 
 	/*
 	 * determine if we are mapping IO space, or beyond the physmem
@@ -1019,7 +1019,7 @@ mbattach(parent, self, aux)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
 		panic("mbattach: PDC_HPA failed");
 
-	printf(" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+	printf(" [flex %lx]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* map all the way till the end of the memory */
 	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa,
@@ -1095,7 +1095,7 @@ mbprint(aux, pnp)
 		    ca->ca_type.iodc_revision);
 	if (ca->ca_hpa) {
 		if (~ca->ca_hpamask)
-			printf(" offset %x", ca->ca_hpa & ~ca->ca_hpamask);
+			printf(" offset %lx", ca->ca_hpa & ~ca->ca_hpamask);
 		if (!pnp && ca->ca_irq >= 0)
 			printf(" irq %d", ca->ca_irq);
 	}
@@ -1113,7 +1113,7 @@ mbsubmatch(parent, match, aux)
 	int ret;
 
 	if (autoconf_verbose)
-		printf(">> hpa %x off %x cf_off %x\n",
+		printf(">> hpa %lx off %lx cf_off %x\n",
 		    ca->ca_hpa, ca->ca_hpa & ~ca->ca_hpamask, cf->hppacf_off);
 
 	if (ca->ca_hpa && ~ca->ca_hpamask && cf->hppacf_off != -1 &&

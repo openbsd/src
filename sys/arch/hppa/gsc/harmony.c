@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.21 2003/08/15 13:25:53 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.22 2003/12/20 21:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -1263,8 +1263,8 @@ harmony_try_more(struct harmony_softc *sc)
 #ifdef DIAGNOSTIC
 	if (cur < d->d_map->dm_segs[0].ds_addr ||
 	    cur >= (d->d_map->dm_segs[0].ds_addr + c->c_segsz))
-		panic("%s: bad current %x < %x || %x > %x", sc->sc_dv.dv_xname,
-		    cur, d->d_map->dm_segs[0].ds_addr, cur,
+		panic("%s: bad current %x < %lx || %x > %lx",
+		    sc->sc_dv.dv_xname, cur, d->d_map->dm_segs[0].ds_addr, cur,
 		    d->d_map->dm_segs[0].ds_addr + c->c_segsz);
 #endif /* DIAGNOSTIC */
 
