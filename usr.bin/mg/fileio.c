@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.44 2005/01/31 15:48:00 millert Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.45 2005/02/01 16:04:15 henning Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -209,6 +209,7 @@ fbackupfile(const char *fn)
 		if (rename(tname, nname) == -1) {
 			ewprintf("Can't rename temp : %s", strerror(errno));
 			(void) unlink(tname);
+			nread = -1;
 		}
 	}
 	free(nname);
