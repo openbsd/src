@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.32 2003/01/10 10:29:35 djm Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.33 2003/03/08 17:18:25 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ static char rcsid[] = "$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <string.h>
 #include <unistd.h>
 
