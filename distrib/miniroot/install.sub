@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.235 2002/06/25 00:31:59 krw Exp $
+#	$OpenBSD: install.sub,v 1.236 2002/06/29 20:01:34 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1803,8 +1803,13 @@ __EOT
 	done
 }
 
-# Create a fstab to use for fsck'ing, mounting and unmounting all
-# of the target filesystems relative to /mnt.
+# Create a /etc/fstab from /tmp/fstab. Ensure /etc/fstab
+#	1) contains only ffs filesystems
+#	2) contains only filesystems without the 'noauto' option
+#	3) contains no 'softdep' options
+#	4) mounts all filesystems relative to /mnt
+#
+# If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
 	local _dev _mp _fstype _opt _rest
 
@@ -1832,7 +1837,13 @@ munge_fstab() {
 		fi
 
 		echo $_dev /mnt$_mp $_fstype $_opt $_rest
-	done > /etc/fstab
+	done < /tmp/fstab > /etc/fstab
+	
+	# If no /etc/fstab was created, we have nowhere to ${MODE} to.
+	if [ ! -s /etc/fstab ]; then
+		echo "Unable to create valid /etc/fstab."
+		exit
+	fi
 }
 
 # Must mount filesystems manually, one at a time, so we can make
@@ -1863,14 +1874,10 @@ __EOT
 
 # Script is exiting. Clean up as much as possible.
 cleanup_on_exit() {
-	local _bad_devs
-
 	echo "\nCleaning up..."
 
 	# Kill any running dhclient, so a restart will not
-	# find /dev/bpf0 busy. Do this first so a user who
-	# interrupts out of any fsck'ing will not be stuck
-	# with an active dhclient.
+	# find /dev/bpf0 busy.
 
 	if [ -f /var/run/dhclient.pid ]; then
 		echo "Stopping dhclient"
@@ -1894,31 +1901,34 @@ remount_fs() {
 	local _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
-		if ! mount -u -o $_opt $_dev $_mp ; then
-			# error message displayed by mount
-			exit 1
-		fi
+		mount -u -o $_opt $_dev $_mp ||	exit
 	done < /etc/fstab
 }
 
 # Preen all filesystems in /etc/fstab, showing individual results,
 # but skipping the root filesystem device given in $1. This was
 # already fsck'ed successfully.
+#
+# Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _rest _badfsck=0 _root=$1
+	local _dev _rest _fail _root=$1
+
+	echo "Checking non-root filesystems..."
 
 	while read _dev _rest; do
 		[ "$_dev" = "$_root" ] && continue
 		echo -n "fsck -p ${_dev}..."
 		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
 			echo "FAILED. You must fsck this device manually."
-			_badfsck=1
+			_fail=y
 		else
 			echo "OK."
 		fi
 	done < /etc/fstab
 
-	return $_badfsck
+	echo "...Done."
+
+	[ "$_fail" ] && exit
 }
 
 # Find LAST instance of DOMAIN or SEARCH and extract first domain name

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.35 2002/06/25 00:31:59 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.36 2002/06/29 20:01:34 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,26 +76,24 @@ while [ -z "$resp" ]; do
 done
 
 echo -n "Checking root filesystem (fsck -fp ${_root_filesystem}) ... "
-if fsck -fp ${_root_filesystem} > /dev/null 2>&1; then
-	echo	"OK."
-else
+if ! fsck -fp ${_root_filesystem} > /dev/null 2>&1; then
 	echo	"FAILED.\nYou must fsck ${_root_filesystem} manually."
-	exit 1
+	exit
 fi
+echo	"OK."
 
 echo -n "Mounting root filesystem ... "
-if mount -o ro ${_root_filesystem} /mnt; then
-	echo	"Done."
-else
+if ! mount -o ro ${_root_filesystem} /mnt; then
 	echo	"ERROR: can't mount root filesystem!"
-	exit 1
+	exit
 fi
+echo	"Done."
 
 # fstab and hosts are required for upgrade
 for _file in fstab hosts; do
 	if [ ! -f /mnt/etc/$_file ]; then
 		echo "ERROR: no /etc/${_file}!"
-		exit 1
+		exit
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
@@ -114,7 +112,7 @@ case $resp in
 y*|Y*)
 	if ! enable_network; then
 		echo "ERROR: can't enable network!"
-		exit 1
+		exit
 	fi
 
 	cat << __EOT
@@ -157,29 +155,18 @@ esac
 
 echo
 
-# Create a fstab containing only ffs filesystems w/o 'noauto'.
-munge_fstab < /tmp/fstab
+# Create /etc/fstab.
+munge_fstab
 
+# fsck -p non-root filesystems in /etc/fstab.
+check_fs $_root_filesystem
+
+# Mount filesystems in /etc/fstab.
 if ! umount /mnt; then
 	echo	"ERROR: can't unmount previously mounted root!"
-	exit 1
+	exit
 fi
-
-# Check filesystems.
-echo "Checking non-root filesystems..."
-if ! check_fs $_root_filesystem; then
-	# Prevent check_fs() invocation in cleanup_on_exit from fsck'ing.
-	# Remember /etc/fstab is a link, /tmp/fstab.shadow is the file!
-	rm /tmp/fstab.shadow
-fi
-echo "...Done."
-
-if [ ! -f /etc/fstab ]; then
-	exit 2
-else
-	# Mount filesystems.
-	mount_fs
-fi
+mount_fs
 
 # If Xfree86 v3 directories that would prevent upgrading to XFree86 v4
 # are found, move them and replace them with links that the upgrade

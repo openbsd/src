@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.103 2002/06/25 00:31:59 krw Exp $
+#	$OpenBSD: install.sh,v 1.104 2002/06/29 20:01:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -275,7 +275,7 @@ if [ ! -f /etc/fstab ]; then
 		done
 	) < ${FILESYSTEMS} > /tmp/fstab
 
-	munge_fstab < /tmp/fstab
+	munge_fstab
 fi
 
 mount_fs "-o async"
