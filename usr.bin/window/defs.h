@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 1997/02/25 00:04:03 downsj Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 1997/06/24 02:44:45 dgregor Exp $	*/
 /*	$NetBSD: defs.h,v 1.3 1995/09/28 10:34:19 tls Exp $	*/
 
 /*
@@ -41,6 +41,8 @@
 
 #include "ww.h"
 #include <sys/time.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define NWINDOW 9
 
