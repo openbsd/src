@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.1 2005/02/15 20:51:18 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.2 2005/02/18 19:57:26 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -20,6 +20,8 @@
 /*
  * CardBus front-end for the Ralink RT2500 driver.
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
