@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.14 2000/04/15 11:45:54 aaron Exp $
+.\"	$OpenBSD: calendar.1,v 1.15 2001/09/26 20:38:55 mickey Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -43,9 +43,10 @@
 .Nm calendar
 .Op Fl a
 .Op Fl A Ar num
+.Op Fl b
 .Op Fl B Ar num
-.Op Fl t Ar [[[cc]yy][mm]]dd
 .Op Fl f Ar calendarfile
+.Op Fl t Ar [[[cc]yy][mm]]dd
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,6 +70,8 @@ This requires superuser privileges.
 Print lines from today and next
 .Ar num
 days (forward, future).
+.It Fl b
+Enforce special date calculation mode for KOI8 calendars.
 .It Fl B Ar num
 Print lines from today and previous
 .Ar num

@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.12 2001/09/26 20:38:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.12 2001/09/26 20:38:55 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,9 @@ time_t Mktime (date)
  * with \t, is shown along with the matched line.
  */
 struct match *
-isnow(endp)
+isnow(endp, bodun)
 	char	*endp;
+	int	bodun;
 {
 	int day = 0, flags = 0, month = 0, v1, v2, i;
 	int monthp, dayp, varp = 0;
@@ -279,6 +280,10 @@ isnow(endp)
 	if (!(v1 = getfield(endp, &endp, &flags)))
 		return (NULL);
 
+	/* adjust bodun rate */
+	if (bodun && !bodun_always)
+		bodun = !(arc4random() % 3);
+		
 	/* Easter or Easter depending days */
 	if (flags & F_SPECIAL)
 		vwd = v1;
@@ -423,7 +428,7 @@ isnow(endp)
 				if ((v2 += isleap(tp->tm_year + TM_YEAR_BASE) ? 366 : 365)
 				    <= v1)
 					tmtmp.tm_year++;
-				else
+				else if(!bodun || (day - tp->tm_yday) != -1)
 					return(NULL);
 			}
 			if ((tmp = malloc(sizeof(struct match))) == NULL)
@@ -435,6 +440,11 @@ isnow(endp)
 			/*    "%a %b %d", &tm);  Skip weekdays */
 			    "%b %d", &tmtmp) == 0)
 				tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
+			if (bodun && (day - tp->tm_yday) == -1)
+				strcpy(tmp->prefix, "Бодун на утро от: ");
+			else
+				tmp->prefix[0] = '\0';
+
 			tmp->var   = varp;
 			tmp->next  = NULL;
 			return(tmp);
@@ -517,8 +527,10 @@ isnow(endp)
 				warnx("time out of range: %s", endp);
 			else {
 				tdiff = difftime(ttmp, f_time)/ SECSPERDAY;
-				if (tdiff <= offset + f_dayAfter) {
-					if (tdiff >=  0) {
+				if (tdiff <= offset + f_dayAfter ||
+				    (bodun && tdiff == -1)) {
+					if (tdiff >=  0 ||
+					    (bodun && tdiff == -1)) {
 					if ((tmp = malloc(sizeof(struct match))) == NULL)
 						err(1, NULL);
 					tmp->when = ttmp;
@@ -527,6 +539,11 @@ isnow(endp)
 					/*    "%a %b %d", &tm);  Skip weekdays */
 					    "%b %d", &tmtmp) == 0)
 						tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
+					if (bodun && tdiff == -1)
+						strcpy(tmp->prefix,
+						    "Bodun na ytpo ot: ");
+					else
+						tmp->prefix[0] = '\0';
 					tmp->var   = varp;
 					tmp->next  = NULL;
 					if (tmp2)

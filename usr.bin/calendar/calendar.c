@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.15 2001/09/03 15:53:00 pjanzen Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.16 2001/09/26 20:38:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.15 2001/09/03 15:53:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.16 2001/09/26 20:38:55 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ char *calendarNoMail = "nomail";  /* don't sent mail if this file exists */
 struct passwd *pw;
 int doall = 0;
 time_t f_time = 0;
+int bodun_always = 0;
 
 int f_dayAfter = 0; /* days after current date */
 int f_dayBefore = 0; /* days before current date */
@@ -91,13 +92,17 @@ main(argc, argv)
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "-af:t:A:B:")) != -1)
+	while ((ch = getopt(argc, argv, "-abf:t:A:B:")) != -1)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
 			doall = 1;
+			break;
+
+		case 'b':
+			bodun_always++;
 			break;
 
 		case 'f': /* other calendar file */
@@ -258,7 +263,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: calendar [-a] [-A num] [-B num] [-t [[[cc]yy][mm]]dd] "
+	    "usage: calendar [-a] [-A num] [-b] [-B num] [-t [[[cc]yy][mm]]dd] "
 	    "[-f calendarfile]\n");
 	exit(1);
 }
