@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.6 1997/09/01 18:29:28 deraadt Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.7 1998/04/30 05:55:05 deraadt Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: glbl.c,v 1.6 1997/09/01 18:29:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glbl.c,v 1.7 1998/04/30 05:55:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,11 +92,12 @@ exec_global(interact, gflag)
 	char *cmd = NULL;
 
 #ifdef BACKWARDS
-	if (!interact)
+	if (!interact) {
 		if (!strcmp(ibufp, "\n"))
 			cmd = "p\n";		/* null cmd-list == `p' */
 		else if ((cmd = get_extended_line(&n, 0)) == NULL)
 			return ERR;
+	}
 #else
 	if (!interact && (cmd = get_extended_line(&n, 0)) == NULL)
 		return ERR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.7 1997/11/15 22:10:22 todd Exp $	*/
+/*	$OpenBSD: dd.c,v 1.8 1998/04/30 05:55:02 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.7 1997/11/15 22:10:22 todd Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.8 1998/04/30 05:55:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,11 +237,12 @@ dd_in()
 		 * Zero the buffer first if sync; if doing block operations
 		 * use spaces.
 		 */
-		if (ddflags & C_SYNC)
+		if (ddflags & C_SYNC) {
 			if (ddflags & (C_BLOCK|C_UNBLOCK))
 				(void)memset(in.dbp, ' ', in.dbsz);
 			else
 				(void)memset(in.dbp, 0, in.dbsz);
+		}
 
 		n = read(in.fd, in.dbp, in.dbsz);
 		if (n == 0) {

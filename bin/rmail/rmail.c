@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.8 1997/09/01 18:30:29 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.9 1998/04/30 05:55:06 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.8 1997/09/01 18:30:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.9 1998/04/30 05:55:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(argc, argv)
 			}
 
 		/* Else use the string up to the last bang. */
-		if (p == NULL)
+		if (p == NULL) {
 			if (*addrp == '!')
 				err(EX_DATAERR,
 				    "bang starts address: %s", addrp);
@@ -183,6 +183,7 @@ main(argc, argv)
 				if (debug)
 					(void)fprintf(stderr, "bang: %s\n", p);
 			}
+		}
 
 		/* 'p' now points to any system string from this line. */
 		if (p != NULL) {
