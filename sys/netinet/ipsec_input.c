@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.20 2000/03/17 10:25:23 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.21 2000/03/29 08:50:38 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -108,8 +108,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
 
-    union sockaddr_union src_address, dst_address;
-    caddr_t sport = 0, dport = 0;
+    union sockaddr_union dst_address;
     struct tdb *tdbp;
     u_int32_t spi;
     int s;
@@ -152,8 +151,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #ifdef INET
 	case AF_INET:
 	    dst_address.sin.sin_len = sizeof(struct sockaddr_in);
-	    sport = (caddr_t) &src_address.sin.sin_port;
-	    dport = (caddr_t) &dst_address.sin.sin_port;
 	    m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
 		       (caddr_t) &(dst_address.sin.sin_addr));
 	    break;
@@ -162,8 +159,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 #ifdef INET6
 	case AF_INET6:
 	    dst_address.sin6.sin6_len = sizeof(struct sockaddr_in6);
-	    sport = (caddr_t) &src_address.sin6.sin6_port;
-	    dport = (caddr_t) &dst_address.sin6.sin6_port;
 	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 		       sizeof(struct in6_addr),
 		       (caddr_t) &(dst_address.sin6.sin6_addr));
@@ -192,8 +187,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
 	splx(s);
-	DPRINTF(("ipsec_common_input(): attempted to use invalid SA %s/%08x\n",
-		 ipsp_address(dst_address), ntohl(spi)));
+	DPRINTF(("ipsec_common_input(): attempted to use invalid SA %s/%08x/%u\n", ipsp_address(dst_address), ntohl(spi), tdbp->tdb_sproto));
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid);
 	return EINVAL;
@@ -202,7 +196,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     if (tdbp->tdb_xform == NULL)
     {
 	splx(s);
-	DPRINTF(("ipsec_common_input(): attempted to use uninitialized SA %s/%08x\n", ipsp_address(dst_address), ntohl(spi)));
+	DPRINTF(("ipsec_common_input(): attempted to use uninitialized SA %s/%08x/%u\n", ipsp_address(dst_address), ntohl(spi), tdbp->tdb_sproto));
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform);
 	return ENXIO;
@@ -223,7 +217,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     /* If we do ingress filtering and the list is empty, quick drop */
     if (ipsec_acl && (tdbp->tdb_access == NULL))
     {
-	DPRINTF(("ipsec_common_input(): packet from %s dropped due to empty policy list, SA %s/%08x\n", ipsp_address(src_address), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	DPRINTF(("ipsec_common_input(): packet dropped due to empty policy list, SA %s/%08x/%u\n", ipsp_address(tdbp->tdb_dst), ntohl(spi), tdbp->tdb_sproto));
 	splx(s);
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
@@ -276,6 +270,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr);
 	return EINVAL;
     }
+
+    bcopy(&tdbp->tdb_dst, &dst_address, tdbp->tdb_dst.sa.sa_len);
 
 #ifdef INET
     /* Fix IPv4 header */
@@ -451,7 +447,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
     /* Access control */
     if (ipsec_acl)
     {
-	bzero(&src_address, sizeof(dst_address));
+	bzero(&src_address, sizeof(src_address));
 	src_address.sa.sa_family = af;
 	src_address.sa.sa_len = dst_address.sa.sa_len;
 
