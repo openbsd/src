@@ -17,16 +17,19 @@ There are man pages and other methodologies available for doing that.
 For example, to view the manual page on the
 .Xr ls 1
 command, type:
-.Ic man 1 ls
+.Ic man 1 ls .
 .\" 
 .\" XXX This should be an enumerated list
 .\"
-\!\"--------------------------------------------------------------------------
 .Ss Login
 Login on the console as
-.Ql Ic root .
-You will not be able to login over the network \(em only on the console.
-\!\"--------------------------------------------------------------------------
+.Dq Ic root .
+You will not be able to login over the network \(em only on the console. This
+behavior is controlled through the
+.Pa /etc/ttys
+file. See
+.Xr tty 5
+for more information.
 .Ss System Date
 Check the system date with the
 .Xr date 1
@@ -36,24 +39,35 @@ If needed, change the date, and/or change the symbolic link of
 to the correct time zone in the
 .Pa /usr/share/zoneinfo
 directory.
-\!\"--------------------------------------------------------------------------
+.Pp
+Examples:
+.Bl -tag -width date
+.It Cm date 199901271504
+Set the current date to January 27th, 1999 3:04pm.
+.It Cm ln -s /usr/share/zoneinfo/Canada/Atlantic /etc/localtime
+Set the time zone to Atlantic Standard Time.
+.El
 .Ss Root password
-Check the password for the root login.
+Check the password for the root user.
 Choose a password that has numbers, digits, and special characters (not space)
 as well as from the upper and lower case alphabet.
 Do not choose any word in any
 language.  It is common for an intruder to use dictionary attacks.
 Type the command
 .Ic /usr/bin/passwd
-to change it.  It is a good idea to always specify the full path
-name for both the
+to change it.
+.Pp
+It is a good idea to always specify the full path name for both the
 .Xr passwd 1
-and the
+and
 .Xr su 1
 commands as this inhibits the possibility of files placed in your execution
 .Ev PATH
-for most shells.
-\!\"--------------------------------------------------------------------------
+for most shells. Furthermore, the super-user's
+.Ev PATH
+should never contain the current directory
+.Po Dq \&.
+.Pc .
 .Ss Check hostname
 Use the
 .Xr hostname 1
@@ -64,7 +78,6 @@ if you need to change it.
 You will also need to edit the
 .Pa /etc/myname
 file to have it stick around for the next reboot.
-\!\"--------------------------------------------------------------------------
 .Ss Verify network interfaces configured correctly
 The first thing to do is an
 .Ic ifconfig -a
@@ -74,7 +87,7 @@ Correct by editing
 (where
 .Ar interface
 is the interface name, e.g.
-.Ic le0 )
+.Dq le0 )
 and then using
 .Xr ifconfig 8
 to manually configure it
@@ -107,7 +120,6 @@ by commenting it out, i.e. by placing a # sign at the start of the line:
 # route add -net 224.0.0.0 -interface $hostname
 .Ed
 .Pp
-\!\"--------------------------------------------------------------------------
 .Ss Check for correct routing
 Do a
 .Ic netstat -r -n
@@ -148,7 +160,6 @@ Packets are not forwarded by default, due to RFC requirements.
 .Pp
 You can add new "virtual interfaces" by adding the required entries to
 .Pa /etc/ifaliases .
-\!\"--------------------------------------------------------------------------
 .Ss BIND Name Server (DNS)
 If you are using the BIND Name Server, check the
 .Pa /etc/resolv.conf
@@ -174,26 +185,38 @@ name server for your domain.  In both these cases, make sure that
 .Xr named 8
 is running
 (otherwise there are long waits for resolver timeouts).
-\!\"--------------------------------------------------------------------------
 .Ss YP verification (NIS)
 Check the YP domain name with the
 .Xr domainname 1
-command, and edit
+command. If necessary, correct it by editing the
 .Pa /etc/defaultdomain
-to correct it.  You may change the running system's YP domain name with the
-.Xr domainname
+file. The
+.Pa /etc/netstart
+script reads this file on bootup to determine and set the domain name.
+You may also set the running system's domain name with the
+.Xr domainname 1
 command.
 To start YP client services, simply run
 .Ic ypbind ,
 then perform the remaining
 YP activation as described in
-.Xr passwd 5 ,
+.Xr passwd 5
 and
 .Xr group 5 .
-There are many more YP man pages on the system.  You can find more information
-by starting with
+.Pp
+In particular, to enable YP passwd support, you'll need to add the following
+line to
+.Pa /etc/master.passwd :
+.Pp
++:*::::::::
+.Pp
+Once this is done, you'll need to run
+.Ic pwd_mkdb /etc/master.passwd
+to regenerate the password databases.
+.Pp
+There are many more YP man pages available to help you. You can find more
+information by starting with
 .Xr yp 8 .
-\!\"--------------------------------------------------------------------------
 .Ss Check disks are mounted correctly
 Check that the disks are mounted correctly by
 comparing the file
@@ -233,13 +256,12 @@ Device      512-blocks     Used    Avail Capacity  Type
 Edit
 .Pa /etc/fstab
 and use the
-.Xr umount 8
-and
 .Xr mount 8
+and
+.Xr umount 8
 commands as appropriate.
 .Pp
 You may wish to do NFS partitions now too, or you can do them later.
-\!\"--------------------------------------------------------------------------
 .Ss Concatenated disks (ccd)
 If you are using
 .Xr ccd 4
@@ -256,7 +278,6 @@ You then
 and edit
 .Pa /etc/fstab
 as needed.
-\!\"--------------------------------------------------------------------------
 .Ss Automounter daemon (AMD)
 If using the
 .Xr amd 8
@@ -270,7 +291,6 @@ to
 .Pa master
 and editing it and creating other maps as needed.
 Alternatively, you can get your maps with YP.
-\!\"--------------------------------------------------------------------------
 .Sh CHANGING /ETC FILES
 The system should be usable now, but you may wish to do more customizing,
 such as adding users, etc.  Many of the following sections may be skipped
@@ -279,14 +299,12 @@ if you are not using that package (for example the
 section).  My suggestion is to
 .Ic cd /etc
 and edit most of the files in that directory.
-\!\"--------------------------------------------------------------------------
 .Ss /etc/motd
 Edit
 .Pa motd
 to make lawyers comfortable and make sure that no mention
 of the word "Welcome" appears.  (Some U.S. lawyers have stated that
 the word "Welcome" is an invitation to come on in.)
-\!\"--------------------------------------------------------------------------
 .Ss Add new users
 Add users.  There is an
 .Xr adduser 8
@@ -314,7 +332,6 @@ Follow instructions for
 if using
 Kerberos
 for authentication.
-\!\"--------------------------------------------------------------------------
 .Ss rc.conf, netstart, rc.local, rc.securelevel
 Check for any local changes needed in the files:
 .Pa /etc/rc.conf , /etc/netstart , /etc/rc.local , rc.securelevel .
@@ -326,20 +343,27 @@ b) uncommenting the lines in
 .Pa rc.securelevel ,
 i.e. delete the leading # signs of:
 .Bd -literal -offset indent
-if [ -x /usr/local/sbin/xntpd ]; then
+if [ -x /usr/local/sbin/ntpd ]; then
      /usr/local/sbin/tickadj -Aq
-     echo -n ' xntpd';       /usr/local/sbin/xntpd
+     echo -n ' ntpd';       /usr/local/sbin/ntpd
 fi
 .Ed
-\!\"--------------------------------------------------------------------------
+.Pp
+If you've installed X, you may want to turn on
+.Xr xdm 1 ,
+the X Display Manager. To do this, change the value of xdm_flags in
+.Pa /etc/rc.conf .
 .Ss Printers
-Edit /etc/printcap and /etc/hosts.lpd to get any printers set up.
+Edit
+.Pa /etc/printcap
+and
+.Pa /etc/hosts.lpd
+to get any printers set up.
 Consult
 .Xr lpd 8
 and
 .Xr printcap 5
 if needed.
-\!\"--------------------------------------------------------------------------
 .Ss Tighten up security
 You might wish to tighten up security more by editing
 .Pa /etc/fbtab
@@ -348,7 +372,6 @@ In
 .Pa /etc/inetd.conf
 turn off extra stuff that you do not need,
 and only add things that are really needed.
-\!\"--------------------------------------------------------------------------
 .Ss Kerberos
 If you are going to use
 .Xr kerberos 1
@@ -360,7 +383,6 @@ and configure.
 Remember to get a
 .Pa srvtab
 from the master so that the remote commands work.
-\!\"--------------------------------------------------------------------------
 .Ss Mail Aliases
 Edit
 .Pa /etc/aliases
@@ -377,7 +399,6 @@ operator:	sysadm
 Run
 .Xr newaliases 1
 after changes.
-\!\"--------------------------------------------------------------------------
 .Ss Sendmail
 .Ox
 ships with a default
@@ -391,7 +412,6 @@ Please see
 and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
-\!\"--------------------------------------------------------------------------
 .Ss BOOTP server
 If this is a
 BOOTP
@@ -402,7 +422,6 @@ as needed.  You will have to turn it on in
 or run
 .Xr bootpd 8
 in its standalone mode.
-\!\"--------------------------------------------------------------------------
 .Ss NFS server
 If this is an NFS server
 make sure
@@ -418,13 +437,11 @@ and get it correct.
 It is probably easier to reboot than to get the daemons running manually,
 but you can get the order correct by looking at
 .Pa /etc/netstart .
-\!\"--------------------------------------------------------------------------
 .Ss HP remote boot server
 Edit
 .Pa /etc/rbootd.config
 if needed for remote booting.
 If you do not have HP computers doing remote booting, do not enable this.
-\!\"--------------------------------------------------------------------------
 .Ss Daily, Weekly, Monthly scripts
 Look at and possibly edit the
 .Pa /etc/daily , /etc/weekly ,
@@ -438,7 +455,6 @@ and
 These scripts have been limited so as to keep the system running without
 filling up disk space from normal running processes and database updates.
 (You probably do not need to understand them.)
-\!\"--------------------------------------------------------------------------
 .Ss Other files in /etc
 Look at the other files in
 .Pa /etc
@@ -452,7 +468,6 @@ nor
 nor
 .Pa rmt ,
 nor any directories.)
-\!\"--------------------------------------------------------------------------
 .Ss Crontab (background running processes)
 Check what is running by typing
 .Ic crontab -l
@@ -470,7 +485,6 @@ and change some of the lines to read:
 .Ed
 See
 .Xr crontab 5 .
-\!\"--------------------------------------------------------------------------
 .Ss Next day cleanup
 After the first night's security run, change ownerships and permissions
 on things.  The best bet is to have permissions as in the security list.
@@ -482,7 +496,6 @@ Use
 and
 .Xr chown 8
 as needed.
-\!\"--------------------------------------------------------------------------
 .Ss Packages
 Install your own packages.
 The simple way is to copy source and compile and link/load.
@@ -508,8 +521,13 @@ from
 .Pa Makefile
 .Ns s
 as the crypt routines are now present in the standard libraries.
-\!\"--------------------------------------------------------------------------
 .Sh COMPILING A KERNEL
+First, review the system message buffer using the
+.Xr dmesg 8
+command to find out information on your system's devices as probed by the
+kernel at boot. In particular, note which devices were not configured. This
+information will prove useful when editing kernel configuration files.
+.Pp
 To compile your own kernel off a CDROM do the following:
 .Sm off
 .Bd -literal -offset indent
@@ -575,7 +593,7 @@ is the architecture (e.g.
 and
 .Ar SOMEFILE
 should be a name indicative of a particular configuration (often
-that of the hostname.)
+that of the hostname).
 You can also do a
 .Ic make depend
 so that you will have dependencies there the next time you do a compile.
@@ -591,50 +609,49 @@ Most people save their backup kernels as
 .Pa /bsd.1 ,
 .Pa /bsd.2 ,
 etc.
-\!\"--------------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr adduser 8 ,
-.Xr aliases 5 ,
-.Xr amd 8 ,
-.Xr bootpd 8 ,
-.Xr bootptab 5 ,
-.Xr ccd 4 ,
-.Xr ccdconfig 8 ,
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
-.Xr chown 8 ,
-.Xr config 8 ,
 .Xr crontab 1 ,
-.Xr crontab 5 ,
 .Xr date 1 ,
 .Xr df 1 ,
-.Xr domainname 8 ,
-.Xr exports 5 ,
-.Xr ext_srvtab 8 ,
-.Xr fbtab 5 ,
-.Xr fstab 5 ,
-.Xr group 5 ,
 .Xr hostname 1 ,
-.Xr hostname 7 ,
-.Xr ifconfig 8 ,
-.Xr inetd 8 ,
 .Xr kerberos 1 ,
-.Xr krb.conf 5 ,
-.Xr krb.realms 5 ,
 .Xr make 1 ,
 .Xr man 1 ,
-.Xr mount 8 ,
-.Xr named 8 ,
 .Xr netstat 1 ,
 .Xr newaliases 1 ,
 .Xr passwd 1 ,
+.Xr su 1 ,
+.Xr ccd 4 ,
+.Xr aliases 5 ,
+.Xr bootptab 5 ,
+.Xr crontab 5 ,
+.Xr exports 5 ,
+.Xr fbtab 5 ,
+.Xr fstab 5 ,
+.Xr group 5 ,
+.Xr krb.conf 5 ,
+.Xr krb.realms 5 ,
 .Xr passwd 5 ,
 .Xr rbootd 5 ,
-.Xr rc 8 ,
 .Xr resolv.conf 5 ,
+.Xr hostname 7 ,
+.Xr adduser 8 ,
+.Xr amd 8 ,
+.Xr bootpd 8 ,
+.Xr ccdconfig 8 ,
+.Xr chown 8 ,
+.Xr config 8 ,
+.Xr domainname 8 ,
+.Xr ext_srvtab 8 ,
+.Xr ifconfig 8 ,
+.Xr inetd 8 ,
+.Xr mount 8 ,
+.Xr named 8 ,
+.Xr rc 8 ,
 .Xr rmt 8 ,
 .Xr route 8 ,
-.Xr su 1 ,
 .Xr umount 8 ,
 .Xr vipw 8 ,
 .Xr ypbind 8 
