@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.6 2004/06/25 09:46:45 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.7 2004/07/20 05:40:42 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -481,7 +481,6 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	}
 	CSR_WRITE_2(sc, re8139_reg, data);
 	splx(s);
-	return;
 }
 
 void
@@ -1357,8 +1356,6 @@ re_rxeof(sc)
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->rl_ldata.rl_rx_prodidx = i;
-
-	return;
 }
 
 void
@@ -1425,8 +1422,6 @@ re_txeof(sc)
 	 */
 	if (sc->rl_ldata.rl_tx_free != RL_TX_DESC_CNT)
                 CSR_WRITE_4(sc, RL_TIMERCNT, 1);
-
-	return;
 }
 
 void
@@ -1751,8 +1746,6 @@ re_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 int
@@ -2106,6 +2099,4 @@ re_stop(sc)
 			sc->rl_ldata.rl_rx_mbuf[i] = NULL;
 		}
 	}
-
-	return;
 }
