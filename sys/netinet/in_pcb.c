@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.36 1999/12/08 11:36:40 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.37 1999/12/17 22:47:04 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -817,6 +817,11 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 				    inp->inp_fport != fport)
 					continue;
 			} else {
+#ifdef INET6
+				if (inp->inp_flags & INP_IPV6)
+					continue; /*XXX*/
+				else
+#endif
 				if (faddr.s_addr != INADDR_ANY)
 					wildcard++;
 			}
@@ -826,6 +831,11 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 				else if (inp->inp_laddr.s_addr != laddr.s_addr)
 					continue;
 			} else {
+#ifdef INET6
+				if (inp->inp_flags & INP_IPV6)
+					continue;	/*XXX*/
+				else
+#endif
 				if (laddr.s_addr != INADDR_ANY)
 					wildcard++;
 			}
@@ -975,6 +985,10 @@ in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 
 	head = INPCBHASH(table, &faddr, fport, &laddr, lport);
 	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			continue;	/*XXX*/
+#endif
 		if (inp->inp_faddr.s_addr == faddr.s_addr &&
 		    inp->inp_fport == fport &&
 		    inp->inp_lport == lport &&

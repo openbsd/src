@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.30 1999/12/12 10:59:41 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.31 1999/12/17 22:47:05 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -409,6 +409,11 @@ udp_input(m, va_alist)
 				if (inp->inp_laddr.s_addr !=
 				    ip->ip_dst.s_addr)
 					continue;
+			} else {
+#ifdef INET6
+				if (inp->inp_flags & INP_IPV6)
+					continue;	/*XXX*/
+#endif
 			}
 #ifdef INET6
 			if (ipv6) {
@@ -424,6 +429,11 @@ udp_input(m, va_alist)
 				    ip->ip_src.s_addr ||
 				    inp->inp_fport != uh->uh_sport)
 					continue;
+			} else {
+#ifdef INET6
+				if (inp->inp_flags & INP_IPV6)
+					continue;	/*XXX*/
+#endif
 			}
 
 			if (last != NULL) {
