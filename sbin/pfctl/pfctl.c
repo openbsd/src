@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.73 2002/06/10 15:19:13 mickey Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.74 2002/06/10 23:07:46 kjell Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -66,7 +66,6 @@ int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
-int	 pfctl_nat(int, char *, int);
 int	 pfctl_log(int, char *, int);
 int	 pfctl_timeout(int, char *, int);
 int	 pfctl_gettimeout(int, const char *);
@@ -81,7 +80,6 @@ int	 opts = 0;
 char	*clearopt;
 char	*hintopt;
 char	*logopt;
-char	*natopt;
 char	*rulesopt;
 char	*showopt;
 char	*timeoutopt;
@@ -555,51 +553,10 @@ int
 pfctl_rules(int dev, char *filename, int opts)
 {
 	FILE *fin;
-	struct pfioc_rule	pr;
-	struct pfctl		pf;
-
-	if (strcmp(filename, "-") == 0) {
-		infile = "stdin";
-		fin = stdin;
-	} else {
-		fin = fopen(filename, "r");
-		infile = filename;
-	}
-	if (fin == NULL) {
-		warn("%s", filename);
-		return (1);
-	}
-	if ((opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(dev, DIOCBEGINRULES, &pr.ticket))
-			err(1, "DIOCBEGINRULES");
-	}
-	/* fill in callback data */
-	pf.dev = dev;
-	pf.opts = opts;
-	pf.prule = &pr;
-	pf.rule_nr = 0;
-	if (parse_rules(fin, &pf) < 0)
-		errx(1, "syntax error in rule file: pf rules not loaded");
-	if ((opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
-			err(1, "DIOCCOMMITRULES");
-#if 0
-		if ((opts & PF_OPT_QUIET) == 0)
-			printf("%u rules loaded\n", n);
-#endif
-	}
-	if (fin != stdin)
-		fclose(fin);
-	return (0);
-}
-
-int
-pfctl_nat(int dev, char *filename, int opts)
-{
-	FILE *fin;
 	struct pfioc_nat	pn;
 	struct pfioc_binat	pb;
 	struct pfioc_rdr	pr;
+	struct pfioc_rule	pl;
 	struct pfctl		pf;
 
 	if (strcmp(filename, "-") == 0) {
@@ -613,7 +570,6 @@ pfctl_nat(int dev, char *filename, int opts)
 		warn("%s", filename);
 		return (1);
 	}
-
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
 			err(1, "DIOCBEGINNATS");
@@ -621,6 +577,8 @@ pfctl_nat(int dev, char *filename, int opts)
 			err(1, "DIOCBEGINRDRS");
 		if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
 			err(1, "DIOCBEGINBINATS");
+		if (ioctl(dev, DIOCBEGINRULES, &pl.ticket))
+			err(1, "DIOCBEGINRULES");
 	}
 	/* fill in callback data */
 	pf.dev = dev;
@@ -628,8 +586,10 @@ pfctl_nat(int dev, char *filename, int opts)
 	pf.pnat = &pn;
 	pf.pbinat = &pb;
 	pf.prdr = &pr;
-	if (parse_nat(fin, &pf) < 0)
-		errx(1, "syntax error in file: nat rules not loaded");
+	pf.prule = &pl;
+	pf.rule_nr = 0;
+	if (parse_rules(fin, &pf) < 0)
+		errx(1, "Syntax error in file: pf rules not loaded");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
 			err(1, "DIOCCOMMITNATS");
@@ -637,11 +597,14 @@ pfctl_nat(int dev, char *filename, int opts)
 			err(1, "DIOCCOMMITRDRS");
 		if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
 			err(1, "DIOCCOMMITBINATS");
+		if (ioctl(dev, DIOCCOMMITRULES, &pl.ticket))
+			err(1, "DIOCCOMMITRULES");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
 			printf("%u nat entries loaded\n", n);
 			printf("%u rdr entries loaded\n", r);
 			printf("%u binat entries loaded\n", b);
+			printf("%u rules loaded\n", n);
 		}
 #endif
 	}
@@ -909,7 +872,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hk:l:m:nN:O:rR:s:t:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqf:F:hk:l:m:nO:rs:t:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -947,10 +910,6 @@ main(int argc, char *argv[])
 		case 'n':
 			opts |= PF_OPT_NOACTION;
 			break;
-		case 'N':
-			natopt = optarg;
-			mode = O_RDWR;
-			break;
 		case 'O':
 			hintopt = optarg;
 			mode = O_RDWR;
@@ -958,7 +917,7 @@ main(int argc, char *argv[])
 		case 'r':
 			opts |= PF_OPT_USEDNS;
 			break;
-		case 'R':
+		case 'f':
 			rulesopt = optarg;
 			mode = O_RDWR;
 			break;
@@ -1041,10 +1000,6 @@ main(int argc, char *argv[])
 
 	if (rulesopt != NULL)
 		if (pfctl_rules(dev, rulesopt, opts))
-			error = 1;
-
-	if (natopt != NULL)
-		if (pfctl_nat(dev, natopt, opts))
 			error = 1;
 
 	if (showopt != NULL) {

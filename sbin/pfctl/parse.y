@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2002/06/10 19:31:44 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2002/06/10 23:07:46 kjell Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -55,8 +55,11 @@ static FILE *fin = NULL;
 static int debug = 0;
 static int lineno = 1;
 static int errors = 0;
-static int natmode = 0;
+static int rulestate = 0;
 
+enum {PFCTL_STATE_NONE=0, PFCTL_STATE_SCRUB=1,
+      PFCTL_STATE_NAT=2, PFCTL_STATE_FILTER=3};
+ 
 struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
@@ -231,10 +234,10 @@ typedef struct {
 ruleset		: /* empty */
 		| ruleset '\n'
 		| ruleset scrubrule '\n'
-		| ruleset pfrule '\n'
 		| ruleset natrule '\n'
 		| ruleset binatrule '\n'
 		| ruleset rdrrule '\n'
+		| ruleset pfrule '\n'
 		| ruleset varset '\n'
 		| ruleset error '\n'		{ errors++; }
 		;
@@ -253,6 +256,13 @@ varset		: STRING PORTUNARY STRING
 scrubrule	: SCRUB dir interface fromto nodf minttl maxmss
 		{
 			struct pf_rule r;
+			
+			if (rulestate > PFCTL_STATE_SCRUB) {
+				yyerror("Rules must in order: "
+				    "scrub, nat, filter");
+				YYERROR;
+			}
+			rulestate = PFCTL_STATE_SCRUB;
 
 			memset(&r, 0, sizeof(r));
 
@@ -277,10 +287,13 @@ pfrule		: action dir log quick interface route af proto fromto
 			struct pf_rule r;
 			struct node_state_opt *o;
 
-			if (natmode) {
-				yyerror("filter rule not permitted in nat mode");
+			if (rulestate > PFCTL_STATE_FILTER) {
+				yyerror("Rules must in order: "
+				    "scrub, nat, filter");
 				YYERROR;
 			}
+			rulestate = PFCTL_STATE_FILTER;
+			
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
@@ -1173,10 +1186,13 @@ natrule		: no NAT interface af proto fromto redirection
 		{
 			struct pf_nat nat;
 
-			if (!natmode) {
-				yyerror("nat rule not permitted in filter mode");
+			if (rulestate > PFCTL_STATE_NAT) {
+				yyerror("Rules must in order: "
+				    "scrub, nat, filter");
 				YYERROR;
 			}
+			rulestate = PFCTL_STATE_NAT;
+			
 			memset(&nat, 0, sizeof(nat));
 
 			nat.no = $1;
@@ -1229,10 +1245,13 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 		{
 			struct pf_binat binat;
 
-			if (!natmode) {
-				yyerror("binat rule not permitted in filter mode");
+			if (rulestate > PFCTL_STATE_NAT) {
+				yyerror("Rules must in order: "
+				    "scrub, nat, filter");
 				YYERROR;
 			}
+			rulestate = PFCTL_STATE_NAT;
+			
 			memset(&binat, 0, sizeof(binat));
 
 			binat.no = $1;
@@ -1336,10 +1355,13 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 		{
 			struct pf_rdr rdr;
 
-			if (!natmode) {
-				yyerror("rdr rule not permitted in filter mode");
+			if (rulestate > PFCTL_STATE_NAT) {
+				yyerror("Rules must in order: "
+				    "scrub, nat, filter");
 				YYERROR;
 			}
+			rulestate = PFCTL_STATE_NAT;
+			
 			memset(&rdr, 0, sizeof(rdr));
 
 			rdr.no = $1;
@@ -2360,19 +2382,6 @@ top:
 int
 parse_rules(FILE *input, struct pfctl *xpf)
 {
-	natmode = 0;
-	fin = input;
-	pf = xpf;
-	lineno = 1;
-	errors = 0;
-	yyparse();
-	return (errors ? -1 : 0);
-}
-
-int
-parse_nat(FILE *input, struct pfctl *xpf)
-{
-	natmode = 1;
 	fin = input;
 	pf = xpf;
 	lineno = 1;
