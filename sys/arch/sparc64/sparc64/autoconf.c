@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 2002/04/10 04:17:50 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.24 2002/06/07 19:31:08 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -663,6 +663,8 @@ setroot()
 					goto gotswap;
 				}
 			}
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				OF_exit();
 			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
 			if (dv != NULL) {
 				bootdv = dv;
@@ -702,6 +704,8 @@ setroot()
 				}
 				break;
 			}
+			if (len == 4 && strncmp(buf, "exit", 4) == 0)
+				OF_exit();
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
@@ -844,7 +848,7 @@ getdisk(str, len, defpart, devp)
 	struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		printf("use one of:");
+		printf("use one of: exit");
 #ifdef RAMDISK_HOOKS
 		printf(" %s[a-p]", fakerdrootdev.dv_xname);
 #endif
