@@ -89,9 +89,9 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 tty0 tty1
-	sh MAKEDEV pty0 pty1 st0 st1 ch0 cd0 cd1 mcd0 acd0 vnd0 vnd1 lpa0 lpa1
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2
+	sh MAKEDEV tty0 tty1 tty2 tty3 pty0 pty1 st0 st1 ch0 cd0 cd1
+	sh MAKEDEV mcd0 acd0 vnd0 vnd1 lpa0 lpa1 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
 	sh MAKEDEV rnd uk0 uk1
