@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.23 2003/04/05 10:42:54 avsm Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.24 2003/05/12 20:53:22 pjanzen Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.23 2003/04/05 10:42:54 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.24 2003/05/12 20:53:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static const char rcsid[] = "$OpenBSD: displayq.c,v 1.23 2003/04/05 10:42:54 avs
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "lp.h"
 #include "lp.local.h"
@@ -282,6 +283,7 @@ displayq(int format)
 	}
 	else {
 		struct sigaction osa, nsa;
+		char *visline;
 
 		i = strlen(line);
 		if (write(fd, line, i) != i)
@@ -292,12 +294,16 @@ displayq(int format)
 		nsa.sa_flags = 0;
 		(void)sigaction(SIGALRM, &nsa, &osa);
 		alarm(wait_time);
+		if ((visline = (char *)malloc(4 * sizeof(line) + 1)) == NULL)
+			fatal("Out of memory");
 		while ((i = read(fd, line, sizeof(line))) > 0) {
-			(void)fwrite(line, 1, i, stdout);
+			i = strvisx(visline, line, i, VIS_SAFE|VIS_NOSLASH);
+			(void)fwrite(visline, 1, i, stdout);
 			alarm(wait_time);
 		}
 		alarm(0);
 		(void)sigaction(SIGALRM, &osa, NULL);
+		free(visline);
 		(void)close(fd);
 	}
 }
