@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.414 2001/07/07 11:22:00 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.415 2001/07/08 18:05:43 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -528,7 +528,7 @@
 #define	PCI_VENDOR_KAWASAKI	0x136b		/* Kawasaki */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
-#define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
+#define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
@@ -1125,7 +1125,7 @@
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 
-/* Hi/Fn products */
+/* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */

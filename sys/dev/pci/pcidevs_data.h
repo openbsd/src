@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.414 2001/07/07 11:22:00 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.415 2001/07/08 18:05:43 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6372,7 +6372,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_HIFN,
-	    "Hi/Fn",
+	    "Hifn",
 	},
 	{
 	    PCI_VENDOR_TRIWARE,
