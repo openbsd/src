@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1999/08/26 09:04:00 fgsch Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/26 03:27:55 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/09/11 11:24:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/08/26 09:04:00 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,10 @@ tmp()
 	}
 
 	if (envtmp)
-		(void)sprintf(path, "%s/%s", envtmp, _NAME_ARTMP);
+		(void)snprintf(path, sizeof(path), "%s/%s", envtmp,
+		    _NAME_ARTMP);
 	else
-		strcpy(path, _PATH_ARTMP);
+		strlcpy(path, _PATH_ARTMP, sizeof(path));
 	
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
