@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: diodevs,v 1.5 2005/01/14 11:49:01 miod Exp 
+ *	OpenBSD: diodevs,v 1.6 2005/01/15 21:45:23 miod Exp 
  */
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
@@ -132,8 +132,8 @@
 #define	DIO_DEVICE_SECID_XGENESIS	0x0b
 #define	DIO_DEVICE_DESC_XGENESIS	"x-genesis display"
 
-#define	DIO_DEVICE_SECID_TIGER	0x0c
-#define	DIO_DEVICE_DESC_TIGER	"tiger display"
+#define	DIO_DEVICE_SECID_TIGERSHARK	0x0c
+#define	DIO_DEVICE_DESC_TIGERSHARK	"TurboVRX (\"tigershark\") display"
 
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
