@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.191 1999/11/03 01:06:10 chris Exp $
+$OpenBSD: pcidevs,v 1.192 1999/11/03 02:47:34 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -637,6 +637,7 @@ product ADP 3940U		0x8278	AHA-3940U
 product ADP 398XU		0x8378	AHA-398XU
 product ADP 2944U		0x8478	AHA-2944U
 product ADP 2940UWPro		0x8778	AHA-2940UWPro
+product ADP AIC6915		0x6915	AIC-6915
 
 product ADP2 2940U2		0x0010	AHA-2940U2
 product ADP2 7890		0x001f	AIC-7890/1
