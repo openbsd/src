@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.2 2001/11/26 18:10:52 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.3 2001/12/01 16:43:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -512,6 +512,7 @@ autri_attach(parent, self, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct autri_codec_softc *codec;
+	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	char const *intrstr;
 	mixer_ctrl_t ctl;
@@ -521,11 +522,10 @@ autri_attach(parent, self, aux)
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
-	printf("\n");
 
 	/* map register to memory */
 	if (pci_mapreg_map(pa, AUTRI_PCI_MEMORY_BASE,
-	    PCI_MAPREG_TYPE_MEM, 0, &sc->memt, &sc->memh, NULL, NULL, 0)) {
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->memt, &sc->memh, NULL, &iosize, 0)) {
 		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -533,6 +533,7 @@ autri_attach(parent, self, aux)
 	/* map and establish the interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		bus_space_unmap(sc->memt, sc->memh, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -544,9 +545,10 @@ autri_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->memt, sc->memh, iosize);
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	sc->sc_dmatag = pa->pa_dmat;
 	sc->sc_pc = pc;
@@ -574,6 +576,8 @@ autri_attach(parent, self, aux)
 	if ((r = ac97_attach(&codec->host_if)) != 0) {
 		printf("%s: can't attach codec (error 0x%X)\n",
 		    sc->sc_dev.dv_xname, r);
+		pci_intr_disestablish(pc, sc->sc_ih);
+		bus_space_unmap(sc->memt, sc->memh, iosize);
 		return;
 	}
 
