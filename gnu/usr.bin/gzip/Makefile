@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/12/09 23:46:38 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2003/04/17 03:47:05 drahn Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
@@ -12,6 +12,9 @@ SRCS+=	match.S
 CFLAGS+=-DASMV 
 .else
 CFLAGS+=-DDYN_ALLOC
+.endif
+.if (${MACHINE_ARCH} == "i386")
+UNDERLINE=-DNO_UNDERLINE
 .endif
 
 CLEANFILES+=	gzip.info
@@ -48,7 +51,7 @@ afterinstall:
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 match.o: ${.CURDIR}/match.S
-	$(CPP) -D__OpenBSD__ -D${MACHINE_ARCH} ${.CURDIR}/match.S >_match.s
+	$(CPP) -D__OpenBSD__ ${UNDERLINE} -D${MACHINE_ARCH} ${.CURDIR}/match.S >_match.s
 	$(CC) -c _match.s
 	mv _match.o match.o
 	rm -f _match.s
