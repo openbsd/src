@@ -1,5 +1,5 @@
-/*	$OpenBSD: stp4020reg.h,v 1.1 2002/06/19 19:14:21 fgsch Exp $	*/
-/*	$NetBSD: stp4020reg.h,v 1.1 1998/11/22 22:14:35 pk Exp $ */
+/*	$OpenBSD: stp4020reg.h,v 1.2 2002/06/21 07:49:31 fgsch Exp $	*/
+/*	$NetBSD: stp4020reg.h,v 1.1 1998/11/22 22:14:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
