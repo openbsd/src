@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.22 2003/10/05 20:27:48 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.23 2003/10/08 22:36:11 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -68,7 +68,7 @@ void vmesyscon_init(struct vmesoftc *);
 int vmebustype;
 int vmevecbase;
 
-struct vme2reg *sys_vme2 = NULL;
+struct vme2reg *sys_vme2;
 
 struct cfattach vme_ca = {
         sizeof(struct vmesoftc), vmematch, vmeattach
@@ -297,7 +297,6 @@ vmeattach(parent, self, args)
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 	{
-		int scon;
 		struct vme2reg *vme2;
 
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
@@ -306,12 +305,9 @@ vmeattach(parent, self, args)
 			panic("Correct the VME Vector Base Registers in the Bug ROM.\nSuggested values are 0x60 for VME Vec0 and 0x70 for VME Vec1.");
 		}
 		vmevecbase = VME2_GET_VBR1(vme2) + 0x10;
-		scon = (vme2->vme2_tctl & VME2_TCTL_SCON);
 		printf(": vector base 0x%x", vmevecbase);
-		if (scon != 0)
+		if (vme2->vme2_tctl & VME2_TCTL_SCON)
 			printf(", system controller");
-		if (scon)
-			sys_vme2 = vme2;
 		printf("\n");
 		vme2chip_init(sc);
 	}
@@ -407,6 +403,8 @@ vme2chip_init(sc)
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 	u_long ctl;
 
+	sys_vme2 = vme2;
+
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
 
@@ -459,20 +457,27 @@ vme2chip_init(sc)
 	/*
 	 * Map the Software VME irq levels to the cpu level 7.
 	*/
-	vme2->vme2_irql3 = (7 << VME2_IRQL3_SW7SHIFT) | (7 << VME2_IRQL3_SW6SHIFT) |
-			(7 << VME2_IRQL3_SW5SHIFT) | (7 << VME2_IRQL3_SW4SHIFT) |
-			(7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) |
-			(7 << VME2_IRQL3_SW1SHIFT) | (7 << VME2_IRQL3_SW0SHIFT);
-		/*
-		 * pseudo driver, abort interrupt handler
-		 */
-		sc->sc_abih.ih_fn = vme2abort;
-		sc->sc_abih.ih_arg = 0;
-		sc->sc_abih.ih_wantframe = 1;
-		sc->sc_abih.ih_ipl = IPL_NMI;
-		intr_establish(110, &sc->sc_abih);
-		vme2->vme2_irqen |= VME2_IRQ_AB;
-	vme2->vme2_irqen |= VME2_IRQ_ACF;
+	vme2->vme2_irql3 = (7 << VME2_IRQL3_SW7SHIFT) |
+	    (7 << VME2_IRQL3_SW6SHIFT) | (7 << VME2_IRQL3_SW5SHIFT) |
+	    (7 << VME2_IRQL3_SW4SHIFT) | (7 << VME2_IRQL3_SW3SHIFT) |
+	    (7 << VME2_IRQL3_SW2SHIFT) | (7 << VME2_IRQL3_SW1SHIFT) |
+	    (7 << VME2_IRQL3_SW0SHIFT);
+
+	/*
+	 * pseudo driver, abort interrupt handler
+	 */
+	sc->sc_abih.ih_fn = vme2abort;
+	sc->sc_abih.ih_arg = 0;
+	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_abih.ih_ipl = IPL_NMI;
+	intr_establish(110, &sc->sc_abih);
+	vme2->vme2_irqen |= VME2_IRQ_AB;
+
+	/*
+	 * Enable ACFAIL interrupt, but disable Timer 1 interrupt - we
+	 * prefer it without for delay().
+	 */
+	vme2->vme2_irqen = (vme2->vme2_irqen | VME2_IRQ_ACF) & ~VME2_IRQ_TIC1;
 }
 #endif /* NPCCTWO */
 

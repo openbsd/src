@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.15 2003/10/05 20:25:08 miod Exp $ */
+/*	$OpenBSD: sclock.c,v 1.16 2003/10/08 22:36:11 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -81,19 +81,19 @@
 #include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+
 #include "pcctwo.h"
 #if NPCCTWO > 0
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 #endif
+
 #include "syscon.h"
 #if NSYSCON > 0
 #include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
-#include <mvme88k/dev/vme.h>
 
-extern struct vme2reg *sys_vme2;
 struct simplelock cio_lock;
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -131,7 +131,6 @@ struct cfdriver sclock_cd = {
 int	sbc_statintr(void *);
 int	m188_statintr(void *);
 
-int	sclockbus;
 u_char	stat_reset;
 
 /*
@@ -155,9 +154,9 @@ sclockmatch(parent, vcf, args)
 	 * We return the ipl here so that the parent can print
 	 * a message if it is different from what ioconf.c says.
 	 */
-	ca->ca_ipl   = IPL_CLOCK;
+	ca->ca_ipl = IPL_CLOCK;
 	/* set size to 0 - see pcctwo.c:match for details */
-	ca->ca_len  = 0;
+	ca->ca_len = 0;
 	return (1);
 }
 
@@ -169,9 +168,7 @@ sclockattach(parent, self, args)
 	struct confargs *ca = args;
 	struct sclocksoftc *sc = (struct sclocksoftc *)self;
 
-	sclockbus = ca->ca_bustype;
-
-	switch (sclockbus) {
+	switch (ca->ca_bustype) {
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 		sc->sc_statih.ih_fn = sbc_statintr;
@@ -181,7 +178,6 @@ sclockattach(parent, self, args)
 		stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih);
 		md.statclock_init_func = sbc_initstatclock;
-		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
 #if NSYSCON > 0
@@ -192,7 +188,6 @@ sclockattach(parent, self, args)
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER2, &sc->sc_statih);
 		md.statclock_init_func = m188_initstatclock;
-		printf(": VME188");
 		break;
 #endif /* NSYSCON */
 	}

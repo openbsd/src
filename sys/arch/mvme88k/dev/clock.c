@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.24 2003/10/08 19:10:04 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.25 2003/10/08 22:36:11 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -87,15 +87,14 @@
 #include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/cmmu.h>	/* DMA_CACHE_SYNC, etc... */
+
 #include "pcctwo.h"
 #if NPCCTWO > 0
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
-#include "bugtty.h"
-#if NBUGTTY > 0
-#include <mvme88k/dev/bugttyfunc.h>
+extern struct vme2reg *sys_vme2;
 #endif
-#endif
+
 #include "syscon.h"
 #if NSYSCON > 0
 #include <mvme88k/dev/sysconfunc.h>
@@ -103,7 +102,10 @@
 #endif
 #include <mvme88k/dev/vme.h>
 
-extern struct vme2reg *sys_vme2;
+#include "bugtty.h"
+#if NBUGTTY > 0
+#include <mvme88k/dev/bugttyfunc.h>
+#endif
 
 int	clockmatch(struct device *, void *, void *);
 void	clockattach(struct device *, struct device *, void *);
@@ -129,7 +131,6 @@ struct cfdriver clock_cd = {
 int	sbc_clockintr(void *);
 int	m188_clockintr(void *);
 
-int	clockbus;
 u_char	prof_reset;
 
 /*
@@ -153,9 +154,9 @@ clockmatch(parent, vcf, args)
 	 * We return the ipl here so that the parent can print
 	 * a message if it is different from what ioconf.c says.
 	 */
-	ca->ca_ipl   = IPL_CLOCK;
+	ca->ca_ipl = IPL_CLOCK;
 	/* set size to 0 - see pcctwo.c:match for details */
-	ca->ca_len  = 0;
+	ca->ca_len = 0;
 	return (1);
 }
 
@@ -167,9 +168,7 @@ clockattach(parent, self, args)
 	struct confargs *ca = args;
 	struct clocksoftc *sc = (struct clocksoftc *)self;
 
-	clockbus = ca->ca_bustype;
-
-	switch (clockbus) {
+	switch (ca->ca_bustype) {
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 		sc->sc_profih.ih_fn = sbc_clockintr;
@@ -179,7 +178,6 @@ clockattach(parent, self, args)
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
 		md.clock_init_func = sbc_initclock;
-		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
 #if NSYSCON > 0
@@ -190,7 +188,6 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
 		md.clock_init_func = m188_initclock;
-		printf(": VME188");
 		break;
 #endif /* NSYSCON */
 	}
@@ -214,8 +211,7 @@ sbc_initclock(void)
 	sys_pcc2->pcc2_t1ctl = 0;
 	sys_pcc2->pcc2_t1cmp = pcc2_timer_us2lim(tick);
 	sys_pcc2->pcc2_t1count = 0;
-	sys_pcc2->pcc2_t1ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC |
-			       PCC2_TCTL_COVF;
+	sys_pcc2->pcc2_t1ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
 	sys_pcc2->pcc2_t1irq = prof_reset;
 
 }
@@ -245,23 +241,26 @@ delay(us)
 {
 	volatile int c;
 
+#if NPCCTWO > 0
 	/*
 	 * We use the vme system controller for the delay clock.
 	 * Do not go to the real timer until vme device is present.
 	 * Or, in the case of MVME188, not at all.
 	 */
-	if (sys_vme2 == NULL || brdtyp == BRD_188) {
-		c = 3 * us;	/* XXX not accurate! */
-		while (--c > 0);
+	if (sys_vme2 != NULL) {
+		sys_vme2->vme2_t1cmp = 0xffffffff;
+		sys_vme2->vme2_t1count = 0;
+		sys_vme2->vme2_tctl |= VME2_TCTL1_CEN;
+
+		while (sys_vme2->vme2_t1count < us)
+			;
+		sys_vme2->vme2_tctl &= ~VME2_TCTL1_CEN;
 		return;
 	}
-	sys_vme2->vme2_irql1 |= (0 << VME2_IRQL1_TIC1SHIFT);
-	sys_vme2->vme2_t1count = 0;
-	sys_vme2->vme2_tctl |= (VME2_TCTL1_CEN | VME2_TCTL1_COVF);
-
-	while (sys_vme2->vme2_t1count < us)
+#endif
+	c = 3 * us;	/* XXX not accurate! */
+	while (--c > 0)
 		;
-	sys_vme2->vme2_tctl &= ~(VME2_TCTL1_CEN | VME2_TCTL1_COVF);
 }
 
 #if NSYSCON > 0
@@ -274,11 +273,7 @@ m188_clockintr(eframe)
 	volatile int tmp;
 
 	/* acknowledge the timer interrupt */
-#if 0
-	dma_cachectl(DART_BASE, PAGE_SIZE, DMA_CACHE_SYNC_INVAL);
-#else
 	tmp = *(int *volatile)DART_ISR;
-#endif
 
 	/* stop the timer while the interrupt is being serviced */
 	tmp = *(int *volatile)DART_STOPC;
