@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.8 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.9 2001/07/16 16:34:07 peter Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -113,6 +113,8 @@ exphymatch(parent, match, aux)
 	 */
 	if ((MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	     MII_MODEL(ma->mii_id2) != 0) &&
+	    (MII_OUI(ma->mii_id1, ma->mii_id2) != MII_OUI_3COM ||
+	     MII_MODEL(ma->mii_id2) != 0) &&
 	    (MII_OUI(ma->mii_id1, ma->mii_id2) != MII_OUI_BROADCOM ||
 	     MII_MODEL(ma->mii_id2) != MII_MODEL_BROADCOM_3C905C))
 		return (0);
@@ -135,7 +137,8 @@ exphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == 0 &&
+	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == 0 ||
+	     MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_3COM) &&
 	    MII_MODEL(ma->mii_id2) == 0)
 		printf(": 3Com internal media interface\n");
 	else if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
