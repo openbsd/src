@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.55 2002/03/11 22:22:57 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.56 2002/03/25 22:05:49 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <net/pfvar.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,7 @@
 #include <errno.h>
 #include <err.h>
 #include <limits.h>
+#include <netdb.h>
 
 #include "pfctl_parser.h"
 
@@ -82,6 +84,8 @@ char	*showopt;
 char	*timeoutopt;
 char	*limitopt;
 char	*debugopt;
+int	 state_killers;
+char 	*state_kill[2];
 
 char	*infile;
 
@@ -260,6 +264,107 @@ pfctl_clear_states(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		printf("states cleared\n");
 	return (0);
+}
+
+int
+pfctl_kill_states(int dev, int opts)
+{
+	struct pfioc_state_kill psk;
+	struct addrinfo *res[2], *resp[2];
+	struct sockaddr last_src, last_dst;
+	int killed, sources, dests;
+	int ret_ga;
+
+	killed = sources = dests = 0;
+
+	memset(&psk, 0, sizeof(psk));
+	memset(&psk.psk_src.mask, 0xff, sizeof(psk.psk_src.mask));
+	memset(&last_src, 0xff, sizeof(last_src));
+	memset(&last_dst, 0xff, sizeof(last_dst));
+
+	if ((ret_ga = getaddrinfo(state_kill[0], NULL, NULL, &res[0]))) {
+		errx(1, "%s", gai_strerror(ret_ga));
+		/* NOTREACHED */
+	}
+	for (resp[0] = res[0]; resp[0]; resp[0] = resp[0]->ai_next) {
+		if (resp[0]->ai_addr == NULL)
+			continue;
+		/* We get lots of duplicates.  Catch the easy ones */
+		if (memcmp(&last_src, resp[0]->ai_addr, sizeof(last_src)) == 0)
+			continue;
+		last_src = *(struct sockaddr *)resp[0]->ai_addr;
+
+		psk.psk_af = resp[0]->ai_family;
+		sources++;
+
+		if (psk.psk_af == AF_INET)
+			psk.psk_src.addr.v4 =
+			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
+		else if (psk.psk_af == AF_INET6)
+			psk.psk_src.addr.v6 =
+			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
+			    sin6_addr;
+		else 
+			errx(1, "Unknown address family!?!?!");
+
+		if (state_killers > 1) {
+			dests = 0;
+			memset(&psk.psk_dst.mask, 0xff,
+			    sizeof(psk.psk_dst.mask));
+			memset(&last_dst, 0xff, sizeof(last_dst));
+			if ((ret_ga = getaddrinfo(state_kill[1], NULL, NULL,
+			    &res[1]))) {
+				errx(1, "%s", gai_strerror(ret_ga));
+				/* NOTREACHED */
+			}
+			for (resp[1] = res[1]; resp[1];
+			    resp[1] = resp[1]->ai_next) {
+				if (resp[1]->ai_addr == NULL)
+					continue;
+				if (psk.psk_af != resp[1]->ai_family)
+					continue;
+
+				if (memcmp(&last_dst, resp[1]->ai_addr,
+				    sizeof(last_dst)) == 0)
+					continue;
+				last_dst = *(struct sockaddr *)resp[1]->ai_addr;
+
+				dests++;
+
+				if (psk.psk_af == AF_INET)
+					psk.psk_dst.addr.v4 =
+					    ((struct sockaddr_in *)resp[1]->
+					    ai_addr)->sin_addr;
+				else if (psk.psk_af == AF_INET6)
+					psk.psk_dst.addr.v6 =
+					    ((struct sockaddr_in6 *)resp[1]->
+					    ai_addr)->sin6_addr;
+				else 
+					errx(1, "Unknown address family!?!?!");
+
+				if (ioctl(dev, DIOCKILLSTATES, &psk))
+					err(1, "DIOCKILLSTATES");
+				killed += psk.psk_af;
+				/* fixup psk.psk_af */
+				psk.psk_af = resp[1]->ai_family;
+			}
+		} else {
+			if (ioctl(dev, DIOCKILLSTATES, &psk))
+				err(1, "DIOCKILLSTATES");
+			killed += psk.psk_af;
+			/* fixup psk.psk_af */
+			psk.psk_af = res[0]->ai_family;
+		}
+	}
+
+	freeaddrinfo(res[0]);
+	if (res[1])
+		freeaddrinfo(res[1]);
+
+	if ((opts & PF_OPT_QUIET) == 0)
+		printf("killed %d states from %d sources and %d destinations\n",
+		    killed, sources, dests);
+	return 0;
 }
 
 int
@@ -817,7 +922,8 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:m:nN:O:rR:s:t:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hk:l:m:nN:O:rR:s:t:vx:z")) != -1)
+	{
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -832,6 +938,15 @@ main(int argc, char *argv[])
 			break;
 		case 'F':
 			clearopt = optarg;
+			mode = O_RDWR;
+			break;
+		case 'k':
+			if (state_killers >= 2) {
+				warnx("can only specify -k twice");
+				usage();
+				/* NOTREACHED */
+			}
+			state_kill[state_killers++] = optarg;
 			mode = O_RDWR;
 			break;
 		case 'l':
@@ -934,6 +1049,8 @@ main(int argc, char *argv[])
 			error = 1;
 		}
 	}
+	if (state_killers)
+		pfctl_kill_states(dev, opts);
 
 	if (rulesopt != NULL)
 		if (pfctl_rules(dev, rulesopt, opts))

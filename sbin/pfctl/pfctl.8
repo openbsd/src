@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.43 2002/03/21 10:12:42 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.44 2002/03/25 22:05:49 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -35,6 +35,7 @@
 .Op Fl dehnqrvz
 .Op Fl F Ar modifier
 .Op Fl l Ar interface
+.Op Fl k Ar modifier
 .Op Fl m Ar modifier
 .Op Fl N Ar file
 .Op Fl O Ar level
@@ -107,6 +108,10 @@ Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar all
 Flush all of the above.
 .El
+.It Fl k Ar modifier
+Kill all of the state entries from the specified host.  A second -k parameter
+may be specified which will kill all the state entries from the first host
+and to the second host.
 .It Fl h
 Help.
 .It Fl l Ar interface
