@@ -1,4 +1,4 @@
-/*	$Id: error_message.c,v 1.1.1.1 1995/12/14 06:52:32 tholo Exp $	*/
+/*	$Id: error_message.c,v 1.2 1996/01/30 06:00:35 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -19,10 +19,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "error_table.h"
 
 static const char rcsid[] =
-    "$Id: error_message.c,v 1.1.1.1 1995/12/14 06:52:32 tholo Exp $";
+    "$Id: error_message.c,v 1.2 1996/01/30 06:00:35 tholo Exp $";
 static const char copyright[] =
     "Copyright 1986, 1987, 1988 by the Student Information Processing Board\nand the department of Information Systems\nof the Massachusetts Institute of Technology";
 
