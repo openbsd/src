@@ -1791,7 +1791,6 @@
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf
 ./usr/share/sendmail/cf/Makefile
-./usr/share/sendmail/cf/alatar.mc
 ./usr/share/sendmail/cf/chez.cs.mc
 ./usr/share/sendmail/cf/clientproto.mc
 ./usr/share/sendmail/cf/corpse.mc
@@ -1806,7 +1805,6 @@
 ./usr/share/sendmail/cf/cs-ultrix4.mc
 ./usr/share/sendmail/cf/cyrusproto.mc
 ./usr/share/sendmail/cf/elbereth.mc
-./usr/share/sendmail/cf/gandalf.mc
 ./usr/share/sendmail/cf/generic-bsd4.4.mc
 ./usr/share/sendmail/cf/generic-hpux10.mc
 ./usr/share/sendmail/cf/generic-hpux9.mc
@@ -1842,7 +1840,6 @@
 ./usr/share/sendmail/domain/S2K.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/berkeley-only.m4
 ./usr/share/sendmail/domain/generic.m4
-./usr/share/sendmail/domain/sigmasoft.m4
 ./usr/share/sendmail/feature
 ./usr/share/sendmail/feature/accept_unqualified_senders.m4
 ./usr/share/sendmail/feature/accept_unresolvable_domains.m4
