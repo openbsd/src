@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.25 1999/02/16 16:54:47 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.26 1999/02/24 22:22:34 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -364,6 +364,37 @@ struct omsghdr {
 	caddr_t	msg_accrights;		/* access rights sent/received */
 	int	msg_accrightslen;
 };
+
+
+/* Stupid C trick: We can define the structures that are members of union
+   sockaddr_union as empty and later redefine them as non-empty. We CAN'T,
+   however, define them as non-empty and later redefine them as empty. So
+   the empty declarations must be wrapped to ensure that we don't do that.
+ 
+   WARNING: gcc < 2.8 generates incorrect debugging information for this;
+   the symptom is that gdb thinks that all struct sockaddr_*'s are empty
+   structures. gcc >= 2.8 correctly figures out what's going on. - cmetz
+*/
+
+#ifndef _NETINET_IN_H_
+struct sockaddr_in {};
+#endif /* _NETINET_IN_H_ */
+#ifndef _NETINET6_IN6_H
+struct sockaddr_in6 {};
+#endif /* _NETINET6_IN6_H */
+#ifndef _SYS_UN_H_
+struct sockaddr_un {};
+#endif /* _SYS_UN_H_ */
+
+union sockaddr_union {
+       struct sockaddr         sa;
+       struct sockaddr_in      sin;
+       struct sockaddr_in6     sin6;
+       struct sockaddr_un      sun;
+       char __maxsize[128];            /* should probably be MHLEN on BSD */
+};
+
+#define SA_LEN(x) ((x)->sa_len)
 
 #ifndef	_KERNEL
 
