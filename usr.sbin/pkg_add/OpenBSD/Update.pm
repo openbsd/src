@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.31 2004/11/14 11:40:08 espie Exp $
+# $OpenBSD: Update.pm,v 1.32 2004/11/14 19:25:45 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -272,6 +272,19 @@ sub split_libs
 	return $splitted;
 }
 
+sub convert_to_requiring
+{
+	my $pkg = shift;
+
+	my $plist = OpenBSD::PackingList->from_installation($pkg);
+	my $r = OpenBSD::Requiring->new($pkg);
+	for my $item (@{$plist->{pkgdep}}) {
+		$r->add($item->{name});
+	}
+	delete $plist->{pkgdep};
+	$plist->to_installation();
+}
+
 sub walk_depends_closure
 {
 	my ($start, $name, $state) = @_;
@@ -289,11 +302,14 @@ sub walk_depends_closure
 			next if $done->{$pkg2};
 			push(@todo, $pkg2);
 			print "\t$pkg2\n" if $state->{beverbose};
-			$write->add($pkg2) unless $state->{not};
-			my $plist = OpenBSD::PackingList->from_installation($pkg2);
-			OpenBSD::PackingElement::PkgDep->add($plist, $name);
-			$plist->to_installation() unless $state->{not};
 			$done->{$pkg2} = 1;
+			next if $state->{not};
+			$write->add($pkg2);
+			my $l = OpenBSD::Requiring->new($pkg2);
+			if (!$l->list()) {
+				convert_to_requiring($pkg2);
+			}
+			$l->add($name);
 		}
 	}
 }
@@ -344,14 +360,11 @@ sub adjust_dependency
 {
 	my ($dep, $from, $into) = @_;
 
-	my $plist = OpenBSD::PackingList->from_installation($dep);
-	my $items = [];
-	for my $item (@{$plist->{pkgdep}}) {
-		next if $item->{'name'} eq $from;
-		push(@$items, $item);
+	my $l = OpenBSD::Requiring->new($dep);
+	if (!$l->list()) {
+		convert_to_requiring($dep);
 	}
-	$plist->{pkgdep} = $items;
-	OpenBSD::PackingElement::PkgDep->add($plist, $into);
-	$plist->to_installation();
+	$l->delete($from);
+	$l->add($into);
 }
 1;

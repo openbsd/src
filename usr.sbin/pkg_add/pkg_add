@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.121 2004/11/14 13:20:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.122 2004/11/14 19:25:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -423,8 +423,11 @@ sub really_add($$)
 		if (defined $handle->{solved_dependencies}) {
 			require OpenBSD::RequiredBy;
 
+			my $r = OpenBSD::Requiring->new($pkgname);
+
 			for my $dep (@{$handle->{solved_dependencies}}) {
 				OpenBSD::RequiredBy->new($dep)->add($pkgname);
+				$r->add($dep);
 			}
 		}
 	}
@@ -548,9 +551,6 @@ sub install_package
 				return () unless $forced{libdepends};
 			}
 		}
-	}
-	for my $dep (@{$handle->{solved_dependencies}}) {
-		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
 	really_add($handle, $state);
 	$state->{conflict_list}->{$plist->pkgname()} = $handle->{conflicts};
