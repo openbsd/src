@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.40 2003/07/21 19:44:05 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.41 2003/07/21 19:44:33 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.40 2003/07/21 19:44:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.41 2003/07/21 19:44:33 deraadt Exp $";
 #endif
 
 
@@ -525,7 +525,7 @@ rarp_bootable(u_int32_t addr)
  * is on network 'net'; 'netmask' is a mask indicating the network portion
  * of the address.
  */
-u_int32_t
+static u_int32_t
 choose_ipaddr(u_int32_t **alist, u_int32_t net, u_int32_t netmask)
 {
 	for (; *alist; ++alist) {
