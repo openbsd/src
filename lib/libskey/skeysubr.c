@@ -11,7 +11,7 @@
  *
  * S/KEY misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.18 1998/07/03 01:08:14 angelos Exp $
+ * $OpenBSD: skeysubr.c,v 1.19 2001/01/26 16:06:40 millert Exp $
  */
 
 #include <stdio.h>
@@ -155,8 +155,8 @@ keycrunch_sha1(result, seed, passwd)
 {
 	char *buf;
 	SHA1_CTX sha;
-	u_int32_t results[5];
 	unsigned int buflen;
+	int i, j;
 
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
@@ -169,15 +169,25 @@ keycrunch_sha1(result, seed, passwd)
 	sevenbit(buf);
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)buf, buflen);
-	SHA1Final((unsigned char *)results, &sha);
+	SHA1Final(NULL, &sha);
 	(void)free(buf);
 
 	/* Fold 160 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-	results[0] ^= results[4];
+	sha.state[0] ^= sha.state[2];
+	sha.state[1] ^= sha.state[3];
+	sha.state[0] ^= sha.state[4];
 
-	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
+	/*
+	 * SHA1 is a big endian algorithm but RFC2289 mandates that
+	 * the result be in little endian form, so we copy to the
+	 * result buffer manually.
+	 */
+	for (i = 0, j = 0; j < 8; i++, j += 4) {
+		result[j]   = (u_char)(sha.state[i] & 0xff);
+		result[j+1] = (u_char)((sha.state[i] >> 8) & 0xff);
+		result[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
+		result[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
+	}
 
 	return(0);
 }
@@ -269,18 +279,28 @@ f_sha1(x)
 	char *x;
 {
 	SHA1_CTX sha;
-	u_int32_t results[5];
+	int i, j;
 
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	SHA1Final((unsigned char *)results, &sha);
+	SHA1Final(NULL, &sha);
 
 	/* Fold 160 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-	results[0] ^= results[4];
+	sha.state[0] ^= sha.state[2];
+	sha.state[1] ^= sha.state[3];
+	sha.state[0] ^= sha.state[4];
 
-	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
+	/*
+	 * SHA1 is a big endian algorithm but RFC2289 mandates that
+	 * the result be in little endian form, so we copy to the
+	 * result buffer manually.
+	 */
+	for (i = 0, j = 0; j < 8; i++, j += 4) {
+		x[j]   = (u_char)(sha.state[i] & 0xff);
+		x[j+1] = (u_char)((sha.state[i] >> 8) & 0xff);
+		x[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
+		x[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
+	}
 }
 
 static void
