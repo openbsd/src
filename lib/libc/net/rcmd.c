@@ -99,6 +99,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			return (-1);
 		}
 		fcntl(s, F_SETOWN, pid);
+		bzero(&sin, sizeof sin);
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_family = hp->h_addrtype;
 		sin.sin_port = rport;
