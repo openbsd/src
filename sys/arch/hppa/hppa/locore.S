@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.103 2003/01/15 12:33:34 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.104 2003/02/12 00:43:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1089,9 +1089,12 @@ ENTRY(TLABEL(emu),0)
 	comib,=	4, r9, TLABEL(all)
 	ldi	T_ILLEGAL, r1
 
-	extru	r8, 25, 3, r9	/* only fpu coprocessor emulation now */
-	comib,<< 4, r9, TLABEL(all)
-	ldi	T_ILLEGAL, r1
+	/*
+	 * pass through for all coprocessors now and
+	 * do not check the uid here.
+	 * in case that piece does not exist emulate
+	 * or the trap will be generted later.
+	 */
 
 	/* if we are already enabled and hit again, emulate */
 	mfctl	ccr, r1
@@ -1099,6 +1102,9 @@ ENTRY(TLABEL(emu),0)
 	b,n	$fpusw_set
 	nop
 
+	mtctl	r0, ccr		/* cause a reload after exception */
+	ldil	L%fpu_curpcb, r1
+	stw	r0, R%fpu_curpcb(r1)
 #if 0
 	/* here we emulate the fld/fst */
 	mfctl	iir, r1
@@ -1111,6 +1117,7 @@ ENTRY(TLABEL(emu),0)
 	comib,=	0x9, r9, TLABEL(all)
 	ldi	T_ILLEGAL, r1
 #endif
+	mfctl	iir, r1
 	.import	$fpu_emulate, code
 	b	$fpu_emulate
 	nop
@@ -2120,6 +2127,7 @@ ENTRY($fpu_emulate,320)
 	ldil	L%fpemu_stack, r31
 	ldw	R%fpemu_stack(r31), r31
 
+	/* stw	r1 , TF_R1 (r31) shadowed */
 	stw	r2 , TF_R2 (r31)
 	stw	r3 , TF_R3 (r31)
 #ifdef DDB
@@ -2197,7 +2205,7 @@ ENTRY($fpu_emulate,320)
 	ldw	TF_R3 (r31), r3
 	mtsar	r1
 	copy	ret0, r1
-#ifdef DDB1
+#ifdef DDB
 	ldw	TF_R4 (r31), r4
 	ldw	TF_R5 (r31), r5
 	ldw	TF_R6 (r31), r6
