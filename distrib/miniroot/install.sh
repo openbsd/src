@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.95 2002/04/12 03:24:02 millert Exp $
+#	$OpenBSD: install.sh,v 1.96 2002/04/20 13:42:52 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -294,19 +294,11 @@ _oifs=$IFS
 IFS=
 resp=
 while [ -z "$resp" ]; do
-	echo -n "Password (will not echo): "
-	stty -echo
-	getresp -n
-	stty echo
-	echo
+	askpass "Password (will not echo):"
 	_password=$resp
 
-	echo -n "Password (again): "
-	stty -echo
-	getresp -n
-	stty echo
-	echo
-	if [ "${_password}" != "${resp}" ]; then
+	askpass "Password (again):"
+	if [ "$_password" != "$resp" ]; then
 		echo "Passwords do not match, try again."
 		resp=
 	fi

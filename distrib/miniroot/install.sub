@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.205 2002/04/13 21:03:58 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.206 2002/04/20 13:42:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -84,35 +84,37 @@
 # include machine dependent subroutines
 . install.md
 
-getresp() {
-	local _no_shell=0
-
-	# -n option means don't try to run shell commands
-	if [ "$1" = "-n" ]; then
-		_no_shell=1
-		shift
-	fi
-
+# Ask for a password, saving the input in $resp.
+#    Display $1 as the prompt.
+#    *Don't* allow the '!' options that getresp does.
+#    *Don't* echo input.
+askpass() {
 	set -o noglob
-	valid=
-	while [ -z "$valid" ]; do
+	stty -echo
+	read resp?"$1 "
+	stty echo
+	set +o noglob
+	echo
+}
+
+# Ask for user input, saving the input (or the default value
+# given in $1 if the input is empty) in $resp. Allow the user
+# to escape to shells ('!') or execute commands ('!foo')
+# before entering the input.
+getresp() {
+	set -o noglob
+	while : ; do
 		read resp
-		if [ ${_no_shell} -eq 1 ]; then
-			[ -z "$resp" ] && resp=$1
-		else
-			case $resp in
-			"")	resp=$1
-				;;
-			!)	echo "Type 'exit' to return to install."
-				sh
-				continue
-				;;
-			!*)	eval ${resp#?}
-				continue
-				;;
-			esac
-		fi
-		valid=true
+		case $resp in
+		!)	echo "Type 'exit' to return to install."
+			sh
+			;;
+		!*)	eval ${resp#?}
+			;;
+		*)	: ${resp:=$1}
+			break
+			;;
+		esac
 	done
 	set +o noglob
 }
@@ -1239,11 +1241,7 @@ __EOT
 		if [ "${_ftp_server_login}" != "anonymous" ]; then
 			resp=
 			while [ -z "$resp" ] ; do
-				echo -n "Password (will not echo): "
-				stty -echo
-				getresp -n "$_ftp_server_password"
-				stty echo
-				echo
+				askpass "Password (will not echo):"
 				_ftp_server_password=$resp
 			done
 		else
