@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.h,v 1.7 2002/03/30 01:21:56 drahn Exp $	*/
+/*	$OpenBSD: keyboard.h,v 1.8 2002/05/09 09:56:57 maja Exp $	*/
 /*	$NetBSD: keyboard.h,v 1.1 1998/05/15 10:15:54 tsubai Exp $	*/
 
 /*-
@@ -87,7 +87,11 @@ unsigned char keyboard[128][4] = {
 	{ /*   0x07, */       'x',       'X',         0x18,	 45 },
 	{ /*   0x08, */       'c',       'C',         0x03,	 46 },
 	{ /*   0x09, */       'v',       'V',         0x16,	 47 },
-	{ /*   0x0A, */      0x00,      0x00,         0x00,	  0 },
+#ifdef FIX_SV_X_KBDBUG
+	{ /*   0x0A, */      0x00,      0x00,         0x00,	 41 },
+#else
+	{ /*   0x0A, */      0x00,      0x00,         0x00,	 86 },
+#endif
 	{ /*   0x0B, */       'b',       'B',         0x02,	 48 },
 	{ /*   0x0C, */       'q',       'Q',         0x11,	 16 },
 	{ /*   0x0D, */       'w',       'W',         0x17,	 17 },
@@ -127,7 +131,11 @@ unsigned char keyboard[128][4] = {
 	{ /*   0x2F, */       '.',       '>',         0x00,	 52 },
 	{ /*   0x30, */      0x09,      0x09,         0x09,	 15 },
 	{ /*   0x31, */       ' ',       ' ',         0x00,	 57 },
+#ifdef FIX_SV_X_KBDBUG
+	{ /*   0x32, */       '`',       '~',         0x00,	 86 },
+#else
 	{ /*   0x32, */       '`',       '~',         0x00,	 41 },
+#endif
 	{ /*   0x33, */      0x7F,      0x7F,         0x7F,	211 }, /* Delete */
 	{ /*   0x34, */      0x00,      0x00,         0x00,	105 }, /* MODE/KP_Enter */
 	{ /*   0x35, */      0x1B,      0x1B,         0x1B,	  1 },
