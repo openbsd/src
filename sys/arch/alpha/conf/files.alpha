@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.8 1995/11/23 02:35:27 cgd Exp $
+#	$NetBSD: files.alpha,v 1.9 1995/12/20 00:14:19 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -59,18 +59,19 @@ file	arch/alpha/pci/wscons.c		wsc		needs-flag
 # TurboChannel Devices
 #
 
-# the turbochannel bus itself
-device tc at mainbus { slot = -1, offset = -1 }
-file	arch/alpha/tc/tc.c		tc		needs-flag
-file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
+include "../../../dev/tc/files.tc"
+
+device tcasic at mainbus: tcbus
+file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
+file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
 
 # the TurboChannel IOCTL ASIC
-device asic at tc { offset = -1 }	# not really optional
-file	arch/alpha/tc/asic.c		asic		needs-flag
+device ioasic at tc { offset = -1 }
+file	arch/alpha/tc/ioasic.c		ioasic		needs-flag
 
 # the TurboChannel clock (XXX)
-# device clock at asic 			# not really optional
+# device clock at ioasic			# not really optional
 #file	arch/alpha/alpha/clock.c	clock
 
 # Smart Frame buffer (XXX NOT YET SUPPORTED)
@@ -78,7 +79,7 @@ device sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
 # 8530 UARTs
-device scc at asic
+device scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
 # the TCDS ASIC
@@ -90,10 +91,9 @@ device esp at tcds: scsi
 file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
 
-# Baseboard Lance ethernet.  (XXX option slot lance)
-device le at asic: ifnet, ether
-file	arch/alpha/tc/if_le.c		le		needs-count
-
+# Baseboard Lance ethernet.
+device le at ioasic, tc: ether, ifnet
+file	dev/tc/if_le.c			le	needs-flag # for le_iomem
 
 #
 # ISA Bus support
@@ -173,7 +173,7 @@ file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 # Devices that can live on multiple busses
 #
 
-device clock at isa, asic				# not really optional
+device clock at isa, ioasic				# not really optional
 file	arch/alpha/alpha/clock.c	clock
 file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
 					dec_2100_a50 dec_kn20aa dec_axppci_33

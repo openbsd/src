@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_NFS,v 1.3 1995/11/23 02:35:06 cgd Exp $
+#	$NetBSD: GENERIC_NFS,v 1.4 1995/12/20 00:14:16 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -56,15 +56,18 @@ config		netbsd_nfs	root on nfs swap on nfs
 mainbus0 at	root
 cpu*	at	mainbus0
 
+# TurboChannel host bus adapter support
+tcasic*	at	mainbus0
+
 # TurboChannel bus support
-tc*	at	mainbus0
+tc*	at	tcasic?
 
 # TurboChannel devices
-asic0	at	tc? slot ? offset ?
-clock0	at	asic? offset ?
-le0	at	asic? offset ?
-scc0	at	asic? offset ?
-scc1	at	asic? offset ?
+ioasic0	at	tc? slot ? offset ?
+clock0	at	ioasic? offset ?
+le0	at	ioasic? offset ?
+scc0	at	ioasic? offset ?
+scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?

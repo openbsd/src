@@ -1,4 +1,4 @@
-#	$NetBSD: MACALLAN,v 1.6 1995/11/23 02:35:13 cgd Exp $
+#	$NetBSD: MACALLAN,v 1.7 1995/12/20 00:14:17 cgd Exp $
 #
 # Kernel for macallan.dssc.cs.cmu.edu.
 
@@ -41,15 +41,18 @@ config		netbsd	root on sd0 swap on sd0 and sd1
 mainbus0 at	root
 cpu*	at	mainbus0
 
+# TurboChannel host bus adapter support
+tcasic*	at	mainbus0
+
 # TurboChannel bus support
-tc*	at	mainbus0
+tc*	at	tcasic?
 
 # TurboChannel devices
-asic0	at	tc? slot ? offset ?
-clock0	at	asic? offset ?
-le0	at	asic? offset ?
-scc0	at	asic? offset ?
-scc1	at	asic? offset ?
+ioasic0	at	tc? slot ? offset ?
+clock0	at	ioasic? offset ?
+le0	at	ioasic? offset ?
+scc0	at	ioasic? offset ?
+scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
