@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.25 2003/06/02 19:38:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.24 2002/07/03 23:39:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.25 2003/06/02 19:38:24 millert Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.17 2002/11/25 07:40:09 itojun Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.18 2003/06/02 19:38:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.17 2002/11/25 07:40:09 itojun Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.18 2003/06/02 19:38:24 millert Exp $";
 #endif /* not lint */
 
 /*
