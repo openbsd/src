@@ -100,9 +100,9 @@ NOTES:
 
 DistributionDescription(ten)
 
-OpenBSDbase(shared,23.4M,70.8M)
+OpenBSDbase(23.4M,70.8M,shared)
 
-OpenBSDcomp(shared,19.7M,68.0M)
+OpenBSDcomp(19.7M,68.0M,shared)
 
 OpenBSDetc(1.0M,3.5M)
 

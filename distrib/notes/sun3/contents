@@ -20,9 +20,9 @@ the OpenBSD System onto Useful Media" for instructions on either method.
 
 DistributionDescription(nine)
 
-OpenBSDbase(shared,21.1M,63.6M)
+OpenBSDbase(21.1M,63.6M,shared)
 
-OpenBSDcomp(shared,14.2M,42.0M)
+OpenBSDcomp(14.2M,42.0M,shared)
 
 OpenBSDetc(1.0M,3.2M)
 

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.16 2001/09/24 19:31:43 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.17 2001/09/24 20:13:22 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -59,29 +59,29 @@ the "MACHINE" subdirectory of the OpenBSD OSREV distribution tree,
 and are as follows:-:})dnl
 dnl
 dnl
-dnl OpenBSDbase( compressed size, uncompressed size )
+dnl OpenBSDbase( compressed size, uncompressed size [, shared])
 dnl
 define({:-OpenBSDbase-:},
 {:-	base{:--:}OSrev	 The OpenBSD/MACHINE OSREV base binary distribution.  You
 		 MUST install this distribution set.  It contains the
 		 base OpenBSD utilities that are necessary for the
-		 system to run and be minimally functional.
-		 ifelse(X$1,Xshared,{:-It includes shared library support, and excludes
-		 everything described below.showsize($2,$3)-:},showsize($1,$2))-:})dnl
+		 system to run and be minimally functional.ifelse(X$3,Xshared,{:-
+		 It includes shared library support, and excludes
+		 everything described below.-:})showsize($1,$2)-:})dnl
 dnl
 dnl
-dnl OpenBSDcomp( compressed size, uncompressed size )
+dnl OpenBSDcomp( compressed size, uncompressed size [, shared])
 dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools
 		 relating to C, C++, and FORTRAN (yes, there are two!) are
 		 supported.  This set includes the system {:-include-:} files
 		 (/usr/{:-include-:}), the linker, the compiler tool chain,
-		 and the various system libraries{:--:}ifelse(X$1,Xshared,{:- (except the shared
+		 and the various system libraries{:--:}ifelse(X$3,Xshared,{:- (except the shared
 		 libraries, which are included as part of the base set).-:},.)
 		 This set also includes the manual pages for all
 		 of the utilities it contains, as well as the system
-		 call and library manual pages.ifelse(X$1,Xshared,showsize($2,$3),showsize($1.$2))-:})dnl
+		 call and library manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDetc( compressed size, uncompressed size )

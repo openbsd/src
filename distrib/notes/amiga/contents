@@ -30,9 +30,9 @@ Installation/upgrade miniroot file system:
 
 DistributionDescription(ten)
 
-OpenBSDbase(shared,19.3M,61.4M)
+OpenBSDbase(19.3M,61.4M,shared)
 
-OpenBSDcomp(shared,13.1M,30.6M)
+OpenBSDcomp(13.1M,30.6M,shared)
 
 OpenBSDetc(982.6K,3.3M)
 

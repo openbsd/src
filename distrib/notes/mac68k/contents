@@ -21,9 +21,9 @@ OpenBSDdistsets
 
 DistributionDescription(ten)
 
-OpenBSDbase(shared,16.0M,47.4M)
+OpenBSDbase(16.0M,47.4M,shared)
 
-OpenBSDcomp(shared,10.6M,33.6M)
+OpenBSDcomp(10.6M,33.6M,shared)
 
 OpenBSDetc(160.1K,690.0K)
 

@@ -17,9 +17,9 @@ OpenBSDrd
 
 DistributionDescription(ten)
 
-OpenBSDbase(shared,16.5M,49.6M)
+OpenBSDbase(16.5M,49.6M,shared)
 
-OpenBSDcomp(shared,10.6M,33.5M)
+OpenBSDcomp(10.6M,33.5M,shared)
 
 OpenBSDetc(162.4K,730.0K)
 

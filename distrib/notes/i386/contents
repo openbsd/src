@@ -31,9 +31,9 @@ useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(shared,17.4M,49.2M)
+OpenBSDbase(17.4M,49.2M,shared)
 
-OpenBSDcomp(shared,11.2M,34.7M)
+OpenBSDcomp(11.2M,34.7M,shared)
 
 OpenBSDetc(161.5K,730.0K)
 

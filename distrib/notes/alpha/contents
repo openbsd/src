@@ -19,9 +19,9 @@ OpenBSDfloppydesc
 
 DistributionDescription(ten)
 
-OpenBSDbase(shared,49.9M,133.6M)
+OpenBSDbase(49.9M,133.6M,shared)
 
-OpenBSDcomp(shared,18.0M,65.6M)
+OpenBSDcomp(18.0M,65.6M,shared)
 
 OpenBSDetc(160.6K,720.0K)
 

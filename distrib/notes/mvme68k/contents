@@ -24,9 +24,9 @@ Useful Media" for more information.
 
 DistributionDescription(nine)
 
-OpenBSDbase(shared,11.2M,33.9M)
+OpenBSDbase(11.2M,33.9M,shared)
 
-OpenBSDcomp(shared,7.0M,23.5M)
+OpenBSDcomp(7.0M,23.5M,shared)
 
 OpenBSDetc(92K,490K)
 
