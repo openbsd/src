@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_gif.c,v 1.13 2001/02/20 10:33:28 itojun Exp $	*/
-/*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.14 2001/02/20 13:50:53 itojun Exp $	*/
+/*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,11 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*
- * gif.c
- */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +245,10 @@ gif_ioctl(ifp, cmd, data)
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
-	struct sockaddr *sa, *dst, *src;
+	struct sockaddr *dst, *src;
+	struct sockaddr *sa;
+	int i;
+	struct gif_softc *sc2;
 		
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -280,6 +278,7 @@ gif_ioctl(ifp, cmd, data)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
+	case SIOCSLIFPHYADDR:
 		switch (cmd) {
 #ifdef INET
 		case SIOCSIFPHYADDR:
@@ -287,92 +286,148 @@ gif_ioctl(ifp, cmd, data)
 				&(((struct in_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_dstaddr);
-			if (src->sa_len != sizeof(struct sockaddr_in) ||
-			    dst->sa_len != sizeof(struct sockaddr_in))
-				return EINVAL;
-			if (src->sa_family != AF_INET ||
-			    dst->sa_family != AF_INET)
-				return EAFNOSUPPORT;
-
-			/* only one gif can have dst = INADDR_ANY */
-#define satosaddr(sa) (((struct sockaddr_in *)(sa))->sin_addr.s_addr)
-
-			if (satosaddr(dst) == INADDR_ANY) {
-				int i;
-				struct gif_softc *sc2;
-
-			  	for (i = 0, sc2 = gif; i < ngif; i++, sc2++) {
-					if (sc2 == sc) continue;
-					if (sc2->gif_pdst &&
-					    satosaddr(sc2->gif_pdst)
-						== INADDR_ANY) {
-					    error = EADDRNOTAVAIL;
-					    goto bad;
-					}
-				}
-			}
-			size = sizeof(struct sockaddr_in);
 			break;
-#endif /* INET */
+#endif
 #ifdef INET6
 		case SIOCSIFPHYADDR_IN6:
 			src = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_dstaddr);
-			if (src->sa_len != sizeof(struct sockaddr_in6) ||
-			    dst->sa_len != sizeof(struct sockaddr_in6))
-				return EINVAL;
-			if (src->sa_family != AF_INET6 ||
-			    dst->sa_family != AF_INET6)
-				return EAFNOSUPPORT;
-
-			/* only one gif can have dst = in6addr_any */
-#define satoin6(sa) (&((struct sockaddr_in6 *)(sa))->sin6_addr)
-
-			if (IN6_IS_ADDR_UNSPECIFIED(satoin6(dst))) {
-				int i;
-				struct gif_softc *sc2;
-
-			  	for (i = 0, sc2 = gif; i < ngif; i++, sc2++) {
-					if (sc2 == sc) continue;
-					if (sc2->gif_pdst &&
-					    IN6_IS_ADDR_UNSPECIFIED(
-						satoin6(sc2->gif_pdst)
-								    )) {
-					    error = EADDRNOTAVAIL;
-					    goto bad;
-					}
-				}
-			}
-			size = sizeof(struct sockaddr_in6);
 			break;
-#endif /* INET6 */
+#endif
+		case SIOCSLIFPHYADDR:
+			src = (struct sockaddr *)
+				&(((struct if_laddrreq *)data)->addr);
+			dst = (struct sockaddr *)
+				&(((struct if_laddrreq *)data)->dstaddr);
+		}
+
+		/* sa_family must be equal */
+		if (src->sa_family != dst->sa_family)
+			return EINVAL;
+
+		/* validate sa_len */
+		switch (src->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if (src->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			if (src->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			break;
+#endif
 		default:
-			error = EPROTOTYPE;
-			goto bad;
+			return EAFNOSUPPORT;
+		}
+		switch (dst->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if (dst->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			if (dst->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			break;
+#endif
+		default:
+			return EAFNOSUPPORT;
+		}
+
+		/* check sa_family looks sane for the cmd */
+		switch (cmd) {
+		case SIOCSIFPHYADDR:
+			if (src->sa_family == AF_INET)
+				break;
+			return EAFNOSUPPORT;
+#ifdef INET6
+		case SIOCSIFPHYADDR_IN6:
+			if (src->sa_family == AF_INET6)
+				break;
+			return EAFNOSUPPORT;
+#endif /* INET6 */
+		case SIOCSLIFPHYADDR:
+			/* checks done in the above */
 			break;
 		}
-		if (sc->gif_psrc != NULL)
-			free((caddr_t)sc->gif_psrc, M_IFADDR);
-		if (sc->gif_pdst != NULL)
-			free((caddr_t)sc->gif_pdst, M_IFADDR);
 
-		sa = (struct sockaddr *)malloc(size, M_IFADDR, M_WAITOK);
-		bzero((caddr_t)sa, size);
-		bcopy((caddr_t)src, (caddr_t)sa, size);
+		for (i = 0; i < ngif; i++) {
+			sc2 = gif + i;
+			if (sc2 == sc)
+				continue;
+			if (!sc2->gif_pdst || !sc2->gif_psrc)
+				continue;
+			if (sc2->gif_pdst->sa_family != dst->sa_family ||
+			    sc2->gif_pdst->sa_len != dst->sa_len ||
+			    sc2->gif_psrc->sa_family != src->sa_family ||
+			    sc2->gif_psrc->sa_len != src->sa_len)
+				continue;
+			/* can't configure same pair of address onto two gifs */
+			if (bcmp(sc2->gif_pdst, dst, dst->sa_len) == 0 &&
+			    bcmp(sc2->gif_psrc, src, src->sa_len) == 0) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
+
+			/* can't configure multiple multi-dest interfaces */
+#define multidest(x) \
+	(((struct sockaddr_in *)(x))->sin_addr.s_addr == INADDR_ANY)
+#ifdef INET6
+#define multidest6(x) \
+	(IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)(x))->sin6_addr))
+#endif
+			if (dst->sa_family == AF_INET &&
+			    multidest(dst) && multidest(sc2->gif_pdst)) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
+#ifdef INET6
+			if (dst->sa_family == AF_INET6 &&
+			    multidest6(dst) && multidest6(sc2->gif_pdst)) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
+#endif
+		}
+
+		if (sc->gif_psrc)
+			free((caddr_t)sc->gif_psrc, M_IFADDR);
+		sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
+		bcopy((caddr_t)src, (caddr_t)sa, src->sa_len);
 		sc->gif_psrc = sa;
-		
-		sa = (struct sockaddr *)malloc(size, M_IFADDR, M_WAITOK);
-		bzero((caddr_t)sa, size);
-		bcopy((caddr_t)dst, (caddr_t)sa, size);
+
+		if (sc->gif_pdst)
+			free((caddr_t)sc->gif_pdst, M_IFADDR);
+		sa = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
+		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
-		
-		ifp->if_flags |= IFF_UP | IFF_RUNNING;
+
+		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
 		if_up(ifp);		/* send up RTM_IFINFO */
 
 		error = 0;
 		break;
+
+#ifdef SIOCDIFPHYADDR
+	case SIOCDIFPHYADDR:
+		if (sc->gif_psrc) {
+			free((caddr_t)sc->gif_psrc, M_IFADDR);
+			sc->gif_psrc = NULL;
+		}
+		if (sc->gif_pdst) {
+			free((caddr_t)sc->gif_pdst, M_IFADDR);
+			sc->gif_pdst = NULL;
+		}
+		/* change the IFF_{UP, RUNNING} flag as well? */
+		break;
+#endif
 			
 	case SIOCGIFPSRCADDR:
 #ifdef INET6
@@ -433,6 +488,31 @@ gif_ioctl(ifp, cmd, data)
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		break;
+
+	case SIOCGLIFPHYADDR:
+		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+			error = EADDRNOTAVAIL;
+			goto bad;
+		}
+
+		/* copy src */
+		src = sc->gif_psrc;
+		dst = (struct sockaddr *)
+			&(((struct if_laddrreq *)data)->addr);
+		size = sizeof(((struct if_laddrreq *)data)->addr);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+
+		/* copy dst */
+		src = sc->gif_pdst;
+		dst = (struct sockaddr *)
+			&(((struct if_laddrreq *)data)->dstaddr);
+		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
 		if (src->sa_len > size)
 			return EINVAL;
 		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);

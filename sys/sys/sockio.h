@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.18 2000/12/31 00:14:59 angelos Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.19 2001/02/20 13:50:53 itojun Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -95,6 +95,9 @@
 #define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif addres */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
+#define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
+#define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
+#define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
 #define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */

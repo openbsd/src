@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.42 2001/02/13 19:49:32 art Exp $	*/
+/*	$OpenBSD: if.c,v 1.43 2001/02/20 13:50:53 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -797,9 +797,11 @@ ifioctl(so, cmd, data, p)
 	}
 
 	case SIOCSIFPHYADDR:
+	case SIOCDIFPHYADDR:
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif
+	case SIOCSLIFPHYADDR:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
@@ -808,6 +810,7 @@ ifioctl(so, cmd, data, p)
 		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
+	case SIOCGLIFPHYADDR:
 	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
