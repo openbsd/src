@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.23 2001/07/09 07:05:02 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.24 2001/08/30 17:25:35 millert Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -103,12 +103,12 @@ static char	 title[80];	/* ``pr'' title */
 static int	 tof;		/* true if at top of form */
 
 static char	class[32];		/* classification field */
-static char	fromhost[32];		/* user's host machine */
+static char	fromhost[MAXHOSTNAMELEN]; /* user's host machine */
 				/* indentation size in static characters */
 static char	indent[10] = "-i0"; 
-static char	jobname[100];		/* job or file name */
+static char	jobname[NAME_MAX];	/* job or file name */
 static char	length[10] = "-l";	/* page length in lines */
-static char	logname[MAXLOGNAME];		/* user's login name */
+static char	logname[MAXLOGNAME];	/* user's login name */
 static char	pxlength[10] = "-y";	/* page length in pixels */
 static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXXXXXX"; /* file name for filter output */
