@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.3 1996/05/04 08:13:54 deraadt Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.4 1996/05/14 01:06:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -239,9 +239,10 @@ main(argc, argv)
 
 		/* Create original format password file entry */
 		if (makeold)
-			(void)fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
+			if (fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
 			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
-			    pwd.pw_dir, pwd.pw_shell);
+			    pwd.pw_dir, pwd.pw_shell) == EOF)
+				error("write old");
 	}
 
 	/* Store YP token, if needed. */
@@ -255,10 +256,12 @@ main(argc, argv)
 			error("put");
 	}
 
-	(void)(dp->close)(dp);
+	if ((dp->close)(dp))
+		error("close dp");
 	if (makeold) {
 		(void)fflush(oldfp);
-		(void)fclose(oldfp);
+		if (fclose(oldfp) == EOF)
+			error("close old");
 	}
 
 	/* Open the temporary encrypted password database. */
@@ -327,7 +330,8 @@ main(argc, argv)
 			error("put");
 	}
 
-	(void)(edp->close)(edp);
+	if ((edp->close)(edp))
+		error("close edp");
 
 	/* Set master.passwd permissions, in case caller forgot. */
 	(void)fchmod(fileno(fp), S_IRUSR|S_IWUSR);
