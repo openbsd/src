@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/11/19 05:07:03 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2000/01/31 21:11:12 d Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
@@ -56,7 +56,7 @@ install: maninstall
 		install-binaries
 
 clean cleandir:
-	 -@test -e Makefile && ${MAKE} distclean
+	 @test ! -e Makefile || ${MAKE} distclean
 
 depend:
 	# Nothing here so far...
