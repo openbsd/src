@@ -1,3 +1,5 @@
+/* $OpenBSD: icmpv6.h,v 1.2 1999/12/10 08:53:17 angelos Exp $ */
+
 /*
 %%% portions-copyright-nrl-97
 Portions of this software are Copyright 1997-1998 by Randall Atkinson,

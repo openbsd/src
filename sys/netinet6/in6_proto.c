@@ -1,3 +1,5 @@
+/* $OpenBSD: in6_proto.c,v 1.5 1999/12/10 08:53:17 angelos Exp $ */
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
