@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.17 2002/12/19 16:32:59 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.18 2003/01/10 13:50:56 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int   wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 
 /*
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
- * WDC_TRY_AGAIN. Must be called at splio().
+ * WDC_TRY_AGAIN. Must be called at splbio().
  */
 int
 wdc_ata_bio(drvp, ata_bio)
