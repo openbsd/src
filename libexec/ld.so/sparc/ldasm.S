@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2002/07/27 15:35:55 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.4 2002/07/29 15:20:38 art Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -104,7 +104,7 @@ _dl_start:
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dynp,dl_data)
 	 mov	0, %o3			! dynp = 0
 
-	add	%sp, DL_DATA_SIZE, %sp		! restore stack
+	add	%sp, DL_DATA_SIZE, %sp	! restore stack
 	
 	jmp	%o0
 	 mov	%l1, %g1		! restore ps_strings

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2002/07/27 16:56:01 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2002/07/29 15:20:38 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -98,7 +98,7 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/* PC10 */
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(10),	/* PC22 */
 	      _RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(2),		/* WPLT30 */
-				_RF_SZ(32) | _RF_RS(0),		/* COPY */
+	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* COPY */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
 				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
@@ -127,7 +127,6 @@ static int reloc_target_flags[] = {
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
-#define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
@@ -157,7 +156,31 @@ static int reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-void _dl_reloc_plt(Elf_Word *where, Elf_Addr value);
+static inline void
+_dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
+{
+	/*
+	 * At the PLT entry pointed at by `where', we now construct
+	 * a direct transfer to the now fully resolved function
+	 * address.  The resulting code in the jump slot is:
+	 *
+	 *	sethi	%hi(roffset), %g1
+	 *	sethi	%hi(addr), %g1
+	 *	jmp	%g1+%lo(addr)
+	 *
+	 * We write the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place. Hence the whole
+	 * PLT slot can be atomically change to the new sequence by
+	 * writing the `sethi' instruction at word 2.
+	 */
+#define SETHI	0x03000000
+#define JMP	0x81c06000
+#define NOP	0x01000000
+	where[2] = JMP   | (value & 0x000003ff);
+	where[1] = SETHI | ((value >> 10) & 0x003fffff);
+	__asm __volatile("iflush %0+8" : : "r" (where));
+	__asm __volatile("iflush %0+4" : : "r" (where));
+}
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relasz)
@@ -188,8 +211,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	}
 
 	for (i = 0; i < numrela; i++, relas++) {
-		Elf_Addr *where, value, ooff, mask;
-		Elf_Word type;
+		Elf_Addr *where, ooff;
+		Elf_Word type, value, mask;
 		const Elf_Sym *sym, *this;
 		const char *symn;
 
@@ -202,6 +225,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 
 		where = (Elf_Addr *)(relas->r_offset + loff);
+
+		if (type == R_TYPE(RELATIVE)) {
+			*where += (Elf_Addr)(loff + relas->r_addend);
+			continue;
+		}
 
 		if (RELOC_USE_ADDEND(type))
 			value = relas->r_addend;
@@ -220,13 +248,14 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 				value += loff;
 			} else {
 				this = NULL;
-				ooff = _dl_find_symbol(symn, _dl_objects,
-				    &this, 0, 1);
+				ooff = _dl_find_symbol(symn,
+				    _dl_objects, &this, 0, 1);
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "
 					    "reference '%s'\n",
-					    _dl_progname, object->load_name,
+					    _dl_progname,
+					    object->load_name,
 					    symn);
 					fails++;
 					continue;
@@ -250,7 +279,7 @@ resolve_failed:
 		}
 
 		if (type == R_TYPE(JMP_SLOT)) {
-			_dl_reloc_plt((Elf_Word *)where, value);
+			_dl_reloc_plt(where, value);
 			continue;
 		}
 
@@ -273,8 +302,6 @@ resolve_failed:
 
 		if (RELOC_PC_RELATIVE(type))
 			value -= (Elf_Addr)where;
-		if (RELOC_BASE_RELATIVE(type))
-			value += loff + *where;
 
 		mask = RELOC_VALUE_BITMASK(type);
 		value >>= RELOC_VALUE_RIGHTSHIFT(type);
@@ -283,7 +310,6 @@ resolve_failed:
 		/* We ignore alignment restrictions here */
 		*where &= ~mask;
 		*where |= value;
-
 	}
 
 	/* reprotect the unprotected segments */
@@ -298,50 +324,23 @@ resolve_failed:
 	return (fails);
 }
 
-void
-_dl_reloc_plt(Elf_Word *where, Elf_Addr value)
-{
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-#define SETHI	0x03000000
-#define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm __volatile("iflush %0+8" : : "r" (where));
-	__asm __volatile("iflush %0+4" : : "r" (where));
-}
-
 /*
  * Resolve a symbol at run-time.
  */
-void *
+Elf_Addr
 _dl_bind(elf_object_t *object, Elf_Word reloff)
 {
-	Elf_RelA *rela;
-	Elf_Addr *addr, ooff;
 	const Elf_Sym *sym, *this;
+	Elf_Addr *addr, ooff;
 	const char *symn;
+	Elf_Addr value;
+	Elf_RelA *rela;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(rela->r_info);
 	symn = object->dyn.strtab + sym->st_name;
-
-DL_DEB(("_dl_bind %s\n", symn));
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
 	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
@@ -350,9 +349,11 @@ DL_DEB(("_dl_bind %s\n", symn));
 		*((int *)0) = 0;	/* XXX */
 	}
 
-	_dl_reloc_plt(addr, ooff + this->st_value);
+	value = ooff + this->st_value;
 
-	return (void *)ooff + this->st_value;
+	_dl_reloc_plt(addr, value);
+
+	return (value);
 }
 
 void
@@ -372,7 +373,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	 * PLTGOT is the PLT on the sparc.
 	 * The first entry holds the call the dynamic linker.
 	 * We construct a `call' sequence that transfers
-	 * to `_rtld_bind_start()'.
+	 * to `_dl_bind_start()'.
 	 * The second entry holds the object identification.
 	 * Note: each PLT entry is three words long.
 	 */
@@ -381,8 +382,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 #define NOP     0x01000000
 	pltgot[0] = SAVE;
 	pltgot[1] = CALL |
-	    ((Elf_Addr)&_dl_bind_start -
-	     (Elf_Addr)&pltgot[1]) >> 2;
+	    ((Elf_Addr)&_dl_bind_start - (Elf_Addr)&pltgot[1]) >> 2;
 	pltgot[2] = NOP;
 	pltgot[3] = (Elf_Addr) object;
 }
