@@ -408,7 +408,7 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct ypresp_val yprv;
 	struct timeval  tv;
 	struct ypreq_key yprk;
-	int             r = 0;
+	int             r;
 
 	*outval = NULL;
 	*outvallen = 0;
@@ -422,12 +422,13 @@ again:
 			 inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
 		*outvallen = yprv.valdat.dsize;
 		if ((*outval = malloc(*outvallen + 1)) == NULL) {
-			r = YPERR_YPERR;
-			goto out;
+			_yp_unbind(ysd);
+			return YPERR_YPERR;
 		}
 		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
-		goto out;
+		_yp_unbind(ysd);
+		return 0;
 	}
 #endif
 
