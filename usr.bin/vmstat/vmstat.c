@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.75 2003/02/24 00:28:37 grange Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.76 2003/05/19 05:17:21 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -713,89 +713,12 @@ dointr(void)
 	u_long intrstray[16];
 	char iname[17], fname[31];
 	int i;
-#if 0
-	int mib[2], l, incflag;
-	size_t size;
-	char *intrnames, *intrcount, *intrn, *intrc, *buf1, *buf2;
-#endif
 
 	iname[16] = '\0';
 	uptime = getuptime();
 
 	(void)printf("interrupt             total     rate\n");
 
-#if 0  /* XXX Something else is needed here....get on with it Theo! */
-	if (nlistf == NULL && memf == NULL) {
-	 	mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_INTRNAMES;
-		size = 0;
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
-			err(1, "could not get machdep.intrnames");
-		intrnames = calloc(size, sizeof(char));
-		if (intrnames == NULL)
-			err(1,
-			    "could not allocate memory for interrupt names");
-		if (sysctl(mib, 2, intrnames, &size, NULL, 0) < 0)
-			err(1, "could not get machdep.intrnames");
-
-		mib[1] = CPU_INTRCOUNT;
-		size = 0;
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
-			err(1, "could not get machdep.intrcount");
-		intrcount = calloc(size, sizeof(char));
-		if (intrcount == NULL)
-			err(1,
-			    "could not allocate memory for interrupt count");
-		if (sysctl(mib, 2, intrcount, &size, NULL, 0) < 0)
-			err(1, "could not get machdep.intrcount");
-
-		mib[1] = CPU_INTRSTRAY;
-		size = sizeof(intrstray);
-		if (sysctl(mib, 2, intrstray, &size, NULL, 0) < 0) {
-			warn("could not get machdep.intrstray");
-			bzero(intrstray, sizeof(intrstray));
-		}
-
-		buf1 = intrnames;
-		buf2 = intrcount;
-		i = 0;
-		while ((intrn = strsep(&buf1, ",/")) != NULL) {
-			/* Find what the next delimiter is */
-			for (l = 0; buf2[l] != '\0'; l++) {
-				if (buf2[l] == '/') {
-					/* Don't increase the irq count */
-					incflag = 0;
-					break;
-				} else if (buf2[l] == ',') {
-					incflag = 1;
-					break;
-				}
-			}
-
-			if ((intrc = strsep(&buf2, ",/")) == NULL)
-				errx(1, "unexpected failure matching interrupts with usage counters");
-
-			/* Unused interrupt ? If so, skip this entry */
-			if (intrn[0] == '\0')	{
-				if (incflag)
-					i++;
-				continue;
-			}
-
-			snprintf(fname, sizeof fname, "irq%d/%s", i, intrn);
-			printf("%-16.16s %10lu %8lu\n", fname,
-			       strtoul(intrc, NULL, 10),
-			       strtoul(intrc, NULL, 10) / uptime);
-			inttotal += strtoul(intrc, NULL, 10);
-
-			if (incflag)
-				i++;
-		}
-
-		free(intrnames);
-		free(intrcount);
-	} else
-#endif /* 0 */
 	{
 		kread(X_INTRHAND, intrhand, sizeof(intrhand));
 		kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
