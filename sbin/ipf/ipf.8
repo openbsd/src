@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.10 1999/06/04 02:45:17 aaron Exp $
+.\"	$OpenBSD: ipf.8,v 1.11 1999/07/06 19:15:01 kjell Exp $
 .Dd February 6, 1999
 .Dt IPF 8
 .Os
@@ -7,7 +7,7 @@
 .Nd "alters packet filtering lists for IP packet input and output"
 .Sh SYNOPSIS
 .Nm ipf
-.Op Fl AdDEInorsUvyzZ
+.Op Fl AdDEInorsvyzZ
 .Op Fl l Ar block|pass|nomatch
 .Op Fl F Ar i|o|a|s|S
 .Op Fl f Ar filename
@@ -82,9 +82,6 @@ than the (default) input list.
 Remove matching filter rules rather than add them to the internal lists
 .It Fl s
 Swap the active filter list in use to be the "other" one.
-.It Fl U
-(SOLARIS 2 ONLY) Block packets traveling along the data stream which aren't
-recognized as IP packets.  They will be printed out on the console.
 .It Fl v
 Turn verbose mode on.  Displays information relating to rule processing.
 .It Fl y
