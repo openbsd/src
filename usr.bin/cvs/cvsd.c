@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.7 2004/09/25 12:21:43 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.8 2004/09/27 12:16:05 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -52,6 +52,7 @@
 static void  cvsd_parent_loop (void);
 static void  cvsd_child_loop  (void);
 static int   cvsd_privdrop    (void);
+static void  cvsd_report      (void);
 
 
 extern char *__progname;
@@ -64,10 +65,11 @@ volatile sig_atomic_t running = 1;
 volatile sig_atomic_t restart = 0;
 
 
-uid_t cvsd_uid = -1;
-gid_t cvsd_gid = -1;
+uid_t  cvsd_uid = -1;
+gid_t  cvsd_gid = -1;
 
-
+static char  *cvsd_user = CVSD_USER;
+static char  *cvsd_group = CVSD_GROUP;
 static char  *cvsd_root = NULL;
 static char  *cvsd_conffile = CVSD_CONF;
 static int    cvsd_privfd = -1;
@@ -79,52 +81,39 @@ static volatile sig_atomic_t   cvsd_chnum = 0;
 static volatile sig_atomic_t   cvsd_chmin = CVSD_CHILD_DEFMIN;
 static volatile sig_atomic_t   cvsd_chmax = CVSD_CHILD_DEFMAX;
 static volatile sig_atomic_t   cvsd_sigchld = 0;
+static volatile sig_atomic_t   cvsd_siginfo = 0;
 
 
-void   usage           (void);
-void   sighup_handler  (int);
-void   sigint_handler  (int);
-void   sigchld_handler (int);
-int    cvsd_msghdlr    (struct cvsd_child *, int);
-
-
-/*
- * sighup_handler()
- *
- * Handler for the SIGHUP signal.
- */
-
-void
-sighup_handler(int signo)
-{
-	restart = 1;
-}
+void   usage         (void);
+void   cvsd_sighdlr  (int);
+int    cvsd_msghdlr  (struct cvsd_child *, int);
 
 
 /*
- * sigint_handler()
+ * cvsd_sighdlr()
  *
- * Handler for the SIGINT signal.
+ * Generic signal handler.
  */
 
 void
-sigint_handler(int signo)
+cvsd_sighdlr(int signo)
 {
-	running = 0;
-}
-
-
-/*
- * sigchld_handler()
- *
- * Handler for the SIGCHLD signal.
- */
-
-void
-sigchld_handler(int signo)
-{
-	cvsd_sigchld = 1;
-	signal(SIGCHLD, sigchld_handler);
+	switch (signo) {
+	case SIGHUP:
+		restart = 1;
+		break;
+	case SIGCHLD:
+		cvsd_sigchld = 1;
+		break;
+	case SIGINT:
+	case SIGTERM:
+	case SIGQUIT:
+		running = 0;
+		break;
+	case SIGINFO:
+		cvsd_siginfo = 1;
+		break;
+	}
 }
 
 
@@ -138,14 +127,17 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-dfhpv] [-c config] [-r root] [-s path]\n"
+	    "Usage: %s [-dfhpv] [-c config] [-g group] [-r root] "
+	    "[-s path] [-u user]\n"
 	    "\t-c config\tUse <config> as the configuration file\n"
 	    "\t-d\t\tStart the server in debugging mode (very verbose)\n"
 	    "\t-f\t\tStay in foreground instead of becoming a daemon\n"
+	    "\t-g group\tUse group <group> for privilege revocation\n"
 	    "\t-h\t\tPrint the usage and exit\n"
 	    "\t-p\t\tPerform repository sanity check on startup\n"
 	    "\t-r root\t\tUse <root> as the root directory of the repository\n"
 	    "\t-s path\t\tUse <path> as the path for the CVS server socket\n"
+	    "\t-u user\tUse user <user> for privilege revocation\n"
 	    "\t-v\t\tBe verbose\n",
 	    __progname);
 }
@@ -176,6 +168,9 @@ main(int argc, char **argv)
 		case 'f':
 			foreground = 1;
 			break;
+		case 'g':
+			cvsd_group = optarg;
+			break;
 		case 'h':
 			usage();
 			exit(0);
@@ -189,6 +184,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			cvsd_sock_path = optarg;
+			break;
+		case 'u':
+			cvsd_user = optarg;
 			break;
 		case 'v':
 			cvs_log_filter(LP_FILTER_UNSET, LP_INFO);
@@ -213,22 +211,22 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&cvsd_children);
 
-	pwd = getpwnam(CVSD_USER);
+	pwd = getpwnam(cvsd_user);
 	if (pwd == NULL)
-		err(EX_NOUSER, "failed to get user `%s'", CVSD_USER);
+		err(EX_NOUSER, "failed to get user `%s'", cvsd_user);
 
-	grp = getgrnam(CVSD_GROUP);
+	grp = getgrnam(cvsd_group);
 	if (grp == NULL)
-		err(EX_NOUSER, "failed to get group `%s'", CVSD_GROUP);
+		err(EX_NOUSER, "failed to get group `%s'", cvsd_group);
 
 	cvsd_uid = pwd->pw_uid;
 	cvsd_gid = grp->gr_gid;
 
-	signal(SIGHUP, sighup_handler);
-	signal(SIGINT, sigint_handler);
-	signal(SIGQUIT, sigint_handler);
-	signal(SIGTERM, sigint_handler);
-	signal(SIGCHLD, sigchld_handler);
+	signal(SIGHUP, cvsd_sighdlr);
+	signal(SIGINT, cvsd_sighdlr);
+	signal(SIGQUIT, cvsd_sighdlr);
+	signal(SIGTERM, cvsd_sighdlr);
+	signal(SIGCHLD, cvsd_sighdlr);
 
 	if (!foreground && daemon(0, 0) == -1) {
 		cvs_log(LP_ERRNO, "failed to become a daemon");
@@ -263,6 +261,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	signal(SIGINFO, cvsd_sighdlr);
 	cvsd_parent_loop();
 
 	cvs_log(LP_NOTICE, "shutting down");
@@ -283,8 +282,8 @@ main(int argc, char **argv)
 int
 cvsd_privdrop(void)
 {
-	cvs_log(LP_INFO, "dropping privileges to %s:%s", CVSD_USER,
-	    CVSD_GROUP);
+	cvs_log(LP_INFO, "dropping privileges to %s[%d]:%s[%d]",
+	    cvsd_user, cvsd_uid, cvsd_group, cvsd_gid);
 	if (setgid(cvsd_gid) == -1) {
 		cvs_log(LP_ERRNO, "failed to drop group privileges to %s",
 		    CVSD_GROUP);
@@ -490,7 +489,7 @@ cvsd_child_fork(struct cvsd_child **chpp)
 	signal(SIGCHLD, SIG_IGN);
 	TAILQ_INSERT_TAIL(&cvsd_children, chp, ch_list);
 	cvsd_chnum++;
-	signal(SIGCHLD, sigchld_handler);
+	signal(SIGCHLD, cvsd_sighdlr);
 
 	if (chpp != NULL)
 		*chpp = chp;
@@ -541,7 +540,7 @@ cvsd_child_reap(void)
 			signal(SIGCHLD, SIG_IGN);
 			TAILQ_REMOVE(&cvsd_children, ch, ch_list);
 			cvsd_chnum--;
-			signal(SIGCHLD, sigchld_handler);
+			signal(SIGCHLD, cvsd_sighdlr);
 
 			break;
 		}
@@ -613,6 +612,10 @@ cvsd_parent_loop(void)
 		if (cvsd_sigchld) {
 			cvsd_sigchld = 0;
 			cvsd_child_reap();
+		}
+		if (cvsd_siginfo) {
+			cvsd_siginfo = 0;
+			cvsd_report();
 		}
 
 		nfds = cvsd_chnum + 1;
@@ -731,6 +734,8 @@ cvsd_child_loop(void)
 			break;
 
 		switch (mtype) {
+		case CVSD_MSG_PASSFD:
+			break;
 		case CVSD_MSG_SHUTDOWN:
 			running = 0;
 			break;
@@ -899,4 +904,37 @@ cvsd_set(int what, ...)
 	va_end(vap);
 
 	return (0);
+}
+
+
+/*
+ * cvsd_report()
+ */
+
+static void
+cvsd_report(void)
+{
+	u_int nb_idle, nb_busy, nb_unknown;
+	struct cvsd_child *ch;
+
+	nb_idle = 0;
+	nb_busy = 0;
+	nb_unknown = 0;
+
+	signal(SIGCHLD, SIG_IGN);
+	TAILQ_FOREACH(ch, &cvsd_children, ch_list) {
+		if (ch->ch_state == CVSD_ST_IDLE)
+			nb_idle++;
+		else if (ch->ch_state == CVSD_ST_BUSY)
+			nb_busy++;
+		else if (ch->ch_state == CVSD_ST_UNKNOWN)
+			nb_unknown++;
+	}
+
+	cvs_log(LP_WARN, "%u children, %u idle, %u busy, %u unknown",
+	    cvsd_chnum, nb_idle, nb_busy, nb_unknown);
+
+	TAILQ_FOREACH(ch, &cvsd_children, ch_list)
+		cvs_log(LP_WARN, "");
+	signal(SIGCHLD, cvsd_sighdlr);
 }

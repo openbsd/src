@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsd.8,v 1.2 2004/07/25 03:23:57 jfb Exp $
+.\"	$OpenBSD: cvsd.8,v 1.3 2004/09/27 12:16:06 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\"
@@ -32,10 +32,12 @@
 .Nd Concurrent Versions System daemon
 .Sh SYNOPSIS
 .Nm cvsd
-.Op Fl dfpv
-.Op Fl a Ar aclfile
+.Op Fl dfhpv
+.Op Fl c Ar config
+.Op Fl g Ar group
 .Op Fl r Ar cvsroot
 .Op Fl s Ar sockpath
+.Op Fl u Ar user
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,10 +68,10 @@ and should only be writable by the user.
 .Pp
 The options are as follows:
 .Bl -tag -width "-s sockpath"
-.It Fl a Ar aclfile
+.It Fl c Ar config
 Use
-.Ar aclfile
-as the source file for the Access Control Lists to apply on the repository.
+.Ar config
+as the startup configuration file instead of the default one.
 .It Fl d
 Start the server with debugging enabled.
 This option overrides the
@@ -80,6 +82,12 @@ Stay in foreground instead of performing the usual operations to become
 a daemon.
 This causes all log messages to be printed on standard input or standard
 error, depending on the priority of each message.
+.It Fl g Ar group
+Drop group privileges to the group name or GID specified by
+.Ar group
+instead of the default group.
+.It Fl h
+Print information about the server's usage and exit.
 .It Fl p
 On startup, perform a check on the whole contents of the CVS repository to
 check file permissions and ownership, and print warnings for any files or
@@ -96,6 +104,10 @@ as the CVS repository's root directory.
 Use the path specified by
 .Ar sockpath
 as the file to bind to for the local socket.
+.It Fl u Ar user
+Drop user privileges to the username or UID specified by
+.Ar user
+instead of the default user.
 .It Fl v
 Be verbose.
 .Sh FILES
