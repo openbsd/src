@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.40 1999/06/07 07:18:34 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.41 1999/08/08 00:32:22 niklas Exp $	*/
 
 /*
  * System call switch table.
@@ -30,12 +30,6 @@
 #define compat_10(func) __CONCAT(compat_10_,func)
 #else
 #define compat_10(func) sys_nosys
-#endif
-
-#ifdef COMPAT_22
-#define compat_22(func) __CONCAT(compat_22_,func)
-#else
-#define compat_22(func) sys_nosys
 #endif
 
 #define	s(type)	sizeof(type)
