@@ -1205,6 +1205,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_urlreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_wi_usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uaudioreg.ph
@@ -1555,6 +1556,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ah.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_carp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet/ip_ether.ph
