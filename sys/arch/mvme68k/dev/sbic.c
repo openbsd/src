@@ -1,4 +1,5 @@
-/*	$OpenBSD: sbic.c,v 1.3 1996/04/28 11:24:44 deraadt Exp $ */
+/*	$OpenBSD: sbic.c,v 1.4 1996/05/10 12:42:02 deraadt Exp $ */
+/*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -806,7 +807,7 @@ sbicabort(dev, where)
                     dev->sc_dev.dv_xname, asr);
             sbicreset(dev);
             dev->sc_flags &= ~SBICF_SELECTED;
-            return -1;
+            return SBIC_STATE_ERROR;
         }
 
         printf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
@@ -826,7 +827,7 @@ sbicabort(dev, where)
         dev->sc_flags &= ~SBICF_SELECTED;
     }
 
-    return -1;
+    return SBIC_STATE_ERROR;
 }
 
 
@@ -1004,15 +1005,6 @@ sbicselectbus(dev)
     SET_SBIC_selid(regs, target);
     SET_SBIC_timeo(regs, SBIC_TIMEOUT(250, dev->sc_clkfreq));
 
-    /*
-     * set sync or async
-     */
-    if ( dev->sc_sync[target].state == SYNC_DONE )
-        SET_SBIC_syn(regs, SBIC_SYN(dev->sc_sync[target].offset,
-                                    dev->sc_sync[target].period));
-    else
-        SET_SBIC_syn(regs, SBIC_SYN(0, sbic_min_period));
-
     GET_SBIC_asr(regs, asr);
 
     if ( asr & (SBIC_ASR_INT|SBIC_ASR_BSY) ) {
@@ -1094,7 +1086,7 @@ sbicselectbus(dev)
     /*
      * Enable (or not) reselection
      * XXXSCW This is probably not necessary since we don't use use the
-     * Select-and-Xfer-with-ATN command to initialte a selection...
+     * Select-and-Xfer-with-ATN command to initiate a selection...
      */
     if ( !sbic_enable_reselect && dev->nexus_list.tqh_first == NULL)
         SET_SBIC_rselid (regs, 0);
@@ -1172,11 +1164,43 @@ sbicselectbus(dev)
         GET_SBIC_csr(regs, csr);
     }
 
+    /*
+     * set sync or async
+     */
+    if ( dev->sc_sync[target].state == SYNC_DONE ) {
+#ifdef  DEBUG
+        if ( sync_debug )
+            printf("select(%d): sync reg = 0x%02x\n", target,
+                            SBIC_SYN(dev->sc_sync[target].offset,
+                                     dev->sc_sync[target].period));
+#endif
+        SET_SBIC_syn(regs, SBIC_SYN(dev->sc_sync[target].offset,
+                                    dev->sc_sync[target].period));
+    } else {
+#ifdef  DEBUG
+        if ( sync_debug )
+            printf("select(%d): sync reg = 0x%02x\n", target,
+                            SBIC_SYN(0,sbic_min_period));
+#endif
+        SET_SBIC_syn(regs, SBIC_SYN(0, sbic_min_period));
+    }
+
     return csr;
 }
 
 /*
- * Information Transfer *to* a Scsi Target
+ * Information Transfer *to* a Scsi Target.
+ *
+ * Note: Don't expect there to be an interrupt immediately after all
+ * the data is transferred out. The WD spec sheet says that the Transfer-
+ * Info command for non-MSG_IN phases only completes when the target
+ * next asserts 'REQ'. That is, when the SCSI bus changes to a new state.
+ *
+ * This can have a nasty effect on commands which take a relatively long
+ * time to complete, for example a START/STOP unit command may remain in
+ * CMD phase until the disk has spun up. Only then will the target change
+ * to STATUS phase. This is really only a problem for immediate commands
+ * since we don't allow disconnection for them (yet).
  */
 int
 sbicxfout(regs, len, bp)
@@ -1223,17 +1247,14 @@ sbicxfout(regs, len, bp)
             wait = sbic_data_wait;
         }
 
-    } while ( (asr & SBIC_ASR_INT) == 0 && wait-- > 0 );
-
-    SBIC_TC_GET(regs, len);
-    SBIC_TC_PUT(regs, 0);
+    } while ( len && (asr & SBIC_ASR_INT) == 0 && wait-- > 0 );
 
 #ifdef  DEBUG
     QPRINTF(("sbicxfout done: %d bytes remaining (wait:%d)\n", len, wait));
 #endif
 
     /*
-     * this leaves with one csr to be read
+     * Normally, an interrupt will be pending when this routing returns.
      */
     return(len);
 }
@@ -1302,6 +1323,10 @@ sbicxfin(regs, len, bp)
  * bytes for data.  The transfer direction is determined by the device
  * (i.e., by the scsi bus data xfer phase).  If 'len' is zero, the
  * command must supply no data.
+ *
+ * Note that although this routine looks like it can handle disconnect/
+ * reselect, the fact is that it can't. There is still some work to be
+ * done to clean this lot up.
  */
 int
 sbicicmd(dev, cbuf, clen, buf, len)
@@ -1315,7 +1340,10 @@ sbicicmd(dev, cbuf, clen, buf, len)
     struct sbic_acb *acb = dev->sc_nexus;
     u_char          csr,
                     asr;
-    int             still_busy = 1;
+    int             still_busy = SBIC_STATE_RUNNING;
+#ifdef  DEBUG
+    int             counter = 0;
+#endif
 
     /*
      * Make sure pointers are OK
@@ -1352,106 +1380,113 @@ sbicicmd(dev, cbuf, clen, buf, len)
         /*
          * select the SCSI bus (it's an error if bus isn't free)
          */
-        if ( (dev->sc_flags & SBICF_SELECTED) == 0 ) {
+        if ( (dev->sc_flags & SBICF_SELECTED) == 0 &&
+             still_busy != SBIC_STATE_DISCONNECT ) {
             if ( (csr = sbicselectbus(dev)) == 0 ) {
                 dev->sc_flags &= ~SBICF_ICMD;
                 return(-1);
             }
         } else
+        if ( (asr & (SBIC_ASR_BSY | SBIC_ASR_INT)) == SBIC_ASR_INT )
             GET_SBIC_csr(regs, csr);
+        else
+            csr = 0;
 
-        QPRINTF((">ASR:0x%02x CSR:0x%02x <", asr, csr));
+        if ( csr ) {
 
-        switch ( csr ) {
+            QPRINTF((">ASR:0x%02x CSR:0x%02x< ", asr, csr));
 
-          case SBIC_CSR_S_XFERRED:
-          case SBIC_CSR_DISC:
-          case SBIC_CSR_DISC_1:
-            {
-                u_char  phase;
+            switch ( csr ) {
 
-                dev->sc_flags &= ~SBICF_SELECTED;
-                GET_SBIC_cmd_phase (regs, phase);
+              case SBIC_CSR_S_XFERRED:
+              case SBIC_CSR_DISC:
+              case SBIC_CSR_DISC_1:
+                {
+                    u_char  phase;
 
-                if ( phase == 0x60 ) {
-                    GET_SBIC_tlun (regs, dev->sc_stat[0]);
-                    still_busy = 0; /* done */
-                } else {
+                    dev->sc_flags &= ~SBICF_SELECTED;
+                    GET_SBIC_cmd_phase (regs, phase);
+
+                    if ( phase == 0x60 ) {
+                        GET_SBIC_tlun (regs, dev->sc_stat[0]);
+                        still_busy = SBIC_STATE_DONE; /* done */
+                    } else {
 #ifdef DEBUG
-                    if ( reselect_debug > 1 )
-                        printf("sbicicmd: handling disconnect\n");
+                        if ( reselect_debug > 1 )
+                            printf("sbicicmd: handling disconnect\n");
 #endif
-                    still_busy = SBIC_STATE_DISCONNECT;
+                        still_busy = SBIC_STATE_DISCONNECT;
+                    }
                 }
-            }
-            break;
+                break;
 
-          case SBIC_CSR_XFERRED | CMD_PHASE:
-          case SBIC_CSR_MIS     | CMD_PHASE:
-          case SBIC_CSR_MIS_1   | CMD_PHASE:
-          case SBIC_CSR_MIS_2   | CMD_PHASE:
-            {
-                if ( sbicxfout(regs, clen, cbuf) )
-                    still_busy = sbicabort(dev, "icmd sending cmd");
-            }
-            break;
+              case SBIC_CSR_XFERRED | CMD_PHASE:
+              case SBIC_CSR_MIS     | CMD_PHASE:
+              case SBIC_CSR_MIS_1   | CMD_PHASE:
+              case SBIC_CSR_MIS_2   | CMD_PHASE:
+                {
+                    if ( sbicxfout(regs, clen, cbuf) )
+                        still_busy = sbicabort(dev, "icmd sending cmd");
+                }
+                break;
 
-          case SBIC_CSR_XFERRED | STATUS_PHASE:
-          case SBIC_CSR_MIS     | STATUS_PHASE:
-          case SBIC_CSR_MIS_1   | STATUS_PHASE:
-          case SBIC_CSR_MIS_2   | STATUS_PHASE:
-            {
-                /*
-                 * The sbic does the status/cmd-complete reading ok,
-                 * so do this with its hi-level commands.
-                 */
+              case SBIC_CSR_XFERRED | STATUS_PHASE:
+              case SBIC_CSR_MIS     | STATUS_PHASE:
+              case SBIC_CSR_MIS_1   | STATUS_PHASE:
+              case SBIC_CSR_MIS_2   | STATUS_PHASE:
+                {
+                    /*
+                     * The sbic does the status/cmd-complete reading ok,
+                     * so do this with its hi-level commands.
+                     */
 #ifdef DEBUG
-                if ( sbic_debug )
-                    printf("SBICICMD status phase (bsy=%d)\n", still_busy);
+                    if ( sbic_debug )
+                        printf("SBICICMD status phase (bsy=%d)\n", still_busy);
 #endif
-                SET_SBIC_cmd_phase(regs, 0x46);
-                SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN_XFER);
-            }
-            break;
+                    SET_SBIC_cmd_phase(regs, 0x46);
+                    SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN_XFER);
+                }
+                break;
 
-          default:
-            {
-                still_busy = sbicnextstate(dev, csr, asr);
-            }
-            break;
-        }
-
-        /*
-         * make sure the last command was taken,
-         * ie. we're not hunting after an ignored command..
-         */
-        GET_SBIC_asr(regs, asr);
-
-        /*
-         * tapes may take a loooong time..
-         */
-        while (asr & SBIC_ASR_BSY ) {
-
-            if ( asr & SBIC_ASR_DBR ) {
-                int     i;
-
-                printf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
-#ifdef DDB
-                Debugger();
-#endif
-                /*
-                 * SBIC is jammed
-                 * DUNNO which direction
-                 * Try old direction
-                 */
-                GET_SBIC_data(regs, i);
-                GET_SBIC_asr(regs, asr);
-
-                if ( asr & SBIC_ASR_DBR ) /* Wants us to write */
-                    SET_SBIC_data(regs, i);
+              default:
+                {
+                    still_busy = sbicnextstate(dev, csr, asr);
+                }
+                break;
             }
 
+            /*
+             * make sure the last command was taken,
+             * ie. we're not hunting after an ignored command..
+             */
             GET_SBIC_asr(regs, asr);
+
+            /*
+             * tapes may take a loooong time..
+             */
+            while (asr & SBIC_ASR_BSY ) {
+
+                if ( asr & SBIC_ASR_DBR ) {
+                    int     i;
+
+                    printf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
+#ifdef DDB
+                    Debugger();
+#endif
+                    /*
+                     * SBIC is jammed
+                     * DUNNO which direction
+                     * Try old direction
+                     */
+                    GET_SBIC_data(regs, i);
+                    GET_SBIC_asr(regs, asr);
+
+                    if ( asr & SBIC_ASR_DBR ) /* Wants us to write */
+                        SET_SBIC_data(regs, i);
+                }
+
+                GET_SBIC_asr(regs, asr);
+            }
         }
 
         /*
@@ -1461,13 +1496,13 @@ sbicicmd(dev, cbuf, clen, buf, len)
             printf("sbicicmd: last command ignored\n");
         }
         else
-        if ( still_busy == 1 ) /* Bsy */
+        if ( still_busy >= SBIC_STATE_RUNNING ) /* Bsy */
             SBIC_WAIT (regs, SBIC_ASR_INT, sbic_cmd_wait);
 
         /*
          * do it again
          */
-    } while ( still_busy > 0 && dev->sc_stat[0] == 0xff );
+    } while ( still_busy >= SBIC_STATE_RUNNING && dev->sc_stat[0] == 0xff );
 
     /*
      * Sometimes we need to do an extra read of the CSR
@@ -1688,10 +1723,9 @@ sbicintr(dev)
     if ( (asr & SBIC_ASR_INT) == 0 )
         return(0);
 
-    do {
+    GET_SBIC_csr(regs, csr);
 
-        if ( asr & SBIC_ASR_INT )
-            GET_SBIC_csr(regs, csr);
+    do {
 
         QPRINTF(("intr[0x%x]", csr));
 
@@ -1699,7 +1733,15 @@ sbicintr(dev)
 #if 0
         WAIT_CIP(regs);
 #endif
-        GET_SBIC_asr(regs, asr);
+        if ( i == SBIC_STATE_RUNNING ) {
+            GET_SBIC_asr(regs, asr);
+
+            if ( asr & SBIC_ASR_LCI )
+                printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
+
+            if ( asr & SBIC_ASR_INT )
+                GET_SBIC_csr(regs, csr);
+        }
 
     } while ( i == SBIC_STATE_RUNNING && asr & (SBIC_ASR_INT|SBIC_ASR_LCI) );
 
@@ -1747,6 +1789,7 @@ sbicpoll(dev)
          * tapes may take a loooong time..
          */
         while ( asr & SBIC_ASR_BSY ) {
+            u_char z = 0;
 
             if ( asr & SBIC_ASR_DBR ) {
                 printf("sbipoll: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
@@ -1758,11 +1801,11 @@ sbicpoll(dev)
                  * DUNNO which direction
                  * Try old direction
                  */
-                GET_SBIC_data(regs, i);
+                GET_SBIC_data(regs, z);
                 GET_SBIC_asr(regs, asr);
 
                 if ( asr & SBIC_ASR_DBR ) /* Wants us to write */
-                    SET_SBIC_data(regs, i);
+                    SET_SBIC_data(regs, z);
             }
 
             GET_SBIC_asr(regs, asr);
@@ -1771,7 +1814,7 @@ sbicpoll(dev)
         if ( asr & SBIC_ASR_LCI )
             printf("sbicpoll: LCI asr:%02x csr:%02x\n", asr,csr);
         else
-        if ( i == 1 ) /* BSY */
+        if ( i == SBIC_STATE_RUNNING ) /* BSY */
             SBIC_WAIT(regs, SBIC_ASR_INT, sbic_cmd_wait);
 
     } while ( i == SBIC_STATE_RUNNING );
@@ -2039,6 +2082,12 @@ sbicmsgin(dev)
              */
             SET_SBIC_syn(regs, SBIC_SYN(dev->sc_sync[dev->target].offset,
                                         dev->sc_sync[dev->target].period));
+#ifdef  DEBUG
+            if ( sync_debug )
+                printf("msgin(%d): sync reg = 0x%02x\n", dev->target,
+                                SBIC_SYN(dev->sc_sync[dev->target].offset,
+                                         dev->sc_sync[dev->target].period));
+#endif
 
             printf("%s: target %d now synchronous, period=%dns, offset=%d.\n",
                    dev->sc_dev.dv_xname, dev->target,
@@ -2089,10 +2138,10 @@ sbicmsgin(dev)
 /*
  * sbicnextstate()
  * return:
- *      0  == done
- *      1  == working
- *      2  == disconnected
- *      -1 == error
+ *      SBIC_STATE_DONE        == done
+ *      SBIC_STATE_RUNNING     == working
+ *      SBIC_STATE_DISCONNECT  == disconnected
+ *      SBIC_STATE_ERROR       == error
  */
 int
 sbicnextstate(dev, csr, asr)
@@ -2374,19 +2423,16 @@ sbicnextstate(dev, csr, asr)
                     GET_SBIC_asr(regs, asr);
                     if (asr & SBIC_ASR_INT)
                         break;
-                    delay(1);
+                    delay(10);
                 }
 
                 /*
                  * If we didn't get an interrupt, somethink's up
                  */
                 if ( (asr & SBIC_ASR_INT) == 0 ) {
-#ifdef DEBUG
-                    if ( reselect_debug )
-                        printf("RSLT_NI - no IFFY message? asr %x\n", asr);
-#endif
+                    printf("%s: Reselect without identify? asr %x\n",
+                            dev->sc_dev.dv_xname, asr);
                     newlun = 0; /* XXXX */
-
                 } else {
                     /*
                      * We got an interrupt, verify that it's a change to
@@ -2655,6 +2701,10 @@ sbictimeout(dev)
                  * We need to service a missed IRQ
                  */
                 sbicintr(dev);
+            } else {
+                (void) sbicabort(dev, "timeout");
+                splx(s);
+                return;
             }
         }
 
