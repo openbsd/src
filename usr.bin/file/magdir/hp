@@ -172,7 +172,7 @@
 
 0	string		IMGfile	CIS 	compimg HP Bitmapfile
 # XXX - see "lif"
-#0	short		0x8000		lif file
+#0	beshort		0x8000		lif file
 0	long		0x020c010c	compiled Lisp
 
 0	string		msgcat01	HP NLS message catalog,
