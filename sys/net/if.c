@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.99 2004/12/08 07:02:16 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.100 2004/12/20 07:24:38 pascoe Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -407,6 +407,10 @@ void
 if_attach(ifp)
 	struct ifnet *ifp;
 {
+#if NCARP > 0
+	struct ifnet *before = NULL;
+#endif
+
 	if (if_index == 0) {
 		TAILQ_INIT(&ifnet);
 		TAILQ_INIT(&ifg_head);
@@ -417,7 +421,20 @@ if_attach(ifp)
 	if (ifp->if_addrhooks == NULL)
 		panic("if_attach: malloc");
 	TAILQ_INIT(ifp->if_addrhooks);
+
+#if NCARP > 0
+	if (ifp->if_type != IFT_CARP)
+		TAILQ_FOREACH(before, &ifnet, if_list)
+			if (before->if_type == IFT_CARP)
+				break;
+	if (before == NULL)
+		TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	else
+		TAILQ_INSERT_BEFORE(before, ifp, if_list);
+#else
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+#endif
+
 	if_attachsetup(ifp);
 }
 
@@ -883,7 +900,7 @@ ifa_ifwithdstaddr(addr)
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 	    if (ifp->if_flags & IFF_POINTOPOINT)
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
