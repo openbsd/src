@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.2,v 1.8 1999/05/23 14:10:56 aaron Exp $
+.\"	$OpenBSD: symlink.2,v 1.9 1999/05/26 03:16:22 aaron Exp $
 .\"	$NetBSD: symlink.2,v 1.7 1995/02/27 12:38:34 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -56,7 +56,9 @@ file created,
 is the string
 used in creating the symbolic link).
 Either name may be an arbitrary path name; the files need not
-be on the same file system.
+be on the same file system, and the file specified by
+.Fa name1
+need not exist at all.
 .Sh RETURN VALUES
 Upon successful completion, a zero value is returned.
 If an error occurs, the error code is stored in
