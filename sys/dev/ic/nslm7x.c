@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.2 2003/06/29 21:21:25 grange Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.3 2003/08/05 13:42:36 couderc Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -134,7 +134,7 @@ lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 	cr = bus_space_read_1(iot, ioh, LMC_DATA);
 
 	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01))
+	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03))
 		rv = 1;
 	else
 		rv = 0;
@@ -297,6 +297,9 @@ wb_match(struct lm_softc *sc)
 		break;
 	case WB_CHIPID_83627:
 		printf(": W83627HF\n");
+		break;
+	case WB_CHIPID_83627THF:
+		printf(": W83627THF\n");
 		break;
 	default:
 		printf(": unknow winbond chip ID 0x%x\n", j);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.2 2003/06/29 21:21:25 grange Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.3 2003/08/05 13:42:36 couderc Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -94,6 +94,7 @@
 #define WB_CHIPID_83781_2	0x11
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
+#define WB_CHIPID_83627THF	0x90
 #define WB_CHIPID_83697		0x60
 #define WB_BANK0_FANBAT	0x5D
 /* Bank1 regs */
