@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.13 2002/12/10 23:13:59 miod Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.14 2003/02/28 15:14:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -203,7 +203,7 @@ ami_pci_attach(parent, self, aux)
 		bus_space_unmap(sc->iot, sc->ioh, size);
 	}
 
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	for (ssp = ami_pci_subsys; ssp->id; ssp++)
@@ -245,7 +245,7 @@ ami_pci_attach(parent, self, aux)
 	default:		lhc = "32b";
 	}
 
-	printf(" %s/%s\n%s", model, lhc, sc->sc_dev.dv_xname);
+	sprintf(sc->sc_raidconfig.rc_name, "%s/%s", model, lhc);
 
 	if (ami_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);

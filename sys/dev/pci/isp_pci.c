@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.29 2002/08/17 17:35:48 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.30 2003/02/28 15:14:08 mickey Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -322,6 +322,11 @@ static int
 isp_pci_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
+
+	/* those are raid puppies */
+	if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_SUBSYS_ID_REG)) == PCI_VENDOR_AMI)
+		return (0);
 
         switch (pa->pa_id) {
 #ifndef	ISP_DISABLE_1020_SUPPORT
