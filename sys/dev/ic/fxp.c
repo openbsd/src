@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.44 2003/12/23 15:16:44 mickey Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.45 2003/12/29 23:06:55 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -81,8 +81,6 @@
 #include <sys/device.h>
 
 #include <netinet/if_ether.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

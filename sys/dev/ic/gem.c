@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.34 2003/07/15 03:52:30 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.35 2003/12/29 23:06:55 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -51,8 +51,6 @@
 
 #include <machine/endian.h>
 
-#include <uvm/uvm_extern.h>
- 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.21 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.22 2003/12/29 23:06:55 brad Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -61,8 +61,6 @@
 #include <netinet/if_ether.h>
 #endif
 #include <net/if_fddi.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
