@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.83 1999/04/06 19:14:41 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.84 1999/04/10 07:48:53 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.83 1999/04/06 19:14:41 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.84 1999/04/10 07:48:53 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -485,11 +485,11 @@ AUTOCONF_DIR?=${WRKSRC}
 AUTOCONF_ENV=PATH=${PORTPATH}
 .endif
 .if defined(USE_EGCC)
-BUILD_DEPENDS+= 	${EGCC}:${PORTSDIR}/devel/egcs-stable
+BUILD_DEPENDS+= 	${EGCC}:${PORTSDIR}/lang/egcs-stable
 CC=${EGCC}
 .endif
 .if defined(USE_EGXX)
-BUILD_DEPENDS+= 	${EGXX}:${PORTSDIR}/devel/egcs-stable
+BUILD_DEPENDS+= 	${EGXX}:${PORTSDIR}/lang/egcs-stable
 CXX=${EGXX}
 .endif
 .if defined(USE_MOTIF) && !defined(HAVE_MOTIF) && !defined(REQUIRES_MOTIF)
@@ -1736,7 +1736,7 @@ clean: pre-clean
 	fi
 .endif
 .else
-	@${RM} -f ${WRKDIR}/.*_done
+	@${RM} -f ${WRKDIR}/.*_started ${WRKDIR}/.*_done
 .endif
 .endif
 
