@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.6 1998/03/07 03:04:49 d Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.7 1998/09/24 03:36:58 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -138,6 +138,10 @@ a monitored log file.  Notification messages are sent as email; the operator
 deserves what they get if they mark the 
 .Xr sendmail 8
 log file as monitored.
+.It pid file (optional)
+Specify a file containing the id of a process to send a HUP signal to
+instead of
+.Pa /var/run/syslog.pid .
 .El
 .Pp
 .Sh OPTIONS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.13 1998/04/25 18:12:58 mickey Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.14 1998/09/24 03:36:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.13 1998/04/25 18:12:58 mickey Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.14 1998/09/24 03:36:58 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -117,6 +117,7 @@ struct conf_entry {
         int     permissions;    /* File permissions on the log */
         int     flags;          /* Flags (CE_COMPACT & CE_BINARY)  */
 	char	*whom;		/* Whom to notify if logfile changes */
+	char	*pidfile;	/* Path to file containg pid to HUP */
         struct conf_entry       *next; /* Linked list pointer */
 };
 
@@ -128,9 +129,8 @@ int     noaction = 0;           /* Don't do anything, just show it */
 int	monitor = 0;		/* Don't do monitoring by default */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
-int     syslog_pid;             /* read in from /etc/syslog.pid */
 #define MIN_PID		3
-#define MAX_PID		65534
+#define MAX_PID		30000
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
@@ -140,7 +140,7 @@ void PRS __P((int, char **));
 void usage __P((void));
 struct conf_entry *parse_file __P((void));
 char *missing_field __P((char *, char *));
-void dotrim __P((char *, int, int, int, int, int));
+void dotrim __P((char *, int, int, int, int, int, int));
 int log_trim __P((char *));
 void compress_log __P((char *));
 int sizefile __P((char *));
@@ -175,7 +175,17 @@ void do_entry(ent)
         struct conf_entry       *ent;
         
 {
-        int     size, modtime;
+        int     size, modtime, pid;
+        char    line[BUFSIZ];
+        FILE    *f;
+
+        /* First find the pid to HUP */
+        pid = -1;
+        if ((f = fopen(ent->pidfile,"r")) != NULL) {
+        	if (fgets(line,BUFSIZ,f))
+                	pid = atoi(line);
+		(void)fclose(f);
+	}
         
         if (verbose) {
                 if (ent->flags & CE_COMPACT)
@@ -209,7 +219,7 @@ void do_entry(ent)
                                                ent->log,ent->numlogs);
                         }
                         dotrim(ent->log, ent->numlogs, ent->flags,
-                               ent->permissions, ent->uid, ent->gid);
+                               ent->permissions, ent->uid, ent->gid, pid);
                 } else {
                         if (verbose)
                                 printf("--> skipping\n");
@@ -222,21 +232,11 @@ void PRS(argc, argv)
         char **argv;
 {
         int     c;
-        FILE    *f;
-        char    line[BUFSIZ];
 	char	*p;
 
         timenow = time(NULL);
         daytime = ctime(&timenow) + 4;
         daytime[15] = '\0';
-
-        /* Let's find the pid of syslogd */
-        syslog_pid = 0;
-        f = fopen(PIDFILE,"r");
-        if (f && fgets(line,BUFSIZ,f))
-                syslog_pid = atoi(line);
-	if (f)
-		(void)fclose(f);
 
         /* Let's get our hostname */
         (void) gethostname(hostname, sizeof(hostname));
@@ -272,7 +272,8 @@ void PRS(argc, argv)
 
 void usage()
 {
-	errx(1, "usage: %s <-nrvm> <-f config-file>", __progname);
+	fprintf(stderr, "usage: %s [-nrvm] [-f config-file]\n", __progname);
+	exit(1);
 }
 
 /* Parse a configuration file and return a linked list of all the logs
@@ -395,6 +396,15 @@ struct conf_entry *parse_file()
 			if (working->log == NULL)
 				err(1, "strdup");
 		}
+
+		working->pidfile = PIDFILE;
+                q = parse = sob(++parse); /* Optional field */
+                *(parse = son(parse)) = '\0';
+		if (q && *q != '\0') {
+			working->pidfile = strdup(q);
+			if (working->pidfile == NULL)
+				err(1, "strdup");
+		}
                 
                 free(errline);
         }
@@ -408,21 +418,21 @@ char *missing_field(p, errline)
         char    *p,*errline;
 {
         if (!p || !*p) {
-                fprintf(stderr, "%s: Missing field in config file line:\n",
-		    __progname);
+		warnx("Missing field in config file line:");
                 fputs(errline, stderr);
                 exit(1);
         }
         return(p);
 }
 
-void dotrim(log, numdays, flags, perm, owner_uid, group_gid)
+void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         char    *log;
         int     numdays;
         int     flags;
         int     perm;
         int     owner_uid;
         int     group_gid;
+	int	daemon_pid;
 {
         char    file1[MAXPATHLEN], file2[MAXPATHLEN];
         char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
@@ -498,11 +508,11 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid)
         else
                 (void) chmod(log,perm);
         if (noaction)
-                printf("kill -HUP %d (syslogd)\n",syslog_pid);
-        else if (syslog_pid < MIN_PID || syslog_pid > MAX_PID)
-		warnx("preposterous process number: %d", syslog_pid);
-        else if (kill(syslog_pid,SIGHUP))
-                        warnx("warning - could not restart syslogd");
+                printf("kill -HUP %d\n",daemon_pid);
+        else if (daemon_pid < MIN_PID || daemon_pid > MAX_PID)
+		warnx("preposterous process number: %d", daemon_pid);
+        else if (kill(daemon_pid,SIGHUP))
+                        warnx("warning - could not HUP daemon");
         if (flags & CE_COMPACT) {
                 if (noaction)
                         printf("Compress %s.0\n",log);
