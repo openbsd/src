@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.16 2000/09/03 18:41:14 espie Exp $
+#	$OpenBSD: Makefile,v 1.17 2000/09/07 04:02:33 rahnds Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,9 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd lockspool \
 
 .if (${YP:L} == "yes")
 SUBDIR+=rpc.yppasswdd
+.endif
+.if (${MACHINE_ARCH} == "powerpc")
+SUBDIR+=ld.so
 .endif
 
 .include <bsd.subdir.mk>
