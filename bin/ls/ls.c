@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.11 1999/02/23 23:54:17 art Exp $	*/
+/*	$OpenBSD: ls.c,v 1.12 1999/02/24 16:48:02 aaron Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.11 1999/02/23 23:54:17 art Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.12 1999/02/24 16:48:02 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ ls_main(argc, argv)
 	 * If not -F, -i, -l, -p, -S, -s or -t options, don't require stat
 	 * information.
 	 */
-	if (!f_inode && !f_longform && !f_size && !f_type && !f_typedir &&
+	if (!f_longform && !f_inode && !f_size && !f_type && !f_typedir &&
 	    sortkey == BY_NAME)
 		fts_options |= FTS_NOSTAT;
 
@@ -367,17 +367,9 @@ traverse(argc, argv, options)
 
 	while ((p = fts_read(ftsp)) != NULL)
 		switch (p->fts_info) {
-		case FTS_DC:
-			warnx("%s: directory causes a cycle", p->fts_name);
-			break;
-		case FTS_DNR:
-		case FTS_ERR:
-			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
-			rval = 1;
-			break;
 		case FTS_D:
-			if (p->fts_level != FTS_ROOTLEVEL &&
-			    p->fts_name[0] == '.' && !f_listdot)
+			if (p->fts_name[0] == '.' &&
+			    p->fts_level != FTS_ROOTLEVEL && !f_listdot)
 				break;
 
 			/*
@@ -397,6 +389,14 @@ traverse(argc, argv, options)
 
 			if (!f_recursive && chp != NULL)
 				(void)fts_set(ftsp, p, FTS_SKIP);
+			break;
+		case FTS_DC:
+			warnx("%s: directory causes a cycle", p->fts_name);
+			break;
+		case FTS_DNR:
+		case FTS_ERR:
+			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			rval = 1;
 			break;
 		}
 	if (errno)
