@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.32 2003/03/13 19:56:56 jason Exp $
+dnl	$OpenBSD: hardware,v 1.33 2003/04/19 11:57:20 henning Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -354,8 +354,8 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		CATC USB-EL1210A-based USB adapters (cue), including: [*]
 			CATC Netmate and Netmate II
 			Belkin F5U011/F5U111
-		Davicom DM9100, DM9102, and DM9102A based PCI adapters (dc),
-		  including: [*]
+		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters
+		  (dc), including: [*]
 			Jaton XpressNet
 		Digital DC2114x-based four port cards, (de) including:
 			Adaptec ANA-6944A
