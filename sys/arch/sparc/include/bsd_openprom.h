@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_openprom.h,v 1.6 2000/12/06 17:18:59 deraadt Exp $	*/
+/*	$OpenBSD: bsd_openprom.h,v 1.7 2001/08/08 02:26:35 millert Exp $	*/
 /*	$NetBSD: bsd_openprom.h,v 1.11 1996/05/18 12:27:43 mrg Exp $ */
 
 /*
@@ -224,7 +224,7 @@ struct promvec {
 	void	(*pv_printf) __P((const char *fmt, ...));
 	void	(*pv_abort) __P((void));	/* L1-A abort */
 	int	*pv_ticks;		/* Ticks since last reset */
-	__dead void (*pv_halt) __P((void)) __attribute__((__noreturn__));/* Halt! */
+	__dead void (*pv_halt) __P((void));	/* Halt! */
 	void	(**pv_synchook) __P((void));	/* "sync" command hook */
 
 	/*
@@ -320,9 +320,7 @@ struct nodeops {
 	caddr_t	(*no_nextprop) __P((int node, caddr_t name));
 };
 
-void	romhalt __P((void))
-    __attribute__((__noreturn__));
-void	romboot __P((char *))
-    __attribute__((__noreturn__));
+__dead void	romhalt __P((void));
+__dead void	romboot __P((char *));
 
 extern struct promvec *promvec;
