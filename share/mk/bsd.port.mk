@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.44 1998/09/07 22:33:19 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.45 1998/09/08 05:51:06 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1699,9 +1699,7 @@ plist: install
 	   if [ -d $$f ]; then dirs="$$ff $$dirs"; \
 	   else \
 	    ${ECHO} $$ff; \
-	    if ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.a$$'; then \
-	     ${ECHO} '@exec ranlib %D/%F'; \
-	    elif ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
+	    if ${ECHO} $$f | ${GREP} -E -q -e '[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
 	     ld="$$LDCONFIG `${DIRNAME} $$f`"; \
 	    fi; \
 	   fi; \
