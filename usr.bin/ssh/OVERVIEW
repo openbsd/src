@@ -3,6 +3,7 @@ code.  This tries to give an overview of the structure of the code.
       
 Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>
 Updated 17 Nov 1995.
+Updated 19 Oct 1999 for OpenSSH-1.2
 
 The software consists of ssh (client), sshd (server), scp, sdist, and
 the auxiliary programs ssh-keygen, ssh-agent, ssh-add, and
@@ -70,11 +71,11 @@ these programs.
       channels inside the secure channel, and uses this framework to
       implement X11 forwarding, TCP/IP forwarding, and authentication
       agent forwarding.
+      The new, Protocol 1.5, channel close implementation is in nchan.c
 
   Authentication agent
 
-    - Code to communicate with the authentication agent is in
-      authfd.c.  The files gen-minfd.c, minfd.h, minfd.c
+    - Code to communicate with the authentication agent is in authfd.c.
 
   Authentication methods
 
@@ -83,8 +84,7 @@ these programs.
       code is linked into the server.  The routines also manipulate
       known hosts files using code in hostfile.c.  Code in canohost.c
       is used to retrieve the canonical host name of the remote host.
-      Code in match.c is used to match host names.  Code for osf C2
-      extended security is in osfc2.c.
+      Code in match.c is used to match host names.  
 
     - In the client end, authentication code is in sshconnect.c.  It
       reads Passwords/passphrases using code in readpass.c.  It reads

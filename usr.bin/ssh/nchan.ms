@@ -44,3 +44,28 @@ box invis "rcvd IEOF/" "-" with .w at last arrow.c
 ellipse wid .9*ellipsewid ht .9*ellipseht at S4
 arrow "start" "" from S1.w+(-0.5,0) to S1.w
 .PE
+.SH
+Notes
+.PP
+The input buffer is filled with data from the socket
+(the socket represents the local comsumer/producer of the
+forwarded channel).
+The data is then sent over the INPUT-end of the channel to the
+remote peer.
+Data sent by the peer is received on the OUTPUT-end,
+saved in the output buffer and written to the socket.
+.PP
+If the local protocol instance has forwarded all data on the
+INPUT-end of the channel, it sends an IEOF message to the peer.
+If the peer receives the IEOF and has comsumed all
+data he replies with an OCLOSE.
+When the local instance receives the OCLOSE
+he considers the INPUT-half of the channel closed.
+The peer has his OUTOUT-half closed.
+.PP
+A channel can be deallocated by a protocol instance
+if both the INPUT- and the OUTOUT-half on his
+side of the channel are closed.
+Note that when an instance is unable to comsume the
+received data, he is permitted to send an OCLOSE
+before the matching IEOF is received.
