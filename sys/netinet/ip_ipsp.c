@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.96 2000/06/19 03:43:15 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.97 2000/08/03 08:12:33 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1768,6 +1768,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
+                ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 	    }
 #endif /* INET */
@@ -1916,6 +1917,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	case AF_INET:
 	    NTOHS(ip->ip_len);
 	    NTOHS(ip->ip_off);
+            ip->ip_sum = 0;
 	    ip->ip_sum = in_cksum(m, ip->ip_hl << 2); /* Fix checksum */
 
 	    return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
