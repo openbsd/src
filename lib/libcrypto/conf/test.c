@@ -58,7 +58,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "conf.h"
+#include <openssl/conf.h>
+#include <openssl/err.h>
 
 main()
 	{
@@ -66,7 +67,7 @@ main()
 	long eline;
 	char *s,*s2;
 
-	conf=CONF_load(NULL,"ssleay.conf",&eline);
+	conf=CONF_load(NULL,"openssl.conf",&eline);
 	if (conf == NULL)
 		{
 		ERR_load_crypto_strings();

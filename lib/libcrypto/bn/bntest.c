@@ -59,49 +59,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "e_os.h"
-#include "bio.h"
-#include "bn.h"
-#include "rand.h"
-#include "x509.h"
-#include "err.h"
+
+#include "openssl/e_os.h"
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
 
 #ifdef WINDOWS
 #include "../bio/bss_file.c"
 #endif
 
-#ifndef NOPROTO
-int test_add (BIO *bp);
-int test_sub (BIO *bp);
-int test_lshift1 (BIO *bp);
-int test_lshift (BIO *bp);
-int test_rshift1 (BIO *bp);
-int test_rshift (BIO *bp);
-int test_div (BIO *bp,BN_CTX *ctx);
-int test_mul (BIO *bp);
-int test_sqr (BIO *bp,BN_CTX *ctx);
-int test_mont (BIO *bp,BN_CTX *ctx);
-int test_mod (BIO *bp,BN_CTX *ctx);
-int test_mod_mul (BIO *bp,BN_CTX *ctx);
-int test_mod_exp (BIO *bp,BN_CTX *ctx);
+int test_add(BIO *bp);
+int test_sub(BIO *bp);
+int test_lshift1(BIO *bp);
+int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_);
+int test_rshift1(BIO *bp);
+int test_rshift(BIO *bp,BN_CTX *ctx);
+int test_div(BIO *bp,BN_CTX *ctx);
+int test_div_recp(BIO *bp,BN_CTX *ctx);
+int test_mul(BIO *bp);
+int test_sqr(BIO *bp,BN_CTX *ctx);
+int test_mont(BIO *bp,BN_CTX *ctx);
+int test_mod(BIO *bp,BN_CTX *ctx);
+int test_mod_mul(BIO *bp,BN_CTX *ctx);
+int test_mod_exp(BIO *bp,BN_CTX *ctx);
+int test_exp(BIO *bp,BN_CTX *ctx);
 int rand_neg(void);
-#else
-int test_add ();
-int test_sub ();
-int test_lshift1 ();
-int test_lshift ();
-int test_rshift1 ();
-int test_rshift ();
-int test_div ();
-int test_mul ();
-int test_sqr ();
-int test_mont ();
-int test_mod ();
-int test_mod_mul ();
-int test_mod_exp ();
-int rand_neg();
-#endif
-
 static int results=0;
 
 #ifdef NO_STDIO
@@ -109,15 +95,14 @@ static int results=0;
 #include "bss_file.c"
 #endif
 
-int main(argc,argv)
-int argc;
-char *argv[];
+static unsigned char lst1[]="\xC6\x4F\x43\x04\x2A\xEA\xCA\x6E\x58\x36\x80\x5B\xE8\xC9"
+"\x9B\x04\x5D\x48\x36\xC2\xFD\x16\xC9\x64\xF0";
+
+int main(int argc, char *argv[])
 	{
 	BN_CTX *ctx;
 	BIO *out;
 	char *outfile=NULL;
-
-	srand((unsigned int)time(NULL));
 
 	argc--;
 	argv++;
@@ -168,8 +153,13 @@ char *argv[];
 	if (!test_lshift1(out)) goto err;
 	fflush(stdout);
 
+	fprintf(stderr,"test BN_lshift (fixed)\n");
+	if (!test_lshift(out,ctx,BN_bin2bn(lst1,sizeof(lst1)-1,NULL)))
+	    goto err;
+	fflush(stdout);
+
 	fprintf(stderr,"test BN_lshift\n");
-	if (!test_lshift(out)) goto err;
+	if (!test_lshift(out,ctx,NULL)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_rshift1\n");
@@ -177,7 +167,7 @@ char *argv[];
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_rshift\n");
-	if (!test_rshift(out)) goto err;
+	if (!test_rshift(out,ctx)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_sqr\n");
@@ -190,6 +180,10 @@ char *argv[];
 
 	fprintf(stderr,"test BN_div\n");
 	if (!test_div(out,ctx)) goto err;
+	fflush(stdout);
+
+	fprintf(stderr,"test BN_div_recp\n");
+	if (!test_div_recp(out,ctx)) goto err;
 	fflush(stdout);
 
 	fprintf(stderr,"test BN_mod\n");
@@ -209,100 +203,415 @@ char *argv[];
 	if (!test_mod_exp(out,ctx)) goto err;
 	fflush(stdout);
 
+	fprintf(stderr,"test BN_exp\n");
+	if (!test_exp(out,ctx)) goto err;
+	fflush(stdout);
+
 /**/
 	exit(0);
 err:
+	BIO_puts(out,"1\n"); /* make sure bc fails if we are piping to it */
 	ERR_load_crypto_strings();
 	ERR_print_errors(out);
 	exit(1);
 	return(1);
 	}
 
-int test_add(bp)
-BIO *bp;
+int test_add(BIO *bp)
 	{
-	BIGNUM *a,*b,*c;
+	BIGNUM a,b,c;
 	int i;
 	int j;
 
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
 
-	BN_rand(a,512,0,0);
+	BN_rand(&a,512,0,0);
 	for (i=0; i<100; i++)
 		{
-		BN_rand(b,450+i,0,0);
-		a->neg=rand_neg();
-		b->neg=rand_neg();
+		BN_rand(&b,450+i,0,0);
+		a.neg=rand_neg();
+		b.neg=rand_neg();
 		if (bp == NULL)
 			for (j=0; j<10000; j++)
-				BN_add(c,a,b);
-		BN_add(c,a,b);
+				BN_add(&c,&a,&b);
+		BN_add(&c,&a,&b);
 		if (bp != NULL)
 			{
 			if (!results)
 				{
-				BN_print(bp,a);
+				BN_print(bp,&a);
 				BIO_puts(bp," + ");
-				BN_print(bp,b);
+				BN_print(bp,&b);
 				BIO_puts(bp," - ");
 				}
-			BN_print(bp,c);
+			BN_print(bp,&c);
 			BIO_puts(bp,"\n");
 			}
+		a.neg=!a.neg;
+		b.neg=!b.neg;
+		BN_add(&c,&c,&b);
+		BN_add(&c,&c,&a);
+		if(!BN_is_zero(&c))
+		    {
+		    BIO_puts(bp,"Add test failed!\n");
+		    return 0;
+		    }
 		}
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
 	return(1);
 	}
 
-int test_sub(bp)
-BIO *bp;
+int test_sub(BIO *bp)
 	{
-	BIGNUM *a,*b,*c;
+	BIGNUM a,b,c;
 	int i;
 	int j;
 
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
 
-	BN_rand(a,512,0,0);
+	BN_rand(&a,512,0,0);
 	for (i=0; i<100; i++)
 		{
-		BN_rand(b,400+i,0,0);
-		a->neg=rand_neg();
-		b->neg=rand_neg();
+		BN_rand(&b,400+i,0,0);
+		a.neg=rand_neg();
+		b.neg=rand_neg();
 		if (bp == NULL)
 			for (j=0; j<10000; j++)
-				BN_sub(c,a,b);
-		BN_sub(c,a,b);
+				BN_sub(&c,&a,&b);
+		BN_sub(&c,&a,&b);
 		if (bp != NULL)
 			{
 			if (!results)
 				{
-				BN_print(bp,a);
+				BN_print(bp,&a);
 				BIO_puts(bp," - ");
-				BN_print(bp,b);
+				BN_print(bp,&b);
 				BIO_puts(bp," - ");
 				}
-			BN_print(bp,c);
+			BN_print(bp,&c);
 			BIO_puts(bp,"\n");
 			}
+		BN_add(&c,&c,&b);
+		BN_sub(&c,&c,&a);
+		if(!BN_is_zero(&c))
+		    {
+		    BIO_puts(bp,"Subtract test failed!\n");
+		    return 0;
+		    }
 		}
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
 	return(1);
 	}
 
-int test_div(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_div(BIO *bp, BN_CTX *ctx)
 	{
-	BIGNUM *a,*b,*c,*d;
+	BIGNUM a,b,c,d,e;
+	int i;
+	int j;
+
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
+	BN_init(&d);
+	BN_init(&e);
+
+	BN_rand(&a,400,0,0);
+	for (i=0; i<100; i++)
+		{
+		BN_rand(&b,50+i,0,0);
+		a.neg=rand_neg();
+		b.neg=rand_neg();
+		if (bp == NULL)
+			for (j=0; j<100; j++)
+				BN_div(&d,&c,&a,&b,ctx);
+		BN_div(&d,&c,&a,&b,ctx);
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," / ");
+				BN_print(bp,&b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&d);
+			BIO_puts(bp,"\n");
+
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," % ");
+				BN_print(bp,&b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&c);
+			BIO_puts(bp,"\n");
+			}
+		BN_mul(&e,&d,&b,ctx);
+		BN_add(&d,&e,&c);
+		BN_sub(&d,&d,&a);
+		if(!BN_is_zero(&d))
+		    {
+		    BIO_puts(bp,"Division test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
+	BN_free(&d);
+	BN_free(&e);
+	return(1);
+	}
+
+int test_div_recp(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM a,b,c,d,e;
+	BN_RECP_CTX recp;
+	int i;
+	int j;
+
+	BN_RECP_CTX_init(&recp);
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
+	BN_init(&d);
+	BN_init(&e);
+
+	BN_rand(&a,400,0,0);
+	for (i=0; i<100; i++)
+		{
+		BN_rand(&b,50+i,0,0);
+		a.neg=rand_neg();
+		b.neg=rand_neg();
+		BN_RECP_CTX_set(&recp,&b,ctx);
+		if (bp == NULL)
+			for (j=0; j<100; j++)
+				BN_div_recp(&d,&c,&a,&recp,ctx);
+		BN_div_recp(&d,&c,&a,&recp,ctx);
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," / ");
+				BN_print(bp,&b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&d);
+			BIO_puts(bp,"\n");
+
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," % ");
+				BN_print(bp,&b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&c);
+			BIO_puts(bp,"\n");
+			}
+		BN_mul(&e,&d,&b,ctx);
+		BN_add(&d,&e,&c);
+		BN_sub(&d,&d,&a);
+		if(!BN_is_zero(&d))
+		    {
+		    BIO_puts(bp,"Reciprocal division test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
+	BN_free(&d);
+	BN_free(&e);
+	BN_RECP_CTX_free(&recp);
+	return(1);
+	}
+
+int test_mul(BIO *bp)
+	{
+	BIGNUM a,b,c,d,e;
+	int i;
+	int j;
+	BN_CTX ctx;
+
+	BN_CTX_init(&ctx);
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
+	BN_init(&d);
+	BN_init(&e);
+
+	BN_rand(&a,200,0,0);
+	for (i=0; i<100; i++)
+		{
+		BN_rand(&b,250+i,0,0);
+		BN_rand(&b,200,0,0);
+		a.neg=rand_neg();
+		b.neg=rand_neg();
+		if (bp == NULL)
+			for (j=0; j<100; j++)
+				BN_mul(&c,&a,&b,&ctx);
+		BN_mul(&c,&a,&b,&ctx);
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," * ");
+				BN_print(bp,&b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&c);
+			BIO_puts(bp,"\n");
+			}
+		BN_div(&d,&e,&c,&a,&ctx);
+		BN_sub(&d,&d,&b);
+		if(!BN_is_zero(&d) || !BN_is_zero(&e))
+		    {
+		    BIO_puts(bp,"Multiplication test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
+	BN_free(&d);
+	BN_free(&e);
+	BN_CTX_free(&ctx);
+	return(1);
+	}
+
+int test_sqr(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM a,c,d,e;
+	int i;
+	int j;
+
+	BN_init(&a);
+	BN_init(&c);
+	BN_init(&d);
+	BN_init(&e);
+
+	for (i=0; i<40; i++)
+		{
+		BN_rand(&a,40+i*10,0,0);
+		a.neg=rand_neg();
+		if (bp == NULL)
+			for (j=0; j<100; j++)
+				BN_sqr(&c,&a,ctx);
+		BN_sqr(&c,&a,ctx);
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,&a);
+				BIO_puts(bp," * ");
+				BN_print(bp,&a);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&c);
+			BIO_puts(bp,"\n");
+			}
+		BN_div(&d,&e,&c,&a,ctx);
+		BN_sub(&d,&d,&a);
+		if(!BN_is_zero(&d) || !BN_is_zero(&e))
+		    {
+		    BIO_puts(bp,"Square test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(&a);
+	BN_free(&c);
+	BN_free(&d);
+	BN_free(&e);
+	return(1);
+	}
+
+int test_mont(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM a,b,c,d,A,B;
+	BIGNUM n;
+	int i;
+	int j;
+	BN_MONT_CTX *mont;
+
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
+	BN_init(&d);
+	BN_init(&A);
+	BN_init(&B);
+	BN_init(&n);
+
+	mont=BN_MONT_CTX_new();
+
+	BN_rand(&a,100,0,0); /**/
+	BN_rand(&b,100,0,0); /**/
+	for (i=0; i<10; i++)
+		{
+		BN_rand(&n,(100%BN_BITS2+1)*BN_BITS2*i*BN_BITS2,0,1); /**/
+		BN_MONT_CTX_set(mont,&n,ctx);
+
+		BN_to_montgomery(&A,&a,mont,ctx);
+		BN_to_montgomery(&B,&b,mont,ctx);
+
+		if (bp == NULL)
+			for (j=0; j<100; j++)
+				BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
+		BN_mod_mul_montgomery(&c,&A,&B,mont,ctx);/**/
+		BN_from_montgomery(&A,&c,mont,ctx);/**/
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+#ifdef undef
+fprintf(stderr,"%d * %d %% %d\n",
+BN_num_bits(&a),
+BN_num_bits(&b),
+BN_num_bits(mont->N));
+#endif
+				BN_print(bp,&a);
+				BIO_puts(bp," * ");
+				BN_print(bp,&b);
+				BIO_puts(bp," % ");
+				BN_print(bp,&(mont->N));
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,&A);
+			BIO_puts(bp,"\n");
+			}
+		BN_mod_mul(&d,&a,&b,&n,ctx);
+		BN_sub(&d,&d,&A);
+		if(!BN_is_zero(&d))
+		    {
+		    BIO_puts(bp,"Montgomery multiplication test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_MONT_CTX_free(mont);
+	BN_free(&a);
+	BN_free(&b);
+	BN_free(&c);
+	BN_free(&d);
+	BN_free(&A);
+	BN_free(&B);
+	BN_free(&n);
+	return(1);
+	}
+
+int test_mod(BIO *bp, BN_CTX *ctx)
+	{
+	BIGNUM *a,*b,*c,*d,*e;
 	int i;
 	int j;
 
@@ -310,197 +619,7 @@ BN_CTX *ctx;
 	b=BN_new();
 	c=BN_new();
 	d=BN_new();
-
-	BN_rand(a,400,0,0);
-	for (i=0; i<100; i++)
-		{
-		BN_rand(b,50+i,0,0);
-		a->neg=rand_neg();
-		b->neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_div(d,c,a,b,ctx);
-		BN_div(d,c,a,b,ctx);
-		if (bp != NULL)
-			{
-			if (!results)
-				{
-				BN_print(bp,a);
-				BIO_puts(bp," / ");
-				BN_print(bp,b);
-				BIO_puts(bp," - ");
-				}
-			BN_print(bp,d);
-			BIO_puts(bp,"\n");
-
-			if (!results)
-				{
-				BN_print(bp,a);
-				BIO_puts(bp," % ");
-				BN_print(bp,b);
-				BIO_puts(bp," - ");
-				}
-			BN_print(bp,c);
-			BIO_puts(bp,"\n");
-			}
-		}
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	return(1);
-	}
-
-int test_mul(bp)
-BIO *bp;
-	{
-	BIGNUM *a,*b,*c;
-	int i;
-	int j;
-
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
-
-	BN_rand(a,200,0,0);
-	for (i=0; i<100; i++)
-		{
-		BN_rand(b,250+i,0,0);
-		a->neg=rand_neg();
-		b->neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mul(c,a,b);
-		BN_mul(c,a,b);
-		if (bp != NULL)
-			{
-			if (!results)
-				{
-				BN_print(bp,a);
-				BIO_puts(bp," * ");
-				BN_print(bp,b);
-				BIO_puts(bp," - ");
-				}
-			BN_print(bp,c);
-			BIO_puts(bp,"\n");
-			}
-		}
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	return(1);
-	}
-
-int test_sqr(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
-	{
-	BIGNUM *a,*c;
-	int i;
-	int j;
-
-	a=BN_new();
-	c=BN_new();
-
-	for (i=0; i<40; i++)
-		{
-		BN_rand(a,40+i*10,0,0);
-		a->neg=rand_neg();
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_sqr(c,a,ctx);
-		BN_sqr(c,a,ctx);
-		if (bp != NULL)
-			{
-			if (!results)
-				{
-				BN_print(bp,a);
-				BIO_puts(bp," * ");
-				BN_print(bp,a);
-				BIO_puts(bp," - ");
-				}
-			BN_print(bp,c);
-			BIO_puts(bp,"\n");
-			}
-		}
-	BN_free(a);
-	BN_free(c);
-	return(1);
-	}
-
-int test_mont(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
-	{
-	BIGNUM *a,*b,*c,*A,*B;
-	BIGNUM *n;
-	int i;
-	int j;
-	BN_MONT_CTX *mont;
-
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
-	A=BN_new();
-	B=BN_new();
-	n=BN_new();
-
-	mont=BN_MONT_CTX_new();
-
-	BN_rand(a,100,0,0); /**/
-	BN_rand(b,100,0,0); /**/
-	for (i=0; i<10; i++)
-		{
-		BN_rand(n,(100%BN_BITS2+1)*BN_BITS2*i*BN_BITS2,0,1); /**/
-		BN_MONT_CTX_set(mont,n,ctx);
-
-		BN_to_montgomery(A,a,mont,ctx);
-		BN_to_montgomery(B,b,mont,ctx);
-
-		if (bp == NULL)
-			for (j=0; j<100; j++)
-				BN_mod_mul_montgomery(c,A,B,mont,ctx);/**/
-		BN_mod_mul_montgomery(c,A,B,mont,ctx);/**/
-		BN_from_montgomery(A,c,mont,ctx);/**/
-		if (bp != NULL)
-			{
-			if (!results)
-				{
-#ifdef undef
-fprintf(stderr,"%d * %d %% %d\n",
-BN_num_bits(a),
-BN_num_bits(b),
-BN_num_bits(mont->N));
-#endif
-				BN_print(bp,a);
-				BIO_puts(bp," * ");
-				BN_print(bp,b);
-				BIO_puts(bp," % ");
-				BN_print(bp,mont->N);
-				BIO_puts(bp," - ");
-				}
-			BN_print(bp,A);
-			BIO_puts(bp,"\n");
-			}
-		}
-	BN_MONT_CTX_free(mont);
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	return(1);
-	}
-
-int test_mod(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
-	{
-	BIGNUM *a,*b,*c;
-	int i;
-	int j;
-
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
+	e=BN_new();
 
 	BN_rand(a,1024,0,0); /**/
 	for (i=0; i<20; i++)
@@ -524,16 +643,23 @@ BN_CTX *ctx;
 			BN_print(bp,c);
 			BIO_puts(bp,"\n");
 			}
+		BN_div(d,e,a,b,ctx);
+		BN_sub(e,e,c);
+		if(!BN_is_zero(e))
+		    {
+		    BIO_puts(bp,"Modulo test failed!\n");
+		    return 0;
+		    }
 		}
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
+	BN_free(d);
+	BN_free(e);
 	return(1);
 	}
 
-int test_mod_mul(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mod_mul(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
 	int i;
@@ -578,6 +704,14 @@ BN_CTX *ctx;
 			BN_print(bp,e);
 			BIO_puts(bp,"\n");
 			}
+		BN_mul(d,a,b,ctx);
+		BN_sub(d,d,e);
+		BN_div(a,b,d,c,ctx);
+		if(!BN_is_zero(b))
+		    {
+		    BIO_puts(bp,"Modulo multiply test failed!\n");
+		    return 0;
+		    }
 		}
 	BN_free(a);
 	BN_free(b);
@@ -587,9 +721,7 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_mod_exp(bp,ctx)
-BIO *bp;
-BN_CTX *ctx;
+int test_mod_exp(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*b,*c,*d,*e;
 	int i;
@@ -623,6 +755,14 @@ BN_CTX *ctx;
 			BN_print(bp,d);
 			BIO_puts(bp,"\n");
 			}
+		BN_exp(e,a,b,ctx);
+		BN_sub(e,e,d);
+		BN_div(a,b,e,c,ctx);
+		if(!BN_is_zero(b))
+		    {
+		    BIO_puts(bp,"Modulo exponentiation test failed!\n");
+		    return 0;
+		    }
 		}
 	BN_free(a);
 	BN_free(b);
@@ -632,19 +772,74 @@ BN_CTX *ctx;
 	return(1);
 	}
 
-int test_lshift(bp)
-BIO *bp;
+int test_exp(BIO *bp, BN_CTX *ctx)
 	{
-	BIGNUM *a,*b,*c;
+	BIGNUM *a,*b,*d,*e,*one;
 	int i;
 
 	a=BN_new();
 	b=BN_new();
+	d=BN_new();
+	e=BN_new();
+	one=BN_new();
+	BN_one(one);
+
+	for (i=0; i<6; i++)
+		{
+		BN_rand(a,20+i*5,0,0); /**/
+		BN_rand(b,2+i,0,0); /**/
+
+		if (!BN_exp(d,a,b,ctx))
+			return(00);
+
+		if (bp != NULL)
+			{
+			if (!results)
+				{
+				BN_print(bp,a);
+				BIO_puts(bp," ^ ");
+				BN_print(bp,b);
+				BIO_puts(bp," - ");
+				}
+			BN_print(bp,d);
+			BIO_puts(bp,"\n");
+			}
+		BN_one(e);
+		for( ; !BN_is_zero(b) ; BN_sub(b,b,one))
+		    BN_mul(e,e,a,ctx);
+		BN_sub(e,e,d);
+		if(!BN_is_zero(e))
+		    {
+		    BIO_puts(bp,"Exponentiation test failed!\n");
+		    return 0;
+		    }
+		}
+	BN_free(a);
+	BN_free(b);
+	BN_free(d);
+	BN_free(e);
+	BN_free(one);
+	return(1);
+	}
+
+int test_lshift(BIO *bp,BN_CTX *ctx,BIGNUM *a_)
+	{
+	BIGNUM *a,*b,*c,*d;
+	int i;
+
+	b=BN_new();
 	c=BN_new();
+	d=BN_new();
 	BN_one(c);
 
-	BN_rand(a,200,0,0); /**/
-	a->neg=rand_neg();
+	if(a_)
+	    a=a_;
+	else
+	    {
+	    a=BN_new();
+	    BN_rand(a,200,0,0); /**/
+	    a->neg=rand_neg();
+	    }
 	for (i=0; i<70; i++)
 		{
 		BN_lshift(b,a,i+1);
@@ -661,21 +856,38 @@ BIO *bp;
 			BN_print(bp,b);
 			BIO_puts(bp,"\n");
 			}
+		BN_mul(d,a,c,ctx);
+		BN_sub(d,d,b);
+		if(!BN_is_zero(d))
+		    {
+		    BIO_puts(bp,"Left shift test failed!\n");
+		    BIO_puts(bp,"a=");
+		    BN_print(bp,a);
+		    BIO_puts(bp,"\nb=");
+		    BN_print(bp,b);
+		    BIO_puts(bp,"\nc=");
+		    BN_print(bp,c);
+		    BIO_puts(bp,"\nd=");
+		    BN_print(bp,d);
+		    BIO_puts(bp,"\n");
+		    return 0;
+		    }
 		}
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
+	BN_free(d);
 	return(1);
 	}
 
-int test_lshift1(bp)
-BIO *bp;
+int test_lshift1(BIO *bp)
 	{
-	BIGNUM *a,*b;
+	BIGNUM *a,*b,*c;
 	int i;
 
 	a=BN_new();
 	b=BN_new();
+	c=BN_new();
 
 	BN_rand(a,200,0,0); /**/
 	a->neg=rand_neg();
@@ -693,22 +905,32 @@ BIO *bp;
 			BN_print(bp,b);
 			BIO_puts(bp,"\n");
 			}
+		BN_add(c,a,a);
+		BN_sub(a,b,c);
+		if(!BN_is_zero(a))
+		    {
+		    BIO_puts(bp,"Left shift one test failed!\n");
+		    return 0;
+		    }
+		
 		BN_copy(a,b);
 		}
 	BN_free(a);
 	BN_free(b);
+	BN_free(c);
 	return(1);
 	}
 
-int test_rshift(bp)
-BIO *bp;
+int test_rshift(BIO *bp,BN_CTX *ctx)
 	{
-	BIGNUM *a,*b,*c;
+	BIGNUM *a,*b,*c,*d,*e;
 	int i;
 
 	a=BN_new();
 	b=BN_new();
 	c=BN_new();
+	d=BN_new();
+	e=BN_new();
 	BN_one(c);
 
 	BN_rand(a,200,0,0); /**/
@@ -729,21 +951,30 @@ BIO *bp;
 			BN_print(bp,b);
 			BIO_puts(bp,"\n");
 			}
+		BN_div(d,e,a,c,ctx);
+		BN_sub(d,d,b);
+		if(!BN_is_zero(d))
+		    {
+		    BIO_puts(bp,"Right shift test failed!\n");
+		    return 0;
+		    }
 		}
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
+	BN_free(d);
+	BN_free(e);
 	return(1);
 	}
 
-int test_rshift1(bp)
-BIO *bp;
+int test_rshift1(BIO *bp)
 	{
-	BIGNUM *a,*b;
+	BIGNUM *a,*b,*c;
 	int i;
 
 	a=BN_new();
 	b=BN_new();
+	c=BN_new();
 
 	BN_rand(a,200,0,0); /**/
 	a->neg=rand_neg();
@@ -761,14 +992,22 @@ BIO *bp;
 			BN_print(bp,b);
 			BIO_puts(bp,"\n");
 			}
+		BN_sub(c,a,b);
+		BN_sub(c,c,b);
+		if(!BN_is_zero(c) && !BN_is_one(c))
+		    {
+		    BIO_puts(bp,"Right shift one test failed!\n");
+		    return 0;
+		    }
 		BN_copy(a,b);
 		}
 	BN_free(a);
 	BN_free(b);
+	BN_free(c);
 	return(1);
 	}
 
-int rand_neg()
+int rand_neg(void)
 	{
 	static unsigned int neg=0;
 	static int sign[8]={0,0,0,1,1,0,1,1};

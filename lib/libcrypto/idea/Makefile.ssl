@@ -7,9 +7,11 @@ TOP=	../..
 CC=	cc
 INCLUDES=
 CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -37,24 +39,23 @@ all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
 	do  \
-	(cp $$i $(INSTALLTOP)/include/$$i; \
-	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
 tags:
@@ -66,15 +67,24 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-errors:
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+i_cbc.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_cbc.o: idea_lcl.h
+i_cfb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_cfb64.o: idea_lcl.h
+i_ecb.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_ecb.o: ../../include/openssl/opensslv.h idea_lcl.h
+i_ofb64.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_ofb64.o: idea_lcl.h
+i_skey.o: ../../include/openssl/idea.h ../../include/openssl/opensslconf.h
+i_skey.o: idea_lcl.h

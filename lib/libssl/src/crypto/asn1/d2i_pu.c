@@ -58,16 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/asn1.h>
 
-EVP_PKEY *d2i_PublicKey(type,a,pp,length)
-int type;
-EVP_PKEY **a;
-unsigned char **pp;
-long length;
+EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
+	     long length)
 	{
 	EVP_PKEY *ret;
 
@@ -106,7 +103,7 @@ long length;
 	default:
 		ASN1err(ASN1_F_D2I_PUBLICKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
-		break;
+		/* break; */
 		}
 	if (a != NULL) (*a)=ret;
 	return(ret);

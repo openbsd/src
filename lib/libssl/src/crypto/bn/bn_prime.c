@@ -60,7 +60,7 @@
 #include <time.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#include "rand.h"
+#include <openssl/rand.h>
 
 /* The quick seive algorithm approach to weeding out primes is
  * Philip Zimmermann's, as implemented in PGP.  I have had a read of
@@ -68,7 +68,6 @@
  */
 #include "bn_prime.h"
 
-#ifndef NOPROTO
 static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
 	BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
@@ -76,32 +75,23 @@ static int probable_prime_dh(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
 static int probable_prime_dh_strong(BIGNUM *rnd, int bits,
 	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-#else
-static int witness();
-static int probable_prime();
-static int probable_prime_dh();
-static int probable_prime_dh_strong();
-#endif
-
-BIGNUM *BN_generate_prime(bits,strong,add,rem,callback,cb_arg)
-int bits;
-int strong;
-BIGNUM *add;
-BIGNUM *rem;
-void (*callback)(P_I_I_P); 
-char *cb_arg;
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int strong, BIGNUM *add,
+	     BIGNUM *rem, void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
-	BIGNUM *ret=NULL;
-	BIGNUM *t=NULL;
+	BIGNUM t;
 	int i,j,c1=0;
 	BN_CTX *ctx;
 
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	if ((rnd=BN_new()) == NULL) goto err;
-	if (strong)
-		if ((t=BN_new()) == NULL) goto err;
+	if (ret == NULL)
+		{
+		if ((rnd=BN_new()) == NULL) goto err;
+		}
+	else
+		rnd=ret;
+	BN_init(&t);
 loop: 
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
@@ -136,7 +126,7 @@ loop:
 		 * check that (p-1)/2 is prime.
 		 * Since a prime is odd, We just
 		 * need to divide by 2 */
-		if (!BN_rshift1(t,rnd)) goto err;
+		if (!BN_rshift1(&t,rnd)) goto err;
 
 		for (i=0; i<BN_prime_checks; i++)
 			{
@@ -144,7 +134,7 @@ loop:
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
-			j=BN_is_prime(t,1,callback,ctx,cb_arg);
+			j=BN_is_prime(&t,1,callback,ctx,cb_arg);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
@@ -156,17 +146,13 @@ loop:
 	ret=rnd;
 err:
 	if ((ret == NULL) && (rnd != NULL)) BN_free(rnd);
-	if (t != NULL) BN_free(t);
+	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
 	return(ret);
 	}
 
-int BN_is_prime(a,checks,callback,ctx_passed,cb_arg)
-BIGNUM *a;
-int checks;
-void (*callback)(P_I_I_P);
-BN_CTX *ctx_passed;
-char *cb_arg;
+int BN_is_prime(BIGNUM *a, int checks, void (*callback)(int,int,void *),
+	     BN_CTX *ctx_passed, void *cb_arg)
 	{
 	int i,j,c2=0,ret= -1;
 	BIGNUM *check;
@@ -183,7 +169,7 @@ char *cb_arg;
 	if ((ctx2=BN_CTX_new()) == NULL) goto err;
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	check=ctx->bn[ctx->tos++];
+	check= &(ctx->bn[ctx->tos++]);
 
 	/* Setup the montgomery structure */
 	if (!BN_MONT_CTX_set(mont,a,ctx2)) goto err;
@@ -214,24 +200,21 @@ err:
 
 #define RECP_MUL_MOD
 
-static int witness(a,n,ctx,ctx2,mont)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx,*ctx2;
-BN_MONT_CTX *mont;
+static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx, BN_CTX *ctx2,
+	     BN_MONT_CTX *mont)
 	{
 	int k,i,ret= -1,good;
 	BIGNUM *d,*dd,*tmp,*d1,*d2,*n1;
 	BIGNUM *mont_one,*mont_n1,*mont_a;
 
-	d1=ctx->bn[ctx->tos];
-	d2=ctx->bn[ctx->tos+1];
-	n1=ctx->bn[ctx->tos+2];
+	d1= &(ctx->bn[ctx->tos]);
+	d2= &(ctx->bn[ctx->tos+1]);
+	n1= &(ctx->bn[ctx->tos+2]);
 	ctx->tos+=3;
 
-	mont_one=ctx2->bn[ctx2->tos];
-	mont_n1=ctx2->bn[ctx2->tos+1];
-	mont_a=ctx2->bn[ctx2->tos+2];
+	mont_one= &(ctx2->bn[ctx2->tos]);
+	mont_n1= &(ctx2->bn[ctx2->tos+1]);
+	mont_a= &(ctx2->bn[ctx2->tos+2]);
 	ctx2->tos+=3;
 
 	d=d1;
@@ -254,7 +237,7 @@ BN_MONT_CTX *mont;
 			good=0;
 
 		BN_mod_mul_montgomery(dd,d,d,mont,ctx2);
-		
+
 		if (good && (BN_cmp(dd,mont_one) == 0))
 			{
 			ret=1;
@@ -281,14 +264,13 @@ err:
 	return(ret);
 	}
 
-static int probable_prime(rnd, bits)
-BIGNUM *rnd;
-int bits;
+static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
 	MS_STATIC BN_ULONG mods[NUMPRIMES];
-	BN_ULONG delta;
+	BN_ULONG delta,d;
 
+again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
 	/* we now have a random number 'rand' to test. */
 	for (i=1; i<NUMPRIMES; i++)
@@ -300,9 +282,12 @@ int bits;
 		 * that gcd(rnd-1,primes) == 1 (except for 2) */
 		if (((mods[i]+delta)%primes[i]) <= 1)
 			{
+			d=delta;
 			delta+=2;
 			/* perhaps need to check for overflow of
-			 * delta (but delta can be upto 2^32) */
+			 * delta (but delta can be upto 2^32)
+			 * 21-May-98 eay - added overflow check */
+			if (delta < d) goto again;
 			goto loop;
 			}
 		}
@@ -310,17 +295,13 @@ int bits;
 	return(1);
 	}
 
-static int probable_prime_dh(rnd, bits, add, rem,ctx)
-BIGNUM *rnd;
-int bits;
-BIGNUM *add;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
+	     BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
 
-	t1=ctx->bn[ctx->tos++];
+	t1= &(ctx->bn[ctx->tos++]);
 
 	if (!BN_rand(rnd,bits,0,1)) goto err;
 
@@ -338,7 +319,7 @@ BN_CTX *ctx;
 	loop: for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_LONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
 			{
 			if (!BN_add(rnd,rnd,add)) goto err;
 			goto loop;
@@ -350,20 +331,16 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_strong(p, bits, padd, rem,ctx)
-BIGNUM *p;
-int bits;
-BIGNUM *padd;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh_strong(BIGNUM *p, int bits, BIGNUM *padd,
+	     BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1,*qadd=NULL,*q=NULL;
 
 	bits--;
-	t1=ctx->bn[ctx->tos++];
-	q=ctx->bn[ctx->tos++];
-	qadd=ctx->bn[ctx->tos++];
+	t1= &(ctx->bn[ctx->tos++]);
+	q= &(ctx->bn[ctx->tos++]);
+	qadd= &(ctx->bn[ctx->tos++]);
 
 	if (!BN_rshift1(qadd,padd)) goto err;
 		
@@ -389,8 +366,8 @@ BN_CTX *ctx;
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		if (	(BN_mod_word(p,(BN_LONG)primes[i]) == 0) ||
-			(BN_mod_word(q,(BN_LONG)primes[i]) == 0))
+		if (	(BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
+			(BN_mod_word(q,(BN_ULONG)primes[i]) == 0))
 			{
 			if (!BN_add(p,p,padd)) goto err;
 			if (!BN_add(q,q,qadd)) goto err;
@@ -404,20 +381,17 @@ err:
 	}
 
 #if 0
-static int witness(a, n,ctx)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx;
+static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx)
 	{
 	int k,i,nb,ret= -1;
 	BIGNUM *d,*dd,*tmp;
 	BIGNUM *d1,*d2,*x,*n1,*inv;
 
-	d1=ctx->bn[ctx->tos];
-	d2=ctx->bn[ctx->tos+1];
-	x=ctx->bn[ctx->tos+2];
-	n1=ctx->bn[ctx->tos+3];
-	inv=ctx->bn[ctx->tos+4];
+	d1= &(ctx->bn[ctx->tos]);
+	d2= &(ctx->bn[ctx->tos+1]);
+	x=  &(ctx->bn[ctx->tos+2]);
+	n1= &(ctx->bn[ctx->tos+3]);
+	inv=&(ctx->bn[ctx->tos+4]);
 	ctx->tos+=5;
 
 	d=d1;

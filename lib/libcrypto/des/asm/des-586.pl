@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # The inner loop instruction sequence and the IP/FP modifications are from
 # Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>
@@ -187,6 +187,8 @@ sub R_PERM_OP
 	&mov(	$tt,		$a		);
 	&xor(	$a,		$b		);
 	&and(	$a,		$mask		);
+	# This can never succeed, and besides it is difficult to see what the
+	# idea was - Ben 13 Feb 99
 	if (!$last eq $b)
 		{
 		&xor(	$b,		$a		);

@@ -60,21 +60,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	crl_main
 
 #undef POSTFIX
 #define	POSTFIX	".rvk"
-
-#define FORMAT_UNDEF	0
-#define FORMAT_ASN1	1
-#define FORMAT_TEXT	2
-#define FORMAT_PEM	3
 
 static char *crl_usage[]={
 "usage: crl args\n",
@@ -92,24 +88,17 @@ static char *crl_usage[]={
 NULL
 };
 
-#ifndef NOPROTO
 static X509_CRL *load_crl(char *file, int format);
-#else
-static X509_CRL *load_crl();
-#endif
-
 static BIO *bio_out=NULL;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	X509_CRL *x=NULL;
 	int ret=1,i,num,badops=0;
 	BIO *out=NULL;
 	int informat,outformat;
 	char *infile=NULL,*outfile=NULL;
-	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0;
+	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
 	char **pp,buf[256];
 
 	apps_startup();
@@ -147,10 +136,6 @@ char **argv;
 			if (--argc < 1) goto bad;
 			outformat=str2fmt(*(++argv));
 			}
-		else if (strcmp(*argv,"-text") == 0)
-			{
-			outformat=FORMAT_TEXT;
-			}
 		else if (strcmp(*argv,"-in") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -161,6 +146,8 @@ char **argv;
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-text") == 0)
+			text = 1;
 		else if (strcmp(*argv,"-hash") == 0)
 			hash= ++num;
 		else if (strcmp(*argv,"-issuer") == 0)
@@ -181,14 +168,6 @@ char **argv;
 		argv++;
 		}
 
-	if (outformat == FORMAT_TEXT)
-		{
-		num=0;
-		issuer= ++num;
-		lastupdate= ++num;
-		nextupdate= ++num;
-		}
-
 	if (badops)
 		{
 bad:
@@ -198,6 +177,7 @@ bad:
 		}
 
 	ERR_load_crypto_strings();
+	X509V3_add_standard_extensions();
 	x=load_crl(infile,informat);
 	if (x == NULL) { goto end; }
 
@@ -208,33 +188,31 @@ bad:
 			if (issuer == i)
 				{
 				X509_NAME_oneline(x->crl->issuer,buf,256);
-				fprintf(stdout,"issuer= %s\n",buf);
+				BIO_printf(bio_out,"issuer= %s\n",buf);
 				}
 
 			if (hash == i)
 				{
-				fprintf(stdout,"%08lx\n",
+				BIO_printf(bio_out,"%08lx\n",
 					X509_NAME_hash(x->crl->issuer));
 				}
 			if (lastupdate == i)
 				{
-				fprintf(stdout,"lastUpdate=");
-				ASN1_UTCTIME_print(bio_out,x->crl->lastUpdate);
-				fprintf(stdout,"\n");
+				BIO_printf(bio_out,"lastUpdate=");
+				ASN1_TIME_print(bio_out,x->crl->lastUpdate);
+				BIO_printf(bio_out,"\n");
 				}
 			if (nextupdate == i)
 				{
-				fprintf(stdout,"nextUpdate=");
+				BIO_printf(bio_out,"nextUpdate=");
 				if (x->crl->nextUpdate != NULL)
-					ASN1_UTCTIME_print(bio_out,x->crl->nextUpdate);
+					ASN1_TIME_print(bio_out,x->crl->nextUpdate);
 				else
-					fprintf(stdout,"NONE");
-				fprintf(stdout,"\n");
+					BIO_printf(bio_out,"NONE");
+				BIO_printf(bio_out,"\n");
 				}
 			}
 		}
-
-	if (noout) goto end;
 
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
@@ -254,27 +232,14 @@ bad:
 			}
 		}
 
+	if (text) X509_CRL_print(out, x);
+
+	if (noout) goto end;
+
 	if 	(outformat == FORMAT_ASN1)
 		i=(int)i2d_X509_CRL_bio(out,x);
 	else if (outformat == FORMAT_PEM)
 		i=PEM_write_bio_X509_CRL(out,x);
-	else if (outformat == FORMAT_TEXT)
-		{
-		X509_REVOKED *r;
-		STACK *sk;
-
-		sk=sk_dup(x->crl->revoked);
-		while ((r=(X509_REVOKED *)sk_pop(sk)) != NULL)
-			{
-			fprintf(stdout,"revoked: serialNumber=");
-			i2a_ASN1_INTEGER(out,r->serialNumber);
-			fprintf(stdout," revocationDate=");
-			ASN1_UTCTIME_print(bio_out,r->revocationDate);
-			fprintf(stdout,"\n");
-			}
-		sk_free(sk);
-		i=1;
-		}
 	else	
 		{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
@@ -283,15 +248,14 @@ bad:
 	if (!i) { BIO_printf(bio_err,"unable to write CRL\n"); goto end; }
 	ret=0;
 end:
-	if (out != NULL) BIO_free(out);
-	if (bio_out != NULL) BIO_free(bio_out);
-	if (x != NULL) X509_CRL_free(x);
+	BIO_free(out);
+	BIO_free(bio_out);
+	X509_CRL_free(x);
+	X509V3_EXT_cleanup();
 	EXIT(ret);
 	}
 
-static X509_CRL *load_crl(infile, format)
-char *infile;
-int format;
+static X509_CRL *load_crl(char *infile, int format)
 	{
 	X509_CRL *x=NULL;
 	BIO *in=NULL;
@@ -316,7 +280,7 @@ int format;
 	if 	(format == FORMAT_ASN1)
 		x=d2i_X509_CRL_bio(in,NULL);
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_CRL(in,NULL,NULL);
+		x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input crl\n");
 		goto end;
@@ -329,7 +293,7 @@ int format;
 		}
 	
 end:
-	if (in != NULL) BIO_free(in);
+	BIO_free(in);
 	return(x);
 	}
 

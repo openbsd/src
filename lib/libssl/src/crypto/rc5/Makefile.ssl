@@ -8,9 +8,11 @@ CC=	cc
 CPP=	$(CC) -E
 INCLUDES=
 CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
@@ -42,7 +44,7 @@ all:	lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 # elf
@@ -61,27 +63,25 @@ asm/r586-out.o: asm/r586unix.cpp
 
 # bsdi
 asm/r586bsdi.o: asm/r586unix.cpp
-	$(CPP) -DBSDI asm/r586unix.cpp | as -o asm/r586bsdi.o
+	$(CPP) -DBSDI asm/r586unix.cpp | sed 's/ :/:/' | as -o asm/r586bsdi.o
 
 asm/r586unix.cpp:
-	(cd asm; perl rc5-586.pl cpp >r586unix.cpp)
+	(cd asm; $(PERL) rc5-586.pl cpp >r586unix.cpp)
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/point.sh ../../doc/rc5.doc rc5.doc ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
 	do  \
-	(cp $$i $(INSTALLTOP)/include/$$i; \
-	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
 tags:
@@ -93,15 +93,20 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-errors:
+	rm -f asm/r586unix.cpp *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rc5_ecb.o: ../../include/openssl/opensslv.h ../../include/openssl/rc5.h
+rc5_ecb.o: rc5_locl.h
+rc5_enc.o: ../../include/openssl/rc5.h rc5_locl.h
+rc5_skey.o: ../../include/openssl/rc5.h rc5_locl.h
+rc5cfb64.o: ../../include/openssl/rc5.h rc5_locl.h
+rc5ofb64.o: ../../include/openssl/rc5.h rc5_locl.h

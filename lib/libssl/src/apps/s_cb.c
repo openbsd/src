@@ -63,17 +63,15 @@
 #include "apps.h"
 #undef NON_MAIN
 #undef USE_SOCKETS
-#include "err.h"
-#include "x509.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
 #include "s_apps.h"
 
 int verify_depth=0;
 int verify_error=X509_V_OK;
 
-int MS_CALLBACK verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	X509 *err_cert;
@@ -109,13 +107,13 @@ X509_STORE_CTX *ctx;
 	case X509_V_ERR_CERT_NOT_YET_VALID:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 		BIO_printf(bio_err,"notBefore=");
-		ASN1_UTCTIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
 		BIO_printf(bio_err,"\n");
 		break;
 	case X509_V_ERR_CERT_HAS_EXPIRED:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		BIO_printf(bio_err,"notAfter=");
-		ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
 		BIO_printf(bio_err,"\n");
 		break;
 		}
@@ -123,15 +121,14 @@ X509_STORE_CTX *ctx;
 	return(ok);
 	}
 
-int set_cert_stuff(ctx, cert_file, key_file)
-SSL_CTX *ctx;
-char *cert_file;
-char *key_file;
+int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	{
 	if (cert_file != NULL)
 		{
+		/*
 		SSL *ssl;
 		X509 *x509;
+		*/
 
 		if (SSL_CTX_use_certificate_file(ctx,cert_file,
 			SSL_FILETYPE_PEM) <= 0)
@@ -149,13 +146,20 @@ char *key_file;
 			return(0);
 			}
 
+		/*
+		In theory this is no longer needed 
 		ssl=SSL_new(ctx);
 		x509=SSL_get_certificate(ssl);
 
-		if (x509 != NULL)
-			EVP_PKEY_copy_parameters(X509_get_pubkey(x509),
-				SSL_get_privatekey(ssl));
+		if (x509 != NULL) {
+			EVP_PKEY *pktmp;
+			pktmp = X509_get_pubkey(x509);
+			EVP_PKEY_copy_parameters(pktmp,
+						SSL_get_privatekey(ssl));
+			EVP_PKEY_free(pktmp);
+		}
 		SSL_free(ssl);
+		*/
 
 		/* If we are using DSA, we can copy the parameters from
 		 * the private key */
@@ -172,13 +176,8 @@ char *key_file;
 	return(1);
 	}
 
-long MS_CALLBACK bio_dump_cb(bio,cmd,argp,argi,argl,ret)
-BIO *bio;
-int cmd;
-char *argp;
-int argi;
-long argl;
-long ret;
+long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp, int argi,
+	     long argl, long ret)
 	{
 	BIO *out;
 
@@ -201,10 +200,7 @@ long ret;
 	return(ret);
 	}
 
-void MS_CALLBACK apps_ssl_info_callback(s,where,ret)
-SSL *s;
-int where;
-int ret;
+void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret)
 	{
 	char *str;
 	int w;

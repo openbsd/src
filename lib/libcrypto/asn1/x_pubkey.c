@@ -58,16 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_PUBKEY,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_PUBKEY_NEW,ASN1_R_LENGTH_MISMATCH);
- */
-
-int i2d_X509_PUBKEY(a,pp)
-X509_PUBKEY *a;
-unsigned char **pp;
+int i2d_X509_PUBKEY(X509_PUBKEY *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -82,10 +76,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_PUBKEY *d2i_X509_PUBKEY(a,pp,length)
-X509_PUBKEY **a;
-unsigned char **pp;
-long length;
+X509_PUBKEY *d2i_X509_PUBKEY(X509_PUBKEY **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,X509_PUBKEY *,X509_PUBKEY_new);
 
@@ -101,9 +93,10 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_PUBKEY_free,ASN1_F_D2I_X509_PUBKEY);
 	}
 
-X509_PUBKEY *X509_PUBKEY_new()
+X509_PUBKEY *X509_PUBKEY_new(void)
 	{
 	X509_PUBKEY *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_PUBKEY);
 	M_ASN1_New(ret->algor,X509_ALGOR_new);
@@ -113,8 +106,7 @@ X509_PUBKEY *X509_PUBKEY_new()
 	M_ASN1_New_Error(ASN1_F_X509_PUBKEY_NEW);
 	}
 
-void X509_PUBKEY_free(a)
-X509_PUBKEY *a;
+void X509_PUBKEY_free(X509_PUBKEY *a)
 	{
 	if (a == NULL) return;
 	X509_ALGOR_free(a->algor);
@@ -123,9 +115,7 @@ X509_PUBKEY *a;
 	Free((char *)a);
 	}
 
-int X509_PUBKEY_set(x,pkey)
-X509_PUBKEY **x;
-EVP_PKEY *pkey;
+int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	{
 	int ok=0;
 	X509_PUBKEY *pk;
@@ -182,11 +172,15 @@ EVP_PKEY *pkey;
 		goto err;
 		}
 
-	i=i2d_PublicKey(pkey,NULL);
+	if ((i=i2d_PublicKey(pkey,NULL)) <= 0) goto err;
 	if ((s=(unsigned char *)Malloc(i+1)) == NULL) goto err;
 	p=s;
 	i2d_PublicKey(pkey,&p);
 	if (!ASN1_BIT_STRING_set(pk->public_key,s,i)) goto err;
+	/* Set number of unused bits to zero */
+	pk->public_key->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+	pk->public_key->flags|=ASN1_STRING_FLAG_BITS_LEFT;
+
 	Free(s);
 
 	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
@@ -204,8 +198,7 @@ err:
 	return(ok);
 	}
 
-EVP_PKEY *X509_PUBKEY_get(key)
-X509_PUBKEY *key;
+EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	{
 	EVP_PKEY *ret=NULL;
 	long j;
@@ -217,7 +210,11 @@ X509_PUBKEY *key;
 
 	if (key == NULL) goto err;
 
-	if (key->pkey != NULL) return(key->pkey);
+	if (key->pkey != NULL)
+	    {
+	    CRYPTO_add(&key->pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+	    return(key->pkey);
+	    }
 
 	if (key->public_key == NULL) goto err;
 
@@ -247,6 +244,7 @@ X509_PUBKEY *key;
 		}
 #endif
 	key->pkey=ret;
+	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_EVP_PKEY);
 	return(ret);
 err:
 	if (ret != NULL)

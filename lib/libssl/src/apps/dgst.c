@@ -60,12 +60,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8
@@ -73,24 +73,17 @@
 #undef PROG
 #define PROG	dgst_main
 
-#ifndef NOPROTO
 void do_fp(unsigned char *buf,BIO *f,int sep);
-#else
-void do_fp();
-#endif
-
-int MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	unsigned char *buf=NULL;
 	int i,err=0;
-	EVP_MD *md=NULL,*m;
+	const EVP_MD *md=NULL,*m;
 	BIO *in=NULL,*inp;
 	BIO *bmd=NULL;
-	char *name;
+	const char *name;
 #define PROG_NAME_SIZE  16
-        char pname[PROG_NAME_SIZE];
+	char pname[PROG_NAME_SIZE];
 	int separator=0;
 	int debug=0;
 
@@ -106,13 +99,13 @@ char **argv;
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
-        program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,PROG_NAME_SIZE);
 
 	md=EVP_get_digestbyname(pname);
 
 	argc--;
 	argv++;
-	for (i=0; i<argc; i++)
+	while (argc > 0)
 		{
 		if ((*argv)[0] != '-') break;
 		if (strcmp(*argv,"-c") == 0)
@@ -146,6 +139,8 @@ char **argv;
 			LN_sha,LN_sha);
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
 			LN_mdc2,LN_mdc2);
+		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm\n",
+			LN_ripemd160,LN_ripemd160);
 		err=1;
 		goto end;
 		}
@@ -187,7 +182,7 @@ char **argv;
 				}
 			printf("%s(%s)= ",name,argv[i]);
 			do_fp(buf,inp,separator);
-			BIO_reset(bmd);
+			(void)BIO_reset(bmd);
 			}
 		}
 end:
@@ -201,10 +196,7 @@ end:
 	EXIT(err);
 	}
 
-void do_fp(buf,bp,sep)
-unsigned char *buf;
-BIO *bp;
-int sep;
+void do_fp(unsigned char *buf, BIO *bp, int sep)
 	{
 	int len;
 	int i;

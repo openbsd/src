@@ -60,12 +60,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cryptlib.h"
-#include "crypto.h"
-#include "x509.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
 
 #ifndef NO_STDIO
-int X509_STORE_set_default_paths(ctx)
-X509_STORE *ctx;
+int X509_STORE_set_default_paths(X509_STORE *ctx)
 	{
 	X509_LOOKUP *lookup;
 
@@ -83,10 +82,8 @@ X509_STORE *ctx;
 	return(1);
 	}
 
-int X509_STORE_load_locations(ctx,file,path)
-X509_STORE *ctx;
-char *file;
-char *path;
+int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
+		const char *path)
 	{
 	X509_LOOKUP *lookup;
 

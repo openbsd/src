@@ -56,19 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "asn1_mac.h"
-#include "dsa.h"
+#include <openssl/bn.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/dsa.h>
 
-/*
- * ASN1err(ASN1_F_D2I_DSAPARAMS,ASN1_R_LENGTH_MISMATCH);
- */
-
-int i2d_DSAparams(a,pp)
-DSA *a;
-unsigned char **pp;
+int i2d_DSAparams(DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[3];
 	ASN1_INTEGER bs;
@@ -118,4 +113,5 @@ err:
 	*pp=p;
 	return(ret);
 	}
+#endif
 

@@ -58,32 +58,44 @@
 
 #include <errno.h>
 #include <time.h>
+#include <stdio.h>
+#include "cryptlib.h"
 #include "des_locl.h"
+#include <openssl/rand.h>
 
-int des_enc_write(fd, buf, len, sched, iv)
-int fd;
-char *buf;
-int len;
-des_key_schedule sched;
-des_cblock (*iv);
+/*
+ * WARNINGS:
+ *
+ *  -  The data format used by des_enc_write() and des_enc_read()
+ *     has a cryptographic weakness: When asked to write more
+ *     than MAXWRITE bytes, des_enc_write will split the data
+ *     into several chunks that are all encrypted
+ *     using the same IV.  So don't use these functions unless you
+ *     are sure you know what you do (in which case you might
+ *     not want to use them anyway).
+ *
+ *  -  This code cannot handle non-blocking sockets.
+ */
+
+int des_enc_write(int fd, const void *_buf, int len,
+		  des_key_schedule sched, des_cblock *iv)
 	{
 #ifdef _LIBC
-	extern int srandom();
 	extern unsigned long time();
-	extern int random();
 	extern int write();
 #endif
-
+	const unsigned char *buf=_buf;
 	long rnum;
 	int i,j,k,outnum;
-	static char *outbuf=NULL;
-	char shortbuf[8];
-	char *p;
+	static unsigned char *outbuf=NULL;
+	unsigned char shortbuf[8];
+	unsigned char *p;
+	const unsigned char *cp;
 	static int start=1;
 
 	if (outbuf == NULL)
 		{
-		outbuf=(char *)malloc(BSIZE+HDRSIZE);
+		outbuf=Malloc(BSIZE+HDRSIZE);
 		if (outbuf == NULL) return(-1);
 		}
 	/* If we are sending less than 8 bytes, the same char will look
@@ -91,7 +103,6 @@ des_cblock (*iv);
 	if (start)
 		{
 		start=0;
-		srandom((unsigned int)time(NULL));
 		}
 
 	/* lets recurse if we want to send the data in small chunks */
@@ -117,35 +128,32 @@ des_cblock (*iv);
 	/* pad short strings */
 	if (len < 8)
 		{
-		p=shortbuf;
-		memcpy(shortbuf,buf,(unsigned int)len);
-		for (i=len; i<8; i++)
-			shortbuf[i]=random();
+		cp=shortbuf;
+		memcpy(shortbuf,buf,len);
+		RAND_bytes(shortbuf+len, 8-len);
 		rnum=8;
 		}
 	else
 		{
-		p=buf;
+		cp=(unsigned char*)buf;
 		rnum=((len+7)/8*8); /* round up to nearest eight */
 		}
 
 	if (des_rw_mode & DES_PCBC_MODE)
-		des_pcbc_encrypt((des_cblock *)p,
-			(des_cblock *)&(outbuf[HDRSIZE]),
-			(long)((len<8)?8:len),sched,iv,DES_ENCRYPT); 
+		des_pcbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+				 DES_ENCRYPT); 
 	else
-		des_cbc_encrypt((des_cblock *)p,
-			(des_cblock *)&(outbuf[HDRSIZE]),
-			(long)((len<8)?8:len),sched,iv,DES_ENCRYPT); 
+		des_cbc_encrypt(cp,&(outbuf[HDRSIZE]),(len<8)?8:len,sched,iv,
+				DES_ENCRYPT); 
 
 	/* output */
-	outnum=(int)rnum+HDRSIZE;
+	outnum=rnum+HDRSIZE;
 
 	for (j=0; j<outnum; j+=i)
 		{
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got upto. */
-		i=write(fd,&(outbuf[j]),(unsigned int)(outnum-j));
+		i=write(fd,&(outbuf[j]),outnum-j);
 		if (i == -1)
 			{
 			if (errno == EINTR)

@@ -59,7 +59,9 @@
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
-#include "buffer.h"
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -208,7 +210,7 @@ typedef struct ssl3_record_st
 /*r */	unsigned int off;	/* read/write offset into 'buf' */
 /*rw*/	unsigned char *data;	/* pointer to the record data */
 /*rw*/	unsigned char *input;	/* where the decode bytes are */
-/*rw*/	unsigned char *comp;	/* only used with decompression */
+/*r */	unsigned char *comp;	/* only used with decompression - malloc()ed */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -219,10 +221,6 @@ typedef struct ssl3_buffer_st
 /*rw*/	int offset;		/* where to 'copy from' */
 /*rw*/	unsigned char *buf;	/* SSL3_RT_MAX_PACKET_SIZE bytes */
 	} SSL3_BUFFER;
-
-typedef struct ssl3_compression_st {
-	int nothing;
-	} SSL3_COMPRESSION;
 
 #define SSL3_CT_RSA_SIGN			1
 #define SSL3_CT_DSS_SIGN			2
@@ -236,7 +234,7 @@ typedef struct ssl3_compression_st {
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define SSL3_FLAGS_DELAY_CLIENT_FINISHED	0x0002
 #define SSL3_FLAGS_POP_BUFFER			0x0004
-#define	TLS1_FLAGS_TLS_PADDING_BUG		0x0008
+#define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 
 #if 0
 #define AD_CLOSE_NOTIFY			0
@@ -290,7 +288,7 @@ typedef struct ssl3_ctx_st
 	int wpend_tot;		/* number bytes written */
 	int wpend_type;
 	int wpend_ret;		/* number of bytes submitted */
-	char *wpend_buf;
+	const unsigned char *wpend_buf;
 
 	/* used during startup, digest all incoming/outgoing packets */
 	EVP_MD_CTX finish_dgst1;
@@ -305,7 +303,7 @@ typedef struct ssl3_ctx_st
 	/* we alow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */
 	int alert_dispatch;
-	char send_alert[2];
+	unsigned char send_alert[2];
 
 	/* This flag is set when we should renegotiate ASAP, basically when
 	 * there is no more data in the read or write buffers */
@@ -324,8 +322,9 @@ typedef struct ssl3_ctx_st
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
+#ifndef NO_DH
 		DH *dh;
-
+#endif
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 
@@ -335,18 +334,23 @@ typedef struct ssl3_ctx_st
 		int cert_req;
 		int ctype_num;
 		char ctype[SSL3_CT_NUMBER];
-		STACK *ca_names;
+		STACK_OF(X509_NAME) *ca_names;
 
 		int use_rsa_tmp;
 
 		int key_block_length;
 		unsigned char *key_block;
 
-		EVP_CIPHER *new_sym_enc;
-		EVP_MD *new_hash;
-		SSL_COMPRESSION *new_compression;
+		const EVP_CIPHER *new_sym_enc;
+		const EVP_MD *new_hash;
+#ifdef HEADER_COMP_H
+		const SSL_COMP *new_compression;
+#else
+		char *new_compression;
+#endif
 		int cert_request;
 		} tmp;
+
 	} SSL3_CTX;
 
 /* SSLv3 */

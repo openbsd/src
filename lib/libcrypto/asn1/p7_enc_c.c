@@ -58,17 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_PKCS7_ENC_CONTENT_NEW,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_PKCS7_ENC_CONTENT,ASN1_R_LENGTH_MISMATCH);
- */
-
-int i2d_PKCS7_ENC_CONTENT(a,pp)
-PKCS7_ENC_CONTENT *a;
-unsigned char **pp;
+int i2d_PKCS7_ENC_CONTENT(PKCS7_ENC_CONTENT *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -85,10 +78,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7_ENC_CONTENT *d2i_PKCS7_ENC_CONTENT(a,pp,length)
-PKCS7_ENC_CONTENT **a;
-unsigned char **pp;
-long length;
+PKCS7_ENC_CONTENT *d2i_PKCS7_ENC_CONTENT(PKCS7_ENC_CONTENT **a,
+	     unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7_ENC_CONTENT *,PKCS7_ENC_CONTENT_new);
 
@@ -103,20 +94,21 @@ long length;
 		ASN1_F_D2I_PKCS7_ENC_CONTENT);
 	}
 
-PKCS7_ENC_CONTENT *PKCS7_ENC_CONTENT_new()
+PKCS7_ENC_CONTENT *PKCS7_ENC_CONTENT_new(void)
 	{
 	PKCS7_ENC_CONTENT *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7_ENC_CONTENT);
-	M_ASN1_New(ret->content_type,ASN1_OBJECT_new);
+	/* M_ASN1_New(ret->content_type,ASN1_OBJECT_new); */
+	ret->content_type=OBJ_nid2obj(NID_pkcs7_encrypted);
 	M_ASN1_New(ret->algorithm,X509_ALGOR_new);
 	ret->enc_data=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_PKCS7_ENC_CONTENT_NEW);
 	}
 
-void PKCS7_ENC_CONTENT_free(a)
-PKCS7_ENC_CONTENT *a;
+void PKCS7_ENC_CONTENT_free(PKCS7_ENC_CONTENT *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->content_type);

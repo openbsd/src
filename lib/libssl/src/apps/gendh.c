@@ -56,34 +56,27 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DH
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "apps.h"
-#include "bio.h"
-#include "rand.h"
-#include "err.h"
-#include "bn.h"
-#include "dh.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #define DEFBITS	512
 #undef PROG
 #define PROG gendh_main
 
-#ifndef NOPROTO
-static void MS_CALLBACK dh_cb(int p, int n, char *arg);
+static void MS_CALLBACK dh_cb(int p, int n, void *arg);
 static long dh_load_rand(char *names);
-#else
-static void MS_CALLBACK dh_cb();
-static long dh_load_rand();
-#endif
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	char buffer[200];
 	DH *dh=NULL;
@@ -171,7 +164,7 @@ bad:
 
 	BIO_printf(bio_err,"Generating DH parameters, %d bit long strong prime, generator of %d\n",num,g);
 	BIO_printf(bio_err,"This is going to take a long time\n");
-	dh=DH_generate_parameters(num,g,dh_cb,(char *)bio_err);
+	dh=DH_generate_parameters(num,g,dh_cb,bio_err);
 		
 	if (dh == NULL) goto end;
 
@@ -191,10 +184,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dh_cb(p,n,arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dh_cb(int p, int n, void *arg)
 	{
 	char c='*';
 
@@ -203,14 +193,13 @@ char *arg;
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	(void)BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif
 	}
 
-static long dh_load_rand(name)
-char *name;
+static long dh_load_rand(char *name)
 	{
 	char *p,*n;
 	int last;
@@ -231,5 +220,4 @@ char *name;
 		}
 	return(tot);
 	}
-
-
+#endif

@@ -63,14 +63,9 @@
  * 64bit block we have used is contained in *num;
  */
 
-void des_ede3_cfb64_encrypt(in, out, length, ks1,ks2,ks3, ivec, num, enc)
-unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule ks1,ks2,ks3;
-des_cblock (*ivec);
-int *num;
-int enc;
+void des_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+	     long length, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3, des_cblock *ivec, int *num, int enc)
 	{
 	register DES_LONG v0,v1;
 	register long l=length;
@@ -78,7 +73,7 @@ int enc;
 	DES_LONG ti[2];
 	unsigned char *iv,c,cc;
 
-	iv=(unsigned char *)ivec;
+	iv=&(*ivec)[0];
 	if (enc)
 		{
 		while (l--)
@@ -90,14 +85,14 @@ int enc;
 
 				ti[0]=v0;
 				ti[1]=v1;
-				des_encrypt3((DES_LONG *)ti,ks1,ks2,ks3);
+				des_encrypt3(ti,ks1,ks2,ks3);
 				v0=ti[0];
 				v1=ti[1];
 
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				}
 			c= *(in++)^iv[n];
 			*(out++)=c;
@@ -116,14 +111,14 @@ int enc;
 
 				ti[0]=v0;
 				ti[1]=v1;
-				des_encrypt3((DES_LONG *)ti,ks1,ks2,ks3);
+				des_encrypt3(ti,ks1,ks2,ks3);
 				v0=ti[0];
 				v1=ti[1];
 
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				l2c(v0,iv);
 				l2c(v1,iv);
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				}
 			cc= *(in++);
 			c=iv[n];
@@ -137,14 +132,9 @@ int enc;
 	}
 
 #ifdef undef /* MACRO */
-void des_ede2_cfb64_encrypt(in, out, length, ks1,ks2, ivec, num, enc)
-unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule ks1,ks2;
-des_cblock (*ivec);
-int *num;
-int enc;
+void des_ede2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
+	     des_key_schedule ks1, des_key_schedule ks2, des_cblock (*ivec),
+	     int *num, int enc)
 	{
 	des_ede3_cfb64_encrypt(in,out,length,ks1,ks2,ks1,ivec,num,enc);
 	}

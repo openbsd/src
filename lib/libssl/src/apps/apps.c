@@ -69,17 +69,9 @@
 #  include "bss_file.c"
 #endif
 
-#ifndef NOPROTO
 int app_init(long mesgwin);
-#else
-int app_init();
-#endif
-
 #ifdef undef /* never finished - probably never will be :-) */
-int args_from_file(file,argc,argv)
-char *file;
-int *argc;
-char **argv[];
+int args_from_file(char *file, int *argc, char **argv[])
 	{
 	FILE *fp;
 	int num,i;
@@ -157,8 +149,7 @@ char **argv[];
 	}
 #endif
 
-int str2fmt(s)
-char *s;
+int str2fmt(char *s)
 	{
 	if 	((*s == 'D') || (*s == 'd'))
 		return(FORMAT_ASN1);
@@ -173,10 +164,7 @@ char *s;
 	}
 
 #if defined(MSDOS) || defined(WIN32) || defined(WIN16)
-void program_name(in,out,size)
-char *in;
-char *out;
-int size;
+void program_name(char *in, char *out, int size)
 	{
 	int i,n;
 	char *p=NULL;
@@ -213,10 +201,28 @@ int size;
 	out[n]='\0';
 	}
 #else
-void program_name(in,out,size)
-char *in;
-char *out;
-int size;
+#ifdef VMS
+void program_name(char *in, char *out, int size)
+	{
+	char *p=in, *q;
+	char *chars=":]>";
+
+	while(*chars != '\0')
+		{
+		q=strrchr(p,*chars);
+		if (q > p)
+			p = q + 1;
+		chars++;
+		}
+
+	q=strrchr(p,'.');
+	if (q == NULL)
+		q = in+size;
+	strncpy(out,p,q-p);
+	out[q-p]='\0';
+	}
+#else
+void program_name(char *in, char *out, int size)
 	{
 	char *p;
 
@@ -229,24 +235,25 @@ int size;
 	out[size-1]='\0';
 	}
 #endif
+#endif
 
 #ifdef WIN32
-int WIN32_rename(from,to)
-char *from;
-char *to;
+int WIN32_rename(char *from, char *to)
 	{
+#ifdef WINNT
 	int ret;
+/* Note: MoveFileEx() doesn't work under Win95, Win98 */
 
 	ret=MoveFileEx(from,to,MOVEFILE_REPLACE_EXISTING|MOVEFILE_COPY_ALLOWED);
 	return(ret?0:-1);
+#else
+	unlink(to);
+	return MoveFile(from, to);
+#endif
 	}
 #endif
 
-int chopup_args(arg,buf,argc,argv)
-ARGS *arg;
-char *buf;
-int *argc;
-char **argv[];
+int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	{
 	int num,len,i;
 	char *p;
@@ -312,8 +319,7 @@ char **argv[];
 	}
 
 #ifndef APP_INIT
-int app_init(mesgwin)
-long mesgwin;
+int app_init(long mesgwin)
 	{
 	return(1);
 	}

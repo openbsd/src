@@ -56,20 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DH
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "asn1_mac.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/dh.h>
 
-/*
- * ASN1err(ASN1_F_D2I_DHPARAMS,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_DHPARAMS_NEW,ASN1_R_LENGTH_MISMATCH);
- */
-
-int i2d_DHparams(a,pp)
-DH *a;
-unsigned char **pp;
+int i2d_DHparams(DH *a, unsigned char **pp)
 	{
 	BIGNUM *num[3];
 	ASN1_INTEGER bs;
@@ -100,7 +94,12 @@ unsigned char **pp;
 		}
 
 	t=ASN1_object_size(1,tot,V_ASN1_SEQUENCE);
-	if (pp == NULL) return(t);
+	if (pp == NULL)
+		{
+		if (num[2] != NULL)
+			BN_free(num[2]);
+		return(t);
+		}
 
 	p= *pp;
 	ASN1_put_object(&p,1,tot,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
@@ -126,3 +125,4 @@ err:
 	*pp=p;
 	return(ret);
 	}
+#endif

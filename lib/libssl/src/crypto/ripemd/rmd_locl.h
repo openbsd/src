@@ -58,15 +58,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
 
 #define ULONG	unsigned long
 #define UCHAR	unsigned char
 #define UINT	unsigned int
-
-#ifdef NOCONST
-#define const
-#endif
 
 #undef c2nl
 #define c2nl(c,l)	(l =(((unsigned long)(*((c)++)))<<24), \

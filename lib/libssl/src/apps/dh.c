@@ -56,17 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "bn.h"
-#include "dh.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	dh_main
@@ -81,9 +82,7 @@
  * -C
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	DH *dh=NULL;
 	int i,badops=0,text=0;
@@ -152,10 +151,10 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
 		BIO_printf(bio_err," -outform arg  output format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -check        check the DH parameters\n");
-		BIO_printf(bio_err," -text         check the DH parameters\n");
+		BIO_printf(bio_err," -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
 		goto end;
@@ -195,7 +194,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		dh=d2i_DHparams_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dh=PEM_read_bio_DHparams(in,NULL,NULL);
+		dh=PEM_read_bio_DHparams(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified\n");
@@ -310,3 +309,4 @@ end:
 	if (dh != NULL) DH_free(dh);
 	EXIT(ret);
 	}
+#endif

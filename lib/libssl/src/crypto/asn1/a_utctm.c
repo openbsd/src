@@ -58,26 +58,35 @@
 
 #include <stdio.h>
 #include <time.h>
+#ifdef VMS
+#include <descrip.h>
+#include <lnmdef.h>
+#include <starlet.h>
+#endif
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_ASN1_UTCTIME_NEW,ASN1_R_UTCTIME_TOO_LONG);
- * ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_EXPECTING_A_UTCTIME);
- */
-
-int i2d_ASN1_UTCTIME(a,pp)
-ASN1_UTCTIME *a;
-unsigned char **pp;
+int i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **pp)
 	{
+#ifndef CHARSET_EBCDIC
 	return(i2d_ASN1_bytes((ASN1_STRING *)a,pp,
 		V_ASN1_UTCTIME,V_ASN1_UNIVERSAL));
+#else
+	/* KLUDGE! We convert to ascii before writing DER */
+	int len;
+	char tmp[24];
+	ASN1_STRING x = *(ASN1_STRING *)a;
+
+	len = x.length;
+	ebcdic2ascii(tmp, x.data, (len >= sizeof tmp) ? sizeof tmp : len);
+	x.data = tmp;
+	return i2d_ASN1_bytes(&x, pp, V_ASN1_UTCTIME,V_ASN1_UNIVERSAL);
+#endif
 	}
 
 
-ASN1_UTCTIME *d2i_ASN1_UTCTIME(a, pp, length)
-ASN1_UTCTIME **a;
-unsigned char **pp;
-long length;
+ASN1_UTCTIME *d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_UTCTIME *ret=NULL;
 
@@ -85,9 +94,12 @@ long length;
 		V_ASN1_UTCTIME,V_ASN1_UNIVERSAL);
 	if (ret == NULL)
 		{
-		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_ERROR_STACK);
+		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ERR_R_NESTED_ASN1_ERROR);
 		return(NULL);
 		}
+#ifdef CHARSET_EBCDIC
+	ascii2ebcdic(ret->data, ret->data, ret->length);
+#endif
 	if (!ASN1_UTCTIME_check(ret))
 		{
 		ASN1err(ASN1_F_D2I_ASN1_UTCTIME,ASN1_R_INVALID_TIME_FORMAT);
@@ -101,8 +113,7 @@ err:
 	return(NULL);
 	}
 
-int ASN1_UTCTIME_check(d)
-ASN1_UTCTIME *d;
+int ASN1_UTCTIME_check(ASN1_UTCTIME *d)
 	{
 	static int min[8]={ 0, 1, 1, 0, 0, 0, 0, 0};
 	static int max[8]={99,12,31,23,59,59,12,59};
@@ -152,9 +163,7 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_set_string(s,str)
-ASN1_UTCTIME *s;
-char *str;
+int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, char *str)
 	{
 	ASN1_UTCTIME t;
 
@@ -174,13 +183,11 @@ char *str;
 		return(0);
 	}
 
-ASN1_UTCTIME *ASN1_UTCTIME_set(s, t)
-ASN1_UTCTIME *s;
-time_t t;
+ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
 	char *p;
 	struct tm *ts;
-#if defined(THREADS)
+#if defined(THREADS) && !defined(WIN32)
 	struct tm data;
 #endif
 
@@ -189,10 +196,48 @@ time_t t;
 	if (s == NULL)
 		return(NULL);
 
-#if defined(THREADS)
-	ts=(struct tm *)gmtime_r(&t,&data);
+#if defined(THREADS) && !defined(WIN32)
+	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
+	ts=&data;
 #else
-	ts=(struct tm *)gmtime(&t);
+	ts=gmtime(&t);
+#endif
+#ifdef VMS
+	if (ts == NULL)
+		{
+		static $DESCRIPTOR(tabnam,"LNM$DCL_LOGICAL");
+		static $DESCRIPTOR(lognam,"SYS$TIMEZONE_DIFFERENTIAL");
+		char result[256];
+		unsigned int reslen = 0;
+		struct {
+			short buflen;
+			short code;
+			void *bufaddr;
+			unsigned int *reslen;
+		} itemlist[] = {
+			{ 0, LNM$_STRING, 0, 0 },
+			{ 0, 0, 0, 0 },
+		};
+		int status;
+
+		/* Get the value for SYS$TIMEZONE_DIFFERENTIAL */
+		itemlist[0].buflen = sizeof(result);
+		itemlist[0].bufaddr = result;
+		itemlist[0].reslen = &reslen;
+		status = sys$trnlnm(0, &tabnam, &lognam, 0, itemlist);
+		if (!(status & 1))
+			return NULL;
+		result[reslen] = '\0';
+
+		/* Get the numerical value of the equivalence string */
+		status = atoi(result);
+
+		/* and use it to move time to GMT */
+		t -= status;
+
+		/* then convert the result to the time structure */
+		ts=(struct tm *)localtime(&t);
+		}
 #endif
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 14))
@@ -208,5 +253,8 @@ time_t t;
 		ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
 	s->length=strlen(p);
 	s->type=V_ASN1_UTCTIME;
+#ifdef CHARSET_EBCDIC_not
+	ebcdic2ascii(s->data, s->data, s->length);
+#endif
 	return(s);
 	}

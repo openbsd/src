@@ -56,14 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
-#include "bio.h"
-#include "rand.h"
-#include "objects.h"
+#include <openssl/bio.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
 #include "ssl_locl.h"
-#include "evp.h"
+#include <openssl/evp.h>
 
-#ifndef NOPROTO
+static SSL_METHOD *ssl2_get_server_method(int ver);
 static int get_client_master_key(SSL *s);
 static int get_client_hello(SSL *s);
 static int server_hello(SSL *s); 
@@ -73,21 +74,9 @@ static int server_finish(SSL *s);
 static int request_certificate(SSL *s);
 static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
 	unsigned char *to,int padding);
-#else
-static int get_client_master_key();
-static int get_client_hello();
-static int server_hello(); 
-static int get_client_finished();
-static int server_verify();
-static int server_finish();
-static int request_certificate();
-static int ssl_rsa_private_decrypt();
-#endif
-
 #define BREAK	break
 
-static SSL_METHOD *ssl2_get_server_method(ver)
-int ver;
+static SSL_METHOD *ssl2_get_server_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
@@ -95,24 +84,23 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_server_method()
+SSL_METHOD *SSLv2_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv2_server_data;
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv2_server_data,(char *)sslv2_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv2_server_data.ssl_accept=ssl2_accept;
 		SSLv2_server_data.get_ssl_method=ssl2_get_server_method;
+		init=0;
 		}
 	return(&SSLv2_server_data);
 	}
 
-int ssl2_accept(s)
-SSL *s;
+int ssl2_accept(SSL *s)
 	{
 	unsigned long l=time(NULL);
 	BUF_MEM *buf=NULL;
@@ -121,7 +109,7 @@ SSL *s;
 	void (*cb)()=NULL;
 	int new_state,state;
 
-	RAND_seed((unsigned char *)&l,sizeof(l));
+	RAND_seed(&l,sizeof(l));
 	ERR_clear_error();
 	clear_sys_error();
 
@@ -134,8 +122,7 @@ SSL *s;
 	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 	s->in_handshake++;
 
-	if (((s->session == NULL) || (s->session->cert == NULL)) &&
-		(s->cert == NULL))
+	if (s->cert == NULL)
 		{
 		SSLerr(SSL_F_SSL2_ACCEPT,SSL_R_NO_CERTIFICATE_SET);
 		return(-1);
@@ -153,6 +140,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
 
+			s->server=1;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			s->version=SSL2_VERSION;
@@ -166,7 +154,7 @@ SSL *s;
 				{ ret= -1; goto end; }
 			s->init_buf=buf;
 			s->init_num=0;
-			s->ctx->sess_accept++;
+			s->ctx->stats.sess_accept++;
 			s->handshake_func=ssl2_accept;
 			s->state=SSL2_ST_GET_CLIENT_HELLO_A;
 			BREAK;
@@ -293,13 +281,14 @@ SSL *s;
 
 		case SSL_ST_OK:
 			BUF_MEM_free(s->init_buf);
+			ssl_free_wbio_buffer(s);
 			s->init_buf=NULL;
 			s->init_num=0;
 		/*	ERR_clear_error();*/
 
 			ssl_update_cache(s,SSL_SESS_CACHE_SERVER);
 
-			s->ctx->sess_accept_good++;
+			s->ctx->stats.sess_accept_good++;
 			/* s->server=1; */
 			ret=1;
 
@@ -330,14 +319,13 @@ end:
 	return(ret);
 	}
 
-static int get_client_master_key(s)
-SSL *s;
+static int get_client_master_key(SSL *s)
 	{
-	int export,i,n,keya,error=0,ek;
+	int is_export,i,n,keya,ek;
 	unsigned char *p;
 	SSL_CIPHER *cp;
-	EVP_CIPHER *c;
-	EVP_MD *md;
+	const EVP_CIPHER *c;
+	const EVP_MD *md;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_CLIENT_MASTER_KEY_A)
@@ -387,7 +375,7 @@ SSL *s;
 	memcpy(s->session->key_arg,&(p[s->s2->tmp.clear+s->s2->tmp.enc]),
 		(unsigned int)keya);
 
-	if (s->session->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)
+	if (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_NO_PRIVATEKEY);
@@ -397,9 +385,9 @@ SSL *s;
 		&(p[s->s2->tmp.clear]),&(p[s->s2->tmp.clear]),
 		(s->s2->ssl2_rollback)?RSA_SSLV23_PADDING:RSA_PKCS1_PADDING);
 
-	export=(s->session->cipher->algorithms & SSL_EXP)?1:0;
+	is_export=SSL_C_IS_EXPORT(s->session->cipher);
 	
-	if (!ssl_cipher_get_evp(s->session->cipher,&c,&md))
+	if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 		{
 		ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);
@@ -408,7 +396,7 @@ SSL *s;
 
 	if (s->session->cipher->algorithm2 & SSL2_CF_8_BYTE_ENC)
 		{
-		export=1;
+		is_export=1;
 		ek=8;
 		}
 	else
@@ -419,11 +407,11 @@ SSL *s;
 	/* If a bad decrypt, continue with protocol but with a
 	 * dud master secret */
 	if ((i < 0) ||
-		((!export && (i != EVP_CIPHER_key_length(c)))
-		|| ( export && ((i != ek) || (s->s2->tmp.clear+i !=
+		((!is_export && (i != EVP_CIPHER_key_length(c)))
+		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c))))))
 		{
-		if (export)
+		if (is_export)
 			i=ek;
 		else
 			i=EVP_CIPHER_key_length(c);
@@ -436,8 +424,8 @@ SSL *s;
 		SSLerr(SSL_F_GET_CLIENT_MASTER_KEY,SSL_R_BAD_RSA_DECRYPT);
 		}
 	/* incorrect number of key bytes for non export cipher */
-	else if ((!export && (i != EVP_CIPHER_key_length(c)))
-		|| ( export && ((i != ek) || (s->s2->tmp.clear+i !=
+	else if ((!is_export && (i != EVP_CIPHER_key_length(c)))
+		|| (is_export && ((i != ek) || (s->s2->tmp.clear+i !=
 			EVP_CIPHER_key_length(c)))))
 		{
 		error=1;
@@ -450,19 +438,18 @@ SSL *s;
 		}
 #endif
 
-	if (export) i+=s->s2->tmp.clear;
+	if (is_export) i+=s->s2->tmp.clear;
 	s->session->master_key_length=i;
 	memcpy(s->session->master_key,p,(unsigned int)i);
 	return(1);
 	}
 
-static int get_client_hello(s)
-SSL *s;
+static int get_client_hello(SSL *s)
 	{
 	int i,n;
 	unsigned char *p;
-	STACK *cs; /* a stack of SSL_CIPHERS */
-	STACK *cl; /* the ones we want to use */
+	STACK_OF(SSL_CIPHER) *cs; /* a stack of SSL_CIPHERS */
+	STACK_OF(SSL_CIPHER) *cl; /* the ones we want to use */
 	int z;
 
 	/* This is a bit of a hack to check for the correct packet
@@ -570,11 +557,11 @@ SSL *s;
 
 		cl=ssl_get_ciphers_by_id(s);
 
-		for (z=0; z<sk_num(cs); z++)
+		for (z=0; z<sk_SSL_CIPHER_num(cs); z++)
 			{
-			if (sk_find(cl,sk_value(cs,z)) < 0)
+			if (sk_SSL_CIPHER_find(cl,sk_SSL_CIPHER_value(cs,z)) < 0)
 				{
-				sk_delete(cs,z);
+				sk_SSL_CIPHER_delete(cs,z);
 				z--;
 				}
 			}
@@ -599,12 +586,11 @@ mem_err:
 	return(0);
 	}
 
-static int server_hello(s)
-SSL *s;
+static int server_hello(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n,hit;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_SEND_SERVER_HELLO_A)
@@ -613,27 +599,52 @@ SSL *s;
 		*(p++)=SSL2_MT_SERVER_HELLO;		/* type */
 		hit=s->hit;
 		*(p++)=(unsigned char)hit;
+#if 1
+		if (!hit)
+			{
+			if (s->session->sess_cert != NULL)
+				/* This can't really happen because get_client_hello
+				 * has called ssl_get_new_session, which does not set
+				 * sess_cert. */
+				ssl_sess_cert_free(s->session->sess_cert);
+			s->session->sess_cert = ssl_sess_cert_new();
+			if (s->session->sess_cert == NULL)
+				{
+				SSLerr(SSL_F_SERVER_HELLO, ERR_R_MALLOC_FAILURE);
+				return(-1);
+				}
+			}
+		/* If 'hit' is set, then s->sess_cert may be non-NULL or NULL,
+		 * depending on whether it survived in the internal cache
+		 * or was retrieved from an external cache.
+		 * If it is NULL, we cannot put any useful data in it anyway,
+		 * so we don't touch it.
+		 */
+
+#else /* That's what used to be done when cert_st and sess_cert_st were
+	   * the same. */
 		if (!hit)
 			{			/* else add cert to session */
 			CRYPTO_add(&s->cert->references,1,CRYPTO_LOCK_SSL_CERT);
-			if (s->session->cert != NULL)
-				ssl_cert_free(s->session->cert);
-			s->session->cert=s->cert;		
+			if (s->session->sess_cert != NULL)
+				ssl_cert_free(s->session->sess_cert);
+			s->session->sess_cert=s->cert;		
 			}
 		else	/* We have a session id-cache hit, if the
 			 * session-id has no certificate listed against
 			 * the 'cert' structure, grab the 'old' one
 			 * listed against the SSL connection */
 			{
-			if (s->session->cert == NULL)
+			if (s->session->sess_cert == NULL)
 				{
 				CRYPTO_add(&s->cert->references,1,
 					CRYPTO_LOCK_SSL_CERT);
-				s->session->cert=s->cert;
+				s->session->sess_cert=s->cert;
 				}
 			}
+#endif
 
-		if (s->session->cert == NULL)
+		if (s->cert == NULL)
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CERTIFICATE);
 			SSLerr(SSL_F_SERVER_HELLO,SSL_R_NO_CERTIFICATE_SPECIFIED);
@@ -690,8 +701,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int get_client_finished(s)
-SSL *s;
+static int get_client_finished(SSL *s)
 	{
 	unsigned char *p;
 	int i;
@@ -733,8 +743,7 @@ SSL *s;
 	return(1);
 	}
 
-static int server_verify(s)
-SSL *s;
+static int server_verify(SSL *s)
 	{
 	unsigned char *p;
 
@@ -752,8 +761,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int server_finish(s)
-SSL *s;
+static int server_finish(SSL *s)
 	{
 	unsigned char *p;
 
@@ -776,14 +784,13 @@ SSL *s;
 	}
 
 /* send the request and check the response */
-static int request_certificate(s)
-SSL *s;
+static int request_certificate(SSL *s)
 	{
 	unsigned char *p,*p2,*buf2;
 	unsigned char *ccd;
 	int i,j,ctype,ret= -1;
 	X509 *x509=NULL;
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 
 	ccd=s->s2->tmp.ccl;
 	if (s->state == SSL2_ST_SEND_REQUEST_CERTIFICATE_A)
@@ -872,7 +879,7 @@ SSL *s;
 		goto msg_end;
 		}
 
-	if (((sk=sk_new_null()) == NULL) || (!sk_push(sk,(char *)x509)))
+	if (((sk=sk_X509_new_null()) == NULL) || (!sk_X509_push(sk,x509)))
 		{
 		SSLerr(SSL_F_REQUEST_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto msg_end;
@@ -890,7 +897,7 @@ SSL *s;
 			(unsigned int)s->s2->key_material_length);
 		EVP_VerifyUpdate(&ctx,ccd,SSL2_MIN_CERT_CHALLENGE_LENGTH);
 
-		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
+		i=i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,NULL);
 		buf2=(unsigned char *)Malloc((unsigned int)i);
 		if (buf2 == NULL)
 			{
@@ -898,13 +905,14 @@ SSL *s;
 			goto msg_end;
 			}
 		p2=buf2;
-		i=i2d_X509(s->session->cert->pkeys[SSL_PKEY_RSA_ENC].x509,&p2);
+		i=i2d_X509(s->cert->pkeys[SSL_PKEY_RSA_ENC].x509,&p2);
 		EVP_VerifyUpdate(&ctx,buf2,(unsigned int)i);
 		Free(buf2);
 
 		pkey=X509_get_pubkey(x509);
 		if (pkey == NULL) goto end;
 		i=EVP_VerifyFinal(&ctx,p,s->s2->tmp.rlen,pkey);
+		EVP_PKEY_free(pkey);
 		memset(&ctx,0,sizeof(ctx));
 
 		if (i) 
@@ -928,17 +936,13 @@ msg_end:
 		ssl2_return_error(s,SSL2_PE_BAD_CERTIFICATE);
 		}
 end:
-	if (sk != NULL) sk_free(sk);
-	if (x509 != NULL) X509_free(x509);
+	sk_X509_free(sk);
+	X509_free(x509);
 	return(ret);
 	}
 
-static int ssl_rsa_private_decrypt(c, len, from, to,padding)
-CERT *c;
-int len;
-unsigned char *from;
-unsigned char *to;
-int padding;
+static int ssl_rsa_private_decrypt(CERT *c, int len, unsigned char *from,
+	     unsigned char *to, int padding)
 	{
 	RSA *rsa;
 	int i;
@@ -961,4 +965,4 @@ int padding;
 		SSLerr(SSL_F_SSL_RSA_PRIVATE_DECRYPT,ERR_R_RSA_LIB);
 	return(i);
 	}
-
+#endif

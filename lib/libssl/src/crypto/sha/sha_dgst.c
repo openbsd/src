@@ -60,39 +60,44 @@
 #include <string.h>
 #define  SHA_0
 #undef SHA_1
-#include "sha.h"
+#include <openssl/sha.h>
 #include "sha_locl.h"
+#include <openssl/opensslv.h>
 
-char *SHA_version="SHA part of SSLeay 0.9.0b 29-Jun-1998";
+#ifndef NO_SHA0
+char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from SHA-0 document - The Secure Hash Algorithm
  */
 
-#define INIT_DATA_h0 (unsigned long)0x67452301L
-#define INIT_DATA_h1 (unsigned long)0xefcdab89L
-#define INIT_DATA_h2 (unsigned long)0x98badcfeL
-#define INIT_DATA_h3 (unsigned long)0x10325476L
-#define INIT_DATA_h4 (unsigned long)0xc3d2e1f0L
+#define INIT_DATA_h0 0x67452301UL
+#define INIT_DATA_h1 0xefcdab89UL
+#define INIT_DATA_h2 0x98badcfeUL
+#define INIT_DATA_h3 0x10325476UL
+#define INIT_DATA_h4 0xc3d2e1f0UL
 
-#define K_00_19	0x5a827999L
-#define K_20_39 0x6ed9eba1L
-#define K_40_59 0x8f1bbcdcL
-#define K_60_79 0xca62c1d6L
+#define K_00_19	0x5a827999UL
+#define K_20_39 0x6ed9eba1UL
+#define K_40_59 0x8f1bbcdcUL
+#define K_60_79 0xca62c1d6UL
 
-#ifndef NOPROTO
-   void sha_block(SHA_CTX *c, register unsigned long *p, int num);
+static void sha_block(SHA_CTX *c, register SHA_LONG *p, int num);
+
+#if !defined(B_ENDIAN) && defined(SHA_ASM)
+#  define	M_c2nl 		c2l
+#  define	M_p_c2nl 	p_c2l
+#  define	M_c2nl_p	c2l_p
+#  define	M_p_c2nl_p	p_c2l_p
+#  define	M_nl2c		l2c
 #else
-   void sha_block();
+#  define	M_c2nl 		c2nl
+#  define	M_p_c2nl	p_c2nl
+#  define	M_c2nl_p	c2nl_p
+#  define	M_p_c2nl_p	p_c2nl_p
+#  define	M_nl2c		nl2c
 #endif
 
-#define	M_c2nl 		c2nl
-#define	M_p_c2nl	p_c2nl
-#define	M_c2nl_p	c2nl_p
-#define	M_p_c2nl_p	p_c2nl_p
-#define	M_nl2c		nl2c
-
-void SHA_Init(c)
-SHA_CTX *c;
+void SHA_Init(SHA_CTX *c)
 	{
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
@@ -104,14 +109,12 @@ SHA_CTX *c;
 	c->num=0;
 	}
 
-void SHA_Update(c, data, len)
-SHA_CTX *c;
-register unsigned char *data;
-unsigned long len;
+void SHA_Update(SHA_CTX *c, register const unsigned char *data,
+		unsigned long len)
 	{
-	register ULONG *p;
+	register SHA_LONG *p;
 	int ew,ec,sw,sc;
-	ULONG l;
+	SHA_LONG l;
 
 	if (len == 0) return;
 
@@ -139,7 +142,7 @@ unsigned long len;
 				}
 			len-=(SHA_CBLOCK-c->num);
 
-			sha_block(c,p,64);
+			sha_block(c,p,1);
 			c->num=0;
 			/* drop through and do the rest */
 			}
@@ -176,15 +179,15 @@ unsigned long len;
 	 * copies it to a local array.  I should be able to do this for
 	 * the C version as well....
 	 */
-#if 1
+#if SHA_LONG_LOG2==2
 #if defined(B_ENDIAN) || defined(SHA_ASM)
-	if ((((unsigned int)data)%sizeof(ULONG)) == 0)
+	if ((((unsigned long)data)%sizeof(SHA_LONG)) == 0)
 		{
 		sw=len/SHA_CBLOCK;
 		if (sw)
 			{
+			sha_block(c,(SHA_LONG *)data,sw);
 			sw*=SHA_CBLOCK;
-			sha_block(c,(ULONG *)data,sw);
 			data+=sw;
 			len-=sw;
 			}
@@ -196,35 +199,61 @@ unsigned long len;
 	p=c->data;
 	while (len >= SHA_CBLOCK)
 		{
-#if defined(B_ENDIAN) || defined(L_ENDIAN)
-		if (p != (unsigned long *)data)
+#if SHA_LONG_LOG2==2
+#if defined(B_ENDIAN) || defined(SHA_ASM)
+#define SHA_NO_TAIL_CODE
+		/*
+		 * Basically we get here only when data happens
+		 * to be unaligned.
+		 */
+		if (p != (SHA_LONG *)data)
 			memcpy(p,data,SHA_CBLOCK);
 		data+=SHA_CBLOCK;
-#  ifdef L_ENDIAN
-#    ifndef SHA_ASM /* Will not happen */
+		sha_block(c,p=c->data,1);
+		len-=SHA_CBLOCK;
+#elif defined(L_ENDIAN)
+#define BE_COPY(dst,src,i)	{				\
+				l = ((SHA_LONG *)src)[i];	\
+				Endian_Reverse32(l);		\
+				dst[i] = l;			\
+				}
+		if ((((unsigned long)data)%sizeof(SHA_LONG)) == 0)
+			{
+			for (sw=(SHA_LBLOCK/4); sw; sw--)
+				{
+				BE_COPY(p,data,0);
+				BE_COPY(p,data,1);
+				BE_COPY(p,data,2);
+				BE_COPY(p,data,3);
+				p+=4;
+				data += 4*sizeof(SHA_LONG);
+				}
+			sha_block(c,p=c->data,1);
+			len-=SHA_CBLOCK;
+			continue;
+			}
+#endif
+#endif
+#ifndef SHA_NO_TAIL_CODE
+		/*
+		 * In addition to "sizeof(SHA_LONG)!= 4" case the
+		 * following code covers unaligned access cases on
+		 * little-endian machines.
+		 *			<appro@fy.chalmers.se>
+		 */
+		p=c->data;
 		for (sw=(SHA_LBLOCK/4); sw; sw--)
 			{
-			Endian_Reverse32(p[0]);
-			Endian_Reverse32(p[1]);
-			Endian_Reverse32(p[2]);
-			Endian_Reverse32(p[3]);
+			M_c2nl(data,l); p[0]=l;
+			M_c2nl(data,l); p[1]=l;
+			M_c2nl(data,l); p[2]=l;
+			M_c2nl(data,l); p[3]=l;
 			p+=4;
 			}
 		p=c->data;
-#    endif
-#  endif
-#else
-		for (sw=(SHA_BLOCK/4); sw; sw--)
-			{
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			M_c2nl(data,l); *(p++)=l;
-			}
-		p=c->data;
-#endif
-		sha_block(c,p,64);
+		sha_block(c,p,1);
 		len-=SHA_CBLOCK;
+#endif
 		}
 	ec=(int)len;
 	c->num=ec;
@@ -237,50 +266,61 @@ unsigned long len;
 	p[sw]=l;
 	}
 
-void SHA_Transform(c,b)
-SHA_CTX *c;
-unsigned char *b;
+void SHA_Transform(SHA_CTX *c, unsigned char *b)
 	{
-	ULONG p[16];
-#if !defined(B_ENDIAN)
-	ULONG *q;
-	int i;
-#endif
+	SHA_LONG p[SHA_LBLOCK];
 
-#if defined(B_ENDIAN) || defined(L_ENDIAN)
-	memcpy(p,b,64);
-#ifdef L_ENDIAN
-	q=p;
-	for (i=(SHA_LBLOCK/4); i; i--)
+#if SHA_LONG_LOG2==2
+#if defined(B_ENDIAN) || defined(SHA_ASM)
+	memcpy(p,b,SHA_CBLOCK);
+	sha_block(c,p,1);
+	return;
+#elif defined(L_ENDIAN)
+	if (((unsigned long)b%sizeof(SHA_LONG)) == 0)
 		{
-		Endian_Reverse32(q[0]);
-		Endian_Reverse32(q[1]);
-		Endian_Reverse32(q[2]);
-		Endian_Reverse32(q[3]);
-		q+=4;
+		SHA_LONG *q;
+		int i;
+
+		q=p;
+		for (i=(SHA_LBLOCK/4); i; i--)
+			{
+			unsigned long l;
+			BE_COPY(q,b,0);	/* BE_COPY was defined above */
+			BE_COPY(q,b,1);
+			BE_COPY(q,b,2);
+			BE_COPY(q,b,3);
+			q+=4;
+			b+=4*sizeof(SHA_LONG);
+			}
+		sha_block(c,p,1);
+		return;
 		}
 #endif
-#else
-	q=p;
-	for (i=(SHA_LBLOCK/4); i; i--)
-		{
-		ULONG l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l;
-		c2nl(b,l); *(q++)=l; 
-		} 
 #endif
-	sha_block(c,p,64);
+#ifndef SHA_NO_TAIL_CODE /* defined above, see comment */
+		{
+		SHA_LONG *q;
+		int i;
+
+		q=p;
+		for (i=(SHA_LBLOCK/4); i; i--)
+			{
+			SHA_LONG l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l;
+			c2nl(b,l); *(q++)=l; 
+			} 
+		sha_block(c,p,1);
+		}
+#endif
 	}
 
-void sha_block(c, W, num)
-SHA_CTX *c;
-register unsigned long *W;
-int num;
+#ifndef SHA_ASM
+static void sha_block(SHA_CTX *c, register SHA_LONG *W, int num)
 	{
-	register ULONG A,B,C,D,E,T;
-	ULONG X[16];
+	register SHA_LONG A,B,C,D,E,T;
+	SHA_LONG X[SHA_LBLOCK];
 
 	A=c->h0;
 	B=c->h1;
@@ -380,8 +420,7 @@ int num;
 	c->h3=(c->h3+B)&0xffffffffL;
 	c->h4=(c->h4+C)&0xffffffffL;
 
-	num-=64;
-	if (num <= 0) break;
+	if (--num <= 0) break;
 
 	A=c->h0;
 	B=c->h1;
@@ -389,17 +428,21 @@ int num;
 	D=c->h3;
 	E=c->h4;
 
-	W+=16;
+	W+=SHA_LBLOCK;	/* Note! This can happen only when sizeof(SHA_LONG)
+			 * is 4. Whenever it's not the actual case this
+			 * function is never called with num larger than 1
+			 * and we never advance down here.
+			 *			<appro@fy.chalmers.se>
+			 */
 		}
 	}
+#endif
 
-void SHA_Final(md, c)
-unsigned char *md;
-SHA_CTX *c;
+void SHA_Final(unsigned char *md, SHA_CTX *c)
 	{
 	register int i,j;
-	register ULONG l;
-	register ULONG *p;
+	register SHA_LONG l;
+	register SHA_LONG *p;
 	static unsigned char end[4]={0x80,0x00,0x00,0x00};
 	unsigned char *cp=end;
 
@@ -419,14 +462,20 @@ SHA_CTX *c;
 		{
 		for (; i<SHA_LBLOCK; i++)
 			p[i]=0;
-		sha_block(c,p,64);
+		sha_block(c,p,1);
 		i=0;
 		}
 	for (; i<(SHA_LBLOCK-2); i++)
 		p[i]=0;
 	p[SHA_LBLOCK-2]=c->Nh;
 	p[SHA_LBLOCK-1]=c->Nl;
-	sha_block(c,p,64);
+#if SHA_LONG_LOG2==2
+#if !defined(B_ENDIAN) && defined(SHA_ASM)
+	Endian_Reverse32(p[SHA_LBLOCK-2]);
+	Endian_Reverse32(p[SHA_LBLOCK-1]);
+#endif
+#endif
+	sha_block(c,p,1);
 	cp=md;
 	l=c->h0; nl2c(l,cp);
 	l=c->h1; nl2c(l,cp);
@@ -434,9 +483,10 @@ SHA_CTX *c;
 	l=c->h3; nl2c(l,cp);
 	l=c->h4; nl2c(l,cp);
 
-	/* clear stuff, sha_block may be leaving some stuff on the stack
-	 * but I'm not worried :-) */
 	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
+	/* sha_block may be leaving some stuff on the stack
+	 * but I'm not worried :-)
+	memset((void *)c,0,sizeof(SHA_CTX));
+	 */
 	}
-
+#endif

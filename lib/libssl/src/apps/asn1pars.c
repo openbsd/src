@@ -56,19 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+/* A nice addition from Dr Stephen Henson <shenson@bigfoot.com> to 
+ * add the -strparse option which parses nested binary structures
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "err.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
-
-#define FORMAT_UNDEF	0
-#define FORMAT_ASN1	1
-#define FORMAT_TEXT	2
-#define FORMAT_PEM	3
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -in arg	- input file - default stdin
@@ -81,17 +80,18 @@
 #undef PROG
 #define PROG	asn1parse_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
-	int i,badops=0,offset=0,ret=1;
+	int i,badops=0,offset=0,ret=1,j;
 	unsigned int length=0;
-	long num;
-	BIO *in=NULL,*out=NULL,*b64=NULL;
+	long num,tmplen;
+	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
 	int informat,indent=0;
-	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
+	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
+	STACK *osk=NULL;
+	ASN1_TYPE *at=NULL;
 
 	informat=FORMAT_PEM;
 
@@ -104,6 +104,11 @@ char **argv;
 	prog=argv[0];
 	argc--;
 	argv++;
+	if ((osk=sk_new_null()) == NULL)
+		{
+		BIO_printf(bio_err,"Malloc failure\n");
+		goto end;
+		}
 	while (argc >= 1)
 		{
 		if 	(strcmp(*argv,"-inform") == 0)
@@ -115,6 +120,11 @@ char **argv;
 			{
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
+			}
+		else if (strcmp(*argv,"-out") == 0)
+			{
+			if (--argc < 1) goto bad;
+			derfile= *(++argv);
 			}
 		else if (strcmp(*argv,"-i") == 0)
 			{
@@ -136,6 +146,11 @@ char **argv;
 			length= atoi(*(++argv));
 			if (length == 0) goto bad;
 			}
+		else if (strcmp(*argv,"-strparse") == 0)
+			{
+			if (--argc < 1) goto bad;
+			sk_push(osk,*(++argv));
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -152,11 +167,15 @@ bad:
 		BIO_printf(bio_err,"%s [options] <infile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -offset arg   offset into file\n");
 		BIO_printf(bio_err," -length arg   lenth of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
 		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
+		BIO_printf(bio_err," -strparse offset\n");
+		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
+		BIO_printf(bio_err,"               ASN1 blob wrappings\n");
+		BIO_printf(bio_err," -out filename output DER encoding to file\n");
 		goto end;
 		}
 
@@ -193,6 +212,14 @@ bad:
 			}
 		}
 
+	if (derfile) {
+		if(!(derout = BIO_new_file(derfile, "wb"))) {
+			BIO_printf(bio_err,"problems opening %s\n",derfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+
 	if ((buf=BUF_MEM_new()) == NULL) goto end;
 	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
 
@@ -218,7 +245,48 @@ bad:
 		}
 	str=buf->data;
 
+	/* If any structs to parse go through in sequence */
+
+	if (sk_num(osk))
+		{
+		tmpbuf=(unsigned char *)str;
+		tmplen=num;
+		for (i=0; i<sk_num(osk); i++)
+			{
+			ASN1_TYPE *atmp;
+			j=atoi(sk_value(osk,i));
+			if (j == 0)
+				{
+				BIO_printf(bio_err,"'%s' is an invalid number\n",sk_value(osk,i));
+				continue;
+				}
+			tmpbuf+=j;
+			tmplen-=j;
+			atmp = at;
+			at = d2i_ASN1_TYPE(NULL,&tmpbuf,tmplen);
+			ASN1_TYPE_free(atmp);
+			if(!at)
+				{
+				BIO_printf(bio_err,"Error parsing structure\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			/* hmm... this is a little evil but it works */
+			tmpbuf=at->value.asn1_string->data;
+			tmplen=at->value.asn1_string->length;
+			}
+		str=(char *)tmpbuf;
+		num=tmplen;
+		}
+
 	if (length == 0) length=(unsigned int)num;
+	if(derout) {
+		if(BIO_write(derout, str + offset, length) != (int)length) {
+			BIO_printf(bio_err, "Error writing output\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
 	if (!ASN1_parse(out,(unsigned char *)&(str[offset]),length,indent))
 		{
 		ERR_print_errors(bio_err);
@@ -226,12 +294,15 @@ bad:
 		}
 	ret=0;
 end:
+	BIO_free(derout);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free(out);
 	if (b64 != NULL) BIO_free(b64);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	if (buf != NULL) BUF_MEM_free(buf);
+	if (at != NULL) ASN1_TYPE_free(at);
+	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
 	EXIT(ret);
 	}

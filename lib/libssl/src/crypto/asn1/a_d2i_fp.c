@@ -58,17 +58,14 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1_mac.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1_mac.h>
 
 #define HEADER_SIZE   8
 
 #ifndef NO_FP_API
-char *ASN1_d2i_fp(xnew,d2i,in,x)
-char *(*xnew)();
-char *(*d2i)();
-FILE *in;
-unsigned char **x;
+char *ASN1_d2i_fp(char *(*xnew)(), char *(*d2i)(), FILE *in,
+	     unsigned char **x)
         {
         BIO *b;
         char *ret;
@@ -85,11 +82,8 @@ unsigned char **x;
         }
 #endif
 
-char *ASN1_d2i_bio(xnew,d2i,in,x)
-char *(*xnew)();
-char *(*d2i)();
-BIO *in;
-unsigned char **x;
+char *ASN1_d2i_bio(char *(*xnew)(), char *(*d2i)(), BIO *in,
+	     unsigned char **x)
 	{
 	BUF_MEM *b;
 	unsigned char *p;

@@ -58,15 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 #ifndef NO_FP_API
-int X509_REQ_print_fp(fp,x)
-FILE *fp;
-X509_REQ *x;
+int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
         {
         BIO *b;
         int ret;
@@ -83,16 +81,15 @@ X509_REQ *x;
         }
 #endif
 
-int X509_REQ_print(bp,x)
-BIO *bp;
-X509_REQ *x;
+int X509_REQ_print(BIO *bp, X509_REQ *x)
 	{
 	unsigned long l;
 	int i,n;
-	char *s,*neg;
+	char *s;
+	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
-	STACK *sk;
+	STACK_OF(X509_ATTRIBUTE) *sk;
 	char str[128];
 
 	ri=x->req_info;
@@ -138,12 +135,14 @@ X509_REQ *x;
 #endif
 		BIO_printf(bp,"%12sUnknown Public Key:\n","");
 
+	EVP_PKEY_free(pkey);
+
 	/* may not be */
 	sprintf(str,"%8sAttributes:\n","");
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	sk=x->req_info->attributes;
-	if ((sk == NULL) || (sk_num(sk) == 0))
+	if ((sk == NULL) || (sk_X509_ATTRIBUTE_num(sk) == 0))
 		{
 		if (!x->req_info->req_kludge)
 			{
@@ -153,7 +152,7 @@ X509_REQ *x;
 		}
 	else
 		{
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 			{
 			ASN1_TYPE *at;
 			X509_ATTRIBUTE *a;
@@ -161,17 +160,17 @@ X509_REQ *x;
 			ASN1_TYPE *t;
 			int j,type=0,count=1,ii=0;
 
-			a=(X509_ATTRIBUTE *)sk_value(sk,i);
+			a=sk_X509_ATTRIBUTE_value(sk,i);
 			sprintf(str,"%12s","");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
-
+			{
 			if (a->set)
 				{
 				ii=0;
-				count=sk_num(a->value.set);
+				count=sk_ASN1_TYPE_num(a->value.set);
 get_next:
-				at=(ASN1_TYPE *)sk_value(a->value.set,ii);
+				at=sk_ASN1_TYPE_value(a->value.set,ii);
 				type=at->type;
 				bs=at->value.asn1_string;
 				}
@@ -181,6 +180,7 @@ get_next:
 				type=t->type;
 				bs=t->value.bit_string;
 				}
+			}
 			for (j=25-j; j>0; j--)
 				if (BIO_write(bp," ",1) != 1) goto err;
 			if (BIO_puts(bp,":") <= 0) goto err;

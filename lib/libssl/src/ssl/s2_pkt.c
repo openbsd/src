@@ -61,29 +61,11 @@
 #define USE_SOCKETS
 #include "ssl_locl.h"
 
-/* SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_NO_CIPHER);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_NO_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_UNKNOWN_REMOTE_ERROR_TYPE);
- */
-
-#ifndef NOPROTO
 static int read_n(SSL *s,unsigned int n,unsigned int max,unsigned int extend);
-static int do_ssl_write(SSL *s, char *buf, unsigned int len);
-static int write_pending(SSL *s, char *buf, unsigned int len);
+static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len);
+static int write_pending(SSL *s, const unsigned char *buf, unsigned int len);
 static int ssl_mt_error(int n);
-#else
-static int read_n();
-static int do_ssl_write();
-static int write_pending();
-static int ssl_mt_error();
-#endif
-
-int ssl2_peek(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl2_peek(SSL *s, char *buf, int len)
 	{
 	int ret;
 
@@ -99,10 +81,7 @@ int len;
 /* SSL_read -
  * This routine will return 0 to len bytes, decrypted etc if required.
  */
-int ssl2_read(s, buf, len)
-SSL *s;
-char *buf;
-int len;
+int ssl2_read(SSL *s, void *buf, int len)
 	{
 	int n;
 	unsigned char mac[MAX_MAC_SIZE];
@@ -110,6 +89,7 @@ int len;
 	int i;
 	unsigned int mac_size=0;
 
+ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
 		{
 		n=s->handshake_func(s);
@@ -237,6 +217,25 @@ int len;
 		INC32(s->s2->read_sequence); /* expect next number */
 		/* s->s2->ract_data is now available for processing */
 
+#if 1
+		/* How should we react when a packet containing 0
+		 * bytes is received?  (Note that SSLeay/OpenSSL itself
+		 * never sends such packets; see ssl2_write.)
+		 * Returning 0 would be interpreted by the caller as
+		 * indicating EOF, so it's not a good idea.
+		 * Instead, we just continue reading.  Note that using
+		 * select() for blocking sockets *never* guarantees
+		 * that the next SSL_read will not block -- the available
+		 * data may contain incomplete packets, and except for SSL 2
+		 * renegotiation can confuse things even more. */
+
+		goto ssl2_read_again; /* This should really be
+				       * "return ssl2_read(s,buf,len)",
+				       * but that would allow for
+				       * denial-of-service attacks if a
+				       * C compiler is used that does not
+				       * recognize end-recursion. */
+#else
 		/* If a 0 byte packet was sent, return 0, otherwise
 		 * we play havoc with people using select with
 		 * blocking sockets.  Let them handle a packet at a time,
@@ -244,6 +243,7 @@ int len;
 		if (s->s2->ract_data_length == 0)
 			return(0);
 		return(ssl2_read(s,buf,len));
+#endif
 		}
 	else
 		{
@@ -252,11 +252,8 @@ int len;
 		}
 	}
 
-static int read_n(s, n, max, extend)
-SSL *s;
-unsigned int n;
-unsigned int max;
-unsigned int extend;
+static int read_n(SSL *s, unsigned int n, unsigned int max,
+	     unsigned int extend)
 	{
 	int i,off,newb;
 
@@ -354,11 +351,9 @@ unsigned int extend;
 	return(n);
 	}
 
-int ssl2_write(s, buf, len)
-SSL *s;
-char *buf;
-int len;
+int ssl2_write(SSL *s, const void *_buf, int len)
 	{
+	const unsigned char *buf=_buf;
 	unsigned int n,tot;
 	int i;
 
@@ -396,17 +391,18 @@ int len;
 			s->s2->wnum=tot;
 			return(i);
 			}
-		if (i == (int)n) return(tot+i);
-
+		if ((i == (int)n) ||
+			(s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))
+			{
+			return(tot+i);
+			}
+		
 		n-=i;
 		tot+=i;
 		}
 	}
 
-static int write_pending(s,buf,len)
-SSL *s;
-char *buf;
-unsigned int len;
+static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 	{
 	int i;
 
@@ -414,7 +410,9 @@ unsigned int len;
 
 	/* check that they have given us the same buffer to
 	 * write */
-	if ((s->s2->wpend_tot > (int)len) || (s->s2->wpend_buf != buf))
+	if ((s->s2->wpend_tot > (int)len) ||
+		((s->s2->wpend_buf != buf) &&
+		 !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)))
 		{
 		SSLerr(SSL_F_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);
 		return(-1);
@@ -451,10 +449,7 @@ unsigned int len;
 		}
 	}
 
-static int do_ssl_write(s, buf, len)
-SSL *s;
-char *buf;
-unsigned int len;
+static int do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 	{
 	unsigned int j,k,olen,p,mac_size,bs;
 	register unsigned char *pp;
@@ -567,7 +562,7 @@ unsigned int len;
 
 	/* lets try to actually write the data */
 	s->s2->wpend_tot=olen;
-	s->s2->wpend_buf=(char *)buf;
+	s->s2->wpend_buf=buf;
 
 	s->s2->wpend_ret=len;
 
@@ -575,10 +570,7 @@ unsigned int len;
 	return(write_pending(s,buf,olen));
 	}
 
-int ssl2_part_read(s,f,i)
-SSL *s;
-unsigned long f;
-int i;
+int ssl2_part_read(SSL *s, unsigned long f, int i)
 	{
 	unsigned char *p;
 	int j;
@@ -608,13 +600,11 @@ int i;
 		}
 	}
 
-int ssl2_do_write(s)
-SSL *s;
+int ssl2_do_write(SSL *s)
 	{
 	int ret;
 
-	ret=ssl2_write(s,(char *)&(s->init_buf->data[s->init_off]),
-		s->init_num);
+	ret=ssl2_write(s,&s->init_buf->data[s->init_off],s->init_num);
 	if (ret == s->init_num)
 		return(1);
 	if (ret < 0)
@@ -624,8 +614,7 @@ SSL *s;
 	return(0);
 	}
 
-static int ssl_mt_error(n)
-int n;
+static int ssl_mt_error(int n)
 	{
 	int ret;
 

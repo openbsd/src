@@ -59,7 +59,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "ripemd.h"
+
+#ifdef NO_RIPEMD
+int main(int argc, char *argv[])
+{
+    printf("No ripemd support\n");
+    return(0);
+}
+#else
+#include <openssl/ripemd.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 char *test[]={
 	"",
@@ -84,15 +96,8 @@ char *ret[]={
 	"9b752e45573d4b39f4dbd3323cab82bf63326bfb",
 	};
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	unsigned char **P,**R;
@@ -103,6 +108,9 @@ char *argv[];
 	i=1;
 	while (*P != NULL)
 		{
+#ifdef CHARSET_EBCDIC
+		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
+#endif
 		p=pt(RIPEMD160(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
 		if (strcmp(p,(char *)*R) != 0)
 			{
@@ -120,8 +128,7 @@ char *argv[];
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -130,4 +137,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
-
+#endif

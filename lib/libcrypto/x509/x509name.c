@@ -57,18 +57,14 @@
  */
 
 #include <stdio.h>
-#include "stack.h"
+#include <openssl/stack.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
-int X509_NAME_get_text_by_NID(name,nid,buf,len)
-X509_NAME *name;
-int nid;
-char *buf;
-int len;
+int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
 	{
 	ASN1_OBJECT *obj;
 
@@ -77,11 +73,8 @@ int len;
 	return(X509_NAME_get_text_by_OBJ(name,obj,buf,len));
 	}
 
-int X509_NAME_get_text_by_OBJ(name,obj,buf,len)
-X509_NAME *name;
-ASN1_OBJECT *obj;
-char *buf;
-int len;
+int X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,
+	     int len)
 	{
 	int i;
 	ASN1_STRING *data;
@@ -96,17 +89,13 @@ int len;
 	return(i);
 	}
 
-int X509_NAME_entry_count(name)
-X509_NAME *name;
+int X509_NAME_entry_count(X509_NAME *name)
 	{
 	if (name == NULL) return(0);
-	return(sk_num(name->entries));
+	return(sk_X509_NAME_ENTRY_num(name->entries));
 	}
 
-int X509_NAME_get_index_by_NID(name,nid,lastpos)
-X509_NAME *name;
-int nid;
-int lastpos;
+int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 	{
 	ASN1_OBJECT *obj;
 
@@ -116,61 +105,57 @@ int lastpos;
 	}
 
 /* NOTE: you should be passsing -1, not 0 as lastpos */
-int X509_NAME_get_index_by_OBJ(name,obj,lastpos)
-X509_NAME *name;
-ASN1_OBJECT *obj;
-int lastpos;
+int X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
+	     int lastpos)
 	{
 	int n;
 	X509_NAME_ENTRY *ne;
-	STACK *sk;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
 	if (name == NULL) return(-1);
 	if (lastpos < 0)
 		lastpos= -1;
 	sk=name->entries;
-	n=sk_num(sk);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	for (lastpos++; lastpos < n; lastpos++)
 		{
-		ne=(X509_NAME_ENTRY *)sk_value(sk,lastpos);
+		ne=sk_X509_NAME_ENTRY_value(sk,lastpos);
 		if (OBJ_cmp(ne->object,obj) == 0)
 			return(lastpos);
 		}
 	return(-1);
 	}
 
-X509_NAME_ENTRY *X509_NAME_get_entry(name,loc)
-X509_NAME *name;
-int loc;
+X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc)
 	{
-	if (	(name == NULL) || (sk_num(name->entries) <= loc) || (loc < 0))
+	if(name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
+	   || loc < 0)
 		return(NULL);
 	else
-		return((X509_NAME_ENTRY *)sk_value(name->entries,loc));
+		return(sk_X509_NAME_ENTRY_value(name->entries,loc));
 	}
 
-X509_NAME_ENTRY *X509_NAME_delete_entry(name,loc)
-X509_NAME *name;
-int loc;
+X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 	{
 	X509_NAME_ENTRY *ret;
-	int i,j,n,set_prev,set_next;
-	STACK *sk;
+	int i,n,set_prev,set_next;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
-	if ((name == NULL) || (sk_num(name->entries) <= loc) || (loc < 0))
+	if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
+	    || loc < 0)
 		return(NULL);
 	sk=name->entries;
-	ret=(X509_NAME_ENTRY *)sk_delete(sk,loc);
-	n=sk_num(sk);
+	ret=sk_X509_NAME_ENTRY_delete(sk,loc);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	name->modified=1;
 	if (loc == n) return(ret);
 
 	/* else we need to fixup the set field */
 	if (loc != 0)
-		set_prev=((X509_NAME_ENTRY *)sk_value(sk,loc-1))->set;
+		set_prev=(sk_X509_NAME_ENTRY_value(sk,loc-1))->set;
 	else
 		set_prev=ret->set-1;
-	set_next=((X509_NAME_ENTRY *)sk_value(sk,loc))->set;
+	set_next=sk_X509_NAME_ENTRY_value(sk,loc)->set;
 
 	/* set_prev is the previous set
 	 * set is the current set
@@ -181,29 +166,23 @@ int loc;
 	 * so basically only if prev and next differ by 2, then
 	 * re-number down by 1 */
 	if (set_prev+1 < set_next)
-		{
-		j=set_next-set_prev-1;
 		for (i=loc; i<n; i++)
-			((X509_NAME_ENTRY *)sk_value(sk,loc-1))->set-=j;
-		}
+			sk_X509_NAME_ENTRY_value(sk,i)->set--;
 	return(ret);
 	}
 
 /* if set is -1, append to previous set, 0 'a new one', and 1,
  * prepend to the guy we are about to stomp on. */
-int X509_NAME_add_entry(name,ne,loc,set)
-X509_NAME *name;
-X509_NAME_ENTRY *ne;
-int loc;
-int set;
+int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
+	     int set)
 	{
 	X509_NAME_ENTRY *new_name=NULL;
 	int n,i,inc;
-	STACK *sk;
+	STACK_OF(X509_NAME_ENTRY) *sk;
 
 	if (name == NULL) return(0);
 	sk=name->entries;
-	n=sk_num(sk);
+	n=sk_X509_NAME_ENTRY_num(sk);
 	if (loc > n) loc=n;
 	else if (loc < 0) loc=n;
 
@@ -218,7 +197,7 @@ int set;
 			}
 		else
 			{
-			set=((X509_NAME_ENTRY *)sk_value(sk,loc-1))->set;
+			set=sk_X509_NAME_ENTRY_value(sk,loc-1)->set;
 			inc=0;
 			}
 		}
@@ -227,43 +206,38 @@ int set;
 		if (loc >= n)
 			{
 			if (loc != 0)
-				set=((X509_NAME_ENTRY *)
-					sk_value(sk,loc-1))->set+1;
+				set=sk_X509_NAME_ENTRY_value(sk,loc-1)->set+1;
 			else
 				set=0;
 			}
 		else
-			set=((X509_NAME_ENTRY *)sk_value(sk,loc))->set;
+			set=sk_X509_NAME_ENTRY_value(sk,loc)->set;
 		inc=(set == 0)?1:0;
 		}
 
 	if ((new_name=X509_NAME_ENTRY_dup(ne)) == NULL)
 		goto err;
 	new_name->set=set;
-	if (!sk_insert(sk,(char *)new_name,loc))
+	if (!sk_X509_NAME_ENTRY_insert(sk,new_name,loc))
 		{
 		X509err(X509_F_X509_NAME_ADD_ENTRY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	if (inc)
 		{
-		n=sk_num(sk);
+		n=sk_X509_NAME_ENTRY_num(sk);
 		for (i=loc+1; i<n; i++)
-			((X509_NAME_ENTRY *)sk_value(sk,i-1))->set+=1;
+			sk_X509_NAME_ENTRY_value(sk,i-1)->set+=1;
 		}	
 	return(1);
 err:
 	if (new_name != NULL)
-		X509_NAME_ENTRY_free(ne);
+		X509_NAME_ENTRY_free(new_name);
 	return(0);
 	}
 
-X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(ne,nid,type,bytes,len)
-X509_NAME_ENTRY **ne;
-int nid;
-int type;
-unsigned char *bytes;
-int len;
+X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
+	     int type, unsigned char *bytes, int len)
 	{
 	ASN1_OBJECT *obj;
 
@@ -276,12 +250,8 @@ int len;
 	return(X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len));
 	}
 
-X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(ne,obj,type,bytes,len)
-X509_NAME_ENTRY **ne;
-ASN1_OBJECT *obj;
-int type;
-unsigned char *bytes;
-int len;
+X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
+	     ASN1_OBJECT *obj, int type, unsigned char *bytes, int len)
 	{
 	X509_NAME_ENTRY *ret;
 
@@ -306,9 +276,7 @@ err:
 	return(NULL);
 	}
 
-int X509_NAME_ENTRY_set_object(ne,obj)
-X509_NAME_ENTRY *ne;
-ASN1_OBJECT *obj;
+int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, ASN1_OBJECT *obj)
 	{
 	if ((ne == NULL) || (obj == NULL))
 		{
@@ -320,11 +288,8 @@ ASN1_OBJECT *obj;
 	return((ne->object == NULL)?0:1);
 	}
 
-int X509_NAME_ENTRY_set_data(ne,type,bytes,len)
-X509_NAME_ENTRY *ne;
-int type;
-unsigned char *bytes;
-int len;
+int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
+	     unsigned char *bytes, int len)
 	{
 	int i;
 
@@ -342,15 +307,13 @@ int len;
 	return(1);
 	}
 
-ASN1_OBJECT *X509_NAME_ENTRY_get_object(ne)
-X509_NAME_ENTRY *ne;
+ASN1_OBJECT *X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne)
 	{
 	if (ne == NULL) return(NULL);
 	return(ne->object);
 	}
 
-ASN1_STRING *X509_NAME_ENTRY_get_data(ne)
-X509_NAME_ENTRY *ne;
+ASN1_STRING *X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne)
 	{
 	if (ne == NULL) return(NULL);
 	return(ne->value);

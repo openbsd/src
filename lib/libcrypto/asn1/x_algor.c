@@ -58,17 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_ALGOR,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_ALGOR_NEW,ASN1_R_EXPECTING_A_SEQUENCE);
- * ASN1err(ASN1_F_D2I_X509_ALGOR,ASN1_R_LENGTH_MISMATCH);
- */
-
-int i2d_X509_ALGOR(a,pp)
-X509_ALGOR *a;
-unsigned char **pp;
+int i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -84,10 +77,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509_ALGOR *d2i_X509_ALGOR(a,pp,length)
-X509_ALGOR **a;
-unsigned char **pp;
-long length;
+X509_ALGOR *d2i_X509_ALGOR(X509_ALGOR **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509_ALGOR *,X509_ALGOR_new);
 
@@ -104,19 +94,19 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_ALGOR_free,ASN1_F_D2I_X509_ALGOR);
 	}
 
-X509_ALGOR *X509_ALGOR_new()
+X509_ALGOR *X509_ALGOR_new(void)
 	{
 	X509_ALGOR *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,X509_ALGOR);
-	M_ASN1_New(ret->algorithm,ASN1_OBJECT_new);
+	ret->algorithm=OBJ_nid2obj(NID_undef);
 	ret->parameter=NULL;
 	return(ret);
 	M_ASN1_New_Error(ASN1_F_X509_ALGOR_NEW);
 	}
 
-void X509_ALGOR_free(a)
-X509_ALGOR *a;
+void X509_ALGOR_free(X509_ALGOR *a)
 	{
 	if (a == NULL) return;
 	ASN1_OBJECT_free(a->algorithm);
@@ -124,3 +114,5 @@ X509_ALGOR *a;
 	Free((char *)a);
 	}
 
+IMPLEMENT_STACK_OF(X509_ALGOR)
+IMPLEMENT_ASN1_SET_OF(X509_ALGOR)

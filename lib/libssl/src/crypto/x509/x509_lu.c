@@ -58,14 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "x509.h"
+#include <openssl/lhash.h>
+#include <openssl/x509.h>
 
 static STACK *x509_store_meth=NULL;
 static STACK *x509_store_ctx_meth=NULL;
 
-X509_LOOKUP *X509_LOOKUP_new(method)
-X509_LOOKUP_METHOD *method;
+X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 	{
 	X509_LOOKUP *ret;
 
@@ -85,8 +84,7 @@ X509_LOOKUP_METHOD *method;
 	return(ret);
 	}
 
-void X509_LOOKUP_free(ctx)
-X509_LOOKUP *ctx;
+void X509_LOOKUP_free(X509_LOOKUP *ctx)
 	{
 	if (ctx == NULL) return;
 	if (	(ctx->method != NULL) &&
@@ -95,8 +93,7 @@ X509_LOOKUP *ctx;
 	Free(ctx);
 	}
 
-int X509_LOOKUP_init(ctx)
-X509_LOOKUP *ctx;
+int X509_LOOKUP_init(X509_LOOKUP *ctx)
 	{
 	if (ctx->method == NULL) return(0);
 	if (ctx->method->init != NULL)
@@ -105,22 +102,17 @@ X509_LOOKUP *ctx;
 		return(1);
 	}
 
-int X509_LOOKUP_shutdown(ctx)
-X509_LOOKUP *ctx;
+int X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 	{
 	if (ctx->method == NULL) return(0);
-	if (ctx->method->init != NULL)
+	if (ctx->method->shutdown != NULL)
 		return(ctx->method->shutdown(ctx));
 	else
 		return(1);
 	}
 
-int X509_LOOKUP_ctrl(ctx,cmd,argc,argl,ret)
-X509_LOOKUP *ctx;
-int cmd;
-char *argc;
-long argl;
-char **ret;
+int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
+	     char **ret)
 	{
 	if (ctx->method == NULL) return(-1);
 	if (ctx->method->ctrl != NULL)
@@ -129,11 +121,8 @@ char **ret;
 		return(1);
 	}
 
-int X509_LOOKUP_by_subject(ctx,type,name,ret)
-X509_LOOKUP *ctx;
-int type;
-X509_NAME *name;
-X509_OBJECT *ret;
+int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
+	     X509_OBJECT *ret)
 	{
 	if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
 		return(X509_LU_FAIL);
@@ -141,12 +130,8 @@ X509_OBJECT *ret;
 	return(ctx->method->get_by_subject(ctx,type,name,ret));
 	}
 
-int X509_LOOKUP_by_issuer_serial(ctx,type,name,serial,ret)
-X509_LOOKUP *ctx;
-int type;
-X509_NAME *name;
-ASN1_INTEGER *serial;
-X509_OBJECT *ret;
+int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
+	     ASN1_INTEGER *serial, X509_OBJECT *ret)
 	{
 	if ((ctx->method == NULL) ||
 		(ctx->method->get_by_issuer_serial == NULL))
@@ -154,32 +139,23 @@ X509_OBJECT *ret;
 	return(ctx->method->get_by_issuer_serial(ctx,type,name,serial,ret));
 	}
 
-int X509_LOOKUP_by_fingerprint(ctx,type,bytes,len,ret)
-X509_LOOKUP *ctx;
-int type;
-unsigned char *bytes;
-int len;
-X509_OBJECT *ret;
+int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
+	     unsigned char *bytes, int len, X509_OBJECT *ret)
 	{
 	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
 		return(X509_LU_FAIL);
 	return(ctx->method->get_by_fingerprint(ctx,type,bytes,len,ret));
 	}
 
-int X509_LOOKUP_by_alias(ctx,type,str,len,ret)
-X509_LOOKUP *ctx;
-int type;
-char *str;
-int len;
-X509_OBJECT *ret;
+int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str, int len,
+	     X509_OBJECT *ret)
 	{
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
 		return(X509_LU_FAIL);
-	return(ctx->method->get_by_alias(ctx,str,len,ret));
+	return(ctx->method->get_by_alias(ctx,type,str,len,ret));
 	}
 
-static unsigned long x509_object_hash(a)
-X509_OBJECT *a;
+static unsigned long x509_object_hash(X509_OBJECT *a)
 	{
 	unsigned long h;
 
@@ -197,8 +173,7 @@ X509_OBJECT *a;
 	return(h);
 	}
 
-static int x509_object_cmp(a,b)
-X509_OBJECT *a,*b;
+static int x509_object_cmp(X509_OBJECT *a, X509_OBJECT *b)
 	{
 	int ret;
 
@@ -218,7 +193,7 @@ X509_OBJECT *a,*b;
 	return(ret);
 	}
 
-X509_STORE *X509_STORE_new()
+X509_STORE *X509_STORE_new(void)
 	{
 	X509_STORE *ret;
 
@@ -226,16 +201,16 @@ X509_STORE *X509_STORE_new()
 		return(NULL);
 	ret->certs=lh_new(x509_object_hash,x509_object_cmp);
 	ret->cache=1;
-	ret->get_cert_methods=sk_new_null();
+	ret->get_cert_methods=sk_X509_LOOKUP_new_null();
 	ret->verify=NULL;
 	ret->verify_cb=NULL;
 	memset(&ret->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	ret->references=1;
+	ret->depth=0;
 	return(ret);
 	}
 
-static void cleanup(a)
-X509_OBJECT *a;
+static void cleanup(X509_OBJECT *a)
 	{
 	if (a->type == X509_LU_X509)
 		{
@@ -251,21 +226,23 @@ X509_OBJECT *a;
 	Free(a);
 	}
 
-void X509_STORE_free(vfy)
-X509_STORE *vfy;
+void X509_STORE_free(X509_STORE *vfy)
 	{
 	int i;
-	STACK *sk;
+	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
 
+	if(vfy == NULL)
+	    return;
+
 	sk=vfy->get_cert_methods;
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_LOOKUP_num(sk); i++)
 		{
-		lu=(X509_LOOKUP *)sk_value(sk,i);
+		lu=sk_X509_LOOKUP_value(sk,i);
 		X509_LOOKUP_shutdown(lu);
 		X509_LOOKUP_free(lu);
 		}
-	sk_free(sk);
+	sk_X509_LOOKUP_free(sk);
 
 	CRYPTO_free_ex_data(x509_store_meth,(char *)vfy,&vfy->ex_data);
 	lh_doall(vfy->certs,cleanup);
@@ -273,18 +250,16 @@ X509_STORE *vfy;
 	Free(vfy);
 	}
 
-X509_LOOKUP *X509_STORE_add_lookup(v,m)
-X509_STORE *v;
-X509_LOOKUP_METHOD *m;
+X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
 	{
 	int i;
-	STACK *sk;
+	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
 
 	sk=v->get_cert_methods;
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_LOOKUP_num(sk); i++)
 		{
-		lu=(X509_LOOKUP *)sk_value(sk,i);
+		lu=sk_X509_LOOKUP_value(sk,i);
 		if (m == lu->method)
 			{
 			return(lu);
@@ -297,7 +272,7 @@ X509_LOOKUP_METHOD *m;
 	else
 		{
 		lu->store_ctx=v;
-		if (sk_push(v->get_cert_methods,(char *)lu))
+		if (sk_X509_LOOKUP_push(v->get_cert_methods,lu))
 			return(lu);
 		else
 			{
@@ -307,24 +282,21 @@ X509_LOOKUP_METHOD *m;
 		}
 	}
 
-int X509_STORE_get_by_subject(vs,type,name,ret)
-X509_STORE_CTX *vs;
-int type;
-X509_NAME *name;
-X509_OBJECT *ret;
+int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
+	     X509_OBJECT *ret)
 	{
 	X509_STORE *ctx=vs->ctx;
 	X509_LOOKUP *lu;
 	X509_OBJECT stmp,*tmp;
 	int i,j;
 
-	tmp=X509_OBJECT_retrive_by_subject(ctx->certs,type,name);
+	tmp=X509_OBJECT_retrieve_by_subject(ctx->certs,type,name);
 
 	if (tmp == NULL)
 		{
-		for (i=vs->current_method; i<sk_num(ctx->get_cert_methods); i++)
+		for (i=vs->current_method; i<sk_X509_LOOKUP_num(ctx->get_cert_methods); i++)
 			{
-			lu=(X509_LOOKUP *)sk_value(ctx->get_cert_methods,i);
+			lu=sk_X509_LOOKUP_value(ctx->get_cert_methods,i);
 			j=X509_LOOKUP_by_subject(lu,type,name,&stmp);
 			if (j < 0)
 				{
@@ -353,8 +325,7 @@ X509_OBJECT *ret;
 	return(1);
 	}
 
-void X509_OBJECT_up_ref_count(a)
-X509_OBJECT *a;
+void X509_OBJECT_up_ref_count(X509_OBJECT *a)
 	{
 	switch (a->type)
 		{
@@ -367,8 +338,7 @@ X509_OBJECT *a;
 		}
 	}
 
-void X509_OBJECT_free_contents(a)
-X509_OBJECT *a;
+void X509_OBJECT_free_contents(X509_OBJECT *a)
 	{
 	switch (a->type)
 		{
@@ -381,10 +351,8 @@ X509_OBJECT *a;
 		}
 	}
 
-X509_OBJECT *X509_OBJECT_retrive_by_subject(h,type,name)
-LHASH *h;
-int type;
-X509_NAME *name;
+X509_OBJECT *X509_OBJECT_retrieve_by_subject(LHASH *h, int type,
+	     X509_NAME *name)
 	{
 	X509_OBJECT stmp,*tmp;
 	X509 x509_s;
@@ -413,11 +381,8 @@ X509_NAME *name;
 	return(tmp);
 	}
 
-void X509_STORE_CTX_init(ctx,store,x509,chain)
-X509_STORE_CTX *ctx;
-X509_STORE *store;
-X509 *x509;
-STACK *chain;
+void X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+	     STACK_OF(X509) *chain)
 	{
 	ctx->ctx=store;
 	ctx->current_method=0;
@@ -426,21 +391,21 @@ STACK *chain;
 	ctx->last_untrusted=0;
 	ctx->valid=0;
 	ctx->chain=NULL;
-	ctx->depth=10;
+	ctx->depth=9;
 	ctx->error=0;
 	ctx->current_cert=NULL;
 	memset(&(ctx->ex_data),0,sizeof(CRYPTO_EX_DATA));
 	}
 
-void X509_STORE_CTX_cleanup(ctx)
-X509_STORE_CTX *ctx;
+void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	{
 	if (ctx->chain != NULL)
 		{
-		sk_pop_free(ctx->chain,X509_free);
+		sk_X509_pop_free(ctx->chain,X509_free);
 		ctx->chain=NULL;
 		}
 	CRYPTO_free_ex_data(x509_store_ctx_meth,(char *)ctx,&(ctx->ex_data));
 	memset(&ctx->ex_data,0,sizeof(CRYPTO_EX_DATA));
 	}
 
+IMPLEMENT_STACK_OF(X509_LOOKUP)

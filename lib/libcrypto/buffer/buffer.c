@@ -58,13 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
+#include <openssl/buffer.h>
 
-BUF_MEM *BUF_MEM_new()
+BUF_MEM *BUF_MEM_new(void)
 	{
 	BUF_MEM *ret;
 
-	ret=(BUF_MEM *)Malloc(sizeof(BUF_MEM));
+	ret=Malloc(sizeof(BUF_MEM));
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_NEW,ERR_R_MALLOC_FAILURE);
@@ -76,9 +76,11 @@ BUF_MEM *BUF_MEM_new()
 	return(ret);
 	}
 
-void BUF_MEM_free(a)
-BUF_MEM *a;
+void BUF_MEM_free(BUF_MEM *a)
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->data != NULL)
 		{
 		memset(a->data,0,(unsigned int)a->max);
@@ -87,9 +89,7 @@ BUF_MEM *a;
 	Free(a);
 	}
 
-int BUF_MEM_grow(str, len)
-BUF_MEM *str;
-int len;
+int BUF_MEM_grow(BUF_MEM *str, int len)
 	{
 	char *ret;
 	unsigned int n;
@@ -101,15 +101,15 @@ int len;
 		}
 	if (str->max >= len)
 		{
-		memset(&(str->data[str->length]),0,len-str->length);
+		memset(&str->data[str->length],0,len-str->length);
 		str->length=len;
 		return(len);
 		}
 	n=(len+3)/3*4;
 	if (str->data == NULL)
-		ret=(char *)Malloc(n);
+		ret=Malloc(n);
 	else
-		ret=(char *)Realloc(str->data,n);
+		ret=Realloc(str->data,n);
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);
@@ -124,8 +124,7 @@ int len;
 	return(len);
 	}
 
-char *BUF_strdup(str)
-char *str;
+char *BUF_strdup(const char *str)
 	{
 	char *ret;
 	int n;

@@ -58,20 +58,20 @@
 
 #include "des_locl.h"
 #include "spr.h"
+#include <openssl/opensslv.h>
 
-char *libdes_version="libdes v 3.24 - 20-Apr-1996 - eay";
-char *DES_version="DES part of SSLeay 0.9.0b 29-Jun-1998";
+OPENSSL_GLOBAL const char *libdes_version="libdes" OPENSSL_VERSION_PTEXT;
+OPENSSL_GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
 
-char *des_options()
+const char *des_options(void)
 	{
 	static int init=1;
 	static char buf[32];
 
 	if (init)
 		{
-		char *ptr,*unroll,*risc,*size;
+		const char *ptr,*unroll,*risc,*size;
 
-		init=0;
 #ifdef DES_PTR
 		ptr="ptr";
 #else
@@ -97,23 +97,21 @@ char *des_options()
 		else
 			size="long";
 		sprintf(buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,size);
+		init=0;
 		}
 	return(buf);
 	}
 		
 
-void des_ecb_encrypt(input, output, ks, enc)
-des_cblock (*input);
-des_cblock (*output);
-des_key_schedule ks;
-int enc;
+void des_ecb_encrypt(const_des_cblock *input, des_cblock *output,
+	     des_key_schedule ks,
+	     int enc)
 	{
 	register DES_LONG l;
-	register unsigned char *in,*out;
 	DES_LONG ll[2];
+	const unsigned char *in = &(*input)[0];
+	unsigned char *out = &(*output)[0];
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
 	c2l(in,l); ll[0]=l;
 	c2l(in,l); ll[1]=l;
 	des_encrypt(ll,ks,enc);

@@ -58,21 +58,20 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
 #ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/rsa.h>
 #endif
 #ifndef NO_DSA
-#include "dsa.h"
+#include <openssl/dsa.h>
 #endif
-#include "objects.h"
-#include "x509.h"
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #ifndef NO_FP_API
-int X509_print_fp(fp,x)
-FILE *fp;
-X509 *x;
+int X509_print_fp(FILE *fp, X509 *x)
         {
         BIO *b;
         int ret;
@@ -89,9 +88,7 @@ X509 *x;
         }
 #endif
 
-int X509_print(bp,x)
-BIO *bp;
-X509 *x;
+int X509_print(BIO *bp, X509 *x)
 	{
 	long l;
 	int ret=0,i,j,n;
@@ -99,7 +96,7 @@ X509 *x;
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
-	char *neg;
+	const char *neg;
 	X509_EXTENSION *ex;
 	ASN1_STRING *str=NULL;
 
@@ -146,9 +143,9 @@ X509 *x;
 	if (!X509_NAME_print(bp,X509_get_issuer_name(x),16)) goto err;
 	if (BIO_write(bp,"\n        Validity\n",18) <= 0) goto err;
 	if (BIO_write(bp,"            Not Before: ",24) <= 0) goto err;
-	if (!ASN1_UTCTIME_print(bp,X509_get_notBefore(x))) goto err;
+	if (!ASN1_TIME_print(bp,X509_get_notBefore(x))) goto err;
 	if (BIO_write(bp,"\n            Not After : ",25) <= 0) goto err;
-	if (!ASN1_UTCTIME_print(bp,X509_get_notAfter(x))) goto err;
+	if (!ASN1_TIME_print(bp,X509_get_notAfter(x))) goto err;
 	if (BIO_write(bp,"\n        Subject: ",18) <= 0) goto err;
 	if (!X509_NAME_print(bp,X509_get_subject_name(x),16)) goto err;
 	if (BIO_write(bp,"\n        Subject Public Key Info:\n",34) <= 0)
@@ -158,6 +155,12 @@ X509 *x;
 		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i)) <= 0) goto err;
 
 	pkey=X509_get_pubkey(x);
+	if (pkey == NULL)
+		{
+		BIO_printf(bp,"%12sUnable to load Public Key\n","");
+		ERR_print_errors(bp);
+		}
+	else
 #ifndef NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -175,7 +178,9 @@ X509 *x;
 		}
 	else
 #endif
-		BIO_printf(bp,"%12sDSA Public Key:\n","");
+		BIO_printf(bp,"%12sUnknown Public Key:\n","");
+
+	EVP_PKEY_free(pkey);
 
 	n=X509_get_ext_count(x);
 	if (n > 0)
@@ -183,7 +188,9 @@ X509 *x;
 		BIO_printf(bp,"%8sX509v3 extensions:\n","");
 		for (i=0; i<n; i++)
 			{
+#if 0
 			int data_type,pack_type;
+#endif
 			ASN1_OBJECT *obj;
 
 			ex=X509_get_ext(x,i);
@@ -191,41 +198,11 @@ X509 *x;
 			obj=X509_EXTENSION_get_object(ex);
 			i2a_ASN1_OBJECT(bp,obj);
 			j=X509_EXTENSION_get_critical(ex);
-			if (BIO_printf(bp,": %s\n%16s",j?"critical":"","") <= 0)
+			if (BIO_printf(bp,": %s\n",j?"critical":"","") <= 0)
 				goto err;
-
-			pack_type=X509v3_pack_type_by_OBJ(obj);
-			data_type=X509v3_data_type_by_OBJ(obj);
-			
-			if (pack_type == X509_EXT_PACK_STRING)
+			if(!X509V3_EXT_print(bp, ex, 0, 16))
 				{
-				if (X509v3_unpack_string(
-					&str,data_type,
-					X509_EXTENSION_get_data(ex)) == NULL)
-					{
-					/* hmm... */
-					goto err;
-					}
-				if (	(data_type == V_ASN1_IA5STRING) ||
-					(data_type == V_ASN1_PRINTABLESTRING) ||
-					(data_type == V_ASN1_T61STRING))
-					{
-					if (BIO_write(bp,(char *)str->data,
-							str->length) <= 0)
-						goto err;
-					}
-				else if (data_type == V_ASN1_BIT_STRING)
-					{
-					BIO_printf(bp,"0x");
-					for (j=0; j<str->length; j++)
-						{
-						BIO_printf(bp,"%02X",
-							str->data[j]);
-						}
-					}
-				}
-			else
-				{
+				BIO_printf(bp, "%16s", "");
 				ASN1_OCTET_STRING_print(bp,ex->value);
 				}
 			if (BIO_write(bp,"\n",1) <= 0) goto err;
@@ -253,9 +230,7 @@ err:
 	return(ret);
 	}
 
-int ASN1_STRING_print(bp,v)
-BIO *bp;
-ASN1_STRING *v;
+int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	{
 	int i,n;
 	char buf[80],*p;;
@@ -284,15 +259,59 @@ ASN1_STRING *v;
 	return(1);
 	}
 
-int ASN1_UTCTIME_print(bp,tm)
-BIO *bp;
-ASN1_UTCTIME *tm;
+int ASN1_TIME_print(BIO *bp, ASN1_TIME *tm)
+{
+	if(tm->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_print(bp, tm);
+	if(tm->type == V_ASN1_GENERALIZEDTIME)
+				return ASN1_GENERALIZEDTIME_print(bp, tm);
+	BIO_write(bp,"Bad time value",14);
+	return(0);
+}
+
+static const char *mon[12]=
+    {
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+    };
+
+int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
 	{
 	char *v;
 	int gmt=0;
-	static char *mon[12]={
-		"Jan","Feb","Mar","Apr","May","Jun",
-		"Jul","Aug","Sep","Oct","Nov","Dec"};
+	int i;
+	int y=0,M=0,d=0,h=0,m=0,s=0;
+
+	i=tm->length;
+	v=(char *)tm->data;
+
+	if (i < 12) goto err;
+	if (v[i-1] == 'Z') gmt=1;
+	for (i=0; i<12; i++)
+		if ((v[i] > '9') || (v[i] < '0')) goto err;
+	y= (v[0]-'0')*1000+(v[1]-'0')*100 + (v[2]-'0')*10+(v[3]-'0');
+	M= (v[4]-'0')*10+(v[5]-'0');
+	if ((M > 12) || (M < 1)) goto err;
+	d= (v[6]-'0')*10+(v[7]-'0');
+	h= (v[8]-'0')*10+(v[9]-'0');
+	m=  (v[10]-'0')*10+(v[11]-'0');
+	if (	(v[12] >= '0') && (v[12] <= '9') &&
+		(v[13] >= '0') && (v[13] <= '9'))
+		s=  (v[12]-'0')*10+(v[13]-'0');
+
+	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d %d%s",
+		mon[M-1],d,h,m,s,y,(gmt)?" GMT":"") <= 0)
+		return(0);
+	else
+		return(1);
+err:
+	BIO_write(bp,"Bad time value",14);
+	return(0);
+	}
+
+int ASN1_UTCTIME_print(BIO *bp, ASN1_UTCTIME *tm)
+	{
+	char *v;
+	int gmt=0;
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
 
@@ -324,10 +343,7 @@ err:
 	return(0);
 	}
 
-int X509_NAME_print(bp,name,obase)
-BIO *bp;
-X509_NAME *name;
-int obase;
+int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	{
 	char *s,*c;
 	int ret=0,l,ll,i,first=1;
@@ -342,6 +358,7 @@ int obase;
 	c=s;
 	for (;;)
 		{
+#ifndef CHARSET_EBCDIC
 		if (	((*s == '/') &&
 				((s[1] >= 'A') && (s[1] <= 'Z') && (
 					(s[2] == '=') ||
@@ -349,6 +366,15 @@ int obase;
 					(s[3] == '='))
 				 ))) ||
 			(*s == '\0'))
+#else
+		if (	((*s == '/') &&
+				(isupper(s[1]) && (
+					(s[2] == '=') ||
+					(isupper(s[2]) &&
+					(s[3] == '='))
+				 ))) ||
+			(*s == '\0'))
+#endif
 			{
 			if ((l <= 0) && !first)
 				{

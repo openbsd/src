@@ -56,17 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "dsa.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	dsa_main
@@ -82,14 +83,12 @@
  * -modulus	- print the DSA public key
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	DSA *dsa=NULL;
 	int i,badops=0;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,text=0,noout=0;
 	char *infile,*outfile,*prog;
@@ -154,7 +153,7 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER NET PEM\n");
 		BIO_printf(bio_err," -outform arg  output format - one of DER NET PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -des          encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3         encrypt PEM output with ede cbc des using 168 bit key\n");
@@ -192,7 +191,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		dsa=d2i_DSAPrivateKey_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL);
+		dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for key\n");
@@ -236,7 +235,7 @@ bad:
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_DSAPrivateKey_bio(out,dsa);
 	else if (outformat == FORMAT_PEM)
-		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL);
+		i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,NULL,0,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
@@ -254,4 +253,4 @@ end:
 	if (dsa != NULL) DSA_free(dsa);
 	EXIT(ret);
 	}
-
+#endif

@@ -57,34 +57,30 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
+#include <openssl/buffer.h>
 #include "ssl_locl.h"
 
 #ifndef NO_FP_API
-int SSL_SESSION_print_fp(fp, x)
-FILE *fp;
-SSL_SESSION *x;
-        {
-        BIO *b;
-        int ret;
+int SSL_SESSION_print_fp(FILE *fp, SSL_SESSION *x)
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file_internal())) == NULL)
+	if ((b=BIO_new(BIO_s_file_internal())) == NULL)
 		{
 		SSLerr(SSL_F_SSL_SESSION_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=SSL_SESSION_print(b,x);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=SSL_SESSION_print(b,x);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
-int SSL_SESSION_print(bp,x)
-BIO *bp;
-SSL_SESSION *x;
+int SSL_SESSION_print(BIO *bp, SSL_SESSION *x)
 	{
-	int i;
+	unsigned int i;
 	char str[128],*s;
 
 	if (x == NULL) goto err;
@@ -111,13 +107,19 @@ SSL_SESSION *x;
 		sprintf(str,"    Cipher    : %s\n",(x->cipher == NULL)?"unknown":x->cipher->name);
 	if (BIO_puts(bp,str) <= 0) goto err;
 	if (BIO_puts(bp,"    Session-ID: ") <= 0) goto err;
-	for (i=0; i<(int)x->session_id_length; i++)
+	for (i=0; i<x->session_id_length; i++)
 		{
 		sprintf(str,"%02X",x->session_id[i]);
 		if (BIO_puts(bp,str) <= 0) goto err;
 		}
+	if (BIO_puts(bp,"\nSession-ID-ctx: ") <= 0) goto err;
+	for (i=0; i<x->sid_ctx_length; i++)
+		{
+		sprintf(str,"%02X",x->sid_ctx[i]);
+		if (BIO_puts(bp,str) <= 0) goto err;
+		}
 	if (BIO_puts(bp,"\n    Master-Key: ") <= 0) goto err;
-	for (i=0; i<(int)x->master_key_length; i++)
+	for (i=0; i<(unsigned int)x->master_key_length; i++)
 		{
 		sprintf(str,"%02X",x->master_key[i]);
 		if (BIO_puts(bp,str) <= 0) goto err;
@@ -128,11 +130,28 @@ SSL_SESSION *x;
 		if (BIO_puts(bp,"None") <= 0) goto err;
 		}
 	else
-		for (i=0; i<(int)x->key_arg_length; i++)
+		for (i=0; i<x->key_arg_length; i++)
 			{
 			sprintf(str,"%02X",x->key_arg[i]);
 			if (BIO_puts(bp,str) <= 0) goto err;
 			}
+	if (x->compress_meth != 0)
+		{
+		SSL_COMP *comp;
+
+		ssl_cipher_get_evp(x,NULL,NULL,&comp);
+		if (comp == NULL)
+			{
+			sprintf(str,"\n   Compression: %d",x->compress_meth);
+			if (BIO_puts(bp,str) <= 0) goto err;
+			}
+		else
+			{
+			sprintf(str,"\n   Compression: %d (%s)",
+				comp->id,comp->method->name);
+			if (BIO_puts(bp,str) <= 0) goto err;
+			}
+		}	
 	if (x->time != 0L)
 		{
 		sprintf(str,"\n    Start Time: %ld",x->time);

@@ -7,23 +7,23 @@ TOP=	../..
 CC=	cc
 INCLUDES= -I.. -I../../include
 CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
-ERR=objects
-ERRC=obj_err
 GENERAL=Makefile README
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	obj_dat.c obj_lib.c $(ERRC).c
-LIBOBJ= obj_dat.o obj_lib.o $(ERRC).o
+LIBSRC=	o_names.c obj_dat.c obj_lib.c obj_err.c
+LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o
 
 SRC= $(LIBSRC)
 
@@ -38,28 +38,27 @@ top:
 all:	obj_dat.h lib
 
 obj_dat.h: objects.h obj_dat.pl
-	perl ./obj_dat.pl < objects.h > obj_dat.h
+	$(PERL) ./obj_dat.pl < objects.h > obj_dat.h
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	sh $(TOP)/util/ranlib.sh $(LIB)
+	$(RANLIB) $(LIB)
 	@touch lib
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
-	$(TOP)/util/mklink.sh ../../include $(EXHEADER)
-	$(TOP)/util/mklink.sh ../../test $(TEST)
-	$(TOP)/util/mklink.sh ../../apps $(APPS)
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
 install:
 	@for i in $(EXHEADER) ; \
 	do  \
-	(cp $$i $(INSTALLTOP)/include/$$i; \
-	chmod 644 $(INSTALLTOP)/include/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
 tags:
@@ -71,17 +70,40 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-
-errors:
-	perl $(TOP)/util/err-ins.pl $(ERR).err $(ERR).h
-	perl ../err/err_genc.pl -s $(ERR).h $(ERRC).c
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+o_names.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+o_names.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+o_names.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
+o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+o_names.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_dat.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_dat.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+obj_dat.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+obj_dat.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+obj_dat.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
+obj_dat.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+obj_dat.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_dat.o: ../cryptlib.h obj_dat.h
+obj_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+obj_err.o: ../../include/openssl/err.h ../../include/openssl/objects.h
+obj_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+obj_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+obj_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os.h
+obj_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+obj_lib.o: ../../include/openssl/lhash.h ../../include/openssl/objects.h
+obj_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+obj_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_lib.o: ../cryptlib.h

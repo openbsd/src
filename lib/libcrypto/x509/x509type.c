@@ -58,13 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int X509_certificate_type(x,pkey)
-X509 *x;
-EVP_PKEY *pkey;
+int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 	{
 	EVP_PKEY *pk;
 	int ret=0,i;
@@ -108,8 +106,9 @@ EVP_PKEY *pkey;
 		break;
 		}
 
-	if (EVP_PKEY_size(pkey) <= 512)
+	if (EVP_PKEY_size(pk) <= 512)
 		ret|=EVP_PKT_EXP;
+	if(pkey==NULL) EVP_PKEY_free(pk);
 	return(ret);
 	}
 

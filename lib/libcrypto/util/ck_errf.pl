@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # This is just a quick script to scan for cases where the 'error'
 # function name in a XXXerr() macro is wrong.
@@ -40,5 +40,6 @@ foreach $file (@ARGV)
 	#		print "$func:$1\n";
 			}
 		}
+	close(IN);
         }
 

@@ -58,18 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
-/* ASN1err(ASN1_F_ASN1_OBJECT_NEW,ASN1_R_EXPECTING_AN_OBJECT); 
- * ASN1err(ASN1_F_D2I_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER); 
- * ASN1err(ASN1_F_I2T_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER);
- */
-
-int i2d_ASN1_OBJECT(a, pp)
-ASN1_OBJECT *a;
-unsigned char **pp;
+int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	{
 	unsigned char *p;
 
@@ -87,14 +80,11 @@ unsigned char **pp;
 	return(a->length);
 	}
 
-int a2d_ASN1_OBJECT(out,olen,buf,num)
-unsigned char *out;
-int olen;
-char *buf;
-int num;
+int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	{
 	int i,first,len=0,c;
-	char tmp[24],*p;
+	char tmp[24];
+	const char *p;
 	unsigned long l;
 
 	if (num == 0)
@@ -180,85 +170,12 @@ err:
 	return(0);
 	}
 
-int i2t_ASN1_OBJECT(buf,buf_len,a)
-char *buf;
-int buf_len;
-ASN1_OBJECT *a;
-	{
-	int i,idx=0,n=0,len,nid;
-	unsigned long l;
-	unsigned char *p;
-	char *s;
-	char tbuf[32];
+int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
+{
+	return OBJ_obj2txt(buf, buf_len, a, 0);
+}
 
-	if (buf_len <= 0) return(0);
-
-	if ((a == NULL) || (a->data == NULL))
-		{
-		buf[0]='\0';
-		return(0);
-		}
-
-	nid=OBJ_obj2nid(a);
-	if (nid == NID_undef)
-		{
-		len=a->length;
-		p=a->data;
-
-		idx=0;
-		l=0;
-		while (idx < a->length)
-			{
-			l|=(p[idx]&0x7f);
-			if (!(p[idx] & 0x80)) break;
-			l<<=7L;
-			idx++;
-			}
-		idx++;
-		i=(int)(l/40);
-		if (i > 2) i=2;
-		l-=(long)(i*40);
-
-		sprintf(tbuf,"%d.%ld",i,l);
-		i=strlen(tbuf);
-		strncpy(buf,tbuf,buf_len);
-		buf_len-=i;
-		buf+=i;
-		n+=i;
-
-		l=0;
-		for (; idx<len; idx++)
-			{
-			l|=p[idx]&0x7f;
-			if (!(p[idx] & 0x80))
-				{
-				sprintf(tbuf,".%ld",l);
-				i=strlen(tbuf);
-				if (buf_len > 0)
-					strncpy(buf,tbuf,buf_len);
-				buf_len-=i;
-				buf+=i;
-				n+=i;
-				l=0;
-				}
-			l<<=7L;
-			}
-		}
-	else
-		{
-		s=(char *)OBJ_nid2ln(nid);
-		if (s == NULL)
-			s=(char *)OBJ_nid2sn(nid);
-		strncpy(buf,s,buf_len);
-		n=strlen(s);
-		}
-	buf[buf_len-1]='\0';
-	return(n);
-	}
-
-int i2a_ASN1_OBJECT(bp,a)
-BIO *bp;
-ASN1_OBJECT *a;
+int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	{
 	char buf[80];
 	int i;
@@ -271,10 +188,8 @@ ASN1_OBJECT *a;
 	return(i);
 	}
 
-ASN1_OBJECT *d2i_ASN1_OBJECT(a, pp, length)
-ASN1_OBJECT **a;
-unsigned char **pp;
-long length; 
+ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_OBJECT *ret=NULL;
 	unsigned char *p;
@@ -330,7 +245,7 @@ err:
 	return(NULL);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_new()
+ASN1_OBJECT *ASN1_OBJECT_new(void)
 	{
 	ASN1_OBJECT *ret;
 
@@ -349,14 +264,15 @@ ASN1_OBJECT *ASN1_OBJECT_new()
 	return(ret);
 	}
 
-void ASN1_OBJECT_free(a)
-ASN1_OBJECT *a;
+void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	{
 	if (a == NULL) return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
 		{
-		if (a->sn != NULL) Free(a->sn);
-		if (a->ln != NULL) Free(a->ln);
+#ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause mempory leaks */
+		if (a->sn != NULL) Free((void *)a->sn);
+		if (a->ln != NULL) Free((void *)a->ln);
+#endif
 		a->sn=a->ln=NULL;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
@@ -366,14 +282,11 @@ ASN1_OBJECT *a;
 		a->length=0;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
-		Free((char *)a);
+		Free(a);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_create(nid,data,len,sn,ln)
-int nid;
-unsigned char *data;
-int len;
-char *sn,*ln;
+ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
+	     char *sn, char *ln)
 	{
 	ASN1_OBJECT o;
 
@@ -382,8 +295,10 @@ char *sn,*ln;
 	o.data=data;
 	o.nid=nid;
 	o.length=len;
-	o.flags=ASN1_OBJECT_FLAG_DYNAMIC|
-		ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|ASN1_OBJECT_FLAG_DYNAMIC_DATA;
+	o.flags=ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
+		ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	return(OBJ_dup(&o));
 	}
 
+IMPLEMENT_STACK_OF(ASN1_OBJECT)
+IMPLEMENT_ASN1_SET_OF(ASN1_OBJECT)

@@ -58,10 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
+#ifndef NO_SHA
 static EVP_MD dsa_md=
 	{
 	NID_dsaWithSHA,
@@ -75,8 +76,8 @@ static EVP_MD dsa_md=
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
-EVP_MD *EVP_dss()
+EVP_MD *EVP_dss(void)
 	{
 	return(&dsa_md);
 	}
-
+#endif

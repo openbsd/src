@@ -58,27 +58,17 @@
 
 #include <stdio.h>
 #include "rmd_locl.h"
+#include <openssl/opensslv.h>
 
-char *RMD160_version="RIPEMD160 part of SSLeay 0.9.0b 29-Jun-1998";
+char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 
-#ifndef NOPROTO
 #  ifdef RMD160_ASM
      void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,int num);
 #    define ripemd160_block ripemd160_block_x86
 #  else
      void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,int num);
 #  endif
-#else
-#  ifdef RMD160_ASM
-     void ripemd160_block_x86();
-#    define ripemd160_block ripemd160_block_x86
-#  else
-     static void ripemd160_block();
-#  endif
-#endif
-
-void RIPEMD160_Init(c)
-RIPEMD160_CTX *c;
+void RIPEMD160_Init(RIPEMD160_CTX *c)
 	{
 	c->A=RIPEMD160_A;
 	c->B=RIPEMD160_B;
@@ -90,10 +80,8 @@ RIPEMD160_CTX *c;
 	c->num=0;
 	}
 
-void RIPEMD160_Update(c, data, len)
-RIPEMD160_CTX *c;
-register unsigned char *data;
-unsigned long len;
+void RIPEMD160_Update(RIPEMD160_CTX *c, register unsigned char *data,
+	     unsigned long len)
 	{
 	register ULONG *p;
 	int sw,sc;
@@ -221,9 +209,7 @@ unsigned long len;
 		}
 	}
 
-void RIPEMD160_Transform(c,b)
-RIPEMD160_CTX *c;
-unsigned char *b;
+void RIPEMD160_Transform(RIPEMD160_CTX *c, unsigned char *b)
 	{
 	ULONG p[16];
 #if !defined(L_ENDIAN)
@@ -260,10 +246,7 @@ unsigned char *b;
 
 #ifndef RMD160_ASM
 
-void ripemd160_block(ctx, X, num)
-RIPEMD160_CTX *ctx;
-register ULONG *X;
-int num;
+void ripemd160_block(RIPEMD160_CTX *ctx, register ULONG *X, int num)
 	{
 	register ULONG A,B,C,D,E;
 	ULONG a,b,c,d,e;
@@ -460,9 +443,7 @@ int num;
 	}
 #endif
 
-void RIPEMD160_Final(md, c)
-unsigned char *md;
-RIPEMD160_CTX *c;
+void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 	{
 	register int i,j;
 	register ULONG l;
@@ -518,8 +499,7 @@ RIPEMD160_CTX *c;
 	}
 
 #ifdef undef
-int printit(l)
-unsigned long *l;
+int printit(unsigned long *l)
 	{
 	int i,ii;
 

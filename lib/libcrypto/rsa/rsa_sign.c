@@ -58,18 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int RSA_sign(type,m,m_len,sigret,siglen,rsa)
-int type;
-unsigned char *m;
-unsigned int m_len;
-unsigned char *sigret;
-unsigned int *siglen;
-RSA *rsa;
+int RSA_sign(int type, unsigned char *m, unsigned int m_len,
+	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)
 	{
 	X509_SIG sig;
 	ASN1_TYPE parameter;
@@ -124,13 +119,8 @@ RSA *rsa;
 	return(ret);
 	}
 
-int RSA_verify(dtype, m, m_len, sigbuf, siglen, rsa)
-int dtype;
-unsigned char *m;
-unsigned int m_len;
-unsigned char *sigbuf;
-unsigned int siglen;
-RSA *rsa;
+int RSA_verify(int dtype, unsigned char *m, unsigned int m_len,
+	     unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
 	{
 	int i,ret=0,sigtype;
 	unsigned char *p,*s;
@@ -154,8 +144,10 @@ RSA *rsa;
 
 	p=s;
 	sig=d2i_X509_SIG(NULL,&p,(long)i);
+
 	if (sig == NULL) goto err;
 	sigtype=OBJ_obj2nid(sig->algor->algorithm);
+
 
 #ifdef RSA_DEBUG
 	/* put a backward compatability flag in EAY */

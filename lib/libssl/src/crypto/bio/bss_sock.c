@@ -62,10 +62,9 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 #ifndef BIO_FD
-#ifndef NOPROTO
 static int sock_write(BIO *h,char *buf,int num);
 static int sock_read(BIO *h,char *buf,int size);
 static int sock_puts(BIO *h,char *str);
@@ -74,18 +73,7 @@ static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 #else
-static int sock_write();
-static int sock_read();
-static int sock_puts();
-static long sock_ctrl();
-static int sock_new();
-static int sock_free();
-int BIO_sock_should_retry();
-#endif
 
-#else
-
-#ifndef NOPROTO
 static int fd_write(BIO *h,char *buf,int num);
 static int fd_read(BIO *h,char *buf,int size);
 static int fd_puts(BIO *h,char *str);
@@ -93,15 +81,6 @@ static long fd_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
-#else
-static int fd_write();
-static int fd_read();
-static int fd_puts();
-static long fd_ctrl();
-static int fd_new();
-static int fd_free();
-int BIO_fd_should_retry();
-#endif
 #endif
 
 #ifndef BIO_FD
@@ -118,7 +97,7 @@ static BIO_METHOD methods_sockp=
 	sock_free,
 	};
 
-BIO_METHOD *BIO_s_socket()
+BIO_METHOD *BIO_s_socket(void)
 	{
 	return(&methods_sockp);
 	}
@@ -135,19 +114,17 @@ static BIO_METHOD methods_fdp=
 	fd_free,
 	};
 
-BIO_METHOD *BIO_s_fd()
+BIO_METHOD *BIO_s_fd(void)
 	{
 	return(&methods_fdp);
 	}
 #endif
 
 #ifndef BIO_FD
-BIO *BIO_new_socket(fd,close_flag)
+BIO *BIO_new_socket(int fd, int close_flag)
 #else
-BIO *BIO_new_fd(fd,close_flag)
+BIO *BIO_new_fd(int fd,int close_flag)
 #endif
-int fd;
-int close_flag;
 	{
 	BIO *ret;
 
@@ -162,11 +139,10 @@ int close_flag;
 	}
 
 #ifndef BIO_FD
-static int sock_new(bi)
+static int sock_new(BIO *bi)
 #else
-static int fd_new(bi)
+static int fd_new(BIO *bi)
 #endif
-BIO *bi;
 	{
 	bi->init=0;
 	bi->num=0;
@@ -176,11 +152,10 @@ BIO *bi;
 	}
 
 #ifndef BIO_FD
-static int sock_free(a)
+static int sock_free(BIO *a)
 #else
-static int fd_free(a)
+static int fd_free(BIO *a)
 #endif
-BIO *a;
 	{
 	if (a == NULL) return(0);
 	if (a->shutdown)
@@ -189,11 +164,7 @@ BIO *a;
 			{
 #ifndef BIO_FD
 			shutdown(a->num,2);
-# ifdef WINDOWS
 			closesocket(a->num);
-# else
-			close(a->num);
-# endif
 #else			/* BIO_FD */
 			close(a->num);
 #endif
@@ -206,21 +177,18 @@ BIO *a;
 	}
 	
 #ifndef BIO_FD
-static int sock_read(b,out,outl)
+static int sock_read(BIO *b, char *out, int outl)
 #else
-static int fd_read(b,out,outl)
+static int fd_read(BIO *b, char *out,int outl)
 #endif
-BIO *b;
-char *out;
-int outl;
 	{
 	int ret=0;
 
 	if (out != NULL)
 		{
-#if defined(WINDOWS) && !defined(BIO_FD)
+#ifndef BIO_FD
 		clear_socket_error();
-		ret=recv(b->num,out,outl,0);
+		ret=readsocket(b->num,out,outl);
 #else
 		clear_sys_error();
 		ret=read(b->num,out,outl);
@@ -240,19 +208,16 @@ int outl;
 	}
 
 #ifndef BIO_FD
-static int sock_write(b,in,inl)
+static int sock_write(BIO *b, char *in, int inl)
 #else
-static int fd_write(b,in,inl)
+static int fd_write(BIO *b, char *in, int inl)
 #endif
-BIO *b;
-char *in;
-int inl;
 	{
 	int ret;
 	
-#if defined(WINDOWS) && !defined(BIO_FD)
+#ifndef BIO_FD
 	clear_socket_error();
-	ret=send(b->num,in,inl,0);
+	ret=writesocket(b->num,in,inl);
 #else
 	clear_sys_error();
 	ret=write(b->num,in,inl);
@@ -271,14 +236,10 @@ int inl;
 	}
 
 #ifndef BIO_FD
-static long sock_ctrl(b,cmd,num,ptr)
+static long sock_ctrl(BIO *b, int cmd, long num, char *ptr)
 #else
-static long fd_ctrl(b,cmd,num,ptr)
+static long fd_ctrl(BIO *b, int cmd, long num, char *ptr)
 #endif
-BIO *b;
-int cmd;
-long num;
-char *ptr;
 	{
 	long ret=1;
 	int *ip;
@@ -286,14 +247,21 @@ char *ptr;
 	switch (cmd)
 		{
 	case BIO_CTRL_RESET:
+		num=0;
+	case BIO_C_FILE_SEEK:
 #ifdef BIO_FD
-		ret=(long)lseek(b->num,0,0);
+		ret=(long)lseek(b->num,num,0);
 #else
 		ret=0;
 #endif
 		break;
+	case BIO_C_FILE_TELL:
 	case BIO_CTRL_INFO:
+#ifdef BIO_FD
+		ret=(long)lseek(b->num,0,1);
+#else
 		ret=0;
+#endif
 		break;
 	case BIO_C_SET_FD:
 #ifndef BIO_FD
@@ -329,7 +297,6 @@ char *ptr;
 	case BIO_CTRL_FLUSH:
 		ret=1;
 		break;
-		break;
 	default:
 		ret=0;
 		break;
@@ -338,22 +305,17 @@ char *ptr;
 	}
 
 #ifdef undef
-static int sock_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int sock_gets(BIO *bp, char *buf,int size)
 	{
 	return(-1);
 	}
 #endif
 
 #ifndef BIO_FD
-static int sock_puts(bp,str)
+static int sock_puts(BIO *bp, char *str)
 #else
-static int fd_puts(bp,str)
+static int fd_puts(BIO *bp, char *str)
 #endif
-BIO *bp;
-char *str;
 	{
 	int n,ret;
 
@@ -367,23 +329,22 @@ char *str;
 	}
 
 #ifndef BIO_FD
-int BIO_sock_should_retry(i)
+int BIO_sock_should_retry(int i)
 #else
-int BIO_fd_should_retry(i)
+int BIO_fd_should_retry(int i)
 #endif
-int i;
 	{
 	int err;
 
 	if ((i == 0) || (i == -1))
 		{
-#if !defined(BIO_FD) && defined(WINDOWS)
+#ifndef BIO_FD
 		err=get_last_socket_error();
 #else
 		err=get_last_sys_error();
 #endif
 
-#if defined(WINDOWS) /* more microsoft stupidity */
+#if defined(WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
 		if ((i == -1) && (err == 0))
 			return(1);
 #endif
@@ -398,11 +359,10 @@ int i;
 	}
 
 #ifndef BIO_FD
-int BIO_sock_non_fatal_error(err)
+int BIO_sock_non_fatal_error(int err)
 #else
-int BIO_fd_non_fatal_error(err)
+int BIO_fd_non_fatal_error(int err)
 #endif
-int err;
 	{
 	switch (err)
 		{
@@ -411,8 +371,10 @@ int err;
 	case WSAEWOULDBLOCK:
 # endif
 
-# if defined(WSAENOTCONN)
+# if 0 /* This appears to always be an error */
+#  if defined(WSAENOTCONN)
 	case WSAENOTCONN:
+#  endif
 # endif
 #endif
 
@@ -452,7 +414,7 @@ int err;
 	case EALREADY:
 #endif
 		return(1);
-		break;
+		/* break; */
 	default:
 		break;
 		}

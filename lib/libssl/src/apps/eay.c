@@ -62,33 +62,34 @@
 
 #define MONOLITH
 #define USE_SOCKETS
-#include "../e_os.h"
 
-#include "bio.h"
-#include "stack.h"
-#include "lhash.h"
+#include "openssl/e_os.h"
 
-#include "err.h"
+#include <openssl/bio.h>
+#include <openssl/stack.h>
+#include <openssl/lhash.h>
 
-#include "bn.h"
+#include <openssl/err.h>
 
-#include "evp.h"
+#include <openssl/bn.h>
 
-#include "rand.h"
-#include "conf.h"
-#include "txt_db.h"
+#include <openssl/evp.h>
 
-#include "err.h"
+#include <openssl/rand.h>
+#include <openssl/conf.h>
+#include <openssl/txt_db.h>
 
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/err.h>
+
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
 #define MONOLITH
 
-#include "ssleay.c"
+#include "openssl.c"
 #include "apps.c"
 #include "asn1pars.c"
 #ifndef NO_RSA

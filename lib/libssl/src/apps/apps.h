@@ -59,11 +59,11 @@
 #ifndef HEADER_APPS_H
 #define HEADER_APPS_H
 
-#include "e_os.h"
+#include "openssl/e_os.h"
 
-#include "buffer.h"
-#include "bio.h"
-#include "crypto.h"
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include "progs.h"
 
 #ifdef NO_STDIO
@@ -88,7 +88,7 @@ extern BIO *bio_err;
 #else
 
 #define MAIN(a,v)	PROG(a,v)
-#include "conf.h"
+#include <openssl/conf.h>
 extern LHASH *config;
 extern char *default_config_file;
 extern BIO *bio_err;
@@ -122,25 +122,16 @@ extern BIO *bio_err;
 #endif
 
 typedef struct args_st
-        {
-        char **data;
+	{
+	char **data;
 	int count;
-        } ARGS;
+	} ARGS;
 
-#ifndef NOPROTO
 int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
 void program_name(char *in,char *out,int size);
 int chopup_args(ARGS *arg,char *buf, int *argc, char **argv[]);
-#else
-int should_retry();
-int args_from_file();
-int str2fmt();
-void program_name();
-int chopup_args();
-#endif
-
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2

@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef NO_RIPEMD
+#error RIPEMD is disabled.
+#endif
+
 #define RIPEMD160_CBLOCK	64
 #define RIPEMD160_LBLOCK	16
 #define RIPEMD160_BLOCK		16
@@ -78,20 +82,11 @@ typedef struct RIPEMD160state_st
 	int num;
 	} RIPEMD160_CTX;
 
-#ifndef NOPROTO
 void RIPEMD160_Init(RIPEMD160_CTX *c);
 void RIPEMD160_Update(RIPEMD160_CTX *c, unsigned char *data, unsigned long len);
 void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 unsigned char *RIPEMD160(unsigned char *d, unsigned long n, unsigned char *md);
 void RIPEMD160_Transform(RIPEMD160_CTX *c, unsigned char *b);
-#else
-void RIPEMD160_Init();
-void RIPEMD160_Update();
-void RIPEMD160_Final();
-unsigned char *RIPEMD160();
-void RIPEMD160_Transform();
-#endif
-
 #ifdef  __cplusplus
 }
 #endif

@@ -74,13 +74,13 @@
 #include <ulocks.h>
 #include <sys/prctl.h>
 #endif
-#include "lhash.h"
-#include "crypto.h"
-#include "buffer.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
 #include "../e_os.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #ifdef NO_FP_API
 #define APPS_WIN16
@@ -92,7 +92,6 @@
 
 #define MAX_THREAD_NUMBER	100
 
-#ifndef NOPROTO
 int MS_CALLBACK verify_callback(int ok, X509 *xs, X509 *xi, int depth,
 	int error,char *arg);
 void thread_setup(void);
@@ -108,23 +107,6 @@ unsigned long irix_thread_id(void );
 unsigned long solaris_thread_id(void );
 unsigned long pthreads_thread_id(void );
 
-#else
-int MS_CALLBACK verify_callback();
-void thread_setup();
-void thread_cleanup();
-void do_threads();
-
-void irix_locking_callback();
-void solaris_locking_callback();
-void win32_locking_callback();
-void pthreads_locking_callback();
-
-unsigned long irix_thread_id();
-unsigned long solaris_thread_id();
-unsigned long pthreads_thread_id();
-
-#endif
-
 BIO *bio_err=NULL;
 BIO *bio_stdout=NULL;
 
@@ -139,15 +121,8 @@ int number_of_loops=10;
 int reconnect=0;
 int cache_stats=0;
 
-#ifndef  NOPROTO
 int doit(char *ctx[4]);
-#else
-int doit();
-#endif
-
-static void print_stats(fp,ctx)
-FILE *fp;
-SSL_CTX *ctx;
+static void print_stats(FILE *fp, SSL_CTX *ctx)
 {
 	fprintf(fp,"%4ld items in the session cache\n",
 		SSL_CTX_sess_number(ctx));
@@ -164,7 +139,7 @@ SSL_CTX *ctx;
 	fprintf(fp,"%4d session cache timeouts\n",SSL_CTX_sess_timeouts(ctx));
 	}
 
-static void sv_usage()
+static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
 	fprintf(stderr,"\n");
@@ -182,9 +157,7 @@ static void sv_usage()
 	fprintf(stderr," -ssl3         - just SSLv3n\n");
 	}
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	char *CApath=NULL,*CAfile=NULL;
 	int badop=0;
@@ -358,8 +331,7 @@ end:
 #define C_DONE	1
 #define S_DONE	2
 
-int ndoit(ssl_ctx)
-SSL_CTX *ssl_ctx[2];
+int ndoit(SSL_CTX *ssl_ctx[2])
 	{
 	int i;
 	int ret;
@@ -405,8 +377,7 @@ SSL_CTX *ssl_ctx[2];
 	return(0);
 	}
 
-int doit(ctx)
-char *ctx[4];
+int doit(char *ctx[4])
 	{
 	SSL_CTX *s_ctx,*c_ctx;
 	static char cbuf[200],sbuf[200];
@@ -681,13 +652,8 @@ err:
 	return(0);
 	}
 
-int MS_CALLBACK verify_callback(ok, xs, xi, depth, error, arg)
-int ok;
-X509 *xs;
-X509 *xi;
-int depth;
-int error;
-char *arg;
+int MS_CALLBACK verify_callback(int ok, X509 *xs, X509 *xi, int depth,
+	     int error, char *arg)
 	{
 	char buf[256];
 
@@ -708,7 +674,7 @@ char *arg;
 
 static HANDLE lock_cs[CRYPTO_NUM_LOCKS];
 
-void thread_setup()
+void thread_setup(void)
 	{
 	int i;
 
@@ -721,7 +687,7 @@ void thread_setup()
 	/* id callback defined */
 	}
 
-void thread_cleanup()
+void thread_cleanup(void)
 	{
 	int i;
 
@@ -730,11 +696,7 @@ void thread_cleanup()
 		CloseHandle(lock_cs[i]);
 	}
 
-void win32_locking_callback(mode,type,file,line)
-int mode;
-int type;
-char *file;
-int line;
+void win32_locking_callback(int mode, int type, char *file, int line)
 	{
 	if (mode & CRYPTO_LOCK)
 		{
@@ -746,8 +708,7 @@ int line;
 		}
 	}
 
-void do_threads(s_ctx,c_ctx)
-SSL_CTX *s_ctx,*c_ctx;
+void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	{
 	double ret;
 	SSL_CTX *ssl_ctx[2];
@@ -806,7 +767,7 @@ static mutex_t lock_cs[CRYPTO_NUM_LOCKS];
 /*static rwlock_t lock_cs[CRYPTO_NUM_LOCKS]; */
 static long lock_count[CRYPTO_NUM_LOCKS];
 
-void thread_setup()
+void thread_setup(void)
 	{
 	int i;
 
@@ -821,7 +782,7 @@ void thread_setup()
 	CRYPTO_set_locking_callback((void (*)())solaris_locking_callback);
 	}
 
-void thread_cleanup()
+void thread_cleanup(void)
 	{
 	int i;
 
@@ -836,11 +797,7 @@ fprintf(stderr,"cleanup\n");
 fprintf(stderr,"done cleanup\n");
 	}
 
-void solaris_locking_callback(mode,type,file,line)
-int mode;
-int type;
-char *file;
-int line;
+void solaris_locking_callback(int mode, int type, char *file, int line)
 	{
 #ifdef undef
 fprintf(stderr,"thread=%4d mode=%s lock=%s %s:%d\n",
@@ -872,8 +829,7 @@ if (CRYPTO_LOCK_SSL_CERT == type)
 		}
 	}
 
-void do_threads(s_ctx,c_ctx)
-SSL_CTX *s_ctx,*c_ctx;
+void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	{
 	SSL_CTX *ssl_ctx[2];
 	thread_t thread_ctx[MAX_THREAD_NUMBER];
@@ -902,7 +858,7 @@ SSL_CTX *s_ctx,*c_ctx;
 		s_ctx->references,c_ctx->references);
 	}
 
-unsigned long solaris_thread_id()
+unsigned long solaris_thread_id(void)
 	{
 	unsigned long ret;
 
@@ -917,7 +873,7 @@ unsigned long solaris_thread_id()
 static usptr_t *arena;
 static usema_t *lock_cs[CRYPTO_NUM_LOCKS];
 
-void thread_setup()
+void thread_setup(void)
 	{
 	int i;
 	char filename[20];
@@ -941,7 +897,7 @@ void thread_setup()
 	CRYPTO_set_locking_callback((void (*)())irix_locking_callback);
 	}
 
-void thread_cleanup()
+void thread_cleanup(void)
 	{
 	int i;
 
@@ -956,11 +912,7 @@ void thread_cleanup()
 		}
 	}
 
-void irix_locking_callback(mode,type,file,line)
-int mode;
-int type;
-char *file;
-int line;
+void irix_locking_callback(int mode, int type, char *file, int line)
 	{
 	if (mode & CRYPTO_LOCK)
 		{
@@ -974,8 +926,7 @@ int line;
 		}
 	}
 
-void do_threads(s_ctx,c_ctx)
-SSL_CTX *s_ctx,*c_ctx;
+void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	{
 	SSL_CTX *ssl_ctx[2];
 	int thread_ctx[MAX_THREAD_NUMBER];
@@ -1000,7 +951,7 @@ SSL_CTX *s_ctx,*c_ctx;
 		s_ctx->references,c_ctx->references);
 	}
 
-unsigned long irix_thread_id()
+unsigned long irix_thread_id(void)
 	{
 	unsigned long ret;
 
@@ -1014,7 +965,7 @@ unsigned long irix_thread_id()
 static pthread_mutex_t lock_cs[CRYPTO_NUM_LOCKS];
 static long lock_count[CRYPTO_NUM_LOCKS];
 
-void thread_setup()
+void thread_setup(void)
 	{
 	int i;
 
@@ -1028,7 +979,7 @@ void thread_setup()
 	CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
 	}
 
-void thread_cleanup()
+void thread_cleanup(void)
 	{
 	int i;
 
@@ -1043,11 +994,8 @@ void thread_cleanup()
 	fprintf(stderr,"done cleanup\n");
 	}
 
-void pthreads_locking_callback(mode,type,file,line)
-int mode;
-int type;
-char *file;
-int line;
+void pthreads_locking_callback(int mode, int type, char *file,
+	     int line)
       {
 #ifdef undef
 	fprintf(stderr,"thread=%4d mode=%s lock=%s %s:%d\n",
@@ -1072,8 +1020,7 @@ int line;
 		}
 	}
 
-void do_threads(s_ctx,c_ctx)
-SSL_CTX *s_ctx,*c_ctx;
+void do_threads(SSL_CTX *s_ctx, SSL_CTX *c_ctx)
 	{
 	SSL_CTX *ssl_ctx[2];
 	pthread_t thread_ctx[MAX_THREAD_NUMBER];
@@ -1101,7 +1048,7 @@ SSL_CTX *s_ctx,*c_ctx;
 	s_ctx->references,c_ctx->references);
 	}
 
-unsigned long pthreads_thread_id()
+unsigned long pthreads_thread_id(void)
 	{
 	unsigned long ret;
 

@@ -58,19 +58,14 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
+#ifndef NO_DES
 static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void des_cfb_init_key();
-static void des_cfb_cipher();
-#endif
-
 static EVP_CIPHER d_cfb_cipher=
 	{
 	NID_des_cfb64,
@@ -84,31 +79,27 @@ static EVP_CIPHER d_cfb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_cfb()
+EVP_CIPHER *EVP_des_cfb(void)
 	{
 	return(&d_cfb_cipher);
 	}
 	
-static void des_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
+	des_cblock *deskey = (des_cblock *)key;
+
 	ctx->num=0;
 
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
-		des_set_key((des_cblock *)key,ctx->c.des_ks);
+	if (deskey != NULL)
+		des_set_key(deskey,ctx->c.des_ks);
 	}
 
-static void des_cfb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	des_cfb64_encrypt(
 		in,out,
@@ -116,3 +107,4 @@ unsigned int inl;
 		(des_cblock *)&(ctx->iv[0]),
 		&ctx->num,ctx->encrypt);
 	}
+#endif

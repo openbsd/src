@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # This file takes as input, the files that have been output from
 # ssleay speed.

@@ -25,6 +25,9 @@ _CAST_encrypt PROC NEAR
 	; Load the 2 words
 	mov	edi,		DWORD PTR [ebx]
 	mov	esi,		DWORD PTR 4[ebx]
+	; Get short key flag
+	mov	eax,		DWORD PTR 128[ebp]
+	push	eax
 	xor	eax,		eax
 	; round 0
 	mov	edx,		DWORD PTR [ebp]
@@ -278,6 +281,10 @@ _CAST_encrypt PROC NEAR
 	mov	ebx,		DWORD PTR _CAST_S_table3[edx*4]
 	sub	ecx,		ebx
 	xor	esi,		ecx
+	; test short key flag
+	pop	edx
+	or	edx,		edx
+	jnz	$L000cast_enc_done
 	; round 12
 	mov	edx,		DWORD PTR 96[ebp]
 	mov	ecx,		DWORD PTR 100[ebp]
@@ -361,9 +368,10 @@ _CAST_encrypt PROC NEAR
 	sub	ecx,		ebx
 	mov	ebx,		DWORD PTR _CAST_S_table3[edx*4]
 	add	ecx,		ebx
-	mov	eax,		DWORD PTR 20[esp]
 	xor	esi,		ecx
+$L000cast_enc_done:
 	nop
+	mov	eax,		DWORD PTR 20[esp]
 	mov	DWORD PTR 4[eax],edi
 	mov	DWORD PTR [eax],esi
 	pop	edi
@@ -391,6 +399,10 @@ _CAST_decrypt PROC NEAR
 	; Load the 2 words
 	mov	edi,		DWORD PTR [ebx]
 	mov	esi,		DWORD PTR 4[ebx]
+	; Get short key flag
+	mov	eax,		DWORD PTR 128[ebp]
+	or	eax,		eax
+	jnz	$L001cast_dec_skip
 	xor	eax,		eax
 	; round 15
 	mov	edx,		DWORD PTR 120[ebp]
@@ -476,6 +488,7 @@ _CAST_decrypt PROC NEAR
 	mov	ebx,		DWORD PTR _CAST_S_table3[edx*4]
 	add	ecx,		ebx
 	xor	esi,		ecx
+$L001cast_dec_skip:
 	; round 11
 	mov	edx,		DWORD PTR 88[ebp]
 	mov	ecx,		DWORD PTR 92[ebp]
@@ -727,9 +740,9 @@ _CAST_decrypt PROC NEAR
 	sub	ecx,		ebx
 	mov	ebx,		DWORD PTR _CAST_S_table3[edx*4]
 	add	ecx,		ebx
-	mov	eax,		DWORD PTR 20[esp]
 	xor	esi,		ecx
 	nop
+	mov	eax,		DWORD PTR 20[esp]
 	mov	DWORD PTR 4[eax],edi
 	mov	DWORD PTR [eax],esi
 	pop	edi
@@ -767,12 +780,12 @@ _CAST_cbc_encrypt PROC NEAR
 	push	eax
 	push	ebx
 	cmp	ecx,		0
-	jz	$L000decrypt
+	jz	$L002decrypt
 	and	ebp,		4294967288
 	mov	eax,		DWORD PTR 8[esp]
 	mov	ebx,		DWORD PTR 12[esp]
-	jz	$L001encrypt_finish
-L002encrypt_loop:
+	jz	$L003encrypt_finish
+L004encrypt_loop:
 	mov	ecx,		DWORD PTR [esi]
 	mov	edx,		DWORD PTR 4[esi]
 	xor	eax,		ecx
@@ -791,35 +804,35 @@ L002encrypt_loop:
 	add	esi,		8
 	add	edi,		8
 	sub	ebp,		8
-	jnz	L002encrypt_loop
-$L001encrypt_finish:
+	jnz	L004encrypt_loop
+$L003encrypt_finish:
 	mov	ebp,		DWORD PTR 52[esp]
 	and	ebp,		7
-	jz	$L003finish
+	jz	$L005finish
 	xor	ecx,		ecx
 	xor	edx,		edx
-	mov	ebp,		DWORD PTR $L004cbc_enc_jmp_table[ebp*4]
+	mov	ebp,		DWORD PTR $L006cbc_enc_jmp_table[ebp*4]
 	jmp	 ebp
-L005ej7:
+L007ej7:
 	xor	edx,		edx
 	mov	dh,		BYTE PTR 6[esi]
 	shl	edx,		8
-L006ej6:
+L008ej6:
 	mov	dh,		BYTE PTR 5[esi]
-L007ej5:
+L009ej5:
 	mov	dl,		BYTE PTR 4[esi]
-L008ej4:
+L010ej4:
 	mov	ecx,		DWORD PTR [esi]
-	jmp	$L009ejend
-L010ej3:
+	jmp	$L011ejend
+L012ej3:
 	mov	ch,		BYTE PTR 2[esi]
 	xor	ecx,		ecx
 	shl	ecx,		8
-L011ej2:
+L013ej2:
 	mov	ch,		BYTE PTR 1[esi]
-L012ej1:
+L014ej1:
 	mov	cl,		BYTE PTR [esi]
-$L009ejend:
+$L011ejend:
 	xor	eax,		ecx
 	xor	ebx,		edx
 	bswap	eax
@@ -833,13 +846,13 @@ $L009ejend:
 	bswap	ebx
 	mov	DWORD PTR [edi],eax
 	mov	DWORD PTR 4[edi],ebx
-	jmp	$L003finish
-$L000decrypt:
+	jmp	$L005finish
+$L002decrypt:
 	and	ebp,		4294967288
 	mov	eax,		DWORD PTR 16[esp]
 	mov	ebx,		DWORD PTR 20[esp]
-	jz	$L013decrypt_finish
-L014decrypt_loop:
+	jz	$L015decrypt_finish
+L016decrypt_loop:
 	mov	eax,		DWORD PTR [esi]
 	mov	ebx,		DWORD PTR 4[esi]
 	bswap	eax
@@ -864,11 +877,11 @@ L014decrypt_loop:
 	add	esi,		8
 	add	edi,		8
 	sub	ebp,		8
-	jnz	L014decrypt_loop
-$L013decrypt_finish:
+	jnz	L016decrypt_loop
+$L015decrypt_finish:
 	mov	ebp,		DWORD PTR 52[esp]
 	and	ebp,		7
-	jz	$L003finish
+	jz	$L005finish
 	mov	eax,		DWORD PTR [esi]
 	mov	ebx,		DWORD PTR 4[esi]
 	bswap	eax
@@ -886,28 +899,28 @@ $L013decrypt_finish:
 	xor	edx,		ebx
 	mov	eax,		DWORD PTR [esi]
 	mov	ebx,		DWORD PTR 4[esi]
-L015dj7:
+L017dj7:
 	ror	edx,		16
 	mov	BYTE PTR 6[edi],dl
 	shr	edx,		16
-L016dj6:
+L018dj6:
 	mov	BYTE PTR 5[edi],dh
-L017dj5:
+L019dj5:
 	mov	BYTE PTR 4[edi],dl
-L018dj4:
+L020dj4:
 	mov	DWORD PTR [edi],ecx
-	jmp	$L019djend
-L020dj3:
+	jmp	$L021djend
+L022dj3:
 	ror	ecx,		16
 	mov	BYTE PTR 2[edi],cl
 	shl	ecx,		16
-L021dj2:
+L023dj2:
 	mov	BYTE PTR 1[esi],ch
-L022dj1:
+L024dj1:
 	mov	BYTE PTR [esi],	cl
-$L019djend:
-	jmp	$L003finish
-$L003finish:
+$L021djend:
+	jmp	$L005finish
+$L005finish:
 	mov	ecx,		DWORD PTR 60[esp]
 	add	esp,		24
 	mov	DWORD PTR [ecx],eax
@@ -917,24 +930,24 @@ $L003finish:
 	pop	ebx
 	pop	ebp
 	ret
-$L004cbc_enc_jmp_table:
+$L006cbc_enc_jmp_table:
 	DD	0
-	DD	L012ej1
-	DD	L011ej2
-	DD	L010ej3
-	DD	L008ej4
-	DD	L007ej5
-	DD	L006ej6
-	DD	L005ej7
-L023cbc_dec_jmp_table:
+	DD	L014ej1
+	DD	L013ej2
+	DD	L012ej3
+	DD	L010ej4
+	DD	L009ej5
+	DD	L008ej6
+	DD	L007ej7
+L025cbc_dec_jmp_table:
 	DD	0
-	DD	L022dj1
-	DD	L021dj2
-	DD	L020dj3
-	DD	L018dj4
-	DD	L017dj5
-	DD	L016dj6
-	DD	L015dj7
+	DD	L024dj1
+	DD	L023dj2
+	DD	L022dj3
+	DD	L020dj4
+	DD	L019dj5
+	DD	L018dj6
+	DD	L017dj7
 _CAST_cbc_encrypt ENDP
 _TEXT	ENDS
 END

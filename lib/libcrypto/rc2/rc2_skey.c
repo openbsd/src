@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc2.h"
+#include <openssl/rc2.h>
 #include "rc2_locl.h"
 
 static unsigned char key_table[256]={
@@ -90,11 +90,7 @@ static unsigned char key_table[256]={
  * BSAFE uses the 'retarded' version.  What I previously shipped is
  * the same as specifying 1024 for the 'bits' parameter.  Bsafe uses
  * a version where the bits parameter is the same as len*8 */
-void RC2_set_key(key,len,data,bits)
-RC2_KEY *key;
-int len;
-unsigned char *data;
-int bits;
+void RC2_set_key(RC2_KEY *key, int len, unsigned char *data, int bits)
 	{
 	int i,j;
 	unsigned char *k;

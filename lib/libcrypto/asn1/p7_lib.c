@@ -58,17 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "objects.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/pkcs7.h>
+#include <openssl/objects.h>
 
-/* ASN1err(ASN1_F_D2I_PKCS7,ASN1_R_BAD_PKCS7_CONTENT);
- * ASN1err(ASN1_F_I2D_PKCS7,ASN1_R_BAD_PKCS7_TYPE);
- * ASN1err(ASN1_F_PKCS7_NEW,ASN1_R_BAD_PKCS7_TYPE);
- */
-
-int i2d_PKCS7(a,pp)
-PKCS7 *a;
-unsigned char **pp;
+int i2d_PKCS7(PKCS7 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -150,10 +144,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-PKCS7 *d2i_PKCS7(a,pp,length)
-PKCS7 **a;
-unsigned char **pp;
-long length;
+PKCS7 *d2i_PKCS7(PKCS7 **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,PKCS7 *,PKCS7_new);
 
@@ -179,6 +170,7 @@ long length;
 			V_ASN1_CONTEXT_SPECIFIC|0))
 			{
 			c.error=ASN1_R_BAD_PKCS7_CONTENT;
+			c.line=__LINE__;
 			goto err;
 			}
 
@@ -187,7 +179,7 @@ long length;
 		c.q=c.p;
 		Tinf=ASN1_get_object(&c.p,&Tlen,&Ttag,&Tclass,
 			(c.inf & 1)?(length+ *pp-c.q):c.slen);
-		if (Tinf & 0x80) goto err;
+		if (Tinf & 0x80) { c.line=__LINE__; goto err; }
 		c.slen-=(c.p-c.q);
 
 		switch (OBJ_obj2nid(ret->type))
@@ -215,14 +207,16 @@ long length;
 			break;
 		default:
 			c.error=ASN1_R_BAD_PKCS7_TYPE;
+			c.line=__LINE__;
 			goto err;
-			break;
+			/* break; */
 			}
 		if (Tinf == (1|V_ASN1_CONSTRUCTED))
 			{
 			if (!ASN1_check_infinite_end(&c.p,c.slen))
 				{
-				c.error=ASN1_R_MISSING_EOS;
+				c.error=ERR_R_MISSING_ASN1_EOS;
+				c.line=__LINE__;
 				goto err;
 				}
 			}
@@ -233,12 +227,13 @@ long length;
 	M_ASN1_D2I_Finish(a,PKCS7_free,ASN1_F_D2I_PKCS7);
 	}
 
-PKCS7 *PKCS7_new()
+PKCS7 *PKCS7_new(void)
 	{
 	PKCS7 *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,PKCS7);
-	ret->type=ASN1_OBJECT_new();
+	ret->type=OBJ_nid2obj(NID_undef);
 	ret->asn1=NULL;
 	ret->length=0;
 	ret->detached=0;
@@ -247,8 +242,7 @@ PKCS7 *PKCS7_new()
 	M_ASN1_New_Error(ASN1_F_PKCS7_NEW);
 	}
 
-void PKCS7_free(a)
-PKCS7 *a;
+void PKCS7_free(PKCS7 *a)
 	{
 	if (a == NULL) return;
 
@@ -260,9 +254,11 @@ PKCS7 *a;
 	Free((char *)(char *)a);
 	}
 
-void PKCS7_content_free(a)
-PKCS7 *a;
+void PKCS7_content_free(PKCS7 *a)
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->asn1 != NULL) Free((char *)a->asn1);
 
 	if (a->d.ptr != NULL)

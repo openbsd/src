@@ -60,19 +60,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void rc5_32_12_16_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void rc5_32_12_16_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void rc5_32_12_16_ecb_init_key();
-static void rc5_32_12_16_ecb_cipher();
-#endif
-
 static EVP_CIPHER rc5_ecb_cipher=
 	{
 	NID_rc5_ecb,
@@ -86,27 +80,21 @@ static EVP_CIPHER rc5_ecb_cipher=
 	NULL,
 	};
 
-EVP_CIPHER *EVP_rc5_32_12_16_ecb()
+EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)
 	{
 	return(&rc5_ecb_cipher);
 	}
 	
-static void rc5_32_12_16_ecb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void rc5_32_12_16_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		RC5_32_set_key(&(ctx->c.rc5_ks),EVP_RC5_32_12_16_KEY_SIZE,key,
 			RC5_12_ROUNDS);
 	}
 
-static void rc5_32_12_16_ecb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void rc5_32_12_16_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 

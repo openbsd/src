@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 package x86ms;
 
@@ -49,6 +49,16 @@ sub main'BP
 sub main'DWP
 	{
 	&get_mem("DWORD",@_);
+	}
+
+sub main'BC
+	{
+	return @_;
+	}
+
+sub main'DWC
+	{
+	return @_;
 	}
 
 sub main'stack_push

@@ -58,38 +58,24 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-
-/* ASN1err(ASN1_F_ASN1_TYPE_NEW,ASN1_R_ERROR_STACK);
- * ASN1err(ASN1_F_D2I_ASN1_TYPE_BYTES,ASN1_R_ERROR_STACK);
- * ASN1err(ASN1_F_D2I_ASN1_TYPE_BYTES,ASN1_R_WRONG_TYPE);
- * ASN1err(ASN1_F_ASN1_COLLATE_PRIMATIVE,ASN1_R_WRONG_TAG);
- */
+#include <openssl/asn1_mac.h>
 
 static unsigned long tag2bit[32]={
 0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
 B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
 B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
-B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags 12-15 */
+B_ASN1_UTF8STRING,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,/* tags 12-15 */
 0,	0,	B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING,
 B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,0,
 0,B_ASN1_GRAPHICSTRING,B_ASN1_ISO64STRING,B_ASN1_GENERALSTRING,
 B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_BMPSTRING,B_ASN1_UNKNOWN,
 	};
 
-#ifndef NOPROTO
 static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c);
-#else
-static int asn1_collate_primative();
-#endif
-
-/* type is a 'bitmap' of acceptable string types to be accepted.
+/* type is a 'bitmap' of acceptable string types.
  */
-ASN1_STRING *d2i_ASN1_type_bytes(a, pp, length, type)
-ASN1_STRING **a;
-unsigned char **pp;
-long length;
-int type;
+ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, unsigned char **pp,
+	     long length, int type)
 	{
 	ASN1_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -152,11 +138,7 @@ err:
 	return(NULL);
 	}
 
-int i2d_ASN1_bytes(a, pp, tag, xclass)
-ASN1_STRING *a;
-unsigned char **pp;
-int tag;
-int xclass;
+int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass)
 	{
 	int ret,r,constructed;
 	unsigned char *p;
@@ -182,12 +164,8 @@ int xclass;
 	return(r);
 	}
 
-ASN1_STRING *d2i_ASN1_bytes(a, pp, length, Ptag, Pclass)
-ASN1_STRING **a;
-unsigned char **pp;
-long length;
-int Ptag;
-int Pclass;
+ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, unsigned char **pp, long length,
+	     int Ptag, int Pclass)
 	{
 	ASN1_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -279,9 +257,7 @@ err:
  * them into the one struture that is then returned */
 /* There have been a few bug fixes for this function from
  * Paul Keogh <paul.keogh@sse.ie>, many thanks to him */
-static int asn1_collate_primative(a,c)
-ASN1_STRING *a;
-ASN1_CTX *c;
+static int asn1_collate_primative(ASN1_STRING *a, ASN1_CTX *c)
 	{
 	ASN1_STRING *os=NULL;
 	BUF_MEM b;
@@ -338,7 +314,7 @@ ASN1_CTX *c;
 	if (os != NULL) ASN1_STRING_free(os);
 	return(1);
 err:
-	ASN1err(ASN1_F_ASN1_COLLATE_PRIMATIVE,c->error);
+	ASN1err(ASN1_F_ASN1_COLLATE_PRIMITIVE,c->error);
 	if (os != NULL) ASN1_STRING_free(os);
 	if (b.data != NULL) Free(b.data);
 	return(0);

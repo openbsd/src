@@ -56,13 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 
 #ifndef NO_RC4
@@ -74,28 +75,12 @@ typedef struct netscape_pkey_st
 	ASN1_OCTET_STRING *private_key;
 	} NETSCAPE_PKEY;
 
-/*
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_D2I_NETSCAPE_PKEY,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_NETSCAPE_PKEY_NEW,ASN1_R_DECODING_ERROR);
- */
-#ifndef NOPROTO
 static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp);
 static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, long length);
 static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
 static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
-#else
-static int i2d_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new();
-static void NETSCAPE_PKEY_free();
-#endif
 
-int i2d_Netscape_RSA(a,pp,cb)
-RSA *a;
-unsigned char **pp;
-int (*cb)();
+int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)())
 	{
 	int i,j,l[6];
 	NETSCAPE_PKEY *pkey;
@@ -138,7 +123,9 @@ int (*cb)();
 	l[2]=i2d_X509_ALGOR(alg,NULL);
 	l[3]=ASN1_object_size(1,l[2]+l[1],V_ASN1_SEQUENCE);
 
+#ifndef CONST_STRICT
 	os.data=(unsigned char *)"private-key";
+#endif
 	os.length=11;
 	l[4]=i2d_ASN1_OCTET_STRING(&os,NULL);
 
@@ -195,18 +182,14 @@ int (*cb)();
 	i2d_ASN1_OCTET_STRING(&os2,&p);
 	ret=l[5];
 err:
-	if (os2.data != NULL) Free((char *)os2.data);
+	if (os2.data != NULL) Free(os2.data);
 	if (alg != NULL) X509_ALGOR_free(alg);
 	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
 	r=r;
 	return(ret);
 	}
 
-RSA *d2i_Netscape_RSA(a,pp,length,cb)
-RSA **a;
-unsigned char **pp;
-long length;
-int (*cb)();
+RSA *d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)())
 	{
 	RSA *ret=NULL;
 	ASN1_OCTET_STRING *os=NULL;
@@ -233,11 +216,8 @@ int (*cb)();
 	M_ASN1_D2I_Finish(a,RSA_free,ASN1_F_D2I_NETSCAPE_RSA);
 	}
 
-RSA *d2i_Netscape_RSA_2(a,pp,length,cb)
-RSA **a;
-unsigned char **pp;
-long length;
-int (*cb)();
+RSA *d2i_Netscape_RSA_2(RSA **a, unsigned char **pp, long length,
+	     int (*cb)())
 	{
 	NETSCAPE_PKEY *pkey=NULL;
 	RSA *ret=NULL;
@@ -249,7 +229,7 @@ int (*cb)();
 	ASN1_OCTET_STRING *os=NULL;
 	ASN1_CTX c;
 
-	c.error=ASN1_R_ERROR_STACK;
+	c.error=ERR_R_NESTED_ASN1_ERROR;
 	c.pp=pp;
 
 	M_ASN1_D2I_Init();
@@ -304,9 +284,7 @@ err:
 	return(ret);
 	}
 
-static int i2d_NETSCAPE_PKEY(a,pp)
-NETSCAPE_PKEY *a;
-unsigned char **pp;
+static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -324,10 +302,8 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(a,pp,length)
-NETSCAPE_PKEY **a;
-unsigned char **pp;
-long length;
+static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a, unsigned char **pp,
+	     long length)
 	{
 	M_ASN1_D2I_vars(a,NETSCAPE_PKEY *,NETSCAPE_PKEY_new);
 
@@ -339,9 +315,10 @@ long length;
 	M_ASN1_D2I_Finish(a,NETSCAPE_PKEY_free,ASN1_F_D2I_NETSCAPE_PKEY);
 	}
 
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new()
+static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void)
 	{
 	NETSCAPE_PKEY *ret=NULL;
+	ASN1_CTX c;
 
 	M_ASN1_New_Malloc(ret,NETSCAPE_PKEY);
 	M_ASN1_New(ret->version,ASN1_INTEGER_new);
@@ -351,8 +328,7 @@ static NETSCAPE_PKEY *NETSCAPE_PKEY_new()
 	M_ASN1_New_Error(ASN1_F_NETSCAPE_PKEY_NEW);
 	}
 
-static void NETSCAPE_PKEY_free(a)
-NETSCAPE_PKEY *a;
+static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *a)
 	{
 	if (a == NULL) return;
 	ASN1_INTEGER_free(a->version);
@@ -362,4 +338,4 @@ NETSCAPE_PKEY *a;
 	}
 
 #endif /* NO_RC4 */
-
+#endif

@@ -60,48 +60,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
 
 #undef PROG
 #define PROG	sess_id_main
 
-#define FORMAT_UNDEF	0
-#define FORMAT_ASN1	1
-#define FORMAT_TEXT	2
-#define FORMAT_PEM	3
-
 static char *sess_id_usage[]={
-"usage: crl args\n",
+"usage: sess_id args\n",
 "\n",
 " -inform arg     - input format - default PEM (one of DER, TXT or PEM)\n",
 " -outform arg    - output format - default PEM\n",
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -text           - print ssl session id details\n",
-" -cert           - output certificaet \n",
+" -cert           - output certificate \n",
 " -noout          - no CRL output\n",
+" -context arg    - set the session ID context\n",
 NULL
 };
 
-#ifndef NOPROTO
 static SSL_SESSION *load_sess_id(char *file, int format);
-#else
-static SSL_SESSION *load_sess_id();
-#endif
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	SSL_SESSION *x=NULL;
 	int ret=1,i,num,badops=0;
 	BIO *out=NULL;
 	int informat,outformat;
-	char *infile=NULL,*outfile=NULL;
+	char *infile=NULL,*outfile=NULL,*context=NULL;
 	int cert=0,noout=0,text=0;
 	char **pp;
 
@@ -145,6 +134,11 @@ char **argv;
 			cert= ++num;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
+		else if (strcmp(*argv,"-context") == 0)
+		    {
+		    if(--argc < 1) goto bad;
+		    context=*++argv;
+		    }
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -166,6 +160,17 @@ bad:
 	ERR_load_crypto_strings();
 	x=load_sess_id(infile,informat);
 	if (x == NULL) { goto end; }
+
+	if(context)
+	    {
+	    x->sid_ctx_length=strlen(context);
+	    if(x->sid_ctx_length > SSL_MAX_SID_CTX_LENGTH)
+		{
+		BIO_printf(bio_err,"Context too long\n");
+		goto end;
+		}
+	    memcpy(x->sid_ctx,context,x->sid_ctx_length);
+	    }
 
 #ifdef undef
 	/* just testing for memory leaks :-) */
@@ -259,9 +264,7 @@ end:
 	EXIT(ret);
 	}
 
-static SSL_SESSION *load_sess_id(infile, format)
-char *infile;
-int format;
+static SSL_SESSION *load_sess_id(char *infile, int format)
 	{
 	SSL_SESSION *x=NULL;
 	BIO *in=NULL;
@@ -286,7 +289,7 @@ int format;
 	if 	(format == FORMAT_ASN1)
 		x=d2i_SSL_SESSION_bio(in,NULL);
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_SSL_SESSION(in,NULL,NULL);
+		x=PEM_read_bio_SSL_SESSION(in,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input crl\n");
 		goto end;

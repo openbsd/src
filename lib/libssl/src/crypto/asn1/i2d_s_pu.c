@@ -56,20 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1_mac.h>
 
-/*
- * ASN1err(ASN1_F_I2D_DSAPUBLICKEY,ASN1_R_UNKNOWN_ATTRIBUTE_TYPE);
- */
-
-int i2d_DSAPublicKey(a,pp)
-DSA *a;
-unsigned char **pp;
+int i2d_DSAPublicKey(DSA *a, unsigned char **pp)
 	{
 	BIGNUM *num[4];
 	ASN1_INTEGER bs;
@@ -128,6 +123,7 @@ unsigned char **pp;
 		}
 	Free((char *)bs.data);
 	*pp=p;
-	return(t);
+	if(all) return(t);
+	else return(tot);
 	}
-
+#endif

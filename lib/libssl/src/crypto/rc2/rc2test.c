@@ -62,7 +62,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "rc2.h"
+
+#ifdef NO_RC2
+int main(int argc, char *argv[])
+{
+    printf("No RC2 support\n");
+    return(0);
+}
+#else
+#include <openssl/rc2.h>
 
 unsigned char RC2key[4][16]={
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -125,19 +133,11 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE]={
 	}; 
 
 
-#ifndef NOPROTO
 /*static int cfb64_test(unsigned char *cfb_cipher);*/
 static char *pt(unsigned char *p);
-#else
-/*static int cfb64_test(); */
-static char *pt();
 #endif
 
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,n,err=0;
 	RC2_KEY key; 
@@ -208,8 +208,7 @@ char *argv[];
 	}
 
 #ifdef undef
-static int cfb64_test(cfb_cipher)
-unsigned char *cfb_cipher;
+static int cfb64_test(unsigned char *cfb_cipher)
         {
         IDEA_KEY_SCHEDULE eks,dks;
         int err=0,i,n;
@@ -247,8 +246,7 @@ unsigned char *cfb_cipher;
         return(err);
         }
 
-static char *pt(p)
-unsigned char *p;
+static char *pt(unsigned char *p)
 	{
 	static char bufs[10][20];
 	static int bnum=0;
@@ -267,4 +265,5 @@ unsigned char *p;
 	return(ret);
 	}
 	
+#endif
 #endif

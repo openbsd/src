@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 # require 'x86asm.pl';
 # &asm_init("cpp","des-586.pl");
@@ -15,7 +15,7 @@ sub main'asm_finish
 
 sub main'asm_init
 	{
-	($type,$fn)=@_;
+	($type,$fn,$i386)=@_;
 	$filename=$fn;
 
 	$cpp=$sol=$aout=$win32=0;
@@ -29,6 +29,8 @@ sub main'asm_init
 		{ $cpp=1; require "x86unix.pl"; }
 	elsif (	($type eq "win32"))
 		{ $win32=1; require "x86ms.pl"; }
+	elsif (	($type eq "win32n"))
+		{ $win32=1; require "x86nasm.pl"; }
 	else
 		{
 		print STDERR <<"EOF";
@@ -38,6 +40,7 @@ Pick one target type from
 	sol	- x86 solaris
 	cpp	- format so x86unix.cpp can be used
 	win32	- Windows 95/Windows NT
+	win32n	- Windows 95/Windows NT NASM format
 EOF
 		exit(1);
 		}
@@ -75,7 +78,7 @@ sub asm_finish_cpp
 #define TYPE(a,b)       .type   a,b
 #define SIZE(a,b)       .size   a,b
 
-#if defined(OUT) || defined(BSDI)
+#if defined(OUT) || (defined(BSDI) && !defined(ELF))
 $tmp
 #endif
 
@@ -84,7 +87,7 @@ $tmp
 #define ALIGN	4
 #endif
 
-#ifdef BSDI
+#if defined(BSDI) && !defined(ELF)
 #define OK              1
 #define ALIGN           4
 #undef SIZE

@@ -62,15 +62,13 @@
 static int seed=0;
 static des_cblock init;
 
-void des_random_seed(key)
-des_cblock key;
+void des_random_seed(des_cblock *key)
 	{
-	memcpy(init,key,sizeof(des_cblock));
+	memcpy(&init,key,sizeof(des_cblock));
 	seed=1;
 	}
 
-void des_random_key(ret)
-unsigned char *ret;
+void des_random_key(des_cblock *ret)
 	{
 	des_key_schedule ks;
 	static DES_LONG c=0;
@@ -101,15 +99,13 @@ unsigned char *ret;
 	t=(DES_LONG)((pid)|((c++)<<16));
 	l2c(t,p);
 
-	des_set_odd_parity((des_cblock *)data);
-	des_set_key((des_cblock *)data,ks);
-	des_cbc_cksum((des_cblock *)key,(des_cblock *)key,
-		(long)sizeof(key),ks,(des_cblock *)data);
+	des_set_odd_parity(&data);
+	des_set_key(&data,ks);
+	des_cbc_cksum(key,&key,sizeof(key),ks,&data);
 
-	des_set_odd_parity((des_cblock *)key);
-	des_set_key((des_cblock *)key,ks);
-	des_cbc_cksum((des_cblock *)key,(des_cblock *)data,
-		(long)sizeof(key),ks,(des_cblock *)key);
+	des_set_odd_parity(&key);
+	des_set_key(&key,ks);
+	des_cbc_cksum(key,&data,sizeof(key),ks,&key);
 
 	memcpy(ret,data,sizeof(key));
 	memset(key,0,sizeof(key));

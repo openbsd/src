@@ -56,35 +56,28 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "apps.h"
-#include "bio.h"
-#include "rand.h"
-#include "err.h"
-#include "bn.h"
-#include "rsa.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #define DEFBITS	512
 #undef PROG
 #define PROG genrsa_main
 
-#ifndef NOPROTO
-static void MS_CALLBACK genrsa_cb(int p, int n, char *arg);
+static void MS_CALLBACK genrsa_cb(int p, int n, void *arg);
 static long gr_load_rand(char *names);
-#else
-static void MS_CALLBACK genrsa_cb();
-static long gr_load_rand();
-#endif
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1;
 	char buffer[200];
@@ -201,7 +194,7 @@ bad:
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
-	rsa=RSA_generate_key(num,f4,genrsa_cb,(char *)bio_err);
+	rsa=RSA_generate_key(num,f4,genrsa_cb,bio_err);
 		
 	if (randfile == NULL)
 		BIO_printf(bio_err,"unable to write 'random state'\n");
@@ -222,7 +215,7 @@ bad:
 		l+=rsa->e->d[i];
 		}
 	BIO_printf(bio_err,"e is %ld (0x%lX)\n",l,l);
-	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL))
+	if (!PEM_write_bio_RSAPrivateKey(out,rsa,enc,NULL,0,NULL,NULL))
 		goto err;
 
 	ret=0;
@@ -234,10 +227,7 @@ err:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK genrsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK genrsa_cb(int p, int n, void *arg)
 	{
 	char c='*';
 
@@ -246,14 +236,13 @@ char *arg;
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	(void)BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif
 	}
 
-static long gr_load_rand(name)
-char *name;
+static long gr_load_rand(char *name)
 	{
 	char *p,*n;
 	int last;
@@ -274,5 +263,4 @@ char *name;
 		}
 	return(tot);
 	}
-
-
+#endif

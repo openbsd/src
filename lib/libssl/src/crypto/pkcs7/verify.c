@@ -56,41 +56,41 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "asn1.h"
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include "example.h"
 
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 
 BIO *bio_err=NULL;
+BIO *bio_out=NULL;
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
-	X509 *x509,*x;
 	PKCS7 *p7;
-	PKCS7_SIGNED *s;
 	PKCS7_SIGNER_INFO *si;
-	PKCS7_ISSUER_AND_SERIAL *ias;
 	X509_STORE_CTX cert_ctx;
 	X509_STORE *cert_store=NULL;
-	X509_LOOKUP *lookup=NULL;
 	BIO *data,*detached=NULL,*p7bio=NULL;
 	char buf[1024*4];
-	unsigned char *p,*pp;
-	int i,j,printit=0;
-	STACK *sk;
+	char *pp;
+	int i,printit=0;
+	STACK_OF(PKCS7_SIGNER_INFO) *sk;
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+	bio_out=BIO_new_fp(stdout,BIO_NOCLOSE);
 	EVP_add_digest(EVP_md2());
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest(EVP_sha1());
 	EVP_add_digest(EVP_mdc2());
 
 	data=BIO_new(BIO_s_file());
-again:
+
 	pp=NULL;
 	while (argc > 1)
 		{
@@ -131,10 +131,10 @@ again:
 	X509_STORE_load_locations(cert_store,NULL,"../../certs");
 	X509_STORE_set_verify_cb_func(cert_store,verify_callback);
 
-	ERR_clear_errors();
+	ERR_clear_error();
 
 	/* We need to process the data */
-	if (PKCS7_get_detached(p7))
+	if ((PKCS7_get_detached(p7) || detached))
 		{
 		if (detached == NULL)
 			{
@@ -166,12 +166,29 @@ again:
 		}
 
 	/* Ok, first we need to, for each subject entry, see if we can verify */
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_PKCS7_SIGNER_INFO_num(sk); i++)
 		{
-		si=(PKCS7_SIGNER_INFO *)sk_value(sk,i);
+		ASN1_UTCTIME *tm;
+		char *str1,*str2;
+
+		si=sk_PKCS7_SIGNER_INFO_value(sk,i);
 		i=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
 		if (i <= 0)
 			goto err;
+		printf("signer info\n");
+		if ((tm=get_signed_time(si)) != NULL)
+			{
+			BIO_printf(bio_out,"Signed time:");
+			ASN1_UTCTIME_print(bio_out,tm);
+			ASN1_UTCTIME_free(tm);
+			BIO_printf(bio_out,"\n");
+			}
+		if (get_signed_seq2string(si,&str1,&str2))
+			{
+			BIO_printf(bio_out,"String 1 is %s\n",str1);
+			BIO_printf(bio_out,"String 2 is %s\n",str2);
+			}
+
 		}
 
 	X509_STORE_free(cert_store);
@@ -185,9 +202,7 @@ err:
 	}
 
 /* should be X509 * but we can just have them as char *. */
-int verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	X509 *err_cert;

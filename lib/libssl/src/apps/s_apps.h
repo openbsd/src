@@ -56,13 +56,36 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/types.h>
+#if (defined(VMS) || defined(__VMS)) && !defined(FD_SET)
+/* VAX C does not defined fd_set and friends, but it's actually quite simple */
+/* These definitions are borrowed from SOCKETSHR.	/Richard Levitte */
+#define MAX_NOFILE	32
+#define	NBBY		 8		/* number of bits in a byte	*/
+
+#ifndef	FD_SETSIZE
+#define	FD_SETSIZE	MAX_NOFILE
+#endif	/* FD_SETSIZE */
+
+/* How many things we'll allow select to use. 0 if unlimited */
+#define MAXSELFD	MAX_NOFILE
+typedef int	fd_mask;	/* int here! VMS prototypes int, not long */
+#define NFDBITS	(sizeof(fd_mask) * NBBY)	/* bits per mask (power of 2!)*/
+#define NFDSHIFT 5				/* Shift based on above */
+
+typedef fd_mask fd_set;
+#define	FD_SET(n, p)	(*(p) |= (1 << ((n) % NFDBITS)))
+#define	FD_CLR(n, p)	(*(p) &= ~(1 << ((n) % NFDBITS)))
+#define	FD_ISSET(n, p)	(*(p) & (1 << ((n) % NFDBITS)))
+#define FD_ZERO(p)	memset((char *)(p), 0, sizeof(*(p)))
+#endif
+
 #define PORT            4433
 #define PORT_STR        "4433"
 #define PROTOCOL        "tcp"
 
-#ifndef NOPROTO
 int do_accept(int acc_sock, int *sock, char **host);
-int do_server(int port, int *ret, int (*cb) ());
+int do_server(int port, int *ret, int (*cb) (), char *context);
 #ifdef HEADER_X509_H
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #else
@@ -86,34 +109,12 @@ int extract_port(char *str, short *port_ptr);
 int extract_host_port(char *str,char **host_ptr,unsigned char *ip,short *p);
 int host_ip(char *str, unsigned char ip[4]);
 
-long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, char *argp,
+long MS_CALLBACK bio_dump_cb(BIO *bio, int cmd, const char *argp,
 	int argi, long argl, long ret);
 
 #ifdef HEADER_SSL_H
 void MS_CALLBACK apps_ssl_info_callback(SSL *s, int where, int ret);
 #else
 void MS_CALLBACK apps_ssl_info_callback(char *s, int where, int ret);
-#endif
-
-#else
-int do_accept();
-int do_server();
-int MS_CALLBACK verify_callback();
-int set_cert_stuff();
-int init_client();
-int init_client_ip();
-int nbio_init_client_ip();
-int nbio_sock_error();
-int spawn();
-int init_server();
-int should_retry();
-void sock_cleanup();
-int extract_port();
-int extract_host_port();
-int host_ip();
-
-long MS_CALLBACK bio_dump_cb();
-void MS_CALLBACK apps_ssl_info_callback();
-
 #endif
 

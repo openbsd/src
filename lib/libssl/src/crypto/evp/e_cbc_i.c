@@ -60,19 +60,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void idea_cbc_init_key();
-static void idea_cbc_cipher();
-#endif
-
 static EVP_CIPHER i_cbc_cipher=
 	{
 	NID_idea_cbc,
@@ -82,20 +76,17 @@ static EVP_CIPHER i_cbc_cipher=
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.idea_ks)),
-	EVP_CIPHER_get_asn1_iv,
 	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_idea_cbc()
+EVP_CIPHER *EVP_idea_cbc(void)
 	{
 	return(&i_cbc_cipher);
 	}
 	
-static void idea_cbc_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void idea_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -116,11 +107,8 @@ int enc;
 		}
 	}
 
-static void idea_cbc_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	idea_cbc_encrypt(
 		in,out,(long)inl,

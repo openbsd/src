@@ -62,16 +62,14 @@
 #include <sys/types.h>
 
 #include "cryptlib.h"
-#include "lhash.h"
-#include "buffer.h"
-#include "evp.h"
-#include "asn1.h"
-#include "x509.h"
-#include "objects.h"
-#include "pem.h"
+#include <openssl/lhash.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
 
-char *X509_verify_cert_error_string(n)
-long n;
+const char *X509_verify_cert_error_string(long n)
 	{
 	static char buf[100];
 
@@ -121,6 +119,8 @@ long n;
 		return("unable to verify the first certificate");
 	case X509_V_ERR_CERT_CHAIN_TOO_LONG:
 		return("certificate chain too long");
+	case X509_V_ERR_CERT_REVOKED:
+		return("certificate revoked");
 	case X509_V_ERR_APPLICATION_VERIFICATION:
 		return("application verification failure");
 	default:

@@ -56,12 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc4.h"
+#include <openssl/rc4.h>
 #include "rc4_locl.h"
+#include <openssl/opensslv.h>
 
-char *RC4_version="RC4 part of SSLeay 0.9.0b 29-Jun-1998";
+const char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
 
-char *RC4_options()
+const char *RC4_options(void)
 	{
 #ifdef RC4_INDEX
 	if (sizeof(RC4_INT) == 1)
@@ -84,10 +85,7 @@ char *RC4_options()
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4_set_key(key, len, data)
-RC4_KEY *key;
-int len;
-register unsigned char *data;
+void RC4_set_key(RC4_KEY *key, int len, register unsigned char *data)
 	{
         register RC4_INT tmp;
         register int id1,id2;

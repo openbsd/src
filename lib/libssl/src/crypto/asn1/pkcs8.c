@@ -58,17 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "objects.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/objects.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_KEY,ASN1_R_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_KEY_NEW,ASN1_R_BAD_GET_OBJECT);
- */
-
-int i2d_X509_KEY(a,pp)
-X509 *a;
-unsigned char **pp;
+int i2d_X509_KEY(X509 *a, unsigned char **pp)
 	{
 	M_ASN1_I2D_vars(a);
 
@@ -85,10 +78,7 @@ unsigned char **pp;
 	M_ASN1_I2D_finish();
 	}
 
-X509 *d2i_X509_KEY(a,pp,length)
-X509 **a;
-unsigned char **pp;
-long length;
+X509 *d2i_X509_KEY(X509 **a, unsigned char **pp, long length)
 	{
 	M_ASN1_D2I_vars(a,X509 *,X509_new);
 
@@ -100,7 +90,7 @@ long length;
 	M_ASN1_D2I_Finish(a,X509_free,ASN1_F_D2I_X509);
 	}
 
-X509 *X509_KEY_new()
+X509 *X509_KEY_new(void)
 	{
 	X509_KEY *ret=NULL;
 
@@ -114,8 +104,7 @@ X509 *X509_KEY_new()
 	M_ASN1_New_Error(ASN1_F_X509_NEW);
 	}
 
-void X509_KEY_free(a)
-X509 *a;
+void X509_KEY_free(X509 *a)
 	{
 	int i;
 

@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-static void function()
+static void function(void)
 	{
 	}
 
@@ -80,7 +80,7 @@ static EVP_MD null_md=
 	sizeof(EVP_MD *),
 	};
 
-EVP_MD *EVP_md_null()
+EVP_MD *EVP_md_null(void)
 	{
 	return(&null_md);
 	}

@@ -58,20 +58,19 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rand.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/dh.h>
 
-int DH_generate_key(dh)
-DH *dh;
+int DH_generate_key(DH *dh)
 	{
 	int ok=0;
 	unsigned int i;
-	BN_CTX *ctx=NULL;
+	BN_CTX ctx;
+	BN_MONT_CTX *mont;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
+	BN_CTX_init(&ctx);
 
 	if (dh->priv_key == NULL)
 		{
@@ -96,7 +95,15 @@ DH *dh;
 	else
 		pub_key=dh->pub_key;
 
-	if (!BN_mod_exp(pub_key,dh->g,priv_key,dh->p,ctx)) goto err;
+	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+		{
+		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
+				dh->p,&ctx)) goto err;
+		}
+	mont=(BN_MONT_CTX *)dh->method_mont_p;
+
+	if (!BN_mod_exp_mont(pub_key,dh->g,priv_key,dh->p,&ctx,mont)) goto err;
 		
 	dh->pub_key=pub_key;
 	dh->priv_key=priv_key;
@@ -107,29 +114,34 @@ err:
 
 	if ((pub_key != NULL)  && (dh->pub_key == NULL))  BN_free(pub_key);
 	if ((priv_key != NULL) && (dh->priv_key == NULL)) BN_free(priv_key);
-	if (ctx != NULL) BN_CTX_free(ctx);
+	BN_CTX_free(&ctx);
 	return(ok);
 	}
 
-int DH_compute_key(key,pub_key,dh)
-unsigned char *key;
-BIGNUM *pub_key;
-DH *dh;
+int DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh)
 	{
-	BN_CTX *ctx;
+	BN_CTX ctx;
+	BN_MONT_CTX *mont;
 	BIGNUM *tmp;
 	int ret= -1;
 
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
-	tmp=ctx->bn[ctx->tos++];
+	BN_CTX_init(&ctx);
+	tmp= &(ctx.bn[ctx.tos++]);
 	
 	if (dh->priv_key == NULL)
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
 		goto err;
 		}
-	if (!BN_mod_exp(tmp,pub_key,dh->priv_key,dh->p,ctx))
+	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+		{
+		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
+				dh->p,&ctx)) goto err;
+		}
+
+	mont=(BN_MONT_CTX *)dh->method_mont_p;
+	if (!BN_mod_exp_mont(tmp,pub_key,dh->priv_key,dh->p,&ctx,mont))
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
@@ -137,6 +149,6 @@ DH *dh;
 
 	ret=BN_bn2bin(tmp,key);
 err:
-	if (ctx != NULL) BN_CTX_free(ctx);
+	BN_CTX_free(&ctx);
 	return(ret);
 	}

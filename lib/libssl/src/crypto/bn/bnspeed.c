@@ -66,14 +66,13 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include "crypto.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 
-#ifndef MSDOS
+#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
 #endif
 
-#ifndef VMS
 #ifndef _IRIX
 #include <time.h>
 #endif
@@ -81,36 +80,33 @@
 #include <sys/types.h>
 #include <sys/times.h>
 #endif
-#else /* VMS */
-#include <types.h>
-struct tms {
-	time_t tms_utime;
-	time_t tms_stime;
-	time_t tms_uchild;	/* I dunno...  */
-	time_t tms_uchildsys;	/* so these names are a guess :-) */
-	}
+
+/* Depending on the VMS version, the tms structure is perhaps defined.
+   The __TMS macro will show if it was.  If it wasn't defined, we should
+   undefine TIMES, since that tells the rest of the program how things
+   should be handled.				-- Richard Levitte */
+#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#undef TIMES
 #endif
+
 #ifndef TIMES
 #include <sys/timeb.h>
 #endif
 
-#ifdef sun
+#if defined(sun) || defined(__ultrix)
+#define _POSIX_SOURCE
 #include <limits.h>
 #include <sys/param.h>
 #endif
 
-#include "bn.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/x509.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 # ifndef CLK_TCK
 #  ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#   ifndef VMS
-#    define HZ	100.0
-#   else /* VMS */
-#    define HZ	100.0
-#   endif
+#   define HZ	100.0
 #  else /* _BSD_CLK_TCK_ */
 #   define HZ ((double)_BSD_CLK_TCK_)
 #  endif
@@ -123,17 +119,11 @@ struct tms {
 #define BUFSIZE	((long)1024*8)
 int run=0;
 
-#ifndef NOPROTO
 static double Time_F(int s);
-#else
-static double Time_F();
-#endif
-
 #define START	0
 #define STOP	1
 
-static double Time_F(s)
-int s;
+static double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -175,27 +165,20 @@ static int sizes[NUM_SIZES]={128,256,512,1024,2048};
 
 void do_mul(BIGNUM *r,BIGNUM *a,BIGNUM *b,BN_CTX *ctx); 
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	BN_CTX *ctx;
-	BIGNUM *a,*b,*c,*r;
+	BIGNUM a,b,c;
 
 	ctx=BN_CTX_new();
-	a=BN_new();
-	b=BN_new();
-	c=BN_new();
-	r=BN_new();
+	BN_init(&a);
+	BN_init(&b);
+	BN_init(&c);
 
-	do_mul(a,b,c,ctx);
+	do_mul(&a,&b,&c,ctx);
 	}
 
-void do_mul(r,a,b,ctx)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
-BN_CTX *ctx;
+void do_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 	{
 	int i,j,k;
 	double tm;
@@ -211,7 +194,7 @@ BN_CTX *ctx;
 			BN_rand(b,sizes[j],1,0);
 			Time_F(START);
 			for (k=0; k<num; k++)
-				BN_mul(r,b,a);
+				BN_mul(r,b,a,ctx);
 			tm=Time_F(STOP);
 			printf("mul %4d x %4d -> %8.3fms\n",sizes[i],sizes[j],tm*1000.0/num);
 			}

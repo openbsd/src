@@ -58,13 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-int i2d_PrivateKey(a,pp)
-EVP_PKEY *a;
-unsigned char **pp;
+int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 	{
 #ifndef NO_RSA
 	if (a->type == EVP_PKEY_RSA)

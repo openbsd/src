@@ -60,19 +60,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void cast_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void cast_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void cast_cbc_init_key();
-static void cast_cbc_cipher();
-#endif
-
 static EVP_CIPHER cast5_cbc_cipher=
 	{
 	NID_cast5_cbc,
@@ -82,20 +76,17 @@ static EVP_CIPHER cast5_cbc_cipher=
 	NULL,
 	sizeof(EVP_CIPHER_CTX)-sizeof((((EVP_CIPHER_CTX *)NULL)->c))+
 		sizeof((((EVP_CIPHER_CTX *)NULL)->c.cast_ks)),
-	EVP_CIPHER_get_asn1_iv,
 	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_cast5_cbc()
+EVP_CIPHER *EVP_cast5_cbc(void)
 	{
 	return(&cast5_cbc_cipher);
 	}
 	
-static void cast_cbc_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void cast_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
@@ -104,11 +95,8 @@ int enc;
 		CAST_set_key(&(ctx->c.cast_ks),EVP_CAST5_KEY_SIZE,key);
 	}
 
-static void cast_cbc_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void cast_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	CAST_cbc_encrypt(
 		in,out,(long)inl,

@@ -56,23 +56,23 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
 	X509 *x509;
 	EVP_PKEY *pkey;
 	PKCS7 *p7;
-	PKCS7 *p7_data;
 	PKCS7_SIGNER_INFO *si;
 	BIO *in;
 	BIO *data,*p7bio;
 	char buf[1024*4];
-	int i,j;
+	int i;
 	int nodetach=0;
 
 	EVP_add_digest(EVP_md2());
@@ -105,7 +105,12 @@ again:
 	p7=PKCS7_new();
 	PKCS7_set_type(p7,NID_pkcs7_signed);
 	 
-	if (PKCS7_add_signature(p7,x509,pkey,EVP_sha1()) == NULL) goto err;
+	si=PKCS7_add_signature(p7,x509,pkey,EVP_sha1());
+	if (si == NULL) goto err;
+
+	/* If you do this then you get signing time automatically added */
+	PKCS7_add_signed_attribute(si, NID_pkcs9_contentType, V_ASN1_OBJECT,
+						OBJ_nid2obj(NID_pkcs7_data));
 
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);
@@ -125,7 +130,7 @@ again:
 		BIO_write(p7bio,buf,i);
 		}
 
-	if (!PKCS7_dataSign(p7,p7bio)) goto err;
+	if (!PKCS7_dataFinal(p7,p7bio)) goto err;
 	BIO_free(p7bio);
 
 	PEM_write_PKCS7(stdout,p7);

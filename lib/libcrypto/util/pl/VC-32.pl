@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 # VCw32lib.pl - the file for Visual C++ 4.[01] for windows NT, static libraries
 #
 
@@ -7,7 +7,7 @@ $crypto="libeay32";
 $RSAref="RSAref32";
 
 $o='\\';
-$cp='copy';
+$cp='copy nul+';	# Timestamps get stuffed otherwise
 $rm='del';
 
 # C compiler stuff
@@ -22,10 +22,11 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWINDOWS -DWIN32 -D_DEBUG -DL_ENDIAN";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWINDOWS -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
+$cflags .= " -DWINNT" if $NT == 1;
 
 $obj='.obj';
 $ofile="/Fo";
@@ -48,13 +49,17 @@ $lfile='/out:';
 
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj";
+if ($nasm) {
+	$asm='nasmw -f win32';
+	$afile='-o ';
+} else {
+	$asm='ml /Cp /coff /c /Cx';
+	$asm.=" /Zi" if $debug;
+	$afile='/Fo';
+}
 
-$asm='ml /Cp /coff /c /Cx';
-$asm.=" /Zi" if $debug;
-$afile='/Fo';
-
-$bn_mulw_obj='';
-$bn_mulw_src='';
+$bn_asm_obj='';
+$bn_asm_src='';
 $des_enc_obj='';
 $des_enc_src='';
 $bf_enc_obj='';
@@ -62,8 +67,8 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_mulw_obj='crypto\bn\asm\bn-win32.obj';
-	$bn_mulw_src='crypto\bn\asm\bn-win32.asm';
+	$bn_asm_obj='crypto\bn\asm\bn-win32.obj';
+	$bn_asm_src='crypto\bn\asm\bn-win32.asm';
 	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\y-win32.obj';
 	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\y-win32.asm';
 	$bf_enc_obj='crypto\bf\asm\b-win32.obj';
@@ -92,6 +97,8 @@ if ($shlib)
 	$tmp_def="tmp32dll";
 	}
 
+$cflags.=" /Fd$out_def";
+
 sub do_lib_rule
 	{
 	local($objs,$target,$name,$shlib)=@_;
@@ -110,7 +117,7 @@ sub do_lib_rule
 	else
 		{
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
-		$ex.=' wsock32.lib gdi32.lib';
+		$ex.=' wsock32.lib gdi32.lib advapi32.lib';
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}
 	$ret.="\n";

@@ -60,6 +60,9 @@
 #include <stdlib.h>
 #endif
 
+
+#include "openssl/e_os.h" /* OPENSSL_EXTERN */
+
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
 			 l|=((unsigned long)(*((c)++)))<< 8L, \
@@ -213,12 +216,11 @@
 	}
 #endif
 
-extern CAST_LONG CAST_S_table0[256];
-extern CAST_LONG CAST_S_table1[256];
-extern CAST_LONG CAST_S_table2[256];
-extern CAST_LONG CAST_S_table3[256];
-extern CAST_LONG CAST_S_table4[256];
-extern CAST_LONG CAST_S_table5[256];
-extern CAST_LONG CAST_S_table6[256];
-extern CAST_LONG CAST_S_table7[256];
-
+OPENSSL_EXTERN CAST_LONG CAST_S_table0[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table1[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table2[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table3[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table4[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table5[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table6[256];
+OPENSSL_EXTERN CAST_LONG CAST_S_table7[256];

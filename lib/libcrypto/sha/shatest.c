@@ -59,7 +59,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "sha.h"
+
+#ifdef NO_SHA
+int main(int argc, char *argv[])
+{
+    printf("No SHA support\n");
+    return(0);
+}
+#else
+#include <openssl/sha.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 #define SHA_0 /* FIPS 180 */
 #undef  SHA_1 /* FIPS 180-1 */
@@ -87,15 +99,8 @@ char *bigret=
 	"34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 #endif
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	unsigned char **P,**R;
@@ -103,6 +108,11 @@ char *argv[];
 	char *p,*r;
 	SHA_CTX c;
 	unsigned char md[SHA_DIGEST_LENGTH];
+
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(test[0], test[0], strlen(test[0]));
+	ebcdic2ascii(test[1], test[1], strlen(test[1]));
+#endif
 
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
@@ -124,6 +134,9 @@ char *argv[];
 		}
 
 	memset(buf,'a',1000);
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, 1000);
+#endif /*CHARSET_EBCDIC*/
 	SHA_Init(&c);
 	for (i=0; i<1000; i++)
 		SHA_Update(&c,buf,1000);
@@ -143,8 +156,7 @@ char *argv[];
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -153,3 +165,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
+#endif

@@ -62,13 +62,17 @@
 extern "C" {
 #endif
 
-#include "evp.h"
+#ifdef NO_HMAC
+#error HMAC is disabled.
+#endif
+
+#include <openssl/evp.h>
 
 #define HMAC_MAX_MD_CBLOCK	64
 
 typedef struct hmac_ctx_st
 	{
-	EVP_MD *md;
+	const EVP_MD *md;
 	EVP_MD_CTX md_ctx;
 	EVP_MD_CTX i_ctx;
 	EVP_MD_CTX o_ctx;
@@ -78,26 +82,16 @@ typedef struct hmac_ctx_st
 
 #define HMAC_size(e)	(EVP_MD_size((e)->md))
 
-#ifndef NOPROTO
 
-void HMAC_Init(HMAC_CTX *ctx, unsigned char *key, int len,
-	EVP_MD *md);
+void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
+	       const EVP_MD *md);
 void HMAC_Update(HMAC_CTX *ctx,unsigned char *key, int len);
 void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 void HMAC_cleanup(HMAC_CTX *ctx);
-unsigned char *HMAC(EVP_MD *evp_md, unsigned char *key, int key_len,
-	unsigned char *d, int n, unsigned char *md, unsigned int *md_len);
+unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
+		    unsigned char *d, int n, unsigned char *md,
+		    unsigned int *md_len);
 
-
-#else
-
-void HMAC_Init();
-void HMAC_Update();
-void HMAC_Final();
-void HMAC_cleanup();
-unsigned char *HMAC();
-
-#endif
 
 #ifdef  __cplusplus
 }

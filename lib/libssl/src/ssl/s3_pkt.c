@@ -59,49 +59,19 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "evp.h"
-#include "buffer.h"
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
 #include "ssl_locl.h"
 
-/* SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CIPHER);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_PEER_ERROR_NO_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_PEER_ERROR_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_PEER_ERROR_UNSUPPORTED_CERTIFICATE_TYPE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_UNKNOWN_REMOTE_ERROR_TYPE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_BAD_RECORD_MAC);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_DECOMPRESSION_FAILURE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_NO_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_BAD_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_CERTIFICATE_REVOKED);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN);
- * SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER);
- */
-
-#ifndef NOPROTO
-static int do_ssl3_write(SSL *s, int type, char *buf, unsigned int len);
-static int ssl3_write_pending(SSL *s, int type, char *buf, unsigned int len);
+static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+			 unsigned int len);
+static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+			      unsigned int len);
 static int ssl3_get_record(SSL *s);
 static int do_compress(SSL *ssl);
 static int do_uncompress(SSL *ssl);
 static int do_change_cipher_spec(SSL *ssl);
-#else
-static int do_ssl3_write();
-static int ssl3_write_pending();
-static int ssl3_get_record();
-static int do_compress();
-static int do_uncompress();
-static int do_change_cipher_spec();
-#endif
-
-static int ssl3_read_n(s,n,max,extend)
-SSL *s;
-int n;
-int max;
-int extend;
+static int ssl3_read_n(SSL *s, int n, int max, int extend)
 	{
 	int i,off,newb;
 
@@ -210,10 +180,8 @@ int extend;
  * ssl->s3->rrec.data, 	- data
  * ssl->s3->rrec.length, - number of bytes
  */
-static int ssl3_get_record(s)
-SSL *s;
+static int ssl3_get_record(SSL *s)
 	{
-	char tmp_buf[512];
 	int ssl_major,ssl_minor,al;
 	int n,i,ret= -1;
 	SSL3_BUFFER *rb;
@@ -331,7 +299,6 @@ again:
 
 	/* decrypt in place in 'rr->input' */
 	rr->data=rr->input;
-	memcpy(tmp_buf,rr->input,(rr->length > 512)?512:rr->length);
 
 	if (!s->method->ssl3_enc->enc(s,0))
 		{
@@ -340,7 +307,7 @@ again:
 		}
 #ifdef TLS_DEBUG
 printf("dec %d\n",rr->length);
-{ int z; for (z=0; z<rr->length; z++) printf("%02X%c",rr->data[z],((z+1)%16)?' ':'\n'); }
+{ unsigned int z; for (z=0; z<rr->length; z++) printf("%02X%c",rr->data[z],((z+1)%16)?' ':'\n'); }
 printf("\n");
 #endif
 	/* r->length is now the compressed data plus mac */
@@ -378,7 +345,7 @@ printf("\n");
 		}
 
 	/* r->length is now just compressed */
-	if ((sess != NULL) && (sess->read_compression != NULL))
+	if (s->expand != NULL)
 		{
 		if (rr->length > 
 			(unsigned int)SSL3_RT_MAX_COMPRESSED_LENGTH+extra)
@@ -424,27 +391,47 @@ err:
 	return(ret);
 	}
 
-static int do_uncompress(ssl)
-SSL *ssl;
+static int do_uncompress(SSL *ssl)
 	{
+	int i;
+	SSL3_RECORD *rr;
+
+	rr= &(ssl->s3->rrec);
+	i=COMP_expand_block(ssl->expand,rr->comp,
+		SSL3_RT_MAX_PLAIN_LENGTH,rr->data,(int)rr->length);
+	if (i < 0)
+		return(0);
+	else
+		rr->length=i;
+	rr->data=rr->comp;
+
 	return(1);
 	}
 
-static int do_compress(ssl)
-SSL *ssl;
+static int do_compress(SSL *ssl)
 	{
+	int i;
+	SSL3_RECORD *wr;
+
+	wr= &(ssl->s3->wrec);
+	i=COMP_compress_block(ssl->compress,wr->data,
+		SSL3_RT_MAX_COMPRESSED_LENGTH,
+		wr->input,(int)wr->length);
+	if (i < 0)
+		return(0);
+	else
+		wr->length=i;
+
+	wr->input=wr->data;
 	return(1);
 	}
 
 /* Call this to write data
  * It will return <= 0 if not all data has been sent or non-blocking IO.
  */
-int ssl3_write_bytes(s,type,buf,len)
-SSL *s;
-int type;
-char *buf;
-int len;
+int ssl3_write_bytes(SSL *s, int type, const void *_buf, int len)
 	{
+	const unsigned char *buf=_buf;
 	unsigned int tot,n,nw;
 	int i;
 
@@ -479,20 +466,22 @@ int len;
 			}
 
 		if (type == SSL3_RT_HANDSHAKE)
-			ssl3_finish_mac(s,(unsigned char *)&(buf[tot]),i);
+			ssl3_finish_mac(s,&(buf[tot]),i);
 
-		if (i == (int)n) return(tot+i);
+		if ((i == (int)n) ||
+			(type == SSL3_RT_APPLICATION_DATA &&
+			 (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
+			{
+			return(tot+i);
+			}
 
 		n-=i;
 		tot+=i;
 		}
 	}
 
-static int do_ssl3_write(s,type,buf,len)
-SSL *s;
-int type;
-char *buf;
-unsigned int len;
+static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+			 unsigned int len)
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
@@ -552,7 +541,7 @@ unsigned int len;
 	 * wr->data */
 
 	/* first we compress */
-	if ((sess != NULL) && (sess->write_compression != NULL))
+	if (s->compress != NULL)
 		{
 		if (!do_compress(s))
 			{
@@ -606,16 +595,15 @@ err:
 	}
 
 /* if s->s3->wbuf.left != 0, we need to call this */
-static int ssl3_write_pending(s,type,buf,len)
-SSL *s;
-int type;
-char *buf;
-unsigned int len;
+static int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
+			      unsigned int len)
 	{
 	int i;
 
 /* XXXX */
-	if ((s->s3->wpend_tot > (int)len) || (s->s3->wpend_buf != buf)
+	if ((s->s3->wpend_tot > (int)len)
+		|| ((s->s3->wpend_buf != buf) &&
+			!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
 		|| (s->s3->wpend_type != type))
 		{
 		SSLerr(SSL_F_SSL3_WRITE_PENDING,SSL_R_BAD_WRITE_RETRY);
@@ -650,18 +638,14 @@ unsigned int len;
 		}
 	}
 
-int ssl3_read_bytes(s,type,buf,len)
-SSL *s;
-int type;
-char *buf;
-int len;
+int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len)
 	{
 	int al,i,j,n,ret;
 	SSL3_RECORD *rr;
 	void (*cb)()=NULL;
 	BIO *bio;
 
-	if (s->s3->rbuf.buf == NULL) /* Not initalised yet */
+	if (s->s3->rbuf.buf == NULL) /* Not initialize yet */
 		if (!ssl3_setup_buffers(s))
 			return(-1);
 
@@ -786,7 +770,8 @@ start:
 
 				s->rwstate=SSL_NOTHING;
 				s->s3->fatal_alert=n;
-				SSLerr(SSL_F_SSL3_READ_BYTES,1000+n);
+				SSLerr(SSL_F_SSL3_READ_BYTES,
+					SSL_AD_REASON_OFFSET+n);
 				sprintf(tmp,"%d",n);
 				ERR_add_error_data(2,"SSL alert number ",tmp);
 				s->shutdown|=SSL_RECEIVED_SHUTDOWN;
@@ -836,7 +821,9 @@ start:
 			if (((s->state&SSL_ST_MASK) == SSL_ST_OK) &&
 				!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS))
 				{
-				s->state=SSL_ST_BEFORE;
+				s->state=SSL_ST_BEFORE|(s->server)
+						?SSL_ST_ACCEPT
+						:SSL_ST_CONNECT;
 				s->new_session=1;
 				}
 			n=s->handshake_func(s);
@@ -937,7 +924,7 @@ start:
 		}
 
 	if (type == SSL3_RT_HANDSHAKE)
-		ssl3_finish_mac(s,(unsigned char *)buf,n);
+		ssl3_finish_mac(s,buf,n);
 	return(n);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
@@ -945,8 +932,7 @@ err:
 	return(-1);
 	}
 
-static int do_change_cipher_spec(s)
-SSL *s;
+static int do_change_cipher_spec(SSL *s)
 	{
 	int i;
 	unsigned char *sender;
@@ -988,14 +974,12 @@ SSL *s;
 	return(1);
 	}
 
-int ssl3_do_write(s,type)
-SSL *s;
-int type;
+int ssl3_do_write(SSL *s, int type)
 	{
 	int ret;
 
-	ret=ssl3_write_bytes(s,type,(char *)
-		&(s->init_buf->data[s->init_off]),s->init_num);
+	ret=ssl3_write_bytes(s,type,&s->init_buf->data[s->init_off],
+			     s->init_num);
 	if (ret == s->init_num)
 		return(1);
 	if (ret < 0) return(-1);
@@ -1004,10 +988,7 @@ int type;
 	return(0);
 	}
 
-void ssl3_send_alert(s,level,desc)
-SSL *s;
-int level;
-int desc;
+void ssl3_send_alert(SSL *s, int level, int desc)
 	{
 	/* Map tls/ssl alert value to correct one */
 	desc=s->method->ssl3_enc->alert_value(desc);
@@ -1025,14 +1006,13 @@ int desc;
 	 * some time in the future */
 	}
 
-int ssl3_dispatch_alert(s)
-SSL *s;
+int ssl3_dispatch_alert(SSL *s)
 	{
 	int i,j;
 	void (*cb)()=NULL;
 
 	s->s3->alert_dispatch=0;
-	i=do_ssl3_write(s,SSL3_RT_ALERT,&(s->s3->send_alert[0]),2);
+	i=do_ssl3_write(s,SSL3_RT_ALERT,&s->s3->send_alert[0],2);
 	if (i <= 0)
 		{
 		s->s3->alert_dispatch=1;
@@ -1043,7 +1023,7 @@ SSL *s;
 		 * does not get sent due to non-blocking IO, we will
 		 * not worry too much. */
 		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
-			BIO_flush(s->wbio);
+			(void)BIO_flush(s->wbio);
 
 		if (s->info_callback != NULL)
 			cb=s->info_callback;

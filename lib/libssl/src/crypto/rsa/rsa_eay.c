@@ -68,11 +68,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "rand.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/rand.h>
 
-#ifndef NOPROTO
 static int RSA_eay_public_encrypt(int flen, unsigned char *from,
 		unsigned char *to, RSA *rsa,int padding);
 static int RSA_eay_private_encrypt(int flen, unsigned char *from,
@@ -84,16 +83,6 @@ static int RSA_eay_private_decrypt(int flen, unsigned char *from,
 static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *i, RSA *rsa);
 static int RSA_eay_init(RSA *rsa);
 static int RSA_eay_finish(RSA *rsa);
-#else
-static int RSA_eay_public_encrypt();
-static int RSA_eay_private_encrypt();
-static int RSA_eay_public_decrypt();
-static int RSA_eay_private_decrypt();
-static int RSA_eay_mod_exp();
-static int RSA_eay_init();
-static int RSA_eay_finish();
-#endif
-
 static RSA_METHOD rsa_pkcs1_eay_meth={
 	"Eric Young's PKCS#1 RSA",
 	RSA_eay_public_encrypt,
@@ -108,31 +97,75 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	NULL,
 	};
 
-RSA_METHOD *RSA_PKCS1_SSLeay()
+RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	{
 	return(&rsa_pkcs1_eay_meth);
 	}
 
-static int RSA_eay_public_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_public_encrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f=NULL,*ret=NULL;
+	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
 
-	/* Body of this routine removed for OpenBSD - will return
-	 * when the RSA patent expires
-	 */
+	BN_init(&f);
+	BN_init(&ret);
+	if ((ctx=BN_CTX_new()) == NULL) goto err;
+	num=BN_num_bytes(rsa->n);
+	if ((buf=(unsigned char *)Malloc(num)) == NULL)
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
 
+	switch (padding)
+		{
+	case RSA_PKCS1_PADDING:
+		i=RSA_padding_add_PKCS1_type_2(buf,num,from,flen);
+		break;
+#ifndef NO_SHA
+	case RSA_PKCS1_OAEP_PADDING:
+	        i=RSA_padding_add_PKCS1_OAEP(buf,num,from,flen,NULL,0);
+		break;
+#endif
+	case RSA_SSLV23_PADDING:
+		i=RSA_padding_add_SSLv23(buf,num,from,flen);
+		break;
+	case RSA_NO_PADDING:
+		i=RSA_padding_add_none(buf,num,from,flen);
+		break;
+	default:
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT,RSA_R_UNKNOWN_PADDING_TYPE);
+		goto err;
+		}
+	if (i <= 0) goto err;
+
+	if (BN_bin2bn(buf,num,&f) == NULL) goto err;
+	
+	if ((rsa->_method_mod_n == NULL) && (rsa->flags & RSA_FLAG_CACHE_PUBLIC))
+		{
+		if ((rsa->_method_mod_n=BN_MONT_CTX_new()) != NULL)
+			if (!BN_MONT_CTX_set(rsa->_method_mod_n,rsa->n,ctx))
+			    goto err;
+		}
+
+	if (!rsa->meth->bn_mod_exp(&ret,&f,rsa->e,rsa->n,ctx,
+		rsa->_method_mod_n)) goto err;
+
+	/* put in leading 0 bytes if the number is less than the
+	 * length of the modulus */
+	j=BN_num_bytes(&ret);
+	i=BN_bn2bin(&ret,&(to[num-j]));
+	for (k=0; k<(num-i); k++)
+		to[k]=0;
+
+	r=num;
 err:
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (f != NULL) BN_free(f);
-	if (ret != NULL) BN_free(ret);
+	BN_clear_free(&f);
+	BN_clear_free(&ret);
 	if (buf != NULL) 
 		{
 		memset(buf,0,num);
@@ -141,14 +174,10 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_private_encrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f=NULL,*ret=NULL;
+	BIGNUM f,ret;
 	int i,j,k,num=0,r= -1;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
@@ -159,8 +188,8 @@ int padding;
 
 err:
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (ret != NULL) BN_free(ret);
-	if (f != NULL) BN_free(f);
+	BN_clear_free(&ret);
+	BN_clear_free(&f);
 	if (buf != NULL)
 		{
 		memset(buf,0,num);
@@ -169,14 +198,10 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_private_decrypt(flen, from, to, rsa,padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_private_decrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f=NULL,*ret=NULL;
+	BIGNUM f,ret;
 	int j,num=0,r= -1;
 	unsigned char *p;
 	unsigned char *buf=NULL;
@@ -188,8 +213,8 @@ int padding;
 
 err:
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (f != NULL) BN_free(f);
-	if (ret != NULL) BN_free(ret);
+	BN_clear_free(&f);
+	BN_clear_free(&ret);
 	if (buf != NULL)
 		{
 		memset(buf,0,num);
@@ -198,19 +223,14 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_public_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+static int RSA_eay_public_decrypt(int flen, unsigned char *from,
+	     unsigned char *to, RSA *rsa, int padding)
 	{
-	BIGNUM *f=NULL,*ret=NULL;
+	BIGNUM f,ret;
 	int i,num=0,r= -1;
 	unsigned char *p;
 	unsigned char *buf=NULL;
 	BN_CTX *ctx=NULL;
-
 
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
@@ -218,8 +238,8 @@ int padding;
 
 err:
 	if (ctx != NULL) BN_CTX_free(ctx);
-	if (f != NULL) BN_free(f);
-	if (ret != NULL) BN_free(ret);
+	BN_clear_free(&f);
+	BN_clear_free(&ret);
 	if (buf != NULL)
 		{
 		memset(buf,0,num);
@@ -228,46 +248,40 @@ err:
 	return(r);
 	}
 
-static int RSA_eay_mod_exp(r0, I, rsa)
-BIGNUM *r0;
-BIGNUM *I;
-RSA *rsa;
+static int RSA_eay_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 	{
-	BIGNUM *r1=NULL,*m1=NULL;
+	BIGNUM r1,m1;
 	int ret=0;
 	BN_CTX *ctx;
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	m1=BN_new();
-	r1=BN_new();
-	if ((m1 == NULL) || (r1 == NULL)) goto err;
+	BN_init(&m1);
+	BN_init(&r1);
 
 	/* Body of this routine removed for OpenBSD - will return
 	 * when the RSA patent expires
 	 */
 err:
-	if (m1 != NULL) BN_free(m1);
-	if (r1 != NULL) BN_free(r1);
+	BN_clear_free(&m1);
+	BN_clear_free(&r1);
 	BN_CTX_free(ctx);
 	return(ret);
 	}
 
-static int RSA_eay_init(rsa)
-RSA *rsa;
+static int RSA_eay_init(RSA *rsa)
 	{
 	rsa->flags|=RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE;
 	return(1);
 	}
 
-static int RSA_eay_finish(rsa)
-RSA *rsa;
+static int RSA_eay_finish(RSA *rsa)
 	{
-	if (rsa->method_mod_n != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_n);
-	if (rsa->method_mod_p != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_p);
-	if (rsa->method_mod_q != NULL)
-		BN_MONT_CTX_free((BN_MONT_CTX *)rsa->method_mod_q);
+	if (rsa->_method_mod_n != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_n);
+	if (rsa->_method_mod_p != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_p);
+	if (rsa->_method_mod_q != NULL)
+		BN_MONT_CTX_free(rsa->_method_mod_q);
 	return(1);
 	}
 

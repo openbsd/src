@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # This adds a copyright message to a souce code file.
 # It also gets the file name correct.

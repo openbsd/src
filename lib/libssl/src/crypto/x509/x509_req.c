@@ -58,22 +58,20 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "asn1.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
-#include "pem.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
+#include <openssl/pem.h>
 
-X509_REQ *X509_to_X509_REQ(x,pkey,md)
-X509 *x;
-EVP_PKEY *pkey;
-EVP_MD *md;
+X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, EVP_MD *md)
 	{
 	X509_REQ *ret;
 	X509_REQ_INFO *ri;
 	int i;
+	EVP_PKEY *pktmp;
 
 	ret=X509_REQ_new();
 	if (ret == NULL)
@@ -92,7 +90,9 @@ EVP_MD *md;
 	if (!X509_REQ_set_subject_name(ret,X509_get_subject_name(x)))
 		goto err;
 
-	i=X509_REQ_set_pubkey(ret,X509_get_pubkey(x));
+	pktmp = X509_get_pubkey(x);
+	i=X509_REQ_set_pubkey(ret,pktmp);
+	EVP_PKEY_free(pktmp);
 	if (!i) goto err;
 
 	if (pkey != NULL)
@@ -106,8 +106,7 @@ err:
 	return(NULL);
 	}
 
-EVP_PKEY *X509_REQ_get_pubkey(req)
-X509_REQ *req;
+EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
 	{
 	if ((req == NULL) || (req->req_info == NULL))
 		return(NULL);

@@ -68,12 +68,11 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "err.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
 
 #if !defined(NO_STDIO)
 
-#ifndef NOPROTO
 static int MS_CALLBACK file_write(BIO *h,char *buf,int num);
 static int MS_CALLBACK file_read(BIO *h,char *buf,int size);
 static int MS_CALLBACK file_puts(BIO *h,char *str);
@@ -81,16 +80,6 @@ static int MS_CALLBACK file_gets(BIO *h,char *str,int size);
 static long MS_CALLBACK file_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int MS_CALLBACK file_new(BIO *h);
 static int MS_CALLBACK file_free(BIO *data);
-#else
-static int MS_CALLBACK file_write();
-static int MS_CALLBACK file_read();
-static int MS_CALLBACK file_puts();
-static int MS_CALLBACK file_gets();
-static long MS_CALLBACK file_ctrl();
-static int MS_CALLBACK file_new();
-static int MS_CALLBACK file_free();
-#endif
-
 static BIO_METHOD methods_filep=
 	{
 	BIO_TYPE_FILE,
@@ -104,9 +93,7 @@ static BIO_METHOD methods_filep=
 	file_free,
 	};
 
-BIO *BIO_new_file(filename,mode)
-char *filename;
-char *mode;
+BIO *BIO_new_file(const char *filename, const char *mode)
 	{
 	BIO *ret;
 	FILE *file;
@@ -125,9 +112,7 @@ char *mode;
 	return(ret);
 	}
 
-BIO *BIO_new_fp(stream,close_flag)
-FILE *stream;
-int close_flag;
+BIO *BIO_new_fp(FILE *stream, int close_flag)
 	{
 	BIO *ret;
 
@@ -138,13 +123,12 @@ int close_flag;
 	return(ret);
 	}
 
-BIO_METHOD *BIO_s_file()
+BIO_METHOD *BIO_s_file(void)
 	{
 	return(&methods_filep);
 	}
 
-static int MS_CALLBACK file_new(bi)
-BIO *bi;
+static int MS_CALLBACK file_new(BIO *bi)
 	{
 	bi->init=0;
 	bi->num=0;
@@ -152,8 +136,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int MS_CALLBACK file_free(a)
-BIO *a;
+static int MS_CALLBACK file_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	if (a->shutdown)
@@ -168,10 +151,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int MS_CALLBACK file_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 
@@ -182,10 +162,7 @@ int outl;
 	return(ret);
 	}
 
-static int MS_CALLBACK file_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int MS_CALLBACK file_write(BIO *b, char *in, int inl)
 	{
 	int ret=0;
 
@@ -201,11 +178,7 @@ int inl;
 	return(ret);
 	}
 
-static long MS_CALLBACK file_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	long ret=1;
 	FILE *fp=(FILE *)b->ptr;
@@ -214,18 +187,20 @@ char *ptr;
 
 	switch (cmd)
 		{
+	case BIO_C_FILE_SEEK:
 	case BIO_CTRL_RESET:
 		ret=(long)fseek(fp,num,0);
 		break;
 	case BIO_CTRL_EOF:
 		ret=(long)feof(fp);
 		break;
+	case BIO_C_FILE_TELL:
 	case BIO_CTRL_INFO:
 		ret=ftell(fp);
 		break;
 	case BIO_C_SET_FILE_PTR:
 		file_free(b);
-		b->shutdown=(int)num;
+		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=(char *)ptr;
 		b->init=1;
 #if defined(MSDOS) || defined(WINDOWS)
@@ -307,10 +282,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int MS_CALLBACK file_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 	{
 	int ret=0;
 
@@ -321,9 +293,7 @@ int size;
 	return(ret);
 	}
 
-static int MS_CALLBACK file_puts(bp,str)
-BIO *bp;
-char *str;
+static int MS_CALLBACK file_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 

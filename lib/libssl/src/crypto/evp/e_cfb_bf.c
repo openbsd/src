@@ -56,23 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_BLOWFISH
-
+#ifndef NO_BF
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void bf_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void bf_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void bf_cfb_init_key();
-static void bf_cfb_cipher();
-#endif
-
 static EVP_CIPHER bfish_cfb_cipher=
 	{
 	NID_bf_cfb64,
@@ -86,16 +79,13 @@ static EVP_CIPHER bfish_cfb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_bf_cfb()
+EVP_CIPHER *EVP_bf_cfb(void)
 	{
 	return(&bfish_cfb_cipher);
 	}
 	
-static void bf_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void bf_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -106,11 +96,8 @@ int enc;
 		BF_set_key(&(ctx->c.bf_ks),EVP_BLOWFISH_KEY_SIZE,key);
 	}
 
-static void bf_cfb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void bf_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	BF_cfb64_encrypt(
 		in,out,

@@ -58,12 +58,30 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "bio.h"
-#include "lhash.h"
+#include <openssl/crypto.h>
+#ifdef CRYPTO_MDEBUG_TIME
+# include <time.h>	
+#endif
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
 #include "cryptlib.h"
 
+/* #ifdef CRYPTO_MDEBUG */
+/* static int mh_mode=CRYPTO_MEM_CHECK_ON; */
+/* #else */
 static int mh_mode=CRYPTO_MEM_CHECK_OFF;
+/* #endif */
+/* State CRYPTO_MEM_CHECK_ON exists only temporarily when the library
+ * thinks that certain allocations should not be checked (e.g. the data
+ * structures used for memory checking).  It is not suitable as an initial
+ * state: the library will unexpectedly enable memory checking when it
+ * executes one of those sections that want to disable checking
+ * temporarily.
+ *
+ * State CRYPTO_MEM_CHECK_ENABLE without ..._ON makes no sense whatsoever.
+ */
+
 static unsigned long order=0;
 
 static LHASH *mh=NULL;
@@ -72,25 +90,41 @@ typedef struct mem_st
 	{
 	char *addr;
 	int num;
-	char *file;
+	const char *file;
 	int line;
+#ifdef CRYPTO_MDEBUG_THREAD
+	unsigned long thread;
+#endif
 	unsigned long order;
+#ifdef CRYPTO_MDEBUG_TIME
+	time_t time;
+#endif
 	} MEM;
 
-int CRYPTO_mem_ctrl(mode)
-int mode;
+int CRYPTO_mem_ctrl(int mode)
 	{
 	int ret=mh_mode;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 	switch (mode)
 		{
-	case CRYPTO_MEM_CHECK_ON:
-		mh_mode|=CRYPTO_MEM_CHECK_ON;
+	/* for applications: */
+	case CRYPTO_MEM_CHECK_ON: /* aka MemCheck_start() */
+		mh_mode = CRYPTO_MEM_CHECK_ON|CRYPTO_MEM_CHECK_ENABLE;
 		break;
-	case CRYPTO_MEM_CHECK_OFF:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ON;
+	case CRYPTO_MEM_CHECK_OFF: /* aka MemCheck_stop() */
+		mh_mode = 0;
 		break;
+
+	/* switch off temporarily (for library-internal use): */
+	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
+		mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
+		break;
+	case CRYPTO_MEM_CHECK_ENABLE: /* aka MemCheck_on() */
+		if (mh_mode&CRYPTO_MEM_CHECK_ON)
+			mh_mode|=CRYPTO_MEM_CHECK_ENABLE;
+		break;
+
 	default:
 		break;
 		}
@@ -98,14 +132,12 @@ int mode;
 	return(ret);
 	}
 
-static int mem_cmp(a,b)
-MEM *a,*b;
+static int mem_cmp(MEM *a, MEM *b)
 	{
 	return(a->addr - b->addr);
 	}
 
-static unsigned long mem_hash(a)
-MEM *a;
+static unsigned long mem_hash(MEM *a)
 	{
 	unsigned long ret;
 
@@ -115,54 +147,69 @@ MEM *a;
 	return(ret);
 	}
 
+static char *(*malloc_locked_func)()=(char *(*)())malloc;
+static void (*free_locked_func)()=(void (*)())free;
 static char *(*malloc_func)()=	(char *(*)())malloc;
 static char *(*realloc_func)()=	(char *(*)())realloc;
 static void (*free_func)()=	(void (*)())free;
 
-void CRYPTO_set_mem_functions(m,r,f)
-char *(*m)();
-char *(*r)();
-void (*f)();
+void CRYPTO_set_mem_functions(char *(*m)(), char *(*r)(), void (*f)())
 	{
 	if ((m == NULL) || (r == NULL) || (f == NULL)) return;
 	malloc_func=m;
 	realloc_func=r;
 	free_func=f;
+	malloc_locked_func=m;
+	free_locked_func=f;
 	}
 
-void CRYPTO_get_mem_functions(m,r,f)
-char *(**m)();
-char *(**r)();
-void (**f)();
+void CRYPTO_set_locked_mem_functions(char *(*m)(), void (*f)())
+	{
+	if ((m == NULL) || (f == NULL)) return;
+	malloc_locked_func=m;
+	free_locked_func=f;
+	}
+
+void CRYPTO_get_mem_functions(char *(**m)(), char *(**r)(), void (**f)())
 	{
 	if (m != NULL) *m=malloc_func;
 	if (r != NULL) *r=realloc_func;
 	if (f != NULL) *f=free_func;
 	}
 
-char *CRYPTO_malloc(num)
-int num;
+void CRYPTO_get_locked_mem_functions(char *(**m)(), void (**f)())
+	{
+	if (m != NULL) *m=malloc_locked_func;
+	if (f != NULL) *f=free_locked_func;
+	}
+
+void *CRYPTO_malloc_locked(int num)
+	{
+	return(malloc_locked_func(num));
+	}
+
+void CRYPTO_free_locked(void *str)
+	{
+	free_locked_func(str);
+	}
+
+void *CRYPTO_malloc(int num)
 	{
 	return(malloc_func(num));
 	}
 
-char *CRYPTO_realloc(str,num)
-char *str;
-int num;
+void *CRYPTO_realloc(void *str, int num)
 	{
 	return(realloc_func(str,num));
 	}
 
-void CRYPTO_free(str)
-char *str;
+void CRYPTO_free(void *str)
 	{
 	free_func(str);
 	}
 
-char *CRYPTO_dbg_malloc(num,file,line)
-int num;
-char *file;
-int line;
+static unsigned long break_order_num=0;
+void *CRYPTO_dbg_malloc(int num, const char *file, int line)
 	{
 	char *ret;
 	MEM *m,*mm;
@@ -170,11 +217,13 @@ int line;
 	if ((ret=malloc_func(num)) == NULL)
 		return(NULL);
 
-	if (mh_mode & CRYPTO_MEM_CHECK_ON)
+	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
 		{
-		if ((m=(MEM *)malloc(sizeof(MEM))) == NULL)
+		MemCheck_off();
+		if ((m=(MEM *)Malloc(sizeof(MEM))) == NULL)
 			{
-			free(ret);
+			Free(ret);
+			MemCheck_on();
 			return(NULL);
 			}
 		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
@@ -182,9 +231,10 @@ int line;
 			{
 			if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
 				{
-				free(ret);
-				free(m);
-				return(NULL);
+				Free(ret);
+				Free(m);
+				ret=NULL;
+				goto err;
 				}
 			}
 
@@ -192,39 +242,49 @@ int line;
 		m->file=file;
 		m->line=line;
 		m->num=num;
+#ifdef CRYPTO_MDEBUG_THREAD
+		m->thread=CRYPTO_thread_id();
+#endif
+		if (order == break_order_num)
+			{
+			/* BREAK HERE */
+			m->order=order;
+			}
 		m->order=order++;
+#ifdef CRYPTO_MDEBUG_TIME
+		m->time=time(NULL);
+#endif
 		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
 			{
 			/* Not good, but don't sweat it */
-			free(mm);
+			Free(mm);
 			}
+err:
 		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+		MemCheck_on();
 		}
 	return(ret);
 	}
 
-void CRYPTO_dbg_free(addr)
-char *addr;
+void CRYPTO_dbg_free(void *addr)
 	{
 	MEM m,*mp;
 
-	if ((mh_mode & CRYPTO_MEM_CHECK_ON) && (mh != NULL))
+	if ((mh_mode & CRYPTO_MEM_CHECK_ENABLE) && (mh != NULL))
 		{
+		MemCheck_off();
 		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 		m.addr=addr;
 		mp=(MEM *)lh_delete(mh,(char *)&m);
 		if (mp != NULL)
-			free(mp);
+			Free(mp);
 		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+		MemCheck_on();
 		}
 	free_func(addr);
 	}
 
-char *CRYPTO_dbg_realloc(addr,num,file,line)
-char *addr;
-int num;
-char *file;
-int line;
+void *CRYPTO_dbg_realloc(void *addr, int num, const char *file, int line)
 	{
 	char *ret;
 	MEM m,*mp;
@@ -232,8 +292,9 @@ int line;
 	ret=realloc_func(addr,num);
 	if (ret == addr) return(ret);
 
-	if (mh_mode & CRYPTO_MEM_CHECK_ON)
+	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
 		{
+		MemCheck_off();
 		if (ret == NULL) return(NULL);
 		m.addr=addr;
 		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
@@ -244,24 +305,19 @@ int line;
 			lh_insert(mh,(char *)mp);
 			}
 		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+		MemCheck_on();
 		}
 	return(ret);
 	}
 
-char *CRYPTO_remalloc(a,n)
-char *a;
-int n;
+void *CRYPTO_remalloc(void *a, int n)
 	{
 	if (a != NULL) Free(a);
 	a=(char *)Malloc(n);
 	return(a);
 	}
 
-char *CRYPTO_dbg_remalloc(a,n,file,line)
-char *a;
-int n;
-char *file;
-int line;
+void *CRYPTO_dbg_remalloc(void *a, int n, const char *file, int line)
 	{
 	if (a != NULL) CRYPTO_dbg_free(a);
 	a=(char *)CRYPTO_dbg_malloc(n,file,line);
@@ -276,21 +332,44 @@ typedef struct mem_leak_st
 	long bytes;
 	} MEM_LEAK;
 
-static void print_leak(m,l)
-MEM *m;
-MEM_LEAK *l;
+static void print_leak(MEM *m, MEM_LEAK *l)
 	{
 	char buf[128];
+#ifdef CRYPTO_MDEBUG_TIME
+	struct tm *lcl;
+#endif
 
-	sprintf(buf,"%5ld file=%s, line=%d, number=%d, address=%08lX\n",
-		m->order,m->file,m->line,m->num,(long)m->addr);
+	if(m->addr == (char *)l->bio)
+	    return;
+
+#ifdef CRYPTO_MDEBUG_TIME
+	lcl = localtime(&m->time);
+#endif
+
+	sprintf(buf,
+#ifdef CRYPTO_MDEBUG_TIME
+		"[%02d:%02d:%02d] "
+#endif
+		"%5lu file=%s, line=%d, "
+#ifdef CRYPTO_MDEBUG_THREAD
+		"thread=%lu, "
+#endif
+		"number=%d, address=%08lX\n",
+#ifdef CRYPTO_MDEBUG_TIME
+		lcl->tm_hour,lcl->tm_min,lcl->tm_sec,
+#endif
+		m->order,m->file,m->line,
+#ifdef CRYPTO_MDEBUG_THREAD
+		m->thread,
+#endif
+		m->num,(unsigned long)m->addr);
+
 	BIO_puts(l->bio,buf);
 	l->chunks++;
 	l->bytes+=m->num;
 	}
 
-void CRYPTO_mem_leaks(b)
-BIO *b;
+void CRYPTO_mem_leaks(BIO *b)
 	{
 	MEM_LEAK ml;
 	char buf[80];
@@ -308,25 +387,23 @@ BIO *b;
 			ml.bytes,ml.chunks);
 		BIO_puts(b,buf);
 		}
-	/*
+
+#if 0
 	lh_stats_bio(mh,b);
-        lh_node_stats_bio(mh,b);
-        lh_node_usage_stats_bio(mh,b);
-	*/
+	lh_node_stats_bio(mh,b);
+	lh_node_usage_stats_bio(mh,b);
+#endif
 	}
 
 static void (*mem_cb)()=NULL;
 
-static void cb_leak(m,cb)
-MEM *m;
-char *cb;
+static void cb_leak(MEM *m, char *cb)
 	{
 	void (*mem_callback)()=(void (*)())cb;
 	mem_callback(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-void CRYPTO_mem_leaks_cb(cb)
-void (*cb)();
+void CRYPTO_mem_leaks_cb(void (*cb)())
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
@@ -337,8 +414,7 @@ void (*cb)();
 	}
 
 #ifndef NO_FP_API
-void CRYPTO_mem_leaks_fp(fp)
-FILE *fp;
+void CRYPTO_mem_leaks_fp(FILE *fp)
 	{
 	BIO *b;
 

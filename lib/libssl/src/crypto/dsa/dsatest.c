@@ -61,14 +61,22 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "crypto.h"
-#include "rand.h"
-#include "bio.h"
-#include "err.h"
-#include "dsa.h"
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
 #ifdef WINDOWS
 #include "../bio/bss_file.c"
 #endif
+
+#ifdef NO_DSA
+int main(int argc, char *argv[])
+{
+    printf("No DSA support\n");
+    return(0);
+}
+#else
+#include <openssl/dsa.h>
 
 #ifdef WIN16
 #define MS_CALLBACK     _far _loadds
@@ -76,12 +84,7 @@
 #define MS_CALLBACK
 #endif
 
-#ifndef NOPROTO
 static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK dsa_cb();
-#endif
-
 static unsigned char seed[20]={
 	0xd5,0x01,0x4e,0x4b,0x60,0xef,0x2b,0xa8,0xb6,0x21,0x1b,0x40,
 	0x62,0xba,0x32,0x24,0xe0,0x42,0x7d,0xd3,
@@ -115,19 +118,23 @@ static unsigned char out_g[]={
 	0xc5,0x72,0xaf,0x53,0xe6,0xd7,0x88,0x02,
 	};
 
+static const unsigned char str1[]="12345678901234567890";
+
 static BIO *bio_err=NULL;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
 	unsigned long h;
+	unsigned char sig[256];
+	unsigned int siglen;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
 	BIO_printf(bio_err,"expect '.*' followed by 5 lines of '.'s and '+'s\n");
@@ -178,21 +185,21 @@ char **argv;
 		BIO_printf(bio_err,"g value is wrong\n");
 		goto end;
 		}
-
-	ret=1;
+	DSA_generate_key(dsa);
+	DSA_sign(0, str1, 20, sig, &siglen, dsa);
+	if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
+		ret=1;
 end:
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (bio_err != NULL) BIO_free(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
+	CRYPTO_mem_leaks(bio_err);
+	if (bio_err != NULL) BIO_free(bio_err);
 	exit(!ret);
 	return(0);
 	}
 
-static void MS_CALLBACK dsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	{
 	char c='*';
 	static int ok=0,num=0;
@@ -202,7 +209,7 @@ char *arg;
 	if (p == 2) { c='*'; ok++; }
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	(void)BIO_flush((BIO *)arg);
 
 	if (!ok && (p == 0) && (num > 1))
 		{
@@ -210,5 +217,4 @@ char *arg;
 		exit(1);
 		}
 	}
-
-
+#endif

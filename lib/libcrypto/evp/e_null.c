@@ -58,19 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void null_init_key();
-static void null_cipher();
-#endif
-
 static EVP_CIPHER n_cipher=
 	{
 	NID_undef,
@@ -83,25 +77,19 @@ static EVP_CIPHER n_cipher=
 	NULL,
 	};
 
-EVP_CIPHER *EVP_enc_null()
+EVP_CIPHER *EVP_enc_null(void)
 	{
 	return(&n_cipher);
 	}
 
-static void null_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void null_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	memset(&(ctx->c),0,sizeof(ctx->c));
 	}
 
-static void null_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	if (in != out)
 		memcpy((char *)out,(char *)in,(int)inl);

@@ -58,45 +58,60 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
+#include <openssl/asn1.h>
 
-/* ASN1err(ASN1_F_ASN1_STRING_NEW,ASN1_R_STRING_TOO_SHORT);
- * ASN1err(ASN1_F_D2I_ASN1_BIT_STRING,ASN1_R_EXPECTING_A_BIT_STRING);
- */
-
-int i2d_ASN1_BIT_STRING(a,pp)
-ASN1_BIT_STRING *a;
-unsigned char **pp;
+int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
-	int ret,j,r,bits;
+	int ret,j,r,bits,len;
 	unsigned char *p,*d;
 
 	if (a == NULL) return(0);
 
-	/* our bit strings are always a multiple of 8 :-) */
-	bits=0;
-	ret=1+a->length;
+	len=a->length;
+
+	if (len > 0)
+		{
+		if (a->flags & ASN1_STRING_FLAG_BITS_LEFT)
+			{
+			bits=(int)a->flags&0x07;
+			}
+		else
+			{
+			for ( ; len > 0; len--)
+				{
+				if (a->data[len-1]) break;
+				}
+			j=a->data[len-1];
+			if      (j & 0x01) bits=0;
+			else if (j & 0x02) bits=1;
+			else if (j & 0x04) bits=2;
+			else if (j & 0x08) bits=3;
+			else if (j & 0x10) bits=4;
+			else if (j & 0x20) bits=5;
+			else if (j & 0x40) bits=6;
+			else if (j & 0x80) bits=7;
+			else bits=0; /* should not happen */
+			}
+		}
+	else
+		bits=0;
+	ret=1+len;
 	r=ASN1_object_size(0,ret,V_ASN1_BIT_STRING);
 	if (pp == NULL) return(r);
 	p= *pp;
 
 	ASN1_put_object(&p,0,ret,V_ASN1_BIT_STRING,V_ASN1_UNIVERSAL);
-	if (bits == 0)
-		j=0;
-	else	j=8-bits;
-	*(p++)=(unsigned char)j;
+	*(p++)=(unsigned char)bits;
 	d=a->data;
-	memcpy(p,d,a->length);
-	p+=a->length;
-	if (a->length > 0) p[-1]&=(0xff<<j);
+	memcpy(p,d,len);
+	p+=len;
+	if (len > 0) p[-1]&=(0xff<<bits);
 	*pp=p;
 	return(r);
 	}
 
-ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(a, pp, length)
-ASN1_BIT_STRING **a;
-unsigned char **pp;
-long length;
+ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, unsigned char **pp,
+	     long length)
 	{
 	ASN1_BIT_STRING *ret=NULL;
 	unsigned char *p,*s;
@@ -127,6 +142,12 @@ long length;
 	if (len < 1) { i=ASN1_R_STRING_TOO_SHORT; goto err; }
 
 	i= *(p++);
+	/* We do this to preserve the settings.  If we modify
+	 * the settings, via the _set_bit function, we will recalculate
+	 * on output */
+	ret->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear */
+	ret->flags|=(ASN1_STRING_FLAG_BITS_LEFT|(i&0x07)); /* set */
+
 	if (len-- > 1) /* using one because of the bits left byte */
 		{
 		s=(unsigned char *)Malloc((int)len);
@@ -158,10 +179,7 @@ err:
 
 /* These next 2 functions from Goetz Babin-Ebell <babinebell@trustcenter.de>
  */
-int ASN1_BIT_STRING_set_bit(a,n,value)
-ASN1_BIT_STRING *a;
-int n;
-int value;
+int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	{
 	int w,v,iv;
 	unsigned char *c;
@@ -169,6 +187,8 @@ int value;
 	w=n/8;
 	v=1<<(7-(n&0x07));
 	iv= ~v;
+
+	a->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear, set on write */
 
 	if (a == NULL) return(0);
 	if ((a->length < (w+1)) || (a->data == NULL))
@@ -189,9 +209,7 @@ int value;
 	return(1);
 	}
 
-int ASN1_BIT_STRING_get_bit(a,n)
-ASN1_BIT_STRING *a;
-int n;
+int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
 	{
 	int w,v;
 

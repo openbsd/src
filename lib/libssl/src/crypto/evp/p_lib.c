@@ -58,22 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "objects.h"
-#include "evp.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
-/* EVPerr(EVP_F_D2I_PKEY,EVP_R_UNSUPPORTED_CIPHER); */
-/* EVPerr(EVP_F_D2I_PKEY,EVP_R_IV_TOO_LARGE); */
-
-#ifndef NOPROTO
 static void EVP_PKEY_free_it(EVP_PKEY *x);
-#else
-static void EVP_PKEY_free_it();
-#endif
-
-int EVP_PKEY_bits(pkey)
-EVP_PKEY *pkey;
+int EVP_PKEY_bits(EVP_PKEY *pkey)
 	{
 #ifndef NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
@@ -87,9 +78,10 @@ EVP_PKEY *pkey;
 	return(0);
 	}
 
-int EVP_PKEY_size(pkey)
-EVP_PKEY *pkey;
+int EVP_PKEY_size(EVP_PKEY *pkey)
 	{
+	if (pkey == NULL)
+		return(0);
 #ifndef NO_RSA
 	if (pkey->type == EVP_PKEY_RSA)
 		return(RSA_size(pkey->pkey.rsa));
@@ -102,9 +94,7 @@ EVP_PKEY *pkey;
 	return(0);
 	}
 
-int EVP_PKEY_save_parameters(pkey,mode)
-EVP_PKEY *pkey;
-int mode;
+int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 	{
 #ifndef NO_DSA
 	if (pkey->type == EVP_PKEY_DSA)
@@ -119,8 +109,7 @@ int mode;
 	return(0);
 	}
 
-int EVP_PKEY_copy_parameters(to,from)
-EVP_PKEY *to,*from;
+int EVP_PKEY_copy_parameters(EVP_PKEY *to, EVP_PKEY *from)
 	{
 	if (to->type != from->type)
 		{
@@ -156,8 +145,7 @@ err:
 	return(0);
 	}
 
-int EVP_PKEY_missing_parameters(pkey)
-EVP_PKEY *pkey;
+int EVP_PKEY_missing_parameters(EVP_PKEY *pkey)
 	{
 #ifndef NO_DSA
 	if (pkey->type == EVP_PKEY_DSA)
@@ -172,8 +160,7 @@ EVP_PKEY *pkey;
 	return(0);
 	}
 
-int EVP_PKEY_cmp_parameters(a,b)
-EVP_PKEY *a,*b;
+int EVP_PKEY_cmp_parameters(EVP_PKEY *a, EVP_PKEY *b)
 	{
 #ifndef NO_DSA
 	if ((a->type == EVP_PKEY_DSA) && (b->type == EVP_PKEY_DSA))
@@ -189,7 +176,7 @@ EVP_PKEY *a,*b;
 	return(-1);
 	}
 
-EVP_PKEY *EVP_PKEY_new()
+EVP_PKEY *EVP_PKEY_new(void)
 	{
 	EVP_PKEY *ret;
 
@@ -207,10 +194,7 @@ EVP_PKEY *EVP_PKEY_new()
 	return(ret);
 	}
 
-int EVP_PKEY_assign(pkey,type,key)
-EVP_PKEY *pkey;
-int type;
-char *key;
+int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	{
 	if (pkey == NULL) return(0);
 	if (pkey->pkey.ptr != NULL)
@@ -221,8 +205,7 @@ char *key;
 	return(1);
 	}
 
-int EVP_PKEY_type(type)
-int type;
+int EVP_PKEY_type(int type)
 	{
 	switch (type)
 		{
@@ -242,8 +225,7 @@ int type;
 		}
 	}
 
-void EVP_PKEY_free(x)
-EVP_PKEY *x;
+void EVP_PKEY_free(EVP_PKEY *x)
 	{
 	int i;
 
@@ -265,8 +247,7 @@ EVP_PKEY *x;
 	Free((char *)x);
 	}
 
-static void EVP_PKEY_free_it(x)
-EVP_PKEY *x;
+static void EVP_PKEY_free_it(EVP_PKEY *x)
 	{
 	switch (x->type)
 		{

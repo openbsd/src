@@ -59,10 +59,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "evp.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int buffer_write(BIO *h,char *buf,int num);
 static int buffer_read(BIO *h,char *buf,int size);
 static int buffer_puts(BIO *h,char *str);
@@ -70,16 +69,6 @@ static int buffer_gets(BIO *h,char *str,int size);
 static long buffer_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-#else
-static int buffer_write();
-static int buffer_read();
-static int buffer_puts();
-static int buffer_gets();
-static long buffer_ctrl();
-static int buffer_new();
-static int buffer_free();
-#endif
-
 #define DEFAULT_BUFFER_SIZE	1024
 
 static BIO_METHOD methods_buffer=
@@ -95,13 +84,12 @@ static BIO_METHOD methods_buffer=
 	buffer_free,
 	};
 
-BIO_METHOD *BIO_f_buffer()
+BIO_METHOD *BIO_f_buffer(void)
 	{
 	return(&methods_buffer);
 	}
 
-static int buffer_new(bi)
-BIO *bi;
+static int buffer_new(BIO *bi)
 	{
 	BIO_F_BUFFER_CTX *ctx;
 
@@ -124,8 +112,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int buffer_free(a)
-BIO *a;
+static int buffer_free(BIO *a)
 	{
 	BIO_F_BUFFER_CTX *b;
 
@@ -140,10 +127,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int buffer_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int buffer_read(BIO *b, char *out, int outl)
 	{
 	int i,num=0;
 	BIO_F_BUFFER_CTX *ctx;
@@ -209,10 +193,7 @@ start:
 	goto start;
 	}
 
-static int buffer_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int buffer_write(BIO *b, char *in, int inl)
 	{
 	int i,num=0;
 	BIO_F_BUFFER_CTX *ctx;
@@ -285,11 +266,7 @@ start:
 	goto start;
 	}
 
-static long buffer_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long buffer_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	BIO_F_BUFFER_CTX *ctx;
@@ -432,6 +409,7 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 				break;
 				}
 			}
+		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
@@ -449,10 +427,7 @@ malloc_error:
 	return(0);
 	}
 
-static int buffer_gets(b,buf,size)
-BIO *b;
-char *buf;
-int size;
+static int buffer_gets(BIO *b, char *buf, int size)
 	{
 	BIO_F_BUFFER_CTX *ctx;
 	int num=0,i,flag;
@@ -503,9 +478,7 @@ int size;
 		}
 	}
 
-static int buffer_puts(b,str)
-BIO *b;
-char *str;
+static int buffer_puts(BIO *b, char *str)
 	{
 	return(BIO_write(b,str,strlen(str)));
 	}

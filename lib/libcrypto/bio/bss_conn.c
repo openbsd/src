@@ -62,15 +62,19 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
-
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
+#include <openssl/bio.h>
 
 #ifdef WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL IPPROTO_TCP
 #endif
+
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
+#undef FIONBIO
+#endif
+
 
 typedef struct bio_connect_st
 	{
@@ -81,13 +85,12 @@ typedef struct bio_connect_st
 	int nbio;
 
 	unsigned char ip[4];
-	short port;
+	unsigned short port;
 
 	struct sockaddr_in them;
 
 	/* int socket; this will be kept in bio->num so that it is
 	 * compatable with the bss_sock bio */ 
-	int error;
 
 	/* called when the connection is initially made
 	 *  callback(BIO,state,ret);  The callback should return
@@ -95,37 +98,17 @@ typedef struct bio_connect_st
 	int (*info_callback)();
 	} BIO_CONNECT;
 
-#ifndef NOPROTO
 static int conn_write(BIO *h,char *buf,int num);
 static int conn_read(BIO *h,char *buf,int size);
 static int conn_puts(BIO *h,char *str);
 static long conn_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
-#else
-static int conn_write();
-static int conn_read();
-static int conn_puts();
-static long conn_ctrl();
-static int conn_new();
-static int conn_free();
-#endif
-
-#ifndef NOPROTO
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
 BIO_CONNECT *BIO_CONNECT_new(void );
 void BIO_CONNECT_free(BIO_CONNECT *a);
-
-#else
-
-static int conn_state();
-static void conn_close_socket();
-BIO_CONNECT *BIO_CONNECT_new();
-void BIO_CONNECT_free();
-
-#endif
 
 static BIO_METHOD methods_connectp=
 	{
@@ -140,9 +123,7 @@ static BIO_METHOD methods_connectp=
 	conn_free,
 	};
 
-static int conn_state(b,c)
-BIO *b;
-BIO_CONNECT *c;
+static int conn_state(BIO *b, BIO_CONNECT *c)
 	{
 	int ret= -1,i;
 	unsigned long l;
@@ -160,7 +141,7 @@ BIO_CONNECT *c;
 			p=c->param_hostname;
 			if (p == NULL)
 				{
-				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_HOSTHNAME_SPECIFIED);
+				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_HOSTNAME_SPECIFIED);
 				goto exit_loop;
 				}
 			for ( ; *p != '\0'; p++)
@@ -187,7 +168,7 @@ BIO_CONNECT *c;
 					}
 				}
 
-			if (p == NULL)
+			if (c->param_port == NULL)
 				{
 				BIOerr(BIO_F_CONN_STATE,BIO_R_NO_PORT_SPECIFIED);
 				ERR_add_error_data(2,"host=",c->param_hostname);
@@ -203,7 +184,12 @@ BIO_CONNECT *c;
 			break;
 
 		case BIO_CONN_S_GET_PORT:
-			if (BIO_get_port(c->param_port,&c->port) <= 0)
+			if (c->param_port == NULL)
+				{
+				abort();
+				goto exit_loop;
+				}
+			else if (BIO_get_port(c->param_port,&c->port) <= 0)
 				goto exit_loop;
 			c->state=BIO_CONN_S_CREATE_SOCKET;
 			break;
@@ -235,12 +221,9 @@ BIO_CONNECT *c;
 			break;
 
 		case BIO_CONN_S_NBIO:
-#ifdef FIONBIO
 			if (c->nbio)
 				{
-				l=1;
-				ret=BIO_socket_ioctl(b->num,FIONBIO,&l);
-				if (ret < 0)
+				if (!BIO_socket_nbio(b->num,1))
 					{
 					BIOerr(BIO_F_CONN_STATE,BIO_R_ERROR_SETTING_NBIO);
 					ERR_add_error_data(4,"host=",
@@ -249,7 +232,6 @@ BIO_CONNECT *c;
 					goto exit_loop;
 					}
 				}
-#endif
 			c->state=BIO_CONN_S_CONNECT;
 
 #ifdef SO_KEEPALIVE
@@ -326,17 +308,15 @@ BIO_CONNECT *c;
 			}
 		}
 
-	if (1)
-		{
+	/* Loop does not exit */
 exit_loop:
-		if (cb != NULL)
-			ret=cb((BIO *)b,c->state,ret);
-		}
+	if (cb != NULL)
+		ret=cb((BIO *)b,c->state,ret);
 end:
 	return(ret);
 	}
 
-BIO_CONNECT *BIO_CONNECT_new()
+BIO_CONNECT *BIO_CONNECT_new(void)
 	{
 	BIO_CONNECT *ret;
 
@@ -353,13 +333,14 @@ BIO_CONNECT *BIO_CONNECT_new()
 	ret->ip[3]=0;
 	ret->port=0;
 	memset((char *)&ret->them,0,sizeof(ret->them));
-	ret->error=0;
 	return(ret);
 	}
 
-void BIO_CONNECT_free(a)
-BIO_CONNECT *a;
+void BIO_CONNECT_free(BIO_CONNECT *a)
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->param_hostname != NULL)
 		Free(a->param_hostname);
 	if (a->param_port != NULL)
@@ -367,13 +348,12 @@ BIO_CONNECT *a;
 	Free(a);
 	}
 
-BIO_METHOD *BIO_s_connect()
+BIO_METHOD *BIO_s_connect(void)
 	{
 	return(&methods_connectp);
 	}
 
-static int conn_new(bi)
-BIO *bi;
+static int conn_new(BIO *bi)
 	{
 	bi->init=0;
 	bi->num=INVALID_SOCKET;
@@ -384,8 +364,7 @@ BIO *bi;
 		return(1);
 	}
 
-static void conn_close_socket(bio)
-BIO *bio;
+static void conn_close_socket(BIO *bio)
 	{
 	BIO_CONNECT *c;
 
@@ -395,17 +374,12 @@ BIO *bio;
 		/* Only do a shutdown if things were established */
 		if (c->state == BIO_CONN_S_OK)
 			shutdown(bio->num,2);
-# ifdef WINDOWS
 		closesocket(bio->num);
-# else
-		close(bio->num);
-# endif
 		bio->num=INVALID_SOCKET;
 		}
 	}
 
-static int conn_free(a)
-BIO *a;
+static int conn_free(BIO *a)
 	{
 	BIO_CONNECT *data;
 
@@ -423,10 +397,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int conn_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int conn_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 	BIO_CONNECT *data;
@@ -442,11 +413,7 @@ int outl;
 	if (out != NULL)
 		{
 		clear_socket_error();
-#if defined(WINDOWS)
-		ret=recv(b->num,out,outl,0);
-#else
-		ret=read(b->num,out,outl);
-#endif
+		ret=readsocket(b->num,out,outl);
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
 			{
@@ -457,10 +424,7 @@ int outl;
 	return(ret);
 	}
 
-static int conn_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int conn_write(BIO *b, char *in, int inl)
 	{
 	int ret;
 	BIO_CONNECT *data;
@@ -473,11 +437,7 @@ int inl;
 		}
 
 	clear_socket_error();
-#if defined(WINDOWS)
-	ret=send(b->num,in,inl,0);
-#else
-	ret=write(b->num,in,inl);
-#endif
+	ret=writesocket(b->num,in,inl);
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{
@@ -487,15 +447,11 @@ int inl;
 	return(ret);
 	}
 
-static long conn_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long conn_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	int *ip;
-	char **pptr;
+	const char **pptr;
 	long ret=1;
 	BIO_CONNECT *data;
 
@@ -519,7 +475,7 @@ char *ptr;
 	case BIO_C_GET_CONNECT:
 		if (ptr != NULL)
 			{
-			pptr=(char **)ptr;
+			pptr=(const char **)ptr;
 			if (num == 0)
 				{
 				*pptr=data->param_hostname;
@@ -559,9 +515,26 @@ char *ptr;
 				data->param_port=BUF_strdup(ptr);
 				}
 			else if (num == 2)
-				memcpy(data->ip,ptr,4);
+				{
+				char buf[16];
+
+				sprintf(buf,"%d.%d.%d.%d",
+					ptr[0],ptr[1],ptr[2],ptr[3]);
+				if (data->param_hostname != NULL)
+					Free(data->param_hostname);
+				data->param_hostname=BUF_strdup(buf);
+				memcpy(&(data->ip[0]),ptr,4);
+				}
 			else if (num == 3)
+				{
+				char buf[16];
+
+				sprintf(buf,"%d",*(int *)ptr);
+				if (data->param_port != NULL)
+					Free(data->param_port);
+				data->param_port=BUF_strdup(buf);
 				data->port= *(int *)ptr;
+				}
 			}
 		break;
 	case BIO_C_SET_NBIO:
@@ -597,7 +570,7 @@ char *ptr;
 		if (data->param_hostname)
 			BIO_set_conn_hostname(dbio,data->param_hostname);
 		BIO_set_nbio(dbio,data->nbio);
-		BIO_set_info_callback(dbio,data->info_callback);
+		(void)BIO_set_info_callback(dbio,data->info_callback);
 		break;
 	case BIO_CTRL_SET_CALLBACK:
 		data->info_callback=(int (*)())ptr;
@@ -617,9 +590,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int conn_puts(bp,str)
-BIO *bp;
-char *str;
+static int conn_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 
@@ -628,8 +599,7 @@ char *str;
 	return(ret);
 	}
 
-BIO *BIO_new_connect(str)
-char *str;
+BIO *BIO_new_connect(char *str)
 	{
 	BIO *ret;
 

@@ -62,25 +62,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "crypto.h"
+#include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "buffer.h"
-#include "evp.h"
-#include "asn1.h"
-#include "x509.h"
-#include "objects.h"
-#include "pem.h"
+#include <openssl/lhash.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static int null_callback(int ok,X509_STORE_CTX *e);
 static int internal_verify(X509_STORE_CTX *ctx);
-#else
-static int null_callback();
-static int internal_verify();
-#endif
+const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
-char *X509_version="X509 part of SSLeay 0.9.0b 29-Jun-1998";
 static STACK *x509_store_ctx_method=NULL;
 static int x509_store_ctx_num=0;
 #if 0
@@ -88,23 +82,19 @@ static int x509_store_num=1;
 static STACK *x509_store_method=NULL;
 #endif
 
-static int null_callback(ok,e)
-int ok;
-X509_STORE_CTX *e;
+static int null_callback(int ok, X509_STORE_CTX *e)
 	{
 	return(ok);
 	}
 
 #if 0
-static int x509_subject_cmp(a,b)
-X509 **a,**b;
+static int x509_subject_cmp(X509 **a, X509 **b)
 	{
 	return(X509_subject_name_cmp(*a,*b));
 	}
 #endif
 
-int X509_verify_cert(ctx)
-X509_STORE_CTX *ctx;
+int X509_verify_cert(X509_STORE_CTX *ctx)
 	{
 	X509 *x,*xtmp,*chain_ss=NULL;
 	X509_NAME *xn;
@@ -112,7 +102,7 @@ X509_STORE_CTX *ctx;
 	int depth,i,ok=0;
 	int num;
 	int (*cb)();
-	STACK *sktmp=NULL;
+	STACK_OF(X509) *sktmp=NULL;
 
 	if (ctx->cert == NULL)
 		{
@@ -127,8 +117,8 @@ X509_STORE_CTX *ctx;
 	 * present and that the first entry is in place */
 	if (ctx->chain == NULL)
 		{
-		if (	((ctx->chain=sk_new_null()) == NULL) ||
-			(!sk_push(ctx->chain,(char *)ctx->cert)))
+		if (	((ctx->chain=sk_X509_new_null()) == NULL) ||
+			(!sk_X509_push(ctx->chain,ctx->cert)))
 			{
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 			goto end;
@@ -138,21 +128,26 @@ X509_STORE_CTX *ctx;
 		}
 
 	/* We use a temporary so we can chop and hack at it */
-	if ((ctx->untrusted != NULL) && (sktmp=sk_dup(ctx->untrusted)) == NULL)
+	if (ctx->untrusted != NULL
+	    && (sktmp=sk_X509_dup(ctx->untrusted)) == NULL)
 		{
 		X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 		goto end;
 		}
 
-	num=sk_num(ctx->chain);
-	x=(X509 *)sk_value(ctx->chain,num-1);
+	num=sk_X509_num(ctx->chain);
+	x=sk_X509_value(ctx->chain,num-1);
 	depth=ctx->depth;
 
 
 	for (;;)
 		{
 		/* If we have enough, we break */
-		if (depth <= num) break;
+		if (depth < num) break; /* FIXME: If this happens, we should take
+		                         * note of it and, if appropriate, use the
+		                         * X509_V_ERR_CERT_CHAIN_TOO_LONG error
+		                         * code later.
+		                         */
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
@@ -165,13 +160,13 @@ X509_STORE_CTX *ctx;
 			xtmp=X509_find_by_subject(sktmp,xn);
 			if (xtmp != NULL)
 				{
-				if (!sk_push(ctx->chain,(char *)xtmp))
+				if (!sk_X509_push(ctx->chain,xtmp))
 					{
 					X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
 					goto end;
 					}
 				CRYPTO_add(&xtmp->references,1,CRYPTO_LOCK_X509);
-				sk_delete_ptr(sktmp,(char *)xtmp);
+				sk_X509_delete_ptr(sktmp,xtmp);
 				ctx->last_untrusted++;
 				x=xtmp;
 				num++;
@@ -187,13 +182,13 @@ X509_STORE_CTX *ctx;
 	 * certificates.  We now need to add at least one trusted one,
 	 * if possible, otherwise we complain. */
 
-	i=sk_num(ctx->chain);
-	x=(X509 *)sk_value(ctx->chain,i-1);
+	i=sk_X509_num(ctx->chain);
+	x=sk_X509_value(ctx->chain,i-1);
 	if (X509_NAME_cmp(X509_get_subject_name(x),X509_get_issuer_name(x))
 		== 0)
 		{
 		/* we have a self signed certificate */
-		if (sk_num(ctx->chain) == 1)
+		if (sk_X509_num(ctx->chain) == 1)
 			{
 			ctx->error=X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
 			ctx->current_cert=x;
@@ -204,10 +199,10 @@ X509_STORE_CTX *ctx;
 		else
 			{
 			/* worry more about this one elsewhere */
-			chain_ss=(X509 *)sk_pop(ctx->chain);
+			chain_ss=sk_X509_pop(ctx->chain);
 			ctx->last_untrusted--;
 			num--;
-			x=(X509 *)sk_value(ctx->chain,num-1);
+			x=sk_X509_value(ctx->chain,num-1);
 			}
 		}
 
@@ -215,7 +210,7 @@ X509_STORE_CTX *ctx;
 	for (;;)
 		{
 		/* If we have enough, we break */
-		if (depth <= num) break;
+		if (depth < num) break;
 
 		/* If we are self signed, we break */
 		xn=X509_get_issuer_name(x);
@@ -240,7 +235,7 @@ X509_STORE_CTX *ctx;
 			break;
 			}
 		x=obj.data.x509;
-		if (!sk_push(ctx->chain,(char *)obj.data.x509))
+		if (!sk_X509_push(ctx->chain,obj.data.x509))
 			{
 			X509_OBJECT_free_contents(&obj);
 			X509err(X509_F_X509_VERIFY_CERT,ERR_R_MALLOC_FAILURE);
@@ -264,7 +259,7 @@ X509_STORE_CTX *ctx;
 		else
 			{
 
-			sk_push(ctx->chain,(char *)chain_ss);
+			sk_X509_push(ctx->chain,chain_ss);
 			num++;
 			ctx->last_untrusted=num;
 			ctx->current_cert=chain_ss;
@@ -285,14 +280,17 @@ X509_STORE_CTX *ctx;
 		ok=ctx->ctx->verify(ctx);
 	else
 		ok=internal_verify(ctx);
+	if (0)
+		{
 end:
-	if (sktmp != NULL) sk_free(sktmp);
+		X509_get_pubkey_parameters(NULL,ctx->chain);
+		}
+	if (sktmp != NULL) sk_X509_free(sktmp);
 	if (chain_ss != NULL) X509_free(chain_ss);
 	return(ok);
 	}
 
-static int internal_verify(ctx)
-X509_STORE_CTX *ctx;
+static int internal_verify(X509_STORE_CTX *ctx)
 	{
 	int i,ok=0,n;
 	X509 *xs,*xi;
@@ -302,10 +300,10 @@ X509_STORE_CTX *ctx;
 	cb=ctx->ctx->verify_cb;
 	if (cb == NULL) cb=null_callback;
 
-	n=sk_num(ctx->chain);
+	n=sk_X509_num(ctx->chain);
 	ctx->error_depth=n-1;
 	n--;
-	xi=(X509 *)sk_value(ctx->chain,n);
+	xi=sk_X509_value(ctx->chain,n);
 	if (X509_NAME_cmp(X509_get_subject_name(xi),
 		X509_get_issuer_name(xi)) == 0)
 		xs=xi;
@@ -322,7 +320,7 @@ X509_STORE_CTX *ctx;
 			{
 			n--;
 			ctx->error_depth=n;
-			xs=(X509 *)sk_value(ctx->chain,n);
+			xs=sk_X509_value(ctx->chain,n);
 			}
 		}
 
@@ -341,11 +339,13 @@ X509_STORE_CTX *ctx;
 				}
 			if (X509_verify(xs,pkey) <= 0)
 				{
+				EVP_PKEY_free(pkey);
 				ctx->error=X509_V_ERR_CERT_SIGNATURE_FAILURE;
 				ctx->current_cert=xs;
 				ok=(*cb)(0,ctx);
 				if (!ok) goto end;
 				}
+			EVP_PKEY_free(pkey);
 			pkey=NULL;
 
 			i=X509_cmp_current_time(X509_get_notBefore(xs));
@@ -394,7 +394,7 @@ X509_STORE_CTX *ctx;
 		if (n >= 0)
 			{
 			xi=xs;
-			xs=(X509 *)sk_value(ctx->chain,n);
+			xs=sk_X509_value(ctx->chain,n);
 			}
 		}
 	ok=1;
@@ -402,8 +402,7 @@ end:
 	return(ok);
 	}
 
-int X509_cmp_current_time(ctm)
-ASN1_UTCTIME *ctm;
+int X509_cmp_current_time(ASN1_UTCTIME *ctm)
 	{
 	char *str;
 	ASN1_UTCTIME atm;
@@ -434,7 +433,7 @@ ASN1_UTCTIME *ctm;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
 		if (*str == '-')
-			offset=-offset;
+			offset= -offset;
 		}
 	atm.type=V_ASN1_UTCTIME;
 	atm.length=sizeof(buff2);
@@ -443,9 +442,9 @@ ASN1_UTCTIME *ctm;
 	X509_gmtime_adj(&atm,-offset);
 
 	i=(buff1[0]-'0')*10+(buff1[1]-'0');
-	if (i < 70) i+=100;
+	if (i < 50) i+=100; /* cf. RFC 2459 */
 	j=(buff2[0]-'0')*10+(buff2[1]-'0');
-	if (j < 70) j+=100;
+	if (j < 50) j+=100;
 
 	if (i < j) return (-1);
 	if (i > j) return (1);
@@ -456,9 +455,7 @@ ASN1_UTCTIME *ctm;
 		return(i);
 	}
 
-ASN1_UTCTIME *X509_gmtime_adj(s, adj)
-ASN1_UTCTIME *s;
-long adj;
+ASN1_UTCTIME *X509_gmtime_adj(ASN1_UTCTIME *s, long adj)
 	{
 	time_t t;
 
@@ -467,18 +464,16 @@ long adj;
 	return(ASN1_UTCTIME_set(s,t));
 	}
 
-int X509_get_pubkey_parameters(pkey,chain)
-EVP_PKEY *pkey;
-STACK *chain;
+int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	{
 	EVP_PKEY *ktmp=NULL,*ktmp2;
 	int i,j;
 
 	if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey)) return(1);
 
-	for (i=0; i<sk_num(chain); i++)
+	for (i=0; i<sk_X509_num(chain); i++)
 		{
-		ktmp=X509_get_pubkey((X509 *)sk_value(chain,i));
+		ktmp=X509_get_pubkey(sk_X509_value(chain,i));
 		if (ktmp == NULL)
 			{
 			X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
@@ -488,6 +483,7 @@ STACK *chain;
 			break;
 		else
 			{
+			EVP_PKEY_free(ktmp);
 			ktmp=NULL;
 			}
 		}
@@ -500,63 +496,17 @@ STACK *chain;
 	/* first, populate the other certs */
 	for (j=i-1; j >= 0; j--)
 		{
-		ktmp2=X509_get_pubkey((X509 *)sk_value(chain,j));
+		ktmp2=X509_get_pubkey(sk_X509_value(chain,j));
 		EVP_PKEY_copy_parameters(ktmp2,ktmp);
+		EVP_PKEY_free(ktmp2);
 		}
 	
-	if (pkey != NULL)
-		EVP_PKEY_copy_parameters(pkey,ktmp);
+	if (pkey != NULL) EVP_PKEY_copy_parameters(pkey,ktmp);
+	EVP_PKEY_free(ktmp);
 	return(1);
 	}
 
-EVP_PKEY *X509_get_pubkey(x)
-X509 *x;
-	{
-	if ((x == NULL) || (x->cert_info == NULL))
-		return(NULL);
-	return(X509_PUBKEY_get(x->cert_info->key));
-	}
-
-int X509_check_private_key(x,k)
-X509 *x;
-EVP_PKEY *k;
-	{
-	EVP_PKEY *xk=NULL;
-	int ok=0;
-
-	xk=X509_get_pubkey(x);
-	if (xk->type != k->type) goto err;
-	switch (k->type)
-		{
-#ifndef NO_RSA
-	case EVP_PKEY_RSA:
-		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0) goto err;
-		if (BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0) goto err;
-		break;
-#endif
-#ifndef NO_DSA
-	case EVP_PKEY_DSA:
-		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
-			goto err;
-		break;
-#endif
-#ifndef NO_DH
-	case EVP_PKEY_DH:
-		/* No idea */
-		goto err;
-#endif
-	default:
-		goto err;
-		}
-
-	ok=1;
-err:
-	return(ok);
-	}
-
-int X509_STORE_add_cert(ctx,x)
-X509_STORE *ctx;
-X509 *x;
+int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 	{
 	X509_OBJECT *obj,*r;
 	int ret=1;
@@ -591,9 +541,7 @@ X509 *x;
 	return(ret);	
 	}
 
-int X509_STORE_add_crl(ctx,x)
-X509_STORE *ctx;
-X509_CRL *x;
+int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 	{
 	X509_OBJECT *obj,*r;
 	int ret=1;
@@ -628,12 +576,8 @@ X509_CRL *x;
 	return(ret);	
 	}
 
-int X509_STORE_CTX_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int X509_STORE_CTX_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
         {
         x509_store_ctx_num++;
         return(CRYPTO_get_ex_new_index(x509_store_ctx_num-1,
@@ -641,64 +585,55 @@ void (*free_func)();
                 argl,argp,new_func,dup_func,free_func));
         }
 
-int X509_STORE_CTX_set_ex_data(ctx,idx,data)
-X509_STORE_CTX *ctx;
-int idx;
-char *data;
+int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
 	{
 	return(CRYPTO_set_ex_data(&ctx->ex_data,idx,data));
 	}
 
-char *X509_STORE_CTX_get_ex_data(ctx,idx)
-X509_STORE_CTX *ctx;
-int idx;
+void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx)
 	{
 	return(CRYPTO_get_ex_data(&ctx->ex_data,idx));
 	}
 
-int X509_STORE_CTX_get_error(ctx)
-X509_STORE_CTX *ctx;
+int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
 	{
 	return(ctx->error);
 	}
 
-void X509_STORE_CTX_set_error(ctx,err)
-X509_STORE_CTX *ctx;
-int err;
+void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
 	{
 	ctx->error=err;
 	}
 
-int X509_STORE_CTX_get_error_depth(ctx)
-X509_STORE_CTX *ctx;
+int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
 	{
 	return(ctx->error_depth);
 	}
 
-X509 *X509_STORE_CTX_get_current_cert(ctx)
-X509_STORE_CTX *ctx;
+X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	{
 	return(ctx->current_cert);
 	}
 
-STACK *X509_STORE_CTX_get_chain(ctx)
-X509_STORE_CTX *ctx;
+STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 	{
 	return(ctx->chain);
 	}
 
-void X509_STORE_CTX_set_cert(ctx,x)
-X509_STORE_CTX *ctx;
-X509 *x;
+void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 	{
 	ctx->cert=x;
 	}
 
-void X509_STORE_CTX_set_chain(ctx,sk)
-X509_STORE_CTX *ctx;
-STACK *sk;
+void X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	{
 	ctx->untrusted=sk;
 	}
 
+IMPLEMENT_STACK_OF(X509)
+IMPLEMENT_ASN1_SET_OF(X509)
 
+IMPLEMENT_STACK_OF(X509_NAME)
+
+IMPLEMENT_STACK_OF(X509_ATTRIBUTE)
+IMPLEMENT_ASN1_SET_OF(X509_ATTRIBUTE)

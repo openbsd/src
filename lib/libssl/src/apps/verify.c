@@ -60,27 +60,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	verify_main
 
-#ifndef NOPROTO
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx,char *file);
-#else
-static int MS_CALLBACK cb();
-static int check();
-#endif
-
 static int v_verbose=0;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int i,ret=1;
 	char *CApath=NULL,*CAfile=NULL;
@@ -141,6 +133,7 @@ char **argv;
 		X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
 
 
+	ERR_clear_error();
 	if (argc < 1) check(cert_ctx,NULL);
 	else
 		for (i=0; i<argc; i++)
@@ -153,9 +146,7 @@ end:
 	EXIT(ret);
 	}
 
-static int check(ctx,file)
-X509_STORE *ctx;
-char *file;
+static int check(X509_STORE *ctx, char *file)
 	{
 	X509 *x=NULL;
 	BIO *in=NULL;
@@ -180,7 +171,7 @@ char *file;
 			}
 		}
 
-	x=PEM_read_bio_X509(in,NULL,NULL);
+	x=PEM_read_bio_X509(in,NULL,NULL,NULL);
 	if (x == NULL)
 		{
 		fprintf(stdout,"%s: unable to load certificate file\n",
@@ -209,9 +200,7 @@ end:
 	return(ret);
 	}
 
-static int MS_CALLBACK cb(ok,ctx)
-int ok;
-X509_STORE_CTX *ctx;
+static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 

@@ -56,11 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RIPEMD
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/ripemd.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 static EVP_MD ripemd160_md=
 	{
@@ -75,7 +77,8 @@ static EVP_MD ripemd160_md=
 	sizeof(EVP_MD *)+sizeof(RIPEMD160_CTX),
 	};
 
-EVP_MD *EVP_ripemd160()
+EVP_MD *EVP_ripemd160(void)
 	{
 	return(&ripemd160_md);
 	}
+#endif

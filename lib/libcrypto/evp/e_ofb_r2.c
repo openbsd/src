@@ -60,19 +60,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void rc2_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void rc2_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void rc2_ofb_init_key();
-static void rc2_ofb_cipher();
-#endif
-
 static EVP_CIPHER r2_ofb_cipher=
 	{
 	NID_rc2_ofb64,
@@ -86,16 +80,13 @@ static EVP_CIPHER r2_ofb_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_rc2_ofb()
+EVP_CIPHER *EVP_rc2_ofb(void)
 	{
 	return(&r2_ofb_cipher);
 	}
 	
-static void rc2_ofb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void rc2_ofb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	ctx->num=0;
 
@@ -103,15 +94,12 @@ int enc;
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
 	if (key != NULL)
-		RC2_set_key(&(ctx->c.rc2_ks),EVP_RC2_KEY_SIZE,key,
-			EVP_RC2_KEY_SIZE*8);
+		RC2_set_key(&(ctx->c.rc2_ks),EVP_CIPHER_CTX_key_length(ctx),
+			key,EVP_CIPHER_CTX_key_length(ctx)*8);
 	}
 
-static void rc2_ofb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void rc2_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	RC2_ofb64_encrypt(
 		in,out,

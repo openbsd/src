@@ -61,12 +61,12 @@
 #include <string.h>
 #include <time.h>
 #include "apps.h"
-#include "err.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
-#include "pkcs7.h"
-#include "pem.h"
+#include <openssl/err.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pkcs7.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	pkcs7_main
@@ -81,9 +81,7 @@
  * -print_certs
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	PKCS7 *p7=NULL;
 	int i,badops=0;
@@ -161,7 +159,7 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
 		BIO_printf(bio_err," -outform arg  output format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -print_certs  print any certs or crl in the input\n");
 		BIO_printf(bio_err," -des          encrypt PEM output with cbc des\n");
@@ -197,7 +195,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		p7=d2i_PKCS7_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		p7=PEM_read_bio_PKCS7(in,NULL,NULL);
+		p7=PEM_read_bio_PKCS7(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified for pkcs7 object\n");
@@ -223,8 +221,8 @@ bad:
 
 	if (print_certs)
 		{
-		STACK *certs=NULL;
-		STACK *crls=NULL;
+		STACK_OF(X509) *certs=NULL;
+		STACK_OF(X509_CRL) *crls=NULL;
 
 		i=OBJ_obj2nid(p7->type);
 		switch (i)
@@ -245,9 +243,9 @@ bad:
 			{
 			X509 *x;
 
-			for (i=0; i<sk_num(certs); i++)
+			for (i=0; i<sk_X509_num(certs); i++)
 				{
-				x=(X509 *)sk_value(certs,i);
+				x=sk_X509_value(certs,i);
 
 				X509_NAME_oneline(X509_get_subject_name(x),
 					buf,256);
@@ -268,18 +266,18 @@ bad:
 			{
 			X509_CRL *crl;
 
-			for (i=0; i<sk_num(crls); i++)
+			for (i=0; i<sk_X509_CRL_num(crls); i++)
 				{
-				crl=(X509_CRL *)sk_value(crls,i);
+				crl=sk_X509_CRL_value(crls,i);
 
 				X509_NAME_oneline(crl->crl->issuer,buf,256);
 				BIO_puts(out,"issuer= ");
 				BIO_puts(out,buf);
 
 				BIO_puts(out,"\nlast update=");
-				ASN1_UTCTIME_print(out,crl->crl->lastUpdate);
+				ASN1_TIME_print(out,crl->crl->lastUpdate);
 				BIO_puts(out,"\nnext update=");
-				ASN1_UTCTIME_print(out,crl->crl->nextUpdate);
+				ASN1_TIME_print(out,crl->crl->nextUpdate);
 				BIO_puts(out,"\n");
 
 				PEM_write_bio_X509_CRL(out,crl);

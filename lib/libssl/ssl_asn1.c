@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "asn1_mac.h"
-#include "objects.h"
+#include <openssl/asn1_mac.h>
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
 typedef struct ssl_session_asn1_st
@@ -69,22 +69,16 @@ typedef struct ssl_session_asn1_st
 	ASN1_OCTET_STRING cipher;
 	ASN1_OCTET_STRING master_key;
 	ASN1_OCTET_STRING session_id;
+	ASN1_OCTET_STRING session_id_context;
 	ASN1_OCTET_STRING key_arg;
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
 	} SSL_SESSION_ASN1;
 
-/*
- * SSLerr(SSL_F_I2D_SSL_SESSION,SSL_R_CIPHER_CODE_WRONG_LENGTH);
- * SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_UNSUPPORTED_CIPHER);
- */
-
-int i2d_SSL_SESSION(in,pp)
-SSL_SESSION *in;
-unsigned char **pp;
+int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0;
+	int v1=0,v2=0,v3=0,v4=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2];
 	long l;
@@ -138,6 +132,10 @@ unsigned char **pp;
 	a.session_id.type=V_ASN1_OCTET_STRING;
 	a.session_id.data=in->session_id;
 
+	a.session_id_context.length=in->sid_ctx_length;
+	a.session_id_context.type=V_ASN1_OCTET_STRING;
+	a.session_id_context.data=in->sid_ctx;
+
 	a.key_arg.length=in->key_arg_length;
 	a.key_arg.type=V_ASN1_OCTET_STRING;
 	a.key_arg.data=in->key_arg;
@@ -171,6 +169,7 @@ unsigned char **pp;
 		M_ASN1_I2D_len_EXP_opt(&(a.timeout),i2d_ASN1_INTEGER,2,v2);
 	if (in->peer != NULL)
 		M_ASN1_I2D_len_EXP_opt(in->peer,i2d_X509,3,v3);
+	M_ASN1_I2D_len_EXP_opt(&a.session_id_context,i2d_ASN1_OCTET_STRING,4,v4);
 
 	M_ASN1_I2D_seq_total();
 
@@ -187,14 +186,14 @@ unsigned char **pp;
 		M_ASN1_I2D_put_EXP_opt(&(a.timeout),i2d_ASN1_INTEGER,2,v2);
 	if (in->peer != NULL)
 		M_ASN1_I2D_put_EXP_opt(in->peer,i2d_X509,3,v3);
+	M_ASN1_I2D_put_EXP_opt(&a.session_id_context,i2d_ASN1_OCTET_STRING,4,
+			       v4);
 
 	M_ASN1_I2D_finish();
 	}
 
-SSL_SESSION *d2i_SSL_SESSION(a,pp,length)
-SSL_SESSION **a;
-unsigned char **pp;
-long length;
+SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, unsigned char **pp,
+	     long length)
 	{
 	int version,ssl_version=0,i;
 	long id;
@@ -307,6 +306,21 @@ long length;
 		ret->peer=NULL;
 		}
 	M_ASN1_D2I_get_EXP_opt(ret->peer,d2i_X509,3);
+
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,4);
+
+	if(os.data != NULL)
+	    {
+	    if (os.length > SSL_MAX_SID_CTX_LENGTH)
+		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_BAD_LENGTH);
+	    ret->sid_ctx_length=os.length;
+	    memcpy(ret->sid_ctx,os.data,os.length);
+	    Free(os.data); os.data=NULL; os.length=0;
+	    }
+	else
+	    ret->sid_ctx_length=0;
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

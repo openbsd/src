@@ -58,20 +58,16 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rand.h"
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/rand.h>
+#ifndef NO_RSA
+#include <openssl/rsa.h>
+#endif
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int EVP_SealInit(ctx,type,ek,ekl,iv,pubk,npubk)
-EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *type;
-unsigned char **ek;
-int *ekl;
-unsigned char *iv;
-EVP_PKEY **pubk;
-int npubk;
+int EVP_SealInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char **ek,
+	     int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
 	{
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	int i;
@@ -105,10 +101,7 @@ int inl;
 	}
 */
 
-void EVP_SealFinal(ctx,out,outl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
+void EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
 	EVP_EncryptFinal(ctx,out,outl);
 	EVP_EncryptInit(ctx,NULL,NULL,NULL);

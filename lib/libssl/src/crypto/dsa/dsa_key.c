@@ -56,16 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "sha.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
+#include <openssl/sha.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
 
-int DSA_generate_key(dsa)
-DSA *dsa;
+int DSA_generate_key(DSA *dsa)
 	{
 	int ok=0;
 	unsigned int i;
@@ -109,4 +109,4 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	return(ok);
 	}
-
+#endif

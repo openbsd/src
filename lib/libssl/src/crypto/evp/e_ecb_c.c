@@ -60,19 +60,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void cast_ecb_init_key();
-static void cast_ecb_cipher();
-#endif
-
 static EVP_CIPHER cast5_ecb_cipher=
 	{
 	NID_cast5_ecb,
@@ -86,26 +80,20 @@ static EVP_CIPHER cast5_ecb_cipher=
 	NULL,
 	};
 
-EVP_CIPHER *EVP_cast5_ecb()
+EVP_CIPHER *EVP_cast5_ecb(void)
 	{
 	return(&cast5_ecb_cipher);
 	}
 	
-static void cast_ecb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void cast_ecb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
 	if (key != NULL)
 		CAST_set_key(&(ctx->c.cast_ks),EVP_CAST5_KEY_SIZE,key);
 	}
 
-static void cast_ecb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void cast_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
 	unsigned int i;
 

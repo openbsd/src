@@ -59,22 +59,21 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 
-char *SSL_state_string_long(s)
-SSL *s;
+char *SSL_state_string_long(SSL *s)
 	{
 	char *str;
 
 	switch (s->state)
 		{
-case SSL_ST_BEFORE: str="before SSL initalisation"; break;
-case SSL_ST_ACCEPT: str="before accept initalisation"; break;
-case SSL_ST_CONNECT: str="before connect initalisation"; break;
+case SSL_ST_BEFORE: str="before SSL initialization"; break;
+case SSL_ST_ACCEPT: str="before accept initialization"; break;
+case SSL_ST_CONNECT: str="before connect initialization"; break;
 case SSL_ST_OK: str="SSL negotiation finished successfully"; break;
 case SSL_ST_RENEGOTIATE:	str="SSL renegotiate ciphers"; break;
-case SSL_ST_BEFORE|SSL_ST_CONNECT: str="before/connect initalisation"; break;
-case SSL_ST_OK|SSL_ST_CONNECT: str="ok/connect SSL initalisation"; break;
-case SSL_ST_BEFORE|SSL_ST_ACCEPT: str="before/accept initalisation"; break;
-case SSL_ST_OK|SSL_ST_ACCEPT: str="ok/accept SSL initalisation"; break;
+case SSL_ST_BEFORE|SSL_ST_CONNECT: str="before/connect initialization"; break;
+case SSL_ST_OK|SSL_ST_CONNECT: str="ok/connect SSL initialization"; break;
+case SSL_ST_BEFORE|SSL_ST_ACCEPT: str="before/accept initialization"; break;
+case SSL_ST_OK|SSL_ST_ACCEPT: str="ok/accept SSL initialization"; break;
 #ifndef NO_SSL2
 case SSL2_ST_CLIENT_START_ENCRYPTION: str="SSLv2 client start encryption"; break;
 case SSL2_ST_SERVER_START_ENCRYPTION: str="SSLv2 server start encryption"; break;
@@ -132,6 +131,8 @@ case SSL3_ST_CR_SRVR_DONE_A:	str="SSLv3 read server done A"; break;
 case SSL3_ST_CR_SRVR_DONE_B:	str="SSLv3 read server done B"; break;
 case SSL3_ST_CW_CERT_A:		str="SSLv3 write client certificate A"; break;
 case SSL3_ST_CW_CERT_B:		str="SSLv3 write client certificate B"; break;
+case SSL3_ST_CW_CERT_C:		str="SSLv3 write client certificate C"; break;
+case SSL3_ST_CW_CERT_D:		str="SSLv3 write client certificate D"; break;
 case SSL3_ST_CW_KEY_EXCH_A:	str="SSLv3 write client key exchange A"; break;
 case SSL3_ST_CW_KEY_EXCH_B:	str="SSLv3 write client key exchange B"; break;
 case SSL3_ST_CW_CERT_VRFY_A:	str="SSLv3 write certificate verify A"; break;
@@ -198,8 +199,7 @@ default:	str="unknown state"; break;
 	return(str);
 	}
 
-char *SSL_rstate_string_long(s)
-SSL *s;
+char *SSL_rstate_string_long(SSL *s)
 	{
 	char *str;
 
@@ -213,8 +213,7 @@ SSL *s;
 	return(str);
 	}
 
-char *SSL_state_string(s)
-SSL *s;
+char *SSL_state_string(SSL *s)
 	{
 	char *str;
 
@@ -283,6 +282,8 @@ case SSL3_ST_CR_SRVR_DONE_A:			str="3RSD_A"; break;
 case SSL3_ST_CR_SRVR_DONE_B:			str="3RSD_B"; break;
 case SSL3_ST_CW_CERT_A:				str="3WCC_A"; break;
 case SSL3_ST_CW_CERT_B:				str="3WCC_B"; break;
+case SSL3_ST_CW_CERT_C:				str="3WCC_C"; break;
+case SSL3_ST_CW_CERT_D:				str="3WCC_D"; break;
 case SSL3_ST_CW_KEY_EXCH_A:			str="3WCKEA"; break;
 case SSL3_ST_CW_KEY_EXCH_B:			str="3WCKEB"; break;
 case SSL3_ST_CW_CERT_VRFY_A:			str="3WCV_A"; break;
@@ -346,8 +347,7 @@ default:					str="UNKWN "; break;
 	return(str);
 	}
 
-char *SSL_alert_type_string_long(value)
-int value;
+char *SSL_alert_type_string_long(int value)
 	{
 	value>>=8;
 	if (value == SSL3_AL_WARNING)
@@ -358,8 +358,7 @@ int value;
 		return("unknown");
 	}
 
-char *SSL_alert_type_string(value)
-int value;
+char *SSL_alert_type_string(int value)
 	{
 	value>>=8;
 	if (value == SSL3_AL_WARNING)
@@ -370,8 +369,7 @@ int value;
 		return("U");
 	}
 
-char *SSL_alert_desc_string(value)
-int value;
+char *SSL_alert_desc_string(int value)
 	{
 	char *str;
 
@@ -394,8 +392,7 @@ int value;
 	return(str);
 	}
 
-char *SSL_alert_desc_string_long(value)
-int value;
+char *SSL_alert_desc_string_long(int value)
 	{
 	char *str;
 
@@ -442,8 +439,7 @@ int value;
 	return(str);
 	}
 
-char *SSL_rstate_string(s)
-SSL *s;
+char *SSL_rstate_string(SSL *s)
 	{
 	char *str;
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # The inner loop instruction sequence and the IP/FP modifications are from
 # Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>
@@ -32,7 +32,7 @@ sub fcrypt_body
 	&xor(	$R,	$R);
 	&mov($ks,&wparam(1));
 
-	&push(25); # add a variable
+	&push(&DWC(25)); # add a variable
 
 	&set_label("start");
 	for ($i=0; $i<16; $i+=2)

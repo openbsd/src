@@ -7,32 +7,39 @@ TOP=	..
 CC=	cc
 INCLUDES= -I.. -I../../include
 CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 MAKE=		make -f Makefile.ssl
-MAKEDEPEND=	makedepend -f Makefile.ssl
+MAKEDEPEND=	$(TOP)/util/domd $(TOP)
 MAKEFILE=	Makefile.ssl
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile.ssl
 TEST=
-APPS= c_hash c_info c_issuer c_name c_rehash
+APPS= c_rehash
+MISC_APPS= c_hash c_info c_issuer c_name
 
 all:
 
 install:
 	@for i in $(APPS) ; \
 	do  \
-	(cp $$i $(INSTALLTOP)/bin/$$i; \
-	chmod 755 $(INSTALLTOP)/bin/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	done;
+	@for i in $(MISC_APPS) ; \
+	do  \
+	(cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+	chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
 	done;
 
 files:
-	perl $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
+	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	/bin/rm -f Makefile
-	$(TOP)/util/point.sh Makefile.ssl Makefile ;
+	@$(TOP)/util/point.sh Makefile.ssl Makefile
 
 lint:
 
@@ -43,11 +50,11 @@ errors:
 depend:
 
 dclean:
-	perl -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	/bin/rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors:
 

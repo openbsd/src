@@ -62,15 +62,12 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
 #define TRUNCATE
 #define DUMP_WIDTH	16
 
-int BIO_dump(bio,s,len)
-BIO *bio;
-char *s;
-int len;
+int BIO_dump(BIO *bio, const char *s, int len)
 {
   int ret=0;
   char buf[160+1],tmp[20];
@@ -105,7 +102,13 @@ int len;
       if (((i*DUMP_WIDTH)+j)>=len)
 	break;
       ch=((unsigned char)*((char *)(s)+i*DUMP_WIDTH+j)) & 0xff;
+#ifndef CHARSET_EBCDIC
       sprintf(tmp,"%c",((ch>=' ')&&(ch<='~'))?ch:'.');
+#else
+      sprintf(tmp,"%c",((ch>=os_toascii[' '])&&(ch<=os_toascii['~']))
+	      ? os_toebcdic[ch]
+	      : '.');
+#endif
       strcat(buf,tmp);
     }
     strcat(buf,"\n");

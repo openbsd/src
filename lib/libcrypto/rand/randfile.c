@@ -56,11 +56,17 @@
  * [including the GNU Public Licence.]
  */
 
+#include <errno.h>
 #include <stdio.h>
-#include "cryptlib.h"
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "rand.h"
+
+#include "openssl/e_os.h"
+
+#include <openssl/rand.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024
@@ -68,9 +74,7 @@
 
 /* #define RFILE ".rand" - defined in ../../e_os.h */
 
-int RAND_load_file(file,bytes)
-char *file;
-long bytes;
+int RAND_load_file(const char *file, long bytes)
 	{
 	MS_STATIC unsigned char buf[BUFSIZE];
 	struct stat sb;
@@ -81,12 +85,12 @@ long bytes;
 
 	i=stat(file,&sb);
 	/* If the state fails, put some crap in anyway */
-	RAND_seed((unsigned char *)&sb,sizeof(sb));
+	RAND_seed(&sb,sizeof(sb));
 	ret+=sizeof(sb);
 	if (i < 0) return(0);
 	if (bytes <= 0) return(ret);
 
-	in=fopen(file,"r");
+	in=fopen(file,"rb");
 	if (in == NULL) goto err;
 	for (;;)
 		{
@@ -105,15 +109,24 @@ err:
 	return(ret);
 	}
 
-int RAND_write_file(file)
-char *file;
+int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
 	int i,ret=0;
 	FILE *out;
 	int n;
 
-	out=fopen(file,"w");
+	/* Under VMS, fopen(file, "wb") will craete a new version of the
+	   same file.  This is not good, so let's try updating an existing
+	   one, and create file only if it doesn't already exist.  This
+	   should be completely harmless on system that have no file
+	   versions.					-- Richard Levitte */
+	out=fopen(file,"rb+");
+	if (out == NULL && errno == ENOENT)
+		{
+		errno = 0;
+		out=fopen(file,"wb");
+		}
 	if (out == NULL) goto err;
 	chmod(file,0600);
 	n=RAND_DATA;
@@ -137,9 +150,7 @@ err:
 	return(ret);
 	}
 
-char *RAND_file_name(buf,size)
-char *buf;
-int size;
+char *RAND_file_name(char *buf, int size)
 	{
 	char *s;
 	char *ret=NULL;
@@ -158,7 +169,9 @@ int size;
 		if (((int)(strlen(s)+strlen(RFILE)+2)) > size)
 			return(RFILE);
 		strcpy(buf,s);
+#ifndef VMS
 		strcat(buf,"/");
+#endif
 		strcat(buf,RFILE);
 		ret=buf;
 		}

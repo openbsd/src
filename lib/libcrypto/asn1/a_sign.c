@@ -62,21 +62,15 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
-#include "pem.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
 
-int ASN1_sign(i2d,algor1,algor2,signature,data,pkey,type)
-int (*i2d)();
-X509_ALGOR *algor1;
-X509_ALGOR *algor2;
-ASN1_BIT_STRING *signature;
-char *data;
-EVP_PKEY *pkey;
-EVP_MD *type;
+int ASN1_sign(int (*i2d)(), X509_ALGOR *algor1, X509_ALGOR *algor2,
+	     ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
+	     const EVP_MD *type)
 	{
 	EVP_MD_CTX ctx;
 	unsigned char *p,*buf_in=NULL,*buf_out=NULL;
@@ -136,7 +130,11 @@ EVP_MD *type;
 	signature->data=buf_out;
 	buf_out=NULL;
 	signature->length=outl;
-
+	/* In the interests of compatability, I'll make sure that
+	 * the bit string has a 'not-used bits' value of 0
+	 */
+	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
 	memset(&ctx,0,sizeof(ctx));
 	if (buf_in != NULL)

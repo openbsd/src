@@ -59,19 +59,17 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#ifndef MSDOS
+#if !defined(MSDOS) && (!defined(VMS) || defined(__DECC))
 #define TIMES
 #endif
 
 #include <stdio.h>
-#ifndef MSDOS
-#include <unistd.h>
-#else
-#include <io.h>
-extern int exit();
-#endif
+
+#include <openssl/e_os2.h>
+#include OPENSSL_UNISTD_IO
+OPENSSL_DECLARE_EXIT
+
 #include <signal.h>
-#ifndef VMS
 #ifndef _IRIX
 #include <time.h>
 #endif
@@ -79,35 +77,32 @@ extern int exit();
 #include <sys/types.h>
 #include <sys/times.h>
 #endif
-#else /* VMS */
-#include <types.h>
-struct tms {
-	time_t tms_utime;
-	time_t tms_stime;
-	time_t tms_uchild;	/* I dunno...  */
-	time_t tms_uchildsys;	/* so these names are a guess :-) */
-	}
+
+/* Depending on the VMS version, the tms structure is perhaps defined.
+   The __TMS macro will show if it was.  If it wasn't defined, we should
+   undefine TIMES, since that tells the rest of the program how things
+   should be handled.				-- Richard Levitte */
+#if defined(VMS) && defined(__DECC) && !defined(__TMS)
+#undef TIMES
 #endif
+
 #ifndef TIMES
 #include <sys/timeb.h>
 #endif
 
-#ifdef sun
+#if defined(sun) || defined(__ultrix)
+#define _POSIX_SOURCE
 #include <limits.h>
 #include <sys/param.h>
 #endif
 
-#include "des.h"
+#include <openssl/des.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 # ifndef CLK_TCK
 #  ifndef _BSD_CLK_TCK_ /* FreeBSD fix */
-#   ifndef VMS
-#    define HZ	100.0
-#   else /* VMS */
-#    define HZ	100.0
-#   endif
+#   define HZ	100.0
 #  else /* _BSD_CLK_TCK_ */
 #   define HZ ((double)_BSD_CLK_TCK_)
 #  endif
@@ -119,12 +114,7 @@ struct tms {
 #define BUFSIZE	((long)1024)
 long run=0;
 
-#ifndef NOPROTO
 double Time_F(int s);
-#else
-double Time_F();
-#endif
-
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #define SIGRETTYPE void
@@ -132,14 +122,8 @@ double Time_F();
 #define SIGRETTYPE int
 #endif
 
-#ifndef NOPROTO
 SIGRETTYPE sig_done(int sig);
-#else
-SIGRETTYPE sig_done();
-#endif
-
-SIGRETTYPE sig_done(sig)
-int sig;
+SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);
 	run=0;
@@ -152,8 +136,7 @@ int sig;
 #define START	0
 #define STOP	1
 
-double Time_F(s)
-int s;
+double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -189,9 +172,7 @@ int s;
 #endif
 	}
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	long count;
 	static unsigned char buf[BUFSIZE];
@@ -209,12 +190,12 @@ char **argv;
 	printf("program when this computer is idle.\n");
 #endif
 
-	des_set_key((C_Block *)key2,sch2);
-	des_set_key((C_Block *)key3,sch3);
+	des_set_key(&key2,sch2);
+	des_set_key(&key3,sch3);
 
 #ifndef SIGALRM
 	printf("First we calculate the approximate speed ...\n");
-	des_set_key((C_Block *)key,sch);
+	des_set_key(&key,sch);
 	count=10;
 	do	{
 		long i;
@@ -244,7 +225,7 @@ char **argv;
 
 	Time_F(START);
 	for (count=0,run=1; COND(ca); count++)
-		des_set_key((C_Block *)key,sch);
+		des_set_key(&key,sch);
 	d=Time_F(STOP);
 	printf("%ld set_key's in %.2f seconds\n",count,d);
 	a=((double)COUNT(ca))/d;
@@ -276,8 +257,8 @@ char **argv;
 #endif
 	Time_F(START);
 	for (count=0,run=1; COND(cc); count++)
-		des_ncbc_encrypt((C_Block *)buf,(C_Block *)buf,BUFSIZE,&(sch[0]),
-			(C_Block *)&(key[0]),DES_ENCRYPT);
+		des_ncbc_encrypt(buf,buf,BUFSIZE,&(sch[0]),
+			&key,DES_ENCRYPT);
 	d=Time_F(STOP);
 	printf("%ld des_cbc_encrypt's of %ld byte blocks in %.2f second\n",
 		count,BUFSIZE,d);
@@ -293,11 +274,11 @@ char **argv;
 #endif
 	Time_F(START);
 	for (count=0,run=1; COND(cd); count++)
-		des_ede3_cbc_encrypt((C_Block *)buf,(C_Block *)buf,BUFSIZE,
+		des_ede3_cbc_encrypt(buf,buf,BUFSIZE,
 			&(sch[0]),
 			&(sch2[0]),
 			&(sch3[0]),
-			(C_Block *)&(key[0]),
+			&key,
 			DES_ENCRYPT);
 	d=Time_F(STOP);
 	printf("%ld des_ede_cbc_encrypt's of %ld byte blocks in %.2f second\n",

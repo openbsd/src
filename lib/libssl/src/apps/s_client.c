@@ -56,19 +56,41 @@
  * [including the GNU Public Licence.]
  */
 
+#ifdef APPS_CRLF
+# include <assert.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define USE_SOCKETS
 #ifdef NO_STDIO
 #define APPS_WIN16
 #endif
+
+/* With IPv6, it looks like Digital has mixed up the proper order of
+   recursive header file inclusion, resulting in the compiler complaining
+   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
+   is needed to have fileno() declared correctly...  So let's define u_int */
+#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#define __U_INT
+typedef unsigned int u_int;
+#endif
+
+#define USE_SOCKETS
 #include "apps.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
-#include "pem.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include "s_apps.h"
+
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
+#undef FIONBIO
+#endif
+
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
 
 #undef PROG
 #define PROG	s_client_main
@@ -90,21 +112,16 @@ static int c_nbio=0;
 #endif
 static int c_Pause=0;
 static int c_debug=0;
+static int c_showcerts=0;
 
-#ifndef NOPROTO
 static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
-#else
-static void sc_usage();
-static void print_stuff();
-#endif
-
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 
-static void sc_usage()
+static void sc_usage(void)
 	{
-	BIO_printf(bio_err,"usage: client args\n");
+	BIO_printf(bio_err,"usage: s_client args\n");
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -host host     - use -connect instead\n");
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
@@ -118,11 +135,15 @@ static void sc_usage()
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -reconnect    - Drop and re-make the connection with the same Session-ID\n");
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
+	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
+#endif
+#ifdef APPS_CRLF /* won't be #ifdef'd in next release */
+	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 #endif
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
@@ -130,14 +151,12 @@ static void sc_usage()
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
-	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'ssleay ciphers'\n");
-	BIO_printf(bio_err,"                 command to se what is available\n");
+	BIO_printf(bio_err," -cipher       - prefered cipher to use, use the 'openssl ciphers'\n");
+	BIO_printf(bio_err,"                 command to see what is available\n");
 
 	}
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int off=0;
 	SSL *con=NULL,*con2=NULL;
@@ -152,7 +171,10 @@ char **argv;
 	char *cert_file=NULL,*key_file=NULL;
 	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE,bugs=0;
-	int write_tty,read_tty,write_ssl,read_ssl,tty_on;
+#ifdef APPS_CRLF
+	int crlf=0;
+#endif
+	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
 	SSL_METHOD *meth=NULL;
@@ -171,6 +193,7 @@ char **argv;
 	c_Pause=0;
 	c_quiet=0;
 	c_debug=0;
+	c_showcerts=0;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -221,12 +244,18 @@ char **argv;
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+#ifdef APPS_CRLF
+		else if	(strcmp(*argv,"-crlf") == 0)
+			crlf=1;
+#endif
 		else if	(strcmp(*argv,"-quiet") == 0)
 			c_quiet=1;
 		else if	(strcmp(*argv,"-pause") == 0)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+		else if	(strcmp(*argv,"-showcerts") == 0)
+			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
 			nbio_test=1;
 		else if	(strcmp(*argv,"-state") == 0)
@@ -434,31 +463,43 @@ re_start:
 				}
 			}
 
+		ssl_pending = read_ssl && SSL_pending(con);
+
+		if (!ssl_pending)
+			{
 #ifndef WINDOWS
-		if (tty_on)
-			{
-			if (read_tty)  FD_SET(fileno(stdin),&readfds);
-			if (write_tty) FD_SET(fileno(stdout),&writefds);
-			}
+			if (tty_on)
+				{
+				if (read_tty)  FD_SET(fileno(stdin),&readfds);
+				if (write_tty) FD_SET(fileno(stdout),&writefds);
+				}
 #endif
-		if (read_ssl)
-			FD_SET(SSL_get_fd(con),&readfds);
-		if (write_ssl)
-			FD_SET(SSL_get_fd(con),&writefds);
+			if (read_ssl)
+				FD_SET(SSL_get_fd(con),&readfds);
+			if (write_ssl)
+				FD_SET(SSL_get_fd(con),&writefds);
 
-/*		printf("mode tty(%d %d%d) ssl(%d%d)\n",
-			tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
+/*			printf("mode tty(%d %d%d) ssl(%d%d)\n",
+				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
-		i=select(width,&readfds,&writefds,NULL,NULL);
-		if ( i < 0)
-			{
-			BIO_printf(bio_err,"bad select %d\n",
+			/* Note: under VMS with SOCKETSHR the second parameter
+			 * is currently of type (int *) whereas under other
+			 * systems it is (void *) if you don't have a cast it
+			 * will choke the compiler: if you do have a cast then
+			 * you can either go for (int *) or (void *).
+			 */
+			i=select(width,(void *)&readfds,(void *)&writefds,
+				 NULL,NULL);
+			if ( i < 0)
+				{
+				BIO_printf(bio_err,"bad select %d\n",
 				get_last_socket_error());
-			goto shut;
-			/* goto end; */
+				goto shut;
+				/* goto end; */
+				}
 			}
 
-		if (FD_ISSET(SSL_get_fd(con),&writefds))
+		if (!ssl_pending && FD_ISSET(SSL_get_fd(con),&writefds))
 			{
 			k=SSL_write(con,&(cbuf[cbuf_off]),
 				(unsigned int)cbuf_len);
@@ -526,8 +567,11 @@ re_start:
 				}
 			}
 #ifndef WINDOWS
-		else if (FD_ISSET(fileno(stdout),&writefds))
+		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
 			{
+#ifdef CHARSET_EBCDIC
+			ascii2ebcdic(&(sbuf[sbuf_off]),&(sbuf[sbuf_off]),sbuf_len);
+#endif
 			i=write(fileno(stdout),&(sbuf[sbuf_off]),sbuf_len);
 
 			if (i <= 0)
@@ -546,12 +590,20 @@ re_start:
 				}
 			}
 #endif
-		else if (FD_ISSET(SSL_get_fd(con),&readfds))
+		else if (ssl_pending || FD_ISSET(SSL_get_fd(con),&readfds))
 			{
 #ifdef RENEG
 { static int iiii; if (++iiii == 52) { SSL_renegotiate(con); iiii=0; } }
 #endif
+#if 1
 			k=SSL_read(con,sbuf,1024 /* BUFSIZZ */ );
+#else
+/* Demo for pending and peek :-) */
+			k=SSL_read(con,sbuf,16);
+{ char zbuf[10240]; 
+printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240));
+}
+#endif
 
 			switch (SSL_get_error(con,k))
 				{
@@ -588,14 +640,39 @@ re_start:
 			case SSL_ERROR_SSL:
 				ERR_print_errors(bio_err);
 				goto shut;
-				break;
+				/* break; */
 				}
 			}
 
 #ifndef WINDOWS
 		else if (FD_ISSET(fileno(stdin),&readfds))
 			{
-			i=read(fileno(stdin),cbuf,BUFSIZZ);
+#ifdef APPS_CRLF
+			if (crlf)
+				{
+				int j, lf_num;
+
+				i=read(fileno(stdin),cbuf,BUFSIZZ/2);
+				lf_num = 0;
+				/* both loops are skipped when i <= 0 */
+				for (j = 0; j < i; j++)
+					if (cbuf[j] == '\n')
+						lf_num++;
+				for (j = i-1; j >= 0; j--)
+					{
+					cbuf[j+lf_num] = cbuf[j];
+					if (cbuf[j] == '\n')
+						{
+						lf_num--;
+						i++;
+						cbuf[j+lf_num] = '\r';
+						}
+					}
+				assert(lf_num == 0);
+				}
+			else
+#endif
+				i=read(fileno(stdin),cbuf,BUFSIZZ);
 
 			if ((!c_quiet) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{
@@ -605,18 +682,21 @@ re_start:
 
 			if ((!c_quiet) && (cbuf[0] == 'R'))
 				{
+				BIO_printf(bio_err,"RENEGOTIATING\n");
 				SSL_renegotiate(con);
-				read_tty=0;
-				write_ssl=1;
+				cbuf_len=0;
 				}
 			else
 				{
 				cbuf_len=i;
 				cbuf_off=0;
+#ifdef CHARSET_EBCDIC
+				ebcdic2ascii(cbuf, cbuf, i);
+#endif
 				}
 
-			read_tty=0;
 			write_ssl=1;
+			read_tty=0;
 			}
 #endif
 		}
@@ -639,34 +719,38 @@ end:
 	}
 
 
-static void print_stuff(bio,s,full)
-BIO *bio;
-SSL *s;
-int full;
+static void print_stuff(BIO *bio, SSL *s, int full)
 	{
 	X509 *peer=NULL;
 	char *p;
 	static char *space="                ";
 	char buf[BUFSIZ];
-	STACK *sk;
+	STACK_OF(X509) *sk;
+	STACK_OF(X509_NAME) *sk2;
 	SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j,i;
 
 	if (full)
 		{
+		int got_a_chain = 0;
+
 		sk=SSL_get_peer_cert_chain(s);
 		if (sk != NULL)
 			{
-			BIO_printf(bio,"---\nCertficate chain\n");
-			for (i=0; i<sk_num(sk); i++)
+			got_a_chain = 1; /* we don't have it for SSL2 (yet) */
+
+			BIO_printf(bio,"---\nCertificate chain\n");
+			for (i=0; i<sk_X509_num(sk); i++)
 				{
-				X509_NAME_oneline(X509_get_subject_name((X509 *)
-					sk_value(sk,i)),buf,BUFSIZ);
+				X509_NAME_oneline(X509_get_subject_name(
+					sk_X509_value(sk,i)),buf,BUFSIZ);
 				BIO_printf(bio,"%2d s:%s\n",i,buf);
-				X509_NAME_oneline(X509_get_issuer_name((X509 *)
-					sk_value(sk,i)),buf,BUFSIZ);
+				X509_NAME_oneline(X509_get_issuer_name(
+					sk_X509_value(sk,i)),buf,BUFSIZ);
 				BIO_printf(bio,"   i:%s\n",buf);
+				if (c_showcerts)
+					PEM_write_bio_X509(bio,sk_X509_value(sk,i));
 				}
 			}
 
@@ -675,7 +759,8 @@ int full;
 		if (peer != NULL)
 			{
 			BIO_printf(bio,"Server certificate\n");
-			PEM_write_bio_X509(bio,peer);
+			if (!(c_showcerts && got_a_chain)) /* Redundant if we showed the whole chain */
+				PEM_write_bio_X509(bio,peer);
 			X509_NAME_oneline(X509_get_subject_name(peer),
 				buf,BUFSIZ);
 			BIO_printf(bio,"subject=%s\n",buf);
@@ -686,13 +771,13 @@ int full;
 		else
 			BIO_printf(bio,"no peer certificate available\n");
 
-		sk=SSL_get_client_CA_list(s);
-		if ((sk != NULL) && (sk_num(sk) > 0))
+		sk2=SSL_get_client_CA_list(s);
+		if ((sk2 != NULL) && (sk_X509_NAME_num(sk2) > 0))
 			{
 			BIO_printf(bio,"---\nAcceptable client certificate CA names\n");
-			for (i=0; i<sk_num(sk); i++)
+			for (i=0; i<sk_X509_NAME_num(sk2); i++)
 				{
-				xn=(X509_NAME *)sk_value(sk,i);
+				xn=sk_X509_NAME_value(sk2,i);
 				X509_NAME_oneline(xn,buf,sizeof(buf));
 				BIO_write(bio,buf,strlen(buf));
 				BIO_write(bio,"\n",1);
@@ -705,6 +790,11 @@ int full;
 		p=SSL_get_shared_ciphers(s,buf,BUFSIZ);
 		if (p != NULL)
 			{
+			/* This works only for SSL 2.  In later protocol
+			 * versions, the client does not know what other
+			 * ciphers (in addition to the one to be used
+			 * in the current connection) the server supports. */
+
 			BIO_printf(bio,"---\nCiphers common between both SSL endpoints:\n");
 			j=i=0;
 			while (*p)
@@ -735,9 +825,13 @@ int full;
 	BIO_printf(bio,"%s, Cipher is %s\n",
 		SSL_CIPHER_get_version(c),
 		SSL_CIPHER_get_name(c));
-	if (peer != NULL)
+	if (peer != NULL) {
+		EVP_PKEY *pktmp;
+		pktmp = X509_get_pubkey(peer);
 		BIO_printf(bio,"Server public key is %d bit\n",
-			EVP_PKEY_bits(X509_get_pubkey(peer)));
+							 EVP_PKEY_bits(pktmp));
+		EVP_PKEY_free(pktmp);
+	}
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)

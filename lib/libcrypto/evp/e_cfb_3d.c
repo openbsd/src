@@ -56,24 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void des_ede_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void des_ede3_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void des_ede_cfb_init_key();
-static void des_ede3_cfb_init_key();
-static void des_ede_cfb_cipher();
-#endif
-
 static EVP_CIPHER d_ede_cfb_cipher2=
 	{
 	NID_des_ede_cfb64,
@@ -100,67 +94,62 @@ static EVP_CIPHER d_ede3_cfb_cipher3=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_des_ede_cfb()
+EVP_CIPHER *EVP_des_ede_cfb(void)
 	{
 	return(&d_ede_cfb_cipher2);
 	}
 
-EVP_CIPHER *EVP_des_ede3_cfb()
+EVP_CIPHER *EVP_des_ede3_cfb(void)
 	{
 	return(&d_ede3_cfb_cipher3);
 	}
 	
-static void des_ede_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ede_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
+	des_cblock *deskey = (des_cblock *)key;
+
 	ctx->num=0;
 
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
+	if (deskey != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
+		des_set_key(&deskey[0],ctx->c.des_ede.ks1);
+		des_set_key(&deskey[1],ctx->c.des_ede.ks2);
 		memcpy( (char *)ctx->c.des_ede.ks3,
 			(char *)ctx->c.des_ede.ks1,
 			sizeof(ctx->c.des_ede.ks1));
 		}
 	}
 
-static void des_ede3_cfb_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void des_ede3_cfb_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
+	des_cblock *deskey = (des_cblock *)key;
+
 	ctx->num=0;
 
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
+	if (deskey != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.des_ede.ks1);
-		des_set_key((des_cblock *)&(key[8]),ctx->c.des_ede.ks2);
-		des_set_key((des_cblock *)&(key[16]),ctx->c.des_ede.ks3);
+		des_set_key(&deskey[0],ctx->c.des_ede.ks1);
+		des_set_key(&deskey[1],ctx->c.des_ede.ks2);
+		des_set_key(&deskey[2],ctx->c.des_ede.ks3);
 		}
 	}
 
-static void des_ede_cfb_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void des_ede_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
-	des_ede3_cfb64_encrypt(
-		in,out,(long)inl,
-		ctx->c.des_ede.ks1,
-		ctx->c.des_ede.ks2,
-		ctx->c.des_ede.ks3,
-		(des_cblock *)&(ctx->iv[0]),
-		&ctx->num,ctx->encrypt);
+	des_ede3_cfb64_encrypt(in,out,(long)inl,
+			       ctx->c.des_ede.ks1,
+			       ctx->c.des_ede.ks2,
+			       ctx->c.des_ede.ks3,
+			       (des_cblock*)&(ctx->iv[0]),
+			       &ctx->num,ctx->encrypt);
 	}
+#endif

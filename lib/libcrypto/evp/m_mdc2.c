@@ -56,11 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_MDC2
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 static EVP_MD mdc2_md=
 	{
@@ -75,7 +76,8 @@ static EVP_MD mdc2_md=
 	sizeof(EVP_MD *)+sizeof(MDC2_CTX),
 	};
 
-EVP_MD *EVP_mdc2()
+EVP_MD *EVP_mdc2(void)
 	{
 	return(&mdc2_md);
 	}
+#endif

@@ -60,9 +60,68 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-char *BN_version="Big Number part of SSLeay 0.9.0b 29-Jun-1998";
+const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
 
-BIGNUM *BN_value_one()
+/* For a 32 bit machine
+ * 2 -   4 ==  128
+ * 3 -   8 ==  256
+ * 4 -  16 ==  512
+ * 5 -  32 == 1024
+ * 6 -  64 == 2048
+ * 7 - 128 == 4096
+ * 8 - 256 == 8192
+ */
+OPENSSL_GLOBAL int bn_limit_bits=0;
+OPENSSL_GLOBAL int bn_limit_num=8;        /* (1<<bn_limit_bits) */
+OPENSSL_GLOBAL int bn_limit_bits_low=0;
+OPENSSL_GLOBAL int bn_limit_num_low=8;    /* (1<<bn_limit_bits_low) */
+OPENSSL_GLOBAL int bn_limit_bits_high=0;
+OPENSSL_GLOBAL int bn_limit_num_high=8;   /* (1<<bn_limit_bits_high) */
+OPENSSL_GLOBAL int bn_limit_bits_mont=0;
+OPENSSL_GLOBAL int bn_limit_num_mont=8;   /* (1<<bn_limit_bits_mont) */
+
+void BN_set_params(int mult, int high, int low, int mont)
+	{
+	if (mult >= 0)
+		{
+		if (mult > (sizeof(int)*8)-1)
+			mult=sizeof(int)*8-1;
+		bn_limit_bits=mult;
+		bn_limit_num=1<<mult;
+		}
+	if (high >= 0)
+		{
+		if (high > (sizeof(int)*8)-1)
+			high=sizeof(int)*8-1;
+		bn_limit_bits_high=high;
+		bn_limit_num_high=1<<high;
+		}
+	if (low >= 0)
+		{
+		if (low > (sizeof(int)*8)-1)
+			low=sizeof(int)*8-1;
+		bn_limit_bits_low=low;
+		bn_limit_num_low=1<<low;
+		}
+	if (mont >= 0)
+		{
+		if (mont > (sizeof(int)*8)-1)
+			mont=sizeof(int)*8-1;
+		bn_limit_bits_mont=mont;
+		bn_limit_num_mont=1<<mont;
+		}
+	}
+
+int BN_get_params(int which)
+	{
+	if      (which == 0) return(bn_limit_bits);
+	else if (which == 1) return(bn_limit_bits_high);
+	else if (which == 2) return(bn_limit_bits_low);
+	else if (which == 3) return(bn_limit_bits_mont);
+	else return(0);
+	}
+
+BIGNUM *BN_value_one(void)
 	{
 	static BN_ULONG data_one=1L;
 	static BIGNUM const_one={&data_one,1,1,0};
@@ -70,7 +129,7 @@ BIGNUM *BN_value_one()
 	return(&const_one);
 	}
 
-char *BN_options()
+char *BN_options(void)
 	{
 	static int init=0;
 	static char data[16];
@@ -89,10 +148,9 @@ char *BN_options()
 	return(data);
 	}
 
-int BN_num_bits_word(l)
-BN_ULONG l;
+int BN_num_bits_word(BN_ULONG l)
 	{
-	static char bits[256]={
+	static const char bits[256]={
 		0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
 		5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
 		6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
@@ -111,24 +169,24 @@ BN_ULONG l;
 		8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
 		};
 
-#ifdef SIXTY_FOUR_BIT_LONG
+#if defined(SIXTY_FOUR_BIT_LONG)
 	if (l & 0xffffffff00000000L)
 		{
 		if (l & 0xffff000000000000L)
 			{
 			if (l & 0xff00000000000000L)
 				{
-				return(bits[l>>56]+56);
+				return(bits[(int)(l>>56)]+56);
 				}
-			else	return(bits[l>>48]+48);
+			else	return(bits[(int)(l>>48)]+48);
 			}
 		else
 			{
 			if (l & 0x0000ff0000000000L)
 				{
-				return(bits[l>>40]+40);
+				return(bits[(int)(l>>40)]+40);
 				}
-			else	return(bits[l>>32]+32);
+			else	return(bits[(int)(l>>32)]+32);
 			}
 		}
 	else
@@ -140,17 +198,17 @@ BN_ULONG l;
 			{
 			if (l & 0xff00000000000000LL)
 				{
-				return(bits[l>>56]+56);
+				return(bits[(int)(l>>56)]+56);
 				}
-			else	return(bits[l>>48]+48);
+			else	return(bits[(int)(l>>48)]+48);
 			}
 		else
 			{
 			if (l & 0x0000ff0000000000LL)
 				{
-				return(bits[l>>40]+40);
+				return(bits[(int)(l>>40)]+40);
 				}
-			else	return(bits[l>>32]+32);
+			else	return(bits[(int)(l>>32)]+32);
 			}
 		}
 	else
@@ -161,27 +219,28 @@ BN_ULONG l;
 		if (l & 0xffff0000L)
 			{
 			if (l & 0xff000000L)
-				return(bits[l>>24L]+24);
-			else	return(bits[l>>16L]+16);
+				return(bits[(int)(l>>24L)]+24);
+			else	return(bits[(int)(l>>16L)]+16);
 			}
 		else
 #endif
 			{
 #if defined(SIXTEEN_BIT) || defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 			if (l & 0xff00L)
-				return(bits[l>>8]+8);
+				return(bits[(int)(l>>8)]+8);
 			else	
 #endif
-				return(bits[l   ]  );
+				return(bits[(int)(l   )]  );
 			}
 		}
 	}
 
-int BN_num_bits(a)
-BIGNUM *a;
+int BN_num_bits(const BIGNUM *a)
 	{
 	BN_ULONG l;
 	int i;
+
+	bn_check_top(a);
 
 	if (a->top == 0) return(0);
 	l=a->d[a->top-1];
@@ -196,126 +255,256 @@ BIGNUM *a;
 	return(i+BN_num_bits_word(l));
 	}
 
-void BN_clear_free(a)
-BIGNUM *a;
+void BN_clear_free(BIGNUM *a)
 	{
+	int i;
+
 	if (a == NULL) return;
 	if (a->d != NULL)
 		{
 		memset(a->d,0,a->max*sizeof(a->d[0]));
-		Free(a->d);
+		if (!(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+			Free(a->d);
 		}
+	i=BN_get_flags(a,BN_FLG_MALLOCED);
 	memset(a,0,sizeof(BIGNUM));
-	Free(a);
+	if (i)
+		Free(a);
 	}
 
-void BN_free(a)
-BIGNUM *a;
+void BN_free(BIGNUM *a)
 	{
 	if (a == NULL) return;
-	if (a->d != NULL) Free(a->d);
-	Free(a);
+	if ((a->d != NULL) && !(BN_get_flags(a,BN_FLG_STATIC_DATA)))
+		Free(a->d);
+	a->flags|=BN_FLG_FREE; /* REMOVE? */
+	if (a->flags & BN_FLG_MALLOCED)
+		Free(a);
 	}
 
-BIGNUM *BN_new()
+void BN_init(BIGNUM *a)
+	{
+	memset(a,0,sizeof(BIGNUM));
+	}
+
+BIGNUM *BN_new(void)
 	{
 	BIGNUM *ret;
-	BN_ULONG *p;
 
-	ret=(BIGNUM *)Malloc(sizeof(BIGNUM));
-	if (ret == NULL) goto err;
+	if ((ret=(BIGNUM *)Malloc(sizeof(BIGNUM))) == NULL)
+		{
+		BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
+		}
+	ret->flags=BN_FLG_MALLOCED;
 	ret->top=0;
 	ret->neg=0;
-	ret->max=(BN_DEFAULT_BITS/BN_BITS2);
-	p=(BN_ULONG *)Malloc(sizeof(BN_ULONG)*(ret->max+1));
-	if (p == NULL) goto err;
-	ret->d=p;
-
-	memset(p,0,(ret->max+1)*sizeof(p[0]));
+	ret->max=0;
+	ret->d=NULL;
 	return(ret);
-err:
-	BNerr(BN_F_BN_NEW,ERR_R_MALLOC_FAILURE);
-	return(NULL);
 	}
 
-BN_CTX *BN_CTX_new()
+
+BN_CTX *BN_CTX_new(void)
 	{
 	BN_CTX *ret;
-	BIGNUM *n;
-	int i,j;
 
 	ret=(BN_CTX *)Malloc(sizeof(BN_CTX));
-	if (ret == NULL) goto err2;
-
-	for (i=0; i<BN_CTX_NUM; i++)
+	if (ret == NULL)
 		{
-		n=BN_new();
-		if (n == NULL) goto err;
-		ret->bn[i]=n;
+		BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
+		return(NULL);
 		}
 
-	/* There is actually an extra one, this is for debugging my
-	 * stuff */
-	ret->bn[BN_CTX_NUM]=NULL;
-
-	ret->tos=0;
+	BN_CTX_init(ret);
+	ret->flags=BN_FLG_MALLOCED;
 	return(ret);
-err:
-	for (j=0; j<i; j++)
-		BN_free(ret->bn[j]);
-	Free(ret);
-err2:
-	BNerr(BN_F_BN_CTX_NEW,ERR_R_MALLOC_FAILURE);
-	return(NULL);
 	}
 
-void BN_CTX_free(c)
-BN_CTX *c;
+void BN_CTX_init(BN_CTX *ctx)
+	{
+	memset(ctx,0,sizeof(BN_CTX));
+	ctx->tos=0;
+	ctx->flags=0;
+	}
+
+void BN_CTX_free(BN_CTX *c)
 	{
 	int i;
 
+	if(c == NULL)
+	    return;
+
 	for (i=0; i<BN_CTX_NUM; i++)
-		BN_clear_free(c->bn[i]);
-	Free(c);
+		BN_clear_free(&(c->bn[i]));
+	if (c->flags & BN_FLG_MALLOCED)
+		Free(c);
 	}
 
-BIGNUM *bn_expand2(b, words)
-BIGNUM *b;
-int words;
+BIGNUM *bn_expand2(BIGNUM *b, int words)
 	{
-	BN_ULONG *p;
+	BN_ULONG *A,*a;
+	const BN_ULONG *B;
+	int i;
+
+	bn_check_top(b);
 
 	if (words > b->max)
 		{
-		p=(BN_ULONG *)Realloc(b->d,sizeof(BN_ULONG)*(words+1));
-		if (p == NULL)
+		bn_check_top(b);	
+		if (BN_get_flags(b,BN_FLG_STATIC_DATA))
+			{
+			BNerr(BN_F_BN_EXPAND2,BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+			return(NULL);
+			}
+		a=A=(BN_ULONG *)Malloc(sizeof(BN_ULONG)*(words+1));
+		if (A == NULL)
 			{
 			BNerr(BN_F_BN_EXPAND2,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		b->d=p;
-		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG));
+#if 1
+		B=b->d;
+		/* Check if the previous number needs to be copied */
+		if (B != NULL)
+			{
+#if 0
+			/* This lot is an unrolled loop to copy b->top 
+			 * BN_ULONGs from B to A
+			 */
+/*
+ * I have nothing against unrolling but it's usually done for
+ * several reasons, namely:
+ * - minimize percentage of decision making code, i.e. branches;
+ * - avoid cache trashing;
+ * - make it possible to schedule loads earlier;
+ * Now let's examine the code below. The cornerstone of C is
+ * "programmer is always right" and that's what we love it for:-)
+ * For this very reason C compilers have to be paranoid when it
+ * comes to data aliasing and assume the worst. Yeah, but what
+ * does it mean in real life? This means that loop body below will
+ * be compiled to sequence of loads immediately followed by stores
+ * as compiler assumes the worst, something in A==B+1 style. As a
+ * result CPU pipeline is going to starve for incoming data. Secondly
+ * if A and B happen to share same cache line such code is going to
+ * cause severe cache trashing. Both factors have severe impact on
+ * performance of modern CPUs and this is the reason why this
+ * particulare piece of code is #ifdefed away and replaced by more
+ * "friendly" version found in #else section below. This comment
+ * also applies to BN_copy function.
+ *
+ *					<appro@fy.chalmers.se>
+ */
+			for (i=b->top&(~7); i>0; i-=8)
+				{
+				A[0]=B[0]; A[1]=B[1]; A[2]=B[2]; A[3]=B[3];
+				A[4]=B[4]; A[5]=B[5]; A[6]=B[6]; A[7]=B[7];
+				A+=8;
+				B+=8;
+				}
+			switch (b->top&7)
+				{
+			case 7:
+				A[6]=B[6];
+			case 6:
+				A[5]=B[5];
+			case 5:
+				A[4]=B[4];
+			case 4:
+				A[3]=B[3];
+			case 3:
+				A[2]=B[2];
+			case 2:
+				A[1]=B[1];
+			case 1:
+				A[0]=B[0];
+			case 0:
+				/* I need the 'case 0' entry for utrix cc.
+				 * If the optimiser is turned on, it does the
+				 * switch table by doing
+				 * a=top&7
+				 * a--;
+				 * goto jump_table[a];
+				 * If top is 0, this makes us jump to 0xffffffc 
+				 * which is rather bad :-(.
+				 * eric 23-Apr-1998
+				 */
+				;
+				}
+#else
+			for (i=b->top>>2; i>0; i--,A+=4,B+=4)
+				{
+				/*
+				 * The fact that the loop is unrolled
+				 * 4-wise is a tribute to Intel. It's
+				 * the one that doesn't have enough
+				 * registers to accomodate more data.
+				 * I'd unroll it 8-wise otherwise:-)
+				 *
+				 *		<appro@fy.chalmers.se>
+				 */
+				BN_ULONG a0,a1,a2,a3;
+				a0=B[0]; a1=B[1]; a2=B[2]; a3=B[3];
+				A[0]=a0; A[1]=a1; A[2]=a2; A[3]=a3;
+				}
+			switch (b->top&3)
+				{
+				case 3:	A[2]=B[2];
+				case 2:	A[1]=B[1];
+				case 1:	A[0]=B[0];
+				case 0:	; /* ultrix cc workaround, see above */
+				}
+#endif
+			Free(b->d);
+			}
+
+		b->d=a;
 		b->max=words;
+
+		/* Now need to zero any data between b->top and b->max */
+
+		A= &(b->d[b->top]);
+		for (i=(b->max - b->top)>>3; i>0; i--,A+=8)
+			{
+			A[0]=0; A[1]=0; A[2]=0; A[3]=0;
+			A[4]=0; A[5]=0; A[6]=0; A[7]=0;
+			}
+		for (i=(b->max - b->top)&7; i>0; i--,A++)
+			A[0]=0;
+#else
+			memset(A,0,sizeof(BN_ULONG)*(words+1));
+			memcpy(A,b->d,sizeof(b->d[0])*b->top);
+			b->d=a;
+			b->max=words;
+#endif
+		
+/*		memset(&(p[b->max]),0,((words+1)-b->max)*sizeof(BN_ULONG)); */
+/*	{ int i; for (i=b->max; i<words+1; i++) p[i]=i;} */
+
 		}
 	return(b);
 	}
 
-BIGNUM *BN_dup(a)
-BIGNUM *a;
+BIGNUM *BN_dup(const BIGNUM *a)
 	{
 	BIGNUM *r;
+
+	if (a == NULL) return NULL;
+
+	bn_check_top(a);
 
 	r=BN_new();
 	if (r == NULL) return(NULL);
 	return((BIGNUM *)BN_copy(r,a));
 	}
 
-BIGNUM *BN_copy(a, b)
-BIGNUM *a;
-BIGNUM *b;
+BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
-	BN_ULONG *A,*B;
+	BN_ULONG *A;
+	const BN_ULONG *B;
+
+	bn_check_top(b);
 
 	if (a == b) return(a);
 	if (bn_wexpand(a,b->top) == NULL) return(NULL);
@@ -323,35 +512,18 @@ BIGNUM *b;
 #if 1
 	A=a->d;
 	B=b->d;
-	for (i=b->top&(~7); i>0; i-=8)
+	for (i=b->top>>2; i>0; i--,A+=4,B+=4)
 		{
-		A[0]=B[0];
-		A[1]=B[1];
-		A[2]=B[2];
-		A[3]=B[3];
-		A[4]=B[4];
-		A[5]=B[5];
-		A[6]=B[6];
-		A[7]=B[7];
-		A+=8;
-		B+=8;
+		BN_ULONG a0,a1,a2,a3;
+		a0=B[0]; a1=B[1]; a2=B[2]; a3=B[3];
+		A[0]=a0; A[1]=a1; A[2]=a2; A[3]=a3;
 		}
-	switch (b->top&7)
+	switch (b->top&3)
 		{
-	case 7:
-		A[6]=B[6];
-	case 6:
-		A[5]=B[5];
-	case 5:
-		A[4]=B[4];
-	case 4:
-		A[3]=B[3];
-	case 3:
-		A[2]=B[2];
-	case 2:
-		A[1]=B[1];
-	case 1:
-		A[0]=B[0];
+		case 3: A[2]=B[2];
+		case 2: A[1]=B[1];
+		case 1: A[0]=B[0];
+		case 0: ; /* ultrix cc workaround, see comments in bn_expand2 */
 		}
 #else
 	memcpy(a->d,b->d,sizeof(b->d[0])*b->top);
@@ -359,52 +531,47 @@ BIGNUM *b;
 
 /*	memset(&(a->d[b->top]),0,sizeof(a->d[0])*(a->max-b->top));*/
 	a->top=b->top;
-	if (a->top == 0)
+	if ((a->top == 0) && (a->d != NULL))
 		a->d[0]=0;
 	a->neg=b->neg;
 	return(a);
 	}
 
-void BN_clear(a)
-BIGNUM *a;
+void BN_clear(BIGNUM *a)
 	{
-	memset(a->d,0,a->max*sizeof(a->d[0]));
+	if (a->d != NULL)
+		memset(a->d,0,a->max*sizeof(a->d[0]));
 	a->top=0;
 	a->neg=0;
 	}
 
-unsigned long BN_get_word(a)
-BIGNUM *a;
+BN_ULONG BN_get_word(BIGNUM *a)
 	{
 	int i,n;
-	unsigned long ret=0;
+	BN_ULONG ret=0;
 
 	n=BN_num_bytes(a);
-	if (n > sizeof(unsigned long))
-#ifdef SIXTY_FOUR_BIT_LONG
+	if (n > sizeof(BN_ULONG))
 		return(BN_MASK2);
-#else
-		return(0xFFFFFFFFL);
-#endif
 	for (i=a->top-1; i>=0; i--)
 		{
 #ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
 		ret<<=BN_BITS4; /* stops the compiler complaining */
 		ret<<=BN_BITS4;
+#else
+		ret=0;
 #endif
 		ret|=a->d[i];
 		}
 	return(ret);
 	}
 
-int BN_set_word(a,w)
-BIGNUM *a;
-unsigned long w;
+int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i,n;
-	if (bn_expand(a,sizeof(unsigned long)*8) == NULL) return(0);
+	if (bn_expand(a,sizeof(BN_ULONG)*8) == NULL) return(0);
 
-	n=sizeof(unsigned long)/BN_BYTES;
+	n=sizeof(BN_ULONG)/BN_BYTES;
 	a->neg=0;
 	a->top=0;
 	a->d[0]=(BN_ULONG)w&BN_MASK2;
@@ -417,6 +584,8 @@ unsigned long w;
 #ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
 		w>>=BN_BITS4;
 		w>>=BN_BITS4;
+#else
+		w=0;
 #endif
 		a->d[i]=(BN_ULONG)w&BN_MASK2;
 		if (a->d[i] != 0) a->top=i+1;
@@ -425,10 +594,7 @@ unsigned long w;
 	}
 
 /* ignore negative */
-BIGNUM *BN_bin2bn(s, len, ret)
-unsigned char *s;
-int len;
-BIGNUM *ret;
+BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	{
 	unsigned int i,m;
 	unsigned int n;
@@ -465,9 +631,7 @@ BIGNUM *ret;
 	}
 
 /* ignore negative */
-int BN_bn2bin(a, to)
-BIGNUM *a;
-unsigned char *to;
+int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 	{
 	int n,i;
 	BN_ULONG l;
@@ -481,12 +645,13 @@ unsigned char *to;
 	return(n);
 	}
 
-int BN_ucmp(a, b)
-BIGNUM *a;
-BIGNUM *b;
+int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
 	BN_ULONG t1,t2,*ap,*bp;
+
+	bn_check_top(a);
+	bn_check_top(b);
 
 	i=a->top-b->top;
 	if (i != 0) return(i);
@@ -502,9 +667,7 @@ BIGNUM *b;
 	return(0);
 	}
 
-int BN_cmp(a, b)
-BIGNUM *a;
-BIGNUM *b;
+int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 	{
 	int i;
 	int gt,lt;
@@ -519,6 +682,10 @@ BIGNUM *b;
 		else
 			return(0);
 		}
+
+	bn_check_top(a);
+	bn_check_top(b);
+
 	if (a->neg != b->neg)
 		{
 		if (a->neg)
@@ -541,27 +708,25 @@ BIGNUM *b;
 	return(0);
 	}
 
-int BN_set_bit(a, n)
-BIGNUM *a;
-int n;
+int BN_set_bit(BIGNUM *a, int n)
 	{
-	int i,j;
+	int i,j,k;
 
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
 	if (a->top <= i)
 		{
-		if (bn_expand(a,n) == NULL) return(0);
+		if (bn_wexpand(a,i+1) == NULL) return(0);
+		for(k=a->top; k<i+1; k++)
+			a->d[k]=0;
 		a->top=i+1;
 		}
 
-	a->d[i]|=(1L<<j);
+	a->d[i]|=(((BN_ULONG)1)<<j);
 	return(1);
 	}
 
-int BN_clear_bit(a, n)
-BIGNUM *a;
-int n;
+int BN_clear_bit(BIGNUM *a, int n)
 	{
 	int i,j;
 
@@ -569,13 +734,12 @@ int n;
 	j=n%BN_BITS2;
 	if (a->top <= i) return(0);
 
-	a->d[i]&=(~(1L<<j));
+	a->d[i]&=(~(((BN_ULONG)1)<<j));
+	bn_fix_top(a);
 	return(1);
 	}
 
-int BN_is_bit_set(a, n)
-BIGNUM *a;
-int n;
+int BN_is_bit_set(const BIGNUM *a, int n)
 	{
 	int i,j;
 
@@ -586,9 +750,7 @@ int n;
 	return((a->d[i]&(((BN_ULONG)1)<<j))?1:0);
 	}
 
-int BN_mask_bits(a,n)
-BIGNUM *a;
-int n;
+int BN_mask_bits(BIGNUM *a, int n)
 	{
 	int b,w;
 
@@ -601,11 +763,25 @@ int n;
 		{
 		a->top=w+1;
 		a->d[w]&= ~(BN_MASK2<<b);
-		while ((w >= 0) && (a->d[w] == 0))
-			{
-			a->top--;
-			w--;
-			}
 		}
+	bn_fix_top(a);
 	return(1);
 	}
+
+int bn_cmp_words(BN_ULONG *a, BN_ULONG *b, int n)
+	{
+	int i;
+	BN_ULONG aa,bb;
+
+	aa=a[n-1];
+	bb=b[n-1];
+	if (aa != bb) return((aa > bb)?1:-1);
+	for (i=n-2; i>=0; i--)
+		{
+		aa=a[i];
+		bb=b[i];
+		if (aa != bb) return((aa > bb)?1:-1);
+		}
+	return(0);
+	}
+

@@ -58,15 +58,12 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "rand.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/rand.h>
 
-int RSA_padding_add_SSLv23(to,tlen,from,flen)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
+int RSA_padding_add_SSLv23(unsigned char *to, int tlen, unsigned char *from,
+	     int flen)
 	{
 	int i,j;
 	unsigned char *p;
@@ -103,11 +100,8 @@ int flen;
 	return(1);
 	}
 
-int RSA_padding_check_SSLv23(to,tlen,from,flen)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
+int RSA_padding_check_SSLv23(unsigned char *to, int tlen, unsigned char *from,
+	     int flen, int num)
 	{
 	int i,j,k;
 	unsigned char *p;
@@ -118,7 +112,7 @@ int flen;
 		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,RSA_R_DATA_TOO_SMALL);
 		return(-1);
 		}
-	if (*(p++) != 02)
+	if ((num != (flen+1)) || (*(p++) != 02))
 		{
 		RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23,RSA_R_BLOCK_TYPE_IS_NOT_02);
 		return(-1);

@@ -60,22 +60,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#ifdef NO_MD5
-#include "md5.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#ifndef NO_MD5
+#include <openssl/md5.h>
 #endif
-#include "pem.h"
+#include <openssl/pem.h>
 
-#ifndef NOPROTO
 int set_hex(char *in,unsigned char *out,int size);
-#else
-int set_hex();
-#endif
-
 #undef SIZE
 #undef BSIZE
 #undef PROG
@@ -84,9 +79,7 @@ int set_hex();
 #define BSIZE	(8*1024)
 #define	PROG	enc_main
 
-int MAIN(argc,argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	char *strbuf=NULL;
 	unsigned char *buff=NULL,*bufsize=NULL;
@@ -97,11 +90,11 @@ char **argv;
 	char *hkey=NULL,*hiv=NULL;
 	int enc=1,printkey=0,i,base64=0;
 	int debug=0,olb64=0;
-	EVP_CIPHER *cipher=NULL,*c;
+	const EVP_CIPHER *cipher=NULL,*c;
 	char *inf=NULL,*outf=NULL;
 	BIO *in=NULL,*out=NULL,*b64=NULL,*benc=NULL,*rbio=NULL,*wbio=NULL;
 #define PROG_NAME_SIZE  16
-        char pname[PROG_NAME_SIZE];
+	char pname[PROG_NAME_SIZE];
 
 	apps_startup();
 
@@ -110,7 +103,7 @@ char **argv;
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	/* first check the program name */
-        program_name(argv[0],pname,PROG_NAME_SIZE);
+	program_name(argv[0],pname,PROG_NAME_SIZE);
 	if (strcmp(pname,"base64") == 0)
 		base64=1;
 
@@ -239,7 +232,7 @@ bad:
 #ifndef NO_RC4
 			BIO_printf(bio_err,"rc2     :128 bit key RC2 encryption\n");
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err,"bf      :128 bit key BlowFish encryption\n");
 #endif
 #ifndef NO_RC4
@@ -277,19 +270,19 @@ bad:
 				LN_rc2_cfb64, LN_rc2_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","rc2", LN_rc2_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_BF
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_bf_ecb, LN_bf_cbc,
 				LN_bf_cfb64, LN_bf_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","bf", LN_bf_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_CAST
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_cast5_ecb, LN_cast5_cbc,
 				LN_cast5_cfb64, LN_cast5_ofb64);
 			BIO_printf(bio_err," -%-4s (%s)\n","cast", LN_cast5_cbc);
 #endif
-#ifndef NO_BLOWFISH
+#ifndef NO_RC5
 			BIO_printf(bio_err," -%-12s -%-12s -%-12s -%-12s",
 				LN_rc5_ecb, LN_rc5_cbc,
 				LN_rc5_cfb64, LN_rc5_ofb64);
@@ -521,10 +514,7 @@ end:
 	EXIT(ret);
 	}
 
-int set_hex(in,out,size)
-char *in;
-unsigned char *out;
-int size;
+int set_hex(char *in, unsigned char *out, int size)
 	{
 	int i,n;
 	unsigned char j;

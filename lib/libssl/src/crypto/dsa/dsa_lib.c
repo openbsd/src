@@ -56,17 +56,17 @@
  * [including the GNU Public Licence.]
  */
 
-/* Origional version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
+/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "asn1.h"
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/asn1.h>
 
-char *DSA_version="\0DSA part of SSLeay 0.9.0b 29-Jun-1998";
+const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
 
-DSA *DSA_new()
+DSA *DSA_new(void)
 	{
 	DSA *ret;
 
@@ -82,19 +82,20 @@ DSA *DSA_new()
 	ret->p=NULL;
 	ret->q=NULL;
 	ret->g=NULL;
+	ret->flags=DSA_FLAG_CACHE_MONT_P;
 
 	ret->pub_key=NULL;
 	ret->priv_key=NULL;
 
 	ret->kinv=NULL;
 	ret->r=NULL;
+	ret->method_mont_p=NULL;
 
 	ret->references=1;
 	return(ret);
 	}
 
-void DSA_free(r)
-DSA *r;
+void DSA_free(DSA *r)
 	{
 	int i;
 
@@ -120,11 +121,12 @@ DSA *r;
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
 	if (r->kinv != NULL) BN_clear_free(r->kinv);
 	if (r->r != NULL) BN_clear_free(r->r);
+	if (r->method_mont_p != NULL)
+		BN_MONT_CTX_free((BN_MONT_CTX *)r->method_mont_p);
 	Free(r);
 	}
 
-int DSA_size(r)
-DSA *r;
+int DSA_size(DSA *r)
 	{
 	int ret,i;
 	ASN1_INTEGER bs;
@@ -143,3 +145,40 @@ DSA *r;
 	return(ret);
 	}
 
+#ifndef NO_DH
+DH *DSA_dup_DH(DSA *r)
+	{
+	/* DSA has p, q, g, optional pub_key, optional priv_key.
+	 * DH has p, optional length, g, optional pub_key, optional priv_key.
+	 */ 
+
+	DH *ret = NULL;
+
+	if (r == NULL)
+		goto err;
+	ret = DH_new();
+	if (ret == NULL)
+		goto err;
+	if (r->p != NULL) 
+		if ((ret->p = BN_dup(r->p)) == NULL)
+			goto err;
+	if (r->q != NULL)
+		ret->length = BN_num_bits(r->q);
+	if (r->g != NULL)
+		if ((ret->g = BN_dup(r->g)) == NULL)
+			goto err;
+	if (r->pub_key != NULL)
+		if ((ret->pub_key = BN_dup(r->pub_key)) == NULL)
+			goto err;
+	if (r->priv_key != NULL)
+		if ((ret->priv_key = BN_dup(r->priv_key)) == NULL)
+			goto err;
+
+	return ret;
+
+ err:
+	if (ret != NULL)
+		DH_free(ret);
+	return NULL;
+	}
+#endif

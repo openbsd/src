@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 # void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 # des_cblock (*input);

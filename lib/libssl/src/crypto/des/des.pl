@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 # des.pl - eric young 22/11/1991 eay@cryptsoft.com
 #
 # Copyright (C) 1993 Eric Young

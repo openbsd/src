@@ -59,7 +59,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "md5.h"
+
+#ifdef NO_MD5
+int main(int argc, char *argv[])
+{
+    printf("No MD5 support\n");
+    return(0);
+}
+#else
+#include <openssl/md5.h>
 
 char *test[]={
 	"",
@@ -82,15 +90,8 @@ char *ret[]={
 	"57edf4a22be3c955ac49da2e2107b67a",
 	};
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	unsigned char **P,**R;
@@ -118,8 +119,7 @@ char *argv[];
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -128,3 +128,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
+#endif

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 # Normal is the
 # ripemd160_block_x86(MD5_CTX *c, ULONG *X);
@@ -530,7 +530,7 @@ sub ripemd160_block
 	# &mov($tmp2,	&wparam(0)); # Moved into last round
 
 	 &mov($tmp1,	&DWP( 4,$tmp2,"",0));	# ctx->B
-	&add($D,	$tmp1);	
+ 	&add($D,	$tmp1);	
 	 &mov($tmp1,	&swtmp(1+18));		# $c
 	&add($D,	$tmp1);
 

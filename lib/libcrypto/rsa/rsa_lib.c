@@ -57,31 +57,49 @@
  */
 
 #include <stdio.h>
-#include "crypto.h"
+#include <openssl/crypto.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "bn.h"
-#include "rsa.h"
+#include <openssl/lhash.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
-char *RSA_version="RSA part of SSLeay 0.9.0b 29-Jun-1998";
+const char *RSA_version="RSA" OPENSSL_VERSION_PTEXT;
 
 static RSA_METHOD *default_RSA_meth=NULL;
 static int rsa_meth_num=0;
 static STACK *rsa_meth=NULL;
 
-RSA *RSA_new()
+RSA *RSA_new(void)
 	{
 	return(RSA_new_method(NULL));
 	}
 
-void RSA_set_default_method(meth)
-RSA_METHOD *meth;
+void RSA_set_default_method(RSA_METHOD *meth)
 	{
 	default_RSA_meth=meth;
 	}
 
-RSA *RSA_new_method(meth)
-RSA_METHOD *meth;
+RSA_METHOD *RSA_get_default_method(void)
+{
+	return default_RSA_meth;
+}
+
+RSA_METHOD *RSA_get_method(RSA *rsa)
+{
+	return rsa->meth;
+}
+
+RSA_METHOD *RSA_set_method(RSA *rsa, RSA_METHOD *meth)
+{
+	RSA_METHOD *mtmp;
+	mtmp = rsa->meth;
+	if (mtmp->finish) mtmp->finish(rsa);
+	rsa->meth = meth;
+	if (meth->init) meth->init(rsa);
+	return mtmp;
+}
+
+RSA *RSA_new_method(RSA_METHOD *meth)
 	{
 	RSA *ret;
 
@@ -116,22 +134,23 @@ RSA_METHOD *meth;
 	ret->dmq1=NULL;
 	ret->iqmp=NULL;
 	ret->references=1;
-	ret->method_mod_n=NULL;
-	ret->method_mod_p=NULL;
-	ret->method_mod_q=NULL;
+	ret->_method_mod_n=NULL;
+	ret->_method_mod_p=NULL;
+	ret->_method_mod_q=NULL;
 	ret->blinding=NULL;
+	ret->bignum_data=NULL;
 	ret->flags=ret->meth->flags;
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
 		Free(ret);
 		ret=NULL;
 		}
-	CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
+	else
+		CRYPTO_new_ex_data(rsa_meth,(char *)ret,&ret->ex_data);
 	return(ret);
 	}
 
-void RSA_free(r)
-RSA *r;
+void RSA_free(RSA *r)
 	{
 	int i;
 
@@ -164,90 +183,63 @@ RSA *r;
 	if (r->dmq1 != NULL) BN_clear_free(r->dmq1);
 	if (r->iqmp != NULL) BN_clear_free(r->iqmp);
 	if (r->blinding != NULL) BN_BLINDING_free(r->blinding);
+	if (r->bignum_data != NULL) Free_locked(r->bignum_data);
 	Free(r);
 	}
 
-int RSA_get_ex_new_index(argl,argp,new_func,dup_func,free_func)
-long argl;
-char *argp;
-int (*new_func)();
-int (*dup_func)();
-void (*free_func)();
+int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
+	     int (*dup_func)(), void (*free_func)())
         {
 	rsa_meth_num++;
 	return(CRYPTO_get_ex_new_index(rsa_meth_num-1,
 		&rsa_meth,argl,argp,new_func,dup_func,free_func));
         }
 
-int RSA_set_ex_data(r,idx,arg)
-RSA *r;
-int idx;
-char *arg;
+int RSA_set_ex_data(RSA *r, int idx, char *arg)
 	{
 	return(CRYPTO_set_ex_data(&r->ex_data,idx,arg));
 	}
 
-char *RSA_get_ex_data(r,idx)
-RSA *r;
-int idx;
+char *RSA_get_ex_data(RSA *r, int idx)
 	{
 	return(CRYPTO_get_ex_data(&r->ex_data,idx));
 	}
 
-int RSA_size(r)
-RSA *r;
+int RSA_size(RSA *r)
 	{
 	return(BN_num_bytes(r->n));
 	}
 
-int RSA_public_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_public_encrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding));
 	}
 
-int RSA_private_encrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_private_encrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
 	}
 
-int RSA_private_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_private_decrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding));
 	}
 
-int RSA_public_decrypt(flen, from, to, rsa, padding)
-int flen;
-unsigned char *from;
-unsigned char *to;
-RSA *rsa;
-int padding;
+int RSA_public_decrypt(int flen, unsigned char *from, unsigned char *to,
+	     RSA *rsa, int padding)
 	{
 	return(rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
 	}
 
-int RSA_flags(r)
-RSA *r;
+int RSA_flags(RSA *r)
 	{
 	return((r == NULL)?0:r->meth->flags);
 	}
 
-void RSA_blinding_off(rsa)
-RSA *rsa;
+void RSA_blinding_off(RSA *rsa)
 	{
 	if (rsa->blinding != NULL)
 		{
@@ -257,9 +249,7 @@ RSA *rsa;
 	rsa->flags&= ~RSA_FLAG_BLINDING;
 	}
 
-int RSA_blinding_on(rsa,p_ctx)
-RSA *rsa;
-BN_CTX *p_ctx;
+int RSA_blinding_on(RSA *rsa, BN_CTX *p_ctx)
 	{
 	BIGNUM *A,*Ai;
 	BN_CTX *ctx;
@@ -275,13 +265,13 @@ BN_CTX *p_ctx;
 	if (rsa->blinding != NULL)
 		BN_BLINDING_free(rsa->blinding);
 
-	A=ctx->bn[0];
+	A= &(ctx->bn[0]);
 	ctx->tos++;
 	if (!BN_rand(A,BN_num_bits(rsa->n)-1,1,0)) goto err;
-	if ((Ai=BN_mod_inverse(A,rsa->n,ctx)) == NULL) goto err;
+	if ((Ai=BN_mod_inverse(NULL,A,rsa->n,ctx)) == NULL) goto err;
 
-	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,
-		(char *)rsa->method_mod_n)) goto err;
+	if (!rsa->meth->bn_mod_exp(A,A,rsa->e,rsa->n,ctx,rsa->_method_mod_n))
+	    goto err;
 	rsa->blinding=BN_BLINDING_new(A,Ai,rsa->n);
 	ctx->tos--;
 	rsa->flags|=RSA_FLAG_BLINDING;
@@ -290,5 +280,50 @@ BN_CTX *p_ctx;
 err:
 	if (ctx != p_ctx) BN_CTX_free(ctx);
 	return(ret);
+	}
+
+int RSA_memory_lock(RSA *r)
+	{
+	int i,j,k,off;
+	char *p;
+	BIGNUM *bn,**t[6],*b;
+	BN_ULONG *ul;
+
+	if (r->d == NULL) return(1);
+	t[0]= &r->d;
+	t[1]= &r->p;
+	t[2]= &r->q;
+	t[3]= &r->dmp1;
+	t[4]= &r->dmq1;
+	t[5]= &r->iqmp;
+	k=sizeof(BIGNUM)*6;
+	off=k/sizeof(BN_ULONG)+1;
+	j=1;
+	for (i=0; i<6; i++)
+		j+= (*t[i])->top;
+	if ((p=Malloc_locked((off+j)*sizeof(BN_ULONG))) == NULL)
+		{
+		RSAerr(RSA_F_MEMORY_LOCK,ERR_R_MALLOC_FAILURE);
+		return(0);
+		}
+	bn=(BIGNUM *)p;
+	ul=(BN_ULONG *)&(p[off]);
+	for (i=0; i<6; i++)
+		{
+		b= *(t[i]);
+		*(t[i])= &(bn[i]);
+		memcpy((char *)&(bn[i]),(char *)b,sizeof(BIGNUM));
+		bn[i].flags=BN_FLG_STATIC_DATA;
+		bn[i].d=ul;
+		memcpy((char *)ul,b->d,sizeof(BN_ULONG)*b->top);
+		ul+=b->top;
+		BN_clear_free(b);
+		}
+	
+	/* I should fix this so it can still be done */
+	r->flags&= ~(RSA_FLAG_CACHE_PRIVATE|RSA_FLAG_CACHE_PUBLIC);
+
+	r->bignum_data=p;
+	return(1);
 	}
 

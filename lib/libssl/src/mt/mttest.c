@@ -74,13 +74,13 @@
 #include <ulocks.h>
 #include <sys/prctl.h>
 #endif
-#include "lhash.h"
-#include "crypto.h"
-#include "buffer.h"
+#include <openssl/lhash.h>
+#include <openssl/crypto.h>
+#include <openssl/buffer.h>
 #include "../e_os.h"
-#include "x509.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/x509.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #ifdef NO_FP_API
 #define APPS_WIN16
@@ -92,7 +92,6 @@
 
 #define MAX_THREAD_NUMBER	100
 
-#ifndef NOPROTO
 int MS_CALLBACK verify_callback(int ok, X509 *xs, X509 *xi, int depth,
 	int error,char *arg);
 void thread_setup(void);
@@ -108,23 +107,6 @@ unsigned long irix_thread_id(void );
 unsigned long solaris_thread_id(void );
 unsigned long pthreads_thread_id(void );
 
-#else
-int MS_CALLBACK verify_callback();
-void thread_setup();
-void thread_cleanup();
-void do_threads();
-
-void irix_locking_callback();
-void solaris_locking_callback();
-void win32_locking_callback();
-void pthreads_locking_callback();
-
-unsigned long irix_thread_id();
-unsigned long solaris_thread_id();
-unsigned long pthreads_thread_id();
-
-#endif
-
 BIO *bio_err=NULL;
 BIO *bio_stdout=NULL;
 
@@ -139,12 +121,7 @@ int number_of_loops=10;
 int reconnect=0;
 int cache_stats=0;
 
-#ifndef  NOPROTO
 int doit(char *ctx[4]);
-#else
-int doit();
-#endif
-
 static void print_stats(fp,ctx)
 FILE *fp;
 SSL_CTX *ctx;

@@ -62,14 +62,17 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
-
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
+#include <openssl/bio.h>
 
 #ifdef WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL IPPROTO_TCP
+#endif
+
+#if (defined(VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
+#undef FIONBIO
 #endif
 
 typedef struct bio_accept_st
@@ -82,38 +85,23 @@ typedef struct bio_accept_st
 
 	char *addr;
 	int nbio;
+	/* If 0, it means normal, if 1, do a connect on bind failure,
+	 * and if there is no-one listening, bind with SO_REUSEADDR.
+	 * If 2, always use SO_REUSEADDR. */
+	int bind_mode;
 	BIO *bio_chain;
 	} BIO_ACCEPT;
 
-#ifndef NOPROTO
 static int acpt_write(BIO *h,char *buf,int num);
 static int acpt_read(BIO *h,char *buf,int size);
 static int acpt_puts(BIO *h,char *str);
 static long acpt_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int acpt_new(BIO *h);
 static int acpt_free(BIO *data);
-#else
-static int acpt_write();
-static int acpt_read();
-static int acpt_puts();
-static long acpt_ctrl();
-static int acpt_new();
-static int acpt_free();
-#endif
-
-#ifndef NOPROTO
 static int acpt_state(BIO *b, BIO_ACCEPT *c);
 static void acpt_close_socket(BIO *data);
 BIO_ACCEPT *BIO_ACCEPT_new(void );
 void BIO_ACCEPT_free(BIO_ACCEPT *a);
-
-#else
-
-static int acpt_state();
-static void acpt_close_socket();
-BIO_ACCEPT *BIO_ACCEPT_new();
-void BIO_ACCEPT_free();
-#endif
 
 #define ACPT_S_BEFORE			1
 #define ACPT_S_GET_ACCEPT_SOCKET	2
@@ -132,13 +120,12 @@ static BIO_METHOD methods_acceptp=
 	acpt_free,
 	};
 
-BIO_METHOD *BIO_s_accept()
+BIO_METHOD *BIO_s_accept(void)
 	{
 	return(&methods_acceptp);
 	}
 
-static int acpt_new(bi)
-BIO *bi;
+static int acpt_new(BIO *bi)
 	{
 	BIO_ACCEPT *ba;
 
@@ -153,7 +140,7 @@ BIO *bi;
 	return(1);
 	}
 
-BIO_ACCEPT *BIO_ACCEPT_new()
+BIO_ACCEPT *BIO_ACCEPT_new(void)
 	{
 	BIO_ACCEPT *ret;
 
@@ -162,20 +149,22 @@ BIO_ACCEPT *BIO_ACCEPT_new()
 
 	memset(ret,0,sizeof(BIO_ACCEPT));
 	ret->accept_sock=INVALID_SOCKET;
+	ret->bind_mode=BIO_BIND_NORMAL;
 	return(ret);
 	}
 
-void BIO_ACCEPT_free(a)
-BIO_ACCEPT *a;
+void BIO_ACCEPT_free(BIO_ACCEPT *a)
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->param_addr != NULL) Free(a->param_addr);
 	if (a->addr != NULL) Free(a->addr);
 	if (a->bio_chain != NULL) BIO_free(a->bio_chain);
 	Free(a);
 	}
 
-static void acpt_close_socket(bio)
-BIO *bio;
+static void acpt_close_socket(BIO *bio)
 	{
 	BIO_ACCEPT *c;
 
@@ -183,18 +172,13 @@ BIO *bio;
 	if (c->accept_sock != INVALID_SOCKET)
 		{
 		shutdown(c->accept_sock,2);
-# ifdef WINDOWS
 		closesocket(c->accept_sock);
-# else
-		close(c->accept_sock);
-# endif
 		c->accept_sock=INVALID_SOCKET;
 		bio->num=INVALID_SOCKET;
 		}
 	}
 
-static int acpt_free(a)
-BIO *a;
+static int acpt_free(BIO *a)
 	{
 	BIO_ACCEPT *data;
 
@@ -212,12 +196,9 @@ BIO *a;
 	return(1);
 	}
 	
-static int acpt_state(b,c)
-BIO *b;
-BIO_ACCEPT *c;
+static int acpt_state(BIO *b, BIO_ACCEPT *c)
 	{
 	BIO *bio=NULL,*dbio;
-	unsigned long l=1;
 	int s= -1;
 	int i;
 
@@ -230,31 +211,24 @@ again:
 			BIOerr(BIO_F_ACPT_STATE,BIO_R_NO_ACCEPT_PORT_SPECIFIED);
 			return(-1);
 			}
-		s=BIO_get_accept_socket(c->param_addr);
+		s=BIO_get_accept_socket(c->param_addr,c->bind_mode);
 		if (s == INVALID_SOCKET)
 			return(-1);
 
-#ifdef FIONBIO
 		if (c->accept_nbio)
 			{
-			i=BIO_socket_ioctl(b->num,FIONBIO,&l);
-			if (i < 0)
+			if (!BIO_socket_nbio(s,1))
 				{
-#ifdef WINDOWS
 				closesocket(s);
-#else
-				close(s);
-# endif
 				BIOerr(BIO_F_ACPT_STATE,BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET);
 				return(-1);
 				}
 			}
-#endif
 		c->accept_sock=s;
 		b->num=s;
 		c->state=ACPT_S_GET_ACCEPT_SOCKET;
 		return(1);
-		break;
+		/* break; */
 	case ACPT_S_GET_ACCEPT_SOCKET:
 		if (b->next_bio != NULL)
 			{
@@ -269,17 +243,14 @@ again:
 		BIO_set_callback(bio,BIO_get_callback(b));
 		BIO_set_callback_arg(bio,BIO_get_callback_arg(b));
 
-#ifdef FIONBIO
 		if (c->nbio)
 			{
-			i=BIO_socket_ioctl(i,FIONBIO,&l);
-			if (i < 0)
+			if (!BIO_socket_nbio(i,1))
 				{
 				BIOerr(BIO_F_ACPT_STATE,BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET);
 				goto err;
 				}
 			}
-#endif
 
 		/* If the accept BIO has an bio_chain, we dup it and
 		 * put the new socket at the end. */
@@ -298,15 +269,9 @@ err:
 		if (bio != NULL)
 			BIO_free(bio);
 		else if (s >= 0)
-			{
-#ifdef WINDOWS
 			closesocket(s);
-#else
-			close(s);
-# endif
-			}
 		return(0);
-		break;
+		/* break; */
 	case ACPT_S_OK:
 		if (b->next_bio == NULL)
 			{
@@ -314,23 +279,20 @@ err:
 			goto again;
 			}
 		return(1);
-		break;
+		/* break; */
 	default:	
 		return(0);
-		break;
+		/* break; */
 		}
 
 	}
 
-static int acpt_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int acpt_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 	BIO_ACCEPT *data;
 
-        BIO_clear_retry_flags(b);
+	BIO_clear_retry_flags(b);
 	data=(BIO_ACCEPT *)b->ptr;
 
 	while (b->next_bio == NULL)
@@ -344,10 +306,7 @@ int outl;
 	return(ret);
 	}
 
-static int acpt_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int acpt_write(BIO *b, char *in, int inl)
 	{
 	int ret;
 	BIO_ACCEPT *data;
@@ -366,11 +325,7 @@ int inl;
 	return(ret);
 	}
 
-static long acpt_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long acpt_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	int *ip;
@@ -417,13 +372,21 @@ char *ptr;
 	case BIO_C_SET_NBIO:
 		data->nbio=(int)num;
 		break;
+	case BIO_C_SET_FD:
+		b->init=1;
+		b->num= *((int *)ptr);
+		data->accept_sock=b->num;
+		data->state=ACPT_S_GET_ACCEPT_SOCKET;
+		b->shutdown=(int)num;
+		b->init=1;
+		break;
 	case BIO_C_GET_FD:
 		if (b->init)
 			{
 			ip=(int *)ptr;
 			if (ip != NULL)
 				*ip=data->accept_sock;
-			ret=b->num;
+			ret=data->accept_sock;
 			}
 		else
 			ret= -1;
@@ -454,6 +417,12 @@ char *ptr;
 		break;
 	case BIO_CTRL_FLUSH:
 		break;
+	case BIO_C_SET_BIND_MODE:
+		data->bind_mode=(int)num;
+		break;
+	case BIO_C_GET_BIND_MODE:
+		ret=(long)data->bind_mode;
+		break;
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
 /*		if (data->param_port) EAY EAY
@@ -470,9 +439,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int acpt_puts(bp,str)
-BIO *bp;
-char *str;
+static int acpt_puts(BIO *bp, char *str)
 	{
 	int n,ret;
 
@@ -481,8 +448,7 @@ char *str;
 	return(ret);
 	}
 
-BIO *BIO_new_accept(str)
-char *str;
+BIO *BIO_new_accept(char *str)
 	{
 	BIO *ret;
 

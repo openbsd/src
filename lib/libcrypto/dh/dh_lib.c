@@ -58,12 +58,12 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
-char *DH_version="Diffie-Hellman part of SSLeay 0.9.0b 29-Jun-1998";
+const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
-DH *DH_new()
+DH *DH_new(void)
 	{
 	DH *ret;
 
@@ -80,21 +80,24 @@ DH *DH_new()
 	ret->length=0;
 	ret->pub_key=NULL;
 	ret->priv_key=NULL;
+	ret->flags=DH_FLAG_CACHE_MONT_P;
+	ret->method_mont_p=NULL;
 	return(ret);
 	}
 
-void DH_free(r)
-DH *r;
+void DH_free(DH *r)
 	{
+	if(r == NULL) return;
 	if (r->p != NULL) BN_clear_free(r->p);
 	if (r->g != NULL) BN_clear_free(r->g);
 	if (r->pub_key != NULL) BN_clear_free(r->pub_key);
 	if (r->priv_key != NULL) BN_clear_free(r->priv_key);
+	if (r->method_mont_p != NULL)
+		BN_MONT_CTX_free((BN_MONT_CTX *)r->method_mont_p);
 	Free(r);
 	}
 
-int DH_size(dh)
-DH *dh;
+int DH_size(DH *dh)
 	{
 	return(BN_num_bytes(dh->p));
 	}

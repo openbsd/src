@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "dsa.h"
+#include <openssl/dsa.h>
 
 #define TEST
 #define GENUINE_DSA
@@ -77,8 +77,7 @@ unsigned char seed[20]={
 	0xe0,0x42,0x7d,LAST_VALUE};
 #endif
 
-int cb(p,n)
-int p,n;
+int cb(int p, int n)
 	{
 	char c='*';
 

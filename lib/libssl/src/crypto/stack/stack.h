@@ -73,11 +73,16 @@ typedef struct stack_st
 	int (*comp)();
 	} STACK;
 
-#define sk_num(sk)		((sk)->num)
-#define sk_value(sk,n)		((sk)->data[n])
 
 #define sk_new_null()	sk_new(NULL)
-#ifndef NOPROTO
+
+#define M_sk_num(sk)		((sk)->num)
+#define M_sk_value(sk,n)	((sk)->data[n])
+
+int sk_num(STACK *);
+char *sk_value(STACK *, int);
+
+char *sk_set(STACK *, int, char *);
 
 STACK *sk_new(int (*cmp)());
 void sk_free(STACK *);
@@ -91,27 +96,9 @@ int sk_unshift(STACK *st,char *data);
 char *sk_shift(STACK *st);
 char *sk_pop(STACK *st);
 void sk_zero(STACK *st);
-void sk_set_cmp_func(STACK *sk, int (*c)());
+int (*sk_set_cmp_func(STACK *sk, int (*c)()))();
 STACK *sk_dup(STACK *st);
-
-#else
-
-STACK *sk_new();
-void sk_free();
-void sk_pop_free();
-int sk_insert();
-char *sk_delete();
-char *sk_delete_ptr();
-int sk_find();
-int sk_push();
-int sk_unshift();
-char *sk_shift();
-char *sk_pop();
-void sk_zero();
-void sk_set_cmp_func();
-STACK *sk_dup();
-
-#endif
+void sk_sort(STACK *st);
 
 #ifdef  __cplusplus
 }

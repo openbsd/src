@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 # we make up an array of
 # $file{function_name}=filename;

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # used to generate the file MINFO for use by util/mk1mf.pl
 # It is basically a list of all variables from the passed makefile

@@ -56,18 +56,19 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "bn.h"
-#include "rand.h"
-#include "dsa.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/dsa.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	dsaparam_main
@@ -80,24 +81,18 @@
  * -text
  * -C
  * -noout
+ * -genkey
  */
 
-#ifndef NOPROTO
 static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK dsa_cb();
-#endif
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog,*inrand=NULL;
-	int numbits= -1,num;
+	int numbits= -1,num,genkey=0;
 	char buffer[200],*randfile=NULL;
 
 	apps_startup();
@@ -140,6 +135,8 @@ char **argv;
 			text=1;
 		else if (strcmp(*argv,"-C") == 0)
 			C=1;
+		else if (strcmp(*argv,"-genkey") == 0)
+			genkey=1;
 		else if (strcmp(*argv,"-rand") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -169,7 +166,7 @@ bad:
 		BIO_printf(bio_err,"where options are\n");
 		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
 		BIO_printf(bio_err," -outform arg  output format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -text         check the DSA parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
@@ -223,7 +220,7 @@ bad:
 	else if	(informat == FORMAT_ASN1)
 		dsa=d2i_DSAparams_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dsa=PEM_read_bio_DSAparams(in,NULL,NULL);
+		dsa=PEM_read_bio_DSAparams(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified\n");
@@ -315,6 +312,22 @@ bad:
 			goto end;
 			}
 		}
+	if (genkey)
+		{
+		DSA *dsakey;
+
+		if ((dsakey=DSAparams_dup(dsa)) == NULL) goto end;
+		if (!DSA_generate_key(dsakey)) goto end;
+		if 	(outformat == FORMAT_ASN1)
+			i=i2d_DSAPrivateKey_bio(out,dsakey);
+		else if (outformat == FORMAT_PEM)
+			i=PEM_write_bio_DSAPrivateKey(out,dsakey,NULL,NULL,0,NULL,NULL);
+		else	{
+			BIO_printf(bio_err,"bad output format specified for outfile\n");
+			goto end;
+			}
+		DSA_free(dsakey);
+		}
 	ret=0;
 end:
 	if (in != NULL) BIO_free(in);
@@ -323,10 +336,7 @@ end:
 	EXIT(ret);
 	}
 
-static void MS_CALLBACK dsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK dsa_cb(int p, int n, char *arg)
 	{
 	char c='*';
 
@@ -335,8 +345,9 @@ char *arg;
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	(void)BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif
 	}
+#endif

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc4.h"
+#include <openssl/rc4.h>
 #include "rc4_locl.h"
 
 /* RC4 as implemented from a posting from
@@ -67,11 +67,8 @@
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4(key, len, indata, outdata)
-RC4_KEY *key;
-unsigned long len;
-unsigned char *indata;
-unsigned char *outdata;
+void RC4(RC4_KEY *key, unsigned long len, unsigned char *indata,
+	     unsigned char *outdata)
 	{
         register RC4_INT *d;
         register RC4_INT x,y,tx,ty;
@@ -95,7 +92,6 @@ unsigned char *outdata;
 #define RC4_LOOP(a,b,i)	LOOP(a[i],b[i])
 #endif
 
-	i= -(int)len;
 	i=(int)(len>>3L);
 	if (i)
 		{

@@ -56,11 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_SHA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
 static EVP_MD dss1_md=
 	{
@@ -75,7 +76,8 @@ static EVP_MD dss1_md=
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
 
-EVP_MD *EVP_dss1()
+EVP_MD *EVP_dss1(void)
 	{
 	return(&dss1_md);
 	}
+#endif

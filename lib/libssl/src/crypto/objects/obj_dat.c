@@ -59,23 +59,29 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/lhash.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
+#ifndef NO_OBJECT
 #include "obj_dat.h"
+#else
+/* You will have to load all the objects needed manually in the application */
+#define NUM_NID 0
+#define NUM_SN 0
+#define NUM_LN 0
+#define NUM_OBJ 0
+static unsigned char lvalues[1];
+static ASN1_OBJECT nid_objs[1];
+static ASN1_OBJECT *sn_objs[1];
+static ASN1_OBJECT *ln_objs[1];
+static ASN1_OBJECT *obj_objs[1];
+#endif
 
-#ifndef NOPROTO
 static int sn_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
 static int ln_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
 static int obj_cmp(ASN1_OBJECT **a, ASN1_OBJECT **b);
-#else
-static int sn_cmp();
-static int ln_cmp();
-static int obj_cmp();
-#endif
-
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
 #define ADDED_LNAME	2
@@ -90,18 +96,13 @@ typedef struct added_obj_st
 static int new_nid=NUM_NID;
 static LHASH *added=NULL;
 
-static int sn_cmp(ap,bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int sn_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{ return(strcmp((*ap)->sn,(*bp)->sn)); }
 
-static int ln_cmp(ap,bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int ln_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{ return(strcmp((*ap)->ln,(*bp)->ln)); }
 
-static unsigned long add_hash(ca)
-ADDED_OBJ *ca;
+static unsigned long add_hash(ADDED_OBJ *ca)
 	{
 	ASN1_OBJECT *a;
 	int i;
@@ -134,8 +135,7 @@ ADDED_OBJ *ca;
 	return(ret);
 	}
 
-static int add_cmp(ca,cb)
-ADDED_OBJ *ca,*cb;
+static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
@@ -163,36 +163,35 @@ ADDED_OBJ *ca,*cb;
 	default:
 		abort();
 		}
+	return(1); /* should not get here */
 	}
 
-static int init_added()
+static int init_added(void)
 	{
 	if (added != NULL) return(1);
 	added=lh_new(add_hash,add_cmp);
 	return(added != NULL);
 	}
 
-static void cleanup1(a)
-ADDED_OBJ *a;
+static void cleanup1(ADDED_OBJ *a)
 	{
 	a->obj->nid=0;
 	a->obj->flags|=ASN1_OBJECT_FLAG_DYNAMIC|
-	                ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
+	                ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
+			ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
 
-static void cleanup2(a)
-ADDED_OBJ *a;
+static void cleanup2(ADDED_OBJ *a)
 	{ a->obj->nid++; }
 
-static void cleanup3(a)
-ADDED_OBJ *a;
+static void cleanup3(ADDED_OBJ *a)
 	{
 	if (--a->obj->nid == 0)
 		ASN1_OBJECT_free(a->obj);
 	Free(a);
 	}
 
-void OBJ_cleanup()
+void OBJ_cleanup(void)
 	{
 	if (added == NULL) return;
 	added->down_load=0;
@@ -203,8 +202,7 @@ void OBJ_cleanup()
 	added=NULL;
 	}
 
-int OBJ_new_nid(num)
-int num;
+int OBJ_new_nid(int num)
 	{
 	int i;
 
@@ -213,8 +211,7 @@ int num;
 	return(i);
 	}
 
-int OBJ_add_object(obj)
-ASN1_OBJECT *obj;
+int OBJ_add_object(ASN1_OBJECT *obj)
 	{
 	ASN1_OBJECT *o;
 	ADDED_OBJ *ao[4],*aop;
@@ -247,7 +244,9 @@ ASN1_OBJECT *obj;
 				Free(aop);
 			}
 		}
-	o->flags&= ~(ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS);
+	o->flags&= ~(ASN1_OBJECT_FLAG_DYNAMIC|ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|
+			ASN1_OBJECT_FLAG_DYNAMIC_DATA);
+
 	return(o->nid);
 err:
 	for (i=ADDED_DATA; i<=ADDED_NID; i++)
@@ -256,8 +255,7 @@ err:
 	return(NID_undef);
 	}
 
-ASN1_OBJECT *OBJ_nid2obj(n)
-int n;
+ASN1_OBJECT *OBJ_nid2obj(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -289,8 +287,7 @@ int n;
 		}
 	}
 
-char *OBJ_nid2sn(n)
-int n;
+const char *OBJ_nid2sn(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -322,8 +319,7 @@ int n;
 		}
 	}
 
-char *OBJ_nid2ln(n)
-int n;
+const char *OBJ_nid2ln(int n)
 	{
 	ADDED_OBJ ad,*adp;
 	ASN1_OBJECT ob;
@@ -355,8 +351,7 @@ int n;
 		}
 	}
 
-int OBJ_obj2nid(a)
-ASN1_OBJECT *a;
+int OBJ_obj2nid(ASN1_OBJECT *a)
 	{
 	ASN1_OBJECT **op;
 	ADDED_OBJ ad,*adp;
@@ -380,45 +375,126 @@ ASN1_OBJECT *a;
 	return((*op)->nid);
 	}
 
-int OBJ_txt2nid(s)
-char *s;
+/* Convert an object name into an ASN1_OBJECT
+ * if "noname" is not set then search for short and long names first.
+ * This will convert the "dotted" form into an object: unlike OBJ_txt2nid
+ * it can be used with any objects, not just registered ones.
+ */
+
+ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	{
-	int ret;
+	int nid = NID_undef;
+	ASN1_OBJECT *op=NULL;
+	unsigned char *buf,*p;
+	int i, j;
 
-	ret=OBJ_sn2nid(s);
-	if (ret == NID_undef)
-		{
-		ret=OBJ_ln2nid(s);
-		if (ret == NID_undef)
-			{
-			ASN1_OBJECT *op=NULL;
-			unsigned char *buf,*p;
-			int i;
-
-			i=a2d_ASN1_OBJECT(NULL,0,s,-1);
-			if (i <= 0)
-				{
-				/* clear the error */
-				ERR_get_error();
-				return(0);
-				}
-
-			if ((buf=(unsigned char *)Malloc(i)) == NULL)
-				return(NID_undef);
-			a2d_ASN1_OBJECT(buf,i,s,-1);
-			p=buf;
-			op=d2i_ASN1_OBJECT(NULL,&p,i);
-			if (op == NULL) return(NID_undef);
-			ret=OBJ_obj2nid(op);
-			ASN1_OBJECT_free(op);
-			Free(buf);
-			}
-		}
-	return(ret);
+	if(!no_name) {
+		if( ((nid = OBJ_sn2nid(s)) != NID_undef) ||
+			((nid = OBJ_ln2nid(s)) != NID_undef) ) 
+					return OBJ_nid2obj(nid);
 	}
 
-int OBJ_ln2nid(s)
-char *s;
+	/* Work out size of content octets */
+	i=a2d_ASN1_OBJECT(NULL,0,s,-1);
+	if (i <= 0) {
+		/* Clear the error */
+		ERR_get_error();
+		return NULL;
+	}
+	/* Work out total size */
+	j = ASN1_object_size(0,i,V_ASN1_OBJECT);
+
+	if((buf=(unsigned char *)Malloc(j)) == NULL) return NULL;
+
+	p = buf;
+	/* Write out tag+length */
+	ASN1_put_object(&p,0,i,V_ASN1_OBJECT,V_ASN1_UNIVERSAL);
+	/* Write out contents */
+	a2d_ASN1_OBJECT(p,i,s,-1);
+	
+	p=buf;
+	op=d2i_ASN1_OBJECT(NULL,&p,i);
+	Free(buf);
+	return op;
+	}
+
+int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
+{
+	int i,idx=0,n=0,len,nid;
+	unsigned long l;
+	unsigned char *p;
+	const char *s;
+	char tbuf[32];
+
+	if (buf_len <= 0) return(0);
+
+	if ((a == NULL) || (a->data == NULL)) {
+		buf[0]='\0';
+		return(0);
+	}
+
+	nid=OBJ_obj2nid(a);
+	if ((nid == NID_undef) || no_name) {
+		len=a->length;
+		p=a->data;
+
+		idx=0;
+		l=0;
+		while (idx < a->length) {
+			l|=(p[idx]&0x7f);
+			if (!(p[idx] & 0x80)) break;
+			l<<=7L;
+			idx++;
+		}
+		idx++;
+		i=(int)(l/40);
+		if (i > 2) i=2;
+		l-=(long)(i*40);
+
+		sprintf(tbuf,"%d.%lu",i,l);
+		i=strlen(tbuf);
+		strncpy(buf,tbuf,buf_len);
+		buf_len-=i;
+		buf+=i;
+		n+=i;
+
+		l=0;
+		for (; idx<len; idx++) {
+			l|=p[idx]&0x7f;
+			if (!(p[idx] & 0x80)) {
+				sprintf(tbuf,".%lu",l);
+				i=strlen(tbuf);
+				if (buf_len > 0)
+					strncpy(buf,tbuf,buf_len);
+				buf_len-=i;
+				buf+=i;
+				n+=i;
+				l=0;
+			}
+			l<<=7L;
+		}
+	} else {
+		s=OBJ_nid2ln(nid);
+		if (s == NULL)
+			s=OBJ_nid2sn(nid);
+		strncpy(buf,s,buf_len);
+		n=strlen(s);
+	}
+	buf[buf_len-1]='\0';
+	return(n);
+}
+
+int OBJ_txt2nid(char *s)
+{
+	ASN1_OBJECT *obj;
+	int nid;
+	obj = OBJ_txt2obj(s, 0);
+	nid = OBJ_obj2nid(obj);
+	ASN1_OBJECT_free(obj);
+	return nid;
+}
+
+int OBJ_ln2nid(const char *s)
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;
@@ -437,8 +513,7 @@ char *s;
 	return((*op)->nid);
 	}
 
-int OBJ_sn2nid(s)
-char *s;
+int OBJ_sn2nid(const char *s)
 	{
 	ASN1_OBJECT o,*oo= &o,**op;
 	ADDED_OBJ ad,*adp;
@@ -457,9 +532,7 @@ char *s;
 	return((*op)->nid);
 	}
 
-static int obj_cmp(ap, bp)
-ASN1_OBJECT **ap;
-ASN1_OBJECT **bp;
+static int obj_cmp(ASN1_OBJECT **ap, ASN1_OBJECT **bp)
 	{
 	int j;
 	ASN1_OBJECT *a= *ap;
@@ -470,12 +543,7 @@ ASN1_OBJECT **bp;
 	return(memcmp(a->data,b->data,a->length));
         }
 
-char *OBJ_bsearch(key,base,num,size,cmp)
-char *key;
-char *base;
-int num;
-int size;
-int (*cmp)();
+char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)())
 	{
 	int l,h,i,c;
 	char *p;
@@ -495,14 +563,24 @@ int (*cmp)();
 		else
 			return(p);
 		}
+#ifdef CHARSET_EBCDIC
+/* THIS IS A KLUDGE - Because the *_obj is sorted in ASCII order, and
+ * I don't have perl (yet), we revert to a *LINEAR* search
+ * when the object wasn't found in the binary search.
+ */
+	for (i=0; i<num; ++i) {
+		p= &(base[i*size]);
+		if ((*cmp)(key,p) == 0)
+			return p;
+	}
+#endif
 	return(NULL);
 	}
 
-int OBJ_create_objects(in)
-BIO *in;
+int OBJ_create_objects(BIO *in)
 	{
 	MS_STATIC char buf[512];
-	int i,num= -1;
+	int i,num=0;
 	char *o,*s,*l=NULL;
 
 	for (;;)
@@ -511,26 +589,26 @@ BIO *in;
 		i=BIO_gets(in,buf,512);
 		if (i <= 0) return(num);
 		buf[i-1]='\0';
-		if (!isalnum(buf[0])) return(num);
+		if (!isalnum((unsigned char)buf[0])) return(num);
 		o=s=buf;
-		while (isdigit(*s) || (*s == '.'))
+		while (isdigit((unsigned char)*s) || (*s == '.'))
 			s++;
 		if (*s != '\0')
 			{
 			*(s++)='\0';
-			while (isspace(*s))
+			while (isspace((unsigned char)*s))
 				s++;
 			if (*s == '\0')
 				s=NULL;
 			else
 				{
 				l=s;
-				while ((*l != '\0') && !isspace(*l))
+				while ((*l != '\0') && !isspace((unsigned char)*l))
 					l++;
 				if (*l != '\0')
 					{
 					*(l++)='\0';
-					while (isspace(*l))
+					while (isspace((unsigned char)*l))
 						l++;
 					if (*l == '\0') l=NULL;
 					}
@@ -544,13 +622,10 @@ BIO *in;
 		if (!OBJ_create(o,s,l)) return(num);
 		num++;
 		}
-	return(num);
+	/* return(num); */
 	}
 
-int OBJ_create(oid,sn,ln)
-char *oid;
-char *sn;
-char *ln;
+int OBJ_create(char *oid, char *sn, char *ln)
 	{
 	int ok=0;
 	ASN1_OBJECT *op=NULL;

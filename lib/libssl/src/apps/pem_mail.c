@@ -56,13 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "err.h"
-#include "pem.h"
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include "apps.h"
 
 #undef PROG
@@ -87,9 +88,7 @@ typedef struct lines_St
 	struct lines_st *next;
 	} LINES;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	FILE *in;
 	RSA *rsa=NULL;
@@ -168,3 +167,4 @@ err:
 	ERR_print_errors(bio_err);
 	EXIT(1);
 	}
+#endif

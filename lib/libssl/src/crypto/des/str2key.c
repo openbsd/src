@@ -58,11 +58,9 @@
 
 #include "des_locl.h"
 
-extern int des_check_key;
+OPENSSL_EXTERN int des_check_key;
 
-void des_string_to_key(str, key)
-char *str;
-des_cblock (*key);
+void des_string_to_key(const char *str, des_cblock *key)
 	{
 	des_key_schedule ks;
 	int i,length;
@@ -89,21 +87,17 @@ des_cblock (*key);
 			}
 		}
 #endif
-	des_set_odd_parity((des_cblock *)key);
+	des_set_odd_parity(key);
 	i=des_check_key;
 	des_check_key=0;
-	des_set_key((des_cblock *)key,ks);
+	des_set_key(key,ks);
 	des_check_key=i;
-	des_cbc_cksum((des_cblock *)str,(des_cblock *)key,(long)length,ks,
-		(des_cblock *)key);
+	des_cbc_cksum((unsigned char*)str,key,length,ks,key);
 	memset(ks,0,sizeof(ks));
-	des_set_odd_parity((des_cblock *)key);
+	des_set_odd_parity(key);
 	}
 
-void des_string_to_2keys(str, key1, key2)
-char *str;
-des_cblock (*key1);
-des_cblock (*key2);
+void des_string_to_2keys(const char *str, des_cblock *key1, des_cblock *key2)
 	{
 	des_key_schedule ks;
 	int i,length;
@@ -154,16 +148,14 @@ des_cblock (*key2);
 		}
 	if (length <= 8) memcpy(key2,key1,8);
 #endif
-	des_set_odd_parity((des_cblock *)key1);
-	des_set_odd_parity((des_cblock *)key2);
+	des_set_odd_parity(key1);
+	des_set_odd_parity(key2);
 	i=des_check_key;
 	des_check_key=0;
-	des_set_key((des_cblock *)key1,ks);
-	des_cbc_cksum((des_cblock *)str,(des_cblock *)key1,(long)length,ks,
-		(des_cblock *)key1);
-	des_set_key((des_cblock *)key2,ks);
-	des_cbc_cksum((des_cblock *)str,(des_cblock *)key2,(long)length,ks,
-		(des_cblock *)key2);
+	des_set_key(key1,ks);
+	des_cbc_cksum((unsigned char*)str,key1,length,ks,key1);
+	des_set_key(key2,ks);
+	des_cbc_cksum((unsigned char*)str,key2,length,ks,key2);
 	des_check_key=i;
 	memset(ks,0,sizeof(ks));
 	des_set_odd_parity(key1);

@@ -63,8 +63,12 @@
 #define APPS_WIN16
 #endif
 #include "apps.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#if defined(NO_RSA) && !defined(NO_SSL2)
+#define NO_SSL2
+#endif
 
 #undef PROG
 #define PROG	ciphers_main
@@ -77,19 +81,18 @@ static char *ciphers_usage[]={
 NULL
 };
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int argc, char **argv)
 	{
 	int ret=1,i;
 	int verbose=0;
-	char **pp,*p;
+	char **pp;
+	const char *p;
 	int badops=0;
 	SSL_CTX *ctx=NULL;
 	SSL *ssl=NULL;
 	char *ciphers=NULL;
 	SSL_METHOD *meth=NULL;
-	STACK *sk;
+	STACK_OF(SSL_CIPHER) *sk;
 	char buf[512];
 	BIO *STDout=NULL;
 
@@ -167,10 +170,10 @@ char **argv;
 		{
 		sk=SSL_get_ciphers(ssl);
 
-		for (i=0; i<sk_num(sk); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 			{
 			BIO_puts(STDout,SSL_CIPHER_description(
-				(SSL_CIPHER *)sk_value(sk,i),
+				sk_SSL_CIPHER_value(sk,i),
 				buf,512));
 			}
 		}

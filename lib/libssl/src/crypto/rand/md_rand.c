@@ -57,21 +57,25 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
 #include <sys/types.h>
 #include <time.h>
+#include <string.h>
+
+#include "openssl/e_os.h"
+
+#include <openssl/crypto.h>
 
 #if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
-#ifndef NO_MD5
-#define USE_MD5_RAND
-#elif !defined(NO_SHA1)
+#if !defined(NO_SHA) && !defined(NO_SHA1)
 #define USE_SHA1_RAND
-#elif !defined(NO_MDC2)
+#elif !defined(NO_MD5)
+#define USE_MD5_RAND
+#elif !defined(NO_MDC2) && !defined(NO_DES)
 #define USE_MDC2_RAND
 #elif !defined(NO_MD2)
 #define USE_MD2_RAND
 #else
-We need a message digest of some type 
+#error No message digest algorithm available
 #endif
 #endif
 
@@ -82,60 +86,78 @@ We need a message digest of some type
  */
 
 #if defined(USE_MD5_RAND)
-#include "md5.h"
+#include <openssl/md5.h>
 #define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 #define MD_CTX			MD5_CTX
 #define MD_Init(a)		MD5_Init(a)
 #define MD_Update(a,b,c)	MD5_Update(a,b,c)
 #define	MD_Final(a,b)		MD5_Final(a,b)
+#define	MD(a,b,c)		MD5(a,b,c)
 #elif defined(USE_SHA1_RAND)
-#include "sha.h"
+#include <openssl/sha.h>
 #define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 #define MD_CTX			SHA_CTX
 #define MD_Init(a)		SHA1_Init(a)
 #define MD_Update(a,b,c)	SHA1_Update(a,b,c)
 #define	MD_Final(a,b)		SHA1_Final(a,b)
+#define	MD(a,b,c)		SHA1(a,b,c)
 #elif defined(USE_MDC2_RAND)
-#include "mdc2.h"
+#include <openssl/mdc2.h>
 #define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
 #define MD_CTX			MDC2_CTX
 #define MD_Init(a)		MDC2_Init(a)
 #define MD_Update(a,b,c)	MDC2_Update(a,b,c)
 #define	MD_Final(a,b)		MDC2_Final(a,b)
+#define	MD(a,b,c)		MDC2(a,b,c)
 #elif defined(USE_MD2_RAND)
-#include "md2.h"
+#include <openssl/md2.h>
 #define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
 #define MD_CTX			MD2_CTX
 #define MD_Init(a)		MD2_Init(a)
 #define MD_Update(a,b,c)	MD2_Update(a,b,c)
 #define	MD_Final(a,b)		MD2_Final(a,b)
+#define	MD(a,b,c)		MD2(a,b,c)
 #endif
 
-#include "rand.h"
+#include <openssl/rand.h>
 
-/*#define NORAND	1 */
-/*#define PREDICT	1 */
+/* #define NORAND	1 */
+/* #define PREDICT	1 */
 
 #define STATE_SIZE	1023
 static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
-static int md_count=0;
+static long md_count[2]={0,0};
 
-char *RAND_version="RAND part of SSLeay 0.9.0b 29-Jun-1998";
+const char *RAND_version="RAND" OPENSSL_VERSION_PTEXT;
 
-void RAND_cleanup()
+static void ssleay_rand_cleanup(void);
+static void ssleay_rand_seed(const void *buf, int num);
+static void ssleay_rand_bytes(unsigned char *buf, int num);
+
+RAND_METHOD rand_ssleay_meth={
+	ssleay_rand_seed,
+	ssleay_rand_bytes,
+	ssleay_rand_cleanup,
+	}; 
+
+RAND_METHOD *RAND_SSLeay(void)
+	{
+	return(&rand_ssleay_meth);
+	}
+
+static void ssleay_rand_cleanup(void)
 	{
 	memset(state,0,sizeof(state));
 	state_num=0;
 	state_index=0;
 	memset(md,0,MD_DIGEST_LENGTH);
-	md_count=0;
+	md_count[0]=0;
+	md_count[1]=0;
 	}
 
-void RAND_seed(buf,num)
-unsigned char *buf;
-int num;
+static void ssleay_rand_seed(const void *buf, int num)
 	{
 	int i,j,k,st_idx,st_num;
 	MD_CTX m;
@@ -178,9 +200,11 @@ int num;
 			MD_Update(&m,&(state[st_idx]),j);
 			
 		MD_Update(&m,buf,j);
+		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
 		MD_Final(md,&m);
+		md_count[1]++;
 
-		buf+=j;
+		buf=(const char *)buf + j;
 
 		for (k=0; k<j; k++)
 			{
@@ -195,9 +219,7 @@ int num;
 	memset((char *)&m,0,sizeof(m));
 	}
 
-void RAND_bytes(buf,num)
-unsigned char *buf;
-int num;
+static void ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	int i,j,k,st_num,st_idx;
 	MD_CTX m;
@@ -221,19 +243,18 @@ int num;
 
 	if (init)
 		{
-		init=0;
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 		/* put in some default random data, we need more than
 		 * just this */
-		RAND_seed((unsigned char *)&m,sizeof(m));
+		RAND_seed(&m,sizeof(m));
 #ifndef MSDOS
 		l=getpid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 		l=getuid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 #endif
 		l=time(NULL);
-		RAND_seed((unsigned char *)&l,sizeof(l));
+		RAND_seed(&l,sizeof(l));
 
 /* #ifdef DEVRANDOM */
 		/* 
@@ -261,6 +282,7 @@ int num;
 		memset(md,0,MD_DIGEST_LENGTH);
 #endif
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+		init=0;
 		}
 
 	st_idx=state_index;
@@ -277,6 +299,7 @@ int num;
 		num-=j;
 		MD_Init(&m);
 		MD_Update(&m,&(md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
+		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
 #ifndef PURIFY
 		MD_Update(&m,buf,j); /* purify complains */
 #endif
@@ -300,7 +323,8 @@ int num;
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,(unsigned char *)&md_count,sizeof(md_count)); md_count++;
+	MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
+	md_count[0]++;
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
 	MD_Final(md,&m);
 	memset(&m,0,sizeof(m));
@@ -308,7 +332,7 @@ int num;
 
 #ifdef WINDOWS
 #include <windows.h>
-#include <rand.h>
+#include <openssl/rand.h>
 
 /*****************************************************************************
  * Initialisation function for the SSL random generator.  Takes the contents
@@ -320,13 +344,13 @@ int num;
  * <URL:http://www.microsoft.com/kb/developr/win_dk/q97193.htm>;
  * the original copyright message is:
  *
-//   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
-//
-//   You have a royalty-free right to use, modify, reproduce and
-//   distribute the Sample Files (and/or any modified version) in
-//   any way you find useful, provided that you agree that
-//   Microsoft has no warranty obligations or liability for any
-//   Sample Application Files which are modified.
+ *   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
+ *
+ *   You have a royalty-free right to use, modify, reproduce and
+ *   distribute the Sample Files (and/or any modified version) in
+ *   any way you find useful, provided that you agree that
+ *   Microsoft has no warranty obligations or liability for any
+ *   Sample Application Files which are modified.
  */
 /*
  * I have modified the loading of bytes via RAND_seed() mechanism since
@@ -385,7 +409,7 @@ void RAND_screen(void)
 	GetBitmapBits(hBitmap, size, bmbits);
 
 	/* Get the MD5 of the bitmap */
-	MD5(bmbits,size,md);
+	MD(bmbits,size,md);
 
 	/* Seed the random generator with the MD5 digest */
 	RAND_seed(md, MD_DIGEST_LENGTH);

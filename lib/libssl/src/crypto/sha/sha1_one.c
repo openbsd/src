@@ -58,12 +58,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "sha.h"
+#include <openssl/sha.h>
 
-unsigned char *SHA1(d, n, md)
-unsigned char *d;
-unsigned long n;
-unsigned char *md;
+#ifndef NO_SHA1
+unsigned char *SHA1(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	SHA_CTX c;
 	static unsigned char m[SHA_DIGEST_LENGTH];
@@ -75,3 +73,4 @@ unsigned char *md;
 	memset(&c,0,sizeof(c));
 	return(md);
 	}
+#endif

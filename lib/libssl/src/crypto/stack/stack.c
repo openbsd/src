@@ -67,32 +67,28 @@
  */
 #include <stdio.h>
 #include "cryptlib.h"
-#include "stack.h"
+#include <openssl/stack.h>
 
 #undef MIN_NODES
 #define MIN_NODES	4
 
-char *STACK_version="STACK part of SSLeay 0.9.0b 29-Jun-1998";
+const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
 
-#ifndef NOPROTO
 #define	FP_ICC	(int (*)(const void *,const void *))
-#else
-#define FP_ICC
-#endif
-
 #include <errno.h>
 
-void sk_set_cmp_func(sk,c)
-STACK *sk;
-int (*c)();
+int (*sk_set_cmp_func(STACK *sk, int (*c)()))(void)
 	{
+	int (*old)()=sk->comp;
+
 	if (sk->comp != c)
 		sk->sorted=0;
 	sk->comp=c;
+
+	return old;
 	}
 
-STACK *sk_dup(sk)
-STACK *sk;
+STACK *sk_dup(STACK *sk)
 	{
 	STACK *ret;
 	char **s;
@@ -113,8 +109,7 @@ err:
 	return(NULL);
 	}
 
-STACK *sk_new(c)
-int (*c)();
+STACK *sk_new(int (*c)())
 	{
 	STACK *ret;
 	int i;
@@ -136,13 +131,11 @@ err0:
 	return(NULL);
 	}
 
-int sk_insert(st,data,loc)
-STACK *st;
-char *data;
-int loc;
+int sk_insert(STACK *st, char *data, int loc)
 	{
 	char **s;
 
+	if(st == NULL) return 0;
 	if (st->num_alloc <= st->num+1)
 		{
 		s=(char **)Realloc((char *)st->data,
@@ -161,7 +154,7 @@ int loc;
 
 		f=(char **)st->data;
 		t=(char **)&(st->data[1]);
-		for (i=st->num; i>loc; i--)
+		for (i=st->num; i>=loc; i--)
 			t[i]=f[i];
 			
 #ifdef undef /* no memmove on sunos :-( */
@@ -176,9 +169,7 @@ int loc;
 	return(st->num);
 	}
 
-char *sk_delete_ptr(st,p)
-STACK *st;
-char *p;
+char *sk_delete_ptr(STACK *st, char *p)
 	{
 	int i;
 
@@ -188,14 +179,13 @@ char *p;
 	return(NULL);
 	}
 
-char *sk_delete(st,loc)
-STACK *st;
-int loc;
+char *sk_delete(STACK *st, int loc)
 	{
 	char *ret;
 	int i,j;
 
-	if ((st->num == 0) || (loc < 0) || (loc >= st->num)) return(NULL);
+	if ((st == NULL) || (st->num == 0) || (loc < 0)
+					 || (loc >= st->num)) return(NULL);
 
 	ret=st->data[loc];
 	if (loc != st->num-1)
@@ -213,13 +203,12 @@ int loc;
 	return(ret);
 	}
 
-int sk_find(st,data)
-STACK *st;
-char *data;
+int sk_find(STACK *st, char *data)
 	{
 	char **r;
 	int i;
 	int (*comp_func)();
+	if(st == NULL) return -1;
 
 	if (st->comp == NULL)
 		{
@@ -228,13 +217,9 @@ char *data;
 				return(i);
 		return(-1);
 		}
-	comp_func=(int (*)())st->comp;
-	if (!st->sorted)
-		{
-		qsort((char *)st->data,st->num,sizeof(char *),FP_ICC comp_func);
-		st->sorted=1;
-		}
+	sk_sort(st);
 	if (data == NULL) return(-1);
+	comp_func=(int (*)())st->comp;
 	r=(char **)bsearch(&data,(char *)st->data,
 		st->num,sizeof(char *),FP_ICC comp_func);
 	if (r == NULL) return(-1);
@@ -245,38 +230,31 @@ char *data;
 	return(i);
 	}
 
-int sk_push(st,data)
-STACK *st;
-char *data;
+int sk_push(STACK *st, char *data)
 	{
 	return(sk_insert(st,data,st->num));
 	}
 
-int sk_unshift(st,data)
-STACK *st;
-char *data;
+int sk_unshift(STACK *st, char *data)
 	{
 	return(sk_insert(st,data,0));
 	}
 
-char *sk_shift(st)
-STACK *st;
+char *sk_shift(STACK *st)
 	{
 	if (st == NULL) return(NULL);
 	if (st->num <= 0) return(NULL);
 	return(sk_delete(st,0));
 	}
 
-char *sk_pop(st)
-STACK *st;
+char *sk_pop(STACK *st)
 	{
 	if (st == NULL) return(NULL);
 	if (st->num <= 0) return(NULL);
 	return(sk_delete(st,st->num-1));
 	}
 
-void sk_zero(st)
-STACK *st;
+void sk_zero(STACK *st)
 	{
 	if (st == NULL) return;
 	if (st->num <= 0) return;
@@ -284,9 +262,7 @@ STACK *st;
 	st->num=0;
 	}
 
-void sk_pop_free(st,func)
-STACK *st;
-void (*func)();
+void sk_pop_free(STACK *st, void (*func)())
 	{
 	int i;
 
@@ -297,11 +273,39 @@ void (*func)();
 	sk_free(st);
 	}
 
-void sk_free(st)
-STACK *st;
+void sk_free(STACK *st)
 	{
 	if (st == NULL) return;
 	if (st->data != NULL) Free((char *)st->data);
 	Free((char *)st);
 	}
 
+int sk_num(STACK *st)
+{
+	if(st == NULL) return -1;
+	return st->num;
+}
+
+char *sk_value(STACK *st, int i)
+{
+	if(st == NULL) return NULL;
+	return st->data[i];
+}
+
+char *sk_set(STACK *st, int i, char *value)
+{
+	if(st == NULL) return NULL;
+	return (st->data[i] = value);
+}
+
+void sk_sort(STACK *st)
+    {
+    if (!st->sorted)
+	{
+	int (*comp_func)();
+
+	comp_func=(int (*)())st->comp;
+	qsort(st->data,st->num,sizeof(char *),FP_ICC comp_func);
+	st->sorted=1;
+	}
+    }

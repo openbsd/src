@@ -57,24 +57,15 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
-#include "rand.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 #include "ssl_locl.h"
 
-#define BREAK	break
-
-/* SSL3err(SSL_F_SSL3_GET_FINISHED,SSL_R_EXCESSIVE_MESSAGE_SIZE);
- */
-
-int ssl3_send_finished(s,a,b,sender,slen)
-SSL *s;
-int a;
-int b;
-unsigned char *sender;
-int slen;
+int ssl3_send_finished(SSL *s, int a, int b, unsigned char *sender,
+	     int slen)
 	{
 	unsigned char *p,*d;
 	int i;
@@ -92,6 +83,13 @@ int slen;
 		p+=i;
 		l=i;
 
+#ifdef WIN16
+		/* MSVC 1.5 does not clear the top bytes of the word unless
+		 * I do this.
+		 */
+		l&=0xffff;
+#endif
+
 		*(d++)=SSL3_MT_FINISHED;
 		l2n3(l,d);
 		s->init_num=(int)l+4;
@@ -104,10 +102,7 @@ int slen;
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-int ssl3_get_finished(s,a,b)
-SSL *s;
-int a;
-int b;
+int ssl3_get_finished(SSL *s, int a, int b)
 	{
 	int al,i,ok;
 	long n;
@@ -167,9 +162,7 @@ f_err:
  * ssl->session->read_compression	assign
  * ssl->session->read_hash		assign
  */
-int ssl3_send_change_cipher_spec(s,a,b)
-SSL *s;
-int a,b;
+int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 	{ 
 	unsigned char *p;
 
@@ -187,9 +180,7 @@ int a,b;
 	return(ssl3_do_write(s,SSL3_RT_CHANGE_CIPHER_SPEC));
 	}
 
-unsigned long ssl3_output_cert_chain(s,x)
-SSL *s;
-X509 *x;
+unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
 	{
 	unsigned char *p;
 	int n,i;
@@ -236,6 +227,23 @@ X509 *x;
 		X509_STORE_CTX_cleanup(&xs_ctx);
 		}
 
+	/* Thawte special :-) */
+	if (s->ctx->extra_certs != NULL)
+	for (i=0; i<sk_X509_num(s->ctx->extra_certs); i++)
+		{
+		x=sk_X509_value(s->ctx->extra_certs,i);
+		n=i2d_X509(x,NULL);
+		if (!BUF_MEM_grow(buf,(int)(n+l+3)))
+			{
+			SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+			return(0);
+			}
+		p=(unsigned char *)&(buf->data[l]);
+		l2n3(n,p);
+		i2d_X509(x,&p);
+		l+=n+3;
+		}
+
 	l-=7;
 	p=(unsigned char *)&(buf->data[4]);
 	l2n3(l,p);
@@ -247,11 +255,7 @@ X509 *x;
 	return(l);
 	}
 
-long ssl3_get_message(s,st1,stn,mt,max,ok)
-SSL *s;
-int st1,stn,mt;
-long max;
-int *ok;
+long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	{
 	unsigned char *p;
 	unsigned long l;
@@ -275,9 +279,8 @@ int *ok;
 
 	if (s->state == st1)
 		{
-		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,
-			(char *)&(p[s->init_num]),
-			4-s->init_num);
+		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],
+				  4-s->init_num);
 		if (i < (4-s->init_num))
 			{
 			*ok=0;
@@ -315,8 +318,7 @@ int *ok;
 	n=s->s3->tmp.message_size;
 	if (n > 0)
 		{
-		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,
-			(char *)&(p[s->init_num]),(int)n);
+		i=ssl3_read_bytes(s,SSL3_RT_HANDSHAKE,&p[s->init_num],n);
 		if (i != (int)n)
 			{
 			*ok=0;
@@ -332,9 +334,7 @@ err:
 	return(-1);
 	}
 
-int ssl_cert_type(x,pkey)
-X509 *x;
-EVP_PKEY *pkey;
+int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	{
 	EVP_PKEY *pk;
 	int ret= -1,i,j;
@@ -380,11 +380,11 @@ EVP_PKEY *pkey;
 		ret= -1;
 
 err:
+	if(!pkey) EVP_PKEY_free(pk);
 	return(ret);
 	}
 
-int ssl_verify_alarm_type(type)
-long type;
+int ssl_verify_alarm_type(long type)
 	{
 	int al;
 
@@ -436,8 +436,7 @@ long type;
 	return(al);
 	}
 
-int ssl3_setup_buffers(s)
-SSL *s;
+int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
 	unsigned int extra;

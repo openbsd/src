@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 #
 # unix.pl - the standard unix makefile stuff.
 #
@@ -38,7 +38,7 @@ $ex_libs="";
 # static library stuff
 $mklib='ar r';
 $mlflags='';
-$ranlib='util/ranlib.sh';
+$ranlib=&which("ranlib") or $ranlib="true";
 $plib='lib';
 $libp=".a";
 $shlibp=".a";
@@ -46,8 +46,8 @@ $lfile='';
 
 $asm='as';
 $afile='-o ';
-$bn_mulw_obj="";
-$bn_mulw_src="";
+$bn_asm_obj="";
+$bn_asm_src="";
 $des_enc_obj="";
 $des_enc_src="";
 $bf_enc_obj="";
@@ -59,7 +59,7 @@ sub do_lib_rule
 	local($ret,$_,$Name);
 
 	$target =~ s/\//$o/g if $o ne '/';
-	$target="\$(LIB_D)$o$target";
+	$target="$target";
 	($Name=$name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";
@@ -78,6 +78,19 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
 	return($ret);
+	}
+
+sub which
+	{
+	my ($name)=@_;
+	my $path;
+	foreach $path (split /:/, $ENV{PATH})
+		{
+		if (-x "$path/$name")
+			{
+			return "$path/$name";
+			}
+		}
 	}
 
 1;

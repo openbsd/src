@@ -62,10 +62,18 @@
 #ifdef WINDOWS
 #include "../bio/bss_file.c" 
 #endif
-#include "crypto.h"
-#include "bio.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/crypto.h>
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+
+#ifdef NO_DH
+int main(int argc, char *argv[])
+{
+    printf("No DH support\n");
+    return(0);
+}
+#else
+#include <openssl/dh.h>
 
 #ifdef WIN16
 #define MS_CALLBACK	_far _loadds
@@ -73,12 +81,7 @@
 #define MS_CALLBACK
 #endif
 
-#ifndef NOPROTO
-static void MS_CALLBACK cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK cb();
-#endif
-
+static void MS_CALLBACK cb(int p, int n, void *arg);
 #ifdef NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
@@ -86,9 +89,7 @@ static void MS_CALLBACK cb();
 
 BIO *out=NULL;
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	DH *a,*b;
 	char buf[12];
@@ -103,7 +104,7 @@ char *argv[];
 	if (out == NULL) exit(1);
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
-	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,(char *)out);
+	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
 	if (a == NULL) goto err;
 
 	BIO_puts(out,"\np    =");
@@ -170,10 +171,7 @@ err:
 	return(ret);
 	}
 
-static void MS_CALLBACK cb(p, n,arg)
-int p;
-int n;
-char *arg;
+static void MS_CALLBACK cb(int p, int n, void *arg)
 	{
 	char c='*';
 
@@ -182,7 +180,9 @@ char *arg;
 	if (p == 2) c='*';
 	if (p == 3) c='\n';
 	BIO_write((BIO *)arg,&c,1);
+	(void)BIO_flush((BIO *)arg);
 #ifdef LINT
 	p=n;
 #endif
 	}
+#endif

@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "conf.h"
+#include <openssl/conf.h>
 
 void print_conf(CONF_VALUE *cv);
 
@@ -66,7 +66,7 @@ main()
 	LHASH *conf;
 	long l;
 
-	conf=CONF_load(NULL,"../../apps/ssleay.cnf",&l);
+	conf=CONF_load(NULL,"../../apps/openssl.cnf",&l);
 	if (conf == NULL)
 		{
 		fprintf(stderr,"error loading config, line %ld\n",l);
@@ -77,8 +77,7 @@ main()
 	}
 
 
-void print_conf(cv)
-CONF_VALUE *cv;
+void print_conf(CONF_VALUE *cv)
 	{
 	int i;
 	CONF_VALUE *v;

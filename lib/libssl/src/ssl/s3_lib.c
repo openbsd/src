@@ -57,20 +57,18 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
-char *ssl3_version_str="SSLv3 part of SSLeay 0.9.0b 29-Jun-1998";
+const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
-#ifndef NOPROTO
 static long ssl3_default_timeout(void );
-#else
-static long ssl3_default_timeout();
-#endif
 
-SSL_CIPHER ssl3_ciphers[]={
+OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* The RSA ciphers */
 /* Cipher 01 */
 	{
@@ -97,7 +95,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_ADH_RC4_40_MD5,
 	SSL3_CK_ADH_RC4_40_MD5,
-	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_EXP|SSL_SSLV3,
+	SSL_kEDH |SSL_aNULL|SSL_RC4  |SSL_MD5 |SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -115,7 +113,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_ADH_DES_40_CBC_SHA,
 	SSL3_CK_ADH_DES_40_CBC_SHA,
-	SSL_kEDH |SSL_aNULL|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kEDH |SSL_aNULL|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -144,7 +142,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_RSA_RC4_40_MD5,
 	SSL3_CK_RSA_RC4_40_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4  |SSL_MD5 |SSL_EXP|SSL_SSLV3,
+	SSL_kRSA|SSL_aRSA|SSL_RC4  |SSL_MD5 |SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -171,7 +169,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_RSA_RC2_40_MD5,
 	SSL3_CK_RSA_RC2_40_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC2  |SSL_MD5 |SSL_EXP|SSL_SSLV3,
+	SSL_kRSA|SSL_aRSA|SSL_RC2  |SSL_MD5 |SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -189,7 +187,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_RSA_DES_40_CBC_SHA,
 	SSL3_CK_RSA_DES_40_CBC_SHA,
-	SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -218,7 +216,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	0,
 	SSL3_TXT_DH_DSS_DES_40_CBC_SHA,
 	SSL3_CK_DH_DSS_DES_40_CBC_SHA,
-	SSL_kDHd |SSL_aDH|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kDHd |SSL_aDH|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -245,7 +243,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	0,
 	SSL3_TXT_DH_RSA_DES_40_CBC_SHA,
 	SSL3_CK_DH_RSA_DES_40_CBC_SHA,
-	SSL_kDHr |SSL_aDH|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kDHr |SSL_aDH|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -274,7 +272,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_EDH_DSS_DES_40_CBC_SHA,
 	SSL3_CK_EDH_DSS_DES_40_CBC_SHA,
-	SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -301,7 +299,7 @@ SSL_CIPHER ssl3_ciphers[]={
 	1,
 	SSL3_TXT_EDH_RSA_DES_40_CBC_SHA,
 	SSL3_CK_EDH_RSA_DES_40_CBC_SHA,
-	SSL_kEDH|SSL_aRSA|SSL_DES|SSL_SHA1|SSL_EXP|SSL_SSLV3,
+	SSL_kEDH|SSL_aRSA|SSL_DES|SSL_SHA1|SSL_EXP40|SSL_SSLV3,
 	0,
 	SSL_ALL_CIPHERS,
 	},
@@ -355,6 +353,73 @@ SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_CIPHERS,
 	},
 
+#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
+	/* New TLS Export CipherSuites */
+	/* Cipher 60 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 61 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 62 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 63 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 64 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 65 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_EXP56|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+	/* Cipher 66 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
+	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    0,
+	    SSL_ALL_CIPHERS
+	    },
+#endif
+
 /* end of list */
 	};
 
@@ -384,6 +449,7 @@ static SSL_METHOD SSLv3_data= {
 	ssl3_write,
 	ssl3_shutdown,
 	ssl3_renegotiate,
+	ssl3_renegotiate_check,
 	ssl3_ctrl,
 	ssl3_ctx_ctrl,
 	ssl3_get_cipher_by_char,
@@ -396,25 +462,24 @@ static SSL_METHOD SSLv3_data= {
 	&SSLv3_enc_data,
 	};
 
-static long ssl3_default_timeout()
+static long ssl3_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the SSLv3 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *sslv3_base_method()
+SSL_METHOD *sslv3_base_method(void)
 	{
 	return(&SSLv3_data);
 	}
 
-int ssl3_num_ciphers()
+int ssl3_num_ciphers(void)
 	{
 	return(SSL3_NUM_CIPHERS);
 	}
 
-SSL_CIPHER *ssl3_get_cipher(u)
-unsigned int u;
+SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 	{
 	if (u < SSL3_NUM_CIPHERS)
 		return(&(ssl3_ciphers[SSL3_NUM_CIPHERS-1-u]));
@@ -423,14 +488,12 @@ unsigned int u;
 	}
 
 /* The problem is that it may not be the correct record type */
-int ssl3_pending(s)
-SSL *s;
+int ssl3_pending(SSL *s)
 	{
 	return(s->s3->rrec.length);
 	}
 
-int ssl3_new(s)
-SSL *s;
+int ssl3_new(SSL *s)
 	{
 	SSL3_CTX *s3;
 
@@ -452,33 +515,42 @@ err:
 	return(0);
 	}
 
-void ssl3_free(s)
-SSL *s;
+void ssl3_free(SSL *s)
 	{
+	if(s == NULL)
+	    return;
+
 	ssl3_cleanup_key_block(s);
 	if (s->s3->rbuf.buf != NULL)
 		Free(s->s3->rbuf.buf);
 	if (s->s3->wbuf.buf != NULL)
 		Free(s->s3->wbuf.buf);
+	if (s->s3->rrec.comp != NULL)
+		Free(s->s3->rrec.comp);
 #ifndef NO_DH
 	if (s->s3->tmp.dh != NULL)
 		DH_free(s->s3->tmp.dh);
 #endif
 	if (s->s3->tmp.ca_names != NULL)
-		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
 	memset(s->s3,0,sizeof(SSL3_CTX));
 	Free(s->s3);
 	s->s3=NULL;
 	}
 
-void ssl3_clear(s)
-SSL *s;
+void ssl3_clear(SSL *s)
 	{
 	unsigned char *rp,*wp;
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
-		sk_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+		sk_X509_NAME_pop_free(s->s3->tmp.ca_names,X509_NAME_free);
+
+	if (s->s3->rrec.comp != NULL)
+		{
+		Free(s->s3->rrec.comp);
+		s->s3->rrec.comp=NULL;
+		}
 
 	rp=s->s3->rbuf.buf;
 	wp=s->s3->wbuf.buf;
@@ -486,6 +558,9 @@ SSL *s;
 	memset(s->s3,0,sizeof(SSL3_CTX));
 	if (rp != NULL) s->s3->rbuf.buf=rp;
 	if (wp != NULL) s->s3->wbuf.buf=wp;
+
+	ssl_free_wbio_buffer(s);
+
 	s->packet_length=0;
 	s->s3->renegotiate=0;
 	s->s3->total_renegotiations=0;
@@ -494,13 +569,29 @@ SSL *s;
 	s->version=SSL3_VERSION;
 	}
 
-long ssl3_ctrl(s,cmd,larg,parg)
-SSL *s;
-int cmd;
-long larg;
-char *parg;
+long ssl3_ctrl(SSL *s, int cmd, long larg, char *parg)
 	{
 	int ret=0;
+
+#if !defined(NO_DSA) || !defined(NO_RSA)
+	if (
+#ifndef NO_RSA
+	    cmd == SSL_CTRL_SET_TMP_RSA ||
+	    cmd == SSL_CTRL_SET_TMP_RSA_CB ||
+#endif
+#ifndef NO_DSA
+	    cmd == SSL_CTRL_SET_TMP_DH ||
+	    cmd == SSL_CTRL_SET_TMP_DH_CB ||
+#endif
+		0)
+		{
+		if (!ssl_cert_inst(&s->cert))
+		    	{
+			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
+		}
+#endif
 
 	switch (cmd)
 		{
@@ -519,21 +610,75 @@ char *parg;
 	case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
 		ret=s->s3->total_renegotiations;
 		break;
+	case SSL_CTRL_GET_FLAGS:
+		ret=(int)(s->s3->flags);
+		break;
+#ifndef NO_RSA
+	case SSL_CTRL_NEED_TMP_RSA:
+		if ((s->cert != NULL) && (s->cert->rsa_tmp == NULL) &&
+		    ((s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL) ||
+		     (EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey) > (512/8))))
+			ret = 1;
+		break;
+	case SSL_CTRL_SET_TMP_RSA:
+		{
+			RSA *rsa = (RSA *)parg;
+			if (rsa == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+				return(ret);
+			}
+			if ((rsa = RSAPrivateKey_dup(rsa)) == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_RSA_LIB);
+				return(ret);
+			}
+			if (s->cert->rsa_tmp != NULL)
+				RSA_free(s->cert->rsa_tmp);
+			s->cert->rsa_tmp = rsa;
+			ret = 1;
+		}
+		break;
+	case SSL_CTRL_SET_TMP_RSA_CB:
+		s->cert->rsa_tmp_cb = (RSA *(*)(SSL *, int, int))parg;
+		break;
+#endif
+#ifndef NO_DH
+	case SSL_CTRL_SET_TMP_DH:
+		{
+			DH *dh = (DH *)parg;
+			if (dh == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+				return(ret);
+			}
+			if ((dh = DHparams_dup(dh)) == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
+				return(ret);
+			}
+			if (!DH_generate_key(dh)) {
+				DH_free(dh);
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
+				return(ret);
+			}
+			if (s->cert->dh_tmp != NULL)
+				DH_free(s->cert->dh_tmp);
+			s->cert->dh_tmp = dh;
+			ret = 1;
+		}
+		break;
+	case SSL_CTRL_SET_TMP_DH_CB:
+		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))parg;
+		break;
+#endif
 	default:
 		break;
 		}
 	return(ret);
 	}
 
-long ssl3_ctx_ctrl(ctx,cmd,larg,parg)
-SSL_CTX *ctx;
-int cmd;
-long larg;
-char *parg;
+long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
 	{
 	CERT *cert;
 
-	cert=ctx->default_cert;
+	cert=ctx->cert;
 
 	switch (cmd)
 		{
@@ -546,7 +691,7 @@ char *parg;
 			return(1);
 		else
 			return(0);
-		break;
+		/* break; */
 	case SSL_CTRL_SET_TMP_RSA:
 		{
 		RSA *rsa;
@@ -574,15 +719,16 @@ char *parg;
 			return(1);
 			}
 		}
-		break;
+		/* break; */
 	case SSL_CTRL_SET_TMP_RSA_CB:
-		cert->rsa_tmp_cb=(RSA *(*)())parg;
+		cert->rsa_tmp_cb=(RSA *(*)(SSL *, int, int))parg;
 		break;
 #endif
 #ifndef NO_DH
 	case SSL_CTRL_SET_TMP_DH:
 		{
 		DH *new=NULL,*dh;
+		int rret=0;
 
 		dh=(DH *)parg;
 		if (	((new=DHparams_dup(dh)) == NULL) ||
@@ -590,21 +736,31 @@ char *parg;
 			{
 			SSLerr(SSL_F_SSL3_CTX_CTRL,ERR_R_DH_LIB);
 			if (new != NULL) DH_free(new);
-			return(0);
 			}
 		else
 			{
 			if (cert->dh_tmp != NULL)
 				DH_free(cert->dh_tmp);
 			cert->dh_tmp=new;
-			return(1);
+			rret=1;
 			}
+		return(rret);
 		}
-		break;
+		/*break; */
 	case SSL_CTRL_SET_TMP_DH_CB:
-		cert->dh_tmp_cb=(DH *(*)())parg;
+		cert->dh_tmp_cb=(DH *(*)(SSL *, int, int))parg;
 		break;
 #endif
+	/* A Thawte special :-) */
+	case SSL_CTRL_EXTRA_CHAIN_CERT:
+		if (ctx->extra_certs == NULL)
+			{
+			if ((ctx->extra_certs=sk_X509_new_null()) == NULL)
+				return(0);
+			}
+		sk_X509_push(ctx->extra_certs,(X509 *)parg);
+		break;
+
 	default:
 		return(0);
 		}
@@ -613,8 +769,7 @@ char *parg;
 
 /* This function needs to check if the ciphers required are actually
  * available */
-SSL_CIPHER *ssl3_get_cipher_by_char(p)
-unsigned char *p;
+SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	{
 	static int init=1;
 	static SSL_CIPHER *sorted[SSL3_NUM_CIPHERS];
@@ -624,7 +779,7 @@ unsigned char *p;
 
 	if (init)
 		{
-		init=0;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
 
 		for (i=0; i<SSL3_NUM_CIPHERS; i++)
 			sorted[i]= &(ssl3_ciphers[i]);
@@ -632,6 +787,10 @@ unsigned char *p;
 		qsort(	(char *)sorted,
 			SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER *),
 			FP_ICC ssl_cipher_ptr_id_cmp);
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+
+		init=0;
 		}
 
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
@@ -646,9 +805,7 @@ unsigned char *p;
 		return(*cpp);
 	}
 
-int ssl3_put_cipher_by_char(c,p)
-SSL_CIPHER *c;
-unsigned char *p;
+int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 	{
 	long l;
 
@@ -662,9 +819,7 @@ unsigned char *p;
 	return(2);
 	}
 
-int ssl3_part_read(s,i)
-SSL *s;
-int i;
+int ssl3_part_read(SSL *s, int i)
 	{
 	s->rwstate=SSL_READING;
 
@@ -679,61 +834,67 @@ int i;
 		}
 	}
 
-SSL_CIPHER *ssl3_choose_cipher(s,have,pref)
-SSL *s;
-STACK *have,*pref;
+SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *have,
+	     STACK_OF(SSL_CIPHER) *pref)
 	{
 	SSL_CIPHER *c,*ret=NULL;
 	int i,j,ok;
 	CERT *cert;
 	unsigned long alg,mask,emask;
 
-	/* Lets see which ciphers we can supported */
-	if (s->cert != NULL)
-		cert=s->cert;
-	else
-		cert=s->ctx->default_cert;
+	/* Let's see which ciphers we can support */
+	cert=s->cert;
 
-	ssl_set_cert_masks(cert);
-	mask=cert->mask;
-	emask=cert->export_mask;
-			
-	sk_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
+	sk_SSL_CIPHER_set_cmp_func(pref,ssl_cipher_ptr_id_cmp);
 
-	for (i=0; i<sk_num(have); i++)
+#ifdef CIPHER_DEBUG
+	printf("Have:\n");
+	for(i=0 ; i < sk_num(pref) ; ++i)
+	    {
+	    c=(SSL_CIPHER *)sk_value(pref,i);
+	    printf("%p:%s\n",c,c->name);
+	    }
+#endif
+
+	for (i=0; i<sk_SSL_CIPHER_num(have); i++)
 		{
-		c=(SSL_CIPHER *)sk_value(have,i);
+		c=sk_SSL_CIPHER_value(have,i);
+
+		ssl_set_cert_masks(cert,c);
+		mask=cert->mask;
+		emask=cert->export_mask;
+			
 		alg=c->algorithms&(SSL_MKEY_MASK|SSL_AUTH_MASK);
-		if (alg & SSL_EXPORT)
+		if (SSL_IS_EXPORT(c->algorithms))
 			{
 			ok=((alg & emask) == alg)?1:0;
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX]%s\n",ok,alg,mask,c->name);
+			printf("%d:[%08lX:%08lX]%p:%s (export)\n",ok,alg,emask,
+			       c,c->name);
 #endif
 			}
 		else
 			{
 			ok=((alg & mask) == alg)?1:0;
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX]%s\n",ok,alg,mask,c->name);
+			printf("%d:[%08lX:%08lX]%p:%s\n",ok,alg,mask,c,
+			       c->name);
 #endif
 			}
 
 		if (!ok) continue;
 	
-		j=sk_find(pref,(char *)c);
+		j=sk_SSL_CIPHER_find(pref,c);
 		if (j >= 0)
 			{
-			ret=(SSL_CIPHER *)sk_value(pref,j);
+			ret=sk_SSL_CIPHER_value(pref,j);
 			break;
 			}
 		}
 	return(ret);
 	}
 
-int ssl3_get_req_cert_type(s,p)
-SSL *s;
-unsigned char *p;
+int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	{
 	int ret=0;
 	unsigned long alg;
@@ -743,33 +904,34 @@ unsigned char *p;
 #ifndef NO_DH
 	if (alg & (SSL_kDHr|SSL_kEDH))
 		{
-#ifndef NO_RSA
+#  ifndef NO_RSA
 		p[ret++]=SSL3_CT_RSA_FIXED_DH;
-#endif
-#ifndef NO_DSA
+#  endif
+#  ifndef NO_DSA
 		p[ret++]=SSL3_CT_DSS_FIXED_DH;
-#endif
+#  endif
 		}
 	if ((s->version == SSL3_VERSION) &&
 		(alg & (SSL_kEDH|SSL_kDHd|SSL_kDHr)))
 		{
-#ifndef NO_RSA
+#  ifndef NO_RSA
 		p[ret++]=SSL3_CT_RSA_EPHEMERAL_DH;
-#endif
-#ifndef NO_DSA
+#  endif
+#  ifndef NO_DSA
 		p[ret++]=SSL3_CT_DSS_EPHEMERAL_DH;
-#endif
+#  endif
 		}
 #endif /* !NO_DH */
 #ifndef NO_RSA
 	p[ret++]=SSL3_CT_RSA_SIGN;
 #endif
+#ifndef NO_DSA
 	p[ret++]=SSL3_CT_DSS_SIGN;
+#endif
 	return(ret);
 	}
 
-int ssl3_shutdown(s)
-SSL *s;
+int ssl3_shutdown(SSL *s)
 	{
 
 	/* Don't do anything much if we have not done the handshake or
@@ -809,13 +971,9 @@ SSL *s;
 		return(0);
 	}
 
-int ssl3_write(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl3_write(SSL *s, const void *buf, int len)
 	{
 	int ret,n;
-	BIO *under;
 
 #if 0
 	if (s->shutdown & SSL_SEND_SHUTDOWN)
@@ -838,7 +996,7 @@ int len;
 		if (s->s3->delay_buf_pop_ret == 0)
 			{
 			ret=ssl3_write_bytes(s,SSL3_RT_APPLICATION_DATA,
-				(char *)buf,len);
+					     buf,len);
 			if (ret <= 0) return(ret);
 
 			s->s3->delay_buf_pop_ret=ret;
@@ -849,30 +1007,24 @@ int len;
 		if (n <= 0) return(n);
 		s->rwstate=SSL_NOTHING;
 
-		/* We have flushed the buffer */
-		under=BIO_pop(s->wbio);
-		s->wbio=under;
-		BIO_free(s->bbio);
-		s->bbio=NULL;
+		/* We have flushed the buffer, so remove it */
+		ssl_free_wbio_buffer(s);
+		s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
+
 		ret=s->s3->delay_buf_pop_ret;
 		s->s3->delay_buf_pop_ret=0;
-
-		s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
 		}
 	else
 		{
 		ret=ssl3_write_bytes(s,SSL3_RT_APPLICATION_DATA,
-			(char *)buf,len);
+				     buf,len);
 		if (ret <= 0) return(ret);
 		}
 
 	return(ret);
 	}
 
-int ssl3_read(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl3_read(SSL *s, void *buf, int len)
 	{
 	int ret;
 	
@@ -894,10 +1046,7 @@ int len;
 	return(ret);
 	}
 
-int ssl3_peek(s,buf,len)
-SSL *s;
-char *buf;
-int len;
+int ssl3_peek(SSL *s, char *buf, int len)
 	{
 	SSL3_RECORD *rr;
 	int n;
@@ -919,8 +1068,7 @@ int len;
 	return(n);
 	}
 
-int ssl3_renegotiate(s)
-SSL *s;
+int ssl3_renegotiate(SSL *s)
 	{
 	if (s->handshake_func == NULL)
 		return(1);
@@ -932,8 +1080,7 @@ SSL *s;
 	return(1);
 	}
 
-int ssl3_renegotiate_check(s)
-SSL *s;
+int ssl3_renegotiate_check(SSL *s)
 	{
 	int ret=0;
 
@@ -957,5 +1104,4 @@ need to go to SSL_ST_ACCEPT.
 		}
 	return(ret);
 	}
-
 

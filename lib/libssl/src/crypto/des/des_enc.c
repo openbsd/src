@@ -58,14 +58,11 @@
 
 #include "des_locl.h"
 
-void des_encrypt(data, ks, enc)
-DES_LONG *data;
-des_key_schedule ks;
-int enc;
+void des_encrypt(DES_LONG *data, des_key_schedule ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -87,7 +84,7 @@ int enc;
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=(DES_LONG *)ks;
+	s=ks->ks.deslong;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
@@ -159,14 +156,11 @@ int enc;
 	l=r=t=u=0;
 	}
 
-void des_encrypt2(data, ks, enc)
-DES_LONG *data;
-des_key_schedule ks;
-int enc;
+void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)des_SPtrans;
 #endif
 #ifndef DES_UNROLL
 	register int i;
@@ -186,7 +180,7 @@ int enc;
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=(DES_LONG *)ks;
+	s=ks->ks.deslong;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
@@ -253,11 +247,8 @@ int enc;
 	l=r=t=u=0;
 	}
 
-void des_encrypt3(data,ks1,ks2,ks3)
-DES_LONG *data;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
+void des_encrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3)
 	{
 	register DES_LONG l,r;
 
@@ -276,11 +267,8 @@ des_key_schedule ks3;
 	data[1]=r;
 	}
 
-void des_decrypt3(data,ks1,ks2,ks3)
-DES_LONG *data;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
+void des_decrypt3(DES_LONG *data, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3)
 	{
 	register DES_LONG l,r;
 
@@ -301,108 +289,24 @@ des_key_schedule ks3;
 
 #ifndef DES_DEFAULT_OPTIONS
 
-void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
-int enc;
+#undef CBC_ENC_C__DONT_UPDATE_IV
+#include "ncbc_enc.c" /* des_ncbc_encrypt */
+
+void des_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
+	     long length, des_key_schedule ks1, des_key_schedule ks2,
+	     des_key_schedule ks3, des_cblock *ivec, int enc)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
+	register const unsigned char *in;
+	unsigned char *out;
 	register long l=length;
 	DES_LONG tin[2];
 	unsigned char *iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
-
-	if (enc)
-		{
-		c2l(iv,tout0);
-		c2l(iv,tout1);
-		for (l-=8; l>=0; l-=8)
-			{
-			c2l(in,tin0);
-			c2l(in,tin1);
-			tin0^=tout0; tin[0]=tin0;
-			tin1^=tout1; tin[1]=tin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
-			tout0=tin[0]; l2c(tout0,out);
-			tout1=tin[1]; l2c(tout1,out);
-			}
-		if (l != -8)
-			{
-			c2ln(in,tin0,tin1,l+8);
-			tin0^=tout0; tin[0]=tin0;
-			tin1^=tout1; tin[1]=tin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
-			tout0=tin[0]; l2c(tout0,out);
-			tout1=tin[1]; l2c(tout1,out);
-			}
-		iv=(unsigned char *)ivec;
-		l2c(tout0,iv);
-		l2c(tout1,iv);
-		}
-	else
-		{
-		c2l(iv,xor0);
-		c2l(iv,xor1);
-		for (l-=8; l>=0; l-=8)
-			{
-			c2l(in,tin0); tin[0]=tin0;
-			c2l(in,tin1); tin[1]=tin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_DECRYPT);
-			tout0=tin[0]^xor0;
-			tout1=tin[1]^xor1;
-			l2c(tout0,out);
-			l2c(tout1,out);
-			xor0=tin0;
-			xor1=tin1;
-			}
-		if (l != -8)
-			{
-			c2l(in,tin0); tin[0]=tin0;
-			c2l(in,tin1); tin[1]=tin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_DECRYPT);
-			tout0=tin[0]^xor0;
-			tout1=tin[1]^xor1;
-			l2cn(tout0,tout1,out,l+8);
-			xor0=tin0;
-			xor1=tin1;
-			}
-
-		iv=(unsigned char *)ivec;
-		l2c(xor0,iv);
-		l2c(xor1,iv);
-		}
-	tin0=tin1=tout0=tout1=xor0=xor1=0;
-	tin[0]=tin[1]=0;
-	}
-
-void des_ede3_cbc_encrypt(input, output, length, ks1, ks2, ks3, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule ks1;
-des_key_schedule ks2;
-des_key_schedule ks3;
-des_cblock (*ivec);
-int enc;
-	{
-	register DES_LONG tin0,tin1;
-	register DES_LONG tout0,tout1,xor0,xor1;
-	register unsigned char *in,*out;
-	register long l=length;
-	DES_LONG tin[2];
-	unsigned char *iv;
-
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	in=input;
+	out=output;
+	iv = &(*ivec)[0];
 
 	if (enc)
 		{
@@ -439,7 +343,7 @@ int enc;
 			l2c(tout0,out);
 			l2c(tout1,out);
 			}
-		iv=(unsigned char *)ivec;
+		iv = &(*ivec)[0];
 		l2c(tout0,iv);
 		l2c(tout1,iv);
 		}
@@ -491,7 +395,7 @@ int enc;
 			xor1=t1;
 			}
 
-		iv=(unsigned char *)ivec;
+		iv = &(*ivec)[0];
 		l2c(xor0,iv);
 		l2c(xor1,iv);
 		}

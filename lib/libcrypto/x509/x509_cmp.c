@@ -60,13 +60,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int X509_issuer_and_serial_cmp(a,b)
-X509 *a;
-X509 *b;
+int X509_issuer_and_serial_cmp(X509 *a, X509 *b)
 	{
 	int i;
 	X509_CINF *ai,*bi;
@@ -79,8 +77,7 @@ X509 *b;
 	}
 
 #ifndef NO_MD5
-unsigned long X509_issuer_and_serial_hash(a)
-X509 *a;
+unsigned long X509_issuer_and_serial_hash(X509 *a)
 	{
 	unsigned long ret=0;
 	MD5_CTX ctx;
@@ -101,70 +98,59 @@ X509 *a;
 	}
 #endif
 	
-int X509_issuer_name_cmp(a, b)
-X509 *a;
-X509 *b;
+int X509_issuer_name_cmp(X509 *a, X509 *b)
 	{
 	return(X509_NAME_cmp(a->cert_info->issuer,b->cert_info->issuer));
 	}
 
-int X509_subject_name_cmp(a, b)
-X509 *a;
-X509 *b;
+int X509_subject_name_cmp(X509 *a, X509 *b)
 	{
 	return(X509_NAME_cmp(a->cert_info->subject,b->cert_info->subject));
 	}
 
-int X509_CRL_cmp(a, b)
-X509_CRL *a;
-X509_CRL *b;
+int X509_CRL_cmp(X509_CRL *a, X509_CRL *b)
 	{
 	return(X509_NAME_cmp(a->crl->issuer,b->crl->issuer));
 	}
 
-X509_NAME *X509_get_issuer_name(a)
-X509 *a;
+X509_NAME *X509_get_issuer_name(X509 *a)
 	{
 	return(a->cert_info->issuer);
 	}
 
-unsigned long X509_issuer_name_hash(x)
-X509 *x;
+unsigned long X509_issuer_name_hash(X509 *x)
 	{
 	return(X509_NAME_hash(x->cert_info->issuer));
 	}
 
-X509_NAME *X509_get_subject_name(a)
-X509 *a;
+X509_NAME *X509_get_subject_name(X509 *a)
 	{
 	return(a->cert_info->subject);
 	}
 
-ASN1_INTEGER *X509_get_serialNumber(a)
-X509 *a;
+ASN1_INTEGER *X509_get_serialNumber(X509 *a)
 	{
 	return(a->cert_info->serialNumber);
 	}
 
-unsigned long X509_subject_name_hash(x)
-X509 *x;
+unsigned long X509_subject_name_hash(X509 *x)
 	{
 	return(X509_NAME_hash(x->cert_info->subject));
 	}
 
-int X509_NAME_cmp(a, b)
-X509_NAME *a;
-X509_NAME *b;
+int X509_NAME_cmp(X509_NAME *a, X509_NAME *b)
 	{
 	int i,j;
 	X509_NAME_ENTRY *na,*nb;
 
-	if (sk_num(a->entries) != sk_num(b->entries))
-		return(sk_num(a->entries)-sk_num(b->entries));
-	for (i=sk_num(a->entries)-1; i>=0; i--)
+	if (sk_X509_NAME_ENTRY_num(a->entries)
+	    != sk_X509_NAME_ENTRY_num(b->entries))
+		return sk_X509_NAME_ENTRY_num(a->entries)
+		  -sk_X509_NAME_ENTRY_num(b->entries);
+	for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
 		{
-		na=(X509_NAME_ENTRY *)sk_value(a->entries,i);
-		nb=(X509_NAME_ENTRY *)sk_value(b->entries,i);
+		na=sk_X509_NAME_ENTRY_value(a->entries,i);
+		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
 		j=na->value->length-nb->value->length;
 		if (j) return(j);
 		j=memcmp(na->value->data,nb->value->data,
@@ -177,10 +163,10 @@ X509_NAME *b;
 	/* We will check the object types after checking the values
 	 * since the values will more often be different than the object
 	 * types. */
-	for (i=sk_num(a->entries)-1; i>=0; i--)
+	for (i=sk_X509_NAME_ENTRY_num(a->entries)-1; i>=0; i--)
 		{
-		na=(X509_NAME_ENTRY *)sk_value(a->entries,i);
-		nb=(X509_NAME_ENTRY *)sk_value(b->entries,i);
+		na=sk_X509_NAME_ENTRY_value(a->entries,i);
+		nb=sk_X509_NAME_ENTRY_value(b->entries,i);
 		j=OBJ_cmp(na->object,nb->object);
 		if (j) return(j);
 		}
@@ -190,8 +176,7 @@ X509_NAME *b;
 #ifndef NO_MD5
 /* I now DER encode the name and hash it.  Since I cache the DER encoding,
  * this is reasonably effiecent. */
-unsigned long X509_NAME_hash(x)
-X509_NAME *x;
+unsigned long X509_NAME_hash(X509_NAME *x)
 	{
 	unsigned long ret=0;
 	unsigned char md[16];
@@ -217,10 +202,8 @@ X509_NAME *x;
 #endif
 
 /* Search a stack of X509 for a match */
-X509 *X509_find_by_issuer_and_serial(sk,name,serial)
-STACK *sk;
-X509_NAME *name;
-ASN1_INTEGER *serial;
+X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
+		ASN1_INTEGER *serial)
 	{
 	int i;
 	X509_CINF cinf;
@@ -230,28 +213,81 @@ ASN1_INTEGER *serial;
 	cinf.serialNumber=serial;
 	cinf.issuer=name;
 
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_num(sk); i++)
 		{
-		x509=(X509 *)sk_value(sk,i);
+		x509=sk_X509_value(sk,i);
 		if (X509_issuer_and_serial_cmp(x509,&x) == 0)
 			return(x509);
 		}
 	return(NULL);
 	}
 
-X509 *X509_find_by_subject(sk,name)
-STACK *sk;
-X509_NAME *name;
+X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
 	{
 	X509 *x509;
 	int i;
 
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_X509_num(sk); i++)
 		{
-		x509=(X509 *)sk_value(sk,i);
+		x509=sk_X509_value(sk,i);
 		if (X509_NAME_cmp(X509_get_subject_name(x509),name) == 0)
 			return(x509);
 		}
 	return(NULL);
 	}
 
+EVP_PKEY *X509_get_pubkey(X509 *x)
+	{
+	if ((x == NULL) || (x->cert_info == NULL))
+		return(NULL);
+	return(X509_PUBKEY_get(x->cert_info->key));
+	}
+
+int X509_check_private_key(X509 *x, EVP_PKEY *k)
+	{
+	EVP_PKEY *xk=NULL;
+	int ok=0;
+
+	xk=X509_get_pubkey(x);
+	if (xk->type != k->type)
+	    {
+	    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_TYPE_MISMATCH);
+	    goto err;
+	    }
+	switch (k->type)
+		{
+#ifndef NO_RSA
+	case EVP_PKEY_RSA:
+		if (BN_cmp(xk->pkey.rsa->n,k->pkey.rsa->n) != 0
+		    || BN_cmp(xk->pkey.rsa->e,k->pkey.rsa->e) != 0)
+		    {
+		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
+		    goto err;
+		    }
+		break;
+#endif
+#ifndef NO_DSA
+	case EVP_PKEY_DSA:
+		if (BN_cmp(xk->pkey.dsa->pub_key,k->pkey.dsa->pub_key) != 0)
+		    {
+		    X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_KEY_VALUES_MISMATCH);
+		    goto err;
+		    }
+		break;
+#endif
+#ifndef NO_DH
+	case EVP_PKEY_DH:
+		/* No idea */
+	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_CANT_CHECK_DH_KEY);
+		goto err;
+#endif
+	default:
+	        X509err(X509_F_X509_CHECK_PRIVATE_KEY,X509_R_UNKNOWN_KEY_TYPE);
+		goto err;
+		}
+
+	ok=1;
+err:
+	EVP_PKEY_free(xk);
+	return(ok);
+	}

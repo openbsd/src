@@ -59,7 +59,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "hmac.h"
+
+#ifdef NO_HMAC
+int main(int argc, char *argv[])
+{
+    printf("No HMAC support\n");
+    return(0);
+}
+#else
+#include <openssl/hmac.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 struct test_st
 	{
@@ -102,18 +114,18 @@ struct test_st
 	};
 
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	char *p;
+
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(test[0].data, test[0].data, test[0].data_len);
+	ebcdic2ascii(test[1].data, test[1].data, test[1].data_len);
+	ebcdic2ascii(test[2].key,  test[2].key,  test[2].key_len);
+	ebcdic2ascii(test[2].data, test[2].data, test[2].data_len);
+#endif
 
 	for (i=0; i<4; i++)
 		{
@@ -135,8 +147,7 @@ char *argv[];
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -145,3 +156,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
+#endif

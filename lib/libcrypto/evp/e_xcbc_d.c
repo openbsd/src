@@ -56,21 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_DES
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
-#ifndef NOPROTO
 static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
 	unsigned char *iv,int enc);
 static void desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	unsigned char *in, unsigned int inl);
-#else
-static void desx_cbc_init_key();
-static void desx_cbc_cipher();
-#endif
-
 static EVP_CIPHER d_xcbc_cipher=
 	{
 	NID_desx_cbc,
@@ -84,39 +79,34 @@ static EVP_CIPHER d_xcbc_cipher=
 	EVP_CIPHER_get_asn1_iv,
 	};
 
-EVP_CIPHER *EVP_desx_cbc()
+EVP_CIPHER *EVP_desx_cbc(void)
 	{
 	return(&d_xcbc_cipher);
 	}
 	
-static void desx_cbc_init_key(ctx,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+static void desx_cbc_init_key(EVP_CIPHER_CTX *ctx, unsigned char *key,
+	     unsigned char *iv, int enc)
 	{
+	des_cblock *deskey = (des_cblock *)key;
+
 	if (iv != NULL)
 		memcpy(&(ctx->oiv[0]),iv,8);
 	memcpy(&(ctx->iv[0]),&(ctx->oiv[0]),8);
-	if (key != NULL)
+	if (deskey != NULL)
 		{
-		des_set_key((des_cblock *)key,ctx->c.desx_cbc.ks);
+		des_set_key(deskey,ctx->c.desx_cbc.ks);
 		memcpy(&(ctx->c.desx_cbc.inw[0]),&(key[8]),8);
 		memcpy(&(ctx->c.desx_cbc.outw[0]),&(key[16]),8);
 		}
 	}
 
-static void desx_cbc_cipher(ctx,out,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-unsigned char *in;
-unsigned int inl;
+static void desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+	     unsigned char *in, unsigned int inl)
 	{
-	des_xcbc_encrypt(
-		(des_cblock *)in,(des_cblock *)out,
-		(long)inl, ctx->c.desx_cbc.ks,
+	des_xcbc_encrypt(in,out,inl,ctx->c.desx_cbc.ks,
 		(des_cblock *)&(ctx->iv[0]),
-		(des_cblock *)&(ctx->c.desx_cbc.inw[0]),
-		(des_cblock *)&(ctx->c.desx_cbc.outw[0]),
+		&ctx->c.desx_cbc.inw,
+		&ctx->c.desx_cbc.outw,
 		ctx->encrypt);
 	}
+#endif

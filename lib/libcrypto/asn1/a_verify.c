@@ -62,22 +62,17 @@
 #include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "bn.h"
-#include "x509.h"
-#include "objects.h"
-#include "buffer.h"
-#include "evp.h"
-#include "pem.h"
+#include <openssl/bn.h>
+#include <openssl/x509.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 
-int ASN1_verify(i2d,a,signature,data,pkey)
-int (*i2d)();
-X509_ALGOR *a;
-ASN1_BIT_STRING *signature;
-char *data;
-EVP_PKEY *pkey;
+int ASN1_verify(int (*i2d)(), X509_ALGOR *a, ASN1_BIT_STRING *signature,
+	     char *data, EVP_PKEY *pkey)
 	{
 	EVP_MD_CTX ctx;
-	EVP_MD *type;
+	const EVP_MD *type;
 	unsigned char *p,*buf_in=NULL;
 	int ret= -1,i,inl;
 
@@ -90,7 +85,7 @@ EVP_PKEY *pkey;
 		}
 	
 	inl=i2d(data,NULL);
-	buf_in=(unsigned char *)Malloc((unsigned int)inl);
+	buf_in=Malloc((unsigned int)inl);
 	if (buf_in == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_VERIFY,ERR_R_MALLOC_FAILURE);

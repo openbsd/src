@@ -57,26 +57,19 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
-#include "rand.h"
-#include "objects.h"
-#include "evp.h"
+#include <openssl/buffer.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
 #include "ssl_locl.h"
 
-#define BREAK break
-
-#ifndef NOPROTO
+static SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
-#else
-int ssl23_get_client_hello();
-#endif
-
-static SSL_METHOD *ssl23_get_server_method(ver)
-int ver;
+static SSL_METHOD *ssl23_get_server_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_server_method());
-	else if (ver == SSL3_VERSION)
+	if (ver == SSL3_VERSION)
 		return(SSLv3_server_method());
 	else if (ver == TLS1_VERSION)
 		return(TLSv1_server_method());
@@ -84,24 +77,23 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_server_method()
+SSL_METHOD *SSLv23_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv23_server_data;
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv23_server_data,
 			(char *)sslv23_base_method(),sizeof(SSL_METHOD));
 		SSLv23_server_data.ssl_accept=ssl23_accept;
 		SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
+		init=0;
 		}
 	return(&SSLv23_server_data);
 	}
 
-int ssl23_accept(s)
-SSL *s;
+int ssl23_accept(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long Time=time(NULL);
@@ -109,7 +101,7 @@ SSL *s;
 	int ret= -1;
 	int new_state,state;
 
-	RAND_seed((unsigned char *)&Time,sizeof(Time));
+	RAND_seed(&Time,sizeof(Time));
 	ERR_clear_error();
 	clear_sys_error();
 
@@ -132,6 +124,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_ACCEPT:
 		case SSL_ST_OK|SSL_ST_ACCEPT:
 
+			s->server=1;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			/* s->version=SSL3_VERSION; */
@@ -155,7 +148,7 @@ SSL *s;
 			ssl3_init_finished_mac(s);
 
 			s->state=SSL23_ST_SR_CLNT_HELLO_A;
-			s->ctx->sess_accept++;
+			s->ctx->stats.sess_accept++;
 			s->init_num=0;
 			break;
 
@@ -166,7 +159,7 @@ SSL *s;
 			ret=ssl23_get_client_hello(s);
 			if (ret >= 0) cb=NULL;
 			goto end;
-			break;
+			/* break; */
 
 		default:
 			SSLerr(SSL_F_SSL23_ACCEPT,SSL_R_UNKNOWN_STATE);
@@ -191,8 +184,7 @@ end:
 	}
 
 
-int ssl23_get_client_hello(s)
-SSL *s;
+int ssl23_get_client_hello(SSL *s)
 	{
 	char buf_space[8];
 	char *buf= &(buf_space[0]);
@@ -201,14 +193,16 @@ SSL *s;
 	unsigned int csl,sil,cl;
 	int n=0,j,tls1=0;
 	int type=0,use_sslv2_strong=0;
+	int v[2];
 
 	/* read the initial header */
+	v[0]=v[1]=0;
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{
 		if (!ssl3_setup_buffers(s)) goto err;
 
 		n=ssl23_read_bytes(s,7);
-		if (n != 7) return(n);
+		if (n != 7) return(n); /* n == -1 || n == 0 */
 
 		p=s->packet;
 
@@ -219,12 +213,14 @@ SSL *s;
 			/* SSLv2 header */
 			if ((p[3] == 0x00) && (p[4] == 0x02))
 				{
+				v[0]=p[3]; v[1]=p[4];
 				/* SSLv2 */
 				if (!(s->options & SSL_OP_NO_SSLv2))
 					type=1;
 				}
 			else if (p[3] == SSL3_VERSION_MAJOR)
 				{
+				v[0]=p[3]; v[1]=p[4];
 				/* SSLv3/TLSv1 */
 				if (p[4] >= TLS1_VERSION_MINOR)
 					{
@@ -237,13 +233,19 @@ SSL *s;
 						{
 						s->state=SSL23_ST_SR_CLNT_HELLO_B;
 						}
+					else if (!(s->options & SSL_OP_NO_SSLv2))
+						{
+						type=1;
+						}
 					}
 				else if (!(s->options & SSL_OP_NO_SSLv3))
 					s->state=SSL23_ST_SR_CLNT_HELLO_B;
+				else if (!(s->options & SSL_OP_NO_SSLv2))
+					type=1;
 
 				if (s->options & SSL_OP_NON_EXPORT_FIRST)
 					{
-					STACK *sk;
+					STACK_OF(SSL_CIPHER) *sk;
 					SSL_CIPHER *c;
 					int ne2,ne3;
 
@@ -274,10 +276,10 @@ SSL *s;
 					if (sk != NULL)
 						{
 						ne2=ne3=0;
-						for (j=0; j<sk_num(sk); j++)
+						for (j=0; j<sk_SSL_CIPHER_num(sk); j++)
 							{
-							c=(SSL_CIPHER *)sk_value(sk,j);
-							if (!(c->algorithms & SSL_EXP))
+							c=sk_SSL_CIPHER_value(sk,j);
+							if (!SSL_C_IS_EXPORT(c))
 								{
 								if ((c->id>>24L) == 2L)
 									ne2=1;
@@ -299,6 +301,7 @@ SSL *s;
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO))
 			{
+			v[0]=p[1]; v[1]=p[2];
 			/* true SSLv3 or tls1 */
 			if (p[2] >= TLS1_VERSION_MINOR)
 				{
@@ -313,15 +316,15 @@ SSL *s;
 			else if (!(s->options & SSL_OP_NO_SSLv3))
 				type=3;
 			}
-		else if ((strncmp("GET ", p,4) == 0) ||
-			 (strncmp("POST ",p,5) == 0) ||
-			 (strncmp("HEAD ",p,5) == 0) ||
-			 (strncmp("PUT ", p,4) == 0))
+		else if ((strncmp("GET ", (char *)p,4) == 0) ||
+			 (strncmp("POST ",(char *)p,5) == 0) ||
+			 (strncmp("HEAD ",(char *)p,5) == 0) ||
+			 (strncmp("PUT ", (char *)p,4) == 0))
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTP_REQUEST);
 			goto err;
 			}
-		else if (strncmp("CONNECT",p,7) == 0)
+		else if (strncmp("CONNECT",(char *)p,7) == 0)
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_HTTPS_PROXY_REQUEST);
 			goto err;
@@ -387,7 +390,7 @@ next_bit:
 			}
 		s2n(j,dd);
 
-		/* compression */
+		/* COMPRESSION */
 		*(d++)=1;
 		*(d++)=0;
 		
@@ -478,6 +481,7 @@ next_bit:
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_server_method();
 			}
+		s->client_version=(v[0]<<8)|v[1];
 		s->handshake_func=s->method->ssl_accept;
 		}
 	

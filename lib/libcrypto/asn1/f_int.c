@@ -58,15 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
 
-int i2a_ASN1_INTEGER(bp, a)
-BIO *bp;
-ASN1_INTEGER *a;
+int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
 	{
 	int i,n=0;
-	static char *h="0123456789ABCDEF";
+	static const char *h="0123456789ABCDEF";
 	char buf[2];
 
 	if (a == NULL) return(0);
@@ -96,11 +94,7 @@ err:
 	return(-1);
 	}
 
-int a2i_ASN1_INTEGER(bp,bs,buf,size)
-BIO *bp;
-ASN1_INTEGER *bs;
-char *buf;
-int size;
+int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	{
 	int ret=0;
 	int i,j,k,m,n,again,bufsize;
@@ -123,9 +117,18 @@ int size;
 
 		for (j=0; j<i; j++)
 			{
+#ifndef CHARSET_EBCDIC
 			if (!(	((buf[j] >= '0') && (buf[j] <= '9')) ||
 				((buf[j] >= 'a') && (buf[j] <= 'f')) ||
 				((buf[j] >= 'A') && (buf[j] <= 'F'))))
+#else
+			/* This #ifdef is not strictly necessary, since
+			 * the characters A...F a...f 0...9 are contiguous
+			 * (yes, even in EBCDIC - but not the whole alphabet).
+			 * Nevertheless, isxdigit() is faster.
+			 */
+			if (!isxdigit(buf[j]))
+#endif
 				{
 				i=j;
 				break;

@@ -56,12 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef NO_RSA
 #include <stdio.h>
-#include "objects.h"
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
-static SSL_METHOD *ssl2_get_method(ver)
-int ver;
+static SSL_METHOD *ssl2_get_method(int ver);
+static SSL_METHOD *ssl2_get_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_method());
@@ -69,20 +70,20 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_method()
+SSL_METHOD *SSLv2_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv2_data;
 
 	if (init)
 		{
-		init=0;
 		memcpy((char *)&SSLv2_data,(char *)sslv2_base_method(),
 			sizeof(SSL_METHOD));
 		SSLv2_data.ssl_connect=ssl2_connect;
 		SSLv2_data.ssl_accept=ssl2_accept;
 		SSLv2_data.get_ssl_method=ssl2_get_method;
+		init=0;
 		}
 	return(&SSLv2_data);
 	}
-
+#endif

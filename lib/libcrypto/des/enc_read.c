@@ -58,18 +58,34 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "cryptlib.h"
 #include "des_locl.h"
 
 /* This has some uglies in it but it works - even over sockets. */
 /*extern int errno;*/
-int des_rw_mode=DES_PCBC_MODE;
+OPENSSL_GLOBAL int des_rw_mode=DES_PCBC_MODE;
 
-int des_enc_read(fd, buf, len, sched, iv)
-int fd;
-char *buf;
-int len;
-des_key_schedule sched;
-des_cblock (*iv);
+
+/*
+ * WARNINGS:
+ *
+ *  -  The data format used by des_enc_write() and des_enc_read()
+ *     has a cryptographic weakness: When asked to write more
+ *     than MAXWRITE bytes, des_enc_write will split the data
+ *     into several chunks that are all encrypted
+ *     using the same IV.  So don't use these functions unless you
+ *     are sure you know what you do (in which case you might
+ *     not want to use them anyway).
+ *
+ *  -  This code cannot handle non-blocking sockets.
+ *
+ *  -  This function uses an internal state and thus cannot be
+ *     used on multiple files.
+ */
+
+
+int des_enc_read(int fd, void *buf, int len, des_key_schedule sched,
+		 des_cblock *iv)
 	{
 	/* data to be unencrypted */
 	int net_num=0;
@@ -77,27 +93,27 @@ des_cblock (*iv);
 	/* extra unencrypted data 
 	 * for when a block of 100 comes in but is des_read one byte at
 	 * a time. */
-	static char *unnet=NULL;
+	static unsigned char *unnet=NULL;
 	static int unnet_start=0;
 	static int unnet_left=0;
-	static char *tmpbuf=NULL;
+	static unsigned char *tmpbuf=NULL;
 	int i;
 	long num=0,rnum;
 	unsigned char *p;
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=(char *)malloc(BSIZE);
+		tmpbuf=Malloc(BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
 		{
-		net=(unsigned char *)malloc(BSIZE);
+		net=Malloc(BSIZE);
 		if (net == NULL) return(-1);
 		}
 	if (unnet == NULL)
 		{
-		unnet=(char *)malloc(BSIZE);
+		unnet=Malloc(BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */
@@ -109,7 +125,7 @@ des_cblock (*iv);
 			 * with the number of bytes we have - should always
 			 * check the return value */
 			memcpy(buf,&(unnet[unnet_start]),
-				(unsigned int)unnet_left);
+			       unnet_left);
 			/* eay 26/08/92 I had the next 2 lines
 			 * reversed :-( */
 			i=unnet_left;
@@ -117,7 +133,7 @@ des_cblock (*iv);
 			}
 		else
 			{
-			memcpy(buf,&(unnet[unnet_start]),(unsigned int)len);
+			memcpy(buf,&(unnet[unnet_start]),len);
 			unnet_start+=len;
 			unnet_left-=len;
 			i=len;
@@ -131,7 +147,7 @@ des_cblock (*iv);
 	/* first - get the length */
 	while (net_num < HDRSIZE) 
 		{
-		i=read(fd,&(net[net_num]),(unsigned int)HDRSIZE-net_num);
+		i=read(fd,&(net[net_num]),HDRSIZE-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif
@@ -153,7 +169,7 @@ des_cblock (*iv);
 	net_num=0;
 	while (net_num < rnum)
 		{
-		i=read(fd,&(net[net_num]),(unsigned int)rnum-net_num);
+		i=read(fd,&(net[net_num]),rnum-net_num);
 #ifdef EINTR
 		if ((i == -1) && (errno == EINTR)) continue;
 #endif
@@ -165,14 +181,12 @@ des_cblock (*iv);
 	if (len < num)
 		{
 		if (des_rw_mode & DES_PCBC_MODE)
-			des_pcbc_encrypt((des_cblock *)net,(des_cblock *)unnet,
-				num,sched,iv,DES_DECRYPT);
+			des_pcbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
 		else
-			des_cbc_encrypt((des_cblock *)net,(des_cblock *)unnet,
-				num,sched,iv,DES_DECRYPT);
-		memcpy(buf,unnet,(unsigned int)len);
+			des_cbc_encrypt(net,unnet,num,sched,iv,DES_DECRYPT);
+		memcpy(buf,unnet,len);
 		unnet_start=len;
-		unnet_left=(int)num-len;
+		unnet_left=num-len;
 
 		/* The following line is done because we return num
 		 * as the number of bytes read. */
@@ -189,30 +203,26 @@ des_cblock (*iv);
 			{
 
 			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt((des_cblock *)net,
-					(des_cblock *)tmpbuf,
-					num,sched,iv,DES_DECRYPT);
+				des_pcbc_encrypt(net,tmpbuf,num,sched,iv,
+						 DES_DECRYPT);
 			else
-				des_cbc_encrypt((des_cblock *)net,
-					(des_cblock *)tmpbuf,
-					num,sched,iv,DES_DECRYPT);
+				des_cbc_encrypt(net,tmpbuf,num,sched,iv,
+						DES_DECRYPT);
 
 			/* eay 26/08/92 fix a bug that returned more
 			 * bytes than you asked for (returned len bytes :-( */
-			memcpy(buf,tmpbuf,(unsigned int)num);
+			memcpy(buf,tmpbuf,num);
 			}
 		else
 			{
 			if (des_rw_mode & DES_PCBC_MODE)
-				des_pcbc_encrypt((des_cblock *)net,
-					(des_cblock *)buf,num,sched,iv,
-					DES_DECRYPT);
+				des_pcbc_encrypt(net,buf,num,sched,iv,
+						 DES_DECRYPT);
 			else
-				des_cbc_encrypt((des_cblock *)net,
-					(des_cblock *)buf,num,sched,iv,
-					DES_DECRYPT);
+				des_cbc_encrypt(net,buf,num,sched,iv,
+						DES_DECRYPT);
 			}
 		}
-	return((int)num);
+	return num;
 	}
 
