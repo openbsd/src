@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.122 2002/12/06 22:03:26 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.123 2003/02/14 01:28:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -560,7 +560,8 @@ feed1:
 		WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 		    offsetof(struct ubsec_dmachunk, d_mcr));
 #ifdef UBSEC_DEBUG
-		printf("feed: q->chip %p %08x\n", q, (u_int32_t)vtophys(&q->q_dma->d_dma->d_mcr));
+		printf("feed: q->chip %p %08x\n", q,
+		    (u_int32_t)q->q_dma->d_alloc.dma_paddr);
 #endif /* UBSEC_DEBUG */
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
 		--sc->sc_nqueue;
@@ -1030,9 +1031,9 @@ ubsec_process(crp)
 		    offsetof(struct ubsec_dmachunk, d_macbuf[0]));
 #ifdef UBSEC_DEBUG
 		printf("opkt: %x %x %x\n",
-		    dmap->d_mcr->mcr_opktbuf.pb_addr,
-		    dmap->d_mcr->mcr_opktbuf.pb_len,
-		    dmap->d_mcr->mcr_opktbuf.pb_next);
+		    dmap->d_dma->d_mcr.mcr_opktbuf.pb_addr,
+		    dmap->d_dma->d_mcr.mcr_opktbuf.pb_len,
+		    dmap->d_dma->d_mcr.mcr_opktbuf.pb_next);
 #endif
 	} else {
 		if (crp->crp_flags & CRYPTO_F_IOV) {
