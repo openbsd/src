@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.15 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.16 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.15 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.16 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1359,7 +1359,7 @@ SuffExpandChildren(cgnp, pgnp)
 	if (DEBUG(SUFF)) {
 	    printf("Expanding \"%s\"...", cgn->name);
 	}
-	cp = Var_Subst(NULL, cgn->name, pgn, TRUE);
+	cp = Var_Subst(cgn->name, pgn, TRUE);
 
 	if (cp != (char *)NULL) {
 	    Lst	    members = Lst_Init(FALSE);

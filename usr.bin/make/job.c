@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.15 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.16 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.15 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.16 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,7 +558,7 @@ JobPrintCommand(cmdp, jobp)
      * the variables in the command.
      */
     cmdNode = Lst_Member(job->node->commands, (ClientData)cmd);
-    cmdStart = cmd = Var_Subst(NULL, cmd, job->node, FALSE);
+    cmdStart = cmd = Var_Subst(cmd, job->node, FALSE);
     Lst_Replace(cmdNode, (ClientData)cmdStart);
 
     cmdTemplate = "%s\n";
@@ -678,7 +678,7 @@ JobSaveCommand(cmd, gn)
     ClientData   cmd;
     ClientData   gn;
 {
-    cmd = (ClientData) Var_Subst(NULL, (char *) cmd, (GNode *) gn, FALSE);
+    cmd = (ClientData) Var_Subst((char *) cmd, (GNode *) gn, FALSE);
     (void) Lst_AtEnd(postCommands->commands, cmd);
     return(0);
 }

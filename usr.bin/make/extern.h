@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 1999/12/16 17:07:20 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.17 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -147,7 +147,8 @@ void Var_Append __P((char *, char *, GNode *));
 Boolean Var_Exists __P((char *, GNode *));
 char *Var_Value __P((char *, GNode *));
 char *Var_Parse __P((char *, GNode *, Boolean, int *, Boolean *));
-char *Var_Subst __P((char *, char *, GNode *, Boolean));
+char *Var_Subst __P((char *, GNode *, Boolean));
+void Var_SubstVar __P((Buffer, char *, const char *, GNode *));
 char *Var_GetTail __P((char *));
 char *Var_GetHead __P((char *));
 void Var_Init __P((void));

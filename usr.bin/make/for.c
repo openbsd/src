@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.12 1999/12/16 17:24:11 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.13 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.12 1999/12/16 17:24:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.13 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,7 @@ struct For_ {
     char		*text;		/* unexpanded text       	*/
     char		*var;		/* Index name		 	*/
     Lst  		lst;		/* List of items	 	*/
+    size_t		guess;		/* Estimated expansion size	*/
     BUFFER		buf;		/* Accumulating text	 	*/
     unsigned long	lineno;		/* Line number at start of loop */
     unsigned long	level;		/* Nesting level		*/
@@ -197,7 +198,7 @@ For_Eval(line)
     arg->var = interval_dup(wrd, endVar);
 
     /* Make a list with the remaining words.  */
-    sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
+    sub = Var_Subst(ptr, VAR_GLOBAL, FALSE);
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "For: Iterator %s List %s\n", arg->var, sub);
 
@@ -260,6 +261,7 @@ For_Accumulate(arg, line)
 }
 
 
+#define GUESS_EXPANSION 32
 /*-
  *-----------------------------------------------------------------------
  * ForExec --
@@ -274,11 +276,15 @@ ForExec(namep, argp)
     char *name = (char *)namep;
     For *arg = (For *)argp;
 
+    Buf_Init(&arg->buf, arg->guess);
     Var_Set(arg->var, name, VAR_GLOBAL);
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "--- %s = %s\n", arg->var, name);
-    Parse_FromString(Var_Subst(arg->var, arg->text, VAR_GLOBAL, FALSE), 
-    	arg->lineno);
+    Var_SubstVar(&arg->buf, arg->text, arg->var, VAR_GLOBAL);
+    if (Buf_Size(&arg->buf) >= arg->guess)
+    	arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
+    
+    Parse_FromString(Buf_Retrieve(&arg->buf), arg->lineno);
     Var_Delete(arg->var, VAR_GLOBAL);
     return 0;
 }
@@ -296,6 +302,7 @@ For_Run(arg)
     For *arg;
 {
     arg->text = Buf_Retrieve(&arg->buf);
+    arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
 
     Lst_ForEach(arg->lst, ForExec, (ClientData)arg);
     free(arg->var);

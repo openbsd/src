@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.15 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.16 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.15 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.16 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ CompatRunCommand (cmdp, gnp)
     errCheck = !(gn->type & OP_IGNORE);
 
     cmdNode = Lst_Member (gn->commands, (ClientData)cmd);
-    cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
+    cmdStart = Var_Subst(cmd, gn, FALSE);
 
     /*
      * brk_string will return an argv with a NULL in av[0], thus causing

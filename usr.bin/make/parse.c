@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.30 1999/12/16 17:07:21 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.31 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.30 1999/12/16 17:07:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.31 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1535,7 +1535,7 @@ Parse_DoVar (line, ctxt)
 	Boolean	  oldOldVars = oldVars;
 
 	oldVars = FALSE;
-	cp = Var_Subst(NULL, cp, ctxt, FALSE);
+	cp = Var_Subst(cp, ctxt, FALSE);
 	oldVars = oldOldVars;
 
 	Var_Set(line, cp, ctxt);
@@ -1551,7 +1551,7 @@ Parse_DoVar (line, ctxt)
 	     * expansion on the whole thing. The resulting string will need
 	     * freeing when we're done, so set freeCmd to TRUE.
 	     */
-	    cp = Var_Subst(NULL, cp, VAR_CMD, TRUE);
+	    cp = Var_Subst(cp, VAR_CMD, TRUE);
 	    freeCmd = TRUE;
 	}
 
@@ -1715,7 +1715,7 @@ ParseDoInclude (file)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst (NULL, file, VAR_CMD, FALSE);
+    file = Var_Subst(file, VAR_CMD, FALSE);
 
     /*
      * Now we know the file's name and its search path, we attempt to
@@ -1915,7 +1915,7 @@ ParseTraditionalInclude (file)
      * Substitute for any variables in the file name before trying to
      * find the thing.
      */
-    file = Var_Subst (NULL, file, VAR_CMD, FALSE);
+    file = Var_Subst(file, VAR_CMD, FALSE);
 
     /*
      * Now we know the file's name, we attempt to find the durn thing.
@@ -2586,7 +2586,7 @@ Parse_File(name, stream)
 #endif
 		    ParseFinishLine();
 
-		    cp = Var_Subst (NULL, line, VAR_CMD, TRUE);
+		    cp = Var_Subst(line, VAR_CMD, TRUE);
 		    free (line);
 		    line = cp;
 

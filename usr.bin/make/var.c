@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.23 1999/12/16 17:02:45 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.24 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.23 1999/12/16 17:02:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.24 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1672,7 +1672,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      */
     str = VarValue(v);
     if (strchr (str, '$') != (char *)NULL) {
-	str = Var_Subst(NULL, str, ctxt, err);
+	str = Var_Subst(str, ctxt, err);
 	*freePtr = TRUE;
     }
 
@@ -2091,7 +2091,7 @@ cleanup:
 /*-
  *-----------------------------------------------------------------------
  * Var_Subst  --
- *	Substitute for all variables in the given string in the given context
+ *	Substitute for all variables in a string in a context
  *	If undefErr is TRUE, Parse_Error will be called when an undefined
  *	variable is encountered.
  *
@@ -2103,16 +2103,12 @@ cleanup:
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst (var, str, ctxt, undefErr)
-    char	  *var;		    /* Named variable || NULL for all */
+Var_Subst(str, ctxt, undefErr)
     char 	  *str;	    	    /* the string in which to substitute */
     GNode         *ctxt;	    /* the context wherein to find variables */
     Boolean 	  undefErr; 	    /* TRUE if undefineds are an error */
 {
-    BUFFER  	  buf;	    	    /* Buffer for forming things */
-    char    	  *val;		    /* Value to substitute for a variable */
-    int	    	  length;   	    /* Length of the variable invocation */
-    Boolean 	  doFree;   	    /* Set true if val should be freed */
+    BUFFER 	  buf;	    	    /* Buffer for forming things */
     static Boolean errorReported;   /* Set true if an error has already
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
@@ -2120,134 +2116,148 @@ Var_Subst (var, str, ctxt, undefErr)
     Buf_Init(&buf, MAKE_BSIZE);
     errorReported = FALSE;
 
-    while (*str) {
-	if (var == NULL && (*str == '$') && (str[1] == '$')) {
-	    /*
-	     * A dollar sign may be escaped either with another dollar sign.
-	     * In such a case, we skip over the escape character and store the
-	     * dollar sign into the buffer directly.
-	     */
-	    str++;
-	    Buf_AddChar(&buf, *str);
-	    str++;
-	} else if (*str != '$') {
-	    /*
-	     * Skip as many characters as possible -- either to the end of
-	     * the string or to the next dollar sign (variable invocation).
-	     */
-	    char  *cp;
+    for (;;) {
+	char		*val;		/* Value to substitute for a variable */
+	size_t		length;		/* Length of the variable invocation */
+	Boolean		doFree;		/* Set true if val should be freed */
+	const char *cp;
 
-	    for (cp = str++; *str != '$' && *str != '\0'; str++)
-		continue;
-	    Buf_AddInterval(&buf, cp, str);
-	} else {
-	    if (var != NULL) {
-		int expand;
-		for (;;) {
-		    if (str[1] != '(' && str[1] != '{') {
-			if (str[1] != *var || var[1] != '\0') {
-			    Buf_AddChars(&buf, 2, str);
-			    str += 2;
-			    expand = FALSE;
-			}
-			else
-			    expand = TRUE;
-			break;
-		    }
-		    else {
-			char *p;
-
-			/*
-			 * Scan up to the end of the variable name.
-			 */
-			for (p = &str[2]; *p &&
-			     *p != ':' && *p != ')' && *p != '}'; p++)
-			    if (*p == '$')
-				break;
-			/*
-			 * A variable inside the variable. We cannot expand
-			 * the external variable yet, so we try again with
-			 * the nested one
-			 */
-			if (*p == '$') {
-			    Buf_AddInterval(&buf, str, p);
-			    str = p;
-			    continue;
-			}
-
-			if (strncmp(var, str + 2, p - str - 2) != 0 ||
-			    var[p - str - 2] != '\0') {
-			    /*
-			     * Not the variable we want to expand, scan
-			     * until the next variable
-			     */
-			    for (;*p != '$' && *p != '\0'; p++)
-				continue;
-			    Buf_AddInterval(&buf, str, p);
-			    str = p;
-			    expand = FALSE;
-			}
-			else
-			    expand = TRUE;
-			break;
-		    }
-		}
-		if (!expand)
-		    continue;
-	    }
-
-	    val = Var_Parse (str, ctxt, undefErr, &length, &doFree);
-
-	    /*
-	     * When we come down here, val should either point to the
-	     * value of this variable, suitably modified, or be NULL.
-	     * Length should be the total length of the potential
-	     * variable invocation (from $ to end character...)
-	     */
-	    if (val == var_Error || val == varNoError) {
-		/*
-		 * If performing old-time variable substitution, skip over
-		 * the variable and continue with the substitution. Otherwise,
-		 * store the dollar sign and advance str so we continue with
-		 * the string...
-		 */
-		if (oldVars) {
-		    str += length;
-		} else if (undefErr) {
-		    /*
-		     * If variable is undefined, complain and skip the
-		     * variable. The complaint will stop us from doing anything
-		     * when the file is parsed.
-		     */
-		    if (!errorReported) {
-			Parse_Error (PARSE_FATAL,
-				     "Undefined variable \"%.*s\"",length,str);
-		    }
-		    str += length;
-		    errorReported = TRUE;
-		} else {
-		    Buf_AddChar(&buf, *str);
-		    str += 1;
-		}
-	    } else {
-		/*
-		 * We've now got a variable structure to store in. But first,
-		 * advance the string pointer.
-		 */
+	/* copy uninteresting stuff */
+	for (cp = str; *str != '\0' && *str != '$'; str++)
+	    ;
+	Buf_AddInterval(&buf, cp, str);
+	if (*str == '\0')
+	    break;
+	if (str[1] == '$') {
+	    /* A dollar sign may be escaped with another dollar sign.  */
+	    Buf_AddChar(&buf, '$');
+	    str += 2;
+	    continue;
+	}
+	val = Var_Parse(str, ctxt, undefErr, &length, &doFree);
+	/* When we come down here, val should either point to the
+	 * value of this variable, suitably modified, or be NULL.
+	 * Length should be the total length of the potential
+	 * variable invocation (from $ to end character...) */
+	if (val == var_Error || val == varNoError) {
+	    /* If performing old-time variable substitution, skip over
+	     * the variable and continue with the substitution. Otherwise,
+	     * store the dollar sign and advance str so we continue with
+	     * the string...  */
+	    if (oldVars) {
 		str += length;
-
-		/*
-		 * Copy all the characters from the variable value straight
-		 * into the new string.
-		 */
-		Buf_AddString(&buf, val);
-		if (doFree)
-		    free(val);
+	    } else if (undefErr) {
+		/* If variable is undefined, complain and skip the
+		 * variable. The complaint will stop us from doing anything
+		 * when the file is parsed.  */
+		if (!errorReported) {
+		    Parse_Error(PARSE_FATAL,
+				 "Undefined variable \"%.*s\"",length,str);
+		}
+		str += length;
+		errorReported = TRUE;
+	    } else {
+		Buf_AddChar(&buf, *str);
+		str += 1;
 	    }
+	} else {
+	    /* We've now got a variable structure to store in. But first,
+	     * advance the string pointer.  */
+	    str += length;
+
+	    /* Copy all the characters from the variable value straight
+	     * into the new string.  */
+	    Buf_AddString(&buf, val);
+	    if (doFree)
+		free(val);
 	}
     }
+    return  Buf_Retrieve(&buf);
+}
 
-    return Buf_Retrieve(&buf);
+/*-
+ *-----------------------------------------------------------------------
+ * Var_SubstVar  --
+ *	Substitute for one variable in the given string in the given context
+ *	If undefErr is TRUE, Parse_Error will be called when an undefined
+ *	variable is encountered.
+ *
+ * Side Effects:
+ *	Append the result to the buffer
+ *-----------------------------------------------------------------------
+ */
+void
+Var_SubstVar(buf, str, var, ctxt)
+    Buffer	buf;		/* Where to store the result */
+    char	*str;	        /* The string in which to substitute */
+    const char	*var;		/* Named variable */
+    GNode	*ctxt;		/* The context wherein to find variables */
+{
+    char	*val;		/* Value substituted for a variable */
+    size_t	length;		/* Length of the variable invocation */
+    Boolean	doFree;		/* Set true if val should be freed */
+
+    for (;;) {
+	const char *cp;
+	/* copy uninteresting stuff */
+	for (cp = str; *str != '\0' && *str != '$'; str++)
+	    ;
+	Buf_AddInterval(buf, cp, str);
+	if (*str == '\0')
+	    break;
+	if (str[1] == '$') {
+	    Buf_AddString(buf, "$$");
+	    str += 2;
+	    continue;
+	}
+	if (str[1] != '(' && str[1] != '{') {
+	    if (str[1] != *var || var[1] != '\0') {
+		Buf_AddChars(buf, 2, str);
+		str += 2;
+		continue;
+	    }
+	} else {
+	    char *p;
+	    char endc;
+
+	    if (str[1] == '(')
+		endc = ')';
+	    else if (str[1] == '{')
+		endc = '}';
+
+	    /* Find the end of the variable specification.  */
+	    p = str+2;
+	    while (*p != '\0' && *p != ':' && *p != endc && *p != '$')
+		p++;
+	    /* A variable inside the variable.  We don't know how to
+	     * expand the external variable at this point, so we try 
+	     * again with the nested variable.  */
+	    if (*p == '$') {
+		Buf_AddInterval(buf, str, p);
+		str = p;
+		continue;
+	    }
+
+	    if (strncmp(var, str + 2, p - str - 2) != 0 ||
+		var[p - str - 2] != '\0') {
+		/* Not the variable we want to expand.  */
+		Buf_AddInterval(buf, str, p);
+		str = p;
+		continue;
+	    } 
+	}
+	/* okay, so we've found the variable we want to expand.  */
+	val = Var_Parse(str, ctxt, FALSE, &length, &doFree);
+	/* We've now got a variable structure to store in. But first,
+	 * advance the string pointer.  */
+	str += length;
+
+	/* Copy all the characters from the variable value straight
+	 * into the new string.  */
+	Buf_AddString(buf, val);
+	if (doFree)
+	    free(val);
+    }
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.17 1999/12/06 22:28:43 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.18 1999/12/16 17:27:18 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.17 1999/12/06 22:28:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.18 1999/12/16 17:27:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 
     *cp++ = '\0';
     if (subLibName) {
-	libName = Var_Subst(NULL, libName, ctxt, TRUE);
+	libName = Var_Subst(libName, ctxt, TRUE);
     }
 
 
@@ -320,7 +320,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    char    *sacrifice;
 	    char    *oldMemName = memName;
 
-	    memName = Var_Subst(NULL, memName, ctxt, TRUE);
+	    memName = Var_Subst(memName, ctxt, TRUE);
 
 	    /*
 	     * Now form an archive spec and recurse to deal with nested
