@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.7 1996/12/22 03:41:24 tholo Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.8 1997/02/06 13:34:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -272,7 +272,7 @@ struct passwd *pw;
 struct sockaddr_in *sin;
 {
 	char line[32];
-	char remotehost[32];
+	char remotehost[MAXHOSTNAMELEN];
 	int wtmp, f;
 	struct hostent *hp = gethostbyaddr((char *)&sin->sin_addr,
 		sizeof (struct in_addr), AF_INET);
