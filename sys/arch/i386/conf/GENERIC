@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.279 2001/10/08 19:30:40 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.280 2001/10/24 03:24:01 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -384,6 +384,7 @@ fms*	at pci? dev ? function ?		# Forte Media FM801
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
 yds*	at pci? dev ? function ?		# Yamaha YMF Audio
+emu*	at pci? dev ? function ?		# SB Live!
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?				# ESS Tech ES188[78], ES888
