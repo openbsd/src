@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.2 2003/10/19 18:39:19 espie Exp $
+# $OpenBSD: pkg_create,v 1.3 2003/10/31 17:43:20 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -86,6 +86,7 @@ sub compute_checksum
 	my $fname = $self->fullname();
 	return if -l "$base/$fname";
 	$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
+	$self->{size} = (stat "$base/$fname")[7];
 }
 
 sub makesum

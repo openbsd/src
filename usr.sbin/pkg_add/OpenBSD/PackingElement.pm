@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.2 2003/10/31 17:43:20 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -142,7 +142,10 @@ sub write
 		print $fh $self->{name}, "\n";
 	}
 	if (defined $self->{md5}) {
-		print $fh "\@comment MD5:", $self->{md5}, "\n";
+		print $fh "\@md5 ", $self->{md5}, "\n";
+	}
+	if (defined $self->{size}) {
+		print $fh "\@size ", $self->{size}, "\n";
 	}
 }
 
@@ -191,6 +194,12 @@ sub add_md5
 	$self->{md5} = $md5;
 }
 
+sub add_size
+{
+	my ($self, $sz) = @_;
+	$self->{size} = $sz;
+}
+
 sub IsFile() { 1 }
 
 package OpenBSD::PackingElement::Other;
@@ -231,6 +240,30 @@ sub add
 		$plist->add2list($self);
 		return $self;
 	}
+}
+
+package OpenBSD::PackingElement::md5;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword('md5');
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	$plist->{state}->{lastfile}->add_md5($');
+	return undef;
+}
+
+package OpenBSD::PackingElement::size;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword('size');
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	$plist->{state}->{lastfile}->add_size($args[0]);
+	return undef;
 }
 
 package OpenBSD::PackingElement::Option;
