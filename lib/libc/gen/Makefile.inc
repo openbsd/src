@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/04/21 23:39:01 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/04/29 04:53:27 etheisen Exp $
 #	$NetBSD: Makefile.inc,v 1.71 1996/04/15 23:44:53 jtc Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
@@ -28,6 +28,11 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 # m-d Makefile.inc must include sources for:
 #	_setjmp() fabs() frexp() infinity isinf() ldexp() modf()
 #	setjmp() sigsetjmp()
+
+# machine dependant ELF ABI v1 libc support
+.if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "mips")
+SRCS+=	elf_sup.c
+.endif
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
