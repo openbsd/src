@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.12 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.13 2002/03/11 13:08:51 vincent Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -446,7 +446,7 @@ gotoline(int f, int n)
 	if (!(f & FFARG)) {
 		if ((s = ereply("Goto line: ", buf, sizeof(buf))) != TRUE)
 			return s;
-		errno = 0;
+
 		nl = strtol(buf, &tmp, 10);
 		if (buf[0] == '\0' || *tmp != '\0') {
 			ewprintf("Invalid number");
