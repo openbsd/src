@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1997/04/22 05:28:56 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1997/04/22 06:34:33 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,7 @@
 #	*random	random data source
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
+this=$0
 umask 77
 
 case `uname -s` in
@@ -83,11 +84,23 @@ SunOS) add ()
 	}
 	hex ()
 	{
-		printf "%x" $1
+		case $1 in
+		[0-9]) echo $1;;
+		10) echo a;;
+		11) echo b;;
+		12) echo c;;
+		13) echo d;;
+		14) echo e;;
+		15) echo f;;
+		esac
+	}
+	trunc ()
+	{
+		expr $1 : $2'\(.*\)'
 	}
 	unt ()
 	{
-		expr $1 : '.[yd]\(.*\)[a-p]'
+		expr $1 : '[a-z]*\([0-9]*\)[a-p]*'
 	}
 	 ;;
 OpenBSD) add ()
@@ -104,6 +117,10 @@ OpenBSD) add ()
 			[0-9]) echo -n $1 ;;
         		1[0-5]) echo -e -n "\\$(( $1 + 131 ))" ;;
 		esac
+	}
+	trunc ()
+	{
+		echo ${1#$2}
 	}
 	unt ()
 	{
@@ -127,21 +144,21 @@ unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $i in
 
 all)
-	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh MAKEDEV cd0 st0 st1
-	sh MAKEDEV fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0
-	sh MAKEDEV uk0 uk1
-	sh MAKEDEV ss0 ss1
-	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
-	sh MAKEDEV cgeight0
-	sh MAKEDEV lkm random local
+	sh ${this} std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
+	sh ${this} cd0 st0 st1
+	sh ${this} fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0
+	sh ${this} uk0 uk1
+	sh ${this} ss0 ss1
+	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh ${this} ccd0 ccd1 ccd2 ccd3
+	sh ${this} bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
+	sh ${this} cgeight0
+	sh ${this} lkm random local
 	;;
 
 floppy)
-	sh MAKEDEV std random
-	sh MAKEDEV fd0 sd0 sd1
+	sh ${this} std random
+	sh ${this} fd0 sd0 sd1
 	;;
 
 std)
@@ -303,7 +320,7 @@ ccd*|sd*|xd*|xy*|cd*|vnd*)
 		n=0
 		while [ $n -lt 32 ]
 		do
-			sh MAKEDEV $name$n
+			sh ${this} $name$n
 			n=`add $n 1`
 		done
 	fi
@@ -411,7 +428,7 @@ random|srandom|urandom|prandom|arandom)
 	;;
 
 uk*)
-	unit=${i#uk}
+	unit=`trunc $i uk`
 	rm -f uk$unit
 	mknod uk$unit c 98 $unit
 	chown root.operator uk$unit
@@ -419,7 +436,7 @@ uk*)
 	;;
 
 ss*)
-	unit=${i#ss}
+	unit=`trunc $i ss`
 	rm -f ss$unit
 	mknod ss$unit c 99 $unit
 	chown root.operator ss$unit
@@ -431,7 +448,7 @@ ss*)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	sh ${this}.local
 	;;
 *)
 	echo $i: unknown device
