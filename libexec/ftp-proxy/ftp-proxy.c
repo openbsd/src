@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.34 2004/01/22 16:10:30 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -67,7 +67,7 @@
  * - per-user rules perhaps.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 

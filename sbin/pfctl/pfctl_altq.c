@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.82 2004/02/19 07:44:00 kjc Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.83 2004/03/14 21:51:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/limits.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -29,6 +28,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

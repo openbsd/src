@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.447 2004/03/08 16:10:02 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.448 2004/03/14 21:51:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+#include <limits.h>
 #include <pwd.h>
 #include <grp.h>
 #include <md5.h>
