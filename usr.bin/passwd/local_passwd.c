@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.18 2001/08/16 18:29:27 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.19 2001/08/18 19:58:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.18 2001/08/16 18:29:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.19 2001/08/18 19:58:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,6 +70,7 @@ local_passwd(uname, authenticated)
 	sigset_t fullset;
 	time_t period;
 	int pfd, tfd = -1;
+	int secureonly = 0;
 	char *s = NULL;
 
 	if (!(pw = getpwnam(uname))) {
@@ -96,10 +97,18 @@ local_passwd(uname, authenticated)
 
 	/* Reset password change time based on login.conf. */
 	period = login_getcaptime(lc, "passwordtime", 0, 0);
-	if (period > 0)
+	if (period > 0) {
 		pw->pw_change = time(NULL) + period;
-	else
-		pw->pw_change = 0;
+	} else {
+		/*
+		 * If the pw change time is the same we only need
+		 * to update the spwd.db file.
+		 */
+		if (pw->pw_change != 0)
+			pw->pw_change = 0;
+		else
+			secureonly = 1;
+	}
 
 	/* Drop user's real uid and block all signals to avoid a DoS. */
 	setuid(0);
@@ -152,8 +161,8 @@ local_passwd(uname, authenticated)
 
 	/* Update master.passwd file and rebuild spwd.db. */
 	pw_copy(pfd, tfd, pw);
-	if (pw_mkdb(uname, 1) < 0)
-		pw_error((char *)NULL, 0, 1);
+	if (pw_mkdb(uname, secureonly) < 0)
+		pw_error(NULL, 0, 1);
 
 	return(0);
 }
