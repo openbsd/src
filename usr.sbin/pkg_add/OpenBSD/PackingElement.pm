@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.21 2004/08/10 11:53:27 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.22 2004/08/11 09:57:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -834,6 +834,17 @@ sub update_fontalias
 	close $f;
 }
 
+sub restore_fontdir
+{
+	my $dirname = shift;
+	if (-f "$dirname/fonts.dir.dist") {
+		require File::Copy;
+
+		unlink("$dirname/fonts.dir");
+		File::Copy::copy("$dirname/fonts.dir.dist", "$dirname/fonts.dir");
+	}
+}
+
 sub finish_fontdirs
 {
 	my @l = keys %fonts_todo;
@@ -841,6 +852,7 @@ sub finish_fontdirs
 		map { update_fontalias($_) } @l;
 		print "You may wish to update your font path for ", join(' ', @l), "\n";
 		eval { system("/usr/X11R6/bin/mkfontdir", @l); };
+		map { restore_fontdir($_) } @l;
 		eval { system("/usr/X11R6/bin/fc-cache", @l); };
 	}
 }
