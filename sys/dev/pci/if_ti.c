@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.26 2001/07/03 02:43:16 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.27 2001/07/03 03:32:11 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -717,11 +717,7 @@ int ti_newbuf_std(sc, i, m)
 	r = &sc->ti_rdata->ti_rx_std_ring[i];
 	TI_HOSTADDR(r->ti_addr) = vtophys(mtod(m_new, caddr_t));
 	r->ti_type = TI_BDTYPE_RECV_BD;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags = TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#else
-	r->ti_flags = 0;
-#endif
+	r->ti_flags = TI_BDFLAG_IP_CKSUM;
 	r->ti_len = MCLBYTES;
 	r->ti_idx = i;
 
@@ -759,10 +755,7 @@ int ti_newbuf_mini(sc, i, m)
 	sc->ti_cdata.ti_rx_mini_chain[i] = m_new;
 	TI_HOSTADDR(r->ti_addr) = vtophys(mtod(m_new, caddr_t));
 	r->ti_type = TI_BDTYPE_RECV_BD;
-	r->ti_flags = TI_BDFLAG_MINI_RING;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#endif
+	r->ti_flags = TI_BDFLAG_MINI_RING | TI_BDFLAG_IP_CKSUM;
 	r->ti_len = m_new->m_len;
 	r->ti_idx = i;
 
@@ -821,10 +814,7 @@ int ti_newbuf_jumbo(sc, i, m)
 	sc->ti_cdata.ti_rx_jumbo_chain[i] = m_new;
 	TI_HOSTADDR(r->ti_addr) = vtophys(mtod(m_new, caddr_t));
 	r->ti_type = TI_BDTYPE_RECV_JUMBO_BD;
-	r->ti_flags = TI_BDFLAG_JUMBO_RING;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#endif
+	r->ti_flags = TI_BDFLAG_JUMBO_RING | TI_BDFLAG_IP_CKSUM;
 	r->ti_len = m_new->m_len;
 	r->ti_idx = i;
 
@@ -1247,9 +1237,9 @@ int ti_chipinit(sc)
 	 * Only allow 1 DMA channel to be active at a time.
 	 * I don't think this is a good idea, but without it
 	 * the firmware racks up lots of nicDmaReadRingFull
-	 * errors.
+	 * errors.  This is not compatible with hardware checksums.
 	 */
-#ifndef TI_CSUM_OFFLOAD
+#if 0
 	TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
 #endif
 
@@ -1330,9 +1320,7 @@ int ti_gibinit(sc)
 	TI_HOSTADDR(rcb->ti_hostaddr) = vtophys(&sc->ti_rdata->ti_rx_std_ring);
 	rcb->ti_max_len = TI_FRAMELEN;
 	rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
+	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 #endif
@@ -1343,9 +1331,7 @@ int ti_gibinit(sc)
 	    vtophys(&sc->ti_rdata->ti_rx_jumbo_ring);
 	rcb->ti_max_len = TI_JUMBO_FRAMELEN;
 	rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
+	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 #endif
@@ -1363,9 +1349,7 @@ int ti_gibinit(sc)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
 	else
 		rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
+	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 #endif
@@ -1402,6 +1386,7 @@ int ti_gibinit(sc)
 		rcb->ti_flags = 0;
 	else
 		rcb->ti_flags = TI_RCB_FLAG_HOST_RING;
+	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
 	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 #endif
@@ -1717,6 +1702,7 @@ void ti_rxeof(sc)
 		u_int16_t		vlan_tag = 0;
 		int			have_tag = 0;
 #endif
+		int			sumflags = 0;
 #ifdef TI_CSUM_OFFLOAD
 		struct ip		*ip;
 #endif
@@ -1789,12 +1775,12 @@ void ti_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-#ifdef TI_CSUM_OFFLOAD
-		ip = (struct ip *)(mtod(m, caddr_t) + ETHER_HDR_LEN);
-		if (!(cur_rx->ti_tcp_udp_cksum ^ 0xFFFF) &&
-		    !(ip->ip_off & htons(IP_MF | IP_OFFMASK | IP_RF)))
-			m->m_flags |= M_HWCKSUM;
-#endif
+		if ((cur_rx->ti_ip_cksum ^ 0xffff) == 0)
+			sumflags |= M_IPV4_CSUM_IN_OK;
+		else
+			sumflags |= M_IPV4_CSUM_IN_BAD;
+		m->m_pkthdr.csum = sumflags;
+		sumflags = 0;
 
 #if NVLAN > 0
 		/*
