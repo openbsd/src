@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.40 2001/06/25 00:41:39 niklas Exp $	*/
+/*	$OpenBSD: route.c,v 1.41 2001/08/18 22:14:03 brian Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.40 2001/06/25 00:41:39 niklas Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.41 2001/08/18 22:14:03 brian Exp $";
 #endif
 #endif /* not lint */
 
@@ -506,10 +506,12 @@ p_sockaddr(sa, mask, flags, width)
 				n = snprintf(cp,
 				    workbuf + sizeof (workbuf) - cp,
 				    "%s%x", cplim, *lla);
+				cplim = ":";
+				if (n == -1)	/* What else to do ? */
+				  continue;
 				if (n >= workbuf + sizeof (workbuf) - cp)
 					n = workbuf + sizeof (workbuf) - cp - 1;
 				cp += n;
-				cplim = ":";
 			}
 			cp = workbuf;
 			break;
@@ -536,20 +538,23 @@ p_sockaddr(sa, mask, flags, width)
 		n = snprintf(cp, cplim - cp, "(%d)", sa->sa_family);
 		if (n >= cplim - cp)
 			n = cplim - cp - 1;
-		cp += n;
+		if (n > 0)
+			cp += n;
 		while (s < slim && cp < cplim) {
 			n = snprintf(cp, workbuf + sizeof (workbuf) - cp,
 			    " %02x", *s++);
 			if (n >= workbuf + sizeof (workbuf) - cp)
 				n = workbuf + sizeof (workbuf) - cp - 1;
-			cp += n;
+			if (n > 0)
+				cp += n;
 			if (s < slim) {
 				n = snprintf(cp,
 				    workbuf + sizeof (workbuf) - cp,
 				    "%02x", *s++);
 				if (n >= workbuf + sizeof (workbuf) - cp)
 					n = workbuf + sizeof (workbuf) - cp - 1;
-				cp += n;
+				if (n > 0)
+					cp += n;
 			}
 		}
 		cp = workbuf;
