@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.49 2004/01/08 17:30:52 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.50 2004/01/10 09:12:07 grange Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ scsi_interpret_sense(xs)
 			break;
 		}
 
-		if ((xs->flags & SCSI_SILENT) == 0)
+		if (key && (xs->flags & SCSI_SILENT) == 0)
 			scsi_print_sense(xs, 0);
 
 		return error;
