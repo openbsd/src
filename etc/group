@@ -39,6 +39,7 @@ proxy:*:71:
 authpf:*:72:
 _syslogd:*:73:
 _pflogd:*:74:
+_bgpd:*:75:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
