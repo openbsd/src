@@ -1,6 +1,5 @@
 PROG=	gspahextoc
 SRCS=	gspahextoc.l
-NOMAN=	noman
 LDADD=	-ll
 DPADD=	${LIBL}
 
