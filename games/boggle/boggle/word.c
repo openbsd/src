@@ -1,3 +1,4 @@
+/*	$OpenBSD: word.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $	*/
 /*	$NetBSD: word.c,v 1.2 1995/03/21 12:14:45 cgd Exp $	*/
 
 /*-
@@ -40,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: word.c,v 1.2 1995/03/21 12:14:45 cgd Exp $";
+static char rcsid[] = "$OpenBSD: word.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,7 +173,7 @@ loaddict(fp)
 	}
 	if (st < 0) {
 		(void)fclose(fp);
-		(void)fprintf(stderr, "Error reading dictionary\n");
+		warnx("Error reading dictionary");
 		return (-1);
 	}
 	*p = '\0';
@@ -194,27 +196,26 @@ loadindex(indexfile)
 	extern struct dictindex dictindex[];
  
 	if ((fp = fopen(indexfile, "r")) == NULL) {
-		(void) fprintf(stderr, "Can't open '%s'\n", indexfile);
+		warnx("Can't open '%s'", indexfile);
 		return (-1);
 	}
 	i = 0;
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		if (strchr(buf, '\n') == NULL) {
-			(void)fprintf(stderr,
-				"A line in the index file is too long\n");
+			warnx("A line in the index file is too long");
 			return(-1);
 		}
 		j = *buf - 'a';
 		if (i != j) {
-		    (void) fprintf(stderr, "Bad index order\n");
-		    return(-1);
+			warnx("Bad index order");
+			return(-1);
 		}
 		dictindex[j].start = atol(buf + 1);
 		dictindex[j].length = atol(buf + 9) - dictindex[j].start;
 		i++;
 	}
 	if (i != 26) {
-		(void) fprintf(stderr, "Bad index length\n");
+		warnx("Bad index length");
 		return(-1);
 	}
 	(void) fclose(fp);

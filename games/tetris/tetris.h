@@ -1,3 +1,4 @@
+/*	$OpenBSD: tetris.h,v 1.3 1998/09/24 06:45:08 pjanzen Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-

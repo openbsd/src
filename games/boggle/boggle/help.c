@@ -1,3 +1,4 @@
+/*	$OpenBSD: help.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $	*/
 /*	$NetBSD: help.c,v 1.2 1995/03/21 12:14:38 cgd Exp $	*/
 
 /*-
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: help.c,v 1.2 1995/03/21 12:14:38 cgd Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +63,7 @@ help()
 	if ((fp = fopen(HELPFILE, "r")) == NULL)
 		return(-1);
 	win = newwin(0, 0, 0, 0);
-	clearok(win, 1);
+	clearok(win, TRUE);
 
 	eof = 0;
 	if (ungetc(getc(fp), fp) == EOF) {
@@ -101,7 +102,8 @@ help()
 		inputch();
 	}
 	delwin(win);
-	clearok(stdscr, 1);
+	clearok(stdscr, TRUE);
+	touchwin(stdscr);
 	refresh();
 	return(0);
 }

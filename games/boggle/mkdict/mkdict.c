@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkdict.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +60,7 @@ static char rcsid[] = "$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $";
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,8 +86,7 @@ main(argc, argv)
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
 		if ((p = strchr(buf[current], '\n')) == NULL) {
-			fprintf(stderr,
-			    "mkdict: word too long: %s\n", buf[current]);
+			warnx("word too long: %s", buf[current]);
 			while ((ch = getc(stdin)) != EOF && ch != '\n')
 				;
 			if (ch == EOF)
@@ -101,7 +102,7 @@ main(argc, argv)
 				if (*q != 'u')
 					break;
 				else {
-					while (*q = *(q + 1))
+					while ((*q = *(q + 1)))
 						q++;
 				}
 				len++;
@@ -125,6 +126,6 @@ main(argc, argv)
 		prev = !prev;
 		current = !current;
 	}
-	fprintf(stderr, "%d words\n", nwords);
+	warnx("%d words", nwords);
 	exit(0);
 }

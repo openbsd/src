@@ -1,3 +1,4 @@
+/*	$OpenBSD: tetris.c,v 1.4 1998/09/24 06:45:08 pjanzen Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -49,7 +50,9 @@ static char copyright[] =
  */
 
 #include <sys/time.h>
+#include <sys/types.h>
 
+#include <err.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,8 +64,10 @@ static char copyright[] =
 #include "screen.h"
 #include "tetris.h"
 
-void onintr __P((int));
-void usage __P((void));
+static void	elide __P((void));
+static void	setup_board __P((void));
+void	onintr __P((int));
+void	usage __P((void));
 
 /*
  * Set up the initial board.  The bottom display row is completely set,
@@ -99,7 +104,7 @@ elide()
 		for (j = B_COLS - 2; *p++ != 0;) {
 			if (--j <= 0) {
 				/* this row is to be elided */
-				bzero(&board[base], B_COLS - 2);
+				memset(&board[base], 0, B_COLS - 2);
 				scr_update();
 				tsleep();
 				while (--base != 0)
@@ -130,7 +135,7 @@ main(argc, argv)
 	egid = getegid();
 	setegid(gid);
 
-	while ((ch = getopt(argc, argv, "k:l:s")) != -1)
+	while ((ch = getopt(argc, argv, "hk:l:s")) != -1)
 		switch(ch) {
 		case 'k':
 			if (strlen(keys = optarg) != 6)
@@ -138,17 +143,15 @@ main(argc, argv)
 			break;
 		case 'l':
 			level = atoi(optarg);
-			if (level < MINLEVEL || level > MAXLEVEL) {
-				(void)fprintf(stderr,
-				    "tetris: level must be from %d to %d",
+			if (level < MINLEVEL || level > MAXLEVEL)
+				errx(1, "level must be from %d to %d",
 				    MINLEVEL, MAXLEVEL);
-				exit(1);
-			}
 			break;
 		case 's':
 			showscores(0);
 			exit(0);
 		case '?':
+		case 'h':
 		default:
 			usage();
 		}
@@ -163,12 +166,8 @@ main(argc, argv)
 
 	for (i = 0; i <= 5; i++) {
 		for (j = i+1; j <= 5; j++) {
-			if (keys[i] == keys[j]) {
-				(void)fprintf(stderr,
-				    "%s: Duplicate command keys specified.\n",
-				    argv[0]);
-				exit (1);
-			}
+			if (keys[i] == keys[j])
+				errx(1, "Duplicate command keys specified.");
 		}
 		if (keys[i] == ' ')
 			strcpy(key_write[i], "<space>");
@@ -313,6 +312,6 @@ onintr(signo)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: tetris [-s] [-l level] [-keys]\n");
+	(void)fprintf(stderr, "usage: tetris [-s] [-l level] [-k keys]\n");
 	exit(1);
 }

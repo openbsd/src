@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1995/03/21 12:14:21 cgd Exp $
+$OpenBSD: README,v 1.3 1998/09/24 06:45:05 pjanzen Exp $
 
 Bog is a fairly portable simulation of Parker Brother's game of Boggle and
 is similar to the 4.[23] BSD "boggle" and Sun's "boggletool".

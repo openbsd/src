@@ -1,3 +1,4 @@
+/*	$OpenBSD: shapes.c,v 1.3 1998/09/24 06:45:07 pjanzen Exp $	*/
 /*	$NetBSD: shapes.c,v 1.2 1995/04/22 07:42:44 cgd Exp $	*/
 
 /*-
@@ -57,25 +58,25 @@
 #define	BR	B_COLS+1	/* bottom right */
 
 struct shape shapes[] = {
-	/* 0*/	7,	TL, TC, MR,
-	/* 1*/	8,	TC, TR, ML,
-	/* 2*/	9,	ML, MR, BC,
-	/* 3*/	3,	TL, TC, ML,
-	/* 4*/	12,	ML, BL, MR,
-	/* 5*/	15,	ML, BR, MR,
-	/* 6*/	18,	ML, MR, /* sticks out */ 2,
-	/* 7*/	0,	TC, ML, BL,
-	/* 8*/	1,	TC, MR, BR,
-	/* 9*/	10,	TC, MR, BC,
-	/*10*/	11,	TC, ML, MR,
-	/*11*/	2,	TC, ML, BC,
-	/*12*/	13,	TC, BC, BR,
-	/*13*/	14,	TR, ML, MR,
-	/*14*/	4,	TL, TC, BC,
-	/*15*/	16,	TR, TC, BC,
-	/*16*/	17,	TL, MR, ML,
-	/*17*/	5,	TC, BC, BL,
-	/*18*/	6,	TC, BC, /* sticks out */ 2*B_COLS,
+	/* 0*/	{ 7,	{ TL, TC, MR } },
+	/* 1*/	{ 8,	{ TC, TR, ML } },
+	/* 2*/	{ 9,	{ ML, MR, BC } },
+	/* 3*/	{ 3,	{ TL, TC, ML } },
+	/* 4*/	{ 12,	{ ML, BL, MR } },
+	/* 5*/	{ 15,	{ ML, BR, MR } },
+	/* 6*/	{ 18,	{ ML, MR, 2  } }, /* sticks out */
+	/* 7*/	{ 0,	{ TC, ML, BL } },
+	/* 8*/	{ 1,	{ TC, MR, BR } },
+	/* 9*/	{ 10,	{ TC, MR, BC } },
+	/*10*/	{ 11,	{ TC, ML, MR } },
+	/*11*/	{ 2,	{ TC, ML, BC } },
+	/*12*/	{ 13,	{ TC, BC, BR } },
+	/*13*/	{ 14,	{ TR, ML, MR } },
+	/*14*/	{ 4,	{ TL, TC, BC } },
+	/*15*/	{ 16,	{ TR, TC, BC } },
+	/*16*/	{ 17,	{ TL, MR, ML } },
+	/*17*/	{ 5,	{ TC, BC, BL } },
+	/*18*/	{ 6,	{ TC, BC, 2*B_COLS } }/* sticks out */
 };
 
 /*

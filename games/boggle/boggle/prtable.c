@@ -1,3 +1,4 @@
+/*	$OpenBSD: prtable.c,v 1.4 1998/09/24 06:45:06 pjanzen Exp $	*/
 /*	$NetBSD: prtable.c,v 1.2 1995/03/21 12:14:42 cgd Exp $	*/
 
 /*-

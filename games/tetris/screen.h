@@ -1,3 +1,4 @@
+/*	$OpenBSD: screen.h,v 1.2 1998/09/24 06:45:07 pjanzen Exp $	*/
 /*	$NetBSD: screen.h,v 1.2 1995/04/22 07:42:42 cgd Exp $	*/
 
 /*-

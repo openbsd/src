@@ -1,3 +1,4 @@
+/*	$OpenBSD: bog.c,v 1.5 1998/09/24 06:45:05 pjanzen Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.5 1998/09/24 06:45:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +57,7 @@ static char rcsid[] = "$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "bog.h"
 #include "extern.h"
@@ -126,12 +128,15 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	long seed;
+	time_t seed;
 	int ch, done, i, selfuse, sflag;
 	char *bspec, *p;
 
+	/* revoke */
+	setegid(getgid());
 	setgid(getgid());
 
+	seed = 0;
 	batch = debug = reuse = selfuse = sflag = 0;
 	bspec = NULL;
 	minlength = 3;
@@ -165,18 +170,19 @@ main(argc, argv)
 	argv += optind;
 
 	/* process final arguments */
-	if (argc > 0)
+	if (argc > 0) {
 		if (strcmp(argv[0], "+") == 0)
 			reuse = 1;
 		else if (strcmp(argv[0], "++") == 0)
 			selfuse = 1;
+	}
 
 	if (reuse || selfuse) {
 		argc -= 1;
 		argv += 1;
 	}
 
-	if (argc > 0)
+	if (argc > 0) {
 		if (islower(argv[0][0])) {
 			if (strlen(argv[0]) != 16) {
 				usage();
@@ -187,6 +193,7 @@ main(argc, argv)
 		} else {
 		  	usage();
 		}
+	}
 
 	if (batch && bspec == NULL)
 		errx(1, "must give both -b and a board setup");
@@ -595,7 +602,7 @@ checkdict()
 		}
 		mword[nmwords++] = mwordsp;
 		p = w;
-		while (*mwordsp++ = *p++);
+		while ((*mwordsp++ = *p++));
 	}
 }
 

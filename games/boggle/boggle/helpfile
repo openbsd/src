@@ -56,21 +56,6 @@ The time limit can be changed from the default 3 minutes by using the flag
 The minimum word length can be changed from 3 letters by specifying 'w#',
 where # is the minimum number of letters to use.
 .
-                           Bugs and Limitations
-
-The following bugs and problems are known to exist:
-
-- If there are a great many words in the cube the final display of the words
-  may scroll off of the screen.  (On a 25 line screen about 130 words can be
-  displayed.)
-
-- Computing the complete word list can be too slow on small machines.
-
-- No word can contain a 'q' that is not immediately followed by a 'u'.
-
-- When using the '+' or '++' options the display of words found in the board
-  doesn't indicate reused cubes.
-.
 Copyright (c) 1988
 Barry Brachman           | UUCP:    {alberta,uw-beaver,uunet}!
 Dept. of Computer Science|           ubc-vision!ubc-csgrads!brachman

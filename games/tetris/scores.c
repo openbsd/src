@@ -1,3 +1,4 @@
+/*	$OpenBSD: scores.c,v 1.3 1998/09/24 06:45:07 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -46,19 +47,17 @@
  * Major whacks since then.
  */
 #include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <term.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
-/*
- * XXX - need a <termcap.h>
- */
-int	tputs __P((const char *, int, int (*)(int)));
+#include <sys/types.h>
 
 #include "pathnames.h"
 #include "screen.h"
@@ -119,36 +118,29 @@ getscores(fpp)
 	mask = umask(S_IWOTH);
 	sd = open(_PATH_SCOREFILE, mint, 0666);
 	(void)umask(mask);
+	setegid(gid);
 	if (sd < 0) {
 		if (fpp == NULL) {
 			nscores = 0;
 			return;
 		}
-		(void)fprintf(stderr, "tetris: cannot open %s for %s: %s\n",
-		    _PATH_SCOREFILE, human, strerror(errno));
-		exit(1);
+		err(1, "cannot open %s for %s", _PATH_SCOREFILE, human);
 	}
-	if ((sf = fdopen(sd, mstr)) == NULL) {
-		(void)fprintf(stderr, "tetris: cannot fdopen %s for %s: %s\n",
-		    _PATH_SCOREFILE, human, strerror(errno));
-		exit(1);
-	}
+	setegid(egid);
+	if ((sf = fdopen(sd, mstr)) == NULL)
+		err(1, "cannot fdopen %s for %s", _PATH_SCOREFILE, human);
 	setegid(gid);
 
 	/*
 	 * Grab a lock.
 	 */
 	if (flock(sd, lck))
-		(void)fprintf(stderr,
-		    "tetris: warning: score file %s cannot be locked: %s\n",
-		    _PATH_SCOREFILE, strerror(errno));
+		warn("warning: score file %s cannot be locked",
+		    _PATH_SCOREFILE);
 
 	nscores = fread(scores, sizeof(scores[0]), MAXHISCORES, sf);
-	if (ferror(sf)) {
-		(void)fprintf(stderr, "tetris: error reading %s: %s\n",
-		    _PATH_SCOREFILE, strerror(errno));
-		exit(1);
-	}
+	if (ferror(sf))
+		err(1, "error reading %s", _PATH_SCOREFILE);
 
 	if (fpp)
 		*fpp = sf;
@@ -212,8 +204,7 @@ savescore(level)
 		rewind(sf);
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
 		    fflush(sf) == EOF)
-			(void)fprintf(stderr,
-			    "tetris: error writing %s: %s -- %s\n",
+			warnx("error writing %s: %s -- %s\n",
 			    _PATH_SCOREFILE, strerror(errno),
 			    "high scores may be damaged");
 	}
@@ -245,7 +236,7 @@ thisuser()
 	l = strlen(p);
 	if (l >= sizeof(u))
 		l = sizeof(u) - 1;
-	bcopy(p, u, l);
+	memcpy(u, p, l);
 	u[l] = '\0';
 	return (u);
 }

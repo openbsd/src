@@ -1,3 +1,4 @@
+/*	$OpenBSD: mach.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +50,8 @@ static char rcsid[] = "$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $";
  *
  * Input is raw and unechoed
  */
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <curses.h>
 #include <fcntl.h>
@@ -97,7 +100,7 @@ setup(sflag, seed)
 		time(&seed);
 	srandom(seed);
 	if (debug)
-		(void) printf("seed = %ld\n", seed);
+		(void) printf("seed = %ld\n", (long) seed);
 	return(0);
 }
 
