@@ -1,4 +1,4 @@
-#	$OpenBSD: PUMA,v 1.7 1996/08/31 02:09:23 deraadt Exp $
+#	$OpenBSD: PUMA,v 1.8 1996/09/01 18:57:04 briggs Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
@@ -14,7 +14,9 @@ options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
+options		KTRACE
 options		DDB
+
 options		FFS
 options		MFS		# memory-based filesystem
 options		NFSSERVER	# Sun NFS-compatible filesystem
