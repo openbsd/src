@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.53 2001/05/03 13:41:13 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.54 2001/05/15 13:31:03 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.53 2001/05/03 13:41:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.54 2001/05/15 13:31:03 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -968,7 +968,10 @@ Var_ParseSkip(str, ctxt, result)
 	/* Find eventual modifiers in the variable */
 	tstr = Var_Name_Get(str, &name, ctxt, FALSE, find_pos(endc));
 	Var_Name_Free(&name);
-	length = tstr+1 - start;
+	length = tstr - start;
+	/* Terminated correctly */
+	if (*tstr != '\0')
+		length++;
     }
 
     if (result != NULL)
@@ -1070,7 +1073,9 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 
 	/* Find eventual modifiers in the variable */
 	tstr = Var_Name_Get(str, &name, ctxt, FALSE, find_pos(endc));
-	*lengthPtr = tstr+1 - start;
+	*lengthPtr = tstr - start;
+	if (*tstr != '\0')
+		(*lengthPtr)++;
     }
 
     idx = quick_lookup(name.s, &name.e, &k);
