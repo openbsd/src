@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.14 1996/11/05 04:42:30 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.15 1996/11/05 04:49:16 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -642,6 +642,9 @@ ttioctl(tp, cmd, data, flag, p)
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
 	case  TIOCFLUSH:
+	case  TIOCDRAIN:
+	case  TIOCSBRK:
+	case  TIOCCBRK:
 	case  TIOCSETA:
 	case  TIOCSETD:
 	case  TIOCSETAF:
