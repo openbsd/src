@@ -239,10 +239,18 @@ fi])
 ### we couldn't find it, but that interacts badly with the cache
 ### variables, the 'unset' command isn't portable, and I'm not sure
 ### there's any harm in just testing for -lcrypt first.
+###
+### XXX OpenBSD has crypt in libc, but don't carry libcrypt.  However
+### XXX it used to have libcrypt which means old systems that hasn't
+### XXX explicitly removed libcrypt will establish dependencies on the
+### XXX obsolete library.
 
 if test "$enable_server" = yes; then
+AC_CHECK_FUNCS(crypt)
+if test "$ac_cv_func_crypt" = no; then
 AC_CHECK_LIB(crypt, crypt)
 AC_CHECK_FUNCS(crypt)
+fi
 
 if test "$ac_cv_func_crypt" = yes; then
   AC_DEFINE(AUTH_SERVER_SUPPORT)
