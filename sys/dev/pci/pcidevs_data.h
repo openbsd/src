@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.436 2001/08/27 05:26:55 chris Exp 
+ *		OpenBSD: pcidevs,v 1.438 2001/09/04 23:45:00 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1908,35 +1908,35 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
-	    "PRO/100 VE Network Controller",
+	    "PRO/100 VE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1,
-	    "PRO/100 VE Network Controller",
+	    "PRO/100 VE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0,
-	    "PRO/100 VM Network Controller",
+	    "PRO/100 VM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1,
-	    "PRO/100 VM Network Controller",
+	    "PRO/100 VM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_0,
-	    "82562EH HomePNA Network Controller",
+	    "82562EH HomePNA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_1,
-	    "82562EH HomePNA Network Controller",
+	    "82562EH HomePNA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_2,
-	    "82562EH HomePNA Network Controller",
+	    "82562EH HomePNA",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2,
-	    "PRO/100 VM Network Controller",
+	    "PRO/100 VM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
