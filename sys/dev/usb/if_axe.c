@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.11 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.12 2004/10/04 13:01:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -163,6 +163,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAU2KTX}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS, USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 	{ { USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_LN029}, 0 },
+	{ { USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { 0, 0}, 0 }
 };
 
@@ -466,14 +467,13 @@ USB_ATTACH(axe)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s\n", USBDEVNAME(sc->axe_dev), devinfo);
+	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfo);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
-			printf("axe%d: couldn't get ep %d\n",
-			    sc->axe_unit, i);
+			printf(" couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -510,8 +510,7 @@ USB_ATTACH(axe)
 	/*
 	 * An ASIX chip was detected. Inform the world.
 	 */
-	printf("axe%d: Ethernet address: %s\n", sc->axe_unit,
-	    ether_sprintf(eaddr));
+	printf(", address %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
