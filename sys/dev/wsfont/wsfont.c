@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.2 2002/03/14 01:27:03 millert Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.3 2002/05/02 19:21:48 matthieu Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -57,11 +57,6 @@
 #include <dev/wsfont/qvss8x15.h>
 #endif
 
-#ifdef FONT_GALLANT12x22
-#define HAVE_FONT 1
-#include <dev/wsfont/gallant12x22.h>
-#endif
-
 #ifdef FONT_LUCIDA16x29
 #define HAVE_FONT 1
 #include <dev/wsfont/lucida16x29.h>
@@ -92,15 +87,28 @@
 #include <dev/wsfont/omron12x20.h>
 #endif
 
+#ifdef FONT_GALLANT12x22
+#define HAVE_FONT 1
+#endif
+
 /* Make sure we always have at least one font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
 #define FONT_BOLD8x16 1
+/* Add the gallant 12x22 font for high screen resolutions */
+#if !defined(SMALL_KERNEL) && !defined(FONT_GALLANT12x22)
+#define FONT_GALLANT12x22
+#endif
 #endif
 
 #ifdef FONT_BOLD8x16
 #include <dev/wsfont/bold8x16.h>
 #endif
+
+#ifdef FONT_GALLANT12x22
+#include <dev/wsfont/gallant12x22.h>
+#endif
+
 
 /* Placeholder struct used for linked list */
 struct font {

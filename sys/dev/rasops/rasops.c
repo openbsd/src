@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
+/*	$OpenBSD: rasops.c,v 1.3 2002/05/02 19:21:48 matthieu Exp $ */
 /*	 $NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -129,8 +129,14 @@ rasops_init(ri, wantrows, wantcols)
 
 		wsfont_init();
 
-		/* Want 8 pixel wide, don't care about aestethics */
-		if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		if (ri->ri_width > 80*12) 
+			/* High res screen, choose a big font */
+			cookie = wsfont_find(NULL, 12, 0, 0);
+		else 
+			/*  lower res, choose a 8 pixel wide font */
+			cookie = wsfont_find(NULL, 8, 0, 0);
+		
+		if (cookie <= 0)
 			cookie = wsfont_find(NULL, 0, 0, 0);
 
 		if (cookie <= 0) {

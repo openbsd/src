@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.15 2002/04/26 20:04:50 matthieu Exp $ */
+/* $OpenBSD: tga.c,v 1.16 2002/05/02 19:21:48 matthieu Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -364,8 +364,13 @@ tga_getdevconfig(memt, pc, tag, dc)
 
 	DPRINTF("tga_getdevconfig: wsfont_init\n");
 	wsfont_init();
-	/* prefer 8 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+	if (rip->ri_width > 80*12) 
+		/* High res screen, choose a big font */
+		cookie = wsfont_find(NULL, 12, 0, 0);
+	else 
+		/*  lower res, choose a 8 pixel wide font */
+		cookie = wsfont_find(NULL, 8, 0, 0);
+	if (cookie <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0);
 	if (cookie <= 0) {
 		printf("tga: no appropriate fonts.\n");
@@ -381,8 +386,7 @@ tga_getdevconfig(memt, pc, tag, dc)
 	dc->dc_rinfo.ri_wsfcookie = cookie;
 	/* fill screen size */
 	rasops_init(rip, dc->dc_ht / rip->ri_font->fontheight,
-			dc->dc_wid / rip->ri_font->fontwidth);
-	/* rasops_init(rip, 34, 80); */
+		     dc->dc_wid / rip->ri_font->fontwidth); 
 	
 	/* add our accelerated functions */
 	/* XXX shouldn't have to do this; rasops should leave non-NULL 
