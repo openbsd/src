@@ -1,25 +1,48 @@
-/*	$OpenBSD: dired.c,v 1.8 2002/02/14 22:58:20 vincent Exp $	*/
+/*	$OpenBSD: dired.c,v 1.9 2002/02/15 01:04:59 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
 
 #include "def.h"
+#include "kbd.h"
 
 #ifndef NO_DIRED
+
+static PF dired_pf[] = {
+	d_findfile,
+};
+
+static struct KEYMAPE (1 + IMAPEXT) diredmap = {
+	1,
+	1 + IMAPEXT,
+	rescan,
+	{
+		{ CCHR('M'), CCHR('M'), dired_pf, NULL },
+	}
+};
 
 /* ARGSUSED */
 int
 dired(f, n)
 	int	f, n;
 {
+	static int inited = 0;
 	char	dirname[NFILEN];
 	BUFFER *bp;
+
+	if (inited == 0) {
+		maps_add((KEYMAP *)&diredmap, "dired");
+		inited = 1;
+	}
 
 	dirname[0] = '\0';
 	if (eread("Dired: ", dirname, NFILEN, EFNEW | EFCR) == ABORT)
 		return ABORT;
 	if ((bp = dired_(dirname)) == NULL)
 		return FALSE;
+	bp->b_modes[0] = name_mode("fundamental");
+	bp->b_modes[1] = name_mode("dired");
+	bp->b_nmodes = 1;
 	curbp = bp;
 	return showbuffer(bp, curwp, WFHARD | WFMODE);
 }
