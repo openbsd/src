@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.99 2004/06/21 13:09:00 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.100 2004/07/09 16:06:48 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -420,7 +420,7 @@ exchange_run(struct message *msg)
 }
 
 void
-exchange_init()
+exchange_init(void)
 {
 	int	i;
 

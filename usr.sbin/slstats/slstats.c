@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.17 2003/09/06 17:27:53 jmc Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.18 2004/07/09 16:08:05 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.17 2003/09/06 17:27:53 jmc Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.18 2004/07/09 16:08:05 deraadt Exp $";
 #endif
 
 #define INET
@@ -78,7 +78,7 @@ int	unit;
 int	s;
 char    interface[IFNAMSIZ];
 
-void	catchalarm(void);
+void	catchalarm(int);
 void	intpr(void);
 void	usage(void);
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 #define V(offset) ((line % 20)? cur.offset - old.offset : cur.offset)
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-v] %s",
@@ -229,7 +229,7 @@ intpr(void)
  * Sets a flag to not wait for the alarm.
  */
 void
-catchalarm()
+catchalarm(int signo)
 {
 	signalled = 1;
 }

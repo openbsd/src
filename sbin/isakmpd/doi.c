@@ -1,4 +1,4 @@
-/* $OpenBSD: doi.c,v 1.8 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: doi.c,v 1.9 2004/07/09 16:06:48 deraadt Exp $	 */
 /* $EOM: doi.c,v 1.4 1999/04/02 00:57:36 niklas Exp $	 */
 
 /*
@@ -39,7 +39,7 @@ static
 LIST_HEAD(doi_list, doi) doi_tab;
 
 void
-doi_init()
+doi_init(void)
 {
 	LIST_INIT(&doi_tab);
 }
