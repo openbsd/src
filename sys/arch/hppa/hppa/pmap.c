@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2002/04/22 00:19:59 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2002/04/22 00:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -444,9 +444,9 @@ pmap_bootstrap(vstart)
 	kpm->pm_pid = HPPA_PID_KERNEL;
 	kpm->pm_pdir_pg = NULL;
 	kpm->pm_pdir = addr;
-	addr += PAGE_SIZE;
 	bzero((void *)addr, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, addr, PAGE_SIZE);
+	addr += PAGE_SIZE;
 
 	/*
 	 * Allocate various tables and structures.
