@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.3 2004/11/29 22:07:41 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.4 2005/03/01 21:21:25 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_linebytes = 1 << ZX_BWIDTH;
 	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height << ZX_BWIDTH;
 
-	printf(", %d x %d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
 	    round_page(sc->sc_sunfb.sf_fbsize), BUS_SPACE_MAP_LINEAR,

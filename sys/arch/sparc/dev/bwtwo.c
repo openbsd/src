@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.29 2005/01/05 23:04:24 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.30 2005/03/01 21:21:24 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -287,7 +287,7 @@ obp_name:
 	bwtwo_burner(sc, 1, 0);
 
 	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, node, ca->ca_bustype);
-	printf(", %d x %d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    sc->sc_pixeloffset, round_page(sc->sc_sunfb.sf_fbsize));

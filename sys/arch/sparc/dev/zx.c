@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.8 2004/11/29 22:07:37 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.9 2005/03/01 21:21:24 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_linebytes = 1 << ZX_BWIDTH;
 	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height << ZX_BWIDTH;
 
-	printf(", %d x %d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	ri->ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    ZX_OFF_SS0, round_page(sc->sc_sunfb.sf_fbsize));
