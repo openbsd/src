@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 1999/02/15 08:56:05 todd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 1999/04/22 00:35:04 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -608,15 +608,22 @@ boot(howto)
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
-		via_shutdown();
-#ifndef MRG_ADB                 /* adb_poweroff is available only when
-                                 * the MRG_ADB method isn't used.       */
-                adb_poweroff(); /* Shut down machines whose power functions
-                                 * are accessed via modified ADB calls. */
+		if (howto & RB_POWERDOWN) {
+			printf("\nAttempting to power down...\n");
+			via_shutdown();
+#ifndef MRG_ADB
+			/*
+			 * adb_poweroff() is available only when
+                         * the MRG_ADB method isn't used.
+			 *
+                	 * Shut down machines whose power functions
+                         * are accessed via modified ADB calls.
+			 */
+                	adb_poweroff();
 #endif
-		printf("You may turn the machine off,");
-		printf(" or hit any key to reboot.\n");
+		}
+		printf("\nThe operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		(void)cngetc();
 	}
 
