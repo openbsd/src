@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1997/06/23 22:15:14 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1997/07/29 03:16:29 kstailey Exp $
 
 #
 # less config
@@ -43,12 +43,23 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 
 .FORCE: .IGNORE
 
+.ifdef GLOBAL_CACHE
+config: .FORCE
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
+		--cache-file=${HOME}/.Makefile.bsd-wrapper.cache
+
+config.status:
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
+		--cache-file=${HOME}/.Makefile.bsd-wrapper.cache
+.else
 config: .FORCE
 	-rm -f config.cache
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
 
 config.status:
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
+.endif
+
 
 gnu_build:
 	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \

@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.16 1997/07/24 20:08:25 kstailey Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.17 1997/07/29 03:16:30 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -16,6 +16,17 @@ all:	config.status
 
 .FORCE:	.IGNORE
 
+.ifdef GLOBAL_CACHE
+config: .FORCE
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		/bin/sh ${.CURDIR}/configure --prefix=/usr \
+		--cache-file=${HOME}/.Makefile.bsd-wrapper.cache
+
+config.status:
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		/bin/sh ${.CURDIR}/configure --prefix=/usr \
+		--cache-file=${HOME}/.Makefile.bsd-wrapper.cache
+.else
 config: .FORCE
 	-rm -f config.cache
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
@@ -24,6 +35,7 @@ config: .FORCE
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		/bin/sh ${.CURDIR}/configure --prefix=/usr
+.endif
 
 .ifdef NOMAN
 maninstall:
