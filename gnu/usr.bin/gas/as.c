@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.3 1999/12/07 20:10:32 espie Exp $	*/
+/*	$OpenBSD: as.c,v 1.4 2002/04/20 01:13:44 deraadt Exp $	*/
 
 /* as.c - GAS main program.
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -34,7 +34,7 @@
  *
  */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: as.c,v 1.3 1999/12/07 20:10:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: as.c,v 1.4 2002/04/20 01:13:44 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -418,7 +418,7 @@ int sig;
 	
 	as_bad("Interrupted by signal %d", sig);
 	if (here_before++)
-	    exit(1);
+	    _exit(1);
 	return((SIGTY) 0);
 }
 
