@@ -28,6 +28,13 @@ X11R5           type=dir
 ..
 
 
+# ./X11R6
+/set type=file gname=wheel uname=root mode=0755
+X11R6           type=dir
+# ./X11R6
+..
+
+
 # ./bin
 /set type=file gname=bin uname=bin mode=0555
 bin             type=dir uname=root gname=wheel mode=0755
@@ -450,6 +457,13 @@ plot            type=dir uname=root gname=wheel mode=0755
 ..
 
 # ./libexec
+..
+
+
+# ./lkm
+/set type=file gname=bin uname=bin mode=0555
+lkm             type=dir uname=root gname=wheel mode=0755
+# ./lkm
 ..
 
 

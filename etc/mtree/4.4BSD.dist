@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.9 1996/01/25 04:32:11 etheisen Exp $
+#	$Id: 4.4BSD.dist,v 1.10 1996/02/25 21:21:26 mickey Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -193,6 +193,11 @@ uucp
 ..
 
 # ./usr/libexec
+..
+
+# ./usr/lkm
+lkm
+# ./usr/lkm
 ..
 
 # ./usr/local
