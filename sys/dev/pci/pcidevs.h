@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.475 2001/12/18 17:31:14 drahn Exp 
+ *		OpenBSD: pcidevs,v 1.476 2001/12/19 16:36:24 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1725,6 +1725,8 @@
 #define	PCI_PRODUCT_PROMISE_PDC20265	0x0d30		/* PDC20265 */
 #define	PCI_PRODUCT_PROMISE_PDC20267	0x4d30		/* PDC20267 */
 #define	PCI_PRODUCT_PROMISE_PDC20268	0x4d68		/* PDC20268 */
+#define	PCI_PRODUCT_PROMISE_PDC20268R	0x6268		/* PDC20268R */
+#define	PCI_PRODUCT_PROMISE_PDC20269	0x4d69		/* PDC20269 */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
