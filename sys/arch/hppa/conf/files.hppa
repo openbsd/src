@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.20 2000/01/11 20:31:48 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.21 2000/01/11 21:26:24 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -188,9 +188,6 @@ file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
 include	"compat/linux/files.linux"
 include "compat/ossaudio/files.ossaudio"
 file	arch/hppa/hppa/linux_machdep.c		compat_linux
-
-# FP emulation
-include "arch/hppa/spmath/files.spmath"
 
 #
 # Non-device files

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.7 1999/12/20 14:19:25 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.8 2000/01/11 21:26:23 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -75,6 +75,12 @@ CFLAGS+=	-mpa-risc-1-1
 
 .if ${IDENT:M-DFPEMUL} != ""
 CFLAGS+=	-msoft-float -mdisable-fpregs
+.include "${HPPA}/spmath/Makefile.inc"
+.ifndef PROF
+LIBSPMATH=	${SPMATH}
+.else
+LIBSPMATH=	${SPMATH_PROF}
+.endif
 .endif
 
 HOSTED_CC=	${HOSTCC}
@@ -111,7 +117,7 @@ HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %SFILES
 
-SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_OBJ=	locore.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT} ${LIBSPMATH}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
