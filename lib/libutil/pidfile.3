@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pidfile.3,v 1.2 2001/09/28 20:27:56 jakob Exp $
+.\"	$OpenBSD: pidfile.3,v 1.3 2001/10/01 06:18:14 mpech Exp $
 .\"	$NetBSD: pidfile.3,v 1.2 2001/04/12 22:34:31 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@
 .Fn pidfile
 writes a file containing the process ID of the program to the
 .Pa /var/run
-directory.  The file name has the form
+directory.
+The file name has the form
 .Pa /var/run/basename.pid .
 If the
 .Ar basename
@@ -58,9 +59,9 @@ argument is NULL,
 will determine the program name and use that instead.
 .Pp
 The pid file can be used as a quick reference if
-the process needs to be sent a signal.  When the program exits,
-the pid file will be removed automatically, unless the program
-receives a fatal signal.
+the process needs to be sent a signal.
+When the program exits, the pid file will be removed automatically,
+unless the program receives a fatal signal.
 .Sh RETURN VALUES
 .Fn pidfile
 returns 0 on success and -1 on failure.
