@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.65 2002/04/23 14:32:23 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.66 2002/04/24 18:10:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,7 +55,7 @@
 #include "pfctl_parser.h"
 
 int		 unmask (struct pf_addr *, u_int8_t);
-void		 print_addr (struct pf_addr *, struct pf_addr *, u_int8_t);
+void		 print_addr (struct pf_addr_wrap *, struct pf_addr *, u_int8_t);
 void		 print_host (struct pf_state_host *, u_int8_t, int);
 void		 print_seq (struct pf_state_peer *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
@@ -277,17 +277,23 @@ unmask(struct pf_addr *m, u_int8_t af)
 }
 
 void
-print_addr(struct pf_addr *addr, struct pf_addr *mask, u_int8_t af)
+print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
 {
 	char buf[48];
 
-	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
-		printf("?");
-	else
-		printf("%s", buf);
+	if (addr->addr_dyn != NULL)
+		printf("(%s)", addr->addr.pfa.ifname);
+	else {
+		if (inet_ntop(af, &addr->addr, buf, sizeof(buf)) == NULL)
+			printf("?");
+		else
+			printf("%s", buf);
+	}
 	if (mask != NULL) {
-		if (!PF_AZERO(mask, af))
-			printf("/%u", unmask(mask, af));
+		int bits = unmask(mask, af);
+
+		if (bits != (af == AF_INET ? 32 : 128))
+			printf("/%u", bits);
 	} 
 }
 
@@ -304,6 +310,7 @@ print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
 		printf("%s", hp->h_name);
 	}
 	if (mask != NULL) {
+		
 		if (!PF_AZERO(mask, af))
 			printf("/%u", unmask(mask, af));
 	}
@@ -316,8 +323,13 @@ print_host(struct pf_state_host *h, u_int8_t af, int opts)
 
 	if (opts & PF_OPT_USEDNS)
 		print_name(&h->addr, NULL, af);
-	else
-		print_addr(&h->addr, NULL, af);
+	else {
+		struct pf_addr_wrap aw;
+
+		aw.addr = h->addr;
+		aw.addr_dyn = NULL;
+		print_addr(&aw, NULL, af);
+	}
 
 	if (p) {
 		if (af == AF_INET)
@@ -392,6 +404,12 @@ print_nat(struct pf_nat *n)
 			printf("! ");
 		printf("%s ", n->ifname);
 	}
+	if (n->af) {
+		if (n->af == AF_INET) 
+			printf("inet ");
+		else
+			printf("inet6 ");
+	}
 	if (n->proto) {
 		struct protoent *p = getprotobynumber(n->proto);
 		if (p != NULL)
@@ -400,7 +418,7 @@ print_nat(struct pf_nat *n)
 			printf("proto %u ", n->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&n->saddr, n->af) || !PF_AZERO(&n->smask, n->af)) {
+	if (!PF_AZERO(&n->saddr.addr, n->af) || !PF_AZERO(&n->smask, n->af)) {
 		if (n->snot)
 			printf("! ");
 		print_addr(&n->saddr, &n->smask, n->af);
@@ -408,7 +426,7 @@ print_nat(struct pf_nat *n)
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&n->daddr, n->af) || !PF_AZERO(&n->dmask, n->af)) {
+	if (!PF_AZERO(&n->daddr.addr, n->af) || !PF_AZERO(&n->dmask, n->af)) {
 		if (n->dnot)
 			printf("! ");
 		print_addr(&n->daddr, &n->dmask, n->af);
@@ -432,6 +450,12 @@ print_binat(struct pf_binat *b)
 		printf("on ");
 		printf("%s ", b->ifname);
 	}
+	if (b->af) {
+		if (b->af == AF_INET) 
+			printf("inet ");
+		else
+			printf("inet6 ");
+	}
 	if (b->proto) {
 		struct protoent *p = getprotobynumber(b->proto);
 		if (p != NULL)
@@ -443,7 +467,7 @@ print_binat(struct pf_binat *b)
 	print_addr(&b->saddr, NULL, b->af);
 	printf(" ");
 	printf("to ");
-	if (!PF_AZERO(&b->daddr, b->af) || !PF_AZERO(&b->dmask, b->af)) {
+	if (!PF_AZERO(&b->daddr.addr, b->af) || !PF_AZERO(&b->dmask, b->af)) {
 		if (b->dnot)
 			printf("! ");
 		print_addr(&b->daddr, &b->dmask, b->af);
@@ -469,6 +493,12 @@ print_rdr(struct pf_rdr *r)
 			printf("! ");
 		printf("%s ", r->ifname);
 	}
+	if (r->af) {
+		if (r->af == AF_INET) 
+			printf("inet ");
+		else
+			printf("inet6 ");
+	}
 	if (r->proto) {
 		struct protoent *p = getprotobynumber(r->proto);
 		if (p != NULL)
@@ -477,7 +507,7 @@ print_rdr(struct pf_rdr *r)
 			printf("proto %u ", r->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&r->saddr, r->af) || !PF_AZERO(&r->smask, r->af)) {
+	if (!PF_AZERO(&r->saddr.addr, r->af) || !PF_AZERO(&r->smask, r->af)) {
 		if (r->snot)
 			printf("! ");
 		print_addr(&r->saddr, &r->smask, r->af);
@@ -485,7 +515,7 @@ print_rdr(struct pf_rdr *r)
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&r->daddr, r->af) || !PF_AZERO(&r->dmask, r->af)) {
+	if (!PF_AZERO(&r->daddr.addr, r->af) || !PF_AZERO(&r->dmask, r->af)) {
 		if (r->dnot)
 			printf("! ");
 		print_addr(&r->daddr, &r->dmask, r->af);
@@ -685,8 +715,12 @@ print_rule(struct pf_rule *r)
 		if (r->rt_ifname[0])
 			printf("%s", r->rt_ifname);
 		if (r->af && !PF_AZERO(&r->rt_addr, r->af)) {
+			struct pf_addr_wrap aw;
+
+			aw.addr = r->rt_addr;
+			aw.addr_dyn = NULL;
 			printf(":");
-			print_addr(&r->rt_addr, NULL, r->af);
+			print_addr(&aw, NULL, r->af);
 		}
 		printf(" ");
 	}
@@ -703,17 +737,17 @@ print_rule(struct pf_rule *r)
 		else
 			printf("proto %u ", r->proto);
 	}
-	if (PF_AZERO(&r->src.addr, AF_INET6) &&
+	if (PF_AZERO(&r->src.addr.addr, AF_INET6) &&
 	    PF_AZERO(&r->src.mask, AF_INET6) &&
 	    !r->src.noroute && !r->dst.noroute &&
-	    !r->src.port_op && PF_AZERO(&r->dst.addr, AF_INET6) &&
+	    !r->src.port_op && PF_AZERO(&r->dst.addr.addr, AF_INET6) &&
 	    PF_AZERO(&r->dst.mask, AF_INET6) && !r->dst.port_op)
 		printf("all ");
 	else {
 		printf("from ");
 		if (r->src.noroute)
 			printf("no-route ");
-		else if (PF_AZERO(&r->src.addr, AF_INET6) &&
+		else if (PF_AZERO(&r->src.addr.addr, AF_INET6) &&
 		    PF_AZERO(&r->src.mask, AF_INET6))
 			printf("any ");
 		else {
@@ -730,7 +764,7 @@ print_rule(struct pf_rule *r)
 		printf("to ");
 		if (r->dst.noroute)
 			printf("no-route ");
-		else if (PF_AZERO(&r->dst.addr, AF_INET6) &&
+		else if (PF_AZERO(&r->dst.addr.addr, AF_INET6) &&
 		    PF_AZERO(&r->dst.mask, AF_INET6))
 			printf("any ");
 		else {

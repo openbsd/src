@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.23 2002/02/27 15:15:29 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.24 2002/04/24 18:10:25 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -119,11 +119,9 @@ set load-time.
 When the address of an interface (or host name) changes (by DHCP or PPP,
 for instance), the rule set must be reloaded for the change to be reflected
 in the kernel.
-See
-.Xr dhclient-script 8
-or
-.Xr ppp 8
-for information on how to automate this task.
+Interface names surrounded by parentheses cause an automatic update of
+the rule whenever the referenced interface changes its address.
+Reloading the rule set is not required in this case.
 If specified,
 .Em mask-bits
 refers to the number of bits in the netmask.
@@ -191,23 +189,21 @@ listening for outbound ftp sessions captured to port 8081.
 # translate outgoing packets' source addresses (any protocol)
 # in my case, any address but the gateway's external address is mapped
 #
-nat on kue0 from ! 157.161.48.183 to any -> 157.161.48.183
+nat on kue0 from ! (kue0) to any -> (kue0)
 
 # BINAT
 # translate outgoing packets' source address (any protocol)
 # translate incoming packets' destination address to an internal machine
 # (bidirectional)
-binat on kue0 from 10.1.2.150 to any -> 157.161.48.184
+binat on kue0 from 10.1.2.150 to any -> (kue0)
 
 # RDR
 # translate incoming packets' destination addresses
 # as an example, redirect a TCP and UDP port to an internal machine
 # NOTE: the lines below are split for readability
 #
-rdr on kue0 proto tcp from any to 157.161.48.183/32 port 8080 \e
-	-> 10.1.2.151 port 22
-rdr on kue0 proto udp from any to 157.161.48.183/32 port 8080 \e
-	-> 10.1.2.151 port 53
+rdr on kue0 proto tcp from any to (kue0) port 8080 -> 10.1.2.151 port 22
+rdr on kue0 proto udp from any to (kue0) port 8080 -> 10.1.2.151 port 53
 
 # RDR 
 # translate outgoing ftp control connections to send them to localhost

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.203 2002/04/23 14:32:22 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.204 2002/04/24 18:10:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -175,7 +175,7 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
-struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl;
+struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl, pf_addr_pl;
 
 struct pf_pool_limit {
 	void		*pp;
@@ -202,6 +202,10 @@ struct pf_tree_node	*pf_tree_search(struct pf_tree_node *,
 void			 pf_insert_state(struct pf_state *);
 void			 pf_purge_expired_states(void);
 void			 pf_purge_timeout(void *);
+int			 pf_dynaddr_setup(struct pf_addr_wrap *, u_int8_t);
+void			 pf_dynaddr_update(void *);
+void			 pf_dynaddr_remove(struct pf_addr_wrap *);
+void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
@@ -405,9 +409,19 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	    a->min_ttl != b->min_ttl ||
 	    a->allow_opts != b->allow_opts)
 		return (1);
-	if (memcmp(&a->src, &b->src, sizeof(struct pf_rule_addr)))
+	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
+	    PF_ANEQ(&a->src.mask, &b->src.mask, a->af) ||
+	    a->src.port[0] != b->src.port[0] ||
+	    a->src.port[1] != b->src.port[1] ||
+	    a->src.not != b->src.not ||
+	    a->src.port_op != b->src.port_op)
 		return (1);
-	if (memcmp(&a->dst, &b->dst, sizeof(struct pf_rule_addr)))
+	if (PF_ANEQ(&a->dst.addr.addr, &b->dst.addr.addr, a->af) ||
+	    PF_ANEQ(&a->dst.mask, &b->dst.mask, a->af) ||
+	    a->dst.port[0] != b->dst.port[0] ||
+	    a->dst.port[1] != b->dst.port[1] ||
+	    a->dst.not != b->dst.not ||
+	    a->dst.port_op != b->dst.port_op)
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -424,15 +438,15 @@ pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
 	    a->ifnot != b->ifnot ||
 	    a->no != b->no)
 		return (1);
-	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
+	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->smask, &b->smask, a->af))
 		return (1);
-	if (PF_ANEQ(&a->daddr, &b->daddr, a->af))
+	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
 		return (1);
-	if (PF_ANEQ(&a->raddr, &b->raddr, a->af))
+	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -447,13 +461,13 @@ pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
 	    a->af != b->af ||
 	    a->no != b->no)
 		return (1);
-	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
+	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
 		return (1);
-	if (PF_ANEQ(&a->daddr, &b->daddr, a->af))
+	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
 		return (1);
-	if (PF_ANEQ(&a->raddr, &b->raddr, a->af))
+	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -474,15 +488,15 @@ pf_compare_rdrs(struct pf_rdr *a, struct pf_rdr *b)
 	    a->opts != b->opts ||
 	    a->no != b->no)
 		return (1);
-	if (PF_ANEQ(&a->saddr, &b->saddr, a->af))
+	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->smask, &b->smask, a->af))
 		return (1);
-	if (PF_ANEQ(&a->daddr, &b->daddr, a->af))
+	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
 		return (1);
-	if (PF_ANEQ(&a->raddr, &b->raddr, a->af))
+	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -879,6 +893,103 @@ pf_purge_expired_states(void)
 	}
 }
 
+int
+pf_dynaddr_setup(struct pf_addr_wrap *aw, u_int8_t af)
+{
+	if (aw->addr_dyn == NULL)
+		return (0);
+	aw->addr_dyn = pool_get(&pf_addr_pl, PR_NOWAIT);
+	if (aw->addr_dyn == NULL)
+		return (1);
+	bcopy(aw->addr.pfa.ifname, aw->addr_dyn->ifname,
+	    sizeof(aw->addr_dyn->ifname));
+	aw->addr_dyn->ifp = ifunit(aw->addr_dyn->ifname);
+	if (aw->addr_dyn->ifp == NULL) {
+		pool_put(&pf_addr_pl, aw->addr_dyn);
+		aw->addr_dyn = NULL;
+		return (1);
+	}
+	aw->addr_dyn->addr = &aw->addr;
+	aw->addr_dyn->af = af;
+	aw->addr_dyn->undefined = 1;
+	aw->addr_dyn->hook_cookie = hook_establish(
+	    aw->addr_dyn->ifp->if_addrhooks, 1,
+	    pf_dynaddr_update, aw->addr_dyn);
+	if (aw->addr_dyn->hook_cookie == NULL) {
+		pool_put(&pf_addr_pl, aw->addr_dyn);
+		aw->addr_dyn = NULL;
+		return (1);
+	}
+	pf_dynaddr_update(aw->addr_dyn);
+	return (0);
+}
+
+void
+pf_dynaddr_update(void *p)
+{
+	struct pf_addr_dyn *ad = (struct pf_addr_dyn *)p;
+	struct ifaddr *ia;
+	int s, changed = 0;
+
+	if (ad == NULL || ad->ifp == NULL)
+		panic("pf_dynaddr_update");
+	s = splsoftnet();
+	TAILQ_FOREACH(ia, &ad->ifp->if_addrlist, ifa_list)
+		if (ia->ifa_addr != NULL &&
+		    ia->ifa_addr->sa_family == ad->af) {
+			if (ad->af == AF_INET) {
+				struct in_addr *a, *b;
+
+				a = &ad->addr->v4;
+				b = &((struct sockaddr_in *)ia->ifa_addr)
+				    ->sin_addr;
+				if (ad->undefined ||
+				    memcmp(a, b, sizeof(*a))) {
+					bcopy(b, a, sizeof(*a));
+					changed = 1;		
+				}
+			} else if (ad->af == AF_INET6) {
+				struct in6_addr *a, *b;
+
+				a = &ad->addr->v6;
+				b = &((struct sockaddr_in6 *)ia->ifa_addr)
+				    ->sin6_addr;
+				if (ad->undefined ||
+				    memcmp(a, b, sizeof(*a))) {
+					bcopy(b, a, sizeof(*a));
+					changed = 1;		
+				}
+			}
+			if (changed)
+				ad->undefined = 0;
+			break;
+		}
+	if (ia == NULL)
+		ad->undefined = 1;
+	splx(s);
+}
+
+void
+pf_dynaddr_remove(struct pf_addr_wrap *aw)
+{
+	if (aw->addr_dyn == NULL)
+		return;
+	hook_disestablish(aw->addr_dyn->ifp->if_addrhooks,
+	    aw->addr_dyn->hook_cookie);
+	pool_put(&pf_addr_pl, aw->addr_dyn);
+	aw->addr_dyn = NULL;
+}
+
+void
+pf_dynaddr_copyout(struct pf_addr_wrap *aw)
+{
+	if (aw->addr_dyn == NULL)
+		return;
+	bcopy(aw->addr_dyn->ifname, aw->addr.pfa.ifname,
+	    sizeof(aw->addr.pfa.ifname));
+	aw->addr_dyn = (struct pf_addr_dyn *)1;
+}
+
 void
 pf_print_host(struct pf_addr *addr, u_int16_t p, u_int8_t af)
 {
@@ -1002,6 +1113,8 @@ pfattach(int num)
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
 	pool_init(&pf_sport_pl, sizeof(struct pf_port_node), 0, 0, 0, "pfsport",
+	    NULL);
+	pool_init(&pf_addr_pl, sizeof(struct pf_addr_dyn), 0, 0, 0, "pfaddr",
 	    NULL);
 
 	TAILQ_INIT(&pf_rules[0]);
@@ -1129,6 +1242,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		while ((rule = TAILQ_FIRST(pf_rules_inactive)) != NULL) {
 			TAILQ_REMOVE(pf_rules_inactive, rule, entries);
+			pf_dynaddr_remove(&rule->src.addr);
+			pf_dynaddr_remove(&rule->dst.addr);
 			pool_put(&pf_rule_pl, rule);
 		}
 		*ticket = ++ticket_rules_inactive;
@@ -1168,7 +1283,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			rule->nr = tail->nr + 1;
 		else
 			rule->nr = 0;
-		rule->ifp = NULL;
 		if (rule->ifname[0]) {
 			rule->ifp = ifunit(rule->ifname);
 			if (rule->ifp == NULL) {
@@ -1187,6 +1301,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rule->rt_ifp = NULL;
+		if (pf_dynaddr_setup(&rule->src.addr, rule->af) ||
+		    pf_dynaddr_setup(&rule->dst.addr, rule->af)) {
+			pf_dynaddr_remove(&rule->src.addr);
+			pf_dynaddr_remove(&rule->dst.addr);
+			pool_put(&pf_rule_pl, rule);
+			error = EINVAL;
+			break;
+		}
 		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
@@ -1221,6 +1343,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* Purge the old rule list. */
 		while ((rule = TAILQ_FIRST(old_rules)) != NULL) {
 			TAILQ_REMOVE(old_rules, rule, entries);
+			pf_dynaddr_remove(&rule->src.addr);
+			pf_dynaddr_remove(&rule->dst.addr);
 			pool_put(&pf_rule_pl, rule);
 		}
 		break;
@@ -1259,6 +1383,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
+		pf_dynaddr_copyout(&pr->rule.src.addr);
+		pf_dynaddr_copyout(&pr->rule.dst.addr);
 		splx(s);
 		break;
 	}
@@ -1295,7 +1421,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 #endif /* INET6 */
-			newrule->ifp = NULL;
 			if (newrule->ifname[0]) {
 				newrule->ifp = ifunit(newrule->ifname);
 				if (newrule->ifp == NULL) {
@@ -1303,8 +1428,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					break;
 				}
-			}
-			newrule->rt_ifp = NULL;
+			} else
+				newrule->ifp = NULL;
 			if (newrule->rt_ifname[0]) {
 				newrule->rt_ifp = ifunit(newrule->rt_ifname);
 				if (newrule->rt_ifname == NULL) {
@@ -1312,6 +1437,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					break;
 				}
+			} else
+				newrule->rt_ifp = NULL;
+			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af) ||
+			    pf_dynaddr_setup(&newrule->dst.addr, newrule->af)) {
+				pf_dynaddr_remove(&newrule->src.addr);
+				pf_dynaddr_remove(&newrule->dst.addr);
+				pool_put(&pf_rule_pl, newrule);
+				error = EINVAL;
+				break;
 			}
 			newrule->evaluations = newrule->packets = 0;
 			newrule->bytes = 0;
@@ -1343,6 +1477,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (n->state->rule == oldrule)
 					n->state->rule = NULL;
 			TAILQ_REMOVE(pf_rules_active, oldrule, entries);
+			pf_dynaddr_remove(&oldrule->src.addr);
+			pf_dynaddr_remove(&oldrule->dst.addr);
 			pool_put(&pf_rule_pl, oldrule);
 		} else {
 			if (oldrule == NULL)
@@ -1371,6 +1507,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_nat *nat;
 
 		while ((nat = TAILQ_FIRST(pf_nats_inactive)) != NULL) {
+			pf_dynaddr_remove(&nat->saddr);
+			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->raddr);
 			TAILQ_REMOVE(pf_nats_inactive, nat, entries);
 			pool_put(&pf_nat_pl, nat);
 		}
@@ -1415,6 +1554,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			nat->ifp = NULL;
+		if (pf_dynaddr_setup(&nat->saddr, nat->af) ||
+		    pf_dynaddr_setup(&nat->daddr, nat->af) ||
+		    pf_dynaddr_setup(&nat->raddr, nat->af)) {
+			pf_dynaddr_remove(&nat->saddr);
+			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->raddr);
+			pool_put(&pf_nat_pl, nat);
+			error = EINVAL;
+			break;
+		}
 		TAILQ_INSERT_TAIL(pf_nats_inactive, nat, entries);
 		break;
 	}
@@ -1439,6 +1588,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Purge the old nat list */
 		while ((nat = TAILQ_FIRST(old_nats)) != NULL) {
+			pf_dynaddr_remove(&nat->saddr);
+			pf_dynaddr_remove(&nat->daddr);
+			pf_dynaddr_remove(&nat->raddr);
 			TAILQ_REMOVE(old_nats, nat, entries);
 			pool_put(&pf_nat_pl, nat);
 		}
@@ -1480,6 +1632,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(nat, &pn->nat, sizeof(struct pf_nat));
+		pf_dynaddr_copyout(&pn->nat.saddr);
+		pf_dynaddr_copyout(&pn->nat.daddr);
+		pf_dynaddr_copyout(&pn->nat.raddr);
 		splx(s);
 		break;
 	}
@@ -1515,7 +1670,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 #endif /* INET6 */
-			newnat->ifp = NULL;
 			if (newnat->ifname[0]) {
 				newnat->ifp = ifunit(newnat->ifname);
 				if (newnat->ifp == NULL) {
@@ -1523,6 +1677,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					break;
 				}
+			} else
+				newnat->ifp = NULL;
+			if (pf_dynaddr_setup(&newnat->saddr, newnat->af) ||
+			    pf_dynaddr_setup(&newnat->daddr, newnat->af) ||
+			    pf_dynaddr_setup(&newnat->raddr, newnat->af)) {
+				pf_dynaddr_remove(&newnat->saddr);
+				pf_dynaddr_remove(&newnat->daddr);
+				pf_dynaddr_remove(&newnat->raddr);
+				pool_put(&pf_nat_pl, newnat);
+				error = EINVAL;
+				break;
 			}
 		}
 
@@ -1545,6 +1710,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcn->action == PF_CHANGE_REMOVE) {
+			pf_dynaddr_remove(&oldnat->saddr);
+			pf_dynaddr_remove(&oldnat->daddr);
+			pf_dynaddr_remove(&oldnat->raddr);
 			TAILQ_REMOVE(pf_nats_active, oldnat, entries);
 			pool_put(&pf_nat_pl, oldnat);
 		} else {
@@ -1570,6 +1738,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		while ((binat = TAILQ_FIRST(pf_binats_inactive)) != NULL) {
 			TAILQ_REMOVE(pf_binats_inactive, binat, entries);
+			pf_dynaddr_remove(&binat->saddr);
+			pf_dynaddr_remove(&binat->daddr);
+			pf_dynaddr_remove(&binat->raddr);
 			pool_put(&pf_binat_pl, binat);
 		}
 		*ticket = ++ticket_binats_inactive;
@@ -1613,6 +1784,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			binat->ifp = NULL;
+		if (pf_dynaddr_setup(&binat->saddr, binat->af) ||
+		    pf_dynaddr_setup(&binat->daddr, binat->af) ||
+		    pf_dynaddr_setup(&binat->raddr, binat->af)) {
+			pf_dynaddr_remove(&binat->saddr);
+			pf_dynaddr_remove(&binat->daddr);
+			pf_dynaddr_remove(&binat->raddr);
+			pool_put(&pf_binat_pl, binat);
+			error = EINVAL;
+			break;
+		}
 		TAILQ_INSERT_TAIL(pf_binats_inactive, binat, entries);
 		break;
 	}
@@ -1638,6 +1819,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* Purge the old binat list */
 		while ((binat = TAILQ_FIRST(old_binats)) != NULL) {
 			TAILQ_REMOVE(old_binats, binat, entries);
+			pf_dynaddr_remove(&binat->saddr);
+			pf_dynaddr_remove(&binat->daddr);
+			pf_dynaddr_remove(&binat->raddr);
 			pool_put(&pf_binat_pl, binat);
 		}
 		break;
@@ -1678,6 +1862,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(binat, &pb->binat, sizeof(struct pf_binat));
+		pf_dynaddr_copyout(&pb->binat.saddr);
+		pf_dynaddr_copyout(&pb->binat.daddr);
+		pf_dynaddr_copyout(&pb->binat.raddr);
 		splx(s);
 		break;
 	}
@@ -1714,7 +1901,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 #endif /* INET6 */
-			newbinat->ifp = NULL;
 			if (newbinat->ifname[0]) {
 				newbinat->ifp = ifunit(newbinat->ifname);
 				if (newbinat->ifp == NULL) {
@@ -1722,6 +1908,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					break;
 				}
+			} else
+				newbinat->ifp = NULL;
+			if (pf_dynaddr_setup(&newbinat->saddr, newbinat->af) ||
+			    pf_dynaddr_setup(&newbinat->daddr, newbinat->af) ||
+			    pf_dynaddr_setup(&newbinat->raddr, newbinat->af)) {
+				pf_dynaddr_remove(&newbinat->saddr);
+				pf_dynaddr_remove(&newbinat->daddr);
+				pf_dynaddr_remove(&newbinat->raddr);
+				pool_put(&pf_binat_pl, newbinat);
+				error = EINVAL;
+				break;
 			}
 		}
 
@@ -1745,6 +1942,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pcn->action == PF_CHANGE_REMOVE) {
 			TAILQ_REMOVE(pf_binats_active, oldbinat, entries);
+			pf_dynaddr_remove(&oldbinat->saddr);
+			pf_dynaddr_remove(&oldbinat->daddr);
+			pf_dynaddr_remove(&oldbinat->raddr);
 			pool_put(&pf_binat_pl, oldbinat);
 		} else {
 			if (oldbinat == NULL)
@@ -1770,6 +1970,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		while ((rdr = TAILQ_FIRST(pf_rdrs_inactive)) != NULL) {
 			TAILQ_REMOVE(pf_rdrs_inactive, rdr, entries);
+			pf_dynaddr_remove(&rdr->saddr);
+			pf_dynaddr_remove(&rdr->daddr);
+			pf_dynaddr_remove(&rdr->raddr);
 			pool_put(&pf_rdr_pl, rdr);
 		}
 		*ticket = ++ticket_rdrs_inactive;
@@ -1813,6 +2016,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rdr->ifp = NULL;
+		if (pf_dynaddr_setup(&rdr->saddr, rdr->af) ||
+		    pf_dynaddr_setup(&rdr->daddr, rdr->af) ||
+		    pf_dynaddr_setup(&rdr->raddr, rdr->af)) {
+			pf_dynaddr_remove(&rdr->saddr);
+			pf_dynaddr_remove(&rdr->daddr);
+			pf_dynaddr_remove(&rdr->raddr);
+			pool_put(&pf_rdr_pl, rdr);
+			error = EINVAL;
+			break;
+		}
 		TAILQ_INSERT_TAIL(pf_rdrs_inactive, rdr, entries);
 		break;
 	}
@@ -1838,6 +2051,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* Purge the old rdr list */
 		while ((rdr = TAILQ_FIRST(old_rdrs)) != NULL) {
 			TAILQ_REMOVE(old_rdrs, rdr, entries);
+			pf_dynaddr_remove(&rdr->saddr);
+			pf_dynaddr_remove(&rdr->daddr);
+			pf_dynaddr_remove(&rdr->raddr);
 			pool_put(&pf_rdr_pl, rdr);
 		}
 		break;
@@ -1878,6 +2094,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rdr, &pr->rdr, sizeof(struct pf_rdr));
+		pf_dynaddr_copyout(&pr->rdr.saddr);
+		pf_dynaddr_copyout(&pr->rdr.daddr);
+		pf_dynaddr_copyout(&pr->rdr.raddr);
 		splx(s);
 		break;
 	}
@@ -1913,7 +2132,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 #endif /* INET6 */
-			newrdr->ifp = NULL;
 			if (newrdr->ifname[0]) {
 				newrdr->ifp = ifunit(newrdr->ifname);
 				if (newrdr->ifp == NULL) {
@@ -1921,6 +2139,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					break;
 				}
+			} else
+				newrdr->ifp = NULL;
+			if (pf_dynaddr_setup(&newrdr->saddr, newrdr->af) ||
+			    pf_dynaddr_setup(&newrdr->daddr, newrdr->af) ||
+			    pf_dynaddr_setup(&newrdr->raddr, newrdr->af)) {
+				pf_dynaddr_remove(&newrdr->saddr);
+				pf_dynaddr_remove(&newrdr->daddr);
+				pf_dynaddr_remove(&newrdr->raddr);
+				pool_put(&pf_rdr_pl, newrdr);
+				error = EINVAL;
+				break;
 			}
 		}
 
@@ -1944,6 +2173,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pcn->action == PF_CHANGE_REMOVE) {
 			TAILQ_REMOVE(pf_rdrs_active, oldrdr, entries);
+			pf_dynaddr_remove(&oldrdr->saddr);
+			pf_dynaddr_remove(&oldrdr->daddr);
+			pf_dynaddr_remove(&oldrdr->raddr);
 			pool_put(&pf_rdr_pl, oldrdr);
 		} else {
 			if (oldrdr == NULL)
@@ -1988,9 +2220,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			st = n->state;
 			if ((!psk->psk_af || st->af == psk->psk_af) &&
 			    (!psk->psk_proto || psk->psk_proto == st->proto) &&
-			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr,
+			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr.addr,
 			    &psk->psk_src.mask, &st->lan.addr, st->af) &&
-			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr,
+			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr.addr,
 			    &psk->psk_dst.mask, &st->ext.addr, st->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
@@ -2304,7 +2536,9 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 			PF_CALC_SKIP_STEP(PF_SKIP_AF, s->af == r->af);
 			PF_CALC_SKIP_STEP(PF_SKIP_PROTO, s->proto == r->proto);
 			PF_CALC_SKIP_STEP(PF_SKIP_SRC_ADDR,
-			    PF_AEQ(&s->src.addr, &r->src.addr, r->af) &&
+			    s->src.addr.addr_dyn == NULL &&
+			    r->src.addr.addr_dyn == NULL &&
+			    PF_AEQ(&s->src.addr.addr, &r->src.addr.addr, r->af) &&
 			    PF_AEQ(&s->src.mask, &r->src.mask, r->af) &&
 			    s->src.not == r->src.not);
 			PF_CALC_SKIP_STEP(PF_SKIP_SRC_PORT,
@@ -2312,7 +2546,9 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 			    s->src.port[1] == r->src.port[1] &&
 			    s->src.port_op == r->src.port_op);
 			PF_CALC_SKIP_STEP(PF_SKIP_DST_ADDR,
-			    PF_AEQ(&s->dst.addr, &r->dst.addr, r->af) &&
+			    s->dst.addr.addr_dyn == NULL &&
+			    r->dst.addr.addr_dyn == NULL &&
+			    PF_AEQ(&s->dst.addr.addr, &r->dst.addr.addr, r->af) &&
 			    PF_AEQ(&s->dst.mask, &r->dst.mask, r->af) &&
 			    s->dst.not == r->dst.not);
 			PF_CALC_SKIP_STEP(PF_SKIP_DST_PORT,
@@ -2829,13 +3065,18 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		    (n->ifp != ifp && n->ifnot)) &&
 		    (!n->proto || n->proto == proto) &&
 		    (!n->af || n->af == af) &&
-		    PF_MATCHA(n->snot, &n->saddr, &n->smask, saddr, af) &&
-		    PF_MATCHA(n->dnot, &n->daddr, &n->dmask, daddr, af))
+		    (n->saddr.addr_dyn == NULL ||
+		    !n->saddr.addr_dyn->undefined) &&
+		    PF_MATCHA(n->snot, &n->saddr.addr, &n->smask, saddr, af) &&
+		    (n->daddr.addr_dyn == NULL ||
+		    !n->daddr.addr_dyn->undefined) &&
+		    PF_MATCHA(n->dnot, &n->daddr.addr, &n->dmask, daddr, af))
 			nm = n;
 		else
 			n = TAILQ_NEXT(n, entries);
 	}
-	if (nm && nm->no)
+	if (nm && (nm->no || (nm->raddr.addr_dyn != NULL &&
+	    nm->raddr.addr_dyn->undefined)))
 		return (NULL);
 	return (nm);
 }
@@ -2854,19 +3095,33 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 		if (direction == PF_OUT && b->ifp == ifp &&
 		    (!b->proto || b->proto == proto) &&
 		    (!b->af || b->af == af) &&
-		    PF_MATCHA(0, &b->saddr, &fullmask, saddr, af) &&
-		    PF_MATCHA(b->dnot, &b->daddr, &b->dmask, daddr, af))
+		    (b->saddr.addr_dyn == NULL ||
+		    !b->saddr.addr_dyn->undefined) &&
+		    PF_MATCHA(0, &b->saddr.addr, &fullmask, saddr, af) &&
+		    (b->daddr.addr_dyn == NULL ||
+		    !b->daddr.addr_dyn->undefined) &&
+		    PF_MATCHA(b->dnot, &b->daddr.addr, &b->dmask, daddr, af))
 			bm = b;
 		else if (direction == PF_IN && b->ifp == ifp &&
 		    (!b->proto || b->proto == proto) &&
 		    (!b->af || b->af == af) &&
-		    PF_MATCHA(0, &b->raddr, &fullmask, saddr, af) &&
-		    PF_MATCHA(b->dnot, &b->daddr, &b->dmask, daddr, af))
+		    (b->raddr.addr_dyn == NULL ||
+		    !b->raddr.addr_dyn->undefined) &&
+		    PF_MATCHA(0, &b->raddr.addr, &fullmask, saddr, af) &&
+		    (b->daddr.addr_dyn == NULL ||
+		    !b->daddr.addr_dyn->undefined) &&
+		    PF_MATCHA(b->dnot, &b->daddr.addr, &b->dmask, daddr, af))
 			bm = b;
 		else
 			b = TAILQ_NEXT(b, entries);
 	}
 	if (bm && bm->no)
+		return (NULL);
+	if (bm && direction == PF_OUT && bm->raddr.addr_dyn != NULL &&
+	    bm->raddr.addr_dyn->undefined)
+		return (NULL);
+	if (bm && direction == PF_IN && bm->saddr.addr_dyn != NULL &&
+	    bm->saddr.addr_dyn->undefined)
 		return (NULL);
 	return (bm);
 }
@@ -2883,8 +3138,12 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		    (r->ifp != ifp && r->ifnot)) &&
 		    (!r->proto || r->proto == proto) &&
 		    (!r->af || r->af == af) &&
-		    PF_MATCHA(r->snot, &r->saddr, &r->smask, saddr, af) &&
-		    PF_MATCHA(r->dnot, &r->daddr, &r->dmask, daddr, af) &&
+		    (r->saddr.addr_dyn == NULL ||
+		    !r->saddr.addr_dyn->undefined) &&
+		    PF_MATCHA(r->snot, &r->saddr.addr, &r->smask, saddr, af) &&
+		    (r->daddr.addr_dyn == NULL ||
+		    !r->daddr.addr_dyn->undefined) &&
+		    PF_MATCHA(r->dnot, &r->daddr.addr, &r->dmask, daddr, af) &&
 		    ((!r->dport2 && (!r->dport || dport == r->dport)) ||
 		    (r->dport2 && (ntohs(dport) >= ntohs(r->dport)) &&
 		    ntohs(dport) <= ntohs(r->dport2))))
@@ -2892,7 +3151,8 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 		else
 			r = TAILQ_NEXT(r, entries);
 	}
-	if (rm && rm->no)
+	if (rm && (rm->no || (rm->raddr.addr_dyn != NULL &&
+	    rm->raddr.addr_dyn->undefined)))
 		return (NULL);
 	return (rm);
 }
@@ -2933,7 +3193,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			PF_ACPY(&baddr, saddr, af);
 			bport = th->th_sport;
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &binat->raddr, th->th_sport, 0, af);
+			    &th->th_sum, &binat->raddr.addr, th->th_sport, 0, af);
 			rewrite++;
 		}
 		/* check outgoing packet for NAT */
@@ -2946,7 +3206,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				return (PF_DROP);
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &nat->raddr, htons(nport), 0, af);
+			    &th->th_sum, &nat->raddr.addr, htons(nport),
+			    0, af);
 			rewrite++;
 		}
 	} else {
@@ -2962,7 +3223,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				nport = bport;
 			PF_ACPY(&baddr, daddr, af);
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
-			    &th->th_sum, &rdr->raddr, nport, 0, af);
+			    &th->th_sum, &rdr->raddr.addr, nport, 0, af);
 			rewrite++;
 		}
 		/* check incoming packet for BINAT */
@@ -2971,7 +3232,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			PF_ACPY(&baddr, daddr, af);
 			bport = th->th_dport;
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
-			    &th->th_sum, &binat->saddr, th->th_dport, 0, af);
+			    &th->th_sum, &binat->saddr.addr, th->th_dport, 0, af);
 			rewrite++;
 		}
 	}
@@ -2993,7 +3254,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr, &r->src.mask, saddr, af))
+		    &r->src.addr.addr, &r->src.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
@@ -3002,7 +3263,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr, &r->dst.mask, daddr, af))
+		    &r->dst.addr.addr, &r->dst.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
@@ -3166,7 +3427,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			PF_ACPY(&baddr, saddr, af);
 			bport = uh->uh_sport;
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &binat->raddr, uh->uh_sport, 1, af);
+			    &uh->uh_sum, &binat->raddr.addr, uh->uh_sport, 1, af);
 			rewrite++;
 		}
 		/* check outgoing packet for NAT */
@@ -3179,7 +3440,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				return (PF_DROP);
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &nat->raddr, htons(nport), 1, af);
+			    &uh->uh_sum, &nat->raddr.addr, htons(nport),
+			    1, af);
 			rewrite++;
 		}
 	} else {
@@ -3196,7 +3458,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 			PF_ACPY(&baddr, daddr, af);
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
-			    &uh->uh_sum, &rdr->raddr, nport, 1, af);
+			    &uh->uh_sum, &rdr->raddr.addr, nport, 1, af);
 			rewrite++;
 		}
 		/* check incoming packet for BINAT */
@@ -3205,7 +3467,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			PF_ACPY(&baddr, daddr, af);
 			bport = uh->uh_dport;
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
-			    &uh->uh_sum, &binat->saddr, uh->uh_dport, 1, af);
+			    &uh->uh_sum, &binat->saddr.addr, uh->uh_dport, 1, af);
 			rewrite++;
 		}
 	}
@@ -3227,7 +3489,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.mask, af) &&
-		    !PF_MATCHA(r->src.not, &r->src.addr, &r->src.mask,
+		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.mask,
 		    saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
@@ -3237,7 +3499,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.mask, af) &&
-		    !PF_MATCHA(r->dst.not, &r->dst.addr, &r->dst.mask,
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.mask,
 			daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
@@ -3413,13 +3675,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    binat->raddr.v4.s_addr, 0);
+				    binat->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &binat->raddr, 0);
+				    &binat->raddr.addr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -3433,13 +3695,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr,
-				    pd->ip_sum, nat->raddr.v4.s_addr, 0);
+				    pd->ip_sum, nat->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &nat->raddr, 0);
+				    &nat->raddr.addr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -3454,13 +3716,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, rdr->raddr.v4.s_addr, 0);
+				    pd->ip_sum, rdr->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(daddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &rdr->raddr, 0);
+				    &rdr->raddr.addr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -3474,13 +3736,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, binat->saddr.v4.s_addr, 0);
+				    pd->ip_sum, binat->saddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(daddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &binat->saddr, 0);
+				    &binat->saddr.addr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -3505,13 +3767,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr, &r->src.mask, saddr, af))
+		    &r->src.addr.addr, &r->src.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->dst.noroute && pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr, &r->dst.mask, daddr, af))
+		    &r->dst.addr.addr, &r->dst.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
@@ -3632,12 +3894,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    binat->raddr.v4.s_addr, 0);
+				    binat->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(saddr, &binat->raddr, af);
+				PF_ACPY(saddr, &binat->raddr.addr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -3650,12 +3912,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr,
-				    pd->ip_sum, nat->raddr.v4.s_addr, 0);
+				    pd->ip_sum, nat->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(saddr, &nat->raddr, af);
+				PF_ACPY(saddr, &nat->raddr.addr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -3669,12 +3931,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, rdr->raddr.v4.s_addr, 0);
+				    pd->ip_sum, rdr->raddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(daddr, &rdr->raddr, af);
+				PF_ACPY(daddr, &rdr->raddr.addr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -3687,12 +3949,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, binat->saddr.v4.s_addr, 0);
+				    pd->ip_sum, binat->saddr.addr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(daddr, &binat->saddr, af);
+				PF_ACPY(daddr, &binat->saddr.addr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -3716,13 +3978,13 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr, &r->src.mask, pd->src, af))
+		    &r->src.addr.addr, &r->src.mask, pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->dst.noroute && pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr, &r->dst.mask, pd->dst, af))
+		    &r->dst.addr.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -3829,13 +4091,13 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr, &r->src.mask, pd->src, af))
+		    &r->src.addr.addr, &r->src.mask, pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->dst.noroute && pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr, &r->dst.mask, pd->dst, af))
+		    &r->dst.addr.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code)

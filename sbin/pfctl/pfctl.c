@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.60 2002/04/01 20:01:16 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.61 2002/04/24 18:10:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -301,10 +301,10 @@ pfctl_kill_states(int dev, int opts)
 		sources++;
 
 		if (psk.psk_af == AF_INET)
-			psk.psk_src.addr.v4 =
+			psk.psk_src.addr.addr.v4 =
 			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
 		else if (psk.psk_af == AF_INET6)
-			psk.psk_src.addr.v6 =
+			psk.psk_src.addr.addr.v6 =
 			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
 			    sin6_addr;
 		else 
@@ -335,11 +335,11 @@ pfctl_kill_states(int dev, int opts)
 				dests++;
 
 				if (psk.psk_af == AF_INET)
-					psk.psk_dst.addr.v4 =
+					psk.psk_dst.addr.addr.v4 =
 					    ((struct sockaddr_in *)resp[1]->
 					    ai_addr)->sin_addr;
 				else if (psk.psk_af == AF_INET6)
-					psk.psk_dst.addr.v6 =
+					psk.psk_dst.addr.addr.v6 =
 					    ((struct sockaddr_in6 *)resp[1]->
 					    ai_addr)->sin6_addr;
 				else 

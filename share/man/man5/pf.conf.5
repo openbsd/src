@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.39 2002/04/23 14:32:23 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.40 2002/04/24 18:10:25 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -68,12 +68,14 @@ af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts          = "all" |
-                 "from" ( "any" | "no-route" | host | "{" host-list "}" ) [ port ]
-                 "to"   ( "any" | "no-route" | host | "{" host-list "}" ) [ port ] .
+                 "from" ( "any" | "no-route" | host | "{" host-list "}" )
+                     [ port ]
+                 "to"   ( "any" | "no-route" | host | "{" host-list "}" )
+                     [ port ] .
 
 host           = [ "!" ] address [ "/" mask-bits ] .
-address        = ( interface-name | host-name | ipv4-dotted-quad |
-                   ipv6-coloned-hex ) .
+address        = ( interface-name | '(' interface-name ')' | host-name |
+                   ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ "," host-list ] .
 port           = "port" ( unary-op | binary-op | "{" port-list "}" ) .
 port-list      = ( unary-op | binary-op ) [ "," port-list ] .
@@ -228,15 +230,13 @@ means any address which is not currently routable.
 .El
 .Pp
 Host name resolution and interface to address translation are done at
-rule set load-time.
+rule set load-time. 
 When the address of an interface (or host name) changes (by DHCP or PPP,
 for instance), the rule set must be reloaded for the change to be reflected
 in the kernel.
-See
-.Xr dhclient-script 8
-or
-.Xr ppp 8
-for information on how to automate this task.
+Interface names surrounded by parentheses cause an automatic update of
+the rule whenever the referenced interface changes its address.
+Reloading the rule set is not required in this case.
 .Pp
 Ports can be specified using these operators
 .Bd -literal

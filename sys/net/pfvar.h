@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.67 2002/04/23 14:32:22 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.68 2002/04/24 18:10:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,12 +60,27 @@ struct pf_addr {
 		u_int8_t		addr8[16];
 		u_int16_t		addr16[8];
 		u_int32_t		addr32[4];
+		char			ifname[IFNAMSIZ];
 	} pfa;		    /* 128-bit address */
 #define v4	pfa.v4
 #define v6	pfa.v6
 #define addr8	pfa.addr8
 #define addr16	pfa.addr16
 #define addr32	pfa.addr32
+};
+
+struct pf_addr_wrap {
+	struct pf_addr		 addr;
+	struct pf_addr_dyn	*addr_dyn;
+};
+
+struct pf_addr_dyn {
+	char			 ifname[IFNAMSIZ];
+	struct ifnet		*ifp;
+	struct pf_addr		*addr;
+	u_int8_t		 af;
+	void			*hook_cookie;
+	u_int8_t		 undefined;
 };
 
 /*
@@ -182,25 +197,17 @@ struct pf_addr {
 #endif /* PF_INET_INET6 */
 
 struct pf_rule_addr {
-	struct pf_addr	addr;
-	struct pf_addr	mask;
-	u_int16_t	port[2];
-	u_int8_t	not;
-	u_int8_t	port_op;
-	u_int8_t	noroute;
+	struct pf_addr_wrap	 addr;
+	struct pf_addr		 mask;
+	u_int16_t		 port[2];
+	u_int8_t		 not;
+	u_int8_t		 port_op;
+	u_int8_t		 noroute;
 };
 
 struct pf_rule {
-	char		 ifname[IFNAMSIZ];
-	char		 rt_ifname[IFNAMSIZ];
-#define PF_RULE_LABEL_SIZE	32
-	char		 label[PF_RULE_LABEL_SIZE];
-	struct ifnet	*ifp;
-	struct ifnet	*rt_ifp;
-	struct pf_rule_addr src;
-	struct pf_rule_addr dst;
-	struct pf_addr	 rt_addr;
-
+	struct pf_rule_addr	 src;
+	struct pf_rule_addr	 dst;
 #define PF_SKIP_ACTION		0
 #define PF_SKIP_IFP		1
 #define PF_SKIP_DIR		2
@@ -211,36 +218,44 @@ struct pf_rule {
 #define PF_SKIP_DST_ADDR	7
 #define PF_SKIP_DST_PORT	8
 #define PF_SKIP_COUNT		9
-	struct pf_rule	*skip[PF_SKIP_COUNT];
-	TAILQ_ENTRY(pf_rule)	entries;
+	struct pf_rule		*skip[PF_SKIP_COUNT];
+#define PF_RULE_LABEL_SIZE	 32
+	char			 label[PF_RULE_LABEL_SIZE];
+	struct pf_addr		 rt_addr;
+	char			 ifname[IFNAMSIZ];
+	char			 rt_ifname[IFNAMSIZ];
+	TAILQ_ENTRY(pf_rule)	 entries;
 
-	u_int64_t	 evaluations;
-	u_int64_t	 packets;
-	u_int64_t	 bytes;
+	u_int64_t		 evaluations;
+	u_int64_t		 packets;
+	u_int64_t		 bytes;
 
-	u_int16_t	 nr;
-	u_int16_t	 return_icmp;
+	struct ifnet		*ifp;
+	struct ifnet		*rt_ifp;
 
-	u_int8_t	 action;
-	u_int8_t	 direction;
-	u_int8_t	 log;
-	u_int8_t	 quick;
+	u_int16_t		 nr;
+	u_int16_t		 return_icmp;
+
+	u_int8_t		 action;
+	u_int8_t		 direction;
+	u_int8_t		 log;
+	u_int8_t		 quick;
 
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
-	u_int8_t	 keep_state;
-	u_int8_t	 af;
-	u_int8_t	 proto;
-	u_int8_t	 type;
-	u_int8_t	 code;
+	u_int8_t		 keep_state;
+	u_int8_t		 af;
+	u_int8_t		 proto;
+	u_int8_t		 type;
+	u_int8_t		 code;
 
-	u_int8_t	 flags;
-	u_int8_t	 flagset;
+	u_int8_t		 flags;
+	u_int8_t		 flagset;
 
-	u_int8_t	 rule_flag;
-	u_int8_t	 min_ttl;	/* minimum ttl for packet normalize */
-	u_int8_t	 allow_opts;
-	u_int8_t	 rt;
+	u_int8_t		 rule_flag;
+	u_int8_t		 min_ttl;
+	u_int8_t		 allow_opts;
+	u_int8_t		 rt;
 };
 
 #define	PFRULE_RETURNRST	0x01
@@ -282,55 +297,55 @@ struct pf_state {
 };
 
 struct pf_nat {
-	char		 ifname[IFNAMSIZ];
-	struct ifnet	*ifp;
-	TAILQ_ENTRY(pf_nat)	entries;
-	struct pf_addr	 saddr;
-	struct pf_addr	 smask;
-	struct pf_addr	 daddr;
-	struct pf_addr	 dmask;
-	struct pf_addr	 raddr;
-	u_int8_t	 af;
-	u_int8_t	 proto;
-	u_int8_t	 snot;
-	u_int8_t	 dnot;
-	u_int8_t	 ifnot;
-	u_int8_t	 no;
+	char			 ifname[IFNAMSIZ];
+	struct ifnet		*ifp;
+	TAILQ_ENTRY(pf_nat)	 entries;
+	struct pf_addr_wrap	 saddr;
+	struct pf_addr_wrap	 daddr;
+	struct pf_addr_wrap	 raddr;
+	struct pf_addr		 smask;
+	struct pf_addr		 dmask;
+	u_int8_t		 af;
+	u_int8_t		 proto;
+	u_int8_t		 snot;
+	u_int8_t		 dnot;
+	u_int8_t		 ifnot;
+	u_int8_t		 no;
 };
 
 struct pf_binat {
-	char		 ifname[IFNAMSIZ];
-	struct ifnet	*ifp;
-	TAILQ_ENTRY(pf_binat)	entries;
-	struct pf_addr	 saddr;
-	struct pf_addr	 daddr;
-	struct pf_addr	 dmask;
-	struct pf_addr	 raddr;
-	u_int8_t	 af;
-	u_int8_t	 proto;
-	u_int8_t	 dnot;
-	u_int8_t	 no;
+	char			 ifname[IFNAMSIZ];
+	struct ifnet		*ifp;
+	TAILQ_ENTRY(pf_binat)	 entries;
+	struct pf_addr_wrap	 saddr;
+	struct pf_addr_wrap	 daddr;
+	struct pf_addr_wrap	 raddr;
+	struct pf_addr		 dmask;
+	u_int8_t		 af;
+	u_int8_t		 proto;
+	u_int8_t		 dnot;
+	u_int8_t		 no;
 };
 
 struct pf_rdr {
-	char		 ifname[IFNAMSIZ];
-	struct ifnet	*ifp;
-	TAILQ_ENTRY(pf_rdr)	entries;
-	struct pf_addr	 saddr;
-	struct pf_addr	 smask;
-	struct pf_addr	 daddr;
-	struct pf_addr	 dmask;
-	struct pf_addr	 raddr;
-	u_int16_t	 dport;
-	u_int16_t	 dport2;
-	u_int16_t	 rport;
-	u_int8_t	 af;
-	u_int8_t	 proto;
-	u_int8_t	 snot;
-	u_int8_t	 dnot;
-	u_int8_t	 ifnot;
-	u_int8_t	 opts;
-	u_int8_t	 no;
+	char			 ifname[IFNAMSIZ];
+	struct ifnet		*ifp;
+	TAILQ_ENTRY(pf_rdr)	 entries;
+	struct pf_addr_wrap	 saddr;
+	struct pf_addr_wrap	 daddr;
+	struct pf_addr_wrap	 raddr;
+	struct pf_addr		 smask;
+	struct pf_addr		 dmask;
+	u_int16_t		 dport;
+	u_int16_t		 dport2;
+	u_int16_t		 rport;
+	u_int8_t		 af;
+	u_int8_t		 proto;
+	u_int8_t		 snot;
+	u_int8_t		 dnot;
+	u_int8_t		 ifnot;
+	u_int8_t		 opts;
+	u_int8_t		 no;
 };
 
 struct pf_tree_key {
