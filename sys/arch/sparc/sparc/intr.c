@@ -373,4 +373,5 @@ intr_fasttrap(level, vec)
 	instrp = (char *)instr;
 	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
 		pmap_writetext(tvp, *instrp);
+	splx(s);
 }
