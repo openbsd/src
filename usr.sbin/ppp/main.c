@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.5 1997/12/17 21:18:03 brian Exp $
+ * $Id: main.c,v 1.6 1997/12/22 02:28:33 brian Exp $
  *
  *	TODO:
  *		o Add commands for traffic summary, version display, etc.
@@ -981,10 +981,10 @@ DoLoop(void)
           LogPrintf(LogPHASE, "Connected to local client.\n");
           break;
         case AF_INET:
-          if (sin->sin_port < 1024) {
+          if (ntohs(sin->sin_port) < 1024) {
             LogPrintf(LogALERT, "Rejected client connection from %s:%u"
                       "(invalid port number) !\n",
-                      inet_ntoa(sin->sin_addr), sin->sin_port);
+                      inet_ntoa(sin->sin_addr), ntohs(sin->sin_port));
 	    close(wfd);
 	    continue;
           }
