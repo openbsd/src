@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2004/08/10 12:41:15 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.19 2004/08/10 12:45:27 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,18 +158,23 @@ conf_main	: LISTEN ON address	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
 
-			for (h = $2->a; h != NULL; h = next) {
-				next = h->next;
-				if (h->ss.ss_family != AF_INET &&
-				    h->ss.ss_family != AF_INET6) {
-					yyerror("IPv4 or IPv6 address "
-					    "or hostname expected");
-					free($2->name);
-					free($2);
-					YYERROR;
-				}
+			h = $2->a;
+			do {
+				if (h != NULL) {
+					next = h->next;
+					if (h->ss.ss_family != AF_INET &&
+					    h->ss.ss_family != AF_INET6) {
+						yyerror("IPv4 or IPv6 address "
+						    "or hostname expected");
+						free($2->name);
+						free($2);
+						YYERROR;
+					}
+					h->next = NULL;
+				} else
+					next = NULL;
+
 				p = new_peer();
-				h->next = NULL;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -177,7 +182,10 @@ conf_main	: LISTEN ON address	{
 				if (p->addr_head.name == NULL)
 					fatal(NULL);
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
-			}
+
+				h = next;
+			} while (h != NULL);
+
 			free($2->name);
 			free($2);
 		}
