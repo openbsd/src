@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.13 1997/09/22 05:11:06 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.14 1997/11/05 10:00:22 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -370,8 +370,14 @@ send_again:
 				goto call_again;
 			}
 		}
-	} else
+	} else {
+		/* xdr_replymsg() may have left some things allocated */
+		int op = reply_xdrs.x_op;
+		reply_xdrs.x_op = XDR_FREE;
+		xdr_replymsg(&reply_xdrs, &reply_msg);
+		reply_xdrs.x_op = op;
 		cu->cu_error.re_status = RPC_CANTDECODERES;
+	}
 
 	if (fds != &readfds)
 		free(fds);
