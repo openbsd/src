@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.5 2001/02/17 22:38:06 pjanzen Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.6 2001/02/17 23:03:57 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: bdisp.c,v 1.5 2001/02/17 22:38:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bdisp.c,v 1.6 2001/02/17 23:03:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ bdwho(update)
 	extern char *plyr[];
 
 	move(21, 0);
-	clrtoeol();
+	printw("                                              ");
 	i = strlen(plyr[BLACK]);
 	j = strlen(plyr[WHITE]);
 	if (i + j <= 20) {
