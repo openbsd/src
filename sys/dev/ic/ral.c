@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.20 2005/03/11 19:53:54 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.21 2005/03/11 19:58:04 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1466,16 +1466,17 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ral_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct ieee80211_duration d0, dn;
-	int npkt, error;
+	int rate, npkt, error;
 
 	desc = &sc->bcnq.desc[sc->bcnq.cur];
 	data = &sc->bcnq.data[sc->bcnq.cur];
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	/* XXX beacons are always sent at 2Mbps */
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+
 	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
-	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, 4, &d0,
+	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, rate, &d0,
 	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
 	if (error != 0) {
 		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
@@ -1508,7 +1509,7 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	desc->plcp_length = htole16(d0.d_plcp_len);
 	desc->plcp_service = 4;
-	desc->plcp_signal = ral_plcp_signal(4);
+	desc->plcp_signal = ral_plcp_signal(rate);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->plcp_signal |= 0x8;
 
@@ -1533,16 +1534,17 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ral_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct ieee80211_duration d0, dn;
-	int npkt, error;
+	int rate, npkt, error;
 
 	desc = &sc->prioq.desc[sc->prioq.cur];
 	data = &sc->prioq.data[sc->prioq.cur];
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	/* XXX management frames are always sent at 2Mbps */
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+
 	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
-	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, 4, &d0,
+	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, rate, &d0,
 	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
 	if (error != 0) {
 		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
@@ -1565,7 +1567,7 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		struct ral_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_rate = 4;
+		tap->wt_rate = rate;
 		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
@@ -1604,7 +1606,7 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	desc->plcp_length = htole16(d0.d_plcp_len);
 	desc->plcp_service = 4;
-	desc->plcp_signal = ral_plcp_signal(4);
+	desc->plcp_signal = ral_plcp_signal(rate);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->plcp_signal |= 0x8;
 
