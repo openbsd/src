@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.9 1997/09/11 10:48:13 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.10 1998/02/09 06:29:08 tholo Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -262,7 +262,7 @@ clean_pipe(p, path)
 	SCARG(&la, path) = stackgap_alloc(&sg, l);
 	SCARG(&la, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
-	if ((error = copyout((char *) path, SCARG(&la, path), l)) != 0)
+	if ((error = copyout((char *) path, (char *) SCARG(&la, path), l)) != 0)
 		return error;
 
 	if ((error = sys_lstat(p, &la, &retval)) != 0)

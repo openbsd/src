@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.11 1997/11/06 05:58:20 csapuntz Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.12 1998/02/09 06:29:07 tholo Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ sys_select(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_select_args /* {
-		syscallarg(u_int) nd;
+		syscallarg(int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
 		syscallarg(fd_set *) ex;
