@@ -293,7 +293,9 @@ bt485_set_cmap(rc, cmapp)
 	data->changed |= DATA_CMAP_CHANGED;
 
 	data->ramdac_sched_update(data->cookie, bt485_update);
-	delay(1);
+#ifdef __alpha__
+	alpha_mb();
+#endif
 	splx(s);
 
 	return (0);
