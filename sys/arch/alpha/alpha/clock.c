@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 1997/01/24 19:56:19 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 1998/03/01 13:42:19 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.14 1996/11/23 06:31:57 cgd Exp $	*/
 
 /*
@@ -104,8 +104,6 @@ clockattach(dev, fns)
 void
 cpu_initclocks()
 {
-	extern int tickadj;
-
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
