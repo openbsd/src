@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.6 1998/07/27 15:24:31 millert Exp $	*/
+/*	$OpenBSD: termout.c,v 1.7 2000/10/11 19:28:02 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.6 1998/07/27 15:24:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: termout.c,v 1.7 2000/10/11 19:28:02 millert Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: termout.c,v 1.6 1998/07/27 15:24:31 millert Exp
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
+#include <term.h>
 #if	defined(ultrix)
 /* Some version of this OS has a bad definition for nonl() */
 #undef	nl
@@ -642,13 +643,8 @@ InitTerminal()
     
     InitMapping();		/* Go do mapping file (MAP3270) first */
     if (!screenInitd) { 	/* not initialized */
-#if	defined(unix)
-	char KSEbuffer[2050];
-	char *lotsofspace = KSEbuffer;
-	extern char *tgetstr();
-#endif	/* defined(unix) */
 
-	if (initscr() == ERR) {	/* Initialize curses to get line size */
+	if (initscr() == NULL) {/* Initialize curses to get line size */
 	    ExitString("InitTerminal:  Error initializing curses", 1);
 	    /*NOTREACHED*/
 	}
@@ -686,22 +682,23 @@ InitTerminal()
 			 * be nice, but it messes us up.
 			 */
 	signal(SIGTSTP, SIG_DFL);
-	if ((myKS = tgetstr("ks", &lotsofspace)) != 0) {
+	if ((myKS = tigetstr("smkx")) != 0) {
 	    myKS = strsave(myKS);
 	    StringToTerminal(myKS);
 	}
-	if ((myKE = tgetstr("ke", &lotsofspace)) != 0) {
+	if ((myKE = tigetstr("rmkx")) != 0) {
 	    myKE = strsave(myKE);
 	}
-	if (tgetstr("md", &lotsofspace) && tgetstr("me", &lotsofspace)) {
-	   SO = strsave(tgetstr("md", &lotsofspace));
-	   SE = strsave(tgetstr("me", &lotsofspace));
+	/* XXX - why? */
+	if (tigetstr("bold") && tigetstr("sgr0")) {
+	   enter_standout_mode = strsave(tigetstr("bold"));
+	   exit_standout_mode = strsave(tigetstr("sgr0"));
 	}
 #endif
 	DoARefresh();
 	setconnmode();
-	if (VB && *VB) {
-	    bellSequence = VB;		/* use visual bell */
+	if (flash_screen && *flash_screen) {
+	    bellSequence = flash_screen;	/* use visual bell */
 	}
 	screenInitd = 1;
 	screenStopped = 0;		/* Not stopped */
