@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.10 2002/09/06 18:45:06 deraadt Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.11 2002/10/15 20:56:02 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -62,7 +62,6 @@ main(int argc, char *argv[])
 {
 	struct iovec iov[2];
 	struct passwd *pwd;
-	char localhost[MAXHOSTNAMELEN];
 	char *username = NULL, *salt, *p;
 	struct rlimit rl;
 	int c;
@@ -79,9 +78,6 @@ main(int argc, char *argv[])
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
-
-	if (gethostname(localhost, sizeof(localhost)) < 0)
-		syslog(LOG_ERR, "couldn't get local hostname: %m");
 
 	while ((c = getopt(argc, argv, "v:s:")) != -1)
 		switch (c) {
