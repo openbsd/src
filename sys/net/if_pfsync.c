@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.36 2004/08/03 05:32:28 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.37 2004/08/30 07:44:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -198,6 +198,8 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	st->rule.ptr = r;
 	/* XXX get pointers to nat_rule and anchor */
+
+	r->states++;
 
 	/* fill in the rest of the state entry */
 	pf_state_host_ntoh(&sp->lan, &st->lan);
