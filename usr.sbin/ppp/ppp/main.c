@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: main.c,v 1.25 2001/03/24 01:06:02 brian Exp $
+ * $OpenBSD: main.c,v 1.26 2001/04/03 08:23:12 brian Exp $
  *
  *	TODO:
  */
@@ -434,8 +434,10 @@ main(int argc, char **argv)
             while ((ret = read(bgpipe[0], &c, 1)) == 1) {
               switch (c) {
                 case EX_NORMAL:
-	          prompt_Printf(prompt, "PPP enabled\n");
-	          log_Printf(LogPHASE, "Parent: PPP enabled\n");
+                  if (!sw.quiet) {
+	            prompt_Printf(prompt, "PPP enabled\n");
+	            log_Printf(LogPHASE, "Parent: PPP enabled\n");
+                  }
 	          break;
                 case EX_REDIAL:
                   if (!sw.quiet)
