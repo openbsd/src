@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2002/09/23 18:31:03 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2003/04/17 03:49:24 drahn Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -86,8 +86,8 @@ rd_teardown:
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-rdsetroot:	${TOP}/../common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../common/rdsetroot.c
+rdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../common/elfrdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -102,7 +102,7 @@ install:
 	cp ${FS} ${DESTDIR}/snapshot/${FS}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
+	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
 	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
