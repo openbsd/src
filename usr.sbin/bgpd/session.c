@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.29 2003/12/23 16:11:06 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.30 2003/12/23 18:28:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,7 @@ struct peer	*getpeerbyip(in_addr_t);
 struct bgpd_config	*conf = NULL, *nconf = NULL;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
+int			 sock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
 
@@ -126,7 +127,7 @@ setup_listener(void)
 int
 session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 {
-	int		 sock, nfds, i, j, timeout;
+	int		 nfds, i, j, timeout;
 	pid_t		 pid;
 	time_t		 nextaction;
 	struct passwd	*pw;
@@ -175,8 +176,10 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_LISTEN].fd = sock;
-		pfd[PFD_LISTEN].events = POLLIN;
+		if (sock != -1) {
+			pfd[PFD_LISTEN].fd = sock;
+			pfd[PFD_LISTEN].events = POLLIN;
+		}
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
@@ -281,9 +284,6 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		}
 	}
 
-	session_terminate();
-	shutdown(sock, SHUT_RDWR);
-	close(sock);
 	logit(LOG_INFO, "session engine exiting");
 	_exit(0);
 }
@@ -561,6 +561,10 @@ session_terminate(void)
 
 	for (p = conf->peers; p != NULL; p = p->next)
 		bgp_fsm(p, EVNT_STOP);
+
+	shutdown(sock, SHUT_RDWR);
+	close(sock);
+	sock = -1;
 }
 
 void
@@ -1278,6 +1282,11 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			nconf = NULL;
 			pending_reconf = 0;
 			logit(LOG_INFO, "SE reconfigured");
+			break;
+		case IMSG_SHUTDOWN_REQUEST:
+			session_terminate();
+			imsg_compose(&ibuf_main, IMSG_SHUTDOWN_DONE, 0,
+			    NULL, 0);
 			break;
 		default:
 		}
