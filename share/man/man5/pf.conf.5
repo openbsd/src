@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.52 2002/06/08 07:58:07 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.53 2002/06/08 08:05:14 henning Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -409,6 +409,12 @@ supports macro definition and expansion like:
 Macro names must start with a letter and may contain letters, digits
 and underscores.
 Macros are not expanded recursively.
+.Pp
+Macros can be concatenated:
+.Bd -literal
+    webservers  = "{ 10.0.0.1,  10.0.0.7,  10.0.0.8, "
+    webservers += "  10.0.0.17, 10.0.0.25, 10.0.0.37 }"
+.Ed
 .Sh STATEFUL INSPECTION
 .Em pf
 is a stateful packet filter, which means it can track the state of
