@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.23 1998/09/15 17:24:46 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.24 1999/03/03 05:50:19 smurph Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -20,8 +20,11 @@ YP?=		yes
 # integrated support for libwrap.
 TCP_WRAPPERS?=	yes
 # Set `AFS` to `yes' to build with AFS support.
+.if (${MACHINE_ARCH} == "m88k")
+AFS?=		no
+.else
 AFS?=		yes
-
+.endif
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
 BSDSRCDIR?=	/usr/src
@@ -83,15 +86,16 @@ STATIC?=	-static
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "hppa")
+    (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "hppa") || \
+    (${MACHINE_ARCH} == "m88k")
 NOPIC=
 .endif
 
 # don't try to generate PROFILED versions of libraries on machines
 # which don't support profiling.
 # to add this back use the following line
-#.if (${MACHINE_ARCH} == "UNSUPPORTED_ARCH")
-.if 0
+.if (${MACHINE_ARCH} == "m88k")
+#.if 0
 NOPROFILE=
 .endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.19 1999/02/28 06:25:34 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.20 1999/03/03 05:50:19 smurph Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -31,7 +31,12 @@ COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
+
+.if (${MACHINE_ARCH} == "m88k")
+CFLAGS?=	-O0 ${PIPE} ${DEBUG}
+.else
 CFLAGS?=	-O2 ${PIPE} ${DEBUG}
+.endif
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
