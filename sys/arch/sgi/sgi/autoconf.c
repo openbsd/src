@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2004/10/23 08:21:27 mjc Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -42,7 +42,7 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
@@ -61,7 +61,6 @@
 struct  device *parsedisk(char *, int, int, dev_t *);
 void	disk_configure(void);
 void    rootconf(void);
-void	configure(void);
 void	swapconf(void);
 extern void dumpconf(void);
 static int findblkmajor(struct device *);

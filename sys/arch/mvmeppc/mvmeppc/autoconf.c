@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2004/01/29 21:30:02 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2004/10/23 08:21:27 mjc Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,13 +37,13 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.9 2004/01/29 21:30:02 miod Exp $
+ *      $Id: autoconf.c,v 1.10 2004/10/23 08:21:27 mjc Exp $
  */
 
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */

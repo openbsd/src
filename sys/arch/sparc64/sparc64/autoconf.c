@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2004/09/28 15:15:50 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2004/10/23 08:21:27 mjc Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -990,7 +990,7 @@ mainbus_match(parent, cf, aux)
 /*
  * Attach the mainbus.
  *
- * Our main job is to attach the CPU (the root node we got in configure())
+ * Our main job is to attach the CPU (the root node we got in cpu_configure())
  * and iterate down the list of `mainbus devices' (children of that node).
  * We also record the `node id' of the default frame buffer, if any.
  */
