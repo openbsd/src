@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.297 2004/05/09 10:51:55 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.298 2004/08/23 14:26:04 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -682,6 +682,18 @@ assigned.
 mainly controls the time packets take to get sent out, while
 .Ar bandwidth
 has primarily effects on throughput.
+.Ar cbq
+achieves both partitioning and sharing of link bandwidth
+by hierarchically structured classes.
+Each class has its own
+.Ar queue
+and is assigned its share of
+.Ar bandwidth .
+A child class can borrow bandwidth from its parent class
+as long as excess bandwidth is available
+(see the option
+.Ar borrow ,
+below).
 .It Ar priq
 Priority Queueing.
 .Ar Queues
@@ -715,6 +727,14 @@ assigned.
 mainly controls the time packets take to get sent out, while
 .Ar bandwidth
 has primarily effects on throughput.
+.Ar hfsc
+supports both link-sharing and guaranteed real-time services.
+It employs a service curve based QoS model,
+and its unique feature is an ability to decouple
+.Ar delay
+and
+.Ar bandwidth
+allocation.
 .El
 .Pp
 The interfaces on which queueing should be activated are declared using
