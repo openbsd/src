@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.19 2000/04/18 21:45:14 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.20 2001/10/04 22:33:49 ho Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -401,7 +401,7 @@ This message lists the number of blocks that were skipped over.
 If the following environment variable exists it will be utilized by
 .Nm restore :
 .Pp
-.Bl -tag -width "TMPDIR" -compact
+.Bl -tag -width "TMPDIR"
 .It Ev TMPDIR
 The directory given in
 .Ev TMPDIR
@@ -412,6 +412,9 @@ to store temporary files.
 Refer to
 .Xr environ 7
 for more information.
+.It Ev TAPE
+Default tape device to use instead of
+.Pa /dev/rst0 .
 .El
 .Sh FILES
 .Bl -tag -width "./restoresymtable" -compact
