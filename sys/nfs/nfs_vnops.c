@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.45 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.46 2001/12/22 09:58:04 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -371,6 +371,26 @@ nfs_open(v)
 		printf("open eacces vtyp=%d\n",vp->v_type);
 #endif
 		return (EACCES);
+	}
+
+	/*
+	 * Initialize read and write creds here, for swapfiles
+	 * and other paths that don't set the creds themselves.
+	 */
+
+	if (ap->a_mode & FREAD) {
+		if (np->n_rcred) {
+			crfree(np->n_rcred);
+		}
+		np->n_rcred = ap->a_cred;
+		crhold(np->n_rcred);
+	}
+	if (ap->a_mode & FWRITE) {
+		if (np->n_wcred) {
+			crfree(np->n_wcred);
+		}
+		np->n_wcred = ap->a_cred;
+		crhold(np->n_wcred);
 	}
 
 	if (np->n_flag & NMODIFIED) {
