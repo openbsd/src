@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.136 2004/06/30 21:01:08 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.137 2004/09/14 22:44:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1006,7 +1006,21 @@ ENTRY(TLABEL(excpt),0)
 	/* now, check for trap */
 	ldw	0(r9), r1
 	bb,>=,n	r1, HPPA_FPU_T_POS, excpt_notrap
-	ldw	8(r9), r1
+	ldw	1*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	2*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	3*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	4*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	5*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	6*4(r9), r1
+	comb,<>,n r0, r1, excpt_emulate
+	ldw	7*4(r9), r1
+
+excpt_emulate
 	bb,>=,n r1, 5, excpt_notrap	/* HPPA_FPU_UNMPL not set */
 
 	ldw	0(r9), r16
@@ -2258,9 +2272,9 @@ ENTRY($fpu_emulate,320)
 	mfctl	cr30, r25
 	ldi	32, r1
 
-	ldw	8(r25), r17	/* fpu exception reg 0 */
+	ldw	4(r25), r17	/* fpu exception reg 0 */
 	zdep	ret0, 5, 6, r17	/* intentionally zero the insn */
-	stw	r17, 8(r25)
+	stw	r17, 4(r25)
 
 	fdc,m	r1(r25)
 	fdc,m	r1(r25)
