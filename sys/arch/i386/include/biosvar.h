@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.5 1997/08/05 17:45:55 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.6 1997/08/07 01:08:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -197,7 +197,7 @@
 #ifdef _LOCORE
 #define	DOINT(n)	int	$0x20+(n)
 #else
-#define	BIOSINT(n)	__asm ((int $0x20+(n)))
+#define	DOINT(n)	"int $0x20+(" #n ")"
 
 extern struct BIOS_regs {
 	u_int32_t	biosr_ax;
