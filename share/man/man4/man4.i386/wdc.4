@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.3 1998/07/12 09:58:29 downsj Exp $
+.\"	$OpenBSD: wdc.4,v 1.4 1998/07/12 10:01:17 downsj Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -45,6 +45,9 @@ controllers.
 .Sh BUGS
 A PnP device that actually works with this driver has yet to be found; the
 Soundblaster IDE port does not.
+.Pp
+Enhanced IDE and UltraDMA is not supported by this driver, though such
+devices should still work (in normal PIO mode).
 .Sh SEE ALSO
 .Xr acd 4 ,
 .Xr intro 4 ,
