@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.205 2002/11/23 18:23:41 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.206 2002/11/23 18:27:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3511,16 +3511,12 @@ remove_invalid_hosts(struct node_host **nh, sa_family_t *af)
 		}
 	}
 
-	if (!*af) {
+	if (!*af)
 		yyerror("address family not given and translation "
 		    "address expands to multiple address families");
-		return;
-	}
-	if (*nh == NULL) {
+	else if (*nh == NULL)
 		yyerror("no translation address with matching address family "
 		    "found.");
-		return;
-	}
 }
 
 struct node_host *
