@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnsubr.c,v 1.2 1999/08/19 06:16:32 d Exp $	*/
+/*	$OpenBSD: rlnsubr.c,v 1.3 1999/08/26 22:28:15 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -744,7 +744,7 @@ rln_msg_txrx(sc, tx, txlen, rx, rxlen)
 	ien = rln_enable(sc, 1);
 
 	/* Wait for the reply message. */
-	if (rln_mbox_wait(sc, txc->cmd_seq, 2000) <= 0) {
+	if (rln_mbox_wait(sc, txc->cmd_seq, 4000) <= 0) {
 		printf("%s: lost message %c%d seq %d\n", sc->sc_dev.dv_xname,
 			txc->cmd_letter, txc->cmd_fn, txc->cmd_seq);
 		rln_enable(sc, ien);
