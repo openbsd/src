@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.14 2001/07/05 10:12:22 art Exp $	*/
+/*	$OpenBSD: param.c,v 1.15 2001/08/12 23:58:34 millert Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ struct	shminfo shminfo = {
  */
 #ifdef SYSVSEM
 struct	seminfo seminfo = {
-	SEMMAP,		/* # of entries in semaphore map */
 	SEMMNI,		/* # of semaphore identifiers */
 	SEMMNS,		/* # of semaphores in system */
 	SEMMNU,		/* # of undo structures in system */

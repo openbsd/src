@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.9 2001/08/12 22:50:12 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.10 2001/08/12 23:58:34 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -112,8 +112,7 @@ struct sem_undo {
  * semaphore info struct
  */
 struct seminfo {
-	int	semmap,		/* # of entries in semaphore map */
-		semmni,		/* # of semaphore identifiers */
+	int	semmni,		/* # of semaphore identifiers */
 		semmns,		/* # of semaphores in system */
 		semmnu,		/* # of undo structures in system */
 		semmsl,		/* max # of semaphores per id */
@@ -146,9 +145,6 @@ extern struct seminfo	seminfo;
 #endif
 
 /* shouldn't need tuning */
-#ifndef SEMMAP
-#define SEMMAP	30		/* # of entries in semaphore map */
-#endif
 #ifndef SEMMSL
 #define SEMMSL	SEMMNS		/* max # of semaphores per id */
 #endif
