@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1996/10/20 22:40:32 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1997/01/28 03:54:52 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.16 1996/10/20 22:40:32 imp Exp $
+ *      $Id: machdep.c,v 1.17 1997/01/28 03:54:52 deraadt Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -717,10 +717,11 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp;

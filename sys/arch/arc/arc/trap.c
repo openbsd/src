@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1996/09/14 15:58:18 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1997/01/28 03:54:53 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.6 1996/09/14 15:58:18 pefo Exp $
+ *      $Id: trap.c,v 1.7 1997/01/28 03:54:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -768,7 +768,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	p->p_md.md_regs[PC] = pc;
 	p->p_md.md_regs[CAUSE] = causeReg;
 	p->p_md.md_regs[BADVADDR] = vadr;
-	trapsignal(p, i, ucode);
+	trapsignal(p, i, ucode, (caddr_t)vadr);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
