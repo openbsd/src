@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.5 2000/11/08 20:44:56 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.6 2001/01/07 20:27:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -86,7 +86,6 @@ static __inline void twe_put_ccb __P((struct twe_ccb *ccb));
 void twe_dispose __P((struct twe_softc *sc));
 int  twe_cmd __P((struct twe_ccb *ccb, int flags, int wait));
 int  twe_start __P((struct twe_ccb *ccb, int wait));
-void twe_exec_cmd __P((void *v));
 int  twe_complete __P((struct twe_ccb *ccb));
 int  twe_done __P((struct twe_softc *sc, int idx));
 void twe_copy_internal_data __P((struct scsi_xfer *xs, void *v, size_t size));
@@ -240,7 +239,7 @@ twe_attach(sc)
 			cmd = ccb->ccb_cmd;
 			cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
 			cmd->cmd_op = TWE_CMD_GPARAM;
-			cmd->cmd_count = 1;
+			cmd->cmd_param.count = 1;
 
 			pb->table_id = TWE_PARAM_AEN;
 			pb->param_id = 2;
@@ -308,7 +307,7 @@ twe_attach(sc)
 	cmd = ccb->ccb_cmd;
 	cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
 	cmd->cmd_op = TWE_CMD_GPARAM;
-	cmd->cmd_count = 1;
+	cmd->cmd_param.count = 1;
 
 	pb->table_id = TWE_PARAM_UC;
 	pb->param_id = TWE_PARAM_UC;
@@ -339,7 +338,7 @@ twe_attach(sc)
 		cmd = ccb->ccb_cmd;
 		cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
 		cmd->cmd_op = TWE_CMD_GPARAM;
-		cmd->cmd_count = 1;
+		cmd->cmd_param.count = 1;
 
 		cap->table_id = TWE_PARAM_UI + i;
 		cap->param_id = 4;
@@ -487,7 +486,6 @@ twe_start(ccb, wait)
 	int i;
 
 	cmd->cmd_op = htole16(cmd->cmd_op);
-	cmd->cmd_count = htole16(cmd->cmd_count);
 
 	if (!wait) {
 
@@ -567,13 +565,12 @@ twe_done(sc, idx)
 	struct twe_softc *sc;
 	int	idx;
 {
-	struct scsi_xfer *xs;
 	struct twe_ccb *ccb = &sc->sc_ccbs[idx];
 	struct twe_cmd *cmd = ccb->ccb_cmd;
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	twe_lock_t	lock;
 
 	TWE_DPRINTF(TWE_D_CMD, ("done(%d) ", idx));
-
-	xs = ccb->ccb_xs;
 
 	if (ccb->ccb_state != TWE_CCB_QUEUED) {
 		printf("%s: unqueued ccb %d ready\n",
@@ -616,8 +613,10 @@ twe_done(sc, idx)
 		ccb->ccb_realdata = NULL;
 	}
 
+	lock = TWE_LOCK_TWE(sc);
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 	twe_put_ccb(ccb);
+	TWE_UNLOCK_TWE(sc, lock);
 
 	if (xs) {
 		xs->resid = 0;
@@ -647,7 +646,7 @@ twe_copy_internal_data(xs, v, size)
 	TWE_DPRINTF(TWE_D_MISC, ("twe_copy_internal_data "));
 
 	if (!xs->datalen)
-		printf("uio move not yet supported\n");
+		printf("uio move is not yet supported\n");
 	else {
 		copy_cnt = MIN(size, xs->datalen);
 		bcopy(v, xs->data, copy_cnt);
@@ -674,7 +673,7 @@ twe_scsi_cmd(xs)
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int error, op;
+	int error, op, flags;
 	twe_lock_t lock;
 
 
@@ -781,6 +780,7 @@ twe_scsi_cmd(xs)
 	case SYNCHRONIZE_CACHE:
 		lock = TWE_LOCK_TWE(sc);
 
+		flags = 0;
 		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
 			/* A read or write operation. */
 			if (xs->cmdlen == 6) {
@@ -792,6 +792,10 @@ twe_scsi_cmd(xs)
 				rwb = (struct scsi_rw_big *)xs->cmd;
 				blockno = _4btol(rwb->addr);
 				blockcnt = _2btol(rwb->length);
+				/* reflect DPO & FUA flags */
+				if (xs->cmd->opcode == WRITE_BIG &&
+				    rwb->byte2 & 0x18)
+					flags = TWE_FLAGS_CACHEDISABLE;
 			}
 			if (blockno >= sc->sc_hdr[target].hd_size ||
 			    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
@@ -799,8 +803,8 @@ twe_scsi_cmd(xs)
 				printf("%s: out of bounds %u-%u >= %u\n",
 				    sc->sc_dev.dv_xname, blockno, blockcnt,
 				    sc->sc_hdr[target].hd_size);
-				scsi_done(xs);
 				xs->error = XS_DRIVER_STUFFUP;
+				scsi_done(xs);
 				return (COMPLETE);
 			}
 		}
@@ -814,8 +818,8 @@ twe_scsi_cmd(xs)
 		}
 
 		if ((ccb = twe_get_ccb(sc)) == NULL) {
-			scsi_done(xs);
 			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
 			return (COMPLETE);
 		}
 
@@ -826,7 +830,8 @@ twe_scsi_cmd(xs)
 		cmd = ccb->ccb_cmd;
 		cmd->cmd_unit_host = TWE_UNITHOST(target, 0); /* XXX why 0? */
 		cmd->cmd_op = op;
-		cmd->cmd_count = blockcnt;
+		cmd->cmd_flags = flags;
+		cmd->cmd_io.count = htole16(blockcnt);
 		cmd->cmd_io.lba = blockno;
 
 		if ((error = twe_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
@@ -838,8 +843,8 @@ twe_scsi_cmd(xs)
 				xs->error = XS_TIMEOUT;
 				return (TRY_AGAIN_LATER);
 			} else {
-				scsi_done(xs);
 				xs->error = XS_DRIVER_STUFFUP;
+				scsi_done(xs);
 				return (COMPLETE);
 			}
 		}
@@ -912,7 +917,6 @@ twe_intr(v)
 
 	if (status & TWE_STAT_RDYI) {
 
-		lock = TWE_LOCK_TWE(sc);
 		while (!(status & TWE_STAT_RQE)) {
 
 			u_int32_t ready;
@@ -933,7 +937,6 @@ twe_intr(v)
 			TWE_DPRINTF(TWE_D_INTR, ("twe_intr stat=%b ",
 			    status & TWE_STAT_FLAGS, TWE_STAT_BITS));
 		}
-		TWE_UNLOCK_TWE(sc, lock);
 	}
 
 	if (status & TWE_STAT_ATTNI) {
@@ -963,7 +966,8 @@ twe_intr(v)
 			cmd = ccb->ccb_cmd;
 			cmd->cmd_unit_host = TWE_UNITHOST(0, 0);
 			cmd->cmd_op = TWE_CMD_GPARAM;
-			cmd->cmd_count = 1;
+			cmd->cmd_flags = 0;
+			cmd->cmd_param.count = 1;
 
 			pb->table_id = TWE_PARAM_AEN;
 			pb->param_id = 2;
