@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.16 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.17 2004/05/16 19:00:51 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -175,7 +175,6 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			if (de_cn2off(pmp, findcn) >= dep->de_FileSize) {
 				if (cnp)
 					*cnp = de_bn2cn(pmp, pmp->pm_rootdirsize);
-				printf("E2BIG 1\n");
 				return (E2BIG);
 			}
 			if (bnp)
@@ -189,7 +188,6 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		} else {		/* just an empty file */
 			if (cnp)
 				*cnp = 0;
-			printf("E2BIG 2\n");
 			return (E2BIG);
 		}
 	}
@@ -275,7 +273,6 @@ hiteof:;
 		brelse(bp);
 	/* update last file cluster entry in the fat cache */
 	fc_setcache(dep, FC_LASTFC, i - 1, prevcn);
-	printf("E2BIG 3\n");
 	return (E2BIG);
 }
 
