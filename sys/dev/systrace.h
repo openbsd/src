@@ -102,6 +102,29 @@ struct systrace_policy {
 #define SYSTR_FLAGS_RESULT	0x001
 
 #ifdef _KERNEL
+struct str_process;
+struct fsystrace {
+	struct lock lock;
+	struct selinfo si;
+
+	TAILQ_HEAD(strprocessq, str_process) processes;
+	int nprocesses;
+
+	TAILQ_HEAD(strpolicyq, str_policy) policies;
+
+	struct strprocessq messages;
+
+	int npolicynr;
+	int npolicies;
+
+	int issuser;
+
+	/* cwd magic */
+	pid_t fd_pid;
+	struct vnode *fd_cdir;
+	struct vnode *fd_rdir;
+};
+
 /* Internal prototypes */
 
 int systrace_redirect(int, struct proc *, void *, register_t *);

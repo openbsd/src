@@ -100,26 +100,6 @@ struct str_process {
 	struct str_message msg;
 };
 
-struct fsystrace {
-	struct lock lock;
-	struct selinfo si;
-
-	TAILQ_HEAD(strprocessq, str_process) processes;
-	TAILQ_HEAD(strpolicyq, str_policy) policies;
-
-	struct strprocessq messages;
-
-	int npolicynr;
-	int npolicies;
-
-	int issuser;
-
-	/* cwd magic */
-	pid_t fd_pid;
-	struct vnode *fd_cdir;
-	struct vnode *fd_rdir;
-};
-
 void systrace_lock(void);
 void systrace_unlock(void);
 
@@ -399,9 +379,6 @@ systracef_close(fp, p)
 	for (strp = TAILQ_FIRST(&fst->processes); strp;
 	    strp = TAILQ_FIRST(&fst->processes)) {
 		struct proc *q = strp->proc;
-
-		if (ISSET(strp->flags, STR_PROC_ONQUEUE))
-			TAILQ_REMOVE(&fst->messages, strp, msg_next);
 
 		systrace_detach(strp);
 		psignal(q, SIGKILL);
@@ -1055,6 +1032,8 @@ systrace_detach(struct str_process *strp)
 		TAILQ_REMOVE(&fst->messages, strp, msg_next);
 
 	TAILQ_REMOVE(&fst->processes, strp, next);
+	fst->nprocesses--;
+
 	if (strp->policy)
 		systrace_closepolicy(fst, strp->policy);
 	pool_put(&systr_proc_pl, strp);
@@ -1094,6 +1073,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc)
 	strp->parent = fst;
 
 	TAILQ_INSERT_TAIL(&fst->processes, strp, next);
+	fst->nprocesses++;
 
 	proc->p_systrace = strp;
 	SET(proc->p_flag, P_SYSTRACE);
