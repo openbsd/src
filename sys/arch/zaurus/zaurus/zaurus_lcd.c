@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.3 2005/01/03 04:50:22 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -166,26 +166,25 @@ lcd_match( struct device *parent, void *cf, void *aux )
 /*
 #define CURRENT_DISPLAY opus
 */
-#define CURRENT_DISPLAY sharp_LM8V31
+#define CURRENT_DISPLAY sharp_zaurus_C3000
 
-static const struct lcd_panel_geometry sharp_LM8V31 =
+static const struct lcd_panel_geometry sharp_zaurus_C3000 =
 {
-    640,			/* Width */
-    480,			/* Height */
+    480,			/* Width */
+    640,			/* Height */
     0,				/* No extra lines */
 
-    LCDPANEL_PASSIVE|LCDPANEL_PCP,
-    10,				/* clock divider */
-    0xff,			/* AC bias pin freq */
+    LCDPANEL_ACTIVE|LCDPANEL_VSP|LCDPANEL_HSP,
+    1,				/* clock divider */
+    0,				/* AC bias pin freq */
 
-    2,				/* horizontal sync pulse width */
-    3,				/* BLW */
-    3,				/* ELW */
+    0x27,			/* horizontal sync pulse width */
+    0x2e,			/* BLW */
+    0x7d,			/* ELW */
 
-    1,				/* vertical sync pulse width */
-    0,				/* BFW */
+    2,				/* vertical sync pulse width */
+    1,				/* BFW */
     0,				/* EFW */
-
 };
 
 static const struct lcd_panel_geometry opus =

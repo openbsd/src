@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.3 2005/01/03 04:50:22 drahn Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -91,6 +91,12 @@ pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *sc,
 		ccr0 |= LCCR0_SDS; /* dual panel */
 	if (info->panel_info & LCDPANEL_MONOCHROME)
 		ccr0 |= LCCR0_CMS;
+	/* XXX - Zaurus C3000 */
+	ccr0 |= LCCR0_LDDALT | 
+	    LCCR0_OUC |
+	    LCCR0_CMDIM |
+	    LCCR0_RDSTM;
+
 	bus_space_write_4(iot, ioh, LCDC_LCCR0, ccr0);
 
 	bus_space_write_4(iot, ioh, LCDC_LCCR1,
@@ -128,6 +134,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 	bus_space_tag_t iot = pxa->pxa_iot;
 	bus_space_handle_t ioh;
 	int error, nldd;
+	u_int32_t lccr0, lscr;
 
 	sc->n_screens = 0;
 	LIST_INIT(&sc->screens);
@@ -144,12 +151,41 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 	sc->ioh = ioh;
 	sc->dma_tag = &pxa2x0_bus_dma_tag;
 
-	sc->ih = pxa2x0_intr_establish(17, IPL_BIO, lcdintr, sc);
+	sc->ih = pxa2x0_intr_establish(17, IPL_BIO, lcdintr, sc,
+	    sc->dev.dv_xname);
 	if (sc->ih == NULL)
 		printf("%s: unable to establish interrupt at irq %d",
 		    sc->dev.dv_xname, 17);
 
 	/* Initialize LCD controller */
+	{
+		printf("\nbefore\n");
+		u_int32_t tmp;
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR0);
+		printf("LCCR0 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR1);
+		printf("LCCR1 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR2);
+		printf("LCCR2 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR3);
+		printf("LCCR3 %08x\n", tmp);
+	}
+
+	/* Check if LCD is enabled before programming, it should not
+	 * be enabled while it is being reprogrammed, therefore disable
+	 * it first.
+	 */
+	lccr0 = bus_space_read_4(iot, ioh, LCDC_LCCR0);
+	if (lccr0 & LCCR0_ENB) {
+		lccr0 |= LCCR0_LDM;
+		bus_space_write_4(iot, ioh, LCDC_LCCR0, lccr0);
+		lccr0 = bus_space_read_4(iot, ioh, LCDC_LCCR0); /* paranoia */
+		lccr0 |= LCCR0_DIS;
+		bus_space_write_4(iot, ioh, LCDC_LCCR0, lccr0);
+		do {
+			lscr = bus_space_read_4(iot, ioh, LCDC_LCSR); 
+		} while (!(lscr & LCSR_LDD));
+	}
 
 	/* enable clock */
 	pxa2x0_clkman_config(CKEN_LCD, 1);
@@ -184,6 +220,18 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		pxa2x0_gpio_set_function(58 + nldd, GPIO_ALT_FN_2_OUT);
 
 	pxa2x0_lcd_geometry(sc, geom);
+	{
+		printf("\nafter\n");
+		u_int32_t tmp;
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR0);
+		printf("LCCR0 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR1);
+		printf("LCCR1 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR2);
+		printf("LCCR2 %08x\n", tmp);
+		tmp = bus_space_read_4(iot, ioh, LCDC_LCCR3);
+		printf("LCCR3 %08x\n", tmp);
+	}
 }
 
 
