@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.12 2000/12/07 21:52:38 mickey Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.13 2000/12/22 19:08:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.12 2000/12/07 21:52:38 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.13 2000/12/22 19:08:00 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -535,6 +535,10 @@ ip_print(register const u_char *bp, register u_int length)
 #define IPPROTO_VRRP 112
 #endif
 		case IPPROTO_VRRP:
+			if (vflag)
+				(void)printf("vrrp %s > %s: ",
+					     ipaddr_string(&ip->ip_src),
+					     ipaddr_string(&ip->ip_dst));
 			vrrp_print(cp, len, ip->ip_ttl);
 			break;
 
