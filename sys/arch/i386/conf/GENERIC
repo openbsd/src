@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.240 2001/02/15 04:58:07 krw Exp $
+#	$OpenBSD: GENERIC,v 1.241 2001/02/20 04:13:21 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -94,6 +94,8 @@ umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
 ukbd*	at uhub? port ? configuration ?	# USB Keyboards
