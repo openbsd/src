@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.42 2003/12/03 14:55:58 markus Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.43 2003/12/06 09:23:25 grange Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -665,8 +665,10 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
+	/* XXX: sa_len is too small for such comparison
 	if (ifr->ifr_addr.sa_len > sizeof(struct sockaddr_storage))
 		return (EINVAL);
+	*/
 
 	error = ether_addmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
 	if (error != ENETRESET)
