@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.6 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: macro.c,v 1.7 2004/02/01 22:26:41 vincent Exp $	*/
 
 /*
  *	Keyboard macros.
@@ -7,9 +7,16 @@
 #ifndef NO_MACRO
 #include "def.h"
 #include "key.h"
-#define EXTERN
-#define INIT(i) = (i)
 #include "macro.h"
+
+int inmacro = FALSE;
+int macrodef = FALSE;
+int macrocount = 0;
+
+LINE *maclhead = NULL;
+LINE *maclcur;
+
+union macrodef macro[MAXMACRO];
 
 /* ARGSUSED */
 int

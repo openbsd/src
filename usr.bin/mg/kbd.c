@@ -1,10 +1,8 @@
-/*	$OpenBSD: kbd.c,v 1.14 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.15 2004/02/01 22:26:40 vincent Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
  */
-
-#define EXTERN
 
 #include "def.h"
 #include "kbd.h"
@@ -29,6 +27,8 @@ static int	 pushed = FALSE;
 static int	 pushedc;
 
 MAP_ELEMENT	*ele;
+
+struct key key;
 
 /*
  * Toggle the value of use_metakey
