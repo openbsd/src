@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 1999/04/01 03:35:57 millert Exp $
+#	$OpenBSD: list,v 1.13 1999/04/01 04:39:51 millert Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -41,9 +41,7 @@ LINK	raminst			sbin/reboot
 LINK	raminst			sbin/route
 LINK	raminst			sbin/slattach
 LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/awk
 LINK	raminst			usr/bin/chgrp
-LINK	raminst			usr/bin/cut
 LINK	raminst			usr/bin/ftp
 LINK	raminst			usr/bin/egrep
 LINK	raminst			usr/bin/grep
