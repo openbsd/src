@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_prot.c,v 1.1 2000/08/04 15:47:55 ericj Exp $ */
+/* $OpenBSD: osf1_prot.c,v 1.2 2003/08/16 21:34:30 tedu Exp $ */
 /* $NetBSD: osf1_prot.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
 
 /*
@@ -86,7 +86,7 @@ osf1_sys_setgid(p, v, retval)
 	gid_t gid = SCARG(uap, gid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
+	if ((error = suser(p, 0)) != 0 &&
 	    gid != pc->p_rgid && gid != pc->p_svgid)
 		return (error);
 
@@ -125,7 +125,7 @@ osf1_sys_setuid(p, v, retval)
 	uid_t uid = SCARG(uap, uid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
+	if ((error = suser(p, 0)) != 0 &&
 	    uid != pc->p_ruid && uid != pc->p_svuid)
 		return (error);
 
