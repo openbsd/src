@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.31 1998/05/18 21:10:49 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.32 1998/11/13 22:24:17 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ ours:
 	 */
 	if (ip->ip_off &~ (IP_DF | IP_RF)) {
 		if (m->m_flags & M_EXT) {		/* XXX */
-			if ((m = m_pullup(m, sizeof (struct ip))) == 0) {
+			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
 				goto next;
 			}
@@ -446,6 +446,7 @@ found:
 				goto next;
 			ipstat.ips_reassembled++;
 			m = dtom(ip);
+			hlen = ip->ip_hl << 2;
 		} else
 			if (fp)
 				ip_freef(fp);
