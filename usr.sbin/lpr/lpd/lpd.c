@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.29 2002/05/20 23:13:50 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.30 2002/05/22 18:24:35 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.29 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.30 2002/05/22 18:24:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,12 +240,8 @@ main(int argc, char **argv)
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
 	(void)umask(0);
-	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT, 0644);
+	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT|O_EXLOCK|O_NONBLOCK, 0644);
 	if (lfd < 0) {
-		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
-		exit(1);
-	}
-	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
 		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
