@@ -1,3 +1,4 @@
+.\"	$NetBSD: tmscp.4,v 1.3 1996/01/07 20:56:59 ragge Exp $
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,19 +31,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)tmscp.4	6.2 (Berkeley) 3/27/91
-.\"	$Id: tmscp.4,v 1.1.1.1 1995/10/18 08:44:35 deraadt Exp $
 .\"
-.Dd March 27, 1991
+.Dd January 7, 1996
 .Dt TMSCP 4 vax
-.Os BSD 4.3
+.Os NetBSD
 .Sh NAME
 .Nm tmscp
 .Nd
 .Tn DEC TMSCP
 magtape interface
 .Sh SYNOPSIS
-.Cd "controller tmscp0 at uba? csr 0174500 vector tmscpintr"
-.Cd "tape tms0 at tmscp0 drive 0"
+.Cd "tmscp0 at uba? csr 0174500"
+.Cd "tms0 at tmscp0 drive ?"
 .Sh DESCRIPTION
 Tape controllers compatible with the
 .Tn DEC
@@ -124,9 +124,15 @@ errors may be:
 .Xr tm 4 ,
 .Xr ts 4 ,
 .Xr ut 4 ,
+.Xr mt 4 ,
+.Xr ht 4 ,
 .Xr dmesg 8
 .Sh HISTORY
 The
 .Nm
 driver appeared in
 .Bx 4.3 .
+.Sh BUGS
+Should be synced together with the
+.Tn MSCP
+devices.
