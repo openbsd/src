@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.72 2004/06/23 01:36:58 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.73 2004/07/04 17:06:12 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -260,6 +260,7 @@ em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 #stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
+re*	at pci? dev ? function ?		# Realtek 8169/8169S/8110S
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 #hme*	at pci? dev ? function ?		# Sun Happy Meal
 
