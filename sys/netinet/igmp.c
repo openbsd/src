@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.7 1999/12/28 07:17:38 itojun Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.8 2000/04/25 19:05:43 aaron Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -218,6 +218,8 @@ igmp_input(m, va_alist)
 			}
 
 			timer = igmp->igmp_code * PR_FASTHZ / IGMP_TIMER_SCALE;
+			if (timer == 0)
+				timer = 1;
 
 			/*
 			 * Start the timers in all of our membership records
