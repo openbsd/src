@@ -1,4 +1,5 @@
-/*	$Id: pcmcia_pcic.c,v 1.11 1997/01/01 20:08:10 graichen Exp $	*/
+/*	$OpenBSD: pcmcia_pcic.c,v 1.12 1997/01/26 10:02:07 niklas Exp $	*/
+
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
  *  All rights reserved.
@@ -27,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+
 /*
  * Device Driver for Intel 82365 based pcmcia slots
  *
@@ -106,8 +108,7 @@ struct pcic_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_tag_t sc_memt;
 	struct pcmcia_adapter sc_adapter;
-	void *sc_ih;
-
+	void	*sc_ih;
 	int	sc_polltimo;
 	int	sc_pcic_irq;
 	bus_space_handle_t sc_ioh;
@@ -120,7 +121,7 @@ struct pcic_softc {
 
 int	pcic_map_io __P((struct pcmcia_link *, u_int, u_int, int));
 int	pcic_map_mem __P((struct pcmcia_link *, bus_space_tag_t, caddr_t,
-				  u_int, u_int, int));
+    u_int, u_int, int));
 int	pcic_map_intr __P((struct pcmcia_link *, int, int));
 int	pcic_service __P((struct pcmcia_link *, int, void *, int));
 
@@ -139,7 +140,6 @@ int pcicmaster_probe __P((struct device *, void *, void *));
 void pcicmaster_attach __P((struct device  *, struct device *, void *));
 int pcicmaster_print __P((void *, const char *));
 int pcic_intr __P((void *));
-
 
 extern struct pcmciabus_link pcmcia_isa_link;
 
@@ -197,6 +197,7 @@ pcic_rd(slot, reg)
 	u_char          res;
 	bus_space_tag_t iot = slot->chip->sc_iot;
 	bus_space_handle_t ioh = slot->chip->sc_ioh;
+
 	if (PDEBUG(PCDRW))
 		printf("pcic_rd(%x [%x %x]) = ", reg, slot->reg_off, ioh);
 	bus_space_write_1(iot, ioh, 0, slot->reg_off + reg);
@@ -214,6 +215,7 @@ pcic_wr(slot, reg, val)
 {
 	bus_space_tag_t iot = slot->chip->sc_iot;
 	bus_space_handle_t ioh =  slot->chip->sc_ioh;
+
 	bus_space_write_1(iot, ioh, 0, slot->reg_off + reg);
 	delay(1);
 	bus_space_write_1(iot, ioh, 1, val);
@@ -246,16 +248,15 @@ pcic_probe(parent, self, aux)
 	struct pcic_softc *pcic = self;
 	struct pcicmaster_softc *pcicm = (struct pcicmaster_softc *) parent;
 	struct pcic_attach_args *pia = aux;
-	bus_space_handle_t memh;
 	u_int           chip_inf = 0, ochip_inf = 0;
-	int first = 1;
+	int		first = 1;
 	int             i, j, maxslot;
 
 	bzero(pcic->slot, sizeof(pcic->slot));
 
 	if (PDEBUG(PCDCONF)) {
 		printf("pcic_probe controller %d unit %d\n", pia->pia_ctlr,
-		       pcic->sc_dev.dv_unit);
+		    pcic->sc_dev.dv_unit);
 		delay(2000000);
 	}
 	if (pcicm->sc_slavestate[pia->pia_ctlr] != SLAVE_FOUND)
@@ -278,6 +279,7 @@ pcic_probe(parent, self, aux)
 	 */
 	pcic->sc_ioh = pia->pia_ioh;
 	pcic->sc_iot = pia->pia_iot;
+	pcic->sc_iot = pia->pia_memt;
 	pcic->sc_adapter.nslots = 0;
 	maxslot = 2;
 	for (i = j = 0; i < maxslot; i++) {
@@ -332,14 +334,15 @@ pcic_probe(parent, self, aux)
 	    }
 	}
 	if (pcic->sc_adapter.nslots != 0) {
-		pcic->sc_memh = memh;
+		if (bus_space_map(pia->pia_memt, pia->pia_maddr,
+		    pia->pia_msize, 0, &pcic->sc_memh))
+			return 0;
 		return 1;
 	}
 	if (PDEBUG(PCDCONF)) {
 		printf("pcic_probe failed\n");
 		delay(2000000);
 	}
-	bus_space_unmap(pia->pia_memt, memh, pia->pia_msize);
 	return 0;
 }
 
@@ -634,20 +637,21 @@ pcic_map_mem(link, memt, haddr, start, len, flags)
 	vm_offset_t     physaddr;
 	struct pcic_softc *sc = link->adapter->adapter_softc;
 	struct slot    *slot;
+
 	if (link->slot >= sc->sc_adapter.nslots)
 		return ENXIO;
 
 	slot = &sc->slot[link->slot];
 
 	if (flags & PCMCIA_PHYSICAL_ADDR)
-		physaddr = (vm_offset_t) haddr;
+		physaddr = (vm_offset_t)haddr;
 	else
-		physaddr = pmap_extract(pmap_kernel(), (vm_offset_t) haddr);
+		physaddr = pmap_extract(pmap_kernel(), (vm_offset_t)haddr);
 	if (PDEBUG(PCDMEM))
-		printf("pcic_map_mem %p %lx %x %x %x\n", haddr, physaddr,
-		       start, len, flags);
+		printf("pcic_map_mem %p %x %x %x %x\n", haddr, physaddr, start,
+		    len, flags);
 
-	(u_long) physaddr >>= 12;
+	physaddr >>= 12;
 	start >>= 12;
 	len = (len - 1) >> 12;
 
@@ -656,6 +660,7 @@ pcic_map_mem(link, memt, haddr, start, len, flags)
 		u_int           stop;
 		int             window;
 		int             winid;
+
 		if (flags & PCMCIA_LAST_WIN) {
 			window = MAX_MEMSECTION - 1;
 		} else if (flags & PCMCIA_FIRST_WIN) {
@@ -676,37 +681,33 @@ pcic_map_mem(link, memt, haddr, start, len, flags)
 
 		offs = (start - (u_long) physaddr) & 0x3fff;
 		if (PDEBUG(PCDMEM))
-			printf("mapmem 2:%x %lx %x\n", offs, physaddr + offs,
-			       start);
+			printf("mapmem 2:%x %x %x\n", offs, physaddr + offs,
+			    start);
 
-		stop = (u_long) physaddr + len;
+		stop = (u_long)physaddr + len;
 
 		winid = window * 0x8 + 0x10;
 
-
 		pcic_wr(slot, winid | PCIC_START | PCIC_ADDR_LOW,
-			(u_long) physaddr & 0xff);
+		    (u_long)physaddr & 0xff);
 		pcic_wr(slot, winid | PCIC_START | PCIC_ADDR_HIGH,
-			(((u_long) physaddr >> 8) & 0x3f) |
-		/* PCIC_ZEROWS| */
-			((flags & PCMCIA_MAP_16) ? PCIC_DATA16 : 0));
+		    (((u_long) physaddr >> 8) & 0x3f) | /* PCIC_ZEROWS| */
+		    ((flags & PCMCIA_MAP_16) ? PCIC_DATA16 : 0));
 
-		pcic_wr(slot, winid | PCIC_END | PCIC_ADDR_LOW,
-			stop & 0xff);
+		pcic_wr(slot, winid | PCIC_END | PCIC_ADDR_LOW, stop & 0xff);
 		pcic_wr(slot, winid | PCIC_END | PCIC_ADDR_HIGH,
-			PCIC_MW1 | ((stop >> 8) & 0x3f));
+		    PCIC_MW1 | ((stop >> 8) & 0x3f));
 
 
-		pcic_wr(slot, winid | PCIC_MOFF | PCIC_ADDR_LOW,
-			offs & 0xff);
+		pcic_wr(slot, winid | PCIC_MOFF | PCIC_ADDR_LOW, offs & 0xff);
 		pcic_wr(slot, winid | PCIC_MOFF | PCIC_ADDR_HIGH,
-			((offs >> 8) & 0x3f) |
-			((flags & PCMCIA_MAP_ATTR) ? PCIC_REG : 0));
+		    ((offs >> 8) & 0x3f) |
+		    ((flags & PCMCIA_MAP_ATTR) ? PCIC_REG : 0));
 		delay(1000);
 
 		pcic_wr(slot, PCIC_ADDRWINE,
-			slot->region_flag |= ((1 << window) | PCIC_MEMCS16));
-		slot->mem_caddr[window] = (caddr_t) physaddr;
+		    slot->region_flag |= ((1 << window) | PCIC_MEMCS16));
+		slot->mem_caddr[window] = (caddr_t)physaddr;
 		slot->mem_haddr[window] = start;
 		slot->mem_len[window] = len;
 		delay(1000);
@@ -722,11 +723,11 @@ pcic_map_mem(link, memt, haddr, start, len, flags)
 		} else if (flags & PCMCIA_ANY_WIN) {
 			for (window = 0; window < MAX_MEMSECTION; window++) {
 				if ((slot->mem_caddr[window] ==
-				     (caddr_t) physaddr) &&
+				    (caddr_t)physaddr) &&
 				    ((start == -1) ||
-				     (slot->mem_haddr[window] == start)) &&
+				    (slot->mem_haddr[window] == start)) &&
 				    ((len == -1) ||
-				     (slot->mem_len[window] == len)))
+				    (slot->mem_len[window] == len)))
 					break;
 			}
 			if (window >= MAX_MEMSECTION)
@@ -762,6 +763,7 @@ pcic_map_intr(link, irq, flags)
 {
 	struct pcic_softc *sc = link->adapter->adapter_softc;
 	struct slot    *slot;
+
 	if (link->slot >= sc->sc_adapter.nslots)
 		return ENXIO;
 
@@ -773,12 +775,11 @@ pcic_map_intr(link, irq, flags)
 	if (flags & PCMCIA_UNMAP) {
 		slot->irq &= ~(PCIC_INT_MASK|PCIC_INTR_ENA);
 		pcic_wr(slot, PCIC_INT_GEN, slot->irq);
-	}
-	else {
+	} else {
 		if (irq < 2 || irq > 15 || irq == 6 || irq == 8 || irq == 13)
 			return EINVAL;
 		if(irq==2)
-		    irq=9;
+			irq=9;
 		slot->irq &= ~(PCIC_INTR_ENA|PCIC_INT_MASK);
 		slot->irq |= irq | PCIC_CARDRESET;	/* reset is inverted */
 		pcic_wr(slot, PCIC_INT_GEN, slot->irq);
@@ -796,6 +797,7 @@ pcic_service(link, opcode, arg, flags)
 {
 	struct pcic_softc *sc = link->adapter->adapter_softc;
 	struct slot    *slot;
+
 	if (link->slot >= sc->sc_adapter.nslots)
 		return ENXIO;
 
@@ -803,123 +805,117 @@ pcic_service(link, opcode, arg, flags)
 
 	slot->link = link;		/* save it for later :) */
 	switch (opcode) {
-	case PCMCIA_OP_STATUS:{
-			u_char          cp;
-			int            *iarg = arg;
+	case PCMCIA_OP_STATUS: {
+		u_char          cp;
+		int            *iarg = arg;
 
-			if (PDEBUG(PCDSERV))
-				printf("pcic_service(status)\n");
-			cp = pcic_rd(slot, PCIC_STATUS);
-			if (PDEBUG(PCDSERV))
-				printf("status for slot %d %b\n",
-				       link->slot, cp, PCIC_STATUSBITS);
-			*iarg = 0;
+		if (PDEBUG(PCDSERV))
+			printf("pcic_service(status)\n");
+		cp = pcic_rd(slot, PCIC_STATUS);
+		if (PDEBUG(PCDSERV))
+			printf("status for slot %d %b\n", link->slot, cp,
+			    PCIC_STATUSBITS);
+		*iarg = 0;
 #define DO_STATUS(cp, val, map)	((cp & val) == val ? map : 0)
-			*iarg |= DO_STATUS(cp, PCIC_CD, PCMCIA_CARD_PRESENT);
-			*iarg |= DO_STATUS(cp, PCIC_BVD, PCMCIA_BATTERY);
-			*iarg |= DO_STATUS(cp, PCIC_MWP, PCMCIA_WRITE_PROT);
-			*iarg |= DO_STATUS(cp, PCIC_READY, PCMCIA_READY);
-			*iarg |= DO_STATUS(cp, PCIC_POW, PCMCIA_POWER);
-			*iarg |= DO_STATUS(cp, PCIC_VPPV, PCMCIA_POWER_PP);
+		*iarg |= DO_STATUS(cp, PCIC_CD, PCMCIA_CARD_PRESENT);
+		*iarg |= DO_STATUS(cp, PCIC_BVD, PCMCIA_BATTERY);
+		*iarg |= DO_STATUS(cp, PCIC_MWP, PCMCIA_WRITE_PROT);
+		*iarg |= DO_STATUS(cp, PCIC_READY, PCMCIA_READY);
+		*iarg |= DO_STATUS(cp, PCIC_POW, PCMCIA_POWER);
+		*iarg |= DO_STATUS(cp, PCIC_VPPV, PCMCIA_POWER_PP);
+		return 0;
+	}
+	case PCMCIA_OP_WAIT: {
+		int             iarg = (int)arg;
+		int             i = iarg * 4;
+
+		if (PDEBUG(PCDSERV))
+			printf("pcic_service(wait)\n");
+		i = pcic_wait(slot, i);
+		if (PDEBUG(PCDSERV))
+			printf("op99 %b %d\n", 
+			    pcic_rd(slot, PCIC_STATUS), PCIC_STATUSBITS, i);
+		if (i <= 0)
+			return EIO;
+		else
 			return 0;
+	}
+	case PCMCIA_OP_RESET: {
+		int             force = ((int) arg) < 0;
+		int             iarg = abs((int) arg);
+		int             i = iarg * 4;
 
-		}
-	case PCMCIA_OP_WAIT:{
-			int             iarg = (int) arg;
-			int             i = iarg * 4;
-
-			if (PDEBUG(PCDSERV))
-				printf("pcic_service(wait)\n");
-			i = pcic_wait(slot, i);
-			if (PDEBUG(PCDSERV))
-				printf("op99 %b %d\n", 
-				       pcic_rd(slot, PCIC_STATUS),
-				       PCIC_STATUSBITS, i);
-			if (i <= 0)
-				return EIO;
-			else
-				return 0;
-		}
-	case PCMCIA_OP_RESET:{
-			int             force = ((int) arg) < 0;
-			int             iarg = abs((int) arg);
-			int             i = iarg * 4;
-
-			if (PDEBUG(PCDSERV))
-				printf("pcic_service(reset)\n");
-			if (flags)
-				slot->irq |= PCIC_IOCARD;
-			else
-				slot->irq &= ~PCIC_IOCARD; /* XXX? */
-			pcic_wr(slot, PCIC_POWER, slot->pow &= ~PCIC_DISRST);
-			slot->irq &= ~PCIC_CARDRESET;
-			pcic_wr(slot, PCIC_INT_GEN, slot->irq);
-			if (iarg == 0)
-				return 0;
-			delay(iarg);
-			pcic_wr(slot, PCIC_POWER, slot->pow |= PCIC_DISRST);
-			slot->irq |= PCIC_CARDRESET;
-			pcic_wr(slot, PCIC_INT_GEN, slot->irq);
-			delay(iarg);
-			i = pcic_wait(slot, i);
-			if (PDEBUG(PCDSERV))
-				printf("opreset %d %b %d\n", force, 
-				       pcic_rd(slot, PCIC_STATUS),
-				       PCIC_STATUSBITS, i);
-			if (i <= 0)
-				return EIO;
-			else
-				return 0;
-		}
-	case PCMCIA_OP_POWER:{
-			int             iarg = (int) arg;
-			if (PDEBUG(PCDSERV))
-				printf("pcic_service(power): ");
-			if (flags & PCMCIA_POWER_ON) {
-				int nv = (PCIC_DISRST|PCIC_OUTENA);
-				pcic_wr(slot, PCIC_INT_GEN,
-					slot->irq = PCIC_IOCARD);
-				if(flags & PCMCIA_POWER_3V)
-					nv |= PCIC_VCC3V;
-				if(flags & PCMCIA_POWER_5V)
-					nv |= PCIC_VCC5V;
-				if(flags & PCMCIA_POWER_AUTO)
-					nv |= PCIC_APSENA|
-					      PCIC_VCC5V|PCIC_VCC3V;
-				slot->pow &= ~(PCIC_APSENA|PCIC_VCC5V|
-					       PCIC_VCC3V|PCIC_VPP12V|
-					       PCIC_VPP5V);
-				slot->pow |= nv;
-				pcic_wr(slot, PCIC_POWER, slot->pow);
+		if (PDEBUG(PCDSERV))
+			printf("pcic_service(reset)\n");
+		if (flags)
+			slot->irq |= PCIC_IOCARD;
+		else
+			slot->irq &= ~PCIC_IOCARD; /* XXX? */
+		pcic_wr(slot, PCIC_POWER, slot->pow &= ~PCIC_DISRST);
+		slot->irq &= ~PCIC_CARDRESET;
+		pcic_wr(slot, PCIC_INT_GEN, slot->irq);
+		if (iarg == 0)
+			return 0;
+		delay(iarg);
+		pcic_wr(slot, PCIC_POWER, slot->pow |= PCIC_DISRST);
+		slot->irq |= PCIC_CARDRESET;
+		pcic_wr(slot, PCIC_INT_GEN, slot->irq);
+		delay(iarg);
+		i = pcic_wait(slot, i);
+		if (PDEBUG(PCDSERV))
+			printf("opreset %d %b %d\n", force, 
+			       pcic_rd(slot, PCIC_STATUS), PCIC_STATUSBITS, i);
+		if (i <= 0)
+			return EIO;
+		else
+			return 0;
+	}
+	case PCMCIA_OP_POWER: {
+		int             iarg = (int) arg;
+		if (PDEBUG(PCDSERV))
+			printf("pcic_service(power): ");
+		if (flags & PCMCIA_POWER_ON) {
+			int nv = (PCIC_DISRST|PCIC_OUTENA);
+			pcic_wr(slot, PCIC_INT_GEN,
+				slot->irq = PCIC_IOCARD);
+			if(flags & PCMCIA_POWER_3V)
+				nv |= PCIC_VCC3V;
+			if(flags & PCMCIA_POWER_5V)
+				nv |= PCIC_VCC5V;
+			if(flags & PCMCIA_POWER_AUTO)
+				nv |= PCIC_APSENA|PCIC_VCC5V|PCIC_VCC3V;
+			slot->pow &= ~(PCIC_APSENA|PCIC_VCC5V|PCIC_VCC3V|
+			    PCIC_VPP12V|PCIC_VPP5V);
+			slot->pow |= nv;
+			pcic_wr(slot, PCIC_POWER, slot->pow);
 #if 0
-				delay(iarg);
-				slot->pow |= PCIC_OUTENA;
-				pcic_wr(slot, PCIC_POWER, slot->pow);
+			delay(iarg);
+			slot->pow |= PCIC_OUTENA;
+			pcic_wr(slot, PCIC_POWER, slot->pow);
 #endif
-				delay(iarg);
-				if (PDEBUG(PCDSERV))
-					printf("on\n");
-			} else {
-				slot->pow &= ~(PCIC_APSENA|PCIC_VCC5V|
-					       PCIC_VCC3V);
-				slot->pow &= ~(PCIC_DISRST|PCIC_OUTENA);
-				pcic_wr(slot,PCIC_POWER, slot->pow);
-				if (PDEBUG(PCDSERV))
-					printf("off\n");
-			}
-			return 0;
-		}
-	case PCMCIA_OP_GETREGS:{
-			struct pcic_regs *pi = arg;
-			int             i;
+			delay(iarg);
 			if (PDEBUG(PCDSERV))
-				printf("pcic_service(getregs)\n");
-			pi->chip_vers = sc->chip_inf;
-			for (i = 0; i < pi->cnt; i++)
-				pi->reg[i].val =
-				    pcic_rd(slot, pi->reg[i].addr);
-			return 0;
+				printf("on\n");
+		} else {
+			slot->pow &= ~(PCIC_APSENA|PCIC_VCC5V|PCIC_VCC3V);
+			slot->pow &= ~(PCIC_DISRST|PCIC_OUTENA);
+			pcic_wr(slot,PCIC_POWER, slot->pow);
+			if (PDEBUG(PCDSERV))
+				printf("off\n");
 		}
+		return 0;
+	}
+	case PCMCIA_OP_GETREGS: {
+		struct pcic_regs *pi = arg;
+		int             i;
+
+		if (PDEBUG(PCDSERV))
+			printf("pcic_service(getregs)\n");
+		pi->chip_vers = sc->chip_inf;
+		for (i = 0; i < pi->cnt; i++)
+			pi->reg[i].val = pcic_rd(slot, pi->reg[i].addr);
+		return 0;
+	}
 	default:
 		if (PDEBUG(PCDSERV))
 			printf("pcic_service(%x)\n", opcode);
@@ -938,10 +934,9 @@ pcicmaster_probe(parent, self, aux)
 {
 	struct pcicmaster_softc *pcicm = self;
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = pcicm->sc_dev.dv_cfdata;
-	bus_space_tag_t iot;
+	struct cfdata	*cf = pcicm->sc_dev.dv_cfdata;
+	bus_space_tag_t	iot;
 	bus_space_handle_t ioh;
-
 	u_int           chip_inf = 0;
 	int             i, j;
 	int		rval = 0;
@@ -989,7 +984,7 @@ pcicmaster_probe(parent, self, aux)
 		if (pcicm->sc_slavestate[i] != SLAVE_FOUND) {
 			/* reset mappings .... */
 			pcic_wr(&pcic.slot[0], PCIC_POWER,
-				pcic.slot[0].pow=PCIC_DISRST);
+			    pcic.slot[0].pow=PCIC_DISRST);
 			delay(1000);
 			for (j = PCIC_INT_GEN; j < 0x40; j++) {
 				pcic_wr(&pcic.slot[0], j, 0);
@@ -1024,9 +1019,9 @@ pcicmaster_attach(parent, self, aux)
 		delay(2000000);
 	}
 #ifdef PCMCIA_ISA_DEBUG
-	printf("pcicm %p isaaddr %p ports %x size %d irq %d drq %d maddr %x msize %x\n",
-	       pcicm, ia, ia->ia_iobase, ia->ia_iosize,
-	       ia->ia_irq, ia->ia_drq, ia->ia_maddr, ia->ia_msize);
+	printf("pcicm %p isaaddr %p ports %x size %d irq %d drq %d maddr %x "
+	    "msize %x\n", pcicm, ia, ia->ia_iobase, ia->ia_iosize, ia->ia_irq,
+	    ia->ia_drq, ia->ia_maddr, ia->ia_msize);
 	if (PDEBUG(PCDCONF))
 		delay(2000000);
 #endif
@@ -1045,10 +1040,10 @@ pcicmaster_attach(parent, self, aux)
 			pia.pia_drq = ia->ia_drq;
 #if 0
 			pia.pia_irq = ia->ia_irq;
-			pia.pia_irq = cf->cf_loc[0]; /* irq from master attach */
+			pia.pia_irq = cf->cf_loc[0]; /* irq from master */
+#endif
 			pia.pia_maddr = ia->ia_maddr + (ia->ia_msize / 2) * i;
 			pia.pia_msize = ia->ia_msize / 2;
-#endif
 
 			config_found(self, &pia, pcicmaster_print);
 		}
