@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 1999/08/25 14:59:16 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 1999/09/18 19:01:56 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -30,8 +30,8 @@
  * Machine dependent constants for PA-RISC.
  */
 
-#define	_MACHINE	hp700
-#define MACHINE		"hp700"
+#define	_MACHINE	hppa
+#define	MACHINE		"hppa"
 #define	_MACHINE_ARCH	hppa
 #define	MACHINE_ARCH	"hppa"
 #define	MID_MACHINE	MID_HPUX800
@@ -70,7 +70,8 @@
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
 #define	UADDR		0x7ffe6000	/* u-area lives here */
-#define	UPAGES		(4)		/* pages of u-area */
+#define	USHIFT		(3)		/* log2(UPAGES) */
+#define	UPAGES		(1<<USHIFT)	/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
 
 /*
