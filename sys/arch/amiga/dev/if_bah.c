@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.13 1995/12/24 02:29:55 mycroft Exp $ */
+/*	$NetBSD: if_bah.c,v 1.14 1995/12/27 07:51:40 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -37,8 +37,9 @@
 
 #define BAHASMCOPY /**/
 #define BAHSOFTCOPY /**/
-/* #define BAHTIMINGS /**/
-/* #define BAH_DEBUG 3 /**/
+#define BAHRETRANSMIT /**/
+/* #define BAHTIMINGS */
+/* #define BAH_DEBUG 3 */
 
 #include "bpfilter.h"
 
@@ -156,9 +157,7 @@ struct bah_softc {
 	u_long	sc_reconcount_excessive; /* for the above */
 #define ARC_EXCESSIVE_RECONS 20
 #define ARC_EXCESSIVE_RECONS_REWARN 400
-	u_char	sc_bufstat[4];		/* use for packet no for rx */
 	u_char	sc_intmask;
-	u_char	sc_rx_packetno;
 	u_char	sc_rx_act;		/* 2..3 */
 	u_char	sc_tx_act;		/* 0..1 */
 	u_char	sc_rx_fillcount;
@@ -181,8 +180,8 @@ int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
 void	bah_watchdog __P((int));
 void	movepout __P((u_char *from, u_char __volatile *to, int len));
 void	movepin __P((u_char __volatile *from, u_char *to, int len));
-void	bah_srint __P((struct bah_softc *sc, void *dummy));
-void	callstart __P((struct bah_softc *sc, void *dummy));
+void	bah_srint __P((void *vsc, void *dummy));
+void	callstart __P((void *vsc, void *dummy));
 
 #ifdef BAHTIMINGS
 int	clkread();
@@ -213,7 +212,7 @@ bahattach(parent, self, aux)
 	struct bah_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
 	struct ifnet *ifp = &sc->sc_arccom.ac_if;
-	int i, s, linkaddress;
+	int s, linkaddress;
 
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
 	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
@@ -228,12 +227,12 @@ bahattach(parent, self, aux)
 
 	sc->sc_base->kick1 = 0x0;
 	sc->sc_base->kick2 = 0x0;
-	DELAY(120);
+	DELAY(200);
 
 	sc->sc_base->kick1 = 0xFF;
 	sc->sc_base->kick2 = 0xFF;
 	do {
-		DELAY(120);
+		DELAY(200);
 	} while (!(sc->sc_base->status & ARC_POR)); 
 
 	linkaddress = sc->sc_base->dipswitches;
@@ -282,7 +281,6 @@ bahattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_ARCNET, ARC_HDRLEN);
 #endif
-
 	/* under heavy load we need four of them: */
 	alloc_sicallback();
 	alloc_sicallback();
@@ -328,7 +326,7 @@ bah_reset(sc)
 	struct bah_softc *sc;
 {
 	struct ifnet *ifp;
-	int i, s, linkaddress;
+	int linkaddress;
 
 	ifp = &sc->sc_arccom.ac_if;
 
@@ -339,14 +337,14 @@ bah_reset(sc)
 
 	sc->sc_base->kick1 = 0;
 	sc->sc_base->kick2 = 0;
-	DELAY(120);
+	DELAY(200);
 
 	/* and restart it */
 	sc->sc_base->kick1 = 0xFF;
 	sc->sc_base->kick2 = 0xFF;
 
 	do {
-		DELAY(120);
+		DELAY(200);
 	} while (!(sc->sc_base->status & ARC_POR)); 
 
 	linkaddress = sc->sc_base->dipswitches;
@@ -382,12 +380,7 @@ bah_reset(sc)
 	/* start receiver */
 
 	sc->sc_intmask  |= ARC_RI;
-
-	sc->sc_bufstat[2] =
-	    sc->sc_bufstat[3] =
-	    sc->sc_rx_packetno = 
-	    sc->sc_rx_fillcount = 0;
-
+	sc->sc_rx_fillcount = 0;
 	sc->sc_rx_act = 2;
 
 	sc->sc_base->command = ARC_RXBC(2);
@@ -422,8 +415,6 @@ void
 bah_stop(sc)
 	struct bah_softc *sc;
 {
-	int s;
-	
 	/* Stop the interrupts */
 	sc->sc_base->status = 0;
 
@@ -534,7 +525,7 @@ bah_start(ifp)
 	struct bah_softc *sc;
 	struct mbuf *m,*mp;
 	__volatile u_char *bah_ram_ptr;
-	int i, len, tlen, offset, s, buffer;
+	int len, tlen, offset, s, buffer;
 #ifdef BAHTIMINGS
 	u_long copystart, lencopy, perbyte;
 #endif
@@ -575,10 +566,6 @@ bah_start(ifp)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* we need the data length beforehand */
-	for (mp = m, tlen=0; mp; mp = mp->m_next)
-		tlen += mp->m_len;
-
 #ifdef BAH_DEBUG
 	m = m_pullup(m,3);	/* gcc does structure padding */
 	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
@@ -599,29 +586,29 @@ bah_start(ifp)
 	bah_ram_ptr[1 * 2] = mtod(m, u_char *)[1];
 	m_adj(m, 2);
 		
-	/* correct total length for that */
-	tlen -= 2;
+	/* get total length left at this point */
+	tlen = m->m_pkthdr.len;
 	if (tlen < ARC_MIN_FORBID_LEN) {
 		offset = 256 - tlen;
 		bah_ram_ptr[2 * 2] = offset;
 	} else {
-		if (tlen <= ARC_MAX_FORBID_LEN) 
-			offset = 512 - 3 - tlen;
+		bah_ram_ptr[2 * 2] = 0;
+		if (tlen <= ARC_MAX_FORBID_LEN)
+			offset = 255;		/* !!! */
 		else {
 			if (tlen > ARC_MAX_LEN)
 				tlen = ARC_MAX_LEN;
 			offset = 512 - tlen;
 		}
-
-		bah_ram_ptr[2 * 2] = 0;
 		bah_ram_ptr[3 * 2] = offset;
+
 	}
 	bah_ram_ptr += offset * 2;
 
-	/* lets loop again through the mbuf chain */
+	/* lets loop through the mbuf chain */
 
 	for (mp = m; mp; mp = mp->m_next) {
-		if (len = mp->m_len) {		/* YAMS */
+		if ((len = mp->m_len)) {		/* YAMS */
 #ifdef BAHTIMINGS
 			lencopy = len;
 			copystart = clkread();
@@ -690,11 +677,12 @@ bah_start(ifp)
 }
 
 void 
-callstart(sc, dummy)
-	struct bah_softc *sc;
-	void *dummy;
+callstart(vsc, dummy)
+	void *vsc, *dummy;
 {
+	struct bah_softc *sc;
 
+	sc = (struct bah_softc *)vsc;
 	bah_start(&sc->sc_arccom.ac_if);
 }
 
@@ -764,11 +752,11 @@ movepin(from, to, len)
  * get the stuff out of any filled buffer we find.
  */
 void
-bah_srint(sc, dummy)
-	struct bah_softc *sc;
-	void *dummy;
+bah_srint(vsc, dummy)
+	void *vsc, *dummy;
 {
-	int buffer, buffer1, len, len1, amount, offset, s, i, type;
+	struct bah_softc *sc;
+	int buffer, len, len1, amount, offset, s, i, type;
 	u_char __volatile *bah_ram_ptr;
 	struct mbuf *m, *dst, *head;
 	struct arc_header *ah;
@@ -776,31 +764,12 @@ bah_srint(sc, dummy)
 #ifdef BAHTIMINGS
 	u_long copystart, lencopy, perbyte;
 #endif
-
-	head = 0;
+	sc = (struct bah_softc *)vsc;
 	ifp = &sc->sc_arccom.ac_if;
+	head = 0;
 
 	s = splnet();
-	if (sc->sc_rx_fillcount <= 1)
-		buffer = sc->sc_rx_act ^ 1;
-	else {
-
-		i = ((unsigned)(sc->sc_bufstat[2] - sc->sc_bufstat[3])) % 256;
-		if (i < 64)
-			buffer = 3;
-		else if (i > 192)
-			buffer = 2;
-		else {
-			log(LOG_WARNING,
-			    "%s: rx srint: which is older, %ld or %ld?\nn",
-			    sc->sc_dev.dv_xname,
-			    sc->sc_bufstat[2], sc->sc_bufstat[3]);
-			log(LOG_WARNING, "%s: (filled %ld)\n",
-			    sc->sc_dev.dv_xname, sc->sc_rx_fillcount);
-			splx(s);
-			return;
-		}
-	}
+	buffer = sc->sc_rx_act ^ 1;
 	splx(s);
 
 	/* Allocate header mbuf */
@@ -906,12 +875,12 @@ bah_srint(sc, dummy)
 	
 cleanup:
 
-	if (head == NULL)
+	if (head != NULL)
 		m_freem(head);
 
 	s = splnet();
 
-	if (--sc->sc_rx_fillcount == 1) {
+	if (--sc->sc_rx_fillcount == 2 - 1) {
 
 		/* was off, restart it on buffer just emptied */
 		sc->sc_rx_act = buffer;
@@ -930,28 +899,41 @@ cleanup:
 }
 
 __inline static void
-bah_tint(sc)
+bah_tint(sc, isr)
 	struct bah_softc *sc;
-{
-	int buffer;
-	u_char __volatile *bah_ram_ptr;
 	int isr;
-	int clknow;
+{
+	struct ifnet *ifp;
 
+	int buffer;
+#ifdef BAHTIMINGS
+	int clknow;
+#endif
+
+	ifp = &(sc->sc_arccom.ac_if);
 	buffer = sc->sc_tx_act;
-	isr = sc->sc_base->status;
 
 	/*
-	 * XXX insert retransmit code etc. here; and dont forget
-	 * to not retransmit if this is a timeout int.
-	 * For now just: 
+	 * retransmit code:  
+	 * Normal situtations first for fast path:
+	 * If acknowledgement received ok or broadcast, we're ok.
+	 * else if 
 	 */ 
 
-	if (!(isr & ARC_TMA) && !(sc->sc_broadcast[buffer]))
-		sc->sc_arccom.ac_if.if_oerrors++;
-	else
+	if (isr & ARC_TMA || sc->sc_broadcast[buffer])
 		sc->sc_arccom.ac_if.if_opackets++;
-
+#ifdef BAHRETRANSMIT
+	else if (ifp->if_flags & IFF_LINK2 && ifp->if_timer > 0 
+	    && --sc->sc_retransmits[buffer] > 0) {
+		/* retransmit same buffer */
+		sc->sc_base->command = ARC_TX(buffer);
+		return;
+	}
+#endif
+	else
+		ifp->if_oerrors++;
+		
+		
 #ifdef BAHTIMINGS
 	clknow = clkread();
 
@@ -963,7 +945,7 @@ bah_tint(sc)
 #endif
 
 	/* We know we can accept another buffer at this point. */
-	sc->sc_arccom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (--sc->sc_tx_fillcount > 0) {
 
@@ -981,7 +963,7 @@ bah_tint(sc)
 		 */
 		sc->sc_base->command = ARC_TX(buffer);
 		/* init watchdog timer */
-		sc->sc_arccom.ac_if.if_timer = ARCTIMEOUT;
+		ifp->if_timer = ARCTIMEOUT;
 
 #ifdef BAHTIMINGS
 		bcopy((caddr_t)&time,
@@ -1000,7 +982,7 @@ bah_tint(sc)
 		sc->sc_intmask &= ~ARC_TA;
 		sc->sc_base->status = sc->sc_intmask;
 		/* ... and watchdog timer */
-		sc->sc_arccom.ac_if.if_timer = 0;
+		ifp->if_timer = 0;
 
 #ifdef BAH_DEBUG
 		printf("%s: tint: no more buffers to send, status 0x%02x\n",
@@ -1026,7 +1008,6 @@ bahintr(sc)
 {
 	u_char isr, maskedisr;
 	int buffer;
-	int unit;
 	u_long newsec;
 
 	isr = sc->sc_base->status;
@@ -1095,9 +1076,6 @@ bahintr(sc)
 #endif
 	
 		buffer = sc->sc_rx_act;
-		sc->sc_rx_packetno = (sc->sc_rx_packetno+1)%256;
-		sc->sc_bufstat[buffer] = sc->sc_rx_packetno;
-
 		if (++sc->sc_rx_fillcount > 1) {
 			sc->sc_intmask &= ~ARC_RI;
 			sc->sc_base->status = sc->sc_intmask;
@@ -1130,7 +1108,7 @@ bahintr(sc)
 	}
 
 	if (maskedisr & ARC_TA) 
-		bah_tint(sc);
+		bah_tint(sc, isr);
 
 	return (1);
 }
@@ -1166,8 +1144,6 @@ bah_ioctl(ifp, command, data)
 #ifdef INET
 		case AF_INET:
 			bah_init(sc);
-			sc->sc_arccom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			/*arpwhohas(&sc->sc_arccom, &IA_SIN(ifa)->sin_addr);*/
 			break;
 #endif
 		default:
