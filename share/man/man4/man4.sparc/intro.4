@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.3 1998/07/13 02:42:18 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.4 1998/07/15 04:42:30 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -176,7 +176,7 @@ the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width le/lebuffer
-.It audio
+.It audioamd
 AMD 79C30 obio (sun4c) audio controller
 .It bwtwo
 black and white obio frame buffer
@@ -206,7 +206,7 @@ FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet Sbus controller
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
 floppy disk drive controller
 .It hme
-HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
+Sbus HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
 .It ie
 Intel 82586 Ethernet controller (Sun 4/100)
 .It isp
@@ -239,6 +239,8 @@ Zilog 8530 serial controller
 The following devices are not supported, due to unavailability of
 either documentation or sample hardware:
 .Bl -tag -width speaker
+.It audiocs
+CS4231 based audio found in some sun4c and sun4m models
 .It bpp
 Bi-directional Parallel port
 .It dbri
