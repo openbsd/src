@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcons.c,v 1.3 1999/10/28 04:25:25 rahnds Exp $	*/
+/*	$OpenBSD: ofcons.c,v 1.4 2000/07/19 13:54:17 art Exp $	*/
 /*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ ofcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		timeout_add(&tp->t_rstrt_to, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
