@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.9 1997/02/03 13:59:43 maja Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.10 1997/07/06 04:07:11 downsj Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ static int emitlocnames __P((FILE *));
 static int emitpseudo __P((FILE *));
 static int emitpv __P((FILE *));
 static int emitroots __P((FILE *));
-static char *vecname __P((char *, const char *, int));
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 

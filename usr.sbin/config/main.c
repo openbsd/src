@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1997/07/06 03:54:05 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1997/07/06 04:07:09 downsj Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -569,7 +569,6 @@ void
 setupdirs()
 {
 	struct stat st;
-	char *prof;
 
 	/* srcdir must be specified if builddir is not specified or if
 	 * no configuration filename was specified. */
