@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.36 2001/06/30 08:35:27 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.37 2001/07/27 05:43:17 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -643,6 +643,8 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args, &mp->mnt_stat.mount_info.nfs_args);
 		return (0);
 	}
+	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
+		return (EINVAL);
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
 	if (error)
 		return (error);
