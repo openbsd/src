@@ -1,3 +1,5 @@
+/*	$OpenBSD: xmaciireg.h,v 1.2 1999/10/01 02:54:15 jason Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
