@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.17 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.18 2003/03/30 20:28:38 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -444,9 +444,9 @@ resolve_ccdname(name)
 			free(path);
 			return (NULL);
 		}
-		(void)sprintf(path, "/dev/%s%c", name, 'a' + rawpart);
+		(void)snprintf(path, newlen, "/dev/%s%c", name, 'a' + rawpart);
 	} else
-		(void)sprintf(path, "/dev/%s", name);
+		(void)snprintf(path, newlen, "/dev/%s", name);
 
 	return (path);
 }
