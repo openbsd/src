@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.41 2001/01/27 03:23:31 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.42 2001/05/11 17:51:56 mickey Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.41 2001/01/27 03:23:31 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.42 2001/05/11 17:51:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -311,8 +311,8 @@ bad:			usage(*argv);
 			if (sa->sa_family != af)
 				continue;
 		}
-                if (sa->sa_family == AF_KEY)
-                        continue;  /* Don't flush SPD */
+		if (sa->sa_family == AF_KEY)
+			continue;  /* Don't flush SPD */
 		if (debugonly)
 			continue;
 		rtm->rtm_type = RTM_DELETE;
@@ -404,8 +404,7 @@ routename(sa)
 				cp = hp->h_name;
 			}
 		}
-		strncpy(line, cp ? cp : inet_ntoa(in), sizeof line-1);
-		line[sizeof line-1] = '\0';
+		strlcpy(line, cp ? cp : inet_ntoa(in), sizeof line);
 		break;
 	    }
 
@@ -517,8 +516,7 @@ netname(sa)
 				cp = np->n_name;
 		}
 		in = ((struct sockaddr_in *)sa)->sin_addr;
-		strncpy(line, cp ? cp : inet_ntoa(in), sizeof line-1);
-		line[sizeof line-1] = '\0';
+		strlcpy(line, cp ? cp : inet_ntoa(in), sizeof line);
 		break;
 	    }
 
@@ -824,7 +822,7 @@ newroute(argc, argv)
 			(void) printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
 			    (void) printf(" (%s)",
-			        inet_ntoa(so_gate.sin.sin_addr));
+				inet_ntoa(so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			(void) printf("\n");
@@ -1132,12 +1130,12 @@ prefixlen(s)
 {
 	int len = atoi(s), q, r;
 
-	rtm_addrs |= RTA_NETMASK;	
+	rtm_addrs |= RTA_NETMASK;
 	if (len < -1 || len > 129) {
 		(void) fprintf(stderr, "%s: bad value\n", s);
 		exit(1);
 	}
-	
+
 	q = len >> 3;
 	r = len & 7;
 	so_mask.sin6.sin6_family = AF_INET6;
