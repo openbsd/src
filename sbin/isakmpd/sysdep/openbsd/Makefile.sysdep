@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.17 2001/04/09 21:21:58 ho Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.18 2001/06/29 19:40:36 ho Exp $
 #	$EOM: Makefile.sysdep,v 1.18 2001/01/26 10:55:22 niklas Exp $
 
 #
@@ -37,7 +37,7 @@
 IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 
-CFLAGS+=	-DHAVE_GETNAMEINFO -DHAVE_PCAP
+CFLAGS+=	-Werror -DHAVE_GETNAMEINFO -DHAVE_PCAP
 
 # Some OpenBSD systems do not provide dlopen(3).
 #.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
