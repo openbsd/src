@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.3 2005/02/19 12:11:40 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.4 2005/02/22 10:41:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
