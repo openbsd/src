@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.34 2001/06/25 01:08:04 hin Exp $
+#	$OpenBSD: services,v 1.35 2001/09/13 01:44:39 millert Exp $
 #
 # Network services, Internet style
 #
@@ -234,8 +234,8 @@ afs3-kaserver       	7004/udp	# AFS kerberos authentication server
 afs3-volser         	7005/udp	# AFS volume server
 afs3-errors         	7006/udp	# AFS error server ?
 afs3-bos            	7007/udp	# AFS basic over-see server ?
-afs3-update         	7008/udp	# ?
-afs3-rmtsys         	7009/udp	# ?
+afs3-update         	7008/udp	# AFS server to server update
+afs3-rmtsys         	7009/udp	# AFS remote cache manager service
 #
 # Unofficial services
 #
