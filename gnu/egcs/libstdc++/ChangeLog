@@ -1,3 +1,41 @@
+Tue Jun  8 00:21:11 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in (*-*-freebsd2*): Add missing '*' at end of configure
+	string.
+
+1999-06-05  Gabriel Dos Reis  <dosreis@cmla.ens-cachan.fr>
+
+	* std/std_valarray.h: Don't #include unconditionally <alloca.h>
+
+1999-06-05  Gabriel Dos Reis  <dosreis@cmla.ens-cachan.fr>
+
+	* std/std_valarray.h: New file.
+	  * std/slice.h: New file.
+	  * std/slice_array.h: New file.
+	  * std/gslice.h: New file.
+	  * std/gslice_array.h: New file.
+	  * std/mask_array.h: New file.
+	  * std/indirect_array.h: New file.
+	  * std/valarray_array.h: New file.
+	  * std/valarray_array.tcc: New file.
+	  * std/valarray_meta.h: New file.
+	  * valarray.cc: New file.
+	  * valarray: New file
+
+	  * Makefile.in (OBJS): add valarray.o
+	  (HEADERS): add valarray
+	  (valarray.o): define dependency on valarray.cc
+	  (install): make it possible to install valarray file.
+	
+Wed Jun  2 00:21:54 1999  Robert Lipe  <robertlipe@usa.net>
+
+	* std/bastring.h (class basic_string:Rep): Encode xlock opcode
+	as .bytes instead of mnemonics.
+
+1999-05-20  Angela Marie Thomas <angela@cygnus.com>
+
+	* configure.in: Test for ${compiler_name}.exe as well.
+
 1999-05-15  Mark Kettenis  <kettenis@gnu.org>
 
 	* configure.in: Add shared library support for the Hurd
