@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.4 2004/11/30 10:13:57 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.5 2004/11/30 12:42:21 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -120,9 +120,9 @@ file looks like this:
 .Bd -literal -offset indent
 pppoedev ne0
 ! /sbin/ifconfig ne0 up
-! /usr/sbin/spppcontrol $int myauthproto=pap myauthname=testcaller \e
+! /usr/sbin/spppcontrol \e$if myauthproto=pap myauthname=testcaller \e
 	myauthkey=donttell
-! /sbin/ifconfig $int inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
+! /sbin/ifconfig \e$if inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
 ! /sbin/route add default 0.0.0.1
 up
 .Ed
