@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.7 2001/03/09 05:44:41 smurph Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.8 2001/03/18 01:49:39 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,6 +62,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
+
 #include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/cpus.h>
@@ -69,31 +70,37 @@
 #include <machine/locore.h>
 #include <machine/m882xx.h>
 
-#if DDB
-   #include <ddb/db_output.h>		/* db_printf()		*/
+#ifdef DDB
+#include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
-#if DDB
-   #define DEBUG_MSG db_printf
+#ifdef DDB
+#define DEBUG_MSG db_printf
 #else
-   #define DEBUG_MSG printf
+#define DEBUG_MSG printf
 #endif /* DDB */
 
 /* On some versions of 88200, page size flushes don't work. I am using
  * sledge hammer approach till I find for sure which ones are bad XXX nivas */
 #define BROKEN_MMU_MASK	
-#define CMMU_DEBUG 1
+#define CMMU_DEBUG
 
 #ifdef DEBUG
-   #define DB_CMMU	0x4000	/* MMU debug */
+#define DB_CMMU	0x4000	/* MMU debug */
 unsigned int m18x_debuglevel = 0;
-   #define dprintf(_L_,_X_) { if (m18x_debuglevel & (_L_)) { unsigned int psr = disable_interrupts_return_psr(); printf("%d: ", cpu_number()); printf _X_;  set_psr(psr); } }
+#define dprintf(_L_,_X_) \
+	do { \
+		if (m18x_debuglevel & (_L_)) { \
+			unsigned int psr = disable_interrupts_return_psr(); \
+			printf("%d: ", cpu_number()); \
+			printf _X_;  \
+			set_psr(psr); \
+		} \
+	} while (0)
 #else
-   #define dprintf(_L_,_X_)
+#define dprintf(_L_,_X_) do { } while (0)
 #endif 
 #undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
-
-int badwordaddr __P((void *addr));
 
 struct cmmu_regs {
    /* base + $000 */volatile unsigned idr; 
@@ -139,7 +146,7 @@ struct cmmu {
 	vm_offset_t    cmmu_addr;	/* address range */
 	vm_offset_t    cmmu_addr_mask;	/* address mask */
 	int            cmmu_addr_match;	/* return value of address comparison */
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 	unsigned batc[8];
 #endif
 }; 
@@ -174,13 +181,24 @@ extern int      cpu_cmmu_ratio;
 
 int      vme188_config;
 
-/* FORWARDS */
-void m18x_setup_cmmu_config(void);
-void m18x_setup_board_config(void);
+/* prototypes */
+void m18x_setup_cmmu_config __P((void));
+void m18x_setup_board_config __P((void));
+#if defined(CMMU_DEBUG)
+void m18x_show_apr __P((unsigned value));
+void m18x_show_sctr __P((unsigned value));
+#endif
+unsigned m18x_cmmu_get __P((int mmu, int reg));
+void m18x_cmmu_set __P((int reg, unsigned val, int flags, int num,
+    int mode, int access, vm_offset_t addr));
+void m18x_cmmu_sync_cache __P((vm_offset_t physaddr, int size));
+void m18x_cmmu_sync_inval_cache __P((vm_offset_t physaddr, int size));
+void m18x_cmmu_inval_cache __P((vm_offset_t physaddr, int size));
 
 #ifdef CMMU_DEBUG
 void
-m18x_show_apr(unsigned value)
+m18x_show_apr(value)
+	unsigned value;
 {
 	union apr_template apr_template;
 	apr_template.bits = value;
@@ -195,7 +213,8 @@ m18x_show_apr(unsigned value)
 }
 
 void
-m18x_show_sctr(unsigned value)
+m18x_show_sctr(value)
+	unsigned value;
 {
 	union {
 		unsigned bits;
@@ -323,7 +342,7 @@ struct cpu_cmmu {
 } cpu_cmmu[MAX_CPUS];
 
 void 
-m18x_setup_board_config(void)
+m18x_setup_board_config()
 {
 	volatile unsigned long *whoami;
 
@@ -390,7 +409,7 @@ m18x_setup_board_config(void)
  * motorola/m88k/m88100/cmmu.c module.
  */
 void 
-m18x_setup_cmmu_config(void)
+m18x_setup_cmmu_config()
 {
 	register int num, cmmu_num;
 #ifdef MVME188
@@ -406,7 +425,7 @@ m18x_setup_cmmu_config(void)
 	 * Probe for available MMUs
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++)
-		if (!badwordaddr((void *)cmmu[cmmu_num].cmmu_regs)) {
+		if (!badwordaddr((vm_offset_t)cmmu[cmmu_num].cmmu_regs)) {
 			union cpupid id;
 
 			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
@@ -606,7 +625,7 @@ static char *cmmu_strat_string[] = {
 #endif 
 
 void 
-m18x_cmmu_dump_config(void)
+m18x_cmmu_dump_config()
 {
 #ifdef MVME188
 	volatile unsigned long *pcnfa;
@@ -654,19 +673,23 @@ m18x_cmmu_dump_config(void)
 
 /* To be implemented as a macro for speedup - XXX-em */
 static void 
-m18x_cmmu_store(int mmu, int reg, unsigned val)
+m18x_cmmu_store(mmu, reg, val)
+	int mmu, reg;
+	unsigned val;
 {
 	*(volatile unsigned *)(reg + (char*)(cmmu[mmu].cmmu_regs)) = val;
 }
 
 int 
-m18x_cmmu_alive(int mmu)
+m18x_cmmu_alive(mmu)
+	int mmu;
 {
 	return (cmmu[mmu].cmmu_alive == CMMU_ALIVE);
 }
 
 unsigned 
-m18x_cmmu_get(int mmu, int reg)
+m18x_cmmu_get(mmu, reg)
+	int mmu, reg;
 {
 	return *(volatile unsigned *)(reg + (char*)(cmmu[mmu].cmmu_regs));
 }
@@ -676,8 +699,11 @@ m18x_cmmu_get(int mmu, int reg)
  * into the CMMU's registers.
  */
 void 
-m18x_cmmu_set(int reg, unsigned val, int flags,
-	      int num, int mode, int access, vm_offset_t addr)
+m18x_cmmu_set(reg, val, flags, num, mode, access, addr)
+	int reg;
+	unsigned val;
+	int flags, num, mode, access;
+	vm_offset_t addr;
 {
 	register int mmu;
 
@@ -718,7 +744,8 @@ m18x_cmmu_set(int reg, unsigned val, int flags,
  * Used by DDB for cache probe functions
  */
 unsigned 
-m18x_cmmu_get_by_mode(int cpu, int mode)
+m18x_cmmu_get_by_mode(cpu, mode)
+	int cpu, mode;
 {
 	register int mmu;
 
@@ -750,7 +777,8 @@ static char *mmutypes[8] = {
  * by the master, before the slaves are started.
 */
 void 
-m18x_cpu_configuration_print(int master)
+m18x_cpu_configuration_print(master)
+	int master;
 {
 	int pid = read_processor_identification_register();
 	int proctype = (pid & 0xff00) >> 8;
@@ -770,7 +798,7 @@ m18x_cpu_configuration_print(int master)
 	else
 		printf("M88100 Version 0x%x\n", procvers);
 
-#if ERRATA__XXX_USR == 0
+#ifndef ERRATA__XXX_USR
 	if (procvers < 2)
 		printf("WARNING: M88100 bug workaround code not enabled!!!\n");
 #endif
@@ -800,7 +828,7 @@ m18x_cpu_configuration_print(int master)
  * CMMU initialization routine
  */
 void
-m18x_cmmu_init(void)
+m18x_cmmu_init()
 {
 	unsigned tmp, cmmu_num;
 	union cpupid id;
@@ -861,7 +889,7 @@ m18x_cmmu_init(void)
 			cmmu[cmmu_num].cmmu_regs->uapr = tmp;
 
 
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 			cmmu[cmmu_num].batc[0] =
 			cmmu[cmmu_num].batc[1] =
 			cmmu[cmmu_num].batc[2] =
@@ -951,7 +979,7 @@ m18x_cmmu_init(void)
  * Just before poweroff or reset....
  */
 void
-m18x_cmmu_shutdown_now(void)
+m18x_cmmu_shutdown_now()
 {
 	unsigned tmp;
 	unsigned cmmu_num;
@@ -990,9 +1018,9 @@ m18x_cmmu_shutdown_now(void)
  * enable parity
  */
 void 
-m18x_cmmu_parity_enable(void)
+m18x_cmmu_parity_enable()
 {
-#ifdef	PARITY_ENABLE
+#ifdef PARITY_ENABLE
 	register int cmmu_num;
 
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
@@ -1018,7 +1046,7 @@ m18x_cmmu_parity_enable(void)
 #define ILLADDRESS	U(0x0F000000) 	/* any faulty address */
 
 unsigned 
-m18x_cmmu_cpu_number(void)
+m18x_cmmu_cpu_number()
 {
 	register unsigned cmmu_no;
 	int i;
@@ -1033,7 +1061,7 @@ m18x_cmmu_cpu_number(void)
 		}
 
 		/* access faulting address */
-		badwordaddr((void *)ILLADDRESS);
+		badwordaddr((vm_offset_t)ILLADDRESS);
 
 		/* check which CMMU reporting the fault  */
 		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
@@ -1052,15 +1080,13 @@ m18x_cmmu_cpu_number(void)
 	return 0; /* to make compiler happy */
 }
 
-/**
- **	Funcitons that actually modify CMMU registers.
- **/
+/*
+ * Functions that actually modify CMMU registers.
+ */
 
-#if !DDB
-static
-#endif
 void
-m18x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
+m18x_cmmu_remote_set(cpu, r, data, x)
+	unsigned cpu, r, data, x;
 {
 	*(volatile unsigned *)(r + (char*)&REGS(cpu,data)) = x;
 }
@@ -1069,18 +1095,17 @@ m18x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
  * cmmu_cpu_lock should be held when called if read
  * the CMMU_SCR or CMMU_SAR.
  */
-#if !DDB
-static
-#endif
 unsigned
-m18x_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
+m18x_cmmu_remote_get(cpu, r, data)
+	unsigned cpu, r, data;
 {
 	return (*(volatile unsigned *)(r + (char*)&REGS(cpu,data)));
 }
 
 /* Needs no locking - read only registers */
 unsigned
-m18x_cmmu_get_idr(unsigned data)
+m18x_cmmu_get_idr(data)
+	unsigned data;
 {
 	int cpu;
 	cpu = cpu_number();
@@ -1088,7 +1113,8 @@ m18x_cmmu_get_idr(unsigned data)
 }
 
 void
-m18x_cmmu_set_sapr(unsigned ap)
+m18x_cmmu_set_sapr(ap)
+	unsigned ap;
 {
 	int cpu;
 	cpu = cpu_number();
@@ -1104,7 +1130,8 @@ m18x_cmmu_set_sapr(unsigned ap)
 }
 
 void
-m18x_cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
+m18x_cmmu_remote_set_sapr(cpu, ap)
+	unsigned cpu, ap;
 {
 	if (cache_policy & CACHE_INH)
 		ap |= AREA_D_CI;
@@ -1118,7 +1145,8 @@ m18x_cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
 }
 
 void
-m18x_cmmu_set_uapr(unsigned ap)
+m18x_cmmu_set_uapr(ap)
+	unsigned ap;
 {
 	int cpu;
 	cpu = cpu_number();
@@ -1141,17 +1169,17 @@ m18x_cmmu_set_uapr(unsigned ap)
  * batc values.
  */
 void
-m18x_cmmu_set_batc_entry(unsigned cpu,
-			 unsigned entry_no,
-			 unsigned data,	  /* 1 = data, 0 = instruction */
-			 unsigned value)  /* the value to stuff into the batc */
+m18x_cmmu_set_batc_entry(cpu, entry_no, data, value)
+	unsigned cpu, entry_no;
+	unsigned data;	/* 1 = data, 0 = instruction */
+	unsigned value;	/* the value to stuff into the batc */
 {
 	/*
 	REGS(cpu,data).bwp[entry_no] = value;
 	*/
 	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, data, CMMU_ACS_USER, 0);
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 	CMMU(cpu,data)->batc[entry_no] = value;
 #endif
 #if 0 /* was for debugging piece (peace?) of mind */
@@ -1165,9 +1193,9 @@ m18x_cmmu_set_batc_entry(unsigned cpu,
  * the data and instruction cache for the named CPU.
  */
 void
-m18x_cmmu_set_pair_batc_entry(unsigned cpu, 
-			      unsigned entry_no,
-			      unsigned value)  /* the value to stuff into the batc */
+m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value)
+	unsigned cpu, entry_no;
+	unsigned value;	/* the value to stuff into the batc */
 {
 
 	/*
@@ -1175,7 +1203,7 @@ m18x_cmmu_set_pair_batc_entry(unsigned cpu,
 	*/
 	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, DATA_CMMU, CMMU_ACS_USER, 0);
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 	CMMU(cpu,DATA_CMMU)->batc[entry_no] = value;
 #endif
 	/*
@@ -1183,7 +1211,7 @@ m18x_cmmu_set_pair_batc_entry(unsigned cpu,
 	*/
 	m18x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL|ACCESS_VAL,
 		      cpu, INST_CMMU, CMMU_ACS_USER, 0);
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 	CMMU(cpu,INST_CMMU)->batc[entry_no] = value;
 #endif
 
@@ -1195,16 +1223,19 @@ m18x_cmmu_set_pair_batc_entry(unsigned cpu,
 #endif
 }
 
-/**
- **	Functions that invalidate TLB entries.
- **/
+/*
+ * Functions that invalidate TLB entries.
+ */
 
 /*
  *	flush any tlb
  *	Some functionality mimiced in m18x_cmmu_pmap_activate.
  */
 void
-m18x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size)
+m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size)
+	unsigned cpu, kernel;
+	vm_offset_t vaddr;
+	int size;
 {
 	register int s = splhigh();
 
@@ -1245,7 +1276,10 @@ m18x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int
  *	flush my personal tlb
  */
 void
-m18x_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
+m18x_cmmu_flush_tlb(kernel, vaddr, size)
+	unsigned kernel;
+	vm_offset_t vaddr;
+	int size;
 {
 	int cpu;
 	cpu = cpu_number();
@@ -1258,10 +1292,10 @@ m18x_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
  * Only called from pmap.c's _pmap_activate().
  */
 void
-m18x_cmmu_pmap_activate(unsigned cpu,
-			unsigned uapr,
-			batc_template_t i_batc[BATC_MAX],
-			batc_template_t d_batc[BATC_MAX])
+m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
+	unsigned cpu, uapr;
+	batc_template_t i_batc[BATC_MAX];
+	batc_template_t d_batc[BATC_MAX];
 {
 	int entry_no;
 
@@ -1283,7 +1317,7 @@ m18x_cmmu_pmap_activate(unsigned cpu,
 			      cpu, INST_CMMU, CMMU_ACS_USER, 0);
 		m18x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no].bits, MODE_VAL|ACCESS_VAL,
 			      cpu, DATA_CMMU, CMMU_ACS_USER, 0);
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no].bits;
 		CMMU(cpu,DATA_CMMU)->batc[entry_no] = d_batc[entry_no].bits;
 #endif
@@ -1303,24 +1337,28 @@ m18x_cmmu_pmap_activate(unsigned cpu,
 		      cpu, 0, CMMU_ACS_USER, 0);
 }
 
-/**
- **	Functions that invalidate caches.
- **
- ** Cache invalidates require physical addresses.  Care must be exercised when
- ** using segment invalidates.  This implies that the starting physical address
- ** plus the segment length should be invalidated.  A typical mistake is to
- ** extract the first physical page of a segment from a virtual address, and
- ** then expecting to invalidate when the pages are not physically contiguous.
- **
- ** We don't push Instruction Caches prior to invalidate because they are not
- ** snooped and never modified (I guess it doesn't matter then which form
- ** of the command we use then).
- **/
+/*
+ * Functions that invalidate caches.
+ *
+ * Cache invalidates require physical addresses.  Care must be exercised when
+ * using segment invalidates.  This implies that the starting physical address
+ * plus the segment length should be invalidated.  A typical mistake is to
+ * extract the first physical page of a segment from a virtual address, and
+ * then expecting to invalidate when the pages are not physically contiguous.
+ *
+ * We don't push Instruction Caches prior to invalidate because they are not
+ * snooped and never modified (I guess it doesn't matter then which form
+ * of the command we use then).
+ */
+
 /*
  *	flush both Instruction and Data caches
  */
 void
-m18x_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
+m18x_cmmu_flush_remote_cache(cpu, physaddr, size)
+	int cpu;
+	vm_offset_t physaddr;
+	int size;
 {
 	register int s = splhigh();
 
@@ -1390,7 +1428,9 @@ m18x_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
  *	flush both Instruction and Data caches
  */
 void
-m18x_cmmu_flush_cache(vm_offset_t physaddr, int size)
+m18x_cmmu_flush_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 {
 	int cpu = cpu_number();
 	m18x_cmmu_flush_remote_cache(cpu, physaddr, size);
@@ -1400,7 +1440,10 @@ m18x_cmmu_flush_cache(vm_offset_t physaddr, int size)
  *	flush Instruction caches
  */
 void
-m18x_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
+m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size)
+	int cpu;
+	vm_offset_t physaddr;
+	int size;
 {
 	register int s = splhigh();
 
@@ -1463,7 +1506,9 @@ m18x_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
  *	flush Instruction caches
  */
 void
-m18x_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
+m18x_cmmu_flush_inst_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 {
 	int cpu;
 	cpu = cpu_number();
@@ -1471,8 +1516,11 @@ m18x_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m18x_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
-{ 
+m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size)
+	int cpu;
+	vm_offset_t physaddr;
+	int size;
+{
 	register int s = splhigh();
 
 #if !defined(BROKEN_MMU_MASK)
@@ -1526,7 +1574,9 @@ m18x_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
  * flush data cache
  */ 
 void
-m18x_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
+m18x_cmmu_flush_data_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 { 
 	int cpu;
 	cpu = cpu_number();
@@ -1537,7 +1587,9 @@ m18x_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
  * sync dcache (and icache too)
  */
 void
-m18x_cmmu_sync_cache(vm_offset_t physaddr, int size)
+m18x_cmmu_sync_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 {
 	register int s = splhigh();
 	int cpu;
@@ -1618,8 +1670,10 @@ m18x_cmmu_sync_cache(vm_offset_t physaddr, int size)
 	splx(s);
 }
 
-void
-m18x_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
+void 
+m18x_cmmu_sync_inval_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 {
 	register int s = splhigh();
 	int cpu;
@@ -1702,7 +1756,9 @@ m18x_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m18x_cmmu_inval_cache(vm_offset_t physaddr, int size)
+m18x_cmmu_inval_cache(physaddr, size)
+	vm_offset_t physaddr;
+	int size;
 {
 	register int s = splhigh();
 	int cpu;
@@ -1785,7 +1841,9 @@ m18x_cmmu_inval_cache(vm_offset_t physaddr, int size)
 }
 
 void
-m18x_dma_cachectl(vm_offset_t va, int size, int op)
+m18x_dma_cachectl(va, size, op)
+	vm_offset_t va;
+	int size, op;
 {
 #if !defined(BROKEN_MMU_MASK)
 	int count;
@@ -1817,7 +1875,7 @@ m18x_dma_cachectl(vm_offset_t va, int size, int op)
 #endif /* !BROKEN_MMU_MASK */
 }
 
-#if DDB
+#ifdef DDB
 union ssr {
    unsigned bits;
    struct {
@@ -1893,11 +1951,9 @@ union batcu {
  * If cmmu == -1, the data cmmu for the current cpu is used.
  */
 void
-m18x_cmmu_show_translation(
-                     unsigned address,
-                     unsigned supervisor_flag,
-                     unsigned verbose_flag,
-                     int cmmu_num)
+m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
+	unsigned address, supervisor_flag, verbose_flag;
+	int cmmu_num;
 {
 	/*
 	 * A virtual address is split into three fields. Two are used as
@@ -2006,7 +2062,7 @@ m18x_cmmu_show_translation(
 
 	/******* LOOK AT THE BATC ** (if not a thread) **************/
 #if 0
-#if SHADOW_BATC
+#ifdef SHADOW_BATC
 	if (thread == 0) {
 		int i;
 		union batcu batc;
@@ -2120,7 +2176,7 @@ m18x_cmmu_show_translation(
 		value |= virtual_address.field.segment_table_index *
 			 sizeof(struct sdt_entry);
 
-		if (badwordaddr((void *)value)) {
+		if (badwordaddr((vm_offset_t)value)) {
 			DEBUG_MSG("ERROR: unable to access page at 0x%08x.\n", value);
 
 			return;
@@ -2169,7 +2225,7 @@ m18x_cmmu_show_translation(
 		value |= virtual_address.field.page_table_index *
 			 sizeof(struct pt_entry);
 
-		if (badwordaddr((void *)value)) {
+		if (badwordaddr((vm_offset_t)value)) {
 			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 
 			return;
@@ -2213,7 +2269,7 @@ m18x_cmmu_show_translation(
 				  virtual_address.field.page_offset, value);
 		value |= virtual_address.field.page_offset;
 
-		if (badwordaddr((void *)value)) {
+		if (badwordaddr((vm_offset_t)value)) {
 			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 
 			return;
@@ -2230,7 +2286,8 @@ m18x_cmmu_show_translation(
 }
 
 void
-m18x_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
+m18x_cmmu_cache_state(addr, supervisor_flag)
+	unsigned addr, supervisor_flag;
 {
 	static char *vv_name[4] =
 	{"exclu-unmod", "exclu-mod", "shared-unmod", "invalid"};
@@ -2283,9 +2340,11 @@ m18x_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
 
 }
 
+#endif /* DDB */
+
 void
-#endif /* end if DDB */
-m18x_show_cmmu_info(unsigned addr)
+m18x_show_cmmu_info(addr)
+	unsigned addr;
 {
 	int cmmu_num;
 	m18x_cmmu_cache_state(addr, 1);
