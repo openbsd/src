@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.65 1999/02/03 03:40:02 angelos Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.66 1999/02/04 01:06:08 angelos Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1823,7 +1823,7 @@ ssyslog	type=dir uname=root gname=daemon mode=700
 ..
 
 #./var/audit
-audit type=dir uname=root gname=audlog mode=2770
+audit type=dir uname=root gname=wheel mode=2770
 #./var/audit
 ..
 
