@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.126 2000/01/01 22:45:35 deraadt Exp $
+#	$OpenBSD: rc,v 1.127 2000/01/02 14:25:07 itojun Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -382,6 +382,32 @@ if [ "X${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
 		dhcpd_ifs=`cat /etc/dhcpd.interfaces | awk -F\# '{ print $1; }'`
 	fi
 	echo -n ' dhcpd';	/usr/sbin/dhcpd ${dhcpd_flags} ${dhcpd_ifs}
+fi
+
+if ifconfig lo0 inet6 >/dev/null 2>&1; then
+	fw=`sysctl -n net.inet6.ip6.forwarding`
+	if [ "X${fw}" == X"0" ]; then
+		# $rtsold_flags is imported from /etc/rc.conf;
+		# If $rtsold_flags == NO, then rtsold isn't run.
+		if [ "X${rtsold_flags}" != X"NO" ]; then
+			echo -n ' rtsold'
+			/usr/sbin/rtsold ${rtsold_flags}
+		fi
+	else
+		# $route6d_flags is imported from /etc/rc.conf;
+		# If $route6d_flags == NO, then route6d isn't run.
+		if [ "X${route6d_flags}" != X"NO" ]; then
+			echo -n ' route6d'
+			/usr/sbin/route6d ${route6d_flags}
+		fi
+		# $rtadvd_flags is imported from /etc/rc.conf;
+		# If $rtadvd_flags == NO or /etc/rtadvd.conf doesn't exist,
+		# then rtadvd isn't run.
+		if [ "X${rtadvd_flags}" != X"NO" -a -f /etc/rtadvd.conf ]; then
+			echo -n ' rtadvd'
+			/usr/sbin/rtadvd ${rtadvd_flags}
+		fi
+	fi
 fi
 
 # $rwhod is imported from /etc/rc.conf;
