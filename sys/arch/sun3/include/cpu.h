@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu.h,v 1.9 1997/02/14 18:30:42 kstailey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -46,6 +47,11 @@
 
 #ifndef _SUN3_CPU_H_
 #define _SUN3_CPU_H_
+
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
 
 #ifdef _KERNEL
 
@@ -151,22 +157,6 @@ union sun3sir {
 #define SUN3_MACH_E    0x08
 
 extern	unsigned char cpu_machine_id;
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_CONTROL	3	/* sun control space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-#define IC_CLEAR (IC_CLR|IC_ENABLE)
 
 /* autoconf.c */
 void	configure __P((void));
