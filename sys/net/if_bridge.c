@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.94 2002/06/09 20:30:45 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.95 2002/06/10 09:13:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2383,13 +2383,18 @@ bridge_send_icmp_err(sc, ifp, eh, n, hassnap, llc, type, code)
 	struct ip *ip;
 	struct icmp *icp;
 	struct in_addr t;
-	struct mbuf *m;
+	struct mbuf *m, *n2;
 	int hlen;
 	u_int8_t ether_tmp[ETHER_ADDR_LEN];
 
+	n2 = m_copym(n, 0, M_COPYALL, M_DONTWAIT);
+	if (!n2)
+		return;
 	m = icmp_do_error(n, type, code, 0, ifp);
 	if (m == NULL)
 		return;
+
+	n = n2;
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.51 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.52 2002/06/10 09:13:26 itojun Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -267,6 +267,7 @@ icmp_do_error(n, type, code, dest, destifp)
 		m_tag_prepend(m, mtag);
 	}
 
+	m_freem(n);
 	return (m);
 
 freeit:
@@ -292,7 +293,6 @@ icmp_error(n, type, code, dest, destifp)
 	m = icmp_do_error(n, type, code, dest, destifp);
 	if (m != NULL)
 		icmp_reflect(m);
-	m_freem(n);
 }
 
 static struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
