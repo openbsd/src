@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.85 2002/03/17 03:04:47 krw Exp $
+#	$OpenBSD: install.sh,v 1.86 2002/03/19 12:16:13 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -386,8 +386,11 @@ done
 echo "...done."
 
 if [ -f /etc/dhclient.conf ]; then
-	echo -n "Modifying dhclient.conf..."
+	echo -n "Saving dhclient configuration..."
 	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
+	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
+	cp /var/db/dhclient.leases /mnt/var/db/.
+	echo "done."
 fi
 
 # If no zoneinfo on the installfs, give them a second chance
