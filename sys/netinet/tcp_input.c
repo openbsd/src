@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.170 2004/05/27 08:17:31 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.171 2004/05/31 11:02:11 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ tcp_input(struct mbuf *m, ...)
 	struct inpcb *inp;
 	u_int8_t *optp = NULL;
 	int optlen = 0;
-	int len, tlen, off;
+	int tlen, off;
 	struct tcpcb *tp = 0;
 	int tiflags;
 	struct socket *so = NULL;
@@ -470,6 +470,7 @@ tcp_input(struct mbuf *m, ...)
 		return;
 	}
 
+	tlen = m->m_pkthdr.len - iphlen;
 	ip = NULL;
 #ifdef INET6
 	ip6 = NULL;
@@ -480,9 +481,6 @@ tcp_input(struct mbuf *m, ...)
 		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
 			goto drop;
-
-		tlen = m->m_pkthdr.len - iphlen;
-
 #ifdef TCP_ECN
 		/* save ip_tos before clearing it for checksum */
 		iptos = ip->ip_tos;
@@ -496,8 +494,7 @@ tcp_input(struct mbuf *m, ...)
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
-			len = m->m_pkthdr.len - iphlen;
-			if (in4_cksum(m, IPPROTO_TCP, iphlen, len) != 0) {
+			if (in4_cksum(m, IPPROTO_TCP, iphlen, tlen) != 0) {
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
@@ -509,7 +506,6 @@ tcp_input(struct mbuf *m, ...)
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
-		tlen = m->m_pkthdr.len - iphlen;
 #ifdef TCP_ECN
 		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 #endif
