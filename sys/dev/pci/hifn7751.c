@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.63 2001/05/14 02:45:19 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.64 2001/05/14 03:07:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -876,16 +876,14 @@ hifn_write_command(cmd, buf)
 int
 hifn_dmamap_aligned(bus_dmamap_t map)
 {
-	int i, nicealign = 1;
+	int i;
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		if ((map->dm_segs[i].ds_addr & 3) ||
-		    (map->dm_segs[i].ds_len & 3)) {
-			nicealign = 0;
-			break;
-		}
+		    (map->dm_segs[i].ds_len & 3))
+			return (0);
 	}
-	return (nicealign);
+	return (1);
 }
 
 void
@@ -921,10 +919,9 @@ hifn_crypto(sc, cmd, crp)
 	struct hifn_command *cmd;
 	struct cryptop *crp;
 {
-	u_int32_t cmdlen;
 	struct	hifn_dma *dma = sc->sc_dma;
-	int	cmdi, resi, nicealign = 1;
-	int     s, i;
+	u_int32_t cmdlen;
+	int cmdi, resi, s;
 
 	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_SEGLEN * MAX_SCATTER,
 	    MAX_SCATTER, HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
@@ -941,77 +938,77 @@ hifn_crypto(sc, cmd, crp)
 	} else
 		goto err_srcmap1;
 
-	for (i = 0; i < cmd->src_map->dm_nsegs; i++) {
-		if ((cmd->src_map->dm_segs[i].ds_addr & 3) ||
-		    (cmd->src_map->dm_segs[i].ds_len & 3)) {
-			nicealign = 0;
-			break;
-		}
-	}
-
-	nicealign = hifn_dmamap_aligned(cmd->src_map);
-	if (!nicealign && (crp->crp_flags & CRYPTO_F_IOV))
-		goto err_srcmap;
-	else if (!nicealign && (crp->crp_flags & CRYPTO_F_IMBUF)) {
-		int totlen, len;
-		struct mbuf *m, *top, **mp;
-
-		totlen = cmd->src_map->dm_mapsize;
-		if (cmd->src_m->m_flags & M_PKTHDR) {
-			len = MHLEN;
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-		} else {
-			len = MLEN;
-			MGET(m, M_DONTWAIT, MT_DATA);
-		}
-		if (m == NULL)
+	if (hifn_dmamap_aligned(cmd->src_map)) {
+		if (crp->crp_flags & CRYPTO_F_IOV)
+			cmd->dst_io = cmd->src_io;
+		else if (crp->crp_flags & CRYPTO_F_IMBUF)
+			cmd->dst_m = cmd->src_m;
+		cmd->dst_map = cmd->src_map;
+	} else {
+		if (crp->crp_flags & CRYPTO_F_IOV)
 			goto err_srcmap;
-		if (len == MHLEN)
-			M_DUP_PKTHDR(m, cmd->src_m);
-		if (totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-		}
-		m->m_len = len;
-		top = NULL;
-		mp = &top;
+		if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			int totlen, len;
+			struct mbuf *m, *top, **mp;
 
-		while (totlen > 0) {
-			if (top) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == NULL) {
-					m_freem(top);
-					goto err_srcmap;
-				}
+			totlen = cmd->src_map->dm_mapsize;
+			if (cmd->src_m->m_flags & M_PKTHDR) {
+				len = MHLEN;
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+			} else {
 				len = MLEN;
+				MGET(m, M_DONTWAIT, MT_DATA);
 			}
-			if (top && totlen >= MINCLSIZE) {
+			if (m == NULL)
+				goto err_srcmap;
+			if (len == MHLEN)
+				M_DUP_PKTHDR(m, cmd->src_m);
+			if (totlen >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if (m->m_flags & M_EXT)
 					len = MCLBYTES;
 			}
 			m->m_len = len;
-			totlen -= len;
-			*mp = m;
-			mp = &m->m_next;
+			top = NULL;
+			mp = &top;
+
+			while (totlen > 0) {
+				if (top) {
+					MGET(m, M_DONTWAIT, MT_DATA);
+					if (m == NULL) {
+						m_freem(top);
+						goto err_srcmap;
+					}
+					len = MLEN;
+				}
+				if (top && totlen >= MINCLSIZE) {
+					MCLGET(m, M_DONTWAIT);
+					if (m->m_flags & M_EXT)
+						len = MCLBYTES;
+				}
+				m->m_len = len;
+				totlen -= len;
+				*mp = m;
+				mp = &m->m_next;
+			}
+			cmd->dst_m = top;
 		}
-		cmd->dst_m = top;
-	} else
-		cmd->dst_m = cmd->src_m;
+	}
 
-	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_SEGLEN * MAX_SCATTER,
-	    MAX_SCATTER, HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map))
-		goto err_srcmap;
-
-	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
-		    cmd->dst_m, BUS_DMA_NOWAIT))
-			goto err_dstmap1;
-	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
-		    cmd->dst_io, BUS_DMA_NOWAIT))
-			goto err_dstmap1;
+	if (cmd->dst_map == NULL) {
+		if (bus_dmamap_create(sc->sc_dmat,
+		    HIFN_MAX_SEGLEN * MAX_SCATTER, MAX_SCATTER,
+		    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->dst_map))
+			goto err_srcmap;
+		if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, cmd->dst_map,
+			    cmd->dst_m, BUS_DMA_NOWAIT))
+				goto err_dstmap1;
+		} else if (crp->crp_flags & CRYPTO_F_IOV) {
+			if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
+			    cmd->dst_io, BUS_DMA_NOWAIT))
+				goto err_dstmap1;
+		}
 	}
 
 #ifdef HIFN_DEBUG
@@ -1052,7 +1049,8 @@ hifn_crypto(sc, cmd, crp)
 
 	cmdlen = hifn_write_command(cmd, dma->command_bufs[cmdi]);
 #ifdef HIFN_DEBUG
-	printf("write_command %d (nice %d)\n", cmdlen, nicealign);
+	printf("write_command %d (nice %d)\n", cmdlen,
+	    hifn_dmamap_aligned(cmd->src_map));
 #endif
 	/* .p for command/result already set */
 	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
@@ -1100,9 +1098,11 @@ hifn_crypto(sc, cmd, crp)
 	return 0;		/* success */
 
 err_dstmap:
-	bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+	if (cmd->src_map != cmd->dst_map)
+		bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
 err_dstmap1:
-	bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+	if (cmd->src_map != cmd->dst_map)
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
 err_srcmap:
 	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 err_srcmap1:
@@ -1544,10 +1544,12 @@ hifn_callback(sc, cmd, macbuf)
 		}
 	}
 
+	if (cmd->src_map != cmd->dst_map) {
+		bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
+		bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
+	}
 	bus_dmamap_unload(sc->sc_dmat, cmd->src_map);
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
-	bus_dmamap_unload(sc->sc_dmat, cmd->dst_map);
-	bus_dmamap_destroy(sc->sc_dmat, cmd->dst_map);
 	free(cmd, M_DEVBUF);
 	crypto_done(crp);
 }
