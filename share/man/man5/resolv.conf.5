@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.12 2000/03/19 19:25:33 aaron Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.13 2000/06/22 07:34:47 itojun Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -60,8 +60,13 @@ and the domain search path is constructed from the domain name.
 The different configuration options are:
 .Bl -tag -width nameserver
 .It Sy nameserver
-Internet address (in dot notation) of a name server
-that the resolver should query.
+IPv4 address (in dot notation)
+or IPv6 address (in hex-and-colon notation)
+of a name server that the resolver should query.
+Scoped IPv6 address notation is accepted as well
+(see
+.Xr inet6 4
+for details).
 Up to
 .Dv MAXNS
 (currently 3) name servers may be listed,
