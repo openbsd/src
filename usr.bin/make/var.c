@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.55 2001/05/23 12:34:51 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.56 2002/06/05 18:45:39 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -233,38 +233,38 @@ quick_lookup(name, end, pk)
     switch (*pk % MAGICSLOTS1) { 	    /* MAGICSLOTS should be the    */
     case K_LONGALLSRC % MAGICSLOTS1:	    /* smallest constant yielding  */
 					    /* distinct case values	   */
-	if (*pk == K_LONGALLSRC && strncmp(name, LONGALLSRC, len) == 0 &&
-	    len == strlen(LONGALLSRC))
+	if (*pk == K_LONGALLSRC && len == strlen(LONGALLSRC) && 
+	    strncmp(name, LONGALLSRC, len) == 0)
 	    return ALLSRC_INDEX;
 	break;
     case K_LONGARCHIVE % MAGICSLOTS1:
-	if (*pk == K_LONGARCHIVE && strncmp(name, LONGARCHIVE, len) == 0 &&
-	    len == strlen(LONGARCHIVE))
+	if (*pk == K_LONGARCHIVE && len == strlen(LONGARCHIVE) &&
+	    strncmp(name, LONGARCHIVE, len) == 0)
 	    return ARCHIVE_INDEX;
 	break;
     case K_LONGIMPSRC % MAGICSLOTS1:
-	if (*pk == K_LONGIMPSRC && strncmp(name, LONGIMPSRC, len) == 0 &&
-	    len == strlen(LONGIMPSRC))
+	if (*pk == K_LONGIMPSRC && len == strlen(LONGIMPSRC) &&
+	    strncmp(name, LONGIMPSRC, len) == 0)
 	    return IMPSRC_INDEX;
 	break;
     case K_LONGMEMBER % MAGICSLOTS1:
-	if (*pk == K_LONGMEMBER && strncmp(name, LONGMEMBER, len) == 0 &&
-	    len == strlen(LONGMEMBER))
+	if (*pk == K_LONGMEMBER && len == strlen(LONGMEMBER) &&
+	    strncmp(name, LONGMEMBER, len) == 0)
 	    return MEMBER_INDEX;
 	break;
     case K_LONGOODATE % MAGICSLOTS1:
-	if (*pk == K_LONGOODATE && strncmp(name, LONGOODATE, len) == 0 &&
-	    len == strlen(LONGOODATE))
+	if (*pk == K_LONGOODATE && len == strlen(LONGOODATE) &&
+	    strncmp(name, LONGOODATE, len) == 0)
 	    return OODATE_INDEX;
 	break;
     case K_LONGPREFIX % MAGICSLOTS1:
-	if (*pk == K_LONGPREFIX && strncmp(name, LONGPREFIX, len) == 0 &&
-	    len == strlen(LONGPREFIX))
+	if (*pk == K_LONGPREFIX && len == strlen(LONGPREFIX) &&
+	    strncmp(name, LONGPREFIX, len) == 0)
 	    return PREFIX_INDEX;
 	break;
     case K_LONGTARGET % MAGICSLOTS1:
-	if (*pk == K_LONGTARGET && strncmp(name, LONGTARGET, len) == 0 &&
-	    len == strlen(LONGTARGET))
+	if (*pk == K_LONGTARGET && len == strlen(LONGTARGET) &&
+	    strncmp(name, LONGTARGET, len) == 0)
 	    return TARGET_INDEX;
 	break;
     case K_TARGET % MAGICSLOTS1:
