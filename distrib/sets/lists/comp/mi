@@ -185,6 +185,8 @@
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
+./usr/include/dev/pci/pciidereg.h
+./usr/include/dev/pci/pciidevar.h
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
@@ -1944,6 +1946,7 @@
 ./usr/share/man/cat3/mitem_visible.0
 ./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/mkstemp.0
+./usr/share/man/cat3/mkstemps.0
 ./usr/share/man/cat3/mktemp.0
 ./usr/share/man/cat3/mktime.0
 ./usr/share/man/cat3/modf.0
@@ -2238,6 +2241,8 @@
 ./usr/share/man/cat3/strerror.0
 ./usr/share/man/cat3/strftime.0
 ./usr/share/man/cat3/string.0
+./usr/share/man/cat3/strlcat.0
+./usr/share/man/cat3/strlcpy.0
 ./usr/share/man/cat3/strlen.0
 ./usr/share/man/cat3/strmode.0
 ./usr/share/man/cat3/strncasecmp.0
