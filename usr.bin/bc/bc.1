@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.3 2003/09/26 07:30:09 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.4 2003/09/26 11:21:26 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -37,47 +37,53 @@
 .Dd August 8, 1991
 .Dt BC 1
 .Sh NAME
-.Nm \&bc
+.Nm bc
 .Nd arbitrary-precision arithmetic language and calculator
 .Sh SYNOPSIS
-.Nm \&bc
-.Op Fl c
-.Op Fl l
+.Nm bc
+.Op Fl cl
 .Ar
 .Sh DESCRIPTION
-.Nm \&Bc
+.Nm
 is an interactive processor for a language which resembles
 C but provides unlimited precision arithmetic.
 It takes input from any files given, then reads
 the standard input.
 .Pp
 Options available:
-.Bl -tag -width flag
-.It Fl l
-allow specification
-of an arbitrary precision math library.
+.Bl -tag -width Ds
 .It Fl c
-.Nm \&Bc
+.Nm
 is actually a preprocessor for
-.Ar \&dc 1 ,
+.Xr dc 1 ,
 which it invokes automatically, unless the
 .Fl c
-compile only.
+.Pq compile only
 option is present.
-In this case the
-.Ar \&dc
-input is sent to the standard output instead.
+In this case the generated
+.Xr dc 1
+instructions are sent to the standard output,
+instead of being interpreted by a running
+.Xr dc 1
+process.
+.It Fl l
+Allow specification
+of an arbitrary precision math library.
 .El
 .Pp
 The syntax for
-.Nm \&bc
-programs is as follows;
-L means letter a-z,
-E means expression, S means statement.
+.Nm
+programs is as follows:
+.Sq L
+means letter a-z;
+.Sq E
+means expression;
+.Sq S
+means statement.
 .Pp
 Comments
 .Bd -unfilled -offset indent -compact
-are enclosed in /* and */.
+are enclosed in /* and */
 .Ed
 .Pp
 Names
@@ -89,8 +95,8 @@ The words `ibase', `obase', and `scale'
 .Pp
 Other operands
 .Bd -unfilled -offset indent -compact
-arbitrarily long numbers with optional sign and decimal point.
-\&( E \&)
+arbitrarily long numbers with optional sign and decimal point
+( E )
 sqrt ( E )
 length ( E )	number of significant decimal digits
 scale ( E )	number of digits right of decimal point
@@ -99,10 +105,10 @@ L ( E , ... , E )
 .Pp
 Operators
 .Bd -unfilled -offset indent -compact
-\&+  \-  *  /  %  ^ (% is remainder; ^ is power)
-\&++   \-\-         (prefix and postfix; apply to names)
-\&==  <=  >=  !=  <  >
-\&=  +=  \-=  *=  /=  %=  ^=
++  \-  *  /  %  ^ (`%' is remainder; `^' is power)
+++   \-\-         (prefix and postfix; apply to names)
+==  <=  >=  !=  <  >
+=  +=  \-=  *=  /=  %=  ^=
 .Ed
 .Pp
 Statements
@@ -127,7 +133,7 @@ define L ( L ,..., L ) {
 .Ed
 .Pp
 Functions in
-.Fl l
+.Fl lm
 math library
 .Bl -tag -width j(n,x) -offset indent -compact
 .It s(x)
@@ -153,7 +159,7 @@ Assignment to
 .Ar scale
 influences the number of digits to be retained on arithmetic
 operations in the manner of
-.Xr \&dc 1 .
+.Xr dc 1 .
 Assignments to
 .Ar ibase
 or
@@ -165,7 +171,7 @@ and a simple variable simultaneously.
 All variables are global to the program.
 `Auto' variables are pushed down during function calls.
 When using arrays as function arguments
-or defining them as automatic variables
+or defining them as automatic variables,
 empty square brackets must follow the array name.
 .Pp
 For example
@@ -193,14 +199,8 @@ the exponential function and
 .Pp
 prints approximate values of the exponential function of
 the first ten integers.
-.Sh FILES
-.\" /usr/lib/lib.b	mathematical library
-.Bl -tag -width xxxxx -compact
-.It Xr \&dc 1
-Desk calculator Proper.
-.El
 .Sh SEE ALSO
-.Xr \&dc 1
+.Xr dc 1
 .Rs
 .%A L. L. Cherry
 .%A R. Morris
@@ -211,17 +211,22 @@ The
 .Nm
 utility is expected to conform to the
 .St -p1003.2
-specification. 
+specification.
 .Sh HISTORY
 The
-.Nm \&bc
+.Nm
 command appeared in
 .At v6 .
 .Sh BUGS
-No &&, \(or\\(or, or ! operators.
+No
+.Sq && ,
+.Sq \(or\(or ,
+or
+.Sq \&!
+operators.
 .Pp
 .Ql For
-statement must have all three E's.
+statements must have all three E's.
 .Pp
 .Ql Quit
 is interpreted when read, not when executed.
