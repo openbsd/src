@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.1 2001/08/22 21:49:39 jason Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.2 2001/08/23 03:44:46 jason Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -55,7 +55,9 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#ifdef __sparc64__
 #include <machine/autoconf.h>
+#endif
 #include <machine/cpu.h>
 
 #include <dev/pci/pcivar.h>
