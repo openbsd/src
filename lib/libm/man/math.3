@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.14 2003/03/28 09:51:33 jmc Exp $
+.\"	$OpenBSD: math.3,v 1.15 2003/04/30 06:19:36 jmc Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -160,7 +160,6 @@ Properties of D_floating-point:
 Binary.
 .It Precision:
 56 \*(Si bits, roughly 17 \*(Si decimal digits.
-.Bd -offset indent
 If x and x' are consecutive positive D_floating-point
 numbers (they differ by 1 \fIulp\fR), then
 .Li 1.3e-17 < 0.5**56 < (x'-x)/x \*(Le 0.5**55 < 2.8e-17.
