@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.14 2000/09/20 17:39:05 niklas Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.15 2000/11/08 14:17:17 art Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -398,6 +398,16 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_LINE_MASK			0xff
 #define	PCI_INTERRUPT_LINE(icr) \
 	    (((icr) >> PCI_INTERRUPT_LINE_SHIFT) & PCI_INTERRUPT_LINE_MASK)
+
+#define	PCI_MIN_GNT_SHIFT			16
+#define	PCI_MIN_GNT_MASK			0xff
+#define	PCI_MIN_GNT(icr) \
+	    (((icr) >> PCI_MIN_GNT_SHIFT) & PCI_MIN_GNT_MASK)
+
+#define	PCI_MAX_LAT_SHIFT			24
+#define	PCI_MAX_LAT_MASK			0xff
+#define	PCI_MAX_LAT(icr) \
+	    (((icr) >> PCI_MAX_LAT_SHIFT) & PCI_MAX_LAT_MASK)
 
 #define	PCI_INTERRUPT_PIN_NONE			0x00
 #define	PCI_INTERRUPT_PIN_A			0x01
