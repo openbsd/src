@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.24 2000/08/17 20:05:10 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.25 2000/08/17 20:06:34 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -73,6 +73,7 @@ extern ServerOptions options;
 extern char *__progname;
 extern int log_stderr;
 extern int debug_flag;
+extern unsigned int utmp_len;
 
 extern int startup_pipe;
 
@@ -562,6 +563,17 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	}
 }
 
+const char *
+get_remote_name_or_ip(void)
+{
+	static const char *remote = "";
+	if (utmp_len > 0)
+		remote = get_canonical_hostname();
+	if (utmp_len == 0 || strlen(remote) > utmp_len)
+		remote = get_remote_ipaddr();
+	return remote;
+}
+
 /* administrative, login(1)-like work */
 void
 do_login(Session *s)
@@ -589,10 +601,10 @@ do_login(Session *s)
 			fatal_cleanup();
 		}
 	}
+
 	/* Record that there was a login on that tty from the remote host. */
 	record_login(pid, s->tty, pw->pw_name, pw->pw_uid,
-	    get_canonical_hostname(),
-	    (struct sockaddr *)&from);
+	    get_remote_name_or_ip(), (struct sockaddr *)&from);
 
 	/* Done if .hushlogin exists. */
 	snprintf(buf, sizeof(buf), "%.200s/.hushlogin", pw->pw_dir);
@@ -1011,8 +1023,9 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		} else {
 			/* Launch login(1). */
 
-			execl("/usr/bin/login", "login", "-h", get_remote_ipaddr(),
-			      "-p", "-f", "--", pw->pw_name, NULL);
+			execl("/usr/bin/login", "login",
+			     "-h", get_remote_name_or_ip(),
+			     "-p", "-f", "--", pw->pw_name, NULL);
 
 			/* Login couldn't be executed, die. */
 

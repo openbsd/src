@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.60 2000/08/02 17:27:04 provos Exp $
+.\" $Id: sshd.8,v 1.61 2000/08/17 20:06:34 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -26,6 +26,7 @@
 .Op Fl h Ar host_key_file
 .Op Fl k Ar key_gen_time
 .Op Fl p Ar port
+.Op Fl u Ar len
 .Op Fl V Ar client_protocol_id
 .Sh DESCRIPTION
 .Nm
@@ -211,6 +212,22 @@ Quiet mode.
 Nothing is sent to the system log.
 Normally the beginning,
 authentication, and termination of each connection is logged.
+.It Fl u Ar len
+This option is used to specify the size of the field
+in the
+.Li utmp
+structure that holds the remote host name.
+If the resolved host name is longer than
+.Ar len ,
+the dotted decimal value will be used instead.
+This allows hosts with very long host names that
+overflow this field to still be uniquely identified.
+Specifying
+.Fl u0
+indicates that only dotted decimal addresses
+should be put into the
+.Pa utmp
+file.
 .It Fl Q
 Do not print an error message if RSA support is missing.
 .It Fl V Ar client_protocol_id

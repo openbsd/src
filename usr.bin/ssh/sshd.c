@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.124 2000/07/22 09:14:37 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.125 2000/08/17 20:06:34 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -133,6 +133,9 @@ unsigned char session_id[16];
 /* same for ssh2 */
 unsigned char *session_id2 = NULL;
 int session_id2_len = 0;
+
+/* record remote hostname or ip */
+unsigned int utmp_len = MAXHOSTNAMELEN;
 
 /* Prototypes for various functions defined later in this file. */
 void do_ssh1_kex();
@@ -462,7 +465,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:diqQ46")) != EOF) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:diqQ46")) != EOF) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -509,6 +512,9 @@ main(int ac, char **av)
 			/* only makes sense with inetd_flag, i.e. no listen() */
 			inetd_flag = 1;
 			break;
+		case 'u':
+			utmp_len = atoi(optarg);
+			break;
 		case '?':
 		default:
 			fprintf(stderr, "sshd version %s\n", SSH_VERSION);
@@ -524,6 +530,7 @@ main(int ac, char **av)
 			fprintf(stderr, "  -b bits    Size of server RSA key (default: 768 bits)\n");
 			fprintf(stderr, "  -h file    File from which to read host key (default: %s)\n",
 			    HOST_KEY_FILE);
+			fprintf(stderr, "  -u len     Maximum hostname length for utmp recording\n");
 			fprintf(stderr, "  -4         Use IPv4 only\n");
 			fprintf(stderr, "  -6         Use IPv6 only\n");
 			exit(1);
