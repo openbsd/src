@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.30 2000/06/23 16:15:49 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.31 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.30 2000/06/23 16:15:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.31 2000/06/23 16:18:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1097,7 +1097,7 @@ Job_CheckCommands(gn, abortProc)
 	     * .DEFAULT itself.
 	     */
 	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn), gn);
+	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
 	} else if (Dir_MTime(gn) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.31 2000/06/23 16:15:50 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.32 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.31 2000/06/23 16:15:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.32 2000/06/23 16:18:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1659,8 +1659,8 @@ SuffFindArchiveDeps(gn, slst)
     /*
      * Set the other two local variables required for this target.
      */
-    Var_Set (MEMBER, name, gn);
-    Var_Set (ARCHIVE, gn->name, gn);
+    Varq_Set(MEMBER_INDEX, name, gn);
+    Varq_Set(ARCHIVE_INDEX, gn->name, gn);
 
     if (ms != NULL) {
 	/*
@@ -1881,10 +1881,10 @@ SuffFindNormalDeps(gn, slst)
      * if it's only a source, it doesn't matter what we put here as far
      * as expanding sources is concerned, since it has none...
      */
-    Var_Set(TARGET, gn->name, gn);
+    Varq_Set(TARGET_INDEX, gn->name, gn);
 
     pref = (targ != NULL) ? targ->pref : gn->name;
-    Var_Set(PREFIX, pref, gn);
+    Varq_Set(PREFIX_INDEX, pref, gn);
 
     /*
      * Now we've got the important local variables set, expand any sources
@@ -1911,7 +1911,7 @@ sfnd_abort:
 				     &targ->suff->searchPath));
 	    if (gn->path != NULL) {
 		char *ptr;
-		Var_Set(TARGET, gn->path, gn);
+		Varq_Set(TARGET_INDEX, gn->path, gn);
 
 		if (targ != NULL) {
 		    /*
@@ -1931,7 +1931,7 @@ sfnd_abort:
 		    else
 			ptr = gn->path;
 
-		    Var_Set(PREFIX, ptr, gn);
+		    Varq_Set(PREFIX_INDEX, ptr, gn);
 
 		    gn->path[savep] = savec;
 		} else {
@@ -1946,7 +1946,7 @@ sfnd_abort:
 		    else
 			ptr = gn->path;
 
-		    Var_Set(PREFIX, ptr, gn);
+		    Varq_Set(PREFIX_INDEX, ptr, gn);
 		}
 	    }
 	} else {
@@ -2039,9 +2039,9 @@ sfnd_abort:
 	     */
 	    targ->node->type |= OP_DEPS_FOUND;
 
-	    Var_Set(PREFIX, targ->pref, targ->node);
+	    Varq_Set(PREFIX_INDEX, targ->pref, targ->node);
 
-	    Var_Set(TARGET, targ->node->name, targ->node);
+	    Varq_Set(TARGET_INDEX, targ->node->name, targ->node);
 	}
     }
 
@@ -2147,14 +2147,14 @@ SuffFindDeps (gn, slst)
 	    Arch_FindLib(gn, &s->searchPath);
 	} else {
 	    gn->suffix = NULL;
-	    Var_Set (TARGET, gn->name, gn);
+	    Varq_Set(TARGET_INDEX, gn->name, gn);
 	}
 	/*
 	 * Because a library (-lfoo) target doesn't follow the standard
 	 * filesystem conventions, we don't set the regular variables for
 	 * the thing. .PREFIX is simply made empty...
 	 */
-	Var_Set(PREFIX, "", gn);
+	Varq_Set(PREFIX_INDEX, "", gn);
     } else {
 	SuffFindNormalDeps(gn, slst);
     }

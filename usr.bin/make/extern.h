@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2000/06/17 14:40:28 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -144,9 +144,13 @@ void Targ_PrintGraph __P((int));
 /* var.c */
 void Var_Delete __P((char *, GNode *));
 void Var_Set __P((char *, char *, GNode *));
+void Varq_Set __P((int, char *, GNode *));
 void Var_Append __P((char *, char *, GNode *));
+void Varq_Append __P((int, char *, GNode *));
 Boolean Var_Exists __P((char *, GNode *));
+Boolean Varq_Exists __P((int, GNode *));
 char *Var_Value __P((char *, GNode *));
+char *Varq_Value __P((int,  GNode *));
 char *Var_Parse __P((char *, GNode *, Boolean, size_t *, Boolean *));
 char *Var_Subst __P((char *, GNode *, Boolean));
 void Var_SubstVar __P((Buffer, char *, const char *, GNode *));

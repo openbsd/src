@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.33 2000/06/17 14:38:20 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.34 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.33 2000/06/17 14:38:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.34 2000/06/23 16:18:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,52 @@ static char rcsid[] = "$OpenBSD: var.c,v 1.33 2000/06/17 14:38:20 espie Exp $";
 #include    <stdlib.h>
 #include    "make.h"
 #include    "buf.h"
+
+/* `Quick' index variants.  For now, these are stubs which call the `real'
+ * slow function.
+ */
+static char *varnames[] = {
+    TARGET,
+    OODATE,
+    ALLSRC,
+    IMPSRC,
+    PREFIX,
+    ARCHIVE,
+    MEMBER };
+
+void 
+Varq_Set(idx, val, gn)
+    int 	idx;
+    char 	*val;
+    GNode 	*gn;
+{
+    Var_Set(varnames[idx], val, gn);
+}
+
+void 
+Varq_Append(idx, val, gn)
+    int		idx;
+    char	*val;
+    GNode	*gn;
+{
+    Var_Append(varnames[idx], val, gn);
+}
+
+char *
+Varq_Value(idx, gn)
+    int		idx;
+    GNode	*gn;
+{
+    return Var_Value(varnames[idx], gn);
+}
+
+Boolean
+Varq_Exists(idx, gn)
+    int		idx;
+    GNode	*gn;
+{
+    return Var_Exists(varnames[idx], gn);
+}
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst

@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.19 2000/06/23 16:15:50 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.20 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.19 2000/06/23 16:15:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.20 2000/06/23 16:18:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -399,7 +399,7 @@ Make_Update (cgn)
     register char  	*cname;	/* the child's name */
     register LstNode	ln; 	/* Element in parents and iParents lists */
 
-    cname = Var_Value(TARGET, cgn);
+    cname = Varq_Value(TARGET_INDEX, cgn);
 
     /*
      * If the child was actually made, see what its modification time is
@@ -515,14 +515,14 @@ Make_Update (cgn)
      * of this node.
      */
     {
-    char	*cpref = Var_Value(PREFIX, cgn);
+    char	*cpref = Varq_Value(PREFIX_INDEX, cgn);
 
 	Lst_Open(&cgn->iParents);
 	while ((ln = Lst_Next(&cgn->iParents)) != NULL) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (pgn->make) {
-		Var_Set (IMPSRC, cname, pgn);
-		Var_Set (PREFIX, cpref, pgn);
+		Varq_Set(IMPSRC_INDEX, cname, pgn);
+		Varq_Set(PREFIX_INDEX, cpref, pgn);
 	    }
 	}
 	Lst_Close(&cgn->iParents);
@@ -558,18 +558,17 @@ MakeAddAllSrc(cgnp, pgnp)
 	char *child;
 
 	if (OP_NOP(cgn->type) ||
-	    (child = Var_Value(TARGET, cgn)) == NULL) {
+	    (child = Varq_Value(TARGET_INDEX, cgn)) == NULL) {
 	    /*
 	     * this node is only source; use the specific pathname for it
 	     */
 	    child = cgn->path ? cgn->path : cgn->name;
 	}
 
-	Var_Append (ALLSRC, child, pgn);
+	Varq_Append(ALLSRC_INDEX, child, pgn);
 	if (pgn->type & OP_JOIN) {
-	    if (cgn->made == MADE) {
-		Var_Append(OODATE, child, pgn);
-	    }
+	    if (cgn->made == MADE)
+		Varq_Append(OODATE_INDEX, child, pgn);
 	} else if ((pgn->mtime < cgn->mtime) ||
 		   (cgn->mtime >= now && cgn->made == MADE))
 	{
@@ -589,7 +588,7 @@ MakeAddAllSrc(cgnp, pgnp)
 	     * since cgn->mtime is set to now in Make_Update. According to
 	     * some people, this is good...
 	     */
-	    Var_Append(OODATE, child, pgn);
+	    Varq_Append(OODATE_INDEX, child, pgn);
 	}
     }
 }
@@ -622,15 +621,13 @@ Make_DoAllVar (gn)
 {
     Lst_ForEach(&gn->children, MakeAddAllSrc, gn);
 
-    if (!Var_Exists (OODATE, gn)) {
-	Var_Set (OODATE, "", gn);
-    }
-    if (!Var_Exists (ALLSRC, gn)) {
-	Var_Set (ALLSRC, "", gn);
-    }
+    if (!Varq_Exists(OODATE_INDEX, gn))
+	Varq_Set(OODATE_INDEX, "", gn);
+    if (!Varq_Exists(ALLSRC_INDEX, gn))
+	Varq_Set(ALLSRC_INDEX, "", gn);
 
     if (gn->type & OP_JOIN)
-	Var_Set(TARGET, Var_Value(ALLSRC, gn), gn);
+	Varq_Set(TARGET_INDEX, Varq_Value(ALLSRC_INDEX, gn), gn);
 }
 
 /*-

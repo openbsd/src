@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.20 2000/06/17 14:40:29 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.21 2000/06/23 16:18:09 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -86,6 +86,14 @@
 
 #define OUT_OF_DATE INT_MIN
 
+/* Variables that are kept in local GNodes.  */
+#define TARGET_INDEX	0
+#define OODATE_INDEX	1
+#define ALLSRC_INDEX	2
+#define IMPSRC_INDEX	3
+#define PREFIX_INDEX	4
+#define ARCHIVE_INDEX   5
+#define MEMBER_INDEX    6
 /*-
  * The structure for an individual graph node. Each node has several
  * pieces of data associated with it.

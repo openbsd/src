@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.28 2000/06/17 14:38:14 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.29 2000/06/23 16:18:08 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.28 2000/06/17 14:38:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.29 2000/06/23 16:18:08 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ CompatInterrupt (signo)
     GNode   *gn;
 
     if ((curTarg != NULL) && !Targ_Precious (curTarg)) {
-	char 	  *file = Var_Value(TARGET, curTarg);
+	char 	  *file = Varq_Value(TARGET_INDEX, curTarg);
 
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed\n", file);
@@ -462,9 +462,8 @@ CompatMake(gnp, pgnp)
 	    return;
 	}
 
-	if (Lst_Member(&gn->iParents, pgn) != NULL) {
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn), pgn);
-	}
+	if (Lst_Member(&gn->iParents, pgn) != NULL)
+	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
 
 	/*
 	 * All the children were made ok. Now cmtime contains the modification
@@ -617,7 +616,7 @@ CompatMake(gnp, pgnp)
 	pgn->make = FALSE;
     } else {
 	if (Lst_Member(&gn->iParents, pgn) != NULL)
-	    Var_Set (IMPSRC, Var_Value(TARGET, gn), pgn);
+	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
 	switch(gn->made) {
 	    case BEINGMADE:
 		Error("Graph cycles through %s\n", gn->name);
