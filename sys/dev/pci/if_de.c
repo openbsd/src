@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.33 1998/08/28 06:31:23 rahnds Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.34 1998/09/09 04:05:36 rahnds Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4169,7 +4169,7 @@ tulip_txput(
 #if defined(__mips__)
 	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)addr, slen);
 #endif
-	    d_status = DESC_BO(TULIP_DSTS_OWNER);
+	    d_status = TULIP_DSTS_OWNER;
 	    len -= slen;
 	    addr += slen;
 #ifdef BIG_PACKET
