@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -177,6 +177,7 @@ int    kn_query(struct environment *, char **, int, char **, int *, int,
 
 /* Aux. routines */
 char **kn_read_asserts(char *, int, int *);
+int    kn_keycompare(void *, void *, int);
 
 /* ASCII-encoding API */
 int    kn_encode_base64(unsigned char const *, unsigned int, char *,

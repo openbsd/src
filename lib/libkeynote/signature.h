@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.h,v 1.1.1.1 1999/05/23 22:11:06 angelos Exp $ */
+/* $OpenBSD: signature.h,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -59,6 +59,5 @@
 
 int   keynote_get_key_algorithm(char *, int *, int *);
 int   keynote_sigverify_assertion(struct assertion *);
-int   keynote_keycompare(void *, void *, int);
 void  keynote_free_key(void *, int);
 #endif /* __SIGNATURE_H__ */

@@ -1,5 +1,3 @@
-# $OpenBSD: keynote-spec,v 1.1.1.1 1999/05/23 22:11:09 angelos Exp $
-
 Network Working Group                                         Matt Blaze
 INTERNET DRAFT                                           Joan Feigenbaum
 Expires in six months                                     John Ioannidis
@@ -293,7 +291,9 @@ Abstract
 
    Attribute names are of the form:
 
-       <AttributeID> ::= [a-zA-Z_][a-zA-Z0-9_]*
+       <AttributeID>:: {Any string starting with a-z, A-Z, or the
+                        underscore character, followed by any number of
+                        a-z, A-Z, 0-9, or underscore characters} ;
 
    That is, an <AttributeID> begins with an alphabetic or underscore
    character and can be followed by any number of alphanumerics and
@@ -362,10 +362,11 @@ Abstract
    For example, an email application might reserve the app_domain
    "RFC822-EMAIL" and might use the attributes named "address" (the
    email address of a message's sender), "name" (the human name of the
-   message sender), and "organization" (the organization name).  The
-   values of these attributes would be derived in the obvious way from
-   the email message headers.  The public key of the message's signer
-   would be given in the "_ACTION_AUTHORIZERS" attribute.
+   message sender), and any "organization" headers present (the
+   organization name).  The values of these attributes would be derived
+   in the obvious way from the email message headers.  The public key of
+   the message's signer would be given in the "_ACTION_AUTHORIZERS"
+   attribute.
 
    Note that "RFC822-EMAIL" is a hypothetical example; such a name may
    or may not appear in the actual registry with these or different
@@ -377,11 +378,17 @@ Abstract
 
    In the following sections, the notation [X]* means zero or more
    repetitions of character string X.  The notation [X]+ means one or
-   more repetitions of X.  Nonterminal grammar symbols are enclosed in
-   angled brackets.  Quoted strings in grammar productions represent
-   terminals.
+   more repetitions of X.  The notation <X>* means zero or more
+   repetitions of non-terminal <X>.  The notation <X>+ means one or more
+   repetitions of X, whereas <X>? means zero or one repetitions of X.
+   Nonterminal grammar symbols are enclosed in angled brackets.  Quoted
+   strings in grammar productions represent terminals.
 
 4.1  Basic Structure
+
+       <Assertion>:: <VersionField>? <AuthField> <LicenseesField>?
+                     <LocalConstantsField>? <ConditionsField>?
+                     <CommentField>? <SignatureField>? ;
 
    All KeyNote assertions are encoded in ASCII.
 
@@ -423,6 +430,8 @@ Abstract
 
 4.2  Comments
 
+       <Comment>:: "#" {ASCII characters} ;
+
    The octothorp character ("#", ASCII 35 decimal) can be used to
    introduce comments.  Outside of quoted strings (see Section 4.3), all
    characters from the "#" character through the end of the current line
@@ -433,10 +442,12 @@ Abstract
 
    A `string' is a lexical object containing a sequence of characters.
    Strings may contain any non-NUL characters, including newlines and
-   nonprinting characters.  Strings may be given as literals, computed
+   nonprintable characters.  Strings may be given as literals, computed
    from complex expressions, or dereferenced from attribute names.
 
 4.3.1  String Literals
+
+       <StringLiteral>:: "\"" {see description below} "\"" ;
 
    A string literal directly represents the value of a string.  String
    literals must be quoted by preceding and following them with the
@@ -487,11 +498,11 @@ Abstract
    4.4), and a string concatenation operator.  String expressions may be
    parenthesized.
 
-       <StrEx> ::= <StrEx> "." <StrEx>    /* String concatenation */
-                 | <StringLiteral>        /* Quoted string */
-                 | "(" <StrEx> ")"
-                 | <DerefAttribute>       /* See Section 4.4 */
-                 | "$" <StrEx>            /* See Section 4.4 */
+       <StrEx>:: <StrEx> "." <StrEx>    /* String concatenation */
+               | <StringLiteral>        /* Quoted string */
+               | "(" <StrEx> ")"
+               | <DerefAttribute>       /* See Section 4.4 */
+               | "$" <StrEx> ;          /* See Section 4.4 */
 
    The "$" operator has higher precedence than the "." operator.
 
@@ -513,7 +524,9 @@ Abstract
 
    Attributes converted to integer and floating point numbers are
    represented according to the ANSI C `long' and `float' types,
-   respectively.
+   respectively.  In particular, integers range from -2147483648 to
+   2147483647, whilst floats range from 1.17549435E-38F to
+   3.40282347E+38F.
 
    Any uninitialized attribute has the empty-string value when
    dereferenced as a string and the value zero when dereferenced as an
@@ -542,7 +555,7 @@ Abstract
 
    The <DerefAttribute> token is defined as:
 
-      <DerefAttribute> ::= <AttributeID>
+      <DerefAttribute>:: <AttributeID> ;
 
 4.5  Principal Identifiers
 
@@ -552,8 +565,8 @@ Abstract
    cryptographic keys that are used by KeyNote for credential signature
    verification.
 
-       <PrincipalIdentifier> ::= <OpaqueID>
-                               | <KeyID>
+       <PrincipalIdentifier>:: <OpaqueID>
+                             | <KeyID> ;
 
 4.5.1  Opaque Principal Identifiers
 
@@ -561,7 +574,7 @@ Abstract
    said to be `opaque.'  Opaque identifiers are encoded in assertions as
    strings (see Section 4.3):
 
-       <OpaqueID> ::= <StrEx>
+       <OpaqueID>:: <StrEx> ;
 
    Opaque identifier strings should not contain the ":" character.
 
@@ -571,13 +584,13 @@ Abstract
    verify credential signatures, are said to be `cryptographic.'
    Cryptographic identifiers are also lexically encoded as strings:
 
-       <KeyID> ::= <StrEx>
+       <KeyID>:: <StrEx> ;
 
    Unlike Opaque Identifiers, however, Cryptographic Identifier strings
    have a special form.  To be interpreted by KeyNote (for signature
    verification), an identifier string should be of the form:
 
-       ALGORITHM:ENCODEDBITS
+      <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
 
    "ALGORITHM" is an ASCII substring that describes the algorithms to be
    used in interpreting the key's bits.  The ALGORITHM identifies the
@@ -609,9 +622,9 @@ Abstract
    assertion language under which the assertion was written.  The
    KeyNote-Version field is of the form
 
-       <VersionField> ::= "KeyNote-Version:" <VersionString>
-       <VersionString> ::= <StringLiteral>
-                         | <IntegerLiteral>
+       <VersionField>:: "KeyNote-Version:" <VersionString> ;
+       <VersionString>:: <StringLiteral>
+                       | <IntegerLiteral> ;
 
    where <VersionString> is an ASCII-encoded string.  Assertions in
    production versions of KeyNote use decimal digits in the version
@@ -629,10 +642,9 @@ Abstract
    to make the Licensees field more readable.  The Local-Constants field
    is of the form:
 
-       <LocalConstantsField> ::= "Local-Constants:" <Assignments>
-       <Assignments> ::=   /* can be empty */
-                       | <AttributeID> "=" <StringLiteral>
-                       | <Assignments> <Assignments>
+       <LocalConstantsField>:: "Local-Constants:" <Assignments> ;
+       <Assignments>:: /* can be empty */
+                     | <AttributeID> "=" <StringLiteral> <Assignments> ;
 
    <AttributeID> is an attribute name from the action attribute
    namespace as defined in Section 3.  The name is available for use as
@@ -653,9 +665,9 @@ Abstract
    The Authorizer identifies the Principal issuing the assertion.  This
    field is of the form
 
-       <AuthField> ::= "Authorizer:" <AuthID>
-       <AuthID> ::= <PrincipalIdentifier>
-                  | <DerefAttribute>
+       <AuthField>:: "Authorizer:" <AuthID> ;
+       <AuthID>:: <PrincipalIdentifier>
+                | <DerefAttribute> ;
 
    The Principal Identifier may be given directly or by reference to the
    attribute namespace (as defined in Section 4.4).
@@ -667,23 +679,23 @@ Abstract
    authorization can be distributed across several principals through
    the use of `and' and threshold constructs.  This field is of the form
 
-       <LicenseesField> ::= "Licensees:" <LicenseesExpr>
+       <LicenseesField>:: "Licensees:" <LicenseesExpr> ;
 
-       <LicenseesExpr> ::=      /* can be empty */
-                         | <PrincExpr>
+       <LicenseesExpr>::      /* can be empty */
+                         | <PrincExpr> ;
 
-       <PrincExpr> ::= "(" <PrincExpr> ")"
+       <PrincExpr>:: "(" <PrincExpr> ")"
                      | <PrincExpr> "&&" <PrincExpr>
                      | <PrincExpr> "||" <PrincExpr>
                      | <K>"-of(" <PrincList> ")"        /* Threshold */
                      | <PrincipalIdentifier>
-                     | <DerefAttribute>
+                     | <DerefAttribute> ;
 
-       <PrincList> ::= <PrincipalIdentifier>
-                     | <DerefAttribute>
-                     | <PrincList> "," <PrincList>
+       <PrincList>:: <PrincipalIdentifier>
+                   | <DerefAttribute>
+                   | <PrincList> "," <PrincList> ;
 
-       <K> ::= [1-9][0-9]*
+       <K>:: {Decimal number starting with a digit from 1 to 9} ;
 
    The "&&" operator has higher precedence than the "||" operator.  <K>
    is an ASCII-encoded positive decimal integer.  If a <PrincList>
@@ -697,72 +709,72 @@ Abstract
    operate on the action attribute set.  The Conditions field is of the
    form:
 
-       <ConditionsField> ::= "Conditions:" <ConditionsProgram>
+       <ConditionsField>:: "Conditions:" <ConditionsProgram> ;
 
-       <ConditionsProgram> ::= /* Can be empty */
-                             | <Clause> ";" <ConditionsProgram>
+       <ConditionsProgram>:: /* Can be empty */
+                             | <Clause> ";" <ConditionsProgram> ;
 
-       <Clause> ::= <Test> "->" "{" <ConditionsProgram> "}"
-                  | <Test> "->" <Value>
-                  | <Test>
+       <Clause>:: <Test> "->" "{" <ConditionsProgram> "}"
+                | <Test> "->" <Value>
+                | <Test> ;
 
-       <Value> ::= <StrEx>
+       <Value>:: <StrEx> ;
 
-       <Test> ::= <RelExpr>
+       <Test>:: <RelExpr> ;
 
-       <RelExpr> ::= "(" <RelExpr> ")"        /* Parentheses */
-                   | <RelExpr> "&&" <RelExpr> /* Logical AND */
-                   | <RelExpr> "||" <RelExpr> /* Logical OR */
-                   | "!" <RelExpr>         /* Logical NOT */
-                   | <IntRelExpr>
-                   | <FloatRelExpr>
-                   | <StringRelExpr>
-                   | "true"        /* case insensitive */
-                   | "false"       /* case insensitive */
+       <RelExpr>:: "(" <RelExpr> ")"        /* Parentheses */
+                 | <RelExpr> "&&" <RelExpr> /* Logical AND */
+                 | <RelExpr> "||" <RelExpr> /* Logical OR */
+                 | "!" <RelExpr>         /* Logical NOT */
+                 | <IntRelExpr>
+                 | <FloatRelExpr>
+                 | <StringRelExpr>
+                 | "true"        /* case insensitive */
+                 | "false" ;     /* case insensitive */
 
-       <IntRelExpr> ::= <IntEx> "==" <IntEx>
-                      | <IntEx> "!=" <IntEx>
-                      | <IntEx> "<" <IntEx>
-                      | <IntEx> ">" <IntEx>
-                      | <IntEx> "<=" <IntEx>
-                      | <IntEx> ">=" <IntEx>
+       <IntRelExpr>:: <IntEx> "==" <IntEx>
+                    | <IntEx> "!=" <IntEx>
+                    | <IntEx> "<" <IntEx>
+                    | <IntEx> ">" <IntEx>
+                    | <IntEx> "<=" <IntEx>
+                    | <IntEx> ">=" <IntEx> ;
 
-       <FloatRelExpr> ::= <FloatEx> "<" <FloatEx>
-                        | <FloatEx> ">" <FloatEx>
-                        | <FloatEx> "<=" <FloatEx>
-                        | <FloatEx> ">=" <FloatEx>
+       <FloatRelExpr>:: <FloatEx> "<" <FloatEx>
+                      | <FloatEx> ">" <FloatEx>
+                      | <FloatEx> "<=" <FloatEx>
+                      | <FloatEx> ">=" <FloatEx> ;
 
-       <StringRelExpr> ::= <StrEx> "==" <StrEx>  /* String equality */
-                         | <StrEx> "!=" <StrEx>  /* String inequality */
-                         | <StrEx> "<" <StrEx>   /* Alphanum. comparisons */
-                         | <StrEx> ">" <StrEx>
-                         | <StrEx> "<=" <StrEx>
-                         | <StrEx> ">=" <StrEx>
-                         | <StrEx> "~=" <RegExpr>  /* Regular expr. matching */
+       <StringRelExpr>:: <StrEx> "==" <StrEx>  /* String equality */
+                       | <StrEx> "!=" <StrEx>  /* String inequality */
+                       | <StrEx> "<" <StrEx>   /* Alphanum. comparisons */
+                       | <StrEx> ">" <StrEx>
+                       | <StrEx> "<=" <StrEx>
+                       | <StrEx> ">=" <StrEx>
+                       | <StrEx> "~=" <RegExpr> ; /* Reg. expr. matching */
 
-       <IntEx> ::= <IntEx> "+" <IntEx>        /* Integer */
-                 | <IntEx> "-" <IntEx>
-                 | <IntEx> "*" <IntEx>
-                 | <IntEx> "/" <IntEx>
-                 | <IntEx> "%" <IntEx>
-                 | <IntEx> "^" <IntEx>        /* Exponentiation */
-                 | "-" <IntEx>
-                 | "(" <IntEx> ")"
-                 | <IntegerLiteral>
-                 | "@" <StrEx>
+       <IntEx>:: <IntEx> "+" <IntEx>        /* Integer */
+               | <IntEx> "-" <IntEx>
+               | <IntEx> "*" <IntEx>
+               | <IntEx> "/" <IntEx>
+               | <IntEx> "%" <IntEx>
+               | <IntEx> "^" <IntEx>        /* Exponentiation */
+               | "-" <IntEx>
+               | "(" <IntEx> ")"
+               | <IntegerLiteral>
+               | "@" <StrEx> ;
 
-       <FloatEx> ::= <FloatEx> "+" <FloatEx>  /* Floating point */
-                   | <FloatEx> "-" <FloatEx>
-                   | <FloatEx> "*" <FloatEx>
-                   | <FloatEx> "/" <FloatEx>
-                   | <FloatEx> "^" <FloatEx> /* Exponentiation */
-                   | "-" <FloatEx>
-                   | "(" <FloatEx> ")"
-                   | <FloatLiteral>
-                   | "&" <StrEx>
+       <FloatEx>:: <FloatEx> "+" <FloatEx>  /* Floating point */
+                 | <FloatEx> "-" <FloatEx>
+                 | <FloatEx> "*" <FloatEx>
+                 | <FloatEx> "/" <FloatEx>
+                 | <FloatEx> "^" <FloatEx> /* Exponentiation */
+                 | "-" <FloatEx>
+                 | "(" <FloatEx> ")"
+                 | <FloatLiteral>
+                 | "&" <StrEx> ;
 
-       <IntegerLiteral> ::= [0-9]+
-       <FloatLiteral> ::= [0-9]+\.[0-9]+
+       <IntegerLiteral>:: {Decimal number of at least one digit} ;
+       <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
 
        <StringLiteral> is a quoted string as defined in Section 4.3
        <AttributeID> is defined in Section 3.
@@ -776,6 +788,14 @@ Abstract
       {+, -, .}
 
    Operators in the same precedence class are evaluated left-to-right.
+
+   Note the inability to test for floating point equality,  as most
+   floating point implementations (hardware or otherwise) do not
+   guarantee accurate equality testing.
+
+   Also note that integer and floating point expressions can only be
+   used within clauses of condition fields, but in no other KeyNote
+   field.
 
    The keywords "true" and "false" are not reserved; they can be used as
    attribute or principal identifier names (although this practice makes
@@ -797,13 +817,13 @@ Abstract
    The Comment field allows assertions to be annotated with information
    describing their purpose.  It is of the form
 
-       <CommentField> ::= "Comment:" <text>
+       <CommentField>:: "Comment:" <text> ;
 
    No interpretation of the contents of this field is performed by
    KeyNote.  Note that this is one of two mechanisms for including
    comments in KeyNote assertions; comments can also be inserted
    anywhere in an assertion's body by preceeding them with the "#"
-   character.
+   character (except inside string literals).
 
 4.6.7  The Signature Field
 
@@ -811,13 +831,13 @@ Abstract
    encoded digital signature of the principal identified in the
    Authorizer field.  The Signature field is of the form:
 
-       <SignatureField> ::= "Signature:" <Signature>
+       <SignatureField>:: "Signature:" <Signature> ;
 
-       <Signature> ::= <StrEx>
+       <Signature>:: <StrEx> ;
 
    The <Signature> string should be of the form:
 
-       ALGORITHM:ENCODEDBITS
+       <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
 
    The formats of the "ALGORITHM" and "ENCODEDBITS" substrings are as
    described for Cryptographic Principal Identifiers in Section 4.4.2
@@ -1149,8 +1169,13 @@ Abstract
    down' approach starting at the POLICY assertions, and still others
    might employ other heuristics entirely.
 
+   Implementations are encouraged to employ mechanisms for recording
+   exceptions (such as division by zero or syntax error), and reporting
+   them to the invoking application if requested.  Such mechanisms are
+   outside the scope of this document.
 
-   6.  Examples
+
+6.  Examples
 
    In this section, we give examples of KeyNote assertions that might be
    used in hypothetical applications.  These examples are intended
@@ -1435,11 +1460,156 @@ Abstract
    security implications for any applications in which it is used.
 
 
-9.  Acknowledgments
+9. IANA Considerations
+
+   This document contains three identifiers to be maintained by the
+   IANA.  This section explains the criteria to be used by the IANA to
+   assign additional identifiers in each of these lists.
+
+9.1  app_domain Identifiers
+
+   The only requirement on IANA on allocation of these identifiers is
+   that they be unique strings.  These strings are case-sensitive for
+   KeyNote purposes, however it is strongly recommended that IANA
+   assigns different capitalizations of the same string only to the same
+   organization.
+
+
+9.2  Public Key Format Identifiers
+
+   These strings uniquely identify a public key algorithm as used in the
+   KeyNote system for representing keys.  Requests for assignment of new
+   identifiers must be accompanied by an RFC-style document which
+   describes the details of this encoding.  Example strings are "rsa-
+   hex:" and "dsa-base64:".  These strings are case-insensitive.
+
+9.3  Signature Algorithm Identifiers
+
+   These strings uniquely identify a public key algorithm as used in the
+   KeyNote system for representing public key signatures.  Requests for
+   assignment of new identifiers must be accompanied by an RFC-style
+   document which describes the details of this encoding. Example
+   strings are "sig-rsa-md5-hex:" and "sig-dsa-sha1-base64:".  Note that
+   all such strings must begin with the prefix "sig-".  These strings
+   are case-insensitive.
+
+
+A.  Acknowledgments
 
    We thank Lorrie Faith Cranor (AT&T Labs - Research) and Jonathan M.
    Smith (University of Pennsylvania) for their suggestions and comments
    on earlier versions of this.
+
+
+B.  Full BNF (alphabetical order)
+
+   <ALGORITHM>:: {see section 4.4.2} ;
+
+   <Assertion>:: <VersionField>? <AuthField> <LicenseesField>?
+                 <LocalConstantsField>? <ConditionsField>?
+                 <CommentField>? <SignatureField>? ;
+
+   <Assignments>:: "" | <AttributeID> "=" <StringLiteral> <Assignments>
+   ;
+
+   <AttributeID>:: {Any string starting with a-z, A-Z, or the
+                    underscore character, followed by any number of
+                    a-z, A-Z, 0-9, or underscore characters} ;
+
+   <AuthField>:: "Authorizer:" <AuthID> ;
+
+   <AuthID>:: <PrincipalIdentifier> | <DerefAttribute> ;
+
+   <Clause>:: <Test> "->" "{" <ConditionsProgram> "}"
+            | <Test> "->" <Value> | <Test> ;
+
+   <Comment>:: "#" {ASCII characters} ;
+
+   <CommentField>:: "Comment:" {Free-form text} ;
+
+   <ConditionsField>:: "Conditions:" <ConditionsProgram> ;
+
+   <ConditionsProgram>:: "" | <Clause> ";" <ConditionsProgram> ;
+
+   <DerefAttribute>:: <AttributeID> ;
+
+   <ENCODEDBITS>:: {see section 4.4.2} ;
+
+   <FloatEx>:: <FloatEx> "+" <FloatEx> | <FloatEx> "-" <FloatEx>
+             | <FloatEx> "*" <FloatEx> | <FloatEx> "/" <FloatEx>
+             | <FloatEx> "^" <FloatEx> | "-" <FloatEx>
+             | "(" <FloatEx> ")" | <FloatLiteral> | "&" <StrEx> ;
+
+   <FloatRelExpr>:: <FloatEx> "<" <FloatEx> | <FloatEx> ">" <FloatEx>
+                  | <FloatEx> "<=" <FloatEx>
+                  | <FloatEx> ">=" <FloatEx> ;
+
+   <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
+
+   <IDString>:: <ALGORITHM>":"<ENCODEDBITS> ;
+
+   <IntegerLiteral>:: {Decimal number of at least one digit} ;
+
+   <IntEx>:: <IntEx> "+" <IntEx> | <IntEx> "-" <IntEx>
+           | <IntEx> "*" <IntEx> | <IntEx> "/" <IntEx>
+           | <IntEx> "%" <IntEx> | <IntEx> "^" <IntEx>
+           | "-" <IntEx> | "(" <IntEx> ")" | <IntegerLiteral>
+           | "@" <StrEx> ;
+
+   <IntRelExpr>:: <IntEx> "==" <IntEx> | <IntEx> "!=" <IntEx>
+                | <IntEx> "<" <IntEx>  | <IntEx> ">" <IntEx>
+                | <IntEx> "<=" <IntEx> | <IntEx> ">=" <IntEx> ;
+
+   <K>:: {Decimal number starting with a digit from 1 to 9} ;
+
+   <KeyID>:: <StrEx> ;
+
+   <LicenseesExpr>:: "" | <PrincExpr> ;
+
+   <LicenseesField>:: "Licensees:" <LicenseesExpr> ;
+
+   <LocalConstantsField>:: "Local-Constants:" <Assignments> ;
+
+   <OpaqueID>:: <StrEx> ;
+
+   <PrincExpr>:: "(" <PrincExpr> ")" | <PrincExpr> "&&" <PrincExpr>
+               | <PrincExpr> "||" <PrincExpr>
+               | <K>"-of(" <PrincList> ")" | <PrincipalIdentifier>
+               | <DerefAttribute> ;
+
+   <PrincipalIdentifier>:: <OpaqueID> | <KeyID> ;
+
+   <PrincList>:: <PrincipalIdentifier> | <DerefAttribute>
+               | <PrincList> "," <PrincList> ;
+
+   <RegExpr>:: {POSIX 1003.2 Regular Expression}
+
+   <RelExpr>:: "(" <RelExpr> ")" | <RelExpr> "&&" <RelExpr>
+             | <RelExpr> "||" <RelExpr> | "!" <RelExpr>
+             | <IntRelExpr> | <FloatRelExpr> | <StringRelExpr>
+             | "true" | "false" ;
+
+   <Signature>:: <StrEx> ;
+
+   <SignatureField>:: "Signature:" <Signature> ;
+
+   <StrEx>:: <StrEx> "." <StrEx> | <StringLiteral> | "(" <StrEx> ")"
+           | <DerefAttribute> | "$" <StrEx> ;
+
+   <StringLiteral>:: {see section 4.3.1} ;
+
+   <StringRelExpr>:: <StrEx> "==" <StrEx> | <StrEx> "!=" <StrEx>
+                   | <StrEx> "<" <StrEx> | <StrEx> ">" <StrEx>
+                   | <StrEx> "<=" <StrEx> | <StrEx> ">=" <StrEx>
+                   | <StrEx> "~=" <RegExpr> ;
+
+   <Test>:: <RelExpr> ;
+
+   <Value>:: <StrEx> ;
+
+   <VersionField>:: "KeyNote-Version:" <VersionString> ;
+
+   <VersionString>:: <StringLiteral> | <IntegerLiteral> ;
 
 
 References
@@ -1477,6 +1647,7 @@ References
            Communications of the ACM, v21n2. pp 120-126.  February
            1978.
 
+
 Contacts
 
    Comments about this document should be discussed on the
@@ -1500,6 +1671,7 @@ Contacts
     200 S. 33rd Street
     Philadelphia, Pennsylvania  19104-6389
     Email: angelos@dsl.cis.upenn.edu
+
 
 Full Copyright Statement
 
@@ -1528,6 +1700,12 @@ Full Copyright Statement
    BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
    HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+
 
 
 

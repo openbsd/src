@@ -1,4 +1,4 @@
-/* $OpenBSD: aux.c,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
+/* $OpenBSD: aux.c,v 1.2 1999/05/25 21:42:20 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -116,7 +116,7 @@ keynote_in_action_authorizers(void *key, int algorithm)
 	 kl != (struct keylist *) NULL;
 	 kl = kl->key_next)
       if (kl->key_alg == alg)
-	if (keynote_keycompare(kl->key_key, s, alg) == RESULT_TRUE)
+	if (kn_keycompare(kl->key_key, s, alg) == RESULT_TRUE)
 	  return RESULT_TRUE;
 
     return RESULT_FALSE;
@@ -299,7 +299,7 @@ keynote_find_assertion(void *authorizer, int num, int algorithm)
 	 as = as->as_next)
       if ((as->as_authorizer != (void *) NULL) &&
 	  (as->as_signeralgorithm == algorithm))
-	if (keynote_keycompare(authorizer, as->as_authorizer, algorithm) ==
+	if (kn_keycompare(authorizer, as->as_authorizer, algorithm) ==
 	    RESULT_TRUE)
 	  if (num-- == 0)
 	    return as;

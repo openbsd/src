@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.1.1.1 1999/05/23 22:11:06 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -644,7 +644,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
  * RESULT_FALSE otherwise.
  */
 int
-keynote_keycompare(void *key1, void *key2, int algorithm)
+kn_keycompare(void *key1, void *key2, int algorithm)
 {
 #ifdef CRYPTO
     DSA *p1, *p2;

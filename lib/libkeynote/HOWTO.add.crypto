@@ -1,4 +1,4 @@
-# $OpenBSD: HOWTO.add.crypto,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $
+# $OpenBSD: HOWTO.add.crypto,v 1.2 1999/05/25 21:42:19 angelos Exp $
 
 This document describes how to add support for digital signature algorithms,
 hash functions, and ASCII encoding mechanisms in this implementation.
@@ -28,7 +28,7 @@ For a signature algorithm:
     the new algorithm's structure for storing a key (use the DSA
     code as a guide).
   - Similarly for kn_encode_key()
-  - In keynote_keycompare(), add code that compares two keys and
+  - In kn_keycompare(), add code that compares two keys and
     returns RETURN_TRUE if they are equal, and RETURN_FALSE otherwise.
   - In keynote_signverify_assertion, add code that verifies a
     signature for the new algorithm.

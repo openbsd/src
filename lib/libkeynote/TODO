@@ -1,6 +1,7 @@
-# $OpenBSD: TODO,v 1.1.1.1 1999/05/23 22:11:03 angelos Exp $
+# $OpenBSD: TODO,v 1.2 1999/05/25 21:42:20 angelos Exp $
 
 Short term TODOs:
+	- Single manpage for utilities
 	- More interesting/comprehensive testsuite
 	- Add the proper RFC reference to the manpages and README
 	- Write key/signature algorithm draft(s)
