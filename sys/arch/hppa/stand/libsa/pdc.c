@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.3 1998/09/29 07:27:02 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.4 1998/10/30 19:40:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -273,26 +273,22 @@ pdc_findev(unit, class)
 	int unit, class;
 {
 	static struct pz_device pz;
-	iodcio_t iodc;
-	struct pdc_memmap memmap;
-	struct iodc_data mptr;
-	int layers[6];
+	int layers[sizeof(pz.pz_layers)/sizeof(pz.pz_layers[0])];
+	register iodcio_t iodc;
 	register struct iomod *io;
-	register int i, err, stp;
+	register int err = 0;
 
 #ifdef	PDCDEBUG
 	if (debug)
 		printf("pdc_finddev(%d, %x)\n", unit, class);
 #endif
 	iodc = (iodcio_t)(PAGE0->mem_free + IODC_MAXSIZE);
-	err = 0;
-	io = NULL;
+	io = PAGE0->mem_boot.pz_hpa;
 
 	/* quick hack for boot device */
 	if (PAGE0->mem_boot.pz_class == class &&
 	    (unit == -1 || PAGE0->mem_boot.pz_layers[0] == unit)) {
 
-		io = PAGE0->mem_boot.pz_hpa;
 		bcopy (&PAGE0->mem_boot.pz_dp, &pz.pz_dp, sizeof(pz.pz_dp));
 		bcopy (pz.pz_layers, layers, sizeof(layers));
 		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
@@ -304,6 +300,9 @@ pdc_findev(unit, class)
 			return NULL;
 		}
 	} else {
+		struct pdc_memmap memmap;
+		struct iodc_data mptr;
+		register int i, stp;
 
 		for (i = 0; i < 0xf; i++) {
 			pz.pz_bc[0] = pz.pz_bc[1] =
@@ -373,7 +372,7 @@ pdc_findev(unit, class)
 
 	if (err >= 0) {
 		/* init device */
-		if ((err = (iodc)(io, IODC_INIT_DEV, io->io_spa,
+		if (0  && (err = (iodc)(io, IODC_INIT_DEV, io->io_spa,
 				  layers, pdcbuf, 0, 0, 0, 0)) < 0) {
 #ifdef DEBUG
 			if (debug)
@@ -381,6 +380,7 @@ pdc_findev(unit, class)
 #endif
 			return NULL;
 		}
+
 		/* read i/o entry code */
 		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
 			  	IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
@@ -392,11 +392,12 @@ pdc_findev(unit, class)
 		}
 
 		pz.pz_flags = 0;
-		bcopy(layers, pz.pz_layers, sizeof(layers));
+		bcopy(layers, pz.pz_layers, sizeof(pz.pz_layers));
 		pz.pz_hpa = io;
-		pz.pz_spa = io->io_spa;
+/* XXX		pz.pz_spa = io->io_spa; */
 		pz.pz_iodc_io = iodc;
 		pz.pz_class = class;
+
 		return &pz;
 	}
 
