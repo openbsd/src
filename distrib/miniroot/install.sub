@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.346 2004/07/17 03:46:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.347 2004/07/18 00:46:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -682,8 +682,6 @@ enable_network() {
 		fi
 	done
 
-	DIDNET=y
-
 	# Set the address for the loopback interface. Bringing the
 	# interface up, automatically invokes the IPv6 address ::1.
 	ifconfig lo0 inet 127.0.0.1
@@ -927,8 +925,6 @@ ftp_error() {
 #	and _ftp_active must be global.
 install_url() {
 	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
-
-	donetconfig
 
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
 	    "${ftp_proxy:-none}"
@@ -1250,8 +1246,6 @@ install_nfs() {
 		echo "/sbin/mount_nfs not found. Cannot mount NFS filesystems."
 		return
 	fi
-
-	donetconfig
 
 	# Get the IP address of the server
 	ask_until "Server IP address or hostname?" "$_nfs_server_ip"
@@ -1602,10 +1596,6 @@ get_fqdn() {
 
 donetconfig() {
 	local _dn _ns
-
-	[[ -n $DIDNET ]] && return
-
-	DIDNET=y
 
 	configure_ifs
 
