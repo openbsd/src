@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.179 2001/12/11 03:08:47 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.180 2001/12/18 00:14:20 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1245,6 +1245,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (newrule->ifname[0]) {
 				newrule->ifp = ifunit(newrule->ifname);
 				if (newrule->ifp == NULL) {
+					pool_put(&pf_rule_pl, newrule);
+					error = EINVAL;
+					break;
+				}
+			}
+			newrule->rt_ifp = NULL;
+			if (newrule->rt_ifname[0]) {
+				newrule->rt_ifp = ifunit(newrule->rt_ifname);
+				if (newrule->rt_ifname == NULL) {
 					pool_put(&pf_rule_pl, newrule);
 					error = EINVAL;
 					break;
