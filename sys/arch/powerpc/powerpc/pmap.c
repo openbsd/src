@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2001/02/16 05:18:06 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2001/02/20 04:29:08 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -67,6 +67,10 @@ static int npgs;
 static u_int nextavail;
 
 static struct mem_region *mem, *avail;
+
+#ifndef UVM
+	extern vm_offset_t pager_sva, pager_eva;
+#endif
 
 #if 1
 void
@@ -1544,6 +1548,15 @@ pmap_page_protect(pa, prot)
 	while (pv->pv_idx != -1) {
 		va = pv->pv_va;
 		pm = pv->pv_pmap;
+#ifdef UVM
+		if ((va >=uvm.pager_sva) && (va < uvm.pager_eva)) {
+				continue;
+		}
+#else
+		if (va >= pager_sva && va < pager_eva) {
+				continue;
+		}
+#endif
 		pmap_remove(pm, va, va + NBPG);
 	}
 	splx(s);
