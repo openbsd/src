@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.780 2004/10/20 13:06:43 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -238,6 +238,7 @@ vendor	VMWARE		0x15ad	VMware
 vendor	NDC		0x15e8	National Datacomm Corp
 vendor	EUMITCOM	0x1638	Eumitcom
 vendor	NETSEC		0x1660	NetSec
+vendor	SAMSUNG		0x167d	Samsung
 vendor	ATHEROS		0x168c	Atheros
 vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
@@ -269,6 +270,7 @@ vendor	ATRONICS	0x907f	Atronics
 vendor	NETMOS		0x9710	NetMos
 vendor	TIGERJET	0xe159	TigerJet Network
 vendor	ENDACE		0xeace	Endace
+vendor	BELKIN		0xec80	Belkin Components
 vendor	ARC		0xedd8	ARC Logic
 vendor	INVALID		0xffff	INVALID VENDOR ID
 
@@ -398,6 +400,7 @@ product ACCTON EN1217		0x1217	EN1217
 /* Addtron products */
 product ADDTRON 8139		0x1360	rtl8139
 product ADDTRON RHINEII		0x1320	RhineII
+product ADDTRON AWA100		0x7001	AWA-100
 
 /* Acer products */
 product ACER M1435		0x1435	M1435 VL-PCI
@@ -753,6 +756,9 @@ product AVM FRITZ_CARD		0x0a00	Fritz ISDN
 product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz v2.0 ISDN
 product AVM B1			0x0700	BRI ISDN
 product AVM T1			0x1200	PRI T1 ISDN
+
+/* Belkin Components products */
+product BELKIN F5D6000		0xec00	F5D6000
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	VME 617
@@ -1110,6 +1116,7 @@ product FORTEMEDIA FM801	0x0801	801 Sound
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 
 /* Global Sun Technology products */
+product GLOBALSUN GL24110P03	0x1100	GL24110P03
 product GLOBALSUN GL24110P	0x1101	GL24110P
 product GLOBALSUN GL24110P02	0x1102	GL24110P02
 
@@ -1482,6 +1489,7 @@ product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
 product INTERPHASE 5526		0x0004	5526 FibreChannel
 
 /* Intersil products */
+product INTERSIL ISL3872	0x3872	PRISM3
 product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5
 
 /* Invertex */
@@ -1544,6 +1552,9 @@ product LINKSYS PCM200		0xab09	PCM200
 /* Lite-On Communications */
 product LITEON PNIC		0x0002	PNIC
 product LITEON PNICII		0xc115	PNIC-II
+
+/* Longshine products */
+product GLOBALSUN 8031		0x1103	8031
 
 /* Lucent products */
 product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
@@ -2138,6 +2149,9 @@ product S3 SONICVIBES		0xca00	SonicVibes
 
 /* SafeNet products */
 product SAFENET SAFEXCEL	0x1141	SafeXcel
+
+/* Samsung products */
+product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH GE	0x4300	984x GE
