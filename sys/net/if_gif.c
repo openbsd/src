@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.1 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.2 2000/01/07 19:28:48 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,25 +33,15 @@
  * gif.c
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#if defined(__FreeBSD__) || __FreeBSD__ >= 3
-/*nothing*/
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <machine/cpu.h>
@@ -89,11 +79,7 @@
 
 #if NGIF > 0
 
-#ifdef __FreeBSD__
-void gifattach __P((void *));
-#else
 void gifattach __P((int));
-#endif
 
 /*
  * gif global variable definitions
@@ -103,11 +89,7 @@ struct gif_softc *gif = 0;
 
 void
 gifattach(dummy)
-#ifdef __FreeBSD__
-	void *dummy;
-#else
 	int dummy;
-#endif
 {
 	register struct gif_softc *sc;
 	register int i;
@@ -115,12 +97,7 @@ gifattach(dummy)
 	gif = sc = malloc (ngif * sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
 	bzero(sc, ngif * sizeof(struct gif_softc));
 	for (i = 0; i < ngif; sc++, i++) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(sc->gif_if.if_xname, "gif%d", i);
-#else
-		sc->gif_if.if_name = "gif";
-		sc->gif_if.if_unit = i;
-#endif
 		sc->gif_if.if_mtu    = GIF_MTU;
 		sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 		sc->gif_if.if_ioctl  = gif_ioctl;
@@ -128,18 +105,11 @@ gifattach(dummy)
 		sc->gif_if.if_type   = IFT_GIF;
 		if_attach(&sc->gif_if);
 #if NBPFILTER > 0
-#ifdef HAVE_OLD_BPF
-		bpfattach(&sc->gif_if, DLT_NULL, sizeof(u_int));
-#else
-		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL, sizeof(u_int));
-#endif
+		bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL,
+			  sizeof(u_int));
 #endif
 	}
 }
-
-#ifdef __FreeBSD__
-PSEUDO_SET(gifattach, if_gif);
-#endif
 
 int
 gif_output(ifp, m, dst, rt)
@@ -169,16 +139,10 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	getmicrotime(&ifp->if_lastchange);
-#else
 	ifp->if_lastchange = time;	
-#endif
+
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
-#if 0	    
-	    sc->gif_flags & GIFF_INUSE ||
-#endif
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
 		m_freem(m);
 		error = ENETDOWN;
@@ -201,19 +165,11 @@ gif_output(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
-#ifdef HAVE_OLD_BPF
-		bpf_mtap(ifp, &m0);
-#else
 		bpf_mtap(ifp->if_bpf, &m0);
-#endif
 	}
 #endif
 	ifp->if_opackets++;	
 	ifp->if_obytes += m->m_pkthdr.len;
-#if 0
-	s = splnet();
-	sc->gif_flags |= GIFF_INUSE;
-#endif
 
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
@@ -230,10 +186,6 @@ gif_output(ifp, m, dst, rt)
 		m_freem(m);		
 		error = ENETDOWN;
 	}
-#if 0
-	sc->gif_flags &= ~GIFF_INUSE;
-	splx(s);
-#endif
 
   end:
 	called = 0;		/* reset recursion counter */
@@ -275,11 +227,7 @@ gif_input(m, af, gifp)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
-#ifdef HAVE_OLD_BPF
-		bpf_mtap(gifp, &m0);
-#else
 		bpf_mtap(gifp->if_bpf, &m0);
-#endif
 	}
 #endif /*NBPFILTER > 0*/
 
@@ -334,11 +282,7 @@ gif_input(m, af, gifp)
 int
 gif_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-	int cmd;
-#else
 	u_long cmd;
-#endif
 	caddr_t data;
 {
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
@@ -355,7 +299,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -369,30 +312,7 @@ gif_ioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-#endif /*not FreeBSD3*/
 		break;
-
-#ifdef	SIOCSIFMTU /* xxx */
-#ifndef __OpenBSD__
-	case SIOCGIFMTU:
-		break;
-	case SIOCSIFMTU:
-		{
-#ifdef __bsdi__
-			short mtu;
-			mtu = *(short *)ifr->ifr_data;
-#else
-			u_long mtu;
-			mtu = ifr->ifr_mtu;
-#endif
-			if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX) {
-				return (EINVAL);
-			}
-			ifp->if_mtu = mtu;
-		}
-		break;
-#endif
-#endif /* SIOCSIFMTU */
 
 	case SIOCSIFPHYADDR:
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.h,v 1.1 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: if_gif.h,v 1.2 2000/01/07 19:28:49 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,14 +37,8 @@
 #define _NET_IF_GIF_H_
 
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_inet.h"
-#endif
-#endif
-
 #include <netinet/in.h>
-/* xxx sigh, why route have struct route instead of pointer? */
+/* XXX sigh, why route have struct route instead of pointer? */
 
 struct gif_softc {
 	struct ifnet	gif_if;	   /* common area */
@@ -77,10 +71,5 @@ extern struct gif_softc *gif;
 void gif_input __P((struct mbuf *, int, struct ifnet *));
 int gif_output __P((struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *));
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-int gif_ioctl __P((struct ifnet *, int, caddr_t));
-#else
 int gif_ioctl __P((struct ifnet *, u_long, caddr_t));
-#endif
-
 #endif /* _NET_IF_GIF_H_ */
