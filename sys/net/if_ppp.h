@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.h,v 1.4 1997/09/05 04:26:59 millert Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.5 2000/03/21 23:31:27 mickey Exp $	*/
 /*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
@@ -125,10 +125,6 @@ struct ifpppcstatsreq {
  */
 #define SIOCGPPPSTATS	_IOWR('i', 123, struct ifpppstatsreq)
 #define SIOCGPPPCSTATS	_IOWR('i', 122, struct ifpppcstatsreq)
-
-#if !defined(ifr_mtu)
-#define ifr_mtu	ifr_ifru.ifru_metric
-#endif
 
 #ifdef _KERNEL
 void pppattach __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.28 2000/03/12 03:54:43 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.29 2000/03/21 23:31:26 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -697,6 +697,10 @@ ifioctl(so, cmd, data, p)
 		ifr->ifr_metric = ifp->if_metric;
 		break;
 
+	case SIOCGIFMTU:
+		ifr->ifr_mtu = ifp->if_mtu;
+		break;
+
 	case SIOCGIFDATA:
 		error = copyout((caddr_t)&ifp->if_data, ifr->ifr_data,
 		    sizeof(ifp->if_data));
@@ -726,6 +730,28 @@ ifioctl(so, cmd, data, p)
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
 		break;
+
+	case SIOCSIFMTU:
+	{
+#ifdef INET6
+		int oldmtu = ifp->if_mtu;
+#endif
+
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		if (ifp->if_ioctl == NULL)
+			return (EOPNOTSUPP);
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+
+		/*
+		 * If the link MTU changed, do network layer specific procedure.
+		 */
+#ifdef INET6
+		if (ifp->if_mtu != oldmtu)
+			nd6_setmtu(ifp);
+#endif
+		break;
+	}
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.28 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.29 2000/03/21 23:31:27 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -306,18 +306,9 @@ tun_ioctl(ifp, cmd, data)
 		tuninit((struct tun_softc *)(ifp->if_softc));
 		TUNDEBUG(("%s: broadcast address set\n", ifp->if_xname));
 		break;
-#if 0
 	case SIOCSIFMTU:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
-		((struct tun_softc *)(ifp->if_softc))->tun_if.if_mtu
-			= ((struct ifreq *)data)->ifr_mtu;
+		ifp->if_mtu = ((struct ifreq *)data)->ifr_mtu;
 		break;
-	case SIOCGIFMTU:
-		((struct ifreq *)data)->ifr_mtu =
-			((struct tun_softc *)(ifp->if_softc))->tun_if.if_mtu;
-		break;
-#endif
 	case SIOCSIFFLAGS:
 		break;
 	default:
