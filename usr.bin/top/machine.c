@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.5 1997/08/24 18:37:46 millert Exp $	*/
+/*	$OpenBSD: machine.c,v 1.6 1997/09/09 14:58:21 millert Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <err.h>
 #include <nlist.h>
 #include <math.h>
 #include <kvm.h>
@@ -206,24 +208,22 @@ struct statics *statics;
 {
     register int i = 0;
     register int pagesize;
+    char errbuf[_POSIX2_LINE_MAX];
 
-    if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
-	return -1;
-
+    if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == NULL) {
+	warnx("%s", errbuf);
+	return(-1);
+    }
 
     /* get the list of symbols we want to access in the kernel */
-    (void) kvm_nlist(kd, nlst);
-    if (nlst[0].n_type == 0)
-    {
-	fprintf(stderr, "top: nlist failed\n");
+    if (kvm_nlist(kd, nlst) <= 0) {
+	warnx("nlist failed");
 	return(-1);
     }
 
     /* make sure they were all found */
     if (i > 0 && check_nlist(nlst) > 0)
-    {
 	return(-1);
-    }
 
     /* get the symbol values out of kmem */
     (void) getkval(nlst[X_HZ].n_value,     (int *)(&hz),	sizeof(hz),
@@ -302,7 +302,7 @@ struct system_info *si;
 	static int mib[] = { CTL_VM, VM_LOADAVG };
 
 	if (sysctl(mib, 2, &sysload, &size, NULL, 0) < 0) {
-	    (void) fprintf(stderr, "top: sysctl failed: %s\n", strerror(errno));
+	    warn("sysctl failed");
 	    bzero(&total, sizeof(total));
 	}
 
@@ -322,7 +322,7 @@ struct system_info *si;
 
 	/* get total -- systemwide main memory usage structure */
 	if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-	    (void) fprintf(stderr, "top: sysctl failed: %s\n", strerror(errno));
+	    warn("sysctl failed");
 	    bzero(&total, sizeof(total));
 	}
 	/* convert memory stats to Kbytes */
@@ -373,12 +373,15 @@ int (*compare) __P((const void *, const void *));
     int show_command;
 
     
-    pbase = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc);
+    if ((pbase = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc)) == NULL) {
+	warnx("%s", kvm_geterr(kd));
+	quit(23);
+    }
     if (nproc > onproc)
 	pref = (struct kinfo_proc **) realloc(pref, sizeof(struct kinfo_proc *)
 		* (onproc = nproc));
-    if (pref == NULL || pbase == NULL) {
-	(void) fprintf(stderr, "top: Out of memory.\n");
+    if (pref == NULL) {
+	warnx("Out of memory.");
 	quit(23);
     }
     /* get a pointer to the states summary array */
@@ -571,8 +574,7 @@ char *refstr;
 	}
 	else
 	{
-	    fprintf(stderr, "top: kvm_read for %s: %s\n",
-		refstr, strerror(errno));
+	    warn("kvm_read for %s", refstr);
 	    quit(23);
 	}
     }
