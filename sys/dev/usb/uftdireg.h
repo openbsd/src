@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdireg.h,v 1.9 2004/07/11 07:17:58 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdireg.h,v 1.10 2005/03/12 21:38:48 tdeval Exp $ 	*/
 /*	$NetBSD: uftdireg.h,v 1.6 2002/07/11 21:14:28 augustss Exp $ */
 
 /*
@@ -8,8 +8,8 @@
  * The device is based on the FTDI FT8U100AX chip. It has a DB25 on one side,
  * USB on the other.
  *
- * Thanx to FTDI (http://www.ftdi.co.uk) for so kindly providing details
- * of the protocol required to talk to the device and ongoing assistence
+ * Thanks to FTDI (http://www.ftdi.co.uk) for so kindly providing details
+ * of the protocol required to talk to the device and ongoing assistance
  * during development.
  *
  * Bill Ryder - bryder@sgi.com of Silicon Graphics, Inc. is the original
@@ -187,7 +187,7 @@ enum {
  *   BmRequestType:  0100 0000b
  *   bRequest:       FTDI_SIO_SET_FLOW_CTRL
  *   wValue:         Xoff/Xon
- *   wIndex:         Protocol/Port - hIndex is protocl / lIndex is port
+ *   wIndex:         Protocol/Port - hIndex is protocol / lIndex is port
  *   wLength:        0
  *   Data:           None
  *
