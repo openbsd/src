@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.53 2004/06/06 22:45:32 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.54 2004/06/30 13:59:08 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -859,6 +859,7 @@ The address macro identifies an address construct
 of the form addr1[,addr2[,addr3]].
 .Pp
 .Dl Usage: .Ad address ... \*(Pu
+.Pp
 .Bl -tag -width ".Ad f1 , f2 , f3 :" -compact -offset 14n
 .It Li \&.Ad addr1
 .Ad addr1
@@ -884,6 +885,7 @@ argument macro may be used whenever
 a command line argument is referenced.
 .Pp
 .Dl Usage: .Ar argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Ar file1 file2" -compact -offset 15n
 .It Li \&.Ar
 .Ar
@@ -958,6 +960,7 @@ by the macro
 .Ql \&.Dv .
 .Pp
 .Dl Usage: .Dv defined_variable ... \*(Pu
+.Pp
 .Bl -tag -width ".Dv MAXHOSTNAMELEN" -compact -offset 14n
 .It Li ".Dv MAXHOSTNAMELEN"
 .Dv MAXHOSTNAMELEN
@@ -976,6 +979,7 @@ The
 macro specifies an environment variable.
 .Pp
 .Dl Usage: .Ev argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Ev PRINTER ) ) ," -compact -offset 14n
 .It Li \&.Ev DISPLAY
 .Ev DISPLAY
@@ -1005,6 +1009,7 @@ general text domain macro, as it would be used in
 a section two manual page.
 .Pp
 .Dl Usage: .Er ERRNOTYPE ... \*(Pu
+.Pp
 .Bl -tag -width ".Bq Er ENOTDIR" -compact -offset 14n
 .It Li \&.Er ENOENT
 .Er ENOENT
@@ -1055,6 +1060,7 @@ are not prepended with a dash, the
 macro is identical, but without the dash.
 .Pp
 .Dl Usage: .Fl argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Fl \-s \-t \-v" -compact -offset 14n
 .It Li \&.Fl
 .Fl
@@ -1087,6 +1093,7 @@ macro is modeled on ANSI C conventions.
 .Bd -literal
 Usage: .Fn [type] function [[type] parameters ... \*(Pu]
 .Ed
+.Pp
 .Bl -tag -width ".Fn .int align. .const * char *sptrsxx" -compact
 .It Li "\&.Fn getchar"
 .Fn getchar
@@ -1194,6 +1201,7 @@ must be used.
 may also be used to refer to structure members.
 .Pp
 .Dl Usage: .Fa function_argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Fa d_namlen\ )\ )\ ," -compact -offset 14n
 .It Li \&.Fa d_namlen\ )\ )\ ,
 .Fa d_namlen ) ) ,
@@ -1241,6 +1249,7 @@ of a section two or three man page by forcing the
 function name to appear on the next line.
 .Pp
 .Dl Usage: .Ft type ... \*(Pu
+.Pp
 .Bl -tag -width "\&.Ft struct stat" -offset 14n -compact
 .It Li \&.Ft struct stat
 .Ft struct stat
@@ -1255,6 +1264,7 @@ The
 macro designates an interactive or internal command.
 .Pp
 .Dl Usage: .Ic command ... \*(Pu
+.Pp
 .Bl -tag -width ".Ic setenv , unsetenvxx" -compact -offset 14n
 .It Li \&.Ic :wq
 .Ic :wq
@@ -1281,6 +1291,7 @@ The
 macro does not call other macros and is not callable by other macros.
 .Pp
 .Dl Usage: .In include_file
+.Pp
 .Bl -tag -width ".In stdio.h    " -compact -offset 14n
 .It Li \&.In stdio.h
 .In stdio.h
@@ -1303,6 +1314,7 @@ variable constants, anything which should be displayed as it
 would be typed.
 .Pp
 .Dl Usage: .Li argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Li cntrl-D ) ," -compact -offset 14n
 .It Li \&.Li \een
 .Li \en
@@ -1362,6 +1374,7 @@ to
 it can not recall the first argument it was invoked with.
 .Pp
 .Dl Usage: .Nm argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Nm mdoc.samples ." -compact -offset 14n
 .It Li \&.Nm mdoc.samples
 .Nm mdoc.samples
@@ -1392,6 +1405,7 @@ and
 may be used across one or more lines.
 .Pp
 .Dl Usage: .Op options ... \*(Pu
+.Pp
 .Bl -tag -width ".Op Fl c Ar objfil Op Ar corfil ," -compact -offset indent
 .It Li \&.Op
 .Op
@@ -1443,6 +1457,7 @@ The
 macro formats path or file names.
 .Pp
 .Dl Usage: .Pa pathname \*(Pu
+.Pp
 .Bl -tag -width ".Pa /tmp/fooXXXXX ) ." -compact -offset 14n
 .It Li \&.Pa /usr/share
 .Pa /usr/share
@@ -1573,6 +1588,7 @@ section, it causes a line break
 .Pq useful for old-style variable declarations .
 .Pp
 .Dl Usage: .Vt Ao type Ac ... \*(Pu
+.Pp
 .Bl -tag -width ".Vt extern char *optarg;" -compact -offset 14n
 .It Li \&.Vt extern char *optarg;
 .Vt extern char *optarg;
@@ -1590,6 +1606,7 @@ macro is parsed and is callable.
 Generic variable reference:
 .Pp
 .Dl Usage: .Va variable ... \*(Pu
+.Pp
 .Bl -tag -width ".Va char s ] ) ) ," -compact -offset 14n
 .It Li \&.Va count
 .Va count
@@ -1617,6 +1634,7 @@ Any
 remaining arguments are assumed to be punctuation.
 .Pp
 .Dl Usage: .Xr man_page [1,...,9] \*(Pu
+.Pp
 .Bl -tag -width ".Xr mdoc 7 ) ) ," -compact -offset 14n
 .It Li \&.Xr mdoc
 .Xr mdoc
@@ -1640,6 +1658,7 @@ any arguments.
 .Bd -literal -offset indent -compact
 Usage: .At [v6 | v7 | 32v | V.1 | V.4] ... \" \*(Pu
 .Ed
+.Pp
 .Bl -tag -width ".At v6 ) ," -compact -offset 14n
 .It Li ".At"
 .At
@@ -1658,6 +1677,7 @@ It accepts at most two arguments.
 It cannot currently handle punctuation.
 .Ss BSD Macro
 .Dl Usage: .Bx [Version/release] ... \*(Pu
+.Pp
 .Bl -tag -width ".Bx 4.3 ) ," -compact -offset 14n
 .It Li ".Bx"
 .Bx
@@ -1672,6 +1692,7 @@ macro is parsed, but is
 callable.
 .Ss BSDI Macro
 .Dl Usage: .Bsx [Version/release] ... \*(Pu
+.Pp
 .Bl -tag -width ".Bsx 3.0 ) ," -compact -offset 14n
 .It Li ".Bsx"
 .Bsx
@@ -1686,6 +1707,7 @@ macro is parsed, but is
 callable.
 .Ss OpenBSD/FreeBSD/NetBSD Macros
 .Dl Usage: .Ox [Version/release] ... \*(Pu
+.Pp
 .Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
 .It Li ".Ox"
 .Ox
@@ -1694,6 +1716,7 @@ callable.
 .El
 .Pp
 .Dl Usage: .Fx [Version/release] ... \*(Pu
+.Pp
 .Bl -tag -width ".Fx 4.0 ) ," -compact -offset 14n
 .It Li ".Fx"
 .Fx
@@ -1702,6 +1725,7 @@ callable.
 .El
 .Pp
 .Dl Usage: .Nx [Version/release] ... \*(Pu
+.Pp
 .Bl -tag -width ".Nx 1.5 ) ," -compact -offset 14n
 .It Li ".Nx"
 .Nx
@@ -1721,6 +1745,7 @@ parsed and are
 callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
+.Pp
 .Bl -tag -width ".Ux 4.3 ) ," -compact -offset 14n
 .It Li ".Ux"
 .Ux
@@ -1738,6 +1763,7 @@ macro.
 The usual font for emphasis is italic.
 .Pp
 .Dl Usage: .Em argument ... \*(Pu
+.Pp
 .Bl -tag -width ".Em vide infra ) ) ," -compact -offset 14n
 .It Li ".Em does not"
 .Em does not
@@ -1963,6 +1989,7 @@ The symbolic emphasis macro is generally a boldface macro in
 either the symbolic sense or the traditional English usage.
 .Pp
 .Dl Usage: .Sy symbol ... \*(Pu
+.Pp
 .Bl -tag -width ".Sy Important Noticex" -compact -offset 14n
 .It Li \&.Sy Important Notice
 .Sy Important Notice
@@ -1978,6 +2005,7 @@ may be quoted.
 Use this macro for mathematical symbols.
 .Pp
 .Dl Usage: .Ms mathematical symbol ... \*(Pu
+.Pp
 .Bl -tag -width ".Ms sigma" -compact -offset 14n
 .It Li ".Ms sigma"
 .Ms sigma
@@ -2041,6 +2069,7 @@ The trade name macro is generally a small caps macro for
 all upper case words longer than two characters.
 .Pp
 .Dl Usage: .Tn symbol ... \*(Pu
+.Pp
 .Bl -tag -width ".Tn ASCII" -compact -offset 14n
 .It Li \&.Tn DEC
 .Tn DEC
