@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.10 2002/05/24 21:22:37 deraadt Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.11 2002/06/23 03:03:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -189,7 +189,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			pwd = getpwnam(name);
 		else {
 			if ((pwd = getpwuid(getuid())) == NULL) {
-				syslog(LOG_ERR, "no such user id %d", getuid());
+				syslog(LOG_ERR, "no such user id %u", getuid());
 				_warnx("cannot approve who we don't recognize");
 				return (0);
 			}

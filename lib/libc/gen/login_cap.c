@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.10 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.11 2002/06/23 03:03:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -667,7 +667,7 @@ setusercontext(lc, pwd, uid, flags)
 	if (flags & LOGIN_SETUSER) {
 		(void) seteuid(uid);	/* just in case */
 		if (setuid(uid) < 0) {
-			syslog(LOG_ERR, "setuid(%d): %m", uid);
+			syslog(LOG_ERR, "setuid(%u): %m", uid);
 			login_close(flc);
 			return (-1);
 		}

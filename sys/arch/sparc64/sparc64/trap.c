@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2002/06/23 03:03:15 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -890,7 +890,7 @@ kfault:
 			return;
 		}
 		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			printf("UVM: pid %d (%s), uid %u killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);

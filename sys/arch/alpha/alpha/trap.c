@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.35 2002/05/16 21:11:10 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.36 2002/06/23 03:03:15 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -551,7 +551,7 @@ trap(a0, a1, a2, entry, framep)
 			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;
 			if (rv == ENOMEM) {
-				printf("UVM: pid %d (%s), uid %d killed: "
+				printf("UVM: pid %u (%s), uid %u killed: "
 				       "out of swap\n", p->p_pid, p->p_comm,
 				       p->p_cred && p->p_ucred ?
 				       p->p_ucred->cr_uid : -1);
@@ -1107,7 +1107,7 @@ unaligned_fixup(va, opcode, reg, p)
 	 */
 	if (doprint) {
 		uprintf(
-		"pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
+		"pid %u (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
 		    p->p_pid, p->p_comm, va,
 		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
 		    p->p_md.md_tf->tf_regs[FRAME_RA]);
