@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesvar.h,v 1.3 2001/06/24 21:08:06 ho Exp $	*/
+/*	$OpenBSD: isesvar.h,v 1.4 2001/06/25 22:30:08 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -34,24 +34,32 @@ struct ises_softc {
 	bus_space_tag_t		sc_memt;	/* memory tag */
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
 	bus_dmamap_t		sc_dmamap;	/* dma xfer map */
-	struct ises_databuf     sc_dma_data;	/* data area */
+	caddr_t			sc_dma_data;	/* data area */
 
 	int32_t			sc_cid;		/* crypto tag */
 	u_int32_t		sc_intrmask;	/* interrupt mask */
+	u_int32_t		sc_dma_mask;	/* DMA running mask */
 	SIMPLEQ_HEAD(,ises_q)	sc_queue;	/* packet queue */
 	int			sc_nqueue;	/* count enqueued */
 	SIMPLEQ_HEAD(,ises_q)	sc_qchip;	/* on chip */
 	struct timeout		sc_timeout;	/* init + hrng timeout */
 	int			sc_nsessions;	/* nr of sessions */
 	struct ises_session	*sc_sessions;	/* sessions */
+	int			sc_cursession;	/* current session */
+	int			sc_switching;	/* we're switching sessions */
 	int			sc_initstate;	/* card initialization state */
 
 	SIMPLEQ_HEAD(,ises_cmd) sc_cmdq;	/* Commands in A-queue */
-	struct ises_bchu_session sc_bsession;	/* Current BCHU session */
 	u_int32_t		sc_lnau1_r[64];	/* LNAU 1 result (2048 bits) */
 	int			sc_lnau1_rlen;	/* LNAU 1 result len (bytes) */
 	u_int32_t		sc_lnau2_r[64];	/* LNAU 2 result (2048 bits) */
 	int			sc_lnau2_rlen;	/* LNAU 2 result len (bytes) */
+};
+
+union ises_q_u {
+	struct mbuf		*mbuf;
+	struct uio		*uio;
+	/* XXX more ? */
 };
 
 struct ises_q {
@@ -59,19 +67,14 @@ struct ises_q {
 	struct cryptop		*q_crp;
 	struct ises_softc	*q_sc;
 
-	struct mbuf 		*q_src_m, *q_dst_m;
-	bus_dma_segment_t	q_srcpkt, q_dstpkt;
+	union ises_q_u		q_src, q_dst;	/* src/dst data bufs */
 
-	struct ises_bchu_session q_bsession;
-	u_int32_t		q_hminner[5];	/* hmac inner state */
-	u_int32_t		q_hmouter[5];	/* hmac outer state */
-	u_int32_t		q_paddr;
+	bus_dma_segment_t	q_src_ds, q_dst_ds;
+
+	struct ises_session	q_session;
 	u_int16_t		q_offset;	/* crypto offset */
-	u_int8_t		q_pad[16];
 	int			q_sesn;
 	
-	long			q_src_packp;
-	int			q_src_packl;
 	int			q_src_npa, q_src_l;
 
 	long			q_dst_packp;
@@ -84,16 +87,9 @@ struct ises_cmd {
 	SIMPLEQ_ENTRY(ises_cmd)	cmd_next;
 	u_int32_t		cmd_code;	/* Command code */
 	u_int32_t		cmd_rlen;	/* Response length */
+	u_int32_t		cmd_session;	/* Current ises_session */
 	u_int32_t		(*cmd_cb)(struct ises_softc *, 
 					  struct ises_cmd *); /* Callback */
-};
-
-struct ises_session {
-	u_int32_t    ses_used;
-	u_int32_t    ses_deskey[6];		/* 3DES key */
-	u_int32_t    ses_hminner[5];		/* hmac inner state */
-	u_int32_t    ses_hmouter[5];		/* hmac outer state */
-	u_int32_t    ses_iv[2];			/* DES/3DES iv */
 };
 
 /* Maximum queue length */

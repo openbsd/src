@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.5 2001/06/24 21:08:06 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.6 2001/06/25 22:30:08 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -348,9 +348,9 @@ static const char *ises_sw_mode[] =
 #define	ISES_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	ISES_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
 
-/* Size and layout of ises_bchu_session is firmware dependent. */
+/* Size and layout of ises_session is firmware dependent. */
 /* This structure should be usable for the SWITCH_SESSION command. */
-struct ises_bchu_session {
+struct ises_session {
 	u_int32_t	kr[6];		/* Key register KR2,KR1,KR0 */
 	u_int32_t	omr;		/* Operation method register */
 
@@ -362,9 +362,6 @@ struct ises_bchu_session {
 } __attribute__((packed));
 
 #define ISES_B_DATASIZE			4096
-struct ises_databuf {
-	  u_int8_t data[ISES_B_DATASIZE];
-} __attribute__((packed));
 
 /* 
  * ------------------------------------------

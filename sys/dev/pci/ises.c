@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.10 2001/06/24 21:08:07 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.11 2001/06/25 22:30:07 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -80,7 +80,9 @@ int	ises_process __P((struct cryptop *));
 void	ises_callback __P((struct ises_q *));
 int	ises_feed __P((struct ises_softc *));
 void	ises_bchu_switch_session __P((struct ises_softc *, 
-				      struct ises_bchu_session *));
+				      struct ises_session *));
+
+void	ises_read_dma __P((struct ises_softc *));
 
 /* XXX for now... */
 void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
@@ -221,15 +223,15 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	state++;
 
 	/* Allocate in DMAable memory. */
-	if (bus_dmamem_alloc(sc->sc_dmat, sizeof sc->sc_dma_data, 1, 0, &seg,
-	    1, &nsegs, BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_alloc(sc->sc_dmat, ISES_B_DATASIZE, 1, 0, &seg, 1,
+	    &nsegs, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc dma buffer space\n");
 		goto fail;
 	}
 	state++;
 
-	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, sizeof sc->sc_dma_data,
-	    (caddr_t *)&sc->sc_dma_data, 0)) {
+	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, ISES_B_DATASIZE,
+	    &sc->sc_dma_data, 0)) {
 		printf(": can't map dma buffer space\n");
 		goto fail;
 	}
@@ -290,9 +292,9 @@ ises_initstate(void *v)
 
 	ticks = hz; 
 
-#if 0 /* Too noisy */
-	DPRINTF (("%s: entered initstate %d\n", dv, sc->sc_initstate));
-#endif
+	p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
+	DPRINTF (("%s: initstate %d, IDP state is %d \"%s\"\n", dv, 
+		  sc->sc_initstate, p, ises_idp_state[p]));
 
 	switch (sc->sc_initstate) {
 	case 0:
@@ -501,8 +503,14 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 
 	len = cmd >> 24;
 	code = (cmd >> 16) & 0xFF;
-	
-	s = splimp();
+
+#ifdef ISESDEBUG
+	if (code != ISES_CMD_HBITS) /* ... since this happens 100 times/s */
+		DPRINTF(("%s: queuing cmd %d len %d\n", sc->sc_dv.dv_xname,
+		    cmd, len));
+#endif
+
+	s = splnet();
 
 	if (len > READ_REG(sc, ISES_A_IQF)) {
 		splx(s);
@@ -519,6 +527,7 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 	bzero(cq, sizeof (struct ises_cmd));
 	cq->cmd_code = code;
 	cq->cmd_cb = callback;
+	cq->cmd_session = sc->sc_cursession;
 	SIMPLEQ_INSERT_TAIL(&sc->sc_cmdq, cq, cmd_next);
 
 	WRITE_REG(sc, ISES_A_IQD, cmd);
@@ -547,8 +556,9 @@ ises_process_oqueue(struct ises_softc *sc)
 	char *dv = sc->sc_dv.dv_xname;
 #endif
 	struct ises_cmd *cq;
+	struct ises_session *ses;
 	u_int32_t oqs, r, d;
-	int cmd, len, c;
+	int cmd, len, c, s;
 
 	r = READ_REG(sc, ISES_A_OQS);
 	if (r > 1)
@@ -562,6 +572,7 @@ ises_process_oqueue(struct ises_softc *sc)
 		cmd = (r >> 16) & 0xff;
 		r   = r & 0xffff;
 
+		s = splnet();
 		if (!SIMPLEQ_EMPTY(&sc->sc_cmdq)) {
 			cq = SIMPLEQ_FIRST(&sc->sc_cmdq);
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_cmdq, cq, cmd_next);
@@ -570,6 +581,7 @@ ises_process_oqueue(struct ises_softc *sc)
 			cq = NULL;
 			DPRINTF(("%s:process_oqueue: cmd queue empty!\n", dv));
 		}
+		splx(s);
 
 		if (r) {
 			/* This command generated an error */
@@ -631,9 +643,10 @@ ises_process_oqueue(struct ises_softc *sc)
 				break;
 
 			case ISES_CMD_BR_OMR:
-				sc->sc_bsession.omr = READ_REG(sc, ISES_A_OQD);
+				ses = &sc->sc_sessions[cq->cmd_session];
+				ses->omr = READ_REG(sc, ISES_A_OQD);
 				DPRINTF(("%s:process_oqueue: read OMR[%08x]\n",
-				    dv, sc->sc_bsession.omr));
+				    dv, ses->omr));
 #ifdef ISESDEBUG
 				ises_debug_parse_omr(sc);
 #endif
@@ -641,10 +654,30 @@ ises_process_oqueue(struct ises_softc *sc)
 
 			case ISES_CMD_BSWITCH:
 				DPRINTF(("%s:process_oqueue: BCHU_SWITCH\n"));
-				/* Put switched BCHU session in sc_bsession. */
+				/* Put switched BCHU session in cur session. */
+				ses = &sc->sc_sessions[cq->cmd_session];
 				for(c = 0; len > 0; len--, c++)
-					*((u_int32_t *)&sc->sc_bsession + c) =
+#if 0 /* Don't store the key, just drain the data */
+					*((u_int32_t *)&ses + c) =
+#endif
 					    READ_REG(sc, ISES_A_OQD);
+
+				sc->sc_switching = 0;
+				ises_feed (sc);
+				break;
+
+			case ISES_CMD_BW_HMLR:
+				/*
+				 * This return indicates our homecooked
+				 * session switch is complete. Start data
+				 * feed.
+				 */
+				DPRINTF(("%s:process_oqueue: sesn switched\n",
+				    dv));
+				sc->sc_switching = 0;
+
+				/* Retry/restart */
+				ises_feed(sc);
 				break;
 
 			default:
@@ -672,17 +705,45 @@ int
 ises_intr(void *arg)
 {
 	struct ises_softc *sc = arg;
-	volatile u_int32_t ints;
-	u_int32_t cmd;
-#ifdef ISESDEBUG
+	u_int32_t ints, dma_status, cmd; 
 	char *dv = sc->sc_dv.dv_xname;
-#endif
+
+	dma_status = READ_REG(sc, ISES_DMA_STATUS);
+
+	if (!(dma_status & (ISES_DMA_STATUS_R_ERR | ISES_DMA_STATUS_W_ERR))) {
+		if ((sc->sc_dma_mask & ISES_DMA_STATUS_R_RUN) != 0 &&
+		    (dma_status & ISES_DMA_STATUS_R_RUN) == 0) {
+			DPRINTF(("%s: DMA read complete\n", dv));
+
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
+			    BUS_DMASYNC_POSTREAD);
+
+			/* XXX */
+
+			WRITE_REG(sc, ISES_DMA_RESET, 0);
+		}
+
+		if ((sc->sc_dma_mask & ISES_DMA_STATUS_W_RUN) != 0 &&
+		    (dma_status & ISES_DMA_STATUS_W_RUN) == 0) {
+			DPRINTF(("%s: DMA write complete\n", dv));
+
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
+			    BUS_DMASYNC_POSTWRITE);
+
+			WRITE_REG(sc, ISES_DMA_RESET, 0);
+			ises_feed(sc);
+		}
+	} else {
+		printf ("%s: DMA error\n", dv);
+		WRITE_REG(sc, ISES_DMA_RESET, 0);
+	}
 
 	ints = READ_REG(sc, ISES_A_INTS);
 	if (!(ints & sc->sc_intrmask))
 		return (0); /* Not our interrupt. */
 
-	WRITE_REG(sc, ISES_A_INTS, ints); /* Clear all set intr bits. */
+	/* Clear all set intr bits. */
+	WRITE_REG(sc, ISES_A_INTS, ints);
 
 #if 0
 	/* Check it we've got room for more data. */
@@ -691,9 +752,9 @@ ises_intr(void *arg)
 		ises_feed(sc);
 #endif
 
-	if (ints & ISES_STAT_SW_OQSINC) {	/* A-intf output q has data */
+	/* Does the A-intf output queue have data we need to process? */
+	if (ints & ISES_STAT_SW_OQSINC)
 		ises_process_oqueue(sc);
-	}
 
 	if (ints & ISES_STAT_LNAU_BUSY_1) {
 		DPRINTF(("%s:ises_intr: LNAU 1 job complete\n", dv));
@@ -746,21 +807,66 @@ int
 ises_feed(struct ises_softc *sc)
 {
 	struct ises_q *q;
-
-	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
-		if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_BCHU_IFF)
-			break;
-		q = SIMPLEQ_FIRST(&sc->sc_queue);
-#if 0
-		WRITE_REG(sc, ISES_OFFSET_BCHU_DATA,
-		    (u_int32_t)vtophys(&q->q_mcr));
-		printf("feed: q->chip %08x %08x\n", q,
-		    (u_int32_t)vtophys(&q->q_mcr));
+	bus_dma_segment_t *ds = &sc->sc_dmamap->dm_segs[0];
+	u_int32_t dma_status;
+	int s;
+#ifdef ISESDEBUG
+	char *dv = sc->sc_dv.dv_xname;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
-		--sc->sc_nqueue;
-		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
+
+	s = splnet();
+	/* Anything to do? */
+	if (SIMPLEQ_EMPTY(&sc->sc_queue) ||
+	    (READ_REG(sc, ISES_A_STAT) & ISES_STAT_BCHU_IFF)) {
+		splx(s);
+		return (0);
 	}
+
+	/* Pick the first */
+	q = SIMPLEQ_FIRST(&sc->sc_queue);
+	splx(s);
+
+	/* If we're currently switching sessions, we'll have to wait. */
+	if (sc->sc_switching != 0) {
+		DPRINTF(("%s:ises_feed: waiting for session switch\n", dv));
+		return (0);
+	}
+
+	/* If on-chip data is not correct for this data, switch session. */
+	if (sc->sc_cursession != q->q_sesn) {
+		/* Session switch required */
+		DPRINTF(("%s:ises_feed: initiating session switch\n", dv));
+		ises_bchu_switch_session (sc, &q->q_session);
+		sc->sc_cursession = q->q_sesn;
+		return (0);
+	}
+
+	s = splnet();
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
+	--sc->sc_nqueue;
+	splx(s);
+
+	if (q->q_crp->crp_flags & CRYPTO_F_IMBUF)
+		bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_dmamap, 
+		    q->q_src.mbuf, BUS_DMA_NOWAIT);
+	else if (q->q_crp->crp_flags & CRYPTO_F_IOV)
+		bus_dmamap_load_uio(sc->sc_dmat, sc->sc_dmamap, q->q_src.uio,
+		    BUS_DMA_NOWAIT);
+	/* ... else */	
+
+	/* Start writing data to the ises. */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, BUS_DMASYNC_PREWRITE);
+	
+	DPRINTF(("%s:ises_feed: writing DMA\n", dv));
+
+	WRITE_REG(sc, ISES_DMA_WRITE_START, ds->ds_addr);
+	WRITE_REG(sc, ISES_DMA_WRITE_COUNT, ISES_DMA_WCOUNT(ds->ds_len));
+
+	dma_status = READ_REG(sc, ISES_DMA_STATUS);
+	dma_status |= ISES_DMA_CTRL_ILT | ISES_DMA_CTRL_RLINE;
+	WRITE_REG(sc, ISES_DMA_CTRL, dma_status);
+
 	return (0);
 }
 
@@ -779,6 +885,9 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	SHA1_CTX   sha1ctx;
 	RMD160_CTX rmd160ctx;
 	int i, sesn;
+#ifdef ISESDEBUG
+	char *dv;
+#endif
 
 	if (sidp == NULL || cri == NULL)
 		return (EINVAL);
@@ -790,6 +899,9 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	}
 	if (sc == NULL)
 		return (EINVAL);
+#ifdef ISESDEBUG
+	dv = sc->sc_dv.dv_xname;
+#endif
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		if (c->cri_alg == CRYPTO_MD5_HMAC ||
@@ -809,6 +921,11 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if (mac == 0 && enc == 0)
 		return (EINVAL);
 
+#ifdef ISESDEBUG
+	printf ("%s:ises_newsession: mac=%p(%d) enc=%p(%d)\n",
+	   dv, mac, (mac ? mac->cri_alg : -1), enc, (enc ? enc->cri_alg : -1));
+#endif
+
 	/* Allocate a new session */
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = (struct ises_session *)
@@ -817,13 +934,14 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			isesstats.nomem++;
 			return (ENOMEM);
 		}
-		sesn = 0;
+		sc->sc_cursession = sesn = 0;
 		sc->sc_nsessions = 1;
 	} else {
 		ses = NULL;
 		for (sesn = 0; sesn < sc->sc_nsessions; sesn++)
-			if (sc->sc_sessions[sesn].ses_used == 0) {
+			if (sc->sc_sessions[sesn].omr == 0) {
 				ses = &sc->sc_sessions[sesn];
+				sc->sc_cursession = sesn;
 				break;
 			}
 
@@ -842,32 +960,38 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			free(sc->sc_sessions, M_DEVBUF);
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sc->sc_nsessions];
+			sc->sc_cursession = sc->sc_nsessions;
 			sc->sc_nsessions++;
 		}
 	}
 
+	DPRINTF(("%s:ises_newsession: nsessions=%d cursession=%d\n", dv,
+	    sc->sc_nsessions, sc->sc_cursession));
+
 	bzero(ses, sizeof(struct ises_session));
-	ses->ses_used = 1;
+
+	/* Select data path through B-interface. */
+	ses->omr |= ISES_SELR_BCHU_DIS;
 
 	if (enc) {
 		/* get an IV, network byte order */
 		/* XXX switch to using builtin HRNG ! */
-		get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
+		get_random_bytes(ses->sccr, sizeof(ses->sccr));
 
 		/* crypto key */
 		if (c->cri_alg == CRYPTO_DES_CBC) {
-			bcopy(enc->cri_key, &ses->ses_deskey[0], 8);
-			bcopy(enc->cri_key, &ses->ses_deskey[2], 8);
-			bcopy(enc->cri_key, &ses->ses_deskey[4], 8);
+			bcopy(enc->cri_key, &ses->kr[0], 8);
+			bcopy(enc->cri_key, &ses->kr[2], 8);
+			bcopy(enc->cri_key, &ses->kr[4], 8);
 		} else
-			bcopy(enc->cri_key, &ses->ses_deskey[0], 24);
+			bcopy(enc->cri_key, &ses->kr[0], 24);
 
-		SWAP32(ses->ses_deskey[0]);
-		SWAP32(ses->ses_deskey[1]);
-		SWAP32(ses->ses_deskey[2]);
-		SWAP32(ses->ses_deskey[3]);
-		SWAP32(ses->ses_deskey[4]);
-		SWAP32(ses->ses_deskey[5]);
+		SWAP32(ses->kr[0]);
+		SWAP32(ses->kr[1]);
+		SWAP32(ses->kr[2]);
+		SWAP32(ses->kr[3]);
+		SWAP32(ses->kr[4]);
+		SWAP32(ses->kr[5]);
 	}
 
 	if (mac) {
@@ -880,16 +1004,14 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hminner,
-			    sizeof(md5ctx.state));
+			MD5Final((u_int8_t *)&ses->cvr, &md5ctx);
 			break;
 		case CRYPTO_SHA1_HMAC:
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hminner,
-			    sizeof(sha1ctx.state));
+			SHA1Final((u_int8_t *)ses->cvr, &sha1ctx);
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
 		default:
@@ -898,8 +1020,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    mac->cri_klen / 8);
 			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			bcopy(rmd160ctx.state, ses->ses_hminner,
-			    sizeof(rmd160ctx.state));
+			RMD160Final((u_int8_t *)ses->cvr, &rmd160ctx);
 			break;
 		}
 
@@ -910,28 +1031,31 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_MD5_HMAC:
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
-			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
+			MD5Update(&md5ctx, hmac_opad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			bcopy(md5ctx.state, ses->ses_hmouter,
+			MD5Update(&md5ctx, (u_int8_t *)ses->cvr,
 			    sizeof(md5ctx.state));
+			MD5Final((u_int8_t *)ses->cvr, &md5ctx);
 			break;
 		case CRYPTO_SHA1_HMAC:
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
-			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
+			SHA1Update(&sha1ctx, hmac_opad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
-			bcopy(sha1ctx.state, ses->ses_hmouter,
+			SHA1Update(&sha1ctx, (u_int8_t *)ses->cvr,
 			    sizeof(sha1ctx.state));
+			SHA1Final((u_int8_t *)ses->cvr, &sha1ctx);
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
 		default:
 			RMD160Init(&rmd160ctx);
 			RMD160Update(&rmd160ctx, mac->cri_key,
 			    mac->cri_klen / 8);
-			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
+			RMD160Update(&rmd160ctx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			bcopy(rmd160ctx.state, ses->ses_hmouter,
+			RMD160Update(&rmd160ctx, (u_int8_t *)ses->cvr, 
 			    sizeof(rmd160ctx.state));
+			RMD160Final((u_int8_t *)ses->cvr, &rmd160ctx);
 			break;
 		}
 
@@ -939,13 +1063,12 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			mac->cri_key[i] ^= HMAC_OPAD_VAL;
 	}
 
+	DPRINTF(("%s:ises_newsession: done\n", dv));
 	*sidp = ISES_SID(sc->sc_dv.dv_unit, sesn);
 	return (0);
 }
 
-/*
- * Deallocate a session.
- */
+/* Deallocate a session. */
 int
 ises_freesession(u_int64_t tsid)
 {
@@ -959,67 +1082,70 @@ ises_freesession(u_int64_t tsid)
 
 	sc = ises_cd.cd_devs[card];
 	sesn = ISES_SESSION(sid);
+
+	DPRINTF(("%s:ises_freesession: freeing session %d\n",
+	    sc->sc_dv.dv_xname, sesn));
+
 	bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 
 	return (0);
 }
 
+/* Called by the crypto framework, crypto(9). */
 int
 ises_process(struct cryptop *crp)
 {
-	int card, err;
 	struct ises_softc *sc;
 	struct ises_q *q;
 	struct cryptodesc *maccrd, *enccrd, *crd;
 	struct ises_session *ses;
-#if 0
-	int s, i, j;
-#else
-	int s;
+	int card, s, err = EINVAL;
+	int encoffset, macoffset, cpskip, sskip, dskip, stheend, dtheend;
+	int cpoffset, coffset, nicealign;
+#ifdef ISESDEBUG
+	char *dv;
 #endif
-	int encoffset = 0, macoffset = 0;
-	int sskip, stheend, dtheend, cpskip, cpoffset, dskip, nicealign;
-	int16_t coffset;
 
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
 
 	card = ISES_CARD(crp->crp_sid);
-	if (card >= ises_cd.cd_ndevs || ises_cd.cd_devs[card] == NULL) {
-		err = EINVAL;
+	if (card >= ises_cd.cd_ndevs || ises_cd.cd_devs[card] == NULL)
 		goto errout;
-	}
 
 	sc = ises_cd.cd_devs[card];
+#ifdef ISESDEBUG
+	dv = sc->sc_dv.dv_xname;
+#endif
 
 	s = splnet();
 	if (sc->sc_nqueue == ISES_MAX_NQUEUE) {
 		splx(s);
-		err = ENOMEM;
-		goto errout;
+		goto memerr;
 	}
 	splx(s);
 
 	q = (struct ises_q *)malloc(sizeof(struct ises_q), M_DEVBUF, M_NOWAIT);
-	if (q == NULL) {
-		err = ENOMEM;
-		goto errout;
-	}
+	if (q == NULL)
+		goto memerr;
 	bzero(q, sizeof(struct ises_q));
 
 	q->q_sesn = ISES_SESSION(crp->crp_sid);
 	ses = &sc->sc_sessions[q->q_sesn];
 
-	/* XXX */
+	DPRINTF(("%s:ises_process: session %d selected\n", dv, q->q_sesn));
 
 	q->q_sc = sc;
 	q->q_crp = crp;
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		q->q_src_m = (struct mbuf *)crp->crp_buf;
-		q->q_dst_m = (struct mbuf *)crp->crp_buf;
+		q->q_src.mbuf = (struct mbuf *)crp->crp_buf;
+		q->q_dst.mbuf = (struct mbuf *)crp->crp_buf;
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		q->q_src.uio = (struct uio *)crp->crp_buf;
+		q->q_dst.uio = (struct uio *)crp->crp_buf;
 	} else {
-		err = EINVAL;
+		/* XXX for now... */
 		goto errout;
 	}
 
@@ -1031,7 +1157,6 @@ ises_process(struct cryptop *crp)
 	 *   for decryption the second one should be crypto.
 	 */
 	maccrd = enccrd = NULL;
-	err = EINVAL;
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 		switch (crd->crd_alg) {
 		case CRYPTO_MD5_HMAC:
@@ -1055,80 +1180,93 @@ ises_process(struct cryptop *crp)
 	}
 	if (!maccrd && !enccrd)
 		goto errout;
-	err = 0;
+
+	/* Select data path through B-interface. */
+	q->q_session.omr |= ISES_SELR_BCHU_DIS;
 
 	if (enccrd) {
 		encoffset = enccrd->crd_skip;
 
+		/* Select algorithm */
 		if (enccrd->crd_alg == CRYPTO_3DES_CBC)
-			q->q_bsession.omr |= ISES_SOMR_BOMR_3DES;
+			q->q_session.omr |= ISES_SOMR_BOMR_3DES;
 		else
-			q->q_bsession.omr |= ISES_SOMR_BOMR_DES;
-		q->q_bsession.omr |= ISES_SOMR_FMR_CBC;
+			q->q_session.omr |= ISES_SOMR_BOMR_DES;
+
+		/* Set CBC mode */
+		q->q_session.omr |= ISES_SOMR_FMR_CBC;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			q->q_bsession.omr |= ISES_SOMR_EDR; /* XXX */
+			/* Set encryption bit */
+			q->q_session.omr |= ISES_SOMR_EDR;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_bsession.sccr, 8);
+				bcopy(enccrd->crd_iv, q->q_session.sccr, 8);
 			else {
-				q->q_bsession.sccr[0] = ses->ses_iv[0];
-				q->q_bsession.sccr[1] = ses->ses_iv[1];
+				q->q_session.sccr[0] = ses->sccr[0];
+				q->q_session.sccr[1] = ses->sccr[1];
 			}
 
-			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
-				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_bsession.sccr);
+			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+				if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copyback(q->q_src.mbuf,
+					    enccrd->crd_inject, 8,
+					    (caddr_t)q->q_session.sccr);
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					cuio_copyback(q->q_src.uio,
+					    enccrd->crd_inject, 8,
+					    (caddr_t)q->q_session.sccr);
+				/* XXX else ... */
+			}
 		} else {
-			q->q_bsession.omr &= ~ISES_SOMR_EDR; /* XXX */
+			/* Clear encryption bit == decrypt mode */
+			q->q_session.omr &= ~ISES_SOMR_EDR;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_bsession.sccr, 8);
-			else
-				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_bsession.sccr);
+				bcopy(enccrd->crd_iv, q->q_session.sccr, 8);
+			else if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata(q->q_src.mbuf, enccrd->crd_inject,
+				    8, (caddr_t)q->q_session.sccr);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata(q->q_src.uio,
+				    enccrd->crd_inject, 8,
+				    (caddr_t)q->q_session.sccr);
+			/* XXX else ... */
 		}
 
-		q->q_bsession.kr[0] = ses->ses_deskey[0];
-		q->q_bsession.kr[1] = ses->ses_deskey[1];
-		q->q_bsession.kr[2] = ses->ses_deskey[2];
-		q->q_bsession.kr[3] = ses->ses_deskey[3];
-		q->q_bsession.kr[4] = ses->ses_deskey[4];
-		q->q_bsession.kr[5] = ses->ses_deskey[5];
+		q->q_session.kr[0] = ses->kr[0];
+		q->q_session.kr[1] = ses->kr[1];
+		q->q_session.kr[2] = ses->kr[2];
+		q->q_session.kr[3] = ses->kr[3];
+		q->q_session.kr[4] = ses->kr[4];
+		q->q_session.kr[5] = ses->kr[5];
 
-		SWAP32(q->q_bsession.sccr[0]);
-		SWAP32(q->q_bsession.sccr[1]);
+		SWAP32(q->q_session.sccr[0]);
+		SWAP32(q->q_session.sccr[1]);
 	}
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
+		/* Select algorithm */
 		switch (crd->crd_alg) {
 		case CRYPTO_MD5_HMAC:
-			q->q_bsession.omr |= ISES_HOMR_HFR_MD5;
+			q->q_session.omr |= ISES_HOMR_HFR_MD5;
 			break;
 		case CRYPTO_SHA1_HMAC:
-			q->q_bsession.omr |= ISES_HOMR_HFR_SHA1;
+			q->q_session.omr |= ISES_HOMR_HFR_SHA1;
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
 		default:
-			q->q_bsession.omr |= ISES_HOMR_HFR_RMD160;
+			q->q_session.omr |= ISES_HOMR_HFR_RMD160;
 			break;
 		}
 
-		q->q_hminner[0] = ses->ses_hminner[0];
-		q->q_hminner[1] = ses->ses_hminner[1];
-		q->q_hminner[2] = ses->ses_hminner[2];
-		q->q_hminner[3] = ses->ses_hminner[3];
-		q->q_hminner[4] = ses->ses_hminner[4];
-		q->q_hminner[5] = ses->ses_hminner[5];
-
-		q->q_hmouter[0] = ses->ses_hmouter[0];
-		q->q_hmouter[1] = ses->ses_hmouter[1];
-		q->q_hmouter[2] = ses->ses_hmouter[2];
-		q->q_hmouter[3] = ses->ses_hmouter[3];
-		q->q_hmouter[4] = ses->ses_hmouter[4];
-		q->q_hmouter[5] = ses->ses_hmouter[5];
+		q->q_session.cvr[0] = ses->cvr[0];
+		q->q_session.cvr[1] = ses->cvr[1];
+		q->q_session.cvr[2] = ses->cvr[2];
+		q->q_session.cvr[3] = ses->cvr[3];
+		q->q_session.cvr[4] = ses->cvr[4];
 	}
 
 	if (enccrd && maccrd) {
@@ -1137,7 +1275,6 @@ ises_process(struct cryptop *crp)
 		if (((encoffset + enccrd->crd_len) !=
 		    (macoffset + maccrd->crd_len)) ||
 		    (enccrd->crd_skip < maccrd->crd_skip)) {
-			err = EINVAL;
 			goto errout;
 		}
 
@@ -1157,76 +1294,40 @@ ises_process(struct cryptop *crp)
 	}
 	q->q_offset = coffset >> 2;
 
-	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, &q->q_src_packp,
-	    &q->q_src_packl, 1, &nicealign);
-	if (q->q_src_l == 0) {
-		err = ENOMEM;
-		goto errout;
-	}
+#if 0
+	/* XXX not sure about this, in bus_dma context */
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		q->q_src_l = mbuf2pages(q->q_src.mbuf, &q->q_src_npa,
+		    &q->q_src_packp, &q->q_src_packl, 1, &nicealign);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		q->q_src_l = iov2pages(q->q_src.uio, &q->q_src_npa,
+		    &q->q_src_packp, &q->q_src_packl, 1, &nicealign);
+	/* XXX else */
+#endif
 
-	/* XXX mcr stuff; q->q_mcr->mcr_pktlen = stheend; */
+	if (q->q_src_l == 0)
+		goto memerr;
 
-#if 0 /* XXX */
-	for (i = j = 0; i < q->q_src_npa; i++) {
-		bus_dma_segment_t *ds;
-
-		/* XXX DEBUG? */
-
-		if (sskip) {
-			if (sskip >= q->q_src_packl) {
-				sskip -= q->q_src_packl;
-				continue;
-			}
-			q->q_src_packp += sskip;
-			q->q_src_packl -= sskip;
-			sskip = 0;
-		}
-
-		ds = NULL; /* XXX initial packet */
-
-		ds->ds_addr = q->q_src_packp;
-		if (stheend) {
-			if (q->q_src_packl > stheend) {
-				ds->ds_len = stheend;
-				stheend = 0;
-			} else {
-				ds->ds_len = q->q_src_packl;
-				stheend -= ds->ds_len;
-			}
-		} else
-			ds->ds_len = q->q_src_packl;
-
-		if ((i + 1) == q->q_src_npa)
-			ds->ds_next = 0;
-		else
-			ds->ds_next = vtophys(&q->q_srcpkt);
-
-		j++;
-	}
-
-#endif /* XXX */
-	/* XXX DEBUG ? */
+	/* XXX ... */
 
 	if (enccrd == NULL && maccrd != NULL) {
-		/* XXX mcr stuff */
+		/* XXX ... */
 	} else {
 		if (!nicealign) {
 			int totlen, len;
 			struct mbuf *m, *top, **mp;
 
 			totlen = q->q_dst_l = q->q_src_l;
-			if (q->q_src_m->m_flags & M_PKTHDR) {
+			if (q->q_src.mbuf->m_flags & M_PKTHDR) {
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
-				M_DUP_PKTHDR(m, q->q_src_m);
+				M_DUP_PKTHDR(m, q->q_src.mbuf);
 				len = MHLEN;
 			} else {
 				MGET(m, M_DONTWAIT, MT_DATA);
 				len = MLEN;
 			}
-			if (m == NULL) {
-				err = ENOMEM;
-				goto errout;
-			}
+			if (m == NULL)
+				goto memerr;
 			if (totlen >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if (m->m_flags & M_EXT)
@@ -1241,8 +1342,7 @@ ises_process(struct cryptop *crp)
 					MGET(m, M_DONTWAIT, MT_DATA);
 					if (m == NULL) {
 						m_freem(top);
-						err = ENOMEM;
-						goto errout;
+						goto memerr;
 					}
 					len = MLEN;
 				}
@@ -1257,75 +1357,41 @@ ises_process(struct cryptop *crp)
 
 				mp = &m->m_next;
 			}
-			q->q_dst_m = top;
-			ubsec_mcopy(q->q_src_m, q->q_dst_m, cpskip, cpoffset);
+			q->q_dst.mbuf = top;
+			ubsec_mcopy(q->q_src.mbuf, q->q_dst.mbuf, cpskip, cpoffset);
 		} else
-			q->q_dst_m = q->q_src_m;
-
-		q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
-		    &q->q_dst_packp, &q->q_dst_packl, 1, NULL);
+			q->q_dst.mbuf = q->q_src.mbuf;
 
 #if 0
-		for (i = j = 0; i < q->q_dst_npa; i++) {
-			struct bus_dma_segment_t *ds;
-
-			if (dskip) {
-				if (dskip >= q->q_dst_packl[i]) {
-					dskip -= q->q_dst_packl[i];
-					continue;
-				}
-				q->q_dst_packp[i] += dskip;
-				q->q_dst_packl[i] -= dskip;
-				dskip = 0;
-			}
-
-			if (j == 0)
-				ds = NULL; /* &q->q_mcr->mcr_opktbuf; */
-			else
-				ds = &q->q_dstpkt[j - 1];
-
-			ds->ds_addr = q->q_dst_packp[i];
-
-			if (dtheend) {
-				if (q->q_dst_packl[i] > dtheend) {
-					ds->ds_len = dtheend;
-					dtheend = 0;
-				} else {
-					ds->ds_len = q->q_dst_packl[i];
-					dtheend -= ds->ds_len;
-				}
-			} else
-				ds->ds_len = q->q_dst_packl[i];
-
-			if ((i + 1) == q->q_dst_npa) {
-				if (maccrd)
-					ds->ds_next = vtophys(q->q_macbuf);
-				else
-					ds->ds_next = 0;
-			} else
-				ds->ds_next = vtophys(&q->q_dstpkt[j]);
-			j++;
-		}
+		/* XXX ? */
+		q->q_dst_l = mbuf2pages(q->q_dst.mbuf, &q->q_dst_npa,
+		    &q->q_dst_packp, &q->q_dst_packl, 1, NULL);
 #endif
 	}
+
+	DPRINTF(("%s:ises_process: queueing request\n", dv));
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
 	sc->sc_nqueue++;
-	ises_feed(sc);
 	splx(s);
+	ises_feed(sc);
 
 	return (0);
 
+memerr:
+	err = ENOMEM;
+	isesstats.nomem++;
 errout:
-	if (err == ENOMEM)
-		isesstats.nomem++;
-	else if (err == EINVAL)
+	DPRINTF(("%s:ises_process: an error occurred, err=%d, q=%p\n", dv, 
+		 err, q));
+
+	if (err == EINVAL)
 		isesstats.invalid++;
 
 	if (q) {
-		if (q->q_src_m != q->q_dst_m)
-			m_freem(q->q_dst_m);
+		if (q->q_src.mbuf != q->q_dst.mbuf)
+			m_freem(q->q_dst.mbuf);
 		free(q, M_DEVBUF);
 	}
 	crp->crp_etype = err;
@@ -1338,10 +1404,29 @@ ises_callback(struct ises_q *q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
+	struct ises_softc *sc = q->q_sc;
+	u_int8_t *sccr;
 
-	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
-		m_freem(q->q_src_m);
-		crp->crp_buf = (caddr_t)q->q_dst_m;
+	if ((crp->crp_flags & CRYPTO_F_IMBUF) && 
+	    (q->q_src.mbuf != q->q_dst.mbuf)) {
+		m_freem(q->q_src.mbuf);
+		crp->crp_buf = (caddr_t)q->q_dst.mbuf;
+	}
+
+	if (q->q_session.omr & ISES_SOMR_EDR) {
+		/* Copy out IV after encryption. */
+		sccr = (u_int8_t *)&sc->sc_sessions[q->q_sesn].sccr;
+		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+			if (crd->crd_alg != CRYPTO_DES_CBC &&
+			    crd->crd_alg != CRYPTO_3DES_CBC)
+				continue;
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - 8, 8, sccr);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - 8, 8, sccr);
+		}
 	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
@@ -1349,12 +1434,18 @@ ises_callback(struct ises_q *q)
 		    crd->crd_alg != CRYPTO_SHA1_HMAC &&
 		    crd->crd_alg != CRYPTO_RIPEMD160_HMAC)
 			continue;
-		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_inject, 12, (u_int8_t *)&q->q_macbuf[0]);
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copyback((struct mbuf *)crp->crp_buf,
+			   crd->crd_inject, 12, (u_int8_t *)q->q_macbuf);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			bcopy((u_int8_t *)q->q_macbuf, crp->crp_mac, 12);
+		/* XXX else ... */
 		break;
 	}
 
 	free(q, M_DEVBUF);
+	DPRINTF(("%s:ises_callback: calling crypto_done\n",
+	    sc->sc_dv.dv_xname));
 	crypto_done(crp);
 }
 
@@ -1525,6 +1616,63 @@ ises_assert_cmd_mode(struct ises_softc *sc)
 	}
 }
 
+void
+ises_bchu_switch_session (struct ises_softc *sc, struct ises_session *ss)
+{
+	/* It appears that the BCHU_SWITCH_SESSION command is broken. */
+	/* We have to work around it. */
+	
+	u_int32_t cmd;
+
+	/* Mark 'switch' in progress. */
+	sc->sc_switching = 1;
+
+	/* Write the key. */
+	cmd = ISES_MKCMD(ISES_CMD_BW_KR0, 2);
+	ises_queue_cmd(sc, cmd, &ss->kr[4], NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BW_KR1, 2);
+	ises_queue_cmd(sc, cmd, &ss->kr[2], NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BW_KR2, 2);
+	ises_queue_cmd(sc, cmd, &ss->kr[0], NULL);
+
+	/* Write OMR - Operation Method Register, clears SCCR+CVR+DBCR+HMLR */
+	cmd = ISES_MKCMD(ISES_CMD_BW_OMR, 1);
+	ises_queue_cmd(sc, cmd, &ss->omr, NULL);
+
+	/* Write SCCR - Symmetric Crypto Chaining Register (IV) */
+	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 1);
+	ises_queue_cmd(sc, cmd, &ss->sccr[0], NULL);
+
+	/* Write CVR - Chaining Variables Register (hash state) */
+	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 5);
+	ises_queue_cmd(sc, cmd, &ss->cvr[0], NULL);
+
+	/* Write DBCR - Data Block Count Register */
+	cmd = ISES_MKCMD(ISES_CMD_BW_SCCR, 2);
+	ises_queue_cmd(sc, cmd, &ss->dbcr[0], NULL);
+
+	/* Write HMLR - Hash Message Length Register */
+	cmd = ISES_MKCMD(ISES_CMD_BW_HMLR, 2);
+	ises_queue_cmd(sc, cmd, &ss->hmlr[0], NULL);
+}
+
+/* XXX Currently unused. */
+void
+ises_read_dma (struct ises_softc *sc)
+{
+	bus_dma_segment_t *ds = &sc->sc_dmamap->dm_segs[0];
+	u_int32_t dma_status;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, BUS_DMASYNC_PREREAD);
+
+	WRITE_REG(sc, ISES_DMA_READ_START, ds->ds_addr);
+	WRITE_REG(sc, ISES_DMA_READ_START, ISES_DMA_RCOUNT(ds->ds_len));
+
+	dma_status = READ_REG(sc, ISES_DMA_STATUS);
+	dma_status |= ISES_DMA_CTRL_ILT | ISES_DMA_CTRL_WRITE;
+	WRITE_REG(sc, ISES_DMA_CTRL, dma_status);
+}
+
 #ifdef ISESDEBUG
 /*
  * Development code section below here.
@@ -1559,37 +1707,10 @@ ises_debug_simple_cmd (struct ises_softc *sc, u_int32_t code, u_int32_t d)
 }
 
 void
-ises_bchu_switch_session (struct ises_softc *sc, struct ises_bchu_session *ss)
-{
-	/* It appears that the BCHU_SWITCH_SESSION command is broken. */
-	/* We have to work around it. */
-	
-	u_int32_t cmd;
-
-	cmd = ISES_MKCMD(ISES_CMD_BR_KR0, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_KR1, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_KR2, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	
-	cmd = ISES_MKCMD(ISES_CMD_BR_OMR, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_SCCR, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_DBCR, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_HMLR, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-	cmd = ISES_MKCMD(ISES_CMD_BR_CVR, 0); 
-	ises_queue_cmd(sc, cmd, NULL, NULL);
-}
-
-void
 ises_debug_loop (void *v)
 {
 	struct ises_softc *sc = (struct ises_softc *)v;
-	struct ises_bchu_session bses;
+	struct ises_session ses;
 	u_int32_t cmd, stat;
 	int i;
 
@@ -1641,36 +1762,27 @@ ises_debug_loop (void *v)
 		/* Crypto. */
 
 		/* Load BCHU session data */
-		bzero(&bses, sizeof bses);
-		bses.kr[0] = 0xD0;
-		bses.kr[1] = 0xD1;
-		bses.kr[2] = 0xD2;
-		bses.kr[3] = 0xD3;
-		bses.kr[4] = 0xD4;
-		bses.kr[5] = 0xD5;
+		bzero(&ses, sizeof ses);
+		ses.kr[0] = 0xD0;
+		ses.kr[1] = 0xD1;
+		ses.kr[2] = 0xD2;
+		ses.kr[3] = 0xD3;
+		ses.kr[4] = 0xD4;
+		ses.kr[5] = 0xD5;
 
 		/* cipher data out is hash in, SHA1, 3DES, encrypt, ECB */
-		bses.omr = ISES_SELR_BCHU_HISOF | ISES_HOMR_HFR_SHA1 |
+		ses.omr = ISES_SELR_BCHU_HISOF | ISES_HOMR_HFR_SHA1 |
 		    ISES_SOMR_BOMR_3DES | ISES_SOMR_EDR | ISES_SOMR_FMR_ECB;
 
-		printf ("Queueing OMR write\n");
-		cmd = ISES_MKCMD(ISES_CMD_BW_OMR, 1);
-		ises_queue_cmd(sc, cmd, &bses.omr, NULL);
-
-		printf ("Queueing KR0, KR1, KR2 writes\n");
-		cmd = ISES_MKCMD(ISES_CMD_BW_KR0, 2);
-		ises_queue_cmd(sc, cmd, &bses.kr[4], NULL);
-		cmd = ISES_MKCMD(ISES_CMD_BW_KR1, 2);
-		ises_queue_cmd(sc, cmd, &bses.kr[2], NULL);
-		cmd = ISES_MKCMD(ISES_CMD_BW_KR2, 2);
-		ises_queue_cmd(sc, cmd, &bses.kr[0], NULL);
-
-#if 0 /* switch session does not appear to work - it never returns */
+#if 1
+		printf ("Queueing home-cooked session switch\n");
+		ises_bchu_switch_session(sc, &ses);
+#else /* switch session does not appear to work - it never returns */
 		printf ("Queueing BCHU session switch\n");
-		cmd = ISES_MKCMD(ISES_CMD_BSWITCH, sizeof bses / 4);
+		cmd = ISES_MKCMD(ISES_CMD_BSWITCH, sizeof ses / 4);
 		printf ("session is %d 32bit words (== 18 ?), cmd = [%08x]\n", 
-			sizeof bses / 4, cmd);
-		ises_queue_cmd(sc, cmd, (u_int32_t *)&bses, NULL);
+			sizeof ses / 4, cmd);
+		ises_queue_cmd(sc, cmd, (u_int32_t *)&ses, NULL);
 #endif
 		
 		break;
@@ -1857,7 +1969,7 @@ ises_showreg (void)
 void
 ises_debug_parse_omr (struct ises_softc *sc)
 {
-	u_int32_t omr = sc->sc_bsession.omr;
+	u_int32_t omr = sc->sc_sessions[sc->sc_cursession].omr;
 	
 	printf ("SELR : ");
 	if (omr & ISES_SELR_BCHU_EH)
@@ -1869,7 +1981,9 @@ ises_debug_parse_omr (struct ises_softc *sc)
 		printf ("HU-input-is-SCU-output ");
 	
 	if (omr & ISES_SELR_BCHU_DIS)
-		printf ("data-interface-select ");
+		printf ("data-interface-select=B ");
+	else
+		printf ("data-interface-select=DataIn/DataOut ");
 	
 	printf ("\n");
 	
