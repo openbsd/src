@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1995/07/05 18:45:46 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.16 1995/04/13 16:24:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,7 +170,8 @@ vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
 int		pmap_pa_exists __P((vm_offset_t));
 int		pmap_dumpsize __P((void));
 int		pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
-				 daddr_t));
+		    daddr_t));
+int		mmu_pagein __P((struct pmap *, int va, vm_prot_t prot));
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
