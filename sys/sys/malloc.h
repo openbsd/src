@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.47 2001/08/17 23:39:59 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.48 2001/08/18 18:15:52 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -162,7 +162,7 @@
 #define	M_USBHC		103	/* USB host controller */
 #define M_PIPE		104	/* Pipe structures */
 #define M_MEMDESC	105	/* Memory range */
-#define M_DEBUG		106	/* MALLOC_DEBUG structures */
+/* 106 - free */
 #define M_KNOTE		107	/* kernel event queue */  
 #define M_CRYPTO_DATA   108	/* Crypto framework data buffers (keys etc.) */
 #define M_IPSEC_POLICY  109	/* IPsec SPD structures */
@@ -283,7 +283,7 @@
 	"USB HC",	/* 103 M_USBHC */ \
 	"pipe", 	/* 104 M_PIPE */ \
 	"memdesc",	/* 105 M_MEMDESC */ \
-	"malloc debug",	/* 106 M_DEBUG */ \
+	NULL,	/* 106 */ \
 	"knote",	/* 107 M_KNOTE */ \
 	"crypto data",	/* 108 M_CRYPTO_DATA */ \
 	"SPD info",	/* 109 M_IPSEC_POLICY */ \
