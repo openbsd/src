@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.53 1999/07/25 10:22:25 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.54 1999/07/25 10:38:30 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -62,10 +62,8 @@ major	{rd = 17}
 # Machine-independent ATAPI drivers
 #
 
-include "../../../dev/atapi/files.atapi"
-
-#include "../../../dev/atapiscsi/files.atapiscsi"
-#include "../../../dev/ata/files.ata"
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
 
 #
 # System bus types
