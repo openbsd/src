@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.25 2004/02/16 21:25:41 jakob Exp $
+.\"	$OpenBSD: rdate.8,v 1.26 2004/02/18 20:10:53 jmc Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -37,7 +37,7 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm rdate
-.Op Fl 46ncpsav
+.Op Fl 46acnpsv
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -61,8 +61,11 @@ to use IPv4 addresses only.
 Forces
 .Nm
 to use IPv6 addresses only.
-.It Fl n
-Use SNTP (RFC 1361) instead of the RFC 868 time protocol.
+.It Fl a
+Use the
+.Xr adjtime 2
+call to gradually skew the local time to the
+remote time rather than just hopping.
 .It Fl c
 Correct leap seconds.
 Sometimes required when synchronizing to an NTP server.
@@ -71,15 +74,12 @@ server does not correctly account for leap seconds.
 You can determine if you need this parameter if you sync against an NTP
 server (with this parameter) or (recommended) check with a local radio
 controlled watch or phone service.
+.It Fl n
+Use SNTP (RFC 1361) instead of the RFC 868 time protocol.
 .It Fl p
 Do not set, just print the remote time.
 .It Fl s
 Do not print the time.
-.It Fl a
-Use the
-.Xr adjtime 2
-call to gradually skew the local time to the
-remote time rather than just hopping.
 .It Fl v
 Verbose output.
 Always show the adjustment.
