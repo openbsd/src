@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/02 04:54:40 drahn Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/09/17 22:38:26 drahn Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -96,8 +96,9 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} \
+	*.o *.lo *.c bsd ${BSD_RD} cd${REV}.fs \
 	rdsetroot
+	rm -rf cd-dir
 
 beforeinstall:
 	cp ${BSD.RD} cd${REV}.fs ${DESTDIR}/snapshot
