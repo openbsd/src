@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.11 1997/07/23 19:31:51 kstailey Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.12 1997/09/07 19:35:08 millert Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -92,7 +92,7 @@ char line[MAXLINELEN];
 
 char confname[MAXPATHLEN], infilename[MAXPATHLEN];
 char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
-char tempfname[MAXPATHLEN], cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
+char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 char topdir[MAXPATHLEN];
 char libdir[MAXPATHLEN] = "/usr/lib";
 int linenum = -1;
@@ -166,16 +166,10 @@ int main(int argc, char **argv)
     else strcpy(confname, infilename);
     if((p=strrchr(confname, '.')) != NULL && !strcmp(p, ".conf")) *p = '\0';
 
-    if(!*outmkname) sprintf(outmkname, "%s.mk", confname);
-    if(!*outcfname) sprintf(outcfname, "%s.c", confname);
-    if(!*execfname) sprintf(execfname, "%s", confname);
-
-    sprintf(cachename, "%s.cache", confname);
-    sprintf(tempfname, ".tmp_%sXXXXXX", confname);
-    if(mktemp(tempfname) == NULL) {
-	perror(tempfname);
-	exit(1);
-    }
+    if(!*outmkname) snprintf(outmkname, sizeof(outmkname), "%s.mk", confname);
+    if(!*outcfname) snprintf(outcfname, sizeof(outcfname), "%s.c", confname);
+    if(!*execfname) snprintf(execfname, sizeof(execfname), "%s", confname);
+    snprintf(cachename, sizeof(cachename), "%s.cache", confname);
 
     parse_conf_file();
     gen_outputs();
@@ -235,7 +229,7 @@ void parse_one_file(char *filename)
     void (*f)(int c, char **v);
     FILE *cf;
 
-    sprintf(line, "reading %s", filename);
+    snprintf(line, sizeof(line), "reading %s", filename);
     status(line);
     strcpy(curfilename, filename);
 
@@ -499,7 +493,7 @@ void fillin_program(prog_t *p)
     strlst_t *s;
     int i;
 
-    sprintf(line, "filling in parms for %s", p->name);
+    snprintf(line, sizeof(line), "filling in parms for %s", p->name);
     status(line);
 
     if(!p->ident) 
@@ -507,16 +501,16 @@ void fillin_program(prog_t *p)
     if(!p->srcdir) {
 	srcparent = dir_search(p->name);
 	if(srcparent)
-	    sprintf(path, "%s/%s", srcparent, p->name);
+	    snprintf(path, sizeof(path), "%s/%s", srcparent, p->name);
 	if(is_dir(path))
 	    p->srcdir = strdup(path);
     }
     if(!p->objdir && p->srcdir) {
-	sprintf(path, "%s/obj", p->srcdir);
+	snprintf(path, sizeof(path), "%s/obj", p->srcdir);
 	if(is_dir(path))
 	    p->objdir = strdup(path);
 	else {
-	    sprintf(path, "%s/obj.%s", p->srcdir, MACHINE);
+	    snprintf(path, sizeof(path), "%s/obj.%s", p->srcdir, MACHINE);
 	    if(is_dir(path))
 		p->objdir = strdup(path);
 	    else
@@ -528,7 +522,7 @@ void fillin_program(prog_t *p)
     /* to find makefile and get objs from it. */
     if (p->srcdir && !p->objs) {
 	for (i = 0; mf_name[i] != NULL; i++) {
-	    sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
+	    snprintf(path, sizeof(path), "%s/%s", p->srcdir, mf_name[i]);
 	    if (is_nonempty_file(path)) {
 		p->mf_name = mf_name[i];
 		fillin_program_objs(p, path);
@@ -542,7 +536,7 @@ void fillin_program(prog_t *p)
 
     if(!p->objpaths && p->objdir && p->objs)
 	for(s = p->objs; s != NULL; s = s->next) {
-	    sprintf(line, "%s/%s", p->objdir, s->str);
+	    snprintf(line, sizeof(line), "%s/%s", p->objdir, s->str);
 	    add_string(&p->objpaths, line);
 	}
 
@@ -563,13 +557,16 @@ void fillin_program(prog_t *p)
 
 void fillin_program_objs(prog_t *p, char *path)
 {
-    char *obj, *cp;
-    int rc;
+    char *cp, *obj, tempfname[MAXPATHLEN];
+    int fd, rc;
     FILE *f;
 
     /* discover the objs from the srcdir Makefile */
 
-    if((f = fopen(tempfname, "w")) == NULL) {
+    snprintf(tempfname, sizeof(tempfname), ".tmp_%sXXXXXXXXXX", confname);
+    if ((fd = mkstemp(tempfname) == -1) || (f = fdopen(fd, f, "w") == NULL)) {
+	if (fd != -1)
+	    close(fd);
 	perror(tempfname);
 	goterror = 1;
 	return;
@@ -582,7 +579,7 @@ void fillin_program_objs(prog_t *p, char *path)
     fprintf(f, "crunchgen_objs:\n\t@echo 'OBJS= '${OBJS}\n");
     fclose(f);
 
-    sprintf(line, "make -f %s crunchgen_objs 2>&1", tempfname);
+    snprintf(line, sizeof(line), "make -f %s crunchgen_objs 2>&1", tempfname);
     if((f = popen(line, "r")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
@@ -639,7 +636,7 @@ void gen_specials_cache(void)
     FILE *cachef;
     prog_t *p;
 
-    sprintf(line, "generating %s", cachename);
+    snprintf(line, sizeof(line), "generating %s", cachename);
     status(line);
 
     if((cachef = fopen(cachename, "w")) == NULL) {
@@ -675,7 +672,7 @@ void gen_output_makefile(void)
     prog_t *p;
     FILE *outmk;
 
-    sprintf(line, "generating %s", outmkname);
+    snprintf(line, sizeof(line), "generating %s", outmkname);
     status(line);
 
     if((outmk = fopen(outmkname, "w")) == NULL) {
@@ -705,7 +702,7 @@ void gen_output_cfile(void)
     prog_t *p;
     strlst_t *s;
 
-    sprintf(line, "generating %s", outcfname);
+    snprintf(line, sizeof(line), "generating %s", outcfname);
     status(line);
 
     if((outcf = fopen(outcfname, "w")) == NULL) {
@@ -767,7 +764,7 @@ char *dir_search(char *progname)
     strlst_t *dir;
 
     for(dir=srcdirs; dir != NULL; dir=dir->next) {
-	sprintf(path, "%s/%s", dir->str, progname);
+	snprintf(path, sizeof(path), "%s/%s", dir->str, progname);
 	if(is_dir(path)) return dir->str;
     }
     return NULL;
