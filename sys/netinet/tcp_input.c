@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.114 2002/06/07 06:42:00 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.115 2002/06/07 15:51:54 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3005,19 +3005,11 @@ tcp_mss(tp, offer)
 	}
 #ifdef INET6
 	else if (is_ipv6) {
-		if (inp && IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
-			/* mapped addr case */
-			struct in_addr d;
-			bcopy(&inp->inp_faddr6.s6_addr32[3], &d, sizeof(d));
-			if (ip_mtudisc || in_localaddr(d))
-				mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
-		} else {
-			/*
-			 * for IPv6, path MTU discovery is always turned on,
-			 * or the node must use packet size <= 1280.
-			 */
-			mss = IN6_LINKMTU(ifp) - iphlen - sizeof(struct tcphdr);
-		}
+		/*
+		 * for IPv6, path MTU discovery is always turned on,
+		 * or the node must use packet size <= 1280.
+		 */
+		mss = IN6_LINKMTU(ifp) - iphlen - sizeof(struct tcphdr);
 	}
 #endif /* INET6 */
 
