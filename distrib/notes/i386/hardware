@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.112 2003/04/19 11:57:20 henning Exp $
+dnl	$OpenBSD: hardware,v 1.113 2003/05/17 21:56:35 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -699,6 +699,10 @@ Supported hardware {:-include-:}:
 		    Intel Smart Video Recorder III
 		    IMS TV Turbo
 		    AVer Media TV/FM
+		Hardware monitoring sensors, including: [G]
+		    National Semiconductor LM78, LM78-J, LM79
+		    Winbond W83697HF, W83627HF, W83781D, W83782D
+		    VIA VT82C686A
 	Many kinds of ISA Plug-and-Play cards
 		Nearly all SB-style audio cards
 		Nearly all joystick ports
