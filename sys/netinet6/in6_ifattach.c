@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.27 2002/06/08 21:22:02 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.28 2002/06/11 07:04:07 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ in6_ifattach(ifp, altifp)
 	}
 
 	/*
-	 * assign a link-local address, if there's none. 
+	 * assign a link-local address, if there's none.
 	 */
 	if (ip6_auto_linklocal) {
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
@@ -721,7 +721,7 @@ in6_ifdetach(ifp)
 			if (ia->ia_next)
 				ia->ia_next = oia->ia_next;
 			else {
-				nd6log((LOG_ERR, 
+				nd6log((LOG_ERR,
 				    "%s: didn't unlink in6ifaddr from list\n",
 				    ifp->if_xname));
 			}
