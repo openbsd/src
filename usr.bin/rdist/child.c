@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.7 1998/06/26 21:20:58 millert Exp $	*/
+/*	$OpenBSD: child.c,v 1.8 1999/02/04 23:18:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: child.c,v 6.28 1996/02/22 19:30:09 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.7 1998/06/26 21:20:58 millert Exp $";
+"$OpenBSD: child.c,v 1.8 1999/02/04 23:18:56 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -151,7 +151,7 @@ static CHILD *copychild(child)
 
 	newc = (CHILD *) xmalloc(sizeof(CHILD));
 
-	newc->c_name = strdup(child->c_name);
+	newc->c_name = xstrdup(child->c_name);
 	newc->c_readfd = child->c_readfd;
 	newc->c_pid = child->c_pid;
 	newc->c_state = child->c_state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.7 1998/06/26 21:21:15 millert Exp $	*/
+/*	$OpenBSD: message.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.7 1998/06/26 21:21:15 millert Exp $";
+"$OpenBSD: message.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -210,7 +210,7 @@ static char *setmsgtypes(msgfac, str)
 		if ((msgfac->mf_fptr = fopen(strptr, "w")) == NULL)
 			fatalerr("Cannot open log file for writing: %s: %s.",
 				 strptr, SYSERR);
-		msgfac->mf_filename = strdup(strptr);
+		msgfac->mf_filename = xstrdup(strptr);
 
 		strptr = cp;
 		break;
@@ -505,7 +505,7 @@ extern void checkhostname()
 		if (gethostname(mbuf, sizeof(mbuf)) == 0) {
 			if ((cp = strchr(mbuf, '.')) != NULL)
 				*cp = CNULL;
-			currenthost = strdup(mbuf);
+			currenthost = xstrdup(mbuf);
 		} else
 			currenthost = "(unknown)";
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.4 1998/06/26 21:21:07 millert Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.5 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: distopt.c,v 6.10 1996/01/30 01:52:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: distopt.c,v 1.4 1998/06/26 21:21:07 millert Exp $";
+"$OpenBSD: distopt.c,v 1.5 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)distopt.c";
@@ -112,7 +112,7 @@ extern int parsedistopts(str, optptr, doerrs)
 	int negate;
 
 	/* strtok() is harmful */
-	string = strdup(str);
+	string = xstrdup(str);
 
 	for (optstr = strtok(string, ","); optstr;
 	     optstr = strtok(NULL, ",")) {

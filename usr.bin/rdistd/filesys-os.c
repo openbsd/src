@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.5 1998/06/26 21:20:47 millert Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.6 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: filesys-os.c,v 6.17 1996/01/17 21:02:45 mcooper Exp mcooper $";
 #else
 static char RCSid[] = 
-"$OpenBSD: filesys-os.c,v 1.5 1998/06/26 21:20:47 millert Exp $";
+"$OpenBSD: filesys-os.c,v 1.6 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)filesys-os.c";
@@ -402,8 +402,8 @@ mntent_t *newmountent(old)
 		return(NULL);
 
 	new = (mntent_t *) xcalloc(1, sizeof(mntent_t));
-	new->me_path = strdup(old->me_path);
-	new->me_type = strdup(old->me_type);
+	new->me_path = xstrdup(old->me_path);
+	new->me_type = xstrdup(old->me_type);
 	new->me_flags = old->me_flags;
 
 	return(new);

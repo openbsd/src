@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.7 1998/06/26 21:21:09 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.7 1998/06/26 21:21:09 millert Exp $";
+"$OpenBSD: docmd.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -592,7 +592,7 @@ done:
 	if (!nflag) {
 		register struct linkbuf *nextl, *l;
 
-		for (l = ihead; l != NULL; free((char *)l), l = nextl) {
+		for (l = ihead; l != NULL; freelinkinfo(l), l = nextl) {
 			nextl = l->nextp;
 			if (contimedout || IS_ON(opts, DO_IGNLNKS) || 
 			    l->count == 0)

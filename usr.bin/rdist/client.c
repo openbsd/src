@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.7 1998/06/26 21:21:00 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.7 1998/06/26 21:21:00 millert Exp $";
+"$OpenBSD: client.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -216,7 +216,7 @@ static void addcmdspecialfile(starget, rname, destdir)
 
 	if (isokay) {
 		new = (struct namelist *) xmalloc(sizeof(struct namelist));
-		new->n_name = strdup(rfile);
+		new->n_name = xstrdup(rfile);
 		new->n_next = updfilelist;
 		updfilelist = new;
 	}
@@ -307,6 +307,18 @@ int checkfilename(name)
 	return(0);
 }
 
+void freelinkinfo(lp)
+	struct linkbuf *lp;
+{
+	if (lp->pathname)
+		free(lp->pathname);
+	if (lp->src)
+		free(lp->src);
+	if (lp->target)
+		free(lp->target);
+	free(lp);
+}
+
 /*
  * Save and retrieve hard link info
  */
@@ -315,6 +327,7 @@ static struct linkbuf *linkinfo(statp)
 {
 	struct linkbuf *lp;
 
+	/* XXX - linear search doesn't scale with many links */
 	for (lp = ihead; lp != NULL; lp = lp->nextp)
 		if (lp->inum == statp->st_ino && lp->devnum == statp->st_dev) {
 			lp->count--;
@@ -327,12 +340,14 @@ static struct linkbuf *linkinfo(statp)
 	lp->inum = statp->st_ino;
 	lp->devnum = statp->st_dev;
 	lp->count = statp->st_nlink - 1;
-	(void) strcpy(lp->pathname, target);
-	(void) strcpy(lp->src, source);
+	lp->pathname = xstrdup(target);
+	lp->src = xstrdup(source);
 	if (Tdest)
-		(void) strcpy(lp->target, Tdest);
+		lp->target = xstrdup(Tdest);
 	else
-		*lp->target = CNULL;
+		lp->target = NULL;
+	if (!lp->pathname || !lp->src || !(Tdest && lp->target))
+		fatalerr("Cannot malloc memory in linkinfo.");
 
 	return(NULL);
 }

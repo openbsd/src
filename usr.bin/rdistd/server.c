@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.7 1998/06/26 21:20:53 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.7 1998/06/26 21:20:53 millert Exp $";
+"$OpenBSD: server.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -1313,7 +1313,7 @@ static void setconfig(cmd)
 		 * Only use info if we don't know who this is.
 		 */
 		if (!fromhost) {
-			fromhost = strdup(cp);
+			fromhost = xstrdup(cp);
 			message(MT_SYSLOG, "startup for %s",  fromhost);
 #if defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 			setproctitle("serving %s", cp);

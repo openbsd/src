@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.9 1998/07/16 20:40:23 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.10 1999/02/04 23:18:57 millert Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -298,9 +298,9 @@ struct linkbuf {
 	ino_t	inum;
 	dev_t	devnum;
 	int	count;
-	char	pathname[BUFSIZ];
-	char	src[BUFSIZ];
-	char	target[BUFSIZ];
+	char	*pathname;
+	char	*src;
+	char	*target;
 	struct	linkbuf *nextp;
 };
 
@@ -354,6 +354,7 @@ char			       *makestr();
 char	       		       *xcalloc();
 char	       		       *xmalloc();
 char	       		       *xrealloc();
+char	       		       *xstrdup();
 extern char		       *xbasename();
 extern char		       *getdistoptlist();
 extern char		       *getgroupname();

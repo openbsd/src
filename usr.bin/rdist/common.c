@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.7 1998/06/26 21:29:13 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.7 1998/06/26 21:29:13 millert Exp $";
+"$OpenBSD: common.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -117,7 +117,7 @@ extern void setprogname(argv)
 	register char *cp;
 
 	if (!progname) {
-		progname = strdup(argv[0]);
+		progname = xstrdup(argv[0]);
 		if ((cp = strrchr(progname, '/')))
 			progname = cp + 1;
 	}
@@ -146,7 +146,7 @@ extern int init(argc, argv, envp)
 	realargc = argc;
 	realargv = (char **) xmalloc(sizeof(char *) * (argc+1));
 	for (i = 0; i < argc; i++)
-		realargv[i] = strdup(argv[i]);
+		realargv[i] = xstrdup(argv[i]);
 
 #if	defined(SETARGS)
 	setargs_settup(argc, argv, envp);
@@ -161,8 +161,8 @@ extern int init(argc, argv, envp)
 
 	debugmsg(DM_MISC, "UserID = %d pwname = '%s' home = '%s'\n",
 		 userid, pw->pw_name, pw->pw_dir);
-	homedir = strdup(pw->pw_dir);
-	locuser = strdup(pw->pw_name);
+	homedir = xstrdup(pw->pw_dir);
+	locuser = xstrdup(pw->pw_name);
 	groupid = pw->pw_gid;
 	gethostname(host, sizeof(host));
 	if ((cp = strchr(host, '.')) != NULL)
@@ -933,6 +933,20 @@ char *xcalloc(num, esize)
 		      num, esize, num * esize);
 
 	return(ptr);
+}
+
+/*
+ * Strdup with error checking
+ */
+char *xstrdup(str)
+	char *str;
+{
+	char *nstr;
+
+	if ((nstr = strdup(str)) == NULL)
+		fatalerr("Cannot malloc %d bytes of memory.", strlen(str));
+
+	return(nstr);
 }
 
 /*

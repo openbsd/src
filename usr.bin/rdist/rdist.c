@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.6 1998/07/16 20:43:56 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.7 1999/02/04 23:18:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.6 1998/07/16 20:43:56 millert Exp $";
+"$OpenBSD: rdist.c,v 1.7 1999/02/04 23:18:57 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -94,7 +94,7 @@ static void addhostlist(name, hostlist)
 		return;
 
 	new = (struct namelist *) xmalloc(sizeof(struct namelist));
-	new->n_name = strdup(name);
+	new->n_name = xstrdup(name);
 	new->n_next = NULL;
 
 	if (*hostlist) {
@@ -174,7 +174,7 @@ main(argc, argv, envp)
 			break;
 
 		case 'L':
-			remotemsglist = strdup(optarg);
+			remotemsglist = xstrdup(optarg);
 			break;
 
 		case 'A':
@@ -200,7 +200,7 @@ main(argc, argv, envp)
 			break;
 
 		case 'f':
-			distfile = strdup(optarg);
+			distfile = xstrdup(optarg);
 			if (distfile[0] == '-' && distfile[1] == CNULL)
 				fin = stdin;
 			break;
@@ -246,7 +246,7 @@ main(argc, argv, envp)
 				error("No path specified to \"-p\".");
 				usage();
 			}
-			path_rdistd = strdup(optarg);
+			path_rdistd = xstrdup(optarg);
 			break;
 
 		case 'P':
@@ -255,7 +255,7 @@ main(argc, argv, envp)
 				usage();
 			}
 			if ((cp = searchpath(optarg)))
-				path_remsh = strdup(cp);
+				path_remsh = xstrdup(cp);
 			else {
 				error("No component of path \"%s\" exists.",
 				      optarg);
