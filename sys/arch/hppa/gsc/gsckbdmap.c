@@ -1,11 +1,11 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.7 2004/07/26 14:06:12 miod Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.8 2005/02/22 19:42:44 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.25 2004/07/26 14:05:59 miod Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.26 2005/02/22 19:41:44 mickey Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -275,7 +275,7 @@ static const keysym_t gsckbd_keydesc_sv[] = {
     KC(91),	KS_dead_diaeresis,	KS_dead_circumflex,	KS_dead_tilde,
     KC(76),	KS_odiaeresis,
     KC(82),	KS_adiaeresis,
-    KC(14),	KS_paragraph,	KS_onehalf,
+    KC(14),	KS_section,	KS_onehalf,
     KC(97),	KS_less,	KS_greater,	KS_bar,
     KC(145),	KS_Mode_switch,	KS_Multi_key,
 };
