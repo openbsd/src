@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.10 2005/02/15 15:17:34 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.11 2005/02/15 20:14:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,11 +29,12 @@
 #include <sys/un.h>
 
 #include <poll.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "log.h"
 #include "sock.h"
@@ -106,6 +107,9 @@ cvsd_sock_open(void)
 		(void)unlink(cvsd_sock_path);
 		return (-1);
 	}
+
+	/* close on exec so children can't muck around with this */
+	(void)fcntl(cvsd_sock, F_SETFD, FD_CLOEXEC);
 
 	cvs_log(LP_DEBUG, "opened local socket `%s'", cvsd_sock_path);
 
