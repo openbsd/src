@@ -7,6 +7,19 @@ ftp://ftp.aba.net.au/pub/OpenBSD ==
 
 ftp://ftp.wiretapped.net/pub/OpenBSD/
 
+ftp://ftp.it.net.au/mirrors/OpenBSD
+
+Austria:
+
+ftp://gd.tuwien.ac.at/opsys/OpenBSD
+
+Canada:
+
+ftp://openbsd.sunsite.ualberta.ca/pub/OpenBSD ==
+	ftp://ftp.openbsd.org/pub/OpenBSD
+	ftp://ftp.ca.openbsd.org/pub/OpenBSD
+	ftp://ftp1.ca.openbsd.org/pub/OpenBSD
+
 France:
 
 ftp://ftp.lip6.fr/pub/OpenBSD == 
@@ -19,15 +32,35 @@ Germany:
 ftp://ftp.fu-berlin.de/unix/OpenBSD ==
 	ftp://ftp.de.openbsd.org/unix/OpenBSD
 
+ftp://ftp.gigabell.net/pub/OpenBSD
+
+Greece:
+
+ftp://filoktitis.noc.uoa.gr/pub/OpenBSD
+
+ftp://ftp.duth.gr/pub/OpenBSD
+
 Japan:
 
-ftp://ftp.tut.ac.jp/OpenBSD
-
 ftp://ftp.dti.ad.jp/pub/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
+
+ftp://ftp.kddlabs.co.jp/OpenBSD
+
+ftp://ftp.netlab.is.tsukuba.ac.jp/pub/os/OpenBSD
 
 Korea:
 
 ftp://ftp.snu.ac.kr/pub/BSD/OpenBSD/
+
+Norway:
+
+ftp://ftp.inet.no/pub/OpenBSD
+
+Russia:
+
+ftp://ftp.chg.ru/pub/OpenBSD
+
+ftp://ftp.radio-msu.net/pub/OpenBSD
 
 Sweden:
 
@@ -35,13 +68,25 @@ ftp://ftp.stacken.kth.se/pub/OpenBSD ==
 	ftp://ftp.se.openbsd.org/pub/OpenBSD
 	ftp://ftp1.se.openbsd.org/pub/OpenBSD
 
+ftp://ftp.sunet.se/pub/OpenBSD
+
+Switzerland:
+
+ftp://sunsite.cnlab-switch.ch/pub/OpenBSD
+
 Taiwan:
 
 ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
 
+Thailand:
+
+ftp://ftp.kmitl.ac.th/pub/OpenBSD
+
 United Kingdom:
 
-ftp://ftp.demon.co.uk/pub/OpenBSD
+ftp://ftp.knowledge.com/pub/mirrors/OpenBSD
+
+ftp://ftp.plig.org/pub/OpenBSD
 
 USA:
 
@@ -56,15 +101,17 @@ ftp://ftp.eecs.umich.edu/pub/OpenBSD ==
 
 ftp://ftp.op.net/pub/OpenBSD
 
-Canada:
+ftp://download.sourceforge.net/pub/mirrors/OpenBSD
 
-ftp://openbsd.sunsite.ualberta.ca/pub/OpenBSD ==
-	ftp://ftp.openbsd.org/pub/OpenBSD
-	ftp://ftp.ca.openbsd.org/pub/OpenBSD
-	ftp://ftp1.ca.openbsd.org/pub/OpenBSD
+ftp://ftp.cerias.purdue.edu/pub/os/OpenBSD
 
-ftp://obsd.compmore.net/pub/OpenBSD ==
-	ftp://ftp2.ca.openbsd.org/pub/OpenBSD
+ftp://ftp.compsci.lyon.edu/pub/distributions/OpenBSD
+
+ftp://ftp.op.net/pub/OpenBSD
+
+ftp://ftp.src.uchicago.edu/pub/openbsd
+
+ftp://rt.fm/pub/OpenBSD
 
 As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/OSREV/ftplist
 contains a list which is continually updated.  If you wish to become a
