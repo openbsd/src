@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.18 2000/09/26 17:50:26 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.19 2001/03/18 17:15:35 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
 	void	*tdbi;			/* pointer to struct tdb_ident */
-					/* XXX - pull in ip_ipsp.h */ 
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -131,19 +130,22 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* packet was authenticated (AH) */
+
 #if 0 /* NRL IPv6 */
 #define M_TUNNEL       	0x1000  /* packet was tunneled */
 #define M_DAD		0x2000	/* Used on outbound packets to indicate that
-				 * this is for duplicate address detection */
 #endif
 
 /* KAME IPv6 */
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
+
 #if 0 /*KAME IPSEC*/
 #define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
 #define M_DECRYPTED	0x0020	/* confidentiality */
 #endif
+
 #define M_LOOP		0x0040	/* for Mbuf statistics */
+
 #if 0 /*KAME IPSEC*/
 #define M_AUTHIPDGM     0x0080  /* data origin authentication */
 #endif
