@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.9 2003/04/07 22:45:59 tedu Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.8 2003/01/08 06:54:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.9 2003/04/07 22:45:59 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -973,7 +973,8 @@ subword(cp, type, adid)
 			    return (STRNULL);
 			}
 			*wp = 0;
-			(void) Strcat(wp, lhsb);
+			(void)Strlcat(wp, lhsb,
+			    sizeof(wbuf)/sizeof(Char) - (wp - wbuf));
 			wp = Strend(wp);
 			continue;
 		    }
@@ -984,7 +985,8 @@ subword(cp, type, adid)
 		    return (STRNULL);
 		}
 		*wp = 0;
-		(void) Strcat(wp, mp);
+		(void)Strlcat(wp, mp,
+		    sizeof(wbuf)/sizeof(Char) - (wp - wbuf));
 		*adid = 1;
 		return (Strsave(wbuf));
 	    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.16 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.17 2003/04/07 22:45:59 tedu Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.16 2003/01/08 06:54:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.17 2003/04/07 22:45:59 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -600,12 +600,12 @@ pads(cp)
     if (cmdlen >= PMAXLEN)
 	return;
     if (cmdlen + i >= PMAXLEN) {
-	(void) Strlcpy(cmdp, STRsp3dots, PMAXLEN - i);	/* XXX? */
+	(void) Strlcpy(cmdp, STRsp3dots, PMAXLEN - cmdlen);
 	cmdlen = PMAXLEN;
 	cmdp += 4;
 	return;
     }
-    (void) Strlcpy(cmdp, cp, PMAXLEN);
+    (void) Strlcpy(cmdp, cp, PMAXLEN - cmdlen);
     cmdp += i;
     cmdlen += i;
 }
