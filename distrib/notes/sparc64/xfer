@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.21 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.22 2004/05/04 23:04:30 deraadt Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -80,9 +80,9 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 	for the host system.
 	
 	Basically, you will need to set up reverse-arp (rarpd) and boot
-	parameter (bootpd) information and make the OpenBSD bootblock,
-	kernel/miniroot partition, and a swap file available as required
-	by the netboot setup.
+	parameter (rpc.bootparamd) information and make the OpenBSD
+	bootblock, kernel/miniroot partition, and a swap file available
+	as required by the netboot setup.
 
 
 OpenBSDXferPrelude
