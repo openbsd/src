@@ -110,9 +110,8 @@ dc.dvi: dc.texi
 DVIPS = dvips
 
 .texi.info:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+	$(MAKEINFO) $<
 
 .texi.dvi:
 	TEXINPUTS=$(srcdir):$$TEXINPUTS \
