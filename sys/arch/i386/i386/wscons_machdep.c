@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2001/02/25 23:24:18 aaron Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2001/02/26 20:20:02 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
+ *      This product includes software developed by Aaron Campbell.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
