@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.10 1997/07/24 22:59:35 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.11 1997/08/01 03:53:01 flipk Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -295,6 +295,8 @@ arprequest(ac, sip, tip, enaddr)
 	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
 	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
 	ea->arp_op = htons(ARPOP_REQUEST);
+	bcopy((caddr_t)enaddr, (caddr_t)eh->ether_shost,
+	      sizeof(eh->ether_shost));
 	bcopy((caddr_t)enaddr, (caddr_t)ea->arp_sha, sizeof(ea->arp_sha));
 	bcopy((caddr_t)sip, (caddr_t)ea->arp_spa, sizeof(ea->arp_spa));
 	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
@@ -536,6 +538,8 @@ reply:
 	eh = (struct ether_header *)sa.sa_data;
 	bcopy((caddr_t)ea->arp_tha, (caddr_t)eh->ether_dhost,
 	    sizeof(eh->ether_dhost));
+	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
+	    sizeof(eh->ether_shost));
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);
@@ -735,6 +739,8 @@ revarprequest(ifp)
 	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
 	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
 	ea->arp_op = htons(ARPOP_REVREQUEST);
+	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
+	   sizeof(ea->arp_tha));
 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
 	   sizeof(ea->arp_sha));
 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_tha,
