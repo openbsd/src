@@ -1,4 +1,4 @@
-/*	$OpenBSD: map_parse.y,v 1.1 2000/07/01 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: map_parse.y,v 1.2 2001/08/26 17:35:13 deraadt Exp $	*/
 /*	$NetBSD: map_parse.y,v 1.2 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -195,7 +195,8 @@ keysym_var	: T_KEYSYM_VAR = {
 			if (res < 0)
 				yyerror("keysym expected");
 			$$ = res;
-		};
+		}
+		;
 %%
 
 void
