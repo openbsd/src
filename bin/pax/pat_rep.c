@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.8 1997/04/05 22:36:15 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.9 1997/06/04 00:15:17 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.8 1997/04/05 22:36:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.9 1997/06/04 00:15:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -744,7 +744,7 @@ mod_name(arcn)
 			return(res);
 		if ((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 		    (arcn->type == PAX_HRG))
-			sub_name(arcn->ln_name, &(arcn->ln_nlen));
+			sub_name(arcn->ln_name, &(arcn->ln_nlen), sizeof(arcn->ln_name));
 	}
 	return(res);
 }
@@ -816,8 +816,8 @@ tty_rename(arcn)
 	 */
 	tty_prnt("Processing continues, name changed to: %s\n", tmpname);
 	res = add_name(arcn->name, arcn->nlen, tmpname);
-	arcn->nlen = l_strncpy(arcn->name, tmpname, PAXPATHLEN+1);
-	arcn->name[PAXPATHLEN] = '\0';
+	arcn->nlen = l_strncpy(arcn->name, tmpname, sizeof(arcn->name) - 1);
+	arcn->name[arcn->nlen] = '\0';
 	if (res < 0)
 		return(-1);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 1997/04/05 22:36:12 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 1997/06/04 00:15:15 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -169,7 +169,6 @@ int next_file __P((register ARCHD *));
  */
 void ls_list __P((register ARCHD *, time_t, FILE *));
 void ls_tty __P((register ARCHD *));
-void zf_strncpy __P((register char *, register char *, int));
 int l_strncpy __P((register char *, register char *, int));
 u_long asc_ul __P((register char *, int, register int));
 int ul_asc __P((u_long, register char *, register int, register int));
@@ -261,7 +260,7 @@ int ftime_start __P((void));
 int chk_ftime __P((register ARCHD *));
 int name_start __P((void));
 int add_name __P((register char *, int, char *));
-void sub_name __P((register char *, int *));
+void sub_name __P((register char *, int *, size_t));
 int dev_start __P((void));
 int add_dev __P((register ARCHD *));
 int map_dev __P((register ARCHD *, u_long, u_long));

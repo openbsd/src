@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.6 1997/02/27 23:32:57 michaels Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.7 1997/06/04 00:15:14 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.6 1997/02/27 23:32:57 michaels Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.7 1997/06/04 00:15:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -777,7 +777,7 @@ copy()
 	 * set up the destination dir path and make sure it is a directory. We
 	 * make sure we have a trailing / on the destination
 	 */
-	dlen = l_strncpy(dirbuf, dirptr, PAXPATHLEN);
+	dlen = l_strncpy(dirbuf, dirptr, sizeof(dirbuf) - 1);
 	dest_pt = dirbuf + dlen;
 	if (*(dest_pt-1) != '/') {
 		*dest_pt++ = '/';

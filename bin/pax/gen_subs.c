@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.4 1997/01/24 19:41:21 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.5 1997/06/04 00:15:16 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.4 1997/01/24 19:41:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.5 1997/06/04 00:15:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,40 +206,12 @@ ls_tty(arcn)
 }
 
 /*
- * zf_strncpy()
- *	copy src to dest up to len chars (stopping at first '\0'), when src is
- *	shorter than len, pads to len with '\0'. big performance win (and 
- *	a lot easier to code) over strncpy(), then a strlen() then a
- *	memset(). (or doing the memset() first).
- */
-
-#if __STDC__
-void
-zf_strncpy(register char *dest, register char *src, int len)
-#else
-void
-zf_strncpy(dest, src, len)
-	register char *dest;
-	register char *src;
-	int len;
-#endif
-{
-	register char *stop;
-
-	stop = dest + len;
-	while ((dest < stop) && (*src != '\0'))
-		*dest++ = *src++;
-	while (dest < stop)
-		*dest++ = '\0';
-	return;
-}
-
-/*
  * l_strncpy()
- *	copy src to dest up to len chars (stopping at first '\0')
+ *	copy src to dest up to len chars (stopping at first '\0').
+ *	when src is shorter than len, pads to len with '\0'. 
  * Return:
  *	number of chars copied. (Note this is a real performance win over
- *	doing a strncpy() then a strlen()
+ *	doing a strncpy(), a strlen(), and then a possible memset())
  */
 
 #if __STDC__
@@ -260,9 +232,10 @@ l_strncpy(dest, src, len)
 	start = dest;
 	while ((dest < stop) && (*src != '\0'))
 		*dest++ = *src++;
-	if (dest < stop)
-		*dest = '\0';
-	return(dest - start);
+	len = dest - start;
+	while (dest < stop)
+		*dest++ = '\0';
+	return(len);
 }
 
 /*

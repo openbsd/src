@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.5 1996/12/24 03:44:13 tholo Exp $	*/
+/*	$OpenBSD: tables.c,v 1.6 1997/06/04 00:15:17 millert Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.5 1996/12/24 03:44:13 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.6 1997/06/04 00:15:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,8 +184,8 @@ chk_lnk(arcn)
 			 * other links.
 			 */
 			arcn->ln_nlen = l_strncpy(arcn->ln_name, pt->name,
-				PAXPATHLEN+1);
-			arcn->ln_name[PAXPATHLEN] = '\0';
+				sizeof(arcn->ln_name) - 1);
+			arcn->ln_name[arcn->ln_nlen] = '\0';
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -630,12 +630,13 @@ add_name(oname, onamelen, nname)
 
 #if __STDC__
 void
-sub_name(register char *oname, int *onamelen)
+sub_name(register char *oname, int *onamelen, size_t onamesize)
 #else
 void
-sub_name(oname, onamelen)
+sub_name(oname, onamelen, onamesize)
 	register char *oname;
 	int *onamelen;
+	size_t onamesize;
 #endif
 {
 	register NAMT *pt;
@@ -652,15 +653,15 @@ sub_name(oname, onamelen)
 
 	while (pt != NULL) {
 		/*
-		 * walk down the hash cahin looking for a match
+		 * walk down the hash chain looking for a match
 		 */
 		if (strcmp(oname, pt->oname) == 0) {
 			/*
 			 * found it, replace it with the new name
 			 * and return (we know that oname has enough space)
 			 */
-			*onamelen = l_strncpy(oname, pt->nname, PAXPATHLEN+1);
-			oname[PAXPATHLEN] = '\0';
+			*onamelen = l_strncpy(oname, pt->nname, onamesize - 1);
+			oname[*onamelen] = '\0';
 			return;
 		}
 		pt = pt->fow;
