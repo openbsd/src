@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.5 2000/06/10 03:54:23 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.6 2000/06/10 05:09:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -190,7 +190,12 @@ ubsec_intr(arg)
 
 	stat = READ_REG(sc, BS_STAT);
 
+	stat &= (BS_STAT_MCR1_DONE | BS_STAT_MCR2_DONE | BS_STAT_DMAERR);
+	if (stat == 0)
+		return (0);
+
 	if (stat & BS_STAT_MCR1_DONE) {
+		q = SIMPLEQ_FIRST(&sc->sc_qchip);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
 		if (q) {
 			/* XXX must generate macbuf ... */
@@ -198,21 +203,29 @@ ubsec_intr(arg)
 		}
 	}
 
+#if 0
+	if (stat & BS_STAT_MCR2_DONE) {
+		...
+	}
+#endif
+
 	if (stat & BS_STAT_DMAERR) {
 		printf("%s: dmaerr\n", sc->sc_dv.dv_xname);
 	}
 
 	/* if MCR is non-full, put a new command in it */
 	if ((stat & BS_STAT_MCR1_FULL) == 0) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
-		--sc->sc_nqueue;
-		if (q) {
+		if (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
+			q = SIMPLEQ_FIRST(&sc->sc_queue);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+			--sc->sc_nqueue;
 			SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
 			WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
 		}
 	}
 
-	return (stat ? 1 : 0);
+	WRITE_REG(sc, BS_STAT, stat);
+	return (1);
 }
 
 int
@@ -437,8 +450,7 @@ ubsec_process(crp)
 		coffset = macoffset - encoffset;
 		if (coffset < 0)
 			coffset = -coffset;
-	}
-	else {
+	} else {
 		dskip = sskip = macoffset + encoffset;
 		coffset = 0;
 	}
