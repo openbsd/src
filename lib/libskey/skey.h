@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.1.1.1 1995/10/18 08:43:11 deraadt Exp $
+ * $Id: skey.h,v 1.2 1995/12/20 09:48:23 deraadt Exp $
  */
 
 #if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)
@@ -61,6 +61,7 @@ void rip __ARGS ((char *buf));
 int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss));
 int skeylookup __ARGS ((struct skey * mp, char *name));
 int skeyverify __ARGS ((struct skey * mp, char *response));
+int skeyzero __ARGS ((struct skey * mp, char *response));
 void sevenbit __ARGS ((char *s));
 void backspace __ARGS ((char *s));
 char *skipspace __ARGS ((char *s));

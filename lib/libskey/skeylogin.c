@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.1.1.1 1995/10/18 08:43:11 deraadt Exp $
+ * $Id: skeylogin.c,v 1.2 1995/12/20 09:48:24 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -363,4 +363,32 @@ skey_authenticate (username)
 		return 0;
 	}
 	return -1;
+}
+
+/* Comment out user's entry in the s/key database
+ *
+ * Return codes:
+ * -1: Write error; database unchanged
+ *  0:  Database updated
+ *
+ * The database file is always closed by this call.
+ */
+int
+skeyzero(mp, response)
+	struct skey *mp;
+	char *response;
+{
+	/*
+	 * Seek to the right place and write comment character
+	 * which effectively zero's out the entry.
+	 */
+	fseek(mp->keyfile, mp->recstart, 0);
+	if (fputc('#', mp->keyfile) == EOF) {
+		fclose(mp->keyfile);
+		return -1;
+	}
+
+	fclose(mp->keyfile);
+	
+	return 0;
 }

@@ -29,13 +29,14 @@
 #define NAMELEN 2
 
 int skeylookup __ARGS((struct skey * mp, char *name));
+int skeyzero __ARGS((struct skey * mp, char *name));
 
 int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	int     rval, n, nn, i, defaultsetup, l;
+	int     rval, n, nn, i, defaultsetup, l, zerokey = 0;
 	time_t  now;
 	char	hostname[MAXHOSTNAMELEN];
 	char    seed[18], tmp[80], key[8], defaultseed[17];
@@ -63,14 +64,15 @@ main(argc, argv)
 		err(1, "Who are you?");
 
 	defaultsetup = 1;
-	if (argc > 1) {
-		if (strcmp("-s", argv[1]) == 0)
+	for (i=1; i < argc; i++) {
+		if (strcmp("-s", argv[i]) == 0)
 			defaultsetup = 0;
-		else
-			pp = getpwnam(argv[1]);
-
-		if (argc > 2)
-			pp = getpwnam(argv[2]);
+		else if (strcmp("-z", argv[i]) == 0)
+			zerokey = 1;
+		else {
+			pp = getpwnam(argv[i]);
+			break;
+		}
 	}
 	if (pp == NULL) {
 		err(1, "User unknown");
@@ -104,6 +106,10 @@ main(argc, argv)
 	case -1:
 		err(1, "cannot open database");
 	case 0:
+		/* comment out user if asked to */
+		if (zerokey)
+			exit(skeyzero(&skey, pp->pw_name));
+
 		printf("[Updating %s]\n", pp->pw_name);
 		printf("Old key: %s\n", skey.seed);
 
@@ -127,6 +133,10 @@ main(argc, argv)
 		}
 		break;
 	case 1:
+		if (zerokey) {
+			printf("You have no entry to zero.\n");
+			exit(1);
+		}
 		printf("[Adding %s]\n", pp->pw_name);
 		break;
 	}
