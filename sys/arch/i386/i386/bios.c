@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.21 1998/01/09 12:14:42 niklas Exp $	*/
+/*	$OpenBSD: bios.c,v 1.22 1998/02/24 22:02:09 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -62,6 +62,7 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "apm.h"
+#include "pci.h"
 
 struct bios_softc {
 	struct	device sc_dev;
@@ -81,6 +82,9 @@ struct cfdriver bios_cd = {
 
 extern dev_t bootdev;
 
+#if NPCI > 0
+bios_pciinfo_t *bios_pciinfo = NULL;
+#endif
 bios_diskinfo_t *bios_diskinfo = NULL;
 u_int32_t	bios_cksumlen;
 
@@ -160,6 +164,12 @@ biosattach(parent, self, aux)
 			bios_cksumlen = *(u_int32_t *)q->ba_arg;
 			printf(" cksumlen %d", bios_cksumlen);
 			break;
+#if NPCI > 0
+		case BOOTARG_PCIINFO:
+			bios_pciinfo = (bios_pciinfo_t *)q->ba_arg;
+			printf(" pciinfo %p", bios_pciinfo);
+			break;
+#endif
 		default:
 			printf(" unsupported arg (%d) %p", q->ba_type,
 			    q->ba_arg);
