@@ -1,5 +1,5 @@
-#!/bin/csh -f
-#	$OpenBSD: maketars,v 1.13 2001/12/25 01:30:22 deraadt Exp $
+#!/bin/sh
+#	$OpenBSD: maketars,v 1.14 2002/03/01 01:38:58 miod Exp $
 
 
 RELEASE=$1
