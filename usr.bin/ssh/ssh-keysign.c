@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.16 2004/04/18 23:10:26 djm Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.17 2004/08/23 14:26:38 dtucker Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -41,6 +41,7 @@ RCSID("$OpenBSD: ssh-keysign.c,v 1.16 2004/04/18 23:10:26 djm Exp $");
 #include "canohost.h"
 #include "pathnames.h"
 #include "readconf.h"
+#include "uidswap.h"
 
 /* XXX readconf.c needs these */
 uid_t original_real_uid;
@@ -148,8 +149,11 @@ main(int argc, char **argv)
 	key_fd[0] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 	key_fd[1] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
 
-	seteuid(getuid());
-	setuid(getuid());
+	if ((pw = getpwuid(getuid())) == NULL)
+		fatal("getpwuid failed");
+	pw = pwcopy(pw);
+
+	permanently_set_uid(pw);
 
 #ifdef DEBUG_SSH_KEYSIGN
 	log_init("ssh-keysign", SYSLOG_LEVEL_DEBUG3, SYSLOG_FACILITY_AUTH, 0);
@@ -166,10 +170,6 @@ main(int argc, char **argv)
 
 	if (key_fd[0] == -1 && key_fd[1] == -1)
 		fatal("could not open any host key");
-
-	if ((pw = getpwuid(getuid())) == NULL)
-		fatal("getpwuid failed");
-	pw = pwcopy(pw);
 
 	SSLeay_add_all_algorithms();
 	for (i = 0; i < 256; i++)

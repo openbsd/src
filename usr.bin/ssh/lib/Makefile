@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 2004/06/13 15:03:02 djm Exp $
+#	$OpenBSD: Makefile,v 1.49 2004/08/23 14:26:39 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -8,7 +8,7 @@ SRCS=	authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
 	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c nchan.c packet.c readpass.c \
 	rsa.c tildexpand.c ttymodes.c xmalloc.c atomicio.c \
-	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
+	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
 	rijndael.c ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
 	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c dns.c \
 	monitor_fdpass.c

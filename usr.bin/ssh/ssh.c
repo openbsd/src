@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.224 2004/07/28 09:40:29 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.225 2004/08/23 14:26:38 dtucker Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -71,6 +71,7 @@ RCSID("$OpenBSD: ssh.c,v 1.224 2004/07/28 09:40:29 markus Exp $");
 #include "match.h"
 #include "msg.h"
 #include "monitor_fdpass.h"
+#include "uidswap.h"
 
 #ifdef SMARTCARD
 #include "scard.h"
@@ -633,8 +634,10 @@ again:
 	 * user's home directory if it happens to be on a NFS volume where
 	 * root is mapped to nobody.
 	 */
-	seteuid(original_real_uid);
-	setuid(original_real_uid);
+	if (original_effective_uid == 0) {
+		PRIV_START;
+		permanently_set_uid(pw);
+	}
 
 	/*
 	 * Now that we are back to our own permissions, create ~/.ssh
