@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.48 2004/01/04 03:25:30 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.49 2004/01/08 17:30:52 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 static __inline struct scsi_xfer *scsi_make_xs(struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
     int datalen, int retries, int timeout, struct buf *, int flags);
-static __inline void asc2ascii(u_char asc, u_char ascq, char *result,
+static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
 int	sc_err1(struct scsi_xfer *, int);
 int	scsi_interpret_sense(struct scsi_xfer *);
@@ -816,9 +816,19 @@ static const char *sense_keys[16] = {
 	"Miscompare Error",
 	"Reserved"
 };
-#ifndef SCSITERSE
+
+#ifdef SCSITERSE
+static __inline void
+asc2ascii(asc, ascq, result, len)
+	u_int8_t asc, ascq;
+	char *result;
+	size_t len;
+{
+	snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x", asc, ascq);
+}
+#else
 static const struct {
-	u_char asc, ascq;
+	u_int8_t asc, ascq;
 	char *description;
 } adesc[] = {
 	{ 0x00, 0x00, "No Additional Sense Information" },
@@ -1133,9 +1143,8 @@ static const struct {
 	{ 0x3F, 0x11, "Medium Auxiliary Memory Accessible" },
 	{ 0x40, 0x00, "RAM FAILURE (Should Use 40 NN)" },
 	/* 
-	 * FIXME
-	 * There is a range from 0x01 to 0xFF on this message
-	 * 0x40 0xNN Diagnostic Failure On Component NN (80H-FFH)
+	 * ASC 0x40 also has an ASCQ range from 0x80 to 0xFF.
+	 * 0x40 0xNN DIAGNOSTIC FAILURE ON COMPONENT NN
 	 */
 	{ 0x41, 0x00, "Data Path FAILURE (Should Use 40 NN)" },
 	{ 0x42, 0x00, "Power-On or Self-Test FAILURE (Should Use 40 NN)" },
@@ -1162,8 +1171,7 @@ static const struct {
 	{ 0x4B, 0x06, "Initiator Response Timeout" },
 	{ 0x4C, 0x00, "Logical Unit Failed Self-Configuration" },
 	/* 
-	 * FIXME
-	 * There is a range from 0x00 to 0xFF on this message
+	 * ASC 0x4D has an ASCQ range from 0x00 to 0xFF.
 	 * 0x4D 0xNN TAGGED OVERLAPPED COMMANDS (NN = TASK TAG) 
 	 */
 	{ 0x4E, 0x00, "Overlapped Commands Attempted" },
@@ -1334,9 +1342,8 @@ static const struct {
 	{ 0x6F, 0x04, "Media Region Code Is Mismatched To Logical Unit Region" },
 	{ 0x6F, 0x05, "Drive Region Must Be Permanent/Region Reset Count Error" },
 	/* 
-	 * FIXME
-	 * There is a range from 0x00 to 0xFF on this message
-	 * 0x70 0xNN Decompression Exception Short Algorithm ID Of NN 
+	 * ASC 0x70 has an ASCQ range from 0x00 to 0xFF.
+	 * 0x70 0xNN DECOMPRESSION EXCEPTION SHORT ALGORITHM ID Of NN
 	 */
 	{ 0x71, 0x00, "Decompression Exception Long Algorithm ID" },
 	{ 0x72, 0x00, "Session Fixation Error" },
@@ -1357,41 +1364,43 @@ static const struct {
 
 static __inline void
 asc2ascii(asc, ascq, result, len)
-	u_char asc, ascq;
+	u_int8_t asc, ascq;
 	char *result;
 	size_t len;
 {
-	register int i = 0;
-
-	while (adesc[i].description != NULL) {
-		if (adesc[i].asc == asc && adesc[i].ascq == ascq)
-			break;
-		i++;
-	}
-	if (adesc[i].description == NULL) {
-		if (asc == 0x40 && ascq != 0) {
-			(void) snprintf(result, len,
-			    "Diagnostic Failure on Component 0x%02x",
-			    ascq & 0xff);
-		} else {
-			(void) snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x",
-			    asc & 0xff, ascq & 0xff);
+	int i;
+	
+	/* Check for a dynamically built description. */
+	switch (asc) {
+	case 0x40:
+		if (ascq >= 0x80) {
+			snprintf(result, len,
+		            "Diagnostic Failure on Component 0x%02x", ascq);
+			return;
 		}
-	} else {
-		(void) strlcpy(result, adesc[i].description, len);
+		break;
+	case 0x4d:
+		snprintf(result, len,
+	 	    "Tagged Overlapped Commands (0x%02x = TASK TAG)", ascq); 
+		return;
+	case 0x70:
+		snprintf(result, len,
+		    "Decompression Exception Short Algorithm ID OF 0x%02x",
+		    ascq);
+		return;
+	default:
+		break;
 	}
-}
 
-#else
+	/* Check for a fixed description. */
+	for (i = 0; adesc[i].description != NULL; i++)
+		if (adesc[i].asc == asc && adesc[i].ascq == ascq) {
+			strlcpy(result, adesc[i].description, len);
+			return;
+		}
 
-static __inline void
-asc2ascii(asc, ascq, result, len)
-	u_char asc, ascq;
-	char *result;
-	size_t len;
-{
-	(void) snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x", asc & 0xff,
-	    ascq & 0xff);
+	/* Just print out the ASC and ASCQ values as a description. */
+	snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x", asc, ascq);
 }
 #endif /* SCSITERSE */
 
