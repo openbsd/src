@@ -1425,7 +1425,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 		my($ispod)=0;
 		if (open(FH,"<$name")) {
 		    while (<FH>) {
-			if (/^=(head|item|pod)\b/) {
+			if (/^=(head[1-4]|item|pod)\b/) {
 			    $ispod=1;
 			    last;
 			}
@@ -1454,7 +1454,7 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
 		my($ispod)=0;
 		if (open(FH,"<$name")) {
 		    while (<FH>) {
-			if (/^=(head|item|pod)\b/) {
+			if (/^=(head[1-4]|item|pod)\b/) {
 			    $ispod=1;
 			    last;
 			}
