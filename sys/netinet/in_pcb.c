@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.15 1997/02/28 04:03:47 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.16 1997/04/17 02:02:26 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -197,19 +197,13 @@ in_pcbbind(v, nam)
 		} else if (inp->inp_flags & INP_LOWPORT) {
 			if ((error = suser(p->p_ucred, &p->p_acflag)))
 				return (EACCES);
-			first = IPPORT_RESERVED - 1;	/* 1023 */
-#if 0
-			/* traditional way */
-			last = IPPORT_RESERVED / 2;	/* traditional - 512 */
-#else
-			/* our way */
-			last = 600;
-#endif
-			*lastport = first;		/* restart each time */
+			first = IPPORT_RESERVED-1; /* 1023 */
+			last = 600;		   /* not IPPORT_RESERVED/2 */
 		} else {
 			first = ipport_firstauto;	/* sysctl */
 			last  = ipport_lastauto;
 		}
+
 		/*
 		 * Simple check to ensure all ports are not used up causing
 		 * a deadlock here.
@@ -228,13 +222,13 @@ portloop:
 				first -= (arc4random() % (first - last));
 			}
 			count = first - last;
+			*lastport = first;		/* restart each time */
 
 			do {
 				if (count-- <= 0) {	/* completely used? */
 					if (loopcount == 0) {
 						last = old;
 						loopcount++;
-
 						goto portloop;
 					}
 					return (EADDRNOTAVAIL);
@@ -243,8 +237,8 @@ portloop:
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (in_pcblookup(table,
-				 zeroin_addr, 0, inp->inp_laddr, lport, wild));
+			} while (in_pcblookup(table, zeroin_addr, 0,
+			    inp->inp_laddr, lport, wild));
 		} else {
 			/*
 			 * counting up
@@ -254,13 +248,13 @@ portloop:
 				first += (arc4random() % (last - first));
 			}
 			count = last - first;
+			*lastport = first;		/* restart each time */
 
 			do {
 				if (count-- <= 0) {	/* completely used? */
 					if (loopcount == 0) {
 						first = old;
 						loopcount++;
-
 						goto portloop;
 					}
 					return (EADDRNOTAVAIL);
@@ -269,8 +263,8 @@ portloop:
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (in_pcblookup(table,
-				 zeroin_addr, 0, inp->inp_laddr, lport, wild));
+			} while (in_pcblookup(table, zeroin_addr, 0,
+			    inp->inp_laddr, lport, wild));
 		}
 	}
 	inp->inp_lport = lport;
