@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.30 2003/11/10 21:26:39 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.31 2003/12/15 05:25:52 otto Exp $	*/
 
 /*
  * execute command tree
@@ -459,6 +459,7 @@ comexec(t, tp, ap, flags)
 	int type_flags;
 	int keepasn_ok;
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
+	int bourne_function_call = 0;
 
 #ifdef KSH
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
@@ -548,9 +549,10 @@ comexec(t, tp, ap, flags)
 		newblock();
 		/* ksh functions don't keep assignments, POSIX functions do. */
 		if (keepasn_ok && tp && tp->type == CFUNC
-		    && !(tp->flag & FKSH))
+		    && !(tp->flag & FKSH)) {
+			bourne_function_call = 1;
 			type_flags = 0;
-		else
+		} else
 			type_flags = LOCAL|LOCAL_COPY|EXPORT;
 	}
 	if (Flag(FEXPORT))
@@ -567,6 +569,8 @@ comexec(t, tp, ap, flags)
 				shf_flush(shl_out);
 		}
 		typeset(cp, type_flags, 0, 0, 0);
+		if (bourne_function_call && !(type_flags & EXPORT))
+			typeset(cp, LOCAL|LOCAL_COPY|EXPORT, 0, 0, 0);
 	}
 
 	if ((cp = *ap) == NULL) {
