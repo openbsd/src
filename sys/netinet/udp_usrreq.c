@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.45 2000/06/18 17:32:48 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.46 2000/07/27 04:05:27 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -285,6 +285,19 @@ udp_input(m, va_alist)
 		/* Be proactive about malicious use of IPv4 mapped address */
 		if (IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_src) ||
 		    IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_dst)) {
+			/* XXX stat */
+			goto bad;
+		}
+
+		/*
+		 * Be proactive about unspecified IPv6 address in source.
+		 * As we use all-zero to indicate unbounded/unconnected pcb,
+		 * unspecified IPv6 address can be used to confuse us.
+		 *
+		 * Note that packets with unspecified IPv6 destination is
+		 * already dropped in ip6_input.
+		 */
+		if (IN6_IS_ADDR_UNSPECIFIED(&ipv6->ip6_src)) {
 			/* XXX stat */
 			goto bad;
 		}
