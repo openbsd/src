@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.S,v 1.3 1996/11/13 22:05:12 niklas Exp $	*/
+/*	$OpenBSD: pipe.S,v 1.4 1999/02/04 06:22:35 d Exp $	*/
 /*	$NetBSD: pipe.S,v 1.1 1995/02/10 17:50:35 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: pipe.S,v 1.3 1996/11/13 22:05:12 niklas Exp $"
+	.asciz "$OpenBSD: pipe.S,v 1.4 1999/02/04 06:22:35 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSCALL(pipe)
@@ -40,4 +40,4 @@ SYSCALL(pipe)
 	stl	a4, 4(a0)
 	mov	zero, v0
 	RET
-END(pipe)
+SYSEND(pipe)
