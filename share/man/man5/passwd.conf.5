@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.13 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.14 2001/09/03 19:20:24 millert Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -28,13 +28,22 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 24, 1997
+.Dd September 3, 2001
 .Dt PASSWD.CONF 5
 .Os
 .Sh NAME
 .Nm passwd.conf
 .Nd format of the password configuration file
 .Sh DESCRIPTION
+.Bf -symbolic
+This configuration file is made obsolete by
+.Xr login.conf 5 .
+Support for the
+.Nm
+file will be removed in a future release of
+.Ox .
+.Ef
+.Pp
 The
 .Pa /etc/passwd.conf
 file, consisting of
