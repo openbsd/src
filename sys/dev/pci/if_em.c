@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.11 2003/08/23 18:52:18 fgsch Exp $ */
+/* $OpenBSD: if_em.c,v 1.12 2003/10/05 21:58:42 henric Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -746,7 +746,7 @@ em_init(void *arg)
 		return;
 	}
 
-	em_enable_vlans(sc);
+	/* em_enable_vlans(sc); */
 
 	/* Prepare transmit descriptors and buffers */
 	if (em_setup_transmit_structures(sc)) {
@@ -1692,6 +1692,9 @@ em_setup_interface(struct em_softc * sc)
 #endif
 #endif /* __FreeBSD__ */
 
+#ifdef __OpenBSD__
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+#endif
 
 	/* 
 	 * Specify the media types supported by this adapter and register
