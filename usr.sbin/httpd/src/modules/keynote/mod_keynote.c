@@ -262,7 +262,7 @@ keynote_add_authorizer(request_rec *r, int sessid, X509 *cert)
 }
 
 static int
-keynote_get_valid_times(request_rec *r, X509 *cert, char *before, char **timecomp, char *after, char **timecomp2)
+keynote_get_valid_times(request_rec *r, X509 *cert, char *before, size_t beforelen, char **timecomp, char *after, size_t afterlen, char **timecomp2)
 {
     ASN1_TIME *tm;
     time_t tt;
@@ -318,9 +318,9 @@ keynote_get_valid_times(request_rec *r, X509 *cert, char *before, char **timecom
 
 	    /* Stupid UTC tricks.  */
 	    if (tm->data[0] < '5')
-		sprintf(before, "20%s", tm->data);
+		snprintf(before, beforelen, "20%s", tm->data);
 	    else
-		sprintf(before, "19%s", tm->data);
+		snprintf(before, beforelen, "19%s", tm->data);
 	} else {
 	    /* V_ASN1_GENERICTIME */
 	    if (tm->length < 12 || tm->length > 15) {
@@ -346,7 +346,7 @@ keynote_get_valid_times(request_rec *r, X509 *cert, char *before, char **timecom
 		    "Invalid value in certificate's NotValidBefore time field");
 	        return(-1);
 	    }
-	    sprintf(before, "%s", tm->data);
+	    snprintf(before, beforelen, "%s", tm->data);
 	}
 
 	/* Fix missing seconds.  */
@@ -410,9 +410,9 @@ keynote_get_valid_times(request_rec *r, X509 *cert, char *before, char **timecom
 
 	    /* Stupid UTC tricks.  */
 	    if (tm->data[0] < '5')
-	      sprintf(after, "20%s", tm->data);
+	      snprintf(after, afterlen, "20%s", tm->data);
 	    else
-	      sprintf(after, "19%s", tm->data);
+	      snprintf(after, afterlen, "19%s", tm->data);
 	} else {
 	    /* V_ASN1_GENERICTIME */
 	    if (tm->length < 12 || tm->length > 15) {
@@ -438,7 +438,7 @@ keynote_get_valid_times(request_rec *r, X509 *cert, char *before, char **timecom
 		    "Invalid value in certificate's NotValidAfter time field");
 		return(-1);
 	    }
-	    sprintf(after, "%s", tm->data);
+	    snprintf(after, afterlen, "%s", tm->data);
         }
 
 	/* Fix missing seconds.  */
@@ -536,7 +536,7 @@ keynote_fake_assertion(request_rec *r, int sessid, X509 *cert, EVP_PKEY *pkey, X
     } else
 	ikey = NULL;
 
-    if (keynote_get_valid_times(r, cert, before, &timecomp, after, &timecomp2) == -1) {
+    if (keynote_get_valid_times(r, cert, before, sizeof(before), &timecomp, after, sizeof(after), &timecomp2) == -1) {
 	free(akey);
 	if (ikey)
 	    free(ikey);
