@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.10 1999/12/19 02:54:29 itojun Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.11 1999/12/21 15:41:08 itojun Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.10 1999/12/19 02:54:29 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.11 1999/12/21 15:41:08 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -211,6 +211,13 @@ rip6_input(mp, offp, proto)
   struct sockaddr_in6 dstsa;
 #endif /* IPSEC */
   int extra = *offp;
+
+	/* Be proactive about malicious use of IPv4 mapped address */
+	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+		/* XXX stat */
+		goto ret;
+	}
 
   bzero(&srcsa, sizeof(struct sockaddr_in6));
   srcsa.sin6_family = AF_INET6;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.32 1999/12/19 02:52:21 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.33 1999/12/21 15:41:08 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -287,6 +287,13 @@ udp_input(m, va_alist)
 	savesum = uh->uh_sum;
 #ifdef INET6
 	if (ipv6) {
+		/* Be proactive about malicious use of IPv4 mapped address */
+		if (IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_src) ||
+		    IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_dst)) {
+			/* XXX stat */
+			goto bad;
+		}
+
 		/*
 		 * In IPv6, the UDP checksum is ALWAYS used.
 		 */

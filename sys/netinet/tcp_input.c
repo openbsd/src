@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.54 1999/12/15 16:37:20 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.55 1999/12/21 15:41:07 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -488,6 +488,13 @@ tcp_input(m, va_alist)
 
 	  ti = NULL;
 	  ipv6 = mtod(m, struct ip6_hdr *);
+
+		/* Be proactive about malicious use of IPv4 mapped address */
+		if (IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_src) ||
+		    IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_dst)) {
+			/* XXX stat */
+			goto drop;
+		}
 
 	  if (in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr), tlen)) {
 	    tcpstat.tcps_rcvbadsum++;
