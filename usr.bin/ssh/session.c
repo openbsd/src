@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.16 2000/05/31 06:36:40 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.17 2000/06/05 19:53:40 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -746,6 +746,10 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	extern char **environ;
 	struct stat st;
 	char *argv[10];
+
+	/* login(1) is only called if we execute the login shell */
+	if (options.use_login && command != NULL)
+		options.use_login = 0;
 
 	f = fopen("/etc/nologin", "r");
 	if (f) {
