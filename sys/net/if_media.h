@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.1 1998/09/03 06:24:20 jason Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.2 1999/07/21 19:55:59 jason Exp $	*/
 /*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
@@ -168,6 +168,10 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_1000_FX	11		/* 1000BaseFX - gigabit over fiber */
 #define	IFM_10_STP	12		/* 10BaseT over shielded TP */
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
+#define	IFM_1000_SX	14		/* 1000baseSX Multi-mode Fiber */
+#define	IFM_1000_LX	15		/* 1000baseLX Single-mode Fiber */
+#define	IFM_1000_CX	16		/* 1000baseCX 150ohm STP */
+#define	IFM_1000_TX	17		/* 1000baseTX 4 pair cat 5 */
 
 /*
  * Token ring
@@ -240,7 +244,7 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
  * Macro to create a media word.
  */
 #define	IFM_MAKEWORD(type, subtype, options, instance)			\
-	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
+    ((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
 
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
@@ -308,6 +312,10 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
 	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
 	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
