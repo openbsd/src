@@ -6,7 +6,7 @@ SRCS=   authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
 	hostfile.c log.c match.c mpaux.c nchan.c packet.c readpass.c \
 	rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c atomicio.c \
 	key.c dispatch.c dsa.c kex.c hmac.c uuencode.c util.c \
-	cli.c
+	cli.c rijndael.c
 
 NOPROFILE= yes
 NOPIC=	yes

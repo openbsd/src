@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.34 2000/10/12 09:59:18 markus Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.35 2000/10/13 18:59:13 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -300,7 +300,75 @@ cast_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 	    CAST_DECRYPT);
 }
 
-/*--*/
+/* RIJNDAEL */
+
+#define RIJNDAEL_BLOCKSIZE 16
+void
+rijndael_setkey(CipherContext *cc, const u_char *key, u_int keylen)
+{
+	rijndael_set_key(&cc->u.rijndael.enc, (u4byte *)key, 8*keylen, 1);
+	rijndael_set_key(&cc->u.rijndael.dec, (u4byte *)key, 8*keylen, 0);
+}
+void
+rijndael_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
+{
+	if (iv == NULL) 
+		fatal("no IV for %s.", cc->cipher->name);
+	memcpy((u_char *)cc->u.rijndael.iv, iv, RIJNDAEL_BLOCKSIZE);
+}
+void
+rijndael_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
+    u_int len)
+{
+	rijndael_ctx *ctx = &cc->u.rijndael.enc;
+	u4byte *iv = cc->u.rijndael.iv;
+	u4byte in[4];
+	u4byte *cprev, *cnow, *plain;
+	int i, blocks = len / RIJNDAEL_BLOCKSIZE;
+	if (len == 0)
+		return;
+	if (len % RIJNDAEL_BLOCKSIZE)
+		fatal("rijndael_cbc_encrypt: bad len %d", len);
+	cnow  = (u4byte*) dest;
+	plain = (u4byte*) src;
+	cprev = iv;
+	for(i = 0; i < blocks; i++, plain+=4, cnow+=4) {
+		in[0] = plain[0] ^ cprev[0];
+		in[1] = plain[1] ^ cprev[1];
+		in[2] = plain[2] ^ cprev[2];
+		in[3] = plain[3] ^ cprev[3];
+		rijndael_encrypt(ctx, in, cnow);
+		cprev = cnow;
+	}
+	memcpy(iv, cprev, RIJNDAEL_BLOCKSIZE);
+}
+
+void
+rijndael_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
+    u_int len)
+{
+	rijndael_ctx *ctx = &cc->u.rijndael.dec;
+	u4byte *iv = cc->u.rijndael.iv;
+	u4byte ivsaved[4];
+	u4byte *cnow =  (u4byte*) (src+len-RIJNDAEL_BLOCKSIZE);
+	u4byte *plain = (u4byte*) (dest+len-RIJNDAEL_BLOCKSIZE);
+	u4byte *ivp;
+	int i, blocks = len / RIJNDAEL_BLOCKSIZE;
+	if (len == 0)
+		return;
+	if (len % RIJNDAEL_BLOCKSIZE)
+		fatal("rijndael_cbc_decrypt: bad len %d", len);
+	memcpy(ivsaved, cnow, RIJNDAEL_BLOCKSIZE);
+	for(i = blocks; i > 0; i--, cnow-=4, plain-=4) {
+		rijndael_decrypt(ctx, cnow, plain);
+		ivp =  (i == 1) ? iv : cnow-4;
+		plain[0] ^= ivp[0];
+		plain[1] ^= ivp[1];
+		plain[2] ^= ivp[2];
+		plain[3] ^= ivp[3];
+	}
+	memcpy(iv, ivsaved, RIJNDAEL_BLOCKSIZE);
+}
 
 Cipher ciphers[] = {
 	{ "none",
@@ -336,6 +404,34 @@ Cipher ciphers[] = {
 		SSH_CIPHER_SSH2, 8, 16,
 		arcfour_setkey, none_setiv,
 		arcfour_crypt, arcfour_crypt },
+	{ "aes128-cbc",
+		SSH_CIPHER_SSH2, 16, 16,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "aes192-cbc",
+		SSH_CIPHER_SSH2, 16, 24,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "aes256-cbc",
+		SSH_CIPHER_SSH2, 16, 32,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "rijndael128-cbc",
+		SSH_CIPHER_SSH2, 16, 16,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "rijndael192-cbc",
+		SSH_CIPHER_SSH2, 16, 24,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "rijndael256-cbc",
+		SSH_CIPHER_SSH2, 16, 32,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
+	{ "rijndael-cbc@lysator.liu.se",
+		SSH_CIPHER_SSH2, 16, 32,
+		rijndael_setkey, rijndael_setiv,
+		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
         { NULL, SSH_CIPHER_ILLEGAL, 0, 0, NULL, NULL, NULL, NULL }
 };
 
