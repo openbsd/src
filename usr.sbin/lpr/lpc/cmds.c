@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.11 2001/06/22 15:27:20 lebel Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.12 2001/06/25 04:08:35 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 2001/06/22 15:27:20 lebel Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 2001/06/25 04:08:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -324,6 +324,10 @@ cleanpr()
 	for (lp = line, cp = SD; (lp - line) < sizeof(line) && (*lp++ = *cp++);)
 		;
 	lp[-1] = '/';
+	if (lp - line >= sizeof(line)) {
+		printf("\tspool directory name too long\n");
+		return;
+	}
 
 	seteuid(euid);
 	nitems = scandir(SD, &queue, doselect, sortq);
@@ -347,8 +351,11 @@ cleanpr()
 				n++;
 			}
 			if (n == 0) {
-				strlcpy(lp, cp, sizeof(line) - strlen(line));
-				unlinkf(line);
+				if (strlcpy(lp, cp, sizeof(line) - (lp - line)) >=
+				    sizeof(line) - (lp - line))
+					printf("\tpath too long, %s/%s", SD, cp);
+				else
+					unlinkf(line);
 			}
 		} else {
 			/*
@@ -356,8 +363,11 @@ cleanpr()
 			 * been skipped above) or a tf file (which can always
 			 * be removed).
 			 */
-			strlcpy(lp, cp, sizeof(line) - strlen(line));
-			unlinkf(line);
+			if (strlcpy(lp, cp, sizeof(line) - (lp - line)) >=
+			    sizeof(line) - (lp - line))
+				printf("\tpath too long, %s/%s", SD, cp);
+			else
+				unlinkf(line);
 		}
      	} while (++i < nitems);
 }
