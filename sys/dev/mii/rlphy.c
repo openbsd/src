@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.13 2004/09/30 14:58:02 jason Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.14 2004/10/07 21:30:57 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -184,20 +184,20 @@ rlphy_reset(struct mii_softc *sc)
 }
 
 void
-rlphy_status(struct mii_softc *phy)
+rlphy_status(struct mii_softc *sc)
 {
-	struct mii_data *mii = phy->mii_pdata;
+	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(phy, MII_BMSR) | PHY_READ(phy, MII_BMSR);
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
-	bmcr = PHY_READ(phy, MII_BMCR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
@@ -219,7 +219,7 @@ rlphy_status(struct mii_softc *phy)
 			return;
 		}
 
-		anlpar = PHY_READ(phy, MII_ANAR) & PHY_READ(phy, MII_ANLPAR);
+		anlpar = PHY_READ(sc, MII_ANAR) & PHY_READ(sc, MII_ANLPAR);
 
 		/*
 		 * if anlpar is non-zero, NWay succeeded with an NWay
@@ -242,14 +242,14 @@ rlphy_status(struct mii_softc *phy)
 		}
 
 		if (strcmp("rl",
-		    phy->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name)
+		    sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name)
 		    == 0) {
-			if (PHY_READ(phy, RL_MEDIASTAT) & RL_MEDIASTAT_SPEED10)
+			if (PHY_READ(sc, RL_MEDIASTAT) & RL_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else
 				mii->mii_media_active |= IFM_100_TX;
 		} else {
-			if (PHY_READ(phy, 0x0019) & 0x01)
+			if (PHY_READ(sc, 0x0019) & 0x01)
 				mii->mii_media_active |= IFM_100_TX;
 			else
 				mii->mii_media_active |= IFM_10_T;
