@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.9 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.10 2002/06/20 19:25:55 millert Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_names.c,v 1.9 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.10 2002/06/20 19:25:55 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -70,9 +70,16 @@ get_names(argc, argv)
 		high_print = 1;
 	}
 
+	if (argc > 1 && !strcmp(argv[1], "-s")) {
+		argv[1] = argv[0];
+		++argv;
+		--argc;
+		smooth_scroll = TRUE;
+	}
+
 	if ((argc < 2 ) || ('@' == argv[1][0])) {
-		fprintf(stderr, "usage: talk user [ttyname]\n"
-				"       talk user@hostname [ttyname]\n");
+		fprintf(stderr, "usage: talk [-Hs] user [ttyname]\n"
+				"       talk [-Hs] user@hostname [ttyname]\n");
 		exit(1);
 	}
 	if (!isatty(0))

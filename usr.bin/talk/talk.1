@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talk.1,v 1.13 2000/12/31 00:24:51 hugh Exp $
+.\"	$OpenBSD: talk.1,v 1.14 2002/06/20 19:25:55 millert Exp $
 .\"	$NetBSD: talk.1,v 1.3 1994/12/09 02:14:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd talk to another user
 .Sh SYNOPSIS
 .Nm talk
-.Op Fl H
+.Op Fl Hs
 .Ar person
 .Op Ar ttyname
 .Sh DESCRIPTION
@@ -52,6 +52,16 @@ terminal to that of another user.
 .Pp
 The command arguments are as follows:
 .Bl -tag -width ttyname
+.It Fl H
+Don't escape characters with the high big set.
+This may be useful for certain character sets, but could cause erratic 
+behaviour on some terminals.
+.It Fl s
+Use smooth scrolling in the
+.Nm
+window.
+The default is to clear the next two rows and jump from the bottom of
+the window to the top.
 .It Ar person
 If you wish to talk to someone on your own machine, then
 .Ar person
@@ -69,12 +79,6 @@ name, where
 is of the form
 .Ql ttyXX .
 .El
-.Pp
-If the
-.Fl H
-argument is given, talk will not escape high characters.
-This may be useful for certain character sets, but could cause erratic 
-behaviour on some terminals.
 .Pp
 When first called,
 .Nm

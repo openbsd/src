@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.11 2002/06/20 10:18:29 form Exp $	*/
+/*	$OpenBSD: display.c,v 1.12 2002/06/20 19:25:55 millert Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: display.c,v 1.11 2002/06/20 10:18:29 form Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.12 2002/06/20 19:25:55 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,7 @@ WINDOW	*line_win;
 
 int	curses_initialized = 0;
 int	high_print = 0;
+bool	smooth_scroll = FALSE;
 
 /*
  * max HAS to be a function, it is called with
@@ -200,11 +201,19 @@ xscroll(win, flag)
 		win->x_col = 0;
 		return;
 	}
-	win->x_line = (win->x_line + 1) % win->x_nlines;
 	win->x_col = 0;
-	wmove(win->x_win, win->x_line, win->x_col);
-	wclrtoeol(win->x_win);
-	wmove(win->x_win, (win->x_line + 1) % win->x_nlines, win->x_col);
-	wclrtoeol(win->x_win);
+	if (smooth_scroll) {
+		if (++win->x_line == win->x_nlines) {
+			--win->x_line;
+			scroll(win->x_win);
+		}
+	} else {
+		win->x_line = (win->x_line + 1) % win->x_nlines;
+		wmove(win->x_win, win->x_line, win->x_col);
+		wclrtoeol(win->x_win);
+		wmove(win->x_win, (win->x_line + 1) % win->x_nlines,
+		    win->x_col);
+		wclrtoeol(win->x_win);
+	}
 	wmove(win->x_win, win->x_line, win->x_col);
 }
