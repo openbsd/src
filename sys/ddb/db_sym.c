@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.16 1996/08/23 19:53:48 niklas Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.17 1997/02/07 06:18:48 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -76,9 +76,9 @@ db_add_symbol_table(start, end, name, ref, rend)
 
 	new->start = start;
 	new->end = end;
-	new->rend = rend;
 	new->name = name;
-	new->private = ref;
+	new->rstart = ref;
+	new->private = rend;
 	new->id = db_nsymtabs;
 	TAILQ_INSERT_TAIL(&db_symtabs, new, list);
 
@@ -390,4 +390,12 @@ db_sym_numargs(sym, nargp, argnames)
 	char		**argnames;
 {
 	return X_db_sym_numargs(db_last_symtab, sym, nargp, argnames);
+}
+
+void
+db_stub_xh(sym, xh)
+	db_symtab_t	sym;
+	struct exec	*xh;
+{
+	X_db_stub_xh(sym, xh);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.6 1996/09/27 14:42:32 briggs Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.7 1997/02/07 06:18:46 mickey Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -44,6 +44,8 @@ void db_printsym __P((db_expr_t, db_strategy_t));
 boolean_t X_db_line_at_pc __P((db_symtab_t, db_sym_t, char **,
 			       int *, db_expr_t));
 int X_db_sym_numargs __P((db_symtab_t, db_sym_t, int *, char **));
+struct exec;
+void X_db_stub_xh __P((db_symtab_t, struct exec *));
 void ddb_init __P((void));
 
 /* db_examine.c */

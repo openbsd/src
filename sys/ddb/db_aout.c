@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.11 1996/08/23 19:53:46 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.12 1997/02/07 06:18:44 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/exec_aout.h>
 
 #include <machine/db_machdep.h>		/* data types */
 
@@ -349,6 +350,19 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 	    }
 	}
 	return FALSE;
+}
+
+void
+X_db_stub_xh(sym, xh)
+	db_symtab_t sym;
+	struct exec *xh;
+{
+	extern char kernel_text[];
+
+	bzero(xh, sizeof(*xh));
+	xh->a_midmag = htonl((((0 << 10) | MID_ZERO) << 16) | ZMAGIC);
+	xh->a_syms   = *sym->rstart;
+	xh->a_entry  = (u_long)kernel_text;
 }
 
 /*
