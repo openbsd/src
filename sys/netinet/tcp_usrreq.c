@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.14 1998/01/06 23:49:49 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.15 1998/01/20 02:22:31 mickey Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_LISTEN:
 		if (inp->inp_lport == 0)
-			error = in_pcbbind(inp, (struct mbuf *)0);
+			error = in_pcbbind(inp, NULL);
 		if (error == 0)
 			tp->t_state = TCPS_LISTEN;
 		break;
@@ -190,7 +190,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_CONNECT:
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0);
+			error = in_pcbbind(inp, NULL);
 			if (error)
 				break;
 		}
@@ -469,7 +469,7 @@ tcp_attach(so)
 		return (error);
 	inp = sotoinpcb(so);
 	tp = tcp_newtcpcb(inp);
-	if (tp == 0) {
+	if (tp == NULL) {
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
