@@ -1,3 +1,4 @@
+/*	$OpenBSD: vnconfig.c,v 1.10 2003/03/30 12:59:11 hugh Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
