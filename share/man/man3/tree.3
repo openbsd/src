@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.6 2002/06/11 19:02:50 provos Exp $
+.\"	$OpenBSD: tree.3,v 1.7 2002/06/12 01:09:20 provos Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -95,9 +95,9 @@
 .Fn SPLAY_FOREACH "VARNAME" "NAME" "SPLAY_HEAD *head"
 .Ft void
 .Fn SPLAY_INIT "SPLAY_HEAD *head"
-.Ft void
+.Ft "struct TYPE *"
 .Fn SPLAY_INSERT "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
-.Ft void
+.Ft "struct TYPE *"
 .Fn SPLAY_REMOVE "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
 .Pp
 .Fn RB_PROTOTYPE "NAME" "TYPE" "FIELD" "CMP"
@@ -126,9 +126,9 @@
 .Fn RB_FOREACH "VARNAME" "NAME" "RB_HEAD *head"
 .Ft void
 .Fn RB_INIT "RB_HEAD *head"
-.Ft void
+.Ft "struct TYPE *"
 .Fn RB_INSERT "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft void
+.Ft "struct TYPE *"
 .Fn RB_REMOVE "NAME" "RB_HEAD *head" "struct TYPE *elm"
 .Sh DESCRIPTION
 These macros defines data structures for different types of trees:
