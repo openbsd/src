@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.15 2000/03/02 21:39:19 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.16 2000/04/26 18:40:50 chris Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ struct mbuf {
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
+#define	M_PROTO1	0x0008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
@@ -148,7 +149,7 @@ struct mbuf {
 #endif
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_ANYCAST6|M_LOOP)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_ANYCAST6|M_LOOP)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
