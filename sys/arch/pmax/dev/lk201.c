@@ -391,6 +391,6 @@ MouseInit(mdev, putc, getc)
 	 * For some reason, the mouse doesn't see this command if it comes
 	 * too soon after a self test.
 	 */
-	DELAY(100);
+	DELAY(150);
 	(*putc)(mdev, MOUSE_INCREMENTAL);
 }
