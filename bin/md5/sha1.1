@@ -1,49 +1,57 @@
-.\"	$OpenBSD: sha1.1,v 1.1 1997/07/12 21:09:02 millert Exp $
+.\"	$OpenBSD: sha1.1,v 1.2 1997/07/12 21:26:58 millert Exp $
 .\"
-.TH SHA1 1 "Jul 12, 1997"
-.SH NAME
-sha1 \- calculate a message-digest fingerprint (checksum) for a file
-.SH SYNOPSIS
-.B sha1
-[ -p | -t | -x | -sstring | filename(s) ]
-.SH DESCRIPTION
-.B sha1
+.Dd July 12, 1997
+.Dt SHA1 1
+.Os
+.Sh NAME
+.Nm sha1
+.Nd "calculate a message-digest fingerprint (checksum) for a file"
+.Sh SYNOPSIS
+.Nm
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ns Ar string
+.Op Ar filename(s)
+.Sh DESCRIPTION
+.Nm
 takes as input a message of arbitrary length and produces
 as output a 160-bit "fingerprint" or "message digest" of the input.
 It is conjectured that it is computationally infeasible to produce
 two messages having the same message digest, or to produce any
 message having a given prespecified target message digest.
-The SHA-1 algorithm is intended for digital signature applications, where a
+The
+.Em SHA-1
+algorithm is intended for digital signature applications, where a
 large file must be "compressed" in a secure manner before being
 encrypted with a private (secret) key under a public-key cryptosystem
 such as
-.I RSA.
-.SH OPTIONS
+.Em RSA .
+.Sh OPTIONS
 The following four options may be used in any combination, except
 that
-.B "filename(s)"
+.Ar filename(s)
 must be the last objects on the command line.
-.in +5
-.PP
-.B -sstring
-prints a checksum of the given "string".
-.PP
-.B -p
-echos stdin to stdout and appends the SHA-1 sum to stdout.
-.PP
-.B -t
+.Bl -tag -width "filename(s)"
+.It Fl s Ns Ar string
+prints a checksum of the given string.
+.It Fl p
+echos stdin to stdout and appends the
+.Em SHA-1
+sum to stdout.
+.It Fl t
 runs a built-in time trial.
-.PP
-.B -x
+.It Fl x
 runs a built-in test script.
-.PP
-.B filename(s)
-prints a checksum(s) for each of the files.
-.SH "SEE ALSO"
-.BR cksum (1)
-.BR md5 (1)
-.PP
+.It Ar filename(s)
+prints the checksum for each file.  If no files are specified,
+standard input is used.
+.El
+.Sh SEE ALSO
+.Xr cksum 1 ,
+.Xr md5 1
+.Pp
 NIST FIPS PUB 180-1 describes the SHA-1 message-digest algorithm in detail.
-.SH ACKNOWLEDGEMENTS
+.Sh ACKNOWLEDGEMENTS
 This program is placed in the public domain for free general use by
 RSA Data Security.
