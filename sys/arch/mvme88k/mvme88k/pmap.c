@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2001/12/22 10:22:13 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -530,6 +530,7 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
  *	start	physical address of range to map
  *	end	physical address of end of range
  *	prot	protection attributes
+ *	cmode	cache control attributes
  *
  * Calls:
  *	pmap_pte
@@ -556,29 +557,18 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
  *	}
  *
  */
-#ifdef MVME197
-extern void m197_load_patc(int, vm_offset_t, vm_offset_t, int);
-#endif
 
 vm_offset_t
-pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
+pmap_map(virt, start, end, prot, cmode)
+	vm_offset_t virt, start, end;
+	vm_prot_t prot;
+	unsigned int cmode;
 {
 	int		aprot;
 	unsigned	npages;
 	unsigned	num_phys_pages;
-	unsigned	cmode;
 	pt_entry_t	*pte;
 	pte_template_t	template;
-#ifdef MVME197
-	static int m197_atc_initialized = FALSE;
-#endif
-	/*
-	 * cache mode is passed in the top 16 bits.
-	 * extract it from there. And clear the top
-	 * 16 bits from prot.
-	 */
-	cmode = (prot & 0xffff0000) >> 16;
-	prot &= 0x0000ffff;
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM))
@@ -598,7 +588,6 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 	npages = atop(round_page(end) - trunc_page(start));
 
 	for (num_phys_pages = npages; num_phys_pages > 0; num_phys_pages--) {
-
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			if ((pte = pmap_expand_kmap(virt, VM_PROT_READ|VM_PROT_WRITE)) == PT_ENTRY_NULL)
 				panic("pmap_map: Cannot allocate pte table");
@@ -609,23 +598,10 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 				printf("(pmap_map :%x) pte @ 0x%x already valid\n", curproc, (unsigned)pte);
 #endif
 		*pte = template.pte;
-#ifdef MVME197
-		/* hack for MVME197 */
-		if (brdtyp == BRD_197 && m197_atc_initialized == FALSE) {
-			int i;
-
-			for (i = 0; i < 32; i++)
-				m197_load_patc(i, virt, 
-					       (vm_offset_t)template.bits, 1);
-			m197_atc_initialized = TRUE;
-		}
-#endif 
 		virt += PAGE_SIZE;
 		template.bits += PAGE_SIZE;
 	}
-
 	return (virt);
-
 } /* pmap_map() */
 
 /*
@@ -672,8 +648,10 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
  *
  */
 vm_offset_t
-pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
-	      vm_prot_t prot, unsigned cmode)
+pmap_map_batc(virt, start, end, prot, cmode)
+	vm_offset_t virt, start, end;
+	vm_prot_t prot;
+	unsigned int cmode;
 {
 	int		aprot;
 	unsigned	num_phys_pages;
@@ -709,7 +687,6 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 				   trunc_page(start));
 
 	while (num_phys_pages > 0) {
-
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_MAPB | CD_FULL)) == (CD_MAPB | CD_FULL))
 			printf("(pmap_map_batc :%x) num_phys_pg=%x, virt=%x, aligne V=%d, phys=%x, aligne P=%d\n", curproc,
@@ -766,9 +743,7 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 		template.bits += PAGE_SIZE;
 		num_phys_pages--;
 	}
-
 	return (round_page(virt));
-
 } /* pmap_map_batc() */
 
 /*
@@ -846,7 +821,6 @@ pmap_cache_ctrl(pmap_t pmap, vm_offset_t s, vm_offset_t e, unsigned mode)
 			printf("(cache_ctrl) pte@0x%08x\n",(unsigned)pte);
 		}
 #endif /* DEBUG */
-
 		/*
 		 * Invalidate pte temporarily to avoid being written back
 		 * the modified bit and/or the reference bit by other cpu.
@@ -863,11 +837,8 @@ pmap_cache_ctrl(pmap_t pmap, vm_offset_t s, vm_offset_t e, unsigned mode)
 			if (cpu_sets[cpu])
 				cmmu_flush_remote_cache(cpu, ptoa(pte->pfn),
 							PAGE_SIZE);
-
 	}
-
 	PMAP_UNLOCK(pmap, spl);
-
 } /* pmap_cache_ctrl */
 
 /*
@@ -932,13 +903,13 @@ pmap_bootstrap(vm_offset_t load_start,
 			kpdt_phys,
 			s_text,
 			e_text,
-			kernel_pmap_size;
+			kernel_pmap_size,
+			pdt_size;
 	apr_template_t	apr_data;
 	pt_entry_t	*pte;
 	int		i;
 	pmap_table_t	ptable;
 	extern char	*kernelstart, *etext;
-	extern void	cmmu_go_virt(void);
 
 #ifdef DEBUG 
 	if ((pmap_con_dbg & (CD_BOOT | CD_NORM)) == (CD_BOOT | CD_NORM)) {
@@ -1006,27 +977,49 @@ pmap_bootstrap(vm_offset_t load_start,
 	kernel_pmap_size = 2*SDT_SIZE;
 
 #ifdef DEBUG
-	printf("kernel segment table from 0x%x to 0x%x\n", kernel_pmap->sdt_vaddr, 
-	       kernel_pmap->sdt_vaddr + kernel_pmap_size);
+	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+		printf("     kernel segment start = 0x%x\n", kernel_pmap->sdt_paddr);
+		printf("kernel segment table size = 0x%x\n", kernel_pmap_size);
+		printf("       kernel segment end = 0x%x\n", ((unsigned)kernel_pmap->sdt_paddr) + kernel_pmap_size);
+	}
 #endif 
-	/* save pointers to where page table entries start in physical memory */
-	kpdt_phys = (*phys_start + kernel_pmap_size);
-	kpdt_virt = (kpdt_entry_t)(*virt_start + kernel_pmap_size);
-	kernel_pmap_size += MAX_KERNEL_PDT_SIZE;
+	/* init all segment descriptors to zero */
+	bzero(kernel_pmap->sdt_vaddr, kernel_pmap_size);
+
 	*phys_start += kernel_pmap_size;
 	*virt_start += kernel_pmap_size;
+	
+	/* make sure page tables are page aligned!! XXX smurph */
+	*phys_start = round_page(*phys_start);
+	*virt_start = round_page(*virt_start);
+	
+	/* save pointers to where page table entries start in physical memory */
+	kpdt_phys = *phys_start;
+	kpdt_virt = (kpdt_entry_t)*virt_start;
+	
+	pdt_size = MAX_KERNEL_PDT_SIZE;
+	/* might as well round up to a page - XXX smurph */
+	pdt_size = round_page(pdt_size);
+	kernel_pmap_size += pdt_size;
+	*phys_start += pdt_size;
+	*virt_start += pdt_size;
 
-	/* init all segment and page descriptor to zero */
-	bzero(kernel_pmap->sdt_vaddr, kernel_pmap_size);
+	/* init all page descriptors to zero */
+	bzero((void *)kpdt_phys, pdt_size);
 #ifdef DEBUG
-	printf("kernel page table to 0x%x\n", kernel_pmap->sdt_vaddr + kernel_pmap_size);
+	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+		printf("--------------------------------------\n");
+		printf("        kernel page start = 0x%x\n", kpdt_phys);
+		printf("   kernel page table size = 0x%x\n", pdt_size);
+		printf("          kernel page end = 0x%x\n", *phys_start);
+	}
 #endif 
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kpdt_phys = %x\n",kpdt_phys);
-		printf("kpdt_virt = %x\n",kpdt_virt);
-		printf("end of kpdt at (virt)0x%08x  ; (phys)0x%08x\n",
+		printf("kpdt_phys = 0x%x\n",kpdt_phys);
+		printf("kpdt_virt = 0x%x\n",kpdt_virt);
+		printf("end of kpdt at (virt)0x%08x, (phys)0x%08x\n",
 		       *virt_start,*phys_start);
 	}
 #endif
@@ -1034,7 +1027,7 @@ pmap_bootstrap(vm_offset_t load_start,
 	 * init the kpdt queue
 	 */
 	kpdt_free = kpdt_virt;
-	for (i = MAX_KERNEL_PDT_SIZE/PDT_SIZE; i > 0; i--) {
+	for (i = pdt_size/PDT_SIZE; i > 0; i--) {
 		kpdt_virt->next = (kpdt_entry_t)((vm_offset_t)kpdt_virt + PDT_SIZE);
 		kpdt_virt->phys = kpdt_phys;
 		kpdt_virt = kpdt_virt->next;
@@ -1059,24 +1052,24 @@ pmap_bootstrap(vm_offset_t load_start,
 #endif
 
 	/*  map the first 64k (BUG ROM) read only, cache inhibited (? XXX) */
-	vaddr = PMAPER(
-		      0,
+	vaddr = PMAPER(0,
 		      0,
 		      0x10000,
-		      (VM_PROT_WRITE | VM_PROT_READ)|(CACHE_INH <<16));
+		       VM_PROT_WRITE | VM_PROT_READ,
+		       CACHE_INH);
 
 	/*  map the kernel text read only */
-	vaddr = PMAPER(
-		      (vm_offset_t)trunc_page(((unsigned)&kernelstart)),
+	vaddr = PMAPER((vm_offset_t)trunc_page(((unsigned)&kernelstart)),
 		      s_text,
 		      e_text,
-		      (VM_PROT_WRITE | VM_PROT_READ)|(CACHE_GLOBAL<<16));  /* shouldn't it be RO? XXX*/
+		       VM_PROT_WRITE | VM_PROT_READ,
+		       CACHE_GLOBAL);  /* shouldn't it be RO? XXX*/
 
-	vaddr = PMAPER(
-		      vaddr,
+	vaddr = PMAPER(vaddr,
 		      e_text,
 		      (vm_offset_t)kmap,
-		      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_GLOBAL << 16));
+		       VM_PROT_WRITE | VM_PROT_READ,
+		       CACHE_GLOBAL);
 	/*
 	 * Map system segment & page tables - should be cache inhibited?
 	 * 88200 manual says that CI bit is driven on the Mbus while accessing
@@ -1092,16 +1085,18 @@ pmap_bootstrap(vm_offset_t load_start,
 		while (vaddr < (*virt_start - kernel_pmap_size))
 			vaddr = round_page(vaddr + 1);
 	}
-	vaddr = PMAPER(
-		      vaddr,
-		      (vm_offset_t)kmap,
-		      *phys_start,
-		      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
+	vaddr = PMAPER(vaddr, (vm_offset_t)kmap, *phys_start,
+		      VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 	if (vaddr != *virt_start) {
+		/* 
+		 * This should never happen because we now round the PDT
+		 * table size up to a page boundry in the quest to get 
+		 * mc88110 working. - XXX smurph
+		 */
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-			printf("1:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
+			printf("1:vaddr %x *virt_start 0x%x *phys_start 0x%x\n", vaddr,
 			       *virt_start, *phys_start);
 		}
 #endif
@@ -1121,11 +1116,8 @@ pmap_bootstrap(vm_offset_t load_start,
 		etherlen = ETHERPAGES * NBPG;
 		etherbuf = (void *)vaddr;
 
-		vaddr = PMAPER(
-			      vaddr,
-			      *phys_start,
-			      *phys_start + etherlen,
-			      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
+		vaddr = PMAPER(vaddr, *phys_start, *phys_start + etherlen,
+			      VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 		*virt_start += etherlen;
 		*phys_start += etherlen; 
@@ -1179,7 +1171,7 @@ pmap_bootstrap(vm_offset_t load_start,
 	}
 #endif
 
-	for (; ptable->size != 0xffffffffU; ptable++)
+	for (; ptable->size != 0xffffffffU; ptable++){
 		if (ptable->size) {
 			/*
 			 * size-1, 'cause pmap_map rounds up to next pagenumber
@@ -1187,9 +1179,9 @@ pmap_bootstrap(vm_offset_t load_start,
 			PMAPER(ptable->virt_start,
 			       ptable->phys_start,
 			       ptable->phys_start + (ptable->size - 1),
-			       ptable->prot|(ptable->cacheability << 16));
+			       ptable->prot, ptable->cacheability);
 		}
-
+		}
 		/*
 		 * Allocate all the submaps we need. Note that SYSMAP just allocates
 		 * kernel virtual address with no physical backing memory. The idea
@@ -1234,7 +1226,6 @@ pmap_bootstrap(vm_offset_t load_start,
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			pmap_expand_kmap(virt, VM_PROT_READ|VM_PROT_WRITE|(CACHE_GLOBAL << 16));
 	}
-
 	/*
 	 * Switch to using new page tables
 	 */
@@ -1261,11 +1252,6 @@ pmap_bootstrap(vm_offset_t load_start,
 		if (cpu_sets[i]) {
 			/* Invalidate entire kernel TLB. */
 			cmmu_flush_remote_tlb(i, 1, 0, -1);
-#ifdef DEBUG
-			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-				printf("After cmmu_flush_remote_tlb()\n");
-			}
-#endif
 			/* still physical */
 			/*
 			 * Set valid bit to DT_INVALID so that the very first 
@@ -1282,7 +1268,7 @@ pmap_bootstrap(vm_offset_t load_start,
 			cmmu_remote_set_sapr(i, apr_data.bits);
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-				printf("After cmmu_remote_set_sapr()\n");
+				printf("Processor %d running virtual.\n", i);
 			}
 #endif
 			SETBIT_CPUSET(i, &kernel_pmap->cpus_using);
@@ -1515,7 +1501,6 @@ pmap_pinit(pmap_t p)
 	segdt = (sdt_entry_t *)uvm_km_zalloc(kernel_map, s);
 	if (segdt == NULL)
 		panic("pmap_create: kmem_alloc failure");
-
 	
 	/*
 	 * Initialize pointer to segment table both virtual and physical.
@@ -2274,7 +2259,6 @@ out:
  *	prot		desired protection attributes
  *
  *	Calls:
- *		m88k_protection
  *		PMAP_LOCK, PMAP_UNLOCK
  *		CHECK_PAGE_ALIGN
  *		panic
@@ -3040,7 +3024,7 @@ pmap_collect(pmap_t pmap)
 		 */
 		for (sdt = sdtp; sdt < (sdtp + PDT_TABLE_GROUP_SIZE); sdt++) {
 			((sdt_entry_template_t *) sdt) -> bits = 0;
-			((sdt_entry_template_t *) sdt+SDT_ENTRIES) -> bits = 0;
+			((sdt_entry_template_t *)(sdt+SDT_ENTRIES))->bits = 0;
 		}
 
 		/*
