@@ -11,8 +11,6 @@ ftp://ftp.ibp.fr/pub/OpenBSD == ftp://ftp2.fr.openbsd.org/pub/OpenBSD
 
 Germany:
 
-ftp://ftp.cs.tu-berlin.de/pub/OpenBSD
-
 ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
 	ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
 
