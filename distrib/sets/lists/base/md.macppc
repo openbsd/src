@@ -1296,7 +1296,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/kbio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/limits.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/link.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pcb.ph
@@ -1308,6 +1307,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/psl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/pte.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ptrace.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/rbus_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/reloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/setjmp.ph
@@ -1580,7 +1580,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kcore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/limits.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/link.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pcb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/pio.ph

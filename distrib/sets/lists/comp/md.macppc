@@ -35,7 +35,6 @@
 ./usr/include/macppc/kbio.h
 ./usr/include/macppc/kcore.h
 ./usr/include/macppc/limits.h
-./usr/include/macppc/link.h
 ./usr/include/macppc/loadfile_machdep.h
 ./usr/include/macppc/param.h
 ./usr/include/macppc/pcb.h
@@ -47,6 +46,7 @@
 ./usr/include/macppc/psl.h
 ./usr/include/macppc/pte.h
 ./usr/include/macppc/ptrace.h
+./usr/include/macppc/rbus_machdep.h
 ./usr/include/macppc/reg.h
 ./usr/include/macppc/reloc.h
 ./usr/include/macppc/setjmp.h
@@ -81,7 +81,6 @@
 ./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
-./usr/include/powerpc/link.h
 ./usr/include/powerpc/param.h
 ./usr/include/powerpc/pcb.h
 ./usr/include/powerpc/pio.h
