@@ -4905,6 +4905,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363,
+	    0,
+	    "VIA",
+	    "VT8363 (Apollo 133) Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    0,
 	    "VIA",
@@ -5059,6 +5065,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT82C686A (Apollo 133) AC-97 Audio",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_AGP,
+	    0,
+	    "VIA",
+	    "VT8363 (Apollo 133) PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
