@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.37 2004/08/30 07:44:28 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.38 2004/09/17 21:49:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -199,6 +199,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	st->rule.ptr = r;
 	/* XXX get pointers to nat_rule and anchor */
 
+	/* XXX when we have nat_rule/anchors, use STATE_INC_COUNTERS */
 	r->states++;
 
 	/* fill in the rest of the state entry */
@@ -227,6 +228,8 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 	if (pf_insert_state(kif, st)) {
 		pfi_maybe_destroy(kif);
+		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
+		r->states--;
 		pool_put(&pf_state_pl, st);
 		return (EINVAL);
 	}

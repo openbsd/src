@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.457 2004/07/11 15:54:21 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.458 2004/09/17 21:49:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -249,6 +249,24 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 #define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
 	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
 	(k)->pfik_parent->pfik_parent)
+
+#define STATE_INC_COUNTERS(s)				\
+	do {						\
+		s->rule.ptr->states++;			\
+		if (s->anchor.ptr != NULL)		\
+			s->anchor.ptr->states++;	\
+		if (s->nat_rule.ptr != NULL)		\
+			s->nat_rule.ptr->states++;	\
+	} while (0)
+
+#define STATE_DEC_COUNTERS(s)				\
+	do {						\
+		if (s->nat_rule.ptr != NULL)		\
+			s->nat_rule.ptr->states--;	\
+		if (s->anchor.ptr != NULL)		\
+			s->anchor.ptr->states--;	\
+		s->rule.ptr->states--;			\
+	} while (0)
 
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
 static __inline int pf_state_compare_lan_ext(struct pf_state *,
@@ -2713,14 +2731,10 @@ cleanup:
 			return (PF_DROP);
 		}
 		bzero(s, sizeof(*s));
-		r->states++;
-		if (a != NULL)
-			a->states++;
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
-		if (s->nat_rule.ptr != NULL)
-			s->nat_rule.ptr->states++;
 		s->anchor.ptr = a;
+		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
 		s->log = r->log & 2;
 		s->proto = IPPROTO_TCP;
@@ -2799,6 +2813,7 @@ cleanup:
 		    off, pd, th, &s->src, &s->dst)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
@@ -2810,6 +2825,7 @@ cleanup:
 			    ("pf_normalize_tcp_stateful failed on first pkt"));
 			pf_normalize_tcp_cleanup(s);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
@@ -2817,6 +2833,7 @@ cleanup:
 			pf_normalize_tcp_cleanup(s);
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		} else
@@ -3054,14 +3071,10 @@ cleanup:
 			return (PF_DROP);
 		}
 		bzero(s, sizeof(*s));
-		r->states++;
-		if (a != NULL)
-			a->states++;
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
-		if (s->nat_rule.ptr != NULL)
-			s->nat_rule.ptr->states++;
 		s->anchor.ptr = a;
+		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
 		s->log = r->log & 2;
 		s->proto = IPPROTO_UDP;
@@ -3110,6 +3123,7 @@ cleanup:
 		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		} else
@@ -3340,14 +3354,10 @@ cleanup:
 			return (PF_DROP);
 		}
 		bzero(s, sizeof(*s));
-		r->states++;
-		if (a != NULL)
-			a->states++;
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
-		if (s->nat_rule.ptr != NULL)
-			s->nat_rule.ptr->states++;
 		s->anchor.ptr = a;
+		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
 		s->log = r->log & 2;
 		s->proto = pd->proto;
@@ -3390,6 +3400,7 @@ cleanup:
 		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		} else
@@ -3606,14 +3617,10 @@ cleanup:
 			return (PF_DROP);
 		}
 		bzero(s, sizeof(*s));
-		r->states++;
-		if (a != NULL)
-			a->states++;
 		s->rule.ptr = r;
 		s->nat_rule.ptr = nr;
-		if (s->nat_rule.ptr != NULL)
-			s->nat_rule.ptr->states++;
 		s->anchor.ptr = a;
+		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
 		s->log = r->log & 2;
 		s->proto = pd->proto;
@@ -3652,6 +3659,7 @@ cleanup:
 		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
+			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		} else
