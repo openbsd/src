@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.86 2004/05/26 22:23:16 markus Exp $
+$OpenBSD: usbdevs,v 1.87 2004/06/13 19:52:57 mickey Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -876,6 +876,7 @@ product IOMEGA ZIP250_2		0x0032	Zip 250
 product IOMEGA CDRW		0x0055	CDRW 9602
 
 /* iRiver products */
+product IRIVER IFP_1XX		0x1101	iFP-1xx
 product IRIVER IFP_3XX		0x1103	iFP-3xx
 product IRIVER IFP_5XX		0x1105	iFP-5xx
 

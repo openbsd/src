@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.11 2004/04/10 08:11:21 deraadt Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.12 2004/06/13 19:52:57 mickey Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
 
 /*
@@ -189,6 +189,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  PQUIRK_NOTUR,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOBIGMODESENSE | PQUIRK_NODOORLOCK | PQUIRK_ONLYBIG,
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 
@@ -440,13 +448,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, umass_fixup_yedata
 	},
 
-       { { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_DNSSF7X},
-         UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-         0,
-         SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
-         UMATCH_VENDOR_PRODUCT,
-         NULL, NULL
-       },
+	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_DNSSF7X},
+	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	 0,
+	 SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
+	 UMATCH_VENDOR_PRODUCT,
+	 NULL, NULL
+	},
 };
 
 const struct umass_quirk *
