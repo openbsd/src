@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2002/02/17 19:42:30 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2002/05/30 06:51:46 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -202,6 +202,7 @@ extern FILE    *cout;
 extern int	data;
 extern char    *home;
 extern jmp_buf	jabort;
+extern int	family;
 extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.38 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.39 2002/05/30 06:51:46 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.38 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.39 2002/05/30 06:51:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -285,7 +285,7 @@ url_get(origline, proxyenv, outfile)
 		    host, portnum, path, savefile);
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	port = portnum ? portnum : httpport;
 	error = getaddrinfo(host, port, &hints, &res0);

@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.34 2001/08/22 17:26:34 beck Exp $
+.\" 	$OpenBSD: ftp.1,v 1.35 2002/05/30 06:51:46 deraadt Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -44,7 +44,7 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl AVadegimnptv
+.Op Fl AVadegimnptv46
 .Op Fl o Ar output
 .Op Fl P Ar port
 .Op Fl r Ar seconds
@@ -152,6 +152,14 @@ as report on data transfer statistics.
 .It Fl V
 Disable verbose mode, overriding the default of enabled when input
 is from a terminal.
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
 .El
 .Pp
 The client host with which
