@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.3 2005/01/19 11:07:33 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.4 2005/01/22 10:14:25 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -124,20 +124,20 @@ struct rtw_srom {
 	u_int16_t		sr_size;
 };
 
-struct rtw_rxctl {
-	struct mbuf			*srx_mbuf;
-	bus_dmamap_t			srx_dmamap;
+struct rtw_rxsoft {
+	struct mbuf			*rs_mbuf;
+	bus_dmamap_t			rs_dmamap;
 };
 
-struct rtw_txctl {
-	SIMPLEQ_ENTRY(rtw_txctl)	stx_q;
-	struct mbuf			*stx_mbuf;
-	bus_dmamap_t			stx_dmamap;
-	struct ieee80211_node		*stx_ni;	/* destination node */
-	u_int				stx_first;	/* 1st hw descriptor */
-	u_int				stx_last;	/* last hw descriptor */
-	struct ieee80211_duration	stx_d0;
-	struct ieee80211_duration	stx_dn;
+struct rtw_txsoft {
+	SIMPLEQ_ENTRY(rtw_txsoft)	ts_q;
+	struct mbuf			*ts_mbuf;
+	bus_dmamap_t			ts_dmamap;
+	struct ieee80211_node		*ts_ni;	/* destination node */
+	u_int				ts_first;	/* 1st hw descriptor */
+	u_int				ts_last;	/* last hw descriptor */
+	struct ieee80211_duration	ts_d0;
+	struct ieee80211_duration	ts_dn;
 };
 
 #define RTW_NTXPRI	4	/* number of Tx priorities */
@@ -170,29 +170,29 @@ struct rtw_txctl {
 #define RTW_RXQLEN	64
 
 struct rtw_txdesc_blk {
-	u_int			htc_ndesc;
-	u_int			htc_next;
-	u_int			htc_nfree;
-	bus_addr_t		htc_physbase;
-	bus_addr_t		htc_ofs;
-	struct rtw_txdesc	*htc_desc;
+	u_int			tdb_ndesc;
+	u_int			tdb_next;
+	u_int			tdb_nfree;
+	bus_addr_t		tdb_physbase;
+	bus_addr_t		tdb_ofs;
+	struct rtw_txdesc	*tdb_desc;
 };
 
-#define RTW_NEXT_IDX(__htc, __idx)	(((__idx) + 1) % (__htc)->htc_ndesc)
+#define RTW_NEXT_IDX(__htc, __idx)	(((__idx) + 1) % (__htc)->tdb_ndesc)
 
 #define RTW_NEXT_DESC(__htc, __idx) \
-    ((__htc)->htc_physbase + \
+    ((__htc)->tdb_physbase + \
      sizeof(struct rtw_txdesc) * RTW_NEXT_IDX((__htc), (__idx)))
 
-SIMPLEQ_HEAD(rtw_txq, rtw_txctl);
+SIMPLEQ_HEAD(rtw_txq, rtw_txsoft);
 
-struct rtw_txctl_blk {
+struct rtw_txsoft_blk {
 	/* dirty/free s/w descriptors */
-	struct rtw_txq		stc_dirtyq;
-	struct rtw_txq		stc_freeq;
-	u_int			stc_ndesc;
-	int			stc_tx_timer;
-	struct rtw_txctl	*stc_desc;
+	struct rtw_txq		tsb_dirtyq;
+	struct rtw_txq		tsb_freeq;
+	u_int			tsb_ndesc;
+	int			tsb_tx_timer;
+	struct rtw_txsoft	*tsb_desc;
 };
 
 struct rtw_descs {
@@ -347,8 +347,8 @@ struct rtw_softc {
 	u_int8_t		sc_phydelay;
 
 	/* s/w Tx/Rx descriptors */
-	struct rtw_txctl_blk	sc_txctl_blk[RTW_NTXPRI];
-	struct rtw_rxctl	sc_rxctl[RTW_RXQLEN];
+	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];
+	struct rtw_rxsoft	sc_rxsoft[RTW_RXQLEN];
 	u_int			sc_txq;
 	u_int			sc_txnext;
 
