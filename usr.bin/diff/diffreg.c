@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.28 2003/07/06 22:17:21 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.29 2003/07/08 04:45:32 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.28 2003/07/06 22:17:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.29 2003/07/08 04:45:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -282,7 +282,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 				status |= 2;
 				goto closem;
 			}
-		} else if (strcmp(file1, "-") == 0 || !S_ISREG(stb1.st_mode)) {
+		} else if (!S_ISREG(stb1.st_mode)) {
 			file1 = copytemp(file1, 1);
 			if (file1 == NULL || stat(file1, &stb1) < 0) {
 				warn("%s", file1);
@@ -290,7 +290,10 @@ diffreg(char *ofile1, char *ofile2, int flags)
 				goto closem;
 			}
 		}
-		f1 = fopen(file1, "r");
+		if (strcmp(file1, "-") == 0)
+			f1 = stdin;
+		else
+			f1 = fopen(file1, "r");
 	}
 	if (f1 == NULL) {
 		warn("%s", file1);
@@ -308,7 +311,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 				status |= 2;
 				goto closem;
 			}
-		} else if (strcmp(file2, "-") == 0 || !S_ISREG(stb2.st_mode)) {
+		} else if (!S_ISREG(stb1.st_mode)) {
 			file2 = copytemp(file2, 2);
 			if (file2 == NULL || stat(file2, &stb2) < 0) {
 				warn("%s", file2);
@@ -316,7 +319,10 @@ diffreg(char *ofile1, char *ofile2, int flags)
 				goto closem;
 			}
 		}
-		f2 = fopen(file2, "r");
+		if (strcmp(file2, "-") == 0)
+			f2 = stdin;
+		else
+			f2 = fopen(file2, "r");
 	}
 	if (f2 == NULL) {
 		warn("%s", file2);
@@ -398,15 +404,13 @@ closem:
 		unlink(tempfiles[0]);
 		free(tempfiles[0]);
 		tempfiles[0] = NULL;
-	}
+	} else if (file1 != ofile1)
+		free(file1);
 	if (tempfiles[1] != NULL) {
 		unlink(tempfiles[1]);
 		free(tempfiles[1]);
 		tempfiles[1] = NULL;
-	}
-	if (file1 != ofile1)
-		free(file1);
-	if (file2 != ofile2)
+	} else if (file2 != ofile2)
 		free(file2);
 }
 

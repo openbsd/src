@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.25 2003/07/06 22:17:21 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.26 2003/07/08 04:45:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.25 2003/07/06 22:17:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.26 2003/07/08 04:45:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -176,12 +176,12 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 	if (strcmp(argv[0], "-") == 0) {
-		stb1.st_mode = S_IFREG;
+		fstat(STDIN_FILENO, &stb1);
 		gotstdin = 1;
 	} else if (stat(argv[0], &stb1) != 0)
 		error("%s", argv[0]);
 	if (strcmp(argv[1], "-") == 0) {
-		stb2.st_mode = S_IFREG;
+		fstat(STDIN_FILENO, &stb2);
 		gotstdin = 1;
 	} else if (stat(argv[1], &stb2) != 0)
 		error("%s", argv[1]);
