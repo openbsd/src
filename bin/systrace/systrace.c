@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.6 2002/06/04 19:50:12 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.7 2002/06/04 19:58:46 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -325,7 +325,8 @@ systrace_initcb(void)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: systrace [-ait] [-f policy] command ...\n");
+	fprintf(stderr,
+	    "Usage: systrace [-ait] [-g gui] [-f policy] command ...\n");
 	exit(1);
 }
 
