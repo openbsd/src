@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.11 2003/06/12 12:59:51 jmc Exp $
+.\"	$OpenBSD: mtrace.8,v 1.12 2003/07/14 13:32:11 jmc Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1993, 1998-2001.
@@ -98,7 +98,7 @@ Assessing problems in the distribution of IP multicast traffic
 can be difficult.
 .Nm
 utilizes a tracing feature implemented in multicast routers
-.Nm ( mrouted
+.Pf ( Nm mrouted
 version 3.3 and later) that is
 accessed via an extension to the IGMP protocol.
 A trace query is passed hop-by-hop along the reverse path from the
@@ -127,7 +127,6 @@ is a unicast address and the
 is a multicast address.
 .Pp
 The options are as follows:
-.Pp
 .Bl -tag -width addr_xy
 .It Fl g Ar gwy
 Send the trace query via unicast directly to the multicast router
@@ -199,7 +198,7 @@ Set the time to wait for a trace response to
 .Ar n
 seconds (default 3 seconds).
 .El
-.Ss How It Works
+.Ss How \&It Works
 The technique used by the
 .Nm traceroute
 tool to trace unicast network paths will not work for IP multicast
@@ -352,7 +351,6 @@ This first section ends with a line showing the round-trip time which measures
 the interval from when the query is issued until the response is
 received, both derived from the local system clock.
 A sample use and output might be:
-.Pp
 .Bd -literal
 oak.isi.edu 80# mtrace -l caraway.lcs.mit.edu 224.2.0.3
 Mtrace from 18.26.0.170 to 128.9.160.100 via group 224.2.0.3
@@ -403,7 +401,6 @@ which is 101 seconds in the example below.
 The second section of the output is omitted if the
 .Fl s .
 option is set.
-.Pp
 .Bd -literal
 Waiting to accumulate statistics... Results after 101 seconds:
 
@@ -479,9 +476,8 @@ that did not implement the multicast traceroute function, so
 switched to hop-by-hop mode.
 The "Route pruned" error code indicates that traffic for group 224.2.143.24
 would not be forwarded.
-.Pp
 .Bd -literal
-oak.isi.edu 108# mtrace -g 140.173.48.2 204.62.246.73 \\
+oak.isi.edu 108# mtrace -g 140.173.48.2 204.62.246.73 \e
                            butter.lcs.mit.edu 224.2.143.24
 Mtrace from 204.62.246.73 to 18.26.0.151 via group 224.2.143.24
 Querying full reverse path... * switching to hop-by-hop:
