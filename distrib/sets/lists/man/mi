@@ -347,6 +347,7 @@
 ./usr/share/man/cat1/lprm.0
 ./usr/share/man/cat1/lptest.0
 ./usr/share/man/cat1/ls.0
+./usr/share/man/cat1/luna88k
 ./usr/share/man/cat1/lynx.0
 ./usr/share/man/cat1/m4.0
 ./usr/share/man/cat1/mac68k
@@ -695,6 +696,7 @@
 ./usr/share/man/cat3/hp300
 ./usr/share/man/cat3/hppa
 ./usr/share/man/cat3/i386
+./usr/share/man/cat3/luna88k
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/macppc
 ./usr/share/man/cat3/mvme68k
@@ -1278,6 +1280,13 @@
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
 ./usr/share/man/cat4/lpt.0
+./usr/share/man/cat4/luna88k
+./usr/share/man/cat4/luna88k/autoconf.0
+./usr/share/man/cat4/luna88k/intro.0
+./usr/share/man/cat4/luna88k/kmem.0
+./usr/share/man/cat4/luna88k/le.0
+./usr/share/man/cat4/luna88k/mem.0
+./usr/share/man/cat4/luna88k/spc.0
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/mac68k/adb.0
@@ -1696,6 +1705,7 @@
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
+./usr/share/man/cat5/luna88k
 ./usr/share/man/cat5/mac68k
 ./usr/share/man/cat5/macppc
 ./usr/share/man/cat5/magic.0
@@ -1983,6 +1993,10 @@
 ./usr/share/man/cat8/logresolve.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
+./usr/share/man/cat8/luna88k
+./usr/share/man/cat8/luna88k/MAKEDEV.0
+./usr/share/man/cat8/luna88k/wsconscfg.0
+./usr/share/man/cat8/luna88k/wsconsctl.0
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mac68k/MAKEDEV.0
 ./usr/share/man/cat8/mac68k/boot_mac68k.0
@@ -2261,6 +2275,7 @@
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386
+./usr/share/man/cat9/luna88k
 ./usr/share/man/cat9/mac68k
 ./usr/share/man/cat9/macppc
 ./usr/share/man/cat9/mvme68k
@@ -2285,6 +2300,7 @@
 ./usr/share/man/man1/hp300
 ./usr/share/man/man1/hppa
 ./usr/share/man/man1/i386
+./usr/share/man/man1/luna88k
 ./usr/share/man/man1/mac68k
 ./usr/share/man/man1/macppc
 ./usr/share/man/man1/mvme68k
@@ -2304,6 +2320,7 @@
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
+./usr/share/man/man4/luna88k
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
@@ -2323,6 +2340,7 @@
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386
+./usr/share/man/man8/luna88k
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/mvme68k
@@ -2340,6 +2358,7 @@
 ./usr/share/man/ps1/hp300
 ./usr/share/man/ps1/hppa
 ./usr/share/man/ps1/i386
+./usr/share/man/ps1/luna88k
 ./usr/share/man/ps1/mac68k
 ./usr/share/man/ps1/macppc
 ./usr/share/man/ps1/mvme68k
@@ -2360,6 +2379,7 @@
 ./usr/share/man/ps3/hp300
 ./usr/share/man/ps3/hppa
 ./usr/share/man/ps3/i386
+./usr/share/man/ps3/luna88k
 ./usr/share/man/ps3/mac68k
 ./usr/share/man/ps3/macppc
 ./usr/share/man/ps3/mvme68k
@@ -2377,6 +2397,7 @@
 ./usr/share/man/ps4/hp300
 ./usr/share/man/ps4/hppa
 ./usr/share/man/ps4/i386
+./usr/share/man/ps4/luna88k
 ./usr/share/man/ps4/mac68k
 ./usr/share/man/ps4/macppc
 ./usr/share/man/ps4/mvme68k
@@ -2393,6 +2414,7 @@
 ./usr/share/man/ps5/hp300
 ./usr/share/man/ps5/hppa
 ./usr/share/man/ps5/i386
+./usr/share/man/ps5/luna88k
 ./usr/share/man/ps5/mac68k
 ./usr/share/man/ps5/macppc
 ./usr/share/man/ps5/mvme68k
@@ -2411,6 +2433,7 @@
 ./usr/share/man/ps8/hp300
 ./usr/share/man/ps8/hppa
 ./usr/share/man/ps8/i386
+./usr/share/man/ps8/luna88k
 ./usr/share/man/ps8/mac68k
 ./usr/share/man/ps8/macppc
 ./usr/share/man/ps8/mvme68k
@@ -2427,6 +2450,7 @@
 ./usr/share/man/ps9/hp300
 ./usr/share/man/ps9/hppa
 ./usr/share/man/ps9/i386
+./usr/share/man/ps9/luna88k
 ./usr/share/man/ps9/mac68k
 ./usr/share/man/ps9/macppc
 ./usr/share/man/ps9/mvme68k

@@ -59,7 +59,7 @@
 ./usr/lib/libtermcap.so.9.0
 ./usr/lib/libtermlib.so.9.0
 ./usr/lib/libusbhid.so.1.0
-./usr/lib/libutil.so.9.0
+./usr/lib/libutil.so.10.0
 ./usr/lib/libwrap.so.3.0
 ./usr/lib/libz.so.3.0
 ./usr/libdata/perl5/site_perl/sparc64-openbsd
