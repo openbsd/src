@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.4 2001/06/25 23:04:39 drahn Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.5 2001/08/19 05:32:59 art Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -47,6 +47,8 @@ int OF_child __P((int phandle));
 int OF_parent __P((int phandle));
 int OF_instance_to_package __P((int ihandle));
 int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+int OF_setprop __P((int, char *, const void *, int));
+int OF_nextprop __P((int, char *, void *));
 int OF_finddevice __P((char *name));
 int OF_instance_to_path __P((int ihandle, char *buf, int buflen));
 int OF_package_to_path __P((int phandle, char *buf, int buflen));
