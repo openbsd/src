@@ -1,0 +1,6 @@
+--- t4.in	Thu Aug  7 16:05:20 2003
++++ t4.out	Thu Aug  7 16:05:37 2003
+@@ -1 +1 @@
+-A line of text
++A line of text
+\ No newline at end of file

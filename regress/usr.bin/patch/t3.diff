@@ -1,0 +1,4 @@
+--- t3.in	Mon Aug  4 10:04:58 2003
++++ t3.out	Mon Aug  4 10:05:11 2003
+@@ -0,0 +1 @@
++A line of text
