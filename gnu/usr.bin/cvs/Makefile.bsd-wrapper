@@ -1,7 +1,7 @@
-#	$Id: Makefile.bsd-wrapper,v 1.13 1996/04/27 20:47:31 tholo Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.14 1996/05/01 07:26:35 deraadt Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8
-GNUCFLAGS=	CFLAGS="${CFLAGS}"
+GNUCFLAGS=	CFLAGS="${CFLAGS} -DSERVER_FLOWCONTROL"
 CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 \
 		man/cvsinit.cat8
 
