@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 1998/08/31 17:42:44 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 1999/11/22 19:22:03 matthieu Exp $	*/
 /*	$NetBSD: mem.c,v 1.9 1996/04/08 18:32:48 ragge Exp $	*/
 
 /*
@@ -203,5 +203,17 @@ mmmmap(dev, off, prot)
 	int off, prot;
 {
 
+	return (EOPNOTSUPP);
+}
+
+/*ARGSUSED*/
+int
+mmioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
 	return (EOPNOTSUPP);
 }

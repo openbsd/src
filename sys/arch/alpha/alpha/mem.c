@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 1998/08/31 17:42:25 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 1999/11/22 19:21:55 matthieu Exp $	*/
 /*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
 
 /*
@@ -215,4 +215,15 @@ mmmmap(dev, off, prot)
 	    off >= ctob(lastusablepage + 1))
 		return (-1);
 	return (alpha_btop(off));
+}
+
+int
+mmioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }

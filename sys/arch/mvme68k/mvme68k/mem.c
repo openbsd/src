@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 1999/09/27 20:30:32 smurph Exp $ */
+/*	$OpenBSD: mem.c,v 1.9 1999/11/22 19:22:00 matthieu Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -263,4 +263,16 @@ mmmmap(dev, off, prot)
 	    (unsigned)off < NBPG)
 		return (-1);
 	return (m68k_btop(off));
+}
+
+/*ARGSUSED*/
+int
+mmioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }

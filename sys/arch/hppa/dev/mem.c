@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 1999/06/29 20:56:09 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 1999/11/22 19:21:58 matthieu Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -296,3 +296,13 @@ mmmmap(dev, off, prot)
 	return (btop(off));
 }
 
+int
+mmioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
