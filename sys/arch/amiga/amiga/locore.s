@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.7 1996/05/04 13:29:04 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.8 1996/05/04 13:34:27 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.51 1996/05/02 02:08:33 mhitch Exp $	*/
 
 /*
@@ -841,9 +841,9 @@ Lcacheon:
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and
  * pass the first available RAM and a pointer to the register
- * set to "mi_main()".  "mi_main()" will do an "execve()" using that
+ * set to "main()".  "main()" will do an "execve()" using that
  * stack frame.
- * When "mi_main()" returns, we're running in process 1 and have
+ * When "main()" returns, we're running in process 1 and have
  * successfully executed the "execve()".  We load up the registers from
  * that set; the "rte" loads the PC and PSR, which jumps to "init".
  */
@@ -858,7 +858,7 @@ Lcacheon:
 	movl	usp,a1
 	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
 	pea	sp@			| addr of space for D0 
-	jbsr	_mi_main		| mi_main(firstaddr, r0)
+	jbsr	_main			| main(firstaddr, r0)
 	addql	#4,sp			| pop args
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lnoflush		| no, skip
