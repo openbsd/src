@@ -1,4 +1,4 @@
-/*	$OpenBSD: shared_intr.c,v 1.3 1998/06/29 05:32:50 downsj Exp $	*/
+/*	$OpenBSD: shared_intr.c,v 1.4 1998/12/27 00:27:18 deraadt Exp $	*/
 /*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
 
 /*
@@ -125,15 +125,17 @@ alpha_shared_intr_check(intr, num, type)
 		return (0);
 
 	switch (intr[num].intr_sharetype) {
-	case IST_EDGE:
+	case IST_NONE:
+		return (2);
+		break;
 	case IST_LEVEL:
-		if (type == intr[num].intr_sharetype)
-			break;
+		if (type != intr[num].intr_sharetype)
+			return (0);
+		return (2);
+	case IST_EDGE:
 	case IST_PULSE:
 		if ((type != IST_NONE) && (intr[num].intr_q.tqh_first != NULL))
-				return (0);
-	case IST_NONE:
-		break;
+			return (0);
 	}
 
 	return (1);

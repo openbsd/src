@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isavar.h,v 1.1 1998/09/11 08:02:51 fgsch Exp $	*/
+/*	$OpenBSD: i82365_isavar.h,v 1.2 1998/12/27 00:27:19 deraadt Exp $	*/
 /*	$NetBSD: i82365_isavar.h,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -31,7 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int pcic_isa_intr_alloc_mask;
+extern char pcic_isa_intr_list[];
+extern int npcic_isa_intr_list;
 
 /* 
  * Establish/disestablish interrupts for PCMCIA functions.

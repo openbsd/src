@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.2 1998/12/19 15:58:24 fgsch Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.3 1998/12/27 00:27:18 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -85,11 +85,12 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
  * lines.
  */
 
-#ifndef PCIC_ISA_INTR_ALLOC_MASK
-#define	PCIC_ISA_INTR_ALLOC_MASK	0xff5f
-#endif
+char	pcic_isa_intr_list[] = {
+	3, 4, 12, 14, 9, 5, 10, 11, 15, 13, 7
+};
 
-int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
+int	npcic_isa_intr_list =
+	sizeof(pcic_isa_intr_list) / sizeof(pcic_isa_intr_list[0]);
 
 /*****************************************************************************
  * End of configurable parameters.
@@ -212,7 +213,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	isa_chipset_tag_t ic = h->sc->intr_est;
 	int irq, ist;
 	void *ih;
-	int reg;
+	int i, reg;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
 		ist = IST_LEVEL;
@@ -221,9 +222,16 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else
 		ist = IST_LEVEL;
 
-	if (isa_intr_alloc(ic,
-	    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask, ist, &irq))
-		return (NULL);
+	for (i = 0; i < npcic_isa_intr_list; i++)
+		if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 2)
+			goto found;
+	for (i = 0; i < npcic_isa_intr_list; i++)
+		if (isa_intr_check(ic, pcic_isa_intr_list[i], ist))
+			goto found;
+	return (NULL);
+
+found:
+	irq = pcic_isa_intr_list[i];
 	if ((ih = isa_intr_establish(ic, irq, ist, ipl,
 	    fct, arg, h->pcmcia->dv_xname)) == NULL)
 		return (NULL);
