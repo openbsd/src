@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.3 2000/01/11 10:09:49 mickey Exp $	*/
+/*	$OpenBSD: float.h,v 1.4 2002/10/21 18:41:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -40,8 +40,12 @@
 
 #include <sys/cdefs.h>
 
+__BEGIN_DECLS
+int __flt_rounds(void);
+__END_DECLS
+
 #define	FLT_RADIX	2
-#define	FLT_ROUNDS	1
+#define	FLT_ROUNDS	__flt_rounds()
 
 #define	FLT_MANT_DIG	24
 #define	FLT_EPSILON	1.19209290E-07F

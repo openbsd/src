@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.2 2002/05/22 20:05:01 miod Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.3 2002/10/21 18:41:05 mickey Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain.
@@ -17,8 +17,8 @@ static const int map[] = {
 int
 __flt_rounds()
 {
-	u_int32_t fpsr;
+	u_int64_t fpsr;
 
-	__asm__ __volatile__("fstw %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr));
-	return map[(fpsr >> 9) & 0x03];
+	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	return map[(fpsr >> 41) & 0x03];
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetround.c,v 1.2 2002/05/22 20:05:01 miod Exp $	*/
+/*	$OpenBSD: fpgetround.c,v 1.3 2002/10/21 18:41:05 mickey Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -10,8 +10,8 @@
 fp_rnd
 fpgetround()
 {
-	u_int32_t fpsr;
+	u_int64_t fpsr;
 
-	__asm__ __volatile__("fstw %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr));
-	return ((fpsr >> 9) & 0x3);
+	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m" (fpsr) : "r" (&fpsr));
+	return ((fpsr >> 41) & 0x3);
 }
