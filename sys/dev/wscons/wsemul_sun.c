@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.6 2002/07/25 19:03:25 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.7 2002/08/29 22:19:33 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -567,6 +567,21 @@ static char *sun_fkeys[] = {
 	"\033[233z",	/* F10 */
 };
 
+static char *sun_lkeys[] = {
+	"\033[207z",	/* KS_Help */
+	NULL,		/* KS_Execute */
+	"\033[200z",	/* KS_Find */
+	NULL,		/* KS_Select */
+	"\033[193z",	/* KS_Again */
+	"\033[194z",	/* KS_Props */
+	"\033[195z",	/* KS_Undo */
+	"\033[196z",	/* KS_Front */
+	"\033[197z",	/* KS_Copy */
+	"\033[198z",	/* KS_Open */
+	"\033[199z",	/* KS_Paste */
+	"\033[201z",	/* KS_Cut */
+};
+
 int
 wsemul_sun_translate(cookie, in, out)
 	void *cookie;
@@ -591,6 +606,10 @@ wsemul_sun_translate(cookie, in, out)
 	}
 	if (in >= KS_KP_F1 && in <= KS_KP_F4) {
 		*out = sun_fkeys[in - KS_KP_F1];
+		return (6);
+	}
+	if (in >= KS_Help && in <= KS_Cut && sun_lkeys[in - KS_Help] != NULL) {
+		*out = sun_lkeys[in - KS_Help];
 		return (6);
 	}
 
