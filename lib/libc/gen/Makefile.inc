@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 1997/09/08 09:37:06 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 1997/12/22 10:13:55 deraadt Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -10,8 +10,8 @@ SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
 	getgrouplist.c gethostname.c getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c getpass.c getpwent.c \
 	getttyent.c getusershell.c glob.c initgroups.c isatty.c isctype.c \
-	nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c raise.c \
-	readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
+	lockf.c nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c \
+	raise.c readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c siginterrupt.c \
 	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
 	syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
@@ -49,7 +49,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
 	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
 	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
-	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
+	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 lockf.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 syslog.3 \

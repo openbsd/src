@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.14 1997/11/16 01:01:24 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.15 1997/12/22 10:13:50 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -191,6 +191,16 @@ extern	 int optreset;
 int	 getsubopt __P((char **, char * const *, char **));
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* !_POSIX_SOURCE */
+
+#if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE_EXTENDED - 0 == 1)
+#define F_ULOCK         0
+#define F_LOCK          1
+#define F_TLOCK         2
+#define F_TEST          3
+int     lockf __P((int, int, off_t));
+#endif /* (!defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)) || ... */
 __END_DECLS
 
 #endif /* !_UNISTD_H_ */
