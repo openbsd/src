@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.13 2001/09/03 18:04:08 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.14 2001/11/17 08:21:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.13 2001/09/03 18:04:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.14 2001/11/17 08:21:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,9 @@ int start_len = LENGTH;
 int visible_len;
 int lastch;
 char outbuf[BUFSIZ];
+
+int wantleave;
+int wantsuspend;
 
 void	crash __P((void));
 void	display __P((struct body *, char));
@@ -145,6 +148,23 @@ main(argc, argv)
 	prize();		/* Put up a goal */
 	while(1)
 	{
+		if (wantleave) {
+			endwin();		/* XXX signal race */
+			exit(0);
+		}
+		if (wantsuspend) {
+			move(LINES-1, 0);
+			refresh();
+			endwin();
+			fflush(stdout);
+			kill(getpid(), SIGSTOP);
+			signal(SIGTSTP, suspend);
+			cbreak();
+			noecho();
+			setup();
+			wantsuspend = 0;
+		}
+
 		if (running)
 		{
 			running--;
@@ -210,8 +230,7 @@ void
 leave(dummy)
 	int dummy;
 {
-	endwin();
-	exit(0);
+	wantleave = 1;
 }
 
 int
@@ -356,15 +375,7 @@ void
 suspend(dummy)
 	int dummy;
 {
-	move(LINES-1, 0);
-	refresh();
-	endwin();
-	fflush(stdout);
-	kill(getpid(), SIGSTOP);
-	signal(SIGTSTP, suspend);
-	cbreak();
-	noecho();
-	setup();
+	wantsuspend = 1;
 }
 
 void
