@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.134 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.135 2002/11/26 00:42:53 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2265,16 +2265,16 @@ hifn_callback(sc, cmd, macbuf)
 
 	if (macbuf != NULL) {
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-                       int len;
+			int len;
 
-                       if (crd->crd_alg == CRYPTO_MD5)
-                               len = 16;
-                       else if (crd->crd_alg == CRYPTO_SHA1)
-                               len = 20;
-                       else if (crd->crd_alg == CRYPTO_MD5_HMAC ||
-                           crd->crd_alg == CRYPTO_SHA1_HMAC)
-                               len = 12;
-                       else
+			if (crd->crd_alg == CRYPTO_MD5)
+				len = 16;
+			else if (crd->crd_alg == CRYPTO_SHA1)
+				len = 20;
+			else if (crd->crd_alg == CRYPTO_MD5_HMAC ||
+			    crd->crd_alg == CRYPTO_SHA1_HMAC)
+				len = 12;
+			else
 				continue;
 
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
