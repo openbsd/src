@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/12/07 00:59:16 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -281,27 +281,6 @@ physunaccess(vaddr, size)
 	for (size = btoc(size); size; size--)
 		*pte++ = PG_NV;
 	TBIAS();
-}
-
-void	setredzone __P((void *, caddr_t));
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-void
-setredzone(pte, vaddr)
-	void *pte;
-	caddr_t vaddr;
-{
 }
 
 int	kvtop __P((caddr_t addr));

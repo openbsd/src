@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.34 2001/12/07 00:59:16 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -69,8 +69,6 @@
 #if NNPX > 0
 extern struct proc *npxproc;
 #endif
-
-void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -245,26 +243,6 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_nseg++;
 	return 0;
 }
-
-#if 0
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-void
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
-{
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
-}
-#endif
 
 /*
  * Move pages from one kernel virtual address to another.

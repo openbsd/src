@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.27 2001/11/30 22:38:22 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.28 2001/12/07 00:59:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -282,25 +282,6 @@ cpu_coredump(p, vp, cred, chdr)
 		chdr->c_nseg++;
 
 	return error;
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-void
-setredzone(pte, vaddr)
-	u_int *pte;
-	caddr_t vaddr;
-{
 }
 
 /*
