@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.23 2002/01/14 21:34:41 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.24 2002/02/05 23:16:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -408,9 +408,8 @@ safe_level(mask, curlevel)
 	for (i = curlevel; i < 8; i++)
 		if (! (int_mask_val[i] & mask))
 			return i;
-	printf("safe_level: no safe level for mask 0x%08x level %d found\n",
+	panic("safe_level: no safe level for mask 0x%08x level %d found",
 	       mask, curlevel);
-	panic("safe_level");
 	/* NOTREACHED */
 }
 
@@ -466,19 +465,6 @@ db_setlevel(int level)
 }
 #endif /* DDB */
 
-#if 0
-void
-block_obio_interrupt(unsigned mask)
-{
-	blocked_interrupts_mask |= mask;
-}
-
-void
-unblock_obio_interrupt(unsigned mask)
-{
-	blocked_interrupts_mask |= ~mask;
-}
-#endif
 #endif  /* MVME188 */
 
 unsigned 
