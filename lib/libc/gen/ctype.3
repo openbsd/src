@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctype.3,v 1.3 1999/05/16 19:54:49 alex Exp $
+.\"	$OpenBSD: ctype.3,v 1.4 1999/05/25 01:13:32 aaron Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -55,24 +55,38 @@
 .Nd character classification macros
 .Sh SYNOPSIS
 .Fd #include <ctype.h>
-.Fa int c
-.br
-.Fn isalpha c
-.Fn isupper c
-.Fn islower c
-.Fn isdigit c
-.Fn isxdigit c
-.Fn isalnum c
-.Fn isspace c
-.Fn ispunct c
-.Fn isprint c
-.Fn isgraph c
-.Fn iscntrl c
-.Fn isblank c
-.Fn isascii c
-.Fn toupper c
-.Fn tolower c
-.Fn toascii c
+.Ft int
+.Fn isalpha "int c"
+.Ft int
+.Fn isupper "int c"
+.Ft int
+.Fn islower "int c"
+.Ft int
+.Fn isdigit "int c"
+.Ft int
+.Fn isxdigit "int c"
+.Ft int
+.Fn isalnum "int c"
+.Ft int
+.Fn isspace "int c"
+.Ft int
+.Fn ispunct "int c"
+.Ft int
+.Fn isprint "int c"
+.Ft int
+.Fn isgraph "int c"
+.Ft int
+.Fn iscntrl "int c"
+.Ft int
+.Fn isblank "int c"
+.Ft int
+.Fn isascii "int c"
+.Ft int
+.Fn toupper "int c"
+.Ft int
+.Fn tolower "int c"
+.Ft int
+.Fn toascii "int c"
 .Sh DESCRIPTION
 The above macros perform character tests and conversions on the integer
 .Ar c .
