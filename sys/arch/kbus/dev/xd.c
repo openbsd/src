@@ -1034,7 +1034,7 @@ xdstrategy(bp)
 	 * completion. */
 
 	if (bounds_check_with_label(bp, xd->sc_dk.dk_label,
-		(xd->flags & XD_WLABEL) != 0) <= 0)
+	 	xd->sc_dk.dk_cpulabel, (xd->flags & XD_WLABEL) != 0) <= 0)
 		goto done;
 
 	/*
