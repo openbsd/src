@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.37 2001/05/05 23:25:30 art Exp $
+#	$OpenBSD: RAMDISKB,v 1.38 2001/05/16 09:06:35 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,6 +12,7 @@ option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 option		UVM		# use the UVM virtual memory system. REQUIRED
+option		SMALL_KERNEL
 
 #option		DUMMY_NOPS	# speed hack; recommended
 

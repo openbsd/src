@@ -1,10 +1,11 @@
-#	$OpenBSD: RAMDISKB,v 1.7 2001/05/14 03:10:26 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.8 2001/05/16 09:06:32 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
 
 option		UVM		# required
 option		PMAP_NEW	# required
+option		SMALL_KERNEL
 
 # CPU Support; at least one is REQUIRED
 #option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
