@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.15 2000/04/21 15:50:21 millert Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.16 2000/06/28 23:48:15 fgsch Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -300,6 +300,15 @@ svr4_sys_creat(p, v, retval)
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 
 	return sys_open(p, &cup, retval);
+}
+
+int
+svr4_sys_creat64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (svr4_sys_creat(p, v, retval));
 }
 
 int             

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.26 2000/06/24 21:00:30 fgsch Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.27 2000/06/28 23:48:15 fgsch Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -464,6 +464,40 @@ svr4_sys_mmap(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_mmap_args	*uap = v;
+	struct sys_mmap_args	 mm;
+	void			*rp;
+#define _MAP_NEW	0x80000000
+	/*
+         * Verify the arguments.
+         */
+	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;	/* XXX still needed? */
+
+	if (SCARG(uap, len) == 0)
+		return EINVAL;
+
+	SCARG(&mm, prot) = SCARG(uap, prot);
+	SCARG(&mm, len) = SCARG(uap, len);
+	SCARG(&mm, flags) = SCARG(uap, flags) & ~_MAP_NEW;
+	SCARG(&mm, fd) = SCARG(uap, fd);
+	SCARG(&mm, addr) = SCARG(uap, addr);
+	SCARG(&mm, pos) = SCARG(uap, pos);
+
+	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
+	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
+		SCARG(&mm, addr) = rp;
+
+	return sys_mmap(p, &mm, retval);
+}
+
+int
+svr4_sys_mmap64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args	 mm;
 	void			*rp;
 #define _MAP_NEW	0x80000000

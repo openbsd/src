@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.28 2000/06/24 21:00:30 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.29 2000/06/28 23:48:15 fgsch Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -325,7 +325,9 @@
 213	STD		{ int svr4_sys_getdents64(int fd, \
 			    struct svr4_dirent64 *dp, \
 			    int nbytes); }
-214	UNIMPL		mmap64
+214 	STD		{ int svr4_sys_mmap64(svr4_caddr_t addr, \
+			    svr4_size_t len, int prot, int flags, int fd, \
+			    svr4_off64_t pos); }
 215	STD		{ int svr4_sys_stat64(const char *path, \
 			    struct svr4_stat64 *sb); }
 216	STD		{ int svr4_sys_lstat64(const char *path, \
@@ -339,7 +341,7 @@
 221	UNIMPL		getrlimit64
 222	UNIMPL		pread64
 223	UNIMPL		pwrite64
-224	UNIMPL		creat64
+224 	STD		{ int svr4_sys_creat64(char *path, int mode); }
 225	STD		{ int svr4_sys_open64(char *path, int flags, \
 			    int mode); }
 226	UNIMPL		rpcsys
