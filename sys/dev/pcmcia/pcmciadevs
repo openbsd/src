@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.76 2001/11/27 17:54:43 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.77 2001/11/27 18:11:05 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -164,6 +164,9 @@ product DUAL NE2000		0x0100 Dual NE2000
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
+
+/* EMTAC */
+product EMTAC WLAN		0x0002 EMTAC A2424i 11Mbps WLAN Card
 
 /* Farallon Communications */
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
