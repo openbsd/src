@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2003/04/07 18:19:37 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2003/04/08 01:46:45 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/04/07 18:19:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2003/04/08 01:46:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ l19999:		k = 43;
 		    || (!weq(wd2, "plant") && !weq(wd2, "door")))
 			goto l2610;
 		if (at(vocab(wd2, 1, 0)))
-			strcpy(wd2, "pour");
+			strlcpy(wd2, "pour", sizeof(wd2));
 
 l2610:		if (weq(wd1, "west"))
 			if (++iwest == 10)
