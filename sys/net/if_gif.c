@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.5 2000/01/12 06:40:45 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.6 2000/01/17 05:42:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -375,6 +375,11 @@ gif_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+		/* sync "running" with "up" */
+		if (ifp->if_flags & IFF_UP)
+			ifp->if_flags |= IFF_RUNNING;
+		else
+			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 
 	default:
