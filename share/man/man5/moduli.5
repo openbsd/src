@@ -1,4 +1,4 @@
-.\" $OpenBSD: moduli.5,v 1.1 2001/06/22 21:36:52 provos Exp $
+.\" $OpenBSD: moduli.5,v 1.2 2001/06/24 18:45:35 itojun Exp $
 .\"
 .\" Copyright 1997, 2000 William Allen Simpson <wsimpson@greendragon.com>
 .\" All rights reserved.
@@ -44,105 +44,105 @@ file contains the system-wide Diffie-Hellman prime moduli for the
 and
 .Xr sshd 8
 programs.
-
-Each line in this file contains the following fields: 
+.Pp
+Each line in this file contains the following fields:
 Time, Type, Tests, Tries, Size, Generator, Modulus.
 The fields are separated by white space (tab or blank).
 .Pp
-.Fa Time : yyyymmddhhmmss.
+.Fa Time : yyyymmddhhmmss .
 Specifies the system time that the line was appended to the file.
 The value 00000000000000 means unknown (historic).
 .\"The file is sorted in ascending order.
 .Pp
-.Fa Type : decimal.
+.Fa Type : decimal .
 Specifies the internal structure of the prime modulus.
 .Pp
 .Bl -tag -width indent -offset indent -compact
-.It 0: 
+.It 0 :
 unknown;
 often learned from peer during protocol operation,
 and saved for later analysis.
-.It 1:
+.It 1 :
 unstructured;
 a common large number.
-.It 2:
+.It 2 :
 safe (p = 2q + 1);
 meets basic structural requirements.
-.It 3:
+.It 3 :
 Schnorr.
-.It 4:
+.It 4 :
 Sophie-Germaine (q = (p-1)/2);
 usually generated in the process of testing safe or strong primes.
-.It 5:
+.It 5 :
 strong;
 useful for RSA public key generation.
 .El
 .Pp
-.Fa Tests : decimal (bit field).
+.Fa Tests : decimal (bit field) .
 Specifies the methods used in checking for primality.
 Usually, more than one test is used.
 .Pp
 .Bl -tag -width indent -offset indent -compact
-.It 0: 
+.It 0 :
 not tested;
 often learned from peer during protocol operation,
 and saved for later analysis.
-.It 1:
+.It 1 :
 composite;
 failed one or more tests.
 In this case, the highest bit specifies the test that failed.
-.It 2:
+.It 2 :
 sieve;
 checked for division by a range of smaller primes.
-.It 4:
+.It 4 :
 Miller-Rabin.
-.It 8:
+.It 8 :
 Jacobi.
-.It 16:
+.It 16 :
 Elliptic Curve.
 .El
 .Pp
-.Fa Tries : decimal.
+.Fa Tries : decimal .
 Depends on the value of the highest valid Test bit,
 where the method specified is:
 .Pp
 .Bl -tag -width indent -offset indent -compact
-.It 0: 
+.It 0 :
 not tested
 (always zero).
-.It 1:
+.It 1 :
 composite
 (irrelevant).
-.It 2:
+.It 2 :
 sieve;
 number of primes sieved.
 Commonly on the order of 32,000,000.
-.It 4:
+.It 4 :
 Miller-Rabin;
 number of M-R iterations.
 Commonly on the order of 32 to 64.
-.It 8:
+.It 8 :
 Jacobi;
 unknown
 (always zero).
-.It 16:
+.It 16 :
 Elliptic Curve;
 unused
 (always zero).
 .El
 .Pp
-.Fa Size : decimal.
+.Fa Size : decimal .
 Specifies the number of significant bits.
 .Pp
-.Fa Generator : hex string.
+.Fa Generator : hex string .
 Specifies the best generator for a Diffie-Hellman exchange.
 0 = unknown or variable,
 2, 3, 5, etc.
 .Pp
-.Fa Modulus : hex string.
+.Fa Modulus : hex string .
 The prime modulus.
 .Pp
-The file is searched for moduli that meet the appropriate 
+The file is searched for moduli that meet the appropriate
 Time, Size and Generator criteria.
 When more than one meet the criteria,
 the selection should be weighted toward newer moduli,
