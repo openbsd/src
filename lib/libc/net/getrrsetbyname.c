@@ -1,4 +1,4 @@
-/* $OpenBSD: getrrsetbyname.c,v 1.6 2003/01/28 04:58:00 marc Exp $ */
+/* $OpenBSD: getrrsetbyname.c,v 1.7 2003/03/07 07:34:14 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -103,7 +103,8 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	struct dns_response *response;
 	struct dns_rr *rr;
 	struct rdatainfo *rdata;
-	unsigned int length, index_ans, index_sig;
+	int length;
+	unsigned int index_ans, index_sig;
 	u_char answer[ANSWER_BUFFER_SIZE];
 
 	/* check for invalid class and type */
