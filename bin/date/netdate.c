@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.13 2001/07/05 22:32:35 espie Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.13 2001/07/05 22:32:35 espie Exp $";
+static char rcsid[] = "$OpenBSD: netdate.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,8 +74,7 @@ extern int retval;
  * Returns 0 on success.  Returns > 0 on failure, setting retval to 2;
  */
 int
-netsettime(tval)
-	time_t tval;
+netsettime(time_t tval)
 {
 	struct timeval tout;
 	struct servent *sp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: test.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: test.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -143,22 +143,20 @@ char **t_wp;
 struct t_op const *t_wp_op;
 
 static enum token t_lex();
-static int oexpr();
-static int aexpr();
-static int nexpr();
-static int binop();
-static int primary();
-static int filstat();
-static int getn();
+static int oexpr(enum token n);
+static int aexpr(enum token n);
+static int nexpr(enum token n);
+static int binop(void);
+static int primary(enum token n);
+static int filstat(char *nm, enum token mode);
+static int getn(const char *s);
 static int newerf();
 static int olderf();
 static int equalf();
-static void syntax();
+static void syntax(const char *op, char *msg);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int	res;
 
@@ -209,9 +207,7 @@ main(argc, argv)
 }
 
 static __dead void
-syntax(op, msg)
-	char	*op;
-	char	*msg;
+syntax(const char *op, char *msg)
 {
 	if (op && *op)
 		errx(2, "%s: %s", op, msg);
@@ -220,8 +216,7 @@ syntax(op, msg)
 }
 
 static int
-oexpr(n)
-	enum token n;
+oexpr(enum token n)
 {
 	int res;
 
@@ -233,8 +228,7 @@ oexpr(n)
 }
 
 static int
-aexpr(n)
-	enum token n;
+aexpr(enum token n)
 {
 	int res;
 
@@ -246,8 +240,7 @@ aexpr(n)
 }
 
 static int
-nexpr(n)
-	enum token n;			/* token */
+nexpr(enum token n)
 {
 	if (n == UNOT)
 		return !nexpr(t_lex(*++t_wp));
@@ -255,8 +248,7 @@ nexpr(n)
 }
 
 static int
-primary(n)
-	enum token n;
+primary(enum token n)
 {
 	int res;
 
@@ -292,7 +284,7 @@ primary(n)
 }
 
 static int
-binop()
+binop(void)
 {
 	const char *opnd1, *opnd2;
 	struct t_op const *op;
@@ -326,19 +318,17 @@ binop()
 	case INTLT:
 		return getn(opnd1) < getn(opnd2);
 	case FILNT:
-		return newerf (opnd1, opnd2);
+		return newerf(opnd1, opnd2);
 	case FILOT:
-		return olderf (opnd1, opnd2);
+		return olderf(opnd1, opnd2);
 	case FILEQ:
-		return equalf (opnd1, opnd2);
+		return equalf(opnd1, opnd2);
 	}
 	/* NOTREACHED */
 }
 
 static int
-filstat(nm, mode)
-	char *nm;
-	enum token mode;
+filstat(char *nm, enum token mode)
 {
 	struct stat s;
 	int i;
@@ -418,8 +408,7 @@ filebit:
 }
 
 static enum token
-t_lex(s)
-	char *s;
+t_lex(char *s)
 {
 	struct t_op const *op = ops;
 
@@ -440,8 +429,7 @@ t_lex(s)
 
 /* atoi with error detection */
 static int
-getn(s)
-	char *s;
+getn(const char *s)
 {
 	char *p;
 	long r;
@@ -450,47 +438,44 @@ getn(s)
 	r = strtol(s, &p, 10);
 
 	if (errno != 0)
-	  errx(2, "%s: out of range", s);
+		errx(2, "%s: out of range", s);
 
 	while (isspace(*p))
-	  p++;
+		p++;
 
 	if (*p)
-	  errx(2, "%s: bad number", s);
+		errx(2, "%s: bad number", s);
 
 	return (int) r;
 }
 
 static int
-newerf (f1, f2)
-char *f1, *f2;
+newerf(char *f1, char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
-		b1.st_mtime > b2.st_mtime);
+	return (stat(f1, &b1) == 0 &&
+	    stat(f2, &b2) == 0 &&
+	    b1.st_mtime > b2.st_mtime);
 }
 
 static int
-olderf (f1, f2)
-char *f1, *f2;
+olderf(char *f1, char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
-		b1.st_mtime < b2.st_mtime);
+	return (stat(f1, &b1) == 0 &&
+	    stat(f2, &b2) == 0 &&
+	    b1.st_mtime < b2.st_mtime);
 }
 
 static int
-equalf (f1, f2)
-char *f1, *f2;
+equalf(char *f1, char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
-		b1.st_dev == b2.st_dev &&
-		b1.st_ino == b2.st_ino);
+	return (stat(f1, &b1) == 0 &&
+	    stat(f2, &b2) == 0 &&
+	    b1.st_dev == b2.st_dev &&
+	    b1.st_ino == b2.st_ino);
 }

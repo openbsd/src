@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.19 2002/06/09 05:47:26 todd Exp $	*/
+/*	$OpenBSD: cp.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.19 2002/06/09 05:47:26 todd Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,9 +102,7 @@ int mastercmp(const FTSENT **, const FTSENT **);
 char *find_last_component(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat to_stat, tmp_stat;
 	enum op type;
@@ -251,9 +249,7 @@ main(argc, argv)
 }
 
 char *
-find_last_component(path)
-	char *path;
-
+find_last_component(char *path)
 {
 	char *p;
 
@@ -278,10 +274,7 @@ find_last_component(path)
 }
 
 int
-copy(argv, type, fts_options)
-	char *argv[];
-	enum op type;
-	int fts_options;
+copy(char *argv[], enum op type, int fts_options)
 {
 	struct stat to_stat;
 	FTS *ftsp;
@@ -482,8 +475,7 @@ copy(argv, type, fts_options)
  *	files first reduces seeking.
  */
 int
-mastercmp(a, b)
-	const FTSENT **a, **b;
+mastercmp(const FTSENT **a, const FTSENT **b)
 {
 	int a_info, b_info;
 

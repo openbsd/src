@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.23 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.24 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.23 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.24 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ int	fastcopy(char *, char *, struct stat *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int baselen, len, rval;
 	char *p, *endp;
@@ -168,8 +166,7 @@ main(argc, argv)
 }
 
 int
-do_move(from, to)
-	char *from, *to;
+do_move(char *from, char *to)
 {
 	struct stat sb, fsb;
 	char modep[15];
@@ -274,9 +271,7 @@ do_move(from, to)
 }
 
 int
-fastcopy(from, to, sbp)
-	char *from, *to;
-	struct stat *sbp;
+fastcopy(char *from, char *to, struct stat *sbp)
 {
 	struct timeval tval[2];
 	static u_int blen;
@@ -362,8 +357,7 @@ err:		if (unlink(to))
 }
 
 int
-copy(from, to)
-	char *from, *to;
+copy(char *from, char *to)
 {
 	int status;
 	pid_t pid;
@@ -408,7 +402,7 @@ copy(from, to)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-fi] source target\n", __progname);
 	(void)fprintf(stderr, "       %s [-fi] source ... directory\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.7 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: ln.c,v 1.8 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.7 2002/02/16 21:27:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.8 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,7 @@ int	linkit(char *, char *, int);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int ch, exitval;
@@ -121,9 +119,7 @@ main(argc, argv)
 }
 
 int
-linkit(target, source, isdir)
-	char *target, *source;
-	int isdir;
+linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
@@ -168,7 +164,7 @@ linkit(target, source, isdir)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

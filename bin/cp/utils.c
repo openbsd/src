@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.19 2002/05/30 06:20:27 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.19 2002/05/30 06:20:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,7 @@ static char rcsid[] = "$OpenBSD: utils.c,v 1.19 2002/05/30 06:20:27 deraadt Exp 
 #include "extern.h"
 
 int
-copy_file(entp, dne)
-	FTSENT *entp;
-	int dne;
+copy_file(FTSENT *entp, int dne)
 {
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
@@ -188,9 +186,7 @@ copy_file(entp, dne)
 }
 
 int
-copy_link(p, exists)
-	FTSENT *p;
-	int exists;
+copy_link(FTSENT *p, int exists)
 {
 	int len;
 	char link[MAXPATHLEN];
@@ -212,9 +208,7 @@ copy_link(p, exists)
 }
 
 int
-copy_fifo(from_stat, exists)
-	struct stat *from_stat;
-	int exists;
+copy_fifo(struct stat *from_stat, int exists)
 {
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
@@ -228,9 +222,7 @@ copy_fifo(from_stat, exists)
 }
 
 int
-copy_special(from_stat, exists)
-	struct stat *from_stat;
-	int exists;
+copy_special(struct stat *from_stat, int exists)
 {
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
@@ -245,9 +237,7 @@ copy_special(from_stat, exists)
 
 
 int
-setfile(fs, fd)
-	struct stat *fs;
-	int fd;
+setfile(struct stat *fs, int fd)
 {
 	static struct timeval tv[2];
 	int rval;
@@ -298,8 +288,7 @@ setfile(fs, fd)
 
 
 int
-setlink(fs)
-	struct stat *fs;
+setlink(struct stat *fs)
 {
 
 	if (lchown(to.p_path, fs->st_uid, fs->st_gid)) {
@@ -313,7 +302,7 @@ setlink(fs)
 
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
             "usage: %s [-R [-H | -L | -P]] [-fip] src target\n", __progname);

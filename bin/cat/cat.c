@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.13 2002/03/14 21:17:50 millert Exp $	*/
+/*	$OpenBSD: cat.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: cat.c,v 1.13 2002/03/14 21:17:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: cat.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,7 @@ void raw_args(char *argv[]);
 void raw_cat(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -125,8 +123,7 @@ main(argc, argv)
 }
 
 void
-cook_args(argv)
-	char **argv;
+cook_args(char **argv)
 {
 	FILE *fp;
 
@@ -151,8 +148,7 @@ cook_args(argv)
 }
 
 void
-cook_buf(fp)
-	FILE *fp;
+cook_buf(FILE *fp)
 {
 	int ch, gobble, line, prev;
 
@@ -209,8 +205,7 @@ cook_buf(fp)
 }
 
 void
-raw_args(argv)
-	char **argv;
+raw_args(char **argv)
 {
 	int fd;
 
@@ -235,8 +230,7 @@ raw_args(argv)
 }
 
 void
-raw_cat(rfd)
-	int rfd;
+raw_cat(int rfd)
 {
 	int nr, nw, off, wfd;
 	static int bsize;

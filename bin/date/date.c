@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.22 2002/04/17 03:54:30 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.23 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.22 2002/04/17 03:54:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.23 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,9 +77,7 @@ static void badformat(void);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct timezone tz;
 	int ch, rflag;
@@ -155,8 +153,7 @@ main(argc, argv)
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
 void
-setthetime(p)
-	char *p;
+setthetime(char *p)
 {
 	struct tm *lt;
 	struct timeval tv;
@@ -262,14 +259,14 @@ setthetime(p)
 }
 
 static void
-badformat()
+badformat(void)
 {
 	warnx("illegal time format");
 	usage();
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-anu] [-d dst] [-r seconds] [-t west] [+format]\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.13 2002/06/09 05:34:26 todd Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.13 2002/06/09 05:34:26 todd Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,7 @@ int	mkpath(char *, mode_t, mode_t);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, exitval, pflag;
 	mode_t *set;
@@ -145,10 +143,7 @@ main(argc, argv)
  *	dir_mode - file mode of intermediate directories
  */
 int
-mkpath(path, mode, dir_mode)
-	char *path;
-	mode_t mode;
-	mode_t dir_mode;
+mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
@@ -182,7 +177,7 @@ mkpath(path, mode, dir_mode)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-p] [-m mode] dirname ...\n", __progname);
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_df.c,v 1.8 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: ext2fs_df.c,v 1.9 2002/07/04 04:26:39 deraadt Exp $	*/
 
 /*
  * This file is substantially derived from src/sys/ufs/ext2fs/ext2fs_vfsops.c:e2fs_statfs().
@@ -64,10 +64,7 @@ union {
 #define sblock sb.ie_fs
 
 int
-e2fs_df(rfd, file, sfsp)
-	int rfd;
-	char *file;
-	struct statfs *sfsp;
+e2fs_df(int rfd, char *file, struct statfs *sfsp)
 {
 	char *mntpt;
 	u_int32_t overhead, overhead_per_group;

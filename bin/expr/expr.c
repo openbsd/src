@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.11 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: expr.c,v 1.12 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -36,10 +36,8 @@ enum token	token;
 struct val     *tokval;
 char	      **av;
 
-
 struct val *
-make_int(i)
-	int		i;
+make_int(int i)
 {
 	struct val     *vp;
 
@@ -54,8 +52,7 @@ make_int(i)
 
 
 struct val *
-make_str(s)
-	char	       *s;
+make_str(char *s)
 {
 	struct val     *vp;
 
@@ -69,8 +66,7 @@ make_str(s)
 
 
 void
-free_value(vp)
-	struct val     *vp;
+free_value(struct val *vp)
 {
 	if (vp->type == string)
 		free(vp->u.s);
@@ -80,9 +76,7 @@ free_value(vp)
 
 /* determine if vp is an integer; if so, return it's value in *r */
 int
-is_integer(vp, r)
-	struct val     *vp;
-	int	       *r;
+is_integer(struct val *vp, int *r)
 {
 	char	       *s;
 	int		neg;
@@ -124,8 +118,7 @@ is_integer(vp, r)
 
 /* coerce to vp to an integer */
 int
-to_integer(vp)
-	struct val     *vp;
+to_integer(struct val *vp)
 {
 	int		r;
 
@@ -145,8 +138,7 @@ to_integer(vp)
 
 /* coerce to vp to an string */
 void
-to_string(vp)
-	struct val     *vp;
+to_string(struct val *vp)
 {
 	char	       *tmp;
 
@@ -163,8 +155,7 @@ to_string(vp)
 }
 
 int
-is_zero_or_null(vp)
-	struct val     *vp;
+is_zero_or_null(struct val *vp)
 {
 	if (vp->type == integer) {
 		return (vp->u.i == 0);
@@ -175,8 +166,7 @@ is_zero_or_null(vp)
 }
 
 void
-nexttoken(pat)
-	int pat;
+nexttoken(int pat)
 {
 	char	       *p;
 
@@ -223,7 +213,7 @@ error()
 }
 
 struct val *
-eval6()
+eval6(void)
 {
 	struct val     *eval0(void);
 	struct val     *v;
@@ -250,7 +240,7 @@ eval6()
 
 /* Parse and evaluate match (regex) expressions */
 struct val *
-eval5()
+eval5(void)
 {
 	regex_t		rp;
 	regmatch_t	rm[2];
@@ -305,7 +295,7 @@ eval5()
 
 /* Parse and evaluate multiplication and division expressions */
 struct val *
-eval4()
+eval4(void)
 {
 	struct val     *l, *r;
 	enum token	op;
@@ -340,7 +330,7 @@ eval4()
 
 /* Parse and evaluate addition and subtraction expressions */
 struct val *
-eval3()
+eval3(void)
 {
 	struct val     *l, *r;
 	enum token	op;
@@ -368,7 +358,7 @@ eval3()
 
 /* Parse and evaluate comparison expressions */
 struct val *
-eval2()
+eval2(void)
 {
 	struct val     *l, *r;
 	enum token	op;
@@ -441,7 +431,7 @@ eval2()
 
 /* Parse and evaluate & expressions */
 struct val *
-eval1()
+eval1(void)
 {
 	struct val     *l, *r;
 
@@ -464,7 +454,7 @@ eval1()
 
 /* Parse and evaluate | expressions */
 struct val *
-eval0()
+eval0(void)
 {
 	struct val     *l, *r;
 
@@ -486,9 +476,7 @@ eval0()
 
 
 int
-main(argc, argv)
-	int		argc;
-	char	      **argv;
+main(int argc, char *argv[])
 {
 	struct val     *vp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.7 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.8 2002/07/04 04:26:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -66,10 +66,7 @@ union {
 #define sblock sb.iu_fs
 
 int
-ffs_df(rfd, file, sfsp)
-	int rfd;
-	char *file;
-	struct statfs *sfsp;
+ffs_df(int rfd, char *file, struct statfs *sfsp)
 {
 	char *mntpt;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.6 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: rmdir.c,v 1.6 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmdir.c,v 1.7 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,7 @@ int rm_path(char *);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, errors;
 	int pflag;
@@ -106,8 +104,7 @@ main(argc, argv)
 }
 
 int
-rm_path(path)
-	char *path;
+rm_path(char *path)
 {
 	char *p;
 
@@ -127,7 +124,7 @@ rm_path(path)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-p] directory ...\n", __progname);
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.13 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.13 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,7 @@ void usage(void);
 #define TAYLOR_ENV /* use UU_MACHINE if present */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 	struct stat sb;
@@ -358,7 +356,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-T] [-D domain] user ...\n",
             __progname);

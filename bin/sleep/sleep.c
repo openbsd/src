@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.13 2002/05/31 05:18:56 pjanzen Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.13 2002/05/31 05:18:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.14 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,7 @@ void usage(void);
 void alarmh(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	time_t secs = 0, t;
@@ -127,7 +125,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s seconds\n", __progname);
 	exit(1);
@@ -138,8 +136,7 @@ usage()
  * of SIGALRM.
  */
 void
-alarmh(sigraised)
-	int sigraised;
+alarmh(int sigraised)
 {
 	/*
 	 * exit() flushes stdio buffers, which is not legal in a signal

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2001/08/29 20:44:03 markus Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 2001/08/29 20:44:03 markus Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.10 2001/08/29 20:44:03 markus Exp $"
 #include "extern.h"
 
 char *
-colon(cp)
-	char *cp;
+colon(char *cp)
 {
 	for (; *cp; ++cp) {
 		if (*cp == ':')
@@ -72,8 +71,7 @@ colon(cp)
 }
 
 void
-verifydir(cp)
-	char *cp;
+verifydir(char *cp)
 {
 	struct stat stb;
 
@@ -87,8 +85,7 @@ verifydir(cp)
 }
 
 int
-okname(cp0)
-	char *cp0;
+okname(char *cp0)
 {
 	int c;
 	char *cp;
@@ -108,9 +105,7 @@ bad:	warnx("%s: invalid user name", cp0);
 }
 
 int
-susystem(s, userid)
-	int userid;
-	char *s;
+susystem(char *s, int userid)
 {
 	sig_t istat, qstat;
 	int status;
@@ -137,9 +132,7 @@ susystem(s, userid)
 }
 
 BUF *
-allocbuf(bp, fd, blksize)
-	BUF *bp;
-	int fd, blksize;
+allocbuf(BUF *bp, int fd, int blksize)
 {
 	struct stat stb;
 	size_t size;
@@ -169,8 +162,7 @@ allocbuf(bp, fd, blksize)
 }
 
 void
-lostconn(signo)
-	int signo;
+lostconn(int signo)
 {
 	extern char *__progname;
 	char buf[1024];

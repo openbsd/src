@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.12 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: rm.c,v 1.13 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.12 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.13 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,7 @@ void	usage(void);
  * 	file removal.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rflag;
 
@@ -140,8 +138,7 @@ main(argc, argv)
 }
 
 void
-rm_tree(argv)
-	char **argv;
+rm_tree(char **argv)
 {
 	FTS *fts;
 	FTSENT *p;
@@ -244,8 +241,7 @@ rm_tree(argv)
 }
 
 void
-rm_file(argv)
-	char **argv;
+rm_file(char **argv)
 {
 	struct stat sb;
 	int rval;
@@ -308,9 +304,7 @@ rm_file(argv)
  * kernel support.
  */
 void
-rm_overwrite(file, sbp)
-	char *file;
-	struct stat *sbp;
+rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
 	struct statfs fsb;
@@ -362,9 +356,7 @@ err:	eval = 1;
 
 
 int
-check(path, name, sp)
-	char *path, *name;
-	struct stat *sp;
+check(char *path, char *name, struct stat *sp)
 {
 	int ch, first;
 	char modep[15];
@@ -405,8 +397,7 @@ check(path, name, sp)
  */
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
 void
-checkdot(argv)
-	char **argv;
+checkdot(char **argv)
 {
 	char *p, **save, **t;
 	int complained;
@@ -437,7 +428,7 @@ checkdot(argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-dfiPRrW] file ...\n", __progname);
 	exit(1);

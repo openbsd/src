@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.5 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: kill.c,v 1.6 2002/07/04 04:26:40 deraadt Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.5 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.6 2002/07/04 04:26:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ int signame_to_signum(char *);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int errors, numsig, pid;
 	char *ep;
@@ -144,8 +142,7 @@ main(argc, argv)
 }
 
 int
-signame_to_signum(sig)
-	char *sig;
+signame_to_signum(char *sig)
 {
 	int n;
 
@@ -159,8 +156,7 @@ signame_to_signum(sig)
 }
 
 void
-nosig(name)
-	char *name;
+nosig(char *name)
 {
 
 	warnx("unknown signal %s; valid signals:", name);
@@ -169,8 +165,7 @@ nosig(name)
 }
 
 void
-printsignals(fp)
-	FILE *fp;
+printsignals(FILE *fp)
 {
 	int n;
 
@@ -184,7 +179,7 @@ printsignals(fp)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n",
             __progname);

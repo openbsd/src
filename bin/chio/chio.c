@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.10 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: chio.c,v 1.11 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 extern	char *__progname;	/* from crt0.o */
 
 static	void usage(void);
-static	void cleanup(void);
 static	int parse_element_type(char *);
 static	int parse_element_unit(char *);
 static	int parse_special(char *);
@@ -99,9 +98,7 @@ static	int changer_fd;
 static	char *changer_name;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, i;
 
@@ -130,10 +127,6 @@ main(argc, argv)
 	if ((changer_fd = open(changer_name, O_RDWR, 0600)) == -1)
 		err(1, "%s: open", changer_name);
 
-	/* Register cleanup function. */
-	if (atexit(cleanup))
-		err(1, "can't register cleanup function");
-
 	/* Find the specified command. */
 	for (i = 0; commands[i].cc_name != NULL; ++i)
 		if (strcmp(*argv, commands[i].cc_name) == 0)
@@ -154,10 +147,7 @@ main(argc, argv)
 }
 
 static int
-do_move(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_move(char *cname, int argc, char *argv[])
 {
 	struct changer_move cmd;
 	int val;
@@ -222,10 +212,7 @@ do_move(cname, argc, argv)
 }
 
 static int
-do_exchange(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_exchange(char *cname, int argc, char *argv[])
 {
 	struct changer_exchange cmd;
 	int val;
@@ -316,10 +303,7 @@ do_exchange(cname, argc, argv)
 }
 
 static int
-do_position(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_position(char *cname, int argc, char *argv[])
 {
 	struct changer_position cmd;
 	int val;
@@ -376,10 +360,7 @@ do_position(cname, argc, argv)
 }
 
 static int
-do_params(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_params(char *cname, int argc, char *argv[])
 {
 	struct changer_params data;
 
@@ -412,10 +393,7 @@ do_params(cname, argc, argv)
 }
 
 static int
-do_getpicker(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_getpicker(char *cname, int argc, char *argv[])
 {
 	int picker;
 
@@ -439,10 +417,7 @@ do_getpicker(cname, argc, argv)
 }
 
 static int
-do_setpicker(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_setpicker(char *cname, int argc, char *argv[])
 {
 	int picker;
 
@@ -468,10 +443,7 @@ do_setpicker(cname, argc, argv)
 }
 
 static int
-do_status(cname, argc, argv)
-	char *cname;
-	int argc;
-	char **argv;
+do_status(char *cname, int argc, char *argv[])
 {
 	struct changer_element_status cmd;
 	struct changer_params data;
@@ -580,8 +552,7 @@ do_status(cname, argc, argv)
 }
 
 static int
-parse_element_type(cp)
-	char *cp;
+parse_element_type(char *cp)
 {
 	int i;
 
@@ -593,8 +564,7 @@ parse_element_type(cp)
 }
 
 static int
-parse_element_unit(cp)
-	char *cp;
+parse_element_unit(char *cp)
 {
 	int i;
 	char *p;
@@ -607,8 +577,7 @@ parse_element_unit(cp)
 }
 
 static int
-parse_special(cp)
-	char *cp;
+parse_special(char *cp)
 {
 	int val;
 
@@ -620,8 +589,7 @@ parse_special(cp)
 }
 
 static int
-is_special(cp)
-	char *cp;
+is_special(char *cp)
 {
 	int i;
 
@@ -633,9 +601,7 @@ is_special(cp)
 }
 
 static char *
-bits_to_string(v, cp)
-	int v;
-	const char *cp;
+bits_to_string(int v, const char *cp)
 {
 	const char *np;
 	char f, sep, *bp;
@@ -661,15 +627,7 @@ bits_to_string(v, cp)
 }
 
 static void
-cleanup()
-{
-
-	/* Simple enough... */
-	(void)close(changer_fd);
-}
-
-static void
-usage()
+usage(void)
 {
 	int i;
 

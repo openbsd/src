@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.13 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.13 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.14 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,7 @@ uid_t a_uid(const char *);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FTS *ftsp;
 	FTSENT *p;
@@ -285,8 +283,7 @@ done:	argv += optind;
 }
 
 uid_t
-a_uid(s)
-	const char *s;
+a_uid(const char *s)
 {
 	struct passwd *pw;
 	char *ep;
@@ -302,13 +299,13 @@ a_uid(s)
 			err(1, "%s", s);
 		if (*ep != '\0')
 			errx(1, "%s: invalid user name", s);
+		/* XXX long -> int */
 		return (uid_t)ul;
 	}
 }
 
 gid_t
-a_gid(s)
-	const char *s;
+a_gid(const char *s)
 {
 	struct group *gr;
 	char *ep;
@@ -324,12 +321,13 @@ a_gid(s)
 			err(1, "%s", s);
 		if (*ep != '\0')
 			errx(1, "%s: invalid group name", s);
+		/* XXX long -> int */
 		return (gid_t)ul;
 	}
 }
 
 void
-usage()
+usage(void)
 {
 	if (ischmod || ischflags)
 		fprintf(stderr,
@@ -339,6 +337,5 @@ usage()
 		fprintf(stderr,
 		    "usage: %s [-R [-H | -L | -P]] [-f] [-h] %s file ...\n",
 		    __progname, ischown ? "[owner][:group]" : "group");
-
 	exit(1);
 }

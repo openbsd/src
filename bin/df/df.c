@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.31 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.32 2002/07/04 04:26:39 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.31 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.32 2002/07/04 04:26:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,7 @@ int	hflag, iflag, kflag, lflag, nflag, Pflag;
 char	**typelist = NULL;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat stbuf;
 	struct statfs *mntbuf;
@@ -193,8 +191,7 @@ main(argc, argv)
 }
 
 char *
-getmntpt(name)
-	char *name;
+getmntpt(char *name)
 {
 	long mntsize, i;
 	struct statfs *mntbuf;
@@ -210,8 +207,7 @@ getmntpt(name)
 static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
-selected(type)
-	const char *type;
+selected(const char *type)
 {
 	char **av;
 
@@ -225,8 +221,7 @@ selected(type)
 }
 
 void
-maketypelist(fslist)
-	char *fslist;
+maketypelist(char *fslist)
 {
 	int i;
 	char *nextcp, **av;
@@ -267,9 +262,7 @@ maketypelist(fslist)
  * current (not cached) info.  Returns the new count of valid statfs bufs.
  */
 long
-regetmntinfo(mntbufp, mntsize)
-	struct statfs **mntbufp;
-	long mntsize;
+regetmntinfo(struct statfs **mntbufp, long mntsize)
 {
 	int i, j;
 	struct statfs *mntbuf;
@@ -301,8 +294,7 @@ regetmntinfo(mntbufp, mntsize)
 typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
 
 unit_t
-unit_adjust(val)
-	double *val;
+unit_adjust(double *val)
 {
 	double abval;
 	unit_t unit;
@@ -330,8 +322,7 @@ unit_adjust(val)
 }
 
 void
-prthumanval(bytes)
-	double bytes;
+prthumanval(double bytes)
 {
 	unit_t unit;
 
@@ -346,9 +337,7 @@ prthumanval(bytes)
 }
 
 void
-prthuman(sfsp, used)
-	struct statfs *sfsp;
-	long used;
+prthuman(struct statfs *sfsp, long used)
 {
 	prthumanval((double)(sfsp->f_blocks) * (double)(sfsp->f_bsize));
 	prthumanval((double)(used) * (double)(sfsp->f_bsize));
@@ -367,9 +356,7 @@ prthuman(sfsp, used)
  * Print out status about a filesystem.
  */
 void
-prtstat(sfsp, maxwidth, headerlen, blocksize)
-	struct statfs *sfsp;
-	int maxwidth, headerlen, blocksize;
+prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 {
 	u_int32_t used, inodes;
 	int32_t availblks;
@@ -400,10 +387,7 @@ prtstat(sfsp, maxwidth, headerlen, blocksize)
  * Print in traditional BSD format.
  */
 void
-bsdprint(mntbuf, mntsize, maxwidth)
-	struct statfs *mntbuf;
-	long mntsize;
-	int maxwidth;
+bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 {
 	int i;
 	char *header;
@@ -440,10 +424,7 @@ bsdprint(mntbuf, mntsize, maxwidth)
  * Print in format defined by POSIX 1002.2, invoke with -P option.
  */
 void
-posixprint(mntbuf, mntsize, maxwidth)
-	struct statfs *mntbuf;
-	long mntsize;
-	int maxwidth;
+posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 {
 	int i;
 	int blocklen;
@@ -486,9 +467,7 @@ posixprint(mntbuf, mntsize, maxwidth)
 }
 
 int
-raw_df(file, sfsp)
-	char *file;
-	struct statfs *sfsp;
+raw_df(char *file, struct statfs *sfsp)
 {
 	int rfd;
 
@@ -512,11 +491,7 @@ raw_df(file, sfsp)
 }
 
 int
-bread(rfd, off, buf, cnt)
-	int rfd;
-	off_t off;
-	void *buf;
-	int cnt;
+bread(int rfd, off_t off, void *buf, int cnt)
 {
 	int nr;
 
@@ -532,7 +507,7 @@ bread(rfd, off, buf, cnt)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
             "usage: %s [-hiklnP] [-t type] [file | file_system ...]\n",
