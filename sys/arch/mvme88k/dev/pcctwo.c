@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.24 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.25 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -159,16 +159,16 @@ pcctwo_scan(parent, child, args)
 	void *child, *args;
 {
 	struct cfdata *cf = child;
-	struct pcctwosoftc *sc = (struct pcctwosoftc *)parent;
-	struct confargs oca;
+	struct confargs oca, *ca = args;
 
 	bzero(&oca, sizeof oca);
-	oca.ca_iot = sc->sc_iot;
+	oca.ca_iot = ca->ca_iot;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
 	if (oca.ca_offset != -1) {
 		/* offset locator for pcctwo children is relative to segment */
-		oca.ca_paddr = sc->sc_base - PCC2_BASE + oca.ca_offset;
+		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
 	} else {
 		oca.ca_paddr = -1;
 	}

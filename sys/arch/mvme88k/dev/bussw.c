@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.13 2004/04/24 19:51:47 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.14 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -41,7 +41,6 @@
 
 struct bussw_softc {
 	struct device		sc_dev;
-	paddr_t			sc_base;
 	struct intrhand 	sc_abih;	/* `abort' switch */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -110,7 +109,6 @@ bussw_attach(parent, self, args)
 
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_ioh = ioh;
-	sc->sc_base = ca->ca_paddr;
 
 	bus_space_write_1(sc->sc_iot, ioh, BS_VBASE,
 	    bus_space_read_1(sc->sc_iot, ioh, BS_VBASE) | BS_VECBASE);
@@ -155,15 +153,15 @@ bussw_scan(parent, child, args)
 	void *child, *args;
 {
 	struct cfdata *cf = child;
-	struct bussw_softc *sc = (struct bussw_softc *)parent;
-	struct confargs oca;
+	struct confargs oca, *ca = args;
 
 	bzero(&oca, sizeof oca);
-	oca.ca_iot = sc->sc_iot;
+	oca.ca_iot = ca->ca_iot;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
 	if (oca.ca_offset != -1) {
-		oca.ca_paddr = sc->sc_base + oca.ca_offset;
+		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
 	} else {
 		oca.ca_paddr = -1;
 	}

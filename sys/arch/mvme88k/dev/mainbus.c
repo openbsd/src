@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.11 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.12 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -174,6 +174,7 @@ mainbus_scan(parent, child, args)
 
 	bzero(&oca, sizeof oca);
 	oca.ca_iot = &mainbus_bustag;
+	oca.ca_dmat = 0;	/* XXX no need for a meaningful value yet */
 	oca.ca_bustype = BUS_MAIN;
 	oca.ca_paddr = cf->cf_loc[0];
 	oca.ca_ipl = -1;

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.27 2004/04/29 14:33:27 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.28 2004/05/07 18:10:26 miod Exp $
 #
 maxpartitions 16
 
@@ -76,6 +76,7 @@ file	netinet/in_cksum.c
 file	netns/ns_cksum.c				ns
 
 file	arch/mvme88k/mvme88k/autoconf.c
+file	arch/mvme88k/mvme88k/bus_dma.c
 file	arch/mvme88k/mvme88k/conf.c
 file	arch/mvme88k/mvme88k/m8820x.c			m88100
 file	arch/mvme88k/mvme88k/m88110.c			m88110

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.14 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -40,7 +40,8 @@
 #include <machine/bus.h>
 
 struct confargs {
-	bus_space_tag_t	ca_iot;		/* bus access */
+	bus_space_tag_t	ca_iot;
+	bus_dma_tag_t	ca_dmat;	
 	int		ca_bustype;	/* bus type */
 	paddr_t		ca_paddr;	/* physical address */
 	int		ca_offset;	/* offset from parent */

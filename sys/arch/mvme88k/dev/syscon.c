@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.19 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.20 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -104,6 +104,7 @@ syscon_scan(parent, child, args)
 
 	bzero(&oca, sizeof oca);
 	oca.ca_iot = ca->ca_iot;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
 	if (oca.ca_offset != -1) {

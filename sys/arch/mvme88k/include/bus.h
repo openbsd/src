@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2004/04/30 21:32:54 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2004/05/07 18:10:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -25,7 +25,7 @@
  */
 
 /*
- * Simple mvme88k bus_space implementation.
+ * Simple mvme88k bus_space and bus_dma implementation.
  *
  * Currently, we only need specific handling for 32 bit read/writes in D16
  * space, and this choice is made at compile time.  As a result, all the
@@ -718,5 +718,89 @@ void d16_bcopy(const void *, void *, size_t);
 void d16_bzero(void *, size_t);
 
 #endif	/* __BUS_SPACE_RESTRICT_D16__ */
+
+/*
+ * Bus DMA implementation
+ */
+
+#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
+#define	BUS_DMAMEM_NOSYNC	0x008
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_STREAMING	0x400	/* hint: sequential, unidirectional */
+
+#define BUS_DMASYNC_PREREAD	0x01
+#define BUS_DMASYNC_POSTREAD	0x02
+#define BUS_DMASYNC_PREWRITE	0x04
+#define BUS_DMASYNC_POSTWRITE	0x08
+
+typedef	u_int32_t	bus_dma_tag_t;	/* ignored, really */
+
+/*
+ *	bus_dma_segment_t
+ *
+ *	Describes a single contiguous DMA transaction.  Values
+ *	are suitable for programming into DMA registers.
+ */
+struct m88k_bus_dma_segment {
+	bus_addr_t	ds_addr;	/* DMA address */
+	bus_size_t	ds_len;		/* length of transfer */
+};
+typedef struct m88k_bus_dma_segment  bus_dma_segment_t;
+
+/*
+ *	bus_dmamap_t
+ *
+ *	Describes a DMA mapping.
+ */
+struct m88k_bus_dmamap {
+	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
+	int		_dm_segcnt;	/* number of segs this map can map */
+	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_boundary;	/* don't cross this */
+
+	bus_size_t	dm_mapsize;	/* size of the mapping */
+	int		dm_nsegs;	/* # valid segments in mapping */
+	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
+};
+typedef struct m88k_bus_dmamap		*bus_dmamap_t;
+
+struct mbuf;
+struct proc;
+struct uio;
+
+int	bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+	    int, bus_size_t, int);
+void	bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+
+int	bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    size_t size);
+paddr_t bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
 
 #endif	/* _MVME88K_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.35 2004/04/30 21:32:52 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.36 2004/05/07 18:10:28 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -213,10 +213,11 @@ vmescan(parent, child, args, bustype)
 	int bustype;
 {
 	struct cfdata *cf = child;
-	struct confargs oca;
+	struct confargs oca, *ca = args;
 
 	bzero(&oca, sizeof oca);
 	oca.ca_iot = &vme_bustag;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_bustype = bustype;
 	oca.ca_paddr = cf->cf_loc[0];
 	oca.ca_vec = cf->cf_loc[1];
