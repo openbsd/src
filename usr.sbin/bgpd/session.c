@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.197 2004/11/02 10:56:48 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.198 2004/11/10 14:48:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1784,7 +1784,6 @@ parse_open(struct peer *peer)
 			peer->IdleHoldTimer = time(NULL);	/* no punish */
 			peer->IdleHoldTime /= 2;
 			return (-1);
-			/* not reached */
 		}
 	}
 
@@ -2326,7 +2325,7 @@ la_cmp(struct listen_addr *a, struct listen_addr *b)
 		break;
 	default:
 		fatal("king bula sez: unknown address family");
-		/* not reached */
+		/* NOTREACHED */
 	}
 
 	return (0);

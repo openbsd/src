@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.110 2004/10/19 12:02:50 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.111 2004/11/10 14:48:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1177,7 +1177,6 @@ fetchtable(void)
 		default:
 			free(kr);
 			continue;
-			/* not reached */
 		}
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
@@ -1334,7 +1333,6 @@ dispatch_rtmsg(void)
 				break;
 			default:
 				continue;
-				/* not reached */
 			}
 		}
 

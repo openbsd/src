@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.30 2004/05/28 18:39:09 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.31 2004/11/10 14:48:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,6 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		break;
 	default:
 		return (-1);
-		/* not reached */
 	}
 	smask.ss_family = ssrc.ss_family;
 	smask.ss_len = ssrc.ss_len;
@@ -124,7 +123,6 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		break;
 	default:
 		return (-1);
-		/* not reached */
 	}
 	dmask.ss_family = sdst.ss_family;
 	dmask.ss_len = sdst.ss_len;
