@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.402 2001/06/06 18:43:31 millert Exp 
+ *		OpenBSD: pcidevs,v 1.403 2001/06/10 05:47:02 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1556,7 +1556,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
-	    "WL11000P PCMCIA dumb bridge",
+	    "WL11000P",
 	},
 	{
 	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
@@ -1588,11 +1588,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
-	    "GL24110P PCMCIA dumb bridge",
+	    "GL24110P",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
-	    "GL24110P02 PCMCIA dumb bridge",
+	    "GL24110P02",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
@@ -6316,7 +6316,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,
-	    "Eumitcom Technology",
+	    "Eumitcom",
 	},
 	{
 	    PCI_VENDOR_NETSEC,
@@ -6324,7 +6324,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN,
-	    "Global Sun Technology",
+	    "Global Sun",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
