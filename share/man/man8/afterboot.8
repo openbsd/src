@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.69 2002/02/14 13:14:20 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.70 2002/02/18 00:09:59 millert Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -212,6 +212,11 @@ and
 .Ic route delete
 commands (see
 .Xr route 8 ) .
+If you run
+.Xr dhclient 8
+you will have to kill it by running
+.Ic kill `cat /var/run/dhclient.pid`
+after you flush the routes.
 .Pp
 If you wish to route packets between interfaces, add the directive
 .Bd -literal -offset indent
