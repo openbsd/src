@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.12 2005/02/19 12:11:18 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.13 2005/02/22 10:41:25 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -36,6 +36,7 @@
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -1433,7 +1434,7 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	desc->flags = htole32(RAL_TX_VALID | RAL_TX_BUSY |
 	    RAL_TX_INSERT_TIMESTAMP | RAL_TX_IFS_NEW_BACKOFF);
-	desc->flags |= htole32(m0->m_pkthdr.len) << 16;
+	desc->flags |= htole32(m0->m_pkthdr.len << 16);
 
 	desc->wme = htole32(
 	    8 << RAL_WME_CWMAX_BITS_SHIFT |
@@ -1499,7 +1500,7 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 
 	desc->flags = htole32(RAL_TX_VALID | RAL_TX_BUSY);
-	desc->flags |= htole32(m0->m_pkthdr.len) << 16;
+	desc->flags |= htole32(m0->m_pkthdr.len << 16);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		desc->flags |= htole32(RAL_TX_NEED_ACK);
@@ -1674,7 +1675,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 
 	desc->flags = htole32(RAL_TX_CIPHER_BUSY);
-	desc->flags |= htole32(m0->m_pkthdr.len) << 16;
+	desc->flags |= htole32(m0->m_pkthdr.len << 16);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		desc->flags |= htole32(RAL_TX_NEED_ACK);
