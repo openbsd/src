@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 2003/03/21 22:59:10 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.32 2003/05/13 01:33:06 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -11992,7 +11992,6 @@ _C_LABEL(intrcnt):
 	.space	16 * 4
 _C_LABEL(eintrcnt):
 
-	.comm	_C_LABEL(curproc), PTRSZ
 	.comm	_C_LABEL(nwindows), 4
 
 #ifdef DEBUG
