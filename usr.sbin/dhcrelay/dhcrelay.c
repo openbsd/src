@@ -68,70 +68,70 @@ int main (argc, argv)
 	int argc;
 	char **argv;
 {
-	int i;
-	struct servent *ent;
-	struct server_list *sp = (struct server_list *)0;
-	int no_daemon = 0;
-	int quiet = 0;
-	char *s;
-
-	s = strrchr (argv [0], '/');
-	if (!s)
-		s = argv [0];
-	else
-		s++;
+	int			 ch, quiet = 0, no_daemon = 0;
+	extern char		*__progname;
+	struct servent		*ent;
+	struct server_list	*sp = NULL;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog (s, LOG_NDELAY, DHCPD_LOG_FACILITY);
-
+	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask (LOG_UPTO (LOG_INFO));
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp (argv [i], "-p")) {
-			if (++i == argc)
-				usage();
-			local_port = htons (atoi (argv [i]));
-			debug ("binding to user-specified port %d",
-			       ntohs (local_port));
-		} else if (!strcmp (argv [i], "-d")) {
+	while ((ch = getopt(argc, argv, "di:p:q")) != -1) {
+		switch (ch) {
+		case 'd':
 			no_daemon = 1;
- 		} else if (!strcmp (argv [i], "-i")) {
-			if (++i == argc || interfaces != NULL) {
+			break;
+		case 'i':
+			if (interfaces != NULL)
 				usage();
-			}
 			if ((interfaces = calloc(1,
 			    sizeof(struct interface_info))) == NULL)
 				error("calloc");
-			strlcpy(interfaces -> name, argv [i],
+			strlcpy(interfaces->name, optarg,
 			    sizeof(interfaces->name));
-		} else if (!strcmp (argv [i], "-q")) {
+			break;
+		case 'p':
+			local_port = htons(atoi(optarg));
+			break;
+		case 'q':
 			quiet = 1;
- 		} else if (argv [i][0] == '-') {
- 		    usage();
- 		} else {
-			struct hostent *he;
-			struct in_addr ia, *iap = (struct in_addr *)0;
-			if (inet_aton (argv [i], &ia)) {
-				iap = &ia;
-			} else {
-				he = gethostbyname (argv [i]);
-				if (!he) {
-					warn ("%s: host unknown", argv [i]);
-				} else {
-					iap = ((struct in_addr *)
-					       he -> h_addr_list [0]);
-				}
-			}
-			if (iap) {
-				sp = calloc(1, sizeof *sp);
-				if (!sp)
-					error ("no memory for server.\n");
-				sp -> next = servers;
-				servers = sp;
-				memcpy (&sp -> to.sin_addr,
-					iap, sizeof *iap);
-			}
- 		}
+			break;
+		default:
+			usage();
+			/* not reached */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
+		usage();
+
+	while (argc > 0) {
+		struct hostent		*he;
+		struct in_addr		 ia, *iap = NULL;
+
+		if (inet_aton(argv[0], &ia))
+			iap = &ia;
+		else {
+			he = gethostbyname(argv[0]);
+			if (!he)
+				warn ("%s: host unknown", argv[0]);
+			else
+				iap =
+				   ((struct in_addr *)he->h_addr_list[0]);
+		}
+		if (iap) {
+			if ((sp = calloc(1, sizeof *sp)) == NULL)
+				error("calloc");
+			sp -> next = servers;
+			servers = sp;
+			memcpy (&sp->to.sin_addr, iap, sizeof *iap);
+		}
+		argc--;
+		argv++;
 	}
 
 	if (!quiet)
