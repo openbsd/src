@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.9 1996/03/03 22:30:37 niklas Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.10 1996/03/09 21:30:22 dm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.28 1996/02/13 23:42:37 christos Exp $	*/
 
 /*
@@ -99,6 +99,11 @@ u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)
+);
+#endif
+
 
 char *
 inet_ntoa(ina)
@@ -247,6 +252,20 @@ next:
 		} else
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
+
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+       /*
+	* Check if we want to allow this packet to be processed.
+	* Consider it to be bad if not.
+	*/
+	{
+		struct mbuf *m0 = m;
+		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
+			goto next;
+		else
+			ip = mtod(m = m0, struct ip *);
+	}
+#endif
 
 	/*
 	 * Process options and, if not destined for us,
