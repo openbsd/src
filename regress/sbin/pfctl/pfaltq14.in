@@ -1,0 +1,7 @@
+# try to provoke the print function for linkshare to omit printing the likshare
+# service curve because m2 = bandwidth, the default
+
+altq on lo0 tbrsize 1824 bandwidth 10Mb hfsc queue eins
+queue eins bandwidth 10% hfsc(default linkshare(15% 20 10%))
+
+
