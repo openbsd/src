@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.3 1995/11/30 00:58:00 jtc Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.4 1995/12/25 14:16:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -128,7 +128,7 @@ struct zs_chanstate {
 	 */
 	u_int		cs_rbget;	/* ring buffer `get' index	*/
 	volatile u_int	cs_rbput;	/* ring buffer `put' index	*/
-	int		cs_rbuf[ZLRB_RING_SIZE];/* type, value pairs	*/
+	int		*cs_rbuf;	/* type, value pairs	*/
 };
 
 #define	ZS_CHAN_A	0

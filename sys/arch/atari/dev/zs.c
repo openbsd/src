@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1995/12/16 21:45:31 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 1995/12/25 14:16:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -60,6 +60,7 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -107,7 +108,7 @@ static u_char zs_init_regs[16] = {
 /*  6 */	0,
 /*  7 */	0,
 /*  8 */	0,
-/*  9 */	ZSWR9_VECTOR_INCL_STAT,
+/*  9 */	ZSWR9_MASTER_IE | ZSWR9_VECTOR_INCL_STAT,
 /* 10 */	ZSWR10_NRZ,
 /* 11 */	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
 /* 12 */	0,
@@ -315,6 +316,11 @@ struct proc	*p;
 	if((machineid & ATARI_TT) && !(unit & 1)) {
 		SOUND->sd_selr = YM_IOA;
 		SOUND->sd_wdat = SOUND->sd_rdat | PA_SER2;
+	}
+
+	if (cs->cs_rbuf == NULL) {
+		cs->cs_rbuf = malloc(ZLRB_RING_SIZE * sizeof(int), M_DEVBUF,
+								   M_WAITOK);
 	}
 
 	tp = cs->cs_ttyp;
