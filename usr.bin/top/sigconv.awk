@@ -25,57 +25,52 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-BEGIN		{
-		    nsig = 0;
-		    j = 0;
-		    print "/* This file was automatically generated */"
-		    print "/* by the awk script \"sigconv.awk\".      */"	
-		    print "/* $OpenBSD: sigconv.awk,v 1.3 2002/07/15 17:20:36 deraadt Exp $ */\n"
-		    print "struct sigdesc {"
-		    print "    char *name;"
-		    print "    int  number;"
-		    print "};\n"
-		    print "struct sigdesc sigdesc[] = {"
-		}
+BEGIN {
+	nsig = 0;
+	j = 0;
+	print "/* This file was automatically generated */"
+	print "/* by the awk script \"sigconv.awk\".      */"	
+	print "/* $OpenBSD: sigconv.awk,v 1.4 2003/06/18 08:42:31 deraadt Exp $ */\n"
+	print "struct sigdesc {"
+	print "	char	*name;"
+	print "	int	number;"
+	print "};\n"
+	print "struct sigdesc sigdesc[] = {"
+}
 
 /^#define[ \t][ \t]*SIG[A-Z]/	{
 
-				    j = sprintf("%d", $3);
-				    str = $2;
+	j = sprintf("%d", $3);
+	str = $2;
+	if (nsig < j) 
+		nsig = j;
+	siglist[j] = sprintf("\"%s\",\t%2d", substr(str, 4), j);
+}
 
-				    if (nsig < j) 
-					nsig = j;
-
-				    siglist[j] = sprintf("\"%s\",\t%2d", \
-						substr(str, 4), j);
-				}
 /^#[ \t]*define[ \t][ \t]*SIG[A-Z]/	{
 
-				    j = sprintf("%d", $4);
-				    str = $3;
+	j = sprintf("%d", $4);
+	str = $3;
+	if (nsig < j)
+		nsig = j;
+	siglist[j] = sprintf("\"%s\",\t%2d", substr(str, 4), j);
+}
 
-				    if (nsig < j)
-					nsig = j;
-
-				    siglist[j] = sprintf("\"%s\",\t%2d", \
-						substr(str, 4), j);
-				}
 /^#[ \t]*define[ \t][ \t]*_SIG[A-Z]/	{
 
-				    j = sprintf("%d", $4);
-				    str = $3;
+	j = sprintf("%d", $4);
+	str = $3;
+	if (nsig < j)
+		nsig = j;
 
-				    if (nsig < j)
-					nsig = j;
+	siglist[j] = sprintf("\"%s\",\t%2d", substr(str, 5), j);
+}
 
-				    siglist[j] = sprintf("\"%s\",\t%2d", \
-					    substr(str, 5), j);
-				}
+END {
+	for (n = 1; n <= nsig; n++) 
+		if (siglist[n] != "")
+			printf("	{ %s },\n", siglist[n]);
 
-END				{
-				    for (n = 1; n <= nsig; n++) 
-					if (siglist[n] != "")
-					    printf("    { %s },\n", siglist[n]);
+	printf("    { NULL,\t 0 }\n};\n");
+}
 
-				    printf("    { NULL,\t 0 }\n};\n");
-				}
