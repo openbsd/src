@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.25 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.26 2002/03/19 23:54:41 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.25 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.26 2002/03/19 23:54:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,8 @@ command(ki, ve)
 				fmt_putc(' ', &left);
 			}
 		}
-	}
+	} else
+		argv = NULL;
 	if (needcomm) {
 		if (!commandonly) {
 			if (kd != NULL) {
@@ -145,7 +146,7 @@ command(ki, ve)
 					}
 				}
 			}
-			if (argv == 0 || argv[0] == 0 ||
+			if (argv == NULL || argv[0] == '\0' ||
 			    strcmp(cmdpart(argv[0]), KI_PROC(ki)->p_comm)) {
 				fmt_putc('(', &left);
 				fmt_puts(KI_PROC(ki)->p_comm, &left);
