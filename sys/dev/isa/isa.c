@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.11 1996/07/02 22:21:15 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.12 1996/08/14 14:36:15 shawn Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -36,11 +36,14 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include "isapnp.h"
 
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
@@ -77,6 +80,9 @@ isaattach(parent, self, aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
+#if NISAPNP > 0
+	void postisapnpattach(struct device *, struct device *, void *);
+#endif /* NISAPNP > 0 */
 
 	isa_attach_hook(parent, self, iba);
 	printf("\n");
@@ -93,6 +99,10 @@ isaattach(parent, self, aux)
 
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
+
+#if NISAPNP > 0
+	postisapnpattach(parent, self, aux);
+#endif /* NISAPNP > 0 */
 }
 
 int
@@ -126,6 +136,12 @@ isascan(parent, match)
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
+	struct emap *io_map, *mem_map, *irq_map, *drq_map;
+
+	io_map = find_emap("io");
+	mem_map = find_emap("mem");
+	irq_map = find_emap("irq");
+	drq_map = find_emap("drq");
 
 	ia.ia_bc = sc->sc_bc;
 	ia.ia_ic = sc->sc_ic;
@@ -141,6 +157,10 @@ isascan(parent, match)
 		struct isa_attach_args ia2 = ia;
 
 		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
+			add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
+			add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
+			add_extent(irq_map, ia.ia_irq, 1);
+			add_extent(drq_map, ia.ia_drq, 1);
 			config_attach(parent, dev, &ia2, isaprint);
 			dev = config_make_softc(parent, cf);
 			ia2 = ia;
@@ -149,8 +169,13 @@ isascan(parent, match)
 		return;
 	}
 
-	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
+		add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
+		add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
+		add_extent(irq_map, ia.ia_irq, 1);
+		add_extent(drq_map, ia.ia_drq, 1);
 		config_attach(parent, dev, &ia, isaprint);
+	}
 	else
 		free(dev, M_DEVBUF);
 }

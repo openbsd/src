@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.26 1996/07/27 07:20:06 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.27 1996/08/14 14:36:14 shawn Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -11,7 +11,8 @@
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
-	     [irq = -1], [drq = -1]}
+	     [irq = -1], [drq = -1],
+	     [pnpid = -1]}
 attach	isa at isabus
 file	dev/isa/isa.c			isa needs-flag
 
@@ -21,6 +22,13 @@ file	dev/isa/isa.c			isa needs-flag
 define	isa_dma
 device  isadma
 attach  isadma at isa: isa_dma
+
+#
+# ISA PnP capability
+#
+device	isapnp
+attach	isapnp at isa
+file	dev/isa/isapnp.c		isapnp needs-flag
 
 #
 # 8250/16[45]50-based multi-port serial boards
