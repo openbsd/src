@@ -617,6 +617,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/gdtreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/gdtvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/hayespreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/hmereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/hmevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i8042reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82365reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82365var.ph

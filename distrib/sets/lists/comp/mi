@@ -184,6 +184,8 @@
 ./usr/include/dev/ic/gdtreg.h
 ./usr/include/dev/ic/gdtvar.h
 ./usr/include/dev/ic/hayespreg.h
+./usr/include/dev/ic/hmereg.h
+./usr/include/dev/ic/hmevar.h
 ./usr/include/dev/ic/i8042reg.h
 ./usr/include/dev/ic/i82365reg.h
 ./usr/include/dev/ic/i82365var.h
