@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/05/05 11:08:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/10/01 20:01:25 deraadt Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
@@ -8,8 +8,7 @@ NOPROG=	noprog
 NOMAN=	noman
 NOOBJ=	noobj
 
-SUBDIR=	stand
-
+SUBDIR=	stand ../m68k
 DIRS=	conf dev include mvme68k
 
 links::
@@ -26,8 +25,6 @@ tags:
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> tags
 	sort -o tags tags
-
-SUBDIR+=stand ../m68k
 
 obj:	_SUBDIRUSE
 
