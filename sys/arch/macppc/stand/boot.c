@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2001/09/21 16:58:41 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.3 2001/12/15 22:26:18 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ main()
 	parseargs(bootline, &boothowto);
 	for (;;) {
 		if (boothowto & RB_ASKNAME) {
-			printf("Boot: ");
+			printf("Boot (or \"exit\"): ");
 			gets(bootline);
 			parseargs(bootline, &boothowto);
 		}
