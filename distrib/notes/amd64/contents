@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.3 2004/02/07 22:47:49 miod Exp $
+dnl	$OpenBSD: contents,v 1.4 2004/02/11 23:29:58 miod Exp $
 TopPart
 dnl uncomment as stuff becomes available
 dnl
@@ -44,9 +44,9 @@ dnl useful for the installation.
 dnl
 DistributionDescription(six)
 
-OpenBSDbase
+OpenBSDbase(,,shared)
 
-OpenBSDcomp
+OpenBSDcomp(,,shared)
 
 OpenBSDetc(,,noupgrade)
 
