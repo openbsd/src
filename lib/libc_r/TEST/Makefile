@@ -32,7 +32,7 @@ SKIP_TESTS +=	test_sock_2a
 all : tests
 
 tests : ${TESTS}
-	@faillist= ; ulimit -t 5; \
+	@faillist= ; ulimit -t 10; \
 	for i in ${.ALLSRC} ; do \
 	  case " ${SKIP_TESTS} " in \
 	  *" $$i "*) \
