@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.4 1996/07/12 13:19:09 mickey Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.5 1996/09/16 02:33:06 tholo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -63,7 +63,7 @@ struct rtentry;
 #define NTOHS(x) (x) = ntohs(x)
 #endif
 
-static inline int xdtoi(int);
+static __inline int xdtoi(int);
 
 /*
  *  Convert host name to internet address.
@@ -216,7 +216,7 @@ pcap_nametoeproto(const char *s)
 }
 
 /* Hex digit to integer. */
-static inline int
+static __inline int
 xdtoi(c)
 	register int c;
 {
@@ -364,5 +364,8 @@ __pcap_nametodnaddr(const char *name)
 #else
 	bpf_error("decnet name support not included, '%s' cannot be translated\n",
 		name);
+#ifdef lint
+	return 0;
+#endif
 #endif
 }

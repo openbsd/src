@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.4 1996/07/12 13:19:08 mickey Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.5 1996/09/16 02:33:05 tholo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -137,10 +137,10 @@ static int cur_chunk;
 
 static void *newchunk(u_int);
 static void freechunks(void);
-static inline struct block *new_block(int);
-static inline struct slist *new_stmt(int);
+static __inline struct block *new_block(int);
+static __inline struct slist *new_stmt(int);
 static struct block *gen_retblk(int);
-static inline void syntax(void);
+static __inline void syntax(void);
 
 static void backpatch(struct block *, struct block *);
 static void merge(struct block *, struct block *);
@@ -148,8 +148,8 @@ static struct block *gen_cmp(u_int, u_int, bpf_int32);
 static struct block *gen_mcmp(u_int, u_int, bpf_int32, bpf_u_int32);
 static struct block *gen_bcmp(u_int, u_int, u_char *);
 static struct block *gen_uncond(int);
-static inline struct block *gen_true(void);
-static inline struct block *gen_false(void);
+static __inline struct block *gen_true(void);
+static __inline struct block *gen_false(void);
 static struct block *gen_linktype(int);
 static struct block *gen_hostop(bpf_u_int32, bpf_u_int32, int, int, u_int, u_int);
 static struct block *gen_ehostop(u_char *, int);
@@ -220,7 +220,7 @@ sdup(s)
 	return (cp);
 }
 
-static inline struct block *
+static __inline struct block *
 new_block(code)
 	int code;
 {
@@ -233,7 +233,7 @@ new_block(code)
 	return p;
 }
 
-static inline struct slist *
+static __inline struct slist *
 new_stmt(code)
 	int code;
 {
@@ -255,7 +255,7 @@ gen_retblk(v)
 	return b;
 }
 
-static inline void
+static __inline void
 syntax()
 {
 	bpf_error("syntax error in filter expression");
@@ -547,13 +547,13 @@ gen_uncond(rsense)
 	return b;
 }
 
-static inline struct block *
+static __inline struct block *
 gen_true()
 {
 	return gen_uncond(1);
 }
 
-static inline struct block *
+static __inline struct block *
 gen_false()
 {
 	return gen_uncond(0);

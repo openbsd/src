@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.4 1996/07/12 13:19:10 mickey Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.5 1996/09/16 02:33:07 tholo Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -99,19 +99,19 @@ static void compute_local_ud(struct block *);
 static void find_ud(struct block *);
 static void init_val(void);
 static int F(int, int, int);
-static inline void vstore(struct stmt *, int *, int, int);
+static __inline void vstore(struct stmt *, int *, int, int);
 static void opt_blk(struct block *, int);
 static int use_conflict(struct block *, struct block *);
 static void opt_j(struct edge *);
 static void or_pullup(struct block *);
 static void and_pullup(struct block *);
 static void opt_blks(struct block *, int);
-static inline void link_inedge(struct edge *, struct block *);
+static __inline void link_inedge(struct edge *, struct block *);
 static void find_inedges(struct block *);
 static void opt_root(struct block **);
 static void opt_loop(struct block *, int);
 static void fold_op(struct stmt *, int, int);
-static inline struct slist *this_op(struct slist *);
+static __inline struct slist *this_op(struct slist *);
 static void opt_not(struct block *);
 static void opt_peep(struct block *);
 static void opt_stmt(struct stmt *, int[], int);
@@ -121,7 +121,7 @@ static void opt_blk(struct block *, int);
 static int use_conflict(struct block *, struct block *);
 static void opt_j(struct edge *);
 static struct block *fold_edge(struct block *, struct edge *);
-static inline int eq_blk(struct block *, struct block *);
+static __inline int eq_blk(struct block *, struct block *);
 static int slength(struct slist *);
 static int count_blocks(struct block *);
 static void number_blks_r(struct block *);
@@ -565,7 +565,7 @@ F(code, v0, v1)
 	return val;
 }
 
-static inline void
+static __inline void
 vstore(s, valp, newval, alter)
 	struct stmt *s;
 	int *valp;
@@ -635,7 +635,7 @@ fold_op(s, v0, v1)
 	done = 0;
 }
 
-static inline struct slist *
+static __inline struct slist *
 this_op(s)
 	struct slist *s;
 {
@@ -1500,7 +1500,7 @@ opt_blks(root, do_stmts)
 	}
 }
 
-static inline void
+static __inline void
 link_inedge(parent, child)
 	struct edge *parent;
 	struct block *child;
@@ -1650,7 +1650,7 @@ eq_slist(x, y)
 	}
 }
 
-static inline int
+static __inline int
 eq_blk(b0, b1)
 	struct block *b0, *b1;
 {

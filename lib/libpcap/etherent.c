@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherent.c,v 1.4 1996/07/12 13:19:07 mickey Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.5 1996/09/16 02:33:04 tholo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995
@@ -40,12 +40,12 @@ static char rcsid[] =
 
 #include "pcap-int.h"
 
-static inline int xdtoi(int);
-static inline int skip_space(FILE *);
-static inline int skip_line(FILE *);
+static __inline int xdtoi(int);
+static __inline int skip_space(FILE *);
+static __inline int skip_line(FILE *);
 
 /* Hex digit to integer. */
-static inline int
+static __inline int
 xdtoi(c)
 	register int c;
 {
@@ -57,7 +57,7 @@ xdtoi(c)
 		return c - 'A' + 10;
 }
 
-static inline int
+static __inline int
 skip_space(f)
 	FILE *f;
 {
@@ -70,7 +70,7 @@ skip_space(f)
 	return c;
 }
 
-static inline int
+static __inline int
 skip_line(f)
 	FILE *f;
 {
