@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.52 2004/04/01 23:56:05 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.53 2004/04/19 22:39:07 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1032,6 +1032,8 @@ sosetopt(so, level, optname, m0)
 		case SO_RCVLOWAT:
 		    {
 			u_long cnt;
+			extern u_long unpst_recvspace;
+			extern u_long unpst_sendspace;
 
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
@@ -1043,10 +1045,16 @@ sosetopt(so, level, optname, m0)
 			switch (optname) {
 
 			case SO_SNDBUF:
+				if (sbcheckreserve(cnt, unpst_sendspace) ||
+				    sbreserve(&so->so_snd, cnt) == 0) {
+					error = ENOBUFS;
+					goto bad;
+				}
+				break;
+
 			case SO_RCVBUF:
-				if (sbreserve(optname == SO_SNDBUF ?
-				    &so->so_snd : &so->so_rcv,
-				    cnt) == 0) {
+				if (sbcheckreserve(cnt, unpst_recvspace) ||
+				    sbreserve(&so->so_rcv, cnt) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}
