@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2.c,v 1.2 1999/06/23 04:48:48 d Exp $	*/
+/*	$OpenBSD: rl2.c,v 1.3 1999/07/14 03:51:08 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -67,14 +67,12 @@ static struct mbuf * rl2get __P((struct rl2_softc *, struct rl2_mm_cmd *,
 /* Card protocol-level functions. */
 static int	rl2_getenaddr __P((struct rl2_softc *, u_int8_t *));
 static int	rl2_getpromvers __P((struct rl2_softc *, char *, int));
-static int	rl2_setparam __P((struct rl2_softc *));
-#if 0
+static int	rl2_sendinit __P((struct rl2_softc *));
+#if notyet
 static int	rl2_roamconfig __P((struct rl2_softc *));
 static int	rl2_roam __P((struct rl2_softc *));
 static int	rl2_multicast __P((struct rl2_softc *, int));
 static int	rl2_searchsync __P((struct rl2_softc *));
-#endif
-#if notyet
 static int	rl2_iosetparam __P((struct rl2_softc *, struct rl2_param *));
 static int	rl2_lockprom __P((struct rl2_softc *));
 static int	rl2_ito __P((struct rl2_softc *));
@@ -98,23 +96,16 @@ rl2config(sc)
 	/* Initialise values in the soft state. */
 	sc->sc_pktseq = 0;	/* rl2_newseq() */
 	sc->sc_txseq = 0;
-	sc->sc_promisc = 0;
 
 	/* Initialise user-configurable params. */
-	sc->sc_param.rp_roamconfig = RL2_ROAM_NORMAL;
+	sc->sc_param.rp_roam_config = RL2_ROAM_NORMAL;
 	sc->sc_param.rp_security = RL2_SECURITY_DEFAULT;
-	sc->sc_param.rp_stationtype = RL2_STATIONTYPE_ALTMASTER;
+	sc->sc_param.rp_station_type = RL2_STATIONTYPE_ALTMASTER;
 	sc->sc_param.rp_domain = 0;
 	sc->sc_param.rp_channel = 1;
 	sc->sc_param.rp_subchannel = 1;
 
 	bzero(sc->sc_param.rp_master, sizeof sc->sc_param.rp_master);
-#if notyet
-	/* XXX hostname not available at autoconf time! */
-	/* Use this host's name as a master name. */
-	bcopy(hostname, sc->sc_param.rp_master, 
-	    min(hostnamelen, sizeof sc->sc_param.rp_master));
-#endif
 
 	/* Initialise the message mailboxes. */
 	for (i = 0; i < RL2_NMBOX; i++)
@@ -167,6 +158,8 @@ rl2init(sc)
 {
 	/* LLDInit() */
 	struct ifnet * ifp = &sc->sc_arpcom.ac_if;
+	int s;
+	extern int cold;
 
 	dprintf(" [init]");
 
@@ -181,12 +174,18 @@ rl2init(sc)
 		printf("%s: could not reset card\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-	sc->sc_state = 0;
+	sc->sc_state = 0;	/* Also clears RL2_STATE_NEEDINIT. */
+
+	/* Use this host's name as a master name. */
+	if (!cold && sc->sc_param.rp_master[0] == '\0') {
+		bcopy(hostname, sc->sc_param.rp_master, 
+		    min(hostnamelen, sizeof sc->sc_param.rp_master));
+	}
 
 	rl2_enable(sc, 1);
 
 	/* Initialise operational params. */
-	if (rl2_setparam(sc)) {
+	if (rl2_sendinit(sc)) {
 		printf("%s: could not set card parameters\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
@@ -203,8 +202,10 @@ rl2init(sc)
 	/* Synchronise with something. */
 	rl2_searchsync(sc);
 #endif
+	s = splnet();
 	ifp->if_flags |= IFF_RUNNING;
 	rl2start(ifp);
+	splx(s);
 
 	return;
 
@@ -223,6 +224,9 @@ rl2start(ifp)
 	int		len, pad, ret;
 
 	dprintf(" start[");
+
+	if (sc->sc_state & RL2_STATE_NEEDINIT)
+		rl2init(sc);
 
 	/* Don't transmit if interface is busy or not running. */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
@@ -289,7 +293,7 @@ rl2start(ifp)
 oerror:
 	++ifp->if_oerrors;
 	m_freem(m0);
-	/* XXX reset card, start again? */
+	rl2_need_reset(sc);
 	return;
 }
 
@@ -326,7 +330,7 @@ rl2_transmit(sc, m0, len, pad)
 	/* A unique packet-level sequence number. XXX related to sc_seq? */
 	cmd.sequence = sc->sc_txseq;
 	sc->sc_txseq++;
-	if (sc->sc_txseq > 0x7c)
+	if (sc->sc_txseq > RL2_MAXSEQ)
 		sc->sc_txseq = 0;
 
 	dprintf(" T[%d+%d", len, pad);
@@ -389,7 +393,7 @@ rl2watchdog(ifp)
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
-	rl2_reset(sc);
+	rl2init(sc);
 	rl2_enable(sc, 1);
 }
 
@@ -435,7 +439,7 @@ rl2softintr(arg)
 
 	if ((len = rl2_rx_request(sc, 300)) < 0) {
 		/* Error in transfer. */
-		/* XXX need reset? */
+		rl2_need_reset(sc);
 		rl2_rx_end(sc);
 	} else if (len < sizeof hdr) {
 		/* Short message. */
@@ -454,8 +458,12 @@ rl2softintr(arg)
 	rl2_wakeup(sc, w);
 
 	/* Check for more interrupts. */
-	if (rl2_status_rx_ready(sc))
+	if (rl2_status_rx_ready(sc)) {
+#ifdef DIAGNOSTIC
+		printf("%s: intr piggyback\n", sc->sc_dev.dv_xname);
+#endif
 		goto again;
+	}
 
 	/* Some cards need this? */
 	rl2_eoi(sc);
@@ -481,6 +489,7 @@ rl2read(sc, hdr, len)
 	size_t	  buflen;
 	struct rl2_pdata pd = RL2_PDATA_INIT;
 	struct rl2_mm_synchronised * syncp = (struct rl2_mm_synchronised *)data;
+	int s;
 
 	dprintf(" [read]");
 
@@ -518,19 +527,20 @@ rl2read(sc, hdr, len)
 			}
 		}
 		rl2_rx_end(sc);
+
 		/* This message can now be handled by the waiter. */
 		rl2_mbox_unlock(sc, hdr->cmd_seq, len + sizeof *hdr);
 		return;
 	} 
 
-	/* Otherwise, handle the message right here, right now. */
+	/* Otherwise, handle the message, right here, right now. */
 
 	/* Check if we can cope with the size of this message. */
 	if (len > sizeof data) {
-		printf("%s: big msg (%d)\n", sc->sc_dev.dv_xname, len);
+		printf("%s: msg too big (%d)\n", sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		rl2_rx_end(sc);
-		/* XXX may need reset */
+		/* rl2_need_reset(sc); */
 		return;
 	}
 
@@ -538,12 +548,12 @@ rl2read(sc, hdr, len)
 	if (hdr->cmd_error & 0x80) {
 		printf("%s: command error 0x%02x command %c%d len=%d\n",
 			sc->sc_dev.dv_xname,
-			hdr->cmd_error & 0x7f,
+			hdr->cmd_error & ~0x80,
 			hdr->cmd_letter, hdr->cmd_fn,
 			len);
 		ifp->if_ierrors++;
 		rl2_rx_end(sc);
-		/* XXX may need reset */
+		rl2_need_reset(sc);
 		return;
 	}
 
@@ -600,21 +610,29 @@ rl2read(sc, hdr, len)
 #endif
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
+		s = splnet();
 		rl2start(ifp);
+		splx(s);
 		break;
 
 	case RL2_MM_CMD('a', 20):			/* a20: Card fault. */
 		printf("%s: hardware fault\n", sc->sc_dev.dv_xname);
-		/* Bring it down. */
-		rl2stop(sc);
-		ifp->if_oerrors++;
-		if_down(ifp);	/* The next if_up() will cause a hard reset. */
 		break;
 
 	case RL2_MM_CMD('a', 4):			/* a4: Sync'd. */
 		if (bcmp(syncp->enaddr, sc->sc_arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN) == 0) {
 			/* Sync'd to own enaddr. */
+ /*
+  * From http://www.proxim.com/support/faq/7400.shtml
+  * 3. RL2SETUP reports that I'm synchronized to my own MAC address. What
+  *    does that mean?
+  *    You are the acting Master for this network. Either you are
+  *    configured as the Master or as an Alternate Master. If you are an
+  *    Alternate Master, you may be out of range or on a different Domain
+  *    and Security ID from the true Master.
+  */
+
 			printf("%s: nothing to sync to; now master ",
 			    sc->sc_dev.dv_xname);
 		}
@@ -632,7 +650,9 @@ rl2read(sc, hdr, len)
 		sc->sc_state |= RL2_STATE_SYNC;
 
 		/* Resume sending. */
+		s = splnet();
 		rl2start(ifp);
+		splx(s);
 		break;
 
 	case RL2_MM_CMD('a', 5):			/* a4: Lost sync. */
@@ -754,10 +774,11 @@ rl2ioctl(ifp, cmd, data)
 {
 	struct rl2_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error = 0;
+	int s, error;
+	int need_init;
 
 	s = splnet();
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) != 0) {
 		splx(s);
 		return error;
 	}
@@ -781,6 +802,8 @@ rl2ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+		need_init = 0;
+
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/* Was running, want down: stop. */
@@ -788,24 +811,44 @@ rl2ioctl(ifp, cmd, data)
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/* Was not running, want up: start. */
-			rl2init(sc);
+			need_init = 1;
 		} 
 
-		if ((ifp->if_flags & IFF_RUNNING) != 0 &&
-		    ((ifp->if_flags & IFF_PROMISC) != sc->sc_promisc)) {
-			/* Promiscuity changed. */
-			sc->sc_promisc = ifp->if_flags & IFF_PROMISC;
-			rl2_setparam(sc);
+		if (ifp->if_flags & IFF_RUNNING) {
+			if ((ifp->if_flags & IFF_PROMISC) &&
+			    (sc->sc_state & RL2_STATE_PROMISC) == 0) {
+				sc->sc_state |= RL2_STATE_PROMISC;
+				need_init = 1;
+			}
+			else if ((ifp->if_flags & IFF_PROMISC) == 0 &&
+			    (sc->sc_state & RL2_STATE_PROMISC)) {
+				sc->sc_state &= ~RL2_STATE_PROMISC;
+				need_init = 1;
+			}
 		}
 
 		/* XXX Deal with other flag changes? */
+
+		if (need_init)
+			rl2init(sc);
+
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 
-	/* XXX There should be a way to change the channel & secid here. */
+#if notyet
+	case RL2IOSPARAM:
+		error = rl2_iosetparam(sc, (struct rl2_param *)&data);
+		break;
+
+	case RL2IOGPARAM:
+		bcopy(&sc->sc_param, (struct rl2_param *)&data, 
+		    sizeof sc->sc_param);
+		break;
+#endif
 
 	default:
 		error = EINVAL;
@@ -837,7 +880,7 @@ rl2_probe(sc)
 
 	dprintf(" [probe]");
 	/* If we can reset it, it's there. */
-	return(rl2_reset(sc));
+	return (rl2_reset(sc));
 }
 
 /* Get MAC address from card. */
@@ -884,48 +927,48 @@ rl2_getpromvers(sc, ver, verlen)
 
 /* Set default operational parameters on card. */
 static int
-rl2_setparam(sc)
+rl2_sendinit(sc)
 	struct rl2_softc *sc;
 {
-	struct rl2_mm_setparam param = { RL2_MM_SETPARAM };
-	struct rl2_mm_paramset presponse;
+	struct rl2_mm_init init = { RL2_MM_INIT };
+	struct rl2_mm_initted iresponse;
 #if 0
 	struct rl2_mm_setmagic magic = { RL2_MM_SETMAGIC };
 	struct rl2_mm_disablehopping hop = { RL2_MM_DISABLEHOPPING };
 	struct rl2_mm_cmd response;
 #endif
 
-	bzero((char*)&param + sizeof param.mm_cmd,
-		sizeof param - sizeof param.mm_cmd);
+	bzero((char*)&init + sizeof init.mm_cmd,
+		sizeof init - sizeof init.mm_cmd);
 
 	dprintf(" [setting parameters]");
-	param.opmode = (sc->sc_promisc ? RL2_MM_SETPARAM_OPMODE_PROMISC :
-	    RL2_MM_SETPARAM_OPMODE_NORMAL);
-	param.stationtype = sc->sc_param.rp_stationtype;
+	init.opmode = (sc->sc_state & RL2_STATE_PROMISC ?
+	    RL2_MM_INIT_OPMODE_PROMISC : RL2_MM_INIT_OPMODE_NORMAL);
+	init.stationtype = sc->sc_param.rp_station_type;
 
 	/* Spread-spectrum frequency hopping. */
-	param.hop_period = 1;
-	param.bfreq = 2;
-	param.sfreq = 7;
+	init.hop_period = 1;
+	init.bfreq = 2;
+	init.sfreq = 7;
 
 	/* Choose channel. */
-	param.channel = sc->sc_param.rp_channel;
-	param.subchannel = sc->sc_param.rp_subchannel;
-	param.domain = sc->sc_param.rp_domain;
+	init.channel = sc->sc_param.rp_channel;
+	init.subchannel = sc->sc_param.rp_subchannel;
+	init.domain = sc->sc_param.rp_domain;
 
 	/* Name of this station when acting as master. */
-	bcopy(sc->sc_param.rp_master, param.mastername, sizeof param.mastername);
+	bcopy(sc->sc_param.rp_master, init.mastername, sizeof init.mastername);
 
 	/* Security params. */
-	param.sec1 = (sc->sc_param.rp_security & 0x0000ff) >> 0;
-	param.sec2 = (sc->sc_param.rp_security & 0x00ff00) >> 8;
-	param.sec3 = (sc->sc_param.rp_security & 0xff0000) >> 16;
+	init.sec1 = (sc->sc_param.rp_security & 0x0000ff) >> 0;
+	init.sec2 = (sc->sc_param.rp_security & 0x00ff00) >> 8;
+	init.sec3 = (sc->sc_param.rp_security & 0xff0000) >> 16;
 
-	param.sync_to = 1;
-	bzero(param.syncname, sizeof param.syncname);
+	init.sync_to = 1;
+	bzero(init.syncname, sizeof init.syncname);
 
-	if (rl2_msg_txrx(sc, &param, sizeof param,
-	    &presponse, sizeof presponse))
+	if (rl2_msg_txrx(sc, &init, sizeof init,
+	    &iresponse, sizeof iresponse))
 		return (-1);
 #if 0
 	dprintf(" [setting magic]");
@@ -953,7 +996,7 @@ rl2_setparam(sc)
 	return (0);
 }
 
-#if 0
+#if notyet
 /* Configure the way the card leaves a basestation. */
 static int
 rl2_roamconfig(sc)
@@ -966,12 +1009,12 @@ rl2_roamconfig(sc)
 
 	dprintf(" [roamconfig]");
 #ifdef DIAGNOSTIC
-	if (sc->sc_param.rp_roamconfig > 2)
+	if (sc->sc_param.rp_roam_config > 2)
 		panic("roamconfig");
 #endif
 	roam.sync_alarm = 0;
-	roam.retry_thresh = retry[sc->sc_param.rp_roamconfig];
-	roam.rssi_threshold = rssi[sc->sc_param.rp_roamconfig];
+	roam.retry_thresh = retry[sc->sc_param.rp_roam_config];
+	roam.rssi_threshold = rssi[sc->sc_param.rp_roam_config];
 	roam.xxx1 = 0x5a;
 	roam.sync_rssi_threshold = 0;
 	roam.xxx2 = 0x5a;
@@ -1038,9 +1081,7 @@ rl2_searchsync(sc)
 	return (rl2_msg_txrx(sc, &search, sizeof search,
 		&response, sizeof response));
 }
-#endif
 
-#if notyet	/* unused */
 /* Set values from an external parameter block. */
 static int
 rl2_iosetparam(sc, param)
@@ -1049,11 +1090,11 @@ rl2_iosetparam(sc, param)
 {
 	int error = 0;
 
-	if (param->rp_roamconfig > 2)
+	if (param->rp_roam_config > 2)
 		error = EINVAL;
 	if (param->rp_security > 0x00ffffff)
 		error = EINVAL;
-	if (param->rp_stationtype > 2)
+	if (param->rp_station_type > 2)
 		error = EINVAL;
 	if (param->rp_channel > 15)
 		error = EINVAL;
@@ -1062,7 +1103,7 @@ rl2_iosetparam(sc, param)
 	if (error == 0) {
 		/* Apply immediately. */
 		bcopy(param, &sc->sc_param, sizeof *param);
-		if (rl2_setparam(sc))
+		if (rl2_sendinit(sc))
 			error = EIO;
 	}
 	return (error);
