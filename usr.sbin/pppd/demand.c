@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.5 1998/01/17 20:30:21 millert Exp $	*/
+/*	$OpenBSD: demand.c,v 1.6 1998/07/12 04:34:39 angelos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: demand.c,v 1.5 1998/01/17 20:30:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: demand.c,v 1.6 1998/07/12 04:34:39 angelos Exp $";
 #endif
 #endif
 
@@ -144,6 +144,34 @@ demand_discard()
     for (pkt = pend_q; pkt != NULL; pkt = nextpkt) {
 	nextpkt = pkt->next;
 	free(pkt);
+    }
+    pend_q = NULL;
+    framelen = 0;
+    flush_flag = 0;
+    escape_flag = 0;
+    fcs = PPP_INITFCS;
+}
+
+/*
+ * demand_drop - set each network protocol to discard packets
+ * without an error.
+ */
+void
+demand_drop()
+{
+    struct packet *pkt, *nextpkt;
+    int i;
+    struct protent *protp;
+
+    for (i = 0; (protp = protocols[i]) != NULL; ++i)
+        if (protp->enabled_flag && protp->demand_conf != NULL)
+            sifnpmode(0, protp->protocol & ~0x8000, NPMODE_DROP);
+    get_loop_output();
+
+    /* discard all saved packets */
+    for (pkt = pend_q; pkt != NULL; pkt = nextpkt) {
+        nextpkt = pkt->next;
+        free(pkt);
     }
     pend_q = NULL;
     framelen = 0;

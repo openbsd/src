@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 1998/07/10 08:06:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 1998/07/12 04:34:41 angelos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 1998/07/10 08:06:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 1998/07/12 04:34:41 angelos Exp $";
 #endif
 #endif
 
@@ -414,7 +414,7 @@ main(argc, argv)
 	    /*
 	     * Now we want to bring up the link.
 	     */
-	    demand_block();
+	    demand_discard();
 	    syslog(LOG_INFO, "Starting link");
 	}
 
@@ -589,8 +589,6 @@ main(argc, argv)
 	if (!persist)
 	    die(1);
 
-	if (demand)
-	    demand_discard();
 	if (holdoff > 0 && need_holdoff) {
 	    phase = PHASE_HOLDOFF;
 	    TIMEOUT(holdoff_end, NULL, holdoff);

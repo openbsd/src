@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.9 1998/05/08 04:52:32 millert Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.10 1998/07/12 04:34:42 angelos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -235,6 +235,7 @@ void check_access __P((FILE *, char *));
 /* Procedures exported from demand.c */
 void demand_conf __P((void));	/* config interface(s) for demand-dial */
 void demand_block __P((void));	/* set all NPs to queue up packets */
+void demand_drop __P((void)); 	/* set all NPs to drop packets */
 void demand_unblock __P((void)); /* set all NPs to pass packets */
 void demand_discard __P((void)); /* set all NPs to discard packets */
 void demand_rexmit __P((int));	/* retransmit saved frames for an NP */
