@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.3 1995/11/17 12:45:52 deraadt Exp $ */
+/*	$Id: flash.c,v 1.4 1995/12/01 17:57:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -111,6 +111,8 @@ flashmatch(parent, cf, args)
 	 * isn't supported (yet).
 	 */
 	if (cputyp == CPU_166)
+		return (0);
+	if (cputyp == CPU_167)
 		return (0);
 #endif
 
