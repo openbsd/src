@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgets.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fgets.c,v 1.6 2003/10/08 10:29:55 avsm Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,9 +50,9 @@ fgets(buf, n, fp)
 	register int n;
 	register FILE *fp;
 {
-	register size_t len;
-	register char *s;
-	register unsigned char *p, *t;
+	size_t len;
+	char *s;
+	unsigned char *p, *t;
 
 	if (n <= 0)		/* sanity check */
 		return (NULL);
@@ -63,15 +63,15 @@ fgets(buf, n, fp)
 		/*
 		 * If the buffer is empty, refill it.
 		 */
-		if ((len = fp->_r) <= 0) {
+		if (fp->_r <= 0) {
 			if (__srefill(fp)) {
 				/* EOF/error: stop with partial or no line */
 				if (s == buf)
 					return (NULL);
 				break;
 			}
-			len = fp->_r;
 		}
+		len = fp->_r;
 		p = fp->_p;
 
 		/*
