@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.5 2004/09/17 13:31:22 miod Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.6 2004/11/02 21:05:34 pefo Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,8 @@
 #include <sys/syscallargs.h>
 
 #include <machine/regnum.h>
+
+struct proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 /*
  * WARNING: code in locore.s assumes the layout shown for sf_signum
@@ -263,6 +265,9 @@ sys_sigreturn(p, v, retval)
 	regs->pc = scp->sc_pc;
 	regs->mullo = scp->mullo;
 	regs->mulhi = scp->mulhi;
+	regs->sr &= ~SR_COP_1_BIT;	/* Zap current FP state */
+	if (p == machFPCurProcPtr) 
+		machFPCurProcPtr = NULL;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs->ast,
 		sizeof(scp->sc_regs) - sizeof(register_t));
 	if (scp->sc_fpused)
