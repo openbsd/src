@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.65 2003/01/02 02:18:27 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.66 2003/03/18 23:13:26 mickey Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -374,6 +374,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
+
+    { PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8041,
+	  PCMCIA_CIS_SMC_8041,
+	  0, -1, { 0x00, 0x04, 0xe2 } },
 
     { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
