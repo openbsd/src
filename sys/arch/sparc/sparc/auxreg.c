@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxreg.c,v 1.7 1997/08/25 08:38:47 downsj Exp $	*/
+/*	$OpenBSD: auxreg.c,v 1.8 2000/07/19 15:31:26 art Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 
@@ -67,12 +68,13 @@ struct cfdriver auxreg_cd = {
 };
 
 extern int sparc_led_blink;	/* from machdep */
+struct timeout sparc_led_to;
 
 void
 led_blink(zero)
 	void *zero;
 {
-	register int s;
+	int s;
 
 	/* Don't do anything if there's no auxreg, ok? */
 	if (auxio_reg == 0)
@@ -99,7 +101,7 @@ led_blink(zero)
 	 */
 	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 
-	timeout(led_blink, (caddr_t)0, s);
+	timeout_add(&sparc_led_to, s);
 }
 
 /*
@@ -144,6 +146,7 @@ auxregattach(parent, self, aux)
 
 	printf("\n");
 
+	timeout_set(&sparc_led_to, led_blink, NULL);
 	/* In case it's initialized to true... */
 	if (sparc_led_blink)
 		led_blink((caddr_t)0);
