@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 1999/11/09 00:20:41 rahnds Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2000/03/23 04:12:48 rahnds Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -102,7 +102,10 @@ inittodr(base)
 
 	if (clock_read != NULL ) {
 		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
-	}
+	} else {
+		/* force failure on chiptotime */
+		mon = 0;
+	} 
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
 		printf("WARNING: unable to get date/time");
 		/*
