@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.2 2001/10/09 00:07:03 miod Exp $
+.\"	$OpenBSD: apm.4,v 1.3 2001/11/14 22:54:27 miod Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -116,10 +116,17 @@ The
 value contains the estimated percentage of battery life available.
 100% indicates a full charge.
 .Pp
-The
+If the battery is charging, i.e. when
+.Va battery_state
+is equal to
+.Dv APM_BATT_CHARGING ,
+the
+.Va battery_life
+value contains the estimated number of minutes until the battery will be
+fully charged.
+Otherwise, the
 .Va minutes_left
-value contains the estimated number of minutes of battery life
-remaining.
+value contains the estimated number of minutes of battery life remaining.
 .It Dv APM_IOC_NEXTEVENT
 .Em NOT YET SUPPORTED on macppc
 .Pq Li "struct apm_event_info"
