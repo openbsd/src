@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.8 2004/12/19 17:32:55 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.9 2004/12/28 20:46:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,6 +55,7 @@ extern int   cvs_nolog;
 extern int   cvs_readonly;
 
 
+static int  cvs_req_set        (int, char *);
 static int  cvs_req_root       (int, char *);
 static int  cvs_req_validreq   (int, char *);
 static int  cvs_req_validresp  (int, char *);
@@ -103,7 +104,7 @@ struct cvs_reqhdlr {
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
-	{ NULL               },
+	{ cvs_req_set        },
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
@@ -186,6 +187,24 @@ static int
 cvs_req_root(int reqid, char *line)
 {
 
+	return (0);
+}
+
+
+static int
+cvs_req_set(int reqid, char *line)
+{
+	char *cp;
+
+	cp = strchr(line, '=');
+	if (cp == NULL) {
+		cvs_log(LP_ERR, "error in Set request "
+		    "(no = in variable assignment)");
+		return (-1);
+	}
+
+	if (cvs_var_set(line, cp) < 0)
+		return (-1);
 	return (0);
 }
 
