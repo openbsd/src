@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.22 2001/03/15 19:03:33 mjacob Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.23 2001/03/15 19:07:01 deraadt Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -135,7 +135,6 @@ struct com_softc {
 	int enabled;
 };
 
-int	comspeedcomspeed __P((long, long));
 int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int	comstop __P((struct tty *, int));
