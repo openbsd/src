@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.8 2004/08/02 22:59:58 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.9 2004/08/12 21:02:20 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -266,7 +266,6 @@ rcs_write(RCSFILE *rfp)
 	char buf[1024], numbuf[64], *cp;
 	size_t rlen, len;
 	struct rcs_sym *symp;
-	struct rcs_lock *lkp;
 	struct rcs_delta *rdp;
 
 	if (rfp->rf_flags & RCS_RF_SYNCED)
