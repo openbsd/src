@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.120 2002/11/25 03:44:12 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.121 2002/11/25 04:05:51 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -205,17 +205,17 @@ These can be combined:
 Optimize the engine to one of the following network topographies or
 environments:
 .Bl -tag -width "O high-latency " -compact
-.It Em default
+.It Pa default
 A normal network environment.
 Suitable for almost all networks.
-.It Em normal
+.It Pa normal
 Alias for
-.Em default
+.Pa default
 .It Em high-latency
 A high-latency environment (such as a satellite connection)
-.It Em satellite
+.It Pa satellite
 Alias for
-.Em high-latency
+.Pa high-latency
 .It Em aggressive
 Aggressively expire connections when they are likely no longer valid.
 This can greatly reduce the memory usage of the firewall at the cost of
@@ -234,9 +234,9 @@ For example:
 .Ed
 .It Pa set block-policy
 The
-.Em block-policy
+.Pa block-policy
 option sets the default behaviour for the
-.Em block
+.Pa block
 action:
 .Bl -tag -width return -compact
 .It Em drop
@@ -260,7 +260,7 @@ translation,
 .Pa queue ,
 filter.
 Setting this option to
-.Em no
+.Pa no
 disables this enforcement.
 One has to be very careful about the implications of an out of order
 ruleset.
@@ -333,24 +333,24 @@ At least two rules are required to configure queues, and later
 any basic filtering or NAT rule can reference the defined
 queues by name.
 The queue name last referenced is where any packets from
-.Em pass
+.Pa pass
 rules will be queued, while for
-.Em block
+.Pa block
 rules it specifies where any resulting
-.Em icmp
+.Pa icmp
 or
-.Em TCP RST
+.Pa TCP RST
 packets should be enqueued.
 .Pp
-.Em altq on
+.Pa altq on
 specifies on which interface queues will be set up.
 The
-.Em scheduler
+.Pa scheduler
 type is required where currently only CBQ is supported.
-.Em bandwidth
+.Pa bandwidth
 is optional and specifies the maximum rate for all queues on this interface.
 All queues for this interface have to be listed after
-.Em queue .
+.Pa queue .
 .Pp
 In the following example, the interface
 .Pa dc0
@@ -360,21 +360,21 @@ should queue up to 5 Mbit/s in two queues using CBQ.
 .Ed
 .Pp
 Parameters for the queues are specified in
-.Em queue
+.Pa queue
 rules. The queuename must match the definition in the
-.Em altq
+.Pa altq
 rule.
-.Em bandwidth
+.Pa bandwidth
 sets the maximum bitrate that can be processed by this queue.
 The value must not exceed the value of the parent queue and can be specified
 in absolute and percentage values.
 Between queues a
-.Em priority
+.Pa priority
 level can be set.
 The range is 0..7 with a default of 1.
 Queues with a higher priority level are preferred in the case of overload.
 The scheduler can get additional parameters with
-.Em cbq( <parameters> ) .
+.Pa cbq( <parameters> ) .
 Parameters are as follows:
 .Pp
 .Bl -tag -width Fl
@@ -399,7 +399,7 @@ ECN implies RED.
 .El
 .Pp
 Furthermore child queues can be specified like in an
-.Em altq
+.Pa altq
 rule.
 .Pp
 Following the previous example, this would specify the two referenced
@@ -440,7 +440,7 @@ Each rule either matches the packet or doesn't.
 The last matching rule decides what action is taken.
 .Pp
 If no rule matches the packet, the default action is
-.Em pass .
+.Pa pass .
 .Pp
 To block everything by default and only pass packets
 that match explicit rules, one uses
@@ -477,12 +477,12 @@ or to the firewall itself.
 .It Em block
 The packet is blocked.
 There are a number of ways in which a
-.Em block
+.Pa block
 rule can behave when blocking a packet. The default behaviour is to
-.Em drop
+.Pa drop
 packets silently, however this can be overridden or made explicit
 globally by setting the
-.Em block-policy
+.Pa block-policy
 option, or on a per-rule basis with the following options:
 .Pp
 .Bl -tag -width "return-icmp6" -compact -offset indent
@@ -508,12 +508,12 @@ Scrub rules are not considered last matching rules.
 IPv6 packets are not defragmented.
 .It Em binat
 A
-.Em binat
+.Pa binat
 rule specifies a bidirectional mapping between an external IP netblock
 and an internal IP netblock.
 .It Em nat
 A
-.Em nat
+.Pa nat
 rule specifies that IP addresses are to be changed as the packet
 traverses the given interface.
 This technique allows one or more IP addresses
@@ -530,7 +530,7 @@ These netblocks are:
 .It Em rdr
 The packet is redirected to another destination and possibly a
 different port.
-.Em rdr
+.Pa rdr
 rules can optionally specify port ranges instead of single ports.
 \'rdr ... port 2000:2999 -> ... port 4000\' redirects ports 2000 to 2999
 (including port 2000 and 2999) to the same port 4000.
@@ -550,9 +550,9 @@ generates all needed rule combinations:
 .It Pa in No or Pa out
 The rule applies to incoming or outgoing packets.
 Either
-.Em in
+.Pa in
 or
-.Em out
+.Pa out
 must be specified.
 To cover both directions, two rules are needed.
 .It Em log
@@ -565,7 +565,7 @@ interface.
 This interface is monitored by the
 .Xr pflogd 8
 logging daemon which dumps the logged packets to the file
-.Em /var/log/pflog
+.Pa /var/log/pflog
 in
 .Xr pcap 3
 binary format.
@@ -656,7 +656,7 @@ For incoming connections to the firewall itself, this is the user that
 listens on the destination port.
 For forwarded connections, where the firewall isn't a connection endpoint,
 the user and group are
-.Em unknown .
+.Pa unknown .
 .Pp
 All packets, both outgoing and incoming, of one connection are associated
 with the same user and group.
@@ -673,14 +673,14 @@ user ID (to drop privileges), the socket's uid remains root.
 User and group IDs can be specified as either numbers or names, the
 syntax is similar to the one for ports.
 The value
-.Em unknown
+.Pa unknown
 matches packets of forwarded connections.
-.Em unknown
+.Pa unknown
 can only be used with operators = and !=, other constructs
 like 'user >= unknown' are invalid.
 Forwarded packets with unknown user and group ID match only rules
 that explicitly compare against
-.Em unknown
+.Pa unknown
 with operator = or !=, for instance 'user >= 0' does not match
 forwarded packets.
 The following example allows only selected users to open outgoing
@@ -717,21 +717,21 @@ must match.
 .It Pa allow-opts
 By default, packets which contain IP options are blocked.
 When
-.Em allow-opts
+.Pa allow-opts
 is specified for a
-.Em pass
+.Pa pass
 rule, packets that pass the filter based on that rule (last matching)
 do so even if they contain IP options.
 For packets that match state, the rule that initially created the
 state is used.
 The implicit
-.Em pass
+.Pa pass
 rule that is used when a packet doesn't match any rules does not
 allow IP options.
 .It Pa label <string>
 Adds a label (name) to the rule, which can be used to identify the rule.
 For instance,
-.Em pfctl -s labels
+.Pa pfctl -s labels
 shows per-rule statistics for rules that have labels.
 .Pp
 The following macros can be used in labels:
@@ -786,50 +786,50 @@ packets matching the same connection.
 .Bl -tag -width xxxx
 .It Pa fastroute
 The
-.Em fastroute
+.Pa fastroute
 option does a normal route lookup to find the next hop for the packet.
 .It Pa route-to
 The
-.Em route-to
+.Pa route-to
 option routes the packet to the specified interface with an optional address
 for the next hop.
 When a
-.Em route-to
+.Pa route-to
 rule creates state, only packets that pass in the same direction as the
 filter rule specifies will be routed in this way.
 Packets passing in the opposite direction (replies) are not affected
 and routed normally.
 .It Pa reply-to
 The
-.Em reply-to
+.Pa reply-to
 option is similar to
-.Em route-to
+.Pa route-to
 but routes packets that pass in the opposite direction (replies) to the
 specified interface.
 Opposite direction is only defined in context of a state entry, and
-.Em route-to
+.Pa route-to
 is useful only in rules that create state.
 It can be used on systems with multiple external connections to
 route all outgoing packets of a connection through the interface
 the incoming connection arrived through (symmetric routing enforcement).
 .It Pa dup-to
 The
-.Em dup-to
+.Pa dup-to
 option creates a duplicate of the packet and routes it like
-.Em route-to.
+.Pa route-to.
 The original packet gets routed as it normally would.
 .El
 .Pp
 .Sh POOL OPTIONS
 For
-.Em nat
+.Pa nat
 and
-.Em rdr
+.Pa rdr
 rules, (as well as for the
-.Em route-to ,
-.Em reply-to
+.Pa route-to ,
+.Pa reply-to
 and
-.Em dup-to
+.Pa dup-to
 rule options) for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address), a variety of different methods for assigning this address can be
@@ -837,47 +837,47 @@ used:
 .Bl -tag -width xxxx
 .It Em bitmask
 The
-.Em bitmask
+.Pa bitmask
 option applies the network portion of the redirection address to the address
 to be modified (source with nat, destination with rdr).
 .It Em random
 The
-.Em random
+.Pa random
 option selects an address at random within the defined block of addresses.
 .It Em source-hash
 The
-.Em source-hash
+.Pa source-hash
 option uses a hash of the source address to determine the redirection address,
 ensuring that the redirection address is always the same for a given source.
 The option can additionally be modified as follows:
 .Bl -tag -width "random" -compact -offset indent
 .It Em key
 The
-.Em key
+.Pa key
 option for
-.Em source-hash
+.Pa source-hash
 allows one to specify a string used by pfctl to generate a key which is hashed
 in with the source address.
 .It Em random
 The
-.Em random
+.Pa random
 option for
-.Em source-hash
+.Pa source-hash
 randomly generates a key for source-hash every time the ruleset is reloaded.
 .El
 .It Em round-robin
 The
-.Em round-robin
+.Pa round-robin
 option loops through the redirection address(s).
 .Pp
 When more than one redirection address is specified,
-.Em round-robin
+.Pa round-robin
 is the only permitted pool type.
 .It Pa static-port
 With
-.Em nat
+.Pa nat
 rules, the
-.Em static-port
+.Pa static-port
 option prevents
 .Xr pf 4
 from modifying the source port on tcp and udp packets.
@@ -951,7 +951,7 @@ state and get passed.
 For ICMP queries, keep state creates an ICMP state, and
 .Xr pf 4
 knows how to match ICMP replies to states.
-For example
+For example,
 .Bd -literal
     pass out inet proto icmp all icmp-type echoreq keep state
 .Ed
@@ -1028,7 +1028,7 @@ For a list of all valid timeout names, see
 Multiple options can be specified, separated by commas:
 .Bd -literal
     pass in proto tcp from any to any port www flags S/SA \\
-      keep state (max 100, tcp.established 60, tcp.closing 5)
+        keep state (max 100, tcp.established 60, tcp.closing 5)
 .Ed
 .Sh BLOCKING SPOOFED TRAFFIC
 "Spoofing" is the faking of IP addresses, typically for malicious
@@ -1077,8 +1077,8 @@ Every packet seen there is sent from and to the local host.
 One may want to include these rules at the very beginning
 of their ruleset to pass all traffic on lo0:
 .Bd -literal
-pass in quick on lo0 all
-pass out quick on lo0 all
+    pass in quick on lo0 all
+    pass out quick on lo0 all
 .Ed
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
@@ -1094,7 +1094,7 @@ to filter on things such as TCP ports or to perform NAT.
 There are four options for handling fragments in the packet filter:
 .Pp
 Use scrub rules.  See the section on
-.Em TRAFFIC NORMALIZATION.
+.Pa TRAFFIC NORMALIZATION.
 .Pp
 The alternative is to filter individual fragments with filter rules.
 If no
@@ -1113,10 +1113,14 @@ fragments but not complete packets.
 Filter rules without the
 .Pa fragment
 option still apply to fragments, if they only specify IP header fields.
-For instance, the rule 'pass in proto tcp from any to any port 80' never
-applies to a fragment, even if the fragment is part of a TCP packet with
-destination port 80, because without reassembly, this information is not
-available for each fragment.
+For instance, the rule
+.Pp
+.Bd -literal
+    pass in proto tcp from any to any port 80
+.Ed
+.Pp never applies to a fragment, even if the fragment is part of a TCP
+packet with destination port 80, because without reassembly, this information
+is not available for each fragment.
 This also means that fragments can't create new or match existing
 state table entries, which makes stateful filtering and address
 translations (NAT, redirection) for fragments impossible.
