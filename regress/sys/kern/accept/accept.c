@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.1 2002/02/11 15:40:31 art Exp $	*/
+/*	$OpenBSD: accept.c,v 1.2 2002/02/14 22:43:03 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2002 Public Domain.
  */
@@ -30,7 +30,7 @@ main(argc, argv)
 	int csunlen;
 	int fd, lastfd;
 	int status;
-	int ischild;
+	int ischild = 0;
 
 	/*
 	 * Create the listen socket.
