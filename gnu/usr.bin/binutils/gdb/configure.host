@@ -132,6 +132,7 @@ powerpc-*-aix*)		gdb_host=aix ;;
 powerpcle-*-cygwin32)	gdb_host=cygwin32 ;;
 powerpcle-*-solaris*)	gdb_host=solaris ;;
 powerpc-*-linux*)	gdb_host=linux ;;
+powerpc-*-openbsd*)	gdb_host=obsd ;;
 pn-*-*)			gdb_host=pn ;;
 
 pyramid-*-*)		gdb_host=pyramid ;;
