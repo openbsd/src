@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_fs.h,v 1.3 1996/06/27 06:48:40 downsj Exp $	*/
+/*	$OpenBSD: ext2_fs.h,v 1.4 1996/11/05 00:55:01 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -114,15 +114,24 @@
 #define	EXT2_MAX_BLOCK_SIZE		4096
 #define EXT2_MIN_BLOCK_LOG_SIZE		  10
 
+#ifdef _KERNEL
 #define EXT2_BLOCK_SIZE(s)		((s)->s_blocksize)
+#else
+#define EXT2_BLOCK_SIZE(s)		(EXT2_MIN_BLOCK_SIZE << (s)->s_log_block_size)
+#endif
 #define EXT2_ACLE_PER_BLOCK(s)		(EXT2_BLOCK_SIZE(s) / \
 					sizeof (struct ext2_acl_entry))
 #define	EXT2_ADDR_PER_BLOCK(s)		(EXT2_BLOCK_SIZE(s) / sizeof (__u32))
 #define EXT2_BLOCK_SIZE_BITS(s)		((s)->s_log_block_size + 10)
 
+#ifdef _KERNEL
 #define EXT2_INODE_SIZE			128
 			/* ought to be  sizeof (struct ext2_inode)) */
 #define	EXT2_INODES_PER_BLOCK(s)	((s)->s_inodes_per_block)
+#else
+#define	EXT2_INODES_PER_BLOCK(s)	(EXT2_BLOCK_SIZE(s) / sizeof (struct ext2_inode))
+#endif
+
 
 /*
  * Macro-instructions used to manage fragments
@@ -130,7 +139,11 @@
 #define EXT2_MIN_FRAG_SIZE		1024
 #define	EXT2_MAX_FRAG_SIZE		4096
 #define EXT2_MIN_FRAG_LOG_SIZE		  10
+#ifdef _KERNEL
 #define EXT2_FRAG_SIZE(s)		((s)->s_frag_size)
+#else
+#define EXT2_FRAG_SIZE(s)		(EXT2_MIN_FRAG_SIZE << (s)->s_log_frag_size)
+#endif
 #define EXT2_FRAGS_PER_BLOCK(s)	(EXT2_BLOCK_SIZE(s) / EXT2_FRAG_SIZE(s))
 
 /*
@@ -285,12 +298,27 @@ struct ext2_super_block {
 	__u32	s_reserved[235];	/* Padding to the end of the block */
 };
 
+/*
+ * Codes for operating systems
+ */
 #define EXT2_OS_LINUX		0
 #define EXT2_OS_HURD		1
 #define EXT2_OS_MASIX		2
+#define EXT2_OS_BSD		3
+#define EXT2_OS_LITES		4
 
-#define EXT2_CURRENT_REV	0
+#define EXT2_OS_FREEBSD		EXT2_OS_BSD
 
+/*
+ * Revision levels
+ */
+#define EXT2_GOOD_OLD_REV	0	/* The good old (original) format */
+
+#define EXT2_CURRENT_REV	EXT2_GOOD_OLD_REV
+
+/*
+ * Default values for user and/or group using reserved blocks
+ */
 #define	EXT2_DEF_RESUID		0
 #define	EXT2_DEF_RESGID		0
 
