@@ -46,7 +46,7 @@ process again from scratch.
 	what disk to install on.
 
 	While booting, you will probably see several warnings.  You
-	should be warned that the kernel can't figure out what devive
+	should be warned that the kernel can't figure out what device
 	it booted from and that no swap space is present.  Do not be
 	alarmed, these are completely normal.  The first warning
 	occurs because while OpenBSD/alpha can boot from the floppy
