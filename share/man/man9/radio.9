@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radio.9,v 1.1 2001/10/04 22:33:49 gluk Exp $
+.\"	$OpenBSD: radio.9,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"	
 .\" Copyright (c) Maxim Tsyplakov <tm@oganer.net>
 .\" All rights reserved.
@@ -42,10 +42,8 @@ struct radio_hw_if {
 	void	*close(dev_t, int, int, struct proc *);
 	int	*ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 };
-
 .Ed
 .Pp
-
 The high level radio driver attaches to the low level driver
 when the latter calls
 .Va radio_attach_mi .
@@ -71,11 +69,9 @@ when the high level driver calls them.
 .Va dev
 is the device struct for the hardware device.
 .Pp
-
 The fields of
 .Va radio_hw_if
 are described in some more detail below.
-
 .Bd -literal
 int open (dev_t dev, int flags, int fmt, struct proc *p);
   Is called when the radio device is opened.
@@ -88,6 +84,6 @@ int close (dev_t dev, int flags, int fmt, struct proc *p);
 int ioctl (dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p);
   Is ioctl requests handler function.
   Returns 0 on success, otherwise an error code.
-
+.Ed
 .Sh SEE ALSO
 .Xr radio 4

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: az.4,v 1.1 2001/10/04 22:33:49 gluk Exp $
+.\"	$OpenBSD: az.4,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -39,17 +39,19 @@ The
 driver provides support for the Aztech/PackardBell radio cards.
 .Pp
 The Aztech/PackardBell cards are stereo FM tuners that allow to tune
-in the 87.5-108.0 MHz range. It is capable to report signal status
-(tuned/not tuned, stereo/mono signal) and force audio output to mono.
+in the 87.5-108.0 MHz range.
+It is capable to report signal status (tuned/not tuned, stereo/mono signal)
+and force audio output to mono.
 .Pp
-The Aztech cards use only one I/O port. The I/O port is set by the driver to
-the value specified in the configuration file. The I/O port must be one of
+The Aztech cards use only one I/O port.
+The I/O port is set by the driver to the value specified in the configuration
+file.
+The I/O port must be one of
 0x350 and 0x358.
 .Sh BUGS
-It is impossible to determine which frequency the card is tuned to. Thus,
-the driver will report an internally stored value even if it is not correct
-(changed by some program that uses direct port access).
+It is impossible to determine which frequency the card is tuned to.
+Thus, the driver will report an internally stored value even if it is not
+correct (changed by some program that uses direct port access).
 .Sh SEE ALSO
-.Xr radio 4 ,
-.Xr isa 4 .
-
+.Xr isa 4 ,
+.Xr radio 4

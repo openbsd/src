@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sf2r.4,v 1.1 2001/10/04 22:33:49 gluk Exp $
+.\"	$OpenBSD: sf2r.4,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -42,13 +42,14 @@ The SF16-FMR2 is a stereo FM tuner that allows to tune in the range
 audio output to mono, perform hardware signal search, and has an internal
 AFC.
 .Pp
-The SF16-FMR2 cards take only one I/O port. The I/O port is set by the driver
-to the value specified in the configuration file and must be 0x384.
+The SF16-FMR2 cards take only one I/O port.
+The I/O port is set by the driver to the value specified in the configuration
+file and must be 0x384.
 .Sh BUGS
 MediaForte made two variants of the SF16-FMR2 cards, the first one has
 an internal amplifier of the output sound, the second one does not have
-such an amplifier. The current driver supports only the second variant.
+such an amplifier.
+The current driver supports only the second variant.
 .Sh SEE ALSO
-.Xr radio 4 ,
-.Xr isa 4 .
-
+.Xr isa 4 ,
+.Xr radio 4

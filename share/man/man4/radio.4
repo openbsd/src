@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radio.4,v 1.1 2001/10/04 22:33:49 gluk Exp $
+.\"	$OpenBSD: radio.4,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -36,8 +36,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for various FM radio cards. It provides an uniform
-programming interface layer above different underlying radio hardware drivers.
+driver provides support for various FM radio cards.
+It provides an uniform programming interface layer above different underlying
+radio hardware drivers.
 .Pp
 For radio tuner controlling there is a single device file available:
 .Pa /dev/radio .
@@ -48,8 +49,8 @@ commands are supported:
 .Pp
 .Bl -tag -width indent -compact
 .It Dv RIOCSMUTE (u_long)
-This command mutes or unmutes the device. This operation does not affect
-volume value of the device.
+This command mutes or unmutes the device.
+This operation does not affect volume value of the device.
 .It Dv RIOCGMUTE (u_long)
 This command returns current mute state of the device.
 .It Dv RIOCSMONO (u_long)
@@ -69,8 +70,8 @@ This command sets working frequency of the device.
 This command assumes that a signal search is required and gives direction
 of search to the driver - 0 to search down and any non-zero value to search up.
 .It Dv RIOCGCAPS (u_long)
-This command returns the device capabilities. The capabilities can have
-following values:
+This command returns the device capabilities.
+The capabilities can have following values:
 .Bl -tag -width indent -compact
 .It Dv RADIO_CAPS_DETECT_STEREO
 The device can determine is it tuned to a stereo signal.
@@ -88,8 +89,9 @@ The device allow to change the reference frequency of a received signal.
 The device allow to change the station lock sensitivity used during search
 operation.
 .It Dv RADIO_CAPS_CARD_TYPE
-Some cards have several different incarnations. This allow to determine
-the variant of the card. Currently not used.
+Some cards have several different incarnations.
+This allow to determine the variant of the card.
+Currently not used.
 .El
 .It Dv RIOCGINFO (u_long)
 This commands returns current state of the device.
@@ -113,18 +115,13 @@ This command sets station lock sensitivity of the device.
 .It Pa /dev/radio
 .El
 .Sh SEE ALSO
-.Xr ioctl 2 .
-.Pp
-For ports using the ISA bus:
+.Xr ioctl 2 ,
+.Xr az 4 ,
 .Xr sf2r 4 ,
-.Xr az 4 .
-.Pp
-For ports using the PCI bus:
-.Xr sf4r 4 .
+.Xr sf4r 4
 .Sh BUGS
-.Pp
-You can have only one card of the same type. For example, if you have two
-aztech FM tuners, the first card with jumper set to port 0x358 and the second
-one - to 0x350, you can use only one aztech card (in the kernel, that is)
-either with port 0x350 or 0x358. Don't even try to compile support for the
-second card into the kernel.
+You can have only one card of the same type.
+For example, if you have two aztech FM tuners, the first card with jumper
+set to port 0x358 and the second one - to 0x350, you can use only one
+aztech card (in the kernel, that is) either with port 0x350 or 0x358.
+Don't even try to compile support for the second card into the kernel.
