@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.4 1997/07/07 23:17:40 downsj Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.5 1997/07/08 00:00:48 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -134,7 +134,10 @@ should not be included.  The ``M'' flag marks this entry as a monitored
 log file.
 .It monitor notification (optional)
 Specify the account that should receive notification messages if this is
-a monitored log file.
+a monitored log file.  Notification messages are sent as email; the operator
+deserves what they get if they mark the log file
+.Xr sendmail 8
+logs to as monitored.
 .El
 .Pp
 .Sh OPTIONS
