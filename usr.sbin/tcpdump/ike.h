@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.2 2001/04/09 21:44:40 ho Exp $ */
+/* $OpenBSD: ike.h,v 1.3 2001/04/10 16:10:21 ho Exp $ */
 
 #define ISAKMP_DOI		0
 #define IPSEC_DOI		1
@@ -82,6 +82,7 @@
 #define PAYLOAD_NOTIFICATION	11
 #define PAYLOAD_DELETE		12
 #define PAYLOAD_VENDOR		13
+#define PAYLOAD_ATTRIBUTE	14
 
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
@@ -98,6 +99,7 @@
 	  "NOTIFICATION",	/* 11 */		\
 	  "DELETE",		/* 12 */		\
 	  "VENDOR",		/* 13 */		\
+	  "ATTRIBUTE",		/* 14 (ikecfg) */	\
 	}
 
 /* Exchange types */
@@ -107,6 +109,7 @@
 #define EXCHANGE_AUTH_ONLY	3
 #define EXCHANGE_AGGRESSIVE	4
 #define EXCHANGE_INFO		5
+#define EXCHANGE_TRANSACTION	6
 #define EXCHANGE_QUICK_MODE	32
 #define EXCHANGE_NEW_GROUP_MODE	33
 
@@ -118,6 +121,7 @@
 	  "AUTH_ONLY",		/* 3 */			\
 	  "AGGRESSIVE",		/* 4 */			\
 	  "INFO",		/* 5 */			\
+	  "TRANSACTION",	/* 6 (ikecfg) */	\
 	  /* step up to type 32 with unknowns */	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
@@ -125,7 +129,7 @@
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown",				\
+	  "unknown",					\
 	  "QUICK_MODE",		/* 32 */		\
 	  "NEW_GROUP_MODE",	/* 33 */		\
 	}
@@ -284,4 +288,40 @@
 	}
 #define IPSEC_ATTR_IPCOMP_INITIALIZER				\
 	{ "NONE", "OUI", "DEFLATE", "LZS", "V42BIS",		\
+	}
+
+/*
+ * IKE mode config. 
+ */
+
+#define IKE_CFG_ATTRIBUTE_TYPE_INITIALIZER		\
+	{ "RESERVED", "CFG_REQUEST", "CFG_REPLY",	\
+	  "CFG_SET", "CFG_ACK",				\
+	}
+
+#define IKE_CFG_ATTR_INTERNAL_IP4_ADDRESS		1
+#define IKE_CFG_ATTR_INTERNAL_IP4_NETMASK		2
+#define IKE_CFG_ATTR_INTERNAL_IP4_DNS			3
+#define IKE_CFG_ATTR_INTERNAL_IP4_NBNS			4
+#define IKE_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY		5
+#define IKE_CFG_ATTR_INTERNAL_IP4_DHCP			6
+#define IKE_CFG_ATTR_APPLICATION_VERSION		7
+#define IKE_CFG_ATTR_INTERNAL_IP6_ADDRESS		8
+#define IKE_CFG_ATTR_INTERNAL_IP6_NETMASK		9
+#define IKE_CFG_ATTR_INTERNAL_IP6_DNS			10
+#define IKE_CFG_ATTR_INTERNAL_IP6_NBNS			11
+#define IKE_CFG_ATTR_INTERNAL_IP6_DHCP			12
+#define IKE_CFG_ATTR_INTERNAL_IP4_SUBNET		13
+#define IKE_CFG_ATTR_SUPPORTED_ATTRIBUTES		14
+#define IKE_CFG_ATTR_INTERNAL_IP6_SUBNET		15
+
+#define IKE_CFG_ATTRIBUTE_INITIALIZER				\
+	{ "RESERVED", "INTERNAL_IP4_ADDRESS",			\
+	  "INTERNAL_IP4_NETMASK", "INTERNAL_IP4_DNS",		\
+	  "INTERNAL_IP4_NBNS", "INTERNAL_ADDRESS_EXPIRY",	\
+	  "INTERNAL_IP4_DHCP", "APPLICATION_VERSION",		\
+	  "INTERNAL_IP6_ADDRESS", "INTERNAL_IP6_NETMASK",	\
+	  "INTERNAL_IP6_DNS", "INTERNAL_IP6_NBNS",		\
+	  "INTERNAL_IP6_DHCP", "INTERNAL_IP4_SUBNET",		\
+	  "SUPPORTED_ATTRIBUTES", "INTERNAL_IP6_SUBNET",	\
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.5 2001/04/09 21:44:40 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.6 2001/04/10 16:10:21 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.5 2001/04/09 21:44:40 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.6 2001/04/10 16:10:21 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -199,7 +199,7 @@ trunc:
 }
 
 void
-ike_sa_print (register u_char *buf, register int len)
+ike_pl_sa_print (register u_char *buf, register int len)
 {
 	u_int32_t situation = ntohl(*(u_int32_t *)(buf + 4));
 	u_char ike_doi = ntohl((*(u_int32_t *)buf));
@@ -221,7 +221,7 @@ ike_sa_print (register u_char *buf, register int len)
 }
 
 int
-ike_attribute_print (register u_char *buf, u_char doi)
+ike_attribute_print (register u_char *buf, u_char doi, register int maxlen)
 {
 	static char *attrs[] = IKE_ATTR_INITIALIZER;
 	static char *attr_enc[] = IKE_ATTR_ENCRYPT_INITIALIZER;
@@ -235,36 +235,45 @@ ike_attribute_print (register u_char *buf, u_char doi)
 	static char *ipsec_attr_auth[] = IPSEC_ATTR_AUTH_INITIALIZER;
 	static char *ipsec_attr_ltype[] = IPSEC_ATTR_DURATION_INITIALIZER;
 
-	unsigned short type = buf[0]<<8 | buf[1];
-	unsigned short length = 0, p;
+	u_char    af   = buf[0] >> 7;
+	u_int16_t type = (buf[0] & 0x7f) << 8 | buf[1];
+	u_int16_t len  = buf[2] << 8 | buf[3], val;
 
 	if (doi == ISAKMP_DOI) 
 		printf("\n\t%sattribute %s = ", ike_tab_offset(),
-		       ((type & 0x7fff) < sizeof attrs / sizeof attrs[0] ?
-			attrs[type & 0x7fff] : "unknown"));
+		       (type < sizeof attrs / sizeof attrs[0] ?
+			attrs[type] : "<unknown>"));
 	else
 		printf("\n\t%sattribute %s = ", ike_tab_offset(),
-		       ((type & 0x7fff) < 
-			(sizeof ipsec_attrs / sizeof ipsec_attrs[0]) ?
-			ipsec_attrs[type & 0x7fff] : "unknown"));
-		
-	if (!(type >> 15)) {
-	        length = buf[2]<<8 | buf[3];
-	        for (p = 0; p < length; p++)
-	               printf("%02x", (char)*(buf + 4 + p));
-	} else {
-	        p = buf[2]<<8 | buf[3];
+		       (type < (sizeof ipsec_attrs / sizeof ipsec_attrs[0]) ?
+			ipsec_attrs[type] : "<unknown>"));
+
+	if ((af == 1 && maxlen < 4) ||
+	    (af == 0 && maxlen < (len + 4))) {
+		printf ("\n\t%s[|attr]", ike_tab_offset());
+		return maxlen;
+	}
+
+	if (af == 0) {
+		/* AF=0; print the variable length attribute value */
+		for (val = 0; val < len; val++)
+			printf("%02x", (char)*(buf + 4 + val));
+		return len + 4;
+	}
+
+	val = len;	/* For AF=1, this field is the "VALUE" */
+	len = 4; 	/* and with AF=1, length is always 4 */
 
 #define CASE_PRINT(TYPE,var) \
         case TYPE : \
-                if (p < sizeof var / sizeof var [0]) \
-                        printf("%s", var [p]); \
-                else \
-                        printf("%d (unknown)", p); \
-                break;
- 
+               	if (val < sizeof var / sizeof var [0]) \
+                       	printf("%s", var [val]); \
+               	else \
+                       	printf("%d (unknown)", val); \
+               	break;
+
 	if (doi == ISAKMP_DOI)
-		switch(type & 0x7fff) {
+		switch(type) {
 			CASE_PRINT(IKE_ATTR_ENCRYPTION_ALGORITHM, attr_enc);
 			CASE_PRINT(IKE_ATTR_HASH_ALGORITHM, attr_hash);
 			CASE_PRINT(IKE_ATTR_AUTHENTICATION_METHOD, attr_auth);
@@ -272,32 +281,32 @@ ike_attribute_print (register u_char *buf, u_char doi)
 			CASE_PRINT(IKE_ATTR_GROUP_TYPE, attr_gtype);
 			CASE_PRINT(IKE_ATTR_LIFE_TYPE, attr_ltype);
 		default:
-			printf("%d", p);
+			printf("%d", val);
 		}
 	else
-		switch(type & 0x7fff) {
+		switch(type) {
 			CASE_PRINT(IPSEC_ATTR_SA_LIFE_TYPE, ipsec_attr_ltype);
 			CASE_PRINT(IPSEC_ATTR_ENCAPSULATION_MODE,
 				   ipsec_attr_encap);
 			CASE_PRINT(IPSEC_ATTR_AUTHENTICATION_ALGORITHM,
 				   ipsec_attr_auth);
 		default:
-			printf ("%d", p);
+			printf ("%d", val);
 		}
-	}
+
 #undef CASE_PRINT
 
-	return length + 4;
+	return len;
 }
 
 void
-ike_transform_print (register u_char *buf, register int len, u_char doi)
+ike_pl_transform_print (register u_char *buf, register int len, u_char doi)
 {
 	const char *ah[] = IPSEC_AH_INITIALIZER;
 	const char *esp[] = IPSEC_ESP_INITIALIZER;
 	u_char *attr = buf + 4;
 
-	printf("\n\t%stransform: %d ID: ", ike_tab_offset(), (char)buf[0]);
+	printf("\n\t%stransform: %u ID: ", ike_tab_offset(), buf[0]);
 	
 	switch (doi) {
 	case ISAKMP_DOI:
@@ -329,12 +338,12 @@ ike_transform_print (register u_char *buf, register int len, u_char doi)
  
 	ike_tab_level++;
 	while((int)(attr - buf) < len - 4)  /* Skip last 'NONE' attr */
-		attr += ike_attribute_print(attr, doi);
+		attr += ike_attribute_print(attr, doi, len - (attr-buf));
 	ike_tab_level--;
 }
 
 void
-ike_proposal_print (register u_char *buf, register int len, u_char doi)
+ike_pl_proposal_print (register u_char *buf, register int len, u_char doi)
 {
 	printf(" proposal: %d proto: %s spisz: %d xforms: %d", 
 	       buf[0], (buf[1] < (sizeof ike / sizeof ike[0]) ? ike[buf[1]] : 
@@ -356,7 +365,7 @@ ike_proposal_print (register u_char *buf, register int len, u_char doi)
 }
 
 void
-ike_ke_print (register u_char *buf, register int len, u_char doi)
+ike_pl_ke_print (register u_char *buf, register int len, u_char doi)
 {
 	if (doi != IPSEC_DOI)
 		return;
@@ -412,7 +421,7 @@ ipsec_id_print (register u_char *buf, register int len, u_char doi)
 	case IPSEC_ID_USER_FQDN:
 		printf ("\"");
 		for(p = buf + 4; (int)(p - buf) < len; p++)
-			printf("%c",(isprint(*p) ? *p : '.'));
+			printf ("%c",(isprint(*p) ? *p : '.'));
 		printf ("\"");
 		break;
 
@@ -426,7 +435,7 @@ ipsec_id_print (register u_char *buf, register int len, u_char doi)
 }
 
 void
-ike_notification_print (register u_char *buf, register int len)
+ike_pl_notification_print (register u_char *buf, register int len)
 {
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
   	struct notification_payload *np = (struct notification_payload *)buf;
@@ -463,7 +472,8 @@ ike_notification_print (register u_char *buf, register int len)
 		attr = &np->data[np->spi_size];
 		ike_tab_level++;
 		while((int)(attr - buf) < len - 4)  /* Skip last 'NONE' attr */
-			attr += ike_attribute_print(attr, IPSEC_DOI);
+			attr += ike_attribute_print(attr, IPSEC_DOI,
+						    len - (attr-buf));
 		ike_tab_level--;	
 		break;
 
@@ -491,7 +501,7 @@ ike_notification_print (register u_char *buf, register int len)
 }
 	
 void
-ike_vendor_print (register u_char *buf, register int len, u_char doi)
+ike_pl_vendor_print (register u_char *buf, register int len, u_char doi)
 {
 	u_char *p = buf;
 
@@ -502,6 +512,120 @@ ike_vendor_print (register u_char *buf, register int len, u_char doi)
 	for(p = buf; (int)(p - buf) < len; p++)
 	        printf("%c",(isprint(*p) ? *p : '.'));
 	printf("\"");
+}
+
+/* IKE mode-config. */
+int
+ike_cfg_attribute_print (register u_char *buf, register int attr_type, 
+			 register int maxlen)
+{
+	static char *attrs[] = IKE_CFG_ATTRIBUTE_INITIALIZER;
+	char ntop_buf[INET6_ADDRSTRLEN];
+	struct in_addr in;
+
+	u_char    af   = buf[0] >> 7;
+	u_int16_t type = (buf[0] & 0x7f) << 8 | buf[1];
+	u_int16_t len  = buf[2] << 8 | buf[3], p;
+
+	printf("\n\t\%sattribute %s = ", ike_tab_offset(),
+	       type < (sizeof attrs / sizeof attrs[0]) ? attrs[type] : 
+	       "<unknown>");
+
+	if ((af == 1 && maxlen < 4) ||
+	    (af == 0 && maxlen < (len + 4))) {
+		printf ("\n\t%s[|attr]", ike_tab_offset());
+		return maxlen;
+	}
+
+	if (af == 0) {
+		for (p = 0; p < len; p++)
+			printf ("%02x", (char)*(buf + 4 + p));
+		return len + 4;
+	}
+
+	/* AF is 1 */
+	if (len == 0) {
+		printf ("<none>");
+		return 4;
+	}
+	
+	switch (type) {
+	case IKE_CFG_ATTR_INTERNAL_IP4_ADDRESS:
+	case IKE_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case IKE_CFG_ATTR_INTERNAL_IP4_DNS:
+	case IKE_CFG_ATTR_INTERNAL_IP4_NBNS:
+	case IKE_CFG_ATTR_INTERNAL_IP4_DHCP:
+		memcpy (&in.s_addr, buf + 4, sizeof in);
+		printf ("%s", inet_ntoa (in));
+		break;
+		
+	case IKE_CFG_ATTR_INTERNAL_IP6_ADDRESS:
+	case IKE_CFG_ATTR_INTERNAL_IP6_NETMASK:
+	case IKE_CFG_ATTR_INTERNAL_IP6_DNS:
+	case IKE_CFG_ATTR_INTERNAL_IP6_NBNS:
+	case IKE_CFG_ATTR_INTERNAL_IP6_DHCP:
+		printf ("%s", inet_ntop (AF_INET6, buf + 4, ntop_buf, 
+					 sizeof ntop_buf));
+		break;
+
+	case IKE_CFG_ATTR_INTERNAL_IP4_SUBNET:
+		memcpy(&in.s_addr, buf + 4, sizeof in);
+		printf("%s/", inet_ntoa (in));
+		memcpy(&in.s_addr, buf + 8, sizeof in);
+		printf("%s", inet_ntoa (in));
+		break;
+		
+	case IKE_CFG_ATTR_INTERNAL_IP6_SUBNET:
+		printf("%s/%u", inet_ntop (AF_INET6, buf + 4, ntop_buf, 
+					   sizeof ntop_buf),
+		       *(buf + 4 + 16));
+		break;
+		
+	case IKE_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY:
+		printf("%u seconds", *(u_int32_t *)(buf + 4));
+		break;
+
+	case IKE_CFG_ATTR_APPLICATION_VERSION:
+		for (p = 0; p < len; p++)
+			printf("%c", isprint(*(buf + 4 + p)) ? 
+			       *(buf + 4 + p) : '.');
+		break;
+		
+	case IKE_CFG_ATTR_SUPPORTED_ATTRIBUTES:
+		printf("<%d attributes>", len / 2);
+		ike_tab_level++;
+		for (p = 0; p < len; p += 2) {
+			type = (buf[4 + p] << 8 | buf[4 + p + 1]) & 0x7fff;
+			printf("\n\t%s%s", ike_tab_offset(),
+			       type < (sizeof attrs/sizeof attrs[0]) ?
+			       attrs[type] : "<unknown>");
+		}
+		ike_tab_level--;
+		break;
+		
+	default:
+		break;
+	}
+	return len + 4;
+}
+
+void
+ike_pl_attribute_print (register u_char *buf, register int len)
+{
+	static const char *pl_attr[] = IKE_CFG_ATTRIBUTE_TYPE_INITIALIZER;
+	u_char type, *attr;
+	u_int16_t id;
+
+	type = buf[0];
+	id = buf[2]<<8 | buf[3];
+	attr = buf + 4;
+
+	printf(" type: %s Id: %d", 
+	       type < (sizeof pl_attr/sizeof pl_attr[0]) ? pl_attr[type] :
+	       "<unknown>", id);
+
+	while((int)(attr - buf) < len - 4)  
+		attr += ike_cfg_attribute_print(attr, type, len - (attr-buf));
 }
 
 void
@@ -524,19 +648,19 @@ ike_pl_print (register u_char type, register u_char *buf, u_char doi)
 		return;
 
 	case PAYLOAD_SA:
-		ike_sa_print(buf+4, this_len);
+		ike_pl_sa_print(buf+4, this_len);
 		break;
 	    
 	case PAYLOAD_PROPOSAL:
-		ike_proposal_print(buf+4, this_len, doi);
+		ike_pl_proposal_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_TRANSFORM:
-		ike_transform_print(buf+4, this_len, doi);
+		ike_pl_transform_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_KE:
-		ike_ke_print(buf+4, this_len, doi);
+		ike_pl_ke_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_ID:
@@ -553,11 +677,15 @@ ike_pl_print (register u_char type, register u_char *buf, u_char doi)
 		break;
 	    
 	case PAYLOAD_NOTIFICATION:
-	  	ike_notification_print(buf, this_len);
+	  	ike_pl_notification_print(buf, this_len);
 		break;
 
 	case PAYLOAD_VENDOR:
-	        ike_vendor_print(buf+4, this_len, doi);
+	        ike_pl_vendor_print(buf+4, this_len, doi);
+		break;
+
+	case PAYLOAD_ATTRIBUTE:
+	        ike_pl_attribute_print(buf+4, this_len);
 		break;
 
 	default:
