@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.17 2002/04/15 17:43:30 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.18 2002/06/04 21:50:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -56,11 +56,10 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
-#include <dev/rcons/raster.h>
+#include <dev/rasops/rasops.h>
 
 struct vgafb_softc {
 	struct device sc_dev;
-	struct sbusdev sc_sd;
 	int sc_nscreens;
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	int sc_node, sc_ofhandle;
@@ -72,24 +71,12 @@ struct vgafb_softc {
 	pci_chipset_tag_t sc_pci_chip;
 	u_int8_t *sc_rom_ptr;
 	int sc_has_rom;
-	struct rcons sc_rcons;
-	struct raster sc_raster;
 	int sc_console;
 	u_int sc_mode;
 	u_int8_t sc_cmap_red[256];
 	u_int8_t sc_cmap_green[256];
 	u_int8_t sc_cmap_blue[256];
-};
-
-struct wsdisplay_emulops vgafb_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
+	struct rasops_info sc_rasops;
 };
 
 struct wsscreen_descr vgafb_stdscreen = {
@@ -203,48 +190,61 @@ vgafbattach(parent, self, aux)
 	if (vgafb_mapregs(sc, pa))
 		return;
 
-	sc->sc_rcons.rc_sp = &sc->sc_raster;
-	sc->sc_raster.width = sc->sc_width;
-	sc->sc_raster.height = sc->sc_height;
-	sc->sc_raster.depth = sc->sc_depth;
-	sc->sc_raster.linelongs = sc->sc_linebytes / 4;
-	sc->sc_raster.pixels = (void *)bus_space_vaddr(sc->sc_mem_t, sc->sc_mem_h);
-
-	if (sc->sc_console == 0 ||
-	    romgetcursoraddr(&sc->sc_rcons.rc_crowp, &sc->sc_rcons.rc_ccolp)) {
-		sc->sc_rcons.rc_crow = sc->sc_rcons.rc_ccol = -1;
-		sc->sc_rcons.rc_crowp = &sc->sc_rcons.rc_crow;
-		sc->sc_rcons.rc_ccolp = &sc->sc_rcons.rc_ccol;
+	if (sc->sc_depth == 24) {
+		/* Depth is 24, but rasops really wants bpp */
+		sc->sc_rasops.ri_depth = 32;
+		/* PROM gets linebytes wrong, ignore it. */
+		sc->sc_rasops.ri_stride =
+		    (sc->sc_rasops.ri_depth / 8) * sc->sc_width;
+	} else {
+		sc->sc_rasops.ri_depth = sc->sc_depth;
+		sc->sc_rasops.ri_stride = sc->sc_linebytes;
 	}
 
-	sc->sc_rcons.rc_maxcol =
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-	sc->sc_rcons.rc_maxrow =
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+	sc->sc_rasops.ri_flg = RI_CENTER;
+	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_mem_t,
+	    sc->sc_mem_h);
+	sc->sc_rasops.ri_width = sc->sc_width;
+	sc->sc_rasops.ri_height = sc->sc_height;
+	sc->sc_rasops.ri_hw = sc;
 
-	rcons_init(&sc->sc_rcons,
-	    sc->sc_rcons.rc_maxrow, sc->sc_rcons.rc_maxcol);
+	rasops_init(&sc->sc_rasops,
+	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
+	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
 
-	vgafb_stdscreen.nrows = sc->sc_rcons.rc_maxrow;
-	vgafb_stdscreen.ncols = sc->sc_rcons.rc_maxcol;
-	vgafb_stdscreen.textops = &vgafb_emulops;
-	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, &defattr);
+	vgafb_stdscreen.nrows = sc->sc_rasops.ri_rows;
+	vgafb_stdscreen.ncols = sc->sc_rasops.ri_cols;
+	vgafb_stdscreen.textops = &sc->sc_rasops.ri_ops;
+	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, &defattr);
 
 	printf("\n");
 
 	if (sc->sc_console) {
+		int *ccolp, *crowp;
+
 		sc->sc_ofhandle = OF_stdout();
-		vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-		vgafb_setcolor(sc, 255, 255, 255, 255);
-		vgafb_setcolor(sc, WSCOL_RED, 255, 0, 0);
-		vgafb_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-		vgafb_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-		vgafb_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-		vgafb_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-		vgafb_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-		vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
-		wsdisplay_cnattach(&vgafb_stdscreen, &sc->sc_rcons,
-		    *sc->sc_rcons.rc_ccolp, *sc->sc_rcons.rc_crowp, defattr);
+
+		if (sc->sc_depth == 8) {
+			vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+			vgafb_setcolor(sc, 255, 255, 255, 255);
+			vgafb_setcolor(sc, WSCOL_RED, 255, 0, 0);
+			vgafb_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
+			vgafb_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
+			vgafb_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
+			vgafb_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
+			vgafb_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
+			vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+		}
+
+		if (romgetcursoraddr(&crowp, &ccolp))
+			ccolp = crowp = NULL;
+		if (ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *ccolp;
+		if (crowp != NULL)
+			sc->sc_rasops.ri_crow = *crowp;
+		wsdisplay_cnattach(&vgafb_stdscreen, &sc->sc_rasops,
+		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
 
 	waa.console = sc->sc_console;
@@ -278,11 +278,11 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		wdf = (void *)data;
 		wdf->height = sc->sc_height;
 		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_depth;
+		wdf->depth  = sc->sc_rasops.ri_depth;
 		wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_linebytes;
+		*(u_int *)data = sc->sc_rasops.ri_stride;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -386,10 +386,11 @@ vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rcons;
-	*curyp = *sc->sc_rcons.rc_crowp;
-	*curxp = *sc->sc_rcons.rc_ccolp;
-	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, attrp);
+	*cookiep = &sc->sc_rasops;
+	*curyp = 0;
+	*curxp = 0;
+	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
@@ -619,8 +620,7 @@ vgafb_mapregs(sc, pa)
 				if (hasmem)
 					continue;
 				if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE,
-	    			    ba, bs, 0, NULL,
-				    &sc->sc_mem_h)) {
+				    ba, bs, 0, NULL, &sc->sc_mem_h)) {
 					printf(": can't map mem space\n");
 					continue;
 				}

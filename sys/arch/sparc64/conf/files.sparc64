@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.34 2002/06/03 16:35:55 fgsch Exp $
+#	$OpenBSD: files.sparc64,v 1.35 2002/06/04 21:50:07 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -23,6 +23,8 @@ file	arch/sparc64/dev/uperf.c		uperf needs-flag
 
 include "dev/sun/files.sun"
 include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 include "dev/sbus/files.sbus"
 include "dev/i2o/files.i2o"
 include "dev/mii/files.mii"
@@ -37,10 +39,6 @@ file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
 device creator: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32
 attach creator at mainbus
 file	arch/sparc64/dev/creator.c		creator
@@ -54,7 +52,7 @@ file	arch/sparc64/dev/pci_machdep.c		psycho
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c			hme_pci
 
-device vgafb: wsemuldisplaydev, wsrasteremulops, wsemul_sun
+device vgafb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
 attach vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
