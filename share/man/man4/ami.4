@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.1 2001/03/09 11:22:35 mickey Exp $
+.\"	$OpenBSD: ami.4,v 1.2 2001/03/27 17:15:47 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff.  All rights reserved.
 .\"
@@ -19,7 +19,10 @@ driver provides support for MegaRAID family of raid controllers.
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD
 and superpositions of those configurations.
-All the RAID set volume management is done via the card BIOS.
+.Pp
+Some cards support both I2O and so called `Mass Storage' mode
+of operation. This driver only supports the later one, I2O
+mode will be supported by a different framework.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
@@ -34,3 +37,5 @@ The
 .Nm
 driver first appeared in
 .Ox 2.9 .
+.Sh BUGS
+All the RAID set volume management is done via the card BIOS.
