@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stp.4,v 1.2 2002/06/20 03:22:52 deraadt Exp $
+.\"	$OpenBSD: stp.4,v 1.3 2002/06/22 22:32:11 deraadt Exp $
 .\"	$NetBSD: nell.4,v 1.2 2002/03/29 16:23:50 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,10 +56,9 @@ It uses the STP4020 chipset and it is SUN part number 501-2367.
 .Xr pcmcia 4 ,
 .Xr sbus 4
 .Sh BUGS
-The driver provides a big-endian pcmcia bus, which is wrong in the
-.Ox
-context. Due to missing/incomplete documentation of the chipset it is not
-known for sure if the hardware has any byteswapping mode. For sparc64 systems
-this can easily be worked around in software, so this will be fixed. For
-sparc systems, the fix might impose a serious performance degration and is
-subject of further research.
+Unlike other pcmcia adapters which are little-endian, this bridge
+provides a big-endian
+.Xr pcmcia 4
+bus.
+Therefore, 16 bit drivers need to be made aware of this before they will
+work.
