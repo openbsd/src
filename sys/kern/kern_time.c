@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.25 2001/12/12 19:06:47 nordin Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.26 2002/02/15 15:59:11 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -189,13 +189,13 @@ sys_nanosleep(p, v, retval)
 	register_t *retval;
 {
 	static int nanowait;
-	register struct sys_nanosleep_args/* {
+	struct sys_nanosleep_args/* {
 		syscallarg(const struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
 	struct timespec rqt;
 	struct timespec rmt;
-	struct timeval atv, utv;
+	struct timeval stv, etv, atv;
 	int error, s, timo;
 
 	error = copyin((const void *)SCARG(uap, rqtp), (void *)&rqt,
@@ -207,15 +207,13 @@ sys_nanosleep(p, v, retval)
 	if (itimerfix(&atv))
 		return (EINVAL);
 
-	s = splclock();
-	timeradd(&atv,&time,&atv);
-	timo = hzto(&atv);
-	splx(s);
-	/* 
-	 * Avoid inadvertantly sleeping forever
-	 */
-	if (timo <= 0)
-		timo = 1;
+	if (SCARG(uap, rmtp)) {
+		s = splclock();
+		stv = mono_time;
+		splx(s);
+	}
+
+	timo = tvtohz(&atv);
 
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
 	if (error == ERESTART)
@@ -227,14 +225,16 @@ sys_nanosleep(p, v, retval)
 		int error;
 
 		s = splclock();
-		utv = time;
+		etv = mono_time;
 		splx(s);
 
-		timersub(&atv, &utv, &utv);
-		if (utv.tv_sec < 0)
-			timerclear(&utv);
+		timersub(&etv, &stv, &stv);
+		timersub(&stv, &atv, &atv);
 
-		TIMEVAL_TO_TIMESPEC(&utv, &rmt);
+		if (atv.tv_sec < 0)
+			timerclear(&atv);
+
+		TIMEVAL_TO_TIMESPEC(&atv, &rmt);
 		error = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 		    sizeof(rmt));		
 		if (error)
