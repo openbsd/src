@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.38 2003/02/28 21:29:07 jason Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.39 2003/04/08 00:53:09 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.38 2003/02/28 21:29:07 jason Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.39 2003/04/08 00:53:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -213,21 +213,22 @@ initkre(void)
 				nintr++;
 				KREAD(ihp, &ih, sizeof(ih));
 				KREAD(ih.ih_what, iname, 16);
-				namelen += 1 + strlen(iname);
+				namelen += strlen(iname) + 1;
 				ihp = ih.ih_next;
 			}
 		}
 		intrloc = calloc(nintr, sizeof (long));
 		intrname = calloc(nintr, sizeof (char *));
 		cp = intrnamebuf = malloc(namelen);
-		for (namelen = 0, i = 0, n = 0; i < 16; i++) {
+		for (i = 0, n = 0; i < 16; i++) {
 			ihp = intrhand[i];
 			while (ihp) {
 				KREAD(ihp, &ih, sizeof(ih));
 				KREAD(ih.ih_what, iname, 16);
 				/* XXX strcpy is safe, sized & malloc'd buffer */
-				strcpy(intrname[n++] = intrnamebuf + namelen, iname);
-				namelen += 1 + strlen(iname);
+				intrname[n++] = cp;
+				strlcpy(cp, iname, intrnamebuf + namelen - cp);
+				cp += strlen(iname) + 1;
 				ihp = ih.ih_next;
 			}
 		}
