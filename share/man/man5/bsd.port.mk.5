@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.97 2003/07/09 20:23:34 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.98 2003/07/12 12:46:44 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -80,6 +80,8 @@ with REFETCH=true
 will try to fetch a version with the correct checksum from the
 .Ox
 main archive site in the case of a checksum mismatch.
+.Ev NO_CHECKSUM
+can be used to avoid all checksumming steps.
 .It Ar clean
 Clean ports contents.
 By default, it will clean the work directory.
@@ -141,7 +143,7 @@ Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
 Described in a separate section below.
 .It Ar fetch
-Fetch the distfiles and patchfiles.
+Fetch the distfiles and patchfiles, using ${FETCH_CMD}.
 Each file of the
 .Ev DISTFILES
 and
@@ -173,6 +175,7 @@ See
 .Ev DISTDIR ,
 .Ev DISTFILES ,
 .Ev DIST_SUBDIR ,
+.Ev FETCH_CMD ,
 .Ev FETCH_SYMLINK_DISTFILES ,
 .Ev FULL_DISTDIR ,
 .Ev MASTER_SITES ,
@@ -191,6 +194,8 @@ See
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
 cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES} minus
 ${IGNOREFILES}.
+.Ev NO_CHECKSUM
+can be used to avoid all checksumming steps.
 .It Ar manpages-check
 Verify that
 .Xr makewhatis 8
@@ -305,6 +310,12 @@ to
 .Pa patch-file.orig
 .El
 .Sh VARIABLES
+Note that some variables are marked as
+.Sq User-settings ,
+which means that individual ports should not modify them,
+and that some variables are marked as 
+.Sq read-only , 
+which means that they shouldn't ever be changed.
 .Bl -tag -width MASTER_SITES
 .It Ev show
 Invoked as make show=name, show the contents of variable name.
@@ -339,6 +350,18 @@ set to autoconf is the correct way to specify which one to use.
 If autoconf must be run manually,
 .Ev MODGNU_AUTOCONF_DEPENDS
 can be used to specify what packages to depend upon.
+.It Ev BATCH
+User-settings.
+Set to
+.Sq Yes 
+to avoid ports that require user-interaction 
+.Po 
+See IGNORE
+.Pc .
+.It Ev BROKEN
+Define only for broken ports, set to reason the port is broken.
+See also
+.Ev NO_IGNORE .
 .It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros passed to make and configure invocations.
 Set based on corresponding INSTALL_* variables.
@@ -659,7 +682,8 @@ By default, ${DESTDIRNAME}=${WRKINST}.
 Command used to fetch distfiles for this port.
 Defaults to
 .Pa /usr/bin/ftp .
-No current port overrides the default.
+User settings.
+Can be used to go through excessively paranoid firewalls.
 .It Ev FETCH_DEPENDS
 See BUILD_DEPENDS for specification.
 Fetch dependencies are checked at the beginning of the extract stage.
@@ -703,6 +727,7 @@ Defaults to gmake.
 Set to the list of files that cannot be checksummed.
 For use by ports which
 fetch dynamically generated archives that can't be checksummed.
+Avoid using IGNOREFILES whenver possible.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
@@ -725,8 +750,22 @@ such.
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
 located, to be used in hand-crafted extraction targets (read-only).
 .It Ev IGNORE
-The port is ignored if set to
-.Sq Yes .
+The port is ignored and ${IGNORE} is printed if defined.
+Usually set to the reason the port is ignored.
+See also
+.Ev BATCH ,
+.Ev BROKEN ,
+.Ev IGNORE_SILENT ,
+.Ev INTERACTIVE ,
+.Ev IS_INTERACTIVE ,
+.Ev NOT_FOR_ARCHS ,
+.Ev NO_IGNORE ,
+.Ev ONLY_FOR_ARCHS ,
+.Ev USE_X11 .
+.It Ev IGNORE_SILENT
+If set to
+.Sq Yes ,
+do not print anything when ignoring a port.
 .It Ev INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros to use to install a program, a script, a man page, or data (or the
 corresponding directory, respectively).
@@ -774,6 +813,16 @@ Used after changing directory to ${WRKBUILD}.
 The make program that is used for building the port.
 Set to ${MAKE} or ${GMAKE} depending on USE_GMAKE.
 Read-only.
+.It Ev MASTER_SITES
+List of primary location from which distfiles and patchfiles are retrieved.
+See the
+.Ar fetch
+target for more details.
+See
+.Xr ports 7 
+for user configuration.
+.It Ev MASTER_SITES0 , ... , MASTER_SITES9
+Supplementary locations from which distfiles and patchfiles are retrieved.
 .It Ev MESSAGE
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
@@ -803,19 +852,37 @@ Set to a list of package extensions for ports that create multiple packages.
 See
 .Qq Flavors and multi-packages
 below.
-.Pp
 .It Ev NOT_FOR_ARCHS
 List of architectures on which this port does not build.
 See also
 .Ev ONLY_FOR_ARCHS .
 .It Ev NO_BUILD
 Port does not need any build stage.
+.It Ev NO_CHECKSUM
+Set to
+.Sq Yes
+to avoid
+.Ar checksum ,
+.Ar makesum ,
+and
+.Ar addsum
+actions entirely.
+User settings.
+Beware of the full implications of this mechanism, namely that it disables
+entirely the basic authentication mechanisms of the ports tree.
 .It Ev NO_DEPENDS
 Don't verify build of dependencies.
 Do not use in any ports Makefile.
 This is only meant as a user convenience when, e.g., you just want to browse
 through a given port's source and do not wish to trigger the build of
 dependencies.
+.It Ev NO_IGNORE
+If set to
+.Sq Yes ,
+avoid ignoring a port for the usual reasons.
+Use, for instance, for fetching all distfiles, or for fixing a broken port.
+See also
+.Ev IGNORE .
 .It Ev NO_REGRESS
 Port does not have any regression tests.
 .It Ev NO_SHARED_ARCHS
@@ -843,6 +910,9 @@ Revision number of
 (read-only).
 .It Ev PACKAGES
 Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
+.it Ev PACKAGING
+Defined while building packages, read-only.
+See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
 .It Ev PATCH
 Command to use to apply all patches.
 Defaults to
@@ -936,6 +1006,11 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
+.It Ev PKG_DBDIR
+Path to package installation records.
+Defaults to
+.Pa /var/db/pkg .
+User settings.
 .It Ev PORTHOME
 Setting of env variable
 .Ev HOME
@@ -1125,7 +1200,7 @@ Apart from the actual port, may
 hold all kinds of cookies that checkpoint the port's build.
 Read-only.
 Ports that need to know the WRKDIR of another port must use
-cd that_port_dir && make show VARNAME=WRKDIR for this.
+cd that_port_dir && make show=WRKDIR for this.
 Note that WRKDIR may be a symbolic link.
 .It Ev WRKDIST
 Subdirectory of ${WRKDIR} where the source is normally unpacked.
@@ -1406,6 +1481,15 @@ becomes
 PATCH_FILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
+.It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
+Set to
+.Sq Yes
+if package or distfiles can be allowed on ftp sites or cdrom without legal
+issues.
+Set to reason not to otherwise.
+PERMIT_* lines in the Makefile should be preceded with a comment explaining
+details about licensing and patents issues the port may have.
+Porters must be very thorough in their checks. In case of doubt, ask.
 .It Ev PLIST_SRC
 From
 .Nx .
@@ -1441,6 +1525,8 @@ instead.
 Use
 .Ev CONFIGURE_STYLE
 instead.
+.It Ev VARNAME
+Use make show=name instead of make show VARNAME=name.
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
