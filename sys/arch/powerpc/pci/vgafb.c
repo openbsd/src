@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.5 2000/09/19 06:10:09 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.6 2000/10/19 03:18:00 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -166,12 +166,13 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 		printf("vgafb_common_probe, mmio done\n");
 		gotmmio = 1;
 	}
+#if 0
 	printf("vgafb_common_probe, mem base %x size %x memt %x\n",
 		membase, memsize, memt);
+#endif
 
 	if (bus_space_map(memt, membase, memsize, 0, &memh))
 		goto bad;
-	printf("vgafb_common_probe, mmio done\n");
 	gotmem = 1;
 
 #if 0
@@ -225,7 +226,6 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
         vc->vc_iot = iot;
         vc->vc_memt = memt;
 	vc->vc_paddr = membase;
-	printf("vgafb_common_setup\n");
 
 	if (iosize != 0) {
            if (bus_space_map(vc->vc_iot, iobase+0x3b0, 0xc, 0, &vc->vc_ioh_b))
@@ -239,12 +239,16 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
            if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
 		panic("vgafb_common_setup: couldn't map mmio");
 	}
+#if 0
 	printf("commons setup mapping mem base %x size %x\n", membase, memsize);
+#endif
         if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
 	vc->vc_ofh = cons_display_ofh;
+#if 0
 	printf("display_mem_h %x\n", cons_display_mem_h );
+#endif
 
 #if 0
 	if (iosize != 0) {
@@ -468,8 +472,6 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
         struct rcons *ri = &dc->dc_ri;
 	ri->rc_sp = &vgafb_raster;
 
-	printf("vgafb_cnattach called\n");
-
 	ri->rc_sp->width = cons_width;
 	ri->rc_sp->height = cons_height;
 	ri->rc_sp->depth = cons_depth;
@@ -485,9 +487,7 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	vgafb_stdscreen.ncols = ri->rc_maxcol;
 	vgafb_stdscreen.textops = &vgafb_emulops;
 	rcons_alloc_attr(ri, 0, 0, 0, &defattr);
-	printf("vgafb_cnattach screen paint start\n");
-	printf("membus %x  mem_h %x\n",
-		cons_membus->bus_base, cons_display_mem_h);
+
 	#if 0
 	{
 		int i;
@@ -498,7 +498,6 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 		}
 	}
 	#endif
-	printf("vgafb_cnattach screen painted\n");
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
 }
 
