@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrawpartition.c,v 1.3 2002/06/09 22:18:43 fgsch Exp $	*/
+/*	$OpenBSD: getrawpartition.c,v 1.4 2004/05/28 07:03:47 deraadt Exp $	*/
 /*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static const char rcsid[] = "$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:3
 #include "util.h"
 
 int
-getrawpartition()
+getrawpartition(void)
 {
 	int rawpart, mib[2];
 	size_t varlen;

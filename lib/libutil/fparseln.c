@@ -1,4 +1,4 @@
-/*	$OpenBSD: fparseln.c,v 1.4 2002/06/09 22:18:43 fgsch Exp $	*/
+/*	$OpenBSD: fparseln.c,v 1.5 2004/05/28 07:03:47 deraadt Exp $	*/
 /*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: fparseln.c,v 1.4 2002/06/09 22:18:43 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: fparseln.c,v 1.5 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -49,9 +49,7 @@ static int isescaped(const char *, const char *, int);
  *	that starts in *sp, is escaped by the escape character esc.
  */
 static int
-isescaped(sp, p, esc)
-	const char *sp, *p;
-	int esc;
+isescaped(const char *sp, const char *p, int esc)
 {
 	const char     *cp;
 	size_t		ne;
@@ -75,24 +73,13 @@ isescaped(sp, p, esc)
  *	the comment char.
  */
 char *
-fparseln(fp, size, lineno, str, flags)
-	FILE		*fp;
-	size_t		*size;
-	size_t		*lineno;
-	const char	 str[3];
-	int		 flags;
+fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3],
+    int flags)
 {
 	static const char dstr[3] = { '\\', '\\', '#' };
-
-	size_t	s, len;
-	char   *buf;
-	char   *ptr, *cp;
-	int	cnt;
-	char	esc, con, nl, com;
-
-	len = 0;
-	buf = NULL;
-	cnt = 1;
+	char	*buf = NULL, *ptr, *cp, esc, con, nl, com;
+	size_t	s, len = 0;
+	int	cnt = 1;
 
 	if (str == NULL)
 		str = dstr;
@@ -100,6 +87,7 @@ fparseln(fp, size, lineno, str, flags)
 	esc = str[0];
 	con = str[1];
 	com = str[2];
+
 	/*
 	 * XXX: it would be cool to be able to specify the newline character,
 	 * but unfortunately, fgetln does not let us
@@ -124,7 +112,7 @@ fparseln(fp, size, lineno, str, flags)
 				}
 		}
 
-		if (s && nl) { 		/* Check and eliminate newlines */
+		if (s && nl) {		/* Check and eliminate newlines */
 			cp = &ptr[s - 1];
 
 			if (*cp == nl)

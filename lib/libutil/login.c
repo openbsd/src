@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.8 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.9 2004/05/28 07:03:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: login.c,v 1.8 2003/06/02 20:18:42 millert Exp $";
+static const char rcsid[] = "$Id: login.c,v 1.9 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,8 +45,7 @@ static const char rcsid[] = "$Id: login.c,v 1.8 2003/06/02 20:18:42 millert Exp 
 #include "util.h"
 
 void
-login(utp)
-	struct utmp *utp;
+login(struct utmp *utp)
 {
 	struct utmp old_ut;
 	register int fd;

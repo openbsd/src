@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.7 2002/02/21 16:22:23 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.8 2004/05/28 07:03:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -46,24 +46,22 @@
  * Try to get a disklabel for the specified device, and return mount_xxx
  * style filesystem type name for the specified partition.
  */
-
-char *readlabelfs(device, verbose)
-	char *device;
-	int verbose;
+char *
+readlabelfs(char *device, int verbose)
 {
 	char rpath[MAXPATHLEN];
+	struct disklabel dk;
 	char part, *type;
 	struct stat sbuf;
-	struct disklabel dk;
 	int fd;
 
 	/* Assuming device is of the form /dev/??p, build a raw partition. */
 	if (stat(device, &sbuf) < 0) {
 		if (verbose)
 			warn("%s", device);
-		return(NULL);
+		return (NULL);
 	}
-	switch(sbuf.st_mode & S_IFMT) {
+	switch (sbuf.st_mode & S_IFMT) {
 	case S_IFCHR:
 		/* Ok... already a raw device.  Hmm. */
 		strncpy(rpath, device, sizeof(rpath));
@@ -77,7 +75,6 @@ char *readlabelfs(device, verbose)
 		if (strlen(device) > sizeof(_PATH_DEV) - 1) {
 			snprintf(rpath, sizeof(rpath), "%sr%s", _PATH_DEV,
 			    &device[sizeof(_PATH_DEV) - 1]);
-
 			/* Change partition name. */
 			part = rpath[strlen(rpath) - 1];
 			rpath[strlen(rpath) - 1] = 'a' + getrawpartition();
@@ -86,7 +83,7 @@ char *readlabelfs(device, verbose)
 	default:
 		if (verbose)
 			warnx("%s: not a device node", device);
-		return(NULL);
+		return (NULL);
 	}
 
 	/* If rpath doesn't exist, change that partition back. */
@@ -99,28 +96,28 @@ char *readlabelfs(device, verbose)
 			if (fd < 0) {
 				if (verbose)
 					warn("%s", rpath);
-				return(NULL);
+				return (NULL);
 			}
 		} else {
-				if (verbose)
-					warn("%s", rpath);
-				return(NULL);
+			if (verbose)
+				warn("%s", rpath);
+			return (NULL);
 		}
 	}
 	if (ioctl(fd, DIOCGDINFO, &dk) < 0) {
 		if (verbose)
 			warn("%s: couldn't read disklabel", rpath);
 		close(fd);
-		return(NULL);
+		return (NULL);
 	}
 	close(fd);
 
 	if (dk.d_partitions[part - 'a'].p_fstype > FSMAXTYPES) {
 		if (verbose)
 			warnx("%s: bad filesystem type in label", rpath);
-		return(NULL);
+		return (NULL);
 	}
 
 	type = fstypesnames[dk.d_partitions[part - 'a'].p_fstype];
-	return((type[0] == '\0') ? NULL : type);
+	return ((type[0] == '\0') ? NULL : type);
 }

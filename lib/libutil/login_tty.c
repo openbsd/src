@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tty.c,v 1.5 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: login_tty.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: login_tty.c,v 1.5 2003/06/02 20:18:42 millert Exp $";
+static const char rcsid[] = "$Id: login_tty.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -40,8 +40,7 @@ static const char rcsid[] = "$Id: login_tty.c,v 1.5 2003/06/02 20:18:42 millert 
 #include "util.h"
 
 int
-login_tty(fd)
-	int fd;
+login_tty(int fd)
 {
 	(void) setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)

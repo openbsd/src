@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendisk.c,v 1.2 2001/08/16 18:34:40 millert Exp $	*/
+/*	$OpenBSD: opendisk.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $	*/
 /*	$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $	*/
 
 /*-
@@ -49,12 +49,7 @@
 #include "util.h"
 
 int
-opendisk(path, flags, buf, buflen, iscooked)
-	const char *path;
-	int	flags;
-	char   *buf;
-	size_t	buflen;
-	int	iscooked;
+opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 {
 	int f, rawpart;
 

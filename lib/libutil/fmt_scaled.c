@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.2 2003/12/27 19:49:51 otto Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.2 2003/12/27 19:49:51 otto Exp $";
+static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -126,7 +126,8 @@ scan_scaled(char *scaled, long long *result)
 		i = (*p) - '0';			/* whew! finally a digit we can use */
 		if (fract_digits > 0) {
 			if (fract_digits >= MAX_DIGITS-1)
-				continue;		/* ignore extra fractional digits */
+				/* ignore extra fractional digits */
+				continue;
 			fract_digits++;		/* for later scaling */
 			fpart *= 10;
 			fpart += i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,9 +59,9 @@ extern char *__progname;
 int
 pidfile(const char *basename)
 {
-	FILE *f;
 	int save_errno;
 	pid_t pid;
+	FILE *f;
 
 	if (basename == NULL)
 		basename = __progname;

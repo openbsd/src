@@ -1,4 +1,5 @@
-/*	$OpenBSD: pty.c,v 1.12 2004/04/11 18:04:36 millert Exp $	*/
+/*	$OpenBSD: pty.c,v 1.13 2004/05/28 07:03:47 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +31,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: pty.c,v 1.12 2004/04/11 18:04:36 millert Exp $";
+static const char rcsid[] = "$Id: pty.c,v 1.13 2004/05/28 07:03:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -52,32 +53,29 @@ static const char rcsid[] = "$Id: pty.c,v 1.12 2004/04/11 18:04:36 millert Exp $
 #define TTY_SUFFIX "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int
-openpty(amaster, aslave, name, termp, winp)
-	int *amaster, *aslave;
-	char *name;
-	struct termios *termp;
-	struct winsize *winp;
+openpty(int *amaster, int *aslave, char *name, struct termios *termp,
+    struct winsize *winp)
 {
 	char line[] = "/dev/ptyXX";
 	const char *cp1, *cp2;
-	int master, slave, ttygid;
-	struct group *gr;
+	int master, slave, fd;
 	struct ptmget ptm;
-	int fd;
+	struct group *gr;
+	gid_t ttygid;
 
-	/* Try to use /dev/ptm and the PTMGET ioctl to get a properly set up
+	/*
+	 * Try to use /dev/ptm and the PTMGET ioctl to get a properly set up
 	 * and owned pty/tty pair. If this fails, (because we might not have
 	 * the ptm device, etc.) fall back to using the traditional method
 	 * of walking through the pty entries in /dev for the moment, until
 	 * there is less chance of people being seriously boned by running
 	 * kernels without /dev/ptm in them.
 	 */
-
 	fd = open(PATH_PTMDEV, O_RDWR, 0);
 	if (fd == -1)
 		goto walkit;
 	if ((ioctl(fd, PTMGET, &ptm) == -1)) {
-		close(fd); 
+		close(fd);
 		goto walkit;
 	}
 	close(fd);

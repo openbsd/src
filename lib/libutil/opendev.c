@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.7 2002/06/09 22:18:43 fgsch Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.8 2004/05/28 07:03:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -41,15 +41,11 @@
  */
 
 int
-opendev(path, oflags, dflags, realpath)
-	char *path;
-	int oflags;
-	int dflags;
-	char **realpath;
+opendev(char *path, int oflags, int dflags, char **realpath)
 {
-	int fd;
-	char *slash, *prefix;
 	static char namebuf[PATH_MAX];
+	char *slash, *prefix;
+	int fd;
 
 	/* Initial state */
 	if (realpath)
