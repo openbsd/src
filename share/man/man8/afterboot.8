@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.67 2001/10/30 01:03:19 miod Exp $
+.\"	$OpenBSD: afterboot.8,v 1.68 2002/02/10 01:07:05 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -43,7 +43,7 @@ Login as
 You can do so on the console, or over the network using
 .Xr ssh 1 .
 If you wish to deny root logins over the network, edit the
-.Pa /etc/sshd_config
+.Pa /etc/ssh/sshd_config
 file and set
 .Cm PermitRootLogin
 to
