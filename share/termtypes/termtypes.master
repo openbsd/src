@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.17 2000/03/14 04:09:37 millert Exp $
+# $OpenBSD: termtypes.master,v 1.18 2000/03/14 17:22:15 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -1718,7 +1718,7 @@ vt132|DEC vt132,
 # with the key marked (ESC) on the vt220.  See vt220d for an alternate mapping.
 # PF1--PF4 are used as F1--F4.
 #
-vt220|vt200|DEC VT220 in vt100 emulation mode,
+vt220-old|vt200-old|DEC VT220 in vt100 emulation mode, 
 	OTbs, OTpt, am, mir, xenl, xon, 
 	cols#80, lines#24, vt#3, 
 	OTnl=^J,
@@ -1742,9 +1742,8 @@ vt220|vt200|DEC VT220 in vt100 emulation mode,
 	sgr0=\E[m$<2>, smacs=\E(0$<2>, smam=\E[?7h, smir=\E[4h, 
 	smso=\E[7m, smul=\E[4m, 
 
-# A much better description of the VT200/220
-# This is misnamed (see xterm-8bit for an example of 8-bit controls)
-vt220-8|dec vt220 8 bit terminal,
+# A much better description of the VT200/220; used to be vt220-8
+vt220|vt200|dec vt220, 
 	OTbs, am, mc5i, mir, msgr, xenl, xon, 
 	cols#80, it#8, lines#24, vt#3, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
@@ -1766,14 +1765,14 @@ vt220-8|dec vt220 8 bit terminal,
 	khome=\E[H, kich1=\E[2~, knp=\E[6~, kpp=\E[5~, krdo=\E[29~, 
 	kslt=\E[4~, lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[i, 
 	mc4=\E[4i, mc5=\E[5i, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, 
-	rmacs=^O, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m, 
-	rmul=\E[24m, rs1=\E[?3l, sc=\E7, sgr0=\E[m, smacs=^N, 
+	rmacs=\E(B, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m, 
+	rmul=\E[24m, rs1=\E[?3l, sc=\E7, sgr0=\E[m, smacs=\E(0, 
 	smam=\E[?7h, smir=\E[4h, smso=\E[7m, smul=\E[4m, tbc=\E[3g, 
 vt220-w|vt200-w|DEC vt220 in wide mode, 
 	cols#132, 
 	rs3=\E[?3h, use=vt220, 
 vt220-8bit|vt220-8|vt200-8bit|vt200-8|dec vt220/200 in 8-bit mode, 
-	am, mc5i, mir, msgr, xenl, xon, 
+	OTbs, am, mc5i, mir, msgr, xenl, xon, 
 	cols#80, it#8, lines#24, vt#3, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, blink=\2335m, bold=\2331m, clear=\233H\233J, cr=^M, 
