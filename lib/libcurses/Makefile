@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1996/12/08 15:22:26 downsj Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/12/16 08:43:22 tholo Exp $
 
 LIB=    curses
 SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
@@ -11,7 +11,7 @@ SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
 	lib_vidattr.c lib_clrbot.c lib_inchstr.c lib_mvcur.c lib_scanw.c \
 	lib_window.c lib_clreol.c lib_initscr.c lib_mvwin.c lib_screen.c \
 	lib_color.c lib_insch.c lib_newterm.c lib_scroll.c lib_data.c \
-	lib_insdel.c lib_keyname.c lib_newwin.c lib_scrreg.c
+	lib_insdel.c lib_keyname.c lib_newwin.c lib_scrreg.c lib_gen.c
 CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO
 LDADD+=  -ltermlib
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
@@ -23,7 +23,7 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_scanw.3 curs_scr_dmp.3 curs_scroll.3 curs_slk.3 curs_termattrs.3 \
 	curs_touch.3 curs_util.3 curs_window.3 curses.3
 MLINKS+=curses.3 ncurses.3
-CLEANFILES+= lib_keyname.c keys.tries
+CLEANFILES+= lib_gen.c lib_keyname.c keys.tries
 
 beforedepend: keys.tries
 
@@ -41,6 +41,9 @@ keys.tries: ${.CURDIR}/keys.list ${.CURDIR}/MKkeys.awk
 
 lib_keyname.c: ${.CURDIR}/keys.list ${.CURDIR}/MKkeyname.awk
 	awk -f ${.CURDIR}/MKkeyname.awk ${.CURDIR}/keys.list > lib_keyname.c
+
+lib_gen.c: ${.CURDIR}/curses.h ${.CURDIR}/MKlib_gen.sh
+	sh ${.CURDIR}/MKlib_gen.sh "${CPP}" "awk" < ${.CURDIR}/curses.h > lib_gen.c
 
 .include <bsd.lib.mk>
 
