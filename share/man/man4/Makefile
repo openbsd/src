@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.33 1998/06/02 23:25:13 provos Exp $
+#	$OpenBSD: Makefile,v 1.34 1998/07/03 06:58:21 deraadt Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	atalk.4 audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 \
 	de.4 drum.4 eap.4 esis.4 fd.4 ffs_softupdates.4 fpa.4 fxp.4 icmp.4 \
-	idp.4 imp.4 inet.4 ip.4 ipl.4 ipsec.4 iso.4 lkm.4 lo.4 ncr.4 \
+	idp.4 imp.4 inet.4 ip.4 ipl.4 ipsec.4 iso.4 lkm.4 lo.4 mtio.4 ncr.4 \
 	netintro.4 ns.4 \
 	nsip.4 null.4 options.4 pnp.4 pty.4 random.4 route.4 scsi.4 sd.4 sl.4 \
 	spp.4 st.4 \
