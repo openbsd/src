@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.4 2000/09/07 20:10:21 aaron Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.5 2001/04/02 23:01:54 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/mii/dcphy.c,v 1.5 2000/06/05 19:37:15 wpaul Exp $
+ * $FreeBSD: src/sys/dev/mii/dcphy.c,v 1.6 2000/10/05 17:36:14 wpaul Exp $
  */
 
 /*
@@ -154,12 +154,17 @@ dcphy_attach(parent, self, aux)
 		sc->mii_capabilities = BMSR_ANEG|BMSR_10TFDX|BMSR_10THDX;
 		break;
 	default:
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
-		    sc->mii_inst), BMCR_LOOP|BMCR_S100);
+		if (dc_sc->dc_pmode == DC_PMODE_SIA) {
+			sc->mii_capabilities =
+			    BMSR_ANEG|BMSR_10TFDX|BMSR_10THDX;
+		} else {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
+			    sc->mii_inst), BMCR_LOOP|BMCR_S100);
 
-		sc->mii_capabilities =
-		    BMSR_ANEG|BMSR_100TXFDX|BMSR_100TXHDX|
-		    BMSR_10TFDX|BMSR_10THDX;
+			sc->mii_capabilities =
+			    BMSR_ANEG|BMSR_100TXFDX|BMSR_100TXHDX|
+			    BMSR_10TFDX|BMSR_10THDX;
+		}
 		break;
 	}
 
@@ -383,10 +388,11 @@ dcphy_status(sc)
 	}
 
 skip:
-	if (CSR_READ_4(dc_sc, DC_NETCFG) & DC_NETCFG_SCRAMBLER)
-		mii->mii_media_active |= IFM_100_TX;
-	else
+
+	if (CSR_READ_4(dc_sc, DC_NETCFG) & DC_NETCFG_SPEEDSEL)
 		mii->mii_media_active |= IFM_10_T;
+	else
+		mii->mii_media_active |= IFM_100_TX;
 	if (CSR_READ_4(dc_sc, DC_NETCFG) & DC_NETCFG_FULLDUPLEX)
 		mii->mii_media_active |= IFM_FDX;
 
