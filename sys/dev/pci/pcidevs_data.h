@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.45 1998/04/03 07:22:39 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.46 1998/04/16 04:49:34 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1687,6 +1687,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5582",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5591,
+	    0,
+	    "Silicon Integrated System",
+	    "5591",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5596,
