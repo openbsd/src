@@ -1,4 +1,4 @@
-/*	$OpenBSD: scaffold.c,v 1.2 1999/06/06 15:34:57 deraadt Exp $	*/
+/*	$OpenBSD: scaffold.c,v 1.3 1999/06/06 18:58:54 deraadt Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -10,7 +10,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #else
-static char rcsid[] = "$OpenBSD: scaffold.c,v 1.2 1999/06/06 15:34:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: scaffold.c,v 1.3 1999/06/06 18:58:54 deraadt Exp $";
 #endif
 #endif
 
@@ -93,7 +93,7 @@ char   *host;
     /*
      * Host address: translate it to internal form.
      */
-    if (dot_quad_addr(host, &addr.s_addr)) {
+    if (dot_quad_addr_new(host, &addr.s_addr)) {
 	h.h_addr_list = addr_list;
 	h.h_addr_list[0] = (char *) &addr;
 	h.h_length = sizeof(addr);
