@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 1998/09/26 22:53:21 maja Exp $
+#	$OpenBSD: GENERIC,v 1.34 1998/10/04 23:41:05 niklas Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -103,11 +103,11 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
-ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10	#
+ec0	at	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+ne0	at	isa? port 0x240 irq 9		# NE[12]000 ethernet cards
+ne1	at	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 ep*	at	isa? port ? irq ?		# 3C509 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
