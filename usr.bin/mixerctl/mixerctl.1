@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.16 2003/01/05 09:42:23 pvalchev Exp $
+.\" $OpenBSD: mixerctl.1,v 1.17 2003/05/15 00:57:50 jfb Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 .Nm mixerctl
 .Op Fl f Ar file
 .Op Fl n
-.Op Fl v
+.Op Fl q
 .Fl w
 .Ar name=value Op Ar ...
 .Sh DESCRIPTION
@@ -80,6 +80,8 @@ Attempt to set the specified variable.
 Specify an alternative audio mixing device.
 .It Fl n
 Suppress printing of the variable name.
+.It Fl q
+Suppress all printing when setting a variable.
 .It Fl v
 Show the possible values of enumeration and set valued variables.
 Enumerated values are shown in

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.9 2002/12/03 22:27:42 pvalchev Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.10 2003/05/15 00:57:50 jfb Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ int
 main(int argc, char **argv)
 {
 	int fd, i, j, ch, pos;
-	int aflag = 0, wflag = 0, vflag = 0;
+	int aflag = 0, qflag = 0, wflag = 0, vflag = 0;
 	char *file;
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
 	        file = "/dev/mixer";
 
-	while ((ch = getopt(argc, argv, "af:nvw")) != -1) {
+	while ((ch = getopt(argc, argv, "af:nqvw")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -264,6 +264,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			file = optarg;
+			break;
+		case 'q':
+			qflag = 1;
 			break;
 		case '?':
 		default:
@@ -358,7 +361,7 @@ main(int argc, char **argv)
 						if (rdfield(p, q)) {
 							if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
 								warn("AUDIO_MIXER_WRITE");
-							else if (sep) {
+							else if (sep && !qflag) {
 								*p->valp = val;
 								prfield(p, ": ", 0);
 								ioctl(fd, AUDIO_MIXER_READ, p->valp);
@@ -394,9 +397,9 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-f file] [-n] [-v] name ...\n"
-	    "       %s [-f file] [-n] [-v] -w name=value ...\n"
+	    "       %s [-f file] [-n] [-q] -w name=value ...\n"
 	    "       %s [-f file] [-n] [-v] -a\n", __progname,
-		__progname, __progname);
+	    __progname, __progname);
 
 	exit(1);
 }
