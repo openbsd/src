@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.40 2004/09/16 08:25:05 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.41 2005/01/04 18:19:26 moritz Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -254,9 +254,11 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 		if (no_user_token_flag) {
 			gentoken(token, sizeof token);
 			syslog(LOG_NOTICE, "token %s == NO USER", token);
-			n = snprintf(buf, sizeof(buf),
+			if ((n = snprintf(buf, sizeof(buf),
 			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
-			    opsys_name, charset_sep, charset_name, token);
+			    opsys_name, charset_sep, charset_name, token))
+			    >= sizeof(buf) || n < 0)
+				n = strlen(buf);
 			if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
 			    syslog_flag) {
 				syslog(LOG_NOTICE, "write to %s: %m",
@@ -450,9 +452,11 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		if (no_user_token_flag) {
 			gentoken(token, sizeof token);
 			syslog(LOG_NOTICE, "token %s == NO USER", token);
-			n = snprintf(buf, sizeof(buf),
+			if ((n = snprintf(buf, sizeof(buf),
 			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
-			    opsys_name, charset_sep, charset_name, token);
+			    opsys_name, charset_sep, charset_name, token))
+			    >= sizeof(buf) || n < 0)
+				n = strlen(buf);
 			if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
 			    syslog_flag) {
 				syslog(LOG_NOTICE, "write to %s: %m",
@@ -487,6 +491,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		    "%d , %d : USERID : %s%s%s :%u\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid))
 		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -506,6 +511,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport))
 		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
