@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.4 2001/08/20 19:40:43 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.5 2001/08/22 12:09:12 art Exp $	*/
 /*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
 
 /*-
@@ -172,7 +172,7 @@ struct cfattach sbus_ca = {
 };
 
 struct cfdriver sbus_cd = {
-	NULL, "sbus", DV_IFNET
+	NULL, "sbus", DV_DULL
 };
 
 extern struct cfdriver sbus_cd;
