@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 1998/09/09 04:32:57 rahnds Exp $
+#	$OpenBSD: list,v 1.8 1998/09/13 03:13:11 rahnds Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -97,8 +97,7 @@ COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.md			install.md
-COPY	install.sh			install
-#COPY	${CURDIR}/../../miniroot/install.sh		install
+COPY	${CURDIR}/../../miniroot/install.sh		install
 COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
 #SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
