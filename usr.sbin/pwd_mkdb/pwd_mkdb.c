@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.15 1998/06/10 09:00:48 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.16 1998/07/14 16:13:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.15 1998/06/10 09:00:48 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.16 1998/07/14 16:13:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ main(argc, argv)
 	if (!(fp = fopen(pname, "r")))
 		error(pname);
 
-	/* check only if password database is valid */
+	/* Check only if password database is valid */
 	if (cflag) {
 		for (cnt = 1; scan(fp, &pwd, &flags); ++cnt)
 			;
@@ -215,8 +215,17 @@ main(argc, argv)
 	 */
 	data.data = (u_char *)buf;
 	key.data = (u_char *)tbuf;
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 #define	COMPACT(e)	t = e; while (*p++ = *t++);
+
+	/*
+	 * Write "insecure" (V7 style) info to the .db file.
+	 * We do the loop three times, one per key type, to get good
+	 * locality in the db file.
+	 * 1) Store by name, check for yp, issue warnings.
+	 * 2) Store by uid.
+	 * 3) Store by number (used for iterative lookups).
+	 */
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
 		/* look like YP? */
 		if ((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
@@ -234,10 +243,10 @@ main(argc, argv)
 		p = buf;
 		COMPACT(pwd.pw_name);
 		COMPACT("*");
-		memmove(p, &pwd.pw_uid, sizeof(int));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(int));
-		p += sizeof(int);
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
+		p += sizeof(uid_t);
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
+		p += sizeof(gid_t);
 		memmove(p, &pwd.pw_change, sizeof(time_t));
 		p += sizeof(time_t);
 		COMPACT(pwd.pw_class);
@@ -258,12 +267,35 @@ main(argc, argv)
 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 
-		/* Store insecure by number. */
-		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
-		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+		/* Create original format password file entry */
+		if (makeold)
+			if (fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
+			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
+			    pwd.pw_dir, pwd.pw_shell) == EOF)
+				error("write old");
+	}
+	rewind(fp);
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
+
+		/* Create insecure data. */
+		p = buf;
+		COMPACT(pwd.pw_name);
+		COMPACT("*");
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
+		p += sizeof(uid_t);
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
+		p += sizeof(gid_t);
+		memmove(p, &pwd.pw_change, sizeof(time_t));
+		p += sizeof(time_t);
+		COMPACT(pwd.pw_class);
+		COMPACT(pwd.pw_gecos);
+		COMPACT(pwd.pw_dir);
+		COMPACT(pwd.pw_shell);
+		memmove(p, &pwd.pw_expire, sizeof(time_t));
+		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
+		data.size = p - buf;
 
 		/* Store insecure by uid. */
 		tbuf[0] = _PW_KEYBYUID;
@@ -271,13 +303,37 @@ main(argc, argv)
 		key.size = sizeof(pwd.pw_uid) + 1;
 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
+	}
+	rewind(fp);
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
-		/* Create original format password file entry */
-		if (makeold)
-			if (fprintf(oldfp, "%s:*:%d:%d:%s:%s:%s\n",
-			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
-			    pwd.pw_dir, pwd.pw_shell) == EOF)
-				error("write old");
+		/* Create insecure data. */
+		p = buf;
+		COMPACT(pwd.pw_name);
+		COMPACT("*");
+		memmove(p, &pwd.pw_uid, sizeof(uid_t));
+		p += sizeof(uid_t);
+		memmove(p, &pwd.pw_gid, sizeof(gid_t));
+		p += sizeof(gid_t);
+		memmove(p, &pwd.pw_change, sizeof(time_t));
+		p += sizeof(time_t);
+		COMPACT(pwd.pw_class);
+		COMPACT(pwd.pw_gecos);
+		COMPACT(pwd.pw_dir);
+		COMPACT(pwd.pw_shell);
+		memmove(p, &pwd.pw_expire, sizeof(time_t));
+		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
+		data.size = p - buf;
+
+		/* Store insecure by number. */
+		tbuf[0] = _PW_KEYBYNUM;
+		memmove(tbuf + 1, &cnt, sizeof(cnt));
+		key.size = sizeof(cnt) + 1;
+		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+			error("put");
+
 	}
 
 	/* Store YP token, if needed. */
@@ -308,6 +364,14 @@ main(argc, argv)
 		error(buf);
 	clean = FILE_SECURE;
 
+	/*
+	 * Write "secure" (master.passwd) info to the .db file.
+	 * We do the loop three times, one per key type, to get good
+	 * locality in the db file.
+	 * 1) Store by name.
+	 * 2) Store by uid.
+	 * 3) Store by number (used for iterative lookups).
+	 */
 	rewind(fp);
 	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
@@ -338,18 +402,64 @@ main(argc, argv)
 		key.size = len + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
+	}
+	rewind(fp);
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
 
-		/* Store secure by number. */
-		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
-		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
+		/* Create secure data. */
+		p = buf;
+		COMPACT(pwd.pw_name);
+		COMPACT(pwd.pw_passwd);
+		memmove(p, &pwd.pw_uid, sizeof(int));
+		p += sizeof(int);
+		memmove(p, &pwd.pw_gid, sizeof(int));
+		p += sizeof(int);
+		memmove(p, &pwd.pw_change, sizeof(time_t));
+		p += sizeof(time_t);
+		COMPACT(pwd.pw_class);
+		COMPACT(pwd.pw_gecos);
+		COMPACT(pwd.pw_dir);
+		COMPACT(pwd.pw_shell);
+		memmove(p, &pwd.pw_expire, sizeof(time_t));
+		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
+		data.size = p - buf;
 
 		/* Store secure by uid. */
 		tbuf[0] = _PW_KEYBYUID;
 		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
 		key.size = sizeof(pwd.pw_uid) + 1;
+		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+			error("put");
+	}
+	rewind(fp);
+	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
+
+		/* Create secure data. */
+		p = buf;
+		COMPACT(pwd.pw_name);
+		COMPACT(pwd.pw_passwd);
+		memmove(p, &pwd.pw_uid, sizeof(int));
+		p += sizeof(int);
+		memmove(p, &pwd.pw_gid, sizeof(int));
+		p += sizeof(int);
+		memmove(p, &pwd.pw_change, sizeof(time_t));
+		p += sizeof(time_t);
+		COMPACT(pwd.pw_class);
+		COMPACT(pwd.pw_gecos);
+		COMPACT(pwd.pw_dir);
+		COMPACT(pwd.pw_shell);
+		memmove(p, &pwd.pw_expire, sizeof(time_t));
+		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
+		data.size = p - buf;
+
+		/* Store secure by number. */
+		tbuf[0] = _PW_KEYBYNUM;
+		memmove(tbuf + 1, &cnt, sizeof(cnt));
+		key.size = sizeof(cnt) + 1;
 		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 	}
@@ -404,7 +514,7 @@ scan(fp, pw, flags)
 	static char line[LINE_MAX];
 	char *p;
 
-	if (!fgets(line, sizeof(line), fp))
+	if (fgets(line, sizeof(line), fp) == NULL)
 		return (0);
 	++lcnt;
 	/*
@@ -412,10 +522,10 @@ scan(fp, pw, flags)
 	 * throat...''
 	 *	-- The Who
 	 */
-	if (!(p = strchr(line, '\n'))) {
+	p = line;
+	if (*p != '\0' && *(p += strlen(line) - 1) != '\n') {
 		warnx("line too long");
 		goto fmt;
-
 	}
 	*p = '\0';
 	*flags = 0;
