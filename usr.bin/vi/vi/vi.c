@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.9 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.10 2005/01/08 05:22:25 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -986,6 +986,7 @@ v_init(sp)
 	 * line in the middle, otherwise, it won't work and we'll end up with
 	 * the line at the top.
 	 */
+	F_CLR(sp, SC_SCR_TOP);
 	F_SET(sp, SC_SCR_REFORMAT | SC_SCR_CENTER);
 
 	/* Invalidate the cursor. */
