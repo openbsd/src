@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.47 2001/06/03 03:53:57 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.48 2001/06/03 04:41:33 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -404,6 +404,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, fscale));
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
+	case KERN_NPROCS:
+		return (sysctl_rdint(oldp, oldlenp, newp, nprocs));
 	default:
 		return (EOPNOTSUPP);
 	}
