@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.34 2002/06/16 16:54:29 miod Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.35 2002/06/18 23:41:32 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.34 2002/06/16 16:54:29 miod Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.35 2002/06/18 23:41:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ kvm_t	*kd = 0;
 	}
 
 void	filemode(void);
-int	getfiles(char **, int *);
+int	getfiles(char **, size_t *);
 struct mount *
 	getmnt(struct mount *);
 struct e_vnode *
@@ -732,8 +732,8 @@ kinfo_vnodes(avnodes)
 	struct mount *mp, mount;
 	struct vnode *vp, vnode;
 	char *vbuf, *evbuf, *bp;
-	int num, numvnodes;
-	int mib[2];
+	int mib[2], numvnodes;
+	size_t num;
 
 #define VPTRSZ  sizeof(struct vnode *)
 #define VNODESZ sizeof(struct vnode)
@@ -777,10 +777,10 @@ char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 void
 ttymode()
 {
-	int ntty, nlen;
 	struct ttylist_head tty_head;
 	struct tty *tp, tty;
-	int mib[2];
+	int mib[2], ntty;
+	size_t nlen;
 
 	if (kd == 0) {
 		mib[0] = CTL_KERN;
@@ -876,9 +876,9 @@ filemode()
 	struct file fp, *ffp;
 	struct file *addr;
 	char *buf, flagbuf[16], *fbp;
-	int len, maxfile, nfile;
 	static char *dtypes[] = { "???", "inode", "socket" };
-	int mib[2];
+	int mib[2], maxfile, nfile;
+	size_t len;
 
 	if (kd == 0) {
 		mib[0] = CTL_KERN;
@@ -954,7 +954,7 @@ filemode()
 int
 getfiles(abuf, alen)
 	char **abuf;
-	int *alen;
+	size_t *alen;
 {
 	size_t len;
 	int mib[2];
