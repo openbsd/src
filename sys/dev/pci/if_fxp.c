@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.22 1999/11/11 16:23:19 provos Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.23 2000/01/08 05:54:44 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -198,9 +198,6 @@ struct fxp_supported_media {
 
 static int fxp_mediachange	__P((struct ifnet *));
 static void fxp_mediastatus	__P((struct ifnet *, struct ifmediareq *));
-#if 0
-static const char *fxp_phyname	__P((int));
-#endif
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
 static FXP_INTR_TYPE fxp_intr	__P((void *));
 static void fxp_start		__P((struct ifnet *));
@@ -435,14 +432,11 @@ fxp_attach(parent, self, aux)
 		printf(FXP_FORMAT ": no phy found, using auto mode\n",
 		    FXP_ARGS(sc));
 	}
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-#if 0
-	printf(FXP_FORMAT ": %s (%s) address %s\n", FXP_ARGS(sc),
-	    fxp_phyname(sc->phy_primary_device),
-	    sc->phy_10Mbps_only ? "10Mbps" : "10/100Mbps",
-	    ether_sprintf(sc->arpcom.ac_enaddr));
-#endif
+	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
 
 	/*
 	 * Attach the interface.
@@ -480,22 +474,6 @@ fxp_attach(parent, self, aux)
 	 */
 	powerhook_establish(fxp_power, sc);
 }
-
-#if 0
-static const char *
-fxp_phyname(device)
-	int device;
-{
-	static const char * const phynames[] = { "unknown", "82553A",
-	    "82553C", "82503", "DP83840", "80C240", "80C24",
-	    "82555/82558/82558B", "unknown", "unknown",
-	    "DP83840A", "82555B" };
-
-	if ((device < FXP_PHY_NONE) || (device > FXP_PHY_82555B))
-		return(phynames[0]);
-	return(phynames[device]);
-}
-#endif
 
 /*
  * Device shutdown routine. Called at system shutdown after sync. The
