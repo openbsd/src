@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2000/12/07 18:19:31 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.22 2001/01/28 19:51:48 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -75,9 +75,9 @@ bm*	at obio?			# bmac ethernet
 #mesh*	at obio? flags 0xffff		# MESH SCSI
 #nvram*	at obio?			# nvram
 adb*	at obio?			# Apple Desktop Bus
-#aed*	at adb?			# ADB Event Device
-#akbd*	at adb?			# ADB keyboard
-#ams*	at adb?			# ADB mouse
+aed*	at adb?				# ADB Event Device
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
 #zsc*	at obio?
 #zstty*	at zsc? channel ?
 
@@ -123,8 +123,11 @@ wsmouse*	at ums? mux 0
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
 
+# USB Scanner driver
+uscanner*  at uhub? port ? configuration ? interface ?
+
 # USB Generic driver
-ugen*	at uhub? port ? configuration ? interface ?
+ugen*  at uhub? port ? configuration ? interface ?
 
 #### Workstation Console attachments
 
@@ -144,7 +147,6 @@ uk*		at scsibus? target ? lun ?
 # mostly unused currently 
 ofbus*		at openfirm?
 ofrtc*		at openfirm?
-#ofdisk*		at openfirm?	 # used for floppy support
-#ofnet*		at openfirm?
 ofcons*	at openfirm?
 
+#pseudo-device        wsmux	2	# mouse & keyboard multiplexor
