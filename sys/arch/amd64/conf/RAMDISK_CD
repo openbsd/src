@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.7 2004/03/12 01:36:58 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.8 2004/05/23 04:03:57 drahn Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -59,10 +59,12 @@ pci*	at pchb? bus ?
 #pcmcia*	at pcic? controller ? socket ?
 
 # PCI USB Controllers
+ehci*	at pci?				# Enhanced Host Controller
 uhci*	at pci?				# Universal Host Controller (Intel)
 ohci*	at pci?				# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at uhci?
 usb*	at ohci?
 
