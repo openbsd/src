@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.113 2002/01/07 03:56:02 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.114 2002/01/23 16:27:35 mpech Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.113 2002/01/07 03:56:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.114 2002/01/23 16:27:35 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -913,14 +913,14 @@ pass(passwd)
 			syslog(LOG_INFO|LOG_AUTH,
 			    "FTP LOGIN FAILED (HOST) as %s: approval failure.",
 			    pw->pw_name);
-			reply(530, "Approval failure.\n");
+			reply(530, "Approval failure.");
 			exit(0);
 		}
 	} else {
 		syslog(LOG_INFO|LOG_AUTH,
 		    "FTP LOGIN CLASS %s MISSING for %s: approval failure.",
 		    pw->pw_class, pw->pw_name);
-		reply(530, "Permission denied.\n");
+		reply(530, "Permission denied.");
 		exit(0);
 	}
 	login_attempts = 0;		/* this time successful */
@@ -1853,7 +1853,7 @@ fatal(s)
 	char *s;
 {
 
-	reply(451, "Error in server: %s\n", s);
+	reply(451, "Error in server: %s", s);
 	reply(221, "Closing connection due to server error.");
 	dologout(0);
 	/* NOTREACHED */
