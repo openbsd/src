@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.70 2002/07/30 09:25:00 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.71 2002/07/30 11:21:46 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -989,8 +989,8 @@ return         = "return-rst" [ "(" "ttl" number ")" ] |
 interface-list = interface-name [ "," interface-list ] .
 route          = "fastroute" |
                  "route-to" "(" interface-name address ")" |
-                 "dup-to" interface-name
-                 "route-to" "(" interface-name address ")" |
+                 "route-to" interface-name |
+                 "dup-to" "(" interface-name address ")" |
                  "dup-to" interface-name
 af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
