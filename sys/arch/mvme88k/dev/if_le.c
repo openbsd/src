@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.5 2004/04/29 06:23:45 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.6 2004/05/06 18:37:35 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -214,7 +214,6 @@ vle_copytobuf_contig(sc, from, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 
-	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
 	d16_bcopy(from, buf + boff, len);
 }
 
@@ -226,7 +225,6 @@ vle_copyfrombuf_contig(sc, to, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 
-	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC_INVAL);
 	d16_bcopy(buf + boff, to, len);
 }
 
@@ -237,7 +235,6 @@ vle_zerobuf_contig(sc, boff, len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 
-	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
 	d16_bzero(buf + boff, len);
 }
 
@@ -270,13 +267,13 @@ leattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (struct le_softc *)self;
+	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
-	caddr_t addr;
+	paddr_t paddr;
 	int card;
 	bus_space_tag_t iot = ca->ca_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, memh;
 
 	if (ca->ca_vec < 0) {
 		printf(": no more interrupts!\n");
@@ -284,11 +281,6 @@ leattach(parent, self, aux)
 	}
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_NET;
-
-	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0) {
-		printf(": can't map registers!\n");
-		return;
-	}
 
 	/* Are we the boot device? */
 	if (ca->ca_paddr == bootaddr)
@@ -325,20 +317,24 @@ leattach(parent, self, aux)
 		return;
 	}
 
-	addr = (caddr_t)(VLEMEMBASE - (card * VLEMEMSIZE));
-
-	sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
-	if (sc->sc_mem == NULL) {
-		printf("\n%s: no more memory in external I/O map\n",
-		    sc->sc_dev.dv_xname);
+	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0) {
+		printf(": can't map registers!\n");
 		return;
 	}
-	sc->sc_addr = (paddr_t)addr & 0x00ffffff;
 
+	paddr = VLEMEMBASE - (card * VLEMEMSIZE);
+	if (bus_space_map(iot, paddr, VLEMEMSIZE, 0, &memh) != 0) {
+		printf(": can't map buffers!\n");
+		bus_space_unmap(iot, ioh, PAGE_SIZE);
+		return;
+	}
 	lesc->sc_r1 = (void *)bus_space_vaddr(iot, ioh);
 	lesc->sc_ipl = ca->ca_ipl;
 	lesc->sc_vec = ca->ca_vec;
+
+	sc->sc_mem = (void *)bus_space_vaddr(iot, memh);
 	sc->sc_memsize = VLEMEMSIZE;
+	sc->sc_addr = paddr & 0x00ffffff;
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_hwreset = vlereset;
 	sc->sc_rdcsr = vlerdcsr;
@@ -349,7 +345,8 @@ leattach(parent, self, aux)
 	sc->sc_copytobuf = vle_copytobuf_contig;
 	sc->sc_copyfrombuf = vle_copyfrombuf_contig;
 	sc->sc_zerobuf = vle_zerobuf_contig;
-	/* get ether address */
+
+	/* get Ethernet address */
 	vleetheraddr(sc);
 
 	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
@@ -361,5 +358,5 @@ leattach(parent, self, aux)
 	lesc->sc_ih.ih_fn = vle_intr;
 	lesc->sc_ih.ih_arg = sc;
 	lesc->sc_ih.ih_ipl = ca->ca_ipl;
-	vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
+	vmeintr_establish(ca->ca_vec, &lesc->sc_ih);
 }
