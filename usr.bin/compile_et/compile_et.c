@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.5 2000/02/19 12:07:18 hin Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.6 2000/11/22 12:51:47 aaron Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -183,7 +183,7 @@ static void
 usage(int code)
 {
     extern char *__progname;
-    fprintf(stderr, "Usage: %s <file>\n", __progname);
+    fprintf(stderr, "usage: %s file\n", __progname);
     exit(1);
 }
 
