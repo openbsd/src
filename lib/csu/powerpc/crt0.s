@@ -10,8 +10,6 @@ L1:	.long 0		# null string plus padding
 	
 
 	.section ".text"
-	.globl start
-start:	
 	.globl _start
 	.type	_start,@function
 _start:	
