@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.16 1997/09/18 16:22:44 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.17 1997/11/05 09:38:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -683,6 +683,7 @@ pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 
 	    i = K_RAW;
 	    error = usl_vt_ioctl(dev, KDSKBMODE, (caddr_t)&i, flag, p);
+	    ttyflush(tp, FREAD);
 	    return error;
 	  }
 
@@ -697,6 +698,7 @@ pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 
 	    i = K_XLATE;
 	    (void)usl_vt_ioctl(dev, KDSKBMODE, (caddr_t)&i, flag, p);
+	    ttyflush(tp, FREAD);
 	    return 0;
 	  }
 

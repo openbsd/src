@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.34 1997/03/03 12:01:15 downsj Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.35 1997/11/05 09:38:54 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -673,9 +673,11 @@ pcioctl(dev, cmd, data, flag, p)
 #ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
+		ttyflush(tp, FREAD);
 		return 0;
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
+		ttyflush(tp, FREAD);
 		return 0;
 	case CONSOLE_X_BELL:
 		/*
