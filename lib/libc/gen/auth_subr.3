@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.13 2003/07/07 14:58:17 jmc Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.14 2004/01/10 23:31:32 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -162,7 +162,8 @@ A session may be cleaned
 by calling
 .Fn auth_clean .
 This function removes any files created by a login script in this
-session and clears all state associated with this session.
+session and clears all state associated with this session, with the
+exception of the option settings.
 It is not necessary to call
 .Fn auth_clean
 if
