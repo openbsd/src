@@ -460,6 +460,11 @@ setup(void) {
 	 */
 	ns_os_inituserinfo(ns_g_username);
 
+	/*
+	 * Initialize time conversion information
+	 */
+	ns_os_tzset();
+
 	ns_os_chroot(ns_g_chrootdir);
 
 	/*

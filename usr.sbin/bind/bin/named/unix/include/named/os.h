@@ -46,4 +46,7 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
 void
 ns_os_shutdown(void);
 
+void
+ns_os_tzset(void);
+
 #endif /* NS_OS_H */

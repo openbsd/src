@@ -225,3 +225,10 @@ ns_os_shutdown(void) {
 	cleanup_pidfile();
 	ntservice_shutdown();	/* This MUST be the last thing done */
 }
+
+void
+ns_os_tzset(void) {
+#ifdef HAVE_TZSET
+        tzset();
+#endif
+}

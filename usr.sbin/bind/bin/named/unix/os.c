@@ -537,3 +537,10 @@ ns_os_shutdown(void) {
 	closelog();
 	cleanup_pidfile();
 }
+
+void
+ns_os_tzset(void) {
+#ifdef HAVE_TZSET
+        tzset();
+#endif
+}
