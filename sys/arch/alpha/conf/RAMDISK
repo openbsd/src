@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 1997/07/08 21:26:31 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.10 1997/07/09 14:38:34 millert Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -25,7 +25,7 @@ option		TIMEZONE="7*60"		# Minutes west of GMT (for param.c)
 option		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+#option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 #option		KTRACE			# System call tracing support
 
 # File system options
