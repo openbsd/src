@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.20 2004/02/16 22:48:40 brad Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.21 2004/02/22 06:25:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -172,10 +172,8 @@ struct pthread_once {
 #define PTHREAD_RWLOCK_INITIALIZER	NULL
 
 #define PTHREAD_PRIO_NONE	0
-#ifdef _POSIX_THREAD_PRIO_PROTECT
 #define PTHREAD_PRIO_INHERIT	1
 #define PTHREAD_PRIO_PROTECT	2
-#endif
 
 /*
  * Mutex types (Single UNIX Specification, Version 2, 1997).
@@ -217,13 +215,6 @@ void		pthread_cleanup_push(void (*routine)(void *),
 		    void *routine_arg);
 int		pthread_condattr_destroy(pthread_condattr_t *attr);
 int		pthread_condattr_init(pthread_condattr_t *attr);
-
-#if defined(_POSIX_THREAD_PROCESS_SHARED)
-int		pthread_condattr_getpshared(const pthread_condattr_t *attr,
-		    int *pshared);
-int		pthread_condattr_setpshared(pthread_condattr_t *attr,
-		    int pshared);
-#endif
 
 int		pthread_cond_broadcast(pthread_cond_t *);
 int		pthread_cond_destroy(pthread_cond_t *);
@@ -279,28 +270,17 @@ int		pthread_getprio(pthread_t);
 int		pthread_setprio(pthread_t, int);
 void		pthread_yield(void);
 
-#if defined(_POSIX_THREAD_PROCESS_SHARED)
-int		pthread_mutexattr_getpshared(pthread_mutexattr_t *,
-		    int *pshared);
-int		pthread_mutexattr_setpshared(pthread_mutexattr_t *,
-		    int pshared);
-#endif
-
-#if defined(_POSIX_THREAD_PRIO_PROTECT)
 int		pthread_mutexattr_getprioceiling(pthread_mutexattr_t *,
 		    int *prioceiling);
 int		pthread_mutexattr_setprioceiling(pthread_mutexattr_t *,
 		    int prioceiling);
 int		pthread_mutex_getprioceiling(pthread_mutex_t *, int *);
 int		pthread_mutex_setprioceiling(pthread_mutex_t *, int, int *);
-#endif
 
-#if defined(_POSIX_THREAD_PRIO_PROTECT) || defined (_POSIX_THREAD_PRIO_INHERIT)
 int		pthread_mutexattr_getprotocol(pthread_mutexattr_t *,
 		    int *protocol);
 int		pthread_mutexattr_setprotocol(pthread_mutexattr_t *,
 		    int protocol);
-#endif
 
 int		pthread_getschedparam(pthread_t pthread, int *policy,
 		    struct sched_param * param);
@@ -309,7 +289,6 @@ int		pthread_setschedparam(pthread_t pthread, int policy,
 int		pthread_getconcurrency(void);
 int		pthread_setconcurrency(int);
 
-#if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
 int		pthread_attr_getinheritsched(const pthread_attr_t *, int *);
 int		pthread_attr_getschedparam(const pthread_attr_t *,
 		    struct sched_param *);
@@ -320,24 +299,6 @@ int		pthread_attr_setschedparam(pthread_attr_t *,
 		    const struct sched_param *);
 int		pthread_attr_setschedpolicy(pthread_attr_t *, int);
 int		pthread_attr_setscope(pthread_attr_t *, int);
-#endif
-
-int		pthread_attr_setfloatstate(pthread_attr_t *, int);
-int		pthread_attr_getfloatstate(pthread_attr_t *, int *);
-int		pthread_attr_setcleanup(pthread_attr_t *,
-		    void (*routine)(void *), void *);
-
-
-#ifdef notyet
-/*
- * Single Unix Specification v2 (UNIX98) defines these:
- */
-#define PTHREAD_PRIO_INHERIT
-#define PTHREAD_PRIO_NONE
-#define PTHREAD_PRIO_PROTECT
-int		pthread_attr_getguardsize(const pthread_attr_t *, size_t *);
-int		pthread_attr_setguardsize(const pthread_attr_t *, size_t);
-#endif	/* susv2 */
 
 __END_DECLS
 
