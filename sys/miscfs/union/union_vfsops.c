@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.11 2001/02/20 01:50:11 assar Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.12 2001/11/21 22:23:14 csapuntz Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -273,6 +273,18 @@ union_start(mp, flags, p)
 	return (0);
 }
 
+
+int union_unmount_count_vnode(struct vnode *vp, void *args);
+
+int
+union_unmount_count_vnode(struct vnode *vp, void *args) {
+	int *n = args;
+
+	*n = *n + 1;
+	simple_unlock(&vp->v_interlock);
+	return (0);
+}
+
 /*
  * Free reference to union layer
  */
@@ -309,14 +321,10 @@ union_unmount(mp, mntflags, p)
 	 * in the filesystem.
 	 */
 	for (freeing = 0; vflush(mp, um_rootvp, flags) != 0;) {
-		struct vnode *vp;
 		int n;
 
 		/* count #vnodes held on mount list */
-		for (n = 0, vp = mp->mnt_vnodelist.lh_first;
-				vp != NULLVP;
-				vp = vp->v_mntvnodes.le_next)
-			n++;
+		vfs_mount_foreach_vnode(mp, union_unmount_count_vnode, &n);
 
 		/* if this is unchanged then stop */
 		if (n == freeing)

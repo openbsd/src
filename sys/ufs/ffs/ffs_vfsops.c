@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.44 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.45 2001/11/21 22:21:48 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
 #include <ufs/ffs/ffs_extern.h>
 
 int ffs_sbupdate __P((struct ufsmount *, int));
+int ffs_reload_vnode(struct vnode *, void *);
+int ffs_sync_vnode(struct vnode *, void *);
 
 struct vfsops ffs_vfsops = {
 	ffs_mount,
@@ -435,6 +437,57 @@ error_1:	/* no state to back out */
 	return (error);
 }
 
+
+struct ffs_reload_args {
+	struct fs *fs;
+	struct proc *p;
+	struct ucred *cred;
+	struct vnode *devvp;
+};
+
+int
+ffs_reload_vnode(struct vnode *vp, void *args) 
+{
+	struct ffs_reload_args *fra = args;
+	struct inode *ip;
+	struct buf *bp;
+	int error;
+
+	/*
+	 * Step 4: invalidate all inactive vnodes.
+	 */
+	if (vp->v_usecount == 0) {
+		vgonel(vp, fra->p);
+		return (0);
+	}
+
+	/*
+	 * Step 5: invalidate all cached file data.
+	 */
+	if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, fra->p))
+		return (0);
+
+	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, 0))
+		panic("ffs_reload: dirty2");
+	/*
+	 * Step 6: re-read inode data for all active vnodes.
+	 */
+	ip = VTOI(vp);
+	error = bread(fra->devvp, 
+	    fsbtodb(fra->fs, ino_to_fsba(fra->fs, ip->i_number)),
+	    (int)fra->fs->fs_bsize, NOCRED, &bp);
+	if (error) {
+		vput(vp);
+		return (error);
+	}
+	ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
+	    ino_to_fsbo(fra->fs, ip->i_number));
+	ip->i_effnlink = ip->i_ffs_nlink;
+	brelse(bp);
+	vput(vp);
+	return (0);
+}
+
 /*
  * Reload all incore data for a filesystem (used after running fsck on
  * the root filesystem and finding things to fix). The filesystem must
@@ -454,14 +507,14 @@ ffs_reload(mountp, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp, *nvp, *devvp;
-	struct inode *ip;
+	struct vnode *devvp;
 	caddr_t space;
-	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
 	int i, blks, size, error;
 	int32_t *lp;
+	struct buf *bp = NULL;
+	struct ffs_reload_args fra;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -535,49 +588,14 @@ ffs_reload(mountp, cred, p)
 			*lp++ = fs->fs_contigsumsize;
 	}
 
-loop:
-	simple_lock(&mntvnode_slock);
-	for (vp = LIST_FIRST(&mountp->mnt_vnodelist); vp != NULL; vp = nvp) {
-		if (vp->v_mount != mountp) {
-			simple_unlock(&mntvnode_slock);
-			goto loop;
-		}
+	fra.p = p;
+	fra.cred = cred;
+	fra.fs = fs;
+	fra.devvp = devvp;
 
-		nvp = LIST_NEXT(vp, v_mntvnodes);
-		/*
-		 * Step 4: invalidate all inactive vnodes.
-		 */
-		if (vrecycle(vp, &mntvnode_slock, p))
-			goto loop;
+	error = vfs_mount_foreach_vnode(mountp, ffs_reload_vnode, &fra);
 
-		/*
-		 * Step 5: invalidate all cached file data.
-		 */
-		simple_lock(&vp->v_interlock);
-		simple_unlock(&mntvnode_slock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, p))
-			goto loop;
-		if (vinvalbuf(vp, 0, cred, p, 0, 0))
-			panic("ffs_reload: dirty2");
-		/*
-		 * Step 6: re-read inode data for all active vnodes.
-		 */
-		ip = VTOI(vp);
-		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-			      (int)fs->fs_bsize, NOCRED, &bp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-		ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
-		    ino_to_fsbo(fs, ip->i_number));
-		ip->i_effnlink = ip->i_ffs_nlink;
-		brelse(bp);
-		vput(vp);
-		simple_lock(&mntvnode_slock);
-	}
-	simple_unlock(&mntvnode_slock);
-	return (0);
+	return (error);
 }
 
 /*
@@ -950,6 +968,41 @@ ffs_statfs(mp, sbp, p)
 	return (0);
 }
 
+
+struct ffs_sync_args {
+	int allerror;
+	struct proc *p;
+	int waitfor;
+	struct ucred *cred;
+};
+
+int
+ffs_sync_vnode(struct vnode *vp, void *arg) {
+	struct ffs_sync_args *fsa = arg;
+	struct inode *ip;
+	int error;
+
+	ip = VTOI(vp);
+	if (fsa->waitfor == MNT_LAZY ||
+	    vp->v_type == VNON || 
+	    ((ip->i_flag &
+		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
+		LIST_EMPTY(&vp->v_dirtyblkhd)) ) {
+		simple_unlock(&vp->v_interlock);
+		return (0);
+	}
+
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, fsa->p))
+		return (0);
+
+	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
+		fsa->allerror = error;
+	VOP_UNLOCK(vp, 0, fsa->p);
+	vrele(vp);
+
+	return (0);
+}
+
 /*
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
@@ -964,11 +1017,10 @@ ffs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	register struct vnode *vp, *nvp;
-	register struct inode *ip;
-	register struct ufsmount *ump = VFSTOUFS(mp);
-	register struct fs *fs;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct fs *fs;
 	int error, allerror = 0, count;
+	struct ffs_sync_args fsa;
 
 	fs = ump->um_fs;
 	/*
@@ -981,44 +1033,19 @@ ffs_sync(mp, waitfor, cred, p)
 		panic("update: rofs mod");
 	}
 
+ loop:
 	/*
 	 * Write back each (modified) inode.
 	 */
-	simple_lock(&mntvnode_slock);
-loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
+	fsa.allerror = 0;
+	fsa.p = p;
+	fsa.cred = cred;
+	fsa.waitfor = waitfor;
 
-		simple_lock(&vp->v_interlock);
-		nvp = LIST_NEXT(vp, v_mntvnodes);
-		ip = VTOI(vp);
-		if (vp->v_type == VNON || ((ip->i_flag &
-		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-		    LIST_EMPTY(&vp->v_dirtyblkhd)) ||
-		    waitfor == MNT_LAZY) {
-			simple_unlock(&vp->v_interlock);
-			continue;
-		}
-		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
-		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
-				goto loop;
-			continue;
-		}
-		if ((error = VOP_FSYNC(vp, cred, waitfor, p)))
-			allerror = error;
-		VOP_UNLOCK(vp, 0, p);
-		vrele(vp);
-		simple_lock(&mntvnode_slock);
-	}
-	simple_unlock(&mntvnode_slock);
+	vfs_mount_foreach_vnode(mp, ffs_sync_vnode, &fsa);
+
+	if (fsa.allerror != 0)
+		allerror = fsa.allerror;
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
@@ -1026,10 +1053,8 @@ loop:
 		if ((error = softdep_flushworklist(ump->um_mountp, &count, p)))
 			allerror = error;
 		/* Flushed work items may create new vnodes to clean */
-		if (count) {
-			simple_lock(&mntvnode_slock);
+		if (count) 
 			goto loop;
-		}
 	}
 	if (waitfor != MNT_LAZY) {
 		if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
