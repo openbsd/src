@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.2 2004/02/23 19:09:57 drahn Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ undefinedinstruction(trapframe_t *frame)
 		/* Give the user an illegal instruction signal. */
 		sv.sival_int = (u_int32_t) fault_pc;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		userret(p);
+		userret(p, fault_pc, p->p_sticks);
 		return;
 	}
 
@@ -233,10 +233,11 @@ undefinedinstruction(trapframe_t *frame)
 		p = &proc0;
 
 #ifdef __PROG26
-	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
+	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR)
 #else
-	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
+	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 #endif
+	{
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.
@@ -325,5 +326,6 @@ undefinedinstruction(trapframe_t *frame)
 
 #else
 	userret(p);
+		userret(p, frame->tf_pc, p->p_sticks);
 #endif
 }

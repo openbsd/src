@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2004/02/23 19:09:57 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
 /* ast.c */
-void userret		__P((register struct proc *p));
+void userret (register struct proc *p, u_int32_t pc, quad_t ticks);
 
 /* machdep.h */
 void bootsync		__P((void));

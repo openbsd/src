@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: ast.c,v 1.2 2004/02/23 19:09:57 drahn Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ int want_resched = 0;
 extern int astpending;
 
 void
-userret(struct proc *p)
+userret(struct proc *p, u_int32_t pc, quad_t oticks)
 {
 	int sig;
 
@@ -80,11 +80,27 @@ userret(struct proc *p)
 	while ((sig = (CURSIG(p))) != 0)
 		postsig(sig);
 
-	#if 0
-	/* XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-	#endif
-	pmap_update(p->p_vmspace->vm_map.pmap); /* XXX DSR help stability */
+	p->p_priority = p->p_usrpri;
+
+	if (want_resched) {
+		/*
+		 * We're being preempted.
+		 */
+		preempt(NULL);
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+
+	/*
+	 * If profiling, charge recent system time to the trapped pc.
+	 */
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
+
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+	}                   
+
+	curpriority = p->p_priority;
 }
 
 
@@ -126,7 +142,7 @@ ast(struct trapframe *tf)
 	if (want_resched)
 		preempt(0);
 
-	userret(p);
+	userret(p, tf->tf_pc, p->p_sticks); /* XXX */
 }
 
 /* End of ast.c */

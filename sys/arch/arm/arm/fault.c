@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.3 2004/02/03 15:42:19 drahn Exp $	*/
+/*	$OpenBSD: fault.c,v 1.4 2004/02/23 19:09:57 drahn Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ do_trapsignal:
 out:
 	/* If returning to user mode, make sure to invoke userret() */
 	if (user)
-		userret(p);
+		userret(p, tf->tf_pc, p->p_sticks);
 }
 
 /*
@@ -783,7 +783,7 @@ prefetch_abort_handler(trapframe_t *tf)
 do_trapsignal:
 
 out:
-	userret(p);
+	userret(p, tf->tf_pc, p->p_sticks);
 }
 
 /*
