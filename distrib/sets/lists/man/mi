@@ -1405,10 +1405,12 @@
 ./usr/share/man/cat5
 ./usr/share/man/cat5/.rhosts.0
 ./usr/share/man/cat5/CellServDB.0
+./usr/share/man/cat5/DynRootDB.0
 ./usr/share/man/cat5/SuidCells.0
 ./usr/share/man/cat5/ThisCell.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
+./usr/share/man/cat5/afsd.conf.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
 ./usr/share/man/cat5/altq.conf.0
