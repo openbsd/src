@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ip.c,v 1.27 2000/09/14 18:04:14 brian Exp $
+ * $OpenBSD: ip.c,v 1.28 2001/01/29 08:47:43 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -651,9 +651,8 @@ PacketCheck(struct bundle *bundle, unsigned char *cp, int nb,
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
                "ESP: %s ---> ", inet_ntoa(pip->ip_src));
       loglen += strlen(logbuf + loglen);
-      snprintf(logbuf + loglen, sizeof logbuf - loglen,
-               "%s, spi %08x", inet_ntoa(pip->ip_dst),
-               (u_int32_t) ptop);
+      snprintf(logbuf + loglen, sizeof logbuf - loglen, "%s, spi %p",
+               inet_ntoa(pip->ip_dst), ptop);
       loglen += strlen(logbuf + loglen);
     }
     break;
@@ -663,9 +662,8 @@ PacketCheck(struct bundle *bundle, unsigned char *cp, int nb,
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
                "AH: %s ---> ", inet_ntoa(pip->ip_src));
       loglen += strlen(logbuf + loglen);
-      snprintf(logbuf + loglen, sizeof logbuf - loglen,
-               "%s, spi %08x", inet_ntoa(pip->ip_dst),
-               (u_int32_t) (ptop + sizeof(u_int32_t)));
+      snprintf(logbuf + loglen, sizeof logbuf - loglen, "%s, spi %p",
+               inet_ntoa(pip->ip_dst), ptop + sizeof(u_int32_t));
       loglen += strlen(logbuf + loglen);
     }
     break;
