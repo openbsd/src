@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.23 1998/08/30 17:11:34 art Exp $	*/
+/*	$OpenBSD: mount.h,v 1.24 1998/09/01 17:01:07 deraadt Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ struct statfs {
 #define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
-#define MOUNT_XFS	"xfs"		/* xfs */
+#define	MOUNT_XFS	"xfs"		/* xfs */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
