@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.38 2003/01/20 15:57:28 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.39 2003/01/22 18:59:36 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -226,13 +226,8 @@ zs_match(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 	if ((ca->ca_bustype == BUS_MAIN && !CPU_ISSUN4) ||
-	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M)) {
-		if (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit &&
-		    findzs(cf->cf_unit))
-			return (1);
-		return (0);
-	}
-
+	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M))
+		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }
