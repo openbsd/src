@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.4 2001/12/14 01:25:29 drahn Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -158,7 +158,13 @@ hmeattach_pci(parent, self, aux)
 	sc->sc_mac = hsc->hsc_memh + 0x6000;
 	sc->sc_mif = hsc->hsc_memh + 0x7000;
 
-	myetheraddr(sc->sc_enaddr);
+#ifdef __sparc__
+        myetheraddr(sc->sc_enaddr);
+#endif
+#ifdef __powerpc__
+	pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+#endif
+
 
 	sc->sc_burst = 16;	/* XXX */
 
