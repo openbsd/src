@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.1 2003/02/11 19:39:30 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.2 2003/02/11 22:53:42 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -203,11 +203,45 @@ const keysym_t hilkbd_keydesc_uk[] = {
     KC(115),			KS_minus,	KS_question,
 };
 
+/*
+ * 1b. French
+ */
+
+const keysym_t hilkbd_keydesc_fr[] = {
+    KC(28),			KS_w,
+    KC(45),			KS_q,
+    KC(53),			KS_z,
+    KC(54),			KS_a,
+    KC(56),			KS_egrave,	KS_7,
+    KC(57),			KS_paragraph,	KS_6,
+    KC(58),			KS_parenleft,	KS_5,
+    KC(59),			KS_apostrophe,	KS_4,
+    KC(60),			KS_quotedbl,	KS_3,
+    KC(61),			KS_eacute,	KS_2,
+    KC(62),			KS_ampersand,	KS_1,
+    KC(63),			KS_dollar,	KS_sterling,
+    KC(88),			KS_exclam,	KS_8,
+    KC(89),			KS_ccedilla,	KS_9,
+    KC(90),			KS_agrave,	KS_0,
+    KC(91),			KS_parenright,	KS_degree,
+    KC(92),			KS_minus,	KS_underscore,
+    KC(99),			KS_dead_circumflex, KS_dead_diaeresis,
+    KC(100),			KS_grave,	KS_asterisk,
+    KC(101),			KS_less,	KS_greater,
+    KC(107),			KS_m,
+    KC(108),			KS_ugrave,	KS_percent,
+    KC(112),			KS_comma,	KS_question,
+    KC(113),			KS_semicolon,	KS_period,
+    KC(114),			KS_colon,	KS_slash,
+    KC(115),			KS_equal,	KS_plus,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
 const struct wscons_keydesc hilkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	hilkbd_keydesc_us),
+	KBD_MAP(KB_FR,			KB_US,	hilkbd_keydesc_fr),
 	KBD_MAP(KB_UK,			KB_US,	hilkbd_keydesc_uk),
 	KBD_MAP(KB_SV,			KB_US,	hilkbd_keydesc_sv),
 	{0, 0, 0, 0},
@@ -244,7 +278,7 @@ const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT] = {
 	-1,	/* 18 Canada French */
 	-1,	/* 19 Swiss German */
 	-1,	/* 1a Norwegian */
-	-1,	/* 1b French */
+	KB_FR,	/* 1b French */
 	-1,	/* 1c Danish */
 	-1,	/* 1d Katakana */
 	-1,	/* 1e Latin Spanish */
