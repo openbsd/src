@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.21 1996/08/31 17:31:05 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.22 1996/12/11 09:05:05 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.21 1996/08/31 17:31:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.22 1996/12/11 09:05:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -151,10 +151,10 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.21 1996/08/31 17:31:05 deraadt Exp 
 
 extern	int errno;
 
-void	config __P((void));
-void	reapchild __P((void));
-void	retry __P((void));
-void	goaway __P((void));
+void	config __P((int));
+void	reapchild __P((int));
+void	retry __P((int));
+void	goaway __P((int));
 
 int	debug = 0;
 int	nsock, maxsock;
@@ -336,7 +336,7 @@ main(argc, argv, envp)
 	sv.sv_mask = SIGBLOCK;
 	sv.sv_handler = retry;
 	sigvec(SIGALRM, &sv, (struct sigvec *)0);
-	config();
+	config(0);
 	sv.sv_handler = config;
 	sigvec(SIGHUP, &sv, (struct sigvec *)0);
 	sv.sv_handler = reapchild;
@@ -545,7 +545,8 @@ dg_badinput(sin)
 }
 
 void
-reapchild()
+reapchild(sig)
+	int sig;
 {
 	int status;
 	int pid;
@@ -589,7 +590,8 @@ struct servtab *getconfigent __P((void));
 struct servtab *enter __P((struct servtab *));
 
 void
-config()
+config(sig)
+	int sig;
 {
 	register struct servtab *sep, *cp, **sepp;
 	long omask;
@@ -736,7 +738,8 @@ config()
 }
 
 void
-retry()
+retry(sig)
+	int sig;
 {
 	register struct servtab *sep;
 
@@ -756,7 +759,8 @@ retry()
 }
 
 void
-goaway()
+goaway(sig)
+	int sig;
 {
 	register struct servtab *sep;
 
@@ -1516,16 +1520,14 @@ print_service(action, sep)
 	struct servtab *sep;
 {
 	if (isrpcservice(sep))
-		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
-		    action, sep->se_service,
-		    sep->se_rpcprog, sep->se_rpcversh, sep->se_rpcversl, sep->se_proto,
-		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (long)sep->se_bi, sep->se_server);
+		fprintf(stderr, "%s: %s rpcprog=%d, rpcvers=%d/%d, proto=%s,",
+		    action, sep->se_service, sep->se_rpcprog,
+		    sep->se_rpcversh, sep->se_rpcversl, sep->se_proto);
 	else
+		fprintf(stderr, "%s: %s proto=%s,",
+		    action, sep->se_service, sep->se_proto);
 		fprintf(stderr,
-		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
-		    action, sep->se_service, sep->se_proto,
+	    " wait.max=%d.%d user.group=%s.%s builtin=%lx server=%s\n",
 		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
 		    (long)sep->se_bi, sep->se_server);
 }
