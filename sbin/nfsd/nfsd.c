@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.23 2004/03/02 01:00:11 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.24 2004/05/10 15:26:49 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.23 2004/03/02 01:00:11 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.24 2004/05/10 15:26:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,6 @@ static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.23 2004/03/02 01:00:11 deraadt
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
@@ -94,6 +91,9 @@ void	nonfs(int);
 void	reapchild(int);
 void	usage(void);
 
+#define	MAXNFSDCNT	20
+#define	DEFNFSDCNT	 4
+
 /*
  * Nfs server daemon mostly just a user context for nfssvc()
  *
@@ -107,7 +107,6 @@ void	usage(void);
  * For connection based sockets, loop doing accepts. When you get a new
  * socket from accept, pass the msgsock into the kernel via. nfssvc().
  * The arguments are:
- *	-c - support iso cltp clients
  *	-r - reregister with portmapper
  *	-t - support tcp nfs clients
  *	-u - support udp nfs clients
@@ -118,35 +117,21 @@ main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
 	struct sockaddr_in inetaddr, inetpeer;
-#ifdef ISO
-	struct sockaddr_iso isoaddr, isopeer;
-#endif
 	fd_set *ready, *sockbits;
 	size_t fd_size;
-	int ch, cltpflag, connect_type_cnt, i, maxsock = 0, msgsock;
-	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
-	int tp4cnt, tpipcnt, udpflag;
+	int ch, connect_type_cnt, i, maxsock = 0, msgsock;
+	int nfsdcnt = DEFNFSDCNT, nfssvc_flag, on, reregister = 0, sock;
+	int udpflag = 0, tcpflag = 0, tcpsock;
+	const char *errstr = NULL;
 	socklen_t len;
 
-#define	MAXNFSDCNT	20
-#define	DEFNFSDCNT	 4
-	nfsdcnt = DEFNFSDCNT;
-	cltpflag = reregister = tcpflag = tp4cnt = tpipcnt = 0;
-	tcpsock = udpflag = 0;
-#ifdef ISO
-#define	GETOPT	"cn:rtu"
-#define	USAGE	"[-crtu] [-n num_servers]"
-#else
-#define	GETOPT	"n:rtu"
-#define	USAGE	"[-rtu] [-n num_servers]"
-#endif
-	while ((ch = getopt(argc, argv, GETOPT)) != -1)
+	while ((ch = getopt(argc, argv, "n:rtu")) != -1)
 		switch (ch) {
 		case 'n':
-			nfsdcnt = atoi(optarg);
-			if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-				warnx("nfsd count %d; reset to %d",
-				    nfsdcnt, DEFNFSDCNT);
+			nfsdcnt = strtonum(optarg, 1, MAXNFSDCNT, &errstr);
+			if (errstr) {
+				warnx("nfsd count %s %s; reset to %d",
+				    optarg, errstr, DEFNFSDCNT);
 				nfsdcnt = DEFNFSDCNT;
 			}
 			break;
@@ -159,21 +144,7 @@ main(int argc, char *argv[])
 		case 'u':
 			udpflag = 1;
 			break;
-#ifdef ISO
-		case 'c':
-			cltpflag = 1;
-			break;
-#ifdef notyet
-		case 'i':
-			tp4cnt = 1;
-			break;
-		case 'p':
-			tpipcnt = 1;
-			break;
-#endif /* notyet */
-#endif /* ISO */
 		default:
-		case '?':
 			usage();
 		};
 	argv += optind;
@@ -186,10 +157,10 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 	if (argc == 1) {
-		nfsdcnt = atoi(argv[0]);
-		if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-			warnx("nfsd count %d; reset to %d",
-			    nfsdcnt, DEFNFSDCNT);
+		nfsdcnt = strtonum(argv[0], 1, MAXNFSDCNT, &errstr);
+		if (errstr) {
+			warnx("nfsd count %s %s; reset to %d",
+			    argv[0], errstr, DEFNFSDCNT);
 			nfsdcnt = DEFNFSDCNT;
 		}
 	}
@@ -251,8 +222,8 @@ main(int argc, char *argv[])
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
-		if (bind(sock,
-		    (struct sockaddr *)&inetaddr, sizeof(inetaddr)) < 0) {
+		if (bind(sock, (struct sockaddr *)&inetaddr,
+		    sizeof(inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind udp addr");
 			return (1);
 		}
@@ -271,47 +242,6 @@ main(int argc, char *argv[])
 		(void)close(sock);
 	}
 
-#ifdef ISO
-	/* If we are serving cltp, set up the socket. */
-	if (cltpflag) {
-		if ((sock = socket(AF_ISO, SOCK_DGRAM, 0)) < 0) {
-			syslog(LOG_ERR, "can't create cltp socket");
-			return (1);
-		}
-		memset(&isoaddr, 0, sizeof(isoaddr));
-		isoaddr.siso_family = AF_ISO;
-		isoaddr.siso_tlen = 2;
-		cp = TSEL(&isoaddr);
-		*cp++ = (NFS_PORT >> 8);
-		*cp = (NFS_PORT & 0xff);
-		isoaddr.siso_len = sizeof(isoaddr);
-		if (bind(sock,
-		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
-			syslog(LOG_ERR, "can't bind cltp addr");
-			return (1);
-		}
-#ifdef notyet
-		/*
-		 * XXX
-		 * Someday this should probably use "rpcbind", the son of
-		 * portmap.
-		 */
-		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_UDP, NFS_PORT)) {
-			syslog(LOG_ERR, "can't register with udp portmap");
-			return (1);
-		}
-#endif /* notyet */
-		nfsdargs.sock = sock;
-		nfsdargs.name = NULL;
-		nfsdargs.namelen = 0;
-		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
-			syslog(LOG_ERR, "can't add UDP socket");
-			return (1);
-		}
-		close(sock);
-	}
-#endif /* ISO */
-
 	/* Now set up the master server socket waiting for tcp connections. */
 	on = 1;
 	connect_type_cnt = 0;
@@ -328,8 +258,8 @@ main(int argc, char *argv[])
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
-		if (bind(tcpsock,
-		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
+		if (bind(tcpsock, (struct sockaddr *)&inetaddr,
+		    sizeof (inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
 			return (1);
 		}
@@ -345,82 +275,6 @@ main(int argc, char *argv[])
 		maxsock = tcpsock;
 		connect_type_cnt++;
 	}
-
-#ifdef notyet
-	/* Now set up the master server socket waiting for tp4 connections. */
-	if (tp4flag) {
-		if ((tp4sock = socket(AF_ISO, SOCK_SEQPACKET, 0)) < 0) {
-			syslog(LOG_ERR, "can't create tp4 socket");
-			return (1);
-		}
-		if (setsockopt(tp4sock,
-		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
-		memset(&isoaddr, 0, sizeof(isoaddr));
-		isoaddr.siso_family = AF_ISO;
-		isoaddr.siso_tlen = 2;
-		cp = TSEL(&isoaddr);
-		*cp++ = (NFS_PORT >> 8);
-		*cp = (NFS_PORT & 0xff);
-		isoaddr.siso_len = sizeof(isoaddr);
-		if (bind(tp4sock,
-		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
-			syslog(LOG_ERR, "can't bind tp4 addr");
-			return (1);
-		}
-		if (listen(tp4sock, 5) < 0) {
-			syslog(LOG_ERR, "listen failed");
-			return (1);
-		}
-		/*
-		 * XXX
-		 * Someday this should probably use "rpcbind", the son of
-		 * portmap.
-		 */
-		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_TCP, NFS_PORT)) {
-			syslog(LOG_ERR, "can't register tcp with portmap");
-			return (1);
-		}
-		maxsock = tp4sock;
-		connect_type_cnt++;
-	}
-
-	/* Now set up the master server socket waiting for tpip connections. */
-	if (tpipflag) {
-		if ((tpipsock = socket(AF_INET, SOCK_SEQPACKET, 0)) < 0) {
-			syslog(LOG_ERR, "can't create tpip socket");
-			return (1);
-		}
-		if (setsockopt(tpipsock,
-		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
-		memset(&inetaddr, 0, sizeof inetaddr);
-		inetaddr.sin_family = AF_INET;
-		inetaddr.sin_addr.s_addr = INADDR_ANY;
-		inetaddr.sin_port = htons(NFS_PORT);
-		inetaddr.sin_len = sizeof(inetaddr);
-		if (bind(tpipsock,
-		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
-			syslog(LOG_ERR, "can't bind tcp addr");
-			return (1);
-		}
-		if (listen(tpipsock, 5) < 0) {
-			syslog(LOG_ERR, "listen failed");
-			return (1);
-		}
-		/*
-		 * XXX
-		 * Someday this should probably use "rpcbind", the son of
-		 * portmap.
-		 */
-		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_TCP, NFS_PORT)) {
-			syslog(LOG_ERR, "can't register tcp with portmap");
-			return (1);
-		}
-		maxsock = tpipsock;
-		connect_type_cnt++;
-	}
-#endif /* notyet */
 
 	if (connect_type_cnt == 0)
 		return (0);
@@ -440,12 +294,6 @@ main(int argc, char *argv[])
 	memset(sockbits, 0, fd_size);
 	if (tcpflag)
 		FD_SET(tcpsock, sockbits);
-#ifdef notyet
-	if (tp4flag)
-		FD_SET(tp4sock, sockbits);
-	if (tpipflag)
-		FD_SET(tpipsock, sockbits);
-#endif
 
 	/*
 	 * Loop forever accepting connections and passing the sockets
@@ -478,48 +326,13 @@ main(int argc, char *argv[])
 			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
 			(void)close(msgsock);
 		}
-#ifdef notyet
-		if (tp4flag && FD_ISSET(tp4sock, ready)) {
-			len = sizeof(isopeer);
-			if ((msgsock = accept(tp4sock,
-			    (struct sockaddr *)&isopeer, &len)) < 0) {
-				syslog(LOG_ERR, "accept failed: %m");
-				return (1);
-			}
-			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
-				syslog(LOG_ERR,
-				    "setsockopt SO_KEEPALIVE: %m");
-			nfsdargs.sock = msgsock;
-			nfsdargs.name = (caddr_t)&isopeer;
-			nfsdargs.namelen = len;
-			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
-			(void)close(msgsock);
-		}
-		if (tpipflag && FD_ISSET(tpipsock, ready)) {
-			len = sizeof(inetpeer);
-			if ((msgsock = accept(tpipsock,
-			    (struct sockaddr *)&inetpeer, &len)) < 0) {
-				syslog(LOG_ERR, "Accept failed: %m");
-				return (1);
-			}
-			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
-				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE: %m");
-			nfsdargs.sock = msgsock;
-			nfsdargs.name = (caddr_t)&inetpeer;
-			nfsdargs.namelen = len;
-			nfssvc(NFSSVC_ADDSOCK, &nfsdargs);
-			(void)close(msgsock);
-		}
-#endif /* notyet */
 	}
 }
 
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: nfsd %s\n", USAGE);
+	(void)fprintf(stderr, "usage: nfsd [-rtu] [-n num_servers]\n");
 	exit(1);
 }
 
