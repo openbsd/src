@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.23 2000/01/15 05:02:46 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.24 2000/01/15 20:02:36 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -33,6 +33,7 @@
 
 #include "bridge.h"
 #include "bpfilter.h"
+#include "enc.h"
 
 #if NBRIDGE > 0
 
@@ -59,6 +60,9 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip_ipsp.h>
+
+#include <net/if_enc.h>
 #ifdef IPFILTER
 #include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
@@ -284,7 +288,14 @@ bridge_ioctl(ifp, cmd, data)
 					break;
 			}
 		}
-		else if (ifs->if_type != IFT_ENC) {
+		else if (ifs->if_type == IFT_ENC) {
+#if NENC > 0
+			/* Can't bind enc0 to a bridge */
+			if (ifs->if_softc == &encif[0])
+				return EINVAL;
+#endif /* NENC */
+		}
+		else {
 			error = EINVAL;
 			break;
 		}

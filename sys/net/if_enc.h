@@ -57,4 +57,5 @@ struct enchdr {
 	u_int32_t flags;
 };
 
+extern struct enc_softc encif[];
 #endif
