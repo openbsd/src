@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.10 2002/01/10 00:06:17 nordin Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.11 2002/01/29 20:33:19 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -432,9 +432,11 @@ psycho_attach(parent, self, aux)
 		psycho_set_intr(sc, 15, psycho_bus_b,
 		    &sc->sc_regs->pciberr_int_map,
 		    &sc->sc_regs->pciberr_clr_int);
+#if 0
 		psycho_set_intr(sc, 15, psycho_powerfail,
 		    &sc->sc_regs->power_int_map, 
 		    &sc->sc_regs->power_clr_int);
+#endif
 		psycho_set_intr(sc, 1, psycho_wakeup,
 		    &sc->sc_regs->pwrmgt_int_map, 
 		    &sc->sc_regs->pwrmgt_clr_int);
