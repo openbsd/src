@@ -1,3 +1,4 @@
+.\"	$OpenBSD: hostname.7,v 1.3 1998/11/28 03:38:02 aaron Exp $
 .\"	$NetBSD: hostname.7,v 1.4 1994/11/30 19:07:14 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -51,13 +52,13 @@ subdomain of the EDU subdomain of the Internet would be represented as
 Hostnames are often used with network client and server programs,
 which must generally translate the name to an address for use.
 (This function is generally performed by the library routine
-.Xr gethostbyname  3  . )
+.Xr gethostbyname 3 . )
 Hostnames are resolved by the Internet name resolver in the following
 fashion.
 .Pp
 If the name consists of a single component, i.e. contains no dot,
 and if the environment variable
-.Dq Ev HOSTALIASES
+.Ev HOSTALIASES
 is set to the name of a file,
 that file is searched for any string matching the input hostname.
 The file should consist of lines made up of two white-space separated strings,
@@ -83,12 +84,14 @@ Lithium.CChem.EDU will not be tried, as there is only one component
 remaining from the local domain.
 The search path can be changed from the default
 by a system-wide configuration file (see
-.Xr resolv.conf  5  ) .
+.Xr resolv.conf 5 ) .
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr resolv.conf 5 ,
 .Xr mailaddr 7 ,
 .Xr named 8
 .Sh HISTORY
-.Nm Hostname
-appeared in 4.2 BSD.
+A
+.Nm
+manual page appeared in
+.Bx 4.2 .

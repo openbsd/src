@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.7 1998/06/28 02:38:50 art Exp $
+.\"	$OpenBSD: hier.7,v 1.8 1998/11/28 03:38:01 aaron Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -44,212 +44,213 @@
 A sketch of the filesystem hierarchy.
 .Bl -tag -width "/stand/"
 .It Li /
-root directory of the filesystem
+Root directory.
 .It Li /bin/
-user utilities fundamental to both single-user and multi-user environments
+User utilities fundamental to both single and multi-user environments.
 .It Li /bsd
-pure kernel executable (the operating system loaded into memory
-at boot time).  
+Pure kernel executable (the operating system loaded into memory
+at boot-time).  
 .It Li /dev/
-block and character device files
+Block and character device files.
 .Pp
 .Bl -tag -width MAKEDEV -compact
 .It Li MAKEDEV
-script for creating device files;
-see
-.Xr makedev 8
+Script for creating device files (see
+.Xr makedev 8 ) .
 .It Li fd/ 
-file descriptor files;
-see
-.Xr \&fd 4
+File descriptor files (see
+.Xr fd 4 ) .
 .El
 .It Li /emul/
-base directory for alternate areas searched first when system call
-emulation is in effect; see
+Base directory for alternate areas searched first when system call
+emulation is in effect (see
+.Xr compat_bsdos 8 ,
 .Xr compat_freebsd 8 ,
 .Xr compat_linux 8 ,
 .Xr compat_sunos 8 ,
-.Xr compat_svr4 8 .
+.Xr compat_svr4 8 ) .
 .It Li /etc/
-system configuration files and scripts 
+System configuration files and scripts.
 .Pp
 .Bl -tag -width "disklabels/" -compact
 .It Li localtime
-local timezone information;
-see
-.Xr ctime 3
+Local timezone information (see
+.Xr ctime 3 ) .
 .It Li disklabels/
-backup disklabels;
-see
-.Xr disklabel 8
+Backup disklabels (see
+.Xr disklabel 8 ) .
 .It Li kerberosIV/ 
-configuration files for the kerberos version IV;
-see
-.Xr kerberos 1
+Configuration files for the Kerberos version IV system (see
+.Xr kerberos 1 ) .
 .It Li mtree/ 
-mtree configuration files;
-see
-.Xr mtree 1
+.Xr mtree
+configuration files (see
+.Xr mtree 8 ) .
 .It Li namedb/ 
-named configuration files;
-see
-.Xr named 8
+.Xr named
+configuration files (see
+.Xr named 8 ) .
 .It Li uucp/
-UUCP configuration files;
+.Xr uucp
+configuration files (see
+.Xr uucp 1 ) .
 .El
+.It Li /home/
+User home directories.
+.It Li /lost+found/
+I don't know.
 .It Li /mnt/
-empty directory commonly used by
-system administrators as a temporary mount point
+Empty directory commonly used by
+system administrators as a temporary mount point.
+.It Li /root/
+Default home directory for the super-user.
 .It Li /sbin/
-system programs and administration utilities
-fundamental to both single-user and multi-user environments
+System programs and administration utilities
+fundamental to both single and multi-user environments.
 .It Li /stand/
-programs used in a standalone environment
+Programs used in a stand-alone environment.
 .It Li /tmp/ 
-temporary files, usually a
+Temporary files, usually an
 .Xr mfs 8
 memory-based filesystem (the contents
-of /tmp are usually NOT preserved across a system reboot)
+of
+.Pa /tmp
+are usually
+.Em not
+preserved across a system reboot).
 .It Li /usr/
-contains the majority of user utilities and applications 
+Contains the majority of user utilities and applications.
 .Pp
 .Bl -tag -width "libdata/" -compact
 .It Li bin/
-common utilities, programming tools, and applications 
+Common utilities, programming tools, and applications.
 .It Li games/
-useful and semi-frivolous programs
+Useful and semi-frivolous programs.
 .It Li include/
-standard C include files
+Standard C include files.
 .Pp
 .Bl -tag -width "kerberosIV/" -compact
 .It Li X11/
-C include files for X11 window system
+C include files for X11 window system.
 .It Li arpa/
-C include files for Internet service protocols
+C include files for Internet service protocols.
 .It Li kerberosIV/
-C include files for kerberos authentication package;
-see
-.Xr kerberos 1
+C include files for Kerberos authentication package (see
+.Xr kerberos 1 ) .
 .It Li machine/
-machine specific C include files
+Machine specific C include files.
 .It Li net/
-misc network C include files
+Miscellaneous network C include files.
 .It Li netimp/
-C include files for IMP protocols;
-see
-.Xr imp 4
+C include files for IMP protocols (see
+.Xr imp 4 ) .
 .It Li netinet/
-C include files for Internet standard protocols;
-see
-.Xr inet 4
+C include files for Internet standard protocols (see
+.Xr inet 4 ) .
 .It Li netiso/
-C include files for ISO standard protocols;
-see
-.Xr iso 4
+C include files for ISO standard protocols (see
+.Xr iso 4 ) .
 .It Li netns/
-C include files for XNS standard protocols;
-see
-.Xr \&ns 4
+C include files for XNS standard protocols (see
+.Xr ns 4 ) .
 .It Li nfs/
-C include files for NFS (Network File System)
+C include files for NFS (Network File System).
 .It Li pascal/
-include files for pc 1
+Include files for
+.Xr pc 1 .
 .It Li protocols/
-C include files for Berkeley service protocols
+C include files for Berkeley service protocols.
 .It Li sys/
-system C include files (kernel data structures)
+System C include files (kernel data structures).
 .It Li ufs/
-C include files for UFS (The U-word File System)
+C include files for UFS (the U-word File System).
 .El
 .Pp
 .It Li lib/
-archive libraries
+Archive libraries.
 .It Li libdata/
-misc. utility data files
+Miscellaneous utility data files.
 .It Li libexec/
-system daemons & system utilities (executed by other programs)
+System daemons and utilities (executed by other programs).
 .It Li local/
-local executables, libraries, etc.
+Local executables, libraries, etc.
 .It Li obj/
-architecture-specific target tree produced by building the /usr/src tree
+Architecture specific target tree produced by building the
+.Pa /usr/src
+tree.
 .It Li old/
-programs from past lives of BSD which may disappear in future
-releases
+Programs from past lives of BSD which may disappear in future
+releases.
 .It Li sbin/
-system daemons & system utilities (executed by users)
+System daemons and utilities (executed by users).
 .It Li share/
-architecture-independent data files
+Architecture independent data files.
 .Pp
 .Bl -tag -width "calendar/" -compact
 .It Li calendar/
-a variety of pre-fab calendar files;
-see
-.Xr calendar 1
+Variety of pre-fab calendar files (see
+.Xr calendar 1 ) .
 .It Li dict/
-word lists;
-see
-.Xr look 1
+Word lists (see
+.Xr look 1 ) .
 .Pp
 .Bl -tag -width Fl -compact
 .It Li words
-common words
+Common words.
 .It Li web2
-words from Webster's 2nd International
+Words from Webster's 2nd International.
 .It Li papers/
-reference databases;
-see
-.Xr refer 1
+Reference databases (see
+.Xr refer 1 ) .
 .It Li special/
-custom word lists;
-see
-.Xr spell 1
+Custom word lists.
 .El
 .Pp
 .It Li doc/
-misc documentation;
-src for most of the printed
+Miscellaneous documentation;
+source for most of the printed
 .Bx 4.3
 manuals (available
 from the
 .Tn USENIX
-association)
+association).
 .It Li games/
-ascii text files used by various games
+ASCII text files used by various games.
 .It Li man/
-manual pages 
+Manual pages.
 .It Li me/
-macros for use with the me macro package
+Macros for use with the me macro package.
 .It Li misc/
-misc system-wide ascii text files
-.Bl -tag -width Fl -compact
+Miscellaneous system-wide ASCII text files.
+.Bl -tag -width Fl
 .It Li termcap
-terminal characteristics database;
-see
-.Xr termcap 5
+Terminal characteristics database (see
+.Xr termcap 5 ) .
 .El
+.Pp
 .It Li mk/
-templates for make;
-see
-.Xr make 1
+Templates for
+.Xr make
+(see
+.Xr make 1 ) .
 .It Li ms/
-macros for use with the ms macro package
+Macros for use with the ms macro package.
 .It Li skel/
-example . (dot) files for new accounts
+Example
+.Dq \&.
+(dot) files for new accounts.
 .It Li tabset/
-tab description files for a variety of terminals; used in 
-the termcap file;
-see
-.Xr termcap 5
+Tab description files for a variety of terminals; used in 
+the termcap file (see
+.Xr termcap 5 ) .
 .It Li tmac/
-text processing macros;
-see
+Text processing macros (see
 .Xr nroff 1
 and 
-.Xr troff 1
+.Xr troff 1 ) .
 .It Li zoneinfo/
-timezone configuration information;
-see
-.Xr tzfile 5
+Timezone configuration information (see
+.Xr tzfile 5 ) .
 .El
 .Pp
 .It Li src/
@@ -257,130 +258,137 @@ BSD and/or local source files
 .Pp
 .Bl -tag -width "kerberosIV/" -compact
 .It Li bin/
-src for files in /bin 
+Source for files in
+.Pa /bin .
 .It Li etc/
-src for files in /etc
+Source for files in
+.Pa /etc .
 .It Li games/
-src for files in /usr/games
+Source for files in
+.Pa /usr/games .
 .It Li gnu/
-src for files with GPL license
+Source for files with GPL license.
 .It Li include/
-src for files in /usr/include
+Source for files in
+.Pa /usr/include .
 .It Li kerberosIV/
-src for kerberos version IV
+Source for Kerberos version IV.
 .It Li lib/
-src for files in /usr/lib
+Source for files in
+.Pa /usr/lib .
 .It Li libexec/
-src for files in /usr/libexec
+Source for files in
+.Pa /usr/libexec .
 .It Li lkm/
-src for files in /usr/lkm
+Source for files in
+.Pa /usr/lkm .
 .It Li sbin/
-src for files in /sbin
+Source for files in
+.Pa /sbin .
 .It Li share/
-src for files in /usr/share
+Source for files in
+.Pa /usr/share .
 .It Li sys/
-kernel src files
+Kernel source files.
 .It Li usr.bin/
-src for files in /usr/bin
+Source for files in
+.Pa /usr/bin .
 .It Li usr.sbin/
-src for files in /usr/sbin
+Source for files in
+.Pa /usr/sbin .
 .El
 .El
 .It Li /var/
-multi-purpose log, temporary, transient, and spool files
+Multi-purpose log, temporary, transient, and spool files.
 .Pp
 .Bl -tag -width "preserve/" -compact
 .It Li account/ 
-system accounting files
+System accounting files.
 .Pp
 .Bl -tag -width Fl -compact
 .It Li acct
-execution accounting file;
-see
-.Xr acct 5
+Execution accounting file (see
+.Xr acct 5 ) .
 .El
 .Pp
 .It Li at/
-timed command scheduling files;
-see
-.Xr \&at 1
+.Xr timed 8
+command scheduling files (see
+.Xr at 1 ) .
 .It Li backups/
-misc. backup files
+Miscellaneous backup files.
 .It Li db/ 
-misc. automatically generated system-specific database files
+Miscellaneous automatically generated system-specific database files.
 .It Li games/ 
-misc. game status and log files
+Miscellaneous game status and log files.
 .It Li log/ 
-misc. system log files
+Miscellaneous system log files.
 .Pp
 .Bl -tag -width Fl -compact
 .It Li wtmp
-login/logout log;
-see
-.Xr wtmp 5
+Login/logout log (see
+.Xr wtmp 5 ) .
 .El
 .Pp
 .It Li mail/ 
-user mailbox files
+User mailbox files.
 .It Li preserve/
-temporary home of files preserved after an accidental death
-of an editor;
-see
-.Xr \&ex 1 
+Temporary home of files preserved after an accidental death
+of an editor (see
+.Xr ex 1 ) .
 .It Li quotas/ 
-filesystem quota information files
+Filesystem quota information files.
 .It Li run/
-system information files describing various info about
-system since it was booted
+System information files describing various info about the
+system since it was booted.
 .Pp
 .Bl -tag -width Fl -compact
 .It Li utmp
-database of current users;
-see
-.Xr utmp 5
+Database of current users (see
+.Xr utmp 5 ) .
 .El
 .Pp
 .It Li rwho/ 
-rwho data files;
-see
+.Xr rwho
+data files (see
 .Xr rwhod 8 ,
 .Xr rwho 1 ,
 and
-.Xr ruptime 1
+.Xr ruptime 1 ) .
 .It Li spool/ 
-misc. printer and mail system spooling directories
+Miscellaneous printer and mail system spooling directories.
 .Pp
 .Bl -tag -width Fl -compact
 .It Li ftp/ 
-commonly ~ftp; the anonymous ftp root directory
+Commonly ~ftp; the anonymous ftp root directory.
 .It Li mqueue/ 
-undelivered mail queue;
-see
-.Xr sendmail 8
+Undelivered mail queue (see
+.Xr sendmail 8 ) .
 .It Li output/
-line printer spooling directories
+Line printer spooling directories.
 .It Li uucp/ 
-uucp spool directory
+.Xr uucp
+spool directory.
 .It Li uucppublic/
-commonly ~uucp; public uucp temporary directory
+Commonly ~uucp; public uucp temporary directory.
 .El
 .Pp
 .It Li tmp/ 
-temporary files that are kept between system reboots
+Temporary files that are kept between system reboots.
 .El
 .El
 .Sh SEE ALSO
-.Xr \&ls 1 ,
 .Xr apropos 1 ,
-.Xr whatis 1 ,
-.Xr whereis 1 ,
 .Xr finger 1 ,
-.Xr which 1 ,
 .Xr find 1 ,
 .Xr grep 1  ,
+.Xr ls 1 ,
+.Xr whatis 1 ,
+.Xr whereis 1 ,
+.Xr which 1 ,
 .Xr fsck 8 
 .Sh HISTORY
 A
-.Nm hier
+.Nm
 manual page appeared in
 .At v7 .
