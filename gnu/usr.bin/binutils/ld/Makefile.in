@@ -197,7 +197,7 @@ ALL_CFLAGS = $(INCLUDES) @HDEFINES@ $(CFLAGS)
 
 BFDDEP = ../bfd/libbfd.a
 BFDLIB = @BFDLIB@
-LIBIBERTY = ../libiberty/libiberty.a
+LIBIBERTY = -liberty
 
 ALL_EMULATIONS = \
 	ea29k.o \

@@ -151,7 +151,7 @@ GENERATED_CFILES = \
 DEBUG_OBJS = rddbg.o debug.o stabs.o ieee.o rdcoff.o
 WRITE_DEBUG_OBJS = $(DEBUG_OBJS) wrstabs.o
 
-LIBIBERTY = ../libiberty/libiberty.a
+LIBIBERTY = -liberty
 
 # Code shared by all the binutils.
 BULIBS = bucomm.o version.o filemode.o

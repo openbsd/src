@@ -127,7 +127,7 @@ $(TARGETLIB): $(OFILES)
 	 $(AR) $(AR_FLAGS) $(TARGETLIB) $(OFILES)
 	 $(RANLIB) $(TARGETLIB)
 
-LIBIBERTY_LISTS = ../libiberty/required-list ../libiberty/needed-list
+LIBIBERTY_LISTS = 
 BFD_PICLIST = @BFD_PICLIST@
 
 stamp-piclist: Makefile $(LIBIBERTY_LISTS) $(BFD_PICLIST)

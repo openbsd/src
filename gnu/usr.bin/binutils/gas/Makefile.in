@@ -238,8 +238,8 @@ ALL_CFLAGS = $(INTERNAL_CFLAGS) $(CROSS) $(CFLAGS) $(HDEFINES) $(TDEFINES)
 # How to link with both our special library facilities
 # and the system's installed libraries.
 
-LIBDEPS = @OPCODES_DEP@ @BFDDEP@ $(LOCAL_LOADLIBES) ../libiberty/libiberty.a
-LIBS = @OPCODES_LIB@ @BFDLIB@ $(LOCAL_LOADLIBES) ../libiberty/libiberty.a
+LIBDEPS = @OPCODES_DEP@ @BFDDEP@ $(LOCAL_LOADLIBES) 
+LIBS = @OPCODES_LIB@ @BFDLIB@ $(LOCAL_LOADLIBES) -liberty
 
 # Specify the directories to be searched for header files.
 # Both . and srcdir are used, in that order,
@@ -267,8 +267,8 @@ $(OBJS): config.h as.h targ-env.h obj-format.h targ-cpu.h flonum.h expr.h \
 	struc-symbol.h write.h frags.h hash.h read.h symbols.h tc.h obj.h \
 	listing.h bignum.h $(srcdir)/../include/libiberty.h
 
-gasp.new: $(GASPOBJS) ../libiberty/libiberty.a
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o gasp.new $(GASPOBJS) ../libiberty/libiberty.a $(LOADLIBES)
+gasp.new: $(GASPOBJS) 
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o gasp.new $(GASPOBJS) -liberty $(LOADLIBES)
 
 installcheck:
 	@echo No installcheck target is available yet for the GNU assembler.

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 1999/06/18 02:01:55 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 1999/06/18 02:11:24 espie Exp $
 
-SUBDIRS=	libiberty opcodes bfd
+SUBDIRS=	opcodes bfd
 MAN=
 
 # gdb not ready yet
@@ -48,11 +48,13 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
+	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info \
+	--disable-gdbtk --disable-commonbfdlib ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info --disable-gdbtk ${CF}
+	sh ${.CURDIR}/configure --prefix=/usr --infodir=/usr/share/info \
+	--disable-gdbtk --disable-commonbfdlib ${CF}
 
 .ifdef NOMAN
 maninstall:

@@ -40,8 +40,8 @@ SRCS=	$(MY_TARGET).c basic_blocks.c call_graph.c \
 	gmon_io.c gprof.c hertz.c hist.c source.c search_list.c symtab.c \
 	sym_ids.c utils.c
 
-LIBDEPS = ../bfd/libbfd.a ../libiberty/libiberty.a
-LIBS = @BFDLIB@ ../libiberty/libiberty.a
+LIBDEPS = ../bfd/libbfd.a 
+LIBS = @BFDLIB@ -liberty
 
 OBJS=	$(MY_TARGET).o basic_blocks.o bsd_callg_bl.o call_graph.o \
 	cg_arcs.o cg_dfn.o cg_print.o core.o flat_bl.o fsf_callg_bl.o \
