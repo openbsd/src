@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.c,v 1.25 2001/02/16 08:22:05 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.109 2000/10/24 07:19:01 jinmei Exp $	*/
+/*	$OpenBSD: in6.c,v 1.26 2001/02/16 15:58:50 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.176 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -119,6 +119,9 @@ const struct in6_addr in6mask128 = IN6MASK128;
 
 static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
+
+const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
+				     0, 0, IN6ADDR_ANY_INIT, 0};
 
 /*
  * This structure is used to keep track of in6_multi chains which belong to
@@ -383,7 +386,7 @@ in6_control(so, cmd, data, ifp, p)
 					htons(ifp->if_index);
 			} else if (sa6->sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
-				return(EINVAL);	/* ifid is contradict */
+				return(EINVAL);	/* ifid contradicts */
 			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
@@ -399,11 +402,11 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCDIFADDR_IN6:
 		/*
-		 * for IPv4, we look for existing in6_ifaddr here to allow
+		 * for IPv4, we look for existing in_ifaddr here to allow
 		 * "ifconfig if0 delete" to remove first IPv4 address on the
 		 * interface.  For IPv6, as the spec allow multiple interface
 		 * address from the day one, we consider "remove the first one"
-		 * semantics to be not preferrable.
+		 * semantics to be not preferable.
 		 */
 		if (ia == NULL)
 			return(EADDRNOTAVAIL);
@@ -571,7 +574,7 @@ in6_control(so, cmd, data, ifp, p)
 			} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				ia->ia_dstaddr = oldaddr;
-				return(EINVAL);	/* ifid is contradict */
+				return(EINVAL);	/* ifid contradicts */
 			}
 		}
 
@@ -715,7 +718,7 @@ in6_control(so, cmd, data, ifp, p)
 				} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 					    htons(ifp->if_index)) {
 					ia->ia_dstaddr = oldaddr;
-					return(EINVAL);	/* ifid is contradict */
+					return(EINVAL);	/* ifid contradicts */
 				}
 			}
 			prefixIsNew = 1; /* We lie; but effect's the same */
@@ -1290,7 +1293,7 @@ in6_restoremkludge(ia, ifp)
 		if (mk->mk_ifp == ifp) {
 			struct in6_multi *in6m, *next;
 
-			for (in6m = mk->mk_head.lh_first; in6m; in6m = next){
+			for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
 				next = in6m->in6m_entry.le_next;
 				in6m->in6m_ia = ia;
 				ia->ia_ifa.ifa_refcnt++;
@@ -1391,6 +1394,7 @@ in6_addmulti(maddr6, ifp, errorp)
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
+			IFAFREE(&ia->ia_ifa);
 			splx(s);
 			return(NULL);
 		}
@@ -1425,8 +1429,9 @@ in6_delmulti(in6m)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
-		if (in6m->in6m_ia)
+		if (in6m->in6m_ia) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+		}
 
 		/*
 		 * Notify the network driver to update its multicast
