@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.67 2001/06/14 23:51:18 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.68 2001/06/14 23:51:58 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1529,6 +1529,10 @@ hifn_callback(sc, cmd, macbuf)
 				dma->dstk = 0;
 			dma->dstu--;
 		}
+	} else if (crp->crp_flags & CRYPTO_F_IOV) {
+		hifnstats.hst_obytes += cmd->dst_map->dm_mapsize;
+		dma->dstk = (dma->dstk + cmd->dst_map->dm_nsegs) % HIFN_D_DST_RSIZE;
+		dma->dstu -= cmd->dst_map->dm_nsegs;
 	}
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE)) ==
