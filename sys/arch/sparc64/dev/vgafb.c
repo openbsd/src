@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.1 2001/12/14 14:59:04 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.2 2001/12/14 19:17:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -150,10 +150,10 @@ vgafbattach(parent, self, aux)
 	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	bus_size_t iosize;
+	bus_size_t memsize;
 	long defattr;
 	int console;
-	bus_addr_t base;
+	bus_addr_t membase;
 
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 
@@ -175,12 +175,13 @@ vgafbattach(parent, self, aux)
 
 	console = vgafb_is_console(sc->sc_node);
 
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x10, &base, &iosize, NULL)) {
+	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x10,
+	    &membase, &memsize, NULL)) {
 		printf(": can't find mem space\n");
 		goto fail;
 	}
-	if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE, base, iosize, 0, NULL,
-	    &sc->sc_bh)) {
+	if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE,
+	    membase, memsize, 0, NULL, &sc->sc_bh)) {
 		printf(": can't map mem space\n");
 		goto fail;
 	}
