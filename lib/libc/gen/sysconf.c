@@ -31,10 +31,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sysconf.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: sysconf.c,v 1.6 2004/05/07 18:39:19 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/sem.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -60,9 +61,10 @@ sysconf(name)
 {
 	struct rlimit rl;
 	size_t len;
-	int mib[2], value;
+	int mib[3], value, namelen;
 
 	len = sizeof(value);
+	namelen = 2;
 
 	switch (name) {
 /* 1003.1 */
@@ -186,15 +188,23 @@ sysconf(name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYSVSHM;
 
-yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
+yesno:		if (sysctl(mib, namelen, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
 			return (-1);
 		return (value);
 		break;
+	case _SC_SEM_NSEMS_MAX:
+	case _SC_SEM_VALUE_MAX:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SEMINFO;
+		mib[2] = name = _SC_SEM_NSEMS_MAX ?
+		    KERN_SEMINFO_SEMMNS : KERN_SEMINFO_SEMVMX;
+		namelen = 3;
+		break;
 	default:
 		errno = EINVAL;
 		return (-1);
 	}
-	return (sysctl(mib, 2, &value, &len, NULL, 0) == -1 ? -1 : value); 
+	return (sysctl(mib, namelen, &value, &len, NULL, 0) == -1 ? -1 : value); 
 }
