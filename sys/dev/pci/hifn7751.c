@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.26 2000/04/05 16:52:22 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.27 2000/04/10 18:40:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1093,6 +1093,16 @@ hifn_crypto(sc, cmd)
 	dma->cmdr[cmdi].l = cmdlen | HIFN_D_VALID | HIFN_D_LAST |
 	    HIFN_D_MASKDONEIRQ;
 	dma->cmdu++;
+
+	/*
+	 * We don't worry about missing an interrupt (which a "command wait"
+	 * interrupt salvages us from), unless there is more than one command
+	 * in the queue.
+	 */
+	if (dma->cmdu > 1)
+		WRITE_REG_1(sc, HIFN_1_DMA_IER,
+		    HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE);
+
 	hifnstats.hst_ipackets++;
 
 	for (i = 0; i < cmd->src_npa; i++) {
@@ -1171,12 +1181,21 @@ hifn_intr(arg)
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 #endif
 
-	if ((dmacsr & HIFN_DMACSR_R_DONE) == 0)
+	if ((dmacsr & (HIFN_DMACSR_R_DONE | HIFN_DMACSR_C_WAIT)) == 0)
 		return (0);
 
 	if (dma->resu > HIFN_D_RES_RSIZE)
 		printf("%s: Internal Error -- ring overflow\n",
 		    sc->sc_dv.dv_xname);
+
+	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) {
+		/*
+		 * If no slots to process and we receive a "waiting on
+		 * command" interrupt, we disable the "waiting on command"
+		 * (by clearing it).
+		 */
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
+	}
 
 	while (dma->resu > 0) {
 		struct hifn_command *cmd;
@@ -1230,9 +1249,11 @@ hifn_intr(arg)
 	dma->cmdk = i; dma->cmdu = u;
 
 	/*
-	 * Clear "result done" flags in status register.
+	 * Clear "result done" and "command wait" flags in status register.
+	 * If we still have slots to process and we received a "command wait"
+	 * interrupt, this will interupt us again.
 	 */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE);
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
 	return (1);
 }
 
@@ -1240,8 +1261,6 @@ hifn_intr(arg)
  * Allocate a new 'session' and return an encoded session id.  'sidp'
  * contains our registration id, and should contain an encoded session
  * id on successful allocation.
- * XXX Mac and encrypt keys should be sent to context ram and should
- * XXX maintain some sort of state.
  */
 int
 hifn_newsession(sidp, cri)
@@ -1265,16 +1284,8 @@ hifn_newsession(sidp, cri)
 	if (sc == NULL)
 		return (EINVAL);
 
-	if (sc->sc_sessions == NULL) {
-		sc->sc_sessions = (u_int8_t *)malloc(sc->sc_maxses,
-		    M_DEVBUF, M_NOWAIT);
-		if (sc->sc_sessions == NULL)
-			return (ENOMEM);
-		bzero(sc->sc_sessions, sc->sc_maxses);
-	}
-
 	for (i = 0; i < sc->sc_maxses; i++) {
-		if (sc->sc_sessions[i] == 0)
+		if (sc->sc_sessions[i].hs_flags == 0)
 			break;
 	}
 	if (i == sc->sc_maxses)
@@ -1300,7 +1311,8 @@ hifn_newsession(sidp, cri)
 		return (EINVAL);
 
 	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
-	sc->sc_sessions[i] = 1;
+	sc->sc_sessions[i].hs_flags = 1;
+	get_random_bytes(sc->sc_sessions[i].hs_iv, HIFN_IV_LENGTH);
 
 	return (0);
 }
@@ -1323,10 +1335,10 @@ hifn_freesession(sid)
 
 	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(sid);
-	if (session >= sc->sc_maxses || sc->sc_sessions == NULL)
+	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	sc->sc_sessions[session] = 0;
+	sc->sc_sessions[session].hs_flags = 0;
 	return (0);
 }
 
@@ -1387,9 +1399,9 @@ hifn_process(crp)
 			maccrd = crd1;
 			enccrd = NULL;
 			cmd->flags |= HIFN_ENCODE | HIFN_MAC_TRUNC;
-			if (sc->sc_sessions[session] == 1) {
+			if (sc->sc_sessions[session].hs_flags == 1) {
 				cmd->flags |= HIFN_MAC_NEW_KEY;
-				sc->sc_sessions[session] = 2;
+				sc->sc_sessions[session].hs_flags = 2;
 			}
 		}
 		else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -1398,9 +1410,9 @@ hifn_process(crp)
 				cmd->flags |= HIFN_ENCODE;
 			else
 				cmd->flags |= HIFN_DECODE;
-			if (sc->sc_sessions[session] == 1) {
+			if (sc->sc_sessions[session].hs_flags == 1) {
 				cmd->flags |= HIFN_CRYPT_NEW_KEY;
-				sc->sc_sessions[session] = 2;
+				sc->sc_sessions[session].hs_flags = 2;
 			}
 			maccrd = NULL;
 			enccrd = crd1;
@@ -1437,22 +1449,31 @@ hifn_process(crp)
 			goto errout;
 		}
 
-		if (sc->sc_sessions[session] == 1) {
+		if (sc->sc_sessions[session].hs_flags == 1) {
 			cmd->flags |= HIFN_MAC_NEW_KEY | HIFN_CRYPT_NEW_KEY;
-			sc->sc_sessions[session] = 2;
+			sc->sc_sessions[session].hs_flags = 2;
 		}
 	}
 
 	if (enccrd) {
-		if ((enccrd->crd_flags & (CRD_F_ENCRYPT | CRD_F_IV_PRESENT)) ==
-		    CRD_F_ENCRYPT) {
-			get_random_bytes(cmd->iv, HIFN_IV_LENGTH);
-			m_copyback(cmd->src_m, enccrd->crd_inject,
-				   HIFN_IV_LENGTH, cmd->iv);
+		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
+			else
+				bcopy(sc->sc_sessions[session].hs_iv,
+				    cmd->iv, HIFN_IV_LENGTH);
+
+			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
+				m_copyback(cmd->src_m, enccrd->crd_inject,
+				    HIFN_IV_LENGTH, cmd->iv);
 		}
-		else
-			m_copydata(cmd->src_m, enccrd->crd_inject,
-				   HIFN_IV_LENGTH, cmd->iv);
+		else {
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
+			else
+				m_copydata(cmd->src_m, enccrd->crd_inject,
+				    HIFN_IV_LENGTH, cmd->iv);
+		}
 
 		if (enccrd->crd_alg == CRYPTO_DES_CBC)
 			cmd->flags |= HIFN_CRYPT_DES;
@@ -1479,6 +1500,7 @@ hifn_process(crp)
 	cmd->dest_ready_callback = hifn_callback;
 	cmd->private_data = (u_long)crp;
 	cmd->session_num = session;
+	cmd->softc = sc;
 
 	if (hifn_crypto(sc, cmd) == 0)
 		return (0);
@@ -1507,6 +1529,19 @@ hifn_callback(cmd, macbuf)
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (cmd->src_m != cmd->dst_m)) {
 		m_freem(cmd->src_m);
 		crp->crp_buf = (caddr_t)cmd->dst_m;
+	}
+
+	if ((cmd->flags & HIFN_ENCODE) &&
+	    ((cmd->flags & HIFN_CRYPT_DES) || (cmd->flags & HIFN_CRYPT_3DES))) {
+		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+			if (crd->crd_alg != CRYPTO_DES_CBC &&
+			    crd->crd_alg != CRYPTO_3DES_CBC)
+				continue;
+			m_copydata((struct mbuf *)crp->crp_buf,
+			    crd->crd_skip + crd->crd_len - 8, 8,
+			    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			break;
+		}
 	}
 
 	if (macbuf != NULL) {

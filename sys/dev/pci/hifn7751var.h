@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.10 2000/04/04 20:16:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.11 2000/04/10 18:40:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -201,6 +201,7 @@ typedef struct hifn_command {
 
 	void (*dest_ready_callback)(struct hifn_command *, u_int8_t *);
 	u_long private_data;
+	struct hifn_softc *softc;
 } hifn_command_t;
 
 /*

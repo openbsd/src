@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.12 2000/04/05 16:34:07 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.13 2000/04/10 18:40:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -119,6 +119,11 @@ struct hifn_dma {
 	int		cmdk, srck, dstk, resk;
 };
 
+struct hifn_session {
+	int hs_flags;
+	u_int8_t hs_iv[HIFN_IV_LENGTH];
+};
+
 /*
  * Holds data specific to a single HIFN board.
  */
@@ -135,7 +140,7 @@ struct hifn_softc {
 	int32_t sc_cid;
 	int sc_maxses;
 	int sc_ramsize;
-	u_int8_t *sc_sessions;
+	struct hifn_session sc_sessions[2048];
 };
 
 /*
