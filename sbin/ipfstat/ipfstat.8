@@ -1,6 +1,6 @@
-.\"     $OpenBSD: ipfstat.8,v 1.14 1999/07/07 10:50:10 aaron Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.15 1999/07/08 00:02:26 deraadt Exp $
 .Dd June 13, 1999
-.Dt ipfstat 8
+.Dt IPFSTAT 8
 .Os
 .Sh NAME
 .Nm ipfstat
@@ -9,6 +9,8 @@
 .Nm ipfstat
 .Op Fl aAfhIinosv
 .Op Fl d Ar device
+.Op Fl M Ar core
+.Op Fl N Ar system
 .Sh DESCRIPTION
 By default,
 .Nm
@@ -24,18 +26,6 @@ it will retrieve and display
 the appropriate list of filter rules currently installed and in use by the
 kernel.
 .Pp
-.Nm
-examines
-.Pa /dev/kmem
-using the symbols
-.Sy _fr_flags ,
-.Sy _frstats ,
-.Sy _filterin ,
-and
-.Sy _filterout .
-To run and work, it needs to be able to read both
-.Pa /dev/kmem
-and the kernel itself.
 .Sh OPTIONS
 .Bl -tag -width "-d device"
 .It Fl a
@@ -72,6 +62,13 @@ filter list details. For use in combination with
 .Fl i .
 .It Fl n
 Show the rule number for each rule as it is printed.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the default
+.Pa /bsd .
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/kmem .
 .It Fl o
 Display the filter list used for the output side of the kernel IP processing.
 .It Fl s
