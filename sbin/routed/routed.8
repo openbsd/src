@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.30 2000/04/15 02:15:17 aaron Exp $
+.\"	$OpenBSD: routed.8,v 1.31 2001/01/05 05:12:41 angelos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -518,13 +518,11 @@ Turns off aggregation of networks into supernets in RIPv2 responses.
 Equivalent to
 .Cm no_rip Cm no_rdisc .
 .It Cm no_rip
-Disables all RIP processing on the specified interface.
+Disables all RIP processing on the specified interface (no RIP will be
+transmitted, and any received RIP packets will be ignored).
 If no interfaces are allowed to process RIP packets,
 .Nm
 acts purely as a router discovery daemon.
-.Cm No_rip
-is equivalent to
-.Cm no_ripv1_in no_ripv2_in no_ripv1_out no_ripv2_out .
 
 Note that turning off RIP without explicitly turning on router
 discovery advertisements with
