@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.8 1999/01/02 00:02:39 niklas Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.9 1999/07/23 13:18:04 niklas Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -153,10 +153,10 @@ int	audioprint __P((void *, const char *));
 #define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
 #define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
 
-/*#ifndef __i386__*/
+#ifndef __i386__
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
-/*#endif*/
+#endif
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
 

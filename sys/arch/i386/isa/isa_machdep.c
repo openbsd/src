@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.33 1998/12/31 09:17:52 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.34 1999/07/23 13:18:04 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -325,6 +325,7 @@ intr_calculatemasks()
 	 * time, so imp > (tty | net | bio).
 	 */
 	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_AUDIO] |= imask[IPL_IMP];
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not

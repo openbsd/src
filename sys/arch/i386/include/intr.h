@@ -33,13 +33,14 @@
 #define _I386_INTR_H_
 
 /* Interrupt priority `levels'; not mutually exclusive. */
-#define	IPL_BIO		0	/* block I/O */
-#define	IPL_NET		1	/* network */
-#define	IPL_TTY		2	/* terminal */
-#define	IPL_CLOCK	3	/* clock */
+#define	IPL_NONE	0	/* nothing */
+#define	IPL_BIO		1	/* block I/O */
+#define	IPL_NET		2	/* network */
+#define	IPL_TTY		3	/* terminal */
 #define	IPL_IMP		4	/* memory allocation */
-#define	IPL_NONE	5	/* nothing */
-#define	IPL_HIGH	6	/* everything */
+#define	IPL_AUDIO	5	/* audio */
+#define	IPL_CLOCK	6	/* clock */
+#define	IPL_HIGH	7	/* everything */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -117,8 +118,8 @@ spllower(ncpl)
 #define	splbio()	splraise(imask[IPL_BIO])
 #define	splnet()	splraise(imask[IPL_NET])
 #define	spltty()	splraise(imask[IPL_TTY])
+#define	splaudio()	splraise(imask[IPL_AUDIO])
 #define	splclock()	splraise(imask[IPL_CLOCK])
-#define	splimp()	splraise(imask[IPL_IMP])
 #define	splstatclock()	splhigh()
 
 /*
@@ -134,7 +135,8 @@ spllower(ncpl)
 /*
  * Miscellaneous
  */
-#define	splhigh()	splraise(-1)
+#define	splimp()	splraise(imask[IPL_IMP])
+#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
 
 /*
