@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.12 1997/08/06 18:45:01 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.13 1997/08/13 04:35:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,8 +58,6 @@ boot(bootdev)
 
 	machdep();
 
-	printf(">> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
-
 	strncpy(cmd.image, bootfile, sizeof(cmd.image));
 	cmd.conf = "/etc/boot.conf";
 	cmd.cwd[0] = '/'; cmd.cwd[1] = '\0';
@@ -68,6 +66,9 @@ boot(bootdev)
 	devboot(bootdev, cmd.bootdev);
 
 	f = read_conf();
+
+	printf(">> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
+
 	while (1) {
 		if (f <= 0) /* no boot.conf, or no boot cmd in there */
 			do {
