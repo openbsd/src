@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.9 1996/07/14 08:30:34 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.10 1996/07/14 09:14:14 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -942,7 +942,7 @@ restart:
 	ext2fs_inode_hash_lock = 1;
 
 	/* Allocate a new vnode/inode. */
-	if (error = getnewvnode(VT_UFS, mp, ext2_vnodeop_p, &vp)) {
+	if (error = getnewvnode(VT_EXT2FS, mp, ext2_vnodeop_p, &vp)) {
 		*vpp = NULL;
 		return (error);
 	}
