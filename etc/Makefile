@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 1998/09/08 20:26:40 marc Exp $
+#	$OpenBSD: Makefile,v 1.91 1998/09/15 18:18:14 art Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -131,6 +131,15 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 644 ppp.secret.sample \
 		    ${DESTDIR}/etc/ppp)
+	(cd afs; \
+		${INSTALL} -c -o root -g wheel -m 644 afsd.conf \
+		    ${DESTDIR}/etc/afs; \
+		${INSTALL} -c -o root -g wheel -m 644 ThisCell \
+		    ${DESTDIR}/etc/afs; \
+		${INSTALL} -c -o root -g wheel -m 644 CellServDB \
+		    ${DESTDIR}/etc/afs; \
+		${INSTALL} -c -o root -g wheel -m 644 README \
+		    ${DESTDIR}/etc/afs)
 	cd namedb; ${INSTALL} -c -o named -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/var/named
 	/bin/rm -f ${DESTDIR}/etc/localtime
