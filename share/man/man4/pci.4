@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.37 2001/06/23 07:03:57 pjanzen Exp $
+.\"	$OpenBSD: pci.4,v 1.38 2001/06/23 14:33:27 matthieu Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -298,6 +298,65 @@ USB UHCI host controller.
 .It Xr wdt 4
 ICS PCI-WDT500/501 watchdog timer devices.
 .El
+.Sh IOCTLS
+If the kernel is compiled with the 
+.Cd option USER_PCICONF
+kernel option, the following
+.Xr ioctl 2
+calls are supported by the
+.Nm
+driver.  They are defined in the header file
+.Aq Pa sys/pciio.h .
+.Bl -tag -width 012345678901234
+.Pp
+.It PCIOCREAD
+This
+.Xr ioctl 2
+reads the
+.Tn PCI
+configuration registers specified by the passed-in
+.Va pci_io
+structure.  The
+.Va pci_io
+structure consists of the following fields:
+.Bl -tag -width pi_width
+.It pi_sel
+A
+.Va pcisel
+structure which specifies the bus, slot and function the user would like to
+query.
+.It pi_reg
+The
+.Tn PCI
+configuration register the user would like to access.
+.It pi_width
+The width, in bytes, of the data the user would like to read.  This value
+may be either 1, 2, or 4.  3-byte reads and reads larger than 4 bytes are
+not supported.
+.It pi_data
+The data returned by the kernel.
+.El
+.It PCIOCWRITE
+This
+.Xr ioctl 2
+allows users to write to the
+.Tn PCI
+specified in the passed-in
+.Va pci_io
+structure.  The
+.Va pci_io
+structure is described above.  The limitations on data width described for
+reading registers, above, also apply to writing
+.Tn PCI
+configuration registers.
+.El
+.Sh FILES
+.Bl -tag -width /dev/pci -compact
+.It Pa /dev/pci
+Character device for the
+.Nm
+driver.
+.El
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr intro 4 ,
@@ -311,3 +370,6 @@ The machine-independent
 .Tn PCI
 subsystem appeared in
 .Ox 2.0 .
+Support for device listing and matching was re-implemented by
+Kenneth Merry, and first appeared in
+.Fx 3.0 .
