@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2001/12/07 10:52:25 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2001/12/07 10:57:58 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2189,16 +2189,9 @@ pv_link4_4c(pv, pm, va, nc)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
- *
- * In addition, if the cacheable bit (SRMMU_PG_C) is updated in the PTE
- * the corresponding PV_C4M flag is also updated in each pv entry. This
- * is done so kvm_uncache() can use this routine and have the uncached
- * status stick.
  */
 void
-pv_changepte4m(pv0, bis, bic)
-	struct pvlist *pv0;
-	int bis, bic;
+pv_changepte4m(struct pvlist *pv0, int bis, int bic)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
@@ -2260,19 +2253,6 @@ pv_changepte4m(pv0, bis, bic)
 		pv0->pv_flags |= MR4M(tpte);
 		tpte = (tpte | bis) & ~bic;
 		setpgt4m(ptep, tpte);
-
-		/* Update PV_C4M flag if required */
-		/*
-		 * XXX - this is incorrect. The PV_C4M means that _this_
-		 *       mapping should be kept uncached. This way we
-		 *       effectively uncache this pa until all mappings
-		 *       to it are gone (see also the XXX in pv_link4m and
-		 *       pv_unlink4m).
-		 */
-		if (bis & SRMMU_PG_C)
-			pv->pv_flags |= PV_C4M;
-		if (bic & SRMMU_PG_C)
-			pv->pv_flags &= ~PV_C4M;
 	}
 	setcontext4m(ctx);
 	splx(s);
@@ -6017,6 +5997,8 @@ pmap_phys_address(x)
  *
  * We just assert PG_NC for each PTE; the addresses must reside
  * in locked kernel space.  A cache flush is also done.
+ * Please do not use this function in new code.
+ * Doesn't work on sun4m, nor for pages with multiple mappings.
  */
 void
 kvm_uncache(caddr_t va, int npages)
@@ -6025,44 +6007,16 @@ kvm_uncache(caddr_t va, int npages)
 	struct pvlist *pv;
 
 	if (CPU_ISSUN4M) {
-#if defined(SUN4M)
-		int ctx = getcontext4m();
-
-		setcontext4m(0);
-		for (; --npages >= 0; va += NBPG) {
-			int *ptep;
-
-			ptep = getptep4m(pmap_kernel(), (vaddr_t)va);
-			pte = *ptep;
-#ifdef DIAGNOSTIC
-			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
-				panic("kvm_uncache: table entry not pte");
-#endif
-			pv = pvhead((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			if (pv) {
-				pv_changepte4m(pv, 0, SRMMU_PG_C);
-			}
-			pte &= ~SRMMU_PG_C;
-			tlb_flush_page((vaddr_t)va);
-			setpgt4m(ptep, pte);
-
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-				cache_flush_page((int)va);
-
-		}
-		setcontext4m(ctx);
-
-#endif
+		panic("kvm_uncache on 4m");
 	} else {
 #if defined(SUN4) || defined(SUN4C)
 		for (; --npages >= 0; va += NBPG) {
 			pte = getpte4(va);
+#ifdef DIAGNOSTIC
 			if ((pte & PG_V) == 0)
 				panic("kvm_uncache !pg_v");
-
-			pv = pvhead(pte & PG_PFNUM);
-			/* XXX - we probably don't need to check for OBMEM */
-			if ((pte & PG_TYPE) == PG_OBMEM && pv) {
+#endif
+			if ((pv = pvhead(pte & PG_PFNUM)) != NULL) {
 				pv_changepte4_4c(pv, PG_NC, 0);
 			}
 			pte |= PG_NC;
