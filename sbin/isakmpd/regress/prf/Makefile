@@ -1,13 +1,16 @@
-#	$OpenBSD: Makefile,v 1.3 1998/12/21 01:02:34 niklas Exp $
-#	$EOM: Makefile,v 1.2 1998/12/21 00:41:57 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/02/26 03:28:41 niklas Exp $
+#	$EOM: Makefile,v 1.3 1999/02/25 15:14:25 niklas Exp $
 
 # Test PRF:
 
 PROG=		prftest
 SRCS=		log.c prf.c hash.c prftest.c
-.PATH:		${.CURDIR}/../../
+TOPSRC=		${.CURDIR}/../..
+TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
+OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
+.PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
+CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 NOMAN=
-CFLAGS+=	-I${.CURDIR}/../../ -Wall
 DEBUG=		-g
 
 .include <bsd.prog.mk>
