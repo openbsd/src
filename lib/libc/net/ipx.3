@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipx.3,v 1.5 1999/07/05 04:40:59 aaron Exp $
+.\"	$OpenBSD: ipx.3,v 1.6 2000/09/22 14:47:33 millert Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <netipx/ipx.h>
 .Ft struct ipx_addr
-.Fn ipx_addr "char *cp"
+.Fn ipx_addr "const char *cp"
 .Ft char *
 .Fn ipx_ntoa "struct ipx_addr ipx"
 .Sh DESCRIPTION
