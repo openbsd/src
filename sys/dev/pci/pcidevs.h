@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.759 2004/09/18 20:31:45 beck Exp 
+ *	OpenBSD: pcidevs,v 1.760 2004/09/20 17:27:52 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1806,6 +1806,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_USB2	0x00d8		/* nForce3 USB2 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_ACA	0x00da		/* nForce3 AC-97 Audio */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB	0x00dd		/* nForce3 PCI-PCI */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_250_ACA	0x00ea		/* nForce3 250 AC-97 Audio */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256_DDR	0x0101		/* GeForce256 DDR */
 #define	PCI_PRODUCT_NVIDIA_QUADOR	0x0103		/* Quadro */
