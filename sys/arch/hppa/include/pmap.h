@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.28 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.29 2004/04/21 22:14:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -38,7 +38,7 @@ struct pmap {
 #define	pm_lock	pm_obj.vmobjlock
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
-	u_int32_t	*pm_pdir;	/* page dir (read-only after create) */
+	volatile u_int32_t *pm_pdir;	/* page dir (read-only after create) */
 	pa_space_t	pm_space;	/* space id (read-only after create) */
 	u_int		pm_pid;		/* prot id (read-only after create) */
 

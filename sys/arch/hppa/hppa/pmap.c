@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2004/04/21 22:14:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -137,9 +137,9 @@ pmap_vtag(struct pmap *pmap, vaddr_t va)
 #endif
 
 static __inline void
-pmap_sdir_set(pa_space_t space, u_int32_t *pd)
+pmap_sdir_set(pa_space_t space, volatile u_int32_t *pd)
 {
-	u_int32_t *vtop;
+	volatile u_int32_t *vtop;
 
 	mfctl(CR_VTOP, vtop);
 #ifdef PMAPDEBUG
@@ -158,8 +158,8 @@ pmap_sdir_get(pa_space_t space)
 	return ((u_int32_t *)vtop[space]);
 }
 
-static __inline pt_entry_t *
-pmap_pde_get(u_int32_t *pd, vaddr_t va)
+static __inline volatile pt_entry_t *
+pmap_pde_get(volatile u_int32_t *pd, vaddr_t va)
 {
 	return ((pt_entry_t *)pd[va >> 22]);
 }
@@ -204,7 +204,7 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 }
 
 static __inline struct vm_page *
-pmap_pde_ptp(struct pmap *pm, pt_entry_t *pde)
+pmap_pde_ptp(struct pmap *pm, volatile pt_entry_t *pde)
 {
 	paddr_t pa = (paddr_t)pde;
 
@@ -229,21 +229,25 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		    ("pmap_pde_release: disposing ptp %p\n", ptp));
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
-		ptp->wire_count = 0;
-		uvm_pagefree(ptp);
 		if (pmap->pm_ptphint == ptp)
 			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
+		ptp->wire_count = 0;
+#ifdef DIAGNOSTIC
+		if (ptp->flags & PG_BUSY)
+			panic("pmap_destroy: busy page table page");
+#endif
+		uvm_pagefree(ptp);
 	}
 }
 
 static __inline pt_entry_t
-pmap_pte_get(pt_entry_t *pde, vaddr_t va)
+pmap_pte_get(volatile pt_entry_t *pde, vaddr_t va)
 {
 	return (pde[(va >> 12) & 0x3ff]);
 }
 
 static __inline void
-pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
+pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 {
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%x, 0x%x)\n",
 	    pde, va, pte));
@@ -281,7 +285,7 @@ pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte)
 static __inline pt_entry_t
 pmap_vp_find(struct pmap *pm, vaddr_t va)
 {
-	pt_entry_t *pde;
+	volatile pt_entry_t *pde;
 
 	if (!(pde = pmap_pde_get(pm->pm_pdir, va)))
 		return (0);
@@ -296,7 +300,8 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 	pa_space_t sp;
 
 	for (sp = 0; sp <= hppa_sid_max; sp++) {
-		pt_entry_t *pde, pte;
+		volatile pt_entry_t *pde;
+		pt_entry_t pte;
 		vaddr_t va, pdemask;
 		u_int32_t *pd;
 
@@ -595,7 +600,7 @@ pmap_init()
 	 *     if we have any at SYSCALLGATE address (;
 	 */
 	{
-		pt_entry_t *pde;
+		volatile pt_entry_t *pde;
 
 		if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, SYSCALLGATE)) &&
 		    !(pde = pmap_pde_alloc(pmap_kernel(), SYSCALLGATE, NULL)))
@@ -739,7 +744,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	pt_entry_t *pde, pte;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte;
 	struct vm_page *pg, *ptp = NULL;
 	struct pv_entry *pve;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
@@ -829,7 +835,8 @@ pmap_remove(pmap, sva, eva)
 	vaddr_t eva;
 {
 	struct pv_entry *pve;
-	pt_entry_t *pde, pte;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte;
 	struct vm_page *pg;
 	vaddr_t pdemask;
 	int batch;
@@ -889,7 +896,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vm_prot_t prot;
 {
 	struct vm_page *pg;
-	pt_entry_t *pde, pte;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte;
 	u_int tlbprot, pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP,
@@ -951,7 +959,8 @@ pmap_page_remove(pg)
 	     pve = (ppve = pve)->pv_next, pmap_pv_free(ppve)) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
-		pt_entry_t *pde, pte;
+		volatile pt_entry_t *pde;
+		pt_entry_t pte;
 
 		simple_lock(&pmap->pm_obj.vmobjlock);
 
@@ -979,7 +988,8 @@ pmap_unwire(pmap, va)
 	struct pmap *pmap;
 	vaddr_t	va;
 {
-	pt_entry_t *pde, pte = 0;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte = 0;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_unwire(%p, 0x%x)\n", pmap, va));
 
@@ -1017,7 +1027,8 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	for(pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
-		pt_entry_t *pde, opte, pte;
+		volatile pt_entry_t *pde;
+		pt_entry_t opte, pte;
 
 		simple_lock(&pmap->pm_obj.vmobjlock);
 		if ((pde = pmap_pde_get(pmap->pm_pdir, va))) {
@@ -1153,7 +1164,8 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pt_entry_t *pde, pte;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot));
@@ -1203,7 +1215,8 @@ pmap_kremove(va, size)
 #endif
 	struct pv_entry *pve;
 	vaddr_t eva, pdemask;
-	pt_entry_t *pde, pte;
+	volatile pt_entry_t *pde;
+	pt_entry_t pte;
 	struct vm_page *pg;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
