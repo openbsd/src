@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.3 1997/04/17 10:02:03 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.4 1997/05/03 07:50:15 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -31,8 +31,6 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
-export TERM
 HOME=/
 export HOME
 
@@ -55,6 +53,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	. /.commonutils
 	. /.instutils
 
-	# run the installation script.
-	install
+	echo "Follow the installation directions to install or upgrade"
+	echo "the OpenBSD distribution sets."
 fi

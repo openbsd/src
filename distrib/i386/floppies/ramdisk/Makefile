@@ -1,4 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 1997/04/17 02:10:42 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/05/03 07:50:14 tholo Exp $
+
+# Revision is 2.1
+REV=		21
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +18,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 LISTFLOPPY=	${.CURDIR}/list_floppy
 
 .include "Makefile.inc"
@@ -36,7 +39,7 @@ ${FS}:	bsd.gz
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
 	sync
 	cat /*bin/* > /dev/null
 	sync
@@ -64,11 +67,13 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
 	${.CURDIR}/${__objdir}/rdsetroot bsd.rd < ${IMAGE}
 
-bsd:
-	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
-	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
-	    make clean && make depend && make
+bsd:	${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
+
+#	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
+#	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
+#	    make clean && make depend && make
+#	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
