@@ -53,7 +53,7 @@ OBJS =		@ISC_EXTRA_OBJS@ \
 		assertions.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
 		bufferlist.@O@ commandline.@O@ error.@O@ event.@O@ \
 		heap.@O@ hex.@O@ hmacmd5.@O@ \
-		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
+		lcg.@O@ lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ netaddr.@O@ ondestroy.@O@ \
 		quota.@O@ random.@O@ \
 		ratelimiter.@O@ result.@O@ rwlock.@O@ \
@@ -66,7 +66,7 @@ SRCS =		@ISC_EXTRA_SRCS@ \
 		assertions.c base64.c bitstring.c buffer.c \
 		bufferlist.c commandline.c error.c event.c \
 		heap.c hex.c hmacmd5.c \
-		lex.c lfsr.c lib.c log.c \
+		lcg.c lex.c lfsr.c lib.c log.c \
 		md5.c mem.c mutexblock.c netaddr.c ondestroy.c \
 		quota.c random.c \
 		ratelimiter.c result.c rwlock.c \
