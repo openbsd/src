@@ -100,7 +100,7 @@ distribution:
 	@-for i in ${CGIFILES}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
-		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 000 \
 		${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 	@-for i in ${ICONFILES}; do \
