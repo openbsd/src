@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.11 1996/10/29 08:28:24 mickey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.12 1996/10/29 08:46:27 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -149,6 +149,7 @@ int	vsprintf __P((char *, const char *, va_list))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 int	sprintf __P((char *buf, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
+struct tty;
 void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 
@@ -209,6 +210,7 @@ void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
 
+struct uio;
 int	uiomove __P((caddr_t, int, struct uio *));
 
 int	setjmp	__P((label_t *));
