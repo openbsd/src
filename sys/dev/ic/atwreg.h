@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwreg.h,v 1.1 2004/06/23 01:27:59 millert Exp $	*/
+/*	$OpenBSD: atwreg.h,v 1.2 2004/07/15 12:55:09 millert Exp $	*/
 /*	$NetBSD: atwreg.h,v 1.8 2004/05/31 11:40:56 dyoung Exp $	*/
 
 /*
@@ -781,6 +781,7 @@
 						 * microseconds (huh?). To
 						 * match TSFT[25:10] (huh?).
 						 */
+#define	ATW_TBTTPRE_MASK	BITS(25, 10)
 #define ATW_TOFS1_TBTTOFS_MASK	BITS(7,0)	/* wake-up time offset before
 						 * TBTT in TU
 						 */

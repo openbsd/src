@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.12 2004/07/15 12:29:39 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.55 2004/07/15 07:01:20 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.13 2004/07/15 12:55:09 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.56 2004/07/15 07:10:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.55 2004/07/15 07:01:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.56 2004/07/15 07:10:25 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -224,7 +224,8 @@ int	atw_media_change(struct ifnet *);
 void	atw_media_status(struct ifnet *, struct ifmediareq *);
 void	atw_filter_setup(struct atw_softc *);
 void	atw_frame_setdurs(struct atw_softc *, struct atw_frame *, int, int);
-static __inline u_int64_t atw_predict_beacon(u_int64_t, u_int32_t);
+static __inline uint32_t atw_last_even_tsft(uint32_t, uint32_t, uint32_t);
+static __inline void atw_tsft(struct atw_softc *, uint32_t *, uint32_t *);
 void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, int, u_int32_t);
 void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
@@ -2063,9 +2064,13 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct atw_softc *sc = (struct atw_softc*)ic->ic_softc;
 	struct ieee80211_frame *wh;
-	u_int64_t tsft, bcn_tsft;
-	u_int32_t tsftl, tsfth;
+	uint32_t tsftl, tsfth;
+	uint32_t bcn_tsftl, bcn_tsfth;
 	int do_print = 0;
+	union {
+		uint32_t	words[2];
+		uint8_t		tstamp[8];
+	} u;
 
 	if (ic->ic_if.if_flags & IFF_LINK0) {
 		do_print = (ic->ic_if.if_flags & IFF_DEBUG)
@@ -2101,23 +2106,21 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	if (ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	/* If we read TSFTL right before rollover, we read a TSF timer
-	 * that is too high rather than too low. This prevents a spurious
-	 * synchronization down the line, however, our IBSS could suffer
-	 * from a creeping TSF....
-	 */
-	tsftl = ATW_READ(sc, ATW_TSFTL);
-	tsfth = ATW_READ(sc, ATW_TSFTH);
+	atw_tsft(sc, &tsfth, &tsftl);
 
-	tsft = (u_int64_t)tsfth << 32 | tsftl;
-	bcn_tsft = letoh64(*(u_int64_t*)ni->ni_tstamp);
+	(void)memcpy(&u, &ic->ic_bss->ni_tstamp[0], sizeof(u));
+	bcn_tsftl = letoh32(u.words[0]);
+	bcn_tsfth = letoh32(u.words[1]);
 
 	if (do_print)
 		printf("%s: my tsft %llx beacon tsft %llx\n",
-		    sc->sc_dev.dv_xname, tsft, bcn_tsft);
+		    sc->sc_dev.dv_xname, ((uint64_t)tsfth << 32) | tsftl,
+		    ((uint64_t)bcn_tsfth << 32) | bcn_tsftl);
 
 	/* we are faster, let the other guy catch up */
-	if (bcn_tsft < tsft)
+	if (bcn_tsfth < tsfth)
+		return;
+	else if (bcn_tsfth == tsfth && bcn_tsftl < tsftl)
 		return;
 
 	if (do_print)
@@ -2270,15 +2273,36 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	    sc->sc_dev.dv_xname, cap1));
 }
 
-/* First beacon was sent at time 0 microseconds, current time is
- * tsfth << 32 | tsftl microseconds, and beacon interval is tbtt
- * microseconds.  Return the expected time in microseconds for the
- * beacon after next.
- */
-static __inline u_int64_t
-atw_predict_beacon(u_int64_t tsft, u_int32_t tbtt)
+/* Return the 32 lsb of the last TSFT divisible by ival. */
+static __inline uint32_t
+atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 {
-	return tsft + (tbtt - tsft % tbtt);
+	/* Following the reference driver's lead, I compute
+	 * 
+	 *   (uint32_t)((((uint64_t)tsfth << 32) | tsftl) % ival)
+	 *
+	 * without using 64-bit arithmetic, using the following
+	 * relationship:
+	 *
+	 *     (0x100000000 * H + L) % m
+	 *   = ((0x100000000 % m) * H + L) % m
+	 *   = (((0xffffffff + 1) % m) * H + L) % m
+	 *   = ((0xffffffff % m + 1 % m) * H + L) % m
+	 *   = ((0xffffffff % m + 1) * H + L) % m
+	 */
+	return ((0xFFFFFFFF % ival + 1) * tsfth + tsftl) % ival;
+}
+
+static __inline void
+atw_tsft(struct atw_softc *sc, uint32_t *tsfth, uint32_t *tsftl)
+{
+	int i;
+	for (i = 0; i < 2; i++) {
+		*tsfth = ATW_READ(sc, ATW_TSFTH);
+		*tsftl = ATW_READ(sc, ATW_TSFTL);
+		if (ATW_READ(sc, ATW_TSFTH) == *tsfth)
+			break;
+	}
 }
 
 /* If we've created an IBSS, write the TSF time in the ADM8211 to
@@ -2293,39 +2317,43 @@ atw_tsf(struct atw_softc *sc)
 #define TBTTOFS 20 /* TU */
 
 	struct ieee80211com *ic = &sc->sc_ic;
-	u_int64_t tsft, tbtt;
+	uint32_t ival, past_even, tbtt, tsfth, tsftl;
+	union {
+		uint32_t	words[2];
+		uint8_t		tstamp[8];
+	} u;
 
 	if ((ic->ic_opmode == IEEE80211_M_HOSTAP) ||
 	    ((ic->ic_opmode == IEEE80211_M_IBSS) &&
 	     (ic->ic_flags & IEEE80211_F_SIBSS))) {
-		tsft = ATW_READ(sc, ATW_TSFTH);
-		tsft <<= 32;
-		tsft |= ATW_READ(sc, ATW_TSFTL);
-		*(u_int64_t*)&ic->ic_bss->ni_tstamp[0] = htole64(tsft);
-	} else
-		tsft = letoh64(*(u_int64_t*)&ic->ic_bss->ni_tstamp[0]);
+		atw_tsft(sc, &tsfth, &tsftl);
+		u.words[0] = htole32(tsftl);
+		u.words[1] = htole32(tsfth);
+		(void)memcpy(&ic->ic_bss->ni_tstamp[0], &u,
+		    sizeof(ic->ic_bss->ni_tstamp));
+	} else {
+		(void)memcpy(&u, &ic->ic_bss->ni_tstamp[0], sizeof(u));
+		tsftl = letoh32(u.words[0]);
+		tsfth = letoh32(u.words[1]);
+	}
 
-	tbtt = atw_predict_beacon(tsft,
-	    ic->ic_bss->ni_intval * IEEE80211_DUR_TU);
+	ival = ic->ic_bss->ni_intval * IEEE80211_DUR_TU;
 
-	/* skip one more beacon so that the TBTT cannot pass before
-	 * we've programmed it, and also so that we can subtract a
-	 * few TU so that we wake a little before TBTT. 
+	/* We sent/received the last beacon `past' microseconds
+	 * after the interval divided the TSF timer.
 	 */
-	tbtt += ic->ic_bss->ni_intval * IEEE80211_DUR_TU;
+	past_even = tsftl - atw_last_even_tsft(tsfth, tsftl, ival);
 
-	/* wake up a little early */
-	tbtt -= TBTTOFS * IEEE80211_DUR_TU;
-
-	DPRINTF(sc, ("%s: tsft %llx tbtt %llx\n",
-	    sc->sc_dev.dv_xname, tsft, tbtt));
+	/* Skip ten beacons so that the TBTT cannot pass before
+	 * we've programmed it.  Ten is an arbitrary number.
+	 */
+	tbtt = past_even + ival * 10;
 
 	ATW_WRITE(sc, ATW_TOFS1,
 	    LSHIFT(1, ATW_TOFS1_TSFTOFSR_MASK) |
 	    LSHIFT(TBTTOFS, ATW_TOFS1_TBTTOFS_MASK) |
-	    LSHIFT(
-		MASK_AND_RSHIFT((u_int32_t)tbtt, BITS(25, 10)),
-		ATW_TOFS1_TBTTPRE_MASK));
+	    LSHIFT(MASK_AND_RSHIFT(tbtt - TBTTOFS * IEEE80211_DUR_TU,
+		ATW_TBTTPRE_MASK), ATW_TOFS1_TBTTPRE_MASK));
 #undef TBTTOFS
 }
 
