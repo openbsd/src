@@ -313,6 +313,11 @@ cpu_startup()
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
+	/*
+	 * Initialize timeouts
+	 */
+	timeout_init();
+
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
