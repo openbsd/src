@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.66 2001/03/22 22:08:47 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.67 2001/05/11 06:39:37 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -269,10 +269,12 @@ information.
 .It Dv KERN_DOMAINNAME No "	string	yes"
 .It Dv KERN_FILE No "	struct file	no"
 .It Dv KERN_FSYNC No "	integer	no"
+.It Dv KERN_FORKSTAT No "	struct forkstat	no"
 .It Dv KERN_HOSTID No "	integer	yes"
 .It Dv KERN_HOSTNAME No "	string	yes"
 .It Dv KERN_JOB_CONTROL No "	integer	no"
 .It Dv KERN_LINK_MAX No "	integer	no"
+.It Dv KERN_MALLOCSTATS No "	node	no"
 .It Dv KERN_MAXFILES No "	integer	yes"
 .It Dv KERN_MAXPARTITIONS No "	integer	no"
 .It Dv KERN_MAXPROC No "	integer	yes"
@@ -280,8 +282,10 @@ information.
 .It Dv KERN_MAX_CANON No "	integer	no"
 .It Dv KERN_MAX_INPUT No "	integer	no"
 .It Dv KERN_NAME_MAX No "	integer	no"
+.It Dv KERN_NCHSTATS No "	struct nchstats	no"
 .It Dv KERN_NGROUPS No "	integer	no"
 .It Dv KERN_NO_TRUNC No "	integer	no"
+.It Dv KERN_NSELCOLL No "	integer	no"
 .It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
@@ -301,7 +305,6 @@ information.
 .It Dv KERN_VDISABLE No "	integer	no"
 .It Dv KERN_VERSION No "	string	no"
 .It Dv KERN_VNODE No "	struct vnode	no"
-.It Dv KERN_MALLOCSTATS No "	node	not applicable"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -344,6 +347,16 @@ whose size depends on the current number of such objects in the system.
 .It Dv KERN_FSYNC
 Return 1 if the File Synchronisation Option is available on this system,
 otherwise 0.
+.It Dv KERN_FORKSTAT
+A
+.Li struct forkstat
+structure is returned.
+This structure contains information about the number of
+.Xr fork 2 ,
+.Xr vfork 2 ,
+.Xr rfork 2
+system calls as well as kernel thread creations since system startup,
+and the number of pages of virtual memory involved in each.
 .It Dv KERN_HOSTID
 Get or set the host ID.
 .It Dv KERN_HOSTNAME
@@ -367,6 +380,14 @@ The minimum maximum number of bytes for which space is available in
 a terminal input queue.
 .It Dv KERN_NAME_MAX
 The maximum number of bytes in a file name.
+.It Dv KERN_NCHSTATS
+A
+.Li struct nchstats
+structure is returned.
+This structure contains information the
+filename to
+.Xr inode 5
+mapping cache.
 .It Dv KERN_NGROUPS
 The maximum number of supplemental groups.
 .It Dv KERN_NO_TRUNC
@@ -375,6 +396,10 @@ Return 1 if file names longer than
 are truncated.
 .It Dv KERN_NOSUIDCOREDUMP
 Programs with their set-user-ID bit set will not dump core when this is set.
+.It Dv KERN_NSELCOLL
+Number of
+.Xr select 2
+collisions.
 .It Dv KERN_OSRELEASE
 The system release string.
 .It Dv KERN_OSREV
@@ -412,6 +437,8 @@ There are no changeable values in this branch.
 .It Sy Third level name	Type
 .It Dv KERN_MALLOC_BUCKETS	string
 .It Dv KERN_MALLOC_BUCKET	node
+.It Dv KERN_MALLOC_KMEMNAMES	string
+.It Dv KERN_MALLOC_KMEMSTATS	node
 .El
 .Pp
 The variables are as follows:
@@ -430,6 +457,15 @@ bucket size, the statistics for the closest larger bucket size will be
 returned instead.
 .Pp
 Note that bucket sizes are typically powers of 2.
+.It Dv KERN_MALLOC_KERNNAMES
+Return a comma-separated list of the names of the kernel
+.Xr malloc 9
+types.
+.It Dv KERN_MALLOC_KMEMSTATS
+A node containing the statistics for the memory types of the specified
+name.
+Each node returns a
+.Li struct kmemstats .
 .El
 .Pp
 .It Dv KERN_PROF
@@ -1208,6 +1244,7 @@ privileges may change the value.
 .It Dv VM_LOADAVG No "	struct loadavg	no"
 .It Dv VM_METER No "	struct vmtotal	no"
 .It Dv VM_SWAPENCRYPT No "	swap encrypt values	yes"
+.It Dv VM_UVMEXP No "	struct uvmexp	no"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1229,7 +1266,6 @@ detailed below.
 .It Dv SWPENC_CREATED No "	integer	no"
 .It Dv SWPENC_DELETED No "	integer	no"
 .El
-.Pp
 .Bl -tag -width "123456"
 .It Dv SWPENC_ENABLE
 Set to 1 to enable swap encryption for all processes.
@@ -1249,6 +1285,8 @@ The number of encryption keys that have been deleted, thus effectivly
 erasing the data that has been encrypted with them.
 Encryption keys are deleted when their reference counter reaches zero.
 .El
+.It Dv VM_UVMEXP
+Contains statistics about the UVM memory management system.
 .El
 .Ss CTL_VFS
 The string and integer information available for the
