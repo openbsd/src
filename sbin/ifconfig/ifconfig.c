@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.50 2001/07/25 17:41:06 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.51 2001/08/18 20:39:43 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.50 2001/07/25 17:41:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.51 2001/08/18 20:39:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2372,6 +2372,7 @@ sec2str(total)
 	int first = 1;
 	char *p = result;
 	char *end = &result[sizeof(result)];
+	int n;
 
 	if (0) {	/*XXX*/
 		days = total / 3600 / 24;
@@ -2381,15 +2382,24 @@ sec2str(total)
 
 		if (days) {
 			first = 0;
-			p += snprintf(p, end - p, "%dd", days);
+			n = snprintf(p, end - p, "%dd", days);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p -= n;
 		}
 		if (!first || hours) {
 			first = 0;
-			p += snprintf(p, end - p, "%dh", hours);
+			n = snprintf(p, end - p, "%dh", hours);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p -= n;
 		}
 		if (!first || mins) {
 			first = 0;
-			p += snprintf(p, end - p, "%dm", mins);
+			n = snprintf(p, end - p, "%dm", mins);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p -= n;
 		}
 		snprintf(p, end - p, "%ds", secs);
 	} else
