@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.30 2002/12/13 09:20:23 miod Exp $
+dnl	$OpenBSD: hardware,v 1.31 2003/01/13 15:56:50 jason Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -245,7 +245,8 @@ Supported Peripherals:
 			Nortel BayStack 21
 			OvisLink LEF-8129TX, LEF-8139TX
 			SMC EZ Card 10/100 PCI 1211-TX
-		VIA Rhine/RhineII Ethernet adapters (vr), including: [*]
+		VIA Rhine/RhineII/Rhine III Ethernet adapters (vr),
+		  including: [*]
 			Addtron AEF-360TX
 			Hawking PN102TX
 			D-Link DFE530TX
