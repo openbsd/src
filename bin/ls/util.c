@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 1999/05/01 23:54:48 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1999/05/05 07:06:01 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1995/09/07 06:43:02 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1999/05/01 23:54:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1999/05/05 07:06:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ putname(name)
 {
 	int len;
 
-	for(len = 0; *name; len++, name++)
+	for (len = 0; *name; len++, name++)
 		putchar((!isprint(*name) && f_nonprint) ? '?' : *name);
 	return len;
 }
