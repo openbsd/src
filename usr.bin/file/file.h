@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.14 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.15 2003/11/09 20:13:57 otto Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -86,7 +86,7 @@ struct magic {
 		unsigned char hl[4];	/* 2 bytes of a fixed-endian "long" */
 	} value;		/* either number or string */
 	uint32_t mask;	/* mask before comparison with value */
-	char nospflag;		/* supress space character */
+	char nospflag;		/* suppress space character */
 	char desc[MAXDESC];	/* description */
 };
 

@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.9 2003/04/06 21:07:08 deraadt Exp $
+ * $OpenBSD: learn.c,v 1.10 2003/11/09 20:13:57 otto Exp $
  */
 
 /****************************************************************
@@ -1041,6 +1041,6 @@ int n;
 	printf("Bye.\n"); /* not only does this reassure user but 
 			it stalls for time while deleting directory */
 	fflush(stdout);
-	/* printf("Wantd %ld got %ld val %d\n", (long)pid, (long)pidw, retval); */
+	/* printf("Wanted %ld got %ld val %d\n", (long)pid, (long)pidw, retval); */
 	exit(n);
 }

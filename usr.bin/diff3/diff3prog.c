@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.3 2003/10/24 20:32:06 avsm Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.4 2003/11/09 20:13:57 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.3 2003/10/24 20:32:06 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.4 2003/11/09 20:13:57 otto Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 }
 
 /*
- * Pick up the line numbers of allcahnges from one change file.
+ * Pick up the line numbers of all changes from one change file.
  * (This puts the numbers in a vector, which is not strictly necessary,
  * since the vector is processed in one sequential pass.
  * The vector could be optimized out of existence)
@@ -346,7 +346,7 @@ merge(int m1, int m2)
 			dup = duplicate(&d1->old,&d2->old);
 			/*
 			 * dup = 0 means all files differ
-			 * dup = 1 meands files 1 and 2 identical
+			 * dup = 1 means files 1 and 2 identical
 			 */
 			if (eflag==0) {
 				separate(dup ? "3" : "");
@@ -441,7 +441,7 @@ keep(int i, struct range *rnew)
 }
 
 /*
- * skip to just befor line number from in file "i".  If "pr" is non-NULL,
+ * skip to just before line number from in file "i".  If "pr" is non-NULL,
  * print all skipped stuff with string pr as a prefix.
  */
 int

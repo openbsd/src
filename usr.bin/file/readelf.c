@@ -41,7 +41,7 @@
 #include "readelf.h"
 
 #ifndef lint
-static char *RCSID = "@(#)$Id: readelf.c,v 1.6 2003/06/13 18:31:14 deraadt Exp $";
+static char *RCSID = "@(#)$Id: readelf.c,v 1.7 2003/11/09 20:13:57 otto Exp $";
 #endif
 
 #ifdef	ELFCORE
@@ -513,7 +513,7 @@ dophn_core(int class, int swap, int fd, off_t off, int num, size_t size)
 				 * is in SunOS 5.x and Linux).
 				 *
 				 * Unfortunately, it's at a different offset
-				 * in varous OSes, so try multiple offsets.
+				 * in various OSes, so try multiple offsets.
 				 * If the characters aren't all printable,
 				 * reject it.
 				 */

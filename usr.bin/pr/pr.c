@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.19 2003/08/04 17:06:45 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.20 2003/11/09 20:13:57 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.19 2003/08/04 17:06:45 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.20 2003/11/09 20:13:57 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,20 +76,20 @@ static char *rcsid = "$OpenBSD: pr.c,v 1.19 2003/08/04 17:06:45 deraadt Exp $";
  * the original version didn't support form-feeds, while many of the ad-hoc
  * pr implementations out there do.  Addding this and making it work reasonably
  * in all four output modes required quite a bit of hacking and a few minor
- * bugs were noted and fixed in the processs.  Some implementations have this
+ * bugs were noted and fixed in the process.  Some implementations have this
  * as the as -f, some as -F so we accept either.
  *
  * The implementation of form feeds on top of the existing I/O structure is
- * a bit ideosyncratic.  Basically they are treated as temporary end-of-file
+ * a bit idiosyncratic.  Basically they are treated as temporary end-of-file
  * conditions and an additional level of "loop on form feed" is added to each
  * of the output modes to continue after such a transient end-of-file's. This
  * has the general benefit of making the existing header/trailer logic work
  * and provides a usable framework for rational behavior in multi-column modes.
  *
- * The orginal "efficient" implementation of the "skip to page N" option was
+ * The original "efficient" implementation of the "skip to page N" option was
  * bogus and I substituted the basic inhibit printing until page N approach.
  * This is still fairly bogus vis-a-vis numbering pages on multiple files
- * restarting at one, but at least lets you consistantly reprint some large
+ * restarting at one, but at least lets you consistently reprint some large
  * document starting in the middle, in any of the output modes.
  *
  * Additional support for overprinting via <back-space> or <return> would
@@ -921,7 +921,7 @@ mulfile(int argc, char *argv[])
      * do not know how many columns yet. The number of operands provide an
      * upper bound on the number of columns. We use the number of files
      * we can open successfully to set the number of columns. The operation
-     * of the merge operation (-m) in relation to unsuccesful file opens
+     * of the merge operation (-m) in relation to unsuccessful file opens
      * is unspecified by posix.
      *
      * XXX - this seems moderately bogus, you'd think that specifying
@@ -946,7 +946,7 @@ mulfile(int argc, char *argv[])
 	return(1);
 
     /*
-     * calculate page boundries based on open file count
+     * calculate page boundaries based on open file count
      */
     if (nmwd) {
 	colwd = (pgwd - clcnt - nmwd)/clcnt;
@@ -1099,7 +1099,7 @@ mulfile(int argc, char *argv[])
  *    buf:    buffer
  *    lim:    buffer length
  *    cnt:    line length or -1 if no line (EOF for example)
- *    cps:    column positon 1st char in buffer (large line support)
+ *    cps:    column position 1st char in buffer (large line support)
  *    trnc:    throw away data more than lim up to \n 
  *    mor:    set if more data in line (not truncated)
  */
@@ -1564,7 +1564,7 @@ addnum(char *buf, int wdth, int line)
  * prhead() should be used carefully, we don't want to print out headers
  * for null input files or orphan headers at the end of files, and also
  * trailer processing is typically conditional on whether you've called
- * prhead() at least once for a file and incremented pagecnt..  Exactly
+ * prhead() at least once for a file and incremented pagecnt.  Exactly
  * how to determine whether to print a header is a little different in
  * the context each output mode, but we let the caller figure that out.
  */
@@ -1612,7 +1612,7 @@ prhead(char *buf, char *fname, int pagcnt)
  *    incomp    was a '\n' missing from last line output
  *
  * prtail() can now be invoked unconditionally, with the notion that if
- * we haven't printed a hearder, these no need for a trailer
+ * we haven't printed a header, there is no need for a trailer
  */
 int
 prtail(int cnt, int incomp)

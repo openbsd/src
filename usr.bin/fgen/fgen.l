@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.6 2002/09/23 04:10:14 millert Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.7 2003/11/09 20:13:57 otto Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1034,7 +1034,7 @@ main(argc, argv)
 
 /*
  * Tokenize one file.  This is a separate function so it can
- * be called recursively to parse mutiple levels of include files.
+ * be called recursively to parse multiple levels of include files.
  */
 
 void
@@ -1562,7 +1562,7 @@ tokenize(input)
 			 */
 			pos = pop();	/* get position of prev link. */
 			push(outpos);	/* save position of this link. */
-			spit(pos);	/* save potision of prev link. */
+			spit(pos);	/* save position of prev link. */
 			if (offsetsize == 16) {
 				spit(0);
 			}

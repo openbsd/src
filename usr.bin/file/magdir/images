@@ -207,10 +207,9 @@
 #>28	belong		>0		colormap is %d bytes long
 
 # SGI image file format, from Daniel Quinlan (quinlan@yggdrasil.com)
-#
-# See
+# See:
 #	http://reality.sgi.com/grafica/sgiimage.html
-#
+#	ftp://ftp.sgi.com/graphics/SGIIMAGESPEC
 0	beshort		474		SGI image data
 #>2	byte		0		\b, verbatim
 >2	byte		1		\b, RLE

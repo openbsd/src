@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.11 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.12 2003/11/09 20:13:57 otto Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -144,7 +144,7 @@ Apr 21, 2000:
 	jon bentley for the test case that found it.
 
 	added test in envinit to catch environment "variables" with
-	names begining with '='; thanks to Berend Hasselman.
+	names beginning with '='; thanks to Berend Hasselman.
 
 Jul 28, 1999:
 	added test in defn() to catch function foo(foo), which
@@ -381,7 +381,7 @@ May 2, 1996:
 	some awful behaviors.)
 
 Apr 29, 1996:
-	replaced uchar by uschar everwhere; apparently some compilers
+	replaced uchar by uschar everywhere; apparently some compilers
 	usurp this name and this causes conflicts.
 
 	fixed call to time in run.c (bltin); arg is time_t *.

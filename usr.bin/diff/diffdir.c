@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.25 2003/10/07 23:37:27 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.26 2003/11/09 20:13:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.25 2003/10/07 23:37:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.26 2003/11/09 20:13:57 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ static void diffit(struct dirent *, char *, size_t, char *, size_t);
 #define d_status	d_type		/* we need to store status for -l */
 
 /*
- * Diff directory traveral. Will be called recursively if -r was specified.
+ * Diff directory traversal. Will be called recursively if -r was specified.
  */
 void
 diffdir(char *p1, char *p2)

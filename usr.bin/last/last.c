@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.28 2003/08/14 21:02:09 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.29 2003/11/09 20:13:57 otto Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.28 2003/08/14 21:02:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.29 2003/11/09 20:13:57 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -586,7 +586,7 @@ dateconv(char *arg)
 		t->tm_year = ATOI2(arg);
 		t->tm_year *= 100;
 		yearset = 1;
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			yearset = ATOI2(arg);

@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $
+ *	$OpenBSD: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $
+ * 	$Id: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $
  */
 
 #ifndef lint
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.13 2003/11/09 20:13:57 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static char rcsid[] = "$OpenBSD: locate.code.c,v 1.12 2003/09/29 16:03:16 deraad
  * The locate database store any character except newline ('\n')
  * and NUL ('\0'). The 8-bit character support don't wast extra
  * space until you have characters in file names less than 32
- * or greather than 127.
+ * or greater than 127.
  *
  *
  * SEE ALSO:	updatedb.sh, ../bigram/locate.bigram.c
