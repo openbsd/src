@@ -783,7 +783,7 @@ If it matches more than one filename, the first match
 is entered into the command line.
 Repeated TABs will cycle thru the other matching filenames.
 .IP "BACKTAB [ ESC-TAB ]"
-Like, TAB, but cycles in the reverse direction thru the matching filenames.
+Like TAB, but cycles in the reverse direction thru the matching filenames.
 .IP "^L"
 Complete the partial filename to the left of the cursor.
 If it matches more than one filename, all matches are entered into
@@ -817,7 +817,7 @@ Before
 .I less
 opens a file, it first gives your input preprocessor a chance to modify the
 way the contents of the file are displayed.
-An input preprocessor is simply an executable program (or shell script),
+An input preprocessor is simply an executable program (or shell script)
 which writes the contents of the file to a different file,
 called the replacement file.
 The contents of the replacement file are then displayed 

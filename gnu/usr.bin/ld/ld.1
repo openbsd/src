@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.1,v 1.13 2000/10/06 17:43:10 aaron Exp $
+.\"	$OpenBSD: ld.1,v 1.14 2002/12/31 20:24:01 millert Exp $
 .\"	$NetBSD: ld.1,v 1.14 1998/02/20 03:12:50 jonathan Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -90,7 +90,7 @@ searches for a library of the from
 option)
 according to the search rules in effect. If such a file can not be
 found a traditional archive is looked for.
-This options can appear anywhere on the command line and is complementary
+This option can appear anywhere on the command line and is complementary
 to
 .Fl Bstatic .
 .It Fl Bstatic
@@ -169,7 +169,7 @@ Produce an
 .Dv OMAGIC
 output file.
 .It Fl n
-Produce a
+Produce an
 .Dv NMAGIC
 output file.
 .It Fl nostdlib
@@ -253,7 +253,7 @@ than a normal executable image.
 This option and its
 .Ar library-name
 argument are ignored. They are provided for compatibility with versions of
-.Nm ld ,
+.Nm ld 
 which allow the user to specify an internal name and version number
 for dynamically-linked shared libraries.
 .It Fl \&-whole-archive
