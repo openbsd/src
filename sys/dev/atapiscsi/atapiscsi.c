@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.14 1999/10/09 03:42:03 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.15 1999/10/29 01:15:16 deraadt Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -61,14 +61,6 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
-/* XXX OpenBSD actually has the "raw" API for "stream" functionality.  */
-#ifndef __BUS_SPACE_HAS_STREAM_METHODS
-#define    bus_space_write_multi_stream_2    bus_space_write_multi_2
-#define    bus_space_write_multi_stream_4    bus_space_write_multi_4
-#define    bus_space_read_multi_stream_2    bus_space_read_multi_2
-#define    bus_space_read_multi_stream_4    bus_space_read_multi_4
-#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
-
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
@@ -97,6 +89,7 @@ int wdcdebug_atapi_mask = 0;
 
 /* 10 ms, this is used only before sending a cmd.  */
 #define ATAPI_DELAY 10
+#define ATAPI_RESET_WAIT 2000
 
 /* When polling, let the exponential backoff max out at 1 second's interval. */
 #define ATAPI_POLL_MAXTIC (hz)
@@ -117,8 +110,7 @@ struct atapiscsi_xfer;
 int	atapiscsi_match __P((struct device *, void *, void *));
 void	atapiscsi_attach __P((struct device *, struct device *, void *));
 
-int	wdc_atapi_get_params __P((struct channel_softc *, u_int8_t, int,
-	    struct ataparams *)); 
+int	wdc_atapi_get_params __P((struct channel_softc *, u_int8_t, struct ataparams *)); 
 
 int	atapi_dsc_wait __P((struct ata_drive_datas *, int));
 int	atapi_dsc_ready __P((void *));
@@ -130,6 +122,11 @@ struct atapiscsi_softc {
 	struct device  sc_dev;
 	struct  scsi_link  sc_adapterlink;
 	struct channel_softc *chp;
+	enum atapi_state { as_none, as_cmdout, as_data } protocol_phase;
+
+	int diagnostics_printed;
+#define ATAPI_DIAG_UNEXP_CMD  0x01
+#define ATAPI_DIAG_POLARITY   0x02
 };
 
 static struct scsi_adapter atapiscsi_switch = 
@@ -160,7 +157,8 @@ struct cfdriver atapiscsi_cd = {
 };
 
 
-int atapiscsi_match(parent, match, aux)
+int
+atapiscsi_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 
@@ -210,8 +208,7 @@ atapiscsi_attach(parent, self, aux)
 		struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 			
 		if ((drvp->drive_flags & DRIVE_ATAPI) &&
-		    (wdc_atapi_get_params(chp, drive,
-		    SCSI_POLL|SCSI_NOSLEEP, id) == COMPLETE)) {
+		    (wdc_atapi_get_params(chp, drive, id) == COMPLETE)) {
 			/* Temporarily, the device will be called
 			   atapiscsi. */
 			drvp->drv_softc = (struct device*)as;
@@ -299,12 +296,12 @@ wdc_atapi_minphys (struct buf *bp)
  */
 
 int
-wdc_atapi_get_params(chp, drive, flags, id)
+wdc_atapi_get_params(chp, drive, id)
 	struct channel_softc *chp;
 	u_int8_t drive;
-	int flags;
 	struct ataparams *id;
 {
+	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	struct wdc_command wdc_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
@@ -312,7 +309,7 @@ wdc_atapi_get_params(chp, drive, flags, id)
 	 * XXX this will break scsireprobe if this is of any interest for
 	 * ATAPI devices one day.
 	 */
-	if ((chp->ch_drive[drive].drive_flags & DRIVE_ATAPI) == 0) {
+	if ((drvp->drive_flags & DRIVE_ATAPI) == 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
 		    drive), DEBUG_PROBE);
 		return (-1);
@@ -322,8 +319,8 @@ wdc_atapi_get_params(chp, drive, flags, id)
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
 	wdc_c.flags = AT_POLL;
-	wdc_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], &wdc_c) != WDC_COMPLETE) {
+	wdc_c.timeout = ATAPI_RESET_WAIT;
+	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
 		    " drive %s:%d:%d: driver failed\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, drive);
@@ -336,13 +333,13 @@ wdc_atapi_get_params(chp, drive, flags, id)
 		    wdc_c.r_error), DEBUG_PROBE);
 		return (-1);
 	}
-	chp->ch_drive[drive].state = 0;
+	drvp->state = 0;
 
 	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 	
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
-	if (ata_get_params(&chp->ch_drive[drive], AT_POLL, id) != 0) {
+	if (ata_get_params(drvp, AT_POLL, id) != 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
@@ -511,6 +508,7 @@ wdc_atapi_start(chp, xfer)
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
+	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
 
 	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
@@ -522,6 +520,15 @@ wdc_atapi_start(chp, xfer)
 		xfer->c_flags |= C_DMA;
 	else
 		xfer->c_flags &= ~C_DMA;
+
+	if (wdc_select_drive(chp, xfer->drive, ATAPI_DELAY) < 0) {
+		printf("wdc_atapi_start: not ready, st = %02x\n",
+		    chp->ch_status);
+		sc_xfer->error = XS_TIMEOUT;
+		wdc_atapi_reset(chp, xfer);
+		return;
+	}
+    
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != IDENTIFY) {
@@ -534,14 +541,6 @@ wdc_atapi_start(chp, xfer)
 		return;
 	}
 	
-	if (wdc_select_drive(chp, xfer->drive, ATAPI_DELAY) < 0) {
-		printf("wdc_atapi_start: not ready, st = %02x\n",
-		    chp->ch_status);
-		sc_xfer->error = XS_TIMEOUT;
-		wdc_atapi_reset(chp, xfer);
-		return;
-	}
-
 	if (drvp->atapi_cap & ACAP_DSC) {
 		if (atapi_dsc_wait(drvp, sc_xfer->timeout)) {
 			sc_xfer->error = XS_TIMEOUT;
@@ -568,6 +567,8 @@ wdc_atapi_start(chp, xfer)
 	    0, 0, 0, 
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 
+	as->protocol_phase = as_cmdout;
+
 	/*
 	 * If there is no interrupt for CMD input, busy-wait for it (done in 
 	 * the interrupt routine. If it is a polled command, call the interrupt
@@ -588,10 +589,10 @@ wdc_atapi_start(chp, xfer)
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			if (drvp->atapi_cap & ACAP_DSC) {
 				if (atapi_poll_wait(
-				    (drvp->drive_flags & DRIVE_DSCWAIT) ?
-				    atapi_dsc_ready : atapi_dsc_semiready,
-				    drvp, sc_xfer->timeout, PZERO + PCATCH,
-				    "atapist")) {
+					(drvp->drive_flags & DRIVE_DSCWAIT) ?
+					    atapi_dsc_ready : atapi_dsc_semiready,
+					    drvp, sc_xfer->timeout, PZERO + PCATCH,
+					    "atapist")) {
 					sc_xfer->error = XS_TIMEOUT;
 					wdc_atapi_reset(chp, xfer);
 					return;
@@ -600,6 +601,7 @@ wdc_atapi_start(chp, xfer)
 				/* Wait for at last 400ns for status bit to
 				   be valid */
 				DELAY(1);
+
 			wdc_atapi_intr(chp, xfer, 0);
 		}
 	}
@@ -620,140 +622,69 @@ atapi_dsc_semiready(arg)
 	return (wait_for_unbusy(chp, 0) == 0);
 }
 
+
+int wdc_atapi_intr_drq __P((struct channel_softc *, struct wdc_xfer *, int));
+
 int
-wdc_atapi_intr(chp, xfer, irq)
+wdc_atapi_intr_drq(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 	int irq;
+
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
-	int len, phase, i, retries=0;
-	int ire, dma_err = 0;
+	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
+	int len, phase, i;
+	int ire;
 	int dma_flags = 0;
-	struct scsi_generic _cmd_reqsense;
-	struct scsi_sense *cmd_reqsense =
-	    (struct scsi_sense *)&_cmd_reqsense;
-	u_int32_t cmd[4];
+	u_int8_t cmd[16];
+	struct scsi_sense *cmd_reqsense;
 	int cmdlen = (drvp->atapi_cap & ACAP_LEN) ? 16 : 12;
-
-	bzero(cmd, sizeof(cmd));
-
-	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive), DEBUG_INTR);
-
-	/* Is it not a transfer, but a control operation? */
-	if (drvp->state < READY) {
-		printf("%s:%d:%d: bad state %d in wdc_atapi_intr\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-		    drvp->state);
-		panic("wdc_atapi_intr: bad state\n");
-	}
-
-	/* We should really wait_for_unbusy here too before 
-	   switching drives. */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (xfer->drive << 4));
-
-	/* Ack interrupt done in wait_for_unbusy */
-	if (wait_for_unbusy(chp,
-	    (irq == 0) ? sc_xfer->timeout : 0) != 0) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
-			return (0); /* IRQ was not for us */
-		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-		    xfer->c_bcount, xfer->c_skip);
-		if (xfer->c_flags & C_DMA)
-			drvp->n_dmaerrs++;
-		sc_xfer->error = XS_TIMEOUT;
-		wdc_atapi_reset(chp, xfer);
-		return (1);
-	}
-	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
-	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
-		drvp->n_dmaerrs++;
-	/* 
-	 * if the request sense command was aborted, report the short sense
-	 * previously recorded, else continue normal processing
-	 */
-
-	if ((xfer->c_flags & C_SENSE) != 0 &&
-	    (chp->ch_status & WDCS_ERR) != 0 &&
-	    (chp->ch_error & WDCE_ABRT) != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_intr: request_sense aborted, "
-		    "calling wdc_atapi_done()"
-		    ), DEBUG_INTR);
-		wdc_atapi_done(chp, xfer);
-		return (1);
-	}
 
 	if (xfer->c_flags & C_DMA) {
 		dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
 		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
 		dma_flags |= ((sc_xfer->flags & SCSI_POLL) ||
-		   (drvp->atapi_cap & ACAP_DSC)) ? WDC_DMA_POLL : 0;
+		    (drvp->atapi_cap & ACAP_DSC)) ? WDC_DMA_POLL : 0;
 	}
-again:
-	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
-	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
-	ire = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_ireason);
-	phase = (ire & (WDCI_CMD | WDCI_IN)) | (chp->ch_status & WDCS_DRQ);
-	WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
-	    "ire 0x%x :", xfer->c_bcount,
-	    len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
 
-	switch (phase) {
-	case PHASE_CMDOUT:
+
+	if (as->protocol_phase == as_cmdout) {
+		bzero(cmd, sizeof(cmd));
+
 		if (xfer->c_flags & C_SENSE) {
-			bzero(cmd_reqsense, sizeof(struct scsi_generic));
+			cmd_reqsense = (struct scsi_sense *)&cmd[0];
 			cmd_reqsense->opcode = REQUEST_SENSE;
 			cmd_reqsense->length = xfer->c_bcount;
-			bcopy(cmd_reqsense, cmd, sizeof(struct scsi_generic));
-		} else {
+		} else 
 			bcopy(sc_xfer->cmd, cmd, sc_xfer->cmdlen);
-		}
-		WDCDEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
+
+		for (i = 0; i < 12; i++)
+			WDCDEBUG_PRINT(("%02x ", cmd[i]), DEBUG_INTR);
+		WDCDEBUG_PRINT((": PHASE_CMDOUT\n"), DEBUG_INTR);
+
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive,
-			    xfer->databuf, xfer->c_bcount, dma_flags) != 0) {
+			    chp->channel, xfer->drive, xfer->databuf, 
+			    xfer->c_bcount, dma_flags) != 0) {
 				sc_xfer->error = XS_DRIVER_STUFFUP;
-				break;
+				wdc_atapi_done(chp, xfer);
+				return (1);
 			}
 		}
 
-		/* send packet command */
-		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
-		if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)cmd,
-				    cmdlen >> 2);
-			} else {
-				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)cmd,
-				    cmdlen >> 1);
-			}
-		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				bus_space_write_multi_stream_4(chp->data32iot,
-				    chp->data32ioh, 0,
-				    (u_int32_t *)cmd,
-				    cmdlen >> 2);
-			} else {
-				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)cmd,
-				    cmdlen >> 1);
-			}
-		}
+
+		wdc_output_bytes(drvp, cmd, cmdlen);
+
+		as->protocol_phase = as_data;
+
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
+			    chp->channel, xfer->drive, 
+			    dma_flags);
 		}
 
 		if ((sc_xfer->flags & SCSI_POLL) == 0 &&
@@ -767,7 +698,7 @@ again:
 		if (drvp->atapi_cap & ACAP_DSC) {
 			if (!(drvp->drive_flags & DRIVE_DSCBA) &&
 			    (sc_xfer->cmd->opcode == READ ||
-			    sc_xfer->cmd->opcode == WRITE)) {
+				sc_xfer->cmd->opcode == WRITE)) {
 				drvp->drive_flags |= DRIVE_DSCBA;
 				WDCDEBUG_PRINT(("set DSCBA\n"), DEBUG_DSC);
 			}
@@ -775,279 +706,264 @@ again:
 				drvp->drive_flags |= DRIVE_DSCWAIT;
 		}
  		return (1);
+	}
 
-	 case PHASE_DATAOUT:
-		/* write data */
-		WDCDEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
-		if ((sc_xfer->flags & SCSI_DATA_OUT) == 0 ||
-		    (xfer->c_flags & C_DMA) != 0) {
-			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
-			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
-				drvp->n_dmaerrs++;
-			}
-			sc_xfer->error = XS_TIMEOUT;
-			wdc_atapi_reset(chp, xfer);
-			return (1);
+	if (as->protocol_phase != as_data) {
+		panic ("wdc_atapi_intr_drq: bad protocol phase");
+	}
+
+	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
+		256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
+	ire = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_ireason);
+	phase = (ire & (WDCI_CMD | WDCI_IN)) | (chp->ch_status & WDCS_DRQ);
+	WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
+	    "ire 0x%x :", xfer->c_bcount,
+	    len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
+
+	/* Possibility to explore; what if we get an interrupt
+	   during DMA ? */
+	if ((xfer->c_flags & C_DMA) != 0) {
+		printf("wdc_atapi_intr_drq: Unexpected "
+		    "interrupt during DMA mode");
+
+		goto abort_data;
+	}
+
+
+	if (ire & WDCI_CMD) {
+		/* Something messed up */
+		if (!(as->diagnostics_printed & ATAPI_DIAG_UNEXP_CMD)) {
+			printf ("wdc_atapi_intr_drq: Unexpectedly "
+			    "in the command phase. Please report this.\n");
+			as->diagnostics_printed |= ATAPI_DIAG_UNEXP_CMD;
 		}
-		if (xfer->c_bcount < len) {
+		goto abort_data;
+	}
+	
+	/* Make sure polarities match */
+	if (((ire & WDCI_IN) == WDCI_IN) ==
+	    ((sc_xfer->flags & SCSI_DATA_OUT) == SCSI_DATA_OUT)) {
+		if (!(as->diagnostics_printed & ATAPI_DIAG_POLARITY)) {
+			printf ("wdc_atapi_intr_drq: Polarity problem "
+			    "in transfer. Please report this.\n");
+			as->diagnostics_printed |= ATAPI_DIAG_POLARITY;
+		}
+		goto abort_data;
+	}
+	
+	WDCDEBUG_PRINT(("PHASE_DATA\n"), DEBUG_INTR);
+	
+	if (len == 0) 
+	        goto abort_data;
+	  
+	if (xfer->c_bcount >= len) {
+		/* Common case */
+		if (sc_xfer->flags & SCSI_DATA_OUT)
+			wdc_output_bytes(drvp, (u_int8_t *)xfer->databuf +
+			    xfer->c_skip, len);
+		else
+			wdc_input_bytes(drvp, (u_int8_t *)xfer->databuf +
+			    xfer->c_skip, len);
+
+		xfer->c_skip += len;
+		xfer->c_bcount -= len;
+	} else {
+		/* Exceptional case */
+		if (sc_xfer->flags & SCSI_DATA_OUT) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
-				bus_space_write_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)
-				    ((char *)xfer->databuf + xfer->c_skip),
-				    xfer->c_bcount >> 1);
-			} else {
-				bus_space_write_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)
-				    ((char *)xfer->databuf + xfer->c_skip),
-				    xfer->c_bcount >> 1);
-			}
+
+			wdc_output_bytes(drvp, (u_int8_t *)xfer->databuf +
+			    xfer->c_skip, xfer->c_bcount);
+			 
 			for (i = xfer->c_bcount; i < len; i += 2)
 				bus_space_write_2(chp->cmd_iot, chp->cmd_ioh,
 				    wd_data, 0);
-			xfer->c_skip += xfer->c_bcount;
-			xfer->c_bcount = 0;
 		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				if ((chp->wdc->cap &
-				    WDC_CAPABILITY_ATAPI_NOSTREAM))
-					bus_space_write_multi_4(chp->data32iot,
-					    chp->data32ioh, 0,
-					    (u_int32_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 2);
-				else
-					bus_space_write_multi_stream_4(
-					    chp->data32iot, chp->data32ioh,
-					    wd_data,
-					    (u_int32_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 2);
-
-				xfer->c_skip += len & 0xfffffffc;
-				xfer->c_bcount -= len & 0xfffffffc;
-				len = len & 0x03;
-			}
-			if (len > 0) {
-				if ((chp->wdc->cap &
-				    WDC_CAPABILITY_ATAPI_NOSTREAM))
-					bus_space_write_multi_2(chp->cmd_iot,
-					    chp->cmd_ioh, wd_data,
-					    (u_int16_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 1);
-				else
-					bus_space_write_multi_stream_2(
-					    chp->cmd_iot, chp->cmd_ioh,
-					    wd_data,
-					    (u_int16_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 1);
-				xfer->c_skip += len;
-				xfer->c_bcount -= len;
-			}
-		}
-
-		if ((sc_xfer->flags & SCSI_POLL) == 0 &&
-		    (drvp->atapi_cap & ACAP_DSC) == 0) {
-			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
-		} else if (drvp->atapi_cap & ACAP_DSC)
-			drvp->drive_flags |= DRIVE_DSCWAIT;
-		return (1);
-
-	case PHASE_DATAIN:
-		/* Read data */
-		WDCDEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
-		if (((sc_xfer->flags & SCSI_DATA_IN) == 0 &&
-		    (xfer->c_flags & C_SENSE) == 0) || 
-		    (xfer->c_flags & C_DMA) != 0) {
-			printf("wdc_atapi_intr: bad data phase DATAIN\n");
-			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
-				drvp->n_dmaerrs++;
-			}
-			sc_xfer->error = XS_TIMEOUT;
-			wdc_atapi_reset(chp, xfer);
-			return (1);
-		}
-		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
-				bus_space_read_multi_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)
-				    ((char *)xfer->databuf + xfer->c_skip),
-				    xfer->c_bcount >> 1);
-			} else {
-				bus_space_read_multi_stream_2(chp->cmd_iot,
-				    chp->cmd_ioh, wd_data,
-				    (u_int16_t *)
-				    ((char *)xfer->databuf + xfer->c_skip),
-				    xfer->c_bcount >> 1);
-			}
+			 
+			wdc_input_bytes(drvp,
+			    (char *)xfer->databuf + xfer->c_skip,
+			    xfer->c_bcount);
 			wdcbit_bucket(chp, len - xfer->c_bcount);
-			xfer->c_skip += xfer->c_bcount;
-			xfer->c_bcount = 0;
-		} else {
-			if (drvp->drive_flags & DRIVE_CAP32) {
-				if ((chp->wdc->cap &
-				    WDC_CAPABILITY_ATAPI_NOSTREAM))
-					bus_space_read_multi_4(chp->data32iot,
-					    chp->data32ioh, 0,
-					    (u_int32_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 2);
-				else
-					bus_space_read_multi_stream_4(
-					    chp->data32iot, chp->data32ioh,
-					    wd_data,
-					    (u_int32_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip),
-					    len >> 2);
-				
-				xfer->c_skip += len & 0xfffffffc;
-				xfer->c_bcount -= len & 0xfffffffc;
-				len = len & 0x03;
-			}
-			if (len > 0) {
-				if ((chp->wdc->cap &
-				    WDC_CAPABILITY_ATAPI_NOSTREAM))
-					bus_space_read_multi_2(chp->cmd_iot,
-					    chp->cmd_ioh, wd_data,
-					    (u_int16_t *)
-					    ((char *)xfer->databuf +
-				            xfer->c_skip), 
-					    len >> 1);
-				else
-					bus_space_read_multi_stream_2(
-					    chp->cmd_iot, chp->cmd_ioh,
-					    wd_data,
-					    (u_int16_t *)
-					    ((char *)xfer->databuf +
-					    xfer->c_skip), 
-					    len >> 1);
-				xfer->c_skip += len;
-				xfer->c_bcount -=len;
-			}
 		}
 
-		if ((sc_xfer->flags & SCSI_POLL) == 0 &&
-		    (drvp->atapi_cap & ACAP_DSC) == 0) {
-			chp->ch_flags |= WDCF_IRQ_WAIT;
-			timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
-		}
+		xfer->c_skip += xfer->c_bcount;
+		xfer->c_bcount = 0;
+	}
+
+	if ((sc_xfer->flags & SCSI_POLL) == 0 &&
+	    (drvp->atapi_cap & ACAP_DSC) == 0) {
+		chp->ch_flags |= WDCF_IRQ_WAIT;
+		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
+	} else if (drvp->atapi_cap & ACAP_DSC)
+		drvp->drive_flags |= DRIVE_DSCWAIT;
+	return (1);
+
+ abort_data:
+	if (xfer->c_flags & C_DMA) {
+		(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+		    chp->channel, xfer->drive, dma_flags);
+		drvp->n_dmaerrs++;
+	}
+
+	sc_xfer->error = XS_TIMEOUT;
+	wdc_atapi_reset(chp, xfer);
+
+	return (1);
+}
+
+
+int
+wdc_atapi_intr(chp, xfer, irq)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+	int irq;
+{
+	struct scsi_xfer *sc_xfer = xfer->cmd;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
+	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
+	int dma_err = 0;
+	int dma_flags = 0;
+
+	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
+			chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive), 
+		       DEBUG_INTR);
+
+	/* Is it not a transfer, but a control operation? */
+	if (drvp->state < READY) {
+		printf("%s:%d:%d: bad state %d in wdc_atapi_intr\n",
+		       chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+		       drvp->state);
+		panic("wdc_atapi_intr: bad state\n");
+	}
+
+	/* We should really wait_for_unbusy here too before 
+	   switching drives. */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			  WDSD_IBM | (xfer->drive << 4));
+
+	/* Ack interrupt done in wait_for_unbusy */
+	if (wait_for_unbusy(chp,
+			    (irq == 0) ? sc_xfer->timeout : 0) != 0) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+			return (0); /* IRQ was not for us */
+		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
+		       chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+		       xfer->c_bcount, xfer->c_skip);
+		if (xfer->c_flags & C_DMA)
+			drvp->n_dmaerrs++;
+		sc_xfer->error = XS_TIMEOUT;
+		wdc_atapi_reset(chp, xfer);
 		return (1);
+	}
+	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
+	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
+		drvp->n_dmaerrs++;
 
-	case PHASE_ABORTED:
-	case PHASE_COMPLETED:
-		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
-		/* turn off DMA channel */
-		if (xfer->c_flags & C_DMA) {
-			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
-			if (xfer->c_flags & C_SENSE)
-				xfer->c_bcount -=
-				    sizeof(sc_xfer->sense);
-			else
-				xfer->c_bcount -= sc_xfer->datalen;
-		}
-		if (xfer->c_flags & C_SENSE) {
-			if ((chp->ch_status & WDCS_ERR) || dma_err < 0) {
-				/*
-				 * request sense failed ! it's not suppossed
-				 * to be possible
-				 */
-				if (dma_err < 0)
-					drvp->n_dmaerrs++;
-				sc_xfer->error = XS_RESET;
-				wdc_atapi_reset(chp, xfer);
-				return (1);
-			} else if (xfer->c_bcount <
-			    sizeof(sc_xfer->sense)) {
-				/* use the sense we just read */
-				sc_xfer->error = XS_SENSE;
-			} else {
-				/*
-				 * command completed, but no data was read.
-				 * use the short sense we saved previsouly.
-				 */
-				sc_xfer->error = XS_SHORTSENSE;
-			}
-		} else {
-			sc_xfer->resid = xfer->c_bcount;
-			if (chp->ch_status & WDCS_ERR) {
-				/* save the short sense */
-				sc_xfer->error = XS_SHORTSENSE;
-				atapi_to_scsi_sense(sc_xfer, chp->ch_error);
-				if ((sc_xfer->sc_link->quirks &
-				    ADEV_NOSENSE) == 0) {
-					/*
-					 * let the driver issue a
-					 * 'request sense'
-					 */
-					xfer->databuf = &sc_xfer->sense;
-					xfer->c_bcount =
-					    sizeof(sc_xfer->sense);
-					xfer->c_skip = 0;
-					xfer->c_flags |= C_SENSE;
-					wdc_atapi_start(chp, xfer);
-					return (1);
-				}
-			} else if (dma_err < 0) {
-				drvp->n_dmaerrs++;
-				sc_xfer->error = XS_RESET;
-				wdc_atapi_reset(chp, xfer);
-				return (1);
-			}
-		}
-		if (xfer->c_bcount != 0) {
-			WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
-			    "%d after io\n", xfer->c_bcount), DEBUG_XFERS);
-		}
-#ifdef DIAGNOSTIC
-		if (xfer->c_bcount < 0) {
-			printf("wdc_atapi_intr warning: bcount value "
-			    "is %d after io\n", xfer->c_bcount);
-		}
-#endif
-		break;
+	if (chp->ch_status & WDCS_DRQ) 
+		return (wdc_atapi_intr_drq(chp, xfer, irq));
+	
+	/* DRQ was dropped. This means the command is over.
+	   Do cleanup, check for errors, etc. */
+	if (xfer->c_flags & C_DMA) {
+		dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
+			     (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
+		dma_flags |= ((sc_xfer->flags & SCSI_POLL) ||
+			      (drvp->atapi_cap & ACAP_DSC)) ? WDC_DMA_POLL : 0;
+	}
 
-	default:
-		if (++retries<500) {
-			DELAY(100);
-			chp->ch_status = bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_ioh, wd_status);
-			chp->ch_error = bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_ioh, wd_error);
-			goto again;
-		}
-		printf("wdc_atapi_intr: unknown phase 0x%x\n", phase);
+	WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
+
+	/* turn off DMA channel */
+	if (as->protocol_phase == as_data &&
+	    xfer->c_flags & C_DMA) {
+		dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+		     chp->channel, xfer->drive, dma_flags);
+
+		/* Assume everything was transferred */
+		if (xfer->c_flags & C_SENSE)
+			xfer->c_bcount -= sizeof(sc_xfer->sense);
+		else
+			xfer->c_bcount -= sc_xfer->datalen;
+	}
+
+	as->protocol_phase = as_none;
+
+	if (xfer->c_flags & C_SENSE) {
 		if (chp->ch_status & WDCS_ERR) {
-			sc_xfer->error = XS_SHORTSENSE;
-			atapi_to_scsi_sense(sc_xfer, chp->ch_error);
-		} else {
+			if (chp->ch_error & WDCE_ABRT) {
+				WDCDEBUG_PRINT(("wdc_atapi_intr: request_sense aborted, "
+						"calling wdc_atapi_done()"
+					), DEBUG_INTR);
+				wdc_atapi_done(chp, xfer);
+				return (1);
+			}
+
+			/*
+			 * request sense failed ! it's not suppossed
+ 			 * to be possible
+			 */
+
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return (1);
+		} else if (xfer->c_bcount < sizeof(sc_xfer->sense)) {
+				/* use the sense we just read */
+			sc_xfer->error = XS_SENSE;
+		} else {
+			/*
+			 * command completed, but no data was read.
+			 * use the short sense we saved previsouly.
+			 */
+			sc_xfer->error = XS_SHORTSENSE;
 		}
+	} else {
+		sc_xfer->resid = xfer->c_bcount;
+		if (chp->ch_status & WDCS_ERR) {
+		        /* save the short sense */
+			sc_xfer->error = XS_SHORTSENSE;
+			atapi_to_scsi_sense(sc_xfer, chp->ch_error);
+			if ((sc_xfer->sc_link->quirks &
+			     ADEV_NOSENSE) == 0) {
+				/*
+				 * let the driver issue a
+				 * 'request sense'
+				 */
+				xfer->databuf = &sc_xfer->sense;
+				xfer->c_bcount =
+					sizeof(sc_xfer->sense);
+				xfer->c_skip = 0;
+				xfer->c_flags |= C_SENSE;
+				wdc_atapi_start(chp, xfer);
+				return (1);
+			}
+		} 
 	}
+
+        if (dma_err < 0) { 
+		drvp->n_dmaerrs++;
+		sc_xfer->error = XS_RESET;
+		wdc_atapi_reset(chp, xfer);
+		return (1);
+	}
+			
+
+	if (xfer->c_bcount != 0) {
+		WDCDEBUG_PRINT(("wdc_atapi_intr: bcount value is "
+				"%d after io\n", xfer->c_bcount), DEBUG_XFERS);
+	}
+#ifdef DIAGNOSTIC
+	if (xfer->c_bcount < 0) {
+		printf("wdc_atapi_intr warning: bcount value "
+		       "is %d after io\n", xfer->c_bcount);
+	}
+#endif
+
 	WDCDEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), error 0x%x "
-	    "\n", sc_xfer->error),
-	    DEBUG_INTR);
+			"\n", sc_xfer->error),
+		       DEBUG_INTR);
 	wdc_atapi_done(chp, xfer);
 	return (1);
 }
@@ -1061,7 +977,7 @@ wdc_atapi_ctrl(chp, xfer, irq)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
-	int delay = (irq == 0) ? ATAPI_DELAY : 0;
+	int delay = (irq == 0) ? ATAPI_DELAY : 1;
 
 	/* Ack interrupt done in wait_for_unbusy */
 again:
@@ -1076,12 +992,16 @@ again:
 	    drvp->state != DMAMODE_WAIT)
 		wdc_select_drive(chp, xfer->drive, delay);
 
+	/* Don't timeout during configuration */
+	xfer->c_flags &= ~C_TIMEOU;
+
 	switch (drvp->state) {
 		/* You need to send an ATAPI drive an ATAPI-specific
 		   command to revive it after a hard reset. Identify
 		   is about the most innocuous thing you can do
 		   that's guaranteed to be there */
 	case IDENTIFY:
+#if 0
 		wdccommandshort(chp, drvp->drive, ATAPI_IDENTIFY_DEVICE);
 		drvp->state = IDENTIFY_WAIT;
 		break;
@@ -1092,7 +1012,7 @@ again:
 		/* Some ATAPI devices need to try to read the media
 		   before responding. Well, let's hope resets while
 		   polling are few and far between */
-		if (wdcwait(chp, 0, 0, (irq == 0) ? 10000 : 0)) 
+		if (wdcwait(chp, 0, 0, delay))
 			goto timeout;
 
 		/* We don't really care if this operation failed.
@@ -1101,15 +1021,15 @@ again:
 			wdcbit_bucket(chp, 512);
 	
 			errstring = "Post IDENTIFY";
-			/* Wait for the drive to become unbusy before shoving
-			   the PIOMODE command down its throat */
-			if (wdcwait(chp, 0, 0, 10000))
-				goto timeout;
+
+			delay = ATAPI_DELAY;
 		}
 
 		drvp->state = PIOMODE;
 		goto again;
-
+#else
+		drvp->state = PIOMODE;
+#endif
 	case PIOMODE:
 piomode:
 		/* Don't try to set mode if controller can't be adjusted */
@@ -1305,15 +1225,6 @@ wdc_atapi_reset(chp, xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 
-	chp->ch_status =
-	    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-
-	if (chp->ch_status & WDCS_DRQ) {
-		printf ("wdc_atapi_reset: "
-		    "DRQ is asserted. We've really messed up\n");
-		wdc_reset_channel(drvp);
-	}
-
 	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
 
 	/* Some ATAPI devices need extra time to find their
@@ -1322,11 +1233,12 @@ wdc_atapi_reset(chp, xfer)
 	delay(5000);
 
 	drvp->state = 0;
-	if (wait_for_unbusy(chp, WDC_RESET_WAIT) != 0) {
+	if (wdcwait(chp, WDCS_DRQ, 0, ATAPI_RESET_WAIT) != 0) {
 		printf("%s:%d:%d: reset failed\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->drive);
 		sc_xfer->error = XS_SELTIMEOUT;
+		wdc_reset_channel(drvp);
 	}
 
 	wdc_atapi_done(chp, xfer);
