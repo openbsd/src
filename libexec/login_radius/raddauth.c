@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.6 2001/08/18 18:56:39 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.7 2001/12/07 23:29:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -64,7 +64,6 @@
 #include <limits.h>
 #include <login_cap.h>
 #include <netdb.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,7 +103,6 @@ int alt_retries;
 int retries;
 int sockfd;
 int timeout;
-jmp_buf timerfail;
 in_addr_t alt_server;
 in_addr_t auth_server;
 
@@ -141,6 +139,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	u_int32_t r;
 	struct servent *svp;
 	struct sockaddr_in sin;
+	struct sigaction sa;
 
 	memset(_pwstate, 0, sizeof(_pwstate));
 	pwstate = password ? challenge : _pwstate;
@@ -237,9 +236,10 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	}
 	vector[AUTH_VECTOR_LEN] = '\0';
 
-	signal(SIGALRM, servtimeout);
-	setjmp(timerfail);
-
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;		/* don't restart system calls */
+	(void)sigaction(SIGALRM, &sa, NULL);
+retry:
 	if (timedout) {
 		timedout = 0;
 		if (--retries <= 0) {
@@ -257,7 +257,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 		}
 	}
 
-	while (retries > 0) {
+	if (retries > 0) {
 		rad_request(req_id, userstyle, passwd, auth_port, vector,
 		    pwstate);
 
@@ -295,6 +295,8 @@ raddauth(char *username, char *class, char *style, char *challenge,
 			break;
 
 		default:
+			if (timedout)
+				goto retry;
 			snprintf(_pwstate, sizeof(_pwstate),
 			    "invalid response type %d\n", i);
 			*emsg = _pwstate;
@@ -426,10 +428,12 @@ rad_recv(char *state, char *challenge)
 	salen = sizeof(sin);
 
 	alarm(timeout);
-
 	if ((recvfrom(sockfd, &auth, sizeof(auth), 0,
-	    (struct sockaddr *)&sin, &salen)) < AUTH_HDR_LEN)
+	    (struct sockaddr *)&sin, &salen)) < AUTH_HDR_LEN) {
+		if (timedout)
+			return(-1);
 		errx(1, "bogus auth packet from server");
+	}
 	alarm(0);
 
 	if (sin.sin_addr.s_addr != auth_server)
@@ -539,7 +543,6 @@ servtimeout(int signo)
 {
 
 	timedout = 1;
-	longjmp(timerfail, 1);
 }
 
 /*
