@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.64 2003/05/13 17:45:24 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.65 2003/05/14 01:39:51 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -469,15 +469,17 @@ pf_tag_unref(u_int16_t tag)
 void
 pf_tag_purge(void)
 {
-	struct pf_tagname	*p;
+	struct pf_tagname	*p, *next;
 
-	TAILQ_FOREACH_REVERSE(p, &pf_tags, entries, pf_tagnames)
+	for (p = TAILQ_LAST(&pf_tags, pf_tags); p != NULL; p = next) {
+		next = TAILQ_PREV(p, pf_tags, entries);
 		if (p->ref == 0) {
 			if (p->tag == tagid)
 				tagid--;
 			TAILQ_REMOVE(&pf_tags, p, entries);
 			free(p, M_TEMP);
 		}
+	}
 }
 
 int
