@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.8 2000/02/25 17:23:37 niklas Exp $
-#	$EOM: Makefile,v 1.10 2000/02/20 19:58:44 niklas Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/04/07 22:06:11 niklas Exp $
+#	$EOM: Makefile,v 1.12 2000/03/28 21:22:07 ho Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.

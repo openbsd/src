@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.4 1999/02/26 03:27:31 niklas Exp $
-#	$EOM: Makefile,v 1.6 1999/02/25 15:10:08 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/04/07 22:06:11 niklas Exp $
+#	$EOM: Makefile,v 1.8 2000/03/28 21:22:06 ho Exp $
 
 # Test EC2N:
 
