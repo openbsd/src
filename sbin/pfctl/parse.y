@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.206 2002/11/23 18:27:28 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.207 2002/11/23 18:32:29 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2529,9 +2529,11 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			strlcpy(a->ifname, tqueue->ifname, IFNAMSIZ);
 			strlcpy(a->parent, tqueue->parent, PF_QNAME_SIZE);
 
-			eval_pfqueue(pf, a, bwspec.bw_absolute,
-			    bwspec.bw_percent);
-			pfctl_add_altq(pf, a);
+			if (!eval_pfqueue(pf, a, bwspec.bw_absolute,
+			    bwspec.bw_percent))
+				if(!pfctl_add_altq(pf, a))
+					added++;
+
 			if (pf->opts & PF_OPT_VERBOSE) {
 				print_altq(&pf->paltq->altq, 0);
 				if (nqueues && nqueues->tail) {
@@ -2544,7 +2546,6 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				}
 				printf("\n");
 			}
-			added++;
 			FREE_LIST(struct node_queue, nqueues);
 		}
 	);
