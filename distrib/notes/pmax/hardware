@@ -45,6 +45,12 @@ Supported devices include:
 		on-board DEC "sii" SCSI controller (2100 and 3100)
 		on-board "asc" SCSI controller (5000 series machines)
 		TurboChannel "asc" SCSI controller, 
+
+		NOTE:  If you want to connect a tape to the machine which
+		you plan to use under OpenBSD/pmax make shure that the
+		scsi id of the tape is either 5 or 6 because tape support
+		is hardcoded to those ids in the kernel.
+
 	DEC (LK-201 or compatible) keyboard 
 	DEC ("hockey puck" or compatible) mouse.
 
