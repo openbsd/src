@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.32 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.33 2002/09/10 18:29:43 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -315,7 +315,6 @@ void		pmap_writetext(unsigned char *, int);
 #if defined(SUN4) || defined(SUN4C)
 boolean_t	pmap_clear_modify4_4c(struct vm_page *);
 boolean_t	pmap_clear_reference4_4c(struct vm_page *);
-void		pmap_copy_page4_4c(paddr_t, paddr_t);
 int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 boolean_t	pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
 boolean_t	pmap_is_modified4_4c(struct vm_page *);
@@ -324,7 +323,8 @@ void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_kremove4_4c(vaddr_t, vsize_t);
 void		pmap_page_protect4_4c(struct vm_page *, vm_prot_t);
 void		pmap_protect4_4c(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-void		pmap_zero_page4_4c(paddr_t);
+void		pmap_copy_page4_4c(struct vm_page *, struct vm_page *);
+void		pmap_zero_page4_4c(struct vm_page *);
 void		pmap_changeprot4_4c(pmap_t, vaddr_t, vm_prot_t, int);
 #endif
 
@@ -333,7 +333,6 @@ void		pmap_changeprot4_4c(pmap_t, vaddr_t, vm_prot_t, int);
 #if defined(SUN4M)
 boolean_t	pmap_clear_modify4m(struct vm_page *);
 boolean_t	pmap_clear_reference4m(struct vm_page *);
-void		pmap_copy_page4m(paddr_t, paddr_t);
 int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 boolean_t	pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
 boolean_t	pmap_is_modified4m(struct vm_page *);
@@ -342,7 +341,8 @@ void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_kremove4m(vaddr_t, vsize_t);
 void		pmap_page_protect4m(struct vm_page *, vm_prot_t);
 void		pmap_protect4m(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-void		pmap_zero_page4m(paddr_t);
+void		pmap_copy_page4m(struct vm_page *, struct vm_page *);
+void		pmap_zero_page4m(struct vm_page *);
 void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 #endif /* defined SUN4M */
 
@@ -382,7 +382,6 @@ void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 
 extern boolean_t	(*pmap_clear_modify_p)(struct vm_page *);
 extern boolean_t	(*pmap_clear_reference_p)(struct vm_page *);
-extern void		(*pmap_copy_page_p)(paddr_t, paddr_t);
 extern int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t,
 					     vm_prot_t, int);
 extern boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
@@ -394,7 +393,8 @@ extern void		(*pmap_page_protect_p)(struct vm_page *,
 						    vm_prot_t);
 extern void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t,
 					       vm_prot_t);
-extern void		(*pmap_zero_page_p)(paddr_t);
+extern void		(*pmap_copy_page_p)(struct vm_page *, struct vm_page *);
+extern void		(*pmap_zero_page_p)(struct vm_page *);
 extern void		(*pmap_changeprot_p)(pmap_t, vaddr_t,
 						  vm_prot_t, int);
 

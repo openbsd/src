@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.43 2002/06/11 09:45:16 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.44 2002/09/10 18:29:44 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1043,7 +1043,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		 */
 		pg->flags &= ~PG_CLEAN;
 		if (zeroit)
-			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+			pmap_zero_page(pg);
 	}
 
 	return(pg);
@@ -1360,7 +1360,7 @@ uvm_pageidlezero()
 		 * XXX This will toast the cache unless the pmap_zero_page()
 		 * XXX implementation does uncached access.
 		 */
-		pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+		pmap_zero_page(pg);
 #endif
 		pg->flags |= PG_ZERO;
 

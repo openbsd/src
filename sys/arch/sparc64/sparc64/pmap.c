@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2002/08/20 19:28:55 jason Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2002/09/10 18:29:44 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -174,6 +174,9 @@ static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
 extern struct vm_page *vm_page_alloc1(void);
 extern void vm_page_free1(struct vm_page *);
 
+/* XXX - temporary workaround for pmap_{copy,zero}_page api change */
+void pmap_zero_phys(paddr_t pa);
+void pmap_copy_phys(paddr_t src, paddr_t dst);
 
 #ifdef DEBUG
 #ifdef __STDC__
@@ -487,7 +490,7 @@ pmap_enter_kpage(va, data)
 			prom_printf("pmap_enter_kpage: out of pages\n");
 			panic("pmap_enter_kpage");
 		}
-		pmap_zero_page(newp);
+		pmap_zero_phys(newp);
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
 #endif
@@ -1234,7 +1237,7 @@ remap_data:
 		{
 			paddr_t p;
 			for (p = mp->start; p < mp->start+mp->size; p += NBPG)
-				pmap_zero_page(p);
+				pmap_zero_phys(p);
 		}
 #endif
 		/* 
@@ -1281,7 +1284,7 @@ remap_data:
 
 		do {
 			pmap_get_page(&newp);
-			pmap_zero_page(newp);
+			pmap_zero_phys(newp);
 		} while (!newp); /* Throw away page zero */
 		pmap_kernel()->pm_segs=(int64_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
@@ -1379,7 +1382,7 @@ remap_data:
 			int64_t data;
 
 			pmap_get_page(&pa);
-			pmap_zero_page(pa);
+			pmap_zero_phys(pa);
 			prom_map_phys(pa, NBPG, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				PGSZ_8K,
@@ -1503,7 +1506,7 @@ pmap_init()
 		u_int64_t data;
 
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_zero_page(pa);
+		pmap_zero_page(m);
 		data = TSB_DATA(0 /* global */, 
 			PGSZ_8K,
 			pa,
@@ -1604,7 +1607,7 @@ pmap_growkernel(maxkvaddr)
 				}
 				pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 			}
-			pmap_zero_page((paddr_t)pg);
+			pmap_zero_phys((paddr_t)pg);
 #ifdef DEBUG
 			enter_stats.ptpneeded ++;
 #endif 
@@ -1666,7 +1669,7 @@ pmap_pinit(pm)
 			uvm_wait("pmap_pinit");
 		}
 		pm->pm_physaddr = (paddr_t)VM_PAGE_TO_PHYS(page);
-		pmap_zero_page(pm->pm_physaddr);
+		pmap_zero_phys(pm->pm_physaddr);
 		pm->pm_segs = (int64_t *)(u_long)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
 #ifdef NOTDEF_DEBUG
@@ -1875,6 +1878,22 @@ pmap_collect(pm)
 #endif
 }
 
+void
+pmap_zero_page(struct vm_page *pg)
+{
+
+	pmap_zero_phys(VM_PAGE_TO_PHYS(pg));
+}
+
+void
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
+{
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
+
+	pmap_copy_phys(src, dst);
+}
+
 #if 0
 /*
  * The two following routines are now in locore.s so I can code them in assembly
@@ -2014,7 +2033,7 @@ pmap_kenter_pa(va, pa, prot)
 			}
 			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 		}
-		pmap_zero_page((paddr_t)pg);
+		pmap_zero_phys((paddr_t)pg);
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
 #endif
@@ -2244,7 +2263,7 @@ pmap_enter(pm, va, pa, prot, flags)
 			}
 			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 		} 
-		pmap_zero_page((paddr_t)pg);
+		pmap_zero_phys((paddr_t)pg);
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
 #endif

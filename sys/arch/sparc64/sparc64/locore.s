@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.24 2002/07/31 01:40:17 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.25 2002/09/10 18:29:44 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8052,7 +8052,7 @@ ENTRY(probeset)
 paginuse:
 	.word	0
 	.text
-ENTRY(pmap_zero_page)
+ENTRY(pmap_zero_phys)
 	!!
 	!! If we have 64-bit physical addresses (and we do now)
 	!! we need to move the pointer from %o0:%o1 to %o0
@@ -8342,7 +8342,7 @@ pmap_zero_phys:
  * We also need to blast the D$ and flush like
  * pmap_zero_page.
  */
-ENTRY(pmap_copy_page)
+ENTRY(pmap_copy_phys)
 	!!
 	!! If we have 64-bit physical addresses (and we do now)
 	!! we need to move the pointer from %o0:%o1 to %o0 and

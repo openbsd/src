@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.14 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.15 2002/09/10 18:29:44 art Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
@@ -282,7 +282,7 @@ uvm_pagezero(pg)
 {
 
 	pg->flags &= ~PG_CLEAN;
-	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+	pmap_zero_page(pg);
 }
 
 /*
@@ -298,7 +298,7 @@ uvm_pagecopy(src, dst)
 {
 
 	dst->flags &= ~PG_CLEAN;
-	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
+	pmap_copy_page(src, dst);
 }
 
 /*

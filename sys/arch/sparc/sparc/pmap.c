@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.128 2002/09/06 22:46:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.129 2002/09/10 18:29:43 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -511,7 +511,6 @@ void	pv_unlink4_4c(struct pvlist *, struct pmap *, vaddr_t);
 /* from pmap.h: */
 boolean_t	(*pmap_clear_modify_p)(struct vm_page *);
 boolean_t	(*pmap_clear_reference_p)(struct vm_page *);
-void		(*pmap_copy_page_p)(paddr_t, paddr_t);
 int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
 boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 boolean_t	(*pmap_is_modified_p)(struct vm_page *);
@@ -520,7 +519,8 @@ void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
 void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
 void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-void            (*pmap_zero_page_p)(paddr_t);
+void		(*pmap_copy_page_p)(struct vm_page *, struct vm_page *);
+void            (*pmap_zero_page_p)(struct vm_page *);
 void	       	(*pmap_changeprot_p)(pmap_t, vaddr_t, vm_prot_t, int);
 /* local: */
 void 		(*pmap_rmk_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
@@ -5920,9 +5920,9 @@ pmap_is_referenced4m(pg)
 #if defined(SUN4) || defined(SUN4C)
 
 void
-pmap_zero_page4_4c(pa)
-	paddr_t pa;
+pmap_zero_page4_4c(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	caddr_t va;
 	int pte;
 	struct pvlist *pv;
@@ -5953,9 +5953,10 @@ pmap_zero_page4_4c(pa)
  * the processor.
  */
 void
-pmap_copy_page4_4c(src, dst)
-	paddr_t src, dst;
+pmap_copy_page4_4c(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	caddr_t sva, dva;
 	int spte, dpte;
 	struct pvlist *pv;
@@ -5991,9 +5992,9 @@ pmap_copy_page4_4c(src, dst)
  * XXX	might be faster to use destination's context and allow cache to fill?
  */
 void
-pmap_zero_page4m(pa)
-	paddr_t pa;
+pmap_zero_page4m(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int pte;
 	struct pvlist *pv;
 	static int *ptep;
@@ -6036,9 +6037,10 @@ pmap_zero_page4m(pa)
  * the processor.
  */
 void
-pmap_copy_page4m(src, dst)
-	paddr_t src, dst;
+pmap_copy_page4m(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	int spte, dpte;
 	struct pvlist *pv;
 	static int *sptep, *dptep;

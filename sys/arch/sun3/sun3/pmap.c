@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2002/09/10 18:29:44 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -3127,9 +3127,10 @@ pmap_resident_pages(pmap)
  *	time.
  */
 void
-pmap_copy_page(src, dst)
-	vm_offset_t	src, dst;
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	int pte;
 	int s;
 
@@ -3168,9 +3169,9 @@ pmap_copy_page(src, dst)
  *	at a time.
  */
 void
-pmap_zero_page(pa)
-	vm_offset_t	pa;
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int pte;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.81 2002/09/05 18:41:19 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.82 2002/09/10 18:29:43 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1178,9 +1178,10 @@ pmap_flush_page(paddr_t pa, int purge)
 }
 
 void
-pmap_zero_page(pa)
-	paddr_t pa;
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_zero_page(%x)\n", pa));
 
 	pmap_flush_page(pa, 1);
@@ -1189,10 +1190,10 @@ pmap_zero_page(pa)
 }
 
 void
-pmap_copy_page(spa, dpa)
-	paddr_t spa;
-	paddr_t dpa;
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t spa = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dpa = VM_PAGE_TO_PHYS(dstpg);
 	DPRINTF(PDB_FOLLOW|PDB_PHYS, ("pmap_copy_page(%x, %x)\n", spa, dpa));
 
 	pmap_flush_page(spa, 0);

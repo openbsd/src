@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2002/07/24 02:19:28 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.74 2002/09/10 18:29:43 art Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -989,8 +989,9 @@ pmap_collect(pmap_t pm)
  * Fill the given physical page with zeros.
  */
 void
-pmap_zero_page(paddr_t pa)
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #ifdef USE_DCBZ
 	int i;
 	paddr_t addr = zero_page;
@@ -1015,8 +1016,10 @@ pmap_zero_page(paddr_t pa)
  * copy the given physical page with zeros.
  */
 void
-pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t srcpa = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
 	/* simple_lock(&pmap_copy_page_lock); */
 
 	pmap_kenter_pa(copy_src_page, srcpa, VM_PROT_READ);

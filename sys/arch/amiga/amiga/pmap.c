@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2002/05/28 14:29:05 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2002/09/10 18:29:43 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -1665,9 +1665,9 @@ pmap_deactivate(p)
  *	at a time.
  */
 void
-pmap_zero_page(phys)
-	paddr_t	phys;
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t	phys = VM_PAGE_TO_PHYS(pg);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
@@ -1683,9 +1683,10 @@ pmap_zero_page(phys)
  *	time.
  */
 void
-pmap_copy_page(src, dst)
-	paddr_t	src, dst;
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);

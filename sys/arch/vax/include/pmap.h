@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.16 2002/03/14 01:26:48 millert Exp $     */
+/*      $OpenBSD: pmap.h,v 1.17 2002/09/10 18:29:44 art Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -132,14 +132,19 @@ extern	struct pmap kernel_pmap_store;
 #define pmap_reference(pmap)		(pmap)->ref_count++
 
 /* These can be done as efficient inline macros */
-#define pmap_copy_page(src, dst)				\
+#define pmap_copy_page(srcpg, dstpg) do {				\
+	paddr_t __src = VM_PAGE_TO_PHYS(srcpg);				\
+	paddr_t __dst = VM_PAGE_TO_PHYS(dstpg);				\
 	__asm__("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
-	    movc3 $4096,(r0),(r1)"				\
-	    :: "r"(src),"r"(dst):"r0","r1","r2","r3","r4","r5");
+	    movc3 $4096,(r0),(r1)"					\
+	    :: "r"(__src),"r"(__dst):"r0","r1","r2","r3","r4","r5");	\
+} while (0)
 
-#define pmap_zero_page(phys)					\
-	__asm__("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$4096,(r0)" \
-	    :: "r"(phys): "r0","r1","r2","r3","r4","r5");
+#define pmap_zero_page(pg) do {						\
+	paddr_t __pa = VM_PAGE_TO_PHYS(pg);				\
+	__asm__("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$4096,(r0)"	\
+	    :: "r"(__pa): "r0","r1","r2","r3","r4","r5");		\
+} while (0)
 
 /* Prototypes */
 void	pmap_bootstrap(void);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.35 2002/07/24 00:33:49 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.36 2002/09/10 18:29:42 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2355,8 +2355,9 @@ pmap_deactivate(struct proc *p)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_zero_page(paddr_t phys)
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 	u_long *p0, *p1, *pend;
 
 #ifdef DEBUG
@@ -2410,8 +2411,10 @@ pmap_zero_page(paddr_t phys)
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_copy_page(paddr_t src, paddr_t dst)
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	caddr_t s, d;
 
 #ifdef DEBUG
@@ -3722,11 +3725,11 @@ pmap_ptpage_free(pmap_t pmap, pt_entry_t *pte, pt_entry_t **ptp)
 	 * zero it, and return the KSEG address of the page.
 	 */
 	if (ptp != NULL) {
-		pmap_zero_page(ptpa);
+		pmap_zero_page(PHYS_TO_VM_PAGE(ptpa));
 		*ptp = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(ptpa);
 	} else {
 #ifdef DEBUG
-		pmap_zero_page(ptpa);
+		pmap_zero_page(PHYS_TO_VM_PAGE(ptpa));
 #endif
 		pmap_physpage_free(ptpa);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2002/05/07 00:54:37 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2002/09/10 18:29:43 art Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1228,9 +1228,9 @@ pmap_init(void)
  * mappings effective, and zeros all the bits.
  */
 void
-pmap_zero_page(phys)
-	paddr_t phys;
+pmap_zero_page(struct vm_page *pg)
 {
+	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 	vaddr_t		srcva;
 	int		spl;
 	int		cpu;
@@ -2751,9 +2751,10 @@ pmap_deactivate(p)
  * new mappings effective, and performs the copy.
  */
 void
-pmap_copy_page(src, dst)
-	paddr_t src, dst;
+pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
+	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	vaddr_t		dstva, srcva;
 	int		spl;
 	pt_entry_t	template, *dstpte, *srcpte;
