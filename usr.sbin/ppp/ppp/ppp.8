@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.45 1999/06/02 00:46:55 brian Exp $
+.\" $Id: ppp.8,v 1.46 1999/06/05 04:16:05 aaron Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Os
@@ -191,22 +191,21 @@ with permissions
 .Dv 04554 .
 By default, 
 .Nm
-will not run if the invoking user id is not zero.  This may be overridden
+will not run if the invoking user ID is not 0.  This may be overridden
 by using the
 .Dq allow users
 command in
 .Pa /etc/ppp/ppp.conf .
 When running as a normal user,
 .Nm
-switches to user id 0 in order to alter the system routing table, set up
+switches to user ID 0 in order to alter the system routing table, set up
 system lock files and read the ppp configuration files.  All
 external commands (executed via the "shell" or "!bg" commands) are executed
-as the user id that invoked
+as the user ID that invoked
 .Nm ppp .
 Refer to the
 .Sq ID0
-logging facility if you're interested in what exactly is done as user id
-zero.
+logging facility if you're interested in what exactly is done as user ID 0.
 .Sh GETTING STARTED
 The following command line switches are understood by
 .Nm ppp :
@@ -1941,7 +1940,7 @@ Log debug information.
 .It Li HDLC
 Dump HDLC packet in hex.
 .It Li ID0
-Log all function calls specifically made as user id 0.
+Log all function calls specifically made as user ID 0.
 .It Li IPCP
 Generate an IPCP packet trace.
 .It Li LCP
@@ -2050,7 +2049,7 @@ protocol.  Refer to RFC 1990 for specification details.
 The peer is identified using a combination of his
 .Dq endpoint discriminator
 and his
-.Dq authentication id .
+.Dq authentication ID .
 Either or both of these may be specified.  It is recommended that
 at least one is specified, otherwise there is no way of ensuring that
 all links are actually connected to the same peer program, and some
@@ -2712,13 +2711,13 @@ in
 .Fl background
 mode.
 .Pp
-User id 0 is immune to these commands.
+User ID 0 is immune to these commands.
 .Bl -tag -width XX
 .It allow user Ns Xo
 .Op s
 .Ar logname Ns No ...
 .Xc
-By default, only user id 0 is allowed access to
+By default, only user ID 0 is allowed access to
 .Nm ppp .
 If this command is used, all of the listed users are allowed access to
 the section in which the
@@ -2914,7 +2913,7 @@ This is replaced with the IP number assigned to the local interface.
 .It Li PEER_ENDDISC
 This is replaced with the value of the peers endpoint discriminator.
 .It Li PROCESSID
-This is replaced with the current process id.
+This is replaced with the current process ID.
 .It Li USER
 This is replaced with the username that has been authenticated with PAP or
 CHAP.  Normally, this variable is assigned only in -direct mode.  This value
@@ -3304,7 +3303,7 @@ to be sent with the CHAP response.
 .It
 The
 .Dq authkey ,
-which is encrypted with the challenge and request id, the answer being sent
+which is encrypted with the challenge and request ID, the answer being sent
 in the CHAP response packet.
 .El
 .Pp
@@ -3314,7 +3313,7 @@ in this manner, it's expected that the host challenge is a series of ascii
 digits or characters.  An encryption device or Secure ID card is usually
 required to calculate the secret appropriate for the given challenge.
 .It set authname Ar id
-This sets the authentication id used in client mode PAP or CHAP negotiation.
+This sets the authentication ID used in client mode PAP or CHAP negotiation.
 .Pp
 If used in
 .Fl direct
@@ -4514,7 +4513,7 @@ tty port locking file.  Refer to
 .Xr uucplock 3
 for further details.
 .It Pa /var/run/tunN.pid
-The process id (pid) of the
+The process ID (PID) of the
 .Nm
 program connected to the tunN device, where
 .Sq N

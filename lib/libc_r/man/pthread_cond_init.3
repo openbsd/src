@@ -42,11 +42,13 @@ function creates a new condition variable, with attributes specified with
 .Fa attr .
 If
 .Fa attr
-is NULL the default attributes are used.
+is
+.Dv NULL
+the default attributes are used.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_init
-function will return zero and put the new condition variable id into
+function will return zero and put the new condition variable ID into
 .Fa cond ,
 otherwise an error number will be returned to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.7 1999/05/15 02:17:55 aaron Exp $
+.\"	$OpenBSD: named.8,v 1.8 1999/06/05 04:16:05 aaron Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -125,9 +125,9 @@ of the boot file directive ``options no-recursion''.
 .TP
 .B \-u
 Specifies the user the server should run as after it initializes.  The value
-specified may be either a username or a numeric user id.  If the
+specified may be either a username or a numeric user ID.  If the
 .B \-g
-flag is not specified, then the group id used will be the primary group of
+flag is not specified, then the group ID used will be the primary group of
 the user specified (initgroups() is called, so all of the user's groups will
 be available to the server).
 .br
@@ -139,7 +139,7 @@ on is a reserved port that only the superuser may bind to.
 .TP
 .B \-g
 Specifies the group the server should run as after it initializes.  The value
-specified may be either a groupname or a numeric group id.
+specified may be either a groupname or a numeric group ID.
 .TP
 .B \-t
 Specifies the directory the server should chroot() into as soon as it is

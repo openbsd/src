@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.3 1996/05/26 01:04:36 deraadt Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.4 1999/06/05 04:16:08 aaron Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.3 1996/05/20 16:58:03 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
-.Fa kd.
+.Fa kd .
 The
 .Fa op
 and
@@ -74,7 +74,7 @@ describes the filtering predicate as follows:
 .It Sy KERN_PROC_ALL
 all processes
 .It Sy KERN_PROC_PID
-processes with process id 
+processes with process ID
 .Fa arg
 .It Sy KERN_PROC_PGRP
 processes with process group
@@ -86,10 +86,10 @@ processes with session
 processes with tty
 .Fa arg
 .It Sy KERN_PROC_UID
-processes with effective user id
+processes with effective user ID
 .Fa arg
 .It Sy KERN_PROC_RUID
-processes with real user id
+processes with real user ID
 .Fa arg
 .El
 .Pp
@@ -111,7 +111,9 @@ Most likely, these arguments correspond to the values passed to
 on process creation.  This information is, however,
 deliberately under control of the process itself.
 Note that the original command name can be found, unaltered,
-in the p_comm field of the process structure returned by
+in the
+.Fa p_comm
+field of the process structure returned by
 .Fn kvm_getprocs .
 .Pp
 The 

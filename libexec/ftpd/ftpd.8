@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.19 1999/05/28 15:54:31 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.20 1999/06/05 04:16:06 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -369,7 +369,7 @@ Log file for anonymous transfers.
 .Sh BUGS
 The server must run as the super-user
 to create sockets with privileged port numbers.  It maintains
-an effective user id of the logged in user, reverting to
+an effective user ID of the logged in user, reverting to
 the super-user only when binding addresses to sockets.  The
 possible security holes have been extensively
 scrutinized, but are possibly incomplete.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modload.8,v 1.11 1999/06/04 02:45:18 aaron Exp $
+.\"	$OpenBSD: modload.8,v 1.12 1999/06/05 04:16:05 aaron Exp $
 .\"	$NetBSD: modload.8,v 1.5 1995/03/18 14:56:43 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -80,7 +80,7 @@ The default module entry point name is
 .It Fl p Ar postinstall
 Specify the name of a shell script or program that will
 be executed if the module is successfully loaded. It
-is always passed the module id (in decimal) and module
+is always passed the module ID (in decimal) and module
 type (in hexadecimal) as the first two arguments.
 For loadable drivers, the third argument is
 the block or character major device number.

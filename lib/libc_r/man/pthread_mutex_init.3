@@ -42,11 +42,13 @@ function creates a new mutex, with attributes specified with
 .Fa attr .
 If
 .Fa attr
-is NULL the default attributes are used.
+is
+.Dv NULL
+the default attributes are used.
 .Sh RETURN VALUES
 If successful,
 .Fn pthread_mutex_init
-will return zero and put the new mutex id into
+will return zero and put the new mutex ID into
 .Fa mutex ,
 otherwise an error number will be returned to indicate the error.
 .Sh ERRORS

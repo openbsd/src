@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.3 1999/05/16 19:56:35 alex Exp $
+.\"	$OpenBSD: raid.4,v 1.4 1999/06/05 04:16:07 aaron Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ or a
 .Xr newfs 8
 filesystem integrity and parity integrity can be ensured.  It bears
 repeating again that parity recomputation is 
-.Ar required
+.Em required
 before any filesystems are created or used on the RAID device.  If the
 parity is not correct, then missing data cannot be correctly recovered.
 .Pp
@@ -149,12 +149,12 @@ device can be constructed out of a number of RAID 5 devices (which, in turn,
 may be constructed out of the physical disks, or of other RAID devices).
 .Pp
 At the time of this writing, it is 
-.Ar imperative
+.Em imperative
 that drives be 
 .Sq nailed down
 at their respective addresses (i.e. not left free-floating, where a
 drive with SCSI ID of 4 can end up as /dev/sd0c).  Consider a system 
-with three SCSI drives at SCSI ID's 4, 5, and 6, and which map to 
+with three SCSI drives at SCSI IDs 4, 5, and 6, and which map to 
 components /dev/sd0e, /dev/sd1e, and /dev/sd2e.  If the drive with
 SCSI ID 5 fails,
 and the system reboots, the old /dev/sd2e will show up as /dev/sd1e.
@@ -201,7 +201,7 @@ device is found in
 .Xr raidctl 8 .
 It is highly recommended that the steps to reconstruct, copyback, and
 re-compute parity are well understood by the system administrator(s)
-.Ar before
+.Em before
 a component failure.  Doing the wrong thing when a component fails may
 result in data loss.
 .Pp
@@ -212,11 +212,11 @@ components of a RAID 4 or 5 system, or the loss of a single component
 of a RAID 0 system, will result in the entire filesystems on that RAID
 device being lost.
 RAID is 
-.Ar NOT
+.Em not
 a substitute for good backup practices.
 .Pp
 Recomputation of parity 
-.Ar MUST
+.Em must
 be performed whenever there is a chance that it may have been
 compromised.  This includes after system crashes, or before a RAID
 device has been used for the first time.  Failure to keep parity

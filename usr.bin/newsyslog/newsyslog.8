@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.13 1999/06/05 01:21:35 aaron Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.14 1999/06/05 04:16:05 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -156,8 +156,9 @@ deserves what they get if they mark the
 .Xr sendmail 8
 log file as monitored.
 .It pid file (optional)
-Specify a file containing the id of a process to send a HUP signal to
-instead of
+Specify a file containing the PID of a process to send a
+.Dv SIGHUP
+signal to instead of
 .Pa /var/run/syslog.pid .
 .El
 .Pp
@@ -186,7 +187,9 @@ Removes the restriction that
 .Nm
 must be running as root.  Of course,
 .Nm
-will not be able to send a HUP signal to
+will not be able to send a
+.Dv SIGHUP
+signal to
 .Xr syslogd 8 ,
 so this option should only be used in debugging.
 .It Fl m

@@ -21,7 +21,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" 
-.\" $Id: uucplock.3,v 1.2 1998/06/08 20:28:29 brian Exp $
+.\" $Id: uucplock.3,v 1.3 1999/06/05 04:16:08 aaron Exp $
 .\" "
 .Dd March 30, 1997
 .Os
@@ -59,9 +59,9 @@ If the file already exists, it is expected to contain the process
 id of the locking program.
 .Pp
 If the file does not already exist, or the owning process given by
-the process id found in the lock file is no longer running,
+the process ID found in the lock file is no longer running,
 .Fn uu_lock
-will write its own process id into the file and return success.
+will write its own process ID into the file and return success.
 .Pp
 .Fn uu_lock_txfr
 transfers lock ownership to another process.
@@ -109,7 +109,7 @@ Can't create temporary lock file via
 .Xr creat 2 .
 .Pp
 .Dv UU_LOCK_WRITE_ERR:
-The current process id could not be written to the lock file via a call to
+The current process ID could not be written to the lock file via a call to
 .Xr write 2 .
 .Pp
 .Dv UU_LOCK_LINK_ERR:
@@ -147,7 +147,7 @@ lock.
 The current process does not already own a lock on the specified device.
 .Pp
 .Dv UU_LOCK_WRITE_ERR:
-The new process id could not be written to the lock file via a call to
+The new process ID could not be written to the lock file via a call to
 .Xr write 2 .
 .Sh ERRORS
 If
@@ -171,7 +171,7 @@ for further details.
 .Xr write 2
 .Sh BUGS
 It is possible that a stale lock is not recognised as such if a new
-processes is assigned the same processes id as the program that left
+process is assigned the same process ID as the program that left
 the stale lock.
 .Pp
 The calling process must have write permissions to the

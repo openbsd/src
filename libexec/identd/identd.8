@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.10 1999/05/28 23:00:08 aaron Exp $
+.\"	$OpenBSD: identd.8,v 1.11 1999/06/05 04:16:06 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -105,14 +105,14 @@ so that the administrator can later discover who the real user was.
 Specifies an idle timeout in seconds where a daemon running in
 "wait" mode will timeout and exit. The default is no timeout.
 .It Fl u Ar uid
-Specify a user id number or user name which the
+Specify a user ID number or user name which the
 .Nm identd
 server should
 switch to after binding itself to the
 .Tn TCP/IP
 port if running as a stand alone daemon.
 .It Fl g Ar gid
-Specify a group id number or group name which the
+Specify a group ID number or group name which the
 .Nm
 server should
 switch to after binding itself to the
@@ -158,7 +158,7 @@ in upper case characters.
 .It Fl n
 Always return uid numbers instead of usernames.
 .It Fl N
-When replying with a user name or id, first 
+When replying with a user name or ID, first 
 check for a file
 .Pa .noident
 in the user's home directory. If this file is accessible, return 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.32 1999/05/25 02:24:51 provos Exp $
+.\"	$OpenBSD: options.4,v 1.33 1999/06/05 04:16:06 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -131,7 +131,7 @@ available on the alpha architecture.
 See
 .Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
-Enable compatibility with a.out executables that lack a machine id.
+Enable compatibility with a.out executables that lack a machine ID.
 On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 and other m68k
 architectures this permits certain old
@@ -337,7 +337,7 @@ files in the procfs namespace.  See
 .Xr mount_procfs 8
 for details.
 .It Cd option UMAPFS
-Includes a loopback file system in which user and group ids may be
+Includes a loopback file system in which user and group IDs may be
 remapped -- this can be useful when mounting alien file systems with
 different uids and gids than the local system (eg, remote NFS).  See
 .Xr mount_umap 8
@@ -442,7 +442,7 @@ for details on the implications of this.  The kernel secure level may
 be manipulated by the superuser by altering the
 .Em kern.securelevel
 sysctl variable. (It should be noted that the secure level may only be
-lowered by a call from process id 1, i.e.
+lowered by a call from process ID 1, i.e.,
 .Em init . )
 See also
 .Xr sysctl 8
