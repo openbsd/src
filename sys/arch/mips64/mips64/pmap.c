@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2004/08/11 10:21:08 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2004/08/15 18:35:12 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -381,7 +381,7 @@ extern struct user *proc0paddr;
 		pv->pv_flags = PV_CACHED;
 
 		pmap->pm_segtab = stp = (struct segtab *)
-			PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
+			(long)PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 
 		i = NBPG / sizeof(struct segtab);
 		s = splimp();
@@ -1051,7 +1051,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 		pv->pv_flags = PV_CACHED;
 
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
-			PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
+			(long)PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 	}
 	pte += (va >> PGSHIFT) & (NPTEPG - 1);
 
@@ -1202,8 +1202,8 @@ pmap_extract(pmap, va, pa)
 	}
 
 	if (!pmap->pm_segtab) {
-		if (va >= KSEG0_BASE && va < (KSEG0_BASE + KSEG_SIZE)) {
-			*pa = KSEG0_TO_PHYS(va);
+		if (va >= (long)KSEG0_BASE && va < (long)(KSEG0_BASE + KSEG_SIZE)) {
+			*pa = (long)KSEG0_TO_PHYS(va);
 		}
 		else {
 #ifdef DIAGNOSTIC
@@ -1357,8 +1357,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_copy_page(%x, %x)\n", src, dst);
 	}
-	s = (int *)PHYS_TO_KSEG0(src);
-	d = (int *)PHYS_TO_KSEG0(dst);
+	s = (int *)(long)PHYS_TO_KSEG0(src);
+	d = (int *)(long)PHYS_TO_KSEG0(dst);
 
 	pv = pa_to_pvh(src);
 	if (pv->pv_flags & PV_CACHED &&
@@ -1588,7 +1588,7 @@ pmap_pv_page_alloc(u_long size, int flags, int mtype)
 	paddr_t pg;
 
 	if (pmap_physpage_alloc(&pg))
-		return ((void *) PHYS_TO_KSEG0(pg));
+		return ((void *)(long)PHYS_TO_KSEG0(pg));
 	return (NULL);
 }
 
