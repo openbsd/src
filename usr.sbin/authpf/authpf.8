@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.8 2002/04/05 20:35:52 deraadt Exp $
+.\" $OpenBSD: authpf.8,v 1.9 2002/04/06 17:34:14 beck Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -115,12 +115,7 @@ The
 .Pa authpf.rules
 file must exist in one of the above locations for
 .Nm
-to run. Additionally, all directories on the path to the 
-.Pa authpf.rules 
-file as well as the file itself must be owned by root
-and be writable only to root or
-.Nm 
-will not run.
+to run.
 .Pp
 Translation rules are loaded from the file
 .Pa /etc/authpf/users/$USER/authpf.nat .
@@ -129,13 +124,7 @@ If this file does not exist the file
 is used.
 The use of translation rules in an
 .Pa authpf.nat
-file is optional, but if an
-.Pa authpf.nat
-file exists in either of the above locations, all directories on the path,
-as well as the file itself must be 
-owned by root and be writable only to root or
-.Nm
-will not run
+file is optional.
 .Sh CONFIGURATION
 Options are controlled by the
 .Pa /etc/authpf/authpf.conf
