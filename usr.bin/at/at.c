@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.32 2003/01/02 15:48:40 mpech Exp $	*/
+/*	$OpenBSD: at.c,v 1.33 2003/02/17 21:47:19 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
@@ -73,7 +74,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.32 2003/01/02 15:48:40 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.33 2003/02/17 21:47:19 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
