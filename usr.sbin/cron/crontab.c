@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.7 1996/12/25 01:56:14 deraadt Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.8 1996/12/25 19:08:09 mickey Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -322,7 +322,6 @@ edit_cmd() {
 	(void) sprintf(Filename, "/tmp/crontab.XXXXXXXXXX");
 	if ((t = mkstemp(Filename)) == -1) {
 		perror(Filename);
-		(void) umask(um);
 		goto fatal;
 	}
 #ifdef HAS_FCHOWN
