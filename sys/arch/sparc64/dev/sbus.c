@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.9 2002/01/10 00:06:17 nordin Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.10 2002/02/05 18:34:39 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -122,6 +122,8 @@
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -513,10 +515,11 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = sc->sc_range[i].poffset + offset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr, flags, hp));
+		*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
+		    VM_PROT_READ|VM_PROT_WRITE, flags);
 	}
 
-		return (-1);
+	return (*hp == -1 ? -1 : 0);
 }
 
 bus_addr_t

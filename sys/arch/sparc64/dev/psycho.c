@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.13 2002/01/31 18:27:26 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.14 2002/02/05 18:34:39 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -93,8 +93,7 @@ void psycho_iommu_init __P((struct psycho_softc *, int));
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
-int psycho_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-    int, bus_space_handle_t *));
+paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
     bus_size_t, int, vaddr_t, bus_space_handle_t *));
 void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
@@ -906,13 +905,13 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-int
-psycho_bus_mmap(t, btype, paddr, flags, hp)
+paddr_t
+psycho_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	bus_addr_t offset = paddr;
 	struct psycho_pbm *pp = t->cookie;
@@ -921,7 +920,8 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 
 	ss = psycho_get_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: type %d flags %d pa %qx\n", btype, flags, (unsigned long long)paddr));
+	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %d flags %d pa %qx\n",
+	    prot, flags, (unsigned long long)paddr));
 
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
@@ -931,10 +931,11 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr space %lx offset %lx paddr %qx\n",
+		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr "
+		    "space %lx offset %lx paddr %qx\n",
 		    (long)ss, (long)offset,
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr, flags, hp));
+		return (bus_space_mmap(sc->sc_bustag, paddr, off, prot, flags));
 	}
 
 	return (-1);

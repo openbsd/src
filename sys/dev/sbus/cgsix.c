@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.5 2002/01/06 00:49:41 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.6 2002/02/05 18:34:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -94,7 +94,6 @@ struct cgsix_softc {
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
-	bus_type_t sc_btype;
 	bus_space_handle_t sc_bt_regs;
 	bus_space_handle_t sc_fhc_regs;
 	bus_space_handle_t sc_thc_regs;
@@ -208,7 +207,6 @@ cgsixattach(parent, self, aux)
 	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	if (sa->sa_nreg != 1) {
@@ -473,15 +471,10 @@ cgsix_mmap(v, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size :
 		    sc->sc_linebytes * sc->sc_height;
-		if (u < sz) {
-			bus_space_handle_t bh;
-
-			if (bus_space_mmap(sc->sc_bustag, sc->sc_btype,
-			    sc->sc_paddr + u + mo->mo_physoff,
-			    BUS_SPACE_MAP_LINEAR, &bh))
-				return (-1);
-			return ((paddr_t)bh);
-		}
+		if (u < sz)
+			return (bus_space_mmap(sc->sc_bustag,
+			    sc->sc_paddr, u + mo->mo_physoff,
+			    prot, BUS_SPACE_MAP_LINEAR));
 	}
 
 	return (-1);

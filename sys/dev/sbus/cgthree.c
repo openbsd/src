@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.5 2002/01/06 00:49:41 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.6 2002/02/05 18:34:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -85,7 +85,6 @@ struct cgthree_softc {
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
-	bus_type_t sc_btype;
 	bus_space_handle_t sc_ctrl_regs;
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
@@ -182,7 +181,6 @@ cgthreeattach(parent, self, aux)
 	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	if (sa->sa_nreg != 1) {
@@ -401,7 +399,6 @@ cgthree_mmap(v, offset, prot)
 	int prot;
 {
 	struct cgthree_softc *sc = v;
-	bus_space_handle_t bh;
 
 	if (offset & PGOFSET)
 		return (-1);
@@ -417,12 +414,10 @@ cgthree_mmap(v, offset, prot)
 	if (offset >= sc->sc_linebytes * sc->sc_height)
 		return (-1);
 
-	if (bus_space_mmap(sc->sc_bustag, sc->sc_btype,
-	    sc->sc_paddr + CGTHREE_VID_OFFSET + offset,
-	    BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
+	return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+	    CGTHREE_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
 
-	return ((paddr_t)bh);
+	return (-1);
 }
 
 static int

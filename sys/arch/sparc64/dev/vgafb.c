@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.3 2002/01/03 16:26:27 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.4 2002/02/05 18:34:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -61,6 +61,7 @@ struct vgafb_softc {
 	int sc_node, sc_ofhandle;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
+	bus_addr_t sc_paddr;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
 	int sc_console;
@@ -164,7 +165,6 @@ vgafbattach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	bus_size_t memsize;
 	long defattr;
-	bus_addr_t membase;
 
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 
@@ -187,12 +187,12 @@ vgafbattach(parent, self, aux)
 	sc->sc_console = vgafb_is_console(sc->sc_node);
 
 	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x10,
-	    &membase, &memsize, NULL)) {
+	    &sc->sc_paddr, &memsize, NULL)) {
 		printf(": can't find mem space\n");
 		goto fail;
 	}
 	if (bus_space_map2(pa->pa_memt, SBUS_BUS_SPACE,
-	    membase, memsize, 0, NULL, &sc->sc_bh)) {
+	    sc->sc_paddr, memsize, 0, NULL, &sc->sc_bh)) {
 		printf(": can't map mem space\n");
 		goto fail;
 	}
@@ -406,17 +406,21 @@ vgafb_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 paddr_t
-vgafb_mmap(v, offset, prot)
+vgafb_mmap(v, off, prot)
 	void *v;
-	off_t offset;
+	off_t off;
 	int prot;
 {
-#if 0
 	struct vgafb_softc *sc = v;
-#endif
 
-	if (offset & PGOFSET)
+	if (off & PGOFSET)
 		return (-1);
+
+	if (off >= 0 && off < 0x800000) {
+		return (bus_space_mmap(sc->sc_bt, sc->sc_paddr, off, prot,
+		    BUS_SPACE_MAP_LINEAR));
+	}
+
 	return (-1);
 }
 

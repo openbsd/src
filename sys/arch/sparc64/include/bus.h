@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.7 2001/09/26 21:30:27 jason Exp $	*/
-/*	$NetBSD: bus.h,v 1.28 2001/07/19 15:32:19 thorpej Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2002/02/05 18:34:39 jason Exp $	*/
+/*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,11 @@ typedef enum bus_type	bus_type_t;
 typedef u_int64_t	bus_addr_t;
 typedef u_int64_t	bus_size_t;
 
+/* For buses which have an iospace. */
+#define	BUS_ADDR_IOSPACE(x)	((x)>>32)
+#define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
+#define	BUS_ADDR(io, pa)	(((io)<<32)|(pa))
+
 /*
  * Access methods for bus resources and address space.
  */
@@ -126,47 +131,35 @@ struct sparc_bus_space_tag {
 	bus_space_tag_t	parent;
 	int		type;
 
-	int	(*sparc_bus_map) __P((
-				bus_space_tag_t,
-				bus_type_t,
-				bus_addr_t,
-				bus_size_t,
-				int,			/*flags*/
-				vaddr_t,		/*preferred vaddr*/
-				bus_space_handle_t *));
-	int	(*sparc_bus_unmap) __P((
-				bus_space_tag_t,
-				bus_space_handle_t,
-				bus_size_t));
-	int	(*sparc_bus_subregion) __P((
-				bus_space_tag_t,
-				bus_space_handle_t,
-				bus_size_t,		/*offset*/
-				bus_size_t,		/*size*/
-				bus_space_handle_t *));
+	int     (*sparc_bus_alloc) __P((bus_space_tag_t, 
+		bus_addr_t, bus_addr_t,
+		bus_size_t, bus_size_t, bus_size_t, 
+		int, bus_addr_t *, bus_space_handle_t *));
 
-	void	(*sparc_bus_barrier) __P((
-				bus_space_tag_t,
-				bus_space_handle_t,
-				bus_size_t,		/*offset*/
-				bus_size_t,		/*size*/
-				int));			/*flags*/
+	void	(*sparc_bus_free) __P((bus_space_tag_t, 
+		bus_space_handle_t, bus_size_t));
 
-	int	(*sparc_bus_mmap) __P((
-				bus_space_tag_t,
-				bus_type_t,		/**/
-				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+	int	(*sparc_bus_map) __P((bus_space_tag_t,
+		bus_type_t, bus_addr_t,	bus_size_t,
+		int, vaddr_t, bus_space_handle_t *));
 
-	void	*(*sparc_intr_establish) __P((
-				bus_space_tag_t,
-				int,			/*bus-specific intr*/
-				int,			/*device class level,
-							  see machine/intr.h*/
-				int,			/*flags*/
-				int (*) __P((void *)),	/*handler*/
-				void *));		/*handler arg*/
+	int	(*sparc_bus_unmap) __P((bus_space_tag_t,
+		bus_space_handle_t, bus_size_t));
+
+	int	(*sparc_bus_subregion) __P((bus_space_tag_t,
+		bus_space_handle_t, bus_size_t,
+		bus_size_t, bus_space_handle_t *));
+
+	void	(*sparc_bus_barrier) __P((bus_space_tag_t,
+		bus_space_handle_t, bus_size_t,
+		bus_size_t, int));
+
+	paddr_t	(*sparc_bus_mmap) __P((bus_space_tag_t,
+		bus_addr_t, off_t, int, int));
+
+	void	*(*sparc_intr_establish) __P((bus_space_tag_t,
+		int, int, int,
+		int (*) __P((void *)), void *));
 
 };
 
@@ -190,6 +183,20 @@ struct sparc_bus_space_tag {
 /*
  * Bus space function prototypes.
  */
+static int	bus_space_alloc __P((
+				bus_space_tag_t,
+				bus_addr_t,		/* reg start */
+				bus_addr_t,		/* reg end */
+				bus_size_t,		/* size */
+				bus_size_t,		/* alignment */
+				bus_size_t,		/* boundary */
+				int,			/* flags */
+				bus_addr_t *, 
+				bus_space_handle_t *));
+static void	bus_space_free __P((
+				bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t));
 static int	bus_space_map __P((
 				bus_space_tag_t,
 				bus_addr_t,
@@ -220,12 +227,12 @@ static void	bus_space_barrier __P((
 				bus_size_t,
 				bus_size_t,
 				int));
-static int	bus_space_mmap __P((
+static paddr_t	bus_space_mmap __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
-				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				bus_addr_t,		/*addr*/
+				off_t,			/*offset*/
+				int,			/*prot*/
+				int));			/*flags*/
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
 				int,			/*bus-specific intr*/
@@ -243,6 +250,30 @@ static void	*bus_intr_establish __P((
 	return (*(t)->f)
 
 __inline__ int
+bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)
+	bus_space_tag_t t;
+	bus_addr_t	rs;
+	bus_addr_t	re;
+	bus_size_t	s;
+	bus_size_t	a;
+	bus_size_t	b;
+	int		f;
+	bus_addr_t	*ap;
+	bus_space_handle_t *hp;
+{
+	_BS_CALL(t, sparc_bus_alloc)(t, rs, re, s, a, b, f, ap, hp);
+}
+
+__inline__ void
+bus_space_free(t, h, s)
+	bus_space_tag_t	t;
+	bus_space_handle_t	h;
+	bus_size_t	s;
+{
+	_BS_CALL(t, sparc_bus_free)(t, h, s);
+}
+
+__inline__ int
 bus_space_map(t, a, s, f, hp)
 	bus_space_tag_t	t;
 	bus_addr_t	a;
@@ -250,7 +281,7 @@ bus_space_map(t, a, s, f, hp)
 	int		f;
 	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_map)((t), 0, (a), (s), (f), 0, (hp));
+	_BS_CALL(t, sparc_bus_map)(t, 0, a, s, f, 0, hp);
 }
 
 __inline__ int
@@ -286,15 +317,15 @@ bus_space_subregion(t, h, o, s, hp)
 	_BS_CALL(t, sparc_bus_subregion)(t, h, o, s, hp);
 }
 
-__inline__ int
-bus_space_mmap(t, bt, a, f, hp)
+__inline__ paddr_t
+bus_space_mmap(t, a, o, p, f)
 	bus_space_tag_t	t;
-	bus_type_t	bt;
 	bus_addr_t	a;
+	off_t		o;
+	int		p;
 	int		f;
-	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_mmap)(t, bt, a, f, hp);
+	_BS_CALL(t, sparc_bus_mmap)(t, a, o, p, f);
 }
 
 __inline__ void *
@@ -320,14 +351,11 @@ bus_space_barrier(t, h, o, s, f)
 	_BS_CALL(t, sparc_bus_barrier)(t, h, o, s, f);
 }
 
-
-#if 0
-int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
-	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int flags, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp));
-void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
+#if 1
+/* XXXX Things get complicated if we use unmapped register accesses. */
+#define	bus_space_vaddr(t, h)	(vaddr_t)(h)
+#else
+void * bus_space_vaddr __P((bus_space_tag_t space, bus_space_handle_t handle));
 #endif
 
 /* flags for bus space map functions */

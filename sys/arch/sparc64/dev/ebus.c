@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.6 2001/12/14 14:53:48 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.7 2002/02/05 18:34:39 jason Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -99,8 +99,7 @@ int	ebus_find_node __P((struct pci_attach_args *));
 /*
  * here are our bus space and bus dma routines.
  */
-static int ebus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				int, bus_space_handle_t *));
+static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
@@ -502,13 +501,13 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-static int
-ebus_bus_mmap(t, btype, paddr, flags, hp)
+static paddr_t
+ebus_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	bus_addr_t offset = paddr;
 	struct ebus_softc *sc = t->cookie;
@@ -523,8 +522,7 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
 
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n",
 		    (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_memtag, 0, paddr,
-				       flags, hp));
+		return (bus_space_mmap(sc->sc_memtag, paddr, off, prot, flags));
 	}
 
 	return (-1);

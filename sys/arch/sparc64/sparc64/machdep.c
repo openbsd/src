@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2002/02/01 21:48:23 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2002/02/05 18:34:39 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1686,14 +1686,17 @@ static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
 					 bus_space_handle_t *));
-static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
-				    bus_addr_t, int, bus_space_handle_t *));
+static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int, int (*) __P((void *)),
 						   void *));
-static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
-					bus_size_t, bus_size_t, int));
-
+static void	sparc_bus_barrier __P((bus_space_tag_t, bus_space_handle_t,
+					  bus_size_t, bus_size_t, int));
+static int	sparc_bus_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
+					bus_size_t, bus_size_t, bus_size_t, int,
+					bus_addr_t *, bus_space_handle_t *));
+static void	sparc_bus_free __P((bus_space_tag_t, bus_space_handle_t,
+				       bus_size_t));
 
 vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
@@ -1818,17 +1821,16 @@ sparc_bus_unmap(t, bh, size)
 	return (0);
 }
 
-int
-sparc_bus_mmap(t, iospace, paddr, flags, hp)
+paddr_t
+sparc_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t	iospace;
-	bus_addr_t	paddr;
-	int		flags;
-	bus_space_handle_t *hp;
+	bus_addr_t paddr;
+	off_t off;
+	int prot;
+	int flags;
 {
-
-	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
-	return (0);
+	/* Devices are un-cached... although the driver should do that */
+	return ((paddr+off)|PMAP_NC);
 }
 
 /*
@@ -1882,7 +1884,8 @@ sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	return (ih);
 }
 
-void sparc_bus_barrier (t, h, offset, size, flags)
+void
+sparc_bus_barrier (t, h, offset, size, flags)
 	bus_space_tag_t	t;
 	bus_space_handle_t h;
 	bus_size_t	offset;
@@ -1906,10 +1909,37 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 	return;
 }
 
+int
+sparc_bus_alloc(t, rs, re, s, a, b, f, ap, hp)
+	bus_space_tag_t	t;
+	bus_addr_t	rs;
+	bus_addr_t	re;
+	bus_size_t	s;
+	bus_size_t	a;
+	bus_size_t	b;
+	int		f;
+	bus_addr_t	*ap;
+	bus_space_handle_t *hp;
+{
+	return (ENOTTY);
+}
+
+void
+sparc_bus_free(t, h, s)
+	bus_space_tag_t	t;
+	bus_space_handle_t	h;
+	bus_size_t	s;
+{
+	return;
+}
+
+
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
 	UPA_BUS_SPACE,			/* type */
+	sparc_bus_alloc,
+	sparc_bus_free,
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	sparc_bus_subregion,		/* bus_space_subregion */
