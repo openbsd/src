@@ -23,7 +23,7 @@ available during the installation process.
 Loading the miniroot onto your raw partition is simple. On OpenBSD as well
 as SunOS you use a command like:
 
-	# dd if=miniroot20.fs of=/dev/rsd0b bs=20b conv=sync
+	# dd if=miniroot21.fs of=/dev/rsd0b bs=20b conv=sync
 
 (here `/dev/rsd0b' is assumed to be your swap partition). There's a
 potential problem here if /dev/rsd0b is actually in use as a swap

@@ -1,5 +1,5 @@
-OpenBSD/sparc 2.0 is brought to you by the same people who did the first
+OpenBSD/sparc 2.1 is brought to you by the same people who did the first
 free BSD port (based on Chris Torek's 4.4BSD work).  Many more sparc
 models and devices are now supported.
-In addition to the SunOS 4.1 compatibility, OpenBSD 2.0 will also run some
+In addition to the SunOS 4.1 compatibility, OpenBSD 2.1 will also run some
 number of SunOS 5 (SVR4) executables in binary emulation mode.
