@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.10 2002/06/07 19:53:19 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.11 2002/06/07 20:26:22 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -202,6 +202,7 @@ cfg_initiator_send_ATTR (struct message *msg)
       return 0;
     }
 
+  attrlen += ISAKMP_ATTRIBUTE_SZ;
   attrp = calloc (1, attrlen);
   if (!attrp)
     {
