@@ -54,6 +54,10 @@ struct ep_softc {
 #define EP_BUS_PCI	  	0x3
 
 #define EP_IS_BUS_32(a)	((a) & 0x2)
+
+	u_char	pcmcia_flags;
+#define EP_REATTACH		0x01
+#define EP_ABSENT		0x02
 };
 
 u_short	epreadeeprom __P((int id_port, int offset));
