@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.s,v 1.4 1995/11/04 00:30:50 cgd Exp $	*/
+/*	$NetBSD: crt0.s,v 1.5 1996/05/16 21:56:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,13 +28,6 @@
  */
 
 #include <machine/asm.h>
-
-#define	SETGP(pv)	ldgp	gp,0(pv)
-
-#define	MF_FPCR(x)	mf_fpcr	x
-#define	MT_FPCR(x)	mt_fpcr	x
-#define	JMP(loc)	br	zero,loc
-#define	CONST(c,reg)	ldiq	reg, c
 
 /*
  * Set up the global variables provided by crt0:
