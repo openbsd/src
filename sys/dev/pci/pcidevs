@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.507 2002/05/10 21:40:03 jason Exp $
+	$OpenBSD: pcidevs,v 1.508 2002/05/14 19:57:45 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1207,8 +1207,12 @@ product HP NETRAID_4M		0x10c2	NetRaid-4M
 /* Hifn products */
 product HIFN 7751		0x0005	7751
 product HIFN 6500		0x0006	6500
-product	HIFN 7811		0x0007	7811
+product HIFN 7811		0x0007	7811
 product HIFN 7951		0x0012	7951
+product HIFN 78XX		0x0014	7814/7851/7854
+product HIFN 8065		0x0016	8065
+product HIFN 8165		0x0017	8165
+product HIFN 8154		0x0018	8154
 
 /* Hint */
 product HINT VXPRO_II_HOST	0x8011	Host
