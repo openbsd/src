@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.61 1999/11/20 11:18:59 matthieu Exp $
+#	$OpenBSD: files.i386,v 1.62 2000/02/21 17:09:08 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -242,6 +242,7 @@ file	arch/i386/i386/bios.c		bios needs-count
 device apm
 attach apm at bios
 file	arch/i386/i386/apm.c		apm needs-count
+file	arch/i386/i386/apmcall.S	apm
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
