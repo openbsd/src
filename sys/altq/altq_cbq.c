@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.11 2003/01/30 09:55:42 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.12 2003/02/05 17:43:12 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -175,9 +175,7 @@ cbq_request(struct ifaltq *ifq, int req, void *arg)
 
 /* copy the stats info in rm_class to class_states_t */
 static void
-get_class_stats(statsp, cl)
-	class_stats_t	*statsp;
-	struct rm_class	*cl;
+get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 {
 	statsp->xmit_cnt	= cl->stats_.xmit_cnt;
 	statsp->drop_cnt	= cl->stats_.drop_cnt;
