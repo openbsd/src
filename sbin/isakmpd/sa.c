@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.13 1999/04/05 20:59:05 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.76 1999/04/05 18:32:11 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.14 1999/04/19 20:53:05 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.83 1999/04/16 23:25:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -84,7 +84,7 @@ sa_init ()
  
 }
 
-/* XXX Ww don't yet resize.  */
+/* XXX We don't yet resize.  */
 void
 sa_resize ()
 {
@@ -112,10 +112,14 @@ sa_find (int (*check) (struct sa *, void *), void *arg)
   int i;
   struct sa *sa;
 
-  for (i = 0; i < bucket_mask; i++)
+  for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       if (check (sa, arg))
+      {
+	log_debug (LOG_SA, 90, "sa_find: return SA %p", sa);
 	return sa;
+      }
+  log_debug (LOG_SA, 90, "sa_find: no SA matched query");
   return 0;
 }
 
@@ -179,6 +183,7 @@ sa_enter (struct sa *sa)
     }
   bucket &= bucket_mask;
   LIST_INSERT_HEAD (&sa_tab[bucket], sa, link);
+  log_debug (LOG_SA, 70, "sa_enter: SA %p added to SA list", sa);
   return 1;
 }
 
@@ -256,6 +261,8 @@ sa_create (struct exchange *exchange, struct transport *t)
       return -1;
     }
   sa->transport = t;
+  if (t)
+    transport_reference (t);
   sa->phase = exchange->phase;
   memcpy (sa->cookies, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   memcpy (sa->message_id, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -279,7 +286,7 @@ sa_create (struct exchange *exchange, struct transport *t)
   TAILQ_INSERT_TAIL (&exchange->sa_list, sa, next);
   sa_reference (sa);
 
-  log_debug (LOG_MISC, 90,
+  log_debug (LOG_SA, 60,
 	     "sa_create: sa %p phase %d added to exchange %p (%s)", sa,
 	     sa->phase, exchange,
 	     exchange->name ? exchange->name : "<unnamed>");
@@ -293,21 +300,21 @@ sa_dump (char *header, struct sa *sa)
   char spi_header[80];
   int i;
 
-  log_debug (LOG_MISC, 10, "%s: %p %s phase %d doi %d flags 0x%x",
-	     header, sa, sa->name ? sa->name : "<unnamed>", sa->phase,
+  log_debug (LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x", 
+	     header, sa, sa->name ? sa->name : "<unnamed>", sa->phase, 
 	     sa->doi->id, sa->flags);
-  log_debug (LOG_MISC, 10,
+  log_debug (LOG_REPORT, 0, 
 	     "%s: icookie %08x%08x rcookie %08x%08x", header,
 	     decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
 	     decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12));
-  log_debug (LOG_MISC, 10, "%s: msgid %08x", header,
-	     decode_32 (sa->message_id));
+  log_debug (LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header, 
+	     decode_32 (sa->message_id), sa->refcnt);
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
-      log_debug (LOG_MISC, 10,
+      log_debug (LOG_REPORT, 0, 
 		 "%s: suite %d proto %d", header, proto->no, proto->proto);
-      log_debug (LOG_MISC, 10,
+      log_debug (LOG_REPORT, 0, 
 		 "%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
 		 proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		 proto->spi[1]);
@@ -315,7 +322,7 @@ sa_dump (char *header, struct sa *sa)
 	if (proto->spi[i])
 	  {
 	    snprintf (spi_header, 80, "%s: spi[%d]", header, i);
-	    log_debug_buf (LOG_MISC, 10, spi_header, proto->spi[i],
+	    log_debug_buf (LOG_REPORT, 0, spi_header, proto->spi[i], 
 			   proto->spi_sz[i]);
 	  }
     }
@@ -327,7 +334,7 @@ sa_report (void)
   int i;
   struct sa *sa;
 
-  for (i = 0; i < bucket_mask; i++)
+  for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       sa_dump ("sa_report", sa);
 }
@@ -353,6 +360,7 @@ proto_free (struct proto *proto)
       free (proto->data);
     }
 
+  /* XXX Use class LOG_SA instead?  */
   log_debug (LOG_MISC, 90, "proto_free: freeing %p", proto);
 
   free (proto);
@@ -379,6 +387,7 @@ sa_free_aux (struct sa *sa)
       message_free (sa->last_sent_in_setup);
     }
   LIST_REMOVE (sa, link);
+  log_debug (LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa);
   sa_release (sa);
 }
 
@@ -387,6 +396,8 @@ void
 sa_reference (struct sa *sa)
 {
   sa->refcnt++;
+  log_debug (LOG_SA, 80, "sa_reference: SA %p now has %d references",
+	     sa, sa->refcnt);
 }
 
 /* Release a reference to SA.  */
@@ -395,10 +406,13 @@ sa_release (struct sa *sa)
 {
   struct proto *proto;
 
+  log_debug (LOG_SA, 80, "sa_release: SA %p had %d references",
+	     sa, sa->refcnt);
+
   if (--sa->refcnt)
     return;
 
-  log_debug (LOG_MISC, 80, "sa_release: freeing SA %p", sa);
+  log_debug (LOG_SA, 60, "sa_release: freeing SA %p", sa);
 
   while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
     proto_free (proto);
@@ -412,6 +426,8 @@ sa_release (struct sa *sa)
     free (sa->name);
   if (sa->keystate)
     free (sa->keystate);
+  if (sa->transport)
+    transport_release (sa->transport);
   free (sa);
 }
 
@@ -427,11 +443,13 @@ sa_isakmp_upgrade (struct message *msg)
   LIST_REMOVE (sa, link);
   GET_ISAKMP_HDR_RCOOKIE (msg->iov[0].iov_base,
 			  sa->cookies + ISAKMP_HDR_ICOOKIE_LEN);
+
   /*
-   *  We don't install a transport in the initiator case as we don't know
+   * We don't install a transport in the initiator case as we don't know
    * what local address will be chosen.  Do it now instead.
    */
   sa->transport = msg->transport;
+  transport_reference (sa->transport);
   sa_enter (sa);
 }
 
@@ -496,7 +514,7 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
   if (sa->doi->proto_init)
     sa->doi->proto_init (proto, 0);
 
-  log_debug (LOG_MISC, 80,
+  log_debug (LOG_SA, 80,
 	     "sa_add_transform: proto %p no %d proto %d chosen %p sa %p id %d",
 	     proto, proto->no, proto->proto, proto->chosen, proto->sa,
 	     proto->id);
@@ -523,7 +541,7 @@ sa_isakmp_lookup_by_peer (struct sockaddr *addr, size_t addr_len)
   struct sockaddr *taddr;
   int taddr_len;
 
-  for (i = 0; i < bucket_mask; i++)
+  for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       /*
        * XXX We check the transport because it can be NULL until we fix
@@ -557,23 +575,13 @@ sa_soft_expire (struct sa *sa)
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)
-    {
-      /* If we are already renegotiating, don't start over.  */
-      if (!exchange_lookup_by_name (sa->name, 1))
-	{
-	  sa_reference (sa);
-	  exchange_establish (sa->name,
-			      (void (*) (void *, int))sa_mark_replaced, sa);
-	}
-    }
+    exchange_establish (sa->name, 0, 0);
   else
-    {
-      /*
-       * Start to watch the use of this SA, so a renegotiation can
-       * happen as soon as it is shown to be alive.
-       */
-      sa->flags |= SA_FLAG_FADING;
-    }
+    /*
+     * Start to watch the use of this SA, so a renegotiation can
+     * happen as soon as it is shown to be alive.
+     */
+    sa->flags |= SA_FLAG_FADING;
 }
 
 /* SA has passed its best before date.  */
@@ -584,15 +592,7 @@ sa_hard_expire (struct sa *sa)
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)
-    {
-      /* If we are already renegotiating, don't start over.  */
-      if (!exchange_lookup_by_name (sa->name, 1))
-	{
-	  sa_reference (sa);
-	  exchange_establish (sa->name,
-			      (void (*) (void *, int))sa_mark_replaced, sa);
-	}
-    }
+    exchange_establish (sa->name, 0, 0);
 
   sa_delete (sa, 1);
 }
@@ -615,18 +615,14 @@ sa_flag (char *attr)
   for (i = 0; i < sizeof sa_flag_map / sizeof sa_flag_map[0]; i++)
     if (strcasecmp (attr, sa_flag_map[i].name) == 0)
       return sa_flag_map[i].flag;
-  log_print (LOG_MISC, 10, "sa_flag: attribute \"%s\" unknown", attr);
+  log_print ("sa_flag: attribute \"%s\" unknown", attr);
   return 0;
 }
 
 /* Mark SA as replaced.  */
 void
-sa_mark_replaced (struct sa *sa, int fail)
+sa_mark_replaced (struct sa *sa)
 {
-  if (!fail)
-    {
-      log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
-      sa->flags |= SA_FLAG_REPLACED;
-    }
-  sa_release (sa);
+  log_debug (LOG_SA, 60, "SA %p marked as replaced", sa);
+  sa->flags |= SA_FLAG_REPLACED;
 }
