@@ -1,20 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2003/11/24 16:53:23 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2003/11/24 16:55:59 espie Exp $
 
 LIB=		iberty
-CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
+CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
 
-# XXX -- GNUism
-# As we need to fill variables with contents of dynamically created files
-# we must first see to that they are really generated.  This is a hack that
-# ensures this.  The echo at the end is because make doesn't like command
-# substitutions to not generate output.
-.ifmake !obj && !clean && !cleandir
-PREREQ!=	test ! -f $(.OBJDIR)/needed-list && \
-			(cd $(.CURDIR); \
-			 $(MAKE) -f Makefile.bsd-wrapper1 needed-list); \
-		echo 'Prerequisites made'
-HOST_FILES!=	cat $(.OBJDIR)/needed-list
-.endif
+HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
+
+.PATH: ${.CURDIR}/src
 
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c dyn-string.c \
 		fdmatch.c getopt.c getopt1.c getpwd.c getruntime.c \
@@ -34,5 +25,18 @@ CLEANFILES+=	insque.o insque.go insque.po insque.so
 
 # and more
 CLEANFILES+=Makefile config.cache config.log stamp-h xhost-mkfrag testsuite/Makefile
+
+
+depend:	needed-list
+
+needed-list: config.status
+	${MAKE} ${GNUCFLAGS} CC=${CC} needed-list
+
+config.status: Makefile.in configure 
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	/bin/sh ${.CURDIR}/src/configure \
+		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		&& touch config.status
 
 .include <bsd.lib.mk>
