@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.30 2002/02/10 23:15:05 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.31 2002/04/25 22:49:51 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -117,6 +117,12 @@ GLOBAL(macos_tt1)
 GLOBAL(bletch)
 	.long	0
 
+GLOBAL(sanity_check)
+	.long	0x18621862	| this is our stack overflow checker.
+
+	.space	4 * NBPG
+ASLOCAL(tmpstk)
+
 BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
@@ -150,8 +156,6 @@ ASENTRY_NOPROFILE(start)
 	tstl	d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
 
-	movl	#CACHE_OFF,d0		| disable and clear both caches
-	movc	d0,cacr
 	lea	_C_LABEL(mmutype),a0	| no, we have 68030
 	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
 	lea	_C_LABEL(cputype),a0
@@ -217,7 +221,7 @@ Lstart2:
 	jbsr	_C_LABEL(consinit)	| XXX Should only be if graybar on
 
 /*
- * Figure out MacOS mappings and bootstrap NetBSD
+ * Figure out MacOS mappings and bootstrap OpenBSD
  */
 	lea	_C_LABEL(macos_tc),a0	| get current TC
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | check to see if 68040
@@ -262,6 +266,7 @@ Lstart3:
 	.long	0x4e7b0006		| movc d0,dtt0 ;Disable dtt0
 	.long	0x4e7b0007		| movc d0,dtt1 ;Disable dtt1
 	movl	a1,d1
+	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	.long	0x4e7b1807		| movc d1,srp
 	movl	#0x8000,d0
@@ -601,7 +606,7 @@ ENTRY_NOPROFILE(fpfault)
 	fsave	a0@		| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
-	cmpl	#CPU_68040,_C_LABEL(cputype)
+	cmpl	#FPU_68040,_C_LABEL(fputype)
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
@@ -685,9 +690,17 @@ ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
+
+	| Check PSW and see what happened.
+	|   T=0 S=0     (should not happen)
+	|   T=1 S=0     trace trap from user mode
+	|   T=0 S=1     trace trap on a trap instruction
+	|   T=1 S=1     trace trap from system mode (kernel breakpoint)
+
 	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
+	notw	d1			| XXX no support for T0 on 680[234]0
+	andw	#PSL_TS,d1		| from system mode (T=1, S=1)?
+	jeq	Lkbrkpt			| yes, kernel breakpoint
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 /*
@@ -752,7 +765,7 @@ Lbrkpt2:
 	movl	d2,sp@-			| push trap type
 	jbsr	_C_LABEL(kdb_trap)	| handle the trap
 	addql	#8,sp			| pop args
-#if 0	/* not needed on hp300 */
+#if 0	/* not needed on mac68k */
 	cmpl	#0,d0			| did ddb handle it?
 	jne	Lbrkpt3			| yes, done
 #endif
@@ -1040,6 +1053,7 @@ Ldorte:
  */
 #include <m68k/m68k/proc_subr.s>
 
+	.data
 GLOBAL(curpcb)
 GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
 	.long	0
@@ -1190,8 +1204,10 @@ Lswnofpsave:
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
 #if defined(M68040)
+#if defined(M68020) || defined(M68030)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lresnot040		| no, skip
+#endif
 	clrl	sp@-			| yes...
 	frestore sp@+			| ...magic!
 Lresnot040:
@@ -1272,7 +1288,7 @@ Lmotommu3:
 	pflusha
 #if defined(M68020)
 	tstl	_C_LABEL(mmutype)
-	jgt	Ltbia851
+	jgt	Ltbia851		| 68851 implies no d-cache
 #endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -1391,7 +1407,7 @@ Lmotommu7:
  * and TBI*.
  */
 ENTRY(DCIA)
-__DCIA:
+_C_LABEL(_DCIA):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu8		| no, skip
@@ -1401,7 +1417,7 @@ Lmotommu8:
 	rts
 
 ENTRY(DCIS)
-__DCIS:
+_C_LABEL(_DCIS):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	Lmotommu9		| no, skip
@@ -1411,7 +1427,7 @@ Lmotommu9:
 	rts
 
 ENTRY(DCIU)
-__DCIU:
+_C_LABEL(_DCIU):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuA		| no, skip
@@ -1863,14 +1879,8 @@ get_pte_fail10:
  * Misc. global variables.
  */
 	.data
-GLOBAL(sanity_check)
-	.long	0x18621862	| this is our stack overflow checker.
-
-	.space	4 * NBPG
-ASLOCAL(tmpstk)
-
 GLOBAL(machineid)
-	.long	0		| default to 320
+	.long	0
 
 GLOBAL(mmutype)
 	.long	MMU_68851	| default to 68851 PMMU
