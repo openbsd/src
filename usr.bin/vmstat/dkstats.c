@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.11 2001/05/14 07:24:12 angelos Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.12 2001/05/14 07:40:39 angelos Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ dkreadstats()
 		size = dk_ndrive * sizeof(struct disk);
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
-		p = calloc(size, sizeof(char));
+		p = malloc(size);
 		if (p == NULL)
 			err(1, NULL);
 		if (sysctl(mib, 2, p, &size, NULL, 0) < 0) {
@@ -308,7 +308,7 @@ int	select;
 		size = 0;
 		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
 			err(1, "can't get hw.disknames");
-		disknames = calloc(size, sizeof(char));
+		disknames = malloc(size);
 		if (disknames == NULL)
 			err(1, NULL);
 		if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
