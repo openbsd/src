@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.9 2002/07/03 22:32:33 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.10 2003/02/12 09:00:40 maja Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -52,6 +52,7 @@
 #define SA_ZSKBD 3
 #define SA_SUNKBD 4
 #define SA_SUN5KBD 5
+#define SA_HILKBD 6
 
 struct nlist nl[] = {
 	{ "_pckbd_keydesctab" },
@@ -60,6 +61,7 @@ struct nlist nl[] = {
 	{ "_zskbd_keydesctab" },
 	{ "_sunkbd_keydesctab" },
 	{ "_sunkbd5_keydesctab" },
+	{ "_hilkbd_keydesctab" },
 	{ NULL },
 };
 
@@ -70,6 +72,7 @@ char *kbtype_tab[] = {
 	"lk201",
 	"sun",
 	"sun5",
+	"hil",
 };
 
 struct nameint {
@@ -155,6 +158,7 @@ kbd_list(void)
 	int	zs_kbd = 0;
 	int	sun_kbd = 0;
 	int	sun5_kbd = 0;
+	int	hil_kbd = 0;
 
 	/* Go through all keyboards. */
 	for (i = 0; i < NUM_KBD; i++) {
@@ -178,6 +182,8 @@ kbd_list(void)
 				sun_kbd++;
 			if (kbtype == WSKBD_TYPE_SUN5)
 				sun5_kbd++;
+			if (kbtype == WSKBD_TYPE_HIL)
+				hil_kbd++;
 			close(fd);
 		}
 	}
@@ -206,6 +212,9 @@ kbd_list(void)
 
 	if (sun5_kbd > 0)
 		kbd_show_enc(kd, SA_SUN5KBD);
+
+	if (hil_kbd > 0)
+		kbd_show_enc(kd, SA_HILKBD);
 
 	kvm_close(kd);
 
