@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.33 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: zs.c,v 1.34 2002/04/28 03:51:19 art Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -104,11 +104,11 @@
 /*
  * Select software interrupt bit based on TTY ipl.
  */
-#if PIL_TTY == 1
+#if IPL_TTY == 1
 # define IE_ZSSOFT IE_L1
-#elif PIL_TTY == 4
+#elif IPL_TTY == 4
 # define IE_ZSSOFT IE_L4
-#elif PIL_TTY == 6
+#elif IPL_TTY == 6
 # define IE_ZSSOFT IE_L6
 #else
 # error "no suitable software interrupt bit"
@@ -292,12 +292,12 @@ zsattach(parent, dev, aux)
 		return;
 	}
 	pri = ra->ra_intr[0].int_pri;
-	printf(" pri %d, softpri %d\n", pri, PIL_TTY);
+	printf(" pri %d, softpri %d\n", pri, IPL_TTY);
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
 		intr_establish(pri, &levelhard);
-		intr_establish(PIL_TTY, &levelsoft);
+		intr_establish(IPL_TTY, &levelsoft);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
 	sc = (struct zs_softc *)dev;
@@ -939,7 +939,7 @@ zshard(intrarg)
 			/* XXX -- but this will go away when zshard moves to locore.s */
 			struct clockframe *p = intrarg;
 
-			if ((p->psr & PSR_PIL) < (PIL_TTY << 8)) {
+			if ((p->psr & PSR_PIL) < (IPL_TTY << 8)) {
 				zsshortcuts++;
 				(void) spltty();
 				if (zshardscope) {
@@ -953,7 +953,7 @@ zshard(intrarg)
 
 #if defined(SUN4M)
 		if (CPU_ISSUN4M)
-			raise(0, PIL_TTY);
+			raise(0, IPL_TTY);
 		else
 #endif
 		ienab_bis(IE_ZSSOFT);

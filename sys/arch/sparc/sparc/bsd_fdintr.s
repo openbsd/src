@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.6 2001/05/10 10:34:45 art Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.7 2002/04/28 03:51:19 art Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -48,7 +48,7 @@
 	or	%l6, IE_L4, %l6;			\
 	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
-! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+! raise(0,IPL_AUSOFT)	! NOTE: CPU#0 and IPL_AUSOFT=4
 #define FD_SET_SWINTR_4M				\
 	sethi	%hi(1 << (16 + 4)), %l5;		\
 	set	ICR_PI_SET, %l6;			\

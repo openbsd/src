@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 2002/04/27 15:00:16 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.48 2002/04/28 03:51:19 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4467,7 +4467,7 @@ idle:
 	ld	[%g2 + %lo(_whichqs)], %o3
 	tst	%o3
 	bnz,a	Lsw_scan
-	 wr	%g1, PIL_CLOCK << 8, %psr	! (void) splclock();
+	 wr	%g1, IPL_CLOCK << 8, %psr	! (void) splclock();
 	b,a	1b
 
 Lsw_panic_rq:
@@ -4539,7 +4539,7 @@ ENTRY(cpu_switch)
 	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
 	wr	%g1, 0, %psr			! (void) spl0();
 	nop; nop; nop				! paranoia
-	wr	%g1, PIL_CLOCK << 8 , %psr	! (void) splclock();
+	wr	%g1, IPL_CLOCK << 8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -4652,7 +4652,7 @@ Lsw_scan:
 	 */
 	tst	%g4
 	be,a	Lsw_load		! if no old process, go load
-	 wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr
+	 wr	%g1, (IPL_CLOCK << 8) | PSR_ET, %psr
 
 	INCR(_nswitchdiff)		! clobbers %o0,%o1
 	/*
@@ -4666,15 +4666,15 @@ wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE	/* 7 of each: */
 	/*
 	 * Load the new process.  To load, we must change stacks and
 	 * alter cpcb and %wim, hence we must disable traps.  %psr is
-	 * currently equal to oldpsr (%g1) ^ (PIL_CLOCK << 8);
+	 * currently equal to oldpsr (%g1) ^ (IPL_CLOCK << 8);
 	 * this means that PSR_ET is on.  Likewise, PSR_ET is on
 	 * in newpsr (%g2), although we do not know newpsr's ipl.
 	 *
 	 * We also must load up the `in' and `local' registers.
 	 */
-	wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr
+	wr	%g1, (IPL_CLOCK << 8) | PSR_ET, %psr
 Lsw_load:
-!	wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr	! done above
+!	wr	%g1, (IPL_CLOCK << 8) | PSR_ET, %psr	! done above
 	/* compute new wim */
 	ld	[%g5 + PCB_WIM], %o0
 	mov	1, %o1

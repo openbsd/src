@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.5 2001/05/10 10:34:44 art Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.6 2002/04/28 03:51:19 art Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -57,7 +57,7 @@
 	or	%l6, IE_L4, %l6;			\
 	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
-! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+! raise(0,IPL_AUSOFT)	! NOTE: CPU#0 and IPL_AUSOFT=4
 #define AUDIO_SET_SWINTR_4M				\
 	sethi	%hi(1 << (16 + 4)), %l5;		\
 	set	ICR_PI_SET, %l6;			\

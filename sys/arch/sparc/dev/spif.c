@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.10 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: spif.c,v 1.11 2002/04/28 03:51:19 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -58,11 +58,11 @@
 #include <sparc/dev/spifreg.h>
 #include <sparc/dev/spifvar.h>
 
-#if PIL_TTY == 1
+#if IPL_TTY == 1
 # define IE_MSOFT IE_L1
-#elif PIL_TTY == 4
+#elif IPL_TTY == 4
 # define IE_MSOFT IE_L4
-#elif PIL_TTY == 6
+#elif IPL_TTY == 6
 # define IE_MSOFT IE_L6
 #else
 # error "no suitable software interrupt bit"
@@ -205,7 +205,7 @@ spifattach(parent, self, aux)
 	sc->sc_regs->stc.gscr3 = 0;
 	printf(": rev %x chiprev %x osc %sMhz stcpri %d ppcpri %d softpri %d\n",
 	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc),
-	    stcpri, ppcpri, PIL_TTY);
+	    stcpri, ppcpri, IPL_TTY);
 
 	(void)config_found(self, sttymatch, NULL);
 	(void)config_found(self, sbppmatch, NULL);
@@ -220,7 +220,7 @@ spifattach(parent, self, aux)
 
 	sc->sc_softih.ih_fun = spifsoftintr;
 	sc->sc_softih.ih_arg = sc;
-	intr_establish(PIL_TTY, &sc->sc_softih);
+	intr_establish(IPL_TTY, &sc->sc_softih);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 }
@@ -885,7 +885,7 @@ spifstcintr(vsc)
 	if (needsoft) {
 #if defined(SUN4M)
 		if (CPU_ISSUN4M)
-			raise(0, PIL_TTY);
+			raise(0, IPL_TTY);
 		else
 #endif
 			ienab_bis(IE_MSOFT);
