@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.36 2003/03/07 15:16:33 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.37 2003/03/27 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -55,7 +55,7 @@
 #define BUF_SIZE 256
 
 extern void	usage(void);
-static int	pfctl_table(int, char *[], char *, char *, char *, int);
+static int	pfctl_table(int, char *[], char *, const char *, char *, int);
 static void	grow_buffer(size_t, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
@@ -66,7 +66,7 @@ static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
 static void	inactive_cleanup(void);
-static void	xprintf(int, char *, ...);
+static void	xprintf(int, const char *, ...);
 
 static union {
 	caddr_t			 caddr;
@@ -79,7 +79,7 @@ static union {
 static int	 size, msize, ticket, inactive;
 extern char	*__progname;
 
-static char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
+static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 	{ "In/Block:",	"In/Pass:",	"In/XPass:" },
 	{ "Out/Block:",	"Out/Pass:",	"Out/XPass:" }
 };
@@ -118,7 +118,7 @@ pfctl_show_tables(int opts)
 
 int
 pfctl_command_tables(int argc, char *argv[], char *tname,
-    char *command, char *file, int opts)
+    const char *command, char *file, int opts)
 {
 	if (tname == NULL || command == NULL)
 		usage();
@@ -126,7 +126,7 @@ pfctl_command_tables(int argc, char *argv[], char *tname,
 }
 
 int
-pfctl_table(int argc, char *argv[], char *tname, char *command,
+pfctl_table(int argc, char *argv[], char *tname, const char *command,
     char *file, int opts)
 {
 	struct pfr_table  table;
@@ -637,7 +637,7 @@ inactive_cleanup(void)
 }
 
 void
-xprintf(int opts, char *fmt, ...)
+xprintf(int opts, const char *fmt, ...)
 {
 	va_list args;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.12 2003/03/06 12:50:40 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.13 2003/03/27 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,7 +57,7 @@ int	 pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, int, int);
 int	 pfctl_clear_tables(int);
 int	 pfctl_show_tables(int);
-int	 pfctl_command_tables(int, char *[], char *, char *, char *, int);
+int	 pfctl_command_tables(int, char *[], char *, const char *, char *, int);
 int	 pfctl_show_altq(int, int, int);
 
 #ifndef DEFAULT_PRIORITY

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.347 2003/03/27 16:17:37 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.348 2003/03/27 18:01:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -215,8 +215,8 @@ struct table_opts {
 	int			init_addr;
 } table_opts;
 
-int	yyerror(char *, ...);
-int	disallow_table(struct node_host *, char *);
+int	yyerror(const char *, ...);
+int	disallow_table(struct node_host *, const char *);
 int	rule_consistent(struct pf_rule *);
 int	filter_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_rule *);
@@ -2690,7 +2690,7 @@ yesno		: NO			{ $$ = 0; }
 %%
 
 int
-yyerror(char *fmt, ...)
+yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
 	extern char	*infile;
@@ -2705,7 +2705,7 @@ yyerror(char *fmt, ...)
 }
 
 int
-disallow_table(struct node_host *h, char *fmt)
+disallow_table(struct node_host *h, const char *fmt)
 {
 	for (; h != NULL; h = h->next)
 		if (h->addr.type == PF_ADDR_TABLE) {

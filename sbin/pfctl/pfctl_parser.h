@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.50 2003/03/07 12:55:37 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.51 2003/03/27 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -124,12 +124,12 @@ void	pfctl_define_table(char *, int, int, int);
 void	pfctl_commit_table(void);
 
 struct icmptypeent {
-	char *name;
+	const char *name;
 	u_int8_t type;
 };
 
 struct icmpcodeent {
-	char *name;
+	const char *name;
 	u_int8_t type;
 	u_int8_t code;
 };

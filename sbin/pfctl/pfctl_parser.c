@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.146 2003/03/19 15:56:08 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.147 2003/03/27 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -55,7 +55,7 @@
 #include "pfctl.h"
 
 void		 print_op (u_int8_t, const char *, const char *);
-void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
+void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *);
 void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
 void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
 void		 print_flags (u_int8_t);
@@ -306,7 +306,7 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 }
 
 void
-print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
+print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto)
 {
 	char		 a1[6], a2[6];
 	struct servent	*s;
@@ -629,8 +629,8 @@ print_rdr(struct pf_rule *r, int verbose)
 	printf("\n");
 }
 
-char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
-char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
+const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
 print_status(struct pf_status *s)

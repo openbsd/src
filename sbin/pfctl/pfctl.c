@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.161 2003/03/11 13:20:17 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.162 2003/03/27 18:01:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,15 +76,15 @@ int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int);
-char	*pfctl_lookup_option(char *, char **);
+const char	*pfctl_lookup_option(char *, const char **);
 
-char	*clearopt;
+const char	*clearopt;
 char	*rulesopt;
-char	*showopt;
-char	*debugopt;
+const char	*showopt;
+const char	*debugopt;
 char	*anchoropt;
 char	*tableopt;
-char	*tblcmdopt;
+const char	*tblcmdopt;
 int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
@@ -158,21 +158,21 @@ static const struct {
 	{ NULL,			NULL }
 };
 
-static char *clearopt_list[] = {
+static const char *clearopt_list[] = {
 	"nat", "queue", "rules", "state", "info", "Tables", "all", NULL
 };
 
-static char *showopt_list[] = {
+static const char *showopt_list[] = {
 	"nat", "queue", "rules", "Anchors", "state", "info", "labels",
 	"timeouts", "memory", "Tables", "all", NULL
 };
 
-static char *tblcmdopt_list[] = {
+static const char *tblcmdopt_list[] = {
 	"kill", "flush", "add", "delete", "load", "replace", "show",
 	"test", "zero", NULL
 };
 
-static char *debugopt_list[] = {
+static const char *debugopt_list[] = {
 	"none", "urgent", "misc", NULL
 };
 
@@ -1291,8 +1291,8 @@ pfctl_show_anchors(int dev, int opts)
 	return (0);
 }
 
-char *
-pfctl_lookup_option(char *cmd, char **list)
+const char *
+pfctl_lookup_option(char *cmd, const char **list)
 {
 	if (cmd != NULL && *cmd)
 		for (; *list; list++)
