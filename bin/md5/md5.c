@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.28 2004/04/28 23:58:41 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.29 2004/05/02 17:53:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -30,17 +30,31 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <md4.h>
 #include <md5.h>
-#include <sha1.h>
 #include <rmd160.h>
+#include <sha1.h>
+#include <sha2.h>
+#include <crc.h>
 
-#define MAX_DIGEST_LEN	40
+#define MAX_DIGEST_LEN	128
 
 union ANY_CTX {
+	CKSUM_CTX cksum;
+	MD4_CTX md4;
 	MD5_CTX md5;
 	RMD160_CTX rmd160;
 	SHA1_CTX sha1;
+	SHA256_CTX sha256;
+	SHA384_CTX sha384;
+	SHA512_CTX sha512;
+	SUM_CTX sum;
+	SYSVSUM_CTX sysvsum;
 };
+
+void digest_print(const char *, const char *, const char *);
+void digest_print_short(const char *, const char *, const char *);
+void digest_print_string(const char *, const char *, const char *);
 
 struct hash_functions {
 	char *name;
@@ -48,70 +62,132 @@ struct hash_functions {
 	void (*init)(void *);
 	void (*update)(void *, const unsigned char *, unsigned int);
 	char * (*end)(void *, char *);
-	char * (*file)(char *, char *);
-	char * (*data)(const unsigned char *, unsigned int, char *);
+	void (*print)(const char *, const char *, const char *);
+	void (*printstr)(const char *, const char *, const char *);
 };
 
 struct hash_functions functions[] = {
 	{
+		"CKSUM",
+		CKSUM_DIGEST_LENGTH * 2,
+		(void (*)(void *))CKSUM_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))CKSUM_Update,
+		(char *(*)(void *, char *))CKSUM_End,
+		digest_print_short,
+		digest_print_short
+	}, {
+		"MD4",
+		MD5_DIGEST_LENGTH * 2,
+		(void (*)(void *))MD4Init,
+		(void (*)(void *, const unsigned char *, unsigned int))MD4Update,
+		(char *(*)(void *, char *))MD4End,
+		digest_print,
+		digest_print_string
+	}, {
 		"MD5",
 		MD5_DIGEST_LENGTH * 2,
 		(void (*)(void *))MD5Init,
 		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
 		(char *(*)(void *, char *))MD5End,
-		(char *(*)(char *, char *))MD5File,
-		(char *(*)(const unsigned char *, unsigned int, char *))MD5Data
+		digest_print,
+		digest_print_string
 	}, {
 		"RMD160",
 		RMD160_DIGEST_LENGTH * 2,
 		(void (*)(void *))RMD160Init,
 		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
 		(char *(*)(void *, char *))RMD160End,
-		(char *(*)(char *, char *))RMD160File,
-		(char *(*)(const unsigned char *, unsigned int, char *))RMD160Data
+		digest_print,
+		digest_print_string
 	}, {
 		"SHA1",
 		SHA1_DIGEST_LENGTH * 2,
 		(void (*)(void *))SHA1Init,
 		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
 		(char *(*)(void *, char *))SHA1End,
-		(char *(*)(char *, char *))SHA1File,
-		(char *(*)(const unsigned char *, unsigned int, char *))SHA1Data
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA256",
+		SHA256_DIGEST_LENGTH * 2,
+		(void (*)(void *))SHA256_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA256_Update,
+		(char *(*)(void *, char *))SHA256_End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA384",
+		SHA384_DIGEST_LENGTH * 2,
+		(void (*)(void *))SHA384_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA384_Update,
+		(char *(*)(void *, char *))SHA384_End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SHA512",
+		SHA512_DIGEST_LENGTH * 2,
+		(void (*)(void *))SHA512_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA512_Update,
+		(char *(*)(void *, char *))SHA512_End,
+		digest_print,
+		digest_print_string
+	}, {
+		"SUM",
+		SUM_DIGEST_LENGTH * 2,
+		(void (*)(void *))SUM_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SUM_Update,
+		(char *(*)(void *, char *))SUM_End,
+		digest_print_short,
+		digest_print_short
+	}, {
+		"SYSVSUM",
+		SYSVSUM_DIGEST_LENGTH * 2,
+		(void (*)(void *))SYSVSUM_Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SYSVSUM_Update,
+		(char *(*)(void *, char *))SYSVSUM_End,
+		digest_print_short,
+		digest_print_short
 	}, {
 		NULL,
 	},
 };
 
+__dead void usage(void);
+void digest_file(char *, struct hash_functions *, int);
+int digest_filelist(int, char *);
+void digest_string(char *, struct hash_functions *);
+void digest_test(struct hash_functions *);
+void digest_time(struct hash_functions *);
+
 extern char *__progname;
-static void usage(void);
-static void digest_file(char *, struct hash_functions *, int);
-static int digest_filelist(int, char *);
-static void digest_string(char *, struct hash_functions *);
-static void digest_test(struct hash_functions *);
-static void digest_time(struct hash_functions *);
 
 int
 main(int argc, char **argv)
 {
 	int fl, digest_type, error;
 	int cflag, pflag, tflag, xflag;
-	char *input_string;
-
-	/* Set digest type based on program name, defaults to MD5. */
-	for (digest_type = 0; functions[digest_type].name != NULL;
-	    digest_type++) {
-		if (strcasecmp(functions[digest_type].name, __progname) == 0)
-			break;
-	}
-	if (functions[digest_type].name == NULL)
-		digest_type = 0;
+	char *digest_name, *input_string;
 
 	input_string = NULL;
+	digest_name = __progname;
 	error = cflag = pflag = tflag = xflag = 0;
-	while ((fl = getopt(argc, argv, "pctxs:")) != -1) {
+	while ((fl = getopt(argc, argv, "a:co:ps:tx")) != -1) {
 		switch (fl) {
+		case 'a':
+			digest_name = optarg;
+			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'o':
+			if (strcmp(optarg, "1") == 0)
+				digest_name = "sum";
+			else if (strcmp(optarg, "2") == 0)
+				digest_name = "sysvsum";
+			else {
+				warnx("illegal argument to -o option");
+				usage();
+			}
 			break;
 		case 'p':
 			pflag = 1;
@@ -132,7 +208,21 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	/* All arguments are mutually exclusive */
+	for (digest_type = 0; functions[digest_type].name != NULL;
+	    digest_type++) {
+		if (strcasecmp(functions[digest_type].name, digest_name) == 0)
+			break;
+	}
+	if (functions[digest_type].name == NULL) {
+		if (digest_name != __progname) {
+			/* Unsupported algorithm specified, exit */
+			warnx("unknown algorithm \"%s\"", digest_name);
+			usage();
+		}
+		digest_type = 0;	/* default to cksum */
+	}
+
+	/* Most arguments are mutually exclusive */
 	fl = pflag + tflag + xflag + cflag + (input_string != NULL);
 	if (fl > 1 || (fl && argc && cflag == 0))
 		usage();
@@ -158,17 +248,37 @@ main(int argc, char **argv)
 	return(error ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
-static void
+void
 digest_string(char *string, struct hash_functions *hf)
 {
 	char digest[MAX_DIGEST_LEN + 1];
+	union ANY_CTX context;
 
-	(void)hf->data((unsigned char *)string, (unsigned int)strlen(string),
-	    digest);
-	(void)printf("%s (\"%s\") = %s\n", hf->name, string, digest);
+	hf->init(&context);
+	hf->update(&context, string, (unsigned int)strlen(string));
+	(void)hf->end(&context, digest);
+	hf->printstr(hf->name, string, digest);
 }
 
-static void
+void
+digest_print(const char *name, const char *what, const char *digest)
+{
+	(void)printf("%s (%s) = %s\n", name, what, digest);
+}
+
+void
+digest_print_string(const char *name, const char *what, const char *digest)
+{
+	(void)printf("%s (\"%s\") = %s\n", name, what, digest);
+}
+
+void
+digest_print_short(const char *name, const char *what, const char *digest)
+{
+	(void)printf("%s %s\n", digest, what);
+}
+
+void
 digest_file(char *file, struct hash_functions *hf, int echo)
 {
 	int fd;
@@ -205,7 +315,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
 		(void)puts(digest);
 	} else {
 		close(fd);
-		(void)printf("%s (%s) = %s\n", hf->name, file, digest);
+		hf->print(hf->name, file, digest);
 	}
 }
 
@@ -215,7 +325,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
  * generate a new checksum against the file on the filesystem.
  * Print out the result of each comparison.
  */
-static int
+int
 digest_filelist(int algorithm_def, char *file)
 {
 	int fd, found, error;
@@ -352,7 +462,7 @@ digest_filelist(int algorithm_def, char *file)
 #define TEST_BLOCK_LEN 10000
 #define TEST_BLOCK_COUNT 10000
 
-static void
+void
 digest_time(struct hash_functions *hf)
 {
 	struct timeval start, stop, res;
@@ -385,7 +495,7 @@ digest_time(struct hash_functions *hf)
 	    TEST_BLOCK_LEN * TEST_BLOCK_COUNT / elapsed);
 }
 
-static void
+void
 digest_test(struct hash_functions *hf)
 {
 	union ANY_CTX context;
@@ -412,8 +522,7 @@ digest_test(struct hash_functions *hf)
 		hf->update((void *)&context, (unsigned char *)test_strings[i],
 		    (unsigned int)strlen(test_strings[i]));
 		(void)hf->end(&context, digest);
-		(void)printf("%s (\"%s\") = %s\n", hf->name, test_strings[i],
-		    digest);
+		hf->printstr(hf->name, test_strings[i], digest);
 	}
 
 	/* Now simulate a string of a million 'a' characters. */
@@ -423,15 +532,20 @@ digest_test(struct hash_functions *hf)
 		hf->update(&context, (unsigned char *)buf,
 		    (unsigned int)sizeof(buf));
 	(void)hf->end(&context, digest);
-	(void)printf("%s (one million 'a' characters) = %s\n",
-	    hf->name, digest);
+	hf->print(hf->name, "one million 'a' characters", digest);
 }
 
-static void
+__dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-p | -t | -x | -c [ checksum_file ... ]",
-	    __progname);
-	fprintf(stderr, " | -s string | file ...]\n");
+	/* We only list the algorithms when invoked as cksum. */
+	if (strcmp(__progname, "cksum") == 0)
+		fprintf(stderr,
+		    "usage: cksum [-a cksum|md4|md5|rmd160|sha1|sha256|sha384|"
+		    "sha512|sum|sysvsum]\n             [-o 1|2] ");
+	else
+		fprintf(stderr, "usage: %s ", __progname);
+	fprintf(stderr, "[-p | -t | -x | -c [checklist ...] | "
+	    "-s string | file ...]\n");
 	exit(EXIT_FAILURE);
 }

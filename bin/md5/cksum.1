@@ -1,0 +1,276 @@
+.\"	$OpenBSD: cksum.1,v 1.1 2004/05/02 17:53:29 millert Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the Institute of Electrical and Electronics Engineers, Inc.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
+.\"
+.Dd April 30, 2004
+.Dt CKSUM 1
+.Os
+.Sh NAME
+.Nm cksum ,
+.Nm sum
+.Nd display file checksums and block counts
+.Sh SYNOPSIS
+.Nm cksum
+.Oo Xo
+.Fl a Ar cksum | Ar md4 |
+.Ar md5 | Ar rmd160 | Ar sha1 |
+.Ar sha256 | Ar sha384 | Ar sha512 |
+.Ar sum | Ar sysvsum
+.Xc
+.Oc
+.Op Fl o Ar \&1 | Ar \&2
+.Oo
+.Fl p | Fl t | Fl x |
+.Fl s Ar string |
+.Fl c Ar [ checklist ... ] |
+.Ar file ...
+.Oc
+.Nm sum
+.Op Ar file ...
+.Sh DESCRIPTION
+The
+.Nm cksum
+utility writes to the standard output a single line each input file.
+The format of this line varies with the algorithm being used as follows:
+.Bl -tag -width Ds
+.It cksum
+The output line consists of three whitespace separated fields: a
+.Tn CRC
+checksum, the number of octets in the input
+and name of the file or string.
+If no file name is specified, the standard input is used and no file name
+is written.
+.It sum
+The output line consists of three whitespace separated fields: a
+.Tn CRC
+checksum, the number of kilobytes in the input
+and name of the file or string.
+If no file name is specified, the standard input is used and no file name
+is written.
+.It sysvsum
+The output line consists of three whitespace separated fields: a
+.Tn CRC
+checksum, the number of 512-byte blocks in the input
+and name of the file or string.
+If no file name is specified, the standard input is used and no file name
+is written.
+.It all others
+The output line consists of four whitespace separated fields:
+the name of the algorithm used, the name of the file or string in
+parenthesis, an equal sign and the cryptographic hash of the input.
+If no file name is specified, the standard input is used and only
+the cryptographic hash is output.
+.El
+.Pp
+The
+.Nm sum
+utility is identical to the
+.Nm cksum
+utility, except that it defaults to using historic algorithm 1, as
+described below.
+It is provided for compatibility only.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a Ar algorithm
+Use the specified algorithm instead of the default (cksum).
+Supported algorithms include
+.Em cksum ,
+.Em md4 ,
+.Em md5 ,
+.Em rmd160 ,
+.Em sha1 ,
+.Em sha256 ,
+.Em sha384 ,
+.Em sha512 ,
+.Em sum
+and
+.Em sysvsum .
+Algorithms specified by the
+.Fl a
+option are case-insensitive.
+.It Fl o Ar \&1 No \&| Ar \&2
+Use historic algorithms instead of the (superior) default one
+(see below).
+.It Fl s Ar string
+Prints a checksum of the given
+.Ar string .
+.It Fl c Ar [ checklist ... ]
+Compares all checksums contained in the file
+.Ar checklist
+with newly computed checksums for the corresponding files.
+Output consists of the digest used, the file name,
+and an OK or FAILED for the result of the comparison.
+This will validate any of the supported checksums (see
+.Xr cksum 1 ).
+If no file is given, stdin is used.
+.It Fl p
+Echoes stdin to stdout and appends the
+checksum to stdout.
+.It Fl t
+Runs a built-in time trial.
+.It Fl x
+Runs a built-in test script.
+.El
+.Pp
+Algorithm 1 (aka
+.Em sum )
+is the algorithm used by historic
+.Bx
+systems as the
+.Nm sum
+algorithm and by historic
+.At V
+systems as the
+.Nm sum
+algorithm when using the
+.Fl r
+option.
+This is a 16-bit checksum, with a right rotation before each addition;
+overflow is discarded.
+.Pp
+Algorithm 2 (aka
+.Em sysvsum )
+is the algorithm used by historic
+.At V
+systems as the
+default
+.Nm sum
+algorithm.
+This is a 32-bit checksum, and is defined as follows:
+.Bd -unfilled -offset indent
+s = sum of all bytes;
+r = s % 2^16 + (s % 2^32) / 2^16;
+cksum = (r % 2^16) + r / 2^16;
+.Ed
+.Pp
+Both algorithm 1 and 2 write to the standard output the same fields as
+the default algorithm except that the size of the file in bytes is
+replaced with the size of the file in blocks.
+For historic reasons, the block size is 1024 for algorithm 1 and 512
+for algorithm 2.
+Partial blocks are rounded up.
+.Pp
+The default
+.Tn CRC
+used is based on the polynomial used for
+.Tn CRC
+error checking
+in the networking standard
+.St -iso8802-3
+The
+.Tn CRC
+checksum encoding is defined by the generating polynomial:
+.Pp
+.Bd -unfilled -offset indent
+G(x) = x^32 + x^26 + x^23 + x^22 + x^16 + x^12 +
+     x^11 + x^10 + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1
+.Ed
+.Pp
+Mathematically, the
+.Tn CRC
+value corresponding to a given file is defined by
+the following procedure:
+.Bd -filled -offset indent
+The
+.Ar n
+bits to be evaluated are considered to be the coefficients of a mod 2
+polynomial M(x) of degree
+.Ar n Ns \-1 .
+These
+.Ar n
+bits are the bits from the file, with the most significant bit being the most
+significant bit of the first octet of the file and the last bit being the least
+significant bit of the last octet, padded with zero bits (if necessary) to
+achieve an integral number of octets, followed by one or more octets
+representing the length of the file as a binary value, least significant octet
+first.
+The smallest number of octets capable of representing this integer are used.
+.Pp
+M(x) is multiplied by x^32 (i.e., shifted left 32 bits) and divided by
+G(x) using mod 2 division, producing a remainder R(x) of degree <= 31.
+.Pp
+The coefficients of R(x) are considered to be a 32-bit sequence.
+.Pp
+The bit sequence is complemented and the result is the CRC.
+.Ed
+.Pp
+The other available algorithms are described in their respective
+man pages in section 3 of the manual.
+.Sh DIAGNOSTICS
+The
+.Nm cksum
+and
+.Nm sum
+utilities exit 0 on success or >0 if an error occurred.
+.Sh SEE ALSO
+.Xr md5 1 ,
+.Xr rmd160 1 ,
+.Xr sha1 1
+.Pp
+The default calculation is identical to that given in pseudo-code
+in the following
+.Tn ACM
+article.
+.Rs
+.%T "Computation of Cyclic Redundancy Checks Via Table Lookup"
+.%A Dilip V. Sarwate
+.%J "Communications of the \\*(tNACM\\*(sP"
+.%D "August 1988"
+.Re
+.Sh STANDARDS
+The
+.Nm cksum
+utility is compliant with the
+.St -p1003.2-92
+specification.
+.Sh HISTORY
+A
+.Nm sum
+command appeared in
+.At v2 .
+The
+.Nm cksum
+utility appeared in
+.Bx 4.4 .
+.Sh WARNING
+Do not use the
+.Em cksum ,
+.Em md4 ,
+.Em sum ,
+or
+.Em sysvsum
+algorithms to detect hostile binary modifications.
+An attacker can trivially produce backdoored daemons which have the same
+checksum as the standard versions.
+Use a cryptographic-strength checksum (such as MD5) instead.

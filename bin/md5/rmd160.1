@@ -1,6 +1,6 @@
-.\"	$OpenBSD: rmd160.1,v 1.15 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: rmd160.1,v 1.16 2004/05/02 17:53:29 millert Exp $
 .\"
-.\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd June 4, 2001
+.Dd April 30, 2004
 .Dt RMD160 1
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@
 .Oo
 .Fl p | Fl t | Fl x |
 .Fl s Ar string |
-.Fl c Ar [ file ... ] |
+.Fl c Ar [ checklist ... ] |
 .Ar file ...
 .Oc
 .Sh DESCRIPTION
@@ -53,16 +53,14 @@ The options are as follows:
 .It Fl s Ar string
 Prints a checksum of the given
 .Ar string .
-.It Fl c Ar [ file ... ]
-Compares all checksums in
-.Ar file
-with newly computed checksums for the files mentioned in
-.Ar file .
+.It Fl c Ar [ checklist ... ]
+Compares all checksums contained in the file   
+.Ar checklist
+with newly computed checksums for the corresponding files.
 Output consists of the digest used, the file name,
 and an OK or FAILED for the result of the comparison.
-This will validate any of the supported checksums in
-.Ar file ,
-including MD5 and SHA-1.
+This will validate any of the supported checksums (see
+.Xr cksum 1 ).
 If no file is given, stdin is used.
 .It Fl p
 Echoes stdin to stdout and appends the
