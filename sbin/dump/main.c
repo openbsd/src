@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1996/12/16 17:11:32 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/02/03 11:53:25 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -94,6 +94,8 @@ static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
 
+extern int maxbsize;
+
 int
 main(argc, argv)
 	int argc;
@@ -138,6 +140,11 @@ main(argc, argv)
 
 		case 'b':		/* blocks per tape write */
 			ntrec = numarg("blocks per write", 1L, 1000L);
+			if (ntrec > maxbsize/1024) {
+				msg("Please choose a blocksize <= %dKB\n",
+				    maxbsize/1024);
+				exit(X_ABORT);
+			}
 			break;
 
 		case 'c':		/* Tape is cart. not 9-track */
@@ -186,6 +193,10 @@ main(argc, argv)
 			lastdump(ch);
 			exit(0);	/* do nothing else */
 
+		case 'a':		/* `auto-size', Write to EOM. */
+			unlimited = 1;
+			break;
+
 		default:
 			usage();
 		}
@@ -217,7 +228,7 @@ main(argc, argv)
 
 	if (blocksperfile)
 		blocksperfile = blocksperfile / ntrec * ntrec; /* round down */
-	else {
+	else if (!unlimited) {
 		/*
 		 * Determine how to default tape size and density
 		 *
@@ -334,7 +345,7 @@ main(argc, argv)
 		anydirskipped = mapdirs(maxino, &tapesize);
 	}
 
-	if (pipeout) {
+	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
 		msg("estimated %ld tape blocks.\n", tapesize);
 	} else {

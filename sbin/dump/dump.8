@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.3 1996/06/23 14:30:09 deraadt Exp $
+.\"	$OpenBSD: dump.8,v 1.4 1997/02/03 11:53:24 deraadt Exp $
 .\"	$NetBSD: dump.8,v 1.14 1996/02/05 23:59:37 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@
 .Nd filesystem backup
 .Sh SYNOPSIS
 .Nm dump
-.Op Fl 0123456789cnu
+.Op Fl 0123456789cnua
 .Op Fl B Ar records
 .Op Fl b Ar blocksize
 .Op Fl d Ar density
@@ -73,7 +73,11 @@ option below for doing remote backups).
 A dump that is larger than the output medium is broken into
 multiple volumes.
 On most media the size is determined by writing until an
-end-of-media indication is returned.
+end-of-media indication is returned.  This can be enforced
+by using the
+.Cm a
+option.
+.Pp
 On media that cannot reliably return an end-of-media indication
 (such as some cartridge tape drives)
 each volume is of a fixed size;
@@ -102,8 +106,26 @@ The default level is 9.
 The number of kilobytes per volume, rounded
 down to a multiple of the blocksize.
 This option overrides the calculation of tape size
+.It Cm a
+.Dq auto-size .
+Bypass all tape length considerations, and enforce writing
+until an end-of-media indication is returned.  This fits best
+for most modern tape drives.  Use of this option is particularly
+recommended when appending to an existing tape, or using a tape
+drive with hardware compression (where you can never be sure about
+the compression ratio).
 based on length and density.
 .It Fl b Ar blocksize
+Since the IO system slices all requests into chunks of MAXBSIZE
+(typically 64KB), it is not possible to use a larger blocksize
+without having problems later with
+.Xr restore 8 .
+Therefore
+.Nm
+will constrain writes to MAXBSIZE.
+.It Cm c
+Change the defaults for use with a cartridge tape drive, with a density
+of 8000 bpi, and a length of 1700 feet.
 The number of kilobytes per dump record.
 .It Fl c
 Modify the calculation of the default density and tape size to be more
