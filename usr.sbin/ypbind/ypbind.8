@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypbind.8,v 1.6 1997/01/30 07:47:28 deraadt Exp $
+.\"	$OpenBSD: ypbind.8,v 1.7 1997/04/02 18:05:47 deraadt Exp $
 .\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,8 +101,11 @@ and
 .Fl ypsetme
 options are dangerous and should be avoided.
 For greatest security, the use of a server list in
-.Pa /var/yp/DOMAINNAME
+.Pa /etc/yp/DOMAINNAME
 is recommended.
+The file should contain a list of valid YP server hostnames,
+with one hostname per line.
+The comment character is #.
 .Pp
 If the directory
 .Pa /var/yp/binding
