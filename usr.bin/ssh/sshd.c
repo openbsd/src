@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.81 2000/01/24 20:31:19 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.82 2000/01/27 20:20:02 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1080,12 +1080,14 @@ do_ssh_kex()
  * DenyUsers or user's primary group is listed in DenyGroups, false will
  * be returned. If AllowUsers isn't empty and user isn't listed there, or
  * if AllowGroups isn't empty and user isn't listed there, false will be
- * returned. Otherwise true is returned.
- * XXX This function should also check if user has a valid shell
+ * returned. 
+ * If the user's shell is not executable, false will be returned.
+ * Otherwise true is returned. 
  */
 static int
 allowed_user(struct passwd * pw)
 {
+	struct stat st;
 	struct group *grp;
 	int i;
 
@@ -1093,7 +1095,11 @@ allowed_user(struct passwd * pw)
 	if (!pw)
 		return 0;
 
-	/* XXX Should check for valid login shell */
+	/* deny if shell does not exists or is not executable */
+	if (stat(pw->pw_shell, &st) != 0)
+		return 0;
+	if (!((st.st_mode & S_IFREG) && (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP))))
+		return 0;
 
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
@@ -1601,7 +1607,8 @@ do_authenticated(struct passwd * pw)
 	 * by the client telling us, so we can equally well trust the client
 	 * not to request anything bogus.)
 	 */
-	channel_permit_all_opens();
+	if (!no_port_forwarding_flag)
+		channel_permit_all_opens();
 
 	/*
 	 * We stay in this loop until the client requests to execute a shell
