@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1996/09/22 22:27:43 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1997/02/21 07:33:21 tholo Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -33,7 +33,7 @@ LIB=		g++
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I. -I$(.CURDIR)/src -I$(.CURDIR)/../libio \
 		-I$(.CURDIR)/../libstdc++ -I$(LIBIO_OBJDIR)
-#LDADD+=		-lcurses
+LDADD+=		-lcurses
 
 CXXSRCS=	AllocRing.cc Obstack.cc builtin.cc $(REGEX_OBJ) Regex.cc \
 		String.cc Intdouble.cc Integer.cc Rational.cc Random.cc \
