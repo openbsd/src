@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.23 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.24 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
 	ip->i_flag &= ~(IN_MODIFIED);
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
-	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
+	e2fs_isave(&ip->i_e2din, (struct ext2fs_dinode *)cp);
 	if (waitfor)
 		return (bwrite(bp));
 	else {
@@ -194,7 +194,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		if (length != 0)
 			panic("ext2fs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&oip->i_din.e2fs_din.e2di_shortlink,
+		bzero((char *)&oip->i_e2din.e2di_shortlink,
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;

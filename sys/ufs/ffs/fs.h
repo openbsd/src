@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.13 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: fs.h,v 1.14 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -167,10 +167,10 @@ struct csum {
 struct fs {
 	int32_t	 fs_firstfield;		/* historic file system linked list, */
 	int32_t	 fs_unused_1;		/*     used for incore super blocks */
-	daddr_t	 fs_sblkno;		/* addr of super-block in filesys */
-	daddr_t	 fs_cblkno;		/* offset of cyl-block in filesys */
-	daddr_t	 fs_iblkno;		/* offset of inode-blocks in filesys */
-	daddr_t	 fs_dblkno;		/* offset of first data after cg */
+	int32_t	 fs_sblkno;		/* addr of super-block in filesys */
+	int32_t	 fs_cblkno;		/* offset of cyl-block in filesys */
+	int32_t	 fs_iblkno;		/* offset of inode-blocks in filesys */
+	int32_t	 fs_dblkno;		/* offset of first data after cg */
 	int32_t	 fs_cgoffset;		/* cylinder group offset in cylinder */
 	int32_t	 fs_cgmask;		/* used to calc mod fs_ntrak */
 	time_t 	 fs_time;		/* last time written */
@@ -210,7 +210,7 @@ struct fs {
 /* fs_id takes the space of the unused fs_headswitch and fs_trkseek fields */
 	int32_t  fs_id[2];		/* unique filesystem id */
 /* sizes determined by number of cylinder groups and their sizes */
-	daddr_t  fs_csaddr;		/* blk addr of cyl grp summary area */
+	int32_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int32_t	 fs_cssize;		/* size of cyl grp summary area */
 	int32_t	 fs_cgsize;		/* cylinder group size */
 /* these fields are derived from the hardware */

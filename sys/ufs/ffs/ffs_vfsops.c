@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.58 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.59 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -483,7 +483,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 		vput(vp);
 		return (error);
 	}
-	ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
+	ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(fra->fs, ip->i_number));
 	ip->i_effnlink = ip->i_ffs_nlink;
 	brelse(bp);
@@ -1196,7 +1196,7 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din.ffs_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+	ip->i_din1 = *((struct ufs1_dinode *)bp->b_data + ino_to_fsbo(fs, ino));
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
 	else
@@ -1234,8 +1234,8 @@ retry:
 	 * fix until fsck has been changed to do the update.
 	 */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
-		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
+		ip->i_ffs_uid = ip->i_din1.di_ouid;		/* XXX */
+		ip->i_ffs_gid = ip->i_din1.di_ogid;		/* XXX */
 	}							/* XXX */
 
 	*vpp = vp;

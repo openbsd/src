@@ -1,4 +1,4 @@
-/*	$OpenBSD: softdep.h,v 1.5 2003/05/26 18:33:17 tedu Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.6 2003/08/25 23:26:55 tedu Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -238,7 +238,7 @@ struct inodedep {
 	struct	fs *id_fs;		/* associated filesystem */
 	ino_t	id_ino;			/* dependent inode */
 	nlink_t	id_nlinkdelta;		/* saved effective link count */
-	struct	dinode *id_savedino;	/* saved dinode contents */
+	struct	ufs1_dinode *id_savedino;	/* saved dinode contents */
 	LIST_ENTRY(inodedep) id_deps;	/* bmsafemap's list of inodedep's */
 	struct	buf *id_buf;		/* related bmsafemap (if pending) */
 	off_t	id_savedsize;		/* file size saved during rollback */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.33 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.34 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -110,8 +110,8 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	 * fix until fsck has been changed to do the update.
 	 */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_din.ffs_din.di_ouid = ip->i_ffs_uid;		/* XXX */
-		ip->i_din.ffs_din.di_ogid = ip->i_ffs_gid;		/* XXX */
+		ip->i_din1.di_ouid = ip->i_ffs_uid;		/* XXX */
+		ip->i_din1.di_ogid = ip->i_ffs_gid;		/* XXX */
 	}						/* XXX */
 	error = bread(ip->i_devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 		(int)fs->fs_bsize, NOCRED, &bp);
@@ -125,8 +125,8 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	else if (ip->i_effnlink != ip->i_ffs_nlink) 
 		panic("ffs_update: bad link cnt");
 
-	*((struct dinode *)bp->b_data +
-	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
+	*((struct ufs1_dinode *)bp->b_data +
+	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din1;
 	if (waitfor && !DOINGASYNC(vp)) {
 		return (bwrite(bp));
 	} else {
@@ -171,7 +171,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	if (ovp->v_type == VLNK &&
 	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
-	      oip->i_din.ffs_din.di_blocks == 0))) {
+	      oip->i_din1.di_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
 			panic("ffs_truncate: partial truncate of symlink");

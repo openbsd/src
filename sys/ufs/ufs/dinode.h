@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.7 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.8 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ typedef int32_t ufs1_daddr_t;
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
-struct dinode {
+struct	ufs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
 	union {

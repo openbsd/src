@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.12 2003/07/06 05:24:16 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.13 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ ext2fs_inode_alloc(struct inode *pip, int mode, struct ucred *cred,
 		panic("ext2fs_valloc: dup alloc");
 	}
 
-	bzero(&(ip->i_din.e2fs_din), sizeof(struct ext2fs_dinode));
+	bzero(&(ip->i_e2din), sizeof(struct ext2fs_dinode));
 
 	/*
 	 * Set up a new generation number for this inode.

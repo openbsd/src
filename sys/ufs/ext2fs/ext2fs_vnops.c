@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.29 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.30 2003/08/25 23:26:55 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ ext2fs_mknod(v)
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		ip->i_din.e2fs_din.e2di_rdev = h2fs32(vap->va_rdev);
+		ip->i_e2din.e2di_rdev = h2fs32(vap->va_rdev);
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -227,7 +227,7 @@ ext2fs_getattr(v)
 	vap->va_nlink = ip->i_e2fs_nlink;
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
-	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din.e2di_rdev);
+	vap->va_rdev = (dev_t)fs2h32(ip->i_e2din.e2di_rdev);
 	vap->va_size = ip->i_e2fs_size;
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
@@ -1177,7 +1177,7 @@ ext2fs_symlink(v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)ip->i_din.e2fs_din.e2di_shortlink, len);
+		bcopy(ap->a_target, (char *)ip->i_e2din.e2di_shortlink, len);
 		ip->i_e2fs_size = len;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
@@ -1207,7 +1207,7 @@ ext2fs_readlink(v)
 	isize = ip->i_e2fs_size;
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
-		uiomove((char *)ip->i_din.e2fs_din.e2di_shortlink, isize, ap->a_uio);
+		uiomove((char *)ip->i_e2din.e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
