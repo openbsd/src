@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplelock.h,v 1.8 1999/07/09 15:17:59 art Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.9 2001/02/26 15:43:08 art Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
@@ -23,6 +23,8 @@ struct simplelock {
 
 #define SLOCK_LOCKED 1
 #define SLOCK_UNLOCKED 0
+
+#define SLOCK_INITIALIZER { SLOCK_UNLOCKED }
 
 /*
  * We can't debug locks when we use them in real life.
