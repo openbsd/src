@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.32 2003/08/19 03:13:07 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.33 2003/08/21 18:06:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -143,10 +143,10 @@ sti_attach_common(sc)
 	 (bus_space_read_1(sc->memt, sc->romh, (o) + 11) <<  8) | \
 	 (bus_space_read_1(sc->memt, sc->romh, (o) + 15)))
 
-		dd->dd_type  = bus_space_read_1(sc->memt, sc->romh, 3);
-		dd->dd_nmon  = bus_space_read_1(sc->memt, sc->romh, 7);
-		dd->dd_grrev = bus_space_read_1(sc->memt, sc->romh, 11);
-		dd->dd_lrrev = bus_space_read_1(sc->memt, sc->romh, 15);
+		dd->dd_type  = bus_space_read_1(sc->memt, sc->romh, 0x03);
+		dd->dd_nmon  = bus_space_read_1(sc->memt, sc->romh, 0x07);
+		dd->dd_grrev = bus_space_read_1(sc->memt, sc->romh, 0x0b);
+		dd->dd_lrrev = bus_space_read_1(sc->memt, sc->romh, 0x0f);
 		dd->dd_grid[0] = parseword(0x10);
 		dd->dd_grid[1] = parseword(0x20);
 		dd->dd_fntaddr = parseword(0x30) & ~3;
@@ -155,16 +155,18 @@ sti_attach_common(sc)
 		dd->dd_reglst  = parseword(0x60) & ~3;
 		dd->dd_maxreent= parseshort(0x70);
 		dd->dd_maxtimo = parseshort(0x78);
-				/* what happened to 0x80 ? */
-		dd->dd_montbl  = parseword(0x90);
-		dd->dd_udaddr  = parseword(0xa0) & ~3;
-		dd->dd_stimemreq=parseword(0xb0);
-		dd->dd_udsize  = parseword(0xc0);
-		dd->dd_pwruse  = parseshort(0xd0);
-		dd->dd_bussup  = bus_space_read_1(sc->memt, sc->romh, 0xdb);
-		dd->dd_ebussup = bus_space_read_1(sc->memt, sc->romh, 0xdf);
-		dd->dd_altcodet= bus_space_read_1(sc->memt, sc->romh, 0xe3);
-		dd->dd_cfbaddr = parseword(0xf0) & ~3;
+		dd->dd_montbl  = parseword(0x80) & ~3;
+		dd->dd_udaddr  = parseword(0x90) & ~3;
+		dd->dd_stimemreq=parseword(0xa0);
+		dd->dd_udsize  = parseword(0xb0);
+		dd->dd_pwruse  = parseshort(0xc0);
+		dd->dd_bussup  = bus_space_read_1(sc->memt, sc->romh, 0xcb);
+		dd->dd_ebussup = bus_space_read_1(sc->memt, sc->romh, 0xcf);
+		dd->dd_altcodet= bus_space_read_1(sc->memt, sc->romh, 0xd3);
+		dd->dd_eddst[0]= bus_space_read_1(sc->memt, sc->romh, 0xd7);
+		dd->dd_eddst[1]= bus_space_read_1(sc->memt, sc->romh, 0xdb);
+		dd->dd_eddst[2]= bus_space_read_1(sc->memt, sc->romh, 0xdf);
+		dd->dd_cfbaddr = parseword(0xe0) & ~3;
 
 		dd->dd_pacode[0x0] = parseword(0x100) & ~3;
 		dd->dd_pacode[0x1] = parseword(0x110) & ~3;
