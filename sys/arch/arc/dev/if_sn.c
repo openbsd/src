@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.4 1996/09/21 10:57:21 deraadt Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.5 1996/09/30 14:36:46 pefo Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -1072,7 +1072,7 @@ sonictxint(sc)
 
 			if (mtdhead != mtdnext) {
 				printf("resubmitting remaining packets\n");
-				csr->s_ctda = LOWER(mtdhead->mtd_txp);
+				csr->s_ctda = LOWER(v_tda + (mtdhead->mtd_txp - p_tda));
 				csr->s_cr = CR_TXP;
 				wbflush();
 				return;
