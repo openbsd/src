@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.6 1998/08/10 16:41:18 millert Exp $
+.\" $OpenBSD: pcvt.4,v 1.7 1998/09/07 16:44:37 aaron Exp $
 .\" 
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -321,8 +321,8 @@ get key repetition switch, and
 set key repetition switch
 .El
 
-again take a pointer to int as argument. They manipulate the
-drivers internal keyboard repetition flag, possible values are:
+Again take a pointer to int as its argument. They manipulate the
+driver's internal keyboard repetition flag, possible values are:
 KBD_REPEATOFF or KBD_REPEATON.
 
 
@@ -331,7 +331,7 @@ KBD_REPEATOFF or KBD_REPEATON.
 get LED state, and
 .It KBDSLEDS
 set LED state manipulate the keyboard indicators, but do not influence
-the drivers idea of lock key state.
+the driver's idea of lock key state.
 .El
 
 The int where the argument points to
@@ -346,15 +346,15 @@ gets state of SCROLL,NUM,CAPS, and
 sets state of SCROLL,NUM,CAPS + LEDs
 .El
 
-should be used in a same manner to get/set the drivers internal
-LED flags.
+These functions should be used in a same manner to get/set the driver's
+internal LED flags.
 
 
 .Em Keyboard remapping
 
 One important feature of the
 .Nm pcvt
-driver is its ability to overload the built in key definition.
+driver is its ability to overload the builtin key definition.
 
 .Bl -tag -width 20n -offset indent -compact
 .It KBDGCKEY
@@ -365,13 +365,13 @@ set new key assignment values, and
 get original key assignment values
 .El
 
-arrange those functions. The take a pointer to a
+Arrange those functions. They take a pointer to a
 .Em struct kbd_ovlkey
-as argument as described below. In addition,
+argument as described below. In addition,
 
 .Bl -tag -width 20n -offset indent -compact
 .It KBDRMKEY
-removes a key assignment, taking a pointer to an int as argument which
+removes a key assignment, taking a pointer to an int as its argument which
 contains the affected key number;
 .It KBDDEFAULT
 removes all key assignments.
@@ -525,10 +525,10 @@ set font attr, and
 get font attr
 .El
 
-are used to manipulate the drivers information about a downloaded
-font. The take a pointer to a
+These functions are used to manipulate the driver's information about a
+downloaded font. They take pointers to a
 .Em struct vgafontattr
-as argument:
+as their arguments:
 .Bd -literal
 struct vgafontattr {
     int character_set;          /* VGA character set */
@@ -588,7 +588,7 @@ Font size
 sets cursor shape,
 .El
 
-taking a pointer to the following structure as argument:
+taking a pointer to the following structure as its argument:
 .Bd -literal
 struct cursorshape {
     int screen_no; /* screen number for which to set,               */
@@ -696,9 +696,9 @@ struct vgapel {
 
 .Bl -tag -width 20n -offset indent -compact
 .It VGAPCVTID
-returns information if the current compiled in driver is pcvt and it's
+returns information if the current compiled in driver is pcvt and its
 major and minor revision numbers. the call is taking a pointer to the
-following structure as argument:
+following structure as its argument:
 .El
 
 .Bd -literal
@@ -716,9 +716,9 @@ struct pcvtid {
 
 .Bl -tag -width 20n -offset indent -compact
 .It VGAPCVTINFO
-returns information if the current compiled in driver is pcvt and it's
+returns information if the current compiled in driver is pcvt and its
 compile time options. the call is taking a pointer to the following
-structure as argument:
+structure as its argument:
 .El
 
 .Bd -literal
@@ -752,7 +752,7 @@ by the command
 set timeout for screen saver in seconds; 0 turns it off,
 .El
 
-taking a pointer to an integer as argument. Despite of its command name,
+taking a pointer to an integer as its argument. Despite of its command name,
 this is available on
 .Em any
 kind of adaptor if configured in by the
@@ -822,7 +822,7 @@ Holger Veit
 .Sh SEE ALSO
 .Xr config 8 ,
 .Xr intro 2 ,
-.Xr ioctl 2 .
+.Xr ioctl 2
 .Sh BUGS
 Certainly existent. See the file
 .Pa BugList

@@ -53,7 +53,7 @@
 .Sh DESCRIPTION
 These functions provide an interface to the run-time linker
 .Xr ld.so .
-They allow new shared objects to be loaded into the process' address space
+They allow new shared objects to be loaded into the process's address space
 under program control.
 The
 .Fn dlopen
@@ -83,7 +83,7 @@ If the named shared object has already
 been loaded by a previous call to
 .Fn dlopen
 .Pq and not yet unloaded by Fn dlclose ,
-a handle refering to the resident copy is returned.
+a handle referring to the resident copy is returned.
 .Pp
 .Fn dlclose
 unlinks and removes the object referred to by
@@ -91,7 +91,7 @@ unlinks and removes the object referred to by
 from the process address space. If multiple calls to
 .Fn dlopen
 have been done on this object
-.Po or the object was one loaded at startup time
+.Po or the object was once loaded at startup time
 .Pc
 the object is removed when its reference count drops to zero.
 .Pp
@@ -112,7 +112,7 @@ is
 .Ud .
 .Pp
 .Fn dlerror
-return a character string representing the most recent error that has
+returns a character string representing the most recent error that has
 occurred while processing one of the other functions described here.
 .Sh SEE ALSO
 .Xr ld 1 ,

@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.7 1998/06/03 08:56:58 beck Exp $
+.\"	$Id: smtpd.8,v 1.8 1998/09/07 16:44:35 aaron Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -61,17 +61,17 @@ Disable host checking against the DNS. By default
 checks and will complain in the syslogs if the DNS information for
 a host seems to indicate a possible spoof or misconfiguration.
 .It Fl i
-specify a filename that
+Specify a filename that
 .Nm smtpd 
-should lock and write it's pid to when running as a daemon. 
+should lock and write its pid to when running as a daemon. 
 Doesn't do anything if running from inetd. Default pid file
 in daemon mode is 
 .Pa /var/run/smtpd.pid
-On BSD systems, or
+on BSD systems, or
 .Pa /usr/spool/smtpd/smtpd.pid 
 on non-BSD systems.
 .It Fl l
-specify an ip address in dotted quad format for 
+Specify an ip address in dotted quad format for 
 .Nm smtpd
 to accept connections to. In daemon mode this limits the address
 that
@@ -80,7 +80,7 @@ listens on. In inetd mode, smtpd will issue a 521 error
 code and exit if connected to on an address other than the specified
 one. By default,
 .Nm smtpd
-accepts a connection no matter what address it is connected to on.
+accepts a connection no matter what address it is connected to.
 .It Fl L
 Suppress children in daemon mode (above) from doing an
 openlog() call. This means your syslogs won't have pid
@@ -92,14 +92,14 @@ in a manner that an openlog() call will work in it.
 Specify
 .Ar myname ,
 the hostname the daemon should announce itself
-as. the default is whatever gethostname() returns.
+as. The default is whatever gethostname() returns.
 .It Fl p
-specify a decimal port number for
+Specify a decimal port number for
 .Nm smtpd 
 to listen when running as a daemon. Doesn't do anything if running 
 from inetd.
 .It Fl P
-Enable paranoid mode of operation, in this mode connections are
+Enable paranoid mode of operation. In this mode connections are
 dropped from any client feeding
 .Nm smtpd
 a suspicious hostname, FROM:, or RCPT: line containing characters

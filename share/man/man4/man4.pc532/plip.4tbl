@@ -74,7 +74,7 @@ Select|13|3|Data in 1
 Gnd|18-25|18-25|Ground
 .TE
 .sp
-In both protocol versions ethernet frames are used. The 1.0 protocol assings
+In both protocol versions ethernet frames are used. The 1.0 protocol assigns
 an ethernet address of the form FD:FD:ww:xx:yy:zz to the interface. The 1.1
 protocol uses FC instead of FD. ww, xx, yy and zz are taken from the internet
 address ww.xx.yy.zz of the interface. Ethernet support has
@@ -93,5 +93,5 @@ PLIPMXERRS (20) packets caused receive errors in sequence.
 .It "plip?: checksum error"
 A packet with a bad checksum was received.
 .It "plip?: packet > MTU"
-A bogus packet longer then the MTU was received.
+A bogus packet longer than the MTU was received.
 .El

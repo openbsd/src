@@ -1,4 +1,4 @@
-.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.7 1998/07/15 00:06:01 deraadt Exp $ (LBL)
+.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.8 1998/09/07 16:44:34 aaron Exp $ (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -800,7 +800,7 @@ feature, causing the original sequence numbers to be output.
 On the 6th line, rtsg sends csam 19 bytes of data (bytes 2 through 20
 in the rtsg \(-> csam side of the conversation).
 The PUSH flag is set in the packet.
-On the 7th line, csam says it's received data sent by rtsg up to
+On the 7th line, csam says its received data sent by rtsg up to
 but not including byte 21.  Most of this data is apparently sitting in the
 socket buffer since csam's receive window has gotten 19 bytes smaller.
 Csam also sends one byte of data to rtsg in this packet.

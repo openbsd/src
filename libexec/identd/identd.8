@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.5 1998/06/10 03:49:39 beck Exp $
+.\"	$OpenBSD: identd.8,v 1.6 1998/09/07 16:44:35 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -131,14 +131,14 @@ Use
 for logging purposes.
 .It Fl v
 Log every request to syslog if 
-Fl l
+.Fl l
 above is specified. 
 .It Fl o
 Do the operating system type, instead 
 always return
 .Dq OTHER .
 .It Fl e
-always return
+Always return
 .Dq UNKNOWN-ERROR
 instead of the
 .Dq NO-USER
@@ -152,7 +152,7 @@ should be a valid character set as described in the
 .Tn MIME RFC
 in upper case characters.
 .It Fl n
-always return uid numbers instead of user names 
+Always return uid numbers instead of usernames.
 .It Fl N
 When replying with a user name or id, first 
 check for a file
@@ -161,19 +161,19 @@ in the user's home directory. If this file is accessible, return
 .Dq HIDDEN-USER 
 instead of the normal USERID response.
 .It Fl m
-allow multiple requests to be
+Allow multiple requests to be
 processed per session.  Each request is specified one per line and
 the responses will be returned one per line.  The connection will not
-be closed until the client closes it's end of the connection.
+be closed until the client closes its end of the connection.
 PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
 IT CURRENTLY STANDS.
-.ItFl d
-flag enables some debugging code that normally should NOT
+.It Fl d
+This flag enables some debugging code that normally should NOT
 be enabled since that breaks the protocol and may reveal information
 that should not be available to outsiders.
 .Pp
 .Sh SEE ALSO
-.Xr inetd.conf 5 .
+.Xr inetd.conf 5
 .Sh NOTES
 .Nm
 uses the 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.4 1997/05/14 15:58:38 niklas Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.5 1998/09/07 16:44:34 aaron Exp $
 .\
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -64,10 +64,10 @@ allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the filesystem can be used for swapping
 or can contain a filesystem that is mounted in the name space.  Both
 traditional devices,
-.Nm vnd
-, and the cache-coherent devices,
-.Nm svnd
-, are configured through
+.Nm vnd  ,
+and the cache-coherent devices,
+.Nm svnd  ,
+are configured through
 .Nm
 .Pp
 Options indicate an action to be performed:
@@ -97,7 +97,7 @@ is assumed.
 .Pp
 Configures the vnode disk
 .Pa svnd0
-(ie. all of it's partitions become useable).
+(ie. all of its partitions become useable).
 .Pp
 .Dl vnconfig -u svnd0
 .Pp
@@ -109,4 +109,4 @@ This command should really be named
 .Xr swapon 8 ,
 .Xr mount 8 ,
 .Xr umount 8 ,
-.Xr vnd 4 .
+.Xr vnd 4

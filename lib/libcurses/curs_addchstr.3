@@ -26,7 +26,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $OpenBSD: curs_addchstr.3,v 1.4 1998/07/23 21:17:27 millert Exp $
+.\" $OpenBSD: curs_addchstr.3,v 1.5 1998/09/07 16:44:35 aaron Exp $
 .\" $From: curs_addchstr.3x,v 1.6 1998/03/11 21:12:53 juergen Exp $
 .TH curs_addchstr 3 ""
 .SH NAME
@@ -64,7 +64,7 @@ The window cursor is \fInot\fR advanced, and these routines work faster than
 (such as for the newline, backspace, or carriage return characters), they don't
 advance the current cursor position, they don't expand other control characters
 to ^-escapes, and they truncate the string if it crosses the right margin,
-rather then wrapping it around to the new line.
+rather than wrapping it around to the new line.
 
 .SH RETURN VALUES
 All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success

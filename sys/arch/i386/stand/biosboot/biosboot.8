@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.6 1997/10/07 09:24:09 mickey Exp $
+.\"	$OpenBSD: biosboot.8,v 1.7 1998/09/07 16:44:38 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -75,7 +75,7 @@ Some kind of error returned by the BIOS read call. This might be
 any media error, including bad sectors (common on floppy disks),
 and invalid sectors (can occur with messed up geometry translations).
 .It Er Bad magic
-The just loaded /boot image contains a bad magic in it's header.  This
+The just loaded /boot image contains a bad magic in its header.  This
 might indicate some kind of hardware problem, the
 .Ar boot
 argument to the
@@ -91,14 +91,14 @@ for the device you are booting from.
 .Sh NOTES
 The practice of making OpenBSD use the whole disk (ie: having
 .Nm                                                                            
-as the MBR) has been depreciated, and will not work on certain BIOS versions.
+as the MBR) has been deprecated, and will not work on certain BIOS versions.
 There is a lot of strange behaviour with different BIOS's, one of well
 known lobotomy cases is that the BIOS does not pass the right boot drive
 number to the
 .Nm
 program.  This is one of the main reasons that having
 .Nm
-as the MBR has been depreciated.
+as the MBR has been deprecated.
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/mbr
