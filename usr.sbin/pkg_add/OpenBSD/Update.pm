@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.4 2004/11/01 14:30:00 espie Exp $
+# $OpenBSD: Update.pm,v 1.5 2004/11/01 15:45:02 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -43,25 +43,17 @@ use File::Temp qw/tempfile/;
 sub extract
 {
 	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
 
-	my $file=$state->{archive}->next();
-	if ($file->{name} ne $self->{name}) {
-		Fatal "Error: archive does not match", $file->{name}, "!=",
-		$self->{name}, "\n";
-	}
-	my $destdir = $state->{destdir};
+	my $file = $self->prepare_to_extract($state);
 
 	if (defined $self->{link} || defined $self->{symlink}) {
 		$self->{tempname} = 1;
 		return;
 	}
-	my ($fh, $tempname) = tempfile(DIR => dirname($destdir.$fullname));
+	my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
 
 	print "extracting $tempname\n";
 	$file->{name} = $tempname;
-	$file->{cwd} = $self->{cwd};
-	$file->{destdir} = $destdir;
 	$file->create();
 	$self->{tempname} = $tempname;
 }

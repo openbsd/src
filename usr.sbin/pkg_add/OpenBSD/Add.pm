@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.3 2004/11/01 14:30:00 espie Exp $
+# $OpenBSD: Add.pm,v 1.4 2004/11/01 15:45:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -163,6 +163,7 @@ sub install
 	my $destdir = $state->{destdir};
 
 	if (defined $self->{tempname}) {
+
 		if (defined $self->{link}) {
 			link($destdir.$self->{link}, $destdir.$fullname);
 		} elsif (defined $self->{symlink}) {
@@ -171,24 +172,56 @@ sub install
 			rename($self->{tempname}, $destdir.$fullname);
 		}
 	} else {
-		my $file=$state->{archive}->next();
-		if ($file->{name} ne $self->{name}) {
-			Fatal "Error: archive does not match", $file->{name}, "!=",
-			$self->{name}, "\n";
-		}
+		my $file = $self->prepare_to_extract($state);
 
 		print "extracting $destdir$fullname\n" if $state->{very_verbose};
 		return if $state->{not};
-		$file->{name} = $fullname;
-		$file->{cwd} = $self->{cwd};
-		$file->{destdir} = $destdir;
-		# faked installation are VERY weird
-		if (defined $self->{symlink} && $state->{do_faked}) {
-			$file->{linkname} = $destdir.$file->{linkname};
-		}
 		$file->create();
 	}
 	$self->set_modes($destdir.$fullname);
+}
+
+sub prepare_to_extract
+{
+	my ($self, $state) = @_;
+	my $fullname = $self->fullname();
+	my $destdir = $state->{destdir};
+
+	my $file=$state->{archive}->next();
+	if ($file->{name} ne $self->{name}) {
+		Fatal "Error: archive does not match ", $file->{name}, "!=",
+		$self->{name}, "\n";
+	}
+	if (defined $self->{symlink} || $file->isSymLink()) {
+		unless (defined $self->{symlink} && $file->isSymLink()) {
+			Fatal "Error: bogus symlink ", $self->{name}, "\n";
+		}
+		if ($self->{symlink} ne $file->{linkname}) {
+			Fatal "Error: archive sl does not match ", $file->{linkname}, "!=",
+			$self->{symlink}, "\n";
+		}
+	} elsif (defined $self->{link} || $file->isHardLink()) {
+		unless (defined $self->{link} && $file->isHardLink()) {
+			Fatal "Error: bogus hardlink ", $self->{name}, "\n";
+		}
+		my $linkname = $file->{linkname};
+		if (defined $self->{cwd}) {
+			$linkname = $self->{cwd}.'/'.$linkname;
+		}
+		if ($self->{link} ne $linkname) {
+			Fatal "Error: archive hl does not match ", $linkname, "!=",
+			$self->{link}, "!!!\n";
+		}
+	}
+
+	$file->{name} = $fullname;
+	$file->{cwd} = $self->{cwd};
+	$file->{destdir} = $destdir;
+	# faked installation are VERY weird
+	if (defined $self->{symlink} && $state->{do_faked}) {
+		$file->{linkname} = $destdir.$file->{linkname};
+	}
+	return $file;
 }
 
 package OpenBSD::PackingElement::EndFake;
