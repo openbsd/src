@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.6 2001/01/25 07:09:39 art Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/07/11 03:02:25 pvalchev Exp $
 
 PROG=	config
 BINDIR=	/usr/sbin
 SRCS=	files.c gram.y hash.c main.c mkheaders.c mkioconf.c mkmakefile.c \
 	mkswap.c pack.c scan.l sem.c util.c \
 	ukc.c misc.c ukcutil.c cmd.c exec.c
-.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "hppa") || (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "hppa") || \
+    (${MACHINE_ARCH} == "alpha")
 CFLAGS+=-DELF_SUPPORT
 SRCS+=  exec_elf.c
 .else
