@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/04/18 01:28:01 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/04/18 02:14:28 mickey Exp $
 
 
 LIB=	sa
@@ -12,7 +12,7 @@ CFLAGS+=-DSTART=$(START) -DHEAP_LIMIT=$(HEAP_LIMIT)
 CFLAGS+=${DEBUGFLAGS} -I${.CURDIR} -I${.CURDIR}/..
 CFLAGS+=-I$(S)/lib/libsa -I$(S)
 AS+=	-R
-AS+=	-Wa,-a
+#AS+=	-Wa,-a
 
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS=	unixsys.S bioscom.S biosdisk.S bioskbd.S biostime.S biosmem.S gidt.S \
