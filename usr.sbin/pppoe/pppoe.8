@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.8,v 1.4 2000/06/20 05:11:43 jason Exp $
+.\"	$OpenBSD: pppoe.8,v 1.5 2000/08/18 18:06:07 jason Exp $
 .\"
 .\" Copyright (c) 2000 Network Security Technologies, Inc.
 .\" (http://www.netsec.net)
@@ -39,11 +39,10 @@
 .Nd PPP Over Ethernet translator
 .Sh SYNOPSIS
 .Nm pppoe
-.Op Ar -s
+.Op Ar -s Op Ar -p system
 .Op Ar -v
 .Op Ar -i interface
 .Op Ar -n service
-.Op Ar -p system
 .Sh DESCRIPTION
 The
 .Nm pppoe
@@ -56,7 +55,10 @@ The options are as follows:
 .It Fl i Ar interface
 Specify the interface that
 .Nm
-is to use.  If this option is not specified,
+is to use, which should be a real Ethernet interface (not a virtual
+device like
+.Xr tun 4 ).
+If this option is not specified,
 .Nm
 will use the first Ethernet interface that is up and running.
 .It Fl n Ar service
@@ -70,6 +72,7 @@ This argument is passed, uninterpreted, to
 .Xr ppp 8 .
 It can be used to specify the configuration data to be used for
 PPP Over Ethernet connections.
+This option is only used in server mode.
 .It Fl s
 If this option is specified,
 .Nm
@@ -94,18 +97,112 @@ if no
 .Ar system
 is specified):
 .Bd -literal -offset indent
+set device !/usr/sbin/pppoe
 set mtu 1492
 set mru 1492
 set speed sync
-disable acfcomp
+disable acfcomp protocomp
 deny acfcomp
-disable protocomp
-set device !/usr/sbin/pppoe
 .Ed
+.Pp
+The
+.Em "set device"
+line tells
+.Nm ppp
+to use
+.Nm pppoe
+program for input and output instead of using a serial port or other
+network connection.  The
+.Nm mtu
+and
+.Nm mru
+must be set to 1492 to leave room in the outgoing Ethernet packet for
+the
+.Nm pppoe
+headers.
+The
+.Em "set speed sync"
+line tells
+.Nm ppp
+to use synchronous encoding for the packets sent between it and
+.Nm pppoe .
+According to RFC2516, protocol compression,
+.Em protocomp ,
+is not recommended, so
+it is disabled, but not denied.  On the other hand, address and control
+field compression,
+.Em acfcomp ,
+must be disabled and denied.
 .Pp
 Additionally, the authentication mechanism for the connection
 must be specified as well as any other parameters.
+.Sh EXAMPLE CONFIGURATION
+Given a machine with one Ethernet interface,
+.Em xl0 ,
+the first thing that must be done is to bring the interface up:
+.Bd -literal -offset indent
+# ifconfig xl0 up
+.Ed
+This can be done automatically during boot with a
+.Pa /etc/hostname.xl0
+file, see
+.Xr hostname.if 5
+for details.
+.Pp
+Next, a
+.Pa /etc/ppp/ppp.conf
+file must be created.  Below is a minimal PPPoE style configuration, see
+.Xr ppp 8
+for more options.
+.Bd -literal -offset indent
+default:
+   set log Phase Chat LCP IPCP CCP tun command
+
+pppoe:
+   set device !/usr/sbin/pppoe
+   set mtu 1492
+   set mru 1492
+   set speed sync
+   disable acfcomp protocomp
+   deny acfcomp
+   set authname "myUsername"
+   set authkey "myPassword"
+.Ed
+.Pp
+The
+.Nm default
+section sets up some helpful information to log while getting started,
+and the
+.Nm pppoe
+section sets the required fields for a PPPoE connection as well as the
+username and password to use to authenticated to the service provider.
+.Pp
+Once the
+.Pa /etc/ppp/ppp.conf
+file is setup, it is just a matter of setting
+.Xr ppp 8
+into action:
+.Bd -literal -offset indent
+# ppp pppoe
+Working in interactive mode
+Using interface: tun0
+ppp ON deepthought> dial
+Ppp ON deepthought>
+PPp ON deepthought>
+PPP ON deepthought>
+.Ed
+.Pp
+The userland
+.Xr ppp 8
+daemon has many options for configuration, like adding default routes,
+network address translation, automatically using remote DNS servers,
+automatic dialing, etc.
+Please see
+.Xr ppp 8
+for details.
 .Sh SEE ALSO
+.Xr tun 4 ,
+.Xr hostname.if 5 ,
 .Xr ppp 8
 .Rs
 .%T RFC2516 A Method for Transmitting PPP Over Ethernet (PPPoE)
