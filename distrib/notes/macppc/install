@@ -56,14 +56,12 @@ OpenBSDBootMsgs
 	fdisk (MBR partitioned disk) or pdisk (HFS partitioned disk)
 	and create an OpenBSD partition.
 
-	If pdisk is being invoked, It will issue a prompt which will
-	allow one to delete the Unused partition, then using the "C"
-	command create a new partition. It is necessary to display
-	the partition table, either before deleting the free partition
-	or after, to know the start and size of the partition.
+	If pdisk is being invoked, you will be issued a command prompt
+	allowing you to modify the partition table.  The most common
+	operation, and the example presented here, deals with the
+	conversion of an existing partition into one usable by OpenBSD.
 
-	An example Partition map:The partition map may look like the following
-	Before editing the table, it looks like:
+	Before editing, the partition table may look like the following:
 
 	 #:                type name             length   base    ( size )
 	 1: Apple_partition_map Apple                63 @ 1      
@@ -94,28 +92,20 @@ OpenBSDBootMsgs
 
 	This will likely be different based on the number of partitions
 	created on the disk by the Apple partition editor.
-	It is _VERY_ important to not change the start or sizes of partitions
-	other than the ones that are to be used by OpenBSD, including
-	the Apple_Driver.* and Apple_partition_map.
+	It is _VERY_ important to not change the start, sizes, or types of
+	partitions other than the ones that are to be used by OpenBSD,
+	including the Apple_Driver.* and Apple_partition_map.
 
 	---
 	Command (? for help): p
 	<output is in the before example above>
-	Command (? for help): d 11
-	Command (? for help): C
-	First block: 6264443
-	Length in blocks: 6330517
-	Name of partition: OpenBSD
-	Type of partition: OpenBSD
+	Command (? for help): t
+	Partition number: 11
+	Existing partition type ``Unused''.
+	New type of partition: OpenBSD
 	Command (? for help): p
 	<output is in the after example above>
 	---
-
-	After the partition is deleted, if the partition is printed,
-	it will show up as:
-	...
-	11:          Apple_Free Extra           6330517 @ 6264443 (  3.0G)
-	...
 
 	If fdisk is being invoked, it will start by
 	displaying the current partitions defined and then allow you
