@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.12 2002/12/19 18:19:10 deraadt Exp $ */
+/*	$OpenBSD: getline.c,v 1.13 2003/01/26 19:29:45 couderc Exp $ */
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -41,7 +41,6 @@
 #include <netinet/in.h>
 #include <arpa/telnet.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -253,10 +252,6 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 
 		/* +1 is for the newline */
 		clen = (ix+1) - iobp->next_byte;
-		while (clen > 0 && isspace(iobp->io_buffer[iobp->next_byte])) {
-			iobp->next_byte++;
-			clen--;
-		}
 		memcpy(iobp->line_buffer, &iobp->io_buffer[iobp->next_byte],
 		    clen);
 		iobp->next_byte += clen;
