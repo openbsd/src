@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsputkey.c,v 1.8 2000/06/19 23:06:25 aaron Exp $	*/
+/*	$OpenBSD: tcfsputkey.c,v 1.9 2000/06/20 01:29:14 provos Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -16,7 +16,6 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <ctype.h>
-#include <des.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
