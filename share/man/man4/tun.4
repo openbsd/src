@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.7 1998/11/04 16:45:57 mickey Exp $
+.\"	$OpenBSD: tun.4,v 1.8 1999/03/01 05:41:13 aaron Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os OpenBSD 1.2
@@ -361,5 +361,5 @@ bit set.)
 Very old versions of the tunnel device did not include the address
 family at the start of the packet.  More recent versions passed the
 address family as a single byte, but this caused problems with bpf,
-hence the currect version passes a u_int32_t of address family.
+hence the current version passes a u_int32_t of address family.
 
