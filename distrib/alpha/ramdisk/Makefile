@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/05/08 16:30:45 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/05/09 19:06:10 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -47,6 +47,7 @@ ${FLOPPY}:	bsd.gz
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV} \
 	    ${FLOPPYTYPE}
+	cat /*bin/* > /dev/null
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
@@ -56,6 +57,8 @@ ${FLOPPY}:	bsd.gz
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	cat /*bin/* > /dev/null
+	@cmp ${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
+	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
 	# some bug can put an extra 8k at the end it seems
