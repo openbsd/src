@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $
+ *	$Id: scp.c,v 1.12 1999/10/05 12:17:05 aaron Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $");
+RCSID("$Id: scp.c,v 1.12 1999/10/05 12:17:05 aaron Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -532,11 +532,10 @@ next:			(void)close(fd);
 			continue;
 		}
 
-		totalbytes = stb.st_size;
-
-		/* kick-start the progress meter */
-		if(showprogress)
+		if (showprogress) {
+			totalbytes = stb.st_size;
 			progressmeter(-1);
+		}
 
 		/* Keep writing after an error so that we stay sync'd up. */
 		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
@@ -750,6 +749,7 @@ sink(argc, argv)
 			np = namebuf;
 		} else
 			np = targ;
+		curfile = cp;
 		exists = stat(np, &stb) == 0;
 		if (buf[0] == 'D') {
 			int mod_flag = pflag;
@@ -796,6 +796,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			totalbytes = size;
 			progressmeter(-1);
 		}
+		statbytes = 0;
 		for (count = i = 0; i < size; i += 4096) {
 			amt = 4096;
 			if (i + amt > size)
@@ -975,7 +976,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $
+ *	$Id: scp.c,v 1.12 1999/10/05 12:17:05 aaron Exp $
  */
 
 char *
@@ -1129,6 +1130,8 @@ progressmeter(int flag)
 		lastsize = 0;
 	}   
 	(void)gettimeofday(&now, (struct timezone *)0);
+	if (totalbytes <= 0)
+		return;
 	cursize = statbytes;
 	ratio = cursize * 100 / totalbytes;
 	ratio = MAX(ratio, 0);
@@ -1196,6 +1199,7 @@ progressmeter(int flag)
 	} else if (flag == 1) {
 		alarmtimer(0);
 		write(fileno(stdout), "\n", 1);
+		statbytes = 0;
 	}
 }
 
