@@ -1,6 +1,11 @@
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1994 Theo de Raadt
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *    This product includes software developed by Theo de Raadt.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -328,7 +333,7 @@ start:
 _trapbase:
 /* trap 0 is special since we cannot receive it */
 	b dostart; nop; nop; nop	! 00 = reset (fake)
-	VTRAP(T_TEXTFAULT, memfault)	! 01 = instr. fetch fault
+	VTRAP(T_TEXTFAULT, 0)		! 01 = instr. fetch fault (backpatch to memfault)
 	TRAP(T_ILLINST)			! 02 = illegal instruction
 	TRAP(T_PRIVINST)		! 03 = privileged instruction
 	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
@@ -336,7 +341,7 @@ _trapbase:
 	WINDOW_UF			! 06 = window underflow
 	TRAP(T_ALIGN)			! 07 = address alignment error
 	VTRAP(T_FPE, fp_exception)	! 08 = fp exception
-	VTRAP(T_DATAFAULT, memfault)	! 09 = data fetch fault
+	VTRAP(T_DATAFAULT, 0)		! 09 = data fetch fault (backpatch to memfault)
 	TRAP(T_TAGOF)			! 0a = tag overflow
 	UTRAP(0x0b)
 	UTRAP(0x0c)
@@ -1073,21 +1078,15 @@ ctw_invalid:
  *	a+8	AC_ASYNC_ERR
  *	a+12	AC_ASYNC_VA
  */
-memfault:
+
+#if defined(SUN4)
+memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
 
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-	sethi	%hi(_cputyp), %o0	! what cpu are we running on?
-	ld	[%o0 + %lo(_cputyp)], %o0
-	cmp	%o0, CPU_SUN4
-	bne	9f
-	 nop
-#endif
-#if defined(SUN4)
 	/*
 	 * registers:
 	 * memerr.ctrl	= memory error control reg., error if 0x80 set
@@ -1121,9 +1120,9 @@ memfault:
 
 xnormal_mem_fault:
 	/*
-	 * have to make SUN4 emulate SUN4C.   4C code expects
-	 * SER in %o1 and the offending VA in %o2, everything else is ok.
-	 * (must figure out if SER_WRITE should be set)
+	 * have to make SUN4 emulate SUN4C. SUN4C code expects SER in
+	 * %o1 and the offending VA in %o2, everything else remains the
+	 * same, but we must figure out if SER_WRITE should be set.
 	 */
 	set	AC_BUS_ERR, %o0		! bus error register
 	cmp	%l3, T_TEXTFAULT	! text fault always on PC
@@ -1139,13 +1138,17 @@ xnormal_mem_fault:
 	 sethi	%hi(SER_WRITE), %o5     ! damn SER_WRITE wont fit simm13
 !	or	%lo(SER_WRITE), %o5, %o5! not necessary since %lo is zero
 	or	%o5, %o1, %o1		! set SER_WRITE
-#if defined(SUN4C) || defined(SUN4M)
 	ba	normal_mem_fault
 	 nop				! XXX make efficient later
-#endif /* SUN4C || SUN4M */
 #endif /* SUN4 */
-9:
-#if defined(SUN4C) || defined(SUN4M)
+
+#if defined(SUN4C)
+memfault_sun4c:
+	TRAP_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+
+	st	%g1, [%sp + CCFSZ + 20]	! save g1
+	rd	%y, %l4			! save y
 
 #if AC_SYNC_ERR + 4 != AC_SYNC_VA || \
     AC_SYNC_ERR + 8 != AC_ASYNC_ERR || AC_SYNC_ERR + 12 != AC_ASYNC_VA
@@ -1225,7 +1228,28 @@ xnormal_mem_fault:
 	b	return_from_trap
 	 wr	%l0, 0, %psr
 	/* NOTREACHED */
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C */
+
+#if defined(SUN4M)
+memfault_sun4m:
+	TRAP_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+
+	st	%g1, [%sp + CCFSZ + 20]	! save g1
+	rd	%y, %l4			! save y
+
+	mov	SRMMU_FAULTSTAT, %o0
+	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
+	lda	[%o0] ASI_SRMMU, %o1	! srmmu fault status
+	mov	SRMMU_FAULTADDR, %o0
+	std	%g4, [%sp + CCFSZ + 32]	! (sneak g4,g5 in here)
+	lda	[%o0] ASI_SRMMU, %o2	! srmmu fault address
+	! XXX check for memory errors?
+	std	%g6, [%sp + CCFSZ + 40]
+	b	normal_mem_fault	! no, just a regular fault
+ 	 wr	%l0, PSR_ET, %psr	! (and reenable traps)
+	/* NOTREACHED */
+#endif /* SUN4M */
 
 normal_mem_fault:
 	/*
@@ -2518,6 +2542,8 @@ dostart:
 is_sun4m:
 #if defined(SUN4M)
 	mov	SUN4CM_PGSHIFT, %g5
+
+	set	memfault_sun4m, %o1	! ptr to our memfault routine
 	b	start_havetype
 	 mov	CPU_SUN4M, %g4
 #else
@@ -2537,6 +2563,7 @@ is_sun4c:
 	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
 	stba	%g0, [%g1] ASI_CONTROL
 
+	set	memfault_sun4c, %o1	! ptr to our memfault routine
 	b	start_havetype
 	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
 #else
@@ -2570,6 +2597,7 @@ is_sun4:
 	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
 	stba	%g0, [%g1] ASI_CONTROL
 
+	set	memfault_sun4, %o1	! ptr to our memfault routine
 	b	start_havetype
 	 mov	CPU_SUN4, %g4
 #else
@@ -2586,6 +2614,41 @@ is_sun4:
 #endif
 
 start_havetype:
+	/*
+	 * Back-patch the T_{TEXT,DATA}FAULT vectors to branch to the
+	 * correct memfault routine. There is a different memfault routine
+	 * for each processor. Here we carefully synthesize the offsets
+	 * and merge them into the "ba" instruction which already exists.
+	 */
+	set	KERNBASE, %o2			! unmapped as yet
+	sub	%o1, %o2, %o1
+	set	_trapbase-KERNBASE, %o2		! and store in trap table
+	set	0xffc00000, %o4			! 22bit offset in "bcc" instruction
+
+	! patch instr fetch fault vector to point to our memfault routine
+	ld	[%o2 + (16*T_TEXTFAULT+4)], %o3	! fetch "ba" instruction
+	and	%o3, %o4, %o3			! mask out garbage
+	sub	%o1, %o2, %o5			! generate relative offset
+	sub	%o5, (16*T_TEXTFAULT+4), %o5
+	srl	%o5, 2, %o5			! long-word offset
+	or	%o3, %o5, %o3			! merge into "ba" instruction
+	st	%o3, [%o2 + (16*T_TEXTFAULT+4)]
+
+	! patch data fetch fault vector to point to our memfault routine
+	ld	[%o2 + (16*T_DATAFAULT+4)], %o3	! fetch "ba" instruction
+	and	%o3, %o4, %o3			! mask out garbage
+	sub	%o1, %o2, %o5			! generate relative offset
+	sub	%o5, (16*T_DATAFAULT+4), %o5
+	srl	%o5, 2, %o5			! long-word offset
+	or	%o3, %o5, %o3			! merge into "ba" instruction
+	st	%o3, [%o2 + (16*T_DATAFAULT+4)]
+	
+	/* 
+	 * XXX
+	 * We just modified the text segment. We should flush that cache
+	 * line!
+	 */
+
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
@@ -2653,7 +2716,7 @@ start_havetype:
 #if defined(MMU_3L)
 	set	AC_IDPROM+1, %l3
 	lduba	[%l3] ASI_CONTROL, %l3
-	cmp	%l3, 0x24 ! XXX - SUN4_400
+	cmp	%l3, SUN4_400
 	bne	no_3mmu
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
@@ -3772,7 +3835,7 @@ Lsw_havectx:
 	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
 	ld	[%o1 + %lo(_cputyp)], %o1
 	cmp	%o1, CPU_SUN4M
-	bne	1f
+	beq	1f
 	 nop
 #endif
 #if defined(SUN4) || defined(SUN4C)
