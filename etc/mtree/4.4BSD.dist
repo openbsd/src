@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.173 2005/04/01 15:27:45 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.174 2005/04/02 17:21:06 jmc Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1440,7 +1440,11 @@ alpha
 ..
 amd64
 ..
+cats
+..
 i386
+..
+zaurus
 ..
 
 # ./usr/share/man/ps2
