@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.171 2005/03/09 11:30:59 espie Exp $
+# $OpenBSD: pkg_add,v 1.172 2005/03/09 11:46:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -656,6 +656,7 @@ sub install_package
 	for my $dep (keys %{$handle->{solved_dependencies}}) {
 		OpenBSD::SharedLibs::add_package_libs($dep);
 	}
+	my $okay = 1;
 	for my $dep (@{$plist->{libdepend}}) {
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		for my $spec (split(/,/, $dep->{libspec})) {
@@ -663,8 +664,7 @@ sub install_package
 			$handle->{solved_dependencies}, 0)) {
 			    Warn "Can't install $pkg: lib not found $spec\n";
 			    clue($handle->{solved_dependencies});
-			    $handle->close();
-			    return () unless $forced{libdepends};
+			    $okay = 0;
 		    }
 		}
 	}
@@ -674,9 +674,12 @@ sub install_package
 		    $handle->{solved_dependencies}, 1, $extra)) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
 			clue($extra);
-			$handle->close();
-			return () unless $forced{libdepends};
+			$okay = 0;
 		}
+	}
+	if (!$okay) {
+		$handle->close();
+		return () unless $forced{libdepends};
 	}
 	really_add($handle, $state);
 	rmtree($handle->info());
