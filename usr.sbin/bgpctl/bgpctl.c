@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.66 2004/10/26 11:44:06 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.67 2004/10/26 11:46:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -43,8 +43,9 @@ enum neighbor_views {
 
 void		 usage(void);
 int		 main(int, char *[]);
+char		*fmt_peer(const struct peer_config *, int);
 void		 show_summary_head(void);
-int		 show_summary_msg(struct imsg *);
+int		 show_summary_msg(struct imsg *, int);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
@@ -74,7 +75,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+	fprintf(stderr, "usage: %s [-n] <command> [arg [...]]\n", __progname);
 	exit(1);
 }
 
@@ -82,10 +83,24 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n, done;
+	int			 fd, n, done, ch, nodescr = 0;
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
+
+	while ((ch = getopt(argc, argv, "n")) != -1) {
+		switch (ch) {
+		case 'n':
+			if (++nodescr > 1)
+				usage();
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= (optind - 1);
+	argv += (optind - 1);
 
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
@@ -240,7 +255,7 @@ main(int argc, char *argv[])
 			switch (res->action) {
 			case SHOW:
 			case SHOW_SUMMARY:
-				done = show_summary_msg(&imsg);
+				done = show_summary_msg(&imsg, nodescr);
 				break;
 			case SHOW_FIB:
 				done = show_fib_msg(&imsg);
@@ -286,6 +301,31 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+char *
+fmt_peer(const struct peer_config *peer, int nodescr)
+{
+	const char	*ip;
+	char		*p;
+
+	if (peer->descr[0] && !nodescr) {
+		if ((p = strdup(peer->descr)) == NULL)
+			fatal(NULL);
+		return (p);
+	}
+
+	ip = log_addr(&peer->remote_addr);
+	if ((peer->remote_addr.af == AF_INET && peer->remote_masklen != 32) ||
+	    (peer->remote_addr.af == AF_INET6 && peer->remote_masklen != 128)) {
+		if (asprintf(&p, "%s/%u", ip, peer->remote_masklen) == -1)
+			fatal(NULL);
+	} else {
+		if ((p = strdup(ip)) == NULL)
+			fatal(NULL);
+	}
+
+	return (p);
+}
+
 void
 show_summary_head(void)
 {
@@ -294,7 +334,7 @@ show_summary_head(void)
 }
 
 int
-show_summary_msg(struct imsg *imsg)
+show_summary_msg(struct imsg *imsg, int nodescr)
 {
 	struct peer		*p;
 	char			*s;
@@ -302,19 +342,9 @@ show_summary_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		if ((p->conf.remote_addr.af == AF_INET &&
-		    p->conf.remote_masklen != 32) ||
-		    (p->conf.remote_addr.af == AF_INET6 &&
-		    p->conf.remote_masklen != 128)) {
-			if (asprintf(&s, "%s/%u",
-			    log_addr(&p->conf.remote_addr),
-			    p->conf.remote_masklen) == -1)
-				err(1, NULL);
-		} else
-			if ((s = strdup(log_addr(&p->conf.remote_addr))) ==
-			    NULL)
-				err(1, NULL);
-
+		s = fmt_peer(&p->conf, nodescr);
+		if (strlen(s) >= 20)
+			s[20] = 0;
 		printf("%-20s %5u %10llu %10llu %5u %-8s ",
 		    s, p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
