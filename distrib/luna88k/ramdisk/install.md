@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.1 2004/04/21 18:40:21 miod Exp $
+#       $OpenBSD: install.md,v 1.2 2004/05/28 22:59:35 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -39,6 +39,7 @@
 #
 
 MDTERM=vt100
+MDROOTFSOPT="-f 1024 -b 8192"
 ARCH=ARCH
 
 md_set_term() {
