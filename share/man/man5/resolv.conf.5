@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.10 2000/01/03 11:51:08 itojun Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.11 2000/02/14 13:23:54 itojun Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -233,3 +233,14 @@ The
 .Nm
 file format appeared in
 .Bx 4.3 .
+.Sh BUGS
+Due to resolver internal issues,
+.Xr getaddrinfo 3
+may not behave as
+.Sy lookup
+suggests.
+Consequently, userland programs that use
+.Xr getaddrinfo 3
+may behave differently from what
+.Sy lookup
+says.
