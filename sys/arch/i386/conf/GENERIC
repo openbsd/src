@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.238 2001/02/13 21:40:35 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.239 2001/02/14 05:13:14 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -224,6 +224,8 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 scsibus* at adv?
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
