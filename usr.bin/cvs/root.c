@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.10 2004/08/27 15:40:44 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.11 2004/08/31 11:54:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -184,6 +184,8 @@ cvsroot_parse(const char *str)
 
 		root->cr_user = cp;
 	}
+	else
+		sp = cp;
 
 	pp = strchr(sp, ':');
 	if (pp != NULL) {
