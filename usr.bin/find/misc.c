@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 2001/11/16 23:54:38 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2001/11/17 19:50:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2001/11/16 23:54:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2001/11/17 19:50:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,8 +142,10 @@ show_path(sig)
 	int save_errno = errno;
 	extern FTSENT *entry;
 
-	write(STDERR_FILENO, "find path: ", 11);
-	write(STDERR_FILENO, entry->fts_path, entry->fts_pathlen);
-	write(STDERR_FILENO, "\n", 1);
-	errno = save_errno;
+	if (entry != NULL) {
+		write(STDERR_FILENO, "find path: ", 11);
+		write(STDERR_FILENO, entry->fts_path, entry->fts_pathlen);
+		write(STDERR_FILENO, "\n", 1);
+		errno = save_errno;
+	}
 }

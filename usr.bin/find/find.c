@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.7 1999/10/04 21:17:32 millert Exp $	*/
+/*	$OpenBSD: find.c,v 1.8 2001/11/17 19:50:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.7 1999/10/04 21:17:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.8 2001/11/17 19:50:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: find.c,v 1.7 1999/10/04 21:17:32 millert Exp $"
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -157,12 +158,20 @@ find_execute(plan, paths)
 	PLAN *plan;		/* search plan */
 	char **paths;		/* array of pathnames to traverse */
 {
+	sigset_t fullset, oset;
 	PLAN *p;
     
 	if (!(tree = fts_open(paths, ftsoptions, NULL)))
 		err(1, "ftsopen");
 
-	while ((entry = fts_read(tree))) {
+	sigfillset(&fullset);
+	for (;;) {
+		(void)sigprocmask(SIG_BLOCK, &fullset, &oset);
+		entry = fts_read(tree);
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+		if (entry == NULL)
+			break;
+
 		switch (entry->fts_info) {
 		case FTS_D:
 			if (isdepth)
