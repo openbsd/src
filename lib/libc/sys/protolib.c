@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: protolib.c,v 1.4 1996/09/15 10:09:13 tholo Exp $";
+static char rcsid[] = "$OpenBSD: protolib.c,v 1.5 1997/12/27 12:04:18 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -133,18 +133,18 @@ int	execve(const char *, char *const [], char *const []);	/*  59 */
 mode_t	umask(mode_t);						/*  60 */
 int	chroot(const char *);					/*  61 */
 
-int	msync(caddr_t, size_t);					/*  65 */
+int	msync(void *, size_t, int);				/*  65 */
 pid_t	vfork(void);						/*  66 */
 
 char	*sbrk(int);						/*  69 */
 char	*sstk(int);						/*  70 */
 
 int	vadvise(int);						/*  72 */
-int	munmap(caddr_t, size_t);				/*  73 */
-int	mprotect(caddr_t, size_t, int);				/*  74 */
-int	madvise(caddr_t, size_t, int);				/*  75 */
+int	munmap(void *, size_t);					/*  73 */
+int	mprotect(void *, size_t, int);				/*  74 */
+int	madvise(void *, size_t, int);				/*  75 */
 
-int	mincore(caddr_t, size_t, char *);			/*  78 */
+int	mincore(void *, size_t, char *);			/*  78 */
 int	getgroups(int, gid_t *);				/*  79 */
 int	setgroups(int, const gid_t *);				/*  80 */
 pid_t	getpgrp(void);						/*  81 */
@@ -237,8 +237,8 @@ quad_t	__syscall(quad_t, ...);					/* 198 */
 
 int	__sysctl(int *, u_int, void *, size_t *, void *,	/* 202 */
 		 size_t);
-int	mlock(caddr_t, size_t);					/* 203 */
-int	munlock(caddr_t, size_t);				/* 204 */
+int	mlock(void *, size_t);					/* 203 */
+int	munlock(void *, size_t);				/* 204 */
 int	undelete(const char *);					/* 205 */
 
 int	__semctl(int, int, int, union semun *);			/* 220 */
@@ -254,7 +254,7 @@ int	shmctl(int, int, struct shmid_ds *);			/* 229 */
 int	shmdt(void *);						/* 230 */
 int	shmget(key_t, int, int);				/* 231 */
 
-int	minherit(caddr_t, size_t, int);				/* 250 */
+int	minherit(void *, size_t, int);				/* 250 */
 int	rfork(int);						/* 251 */
 int	poll(struct pollfd *, unsigned long, int);		/* 252 */
 int	issetugid(void);					/* 253 */
