@@ -1,4 +1,4 @@
-.\"	$OpenBSD: times.3,v 1.8 2000/12/24 00:30:52 aaron Exp $
+.\"	$OpenBSD: times.3,v 1.9 2002/05/22 03:44:21 vincent Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,7 @@ The
 .Li tms
 structure is defined as follows:
 .Bd -literal -offset indent
-typedef struct {
+struct tms {
 	clock_t tms_utime;
 	clock_t tms_stime;
 	clock_t tms_cutime;
