@@ -260,6 +260,8 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/include
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/include/unwind.h
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/libgcc.a
+./usr/lib/libarm.a
+./usr/lib/libarm_p.a
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libbfd.la
