@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 2002/06/07 03:32:04 itojun Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2003/05/15 04:45:28 pjanzen Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -10,7 +10,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2002/06/07 03:32:04 itojun Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2003/05/15 04:45:28 pjanzen Exp $";
 #endif
 #endif
 
@@ -33,7 +33,7 @@ FILE   *fp;
     int     got;
     char   *start = ptr;
 
-    while (fgets(ptr, len, fp)) {
+    while (len > 1 && fgets(ptr, len, fp)) {
 	got = strlen(ptr);
 	if (got >= 1 && ptr[got - 1] == '\n') {
 	    tcpd_context.line++;
