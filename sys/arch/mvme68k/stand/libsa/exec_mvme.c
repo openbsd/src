@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.6 2003/08/20 00:26:00 deraadt Exp $ */
+/*	$OpenBSD: exec_mvme.c,v 1.7 2003/09/19 22:34:52 miod Exp $ */
 /*	$NetBSD: exec_sun.c,v 1.5 1996/01/29 23:41:06 gwr Exp $ */
 
 /*-
@@ -174,6 +174,9 @@ exec_mvme(file, flag)
 	close(io);
 
 	printf("Start @ 0x%x ...\n", (int)entry);
+	if (flag & RB_HALT)
+		_rtt();
+
 	(*entry)(flag, bugargs.ctrl_addr, bugargs.ctrl_lun,
 	    bugargs.dev_lun, 0, cp);
 	printf("exec: kernel returned!\n");
