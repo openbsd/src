@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.4,v 1.11 1999/06/18 01:44:19 aaron Exp $
+.\"      $OpenBSD: ipnat.4,v 1.12 1999/06/18 01:46:40 aaron Exp $
 .Dd 5 June, 1999
 .Os
 .Dt IPNAT 4
@@ -21,9 +21,8 @@ supported.
 To add/delete rules to/from the NAT list, two
 .Dq basic
 ioctl's are provided:
-.Bd -ragged -offset indent
+.Bd -literal -offset indent
 .Fn ioctl fd SIOCADNAT "struct ipnat *"
-.br
 .Fn ioctl fd SIOCRMNAT "struct ipnat *"
 .Ed
 .Pp
