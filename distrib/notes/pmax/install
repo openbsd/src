@@ -166,7 +166,7 @@ looks like:
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
-# /dev/rrz0c:
+ # /dev/rrz0c:
 type: SCSI
 disk: simpleroot
 label: 
@@ -197,7 +197,7 @@ disk above (SEAGATE ST1480).
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
-# /dev/rrz0c:
+ # /dev/rrz0c:
 type: SCSI
 disk: SEAGATE ST1480 r
 label: 
