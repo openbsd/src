@@ -599,6 +599,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/ansi.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/asm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/atomic.ph

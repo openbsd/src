@@ -4,6 +4,7 @@
 ./usr/bin/readelf
 ./usr/include/arm
 ./usr/include/arm/ansi.h
+./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
 ./usr/include/arm/atomic.h
