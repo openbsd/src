@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.104 2004/09/17 13:53:08 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.105 2004/12/14 10:17:28 mcbride Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1838,6 +1838,7 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
     struct sockaddr **mask, u_int8_t *tproto, u_int16_t *port)
 {
 	char	*type, *address, *netmask;
+	sa_family_t	af = 0;
 
 	type = conf_get_str(section, "ID-type");
 	if (!type) {
@@ -1846,6 +1847,16 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 		return -1;
 	}
 	*id = constant_value(ipsec_id_cst, type);
+	switch (*id) {
+	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV4_ADDR_SUBNET:
+		af = AF_INET;
+		break;
+	case IPSEC_ID_IPV6_ADDR:
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+		af = AF_INET6;
+		break;
+	}
 	switch (*id) {
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR: {
@@ -1857,7 +1868,7 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 			    "\"Address\" tag", section);
 			return -1;
 		}
-		if (text2sockaddr(address, NULL, addr)) {
+		if (text2sockaddr(address, NULL, addr, af, 0)) {
 			log_print("ipsec_get_id: invalid address %s in "
 			    "section %s", address, section);
 			return -1;
@@ -1887,7 +1898,7 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 			    "\"Network\" tag", section);
 			return -1;
 		}
-		if (text2sockaddr(address, NULL, addr)) {
+		if (text2sockaddr(address, NULL, addr, af, 0)) {
 			log_print("ipsec_get_id: invalid section %s "
 			    "network %s", section, address);
 			return -1;
@@ -1899,7 +1910,7 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 			free(*addr);
 			return -1;
 		}
-		if (text2sockaddr(netmask, NULL, mask)) {
+		if (text2sockaddr(netmask, NULL, mask, af, 1)) {
 			log_print("ipsec_id_build: invalid section %s "
 			    "network %s", section, netmask);
 			free(*addr);

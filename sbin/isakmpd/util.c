@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.48 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.49 2004/12/14 10:17:28 mcbride Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -41,6 +41,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ifaddrs.h>
+#include <net/route.h>
+#include <net/if.h>
 
 #include "sysdep.h"
 
@@ -240,9 +243,23 @@ hex2raw(char *s, u_int8_t *buf, size_t sz)
 }
 
 int
-text2sockaddr(char *address, char *port, struct sockaddr **sa)
+text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
+    int netmask)
 {
 	struct addrinfo *ai, hints;
+	struct sockaddr_storage tmp_sas;
+	struct ifaddrs *ifap, *ifa = NULL, *llifa = NULL;
+	char *np = address;
+#ifdef USE_DEFAULT_ROUTE
+	char ifname[IFNAMSIZ];
+	u_char buf[BUFSIZ];
+	struct rt_msghdr *rtm;
+	struct sockaddr *sa2;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6;
+	int fd = 0, seq, len, b;
+	pid_t pid;
+#endif /* USE_DEFAULT_ROUTE */
 
 	memset(&hints, 0, sizeof hints);
 	if (!allow_name_lookups)
@@ -251,17 +268,136 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
 
-	if (getaddrinfo(address, port, &hints, &ai))
-		return -1;
+	if (getaddrinfo(address, port, &hints, &ai)) {
+#ifdef USE_DEFAULT_ROUTE
+		/*
+		 * If the 'default' keyword is used, do a route lookup for
+		 * the default route, and use the interface associated with
+		 * it to select a source address.
+		 */
+		if (!strcmp(address, "default")) {
+			fd = socket(PF_ROUTE, SOCK_RAW, af);
+			
+			memset(buf, 0, sizeof(buf));
 
-	*sa = malloc(sysdep_sa_len(ai->ai_addr));
-	if (!*sa) {
+			rtm = (struct rt_msghdr *)buf;
+			rtm->rtm_version = RTM_VERSION;
+			rtm->rtm_type = RTM_GET;
+			rtm->rtm_flags = RTF_UP;
+			rtm->rtm_addrs = RTA_DST;
+			rtm->rtm_seq = seq = arc4random(); 
+
+			/* default destination */
+			sa2 = (struct sockaddr *)(rtm + 1);
+			switch (af) {
+			case AF_INET: {
+				sin = (struct sockaddr_in *)sa2;
+				sin->sin_len = sizeof(*sin);
+				sin->sin_family = af;
+				break;
+			}
+			case AF_INET6: {
+				sin6 = (struct sockaddr_in6 *)sa2;
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = af;
+				break;
+			}
+			default:
+				close(fd);
+				return (-1);
+			}
+			rtm->rtm_addrs |= RTA_NETMASK|RTA_IFP|RTA_IFA;
+			rtm->rtm_msglen = sizeof(*rtm) + sizeof(*sa2);
+
+			if ((b = write(fd, buf, rtm->rtm_msglen)) < 0) {
+				close(fd);
+				return (-1);
+			}
+
+			pid = getpid();
+
+			while ((len = read(fd, buf, sizeof(buf))) > 0) {
+				if (len < sizeof(*rtm)) {
+					close(fd);
+					return (-1);
+				}
+
+				if (rtm->rtm_type == RTM_GET &&
+				    rtm->rtm_pid == pid &&
+				    rtm->rtm_seq == seq) {
+					if (rtm->rtm_errno) {
+						close(fd);
+						return (-1);
+					}
+					break;
+				}
+			}
+			close(fd);
+
+			if ((rtm->rtm_addrs & (RTA_DST|RTA_GATEWAY)) ==
+			    (RTA_DST|RTA_GATEWAY)) {
+				np = if_indextoname(rtm->rtm_index, ifname);
+				if (np == NULL)
+					return (-1);
+			}	
+		}
+#endif /* USE_DEFAULT_ROUTE */
+	
+		if (getifaddrs(&ifap) != 0)
+			return (-1);
+
+		switch (af) {
+		default:
+		case AF_INET:
+			for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+				if (!strcmp(ifa->ifa_name, np) &&
+				    ifa->ifa_addr != NULL && 
+				    ifa->ifa_addr->sa_family == AF_INET)
+					break;
+			break;
+		case AF_INET6:
+			for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+				if (!strcmp(ifa->ifa_name, np) &&
+				    ifa->ifa_addr != NULL && 
+				    ifa->ifa_addr->sa_family == AF_INET6) {
+					if (IN6_IS_ADDR_LINKLOCAL(
+					    &((struct sockaddr_in6 *)
+					    ifa->ifa_addr)->sin6_addr) && 
+					    llifa == NULL)
+						llifa = ifa;
+					else
+						break;
+				}
+			}
+			if (ifa == NULL) {
+				ifa = llifa;
+			}
+			break;
+		}
+  
+		if (ifa) {
+			if (netmask)
+				memcpy(&tmp_sas, ifa->ifa_netmask,
+				    sysdep_sa_len(ifa->ifa_netmask));
+				    
+			else
+				memcpy(&tmp_sas, ifa->ifa_addr,
+				    sysdep_sa_len(ifa->ifa_addr));
+			freeifaddrs(ifap);
+		} else {
+			freeifaddrs(ifap);
+			return -1;
+		}
+	} else {
+		memcpy(&tmp_sas, ai->ai_addr, sysdep_sa_len(ai->ai_addr));
 		freeaddrinfo(ai);
-		return -1;
 	}
 
-	memcpy(*sa, ai->ai_addr, sysdep_sa_len(ai->ai_addr));
-	freeaddrinfo(ai);
+	*sa = malloc(sysdep_sa_len((struct sockaddr *)&tmp_sas));
+	if (!*sa)
+		return -1;
+
+	memcpy(*sa, &tmp_sas, sysdep_sa_len((struct sockaddr *)&tmp_sas));
 	return 0;
 }
 

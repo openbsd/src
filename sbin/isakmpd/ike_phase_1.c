@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.56 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.57 2004/12/14 10:17:28 mcbride Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -802,6 +802,7 @@ ike_phase_1_send_ID(struct message *msg)
 	size_t         *id_len;
 	char           *my_id = 0, *data;
 	u_int8_t        id_type;
+	sa_family_t	af = 0;
 
 	/* Choose the right fields to fill-in.  */
 	id = initiator ? &exchange->id_i : &exchange->id_r;
@@ -831,6 +832,16 @@ ike_phase_1_send_ID(struct message *msg)
 		SET_ISAKMP_ID_TYPE(buf, id_type);
 		switch (id_type) {
 		case IPSEC_ID_IPV4_ADDR:
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+			af = AF_INET;
+			break;
+		case IPSEC_ID_IPV6_ADDR:
+		case IPSEC_ID_IPV6_ADDR_SUBNET:
+			af = AF_INET6;
+			break;
+		}
+		switch (id_type) {
+		case IPSEC_ID_IPV4_ADDR:
 		case IPSEC_ID_IPV6_ADDR:
 			/* Already in network byteorder.  */
 			memcpy(buf + ISAKMP_ID_DATA_OFF,
@@ -846,7 +857,7 @@ ike_phase_1_send_ID(struct message *msg)
 				    "has no \"Network\" tag", my_id);
 				return -1;
 			}
-			if (text2sockaddr(data, NULL, &src)) {
+			if (text2sockaddr(data, NULL, &src, af, 0)) {
 				log_error("ike_phase_1_send_ID: "
 				    "text2sockaddr() failed");
 				return -1;
@@ -861,7 +872,7 @@ ike_phase_1_send_ID(struct message *msg)
 				    "has no \"Netmask\" tag", my_id);
 				return -1;
 			}
-			if (text2sockaddr(data, NULL, &src)) {
+			if (text2sockaddr(data, NULL, &src, af, 1)) {
 				log_error("ike_phase_1_send_ID: "
 				    "text2sockaddr() failed");
 				return -1;
@@ -968,6 +979,7 @@ ike_phase_1_recv_ID(struct message *msg)
 	size_t         *id_len;
 	ssize_t         sz;
 	struct sockaddr *sa;
+	sa_family_t	af = 0;
 
 	payload = payload_first(msg, ISAKMP_PAYLOAD_ID);
 
@@ -989,6 +1001,14 @@ ike_phase_1_recv_ID(struct message *msg)
 		}
 		switch (id_type) {
 		case IPSEC_ID_IPV4_ADDR:
+			af = AF_INET;
+			break;
+		case IPSEC_ID_IPV6_ADDR:
+			af = AF_INET6;
+			break;
+		}
+		switch (id_type) {
+		case IPSEC_ID_IPV4_ADDR:
 		case IPSEC_ID_IPV6_ADDR:
 			p = conf_get_str(rs, "Address");
 			if (!p) {
@@ -997,7 +1017,7 @@ ike_phase_1_recv_ID(struct message *msg)
 				free(rid);
 				return -1;
 			}
-			if (text2sockaddr(p, 0, &sa) == -1) {
+			if (text2sockaddr(p, 0, &sa, af, 0) == -1) {
 				log_print("ike_phase_1_recv_ID: "
 				    "failed to parse address %s", p);
 				free(rid);

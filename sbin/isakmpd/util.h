@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.21 2004/06/23 03:01:53 hshoexer Exp $	 */
+/* $OpenBSD: util.h,v 1.22 2004/12/14 10:17:28 mcbride Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -63,7 +63,8 @@ extern u_int8_t *sockaddr_addrdata(struct sockaddr *);
 extern int      sockaddr_addrlen(struct sockaddr *);
 extern in_port_t sockaddr_port(struct sockaddr *);
 extern void	sockaddr_set_port(struct sockaddr *, in_port_t);
-extern int      text2sockaddr(char *, char *, struct sockaddr **);
+extern int      text2sockaddr(char *, char *, struct sockaddr **,
+		    sa_family_t, int);
 extern void     util_ntoa(char **, int, u_int8_t *);
 extern int      zero_test(const u_int8_t *, size_t);
 

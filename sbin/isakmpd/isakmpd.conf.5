@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.94 2004/08/10 15:59:10 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.95 2004/12/14 10:17:28 mcbride Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -644,21 +644,43 @@ If the ID-type is
 .Li IPV4_ADDR
 or
 .Li IPV6_ADDR
-this tag should exist and be an IP-address.
+this tag should exist and be an IP-address, an interface name, or the
+.Em default
+keyword.
+If an interface is used, the first address of the appropriate
+family will be used.
+The
+.Em default
+keyword uses the interface associated with the default route.
+In the case of IPv6 link-local addresses will be skipped if 
+addresses which are not link-local exist.
+If the address on the interface changes
+.Em isakmpd
+will not track the change.
+The configuration must be reloaded to learn the new address.
 .It Em Network
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
 or
 .Li IPV6_ADDR_SUBNET
-this tag should exist and
-be a network address.
+this tag should exist and be a network address, an interface, or the
+.Em default
+keyword.
+When an interface is specified the network is selected as with the
+.Em Address
+tag.
 .It Em Netmask
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
 or
 .Li IPV6_ADDR_SUBNET
 this tag should exist and
-be a network subnet mask.
+be a network subnet mask or an interface.
+When an interface is specified the netmask is the mask associated with the
+.Em Network .
+The
+.Em default
+keyword uses the interface associated with the default route.
 .It Em Protocol
 If the ID-type is
 .Li IPV4_ADDR ,

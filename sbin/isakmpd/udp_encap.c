@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.9 2004/10/20 15:00:45 hshoexer Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.10 2004/12/14 10:17:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -252,7 +252,7 @@ udp_encap_create(char *name)
 		    "for \"%s\"", name);
 		return 0;
 	}
-	if (text2sockaddr(addr_str, port_str, &dst)) {
+	if (text2sockaddr(addr_str, port_str, &dst, 0, 0)) {
 		log_print("udp_encap_create: address \"%s\" not understood",
 		    addr_str);
 		return 0;
@@ -281,7 +281,7 @@ udp_encap_create(char *name)
 		for (addr_node = TAILQ_FIRST(&addr_list->fields);
 		     addr_node; addr_node = TAILQ_NEXT(addr_node, link))
 			if (text2sockaddr(addr_node->field, port_str,
-			    &addr) == 0) {
+			    &addr, 0, 0) == 0) {
 				v = virtual_listen_lookup(addr);
 				free(addr);
 				if (v) {
@@ -296,7 +296,7 @@ udp_encap_create(char *name)
 			goto ret;
 		}
 	}
-	if (text2sockaddr(addr_str, port_str, &addr)) {
+	if (text2sockaddr(addr_str, port_str, &addr, 0, 0)) {
 		log_print("udp_encap_create: "
 		    "address \"%s\" not understood", addr_str);
 		rv = 0;

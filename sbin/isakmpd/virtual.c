@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.9 2004/09/20 21:36:50 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.10 2004/12/14 10:17:28 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -457,7 +457,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	if (listen_on) {
 		for (address = TAILQ_FIRST(&listen_on->fields); address;
 		    address = TAILQ_NEXT(address, link)) {
-			if (text2sockaddr(address->field, 0, &addr)) {
+			if (text2sockaddr(address->field, 0, &addr, 0, 0)) {
 				log_print("virtual_bind_if: "
 				    "invalid address %s in \"Listen-on\"",
 				    address->field);
