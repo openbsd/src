@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2005/04/04 11:44:50 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2005/04/04 11:45:33 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1639,12 +1639,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else
 			printf("(pmap_enter: %x) pmap %x va %x pa %x\n", curproc, pmap, va, pa);
 	}
-
-	/* copying/zeroing pages are magic */
-	if (pmap == kernel_pmap &&
-	    va >= phys_map_vaddr && va < phys_map_vaddr_end) {
-		return 0;
-	}
 #endif
 
 	template = m88k_protection(prot);
@@ -1679,26 +1673,28 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pmap_con_dbg & CD_ENT)
 		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, *pte);
 #endif
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg != NULL)
+		pvl = pg_to_pvh(pg);
+	else
+		pvl = NULL;
+
 	if (old_pa == pa) {
 		/* May be changing its wired attributes or protection */
 		if (wired && !(pmap_pte_w(pte)))
 			pmap->pm_stats.wired_count++;
 		else if (!wired && pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
-
-		pvl = NULL;
-	} else { /* if (pa == old_pa) */
+	} else {
 		/* Remove old mapping from the PV list if necessary. */
 		pmap_remove_pte(pmap, va, pte);
 
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL) {
+		if (pvl != NULL) {
 			/*
-			 *	Enter the mapping in the PV list for this
-			 *	physical page.
+			 * Enter the mapping in the PV list for this
+			 * managed page.
 			 */
-			pvl = pg_to_pvh(pg);
-
 			if (pvl->pv_pmap == PMAP_NULL) {
 				/*
 				 *	No mappings yet
@@ -1709,15 +1705,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				pvl->pv_flags = 0;
 
 			} else {
-#ifdef DEBUG
-				/*
-				 * Check that this mapping is not already there
-				 */
-				for (pv_e = pvl; pv_e; pv_e = pv_e->pv_next)
-					if (pv_e->pv_pmap == pmap &&
-					    pv_e->pv_va == va)
-						panic("pmap_enter: already in pv_list");
-#endif
 				/*
 				 * Add new pv_entry after header.
 				 */
@@ -1750,6 +1737,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (wired)
 		template |= PG_W;
 
+	/*
+	 * If outside physical memory, disable cache on this (I/O) page.
+	 */
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH;
 	else
@@ -2476,6 +2466,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	kernel_pmap->pm_stats.wired_count++;
 
 	invalidate_pte(pte);
+
+	/*
+	 * If outside physical memory, disable cache on this (I/O) page.
+	 */
 	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH | PG_V | PG_W;
 	else
