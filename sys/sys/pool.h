@@ -1,12 +1,13 @@
-/*	$OpenBSD: pool.h,v 1.1 1999/02/26 03:13:29 art Exp $	*/
-/*	$NetBSD: pool.h,v 1.12 1998/12/27 21:13:43 thorpej Exp $	*/
+/*	$OpenBSD: pool.h,v 1.2 2000/12/05 16:43:40 art Exp $	*/
+/*	$NetBSD: pool.h,v 1.17 2000/02/14 21:17:04 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,12 +41,23 @@
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
 
+#ifdef _KERNEL
+#define	__POOL_EXPOSE
+#endif
+
+#ifdef __POOL_EXPOSE
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/time.h>
+#endif
 
 #define PR_HASHTABSIZE		8
 
-typedef struct pool {
+struct pool;
+typedef struct pool *pool_handle_t;
+
+#ifdef __POOL_EXPOSE
+struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
 	TAILQ_HEAD(,pool_item_header)
@@ -63,11 +75,16 @@ typedef struct pool {
 	unsigned int	pr_pageshift;	/* shift corr. to above */
 	unsigned int	pr_itemsperpage;/* # items that fit in a page */
 	unsigned int	pr_slack;	/* unused space in a page */
+	unsigned int	pr_nitems;	/* number of available items in pool */
+	unsigned int	pr_nout;	/* # items currently allocated */
+	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
+					   items */
 	void		*(*pr_alloc) __P((unsigned long, int, int));
 	void		(*pr_free) __P((void *, unsigned long, int));
 	int		pr_mtype;	/* memory allocator tag */
-	char		*pr_wchan;	/* tsleep(9) identifier */
-	unsigned int	pr_flags;
+	const char	*pr_wchan;	/* tsleep(9) identifier */
+	unsigned int	pr_flags;	/* r/w flags */
+	unsigned int	pr_roflags;	/* r/o flags */
 #define PR_MALLOCOK	1
 #define	PR_NOWAIT	0		/* for symmetry */
 #define PR_WAITOK	2
@@ -77,16 +94,18 @@ typedef struct pool {
 #define PR_URGENT	32
 #define PR_PHINPAGE	64
 #define PR_LOGGING	128
+#define PR_LIMITFAIL	256	/* even if waiting, fail if we hit limit */
 
 	/*
-	 * `pr_lock' protects the pool's data structures when removing
-	 * items from or returning items to the pool.
-	 * `pr_resourcelock' is used to serialize access to the pool's
-	 * back-end page allocator. At the same time it also protects
-	 * the `pr_maxpages', `pr_minpages' and `pr_minitems' fields.
+	 * `pr_slock' protects the pool's data structures when removing
+	 * items from or returning items to the pool, or when reading
+	 * or updating read/write fields in the pool descriptor.
+	 *
+	 * We assume back-end page allocators provide their own locking
+	 * scheme.  They will be called with the pool descriptor _unlocked_,
+	 * since the page allocators may block.
 	 */
-	struct simplelock	pr_lock;
-	struct lock		pr_resourcelock;
+	struct simplelock	pr_slock;
 
 	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
 			pr_hashtab[PR_HASHTABSIZE];
@@ -94,6 +113,14 @@ typedef struct pool {
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
 	int		pr_phoffset;	/* Offset in page of page header */
+
+	/*
+	 * Warning message to be issued, and a per-time-delta rate cap,
+	 * if the hard limit is reached.
+	 */
+	const char	*pr_hardlimit_warning;
+	struct timeval	pr_hardlimit_ratecap;
+	struct timeval	pr_hardlimit_warning_last;
 
 	/*
 	 * Instrumentation
@@ -106,43 +133,55 @@ typedef struct pool {
 	unsigned int	pr_hiwat;	/* max # of pages in pool */
 	unsigned long	pr_nidle;	/* # of idle pages */
 
-#ifdef POOL_DIAGNOSTIC
+	/*
+	 * Diagnostic aides.
+	 */
 	struct pool_log	*pr_log;
 	int		pr_curlogentry;
 	int		pr_logsize;
-#endif
-} *pool_handle_t;
 
+	const char	*pr_entered_file; /* reentrancy check */
+	long		pr_entered_line;
+};
+#endif /* __POOL_EXPOSE */
+
+#ifdef _KERNEL
 pool_handle_t	pool_create __P((size_t, u_int, u_int,
-				 int, char *, size_t,
+				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
 				 int));
 void		pool_init __P((struct pool *, size_t, u_int, u_int,
-				 int, char *, size_t,
+				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
 				 void  (*)__P((void *, unsigned long, int)),
 				 int));
 void		pool_destroy __P((pool_handle_t));
-#ifdef POOL_DIAGNOSTIC
+
+/*
+ * These routines do reentrancy checking.
+ */
 void		*_pool_get __P((pool_handle_t, int, const char *, long));
 void		_pool_put __P((pool_handle_t, void *, const char *, long));
+void		_pool_reclaim __P((pool_handle_t, const char *, long));
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
-#else
-void		*pool_get __P((pool_handle_t, int));
-void		pool_put __P((pool_handle_t, void *));
-#endif
+#define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
+
 int		pool_prime __P((pool_handle_t, int, caddr_t));
 void		pool_setlowat __P((pool_handle_t, int));
 void		pool_sethiwat __P((pool_handle_t, int));
-void		pool_print __P((pool_handle_t, char *));
+void		pool_sethardlimit __P((pool_handle_t, int, const char *, int));
 void		pool_reclaim __P((pool_handle_t));
 void		pool_drain __P((void *));
-#if defined(POOL_DIAGNOSTIC) || defined(DEBUG)
-void		pool_print __P((struct pool *, char *));
+
+/*
+ * Debugging and diagnostic aides.
+ */
+void		pool_print __P((struct pool *, const char *));
+void		pool_printit __P((struct pool *, const char *,
+		    int (*)(const char *, ...)));
 int		pool_chk __P((struct pool *, char *));
-#endif
 
 /*
  * Alternate pool page allocator, provided for pools that know they
@@ -150,5 +189,6 @@ int		pool_chk __P((struct pool *, char *));
  */
 void		*pool_page_alloc_nointr __P((unsigned long, int, int));
 void		pool_page_free_nointr __P((void *, unsigned long, int));
+#endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
