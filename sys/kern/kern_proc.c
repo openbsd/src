@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.3 1997/11/24 03:22:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.4 1998/02/20 13:47:22 niklas Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -310,11 +310,12 @@ fixjobc(p, pgrp, entering)
 	 * group; if so, adjust count for p's process group.
 	 */
 	if ((hispgrp = p->p_pptr->p_pgrp) != pgrp &&
-	    hispgrp->pg_session == mysession)
+	    hispgrp->pg_session == mysession) {
 		if (entering)
 			pgrp->pg_jobc++;
 		else if (--pgrp->pg_jobc == 0)
 			orphanpg(pgrp);
+	}
 
 	/*
 	 * Check this process' children to see whether they qualify
@@ -324,11 +325,12 @@ fixjobc(p, pgrp, entering)
 	for (p = p->p_children.lh_first; p != 0; p = p->p_sibling.le_next)
 		if ((hispgrp = p->p_pgrp) != pgrp &&
 		    hispgrp->pg_session == mysession &&
-		    p->p_stat != SZOMB)
+		    p->p_stat != SZOMB) {
 			if (entering)
 				hispgrp->pg_jobc++;
 			else if (--hispgrp->pg_jobc == 0)
 				orphanpg(hispgrp);
+		}
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.8 1997/12/12 17:13:56 gene Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.9 1998/02/20 13:43:23 niklas Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -348,11 +348,12 @@ free(addr, type)
 #endif /* DIAGNOSTIC */
 #ifdef KMEMSTATS
 	kup->ku_freecnt++;
-	if (kup->ku_freecnt >= kbp->kb_elmpercl)
+	if (kup->ku_freecnt >= kbp->kb_elmpercl) {
 		if (kup->ku_freecnt > kbp->kb_elmpercl)
 			panic("free: multiple frees");
 		else if (kbp->kb_totalfree > kbp->kb_highwat)
 			kbp->kb_couldfree++;
+	}
 	kbp->kb_totalfree++;
 	ksp->ks_memuse -= size;
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
