@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.8 2000/07/23 21:30:06 pjanzen Exp $	*/
+/*	$OpenBSD: stat.h,v 1.9 2001/09/10 16:21:05 millert Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -155,10 +155,10 @@ struct stat {
 #endif
 
 #ifndef _POSIX_SOURCE
-#define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 0777 */
-							/* 7777 */
+#define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 00777 */
+							/* 07777 */
 #define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
-							/* 0666 */
+							/* 00666 */
 #define	DEFFILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 
 #define	S_BLKSIZE	512		/* block size used in the stat struct */
