@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.1 2000/04/26 21:28:33 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.2 2000/04/26 21:33:53 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -180,8 +180,6 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	server_host_key = dsa_key_from_blob(server_host_key_blob, sbloblen);
 	if (server_host_key == NULL)
 		fatal("cannot decode server_host_key_blob");
-
-dump_base64(stderr, server_host_key_blob, sbloblen);
 
 	check_host_key(host, hostaddr, server_host_key,
 	    options.user_hostfile2, options.system_hostfile2);
