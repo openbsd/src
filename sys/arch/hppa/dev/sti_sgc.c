@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.3 2000/06/15 03:04:17 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.4 2000/09/03 21:01:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -31,8 +31,9 @@
  */
 /*
  * These cards has to be known to work so far:
- *	- HPA1991AC19  rev 0.02 (715/33) (byte-wide)
- *	- HPA208LC1280 rev 8.04 (712/80) just works
+ *	- HPA1991AGrayscale rev 0.02	(705/35) (byte-wide)
+ *	- HPA1991AC19       rev 0.02	(715/33) (byte-wide)
+ *	- HPA208LC1280      rev 8.04	(712/80) just works
  */
 
 #include <sys/param.h>
