@@ -122,7 +122,7 @@ int	rtcintr __P((void *));
 __inline u_int mc146818_read __P((void *, u_int));
 __inline void mc146818_write __P((void *, u_int, u_int));
 
-#ifdef I586_CPU
+#if defined(I586_CPU) || defined(I686_CPU)
 int pentium_mhz;
 #endif
 
@@ -344,7 +344,7 @@ findcpuspeed()
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
 
-#ifdef I586_CPU
+#if defined(I586_CPU) || defined(I686_CPU)
 void
 calibrate_cyclecounter()
 {
