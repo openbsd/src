@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.4 2001/12/07 20:21:17 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.5 2001/12/07 22:16:48 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -131,30 +131,13 @@ signal (stop signal generated from keyboard) is treated specially.
 When the process is resumed after it has been stopped,
 .Fn readpassphrase
 will reprint the prompt and the user may then enter a passphrase.
-.Pp
-Note: if the handler for a signal was
-.Dv SIG_IGN
-(ignore signal) when
-.Fn readpassphrase
-was called, terminal echo will not be restored to its previous value
-(since there is no other handler to call).
-This is only a problem when the program that calls
-.Fn readpassphrase
-is running as a child process of another program that also
-receives the signal (and exits or suspends due to it).
-Because of this it is suggested that these signals be blocked
-instead of ignored.
-See
-.Xr sigprocmask 3
-for details on blocking signal receipt.
 .Sh FILES
 .Bl -tag -width /dev/tty -compact
 .It Pa /dev/tty
 .El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr getpass 3 ,
-.Xr sigprocmask 3
+.Xr getpass 3
 .Sh HISTORY
 The
 .Fn readpassphrase
