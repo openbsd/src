@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -68,7 +68,6 @@
 #include <openssl/dsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #define DEFBITS	512
 #undef PROG
@@ -85,7 +84,7 @@ int MAIN(int argc, char **argv)
 	char *inrand=NULL,*dsaparams=NULL;
 	char *passargout = NULL, *passout = NULL;
 	BIO *out=NULL,*in=NULL;
-	EVP_CIPHER *enc=NULL;
+	const EVP_CIPHER *enc=NULL;
 	char *engine=NULL;
 
 	apps_startup();
@@ -93,6 +92,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	argv++;
 	argc--;
@@ -121,15 +123,23 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-") == 0)
 			goto bad;
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		else if (strcmp(*argv,"-des") == 0)
 			enc=EVP_des_cbc();
 		else if (strcmp(*argv,"-des3") == 0)
 			enc=EVP_des_ede3_cbc();
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
+#endif
+#ifndef OPENSSL_NO_AES
+		else if (strcmp(*argv,"-aes128") == 0)
+			enc=EVP_aes_128_cbc();
+		else if (strcmp(*argv,"-aes192") == 0)
+			enc=EVP_aes_192_cbc();
+		else if (strcmp(*argv,"-aes256") == 0)
+			enc=EVP_aes_256_cbc();
 #endif
 		else if (**argv != '-' && dsaparams == NULL)
 			{
@@ -146,12 +156,16 @@ int MAIN(int argc, char **argv)
 bad:
 		BIO_printf(bio_err,"usage: gendsa [args] dsaparam-file\n");
 		BIO_printf(bio_err," -out file - output the key to 'file'\n");
-#ifndef NO_DES
+#ifndef OPENSSL_NO_DES
 		BIO_printf(bio_err," -des      - encrypt the generated key with DES in cbc mode\n");
 		BIO_printf(bio_err," -des3     - encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea     - encrypt the generated key with IDEA in cbc mode\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
 #endif
 		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
@@ -162,23 +176,7 @@ bad:
 		goto end;
 		}
 
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	if(!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
@@ -207,7 +205,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -247,6 +245,7 @@ end:
 	if (out != NULL) BIO_free_all(out);
 	if (dsa != NULL) DSA_free(dsa);
 	if(passout) OPENSSL_free(passout);
+	apps_shutdown();
 	EXIT(ret);
 	}
 #endif

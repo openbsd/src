@@ -62,7 +62,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "openssl/e_os.h"
+#include "e_os.h"
 
 #include <openssl/crypto.h>
 #include <openssl/buffer.h> 
@@ -74,7 +74,7 @@
 extern "C" {
 #endif
 
-#ifndef VMS
+#ifndef OPENSSL_SYS_VMS
 #define X509_CERT_AREA		OPENSSLDIR
 #define X509_CERT_DIR		OPENSSLDIR "/certs"
 #define X509_CERT_FILE		OPENSSLDIR "/cert.pem"

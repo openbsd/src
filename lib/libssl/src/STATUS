@@ -1,0 +1,114 @@
+
+  OpenSSL STATUS                           Last modified at
+  ______________                           $Date: 2002/05/15 02:29:08 $
+
+  DEVELOPMENT STATE
+
+    o  OpenSSL 0.9.7:  Under development...
+    o  OpenSSL 0.9.6c: Released on December  21st, 2001
+    o  OpenSSL 0.9.6b: Released on July       9th, 2001
+    o  OpenSSL 0.9.6a: Released on April      5th, 2001
+    o  OpenSSL 0.9.6:  Released on September 24th, 2000
+    o  OpenSSL 0.9.5a: Released on April      1st, 2000
+    o  OpenSSL 0.9.5:  Released on February  28th, 2000
+    o  OpenSSL 0.9.4:  Released on August    09th, 1999
+    o  OpenSSL 0.9.3a: Released on May       29th, 1999
+    o  OpenSSL 0.9.3:  Released on May       25th, 1999
+    o  OpenSSL 0.9.2b: Released on March     22th, 1999
+    o  OpenSSL 0.9.1c: Released on December  23th, 1998
+
+  RELEASE SHOWSTOPPERS
+
+    o BIGNUM library failures on 64-bit platforms (0.9.7-dev):
+      - BN_mod_mul verificiation (bc) fails for solaris64-sparcv9-cc
+        and other 64-bit platforms
+
+	Checked on			Result
+	alpha-cc (Tru64 version 4.0)	works
+	linux-alpha+bwx-gcc		doesn't work. Reported by
+					Sean O'Riordain <seanpor@acm.org>
+	OpenBSD-sparc64			doesn't work.  BN_mod_mul breaks.
+
+	Needs checked on
+	[add platforms here]
+
+      - BN_mod_mul verification fails for mips3-sgi-irix
+        unless configured with no-asm
+
+  AVAILABLE PATCHES
+
+    o 
+
+  IN PROGRESS
+
+    o Steve is currently working on (in no particular order):
+        ASN1 code redesign, butchery, replacement.
+        OCSP
+        EVP cipher enhancement.
+        Enhanced certificate chain verification.
+	Private key, certificate and CRL API and implementation.
+	Developing and bugfixing PKCS#7 (S/MIME code).
+        Various X509 issues: character sets, certificate request extensions.
+    o Geoff and Richard are currently working on:
+	ENGINE (the new code that gives hardware support among others).
+    o Richard is currently working on:
+	UI (User Interface)
+	UTIL (a new set of library functions to support some higher level
+	      functionality that is currently missing).
+	Shared library support for VMS.
+	Kerberos 5 authentication
+	Constification
+	OCSP
+
+  NEEDS PATCH
+
+    o  apps/ca.c: "Sign the certificate?" - "n" creates empty certificate file
+
+    o  "OpenSSL STATUS" is never up-to-date.
+
+  OPEN ISSUES
+
+    o  Do we want the EVP API changes in 0.9.7?
+       Can compatibility be improved?
+
+    o  The Makefile hierarchy and build mechanism is still not a round thing:
+
+       1. The config vs. Configure scripts
+          It's the same nasty situation as for Apache with APACI vs.
+          src/Configure. It confuses.
+          Suggestion: Merge Configure and config into a single configure
+                      script with a Autoconf style interface ;-) and remove
+                      Configure and config. Or even let us use GNU Autoconf
+                      itself. Then we can avoid a lot of those platform checks
+                      which are currently in Configure.
+
+    o  Support for Shared Libraries has to be added at least
+       for the major Unix platforms. The details we can rip from the stuff
+       Ralf has done for the Apache src/Configure script. Ben wants the
+       solution to be really simple.
+
+       Status: Ralf will look how we can easily incorporate the
+               compiler PIC and linker DSO flags from Apache
+               into the OpenSSL Configure script.
+
+               Ulf: +1 for using GNU autoconf and libtool (but not automake,
+                    which apparently is not flexible enough to generate
+                    libcrypto)
+
+  WISHES
+
+    o  Add variants of DH_generate_parameters() and BN_generate_prime() [etc?]
+       where the callback function can request that the function be aborted.
+       [Gregory Stark <ghstark@pobox.com>, <rayyang2000@yahoo.com>]
+
+    o  SRP in TLS.
+       [wished by:
+        Dj <derek@yo.net>, Tom Wu <tom@arcot.com>,
+        Tom Holroyd <tomh@po.crl.go.jp>]
+
+       See http://search.ietf.org/internet-drafts/draft-ietf-tls-srp-00.txt
+       as well as http://www-cs-students.stanford.edu/~tjw/srp/.
+
+       Tom Holroyd tells us there is a SRP patch for OpenSSH at
+       http://members.tripod.com/professor_tom/archives/, that could
+       be useful.

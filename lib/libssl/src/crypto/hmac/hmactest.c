@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef NO_HMAC
+#ifdef OPENSSL_NO_HMAC
 int main(int argc, char *argv[])
 {
     printf("No HMAC support\n");
@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
 }
 #else
 #include <openssl/hmac.h>
+#include <openssl/md5.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>

@@ -59,15 +59,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include "../bio/bss_file.c" 
 #endif
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
-#ifdef NO_DH
+#ifdef OPENSSL_NO_DH
 int main(int argc, char *argv[])
 {
     printf("No DH support\n");
@@ -76,14 +77,14 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/dh.h>
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define MS_CALLBACK	_far _loadds
 #else
 #define MS_CALLBACK
 #endif
 
 static void MS_CALLBACK cb(int p, int n, void *arg);
-#ifdef NO_STDIO
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #include "bss_file.c"
 #endif
@@ -99,7 +100,11 @@ int main(int argc, char *argv[])
 	int i,alen,blen,aout,bout,ret=1;
 	BIO *out;
 
-#ifdef WIN32
+	CRYPTO_malloc_debug_init();
+	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+#ifdef OPENSSL_SYS_WIN32
 	CRYPTO_malloc_init();
 #endif
 
@@ -111,6 +116,16 @@ int main(int argc, char *argv[])
 
 	a=DH_generate_parameters(64,DH_GENERATOR_5,cb,out);
 	if (a == NULL) goto err;
+
+	if (!DH_check(a, &i)) goto err;
+	if (i & DH_CHECK_P_NOT_PRIME)
+		BIO_puts(out, "p value is not prime\n");
+	if (i & DH_CHECK_P_NOT_SAFE_PRIME)
+		BIO_puts(out, "p value is not a safe prime\n");
+	if (i & DH_UNABLE_TO_CHECK_GENERATOR)
+		BIO_puts(out, "unable to check the generator value\n");
+	if (i & DH_NOT_SUITABLE_GENERATOR)
+		BIO_puts(out, "the g value is not a generator\n");
 
 	BIO_puts(out,"\np    =");
 	BN_print(out,a->p);
@@ -170,11 +185,16 @@ int main(int argc, char *argv[])
 	else
 		ret=0;
 err:
+	ERR_print_errors_fp(stderr);
+
 	if (abuf != NULL) OPENSSL_free(abuf);
 	if (bbuf != NULL) OPENSSL_free(bbuf);
 	if(b != NULL) DH_free(b);
 	if(a != NULL) DH_free(a);
 	BIO_free(out);
+	CRYPTO_cleanup_all_ex_data();
+	ERR_remove_state(0);
+	CRYPTO_mem_leaks_fp(stderr);
 	exit(ret);
 	return(ret);
 	}

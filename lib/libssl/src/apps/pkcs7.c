@@ -67,7 +67,6 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	pkcs7_main
@@ -163,28 +162,13 @@ bad:
 		BIO_printf(bio_err," -text         print full details of certificates\n");
 		BIO_printf(bio_err," -noout        don't output encoded data\n");
 		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
-		EXIT(1);
+		ret = 1;
+		goto end;
 		}
 
 	ERR_load_crypto_strings();
 
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
@@ -225,7 +209,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -316,5 +300,6 @@ end:
 	if (p7 != NULL) PKCS7_free(p7);
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
+	apps_shutdown();
 	EXIT(ret);
 	}

@@ -1,5 +1,5 @@
 /* pkcs12.c */
-#if !defined(NO_DES) && !defined(NO_SHA1)
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)
 
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 1999.
@@ -66,11 +66,10 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include <openssl/engine.h>
 
 #define PROG pkcs12_main
 
-EVP_CIPHER *enc;
+const EVP_CIPHER *enc;
 
 
 #define NOKEYS		0x1
@@ -96,9 +95,10 @@ int MAIN(int argc, char **argv)
     ENGINE *e = NULL;
     char *infile=NULL, *outfile=NULL, *keyname = NULL;	
     char *certfile=NULL;
-    BIO *in=NULL, *out = NULL, *inkey = NULL, *certsin = NULL;
+    BIO *in=NULL, *out = NULL;
     char **args;
     char *name = NULL;
+    char *csp_name = NULL;
     PKCS12 *p12 = NULL;
     char pass[50], macpass[50];
     int export_cert = 0;
@@ -127,6 +127,9 @@ int MAIN(int argc, char **argv)
     enc = EVP_des_ede3_cbc();
     if (bio_err == NULL ) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
     args = argv + 1;
 
 
@@ -147,10 +150,15 @@ int MAIN(int argc, char **argv)
     			cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 		else if (!strcmp (*args, "-export")) export_cert = 1;
 		else if (!strcmp (*args, "-des")) enc=EVP_des_cbc();
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		else if (!strcmp (*args, "-idea")) enc=EVP_idea_cbc();
 #endif
 		else if (!strcmp (*args, "-des3")) enc = EVP_des_ede3_cbc();
+#ifndef OPENSSL_NO_AES
+		else if (!strcmp(*args,"-aes128")) enc=EVP_aes_128_cbc();
+		else if (!strcmp(*args,"-aes192")) enc=EVP_aes_192_cbc();
+		else if (!strcmp(*args,"-aes256")) enc=EVP_aes_256_cbc();
+#endif
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-maciter"))
 					 maciter = PKCS12_DEFAULT_ITER;
@@ -196,6 +204,11 @@ int MAIN(int argc, char **argv)
 		    if (args[1]) {
 			args++;	
 			name = *args;
+		    } else badarg = 1;
+		} else if (!strcmp (*args, "-CSP")) {
+		    if (args[1]) {
+			args++;	
+			csp_name = *args;
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-caname")) {
 		    if (args[1]) {
@@ -272,8 +285,12 @@ int MAIN(int argc, char **argv)
 	BIO_printf (bio_err, "-info         give info about PKCS#12 structure.\n");
 	BIO_printf (bio_err, "-des          encrypt private keys with DES\n");
 	BIO_printf (bio_err, "-des3         encrypt private keys with triple DES (default)\n");
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	BIO_printf (bio_err, "-idea         encrypt private keys with idea\n");
+#endif
+#ifndef OPENSSL_NO_AES
+	BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
+	BIO_printf (bio_err, "              encrypt PEM output with cbc aes\n");
 #endif
 	BIO_printf (bio_err, "-nodes        don't encrypt private keys\n");
 	BIO_printf (bio_err, "-noiter       don't use encryption iteration\n");
@@ -294,19 +311,7 @@ int MAIN(int argc, char **argv)
     	goto end;
     }
 
-    if (engine != NULL) {
-	if((e = ENGINE_by_id(engine)) == NULL) {
-	    BIO_printf(bio_err,"invalid engine \"%s\"\n", engine);
-	    goto end;
-	}
-	if(!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
-	    BIO_printf(bio_err,"can't use that engine\n");
-	    goto end;
-	}
-	BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-	/* Free our "structural" reference. */
-	ENGINE_free(e);
-    }
+    e = setup_engine(bio_err, engine, 0);
 
     if(passarg) {
 	if(export_cert) passargout = passarg;
@@ -352,6 +357,7 @@ int MAIN(int argc, char **argv)
 	    goto end;
    }
 
+#if 0
    if (certfile) {
     	if(!(certsin = BIO_new_file(certfile, "r"))) {
 	    BIO_printf(bio_err, "Can't open certificate file %s\n", certfile);
@@ -367,6 +373,7 @@ int MAIN(int argc, char **argv)
 	    goto end;
 	}
      }
+#endif
 
 #ifdef CRYPTO_MDEBUG
     CRYPTO_pop_info();
@@ -375,7 +382,7 @@ int MAIN(int argc, char **argv)
 
     if (!outfile) {
 	out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	{
 	    BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 	    out = BIO_push(tmpbio, out);
@@ -420,12 +427,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("process -export_cert");
 	CRYPTO_push_info("reading private key");
 #endif
-	key = PEM_read_bio_PrivateKey(inkey ? inkey : in, NULL, NULL, passin);
-	if (!inkey) (void) BIO_reset(in);
-	else BIO_free(inkey);
+	key = load_key(bio_err, keyname ? keyname : infile, FORMAT_PEM,
+		passin, e, "private key");
 	if (!key) {
-		BIO_printf (bio_err, "Error loading private key\n");
-		ERR_print_errors(bio_err);
 		goto export_end;
 	}
 
@@ -434,12 +438,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("reading certs from input");
 #endif
 
-	certs = sk_X509_new_null();
-
 	/* Load in all certs in input file */
-	if(!cert_load(in, certs)) {
-		BIO_printf(bio_err, "Error loading certificates from input\n");
-		ERR_print_errors(bio_err);
+	if(!(certs = load_certs(bio_err, infile, FORMAT_PEM, NULL, e,
+		"certificates"))) {
 		goto export_end;
 	}
 
@@ -469,13 +470,17 @@ int MAIN(int argc, char **argv)
 	bags = sk_PKCS12_SAFEBAG_new_null ();
 
 	/* Add any more certificates asked for */
-	if (certsin) {
-		if(!cert_load(certsin, certs)) {
-			BIO_printf(bio_err, "Error loading certificates from certfile\n");
-			ERR_print_errors(bio_err);
+	if (certfile) {
+		STACK_OF(X509) *morecerts=NULL;
+		if(!(morecerts = load_certs(bio_err, certfile, FORMAT_PEM,
+					    NULL, e,
+					    "certificates from certfile"))) {
 			goto export_end;
 		}
-	    	BIO_free(certsin);
+		while(sk_X509_num(morecerts) > 0) {
+			sk_X509_push(certs, sk_X509_shift(morecerts));
+		}
+		sk_X509_free(morecerts);
  	}
 
 #ifdef CRYPTO_MDEBUG
@@ -521,7 +526,7 @@ int MAIN(int argc, char **argv)
 	for(i = 0; i < sk_X509_num(certs); i++) {
 		X509 *cert = NULL;
 		cert = sk_X509_value(certs, i);
-		bag = M_PKCS12_x5092certbag(cert);
+		bag = PKCS12_x5092certbag(cert);
 		/* If it matches private key set id */
 		if(cert == ucert) {
 			if(name) PKCS12_add_friendlyname(bag, name, -1);
@@ -572,6 +577,7 @@ int MAIN(int argc, char **argv)
 	PKCS8_PRIV_KEY_INFO_free(p8);
 	p8 = NULL;
         if (name) PKCS12_add_friendlyname (bag, name, -1);
+	if(csp_name) PKCS12_add_CSPName_asc(bag, csp_name, -1);
 	PKCS12_add_localkeyid (bag, keyid, keyidlen);
 	bags = sk_PKCS12_SAFEBAG_new_null();
 	sk_PKCS12_SAFEBAG_push (bags, bag);
@@ -592,9 +598,9 @@ int MAIN(int argc, char **argv)
 	CRYPTO_push_info("building pkcs12");
 #endif
 
-	p12 = PKCS12_init (NID_pkcs7_data);
+	p12 = PKCS12_init(NID_pkcs7_data);
 
-	M_PKCS12_pack_authsafes (p12, safes);
+	PKCS12_pack_authsafes(p12, safes);
 
 	sk_PKCS7_pop_free(safes, PKCS7_free);
 	safes = NULL;
@@ -691,6 +697,7 @@ int MAIN(int argc, char **argv)
     if (canames) sk_free(canames);
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
+    apps_shutdown();
     EXIT(ret);
 }
 
@@ -702,20 +709,20 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	int i, bagnid;
 	PKCS7 *p7;
 
-	if (!( asafes = M_PKCS12_unpack_authsafes (p12))) return 0;
+	if (!( asafes = PKCS12_unpack_authsafes(p12))) return 0;
 	for (i = 0; i < sk_PKCS7_num (asafes); i++) {
 		p7 = sk_PKCS7_value (asafes, i);
 		bagnid = OBJ_obj2nid (p7->type);
 		if (bagnid == NID_pkcs7_data) {
-			bags = M_PKCS12_unpack_p7data (p7);
+			bags = PKCS12_unpack_p7data(p7);
 			if (options & INFO) BIO_printf (bio_err, "PKCS7 Data\n");
 		} else if (bagnid == NID_pkcs7_encrypted) {
 			if (options & INFO) {
-				BIO_printf (bio_err, "PKCS7 Encrypted data: ");
-				alg_print (bio_err, 
+				BIO_printf(bio_err, "PKCS7 Encrypted data: ");
+				alg_print(bio_err, 
 					p7->d.encrypted->enc_data->algorithm);
 			}
-			bags = M_PKCS12_unpack_p7encdata (p7, pass, passlen);
+			bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
 		} else continue;
 		if (!bags) return 0;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
@@ -770,9 +777,12 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		}
 		if (options & NOKEYS) return 1;
 		print_attribs (out, bag->attrib, "Bag Attributes");
-		if (!(p8 = M_PKCS12_decrypt_skey (bag, pass, passlen)))
+		if (!(p8 = PKCS12_decrypt_skey(bag, pass, passlen)))
 				return 0;
-		if (!(pkey = EVP_PKCS82PKEY (p8))) return 0;
+		if (!(pkey = EVP_PKCS82PKEY (p8))) {
+			PKCS8_PRIV_KEY_INFO_free(p8);
+			return 0;
+		}
 		print_attribs (out, p8->attributes, "Key Attributes");
 		PKCS8_PRIV_KEY_INFO_free(p8);
 		PEM_write_bio_PrivateKey (out, pkey, enc, NULL, 0, NULL, pempass);
@@ -788,7 +798,7 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 		print_attribs (out, bag->attrib, "Bag Attributes");
 		if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate )
 								 return 1;
-		if (!(x509 = M_PKCS12_certbag2x509(bag))) return 0;
+		if (!(x509 = PKCS12_certbag2x509(bag))) return 0;
 		dump_cert_text (out, x509);
 		PEM_write_bio_X509 (out, x509);
 		X509_free(x509);
@@ -820,6 +830,9 @@ int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 	STACK_OF(X509) *chn;
 	int i;
 
+	/* FIXME: Should really check the return status of X509_STORE_CTX_init
+	 * for an error, but how that fits into the return value of this
+	 * function is less obvious. */
 	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
 	if (X509_verify_cert(&store_ctx) <= 0) {
 		i = X509_STORE_CTX_get_error (&store_ctx);

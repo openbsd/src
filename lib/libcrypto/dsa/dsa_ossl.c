@@ -94,7 +94,7 @@ dsa_finish,
 NULL
 };
 
-DSA_METHOD *DSA_OpenSSL(void)
+const DSA_METHOD *DSA_OpenSSL(void)
 {
 	return &openssl_dsa_meth;
 }
@@ -204,7 +204,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	if (!ENGINE_get_DSA(dsa->engine)->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
+	if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
 		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
@@ -237,6 +237,11 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
 	int ret = -1;
+	if (!dsa->p || !dsa->q || !dsa->g)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MISSING_PARAMETERS);
+		return -1;
+		}
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_init(&u1);
@@ -293,7 +298,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	if (!BN_mod(&u1,&u1,dsa->q,ctx)) goto err;
 #else
 	{
-	if (!ENGINE_get_DSA(dsa->engine)->dsa_mod_exp(dsa, &t1,dsa->g,&u1,dsa->pub_key,&u2,
+	if (!dsa->meth->dsa_mod_exp(dsa, &t1,dsa->g,&u1,dsa->pub_key,&u2,
 						dsa->p,ctx,mont)) goto err;
 	/* BN_copy(&u1,&t1); */
 	/* let u1 = u1 mod q */

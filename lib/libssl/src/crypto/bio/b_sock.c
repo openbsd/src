@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_SOCK
+#ifndef OPENSSL_NO_SOCK
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,21 +65,21 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL IPPROTO_TCP
 #endif
 
 #ifdef SO_MAXCONN
-#define MAX_LISTEN  SOMAXCONN
-#elif defined(SO_MAXCONN)
 #define MAX_LISTEN  SO_MAXCONN
+#elif defined(SOMAXCONN)
+#define MAX_LISTEN  SOMAXCONN
 #else
 #define MAX_LISTEN  32
 #endif
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static int wsa_init_done=0;
 #endif
 
@@ -95,8 +95,10 @@ static struct ghbn_cache_st
 	} ghbn_cache[GHBN_NUM];
 
 static int get_ip(const char *str,unsigned char *ip);
+#if 0
 static void ghbn_free(struct hostent *a);
 static struct hostent *ghbn_dup(struct hostent *a);
+#endif
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;
@@ -266,6 +268,7 @@ long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 	return(1);
 	}
 
+#if 0
 static struct hostent *ghbn_dup(struct hostent *a)
 	{
 	struct hostent *ret;
@@ -343,20 +346,27 @@ static void ghbn_free(struct hostent *a)
 	OPENSSL_free(a);
 	}
 
+#endif
+
 struct hostent *BIO_gethostbyname(const char *name)
 	{
+#if 1
+	/* Caching gethostbyname() results forever is wrong,
+	 * so we have to let the true gethostbyname() worry about this */
+	return gethostbyname(name);
+#else
 	struct hostent *ret;
 	int i,lowi=0,j;
 	unsigned long low= (unsigned long)-1;
 
-/*	return(gethostbyname(name)); */
 
-#if 0 /* It doesn't make sense to use locking here: The function interface
-	   * is not thread-safe, because threads can never be sure when
-	   * some other thread destroys the data they were given a pointer to.
-	   */
+#  if 0
+	/* It doesn't make sense to use locking here: The function interface
+	 * is not thread-safe, because threads can never be sure when
+	 * some other thread destroys the data they were given a pointer to.
+	 */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	j=strlen(name);
 	if (j < 128)
 		{
@@ -384,20 +394,21 @@ struct hostent *BIO_gethostbyname(const char *name)
 		 * parameter is 'char *', instead of 'const char *'
 		 */
 		ret=gethostbyname(
-#ifndef CONST_STRICT
+#  ifndef CONST_STRICT
 		    (char *)
-#endif
+#  endif
 		    name);
 
 		if (ret == NULL)
 			goto end;
 		if (j > 128) /* too big to cache */
 			{
-#if 0 /* If we were trying to make this function thread-safe (which
-	   * is bound to fail), we'd have to give up in this case
-	   * (or allocate more memory). */
+#  if 0
+			/* If we were trying to make this function thread-safe (which
+			 * is bound to fail), we'd have to give up in this case
+			 * (or allocate more memory). */
 			ret = NULL;
-#endif
+#  endif
 			goto end;
 			}
 
@@ -421,15 +432,17 @@ struct hostent *BIO_gethostbyname(const char *name)
 		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
 end:
-#if 0
+#  if 0
 	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	return(ret);
+#endif
 	}
+
 
 int BIO_sock_init(void)
 	{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	static struct WSAData wsa_state;
 
 	if (!wsa_init_done)
@@ -449,13 +462,13 @@ int BIO_sock_init(void)
 			return(-1);
 			}
 		}
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WINDOWS */
 	return(1);
 	}
 
 void BIO_sock_cleanup(void)
 	{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	if (wsa_init_done)
 		{
 		wsa_init_done=0;
@@ -465,7 +478,7 @@ void BIO_sock_cleanup(void)
 #endif
 	}
 
-#if !defined(VMS) || __VMS_VER >= 70000000
+#if !defined(OPENSSL_SYS_VMS) || __VMS_VER >= 70000000
 
 int BIO_socket_ioctl(int fd, long type, unsigned long *arg)
 	{
@@ -494,16 +507,16 @@ static int get_ip(const char *str, unsigned char ip[4])
 			{
 			ok=1;
 			tmp[num]=tmp[num]*10+c-'0';
-			if (tmp[num] > 255) return(-1);
+			if (tmp[num] > 255) return(0);
 			}
 		else if (c == '.')
 			{
 			if (!ok) return(-1);
-			if (num == 3) break;
+			if (num == 3) return(0);
 			num++;
 			ok=0;
 			}
-		else if ((num == 3) && ok)
+		else if (c == '\0' && (num == 3) && ok)
 			break;
 		else
 			return(0);
@@ -661,6 +674,7 @@ int BIO_accept(int sock, char **addr)
 	ret=accept(sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
+		if(BIO_sock_should_retry(ret)) return -2;
 		SYSerr(SYS_F_ACCEPT,get_last_socket_error());
 		BIOerr(BIO_F_BIO_ACCEPT,BIO_R_ACCEPT_ERROR);
 		goto end;

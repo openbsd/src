@@ -109,7 +109,7 @@
  *
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -121,9 +121,8 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
@@ -152,7 +151,7 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 	DH *dh=NULL;
 	int i,badops=0,text=0;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	int dsaparam=0;
 #endif
 	BIO *in=NULL,*out=NULL;
@@ -166,6 +165,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	infile=NULL;
 	outfile=NULL;
@@ -206,7 +208,7 @@ int MAIN(int argc, char **argv)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
 			text=1;
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		else if (strcmp(*argv,"-dsaparam") == 0)
 			dsaparam=1;
 #endif
@@ -238,7 +240,7 @@ bad:
 		BIO_printf(bio_err," -outform arg  output format - one of DER PEM\n");
 		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		BIO_printf(bio_err," -dsaparam     read or generate DSA parameters, convert to DH\n");
 #endif
 		BIO_printf(bio_err," -check        check the DH parameters\n");
@@ -257,28 +259,12 @@ bad:
 
 	ERR_load_crypto_strings();
 
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	if (g && !num)
 		num = DEFBITS;
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	if (dsaparam)
 		{
 		if (g)
@@ -305,7 +291,7 @@ bad:
 			BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
 				app_RAND_load_files(inrand));
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (dsaparam)
 			{
 			DSA *dsa;
@@ -366,7 +352,7 @@ bad:
 			goto end;
 			}
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (dsaparam)
 			{
 			DSA *dsa;
@@ -419,7 +405,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -504,7 +490,7 @@ bad:
 		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
 		printf("\t\t{ DH_free(dh); return(NULL); }\n");
 		if (dh->length)
-			printf("\tdh->length = %d;\n", dh->length);
+			printf("\tdh->length = %ld;\n", dh->length);
 		printf("\treturn(dh);\n\t}\n");
 		OPENSSL_free(data);
 		}
@@ -532,6 +518,7 @@ end:
 	if (in != NULL) BIO_free(in);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

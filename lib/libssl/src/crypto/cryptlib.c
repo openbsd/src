@@ -62,7 +62,7 @@
 #include <openssl/crypto.h>
 #include <openssl/safestack.h>
 
-#if defined(WIN32) || defined(WIN16)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
@@ -74,7 +74,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	{
 	"<<ERROR>>",
 	"err",
-	"err_hash",
+	"ex_data",
 	"x509",
 	"x509_info",
 	"x509_pkey",
@@ -90,6 +90,7 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"ssl_sess_cert",
 	"ssl",
 	"rand",
+	"rand2",
 	"debug_malloc",
 	"BIO",
 	"gethostbyname",
@@ -101,7 +102,8 @@ static const char* lock_names[CRYPTO_NUM_LOCKS] =
 	"dso",
 	"dynlock",
 	"engine",
-#if CRYPTO_NUM_LOCKS != 29
+	"ui",
+#if CRYPTO_NUM_LOCKS != 31
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 	};
@@ -133,11 +135,11 @@ int CRYPTO_get_new_lockid(char *name)
 	char *str;
 	int i;
 
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
 	/* A hack to make Visual C++ 5.0 work correctly when linking as
 	 * a DLL using /MT. Without this, the application cannot use
 	 * and floating point printf's.
 	 * It also seems to be needed for Visual C 1.5 (win16) */
-#if defined(WIN32) || defined(WIN16)
 	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
 #endif
 
@@ -228,7 +230,10 @@ void CRYPTO_destroy_dynlockid(int i)
 	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
 
 	if (dyn_locks == NULL || i >= sk_CRYPTO_dynlock_num(dyn_locks))
+		{
+		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 		return;
+		}
 	pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
 	if (pointer != NULL)
 		{
@@ -354,9 +359,9 @@ unsigned long CRYPTO_thread_id(void)
 
 	if (id_callback == NULL)
 		{
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 		ret=(unsigned long)GetCurrentTask();
-#elif defined(WIN32)
+#elif defined(OPENSSL_SYS_WIN32)
 		ret=(unsigned long)GetCurrentThreadId();
 #elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;
@@ -462,7 +467,7 @@ const char *CRYPTO_get_lock_name(int type)
 	}
 
 #ifdef _DLL
-#ifdef WIN32
+#ifdef OPENSSL_SYS_WIN32
 
 /* All we really need to do is remove the 'error' state when a thread
  * detaches */

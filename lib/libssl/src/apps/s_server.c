@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <assert.h>
 #include <stdio.h>
@@ -62,7 +115,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef NO_STDIO
+#include <openssl/e_os2.h>
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 
@@ -70,7 +124,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
@@ -84,19 +138,18 @@ typedef unsigned int u_int;
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
-#include <openssl/engine.h>
 #include "s_apps.h"
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include <conio.h>
 #endif
 
-#if (defined(VMS) && __VMS_VER < 70000000)
+#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int sv_body(char *hostname, int s, unsigned char *context);
@@ -105,7 +158,9 @@ static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
-#ifndef NO_DH
+static int generate_session_id(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len);
+#ifndef OPENSSL_NO_DH
 static DH *load_dh_param(char *dhfile);
 static DH *get_dh512(void);
 #endif
@@ -121,7 +176,7 @@ static void s_server_init(void);
 # endif
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static unsigned char dh512_p[]={
 	0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
 	0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
@@ -175,10 +230,12 @@ static int www=0;
 
 static BIO *bio_s_out=NULL;
 static int s_debug=0;
+static int s_msg=0;
 static int s_quiet=0;
 
 static int hack=0;
 static char *engine_id=NULL;
+static const char *session_id_prefix=NULL;
 
 #ifdef MONOLITH
 static void s_server_init(void)
@@ -199,6 +256,7 @@ static void s_server_init(void)
 
 	bio_s_out=NULL;
 	s_debug=0;
+	s_msg=0;
 	s_quiet=0;
 	hack=0;
 	engine_id=NULL;
@@ -227,11 +285,13 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -nbio_test    - test with the non-blocking test bio\n");
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err," -debug        - Print more output\n");
+	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -state        - Print the SSL states\n");
 	BIO_printf(bio_err," -CApath arg   - PEM format directory of CA's\n");
 	BIO_printf(bio_err," -CAfile arg   - PEM format file of CA's\n");
 	BIO_printf(bio_err," -nocert       - Don't use any certificates (Anon-DH)\n");
 	BIO_printf(bio_err," -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
+	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err," -quiet        - No server output\n");
 	BIO_printf(bio_err," -no_tmp_rsa   - Do not generate a tmp RSA key\n");
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
@@ -240,14 +300,17 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
-	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err," -HTTP         - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
+        BIO_printf(bio_err,"                 with the assumption it contains a complete HTTP response.\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+	BIO_printf(bio_err," -id_prefix arg - Generate SSL/TLS session IDs prefixed by 'arg'\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	}
 
 static int local_argc=0;
@@ -407,6 +470,8 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char *argv[])
 	{
+	X509_STORE *store = NULL;
+	int vflags = 0;
 	short port=PORT;
 	char *CApath=NULL,*CAfile=NULL;
 	char *context = NULL;
@@ -417,18 +482,14 @@ int MAIN(int argc, char *argv[])
 	int no_tmp_rsa=0,no_dhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
-	char *inrand=NULL;
-	char *engine_id=NULL;
 	ENGINE *e=NULL;
-#ifndef NO_DH
-	DH *dh=NULL;
-#endif
+	char *inrand=NULL;
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
-#elif !defined(NO_SSL3)
+#elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_server_method();
-#elif !defined(NO_SSL2)
+#elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_server_method();
 #endif
 
@@ -442,6 +503,9 @@ int MAIN(int argc, char *argv[])
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	verify_depth=0;
 #ifdef FIONBIO
@@ -515,6 +579,16 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if (strcmp(*argv,"-crl_check") == 0)
+			{
+			vflags |= X509_V_FLAG_CRL_CHECK;
+			}
+		else if (strcmp(*argv,"-crl_check") == 0)
+			{
+			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
+			}
+		else if	(strcmp(*argv,"-serverpref") == 0)
+			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -538,6 +612,8 @@ int MAIN(int argc, char *argv[])
 			}
 		else if	(strcmp(*argv,"-debug") == 0)
 			{ s_debug=1; }
+		else if	(strcmp(*argv,"-msg") == 0)
+			{ s_msg=1; }
 		else if	(strcmp(*argv,"-hack") == 0)
 			{ hack=1; }
 		else if	(strcmp(*argv,"-state") == 0)
@@ -556,33 +632,40 @@ int MAIN(int argc, char *argv[])
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
 			{ www=2; }
+		else if	(strcmp(*argv,"-HTTP") == 0)
+			{ www=3; }
 		else if	(strcmp(*argv,"-no_ssl2") == 0)
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
 			{ off|=SSL_OP_NO_SSLv3; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			{ meth=SSLv3_server_method(); }
 #endif
-#ifndef NO_TLS1
+#ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
-		else if (strcmp(*argv,"-rand") == 0)
+		else if (strcmp(*argv, "-id_prefix") == 0)
 			{
 			if (--argc < 1) goto bad;
-			inrand= *(++argv);
+			session_id_prefix = *(++argv);
 			}
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine_id= *(++argv);
+			}
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
 			}
 		else
 			{
@@ -611,7 +694,7 @@ bad:
 
 	if (bio_s_out == NULL)
 		{
-		if (s_quiet && !s_debug)
+		if (s_quiet && !s_debug && !s_msg)
 			{
 			bio_s_out=BIO_new(BIO_s_null());
 			}
@@ -622,7 +705,7 @@ bad:
 			}
 		}
 
-#if !defined(NO_RSA) || !defined(NO_DSA)
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
 	if (nocert)
 #endif
 		{
@@ -635,28 +718,7 @@ bad:
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
-	if (engine_id != NULL)
-		{
-		if((e = ENGINE_by_id(engine_id)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if (s_debug)
-			{
-			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
-				0, bio_err, 0);
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine_id, 1);
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
@@ -664,12 +726,26 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
-
+	if (session_id_prefix)
+		{
+		if(strlen(session_id_prefix) >= 32)
+			BIO_printf(bio_err,
+"warning: id_prefix is too long, only one new session will be possible\n");
+		else if(strlen(session_id_prefix) >= 16)
+			BIO_printf(bio_err,
+"warning: id_prefix is too long if you use SSLv2\n");
+		if(!SSL_CTX_set_generate_session_id(ctx, generate_session_id))
+			{
+			BIO_printf(bio_err,"error setting 'id_prefix'\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		BIO_printf(bio_err,"id_prefix '%s' set.\n", session_id_prefix);
+		}
 	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx,off);
-	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NON_EXPORT_FIRST);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 
@@ -694,11 +770,19 @@ bad:
 		ERR_print_errors(bio_err);
 		/* goto end; */
 		}
+	store = SSL_CTX_get_cert_store(ctx);
+	X509_STORE_set_flags(store, vflags);
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	if (!no_dhe)
 		{
-		dh=load_dh_param(dhfile ? dhfile : s_cert_file);
+		DH *dh=NULL;
+
+		if (dhfile)
+			dh = load_dh_param(dhfile);
+		else if (s_cert_file)
+			dh = load_dh_param(s_cert_file);
+
 		if (dh != NULL)
 			{
 			BIO_printf(bio_s_out,"Setting temp DH parameters\n");
@@ -723,7 +807,7 @@ bad:
 			goto end;
 		}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #if 1
 	if (!no_tmp_rsa)
 		SSL_CTX_set_tmp_rsa_callback(ctx,tmp_rsa_cb);
@@ -775,6 +859,7 @@ end:
 		BIO_free(bio_s_out);
 		bio_s_out=NULL;
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}
 
@@ -812,7 +897,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
 
@@ -835,6 +920,15 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (con == NULL) {
 		con=SSL_new(ctx);
+#ifndef OPENSSL_NO_KRB5
+		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+                        {
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE,
+								KRB5SVC);
+                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB,
+								KRB5KEYTAB);
+                        }
+#endif	/* OPENSSL_NO_KRB5 */
 		if(context)
 		      SSL_set_session_id_context(con, context,
 						 strlen((char *)context));
@@ -859,6 +953,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_cb);
 		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
 		}
+	if (s_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_out);
+		}
 
 	width=s+1;
 	for (;;)
@@ -872,7 +971,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		if (!read_from_sslcon)
 			{
 			FD_ZERO(&readfds);
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 			FD_SET(fileno(stdin),&readfds);
 #endif
 			FD_SET(s,&readfds);
@@ -882,7 +981,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			 * the compiler: if you do have a cast then you can either
 			 * go for (int *) or (void *).
 			 */
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 			/* Under Windows we can't select on stdin: only
 			 * on sockets. As a workaround we timeout the select every
 			 * second and check for any keypress. In a proper Windows
@@ -1148,7 +1247,7 @@ static int init_ssl_connection(SSL *con)
 	return(1);
 	}
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 static DH *load_dh_param(char *dhfile)
 	{
 	DH *ret=NULL;
@@ -1217,6 +1316,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=SSL_new(ctx)) == NULL) goto err;
+#ifndef OPENSSL_NO_KRB5
+	if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+		{
+		kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
+		kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+		}
+#endif	/* OPENSSL_NO_KRB5 */
 	if(context) SSL_set_session_id_context(con, context,
 					       strlen((char *)context));
 
@@ -1243,6 +1349,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_cb);
 		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		}
+	if (s_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
 	blank=0;
@@ -1284,7 +1395,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			else
 				{
 				BIO_printf(bio_s_out,"read R BLOCK\n");
-#ifndef MSDOS
+#ifndef OPENSSL_SYS_MSDOS
 				sleep(1);
 #endif
 				continue;
@@ -1378,7 +1489,8 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			BIO_puts(io,"</BODY></HTML>\r\n\r\n");
 			break;
 			}
-		else if ((www == 2) && (strncmp("GET /",buf,5) == 0))
+		else if ((www == 2 || www == 3)
+                         && (strncmp("GET /",buf,5) == 0))
 			{
 			BIO *file;
 			char *p,*e;
@@ -1468,13 +1580,16 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			if (!s_quiet)
 				BIO_printf(bio_err,"FILE:%s\n",p);
 
-			i=strlen(p);
-			if (	((i > 5) && (strcmp(&(p[i-5]),".html") == 0)) ||
-				((i > 4) && (strcmp(&(p[i-4]),".php") == 0)) ||
-				((i > 4) && (strcmp(&(p[i-4]),".htm") == 0)))
-				BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
-			else
-				BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
+                        if (www == 2)
+                                {
+                                i=strlen(p);
+                                if (	((i > 5) && (strcmp(&(p[i-5]),".html") == 0)) ||
+                                        ((i > 4) && (strcmp(&(p[i-4]),".php") == 0)) ||
+                                        ((i > 4) && (strcmp(&(p[i-4]),".htm") == 0)))
+                                        BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
+                                else
+                                        BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
+                                }
 			/* send the file */
 			total_bytes=0;
 			for (;;)
@@ -1552,7 +1667,7 @@ err:
 	return(ret);
 	}
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	{
 	static RSA *rsa_tmp=NULL;
@@ -1574,3 +1689,26 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength)
 	return(rsa_tmp);
 	}
 #endif
+
+#define MAX_SESSION_ID_ATTEMPTS 10
+static int generate_session_id(const SSL *ssl, unsigned char *id,
+				unsigned int *id_len)
+	{
+	unsigned int count = 0;
+	do	{
+		RAND_pseudo_bytes(id, *id_len);
+		/* Prefix the session_id with the required prefix. NB: If our
+		 * prefix is too long, clip it - but there will be worse effects
+		 * anyway, eg. the server could only possibly create 1 session
+		 * ID (ie. the prefix!) so all future session negotiations will
+		 * fail due to conflicts. */
+		memcpy(id, session_id_prefix,
+			(strlen(session_id_prefix) < *id_len) ?
+			strlen(session_id_prefix) : *id_len);
+		}
+	while(SSL_has_matching_session_id(ssl, id, *id_len) &&
+		(++count < MAX_SESSION_ID_ATTEMPTS));
+	if(count >= MAX_SESSION_ID_ATTEMPTS)
+		return 0;
+	return 1;
+	}

@@ -61,7 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/dso.h>
 
-#ifndef WIN32
+#ifndef OPENSSL_SYS_WIN32
 DSO_METHOD *DSO_METHOD_win32(void)
 	{
 	return NULL;
@@ -71,7 +71,7 @@ DSO_METHOD *DSO_METHOD_win32(void)
 /* Part of the hack in "win32_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
-static int win32_load(DSO *dso, const char *filename);
+static int win32_load(DSO *dso);
 static int win32_unload(DSO *dso);
 static void *win32_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname);
@@ -80,8 +80,9 @@ static int win32_unbind_var(DSO *dso, char *symname, void *symptr);
 static int win32_unbind_func(DSO *dso, char *symname, DSO_FUNC_TYPE symptr);
 static int win32_init(DSO *dso);
 static int win32_finish(DSO *dso);
-#endif
 static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg);
+#endif
+static char *win32_name_converter(DSO *dso, const char *filename);
 
 static DSO_METHOD dso_meth_win32 = {
 	"OpenSSL 'win32' shared library method",
@@ -94,7 +95,8 @@ static DSO_METHOD dso_meth_win32 = {
 	NULL, /* unbind_var */
 	NULL, /* unbind_func */
 #endif
-	win32_ctrl,
+	NULL, /* ctrl */
+	win32_name_converter,
 	NULL, /* init */
 	NULL  /* finish */
 	};
@@ -109,50 +111,48 @@ DSO_METHOD *DSO_METHOD_win32(void)
  *     LoadLibrary(), and copied.
  */
 
-static int win32_load(DSO *dso, const char *filename)
+static int win32_load(DSO *dso)
 	{
-	HINSTANCE h, *p;
-	char translated[DSO_MAX_TRANSLATED_SIZE];
-	int len;
+	HINSTANCE h = NULL, *p = NULL;
+	/* See applicable comments from dso_dl.c */
+	char *filename = DSO_convert_filename(dso, NULL);
 
-	/* NB: This is a hideous hack, but I'm not yet sure what
-	 * to replace it with. This attempts to convert any filename,
-	 * that looks like it has no path information, into a
-	 * translated form, e. "blah" -> "blah.dll" ... I'm more
-	 * comfortable putting hacks into win32 code though ;-) */
-	len = strlen(filename);
-	if((dso->flags & DSO_FLAG_NAME_TRANSLATION) &&
-			(len + 4 < DSO_MAX_TRANSLATED_SIZE) &&
-			(strstr(filename, "/") == NULL) &&
-			(strstr(filename, "\\") == NULL) &&
-			(strstr(filename, ":") == NULL))
+	if(filename == NULL)
 		{
-		sprintf(translated, "%s.dll", filename);
-		h = LoadLibrary(translated);
+		DSOerr(DSO_F_WIN32_LOAD,DSO_R_NO_FILENAME);
+		goto err;
 		}
-	else
-		h = LoadLibrary(filename);
+	h = LoadLibrary(filename);
 	if(h == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_LOAD_FAILED);
-		return(0);
+		ERR_add_error_data(3, "filename(", filename, ")");
+		goto err;
 		}
 	p = (HINSTANCE *)OPENSSL_malloc(sizeof(HINSTANCE));
 	if(p == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,ERR_R_MALLOC_FAILURE);
-		FreeLibrary(h);
-		return(0);
+		goto err;
 		}
 	*p = h;
 	if(!sk_push(dso->meth_data, (char *)p))
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_STACK_ERROR);
-		FreeLibrary(h);
-		OPENSSL_free(p);
-		return(0);
+		goto err;
 		}
+	/* Success */
+	dso->loaded_filename = filename;
 	return(1);
+err:
+	/* Cleanup !*/
+	if(filename != NULL)
+		OPENSSL_free(filename);
+	if(p != NULL)
+		OPENSSL_free(p);
+	if(h != NULL)
+		FreeLibrary(h);
+	return(0);
 	}
 
 static int win32_unload(DSO *dso)
@@ -211,6 +211,7 @@ static void *win32_bind_var(DSO *dso, const char *symname)
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_VAR,DSO_R_SYM_FAILURE);
+		ERR_add_error_data(3, "symname(", symname, ")");
 		return(NULL);
 		}
 	return(sym);
@@ -241,33 +242,38 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_FUNC,DSO_R_SYM_FAILURE);
+		ERR_add_error_data(3, "symname(", symname, ")");
 		return(NULL);
 		}
 	return((DSO_FUNC_TYPE)sym);
 	}
 
-static long win32_ctrl(DSO *dso, int cmd, long larg, void *parg)
-        {
-        if(dso == NULL)
-                {
-                DSOerr(DSO_F_WIN32_CTRL,ERR_R_PASSED_NULL_PARAMETER);
-                return(-1);
-                }
-        switch(cmd)
-                {
-        case DSO_CTRL_GET_FLAGS:
-                return dso->flags;
-        case DSO_CTRL_SET_FLAGS:
-                dso->flags = (int)larg;
-                return(0);
-        case DSO_CTRL_OR_FLAGS:
-                dso->flags |= (int)larg;
-                return(0);
-        default:
-                break;
-                }
-        DSOerr(DSO_F_WIN32_CTRL,DSO_R_UNKNOWN_COMMAND);
-        return(-1);
-        }
+static char *win32_name_converter(DSO *dso, const char *filename)
+	{
+	char *translated;
+	int len, transform;
 
-#endif /* WIN32 */
+	len = strlen(filename);
+	transform = ((strstr(filename, "/") == NULL) &&
+			(strstr(filename, "\\") == NULL) &&
+			(strstr(filename, ":") == NULL));
+	if(transform)
+		/* We will convert this to "%s.dll" */
+		translated = OPENSSL_malloc(len + 5);
+	else
+		/* We will simply duplicate filename */
+		translated = OPENSSL_malloc(len + 1);
+	if(translated == NULL)
+		{
+		DSOerr(DSO_F_WIN32_NAME_CONVERTER,
+				DSO_R_NAME_TRANSLATION_FAILED); 
+		return(NULL);   
+		}
+	if(transform)
+		sprintf(translated, "%s.dll", filename);
+	else
+		sprintf(translated, "%s", filename);
+	return(translated);
+	}
+
+#endif /* OPENSSL_SYS_WIN32 */

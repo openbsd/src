@@ -113,7 +113,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(WINDOWS) || defined(WIN32)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 #include <windows.h>
 #ifndef _WIN32_WINNT
 # define _WIN32_WINNT 0x0400
@@ -254,6 +254,10 @@ int RAND_poll(void)
          * at random times on Windows 2000.  Reported by Jeffrey Altman.  
          * Only use it on NT.
 	 */
+	/* Wolfgang Marczy <WMarczy@topcall.co.at> reports that
+	 * the RegQueryValueEx call below can hang on NT4.0 (SP6).
+	 * So we don't use this at all for now. */
+#if 0
         if ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT &&
 		osverinfo.dwMajorVersion < 5)
 		{
@@ -290,6 +294,7 @@ int RAND_poll(void)
 		if (buf)
 			free(buf);
 		}
+#endif
 
 	if (advapi)
 		{
@@ -310,8 +315,8 @@ int RAND_poll(void)
 			{
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
-				RAND_add(buf, sizeof(buf), sizeof(buf));
-#ifdef DEBUG
+				RAND_add(buf, sizeof(buf), 0);
+#if 0
 				printf("randomness from PROV_RSA_FULL\n");
 #endif
 				}
@@ -324,7 +329,7 @@ int RAND_poll(void)
 			if (gen(hProvider, sizeof(buf), buf) != 0)
 				{
 				RAND_add(buf, sizeof(buf), sizeof(buf));
-#ifdef DEBUG
+#if 0
 				printf("randomness from PROV_INTEL_SEC\n");
 #endif
 				}
@@ -461,7 +466,7 @@ int RAND_poll(void)
 						hlist.th32ProcessID,
 						hlist.th32HeapID))
 						{
-						int entrycnt = 50;
+						int entrycnt = 80;
 						do
 							RAND_add(&hentry,
 								hentry.dwSize, 5);
@@ -510,7 +515,7 @@ int RAND_poll(void)
 		FreeLibrary(kernel);
 		}
 
-#ifdef DEBUG
+#if 0
 	printf("Exiting RAND_poll\n");
 #endif
 
@@ -683,52 +688,6 @@ static void readscreen(void)
   DeleteObject(hBitmap);
   DeleteDC(hMemDC);
   DeleteDC(hScrDC);
-}
-
-#else /* Unix version */
-
-#include <time.h>
-
-int RAND_poll(void)
-{
-	unsigned long l;
-	pid_t curr_pid = getpid();
-#ifdef DEVRANDOM
-	FILE *fh;
-#endif
-
-#ifdef DEVRANDOM
-	/* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
-	 * have this. Use /dev/urandom if you can as /dev/random may block
-	 * if it runs out of random entries.  */
-
-	if ((fh = fopen(DEVRANDOM, "r")) != NULL)
-		{
-		unsigned char tmpbuf[ENTROPY_NEEDED];
-		int n;
-		
-		setvbuf(fh, NULL, _IONBF, 0);
-		n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
-		fclose(fh);
-		RAND_add(tmpbuf,sizeof tmpbuf,n);
-		memset(tmpbuf,0,n);
-		}
-#endif
-
-	/* put in some default random data, we need more than just this */
-	l=curr_pid;
-	RAND_add(&l,sizeof(l),0);
-	l=getuid();
-	RAND_add(&l,sizeof(l),0);
-
-	l=time(NULL);
-	RAND_add(&l,sizeof(l),0);
-
-#ifdef DEVRANDOM
-	return 1;
-#else
-	return 0;
-#endif
 }
 
 #endif

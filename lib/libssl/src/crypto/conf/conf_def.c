@@ -81,10 +81,11 @@ static int def_init_default(CONF *conf);
 static int def_init_WIN32(CONF *conf);
 static int def_destroy(CONF *conf);
 static int def_destroy_data(CONF *conf);
-static int def_load(CONF *conf, BIO *bp, long *eline);
-static int def_dump(CONF *conf, BIO *bp);
-static int def_is_number(CONF *conf, char c);
-static int def_to_int(CONF *conf, char c);
+static int def_load(CONF *conf, const char *name, long *eline);
+static int def_load_bio(CONF *conf, BIO *bp, long *eline);
+static int def_dump(const CONF *conf, BIO *bp);
+static int def_is_number(const CONF *conf, char c);
+static int def_to_int(const CONF *conf, char c);
 
 const char *CONF_def_version="CONF_def" OPENSSL_VERSION_PTEXT;
 
@@ -94,10 +95,11 @@ static CONF_METHOD default_method = {
 	def_init_default,
 	def_destroy,
 	def_destroy_data,
-	def_load,
+	def_load_bio,
 	def_dump,
 	def_is_number,
-	def_to_int
+	def_to_int,
+	def_load
 	};
 
 static CONF_METHOD WIN32_method = {
@@ -106,10 +108,11 @@ static CONF_METHOD WIN32_method = {
 	def_init_WIN32,
 	def_destroy,
 	def_destroy_data,
-	def_load,
+	def_load_bio,
 	def_dump,
 	def_is_number,
-	def_to_int
+	def_to_int,
+	def_load
 	};
 
 CONF_METHOD *NCONF_default()
@@ -177,7 +180,32 @@ static int def_destroy_data(CONF *conf)
 	return 1;
 	}
 
-static int def_load(CONF *conf, BIO *in, long *line)
+static int def_load(CONF *conf, const char *name, long *line)
+	{
+	int ret;
+	BIO *in=NULL;
+
+#ifdef OPENSSL_SYS_VMS
+	in=BIO_new_file(name, "r");
+#else
+	in=BIO_new_file(name, "rb");
+#endif
+	if (in == NULL)
+		{
+		if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE)
+			CONFerr(CONF_F_CONF_LOAD,CONF_R_NO_SUCH_FILE);
+		else
+			CONFerr(CONF_F_CONF_LOAD,ERR_R_SYS_LIB);
+		return 0;
+		}
+
+	ret = def_load_bio(conf, in, line);
+	BIO_free(in);
+
+	return ret;
+	}
+
+static int def_load_bio(CONF *conf, BIO *in, long *line)
 	{
 #define BUFSIZE	512
 	char btmp[16];
@@ -418,7 +446,11 @@ err:
 	if (line != NULL) *line=eline;
 	sprintf(btmp,"%ld",eline);
 	ERR_add_error_data(2,"line ",btmp);
-	if ((h != conf->data) && (conf->data != NULL)) CONF_free(conf->data);
+	if ((h != conf->data) && (conf->data != NULL))
+		{
+		CONF_free(conf->data);
+		conf->data=NULL;
+		}
 	if (v != NULL)
 		{
 		if (v->name != NULL) OPENSSL_free(v->name);
@@ -685,18 +717,20 @@ static void dump_value(CONF_VALUE *a, BIO *out)
 		BIO_printf(out, "[[%s]]\n", a->section);
 	}
 
-static int def_dump(CONF *conf, BIO *out)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE *, BIO *)
+
+static int def_dump(const CONF *conf, BIO *out)
 	{
-	lh_doall_arg(conf->data, (void (*)())dump_value, out);
+	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value), out);
 	return 1;
 	}
 
-static int def_is_number(CONF *conf, char c)
+static int def_is_number(const CONF *conf, char c)
 	{
 	return IS_NUMBER(conf,c);
 	}
 
-static int def_to_int(CONF *conf, char c)
+static int def_to_int(const CONF *conf, char c)
 	{
 	return c - '0';
 	}

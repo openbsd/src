@@ -64,7 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
         {
         BIO *b;
@@ -85,8 +85,7 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 int X509_REQ_print(BIO *bp, X509_REQ *x)
 	{
 	unsigned long l;
-	int i,n;
-	char *s;
+	int i;
 	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
@@ -118,7 +117,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	pkey=X509_REQ_get_pubkey(x);
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	if (pkey != NULL && pkey->type == EVP_PKEY_RSA)
 		{
 		BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
@@ -127,7 +126,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 		}
 	else 
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 		if (pkey != NULL && pkey->type == EVP_PKEY_DSA)
 		{
 		BIO_printf(bp,"%12sDSA Public Key:\n","");
@@ -145,13 +144,10 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	sk=x->req_info->attributes;
-	if ((sk == NULL) || (sk_X509_ATTRIBUTE_num(sk) == 0))
+	if (sk_X509_ATTRIBUTE_num(sk) == 0)
 		{
-		if (!x->req_info->req_kludge)
-			{
-			sprintf(str,"%12sa0:00\n","");
-			if (BIO_puts(bp,str) <= 0) goto err;
-			}
+		sprintf(str,"%12sa0:00\n","");
+		if (BIO_puts(bp,str) <= 0) goto err;
 		}
 	else
 		{
@@ -170,7 +166,13 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
 			{
-			if (a->set)
+			if (a->single)
+				{
+				t=a->value.single;
+				type=t->type;
+				bs=t->value.bit_string;
+				}
+			else
 				{
 				ii=0;
 				count=sk_ASN1_TYPE_num(a->value.set);
@@ -178,12 +180,6 @@ get_next:
 				at=sk_ASN1_TYPE_value(a->value.set,ii);
 				type=at->type;
 				bs=at->value.asn1_string;
-				}
-			else
-				{
-				t=a->value.single;
-				type=t->type;
-				bs=t->value.bit_string;
 				}
 			}
 			for (j=25-j; j>0; j--)
@@ -229,24 +225,8 @@ get_next:
 		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	}
 
-	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	sprintf(str,"%4sSignature Algorithm: %s","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
-	if (BIO_puts(bp,str) <= 0) goto err;
+	if(!X509_signature_print(bp, x->sig_alg, x->signature)) goto err;
 
-	n=x->signature->length;
-	s=(char *)x->signature->data;
-	for (i=0; i<n; i++)
-		{
-		if ((i%18) == 0)
-			{
-			sprintf(str,"\n%8s","");
-			if (BIO_puts(bp,str) <= 0) goto err;
-			}
-		sprintf(str,"%02x%s",(unsigned char)s[i],((i+1) == n)?"":":");
-		if (BIO_puts(bp,str) <= 0) goto err;
-		}
-	if (BIO_puts(bp,"\n") <= 0) goto err;
 	return(1);
 err:
 	X509err(X509_F_X509_REQ_PRINT,ERR_R_BUF_LIB);

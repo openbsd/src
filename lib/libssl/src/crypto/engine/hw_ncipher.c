@@ -4,7 +4,7 @@
  * for the OpenSSL project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,15 +58,16 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
+#include <openssl/ui.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_NCIPHER
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_NCIPHER
 
 /* Attribution notice: nCipher have said several times that it's OK for
  * us to implement a general interface to their boxes, and recently declared
@@ -82,9 +83,13 @@
 #include "vendor_defns/hwcryptohook.h"
 #endif
 
-static int hwcrhk_init(void);
-static int hwcrhk_finish(void);
-static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)()); 
+#define HWCRHK_LIB_NAME "hwcrhk engine"
+#include "hw_ncipher_err.c"
+
+static int hwcrhk_destroy(ENGINE *e);
+static int hwcrhk_init(ENGINE *e);
+static int hwcrhk_finish(ENGINE *e);
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)()); 
 
 /* Functions to handle mutexes */
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex*, HWCryptoHook_CallerContext*);
@@ -93,39 +98,77 @@ static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex*);
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex*);
 
 /* BIGNUM stuff */
-static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa);
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa);
+#endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int hwcrhk_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
-static int hwcrhk_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
+	const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 /* RAND stuff */
 static int hwcrhk_rand_bytes(unsigned char *buf, int num);
 static int hwcrhk_rand_status(void);
 
 /* KM stuff */
-static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
-	const char *passphrase);
-static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id,
-	const char *passphrase);
+static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data);
+static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data);
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index,long argl, void *argp);
+	int ind,long argl, void *argp);
 
 /* Interaction stuff */
+static int hwcrhk_insert_card(const char *prompt_info,
+	const char *wrong_info,
+	HWCryptoHook_PassphraseContext *ppctx,
+	HWCryptoHook_CallerContext *cactx);
 static int hwcrhk_get_pass(const char *prompt_info,
 	int *len_io, char *buf,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx);
-static void hwcrhk_log_message(void *logstream, const char *message);
+static void hwcrhk_log_message(void *logstr, const char *message);
 
+/* The definitions for control commands specific to this engine */
+#define HWCRHK_CMD_SO_PATH		ENGINE_CMD_BASE
+#define HWCRHK_CMD_FORK_CHECK		(ENGINE_CMD_BASE + 1)
+#define HWCRHK_CMD_THREAD_LOCKING	(ENGINE_CMD_BASE + 2)
+#define HWCRHK_CMD_SET_USER_INTERFACE   (ENGINE_CMD_BASE + 3)
+#define HWCRHK_CMD_SET_CALLBACK_DATA    (ENGINE_CMD_BASE + 4)
+static const ENGINE_CMD_DEFN hwcrhk_cmd_defns[] = {
+	{HWCRHK_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'hwcrhk' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{HWCRHK_CMD_FORK_CHECK,
+		"FORK_CHECK",
+		"Turns fork() checking on or off (boolean)",
+		ENGINE_CMD_FLAG_NUMERIC},
+	{HWCRHK_CMD_THREAD_LOCKING,
+		"THREAD_LOCKING",
+		"Turns thread-safe locking on or off (boolean)",
+		ENGINE_CMD_FLAG_NUMERIC},
+	{HWCRHK_CMD_SET_USER_INTERFACE,
+		"SET_USER_INTERFACE",
+		"Set the global user interface (internal)",
+		ENGINE_CMD_FLAG_INTERNAL},
+	{HWCRHK_CMD_SET_CALLBACK_DATA,
+		"SET_CALLBACK_DATA",
+		"Set the global user interface extra data (internal)",
+		ENGINE_CMD_FLAG_INTERNAL},
+	{0, NULL, NULL, 0}
+	};
+
+#ifndef OPENSSL_NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD hwcrhk_rsa =
 	{
@@ -143,7 +186,9 @@ static RSA_METHOD hwcrhk_rsa =
 	NULL,
 	NULL
 	};
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD hwcrhk_dh =
 	{
@@ -156,6 +201,7 @@ static DH_METHOD hwcrhk_dh =
 	0,
 	NULL
 	};
+#endif
 
 static RAND_METHOD hwcrhk_rand =
 	{
@@ -168,26 +214,9 @@ static RAND_METHOD hwcrhk_rand =
 	hwcrhk_rand_status,
 	};
 
-/* Our ENGINE structure. */
-static ENGINE engine_hwcrhk =
-        {
-	"chil",
-	"nCipher hardware engine support",
-	&hwcrhk_rsa,
-	NULL,
-	&hwcrhk_dh,
-	&hwcrhk_rand,
-	hwcrhk_mod_exp,
-	NULL,
-	hwcrhk_init,
-	hwcrhk_finish,
-	hwcrhk_ctrl,
-	hwcrhk_load_privkey,
-	hwcrhk_load_pubkey,
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-        };
+/* Constants used when creating the ENGINE */
+static const char *engine_hwcrhk_id = "chil";
+static const char *engine_hwcrhk_name = "nCipher hardware engine support";
 
 /* Internal stuff for HWCryptoHook */
 
@@ -204,7 +233,8 @@ struct HWCryptoHook_MutexValue
    into HWCryptoHook_PassphraseContext */
 struct HWCryptoHook_PassphraseContextValue
 	{
-	void *any;
+        UI_METHOD *ui_method;
+	void *callback_data;
 	};
 
 /* hwcryptohook.h has some typedefs that turn
@@ -212,7 +242,10 @@ struct HWCryptoHook_PassphraseContextValue
    into HWCryptoHook_CallerContext */
 struct HWCryptoHook_CallerContextValue
 	{
-	void *any;
+	pem_password_cb *password_callback; /* Deprecated!  Only present for
+                                               backward compatibility! */
+        UI_METHOD *ui_method;
+	void *callback_data;
 	};
 
 /* The MPI structure in HWCryptoHook is pretty compatible with OpenSSL
@@ -222,31 +255,27 @@ struct HWCryptoHook_CallerContextValue
 #define MPI2BN(bn, mp) \
     {mp.size = bn->dmax * sizeof(BN_ULONG); mp.buf = (unsigned char *)bn->d;}
 
-#if 0 /* Card and password management is not yet supported */
-/* HWCryptoHook callbacks.  insert_card() and get_pass() are not yet
-   defined, because we haven't quite decided on the proper form yet.
-   log_message() just adds an entry in the error stack.  I don't know
-   if that's good or bad...  */
-static int insert_card(const char *prompt_info,
-	const char *wrong_info,
-	HWCryptoHook_PassphraseContext *ppctx,
-	HWCryptoHook_CallerContext *cactx);
-static int get_pass(const char *prompt_info,
-	int *len_io, char *buf,
-	HWCryptoHook_PassphraseContext *ppctx,
-	HWCryptoHook_CallerContext *cactx);
-#endif
-
 static BIO *logstream = NULL;
-static pem_password_cb *password_callback = NULL;
-#if 0
-static void *password_callback_userdata = NULL;
-#endif
 static int disable_mutex_callbacks = 0;
+
+/* One might wonder why these are needed, since one can pass down at least
+   a UI_METHOD and a pointer to callback data to the key-loading functions.
+   The thing is that the ModExp and RSAImmed functions can load keys as well,
+   if the data they get is in a special, nCipher-defined format (hint: if you
+   look at the private exponent of the RSA data as a string, you'll see this
+   string: "nCipher KM tool key id", followed by some bytes, followed a key
+   identity string, followed by more bytes.  This happens when you use "embed"
+   keys instead of "hwcrhk" keys).  Unfortunately, those functions do not take
+   any passphrase or caller context, and our functions can't really take any
+   callback data either.  Still, the "insert_card" and "get_passphrase"
+   callbacks may be called down the line, and will need to know what user
+   interface callbacks to call, and having callback data from the application
+   may be a nice thing as well, so we need to keep track of that globally. */
+static HWCryptoHook_CallerContext password_context = { NULL, NULL, NULL };
 
 /* Stuff to pass to the HWCryptoHook library */
 static HWCryptoHook_InitInfo hwcrhk_globals = {
-	0,			/* Flags */
+	HWCryptoHook_InitFlags_SimpleForkCheck,	/* Flags */
 	&logstream,		/* logstream */
 	sizeof(BN_ULONG),	/* limbsize */
 	0,			/* mslimb first: false for BNs */
@@ -280,20 +309,42 @@ static HWCryptoHook_InitInfo hwcrhk_globals = {
 	0, /* hwcrhk_cv_destroy, */
 
 	hwcrhk_get_pass,	/* pass phrase */
-	0, /* insert_card, */	/* insert a card */
+	hwcrhk_insert_card,	/* insert a card */
 	hwcrhk_log_message	/* Log message */
 };
 
 
 /* Now, to our own code */
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_ncipher()
+/* This internal function is used by ENGINE_ncipher() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
 	{
-	RSA_METHOD *meth1;
-	DH_METHOD *meth2;
+#ifndef OPENSSL_NO_RSA
+	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DH
+	const DH_METHOD *meth2;
+#endif
+	if(!ENGINE_set_id(e, engine_hwcrhk_id) ||
+			!ENGINE_set_name(e, engine_hwcrhk_name) ||
+#ifndef OPENSSL_NO_RSA
+			!ENGINE_set_RSA(e, &hwcrhk_rsa) ||
+#endif
+#ifndef OPENSSL_NO_DH
+			!ENGINE_set_DH(e, &hwcrhk_dh) ||
+#endif
+			!ENGINE_set_RAND(e, &hwcrhk_rand) ||
+			!ENGINE_set_destroy_function(e, hwcrhk_destroy) ||
+			!ENGINE_set_init_function(e, hwcrhk_init) ||
+			!ENGINE_set_finish_function(e, hwcrhk_finish) ||
+			!ENGINE_set_ctrl_function(e, hwcrhk_ctrl) ||
+			!ENGINE_set_load_privkey_function(e, hwcrhk_load_privkey) ||
+			!ENGINE_set_load_pubkey_function(e, hwcrhk_load_pubkey) ||
+			!ENGINE_set_cmd_defns(e, hwcrhk_cmd_defns))
+		return 0;
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -306,12 +357,41 @@ ENGINE *ENGINE_ncipher()
 	hwcrhk_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
 	hwcrhk_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	hwcrhk_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+#endif
 
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth2 = DH_OpenSSL();
 	hwcrhk_dh.generate_key = meth2->generate_key;
 	hwcrhk_dh.compute_key = meth2->compute_key;
-	return &engine_hwcrhk;
+#endif
+
+	/* Ensure the hwcrhk error handling is set up */
+	ERR_load_HWCRHK_strings();
+	return 1;
+	}
+
+static ENGINE *engine_ncipher(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+void ENGINE_load_chil(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_ncipher();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 	}
 
 /* This is a process-global DSO handle used for loading and unloading
@@ -321,30 +401,41 @@ ENGINE *ENGINE_ncipher()
  * implicitly. */
 static DSO *hwcrhk_dso = NULL;
 static HWCryptoHook_ContextHandle hwcrhk_context = 0;
-static int hndidx = -1;	/* Index for KM handle.  Not really used yet. */
+#ifndef OPENSSL_NO_RSA
+static int hndidx_rsa = -1;    /* Index for KM handle.  Not really used yet. */
+#endif
 
 /* These are the function pointers that are (un)set when the library has
  * successfully (un)loaded. */
 static HWCryptoHook_Init_t *p_hwcrhk_Init = NULL;
 static HWCryptoHook_Finish_t *p_hwcrhk_Finish = NULL;
 static HWCryptoHook_ModExp_t *p_hwcrhk_ModExp = NULL;
+#ifndef OPENSSL_NO_RSA
 static HWCryptoHook_RSA_t *p_hwcrhk_RSA = NULL;
+#endif
 static HWCryptoHook_RandomBytes_t *p_hwcrhk_RandomBytes = NULL;
+#ifndef OPENSSL_NO_RSA
 static HWCryptoHook_RSALoadKey_t *p_hwcrhk_RSALoadKey = NULL;
 static HWCryptoHook_RSAGetPublicKey_t *p_hwcrhk_RSAGetPublicKey = NULL;
 static HWCryptoHook_RSAUnloadKey_t *p_hwcrhk_RSAUnloadKey = NULL;
+#endif
 static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 
 /* Used in the DSO operations. */
-static const char *HWCRHK_LIBNAME = "nfhwcrhk";
+static const char def_HWCRHK_LIBNAME[] = "nfhwcrhk";
+static const char *HWCRHK_LIBNAME = def_HWCRHK_LIBNAME;
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";
 static const char *n_hwcrhk_Finish = "HWCryptoHook_Finish";
 static const char *n_hwcrhk_ModExp = "HWCryptoHook_ModExp";
+#ifndef OPENSSL_NO_RSA
 static const char *n_hwcrhk_RSA = "HWCryptoHook_RSA";
+#endif
 static const char *n_hwcrhk_RandomBytes = "HWCryptoHook_RandomBytes";
+#ifndef OPENSSL_NO_RSA
 static const char *n_hwcrhk_RSALoadKey = "HWCryptoHook_RSALoadKey";
 static const char *n_hwcrhk_RSAGetPublicKey = "HWCryptoHook_RSAGetPublicKey";
 static const char *n_hwcrhk_RSAUnloadKey = "HWCryptoHook_RSAUnloadKey";
+#endif
 static const char *n_hwcrhk_ModExpCRT = "HWCryptoHook_ModExpCRT";
 
 /* HWCryptoHook library functions and mechanics - these are used by the
@@ -353,16 +444,17 @@ static const char *n_hwcrhk_ModExpCRT = "HWCryptoHook_ModExpCRT";
  * called, the checking and error handling is probably down there. */
 
 /* utility function to obtain a context */
-static int get_context(HWCryptoHook_ContextHandle *hac)
+static int get_context(HWCryptoHook_ContextHandle *hac,
+        HWCryptoHook_CallerContext *cac)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
         *hac = p_hwcrhk_Init(&hwcrhk_globals, sizeof(hwcrhk_globals), &rmsg,
-		NULL);
+		cac);
 	if (!*hac)
                 return 0;
         return 1;
@@ -374,30 +466,38 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 	p_hwcrhk_Finish(hac);
 	}
 
+/* Destructor (complements the "ENGINE_ncipher()" constructor) */
+static int hwcrhk_destroy(ENGINE *e)
+	{
+	ERR_unload_HWCRHK_strings();
+	return 1;
+	}
+
 /* (de)initialisation functions. */
-static int hwcrhk_init()
+static int hwcrhk_init(ENGINE *e)
 	{
 	HWCryptoHook_Init_t *p1;
 	HWCryptoHook_Finish_t *p2;
 	HWCryptoHook_ModExp_t *p3;
+#ifndef OPENSSL_NO_RSA
 	HWCryptoHook_RSA_t *p4;
 	HWCryptoHook_RSALoadKey_t *p5;
 	HWCryptoHook_RSAGetPublicKey_t *p6;
 	HWCryptoHook_RSAUnloadKey_t *p7;
+#endif
 	HWCryptoHook_RandomBytes_t *p8;
 	HWCryptoHook_ModExpCRT_t *p9;
 
 	if(hwcrhk_dso != NULL)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_ALREADY_LOADED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_ALREADY_LOADED);
 		goto err;
 		}
 	/* Attempt to load libnfhwcrhk.so/nfhwcrhk.dll/whatever. */
-	hwcrhk_dso = DSO_load(NULL, HWCRHK_LIBNAME, NULL,
-		DSO_FLAG_NAME_TRANSLATION);
+	hwcrhk_dso = DSO_load(NULL, HWCRHK_LIBNAME, NULL, 0);
 	if(hwcrhk_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_DSO_FAILURE);
+		HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_DSO_FAILURE);
 		goto err;
 		}
 	if(!(p1 = (HWCryptoHook_Init_t *)
@@ -406,6 +506,7 @@ static int hwcrhk_init()
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_Finish)) ||
 		!(p3 = (HWCryptoHook_ModExp_t *)
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExp)) ||
+#ifndef OPENSSL_NO_RSA
 		!(p4 = (HWCryptoHook_RSA_t *)
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSA)) ||
 		!(p5 = (HWCryptoHook_RSALoadKey_t *)
@@ -414,22 +515,25 @@ static int hwcrhk_init()
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAGetPublicKey)) ||
 		!(p7 = (HWCryptoHook_RSAUnloadKey_t *)
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAUnloadKey)) ||
+#endif
 		!(p8 = (HWCryptoHook_RandomBytes_t *)
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_RandomBytes)) ||
 		!(p9 = (HWCryptoHook_ModExpCRT_t *)
 			DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExpCRT)))
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_DSO_FAILURE);
+		HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_DSO_FAILURE);
 		goto err;
 		}
 	/* Copy the pointers */
 	p_hwcrhk_Init = p1;
 	p_hwcrhk_Finish = p2;
 	p_hwcrhk_ModExp = p3;
+#ifndef OPENSSL_NO_RSA
 	p_hwcrhk_RSA = p4;
 	p_hwcrhk_RSALoadKey = p5;
 	p_hwcrhk_RSAGetPublicKey = p6;
 	p_hwcrhk_RSAUnloadKey = p7;
+#endif
 	p_hwcrhk_RandomBytes = p8;
 	p_hwcrhk_ModExpCRT = p9;
 
@@ -448,16 +552,18 @@ static int hwcrhk_init()
 
 	/* Try and get a context - if not, we may have a DSO but no
 	 * accelerator! */
-	if(!get_context(&hwcrhk_context))
+	if(!get_context(&hwcrhk_context, &password_context))
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_INIT,ENGINE_R_UNIT_FAILURE);
+		HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_UNIT_FAILURE);
 		goto err;
 		}
 	/* Everything's fine. */
-	if (hndidx == -1)
-		hndidx = RSA_get_ex_new_index(0,
+#ifndef OPENSSL_NO_RSA
+	if (hndidx_rsa == -1)
+		hndidx_rsa = RSA_get_ex_new_index(0,
 			"nFast HWCryptoHook RSA key handle",
 			NULL, NULL, hwcrhk_ex_free);
+#endif
 	return 1;
 err:
 	if(hwcrhk_dso)
@@ -466,28 +572,30 @@ err:
 	p_hwcrhk_Init = NULL;
 	p_hwcrhk_Finish = NULL;
 	p_hwcrhk_ModExp = NULL;
+#ifndef OPENSSL_NO_RSA
 	p_hwcrhk_RSA = NULL;
 	p_hwcrhk_RSALoadKey = NULL;
 	p_hwcrhk_RSAGetPublicKey = NULL;
 	p_hwcrhk_RSAUnloadKey = NULL;
+#endif
 	p_hwcrhk_ModExpCRT = NULL;
 	p_hwcrhk_RandomBytes = NULL;
 	return 0;
 	}
 
-static int hwcrhk_finish()
+static int hwcrhk_finish(ENGINE *e)
 	{
 	int to_return = 1;
 	if(hwcrhk_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_NOT_LOADED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_FINISH,HWCRHK_R_NOT_LOADED);
 		to_return = 0;
 		goto err;
 		}
 	release_context(hwcrhk_context);
 	if(!DSO_free(hwcrhk_dso))
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_FINISH,ENGINE_R_DSO_FAILURE);
+		HWCRHKerr(HWCRHK_F_HWCRHK_FINISH,HWCRHK_R_DSO_FAILURE);
 		to_return = 0;
 		goto err;
 		}
@@ -498,21 +606,36 @@ static int hwcrhk_finish()
 	p_hwcrhk_Init = NULL;
 	p_hwcrhk_Finish = NULL;
 	p_hwcrhk_ModExp = NULL;
+#ifndef OPENSSL_NO_RSA
 	p_hwcrhk_RSA = NULL;
 	p_hwcrhk_RSALoadKey = NULL;
 	p_hwcrhk_RSAGetPublicKey = NULL;
 	p_hwcrhk_RSAUnloadKey = NULL;
+#endif
 	p_hwcrhk_ModExpCRT = NULL;
 	p_hwcrhk_RandomBytes = NULL;
 	return to_return;
 	}
 
-static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
+static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 	{
 	int to_return = 1;
 
 	switch(cmd)
 		{
+	case HWCRHK_CMD_SO_PATH:
+		if(hwcrhk_dso)
+			{
+			HWCRHKerr(HWCRHK_F_HWCRHK_CTRL,HWCRHK_R_ALREADY_LOADED);
+			return 0;
+			}
+		if(p == NULL)
+			{
+			HWCRHKerr(HWCRHK_F_HWCRHK_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		HWCRHK_LIBNAME = (const char *)p;
+		return 1;
 	case ENGINE_CTRL_SET_LOGSTREAM:
 		{
 		BIO *bio = (BIO *)p;
@@ -526,18 +649,31 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 		if (CRYPTO_add(&bio->references,1,CRYPTO_LOCK_BIO) > 1)
 			logstream = bio;
 		else
-			ENGINEerr(ENGINE_F_HWCRHK_CTRL,ENGINE_R_BIO_WAS_FREED);
+			HWCRHKerr(HWCRHK_F_HWCRHK_CTRL,HWCRHK_R_BIO_WAS_FREED);
 		}
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 	case ENGINE_CTRL_SET_PASSWORD_CALLBACK:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-		password_callback = (pem_password_cb *)f;
+		password_context.password_callback = (pem_password_cb *)f;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	case ENGINE_CTRL_SET_USER_INTERFACE:
+	case HWCRHK_CMD_SET_USER_INTERFACE:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		password_context.ui_method = (UI_METHOD *)p;
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
+	case ENGINE_CTRL_SET_CALLBACK_DATA:
+	case HWCRHK_CMD_SET_CALLBACK_DATA:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		password_context.callback_data = p;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
 	/* this enables or disables the "SimpleForkCheck" flag used in the
 	 * initialisation structure. */
 	case ENGINE_CTRL_CHIL_SET_FORKCHECK:
+	case HWCRHK_CMD_FORK_CHECK:
 		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 		if(i)
 			hwcrhk_globals.flags |=
@@ -557,11 +693,16 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 		disable_mutex_callbacks = 1;
 		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 		break;
+	case HWCRHK_CMD_THREAD_LOCKING:
+		CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+		disable_mutex_callbacks = ((i == 0) ? 0 : 1);
+		CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+		break;
 
 	/* The command isn't understood by this engine */
 	default:
-		ENGINEerr(ENGINE_F_HWCRHK_CTRL,
-			ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_CTRL,
+			HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 		to_return = 0;
 		break;
 		}
@@ -569,44 +710,62 @@ static int hwcrhk_ctrl(int cmd, long i, void *p, void (*f)())
 	return to_return;
 	}
 
-static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
-	const char *passphrase)
+static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
 	{
+#ifndef OPENSSL_NO_RSA
 	RSA *rtmp = NULL;
+#endif
 	EVP_PKEY *res = NULL;
+#ifndef OPENSSL_NO_RSA
 	HWCryptoHook_MPI e, n;
 	HWCryptoHook_RSAKeyHandle *hptr;
+#endif
+#if !defined(OPENSSL_NO_RSA)
+	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
+#endif
+	HWCryptoHook_PassphraseContext ppctx;
+
+#if !defined(OPENSSL_NO_RSA)
+	rmsg.buf = tempbuf;
+	rmsg.size = sizeof(tempbuf);
+#endif
 
 	if(!hwcrhk_context)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
-			ENGINE_R_NOT_INITIALISED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
+			HWCRHK_R_NOT_INITIALISED);
 		goto err;
 		}
+#ifndef OPENSSL_NO_RSA
 	hptr = OPENSSL_malloc(sizeof(HWCryptoHook_RSAKeyHandle));
 	if (!hptr)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
 			ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
+        ppctx.ui_method = ui_method;
+	ppctx.callback_data = callback_data;
 	if (p_hwcrhk_RSALoadKey(hwcrhk_context, key_id, hptr,
-		&rmsg, NULL))
+		&rmsg, &ppctx))
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
-			ENGINE_R_CHIL_ERROR);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
+			HWCRHK_R_CHIL_ERROR);
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
 		}
 	if (!*hptr)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PRIVKEY,
-			ENGINE_R_NO_KEY);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
+			HWCRHK_R_NO_KEY);
 		goto err;
 		}
-	rtmp = RSA_new_method(&engine_hwcrhk);
-	RSA_set_ex_data(rtmp, hndidx, (char *)hptr);
+#endif
+#ifndef OPENSSL_NO_RSA
+	rtmp = RSA_new_method(eng);
+	RSA_set_ex_data(rtmp, hndidx_rsa, (char *)hptr);
 	rtmp->e = BN_new();
 	rtmp->n = BN_new();
 	rtmp->flags |= RSA_FLAG_EXT_PKEY;
@@ -615,11 +774,11 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg)
 		!= HWCRYPTOHOOK_ERROR_MPISIZE)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PUBKEY,ENGINE_R_CHIL_ERROR);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,HWCRHK_R_CHIL_ERROR);
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
 		}
-			
+
 	bn_expand2(rtmp->e, e.size/sizeof(BN_ULONG));
 	bn_expand2(rtmp->n, n.size/sizeof(BN_ULONG));
 	MPI2BN(rtmp->e, e);
@@ -627,8 +786,8 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 
 	if (p_hwcrhk_RSAGetPublicKey(*hptr, &n, &e, &rmsg))
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_LOAD_PUBKEY,
-			ENGINE_R_CHIL_ERROR);
+		HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
+			HWCRHK_R_CHIL_ERROR);
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
 		}
@@ -639,23 +798,37 @@ static EVP_PKEY *hwcrhk_load_privkey(const char *key_id,
 
 	res = EVP_PKEY_new();
 	EVP_PKEY_assign_RSA(res, rtmp);
+#endif
+
+        if (!res)
+                HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
+                        HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED);
 
 	return res;
  err:
 	if (res)
 		EVP_PKEY_free(res);
+#ifndef OPENSSL_NO_RSA
 	if (rtmp)
 		RSA_free(rtmp);
+#endif
 	return NULL;
 	}
 
-static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id, const char *passphrase)
+static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
 	{
-	EVP_PKEY *res = hwcrhk_load_privkey(key_id, passphrase);
+	EVP_PKEY *res = NULL;
+
+#ifndef OPENSSL_NO_RSA
+        res = hwcrhk_load_privkey(eng, key_id,
+                ui_method, callback_data);
+#endif
 
 	if (res)
 		switch(res->type)
 			{
+#ifndef OPENSSL_NO_RSA
 		case EVP_PKEY_RSA:
 			{
 			RSA *rsa = NULL;
@@ -665,12 +838,16 @@ static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id, const char *passphrase)
 			res->pkey.rsa = RSA_new();
 			res->pkey.rsa->n = rsa->n;
 			res->pkey.rsa->e = rsa->e;
+			rsa->n = NULL;
+			rsa->e = NULL;
 			CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
 			RSA_free(rsa);
 			}
+			break;
+#endif
 		default:
-			ENGINEerr(ENGINE_F_HWCRHK_LOAD_PUBKEY,
-				ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+			HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PUBKEY,
+				HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED);
 			goto err;
 			}
 
@@ -682,7 +859,7 @@ static EVP_PKEY *hwcrhk_load_pubkey(const char *key_id, const char *passphrase)
 	}
 
 /* A little mod_exp */
-static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)
 	{
 	char tempbuf[1024];
@@ -695,11 +872,11 @@ static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
  
 	to_return = 0; /* expect failure */
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
 	if(!hwcrhk_context)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_MOD_EXP,ENGINE_R_NOT_INITIALISED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_NOT_INITIALISED);
 		goto err;
 		}
 	/* Prepare the params */
@@ -723,11 +900,11 @@ static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		   might be a good thing. */
 		if(ret == HWCRYPTOHOOK_ERROR_FALLBACK)
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_MOD_EXP,ENGINE_R_REQUEST_FALLBACK);
+			HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_REQUEST_FALLBACK);
 			}
 		else
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+			HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_REQUEST_FAILED);
 			}
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
@@ -737,37 +914,38 @@ static int hwcrhk_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 err:
 	return to_return;
 	}
- 
-static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
+
+#ifndef OPENSSL_NO_RSA 
+static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
 	HWCryptoHook_RSAKeyHandle *hptr;
 	int to_return = 0, ret;
 
+	rmsg.buf = tempbuf;
+	rmsg.size = sizeof(tempbuf);
+
 	if(!hwcrhk_context)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_MOD_EXP,ENGINE_R_NOT_INITIALISED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_MOD_EXP,HWCRHK_R_NOT_INITIALISED);
 		goto err;
 		}
 
 	/* This provides support for nForce keys.  Since that's opaque data
 	   all we do is provide a handle to the proper key and let HWCryptoHook
 	   take care of the rest. */
-	if ((hptr = (HWCryptoHook_RSAKeyHandle *) RSA_get_ex_data(rsa, hndidx))
+	if ((hptr = (HWCryptoHook_RSAKeyHandle *) RSA_get_ex_data(rsa, hndidx_rsa))
 		!= NULL)
 		{
 		HWCryptoHook_MPI m_a, m_r;
 
 		if(!rsa->n)
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,
-				ENGINE_R_MISSING_KEY_COMPONENTS);
+			HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+				HWCRHK_R_MISSING_KEY_COMPONENTS);
 			goto err;
 			}
-
-		rmsg.buf = tempbuf;
-		rmsg.size = 1024;
 
 		/* Prepare the params */
 		bn_expand2(r, rsa->n->top); /* Check for error !! */
@@ -788,11 +966,13 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
 			   might be a good thing. */
 			if(ret == HWCRYPTOHOOK_ERROR_FALLBACK)
 				{
-				ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,ENGINE_R_REQUEST_FALLBACK);
+				HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+					HWCRHK_R_REQUEST_FALLBACK);
 				}
 			else
 				{
-				ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+				HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+					HWCRHK_R_REQUEST_FAILED);
 				}
 			ERR_add_error_data(1,rmsg.buf);
 			goto err;
@@ -804,13 +984,10 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
 
 		if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,
-				ENGINE_R_MISSING_KEY_COMPONENTS);
+			HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+				HWCRHK_R_MISSING_KEY_COMPONENTS);
 			goto err;
 			}
-
-		rmsg.buf = tempbuf;
-		rmsg.size = 1024;
 
 		/* Prepare the params */
 		bn_expand2(r, rsa->n->top); /* Check for error !! */
@@ -837,11 +1014,13 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
 			   might be a good thing. */
 			if(ret == HWCRYPTOHOOK_ERROR_FALLBACK)
 				{
-				ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,ENGINE_R_REQUEST_FALLBACK);
+				HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+					HWCRHK_R_REQUEST_FALLBACK);
 				}
 			else
 				{
-				ENGINEerr(ENGINE_F_HWCRHK_RSA_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+				HWCRHKerr(HWCRHK_F_HWCRHK_RSA_MOD_EXP,
+					HWCRHK_R_REQUEST_FAILED);
 				}
 			ERR_add_error_data(1,rmsg.buf);
 			goto err;
@@ -852,16 +1031,18 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, BIGNUM *I, RSA *rsa)
 err:
 	return to_return;
 	}
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int hwcrhk_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);
 	}
 
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
-static int hwcrhk_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);
@@ -876,11 +1057,11 @@ static int hwcrhk_rand_bytes(unsigned char *buf, int num)
 	int ret;
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
 	if(!hwcrhk_context)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_RAND_BYTES,ENGINE_R_NOT_INITIALISED);
+		HWCRHKerr(HWCRHK_F_HWCRHK_RAND_BYTES,HWCRHK_R_NOT_INITIALISED);
 		goto err;
 		}
 
@@ -892,11 +1073,13 @@ static int hwcrhk_rand_bytes(unsigned char *buf, int num)
 		   might be a good thing. */
 		if(ret == HWCRYPTOHOOK_ERROR_FALLBACK)
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_RAND_BYTES,ENGINE_R_REQUEST_FALLBACK);
+			HWCRHKerr(HWCRHK_F_HWCRHK_RAND_BYTES,
+				HWCRHK_R_REQUEST_FALLBACK);
 			}
 		else
 			{
-			ENGINEerr(ENGINE_F_HWCRHK_RAND_BYTES,ENGINE_R_REQUEST_FAILED);
+			HWCRHKerr(HWCRHK_F_HWCRHK_RAND_BYTES,
+				HWCRHK_R_REQUEST_FAILED);
 			}
 		ERR_add_error_data(1,rmsg.buf);
 		goto err;
@@ -914,20 +1097,28 @@ static int hwcrhk_rand_status(void)
 /* This cleans up an RSA KM key, called when ex_data is freed */
 
 static void hwcrhk_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-	int index,long argl, void *argp)
+	int ind,long argl, void *argp)
 {
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;
+#ifndef OPENSSL_NO_RSA
 	HWCryptoHook_RSAKeyHandle *hptr;
+#endif
+#if !defined(OPENSSL_NO_RSA)
 	int ret;
+#endif
 
 	rmsg.buf = tempbuf;
-	rmsg.size = 1024;
+	rmsg.size = sizeof(tempbuf);
 
+#ifndef OPENSSL_NO_RSA
 	hptr = (HWCryptoHook_RSAKeyHandle *) item;
-	if(!hptr) return;
-	ret = p_hwcrhk_RSAUnloadKey(*hptr, NULL);
-	OPENSSL_free(hptr);
+	if(hptr)
+                {
+                ret = p_hwcrhk_RSAUnloadKey(*hptr, NULL);
+                OPENSSL_free(hptr);
+                }
+#endif
 }
 
 /* Mutex calls: since the HWCryptoHook model closely follows the POSIX model
@@ -939,17 +1130,17 @@ static int hwcrhk_mutex_init(HWCryptoHook_Mutex* mt,
 	{
 	mt->lockid = CRYPTO_get_new_dynlockid();
 	if (mt->lockid == 0)
-		return 0;
-	return 1;
+		return 1; /* failure */
+	return 0; /* success */
 	}
 
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex *mt)
 	{
 	CRYPTO_w_lock(mt->lockid);
-	return 1;
+	return 0;
 	}
 
-void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
+static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
 	{
 	CRYPTO_w_unlock(mt->lockid);
 	}
@@ -964,50 +1155,146 @@ static int hwcrhk_get_pass(const char *prompt_info,
 	HWCryptoHook_PassphraseContext *ppctx,
 	HWCryptoHook_CallerContext *cactx)
 	{
-	int l = 0;
-	char prompt[1024];
+	pem_password_cb *callback = NULL;
+	void *callback_data = NULL;
+        UI_METHOD *ui_method = NULL;
 
-	if (password_callback == NULL)
+        if (cactx)
+                {
+                if (cactx->ui_method)
+                        ui_method = cactx->ui_method;
+		if (cactx->password_callback)
+			callback = cactx->password_callback;
+		if (cactx->callback_data)
+			callback_data = cactx->callback_data;
+                }
+	if (ppctx)
 		{
-		ENGINEerr(ENGINE_F_HWCRHK_GET_PASS,ENGINE_R_NO_CALLBACK);
+                if (ppctx->ui_method)
+                        {
+                        ui_method = ppctx->ui_method;
+                        callback = NULL;
+                        }
+		if (ppctx->callback_data)
+			callback_data = ppctx->callback_data;
+		}
+	if (callback == NULL && ui_method == NULL)
+		{
+		HWCRHKerr(HWCRHK_F_HWCRHK_GET_PASS,HWCRHK_R_NO_CALLBACK);
 		return -1;
 		}
-	if (prompt_info)
-		{
-		strncpy(prompt, "Card: \"", sizeof(prompt));
-		l += 5;
-		strncpy(prompt + l, prompt_info, sizeof(prompt) - l);
-		l += strlen(prompt_info);
-		if (l + 2 < sizeof(prompt))
-			{
-			strncpy(prompt + l, "\"\n", sizeof(prompt) - l);
-			l += 2;
-			}
-		}
-	if (l < sizeof(prompt) - 1)
-		{
-		strncpy(prompt, "Enter Passphrase <enter to cancel>:",
-			sizeof(prompt) - l);
-		l += 35;
-		}
-	prompt[l] = '\0';
 
-	/* I know, passing on the prompt instead of the user data *is*
-	   a bad thing.  However, that's all we have right now.
-	   --  Richard Levitte */
-	*len_io = password_callback(buf, *len_io, 0, prompt);
+        if (ui_method)
+                {
+                UI *ui = UI_new_method(ui_method);
+                if (ui)
+                        {
+                        int ok;
+                        char *prompt = UI_construct_prompt(ui,
+                                "pass phrase", prompt_info);
+
+                        ok = UI_add_input_string(ui,prompt,
+                                UI_INPUT_FLAG_DEFAULT_PWD,
+				buf,0,(*len_io) - 1);
+                        UI_add_user_data(ui, callback_data);
+			UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
+
+			if (ok >= 0)
+				do
+					{
+					ok=UI_process(ui);
+					}
+				while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
+
+                        if (ok >= 0)
+                                *len_io = strlen(buf);
+
+                        UI_free(ui);
+                        OPENSSL_free(prompt);
+                        }
+                }
+        else
+                {
+                *len_io = callback(buf, *len_io, 0, callback_data);
+                }
 	if(!*len_io)
 		return -1;
 	return 0;
 	}
 
-static void hwcrhk_log_message(void *logstream, const char *message)
+static int hwcrhk_insert_card(const char *prompt_info,
+		      const char *wrong_info,
+		      HWCryptoHook_PassphraseContext *ppctx,
+		      HWCryptoHook_CallerContext *cactx)
+        {
+        int ok = -1;
+        UI *ui;
+	void *callback_data = NULL;
+        UI_METHOD *ui_method = NULL;
+
+        if (cactx)
+                {
+                if (cactx->ui_method)
+                        ui_method = cactx->ui_method;
+		if (cactx->callback_data)
+			callback_data = cactx->callback_data;
+                }
+	if (ppctx)
+		{
+                if (ppctx->ui_method)
+                        ui_method = ppctx->ui_method;
+		if (ppctx->callback_data)
+			callback_data = ppctx->callback_data;
+		}
+	if (ui_method == NULL)
+		{
+		HWCRHKerr(HWCRHK_F_HWCRHK_INSERT_CARD,
+			HWCRHK_R_NO_CALLBACK);
+		return -1;
+		}
+
+	ui = UI_new_method(ui_method);
+
+	if (ui)
+		{
+		char answer;
+		char buf[BUFSIZ];
+
+		if (wrong_info)
+			BIO_snprintf(buf, sizeof(buf)-1,
+				"Current card: \"%s\"\n", wrong_info);
+		ok = UI_dup_info_string(ui, buf);
+		if (ok >= 0 && prompt_info)
+			{
+			BIO_snprintf(buf, sizeof(buf)-1,
+				"Insert card \"%s\"", prompt_info);
+			ok = UI_dup_input_boolean(ui, buf,
+				"\n then hit <enter> or C<enter> to cancel\n",
+				"\r\n", "Cc", UI_INPUT_FLAG_ECHO, &answer);
+			}
+		UI_add_user_data(ui, callback_data);
+
+		if (ok >= 0)
+			ok = UI_process(ui);
+		UI_free(ui);
+
+		if (ok == -2 || (ok >= 0 && answer == 'C'))
+			ok = 1;
+		else if (ok < 0)
+			ok = -1;
+		else
+			ok = 0;
+		}
+	return ok;
+	}
+
+static void hwcrhk_log_message(void *logstr, const char *message)
 	{
 	BIO *lstream = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_BIO);
-	if (logstream)
-		lstream=*(BIO **)logstream;
+	if (logstr)
+		lstream=*(BIO **)logstr;
 	if (lstream)
 		{
 		BIO_write(lstream, message, strlen(message));
@@ -1015,5 +1302,20 @@ static void hwcrhk_log_message(void *logstream, const char *message)
 	CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 	}
 
-#endif /* !NO_HW_NCIPHER */
-#endif /* !NO_HW */
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */	   
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_hwcrhk_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}       
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
+
+#endif /* !OPENSSL_NO_HW_NCIPHER */
+#endif /* !OPENSSL_NO_HW */

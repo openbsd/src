@@ -3,7 +3,7 @@
  * project 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,11 +60,10 @@
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/dso.h>
-#include "engine_int.h"
 #include <openssl/engine.h>
 
-#ifndef NO_HW
-#ifndef NO_HW_CSWIFT
+#ifndef OPENSSL_NO_HW
+#ifndef OPENSSL_NO_HW_CSWIFT
 
 /* Attribution notice: Rainbow have generously allowed me to reproduce
  * the necessary definitions here from their API. This means the support
@@ -84,33 +83,55 @@
 #include "vendor_defns/cswift.h"
 #endif
 
-static int cswift_init(void);
-static int cswift_finish(void);
+#define CSWIFT_LIB_NAME "cswift engine"
+#include "hw_cswift_err.c"
+
+static int cswift_destroy(ENGINE *e);
+static int cswift_init(ENGINE *e);
+static int cswift_finish(ENGINE *e);
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)());
 
 /* BIGNUM stuff */
-static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx);
-static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *q, const BIGNUM *dmp1, const BIGNUM *dmq1,
 		const BIGNUM *iqmp, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_RSA
 /* RSA stuff */
-static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
+#endif
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+#ifndef OPENSSL_NO_DSA
 /* DSA stuff */
 static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 				DSA_SIG *sig, DSA *dsa);
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
-static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
+/* The definitions for control commands specific to this engine */
+#define CSWIFT_CMD_SO_PATH		ENGINE_CMD_BASE
+static const ENGINE_CMD_DEFN cswift_cmd_defns[] = {
+	{CSWIFT_CMD_SO_PATH,
+		"SO_PATH",
+		"Specifies the path to the 'cswift' shared library",
+		ENGINE_CMD_FLAG_STRING},
+	{0, NULL, NULL, 0}
+	};
 
+#ifndef OPENSSL_NO_RSA
 /* Our internal RSA_METHOD that we provide pointers to */
 static RSA_METHOD cswift_rsa =
 	{
@@ -128,7 +149,9 @@ static RSA_METHOD cswift_rsa =
 	NULL,
 	NULL
 	};
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /* Our internal DSA_METHOD that we provide pointers to */
 static DSA_METHOD cswift_dsa =
 	{
@@ -143,7 +166,9 @@ static DSA_METHOD cswift_dsa =
 	0, /* flags */
 	NULL /* app_data */
 	};
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* Our internal DH_METHOD that we provide pointers to */
 static DH_METHOD cswift_dh =
 	{
@@ -156,35 +181,41 @@ static DH_METHOD cswift_dh =
 	0,
 	NULL
 	};
+#endif
 
-/* Our ENGINE structure. */
-static ENGINE engine_cswift =
-        {
-	"cswift",
-	"CryptoSwift hardware engine support",
-	&cswift_rsa,
-	&cswift_dsa,
-	&cswift_dh,
-	NULL,
-	cswift_mod_exp,
-	cswift_mod_exp_crt,
-	cswift_init,
-	cswift_finish,
-	NULL, /* no ctrl() */
-	NULL, /* no load_privkey() */
-	NULL, /* no load_pubkey() */
-	0, /* no flags */
-	0, 0, /* no references */
-	NULL, NULL /* unlinked */
-        };
+/* Constants used when creating the ENGINE */
+static const char *engine_cswift_id = "cswift";
+static const char *engine_cswift_name = "CryptoSwift hardware engine support";
 
-/* As this is only ever called once, there's no need for locking
- * (indeed - the lock will already be held by our caller!!!) */
-ENGINE *ENGINE_cswift()
+/* This internal function is used by ENGINE_cswift() and possibly by the
+ * "dynamic" ENGINE support too */
+static int bind_helper(ENGINE *e)
 	{
-	RSA_METHOD *meth1;
-	DH_METHOD *meth2;
+#ifndef OPENSSL_NO_RSA
+	const RSA_METHOD *meth1;
+#endif
+#ifndef OPENSSL_NO_DH
+	const DH_METHOD *meth2;
+#endif
+	if(!ENGINE_set_id(e, engine_cswift_id) ||
+			!ENGINE_set_name(e, engine_cswift_name) ||
+#ifndef OPENSSL_NO_RSA
+			!ENGINE_set_RSA(e, &cswift_rsa) ||
+#endif
+#ifndef OPENSSL_NO_DSA
+			!ENGINE_set_DSA(e, &cswift_dsa) ||
+#endif
+#ifndef OPENSSL_NO_DH
+			!ENGINE_set_DH(e, &cswift_dh) ||
+#endif
+			!ENGINE_set_destroy_function(e, cswift_destroy) ||
+			!ENGINE_set_init_function(e, cswift_init) ||
+			!ENGINE_set_finish_function(e, cswift_finish) ||
+			!ENGINE_set_ctrl_function(e, cswift_ctrl) ||
+			!ENGINE_set_cmd_defns(e, cswift_cmd_defns))
+		return 0;
 
+#ifndef OPENSSL_NO_RSA
 	/* We know that the "PKCS1_SSLeay()" functions hook properly
 	 * to the cswift-specific mod_exp and mod_exp_crt so we use
 	 * those functions. NB: We don't use ENGINE_openssl() or
@@ -197,12 +228,41 @@ ENGINE *ENGINE_cswift()
 	cswift_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
 	cswift_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	cswift_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
+#endif
 
+#ifndef OPENSSL_NO_DH
 	/* Much the same for Diffie-Hellman */
 	meth2 = DH_OpenSSL();
 	cswift_dh.generate_key = meth2->generate_key;
 	cswift_dh.compute_key = meth2->compute_key;
-	return &engine_cswift;
+#endif
+
+	/* Ensure the cswift error handling is set up */
+	ERR_load_CSWIFT_strings();
+	return 1;
+	}
+
+static ENGINE *engine_cswift(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+void ENGINE_load_cswift(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_cswift();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
 	}
 
 /* This is a process-global DSO handle used for loading and unloading
@@ -220,7 +280,8 @@ t_swSimpleRequest *p_CSwift_SimpleRequest = NULL;
 t_swReleaseAccContext *p_CSwift_ReleaseAccContext = NULL;
 
 /* Used in the DSO operations. */
-static const char *CSWIFT_LIBNAME = "swift";
+static const char def_CSWIFT_LIBNAME[] = "swift";
+static const char *CSWIFT_LIBNAME = def_CSWIFT_LIBNAME;
 static const char *CSWIFT_F1 = "swAcquireAccContext";
 static const char *CSWIFT_F2 = "swAttachKeyParam";
 static const char *CSWIFT_F3 = "swSimpleRequest";
@@ -249,8 +310,15 @@ static void release_context(SW_CONTEXT_HANDLE hac)
         p_CSwift_ReleaseAccContext(hac);
 	}
 
+/* Destructor (complements the "ENGINE_cswift()" constructor) */
+static int cswift_destroy(ENGINE *e)
+	{
+	ERR_unload_CSWIFT_strings();
+	return 1;
+	}
+
 /* (de)initialisation functions. */
-static int cswift_init()
+static int cswift_init(ENGINE *e)
 	{
         SW_CONTEXT_HANDLE hac;
         t_swAcquireAccContext *p1;
@@ -260,15 +328,14 @@ static int cswift_init()
 
 	if(cswift_dso != NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_ALREADY_LOADED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_ALREADY_LOADED);
 		goto err;
 		}
 	/* Attempt to load libswift.so/swift.dll/whatever. */
-	cswift_dso = DSO_load(NULL, CSWIFT_LIBNAME, NULL,
-		DSO_FLAG_NAME_TRANSLATION);
+	cswift_dso = DSO_load(NULL, CSWIFT_LIBNAME, NULL, 0);
 	if(cswift_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_NOT_LOADED);
 		goto err;
 		}
 	if(!(p1 = (t_swAcquireAccContext *)
@@ -280,7 +347,7 @@ static int cswift_init()
 			!(p4 = (t_swReleaseAccContext *)
 				DSO_bind_func(cswift_dso, CSWIFT_F4)))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_NOT_LOADED);
 		goto err;
 		}
 	/* Copy the pointers */
@@ -292,7 +359,7 @@ static int cswift_init()
 	 * accelerator! */
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_INIT,ENGINE_R_UNIT_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_INIT,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	release_context(hac);
@@ -308,16 +375,16 @@ err:
 	return 0;
 	}
 
-static int cswift_finish()
+static int cswift_finish(ENGINE *e)
 	{
 	if(cswift_dso == NULL)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_FINISH,ENGINE_R_NOT_LOADED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_FINISH,CSWIFT_R_NOT_LOADED);
 		return 0;
 		}
 	if(!DSO_free(cswift_dso))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_FINISH,ENGINE_R_DSO_FAILURE);
+		CSWIFTerr(CSWIFT_F_CSWIFT_FINISH,CSWIFT_R_UNIT_FAILURE);
 		return 0;
 		}
 	cswift_dso = NULL;
@@ -328,8 +395,33 @@ static int cswift_finish()
 	return 1;
 	}
 
+static int cswift_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+	{
+	int initialised = ((cswift_dso == NULL) ? 0 : 1);
+	switch(cmd)
+		{
+	case CSWIFT_CMD_SO_PATH:
+		if(p == NULL)
+			{
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,ERR_R_PASSED_NULL_PARAMETER);
+			return 0;
+			}
+		if(initialised)
+			{
+			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,CSWIFT_R_ALREADY_LOADED);
+			return 0;
+			}
+		CSWIFT_LIBNAME = (const char *)p;
+		return 1;
+	default:
+		break;
+		}
+	CSWIFTerr(CSWIFT_F_CSWIFT_CTRL,CSWIFT_R_CTRL_COMMAND_NOT_IMPLEMENTED);
+	return 0;
+	}
+
 /* Un petit mod_exp */
-static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *m, BN_CTX *ctx)
 	{
 	/* I need somewhere to store temporary serialised values for
@@ -353,24 +445,25 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
  
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	modulus = BN_CTX_get(ctx);
 	exponent = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!modulus || !exponent || !argument || !result)
+	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(modulus, m->top) || !bn_wexpand(exponent, p->top) ||
 		!bn_wexpand(argument, a->top) || !bn_wexpand(result, m->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_EXP;
@@ -387,13 +480,12 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -410,7 +502,7 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		&res, 1)) != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -421,15 +513,12 @@ static int cswift_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 err:
 	if(acquired)
 		release_context(hac);
-	if(modulus) ctx->tos--;
-	if(exponent) ctx->tos--;
-	if(argument) ctx->tos--;
-	if(result) ctx->tos--;
+	BN_CTX_end(ctx);
 	return to_return;
 	}
 
 /* Un petit mod_exp chinois */
-static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_crt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			const BIGNUM *q, const BIGNUM *dmp1,
 			const BIGNUM *dmq1, const BIGNUM *iqmp, BN_CTX *ctx)
 	{
@@ -449,11 +538,12 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
  
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	rsa_p = BN_CTX_get(ctx);
 	rsa_q = BN_CTX_get(ctx);
 	rsa_dmp1 = BN_CTX_get(ctx);
@@ -461,10 +551,9 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	rsa_iqmp = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!rsa_p || !rsa_q || !rsa_dmp1 || !rsa_dmq1 || !rsa_iqmp ||
-			!argument || !result)
+	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(rsa_p, p->top) || !bn_wexpand(rsa_q, q->top) ||
@@ -474,7 +563,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 			!bn_wexpand(argument, a->top) ||
 			!bn_wexpand(result, p->top + q->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_CRT;
@@ -498,13 +587,12 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -521,7 +609,7 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 		&res, 1)) != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_MOD_EXP_CRT,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_MOD_EXP_CRT,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -532,17 +620,12 @@ static int cswift_mod_exp_crt(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 err:
 	if(acquired)
 		release_context(hac);
-	if(rsa_p) ctx->tos--;
-	if(rsa_q) ctx->tos--;
-	if(rsa_dmp1) ctx->tos--;
-	if(rsa_dmq1) ctx->tos--;
-	if(rsa_iqmp) ctx->tos--;
-	if(argument) ctx->tos--;
-	if(result) ctx->tos--;
+	BN_CTX_end(ctx);
 	return to_return;
 	}
  
-static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
+#ifndef OPENSSL_NO_RSA
+static int cswift_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 	{
 	BN_CTX *ctx;
 	int to_return = 0;
@@ -551,7 +634,7 @@ static int cswift_rsa_mod_exp(BIGNUM *r0, BIGNUM *I, RSA *rsa)
 		goto err;
 	if(!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_RSA_MOD_EXP,ENGINE_R_MISSING_KEY_COMPONENTS);
+		CSWIFTerr(CSWIFT_F_CSWIFT_RSA_MOD_EXP,CSWIFT_R_MISSING_KEY_COMPONENTS);
 		goto err;
 		}
 	to_return = cswift_mod_exp_crt(r0, I, rsa->p, rsa->q, rsa->dmp1,
@@ -561,14 +644,16 @@ err:
 		BN_CTX_free(ctx);
 	return to_return;
 	}
+#endif
 
 /* This function is aliased to mod_exp (with the mont stuff dropped). */
-static int cswift_mod_exp_mont(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
 
+#ifndef OPENSSL_NO_DSA
 static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
 	SW_CONTEXT_HANDLE hac;
@@ -589,19 +674,20 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	dsa_p = BN_CTX_get(ctx);
 	dsa_q = BN_CTX_get(ctx);
 	dsa_g = BN_CTX_get(ctx);
 	dsa_key = BN_CTX_get(ctx);
 	result = BN_CTX_get(ctx);
-	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !result)
+	if(!result)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(dsa_p, dsa->p->top) ||
@@ -610,7 +696,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 			!bn_wexpand(dsa_key, dsa->priv_key->top) ||
 			!bn_wexpand(result, dsa->p->top))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_DSA;
@@ -633,13 +719,12 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -657,7 +742,7 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if(sw_status != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_SIGN,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_SIGN,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -672,13 +757,11 @@ static DSA_SIG *cswift_dsa_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 err:
 	if(acquired)
 		release_context(hac);
-	if(dsa_p) ctx->tos--;
-	if(dsa_q) ctx->tos--;
-	if(dsa_g) ctx->tos--;
-	if(dsa_key) ctx->tos--;
-	if(result) ctx->tos--;
 	if(ctx)
+		{
+		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
+		}
 	return to_return;
 	}
 
@@ -703,19 +786,20 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 		goto err;
 	if(!get_context(&hac))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_GET_HANDLE_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_UNIT_FAILURE);
 		goto err;
 		}
 	acquired = 1;
 	/* Prepare the params */
+	BN_CTX_start(ctx);
 	dsa_p = BN_CTX_get(ctx);
 	dsa_q = BN_CTX_get(ctx);
 	dsa_g = BN_CTX_get(ctx);
 	dsa_key = BN_CTX_get(ctx);
 	argument = BN_CTX_get(ctx);
-	if(!dsa_p || !dsa_q || !dsa_g || !dsa_key || !argument)
+	if(!argument)
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_CTX_FULL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BN_CTX_FULL);
 		goto err;
 		}
 	if(!bn_wexpand(dsa_p, dsa->p->top) ||
@@ -724,7 +808,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 			!bn_wexpand(dsa_key, dsa->pub_key->top) ||
 			!bn_wexpand(argument, 40))
 		{
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_BN_EXPAND_FAIL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BN_EXPAND_FAIL);
 		goto err;
 		}
 	sw_param.type = SW_ALG_DSA;
@@ -747,13 +831,12 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	case SW_OK:
 		break;
 	case SW_ERR_INPUT_SIZE:
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,
-			ENGINE_R_SIZE_TOO_LARGE_OR_TOO_SMALL);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_BAD_KEY_SIZE);
 		goto err;
 	default:
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		}
@@ -775,7 +858,7 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 	if(sw_status != SW_OK)
 		{
 		char tmpbuf[20];
-		ENGINEerr(ENGINE_F_CSWIFT_DSA_VERIFY,ENGINE_R_REQUEST_FAILED);
+		CSWIFTerr(CSWIFT_F_CSWIFT_DSA_VERIFY,CSWIFT_R_REQUEST_FAILED);
 		sprintf(tmpbuf, "%ld", sw_status);
 		ERR_add_error_data(2, "CryptoSwift error number is ",tmpbuf);
 		goto err;
@@ -786,22 +869,39 @@ static int cswift_dsa_verify(const unsigned char *dgst, int dgst_len,
 err:
 	if(acquired)
 		release_context(hac);
-	if(dsa_p) ctx->tos--;
-	if(dsa_q) ctx->tos--;
-	if(dsa_g) ctx->tos--;
-	if(dsa_key) ctx->tos--;
-	if(argument) ctx->tos--;
 	if(ctx)
+		{
+		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
+		}
 	return to_return;
 	}
+#endif
 
+#ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
-static int cswift_mod_exp_dh(DH *dh, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
+		const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 	{
 	return cswift_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
-#endif /* !NO_HW_CSWIFT */
-#endif /* !NO_HW */
+/* This stuff is needed if this ENGINE is being compiled into a self-contained
+ * shared-library. */
+#ifdef ENGINE_DYNAMIC_SUPPORT
+static int bind_fn(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_cswift_id) != 0))
+		return 0;
+	if(!bind_helper(e))
+		return 0;
+	return 1;
+	}       
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+#endif /* ENGINE_DYNAMIC_SUPPORT */
+
+#endif /* !OPENSSL_NO_HW_CSWIFT */
+#endif /* !OPENSSL_NO_HW */

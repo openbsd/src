@@ -19,21 +19,21 @@ require "desboth.pl";
 $L="edi";
 $R="esi";
 
-&external_label("des_SPtrans");
-&des_encrypt("des_encrypt1",1);
-&des_encrypt("des_encrypt2",0);
-&des_encrypt3("des_encrypt3",1);
-&des_encrypt3("des_decrypt3",0);
-&cbc("des_ncbc_encrypt","des_encrypt1","des_encrypt1",0,4,5,3,5,-1);
-&cbc("des_ede3_cbc_encrypt","des_encrypt3","des_decrypt3",0,6,7,3,4,5);
+&external_label("DES_SPtrans");
+&DES_encrypt("DES_encrypt1",1);
+&DES_encrypt("DES_encrypt2",0);
+&DES_encrypt3("DES_encrypt3",1);
+&DES_encrypt3("DES_decrypt3",0);
+&cbc("DES_ncbc_encrypt","DES_encrypt1","DES_encrypt1",0,4,5,3,5,-1);
+&cbc("DES_ede3_cbc_encrypt","DES_encrypt3","DES_decrypt3",0,6,7,3,4,5);
 
 &asm_finish();
 
-sub des_encrypt
+sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
 
-	&function_begin_B($name,"EXTRN   _des_SPtrans:DWORD");
+	&function_begin_B($name,"EXTRN   _DES_SPtrans:DWORD");
 
 	&push("esi");
 	&push("edi");
@@ -80,11 +80,11 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT($i,$L,$R,$i*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i,$L,$R,$i*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 
 		&comment("");
 		&comment("Round ".sprintf("%d",$i+1));
-		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 		}
 	&jmp(&label("end"));
 
@@ -94,10 +94,10 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT(15-$i,$L,$R,$i*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT(15-$i,$L,$R,$i*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 		&comment("");
 		&comment("Round ".sprintf("%d",$i-1));
-		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$ks,"DES_SPtrans","eax","ebx","ecx","edx");
 		}
 
 	&set_label("end");

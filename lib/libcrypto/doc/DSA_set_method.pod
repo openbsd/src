@@ -90,7 +90,7 @@ struct
 =head1 RETURN VALUES
 
 DSA_OpenSSL() and DSA_get_default_openssl_method() return pointers to the
-respective DSA_METHODs.
+respective B<DSA_METHOD>s.
 
 DSA_set_default_openssl_method() returns no value.
 

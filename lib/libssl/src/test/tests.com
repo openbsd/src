@@ -21,14 +21,15 @@ $	else
 $	    tests := -
 	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
 	test_md2,test_mdc2,-
-	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,-
-	test_rand,test_bn,test_enc,test_x509,test_rsa,test_crl,test_sid,-
+	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_rd,-
+	test_rand,test_bn,test_ec,test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_ssl
+	test_ss,test_ca,test_engine,test_ssl,test_evp
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
 $	BNTEST :=	bntest
+$	ECTEST :=	ectest
 $	EXPTEST :=	exptest
 $	IDEATEST :=	ideatest
 $	SHATEST :=	shatest
@@ -51,6 +52,8 @@ $	DSATEST :=	dsatest
 $	METHTEST :=	methtest
 $	SSLTEST :=	ssltest
 $	RSATEST :=	rsa_test
+$	ENGINETEST :=	enginetest
+$	EVPTEST :=	evp_test
 $
 $	tests_i = 0
 $ loop_tests:
@@ -60,6 +63,9 @@ $	if tests_e .eqs. "," then goto exit
 $	gosub 'tests_e'
 $	goto loop_tests
 $
+$ test_evp:
+$	mcr 'texe_dir''evptest' evptests.txt
+$	return
 $ test_des:
 $	mcr 'texe_dir''destest'
 $	return
@@ -157,7 +163,7 @@ RECORD
 $	create/fdl=bntest-vms.fdl bntest-vms.sh
 $	open/append foo bntest-vms.sh
 $	type/output=foo: sys$input:
-<< __FOO__ bc | perl -e 'while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} print STDERR "."; $i++;} print STDERR "\n$i tests passed\n"'
+<< __FOO__ sh -c "`sh ./bctest`" | perl -e '$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} else {print STDERR "."; $i++;}} print STDERR "\n$i tests passed\n"'
 $	define/user sys$output bntest-vms.tmp
 $	mcr 'texe_dir''bntest'
 $	copy bntest-vms.tmp foo:
@@ -165,11 +171,16 @@ $	delete bntest-vms.tmp;*
 $	type/output=foo: sys$input:
 __FOO__
 $	close foo
-$	write sys$output "-- copy the [.test]bntest-vms.sh file to a Unix system and run it"
-$	write sys$output "-- through sh or bash to verify that the bignum operations went well."
+$	write sys$output "-- copy the [.test]bntest-vms.sh and [.test]bctest files to a Unix system and"
+$	write sys$output "-- run bntest-vms.sh through sh or bash to verify that the bignum operations"
+$	write sys$output "-- went well."
 $	write sys$output ""
 $	write sys$output "test a^b%c implementations"
 $	mcr 'texe_dir''exptest'
+$	return
+$ test_ec:
+$	write sys$output "test elliptic curves"
+$	mcr 'texe_dir''ectest'
 $	return
 $ test_verify:
 $	write sys$output "The following command should have some OK's and some failures"
@@ -201,6 +212,10 @@ $ test_ss:
 $	write sys$output "Generate and certify a test certificate"
 $	@testss.com
 $	return
+$ test_engine: 
+$	write sys$output "Manipulate the ENGINE structures"
+$	mcr 'texe_dir''enginetest'
+$	return
 $ test_ssl:
 $	write sys$output "test SSL protocol"
 $	gosub maybe_test_ss
@@ -219,6 +234,10 @@ $	else
 $	    write sys$output "Generate and certify a test certificate via the 'ca' program"
 $	    @testca.com
 $	endif
+$	return
+$ test_rd: 
+$	write sys$output "test Rijndael"
+$	!mcr 'texe_dir''rdtest'
 $	return
 $
 $

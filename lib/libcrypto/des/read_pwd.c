@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32)
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WIN32)
 #ifdef OPENSSL_UNISTD
 # include OPENSSL_UNISTD
 #else
@@ -78,7 +78,7 @@
 /* #define SIGACTION */ /* Define this if you have sigaction() */
 
 #ifdef WIN16TTY
-#undef WIN16
+#undef OPENSSL_SYS_WIN16
 #undef _WINDOWS
 #include <graph.h>
 #endif
@@ -92,7 +92,7 @@
 #include <setjmp.h>
 #include <errno.h>
 
-#ifdef VMS			/* prototypes for sys$whatever */
+#ifdef OPENSSL_SYS_VMS			/* prototypes for sys$whatever */
 #include <starlet.h>
 #ifdef __DECC
 #pragma message disable DOLLARID
@@ -127,10 +127,16 @@
 #undef  SGTTY
 #endif
 
-#if !defined(TERMIO) && !defined(TERMIOS) && !defined(VMS) && !defined(MSDOS) && !defined(MAC_OS_pre_X) && !defined(MAC_OS_GUSI_SOURCE)
+#if !defined(TERMIO) && !defined(TERMIOS) && !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_MSDOS) && !defined(MAC_OS_pre_X) && !defined(MAC_OS_GUSI_SOURCE)
 #undef  TERMIOS
 #undef  TERMIO
 #define SGTTY
+#endif
+
+#if defined(OPENSSL_SYS_VSWORKS)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
 #endif
 
 #ifdef TERMIOS
@@ -157,16 +163,16 @@
 #define TTY_set(tty,data)	ioctl(tty,TIOCSETP,data)
 #endif
 
-#if !defined(_LIBC) && !defined(MSDOS) && !defined(VMS) && !defined(MAC_OS_pre_X)
+#if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && !defined(MAC_OS_pre_X)
 #include <sys/ioctl.h>
 #endif
 
-#if defined(MSDOS) && !defined(__CYGWIN32__)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(__CYGWIN32__)
 #include <conio.h>
 #define fgets(a,b,c) noecho_fgets(a,b,c)
 #endif
 
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 #include <ssdef.h>
 #include <iodef.h>
 #include <ttdef.h>
@@ -195,17 +201,17 @@ static void read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
-#if defined(MSDOS) && !defined(WIN16)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 #ifdef SIGACTION
  static struct sigaction savsig[NX509_SIG];
 #else
-  static void (*savsig[NX509_SIG])(int );
+ static void (*savsig[NX509_SIG])(int );
 #endif
 static jmp_buf save;
 
-int des_read_pw_string(char *buf, int length, const char *prompt,
+int _ossl_old_des_read_pw_string(char *buf, int length, const char *prompt,
 	     int verify)
 	{
 	char buff[BUFSIZ];
@@ -216,7 +222,7 @@ int des_read_pw_string(char *buf, int length, const char *prompt,
 	return(ret);
 	}
 
-#ifndef WIN16
+#ifndef OPENSSL_SYS_WIN16
 
 static void read_till_nl(FILE *in)
 	{
@@ -233,14 +239,14 @@ static void read_till_nl(FILE *in)
 int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	     int verify)
 	{
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	struct IOSB iosb;
 	$DESCRIPTOR(terminal,"TT");
 	long tty_orig[3], tty_new[3];
 	long status;
 	unsigned short channel = 0;
 #else
-#ifndef MSDOS
+#ifndef OPENSSL_SYS_MSDOS
 	TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif
@@ -265,19 +271,19 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	is_a_tty=1;
 	tty=NULL;
 
-#ifdef MSDOS
+#ifdef OPENSSL_SYS_MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#elif defined(MAC_OS_pre_X)
+#elif defined(MAC_OS_pre_X) || defined(OPENSSL_SYS_VSWORKS)
 	tty=stdin;
 #else
-#ifndef MPE
+#ifndef OPENSSL_SYS_MPE
 	if ((tty=fopen("/dev/tty","r")) == NULL)
 #endif
 		tty=stdin;
 #endif
 
-#if defined(TTY_get) && !defined(VMS)
+#if defined(TTY_get) && !defined(OPENSSL_SYS_VMS)
 	if (TTY_get(fileno(tty),&tty_orig) == -1)
 		{
 #ifdef ENOTTY
@@ -296,7 +302,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 		}
 	memcpy(&(tty_new),&(tty_orig),sizeof(tty_orig));
 #endif
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	status = sys$assign(&terminal,&channel,0,0);
 	if (status != SS$_NORMAL)
 		return(-1);
@@ -312,15 +318,15 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	tty_new.TTY_FLAGS &= ~ECHO;
 #endif
 
-#if defined(TTY_set) && !defined(VMS)
+#if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
 	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
-#ifdef MPE 
+#ifdef OPENSSL_SYS_MPE 
 		; /* MPE lies -- echo really has been disabled */
 #else
 		return(-1);
 #endif
 #endif
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	tty_new[0] = tty_orig[0];
 	tty_new[1] = tty_orig[1] | TT$M_NOECHO;
 	tty_new[2] = tty_orig[2];
@@ -366,14 +372,14 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 error:
 	fprintf(stderr,"\n");
-#ifdef DEBUG
+#if 0
 	perror("fgets(tty)");
 #endif
 	/* What can we do if there is an error? */
-#if defined(TTY_set) && !defined(VMS)
+#if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
 	if (ps >= 2) TTY_set(fileno(tty),&tty_orig);
 #endif
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	if (ps >= 2)
 		status = sys$qiow(0,channel,IO$_SETMODE,&iosb,0,0
 			,tty_orig,12,0,0,0,0);
@@ -381,13 +387,13 @@ error:
 	
 	if (ps >= 1) popsig();
 	if (stdin != tty) fclose(tty);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 	status = sys$dassgn(channel);
 #endif
 	return(!ok);
 	}
 
-#else /* WIN16 */
+#else /* OPENSSL_SYS_WIN16 */
 
 int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify)
 	{ 
@@ -460,7 +466,7 @@ static void recsig(int i)
 #endif
 	}
 
-#if defined(MSDOS) && !defined(WIN16)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN16)
 static int noecho_fgets(char *buf, int size, FILE *tty)
 	{
 	int i;

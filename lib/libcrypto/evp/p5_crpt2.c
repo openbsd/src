@@ -55,7 +55,7 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#if !defined(NO_HMAC) && !defined(NO_SHA)
+#if !defined(OPENSSL_NO_HMAC) && !defined(OPENSSL_NO_SHA)
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/x509.h>
@@ -84,6 +84,8 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 	int cplen, j, k, tkeylen;
 	unsigned long i = 1;
 	HMAC_CTX hctx;
+
+	HMAC_CTX_init(&hctx);
 	p = out;
 	tkeylen = keylen;
 	if(!pass) passlen = 0;
@@ -98,7 +100,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 		itmp[1] = (unsigned char)((i >> 16) & 0xff);
 		itmp[2] = (unsigned char)((i >> 8) & 0xff);
 		itmp[3] = (unsigned char)(i & 0xff);
-		HMAC_Init(&hctx, pass, passlen, EVP_sha1());
+		HMAC_Init_ex(&hctx, pass, passlen, EVP_sha1(), NULL);
 		HMAC_Update(&hctx, salt, saltlen);
 		HMAC_Update(&hctx, itmp, 4);
 		HMAC_Final(&hctx, digtmp, NULL);
@@ -112,7 +114,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 		i++;
 		p+= cplen;
 	}
-	HMAC_cleanup(&hctx);
+	HMAC_CTX_cleanup(&hctx);
 #ifdef DEBUG_PKCS5V2
 	fprintf(stderr, "Password:\n");
 	h__dump (pass, passlen);
@@ -143,7 +145,7 @@ main()
  */
 
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-                         ASN1_TYPE *param, EVP_CIPHER *c, EVP_MD *md,
+                         ASN1_TYPE *param, const EVP_CIPHER *c, const EVP_MD *md,
                          int en_de)
 {
 	unsigned char *pbuf, *salt, key[EVP_MAX_KEY_LENGTH];
@@ -181,7 +183,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	}
 
 	/* Fixup cipher based on AlgorithmIdentifier */
-	EVP_CipherInit(ctx, cipher, NULL, NULL, en_de);
+	EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de);
 	if(EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
 					EVP_R_CIPHER_PARAMETER_ERROR);
@@ -227,7 +229,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	saltlen = kdf->salt->value.octet_string->length;
 	iter = ASN1_INTEGER_get(kdf->iter);
 	PKCS5_PBKDF2_HMAC_SHA1(pass, passlen, salt, saltlen, iter, keylen, key);
-	EVP_CipherInit(ctx, NULL, key, NULL, en_de);
+	EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 	memset(key, 0, keylen);
 	PBKDF2PARAM_free(kdf);
 	return 1;

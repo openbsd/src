@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.44 2002/05/15 01:48:54 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.45 2002/05/15 02:29:01 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -673,7 +673,7 @@ maninstall:
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
 
-SSL_SRC=openssl
+SSL_SRC=src
 
 all: 	prereq ${MANALL} ${PSALL}
 # egcs bombs optimising this file on vax

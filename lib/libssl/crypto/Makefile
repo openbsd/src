@@ -1,7 +1,7 @@
 
 LIB=	crypto
 
-SSLEAYDIST= openssl
+SSLEAYDIST= src
 
 LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
 LCRYPTO_INC= ${.CURDIR}/../${SSLEAYDIST}/include

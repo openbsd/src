@@ -55,12 +55,66 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef NO_STDIO
+#include <openssl/e_os2.h>
+#ifdef OPENSSL_NO_STDIO
 #define APPS_WIN16
 #endif
 
@@ -68,7 +122,7 @@
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
    is needed to have fileno() declared correctly...  So let's define u_int */
-#if defined(VMS) && defined(__DECC) && !defined(__U_INT)
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
 #define __U_INT
 typedef unsigned int u_int;
 #endif
@@ -80,15 +134,14 @@ typedef unsigned int u_int;
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/engine.h>
 #include "s_apps.h"
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 #include <conio.h>
 #endif
 
 
-#if (defined(VMS) && __VMS_VER < 70000000)
+#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
 #endif
@@ -113,6 +166,7 @@ static int c_nbio=0;
 #endif
 static int c_Pause=0;
 static int c_debug=0;
+static int c_msg=0;
 static int c_showcerts=0;
 
 static void sc_usage(void);
@@ -139,6 +193,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -pause        - sleep(1) after each read(2) and write(2) system call\n");
 	BIO_printf(bio_err," -showcerts    - show all certificates in the chain\n");
 	BIO_printf(bio_err," -debug        - extra output\n");
+	BIO_printf(bio_err," -msg          - Show protocol messages\n");
 	BIO_printf(bio_err," -nbio_test    - more ssl protocol testing\n");
 	BIO_printf(bio_err," -state        - print the 'ssl' states\n");
 #ifdef FIONBIO
@@ -152,10 +207,16 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
+	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err,"                 command to see what is available\n");
-	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
+	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
+	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
+	BIO_printf(bio_err,"                 only \"smtp\" is supported.\n");
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
+	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+
 	}
 
 int MAIN(int, char **);
@@ -164,8 +225,9 @@ int MAIN(int argc, char **argv)
 	{
 	int off=0;
 	SSL *con=NULL,*con2=NULL;
+	X509_STORE *store = NULL;
 	int s,k,width,state=0;
-	char *cbuf=NULL,*sbuf=NULL;
+	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
 	int sbuf_len,sbuf_off;
 	fd_set readfds,writefds;
@@ -179,21 +241,22 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
-	int prexit = 0;
+	int smtp_starttls = 0;
+	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
 	BIO *sbio;
 	char *inrand=NULL;
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 	struct timeval tv;
 #endif
 
-#if !defined(NO_SSL2) && !defined(NO_SSL3)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
-#elif !defined(NO_SSL3)
+#elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_client_method();
-#elif !defined(NO_SSL2)
+#elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_client_method();
 #endif
 
@@ -202,13 +265,18 @@ int MAIN(int argc, char **argv)
 	c_quiet=0;
 	c_ign_eof=0;
 	c_debug=0;
+	c_msg=0;
 	c_showcerts=0;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
-		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
+		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
+		((mbuf=OPENSSL_malloc(BUFSIZZ)) == NULL))
 		{
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
@@ -253,6 +321,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-crl_check") == 0)
+			vflags |= X509_V_FLAG_CRL_CHECK;
+		else if	(strcmp(*argv,"-crl_check_all") == 0)
+			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 		else if	(strcmp(*argv,"-prexit") == 0)
 			prexit=1;
 		else if	(strcmp(*argv,"-crlf") == 0)
@@ -268,21 +340,23 @@ int MAIN(int argc, char **argv)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+		else if	(strcmp(*argv,"-msg") == 0)
+			c_msg=1;
 		else if	(strcmp(*argv,"-showcerts") == 0)
 			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
 			nbio_test=1;
 		else if	(strcmp(*argv,"-state") == 0)
 			state=1;
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			meth=SSLv2_client_method();
 #endif
-#ifndef NO_SSL3
+#ifndef OPENSSL_NO_SSL3
 		else if	(strcmp(*argv,"-ssl3") == 0)
 			meth=SSLv3_client_method();
 #endif
-#ifndef NO_TLS1
+#ifndef OPENSSL_NO_TLS1
 		else if	(strcmp(*argv,"-tls1") == 0)
 			meth=TLSv1_client_method();
 #endif
@@ -313,6 +387,8 @@ int MAIN(int argc, char **argv)
 			off|=SSL_OP_NO_SSLv3;
 		else if (strcmp(*argv,"-no_ssl2") == 0)
 			off|=SSL_OP_NO_SSLv2;
+		else if (strcmp(*argv,"-serverpref") == 0)
+			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -322,15 +398,24 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-nbio") == 0)
 			{ c_nbio=1; }
 #endif
-		else if (strcmp(*argv,"-rand") == 0)
+		else if	(strcmp(*argv,"-starttls") == 0)
 			{
 			if (--argc < 1) goto bad;
-			inrand= *(++argv);
+			++argv;
+			if (strcmp(*argv,"smtp") == 0)
+				smtp_starttls = 1;
+			else
+				goto bad;
 			}
 		else if	(strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) goto bad;
 			engine_id = *(++argv);
+			}
+		else if (strcmp(*argv,"-rand") == 0)
+			{
+			if (--argc < 1) goto bad;
+			inrand= *(++argv);
 			}
 		else
 			{
@@ -359,7 +444,7 @@ bad:
 
 	if (bio_c_out == NULL)
 		{
-		if (c_quiet)
+		if (c_quiet && !c_debug && !c_msg)
 			{
 			bio_c_out=BIO_new(BIO_s_null());
 			}
@@ -373,28 +458,7 @@ bad:
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 
-	if (engine_id != NULL)
-		{
-		if((e = ENGINE_by_id(engine_id)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		if (c_debug)
-			{
-			ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM,
-				0, bio_err, 0);
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			ERR_print_errors(bio_err);
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine_id);
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine_id, 1);
 
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
@@ -432,8 +496,16 @@ bad:
 		/* goto end; */
 		}
 
+	store = SSL_CTX_get_cert_store(ctx);
+	X509_STORE_set_flags(store, vflags);
 
 	con=SSL_new(ctx);
+#ifndef OPENSSL_NO_KRB5
+	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
+                {
+                kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVER, host);
+		}
+#endif	/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 
 re_start:
@@ -475,6 +547,11 @@ re_start:
 		BIO_set_callback(sbio,bio_dump_cb);
 		BIO_set_callback_arg(sbio,bio_c_out);
 		}
+	if (c_msg)
+		{
+		SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_c_out);
+		}
 
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_connect_state(con);
@@ -492,6 +569,14 @@ re_start:
 	cbuf_off=0;
 	sbuf_len=0;
 	sbuf_off=0;
+
+	/* This is an ugly hack that does a lot of assumptions */
+	if (smtp_starttls)
+		{
+		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO_printf(sbio,"STARTTLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
 
 	for (;;)
 		{
@@ -512,6 +597,13 @@ re_start:
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 
+				if (smtp_starttls)
+					{
+					BIO_printf(bio_err,"%s",mbuf);
+					/* We don't need to know any more */
+					smtp_starttls = 0;
+					}
+
 				if (reconnect)
 					{
 					reconnect--;
@@ -528,7 +620,7 @@ re_start:
 
 		if (!ssl_pending)
 			{
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
@@ -555,7 +647,7 @@ re_start:
 			 * will choke the compiler: if you do have a cast then
 			 * you can either go for (int *) or (void *).
 			 */
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 			/* Under Windows we make the assumption that we can
 			 * always write to the tty: therefore if we need to
 			 * write to the tty we just fall through. Otherwise
@@ -654,7 +746,7 @@ re_start:
 				goto shut;
 				}
 			}
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		/* Assume Windows can always write */
 		else if (!ssl_pending && write_tty)
 #else
@@ -735,7 +827,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				}
 			}
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		else if ((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
@@ -802,11 +894,13 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cbuf != NULL) { memset(cbuf,0,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { memset(sbuf,0,BUFSIZZ); OPENSSL_free(sbuf); }
+	if (mbuf != NULL) { memset(mbuf,0,BUFSIZZ); OPENSSL_free(mbuf); }
 	if (bio_c_out != NULL)
 		{
 		BIO_free(bio_c_out);
 		bio_c_out=NULL;
 		}
+	apps_shutdown();
 	EXIT(ret);
 	}
 
@@ -928,5 +1022,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)
 		X509_free(peer);
+	/* flush, or debugging output gets mixed with http response */
+	BIO_flush(bio);
 	}
 

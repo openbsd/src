@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
-#ifndef NO_OBJECT
+#ifndef OPENSSL_NO_OBJECT
 #include "obj_dat.h"
 #else
 /* You will have to load all the objects needed manually in the application */
@@ -108,12 +108,14 @@ static int ln_cmp(const void *a, const void *b)
 	return(strcmp((*ap)->ln,(*bp)->ln));
 	}
 
-static unsigned long add_hash(ADDED_OBJ *ca)
+/* static unsigned long add_hash(ADDED_OBJ *ca) */
+static unsigned long add_hash(const void *ca_void)
 	{
-	ASN1_OBJECT *a;
+	const ASN1_OBJECT *a;
 	int i;
 	unsigned long ret=0;
 	unsigned char *p;
+	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
 
 	a=ca->obj;
 	switch (ca->type)
@@ -142,10 +144,13 @@ static unsigned long add_hash(ADDED_OBJ *ca)
 	return(ret);
 	}
 
-static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
+/* static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb) */
+static int add_cmp(const void *ca_void, const void *cb_void)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
+	ADDED_OBJ *ca = (ADDED_OBJ *)ca_void;
+	ADDED_OBJ *cb = (ADDED_OBJ *)cb_void;
 
 	i=ca->type-cb->type;
 	if (i) return(i);
@@ -171,7 +176,6 @@ static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb)
 		/* abort(); */
 		return 0;
 		}
-	return(1); /* should not get here */
 	}
 
 static int init_added(void)
@@ -199,13 +203,17 @@ static void cleanup3(ADDED_OBJ *a)
 	OPENSSL_free(a);
 	}
 
+static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ *)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ *)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ *)
+
 void OBJ_cleanup(void)
 	{
 	if (added == NULL) return;
 	added->down_load=0;
-	lh_doall(added,cleanup1); /* zero counters */
-	lh_doall(added,cleanup2); /* set counters */
-	lh_doall(added,cleanup3); /* free objects */
+	lh_doall(added,LHASH_DOALL_FN(cleanup1)); /* zero counters */
+	lh_doall(added,LHASH_DOALL_FN(cleanup2)); /* set counters */
+	lh_doall(added,LHASH_DOALL_FN(cleanup3)); /* free objects */
 	lh_free(added);
 	added=NULL;
 	}
@@ -219,7 +227,7 @@ int OBJ_new_nid(int num)
 	return(i);
 	}
 
-int OBJ_add_object(ASN1_OBJECT *obj)
+int OBJ_add_object(const ASN1_OBJECT *obj)
 	{
 	ASN1_OBJECT *o;
 	ADDED_OBJ *ao[4]={NULL,NULL,NULL,NULL},*aop;
@@ -355,7 +363,7 @@ const char *OBJ_nid2ln(int n)
 		}
 	}
 
-int OBJ_obj2nid(ASN1_OBJECT *a)
+int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{
 	ASN1_OBJECT **op;
 	ADDED_OBJ ad,*adp;
@@ -368,7 +376,7 @@ int OBJ_obj2nid(ASN1_OBJECT *a)
 	if (added != NULL)
 		{
 		ad.type=ADDED_DATA;
-		ad.obj=a;
+		ad.obj=(ASN1_OBJECT *)a; /* XXX: ugly but harmless */
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
@@ -422,7 +430,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	return op;
 	}
 
-int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
+int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 {
 	int i,idx=0,n=0,len,nid;
 	unsigned long l;
@@ -437,8 +445,7 @@ int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
 		return(0);
 	}
 
-	nid=OBJ_obj2nid(a);
-	if ((nid == NID_undef) || no_name) {
+	if (no_name || (nid=OBJ_obj2nid(a)) == NID_undef) {
 		len=a->length;
 		p=a->data;
 
@@ -488,7 +495,7 @@ int OBJ_obj2txt(char *buf, int buf_len, ASN1_OBJECT *a, int no_name)
 	return(n);
 }
 
-int OBJ_txt2nid(char *s)
+int OBJ_txt2nid(const char *s)
 {
 	ASN1_OBJECT *obj;
 	int nid;
@@ -547,10 +554,11 @@ static int obj_cmp(const void *ap, const void *bp)
 	return(memcmp(a->data,b->data,a->length));
         }
 
-char *OBJ_bsearch(char *key, char *base, int num, int size, int (*cmp)(const void *, const void *))
+const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
+	int (*cmp)(const void *, const void *))
 	{
 	int l,h,i,c;
-	char *p;
+	const char *p;
 
 	if (num == 0) return(NULL);
 	l=0;
@@ -629,7 +637,7 @@ int OBJ_create_objects(BIO *in)
 	/* return(num); */
 	}
 
-int OBJ_create(char *oid, char *sn, char *ln)
+int OBJ_create(const char *oid, const char *sn, const char *ln)
 	{
 	int ok=0;
 	ASN1_OBJECT *op=NULL;
@@ -645,6 +653,8 @@ int OBJ_create(char *oid, char *sn, char *ln)
 		return(0);
 		}
 	i=a2d_ASN1_OBJECT(buf,i,oid,-1);
+	if (i == 0)
+		goto err;
 	op=(ASN1_OBJECT *)ASN1_OBJECT_create(OBJ_new_nid(1),buf,i,sn,ln);
 	if (op == NULL) 
 		goto err;

@@ -84,7 +84,11 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 	case PKCS7_OP_GET_DETACHED_SIGNATURE:
 		if (nid == NID_pkcs7_signed)
 			{
-			ret=p7->detached;
+			if(!p7->d.sign  || !p7->d.sign->contents->d.ptr)
+				ret = 1;
+			else ret = 0;
+				
+			p7->detached = ret;
 			}
 		else
 			{
@@ -144,7 +148,7 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 	{
 	ASN1_OBJECT *obj;
 
-	PKCS7_content_free(p7);
+	/*PKCS7_content_free(p7);*/
 	obj=OBJ_nid2obj(type); /* will not fail */
 
 	switch (type)
@@ -165,18 +169,24 @@ int PKCS7_set_type(PKCS7 *p7, int type)
 		if ((p7->d.signed_and_enveloped=PKCS7_SIGN_ENVELOPE_new())
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version,1);
+		p7->d.signed_and_enveloped->enc_data->content_type
+						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
 	case NID_pkcs7_enveloped:
 		p7->type=obj;
 		if ((p7->d.enveloped=PKCS7_ENVELOPE_new())
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.enveloped->version,0);
+		p7->d.enveloped->enc_data->content_type
+						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
 	case NID_pkcs7_encrypted:
 		p7->type=obj;
 		if ((p7->d.encrypted=PKCS7_ENCRYPT_new())
 			== NULL) goto err;
 		ASN1_INTEGER_set(p7->d.encrypted->version,0);
+		p7->d.encrypted->enc_data->content_type
+						= OBJ_nid2obj(NID_pkcs7_data);
 		break;
 
 	case NID_pkcs7_digest:
@@ -295,7 +305,7 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 	}
 
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
-	     EVP_MD *dgst)
+	     const EVP_MD *dgst)
 	{
 	char is_dsa;
 	if (pkey->type == EVP_PKEY_DSA) is_dsa = 1;
@@ -343,7 +353,7 @@ err:
 	}
 
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
-	     EVP_MD *dgst)
+	     const EVP_MD *dgst)
 	{
 	PKCS7_SIGNER_INFO *si;
 
@@ -415,9 +425,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 		M_ASN1_INTEGER_dup(X509_get_serialNumber(x509));
 
 	X509_ALGOR_free(p7i->key_enc_algor);
-	p7i->key_enc_algor=(X509_ALGOR *)ASN1_dup(i2d_X509_ALGOR,
-		(char *(*)())d2i_X509_ALGOR,
-		(char *)x509->cert_info->key->algor);
+	p7i->key_enc_algor= X509_ALGOR_dup(x509->cert_info->key->algor);
 
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
 	p7i->cert=x509;

@@ -57,10 +57,11 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
+#include <openssl/evp.h>
 #include <openssl/md5.h>
 
 static long ssl2_default_timeout(void );
@@ -329,7 +330,7 @@ void ssl2_clear(SSL *s)
 	s->packet_length=0;
 	}
 
-long ssl2_ctrl(SSL *s, int cmd, long larg, char *parg)
+long ssl2_ctrl(SSL *s, int cmd, long larg, void *parg)
 	{
 	int ret=0;
 
@@ -349,7 +350,7 @@ long ssl2_callback_ctrl(SSL *s, int cmd, void (*fp)())
 	return(0);
 	}
 
-long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, char *parg)
+long ssl2_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 	{
 	return(0);
 	}
@@ -415,7 +416,7 @@ int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
 void ssl2_generate_key_material(SSL *s)
 	{
 	unsigned int i;
-	MD5_CTX ctx;
+	EVP_MD_CTX ctx;
 	unsigned char *km;
 	unsigned char c='0';
 
@@ -423,20 +424,21 @@ void ssl2_generate_key_material(SSL *s)
 	c = os_toascii['0']; /* Must be an ASCII '0', not EBCDIC '0',
 				see SSLv2 docu */
 #endif
-
+	EVP_MD_CTX_init(&ctx);
 	km=s->s2->key_material;
 	for (i=0; i<s->s2->key_material_length; i+=MD5_DIGEST_LENGTH)
 		{
-		MD5_Init(&ctx);
+		EVP_DigestInit_ex(&ctx,EVP_md5(), NULL);
 
-		MD5_Update(&ctx,s->session->master_key,s->session->master_key_length);
-		MD5_Update(&ctx,&c,1);
+		EVP_DigestUpdate(&ctx,s->session->master_key,s->session->master_key_length);
+		EVP_DigestUpdate(&ctx,&c,1);
 		c++;
-		MD5_Update(&ctx,s->s2->challenge,s->s2->challenge_length);
-		MD5_Update(&ctx,s->s2->conn_id,s->s2->conn_id_length);
-		MD5_Final(km,&ctx);
+		EVP_DigestUpdate(&ctx,s->s2->challenge,s->s2->challenge_length);
+		EVP_DigestUpdate(&ctx,s->s2->conn_id,s->s2->conn_id_length);
+		EVP_DigestFinal_ex(&ctx,km,NULL);
 		km+=MD5_DIGEST_LENGTH;
 		}
+	EVP_MD_CTX_cleanup(&ctx);
 	}
 
 void ssl2_return_error(SSL *s, int err)
@@ -468,10 +470,14 @@ void ssl2_write_error(SSL *s)
 
 	if (i < 0)
 		s->error=error;
-	else if (i != s->error)
+	else
+		{
 		s->error=error-i;
-	/* else
-		s->error=0; */
+
+		if (s->error == 0)
+			if (s->msg_callback)
+				s->msg_callback(1, s->version, 0, buf, 3, s, s->msg_callback_arg); /* ERROR */
+		}
 	}
 
 int ssl2_shutdown(SSL *s)
@@ -479,7 +485,7 @@ int ssl2_shutdown(SSL *s)
 	s->shutdown=(SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 	return(1);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

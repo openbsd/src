@@ -110,38 +110,13 @@
  */
 
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
 #define TABLE_SIZE	32
 
-/* slow but works */
-int BN_mod_mul(BIGNUM *ret, BIGNUM *a, BIGNUM *b, const BIGNUM *m, BN_CTX *ctx)
-	{
-	BIGNUM *t;
-	int r=0;
-
-	bn_check_top(a);
-	bn_check_top(b);
-	bn_check_top(m);
-
-	BN_CTX_start(ctx);
-	if ((t = BN_CTX_get(ctx)) == NULL) goto err;
-	if (a == b)
-		{ if (!BN_sqr(t,a,ctx)) goto err; }
-	else
-		{ if (!BN_mul(t,a,b,ctx)) goto err; }
-	if (!BN_mod(ret,t,m,ctx)) goto err;
-	r=1;
-err:
-	BN_CTX_end(ctx);
-	return(r);
-	}
-
-
 /* this one works - simple but works */
-int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx)
+int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int i,bits,ret=0;
 	BIGNUM *v,*rr;
@@ -176,7 +151,7 @@ err:
 	}
 
 
-int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	       BN_CTX *ctx)
 	{
 	int ret;
@@ -184,6 +159,40 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bn_check_top(a);
 	bn_check_top(p);
 	bn_check_top(m);
+
+	/* For even modulus  m = 2^k*m_odd,  it might make sense to compute
+	 * a^p mod m_odd  and  a^p mod 2^k  separately (with Montgomery
+	 * exponentiation for the odd part), using appropriate exponent
+	 * reductions, and combine the results using the CRT.
+	 *
+	 * For now, we use Montgomery only if the modulus is odd; otherwise,
+	 * exponentiation using the reciprocal-based quick remaindering
+	 * algorithm is used.
+	 *
+	 * (Timing obtained with expspeed.c [computations  a^p mod m
+	 * where  a, p, m  are of the same length: 256, 512, 1024, 2048,
+	 * 4096, 8192 bits], compared to the running time of the
+	 * standard algorithm:
+	 *
+	 *   BN_mod_exp_mont   33 .. 40 %  [AMD K6-2, Linux, debug configuration]
+         *                     55 .. 77 %  [UltraSparc processor, but
+	 *                                  debug-solaris-sparcv8-gcc conf.]
+	 * 
+	 *   BN_mod_exp_recp   50 .. 70 %  [AMD K6-2, Linux, debug configuration]
+	 *                     62 .. 118 % [UltraSparc, debug-solaris-sparcv8-gcc]
+	 *
+	 * On the Sparc, BN_mod_exp_recp was faster than BN_mod_exp_mont
+	 * at 2048 and more bits, but at 512 and 1024 bits, it was
+	 * slower even than the standard algorithm!
+	 *
+	 * "Real" timings [linux-elf, solaris-sparcv9-gcc configurations]
+	 * should be obtained when the new Montgomery reduction code
+	 * has been integrated into OpenSSL.)
+	 */
+
+#define MONT_MUL_MOD
+#define MONT_EXP_WORD
+#define RECP_MUL_MOD
 
 #ifdef MONT_MUL_MOD
 	/* I have finally been able to take out this pre-condition of
@@ -194,12 +203,14 @@ int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (BN_is_odd(m))
 		{
-		if (a->top == 1)
+#  ifdef MONT_EXP_WORD
+		if (a->top == 1 && !a->neg)
 			{
 			BN_ULONG A = a->d[0];
 			ret=BN_mod_exp_mont_word(r,A,p,m,ctx,NULL);
 			}
 		else
+#  endif
 			ret=BN_mod_exp_mont(r,a,p,m,ctx,NULL);
 		}
 	else
@@ -227,20 +238,35 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
 	if (bits == 0)
 		{
-		BN_one(r);
-		return(1);
+		ret = BN_one(r);
+		return ret;
 		}
 
 	BN_CTX_start(ctx);
 	if ((aa = BN_CTX_get(ctx)) == NULL) goto err;
 
 	BN_RECP_CTX_init(&recp);
-	if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
+	if (m->neg)
+		{
+		/* ignore sign of 'm' */
+		if (!BN_copy(aa, m)) goto err;
+		aa->neg = 0;
+		if (BN_RECP_CTX_set(&recp,aa,ctx) <= 0) goto err;
+		}
+	else
+		{
+		if (BN_RECP_CTX_set(&recp,m,ctx) <= 0) goto err;
+		}
 
 	BN_init(&(val[0]));
 	ts=1;
 
-	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (BN_is_zero(&(val[0])))
+		{
+		ret = BN_zero(r);
+		goto err;
+		}
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)
@@ -325,13 +351,13 @@ err:
 	}
 
 
-int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
+int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue;
 	int start=1,ts=0;
 	BIGNUM *d,*r;
-	BIGNUM *aa;
+	const BIGNUM *aa;
 	BIGNUM val[TABLE_SIZE];
 	BN_MONT_CTX *mont=NULL;
 
@@ -347,9 +373,10 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 	bits=BN_num_bits(p);
 	if (bits == 0)
 		{
-		BN_one(rr);
-		return(1);
+		ret = BN_one(rr);
+		return ret;
 		}
+
 	BN_CTX_start(ctx);
 	d = BN_CTX_get(ctx);
 	r = BN_CTX_get(ctx);
@@ -368,14 +395,19 @@ int BN_mod_exp_mont(BIGNUM *rr, BIGNUM *a, const BIGNUM *p,
 
 	BN_init(&val[0]);
 	ts=1;
-	if (BN_ucmp(a,m) >= 0)
+	if (a->neg || BN_ucmp(a,m) >= 0)
 		{
-		if (!BN_mod(&(val[0]),a,m,ctx))
+		if (!BN_nnmod(&(val[0]),a,m,ctx))
 			goto err;
 		aa= &(val[0]);
 		}
 	else
 		aa=a;
+	if (BN_is_zero(aa))
+		{
+		ret = BN_zero(rr);
+		goto err;
+		}
 	if (!BN_to_montgomery(&(val[0]),aa,mont,ctx)) goto err; /* 1 */
 
 	window = BN_window_bits_for_exponent_size(bits);
@@ -475,26 +507,39 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 		(/* BN_ucmp(r, (m)) < 0 ? 1 :*/  \
 			(BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
 		/* BN_MOD_MUL_WORD is only used with 'w' large,
-		  * so the BN_ucmp test is probably more overhead
-		  * than always using BN_mod (which uses BN_copy if
-		  * a similar test returns true). */
+		 * so the BN_ucmp test is probably more overhead
+		 * than always using BN_mod (which uses BN_copy if
+		 * a similar test returns true). */
+		/* We can use BN_mod and do not need BN_nnmod because our
+		 * accumulator is never negative (the result of BN_mod does
+		 * not depend on the sign of the modulus).
+		 */
 #define BN_TO_MONTGOMERY_WORD(r, w, mont) \
 		(BN_set_word(r, (w)) && BN_to_montgomery(r, r, (mont), ctx))
 
 	bn_check_top(p);
 	bn_check_top(m);
 
-	if (!(m->d[0] & 1))
+	if (m->top == 0 || !(m->d[0] & 1))
 		{
 		BNerr(BN_F_BN_MOD_EXP_MONT_WORD,BN_R_CALLED_WITH_EVEN_MODULUS);
 		return(0);
 		}
+	if (m->top == 1)
+		a %= m->d[0]; /* make sure that 'a' is reduced */
+
 	bits = BN_num_bits(p);
 	if (bits == 0)
 		{
-		BN_one(rr);
-		return(1);
+		ret = BN_one(rr);
+		return ret;
 		}
+	if (a == 0)
+		{
+		ret = BN_zero(rr);
+		return ret;
+		}
+
 	BN_CTX_start(ctx);
 	d = BN_CTX_get(ctx);
 	r = BN_CTX_get(ctx);
@@ -590,8 +635,9 @@ err:
 
 
 /* The old fallback, simple version :-) */
-int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
-	     BN_CTX *ctx)
+int BN_mod_exp_simple(BIGNUM *r,
+	const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+	BN_CTX *ctx)
 	{
 	int i,j,bits,ret=0,wstart,wend,window,wvalue,ts=0;
 	int start=1;
@@ -602,8 +648,8 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 
 	if (bits == 0)
 		{
-		BN_one(r);
-		return(1);
+		ret = BN_one(r);
+		return ret;
 		}
 
 	BN_CTX_start(ctx);
@@ -611,7 +657,12 @@ int BN_mod_exp_simple(BIGNUM *r, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 
 	BN_init(&(val[0]));
 	ts=1;
-	if (!BN_mod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (!BN_nnmod(&(val[0]),a,m,ctx)) goto err;		/* 1 */
+	if (BN_is_zero(&(val[0])))
+		{
+		ret = BN_zero(r);
+		goto err;
+		}
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1)

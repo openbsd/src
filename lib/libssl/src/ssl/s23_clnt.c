@@ -68,7 +68,7 @@ static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
 static SSL_METHOD *ssl23_get_client_method(int ver)
 	{
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
 #endif
@@ -100,7 +100,7 @@ int ssl23_connect(SSL *s)
 	{
 	BUF_MEM *buf;
 	unsigned long Time=time(NULL);
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
 
@@ -113,8 +113,8 @@ int ssl23_connect(SSL *s)
 	else if (s->ctx->info_callback != NULL)
 		cb=s->ctx->info_callback;
 	
-	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 	s->in_handshake++;
+	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 
 	for (;;)
 		{
@@ -211,6 +211,7 @@ static int ssl23_client_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i,ch_len;
+	int ret;
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
@@ -302,7 +303,11 @@ static int ssl23_client_hello(SSL *s)
 		}
 
 	/* SSL3_ST_CW_CLNT_HELLO_B */
-	return(ssl23_write_bytes(s));
+	ret = ssl23_write_bytes(s);
+	if (ret >= 2)
+		if (s->msg_callback)
+			s->msg_callback(1, SSL2_VERSION, 0, s->init_buf->data+2, ret-2, s, s->msg_callback_arg); /* CLIENT-HELLO */
+	return ret;
 	}
 
 static int ssl23_get_server_hello(SSL *s)
@@ -322,7 +327,7 @@ static int ssl23_get_server_hello(SSL *s)
 	if ((p[0] & 0x80) && (p[2] == SSL2_MT_SERVER_HELLO) &&
 		(p[5] == 0x00) && (p[6] == 0x02))
 		{
-#ifdef NO_SSL2
+#ifdef OPENSSL_NO_SSL2
 		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 		goto err;
 #else
@@ -435,7 +440,7 @@ static int ssl23_get_server_hello(SSL *s)
 		 (p[3] == 0) &&
 		 (p[4] == 2))
 		{
-		void (*cb)()=NULL;
+		void (*cb)(const SSL *ssl,int type,int val)=NULL;
 		int j;
 
 		/* An alert */

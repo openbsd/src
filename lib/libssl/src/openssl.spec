@@ -1,15 +1,15 @@
 %define libmaj 0
 %define libmin 9
-%define librel 6
-%define librev a
+%define librel 7
+#%define librev a
 Release: 1
 
 %define openssldir /var/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
-Name: openssl-engine
-#Version: %{libmaj}.%{libmin}.%{librel}
-Version: %{libmaj}.%{libmin}.%{librel}%{librev}
+Name: openssl
+Version: %{libmaj}.%{libmin}.%{librel}
+#Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 Copyright: Freely distributable
 Group: System Environment/Libraries
@@ -38,7 +38,7 @@ libraries and tools.
 %package devel
 Summary: Secure Sockets Layer and cryptography static libraries and headers
 Group: Development/Libraries
-Requires: openssl-engine
+Requires: openssl
 %description devel
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
@@ -59,7 +59,7 @@ static libraries and header files required when developing applications.
 %package doc
 Summary: OpenSSL miscellaneous files
 Group: Documentation
-Requires: openssl-engine
+Requires: openssl
 %description doc
 The OpenSSL Project is a collaborative effort to develop a robust,
 commercial-grade, fully featured, and Open Source toolkit implementing the
@@ -88,16 +88,13 @@ documentation and POD files from which the man pages were produced.
 perl util/perlpath.pl /usr/bin/perl
 
 %ifarch i386 i486 i586 i686
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf
-#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-elf shared
 %endif
 %ifarch ppc
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc
-#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-ppc shared
 %endif
 %ifarch alpha
-./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha
-#!#./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
+./Configure %{CONFIG_FLAGS} --openssldir=%{openssldir} linux-alpha shared
 %endif
 LD_LIBRARY_PATH=`pwd` make
 LD_LIBRARY_PATH=`pwd` make rehash
@@ -112,12 +109,8 @@ for x in $RPM_BUILD_ROOT/usr/man/man*/*
 	do mv ${x} ${x}ssl
 done
 
-# Install RSAref stuff
-install -m644 rsaref/rsaref.h $RPM_BUILD_ROOT/usr/include/openssl
-install -m644 libRSAglue.a $RPM_BUILD_ROOT/usr/lib
-
 # Make backwards-compatibility symlink to ssleay
-ln -s /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
+ln -sf /usr/bin/openssl $RPM_BUILD_ROOT/usr/bin/ssleay
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -127,7 +120,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
 %attr(0755,root,root) /usr/bin/*
-#!#%attr(0755,root,root) /usr/lib/*.so*
+%attr(0755,root,root) /usr/lib/*.so*
 %attr(0755,root,root) %{openssldir}/misc/*
 %attr(0644,root,root) /usr/man/man[157]/*
 
@@ -138,14 +131,15 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0750,root,root) %{openssldir}/private
 
 %files devel
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 
-%defattr(0644,root,root,0755)
 %attr(0644,root,root) /usr/lib/*.a
 %attr(0644,root,root) /usr/include/openssl/*
 %attr(0644,root,root) /usr/man/man[3]/*
 
 %files doc
+%defattr(0644,root,root,0755)
 %doc CHANGES CHANGES.SSLeay LICENSE NEWS README
 %doc doc
 
@@ -158,7 +152,8 @@ ldconfig
 %changelog
 * Thu Mar 22 2001 Richard Levitte <richard@levitte.org>
 - Removed redundant subsection that re-installed libcrypto.a and libssl.a
-  as well.
+  as well.  Also remove RSAref stuff completely, since it's not needed
+  any more.
 * Thu Mar 15 2001 Jeremiah Johnson <jjohnson@penguincomputing.com>
 - Removed redundant subsection that re-installed libcrypto.so.0.9.6 and
   libssl.so.0.9.6.  As well as the subsection that created symlinks for

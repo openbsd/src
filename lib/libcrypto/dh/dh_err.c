@@ -1,6 +1,6 @@
 /* crypto/dh/dh_err.c */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +63,7 @@
 #include <openssl/dh.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA DH_str_functs[]=
 	{
 {ERR_PACK(0,DH_F_DHPARAMS_PRINT,0),	"DHparams_print"},
@@ -71,12 +71,13 @@ static ERR_STRING_DATA DH_str_functs[]=
 {ERR_PACK(0,DH_F_DH_COMPUTE_KEY,0),	"DH_compute_key"},
 {ERR_PACK(0,DH_F_DH_GENERATE_KEY,0),	"DH_generate_key"},
 {ERR_PACK(0,DH_F_DH_GENERATE_PARAMETERS,0),	"DH_generate_parameters"},
-{ERR_PACK(0,DH_F_DH_NEW,0),	"DH_new"},
+{ERR_PACK(0,DH_F_DH_NEW_METHOD,0),	"DH_new_method"},
 {0,NULL}
 	};
 
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
+{DH_R_BAD_GENERATOR                      ,"bad generator"},
 {DH_R_NO_PRIVATE_VALUE                   ,"no private value"},
 {0,NULL}
 	};
@@ -90,7 +91,7 @@ void ERR_load_DH_strings(void)
 	if (init)
 		{
 		init=0;
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
 		ERR_load_strings(ERR_LIB_DH,DH_str_functs);
 		ERR_load_strings(ERR_LIB_DH,DH_str_reasons);
 #endif

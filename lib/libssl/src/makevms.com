@@ -185,6 +185,59 @@ $!
 $ WRITE H_FILE "/* This file was automatically built using makevms.com */"
 $ WRITE H_FILE "/* and [.CRYPTO]OPENSSLCONF.H_IN */"
 $
+$!
+$! Write a few macros that indicate how this system was built.
+$!
+$ WRITE H_FILE ""
+$ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
+$ WRITE H_FILE "# define OPENSSL_SYS_VMS"
+$ WRITE H_FILE "#endif"
+$ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
+	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
+	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
+$ CONFIG_LOG_I = 0
+$ CONFIG_LOG_LOOP:
+$   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
+$   CONFIG_LOG_I = CONFIG_LOG_I + 1
+$   IF CONFIG_LOG_E1 .EQS. "" THEN GOTO CONFIG_LOG_LOOP
+$   IF CONFIG_LOG_E1 .EQS. "," THEN GOTO CONFIG_LOG_LOOP_END
+$   CONFIG_LOG_E2 = F$EDIT(CONFIG_LOG_E1,"TRIM")
+$   CONFIG_LOG_E1 = F$ELEMENT(0,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E2 = F$ELEMENT(1,";",CONFIG_LOG_E2)
+$   CONFIG_LOG_E0 = F$ELEMENT(0,"/",CONFIG_LOG_E1)
+$   CONFIG_LOG_E1 = F$ELEMENT(1,"/",CONFIG_LOG_E1)
+$   IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E0)
+$   THEN
+$     WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E0
+$     WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E0
+$     WRITE H_FILE "#endif"
+$     IF CONFIG_LOG_E1 .NES. "/"
+$     THEN
+$       WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E1
+$       WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E1
+$       WRITE H_FILE "#endif"
+$     ENDIF
+$   ELSE
+$     IF CONFIG_LOG_E2 .NES. ";"
+$     THEN
+$       IF F$TRNLNM("OPENSSL_"+CONFIG_LOG_E2)
+$       THEN
+$         WRITE H_FILE "#ifndef OPENSSL_",CONFIG_LOG_E2
+$         WRITE H_FILE "# define OPENSSL_",CONFIG_LOG_E2
+$         WRITE H_FILE "#endif"
+$       ENDIF
+$     ENDIF
+$   ENDIF
+$   GOTO CONFIG_LOG_LOOP
+$ CONFIG_LOG_LOOP_END:
+$ WRITE H_FILE "#ifndef OPENSSL_THREADS"
+$ WRITE H_FILE "# define OPENSSL_THREADS"
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE "#ifndef OPENSSL_NO_KRB5"
+$ WRITE H_FILE "# define OPENSSL_NO_KRB5"
+$ WRITE H_FILE "#endif"
+$ WRITE H_FILE ""
+$!
 $! Different tar version may have named the file differently
 $ IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H_IN") .NES. ""
 $ THEN
@@ -194,11 +247,16 @@ $   IF F$SEARCH("[.CRYPTO]OPENSSLCONF_H.IN") .NES. ""
 $   THEN
 $     TYPE [.CRYPTO]OPENSSLCONF_H.IN /OUTPUT=H_FILE:
 $   ELSE
-$     WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
-$     EXIT 0
+$     ! For ODS-5
+$     IF F$SEARCH("[.CRYPTO]OPENSSLCONF.H.IN") .NES. ""
+$     THEN
+$       TYPE [.CRYPTO]OPENSSLCONF.H.IN /OUTPUT=H_FILE:
+$     ELSE
+$       WRITE SYS$ERROR "Couldn't find a [.CRYPTO]OPENSSLCONF.H_IN.  Exiting!"
+$       EXIT 0
+$     ENDIF
 $   ENDIF
 $ ENDIF
-$!
 $ IF ARCH .EQS. "AXP"
 $ THEN
 $!
@@ -231,6 +289,8 @@ $   WRITE H_FILE "#undef THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
+$
+$   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
 $!  Else...
 $!
@@ -263,6 +323,9 @@ $   WRITE H_FILE "#define THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
+$
+$   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
+$   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
 $!  End
 $!
@@ -336,10 +399,12 @@ $! First, We Have To "Rebuild" The "[.TEST]" Directory, So Delete
 $! All The "C" Files That Are Currently There Now.
 $!
 $ DELETE SYS$DISK:[.TEST]*.C;*
+$ DELETE SYS$DISK:[.TEST]EVPTESTS.TXT;*
 $!
 $! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
 $!
 $ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
+$ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
 $!
 $! Copy all the *TEST.C files from [.SSL...] into [.TEST]
 $!
@@ -356,17 +421,18 @@ $ IF F$PARSE("SYS$DISK:[.INCLUDE.OPENSSL]") .EQS. "" THEN -
 $!
 $! Copy All The ".H" Files From The Main Directory.
 $!
-$ EXHEADER := e_os.h,e_os2.h
+$ EXHEADER := e_os2.h
 $ COPY 'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,RC2,RC4,RC5,IDEA,BF,CAST,-
-   BN,RSA,DSA,DH,DSO,ENGINE,-
+   BN,EC,RSA,DSA,DH,DSO,ENGINE,AES,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
-   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP
-$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h
+   EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5
+$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
+		ossl_typ.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
 $ EXHEADER_MD5 := md5.h
@@ -374,7 +440,7 @@ $ EXHEADER_SHA := sha.h
 $ EXHEADER_MDC2 := mdc2.h
 $ EXHEADER_HMAC := hmac.h
 $ EXHEADER_RIPEMD := ripemd.h
-$ EXHEADER_DES := des.h
+$ EXHEADER_DES := des.h,des_old.h
 $ EXHEADER_RC2 := rc2.h
 $ EXHEADER_RC4 := rc4.h
 $ EXHEADER_RC5 := rc5.h
@@ -382,11 +448,13 @@ $ EXHEADER_IDEA := idea.h
 $ EXHEADER_BF := blowfish.h
 $ EXHEADER_CAST := cast.h
 $ EXHEADER_BN := bn.h
+$ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
 $ EXHEADER_DSA := dsa.h
 $ EXHEADER_DH := dh.h
 $ EXHEADER_DSO := dso.h
 $ EXHEADER_ENGINE := engine.h
+$ EXHEADER_AES := aes.h
 $ EXHEADER_BUFFER := buffer.h
 $ EXHEADER_BIO := bio.h
 $ EXHEADER_STACK := stack.h,safestack.h
@@ -395,7 +463,7 @@ $ EXHEADER_RAND := rand.h
 $ EXHEADER_ERR := err.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_EVP := evp.h
-$ EXHEADER_ASN1 := asn1.h,asn1_mac.h
+$ EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
 $ EXHEADER_PEM := pem.h,pem2.h
 $ EXHEADER_X509 := x509.h,x509_vfy.h
 $ EXHEADER_X509V3 := x509v3.h
@@ -404,6 +472,9 @@ $ EXHEADER_TXT_DB := txt_db.h
 $ EXHEADER_PKCS7 := pkcs7.h
 $ EXHEADER_PKCS12 := pkcs12.h
 $ EXHEADER_COMP := comp.h
+$ EXHEADER_OCSP := ocsp.h
+$ EXHEADER_UI := ui.h,ui_compat.h
+$ EXHEADER_KRB5 := krb5_asn.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
@@ -422,12 +493,12 @@ $ LOOP_SDIRS_END:
 $!
 $! Copy All The ".H" Files From The [.RSAREF] Directory.
 $!
-$ EXHEADER := rsaref.h
-$ COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
+$! EXHEADER := rsaref.h
+$! COPY SYS$DISK:[.RSAREF]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles
@@ -470,6 +541,9 @@ $!
 $! Build The [.xxx.EXE.RSAREF]LIBRSAGLUE Library.
 $!
 $ RSAREF:
+$ WRITE SYS$OUTPUT ""
+$ WRITE SYS$OUTPUT "RSAref glue library not built, since it's no longer needed"
+$ RETURN
 $!
 $! Tell The User What We Are Doing.
 $!
@@ -634,7 +708,6 @@ $     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO]OPENSSLCONF.H fi
 $     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
-$     WRITE SYS$OUTPUT "    RSAREF   :  To Build Just The [.xxx.EXE.RSAREF]LIBRSAGLUE.OLB Library."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.OLB Library."
 $     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
@@ -661,6 +734,7 @@ $ ENDIF
 $!
 $! Check To See If P2 Is Blank.
 $!
+$ P2 = "NORSAREF"
 $ IF (P2.EQS."NORSAREF")
 $ THEN
 $!

@@ -66,7 +66,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8
@@ -89,10 +88,11 @@ int MAIN(int argc, char **argv)
 	BIO *bmd=NULL;
 	BIO *out = NULL;
 	const char *name;
-#define PROG_NAME_SIZE  16
-	char pname[PROG_NAME_SIZE];
+#define PROG_NAME_SIZE  39
+	char pname[PROG_NAME_SIZE+1];
 	int separator=0;
 	int debug=0;
+	int keyform=FORMAT_PEM;
 	const char *outfile = NULL, *keyfile = NULL;
 	const char *sigfile = NULL, *randfile = NULL;
 	int out_bin = -1, want_pub = 0, do_verify = 0;
@@ -111,6 +111,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	/* first check the program name */
 	program_name(argv[0],pname,PROG_NAME_SIZE);
@@ -157,6 +160,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) break;
 			sigfile=*(++argv);
 			}
+		else if (strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) break;
+			keyform=str2fmt(*(++argv));
+			}
 		else if (strcmp(*argv,"-engine") == 0)
 			{
 			if (--argc < 1) break;
@@ -196,6 +204,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-sign   file    sign digest using private key in file\n");
 		BIO_printf(bio_err,"-verify file    verify a signature using public key in file\n");
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
+		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-binary         output in binary form\n");
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
@@ -218,23 +227,7 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	in=BIO_new(BIO_s_file());
 	bmd=BIO_new(BIO_f_md());
@@ -265,7 +258,7 @@ int MAIN(int argc, char **argv)
 		else    out = BIO_new_file(outfile, "w");
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -280,27 +273,21 @@ int MAIN(int argc, char **argv)
 		goto end;
 	}
 
-	if(keyfile) {
-		BIO *keybio;
-		keybio = BIO_new_file(keyfile, "r");
-		if(!keybio) {
-			BIO_printf(bio_err, "Error opening key file %s\n",
-								keyfile);
-			ERR_print_errors(bio_err);
+	if(keyfile)
+		{
+		if (want_pub)
+			sigkey = load_pubkey(bio_err, keyfile, keyform, NULL,
+				e, "key file");
+		else
+			sigkey = load_key(bio_err, keyfile, keyform, NULL,
+				e, "key file");
+		if (!sigkey)
+			{
+			/* load_[pub]key() has already printed an appropriate
+			   message */
 			goto end;
+			}
 		}
-		
-		if(want_pub) 
-			sigkey = PEM_read_bio_PUBKEY(keybio, NULL, NULL, NULL);
-		else sigkey = PEM_read_bio_PrivateKey(keybio, NULL, NULL, NULL);
-		BIO_free(keybio);
-		if(!sigkey) {
-			BIO_printf(bio_err, "Error reading key file %s\n",
-								keyfile);
-			ERR_print_errors(bio_err);
-			goto end;
-		}
-	}
 
 	if(sigfile && sigkey) {
 		BIO *sigbio;
@@ -362,6 +349,7 @@ end:
 	EVP_PKEY_free(sigkey);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
+	apps_shutdown();
 	EXIT(err);
 	}
 

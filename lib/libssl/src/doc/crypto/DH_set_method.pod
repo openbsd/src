@@ -82,8 +82,8 @@ the default engine for Diffie-Hellman opertaions is used.
 
 =head1 RETURN VALUES
 
-DH_OpenSSL() and DH_get_default_method() return pointers to the respective
-DH_METHODs.
+DH_OpenSSL() and DH_get_default_openssl_method() return pointers to the
+respective B<DH_METHOD>s.
 
 DH_set_default_openssl_method() returns no value.
 

@@ -63,12 +63,12 @@
  * and things should work as expected */
 #include "cryptlib.h"
 
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/lhash.h>
 
-#ifdef NO_BIO
+#ifdef OPENSSL_NO_BIO
 
 void lh_stats(LHASH *lh, FILE *out)
 	{
@@ -88,7 +88,7 @@ void lh_stats(LHASH *lh, FILE *out)
 	fprintf(out,"num_retrieve          = %lu\n",lh->num_retrieve);
 	fprintf(out,"num_retrieve_miss     = %lu\n",lh->num_retrieve_miss);
 	fprintf(out,"num_hash_comps        = %lu\n",lh->num_hash_comps);
-#ifdef DEBUG
+#if 0
 	fprintf(out,"p                     = %u\n",lh->p);
 	fprintf(out,"pmax                  = %u\n",lh->pmax);
 	fprintf(out,"up_load               = %lu\n",lh->up_load);
@@ -138,8 +138,8 @@ void lh_node_usage_stats(LHASH *lh, FILE *out)
 
 #else
 
-#ifndef NO_FP_API
-void lh_stats(LHASH *lh, FILE *fp)
+#ifndef OPENSSL_NO_FP_API
+void lh_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -151,7 +151,7 @@ void lh_stats(LHASH *lh, FILE *fp)
 end:;
 	}
 
-void lh_node_stats(LHASH *lh, FILE *fp)
+void lh_node_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -163,7 +163,7 @@ void lh_node_stats(LHASH *lh, FILE *fp)
 end:;
 	}
 
-void lh_node_usage_stats(LHASH *lh, FILE *fp)
+void lh_node_usage_stats(const LHASH *lh, FILE *fp)
 	{
 	BIO *bp;
 
@@ -177,7 +177,7 @@ end:;
 
 #endif
 
-void lh_stats_bio(LHASH *lh, BIO *out)
+void lh_stats_bio(const LHASH *lh, BIO *out)
 	{
 	char buf[128];
 
@@ -213,7 +213,7 @@ void lh_stats_bio(LHASH *lh, BIO *out)
 	BIO_puts(out,buf);
 	sprintf(buf,"num_hash_comps        = %lu\n",lh->num_hash_comps);
 	BIO_puts(out,buf);
-#ifdef DEBUG
+#if 0
 	sprintf(buf,"p                     = %u\n",lh->p);
 	BIO_puts(out,buf);
 	sprintf(buf,"pmax                  = %u\n",lh->pmax);
@@ -225,7 +225,7 @@ void lh_stats_bio(LHASH *lh, BIO *out)
 #endif
 	}
 
-void lh_node_stats_bio(LHASH *lh, BIO *out)
+void lh_node_stats_bio(const LHASH *lh, BIO *out)
 	{
 	LHASH_NODE *n;
 	unsigned int i,num;
@@ -240,7 +240,7 @@ void lh_node_stats_bio(LHASH *lh, BIO *out)
 		}
 	}
 
-void lh_node_usage_stats_bio(LHASH *lh, BIO *out)
+void lh_node_usage_stats_bio(const LHASH *lh, BIO *out)
 	{
 	LHASH_NODE *n;
 	unsigned long num;

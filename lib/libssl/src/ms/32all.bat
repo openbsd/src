@@ -10,6 +10,11 @@ perl util\mkdef.pl 32 libeay > ms\libeay32.def
 perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
 
 nmake -f d32.mak
+@if errorlevel 1 goto end
 nmake -f 32.mak
+@if errorlevel 1 goto end
 nmake -f d32dll.mak
+@if errorlevel 1 goto end
 nmake -f 32dll.mak
+
+:end

@@ -57,7 +57,7 @@
  */
 
 #include "ssl_locl.h"
-#ifndef NO_SSL2
+#ifndef OPENSSL_NO_SSL2
 #include <stdio.h>
 
 int ssl2_enc_init(SSL *s, int client)
@@ -98,9 +98,9 @@ int ssl2_enc_init(SSL *s, int client)
 
 	ssl2_generate_key_material(s);
 
-	EVP_EncryptInit(ws,c,&(s->s2->key_material[(client)?num:0]),
+	EVP_EncryptInit_ex(ws,c,NULL,&(s->s2->key_material[(client)?num:0]),
 		s->session->key_arg);
-	EVP_DecryptInit(rs,c,&(s->s2->key_material[(client)?0:num]),
+	EVP_DecryptInit_ex(rs,c,NULL,&(s->s2->key_material[(client)?0:num]),
 		s->session->key_arg);
 	s->s2->read_key=  &(s->s2->key_material[(client)?0:num]);
 	s->s2->write_key= &(s->s2->key_material[(client)?num:0]);
@@ -111,8 +111,8 @@ err:
 	}
 
 /* read/writes from s->s2->mac_data using length for encrypt and 
- * decrypt.  It sets the s->s2->padding, s->[rw]length and
- * s->s2->pad_data ptr if we are encrypting */
+ * decrypt.  It sets s->s2->padding and s->[rw]length
+ * if we are encrypting */
 void ssl2_enc(SSL *s, int send)
 	{
 	EVP_CIPHER_CTX *ds;
@@ -169,16 +169,17 @@ void ssl2_mac(SSL *s, unsigned char *md, int send)
 	l2n(seq,p);
 
 	/* There has to be a MAC algorithm. */
-	EVP_DigestInit(&c,s->read_hash);
+	EVP_MD_CTX_init(&c);
+	EVP_DigestInit_ex(&c, s->read_hash, NULL);
 	EVP_DigestUpdate(&c,sec,
 		EVP_CIPHER_CTX_key_length(s->enc_read_ctx));
 	EVP_DigestUpdate(&c,act,len); 
 	/* the above line also does the pad data */
 	EVP_DigestUpdate(&c,sequence,4); 
-	EVP_DigestFinal(&c,md,NULL);
-	/* some would say I should zero the md context */
+	EVP_DigestFinal_ex(&c,md,NULL);
+	EVP_MD_CTX_cleanup(&c);
 	}
-#else /* !NO_SSL2 */
+#else /* !OPENSSL_NO_SSL2 */
 
 # if PEDANTIC
 static void *dummy=&dummy;

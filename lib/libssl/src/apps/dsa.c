@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +68,6 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #undef PROG
 #define PROG	dsa_main
@@ -80,6 +79,9 @@
  * -des		- encrypt output if PEM format with DES in cbc mode
  * -des3	- encrypt output if PEM format
  * -idea	- encrypt output if PEM format
+ * -aes128	- encrypt output if PEM format
+ * -aes192	- encrypt output if PEM format
+ * -aes256	- encrypt output if PEM format
  * -text	- print a text version
  * -modulus	- print the DSA public key
  */
@@ -106,6 +108,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	engine=NULL;
 	infile=NULL;
@@ -187,8 +192,12 @@ bad:
 		BIO_printf(bio_err," -engine e       use engine e, possibly a hardware device.\n");
 		BIO_printf(bio_err," -des            encrypt PEM output with cbc des\n");
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
+#endif
+#ifndef OPENSSL_NO_AES
+		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");
 		BIO_printf(bio_err," -noout          don't print key out\n");
@@ -198,23 +207,7 @@ bad:
 
 	ERR_load_crypto_strings();
 
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	if(!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
@@ -262,7 +255,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -320,6 +313,7 @@ end:
 	if(dsa != NULL) DSA_free(dsa);
 	if(passin) OPENSSL_free(passin);
 	if(passout) OPENSSL_free(passout);
+	apps_shutdown();
 	EXIT(ret);
 	}
 #endif

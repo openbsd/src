@@ -57,7 +57,7 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -70,7 +70,6 @@
 #include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 
 #define DEFBITS	512
 #undef PROG
@@ -96,6 +95,9 @@ int MAIN(int argc, char **argv)
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	argv++;
 	argc--;
@@ -143,23 +145,7 @@ bad:
 		goto end;
 		}
 		
-	if (engine != NULL)
-		{
-		if((e = ENGINE_by_id(engine)) == NULL)
-			{
-			BIO_printf(bio_err,"invalid engine \"%s\"\n",
-				engine);
-			goto end;
-			}
-		if(!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-			{
-			BIO_printf(bio_err,"can't use that engine\n");
-			goto end;
-			}
-		BIO_printf(bio_err,"engine \"%s\" set.\n", engine);
-		/* Free our "structural" reference. */
-		ENGINE_free(e);
-		}
+        e = setup_engine(bio_err, engine, 0);
 
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
@@ -171,7 +157,7 @@ bad:
 	if (outfile == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-#ifdef VMS
+#ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
 		out = BIO_push(tmpbio, out);
@@ -211,6 +197,7 @@ end:
 		ERR_print_errors(bio_err);
 	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
+	apps_shutdown();
 	EXIT(ret);
 	}
 

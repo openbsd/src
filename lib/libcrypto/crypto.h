@@ -61,7 +61,7 @@
 
 #include <stdlib.h>
 
-#ifndef NO_FP_API
+#ifndef OPENSSL_NO_FP_API
 #include <stdio.h>
 #endif
 
@@ -90,13 +90,14 @@ extern "C" {
 #define SSLEAY_CFLAGS		2
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
+#define SSLEAY_DIR		5
 
 /* When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
  */
 
 #define	CRYPTO_LOCK_ERR			1
-#define	CRYPTO_LOCK_ERR_HASH		2
+#define	CRYPTO_LOCK_EX_DATA		2
 #define	CRYPTO_LOCK_X509		3
 #define	CRYPTO_LOCK_X509_INFO		4
 #define	CRYPTO_LOCK_X509_PKEY		5
@@ -112,25 +113,27 @@ extern "C" {
 #define	CRYPTO_LOCK_SSL_SESS_CERT	15
 #define	CRYPTO_LOCK_SSL			16
 #define	CRYPTO_LOCK_RAND		17
-#define	CRYPTO_LOCK_MALLOC		18
-#define	CRYPTO_LOCK_BIO			19
-#define	CRYPTO_LOCK_GETHOSTBYNAME	20
-#define	CRYPTO_LOCK_GETSERVBYNAME	21
-#define	CRYPTO_LOCK_READDIR		22
-#define	CRYPTO_LOCK_RSA_BLINDING	23
-#define	CRYPTO_LOCK_DH			24
-#define	CRYPTO_LOCK_MALLOC2		25
-#define	CRYPTO_LOCK_DSO			26
-#define	CRYPTO_LOCK_DYNLOCK		27
-#define	CRYPTO_LOCK_ENGINE		28
-#define	CRYPTO_NUM_LOCKS		29
+#define	CRYPTO_LOCK_RAND2		18
+#define	CRYPTO_LOCK_MALLOC		19
+#define	CRYPTO_LOCK_BIO			20
+#define	CRYPTO_LOCK_GETHOSTBYNAME	21
+#define	CRYPTO_LOCK_GETSERVBYNAME	22
+#define	CRYPTO_LOCK_READDIR		23
+#define	CRYPTO_LOCK_RSA_BLINDING	24
+#define	CRYPTO_LOCK_DH			25
+#define	CRYPTO_LOCK_MALLOC2		26
+#define	CRYPTO_LOCK_DSO			27
+#define	CRYPTO_LOCK_DYNLOCK		28
+#define	CRYPTO_LOCK_ENGINE		29
+#define	CRYPTO_LOCK_UI			30
+#define	CRYPTO_NUM_LOCKS		31
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
 #define CRYPTO_READ		4
 #define CRYPTO_WRITE		8
 
-#ifndef NO_LOCKING
+#ifndef OPENSSL_NO_LOCKING
 #ifndef CRYPTO_w_lock
 #define CRYPTO_w_lock(type)	\
 	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
@@ -224,6 +227,16 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 #define CRYPTO_EX_INDEX_SSL_SESSION	3
 #define CRYPTO_EX_INDEX_X509_STORE	4
 #define CRYPTO_EX_INDEX_X509_STORE_CTX	5
+#define CRYPTO_EX_INDEX_RSA		6
+#define CRYPTO_EX_INDEX_DSA		7
+#define CRYPTO_EX_INDEX_DH		8
+#define CRYPTO_EX_INDEX_ENGINE		9
+#define CRYPTO_EX_INDEX_X509		10
+#define CRYPTO_EX_INDEX_UI		11
+
+/* Dynamically assigned indexes start from this value (don't use directly, use
+ * via CRYPTO_ex_data_new_class). */
+#define CRYPTO_EX_INDEX_USER		100
 
 
 /* This is the default callbacks, but we can have others as well:
@@ -280,14 +293,31 @@ unsigned long SSLeay(void);
 
 int OPENSSL_issetugid(void);
 
-int CRYPTO_get_ex_new_index(int idx, STACK_OF(CRYPTO_EX_DATA_FUNCS) **skp, long argl, void *argp,
-	     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+/* An opaque type representing an implementation of "ex_data" support */
+typedef struct st_CRYPTO_EX_DATA_IMPL	CRYPTO_EX_DATA_IMPL;
+/* Return an opaque pointer to the current "ex_data" implementation */
+const CRYPTO_EX_DATA_IMPL *CRYPTO_get_ex_data_implementation(void);
+/* Sets the "ex_data" implementation to be used (if it's not too late) */
+int CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i);
+/* Get a new "ex_data" class, and return the corresponding "class_index" */
+int CRYPTO_ex_data_new_class(void);
+/* Within a given class, get/register a new index */
+int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
+		CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
+		CRYPTO_EX_free *free_func);
+/* Initialise/duplicate/free CRYPTO_EX_DATA variables corresponding to a given
+ * class (invokes whatever per-class callbacks are applicable) */
+int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
+		CRYPTO_EX_DATA *from);
+void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+/* Get/set data in a CRYPTO_EX_DATA variable corresponding to a particular index
+ * (relative to the class type involved) */
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
-void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *ad,int idx);
-int CRYPTO_dup_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, CRYPTO_EX_DATA *to,
-	     CRYPTO_EX_DATA *from);
-void CRYPTO_free_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad);
-void CRYPTO_new_ex_data(STACK_OF(CRYPTO_EX_DATA_FUNCS) *meth, void *obj, CRYPTO_EX_DATA *ad);
+void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad,int idx);
+/* This function cleans up all "ex_data" state. It mustn't be called under
+ * potential race-conditions. */
+void CRYPTO_cleanup_all_ex_data(void);
 
 int CRYPTO_get_new_lockid(char *name);
 
@@ -322,6 +352,11 @@ void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void (*f)(void *));
 int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
+int CRYPTO_set_mem_ex_functions(void *(*m)(size_t,const char *,int),
+                                void *(*r)(void *,size_t,const char *,int),
+                                void (*f)(void *));
+int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t,const char *,int),
+                                       void (*free_func)(void *));
 int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*r)(void *,void *,int,const char *,int,int),
 				   void (*f)(void *,int),
@@ -329,6 +364,11 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   long (*go)(void));
 void CRYPTO_get_mem_functions(void *(**m)(size_t),void *(**r)(void *, size_t), void (**f)(void *));
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
+void CRYPTO_get_mem_ex_functions(void *(**m)(size_t,const char *,int),
+                                 void *(**r)(void *, size_t,const char *,int),
+                                 void (**f)(void *));
+void CRYPTO_get_locked_mem_ex_functions(void *(**m)(size_t,const char *,int),
+                                        void (**f)(void *));
 void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
 				    void (**r)(void *,void *,int,const char *,int,int),
 				    void (**f)(void *,int),
@@ -351,6 +391,9 @@ int CRYPTO_push_info_(const char *info, const char *file, int line);
 int CRYPTO_pop_info(void);
 int CRYPTO_remove_all_info(void);
 
+
+/* Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
+ * used as default in CRYPTO_MDEBUG compilations): */
 /* The last argument has the following significance:
  *
  * 0:	called before the actual memory allocation has taken place
@@ -359,31 +402,32 @@ int CRYPTO_remove_all_info(void);
 void CRYPTO_dbg_malloc(void *addr,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_realloc(void *addr1,void *addr2,int num,const char *file,int line,int before_p);
 void CRYPTO_dbg_free(void *addr,int before_p);
-
 /* Tell the debugging code about options.  By default, the following values
  * apply:
  *
- * 0:	Clear all options.
- * 1:	Set the "Show Time" option.
- * 2:	Set the "Show Thread Number" option.
- * 3:	1 + 2
+ * 0:                           Clear all options.
+ * V_CRYPTO_MDEBUG_TIME (1):    Set the "Show Time" option.
+ * V_CRYPTO_MDEBUG_THREAD (2):  Set the "Show Thread Number" option.
+ * V_CRYPTO_MDEBUG_ALL (3):     1 + 2
  */
 void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
 
-#ifndef NO_FP_API
+
+#ifndef OPENSSL_NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
 #endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
 /* unsigned long order, char *file, int line, int num_bytes, char *addr */
-void CRYPTO_mem_leaks_cb(void (*cb)(unsigned long, const char *, int, int, void *));
+typedef void *CRYPTO_MEM_LEAK_CB(unsigned long, const char *, int, int, void *);
+void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
-void ERR_load_CRYPTO_strings(void);
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
+void ERR_load_CRYPTO_strings(void);
 
 /* Error codes for the CRYPTO functions. */
 
@@ -392,6 +436,11 @@ void ERR_load_CRYPTO_strings(void);
 #define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID		 103
 #define CRYPTO_F_CRYPTO_GET_NEW_LOCKID			 101
 #define CRYPTO_F_CRYPTO_SET_EX_DATA			 102
+#define CRYPTO_F_DEF_ADD_INDEX				 104
+#define CRYPTO_F_DEF_GET_CLASS				 105
+#define CRYPTO_F_INT_DUP_EX_DATA			 106
+#define CRYPTO_F_INT_FREE_EX_DATA			 107
+#define CRYPTO_F_INT_NEW_EX_DATA			 108
 
 /* Reason codes. */
 #define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
@@ -400,4 +449,3 @@ void ERR_load_CRYPTO_strings(void);
 }
 #endif
 #endif
-

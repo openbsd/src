@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -125,12 +125,13 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe, BIGNUM *add,
-	     BIGNUM *rem, void (*callback)(int,int,void *), void *cb_arg)
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
+	const BIGNUM *add, const BIGNUM *rem,
+	void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
@@ -225,12 +226,15 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	BN_MONT_CTX *mont = NULL;
 	const BIGNUM *A = NULL;
 
+	if (BN_cmp(a, BN_value_one()) <= 0)
+		return 0;
+	
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
 
 	/* first look for small factors */
 	if (!BN_is_odd(a))
-		return(0);
+		return 0;
 	if (do_trial_division)
 		{
 		for (i = 1; i < NUMPRIMES; i++)
@@ -289,11 +293,8 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	
 	for (i = 0; i < checks; i++)
 		{
-		if (!BN_pseudo_rand(check, BN_num_bits(A1), 0, 0))
+		if (!BN_pseudo_rand_range(check, A1))
 			goto err;
-		if (BN_cmp(check, A1) >= 0)
-			if (!BN_sub(check, check, A1))
-				goto err;
 		if (!BN_add_word(check, 1))
 			goto err;
 		/* now 1 <= check < A */
@@ -376,8 +377,8 @@ again:
 	return(1);
 	}
 
-static int probable_prime_dh(BIGNUM *rnd, int bits, BIGNUM *add, BIGNUM *rem,
-	     BN_CTX *ctx)
+static int probable_prime_dh(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
@@ -413,8 +414,8 @@ err:
 	return(ret);
 	}
 
-static int probable_prime_dh_safe(BIGNUM *p, int bits, BIGNUM *padd,
-	     BIGNUM *rem, BN_CTX *ctx)
+static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
+	const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1,*qadd,*q;
