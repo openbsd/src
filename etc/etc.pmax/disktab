@@ -37,6 +37,16 @@
 # four times `a' while `c' is always the entire disk. The
 # sum of `d', `e', and `f' is equal to `g' which is everything else.
 
+simpleroot:\
+	:ty=winchester:\
+	:dt=SCSI:\
+	:ns#32:\
+	:nt#64:\
+	:nc#96:\
+	:pa#65536:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#131072:ob#65536:tb=swap:\
+	:pc#196608:oc#0:
+
 rz22|RZ22|DEC RZ22 Winchester:\
 	:dt=SCSI:ty=winchester:ns#33:nt#4:nc#776:\
 	:pa#32768:oa#0:ba#8192:fa#1024:\
