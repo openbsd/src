@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.178 1999/09/08 14:25:49 jakob Exp 
+ *	OpenBSD: pcidevs,v 1.179 1999/09/11 10:10:42 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -571,6 +571,7 @@
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
 #define	PCI_PRODUCT_3DFX_VOODOO2	0x0002		/* Voodoo2 */
 #define	PCI_PRODUCT_3DFX_BANSHEE	0x0003		/* Banshee */
+#define	PCI_PRODUCT_3DFX_VOODOO3	0x0005		/* Voodoo3 */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */

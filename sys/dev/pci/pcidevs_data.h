@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.178 1999/09/08 14:25:49 jakob Exp 
+ *	OpenBSD: pcidevs,v 1.179 1999/09/11 10:10:42 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -151,6 +151,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3DFX Interactive",
 	    "Banshee",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3,
+	    0,
+	    "3DFX Interactive",
+	    "Voodoo3",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
