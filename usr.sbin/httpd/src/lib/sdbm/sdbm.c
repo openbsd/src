@@ -77,18 +77,15 @@ register int mode;
 	if (file == NULL || !*file)
 		return errno = EINVAL, (DBM *) NULL;
 /*
- * need space for two seperate filenames
- */
-	n = strlen(file) * 2 + strlen(DIRFEXT) + strlen(PAGFEXT) + 2;
-
-	if ((dirname = malloc((unsigned) n)) == NULL)
-		return errno = ENOMEM, (DBM *) NULL;
-/*
  * build the file names
  */
-	dirname = strcat(strcpy(dirname, file), DIRFEXT);
-	pagname = strcpy(dirname + strlen(dirname) + 1, file);
-	pagname = strcat(pagname, PAGFEXT);
+	if (asprintf(&dirname, "%s%s", file, DIRFEXT) == -1)
+		return (DBM *) NULL;
+
+	if (asprintf(&pagname, "%s%s", file, PAGFEXT) == -1) {
+		free(dirname);
+		return (DBM *) NULL;
+	}
 
 #ifdef NETWARE
 	locking_sem = OpenLocalSemaphore (1);
