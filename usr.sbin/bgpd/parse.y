@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2004/04/30 17:34:05 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.100 2004/05/04 11:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -835,15 +835,17 @@ filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 				free($2);
 				YYERROR;
 			}
-			free($2);
 			if (i == 0 || i == USHRT_MAX) {
-				yyerror("Bad community as number");
+				free($2);
+				yyerror("Bad community AS number");
 				YYERROR;
 			}
 			$$.community.as = i;
 			if ((i = getcommunity(p)) == COMMUNITY_ERROR) {
+				free($2);
 				YYERROR;
 			}
+			free($2);
 			$$.community.type = i;
 		}
 		;
