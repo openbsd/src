@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.72 2000/01/11 01:39:10 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.73 2000/01/11 03:10:04 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -366,7 +366,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 	/* Initialize TDB for PF_KEY notification */
 	bzero(&tdb2, sizeof(tdb2));
-	tdb2.tdb_satype = get_sa_require(inp);
+	sa_require = get_sa_require(inp);
 
 	/* Check for PFS */
 	if (ipsec_require_pfs)
@@ -397,8 +397,10 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	if (ipsec_exp_first_use > 0)
 	  tdb2.tdb_exp_first_use = ipsec_exp_first_use;
 
-	if (tdb2.tdb_satype & NOTIFY_SATYPE_CONF)
+	if (sa_require & NOTIFY_SATYPE_CONF)
 	{
+	    tdb2.tdb_satype = SADB_SATYPE_ESP;
+
 	    if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
 	      tdb2.tdb_encalgxform = &enc_xform_des;
 	    else
@@ -418,6 +420,9 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 	if (tdb2.tdb_satype & NOTIFY_SATYPE_AUTH)
 	{
+	    if (!(sa_require & NOTIFY_SATYPE_CONF))
+	      tdb2.tdb_satype = SADB_SATYPE_AH;
+
 	    if (!strncasecmp(ipsec_def_auth, "hmac-md5", sizeof("hmac-md5")))
 	      tdb2.tdb_authalgxform = &auth_hash_hmac_md5_96;
 	    else

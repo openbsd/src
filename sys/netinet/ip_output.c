@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.63 2000/01/11 01:03:23 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.64 2000/01/11 03:10:04 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -514,7 +514,7 @@ sendit:
 
 			/* Default entry is for ESP */
 			sa_require = NOTIFY_SATYPE_CONF | NOTIFY_SATYPE_AUTH;
-			tdb2.tdb_satype = sa_require;
+			tdb2.tdb_satype = SADB_SATYPE_ESP;
 		    } else {
 			if (tdb->tdb_authalgxform)
 			  sa_require = NOTIFY_SATYPE_AUTH;
