@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2004/01/29 21:30:02 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2004/05/06 20:15:08 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -837,7 +837,7 @@ ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 		ppc_configed_intr_cnt++;
 	} else {
 		panic("ppc_intr_establish called before interrupt controller"
-			" configured: driver %s too many interrupts", name);
+			" configured: driver %s has too many interrupts", name);
 	}
 	/* disestablish is going to be tricky to supported for these :-) */
 	return (void *)ppc_configed_intr_cnt;
