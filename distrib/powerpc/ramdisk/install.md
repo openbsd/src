@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2000/09/12 03:03:40 rahnds Exp $
+#	$OpenBSD: install.md,v 1.16 2000/10/17 15:21:59 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -372,7 +372,7 @@ md_not_going_to_install() {
 	cat << __EOT
 
 OK, then.  Enter 'reboot' at the prompt to reset the machine.  Once the machine
-has rebooted, use openfirmware to load the new boot code.
+has rebooted, use Open Firmware to load the new boot code.
 
 __EOT
 }
@@ -387,8 +387,8 @@ md_congrats() {
 	cat << __EOT
 
 CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
-installed system, enter halt at the command prompt. Once the system has
-halted, reset the machine and boot from the disk.
+installed system, enter reboot at the command prompt.  Once the machine
+has rebooted, use Open Firmware to boot into OpenBSD.
 
 __EOT
 }
