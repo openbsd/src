@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.11 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.12 2004/10/04 12:03:45 pedro Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 /*
- * Structures associated with name cacheing.
+ * Structures associated with name caching.
  */
 LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
@@ -88,7 +88,7 @@ u_long nextvnodeid;
  * the name. If the lookup succeeds, the vnode is returned in ni_vp
  * and a status of 0 is returned. If the locking fails for whatever
  * reason, the vnode is unlocked and the error is returned to caller.
- * If the lookup determines that the name does not exist (negative cacheing),
+ * If the lookup determines that the name does not exist (negative caching),
  * a status of ENOENT is returned. If the lookup fails, a status of -1
  * is returned.
  */

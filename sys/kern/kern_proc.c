@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.21 2004/07/25 20:50:51 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.22 2004/10/04 12:03:45 pedro Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <sys/pool.h>
 
 /*
- * Structure associated with user cacheing.
+ * Structure associated with user caching.
  */
 struct uidinfo {
 	LIST_ENTRY(uidinfo) ui_hash;
