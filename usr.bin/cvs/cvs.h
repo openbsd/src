@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.26 2004/08/13 02:16:29 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.27 2004/08/13 02:56:37 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -163,9 +163,12 @@ struct cvsroot {
 #define CVS_HIST_TAG      'T'
 
 
+#define CVS_ENT_DUMMYTIME  "dummy timestamp"
+
 #define CVS_ENT_NONE    0
 #define CVS_ENT_FILE    1
 #define CVS_ENT_DIR     2
+
 
 #define CVS_ENTF_SYNC   0x01    /* contents of disk and memory match */
 #define CVS_ENTF_WR     0x02    /* file is opened for writing too */
