@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2004/02/04 20:07:18 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 2004/02/14 15:09:22 grange Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -145,14 +145,15 @@ cpumatch(parent, cfdata, aux)
 	return (1);
 }
 
-extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
 static u_int32_t ppc_curfreq;
 
 
 int
-ppc_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+ppc_cpuspeed(int *freq)
 {
-	return (sysctl_rdint(oldp, oldlenp, newp, ppc_curfreq));
+	*freq = ppc_curfreq;
+
+	return (0);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.5 2003/12/24 10:35:59 markus Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.6 2004/02/14 15:09:22 grange Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -64,8 +64,8 @@ struct elansc_softc {
 
 int	elansc_match(struct device *, void *, void *);
 void	elansc_attach(struct device *, struct device *, void *);
-int	elansc_cpuspeed(void *, size_t *, void *, size_t);
-int	elansc_setperf(void *, size_t *, void *, size_t);
+int	elansc_cpuspeed(int *);
+int	elansc_setperf(int);
 
 void	elansc_wdogctl(struct elansc_softc *, int, uint16_t);
 #define elansc_wdogctl_reset(sc)	elansc_wdogctl(sc, 1, 0)
@@ -220,29 +220,23 @@ elansc_wdogctl_cb(void *self, int period)
 }
 
 int
-elansc_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+elansc_cpuspeed(int *freq)
 {
 	static const int elansc_mhz[] = { 0, 100, 133, 999 };
 	uint8_t cpuctl;
 
 	cpuctl = bus_space_read_1(elansc->sc_memt, elansc->sc_memh,
 	    MMCR_CPUCTL);
-	return (sysctl_rdint(oldp, oldlenp, newp,
-	    elansc_mhz[cpuctl & CPUCTL_CPU_CLK_SPD_MASK]));
+	*freq = elansc_mhz[cpuctl & CPUCTL_CPU_CLK_SPD_MASK];
+	return (0);
 }
 
 int
-elansc_setperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+elansc_setperf(int level)
 {
-	static int level = 100;
-	int error;
 	uint32_t eflags;
 	uint8_t cpuctl, speed;
 
-	if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)))
-		return (error);
-	if (newp == NULL)
-		return (0);
 	level = (level > 50) ? 100 : 0;
 
 	cpuctl = bus_space_read_1(elansc->sc_memt, elansc->sc_memh,

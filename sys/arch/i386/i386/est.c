@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.4 2004/01/06 21:09:20 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.5 2004/02/14 15:09:22 grange Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -259,21 +259,14 @@ est_init(const char *cpu_device)
 }
 
 int
-est_setperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+est_setperf(int level)
 {
-	static uint level = 100;
-	int low, high, i, fq, error;
+	int low, high, i, fq;
 	uint64_t msr;
 
 	if (est_fqlist == NULL)
 		return (EOPNOTSUPP);
 
-	error = sysctl_int(oldp, oldlenp, newp, newlen, &level);
-	if (error)
-		return (error);
-
-	if (level > 100)
-		level = 100;
 	low = est_fqlist->table[est_fqlist->n - 1].mhz;
 	high = est_fqlist->table[0].mhz;
 	fq = low + (high - low) * level / 100;
@@ -291,11 +284,8 @@ est_setperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 
 int
-est_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+est_cpuspeed(int *freq)
 {
-	int freq;
-
-	freq = MSR2MHZ(rdmsr(MSR_PERF_STATUS));
-
-	return (sysctl_rdint(oldp, oldlenp, newp, freq));
+	*freq = MSR2MHZ(rdmsr(MSR_PERF_STATUS));
+	return (0);
 }

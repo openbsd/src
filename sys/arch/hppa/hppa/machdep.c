@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2004/01/05 17:07:00 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2004/02/14 15:09:22 grange Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -276,11 +276,11 @@ const struct hppa_cpu_typed {
 };
 
 int
-hppa_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+hppa_cpuspeed(int *mhz)
 {
-	int mhz = PAGE0->mem_10msec / 10000;
+	*mhz = PAGE0->mem_10msec / 10000;
 
-	return sysctl_rdint(oldp, oldlenp, newp, mhz);
+	return (0);
 }
 
 void

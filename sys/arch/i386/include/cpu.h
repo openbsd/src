@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2004/02/01 19:05:23 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2004/02/14 15:09:22 grange Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -191,21 +191,21 @@ void	rtcdrain(void *);
 /* est.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	est_init(const char *);
-int     est_cpuspeed(void *, size_t *, void *, size_t);
-int     est_setperf(void *, size_t *, void *, size_t);
+int     est_cpuspeed(int *);
+int     est_setperf(int);
 #endif
 
 /* longrun.c */
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 void	longrun_init(void);
-int	longrun_cpuspeed(void *, size_t *, void *, size_t);
-int	longrun_setperf(void *, size_t *, void *, size_t);
+int	longrun_cpuspeed(int *);
+int	longrun_setperf(int);
 #endif
 
 /* p4tcc.c */
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 void	p4tcc_init(int, int);
-int     p4tcc_setperf(void *, size_t *, void *, size_t);
+int     p4tcc_setperf(int);
 #endif
 
 /* npx.c */
