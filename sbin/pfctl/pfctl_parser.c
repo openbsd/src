@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.9 2001/06/26 12:27:14 wilfried Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.10 2001/06/26 12:47:10 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -70,7 +70,7 @@ error(int n, char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	fprintf(stderr, "%s: line %d", __progname, n);
+	fprintf(stderr, "%s: line %d ", __progname, n);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	return (0);
