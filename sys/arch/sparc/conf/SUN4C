@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.36 2002/11/23 20:47:04 miod Exp $
+#	$OpenBSD: SUN4C,v 1.37 2003/01/31 22:00:22 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -7,8 +7,6 @@ machine		sparc
 include "../../../conf/GENERIC"
 
 
-# Options for variants of the Sun SPARC architecure.
-# At least one is required.
 option		SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 
 #option		KGDB		# support for kernel gdb

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.26 2002/08/12 10:44:03 miod Exp $
+#	$OpenBSD: SUN4,v 1.27 2003/01/31 22:00:22 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -6,8 +6,6 @@ machine		sparc
 
 include "../../../conf/GENERIC"
 
-# Options for variants of the Sun SPARC architecure.
-# At least one is required.
 option		SUN4		# sun4/100, sun4/200, sun4/300
 
 #option		MMU_3L		# 3-level MMU on sun4/400

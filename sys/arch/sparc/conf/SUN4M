@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.44 2002/09/20 11:17:55 fgsch Exp $
+#	$OpenBSD: SUN4M,v 1.45 2003/01/31 22:00:22 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -8,7 +8,7 @@ include "../../../conf/GENERIC"
 
 # This is a 4m specific kernel.
 # NOTE: Cypress mbus cpus are not pure 4m, and require
-#       either SUN4C or SUN4M to be specified as well
+#       both SUN4C and SUN4M to be specified as well
 option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
 #option		KGDB		# support for kernel gdb
