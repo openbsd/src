@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.77 2004/02/16 12:53:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.78 2004/02/16 14:26:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -489,16 +489,17 @@ void
 rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
     void *data, u_int16_t size)
 {
-	u_char	buf[1024];
+	struct buf	*wbuf;
 
-	buf[0] = error;
-	buf[1] = suberr;
-	if (size > sizeof(buf) - 2)
-		size = sizeof(buf) - 2;
-	memcpy(buf + 2, data, size);
-	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peer->conf.id,
-	    buf, size + 2) == -1)
-		fatal("imsg_compose error");
+	if ((wbuf = imsg_create(&ibuf_se, IMSG_UPDATE_ERR, peer->conf.id,
+	    size + sizeof(error) + sizeof(suberr))) == NULL)
+		fatal("imsg_create error");
+	if (imsg_add(wbuf, &error, sizeof(error)) == -1 ||
+	    imsg_add(wbuf, &suberr, sizeof(suberr)) == -1 ||
+	    imsg_add(wbuf, data, size) == -1)
+		fatal("imsg_add error");
+	if (imsg_close(&ibuf_se, wbuf) == -1)
+		fatal("imsg_close error");
 	peer->state = PEER_ERR;
 }
 

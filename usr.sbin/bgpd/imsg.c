@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.22 2004/01/22 20:34:56 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.23 2004/02/16 14:26:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,8 +25,10 @@
 
 #include "bgpd.h"
 
-int	imsg_compose_core(struct imsgbuf *, int, u_int32_t, void *, u_int16_t,
-	    pid_t);
+int		 imsg_compose_core(struct imsgbuf *, int, u_int32_t, void *,
+		     u_int16_t, pid_t);
+struct buf	*imsg_create_core(struct imsgbuf *, int, u_int32_t, u_int16_t,
+		     pid_t);
 
 void
 imsg_init(struct imsgbuf *ibuf, int sock)
@@ -140,6 +142,67 @@ imsg_compose_core(struct imsgbuf *ibuf, int type, u_int32_t peerid, void *data,
 	if ((n = buf_close(&ibuf->w, wbuf)) < 0) {
 			log_warnx("imsg_compose: buf_add error");
 			buf_free(wbuf);
+			return (-1);
+	}
+	return (n);
+}
+
+struct buf *
+imsg_create(struct imsgbuf *ibuf, int type, u_int32_t peerid, u_int16_t dlen)
+{
+	return (imsg_create_core(ibuf, type, peerid, dlen, ibuf->pid));
+}
+
+struct buf *
+imsg_create_pid(struct imsgbuf *ibuf, int type, pid_t pid, u_int16_t datalen)
+{
+	return (imsg_create_core(ibuf, type, 0, datalen, pid));
+}
+
+struct buf *
+imsg_create_core(struct imsgbuf *ibuf, int type, u_int32_t peerid,
+    u_int16_t datalen, pid_t pid)
+{
+	struct buf	*wbuf;
+	struct imsg_hdr	 hdr;
+
+	hdr.len = datalen + IMSG_HEADER_SIZE;
+	hdr.type = type;
+	hdr.peerid = peerid;
+	hdr.pid = pid;
+	wbuf = buf_open(hdr.len);
+	if (wbuf == NULL) {
+		log_warnx("imsg_create: buf_open error");
+		return (NULL);
+	}
+	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1) {
+		log_warnx("imsg_create: buf_add error");
+		buf_free(wbuf);
+		return (NULL);
+	}
+	return (wbuf);
+}
+
+int
+imsg_add(struct buf *msg, void *data, u_int16_t datalen)
+{
+	if (datalen)
+		if (buf_add(msg, data, datalen) == -1) {
+			log_warnx("imsg_add: buf_add error");
+			buf_free(msg);
+			return (-1);
+		}
+	return (datalen);
+}
+
+int
+imsg_close(struct imsgbuf *ibuf, struct buf *msg)
+{
+	int	n;
+
+	if ((n = buf_close(&ibuf->w, msg)) < 0) {
+			log_warnx("imsg_close: buf_add error");
+			buf_free(msg);
 			return (-1);
 	}
 	return (n);
