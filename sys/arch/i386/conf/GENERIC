@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.193 2000/07/04 11:46:08 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.194 2000/07/06 05:58:12 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -68,13 +68,13 @@ pcmcia*	at pcic? controller ? socket ?
 #pcmcia* at tcic? controller ? socket ?
 
 # CardBus bus support (also see NOTE below)
-#cardbus*	at cardslot?
-#pcmcia*		at cardslot?
-#cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
 
 # NOTE: You may need to uncomment the following line for CardBus to work
-#option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
+option	BIOS32,PCIBIOS,PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP
 
 # PCI USB Controllers
 #uhci*	at pci?				# Universal Host Controller (Intel)
@@ -280,7 +280,7 @@ sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 xe*	at pcmcia? function ?			# Xircom ethernet
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
 xl*	at pci? dev ? function ?		# 3c9xx ethernet
-#xl*	at cardbus? dev ? function ?		# 3c575 ethernet
+xl*	at cardbus? dev ? function ?		# 3c575 ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
