@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.21 2001/03/21 11:43:44 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.22 2001/03/23 12:02:49 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -371,9 +371,6 @@ do_authentication()
 	packet_start(SSH_SMSG_SUCCESS);
 	packet_send();
 	packet_write_wait();
-
-	xfree(authctxt->user);
-	xfree(authctxt);
 
 	/* Perform session preparation. */
 	do_authenticated(authctxt);
