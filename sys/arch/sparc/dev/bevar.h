@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.9 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.10 1999/02/15 16:22:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -43,7 +43,6 @@ struct besoftc {
 	u_int	sc_rev;
 
 	int	sc_channel;		/* channel number */
-	int	sc_promisc;
 	int	sc_burst;
 	int	sc_tcvr_type;
 	int	sc_nticks;		/* negotiation ticks */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.20 1999/02/08 13:39:29 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.21 1999/02/15 16:22:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -558,7 +558,6 @@ beioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->sc_promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -676,12 +675,10 @@ beinit(sc)
 	br->mac_addr0 = (sc->sc_arpcom.ac_enaddr[0] << 8) |
 	    sc->sc_arpcom.ac_enaddr[1];
 
-	br->htable3 = 0;
-	br->htable2 = 0;
-	br->htable1 = 0;
-	br->htable0 = 0;
-
 	br->rx_cfg = BE_BR_RXCFG_HENABLE | BE_BR_RXCFG_FIFO;
+
+	be_mcreset(sc);
+
 	DELAY(20);
 
 	br->tx_cfg = BE_BR_TXCFG_FIFO;
@@ -1227,16 +1224,18 @@ be_mcreset(sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
+	if (ifp->if_flags & IFF_PROMISC) {
+		br->rx_cfg |= BE_BR_RXCFG_PMISC;
+		return;
+	}
+	else
+		br->rx_cfg &= ~BE_BR_RXCFG_PMISC;
+
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		br->htable3 = 0xffff;
 		br->htable2 = 0xffff;
 		br->htable1 = 0xffff;
 		br->htable0 = 0xffff;
-		return;
-	}
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		br->rx_cfg |= BE_BR_RXCFG_PMISC;
 		return;
 	}
 
