@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.26 2001/05/16 19:17:01 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.27 2001/08/03 16:17:47 tholo Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -591,9 +591,9 @@ vga_ioctl(v, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct vga_config *vc = v;
+#if NVGA_PCI > 0
 	int error;
 
-#if NVGA_PCI > 0
 	if (vc->vc_type == WSDISPLAY_TYPE_PCIVGA &&
 	    (error = vga_pci_ioctl(v, cmd, data, flag, p)) != ENOTTY)
 		return (error);
