@@ -73,6 +73,8 @@ NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 
 %CFILES
 
+%SFILES
+
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
@@ -124,9 +126,6 @@ fp.o: ${PICA}/pica/fp.S ${PICA}/include/machAsmDefs.h \
 	${PICA}/include/machConst.h ${PICA}/include/reg.h assym.h
 	${NORMAL_S} -mips3 ${PICA}/pica/fp.S
 
-# the following is necessary because autoconf.o depends on #if GENERIC
-autoconf.o: Makefile
-
 # the following are necessary because the files depend on the types of
 # cpu's included in the system configuration
 clock.o machdep.o autoconf.o conf.o: Makefile
@@ -144,10 +143,6 @@ genassym: genassym.o
 
 genassym.o: ${PICA}/pica/genassym.c
 	${USRLAND_C_C}
-
-depend: assym.h param.c
-	mkdep ${COPTS} ${CFILES} ioconf.c param.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${PICA}/pica/genassym.c
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
@@ -173,6 +168,13 @@ param.o: param.c Makefile
 newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+depend:: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${PICA}/pica/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${PICA}/pica/genassym.c
 
 %RULES
 
