@@ -1,3 +1,4 @@
+/*	$OpenBSD: vga.c,v 1.2 1997/07/05 10:36:12 niklas Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -319,7 +320,7 @@ vga_erasecols(id, row, startcol, ncols)
 
 	val = (vc->vc_at << 8) | ' ';
 
-	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, count, val);
+	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, count);
 }
 
 static void
