@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.19 2003/12/24 22:41:45 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.20 2003/12/25 00:12:37 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -32,6 +32,8 @@
 #include <machine/asm.h>
 
 #define destsize 10
+
+/* Floating-Point Status Register bits */
 #define inexact 0
 #define overflow 1
 #define underflow 2
@@ -95,7 +97,7 @@ ASENTRY(m88100_Xfp_precise)
 
 	or.u	r1,r0,hi16(wrapup)	/* load return address of function */
 	or	r1,r1,lo16(wrapup)
-2:
+
 	bb0	6,r4, 3f		/* branch to FPunimp if bit set */
 	br	FPuimp
 3:
@@ -124,7 +126,7 @@ ASLOCAL(FPuimp)
 	bsr	_C_LABEL(m88100_trap)
 	ld	r1,r31,36		/* recover return address */
 	addu	r31,r31,40		/* deallocate stack */
-	br	fp_p_return
+	jmp	r1
 
 	/*
 	 * To write back the results to the user registers, disable exceptions
@@ -163,8 +165,6 @@ ASLOCAL(wrapup)
 	clr	r2, r2, 27<5>		/* perform equivalent of mod 32 */
 ASLOCAL(writesingle)
 	st	r6, r3 [r2]		/* write low word into memory */
-
-ASLOCAL(fp_p_return)
 	jmp	r1
 
 /*
@@ -194,7 +194,7 @@ ASLOCAL(FPdivzero)
  */
 
 ASLOCAL(resoper)
-	set	r2,r2,1<oper>	/* set bit in FPSR */
+	set	r2,r2,1<oper>
 #ifdef HANDLER
 	bb0	oper,r3,noreshand	/* branch to execute default handling */
 					/* for reserved operands */
@@ -217,8 +217,8 @@ noreshand:
  */
 
 setbit:
+	set	r2,r2,1<divzero>
 #ifdef HANDLER
-	set	r2,r2,1<divzero>	/* set bit in FPSR */
 	bb0	divzero,r3,default	/* go to default routine if no hdlr */
 	bsr	_handler		/* execute handler routine */
 	br	FP_div_return
@@ -617,9 +617,9 @@ maxneg:
 	 */
 
 overflw:
+	set	r2,r2,1<oper>
 #ifdef HANDLER
-	bb0.n	oper,r3,nohandler	/* do not go to user handler routine */
-	 set	r2,r2,1<oper>		/* set invalid operand bit */
+	bb0	oper,r3,nohandler	/* do not go to user handler routine */
 	bsr	_handler		/* go to user handler routine */
 	br	FPintov_return
 nohandler:
@@ -799,10 +799,11 @@ ASLOCAL(inf)
 
 ASLOCAL(FPunderflow)
 	st	r1,r31,0	/* save return address */
+	set	r2,r2,1<underflow>
+	set	r2,r2,1<inexact>
 #ifdef HANDLER
 	bb0	efunf,r12,FPU_denorm	/* jump to default procedure */
-	bb1.n	destsize,r12,doubleprec	/* double precision destination */
-	 set	r2,r2,1<underflow>	/* set underflow flag in FPSR */
+	bb1	destsize,r12,doubleprec	/* double precision destination */
 singleprec:
 	or.u	r6,r0,0x0c00	/* load exponent adjust 192 */
 	br.n	callundhand	/* branch to call handler for user handler */
@@ -1347,10 +1348,11 @@ addone:
 /* Branch to inexact user handler if there is one. */
 
 noaddone:
+	set	r2,r2,1<inexact>
+	set	r2,r2,1<underflow>
 #ifdef HANDLER
-	bb1.n	efinx,r12,modformdef	/* branch to modify form for user */
+	bb1	efinx,r12,modformdef	/* branch to modify form for user */
 					/* handler */
-	 or	r2,r2,5			/* set inexact and underflow flags */
 #endif
 
 
@@ -1415,11 +1417,10 @@ Ureturn:
 
 ASLOCAL(FPoverflow)
 	st	r1,r31,0	/* save return address */
+	set	r2,r2,1<overflow>
+	set	r2,r2,1<inexact>
 #ifdef HANDLER
-	set	r2,r2,1<overflow> /* set overflow bit in r2 which holds FPSR */
 	bb1	efovf,r12,hand	/* go to user handler if bit set for overflow */
-	set	r2,r2,1<inexact> /* set inexact bit in r2 since overflow bit */
-				/* in FPCR is not set */
 	bb0	efinx,r12,nohandler/* if userhandler for inexact not set,then */
 				/* round result */
 	br	callhandler	/* branch to user handler for inexact */
@@ -1576,7 +1577,7 @@ ASLOCAL(NaN)
 	bb0.n	s1nan,r12,S2sigcheck	/* S1 is not a NaN */
 	 st	r1,r31,0		/* save return address */
 	bb1	sigbit,r5,S2sigcheck	/* S1 is not a signaling NaN */
-	set	r2,r2,1<oper>		/* set invalid operation bit in FPSR */
+	set	r2,r2,1<oper>
 #ifdef HANDLER
 	bb0	oper,r3,S1nohandler	/* branch if no user handler */
 	bsr	_handler		/* branch to handler */
@@ -1591,7 +1592,7 @@ ASLOCAL(S1nohandler)
 ASLOCAL(S2sigcheck)
 	bb0	s2nan,r12,S1write	/* S2 is not a NaN */
 	bb1	sigbit,r7,S1write	/* S2 is not a signaling NaN */
-	set	r2,r2,1<oper>		/* set invalid operation bit in FPSR */
+	set	r2,r2,1<oper>
 #ifdef HANDLER
 	bb0	oper,r3,S2nohandler	/* branch if no user handler */
 	bsr	_handler		/* branch to handler */
@@ -1914,7 +1915,7 @@ FSQRT:
 #endif
 
 excpt:
-	set	r2,r2,1<oper>		/* set invalid operation bit of FPSR */
+	set	r2,r2,1<oper>
 #ifdef HANDLER
 	bb0	oper,r3,nohandler	/* branch if no user handler */
 	bsr	_handler		/* branch to interface with user handler */
@@ -1973,7 +1974,9 @@ negwrzerod:
 	 set	r5,r5,1<31>	/* set sign bit */
 
 FP_inf_overflw:
-	set	r2,r2,1<oper>	/* set invalid operand bit */
+	set	r2,r2,1<oper>
+	set	r2,r2,1<overflow>
+	set	r2,r2,1<inexact>
 #ifdef HANDLER
 	bb0	oper,r3,nohandlero /* do not go to user handler routine */
 	bsr	_handler	/* go to user handler routine */
@@ -2454,7 +2457,7 @@ operation:
 	jmp	r1
 
 ASENTRY(Xfp_imprecise)
-/* input: r3 is the excepton frame */
+/* input: r3 is the exception frame */
 	or	r29, r3, r0		/* r29 is now the E.F. */
 	subu	r31, r31, 40
 	st	r1,  r31, 32
@@ -2484,23 +2487,6 @@ ASENTRY(Xfp_imprecise)
 					/* be set for inexact */
 #endif
 
-/*
- * XXX should never get here!
- */
-	data
-	align 8
-1:
-	string "error in inprecise fp exception handler, r4 is 0x%08x\0"
-	text
-	align 8
-	or.u	r2, r0, hi16(1b)
-	or	r2, r2, lo16(1b)
-	or	r3, r4, r0
-	bsr	_printf
-	or.u	r2, r0, hi16(1b)
-	or	r2, r2, lo16(1b)
-	bsr	_panic
-
 fpui_wrapup:
 	tb1	0,r0,0		/* make sure all floating point operations */
 				/* have finished */
@@ -2513,6 +2499,9 @@ fpui_wrapup:
 	ld	r1, r31, 32
 	ld	r29,r31, 36
 	addu	r31, r31, 40
+
+	fstcr	r2, FPSR	/* write revised value of FPSR */
+	fstcr	r3, FPCR	/* write revised value of FPCR */
 
 	/* write back the results */
 	extu	r2, r12, 5<0>
