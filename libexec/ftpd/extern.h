@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2002/06/13 06:40:28 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2002/06/13 06:58:57 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -108,9 +108,9 @@ int	yyparse(void);
 
 union sockunion {
 	struct sockinet {
-		u_char si_len;
-		u_char si_family;
-		u_short si_port;
+		u_int8_t si_len;
+		sa_family_t si_family;
+		in_port_t si_port;
 	} su_si;
 	struct sockaddr_in  su_sin;
 	struct sockaddr_in6 su_sin6;
