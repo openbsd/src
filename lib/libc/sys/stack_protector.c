@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.5 2003/07/18 23:05:13 david Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.6 2003/10/01 18:19:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.5 2003/07/18 23:05:13 david Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.6 2003/10/01 18:19:08 miod Exp $";
 #endif
 
 #include <sys/param.h>
@@ -37,6 +37,8 @@ static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.5 2003/07/18 23:05:13 dav
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+extern int __sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 long __guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __guard_setup(void) __attribute__ ((constructor));
@@ -56,7 +58,7 @@ __guard_setup(void)
 
 	len = 4;
 	for (i = 0; i < sizeof(__guard) / 4; i++) {
-		if (sysctl(mib, 2, (char *)&((int *)__guard)[i],
+		if (__sysctl(mib, 2, (char *)&((int *)__guard)[i],
 		    &len, NULL, 0) == -1)
 			break;
 	}
