@@ -8,13 +8,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.26 1997/05/31 08:55:06 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.27 1997/07/02 16:26:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Defining EXTRA_SANITY will enable extra checks which are related
- * to internal conditions and consistency in malloc.c. This has a
- * noticeable runtime performance hit, and generally will not do you
+ * Defining MALLOC_EXTRA_SANITY will enable extra checks which are
+ * related to internal conditions and consistency in malloc.c. This has
+ * a noticeable runtime performance hit, and generally will not do you
  * any good unless you fiddle with the internals of malloc or want
  * to catch random pointer corruption as early as possible.
  */
@@ -278,6 +278,7 @@ static int extend_pgdir(u_long index);
 static void *imalloc(size_t size);
 static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
+static void *malloc_bytes(size_t size);
 
 #ifdef MALLOC_STATS
 void
@@ -400,9 +401,9 @@ map_pages(pages)
     tail = result + (pages << malloc_pageshift);
 
     if (brk(tail)) {
-#ifdef EXTRA_SANITY
+#ifdef MALLOC_EXTRA_SANITY
 	wrterror("(ES): map_pages fails\n");
-#endif /* EXTRA_SANITY */
+#endif /* MALLOC_EXTRA_SANITY */
 	return 0;
     }
 
@@ -482,9 +483,9 @@ malloc_init ()
 
     INIT_MMAP();
 
-#ifdef EXTRA_SANITY
+#ifdef MALLOC_EXTRA_SANITY
     malloc_junk = 1;
-#endif /* EXTRA_SANITY */
+#endif /* MALLOC_EXTRA_SANITY */
 
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
@@ -604,7 +605,7 @@ malloc_pages(size)
     /* Look for free pages before asking for more */
     for(pf = free_list.next; pf; pf = pf->next) {
 
-#ifdef EXTRA_SANITY
+#ifdef MALLOC_EXTRA_SANITY
 	if (pf->size & malloc_pagemask)
 	    wrterror("(ES): junk length entry on free_list\n");
 	if (!pf->size)
@@ -619,7 +620,7 @@ malloc_pages(size)
 	    wrterror("(ES): non-free first page on free-list\n");
 	if (page_dir[ptr2index(pf->end)-1] != MALLOC_FREE)
 	    wrterror("(ES): non-free last page on free-list\n");
-#endif /* EXTRA_SANITY */
+#endif /* MALLOC_EXTRA_SANITY */
 
 	if (pf->size < size)
 	    continue;
@@ -639,10 +640,10 @@ malloc_pages(size)
 	break;
     }
 
-#ifdef EXTRA_SANITY
+#ifdef MALLOC_EXTRA_SANITY
     if (p && page_dir[ptr2index(p)] != MALLOC_FREE)
 	wrterror("(ES): allocated non-free page on free-list\n");
-#endif /* EXTRA_SANITY */
+#endif /* MALLOC_EXTRA_SANITY */
 
     size >>= malloc_pageshift;
 
@@ -977,7 +978,7 @@ free_pages(ptr, index, info)
 
     /* add to free-list */
     if (!px)
-	px = imalloc(sizeof *pt);	/* This cannot fail... */
+	px = imalloc(sizeof *px);	/* This cannot fail... */
     px->page = ptr;
     px->end =  tail;
     px->size = l;
@@ -1118,10 +1119,10 @@ free_bytes(ptr, index, info)
     /* Find & remove this page in the queue */
     while (*mp != info) {
 	mp = &((*mp)->next);
-#ifdef EXTRA_SANITY
+#ifdef MALLOC_EXTRA_SANITY
 	if (!*mp)
 		wrterror("(ES): Not on queue\n");
-#endif /* EXTRA_SANITY */
+#endif /* MALLOC_EXTRA_SANITY */
     }
     *mp = info->next;
 
