@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.3 1996/07/08 22:09:37 ccappuc Exp $
+.\"	$OpenBSD: disk.9,v 1.4 1997/07/09 18:28:15 kstailey Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -130,7 +130,8 @@ Increment the disk's
 If this counter goes from 0 to 1, set the timestamp corresponding to
 this transfer.
 .It Fn disk_unbusy
-Decrement a disk's busy counter.  If the count drops below zero, panic.
+Decrement a disk's busy counter.  If the count drops below zero, print
+a warning message.
 Get the current time, subtract it from the disk's timestamp, and add
 the difference to the disk's running total.  Set the disk's timestamp
 to the current time.  If the provided byte count is greater than 0,
