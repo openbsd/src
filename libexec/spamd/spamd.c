@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.4 2002/12/23 04:04:24 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.5 2002/12/26 01:12:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -440,14 +440,14 @@ main(int argc, char *argv[])
 		writers = 0;
 		for (i = 0; i < maxcon; i++) {
 			if (con[i].fd != -1 && con[i].r) {
-				if (con[i].r + MAXTIME > t) {
+				if (con[i].r + MAXTIME <= t) {
 					closecon(&con[i]);
 					continue;
 				}
 				FD_SET(con[i].fd, fdsr);
 			}
 			if (con[i].fd != -1 && con[i].w) {
-				if (con[i].w + MAXTIME > t) {
+				if (con[i].w + MAXTIME <= t) {
 					closecon(&con[i]);
 					continue;
 				}
