@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.c,v 1.3 1999/04/24 01:17:37 millert Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcpy.c,v 1.3 1999/04/24 01:17:37 millert Exp $";
+static char *rcsid = "$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,17 +48,21 @@ size_t strlcpy(dst, src, siz)
 	register const char *s = src;
 	register size_t n = siz;
 
-	if (n)
-		n--;		/* don't count the NUL */
-	while (*s) {
-		if (n) {
-			*d++ = *s;
-			n--;
-		}
-		s++;
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
 	}
-	if (siz)
-		*d = '\0';
 
-	return(s - src);	/* count does not include NUL */
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
