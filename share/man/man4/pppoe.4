@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.5 2004/11/30 12:42:21 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.6 2004/12/29 10:39:54 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,20 +78,6 @@ mode, selected by setting
 .Em link1 ,
 only establishes a connection when data is being sent to the interface.
 .Pp
-If the kernel is compiled with option
-.Dv PPPOE_SERVER ,
-there are two modes of connection, controlled via the
-.Em link0
-switch.
-The default mode,
-.Em link0
-not being set, is client mode.
-The
-.Dq PPPoE server
-mode, selected by setting
-.Em link0 ,
-is to wait for incoming PPPoE session.
-.Pp
 Before a
 .Nm
 interface is usable, it needs to be configured.
@@ -119,11 +105,11 @@ A typical
 file looks like this:
 .Bd -literal -offset indent
 pppoedev ne0
-! /sbin/ifconfig ne0 up
-! /usr/sbin/spppcontrol \e$if myauthproto=pap myauthname=testcaller \e
+!/sbin/ifconfig ne0 up
+!/usr/sbin/spppcontrol \e$if myauthproto=pap myauthname=testcaller \e
 	myauthkey=donttell
-! /sbin/ifconfig \e$if inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
-! /sbin/route add default 0.0.0.1
+!/sbin/ifconfig \e$if inet 0.0.0.0 0.0.0.1 netmask 0xffffffff
+!/sbin/route add default 0.0.0.1
 up
 .Ed
 .Pp
@@ -138,20 +124,18 @@ PPP negotiation will only agree to exactly this address.
 If one side is wildcarded,
 every address suggested by the peer will be accepted.
 .Pp
-To wildcard the local address set it to 0.0.0.0, to wildcard the remote
+To wildcard the local address set it to 0.0.0.0; to wildcard the remote
 address set it to 0.0.0.1.
-.Sh OPTIONS
+.Sh KERNEL OPTIONS
 A
 .Nm
-enabled kernel will not interfere with other
-.Nm PPPoE
-implementations running on the same machine.
+enabled kernel will not interfere with other PPPoE implementations
+running on the same machine.
 Under special circumstances
 (details below) this is not desirable, so the
 .Nm
-driver can be told to kill all unknown
-.Nm PPPoE
-sessions received by the Ethernet interface used for a configured
+driver can be told to kill all unknown PPPoE sessions
+received by the Ethernet interface used for a configured
 .Nm
 interface.
 To do this,
@@ -159,8 +143,7 @@ add the following to your kernel config file:
 .Pp
 .Dl option PPPOE_TERM_UNKNOWN_SESSIONS
 .Pp
-Note that this will break all userland
-.Nm PPPoE
+Note that this will break all userland PPPoE
 implementations using the same Ethernet interface!
 .Pp
 This option is only useful if you have a static IP address assigned and
@@ -174,8 +157,84 @@ driver with this option set will send a PADT packet
 (request to terminate the session).
 The peer will immediately disconnect
 the orphaned session and allow a new one to be established.
+.Pp
+If the kernel is compiled with option
+.Dv PPPOE_SERVER ,
+there are two modes of connection, controlled via the
+.Em link0
+switch.
+The default mode,
+.Em link0
+not being set, is client mode.
+The
+.Dq PPPoE server
+mode, selected by setting
+.Em link0 ,
+is to wait for incoming PPPoE sessions.
+.Sh MTU/MSS ISSUES
+Problems can arise on machines with private IPs connecting to the Internet
+via a machine running both
+Network Address Translation (NAT)
+and
+.Nm .
+Standard Ethernet uses a
+Maximum Transmission Unit (MTU)
+of 1500 bytes,
+whereas PPPoE mechanisms need a further 8 bytes of overhead.
+This leaves a maximum MTU of 1492.
+.Nm
+sets the MTU on its interface to 1492 as a matter of course.
+However,
+machines connecting on a private LAN will still have their MTUs set to 1500,
+causing conflict.
+.Pp
+Userland
+.Xr pppoe 8
+users do not have to worry about this issue, since
+.Xr ppp 8
+itself has an option,
+.Dq mssfixup ,
+which is enabled by default and takes care of this.
+Kernel
+.Nm
+users have to rely on other methods:
+.Bl -bullet
+.It
+Using a packet filter,
+the
+Maximum Segment Size (MSS)
+can be set (clamped) to the required value.
+The following rule in
+.Xr pf.conf 5
+would set the MSS to 1440:
+.Pp
+.Dl scrub out on pppoe0 max-mss 1440
+.Pp
+Although in theory the maximum MSS over a PPPoE interface
+is 1452 bytes,
+1440 appears to be a safer bet.
+Note that setting the MSS this way can have undesirable effects,
+such as reducing TCP/IP throughput,
+and interfering with the OS detection features of
+.Xr pf 4 .
+.It
+Setting the MTU on all interfaces being NAT'ed to 1492,
+instead of the Ethernet default, 1500.
+This can be done using
+.Xr ifconfig 8 .
+The following would set the MTU to 1492 on interface bge0:
+.Pp
+.Dl # ifconfig bge0 mtu 1492
+.Pp
+Unfortunately not all interfaces support setting the MTU at this time.
+.El
+.Pp
+See
+.Xr pf.conf 5
+for more information on MTU, MSS, and NAT.
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
+.Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr ppp 8 ,
 .Xr pppoe 8 ,
@@ -188,7 +247,7 @@ the orphaned session and allow a new one to be established.
 .Sh HISTORY
 The
 .Nm
-device appeared in
+device first appeared in
 .Ox 3.7 .
 .Sh BUGS
 This implementation is client side only.
