@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.11 1997/06/22 23:57:23 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.12 1997/09/29 19:18:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.11 1997/06/22 23:57:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.12 1997/09/29 19:18:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -387,14 +387,14 @@ pw_edit(notsetuid, filename)
 void
 pw_prompt()
 {
-	int c;
+	int first, c;
 
 	(void)printf("re-edit the password file? [y]: ");
 	(void)fflush(stdout);
-	c = getchar();
-	if (c != EOF && c != '\n')
-		while (getchar() != '\n');
-	if (c == 'n')
+	first = c = getchar();
+	while (c != '\n' && c != EOF)
+		c = getchar();
+	if (first == 'n')
 		pw_error(NULL, 0, 0);
 }
 
