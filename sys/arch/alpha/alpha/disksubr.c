@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.19 1998/02/24 04:22:40 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.20 1998/03/01 16:39:59 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -62,13 +62,15 @@
 #define DISKLABEL_ALPHA
 #elif (defined(i386) || defined(arc))) && !defined(DISKLABEL_I386)
 #define DISKLABEL_I386
-#elif defined(amiga)) && !defined(DISKLABEL_AMIGA)
+#elif defined(amiga) && !defined(DISKLABEL_AMIGA)
 #define DISKLABEL_AMIGA
+#elif defined(sparc) && !defined(DISKLABEL_SUN)
+#define DISKLABEL_SUN
 #endif
 
 #define	b_cylin	b_resid
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_SUN) || defined(DISKLABEL_ALL)
 void	swapdisklabel __P((struct disklabel *d));
 char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
     int, int, struct disklabel *));
@@ -81,9 +83,15 @@ char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
 char   *readamigalabel __P((struct buf *, void (*) __P((struct buf *)),
     struct disklabel *, struct cpu_disklabel *));
 #endif
+#if defined(DISKLABEL_SUN) || defined(DISKLABEL_ALL)
+char	*disklabel_sun_to_bsd __P((char *, struct disklabel *));
+int	disklabel_bsd_to_sun __P((struct disklabel *, char *));
+static __inline u_int32_t sun_extended_sum __P((struct sun_disklabel *));
+#endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
 
+/* When/if this file gets MI, dk_establish should be moved to an MD file */
 void
 dk_establish(dk, dev)
 	struct disk *dk;
@@ -91,7 +99,7 @@ dk_establish(dk, dev)
 {
 }
 
-#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
+#if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_SUN) || defined(DISKLABEL_ALL)
 
 /*
  * Byteswap all the fields that might be swapped.
@@ -278,6 +286,14 @@ readdisklabel(dev, strat, lp, osdep)
 #endif
 			break;
 
+		case DLT_SUN:
+#if defined(DISKLABEL_SUN) || defined(DISKLABEL_ALL)
+			/* XXX We want to grok native Sun labels too */
+			msg = readbsdlabel(bp, strat, 0, SUN_LABELSECTOR,
+			    SUN_LABELOFFSET, BIG_ENDIAN, lp);
+#endif
+			break;
+
 		default:
 			panic("unrecognized disklabel tag %d", *tp);
 		}
@@ -336,7 +352,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp)
 	cyl = I386_LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
 	        daddr_t part_blkno = DOSBBSECTOR;
-		unsigned long extoff = 0;
+		u_int32_t extoff = 0;
 		int wander = 1, n = 0, loop = 0;
 
 		/*
@@ -558,8 +574,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
@@ -766,3 +782,255 @@ bad:
 done:
 	return (0);
 }
+
+#if defined(DISKLABEL_SUN) || defined(DISKLABEL_ALL)
+/************************************************************************
+ *
+ * The rest of this was taken from arch/sparc/scsi/sun_disklabel.c
+ * and then substantially rewritten by Gordon W. Ross
+ *
+ ************************************************************************/
+
+/* What partition types to assume for Sun disklabels: */
+static u_int8_t
+sun_fstypes[16] = {
+	FS_BSDFFS,	/* a */
+	FS_SWAP,	/* b */
+	FS_UNUSED,	/* c - whole disk */
+	FS_BSDFFS,	/* d */
+	FS_BSDFFS,	/* e */
+	FS_BSDFFS,	/* f */
+	FS_BSDFFS,	/* g */
+	FS_BSDFFS,	/* h */
+	FS_BSDFFS,	/* i */
+	FS_BSDFFS,	/* j */
+	FS_BSDFFS,	/* k */
+	FS_BSDFFS,	/* l */
+	FS_BSDFFS,	/* m */
+	FS_BSDFFS,	/* n */
+	FS_BSDFFS,	/* o */
+	FS_BSDFFS	/* p */
+};
+
+/*
+ * Given a struct sun_disklabel, assume it has an extended partition
+ * table and compute the correct value for sl_xpsum.
+ */
+static __inline u_int32_t
+sun_extended_sum(sl)
+	struct sun_disklabel *sl;
+{
+	u_int32_t lsum;
+	u_int32_t *xp;
+	u_int32_t *ep;
+
+	xp = (u_int32_t *) &sl->sl_xpmag;
+	ep = (u_int32_t *) &sl->sl_xxx1[0];
+
+	lsum = 0;
+	for (; xp < ep; xp++)
+		lsum += *xp;
+	return (lsum);
+}
+
+/*
+ * Given a SunOS disk label, set lp to a BSD disk label.
+ * Returns NULL on success, else an error string.
+ *
+ * The BSD label is cleared out before this is called.
+ */
+char *
+disklabel_sun_to_bsd(cp, lp)
+	char *cp;
+	struct disklabel *lp;
+{
+	struct sun_disklabel *sl;
+	struct partition *npp;
+	struct sun_dkpart *spp;
+	int i, secpercyl;
+	u_int16_t cksum, *sp1, *sp2;
+
+	sl = (struct sun_disklabel *)cp;
+
+	/* Verify the XOR check. */
+	sp1 = (u_int16_t *)sl;
+	sp2 = (u_int16_t *)(sl + 1);
+	cksum = 0;
+	while (sp1 < sp2)
+		cksum ^= *sp1++;
+	if (cksum != 0)
+		return("SunOS disk label, bad checksum");
+
+	/* Format conversion. */
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	bcopy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
+
+	lp->d_secsize = 512;
+	lp->d_nsectors   = sl->sl_nsectors;
+	lp->d_ntracks    = sl->sl_ntracks;
+	lp->d_ncylinders = sl->sl_ncylinders;
+
+	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
+	lp->d_secpercyl  = secpercyl;
+	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
+
+	lp->d_sparespercyl = sl->sl_sparespercyl;
+	lp->d_acylinders   = sl->sl_acylinders;
+	lp->d_rpm          = sl->sl_rpm;
+	lp->d_interleave   = sl->sl_interleave;
+
+	lp->d_npartitions = MAXPARTITIONS;
+	/* These are as defined in <ufs/ffs/fs.h> */
+	lp->d_bbsize = 8192;	/* XXX */
+	lp->d_sbsize = 8192;	/* XXX */
+
+	for (i = 0; i < 8; i++) {
+		spp = &sl->sl_part[i];
+		npp = &lp->d_partitions[i];
+		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
+		npp->p_size = spp->sdkp_nsectors;
+		if (npp->p_size == 0) {
+			npp->p_fstype = FS_UNUSED;
+		} else {
+			npp->p_fstype = sun_fstypes[i];
+			if (npp->p_fstype == FS_BSDFFS) {
+				/*
+				 * The sun label does not store the FFS fields,
+				 * so just set them with default values here.
+				 */
+				npp->p_fsize = 1024;
+				npp->p_frag = 8;
+				npp->p_cpg = 16;
+			}
+		}
+	}
+
+	/* Clear "extended" partition info, tentatively */
+	for (i = 0; i < SUNXPART; i++) {
+		npp = &lp->d_partitions[i+8];
+		npp->p_offset = 0;
+		npp->p_size = 0;
+		npp->p_fstype = FS_UNUSED;
+	}
+
+	/* Check to see if there's an "extended" partition table */
+	if (sl->sl_xpmag == SL_XPMAG &&
+	    sun_extended_sum(sl) == sl->sl_xpsum) {	/* ...yes! */
+		/*
+		 * There is.  Copy over the "extended" partitions.
+		 * This code parallels the loop for partitions a-h.
+		 */
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			npp->p_offset = spp->sdkp_cyloffset * secpercyl;
+			npp->p_size = spp->sdkp_nsectors;
+			if (npp->p_size == 0) {
+				npp->p_fstype = FS_UNUSED;
+				continue;
+			}
+			npp->p_fstype = sun_fstypes[i+8];
+			if (npp->p_fstype == FS_BSDFFS) {
+				npp->p_fsize = 1024;
+				npp->p_frag = 8;
+				npp->p_cpg = 16;
+			}
+		}
+	}
+
+	lp->d_checksum = 0;
+	lp->d_checksum = dkcksum(lp);
+	return (NULL);
+}
+
+/*
+ * Given a BSD disk label, update the Sun disklabel
+ * pointed to by cp with the new info.  Note that the
+ * Sun disklabel may have other info we need to keep.
+ * Returns zero or error code.
+ */
+int
+disklabel_bsd_to_sun(lp, cp)
+	struct disklabel *lp;
+	char *cp;
+{
+	struct sun_disklabel *sl;
+	struct partition *npp;
+	struct sun_dkpart *spp;
+	int i, secpercyl;
+	u_int16_t cksum, *sp1, *sp2;
+
+	if (lp->d_secsize != 512)
+		return (EINVAL);
+
+	sl = (struct sun_disklabel *)cp;
+
+	/* Format conversion. */
+	bcopy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
+	sl->sl_rpm = lp->d_rpm;
+	sl->sl_pcylinders   = lp->d_ncylinders + lp->d_acylinders; /* XXX */
+	sl->sl_sparespercyl = lp->d_sparespercyl;
+	sl->sl_interleave   = lp->d_interleave;
+	sl->sl_ncylinders   = lp->d_ncylinders;
+	sl->sl_acylinders   = lp->d_acylinders;
+	sl->sl_ntracks      = lp->d_ntracks;
+	sl->sl_nsectors     = lp->d_nsectors;
+
+	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
+	for (i = 0; i < 8; i++) {
+		spp = &sl->sl_part[i];
+		npp = &lp->d_partitions[i];
+
+		if (npp->p_offset % secpercyl)
+			return (EINVAL);
+		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
+		spp->sdkp_nsectors = npp->p_size;
+	}
+	sl->sl_magic = SUN_DKMAGIC;
+
+	/*
+	 * The reason we store the extended table stuff only conditionally
+	 * is so that a label that doesn't need it will have NULs there, like
+	 * a "traditional" Sun label.  Since Suns seem to ignore everything
+	 * between sl_text and sl_rpm, this probably doesn't matter, but it
+	 * certainly doesn't hurt anything and it's easy to do.
+	 */
+	for (i = 0; i < SUNXPART; i++) {
+		if (lp->d_partitions[i+8].p_offset ||
+		    lp->d_partitions[i+8].p_size)
+			break;
+	}
+	/* We do need to load the extended table? */
+	if (i < SUNXPART) {
+		sl->sl_xpmag = SL_XPMAG;
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			if (npp->p_offset % secpercyl)
+				return (EINVAL);
+			sl->sl_xpart[i].sdkp_cyloffset =
+			    npp->p_offset / secpercyl;
+			sl->sl_xpart[i].sdkp_nsectors = npp->p_size;
+		}
+		sl->sl_xpsum = sun_extended_sum(sl);
+	} else {
+		sl->sl_xpmag = 0;
+		for (i = 0; i < SUNXPART; i++) {
+			sl->sl_xpart[i].sdkp_cyloffset = 0;
+			sl->sl_xpart[i].sdkp_nsectors = 0;
+		}
+		sl->sl_xpsum = 0;
+	}
+
+	/* Correct the XOR check. */
+	sp1 = (u_int16_t *)sl;
+	sp2 = (u_int16_t *)(sl + 1);
+	sl->sl_cksum = cksum = 0;
+	while (sp1 < sp2)
+		cksum ^= *sp1++;
+	sl->sl_cksum = cksum;
+
+	return (0);
+}
+#endif
