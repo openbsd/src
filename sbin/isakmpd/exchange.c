@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.13 1999/04/02 01:08:25 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.73 1999/04/02 00:39:57 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.14 1999/04/05 20:58:13 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.75 1999/04/05 18:28:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -279,10 +279,8 @@ exchange_run (struct message *msg)
 	       * peer later.
 	       * XXX Think about this some more wrt the last message in
 	       * phase 2 messages, does this not apply there too?
-	       * MSG_NO_RETRANS and MSG_KEEP seems to go hand in hand btw..
-	       * Unify?
 	       */
-	      msg->flags |= MSG_NO_RETRANS | MSG_KEEP;
+	      msg->flags |= MSG_NO_RETRANS;
 	      if (exchange->phase == 1 && msg->isakmp_sa)
 		{
 		  if (msg->isakmp_sa->last_sent_in_setup)
@@ -292,6 +290,7 @@ exchange_run (struct message *msg)
 		      message_free (msg->isakmp_sa->last_sent_in_setup);
 		    }
 		  msg->isakmp_sa->last_sent_in_setup = msg;
+		  msg->flags |= MSG_KEEP;
 		  exchange_reference (msg->exchange);
 		}
 
@@ -549,7 +548,10 @@ exchange_create (int phase, int initiator, int doi, int type)
    */
   exchange = calloc (1, sizeof *exchange);
   if (!exchange)
-    return 0;
+    {
+      log_error ("exchange_create: calloc (1, %d) failed", sizeof *exchange);
+      return 0;
+    }
   exchange_reference (exchange);
   exchange->phase = phase;
   exchange->step = 0;
@@ -569,6 +571,8 @@ exchange_create (int phase, int initiator, int doi, int type)
       exchange->data = calloc (1, exchange->doi->exchange_size);
       if (!exchange->data)
 	{
+	  log_error ("exchange_create: calloc (1, %d) failed",
+		     exchange->doi->exchange_size);
 	  exchange_free (exchange);
 	  return 0;
 	}
@@ -592,20 +596,20 @@ exchange_create (int phase, int initiator, int doi, int type)
 
 struct exchange_finalization_node
 {
-  void (*first) (void *);
+  void (*first) (void *, int);
   void *first_arg;
-  void (*second) (void *);
+  void (*second) (void *, int);
   void *second_arg;
 };
 
 /* Run the finalization functions of ARG.  */
 static void
-exchange_run_finalizations (void *arg)
+exchange_run_finalizations (void *arg, int fail)
 {
   struct exchange_finalization_node *node = arg;
 
-  node->first (node->first_arg);
-  node->second (node->second_arg);
+  node->first (node->first_arg, fail);
+  node->second (node->second_arg, fail);
   free (node);
 }
 
@@ -615,7 +619,7 @@ exchange_run_finalizations (void *arg)
  */
 static void
 exchange_add_finalization (struct exchange *exchange,
-			   void (*finalize) (void *), void *arg)
+			   void (*finalize) (void *, int), void *arg)
 {
   struct exchange_finalization_node *node;
 
@@ -648,7 +652,7 @@ exchange_add_finalization (struct exchange *exchange,
 /* Establish a phase 1 exchange.  */
 void
 exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
-		       char *name, void *args, void (*finalize) (void *),
+		       char *name, void *args, void (*finalize) (void *, int),
 		       void *arg)
 {
   struct exchange *exchange;
@@ -775,7 +779,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 /* Establish a phase 2 exchange.  XXX With just one SA for now.  */
 void
 exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
-		       void *args, void (*finalize) (void *), void *arg)
+		       void *args, void (*finalize) (void *, int), void *arg)
 {
   struct exchange *exchange;
   struct message *msg;
@@ -1066,6 +1070,11 @@ exchange_release (struct exchange *exchange)
   if (exchange->name)
     free (exchange->name);
   exchange_free_aca_list (exchange);
+
+  /* Tell potential finalize routine we never got there.  */
+  if (exchange->finalize)
+    exchange->finalize (exchange->finalize_arg, 1);
+
   free (exchange);
 }
 
@@ -1082,7 +1091,6 @@ exchange_free_aux (struct exchange *exchange)
   if (exchange->last_sent)
     message_free (exchange->last_sent);
   LIST_REMOVE (exchange, link);
-
   exchange_release (exchange);
 }
 
@@ -1151,9 +1159,12 @@ exchange_finalize (struct message *msg)
 	{
 	  attrs = conf_get_list (exchange->name, "Flags");
 	  if (attrs)
-	    for (attr = TAILQ_FIRST (&attrs->fields); attr;
-		 attr = TAILQ_NEXT (attr, link))
-	      sa->flags |= sa_flag (attr->field);
+	    {
+	      for (attr = TAILQ_FIRST (&attrs->fields); attr;
+		   attr = TAILQ_NEXT (attr, link))
+		sa->flags |= sa_flag (attr->field);
+	      conf_free_list (attrs);
+	    }
 	}
 
       sa->exch_type = exchange->type;
@@ -1170,7 +1181,8 @@ exchange_finalize (struct message *msg)
     }
   exchange->doi->finalize_exchange (msg);
   if (exchange->finalize)
-    exchange->finalize (exchange->finalize_arg);
+    exchange->finalize (exchange->finalize_arg, 0);
+  exchange->finalize = 0;
 
   /* No need for this anymore.  */
   exchange_free (exchange);
@@ -1191,7 +1203,10 @@ exchange_nonce (struct exchange *exchange, int peer, size_t nonce_sz,
   *nonce_len = nonce_sz;
   *nonce = malloc (nonce_sz);
   if (!*nonce)
-    return -1;
+    {
+      log_error ("exchange_nonce: malloc (%d) failed", nonce_sz);
+      return -1;
+    }
   memcpy (*nonce, buf, nonce_sz);
   snprintf (header, 32, "exchange_nonce: NONCE_%c", initiator ? 'i' : 'r');
   log_debug_buf (LOG_MISC, 80, header, *nonce, nonce_sz);
@@ -1207,7 +1222,11 @@ exchange_gen_nonce (struct message *msg, size_t nonce_sz)
 
   buf = malloc (ISAKMP_NONCE_SZ + nonce_sz);
   if (!buf)
-    return -1;
+    {
+      log_error ("exchange_gen_nonce: malloc (%d) failed",
+		 ISAKMP_NONCE_SZ + nonce_sz);
+      return -1;
+    }
   getrandom (buf + ISAKMP_NONCE_DATA_OFF, nonce_sz);
   if (message_add_payload (msg, ISAKMP_PAYLOAD_NONCE, buf,
 			   ISAKMP_NONCE_SZ + nonce_sz, 1))
@@ -1277,8 +1296,7 @@ exchange_free_aca_list (struct exchange *exchange)
     }
 }
 
-/* Obtain Certificates from Acceptable Certification Authority */
-
+/* Obtain certificates from acceptable certification authority.  */
 int
 exchange_add_certs (struct message *msg)
 {
@@ -1298,8 +1316,12 @@ exchange_add_certs (struct message *msg)
 	  return -1;
 	}
       cert = realloc (cert, ISAKMP_CERT_SZ + certlen);
-      if (cert == NULL)
+      if (!cert)
+	{
+	  log_error ("exchange_add_certs: realloc (%p, %d) failed", cert,
+		     ISAKMP_CERT_SZ + certlen);
 	  return -1;
+	}
       memmove (cert + ISAKMP_CERT_DATA_OFF, cert, certlen);
       SET_ISAKMP_CERT_ENCODING (cert, aca->id);
       if (message_add_payload (msg, ISAKMP_PAYLOAD_CERT, cert,
@@ -1317,30 +1339,32 @@ exchange_add_certs (struct message *msg)
 }
 
 static void
-exchange_establish_finalize (void *arg)
+exchange_establish_finalize (void *arg, int fail)
 {
   char *name = arg;
   char *peer;
   struct sa *isakmp_sa;
 
-  peer = conf_get_str (name, "ISAKMP-peer");
-  if (!peer)
+  if (!fail)
     {
-      log_print ("exchange_establish_finalize: "
-		 "no ISAKMP-peer given for \"%s\"",
-		 name);
-      return;
-    }
+      peer = conf_get_str (name, "ISAKMP-peer");
+      if (!peer)
+	{
+	  log_print ("exchange_establish_finalize: "
+		     "no ISAKMP-peer given for \"%s\"", name);
+	  return;
+	}
 
-  isakmp_sa = sa_lookup_by_name (peer, 1);
-  if (!isakmp_sa)
-    {
-      log_print ("exchange_establish_finalize: did not find \"%s\" ISAKMP SA",
-		 peer);
-      return;
-    }
+      isakmp_sa = sa_lookup_by_name (peer, 1);
+      if (!isakmp_sa)
+	{
+	  log_print ("exchange_establish_finalize: "
+		     "did not find \"%s\" ISAKMP SA", peer);
+	  return;
+	}
 
-  exchange_establish_p2 (isakmp_sa, 0, name, 0, 0, 0);
+      exchange_establish_p2 (isakmp_sa, 0, name, 0, 0, 0);
+    }
   free (name);
 }
 
@@ -1349,7 +1373,7 @@ exchange_establish_finalize (void *arg)
  * taking ARG as an argument to be run after the exchange is ready.
  */
 void
-exchange_establish (char *name, void (*finalize) (void *), void *arg)
+exchange_establish (char *name, void (*finalize) (void *, int), void *arg)
 {
   int phase;
   char *trpt;
