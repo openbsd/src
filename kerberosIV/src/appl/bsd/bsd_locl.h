@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: bsd_locl.h,v 1.111.2.1 2000/06/23 02:34:20 assar Exp $ */
+/* $KTH: bsd_locl.h,v 1.115 2001/09/17 01:58:45 assar Exp $ */
 
 #define LOGALL
 #define KERBEROS
@@ -258,6 +258,10 @@ struct aud_rec;
 
 #include <err.h>
 
+/* defined by aix's sys/stream.h and again by arpa/nameser.h */
+
+#undef NOERROR
+
 #include <roken.h>
 
 #ifdef SOCKS
@@ -267,7 +271,11 @@ struct tm *localtime(const time_t *);
 struct hostent  *gethostbyname(const char *);
 #endif
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <kafs.h>
 
@@ -327,9 +335,9 @@ int login_access(struct passwd *user, char *from);
 void fatal(int f, const char *msg, int syserr);
 
 extern int LEFT_JUSTIFIED;
-int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
+int bsd_des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
-int des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
+int bsd_des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
 	des_cblock *iv);
 
 /* used in des_read and des_write */
@@ -389,6 +397,11 @@ __attribute__ ((format (printf, 1, 2)))
 
 char *clean_ttyname (char *tty);
 char *make_id (char *tty);
+
+void
+shrink_hostname (const char *hostname,
+		 char *dst, size_t dst_sz);
+
 #ifdef HAVE_UTMP_H
 void prepare_utmp (struct utmp *utmp, char *tty, char *username,
 		   char *hostname);

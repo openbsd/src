@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: otp.h,v 1.17 1999/12/02 16:58:44 joda Exp $ */
+/* $KTH: otp.h,v 1.19 2000/07/12 00:26:43 assar Exp $ */
 
 #ifndef _OTP_H
 #define _OTP_H
@@ -60,8 +60,8 @@ typedef struct {
   OtpAlgID id;
   char *name;
   int hashsize;
-  int (*hash)(char *s, size_t len, unsigned char *res);
-  int (*init)(OtpKey key, char *pwd, char *seed);
+  int (*hash)(const char *s, size_t len, unsigned char *res);
+  int (*init)(OtpKey key, const char *pwd, const char *seed);
   int (*next)(OtpKey key);
 } OtpAlgorithm;
 
@@ -82,13 +82,13 @@ void otp_print_hex (OtpKey key, char *str, size_t sz);
 void otp_print_stddict_extended (OtpKey key, char *str, size_t sz);
 void otp_print_hex_extended (OtpKey key, char *str, size_t sz);
 unsigned otp_checksum (OtpKey key);
-int otp_parse_hex (OtpKey key, char *);
-int otp_parse_stddict (OtpKey key, char *);
-int otp_parse_altdict (OtpKey key, char *, OtpAlgorithm *);
-int otp_parse (OtpKey key, char *, OtpAlgorithm *);
+int otp_parse_hex (OtpKey key, const char *);
+int otp_parse_stddict (OtpKey key, const char *);
+int otp_parse_altdict (OtpKey key, const char *, OtpAlgorithm *);
+int otp_parse (OtpKey key, const char *, OtpAlgorithm *);
 int otp_challenge (OtpContext *ctx, char *user, char *str, size_t len);
-int otp_verify_user (OtpContext *ctx, char *passwd);
-int otp_verify_user_1 (OtpContext *ctx, char *passwd);
+int otp_verify_user (OtpContext *ctx, const char *passwd);
+int otp_verify_user_1 (OtpContext *ctx, const char *passwd);
 char *otp_error (OtpContext *ctx);
 
 void *otp_db_open (void);

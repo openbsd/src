@@ -176,25 +176,25 @@ crypt_md5(pw, salt)
 	/* get the length of the true salt */
 	sl = ep - sp;
 
-	MD5Init(&ctx);
+	MD5_Init(&ctx);
 
 	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx,pw,strlen(pw));
+	MD5_Update(&ctx,pw,strlen(pw));
 
 	/* Then our magic string */
-	MD5Update(&ctx,magic,strlen(magic));
+	MD5_Update(&ctx,magic,strlen(magic));
 
 	/* Then the raw salt */
-	MD5Update(&ctx,sp,sl);
+	MD5_Update(&ctx,sp,sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
-	MD5Init(&ctx1);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Update(&ctx1,sp,sl);
-	MD5Update(&ctx1,pw,strlen(pw));
-	MD5Final(final,&ctx1);
+	MD5_Init(&ctx1);
+	MD5_Update(&ctx1,pw,strlen(pw));
+	MD5_Update(&ctx1,sp,sl);
+	MD5_Update(&ctx1,pw,strlen(pw));
+	MD5_Final(final,&ctx1);
 	for(pl = strlen(pw); pl > 0; pl -= 16)
-		MD5Update(&ctx,final,pl>16 ? 16 : pl);
+		MD5_Update(&ctx,final,pl>16 ? 16 : pl);
 
 	/* Don't leave anything around in vm they could use. */
 	memset(final,0,sizeof final);
@@ -202,16 +202,16 @@ crypt_md5(pw, salt)
 	/* Then something really weird... */
 	for (j=0,i = strlen(pw); i ; i >>= 1)
 		if(i&1)
-		    MD5Update(&ctx, final+j, 1);
+		    MD5_Update(&ctx, final+j, 1);
 		else
-		    MD5Update(&ctx, pw+j, 1);
+		    MD5_Update(&ctx, pw+j, 1);
 
 	/* Now make the output string */
 	strcpy(passwd, magic); /* sizeof(passwd) > sizeof(magic) */
 	strncat(passwd, sp, sl); /* ok, since sl <= 8 */
 	strcat(passwd, "$");
 
-	MD5Final(final,&ctx);
+	MD5_Final(final,&ctx);
 
 	/*
 	 * and now, just to make sure things don't run too fast
@@ -219,23 +219,23 @@ crypt_md5(pw, salt)
 	 * need 30 seconds to build a 1000 entry dictionary...
 	 */
 	for(i=0;i<1000;i++) {
-		MD5Init(&ctx1);
+		MD5_Init(&ctx1);
 		if(i & 1)
-			MD5Update(&ctx1,pw,strlen(pw));
+			MD5_Update(&ctx1,pw,strlen(pw));
 		else
-			MD5Update(&ctx1,final,16);
+			MD5_Update(&ctx1,final,16);
 
 		if(i % 3)
-			MD5Update(&ctx1,sp,sl);
+			MD5_Update(&ctx1,sp,sl);
 
 		if(i % 7)
-			MD5Update(&ctx1,pw,strlen(pw));
+			MD5_Update(&ctx1,pw,strlen(pw));
 
 		if(i & 1)
-			MD5Update(&ctx1,final,16);
+			MD5_Update(&ctx1,final,16);
 		else
-			MD5Update(&ctx1,pw,strlen(pw));
-		MD5Final(final,&ctx1);
+			MD5_Update(&ctx1,pw,strlen(pw));
+		MD5_Final(final,&ctx1);
 	}
 
 	p = passwd + strlen(passwd);

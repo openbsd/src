@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: md4.h,v 1.6 1999/12/02 16:58:38 joda Exp $ */
+/* $KTH: md4.h,v 1.8 2001/01/29 02:08:56 assar Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -47,12 +47,13 @@
 #endif
 
 struct md4 {
-  unsigned int offset;
-  unsigned int sz;
+  unsigned int sz[2];
   u_int32_t counter[4];
   unsigned char save[64];
 };
 
-void md4_init (struct md4 *m);
-void md4_update (struct md4 *m, const void *p, size_t len);
-void md4_finito (struct md4 *m, void *res);
+typedef struct md4 MD4_CTX;
+
+void MD4_Init (struct md4 *m);
+void MD4_Update (struct md4 *m, const void *p, size_t len);
+void MD4_Final (void *res, struct md4 *m);

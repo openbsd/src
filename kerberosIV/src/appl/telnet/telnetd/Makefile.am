@@ -1,8 +1,8 @@
-# $KTH: Makefile.am,v 1.12 1999/04/09 18:24:38 assar Exp $
+# $KTH: Makefile.am,v 1.18 2001/08/28 11:21:17 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
 
 libexec_PROGRAMS = telnetd
 
@@ -11,11 +11,16 @@ CHECK_LOCAL =
 telnetd_SOURCES  = telnetd.c state.c termstat.c slc.c sys_term.c \
 		   utility.c global.c authenc.c defs.h ext.h telnetd.h
 
+man_MANS = telnetd.8
+
 LDADD = \
 	../libtelnet/libtelnet.a \
 	$(LIB_krb5) \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_tgetent) \
 	$(LIB_logwtmp) \
+	$(LIB_logout) \
+	$(LIB_openpty) \
+	$(LIB_kdfs) \
 	$(LIB_roken)

@@ -54,7 +54,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: encrypt.c,v 1.21 1998/07/09 23:16:25 assar Exp $");
+RCSID("$KTH: encrypt.c,v 1.22.8.1 2002/02/06 03:39:13 assar Exp $");
 
 #if	defined(ENCRYPTION)
 
@@ -89,7 +89,7 @@ static int autoencrypt = 0;
 static int autodecrypt = 0;
 static int havesessionkey = 0;
 static int Server = 0;
-static char *Name = "Noname";
+static const char *Name = "Noname";
 
 #define	typemask(x)	((x) > 0 ? 1 << ((x)-1) : 0)
 
@@ -175,7 +175,7 @@ static struct key_info {
 };
 
 void
-encrypt_init(char *name, int server)
+encrypt_init(const char *name, int server)
 {
     Encryptions *ep = encryptions;
 
@@ -948,6 +948,13 @@ encrypt_delay(void)
        (I_SUPPORT_DECRYPT & remote_supports_encrypt) == 0)
 	return 0;
     if(!(encrypt_output && decrypt_input))
+	return 1;
+    return 0;
+}
+
+int encrypt_is_encrypting()
+{
+    if (encrypt_output && decrypt_input)
 	return 1;
     return 0;
 }

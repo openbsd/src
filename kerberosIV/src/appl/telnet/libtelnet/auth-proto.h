@@ -53,7 +53,7 @@
  * or implied warranty.
  */
 
-/* $KTH: auth-proto.h,v 1.9 1998/06/09 19:24:40 joda Exp $ */
+/* $KTH: auth-proto.h,v 1.10 2000/01/18 03:08:55 assar Exp $ */
 
 #ifdef AUTHENTICATION
 Authenticator *findauthenticator (int, int);
@@ -62,7 +62,7 @@ int auth_wait (char *, size_t);
 void auth_disable_name (char *);
 void auth_finished (Authenticator *, int);
 void auth_gen_printsub (unsigned char *, int, unsigned char *, int);
-void auth_init (char *, int);
+void auth_init (const char *, int);
 void auth_is (unsigned char *, int);
 void auth_name(unsigned char*, int);
 void auth_reply (unsigned char *, int);

@@ -1,9 +1,9 @@
-# $KTH: Makefile.am,v 1.20 1999/11/25 08:00:43 assar Exp $
+# $KTH: Makefile.am,v 1.26 2001/08/04 03:10:23 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libdes.la
-libdes_la_LDFLAGS = -version-info 0:2:0
+libdes_la_LDFLAGS = -version-info 3:1:0
 
 include_HEADERS = des.h md4.h md5.h sha.h rc4.h
 
@@ -58,6 +58,8 @@ libdes_la_SOURCES =	\
 
 EXTRA_libdes_la_SOURCES = dllmain.c passwd_dialog.aps passwd_dialog.clw \
 	passwd_dialog.rc passwd_dialog.res passwd_dlg.c passwd_dlg.h resource.h
+
+man_MANS = des.1 des_crypt.3
 
 ## this is an awful lot of junk, but it's just as well to include everything
 EXTRA_DIST =		\

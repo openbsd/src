@@ -1,16 +1,220 @@
-2001-02-18
+2002-02-01
 
-	* configure.in (VERSION): bump to 1.0.7
+	* Release 1.1.1
 
-2001-01-03
 
-	* Makefile.in (travelkit): make it work with install's that copy
-	the whole path
-	(such as Ultrix install)
+	* configure.in: check for tgetent before testing for readline
 
-2000-12-25
+2002-01-14
 
-	* configure.in (VERSION): bump to 1.0.5
+	* README: fix typo; from Rich Morin
+
+2001-12-05
+
+	* kadmin/admin_server.c, kadmin/kadm_locl.h,
+	kadmin/kadm_ser_wrap.c, kadmin/kadmind.8: add -p to enable kadmind
+	to use a different port
+
+2001-11-01
+
+	* appl/movemail/movemail.c (mbx_delimit_begin): add a LF here so
+	that the last line before the next From_ is empty.  noted by
+	<marc@mit.edu>
+
+2001-09-17
+
+	* Release 1.1
+
+
+	* lib/krb/*: adjust to openssl's des prototypes
+
+2001-09-13
+
+	* lib/krb/Makefile.am (libkrb_la_LDFLAGS): set version to 2:0:1
+	(new interfaces added)
+	* lib/kdb/Makefile.am (libkdb_la_LDFLAGS): set version to 1:10:0
+	(newer than any from 1.0-branch)
+	* lib/kadm/Makefile.am (libkadm_la_LDFLAGS): set version to 1:10:0
+	(newer than any from 1.0-branch)
+
+	* admin/kdb_destroy.c, lib/kdb/krb_dbm.c: test for the ndbm
+	database really being a .db one and use it when moving/removing
+	database files
+
+	* tools/krb4-config.in: add
+
+2001-09-10
+
+	* lib/kdb/Makefile.am: correct dependency on config.h,
+	roken_rename.h
+
+	* configure.in: add a prereq so it's clear this requires autoconf
+	2.52 use the macros for testing for compile_et and lib/auth
+
+2001-09-04
+
+	* appl/bsd/rcp.c (allocbuf): do not leak memory on failure and
+	zero re-used memory, from Markus Friedl <markus@openbsd.org>
+
+2001-09-03
+
+	* admin/ext_srvtab.c (main): handle atexit or on_exit
+
+2001-08-28
+
+	* lib/krb/get_krbrlm.c (krb_get_lrealm_f): only set result if not
+	an error
+
+	* appl/bsd/su.c (kerberos): make sure krb_get_lrealm returns
+	success
+
+2001-08-26
+
+	* appl/afsutil/aklog.c: call krb_get_default_principal correctly
+
+	* lib/krb/Makefile.am: always link libkrb against libdes (or
+	libcrypto) add random_block.c
+
+	* *: use socklen_t
+
+	* appl/bsd/Makefile.am (rlogind_LDADD): remember logwtmp
+
+	* lib/krb/krb.h: made it into a generated file
+
+	* server/kerberos.c: adopt to new KRB_CRYPTO.  remove variables
+	that are just set and never used
+
+	* configure.in: adopt to new rk_DB and new KRB_CRYPTO also
+	generate lib/krb/krb.h
+
+2001-07-19
+
+	* appl/bsd/rshd.c (error): use vsnprintf correctly
+
+2001-06-19
+
+	* appl/bsd/rcp.c (run_err): call va_start - va_end for every use
+	of va_list.  from markus@openbsd.org
+
+2001-06-04
+
+	* update copyright messages on Wietse Venema's code.
+
+2001-05-04
+
+	* lib/krb/Makefile.am (libkrb_la_LIBADD): add a dependency on
+	libdes on solaris
+	* configure.in (arc4random, srandomdev): test for SOLARIS_LIBDES:
+	set on solaris to add a dependency to libkrb
+
+2001-05-03
+
+	* lib/krb/lsb_addr_comp.c (lsb_time): have the nat_in_use override
+	firewall_address.  from Ake Sandgren <ake@cs.umu.se>
+
+2001-04-25
+
+	* kadmin/kadmin.c: remove non-used code for not converting the key
+	to network byte order
+
+2001-03-13
+
+	* lib/kadm/kadm_cli_wrap.c: initialize pointers to NULL and sizes
+	to 0 to avoid freeing invalid memory
+
+2001-02-26
+
+	* configure.in: no DCE here
+
+2001-02-08
+
+	* appl/bsd/utmp_login.c, appl/bsd/utmpx_login.c: shrink hostname
+	to be written into utmp in the same way as telnetd
+
+2000-12-29
+
+	* lib/krb/krb-protos.h (krb_get_our_ip_for_realm): add prototype
+	* lib/krb/logging.c (log_tty, log_with_timestamp_and_nl): add
+	printf attributes, from sommerfeld@netbsd.org
+
+2000-12-15
+
+	* lib/krb/verify_user.c (krb_verify_user_srvtab_exact): iterate
+	over local relams when looking for a srvtab key to verify against
+
+2000-12-13
+
+	* include/Makefile.am: rename protos.H -> protos.hin
+
+2000-12-07
+
+	* configure.in (streamspty): try quoting glob pattern properly
+	* lib/krb/getfile.c (get_file): do not support reading KRBCONFDIR
+	for uid == 0
+
+	* lib/krb/extra.c: remove (obsolete) support for reading from
+	environment variables
+
+	* appl/bsd/su.c (kerberos): loop over all the local realms to find
+	(the) one where the local rcmd exists
+
+2000-12-04
+
+	* lib/krb/kdc_reply.c (kdc_reply_cipher): check the len for being
+	sane.  noted by Jouko Pynnönen <jouko@solutions.fi>
+
+2000-11-30
+
+	* appl/bsd/su.c: add support for multiple local realms
+
+	* lib/krb/krb-protos.h (krb_get_our_ip_for_realm): add prototype
+	* lib/krb/tf_util.c (tf_store_addr): remove unused variables
+	* lib/krb/send_to_kdc.c (send_to_kdc): remove unused variable
+	* lib/krb/krb-protos.h (krb_get_credentials): add prototype
+	* lib/krb/mk_req.c (krb_get_credentials): removed unused variable
+
+
+	* configure.in: use rk_CHECK_MAN
+
+	* configure.in: remove more roken duplicates
+
+2000-11-29
+
+	* configure.in: don't test for glob and syslog here
+
+	* configure.in: add roken/Makefile here, since it can't live in
+	rk_ROKEN
+
+	* admin/kdb_util.c: make it possible to change to a new master
+	password without knowing the old
+
+2000-11-15
+
+	* configure.in (LIB_des): set. fix users.
+
+2000-11-05
+
+	* configure.in: switch to automake
+
+	* acconfig.h: remove some automagically defined things
+
+2000-10-23
+
+	* lib/krb/str2key.c: cast to des_cblock*
+
+	* lib/krb/roken_rename.h: add more functions
+
+	* lib/krb/rd_priv.c: cast to des_cblock*
+
+	* lib/krb/mk_priv.c: cast to des_cblock*
+
+	* lib/krb/krb.h: fix constness of krb4_version
+
+	* lib/krb/encrypt_ktext.c: cast to des_cblock*
+
+	* lib/krb/decomp_ticket.c: cast to des_cblock*
+
+	* appl/bsd/rcp.c: HAVE_ST_BLKSIZE -> HAVE_STRUCT_STAT_ST_BLKSIZE
 
 2000-10-19
 
@@ -64,7 +268,8 @@
 
 2000-08-16
 
-	* configure.in (getmsg): re-do so it possibly works on redhat 7.0
+	* configure.in (VERSION): up to 1.0.3pre
+	(getmsg): re-do so it possibly works on redhat 7.0
 
 2000-08-09
 
@@ -74,6 +279,14 @@
 	* appl/bsd/rshd.c (doit): do not call warnx with a variable as
 	format string
 
+2000-08-04
+
+	* kadmin/kadmin.c: add support for reading key in hex for ckey
+
+2000-07-31
+
+	* configure.in: check for uint*_t
+	
 2000-07-30
 
 	* doc/install.texi: say something about siacfg
@@ -96,6 +309,7 @@
 
 	* lib/krb/rw.c (krb_get_nir): add explicit lengths to the
 	parameters.  before this the function `knew'.  change callers.
+	* appl/afsutil/aklog.c (__attribute__): remove, now in roken
 
 2000-05-14
 
@@ -118,6 +332,10 @@
 	* config.guess, config.sub: update to current version from
 	:pserver:anoncvs@subversions.gnu.org:/home/cvs
 
+	* lib/krb/mk_req.c (krb_get_credentials): fill in `cred->pname'
+	and `cred->pinst' from the ticket file.  do not try again if the
+	cred is expired - this produced a loop
+
 	* appl/bsd/rlogind.c (rlogind_logout, logwtmp): make sure to
 	always call time and ctime with `time_t's.  there were some types
 	(like in lastlog) that we believed to always be time_t.  this has
@@ -129,6 +347,11 @@
 
 	* configure.in: add solaris2.8
 
+2000-03-16
+
+	* lib/krb/get_default_principal.c (krb_get_default_principal): use
+	tkt_string instead of getenv
+
 2000-03-15
 
 	* configure.in: on all versions of aix, add `-bnolibpath' to the
@@ -136,16 +359,94 @@
 	to find shared libraries and looking in ../../foo is a bad idea.
 	bug report from Niklas Edmundsson <nikke@ing.umu.se>
 
-2000-03-09
+2000-03-04
 
-	*  Release 1.0.1
+	* man/Makefile.in: add pfrom.  move cat-page of push to correct
+	directory
 
+2000-02-28
+
+	* appl/bsd/rshd.c (doit): send in home directory to kafs so that
+	we can find out the cell where it's located and read the
+	.TheseCells file
+
+2000-01-09
+
+	* configure.in (APPL_KIP_DIR): remove setting.  always build kip
+	(sig_atomic_t): check for
+	* appl/Makefile.in (SUBDIRS): always build kip
+
+	* appl/kip/common.c (kip_exec): change to return error
+	* appl/kip/Makefile.in (kip-join-network, kipd-control): add
+	* appl/kip/kipd.c: rewrite.
+	(main): use getarg
+	(doit): run scripts when interface going up and down.
+	* appl/kip/kip.h: make it work on all systems add new prototypes
+	* appl/kip/kip.c: rewrite.
+	(main): use getarg
+	(doit): run scripts when interface going up and down.
+	* appl/kip/common.c (copy_packets): allow termination.  handle
+ 	EINTR correctly.  handle error messages.
+	(tunnel_open): return if name
+	(kip_exec): new function for runnning scripts
+	(fatal): generic failing function
+	based on patches from Love <lha@s3.kth.se>
+
+2000-01-01
+
+	* configure.in: check for IPv6 so that we can find libraries that
+	contain getnameinfo et al (which we actually use)
+
+1999-12-27
+
+	* appl/movemail/movemail.c: changes from Lars Engebretsen
+ 	<enge@nada.kth.se> for adding `-p'
+	(preserve) and `-r' (reverse).  also removed strerror.
+
+1999-12-06
+
+	* lib/krb/krb_ip_realm.c (krb_add_our_ip_for_realm): no pointers
+ 	to s_addr (fails on Crays where it's a bit-field)
+
+	* kuser/klist.c: most casts and consts
+	(display_tktfile): only display NAT address with `-l'
+
+	* configure.in: conditionalize aix magic to only be performed on
+	aix 4.1
+
+	* appl/bsd/rlogind.c (doit): type correctness
+	* appl/bsd/rshd.c (doit): type correctness
+	
+1999-12-05
+
+	* configure.in: remove /lib/pse.exp stuff for AIX.  It seems to
+ 	give problems on modern version of AIX 4 and we don't have any
+ 	older AIX 4 boxes to test on any longer.
+	(netdb.h): ultrix test
+
+	* include/netdb.x: new file
+	* include/Makefile.in (netdb.h): add
+
+	* appl/bsd/rshd.c: use getnameinfo_verified instead of plain
+	getnameinfo
+	* appl/bsd/rlogind.c: use getnameinfo_verified instead of plain
+	getnameinfo
+	* appl/bsd/rlogind.c: replace inaddr2str with getnameinfo
+	* appl/bsd/rshd.c: replace inaddr2str with getnameinfo
+
+1999-12-03
+
+	* configure.in (AC_BROKEN): add freeaddrinfo, gai_strerror,
+	getaddrinfo, getnameinfo
+	(socklen_t): check for
+
+1999-12-02
+
+	* lib/krb/tf_util.c (tf_get_addr): support realm == NULL (any)
+	
 1999-11-29
 
-	*  Release 1.0
-
 	* lib/krb/krb-protos.h (tf_get_cred_addr): add prototype
-
 	* lib/krb/tf_util.c (tf_get_cred_addr): new function for fetching
 	the NAT addresses stored in the ticket file. From
 	<thn@stacken.kth.se>

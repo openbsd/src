@@ -33,7 +33,7 @@
  *	@(#)ring.h	8.1 (Berkeley) 6/6/93
  */
 
-/* $KTH: ring.h,v 1.3 1997/05/04 04:01:09 assar Exp $ */
+/* $KTH: ring.h,v 1.4 2000/02/06 05:15:47 assar Exp $ */
 
 /*
  * This defines a structure for a ring buffer.
@@ -88,7 +88,7 @@ extern int
 
 #if	defined(ENCRYPTION)
 extern void
-	ring_encrypt (Ring *ring, void (*func)()),
+	ring_encrypt (Ring *ring, void (*func)(unsigned char *, int)),
 	ring_clearto (Ring *ring);
 #endif
 

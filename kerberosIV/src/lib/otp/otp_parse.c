@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: otp_parse.c,v 1.19 1999/12/02 16:58:44 joda Exp $");
+RCSID("$KTH: otp_parse.c,v 1.20 2000/07/01 13:58:38 assar Exp $");
 #endif
 
 #include "otp_locl.h"
@@ -56,11 +56,11 @@ cmp(const void *a, const void *b)
 }
 
 static int
-get_stdword (char *s, void *v)
+get_stdword (const char *s, void *v)
 {
   struct e e, *r;
 
-  e.s = s;
+  e.s = (char *)s;
   e.n = -1;
   r = (struct e *) bsearch (&e, inv_std_dict,
 			    sizeof(inv_std_dict)/sizeof(*inv_std_dict),
@@ -85,7 +85,7 @@ compress (OtpKey key, unsigned wn[])
 }
 
 static int
-get_altword (char *s, void *a)
+get_altword (const char *s, void *a)
 {
   OtpAlgorithm *alg = (OtpAlgorithm *)a;
   int ret;
@@ -102,8 +102,8 @@ get_altword (char *s, void *a)
 
 static int
 parse_words(unsigned wn[],
-	    char *str,
-	    int (*convert)(char *, void *),
+	    const char *str,
+	    int (*convert)(const char *, void *),
 	    void *arg)
 {
   unsigned char *w, *wend, c;
@@ -130,8 +130,9 @@ parse_words(unsigned wn[],
 }
 
 static int
-otp_parse_internal (OtpKey key, char *str, OtpAlgorithm *alg,
-		    int (*convert)(char *, void *))
+otp_parse_internal (OtpKey key, const char *str,
+		    OtpAlgorithm *alg,
+		    int (*convert)(const char *, void *))
 {
   unsigned wn[6];
 
@@ -144,19 +145,19 @@ otp_parse_internal (OtpKey key, char *str, OtpAlgorithm *alg,
 }
 
 int
-otp_parse_stddict (OtpKey key, char *str)
+otp_parse_stddict (OtpKey key, const char *str)
 {
   return otp_parse_internal (key, str, NULL, get_stdword);
 }
 
 int
-otp_parse_altdict (OtpKey key, char *str, OtpAlgorithm *alg)
+otp_parse_altdict (OtpKey key, const char *str, OtpAlgorithm *alg)
 {
   return otp_parse_internal (key, str, alg, get_altword);
 }
 
 int
-otp_parse_hex (OtpKey key, char *s)
+otp_parse_hex (OtpKey key, const char *s)
 {
   char buf[17], *b;
   int is[8];
@@ -183,7 +184,7 @@ otp_parse_hex (OtpKey key, char *s)
 }
 
 int
-otp_parse (OtpKey key, char *s, OtpAlgorithm *alg)
+otp_parse (OtpKey key, const char *s, OtpAlgorithm *alg)
 {
   int ret;
   int dohex = 1;

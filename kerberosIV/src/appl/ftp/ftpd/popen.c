@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: popen.c,v 1.19.2.3 2001/03/26 11:42:36 assar Exp $");
+RCSID("$KTH: popen.c,v 1.25 2001/06/19 10:00:25 assar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,10 +61,9 @@ RCSID("$KTH: popen.c,v 1.19.2.3 2001/03/26 11:42:36 assar Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <roken.h>
 #include "extern.h"
 
-#include <roken.h>
 
 /* 
  * Special version of popen which avoids call to shell.  This ensures
@@ -140,7 +139,13 @@ ftpd_popen(char *program, char *type, int do_stderr, int no_glob)
 	for (gargc = argc = 1; argv[argc] && gargc < MAXGLOBS - 1; argc++) {
 		glob_t gl;
 		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE
-		    | GLOB_LIMIT;
+		    |
+#ifdef GLOB_MAXPATH
+	GLOB_MAXPATH
+#else
+	GLOB_LIMIT
+#endif
+		    ;
 
 		memset(&gl, 0, sizeof(gl));
 		if (no_glob || glob(argv[argc], flags, NULL, &gl))

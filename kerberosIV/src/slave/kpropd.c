@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
 
 #include "kprop.h"
 
-RCSID("$KTH: kpropd.c,v 2.32 1999/12/02 16:58:56 joda Exp $");
+RCSID("$KTH: kpropd.c,v 2.35 2001/09/17 04:56:46 assar Exp $");
 
 #ifndef SBINDIR
 #define SBINDIR "/usr/athena/sbin"
@@ -107,6 +107,7 @@ int
 kprop(int s)
 {
     char buf[128];
+    socklen_t sock_len;
     int n;
     KTEXT_ST ticket;
     AUTH_DAT ad;
@@ -116,14 +117,14 @@ kprop(int s)
     int kerr;
     int lock;
     
-    n = sizeof(master);
-    if(getpeername(s, (struct sockaddr*)&master, &n) < 0){
+    sock_len = sizeof(master);
+    if(getpeername(s, (struct sockaddr*)&master, &sock_len) < 0){
 	klog(L_KRB_PERR, "getpeername: %s", strerror(errno));
 	return 1;
     }
     
-    n = sizeof(slave);
-    if(getsockname(s, (struct sockaddr*)&slave, &n) < 0){
+    sock_len = sizeof(slave);
+    if(getsockname(s, (struct sockaddr*)&slave, &sock_len) < 0){
 	klog(L_KRB_PERR, "getsockname: %s", strerror(errno));
 	return 1;
     }
@@ -212,7 +213,7 @@ static int
 doit_interactive(void)
 {
     struct sockaddr_in sa;
-    int salen;
+    socklen_t salen;
     int s, s2;
     int ret;
 
@@ -269,6 +270,7 @@ main(int argc, char **argv)
     int opt;
     int interactive = 0;
 
+    set_progname(argv[0]);
     krb_get_lrealm(realm, 1);
     
     while((opt = getopt(argc, argv, ":d:l:mp:P:r:s:i")) >= 0){

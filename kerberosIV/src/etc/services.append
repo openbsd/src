@@ -1,12 +1,12 @@
 #
-# $KTH: services.append,v 1.13 1999/07/06 13:08:02 assar Exp $
+# $KTH: services.append,v 1.14 2001/09/13 00:46:37 assar Exp $
 #
 # Kerberos services
 #
 kerberos-sec	88/udp				# Kerberos secondary port UDP
 kerberos-sec	88/tcp				# Kerberos secondary port TCP
 kpasswd		464/udp				# password changing
-kpasswd		464/tdp				# password changing
+kpasswd		464/tcp				# password changing
 klogin		543/tcp				# Kerberos authenticated rlogin
 kshell		544/tcp		krcmd		# and remote shell
 ekshell		545/tcp		      # Kerberos encrypted remote shell -kfall

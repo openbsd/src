@@ -1,4 +1,4 @@
-# $KTH: Makefile.am,v 1.2 2000/11/05 17:16:24 joda Exp $
+# $KTH: Makefile.am,v 1.3 2001/09/17 01:06:32 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -19,4 +19,4 @@ SUBDIRS	=					\
 	push					\
 	sample					\
 	telnet					\
-	xnlock					\
+	xnlock

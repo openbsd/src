@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: decomp_ticket.c,v 1.20 1999/12/02 16:58:41 joda Exp $");
+RCSID("$KTH: decomp_ticket.c,v 1.23 2001/09/16 22:41:58 assar Exp $");
 
 /*
  * This routine takes a ticket and pointers to the variables that
@@ -70,7 +70,7 @@ decomp_ticket(KTEXT tkt,	/* The ticket to be decoded */
     
     int little_endian;
 
-    des_pcbc_encrypt((des_cblock *)tkt->dat, (des_cblock *)tkt->dat,
+    des_pcbc_encrypt(tkt->dat, tkt->dat,
 		     tkt->length, schedule, key, DES_DECRYPT);
 
     tkt->mbz = 0;

@@ -1,4 +1,4 @@
-# $KTH: Makefile.am,v 1.9 1999/10/10 04:45:18 assar Exp $
+# $KTH: Makefile.am,v 1.12 2000/11/15 22:51:08 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -6,22 +6,21 @@ INCLUDES += $(INCLUDE_krb4) $(X_CFLAGS)
 
 WFLAGS += $(WFLAGS_NOIMPLICITINT)
 
-X_PROGS_BIN_PROGS     = kx
-X_PROGS_BIN_SCRPTS    = rxterm rxtelnet tenletxr
-X_PROGS_LIBEXEC_PROGS = kxd
+if HAVE_X
+
+bin_PROGRAMS = kx
+bin_SCRIPTS = rxterm rxtelnet tenletxr
+libexec_PROGRAMS = kxd
+
+else
+
+bin_PROGRAMS = 
+bin_SCRIPTS = 
+libexec_PROGRAMS = 
+
+endif
 
 CLEANFILES = rxterm rxtelnet tenletxr
-
-MAKE_X_PROGS_BIN_PROGS     = @MAKE_X_PROGS_BIN_PROGS@
-MAKE_X_PROGS_BIN_SCRPTS    = @MAKE_X_PROGS_BIN_SCRPTS@
-MAKE_X_PROGS_LIBEXEC_PROGS = @MAKE_X_PROGS_LIBEXEC_PROGS@
-
-bin_PROGRAMS     = $(MAKE_X_PROGS_BIN_PROGS)
-bin_SCRIPTS      = $(MAKE_X_PROGS_BIN_SCRPTS)
-libexec_PROGRAMS = $(MAKE_X_PROGS_LIBEXEC_PROGS)
-
-EXTRA_PROGRAMS         = $(X_PROGS_BIN_PROGS) $(X_PROGS_LIBEXEC_PROGS)
-EXTRA_SCRIPTS          = $(X_PROGS_BIN_SCRPTS)
 
 if NEED_WRITEAUTH
 XauWriteAuth_c = writeauth.c
@@ -51,6 +50,8 @@ EXTRA_kxd_SOURCES = writeauth.c
 
 EXTRA_DIST = rxterm.in rxtelnet.in tenletxr.in
 
+man_MANS = kx.1 rxtelnet.1 rxterm.1 tenletxr.1 kxd.8
+
 rxterm: rxterm.in
 	sed -e "s!%bindir%!$(bindir)!" $(srcdir)/rxterm.in > $@
 	chmod +x $@
@@ -67,6 +68,6 @@ LDADD = \
 	$(LIB_kafs)				\
 	$(LIB_krb5) \
 	$(LIB_krb4)				\
-	$(top_builddir)/lib/des/libdes.la	\
+	$(LIB_des)	\
 	$(LIB_roken)				\
 	$(X_LIBS) $(LIB_XauReadAuth) $(X_PRE_LIBS) $(X_EXTRA_LIBS)

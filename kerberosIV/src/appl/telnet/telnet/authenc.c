@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$KTH: authenc.c,v 1.10 1999/09/16 20:41:35 assar Exp $");
+RCSID("$KTH: authenc.c,v 1.11.4.1 2002/02/06 03:40:13 assar Exp $");
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
 int
@@ -62,11 +62,18 @@ net_encrypt(void)
 int
 telnet_spin(void)
 {
-	return(-1);
+    extern int scheduler_lockout_tty;
+
+    scheduler_lockout_tty = 1;
+    Scheduler(0);
+    scheduler_lockout_tty = 0;
+    
+    return 0;
+
 }
 
 char *
-telnet_getenv(char *val)
+telnet_getenv(const char *val)
 {
 	return((char *)env_getvalue((unsigned char *)val));
 }

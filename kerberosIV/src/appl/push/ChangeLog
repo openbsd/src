@@ -1,3 +1,51 @@
+2001-09-04  Assar Westerlund  <assar@sics.se>
+
+	* push.c (doit): check return values from snprintf being negative
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* push.c (main): handle krb5_init_context failure consistently
+
+2000-12-26  Assar Westerlund  <assar@sics.se>
+
+	* push.c: support several headers, from <mattiasa@e.kth.se> use
+	estrdup, emalloc, erealloc
+
+2000-11-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* pfrom.1: work around bug in grog that makes it think it needs
+	mdoc.old
+
+	* push.8: work around bug in grog that makes it think it needs
+	mdoc.old
+
+2000-11-27  Johan Danielsson  <joda@pdc.kth.se>
+
+	* push.c: add space to usage
+
+2000-10-08  Assar Westerlund  <assar@sics.se>
+
+	* push.c (doit): check that fds are not too large to select on
+
+2000-03-04  Assar Westerlund  <assar@sics.se>
+
+	* add man-page for pfrom
+
+1999-12-28  Assar Westerlund  <assar@sics.se>
+
+	* push.c (main): call k_getportbyname with port number in
+ 	network-byte-order
+
+1999-12-14  Assar Westerlund  <assar@sics.se>
+
+	* push.c (do_connect): remove bogus local block variable
+
+1999-12-05  Assar Westerlund  <assar@sics.se>
+
+	* push.c (do_connect): use `getaddrinfo'
+	* push.c: add --count (print number of messages and bytes at
+	beginning)
+
 1999-11-13  Assar Westerlund  <assar@sics.se>
 
 	* push.c: make `-v' a arg_counter

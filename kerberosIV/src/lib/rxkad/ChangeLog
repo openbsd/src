@@ -1,3 +1,12 @@
+2000-03-07  Assar Westerlund  <assar@sics.se>
+
+	* rxk_clnt.c: from arla:
+	
+	(rxkad_NewClientSecurityObject): make sure bit 31 is not set in the
+	epoch.  this bit is used by rx to mean that we should only match
+	on connection-id and that means we never get any port number
+	updates when using NAT.  see rx.c:1.12
+
 Sun Nov 22 10:46:02 1998  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.in (WFLAGS): set

@@ -1,14 +1,15 @@
-# $KTH: Makefile.am,v 1.7 1999/04/09 18:23:51 assar Exp $
+# $KTH: Makefile.am,v 1.11 2001/08/28 08:31:21 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
+
+INCLUDES += $(INCLUDE_des)
 
 bin_PROGRAMS = otp otpprint
 bin_SUIDS = otp
 otp_SOURCES = otp.c otp_locl.h
 otpprint_SOURCES = otpprint.c otp_locl.h
 
+man_MANS = otp.1  otpprint.1
+
 LDADD = \
-	$(top_builddir)/lib/otp/libotp.la \
-	$(top_builddir)/lib/des/libdes.la \
-	$(LIB_roken) \
-	$(DBLIB)
+	$(top_builddir)/lib/otp/libotp.la

@@ -33,7 +33,7 @@
  *	@(#)ext.h	8.2 (Berkeley) 12/15/93
  */
 
-/* $KTH: ext.h,v 1.19 1999/09/05 19:15:21 assar Exp $ */
+/* $KTH: ext.h,v 1.23 2001/08/29 00:45:22 assar Exp $ */
 
 #ifndef __EXT_H__
 #define __EXT_H__
@@ -78,7 +78,7 @@ extern int	SYNCHing;		/* we are in TELNET SYNCH mode */
 int telnet_net_write (unsigned char *str, int len);
 void net_encrypt (void);
 int telnet_spin (void);
-char *telnet_getenv (char *val);
+char *telnet_getenv (const char *val);
 char *telnet_gets (char *prompt, char *result, int length, int echo);
 void get_slc_defaults (void);
 void telrcv (void);
@@ -116,15 +116,15 @@ void tty_tspeed (int val);
 void tty_rspeed (int val);
 void getptyslave (void);
 int cleanopen (char *line);
-void startslave (char *host, int autologin, char *autoname);
+void startslave (const char *host, const char *, int autologin, char *autoname);
 void init_env (void);
-void start_login (char *host, int autologin, char *name);
+void start_login (const char *host, int autologin, char *name);
 void cleanup (int sig);
 int main (int argc, char **argv);
 int getterminaltype (char *name, size_t);
 void _gettermname (void);
 int terminaltypeok (char *s);
-void my_telnet (int f, int p, char*, int, char*);
+void my_telnet (int f, int p, const char*, const char *, int, char*);
 void interrupt (void);
 void sendbrk (void);
 void sendsusp (void);
@@ -141,6 +141,7 @@ void netflush (void);
 void writenet (unsigned char *ptr, int len);
 void fatal (int f, char *msg);
 void fatalperror (int f, const char *msg);
+void fatalperror_errno (int f, const char *msg, int error);
 void edithost (char *pat, char *host);
 void putstr (char *s);
 void putchr (int cc);
@@ -180,6 +181,11 @@ extern struct clocks_t clocks;
 
 extern int log_unauth;
 extern int no_warn;
+
+extern int def_tspeed, def_rspeed;
+#ifdef	TIOCSWINSZ
+extern int def_row, def_col;
+#endif
 
 #ifdef STREAMSPTY
 extern int really_stream;

@@ -1,3 +1,24 @@
+2001-09-13  Assar Westerlund  <assar@sics.se>
+
+	* editline.c: rename STATUS -> el_STATUS to avoid conflict with
+	STATUS in arpa/nameser.h
+
+2000-11-15  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am: make libeditline and libel_compat into libtool
+	libraries but always make them static
+
+2000-03-01  Assar Westerlund  <assar@sics.se>
+
+	* edit_compat.c (readline): be more liberal in what we accept from
+	el_gets.  if count == 0 -> interpret it as EOF.  also copy the
+	string first and then cut of the newline, it's cleaner
+
+1999-12-23  Assar Westerlund  <assar@sics.se>
+
+	* editline.c (TTYinfo): add fallback if we fail to find "le" in
+ 	termcap.
+
 1999-08-06  Assar Westerlund  <assar@sics.se>
 
 	* editline.c (TTYinfo): copy backspace string to avoid referencing

@@ -1,3 +1,79 @@
+2001-10-27  Assar Westerlund  <assar@sics.se>
+
+	* pam/Makefile.am: actually build the pam module
+
+2001-09-13  Assar Westerlund  <assar@sics.se>
+
+	* sia/sia.c: move krb5_error_code inside a ifdef KRB5
+	* sia/sia_locl.h: move roken.h earlier to grab definition of
+	socklen_t
+
+2001-08-28  Johan Danielsson  <joda@pdc.kth.se>
+
+	* sia/krb5_matrix.conf: athena -> heimdal
+
+2001-07-17  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am: use make-rpath to sort rpath arguments
+
+2001-07-15  Assar Westerlund  <assar@sics.se>
+
+	* afskauthlib/Makefile.am: use LIB_des, so that we link with
+	libcrypto/libdes from krb4
+
+2001-07-12  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am: use $(CC) instead of ld for linking
+
+2001-07-06  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am: use LDFLAGS, and conditional libdes
+
+2001-03-06  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am: make sure of using -rpath and not -R when
+	calling ld
+
+2001-02-15  Assar Westerlund  <assar@sics.se>
+
+	* pam/pam.c (psyslog): do not log to console
+
+2001-01-29  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am (libsia_krb5.so): actually run ld in the case
+	shared library case
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* sia/sia.c (siad_ses_init): handle krb5_init_context failure
+	consistently
+	* afskauthlib/verify.c (verify_krb5): handle krb5_init_context
+	failure consistently
+
+2000-11-30  Johan Danielsson  <joda@pdc.kth.se>
+
+	* afskauthlib/Makefile.am: use libtool
+
+	* afskauthlib/Makefile.am: work with krb4 only
+
+2000-07-30  Johan Danielsson  <joda@pdc.kth.se>
+
+	* sia/Makefile.am: don't compress library, since 5.0 seems to have
+	a problem with this
+
+2000-07-02  Assar Westerlund  <assar@sics.se>
+
+	* afskauthlib/verify.c: fixes for pag setting
+
+1999-12-30  Assar Westerlund  <assar@sics.se>
+
+	* sia/Makefile.am: try to link with shared libraries if we don't
+ 	find any static ones
+
+1999-12-20  Johan Danielsson  <joda@pdc.kth.se>
+
+	* sia/sia.c: don't use string concatenation with TKT_ROOT
+
 1999-11-15  Assar Westerlund  <assar@sics.se>
 
 	* */lib/Makefile.in: set LIBNAME.  From Enrico Scholz
@@ -19,6 +95,10 @@
 
 	* afskauthlib/verify.c (verify_krb5): remove krb5_kuserok.  use
  	krb5_verify_user_lrealm
+
+1999-08-27  Johan Danielsson  <joda@pdc.kth.se>
+
+	* pam/Makefile.in: link with res_search/dn_expand libraries
 
 1999-08-11  Johan Danielsson  <joda@pdc.kth.se>
 

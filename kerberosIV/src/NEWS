@@ -1,3 +1,63 @@
+Changes in release 1.1.1:
+
+* telnet: abort if telnetd does not support encryption
+
+* handle non-existant strtok_r and strlcpy better in libkafs
+
+* do not create extra symlink when installing man pages
+
+* build pam module
+
+* add localtime_r to libroken
+
+* install sia module more correctly
+
+* avoid reading too far when sorting DNS srv records
+
+Changes in release 1.1:
+
+* ftpd: new functionality (-R, -a/-A), also using high ports
+
+* kx: support local TCP sockets
+
+* push: print several headers, add --count
+
+* telnetd: handle linux devfs case (only unix98 ptys)
+
+* handle openssl's libcrypto
+
+* do not use result from snprintf blindly
+
+* lib/kafs: support debian's arla package (/etc/arla)
+
+* handle different cases of database libraries better
+
+* now uses libtool/automake
+
+* update config.{guess,sub}
+
+* portability enhancements
+
+* bug fixes
+
+Changes in release 1.0.9:
+
+* fix buffer overrun in telnetd
+
+* fix -ldes building (now only happens on Solaris)
+
+* support /etc/openafs for looking for ThisCell, CellServDB
+
+* new argument `-b' for specifying telnet binary to rxtelnet/rxterm
+
+* fix endian bug in 'kadmin ckey'
+
+* fix globing problem on FreeBSD (ftpd)
+
+* man pages updates
+
+* update some copyright notices
+
 Changes in release 1.0.8:
 
 * add GLOB_LIMIT flag to glob and use in ftpd

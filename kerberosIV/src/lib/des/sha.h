@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: sha.h,v 1.5 1999/12/02 16:58:39 joda Exp $ */
+/* $KTH: sha.h,v 1.7 2001/01/29 02:08:57 assar Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -47,12 +47,13 @@
 #endif
 
 struct sha {
-  unsigned int offset;
-  unsigned int sz;
+  unsigned int sz[2];
   u_int32_t counter[5];
   unsigned char save[64];
 };
 
-void sha_init (struct sha *m);
-void sha_update (struct sha *m, const void *v, size_t len);
-void sha_finito (struct sha *m, void *res);
+typedef struct sha SHA_CTX;
+
+void SHA1_Init (struct sha *m);
+void SHA1_Update (struct sha *m, const void *v, size_t len);
+void SHA1_Final (void *res, struct sha *m);

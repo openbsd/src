@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: otp_locl.h,v 1.7 1999/12/02 16:58:32 joda Exp $ */
+/* $KTH: otp_locl.h,v 1.9 2001/08/22 20:30:21 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -52,5 +52,9 @@
 #endif
 #include <roken.h>
 #include <err.h>
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <otp.h>

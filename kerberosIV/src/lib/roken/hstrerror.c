@@ -33,25 +33,17 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hstrerror.c,v 1.22 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: hstrerror.c,v 1.24 2001/08/08 03:47:23 assar Exp $");
 #endif
 
 #ifndef HAVE_HSTRERROR
 
-#include "roken.h"
-
-#include <stdio.h>
-
-#ifdef HAVE_NETDB_H
 #if (defined(SunOS) && (SunOS >= 50))
 #define hstrerror broken_proto
 #endif
-#include <netdb.h>
+#include "roken.h"
+#if (defined(SunOS) && (SunOS >= 50))
 #undef hstrerror
-#endif
-
-#ifndef HAVE_H_ERRNO
-int h_errno = -17; /* Some magic number */
 #endif
 
 #if !(defined(HAVE_H_ERRLIST) && defined(HAVE_H_NERR))

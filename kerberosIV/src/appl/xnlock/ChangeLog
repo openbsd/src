@@ -1,3 +1,25 @@
+2001-06-24  Assar Westerlund  <assar@sics.se>
+
+	* xnlock.c (verify_krb5): remove unused variable
+
+2001-03-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xnlock.c: don't explicitly set the krb4 ticket file
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* xnlock.c (main): handle krb5_init_context failure consistently
+
+2000-07-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: use conditional for X
+
+2000-04-09  Assar Westerlund  <assar@sics.se>
+
+	* xnlock.c (verfiy_krb5): get the v4-realm from the v5-ticket and
+	not from the default one.
+	* xnlock.c (verify_krb5): add obtainting of v4 tickets.
+
 1999-11-17  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am: only build when we have X11.  From: Simon Josefsson

@@ -1,6 +1,6 @@
 /* -*- C -*- */
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -32,18 +32,35 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken.h.in,v 1.125.2.4 2000/03/12 20:32:51 assar Exp $ */
+/* $KTH: roken.h.in,v 1.161 2001/09/13 00:50:22 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <signal.h>
+
+#ifdef _AIX
+struct ether_addr;
+struct sockaddr_dl;
+#endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_BITYPES_H
+#include <sys/bitypes.h>
+#endif
+#ifdef HAVE_BIND_BITYPES_H
+#include <bind/bitypes.h>
+#endif
+#ifdef HAVE_NETINET_IN6_MACHTYPES_H
+#include <netinet/in6_machtypes.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -75,11 +92,14 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
-#endif
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -109,9 +129,6 @@
 #include <paths.h>
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifndef ROKEN_LIB_FUNCTION
 #if defined(__BORLANDC__)
@@ -124,6 +141,8 @@ extern "C" {
 #endif
 
 #include <roken-common.h>
+
+ROKEN_CPP_START
 
 #if !defined(HAVE_SETSID) && defined(HAVE__SETSID)
 #define setsid _setsid
@@ -194,6 +213,10 @@ size_t strnlen(const char*, size_t);
 
 #if !defined(HAVE_STRSEP) || defined(NEED_STRSEP_PROTO)
 char *strsep(char**, const char*);
+#endif
+
+#if !defined(HAVE_STRSEP_COPY) || defined(NEED_STRSEP_COPY_PROTO)
+ssize_t strsep_copy(const char**, const char*, char*, size_t);
 #endif
 
 #ifndef HAVE_STRCASECMP
@@ -340,6 +363,18 @@ int
 mkstemp(char *template);
 #endif
 
+#ifndef HAVE_PIDFILE
+void pidfile (const char*);
+#endif
+
+#ifndef HAVE_BSWAP32
+unsigned int bswap32(unsigned int);
+#endif
+
+#ifndef HAVE_BSWAP16
+unsigned short bswap16(unsigned short);
+#endif
+
 #ifndef HAVE_FLOCK
 #ifndef LOCK_SH
 #define LOCK_SH   1		/* Shared lock */
@@ -360,8 +395,6 @@ int flock(int fd, int operation);
 time_t tm2time (struct tm tm, int local);
 
 int unix_verify_user(char *user, char *password);
-
-void inaddr2str(struct in_addr addr, char *s, size_t len);
 
 void mini_inetd (int port);
 
@@ -456,8 +489,8 @@ typedef unsigned char roken_sa_family_t;
 #define _SS_PAD2SIZE   (_SS_MAXSIZE - (sizeof (roken_sa_family_t) + sizeof(unsigned char) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 
 struct sockaddr_storage {
-    unsigned char	__ss_len;
-    roken_sa_family_t	__ss_family;
+    unsigned char	ss_len;
+    roken_sa_family_t	ss_family;
     char		__ss_pad1[_SS_PAD1SIZE];
     unsigned long	__ss_align[_SS_PAD2SIZE / sizeof(unsigned long) + 1];
 };
@@ -470,7 +503,7 @@ typedef unsigned short roken_sa_family_t;
 #define _SS_PAD2SIZE   (_SS_MAXSIZE - (sizeof (roken_sa_family_t) + _SS_PAD1SIZE + _SS_ALIGNSIZE))
 
 struct sockaddr_storage {
-    roken_sa_family_t	__ss_family;
+    roken_sa_family_t	ss_family;
     char		__ss_pad1[_SS_PAD1SIZE];
     unsigned long	__ss_align[_SS_PAD2SIZE / sizeof(unsigned long) + 1];
 };
@@ -478,6 +511,77 @@ struct sockaddr_storage {
 #endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
 
 #endif /* HAVE_STRUCT_SOCKADDR_STORAGE */
+
+#ifndef HAVE_STRUCT_ADDRINFO
+struct addrinfo {
+    int    ai_flags;
+    int    ai_family;
+    int    ai_socktype;
+    int    ai_protocol;
+    size_t ai_addrlen;
+    char  *ai_canonname;
+    struct sockaddr *ai_addr;
+    struct addrinfo *ai_next;
+};
+#endif
+
+#ifndef HAVE_GETADDRINFO
+int
+getaddrinfo(const char *nodename,
+	    const char *servname,
+	    const struct addrinfo *hints,
+	    struct addrinfo **res);
+#endif
+
+#ifndef HAVE_GETNAMEINFO
+int getnameinfo(const struct sockaddr *sa, socklen_t salen,
+		char *host, size_t hostlen,
+		char *serv, size_t servlen,
+		int flags);
+#endif
+
+#ifndef HAVE_FREEADDRINFO
+void
+freeaddrinfo(struct addrinfo *ai);
+#endif
+
+#ifndef HAVE_GAI_STRERROR
+char *
+gai_strerror(int ecode);
+#endif
+
+int
+getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
+		     char *host, size_t hostlen,
+		     char *serv, size_t servlen,
+		     int flags);
+
+int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
+int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
+
+#ifndef HAVE_STRFTIME
+size_t
+strftime (char *buf, size_t maxsize, const char *format,
+	  const struct tm *tm);
+#endif
+
+#ifndef HAVE_STRPTIME
+char *
+strptime (const char *buf, const char *format, struct tm *timeptr);
+#endif
+
+#ifndef HAVE_EMALLOC
+void *emalloc (size_t);
+#endif
+#ifndef HAVE_ECALLOC
+void *ecalloc(size_t num, size_t sz);
+#endif
+#ifndef HAVE_EREALLOC
+void *erealloc (void *, size_t);
+#endif
+#ifndef HAVE_ESTRDUP
+char *estrdup (const char *);
+#endif
 
 /*
  * kludges and such
@@ -513,8 +617,21 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 #define roken_openlog(a,b,c) openlog((char *)a,b,c)
 #endif
 
-void set_progname(char *argv0);
-
-#ifdef __cplusplus
-}
+#ifdef GETSOCKNAME_PROTO_COMPATIBLE
+#define roken_getsockname(a,b,c) getsockname(a,b,c)
+#else
+#define roken_getsockname(a,b,c) getsockname(a, b, (void*)c)
 #endif
+
+#ifndef HAVE_SETPROGNAME
+void setprogname(const char *argv0);
+#endif
+
+#ifndef HAVE_GETPROGNAME
+const char *getprogname(void);
+#endif
+
+void set_progname(char *argv0);
+const char *get_progname(void);
+
+ROKEN_CPP_END

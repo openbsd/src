@@ -43,7 +43,7 @@
 %{
 
 #include "ftpd_locl.h"
-RCSID("$KTH: ftpcmd.y,v 1.56.2.2 2000/06/23 02:48:19 assar Exp $");
+RCSID("$KTH: ftpcmd.y,v 1.61 2001/08/05 06:39:29 assar Exp $");
 
 off_t	restart_point;
 
@@ -159,18 +159,21 @@ cmd
 			eprt ($3);
 			free ($3);
 		}
-	| PASV CRLF
+	| PASV CRLF check_login
 		{
+		    if($3)
 			pasv ();
 		}
-	| EPSV CRLF
+	| EPSV CRLF check_login
 		{
+		    if($3)
 			epsv (NULL);
 		}
-	| EPSV SP STRING CRLF
+	| EPSV SP STRING CRLF check_login
 		{
+		    if($5)
 			epsv ($3);
-			free ($3);
+		    free ($3);
 		}
 	| TYPE SP type_code CRLF
 		{
@@ -1235,9 +1238,9 @@ yylex(void)
 				cpos++;
 				return (SP);
 			}
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';
@@ -1250,9 +1253,9 @@ yylex(void)
 			goto dostr1;
 
 		case ARGS:
-			if (isdigit(cbuf[cpos])) {
+			if (isdigit((unsigned char)cbuf[cpos])) {
 				cp = &cbuf[cpos];
-				while (isdigit(cbuf[++cpos]))
+				while (isdigit((unsigned char)cbuf[++cpos]))
 					;
 				c = cbuf[cpos];
 				cbuf[cpos] = '\0';

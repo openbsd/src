@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: auth.c,v 1.22 1999/03/11 13:48:52 joda Exp $");
+RCSID("$KTH: auth.c,v 1.24.4.1 2002/02/06 03:37:35 assar Exp $");
 
 #if	defined(AUTHENTICATION)
 #include <stdio.h>
@@ -100,7 +100,9 @@ extern rsaencpwd_printsub();
 #endif
 
 int auth_debug_mode = 0;
-static 	char	*Name = "Noname";
+int auth_has_failed  = 0;
+int auth_enable_encrypt = 0;
+static 	const	char	*Name = "Noname";
 static	int	Server = 0;
 static	Authenticator	*authenticated = 0;
 static	int	authenticating = 0;
@@ -217,7 +219,7 @@ findauthenticator(int type, int way)
 }
 
 void
-auth_init(char *name, int server)
+auth_init(const char *name, int server)
 {
     Authenticator *ap = authenticators;
 
@@ -468,6 +470,7 @@ auth_send(unsigned char *data, int cnt)
     if (auth_debug_mode)
 	printf(">>>%s: Sent failure message\r\n", Name);
     auth_finished(0, AUTH_REJECT);
+    auth_has_failed = 1;
 #ifdef KANNAN
     /*
      *  We requested strong authentication, however no mechanisms worked.
@@ -646,7 +649,7 @@ auth_gen_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
     buf[buflen-2] = '*';
     buflen -= 2;
     for (; cnt > 0; cnt--, data++) {
-	snprintf(tbuf, sizeof(tbuf), " %d", *data);
+	snprintf((char*)tbuf, sizeof(tbuf), " %d", *data);
 	for (cp = tbuf; *cp && buflen > 0; --buflen)
 	    *buf++ = *cp++;
 	if (buflen <= 0)

@@ -38,7 +38,7 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-RCSID("$KTH: main.c,v 1.30 1999/11/13 06:30:11 assar Exp $");
+RCSID("$KTH: main.c,v 1.33.2.2 2002/02/07 16:12:56 assar Exp $");
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */
@@ -103,7 +103,11 @@ static void
 krb5_init(void)
 {
     krb5_context context;
-    krb5_init_context(&context);
+    krb5_error_code ret;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return;
 
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
     if (krb5_config_get_bool (context, NULL,
@@ -122,12 +126,18 @@ krb5_init(void)
         "libdefaults", "encrypt", NULL)) {
           encrypt_auto(1);
           decrypt_auto(1); 
+	  wantencryption = 1;
           EncryptVerbose(1);
         }
 #endif
 
     krb5_free_context(context);
 }
+#endif
+
+#if defined(AUTHENTICATION) && defined(KRB4)
+extern char *dest_realm, dst_realm_buf[];
+extern int dst_realm_sz;
 #endif
 
 int
@@ -176,7 +186,7 @@ main(int argc, char **argv)
 		    /* sometimes we don't want a mangled display */
 		    char *p;
 		    if((p = getenv("DISPLAY")))
-			env_define("DISPLAY", (unsigned char*)p);
+			env_define((unsigned char*)"DISPLAY", (unsigned char*)p);
 		    break;
 		}
 		case 'E':
@@ -260,8 +270,6 @@ main(int argc, char **argv)
 		case 'k':
 #if defined(AUTHENTICATION) && defined(KRB4)
 		    {
-			extern char *dest_realm, dst_realm_buf[];
-			extern int dst_realm_sz;
 			dest_realm = dst_realm_buf;
 			strlcpy(dest_realm, optarg, dst_realm_sz);
 		    }
@@ -288,6 +296,7 @@ main(int argc, char **argv)
 #ifdef	ENCRYPTION
 			encrypt_auto(1);
 			decrypt_auto(1);
+			wantencryption = 1;
 			EncryptVerbose(1);
 #else
 			fprintf(stderr,
@@ -320,6 +329,7 @@ main(int argc, char **argv)
 #if defined(ENCRYPTION)
 		encrypt_auto(1);
 		decrypt_auto(1);
+		wantencryption = -1;
 #endif
 	}
 

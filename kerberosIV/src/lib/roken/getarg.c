@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,10 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getarg.c,v 1.32 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: getarg.c,v 1.44 2001/09/10 13:22:43 assar Exp $");
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <roken.h>
 #include "getarg.h"
 
@@ -56,11 +58,12 @@ print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 	if(longp)
 	    strlcat(string, "= Ns", len);
 	strlcat(string, " Ar ", len);
-    }else
+    } else {
 	if (longp)
 	    strlcat (string, "=", len);
 	else
 	    strlcat (string, " ", len);
+    }
 
     if (arg->arg_help)
 	s = arg->arg_help;
@@ -68,6 +71,8 @@ print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 	s = "integer";
     else if (arg->type == arg_string)
 	s = "string";
+    else if (arg->type == arg_strings)
+	s = "strings";
     else if (arg->type == arg_double)
 	s = "float";
     else
@@ -125,14 +130,16 @@ mandoc_template(struct getargs *args,
 	    }
 	    if(args[i].long_name) {
 		print_arg(buf, sizeof(buf), 1, 1, args + i);
-		printf("Fl -%s%s", args[i].long_name, buf);
+		printf("Fl -%s%s%s",
+		       args[i].type == arg_negative_flag ? "no-" : "",
+		       args[i].long_name, buf);
 	    }
 	    printf("\n");
 	} else {
 	    print_arg(buf, sizeof(buf), 1, 0, args + i);
 	    printf(".Oo Fl %c%s \\*(Ba Xo\n", args[i].short_name, buf);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i);
-	    printf(".Fl -%s%s Oc\n.Xc\n", args[i].long_name, buf);
+	    printf(".Fl -%s%s\n.Xc\n.Oc\n", args[i].long_name, buf);
 	}
     /*
 	    if(args[i].type == arg_strings)
@@ -155,7 +162,9 @@ mandoc_template(struct getargs *args,
 	    printf("\n");
 	}
 	if(args[i].long_name){
-	    printf(".Fl -%s", args[i].long_name);
+	    printf(".Fl -%s%s",
+		   args[i].type == arg_negative_flag ? "no-" : "",
+		   args[i].long_name);
 	    print_arg(buf, sizeof(buf), 1, 1, args + i);
 	    printf("%s\n", buf);
 	}
@@ -202,7 +211,7 @@ arg_printusage (struct getargs *args,
     struct winsize ws;
 
     if (progname == NULL)
-	progname = __progname;
+	progname = getprogname();
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, num_args, progname, extra_string);
@@ -214,6 +223,23 @@ arg_printusage (struct getargs *args,
 	columns = 80;
     col = 0;
     col += fprintf (stderr, "Usage: %s", progname);
+    buf[0] = '\0';
+    for (i = 0; i < num_args; ++i) {
+	if(args[i].short_name && ISFLAG(args[i])) {
+	    char s[2];
+	    if(buf[0] == '\0')
+		strlcpy(buf, "[-", sizeof(buf));
+	    s[0] = args[i].short_name;
+	    s[1] = '\0';
+	    strlcat(buf, s, sizeof(buf));
+	}
+    }
+    if(buf[0] != '\0') {
+	strlcat(buf, "]", sizeof(buf));
+	col = check_column(stderr, col, strlen(buf) + 1, columns);
+	col += fprintf(stderr, " %s", buf);
+    }
+
     for (i = 0; i < num_args; ++i) {
 	size_t len = 0;
 
@@ -235,7 +261,7 @@ arg_printusage (struct getargs *args,
 	    col = check_column(stderr, col, strlen(buf) + 1, columns);
 	    col += fprintf(stderr, " %s", buf);
 	}
-	if (args[i].short_name) {
+	if (args[i].short_name && !ISFLAG(args[i])) {
 	    snprintf(buf, sizeof(buf), "[-%c", args[i].short_name);
 	    len += 2;
 	    len += print_arg(buf + strlen(buf), sizeof(buf) - strlen(buf), 
@@ -376,7 +402,11 @@ arg_match_long(struct getargs *args, size_t num_args,
 	    *flag = !negate;
 	    return 0;
 	} else if (*optarg && strcmp(optarg + 1, "maybe") == 0) {
+#ifdef HAVE_RANDOM
+	    *flag = random() & 1;
+#else
 	    *flag = rand() & 1;
+#endif
 	} else {
 	    *flag = negate;
 	    return 0;
@@ -389,13 +419,8 @@ arg_match_long(struct getargs *args, size_t num_args,
 
 	if (*optarg == '\0')
 	    val = 1;
-	else {
-	    char *endstr;
-
-	    val = strtol (optarg, &endstr, 0);
-	    if (endstr == optarg)
-		return ARG_ERR_BAD_ARG;
-	}
+	else if(sscanf(optarg + 1, "%d", &val) != 1)
+	    return ARG_ERR_BAD_ARG;
 	*(int *)current->value += val;
 	return 0;
     }
@@ -457,8 +482,10 @@ arg_match_short (struct getargs *args, size_t num_args,
 		    ++*optind;
 		    optarg = rargv[*optind];
 		}
-		if(optarg == NULL)
+		if(optarg == NULL) {
+		    --*optind;
 		    return ARG_ERR_NO_ARG;
+		}
 		if(args[k].type == arg_integer) {
 		    int tmp;
 		    if(sscanf(optarg, "%d", &tmp) != 1)
@@ -494,7 +521,13 @@ getarg(struct getargs *args, size_t num_args,
     int i;
     int ret = 0;
 
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
     srand (time(NULL));
+#endif
     (*optind)++;
     for(i = *optind; i < argc; i++) {
 	if(argv[i][0] != '-')
@@ -515,6 +548,12 @@ getarg(struct getargs *args, size_t num_args,
     }
     *optind = i;
     return ret;
+}
+
+void
+free_getarg_strings (getarg_strings *s)
+{
+    free (s->strings);
 }
 
 #if TEST

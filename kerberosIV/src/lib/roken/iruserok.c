@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iruserok.c,v 1.22 1999/09/16 20:06:06 assar Exp $");
+RCSID("$KTH: iruserok.c,v 1.23 1999/12/05 13:27:05 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -52,13 +52,6 @@ RCSID("$KTH: iruserok.c,v 1.22 1999/09/16 20:06:06 assar Exp $");
 #endif
 #ifdef HAVE_RPCSVC_YPCLNT_H
 #include <rpcsvc/ypclnt.h>
-#endif
-
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
 #endif
 
 #include "roken.h"

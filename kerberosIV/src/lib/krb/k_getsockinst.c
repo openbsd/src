@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: k_getsockinst.c,v 1.13 1999/12/02 16:58:42 joda Exp $");
+RCSID("$KTH: k_getsockinst.c,v 1.14 2001/08/26 01:46:14 assar Exp $");
 
 /*
  * Return in inst the name of the local interface bound to socket
@@ -44,7 +44,7 @@ int
 k_getsockinst(int fd, char *inst, size_t inst_size)
 {
   struct sockaddr_in addr;
-  int len = sizeof(addr);
+  socklen_t len = sizeof(addr);
   struct hostent *hnam;
 
   if (getsockname(fd, (struct sockaddr *)&addr, &len) < 0)

@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: mk_priv.c,v 1.22 1999/12/02 16:58:43 joda Exp $");
+RCSID("$KTH: mk_priv.c,v 1.25 2001/09/16 22:41:58 assar Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -113,7 +113,7 @@ krb_mk_priv(void *in, void *out, u_int32_t length,
     
     memset(p, 0, 7);
 
-    des_pcbc_encrypt((des_cblock *)cipher, (des_cblock *)cipher,
+    des_pcbc_encrypt(cipher, cipher,
 		     len, schedule, key, DES_ENCRYPT);
 
     return  (cipher - (unsigned char*)out) + len;

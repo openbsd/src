@@ -33,7 +33,7 @@
 
 #include "kauth.h"
 
-RCSID("$KTH: rkinit.c,v 1.22.2.1 1999/12/06 17:27:56 assar Exp $");
+RCSID("$KTH: rkinit.c,v 1.24 2000/08/09 20:53:02 assar Exp $");
 
 static struct in_addr *
 getalladdrs (char *hostname, unsigned *count)
@@ -92,7 +92,7 @@ doit_host (krb_principal *princ, int lifetime, char *locuser,
     int status;
     des_key_schedule schedule;
     struct sockaddr_in thisaddr, thataddr;
-    int addrlen;
+    socklen_t addrlen;
     void *ret;
 
     addrlen = sizeof(thisaddr);

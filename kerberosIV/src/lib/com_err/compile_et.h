@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: compile_et.h,v 1.4 1999/12/02 16:58:38 joda Exp $ */
+/* $KTH: compile_et.h,v 1.6 2000/07/01 20:21:48 assar Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__
@@ -45,7 +45,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-
 #include <roken.h>
 
 extern long base;

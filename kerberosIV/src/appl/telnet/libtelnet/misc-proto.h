@@ -53,13 +53,13 @@
  * or implied warranty.
  */
 
-/* $KTH: misc-proto.h,v 1.7 1998/07/09 23:16:30 assar Exp $ */
+/* $KTH: misc-proto.h,v 1.9 2000/11/15 23:00:21 assar Exp $ */
 
 #ifndef	__MISC_PROTO__
 #define	__MISC_PROTO__
 
-void auth_encrypt_init (char *, char *, char *, int);
-void auth_encrypt_user(char *name);
+void auth_encrypt_init (const char *, const char *, const char *, int);
+void auth_encrypt_user(const char *name);
 void auth_encrypt_connect (int);
 void printd (const unsigned char *, int);
 
@@ -73,7 +73,7 @@ int Ambiguous(void *s);
 int telnet_net_write (unsigned char *, int);
 void net_encrypt (void);
 int telnet_spin (void);
-char *telnet_getenv (char *);
+char *telnet_getenv (const char *);
 char *telnet_gets (char *, char *, int, int);
 void printsub(int direction, unsigned char *pointer, int length);
 #endif

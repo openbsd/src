@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
  * All rights reserved.
  * 
@@ -33,38 +33,20 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: warnerr.c,v 1.8 1999/12/02 16:58:54 joda Exp $");
+RCSID("$KTH: warnerr.c,v 1.15 2001/07/09 14:56:51 assar Exp $");
 #endif
 
 #include "roken.h"
 #include "err.h"
 
-#ifndef HAVE___PROGNAME
-const char *__progname;
-#endif
-
-void
-set_progname(char *argv0)
-{
-#ifndef HAVE___PROGNAME
-    char *p;
-    if(argv0 == NULL)
-	return;
-    p = strrchr(argv0, '/');
-    if(p == NULL)
-	p = argv0;
-    else
-	p++;
-    __progname = p;
-#endif
-}
-
 void
 warnerr(int doerrno, const char *fmt, va_list ap)
 {
     int sverrno = errno;
-    if(__progname != NULL){
-	fprintf(stderr, "%s", __progname);
+    const char *progname = getprogname();
+
+    if(progname != NULL){
+	fprintf(stderr, "%s", progname);
 	if(fmt != NULL || doerrno)
 	    fprintf(stderr, ": ");
     }

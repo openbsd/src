@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: afssysdefs.h,v 1.21.2.3 2001/01/09 14:59:57 joda Exp $ */
+/* $KTH: afssysdefs.h,v 1.24 2000/11/17 01:07:47 assar Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!

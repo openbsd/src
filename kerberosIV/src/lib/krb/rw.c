@@ -38,7 +38,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: rw.c,v 1.12.2.1 2000/06/23 03:37:33 assar Exp $");
+RCSID("$KTH: rw.c,v 1.13 2000/05/15 00:13:12 assar Exp $");
 
 int
 krb_get_int(void *f, u_int32_t *to, int size, int lsb)

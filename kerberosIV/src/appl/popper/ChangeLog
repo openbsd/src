@@ -1,7 +1,44 @@
+2001-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* maildir.c: replace MAXDROPLEN with MAXPATHLEN
+
+	* popper.h: replace MAXDROPLEN with MAXPATHLEN
+
+2001-08-13  Johan Danielsson  <joda@pdc.kth.se>
+
+	* popper.8: rewritten man page
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* pop_init.c (pop_init): handle krb5_init_context failure
+	consistently
+	* pop_debug.c (doit_v5): handle krb5_init_context failure
+	consistently
+
+2000-06-10  Assar Westerlund  <assar@sics.se>
+
+	* pop_init.c (krb4_authenticate): do not exit on failure, just
+	return
+	(krb5_authenticate): log errors from krb5_recvauth
+
 2000-04-12  Assar Westerlund  <assar@sics.se>
 
 	* *.c: replace all erroneous calls to pop_log with POP_FAILURE
 	with POP_PRIORITY.  reported by Janne Johansson <jj@it.kth.se>'
+
+2000-01-27  Assar Westerlund  <assar@sics.se>
+
+	* pop_debug.c (main): figure out port number
+
+1999-12-20  Assar Westerlund  <assar@sics.se>
+
+	* pop_init.c (pop_init): use getnameinfo_verified
+
+	* pop_debug.c (get_socket): use getaddrinfo
+
+1999-12-03  Johan Danielsson  <joda@pdc.kth.se>
+
+	* pop_init.c: optionally trace connected addresses to a file
 
 1999-11-02  Assar Westerlund  <assar@sics.se>
 

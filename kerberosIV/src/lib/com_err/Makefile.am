@@ -1,11 +1,11 @@
-# $KTH: Makefile.am,v 1.23 1999/04/09 18:26:55 assar Exp $
+# $KTH: Makefile.am,v 1.26 2001/09/02 16:56:21 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 YFLAGS = -d
 
 lib_LTLIBRARIES = libcom_err.la
-libcom_err_la_LDFLAGS = -version-info 1:0:0
+libcom_err_la_LDFLAGS = -version-info 2:0:1
 
 bin_PROGRAMS = compile_et
 
@@ -17,7 +17,7 @@ libcom_err_la_SOURCES = error.c com_err.c roken_rename.h
 
 CLEANFILES = lex.c parse.c parse.h
 
-$(compile_et_OBJECTS): parse.h
+$(compile_et_OBJECTS): parse.h parse.c ## XXX broken automake 1.4s
 
 compile_et_LDADD = \
 	$(LIB_roken) \

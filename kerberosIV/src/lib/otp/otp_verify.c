@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: otp_verify.c,v 1.6 1999/12/02 16:58:45 joda Exp $");
+RCSID("$KTH: otp_verify.c,v 1.7 2000/07/01 13:58:38 assar Exp $");
 #endif
 
 #include "otp_locl.h"
 
 int
-otp_verify_user_1 (OtpContext *ctx, char *passwd)
+otp_verify_user_1 (OtpContext *ctx, const char *passwd)
 {
   OtpKey key1, key2;
 
@@ -58,7 +58,7 @@ otp_verify_user_1 (OtpContext *ctx, char *passwd)
 }
 
 int
-otp_verify_user (OtpContext *ctx, char *passwd)
+otp_verify_user (OtpContext *ctx, const char *passwd)
 {
   void *dbm;
   int ret;

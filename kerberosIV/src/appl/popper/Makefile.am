@@ -1,4 +1,4 @@
-# $KTH: Makefile.am,v 1.12 1999/04/09 18:29:38 assar Exp $
+# $KTH: Makefile.am,v 1.14 2001/08/04 03:08:02 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -24,6 +24,8 @@ LDADD = \
 	$(LIB_otp) \
 	$(LIB_krb5) \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(DBLIB)
+
+man_MANS = popper.8

@@ -150,7 +150,7 @@ void pfatal_with_name (char *name);
 void pfatal_and_delete (char *name);
 char *concat (char *s1, char *s2, char *s3);
 long *xmalloc (unsigned size);
-int popmail (char *user, char *outfile);
+int popmail (char *user, char *outfile, int preserve, int reverse_order);
 int pop_retr (popserver server, int msgno, int (*action)(char *, void *),
 	      void *arg);
 int mbx_write (char *line, FILE *mbf);
@@ -170,6 +170,7 @@ main (int argc, char **argv)
   int indesc, outdesc;
   int nread;
   WAITTYPE status;
+  int c, preserve_mail = 0;
 
 #ifndef MAIL_USE_SYSTEM_LOCK
   struct stat st;
@@ -180,16 +181,32 @@ main (int argc, char **argv)
   int desc;
 #endif /* not MAIL_USE_SYSTEM_LOCK */
 
+  int pop_reverse_order = 0;
   delete_lockname = 0;
 
-  if (argc < 3)
+  while ((c = getopt (argc, argv, "pr")) != EOF)
     {
-      fprintf (stderr, "Usage: movemail inbox destfile\n");
-      exit(1);
+      switch (c) {
+      case 'r':
+	pop_reverse_order = 1;
+	break;
+      case 'p':
+	preserve_mail = 1;
+	break;
+      default:
+	fprintf (stderr, "Usage: movemail [-p] [-r] inbox destfile\n");
+	exit (1);
+      }
     }
 
-  inname = argv[1];
-  outname = argv[2];
+  if (argc - optind != 2)
+    {
+      fprintf (stderr, "Usage: movemail [-p] [-r] inbox destfile\n");
+      exit (1);
+    }
+
+  inname = argv[optind];
+  outname = argv[optind+1];
 
 #ifdef MAIL_USE_MMDF
   mmdf_init (argv[0]);
@@ -221,7 +238,8 @@ main (int argc, char **argv)
     {
       int status;
 
-      status = popmail (inname + 3, outname);
+      status = popmail (inname + 3, outname, preserve_mail,
+			pop_reverse_order);
       exit (status);
     }
 
@@ -370,12 +388,15 @@ main (int argc, char **argv)
 	pfatal_and_delete (outname);
 
 #ifdef MAIL_USE_SYSTEM_LOCK
+      if (! preserve_mail)
+	{
 #if defined (STRIDE) || defined (XENIX)
       /* Stride, xenix have file locking, but no ftruncate.  This mess will do. */
       close (open (inname, O_CREAT | O_TRUNC | O_RDWR, 0666));
 #else
       ftruncate (indesc, 0L);
 #endif /* STRIDE or XENIX */
+	}
 #endif /* MAIL_USE_SYSTEM_LOCK */
 
 #ifdef MAIL_USE_MMDF
@@ -385,14 +406,17 @@ main (int argc, char **argv)
 #endif
 
 #ifndef MAIL_USE_SYSTEM_LOCK
-      /* Delete the input file; if we can't, at least get rid of its
-	 contents.  */
+      if (! preserve_mail)
+	{
+	  /* Delete the input file; if we can't, at least get rid of its
+	     contents.  */
 #ifdef MAIL_UNLINK_SPOOL
       /* This is generally bad to do, because it destroys the permissions
 	 that were set on the file.  Better to just empty the file.  */
       if (unlink (inname) < 0 && errno != ENOENT)
 #endif /* MAIL_UNLINK_SPOOL */
-	creat (inname, 0600);
+	    creat (inname, 0600);
+	}
 #endif /* not MAIL_USE_SYSTEM_LOCK */
 
       exit (0);
@@ -491,13 +515,14 @@ char obuffer[BUFSIZ];
 char Errmsg[80];
 
 int
-popmail (char *user, char *outfile)
+popmail (char *user, char *outfile, int preserve, int reverse_order)
 {
   int nmsgs, nbytes;
   int i;
   int mbfi;
   FILE *mbf;
   popserver server;
+  int start, end, increment;
 
   server = pop_open (0, user, 0, POP_NO_GETPASS);
   if (! server)
@@ -536,7 +561,20 @@ popmail (char *user, char *outfile)
       return (1);
     }
 
-  for (i = 1; i <= nmsgs; i++)
+  if (reverse_order)
+    {
+      start = nmsgs;
+      end = 1;
+      increment = -1;
+    }
+  else
+    {
+      start = 1;
+      end = nmsgs;
+      increment = 1;
+    }
+
+  for (i = start; i * increment <= end * increment; i += increment)
     {
       mbx_delimit_begin (mbf);
       if (pop_retr (server, i, (int (*)(char *, void *))mbx_write, mbf) != OK)
@@ -576,7 +614,8 @@ popmail (char *user, char *outfile)
       return (1);
     }
 
-  for (i = 1; i <= nmsgs; i++)
+  if (! preserve)
+    for (i = 1; i <= nmsgs; i++)
     {
       if (pop_delete (server, i))
 	{
@@ -677,21 +716,7 @@ int mbx_delimit_end (FILE *mbf)
   if (putc ('\037', mbf) == EOF)
     return (NOTOK);
 #endif
+  if (putc('\n', mbf) == EOF)
+    return (NOTOK);
   return (OK);
 }
-
-
-#ifndef HAVE_STRERROR
-char *
-strerror (errnum)
-     int errnum;
-{
-  extern char *sys_errlist[];
-  extern int sys_nerr;
-
-  if (errnum >= 0 && errnum < sys_nerr)
-    return sys_errlist[errnum];
-  return (char *) "Unknown error";
-}
-
-#endif /* ! HAVE_STRERROR */

@@ -33,16 +33,15 @@
 
 #include "kadm_locl.h"
 
-RCSID("$KTH: random_password.c,v 1.4 1999/12/02 16:58:36 joda Exp $");
+RCSID("$KTH: random_password.c,v 1.5 2000/04/11 17:19:11 joda Exp $");
 
-/* This file defines some a function that generates a random password,
-   that can be used when creating a large amount of principals (such
+/* This file defines two functions that generate random passwords.
+   They can be used when creating a large amount of principals (such
    as for a batch of students). Since this is a political matter, you
-   should think about how secure generated passwords has to be.
+   should think about how secure generated passwords have to be.
    
    Both methods defined here will give you at least 55 bits of
-   entropy.
-   */
+   entropy. */
 
 /* If you want OTP-style passwords, define OTP_STYLE */
 

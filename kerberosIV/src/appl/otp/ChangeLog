@@ -1,3 +1,9 @@
+2000-11-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* otpprint.1: sort parameters and close a list
+
+	* otp.1: sort parameters and close a list
+
 1999-09-14  Assar Westerlund  <assar@sics.se>
 
 	* otp.c (verify_user_otp): check return value from

@@ -33,16 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: roken_gethostby.c,v 1.4 1999/12/02 16:58:52 joda Exp $");
+RCSID("$KTH: roken_gethostby.c,v 1.5 1999/12/05 13:16:44 assar Exp $");
 #endif
 
 #include <roken.h>
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 
 #undef roken_gethostbyname
 #undef roken_gethostbyaddr

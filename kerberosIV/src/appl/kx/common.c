@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$KTH: common.c,v 1.53 1999/12/02 16:58:32 joda Exp $");
+RCSID("$KTH: common.c,v 1.65 2001/08/26 01:40:38 assar Exp $");
 
 char x_socket[MaxPathLen];
 
@@ -51,10 +51,6 @@ size_t cookie_len = sizeof(cookie);
 
 #ifndef X_PIPE_PATH
 #define X_PIPE_PATH "/tmp/.X11-pipe/X"
-#endif
-
-#ifndef INADDR_LOOPBACK
-#define INADDR_LOOPBACK 0x7f000001
 #endif
 
 /*
@@ -351,7 +347,7 @@ chown_xsockets (int n, struct x_socket *sockets, uid_t uid, gid_t gid)
 }
 
 /*
- * Connect to local display `dnr' with local transport.
+ * Connect to local display `dnr' with local transport or TCP.
  * Return a file descriptor.
  */
 
@@ -359,18 +355,34 @@ int
 connect_local_xsocket (unsigned dnr)
 {
      int fd;
-     struct sockaddr_un addr;
      char **path;
 
      for (path = x_sockets; *path; ++path) {
+	 struct sockaddr_un addr;
+
 	 fd = socket (AF_UNIX, SOCK_STREAM, 0);
 	 if (fd < 0)
-	     err (1, "socket AF_UNIX");
+	     break;
 	 memset (&addr, 0, sizeof(addr));
 	 addr.sun_family = AF_UNIX;
 	 snprintf (addr.sun_path, sizeof(addr.sun_path), *path, dnr);
 	 if (connect (fd, (struct sockaddr *)&addr, sizeof(addr)) == 0)
 	     return fd;
+	 close(fd);
+     }
+     {
+	 struct sockaddr_in addr;
+
+	 fd = socket(AF_INET, SOCK_STREAM, 0);
+	 if (fd < 0)
+	     err (1, "socket AF_INET");
+	 memset (&addr, 0, sizeof(addr));
+	 addr.sin_family = AF_INET;
+	 addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	 addr.sin_port = htons(6000 + dnr);
+	 if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == 0)
+	     return fd;
+	 close(fd);
      }
      err (1, "connecting to local display %u", dnr);
 }
@@ -409,7 +421,11 @@ create_and_write_cookie (char *xauthfile,
      auth.name_length = strlen(auth.name);
      auth.data_length = cookie_sz;
      auth.data = (char*)cookie;
-     des_rand_data (cookie, cookie_sz);
+#ifdef KRB5
+     krb5_generate_random_block (cookie, cookie_sz);
+#else
+     krb_generate_random_block (cookie, cookie_sz);
+#endif
 
      strlcpy(xauthfile, "/tmp/AXXXXXX", xauthfile_size);
      fd = mkstemp(xauthfile);
@@ -559,15 +575,17 @@ fail:
 
 /* 
  * Return 0 iff `cookie' is compatible with the cookie for the
- * localhost with name given in `disp_he' and display number in
- * `disp_nr'.
+ * localhost with name given in `ai' (or `hostname') and display
+ * number in `disp_nr'.
  */
 
 static int
-match_local_auth (Xauth* auth, struct hostent *disp_he, int disp_nr)
+match_local_auth (Xauth* auth,
+		  struct addrinfo *ai, const char *hostname, int disp_nr)
 {
     int auth_disp;
     char *tmp_disp;
+    struct addrinfo *a;
     
     tmp_disp = strndup (auth->number, auth->number_length);
     if (tmp_disp == NULL)
@@ -576,21 +594,20 @@ match_local_auth (Xauth* auth, struct hostent *disp_he, int disp_nr)
     free (tmp_disp);
     if (auth_disp != disp_nr)
 	return 1;
-    if (auth->family == FamilyLocal
-	|| auth->family == FamilyWild) {
-	int i;
-
-	if (strncmp (auth->address,
-		     disp_he->h_name,
-		     auth->address_length) == 0)
+    for (a = ai; a != NULL; a = a->ai_next) {
+	if ((auth->family == FamilyLocal
+	     || auth->family == FamilyWild)
+	    && a->ai_canonname != NULL
+	    && strncmp (auth->address,
+			a->ai_canonname,
+			auth->address_length) == 0)
 	    return 0;
-
-	for (i = 0; disp_he->h_aliases[i] != NULL; ++i)
-	    if (strncmp (auth->address,
-			 disp_he->h_aliases[i],
-			 auth->address_length) == 0)
-		return 0;
     }
+    if (hostname != NULL
+	&& (auth->family    == FamilyLocal
+	    || auth->family == FamilyWild)
+	&& strncmp (auth->address, hostname, auth->address_length) == 0)
+	return 0;
     return 1;
 }
 
@@ -604,12 +621,17 @@ find_auth_cookie (FILE *f)
     Xauth *ret = NULL;
     char local_hostname[MaxHostNameLen];
     char *display = getenv("DISPLAY");
+    char d[MaxHostNameLen + 4];
     char *colon;
-    struct hostent *display_he;
+    struct addrinfo *ai;
+    struct addrinfo hints;
     int disp;
+    int error;
 
-    if (display == NULL)
+    if(display == NULL)
 	display = ":0";
+    strlcpy(d, display, sizeof(d));
+    display = d;
     colon = strchr (display, ':');
     if (colon == NULL)
 	disp = 0;
@@ -623,16 +645,24 @@ find_auth_cookie (FILE *f)
 	gethostname (local_hostname, sizeof(local_hostname));
 	display = local_hostname;
     }
-    display_he = gethostbyname (display);
-    if (display_he == NULL) {
-	warnx ("gethostbyname %s: %s", display, hstrerror(h_errno));
-	return NULL;
-    }
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_flags    = AI_CANONNAME;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    error = getaddrinfo (display, NULL, &hints, &ai);
+    if (error)
+	ai = NULL;
 
     for (; (ret = XauReadAuth (f)) != NULL; XauDisposeAuth(ret)) {
-	if (match_local_auth (ret, display_he, disp) == 0)
+	if (match_local_auth (ret, ai, display, disp) == 0) {
+	    if (ai != NULL)
+		freeaddrinfo (ai);
 	    return ret;
+	}
     }
+    if (ai != NULL)
+	freeaddrinfo (ai);
     return NULL;
 }
 
@@ -725,7 +755,7 @@ int
 suspicious_address (int sock, struct sockaddr_in addr)
 {
     char data[40];
-    int len = sizeof(data);
+    socklen_t len = sizeof(data);
 
     return addr.sin_addr.s_addr != htonl(INADDR_LOOPBACK)
 #if defined(IP_OPTIONS) && defined(HAVE_GETSOCKOPT)

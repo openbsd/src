@@ -1,8 +1,8 @@
-# $KTH: Makefile.am,v 1.12 1999/04/09 18:22:08 assar Exp $
+# $KTH: Makefile.am,v 1.15 2001/08/28 08:31:21 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_krb4)
+INCLUDES += -I$(srcdir)/../common $(INCLUDE_readline) $(INCLUDE_krb4) $(INCLUDE_des)
 
 bin_PROGRAMS = ftp
 
@@ -34,11 +34,13 @@ ftp_SOURCES = \
 
 EXTRA_ftp_SOURCES = krb4.c kauth.c gssapi.c
 
+man_MANS = ftp.1
+
 LDADD = \
 	../common/libcommon.a \
 	$(LIB_gssapi) \
 	$(LIB_krb5) \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(LIB_readline)

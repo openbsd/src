@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_right.h,v 1.9.2.2 2001/03/02 21:49:23 assar Exp $ */
+/* $KTH: com_right.h,v 1.11 2000/07/31 01:11:08 assar Exp $ */
 
 #ifndef __COM_RIGHT_H__
 #define __COM_RIGHT_H__

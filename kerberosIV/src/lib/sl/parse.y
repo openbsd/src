@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,11 +33,9 @@
  */
 
 #include "make_cmds.h"
-RCSID("$KTH: parse.y,v 1.5 1999/12/02 16:58:55 joda Exp $");
+RCSID("$KTH: parse.y,v 1.7 2000/06/27 02:37:18 assar Exp $");
 
-void yyerror (char *s);
-long name2number(const char *str);
-void error_message(char *, ...);
+static void yyerror (char *s);
 
 struct string_list* append_string(struct string_list*, char*);
 void free_string_list(struct string_list *list);
@@ -130,32 +128,7 @@ flag		: STRING
 
 %%
 
-long
-name2number(const char *str)
-{
-    const char *p;
-    long base = 0;
-    const char *x = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz0123456789_";
-    if(strlen(str) > 4) {
-	yyerror("table name too long");
-	return 0;
-    }
-    for(p = str; *p; p++){
-	char *q = strchr(x, *p);
-	if(q == NULL) {
-	    yyerror("invalid character in table name");
-	    return 0;
-	}
-	base = (base << 6) + (q - x) + 1;
-    }
-    base <<= 8;
-    if(base > 0x7fffffff)
-	base = -(0xffffffff - base + 1);
-    return base;
-}
-
-void
+static void
 yyerror (char *s)
 {
     error_message ("%s\n", s);

@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken.h,v 1.8 1999/12/02 16:58:36 joda Exp $ */
+/* $KTH: roken.h,v 1.9 2001/02/20 23:07:54 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -209,6 +209,6 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_openlog(a,b,c) openlog((char *)a,b,c)
 
-void set_progname(char *argv0);
+void setprogname(char *argv0);
 
 #endif /* __ROKEN_H__ */

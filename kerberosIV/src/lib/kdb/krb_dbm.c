@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "kdb_locl.h"
 
-RCSID("$KTH: krb_dbm.c,v 1.37 1999/09/16 20:41:49 assar Exp $");
+RCSID("$KTH: krb_dbm.c,v 1.39 2001/09/13 00:34:08 assar Exp $");
 
 #include <xdbm.h>
 
@@ -380,7 +380,6 @@ kerb_db_create(char *db_name)
     char *okname = gen_dbsuffix(db_name, ".ok");
     int fd;
     int ret = 0;
-#ifdef NDBM
     DBM *db;
 
     db = dbm_open(db_name, O_RDWR|O_CREAT|O_EXCL, 0600);
@@ -388,24 +387,6 @@ kerb_db_create(char *db_name)
 	ret = errno;
     else
 	dbm_close(db);
-#else
-    char *dirname = gen_dbsuffix(db_name, ".dir");
-    char *pagname = gen_dbsuffix(db_name, ".pag");
-
-    fd = open(dirname, O_RDWR|O_CREAT|O_EXCL, 0600);
-    if (fd < 0)
-	ret = errno;
-    else {
-	close(fd);
-	fd = open (pagname, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (fd < 0)
-	    ret = errno;
-	else
-	    close(fd);
-    }
-    if (dbminit(db_name) < 0)
-	ret = errno;
-#endif
     if (ret == 0) {
 	fd = open (okname, O_CREAT|O_RDWR|O_TRUNC, 0600);
 	if (fd < 0)
@@ -564,7 +545,7 @@ kerb_db_get_principal (char *name, char *inst, Principal *principal,
 	/* process wild cards by looping through entire database */
 
 	for (key = dbm_firstkey(db); key.dptr != NULL;
-	     key = dbm_next(db, key)) {
+	     key = dbm_nextkey(db)) {
 	    decode_princ_key(&key, testname, testinst);
 	    if ((wildp || !strcmp(testname, name)) &&
 		(wildi || !strcmp(testinst, inst))) { /* have a match */
@@ -755,7 +736,7 @@ kerb_db_iterate (k_iter_proc_t func, void *arg)
     if (db == NULL)
 	return errno;
 
-    for (key = dbm_firstkey (db); key.dptr != NULL; key = dbm_next(db, key)) {
+    for (key = dbm_firstkey (db); key.dptr != NULL; key = dbm_nextkey(db)) {
 	contents = dbm_fetch (db, key);
 	/* XXX may not be properly aligned */
 	principal = (Principal *) contents.dptr;

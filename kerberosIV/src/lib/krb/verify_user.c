@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: verify_user.c,v 1.17.2.2 2000/12/15 14:43:37 assar Exp $");
+RCSID("$KTH: verify_user.c,v 1.20 2000/12/15 14:41:30 assar Exp $");
 
 /*
  * Verify user (name.instance@realm) with `password'.

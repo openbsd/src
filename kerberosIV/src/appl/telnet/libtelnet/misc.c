@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$KTH: misc.c,v 1.13 1998/06/13 00:06:54 assar Exp $");
+RCSID("$KTH: misc.c,v 1.15 2000/01/25 23:24:58 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,13 +47,14 @@ RCSID("$KTH: misc.c,v 1.13 1998/06/13 00:06:54 assar Exp $");
 #include "encrypt.h"
 
 
-char *RemoteHostName;
-char *LocalHostName;
+const char *RemoteHostName;
+const char *LocalHostName;
 char *UserNameRequested = 0;
 int ConnectedCount = 0;
 
 void
-auth_encrypt_init(char *local, char *remote, char *name, int server)
+auth_encrypt_init(const char *local, const char *remote, const char *name,
+		  int server)
 {
     RemoteHostName = remote;
     LocalHostName = local;
@@ -70,7 +71,7 @@ auth_encrypt_init(char *local, char *remote, char *name, int server)
 }
 
 void
-auth_encrypt_user(char *name)
+auth_encrypt_user(const char *name)
 {
     if (UserNameRequested)
 	free(UserNameRequested);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #include "kadm_locl.h"
 #include "ksrvutil.h"
 
-RCSID("$KTH: ksrvutil_get.c,v 1.43 1999/12/02 16:58:36 joda Exp $");
+RCSID("$KTH: ksrvutil_get.c,v 1.45 2001/08/26 01:40:42 assar Exp $");
 
 #define BAD_PW 1
 #define GOOD_PW 0
@@ -86,7 +86,9 @@ get_admin_password(char *myname, char *myinst, char *myrealm)
     /* Initialize non shared random sequence from session key. */
     memset(&c, 0, sizeof(c));
     krb_get_cred(PWSERV_NAME, KADM_SINST, myrealm, &c);
+#ifndef HAVE_OPENSSL
     des_init_random_number_generator(&c.session);
+#endif
   } else
     status = KDC_PR_UNKNOWN;
   
@@ -201,7 +203,7 @@ get_srvtab_ent(int unique_filename, int fd, char *filename,
     SET_FIELD(KADM_DESKEY,values.fields);
 
     ret = kadm_mod(&values, &values);
-    if(ret == KADM_NOENTRY)
+    if(ret == KADM_NOENTRY || ret == KADM_UNAUTH)
 	ret = kadm_add(&values);
     if (ret != KSUCCESS) {
 	warnx ("Couldn't get srvtab entry for %s.%s: %s",
@@ -295,9 +297,11 @@ ksrvutil_kadm(int unique_filename, int fd, char *filename, struct srv_ent *p)
   }
   
   ret = krb_get_cred (PWSERV_NAME, KADM_SINST, u_realm, &c);
-  if (ret == KSUCCESS)
+  if (ret == KSUCCESS) {
+#ifndef HAVE_OPENSSL
     des_init_random_number_generator (&c.session);
-  else {
+#endif
+  } else {
     umask(077);
        
     /*

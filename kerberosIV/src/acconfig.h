@@ -1,15 +1,6 @@
-/* $KTH: acconfig.h,v 1.105 1999/12/02 13:09:41 joda Exp $ */
+/* $KTH: acconfig.h,v 1.106 2000/11/05 17:14:13 joda Exp $ */
 
 @BOTTOM@
-
-#undef HAVE_INT8_T
-#undef HAVE_INT16_T
-#undef HAVE_INT32_T
-#undef HAVE_INT64_T
-#undef HAVE_U_INT8_T
-#undef HAVE_U_INT16_T
-#undef HAVE_U_INT32_T
-#undef HAVE_U_INT64_T
 
 /* This for compat with heimdal (or something) */
 #define KRB_PUT_INT(f, t, l, s) krb_put_int((f), (t), (l), (s))
@@ -20,51 +11,17 @@
 
 #define HAVE_KRB_GET_OUR_IP_FOR_REALM 1
 
-#define RCSID(msg) \
-static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
-
 /*
  * Set ORGANIZATION to be the desired organization string printed
  * by the 'kinit' program.  It may have spaces.
  */
 #define ORGANIZATION "eBones International"
 
-#if 0
-#undef BINDIR 
-#undef LIBDIR
-#undef LIBEXECDIR
-#undef SBINDIR
-#endif
-
-#if 0
-#define KRB_CNF_FILES	{ "/etc/krb.conf",   "/etc/kerberosIV/krb.conf", 0}
-#define KRB_RLM_FILES	{ "/etc/krb.realms", "/etc/kerberosIV/krb.realms", 0}
-#define KRB_EQUIV	"/etc/krb.equiv"
-
-#define KEYFILE		"/etc/srvtab"
-
-#define KRBDIR		"/var/kerberos"
-#define DBM_FILE	KRBDIR "/principal"
-#define DEFAULT_ACL_DIR	KRBDIR
-
-#define KRBLOG		"/var/log/kerberos.log"	/* master server  */
-#define KRBSLAVELOG	"/var/log/kerberos_slave.log" /* slave server  */
-#define KADM_SYSLOG	"/var/log/admin_server.syslog"
-#define K_LOGFIL	"/var/log/kpropd.log"
-#endif
-
-/* Maximum values on all known systems */
-#define MaxHostNameLen (64+4)
-#define MaxPathLen (1024+4)
-
 /* ftp stuff -------------------------------------------------- */
 
 #define KERBEROS
 
 /* telnet stuff ----------------------------------------------- */
-
-/* define this for OTP support */
-#undef OTP
 
 /* define this if you have kerberos 4 */
 #undef KRB4
@@ -107,17 +64,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 
 /* ------------------------------------------------------------ */
-
-#ifdef BROKEN_REALLOC
-#define realloc(X, Y) isoc_realloc((X), (Y))
-#define isoc_realloc(X, Y) ((X) ? realloc((X), (Y)) : malloc(Y))
-#endif
-
-#ifdef VOID_RETSIGTYPE
-#define SIGRETURN(x) return
-#else
-#define SIGRETURN(x) return (RETSIGTYPE)(x)
-#endif
 
 /* Temporary fixes for krb_{rd,mk}_safe */
 #define DES_QUAD_GUESS 0

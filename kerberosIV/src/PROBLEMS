@@ -1,3 +1,4 @@
+
 Problems compiling Kerberos
 ===========================
 
@@ -81,10 +82,10 @@ constraints, and similar. The N32 format is the default format from IRIX
 You select ABI at compile time, and you can do this with the
 `--with-mips-abi' configure option. The valid arguments are `o32',
 `n32', and `64', N32 is the default. Libraries for the three different
-ABI:s are normally installed installed in different directories (`lib',
-`lib32', and `lib64'). If you want more than one set of libraries you
-have to reconfigure and recompile for each ABI, but you should probably
-install only N32 binaries.
+ABI:s are normally installed in different directories (`lib', `lib32',
+and `lib64'). If you want more than one set of libraries you have to
+reconfigure and recompile for each ABI, but you should probably install
+only N32 binaries.
 
 GCC had had some known problems with the different ABI:s. Old GCC could
 only handle O32, newer GCC can handle N32, and 64, but not O32, but in
@@ -99,7 +100,7 @@ Another problem that you might encounter if you run AFS is that Transarc
 apparently doesn't support the 64-bit ABI, and because of this you can't
 get tokens with a 64 bit application. If you really need to do this,
 there is a kernel module that provides this functionality at
-`ftp://ftp.pdc.kth.se/home/joda/irix-afs64.tar.gz'.
+<ftp://ftp.pdc.kth.se/home/joda/irix-afs64.tar.gz>.
 
 AIX problems
 ------------
@@ -108,7 +109,7 @@ AIX problems
 `appl/telnet/telnetd/sys_term.c' (and possibily `appl/bsd/forkpty.c'),
 if used with too much optimization.
 
-Some versions of the `xlc' preprocessor doesn't recognise the
+Some versions of the `xlc' preprocessor do not recognise the
 (undocumented) `-qnolm' option. If this option is passed to the
 preprocessor (like via the configuration file `/etc/ibmcxx.cfg',
 configure will fail.

@@ -33,19 +33,20 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: get_ad_tkt.c,v 1.22 1999/12/02 16:58:41 joda Exp $");
+RCSID("$KTH: get_ad_tkt.c,v 1.23 1999/12/11 23:37:49 joda Exp $");
 
 /*
- * get_ad_tkt obtains a new service ticket from Kerberos, using
- * the ticket-granting ticket which must be in the ticket file.
- * It is typically called by krb_mk_req() when the client side
- * of an application is creating authentication information to be
- * sent to the server side.
+ * krb_get_cred_kdc obtains a new service ticket from Kerberos, using
+ * the ticket-granting ticket which must be in the ticket file.  It is
+ * typically called by krb_mk_req() when the client side of an
+ * application is creating authentication information to be sent to
+ * the server side.
  *
- * get_ad_tkt takes four arguments: three pointers to strings which
- * contain the name, instance, and realm of the service for which the
- * ticket is to be obtained; and an integer indicating the desired
- * lifetime of the ticket.
+ * krb_get_cred_kdc takes five arguments: three pointers to strings
+ * which contain the name, instance, and realm of the service for
+ * which the ticket is to be obtained; an integer indicating the
+ * desired lifetime of the ticket; and an credentials struct to store
+ * the retrieved cred in
  *
  * It returns an error status if the ticket couldn't be obtained,
  * or AD_OK if all went well.  The ticket is stored in the ticket
@@ -65,11 +66,11 @@ RCSID("$KTH: get_ad_tkt.c,v 1.22 1999/12/02 16:58:41 joda Exp $");
  * string		sinstance		service instance arg.
  *
  * See "prot.h" for the reply packet layout and definitions of the
- * extraction macros like pkt_version(), pkt_msg_type(), etc.
- */
+ * extraction macros like pkt_version(), pkt_msg_type(), etc.  */
 
 int
-get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
+krb_get_cred_kdc(const char *service, const char *instance, const char *realm, 
+		 int lifetime, CREDENTIALS *ret_cred)
 {
     static KTEXT_ST pkt_st;
     KTEXT pkt = & pkt_st;	/* Packet to KDC */
@@ -115,16 +116,15 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	    return(AD_NOTGT);
 	else{
 	    if ((kerror = 
-		 get_ad_tkt(KRB_TICKET_GRANTING_TICKET,
-			    realm, lrealm, lifetime)) != KSUCCESS) {
+		 krb_get_cred_kdc(KRB_TICKET_GRANTING_TICKET,
+				  realm, lrealm, lifetime, &cr)) != KSUCCESS) {
 		if (kerror == KDC_PR_UNKNOWN)
-		  return(AD_INTR_RLM_NOTGT);
+		    return(AD_INTR_RLM_NOTGT);
 		else
-		  return(kerror);
+		    return(kerror);
 	    }
-	    if ((kerror = krb_get_cred(KRB_TICKET_GRANTING_TICKET,
-				       realm, lrealm, &cr)) != KSUCCESS)
-		return(kerror);
+	    if((kerror = save_credentials_cred(&cr)) != KSUCCESS)
+		return kerror;
 	}
     }
     
@@ -136,7 +136,7 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
     
     kerror = krb_mk_req(pkt,
 			KRB_TICKET_GRANTING_TICKET,
-			realm,lrealm,0L);
+			realm, lrealm, 0L);
 
     if (kerror)
 	return(AD_NOTGT);
@@ -156,7 +156,7 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
     p += tmp;
     rem -= tmp;
 
-    tmp = krb_put_nir(service, sinstance, NULL, p, rem);
+    tmp = krb_put_nir(service, instance, NULL, p, rem);
     if (tmp < 0)
 	return KFAILURE;
     p += tmp;
@@ -185,7 +185,7 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	if(kerror != KSUCCESS)
 	    return kerror;
 
-	if (strcmp(cred.service, service) || strcmp(cred.instance, sinstance) ||
+	if (strcmp(cred.service, service) || strcmp(cred.instance, instance) ||
 	    strcmp(cred.realm, realm))	/* not what we asked for */
 	    return INTK_ERR;	/* we need a better code here XXX */
 	
@@ -194,10 +194,26 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	    return RD_AP_TIME; /* XXX should probably be better code */
 	}
 	
-
-	kerror = save_credentials(cred.service, cred.instance, cred.realm, 
-				  cred.session, cred.lifetime, cred.kvno, 
-				  &cred.ticket_st, tv.tv_sec);
+	cred.issue_date = tv.tv_sec; /* XXX does this make sense? */
+	
+	*ret_cred = cred;
+	memset(&cred, 0, sizeof(cred));
 	return kerror;
     }
+}
+
+int
+get_ad_tkt(char *service, char *instance, char *realm, 
+	   int lifetime)
+{
+    int ret;
+    CREDENTIALS cred;
+
+    ret = krb_get_cred_kdc(service, instance, realm, lifetime, &cred);
+    if(ret)
+	return ret;
+    
+    ret = save_credentials_cred(&cred);
+    memset(&cred, 0, sizeof(cred));
+    return ret;
 }

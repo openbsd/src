@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: rd_req.c,v 1.27.2.2 2000/06/23 04:00:20 assar Exp $");
+RCSID("$KTH: rd_req.c,v 1.28 2000/05/15 00:19:38 assar Exp $");
 
 static struct timeval t_local = { 0, 0 };
 
@@ -207,7 +207,7 @@ krb_rd_req(KTEXT authent,	/* The received message */
      */
     if (fn && (strcmp(st_nam,service) || strcmp(st_inst,instance) ||
                strcmp(st_rlm,realm) || (st_kvno != s_kvno))) {
-        if (*fn == 0) fn = (char *)KEYFILE;
+        if (*fn == 0) fn = KEYFILE;
         st_kvno = s_kvno;
         if (read_service_key(service, instance, realm, s_kvno,
 			     fn, (char *)skey))

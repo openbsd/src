@@ -30,7 +30,7 @@ unwraps wrapped packets and calls the appropriate server subroutine
 
 #include "kadm_locl.h"
 
-RCSID("$KTH: kadm_ser_wrap.c,v 1.25 1999/09/16 20:41:41 assar Exp $");
+RCSID("$KTH: kadm_ser_wrap.c,v 1.25.4.1 2002/02/01 16:17:30 assar Exp $");
 
 /* GLOBAL */
 Kadm_Server server_parm;
@@ -42,7 +42,8 @@ set up the server_parm structure
 int
 kadm_ser_init(int inter,	/* interactive or from file */
 	      char *realm,
-	      struct in_addr addr)
+	      struct in_addr addr,
+	      int port)
 {
   struct hostent *hp;
   char hostname[MaxHostNameLen];
@@ -66,9 +67,7 @@ kadm_ser_init(int inter,	/* interactive or from file */
   /* setting up the addrs */
   memset(&server_parm.admin_addr,0, sizeof(server_parm.admin_addr));
 
-  server_parm.admin_addr.sin_port = k_getportbyname (KADM_SNAME,
-						     "tcp",
-						     htons(751));
+  server_parm.admin_addr.sin_port = port;
   server_parm.admin_addr.sin_family = AF_INET;
   if ((hp = gethostbyname(hostname)) == NULL)
       return KADM_NO_HOSTNAME;
@@ -188,6 +187,7 @@ kadm_ser_in(u_char **dat, int *dat_len, u_char *errdat)
 	errpkt(errdat, dat, dat_len, KADM_NO_OPCODE);
 	return KADM_NO_OPCODE;
     }
+
     /* Now seal the response back into a priv msg */
     tmpdat = (u_char *) malloc(retlen + KADM_VERSIZE + 4);
     if (tmpdat == NULL) {

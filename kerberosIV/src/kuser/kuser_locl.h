@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kuser_locl.h,v 1.11 1999/12/02 16:58:37 joda Exp $ */
+/* $KTH: kuser_locl.h,v 1.12 2000/12/29 22:11:18 assar Exp $ */
 
 #include "config.h"
 #include "protos.h"
@@ -61,6 +61,9 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
 #endif
 
 #ifdef HAVE_PWD_H

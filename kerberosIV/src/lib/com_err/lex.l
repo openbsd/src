@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -42,12 +42,16 @@
 
 #include "compile_et.h"
 #include "parse.h"
+#include "lex.h"
 
-RCSID("$KTH: lex.l,v 1.5 1999/12/02 16:58:38 joda Exp $");
+RCSID("$KTH: lex.l,v 1.6 2000/06/22 00:42:52 assar Exp $");
 
 static unsigned lineno = 1;
-void error_message(char *, ...);
-int getstring(void);
+static int getstring(void);
+
+#define YY_NO_UNPUT
+
+#undef ECHO
 
 %}
 
@@ -78,7 +82,7 @@ yywrap ()
 }
 #endif
 
-int
+static int
 getstring(void)
 {
     char x[128];
@@ -110,7 +114,7 @@ getstring(void)
 }
 
 void
-error_message (char *format, ...)
+error_message (const char *format, ...)
 {
      va_list args;
 

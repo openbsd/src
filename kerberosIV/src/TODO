@@ -1,4 +1,7 @@
 -*- indented-text -*-
+
+$KTH: TODO,v 1.49 2001/09/09 20:29:03 assar Exp $
+
 rlogind, rshd, popper, ftpd (telnetd uses nonce?)
   Add a replay cache.
 
@@ -26,7 +29,6 @@ rshd
 autoconf
 
 libraries
-  generate archive and shared libraries in some portable way.
 
 ftpd
 

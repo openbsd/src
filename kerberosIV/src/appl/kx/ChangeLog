@@ -1,3 +1,101 @@
+2001-09-17  Assar Westerlund  <assar@sics.se>
+
+	* kx.h: add a kludge to make it build on aix (that defines NOERROR
+	in both sys/stream.h and arpa/nameser.h and considers that a fatal
+	error)
+
+2001-07-12  Assar Westerlund  <assar@sics.se>
+
+	* common.c (connect_local_xsocket): handle a tcp socket as last
+	resort
+
+	* rxterm.in: add -K (send arguments to kx)
+	* rxtelnet.in: add -K (send arguments to kx)
+	
+2001-06-21  Assar Westerlund  <assar@sics.se>
+
+	* rxterm.in: add -b for pointing to the rsh program.  from
+	<mikan@mikan.net>
+	* rxtelnet.in: add -b for pointing to the telnet program.  from
+	<mikan@mikan.net>
+
+2001-01-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* common.c: don't write to string constants
+
+2000-12-31  Assar Westerlund  <assar@sics.se>
+
+	* krb5.c (krb5_make_context): handle krb5_init_context failure
+	consistently
+
+2000-10-08  Assar Westerlund  <assar@sics.se>
+
+	* kxd.c (doit_passive): check that fds are not too large to select
+	on
+	* kx.c (doit_active): check that fds are not too large to select
+	on
+	* krb5.c (krb5_copy_encrypted): check that fds are not too large
+	to select on
+	* krb4.c (krb4_copy_encrypted): check that fds are not too large
+	to select on
+
+2000-07-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: use conditional for X
+
+2000-06-10  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.in: use INSTALL_SCRIPT for installing rxterm, rxtelnet,
+	tenletxr
+
+2000-04-19  Assar Westerlund  <assar@sics.se>
+
+	* common.c: try hostname uncanonified if getaddrinfo() fails
+
+2000-02-06  Assar Westerlund  <assar@sics.se>
+
+	* kx.h: remove old prorotypes
+
+2000-01-08  Assar Westerlund  <assar@sics.se>
+
+	* common.c (match_local_auth): handle ai_canonname being set in
+	any of the addresses returnedby getaddrinfo.  glibc apparently
+	returns the reverse lookup of every address in ai_canonname.
+
+1999-12-28  Assar Westerlund  <assar@sics.se>
+
+	* kxd.c (main): call krb5_getportbyname with the default in
+ 	host-byte-order
+
+1999-12-17  Assar Westerlund  <assar@sics.se>
+
+	* common.c (match_local_auth): remove extra brace.  spotted by
+ 	Jakob Schlyter <jakob@cdg.chalmers.se>
+
+1999-12-16  Assar Westerlund  <assar@sics.se>
+
+	* common.c (match_local_auth): handle ai_canonname not being set
+
+1999-12-06  Assar Westerlund  <assar@sics.se>
+
+	* krb4.c (krb4_authenticate): the NAT address might not be the one
+	for the relevant realm, try anyway.
+	* kxd.c (recv_conn): type correctness
+	* kx.c (connect_host): typo
+
+1999-12-05  Assar Westerlund  <assar@sics.se>
+
+	* common.c (INADDR_LOOPBACK): remove.  now in roken.
+
+	* kxd.c (recv_conn): use getnameinfo_verified
+	* kxd.c (recv_conn): replace inaddr2str with getnameinfo
+
+1999-12-04  Assar Westerlund  <assar@sics.se>
+
+	* kx.c (connect_host): use getaddrinfo
+	* common.c (find_auth_cookie, match_local_auth): re-write to use
+	getaddrinfo
+
 1999-11-27  Assar Westerlund  <assar@sics.se>
 
 	* kxd.c (recv_conn): better errors when getting unrecognized data

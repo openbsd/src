@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,14 +32,19 @@
  * SUCH DAMAGE. 
  */
 
+#undef ECHO
+
 #include "make_cmds.h"
 #include "parse.h"
 
-RCSID("$KTH: lex.l,v 1.3 1999/12/02 16:58:55 joda Exp $");
+RCSID("$KTH: lex.l,v 1.6 2001/09/16 23:10:10 assar Exp $");
 
 static unsigned lineno = 1;
-void error_message(char *, ...);
-int getstring(void);
+static int getstring(void);
+
+#define YY_NO_UNPUT
+
+#undef ECHO
 
 %}
 
@@ -66,7 +71,7 @@ yywrap ()
 }
 #endif
 
-int
+static int
 getstring(void)
 {
     char x[128];
@@ -102,7 +107,7 @@ getstring(void)
 }
 
 void
-error_message (char *format, ...)
+error_message (const char *format, ...)
 {
      va_list args;
 

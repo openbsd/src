@@ -34,8 +34,8 @@
  */
 
 extern char *UserNameRequested;
-extern char *LocalHostName;
-extern char *RemoteHostName;
+extern const char *LocalHostName;
+extern const char *RemoteHostName;
 extern int ConnectedCount;
 extern int ReservedPort;
 

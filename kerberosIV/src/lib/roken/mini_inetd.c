@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,95 +33,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: mini_inetd.c,v 1.18.2.1 2000/10/10 13:22:33 assar Exp $");
+RCSID("$KTH: mini_inetd.c,v 1.29 2001/08/01 14:48:54 assar Exp $");
 #endif
 
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-#ifdef HAVE_NETINET6_IN6_H
-#include <netinet6/in6.h>
-#endif
-
-
-#include <roken.h>
-
-static int
-listen_v4 (int port)
-{
-     struct sockaddr_in sa;
-     int s;
-
-     s = socket(AF_INET, SOCK_STREAM, 0);
-     if(s < 0) {
-	 if (errno == ENOSYS)
-	     return -1;
-	  perror("socket");
-	  exit(1);
-     }
-     socket_set_reuseaddr (s, 1);
-     memset(&sa, 0, sizeof(sa));
-     sa.sin_family      = AF_INET;
-     sa.sin_port        = port;
-     sa.sin_addr.s_addr = INADDR_ANY;
-     if(bind(s, (struct sockaddr*)&sa, sizeof(sa)) < 0){
-	  perror("bind");
-	  exit(1);
-     }
-     if(listen(s, SOMAXCONN) < 0){
-	  perror("listen");
-	  exit(1);
-     }
-     return s;
-}
-
-#ifdef HAVE_IPV6
-static int
-listen_v6 (int port)
-{
-     struct sockaddr_in6 sa;
-     int s;
-
-     s = socket(AF_INET6, SOCK_STREAM, 0);
-     if(s < 0) {
-	 if (errno == ENOSYS)
-	     return -1;
-	 perror("socket");
-	 exit(1);
-     }
-     socket_set_reuseaddr (s, 1);
-     memset(&sa, 0, sizeof(sa));
-     sa.sin6_family = AF_INET6;
-     sa.sin6_port   = port;
-     sa.sin6_addr   = in6addr_any;
-     if(bind(s, (struct sockaddr*)&sa, sizeof(sa)) < 0){
-	  perror("bind");
-	  exit(1);
-     }
-     if(listen(s, SOMAXCONN) < 0){
-	  perror("listen");
-	  exit(1);
-     }
-     return s;
-}
-#endif /* HAVE_IPV6 */
+#include <err.h>
+#include "roken.h"
 
 /*
  * accept a connection on `s' and pretend it's served by inetd.
@@ -132,11 +48,9 @@ accept_it (int s)
 {
     int s2;
 
-    s2 = accept(s, NULL, 0);
-    if(s2 < 0){
-	perror("accept");
-	exit(1);
-    }
+    s2 = accept(s, NULL, NULL);
+    if(s2 < 0)
+	err (1, "accept");
     close(s);
     dup2(s2, STDIN_FILENO);
     dup2(s2, STDOUT_FILENO);
@@ -151,48 +65,74 @@ accept_it (int s)
 void
 mini_inetd (int port)
 {
-    int ret;
-    int max_fd = -1;
-    int sock_v4 = -1;
-    int sock_v6 = -1;
+    int error, ret;
+    struct addrinfo *ai, *a, hints;
+    char portstr[NI_MAXSERV];
+    int n, nalloc, i;
+    int *fds;
     fd_set orig_read_set, read_set;
+    int max_fd = -1;
+
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_flags    = AI_PASSIVE;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family   = PF_UNSPEC;
+
+    snprintf (portstr, sizeof(portstr), "%d", ntohs(port));
+
+    error = getaddrinfo (NULL, portstr, &hints, &ai);
+    if (error)
+	errx (1, "getaddrinfo: %s", gai_strerror (error));
+
+    for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
+	++nalloc;
+
+    fds = malloc (nalloc * sizeof(*fds));
+    if (fds == NULL)
+	errx (1, "mini_inetd: out of memory");
 
     FD_ZERO(&orig_read_set);
 
-    sock_v4 = listen_v4 (port);
-    if (sock_v4 >= 0) {
-	max_fd  = max(max_fd, sock_v4);
-	if (max_fd >= FD_SETSIZE)
+    for (i = 0, a = ai; a != NULL; a = a->ai_next) {
+	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	if (fds[i] < 0) {
+	    warn ("socket af = %d", a->ai_family);
+	    continue;
+	}
+	socket_set_reuseaddr (fds[i], 1);
+	if (bind (fds[i], a->ai_addr, a->ai_addrlen) < 0) {
+	    warn ("bind af = %d", a->ai_family);
+	    close(fds[i]);
+	    continue;
+	}
+	if (listen (fds[i], SOMAXCONN) < 0) {
+	    warn ("listen af = %d", a->ai_family);
+	    close(fds[i]);
+	    continue;
+	}
+	if (fds[i] >= FD_SETSIZE)
 	    errx (1, "fd too large");
-	FD_SET(sock_v4, &orig_read_set);
+	FD_SET(fds[i], &orig_read_set);
+	max_fd = max(max_fd, fds[i]);
+	++i;
     }
-#ifdef HAVE_IPV6
-    sock_v6 = listen_v6 (port);
-    if (sock_v6 >= 0) {
-	max_fd  = max(max_fd, sock_v6);
-	if (max_fd >= FD_SETSIZE)
-	    errx (1, "fd too large");
-	FD_SET(sock_v6, &orig_read_set);
-    }
-#endif    
+    freeaddrinfo (ai);
+    if (i == 0)
+	errx (1, "no sockets");
+    n = i;
 
     do {
 	read_set = orig_read_set;
 
 	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
-	if (ret < 0 && ret != EINTR) {
-	    perror ("select");
-	    exit (1);
-	}
+	if (ret < 0 && errno != EINTR)
+	    err (1, "select");
     } while (ret <= 0);
 
-    if (sock_v4 > 0 && FD_ISSET (sock_v4, &read_set)) {
-	accept_it (sock_v4);
-	return;
-    }
-    if (sock_v6 > 0 && FD_ISSET (sock_v6, &read_set)) {
-	accept_it (sock_v6);
-	return;
-    }
+    for (i = 0; i < n; ++i)
+	if (FD_ISSET (fds[i], &read_set)) {
+	    accept_it (fds[i]);
+	    return;
+	}
     abort ();
 }

@@ -34,7 +34,7 @@
 /*
  * Add here functions that don't have a prototype on your system.
  *
- * $KTH: protos.hin,v 1.46.2.1 2000/12/13 14:41:38 assar Exp $
+ * $KTH: protos.hin,v 1.46 1999/12/02 16:58:36 joda Exp $
  */
 
 #ifdef NEED_CRYPT_PROTO

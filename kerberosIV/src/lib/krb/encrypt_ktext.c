@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,14 +33,14 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: encrypt_ktext.c,v 1.5 1999/12/02 16:58:41 joda Exp $");
+RCSID("$KTH: encrypt_ktext.c,v 1.8 2001/09/16 22:41:58 assar Exp $");
 
 void
 encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt)
 {
     des_key_schedule schedule;
     des_set_key(key, schedule);
-    des_pcbc_encrypt((des_cblock*)cip->dat, (des_cblock*)cip->dat, 
+    des_pcbc_encrypt(cip->dat, cip->dat, 
 		     cip->length, schedule, key, encrypt);
     memset(schedule, 0, sizeof(des_key_schedule));
 }

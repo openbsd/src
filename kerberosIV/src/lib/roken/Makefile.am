@@ -1,41 +1,52 @@
-# $KTH: Makefile.am,v 1.54 1999/12/03 04:04:13 assar Exp $
+# $KTH: Makefile.am,v 1.116.2.1 2001/10/27 17:49:07 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-CLEANFILES = roken.h make-roken.c print_version.h
+ACLOCAL_AMFLAGS = -I ../../cf
+
+CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 3:2:0
+libroken_la_LDFLAGS = -version-info 15:0:6
 
-noinst_PROGRAMS = make-roken make-print-version
+noinst_PROGRAMS = make-roken snprintf-test
 
-check_PROGRAMS = parse_bytes-test strpftime-test getaddrinfo-test
+nodist_make_roken_SOURCES = make-roken.c
+
+check_PROGRAMS = 				\
+		base64-test			\
+		getaddrinfo-test		\
+		parse_bytes-test		\
+		snprintf-test			\
+		strpftime-test
+
 TESTS = $(check_PROGRAMS)
 
-getaddrinfo_test_LDADD = libroken.la
-parse_bytes_test_LDADD = libroken.la
-strpftime_test_LDADD = strftime.o strptime.o
+LIB_crypt = @LIB_crypt@
 
-if KRB4
-if KRB5
-## need to link with des here; otherwise, if krb4 is shared the link
-## will fail with unresolved references
-make_print_version_LDADD += $(LIB_krb4) -ldes
-endif
-endif
+LDADD = libroken.la $(LIB_crypt)
+make_roken_LDADD = 
+
+strpftime_test_SOURCES	= strpftime-test.c strftime.c strptime.c snprintf.c
+snprintf_test_SOURCES	= snprintf-test.c snprintf.c
+snprintf_test_CFLAGS	= -DTEST_SNPRINTF
 
 libroken_la_SOURCES =		\
 	base64.c		\
+	bswap.c			\
 	concat.c		\
-	emalloc.c		\
+	environment.c		\
 	eread.c			\
-	erealloc.c		\
-	estrdup.c		\
+	esetenv.c		\
 	ewrite.c		\
+	getaddrinfo_hostspec.c	\
 	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
-	inaddr2str.c		\
+	getnameinfo_verified.c	\
+	getprogname.c		\
+	h_errno.c		\
+	hostent_find_fqdn.c	\
 	issuid.c		\
 	k_getpwnam.c		\
 	k_getpwuid.c		\
@@ -45,47 +56,59 @@ libroken_la_SOURCES =		\
 	parse_bytes.c		\
 	parse_time.c		\
 	parse_units.c		\
-	print_version.c		\
 	resolve.c		\
 	roken_gethostby.c	\
+	rtbl.c			\
+	rtbl.h			\
+	setprogname.c		\
 	signal.c		\
 	simple_exec.c		\
 	snprintf.c		\
 	socket.c		\
+	strcollect.c		\
+	timeval.c		\
 	tm2time.c		\
+	unvis.c			\
 	verify.c		\
+	vis.c			\
+	vis.h			\
 	warnerr.c		\
+	write_pid.c		\
 	xdbm.h
 
 EXTRA_libroken_la_SOURCES =	\
 	chown.c			\
 	copyhostent.c		\
 	daemon.c		\
+	ecalloc.c		\
+	emalloc.c		\
+	erealloc.c		\
+	estrdup.c		\
 	err.c			\
-	err.h			\
+	err.hin			\
 	errx.c			\
 	fchown.c		\
 	flock.c			\
 	fnmatch.c		\
-	fnmatch.h		\
+	fnmatch.hin		\
 	freeaddrinfo.c		\
 	freehostent.c		\
 	gai_strerror.c		\
-	getaddrinfo.c		\
 	getdtablesize.c		\
 	getegid.c		\
 	geteuid.c		\
 	getgid.c		\
 	gethostname.c		\
+	getifaddrs.c		\
 	getipnodebyaddr.c	\
 	getipnodebyname.c	\
-	getnameinfo.c		\
 	getopt.c		\
 	gettimeofday.c		\
 	getuid.c		\
 	getusershell.c		\
-	glob.h			\
+	glob.hin		\
 	hstrerror.c		\
+	ifaddrs.hin		\
 	inet_aton.c		\
 	inet_ntop.c		\
 	inet_pton.c		\
@@ -115,12 +138,14 @@ EXTRA_libroken_la_SOURCES =	\
 	strnlen.c		\
 	strptime.c		\
 	strsep.c		\
+	strsep_copy.c		\
 	strtok_r.c		\
 	strupr.c		\
 	swab.c			\
 	unsetenv.c		\
 	verr.c			\
 	verrx.c			\
+	vis.hin			\
 	vsyslog.c		\
 	vwarn.c			\
 	vwarnx.c		\
@@ -128,20 +153,13 @@ EXTRA_libroken_la_SOURCES =	\
 	warnx.c			\
 	writev.c
 
-EXTRA_DIST = resource.h roken.awk roken.def roken.dsp roken.h.in \
-	roken.mak roken.rc
+EXTRA_DIST = roken.awk roken.h.in
 
+libroken_la_LIBADD = @LTLIBOBJS@ $(DBLIB)
 
+$(LTLIBOBJS) $(libroken_la_OBJECTS): $(include_HEADERS) roken.h $(XHEADERS)
 
-libroken_la_LIBADD = @LTLIBOBJS@
-
-$(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h
-
-include_HEADERS = $(err_h) base64.h getarg.h \
-	parse_bytes.h parse_time.h parse_units.h \
-	resolve.h roken.h roken-common.h
-
-build_HEADERZ = $(err_h) $(fnmatch_h) $(glob_h) xdbm.h
+BUILT_SOURCES = make-roken.c roken.h
 
 if have_err_h
 err_h =
@@ -161,17 +179,45 @@ else
 glob_h = glob.h
 endif
 
-roken.h: make-roken
-	@./make-roken > tmp.h ;\
+if have_ifaddrs_h
+ifaddrs_h =
+else
+ifaddrs_h = ifaddrs.h
+endif
+
+if have_vis_h
+vis_h = 
+else
+vis_h = vis.h
+endif
+
+## these are controlled by configure
+XHEADERS = $(err_h) $(fnmatch_h) $(glob_h) $(ifaddrs_h) $(vis_h)
+
+include_HEADERS = 				\
+	base64.h				\
+	getarg.h				\
+	parse_bytes.h 				\
+	parse_time.h 				\
+	parse_units.h				\
+	resolve.h 				\
+	roken-common.h 				\
+	rtbl.h 					\
+	xdbm.h					\
+	$(XHEADERS) 
+
+nodist_include_HEADERS = roken.h
+
+man_MANS = getarg.3
+
+SUFFIXES = .hin
+.hin.h:
+	cp $< $@
+
+roken.h: make-roken$(EXEEXT)
+	@./make-roken$(EXEEXT) > tmp.h ;\
 	if [ -f roken.h ] && cmp -s tmp.h roken.h ; then rm -f tmp.h ; \
 	else rm -f roken.h; mv tmp.h roken.h; fi
 
 make-roken.c: roken.h.in roken.awk
 	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
-
-print_version.lo: print_version.h
-
-print_version.h: make-print-version
-	./make-print-version print_version.h
-
-make-print-version.o: $(top_builddir)/include/version.h

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$KTH: ring.c,v 1.10 1997/05/04 04:01:08 assar Exp $");
+RCSID("$KTH: ring.c,v 1.11 2000/02/06 05:15:21 assar Exp $");
 
 /*
  * This defines a structure for a ring buffer.
@@ -288,7 +288,7 @@ ring_consume_data(Ring *ring, unsigned char *buffer, int count)
 
 #if	defined(ENCRYPTION)
 void
-ring_encrypt(Ring *ring, void (*encryptor)())
+ring_encrypt(Ring *ring, void (*encryptor)(unsigned char *, int))
 {
     unsigned char *s, *c;
 

@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: kdc_reply.c,v 1.12.2.2 2000/12/04 14:34:28 assar Exp $");
+RCSID("$KTH: kdc_reply.c,v 1.14 2000/12/04 14:33:35 assar Exp $");
 
 static int little_endian; /* XXX ugly */
 

@@ -1,12 +1,15 @@
-# $KTH: Makefile.am,v 1.7 1999/04/09 18:22:45 assar Exp $
+# $KTH: Makefile.am,v 1.12 2001/08/28 22:08:22 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4)
+INCLUDES += $(INCLUDE_krb4) -DBINDIR=\"$(bindir)\"
 
 bin_PROGRAMS = kauth
 bin_SCRIPTS = ksrvtgt
 libexec_PROGRAMS = kauthd
+CLEANFILES = $(bin_SCRIPTS)
+
+man_MANS = kauth.1 ksrvtgt.1 kauthd.8 
 
 EXTRA_DIST = zrefresh ksrvtgt.in
 
@@ -28,15 +31,14 @@ ksrvtgt: ksrvtgt.in
 	chmod +x $@
 
 install-exec-local:
-	if test -f $(bindir)/zrefresh -o -r  $(bindir)/zrefresh; then \
+	if test -f $(DESTDIR)$(bindir)/zrefresh -o -r $(DESTDIR)$(bindir)/zrefresh; then \
 	  true; \
 	else \
-	  $(INSTALL_PROGRAM) $(srcdir)/zrefresh $(bindir)/`echo zrefresh | sed '$(transform)'`; \
+	  $(INSTALL_SCRIPT) $(srcdir)/zrefresh $(DESTDIR)$(bindir)/`echo zrefresh | sed '$(transform)'`; \
 	fi
 
 LDADD = \
-	$(LIB_kafs)				\
-	$(LIB_krb5)				\
-	$(LIB_krb4)				\
-	$(top_builddir)/lib/des/libdes.la	\
+	$(LIB_kafs) \
+	$(LIB_krb4) \
+	$(LIB_des) \
 	$(LIB_roken)

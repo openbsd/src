@@ -1,4 +1,4 @@
-$KTH: dir,v 1.1 1997/06/12 16:15:21 joda Exp $
+$KTH: dir,v 1.2 1999/12/31 01:13:16 assar Exp $
 This is the file .../info/dir, which contains the topmost node of the
 Info hierarchy.  The first time you invoke Info you start off
 looking at that node, which is (dir)Top.
@@ -15,3 +15,4 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Menu: 
 
+* Kth-krb: (kth-krb).           The Kerberos IV distribution from KTH

@@ -1,7 +1,15 @@
+
 Digital SIA
 -----------
 
-To install the SIA module you will have to do the following:
+How to install the SIA module depends on which OS version you're
+running. Tru64 5.0 have a new command, `siacfg', which makes this
+process quite simple. If you have this program, you should just be able
+to run:
+     siacfg -a KRB4 /usr/athena/lib/libsia_krb4.so
+
+On older versions, or if you want to do it by hand, you have to do the
+following (not tested by us on Tru64 5.0):
 
    * Make sure `libsia_krb4.so' is available in `/usr/athena/lib'. If
      `/usr/athena' is not on local disk, you might want to put it in
@@ -58,7 +66,7 @@ following.
      the default entry `/usr/tcb/bin/edauth -dd default', and add a
      `d_accept_alternate_vouching' capability, if not already present.
 
-   * For each user that does *not* have a local C2 password, you should
+   * For each user that does _not_ have a local C2 password, you should
      set the password expiration field to zero. You can do this for each
      user, or in the `default' table. To do this use `edauth' to set
      (or change) the `u_exp' capability to `u_exp#0'.
@@ -77,7 +85,7 @@ Also, kerberised ftp will not work with C2 passwords. You can solve this
 by using both Digital's ftpd and our on different ports.
 
 *Remember*, if you do these changes you will get a system that most
-certainly does *not* fulfill the requirements of a C2 system. If C2 is
+certainly does _not_ fulfill the requirements of a C2 system. If C2 is
 what you want, for instance if someone else is forcing you to use it,
 you're out of luck.  If you use enhanced security because you want a
 system that is more secure than it would otherwise be, you probably got

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: otp.c,v 1.7 1999/12/02 16:58:44 joda Exp $");
+RCSID("$KTH: otp.c,v 1.8 2000/07/12 00:26:43 assar Exp $");
 #endif
 
 #include "otp_locl.h"

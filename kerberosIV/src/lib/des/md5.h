@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: md5.h,v 1.6 1999/12/02 16:58:38 joda Exp $ */
+/* $KTH: md5.h,v 1.8 2001/01/29 02:08:57 assar Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -47,40 +47,13 @@
 #endif
 
 struct md5 {
-  unsigned int offset;
-  unsigned int sz;
+  unsigned int sz[2];
   u_int32_t counter[4];
   unsigned char save[64];
 };
 
-void md5_init (struct md5 *m);
-void md5_update (struct md5 *m, const void *p, size_t len);
-void md5_finito (struct md5 *m, void *res); /* u_int32_t res[4] */
+typedef struct md5 MD5_CTX;
 
-/*
- * Functions for compatibility that have never been tested.
- */
-typedef struct {
-  u_int32_t i[2];		/* number of _bits_ handled mod 2^64 */
-  u_int32_t buf[4];		/* scratch buffer */
-  unsigned char in[64];		/* input buffer */
-} MD5_CTX_PREAMBLE;
-
-typedef struct {
-  union {
-    MD5_CTX_PREAMBLE preamble_;
-    struct md5 d5;
-  } m;
-} MD5_CTX;
-
-void MD5Init (MD5_CTX *mdContext);
-void MD5Update (MD5_CTX *mdContext,
-		const unsigned char *inBuf,
-		unsigned int inLen);
-void MD5Final (unsigned char digest[16], MD5_CTX *mdContext);
-
-#ifndef NO_MD5_MACROS
-#define MD5Init(mdContext) md5_init(&(mdContext)->m.d5)
-#define MD5Update(mdCtx, inBuf, inLen) md5_update(&(mdCtx)->m.d5, inBuf, inLen)
-#define MD5Final(digest, mdCtx) md5_finito(&(mdCtx)->m.d5, (digest))
-#endif
+void MD5_Init (struct md5 *m);
+void MD5_Update (struct md5 *m, const void *p, size_t len);
+void MD5_Final (void *res, struct md5 *m); /* u_int32_t res[4] */

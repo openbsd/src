@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: rd_priv.c,v 1.27 1999/12/02 16:58:43 joda Exp $");
+RCSID("$KTH: rd_priv.c,v 1.30 2001/09/16 22:41:58 assar Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -83,7 +83,7 @@ krb_rd_priv(void *in, u_int32_t in_length,
     if(clen + 2 > in_length)
 	return RD_AP_MODIFIED;
 
-    des_pcbc_encrypt((des_cblock*)p, (des_cblock*)p, clen, 
+    des_pcbc_encrypt(p, p, clen, 
 		     schedule, key, DES_DECRYPT);
     
     p += krb_get_int(p, &m_data->app_length, 4, little_endian);

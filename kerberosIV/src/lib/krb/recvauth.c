@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$KTH: recvauth.c,v 1.19 1998/06/09 19:25:25 joda Exp $");
+RCSID("$KTH: recvauth.c,v 1.21 2001/08/26 02:52:18 assar Exp $");
 
 /*
  * krb_recvauth() reads (and optionally responds to) a message sent
@@ -111,7 +111,6 @@ krb_recvauth(int32_t options,	/* bit-pattern of options */
 	     struct des_ks_struct *schedule, /* key schedule (return) */
 	     char *version)	/* version string (filled in) */
 {
-    int cc;
     char krb_vers[KRB_SENDAUTH_VLEN + 1]; /* + 1 for the null terminator */
     int rem;
     int32_t priv_len;
@@ -185,7 +184,7 @@ krb_recvauth(int32_t options,	/* bit-pattern of options */
 	/* mk_priv will never fail */
 	priv_len += krb_put_int(priv_len, tmp_buf, 4, 4);
 	
-	if((cc = krb_net_write(fd, tmp_buf, priv_len)) != priv_len)
+	if(krb_net_write(fd, tmp_buf, priv_len) != priv_len)
 	    return -1;
     }
     return rem;

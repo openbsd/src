@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$KTH: krb5.c,v 1.4 1999/12/02 16:58:32 joda Exp $");
+RCSID("$KTH: krb5.c,v 1.7 2000/12/31 07:32:03 assar Exp $");
 
 #ifdef KRB5
 
@@ -265,6 +265,11 @@ krb5_copy_encrypted (kx_context *kc, int fd1, int fd2)
 	fd_set fdset;
 	int ret;
 
+	if (fd1 >= FD_SETSIZE || fd2 >= FD_SETSIZE) {
+	    warnx ("fd too large");
+	    return 1;
+	}
+
 	FD_ZERO(&fdset);
 	FD_SET(fd1, &fdset);
 	FD_SET(fd2, &fdset);
@@ -298,10 +303,12 @@ krb5_userok (kx_context *kc, char *user)
     krb5_kx_context *c = (krb5_kx_context *)kc->data;
     krb5_context context = c->context;
     krb5_error_code ret;
+    char *tmp;
 
-    ret = krb5_unparse_name (context, c->client, &kc->user);
+    ret = krb5_unparse_name (context, c->client, &tmp);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_unparse_name");
+    kc->user = tmp;
 
     return !krb5_kuserok (context, c->client, user);
 }
@@ -314,6 +321,7 @@ void
 krb5_make_context (kx_context *kc)
 {
     krb5_kx_context *c;
+    krb5_error_code ret;
 
     kc->authenticate	= krb5_authenticate;
     kc->userok		= krb5_userok;
@@ -328,7 +336,9 @@ krb5_make_context (kx_context *kc)
 	err (1, "malloc");
     memset (kc->data, 0, sizeof(krb5_kx_context));
     c = (krb5_kx_context *)kc->data;
-    krb5_init_context (&c->context);
+    ret = krb5_init_context (&c->context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 }
 
 /*

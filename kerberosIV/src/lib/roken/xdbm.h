@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,26 +31,27 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xdbm.h,v 1.6.2.1 2000/08/16 04:11:29 assar Exp $ */
+/* $KTH: xdbm.h,v 1.14 2001/09/03 05:03:00 assar Exp $ */
 
 /* Generic *dbm include file */
 
 #ifndef __XDBM_H__
 #define __XDBM_H__
 
-#ifdef HAVE_NDBM_H
-#include <ndbm.h>
-#elif defined(HAVE_GDBM_NDBM_H)
-#include <gdbm/ndbm.h>
-#elif defined(HAVE_DBM_H)
-#include <dbm.h>
-#elif defined(HAVE_RPCSVC_DBM_H)
-#include <rpcsvc/dbm.h>
-#elif defined(HAVE_DB_H)
+#if HAVE_DB_NDBM
 #define DB_DBM_HSEARCH 1
 #include <db.h>
+#elif HAVE_NDBM
+#if defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
+#elif defined(HAVE_NDBM_H)
+#include <ndbm.h>
+#elif defined(HAVE_DBM_H)
+#include <dbm.h>
 #endif
+#endif /* HAVE_NDBM */
 
+#if 0
 /* Macros to convert ndbm names to dbm names.
  * Note that dbm_nextkey() cannot be simply converted using a macro, since
  * it is invoked giving the database, and nextkey() needs the previous key.
@@ -58,7 +59,7 @@
  * Instead, all routines call "dbm_next" instead.
  */
 
-#ifndef NDBM
+#if !defined(NDBM) && !defined(HAVE_DB_H)
 typedef char DBM;
 
 #define dbm_open(file, flags, mode) ((dbminit(file) == 0)?"":((char *)0))
@@ -70,6 +71,7 @@ typedef char DBM;
 #define dbm_close(db) dbmclose()
 #else
 #define dbm_next(db,key) dbm_nextkey(db)
+#endif
 #endif
 
 #endif /* __XDBM_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$KTH: sha.c,v 1.13 1999/12/02 16:58:39 joda Exp $");
+RCSID("$KTH: sha.c,v 1.16 2001/01/29 04:33:44 assar Exp $");
 #endif
 
 #include "sha.h"
@@ -48,10 +48,10 @@ RCSID("$KTH: sha.c,v 1.13 1999/12/02 16:58:39 joda Exp $");
 #define X data
 
 void
-sha_init (struct sha *m)
+SHA1_Init (struct sha *m)
 {
-  m->offset = 0;
-  m->sz = 0;
+  m->sz[0] = 0;
+  m->sz[1] = 0;
   A = 0x67452301;
   B = 0xefcdab89;
   C = 0x98badcfe;
@@ -225,17 +225,23 @@ struct x32{
 };
 
 void
-sha_update (struct sha *m, const void *v, size_t len)
+SHA1_Update (struct sha *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
-  m->sz += len;
+  size_t old_sz = m->sz[0];
+  size_t offset;
+
+  m->sz[0] += len * 8;
+  if (m->sz[0] < old_sz)
+      ++m->sz[1];
+  offset = (old_sz / 8)  % 64;
   while(len > 0){
-    size_t l = min(len, 64 - m->offset);
-    memcpy(m->save + m->offset, p, l);
-    m->offset += l;
+    size_t l = min(len, 64 - offset);
+    memcpy(m->save + offset, p, l);
+    offset += l;
     p += l;
     len -= l;
-    if(m->offset == 64){
+    if(offset == 64){
 #if !defined(WORDS_BIGENDIAN) || defined(_CRAY)
       int i;
       u_int32_t current[16];
@@ -248,26 +254,29 @@ sha_update (struct sha *m, const void *v, size_t len)
 #else
       calc(m, (u_int32_t*)m->save);
 #endif
-      m->offset = 0;
+      offset = 0;
     }
   }
 }
 
 void
-sha_finito (struct sha *m, void *res)
+SHA1_Final (void *res, struct sha *m)
 {
   static unsigned char zeros[72];
-  u_int32_t len;
-  unsigned int dstart = (120 - m->offset - 1) % 64 + 1;
+  unsigned offset = (m->sz[0] / 8) % 64;
+  unsigned int dstart = (120 - offset - 1) % 64 + 1;
 
   *zeros = 0x80;
   memset (zeros + 1, 0, sizeof(zeros) - 1);
-  len = 8 * m->sz;
-  zeros[dstart+7] = (len >> 0) & 0xff;
-  zeros[dstart+6] = (len >> 8) & 0xff;
-  zeros[dstart+5] = (len >> 16) & 0xff;
-  zeros[dstart+4] = (len >> 24) & 0xff;
-  sha_update (m, zeros, dstart + 8);
+  zeros[dstart+7] = (m->sz[0] >> 0) & 0xff;
+  zeros[dstart+6] = (m->sz[0] >> 8) & 0xff;
+  zeros[dstart+5] = (m->sz[0] >> 16) & 0xff;
+  zeros[dstart+4] = (m->sz[0] >> 24) & 0xff;
+  zeros[dstart+3] = (m->sz[1] >> 0) & 0xff;
+  zeros[dstart+2] = (m->sz[1] >> 8) & 0xff;
+  zeros[dstart+1] = (m->sz[1] >> 16) & 0xff;
+  zeros[dstart+0] = (m->sz[1] >> 24) & 0xff;
+  SHA1_Update (m, zeros, dstart + 8);
   {
       int i;
       unsigned char *r = (unsigned char*)res;

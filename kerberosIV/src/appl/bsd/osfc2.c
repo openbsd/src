@@ -32,7 +32,7 @@
  */
 
 #include "bsd_locl.h"
-RCSID("$KTH: osfc2.c,v 1.2 1999/12/02 16:58:28 joda Exp $");
+RCSID("$KTH: osfc2.c,v 1.3 2001/02/20 23:07:50 assar Exp $");
 
 int
 do_osfc2_magic(uid_t uid)
@@ -42,7 +42,7 @@ do_osfc2_magic(uid_t uid)
     char *argv[2];
     
     /* fake */
-    argv[0] = (char*)__progname;
+    argv[0] = (char*)getprogname();
     argv[1] = NULL;
     set_auth_parameters(1, argv);
     

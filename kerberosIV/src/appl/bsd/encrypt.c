@@ -46,7 +46,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: encrypt.c,v 1.4 1999/06/17 18:47:26 assar Exp $");
+RCSID("$KTH: encrypt.c,v 1.6 2001/09/09 20:27:22 assar Exp $");
 
 /* replacements for htonl and ntohl since I have no idea what to do
  * when faced with machines with 8 byte longs. */
@@ -68,7 +68,7 @@ int des_rw_mode=DES_PCBC_MODE;
 int LEFT_JUSTIFIED = 0;
 
 int
-des_enc_read(int fd, char *buf, int len, struct des_ks_struct *sched, des_cblock *iv)
+bsd_des_enc_read(int fd, char *buf, int len, struct des_ks_struct *sched, des_cblock *iv)
 {
   /* data to be unencrypted */
   int net_num=0;
@@ -213,7 +213,7 @@ des_enc_read(int fd, char *buf, int len, struct des_ks_struct *sched, des_cblock
 }
 
 int
-des_enc_write(int fd, char *buf, int len, struct des_ks_struct *sched, des_cblock *iv)
+bsd_des_enc_write(int fd, char *buf, int len, struct des_ks_struct *sched, des_cblock *iv)
 {
   long rnum;
   int i,j,k,outnum;
@@ -227,7 +227,9 @@ des_enc_write(int fd, char *buf, int len, struct des_ks_struct *sched, des_cbloc
   if (start)
     {
       start=0;
+#ifndef HAVE_ARC4RANDOM
       srand(time(NULL));
+#endif
     }
 
   /* lets recurse if we want to send the data in small chunks */
@@ -236,7 +238,7 @@ des_enc_write(int fd, char *buf, int len, struct des_ks_struct *sched, des_cbloc
       j=0;
       for (i=0; i<len; i+=k)
 	{
-	  k=des_enc_write(fd,&(buf[i]),
+	  k=bsd_des_enc_write(fd,&(buf[i]),
 			  ((len-i) > DES_RW_MAXWRITE)?DES_RW_MAXWRITE:(len-i),sched,iv);
 	  if (k < 0)
 	    return(k);
@@ -258,14 +260,22 @@ des_enc_write(int fd, char *buf, int len, struct des_ks_struct *sched, des_cbloc
 		p=shortbuf;
 		memcpy(shortbuf,buf,(unsigned int)len);
 		for (i=len; i<8; i++)
+#ifdef HAVE_ARC4RANDOM
+		    shortbuf[i]=arc4random();
+#else
 		    shortbuf[i]=rand();
+#endif
 		rnum=8;
 	    }
 	else
 	    {
 		p=shortbuf;
 		for (i=0; i<8-len; i++)
+#ifdef HAVE_ARC4RANDOM
+		    shortbuf[i]=arc4random();
+#else
 		    shortbuf[i]=rand();
+#endif
 		memcpy(shortbuf + 8 - len, buf, len);
 		rnum=8;
 	    }

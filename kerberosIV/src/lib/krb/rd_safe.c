@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: rd_safe.c,v 1.26.2.1 2000/10/10 13:20:36 assar Exp $");
+RCSID("$KTH: rd_safe.c,v 1.28 2001/09/16 22:41:58 assar Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -60,7 +60,7 @@ void
 fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
 		 void *new_checksum, void *old_checksum, int little)
 {
-    des_quad_cksum((des_cblock*)start, (des_cblock*)new_checksum, len, 2, key);
+    des_quad_cksum(start, new_checksum, len, 2, key);
     if(HOST_BYTE_ORDER){
 	if(little){
 	    memcpy(old_checksum, new_checksum, 16);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$KTH: md5.c,v 1.12 1999/12/02 16:58:38 joda Exp $");
+RCSID("$KTH: md5.c,v 1.15 2001/01/29 04:33:44 assar Exp $");
 #endif
 
 #include "md5.h"
@@ -47,10 +47,10 @@ RCSID("$KTH: md5.c,v 1.12 1999/12/02 16:58:38 joda Exp $");
 #define X data
 
 void
-md5_init (struct md5 *m)
+MD5_Init (struct md5 *m)
 {
-  m->offset = 0;
-  m->sz = 0;
+  m->sz[0] = 0;
+  m->sz[1] = 0;
   D = 0x10325476;
   C = 0x98badcfe;
   B = 0xefcdab89;
@@ -199,17 +199,23 @@ struct x32{
 };
 
 void
-md5_update (struct md5 *m, const void *v, size_t len)
+MD5_Update (struct md5 *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
-  m->sz += len;
+  size_t old_sz = m->sz[0];
+  size_t offset;
+
+  m->sz[0] += len * 8;
+  if (m->sz[0] < old_sz)
+      ++m->sz[1];
+  offset = (old_sz / 8)  % 64;
   while(len > 0){
-    size_t l = min(len, 64 - m->offset);
-    memcpy(m->save + m->offset, p, l);
-    m->offset += l;
+    size_t l = min(len, 64 - offset);
+    memcpy(m->save + offset, p, l);
+    offset += l;
     p += l;
     len -= l;
-    if(m->offset == 64){
+    if(offset == 64){
 #if defined(WORDS_BIGENDIAN)
       int i;
       u_int32_t current[16];
@@ -222,26 +228,29 @@ md5_update (struct md5 *m, const void *v, size_t len)
 #else
       calc(m, (u_int32_t*)m->save);
 #endif
-      m->offset = 0;
+      offset = 0;
     }
   }
 }
 
 void
-md5_finito (struct md5 *m, void *res)
+MD5_Final (void *res, struct md5 *m)
 {
   static unsigned char zeros[72];
-  u_int32_t len;
-  unsigned int dstart = (120 - m->offset - 1) % 64 + 1;
+  unsigned offset = (m->sz[0] / 8) % 64;
+  unsigned int dstart = (120 - offset - 1) % 64 + 1;
 
   *zeros = 0x80;
   memset (zeros + 1, 0, sizeof(zeros) - 1);
-  len = 8 * m->sz;
-  zeros[dstart+0] = (len >> 0) & 0xff;
-  zeros[dstart+1] = (len >> 8) & 0xff;
-  zeros[dstart+2] = (len >> 16) & 0xff;
-  zeros[dstart+3] = (len >> 24) & 0xff;
-  md5_update (m, zeros, dstart + 8);
+  zeros[dstart+0] = (m->sz[0] >> 0) & 0xff;
+  zeros[dstart+1] = (m->sz[0] >> 8) & 0xff;
+  zeros[dstart+2] = (m->sz[0] >> 16) & 0xff;
+  zeros[dstart+3] = (m->sz[0] >> 24) & 0xff;
+  zeros[dstart+4] = (m->sz[1] >> 0) & 0xff;
+  zeros[dstart+5] = (m->sz[1] >> 8) & 0xff;
+  zeros[dstart+6] = (m->sz[1] >> 16) & 0xff;
+  zeros[dstart+7] = (m->sz[1] >> 24) & 0xff;
+  MD5_Update (m, zeros, dstart + 8);
   {
       int i;
       unsigned char *r = (unsigned char *)res;
@@ -262,29 +271,4 @@ md5_finito (struct md5 *m, void *res)
       r[i] = swap_u_int32_t (m->counter[i]);
   }
 #endif
-}
-
-/*
- * This is only for linkage compatibility!
- */
-#undef MD5Init
-#undef MD5Update
-#undef MD5Final
-
-void
-MD5Init (MD5_CTX *mdContext)
-{
-  md5_init(&mdContext->m.d5);
-}
-
-void
-MD5Update (MD5_CTX *mdContext, const unsigned char *inBuf, unsigned int inLen)
-{
-  md5_update(&mdContext->m.d5, (const unsigned char *)inBuf, inLen);
-}
-
-void
-MD5Final (unsigned char digest[16], MD5_CTX *mdContext)
-{
-  md5_finito(&mdContext->m.d5, digest);
 }

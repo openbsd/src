@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: telnet_locl.h,v 1.18 1999/12/02 16:58:34 joda Exp $ */
+/* $KTH: telnet_locl.h,v 1.20.2.1 2002/02/06 03:43:22 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -138,6 +138,10 @@
 #include <netinet/ip.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
+#ifdef _AIX
+struct sockaddr_dl; /* AIX fun */
+struct ether_addr;
+#endif
 #include <arpa/inet.h>
 #endif
 
@@ -149,6 +153,7 @@
 #include <socks.h>
 #endif
 
+#include <err.h>
 #include <roken.h>
 /* krb.h? */
 
@@ -160,7 +165,9 @@
 #include <libtelnet/misc-proto.h>
 
 #define LINEMODE
+#ifndef KLUDGELINEMODE
 #define KLUDGELINEMODE
+#endif
 
 #include "ring.h"
 #include "externs.h"

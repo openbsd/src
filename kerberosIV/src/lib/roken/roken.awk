@@ -1,3 +1,5 @@
+# $KTH: roken.awk,v 1.7 2001/03/26 09:26:35 joda Exp $
+
 BEGIN {
 	print "#include <stdio.h>"
 	print "#ifdef HAVE_CONFIG_H"
@@ -11,11 +13,6 @@ BEGIN {
 	print "puts(\"#ifndef __ROKEN_H__\");"
 	print "puts(\"#define __ROKEN_H__\");"
 	print "puts(\"\");"
-}
-END {
-	print "puts(\"#endif /* __ROKEN_H__ */\");"
-	print "exit(0);"
-	print "}"
 }
 
 $1 == "\#ifdef" || $1 == "\#ifndef" || $1 == "\#if" || $1 == "\#else" || $1 == "\#elif" || $1 == "\#endif" || $1 == "#ifdef" || $1 == "#ifndef" || $1 == "#if" || $1 == "#else" || $1 == "#elif" || $1 == "#endif" {
@@ -32,4 +29,12 @@ $1 == "\#ifdef" || $1 == "\#ifndef" || $1 == "\#if" || $1 == "\#else" || $1 == "
 		s = s x;
 	}
 	print "puts(\"" s "\");"
+}
+
+END {
+	print "puts(\"#define ROKEN_VERSION \" VERSION );"
+	print "puts(\"\");"
+	print "puts(\"#endif /* __ROKEN_H__ */\");"
+	print "return 0;"
+	print "}"
 }

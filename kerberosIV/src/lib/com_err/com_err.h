@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_err.h,v 1.4.2.1 2000/06/23 03:23:05 assar Exp $ */
+/* $KTH: com_err.h,v 1.9 2001/05/11 20:03:36 assar Exp $ */
 
 /* MIT compatible com_err library */
 
@@ -40,17 +40,26 @@
 
 #include <com_right.h>
 
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(X)
+#endif
+
 typedef void (*errf) __P((const char *, long, const char *, va_list));
 
 const char * error_message __P((long));
 int init_error_table __P((const char**, long, int));
 
-void com_err_va __P((const char *, long, const char *, va_list));
-void com_err __P((const char *, long, const char *, ...));
+void com_err_va __P((const char *, long, const char *, va_list))
+    __attribute__((format(printf, 3, 0)));
+
+void com_err __P((const char *, long, const char *, ...))
+    __attribute__((format(printf, 3, 4)));
 
 errf set_com_err_hook __P((errf));
 errf reset_com_err_hook __P((void));
 
 const char *error_table_name  __P((int num));
+
+void add_to_error_table __P((struct et_list *new_table));
 
 #endif /* __COM_ERR_H__ */

@@ -31,7 +31,7 @@ or implied warranty.
 
 #include <kdc.h>
 
-RCSID("$KTH: krb_kdb_utils.c,v 1.25 1999/03/13 21:24:21 assar Exp $");
+RCSID("$KTH: krb_kdb_utils.c,v 1.27 2001/09/16 22:41:55 assar Exp $");
 
 /* always try /.k for backwards compatibility */
 static char *master_key_files[] = { MKEYFILE, "/.k", NULL };
@@ -142,7 +142,7 @@ kdb_new_get_new_master_key(des_cblock *key,
   des_key_sched(key, schedule);
   
   des_read_pw_string(buf, sizeof(buf), "Enter master key seed: ", 0);
-  des_cbc_cksum((des_cblock*)buf, key, sizeof(buf), schedule, key);
+  des_cbc_cksum(buf, key, sizeof(buf), schedule, key);
   memset(buf, 0, sizeof(buf));
 #endif
   des_key_sched(key, schedule);
@@ -196,8 +196,8 @@ kdb_encrypt_key (des_cblock (*in), des_cblock (*out),
 #ifdef NOENCRYPTION
   memcpy(out, in, sizeof(des_cblock));
 #else
-  des_pcbc_encrypt(in,out,(long)sizeof(des_cblock),master_key_sched,master_key,
-		   e_d_flag);
+  des_pcbc_encrypt((void *)in, (void *)out, sizeof(des_cblock),
+		   master_key_sched,master_key, e_d_flag);
 #endif
 }
 

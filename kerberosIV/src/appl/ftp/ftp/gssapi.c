@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,12 +37,14 @@
 #include "ftp_locl.h"
 #endif
 #include <gssapi.h>
+#include <krb5_err.h>
 
-RCSID("$KTH: gssapi.c,v 1.13 1999/12/02 16:58:29 joda Exp $");
+RCSID("$KTH: gssapi.c,v 1.17 2001/09/04 09:45:09 assar Exp $");
 
 struct gss_data {
     gss_ctx_id_t context_hdl;
     char *client_name;
+    gss_cred_id_t delegated_cred_handle;
 };
 
 static int
@@ -50,7 +52,17 @@ gss_init(void *app_data)
 {
     struct gss_data *d = app_data;
     d->context_hdl = GSS_C_NO_CONTEXT;
+    d->delegated_cred_handle = NULL;
+#if defined(FTP_SERVER)
     return 0;
+#else
+    /* XXX Check the gss mechanism; with  gss_indicate_mechs() ? */
+#ifdef KRB5
+    return !use_kerberos;
+#else
+    return 0
+#endif /* KRB5 */
+#endif /* FTP_SERVER */
 }
 
 static int
@@ -154,32 +166,41 @@ gss_adat(void *app_data, void *buf, size_t len)
     OM_uint32 maj_stat, min_stat;
     gss_name_t client_name;
     struct gss_data *d = app_data;
+    struct gss_channel_bindings_struct bindings;
 
-    gss_channel_bindings_t bindings = malloc(sizeof(*bindings));
     sockaddr_to_gss_address (his_addr,
-			     &bindings->initiator_addrtype,
-			     &bindings->initiator_address);
+			     &bindings.initiator_addrtype,
+			     &bindings.initiator_address);
     sockaddr_to_gss_address (ctrl_addr,
-			     &bindings->acceptor_addrtype,
-			     &bindings->acceptor_address);
+			     &bindings.acceptor_addrtype,
+			     &bindings.acceptor_address);
 
-    bindings->application_data.length = 0;
-    bindings->application_data.value = NULL;
+    bindings.application_data.length = 0;
+    bindings.application_data.value = NULL;
 
     input_token.value = buf;
     input_token.length = len;
+
+    d->delegated_cred_handle = malloc(sizeof(*d->delegated_cred_handle));
+    if (d->delegated_cred_handle == NULL) {
+       reply(500, "Out of memory");
+       goto out;
+    }
+
+    memset ((char*)d->delegated_cred_handle, 0,
+            sizeof(*d->delegated_cred_handle));
     
     maj_stat = gss_accept_sec_context (&min_stat,
 				       &d->context_hdl,
 				       GSS_C_NO_CREDENTIAL,
 				       &input_token,
-				       bindings,
+				       &bindings,
 				       &client_name,
 				       NULL,
 				       &output_token,
 				       NULL,
 				       NULL,
-				       NULL);
+                                       &d->delegated_cred_handle);
 
     if(output_token.length) {
 	if(base64_encode(output_token.value, output_token.length, &p) < 0) {
@@ -245,24 +266,21 @@ struct sec_server_mech gss_server_mech = {
 extern struct sockaddr *hisctladdr, *myctladdr;
 
 static int
-gss_auth(void *app_data, char *host)
+import_name(const char *kname, const char *host, gss_name_t *target_name)
 {
-    
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc name;
-    gss_name_t target_name;
-    gss_buffer_desc input, output_token;
-    int context_established = 0;
-    char *p;
-    int n;
-    gss_channel_bindings_t bindings;
-    struct gss_data *d = app_data;
-	    
-    name.length = asprintf((char**)&name.value, "ftp@%s", host);
+
+    name.length = asprintf((char**)&name.value, "%s@%s", kname, host);
+    if (name.value == NULL) {
+	printf("Out of memory\n");
+	return AUTH_ERROR;
+    }
+
     maj_stat = gss_import_name(&min_stat,
 			       &name,
 			       GSS_C_NT_HOSTBASED_SERVICE,
-			       &target_name);
+			       target_name);
     if (GSS_ERROR(maj_stat)) {
 	OM_uint32 new_stat;
 	OM_uint32 msg_ctx = 0;
@@ -281,7 +299,28 @@ gss_auth(void *app_data, char *host)
 	return AUTH_ERROR;
     }
     free(name.value);
+    return 0;
+}
+
+static int
+gss_auth(void *app_data, char *host)
+{
     
+    OM_uint32 maj_stat, min_stat;
+    gss_buffer_desc name;
+    gss_name_t target_name;
+    gss_buffer_desc input, output_token;
+    int context_established = 0;
+    char *p;
+    int n;
+    gss_channel_bindings_t bindings;
+    struct gss_data *d = app_data;
+
+    const char *knames[] = { "ftp", "host", NULL }, **kname = knames;
+	    
+    
+    if(import_name(*kname++, host, &target_name))
+	return AUTH_ERROR;
 
     input.length = 0;
     input.value = NULL;
@@ -304,7 +343,8 @@ gss_auth(void *app_data, char *host)
 					&d->context_hdl,
 					target_name,
 					GSS_C_NO_OID,
-					GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG,
+                                        GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG
+                                          | GSS_C_DELEG_FLAG,
 					0,
 					bindings,
 					&input,
@@ -316,6 +356,12 @@ gss_auth(void *app_data, char *host)
 	    OM_uint32 new_stat;
 	    OM_uint32 msg_ctx = 0;
 	    gss_buffer_desc status_string;
+
+	    if(min_stat == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN && *kname != NULL) {
+		if(import_name(*kname++, host, &target_name))
+		    return AUTH_ERROR;
+		continue;
+	    }
 	    
 	    gss_display_status(&new_stat,
 			       min_stat,
@@ -346,7 +392,8 @@ gss_auth(void *app_data, char *host)
 	if (maj_stat & GSS_S_CONTINUE_NEEDED) {
 	    p = strstr(reply_string, "ADAT=");
 	    if(p == NULL){
-		printf("Error: expected ADAT in reply.\n");
+		printf("Error: expected ADAT in reply. got: %s\n",
+		       reply_string);
 		return AUTH_ERROR;
 	    } else {
 		p+=5;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: mk_req.c,v 1.22 1999/12/02 16:58:43 joda Exp $");
+RCSID("$KTH: mk_req.c,v 1.26 2000/11/30 07:11:05 assar Exp $");
 
 static int lifetime = 255;	/* But no longer than TGT says. */
 
@@ -125,7 +125,42 @@ build_request(KTEXT req, char *name, char *inst, char *realm,
  */
 
 int
-krb_mk_req(KTEXT authent, char *service, char *instance, char *realm, 
+krb_get_credentials(const char *service, 
+		    const char *instance, 
+		    const char *realm, 
+		    CREDENTIALS *cred)
+{
+    int ret;
+
+    ret = krb_get_cred(service, instance, realm, cred);
+    if(ret == RET_NOTKT) {
+	ret = krb_get_cred_kdc(service, instance, realm, lifetime, cred);
+	if(ret == 0) {
+	    ret = tf_init(TKT_FILE, W_TKT_FIL);
+	    if(ret)
+		return ret;
+	    ret = tf_get_pname(cred->pname);
+	    if (ret) {
+		tf_close();
+		return ret;
+	    }
+	    ret = tf_get_pinst(cred->pinst);
+	    if (ret) {
+		tf_close();
+		return ret;
+	    }
+	    ret = tf_replace_cred(cred);
+	    tf_close();
+	}
+    }
+    return ret;
+}
+
+int
+krb_mk_req(KTEXT authent, 
+	   const char *service, 
+	   const char *instance, 
+	   const char *realm, 
 	   int32_t checksum)
 {
     KTEXT_ST req_st;
@@ -157,18 +192,10 @@ krb_mk_req(KTEXT authent, char *service, char *instance, char *realm,
     if (krb_ap_req_debug)
         krb_warning("Realm: %s\n", realm);
 
-    retval = krb_get_cred(service,instance,realm,&cr);
-
-    if (retval == RET_NOTKT) {
-	retval = get_ad_tkt(service, instance, realm, lifetime);
-	if (retval == KSUCCESS)
-	    retval = krb_get_cred(service, instance, realm, &cr);
-    }
-
+    retval = krb_get_credentials(service, instance, realm, &cr);
     if (retval != KSUCCESS)
 	return retval;
-
-
+    
     /*
      * With multi realm ticket files either find a matching TGT or
      * else use the first TGT for inter-realm authentication.

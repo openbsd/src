@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: lsb_addr_comp.c,v 1.16 1999/12/02 16:58:42 joda Exp $");
+RCSID("$KTH: lsb_addr_comp.c,v 1.17 2001/05/03 15:21:37 assar Exp $");
 
 #include "krb-archaeology.h"
 
@@ -109,7 +109,8 @@ lsb_time(time_t t, struct sockaddr_in *src, struct sockaddr_in *dst)
 	if(krb_debug) 
 	    krb_warning("lsb_time: reversing direction: %d -> %d\n", dir, -dir);
 	dir = -dir;
-    }else if((fw = krb_get_config_string("firewall_address"))) {
+    }else if(!krb_get_config_bool("nat_in_use")
+	     && (fw = krb_get_config_string("firewall_address"))) {
 	struct in_addr fw_addr;
 	fw_addr.s_addr = inet_addr(fw);
 	if(fw_addr.s_addr != INADDR_NONE) {

@@ -1,3 +1,21 @@
+2001-08-29  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am: install zrefresh in $DESTDIR, noted by
+	mikan@mikan.net
+
+2001-08-01  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (install-exec-local): zrefresh is a script, use
+	INSTALL_SCRIPT
+
+2000-12-28  Assar Westerlund  <assar@sics.se>
+
+	* kauth.c (main): remove extra printing of version
+
+2000-11-15  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (LDADD): use LIB_des
+
 2000-02-28  Assar Westerlund  <assar@sics.se>
 
 	* kauth.c (main): don't enable aflag with `-d'.  this breaks with
@@ -8,6 +26,10 @@
 
 	* rkinit.c (doit_host): NAT work-around
 	* kauthd.c (doit): type correctness
+
+1999-12-05  Assar Westerlund  <assar@sics.se>
+
+	* kauthd.c: use getnameinfo instead of inaddr2str and inet_ntoa
 
 1999-08-31  Johan Danielsson  <joda@pdc.kth.se>
 
