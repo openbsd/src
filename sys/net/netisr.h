@@ -61,10 +61,17 @@
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define NETISR_PPP	26		/* for PPP processing */
 
-#define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
-
 #ifndef _LOCORE
 #ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
+
+#include "rnd.h"
+#if NRND > 0
+#include <dev/rndvar.h>
+#define	schednetisr(anisr)	\
+	{ netisr |= 1<<(anisr); add_net_randomness(anisr); setsoftnet(); }
+#else /* no rnd */
+#define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
+#endif
 #endif
 #endif

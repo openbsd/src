@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 1996/03/03 12:11:27 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 1996/03/29 12:05:56 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.30 1996/02/13 21:08:50 christos Exp $	*/
 
 /*-
@@ -304,6 +304,12 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, ioctl, select */
+#define	cdev_rnd_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
 
 /* symbolic sleep message strings */
 extern char devopn[], devio[], devwait[], devin[], devout[];

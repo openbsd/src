@@ -75,6 +75,10 @@
 #if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
+#include "rnd.h"
+#if	NRND
+#include <dev/rndvar.h>
+#endif
 
 static void fkey1(void), fkey2(void),  fkey3(void),  fkey4(void);
 static void fkey5(void), fkey6(void),  fkey7(void),  fkey8(void);
@@ -999,6 +1003,9 @@ loop:
 		PCVT_KBD_DELAY();		/* 7 us delay */
 		dt = inb(CONTROLLER_DATA);	/* yes, get data */
 
+#if	NRND
+		add_keyboard_randomness(dt)
+#endif
 #endif /* !PCVT_KBD_FIFO */
 
 		/*

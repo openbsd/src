@@ -60,6 +60,11 @@
 #include <sys/conf.h>
 #include <sys/cpu.h>
 
+#include "rnd.h"
+#if	NRND > 0
+#include <dev/rndvar.h>
+#endif
+
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
@@ -789,6 +794,10 @@ biodone(bp)
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
+
+#if	NRND > 0
+	add_blkdev_randomness(bp->b_dev);
+#endif
 
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);

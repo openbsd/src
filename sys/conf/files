@@ -38,6 +38,7 @@ pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
+pseudo-device rnd
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
@@ -69,6 +70,7 @@ file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
+file dev/rnd.c				rnd			needs-flag
 file dev/vnd.c				vnd			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660

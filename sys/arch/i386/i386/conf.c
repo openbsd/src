@@ -197,6 +197,8 @@ cdev_decl(svr4_net);
 cdev_decl(ccd);
 #include "joy.h"
 cdev_decl(joy);
+#include "rnd.h"
+cdev_decl(rnd);
 
 cdev_decl(ipl);
 #ifdef IPFILTER
@@ -257,7 +259,8 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 43 */
 #endif
-	cdev_gen_ipf(NIPF,ipl),         /* 44 */
+	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
+	cdev_rnd_init(NRND,rnd),	/* 45 random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

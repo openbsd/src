@@ -90,6 +90,10 @@
 #define EXTERN			/* allocate mem */
 
 #include "pcvt_hdr.h"		/* global include */
+#include "rnd.h"
+#if	NRND
+#include <dev/rndvar.h>
+#endif
 
 #ifdef NOTDEF
 unsigned	__debug = 0; /*0xffe */;
@@ -874,6 +878,9 @@ pcrint(void)
 
 		dt = inb(CONTROLLER_DATA);		/* get it 8042 data */
 
+#if	NRND
+		add_keyboard_randomness(dt);
+#endif
 		if (pcvt_kbd_count >= PCVT_KBD_FIFO_SZ)	/* fifo overflow ? */
 		{
 			log (LOG_WARNING, "pcvt: keyboard buffer overflow\n");

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pccons.c,v 1.6 1996/03/29 12:05:39 mickey Exp $	*/
 /*	$NetBSD: pccons.c,v 1.91 1995/12/24 02:30:25 mycroft Exp $	*/
 
 /*-
@@ -68,6 +69,11 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
+
+#include "rnd.h"
+#if	NRND
+#include <dev/rndvar.h>
+#endif
 
 #define	XFREE86_BUG_COMPAT
 
@@ -1420,6 +1426,10 @@ top:
 		nak = 1;
 		goto loop;
 	}
+
+#if	NRND
+	add_keyboard_randomness(dt);
+#endif
 
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
