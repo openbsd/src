@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.14 1997/03/17 12:20:22 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.15 1997/03/17 13:09:05 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -11,7 +11,7 @@
  *
  *   Denton Gentry <denny1@home.com>
  * and also
- *   Takeshi Yanagisawa <yanagisw@aa.ap.titech.ac.jp>
+ *   Yanagisawa Takeshi <yanagisw@aa.ap.titech.ac.jp>
  * did the work to get this running on the Macintosh.
  */
 
@@ -126,6 +126,12 @@ snsetup(sc)
 	int		i;
 
 	sc->sc_csr = (struct sonic_reg *) sc->sc_regh;
+
+/*
+ * Disable caching on the SONIC's data space.
+ */
+	physaccess((caddr_t) sc->space, (caddr_t) kvtop((caddr_t) sc->space),
+		sizeof(sc->space), PG_V | PG_RW | PG_CI);
 
 /*
  * Put the pup in reset mode (sninit() will fix it later)
