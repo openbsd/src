@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.3 1997/03/17 04:17:00 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.4 1997/03/29 02:27:11 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -98,7 +98,7 @@ sn_obio_attach(parent, self, aux)
         case MACH_CLASSPB:
                 sc->s_dcr |= DCR_DW16;
 		sc->bitmode = 0;
-                return;
+                break;
 
 	default:
 		printf("unsupported machine type\n");
