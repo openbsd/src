@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.205 2002/09/12 18:21:48 millert Exp $
+#	$OpenBSD: rc,v 1.206 2002/10/06 19:09:20 krw Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -505,13 +505,6 @@ fi
 if [ "X${identd_flags}" != X"NO" ]; then
 	echo -n ' identd';		/usr/libexec/identd ${identd_flags}
 fi
-
-# $smtpfwdd_flags is imported from /etc/rc.conf;
-# If $smtpfwdd_flags == NO, smtpfwdd isn't run.
-if [ "X${smtpfwdd_flags}" != X"NO" ]; then
-	echo -n ' smtpfwdd';	/usr/libexec/smtpfwdd ${smtpfwdd_flags}
-fi
-
 
 if [ X${inetd} = X"YES" -a -e /etc/inetd.conf ]; then
 	echo -n ' inetd';		inetd
