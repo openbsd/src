@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtok.c,v 1.2 1996/08/19 08:34:28 tholo Exp $";
+static char *rcsid = "$OpenBSD: strtok.c,v 1.3 1999/11/09 11:19:46 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -42,13 +42,23 @@ strtok(s, delim)
 	register char *s;
 	register const char *delim;
 {
+	static char *last;
+
+	return strtok_r(s, delim, &last);
+}
+
+char *
+strtok_r(s, delim, last)
+	register char *s;
+	register const char *delim;
+	char **last;
+{
 	register char *spanp;
 	register int c, sc;
 	char *tok;
-	static char *last;
 
 
-	if (s == NULL && (s = last) == NULL)
+	if (s == NULL && (s = *last) == NULL)
 		return (NULL);
 
 	/*
@@ -62,7 +72,7 @@ cont:
 	}
 
 	if (c == 0) {		/* no non-delimiter characters */
-		last = NULL;
+		*last = NULL;
 		return (NULL);
 	}
 	tok = s - 1;
@@ -80,7 +90,7 @@ cont:
 					s = NULL;
 				else
 					s[-1] = 0;
-				last = s;
+				*last = s;
 				return (tok);
 			}
 		} while (sc != 0);
