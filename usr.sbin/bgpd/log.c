@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.33 2004/04/25 07:16:24 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.34 2004/04/25 22:02:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,7 @@ log_fmt_peer(const struct peer_config *peer)
 		if (asprintf(&p, "%s/%u", ip, peer->remote_masklen) == -1)
 			fatal(NULL);
 	} else {
-		if((p = strdup(ip)) == NULL)
+		if ((p = strdup(ip)) == NULL)
 			fatal(NULL);
 	}
 
