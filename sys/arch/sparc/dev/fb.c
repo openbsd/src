@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.20 2002/08/16 02:06:43 millert Exp $	*/
+/*	$OpenBSD: fb.c,v 1.21 2002/09/05 09:31:20 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -91,6 +91,25 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
+
+#include "wsdisplay.h"
+
+/*
+ * emergency unblank code
+ * XXX should be somewhat moved to wscons MI code
+ */
+
+void (*fb_burner)(void *, u_int, u_int);
+void *fb_cookie;
+
+void
+fb_unblank()
+{
+	if (fb_burner != NULL)
+		(*fb_burner)(fb_cookie, 1, 0);
+}
+
+#if NWSDISPLAY > 0
 
 void
 fb_setsize(sf, def_depth, def_width, def_height, node, bustype)
@@ -286,21 +305,6 @@ a2int(cp, deflt)
 	return (i);
 }
 
-/*
- * emergency unblank code
- * XXX should be somewhat moved to wscons MI code
- */
-
-void (*fb_burner)(void *, u_int, u_int);
-void *fb_cookie;
-
-void
-fb_unblank()
-{
-	if (fb_burner != NULL)
-		(*fb_burner)(fb_cookie, 1, 0);
-}
-
 void
 fbwscons_init(sf, isconsole)
 	struct sunfb *sf;
@@ -481,3 +485,4 @@ fb_pfour_set_video(sf, enable)
 
 #endif /* SUN4 */
 
+#endif	/* NWSDISPLAY */
