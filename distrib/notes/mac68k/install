@@ -87,7 +87,7 @@ Installation of base files:
 
 **** Booting the system
 
-Double-click on the MacBSD Booter icon to start the application.  Check
+Double-click on the BSD/Mac68k Booter icon to start the application.  Check
 that the options in the Booting dialog look sane--especially the SCSI ID.
 If not, correct them to your preference.  When you are satisfied with
 your choices, try booting OpenBSD.
