@@ -1,4 +1,4 @@
-/*	$NetBSD $	*/
+/*	$OpenBSD: apm.c,v 1.2 1996/07/15 07:33:16 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -590,6 +590,7 @@ apmattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	extern union descriptor *dynamic_gdt;
 	struct apm_softc *apmsc = (void *)self;
 	struct apmregs regs;
 	int error;
