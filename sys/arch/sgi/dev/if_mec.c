@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.5 2004/09/23 17:45:16 brad Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.6 2004/09/29 17:57:35 pefo Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -708,6 +708,7 @@ mec_reset(struct mec_softc *sc)
 
 	/* reset chip */
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
+	delay(1000);
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 
