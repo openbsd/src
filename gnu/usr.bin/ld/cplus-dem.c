@@ -1,4 +1,4 @@
-/*	$OpenBSD: cplus-dem.c,v 1.3 2002/07/19 19:28:11 marc Exp $	*/
+/*	$OpenBSD: cplus-dem.c,v 1.4 2003/04/16 02:15:10 deraadt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -7,7 +7,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cplus-dem.c	5.4 (Berkeley) 4/30/91";*/
-static char rcsid[] = "$OpenBSD: cplus-dem.c,v 1.3 2002/07/19 19:28:11 marc Exp $";
+static char rcsid[] = "$OpenBSD: cplus-dem.c,v 1.4 2003/04/16 02:15:10 deraadt Exp $";
 #endif /* not lint */
 
 /* Demangler for GNU C++ 
@@ -213,10 +213,7 @@ cplus_demangle(const char *type)
 	{
 	  int n = (strlen (type) - 3)*2 + 3 + 2 + 1;
 	  char *tem = (char *) xmalloc (n);
-	  strcpy (tem, type + 3);
-	  strcat (tem, "::~");
-	  strcat (tem, type + 3);
-	  strcat (tem, "()");
+	  snprintf(tem, n, "%s::~%s()", type + 3, type + 3);
 	  return tem;
 	}
       /* static data member */
@@ -224,9 +221,7 @@ cplus_demangle(const char *type)
 	{
 	  int n = strlen (type) + 2;
 	  char *tem = (char *) xmalloc (n);
-	  memcpy (tem, type, p - type);
-	  strcpy (tem + (p - type), "::");
-	  strcpy (tem + (p - type) + 2, p + 1);
+	  snprintf(tem, n, "%.*s::%s", (int)(p - type), type, p + 1);
 	  return tem;
 	}
       /* virtual table */
@@ -234,8 +229,7 @@ cplus_demangle(const char *type)
 	{
 	  int n = strlen (type + 4) + 14 + 1;
 	  char *tem = (char *) xmalloc (n);
-	  strcpy (tem, type + 4);
-	  strcat (tem, " virtual table");
+	  snprintf(tem, n, "%s virtual table", type + 4)
 	  return tem;
 	}
       return NULL;

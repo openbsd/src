@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.28 2002/09/07 01:25:34 marc Exp $	*/
+/*	$OpenBSD: ld.c,v 1.29 2003/04/16 02:15:10 deraadt Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -1336,9 +1336,7 @@ enter_file_symbols(struct file_entry *entry)
 				enter_global_ref(lsp, name, entry);
 				sp = getsym(name);
 				if (sp->warning == NULL) {
-					sp->warning = (char *)
-						xmalloc(strlen(msg)+1);
-					strcpy(sp->warning, msg);
+					sp->warning = (char *)xstrdup(msg);
 					warn_sym_count++;
 				} else if (strcmp(sp->warning, msg))
 					warnx(
@@ -3665,10 +3663,12 @@ write_file_syms(struct file_entry *entry, void *arg)
 			name = p->n_un.n_strx + entry->strings;
 		else {
 			char *cp = p->n_un.n_strx + entry->strings;
-			name = (char *)alloca(
-					strlen(entry->local_sym_name) +
-					strlen(cp) + 2 );
-			(void)sprintf(name, "%s.%s", entry->local_sym_name, cp);
+			size_t len = strlen(entry->local_sym_name) + 1 +
+			    strlen(cp) + 1;
+
+			name = (char *)alloca(len);
+			(void)snprintf(name, len, "%s.%s",
+			    entry->local_sym_name, cp);
 		}
 
 		/*

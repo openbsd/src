@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.9 2002/09/07 01:25:34 marc Exp $*/
+/* * $OpenBSD: warnings.c,v 1.10 2003/04/16 02:15:10 deraadt Exp $*/
 /*
  */
 
@@ -65,6 +65,7 @@ char *
 get_file_name(struct file_entry *entry)
 {
 	char *result, *supfile;
+	size_t len;
 
 	if (entry == NULL) {
 		return (char *)strdup("NULL");
@@ -72,14 +73,15 @@ get_file_name(struct file_entry *entry)
 
 	if (entry->superfile) {
 		supfile = get_file_name(entry->superfile);
+		len = strlen(supfile) + 1 + strlen(entry->filename) + 2;
 		result = (char *)
-			xmalloc(strlen(supfile) + strlen(entry->filename) + 3);
-		(void)sprintf(result, "%s(%s)", supfile, entry->filename);
+			xmalloc(len);
+		(void)snprintf(result, len, "%s(%s)", supfile,
+		    entry->filename);
 		free(supfile);
 
 	} else {
-		result = (char *)xmalloc(strlen(entry->filename) + 1);
-		strcpy(result, entry->filename);
+		result = (char *)xstrdup(entry->filename);
 	}
 	return result;
 }
@@ -485,11 +487,14 @@ do_relocation_warnings(struct file_entry *entry, int data_segment,
 		/* If errfmt == 0, errmsg has already been defined.  */
 		if (errfmt != 0) {
 			char	       *nm;
+			size_t		len;
 
 			nm = g->name;
+			len = strlen(errfmt) + strlen(nm) + 1;
 			errmsg = (char *)
-				xmalloc(strlen(errfmt) + strlen(nm) + 1);
-			sprintf(errmsg, errfmt, nm, data_segment?"data":"text");
+				xmalloc(len);
+			snprintf(errmsg, len, errfmt, nm,
+			    data_segment?"data":"text");
 			if (nm != g->name)
 				free(nm);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.14 2002/09/07 01:25:34 marc Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.15 2003/04/16 02:15:10 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ findshlib(char *name, int *majorp, int *minorp, int do_dot_a)
 
 	len = strlen(name);
 	lname = (char *)alloca(len + sizeof("lib"));
-	sprintf(lname, "lib%s", name);
+	snprintf(lname, len + sizeof("lib"), "lib%s", name);
 	len += 3;
 
 	ndewey = 0;

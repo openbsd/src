@@ -1,4 +1,4 @@
-/* * $OpenBSD: symbol.c,v 1.7 2002/09/07 01:25:34 marc Exp $	- symbol table routines*/
+/* * $OpenBSD: symbol.c,v 1.8 2003/04/16 02:15:10 deraadt Exp $	- symbol table routines*/
 /*
  */
 
@@ -109,8 +109,7 @@ getsym(char *key)
 
 	/* Nothing was found; create a new symbol table entry.  */
 	bp = (symbol *)xmalloc(sizeof(symbol));
-	bp->name = (char *)xmalloc(strlen(key) + 1);
-	strcpy (bp->name, key);
+	bp->name = (char *)xstrdup(key);
 	bp->refs = 0;
 	bp->defined = 0;
 	bp->value = 0;
