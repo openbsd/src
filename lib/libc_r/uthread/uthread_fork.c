@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.7 1999/11/25 07:01:35 d Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.8 1999/11/30 03:16:01 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,7 +46,6 @@ fork(void)
 	int             i, flags;
 	pid_t           ret;
 	pthread_t	pthread;
-	pthread_t	pthread_save;
 
 	/*
 	 * Defer signals to protect the scheduling queues from access
@@ -113,35 +112,27 @@ fork(void)
 			 * Enter a loop to remove all threads other than
 			 * the running thread from the thread list:
 			 */
-			pthread = TAILQ_FIRST(&_thread_list);
-			while (pthread != NULL) {
-				/* Save the thread to be freed: */
-				pthread_save = pthread;
-
-				/*
-				 * Advance to the next thread before
-				 * destroying the current thread:
-				 */
-				pthread = TAILQ_NEXT(pthread, dle);
+			while ((pthread = TAILQ_FIRST(&_thread_list)) != NULL) {
+				TAILQ_REMOVE(&_thread_list, pthread, tle);
 
 				/* Make sure this isn't the running thread: */
-				if (pthread_save != _thread_run) {
-					/* Remove this thread from the list: */
-					TAILQ_REMOVE(&_thread_list,
-					    pthread_save, tle);
+				if (pthread != _thread_run) {
+					/* XXX should let gc do all this. */
+					if(pthread->stack != NULL)
+						_thread_stack_free(pthread->stack);
 
-					if(pthread_save->stack != NULL)
-						_thread_stack_free(pthread_save->stack);
+					if (pthread->specific_data != NULL)
+						free(pthread->specific_data);
 
-					if (pthread_save->specific_data != NULL)
-						free(pthread_save->specific_data);
+					if (pthread->poll_data.fds != NULL)
+						free(pthread->poll_data.fds);
 
-					if (pthread_save->poll_data.fds != NULL)
-						free(pthread_save->poll_data.fds);
-
-					free(pthread_save);
+					free(pthread);
 				}
 			}
+
+			/* Restore the running thread */
+			TAILQ_INSERT_HEAD(&_thread_list, _thread_run, tle);
 
 			/* Re-init the dead thread list: */
 			TAILQ_INIT(&_dead_list);
