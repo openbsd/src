@@ -1,16 +1,16 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/16 02:45:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/16 21:37:30 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		mr-${REV}.fs
+IMAGE=		mr.fs
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 BASE=mr
 
 MOUNT_POINT=	/mnt
 
-FS=		floppy-${REV}.fs
+FS=		floppy.fs
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
@@ -102,3 +102,5 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 
+install:
+	cp ${FS} ${DESTDIR}/snapshot/${FS}
