@@ -2,9 +2,9 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.6 1996/04/18 23:48:04 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp 
  */
-/*	$NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp $ */
+/*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
 struct pci_knowndev pci_knowndevs[] = {
@@ -79,6 +79,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AIC-7850",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
+	    0,
+	    "AMD",
+	    "PCnet-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,

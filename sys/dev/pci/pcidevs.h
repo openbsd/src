@@ -2,9 +2,9 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.6 1996/04/18 23:48:04 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp 
  */
-/*	$NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp $ */
+/*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
 /*
@@ -426,6 +426,9 @@
 #define	PCI_PRODUCT_ADP_AIC7880	0x8078		/* AIC-7880 Ultra */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */
 #define	PCI_PRODUCT_ADP_AIC7850	0x5078		/* AIC-7850 */
+
+/* AMD products */
+#define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
