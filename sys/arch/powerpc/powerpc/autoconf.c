@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1998/05/29 04:15:37 rahnds Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1998/08/06 15:04:05 pefo Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.5 1998/05/29 04:15:37 rahnds Exp $
+ *      $Id: autoconf.c,v 1.6 1998/08/06 15:04:05 pefo Exp $
  */
 
 /*
@@ -93,7 +93,9 @@ configure()
 	(void)splhigh();	/* To be really sure.. */
 	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
-	ofrootfound();
+	if(system_type == OFWMACH) {
+		ofrootfound();
+	}
 	(void)spl0();
 
 	setroot();

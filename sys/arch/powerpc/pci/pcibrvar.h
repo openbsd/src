@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibrvar.h,v 1.1 1997/10/11 11:29:32 pefo Exp $ */
+/*	$OpenBSD: pcibrvar.h,v 1.2 1998/08/06 15:04:03 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -42,7 +42,8 @@ struct pcibr_config {
 struct pcibr_softc {
 	struct device	sc_dev;
 	struct pcibr_config *sc_pcibr;
-	struct p4e_bus_space sc_bus_space;	/* Same for I/O and Mem */
+	struct p4e_bus_space sc_membus_space;
+	struct p4e_bus_space sc_iobus_space;
 };
 
 

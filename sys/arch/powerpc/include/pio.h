@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
+/*	$OpenBSD: pio.h,v 1.2 1998/08/06 15:03:57 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -168,5 +168,27 @@ __inlrb(a)
 #define	in16rb(a)	inwrb(a)
 #define	inlrb(a)	(__inlrb((volatile u_int32_t *)(a)))
 #define	in32rb(a)	inlrb(a)
+
+#ifdef DEBUG
+static __inline void
+__flash_led(bits, count)
+	int bits;
+{
+	int i, v = 0;
+
+	if(bits == 0) {
+		v = 1; bits = 3;
+	}
+	bits &= 3;
+	count += count;
+	v |= (*(volatile u_int8_t *)0x800001f4) & ~3;
+	while(count--) {
+		v ^= bits;
+		for(i = 100000; i > 0; i--)
+			*(volatile u_int8_t *)0x800001f4 = v;
+	}
+	*(u_int8_t *)0x800001f4 &= ~3;
+}
+#endif /* DEBUG */
 
 #endif /*_MACHINE_PIO_H_*/

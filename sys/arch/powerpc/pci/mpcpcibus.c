@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.4 1998/04/06 20:23:21 pefo Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.5 1998/08/06 15:04:00 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -74,7 +74,7 @@ const char *mpc_intr_string __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
-int      mpc_ether_hw_addr __P((u_int8_t *));
+int      mpc_ether_hw_addr __P((u_int8_t *, u_int8_t, u_int8_t));
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -132,8 +132,10 @@ mpcpcibrattach(parent, self, aux)
 	case POWER4e:
 		lcp = sc->sc_pcibr = &mpc_config;
 
-		sc->sc_bus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
-		sc->sc_bus_space.bus_reverse = 1;
+		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
+		sc->sc_membus_space.bus_reverse = 1;
+		sc->sc_iobus_space.bus_base = MPC106_PCI_IO_SPACE;
+		sc->sc_iobus_space.bus_reverse = 1;
 
 		lcp->lc_pc.pc_conf_v = lcp;
 		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
@@ -157,8 +159,8 @@ mpcpcibrattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = &sc->sc_bus_space;
-	pba.pba_memt = &sc->sc_bus_space;
+	pba.pba_iot = &sc->sc_iobus_space;
+	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
 	config_found(self, &pba, mpcpcibrprint);
@@ -208,8 +210,8 @@ mpc_attach_hook(parent, self, pba)
 }
 
 int
-mpc_ether_hw_addr(p)
-	u_int8_t *p;
+mpc_ether_hw_addr(p, b, s)
+	u_int8_t *p, b, s;
 {
 	int i;
 

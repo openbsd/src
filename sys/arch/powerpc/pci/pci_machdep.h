@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 1998/04/06 20:24:22 pefo Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.4 1998/08/06 15:04:01 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -60,8 +60,10 @@ struct p4e_pci_chipset {
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
-	int		(*pc_ether_hw_addr) __P((u_int8_t *));
+	int		(*pc_ether_hw_addr) __P((u_int8_t *, u_int8_t, u_int8_t));
 };
+
+#define	NEED_PCI_ETHER_HW_ADDR_FUNC	/* srom less pci ether adapter */
 
 /*
  * Functions provided to machine-independent PCI code.
@@ -86,8 +88,8 @@ struct p4e_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
-#define	pci_ether_hw_addr(c, p)						\
-    (*(c)->pc_ether_hw_addr)((p))
+#define	pci_ether_hw_addr(c, p, b, s)					\
+    (*(c)->pc_ether_hw_addr)((p), (b), (s))
 
 vm_offset_t vtophys __P((void *));
 
