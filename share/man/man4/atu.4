@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atu.4,v 1.5 2004/11/17 14:14:05 deraadt Exp $
+.\"	$OpenBSD: atu.4,v 1.6 2004/11/17 22:31:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -85,6 +85,21 @@ driver:
 .It Tn Atmel DWL-120
 .It Tn AcerP AWL-300
 .El
+.Sh FILES
+The driver needs a couple of firmware files which are loaded on
+demand when the device is attached.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/atu-license
+.It Pa /etc/firmware/atu-intersil-int
+.It Pa /etc/firmware/atu-intersil-ext
+.It Pa /etc/firmware/atu-rfmd-int
+.It Pa /etc/firmware/atu-rfmd-ext
+.It Pa /etc/firmware/atu-rfmd2958-int
+.It Pa /etc/firmware/atu-rfmd2958-ext
+.It Pa /etc/firmware/atu-rfmd2958smc-int
+.It Pa /etc/firmware/atu-rfmd2958smc-ext
+.El
 .Sh EXAMPLES
 Join an existing BSS network (ie: connect to an access point):
 .Dl # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00
@@ -146,21 +161,6 @@ Create a host-based wireless bridge to fxp0:
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8
-.Sh FILES
-The driver needs a couple of firmware files which are loaded on
-demand when the device is attached.  
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/atu-license
-.It Pa /etc/firmware/atu-intersil-int
-.It Pa /etc/firmware/atu-intersil-ext
-.It Pa /etc/firmware/atu-rfmd-int
-.It Pa /etc/firmware/atu-rfmd-ext
-.It Pa /etc/firmware/atu-rfmd2958-int
-.It Pa /etc/firmware/atu-rfmd2958-ext
-.It Pa /etc/firmware/atu-rfmd2958smc-int
-.It Pa /etc/firmware/atu-rfmd2958smc-ext
-.El
 .Sh AUTHORS
 The
 .Nm
