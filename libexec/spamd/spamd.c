@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.15 2003/03/02 22:30:35 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.16 2003/03/02 23:04:35 kjell Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -32,15 +32,16 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <syslog.h>
-#include <string.h>
-#include <stdlib.h>
-#include <getopt.h>
 #include <err.h>
+#include <errno.h>
+#include <getopt.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #include "sdl.h"
 
 char hostname[MAXHOSTNAMELEN];
@@ -112,9 +113,9 @@ grow_obuf(struct con *cp, int off)
 		cp->osize += 8192;
 		cp->obuf = tmp;
 		cp->obufalloc = 1;
-		return(cp->obuf + off);
+		return (cp->obuf + off);
 	}
-	return(NULL);
+	return (NULL);
 }
 
 
@@ -127,7 +128,7 @@ parse_configline(char *line)
 	size_t au = 0;
 	int mdone = 0;
 
-	if (debug)
+	if (debug > 0)
 		printf("read config line %40s ...\n", line);
 
 	name = line;
@@ -183,7 +184,7 @@ parse_configline(char *line)
 		goto parse_error;
 	else
 		sdl_add(name, msg, av, au - 1);
-	return(0);
+	return (0);
 
  parse_error:
 	if (debug > 0)
@@ -211,7 +212,7 @@ parse_configs(void)
 		cbs += 8192;
 		cb = tmp;
 	}
-	cb[cbu++]='\0';
+	cb[cbu++] = '\0';
 	
 	start = cb;
 	end = start;
@@ -251,7 +252,7 @@ do_config(void)
 		cb = tmp;
 	}
 
-	n = read(conffd, cb+cbu, cbs-cbu);
+	n = read(conffd, cb + cbu, cbs - cbu);
 	if (debug > 0)
 		printf("read %d config bytes\n", n);
 	if (n == 0) {
@@ -349,20 +350,20 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 			if (sav)
 			c[i++] = sav;
 			c[i++] = *s;
-			sav='\0';
+			sav = '\0';
 			c[i] = '\0';
 			break;
 		}
 		s++;
 	}
-	return(i);
+	return (i);
  no_mem:
 	/* Out of memory, free obuf and bail, caller must deal */
 	if (cp->osize)
 		free(cp->obuf);
 	cp->osize = 0;
 	cp->obuf = NULL;
-	return(-1);
+	return (-1);
 }
 
 
@@ -401,8 +402,8 @@ build_reply(struct con *cp)
 					goto bad;
 				}
 			}
-			cp->obuf[off++]='\n';
-			cp->obuf[off]='\0';
+			cp->obuf[off++] = '\n';
+			cp->obuf[off] = '\0';
 		}
 	}
 	return;
@@ -416,7 +417,7 @@ bad:
 	if (cp->obuf == NULL) {
 		/* we're having a really bad day.. */
 		cp->obufalloc = 0; /* know not to free or mangle */
-		cp->obuf="450 Try again\n";
+		cp->obuf = "450 Try again\n";
 	} else
 		cp->osize = strlen(cp->obuf) + 1;
 }
@@ -426,7 +427,7 @@ doreply(struct con *cp)
 {
 	if (reply) {
 		if (!cp->obufalloc)
-			err(1, "shouldn't happen");
+			errx(1, "shouldn't happen");
 		snprintf(cp->obuf, cp->osize, "%s %s\n", nreply, reply);
 		return;
 	}
@@ -503,7 +504,7 @@ closecon(struct con *cp)
 int
 match(char *s1, char *s2)
 {
-	return !strncasecmp(s1, s2, strlen(s2));
+	return (strncasecmp(s1, s2, strlen(s2)) == 0);
 }
 
 void
@@ -740,7 +741,7 @@ main(int argc, char *argv[])
 
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one)) == -1)
-		return(-1);
+		return (-1);
 
 	conflisten = socket(AF_INET, SOCK_STREAM, 0);
 	if (conflisten == -1)
@@ -748,7 +749,7 @@ main(int argc, char *argv[])
 
 	if (setsockopt(conflisten, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one)) == -1)
-		return(-1);
+		return (-1);
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_len = sizeof(sin);
