@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.372 2001/03/03 05:14:19 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.373 2001/03/12 06:18:07 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1669,6 +1669,7 @@ product TI PERMEDIA		0x3d04	3DLabs Permedia
 product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
 product TI TSB12LV22		0x8009	TSB12LV22 FireWire
 product TI TSB12LV23		0x8019	TSB12LV23 FireWire
+product TI TSB12LV26		0x8020	TSB12LV26 FireWire
 product TI PCI1130		0xac12	PCI1130 PCI-CardBus
 product TI PCI1031		0xac13	PCI1031 PCI-pcmcia
 product TI PCI1131		0xac15	PCI1131 PCI-CardBus
