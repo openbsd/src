@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.4 1999/07/02 23:37:33 deraadt Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.5 1999/12/05 21:46:13 angelos Exp $";
 #endif
 
 #include <time.h>
@@ -1354,7 +1354,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
 				     SPI->idst, SPI->idmask,
 				     SPI->address, spi, proto, 
-				     SADB_X_SAFLAGS_REPLACEFLOW | SADB_X_SAFLAGS_LOCALFLOW |
+				     SADB_X_SAFLAGS_REPLACEFLOW |
 				     (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0)) == -1)
 		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
 	  } else {
@@ -1414,7 +1414,7 @@ kernel_unlink_spi(struct spiob *ospi)
 			AT_AH_ATTRIB);
      
      if (esp != NULL) {
-	  int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | SADB_X_SAFLAGS_LOCALFLOW;
+	  int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0);
 	  if (!(ospi->flags & SPI_OWNER) && 
 	      kernel_disable_spi(ospi->isrc, ospi->ismask,
 				 ospi->idst, ospi->idmask,
@@ -1428,8 +1428,7 @@ kernel_unlink_spi(struct spiob *ospi)
 	  
      if (ah != NULL) {
 	  if (esp == NULL) {
-	       int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | 
-					SADB_X_SAFLAGS_LOCALFLOW;
+	       int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0);
 	       if (!(ospi->flags & SPI_OWNER) &&
 		   kernel_disable_spi(ospi->isrc, ospi->ismask,
 				      ospi->idst, ospi->idmask,
