@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.13 2002/09/08 12:33:42 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.14 2003/05/14 18:06:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -119,14 +119,14 @@ ntp_client(const char *hostname, struct timeval *new,
 {
 	struct addrinfo hints, *res0, *res;
 	double offset, error;
-	int packets = 0, s;
+	int packets = 0, s, ierror;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
-	error = getaddrinfo(hostname, "ntp", &hints, &res0);
-	if (error) {
-		errx(1, "%s: %s", hostname, gai_strerror(error));
+	ierror = getaddrinfo(hostname, "ntp", &hints, &res0);
+	if (ierror) {
+		errx(1, "%s: %s", hostname, gai_strerror(ierror));
 		/*NOTREACHED*/
 	}
 
