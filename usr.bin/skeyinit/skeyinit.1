@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.28 2004/06/06 11:23:25 otto Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.29 2004/06/06 21:30:38 jmc Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -25,13 +25,13 @@
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
-initializes the system so you can use S/Key one-time passwords to login.
+initializes the system so you can use S/Key one-time passwords to log in.
 The program will ask you to enter a secret passphrase which is used by
 .Xr skey 1
 to generate one-time passwords;
 enter a phrase of several words in response.
 After the S/Key database
-has been updated you can login using either your regular password
+has been updated you can log in using either your regular password
 or using S/Key one-time passwords.
 .Pp
 .Nm
@@ -54,7 +54,7 @@ should be used.
 The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
 .Pp
-.Nm 
+.Nm
 prints a sequence number and a one-time password.
 This password can not be used to log in; one-time passwords should be
 generated using
@@ -164,23 +164,23 @@ directory containing user entries for S/Key
 .El
 .Sh EXAMPLES
 .Bd -literal
-    $ skeyinit
-    Reminder - Only use this method if you are directly connected
-               or have an encrypted channel.  If you are using telnet,
-               hit return now and use skeyinit -s.
-    Password: <enter your regular password here>
-    [Updating user with md5]
-    Old seed: [md5] host12377
-    Enter new secret passphrase: <type a new passphrase here>
-    Again secret passphrase: <again>
-    ID user skey is otp-md5 100 host12378
-    Next login password: CITE BREW IDLE CAIN ROD DOME
-    $ otp-md5 -n 3 100 host12378
-    Reminder - Do not use this program while logged in via telnet.
-    Enter secret passphrase: <type your passphrase here>
-    98: WERE TUG EDDY GEAR GILL TEE  
-    99: NEAR HA TILT FIN LONG SNOW   
-    100: CITE BREW IDLE CAIN ROD DOME
+$ skeyinit
+Reminder - Only use this method if you are directly connected
+           or have an encrypted channel.  If you are using telnet,
+           hit return now and use skeyinit -s.
+Password: <enter your regular password here>
+[Updating user with md5]
+Old seed: [md5] host12377
+Enter new secret passphrase: <type a new passphrase here>
+Again secret passphrase: <again>
+ID user skey is otp-md5 100 host12378
+Next login password: CITE BREW IDLE CAIN ROD DOME
+$ otp-md5 -n 3 100 host12378
+Reminder - Do not use this program while logged in via telnet.
+Enter secret passphrase: <type your passphrase here>
+98: WERE TUG EDDY GEAR GILL TEE
+99: NEAR HA TILT FIN LONG SNOW
+100: CITE BREW IDLE CAIN ROD DOME
 .Ed
 .Pp
 The one-time password for the next login will have sequence number 99.
@@ -199,6 +199,6 @@ flag.
 .Xr skey 1 ,
 .Xr skeyaudit 1 ,
 .Xr skeyinfo 1 ,
-.Xr skeyprune 1
+.Xr skeyprune 8
 .Sh AUTHORS
 Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin, Todd Miller
