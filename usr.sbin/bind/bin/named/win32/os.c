@@ -229,6 +229,6 @@ ns_os_shutdown(void) {
 void
 ns_os_tzset(void) {
 #ifdef HAVE_TZSET
-        tzset();
+	tzset();
 #endif
 }
