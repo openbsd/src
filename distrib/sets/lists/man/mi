@@ -1579,7 +1579,6 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/vpn.0
-./usr/share/man/cat8/wicontrol.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -1618,3 +1617,14 @@
 ./usr/share/man/man4/powerpc
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/hostname.if.0
+./usr/share/man/cat9/gsignal.0
+./usr/share/man/cat9/hz.0
+./usr/share/man/cat9/hzto.0
+./usr/share/man/cat9/microtime.0
+./usr/share/man/cat9/pgsignal.0
+./usr/share/man/cat9/psignal.0
+./usr/share/man/cat9/sleep.0
+./usr/share/man/cat9/timeout.0
+./usr/share/man/cat9/tsleep.0
+./usr/share/man/cat9/untimeout.0
+./usr/share/man/cat9/wakeup.0
