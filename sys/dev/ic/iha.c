@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.4 2001/07/09 15:20:28 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.5 2001/07/09 18:01:38 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -192,7 +192,7 @@ static struct iha_scsi_req_q *tul_find_pend_scb	  __P((struct iha_softc *));
 
 static void tul_sync_done __P((struct iha_softc *,
 				  bus_space_tag_t, bus_space_handle_t));
-static void tul_wdtr_done __P((struct iha_softc *,
+static void tul_wide_done __P((struct iha_softc *,
 				  bus_space_tag_t, bus_space_handle_t));
 static void tul_bad_seq	  __P((struct iha_softc *));
 
@@ -230,8 +230,8 @@ static int  tul_status_msg __P((struct iha_softc *,
 
 static int  tul_msgin        __P((struct iha_softc *,
 				     bus_space_tag_t, bus_space_handle_t));
-static int  tul_msgin_sync   __P((struct iha_softc *));
-static int  tul_msgin_extend __P((struct iha_softc *,
+static int  tul_msgin_sdtr   __P((struct iha_softc *));
+static int  tul_msgin_extended __P((struct iha_softc *,
 				     bus_space_tag_t, bus_space_handle_t));
 static int  tul_msgin_ignore_wid_resid __P((struct iha_softc *,
 					       bus_space_tag_t,
@@ -240,14 +240,16 @@ static int  tul_msgin_ignore_wid_resid __P((struct iha_softc *,
 static int  tul_msgout	      __P((struct iha_softc *,
 				      bus_space_tag_t, bus_space_handle_t,
 				      u_int8_t));
+static int  tul_msgout_extended __P((struct iha_softc *,
+					bus_space_tag_t, bus_space_handle_t));
 static void tul_msgout_abort  __P((struct iha_softc *,
 				      bus_space_tag_t, bus_space_handle_t,
 				      u_int8_t));
 static int  tul_msgout_reject __P((struct iha_softc *,
 				      bus_space_tag_t, bus_space_handle_t));
-static int  tul_msgout_sync   __P((struct iha_softc *,
+static int  tul_msgout_sdtr   __P((struct iha_softc *,
 				      bus_space_tag_t, bus_space_handle_t));
-static int  tul_msgout_wide   __P((struct iha_softc *,
+static int  tul_msgout_wdtr   __P((struct iha_softc *,
 				      bus_space_tag_t, bus_space_handle_t));
 
 static void tul_select __P((struct iha_softc *,
@@ -1275,10 +1277,10 @@ tul_state_1(sc, iot, ioh)
 
 		flags = pTcs->TCS_Flags;
 		if ((flags & FLAG_NO_NEG_WIDE) == 0) {
-			if (tul_msgout_wide(sc, iot, ioh) == -1)
+			if (tul_msgout_wdtr(sc, iot, ioh) == -1)
 				return (-1);
 		} else if ((flags & FLAG_NO_NEG_SYNC) == 0) {
-			if (tul_msgout_sync(sc, iot, ioh) == -1)
+			if (tul_msgout_sdtr(sc, iot, ioh) == -1)
 				return (-1);
 		}
 
@@ -1361,7 +1363,7 @@ tul_state_3(sc, iot, ioh)
 			if ((flags & FLAG_NO_NEG_SYNC) != 0) {
 				if (tul_msgout(sc, iot, ioh, MSG_NOOP) == -1)
 					return (-1);
-			} else if (tul_msgout_sync(sc, iot, ioh) == -1)
+			} else if (tul_msgout_sdtr(sc, iot, ioh) == -1)
 				return (-1);
 			break;
 
@@ -1884,9 +1886,8 @@ tul_resel(sc, iot, ioh)
 
 	if (sc->HCS_ActScb != NULL) {
 		if ((sc->HCS_ActScb->SCB_Status == STATUS_SELECT))
-			tul_push_pend_scb(sc, sc->HCS_ActScb); /* sets ActScb to NULL */
-		else
-			sc->HCS_ActScb = NULL;
+			tul_push_pend_scb(sc, sc->HCS_ActScb);
+		sc->HCS_ActScb = NULL;
 	}
 
 	target = bus_space_read_1(iot, ioh, TUL_SBID);
@@ -2002,7 +2003,7 @@ tul_msgin(sc, iot, ioh)
 			phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
 			break;
 		case MSG_EXTENDED:
-			phase = tul_msgin_extend(sc, iot, ioh);
+			phase = tul_msgin_extended(sc, iot, ioh);
 			break;
 		case MSG_IGN_WIDE_RESIDUE:
 			phase = tul_msgin_ignore_wid_resid(sc, iot, ioh);
@@ -2039,21 +2040,22 @@ tul_msgin_ignore_wid_resid(sc, iot, ioh)
 	phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
 
 	if (phase == PHASE_MSG_IN) {
-		if (tul_wait(sc, iot, ioh, XF_FIFO_IN) == -1)
-			return (-1);
+		phase = tul_wait(sc, iot, ioh, XF_FIFO_IN);
 
-		bus_space_write_1(iot, ioh, TUL_SFIFO, 0); /* put pad	     */
-		bus_space_read_1 (iot, ioh, TUL_SFIFO);	   /* get IGNORE     */
-		bus_space_read_1 (iot, ioh, TUL_SFIFO);	   /* get pad	     */
+		if (phase != -1) {
+			bus_space_write_1(iot, ioh, TUL_SFIFO, 0);
+			bus_space_read_1 (iot, ioh, TUL_SFIFO);
+			bus_space_read_1 (iot, ioh, TUL_SFIFO);
 
-		return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
+			phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
+		}
 	}
-	else
-		return (phase);
+
+	return (phase);
 }
 
 static int
-tul_msgin_extend(sc, iot, ioh)
+tul_msgin_extended(sc, iot, ioh)
 	struct iha_softc  *sc;
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
@@ -2085,7 +2087,7 @@ tul_msgin_extend(sc, iot, ioh)
 	msgcode = sc->HCS_Msg[1];
 
 	if ((msglen == MSG_EXT_SDTR_LEN) && (msgcode == MSG_EXT_SDTR)) {
-		if (tul_msgin_sync(sc) == 0) {
+		if (tul_msgin_sdtr(sc) == 0) {
 			tul_sync_done(sc, iot, ioh);
 			return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
 		}
@@ -2101,12 +2103,6 @@ tul_msgin_extend(sc, iot, ioh)
 
 		tul_sync_done(sc, iot, ioh); /* This is our final offer */
 
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR_LEN);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[2]);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[3]);
-
 	} else if ((msglen == MSG_EXT_WDTR_LEN) && (msgcode == MSG_EXT_WDTR)) {
 
 		flags = sc->HCS_ActScb->SCB_Tcs->TCS_Flags;
@@ -2121,7 +2117,7 @@ tul_msgin_extend(sc, iot, ioh)
 			sc->HCS_Msg[2] = 1;	/* Offer 16 instead	     */
 
 		else {
-			tul_wdtr_done(sc, iot, ioh);
+			tul_wide_done(sc, iot, ioh);
 			if ((flags & FLAG_NO_NEG_SYNC) == 0)
 				tul_set_ssig(iot, ioh, REQ | BSY | SEL, ATN);
 			return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
@@ -2133,26 +2129,21 @@ tul_msgin_extend(sc, iot, ioh)
 		if (phase != PHASE_MSG_OUT)
 			return (phase);
 
-		/* WDTR msg out */
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_LEN);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[2]);
-
 	} else
 		return (tul_msgout_reject(sc, iot, ioh));
 
-	return (tul_wait(sc, iot, ioh, XF_FIFO_OUT));
+	/* Send message built in sc->HCS_Msg[] */
+	return (tul_msgout_extended(sc, iot, ioh));
 }
 
 /*
- * tul_msgin_sync - check SDTR msg in HCS_Msg. If the offer is
+ * tul_msgin_sdtr - check SDTR msg in HCS_Msg. If the offer is
  *                  acceptable leave HCS_Msg as is and return 0.
  *                  If the negotiation must continue, modify HCS_Msg
  *                  as needed and return 1. Else return 0.
  */
 static int
-tul_msgin_sync(sc)
+tul_msgin_sdtr(sc)
 	struct iha_softc *sc;
 {
 	u_int16_t flags;
@@ -2217,11 +2208,8 @@ tul_msgout_abort(sc, iot, ioh,	aborttype)
 		break;
 
 	case PHASE_MSG_OUT:
-		bus_space_write_1(iot, ioh, TUL_SFIFO, aborttype );
-
 		sc->HCS_Flags |= FLAG_EXPECT_DISC;
-
-		if (tul_wait(sc, iot, ioh, XF_FIFO_OUT) != -1)
+		if (tul_msgout(sc, iot, ioh, aborttype) != -1)
 			tul_bad_seq(sc);
 		break;
 
@@ -2237,35 +2225,26 @@ tul_msgout_reject(sc, iot, ioh)
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
-	int phase;
-
 	tul_set_ssig(iot, ioh, REQ | BSY | SEL, ATN);
 
-	if ((phase = tul_wait(sc, iot, ioh, MSG_ACCEPT)) == -1)
-		return (-1);
+	if (tul_wait(sc, iot, ioh, MSG_ACCEPT) == PHASE_MSG_OUT)
+		return (tul_msgout(sc, iot, ioh, MSG_MESSAGE_REJECT));
 
-	if (phase == PHASE_MSG_OUT) {
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_MESSAGE_REJECT);
-		return (tul_wait(sc, iot, ioh, XF_FIFO_OUT));
-	}
-
-	return (phase);
+	return (-1);
 }
 
 static int
-tul_msgout_wide(sc, iot, ioh)
+tul_msgout_extended(sc, iot, ioh)
 	struct iha_softc  *sc;
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
 	int phase;
 
-	sc->HCS_ActScb->SCB_Tcs->TCS_Flags |= FLAG_WIDE_DONE;
-
 	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_LEN);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_BUS_16_BIT);
+
+	bus_space_write_multi_1(iot, ioh, TUL_SFIFO, 
+	    sc->HCS_Msg, sc->HCS_Msg[0]+1);
 
 	phase = tul_wait(sc, iot, ioh, XF_FIFO_OUT);
 
@@ -2276,35 +2255,43 @@ tul_msgout_wide(sc, iot, ioh)
 }
 
 static int
-tul_msgout_sync(sc, iot, ioh)
+tul_msgout_wdtr(sc, iot, ioh)
+	struct iha_softc  *sc;
+	bus_space_tag_t	   iot;
+	bus_space_handle_t ioh;
+{
+	sc->HCS_ActScb->SCB_Tcs->TCS_Flags |= FLAG_WIDE_DONE;
+
+	sc->HCS_Msg[0] = MSG_EXT_WDTR_LEN;
+	sc->HCS_Msg[1] = MSG_EXT_WDTR;
+	sc->HCS_Msg[2] = MSG_EXT_WDTR_BUS_16_BIT;
+
+	return (tul_msgout_extended(sc, iot, ioh));
+}
+
+static int
+tul_msgout_sdtr(sc, iot, ioh)
 	struct iha_softc  *sc;
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
 {
 	u_int16_t rateindex;
 	u_int8_t sync_rate;
-	int phase;
 
 	rateindex = sc->HCS_ActScb->SCB_Tcs->TCS_Flags & FLAG_SCSI_RATE;
 
 	sync_rate = tul_rate_tbl[rateindex];
 
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR_LEN);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, sync_rate);
-	bus_space_write_1(iot, ioh, TUL_SFIFO, IHA_MAX_TARGETS-1); /* REQ/ACK*/
+	sc->HCS_Msg[0] = MSG_EXT_SDTR_LEN;
+	sc->HCS_Msg[1] = MSG_EXT_SDTR;
+	sc->HCS_Msg[2] = sync_rate;
+	sc->HCS_Msg[3] = IHA_MAX_TARGETS-1; /* REQ/ACK */
 
-	phase = tul_wait(sc, iot, ioh, XF_FIFO_OUT);
-
-	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
-	tul_set_ssig(iot, ioh, REQ | BSY | SEL | ATN, 0);
-
-	return (phase);
+	return (tul_msgout_extended(sc, iot, ioh));
 }
 
 static void
-tul_wdtr_done(sc, iot, ioh)
+tul_wide_done(sc, iot, ioh)
 	struct iha_softc  *sc;
 	bus_space_tag_t	   iot;
 	bus_space_handle_t ioh;
@@ -2919,9 +2906,9 @@ tul_se2_rd_all(iot, ioh)
 		*np = tul_se2_rd(iot, ioh, i);
 		chksum += *np;
 	}
-	*np = tul_se2_rd(iot, ioh, 31); /* just read checksum		    */
+	*np = tul_se2_rd(iot, ioh, 31); /* read checksum from eeprom */
 
-	chksum &= 0x0000ffff;		/* checksum is lower 16 bits of sum */
+	chksum &= 0x0000ffff; /* calculated checksum is lower 16 bits of sum */
 
 	return (tul_nvram.NVM_Signature == SIGNATURE)
 	       &&
