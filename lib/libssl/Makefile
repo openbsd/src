@@ -8,4 +8,10 @@ SUBDIR= crypto-patent ssl-patent
 SUBDIR= crypto ssl
 .endif
 
+distribution:
+	@echo "Installing ${DESTDIR}/etc/ssl/lib/ssleay.cnf"; \
+	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+	   ${.CURDIR}/ssleay.cnf ${DESTDIR}/etc/ssl/lib/ssleay.cnf;
+
 .include <bsd.subdir.mk>
+
