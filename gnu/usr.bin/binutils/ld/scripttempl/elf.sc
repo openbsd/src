@@ -317,14 +317,14 @@ SECTIONS
   .gcc_except_table : { *(.gcc_except_table) }
   ${WRITABLE_RODATA+${RODATA}}
   ${RELOCATING+${OTHER_READWRITE_SECTIONS}}
-  ${RELOCATING+${CTOR}}
-  ${RELOCATING+${DTOR}}
 
-  /* pad GOT (and PLT if DATA_PLT) to page aligned if PAD_GOT */
+  /* pad CTOR/DTOR, GOT (and PLT if DATA_PLT) to page aligned if PAD_GOT */
   ${DATA_PLT+${PAD_PLT+${PAD_PLT0}}}
   ${DATA_PLT+${PLT}}
   ${DATA_PLT+${PAD_PLT+${PAD_PLT1}}}
   ${PAD_GOT+${PAD_GOT0}}
+  ${RELOCATING+${CTOR}}
+  ${RELOCATING+${DTOR}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
   .got		${RELOCATING-0} : { *(.got.plt) *(.got) }
   ${PAD_GOT+${PAD_GOT1}}
