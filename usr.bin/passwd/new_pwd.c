@@ -59,98 +59,96 @@
 static char *
 check_pw (char *pword)
 {
-    if (strlen(pword) == 0)
-	return "Null passwords are not allowed - Please enter a longer password.";
-    
-    if (strlen(pword) < MIN_KPW_LEN)
-	return "Password is to short - Please enter a longer password.";
-    
-    /* Don't allow all lower case passwords regardless of length */
-    {
 	char *t;
-	for (t = pword; *t && islower(*t); t++)
-	    ;
-	if (*t == 0)
-	    return "Please don't use an all-lower case password.\n"
-	      "\tUnusual capitalization, delimiter characters or "
-	      "digits are suggested.";
-    }
 
-    return NULL;
+	if (strlen(pword) == 0)
+		return "Null passwords are not allowed - Please enter a longer password.";
+    
+	if (strlen(pword) < MIN_KPW_LEN)
+		return "Password is to short - Please enter a longer password.";
+    
+	if (strcmp(pword, "s/key") == 0)
+		return "That password collides with a system feature. Choose another.\n";
+
+	/* Don't allow all lower case passwords regardless of length */
+	for (t = pword; *t && islower(*t); t++)
+		;
+	if (*t == 0)
+		return "Please don't use an all-lower case password.\n"
+		    "\tUnusual capitalization, delimiter characters or "
+		    "digits are suggested.";
+	return NULL;
 }
 
 int
 get_pw_new_pwd(char *pword, int pwlen, krb_principal *pr, int print_realm)
 {
-    char ppromp[40+ANAME_SZ+INST_SZ+REALM_SZ]; /* for the password prompt */
-    char npromp[40+ANAME_SZ+INST_SZ+REALM_SZ]; /* for the password prompt */
-    
-    char p[MAX_K_NAME_SZ];
-    
-    char local_realm[REALM_SZ];
-    int status;
-    char *expl;
-    
-    /*
-     * We don't care about failure; this is to determine whether or
-     * not to print the realm in the prompt for a new password. 
-     */
-    krb_get_lrealm(local_realm, 1);
-    
-    if (strcmp(local_realm, pr->realm))
-	print_realm++;
-    
-    {
+	char ppromp[40+ANAME_SZ+INST_SZ+REALM_SZ]; /* for the password prompt */
+	char npromp[40+ANAME_SZ+INST_SZ+REALM_SZ]; /* for the password prompt */
+	char p[MAX_K_NAME_SZ];
+	char local_realm[REALM_SZ];
+	int status;
+	char *expl;
 	char *q;
+    
+	/*
+	 * We don't care about failure; this is to determine whether or
+	 * not to print the realm in the prompt for a new password. 
+	 */
+	krb_get_lrealm(local_realm, 1);
+    
+	if (strcmp(local_realm, pr->realm))
+		print_realm++;
 	krb_unparse_name_r(pr, p);
-	if(print_realm == 0 && (q = strrchr(p, '@')))
-	    *q = 0;
-    }
+	if (print_realm == 0 && (q = strrchr(p, '@')))
+		*q = 0;
 
-    snprintf(ppromp, sizeof(ppromp), "Old password for %s:", p);
-    if (read_long_pw_string(pword, pwlen-1, ppromp, 0)) {
-	fprintf(stderr, "Error reading old password.\n");
-	return -1;
-    }
+	snprintf(ppromp, sizeof(ppromp), "Old password for %s:", p);
+	if (read_long_pw_string(pword, pwlen-1, ppromp, 0)) {
+		fprintf(stderr, "Error reading old password.\n");
+		return -1;
+	}
 
-    status = krb_get_pw_in_tkt(pr->name, pr->instance, pr->realm, 
-			       PWSERV_NAME, KADM_SINST, 1, pword);
-    if (status != KSUCCESS) {
-	if (status == INTK_BADPW) {
-	    printf("Incorrect old password.\n");
-	    return -1;
+	status = krb_get_pw_in_tkt(pr->name, pr->instance, pr->realm, 
+	    PWSERV_NAME, KADM_SINST, 1, pword);
+	if (status != KSUCCESS) {
+		if (status == INTK_BADPW) {
+			printf("Incorrect old password.\n");
+			return -1;
+		} else {
+			fprintf(stderr, "Kerberos error: %s\n",
+			    krb_get_err_text(status));
+			return -1;
+		}
 	}
-	else {
-	    fprintf(stderr, "Kerberos error: %s\n", krb_get_err_text(status));
-	    return -1;
-	}
-    }
-    memset(pword, 0, pwlen);
+	memset(pword, 0, pwlen);
 
-    do {
-	char verify[MAX_KPW_LEN];
-	snprintf(npromp, sizeof(npromp), "New Password for %s:",p);
-	if (read_long_pw_string(pword, pwlen-1, npromp, 0)) {
-	    fprintf(stderr,
-		    "Error reading new password, password unchanged.\n");
-	    return -1;
-        }
-	expl = check_pw (pword);
-	if (expl) {
-	    printf("\n\t%s\n\n", expl);
-	    continue;
-	}
-	/* Now we got an ok password, verify it. */
-	snprintf(npromp, sizeof(npromp), "Verifying New Password for %s:", p);
-	if (read_long_pw_string(verify, MAX_KPW_LEN-1, npromp, 0)) {
-	    fprintf(stderr,
-		    "Error reading new password, password unchanged.\n");
-	    return -1;
-        }
-	if (strcmp(pword, verify) != 0) {
-	    printf("Verify failure - try again\n");
-	    expl = "";		/* continue */
-	}
-    } while (expl);
-    return 0;
+	do {
+		char verify[MAX_KPW_LEN];
+		snprintf(npromp, sizeof(npromp), "New Password for %s:",p);
+		if (read_long_pw_string(pword, pwlen-1, npromp, 0)) {
+			fprintf(stderr,
+			    "Error reading new password, password unchanged.\n");
+			return -1;
+		}
+		expl = check_pw (pword);
+		if (expl) {
+			printf("\n\t%s\n\n", expl);
+			continue;
+		}
+
+		/* Now we got an ok password, verify it. */
+		snprintf(npromp, sizeof(npromp),
+		    "Verifying New Password for %s:", p);
+		if (read_long_pw_string(verify, MAX_KPW_LEN-1, npromp, 0)) {
+			fprintf(stderr,
+			    "Error reading new password, password unchanged.\n");
+			return -1;
+		}
+		if (strcmp(pword, verify) != 0) {
+			printf("Verify failure - try again\n");
+			expl = "";		/* continue */
+		}
+	} while (expl);
+	return 0;
 }

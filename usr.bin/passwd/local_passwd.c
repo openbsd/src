@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.8 1997/04/07 06:43:09 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.9 1998/02/24 20:46:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.8 1997/04/07 06:43:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.9 1998/02/24 20:46:14 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,6 +125,10 @@ getnewpasswd(pw)
 		if (!*p) {
 			(void)printf("Password unchanged.\n");
 			pw_error(NULL, 0, 0);
+		}
+		if (strcmp(p, "s/key") == 0) {
+			printf("That password collides with a system feature. Choose another.\n");
+			continue;
 		}
 		if (strlen(p) <= 5 && ++tries < 2) {
 			(void)printf("Please enter a longer password.\n");
