@@ -140,6 +140,10 @@ cdev_decl(kbd);
 cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
+#include "rnd.h"
+cdev_decl(rnd);
+#include "uk.h"
+cdev_decl(uk);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -178,6 +182,8 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSCONS,kbd),	/* 29: /dev/kbd XXX */
 	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
+	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
+	cdev_rnd_init(NRND,rnd),	/* 33: random data source */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

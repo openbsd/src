@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/05/04 18:50:55 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 1996/07/15 14:57:07 mickey Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -175,6 +175,8 @@ cdev_decl(svr4_net);
 #define NLKM 0
 #endif
 cdev_decl(lkm);
+#include "rnd.h"
+cdev_decl(rnd);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -311,6 +313,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 116 */
 	cdev_lkm_dummy(),		/* 117 */
 	cdev_lkm_dummy(),		/* 118 */
+	cdev_rnd_init(NRND,rnd),	/* 119: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

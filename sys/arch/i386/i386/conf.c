@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 1996/07/15 07:35:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 1996/07/15 14:57:02 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -110,12 +110,11 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl */
-#define cdev_ss_init(c,n) { \
+#define cdev_joy_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
-#define cdev_joy_init cdev_ss_init
 
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \

@@ -172,20 +172,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	0, seltrue, dev_init(c,n,mmap), 0 }
 
 /* open, close, write, ioctl */
-#define cdev_uk_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, read, ioctl */
-#define cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, write, ioctl */
 #define cdev_iic_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
@@ -259,6 +245,8 @@ cdev_decl(cpu);
 cdev_decl(iic);
 #include "rtc.h"
 cdev_decl(rtc);
+#include "rnd.h"
+cdev_decl(rnd);
 /* Temporary hack for ATAPI CDROM */
 cdev_decl(wcd);
 
@@ -309,6 +297,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 41: */
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
+	cdev_rnd_init(NRND, rnd),	/* 44: random data source */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

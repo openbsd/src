@@ -318,6 +318,9 @@ cdev_decl(bpf);
 #include "tun.h" 
 cdev_decl(tun);
 
+#include "rnd.h"
+cdev_decl(rnd);
+
 dev_decl(filedesc,open);
 
 struct cdevsw	cdevsw[] =
@@ -380,6 +383,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 57: tunnel filter */
+	cdev_rnd_init(NRND,rnd),	/* 58: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

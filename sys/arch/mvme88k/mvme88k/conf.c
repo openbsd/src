@@ -167,6 +167,9 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 
+#include "rnd.h"
+cdev_decl(rnd);
+
 #ifdef LKM
 #define NLKM 1
 #else
@@ -228,6 +231,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
 	cdev_lkm_dummy(),		/* 38 */
+	cdev_rnd_init(NRND,rnd),	/* 39: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

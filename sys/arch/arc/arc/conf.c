@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1996/06/24 20:05:34 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 1996/07/15 14:57:00 mickey Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.2 1996/06/24 20:05:34 pefo Exp $
+ *      $Id: conf.c,v 1.3 1996/07/15 14:57:00 mickey Exp $
  */
 
 #include <sys/param.h>
@@ -140,6 +140,10 @@ cdev_decl(sd);
 cdev_decl(pc);
 cdev_decl(pms);
 cdev_decl(cd);
+#include "rnd.h"
+cdev_decl(rnd);
+#include "uk.h"
+cdev_decl(uk);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -183,6 +187,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 29: */
 	cdev_notdef(),			/* 30: */
 	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
+	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
+	cdev_rnd_init(NRND,rnd),	/* 33: random data source */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
