@@ -4395,6 +4395,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C595 (Apollo VP2) Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A,
+	    0,
+	    "VIA",
+	    "VT82C596A (Apollo Pro) PCI-ISA",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597PCI,
 	    0,
 	    "VIA",
