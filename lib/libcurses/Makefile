@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/01/07 06:52:57 graichen Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/02/09 18:51:50 deraadt Exp $
 
 LIB=    curses
 SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
@@ -13,9 +13,7 @@ SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
 	lib_color.c lib_insch.c lib_newterm.c lib_scroll.c lib_data.c \
 	lib_insdel.c lib_keyname.c lib_newwin.c lib_scrreg.c lib_gen.c
 CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO
-.if ${MACHINE_ARCH} != "mips"
 LDADD+=  -ltermlib
-.endif
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
 	curs_deleteln.3 curs_getch.3 curs_getstr.3 curs_getyx.3 curs_inch.3 \
