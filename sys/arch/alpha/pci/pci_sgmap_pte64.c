@@ -1,3 +1,4 @@
+/* $OpenBSD: pci_sgmap_pte64.c,v 1.2 2000/11/08 20:59:25 ericj Exp $ */
 /* $NetBSD: pci_sgmap_pte64.c,v 1.4 2000/06/29 08:58:49 mrg Exp $ */
 
 /*-

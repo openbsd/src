@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.1 2000/11/08 16:01:21 art Exp $	*/
-/*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.2 2000/11/08 20:59:25 ericj Exp $ */
+/* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
