@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2001/11/09 15:25:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2001/11/22 09:23:51 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -176,8 +176,7 @@ cpu_startup()
 	/*
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
 	 */
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+	pmap_map(MSGBUF_VA, 0, MSGBUFSIZE, VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
 
 	proc0.p_addr = proc0paddr;
