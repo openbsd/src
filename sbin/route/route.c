@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.8 1996/08/16 09:26:11 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.9 1996/09/03 07:29:31 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.8 1996/08/16 09:26:11 mickey Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.9 1996/09/03 07:29:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -952,7 +952,8 @@ ns_print(sns)
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
 	u_short port;
-	static char mybuf[50], cport[10], chost[25];
+	static char mybuf[50];
+	char cport[10], chost[25];
 	char *host = "";
 	register char *p;
 	register u_char *q;
@@ -964,7 +965,7 @@ ns_print(sns)
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) sprintf(mybuf, "*.%XH", port);
+		(void) sprintf(mybuf, "*.0x%x", port);
 		return (mybuf);
 	}
 
@@ -974,18 +975,16 @@ ns_print(sns)
 		host = "*";
 	else {
 		q = work.x_host.c_host;
-		(void) sprintf(chost, "%02X%02X%02X%02X%02X%02XH",
+		(void) sprintf(chost, "0x%02x%02x%02x%02x%02x%02x",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
-		for (p = chost; *p == '0' && p < chost + 12; p++)
-			/* void */;
-		host = p;
+		host = chost;
 	}
 	if (port)
-		(void) sprintf(cport, ".%XH", htons(port));
+		(void) sprintf(cport, ".0x%x", htons(port));
 	else
-		*cport = 0;
+		*cport = '\0';
 
-	(void) sprintf(mybuf,"%XH.%s%s", ntohl(net.long_e), host, cport);
+	(void) sprintf(mybuf,"0x%x.%s%s", ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
