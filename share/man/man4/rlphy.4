@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlphy.4,v 1.6 2003/06/02 18:51:33 jason Exp $
+.\"	$OpenBSD: rlphy.4,v 1.7 2004/09/24 14:46:21 millert Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm rlphy
-.Nd Realtek 8139 internal Ethernet PHY driver
+.Nd Realtek 8139/8201L Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "rlphy* at mii? phy ?"
 .Sh DESCRIPTION
@@ -38,9 +38,12 @@ The
 driver supports the internal physical layer interface (PHY) found on
 Realtek Semiconductor
 .Tn RTL8139
-based Ethernet adapters.
+based Ethernet adapters, as well the
+.Tn RTL8201L
+Ethernet PHY chip.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr mii 4 ,
+.Xr rl 4 ,
 .Xr ifconfig 8
