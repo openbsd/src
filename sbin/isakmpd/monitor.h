@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.h,v 1.6 2004/03/15 16:29:00 hshoexer Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.7 2004/03/19 14:04:43 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -24,10 +24,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MONITOR_H_
+#define _MONITOR_H_
+
 #if defined (USE_PRIVSEP)
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <dirent.h>
 #include <stdio.h>
 
 #define ISAKMPD_PRIVSEP_USER "_isakmpd"
+
+#define ISAKMP_PORT_DEFAULT	500
 
 enum monitor_reqtypes
 {
@@ -36,7 +45,20 @@ enum monitor_reqtypes
   MONITOR_SETSOCKOPT,
   MONITOR_BIND,
   MONITOR_MKFIFO,
-  MONITOR_SHUTDOWN,
+  MONITOR_INIT_DONE,
+  MONITOR_SHUTDOWN
+};
+
+enum priv_state {
+	STATE_INIT,		/* just started */
+	STATE_RUNNING,		/* running */
+	STATE_QUIT		/* shutting down */
+};
+
+struct monitor_dirents
+{
+  int	 current;
+  struct dirent **dirents;
 };
 
 pid_t	monitor_init (void);
@@ -45,7 +67,6 @@ void	monitor_loop (int);
 int	mm_send_fd (int, int);
 int	mm_receive_fd (int);
 
-struct stat;
 FILE	*monitor_fopen (const char *, const char *);
 int	monitor_open (const char *, int, mode_t);
 int	monitor_stat (const char *, struct stat *);
@@ -53,6 +74,10 @@ int	monitor_socket (int, int, int);
 int	monitor_setsockopt (int, int, int, const void *, socklen_t);
 int	monitor_bind (int, const struct sockaddr *, socklen_t);
 int	monitor_mkfifo (const char *, mode_t);
+struct monitor_dirents	*monitor_opendir (const char *);
+struct dirent	*monitor_readdir (struct monitor_dirents *);
+int	monitor_closedir (struct monitor_dirents *);
+void	monitor_init_done (void);
 
 #else /* !USE_PRIVSEP */
 
@@ -63,9 +88,9 @@ int	monitor_mkfifo (const char *, mode_t);
 #define monitor_setsockopt setsockopt
 #define monitor_bind bind
 #define monitor_mkfifo mkfifo
-
-#if defined (USE_X509)
-#define monitor_RSA_free RSA_free
-#endif
+#define monitor_opendir opendir
+#define monitor_readdir readdir
+#define monitor_closedir closedir
 
 #endif /* USE_PRIVSEP */
+#endif /* _MONITOR_H_ */

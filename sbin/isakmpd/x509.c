@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.85 2004/01/06 00:09:19 hshoexer Exp $	*/
+/*	$OpenBSD: x509.c,v 1.86 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include "ipsec.h"
 #include "log.h"
 #include "math_mp.h"
+#include "monitor.h"
 #include "policy.h"
 #include "sa.h"
 #include "util.h"
@@ -656,9 +657,14 @@ x509_hash_enter (X509 *cert)
 int
 x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 {
-  DIR *dir;
   struct dirent *file;
+#if defined (USE_PRIVSEP)
+  struct monitor_dirents *dir;
+  FILE *certfp;
+#else
+  DIR *dir;
   BIO *certh;
+#endif
   X509 *cert;
   char fullname[PATH_MAX];
   int off, size;
@@ -672,7 +678,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
   LOG_DBG ((LOG_CRYPTO, 40, "x509_read_from_dir: reading certs from %s",
 	    name));
 
-  dir = opendir (name);
+  dir = monitor_opendir (name);
   if (!dir)
     {
       LOG_DBG ((LOG_CRYPTO, 10, "x509_read_from_dir: opendir (\"%s\") failed: "
@@ -684,7 +690,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
   off = strlen (fullname);
   size = sizeof fullname - off;
 
-  while ((file = readdir (dir)) != NULL)
+  while ((file = monitor_readdir (dir)) != NULL)
     {
       strlcpy (fullname + off, file->d_name, size);
 
@@ -697,13 +703,29 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       {
 	struct stat sb;
 
-	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+	if (monitor_stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
           continue;
       }
 
       LOG_DBG ((LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
 		file->d_name));
 
+#if defined (USE_PRIVSEP)
+      certfp = monitor_fopen (fullname, "r");
+      if (!certfp)
+        { 
+          log_error ("x509_read_from_dir: monitor_fopen (\"%s\", \"r\") failed",
+                     fullname);
+          continue;
+        }
+
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+      cert = PEM_read_X509 (certfp, NULL, NULL, NULL);
+#else
+      cert = PEM_read_X509 (certfp, NULL, NULL);
+#endif
+      fclose (certfp);
+#else
       certh = BIO_new (BIO_s_file ());
       if (!certh)
 	{
@@ -726,6 +748,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       cert = PEM_read_bio_X509 (certh, NULL, NULL);
 #endif
       BIO_free (certh);
+#endif	/* USE_PRIVSEP */
       if (cert == NULL)
 	{
 	  log_print ("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
@@ -751,7 +774,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 		     file->d_name);
     }
 
-  closedir (dir);
+  monitor_closedir (dir);
 
   return 1;
 }
@@ -761,9 +784,14 @@ int
 x509_read_crls_from_dir (X509_STORE *ctx, char *name)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-  DIR *dir;
   struct dirent *file;
+#if defined (USE_PRIVSEP)
+  struct monitor_dirents *dir;
+  FILE *crlfp;
+#else
+  DIR *dir;
   BIO *crlh;
+#endif
   X509_CRL *crl;
   char fullname[PATH_MAX];
   int off, size;
@@ -777,7 +805,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
   LOG_DBG ((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs from %s",
 	    name));
 
-  dir = opendir (name);
+  dir = monitor_opendir (name);
   if (!dir)
     {
       LOG_DBG ((LOG_CRYPTO, 10, "x509_read_crls_from_dir: opendir (\"%s\") "
@@ -789,7 +817,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
   off = strlen (fullname);
   size = sizeof fullname - off;
 
-  while ((file = readdir (dir)) != NULL)
+  while ((file = monitor_readdir (dir)) != NULL)
     {
       strlcpy (fullname + off, file->d_name, size);
 
@@ -802,13 +830,25 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
       {
 	struct stat sb;
 
-	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+	if (monitor_stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
 	  continue;
       }
 
       LOG_DBG ((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading CRL %s",
 		file->d_name));
 
+#if defined (USE_PRIVSEP)
+      crlfp = monitor_fopen (fullname, "r");
+      if (!crlfp)
+	{
+          log_error ("x509_read_crls_from_dir: monitor_fopen (\"%s\", \"r\") "
+	             "failed", fullname);
+	  continue;
+	}
+
+      crl = PEM_read_X509_CRL (crlfp, NULL, NULL, NULL);
+      fclose (crlfp);
+#else
       crlh = BIO_new (BIO_s_file ());
       if (!crlh)
 	{
@@ -828,6 +868,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
       crl = PEM_read_bio_X509_CRL (crlh, NULL, NULL, NULL);
 
       BIO_free (crlh);
+#endif	/* USE_PRIVSEP */
       if (crl == NULL)
 	{
 	  log_print ("x509_read_crls_from_dir: "
@@ -852,7 +893,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
       X509_STORE_set_flags (ctx, X509_V_FLAG_CRL_CHECK);
     }
 
-  closedir (dir);
+  monitor_closedir (dir);
 #endif /* OPENSSL_VERSION_NUMBER >= 0x00907000L */
 
   return 1;

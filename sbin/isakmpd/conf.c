@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.61 2004/02/27 19:07:16 hshoexer Exp $	*/
+/*	$OpenBSD: conf.c,v 1.62 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -585,7 +585,7 @@ conf_reinit (void)
   char *new_conf_addr = 0;
   struct stat sb;
 
-  if ((stat (conf_path, &sb) == 0) || (errno != ENOENT))
+  if ((monitor_stat (conf_path, &sb) == 0) || (errno != ENOENT))
     {
       if (check_file_secrecy (conf_path, &sz))
 	return;

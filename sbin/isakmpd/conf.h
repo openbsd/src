@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.24 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: conf.h,v 1.25 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
 
 /*
@@ -38,11 +38,7 @@
 #include <sys/socket.h>
 #include <stdio.h>
 
-#if !defined (USE_PRIVSEP)
-# define ISAKMPD_ROOT "/etc/isakmpd/"
-#else
-# define ISAKMPD_ROOT ""
-#endif
+#define ISAKMPD_ROOT			"/etc/isakmpd/"
 
 #define CONFIG_FILE			ISAKMPD_ROOT "isakmpd.conf"
 

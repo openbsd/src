@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.65 2003/09/26 11:29:11 cedric Exp $	*/
+/*	$OpenBSD: udp.c,v 1.66 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ udp_make (struct sockaddr *laddr)
       return 0;
     }
 
-  s = socket (laddr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+  s = monitor_socket (laddr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
   if (s == -1)
     {
       log_error ("udp_make: socket (%d, %d, %d)", laddr->sa_family, SOCK_DGRAM,
@@ -174,7 +174,7 @@ udp_make (struct sockaddr *laddr)
    * sending from it make sure it is entirely reuseable with SO_REUSEPORT.
    */
   on = 1;
-  if (setsockopt (s, SOL_SOCKET,
+  if (monitor_setsockopt (s, SOL_SOCKET,
 		  wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 		  (void *)&on, sizeof on) == -1)
     {
@@ -363,7 +363,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
     }
 
   /* Don't bother with interfaces that are down.  */
-  s = socket (if_addr->sa_family, SOCK_DGRAM, 0);
+  s = monitor_socket (if_addr->sa_family, SOCK_DGRAM, 0);
   if (s == -1)
     {
       log_error ("udp_bind_if: socket (%d, SOCK_DGRAM, 0) failed",

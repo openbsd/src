@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.16 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: if.c,v 1.17 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ siocgifconf (struct ifconf *ifcp)
   caddr_t buf, new_buf;
 
   /* Get a socket to ask for the network interface configurations.  */
-  s = socket (AF_INET, SOCK_DGRAM, 0);
+  s = monitor_socket (AF_INET, SOCK_DGRAM, 0);
   if (s == -1)
     {
       log_error ("siocgifconf: socket (AF_INET, SOCK_DGRAM, 0) failed");

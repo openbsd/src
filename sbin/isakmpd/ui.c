@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.35 2003/11/06 16:12:08 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.36 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -77,7 +77,12 @@ ui_init (void)
   else
     {
       /* Don't overwrite a file, i.e '-f /etc/isakmpd/isakmpd.conf'.  */
+#if defined (USE_PRIVSEP)
+      /* XXX This is a fstat! */
+      if (monitor_stat (ui_fifo, &st) == 0)
+#else
       if (lstat (ui_fifo, &st) == 0)
+#endif
 	if ((st.st_mode & S_IFMT) == S_IFREG)
 	  {
 	    errno = EEXIST;

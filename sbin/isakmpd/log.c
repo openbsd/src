@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.40 2004/02/25 16:01:28 hshoexer Exp $	*/
+/*	$OpenBSD: log.c,v 1.41 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -427,7 +427,12 @@ log_packet_init (char *newname)
     }
 
   /* Does the file already exist?  XXX lstat() or stat()?  */
+#if defined (USE_PRIVSEP)
+  /* XXX This is a fstat! */
+  if (monitor_stat (pcaplog_file, &st) == 0)
+#else
   if (lstat (pcaplog_file, &st) == 0)
+#endif
     {
       /* Sanity checks.  */
       if ((st.st_mode & S_IFMT) != S_IFREG)

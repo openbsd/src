@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.76 2004/02/27 10:16:26 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.77 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
+#include "monitor.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
@@ -693,7 +694,7 @@ sa_report_all (void)
   struct sa *sa;
 
   /* Open SA_FILE. */
-  fd = fopen (SA_FILE, "w");
+  fd = monitor_fopen (SA_FILE, "w");
 
   /* Start sa_config_report. */
   for (i = 0; i <= bucket_mask; i++)

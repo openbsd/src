@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.57 2004/02/19 15:35:16 hshoexer Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.58 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -363,10 +363,15 @@ main (int argc, char *argv[])
   size_t mask_size;
   struct timeval tv, *timeout;
 
+  closefrom (STDERR_FILENO + 1);
+
   /* Make sure init() won't alloc fd 0, 1 or 2, as daemon() will close them. */
   for (n = 0; n <= 2; n++)
     if (fcntl (n, F_GETFL, 0) == -1 && errno == EBADF)
       (void)open ("/dev/null", n ? O_WRONLY : O_RDONLY, 0);
+
+  for (n = 1; n < _NSIG; n++)
+    signal (n, SIG_DFL);
 
   /* Log cmd line parsing and initialization errors to stderr.  */
   log_to (stderr);
@@ -381,15 +386,15 @@ main (int argc, char *argv[])
   if (debug == 1) /* i.e '-dd' will skip this.  */
     signal (SIGINT, daemon_shutdown_now);
 
+  /* Daemonize before forking unpriv'ed child */
+  if (!debug)
+    if (daemon (0, 0))
+      log_fatal ("main: daemon (0, 0) failed");
+
 #if defined (USE_PRIVSEP)
   if (monitor_init ())
     {
-      /* The parent, with privileges.  */
-      if (!debug)
-	if (daemon (0, 0))
-	  log_fatal ("main [priv]: daemon (0, 0) failed");
-
-      /* Enter infinite monitor loop.  */
+      /* The parent, with privileges enters infinite monitor loop.  */
       monitor_loop (debug);
       exit (0); /* Never reached.  */
     }
@@ -398,10 +403,6 @@ main (int argc, char *argv[])
 #endif
 
   init ();
-
-  if (!debug)
-    if (daemon (0, 0))
-      log_fatal ("main: daemon (0, 0) failed");
 
   write_pid_file ();
 
@@ -429,6 +430,10 @@ main (int argc, char *argv[])
   wfds = (fd_set *)malloc (mask_size);
   if (!wfds)
     log_fatal ("main: malloc (%lu) failed", (unsigned long)mask_size);
+
+#if defined (USE_PRIVSEP)
+  monitor_init_done();
+#endif
 
   while (1)
     {

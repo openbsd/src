@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.67 2003/11/06 16:12:08 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.68 2004/03/19 14:04:43 hshoexer Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2100,7 +2100,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       return 0;
     }
 
-  if (stat (file, &sb) < 0)
+  if (monitor_stat (file, &sb) < 0)
     {
       LOG_DBG ((LOG_POLICY, 30, "keynote_cert_obtain: failed to stat \"%s\"",
 		file));
@@ -2118,7 +2118,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       return 0;
     }
 
-  fd = open (file, O_RDONLY, 0);
+  fd = monitor_open (file, O_RDONLY, 0);
   if (fd < 0)
     {
       LOG_DBG ((LOG_POLICY, 30, "keynote_cert_obtain: failed to open \"%s\"",
