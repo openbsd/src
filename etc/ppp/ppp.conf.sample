@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.14 1999/07/27 23:48:38 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.15 1999/08/17 15:02:03 brian Exp $
 #
 #################################################################
 
@@ -451,6 +451,8 @@ loop-in:
 #
 sloop:
  load loop
+ # Passive mode allows ssh plenty of time to establish the connection
+ set openmode passive
  set device "!ssh whatevermachine /usr/sbin/ppp -direct loop-in"
 
 # If you wish to connect to a server that will dial back *without* using
