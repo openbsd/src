@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.15 2000/04/17 02:32:44 aaron Exp $
+.\"	$OpenBSD: tty.4,v 1.16 2001/06/23 08:01:54 pjanzen Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -367,7 +367,11 @@ structure pointed to by
 .It Dv TIOCCONS Fa int *on
 If
 .Fa on
-points to a non-zero integer, redirect kernel console output (kernel printf's)
+points to a non-zero integer, redirect kernel console output
+.Po
+kernel
+.Fn printf Ns s
+.Pc
 to this terminal.
 If
 .Fa on

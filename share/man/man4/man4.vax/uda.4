@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.6 2001/06/20 16:49:44 millert Exp $
+.\"	$OpenBSD: uda.4,v 1.7 2001/06/23 08:02:03 pjanzen Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -64,8 +64,7 @@ The
 driver
 is a typical block-device disk driver; see
 .Xr physio 9
-for a description of block
-.Tn I/O .
+for a description of block I/O .
 The script
 .Xr MAKEDEV 8
 should be used to create the
@@ -77,8 +76,8 @@ file need to be created by hand, consult
 The
 .Dv MSCP_PARANOIA
 option enables runtime checking on all transfer completion responses
-from the controller.  This increases disk
-.Tn I/O
+from the controller.
+This increases disk I/O
 overhead and may
 be undesirable on slow machines, but is otherwise recommended.
 .Pp
@@ -99,13 +98,14 @@ If a label is found, the geometry of the drive and the partition tables
 are taken from it.
 If no label is found,
 the driver configures the type of each drive when it is first
-encountered.  A default partition table in the driver is used for each type
-of disk when a pack is not labelled.  The origin and size
-(in sectors) of the default pseudo-disks on each
+encountered.
+A default partition table in the driver is used for each type
+of disk when a pack is not labelled.
+The origin and size (in sectors) of the default pseudo-disks on each
 drive are shown below.  Not all partitions begin on cylinder
 boundaries, as on other drives, because previous drivers used one
-partition table for all drive types.  Variants of the partition tables
-are common; check the driver and the file
+partition table for all drive types.
+Variants of the partition tables are common; check the driver and the file
 .Pa /etc/disktab
 .Pq Xr disktab 5
 for other possibilities.
@@ -114,21 +114,20 @@ Special file names begin with
 .Sq Li ra
 and
 .Sq Li rra
-for the block and character files respectively. The second
-component of the name, a drive unit number in the range of zero to
+for the block and character files respectively.
+The second component of the name, a drive unit number in the range of zero to
 seven, is represented by a
 .Sq Li ?
-in the disk layouts below. The last component of the name is the
-file system partition
-designated
+in the disk layouts below.
+The last component of the name is the file system partition designated
 by a letter from
 .Sq Li a
 to
 .Sq Li h
 and which corresponds to a minor device number set: zero to seven,
 eight to 15, 16 to 23 and so forth for drive zero, drive two and drive
-three respectively, (see
-.Xr physio 9) .
+three respectively (see
+.Xr physio 9 ) .
 The location and size (in sectors) of the partitions:
 .Bl -column header diskx undefined length
 .Tn RA60 No partitions
@@ -209,8 +208,8 @@ copying (it maps the entire disk).
 .Bl -diag
 .It "panic: udaslave"
 No command packets were available while the driver was looking
-for disk drives.  The controller is not extending enough credits
-to use the drives.
+for disk drives.
+The controller is not extending enough credits to use the drives.
 .Pp
 .It "uda%d: no response to Get Unit Status request"
 A disk drive was found, but did not respond to a status request.
@@ -219,15 +218,17 @@ plugs very fast.
 .Pp
 .It "uda%d: unit %d off line"
 While searching for drives, the controller found one that
-seems to be manually disabled.  It is ignored.
+seems to be manually disabled.
+It is ignored.
 .Pp
 .It "uda%d: unable to get unit status"
 Something went wrong while trying to determine the status of
-a disk drive.  This is followed by an error detail.
+a disk drive.
+This is followed by an error detail.
 .Pp
 .It uda%d: unit %d, next %d
-This probably never happens, but I wanted to know if it did.  I
-have no idea what one should do about it.
+This probably never happens, but I wanted to know if it did.
+I have no idea what one should do about it.
 .Pp
 .It "uda%d: cannot handle unit number %d (max is %d)"
 The controller found a drive whose unit number is too large.
@@ -235,7 +236,8 @@ Valid unit numbers are those in the range [0..7].
 .Pp
 .It "ra%d: don't have a partition table for %s; using (s,t,c)=(%d,%d,%d)"
 The controller found a drive whose media identifier (e.g. `RA 25')
-does not have a default partition table.  A temporary partition
+does not have a default partition table.
+A temporary partition
 table containing only an `a' partition has been created covering
 the entire disk, which has the indicated numbers of sectors per
 track (s), tracks per cylinder (t), and total cylinders (c).
@@ -244,19 +246,19 @@ Give the pack a label with the
 utility.
 .Pp
 .It "uda%d: uballoc map failed"
-Unibus resource map allocation failed during initialisation.  This
-can only happen if you have 496 devices on a Unibus.
+Unibus resource map allocation failed during initialization.
+This can only happen if you have 496 devices on a Unibus.
 .Pp
 .It uda%d: timeout during init
-The controller did not initialise within ten seconds.  A hardware
-problem, but it sometimes goes away if you try again.
+The controller did not initialize within ten seconds.
+A hardware problem, but it sometimes goes away if you try again.
 .Pp
 .It uda%d: init failed, sa=%b
-The controller refused to initialise.
+The controller refused to initialize.
 .Pp
 .It uda%d: controller hung
-The controller never finished initialisation.  Retrying may sometimes
-fix it.
+The controller never finished initialization.
+Retrying may sometimes fix it.
 .Pp
 .It ra%d: drive will not come on line
 The drive will not come on line, probably because it is spun down.
@@ -264,8 +266,9 @@ This should be preceded by a message giving details as to why the
 drive stayed off line.
 .Pp
 .It uda%d: still hung
-When the controller hangs, the driver occasionally tries to reinitialise
-it.  This means it just tried, without success.
+When the controller hangs, the driver occasionally tries to reinitialize
+it.
+This means it just tried, without success.
 .Pp
 .It panic: udastart: bp==NULL
 A bug in the driver has put an empty drive queue on a controller queue.
@@ -279,10 +282,12 @@ you may see a performance improvement.
 .Pp
 .It panic: udastart
 A drive was found marked for status or on-line functions while performing
-status or on-line functions.  This indicates a bug in the driver.
+status or on-line functions.
+This indicates a bug in the driver.
 .Pp
 .It "uda%d: controller error, sa=0%o (%s)"
-The controller reported an error.  The error code is printed in
+The controller reported an error.
+The error code is printed in
 octal, along with a short description if the code is known (see the
 .%T UDA50 Maintenance Guide ,
 .Tn DEC
@@ -290,18 +295,17 @@ part number
 .Tn AA-M185B-TC ,
 pp. 18-22).
 If this occurs during normal
-operation, the driver will reset it and retry pending
-.Tn I/O .
+operation, the driver will reset it and retry pending I/O .
 If
 it occurs during configuration, the controller may be ignored.
 .Pp
 .It uda%d: stray intr
-The controller interrupted when it should have stayed quiet.  The
-interrupt has been ignored.
+The controller interrupted when it should have stayed quiet.
+The interrupt has been ignored.
 .Pp
 .It "uda%d: init step %d failed, sa=%b"
-The controller reported an error during the named initialisation step.
-The driver will retry initialisation later.
+The controller reported an error during the named initialization step.
+The driver will retry initialization later.
 .Pp
 .It uda%d: version %d model %d
 An informational message giving the revision level of the controller.
@@ -317,22 +321,27 @@ Indicates a bug in the generic
 code.
 .Pp
 .It uda%d: driver bug, state %d
-The driver has a bogus value for the controller state.  Something
-is quite wrong.  This is immediately followed by a `panic: udastate'.
+The driver has a bogus value for the controller state.
+Something is quite wrong.
+This is immediately followed by a
+.Sq panic: udastate .
 .Pp
 .It uda%d: purge bdp %d
-A benign message tracing BDP purges.  I have been trying to figure
-out what BDP purges are for.  You might want to comment out this
+A benign message tracing BDP purges.
+I have been trying to figure out what BDP purges are for.
+You might want to comment out this
 call to log() in /sys/vaxuba/uda.c.
 .Pp
 .It uda%d: SETCTLRC failed:  `detail'
 The Set Controller Characteristics command (the last part of the
-controller initialisation sequence) failed.  The
+controller initialization sequence) failed.
+The
 .Em detail
 message tells why.
 .Pp
 .It "uda%d: attempt to bring ra%d on line failed:  `detail'"
-The drive could not be brought on line.  The
+The drive could not be brought on line.
+The
 .Em detail
 message tells why.
 .Pp
@@ -352,18 +361,20 @@ The driver believes the new type.
 .Pp
 .It "ra%d: uda%d, unit %d, size = %d sectors"
 The named drive is on the indicated controller as the given unit,
-and has that many sectors of user-file area.  This is printed
-during configuration.
+and has that many sectors of user-file area.
+This is printed during configuration.
 .Pp
 .It "uda%d: attempt to get status for ra%d failed:  `detail'"
-A status request failed.  The
+A status request failed.
+The
 .Em detail
 message should tell why.
 .Pp
 .It ra%d: bad block report: %d
-The drive has reported the given block as bad.  If there are multiple
-bad blocks, the drive will report only the first; in this case this
-message will be followed by `+ others'.  Get
+The drive has reported the given block as bad.
+If there are multiple bad blocks, the drive will report only the first;
+in this case this message will be followed by `+ others'.
+Get
 .Tn DEC
 to forward the
 block with
@@ -375,14 +386,13 @@ I have no idea what this really means.
 .It panic: udareplace
 The controller reported completion of a
 .Tn REPLACE
-operation.  The
-driver never issues any
+operation.
+The driver never issues any
 .Tn REPLACE Ns s ,
 so something is wrong.
 .Pp
 .It panic: udabb
-The controller reported completion of bad block related
-.Tn I/O .
+The controller reported completion of bad block related I/O .
 The
 driver never issues any such, so something is wrong.
 .Pp
@@ -396,16 +406,18 @@ You defined
 and increased
 .Dv NCMDL2
 and Emulex has
-new firmware.  Raise
+new firmware.
+Raise
 .Dv AEB_MAX_BP
 or turn off
 .Dv AVOID_EMULEX_BUG .
 .Pp
 .It "uda%d: unit %d: unknown message type 0x%x ignored"
-The controller responded with a mysterious message type. See
+The controller responded with a mysterious message type.
+See
 .Pa /sys/vax/mscp.h
-for a list of known message types.  This is probably
-a controller hardware problem.
+for a list of known message types.
+This is probably a controller hardware problem.
 .Pp
 .It "uda%d: unit %d out of range"
 The disk drive unit number (the unit plug) is higher than the
@@ -420,18 +432,18 @@ is one of `available attention' (an `I am here' message) or
 .Pp
 .It ra%d: bad lbn (%d)?
 The drive has reported an invalid command error, probably due to an
-invalid block number.  If the lbn value is very much greater than the
-size reported by the drive, this is the problem.  It is probably due to
-an improperly configured partition table.  Other invalid commands
-indicate a bug in the driver, or hardware trouble.
+invalid block number.
+If the lbn value is very much greater than the
+size reported by the drive, this is the problem.
+It is probably due to an improperly configured partition table.
+Other invalid commands indicate a bug in the driver, or hardware trouble.
 .Pp
 .It ra%d: duplicate ONLINE ignored
-The drive has come on-line while already on-line.  This condition
-can probably be ignored (and has been).
+The drive has come on-line while already on-line.
+This condition can probably be ignored (and has been).
 .Pp
 .It ra%d: io done, but no buffer?
-Hardware trouble, or a bug; the drive has finished an
-.Tn I/O
+Hardware trouble, or a bug; the drive has finished an I/O
 request,
 but the response has an invalid (zero) command reference number.
 .Pp
@@ -439,7 +451,8 @@ but the response has an invalid (zero) command reference number.
 You turned on
 .Dv AVOID_EMULEX_BUG ,
 and the driver successfully
-avoided the bug.  The number of correctly handled requests is
+avoided the bug.
+The number of correctly handled requests is
 reported, along with the expected and actual values relating to
 the bug being avoided.
 .Pp
@@ -447,7 +460,8 @@ the bug being avoided.
 You turned on
 .Dv AVOID_EMULEX_BUG ,
 but Emulex was too clever and
-avoided the avoidance.  Try turning on
+avoided the avoidance.
+Try turning on
 .Dv MSCP_PARANOIA
 instead.
 .Pp
@@ -455,14 +469,16 @@ instead.
 You turned on
 .Dv MSCP_PARANOIA ,
 and the driver caught the controller in
-a lie.  The lie has been ignored, and the controller will soon be
-reset (after a `lost' interrupt).  This is followed by a hex dump of
-the offending packet.
+a lie.
+The lie has been ignored, and the controller will soon be
+reset (after a `lost' interrupt).
+This is followed by a hex dump of the offending packet.
 .Pp
 .It ra%d: bogus REPLACE end
 The drive has reported finishing a bad sector replacement, but the
-driver never issues bad sector replacement commands.  The report
-is ignored.  This is likely a hardware problem.
+driver never issues bad sector replacement commands.
+The report is ignored.
+This is likely a hardware problem.
 .Pp
 .It "ra%d: unknown opcode 0x%x status 0x%x ignored"
 The drive has reported something that the driver cannot understand.
@@ -482,10 +498,13 @@ as well as the cylinder, track and sector number of the block.
 .Pp
 .It uda%d: %s error datagram
 The controller has reported some kind of error, either `hard'
-(unrecoverable) or `soft' (recoverable).  If the controller is going on
+(unrecoverable) or `soft' (recoverable).
+If the controller is going on
 (attempting to fix the problem), this message includes the remark
-`(continuing)'.  Emulex controllers wrongly claim that all soft errors
-are hard errors.  This message may be followed by
+`(continuing)'.
+Emulex controllers wrongly claim that all soft errors
+are hard errors.
+This message may be followed by
 one of the following 5 messages, depending on its type, and will always
 be followed by a failure detail message (also listed below).
 .Bd -filled -offset indent
@@ -496,25 +515,31 @@ read.
 .It "unit %d: level %d retry %d, %s %d"
 A typical disk error; the retry count and error recovery levels are
 printed, along with the block type (`lbn', or logical block; or `rbn',
-or replacement block) and number.  If the string is something else,
+or replacement block) and number.
+If the string is something else,
 .Tn DEC
 has been clever, or your hardware has gone to Australia for vacation
 (unless you live there; then it might be in New Zealand, or Brazil).
 .Pp
 .It unit %d: %s %d
-Also a disk error, but an `SDI' error, whatever that is.  (I doubt
-it has anything to do with Ronald Reagan.)  This lists the block
-type (`lbn' or `rbn') and number.  This is followed by a second
-message indicating a microprocessor error code and a front panel
-code.  These latter codes are drive-specific, and are intended to
+Also a disk error, but an `SDI' error, whatever that is.
+.Po
+I doubt it has anything to do with Ronald Reagan.
+.Pc
+This lists the block type (`lbn' or `rbn') and number.
+This is followed by a second
+message indicating a microprocessor error code and a front panel code.
+These latter codes are drive-specific, and are intended to
 be used by field service as an aid in locating failing hardware.
 The codes for RA81s can be found in the
 .%T RA81 Maintenance Guide ,
 DEC order number AA-M879A-TC, in appendices E and F.
 .Pp
 .It "unit %d: small disk error, cyl %d"
-Yet another kind of disk error, but for small disks.  (`That's what
-it says, guv'nor.  Dunnask me what it means.')
+Yet another kind of disk error, but for small disks.
+.Po
+``That's what it says, guv'nor.  Dunnask me what it means.''
+.Pc
 .Pp
 .It "unit %d: unknown error, format 0x%x"
 A mysterious error: the given format code is not known.
@@ -524,7 +549,8 @@ The detail messages are as follows:
 .Bd -filled -offset indent
 .It success (%s) (code 0, subcode %d)
 Everything worked, but the controller thought it would let you know
-that something went wrong.  No matter what subcode, this can probably
+that something went wrong.
+No matter what subcode, this can probably
 be ignored.
 .Pp
 .It "invalid command (%s) (code 1, subcode %d)"
@@ -545,7 +571,8 @@ The controller has decided to report a perfectly normal event as
 an error.  (Why?)
 .Pp
 .It "media format error (%s) (code 5, subcode %d)"
-The drive cannot be used without reformatting.  The Format Control
+The drive cannot be used without reformatting.
+The Format Control
 Table cannot be read (`fct unread - edc'), there is a bad sector
 header (`invalid sector header'), the drive is not set for 512-byte
 sectors (`not 512 sectors'), the drive is not formatted (`not formatted'),
@@ -557,54 +584,64 @@ error (`fct ecc').
 .Pp
 .It "write protected (%s) (code 6, subcode %d)"
 The drive is write protected, either by the front panel switch
-(`hardware') or via the driver (`software').  The driver never
-sets software write protect.
+(`hardware') or via the driver (`software').
+The driver never sets software write protect.
 .Pp
 .It "compare error (unknown subcode) (code 7, subcode %d)"
-A compare operation showed some sort of difference.  The driver
-never uses compare operations.
+A compare operation showed some sort of difference.
+The driver never uses compare operations.
 .Pp
 .It "data error (%s) (code 7, subcode %d)"
-Something went wrong reading or writing a data sector.  A `forced
+Something went wrong reading or writing a data sector.
+A `forced
 error' is a software-asserted error used to mark a sector that contains
-suspect data.  Rewriting the sector will clear the forced error.  This
-is normally set only during bad block replacement, and the driver does
-no bad block replacement, so these should not occur.  A `header
-compare' error probably means the block is shot.  A `sync timeout'
-presumably has something to do with sector synchronisation.
+suspect data.
+Rewriting the sector will clear the forced error.
+This is normally set only during bad block replacement, and the driver does
+no bad block replacement, so these should not occur.
+A `header compare' error probably means the block is shot.
+A `sync timeout' presumably has something to do with sector synchronisation.
 An `uncorrectable ecc' error is an ordinary data error that cannot
 be fixed via
 .Tn ECC
-logic.  A `%d symbol ecc' error is a data error
+logic.
+A `%d symbol ecc' error is a data error
 that can be (and presumably has been) corrected by the
 .Tn ECC
 logic.
 It might indicate a sector that is imperfect but usable, or that
-is starting to go bad.  If any of these errors recur, the sector
+is starting to go bad.
+If any of these errors recur, the sector
 may need to be replaced.
 .Pp
 .It "host buffer access error (%s) (code %d, subcode %d)"
 Something went wrong while trying to copy data to or from the host
-(Vax).  The subcode is one of `odd xfer addr', `odd xfer count',
-`non-exist. memory', or `memory parity'.  The first two could be a
+(Vax).
+The subcode is one of `odd xfer addr', `odd xfer count',
+`non-exist. memory', or `memory parity'.
+The first two could be a
 software glitch; the last two indicate hardware problems.
 .It controller error (%s) (code %d, subcode %d)
-The controller has detected a hardware error in itself.  A
-`serdes overrun' is a serialiser / deserialiser overrun; `edc'
+The controller has detected a hardware error in itself.
+A `serdes overrun' is a serialiser / deserialiser overrun; `edc'
 probably stands for `error detection code'; and `inconsistent
 internal data struct' is obvious.
 .Pp
 .It "drive error (%s) (code %d, subcode %d)"
 Either the controller or the drive has detected a hardware error
-in the drive.  I am not sure what an `sdi command timeout' is, but
-these seem to occur benignly on occasion.  A `ctlr detected protocol'
+in the drive.
+I am not sure what an `sdi command timeout' is, but
+these seem to occur benignly on occasion.
+A `ctlr detected protocol'
 error means that the controller and drive do not agree on a protocol;
-this could be a cabling problem, or a version mismatch.  A `positioner'
+this could be a cabling problem, or a version mismatch.
+A `positioner'
 error means the drive seek hardware is ailing; `lost rd/wr ready'
 means the drive read/write logic is sick; and `drive clock dropout'
 means that the drive clock logic is bad, or the media is hopelessly
-scrambled.  I have no idea what `lost recvr ready' means.  A `drive
-detected error' is a catch-all for drive hardware trouble; `ctlr
+scrambled.
+I have no idea what `lost recvr ready' means.
+A `drive detected error' is a catch-all for drive hardware trouble; `ctlr
 detected pulse or parity' errors are often caused by cabling problems.
 .Ed
 .El
