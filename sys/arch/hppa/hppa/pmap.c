@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.84 2002/09/10 22:37:46 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.85 2002/09/15 09:42:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -365,22 +365,20 @@ pmap_dump_pv(paddr_t pa)
 
 #ifdef PMAPDEBUG
 int
-pmap_check_alias(struct pv_entry *pve, vaddr_t va)
+pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 {
-	pt_entry_t pte;
-	int ret = 0;
+	int ret;
 
 	/* check for non-equ aliased mappings */
-	for (pte = 0; pve; pve = pve->pv_next) {
-		pt_entry_t pte1 = pmap_vp_find(pve->pv_pmap, pve->pv_va);
+	for (ret = 0; pve; pve = pve->pv_next) {
+		pte |= pmap_vp_find(pve->pv_pmap, pve->pv_va);
 		if ((va & HPPA_PGAOFF) != (pve->pv_va & HPPA_PGAOFF) &&
-		    pte && (pte1 & PTE_PROT(TLB_WRITE))) {
+		    (pte & PTE_PROT(TLB_WRITE))) {
 			printf("pmap_pv_enter: "
-			    "aliased writable mapping %d:0x%x",
+			    "aliased writable mapping 0x%x:0x%x\n",
 			    pve->pv_pmap->pm_space, pve->pv_va);
 			ret++;
 		}
-		pte |= pte1;
 	}
 
 	return (ret);
@@ -430,7 +428,7 @@ pmap_pv_enter(struct pv_head *pvh, struct pv_entry *pve, struct pmap *pm,
 	simple_lock(&pvh->pvh_lock);		/* lock pv_head */
 	pve->pv_next = pvh->pvh_list;
 	pvh->pvh_list = pve;
-	if (pmap_check_alias(pve, va))
+	if (pmap_check_alias(pve, va, 0))
 		Debugger();
 	simple_unlock(&pvh->pvh_lock);		/* unlock, done! */
 }
@@ -1242,7 +1240,7 @@ pmap_kenter_pa(va, pa, prot)
 		if (pmap_initialized && bank != -1) {
 			pvh = &vm_physmem[bank].pmseg.pvhead[off];
 			simple_lock(&pvh->pvh_lock);
-			if (pmap_check_alias(pvh->pvh_list, va))
+			if (pmap_check_alias(pvh->pvh_list, va, pte))
 				Debugger();
 			simple_unlock(&pvh->pvh_lock);
 		}
