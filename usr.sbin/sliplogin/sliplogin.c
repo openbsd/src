@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.6 1996/12/15 05:57:20 bitblt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.7 1998/01/21 00:25:26 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -227,6 +227,8 @@ main(argc, argv)
 	s = getdtablesize();
 	for (fd = 3 ; fd < s ; fd++)
 		(void) close(fd);
+	if (strlen(argv[0]) > MAXLOGNAME)
+		errx(1, "login %s too long", argv[0]);
 	openlog(name, LOG_PID, LOG_DAEMON);
 	uid = getuid();
 	if (argc > 1) {
