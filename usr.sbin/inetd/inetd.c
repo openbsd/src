@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.73 2001/01/16 23:57:37 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.74 2001/01/17 19:30:03 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.73 2001/01/16 23:57:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.74 2001/01/17 19:30:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -285,9 +285,9 @@ struct biltin {
 	{ 0 }
 };
 
-volatile int wantretry;
-volatile int wantconfig;
-volatile int wantreap;
+sig_atomic_t wantretry;
+sig_atomic_t wantconfig;
+sig_atomic_t wantreap;
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
