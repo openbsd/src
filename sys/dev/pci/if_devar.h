@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.5 1997/11/16 07:41:27 millert Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.6 1998/08/07 16:48:18 pefo Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -87,9 +87,12 @@ typedef volatile u_int32_t *tulip_csrptr_t;
 /*
  *  Swap macro to access certain data types.
  */
-#if BYTE_ORDER == BIG_ENDIAN
+#if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
+__inline__ static u_int32_t FILT_BO(u_int32_t);
+__inline__ static u_int32_t DESC_BO(u_int32_t);
+
 __inline__ static u_int32_t
-FILT_SWAP(x)
+FILT_BO(x)
     u_int32_t x;
 {
 	u_int32_t s;
@@ -98,8 +101,22 @@ FILT_SWAP(x)
 	s = s << 16;
 	return s;
 }
+
+__inline__ static u_int32_t
+DESC_BO(x)
+    u_int32_t x;
+{
+	u_int32_t s;
+
+	s = x;
+	x = (((s) >> 24) | (((s) >> 8) & 0xff00) | 
+             ((s) << 24) | (((s) & 0xff00) << 8));
+	return x;
+}
+
 #else
-#define FILT_SWAP(x)	(x)
+#define FILT_BO(x)	(x)
+#define DESC_BO(x)	(x)
 #endif
 
 /*
@@ -178,7 +195,7 @@ typedef struct {
  * architecture which can't handle unaligned accesses) because with
  * 100Mb/s cards the copying is just too much of a hit.
  */
-#if defined(__alpha__)
+#if defined(__alpha__) || defined(__mips__)
 #define	TULIP_COPY_RXDATA	1
 #endif
 

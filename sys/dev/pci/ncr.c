@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.40 1998/07/21 07:16:37 downsj Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.41 1998/08/07 16:48:19 pefo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1465,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.40 1998/07/21 07:16:37 downsj Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.41 1998/08/07 16:48:19 pefo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3838,12 +3838,16 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	}
 
 	np->maxwide	= np->features & FE_WIDE ? 1 : 0;
-#if defined(__mips__) /* XXX FIXME - This is gross XXX */
-	np->clock_khz	= 66000;
-	np->clock_khz	= 48000;
+#ifdef NEED_PCI_SCSI_CLOCK_FUNC
+	{
+	int b, d, f; 
+        pci_decompose_tag(pc, pa->pa_tag, &b, &d, &f); \
+	if((np->clock_khz = pci_scsi_clock(pc, b, d)) == 0)
+		np->clock_khz	= np->features & FE_CLK80 ? 80000 : 40000;
+	}
 #else
 	np->clock_khz	= np->features & FE_CLK80 ? 80000 : 40000;
-#endif /*__mips__*/
+#endif
 	if	(np->features & FE_QUAD)	np->multiplier = 4;
 	else if	(np->features & FE_DBLR)	np->multiplier = 2;
 	else					np->multiplier = 1;

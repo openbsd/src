@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.31 1998/05/28 20:25:51 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.32 1998/08/07 16:48:16 pefo Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -1048,6 +1048,16 @@ tulip_21041_mediainfo_init(
 }
 
 static void
+tulip_21041_media_noprobe(
+    tulip_softc_t * const sc)
+{
+    sc->tulip_if.if_baudrate = 10000000;
+    sc->tulip_cmdmode |= TULIP_CMD_CAPTREFFCT|TULIP_CMD_ENHCAPTEFFCT
+	|TULIP_CMD_THRSHLD160|TULIP_CMD_BACKOFFCTR;
+    sc->tulip_intrmask |= TULIP_STS_LINKPASS;
+}
+
+static void
 tulip_21041_media_probe(
     tulip_softc_t * const sc)
 {
@@ -1215,6 +1225,13 @@ tulip_21041_media_poll(
 static const tulip_boardsw_t tulip_21041_boardsw = {
     TULIP_21041_GENERIC,
     tulip_21041_media_probe,
+    tulip_media_select,
+    tulip_21041_media_poll
+};
+
+static const tulip_boardsw_t tulip_21041np_boardsw = {
+    TULIP_21041_GENERIC,
+    tulip_21041_media_noprobe,
     tulip_media_select,
     tulip_21041_media_poll
 };
@@ -2772,9 +2789,15 @@ tulip_read_macaddr(
 	     
 	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
 	}
-#ifdef powerpc
-/*XXX This should be fixed in some other way. Right now we need someting. */
-	pci_ether_hw_addr(sc->tulip_pc, (u_char *)(&sc->tulip_rombuf));
+#ifdef NEED_PCI_ETHER_HW_ADDR_FUNC
+	if(pci_ether_hw_addr(sc->tulip_pc, (u_char *)(&sc->tulip_rombuf),
+	    sc->tulip_pci_busno, sc->tulip_pci_devno)) {
+	    	if(sc->tulip_boardsw == &tulip_21041_boardsw)
+		    sc->tulip_boardsw = &tulip_21041np_boardsw;
+	}
+	else {
+		tulip_srom_read(sc);
+	}
 #else
 	tulip_srom_read(sc);
 #endif
@@ -3068,7 +3091,7 @@ tulip_addr_filter(
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
-		    sp[hash >> 4] |= 1 << (hash & 0xF);
+		    sp[hash >> 4] |= FILT_BO(1 << (hash & 0xF));
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    sc->tulip_flags &= ~(TULIP_WANTHASHONLY|TULIP_WANTHASHPERFECT);
@@ -3082,14 +3105,14 @@ tulip_addr_filter(
 	 */
 	if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
 	    hash = tulip_mchash(etherbroadcastaddr);
-	    sp[hash >> 4] |= 1 << (hash & 0xF);
+	    sp[hash >> 4] |= FILT_BO(1 << (hash & 0xF));
 	    if (sc->tulip_flags & TULIP_WANTHASHONLY) {
 		hash = tulip_mchash(sc->tulip_enaddr);
-		sp[hash >> 4] |= 1 << (hash & 0xF);
+		sp[hash >> 4] |= FILT_BO(1 << (hash & 0xF));
 	    } else {
-		sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0]; 
-		sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1]; 
-		sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2];
+		sp[39] = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[0]); 
+		sp[40] = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[1]); 
+		sp[41] = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[2]);
 	    }
 	}
     }
@@ -3103,9 +3126,9 @@ tulip_addr_filter(
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    for (; enm != NULL; idx++) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
+		    *sp++ = FILT_BO(((u_int16_t *) enm->enm_addrlo)[0]); 
+		    *sp++ = FILT_BO(((u_int16_t *) enm->enm_addrlo)[1]); 
+		    *sp++ = FILT_BO(((u_int16_t *) enm->enm_addrlo)[2]);
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    break;
@@ -3116,17 +3139,17 @@ tulip_addr_filter(
 	     * Add the broadcast address.
 	     */
 	    idx++;
-	    *sp++ = 0xFFFF;
-	    *sp++ = 0xFFFF;
-	    *sp++ = 0xFFFF;
+	    *sp++ = FILT_BO(0xFFFF);
+	    *sp++ = FILT_BO(0xFFFF);
+	    *sp++ = FILT_BO(0xFFFF);
 	}
 	/*
 	 * Pad the rest with our hardware address
 	 */
 	for (; idx < 16; idx++) {
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[0]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[1]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[2];
+	    *sp++ = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[0]); 
+	    *sp++ = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[1]); 
+	    *sp++ = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[2]);
 	}
     }
 #if defined(IFF_ALLMULTI)
@@ -3166,11 +3189,19 @@ tulip_reset(
 
     TULIP_CSR_WRITE(sc, csr_txlist, TULIP_KVATOPHYS(sc, &sc->tulip_txinfo.ri_first[0]));
     TULIP_CSR_WRITE(sc, csr_rxlist, TULIP_KVATOPHYS(sc, &sc->tulip_rxinfo.ri_first[0]));
+#ifdef powerpc
+    TULIP_CSR_WRITE(sc, csr_busmode,
+		    (4 << 2)	/* Descriptor skip length */
+		    |TULIP_BUSMODE_CACHE_ALIGN8
+		    |TULIP_BUSMODE_READMULTIPLE
+		    |(BYTE_ORDER != LITTLE_ENDIAN ? (TULIP_BUSMODE_DESC_BIGENDIAN) : 0));
+#else
     TULIP_CSR_WRITE(sc, csr_busmode,
 		    (1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
 		    |TULIP_BUSMODE_CACHE_ALIGN8
 		    |TULIP_BUSMODE_READMULTIPLE
-		    |(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_BIGENDIAN : 0));
+		    |(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_DESC_BIGENDIAN : 0));
+#endif
 
     sc->tulip_txtimer = 0;
     sc->tulip_txq.ifq_maxlen = TULIP_TXDESCS;
@@ -3515,6 +3546,9 @@ tulip_rx_intr(
 	    ri->ri_nextout->d_length1 = TULIP_RX_BUFLEN;
 	    ri->ri_nextout->d_addr1 = TULIP_KVATOPHYS(sc, mtod(ms, caddr_t));
 	    ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
+#if defined(__mips__)
+	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)mtod(ms, caddr_t),TULIP_RX_BUFLEN);
+#endif
 	    if (++ri->ri_nextout == ri->ri_last)
 		ri->ri_nextout = ri->ri_first;
 	    me = ms->m_next;
@@ -4100,6 +4134,9 @@ tulip_txput(
 		eop->d_addr2 = TULIP_KVATOPHYS(sc, addr);
 		eop->d_length2 = slen;
 	    }
+#if defined(__mips__)
+	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)addr, slen);
+#endif
 	    d_status = TULIP_DSTS_OWNER;
 	    len -= slen;
 	    addr += slen;
@@ -4238,6 +4275,9 @@ tulip_txput_setup(
      */
     sc->tulip_flags ^= TULIP_WANTSETUP|TULIP_DOINGSETUP;
     ri->ri_free--;
+#if defined(__mips__)
+    pci_sync_cache(sc->tulip_pc, (vm_offset_t)sc->tulip_setupbuf, sizeof(sc->tulip_setupbuf));
+#endif
     nextout = ri->ri_nextout;
     nextout->d_flag &= TULIP_DFLAG_ENDRING|TULIP_DFLAG_CHAIN;
     nextout->d_flag |= TULIP_DFLAG_TxFIRSTSEG|TULIP_DFLAG_TxLASTSEG
@@ -4738,6 +4778,33 @@ tulip_initring(
     tulip_desc_t *descs,
     int ndescs)
 {
+#if defined(__mips__)
+    tulip_desc_t *xdesc = descs;
+    /*
+     * Someone moved the descriptors into the softc struct.
+     * Avoid cache line conflicts by aligning on cache line.
+     */
+    descs = (tulip_desc_t *)(roundup((int)descs, 16));
+    if(xdesc != descs) {
+	ndescs--;
+    }
+    pci_sync_cache(sc->tulip_pc, (vm_offset_t)descs, ndescs * sizeof(tulip_desc_t));
+    descs = (tulip_desc_t *)TULIP_KVATOPHYS(sc, descs);
+    descs = (tulip_desc_t *)PHYS_TO_UNCACHED((int)descs & 0x3fffffff);
+#endif
+#ifdef PPC_MPC106_BUG
+    /*
+     * This is a workaround for the powerpc MPC106 chip not snooping
+     * accesses to the descriptor area correctly.
+     */
+    tulip_desc_t *xdesc = descs;
+    xdesc = (tulip_desc_t *)(roundup((int)descs, 32) - 4);
+    if(xdesc < descs) {
+	ndescs--;
+	xdesc++;
+    }
+    descs = xdesc;
+#endif
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
