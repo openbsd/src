@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.4 2003/05/24 21:48:06 tedu Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.5 2003/06/10 16:41:29 deraadt Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp 
+ * Id: mount_ntfs.c,v 1.1.1.1 1999/02/03 03:51:19 semenu Exp
  */
 
 #include <sys/cdefs.h>
@@ -68,32 +68,19 @@ static void	usage(void) __dead2;
 int main(int, char **);
 int mount_ntfs(int argc, char **argv);
 
-#ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	return mount_ntfs(argc, argv);
 }
-#endif
 
 int
-mount_ntfs(argc, argv)
-	int argc;
-	char **argv;
+mount_ntfs(int argc, char *argv[])
 {
 	struct ntfs_args args;
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, *dir, ndir[MAXPATHLEN+1];
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 300000
-	struct vfsconf vfc;
-#else
-	struct vfsconf *vfc;
-#endif
-#endif
+	char *dev, *dir, ndir[MAXPATHLEN];
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -160,39 +147,7 @@ mount_ntfs(argc, argv)
 		if (!set_mask)
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
-#ifdef __FreeBSD__
-#if __FreeBSD_version >= 300000
-	c = getvfsbyname("ntfs", &vfc);
-	if (c && vfsisloadable("ntfs")) {
-		if (vfsload("ntfs"))
-#else
-	vfc = getvfsbyname("ntfs");
-	if (!vfc && vfsisloadable("ntfs")) {
-		if (vfsload("ntfs"))
-#endif
-			err(EX_OSERR, "vfsload(ntfs)");
-		endvfsent();	/* clear cache */
-#if __FreeBSD_version >= 300000
-		c = getvfsbyname("ntfs", &vfc);
-#else
-		vfc = getvfsbyname("ntfs");
-#endif
-	}
-#if __FreeBSD_version >= 300000
-	if (c)
-#else
-	if (!vfc)
-#endif
-		errx(EX_OSERR, "ntfs filesystem is not available");
-
-#if __FreeBSD_version >= 300000
-	if (mount(vfc.vfc_name, dir, mntflags, &args) < 0)
-#else
-	if (mount(vfc->vfc_index, dir, mntflags, &args) < 0)
-#endif
-#else
 	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
-#endif
 		err(EX_OSERR, "%s on %s", dev, dir);
 
 #ifdef MNT_GETARGS
@@ -207,8 +162,9 @@ mount_ntfs(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr, "usage: mount_ntfs [-a] [-i] [-u user] [-g group] [-m mask] bdev dir\n");
+	fprintf(stderr,
+	    "usage: mount_ntfs [-a] [-i] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(EX_USAGE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.64 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.65 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -680,7 +680,7 @@ policy_callback (char *name)
 			 sizeof remote_id_addr_lower - 1, 1);
 	  remote_id = strdup (remote_id_addr_upper);
 	  if (!remote_id)
-  	    {
+	    {
 	      log_error ("policy_callback: strdup (\"%s\") failed",
 			 remote_id_addr_upper);
 	      goto bad;
@@ -745,7 +745,7 @@ policy_callback (char *name)
 		   sizeof remote_id_addr_lower);
 	  remote_id = strdup (remote_id_addr_upper);
 	  if (!remote_id)
-  	    {
+	    {
 	      log_error ("policy_callback: strdup (\"%s\") failed",
 			 remote_id_addr_upper);
 	      goto bad;
@@ -917,7 +917,7 @@ policy_callback (char *name)
 	  break;
 #endif
 
- 	default:
+	default:
 	  snprintf (remote_id_proto_num, sizeof remote_id_proto_num, "%d",
 		    id[1]);
 	  remote_id_proto = remote_id_proto_num;
@@ -1193,7 +1193,7 @@ policy_callback (char *name)
 	      break;
 #endif
 
- 	    default:
+	    default:
 	      snprintf (remote_filter_proto_num,
 			sizeof remote_filter_proto_num, "%d",
 			idremote[ISAKMP_GEN_SZ + 1]);
@@ -1486,7 +1486,7 @@ policy_callback (char *name)
 	      break;
 #endif
 
- 	    default:
+	    default:
 	      snprintf (local_filter_proto_num, sizeof local_filter_proto_num,
 			"%d", idlocal[ISAKMP_GEN_SZ + 1]);
 	      local_filter_proto = local_filter_proto_num;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.34 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.34 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -613,7 +613,7 @@ check_space(void)
 		syslog(LOG_ERR, "%s: %m", dirn);
 		exit(1);
 	}
- 	spacefree = ((off_t)fsbuf.f_bavail * fsbuf.f_bsize) / 1024;
+	spacefree = ((off_t)fsbuf.f_bavail * fsbuf.f_bsize) / 1024;
 
 	(void)snprintf(path, sizeof(path), "%s/minfree", dirn);
 	if ((fp = fopen(path, "r")) == NULL)
@@ -627,7 +627,7 @@ check_space(void)
 	}
 
 	needed = (dumpsize + kernelsize) / 1024;
- 	if (minfree > 0 && spacefree - needed < minfree) {
+	if (minfree > 0 && spacefree - needed < minfree) {
 		syslog(LOG_WARNING,
 		    "no dump, not enough free space on device");
 		return (0);

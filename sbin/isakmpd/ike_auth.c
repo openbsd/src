@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.77 2003/06/04 07:31:16 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.78 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -714,7 +714,7 @@ rsa_sig_decode_hash (struct message *msg)
 
 	  id_found = 0;
 	  for (i = 0; i < n; i++)
- 	    if (id_cert_len[i] == id_len
+	    if (id_cert_len[i] == id_len
 		&& id[0] == id_cert[i][0]
 		&& memcmp (id + 4, id_cert[i] + 4, id_len - 4) == 0)
 	      {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.20 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: transport.c,v 1.21 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ transport_send_messages (fd_set *fds)
 
 	  /* Prefer a message from the prioritized sendq.  */
 	  if (TAILQ_FIRST (&t->prio_sendq))
- 	    {
+	    {
 	      msg = TAILQ_FIRST (&t->prio_sendq);
 	      TAILQ_REMOVE (&t->prio_sendq, msg, link);
 	    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.81 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.82 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ x509_generate_kn (int id, X509 *cert)
       if (X509_STORE_get_by_subject (&csc, X509_LU_X509, issuer, &obj) !=
           X509_LU_X509)
 	{
-  	  X509_STORE_CTX_cleanup (&csc);
+	  X509_STORE_CTX_cleanup (&csc);
 	  LOG_DBG ((LOG_POLICY, 30,
 		    "x509_generate_kn: no certificate found for issuer"));
 	  return 0;
@@ -928,7 +928,7 @@ x509_cert_init (void)
 int
 x509_crl_init (void)
 {
-  /* 
+  /*
    * XXX I'm not sure if the method to use CRLs in certificate validation
    * is valid for OpenSSL versions prior to 0.9.7. For now, simply do not
    * support it.
@@ -1366,7 +1366,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
 	    case 16:
 	      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV6_ADDR);
 	      break;
-	      
+
 	    default:
 	      log_print ("x509_cert_get_subject: "
 			 "invalid subjectAltName iPAdress length %d ", altlen);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.60 2003/05/10 21:03:21 jmc Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.61 2003/06/10 16:41:28 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -667,13 +667,13 @@ authentication:
 .Bd -literal
 # ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \\
 	-src 169.20.12.3 \\
-	-key 638063806380638063806380638063806380638063806380 \\ 
+	-key 638063806380638063806380638063806380638063806380 \\
 	-authkey 1234123412341234123412341234123412341234
 .Ed
 .Pp
 Set up an SA for authentication with old ah only:
 .Bd -literal
-# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \\ 
+# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \\
 	-key 12341234deadbeef
 .Ed
 .Pp

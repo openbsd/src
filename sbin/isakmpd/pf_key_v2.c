@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.132 2003/06/04 07:31:17 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.133 2003/06/10 16:41:29 deraadt Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2061,9 +2061,9 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   policy->sadb_x_policy_len = len / PF_KEY_V2_CHUNK;
   policy->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
   if (ingress)
-  	policy->sadb_x_policy_dir = IPSEC_DIR_INBOUND;
+	policy->sadb_x_policy_dir = IPSEC_DIR_INBOUND;
   else
-  	policy->sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
+	policy->sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
   policy->sadb_x_policy_reserved = 0;
 
   /* Setup the IPSECREQUEST extension part.  */
@@ -3184,7 +3184,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
           break;
 
 	default:
-	  /* 
+	  /*
 	   * The kernel will pass an all '0' EXT_ADDRESS_SRC if it wasn't
 	   * specified for the flow. In that case, do NOT specify the srcaddr
 	   * in the Peer- name below

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.63 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.64 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -689,7 +689,7 @@ udp_init (void)
       LIST_INSERT_HEAD (&udp_listen_list,
 			(struct udp_transport *)default_transport, link);
     }
-  
+
   if (!bind_family || (bind_family & BIND_FAMILY_INET6))
     {
       memset (&dflt_stor, 0, sizeof dflt_stor);

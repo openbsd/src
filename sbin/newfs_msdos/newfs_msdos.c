@@ -69,7 +69,7 @@ static const char rcsid[] =
 #define MINCLS12  1		/* minimum FAT12 clusters */
 #define MINCLS16  0x1000	/* minimum FAT16 clusters */
 #define MINCLS32  2		/* minimum FAT32 clusters */
-#define MAXCLS12  0xfed 	/* maximum FAT12 clusters */
+#define MAXCLS12  0xfed		/* maximum FAT12 clusters */
 #define MAXCLS16  0xfff5	/* maximum FAT16 clusters */
 #define MAXCLS32  0xffffff5	/* maximum FAT32 clusters */
 
@@ -134,7 +134,7 @@ struct bsx {
     u_int8_t rsvd;		/* reserved */
     u_int8_t sig;		/* extended boot signature */
     u_int8_t volid[4];		/* volume ID number */
-    u_int8_t label[11]; 	/* volume label */
+    u_int8_t label[11];		/* volume label */
     u_int8_t type[8];		/* file system type */
 };
 
@@ -160,8 +160,8 @@ struct bpb {
     u_int spt;			/* sectors per track */
     u_int hds;			/* drive heads */
     u_int hid;			/* hidden sectors */
-    u_int bsec; 		/* big total sectors */
-    u_int bspf; 		/* big sectors per FAT */
+    u_int bsec;			/* big total sectors */
+    u_int bspf;			/* big sectors per FAT */
     u_int rdcl; 		/* root directory start cluster */
     u_int infs; 		/* file system info sector */
     u_int bkbs; 		/* backup boot sector */

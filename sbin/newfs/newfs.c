@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.39 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.40 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.39 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.40 2003/06/10 16:41:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -600,61 +600,61 @@ havelabel:
 #ifdef MFS
 	if (mfs) {
 		struct mfs_args args;
- 
- 		switch (pid = fork()) {
- 		case -1:
- 			perror("mfs");
- 			exit(10);
- 		case 0:
- 			snprintf(mountfromname, sizeof(mountfromname),
+
+		switch (pid = fork()) {
+		case -1:
+			perror("mfs");
+			exit(10);
+		case 0:
+			snprintf(mountfromname, sizeof(mountfromname),
 			    "mfs:%d", getpid());
- 			break;
- 		default:
- 			snprintf(mountfromname, sizeof(mountfromname),
+			break;
+		default:
+			snprintf(mountfromname, sizeof(mountfromname),
 			    "mfs:%d", pid);
- 			for (;;) {
- 				/*
- 				 * spin until the mount succeeds
- 				 * or the child exits
- 				 */
- 				usleep(1);
- 
- 				/*
- 				 * XXX Here is a race condition: another process
- 				 * can mount a filesystem which hides our
- 				 * ramdisk before we see the success.
- 				 */
- 				if (statfs(argv[1], &sf) < 0)
- 					err(88, "statfs %s", argv[1]);
- 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
- 				    !strncmp(sf.f_mntonname, argv[1],
- 					     MNAMELEN) &&
- 				    !strcmp(sf.f_fstypename, "mfs"))
- 					exit(0);
- 
- 				res = waitpid(pid, &status, WNOHANG);
- 				if (res == -1)
- 					err(11, "waitpid");
- 				if (res != pid)
- 					continue;
- 				if (WIFEXITED(status)) {
- 					if (WEXITSTATUS(status) == 0)
- 						exit(0);
- 					errx(1, "%s: mount: %s", argv[1],
- 					     strerror(WEXITSTATUS(status)));
- 				} else
- 					errx(11, "abnormal termination");
- 			}
- 			/* NOTREACHED */
- 		}
- 
- 		(void) setsid();
- 		(void) close(0);
- 		(void) close(1);
- 		(void) close(2);
- 		(void) chdir("/");
- 
- 		args.fspec = mountfromname;
+			for (;;) {
+				/*
+				 * spin until the mount succeeds
+				 * or the child exits
+				 */
+				usleep(1);
+
+				/*
+				 * XXX Here is a race condition: another process
+				 * can mount a filesystem which hides our
+				 * ramdisk before we see the success.
+				 */
+				if (statfs(argv[1], &sf) < 0)
+					err(88, "statfs %s", argv[1]);
+				if (!strcmp(sf.f_mntfromname, mountfromname) &&
+				    !strncmp(sf.f_mntonname, argv[1],
+					     MNAMELEN) &&
+				    !strcmp(sf.f_fstypename, "mfs"))
+					exit(0);
+
+				res = waitpid(pid, &status, WNOHANG);
+				if (res == -1)
+					err(11, "waitpid");
+				if (res != pid)
+					continue;
+				if (WIFEXITED(status)) {
+					if (WEXITSTATUS(status) == 0)
+						exit(0);
+					errx(1, "%s: mount: %s", argv[1],
+					     strerror(WEXITSTATUS(status)));
+				} else
+					errx(11, "abnormal termination");
+			}
+			/* NOTREACHED */
+		}
+
+		(void) setsid();
+		(void) close(0);
+		(void) close(1);
+		(void) close(2);
+		(void) chdir("/");
+
+		args.fspec = mountfromname;
 		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
 			args.export_info.ex_flags = MNT_EXRDONLY;

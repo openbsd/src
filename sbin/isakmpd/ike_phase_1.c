@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.37 2003/06/04 07:31:16 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.38 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -821,8 +821,8 @@ ike_phase_1_send_ID (struct message *msg)
 	{
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR:
-      	  /* Already in network byteorder.  */
-      	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+	  /* Already in network byteorder.  */
+	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
 		  sockaddr_addrlen (src));
 	  break;
 

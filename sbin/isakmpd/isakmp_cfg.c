@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.24 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.25 2003/06/10 16:41:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -144,7 +144,7 @@ cfg_initiator_send_ATTR (struct message *msg)
 	      {								\
 	      case AF_INET:						\
 		bit_set (attrbits, ATTR4);				\
-		attrlen += ISAKMP_ATTR_SZ + LEN4;		       	\
+		attrlen += ISAKMP_ATTR_SZ + LEN4;			\
 		break;							\
 	      case AF_INET6:						\
 		bit_set (attrbits, ATTR6);				\

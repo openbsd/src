@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2002/06/17 18:01:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/06/10 16:41:28 deraadt Exp $
 
 PROG=	ccdconfig
 MAN=	ccdconfig.8
 
-# Only permit root to use -g 
+# Only permit root to use -g
 #BINGRP= kmem
 #BINMODE=2555
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.3 2003/03/14 04:58:11 margarida Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.4 2003/06/10 16:41:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -280,11 +280,11 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 
 	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
 		printf("cpi 0x%8.8x comp %s\n",
-		    ntohl(sa->sadb_sa_spi), 
+		    ntohl(sa->sadb_sa_spi),
 		    lookup_name(comp_types, sa->sadb_sa_encrypt));
 	else
 		printf("spi 0x%8.8x auth %s enc %s\n",
-		    ntohl(sa->sadb_sa_spi), 
+		    ntohl(sa->sadb_sa_spi),
 		    lookup_name(auth_types, sa->sadb_sa_auth),
 		    lookup_name(enc_types, sa->sadb_sa_encrypt));
 	printf("\t\tstate %s replay %u flags %u\n",
@@ -531,7 +531,7 @@ msg_send(int pfkey, u_int8_t satype, u_int8_t mtype)
 	msg.sadb_msg_seq = ++seq;
 	msg.sadb_msg_satype = satype;
 	msg.sadb_msg_type = mtype;
-	msg.sadb_msg_len = sizeof(msg) / PFKEY2_CHUNK; 
+	msg.sadb_msg_len = sizeof(msg) / PFKEY2_CHUNK;
 	if (write(pfkey, &msg, sizeof(msg)) != sizeof(msg))
 		err(1, "write");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.56 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ conf_load_defaults (int tr)
   /* Default Phase-1 Configuration section */
   conf_set (tr, CONF_DFLT_TAG_PHASE1_CONFIG, "EXCHANGE_TYPE",
 	    CONF_DFLT_PHASE1_EXCH_TYPE, 0, 1);
-  conf_set (tr, CONF_DFLT_TAG_PHASE1_CONFIG, "Transforms", 
+  conf_set (tr, CONF_DFLT_TAG_PHASE1_CONFIG, "Transforms",
 	    CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
 
   /* Main modes */

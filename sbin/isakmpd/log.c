@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.34 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -639,4 +639,3 @@ in_cksum (const u_int16_t *w, int len)
 }
 
 #endif /* USE_DEBUG */
-  

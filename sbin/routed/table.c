@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.13 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: table.c,v 1.14 2003/06/10 16:41:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1113,7 +1113,7 @@ read_rt(void)
 			? HOST_MASK
 			: std_mask(S_ADDR(INFO_DST(&info))));
 
-		snprintf(strp, str + sizeof str - strp, ": %s", 
+		snprintf(strp, str + sizeof str - strp, ": %s",
 			addrname(S_ADDR(INFO_DST(&info)), mask, 0));
 		strp+= strlen(strp);
 

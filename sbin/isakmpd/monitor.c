@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.6 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.7 2003/06/10 16:41:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -398,7 +398,7 @@ monitor_RSA_get_private_key (char *id, char *local_id)
 
   /*
    * The privileged process will call ike_auth_get_key, so we need to
-   * to collect some current configuration data for it. 
+   * to collect some current configuration data for it.
    */
   confval = conf_get_str ("KeyNote", "Credential-directory");
   if (!confval)
@@ -488,7 +488,7 @@ monitor_RSA_free (void *key)
 }
 #endif /* USE_X509 */
 
-/* 
+/*
  * Start of code running with privileges (the monitor process).
  */
 
@@ -521,7 +521,7 @@ monitor_loop (int debugging)
 
   /* If the child dies, we should shutdown also.  */
   signal (SIGCHLD, monitor_got_sigchld);
-  
+
   while (!shutdown)
     {
       /*
@@ -612,7 +612,7 @@ monitor_loop (int debugging)
 
 /* Privileged: called by monitor_loop.  */
 void
-m_priv_getfd (int s)  
+m_priv_getfd (int s)
 {
   char path[MAXPATHLEN];
   int32_t v;
@@ -656,7 +656,7 @@ m_priv_getfd (int s)
 
 /* Privileged: called by monitor_loop.  */
 void
-m_priv_getsocket (int s)  
+m_priv_getsocket (int s)
 {
   int domain, type, protocol;
   int32_t v;
@@ -689,7 +689,7 @@ m_priv_getsocket (int s)
 
 /* Privileged: called by monitor_loop.  */
 void
-m_priv_setsockopt (int s)  
+m_priv_setsockopt (int s)
 {
   int sock, level, optname;
   char *optval = 0;
@@ -812,7 +812,7 @@ m_priv_rsa_getkey (int s)
   int32_t keyno;
   RSA *rsakey = 0;
   BIO *keyh;
-  
+
   cred_dir[0] = pkey_path[0] = id[0] = local_id[0] = 0;
   if (m_read_raw (s, pbuf, sizeof pbuf))
     goto errout;
