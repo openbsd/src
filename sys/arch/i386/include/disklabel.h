@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 1996/10/04 02:49:59 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 1997/04/10 13:06:24 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -58,14 +58,17 @@ struct dos_partition {
 };
 
 /* Known DOS partition types. */
+#define	DOSPTYP_UNUSED	0x00		/* Unused partition */
+#define DOSPTYP_FAT12	0x01		/* 12-bit FAT */
+#define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
+#define DOSPTYP_EXTEND	0x05		/* Extended; contains sub-partitions */
+#define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
+#define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
+#define DOSPTYP_ONTRACK	0x54
+#define	DOSPTYP_LINUX	0x83		/* That other thing */
 #define DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
 #define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
 #define DOSPTYP_OPENBSD	0xa6		/* OpenBSD partition type */
-#define DOSPTYP_FAT12	0x1		/* 12-bit FAT */
-#define DOSPTYP_FAT16S	0x4		/* 16-bit FAT, less than 32M */
-#define DOSPTYP_FAT16B	0x6		/* 16-bit FAT, more than 32M */
-#define DOSPTYP_FAT16C	0xe		/* 16-bit FAT, CHS-mapped */
-#define DOSPTYP_ONTRACK	0x54
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
