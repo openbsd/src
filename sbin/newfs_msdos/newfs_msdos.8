@@ -129,27 +129,28 @@ file system.  For reference purposes, this structure is presented
 below.
 .Bd -literal
 struct bsbpb {
-    u_int16_t	bps;		/* [-S] bytes per sector */
-    u_int8_t	spc;		/* [-c] sectors per cluster */
-    u_int16_t	res;		/* [-r] reserved sectors */
-    u_int8_t	nft;		/* [-n] number of FATs */
-    u_int16_t	rde;		/* [-e] root directory entries */
-    u_int16_t	sec;		/* [-s] total sectors */
-    u_int8_t	mid;		/* [-m] media descriptor */
-    u_int16_t	spf;		/* [-a] sectors per FAT */
-    u_int16_t	spt;		/* [-u] sectors per track */
-    u_int16_t	hds;		/* [-h] drive heads */
-    u_int32_t	hid;		/* [-o] hidden sectors */
-    u_int32_t	bsec;		/* [-s] big total sectors */
+	u_int16_t	bps;		/* [-S] bytes per sector */
+	u_int8_t	spc;		/* [-c] sectors per cluster */
+	u_int16_t	res;		/* [-r] reserved sectors */
+	u_int8_t	nft;		/* [-n] number of FATs */
+	u_int16_t	rde;		/* [-e] root directory entries */
+	u_int16_t	sec;		/* [-s] total sectors */
+	u_int8_t	mid;		/* [-m] media descriptor */
+	u_int16_t	spf;		/* [-a] sectors per FAT */
+	u_int16_t	spt;		/* [-u] sectors per track */
+	u_int16_t	hds;		/* [-h] drive heads */
+	u_int32_t	hid;		/* [-o] hidden sectors */
+	u_int32_t	bsec;		/* [-s] big total sectors */
 };
+
 /* FAT32 extensions */
 struct bsxbpb {
-    u_int32_t	bspf;		/* [-a] big sectors per FAT */
-    u_int16_t	xflg;		/* control flags */
-    u_int16_t	vers;		/* file system version */
-    u_int32_t	rdcl;		/* root directory start cluster */
-    u_int16_t	infs;		/* [-i] file system info sector */
-    u_int16_t	bkbs;		/* [-k] backup boot sector */
+	u_int32_t	bspf;		/* [-a] big sectors per FAT */
+	u_int16_t	xflg;		/* control flags */
+	u_int16_t	vers;		/* file system version */
+	u_int32_t	rdcl;		/* root directory start cluster */
+	u_int16_t	infs;		/* [-i] file system info sector */
+	u_int16_t	bkbs;		/* [-k] backup boot sector */
 };
 .Ed
 .Sh EXAMPLES
@@ -173,6 +174,6 @@ Exit status is 0 on success and 1 on error.
 The
 .Nm
 command first appeared in
-.Fx 3.0 .
+.Ox 2.1 .
 .Sh AUTHORS
 .An Robert Nordier Aq rnordier@FreeBSD.org .
