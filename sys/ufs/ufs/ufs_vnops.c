@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.25 1999/02/26 03:35:18 art Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.26 1999/02/26 05:55:10 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -932,6 +932,11 @@ abortit:
 	/* fvp, tdvp, tvp now locked */
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
+	if ((nlink_t)ip->i_ffs_nlink >= LINK_MAX) {
+		VOP_UNLOCK(fvp, 0, p);
+		error = EMLINK;
+		goto abortit;
+	}
 	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
 	    (dp->i_ffs_flags & APPEND)) {
 		VOP_UNLOCK(fvp, 0, p);
@@ -981,10 +986,6 @@ abortit:
 	 *    completing our work, the link count
 	 *    may be wrong, but correctable.
 	 */
-	if ((nlink_t)dp->i_ffs_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto bad;
-	}
 	ip->i_effnlink++;
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
