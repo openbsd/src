@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.321 2002/10/13 20:59:34 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.322 2002/11/28 22:37:20 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -413,6 +413,7 @@ pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? disable port 0x220 irq 7 drq 1 drq2 6 # Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
+ympu*	at isa? port 0x300 			# generic MPU, Yamaha SW60XG
 #aria0	at isa? port 0x280 irq 10 drq 0 flags 0x1 # Prometheus Aria 16
 
 # OPL[23] FM syntheziers
@@ -429,6 +430,7 @@ midi*	at opl?			# OPL FM synth
 midi*	at ym?
 midi*	at mpu?
 midi*	at autri?
+midi*	at ympu?	
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

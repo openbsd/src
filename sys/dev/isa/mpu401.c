@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.7 2002/11/28 22:37:20 mickey Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -70,18 +70,6 @@ int	mpu401debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define MPU401_NPORT	2
-#define MPU_DATA		0
-#define MPU_COMMAND	1
-#define  MPU_RESET	0xff
-#define  MPU_UART_MODE	0x3f
-#define  MPU_ACK		0xfe
-#define MPU_STATUS	1
-#define  MPU_OUTPUT_BUSY	0x40
-#define  MPU_INPUT_EMPTY	0x80
-
-#define MPU_MAXWAIT	10000	/* usec/10 to wait */
 
 #define MPU_GETSTATUS(iot, ioh) (bus_space_read_1(iot, ioh, MPU_STATUS))
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.79 2002/10/15 15:00:11 mickey Exp $
+#	$OpenBSD: files.isa,v 1.80 2002/11/28 22:37:20 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -221,7 +221,7 @@ file	dev/isa/if_ie.c			ie_isa
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO/100)
-device  iy: ether, ifnet         
+device  iy: ether, ifnet
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
 
@@ -243,7 +243,7 @@ attach	le at isa with le_isa
 file	dev/isa/if_le.c			le_isa | le_pci
 file	dev/isa/if_le_isa.c		le_isa
 
-# SMC91Cxx Ethernet Controllers 
+# SMC91Cxx Ethernet Controllers
 attach	sm at isa with sm_isa
 file	dev/isa/if_sm_isa.c		sm_isa
 
@@ -265,6 +265,11 @@ file	dev/isa/if_trtcm_isa.c		tr_isa
 # MPU401 MIDI UART compatibles
 define	mpu
 file	dev/isa/mpu401.c		mpu | midi
+
+# MPU401 generic MIDI UART for dump MPUs like Yamaha SW60XG
+device	ympu: midibus
+attach	ympu at isa with ympu_isa
+file	dev/isa/ympu_isa.c		ympu & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
 define	sbdsp { }
@@ -326,7 +331,7 @@ file	dev/isa/opl_ess.c		opl_ess
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
-# channel for full-duplex operation. 
+# channel for full-duplex operation.
 
 device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
 file	dev/isa/gus.c			gus needs-flag
@@ -369,10 +374,10 @@ file	dev/isa/radiotrack2.c		rtii
 device  pcppi {}
 attach  pcppi at isa
 file	dev/isa/pcppi.c	pcppi	needs-flag
-device spkr
-attach spkr at pcppi
+device	spkr
+attach	spkr at pcppi
 file	dev/isa/spkr.c		spkr	needs-flag
-attach midi at pcppi with midi_pcppi: midisyn
+attach	midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c    midi_pcppi
 
 # 8255A-based PC parallel ports
