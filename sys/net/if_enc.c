@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.29 2000/04/18 06:35:02 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.30 2000/04/18 06:41:23 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -247,6 +247,9 @@ struct ifnet *ifp;
 	    continue;
 	}
 
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
+
 	m->m_pkthdr.rcvif = ifp;
 	mp = NULL;
 
@@ -323,9 +326,6 @@ register struct rtentry *rt;
 	splx(s);
 	return 0;
     }
-
-    ifp->if_opackets++;
-    ifp->if_obytes += m->m_pkthdr.len;
 
     IF_ENQUEUE(&ifp->if_snd, m);
     splx(s);
