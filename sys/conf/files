@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.108 1999/02/24 22:38:22 angelos Exp $
+#	$OpenBSD: files,v 1.109 1999/02/24 22:59:00 angelos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -608,6 +608,6 @@ file netinet6/in6_proto.c		inet6
 file netinet6/ipv6_trans.c   		inet6
 
 # ... PF_KEY
-file netsec/pfkey.c			key
-file netsec/pfkeyv2.c			key
-file netsec/pfkeyv2_parsemessage.c	key
+file net/pfkey.c			key
+file net/pfkeyv2.c			key
+file net/pfkeyv2_parsemessage.c		key
