@@ -2670,3 +2670,4 @@
 ./usr/sbin/rtsold
 ./sbin/rtsol
 ./usr.sbin/ndp
+./sbin/ping6
