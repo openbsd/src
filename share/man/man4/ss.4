@@ -1,0 +1,119 @@
+.\" $OpenBSD: ss.4,v 1.1 1998/09/29 17:26:20 kstailey Exp $
+.\"
+.\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Kenneth Stailey
+.\"     and Ian Darwin.
+.\" 4. The author's name may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd Sept 28, 1998
+.Os
+.Dt SS 4
+.Sh NAME
+.Nm ss
+.Nd SCSI Scanner device
+.Sh SYNOPSIS
+.Nm ss* at scsibus? target ? lun ?
+.Sh DESCRIPTION
+The
+.Nm ss
+device allows an application to set scanner parameters and retrieve
+image data from any of the supported scanners without having to be
+concerned with details of its particular command set.
+.Pp
+The list of supported scanners varies from time to time; at present it
+includes HP Scanner Control Language (SCL) SCSI processor type
+scanners: Scanjet IIp, IIc, IIcx, 4p and 5p (others will probably work
+if the SCSI INQUIRY strings are added to the driver.)  Not recently
+tested but worked in the past true SCSI scanners: Mustek 600CX and 1200CX
+(these do not do SCSI disconnect-reconnect they will lock up the bus
+during operation.  You can use a second controller.)
+.Sh KERNEL CONFIGURATION
+Obviously a SCSI host adapter must be present in the config file
+before this device can be configured.
+.Pp
+If a count is given, that many 
+.Nm ss 
+devices will be configured into the kernel.
+.Sh IOCTLS
+This device provides the
+.Nm SCIOCGET
+and
+.Nm SCIOCSET
+ioctls, which respectively get and set a series of parameters
+describing the scan to be performed upon subsequent reading of the scanner.
+The third argument is the address of a scan_io structure;
+details of this structure can be found in the header file
+.Nm scanio.h.
+.Pp
+The 
+.Nm SCIOCRESTART
+ioctl ignores the third parameter, and restarts the scan.
+The
+.Nm SCIOC_USE_ADF
+ioctl also ignores its third parameter, and tells the scanner
+to use its automatic document feeder if it has one.
+.Sh EXAMPLE
+The normal use of this device in a scanner program would be something
+like this:
+.nf
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/scanio.h>
+struct scan_io sp;
+fd = open the driver (/dev/ss0 for the first scanner)
+ioctl(fd, SCIOCGET, &sp) to get the scanner parameters.
+\&... modify any parameters ...
+ioctl(fd, SCIOCSET, &sp) to set the changed parms;
+ioctl(fd, SCIOCGET, &sp) to see if things got rounded or truncated
+read(fd, somebuf, sp.scan_window_size);
+write the data someplace where you want it.
+.Sh BUGS
+Image data should should either be normalized to a particular format
+or some indication as to what the format is should be provided.
+Currently scanners return data in a format similar to the data portion
+of a Portable Any Map (PNM) as produced by the pbmplus and netpbm
+software packages.
+.Pp
+Even when vendors produce compliant SCSI scanners there is much
+variation in what parameters actually work in a SCSI_SET_WINDOW
+command.  Back in March 1997 an attempt to deal with this via quirk
+tables was started.  There exists some code for Ultima AT3 and A6000C
+Plus, Ricoh IS50, IS410, IBM 2456-001, UMAX UC630, and Fujitsu M3096Gm
+that use this approach but none of these scanners work yet.
+.Pp
+Provisional userland programs exist in the source tree in
+src/usr.sbin/ssio.  Eventually a program similar to
+.Nm chio
+or
+.Nm mt
+will be written.
+.Sh SEE ALSO
+.Xr scsi 4
+.Pp
+Documentation from the various scanner vendors.
