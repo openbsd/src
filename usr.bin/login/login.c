@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.30 2000/08/20 18:42:39 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.31 2000/08/24 20:05:07 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.30 2000/08/20 18:42:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.31 2000/08/24 20:05:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -346,10 +346,10 @@ main(argc, argv)
 		 * but with insecure terminal, refuse the login attempt.
 		 */
 #if defined(KERBEROS) || defined(KERBEROS5)
-		if (authok == 0)
+		if (authok == 1)
 #endif
 		/* if logging in as root, user must be on a secure tty */
-		if (pwd && !rval && (!rootlogin || rootterm(tty)))
+		if (pwd && rval == 0 && (!rootlogin || rootterm(tty)))
 			break;
 
 		/*
