@@ -1,5 +1,4 @@
-use strict;
-# $OpenBSD: Temp.pm,v 1.2 2003/11/04 17:54:21 espie Exp $
+# $OpenBSD: Logger.pm,v 1.1 2003/11/04 17:54:21 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -24,21 +23,40 @@ use strict;
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use strict;
 use warnings;
-package OpenBSD::Temp;
+package OpenBSD::Logger;
 
+use OpenBSD::Temp;
 use File::Temp;
-our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
 
-sub dir()
+my $log_handle;
+my $log_base;
+my $log_name;
+
+sub log_as($)
 {
-	return File::Temp::tempdir("pkginfo.XXXXXXXXXXX", DIR => $tempbase,
-	    CLEANUP => 1).'/';
+	$log_base = shift;
 }
 
-sub list($)
+sub logname()
 {
-	return File::Temp::tempfile("list.XXXXXXXXXXX", DIR => shift);
+	return $log_name;
+}
+
+sub logfile()
+{
+	if (!defined $log_handle) {
+		($log_handle, $log_name) =  
+		    File::Temp::tempfile("$log_base.XXXXXXXXXXX", DIR => $OpenBSD::Temp::tempbase);
+	}
+	return $log_handle;
+}
+
+sub log(@)
+{
+	my $fh = logfile();
+	print $fh @_;
 }
 
 1;
