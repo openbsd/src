@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.14 1996/07/29 02:34:30 downsj Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.15 1996/08/02 18:21:00 tholo Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1220,7 +1220,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		/*
 		 * Don't allow this to change in a secure environment.
 		 */
-		if (securelevel > 0)
+		if (newp && securelevel > 0)
 			return (EPERM);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_dosourceroute));
