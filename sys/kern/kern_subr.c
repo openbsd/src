@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.15 2000/09/07 19:07:00 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.16 2000/09/07 19:21:30 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -319,8 +319,14 @@ dopowerhooks(why)
 	int s;
 
 	s = splhigh();
-	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
-		(*dp->sfd_fn)(why, dp->sfd_arg);
+	if (why == PWR_RESUME) {
+		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
+	} else {
+		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
 	}
 	splx(s);
 }
