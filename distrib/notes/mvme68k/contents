@@ -22,7 +22,7 @@ They can also be used to configure an NFS server to support installation
 "over the network".  See the section "Getting the OpenBSD system onto
 Useful Media" for more information.
 
-DistributionDescription
+DistributionDescription(nine)
 
 OpenBSDbase(11.2M,33.9M)
 
@@ -38,6 +38,6 @@ OpenBSDmisc(1.7M,5.9M)
 
 OpenBSDxbase
 
-OpenBSDxfont
+OpenBSDxshare
 
-OpenBSDxserv
+OpenBSDxfont

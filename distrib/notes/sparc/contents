@@ -54,7 +54,7 @@ Bootable installation images:
 	or Solaris installation to allow upgrading to OpenBSD OSREV
 
 
-DistributionDescription
+DistributionDescription(ten)
 
 OpenBSDbase(18.4M,56.4M)
 

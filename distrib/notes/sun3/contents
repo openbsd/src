@@ -18,7 +18,7 @@ OpenBSD/sun3.  These files can also be used to configure an NFS server
 to support installation "over the network".  See the section "Getting
 the OpenBSD System onto Useful Media" for instructions on either method.
 
-DistributionDescription
+DistributionDescription(nine)
 
 OpenBSDbase(21.1M,63.6M)
 
@@ -31,3 +31,10 @@ OpenBSDgame(2.8M,6.6M)
 OpenBSDman(5.4M,19.5M)
 
 OpenBSDmisc(1.7M,5.6M)
+
+OpenBSDxbase
+
+OpenBSDxshare
+
+OpenBSDxfont
+

@@ -15,7 +15,7 @@ OpenBSDrd
 		SYS_CDBOOT	Raw boot file, used for booting from
 				CDROM.
 
-DistributionDescription
+DistributionDescription(ten)
 
 OpenBSDbase(16.5M,49.6M)
 

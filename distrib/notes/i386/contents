@@ -24,7 +24,7 @@ OpenBSDfloppydesc({:-In addition,
 the "tools/" directory contains some utilities that might be useful
 for the installation.-:})
 
-DistributionDescription
+DistributionDescription(eleven)
 
 OpenBSDbase(17.4M,49.2M)
 

@@ -98,7 +98,7 @@ NOTES:
 	immediately upon booting.  Typically the machine will then attempt to
 	load Mac OS, if available.
 
-DistributionDescription
+DistributionDescription(ten)
 
 OpenBSDbase(23.4M,70.8M)
 

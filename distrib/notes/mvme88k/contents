@@ -6,7 +6,7 @@ OpenBSDbsd
 
 OpenBSDrd
 
-DistributionDescription
+DistributionDescription(nine)
 
 OpenBSDbase(41.4M,125.8M)
 
@@ -22,7 +22,7 @@ OpenBSDmisc(1.6M,5.4M)
 
 OpenBSDxbase
 
-OpenBSDxfont
+OpenBSDxshare
 
-OpenBSDxserv
+OpenBSDxfont
 

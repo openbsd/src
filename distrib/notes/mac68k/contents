@@ -2,25 +2,24 @@ TopPart
 
 OpenBSDdistsets
 
-		bsd-generic*	mac68k kernel binaries.
-				You MUST install one.
+		bsd-generic.tgz The OpenBSD/mac68k OSREV kernel binary.  
+				You MUST install this file.  It is the kernel
+				that you need to boot the system.
+				[ 1.4M uncompressed ]
+
+		bsd-genericsbc.tgz
+				Another OpenBSD/mac68k OSREV kernel binary.
+				This is identical in every way to
+				bsd-generic.tgz accept that it enables a
+				different SCSI driver which may allow
+				some otherwise incompatible SCSI disks to
+				function with OpenBSD/mac68k.  You must
+				install either this or bsd-generic.tgz.
+				[ 1.4M uncompressed ]
 
 		utils/		The mac68k installation utilities for MacOS.
 
-DistributionDescription
-
-	bsd-generic.tgz The OpenBSD/mac68k OSREV kernel binary.  
-		  You MUST install this file.  It is the kernel that you 
-		  need to boot the system.
-		  [ 1.4M uncompressed ]
-
-	bsd-genericsbc.tgz The OpenBSD/mac68k OSREV kernel binary.  This is
-		 identical in every way to bsd-generic.tgz accept that
-		 it enables a different SCSI driver which may allow
-		 some otherwise incompatible SCSI disks to function
-		 with OpenBSD/mac68k.  You must install either this
-		 or bsd-generic.tgz.
-		 [ 1.4M uncompressed ]
+DistributionDescription(ten)
 
 OpenBSDbase(16.0M,47.4M)
 

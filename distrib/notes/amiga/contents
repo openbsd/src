@@ -28,7 +28,7 @@ Installation/upgrade miniroot file system:
 	This file is named "miniroot{:--:}OSrev.fs".
 
 
-DistributionDescription
+DistributionDescription(ten)
 
 OpenBSDbase(19.3M,61.4M)
 
