@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/04/21 23:45:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/04/22 20:21:52 hannken Exp $
 #	$NetBSD: Makefile,v 1.28 1996/04/05 01:44:24 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
@@ -6,7 +6,7 @@
 # Missing: icheck ncheck
 
 SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init ipf \
-	ipfstat mknod modload modunload mount mountd nfsd nfsiod nologin \
+	ipfstat kbd mknod modload modunload mount mountd nfsd nfsiod nologin \
 	ping quotacheck reboot route routed savecore shutdown slattach \
 	swapon ttyflags umount
 
