@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.4 1996/09/30 01:54:48 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.5 1997/02/14 23:27:28 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.4 1996/09/30 01:54:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.5 1997/02/14 23:27:28 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,7 +107,8 @@ getnewpasswd(pw)
 {
 	register char *p, *t;
 	int tries;
-	char buf[_PASSWORD_LEN+1], salt[9], *crypt(), *getpass();
+	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN], *crypt(), *getpass();
+	void pwd_gensalt __P(( char *, int, struct passwd *, char));
 
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -138,15 +139,7 @@ getnewpasswd(pw)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	/* grab a random printable character that isn't a colon */
-	(void)srandom((int)time((time_t *)NULL));
-#ifdef NEWSALT
-	salt[0] = _PASSWORD_EFMT1;
-	to64(&salt[1], (long)(29 * 25), 4);
-	to64(&salt[5], random(), 4);
-#else
-	to64(&salt[0], random(), 2);
-#endif
+	pwd_gensalt( salt, _PASSWORD_LEN, pw, 'l' );
 	return(crypt(buf, salt));
 }
 

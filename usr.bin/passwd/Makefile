@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.11 1997/01/02 16:34:51 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/02/14 23:27:25 provos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
+SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c pwd_gensalt.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
-CFLAGS+=-I${.CURDIR}
+CFLAGS+= -I${.CURDIR}
 
 .if defined(YP)
 CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
