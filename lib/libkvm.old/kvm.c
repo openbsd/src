@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.12 2001/01/04 21:51:04 todd Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.13 2001/05/17 21:03:49 miod Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -310,7 +310,7 @@ kvm_open(uf, mf, sf, flag, program)
 	register kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
-		(void)fprintf(stderr, "%s: %s\n", strerror(errno));
+		(void)fprintf(stderr, "%s: %s\n", program, strerror(errno));
 		return (0);
 	}
 	kd->program = program;
