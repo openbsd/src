@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.299 2000/08/06 16:50:03 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.300 2000/08/06 22:30:45 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -821,152 +821,158 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach32",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 CT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CX,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 CX",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 ET",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEPRO,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Rage Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GD",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GI",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GQ",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GU,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GU",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GV,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GV",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GW,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GW",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GX",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GZ,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 GZ",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 LB",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 LD",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 LG",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 LI",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_1,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mobility 1",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 LP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Rage Magnum",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 VT",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VU,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 VU",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VV,
 	    0,
-	    "ATI Technologies",
+	    "ATI",
 	    "Mach64 VV",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
+	    0,
+	    "ATI",
+	    "Rage Fury AGP4x",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -5279,7 +5285,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ATI, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ATI Technologies",
+	    "ATI",
 	    NULL,
 	},
 	{
