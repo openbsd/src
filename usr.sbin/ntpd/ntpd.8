@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.2 2004/07/07 08:30:09 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.3 2004/07/09 10:59:15 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 31, 2004
+.Dd July 9, 2004
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -30,7 +30,9 @@
 The
 .Nm
 daemon implements the Simple Network Time Protocol version 4 as described
-in RFC 2030.
+in RFC 2030 and the Network Time Protocol version 3 as described in RFC 1305.
+It can synchronize the local clock to one or more remote NTP servers and act
+as NTP server itself, redistributing the local time.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
@@ -50,6 +52,11 @@ configuration file.
 .Sh SEE ALSO
 .Xr ntpd.conf 5 ,
 .Xr rdate 8
+.Rs
+.%R RFC 1305
+.%T "Network Time Protocol (Version 3)"
+.%D March 1992
+.Re
 .Rs
 .%R RFC 2030
 .%T "Simple Network Time Protocol (SNTP) Version 4"
