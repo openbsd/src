@@ -1,6 +1,9 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:41:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/03/05 07:55:33 niklas Exp $
 
-CFLAGS+=	-DLIBC_SCCS -fpic
+CFLAGS+=	-DLIBC_SCCS
+.if !defined(NOPIC)
+CFLAGS+=	-fpic
+.endif
 OBJS=		c++rt0.o
 
 all: ${OBJS}
