@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.116 2001/05/22 02:55:49 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.117 2001/05/27 05:16:32 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1207,28 +1207,6 @@ ipsp_address(union sockaddr_union sa)
 	default:
 	    return "(unknown address family)";
     }
-}
-
-/* Copy a struct tdb_ident structure */
-void *
-ipsp_copy_ident(void *arg)
-{
-    struct tdb_ident *tdbii, *tdbi;
-
-    tdbi = (struct tdb_ident *) arg;
-
-    /*
-     * Allocate new structure. If we fail, just return NULL -- the
-     * new packet will be treated as if it was not protected.
-     */
-    MALLOC(tdbii, struct tdb_ident *, sizeof(struct tdb_ident), M_TEMP,
-	   M_NOWAIT);
-    if (tdbii == NULL)
-      return NULL;
-    bcopy(&tdbi->dst, &tdbii->dst, sizeof(union sockaddr_union));
-    tdbii->proto = tdbi->proto;
-    tdbii->spi = tdbi->spi;
-    return (void *) tdbii;
 }
 
 /* Check whether an IP{4,6} address is unspecified. */
