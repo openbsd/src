@@ -8,7 +8,7 @@ The following HP hardware is supported:
 	CPUs:
 		68020-based: 318, 319, 320, 330, and 350.
 		68030-based: 340, 345, 360, 370, 375, and 400(*).
-		68040-based: 380, 425(*), and 433(*).
+		68040-based: 380, 385, 425(*), and 433(*).
 
 	Disks:
 		HP-IB/CS80: 7912, 7914, 7933, 7936, 7937, 7945, 7957,
