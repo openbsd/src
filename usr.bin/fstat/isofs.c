@@ -1,4 +1,4 @@
-/*	$OpenBSD: isofs.c,v 1.2 1998/07/09 20:28:02 mickey Exp $	*/
+/*	$OpenBSD: isofs.c,v 1.3 2001/12/01 18:59:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -93,6 +93,5 @@ isofs_filestat(vp, fsp)
 	fsp->mode = inode.inode.iso_mode;
 	fsp->size = inode.i_size;
 	fsp->rdev = inode.i_dev;
-
 	return 1;
 }

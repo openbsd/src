@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.33 2001/11/26 01:37:16 itojun Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.34 2001/12/01 18:59:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.33 2001/11/26 01:37:16 itojun Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.34 2001/12/01 18:59:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ int maxfiles;
 	}
 
 /*
- * a kvm_read that returns true if everything is read 
+ * a kvm_read that returns true if everything is read
  */
 #define KVM_READ(kaddr, paddr, len) \
 	(kvm_read(kd, (u_long)(kaddr), (void *)(paddr), (len)) == (len))
@@ -232,7 +232,7 @@ main(argc, argv)
 
 	ALLOC_OFILES(256);	/* reserve space for file pointers */
 
-	if (fsflg && !checkfile) {	
+	if (fsflg && !checkfile) {
 		/* -f with no files means use wd */
 		if (getfname(".") == 0)
 			exit(1);
@@ -280,7 +280,8 @@ main(argc, argv)
 char	*Uname, *Comm;
 pid_t	Pid;
 
-#define PREFIX(i) printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
+#define PREFIX(i) do { \
+	printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
 	switch(i) { \
 	case TEXT: \
 		printf(" text"); \
@@ -297,7 +298,8 @@ pid_t	Pid;
 	default: \
 		printf(" %4d", i); \
 		break; \
-	}
+	} \
+} while (0)
 
 /*
  * print open files attributed to this process
@@ -432,10 +434,11 @@ vtrans(vp, i, flag, offset)
 		case VT_NULL:
 			if (!null_filestat(&vn, &fst))
 				badtype = "error";
-			break;		
+			break;
 		default: {
 			static char unknown[30];
-			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
+			snprintf(badtype = unknown, sizeof unknown,
+			    "?(%x)", vn.v_tag);
 			break;
 		}
 	}
@@ -467,22 +470,22 @@ vtrans(vp, i, flag, offset)
 	else
 		(void)printf(" %-8s", getmnton(vn.v_mount));
 	if (nflg)
-		(void)sprintf(mode, "%o", fst.mode);
+		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
 	(void)printf(" %6ld %11s", fst.fileid, mode);
 	rw[0] = '\0';
 	if (flag & FREAD)
-		strcat(rw, "r");
+		strlcat(rw, "r", sizeof rw);
 	if (flag & FWRITE)
-		strcat(rw, "w");
+		strlcat(rw, "w", sizeof rw);
 	printf(" %2s", rw);
 	switch (vn.v_type) {
 	case VBLK:
 	case VCHR: {
 		char *name;
 
-		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
+		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ?
 		    S_IFCHR : S_IFBLK)) == NULL))
 			printf("   %2d,%-3d", major(fst.rdev), minor(fst.rdev));
 		else
@@ -604,7 +607,7 @@ nfs_filestat(vp, fsp)
 		break;
 	default:
 		break;
-	};
+	}
 	fsp->mode = mode;
 
 	return 1;
@@ -698,7 +701,7 @@ null_filestat(vp, fsp)
 	if (fail)
 		fsp->fileid = (long)node.null_lowervp;
 	else
-		fsp->fileid = fst.fileid; 
+		fsp->fileid = fst.fileid;
 	fsp->mode = fst.mode;
 	fsp->size = fst.mode;
 	fsp->rdev = fst.mode;
@@ -761,10 +764,10 @@ pipetrans(pipe, i)
 	maxaddr = MAX(pipe, pi.pipe_peer);
 
 	printf("pipe %p state: %s%s%s", maxaddr,
-	       (pi.pipe_state & PIPE_WANTR) ? "R" : "",
-	       (pi.pipe_state & PIPE_WANTW) ? "W" : "",
-	       (pi.pipe_state & PIPE_EOF) ? "E" : "");
-	
+	    (pi.pipe_state & PIPE_WANTR) ? "R" : "",
+	    (pi.pipe_state & PIPE_WANTW) ? "W" : "",
+	    (pi.pipe_state & PIPE_EOF) ? "E" : "");
+
 	printf("\n");
 	return;
 bad:
@@ -861,7 +864,7 @@ socktrans(sock, i)
 	else
 		printf("* %s %s", dname, stypename[so.so_type]);
 
-	/* 
+	/*
 	 * protocol specific formatting
 	 *
 	 * Try to find interesting things to print.  For tcp, the interesting

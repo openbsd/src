@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.16 2000/10/18 23:05:16 pjanzen Exp $	*/
+/*	$OpenBSD: quota.c,v 1.17 2001/12/01 19:00:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.16 2000/10/18 23:05:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.17 2001/12/01 19:00:34 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -370,23 +370,23 @@ showquotas(type, id, name)
 				printf("%s\n", qup->fsname);
 				nam = "";
 			} 
-			printf("%15s%8d%c%7d%8d%8s"
-			    , nam
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
-				/ 1024)
-			    , (msgb == (char *)0) ? ' ' : '*'
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
-				/ 1024)
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
-				/ 1024)
-			    , (msgb == (char *)0) ? ""
+			printf("%15s%8d%c%7d%8d%8s",
+			    nam,
+			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
+				/ 1024),
+			    (msgb == (char *)0) ? ' ' : '*',
+			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
+				/ 1024),
+			    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
+				/ 1024),
+			    (msgb == (char *)0) ? ""
 			        : timeprt(qup->dqblk.dqb_btime));
-			printf("%8d%c%7d%8d%8s\n"
-			    , qup->dqblk.dqb_curinodes
-			    , (msgi == (char *)0) ? ' ' : '*'
-			    , qup->dqblk.dqb_isoftlimit
-			    , qup->dqblk.dqb_ihardlimit
-			    , (msgi == (char *)0) ? ""
+			printf("%8d%c%7d%8d%8s\n",
+			    qup->dqblk.dqb_curinodes,
+			    (msgi == (char *)0) ? ' ' : '*',
+			    qup->dqblk.dqb_isoftlimit,
+			    qup->dqblk.dqb_ihardlimit,
+			    (msgi == (char *)0) ? ""
 			        : timeprt(qup->dqblk.dqb_itime)
 			);
 			continue;
@@ -406,17 +406,16 @@ heading(type, id, name, tag)
 	printf("Disk quotas for %s %s (%cid %ld): %s\n", qfextension[type],
 	    name, *qfextension[type], id, tag);
 	if (!qflag && tag[0] == '\0') {
-		printf("%15s%8s %7s%8s%8s%8s %7s%8s%8s\n"
-		    , "Filesystem"
-		    , "blocks"
-		    , "quota"
-		    , "limit"
-		    , "grace"
-		    , "files"
-		    , "quota"
-		    , "limit"
-		    , "grace"
-		);
+		printf("%15s%8s %7s%8s%8s%8s %7s%8s%8s\n",
+		    "Filesystem",
+		    "blocks",
+		    "quota",
+		    "limit",
+		    "grace",
+		    "files",
+		    "quota",
+		    "limit",
+		    "grace");
 	}
 }
 
