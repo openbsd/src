@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.45 2001/02/09 17:10:53 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.46 2001/02/10 12:09:21 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -882,18 +882,13 @@ userauth_kbdint(Authctxt *authctxt)
 }
 
 /*
- * parse SSH2_MSG_USERAUTH_INFO_REQUEST, prompt user and send
- * SSH2_MSG_USERAUTH_INFO_RESPONSE
+ * parse INFO_REQUEST, prompt user and send INFO_RESPONSE
  */
 void
 input_userauth_info_req(int type, int plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
-	char *name = NULL;
-	char *inst = NULL;
-	char *lang = NULL;
-	char *prompt = NULL;
-	char *response = NULL;
+	char *name, *inst, *lang, *prompt, *response;
 	u_int num_prompts, i;
 	int echo = 0;
 
@@ -905,15 +900,13 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 	name = packet_get_string(NULL);
 	inst = packet_get_string(NULL);
 	lang = packet_get_string(NULL);
-
 	if (strlen(name) > 0)
 		cli_mesg(name);
-	xfree(name);
-
 	if (strlen(inst) > 0)
 		cli_mesg(inst);
+	xfree(name);
 	xfree(inst);
-	xfree(lang); 				/* unused */
+	xfree(lang);
 
 	num_prompts = packet_get_int();
 	/*
