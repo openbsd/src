@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.4 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.5 2000/05/19 05:14:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -670,7 +670,7 @@ skip_ipsec2:;
 			 * if necessary.
 			 */
 			if (ip6_mrouter && (flags & IPV6_FORWARDING) == 0) {
-				if (ip6_mforward(ip6, ifp, m) != NULL) {
+				if (ip6_mforward(ip6, ifp, m) != 0) {
 					m_freem(m);
 					goto done;
 				}
