@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.5 1996/12/03 07:36:32 kstailey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.6 1997/01/15 07:09:29 kstailey Exp $	*/
 /*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/signalvar.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -188,8 +189,18 @@ struct zsops zsops_kbd;
  * Definition of the driver for autoconfig.
  ****************************************************************/
 
-static int	kbd_match(struct device *, void *, void *);
-static void	kbd_attach(struct device *, struct device *, void *);
+static int	kbd_match __P((struct device *, void *, void *));
+static void	kbd_attach __P((struct device *, struct device *, void *));
+
+static int	kbd_drain_tx __P((struct kbd_softc *));
+static void	kbd_input_string __P((struct kbd_softc *, char *str));
+static void	kbd_input_funckey __P((struct kbd_softc *,register int));
+static void	kbd_input_keysym __P((struct kbd_softc *,register int));
+static void	kbd_input_raw __P((struct kbd_softc *,register int));
+static void	kbd_rxint __P((register struct zs_chanstate *));
+static void	kbd_txint __P((register struct zs_chanstate *));
+static void	kbd_stint __P((register struct zs_chanstate *));
+static void	kbd_softint __P((register struct zs_chanstate *));
 
 struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbd_match, kbd_attach
@@ -295,7 +306,7 @@ kbdopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct kbd_softc *k;
-	int error, s, unit;
+	int error, unit;
 
 	unit = minor(dev);
 	if (unit >= kbd_cd.cd_ndevs)
@@ -627,7 +638,6 @@ kbd_iocsled(k, data)
 	struct kbd_softc *k;
 	int *data;
 {
-	struct kbd_state *ks = &k->k_state;
 	int leds, error, s;
 
 	leds = *data;
@@ -727,7 +737,7 @@ kbd_code_to_keysym(ks, c)
 	return (keysym);
 }
 
-void
+static void
 kbd_input_string(k, str)
 	struct kbd_softc *k;
 	char *str;
@@ -738,7 +748,7 @@ kbd_input_string(k, str)
 	}
 }
 
-void
+static void
 kbd_input_funckey(k, keysym)
 	struct kbd_softc *k;
 	register int keysym;
@@ -759,7 +769,7 @@ kbd_input_funckey(k, keysym)
  * This is called by kbd_input_raw() or by kb_repeat()
  * to deliver ASCII input.  Called at spltty().
  */
-void
+static void
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
 	register int keysym;
@@ -1065,7 +1075,6 @@ kbd_softint(cs)
 	register int get, c, s;
 	int intr_flags;
 	register u_short ring_data;
-	register u_char rr0, rr1;
 
 	k = cs->cs_private;
 
@@ -1286,7 +1295,7 @@ kbd_new_layout(k)
  * Wait for output to finish.
  * Called at spltty().  Has user context.
  */
-int
+static int
 kbd_drain_tx(k)
 	struct kbd_softc *k;
 {
@@ -1312,7 +1321,6 @@ kbd_output(k, c)
 	struct kbd_softc *k;
 	int c;	/* the data */
 {
-	struct zs_chanstate *cs = k->k_cs;
 	int put;
 
 	put = k->k_tbput;

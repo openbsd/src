@@ -1,3 +1,4 @@
+/*	$OpenBSD: kbd_xlate.h,v 1.2 1997/01/15 07:09:31 kstailey Exp $	*/
 /*	$NetBSD: kbd_xlate.h,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
 
 /*
@@ -81,3 +82,11 @@ struct kbd_state {
 extern void kbd_xlate_init __P((struct kbd_state *ks));
 extern int kbd_code_to_keysym __P((struct kbd_state *ks, int c));
 
+/*
+ * XXX: kd/kbd interface...  Does this belong elsewhere?
+ * This is the only header shared between them...
+ */
+
+extern int kbd_iopen __P((int unit));
+extern void kd_init __P((int unit));
+extern void kd_input __P((int c));
