@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.31 1996/12/05 04:40:26 tholo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.32 1996/12/20 07:24:49 graichen Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -1881,7 +1881,9 @@ pcmmap(dev, offset, nprot)
 void
 pc_xmode_on()
 {
+#ifdef COMPAT_10
 	struct trapframe *fp;
+#endif
 
 	if (pc_xmode)
 		return;
