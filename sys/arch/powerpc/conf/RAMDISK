@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2000/09/07 01:43:05 rahnds Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2000/09/07 22:03:09 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -139,7 +139,7 @@ ugen*  at uhub? port ? configuration ? interface ?
 #### Workstation Console attachments
 
 wsdisplay*	at vgafb?
-wskbd0		at ukbd? console 1
+wskbd0		at ukbd? console ?
 
 #### SCSI Bus devices
  
