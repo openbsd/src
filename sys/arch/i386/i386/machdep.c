@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 1999/11/01 20:51:11 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.120 1999/11/27 04:22:08 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -267,6 +267,7 @@ int allowaperture = 0;
 #endif
 #endif
 
+void	winchip_cpu_setup __P((const char *, int, int));
 void	cyrix6x86_cpu_setup __P((const char *, int, int));
 void	intel586_cpu_setup __P((const char *, int, int));
 void	intel686_cpu_setup __P((const char *, int, int));
@@ -816,7 +817,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
 				"WinChip"		/* Default */
 			},
-			NULL
+			winchip_cpu_setup
 		},
 		/* Family 6, not yet available from IDT */
 		{
@@ -891,6 +892,23 @@ struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_SIMD,	"SIMD" },
 	{ CPUID_3DNOW,	"3DNOW" },
 };
+
+void
+winchip_cpu_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+#if defined(I586_CPU)
+	extern int cpu_feature;
+
+	switch (model) {
+	case 4: /* WinChip C6 */
+		cpu_feature &= ~CPUID_TSC;
+		printf("%s: broken TSC disabled\n", cpu_device);
+		break;
+	}
+#endif
+}
 
 void
 cyrix6x86_cpu_setup(cpu_device, model, step)
