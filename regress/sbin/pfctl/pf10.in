@@ -16,9 +16,9 @@ block return-icmp(15) in inet proto icmp all
 block return-icmp(cutoff-preced) in inet proto icmp all
 block return-icmp6 in inet6 proto ipv6-icmp all
 block return-icmp6(0) in inet6 proto ipv6-icmp all
-block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all
-block return-icmp6(1) in inet6 proto ipv6-icmp all
 block return-icmp6(noroute-unr) in inet6 proto ipv6-icmp all
+block return-icmp6(1) in inet6 proto ipv6-icmp all
+block return-icmp6(admin-unr) in inet6 proto ipv6-icmp all
 block return-icmp6(2) in inet6 proto ipv6-icmp all
 block return-icmp6(notnbr-unr) in inet6 proto ipv6-icmp all
 block return-icmp6(3) in inet6 proto ipv6-icmp all

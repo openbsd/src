@@ -5,7 +5,7 @@
 @0 pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
 @0 pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
 @0 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
-@0 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code noroute-unr 
+@0 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
 @0 block in inet proto icmp all icmp-type echorep 
 @0 block in inet proto icmp all icmp-type echorep code 0 
 @0 block in inet proto icmp all icmp-type 1 
@@ -13,4 +13,4 @@
 @0 block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
 @0 block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
 @0 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
-@0 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code noroute-unr 
+@0 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
