@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.4 1996/12/04 01:41:54 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.5 1996/12/11 19:23:40 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $	*/
 
 /*
@@ -1042,7 +1042,7 @@ gethead(buf)
 		if (checksum((int *)buf) == FAIL)
 			return (FAIL);
 		if (Bcvt)
-			swabst((u_char *)"8l4s31l", (u_char *)buf);
+			swabst((u_char *)"8l4s31l528b1l192b2l", (u_char *)buf);
 		goto good;
 	}
 	readtape((char *)(&u_ospcl.s_ospcl));
