@@ -1379,7 +1379,7 @@ start_login(const char *host, int autologin, char *name)
 
     execv(new_login, (char *const*)argv.argv);
     save_errno = errno;
-    syslog(LOG_ERR, "%s: %m\n", new_login);
+    syslog(LOG_ERR, "%s: %m", new_login);
     fatalperror_errno(net, new_login, save_errno);
     /*NOTREACHED*/
 }
@@ -1882,12 +1882,12 @@ cleantmpdir(jid, tpath, user)
 {
     switch(fork()) {
     case -1:
-	syslog(LOG_ERR, "TMPDIR cleanup(%s): fork() failed: %m\n",
+	syslog(LOG_ERR, "TMPDIR cleanup(%s): fork() failed: %m",
 	       tpath);
 	break;
     case 0:
 	execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, (char *)NULL);
-	syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m\n",
+	syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m",
 	       tpath, CLEANTMPCMD);
 	exit(1);
     default:

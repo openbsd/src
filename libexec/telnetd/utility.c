@@ -65,10 +65,10 @@ ttloop(void)
     if (ncc < 0) {
 	if (errno == EINTR)
 	    return 1;
-	syslog(LOG_INFO, "ttloop:  read: %m\n");
+	syslog(LOG_INFO, "ttloop:  read: %m");
 	exit(1);
     } else if (ncc == 0) {
-	syslog(LOG_INFO, "ttloop:  peer died\n");
+	syslog(LOG_INFO, "ttloop:  peer died");
 	exit(1);
     }
     DIAG(TD_REPORT, {
