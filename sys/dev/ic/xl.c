@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.44 2002/11/17 02:41:30 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.45 2002/11/17 02:46:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1719,6 +1719,12 @@ reload:
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+
+	if (c->map->dm_nsegs != 0) {
+		bus_dmamap_sync(sc->sc_dmat, c->map,
+		    0, c->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, c->map);
+	}
 
 	c->xl_mbuf = m_head;
 	sc->sc_tx_sparemap = c->map;
