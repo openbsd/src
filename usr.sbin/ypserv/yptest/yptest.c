@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yptest.c,v 1.1 1995/11/01 16:56:40 deraadt Exp $";
+static char rcsid[] = "$Id: yptest.c,v 1.2 1996/01/20 00:37:58 chuck Exp $";
 #endif
 
 #include <stdio.h>
@@ -73,31 +73,23 @@ main()
   printf("Test 1: yp_match\n");
   KeyLen = strlen(Key);
   Status = yp_match(Domain,Map,Key,KeyLen,&Value,&ValLen);
-  printf("%*.*s\n",ValLen-1,ValLen-1,Value);
-  /* yp_match: Value is terminated with LF NUL */
+  printf("%*.*s\n",ValLen,ValLen,Value);
   
   printf("\nTest 2: yp_first\n");
   Status = yp_first(Domain,Map,&Key2,&KeyLen,&Value,&ValLen);
-  printf("%*.*s %*.*s\n",KeyLen-1,KeyLen-1,Key2,ValLen-1,ValLen-1,Value);
-  /* yp_first: Value is terminated with LF NUL */
-  /*           Key2 is terminated with LF NUL */
+  printf("%*.*s %*.*s\n",KeyLen,KeyLen,Key2,ValLen,ValLen,Value);
 
   printf("\nTest 3: yp_next\n");
-  
   while (Status == 0) {
     Status = yp_next(Domain,Map,Key2,KeyLen,&Key2,&KeyLen,&Value,&ValLen);
     if (Status == 0) {
-      printf("%*.*s %*.*s\n",KeyLen-1,KeyLen-1,Key2,ValLen,ValLen,Value);
+      printf("%*.*s %*.*s\n",KeyLen,KeyLen,Key2,ValLen,ValLen,Value);
     }
-    /* yp_next: Value is terminated with LF NUL */
-    /*          Key2 is terminated with LF NUL */
   }
 
   printf("\nTest 4: yp_master\n");
-  
   Status = yp_master(Domain,Map,&Key2);
   printf("%s\n",Key2);
-  /* yp_master: Key2 is terminated with NUL */
 
   printf("\nTest 5: yp_order\n");
   Status = yp_order(Domain,Map,&Order);
@@ -113,7 +105,6 @@ main()
 		y=ypml->ypml_next;
 	}
   }
-  
 
   printf("\nTest 7: yp_all\n");
   Callback.foreach=yptest_foreach;
