@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.36 2001/11/01 14:18:49 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.37 2001/11/05 07:50:37 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -250,8 +250,8 @@ volatile sig_atomic_t seeninfo;
 #endif
 
 struct ping6_timeval {
-	int	tv_sec;
-	int	tv_usec;
+	int32_t	tv_sec;
+	int32_t	tv_usec;
 };
 
 int	 main __P((int, char *[]));
@@ -2562,7 +2562,7 @@ fill(bp, patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct timeval) + ii);
+		    kk <= MAXDATALEN - (8 + sizeof(struct ping6_timeval) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
