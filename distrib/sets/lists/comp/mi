@@ -1539,7 +1539,7 @@
 ./usr/share/man/cat2/socketpair.0
 ./usr/share/man/cat2/stat.0
 ./usr/share/man/cat2/statfs.0
-./usr/share/man/cat2/swapon.0
+./usr/share/man/cat2/swapctl.0
 ./usr/share/man/cat2/symlink.0
 ./usr/share/man/cat2/sync.0
 ./usr/share/man/cat2/sysarch.0
@@ -3303,3 +3303,8 @@
 ./usr/share/man/cat8/ifmcstat.0
 ./usr/include/dev/mii/txphyreg.h
 ./usr/include/dev/pci/if_dcreg.h
+./usr/include/netinet/ipl.h
+./usr/include/dev/ic/am79c930reg.h
+./usr/include/dev/ic/am79c930var.h
+./usr/include/dev/ic/awireg.h
+./usr/include/dev/ic/awivar.h
