@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 1996/08/26 21:30:10 pefo Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/03/30 19:22:42 provos Exp $
 
 PROG=	encrypt
+SRCS= encrypt.c pwd_gensalt.c
+.PATH: ${.CURDIR}/../passwd
 
+LDADD = -lutil
 LIBEXEC?=       /usr/libexec
 
 LINKS=	${BINDIR}/encrypt ${LIBEXEC}/makekey

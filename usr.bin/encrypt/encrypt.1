@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.4 1996/08/26 08:41:25 downsj Exp $
+.\"	$OpenBSD: encrypt.1,v 1.5 1997/03/30 19:22:45 provos Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -32,6 +32,7 @@
 .Sh SYNOPSIS
 .Nm encrypt
 .Op Fl k
+.Op Fl b Ar rounds
 .Op Fl m
 .Op Fl s Ar salt
 .Op Ar string
@@ -44,13 +45,16 @@ to the standard output.  This is mostly useful for encrypting passwords
 from within scripts.
 .Pp
 The following options are supported:
-.Bl -tag -width XxXXXXX
+.Bl -tag -width XxXXXXXXX
 .It Fl k
 Run in
 .Nm makekey
 compatible mode; a single combined key and salt are read from standard
 input and the DES encrypted result is written to standard output without a
 terminating newline.
+.It Fl b Ar rounds
+Encrypt the string using Blowfish hashing with the specified
+.Ar rounds .
 .It Fl m
 Encrypt the string using MD5.
 .It Fl s Ar salt
@@ -63,14 +67,25 @@ If no
 is specified,
 .Nm encrypt
 reads one string per line from standard input, encrypting each one with
-the same
-.Ar salt .
+with the chosen algorithm from above. In case that no specific algorithm
+was given as command line option, the default will be looked up from
+.Ar passwd.conf(5) .
+.Pp
+For MD5 and Blowfish a new random salt is automatically generated for each
+password.
+.Pp
 Specifing the 
 .Ar string
 on the command line should be discouraged; using the
 standard input is more secure.
+.Sh FILES
+.Bl -tag -width /etc/passwd.conf -compact
+.It Pa /etc/passwd.conf
+.El
 .Sh SEE ALSO
-.Xr crypt 3
+.Xr crypt 3 ,
+.Xr passwd.conf 5 ,
+.Xr pw_getconf 3
 .Sh HISTORY
 .Nm encrypt
 first appeared in OpenBSD 1.2.

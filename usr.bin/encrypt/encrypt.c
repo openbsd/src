@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.4 1997/03/27 23:43:36 downsj Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.5 1997/03/30 19:22:46 provos Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -31,20 +31,27 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 /*
  * Very simple little program, for encrypting passwords from the command
  * line.  Useful for scripts and such.
  */
 
+#define DO_MAKEKEY 0
+#define DO_DES     1
+#define DO_MD5     2
+#define DO_BLF     3
+
 extern char *optarg;
 extern int optind;
 
 char *progname;
+char buffer[_PASSWORD_LEN];
 
 void usage()
 {
-    errx(1, "usage: %s [-k] [-m] [-s salt] [string]", progname);
+    errx(1, "usage: %s [-k] [-b rounds] [-m] [-s salt] [string]", progname);
 }
 
 char *trim(line)
@@ -63,14 +70,62 @@ char *trim(line)
     return(ptr);
 }
 
+void print_passwd(char *string, int operation, void *extra)
+{
+     char msalt[3], *salt;
+     struct passwd pwd;
+     extern char *bcrypt_gensalt __P((int));
+     extern pwd_gensalt __P((char *, int, struct passwd *, char));
+
+     switch(operation) {
+     case DO_MAKEKEY:
+	  /*
+	   * makekey mode: parse string into seperate DES key and salt.
+	   */
+	  if (strlen(string) != 10) {
+	       /* To be compatible... */
+	       fprintf (stderr, "%s: %s\n", progname, strerror(EFTYPE));
+	       exit (1);
+	  }
+	  strcpy(msalt, &string[8]);
+	  salt = msalt;
+	  break;
+     case DO_MD5:
+	  strcpy(buffer, "$1$");
+	  to64(&buffer[3], arc4random(), 4);
+	  to64(&buffer[7], arc4random(), 4);
+	  strcpy(buffer+11, "$");
+	  salt = buffer;
+	  break;
+     case DO_BLF:
+	  strncpy(buffer, bcrypt_gensalt(*(int *)extra), _PASSWORD_LEN - 1);
+	  buffer[_PASSWORD_LEN-1] = 0;
+	  salt = buffer;
+	  break;
+     case DO_DES:
+	  salt = extra;
+	  break;
+     default:
+	  pwd.pw_name = "default";
+	  if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, 'l')) {
+	       fprintf (stderr, "%s: Can't generate salt\n", progname);
+	       exit (1);
+	  }
+	  salt = buffer;
+	  break;
+     }
+     
+     fputs(crypt(string, salt), stdout);
+}
+
 int main(argc, argv)
     int argc;
     char *argv[];
 {
     int opt;
-    int do_md5 = 0;
-    int do_makekey = 0;
-    char *salt = (char *)NULL;
+    int operation = -1;
+    int rounds;
+    void *extra;                       /* Store salt or number of rounds */
 
     if ((progname = strrchr(argv[0], '/')))
 	progname++;
@@ -78,37 +133,42 @@ int main(argc, argv)
 	progname = argv[0];
 
     if (strcmp(progname, "makekey") == 0)
-    	do_makekey = 1;
+	 operation = DO_MAKEKEY;
 
-    while ((opt = getopt(argc, argv, "kms:")) != -1) {
+    while ((opt = getopt(argc, argv, "kms:b:")) != -1) {
     	switch (opt) {
-	case 'k':
-	    do_makekey = 1;
+	case 'k':                       /* Stdin/Stdout Unix crypt */
+	    if (operation != -1)
+		 usage();
+	    operation = DO_MAKEKEY;
 	    break;
-	case 'm':
-	    do_md5 = 1;
+	case 'm':                       /* MD5 password hash */
+	    if (operation != -1)
+		 usage();
+	    operation = DO_MD5;
 	    break;
-	case 's':
-	    salt = optarg;
-	    if (salt[0] == '$')		/* -s is only for DES. */
+	case 's':                       /* Unix crypt (DES) */
+	    if (operation != -1)
+		 usage();
+	    operation = DO_DES;
+	    if (optarg[0] == '$')	/* -s is only for DES. */
 		usage();
+	    extra = optarg;
 	    break;
+	case 'b':                       /* Blowfish password hash */
+	    if (operation != -1)
+		 usage();
+	     operation = DO_BLF;
+	     rounds = atoi(optarg);
+	     extra = &rounds;
+	     break;
 	default:
 	    usage();
 	}
     }
 
-    if (do_md5 && !do_makekey && (salt != (char *)NULL))
-	usage();
-
-    if (!do_md5 && !do_makekey && (salt == (char *)NULL))
-	usage();
-
-    if (do_makekey && (do_md5 || (salt != (char *)NULL)))
-        usage();
-
-    if (((argc - optind) < 1) || do_makekey) {
-    	char line[BUFSIZ], *string, msalt[3];
+    if (((argc - optind) < 1) || operation == DO_MAKEKEY) {
+    	char line[BUFSIZ], *string;
 
     	/* Encrypt stdin to stdout. */
 	while (!feof(stdin) && (fgets(line, sizeof(line), stdin) != NULL)) {
@@ -116,21 +176,10 @@ int main(argc, argv)
 	    string = trim(line);
 	    if (*string == '\0')
 	    	continue;
-	    if (do_makekey) {
-	    	/*
-		 * makekey mode: parse string into seperate DES key and salt.
-		 */
-		if (strlen(string) != 10) {
-		    /* To be compatible... */
-		    fprintf (stderr, "%s: %s\n", progname, strerror(EFTYPE));
-		    exit (1);
-		}
-		strcpy(msalt, &string[8]);
-		salt = msalt;
-	    }
+	    
+	    print_passwd(string, operation, extra);
 
-	    fputs(crypt(string, (do_md5 ? "$1$" : salt)), stdout);
-	    if (do_makekey) {
+	    if (operation == DO_MAKEKEY) {
 	        fflush(stdout);
 		break;
 	    }
@@ -146,7 +195,8 @@ int main(argc, argv)
     	/* Wipe the argument. */
     	bzero(argv[optind], strlen(argv[optind]));
 
-    	fputs(crypt(string, (do_md5 ? "$1$" : salt)), stdout);
+	print_passwd(string, operation, extra);
+
     	fputc('\n', stdout);
 
     	/* Wipe our copy, before we free it. */
