@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2003/12/20 22:40:27 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.66 2004/01/03 00:57:06 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -312,6 +312,20 @@ initppc(startkernel, endkernel, args)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
+	/* use BATs to map 1GB memory, no pageable BATs now */
+	if (physmem > btoc(0x10000000)) {
+		ppc_mtdbat1l(BATL(0x10000000, BAT_M));
+		ppc_mtdbat1u(BATU(0x10000000));
+	}
+	if (physmem > btoc(0x20000000)) {
+		ppc_mtdbat2l(BATL(0x20000000, BAT_M));
+		ppc_mtdbat2u(BATU(0x20000000));
+	}
+	if (physmem > btoc(0x30000000)) {
+		ppc_mtdbat3l(BATL(0x30000000, BAT_M));
+		ppc_mtdbat3u(BATU(0x30000000));
+	}
+#if 0
 	/* now that we know physmem size, map physical memory with BATs */
 	if (physmem > btoc(0x10000000)) {
 		battable[0x1].batl = BATL(0x10000000, BAT_M);
@@ -341,6 +355,7 @@ initppc(startkernel, endkernel, args)
 		battable[0x7].batl = BATL(0x70000000, BAT_M);
 		battable[0x7].batu = BATU(0x70000000);
 	}
+#endif
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).

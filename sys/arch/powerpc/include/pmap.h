@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.32 2003/10/31 03:06:16 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.33 2004/01/03 00:57:06 pvalchev Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -71,9 +71,7 @@ typedef u_int sr_t;
 #define VP_IDX2_MASK	(VP_IDX2_SIZE-1)
 #define VP_IDX2_POS 	12
 
-/* functions used by the bus layer for device accesses */
-void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
-void pmap_kremove_pg(vaddr_t va);
+void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 
 /* cache flags */
 #define PMAP_CACHE_DEFAULT	0 	/* WB cache managed mem, devices not */
