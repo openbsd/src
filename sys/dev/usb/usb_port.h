@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.33 2002/04/01 21:47:07 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.34 2002/05/06 05:44:51 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -276,6 +276,7 @@ typedef int usb_malloc_type;
 #define realloc usb_realloc
 void *usb_realloc(void *, u_int, int, int);
 
+typedef struct proc *usb_proc_ptr;
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
