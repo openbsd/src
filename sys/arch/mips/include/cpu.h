@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 1998/03/16 09:03:04 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 1998/07/11 21:40:59 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -371,7 +371,7 @@ union cpuprid {
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
 #define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
-#define MIPS_UNKC2	0x0c	/* unnanounced product cpu	ISA III */
+#define MIPS_R4100	0x0c	/* NEC VR41xx CPU MIPS-16	ISA III */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
 #define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 1998/03/16 09:03:23 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.3 1998/07/11 21:41:15 imp Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -113,6 +113,9 @@ cpuattach(parent, dev, aux)
 	case MIPS_R4300:
 		printf("NEC VR4300 CPU");
 		break;
+	case MIPS_R4100:
+		printf("NEC VR41xx CPU");
+		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 Blackbird/TFP CPU");
 		break;
@@ -128,7 +131,6 @@ cpuattach(parent, dev, aux)
 	case MIPS_RM52X0:
 		printf("QED RM52X0 CPU");
 		break;
-	case MIPS_UNKC2:
 	default:
 		printf("Unknown CPU type (0x%x)",cpu_id.cpu.cp_imp);
 		break;
@@ -204,4 +206,3 @@ cpuattach(parent, dev, aux)
 	else
 		printf("No Snooping L2 cache!\n");
 }
-
