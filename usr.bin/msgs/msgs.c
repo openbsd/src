@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.10 1997/04/28 06:03:51 downsj Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.11 1997/09/11 19:02:55 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.10 1997/04/28 06:03:51 downsj Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.11 1997/09/11 19:02:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -231,9 +231,9 @@ main(argc, argv)
 				qopt = YES;
 				break;
 
-                        case 'r':               /* restricted */
-                                restricted = YES;
-                                break;
+			case 'r':		/* restricted */
+				restricted = YES;
+				break;
  
 
 			case 's':		/* sending TO msgs */
@@ -408,9 +408,9 @@ main(argc, argv)
 	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;
-                fscanf(msgsrc, "%d\n", &nextmsg);
-                fclose(msgsrc);
-                if (nextmsg > lastmsg+1) {
+		fscanf(msgsrc, "%d\n", &nextmsg);
+		fclose(msgsrc);
+		if (nextmsg > lastmsg+1) {
 			printf("Warning: bounds have been reset (%d, %d)\n",
 				firstmsg, lastmsg);
 			truncate(fname, (off_t)0);
@@ -419,11 +419,11 @@ main(argc, argv)
 		else if (!rcfirst)
 			rcfirst = nextmsg - rcback;
 	}
-        else
-        	newrc = YES;
-        msgsrc = fopen(fname, "r+");
-        if (msgsrc == NULL)
-               msgsrc = fopen(fname, "w");
+	else
+		newrc = YES;
+	msgsrc = fopen(fname, "r+");
+	if (msgsrc == NULL)
+		msgsrc = fopen(fname, "w");
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
@@ -629,11 +629,11 @@ int length;
 	if (use_pager && length > Lpp) {
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
-                if ((env_pager = getenv("PAGER")) == NULL) {
-                        snprintf(cmdbuf, sizeof(cmdbuf), _PATH_PAGER, Lpp);
-                } else {
-                        strcpy(cmdbuf, env_pager);
-                }
+		if ((env_pager = getenv("PAGER")) == NULL) {
+			snprintf(cmdbuf, sizeof(cmdbuf), _PATH_PAGER, Lpp);
+		} else {
+			snprintf(cmdbuf, sizeof(cmdbuf), env_pager);
+		}
 		outf = popen(cmdbuf, "w");
 		if (!outf)
 			outf = stdout;
@@ -751,7 +751,7 @@ ask(prompt)
 	/*
 	 * Handle 'mail' and 'save' here.
 	 */
-        if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
+	if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
 		if (inbuf[1] == '-')
 			cmsg = prevmsg;
 		else if (isdigit(inbuf[1]))
