@@ -93,11 +93,9 @@ DISTFILES = \
 	BUGS MINOR-BUGS FAQ HACKING \
 	ChangeLog NEWS ChangeLog.zoo \
 	configure configure.in stamp-h.in config.h.in Makefile.in acconfig.h \
-	cvs-format.el mkinstalldirs install-sh cvsinit.sh \
+	cvs-format.el mkinstalldirs install-sh \
 	cvsnt.mak \
 	.cvsignore
-
-PROGS = cvsinit
 
 ### Subdirectories to run make in for the primary targets.
 # Unix source subdirs, where we'll want to run lint and etags:
@@ -105,7 +103,7 @@ USOURCE_SUBDIRS = lib src
 # Documentation directories; special handling
 INSTALL_MAN=man
 # All other subdirs:
-SUBDIRS = ${USOURCE_SUBDIRS} ${INSTALL_MAN} doc contrib examples windows-NT os2 macintosh
+SUBDIRS = ${USOURCE_SUBDIRS} ${INSTALL_MAN} doc contrib tools windows-NT os2 macintosh
 # Only make TAGS/tags files in these directories, in this order
 #    [Why in this order?  If we didn't have to stick to this order, we
 #    could make "TSUBDIRS = ${USOURCE_SUBDIRS}".  -Karl]
@@ -124,19 +122,7 @@ all install uninstall: config.h Makefile all-local
 install: all install-local install-info
 
 .PHONY: all-local
-all-local: $(PROGS)
-
-cvsinit: cvsinit.sh
-	echo > .fname \
-	  cvs-`sed < $(srcdir)/src/version.c \
-		    -e '/version_string/!d' \
-		    -e 's/[^0-9.]*\([0-9.]*\).*/\1/' \
-		    -e q`
-	sed -e 's,xLIBDIRx,$(libdir)/cvs,g' \
-	    -e "s,xVERSIONx,`cat .fname`,g" $(srcdir)/cvsinit.sh > $@-t
-	rm -f .fname
-	mv $@-t $@
-	chmod a+x $@
+all-local:
 
 .PHONY: info dvi clean-info install-info
 info dvi clean-info install-info:
@@ -144,10 +130,7 @@ info dvi clean-info install-info:
 
 .PHONY: install-local
 install-local: all-local
-	@for prog in $(PROGS); do \
-	  echo Installing $$prog in $(bindir); \
-	  $(INSTALL) $$prog $(bindir)/$$prog ; \
-	done
+	@: nothing to do locally
 
 .PHONY: tags
 tags:
@@ -186,7 +169,7 @@ realclean: realclean-local
 
 .PHONY: mostlyclean-local
 mostlyclean-local:
-	rm -f *~ $(PROGS)
+	rm -f *~
 
 .PHONY: clean-local
 clean-local: mostlyclean-local
@@ -265,10 +248,12 @@ config.status: configure
 
 config.h: stamp-h
 
-# The ./config.status --recheck line is to update config.status with
-# any new #defines from config.h.in.
+# This used to do a ./config.status --recheck, to update config.status with
+# any new #defines from config.h.in.  The problem was that the rule itself
+# depends on config.status, so that the --recheck would get run several
+# times, which is bad if the user was trying to specify CFLAGS manually.
+# It was a big pain in the neck.
 stamp-h: config.h.in config.status
-	./config.status --recheck
 	CONFIG_FILES=$@ CONFIG_HEADERS=config.h ./config.status
 
 #config.h.in: stamp-h.in

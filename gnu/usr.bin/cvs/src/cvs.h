@@ -118,6 +118,23 @@ extern int errno;
  * Definitions for the CVS Administrative directory and the files it contains.
  * Here as #define's to make changing the names a simple task.
  */
+
+#ifdef USE_VMS_FILENAMES
+#define CVSADM          "CVS"
+#define CVSADM_ENT      "CVS/Entries."
+#define CVSADM_ENTBAK   "CVS/Entries.Backup"
+#define CVSADM_ENTLOG   "CVS/Entries.Log"
+#define CVSADM_ENTSTAT  "CVS/Entries.Static"
+#define CVSADM_REP      "CVS/Repository."
+#define CVSADM_ROOT     "CVS/Root."
+#define CVSADM_CIPROG   "CVS/Checkin.prog"
+#define CVSADM_UPROG    "CVS/Update.prog"
+#define CVSADM_TAG      "CVS/Tag."
+#define CVSADM_NOTIFY   "CVS/Notify."
+#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
+#define CVSADM_BASE      "CVS/Base"
+#define CVSADM_TEMPLATE "CVS/Template."
+#else /* USE_VMS_FILENAMES */
 #define	CVSADM		"CVS"
 #define	CVSADM_ENT	"CVS/Entries"
 #define	CVSADM_ENTBAK	"CVS/Entries.Backup"
@@ -133,6 +150,9 @@ extern int errno;
 /* A directory in which we store base versions of files we currently are
    editing with "cvs edit".  */
 #define CVSADM_BASE     "CVS/Base"
+/* File which contains the template for use in log messages.  */
+#define CVSADM_TEMPLATE "CVS/Template"
+#endif /* USE_VMS_FILENAMES */
 
 /* This is the special directory which we use to store various extra
    per-directory information in the repository.  It must be the same as
@@ -167,10 +187,6 @@ extern int errno;
 
 #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
 
-/* support for the modules file (CVSROOTADM_MODULES) */
-#define	CVSMODULE_OPTS	"ad:i:lo:e:s:t:u:"/* options in modules file */
-#define CVSMODULE_SPEC	'&'		/* special delimiter */
-
 /* Other CVS file names */
 
 /* Files go in the attic if the head main branch revision is dead,
@@ -181,7 +197,6 @@ extern int errno;
 #define	CVSATTIC	"Attic"
 
 #define	CVSLCK		"#cvs.lock"
-#define	CVSTFL		"#cvs.tfl"
 #define	CVSRFL		"#cvs.rfl"
 #define	CVSWFL		"#cvs.wfl"
 #define CVSRFLPAT	"#cvs.rfl.*"	/* wildcard expr to match read locks */
@@ -195,10 +210,16 @@ extern int errno;
 #define	CVSLCKAGE	(60*60)		/* 1-hour old lock files cleaned up */
 #define	CVSLCKSLEEP	30		/* wait 30 seconds before retrying */
 #define	CVSBRANCH	"1.1.1"		/* RCS branch used for vendor srcs */
+
+#ifdef USE_VMS_FILENAMES
+#define BAKPREFIX       "_$"
+#define DEVNULL         "NLA0:"
+#else /* USE_VMS_FILENAMES */
 #define	BAKPREFIX	".#"		/* when rcsmerge'ing */
 #ifndef DEVNULL
 #define	DEVNULL		"/dev/null"
 #endif
+#endif /* USE_VMS_FILENAMES */
 
 #define	FALSE		0
 #define	TRUE		1
@@ -398,6 +419,7 @@ extern int logoff;		/* Don't write history entry */
 extern char hostname[];
 
 /* Externs that are included directly in the CVS sources */
+
 int RCS_settag PROTO((const char *, const char *, const char *));
 int RCS_deltag PROTO((const char *, const char *, int));
 int RCS_setbranch PROTO((const char *, const char *));
@@ -423,7 +445,7 @@ int RCS_checkin PROTO ((char *rcsfile, char *workfile, char *message,
 
 DBM *open_module PROTO((void));
 FILE *open_file PROTO((const char *, const char *));
-List *Find_Dirs PROTO((char *repository, int which));
+List *Find_Directories PROTO((char *repository, int which));
 void Entries_Close PROTO((List *entries));
 List *Entries_Open PROTO((int aflag));
 char *Make_Date PROTO((char *rawdate));
@@ -436,7 +458,7 @@ char *gca PROTO((char *rev1, char *rev2));
 char *getcaller PROTO((void));
 char *time_stamp PROTO((char *file));
 char *xmalloc PROTO((size_t bytes));
-char *xrealloc PROTO((char *ptr, size_t bytes));
+void *xrealloc PROTO((void *ptr, size_t bytes));
 char *xstrdup PROTO((const char *str));
 void strip_trailing_newlines PROTO((char *str));
 int No_Difference PROTO((char *file, Vers_TS * vers, List * entries,
@@ -447,7 +469,6 @@ int Reader_Lock PROTO((char *xrepository));
 typedef	RETSIGTYPE (*SIGCLEANUPPROC)	PROTO(());
 int SIG_register PROTO((int sig, SIGCLEANUPPROC sigcleanup));
 int Writer_Lock PROTO((List * list));
-int ign_name PROTO((char *name));
 int isdir PROTO((const char *file));
 int isfile PROTO((const char *file));
 int islink PROTO((const char *file));
@@ -492,6 +513,7 @@ void fperror PROTO((FILE * fp, int status, int errnum, char *message,...));
 void free_names PROTO((int *pargc, char *argv[]));
 void freevers_ts PROTO((Vers_TS ** versp));
 
+extern int ign_name PROTO ((char *name));
 void ign_add PROTO((char *ign, int hold));
 void ign_add_file PROTO((char *file, int hold));
 void ign_setup PROTO((void));
@@ -500,6 +522,7 @@ int ignore_directory PROTO((char *name));
 typedef void (*Ignore_proc) PROTO ((char *, char *));
 extern void ignore_files PROTO ((List *, char *, Ignore_proc));
 extern int ign_inhibit_server;
+extern int ign_case;
 
 #include "update.h"
 
@@ -507,6 +530,16 @@ void line2argv PROTO((int *pargc, char *argv[], char *line));
 void make_directories PROTO((const char *name));
 void make_directory PROTO((const char *name));
 void rename_file PROTO((const char *from, const char *to));
+/* Expand wildcards in each element of (ARGC,ARGV).  This is according to the
+   files which exist in the current directory, and accordingly to OS-specific
+   conventions regarding wildcard syntax.  It might be desirable to change the
+   former in the future (e.g. "cvs status *.h" including files which don't exist
+   in the working directory).  The result is placed in *PARGC and *PARGV;
+   the *PARGV array itself and all the strings it contains are newly
+   malloc'd.  It is OK to call it with PARGC == &ARGC or PARGV == &ARGV.  */
+extern void expand_wild PROTO ((int argc, char **argv, 
+                                int *pargc, char ***pargv));
+
 void strip_path PROTO((char *path));
 void strip_trailing_slashes PROTO((char *path));
 void update_delproc PROTO((Node * p));
@@ -518,7 +551,7 @@ int Checkin PROTO((int type, char *file, char *update_dir,
 		   char *tag, char *options, char *message, List *entries));
 Ctype Classify_File PROTO((char *file, char *tag, char *date, char *options,
 		     int force_tag_match, int aflag, char *repository,
-		     List *entries, List *srcfiles, Vers_TS **versp,
+		     List *entries, RCSNode *rcsnode, Vers_TS **versp,
 		     char *update_dir, int pipeout));
 List *Find_Names PROTO((char *repository, int which, int aflag,
 		  List ** optentries));
@@ -528,7 +561,7 @@ void Update_Logfile PROTO((char *repository, char *xmessage, char *xrevision,
 		     FILE * xlogfp, List * xchanges));
 Vers_TS *Version_TS PROTO((char *repository, char *options, char *tag,
 		     char *date, char *user, int force_tag_match,
-		     int set_time, List * entries, List * xfiles));
+		     int set_time, List * entries, RCSNode * rcs));
 void do_editor PROTO((char *dir, char **messagep,
 		      char *repository, List * changes));
 
@@ -550,6 +583,11 @@ struct file_info
        in which the command was issued, this is "".  */
     char *update_dir;
 
+    /* update_dir and file put together, with a slash between them as
+       necessary.  This is the proper way to refer to the file in user
+       messages.  */
+    char *fullname;
+
     /* Name of the directory corresponding to the repository which contains
        this file.  */
     char *repository;
@@ -557,9 +595,7 @@ struct file_info
     /* The pre-parsed entries for this directory.  */
     List *entries;
 
-    /* The pre-parsed versions of the RCS files.  This is filled in only
-       if dosrcs was passed as nonzero to start_recursion.  */
-    List *srcfiles;
+    RCSNode *rcs;
 };
 
 typedef	int (*FILEPROC)		PROTO((struct file_info *finfo));
@@ -568,6 +604,7 @@ typedef	Dtype (*DIRENTPROC)	PROTO((char *dir, char *repos, char *update_dir));
 typedef	int (*DIRLEAVEPROC)	PROTO((char *dir, int err, char *update_dir));
 
 extern int mkmodules PROTO ((char *dir));
+extern int init PROTO ((int argc, char **argv));
 
 int do_module PROTO((DBM * db, char *mname, enum mtype m_type, char *msg,
 		CALLBACKPROC callback_proc, char *where, int shorten,
@@ -585,7 +622,7 @@ int start_recursion PROTO((FILEPROC fileproc, FILESDONEPROC filesdoneproc,
 		     int dosrcs, int wd_is_repos));
 void SIG_beginCrSect PROTO((void));
 void SIG_endCrSect PROTO((void));
-void read_cvsrc PROTO((int *argc, char ***argv));
+void read_cvsrc PROTO((int *argc, char ***argv, char *cmdname));
 
 char *make_message_rcslegal PROTO((char *message));
 
@@ -643,6 +680,7 @@ int edit PROTO ((int argc, char **argv));
 int unedit PROTO ((int argc, char **argv));
 int editors PROTO ((int argc, char **argv));
 int watchers PROTO ((int argc, char **argv));
+extern int annotate PROTO ((int argc, char **argv));
 
 #if defined(AUTH_CLIENT_SUPPORT) || defined(AUTH_SERVER_SUPPORT)
 char *scramble PROTO ((char *str));

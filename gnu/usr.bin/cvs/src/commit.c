@@ -23,7 +23,7 @@ static Dtype check_direntproc PROTO((char *dir, char *repos, char *update_dir));
 static int check_fileproc PROTO((struct file_info *finfo));
 static int check_filesdoneproc PROTO((int err, char *repos, char *update_dir));
 static int checkaddfile PROTO((char *file, char *repository, char *tag,
-			       char *options, List *srcfiles)); 
+			       char *options, RCSNode **rcsnode)); 
 static Dtype commit_direntproc PROTO((char *dir, char *repos, char *update_dir));
 static int commit_dirleaveproc PROTO((char *dir, int err, char *update_dir));
 static int commit_fileproc PROTO((struct file_info *finfo));
@@ -37,7 +37,7 @@ static int lockrcsfile PROTO((char *file, char *repository, char *rev));
 static int precommit_list_proc PROTO((Node * p, void *closure));
 static int precommit_proc PROTO((char *repository, char *filter));
 static int remove_file PROTO((char *file, char *repository, char *tag,
-			char *message, List *entries, List *srcfiles));
+			char *message, List *entries, RCSNode *rcsnode));
 static void fix_rcs_modes PROTO((char *rcs, char *user));
 static void fixaddfile PROTO((char *file, char *repository));
 static void fixbranch PROTO((char *file, char *repository, char *branch));
@@ -109,29 +109,21 @@ find_fileproc (finfo)
     enum classify_type status;
     Node *node;
     struct find_data *args = find_data_static;
-    char *fullname;
-
-    fullname = xmalloc (strlen (finfo->update_dir) + strlen (finfo->file) + 10);
-    fullname[0] = '\0';
-    if (finfo->update_dir[0] != '\0')
-    {
-	strcat (fullname, finfo->update_dir);
-	strcat (fullname, "/");
-    }
-    strcat (fullname, finfo->file);
 
     vers = Version_TS ((char *)NULL, (char *)NULL, (char *)NULL,
 		       (char *)NULL,
-		       finfo->file, 0, 0, finfo->entries, (List *)NULL);
+		       finfo->file, 0, 0, finfo->entries, (RCSNode *)NULL);
     if (vers->ts_user == NULL
 	&& vers->vn_user != NULL
 	&& vers->vn_user[0] == '-')
 	status = T_REMOVED;
-    else if (vers->ts_user == NULL
-	     && vers->vn_user == NULL)
+    else if (vers->vn_user == NULL)
     {
-	error (0, 0, "nothing known about `%s'", fullname);
-	free (fullname);
+	if (vers->ts_user == NULL)
+	    error (0, 0, "nothing known about `%s'", finfo->fullname);
+	else
+	    error (0, 0, "use `cvs add' to create an entry for %s",
+		   finfo->fullname);
 	return 1;
     }
     else if (vers->ts_user != NULL
@@ -144,23 +136,15 @@ find_fileproc (finfo)
 	status = T_MODIFIED;
     else
     {
-	/* This covers unmodified files, as well as a variety of other cases
-	   (e.g. "touch foo", "cvs ci foo").  FIXME: we probably should be
-	   printing a message and returning 1 for many of those cases (but
-	   I'm not sure exactly which ones).  */
-	free (fullname);
+	/* This covers unmodified files, as well as a variety of other
+	   cases.  FIXME: we probably should be printing a message and
+	   returning 1 for many of those cases (but I'm not sure
+	   exactly which ones).  */
 	return 0;
     }
 
     node = getnode ();
-    node->key = xmalloc (strlen (finfo->update_dir) + strlen (finfo->file) + 8);
-    node->key[0] = '\0';
-    if (finfo->update_dir[0] != '\0')
-    {
-	strcpy (node->key, finfo->update_dir);
-	strcat (node->key, "/");
-    }
-    strcat (node->key, finfo->file);
+    node->key = xstrdup (finfo->fullname);
 
     node->type = UPDATE;
     node->delproc = update_delproc;
@@ -168,8 +152,6 @@ find_fileproc (finfo)
     (void)addnode (args->ulist, node);
 
     ++args->argc;
-
-    free (fullname);
 
     return 0;
 }
@@ -287,6 +269,7 @@ commit (argc, argv)
 	if (message)
 	    error (1, 0, "cannot specify both a message and a log file");
 
+	/* FIXME: Why is this binary?  Needs more investigation.  */
 	if ((logfd = open (logfile, O_RDONLY | OPEN_BINARY)) < 0)
 	    error (1, errno, "cannot open log file %s", logfile);
 
@@ -295,6 +278,8 @@ commit (argc, argv)
 
 	message = xmalloc (statbuf.st_size + 1);
 
+	/* FIXME: Should keep reading until EOF, rather than assuming the
+	   first read gets the whole thing.  */
 	if ((n = read (logfd, message, statbuf.st_size + 1)) < 0)
 	    error (1, errno, "cannot read log message from %s", logfile);
 
@@ -365,7 +350,7 @@ commit (argc, argv)
 	   check on those files.  This is different from local CVS and
 	   previous versions of client/server CVS, but it probably is a Good
 	   Thing, or at least Not Such A Bad Thing.  */
-	send_file_names (find_args.argc, find_args.argv);
+	send_file_names (find_args.argc, find_args.argv, 0);
 	send_files (find_args.argc, find_args.argv, local, 0);
 
 	send_to_server ("ci\012", 0);
@@ -461,7 +446,7 @@ check_fileproc (finfo)
 	{
 	    status = Classify_File (finfo->file, (char *) NULL, (char *) NULL,
 				    (char *) NULL, 1, aflag, finfo->repository,
-				    finfo->entries, finfo->srcfiles, &vers, finfo->update_dir, 0);
+				    finfo->entries, finfo->rcs, &vers, finfo->update_dir, 0);
 	    if (status == T_UPTODATE || status == T_MODIFIED ||
 		status == T_ADDED)
 	    {
@@ -470,7 +455,7 @@ check_fileproc (finfo)
 		freevers_ts (&vers);
 		xstatus = Classify_File (finfo->file, tag, (char *) NULL,
 					 (char *) NULL, 1, aflag, finfo->repository,
-					 finfo->entries, finfo->srcfiles, &vers, finfo->update_dir,
+					 finfo->entries, finfo->rcs, &vers, finfo->update_dir,
 					 0);
 		if (xstatus == T_REMOVE_ENTRY)
 		    status = T_MODIFIED;
@@ -496,7 +481,7 @@ check_fileproc (finfo)
 	    }
 	    status = Classify_File (finfo->file, xtag, (char *) NULL,
 				    (char *) NULL, 1, aflag, finfo->repository,
-				    finfo->entries, finfo->srcfiles, &vers, finfo->update_dir, 0);
+				    finfo->entries, finfo->rcs, &vers, finfo->update_dir, 0);
 	    if ((status == T_REMOVE_ENTRY || status == T_CONFLICT)
 		&& (cp = strrchr (xtag, '.')) != NULL)
 	    {
@@ -505,7 +490,7 @@ check_fileproc (finfo)
 		freevers_ts (&vers);
 		status = Classify_File (finfo->file, xtag, (char *) NULL,
 					(char *) NULL, 1, aflag, finfo->repository,
-					finfo->entries, finfo->srcfiles, &vers, finfo->update_dir,
+					finfo->entries, finfo->rcs, &vers, finfo->update_dir,
 					0);
 		if (status == T_UPTODATE || status == T_REMOVE_ENTRY)
 		    status = T_MODIFIED;
@@ -518,7 +503,7 @@ check_fileproc (finfo)
     }
     else
 	status = Classify_File (finfo->file, tag, (char *) NULL, (char *) NULL,
-				1, 0, finfo->repository, finfo->entries, finfo->srcfiles, &vers,
+				1, 0, finfo->repository, finfo->entries, finfo->rcs, &vers,
 				finfo->update_dir, 0);
     noexec = save_noexec;
     quiet = save_quiet;
@@ -541,11 +526,7 @@ check_fileproc (finfo)
 	case T_NEEDS_MERGE:
 	case T_CONFLICT:
 	case T_REMOVE_ENTRY:
-	    if (finfo->update_dir[0] == '\0')
-		error (0, 0, "Up-to-date check failed for `%s'", finfo->file);
-	    else
-		error (0, 0, "Up-to-date check failed for `%s/%s'",
-		       finfo->update_dir, finfo->file);
+	    error (0, 0, "Up-to-date check failed for `%s'", finfo->fullname);
 	    freevers_ts (&vers);
 	    return (1);
 	case T_MODIFIED:
@@ -567,30 +548,18 @@ check_fileproc (finfo)
 	    {
 		if (vers->date)
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
-			       "cannot commit with sticky date for file `%s'",
-			       finfo->file);
-		    else
-			error
-			  (0, 0,
-			   "cannot commit with sticky date for file `%s/%s'",
-			   finfo->update_dir, finfo->file);
+		    error (0, 0,
+			   "cannot commit with sticky date for file `%s'",
+			   finfo->fullname);
 		    freevers_ts (&vers);
 		    return (1);
 		}
 		if (status == T_MODIFIED && vers->tag &&
-		    !RCS_isbranch (finfo->file, vers->tag, finfo->srcfiles))
+		    !RCS_isbranch (finfo->rcs, vers->tag))
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
-			       "sticky tag `%s' for file `%s' is not a branch",
-			       vers->tag, finfo->file);
-		    else
-			error
-			  (0, 0,
-			   "sticky tag `%s' for file `%s/%s' is not a branch",
-			   vers->tag, finfo->update_dir, finfo->file);
+		    error (0, 0,
+			   "sticky tag `%s' for file `%s' is not a branch",
+			   vers->tag, finfo->fullname);
 		    freevers_ts (&vers);
 		    return (1);
 		}
@@ -621,14 +590,9 @@ check_fileproc (finfo)
 #endif
 		if (retcode == 0)
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
+		    error (0, 0,
 			  "file `%s' had a conflict and has not been modified",
-			       finfo->file);
-		    else
-			error (0, 0,
-		       "file `%s/%s' had a conflict and has not been modified",
-			       finfo->update_dir, finfo->file);
+			   finfo->fullname);
 		    freevers_ts (&vers);
 		    return (1);
 		}
@@ -644,25 +608,15 @@ check_fileproc (finfo)
 		    
 		if (retcode == -1)
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (1, errno,
-			       "fork failed while examining conflict in `%s'",
-			       finfo->file);
-		    else
-			error (1, errno,
-			     "fork failed while examining conflict in `%s/%s'",
-			       finfo->update_dir, finfo->file);
+		    error (1, errno,
+			   "fork failed while examining conflict in `%s'",
+			   finfo->fullname);
 		}
 		else if (retcode == 0)
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
-			       "file `%s' still contains conflict indicators",
-			       finfo->file);
-		    else
-			error (0, 0,
-			     "file `%s/%s' still contains conflict indicators",
-			       finfo->update_dir, finfo->file);
+		    error (0, 0,
+			   "file `%s' still contains conflict indicators",
+			   finfo->fullname);
 		    freevers_ts (&vers);
 		    return (1);
 		}
@@ -670,14 +624,9 @@ check_fileproc (finfo)
 
 	    if (status == T_REMOVED && vers->tag && isdigit (*vers->tag))
 	    {
-		if (finfo->update_dir[0] == '\0')
-		    error (0, 0,
+		error (0, 0,
 	"cannot remove file `%s' which has a numeric sticky tag of `%s'",
-			   finfo->file, vers->tag);
-		else
-		    error (0, 0,
-	"cannot remove file `%s/%s' which has a numeric sticky tag of `%s'",
-			   finfo->update_dir, finfo->file, vers->tag);
+			   finfo->fullname, vers->tag);
 		freevers_ts (&vers);
 		return (1);
 	    }
@@ -690,28 +639,18 @@ check_fileproc (finfo)
 		sprintf(rcs, "%s/%s%s", finfo->repository, finfo->file, RCSEXT);
 		if (isreadable (rcs))
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
+		    error (0, 0,
 		"cannot add file `%s' when RCS file `%s' already exists",
-			       finfo->file, rcs);
-		    else
-			error (0, 0,
-		"cannot add file `%s/%s' when RCS file `%s' already exists",
-			       finfo->update_dir, finfo->file, rcs);
+			   finfo->fullname, rcs);
 		    freevers_ts (&vers);
 		    return (1);
 		}
 		if (vers->tag && isdigit (*vers->tag) &&
 		    numdots (vers->tag) > 1)
 		{
-		    if (finfo->update_dir[0] == '\0')
-			error (0, 0,
+		    error (0, 0,
 		"cannot add file `%s' with revision `%s'; must be on trunk",
-			       finfo->file, vers->tag);
-		    else
-			error (0, 0,
-		"cannot add file `%s/%s' with revision `%s'; must be on trunk",
-			       finfo->update_dir, finfo->file, vers->tag);
+			       finfo->fullname, vers->tag);
 		    freevers_ts (&vers);
 		    return (1);
 		}
@@ -763,7 +702,7 @@ check_fileproc (finfo)
 		if (isdigit (*vers->tag))
 		    ci->rev = xstrdup (vers->tag);
 		else
-		    ci->rev = RCS_whatbranch (finfo->file, vers->tag, finfo->srcfiles);
+		    ci->rev = RCS_whatbranch (finfo->rcs, vers->tag);
 	    else
 		ci->rev = (char *) NULL;
 	    ci->tag = xstrdup (vers->tag);
@@ -772,10 +711,7 @@ check_fileproc (finfo)
 	    (void) addnode (cilist, p);
 	    break;
 	case T_UNKNOWN:
-	    if (finfo->update_dir[0] == '\0')
-		error (0, 0, "nothing known about `%s'", finfo->file);
-	    else
-		error (0, 0, "nothing known about `%s/%s'", finfo->update_dir, finfo->file);
+	    error (0, 0, "nothing known about `%s'", finfo->fullname);
 	    freevers_ts (&vers);
 	    return (1);
 	case T_UPTODATE:
@@ -949,7 +885,7 @@ commit_fileproc (finfo)
     else if (ci->status == T_ADDED)
     {
 	if (checkaddfile (finfo->file, finfo->repository, ci->tag, ci->options,
-			  finfo->srcfiles) != 0)
+			  &finfo->rcs) != 0)
 	{
 	    fixaddfile (finfo->file, finfo->repository);
 	    err = 1;
@@ -962,7 +898,7 @@ commit_fileproc (finfo)
 
 	if (ci->tag) {
 	    locate_rcs (finfo->file, finfo->repository, rcs);
-	    ci->rev = RCS_whatbranch (finfo->file, ci->tag, finfo->srcfiles);
+	    ci->rev = RCS_whatbranch (finfo->rcs, ci->tag);
 	    err = Checkin ('A', finfo->file, finfo->update_dir, finfo->repository, rcs, ci->rev,
 			   ci->tag, ci->options, message, finfo->entries);
 	    if (err != 0)
@@ -1019,7 +955,7 @@ commit_fileproc (finfo)
     else if (ci->status == T_REMOVED)
     {
 	err = remove_file (finfo->file, finfo->repository, ci->tag, message,
-			   finfo->entries, finfo->srcfiles);
+			   finfo->entries, finfo->rcs);
 #ifdef SERVER_SUPPORT
 	if (server_active) {
 	    server_scratch_entry_only ();
@@ -1246,13 +1182,13 @@ findmaxrev (p, closure)
  * link to keep it relative after we move it into the attic.
  */
 static int
-remove_file (file, repository, tag, message, entries, srcfiles)
+remove_file (file, repository, tag, message, entries, rcsnode)
     char *file;
     char *repository;
     char *tag;
     char *message;
     List *entries;
-    List *srcfiles;
+    RCSNode *rcsnode;
 {
     mode_t omask;
     int retcode;
@@ -1264,8 +1200,6 @@ remove_file (file, repository, tag, message, entries, srcfiles)
     char *corev;
     char *rev;
     char *prev_rev;
-    Node *p;
-    RCSNode *rcsfile;
 
     corev = NULL;
     rev = NULL;
@@ -1276,7 +1210,7 @@ remove_file (file, repository, tag, message, entries, srcfiles)
     locate_rcs (file, repository, rcs);
 
     branch = 0;
-    if (tag && !(branch = RCS_isbranch (file, tag, srcfiles)))
+    if (tag && !(branch = RCS_isbranch (rcsnode, tag)))
     {
 	/* a symbolic tag is specified; just remove the tag from the file */
 	if ((retcode = RCS_deltag (rcs, tag, 1)) != 0) 
@@ -1302,26 +1236,24 @@ remove_file (file, repository, tag, message, entries, srcfiles)
     {
 	char *branchname;
 
-	rev = RCS_whatbranch (file, tag, srcfiles);
+	rev = RCS_whatbranch (rcsnode, tag);
 	if (rev == NULL)
 	{
 	    error (0, 0, "cannot find branch \"%s\".", tag);
 	    return (1);
 	}
 	
-	p = findnode (srcfiles, file);
-	if (p == NULL)
+	if (rcsnode == NULL)
 	{
 	    error (0, 0, "boy, I'm confused.");
 	    return (1);
 	}
-	rcsfile = (RCSNode *) p->data;
-	branchname = RCS_getbranch (rcsfile, rev, 1);
+	branchname = RCS_getbranch (rcsnode, rev, 1);
 	if (branchname == NULL)
 	{
 	    /* no revision exists on this branch.  use the previous
 	       revision but do not lock. */
-	    corev = RCS_gettag (rcsfile, tag, 1, 0);
+	    corev = RCS_gettag (rcsnode, tag, 1, 0);
 	    prev_rev = xstrdup(rev);
 	    lockflag = 0;
 	} else
@@ -1335,14 +1267,12 @@ remove_file (file, repository, tag, message, entries, srcfiles)
     {
 
         /* Get current head revision of file. */
-	p = findnode (srcfiles, file);
-	if (p == NULL)
+	if (rcsnode == NULL)
 	{
 	    error (0, 0, "could not find parsed rcsfile %s", file);
 	    return (1);
 	}
-	rcsfile = (RCSNode *) p->data;
-	prev_rev = RCS_head (rcsfile);
+	prev_rev = RCS_head (rcsnode);
     }
     
     /* if removing without a tag or a branch, then make sure the default
@@ -1532,12 +1462,12 @@ fixbranch (file, repository, branch)
  */
 
 static int
-checkaddfile (file, repository, tag, options, srcfiles)
+checkaddfile (file, repository, tag, options, rcsnode)
     char *file;
     char *repository;
     char *tag;
     char *options;
-    List *srcfiles;
+    RCSNode **rcsnode;
 {
     char rcs[PATH_MAX];
     char fname[PATH_MAX];
@@ -1562,7 +1492,6 @@ checkaddfile (file, repository, tag, options, srcfiles)
 	/* file has existed in the past.  Prepare to resurrect. */
 	char oldfile[PATH_MAX];
 	char *rev;
-	Node *p;
 	RCSNode *rcsfile;
 
 	if (tag == NULL)
@@ -1583,14 +1512,12 @@ checkaddfile (file, repository, tag, options, srcfiles)
 	    }
 	}
 
-	p = findnode (srcfiles, file);
-	if (p == NULL)
+	if ((rcsfile = *rcsnode) == NULL)
 	{
 	    error (0, 0, "could not find parsed rcsfile %s", file);
 	    return (1);
 	}
 
-	rcsfile = (RCSNode *) p->data;
 	rev = RCS_getversion (rcsfile, tag, NULL, 1, 0);
 	/* and lock it */
 	if (lock_RCS (file, rcs, rev, repository)) {
@@ -1663,7 +1590,6 @@ checkaddfile (file, repository, tag, options, srcfiles)
     {
 	/* when adding with a tag, we need to stub a branch, if it
 	   doesn't already exist.  */
-	Node *p;
 	RCSNode *rcsfile;
 
 	rcsfile = RCS_parse (file, repository);
@@ -1673,7 +1599,7 @@ checkaddfile (file, repository, tag, options, srcfiles)
 	    return (1);
 	}
 	
-	if (!RCS_nodeisbranch (tag, rcsfile)) {
+	if (!RCS_nodeisbranch (rcsfile, tag)) {
 	    /* branch does not exist.  Stub it.  */
 	    char *head;
 	    char *magicrev;
@@ -1707,17 +1633,11 @@ checkaddfile (file, repository, tag, options, srcfiles)
 		error (0, 0, "cannot lock `%s'.", rcs);
 		return (1);
 	    }
-	}	    
+	} 
 
-	/* add (replace) this rcs file to our list */
-	p = findnode (srcfiles, file);
-
-	if (p != NULL)
-	  freercsnode((RCSNode **) &p->data);
-
-	delnode(p);
-
-	RCS_addnode (file, rcsfile, srcfiles);
+	if (rcsnode)
+		freercsnode(rcsnode);
+	*rcsnode = rcsfile;
     }
 
     fileattr_newfile (file);

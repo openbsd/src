@@ -42,10 +42,10 @@
 #include "edit.h"
 
 static int checkout_file PROTO((char *file, char *repository, List *entries,
-			  List *srcfiles, Vers_TS *vers_ts, char *update_dir));
+			  RCSNode *rcsnode, Vers_TS *vers_ts, char *update_dir));
 #ifdef SERVER_SUPPORT
 static int patch_file PROTO((char *file, char *repository, List *entries,
-		       List *srcfiles, Vers_TS *vers_ts, char *update_dir,
+		       RCSNode*rcsnode, Vers_TS *vers_ts, char *update_dir,
 		       int *docheckout, struct stat *file_info,
 		       unsigned char *checksum));
 #endif
@@ -61,10 +61,10 @@ static int update_filesdone_proc PROTO((int err, char *repository,
 					char *update_dir));
 static int write_letter PROTO((char *file, int letter, char *update_dir));
 #ifdef SERVER_SUPPORT
-static void join_file PROTO((char *file, List *srcfiles, Vers_TS *vers_ts,
+static void join_file PROTO((char *file, RCSNode *rcsnode, Vers_TS *vers_ts,
 		       char *update_dir, List *entries, char *repository));
 #else
-static void join_file PROTO((char *file, List *srcfiles, Vers_TS *vers_ts,
+static void join_file PROTO((char *file, RCSNode *rcsnode, Vers_TS *vers_ts,
 		       char *update_dir, List *entries));
 #endif
 
@@ -257,7 +257,7 @@ update (argc, argv)
 
 	    if (failed_patches == NULL)
 	    {
-		send_file_names (argc, argv);
+		send_file_names (argc, argv, SEND_EXPAND_WILD);
 		send_files (argc, argv, local, aflag);
 	    }
 	    else
@@ -275,7 +275,7 @@ update (argc, argv)
 
 		for (i = 0; i < failed_patches_count; i++)
 		    (void) unlink_file (failed_patches[i]);
-		send_file_names (failed_patches_count, failed_patches);
+		send_file_names (failed_patches_count, failed_patches, 0);
 		send_files (failed_patches_count, failed_patches, local,
 			    aflag);
 	    }
@@ -439,7 +439,7 @@ update_fileproc (finfo)
     Vers_TS *vers;
 
     status = Classify_File (finfo->file, tag, date, options, force_tag_match,
-			    aflag, finfo->repository, finfo->entries, finfo->srcfiles, &vers,
+			    aflag, finfo->repository, finfo->entries, finfo->rcs, &vers,
 			    finfo->update_dir, pipeout);
     if (pipeout)
     {
@@ -469,7 +469,7 @@ update_fileproc (finfo)
 #ifdef SERVER_SUPPORT
 	    case T_PATCH:		/* needs patch */
 #endif
-		retval = checkout_file (finfo->file, finfo->repository, finfo->entries, finfo->srcfiles,
+		retval = checkout_file (finfo->file, finfo->repository, finfo->entries, finfo->rcs,
 					vers, finfo->update_dir);
 		break;
 
@@ -505,7 +505,7 @@ update_fileproc (finfo)
 			/* Should we be warning the user that we are
 			 * overwriting the user's copy of the file?  */
 			retval = checkout_file (finfo->file, finfo->repository, finfo->entries,
-						finfo->srcfiles, vers, finfo->update_dir);
+						finfo->rcs, vers, finfo->update_dir);
 		    else
 			retval = merge_file (finfo->file, finfo->repository, finfo->entries,
 					     vers, finfo->update_dir);
@@ -549,14 +549,9 @@ update_fileproc (finfo)
 					    RUN_TTY,RUN_NORMAL);
 			if (retcode == -1)
 			{
-			    if (finfo->update_dir[0] == '\0')
-				error (1, errno,
+			    error (1, errno,
 				"fork failed while examining conflict in `%s'",
-				       finfo->file);
-			    else
-				error (1, errno,
-			     "fork failed while examining conflict in `%s/%s'",
-				       finfo->update_dir, finfo->file);
+				       finfo->fullname);
 			}
 		    }
 		    if (!retcode)
@@ -583,7 +578,7 @@ update_fileproc (finfo)
 		    struct stat file_info;
 		    unsigned char checksum[16];
 
-		    retval = patch_file (finfo->file, finfo->repository, finfo->entries, finfo->srcfiles,
+		    retval = patch_file (finfo->file, finfo->repository, finfo->entries, finfo->rcs,
 					 vers, finfo->update_dir, &docheckout,
 					 &file_info, checksum);
 		    if (! docheckout)
@@ -602,7 +597,7 @@ update_fileproc (finfo)
 		/* Fall through.  */
 #endif
 	    case T_CHECKOUT:		/* needs checkout */
-		retval = checkout_file (finfo->file, finfo->repository, finfo->entries, finfo->srcfiles,
+		retval = checkout_file (finfo->file, finfo->repository, finfo->entries, finfo->rcs,
 					vers, finfo->update_dir);
 #ifdef SERVER_SUPPORT
 		if (server_active && retval == 0)
@@ -637,9 +632,9 @@ update_fileproc (finfo)
     /* only try to join if things have gone well thus far */
     if (retval == 0 && join_rev1)
 #ifdef SERVER_SUPPORT
-	join_file (finfo->file, finfo->srcfiles, vers, finfo->update_dir, finfo->entries, finfo->repository);
+	join_file (finfo->file, finfo->rcs, vers, finfo->update_dir, finfo->entries, finfo->repository);
 #else
-	join_file (finfo->file, finfo->srcfiles, vers, finfo->update_dir, finfo->entries);
+	join_file (finfo->file, finfo->rcs, vers, finfo->update_dir, finfo->entries);
 #endif
 
     /* if this directory has an ignore list, add this file to it */
@@ -746,7 +741,8 @@ update_dirent_proc (dir, repository, update_dir)
 	    Create_Admin (dir, update_dir, repository, tag, date);
 	}
     }
-    else
+    /* Do we need to check noexec here? */
+    else if (!pipeout)
     {
 	char *cvsadmdir;
 
@@ -910,11 +906,11 @@ scratch_file (file, repository, entries, update_dir)
  * check out a file - essentially returns the result of the fork on "co".
  */
 static int
-checkout_file (file, repository, entries, srcfiles, vers_ts, update_dir)
+checkout_file (file, repository, entries, rcsnode, vers_ts, update_dir)
     char *file;
     char *repository;
     List *entries;
-    List *srcfiles;
+    RCSNode *rcsnode;
     Vers_TS *vers_ts;
     char *update_dir;
 {
@@ -1043,23 +1039,9 @@ checkout_file (file, repository, entries, srcfiles, vers_ts, update_dir)
 	    wrap_fromcvs_process_file (file);
 
 	    xvers_ts = Version_TS (repository, options, tag, date, file,
-			      force_tag_match, set_time, entries, srcfiles);
+			      force_tag_match, set_time, entries, rcsnode);
 	    if (strcmp (xvers_ts->options, "-V4") == 0)
 		xvers_ts->options[0] = '\0';
-	    /* If no keyword expansion was specified on command line,
-	       use whatever was in the file.  This is how we tell the client
-	       whether a file is binary.  */
-	    if (xvers_ts->options[0] == '\0')
-	    {
-		if (vers_ts->srcfile->expand != NULL)
-		{
-		    free (xvers_ts->options);
-		    xvers_ts->options =
-			xmalloc (strlen (vers_ts->srcfile->expand) + 3);
-		    strcpy (xvers_ts->options, "-k");
-		    strcat (xvers_ts->options, vers_ts->srcfile->expand);
-		}
-	    }
 
 	    (void) time (&last_register_time);
 
@@ -1142,12 +1124,12 @@ checkout_file (file, repository, entries, srcfiles, vers_ts, update_dir)
  * itself.
  */
 static int
-patch_file (file, repository, entries, srcfiles, vers_ts, update_dir,
+patch_file (file, repository, entries, rcsnode, vers_ts, update_dir,
 	    docheckout, file_info, checksum)
     char *file;
     char *repository;
     List *entries;
-    List *srcfiles;
+    RCSNode *rcsnode;
     Vers_TS *vers_ts;
     char *update_dir;
     int *docheckout;
@@ -1328,7 +1310,7 @@ patch_file (file, repository, entries, srcfiles, vers_ts, update_dir,
         /* This stuff is just copied blindly from checkout_file.  I
 	   don't really know what it does.  */
         xvers_ts = Version_TS (repository, options, tag, date, file,
-			       force_tag_match, 0, entries, srcfiles);
+			       force_tag_match, 0, entries, rcsnode);
 	if (strcmp (xvers_ts->options, "-V4") == 0)
 	    xvers_ts->options[0] = '\0';
 
@@ -1516,13 +1498,13 @@ merge_file (file, repository, entries, vers, update_dir)
  */
 static void
 #ifdef SERVER_SUPPORT
-join_file (file, srcfiles, vers, update_dir, entries, repository)
+join_file (file, rcsnode, vers, update_dir, entries, repository)
     char *repository;
 #else
-join_file (file, srcfiles, vers, update_dir, entries)
+join_file (file, rcsnode, vers, update_dir, entries)
 #endif
     char *file;
-    List *srcfiles;
+    RCSNode *rcsnode;
     Vers_TS *vers;
     char *update_dir;
     List *entries;
@@ -1746,7 +1728,7 @@ join_file (file, srcfiles, vers, update_dir, entries)
 		return;
 	    }
 	    
-	    baserev = RCS_whatbranch (file, join_rev1, srcfiles);
+	    baserev = RCS_whatbranch (file, join_rev1, rcsnode);
 	    if (baserev)
 	    {
 		char *cp;

@@ -27,8 +27,10 @@
 
 #ifdef AUTH_SERVER_SUPPORT
 /* For initgroups().  */
+#if HAVE_INITGROUPS
 #include <grp.h>
-#endif
+#endif /* HAVE_INITGROUPS */
+#endif /* AUTH_SERVER_SUPPORT */
 
 
 /* Functions which the server calls.  */
@@ -270,7 +272,7 @@ serve_valid_responses (arg)
 	{
 	    printf ("E response `%s' not supported by client\nerror  \n",
 		    rs->name);
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
 	else if (rs->status == rs_optional)
 	    rs->status = rs_not_supported;
@@ -676,7 +678,8 @@ receive_file (size, file, gzipped)
     if (gzip_pid)
     {
 	if (waitpid (gzip_pid, &gzip_status, 0) != gzip_pid)
-	    error (1, errno, "waiting for gunzip process %d", gzip_pid);
+	    error (1, errno, "waiting for gunzip process %ld",
+		   (long) gzip_pid);
 	else if (gzip_status != 0)
 	    error (1, 0, "gunzip exited %d", gzip_status);
     }
@@ -2185,6 +2188,15 @@ serve_questionable (arg)
 	buf_output (&buf_to_net, "\n", 1);
     }
 }
+
+static void serve_case PROTO ((char *));
+
+static void
+serve_case (arg)
+    char *arg;
+{
+    ign_case = 1;
+}
 
 static struct buffer protocol;
 
@@ -2226,7 +2238,7 @@ error ENOMEM Virtual memory exhausted.\n";
     /* If this gives an error, not much we could do.  syslog() it?  */
     write (STDOUT_FILENO, msg, sizeof (msg) - 1);
     server_cleanup (0);
-    exit (1);
+    exit (EXIT_FAILURE);
 }
 
 static void
@@ -3207,6 +3219,32 @@ serve_noop (arg)
 {
     do_cvs_command (noop);
 }
+
+static void serve_init PROTO ((char *));
+
+static void
+serve_init (arg)
+    char *arg;
+{
+    CVSroot = malloc (strlen (arg) + 1);
+    if (CVSroot == NULL)
+    {
+	pending_error = ENOMEM;
+	return;
+    }
+    strcpy (CVSroot, arg);
+
+    do_cvs_command (init);
+}
+
+static void serve_annotate PROTO ((char *));
+
+static void
+serve_annotate (arg)
+    char *arg;
+{
+    do_cvs_command (annotate);
+}
 
 static void
 serve_co (arg)
@@ -3382,6 +3420,10 @@ server_updated (file, update_dir, repository, updated, file_info, checksum)
 	size = 0;
 	if (sb.st_size > 0)
 	{
+	    /* Throughout this section we use binary mode to read the
+	       file we are sending.  The client handles any line ending
+	       translation if necessary.  */
+
 	    if (gzip_level
 		/*
 		 * For really tiny files, the gzip process startup
@@ -3394,11 +3436,11 @@ server_updated (file, update_dir, repository, updated, file_info, checksum)
 		int status, fd, gzip_status;
 		pid_t gzip_pid;
 
-		fd = open (file, O_RDONLY, 0);
+		fd = open (file, O_RDONLY | OPEN_BINARY, 0);
 		if (fd < 0)
 		    error (1, errno, "reading %s", short_pathname);
 		fd = filter_through_gzip (fd, 1, gzip_level, &gzip_pid);
-		f = fdopen (fd, "r");
+		f = fdopen (fd, "rb");
 		status = buf_read_file_to_eof (f, &list, &last);
 		size = buf_chain_length (list);
 		if (status == -2)
@@ -3409,7 +3451,8 @@ server_updated (file, update_dir, repository, updated, file_info, checksum)
 		if (fclose (f) == EOF)
 		    error (1, errno, "reading %s", short_pathname);
 		if (waitpid (gzip_pid, &gzip_status, 0) == -1)
-		    error (1, errno, "waiting for gzip process %d", gzip_pid);
+		    error (1, errno, "waiting for gzip process %ld",
+			   (long) gzip_pid);
 		else if (gzip_status != 0)
 		    error (1, 0, "gzip exited %d", gzip_status);
 		/* Prepending length with "z" is flag for using gzip here.  */
@@ -3420,7 +3463,7 @@ server_updated (file, update_dir, repository, updated, file_info, checksum)
 		long status;
 
 		size = sb.st_size;
-		f = fopen (file, "r");
+		f = fopen (file, "rb");
 		if (f == NULL)
 		    error (1, errno, "reading %s", short_pathname);
 		status = buf_read_file (f, sb.st_size, &list, &last);
@@ -3561,7 +3604,76 @@ server_set_sticky (update_dir, repository, tag, date)
     }
     buf_send_counted (&protocol);
 }
+
+struct template_proc_data
+{
+    char *update_dir;
+    char *repository;
+};
 
+/* Here as a static until we get around to fixing Parse_Info to pass along
+   a void * for it.  */
+static struct template_proc_data *tpd;
+
+static int
+template_proc (repository, template)
+    char *repository;
+    char *template;
+{
+    FILE *fp;
+    char buf[1024];
+    size_t n;
+    struct stat sb;
+    struct template_proc_data *data = tpd;
+
+    if (!supported_response ("Template"))
+	/* Might want to warn the user that the rcsinfo feature won't work.  */
+	return 0;
+    buf_output0 (&protocol, "Template ");
+    output_dir (data->update_dir, data->repository);
+    buf_output0 (&protocol, "\n");
+
+    fp = fopen (template, "rb");
+    if (fp == NULL)
+    {
+	error (0, errno, "Couldn't open rcsinfo template file %s", template);
+	return 1;
+    }
+    if (fstat (fileno (fp), &sb) < 0)
+    {
+	error (0, errno, "cannot stat rcsinfo template file %s", template);
+	return 1;
+    }
+    sprintf (buf, "%ld\n", (long) sb.st_size);
+    buf_output0 (&protocol, buf);
+    while (!feof (fp))
+    {
+	n = fread (buf, 1, sizeof buf, fp);
+	buf_output (&protocol, buf, n);
+	if (ferror (fp))
+	{
+	    error (0, errno, "cannot read rcsinfo template file %s", template);
+	    (void) fclose (fp);
+	    return 1;
+	}
+    }
+    if (fclose (fp) < 0)
+	error (0, errno, "cannot close rcsinfo template file %s", template);
+    return 0;
+}
+
+void
+server_template (update_dir, repository)
+    char *update_dir;
+    char *repository;
+{
+    struct template_proc_data data;
+    data.update_dir = update_dir;
+    data.repository = repository;
+    tpd = &data;
+    (void) Parse_Info (CVSROOTADM_RCSINFO, repository, template_proc, 1);
+}
+
 static void
 serve_gzip_contents (arg)
      char *arg;
@@ -3786,6 +3898,7 @@ struct request requests[] =
   REQ_LINE("Unchanged", serve_unchanged, rq_optional),
   REQ_LINE("Notify", serve_notify, rq_optional),
   REQ_LINE("Questionable", serve_questionable, rq_optional),
+  REQ_LINE("Case", serve_case, rq_optional),
   REQ_LINE("Argument", serve_argument, rq_essential),
   REQ_LINE("Argumentx", serve_argumentx, rq_essential),
   REQ_LINE("Global_option", serve_global_option, rq_optional),
@@ -3815,6 +3928,8 @@ struct request requests[] =
   REQ_LINE("watch-remove", serve_watch_remove, rq_optional),
   REQ_LINE("watchers", serve_watchers, rq_optional),
   REQ_LINE("editors", serve_editors, rq_optional),
+  REQ_LINE("init", serve_init, rq_optional),
+  REQ_LINE("annotate", serve_annotate, rq_optional),
   REQ_LINE("noop", serve_noop, rq_optional),
   REQ_LINE(NULL, NULL, rq_optional)
 
@@ -4010,7 +4125,7 @@ server (argc, argv)
 	{
 	    printf ("E Fatal server error, aborting.\n\
 error ENOMEM Virtual memory exhausted.\n");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
 	putenv (env);
     }
@@ -4034,7 +4149,7 @@ error ENOMEM Virtual memory exhausted.\n");
 	     */
 	    printf ("E Fatal server error, aborting.\n\
 error ENOMEM Virtual memory exhausted.\n");
-	    exit (1);
+	    exit (EXIT_FAILURE);
 	}
 	strcpy (server_temp_dir, temp_dir);
 
@@ -4051,7 +4166,7 @@ error ENOMEM Virtual memory exhausted.\n");
 	strcat (server_temp_dir, "/cvs-serv");
 
 	p = server_temp_dir + strlen (server_temp_dir);
-	sprintf (p, "%d", getpid ());
+	sprintf (p, "%ld", (long) getpid ());
     }
 
     (void) SIG_register (SIGHUP, server_cleanup);
@@ -4074,7 +4189,7 @@ error ENOMEM Virtual memory exhausted.\n");
 	 */
 	printf ("E Fatal server error, aborting.\n\
 error ENOMEM Virtual memory exhausted.\n");
-	exit (1);
+	exit (EXIT_FAILURE);
     }
 
     argument_count = 1;
@@ -4243,50 +4358,51 @@ check_repository_password (username, password, repository, host_user_ptr)
 /* Return a hosting username if password matches, else NULL. */
 char *
 check_password (username, password, repository)
-     char *username, *password, *repository;
+    char *username, *password, *repository;
 {
-  int rc;
-  char *host_user;
+    int rc;
+    char *host_user;
 
-  /* First we see if this user has a password in the CVS-specific
-     password file.  If so, that's enough to authenticate with.  If
-     not, we'll check /etc/passwd. */
+    /* First we see if this user has a password in the CVS-specific
+       password file.  If so, that's enough to authenticate with.  If
+       not, we'll check /etc/passwd. */
 
-  rc = check_repository_password (username, password, repository, &host_user);
+    rc = check_repository_password (username, password, repository,
+				    &host_user);
 
-  if (rc == 1)
-    return host_user;
-  else if (rc == 2)
-    return 0;
-  else if (rc == 0)
+    if (rc == 1)
+	return host_user;
+    else if (rc == 2)
+	return 0;
+    else if (rc == 0)
     {
-      /* No cvs password found, so try /etc/passwd. */
+	/* No cvs password found, so try /etc/passwd. */
 
-      struct passwd *pw;
-      char *found_passwd;
+	struct passwd *pw;
+	char *found_passwd;
 
-      pw = getpwnam (username);
-      if (pw == NULL)
+	pw = getpwnam (username);
+	if (pw == NULL)
         {
-          printf ("E Fatal error, aborting.\n"
-                  "error 0 %s: no such user\n", username);
-          exit (1);
-        }
-      found_passwd = pw->pw_passwd;
-      
-      if (found_passwd && *found_passwd)
-        return (! strcmp (found_passwd, crypt (password, found_passwd))) ?
-          username : NULL;
-      else if (password && *password)
-        return username;
-      else
-        return NULL;
+	    printf ("E Fatal error, aborting.\n\
+error 0 %s: no such user\n", username);
+	    exit (EXIT_FAILURE);
+	}
+	found_passwd = pw->pw_passwd;
+
+	if (found_passwd && *found_passwd)
+	    return ((! strcmp (found_passwd, crypt (password, found_passwd)))
+		    ? username : NULL);
+	else if (password && *password)
+	    return username;
+	else
+	    return NULL;
     }
-  else
+    else
     {
-      /* Something strange happened.  We don't know what it was, but
-         we certainly won't grant authorization. */
-      return NULL;
+	/* Something strange happened.  We don't know what it was, but
+	   we certainly won't grant authorization. */
+	return NULL;
     }
 }
 
@@ -4395,7 +4511,7 @@ authenticate_connection ()
       fflush (stdout);
       memset (descrambled_password, 0, strlen (descrambled_password));
       free (descrambled_password);
-      exit (1);
+      exit (EXIT_FAILURE);
     }
   
   /* Don't go any farther if we're just responding to "cvs login". */
@@ -4411,7 +4527,10 @@ authenticate_connection ()
              username);
     }
   
+#if HAVE_INITGROUPS
   initgroups (pw->pw_name, pw->pw_gid);
+#endif /* HAVE_INITGROUPS */
+
   setgid (pw->pw_gid);
   setuid (pw->pw_uid);
   /* Inhibit access by randoms.  Don't want people randomly
