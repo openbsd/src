@@ -1,7 +1,7 @@
 TODOs for KAME/OpenBSD
 Jun-ichiro Hagino, KAME project
 KAME Id: TODO,v 1.32 1999/12/08 05:49:27 itojun Exp
-$OpenBSD: TODO,v 1.1 1999/12/08 06:30:51 itojun Exp $
+$OpenBSD: TODO,v 1.2 1999/12/20 08:26:32 itojun Exp $
 
 
 Please refrain from making too much changes to sys/netinet6 tree (even if
@@ -26,15 +26,9 @@ Things we can do with the current code:
 
 Things we can't do with the current code:
 - setsockopt(), ioctl and advapi needs checking
-- ipv4 mapped address
 - check advanced APIs (both userland and kernel)
 - multicast related items need checking
 - ip6_output() does not consult /128 routes, and will not obey icmp6 redir.
-- if you login via ssh, over IPv4 traffic to AF_INET6 socket (using IPv4
-  mapped addres), login(1) or some other program *sometimes* dies with SEGV
-  (string too long on wtmp?)
-  workaround: run sshd -4, then sshd -6.  strangely enough no error will
-  be raised with this configuration.
 - due to library twists, you can't specify IPv6 network name to ifconfig(8).
   it will be fixed once libinet6 is integrated into libc.
 - ssh6 port does not work on sparc (ssh does not work.  sshd works fine - why?)

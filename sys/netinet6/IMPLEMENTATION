@@ -1,4 +1,4 @@
-$OpenBSD: IMPLEMENTATION,v 1.1 1999/12/08 06:30:51 itojun Exp $
+$OpenBSD: IMPLEMENTATION,v 1.2 1999/12/20 08:26:32 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $OpenBSD: IMPLEMENTATION,v 1.1 1999/12/08 06:30:51 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 1999/12/03 14:50:38
+			KAME Date: 1999/12/20 08:23:13
 
 1. IPv6
 
@@ -81,8 +81,8 @@ RFC2553: Basic Socket Interface Extensions for IPv6
       socket (3.8) are,
 	- supported on KAME/FreeBSD3x,
 	- supported on KAME/NetBSD,
-	- supported on KAME/OpenBSD and KAME/BSDI4,
-	- not supported on KAME/FreeBSD228 and KAME/BSDI3.
+	- supported on KAME/BSDI4,
+	- not supported on KAME/FreeBSD228, KAME/OpenBSD and KAME/BSDI3.
       see 1.12 in this document for details.
 RFC2675: IPv6 Jumbograms
     * See 1.7 in this document for details.
@@ -558,14 +558,14 @@ We KAME team have 4 OS platforms right now, and behavior is slightly
 different between them.  To summarize:
 - All KAME implementations treat tcp/udp port number space separately
   between IPv4 and IPv6.
-- KAME/BSDI3 and KAME/FreeBSD228 does not support IPv4 mapped address,
-  nor special wildcard bind on AF_INET6.
+- KAME/BSDI3, KAME/OpenBSD and KAME/FreeBSD228 does not support IPv4 mapped
+  address, nor special wildcard bind on AF_INET6.
 - KAME/FreeBSD3x supports IPv4 mapped address, and special wildcard bind on
   AF_INET6.  It is enabled by default.  You can disable those two by runtime
   and kernel compile configuration.
   (you can't enable only one of them: they come together)
 - KAME/NetBSD supports both.  This is always enabled.
-- KAME/OpenBSD and KAME/BSDI4 supports both.  This is always enabled.
+- KAME/BSDI4 supports both.  This is always enabled.
 
 The following sections will give you the details, and how you can
 configure the behavior.
@@ -693,9 +693,9 @@ while KAME/FreeBSD3x uses merged inpcb structure.
 Supports for IPv4 mapped address/special AF_INET6 wildcard bind are
 enabled by default.  At this moment there is no way to disable it.
 
-1.12.5 KAME/OpenBSD and KAME/BSDI4
+1.12.5 KAME/BSDI4
 
-KAME/OpenBSD and KAME/BSDI4 use NRL-based TCP/UDP stack and inpcb source code,
+KAME/BSDI4 uses NRL-based TCP/UDP stack and inpcb source code,
 which was derived from NRL IPv6/IPsec stack.  I guess it supports IPv4 mapped
 address and speical AF_INET6 wildcard bind.  The implementation is, again,
 different from other KAME/*BSDs.
@@ -708,7 +708,19 @@ namely:
   both will success.  However, all IPv4 traffic (and IPv6 traffic) will be
   captured by IPv6 wildcard socket.
 
-1.12.6 configuration and implementation
+1.12.6 KAME/OpenBSD
+
+KAME/OpenBSD uses NRL-based TCP/UDP stack and inpcb source code,
+which was derived from NRL IPv6/IPsec stack.  However, KAME/OpenBSD
+disables special behavior on AF_INET6 wildcard bind for security reasons
+(if IPv4 traffic toward AF_INET6 wildcard bind is allowed, access control
+will become much harder).  KAME/BSDI4 uses NRL-based TCP/UDP stack as well,
+however, the behavior is different.
+
+As a result the behavior of KAME/OpenBSD is similar to KAME/BSDI3 and
+KAME/FreeBSD228 (see 1.12.1 for more detail).
+
+1.12.7 configuration and implementation
 
 On KAME/FreeBSD3x, the behavior is configurable by following procedure.
 To enable it:
@@ -719,6 +731,45 @@ To enable it:
 	# sysctl -w net.inet6.ip6.mapped_addr=1
 Note that, to enable the behavior you'll need to do the both of the above.
 If you do not do the both, the behavior is disabled.
+
+1.13 sockaddr_storage
+
+When RFC2553 was about to be finalized, there was discusson on how struct
+sockaddr_storage members are named.  One proposal is to prepend "__" to the
+members (like "__ss_len") as they should not be touched.  The other proposal
+was that don't prepend it (like "ss_len") as we need to touch those members
+directly.  There was no clear consensus on it.
+
+As a result, RFC2553 defines struct sockaddr_storage as follows:
+	struct sockaddr_storage {
+		u_char	__ss_len;	/* address length */
+		u_char	__ss_family;	/* address family */
+		/* and bunch of padding */
+	};
+On the contrary, XNET draft defines as follows:
+	struct sockaddr_storage {
+		u_char	ss_len;		/* address length */
+		u_char	ss_family;	/* address family */
+		/* and bunch of padding */
+	};
+
+In December 1999, it was agreed that RFC2553bis should pick the latter (XNET)
+definition.
+
+KAME kit prior to December 1999 used RFC2553 definition.  KAME kit after
+December 1999 (including December) will conform to XNET definition,
+based on RFC2553bis discusson.
+
+If you look at multiple IPv6 implementations, you will be able to see
+both definitions.  As an userland programmer, the most portable way of
+dealing with it is to:
+(1) ensure ss_family and/or ss_len are available on the platform, by using
+    GNU autoconf,
+(2) have -Dss_family=__ss_family to unify all occurences (including header
+    file) into __ss_family, or
+(3) never touch __ss_family.  cast to sockaddr * and use sa_family like:
+	struct sockaddr_storage ss;
+	family = ((struct sockaddr *)&ss)->sa_family
 
 2. Network Drivers
 
