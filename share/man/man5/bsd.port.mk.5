@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.25 2001/03/01 16:11:21 aaron Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.26 2001/03/06 19:00:18 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -538,8 +538,20 @@ Leave empty if no message is needed.
 specification to check when creating a PLIST with the
 .Ar plist
 target.
-By default,
-.Pa ${PORTSDIR}/infrastructure/db/fake.mtree.
+.Ev MTREE_FILE
+can hold a list of file names, to which
+.Pa ${PORTSDIR}/infrastructure/db/fake.mtree
+is always appended.  These specifications are rooted at
+.Pa ${WRKINST} ,
+and are subject to
+.Ev SUBST_VARS
+substitution, to ease
+.Pa ${PREFIX}
+independence.
+This feature is primarily intended for large, interconnected ports,
+such as the kde suite, where a base package sets up a large, extra
+directory hierarchy that would make the manual checking of packing lists
+tedious.
 .It Ev MULTI_PACKAGES
 Set to a list of package extensions for ports that create multiple packages.
 See
