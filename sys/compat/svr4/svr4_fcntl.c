@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.9 1997/08/29 18:55:56 kstailey Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.10 1997/08/29 19:14:53 kstailey Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -354,7 +354,8 @@ svr4_sys_pwrite(p, v, retval)
 		return error;
 
 	SCARG(&wap, fd) = SCARG(uap, fd);
-	SCARG(&wap, buf) = (void *)SCARG(uap, buf);
+	SCARG(&wap, buf) = (char *)SCARG(uap, buf); /* XXX until sys_write_args
+						       is fixed */
 	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
 
 	return sys_write(p, &wap, retval);
