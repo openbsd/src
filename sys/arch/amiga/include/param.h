@@ -244,8 +244,8 @@ splx(npsl)
 #endif
 #define spl0()	splx(PSL_S|PSL_IPL0)
 
-void delay __P((int));
-void DELAY __P((int));
+void delay __P((unsigned));
+void DELAY __P((unsigned));
 #endif
 
 #endif /* !_MACHINE_PARAM_H_ */
