@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2000/06/29 00:12:28 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -135,7 +135,7 @@ log_vprint_syslog (Log_method *lm, char *fmt, va_list args)
 static void
 log_print_syslog (Log_method *lm, char *str)
 {
-     syslog (LOG_INFO, str);
+     syslog (LOG_INFO, "%s", str);
 }
 #endif /* HAVE_VSYSLOG */
 
