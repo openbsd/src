@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.118 2005/03/05 01:44:52 miod Exp $
+#	$OpenBSD: GENERIC,v 1.119 2005/03/05 01:49:02 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -278,29 +278,31 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ukphy*	at mii?				# Unknown PHYs
 
 # Framebuffers
-vgafb*		at pci?			# PCI display
-wsdisplay*	at vgafb?
-bwtwo*		at sbus?		# bw2, sbus mono framebuffer
-wsdisplay*	at bwtwo?
-cgsix*		at sbus?		# cg6, sbus color framebuffer
-wsdisplay*	at cgsix?
-cgthree*	at sbus?		# cg3, sbus color framebuffer
-wsdisplay*	at cgthree?
-zx*		at sbus?		# Sun Leo (ZX) framebuffer
-wsdisplay*	at zx?
-rfx*		at sbus?		# RasterFlex framebuffer series
-wsdisplay*	at rfx?
-mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
-wsdisplay*	at mgx?
 agten*		at sbus?		# Fujitsu AG-10e framebuffer
 wsdisplay*	at agten?
-tvtwo*		at sbus?		# Parallax XVideo/PowerVideo framebuffer
-wsdisplay*	at tvtwo?
-vigra*		at sbus?		# Viagra framebuffer series
-wsdisplay*	at vigra?
-creator*	at mainbus0
+bwtwo*		at sbus?		# bwtwo monochrome framebuffer
+wsdisplay*	at bwtwo?
+cgsix*		at sbus?		# cgsix 8-bit accelerated framebuffer
+wsdisplay*	at cgsix?
+cgthree*	at sbus?		# cgthree 8-bit framebuffer
+wsdisplay*	at cgthree?
+cgtwelve*	at sbus?		# cgtwelve 24-bit color framebuffer
+wsdisplay*	at cgtwelve?
+creator*	at mainbus0		# Creator3D/Elite3D framebuffers
 creator*	at upa0
 wsdisplay*	at creator?
+mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
+wsdisplay*	at mgx?
+rfx*		at sbus?		# RasterFlex framebuffer series
+wsdisplay*	at rfx?
+tvtwo*		at sbus?		# Parallax XVideo/PowerVideo framebuffer
+wsdisplay*	at tvtwo?
+vgafb*		at pci?			# PCI display
+wsdisplay*	at vgafb?
+vigra*		at sbus?		# Viagra framebuffer series
+wsdisplay*	at vigra?
+zx*		at sbus?		# Sun Leo (ZX) framebuffer
+wsdisplay*	at zx?
 
 audiocs*	at sbus?
 

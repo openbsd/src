@@ -1,7 +1,6 @@
-.\"	$OpenBSD: creator.4,v 1.20 2005/03/05 01:48:59 miod Exp $
+.\"	$OpenBSD: cgtwelve.4,v 1.1 2005/03/05 01:48:59 miod Exp $
 .\"
-.\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
-.\" All rights reserved.
+.\" Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -24,57 +23,51 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 21, 2002
-.Dt CREATOR 4 sparc64
+.Dd March 4, 2005
+.Dt CGTWELVE 4 sparc64
 .Os
 .Sh NAME
-.Nm creator
-.Nd accelerated color frame buffer
+.Nm cgtwelve
+.Nd accelerated 24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "creator* at mainbus0 flags 0x0"
-.Cd "creator* at upa0 flags 0x0"
-.Cd "wsdisplay* at creator?"
+.Cd "cgtwelve* at sbus?"
+.Cd "wsdisplay* at cgtwelve?"
 .Sh DESCRIPTION
-The Creator, Creator 3D and Elite 3D UPA
-are color frame buffers, with graphics acceleration, available for most
-of the UltraSPARC workstations with UPA or PCI slots.
+The
+.Nm
+is a triple-slot SBus color frame buffer, with graphics acceleration
+and overlay capabilities.
 .Pp
 The
 .Nm
-driver interfaces those frame buffers with the
+driver interfaces the frame buffer with the
 .Xr wscons 4
 console framework.
-It does not provide direct device driver entry points but makes its functions
-available via the internal
+It does not provide direct device driver entry points
+but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
-.Pp
-By default hardware acceleration is used to erase the screen and
-scroll text.
-By setting
-.Ar flags
-to
-.Ar 1
-(via
-.Xr config 8
-or
-.Xr boot_config 8 )
-this acceleration can be disabled.
 .Sh SEE ALSO
 .Xr agten 4 ,
 .Xr bwtwo 4 ,
 .Xr cgsix 4 ,
 .Xr cgthree 4 ,
-.Xr cgtwelve 4 ,
+.Xr creator 4 ,
 .Xr intro 4 ,
 .Xr mgx 4 ,
 .Xr rfx 4 ,
+.Xr sbus 4 ,
 .Xr tvtwo 4 ,
-.Xr upa 4 ,
 .Xr vgafb 4 ,
 .Xr vigra 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
-.Xr zx 4 ,
-.Xr boot_config 8 ,
-.Xr config 8
+.Xr zx 4
+.Sh CAVEATS
+The only way to connect a
+.Nm
+frame buffer to an UltraSPARC is with the help of an
+.Xr xbox 4
+SBus Expansion subsystem.
+.Pp
+This driver does not support any acceleration features.
