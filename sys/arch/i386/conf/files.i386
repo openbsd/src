@@ -51,9 +51,6 @@ device	isa at root {[port = -1], [size = 0],
 device	pci at root {[bus = -1], [dev = -1]}
 #device	mca at root {...}
 
-define vm86
-file	arch/i386/i386/vm86.c		vm86
-
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
