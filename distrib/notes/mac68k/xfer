@@ -9,10 +9,10 @@ If the install is being done from an AppleShare-mounted volume,
 the install utility must be in the same folder as the data files.
 
 There will be two images of each file.  One in "raw" Unix format
-and one in a binhex format.  Therefore, base20 and base11.hqx both
-contain the same information, but base11.hqx has been encoded in
+and one in a binhex format.  Therefore, base20 and base20.hqx both
+contain the same information, but base20.hqx has been encoded in
 binhex format.  Download the files; if necessary, decode them so
-you have all of the files as base11, etc11, etc.  This can be
+you have all of the files as base20, etc20, etc.  This can be
 accomplished from the .hqx files by using _Stuffit Expander_ or
 any one of a number of freeware and shareware Macintosh tools.
 

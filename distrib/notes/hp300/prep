@@ -49,7 +49,7 @@ In order to complete this process, you will need the following from the
 	SYS_INST	The standalone disklabel and miniroot
 			installation tool
 
-	inst-11.fs.gz	A gzipped miniroot filesystem image.  This image
+	inst-20.fs.gz	A gzipped miniroot filesystem image.  This image
 			must be un-gzipped before copying to disk.
 
 To boot SYS_INST via the network, you will need a system capable of handling

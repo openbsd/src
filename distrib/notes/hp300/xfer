@@ -27,7 +27,7 @@ To prepare for installing via a tape:
 	way to do this is with the dd(1) command.  Make sure you
 	use a `no-rewind-on-close' tape device.  For example:
 
-		for file in base11.tar.gz etc11.tar.gz; do
+		for file in base20.tar.gz etc20.tar.gz; do
 			dd if=${file} of=/dev/nrst0 bs=20b
 		done
 
@@ -77,4 +77,4 @@ To prepare for installing via FTP:
 		IP Address: 205.149.163.23
 		Login: anonymous
 		Password: <your e-mail address>
-		Server path: /pub/OpenBSD/OpenBSD-1.1/hp300/binary
+		Server path: /pub/OpenBSD/2.0/hp300/binary
