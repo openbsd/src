@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.43 1998/09/22 06:33:17 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.44 1998/09/26 19:10:55 fgsch Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -222,6 +222,10 @@ file	dev/isa/if_le_isa.c		le_isa
 # Novell NE1000, NE2000, and clones
 attach	ne at isa with ne_isa
 file	dev/isa/if_ne_isa.c		ne_isa
+
+# SMC91Cxx Ethernet Controllers 
+attach	sm at isa with sm_isa
+file	dev/isa/if_sm_isa.c		sm_isa
 
 #
 # ISA Sound hardware
