@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/05/02 06:43:29 niklas Exp $
-#	$NetBSD: GENERIC,v 1.55 1996/04/27 20:51:07 veego Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/05/04 13:45:17 niklas Exp $
+#	$NetBSD: GENERIC,v 1.56 1996/04/30 17:40:34 is Exp $
 
 #
 # GENERIC AMIGA
@@ -85,6 +85,8 @@ options		SYSVSEM		# System V-like semaphores
 #
 
 options		UCONSOLE	# anyone can redirect a virtual console
+#options	INSECURE	# allow, among other insecure stuff, LKM 
+				# loading in multi-user mode.
 
 options		GENERIC		# Mini-root boot support
 options		LKM		# Loadable kernel modules
