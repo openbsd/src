@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.41 1998/07/26 17:40:38 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.42 1998/07/29 18:47:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.41 1998/07/26 17:40:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.42 1998/07/29 18:47:12 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -788,7 +788,7 @@ getoff2:
 		for (;;) {
 			ui = getuint(lp, partno, "fragment size",
 			    "Size of fs block fragments.  Usually 1024 or 512.",
-			    pp->p_fsize, 1024, 0);
+			    pp->p_fsize ? pp->p_fsize : 1024, 1024, 0);
 			if (ui == UINT_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				*pp = origpart;		/* undo changes */
@@ -806,8 +806,8 @@ getoff2:
 		for (; pp->p_fsize > 0;) {
 			ui = getuint(lp, partno, "block size",
 			    "Size of filesystem blocks.  Usually 8192 or 4096.",
-			    pp->p_fsize * pp->p_frag, pp->p_fsize * pp->p_frag,
-			    0);
+			    pp->p_frag ? pp->p_fsize * pp->p_frag : 8192,
+			    8192, 0);
 
 			/* sanity check */
 			if (ui == UINT_MAX - 1) {
@@ -831,8 +831,8 @@ getoff2:
 			for (;;) {
 				ui = getuint(lp, partno, "cpg",
 				    "Number of filesystem cylinders per group."
-				    "  Usually 16 or 8.", pp->p_cpg, pp->p_cpg,
-				    0);
+				    "  Usually 16 or 8.",
+				    pp->p_cpg ? pp->p_cpg : 16, 16, 0);
 				if (ui == UINT_MAX - 1) {
 					fputs("Command aborted\n", stderr);
 					*pp = origpart;	/* undo changes */
