@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.1 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.2 2003/10/31 09:00:32 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -63,7 +63,8 @@ struct carp_header {
  * Statistics.
  */
 struct carpstats {
-	u_long	carps_ipackets;		/* total input packets */
+	u_long	carps_ipackets;		/* total input packets, IPv4 */
+	u_long	carps_ipackets6;	/* total input packets, IPv6 */
 	u_long	carps_badttl;		/* TTL is not CARP_DFLTTL */
 	u_long	carps_hdrops;		/* packets shorter than header */
 	u_long	carps_badsum;		/* bad checksum */
@@ -73,7 +74,8 @@ struct carpstats {
 	u_long	carps_badvhid;		/* bad VHID */
 	u_long	carps_badaddrs;		/* bad address list */
 
-	u_long	carps_opackets;		/* total output packets */
+	u_long	carps_opackets;		/* total output packets, IPv4 */
+	u_long	carps_opackets6;	/* total output packets, IPv6 */
 	u_long	carps_onomem;		/* no memory for an mbuf for a send */
 	u_long	carps_ostates;		/* total state updates sent */
 
@@ -115,10 +117,13 @@ struct carpreq {
 #ifdef _KERNEL
 void		 carp_ifdetach (struct ifnet *);
 void		 carp_input (struct mbuf *, ...);
+int		 carp6_input (struct mbuf **, int *, int);
 int		 carp_output (struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);
 int		 carp_iamatch (void *, struct in_ifaddr *, struct in_addr *,
 		     u_int8_t **);
+struct ifaddr	*carp_iamatch6(void *, struct in6_addr *);
+void		*carp_macmatch6(void *, struct mbuf *, struct in6_addr *);
 struct	ifnet	*carp_forus (void *, void *);
 int		 carp_sysctl (int *, u_int,  void *, size_t *, void *, size_t);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.42 2003/08/07 09:11:53 itojun Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.43 2003/10/31 09:00:32 mcbride Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -101,6 +101,11 @@
 #include "gif.h"
 #if NGIF > 0
 #include <netinet6/in6_gif.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 /*
@@ -210,6 +215,13 @@ struct ip6protosw inet6sw[] = {
   rip6_usrreq,
   0,		0,		0,		0,
 },
+#if NCARP > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp6_input,	rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,		carp_sysctl
+},
+#endif /* NCARP */
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,

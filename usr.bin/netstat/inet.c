@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.70 2003/10/25 19:33:05 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.71 2003/10/31 09:00:32 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.70 2003/10/25 19:33:05 mcbride Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.71 2003/10/31 09:00:32 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -854,7 +854,8 @@ carp_stats(u_long off, char *name)
 #define p2(f, m) if (carpstat.f || sflag <= 1) \
 	printf(m, carpstat.f)
 
-	p(carps_ipackets, "\t%u packet%s received\n");
+	p(carps_ipackets, "\t%u packet%s received (IPv4)\n");
+	p(carps_ipackets6, "\t%u packet%s received (IPv6)\n");
 	p(carps_hdrops, "\t\t%u packet%s shorter than header\n");
 	p(carps_badsum, "\t\t%u discarded for bad checksum%s\n");
 	p(carps_badver,	"\t\t%u discarded packet%s with a bad version\n");
@@ -862,7 +863,8 @@ carp_stats(u_long off, char *name)
 	p2(carps_badauth, "\t\t%u discarded for bad authentication\n");
 	p2(carps_badvhid, "\t\t%u discarded for bad vhid\n");
 	p2(carps_badaddrs, "\t\t%u discarded because of a bad address list\n");
-	p(carps_opackets, "\t%u packet%s sent\n");
+	p(carps_opackets, "\t%u packet%s sent (IPv4)\n");
+	p(carps_opackets6, "\t%u packet%s sent (IPv6)\n");
 #if notyet
 	p(carps_ostates, "\t\t%s state update%s sent\n");
 #endif

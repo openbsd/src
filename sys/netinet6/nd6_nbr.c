@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.32 2003/06/27 22:47:32 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.33 2003/10/31 09:00:32 mcbride Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -59,6 +59,11 @@
 
 #include <dev/rndvar.h>
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 struct dadq;
@@ -92,7 +97,7 @@ nd6_ns_input(m, off, icmp6len)
 	struct in6_addr taddr6;
 	struct in6_addr myaddr6;
 	char *lladdr = NULL;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	int lladdrlen = 0;
 	int anycast = 0, proxy = 0, tentative = 0;
 	int router = ip6_forwarding;
@@ -187,7 +192,14 @@ nd6_ns_input(m, off, icmp6len)
 	 * (3) "tentative" address on which DAD is being performed.
 	 */
 	/* (1) and (3) check. */
+#if NCARP > 0
+	if (ifp->if_carp) 
+		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
+	if (!ifa) 
+		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+#else
 	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+#endif
 
 	/* (2) check. */
 	if (!ifa) {
@@ -925,9 +937,17 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 		 * lladdr in sdl0.  If we are not proxying (sending NA for
 		 * my address) use lladdr configured for the interface.
 		 */
-		if (sdl0 == NULL)
+		if (sdl0 == NULL) {
+#if NCARP > 0
+			if (ifp->if_carp) 
+				mac = carp_macmatch6(ifp->if_carp, m, taddr6);
+			if (mac == NULL)
+				mac = nd6_ifptomac(ifp);
+#else
+
 			mac = nd6_ifptomac(ifp);
-		else if (sdl0->sa_family == AF_LINK) {
+#endif
+		} else if (sdl0->sa_family == AF_LINK) {
 			struct sockaddr_dl *sdl;
 			sdl = (struct sockaddr_dl *)sdl0;
 			if (sdl->sdl_alen == ifp->if_addrlen)
