@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.17 2002/07/15 14:04:28 pb Exp $
+.\"	$OpenBSD: pf.4,v 1.18 2002/10/25 09:27:54 mpech Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -327,7 +327,7 @@ main(int argc, char *argv[])
 
 	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1)
-		err(0, "open(\\"/dev/pf\\") failed");
+		err(1, "open(\\"/dev/pf\\") failed");
 
 	memset(&nl, 0, sizeof(struct pfioc_natlook));
 	nl.saddr.v4.s_addr	= read_address(argv[1]);
@@ -339,7 +339,7 @@ main(int argc, char *argv[])
 	nl.direction		= PF_IN;
 
         if (ioctl(dev, DIOCNATLOOK, &nl))
-		err(0, "DIOCNATLOOK");
+		err(1, "DIOCNATLOOK");
 
 	printf("internal host ");
 	print_address(nl.rsaddr.v4.s_addr);
