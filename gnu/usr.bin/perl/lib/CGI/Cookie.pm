@@ -13,48 +13,73 @@ package CGI::Cookie;
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Cookie::VERSION='1.20';
+$CGI::Cookie::VERSION='1.24';
 
 use CGI::Util qw(rearrange unescape escape);
 use overload '""' => \&as_string,
     'cmp' => \&compare,
     'fallback'=>1;
 
+# Turn on special checking for Doug MacEachern's modperl
+my $MOD_PERL = 0;
+if (exists $ENV{MOD_PERL}) {
+  eval "require mod_perl";
+  if (defined $mod_perl::VERSION) {
+    if ($mod_perl::VERSION >= 1.99) {
+      $MOD_PERL = 2;
+      require Apache::RequestUtil;
+    } else {
+      $MOD_PERL = 1;
+      require Apache;
+    }
+  }
+}
+
 # fetch a list of cookies from the environment and
 # return as a hash.  the cookies are parsed as normal
 # escaped URL data.
 sub fetch {
     my $class = shift;
-    my $raw_cookie = $ENV{HTTP_COOKIE} || $ENV{COOKIE};
-    return () unless $raw_cookie;
+    my $raw_cookie = get_raw_cookie(@_) or return;
     return $class->parse($raw_cookie);
 }
 
-# fetch a list of cookies from the environment and
-# return as a hash.  the cookie values are not unescaped
-# or altered in any way.
-sub raw_fetch {
-    my $class = shift;
-    my $raw_cookie = $ENV{HTTP_COOKIE} || $ENV{COOKIE};
-    return () unless $raw_cookie;
-    my %results;
-    my($key,$value);
+# Fetch a list of cookies from the environment or the incoming headers and
+# return as a hash. The cookie values are not unescaped or altered in any way.
+ sub raw_fetch {
+   my $class = shift;
+   my $raw_cookie = get_raw_cookie(@_) or return;
+   my %results;
+   my($key,$value);
+   
+   my(@pairs) = split("; ?",$raw_cookie);
+   foreach (@pairs) {
+     s/\s*(.*?)\s*/$1/;
+     if (/^([^=]+)=(.*)/) {
+       $key = $1;
+       $value = $2;
+     }
+     else {
+       $key = $_;
+       $value = '';
+     }
+     $results{$key} = $value;
+   }
+   return \%results unless wantarray;
+   return %results;
+}
 
-    my(@pairs) = split("; ?",$raw_cookie);
-    foreach (@pairs) {
-      s/\s*(.*?)\s*/$1/;
-      if (/^([^=]+)=(.*)/) {
-	$key = $1;
-	$value = $2;
-      }
-      else {
-	$key = $_;
-	$value = '';
-      }
-      $results{$key} = $value;
+sub get_raw_cookie {
+  my $r = shift;
+  $r ||= eval { Apache->request() } if $MOD_PERL;
+  if ($r) {
+    $raw_cookie = $r->headers_in->{'Cookie'};
+  } else {
+    if ($MOD_PERL && !exists $ENV{REQUEST_METHOD}) {
+      die "Run $r->subprocess_env; before calling fetch()";
     }
-    return \%results unless wantarray;
-    return %results;
+    $raw_cookie = $ENV{HTTP_COOKIE} || $ENV{COOKIE};
+  }
 }
 
 
@@ -117,6 +142,7 @@ sub new {
   $self->domain($domain) if defined $domain;
   $self->secure($secure) if defined $secure;
   $self->expires($expires) if defined $expires;
+#  $self->max_age($expires) if defined $expires;
   return $self;
 }
 
@@ -124,11 +150,12 @@ sub as_string {
     my $self = shift;
     return "" unless $self->name;
 
-    my(@constant_values,$domain,$path,$expires,$secure);
+    my(@constant_values,$domain,$path,$expires,$max_age,$secure);
 
-    push(@constant_values,"domain=$domain") if $domain = $self->domain;
-    push(@constant_values,"path=$path") if $path = $self->path;
+    push(@constant_values,"domain=$domain")   if $domain = $self->domain;
+    push(@constant_values,"path=$path")       if $path = $self->path;
     push(@constant_values,"expires=$expires") if $expires = $self->expires;
+    push(@constant_values,"max-age=$max_age") if $max_age = $self->max_age;
     push(@constant_values,"secure") if $secure = $self->secure;
 
     my($key) = escape($self->name);
@@ -188,6 +215,13 @@ sub expires {
     my $expires = shift;
     $self->{'expires'} = CGI::Util::expires($expires,'cookie') if defined $expires;
     return $self->{'expires'};
+}
+
+sub max_age {
+  my $self = shift;
+  my $expires = shift;
+  $self->{'max-age'} = CGI::Util::expire_calc($expires)-time if defined $expires;
+  return $self->{'max-age'};
 }
 
 sub path {
@@ -331,8 +365,6 @@ sequence:
   print "Content-Type: text/html\n\n";
 
 To send more than one cookie, create several Set-Cookie: fields.
-Alternatively, you may concatenate the cookies together with "; " and
-send them in one field.
 
 If you are using CGI.pm, you send cookies by providing a -cookie
 argument to the header() method:
@@ -342,7 +374,7 @@ argument to the header() method:
 Mod_perl users can set cookies using the request object's header_out()
 method:
 
-  $r->header_out('Set-Cookie',$c);
+  $r->headers_out->set('Set-Cookie' => $c);
 
 Internally, Cookie overloads the "" operator to call its as_string()
 method when incorporated into the HTTP header.  as_string() turns the
@@ -377,6 +409,11 @@ form using the parse() class method:
 
        $COOKIES = `cat /usr/tmp/Cookie_stash`;
        %cookies = parse CGI::Cookie($COOKIES);
+
+If you are in a mod_perl environment, you can save some overhead by
+passing the request object to fetch() like this:
+
+   CGI::Cookie->fetch($r);
 
 =head2 Manipulating Cookies
 

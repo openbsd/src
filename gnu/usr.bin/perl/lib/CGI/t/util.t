@@ -1,17 +1,10 @@
 #!/usr/local/bin/perl -w
 
-BEGIN {
-	chdir 't' if -d 't';
-	if ($ENV{PERL_CORE}) {
-		@INC = '../lib';
-	} else {
-		unshift @INC, qw( ../blib/lib ../blib/arch lib );
-	}
-}
-
 # Test ability to escape() and unescape() punctuation characters
 # except for qw(- . _).
 ######################### We start with some black magic to print on failure.
+use lib '../blib/lib','../blib/arch';
+
 BEGIN {$| = 1; print "1..59\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Config;

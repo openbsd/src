@@ -1,30 +1,21 @@
 #!/usr/local/bin/perl -w
 
-BEGIN {
-	chdir 't' if -d 't';
-	if ($ENV{PERL_CORE}) {
-		@INC = '../lib';
-	} else {
-		# Due to a bug in older versions of MakeMaker & Test::Harness,
-	        # we must ensure the blib's are in @INC, else we might use
-	        # the core CGI.pm
-		unshift @INC, qw( ../blib/lib ../blib/arch ../lib );
-	}
-}
 # Test ability to retrieve HTTP request info
 ######################### We start with some black magic to print on failure.
+use lib '../blib/lib','../blib/arch';
 
-BEGIN {$| = 1; print "1..24\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use CGI (':standard','-no_debug','*h3','start_table');
 $loaded = 1;
 print "ok 1\n";
 
 BEGIN {
-    if ($] >= 5.006) {
-	require utf8;	# we contain Latin-1 in subtest #22,
-	utf8->unimport;	# possible "use utf8" must be undone
-    }
+   $| = 1; print "1..27\n";
+  if( $] > 5.006 ) {
+    # no utf8
+    require utf8; # we contain Latin-1
+    utf8->unimport;
+  }
 }
 
 ######################### End of black magic.
@@ -67,14 +58,14 @@ test(13,start_html() ."\n" eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><title>Untitled Document</title>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head><title>Untitled Document</title>
 </head><body>
 END
     ;
 test(14,start_html(-dtd=>"-//IETF//DTD HTML 3.2//FR",-lang=>'fr') ."\n" eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//IETF//DTD HTML 3.2//FR">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><title>Untitled Document</title>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr"><head><title>Untitled Document</title>
 </head><body>
 END
     ;
@@ -83,7 +74,7 @@ test(15,start_html(-Title=>'The world of foo') ."\n" eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><title>The world of foo</title>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head><title>The world of foo</title>
 </head><body>
 END
     ;
@@ -94,7 +85,7 @@ test(17,$h =~ m!^Set-Cookie: fred=chocolate&chip\; path=/${CRLF}Date:.*${CRLF}Co
 test(18,start_h3 eq '<h3>');
 test(19,end_h3 eq '</h3>');
 test(20,start_table({-border=>undef}) eq '<table border>');
-test(21,h1(escapeHTML("this is <not> \x8bright\x9b")) eq '<h1>this is &lt;not&gt; &#139;right&#155;</h1>');
+test(21,h1(escapeHTML("this is <not> \x8bright\x9b")) eq '<h1>this is &lt;not&gt; &#8249;right&#8250;</h1>');
 charset('utf-8');
 if (ord("\t") == 9) {
 test(22,h1(escapeHTML("this is <not> \x8bright\x9b")) eq '<h1>this is &lt;not&gt; ‹right›</h1>');
@@ -105,3 +96,9 @@ test(22,h1(escapeHTML("this is <not> \x8bright\x9b")) eq '<h1>this is &lt;not&gt
 test(23,i(p('hello there')) eq '<i><p>hello there</p></i>');
 my $q = new CGI;
 test(24,$q->h1('hi') eq '<h1>hi</h1>');
+
+$q->autoEscape(1);
+test(25,$q->p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hello world&amp;egrave;">hello &aacute;</p>');
+$q->autoEscape(0);
+test(26,$q->p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hello world&egrave;">hello &aacute;</p>');
+test(27,p({title=>"hello world&egrave;"},'hello &aacute;') eq '<p title="hello world&amp;egrave;">hello &aacute;</p>');

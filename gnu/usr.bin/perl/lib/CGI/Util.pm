@@ -199,6 +199,8 @@ sub escape {
   shift() if @_ > 1 and ( ref($_[0]) || (defined $_[1] && $_[0] eq $CGI::DefaultClass));
   my $toencode = shift;
   return undef unless defined($toencode);
+  # force bytes while preserving backward compatibility -- dankogai
+  $toencode = pack("C*", unpack("C*", $toencode));
     if ($EBCDIC) {
       $toencode=~s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",$E2A[ord($1)])/eg;
     } else {

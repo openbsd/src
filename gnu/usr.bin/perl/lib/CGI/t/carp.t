@@ -1,20 +1,14 @@
 # -*- Mode: cperl; coding: utf-8; cperl-indent-level: 2 -*-
 #!/usr/local/bin/perl -w
 
-BEGIN {
-	chdir 't' if -d 't';
-	if ($ENV{PERL_CORE}) {
-		@INC = '../lib';
-	} else {
-		# Due to a bug in older versions of MakeMaker & Test::Harness, we must
-		# ensure the blib's are in @INC, else we might use the core CGI.pm
-		unshift @INC, qw( ../blib/lib ../blib/arch lib );
-	}
-}
-
 use strict;
+use lib qw(t/lib);
 
-use Test::More tests => 42;
+# Due to a bug in older versions of MakeMaker & Test::Harness, we must
+# ensure the blib's are in @INC, else we might use the core CGI.pm
+use lib qw(blib/lib blib/arch);
+
+use Test::More tests => 47;
 use IO::Handle;
 
 BEGIN { use_ok('CGI::Carp') };
@@ -159,6 +153,28 @@ is($CGI::Carp::CUSTOM_MSG,
 CGI::Carp::set_message(''),
 
 #-----------------------------------------------------------------------------
+# Test set_progname
+#-----------------------------------------------------------------------------
+
+import CGI::Carp qw(name=new_progname);
+is($CGI::Carp::PROGNAME,
+     'new_progname',
+     'CGI::Carp::import set program name correctly');
+
+is(CGI::Carp::set_progname('newer_progname'),
+   'newer_progname',
+   'CGI::Carp::set_progname returns new program name');
+
+is($CGI::Carp::PROGNAME,
+   'newer_progname',
+   'CGI::Carp::set_progname program name set correctly');
+
+# set the message back to the empty string so that the tests later
+# work properly.
+is (CGI::Carp::set_progname(undef),undef,"CGI::Carp::set_progname returns unset name correctly");
+is ($CGI::Carp::PROGNAME,undef,"CGI::Carp::set_progname program name unset correctly");
+
+#-----------------------------------------------------------------------------
 # Test warnings_to_browser
 #-----------------------------------------------------------------------------
 
@@ -177,7 +193,7 @@ untie *STDOUT;
 open(STDOUT, ">&REAL_STDOUT");
 my $fname = $0;
 $fname =~ tr/<>-/\253\273\255/; # _warn does this so we have to also
-is( $fake_out, "<!-- warning: There is a problem at $fname line 106. -->\n",
+is( $fake_out, "<!-- warning: There is a problem at $fname line 100. -->\n",
                         'warningsToBrowser() on' );
 
 is($CGI::Carp::EMIT_WARNINGS, 1, "Warnings turned off");

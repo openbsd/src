@@ -31,7 +31,7 @@ sub save_request {
     # no-op
 }
 
-# If ENV{FCGI_SOCKET_PATH} is specified, we maintain an FCGI Request handle
+# If ENV{FCGI_SOCKET_PATH} is specified, we maintain a FCGI Request handle
 # in this package variable.
 use vars qw($Ext_Request);
 BEGIN {
@@ -187,7 +187,7 @@ documentation for C<FCGI::OpenSocket> for more information.)
 =item FCGI_SOCKET_PATH
 
 The address (TCP/IP) or path (UNIX Domain) of the socket the external FastCGI
-script to which bind can listen for incoming connections from the web server.
+script to which bind an listen for incoming connections from the web server.
 
 =item FCGI_LISTEN_QUEUE
 
