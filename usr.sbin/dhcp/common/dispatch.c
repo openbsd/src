@@ -63,7 +63,7 @@ static int interface_status(struct interface_info *ifinfo);
 
 int quiet_interface_discovery;
 
-/* Use the SIOCGIFCONF ioctl to get a list of all the attached interfaces.
+/* Use getifaddrs() to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
    register that interface with the network I/O software, figure out what
    subnet it's on, and add it to the list of interfaces. */
@@ -73,7 +73,6 @@ void discover_interfaces (state)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
-	int sock;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
@@ -83,10 +82,6 @@ void discover_interfaces (state)
 #ifdef ALIAS_NAMES_PERMUTED
 	char *s;
 #endif
-
-	/* Create an unbound datagram socket to do the SIOCGIFADDR ioctl on. */
-	if ((sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		error ("Can't create addrlist socket");
 
 	if (getifaddrs(&ifap) != 0)
 		error ("getifaddrs failed");
@@ -284,7 +279,6 @@ void discover_interfaces (state)
 		add_protocol (tmp -> name, tmp -> rfdesc, got_one, tmp);
 	}
 
-	close (sock);
 	freeifaddrs(ifap);
 
 	maybe_setup_fallback ();
