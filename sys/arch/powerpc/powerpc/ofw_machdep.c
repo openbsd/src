@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.16 2000/09/07 03:02:04 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.17 2000/09/19 05:28:11 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -362,6 +362,7 @@ bus_space_tag_t cons_membus = &ppc_membus;
 bus_space_handle_t cons_display_mem_h;
 bus_space_handle_t cons_display_ctl_h;
 int cons_height, cons_width, cons_linebytes, cons_depth;
+int cons_display_ofh;
 u_int32_t cons_addr;
 
 #include "vgafb_pci.h"
@@ -392,6 +393,7 @@ ofwconprobe()
 	printf("console out [%s]", name);
 	*/
 	cons_displaytype=1;
+	cons_display_ofh = OF_stdout;
 	err = OF_getprop(stdout_node, "width", &cons_width, 4);
 	if ( err != 4) {
 		cons_width = 0;
