@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.51 2001/01/26 20:07:15 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.52 2001/01/26 20:17:28 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.46 2001/01/26 20:06:51 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.47 2001/01/26 20:16:58 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -366,25 +366,25 @@
 #define	PCMCIA_PRODUCT_XIRCOM_XIR_CEM_28	0x110b
 
 /* Cards we know only by their cis */
-#define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
-#define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
-#define	PCMCIA_VENDOR_PLANEX	-1	/* Planex */
-#define	PCMCIA_VENDOR_DLINK	-1	/* D-Link */
-#define	PCMCIA_VENDOR_RPTI	-1	/* RPTI */
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
-#define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
-#define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital */
-#define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
-#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom */
+#define	PCMCIA_VENDOR_AMD	-1	/* AMD */
+#define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
+#define	PCMCIA_VENDOR_CNET	-1	/* CNet */
+#define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital */
+#define	PCMCIA_VENDOR_DLINK	-1	/* D-Link */
+#define	PCMCIA_VENDOR_EDIMAX	-1	/* Edimax */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
-#define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
-#define	PCMCIA_VENDOR_AMD	-1	/* AMD */
-#define	PCMCIA_VENDOR_EDIMAX	-1	/* Edimax */
-#define	PCMCIA_VENDOR_CNET	-1	/* CNet */
+#define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
+#define	PCMCIA_VENDOR_PLANEX	-1	/* Planex */
+#define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
+#define	PCMCIA_VENDOR_RPTI	-1	/* RPTI */
+#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
 #define	PCMCIA_VENDOR_SHUTTLE	-1	/* Shuttle */
+#define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
+#define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_ZOOM	-1	/* Zoom */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
