@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 1999/08/04 23:17:40 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 1999/08/09 12:05:29 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -439,7 +439,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
-	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
+	int _port = (h)+(o); const void *_addr=(a); int _cnt=(c);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
@@ -462,7 +462,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0)
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
-	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
+	int _port = (h)+(o); const void *_addr=(a); int _cnt=(c);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
@@ -485,7 +485,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 } while (0)
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
-	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
+	int _port = (h)+(o); const void *_addr=(a); int _cnt=(c);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
