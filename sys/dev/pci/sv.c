@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.13 2002/03/14 03:16:06 millert Exp $ */
+/*      $OpenBSD: sv.c,v 1.14 2002/06/11 06:04:17 nordin Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -750,8 +750,6 @@ sv_set_params(addr, setmode, usemode, p, r)
 
 #define F_REF 24576000
 
-#define ABS(x) (((x) < 0) ? (-x) : (x))
-
 	if (setmode & AUMODE_RECORD)
 	{
 	  /* The ADC reference frequency (f_out) is 512 * the sample rate */
@@ -790,7 +788,7 @@ sv_set_params(addr, setmode, usemode, p, r)
 
 	    /* Threshold might be good here */
 	    error = pll_sample - r->sample_rate;
-	    error = ABS(error);
+	    error = abs(error);
 	    
 	    if (error < best_error) {
 	      best_error = error;
