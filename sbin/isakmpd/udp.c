@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.41 2001/07/01 20:29:39 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.42 2001/07/03 07:54:20 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -712,7 +712,7 @@ udp_decode_ids (struct transport *t)
 		   ((struct udp_transport *)t)->src->sa_len,
 		   idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0)
     {
-      log_print ("udp_decode_ids: getnameinfo () failed");
+      log_print ("udp_decode_ids: getnameinfo () failed for 'src'");
       strcpy (idsrc, "<error>");
     }
 
@@ -720,7 +720,7 @@ udp_decode_ids (struct transport *t)
 		   ((struct udp_transport *)t)->dst->sa_len,
 		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
-      log_print ("udp_decode_ids: getnameinfo () failed");
+      log_print ("udp_decode_ids: getnameinfo () failed for 'dst'");
       strcpy (iddst, "<error>");
     }
 #else
