@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.7 1997/06/30 02:59:28 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.8 1997/11/13 07:38:37 millert Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.7 1997/06/30 02:59:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.8 1997/11/13 07:38:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,7 @@ dumpfs(name)
 		goto err;
 
  	if (afs.fs_magic != FS_MAGIC) {
-		warnx("%s: superblock has bad magic number, skipping.",
-		     name);
+		warnx("%s: superblock has bad magic number, skipping.", name);
 		(void) close(fd);
  		return (1);
  	}
@@ -149,8 +148,9 @@ dumpfs(name)
 				i++;
 		}
 	}
-	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\n",
-	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i);
+	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d%s\n",
+	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
+	    (afs.fs_flags & FS_DOSOFTDEP) ? "\tsoft updates" : "");
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    afs.fs_cstotal.cs_nbfree, afs.fs_cstotal.cs_ndir,
 	    afs.fs_cstotal.cs_nifree, afs.fs_cstotal.cs_nffree);
