@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2001/12/18 01:47:06 deraadt Exp $	*/
 
 /*
  * signal handling
@@ -70,6 +70,8 @@ static RETSIGTYPE
 alarm_catcher(sig)
 	int sig;
 {
+	int errno_ = errno;
+
 	if (ksh_tmout_state == TMOUT_READING) {
 		int left = alarm(0);
 
@@ -79,6 +81,7 @@ alarm_catcher(sig)
 		} else
 			alarm(left);
 	}
+	errno = errno_;
 	return RETSIGVAL;
 }
 #endif /* KSH */
@@ -124,7 +127,7 @@ trapsig(i)
 	int i;
 {
 	Trap *p = &sigtraps[i];
-	int save_errno = errno;
+	int errno_ = errno;
 
 	trap = p->set = 1;
 	if (p->flags & TF_DFL_INTR)
@@ -139,7 +142,7 @@ trapsig(i)
 	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
 		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
 #endif /* V7_SIGNALS */
-	errno = save_errno;
+	errno = errno_;
 	return RETSIGVAL;
 }
 
