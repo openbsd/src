@@ -116,3 +116,5 @@ clean::
 	rm -f conf.o boot.o rom.o racopy.o srt0.o devopen.o rootcopy.o \
 	copy copy.o
 
+.include <bsd.prog.mk>
+
