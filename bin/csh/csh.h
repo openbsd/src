@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.6 2000/08/30 01:46:34 mickey Exp $	*/
+/*	$OpenBSD: csh.h,v 1.7 2000/10/30 17:16:46 millert Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -139,7 +139,6 @@ int     onelflg;		/* 2 -> need line for -t, 1 -> exit on read */
 Char   *ffile;			/* Name of shell file for $0 */
 
 char   *seterr;			/* Error message from scanner/parser */
-Char   *shtemp;			/* Temp name for << shell files in /tmp */
 
 #include <sys/types.h>
 #include <sys/time.h>
