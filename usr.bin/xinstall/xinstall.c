@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.16 1998/09/26 09:04:43 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.17 1998/12/16 19:55:57 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.16 1998/09/26 09:04:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.17 1998/12/16 19:55:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ gid_t gid;
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
 #define NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 
-void	copy __P((int, char *, int, char *, off_t));
+void	copy __P((int, char *, int, char *, off_t, int));
 int	compare __P((int, const char *, size_t, int, const char *, size_t));
 void	install __P((char *, char *, u_long, u_int));
 void	install_dir __P((char *));
@@ -89,6 +89,7 @@ void	strip __P((char *));
 void	usage __P((void));
 int	create_newfile __P((char *, struct stat *));
 int	create_tempfile __P((char *, char *, size_t));
+int	file_write __P((int, char *, register int, int *, int *, int));
 
 int
 main(argc, argv)
@@ -281,7 +282,8 @@ install(from_name, to_name, fset, flags)
 		}
 		if (!files_match)
 			copy(from_fd, from_name, to_fd,
-			     safecopy ? tempfile : to_name, from_sb.st_size);
+			     safecopy ? tempfile : to_name, from_sb.st_size,
+			     ((off_t)from_sb.st_blocks * S_BLKSIZE < from_sb.st_size));
 	}
 
 	if (dostrip) {
@@ -397,15 +399,15 @@ install(from_name, to_name, fset, flags)
  *	copy from one file to another
  */
 void
-copy(from_fd, from_name, to_fd, to_name, size)
+copy(from_fd, from_name, to_fd, to_name, size, sparse)
 	register int from_fd, to_fd;
 	char *from_name, *to_name;
 	off_t size;
+	int sparse;
 {
 	register int nr, nw;
 	int serrno;
 	char *p, buf[MAXBSIZE];
-	volatile size_t siz;
 
 	/* Rewind file descriptors. */
 	if (lseek(from_fd, (off_t)0, SEEK_SET) == (off_t)-1)
@@ -416,9 +418,11 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	/*
 	 * Mmap and write if less than 8M (the limit is so we don't totally
 	 * trash memory on big files.  This is really a minor hack, but it
-	 * wins some CPU back.
+	 * wins some CPU back.  Sparse files need special treatment.
 	 */
-	if (size <= 8 * 1048576) {
+	if (!sparse && size <= 8 * 1048576) {
+		volatile size_t siz;
+
 		if ((p = mmap(NULL, (size_t)size, PROT_READ,
 		    MAP_PRIVATE, from_fd, (off_t)0)) == (char *)-1) {
 			serrno = errno;
@@ -434,13 +438,30 @@ copy(from_fd, from_name, to_fd, to_name, size)
 		}
 		(void) munmap(p, (size_t)size);
 	} else {
-		while ((nr = read(from_fd, buf, sizeof(buf))) > 0)
-			if ((nw = write(to_fd, buf, nr)) != nr) {
+		int sz, rem, isem = 1;
+		struct stat sb;
+
+		/*
+		 * Pass the blocksize of the file being written to the write
+		 * routine.  if the size is zero, use the default S_BLKSIZE.
+		 */
+		if (fstat(to_fd, &sb) != 0 || sb.st_blksize == 0)
+			sz = S_BLKSIZE;
+		else
+			sz = sb.st_blksize;
+
+		while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
+			if (sparse)
+				nw = file_write(to_fd, buf, nr, &rem, &isem, sz);
+			else
+				nw = write(to_fd, buf, nr);
+			if (nw != nr) {
 				serrno = errno;
 				(void)unlink(to_name);
 				errx(EX_OSERR, "%s: %s",
 				    to_name, strerror(nw > 0 ? EIO : serrno));
 			}
+		}
 		if (nr != 0) {
 			serrno = errno;
 			(void)unlink(to_name);
@@ -621,4 +642,130 @@ create_newfile(path, sbp)
 	(void)unlink(path);
 
 	return(open(path, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR));
+}
+
+/*
+ * file_write()
+ *	Write/copy a file (during copy or archive extract). This routine knows
+ *	how to copy files with lseek holes in it. (Which are read as file
+ *	blocks containing all 0's but do not have any file blocks associated
+ *	with the data). Typical examples of these are files created by dbm
+ *	variants (.pag files). While the file size of these files are huge, the
+ *	actual storage is quite small (the files are sparse). The problem is
+ *	the holes read as all zeros so are probably stored on the archive that
+ *	way (there is no way to determine if the file block is really a hole,
+ *	we only know that a file block of all zero's can be a hole).
+ *	At this writing, no major archive format knows how to archive files
+ *	with holes. However, on extraction (or during copy, -rw) we have to
+ *	deal with these files. Without detecting the holes, the files can
+ *	consume a lot of file space if just written to disk. This replacement
+ *	for write when passed the basic allocation size of a file system block,
+ *	uses lseek whenever it detects the input data is all 0 within that
+ *	file block. In more detail, the strategy is as follows:
+ *	While the input is all zero keep doing an lseek. Keep track of when we
+ *	pass over file block boundries. Only write when we hit a non zero
+ *	input. once we have written a file block, we continue to write it to
+ *	the end (we stop looking at the input). When we reach the start of the
+ *	next file block, start checking for zero blocks again. Working on file
+ *	block boundries significantly reduces the overhead when copying files
+ *	that are NOT very sparse. This overhead (when compared to a write) is
+ *	almost below the measurement resolution on many systems. Without it,
+ *	files with holes cannot be safely copied. It does has a side effect as
+ *	it can put holes into files that did not have them before, but that is
+ *	not a problem since the file contents are unchanged (in fact it saves
+ *	file space). (Except on paging files for diskless clients. But since we
+ *	cannot determine one of those file from here, we ignore them). If this
+ *	ever ends up on a system where CTG files are supported and the holes
+ *	are not desired, just do a conditional test in those routines that
+ *	call file_write() and have it call write() instead. BEFORE CLOSING THE
+ *	FILE, make sure to call file_flush() when the last write finishes with
+ *	an empty block. A lot of file systems will not create an lseek hole at
+ *	the end. In this case we drop a single 0 at the end to force the
+ *	trailing 0's in the file.
+ *	---Parameters---
+ *	rem: how many bytes left in this file system block
+ *	isempt: have we written to the file block yet (is it empty)
+ *	sz: basic file block allocation size
+ *	cnt: number of bytes on this write
+ *	str: buffer to write
+ * Return:
+ *	number of bytes written, -1 on write (or lseek) error.
+ */
+
+int
+file_write(fd, str, cnt, rem, isempt, sz)
+	int fd;
+	char *str;
+	register int cnt;
+	int *rem;
+	int *isempt;
+	int sz;
+{
+	register char *pt;
+	register char *end;
+	register int wcnt;
+	register char *st = str;
+
+	/*
+	 * while we have data to process
+	 */
+	while (cnt) {
+		if (!*rem) {
+			/*
+			 * We are now at the start of file system block again
+			 * (or what we think one is...). start looking for
+			 * empty blocks again
+			 */
+			*isempt = 1;
+			*rem = sz;
+		}
+
+		/*
+		 * only examine up to the end of the current file block or
+		 * remaining characters to write, whatever is smaller
+		 */
+		wcnt = MIN(cnt, *rem);
+		cnt -= wcnt;
+		*rem -= wcnt;
+		if (*isempt) {
+			/*
+			 * have not written to this block yet, so we keep
+			 * looking for zero's
+			 */
+			pt = st;
+			end = st + wcnt;
+
+			/*
+			 * look for a zero filled buffer
+			 */
+			while ((pt < end) && (*pt == '\0'))
+				++pt;
+
+			if (pt == end) {
+				/*
+				 * skip, buf is empty so far
+				 */
+				if (lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
+					warn("lseek");
+					return(-1);
+				}
+				st = pt;
+				continue;
+			}
+			/*
+			 * drat, the buf is not zero filled
+			 */
+			*isempt = 0;
+		}
+
+		/*
+		 * have non-zero data in this file system block, have to write
+		 */
+		if (write(fd, st, wcnt) != wcnt) {
+			warn("write");
+			return(-1);
+		}
+		st += wcnt;
+	}
+	return(st - str);
 }
