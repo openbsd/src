@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.4 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.5 2002/08/21 22:07:44 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.50 2002/08/12 10:45:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -343,7 +343,8 @@ local)
 	;;
 
 ramdisk)
-	R pty0 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4 bpf0 std
+	R pty0 tty00 ttya rd0 cd0 cd1 st0 st1 sd0 sd1 sd2 sd3 sd4
+	R bpf0 std
 	;;
 
 all)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.5 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.6 2002/08/21 22:07:43 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.50 2002/08/12 10:45:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -321,8 +321,8 @@ tty0*)
 	u=${i#tty0*}
 	case $u in
 	0|1|2|3)
-		M tty0$u c major_tty0_c $u 660 dialer uucp
-		M cua0$u c major_tty0_c $(($u+128)) 660 dialer uucp
+		M tty0$u c 13 $u 660 dialer uucp
+		M cua0$u c 13 $(($u+128)) 660 dialer uucp
 		;;
 	*) echo unknown tty device $i ;;
 	esac
@@ -392,12 +392,12 @@ ramdisk)
 	;;
 
 all)
-	R ttyw0 ttyw1 ttyw2 ttyw3 tty000 tty001 tty002 tty003 cuaa
-	R cuab cuac cuad ttya ttyb ttyc ttyd ccd0 ccd1 ccd2 ccd3 vnd0
-	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1
-	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R pty0 pty1 pty2 xfs0 ss0 ss1 vmel0 vmes0 flash0 nvram0 sram0
-	R uk0 random lkm pf altq systrace std st0 st1 fd
+	R ttyw0 ttyw1 ttyw2 ttyw3 tty00 tty01 tty02 tty03 cuaa cuab
+	R cuac cuad ttya ttyb ttyc ttyd ccd0 ccd1 ccd2 ccd3 vnd0 vnd1
+	R vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2
+	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
+	R pty1 pty2 xfs0 ss0 ss1 vmel0 vmes0 flash0 nvram0 sram0 uk0
+	R random lkm pf altq systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
