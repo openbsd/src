@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.10 1998/07/08 22:14:16 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.11 1998/08/21 13:55:23 kstailey Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -14,11 +14,12 @@
  *
  * TERMCAP: -ltermlib
  *
- * CFLAGS: -DHAVE_GETOPT
+ * CFLAGS: -DHAVE_GETOPT -DORDER
  *
  * AUTHOR:  Thorsten Lockert <tholo@sigmasoft.com>
  *          Adapted from BSD4.4 by Christos Zoulas <christos@ee.cornell.edu>
  *          Patch for process wait display by Jarl F. Greipsland <jarle@idt.unit.no>
+ *	    Patch for -DORDER by Kenneth Stailey <kstailey@disclosure.com>
  */
 
 #include <sys/types.h>
@@ -172,6 +173,12 @@ char *memorynames[] = {
     NULL
 };
 
+#ifdef ORDER
+/* these are names given to allowed sorting orders -- first is default */
+
+char *ordernames[] = {"cpu", "size", "res", "time", "pri", NULL};
+#endif
+
 /* these are for keeping track of the proc array */
 
 static int nproc;
@@ -244,6 +251,9 @@ struct statics *statics;
     statics->procstate_names = procstatenames;
     statics->cpustate_names = cpustatenames;
     statics->memory_names = memorynames;
+#ifdef ORDER
+    statics->order_names = ordernames;
+#endif
 
     /* all done! */
     return(0);
@@ -562,6 +572,205 @@ char *refstr;
     
 /* comparison routine for qsort */
 
+static unsigned char sorted_state[] =
+{
+    0,	/* not used		*/
+    4,	/* start		*/
+    5,	/* run			*/
+    2,	/* sleep		*/
+    3,	/* stop			*/
+    1	/* zombie		*/
+};
+
+#ifdef ORDER
+
+/*
+ *  proc_compares - comparison functions for "qsort"
+ */
+
+/*
+ * First, the possible comparison keys.  These are defined in such a way
+ * that they can be merely listed in the source code to define the actual
+ * desired ordering.
+ */
+
+
+#define ORDERKEY_PCTCPU \
+	if (lresult = PP(p2, p_pctcpu) - PP(p1, p_pctcpu), \
+           (result = lresult > 0 ? 1 : lresult < 0 ? -1 : 0) == 0)
+#define ORDERKEY_CPUTIME \
+	if ((result = PP(p2, p_rtime.tv_sec) - PP(p1, p_rtime.tv_sec)) == 0) \
+		if ((result = PP(p2, p_rtime.tv_usec) - \
+		     PP(p1, p_rtime.tv_usec)) == 0)
+#define ORDERKEY_STATE \
+	if ((result = sorted_state[(unsigned char) PP(p2, p_stat)] - \
+                      sorted_state[(unsigned char) PP(p1, p_stat)])  == 0)
+#define ORDERKEY_PRIO \
+	if ((result = PP(p2, p_priority) - PP(p1, p_priority)) == 0)
+#define ORDERKEY_RSSIZE \
+	if ((result = VP(p2, vm_rssize) - VP(p1, vm_rssize)) == 0)
+#define ORDERKEY_MEM \
+	if ((result = PROCSIZE(p2) - PROCSIZE(p1)) == 0)
+
+ 
+/* compare_cpu - the comparison function for sorting by cpu percentage */
+
+int
+compare_cpu(v1, v2)
+
+const void *v1, *v2;
+
+{
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
+    register struct kinfo_proc *p1;
+    register struct kinfo_proc *p2;
+    register int result;
+    register pctcpu lresult;
+
+    /* remove one level of indirection */
+    p1 = *(struct kinfo_proc **) pp1;
+    p2 = *(struct kinfo_proc **) pp2;
+
+    ORDERKEY_PCTCPU
+    ORDERKEY_CPUTIME
+    ORDERKEY_STATE
+    ORDERKEY_PRIO
+    ORDERKEY_RSSIZE
+    ORDERKEY_MEM
+    ;
+    return(result);
+}
+
+/* compare_size - the comparison function for sorting by total memory usage */
+
+int
+compare_size(v1, v2)
+
+const void *v1, *v2;
+
+{
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
+    register struct kinfo_proc *p1;
+    register struct kinfo_proc *p2;
+    register int result;
+    register pctcpu lresult;
+
+    /* remove one level of indirection */
+    p1 = *(struct kinfo_proc **) pp1;
+    p2 = *(struct kinfo_proc **) pp2;
+
+    ORDERKEY_MEM
+    ORDERKEY_RSSIZE
+    ORDERKEY_PCTCPU
+    ORDERKEY_CPUTIME
+    ORDERKEY_STATE
+    ORDERKEY_PRIO
+    ;
+
+    return(result);
+}
+
+/* compare_res - the comparison function for sorting by resident set size */
+
+int
+compare_res(v1, v2)
+
+const void *v1, *v2;
+
+{
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
+    register struct kinfo_proc *p1;
+    register struct kinfo_proc *p2;
+    register int result;
+    register pctcpu lresult;
+
+    /* remove one level of indirection */
+    p1 = *(struct kinfo_proc **) pp1;
+    p2 = *(struct kinfo_proc **) pp2;
+
+    ORDERKEY_RSSIZE
+    ORDERKEY_MEM
+    ORDERKEY_PCTCPU
+    ORDERKEY_CPUTIME
+    ORDERKEY_STATE
+    ORDERKEY_PRIO
+    ;
+
+    return(result);
+}
+
+/* compare_time - the comparison function for sorting by CPU time */
+
+int
+compare_time(v1, v2)
+
+const void *v1, *v2;
+
+{
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
+    register struct kinfo_proc *p1;
+    register struct kinfo_proc *p2;
+    register int result;
+    register pctcpu lresult;
+
+    /* remove one level of indirection */
+    p1 = *(struct kinfo_proc **) pp1;
+    p2 = *(struct kinfo_proc **) pp2;
+
+    ORDERKEY_CPUTIME
+    ORDERKEY_PCTCPU
+    ORDERKEY_STATE
+    ORDERKEY_PRIO
+    ORDERKEY_MEM
+    ORDERKEY_RSSIZE
+    ;
+
+    return(result);
+}
+
+/* compare_prio - the comparison function for sorting by CPU time */
+
+int
+compare_prio(v1, v2)
+
+const void *v1, *v2;
+
+{
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
+    register struct kinfo_proc *p1;
+    register struct kinfo_proc *p2;
+    register int result;
+    register pctcpu lresult;
+
+    /* remove one level of indirection */
+    p1 = *(struct kinfo_proc **) pp1;
+    p2 = *(struct kinfo_proc **) pp2;
+
+    ORDERKEY_PRIO
+    ORDERKEY_PCTCPU
+    ORDERKEY_CPUTIME
+    ORDERKEY_STATE
+    ORDERKEY_RSSIZE
+    ORDERKEY_MEM
+    ;
+
+    return(result);
+}
+
+int (*proc_compares[])() = {
+    compare_cpu,
+    compare_size,
+    compare_res,
+    compare_time,
+    compare_prio,
+    NULL
+};
+#else 
 /*
  *  proc_compare - comparison function for "qsort"
  *	Compares the resource consumption of two processes using five
@@ -573,16 +782,6 @@ char *refstr;
  *  	reflects this ordering.
  */
 
-static unsigned char sorted_state[] =
-{
-    0,	/* not used		*/
-    4,	/* start		*/
-    5,	/* run			*/
-    2,	/* sleep		*/
-    3,	/* stop			*/
-    1	/* zombie		*/
-};
- 
 int
 proc_compare(v1, v2)
 
@@ -630,7 +829,7 @@ const void *v1, *v2;
 
     return(result);
 }
-
+#endif
 
 /*
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if

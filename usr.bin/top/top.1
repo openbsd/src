@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.3 1997/08/30 17:20:58 deraadt Exp $
+.\"	$OpenBSD: top.1,v 1.4 1998/08/21 13:55:24 kstailey Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .Op Fl SbiInqu
 .Op Fl d Ar count
 .Op Fl s Ar time
-.\" .Op Fl o Ar field
+.Op Fl o Ar field
 .Op Fl U Ar username
 .Op Ar number
 .Sh DESCRIPTION
@@ -125,17 +125,18 @@ is set.  The default is 1 for dumb terminals.
 Set the delay between screen updates to
 .Ar time
 seconds.  The default delay between updates is 5 seconds.
-.\" .It Fl o Ar field
-.\" Sort the process display area on the specified field.  The field name is
-.\" the name of the column as seen in the output, but in lower case.  Likely
-.\" values are
-.\" .Ar cpu ,
-.\" .Ar size ,
-.\" .Ar res ,
-.\" and
-.\" .Ar time ,
-.\" but may vary on different operating systems.  Note that
-.\" not all operating systems support this option.
+.It Fl o Ar field
+Sort the process display area using the specified field as the primary
+key.  The field name is the name of the column as seen in the output,
+but in lower case.  The
+.Ox
+version of top supports
+.Ar cpu ,
+.Ar size ,
+.Ar res ,
+.Ar time ,
+and
+.Ar pri.
 .It Fl U Ar username
 Show only those processes owned by
 .Ar username .

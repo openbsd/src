@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 1998/07/24 00:11:04 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/08/21 13:55:22 kstailey Exp $
 #
 # Makefile for OpenBSD top-3.4.
 
 PROG=	top
 
-CFLAGS+=-I. -I${.CURDIR}
+CFLAGS+=-I. -I${.CURDIR} -DORDER
 SRCS=	commands.c display.c machine.c screen.c top.c username.c utils.c \
 	version.c
 DPADD=	${LIBCURSES} ${LIBM} ${LIBKVM}
