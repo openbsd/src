@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.5 1996/08/07 01:56:28 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.6 1996/08/07 05:40:47 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -87,18 +87,19 @@ struct cfdriver atapibus_cd = {
  */
 
 struct atapi_quirk_inquiry_pattern {
-	struct {
-		u_int8_t type;
-		u_int8_t rem;
-		char *product;
-		char *revision;
-	} pattern;
+	u_int8_t type;
+	u_int8_t rem;
+	char *product;
+	char *revision;
+
 	u_int8_t quirks;
 };
 
 struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
-	{{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
-	 "GCD-R580B", "1.00"}, ADEV_LITTLETOC},
+	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "GCD-R580B", "1.00", ADEV_LITTLETOC},	/* GoldStar 8X */
+
+	{0, 0, NULL, NULL, 0}			/* The End */
 };
 
 int
@@ -120,8 +121,7 @@ atapi_fixquirk(ad_link)
 	struct at_dev_link *ad_link;
 {
 	struct atapi_identify *id = &ad_link->id;
-	struct atapi_quirk_inquiry_pattern *finger;
-	int quirk, nquirks;
+	struct atapi_quirk_inquiry_pattern *quirk;
 
 	/*
 	 * Shuffle string byte order.
@@ -141,27 +141,27 @@ atapi_fixquirk(ad_link)
 	btrim(id->serial_number, sizeof(id->serial_number));
 	btrim(id->firmware_revision, sizeof(id->firmware_revision));
 
-	nquirks = sizeof(atapi_quirk_inquiry_patterns) /
-		    sizeof(struct atapi_quirk_inquiry_pattern);
-	for (quirk = 0; quirk < nquirks; quirk++) {
-		finger = &atapi_quirk_inquiry_patterns[quirk];
+#define quirk_null(_q)	((_q->type == 0) && (_q->rem == 0) && \
+			 (_q->product == NULL) && (_q->revision == NULL))
 
+	for (quirk = atapi_quirk_inquiry_patterns;
+	     !quirk_null(quirk); quirk++) {
 		if ((id->config.device_type
-		    & ATAPI_DEVICE_TYPE_MASK) != finger->pattern.type)
+		    & ATAPI_DEVICE_TYPE_MASK) != quirk->type)
 			continue;
-		if ((id->config.cmd_drq_rem & finger->pattern.rem) == 0)
+		if ((id->config.cmd_drq_rem & quirk->rem) == 0)
 			continue;
-		if (strcmp(id->model, finger->pattern.product))
+		if (strcmp(id->model, quirk->product))
 			continue;
-		if (strcmp(id->firmware_revision, finger->pattern.revision))
+		if (strcmp(id->firmware_revision, quirk->revision))
 			continue;
 
 		break;
 	}
 
-	if (quirk < nquirks) {
+	if (!quirk_null(quirk)) {
 		/* Found a quirk entry for this drive. */
-		ad_link->quirks = finger->quirks;
+		ad_link->quirks = quirk->quirks;
 	}
 }
 
