@@ -1,4 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.2 1998/11/15 00:44:00 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.3 1998/11/17 11:10:17 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.9 1998/08/09 19:03:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

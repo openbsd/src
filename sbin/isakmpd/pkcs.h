@@ -1,4 +1,5 @@
-/*	$OpenBSD: pkcs.h,v 1.2 1998/11/15 00:44:02 niklas Exp $	*/
+/*	$OpenBSD: pkcs.h,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
+/*	$EOM: pkcs.h,v 1.6 1998/08/20 14:09:03 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

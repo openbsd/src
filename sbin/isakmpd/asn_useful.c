@@ -1,4 +1,5 @@
-/*	$OpenBSD: asn_useful.c,v 1.4 1998/11/16 21:07:15 niklas Exp $	*/
+/*	$OpenBSD: asn_useful.c,v 1.5 1998/11/17 11:10:07 niklas Exp $	*/
+/*	$EOM: asn_useful.c,v 1.8 1998/08/21 13:47:58 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

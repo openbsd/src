@@ -1,4 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.2 1998/11/15 00:43:55 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.3 1998/11/17 11:10:12 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.62 1998/11/12 12:55:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

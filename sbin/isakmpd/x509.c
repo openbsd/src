@@ -1,4 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.4 1998/11/16 21:07:18 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.5 1998/11/17 11:10:22 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.8 1998/08/21 14:33:09 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

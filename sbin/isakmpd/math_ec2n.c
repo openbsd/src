@@ -1,4 +1,5 @@
-/*	$OpenBSD: math_ec2n.c,v 1.2 1998/11/15 00:44:00 niklas Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.3 1998/11/17 11:10:16 niklas Exp $	*/
+/*	$EOM: math_ec2n.c,v 1.4 1998/07/18 21:09:41 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: sysdep.c,v 1.1 1998/11/15 01:23:53 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.2 1998/11/17 11:10:20 niklas Exp $	*/
+/*	$EOM: sysdep-openbsd.c,v 1.16 1998/10/12 22:15:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

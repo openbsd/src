@@ -1,4 +1,5 @@
-#	$Id: genfields.sh,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+#	$OpenBSD: genfields.sh,v 1.2 1998/11/17 11:10:11 niklas Exp $
+#	$EOM: genfields.sh,v 1.3 1998/08/02 20:25:02 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: ipsec_doi.h,v 1.2 1998/11/15 00:43:56 niklas Exp $	*/
+/*	$OpenBSD: ipsec_doi.h,v 1.3 1998/11/17 11:10:14 niklas Exp $	*/
+/*	$EOM: ipsec_doi.h,v 1.8 1998/08/02 20:12:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

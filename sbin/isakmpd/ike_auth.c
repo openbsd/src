@@ -1,4 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.6 1998/11/16 21:07:16 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.7 1998/11/17 11:10:12 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.20 1998/08/26 14:25:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

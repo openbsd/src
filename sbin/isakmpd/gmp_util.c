@@ -1,4 +1,5 @@
-/*	$OpenBSD: gmp_util.c,v 1.2 1998/11/15 00:43:53 niklas Exp $	*/
+/*	$OpenBSD: gmp_util.c,v 1.3 1998/11/17 11:10:11 niklas Exp $	*/
+/*	$EOM: gmp_util.c,v 1.1 1998/08/03 19:32:36 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: message.h,v 1.2 1998/11/15 00:44:01 niklas Exp $	*/
+/*	$OpenBSD: message.h,v 1.3 1998/11/17 11:10:17 niklas Exp $	*/
+/*	$EOM: message.h,v 1.36 1998/10/11 13:32:18 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,4 +1,5 @@
-$OpenBSD: README,v 1.3 1998/11/15 00:43:48 niklas Exp $
+$OpenBSD: README,v 1.4 1998/11/17 11:10:06 niklas Exp $
+$EOM: README,v 1.10 1998/10/15 11:13:35 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,

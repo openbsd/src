@@ -1,4 +1,5 @@
-/*	$OpenBSD: cookie.c,v 1.2 1998/11/15 00:43:51 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
+/*	$EOM: cookie.c,v 1.17 1998/08/05 09:21:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: transport.h,v 1.2 1998/11/15 00:44:04 niklas Exp $	*/
+/*	$OpenBSD: transport.h,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
+/*	$EOM: transport.h,v 1.10 1998/10/11 20:25:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

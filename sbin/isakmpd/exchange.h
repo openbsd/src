@@ -1,4 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.2 1998/11/15 00:43:52 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.3 1998/11/17 11:10:10 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.15 1998/08/13 21:43:57 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: if.h,v 1.2 1998/11/15 00:43:54 niklas Exp $	*/
+/*	$OpenBSD: if.h,v 1.3 1998/11/17 11:10:12 niklas Exp $	*/
+/*	$EOM: if.h,v 1.2 1998/07/07 23:35:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

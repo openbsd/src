@@ -1,4 +1,5 @@
-/*	$OpenBSD: isakmp_doi.h,v 1.2 1998/11/15 00:43:57 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.h,v 1.3 1998/11/17 11:10:14 niklas Exp $	*/
+/*	$EOM: isakmp_doi.h,v 1.1 1998/07/07 23:20:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: asn.h,v 1.2 1998/11/15 00:43:49 niklas Exp $	*/
+/*	$OpenBSD: asn.h,v 1.3 1998/11/17 11:10:07 niklas Exp $	*/
+/*	$EOM: asn.h,v 1.16 1998/08/21 13:47:56 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: timer.h,v 1.2 1998/11/15 00:44:03 niklas Exp $	*/
+/*	$OpenBSD: timer.h,v 1.3 1998/11/17 11:10:20 niklas Exp $	*/
+/*	$EOM: timer.h,v 1.4 1998/07/29 09:31:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
