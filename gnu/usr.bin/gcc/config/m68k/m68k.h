@@ -116,7 +116,7 @@ extern int target_flags;
     { "bitfield", 4},				\
     { "68000", -03405},				\
     { "c68000", -03405},			\
-    { "soft-float", -03102},			\
+    { "soft-float", -01102},			\
     { "nobitfield", -4},			\
     { "rtd", 8},				\
     { "nortd", -8},				\
