@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.2 2002/01/17 05:39:16 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.3 2002/01/17 19:30:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -105,6 +105,7 @@ struct sabtty_softc {
 #define	SABTTYF_CONS_OUT	0x20
 	u_int8_t		sc_rbuf[SABTTY_RBUF_SIZE];
 	u_int8_t		*sc_rend, *sc_rput, *sc_rget;
+	u_int8_t		sc_polling, sc_pollrfc;
 };
 
 struct sabtty_softc *sabtty_cons_input;
@@ -120,7 +121,6 @@ void sab_attach __P((struct device *, struct device *, void *));
 int sab_print __P((void *, const char *));
 int sab_intr __P((void *));
 void sab_softintr __P((void *));
-struct sabtty_softc *sab_findsabtty __P((dev_t));
 void sab_cnputc __P((dev_t, int));
 int sab_cngetc __P((dev_t));
 void sab_cnpollc __P((dev_t, int));
@@ -138,6 +138,8 @@ void sabtty_reset __P((struct sabtty_softc *));
 void sabtty_flush __P((struct sabtty_softc *));
 int sabtty_speed __P((int));
 void sabtty_console_flags __P((struct sabtty_softc *));
+void sabtty_cnpollc __P((struct sabtty_softc *, int));
+void sabtty_ddb __P((struct sabtty_softc *));
 
 int sabttyopen __P((dev_t, int, int, struct proc *));
 int sabttyclose __P((dev_t, int, int, struct proc *));
@@ -148,6 +150,7 @@ int sabttystop __P((struct tty *, int));
 struct tty *sabttytty __P((dev_t));
 void sabtty_cnputc __P((struct sabtty_softc *, int));
 int sabtty_cngetc __P((struct sabtty_softc *));
+void sabtty_abort __P((struct sabtty_softc *));
 
 struct cfattach sab_ca = {
 	sizeof(struct sab_softc), sab_match, sab_attach
@@ -269,7 +272,7 @@ sab_attach(parent, self, aux)
 	/* Disable port interrupts */
 	SAB_WRITE(sc, SAB_PIM, 0xff);
 	SAB_WRITE(sc, SAB_PVR, SAB_PVR_DTR_A | SAB_PVR_DTR_B | SAB_PVR_MAGIC);
-	SAB_WRITE(sc, SAB_IPC, SAB_IPC_ICPL);
+	SAB_WRITE(sc, SAB_IPC, SAB_IPC_ICPL | SAB_IPC_VIS);
 
 	for (i = 0; i < SAB_NCHAN; i++) {
 		struct sabtty_attach_args sta;
@@ -491,6 +494,9 @@ sabtty_intr(sc, needsoftp)
 		sc->sc_flags |= SABTTYF_CDCHG;
 		needsoft = 1;
 	}
+
+	if (isr1 & SAB_ISR1_BRK)
+		sabtty_abort(sc);
 
 	if (isr1 & SAB_ISR1_XPR) {
 		r = 1;
@@ -1100,21 +1106,63 @@ int
 sabtty_cngetc(sc)
 	struct sabtty_softc *sc;
 {
-	return (-1);
+	u_int8_t r, len;
+
+again:
+	do {
+		r = SAB_READ(sc, SAB_STAR);
+	} while ((r & SAB_STAR_RFNE) == 0);
+
+	/*
+	 * Ok, at least one byte in RFIFO, ask for permission to access RFIFO
+	 * (I hate this chip... hate hate hate).
+	 */
+	sabtty_cec_wait(sc);
+	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RFRD);
+
+	/* Wait for RFIFO to come ready */
+	do {
+		r = SAB_READ(sc, SAB_ISR0);
+	} while ((r & SAB_ISR0_TCD) == 0);
+
+	len = SAB_READ(sc, SAB_RBCL) & (32 - 1);
+	if (len == 0)
+		goto again;	/* Shouldn't happen... */
+
+	r = SAB_READ(sc, SAB_RFIFO);
+
+	/*
+	 * Blow away everything left in the FIFO...
+	 */
+	sabtty_cec_wait(sc);
+	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RMC);
+	return (r);
 }
 
-struct sabtty_softc *
-sab_findsabtty(dev)
-	dev_t dev;
+void
+sabtty_cnpollc(sc, on)
+	struct sabtty_softc *sc;
+	int on;
 {
-	struct sab_softc *bc;
-	int card = SAB_CARD(dev), port = SAB_PORT(dev);
+	u_int8_t r;
 
-	if (card >= sab_cd.cd_ndevs || (bc = sab_cd.cd_devs[card]) == NULL)
-		return (NULL);
-	if (port >= bc->sc_nchild)
-		return (NULL);
-	return (bc->sc_child[port]);
+	if (on) {
+		if (sc->sc_polling)
+			return;
+		r = sc->sc_pollrfc = SAB_READ(sc, SAB_RFC);
+		r &= ~(SAB_RFC_RFDF);
+		SAB_WRITE(sc, SAB_RFC, r);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+		sc->sc_polling = 1;
+	} else {
+		if (!sc->sc_polling)
+			return;
+		SAB_WRITE(sc, SAB_RFC, sc->sc_pollrfc);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+		sc->sc_polling = 0;
+	}
 }
 
 void
@@ -1136,6 +1184,9 @@ sab_cnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
+	struct sabtty_softc *sc = sabtty_cons_input;
+
+	sabtty_cnpollc(sc, on);
 }
 
 int
@@ -1183,12 +1234,54 @@ sabtty_console_flags(sc)
 	if (node == OF_instance_to_package(OF_stdout())) {
 		if (OF_getprop(chosen, "output-device", buf,
 		    sizeof(buf)) != -1) {
-			printf("Found output device: %s\n", buf);
 			if (strcmp("ttyb", buf) == 0)
 				cookie = 1;
 		}
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_OUT;
+	}
+}
+
+#ifdef DDB
+void
+sabtty_ddb(sc)
+	struct sabtty_softc *sc;
+{
+	extern int db_active, db_console;
+
+	if (db_console == 0)
+		return;
+	if (db_active == 0)
+		Debugger();
+	else
+		callrom();	/* Debugger is probably hosed */
+}
+#endif
+
+void
+sabtty_abort(sc)
+	struct sabtty_softc *sc;
+{
+	if (sc->sc_flags & SABTTYF_CONS_IN) {
+		u_int8_t oldrfc, r;
+
+		/* Set FIFO for single character mode */
+		r = oldrfc = SAB_READ(sc, SAB_RFC);
+		r &= ~(SAB_RFC_RFDF);
+		SAB_WRITE(sc, SAB_RFC, r);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+
+#ifdef DDB
+		sabtty_ddb(sc);
+#else
+		callrom();
+#endif
+
+		/* Reset FIFO to character + status mode */
+		SAB_WRITE(sc, SAB_RFC, oldrfc);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
 	}
 }
