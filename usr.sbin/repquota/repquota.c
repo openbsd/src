@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.23 2003/06/02 23:36:54 millert Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.24 2003/06/25 15:54:17 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -68,8 +68,8 @@ struct fileusage {
 };
 #define FUHASH 1024	/* must be power of two */
 struct fileusage *fuhead[MAXQUOTAS][FUHASH];
-struct fileusage *lookup();
-struct fileusage *addid();
+struct fileusage *lookup(uid_t, int);
+struct fileusage *addid(uid_t id, int type, char *name);
 uid_t highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 
 int	vflag;			/* verbose */
@@ -81,9 +81,7 @@ int	hasquota(struct fstab *, int, char **);
 int	oneof(char *, char *[], int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct fstab *fs;
 	struct passwd *pw;
@@ -164,7 +162,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage:\n\t%s\n\t%s\n",
 		"repquota [-v] [-g] [-u] -a",
@@ -173,10 +171,7 @@ usage()
 }
 
 int
-repquota(fs, type, qfpathname)
-	struct fstab *fs;
-	int type;
-	char *qfpathname;
+repquota(struct fstab *fs, int type, char *qfpathname)
 {
 	struct fileusage *fup;
 	FILE *qf;
@@ -257,9 +252,7 @@ repquota(fs, type, qfpathname)
  * Check to see if target appears in list of size cnt.
  */
 int
-oneof(target, list, cnt)
-	char *target, *list[];
-	int cnt;
+oneof(char *target, char *list[], int cnt)
 {
 	int i;
 
@@ -273,10 +266,7 @@ oneof(target, list, cnt)
  * Check to see if a particular quota is to be enabled.
  */
 int
-hasquota(fs, type, qfnamep)
-	struct fstab *fs;
-	int type;
-	char **qfnamep;
+hasquota(struct fstab *fs, int type, char **qfnamep)
 {
 	char *opt;
 	char *cp;
@@ -317,9 +307,7 @@ hasquota(fs, type, qfnamep)
  * Lookup an id of a specific type.
  */
 struct fileusage *
-lookup(id, type)
-	uid_t id;
-	int type;
+lookup(uid_t id, int type)
 {
 	struct fileusage *fup;
 
@@ -333,10 +321,7 @@ lookup(id, type)
  * Add a new file usage id if it does not already exist.
  */
 struct fileusage *
-addid(id, type, name)
-	uid_t id;
-	int type;
-	char *name;
+addid(uid_t id, int type, char *name)
 {
 	struct fileusage *fup, **fhp;
 	size_t len;
@@ -369,8 +354,7 @@ addid(id, type, name)
  * Calculate the grace period and return a printable string for it.
  */
 char *
-timeprt(seconds)
-	time_t seconds;
+timeprt(time_t seconds)
 {
 	int hours, minutes;
 	static char buf[20];
