@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.65 2004/11/28 02:11:33 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.66 2005/01/14 04:31:33 djm Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -201,10 +201,13 @@ void	*memmove(void *, const void *, size_t)
 void	*memset(void *, int, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)));
 
-int	copystr(const void *, void *, size_t, size_t *);
-int	copyinstr(const void *, void *, size_t, size_t *);
+int	copystr(const void *, void *, size_t, size_t *)
+		__attribute__ ((__bounded__(__string__,2,3)));
+int	copyinstr(const void *, void *, size_t, size_t *)
+		__attribute__ ((__bounded__(__string__,2,3)));
 int	copyoutstr(const void *, void *, size_t, size_t *);
-int	copyin(const void *, void *, size_t);
+int	copyin(const void *, void *, size_t)
+		__attribute__ ((__bounded__(__buffer__,2,3)));
 int	copyout(const void *, void *, size_t);
 
 struct timeval;
