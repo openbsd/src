@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.16 2003/05/07 04:33:33 deraadt Exp $ */
-/*	$NetBSD: ulpt.c,v 1.55 2002/10/23 09:14:01 jdolecek Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.17 2003/05/19 00:35:43 nate Exp $ */
+/*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -242,8 +242,8 @@ USB_ATTACH(ulpt)
 		    id->bInterfaceNumber == ifcd->bInterfaceNumber) {
 			if (id->bInterfaceClass == UICLASS_PRINTER &&
 			    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
-			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
+			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI /*||
+			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284*/))
 				goto found;
 			altno++;
 		}
@@ -410,6 +410,7 @@ USB_DETACH(ulpt)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
 #elif defined(__FreeBSD__)
 	vp = SLIST_FIRST(&sc->dev->si_hlist);
 	if (vp)
