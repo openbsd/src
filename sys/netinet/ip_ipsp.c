@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.28 1998/11/16 04:06:45 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.29 1998/11/16 08:00:43 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -754,25 +754,40 @@ ipsp_kern(int off, char **bufp, int len)
 			 inet_ntoa(tdb->tdb_odst), tdb->tdb_ttl);
 
 	    if (tdb->tdb_onext)
-	      l += sprintf(buffer + l, "\tNext (on output) SA: SPI = %08x, Destination = %s, Sproto = %u\n", ntohl(tdb->tdb_onext->tdb_spi), inet_ntoa(tdb->tdb_onext->tdb_dst), tdb->tdb_onext->tdb_sproto);
+	      l += sprintf(buffer + l,
+			   "\tNext (on output) SA: SPI = %08x, "
+			   "Destination = %s, Sproto = %u\n",
+			   ntohl(tdb->tdb_onext->tdb_spi),
+			   inet_ntoa(tdb->tdb_onext->tdb_dst),
+			   tdb->tdb_onext->tdb_sproto);
 
 	    if (tdb->tdb_inext)
-	      l += sprintf(buffer + l, "\tNext (on input) SA: SPI = %08x, Destination = %s, Sproto = %u\n", ntohl(tdb->tdb_inext->tdb_spi), inet_ntoa(tdb->tdb_inext->tdb_dst), tdb->tdb_inext->tdb_sproto);
+	      l += sprintf(buffer + l,
+			   "\tNext (on input) SA: SPI = %08x, "
+			   "Destination = %s, Sproto = %u\n",
+			   ntohl(tdb->tdb_inext->tdb_spi),
+			   inet_ntoa(tdb->tdb_inext->tdb_dst),
+			   tdb->tdb_inext->tdb_sproto);
 
 	    /* XXX We can reuse variable i, we're not going to loop again */
 	    for (i = 0, fl = tdb->tdb_flow; fl; fl = fl->flow_next)
 	      i++;
 
-	    l += sprintf(buffer + l, "\t%u flows counted (use netstat -r for  more information)\n", i);
+	    l += sprintf(buffer + l,
+			 "\t%u flows counted "
+			 "(use netstat -r for  more information)\n",
+			 i);
 	    
 	    l += sprintf(buffer + l, "\tExpirations:\n");
 
 	    if (tdb->tdb_flags & TDBF_TIMER)
-	      l += sprintf(buffer + l, "\t\tHard expiration(1) in %u seconds\n",
+	      l += sprintf(buffer + l,
+			   "\t\tHard expiration(1) in %qu seconds\n",
 			   tdb->tdb_exp_timeout - time.tv_sec);
 	    
 	    if (tdb->tdb_flags & TDBF_SOFT_TIMER)
-	      l += sprintf(buffer + l, "\t\tSoft expiration(1) in %u seconds\n",
+	      l += sprintf(buffer + l,
+			   "\t\tSoft expiration(1) in %qu seconds\n",
 			   tdb->tdb_soft_timeout - time.tv_sec);
 	    
 	    if (tdb->tdb_flags & TDBF_BYTES)
@@ -800,14 +815,26 @@ ipsp_kern(int off, char **bufp, int len)
 			 tdb->tdb_cur_packets);
 	    
 	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
-	      l += sprintf(buffer + l, "\t\tHard expiration(2) in %u seconds\n",
-			   (tdb->tdb_established + tdb->tdb_exp_first_use) -
-			   time.tv_sec);
-	    
+	      if (tdb->tdb_first_use)
+		l += sprintf(buffer + l,
+			     "\t\tHard expiration(2) in %qu seconds\n",
+			     (tdb->tdb_first_use + tdb->tdb_exp_first_use) -
+			     time.tv_sec);
+	      else
+		l += sprintf(buffer + l,
+			     "\t\tHard expiration in %qu seconds after first "
+			     "use\n", tdb->tdb_exp_first_use);
+
 	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-	      l += sprintf(buffer + l, "\t\tSoft expiration(2) in %u seconds\n",
-			   (tdb->tdb_established + tdb->tdb_soft_first_use) -
-			   time.tv_sec);
+	      if (tdb->tdb_first_use)
+		l += sprintf(buffer + l,
+			     "\t\tSoft expiration(2) in %qu seconds\n",
+			     (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
+			     time.tv_sec);
+	      else
+		l += sprintf(buffer + l,
+			     "\t\tSoft expiration in %qu seconds after first "
+			     "use\n", tdb->tdb_soft_first_use);
 
 	    if (!(tdb->tdb_flags & (TDBF_TIMER | TDBF_SOFT_TIMER | TDBF_BYTES |
 				    TDBF_SOFT_PACKETS | TDBF_PACKETS |
