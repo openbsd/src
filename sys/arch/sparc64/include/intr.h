@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2002/05/21 16:15:53 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -46,7 +46,7 @@
 #define	IPL_NET		PIL_NET		/* network */
 #define	IPL_SOFTSERIAL	4		/* serial */
 #define	IPL_TTY		PIL_TTY		/* terminal */
-#define	IPL_IMP		PIL_IMP		/* memory allocation */
+#define	IPL_VM		PIL_VM		/* memory allocation */
 #define	IPL_AUDIO	PIL_AUD		/* audio */
 #define	IPL_CLOCK	PIL_CLOCK	/* clock */
 #define	IPL_SERIAL	PIL_SER		/* serial */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.5 2002/04/29 07:35:23 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.6 2002/05/21 16:15:53 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -86,7 +86,7 @@
 #define PIL_TTY		6
 #define PIL_LPT		6
 #define PIL_NET		6
-#define PIL_IMP		7
+#define PIL_VM		7
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
@@ -262,8 +262,22 @@ static __inline void splx(int);
 #endif
 static __inline u_int64_t getver(void);
 
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define splassert(wantipl) do { /* nada */ } while (0)
+#endif
 
 /*
  * GCC pseudo-functions for manipulating privileged registers
@@ -390,7 +404,7 @@ SPLHOLD(spllpt, PIL_LPT)
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
-SPLHOLD(splvm, PIL_IMP)
+SPLHOLD(splvm, PIL_VM)
 #define	splimp splvm
 
 SPLHOLD(splclock, PIL_CLOCK)
