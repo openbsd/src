@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.38 2001/05/31 18:41:16 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.39 2001/06/25 16:18:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.38 2001/05/31 18:41:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.39 2001/06/25 16:18:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,8 +136,9 @@ main(argc, argv)
 
 	if ((as = auth_open()) == NULL) {
 		syslog(LOG_ERR, "auth_open: %m");
-		err(1, "unable to begin authentication");
+		err(1, "unable to initialize BSD authentication");
 	}
+	auth_setoption(as, "login", "yes");
 
 	/* get current login name and shell */
 	ruid = getuid();

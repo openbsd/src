@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.38 2001/06/24 17:12:52 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.39 2001/06/25 16:18:37 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.38 2001/06/24 17:12:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.39 2001/06/25 16:18:37 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -220,9 +220,10 @@ main(argc, argv)
 	}
 
 	if ((as = auth_open()) == NULL) {
-		syslog(LOG_ERR, "%m");
-		err(1, NULL);
+		syslog(LOG_ERR, "auth_open: %m");
+		err(1, "unable to initialize BSD authentication");
 	}
+	auth_setoption(as, "login", "yes");
 
 	fflag = pflag = 0;
 	uid = getuid();
