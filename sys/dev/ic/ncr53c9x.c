@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.2 1997/08/08 08:13:05 downsj Exp $	*/
-/*	$NetBSD: ncr53c9x.c,v 1.16 1997/07/30 12:01:53 pk Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.3 1998/02/03 22:02:46 jason Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.22 1998/01/24 15:33:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -134,6 +134,7 @@ const char *ncr53c9x_variant_names[] = {
 	"NCR53C96",
 	"ESP406",
 	"FAS408",
+	"FAS216",
 };
 
 /*
@@ -238,6 +239,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
 		NCR_SCSIREGS(sc);
+	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
@@ -423,13 +425,13 @@ ncr53c9x_select(sc, ecb)
 	struct scsi_link *sc_link = ecb->xs->sc_link;
 	int target = sc_link->target;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[target];
+	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
-	    sc_link->target, sc_link->lun, ecb->cmd.cmd.opcode));
+		   sc_link->target, sc_link->lun, ecb->cmd.cmd.opcode));
 
-	/* new state NCR_SELECTING */
 	sc->sc_state = NCR_SELECTING;
 
 	/*
@@ -441,8 +443,6 @@ ncr53c9x_select(sc, ecb)
 		timeout(ncr53c9x_timeout, ecb,
 		    (ecb->timeout * hz) / 1000);
 
-	NCRCMD(sc, NCRCMD_FLUSH);
-
 	/*
 	 * The docs say the target register is never reset, and I
 	 * can't think of a better place to set it
@@ -450,29 +450,34 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
-	if (ncr53c9x_dmaselect && (ti->flags & T_NEGOTIATE) == 0) {
-		size_t dmacl;
+	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
+		size_t dmasize;
+
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1);
 
 		/* setup DMA transfer for command */
-		clen = ecb->clen + 1;
+		dmasize = clen = ecb->clen + 1;
 		sc->sc_cmdlen = clen;
 		sc->sc_cmdp = (caddr_t)&ecb->cmd;
-		dmacl = clen;
-		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmacl);
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
+
 		/* Program the SCSI counter */
-		NCR_WRITE_REG(sc, NCR_TCL, clen);
-		NCR_WRITE_REG(sc, NCR_TCM, clen >> 8);
+		NCR_WRITE_REG(sc, NCR_TCL, dmasize);
+		NCR_WRITE_REG(sc, NCR_TCM, dmasize >> 8);
 		if (sc->sc_cfg2 & NCRCFG2_FE) {
-			NCR_WRITE_REG(sc, NCR_TCH, clen >> 16);
+			NCR_WRITE_REG(sc, NCR_TCH, dmasize >> 16);
 		}
+
+		/* load the count in */
+		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
 		/* And get the targets attention */
 		NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
 		NCRDMA_GO(sc);
 		return;
 	}
+
 	/*
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
@@ -671,7 +676,8 @@ ncr53c9x_sched(sc)
 			break;
 		} else
 			NCR_MISC(("%d:%d busy\n",
-			    sc_link->target, sc_link->lun));
+				  sc_link->target,
+				  sc_link->lun));
 	}
 }
 
@@ -1089,8 +1095,7 @@ gotit:
 					printf("max sync rate %d.%02dMb/s\n",
 						r, s);
 #endif
-					if ((sc->sc_flags&NCR_SYNCHNEGO)
-					    == 0) {
+					if ((sc->sc_flags&NCR_SYNCHNEGO) == 0) {
 						/*
 						 * target initiated negotiation
 						 */
@@ -1174,6 +1179,13 @@ ncr53c9x_msgout(sc)
 	NCR_TRACE(("[ncr53c9x_msgout(priq:%x, prevphase:%x)]",
 	    sc->sc_msgpriq, sc->sc_prevphase));
 
+	/*
+	 * XXX - the NCR_ATN flag is not in sync with the actual ATN
+	 *	 condition on the SCSI bus. The 53c9x chip
+	 *	 automatically turns off ATN before sending the
+	 *	 message byte.  (see also the comment below in the
+	 *	 default case when picking out a message to send)
+	 */
 	if (sc->sc_flags & NCR_ATN) {
 		if (sc->sc_prevphase != MESSAGE_OUT_PHASE) {
 		new:
@@ -1244,7 +1256,19 @@ ncr53c9x_msgout(sc)
 			sc->sc_omess[0] = MSG_MESSAGE_REJECT;
 			break;
 		default:
-			NCRCMD(sc, NCRCMD_RSTATN);
+			/*
+			 * We normally do not get here, since the chip
+			 * automatically turns off ATN before the last
+			 * byte of a message is sent to the target.
+			 * However, if the target rejects our (multi-byte)
+			 * message early by switching to MSG IN phase
+			 * ATN remains on, so the target may return to
+			 * MSG OUT phase. If there are no scheduled messages
+			 * left we send a NO-OP.
+			 *
+			 * XXX - Note that this leaves no useful purpose for
+			 * the NCR_ATN flag.
+			 */
 			sc->sc_flags &= ~NCR_ATN;
 			sc->sc_omess[0] = MSG_NOOP;
 			break;
@@ -1252,7 +1276,6 @@ ncr53c9x_msgout(sc)
 		sc->sc_omp = sc->sc_omess;
 	}
 
-#if 1
 	/* (re)send the message */
 	size = min(sc->sc_omlen, sc->sc_maxxfer);
 	NCRDMA_SETUP(sc, &sc->sc_omp, &sc->sc_omlen, 0, &size);
@@ -1262,18 +1285,10 @@ ncr53c9x_msgout(sc)
 	if (sc->sc_cfg2 & NCRCFG2_FE) {
 		NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
 	}
-	/* load the count in */
+	/* Load the count in and start the message-out transfer */
 	NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 	NCRCMD(sc, NCRCMD_TRANS|NCRCMD_DMA);
 	NCRDMA_GO(sc);
-#else
-	{	int i;
-		for (i = 0; i < sc->sc_omlen; i++)
-			NCR_WRITE_REG(sc, FIFO, sc->sc_omess[i]);
-		NCRCMD(sc, NCRCMD_TRANS);
-		sc->sc_omlen = 0;
-	}
-#endif
 }
 
 /*
@@ -1394,7 +1409,16 @@ ncr53c9x_intr(sc)
 
 			if (sc->sc_espintr & NCRINTR_ILL) {
 				if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
-printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
+					/*
+					 * Eat away "Illegal command" interrupt
+					 * on a ESP100 caused by a re-selection
+					 * while we were trying to select
+					 * another target.
+					 */
+#ifdef DEBUG
+					printf("%s: ESP100 work-around activated\n",
+						sc->sc_dev.dv_xname);
+#endif
 					sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
 					continue;
 				}
@@ -1432,23 +1456,53 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 			if (NCRDMA_ISACTIVE(sc))
 				return 1;
 
-			/*
-			 * Note that this can happen during normal operation
-			 * if we are reselected while using DMA to select
-			 * a target.  If this is the case, don't issue the
-			 * warning.
-			 */
-			if (sc->sc_dleft == 0 &&
-			    (sc->sc_espstat & NCRSTAT_TC) == 0 &&
-			    sc->sc_state != NCR_SELECTING)
-				printf("%s: !TC [intr %x, stat %x, step %d]"
-				       " prevphase %x, resid %x\n",
-					sc->sc_dev.dv_xname,
-					sc->sc_espintr,
-					sc->sc_espstat,
-					sc->sc_espstep,
-					sc->sc_prevphase,
-					ecb?ecb->dleft:-1);
+			if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
+				/*
+				 * DMA not completed.  If we can not find a
+				 * acceptable explanation, print a diagnostic.
+				 */
+				if (sc->sc_state == NCR_SELECTING)
+					/*
+					 * This can happen if we are reselected
+					 * while using DMA to select a target.
+					 */
+					/*void*/;
+				else if (sc->sc_prevphase == MESSAGE_OUT_PHASE){
+					/*
+					 * Our (multi-byte) message (eg SDTR)
+					 * was interrupted by the target to
+					 * send a MSG REJECT.
+					 * Print diagnostic if current phase
+					 * is not MESSAGE IN.
+					 */
+					if (sc->sc_phase != MESSAGE_IN_PHASE)
+					    printf("%s: !TC on MSG OUT"
+					       " [intr %x, stat %x, step %d]"
+					       " prevphase %x, resid %x\n",
+						sc->sc_dev.dv_xname,
+						sc->sc_espintr,
+						sc->sc_espstat,
+						sc->sc_espstep,
+						sc->sc_prevphase,
+						sc->sc_omlen);
+				} else if (sc->sc_dleft == 0) {
+					/*
+					 * The DMA operation was started for
+					 * a DATA transfer. Print a diagnostic
+					 * if the DMA counter and TC bit
+					 * appear to be out of sync.
+					 */
+					printf("%s: !TC on DATA XFER"
+					       " [intr %x, stat %x, step %d]"
+					       " prevphase %x, resid %x\n",
+						sc->sc_dev.dv_xname,
+						sc->sc_espintr,
+						sc->sc_espstat,
+						sc->sc_espstep,
+						sc->sc_prevphase,
+						ecb?ecb->dleft:-1);
+				}
+			}
 		}
 
 #if 0	/* Unreliable on some NCR revisions? */
@@ -1483,6 +1537,7 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 			 * 250mS of a disconnect. So here you are...
 			 */
 			NCRCMD(sc, NCRCMD_ENSEL);
+
 			switch (sc->sc_state) {
 			case NCR_RESELECTED:
 				goto sched;
@@ -1571,7 +1626,6 @@ printf("<<RESELECT CONT'd>>");
 			break;
 
 		case NCR_IDLE:
-if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 		case NCR_SELECTING:
 			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 			sc->sc_flags = 0;
@@ -1635,8 +1689,15 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				/* Handle identify message */
 				ncr53c9x_msgin(sc);
 				if (nfifo != 2) {
+					/*
+					 * Note: this should not happen
+					 * with `dmaselect' on.
+					 */
 					sc->sc_flags |= NCR_EXPECT_ILLCMD;
 					NCRCMD(sc, NCRCMD_FLUSH);
+				} else if (ncr53c9x_dmaselect &&
+					   sc->sc_rev == NCR_VARIANT_ESP100) {
+					sc->sc_flags |= NCR_EXPECT_ILLCMD;
 				}
 
 				if (sc->sc_state != NCR_CONNECTED) {
@@ -1660,11 +1721,17 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 
 				switch (sc->sc_espstep) {
 				case 0:
-					printf("%s: select timeout/no "
-					    "disconnect\n",
-					    sc->sc_dev.dv_xname);
-					ecb->xs->error = XS_SELTIMEOUT;
-					goto finish;
+					/*
+					 * The target did not respond with a
+					 * message out phase - probably an old
+					 * device that doesn't recognize ATN.
+					 * Clear ATN and just continue, the
+					 * target should be in the command
+					 * phase.
+					 * XXXX check for command phase?
+					 */
+					NCRCMD(sc, NCRCMD_RSTATN);
+					break;
 				case 1:
 					if ((ti->flags & T_NEGOTIATE) == 0) {
 						printf("%s: step 1 & !NEG\n",
@@ -1721,11 +1788,15 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					if (ncr53c9x_dmaselect &&
 					    sc->sc_cmdlen != 0)
 						printf("(%s:%d:%d): select; "
-						      "%d left in DMA buffer\n",
+						       "%d left in DMA buffer "
+						"[intr %x, stat %x, step %d]\n",
 							sc->sc_dev.dv_xname,
 							sc_link->target,
 							sc_link->lun,
-							sc->sc_cmdlen);
+							sc->sc_cmdlen,
+							sc->sc_espintr,
+							sc->sc_espstat,
+							sc->sc_espstep);
 					/* So far, everything went fine */
 					break;
 				}
@@ -1854,7 +1925,7 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 			 * Send the command block. Normally we don't see this
 			 * phase because the SEL_ATN command takes care of
 			 * all this. However, we end up here if either the
-			 * target or we wanted exchange some more messages
+			 * target or we wanted to exchange some more messages
 			 * first (e.g. to start negotiations).
 			 */
 
@@ -1879,6 +1950,10 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 					NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
 				}
 
+				/* load the count in */
+				NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+				/* start the command transfer */
 				NCRCMD(sc, NCRCMD_TRANS | NCRCMD_DMA);
 				NCRDMA_GO(sc);
 			} else {
