@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2004/06/06 04:50:57 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.25 2004/06/25 11:03:28 art Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -32,7 +32,7 @@ config		bsd	swap generic
 
 mainbus0 at root
 
-cpu*	at mainbus0
+cpu0	at mainbus? apid ?
 isa0	at mainbus0
 #isa0	at pcib?
 pci*	at mainbus0 bus ?

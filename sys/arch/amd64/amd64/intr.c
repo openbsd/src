@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.2 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -69,9 +69,7 @@ struct pic softintr_pic = {
         {0, {NULL}, NULL, 0, "softintr_fakepic", NULL, 0, 0},
         PIC_SOFT,
 #ifdef MULTIPROCESSOR
-        __SIMPLELOCK_UNLOCKED,
-#else
-	0,
+	{},
 #endif
 	NULL,
 	NULL,
@@ -544,7 +542,7 @@ struct intrhand fake_softserial_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
-#if NLAPIC > 0 && defined(MULTIPROCESSOR)
+#if NLAPIC > 0 && defined(MULTIPROCESSOR) && 0
 static char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
@@ -556,7 +554,7 @@ void
 cpu_intr_init(struct cpu_info *ci)
 {
 	struct intrsource *isp;
-#if NLAPIC > 0 && defined(MULTIPROCESSOR)
+#if NLAPIC > 0 && defined(MULTIPROCESSOR) && 0
 	int i;
 #endif
 
@@ -634,9 +632,11 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;
 
+#ifdef notyet
 	for (i = 0; i < X86_NIPI; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
 		    NULL, ci->ci_dev->dv_xname, x86_ipi_names[i]);
+#endif
 #endif
 #endif
 
@@ -649,26 +649,26 @@ void
 x86_intlock(struct intrframe iframe)
 {
 	if (iframe.if_ppl < IPL_SCHED)
-		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
+		__mp_lock(&kernel_lock);
 }
 
 void
 x86_intunlock(struct intrframe iframe)
 {
 	if (iframe.if_ppl < IPL_SCHED)
-		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+		__mp_unlock(&kernel_lock);
 }
 
 void
 x86_softintlock(void)
 {
-	spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
+	__mp_lock(&kernel_lock);
 }
 
 void
 x86_softintunlock(void)
 {
-	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	__mp_unlock(&kernel_lock);
 }
 #endif
 

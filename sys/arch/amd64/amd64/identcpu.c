@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.4 2004/02/28 18:12:21 deraadt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.5 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -163,11 +163,6 @@ identifycpu(struct cpu_info *ci)
 	printf("\n");
 
 	x86_print_cacheinfo(ci);
-
-	return;	/* TODO - warning to fix this ifdef later */
-#ifdef notyet
-	microtime_func = cc_microtime;
-#endif
 }
 
 void

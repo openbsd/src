@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2004/06/22 01:16:50 art Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2004/06/25 11:03:27 art Exp $
 
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
@@ -15,6 +15,8 @@ include <machine/pmap.h>
 include <machine/pte.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
+include <machine/pic.h>
+include <machine/i82093var.h>
 
 export	SRUN
 export	SONPROC
@@ -105,6 +107,7 @@ member	CPU_INFO_IDEPTH		ci_idepth
 member	CPU_INFO_ISOURCES	ci_isources
 member	CPU_INFO_IPENDING	ci_ipending
 member	CPU_INFO_IUNMASK	ci_iunmask
+member	CPU_INFO_GDT		ci_gdt
 
 struct	intrsource
 member	is_recurse
@@ -122,6 +125,10 @@ member	ih_fun
 member	ih_arg
 member	ih_next
 member	ih_level
+
+struct	ioapic_softc
+member	IOAPIC_SC_REG	sc_reg
+member	IOAPIC_SC_DATA	sc_data
 
 # pte fields
 export	PG_V

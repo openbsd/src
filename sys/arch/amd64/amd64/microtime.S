@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.S,v 1.3 2004/03/22 19:43:29 nordin Exp $	*/
+/*	$OpenBSD: microtime.S,v 1.4 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: microtime.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) & 7))
 #define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
-ENTRY(microtime)
+ENTRY(i8254_microtime)
 	# clear registers and do whatever we can up front
 	xorl	%edx,%edx
 	movl	$(TIMER_SEL0|TIMER_LATCH),%eax

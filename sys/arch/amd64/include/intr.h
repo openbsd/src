@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2004/05/07 20:33:04 tedu Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2004/06/25 11:03:28 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
-#include <machine/pic.h>
 
 /*
  * Struct describing an interrupt source for a CPU. struct cpu_info
@@ -251,6 +250,8 @@ softintr(int sir)
 
 #define IPLSHIFT 4			/* The upper nibble of vectors is the IPL.      */
 #define IPL(level) ((level) >> IPLSHIFT)	/* Extract the IPL.    */
+
+#include <machine/pic.h>
 
 /*
  * Stub declarations.

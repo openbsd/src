@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.2 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -112,9 +112,7 @@ struct pic i8259_pic = {
 	{0, {NULL}, NULL, 0, "pic0", NULL, 0, 0},
 	PIC_I8259,
 #ifdef MULTIPROCESSOR
-	__SIMPLELOCK_UNLOCKED,
-#else
-	0,
+	{},
 #endif
 	i8259_hwmask,
 	i8259_hwunmask,

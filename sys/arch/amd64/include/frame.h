@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.2 2004/06/25 11:03:28 art Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -162,7 +162,6 @@ struct intrframe {
  * Stack frame inside cpu_switch()
  */
 struct switchframe {
-	int64_t	sf_ppl;
 	int64_t	sf_r15;
 	int64_t	sf_r14;
 	int64_t	sf_r13;

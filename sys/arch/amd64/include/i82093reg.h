@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.2 2004/06/25 11:03:28 art Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -119,3 +119,65 @@
 #define IMCR_REGISTER		0x70
 #define		IMCR_PIC	0x00
 #define 	IMCR_APIC	0x01
+
+#ifdef _KERNEL
+
+#define ioapic_asm_ack(num) \
+	movl	$0,(_C_LABEL(local_apic)+LAPIC_EOI)(%rip)
+
+#ifdef MULTIPROCESSOR
+
+#ifdef notyet
+#define ioapic_asm_lock(num) \
+	movl	$1,%esi						;\
+77:								\
+	xchgl	%esi,PIC_LOCK(%rdi)				;\
+	testl	%esi,%esi					;\
+	jne	77b
+
+#define ioapic_asm_unlock(num) \
+	movl	$0,PIC_LOCK(%rdi)
+#else
+#define ioapic_asm_lock(num)
+#define ioapic_asm_unlock(num)
+#endif
+	
+#else
+
+#define ioapic_asm_lock(num)
+#define ioapic_asm_unlock(num)
+
+#endif	/* MULTIPROCESSOR */
+
+
+#define ioapic_mask(num) \
+	movq	IS_PIC(%r14),%rdi				;\
+	ioapic_asm_lock(num)					;\
+	movl	IS_PIN(%r14),%esi				;\
+	leaq	0x10(%rsi,%rsi,1),%rsi				;\
+	movq	IOAPIC_SC_REG(%rdi),%r15			;\
+	movl	%esi, (%r15)					;\
+	movq	IOAPIC_SC_DATA(%rdi),%r15			;\
+	movl	(%r15),%esi					;\
+	orl	$IOAPIC_REDLO_MASK,%esi				;\
+	movl	%esi,(%r15)					;\
+	ioapic_asm_unlock(num)
+
+#define ioapic_unmask(num) \
+	cmpq	$IREENT_MAGIC,(TF_ERR+8)(%rsp)			;\
+	jne	79f						;\
+	movq	IS_PIC(%r14),%rdi				;\
+	ioapic_asm_lock(num)					;\
+	movl	IS_PIN(%r14),%esi				;\
+	leaq	0x10(%rsi,%rsi,1),%rsi				;\
+	movq	IOAPIC_SC_REG(%rdi),%r15			;\
+	movq	IOAPIC_SC_DATA(%rdi),%r13			;\
+	movl	%esi, (%r15)					;\
+	movl	(%r13),%r12d					;\
+	andl	$~IOAPIC_REDLO_MASK,%r12d			;\
+	movl	%esi,(%r15)					;\
+	movl	%r12d,(%r13)					;\
+	ioapic_asm_unlock(num)					;\
+79:
+
+#endif

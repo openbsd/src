@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2004/06/06 04:50:57 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2004/06/25 11:03:28 art Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -33,7 +33,7 @@ config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
-cpu*	at mainbus0
+cpu*	at mainbus0 apid ?
 isa0	at mainbus0
 #isa0	at pcib?
 pci*	at mainbus0

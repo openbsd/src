@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2004/06/22 01:16:50 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -200,6 +200,10 @@ pid_t sigpid = 0;
 #endif
 
 extern	paddr_t avail_start, avail_end;
+
+void (*delay_func)(int) = i8254_delay;
+void (*microtime_func)(struct timeval *) = i8254_microtime;
+void (*initclock_func)(void) = i8254_initclocks;
 
 struct mtrr_funcs *mtrr_funcs;
 
@@ -1793,33 +1797,11 @@ cpu_dump_mempagecnt()
 	return (n);
 }
 
-#if 0
-extern void i8254_microtime(struct timeval *tv);
-
-/*
- * XXXXXXX
- * the simulator's 8254 seems to travel backward in time sometimes?
- * work around this with this hideous code. Unacceptable for
- * real hardware, but this is just a patch to stop the weird
- * effects. SMP unsafe, etc.
- */
 void
-microtime(struct timeval *tv)
+cpu_initclocks(void)
 {
-	static struct timeval mtv;
-
-	i8254_microtime(tv);
-	if (tv->tv_sec <= mtv.tv_sec && tv->tv_usec < mtv.tv_usec) {
-		mtv.tv_usec++;
-		if (mtv.tv_usec > 1000000) {
-			mtv.tv_sec++;
-			mtv.tv_usec = 0;
-		}
-		*tv = mtv;
-	} else
-		mtv = *tv;
+	(*initclock_func)();
 }
-#endif
 
 void
 need_resched(struct cpu_info *ci)

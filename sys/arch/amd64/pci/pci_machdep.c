@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.2 2004/06/25 11:03:28 art Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@
 
 int pci_mode = -1;
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
 #else
 struct simplelock pci_conf_slock = { 0 };

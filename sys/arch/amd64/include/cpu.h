@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2004/06/22 01:16:50 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2004/06/25 11:03:28 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -140,6 +140,8 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev->dv_unit)
+
 /*      
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -177,8 +179,6 @@ extern struct cpu_info cpu_info_primary;
 
 #endif
 
-#include <machine/psl.h>
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -187,6 +187,12 @@ extern struct cpu_info cpu_info_primary;
 #define CPU_IS_PRIMARY(ci)	1
 
 #endif	/* MULTIPROCESSOR */
+
+#include <machine/psl.h>
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif
 
 #define aston(p)	((p)->p_md.md_astpending = 1)
 
@@ -223,11 +229,13 @@ extern u_int32_t cpus_attached;
 /*
  * We need a machine-independent name for this.
  */
-extern void delay(int);
+extern void (*delay_func)(int);
 struct timeval;
-extern void microtime(struct timeval *);
+extern void (*microtime_func)(struct timeval *);
 
-#define DELAY(x)		delay(x)
+#define DELAY(x)		(*delay_func)(x)
+#define delay(x)		(*delay_func)(x)
+#define microtime(tv)		(*microtime_func)(tv)
 
 
 /*
@@ -256,7 +264,6 @@ int	cpu_amd64speed(int *);
 void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
-void	delay(int);
 void	dumpconf(void);
 int	cpu_maxproc(void);
 void	cpu_reset(void);

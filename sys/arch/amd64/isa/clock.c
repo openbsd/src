@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2004/03/22 19:43:29 nordin Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2004/06/25 11:03:28 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ mc146818_write(sc, reg, datum)
 	DELAY(1);
 }
 
-static u_long rtclock_tval;
+u_long rtclock_tval;
 
 /* minimal initialization, enough for delay() */
 void
@@ -313,28 +313,7 @@ int
 clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
-#if defined(I586_CPU) || defined(I686_CPU)
-	static int microset_iter; /* call cc_microset once/sec */
-	struct cpu_info *ci = curcpu();
-	
-	/*
-	 * If we have a cycle counter, do the microset thing.
-	 */
-	if (ci->ci_feature_flags & CPUID_TSC) {
-		if (
-#if defined(MULTIPROCESSOR)
-		    CPU_IS_PRIMARY(ci) &&
-#endif
-		    (microset_iter--) == 0) {
-			cc_microset_time = time;
-			microset_iter = hz - 1;
-#if defined(MULTIPROCESSOR)
-			x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-			cc_microset(ci);
-		}
-	}
-#endif
+
 	hardclock(frame);
 
 	return 1;
@@ -383,7 +362,7 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-delay(int n)
+i8254_delay(int n)
 {
 	int limit, tick, otick;
 	static const int delaytab[26] = {
@@ -518,7 +497,7 @@ rtcdrain(void *v)
 }
 
 void
-cpu_initclocks()
+i8254_initclocks()
 {
 	static struct timeout rtcdrain_timeout;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.2 2003/05/11 00:05:52 fvdl Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -50,6 +50,7 @@ struct mp_intr_map
  	int flags;		/* from mp spec intr record */
 	u_int32_t redir;
 	int cpu_id;
+	int global_int;		/* ACPI global interrupt number */
 };
 
 #if defined(_KERNEL)

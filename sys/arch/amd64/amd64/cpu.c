@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2004/06/24 19:35:23 tholo Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2004/06/25 11:03:27 art Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -347,6 +347,7 @@ cpu_attach(parent, self, aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_start_secondary(ci);
+		ncpus++;
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
 			ci->ci_next = cpu_info_list->ci_next;
@@ -447,26 +448,10 @@ cpu_start_secondary (ci)
 {
 	struct pcb *pcb;
 	int i;
-	struct pmap *kmp = pmap_kernel();
-	extern u_int64_t mp_pdirpa;
-	extern vaddr_t lo32_vaddr;
-	extern paddr_t lo32_paddr;
-
-	/*
-	 * The initial PML4 pointer must be below 4G, so if the
-	 * current one isn't, use a "bounce buffer"
-	 */
-	if (kmp->pm_pdirpa > 0xffffffff) {
-		memcpy((void *)lo32_vaddr, kmp->pm_pdir, PAGE_SIZE);
-		mp_pdirpa = lo32_paddr;
-	} else
-		mp_pdirpa = kmp->pm_pdirpa;
 
 	pcb = ci->ci_idle_pcb;
 
 	ci->ci_flags |= CPUF_AP;
-
-	printf("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -558,10 +543,6 @@ cpu_hatch(void *v)
 	enable_intr();
 
 	printf("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (ci->ci_feature_flags & CPUID_TSC)
-		cc_microset(ci);
-#endif
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
@@ -601,12 +582,30 @@ cpu_copy_trampoline()
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
+
+	struct pmap *kmp = pmap_kernel();
+	extern u_int32_t mp_pdirpa;
+	extern vaddr_t lo32_vaddr;
+	extern paddr_t lo32_paddr;
+
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
 	memcpy((caddr_t)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
+
+	/*
+	 * The initial PML4 pointer must be below 4G, so if the
+	 * current one isn't, use a "bounce buffer"
+	 * We need to patch this after we copy the trampoline,
+	 * the symbol points into the copied trampoline.
+	 */
+	if (kmp->pm_pdirpa > 0xffffffff) {
+		memcpy((void *)lo32_vaddr, kmp->pm_pdir, PAGE_SIZE);
+		mp_pdirpa = lo32_paddr;
+	} else
+		mp_pdirpa = kmp->pm_pdirpa;
 }
 
 #endif
@@ -635,9 +634,9 @@ mp_cpu_start(struct cpu_info *ci)
 	dwordptr[0] = 0;
 	dwordptr[1] = MP_TRAMPOLINE >> 4;
 
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, PAGE_SIZE);
+	pmap_kenter_pa(0, 0, VM_PROT_READ|VM_PROT_WRITE);
+	memcpy((u_int8_t *) 0x467, dwordptr, 4);
+	pmap_kremove(0, PAGE_SIZE);
 
 #if NLAPIC > 0
 	/*
@@ -651,7 +650,6 @@ mp_cpu_start(struct cpu_info *ci)
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
-
 			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
 					     ci->ci_apicid,
 					     LAPIC_DLMODE_STARTUP)) != 0)

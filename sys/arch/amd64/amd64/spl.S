@@ -178,6 +178,7 @@ IDTVEC(doreti)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp, %rdi
 	call	_C_LABEL(trap)
 	cli
 	jmp	5b

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2004/05/13 20:20:24 sturm Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2004/06/25 11:03:27 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -144,7 +144,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		tf->tf_rsp = (u_int64_t)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_ppl = IPL_NONE;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
 	if (func == child_return)
