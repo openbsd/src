@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.223 2003/04/19 21:45:16 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.224 2003/04/19 21:58:06 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1985,11 +1985,12 @@ trans-anchors  = ( nat-anchor | rdr-anchor | binat-anchor ) string
                  [ on ifspec ] [ af ] [ proto ] [ protospec ] [ hosts ]
 
 queueopts-list = queueopts-list queueopts | queueopts
-queueopts      = [ bandwidth number ( b | Kb | Mb | Gb | % ) ] |
+queueopts      = [ bandwidth bandwidth-spec ] |
                  [ qlimit number ] | [ tbrsize number ] |
                  [ priority number ] | [ schedulers ] |
                  [ qlimit number ]
-schedulers     = ( cbq-def | priq-def )
+schedulers     = ( cbq-def | priq-def | hfsc-def )
+bandwidth-spec = number ( b | Kb | Mb | Gb | % )
 
 action         = pass | block [ return ] | scrub
 return         = drop | return | return-rst [ ( ttl number ) ]
@@ -2074,8 +2075,16 @@ subqueue       = string | { queue-list }
 queue-list     = string [ [ , ] string ]
 cbq-def        = cbq [ ( cbq-opt [ [ , ] cbq-opt ] ) ]
 priq-def       = priq [ ( priq-opt [ [ , ] priq-opt ] ) ]
+hfsc-def       = hfsc [ ( hfsc-opt [ [ , ] hfsc-opt ] ) ]
 cbq-opt        = ( default | borrow | red | ecn | rio )
 priq-opt       = ( default | red | ecn | rio )
+hfsc-opt       = ( default | red | ecn | rio
+                 | linkshare-sc | realtime-sc | upperlimit-sc )
+linkshare-sc   = linkshare sc-spec
+realtime-sc    = realtime sc-spec
+upperlimit-sc  = upperlimit sc-spec
+sc-spec        = ( bandwidth-spec
+                 | ( bandwidth-spec number bandwidth-spec ) )
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/protocols" -compact
