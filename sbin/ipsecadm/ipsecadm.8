@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.25 2000/04/21 17:33:41 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.26 2000/04/22 01:50:15 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -82,9 +82,11 @@ modifiers are:
 .Fl enc ,
 .Fl auth ,
 .Fl authkey ,
+.Fl authkeyfile ,
 .Fl forcetunnel ,
+.Fl key ,
 and
-.Fl key .
+.Fl keyfile .
 .It old esp
 Setup a SA which uses the old esp transforms.
 Only encryption algorithms can be applied.
@@ -96,8 +98,9 @@ Allowed modifiers are:
 .Fl enc ,
 .Fl halfiv ,
 .Fl forcetunnel ,
+.Fl key ,
 and
-.Fl key .
+.Fl keyfile .
 .It new ah
 Setup a SA which uses the new ah transforms.
 Authentication will be done with HMAC using the specified hash algorithm.
@@ -108,8 +111,9 @@ Allowed modifiers are:
 .Fl spi ,
 .Fl forcetunnel ,
 .Fl auth ,
+.Fl key ,
 and
-.Fl key .
+.Fl keyfile .
 .It old ah
 Setup a SA which uses the old ah transforms.
 Simple keyed hashes will be used for authentication.
@@ -120,8 +124,9 @@ Allowed modifiers are:
 .Fl spi ,
 .Fl forcetunnel ,
 .Fl auth ,
+.Fl key ,
 and
-.Fl key .
+.Fl keyfile .
 .It ip4
 Setup an SA which uses the IP-in-IP encapsulation protocol.
 This mode
@@ -331,6 +336,10 @@ It is very important that the key is not guessable.
 One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
+.It Fl keyfile
+Read the key from a file.  May be used instead of the
+.Fl key
+flag, and has the same syntax considerations.
 .It Fl authkey
 The secret key material used for authentication
 if additional authentication in new esp mode is required.
@@ -348,6 +357,10 @@ It is very important that the key is not guessable.
 One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
+.It Fl authkeyfile
+Read the authkey from a file.  May be used instead of the
+.Fl authkey
+flag, and has the same syntax considerations.
 .It Fl iv
 This option has been deprecated.
 The argument is ignored.
