@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.17 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.18 2003/08/02 20:38:38 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -327,7 +327,7 @@ cmd_examine(int argc, char **argv, void *arg)
 			}
 		}
 
-        	if (process_read(ps, addr, &val, sizeof(val))) {
+        	if (process_read(ps, addr, &val, sizeof(val)) < 0) {
 			warn("Can't read process contents at 0x%lx", addr);
 			return (0);
 		}

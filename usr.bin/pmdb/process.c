@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.11 2003/05/30 18:03:01 miod Exp $	*/
+/*	$OpenBSD: process.c,v 1.12 2003/08/02 20:38:38 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -140,7 +140,8 @@ process_read(struct pstate *ps, off_t from, void *to, size_t size)
 		piod.piod_addr = to;
 		piod.piod_len = size;
 
-		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0));
+		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0) < 0?
+		    -1 : piod.piod_len);
 	}
 }
 
@@ -157,7 +158,8 @@ process_write(struct pstate *ps, off_t to, void *from, size_t size)
 		piod.piod_addr = from;
 		piod.piod_len = size;
 
-		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0));
+		return (ptrace(PT_IO, ps->ps_pid, (caddr_t)&piod, 0) < 0?
+		    -1 : piod.piod_len);
 	}
 }
 
