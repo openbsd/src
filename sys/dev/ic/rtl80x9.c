@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.1 1998/11/06 06:34:36 fgsch Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.2 1998/11/28 05:02:04 fgsch Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -64,10 +64,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
