@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.8 2004/11/07 21:42:33 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.9 2004/11/08 19:09:19 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -71,6 +71,10 @@ For example:
 server 10.0.0.2
 server ntp.example.org
 .Ed
+.Pp
+To provide redundancy, it is good practice to configure multiple servers.
+In general, best accuracy is obtained by using servers that have a low
+network latency.
 .It Ic servers Ar address
 As with
 .Cm server ,
