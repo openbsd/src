@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.6 1997/03/29 06:08:56 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.7 1997/07/09 03:05:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -267,7 +267,9 @@ svcudp_destroy(xprt)
 	register struct svcudp_data *su = su_data(xprt);
 
 	xprt_unregister(xprt);
-	(void)close(xprt->xp_sock);
+	if (xprt->xp_sock != -1)
+		(void)close(xprt->xp_sock);
+	xprt->xp_sock = -1;
 	XDR_DESTROY(&(su->su_xdrs));
 	mem_free(rpc_buffer(xprt), su->su_iosz);
 	mem_free((caddr_t)su, sizeof(struct svcudp_data));

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.14 1997/01/22 18:50:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.15 1997/07/09 03:05:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -73,14 +73,14 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	struct timeval tout;
 	u_long *port_ptr;
 {
-	int socket = -1;
+	int sock = -1;
 	register CLIENT *client;
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	enum clnt_stat stat;
 
 	addr->sin_port = htons(PMAPPORT);
-	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &socket);
+	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
 	if (client != (CLIENT *)NULL) {
 		a.prog = prog;
 		a.vers = vers;
@@ -96,8 +96,8 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	} else {
 		stat = RPC_FAILED;
 	}
-	if (socket != -1)
-		(void)close(socket);
+	if (sock != -1)
+		(void)close(sock);
 	addr->sin_port = 0;
 	return (stat);
 }
@@ -245,7 +245,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	XDR xdr_stream;
 	register XDR *xdrs = &xdr_stream;
 	int outlen, inlen, fromlen, nets;
-	register int sock;
+	register int sock = -1;
 	int on = 1;
 	fd_set *fds, readfds;
 	register int i;
@@ -414,4 +414,3 @@ done_broad:
 	AUTH_DESTROY(unix_auth);
 	return (stat);
 }
-

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.14 1997/04/30 05:50:17 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.15 1997/07/09 03:05:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -307,7 +307,9 @@ svctcp_destroy(xprt)
 	register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
 	xprt_unregister(xprt);
-	(void)close(xprt->xp_sock);
+	if (xprt->xp_sock != -1)
+		(void)close(xprt->xp_sock);
+	xprt->xp_sock = -1;
 	if (xprt->xp_port != 0) {
 		/* a rendezvouser socket */
 		xprt->xp_port = 0;
