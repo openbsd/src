@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.29 1999/02/05 05:42:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.30 1999/02/08 17:36:28 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1340,7 +1340,7 @@ trimthenstep6:
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
-				iss = tp->rcv_nxt + TCP_ISSINCR;
+				iss = tp->snd_nxt + TCP_ISSINCR;
 				tp = tcp_close(tp);
 				goto findpcb;
 			}
