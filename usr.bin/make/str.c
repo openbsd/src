@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.10 1999/12/06 22:24:32 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.11 1999/12/09 18:18:24 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.10 1999/12/06 22:24:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.11 1999/12/09 18:18:24 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -412,7 +412,7 @@ Str_SYSVSubst(buf, pat, src, len)
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix */
-	Buf_AddChars(buf, m - pat, pat);
+	Buf_AddInterval(buf, pat, m);
 	/* skip the % */
 	pat = m + 1;
     }
@@ -421,7 +421,7 @@ Str_SYSVSubst(buf, pat, src, len)
     Buf_AddChars(buf, len, src);
 
     /* append the rest */
-    Buf_AddChars(buf, strlen(pat), pat);
+    Buf_AddString(buf, pat);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.18 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.19 1999/12/09 18:18:24 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.18 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.19 1999/12/09 18:18:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -485,7 +485,7 @@ Var_Set (name, val, ctxt)
 	(void)VarAdd(name, val, ctxt);
     } else {
 	Buf_Discard(v->val, Buf_Size(v->val));
-	Buf_AddChars(v->val, strlen(val), val);
+	Buf_AddString(v->val, val);
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name, val);
@@ -539,8 +539,8 @@ Var_Append (name, val, ctxt)
     if (v == (Var *) NIL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
-	Buf_AddChar(v->val, ' ');
-	Buf_AddChars(v->val, strlen(val), val);
+	Buf_AddSpace(v->val);
+	Buf_AddString(v->val, val);
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name,
@@ -629,13 +629,10 @@ VarUppercase (word, addSpace, buf, dummy)
 {
     size_t len = strlen(word);
 
-    if (addSpace) {
-	Buf_AddChar(buf, ' ');
-    }
-
-    while (len--) {
+    if (addSpace)
+	Buf_AddSpace(buf);
+    while (len--)
     	Buf_AddChar(buf, toupper(*word++));
-    }
     return (TRUE);
 }
 
@@ -663,13 +660,10 @@ VarLowercase (word, addSpace, buf, dummy)
 {
     size_t len = strlen(word);
 
-    if (addSpace) {
-	Buf_AddChar(buf, ' ');
-    }
-
-    while (len--) {
+    if (addSpace)
+	Buf_AddSpace(buf);
+    while (len--)
     	Buf_AddChar(buf, tolower(*word++));
-    }
     return (TRUE);
 }
 
@@ -698,24 +692,18 @@ VarHead (word, addSpace, buf, dummy)
 {
     register char *slash;
 
-    slash = strrchr (word, '/');
-    if (slash != (char *)NULL) {
-	if (addSpace) {
-	    Buf_AddChar(buf, ' ');
-	}
-	*slash = '\0';
-	Buf_AddChars(buf, strlen(word), word);
-	*slash = '/';
+    slash = strrchr(word, '/');
+    if (slash != NULL) {
+	if (addSpace)
+	    Buf_AddSpace(buf);
+	Buf_AddInterval(buf, word, slash);
 	return (TRUE);
     } else {
-	/*
-	 * If no directory part, give . (q.v. the POSIX standard)
-	 */
-	if (addSpace) {
-	    Buf_AddChars(buf, 2, " .");
-	} else {
+	/* If no directory part, give . (q.v. the POSIX standard) */
+	if (addSpace)
+	    Buf_AddString(buf, " .");
+	else
 	    Buf_AddChar(buf, '.');
-	}
     }
     return(dummy ? TRUE : TRUE);
 }
@@ -745,18 +733,13 @@ VarTail (word, addSpace, buf, dummy)
 {
     register char *slash;
 
-    if (addSpace) {
-	Buf_AddChar(buf, ' ');
-    }
-
-    slash = strrchr (word, '/');
-    if (slash != (char *)NULL) {
-	*slash++ = '\0';
-	Buf_AddChars(buf, strlen(slash), slash);
-	slash[-1] = '/';
-    } else {
-	Buf_AddChars(buf, strlen(word), word);
-    }
+    if (addSpace) 
+	Buf_AddSpace(buf);
+    slash = strrchr(word, '/');
+    if (slash != NULL)
+	Buf_AddString(buf, slash+1);
+    else
+	Buf_AddString(buf, word);
     return (dummy ? TRUE : TRUE);
 }
 
@@ -782,16 +765,13 @@ VarSuffix (word, addSpace, buf, dummy)
     Buffer  	  buf;	    	/* Buffer in which to store it */
     ClientData	  dummy;
 {
-    register char *dot;
+    char *dot;
 
-    dot = strrchr (word, '.');
-    if (dot != (char *)NULL) {
-	if (addSpace) {
-	    Buf_AddChar(buf, ' ');
-	}
-	*dot++ = '\0';
-	Buf_AddChars(buf, strlen(dot), dot);
-	dot[-1] = '.';
+    dot = strrchr(word, '.');
+    if (dot != NULL) {
+	if (addSpace)
+	    Buf_AddSpace(buf);
+	Buf_AddString(buf, dot+1);
 	addSpace = TRUE;
     }
     return (dummy ? addSpace : addSpace);
@@ -820,20 +800,16 @@ VarRoot (word, addSpace, buf, dummy)
     Buffer  	  buf;	    	/* Buffer in which to store it */
     ClientData	  dummy;
 {
-    register char *dot;
+    char *dot;
 
-    if (addSpace) {
-	Buf_AddChar(buf, ' ');
-    }
+    if (addSpace)
+	Buf_AddSpace(buf);
 
-    dot = strrchr (word, '.');
-    if (dot != (char *)NULL) {
-	*dot = '\0';
-	Buf_AddChars(buf, strlen(word), word);
-	*dot = '.';
-    } else {
-	Buf_AddChars(buf, strlen(word), word);
-    }
+    dot = strrchr(word, '.');
+    if (dot != NULL)
+	Buf_AddInterval(buf, word, dot);
+    else
+	Buf_AddString(buf, word);
     return (dummy ? TRUE : TRUE);
 }
 
@@ -862,11 +838,10 @@ VarMatch (word, addSpace, buf, pattern)
     ClientData    pattern; 	/* Pattern the word must match */
 {
     if (Str_Match(word, (char *) pattern)) {
-	if (addSpace) {
-	    Buf_AddChar(buf, ' ');
-	}
+	if (addSpace)
+	    Buf_AddSpace(buf);
 	addSpace = TRUE;
-	Buf_AddChars(buf, strlen(word), word);
+	Buf_AddString(buf, word);
     }
     return(addSpace);
 }
@@ -903,14 +878,14 @@ VarSYSVMatch (word, addSpace, buf, patp)
 
     if (*word) {
 	    if (addSpace)
-		Buf_AddChar(buf, ' ');
+		Buf_AddSpace(buf);
 
 	    addSpace = TRUE;
 
 	    if ((ptr = Str_SYSVMatch(word, pat->lhs, &len)) != NULL)
 		Str_SYSVSubst(buf, pat->rhs, ptr, len);
 	    else
-		Buf_AddChars(buf, strlen(word), word);
+		Buf_AddString(buf, word);
     }
     return(addSpace);
 }
@@ -942,11 +917,10 @@ VarNoMatch (word, addSpace, buf, pattern)
     ClientData    pattern; 	/* Pattern the word must match */
 {
     if (!Str_Match(word, (char *) pattern)) {
-	if (addSpace) {
-	    Buf_AddChar(buf, ' ');
-	}
+	if (addSpace)
+	    Buf_AddSpace(buf);
 	addSpace = TRUE;
-	Buf_AddChars(buf, strlen(word), word);
+	Buf_AddString(buf, word);
     }
     return(addSpace);
 }
@@ -998,9 +972,8 @@ VarSubstitute (word, addSpace, buf, patternp)
 			 * if rhs is non-null.
 			 */
 			if (pattern->rightLen != 0) {
-			    if (addSpace) {
-				Buf_AddChar(buf, ' ');
-			    }
+			    if (addSpace)
+				Buf_AddSpace(buf);
 			    addSpace = TRUE;
 			    Buf_AddChars(buf, pattern->rightLen, pattern->rhs);
 			}
@@ -1015,9 +988,8 @@ VarSubstitute (word, addSpace, buf, patternp)
 		     * Matches at start but need to copy in trailing characters
 		     */
 		    if ((pattern->rightLen + wordLen - pattern->leftLen) != 0){
-			if (addSpace) {
-			    Buf_AddChar(buf, ' ');
-			}
+			if (addSpace)
+			    Buf_AddSpace(buf);
 			addSpace = TRUE;
 		    }
 		    Buf_AddChars(buf, pattern->rightLen, pattern->rhs);
@@ -1047,12 +1019,11 @@ VarSubstitute (word, addSpace, buf, patternp)
 		 * by the right-hand-side.
 		 */
 		if (((cp - word) + pattern->rightLen) != 0) {
-		    if (addSpace) {
-			Buf_AddChar(buf, ' ');
-		    }
+		    if (addSpace)
+			Buf_AddSpace(buf);
 		    addSpace = TRUE;
 		}
-		Buf_AddChars(buf, cp - word, word);
+		Buf_AddInterval(buf, word, cp);
 		Buf_AddChars(buf, pattern->rightLen, pattern->rhs);
 		pattern->flags |= VAR_SUB_MATCHED;
 	    } else {
@@ -1082,10 +1053,10 @@ VarSubstitute (word, addSpace, buf, patternp)
 		cp = strstr(word, pattern->lhs);
 		if (cp != (char *)NULL) {
 		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)){
-			Buf_AddChar(buf, ' ');
+			Buf_AddSpace(buf);
 			addSpace = FALSE;
 		    }
-		    Buf_AddChars(buf, cp-word, word);
+		    Buf_AddInterval(buf, word, cp);
 		    Buf_AddChars(buf, pattern->rightLen, pattern->rhs);
 		    wordLen -= (cp - word) + pattern->leftLen;
 		    word = cp + pattern->leftLen;
@@ -1098,9 +1069,8 @@ VarSubstitute (word, addSpace, buf, patternp)
 		}
 	    }
 	    if (wordLen != 0) {
-		if (addSpace) {
-		    Buf_AddChar(buf, ' ');
-		}
+		if (addSpace)
+		    Buf_AddSpace(buf);
 		Buf_AddChars(buf, wordLen, word);
 	    }
 	    /*
@@ -1113,9 +1083,8 @@ VarSubstitute (word, addSpace, buf, patternp)
 	return (addSpace);
     }
  nosub:
-    if (addSpace) {
-	Buf_AddChar(buf, ' ');
-    }
+    if (addSpace)
+	Buf_AddSpace(buf);
     Buf_AddChars(buf, wordLen, word);
     return(TRUE);
 }
@@ -1179,7 +1148,7 @@ VarRESubstitute(word, addSpace, buf, patternp)
 
 #define MAYBE_ADD_SPACE()		\
 	if (addSpace && !added)		\
-	    Buf_AddChar(buf, ' ');	\
+	    Buf_AddSpace(buf);		\
 	added = 1
 
     added = 0;
@@ -1389,7 +1358,7 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 		 * substitution and recurse.
 		 */
 		cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
-		Buf_AddChars(buf, strlen(cp2), cp2);
+		Buf_AddString(buf, cp2);
 		if (freeIt)
 		    free(cp2);
 		cp += len - 1;
@@ -2179,7 +2148,7 @@ Var_Subst (var, str, ctxt, undefErr)
 
 	    for (cp = str++; *str != '$' && *str != '\0'; str++)
 		continue;
-	    Buf_AddChars(buf, str - cp, cp);
+	    Buf_AddInterval(buf, cp, str);
 	} else {
 	    if (var != NULL) {
 		int expand;
@@ -2210,7 +2179,7 @@ Var_Subst (var, str, ctxt, undefErr)
 			 * the nested one
 			 */
 			if (*p == '$') {
-			    Buf_AddChars(buf, p - str, str);
+			    Buf_AddInterval(buf, str, p);
 			    str = p;
 			    continue;
 			}
@@ -2223,7 +2192,7 @@ Var_Subst (var, str, ctxt, undefErr)
 			     */
 			    for (;*p != '$' && *p != '\0'; p++)
 				continue;
-			    Buf_AddChars(buf, p - str, str);
+			    Buf_AddInterval(buf, str, p);
 			    str = p;
 			    expand = FALSE;
 			}
@@ -2280,7 +2249,7 @@ Var_Subst (var, str, ctxt, undefErr)
 		 * Copy all the characters from the variable value straight
 		 * into the new string.
 		 */
-		Buf_AddChars(buf, strlen(val), val);
+		Buf_AddString(buf, val);
 		if (doFree) {
 		    free ((Address)val);
 		}

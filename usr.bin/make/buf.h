@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.6 1999/12/06 22:24:31 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.7 1999/12/09 18:18:24 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -67,7 +67,17 @@ typedef struct Buffer {
 #define BUF_ERROR 256
 
 void Buf_OvAddChar __P((Buffer, char));
+
+/* Buf_AddChars -- Add a number of chars to the buffer.  */
 void Buf_AddChars __P((Buffer, size_t, const char *));
+/* Buf_AddSpace -- Add a space to buffer.  */
+#define Buf_AddSpace(b)			Buf_AddChar((b), ' ')
+/* Buf_AddString -- Add the contents of a NULL terminated string to buffer.  */
+#define Buf_AddString(b, s)		Buf_AddChars((b), strlen(s), (s))
+/* Buf_AddInterval -- Add characters between pointers s and e to buffer.  */
+#define Buf_AddInterval(b, s, e) 	Buf_AddChars((b), (e) - (s), (s))
+
+
 char *Buf_GetAll __P((Buffer, size_t *));
 void Buf_Discard __P((Buffer, size_t));
 int Buf_Size __P((Buffer));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.6 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.7 1999/12/09 18:18:24 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.6 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.7 1999/12/09 18:18:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ CondGetArg(linePtr, argPtr, func, parens)
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &doFree);
 
-	    Buf_AddChars(buf, strlen(cp2), cp2);
+	    Buf_AddString(buf, cp2);
 	    if (doFree) {
 		free(cp2);
 	    }
@@ -543,12 +543,10 @@ CondToken(doEval)
 		if (!isspace((unsigned char) *condExpr) &&
 		    strchr("!=><", *condExpr) == NULL) {
 		    Buffer buf;
-		    char *cp;
 
 		    buf = Buf_Init(0);
 
-		    for (cp = lhs; *cp; cp++)
-			Buf_AddChar(buf, *cp);
+		    Buf_AddString(buf, lhs);
 
 		    if (doFree)
 			free(lhs);
@@ -640,7 +638,7 @@ do_string_compare:
 
 			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
 			    if (cp2 != var_Error) {
-				Buf_AddChars(buf, strlen(cp2), cp2);
+				Buf_AddString(buf, cp2);
 				if (freeIt) {
 				    free(cp2);
 				}
