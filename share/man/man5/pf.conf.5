@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.170 2003/01/25 09:35:43 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.171 2003/01/25 17:49:37 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -135,7 +135,10 @@ mechanisms. As with macros, reserved words may not be used as table names.
 .Bl -tag -width "manually"
 .It Ar manually
 Persistent tables can be manually created with the
-.Ar create
+.Ar create ,
+.Ar add
+or
+.Ar replace
 option of
 .Xr pfctl 8 ,
 before or after the ruleset has been loaded.
@@ -199,11 +202,25 @@ rules are flushed), the
 .Ar persist
 keyword ensures that the table will not be lost.
 .Pp
+A table can also be initialized with an address list specified in one or more
+external files, using the following syntax:
+.Bd -literal -offset indent
+.Ic table <spam> persist file \&"/etc/spammers\&" file \&"/etc/openrelays\&"
+.Xo Ic block on fxp0 from <spam>\ 
+.Ic to any
+.Xc
+.Ed
+.Pp
 In addition to being specified by IP address, hosts may also be specified
 by their hostname.
 When the resolver is called to add a hostname to a table,
 .Em all
 resulting IPv4 and IPv6 addresses are placed into the table.
+IP addresses can also be entered in a table by specifying a valid interface
+name or the
+.Em self
+keyword, in which case all addresses assigned to the interface(s) will be
+added to the table. 
 .Sh OPTIONS
 .Xr pf 4
 may be tuned for various situations using the
@@ -1842,8 +1859,13 @@ rdr-rule       = [ no ] rdr on ifspec [ af ] [ protospec ]
 antispoof-rule = antispoof [ log ] [ quick ]
                  for ( interface-name | { interface-list } ) [ af ]
 
-table-rule     = table < tablename > [ persist ] [ const ]
-		 [ { [ table-address [ , ] ]* } ]
+table-rule     = table < tablename > [ tableopts-list ]
+tableopts-list = tableopts-list tableopts | tableopts
+tableopts      = persist | const | file "filename" | { [ tableaddr-list ] }
+tableaddr-list = tableaddr-list [ , ] tableaddr-spec | tableaddr-spec
+tableaddr-spec = [ ! ] tableaddr [ / mask-bits ]
+tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
+                 interface-name | self
 
 altq-rule      = altq on interface-name queueopts-list
                  queue queue-list
@@ -1887,7 +1909,6 @@ redirhost      = address [ / mask-bits ]
 routehost      = ( interface-name [ address [ / mask-bits ] ] )
 address        = ( interface-name | ( interface-name ) | host-name
                  | ipv4-dotted-quad | ipv6-coloned-hex )
-table-address  = hostname | ipv4-dotted-quad | ipv6-coloned-hex
 host-list      = host [ [ , ] host-list ]
 redirhost-list = redirhost [ [,] redirhost-list ]
 routehost-list = routehost [ [,] routehost-list ]
