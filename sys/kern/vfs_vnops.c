@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.25 2000/04/21 15:47:28 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.26 2000/04/25 02:10:04 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ vn_open(ndp, fmode, cmode)
 				error = EEXIST;
 				goto bad;
 			}
+			fmode &= ~O_CREAT;
 		}
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
