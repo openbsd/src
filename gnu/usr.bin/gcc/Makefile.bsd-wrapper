@@ -1,0 +1,163 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2003/11/29 13:29:55 espie Exp $
+
+#MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
+MAN=		gcc.1 cpp.1 gcov.1
+#MLINKS+=	cccp.1 cpp.1
+#MLINKS+=	protoize.1 unprotoize.1
+
+BINDIR=/usr/bin
+.if defined(BOOTSTRAP)
+LANGUAGES=--enable-languages=c
+.else
+LANGUAGES=--enable-languages='c,c++,objc,f77' 
+MAN+=		f/g77.1
+MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
+MLINKS+=	g77.1 f77.1
+.endif
+
+.SUFFIXES:	.1
+.PATH.1:	${.CURDIR}/gcc ${.CURDIR}/gcc/doc
+
+LIBIBERTY_INCLUDES=${.CURDIR}/../../lib/libiberty/include
+GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_NATIVE \
+		-I${LIBIBERTY_INCLUDES}
+
+VAXHOST_CFLAGS=	-DIN_GCC -DOPENBSD_NATIVE -DHAVE_CONFIG_H -O0
+MAKE_FLAGS= 	CFLAGS="${GNUCFLAGS}" \
+		CC="${CC}" LDFLAGS="${LDSTATIC}" \
+		DEMANGLER_PROG= \
+		DEMANGLE_H= \
+		LIBIBERTY_INCLUDES=${LIBIBERTY_INCLUDES} \
+		LIBGCC2_INCLUDES=-I${LIBIBERTY_INCLUDES} \
+		BUILD_LIBIBERTY=-liberty \
+		LIBIBERTY=-liberty \
+		HOST_LIBDEPS= \
+		LIBDEPS= \
+		build_infodir=.
+
+.if ${MACHINE_ARCH} == "vax"
+MAKE_FLAGS+=	HOST_CFLAGS="${VAXHOST_CFLAGS}"
+.endif
+
+GXX_INCDIR=	/usr/include/g++
+CLEANFILES=	.gdbinit */.gdbinit *.info* \
+		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
+		f/*.info* objc-parse.c objc-parse.y target_path \
+		genrtl.c genrtl.h fixinc.sh fixinc/Makefile \
+		po/Makefile  po/Makefile.in  po/POTFILES
+
+CXX_HEADERS=	${.CURDIR}/gcc/cp/inc/typeinfo ${.CURDIR}/cp/inc/exception \
+		${.CURDIR}/gcc/cp/inc/new ${.CURDIR}/gcc/cp/inc/new.h
+
+.if ${MACHINE} == "arc" || ${MACHINE} == "pmax" || ${MACHINE} == "wgrisc"
+M_ARCH=		mipsel
+.elif ${MACHINE} == "hkmips" || ${MACHINE} == "sgi"
+M_ARCH=		mips
+.else
+M_ARCH=		${MACHINE_ARCH}
+.endif
+
+
+GCCARCH=	${M_ARCH}-unknown-openbsd${OSREV}
+
+all:	config.status
+	exec ${MAKE} ${MAKE_FLAGS} all doc
+
+tree-check.h: config.status
+	exec ${MAKE} ${MAKE_FLAGS} $@
+
+
+.FORCE:	.IGNORE
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config.status: gcc/Makefile.in gcc/configure gcc/c-parse.in
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	CPPFLAGS=-I${LIBIBERTY_INCLUDES} \
+	/bin/sh ${.CURDIR}/gcc/configure --with-gnu-as --with-gnu-ld \
+		--prefix=/usr --mandir='$$(prefix)/share/man' \
+		--with-local-prefix=/usr ${CF} \
+		${LANGUAGES} --enable-cpp --disable-nls \
+		--with-gxx-include-dir=${GXX_INCDIR} ${GCCARCH} && touch config.status
+
+includes:
+	@-for i in ${CXX_HEADERS}; do \
+		j=`basename $$i` \
+		cmp -s $$i ${DESTDIR}/${GXX_INCDIR}/$$j || \
+		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i \
+		    ${DESTDIR}/${GXX_INCDIR}; \
+	done
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+# XXX INSTALL_TARGET should be install-normal, more or less
+# the only reason is not so is because our man handling is special
+# (pre-formatted) and also because of cpp, that we install by hand
+# elsewhere, until we get rid of that old `compatibility' script.
+
+target_path: Makefile
+	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
+	__version=`sed -n '/^gcc_version=/s/gcc_version=//p' Makefile`; \
+	echo /usr/lib/gcc-lib/$$__target/$$__version >target_path
+
+install:	maninstall target_path
+	${MAKE} ${MAKE_FLAGS} \
+		prefix=/usr \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		GXX_TARGET_INSTALL_NAME=${.OBJDIR}/dummy1 \
+		CXX_TARGET_INSTALL_NAME=${.OBJDIR}/dummy2 \
+		infodir=/usr/share/info \
+		tooldir=/tmp assertdir=/tmp \
+		bindir=$(BINDIR) \
+		install-common install-headers install-multilib \
+		install-info intl.install \
+		lang.install-normal
+	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
+	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
+	mkdir -p ${DESTDIR}/usr/libexec ${DESTDIR}/usr/bin
+#	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
+#		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
+#		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
+#	fi
+	if [ -e ${DESTDIR}/usr/include/f2c.h ]; then \
+		chown ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
+		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
+	fi
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 cpp \
+	   ${DESTDIR}/usr/libexec/cpp
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
+	   ${DESTDIR}/usr/bin/gcc
+	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+	[ -f ${DESTDIR}/usr/bin/g77 ] && \
+		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
+#	ln -fs `cat target-path`/cpp \
+#		${DESTDIR}/usr/libexec
+
+clean cleandir: 
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	-rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
