@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.8 1998/03/31 06:40:49 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.9 1998/04/08 02:53:00 millert Exp $	*/
 
 /*
  * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
@@ -680,9 +680,9 @@ static int sudo_krb_validate_user(pw_ent, pass)
     char tkfile[sizeof(_PATH_SUDO_TIMEDIR) + 4 + MAX_UID_T_LEN];
     int k_errno;
 
-    /* Get the local realm */
+    /* Get the local realm, or retrun failure (no krb.conf) */
     if (krb_get_lrealm(realm, 1) != KSUCCESS)
-	(void) fprintf(stderr, "Warning: Unable to get local kerberos realm\n");
+	return(-1);
 
     /*
      * Set the ticket file to be in sudo sudo timedir so we don't
