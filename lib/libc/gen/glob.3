@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.9 1995/02/27 04:13:30 cgd Exp $
+.\"	$NetBSD: glob.3,v 1.10 1996/04/19 00:12:16 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -222,15 +222,16 @@ to provide globbing from directories stored on tape.
 Pre-process the pattern string to expand 
 .Ql {pat,pat,...} 
 strings like 
-.Xr csh 1. The pattern 
+.Xr csh 1 .
+The pattern 
 .Ql {}
-is left unexpanded for historical reasons
+is left unexpanded for historical reasons.
 .Xr (Csh 1 
 does the same thing to 
 ease typing
 of 
 .Xr find 1 
-patterns).
+patterns.)
 .It Dv GLOB_MAGCHAR
 Set by the
 .Fn glob
