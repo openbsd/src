@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.1 2001/01/23 04:19:41 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.2 2001/02/08 17:35:05 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -52,6 +52,7 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+#include <scsi/scsi_message.h>
 
 #include <dev/ic/iha.h>
 
@@ -331,11 +332,12 @@ iha_scsi_cmd(xs)
 	pScb->SCB_Lun	 = sc_link->lun;
 	pScb->SCB_Tcs	 = &sc->HCS_Tcs[pScb->SCB_Target];
 	pScb->SCB_Flags	 = xs->flags;
-	pScb->SCB_Ident  = IDENT_IDENTITY | (pScb->SCB_Lun & IDENT_LUN);
+	pScb->SCB_Ident  = MSG_IDENTIFYFLAG |
+		(pScb->SCB_Lun & MSG_IDENTIFY_LUNMASK);
 
 	if ((xs->cmd->opcode != REQUEST_SENSE)
 	    && ((pScb->SCB_Flags & SCSI_POLL) == 0))
-		pScb->SCB_Ident |= IDENT_DISC_PRIV;
+		pScb->SCB_Ident |= MSG_IDENTIFY_DISCFLAG;
 
 	pScb->SCB_Xs	 = xs;
 	pScb->SCB_CDBLen = xs->cmdlen;
@@ -908,7 +910,7 @@ tul_push_sense_request(sc, pScb)
 	pScb->SCB_Flags &= ~(FLAG_SG | FLAG_DIR);
 	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
 
-	pScb->SCB_Ident &= ~IDENT_DISC_PRIV;
+	pScb->SCB_Ident &= ~MSG_IDENTIFY_DISCFLAG;
 
 	pScb->SCB_TagMsg = 0;
 	pScb->SCB_TaStat = SCSI_OK;
@@ -1341,7 +1343,7 @@ tul_state_3(sc, iot, ioh)
 		case PHASE_MSG_OUT:
 			flags = pScb->SCB_Tcs->TCS_Flags;
 			if ((flags & FLAG_NO_NEG_SYNC) != 0) {
-				if (tul_msgout(sc, iot, ioh, MSG_NOP) == -1)
+				if (tul_msgout(sc, iot, ioh, MSG_NOOP) == -1)
 					return (-1);
 			} else if (tul_msgout_sync(sc, iot, ioh) == -1)
 				return (-1);
@@ -1394,12 +1396,13 @@ tul_state_4(sc, iot, ioh)
 			if ((sc->HCS_JSStatus0 & SPERR) != 0) {
 				pScb->SCB_BufLen = 0;
 				pScb->SCB_HaStat = HOST_SPERR;
-				if (tul_msgout(sc, iot, ioh, MSG_IDE) == -1)
+				if (tul_msgout(sc, iot, ioh,
+					MSG_INITIATOR_DET_ERR) == -1)
 					return (-1);
 				else
 					return (6);
 			} else {
-				if (tul_msgout(sc, iot, ioh, MSG_NOP) == -1)
+				if (tul_msgout(sc, iot, ioh, MSG_NOOP) == -1)
 					return (-1);
 			}
 			break;
@@ -1544,7 +1547,7 @@ tul_state_6(sc, iot, ioh)
 			break;
 
 		case PHASE_MSG_OUT:
-			if ((tul_msgout(sc, iot, ioh, MSG_NOP)) == -1)
+			if ((tul_msgout(sc, iot, ioh, MSG_NOOP)) == -1)
 				return (-1);
 			break;
 
@@ -1578,7 +1581,7 @@ tul_state_8(sc, iot, ioh)
 	u_int8_t tar;
 
 	if (sc->HCS_Phase == PHASE_MSG_OUT) {
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_DEVRST);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_BUS_DEV_RESET);
 
 		pScb = sc->HCS_ActScb;
 		
@@ -1739,9 +1742,11 @@ tul_status_msg(sc, iot, ioh)
 
 	if (phase == PHASE_MSG_OUT) {
 		if ((sc->HCS_JSStatus0 & SPERR) == 0)
-			bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_NOP);
+			bus_space_write_1(iot, ioh, TUL_SFIFO,
+			    MSG_NOOP);
 		else
-			bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_PARITY);
+			bus_space_write_1(iot, ioh, TUL_SFIFO,
+			    MSG_PARITY_ERROR);
 
 		return (tul_wait(sc, iot, ioh, XF_FIFO_OUT));
 
@@ -1754,14 +1759,14 @@ tul_status_msg(sc, iot, ioh)
 				return (-1);
 			case PHASE_MSG_OUT:
 				bus_space_write_1(iot, ioh, TUL_SFIFO,
-				    MSG_PARITY);
+				    MSG_PARITY_ERROR);
 				return (tul_wait(sc, iot, ioh, XF_FIFO_OUT));
 			default:
 				tul_bad_seq(sc);
 				return (-1);
 			}
 
-		if (msg == MSG_COMP) {
+		if (msg == MSG_CMDCOMPLETE) {
 			if ((pScb->SCB_TaStat 
 				& (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM) {
 				tul_bad_seq(sc);
@@ -1772,7 +1777,8 @@ tul_status_msg(sc, iot, ioh)
 			return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
 		}
 
-		if ((msg == MSG_LINK_COMP) || (msg == MSG_LINK_FLAG)) {
+		if ((msg == MSG_LINK_CMD_COMPLETE)
+		    || (msg == MSG_LINK_CMD_COMPLETEF)) {
 			if ((pScb->SCB_TaStat 
 				 & (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM)
 				return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
@@ -1868,7 +1874,7 @@ tul_resel(sc, iot, ioh)
 	}
 
 	target = bus_space_read_1(iot, ioh, TUL_SBID);
-	lun    = bus_space_read_1(iot, ioh, TUL_SALVC) & IDENT_LUN;
+	lun    = bus_space_read_1(iot, ioh, TUL_SALVC) & MSG_IDENTIFY_LUNMASK;
 
 	pTcs = &sc->HCS_Tcs[target];
 
@@ -1903,7 +1909,7 @@ tul_resel(sc, iot, ioh)
 
 		msg = bus_space_read_1(iot, ioh, TUL_SFIFO); /* Read Tag Msg */
 
-		if ((msg < MSG_STAG) || (msg > MSG_OTAG))
+		if ((msg < MSG_SIMPLE_Q_TAG) || (msg > MSG_ORDERED_Q_TAG))
 			goto abort;
 
 		switch (tul_wait(sc, iot, ioh, MSG_ACCEPT)) {
@@ -1960,18 +1966,18 @@ tul_msgin(sc, iot, ioh)
 		msg   = bus_space_read_1(iot, ioh, TUL_SFIFO);
 
 		switch (msg) {
-		case MSG_DISC:
+		case MSG_DISCONNECT:
 			sc->HCS_Flags |= FLAG_EXPECT_DISC;
 			if (tul_wait(sc, iot, ioh, MSG_ACCEPT) != -1)
 				tul_bad_seq(sc);
 			phase = -1;
 			break;
-		case MSG_SDP:
-		case MSG_RESTORE:
-		case MSG_NOP:
+		case MSG_SAVEDATAPOINTER:
+		case MSG_RESTOREPOINTERS:
+		case MSG_NOOP:
 			phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
 			break;
-		case MSG_REJ:
+		case MSG_MESSAGE_REJECT:
 			/* XXX - need to clear FIFO like other 'Clear ATN'?*/
 			tul_set_ssig(iot, ioh, REQ | BSY | SEL | ATN, 0);
 			flags = sc->HCS_ActScb->SCB_Tcs->TCS_Flags;
@@ -1979,13 +1985,13 @@ tul_msgin(sc, iot, ioh)
 				tul_set_ssig(iot, ioh, REQ | BSY | SEL, ATN);
 			phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
 			break;
-		case MSG_EXTEND:
+		case MSG_EXTENDED:
 			phase = tul_msgin_extend(sc, iot, ioh);
 			break;
-		case MSG_IGNOREWIDE:
+		case MSG_IGN_WIDE_RESIDUE:
 			phase = tul_msgin_ignore_wid_resid(sc, iot, ioh);
 			break;
-		case MSG_COMP:
+		case MSG_CMDCOMPLETE:
 			sc->HCS_Flags |= FLAG_EXPECT_DONE_DISC;
 			bus_space_write_1(iot, ioh, TUL_SCTRL0, RSFIFO);
 			phase = tul_wait(sc, iot, ioh, MSG_ACCEPT);
@@ -2062,7 +2068,7 @@ tul_msgin_extend(sc, iot, ioh)
 	msglen	= sc->HCS_Msg[0];
 	msgcode = sc->HCS_Msg[1];
 
-	if ((msglen == MSG_LEN_SYNC_XFER) && (msgcode == MSG_CODE_SYNC_XFER)) {
+	if ((msglen == MSG_EXT_SDTR_LEN) && (msgcode == MSG_EXT_SDTR)) {
 		if (tul_msgin_sync(sc) == 0) {
 			tul_sync_done(sc, iot, ioh);
 			return (tul_wait(sc, iot, ioh, MSG_ACCEPT));
@@ -2079,14 +2085,13 @@ tul_msgin_extend(sc, iot, ioh)
 
 		tul_sync_done(sc, iot, ioh); /* This is our final offer */
 
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTEND);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, 3);
-		bus_space_write_1(iot, ioh, TUL_SFIFO, 1);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR_LEN);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR);
 		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[2]);
 		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[3]);
 
-	} else if ((msglen == MSG_LEN_WIDE_XFER)
-	               && (msgcode == MSG_CODE_WIDE_XFER)) {
+	} else if ((msglen == MSG_EXT_WDTR_LEN) && (msgcode == MSG_EXT_WDTR)) {
 
 		flags = sc->HCS_ActScb->SCB_Tcs->TCS_Flags;
 
@@ -2113,9 +2118,9 @@ tul_msgin_extend(sc, iot, ioh)
 			return (phase);
 
 		/* WDTR msg out */
-		bus_space_write_1(iot, ioh, TUL_SFIFO,	   MSG_EXTEND);
-		bus_space_write_1(iot, ioh, TUL_SFIFO,		    2);
-		bus_space_write_1(iot, ioh, TUL_SFIFO,		    3);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_LEN);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR);
 		bus_space_write_1(iot, ioh, TUL_SFIFO, sc->HCS_Msg[2]);
 
 	} else
@@ -2224,7 +2229,7 @@ tul_msgout_reject(sc, iot, ioh)
 		return (-1);
 
 	if (phase == PHASE_MSG_OUT) {
-		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_REJ);
+		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_MESSAGE_REJECT);
 		return (tul_wait(sc, iot, ioh, XF_FIFO_OUT));
 	}
 
@@ -2241,10 +2246,10 @@ tul_msgout_wide(sc, iot, ioh)
 
 	sc->HCS_ActScb->SCB_Tcs->TCS_Flags |= FLAG_WIDE_DONE;
 
-	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTEND);
-	bus_space_write_1(iot, ioh, TUL_SFIFO,		2); /* Message length*/
-	bus_space_write_1(iot, ioh, TUL_SFIFO,		3); /* WDTR request  */
-	bus_space_write_1(iot, ioh, TUL_SFIFO,		1); /* 16 bits xfer  */
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_LEN);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_WDTR_BUS_16_BIT);
 
 	phase = tul_wait(sc, iot, ioh, XF_FIFO_OUT);
 
@@ -2268,10 +2273,10 @@ tul_msgout_sync(sc, iot, ioh)
 
 	sync_rate = tul_rate_tbl[rateindex];
 
-	bus_space_write_1(iot, ioh, TUL_SFIFO,	      MSG_EXTEND);
-	bus_space_write_1(iot, ioh, TUL_SFIFO,		       3); /* Msg len*/
-	bus_space_write_1(iot, ioh, TUL_SFIFO,		       1); /* SDTR   */
-	bus_space_write_1(iot, ioh, TUL_SFIFO,	       sync_rate);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR_LEN);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXT_SDTR);
+	bus_space_write_1(iot, ioh, TUL_SFIFO, sync_rate);
 	bus_space_write_1(iot, ioh, TUL_SFIFO, IHA_MAX_TARGETS-1); /* REQ/ACK*/
 
 	phase = tul_wait(sc, iot, ioh, XF_FIFO_OUT);

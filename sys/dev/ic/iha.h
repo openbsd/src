@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.1 2001/01/23 04:19:42 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.2 2001/02/08 17:35:05 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -102,10 +102,7 @@ struct iha_scsi_req_q {
 	u_int8_t  SCB_SGLen;		   /* # of valid entries in SGList   */
 	u_int8_t  SCB_SenseLen;		   /* Sense Data Allocation Length   */
 	u_int8_t  SCB_CDBLen;		   /* CDB Length		     */
-	u_int8_t  SCB_Ident;		   /* Identity			     */
-#define		      IDENT_IDENTITY  0x80 /*	   Must ALWAYS be set	     */
-#define		      IDENT_DISC_PRIV 0x40 /*	   Disconnect allowed	     */
-#define		      IDENT_LUN	      0x3f /*	   Target LUN		     */
+	u_int8_t  SCB_Ident;		   /* Identity Message		     */
 	u_int8_t  SCB_TagMsg;		   /* Tag Message		     */
 	u_int8_t  SCB_TagId;		   /* Queue Tag			     */
 	u_int8_t  SCB_CDB[12];		   /* SCSI Command		     */
@@ -185,10 +182,6 @@ struct iha_softc {
 	u_int8_t  HCS_JSStatus1;
 	u_int8_t  HCS_SConf1;
 	u_int8_t  HCS_Msg[IHA_MAX_EXTENDED_MSG];    /* [0] len, [1] Msg Code */
-#define		      MSG_LEN_SYNC_XFER	     0x03
-#define		      MSG_CODE_SYNC_XFER     0x01
-#define		      MSG_LEN_WIDE_XFER	     0x02
-#define		      MSG_CODE_WIDE_XFER     0x03
 
 	struct iha_scsi_req_q *HCS_Scb;		    /* SCB array	     */
 	struct iha_scsi_req_q *HCS_ActScb;	    /* SCB using SCSI bus    */
@@ -365,35 +358,6 @@ struct nvram {
 #define TUL_SDATI	0x8B	       /* R   SCSI Bus contents		     */
 #define TUL_SDAT0	0x8B	       /* W   SCSI Data Out		     */
 #define TUL_SFIFO	0x8C	       /* R/W FIFO			     */
-#define	    MSG_COMP	    0x00       /*     Command Complete		     */
-#define	    MSG_EXTEND	    0x01       /*     Extended Message		     */
-#define	    MSG_SDP	    0x02       /*     Save Data Pointer		     */
-#define	    MSG_RESTORE	    0x03       /*     Restore Pointers		     */
-#define	    MSG_DISC	    0x04       /*     Disconnect		     */
-#define	    MSG_IDE	    0x05       /*     Initiator Detected Error	     */
-#define	    MSG_ABORT	    0x06       /*     Abort			     */
-#define	    MSG_REJ	    0x07       /*     Message Reject		     */
-#define	    MSG_NOP	    0x08       /*     No Operation		     */
-#define	    MSG_PARITY	    0x09       /*     Message Parity Error	     */
-#define	    MSG_LINK_COMP   0x0A       /*     Linked Command Complete	     */
-#define	    MSG_LINK_FLAG   0x0B       /*     Linked Command Complete w Flag */
-#define	    MSG_DEVRST	    0x0C       /*     Bus Device Reset		     */
-#define	    MSG_ABORT_TAG   0x0D       /*     Abort Tag			     */
-#define	    MSG_CLEAR_QUEUE 0x0E       /*     Clear Queue		     */
-#define	    MSG_INIT_RCVRY  0x0F       /*     Initiate Recovery		     */
-#define	    MSG_RLSE_RCVRY  0x10       /*     Release Recovery		     */
-#define	    MSG_TERM_IO	    0x11       /*     Terminate I/O Process	     */
-#define	    MSG_CONT_IO	    0x12       /*     Continue	I/O		     */
-#define	    MSG_TARG_XF_DIS 0x13       /*     Target Transfer Disable	     */
-				       /*     0x14 -> 0x15 are reserved	     */
-#define	    MSG_CLEAR_ACA   0x16       /*     Clear Auto Contingent Active   */
-				       /*     0x17 -> 0x1f are reserved	     */
-#define	    MSG_STAG	    0x20       /*     Simple Queue Tag		     */
-#define	    MSG_HTAG	    0x21       /*     Head of Queue Tag		     */
-#define	    MSG_OTAG	    0x22       /*     Ordered Queue Tag		     */
-#define	    MSG_IGNOREWIDE  0x23       /*     Ignore Wide Residue	     */
-				       /*     0x24 -> 0x7f are reserved	     */
-				       /*     0x80 -> 0xff are identify msgs */
 #define TUL_SSIGI	0x90	       /* R   SCSI signal in		     */
 #define	    REQ		    0x80       /*     REQ signal		     */
 #define	    ACK		    0x40       /*     ACK signal		     */
