@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.11 2004/09/28 00:21:23 brad Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.12 2005/02/22 20:44:26 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -195,6 +195,7 @@ struct hme_rxr {
 #define RXR_CFG_RINGSIZE256	0x00000600	/* rx descptr ring size: 128 */
 #define RXR_CFG_reserved3	0x0000f800	/* reserved bits */
 #define RXR_CFG_CSUMSTART	0x007f0000	/* rx offset of checksum */
+#define RXR_CFG_CSUM_SHIFT	16
 
 /*
  * configuration registers
