@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.2 2000/09/15 17:00:24 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.3 2000/09/25 23:50:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -67,11 +67,11 @@ int twe_debug = 0xffff;
 #define	TWE_DPRINTF(m,a)	/* m, a */
 #endif
 
-int	twe_scsi_cmd __P((struct scsi_xfer *));
-
 struct cfdriver twe_cd = {
 	NULL, "twe", DV_DULL
 };
+
+int	twe_scsi_cmd __P((struct scsi_xfer *));
 
 struct scsi_adapter twe_switch = {
 	twe_scsi_cmd, tweminphys, 0, 0,
@@ -83,6 +83,7 @@ struct scsi_device twe_dev = {
 
 static __inline struct twe_ccb *twe_get_ccb __P((struct twe_softc *sc));
 static __inline void twe_put_ccb __P((struct twe_ccb *ccb));
+void twe_dispose __P((struct twe_softc *sc));
 int  twe_cmd __P((struct twe_ccb *ccb, int flags, int wait));
 int  twe_start __P((struct twe_ccb *ccb, int wait));
 void twe_exec_cmd __P((void *v));
@@ -96,13 +97,10 @@ twe_get_ccb(sc)
 	struct twe_softc *sc;
 {
 	struct twe_ccb *ccb;
-	twe_lock_t lock;
 
-	lock = TWE_LOCK_TWE(sc);
 	ccb = TAILQ_LAST(&sc->sc_free_ccb, twe_queue_head);
 	if (ccb)
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
-	TWE_UNLOCK_TWE(sc, lock);
 	return ccb;
 }
 
@@ -111,12 +109,24 @@ twe_put_ccb(ccb)
 	struct twe_ccb *ccb;
 {
 	struct twe_softc *sc = ccb->ccb_sc;
-	twe_lock_t lock;
 
-	lock = TWE_LOCK_TWE(sc);
 	ccb->ccb_state = TWE_CCB_FREE;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
-	TWE_UNLOCK_TWE(sc, lock);
+}
+
+void
+twe_dispose(sc)
+	struct twe_softc *sc;
+{
+	register struct twe_ccb *ccb;
+	if (sc->sc_cmdmap != NULL)
+		bus_dmamap_destroy(sc->dmat, sc->sc_cmdmap);
+	/* TODO: traverse the ccbs and destroy the maps */
+	for (ccb = &sc->sc_ccbs[TWE_MAXCMDS - 1]; ccb >= sc->sc_ccbs; ccb--)
+		if (ccb->ccb_dmamap)
+			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
+	uvm_km_free(kmem_map, (vaddr_t)sc->sc_cmds,
+	    sizeof(struct twe_cmd) * TWE_MAXCMDS);
 }
 
 int
@@ -131,16 +141,14 @@ twe_attach(sc)
 	struct twe_ccb	*ccb;
 	struct twe_cmd	*cmd;
 	u_int32_t	status;
-	u_int16_t	aen;
-	int		error, i, retry, veseen_srst, size;
+	int		error, i, retry;
 	const char	*errstr;
 
 	TAILQ_INIT(&sc->sc_ccb2q);
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_free_ccb);
-	size = round_page(sizeof(struct twe_cmd) * TWE_MAXCMDS);
 	sc->sc_cmds = (void *)uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-	    size, UVM_KMF_NOWAIT);
+	    sizeof(struct twe_cmd) * TWE_MAXCMDS, UVM_KMF_NOWAIT);
 	if (sc->sc_cmds == NULL) {
 		printf(": cannot allocate commands\n");
 		return (1);
@@ -151,12 +159,14 @@ twe_attach(sc)
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_cmdmap);
 	if (error) {
 		printf(": cannot create ccb cmd dmamap (%d)\n", error);
+		twe_dispose(sc);
 		return (1);
 	}
 	error = bus_dmamap_load(sc->dmat, sc->sc_cmdmap, sc->sc_cmds,
 	    sizeof(struct twe_cmd) * TWE_MAXCMDS, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf(": cannot load command dma map (%d)\n", error);
+		twe_dispose(sc);
 		return (1);
 	}
 	for (cmd = sc->sc_cmds + sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
@@ -169,6 +179,7 @@ twe_attach(sc)
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
 			printf(": cannot create ccb dmamap (%d)\n", error);
+			twe_dispose(sc);
 			return (1);
 		}
 		ccb->ccb_sc = sc;
@@ -186,6 +197,9 @@ twe_attach(sc)
 	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 
 	for (errstr = NULL, retry = 3; retry--; ) {
+		int		veseen_srst;
+		u_int16_t	aen;
+
 		if (errstr)
 			TWE_DPRINTF(TWE_D_MISC, ("%s ", errstr));
 
@@ -284,11 +298,13 @@ twe_attach(sc)
 
 	if (retry < 0) {
 		printf(errstr);
+		twe_dispose(sc);
 		return 1;
 	}
 
 	if ((ccb = twe_get_ccb(sc)) == NULL) {
 		printf(": out of ccbs\n");
+		twe_dispose(sc);
 		return 1;
 	}
 
@@ -306,6 +322,7 @@ twe_attach(sc)
 	pb->param_size = TWE_MAX_UNITS;
 	if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
 		printf(": failed to fetch unit parameters\n");
+		twe_dispose(sc);
 		return 1;
 	}
 
@@ -318,6 +335,7 @@ twe_attach(sc)
 
 		if ((ccb = twe_get_ccb(sc)) == NULL) {
 			printf(": out of ccbs\n");
+			twe_dispose(sc);
 			return 1;
 		}
 
@@ -860,7 +878,7 @@ twe_intr(v)
 	}
 #endif
 
-	if (status & (TWE_STAT_CMDI | TWE_STAT_CQF)) {
+	if (status & TWE_STAT_CMDI) {
 
 		lock = TWE_LOCK_TWE(sc);
 		while (!(status & TWE_STAT_CQF) &&
@@ -871,7 +889,6 @@ twe_intr(v)
 
 			ccb->ccb_state = TWE_CCB_QUEUED;
 			TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
-
 			bus_space_write_4(sc->iot, sc->ioh, TWE_COMMANDQUEUE,
 			    ccb->ccb_cmdpa);
 
@@ -926,6 +943,7 @@ twe_intr(v)
 		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
 		    TWE_CTRL_CATTNI);
 
+		lock = TWE_LOCK_TWE(sc);
 		for (aen = -1; aen != TWE_AEN_QEMPTY; ) {
 			u_int8_t param_buf[2 * TWE_SECTOR_SIZE + TWE_ALIGN - 1];
 			struct twe_param *pb = (void *) (((u_long)param_buf +
@@ -953,8 +971,8 @@ twe_intr(v)
 			aen = *(u_int16_t *)pb->data;
 			TWE_DPRINTF(TWE_D_AEN, ("aen=%x ", aen));
 		}
+		TWE_UNLOCK_TWE(sc, lock);
 	}
 
 	return rv;
 }
-
