@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.772 2004/09/30 19:24:05 grange Exp $
+$OpenBSD: pcidevs,v 1.773 2004/10/01 07:18:40 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1103,6 +1103,10 @@ product HP TOPTOOLS		0x10c1	TopTools Communications Port
 product HP NETRAID_4M		0x10c2	NetRaid-4M
 product HP SMARTIRQ		0x10ed	NetServer SmartIRQ
 product HP 82557B		0x1200	82557B 10/100 NIC
+product HP PLUTO		0x1229	Pluto MIO
+product HP ZX1_IOC		0x122a	zx1 IOC
+product HP MERCURY		0x122e	Mercury Ropes-PCI
+product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
