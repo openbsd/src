@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.58 2005/03/08 09:54:18 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.59 2005/03/08 12:15:12 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -109,14 +109,16 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ABOCOM,	USB_PRODUCT_ABOCOM_BWU613,
 	  RadioRFMD,		ATU_NO_QUIRK },
-	{ USB_VENDOR_ADDTRON,	USB_PRODUCT_ADDTRON_AWU120,
-	  RadioIntersil,	ATU_NO_QUIRK },
+	{ USB_VENDOR_ACCTON,	USB_PRODUCT_ACCTON_2664W,
+	  AT76C503_rfmd_acc,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ACERP,	USB_PRODUCT_ACERP_AWL300,
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ACERP,	USB_PRODUCT_ACERP_AWL400,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ACTIONTEC,	USB_PRODUCT_ACTIONTEC_802UAT1,
 	  RadioRFMD,		ATU_NO_QUIRK },
+	{ USB_VENDOR_ADDTRON,	USB_PRODUCT_ADDTRON_AWU120,
+	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_AINCOMM,	USB_PRODUCT_AINCOMM_AWU2000B,
 	  RadioRFMD2958,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ASKEY,	USB_PRODUCT_ASKEY_VOYAGER1010,
@@ -125,10 +127,14 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ASKEY,	USB_PRODUCT_ASKEY_WLL013,
 	  RadioRFMD,		ATU_NO_QUIRK },
-	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503,
+	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503I1,
 	  RadioIntersil,	ATU_NO_QUIRK },
+	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503I2,
+	  AT76C503_i3863,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503RFMD,
 	  RadioRFMD,		ATU_NO_QUIRK },
+	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C505RFMD,
+	  AT76C505_rfmd,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C505RFMD2958,
 	  RadioRFMD2958,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C505A, /* SMC2662 V.4 */
@@ -187,10 +193,14 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
 	{ USB_VENDOR_PLANEX2,	USB_PRODUCT_PLANEX2_GW_US11S,
 	  RadioRFMD,		ATU_NO_QUIRK },
+	{ USB_VENDOR_SAMSUNG,	USB_PRODUCT_SAMSUNG_SWL2100W,
+	  AT76C503_i3863,	ATU_NO_QUIRK },
 	{ USB_VENDOR_SIEMENS2,	USB_PRODUCT_SIEMENS2_WLL013,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WV1,
 	  RadioIntersil,	ATU_NO_QUIRK },
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WV2,
+	  AT76C503_rfmd_acc,	ATU_NO_QUIRK },
 	{ USB_VENDOR_TEKRAM,	USB_PRODUCT_TEKRAM_U300C,
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ZCOM,	USB_PRODUCT_ZCOM_M4Y750,
@@ -205,7 +215,22 @@ struct atu_radfirm {
 	{ RadioRFMD,		"atu-rfmd-int",		"atu-rfmd-ext" },
 	{ RadioRFMD2958,	"atu-rfmd2958-int",	"atu-rfmd2958-ext" },
 	{ RadioRFMD2958_SMC,	"atu-rfmd2958smc-int",	"atu-rfmd2958smc-ext" },
-	{ RadioIntersil,	"atu-intersil-int",	"atu-intersil-ext" }
+	{ RadioIntersil,	"atu-intersil-int",	"atu-intersil-ext" },
+	{
+		AT76C503_i3863,
+		"atu-at76c503-i3863-int",
+		"atu-at76c503-i3863-ext"
+	},
+	{
+		AT76C503_rfmd_acc,
+		"atu-at76c503-rfmd-acc-int",
+		"atu-at76c503-rfmd-acc-ext"
+	},
+	{
+		AT76C505_rfmd,
+		"atu-at76c505-rfmd-int",
+		"atu-at76c505-rfmd-ext"
+	}
 };
 
 int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
@@ -1036,6 +1061,8 @@ atu_get_card_config(struct atu_softc *sc)
 	case RadioRFMD:
 	case RadioRFMD2958:
 	case RadioRFMD2958_SMC:
+	case AT76C503_rfmd_acc:
+	case AT76C505_rfmd:
 		err = atu_usb_request(sc, UT_READ_VENDOR_INTERFACE, 0x33,
 		    0x0a02, 0x0000, sizeof(rfmd_conf),
 		    (u_int8_t *)&rfmd_conf);
@@ -1048,6 +1075,7 @@ atu_get_card_config(struct atu_softc *sc)
 		break;
 
 	case RadioIntersil:
+	case AT76C503_i3863:
 		err = atu_usb_request(sc, UT_READ_VENDOR_INTERFACE, 0x33,
 		    0x0902, 0x0000, sizeof(intersil_conf),
 		    (u_int8_t *)&intersil_conf);
