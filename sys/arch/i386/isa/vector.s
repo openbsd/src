@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.31 1996/01/07 03:59:35 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -50,8 +50,8 @@
 
 #ifdef ICU_SPECIAL_MASK_MODE
 
-#define	ENABLE_ICU1(irq_num)
-#define	ENABLE_ICU1_AND_2(irqnum) \
+#define	ACK1(irq_num)
+#define	ACK2(irq_num) \
 	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
 	outb	%al,$IO_ICU1
 #define	MASK(irq_num, icu)
@@ -62,21 +62,21 @@
 #else /* ICU_SPECIAL_MASK_MODE */
 
 #ifndef	AUTO_EOI_1
-#define	ENABLE_ICU1(irq_num) \
+#define	ACK1(irq_num) \
 	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
 	outb	%al,$IO_ICU1
 #else
-#define	ENABLE_ICU1(irq_num)
+#define	ACK1(irq_num)
 #endif
 
 #ifndef AUTO_EOI_2
-#define	ENABLE_ICU1_AND_2(irq_num) \
+#define	ACK2(irq_num) \
 	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
 	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
 	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
 	outb	%al,$IO_ICU1
 #else
-#define	ENABLE_ICU1_AND_2(irq_num)
+#define	ACK2(irq_num)
 #endif
 
 #ifdef ICU_HARDWARE_MASK
@@ -143,7 +143,7 @@
  * or softintr; if so, it will be deferred until the next clock tick (or
  * possibly sooner).
  */
-#define	FAST(irq_num, icu, enable_icus) \
+#define	FAST(irq_num, icu, ack) \
 IDTVEC(fast/**/irq_num)							;\
 	pushl	%eax			/* save call-used registers */	;\
 	pushl	%ecx							;\
@@ -158,7 +158,7 @@ IDTVEC(fast/**/irq_num)							;\
 	incl	IH_COUNT(%eax)						;\
 	pushl	IH_ARG(%eax)						;\
 	call	IH_FUN(%eax)						;\
-	enable_icus(irq_num)						;\
+	ack(irq_num)							;\
 	addl	$4,%esp							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
 	popl	%es							;\
@@ -168,22 +168,22 @@ IDTVEC(fast/**/irq_num)							;\
 	popl	%eax							;\
 	iret
 
-FAST(0, IO_ICU1, ENABLE_ICU1)
-FAST(1, IO_ICU1, ENABLE_ICU1)
-FAST(2, IO_ICU1, ENABLE_ICU1)
-FAST(3, IO_ICU1, ENABLE_ICU1)
-FAST(4, IO_ICU1, ENABLE_ICU1)
-FAST(5, IO_ICU1, ENABLE_ICU1)
-FAST(6, IO_ICU1, ENABLE_ICU1)
-FAST(7, IO_ICU1, ENABLE_ICU1)
-FAST(8, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(9, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(10, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(11, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(12, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(13, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(14, IO_ICU2, ENABLE_ICU1_AND_2)
-FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(0, IO_ICU1, ACK1)
+FAST(1, IO_ICU1, ACK1)
+FAST(2, IO_ICU1, ACK1)
+FAST(3, IO_ICU1, ACK1)
+FAST(4, IO_ICU1, ACK1)
+FAST(5, IO_ICU1, ACK1)
+FAST(6, IO_ICU1, ACK1)
+FAST(7, IO_ICU1, ACK1)
+FAST(8, IO_ICU2, ACK2)
+FAST(9, IO_ICU2, ACK2)
+FAST(10, IO_ICU2, ACK2)
+FAST(11, IO_ICU2, ACK2)
+FAST(12, IO_ICU2, ACK2)
+FAST(13, IO_ICU2, ACK2)
+FAST(14, IO_ICU2, ACK2)
+FAST(15, IO_ICU2, ACK2)
 
 /*
  * Normal vectors.
@@ -201,7 +201,7 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
  *
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
-#define	INTR(irq_num, icu, enable_icus) \
+#define	INTR(irq_num, icu, ack) \
 IDTVEC(recurse/**/irq_num)						;\
 	pushfl								;\
 	pushl	%cs							;\
@@ -213,7 +213,7 @@ _Xintr/**/irq_num/**/:							;\
 	INTRENTRY							;\
 	MAKE_FRAME							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
-	enable_icus(irq_num)		/* and allow other intrs */	;\
+	ack(irq_num)			/* and allow other intrs */	;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
@@ -271,22 +271,22 @@ IDTVEC(hold/**/irq_num)							;\
 #define	MAKE_FRAME
 #endif /* DDB */
 
-INTR(0, IO_ICU1, ENABLE_ICU1)
-INTR(1, IO_ICU1, ENABLE_ICU1)
-INTR(2, IO_ICU1, ENABLE_ICU1)
-INTR(3, IO_ICU1, ENABLE_ICU1)
-INTR(4, IO_ICU1, ENABLE_ICU1)
-INTR(5, IO_ICU1, ENABLE_ICU1)
-INTR(6, IO_ICU1, ENABLE_ICU1)
-INTR(7, IO_ICU1, ENABLE_ICU1)
-INTR(8, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(9, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(10, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(11, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(12, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(13, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(14, IO_ICU2, ENABLE_ICU1_AND_2)
-INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(0, IO_ICU1, ACK1)
+INTR(1, IO_ICU1, ACK1)
+INTR(2, IO_ICU1, ACK1)
+INTR(3, IO_ICU1, ACK1)
+INTR(4, IO_ICU1, ACK1)
+INTR(5, IO_ICU1, ACK1)
+INTR(6, IO_ICU1, ACK1)
+INTR(7, IO_ICU1, ACK1)
+INTR(8, IO_ICU2, ACK2)
+INTR(9, IO_ICU2, ACK2)
+INTR(10, IO_ICU2, ACK2)
+INTR(11, IO_ICU2, ACK2)
+INTR(12, IO_ICU2, ACK2)
+INTR(13, IO_ICU2, ACK2)
+INTR(14, IO_ICU2, ACK2)
+INTR(15, IO_ICU2, ACK2)
 
 /*
  * These tables are used by the ISA configuration code.
