@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.387 2004/11/17 16:53:05 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.388 2004/12/01 01:29:00 pvalchev Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -421,6 +421,7 @@ stge*	at pci?				# Sundance TC9021 GigE
 #lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
+vge*	at pci? 			# VIA VT612x
 
 # Wireless network cards
 ath*	at pci?				# Atheros AR5k (802.11a/b/g)
@@ -461,6 +462,7 @@ xmphy*	at mii?				# XaQti XMAC-II PHYs
 nsgphy*	at mii?				# NS gigabit PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
+ciphy*  at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6	# Personal Sound System
