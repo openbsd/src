@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: genc.pl,v 1.3 2003/07/13 06:39:44 jason Exp $
+#	$OpenBSD: genc.pl,v 1.4 2004/08/05 11:39:37 art Exp $
 #
 # Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 # All rights reserved.
@@ -61,18 +61,18 @@ dump_reg(union fpregs *fr)
 			printf("f%-2d:", i);
 		printf(" %08x", fr->f_reg32[i]);
 		if ((i & 3) == 3)
-			printf("\n");
+			printf("\\n");
 	}
 }
 
 void
 dump_regs(union fpregs *fr1, union fpregs *fr2, union fpregs *fr3)
 {
-	printf("BEFORE ASM\n");
+	printf("BEFORE ASM\\n");
 	dump_reg(fr1);
-	printf("AFTER ASM\n");
+	printf("AFTER ASM\\n");
 	dump_reg(fr2);
-	printf("MANUAL\n");
+	printf("MANUAL\\n");
 	dump_reg(fr3);
 }
 
