@@ -66,6 +66,7 @@ typedef	_BSD_SIZE_T_	size_t;
 typedef off_t fpos_t;
 #else
 typedef struct __sfpos {
+	/* LONGLONG */
 	long long _pos;			/* XXX must be the same as off_t */
 } fpos_t;
 #endif

@@ -56,7 +56,9 @@ typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
 #ifdef WE_DONT_NEED_QUADS
+/* LONGLONG */
 typedef	long long		  int64_t;
+/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 #endif
 #endif
