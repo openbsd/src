@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.53 2002/08/19 07:24:47 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.54 2002/08/19 23:23:39 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1965,11 +1965,12 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 int
 nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	int name;
-	void *oldp;
+	void *oldp;	/* syscall arg, need copyout */
 	size_t *oldlenp;
-	void *newp;
+	void *newp;	/* syscall arg, need copyin */
 	size_t newlen;
 {
+	void *p;
 	size_t ol, l;
 	int error;
 
@@ -1982,23 +1983,31 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 		return EINVAL;
 	ol = oldlenp ? *oldlenp : 0;
 
+	if (oldp) {
+		p = malloc(*oldlenp, M_TEMP, M_WAITOK);
+		if (!p)
+			return ENOMEM;
+	} else
+		p = NULL;
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
-		error = fill_drlist(oldp, oldlenp, ol);
-		if (!error && oldp)
-			copyout(oldp, oldp, *oldlenp);
+		error = fill_drlist(p, oldlenp, ol);
+		if (!error && p && oldp)
+			copyout(p, oldp, *oldlenp);
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
-		error = fill_prlist(oldp, oldlenp, ol);
-		if (!error && oldp)
-			copyout(oldp, oldp, *oldlenp);
+		error = fill_prlist(p, oldlenp, ol);
+		if (!error && p && oldp)
+			copyout(p, oldp, *oldlenp);
 		break;
 
 	default:
 		error = ENOPROTOOPT;
 		break;
 	}
+	if (p)
+		free(p, M_TEMP);
 
 	return(error);
 }
