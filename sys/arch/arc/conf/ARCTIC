@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.10 1997/08/01 11:31:21 deraadt Exp $
+#	$OpenBSD: ARCTIC,v 1.11 1997/11/11 20:15:53 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -51,14 +51,12 @@ option	 	GATEWAY		# IP packet forwarding
 #option		ISO		# OSI networking
 #option		TPIP
 #option		EON
+option		IPFILTER
+option		IPFILTER_LOG
 
 # Compatibilitry modules
 option		COMPAT_43	# compatibility with 4.3BSD binaries
 #option		COMPAT_ULTRIX	# Ultrix binary compatibility (no go yet)
-
-# Special options
-option		PCCONS_FORCE_WORD	# Max out at 16bit accesses to the
-					# VGA memory
 
 # Specify storage configuration (its a joke..)
 config		bsd	root on sd0 swap on sd0 dumps on sd0
@@ -101,9 +99,9 @@ ed0     at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
 ed1     at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
 ed2     at isa? port 0x300 iomem 0xcc000 irq 10 #
 
-tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
-tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
-tel2    at isa? port 0x180 irq 5	# Teles S0/16.3 card (no shared memory)
+#tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
+#tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
+#tel2    at isa? port 0x180 irq 5	# Teles S0/16.3 card (no shared memory)
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
