@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.74 2001/07/05 16:48:03 jjbg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.75 2001/07/06 13:31:07 ho Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -749,16 +749,16 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 
 	    break;
 
-	    case SADB_X_SATYPE_IPCOMP:
-		if (!ipcomp_enable)
-		    return EOPNOTSUPP;
+	case SADB_X_SATYPE_IPCOMP:
+	    if (!ipcomp_enable)
+		return EOPNOTSUPP;
 
-		*sproto = IPPROTO_IPCOMP;
+	    *sproto = IPPROTO_IPCOMP;
 
-		if(alg != NULL)
-		    *alg = satype = XF_IPCOMP;
+	    if(alg != NULL)
+		*alg = satype = XF_IPCOMP;
 
-		break;
+	    break;
 
 #ifdef TCP_SIGNATURE
 	case SADB_X_SATYPE_TCPSIGNATURE:
@@ -1274,7 +1274,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 		case SADB_X_SATYPE_IPIP:
-	    case SADB_X_SATYPE_IPCOMP:
+		case SADB_X_SATYPE_IPCOMP:
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
 #endif /* TCP_SIGNATURE */
@@ -2091,7 +2091,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	case IPPROTO_AH:
 	case IPPROTO_ESP:
 	case IPPROTO_IPIP:
-    case IPPROTO_IPCOMP:
+	case IPPROTO_IPCOMP:
 #ifdef TCP_SIGNATURE
 	case IPPROTO_TCP:
 #endif /* TCP_SIGNATURE */
