@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.14 2004/07/07 06:51:16 deraadt Exp $ */
+/*	$OpenBSD: client.c,v 1.15 2004/07/07 06:57:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,10 +150,6 @@ client_dispatch(struct ntp_peer *p)
 
 	p->deadline = 0;
 	p->state = STATE_REPLY_RECEIVED;
-
-	log_debug("reply received from %s: offset %f delay %f",
-	    log_sockaddr((struct sockaddr *)&fsa), p->reply[p->shift].offset,
-	    p->reply[p->shift].delay);
 
 	/* every received reply which we do not discard increases trust */
 	if (p->trustlevel < 10) {

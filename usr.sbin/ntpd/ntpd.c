@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.6 2004/07/05 07:46:16 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.7 2004/07/07 06:57:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,7 +265,7 @@ ntpd_adjtime(double d)
 	struct timeval	tv;
 
 	d_to_tv(d, &tv);
-	log_debug("calling adjtime, offset=%fs", d);
+	log_info("adjusting local clock by %fs", d);
 	if (adjtime(&tv, NULL) == -1)
 		log_warn("adjtime failed");
 }
