@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.18 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.19 2002/06/08 03:35:48 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.18 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.19 2002/06/08 03:35:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -347,11 +347,6 @@ checkremote(void)
 
 	if (RM == NULL || *RM == '\0')
 		return NULL;
-
-	/* XXX */
-	remote = 1;
-	return NULL; /* XXX -- for local testing only! */
-	/* XXX */
 
 	/* get the local interface addresses */
 	siginterrupt(SIGINT, 1);
