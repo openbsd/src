@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.19 1997/10/12 19:39:48 weingart Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.20 1997/10/15 15:54:52 weingart Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 #include <util.h>
 
 extern	char *__progname;
-int	verbose, nowrite, nheads, nsectors;
+int	verbose, nowrite, nheads, nsectors, userspec = 0;
 char	*boot, *proto, *dev, *realdev;
 struct nlist nl[] = {
 #define X_BLOCK_COUNT	0
@@ -111,9 +111,11 @@ main(argc, argv)
 		switch (c) {
 		case 'h':
 			nheads = atoi(optarg);
+			userspec = 1;
 			break;
 		case 's':
 			nsectors = atoi(optarg);
+			userspec = 1;
 			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -433,8 +435,8 @@ loadblocknums(boot, devfd, dl)
 		fprintf(stderr, "Will load %d blocks of size %d each.\n",
 			ndb, fs->fs_bsize);
 
-	if (dl->d_type != 0 && dl->d_type != DTYPE_FLOPPY &&
-	    dl->d_type != DTYPE_VND ) {
+	if ((dl->d_type != 0 && dl->d_type != DTYPE_FLOPPY &&
+	    dl->d_type != DTYPE_VND) || userspec ) {
 		/* adjust disklabel w/ synthetic geometry */
 		dl->d_nsectors = nsectors;
 		dl->d_secpercyl = dl->d_nsectors * nheads;
