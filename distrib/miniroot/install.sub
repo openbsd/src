@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.96 1998/09/24 06:39:07 millert Exp $
+#	$OpenBSD: install.sub,v 1.97 1998/09/24 21:55:08 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -602,7 +602,6 @@ configure_ifs() {
 			/media/p'
 		echo "If the default is not satisfactory, and you wish to use another"
 		echo "media, copy that line from above (ie. \"media 100baseTX\")"
-		echo ""
 		echo -n "Media directives? [$_interface_extra] "
 		getresp "$_interface_extra"
 		if [ "X${resp}" != X"" ]; then
@@ -615,6 +614,12 @@ configure_ifs() {
 	# network configuration info.
 	if [ "$_interface_ip" = "dhcp" ]; then
 		ifconfig ${_interface_name} down ${_interface_extra}
+cat > /etc/dhclient.conf << __dhclientedit1
+initial-interval 1;
+send host-name "$_hostname";
+request subnet-mask, broadcast-address, routers,
+       domain-name, domain-name-servers, host-name;
+__dhclientedit1
 		dhclient -1 ${_interface_name}
 
 		set -- `ifconfig $_interface_name | sed -n '
@@ -628,9 +633,37 @@ configure_ifs() {
 			/inet/s/inet// p'`
 
 		if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
-			echo "DHCP configuration of $_interface_name failed."
+			echo "hostname-associated DHCP attempt for $_interface_name failed..."
 			ifconfig $_interface_name delete down
-			return 1
+
+			cat > /etc/dhclient.conf << __dhclientedit2
+initial-interval 1;
+request subnet-mask, broadcast-address, routers,
+       domain-name, domain-name-servers, host-name;
+__dhclientedit2
+			dhclient -1 ${_interface_name}
+			set -- `ifconfig $_interface_name | sed -n '
+				1s/.*<UP,.*$/UP/p
+				1s/.*<.*>*$/DOWN/p
+				/media:/s/^.*$//
+				/status:/s/^.*$//
+				/inet/s/--> [0-9.][0-9.]*//
+				/inet/s/netmask//
+				/inet/s/broadcast//
+				/inet/s/inet// p'`
+
+			if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
+				echo "free-roaming DHCP attempt for $_interface_name failed."
+				ifconfig $_interface_name delete down
+				return 1
+			else
+				echo "DHCP attempt for $_interface_name successful."
+				addifconfig \
+					${_interface_name} \
+					${_interface_symname} \
+					${_interface_ip}
+				return 0
+			fi
 		else
 			echo "DHCP configuration of $_interface_name successful."
 			addifconfig \
