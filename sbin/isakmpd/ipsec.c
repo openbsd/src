@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.26 2000/06/08 20:50:41 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.119 2000/05/04 21:44:30 provos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.27 2000/08/03 07:24:58 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.126 2000/07/13 20:05:07 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -150,7 +151,8 @@ static struct doi ipsec_doi = {
   ipsec_validate_situation,
   ipsec_validate_transform_id,
   ipsec_initiator,
-  ipsec_responder
+  ipsec_responder,
+  ipsec_decode_ids
 };
 
 int16_t script_quick_mode[] = {
@@ -1254,6 +1256,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
   struct sockaddr *dst;
   socklen_t dstlen;
   struct sa *sa;
+  int flag = 0;
 
   /* So far, the only thing we handle is an INITIAL-CONTACT NOTIFY.  */
   switch (type)
@@ -1270,6 +1273,19 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
 	  while ((sa = sa_lookup_by_peer (dst, dstlen)) != 0)
 	    {
+	      /*
+	       * Don't delete the current SA -- we received the notification
+	       * over it, so it's obviously still active. We temporarily need
+               * to remove the SA from the list to avoid an endless loop.
+	       */
+		   
+	      if (sa == msg->isakmp_sa)
+	        {
+                  LIST_REMOVE (sa, link);
+                  flag = 1;
+		  continue;
+		}
+
 	      LOG_DBG ((LOG_SA, 30,
 			"ipsec_handle_leftover_payload: "
 			"INITIAL-CONTACT made us delete SA %p",
@@ -1277,6 +1293,8 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	      sa_delete (sa, 0);
 	    }
 
+          if (flag)
+            sa_enter (msg->isakmp_sa);
 	  payload->flags |= PL_MARK;
 	  return 0;
 	  break;
@@ -1467,6 +1485,92 @@ ipsec_get_id (char *section, int *id, struct in_addr *addr,
   return 0;
 }
 
+#ifdef USE_DEBUG
+static void
+ipsec_ipv4toa (char *buf, size_t size, u_int8_t *addr)
+{
+  struct sockaddr_storage from;
+  struct sockaddr_in *sfrom = (struct sockaddr_in *)&from;
+  socklen_t fromlen = sizeof(from);
+
+  memset (&from, 0, fromlen);
+  sfrom->sin_len = sizeof (struct sockaddr_in);
+  sfrom->sin_family = AF_INET;
+  memcpy (&sfrom->sin_addr.s_addr, addr, 4);
+
+  if (getnameinfo ((struct sockaddr *)sfrom, sfrom->sin_len,
+		  buf, size, NULL, 0, NI_NUMERICHOST) != 0)
+    {
+      log_error("ipsec_ipv4toa: getnameinfo() failed");
+      strcpy(buf, "<error>");
+    }
+}
+
+static void
+ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
+		 int isakmpform)
+{
+  int id_type;
+  char ntop[NI_MAXHOST], ntop2[NI_MAXHOST];
+
+  if (id)
+    {
+      if (!isakmpform)
+	{
+	  /* exchanges and SA's dont carry the IDs in ISAKMP form */
+	  id -= ISAKMP_ID_TYPE_OFF;
+	  id_len += ISAKMP_ID_TYPE_OFF;
+	}
+
+      id_type = GET_ISAKMP_ID_TYPE (id);
+      switch (id_type)
+	{
+	case IPSEC_ID_IPV4_ADDR:
+	  ipsec_ipv4toa (ntop, sizeof(ntop), id + ISAKMP_ID_DATA_OFF);
+	  snprintf (buf, size, "%08x: %s",
+		    decode_32 (id + ISAKMP_ID_DATA_OFF), ntop);
+	  break;
+	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	  ipsec_ipv4toa (ntop, sizeof(ntop), id + ISAKMP_ID_DATA_OFF);
+	  ipsec_ipv4toa (ntop2, sizeof(ntop2), id + ISAKMP_ID_DATA_OFF + 4);
+	  snprintf (buf, size, "%08x/%08x: %s/%s", 
+		    decode_32 (id + ISAKMP_ID_DATA_OFF),
+		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4),
+		    ntop, ntop2);
+	  break;
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_USER_FQDN:
+	  /* String is not NUL terminated, be careful */
+	  id_len -= ISAKMP_ID_DATA_OFF;
+	  id_len = MIN(id_len, size - 1);
+	  memcpy (buf, id + ISAKMP_ID_DATA_OFF, id_len);
+	  buf[id_len] = '\0';
+	  break;
+	  /* XXX - IPV6 et al */
+	default:
+	  snprintf (buf, size, "<type unknown: %x>", id_type);
+	  break;
+	}
+    }
+  else
+    strlcpy(buf, "<noid>", size);
+}
+
+char *
+ipsec_decode_ids (char *fmt, u_int8_t *id1, size_t id1_len,
+		  u_int8_t *id2, size_t id2_len, int isakmpform)
+{
+  static char result[1024];
+  char s_id1[256], s_id2[256];
+
+  ipsec_decode_id(s_id1, sizeof(s_id1), id1, id1_len, isakmpform);
+  ipsec_decode_id(s_id2, sizeof(s_id2), id2, id2_len, isakmpform);
+
+  snprintf (result, sizeof(result), fmt, s_id1, s_id2);
+  return result;
+}
+#endif /* USE_DEBUG */
+
 /*
  * Out of a named section SECTION in the configuration file build an
  * ISAKMP ID payload.  Ths payload size should be stashed in SZ.
@@ -1515,6 +1619,36 @@ ipsec_build_id (char *section, size_t *sz)
     }
 
   return p;
+}
+
+/*
+ * copy an ISAKMPD id
+ */
+
+int
+ipsec_clone_id (u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
+{
+  if (*did)
+    free (*did);
+
+  if (!id_len || id == NULL)
+    {
+      *did = NULL;
+      *did_len = 0;
+      return 0;
+    }
+
+  *did = malloc (id_len);
+  if (*did == NULL) 
+    {
+      log_error ("ipsec_clone_id: malloc(%d) failed", id_len);
+      return -1;
+    }
+
+  *did_len = id_len;
+  memcpy (*did, id, id_len);
+    
+  return 0;
 }
 
 /*
