@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.1 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.2 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/evcount.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -56,34 +57,14 @@
 #define	NISR	8
 #define	ISRLOC	0x18
 
-static int intr_noint (void *);
-void netintr (void);
-
-static int ((*intr_func[NISR]) (void *)) = {
-	intr_noint,
-	intr_noint,
-	intr_noint,
-	intr_noint,
-	intr_noint,
-	intr_noint,
-	intr_noint,
-	intr_noint
-};
-static void *intr_arg[NISR] = {
-	(void *)0,
-	(void *)1,
-	(void *)2,
-	(void *)3,
-	(void *)4,
-	(void *)5,
-	(void *)6,
-	(void *)7
-};
+void	intr_init(void);
+void	netintr(void);
 
 #ifdef DEBUG
 int	intr_debug = 0;
 #endif
 
+struct intrhand intrs[NISR];
 extern	int intrcnt[];		/* from locore.s */
 
 /*
@@ -96,35 +77,50 @@ extern	int intrcnt[];		/* from locore.s */
  * ensue!  (sar 19980806)
  */
 void
-intr_establish(func, arg, ipl)
-	int (*func) (void *);
-	void *arg;
-	int ipl;
+intr_establish(int (*func)(void *), void *arg, int ipl, const char *name)
 {
-	if ((ipl < 0) || (ipl >= NISR))
-		panic("intr_establish: bad ipl %d", ipl);
+	struct intrhand *ih;
 
 #ifdef DIAGNOSTIC
-	if (intr_func[ipl] != intr_noint)
-		printf("intr_establish: attempt to share ipl %d\n", ipl);
+	if (ipl < 0 || ipl >= NISR)
+		panic("intr_establish: bad ipl %d", ipl);
 #endif
 
-	intr_func[ipl] = func;
-	intr_arg[ipl] = arg;
+	ih = &intrs[ipl];
+
+#ifdef DIAGNOSTIC
+	if (ih->ih_fn != NULL)
+		panic("intr_establish: attempt to share ipl %d", ipl);
+#endif
+
+	ih->ih_fn = func;
+	ih->ih_arg = arg;
+	ih->ih_ipl = ipl;
+	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl, &evcount_intr);
 }
 
 /*
  * Disestablish an interrupt handler.
  */
 void
-intr_disestablish(ipl)
-	int ipl;
+intr_disestablish(int ipl)
 {
-	if ((ipl < 0) || (ipl >= NISR))
-		panic("intr_disestablish: bad ipl %d", ipl);
+	struct intrhand *ih;
 
-	intr_func[ipl] = intr_noint;
-	intr_arg[ipl] = (void *)ipl;
+#ifdef DIAGNOSTIC
+	if (ipl < 0 || ipl >= NISR)
+		panic("intr_disestablish: bad ipl %d", ipl);
+#endif
+
+	ih = &intrs[ipl];
+
+#ifdef DIAGNOSTIC
+	if (ih->ih_fn == NULL)
+		panic("intr_disestablish: no vector on ipl %d", ipl);
+#endif
+
+	ih->ih_fn = NULL;
+	evcount_detach(&ih->ih_count);
 }
 
 /*
@@ -134,36 +130,28 @@ intr_disestablish(ipl)
  * XXX Note: see the warning in intr_establish()
  */
 void
-intr_dispatch(evec)
-	int evec;		/* format | vector offset */
+intr_dispatch(int evec)	/* format | vector offset */
 {
+	struct intrhand *ih;
 	int ipl, vec;
 
-	vec = (evec & 0xfff) >> 2;
-#ifdef DIAGNOSTIC
-	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("intr_dispatch: bad vec 0x%x\n", vec);
-#endif
+	vec = (evec & 0x0fff) >> 2;
 	ipl = vec - ISRLOC;
-
-	intrcnt[ipl]++;
-	uvmexp.intrs++;
-
-	(void)(*intr_func[ipl])(intr_arg[ipl]);
-}
-
-/*
- * Default interrupt handler:  do nothing.
- */
-static int
-intr_noint(arg)
-	void *arg;
-{
-#ifdef DEBUG
-	if (intr_debug)
-		printf("intr_noint: ipl %d\n", (int)arg);
+#ifdef DIAGNOSTIC
+	if (ipl < 0 || ipl >= NISR)
+		panic("intr_dispatch: bad vec 0x%x", vec);
 #endif
-	return 0;
+
+	uvmexp.intrs++;
+	ih = &intrs[ipl];
+	if (ih->ih_fn != NULL) {
+		if ((*ih->ih_fn)(ih->ih_arg) != 0)
+			ih->ih_count.ec_count++;
+	} else {
+#if 0
+		printf("spurious interrupt, ipl %d\n", ipl);
+#endif
+	}
 }
 
 int netisr;

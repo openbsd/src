@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.15 2002/04/22 20:15:55 miod Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.16 2004/11/26 21:21:24 miod Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -262,7 +262,7 @@ sn_nubus_attach(parent, self, aux)
 		return;
 	}
 
-	add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	add_nubus_intr(sc->slotno, snintr, sc, sc->sc_dev.dv_xname);
 }
 
 static int

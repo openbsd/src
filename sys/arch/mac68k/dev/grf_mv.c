@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.19 2004/01/09 22:55:19 jmc Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.20 2004/11/26 21:21:24 miod Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
@@ -53,11 +53,11 @@
 
 static void	load_image_data(caddr_t data, struct image_data *image);
 
-static void	grfmv_intr_generic(void *vsc, int slot);
-static void	grfmv_intr_radius(void *vsc, int slot);
-static void	grfmv_intr_cti(void *vsc, int slot);
-static void	grfmv_intr_cb264(void *vsc, int slot);
-static void	grfmv_intr_cb364(void *vsc, int slot);
+static int	grfmv_intr_generic(void *vsc);
+static int	grfmv_intr_radius(void *vsc);
+static int	grfmv_intr_cti(void *vsc);
+static int	grfmv_intr_cb264(void *vsc);
+static int	grfmv_intr_cb364(void *vsc);
 
 static int	grfmv_mode(struct grf_softc *gp, int cmd, void *arg);
 static caddr_t	grfmv_phys(struct grf_softc *gp, vm_offset_t addr);
@@ -219,30 +219,37 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_TFB:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_radius, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_radius, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 		sc->cli_offset = 0xF05000;
 		sc->cli_value = 0x80;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SAM768:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_CB264:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_CB364:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb364, sc);
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb364, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SE30:
 		/* Do nothing--SE/30 interrupts are disabled */
@@ -296,10 +303,8 @@ grfmv_phys(gp, addr)
  * cards.
  */
 /*ARGSUSED*/
-static void
-grfmv_intr_generic(vsc, slot)
-	void	*vsc;
-	int	slot;
+static int
+grfmv_intr_generic(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -307,6 +312,7 @@ grfmv_intr_generic(vsc, slot)
 	sc = (struct grfbus_softc *)vsc;
 	slotbase = (volatile char *)sc->sc_slot.virtual_base;
 	slotbase[sc->cli_offset] = sc->cli_value;
+	return (1);
 }
 
 /*
@@ -315,10 +321,8 @@ grfmv_intr_generic(vsc, slot)
  * cards.
  */
 /*ARGSUSED*/
-static void
-grfmv_intr_radius(vsc, slot)
-	void	*vsc;
-	int	slot;
+static int
+grfmv_intr_radius(void *vsc)
 {
 	unsigned char	c;
 	struct grfbus_softc *sc;
@@ -338,6 +342,7 @@ grfmv_intr_radius(vsc, slot)
 	slotbase[0xD00403] = c;
 	c &= 0x7F;
 	slotbase[0xD00403] = c;
+	return (1);
 }
 
 /*
@@ -350,10 +355,8 @@ grfmv_intr_radius(vsc, slot)
  *	Information for this provided by Brad Salai <bsalai@servtech.com>
  */
 /*ARGSUSED*/
-static void
-grfmv_intr_cti(vsc, slot)
-	void	*vsc;
-	int	slot;
+static int
+grfmv_intr_cti(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -362,13 +365,12 @@ grfmv_intr_cti(vsc, slot)
 	slotbase = ((volatile char *)sc->sc_slot.virtual_base) + 0x00080000;
 	*slotbase = (*slotbase | 0x02);
 	*slotbase = (*slotbase & 0xFD);
+	return (1);
 }
 
 /*ARGSUSED*/
-static void
-grfmv_intr_cb264(vsc, slot)
-	void	*vsc;
-	int	slot;
+static int
+grfmv_intr_cb264(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -412,6 +414,7 @@ grfmv_intr_cb264(vsc, slot)
 		_mv_intr_fin:
 			movl	#0x1,a0@(0xff6014)"
 		: : "g" (slotbase) : "a0","d0","d1");
+	return (1);
 }
 
 /*
@@ -420,10 +423,8 @@ grfmv_intr_cb264(vsc, slot)
  * significantly simplified.  Contributions welcome...  :-)
  */
 /*ARGSUSED*/
-static void
-grfmv_intr_cb364(vsc, slot)
-	void	*vsc;
-	int	slot;
+static int
+grfmv_intr_cb364(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -503,4 +504,5 @@ grfmv_intr_cb364(vsc, slot)
 			movl	#0x1,a0@(0xfe6014)
 		_cb364_intr_quit:
 		" : : "g" (slotbase) : "a0","d0","d1","d2");
+	return (1);
 }

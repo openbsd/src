@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2004/11/26 21:21:27 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -157,12 +157,24 @@ extern volatile u_int8_t ssir;
 #define	setsoftadb()	siron(SIR_ADB)
 
 /* intr.c */
-void	intr_establish (int (*)(void *), void *, int);
-void	intr_disestablish (int);
-void	intr_dispatch (int);
+void	intr_establish(int (*)(void *), void *, int, const char *);
+void	intr_disestablish(int);
+void	intr_dispatch(int);
 
 /* locore.s */
 int	spl0(void);
+
+/*
+ * Interrupt handler.
+ * There is no support for shared interrupts at the moment.
+ */
+#include <sys/evcount.h>
+struct intrhand {
+	int		(*ih_fn)(void *);
+	void		*ih_arg;
+	int		ih_ipl;
+	struct evcount	ih_count;
+};
 #endif /* _KERNEL */
 
 #endif /* _MAC68K_INTR_H_ */

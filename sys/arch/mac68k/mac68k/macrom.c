@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.25 2004/01/09 22:55:19 jmc Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.26 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -395,7 +395,7 @@ mrg_jkybdtaskpanic()	/* JKybdTask stopper */
                          * here if we are using the MRG_ADB method to
 			 * access the ADB/PRAM/RTC. They are
 			 * defined in adb_direct.c */
-long
+int
 mrg_adbintr()	/* Call ROM ADB Interrupt */
 {
 	if(mrg_romadbintr != NULL)

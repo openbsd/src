@@ -1,4 +1,4 @@
-/*	$OpenBSD: psc.c,v 1.3 2004/11/25 18:32:11 miod Exp $	*/
+/*	$OpenBSD: psc.c,v 1.4 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: psc.c,v 1.5 1998/08/12 05:42:46 scottr Exp $	*/
 
 
@@ -92,10 +92,10 @@ psc_init()
 	 * Only Quadra AVs have a PSC.
 	 */
 	if (current_mac_model->class == MACH_CLASSAV) {
-		intr_establish(psc_lev3_intr, NULL, 3);
-		intr_establish(psc_lev4_intr, NULL, 4);
-		intr_establish(psc_lev5_intr, NULL, 5);
-		intr_establish(psc_lev6_intr, NULL, 6);
+		intr_establish(psc_lev3_intr, NULL, 3, "psc");
+		intr_establish(psc_lev4_intr, NULL, 4, "psc");
+		intr_establish(psc_lev5_intr, NULL, 5, "psc");
+		intr_establish(psc_lev6_intr, NULL, 6, "psc");
 		psc_reg1(PSC_LEV3_IER) = 0x01; /* disable level 3 interrupts */
 		psc_reg1(PSC_LEV4_IER) = 0x09; /* disable level 4 interrupts */
 		psc_reg1(PSC_LEV4_IER) = 0x86; /* except for SCC */

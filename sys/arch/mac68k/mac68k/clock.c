@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2004/08/03 12:10:47 todd Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 int	clock_debug = 0;
 #endif
 
-void	rtclock_intr(void);
+int	rtclock_intr(void *);
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -464,13 +464,14 @@ dummy_delay(usec)
 	return ((delay_factor >> 7) - cycles);
 }
 
-static void	delay_timer1_irq(void *);
+static int	delay_timer1_irq(void *);
 
-static void
+static int
 delay_timer1_irq(dummy)
 	void *dummy;
 {
 	delay_flag = 0;
+	return 1;
 }
 
 /*
@@ -484,7 +485,7 @@ mac68k_calibrate_delay()
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	via1_register_irq(VIA1_T1, delay_timer1_irq, NULL);
+	via1_register_irq(VIA1_T1, delay_timer1_irq, NULL, NULL);
 
 	/* Set the timer for one-shot mode, then clear and enable interrupts */
 	via_reg(VIA1, vACR) &= ~ACR_T1LATCH;
@@ -505,7 +506,7 @@ mac68k_calibrate_delay()
 
 	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	via1_register_irq(VIA1_T1, (void (*)(void *))rtclock_intr, NULL);
+	via1_register_irq(VIA1_T1, rtclock_intr, NULL, NULL);
 
 	/*
 	 * If this weren't integer math, the following would look

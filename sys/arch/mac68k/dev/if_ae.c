@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.23 2004/08/03 12:10:47 todd Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.24 2004/11/26 21:21:24 miod Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -585,10 +585,8 @@ loop:
 }
 
 /* Ethernet interface interrupt processor. */
-void
-aeintr(arg, slot)
-	void *arg;
-	int slot;
+int
+aeintr(void *arg)
 {
 	struct ae_softc *sc = (struct ae_softc *)arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -599,7 +597,7 @@ aeintr(arg, slot)
 
 	isr = NIC_GET(sc, ED_P0_ISR);
 	if (!isr)
-		return;
+		return (0);
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -749,8 +747,9 @@ aeintr(arg, slot)
 
 		isr = NIC_GET(sc, ED_P0_ISR);
 		if (!isr)
-			return;
+			break;
 	}
+	return (1);
 }
 
 /*

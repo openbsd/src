@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.16 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.17 2004/11/26 21:21:24 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ zsc_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct zsc_softc *zsc = (void *) self;
+	struct zsc_softc *zsc = (void *)self;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct xzs_chanstate *xcs;
@@ -418,7 +418,7 @@ zsc_attach(parent, self, aux)
 		add_psc_lev4_intr(2, zshard, zsc);
 		add_psc_lev4_intr(3, zshard, zsc);
 	} else {
-		intr_establish(zshard, zsc, ZSHARD_PRI);
+		intr_establish(zshard, zsc, ZSHARD_PRI, self->dv_xname);
 	}
 
 	/* XXX - Now safe to install interrupt handlers. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.36 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.37 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -829,12 +829,10 @@ Lbrkpt3:
 #define	INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)
-	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)
-	addql	#1,_C_LABEL(intrcnt)+4
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
@@ -846,7 +844,6 @@ ENTRY_NOPROFILE(lev1intr)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev2intr)
-	addql	#1,_C_LABEL(intrcnt)+8
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
@@ -868,7 +865,6 @@ ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)
-	addql	#1,_C_LABEL(intrcnt)+16
 	clrl	sp@-			| pad SR to longword
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -897,8 +893,6 @@ ENTRY_NOPROFILE(rtclock_intr)
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	lea	sp@(12),sp		| pop params
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
-	addql	#1,_C_LABEL(intrcnt)+20
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
 	movl	#1,d0			| clock taken care of
@@ -1886,21 +1880,8 @@ ASGLOBAL(fullcflush)
 	.long	0
 #endif
 
-/* interrupt counters */
-
+/* old interrupt counters */
 GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"via1"
-	.asciz	"via2"
-	.asciz	"scc"
-	.asciz	"nmi"
-	.asciz	"clock"
-	.asciz	"unused1"
-	.asciz	"unused2"
-	.asciz	"unused3"
 GLOBAL(eintrnames)
-	.even
-
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

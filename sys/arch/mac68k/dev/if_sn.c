@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.33 2003/01/19 17:25:42 henning Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.34 2004/11/26 21:21:24 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -854,15 +854,15 @@ initialise_rra(sc)
 	wbflush();
 }
 
-void
-snintr(arg, slot)
-	void	*arg;
-	int	slot;
+int
+snintr(void *arg)
 {
 	struct sn_softc *sc = (struct sn_softc *)arg;
-	int	isr;
+	int isr;
+	int rv = 0;
 
 	while ((isr = (NIC_GET(sc, SNR_ISR) & ISR_ALL)) != 0) {
+		rv = 1;
 		/* scrub the interrupts that we are going to service */
 		NIC_PUT(sc, SNR_ISR, isr);
 		wbflush();
@@ -913,7 +913,8 @@ snintr(arg, slot)
 		}
 		snstart(&sc->sc_if);
 	}
-	return;
+
+	return (rv);
 }
 
 /*

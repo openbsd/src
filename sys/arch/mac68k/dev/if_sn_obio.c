@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.19 2002/04/22 20:15:55 miod Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.20 2004/11/26 21:21:24 miod Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -181,7 +181,7 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
-	add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	add_nubus_intr(sc->slotno, snintr, sc, sc->sc_dev.dv_xname);
 }
 
 static int

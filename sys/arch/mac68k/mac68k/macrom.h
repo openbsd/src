@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.h,v 1.10 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.11 2004/11/26 21:21:28 miod Exp $	*/
 /*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
 
 /*-
@@ -231,8 +231,8 @@ void	mrg_setvectors(romvec_t *rom_vectors);
 int	mrg_romready(void);
 caddr_t	*Get_Ind_Resource(u_int32_t, u_int16_t);
 void	mrg_initadbintr(void);
-long	mrg_adbintr(void);
-long	mrg_pmintr(void);
+int	mrg_adbintr(void);
+int	mrg_pmintr(void);
 void	mrg_fixupROMBase(caddr_t, caddr_t);
 int	mrg_Delay(void);
 void	mrg_VBLQueue(void);

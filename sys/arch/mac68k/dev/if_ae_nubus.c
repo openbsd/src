@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.9 2004/04/02 21:01:44 xsa Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.10 2004/11/26 21:21:24 miod Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ ae_nubus_attach(parent, self, aux)
 	}
 
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr(na->slot, aeintr, sc);
+	add_nubus_intr(na->slot, aeintr, sc, sc->sc_dev.dv_xname);
 }
 
 static int

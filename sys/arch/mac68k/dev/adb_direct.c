@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.14 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.15 2004/11/26 21:21:23 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -2152,14 +2152,14 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 }
 
 #ifndef MRG_ADB
-long
+int
 mrg_adbintr(void)
 {
 	adb_intr();
 	return 1;	/* mimic mrg_adbintr in macrom.h just in case */
 }
 
-long
+int
 mrg_pmintr(void)	/* we don't do this yet */
 {
 	pm_intr();
