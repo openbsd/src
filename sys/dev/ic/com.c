@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.70 2001/09/30 00:37:17 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.71 2001/09/30 00:57:07 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -96,9 +96,6 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/ic/ns16550reg.h>
-#ifdef COM_HAYESP
-#include <dev/ic/hayespreg.h>
-#endif
 #define	com_lcr	com_cfcr
 
 #include "com.h"
@@ -200,71 +197,6 @@ comprobe1(iot, ioh)
 	return 1;
 }
 
-#ifdef COM_HAYESP
-int
-comprobeHAYESP(hayespioh, sc)
-	bus_space_handle_t hayespioh;
-	struct com_softc *sc;
-{
-	char	val, dips;
-	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-	bus_space_tag_t iot = sc->sc_iot;
-
-	/*
-	 * Hayes ESP cards have two iobases.  One is for compatibility with
-	 * 16550 serial chips, and at the same ISA PC base addresses.  The
-	 * other is for ESP-specific enhanced features, and lies at a
-	 * different addressing range entirely (0x140, 0x180, 0x280, or 0x300).
-	 */
-
-	/* Test for ESP signature */
-	if ((bus_space_read_1(iot, hayespioh, 0) & 0xf3) == 0)
-		return 0;
-
-	/*
-	 * ESP is present at ESP enhanced base address; unknown com port
-	 */
-
-	/* Get the dip-switch configurations */
-	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETDIPS);
-	dips = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1);
-
-	/* Determine which com port this ESP card services: bits 0,1 of  */
-	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
-	if (sc->sc_iobase != combaselist[dips & 0x03])
-		return 0;
-
-	printf(": ESP");
-
-	/* Check ESP Self Test bits. */
-	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
-	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETTEST);
-	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1); /* Clear reg 1 */
-	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS2);
-	if ((val & 0x70) < 0x20) {
-		printf("-old (%o)", val & 0x70);
-		/* we do not support the necessary features */
-		return 0;
-	}
-
-	/* Check for ability to emulate 16550: bit 8 == 1 */
-	if ((dips & 0x80) == 0) {
-		printf(" slave");
-		/* XXX Does slave really mean no 16550 support?? */
-		return 0;
-	}
-
-	/*
-	 * If we made it this far, we are a full-featured ESP v2.0 (or
-	 * better), at the correct com port address.
-	 */
-
-	SET(sc->sc_hwflags, COM_HW_HAYESP);
-	printf(", 1024 byte fifo\n");
-	return 1;
-}
-#endif
-
 void
 com_attach_subr(sc)
 	struct com_softc *sc;
@@ -285,26 +217,6 @@ com_attach_subr(sc)
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, COM_SW_SOFTCAR);
 	}
-
-#ifdef COM_HAYESP
-	/* Look for a Hayes ESP board. */
-	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
-		bus_space_handle_t hayespioh;
-
-#define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
-		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, 0, &hayespioh))
-			continue;
-		if (comprobeHAYESP(hayespioh, sc)) {
-			sc->sc_hayespbase = *hayespp;
-			sc->sc_hayespioh = hayespioh;
-			sc->sc_fifolen = 1024;
-			break;
-		}
-		bus_space_unmap(iot, hayespioh, HAYESP_NPORTS);
-	}
-	/* No ESP; look for other things. */
-	if (*hayespp == 0) {
-#endif
 
 	/*
 	 * Probe for all known forms of UART.
@@ -416,9 +328,6 @@ com_attach_subr(sc)
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
 	(void)bus_space_read_1(iot, ioh, com_data);
 	bus_space_write_1(iot, ioh, com_fifo, 0);
-#ifdef COM_HAYESP
-	}
-#endif
 
 	/* disable interrupts */
 	bus_space_write_1(iot, ioh, com_ier, 0);
@@ -653,38 +562,6 @@ comopen(dev, flag, mode, p)
 			break;
 		}
 
-#ifdef COM_HAYESP
-		/* Setup the ESP board */
-		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
-			bus_space_handle_t hayespioh = sc->sc_hayespioh;
-
-			bus_space_write_1(iot, ioh, com_fifo,
-			    FIFO_DMA_MODE|FIFO_ENABLE|
-			    FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
-
-			/* Set 16550 compatibility mode */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			    HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
-			    HAYESP_MODE_SCALE);
-
-			/* Set RTS/CTS flow control */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_RTS);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_CTS);
-
-			/* Set flow control levels */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			    HAYESP_HIBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			    HAYESP_LOBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			    HAYESP_HIBYTE(HAYESP_RXLOWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			    HAYESP_LOBYTE(HAYESP_RXLOWMARK));
-		} else
-#endif
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 			u_int8_t fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST;
 			u_int8_t lcr;
@@ -1142,8 +1019,7 @@ comparam(tp, t)
 		} else
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 
-		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
-		    ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 			if (sc->sc_uarttype == COM_UART_TI16750) {
 				bus_space_write_1(iot, ioh, com_lcr,
 				    lcr | LCR_DLAB);
@@ -1234,11 +1110,8 @@ comstart(tp)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
-#ifdef COM_HAYESP
-		u_char buffer[1024];	/* XXX: largest fifo */
-#else
 		u_char buffer[64];	/* XXX: largest fifo */
-#endif
+
 		int n = q_to_b(&tp->t_outq, buffer, sc->sc_fifolen);
 		int i;
 

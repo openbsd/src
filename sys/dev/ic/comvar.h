@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.26 2001/09/29 03:07:57 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.27 2001/09/30 00:57:07 art Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -97,12 +97,8 @@ struct com_softc {
 
 	int sc_iobase;
 	int sc_frequency;
-#ifdef COM_HAYESP
-	int sc_hayespbase;
-#endif
 
 	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_hayespioh;
 
 	u_char sc_uarttype;
 #define COM_UART_UNKNOWN	0x00		/* unknown */
@@ -118,7 +114,6 @@ struct com_softc {
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-#define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 	u_char sc_swflags;
@@ -151,9 +146,6 @@ int	comintr __P((void *));
 int	com_detach __P((struct device *, int));
 int	com_activate __P((struct device *, enum devact));
 
-#ifdef COM_HAYESP
-int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
-#endif
 void	comdiag		__P((void *));
 int	comspeed	__P((long, long));
 u_char	com_cflag2lcr	__P((tcflag_t));
