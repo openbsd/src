@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.33 2003/07/31 14:10:21 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.34 2003/07/31 21:07:35 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.33 2003/07/31 14:10:21 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.34 2003/07/31 21:07:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -438,7 +438,7 @@ reinitialize_almost_everything(void)
 static void
 get_some_switches(void)
 {
-	const char *options = "b::B:cCd:D:eEfF:i:lnNo:p::r:RstuvV:x:z:";
+	const char *options = "b::B:cCd:D:eEfF:i:lnNo:p:r:RstuvV:x:z:";
 	static struct option longopts[] = {
 		{"backup",		no_argument,		0,	'b'},
 		{"batch",		no_argument,		0,	't'},
@@ -461,7 +461,7 @@ get_some_switches(void)
 		{"remove-empty-files",	no_argument,		0,	'E'},
 		{"reverse",		no_argument,		0,	'R'},
 		{"silent",		no_argument,		0,	's'},
-		{"strip",		optional_argument,	0,	'p'},
+		{"strip",		required_argument,	0,	'p'},
 		{"suffix",		required_argument,	0,	'z'},
 		{"unified",		no_argument,		0,	'u'},
 		{"version",		no_argument,		0,	'v'},
@@ -547,7 +547,7 @@ get_some_switches(void)
 			outname = savestr(optarg);
 			break;
 		case 'p':
-			strippath = optarg ? atoi(optarg) : 0;
+			strippath = atoi(optarg);
 			break;
 		case 'r':
 			if (strlcpy(rejname, optarg,
@@ -603,7 +603,7 @@ usage(void)
 {
 	fprintf(stderr,
 "usage: patch [-bcCeEflnNRstuv] [-B backup-prefix] [-d directory] [-D symbol]\n"
-"             [-Fmax-fuzz] [-i patchfile] [-o out-file] [-p[strip-count]]\n"
+"             [-F max-fuzz] [-i patchfile] [-o out-file] [-p strip-count]\n"
 "             [-r rej-name] [-V {numbered,existing,simple}] [-z backup-ext]\n"
 "             [origfile [patchfile]]\n");
 	my_exit(EXIT_SUCCESS);
