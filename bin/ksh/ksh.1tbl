@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.84 2004/12/22 18:58:44 millert Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.85 2005/01/10 11:06:50 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -346,7 +346,7 @@ etc.) are all well-defined and are described where the construct is
 described.
 The exit status of a command consisting only of parameter
 assignments is that of the last command substitution performed during the
-parameter assignment or 0 is there were no command substitutions.
+parameter assignment or 0 if there were no command substitutions.
 .Pp
 Commands can be chained together using the
 .Ql |
