@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.36 2000/01/04 07:52:03 markus Exp $");
+RCSID("$Id: channels.c,v 1.37 2000/01/10 10:12:52 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -533,10 +533,19 @@ channel_output_poll()
 
 	for (i = 0; i < channels_alloc; i++) {
 		ch = &channels[i];
+
 		/* We are only interested in channels that can have buffered incoming data. */
-		if (ch->type != SSH_CHANNEL_OPEN &&
-		    ch->type != SSH_CHANNEL_INPUT_DRAINING)
-			continue;
+		if (compat13) {
+			if (ch->type != SSH_CHANNEL_OPEN &&
+			    ch->type != SSH_CHANNEL_INPUT_DRAINING)
+				continue;
+		} else {
+			if (ch->type != SSH_CHANNEL_OPEN)
+				continue;
+			if (ch->istate != CHAN_INPUT_OPEN &&
+			    ch->istate != CHAN_INPUT_WAIT_DRAIN)
+				continue;
+		}
 
 		/* Get the amount of buffered data for this channel. */
 		len = buffer_len(&ch->input);
@@ -576,25 +585,33 @@ channel_output_poll()
 void 
 channel_input_data(int payload_len)
 {
-	int channel;
+	int id;
 	char *data;
 	unsigned int data_len;
+	Channel *ch;
 
 	/* Get the channel number and verify it. */
-	channel = packet_get_int();
-	if (channel < 0 || channel >= channels_alloc ||
-	    channels[channel].type == SSH_CHANNEL_FREE)
-		packet_disconnect("Received data for nonexistent channel %d.", channel);
+	id = packet_get_int();
+	if (id < 0 || id >= channels_alloc)
+		packet_disconnect("Received data for nonexistent channel %d.", id);
+	ch = &channels[id];
+
+	if (ch->type == SSH_CHANNEL_FREE)
+		packet_disconnect("Received data for free channel %d.", ch->self);
 
 	/* Ignore any data for non-open channels (might happen on close) */
-	if (channels[channel].type != SSH_CHANNEL_OPEN &&
-	    channels[channel].type != SSH_CHANNEL_X11_OPEN)
+	if (ch->type != SSH_CHANNEL_OPEN &&
+	    ch->type != SSH_CHANNEL_X11_OPEN)
+		return;
+
+	/* same for protocol 1.5 if output end is no longer open */
+	if (!compat13 && ch->ostate != CHAN_OUTPUT_OPEN)
 		return;
 
 	/* Get the data. */
 	data = packet_get_string(&data_len);
 	packet_integrity_check(payload_len, 4 + 4 + data_len, SSH_MSG_CHANNEL_DATA);
-	buffer_append(&channels[channel].output, data, data_len);
+	buffer_append(&ch->output, data, data_len);
 	xfree(data);
 }
 
@@ -611,23 +628,11 @@ channel_not_very_much_buffered_data()
 
 	for (i = 0; i < channels_alloc; i++) {
 		ch = &channels[i];
-		switch (ch->type) {
-		case SSH_CHANNEL_X11_LISTENER:
-		case SSH_CHANNEL_PORT_LISTENER:
-		case SSH_CHANNEL_AUTH_SOCKET:
-			continue;
-		case SSH_CHANNEL_OPEN:
+		if (ch->type == SSH_CHANNEL_OPEN) {
 			if (buffer_len(&ch->input) > packet_get_maxsize())
 				return 0;
 			if (buffer_len(&ch->output) > packet_get_maxsize())
 				return 0;
-			continue;
-		case SSH_CHANNEL_INPUT_DRAINING:
-		case SSH_CHANNEL_OUTPUT_DRAINING:
-		case SSH_CHANNEL_X11_OPEN:
-		case SSH_CHANNEL_FREE:
-		default:
-			continue;
 		}
 	}
 	return 1;
@@ -854,9 +859,11 @@ channel_open_message()
 		case SSH_CHANNEL_X11_OPEN:
 		case SSH_CHANNEL_INPUT_DRAINING:
 		case SSH_CHANNEL_OUTPUT_DRAINING:
-			snprintf(buf, sizeof buf, "  #%d %.300s (t%d r%d i%d o%d)\r\n",
-				 c->self, c->remote_name,
-				 c->type, c->remote_id, c->istate, c->ostate);
+			snprintf(buf, sizeof buf, "  #%d %.300s (t%d r%d i%d/%d o%d/%d)\r\n",
+			    c->self, c->remote_name,
+			    c->type, c->remote_id,
+			    c->istate, buffer_len(&c->input),
+			    c->ostate, buffer_len(&c->output));
 			buffer_append(&buffer, buf, strlen(buf));
 			continue;
 		default:
