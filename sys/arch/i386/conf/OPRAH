@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.14 1997/04/29 05:15:18 deraadt Exp $
+#	$OpenBSD: OPRAH,v 1.15 1997/08/07 09:06:25 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -26,7 +26,7 @@ option		DIAGNOSTIC	# internally consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 option		BOOT_CONFIG	# User kernel config
 #option		SCSIDEBUG
-option		COMCONSOLE	# Serial console
+#option		COMCONSOLE	# Serial console
 option		CONADDR=0x2f8
 option		CONUNIT=1
 
@@ -94,11 +94,15 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 aha0	at isa? port 0x230 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x234 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+scsibus* at aic?
 wds0    at isa? port 0x350 irq 15 drq 6 # WD7000 and TMC-7000 controllers
 wds1    at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
