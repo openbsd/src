@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2003/07/02 21:30:13 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/powerpc.h>
 #include <dev/ofw/openfirm.h>
 
 void resettodr(void);
@@ -231,7 +232,7 @@ decr_intr(frame)
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 
-	asm volatile ("mtdec %0" :: "r"(tick));
+	ppc_mtdec(tick);
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
 	 * start of this tick interval.
@@ -267,12 +268,11 @@ decr_intr(frame)
 void
 cpu_initclocks()
 {
-	int msr, scratch;
-	asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm volatile ("mftb %0" : "=r"(lasttb));
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	int s;
+	s = ppc_intr_disable();
+	lasttb = ppc_mftbl();
+	ppc_mtdec(ticks_per_intr);
+	ppc_intr_enable(s);
 }
 
 void
@@ -280,7 +280,7 @@ calc_delayconst()
 {
 	int qhandle, phandle;
 	char name[32];
-	int msr, scratch;
+	int s;
 	
 	/*
 	 * Get this info during autoconf?				XXX
@@ -293,12 +293,10 @@ calc_delayconst()
 			/*
 			 * Should check for correct CPU here?		XXX
 			 */
-			asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-			    : "=r"(msr), "=r"(scratch)
-			    : "K"((u_short)~PSL_EE));
+			s = ppc_intr_disable();
 			ns_per_tick = 1000000000 / ticks_per_sec;
 			ticks_per_intr = ticks_per_sec / hz;
-			asm volatile ("mtmsr %0" :: "r"(msr));
+			ppc_intr_enable(s);
 			break;
 		}
 		if ((phandle = OF_child(qhandle)))
@@ -333,14 +331,13 @@ microtime(tvp)
 {
 	u_long tb;
 	u_long ticks;
-	int msr, scratch;
+	int s;
 	
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	s = ppc_intr_disable();
+	tb = ppc_mftbl();
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	ppc_intr_enable(s);
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {

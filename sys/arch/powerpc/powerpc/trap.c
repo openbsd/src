@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2003/03/04 19:11:37 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2003/07/02 21:30:12 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -114,17 +114,15 @@ save_vec(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vreg *pcb_vr = pcb->pcb_vr;
 	u_int32_t oldmsr, msr;
-	u_int32_t tmp;
 	/* first we enable vector so that we dont throw an exception
 	 * in kernel mode
 	 */
-	__asm__ volatile ("mfmsr %0" : "=r" (oldmsr));
+	oldmsr = ppc_mfmsr();
 	msr = oldmsr | PSL_VEC;
-	__asm__ volatile ("mtmsr %0" :: "r" (msr));
+	ppc_mtmsr(msr);
 	__asm__ volatile ("sync;isync");
 
-	__asm__ volatile ("mfspr %0, 256" : "=r" (tmp));
-	pcb->pcb_vr->vrsave = tmp;
+	pcb->pcb_vr->vrsave = ppc_mfvrsave();
 
 #define STR(x) #x
 #define SAVE_VEC_REG(reg, addr)   \
@@ -166,7 +164,7 @@ save_vec(struct proc *p)
 	SAVE_VEC_REG(0,&pcb_vr->vscr);
 
 	/* fix kernel msr back */
-	__asm__ volatile ("mfmsr %0" :: "r" (oldmsr));
+	ppc_mtmsr(oldmsr);
 }
 
 /*
@@ -178,7 +176,6 @@ enable_vec(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vreg *pcb_vr = pcb->pcb_vr;
 	u_int32_t oldmsr, msr;
-	u_int32_t tmp;
 
 	/* If this is the very first altivec instruction executed
 	 * by this process, create a context.
@@ -191,9 +188,9 @@ enable_vec(struct proc *p)
 	/* first we enable vector so that we dont throw an exception
 	 * in kernel mode
 	 */
-	__asm__ volatile ("mfmsr %0" : "=r" (oldmsr));
+	oldmsr = ppc_mfmsr();
 	msr = oldmsr | PSL_VEC;
-	__asm__ volatile ("mtmsr %0" :: "r" (msr));
+	ppc_mtmsr(msr);
 	__asm__ volatile ("sync;isync");
 
 #define LOAD_VEC_REG(reg, addr)   \
@@ -201,8 +198,7 @@ enable_vec(struct proc *p)
 
 	LOAD_VEC_REG(0, &pcb_vr->vscr);
 	__asm__ volatile ("mtvscr 0");
-	tmp = pcb_vr->vrsave;
-	__asm__ volatile ("mtspr 256, %0" :: "r" (tmp));
+	ppc_mtvrsave(pcb_vr->vrsave);
 
 	LOAD_VEC_REG(0, &pcb_vr->vreg[0]);
 	LOAD_VEC_REG(1, &pcb_vr->vreg[1]);
@@ -238,7 +234,7 @@ enable_vec(struct proc *p)
 	LOAD_VEC_REG(31, &pcb_vr->vreg[31]);
 
 	/* fix kernel msr back */
-	__asm__ volatile ("mfmsr %0" :: "r" (oldmsr));
+	ppc_mtmsr(oldmsr);
 }
 #endif /* ALTIVEC */
 

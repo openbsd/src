@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.17 2003/06/02 23:27:49 millert Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.18 2003/07/02 21:30:13 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -568,7 +568,7 @@ mac_intr_do_pending_int()
 	int irq;
 	int pcpl;
 	int hwpend;
-	int emsr, dmsr;
+	int s;
 	static int processing;
 
 	if (processing)
@@ -576,9 +576,7 @@ mac_intr_do_pending_int()
 
 	processing = 1;
 	pcpl = splhigh();		/* Turn off all */
-	asm volatile("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	s = ppc_intr_disable();
 
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen_m &= ~hwpend;
@@ -617,7 +615,7 @@ mac_intr_do_pending_int()
 	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~cpl);
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	ppc_intr_enable(s);
 	processing = 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2003/07/02 21:23:35 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2003/07/02 21:30:13 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -219,14 +219,14 @@ where = 3;
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
 	 */
-	__asm__ volatile ("mtibatu 0,%0" :: "r"(0));
-	__asm__ volatile ("mtibatu 1,%0" :: "r"(0));
-	__asm__ volatile ("mtibatu 2,%0" :: "r"(0));
-	__asm__ volatile ("mtibatu 3,%0" :: "r"(0));
-	__asm__ volatile ("mtdbatu 0,%0" :: "r"(0));
-	__asm__ volatile ("mtdbatu 1,%0" :: "r"(0));
-	__asm__ volatile ("mtdbatu 2,%0" :: "r"(0));
-	__asm__ volatile ("mtdbatu 3,%0" :: "r"(0));
+	ppc_mtibat0u(0);
+	ppc_mtibat1u(0);
+	ppc_mtibat2u(0);
+	ppc_mtibat3u(0);
+	ppc_mtdbat0u(0);
+	ppc_mtdbat1u(0);
+	ppc_mtdbat2u(0);
+	ppc_mtdbat3u(0);
 
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
@@ -241,13 +241,12 @@ where = 3;
 	 * registers were cleared above.
 	 */
 	/* IBAT0 used for initial 256 MB segment */
-	__asm__ volatile ("mtibatl 0,%0; mtibatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+	ppc_mtibat0l(battable[0].batl);
+	ppc_mtibat0u(battable[0].batu);
+
 	/* DBAT0 used similar */
-	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-
-
+	ppc_mtdbat0l(battable[0].batl);
+	ppc_mtdbat0u(battable[0].batu);
 
 	/*
 	 * Set up trap vectors
@@ -322,19 +321,16 @@ where = 3;
 
 	/* use BATs to map 1GB memory, no pageable BATs now */
 	if (physmem > btoc(0x10000000)) {
-		__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-			      :: "r"(BATL(0x10000000, BAT_M)),
-			      "r"(BATU(0x10000000)));
+		ppc_mtdbat1l(BATL(0x10000000, BAT_M));
+		ppc_mtdbat1u(BATU(0x10000000));
 	}
 	if (physmem > btoc(0x20000000)) {
-		__asm__ volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-			      :: "r"(BATL(0x20000000, BAT_M)),
-			      "r"(BATU(0x20000000)));
+		ppc_mtdbat2l(BATL(0x20000000, BAT_M));
+		ppc_mtdbat2u(BATU(0x20000000));
 	}
 	if (physmem > btoc(0x30000000)) {
-		__asm__ volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
-			      :: "r"(BATL(0x30000000, BAT_M)),
-			      "r"(BATU(0x30000000)));
+		ppc_mtdbat3l(BATL(0x30000000, BAT_M));
+		ppc_mtdbat3u(BATU(0x30000000));
 	}
 #if 0
 	/* now that we know physmem size, map physical memory with BATs */
@@ -510,13 +506,14 @@ install_extint(handler)
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	__asm__ volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
+	omsr = ppc_mfmsr();
+	msr = omsr & ~PSL_EE;
+	ppc_mtmsr(msr);
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
 	syncicache((void *)&extint_call, sizeof extint_call);
 	syncicache((void *)EXC_EXI, (int)&extsize);
-	__asm__ volatile ("mtmsr %0" :: "r"(omsr));
+	ppc_mtmsr(omsr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.13 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.14 2003/07/02 21:30:13 drahn Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -400,7 +400,7 @@ bmac_init(sc)
 		bmac_set_bits(sc, XCVRIF, ClkBit|SerialMode|COLActiveLow);
 	}
 
-	__asm __volatile ("mftb %0" : "=r"(tb));
+	tb = ppc_mftbl();
 	bmac_write_reg(sc, RSEED, tb);
 	bmac_set_bits(sc, XIFC, TxOutputEnable);
 	bmac_read_reg(sc, PAREG);

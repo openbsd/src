@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.18 2003/06/16 00:37:35 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.19 2003/07/02 21:30:13 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -273,17 +273,15 @@ void
 ofw_do_pending_int()
 {
 	int pcpl;
-	int emsr, dmsr;
+	int s;
+
 	static int processing;
 
 	if(processing)
 		return;
 
 	processing = 1;
-	__asm__ volatile("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr & ~PSL_EE;
-	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
-
+	s = ppc_intr_disable();
 
 	pcpl = splhigh();		/* Turn off all */
 	if((ipending & SINT_CLOCK) && ((pcpl & imask[IPL_CLOCK]) == 0)) {
@@ -299,7 +297,7 @@ ofw_do_pending_int()
 	}
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	__asm__ volatile("mtmsr %0" :: "r"(emsr));
+	ppc_intr_enable(s);
 	processing = 0;
 }
 
