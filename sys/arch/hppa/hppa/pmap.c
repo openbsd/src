@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2002/04/30 17:26:52 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.74 2002/05/20 01:24:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -73,7 +73,7 @@
 #define	PDB_PHYS	0x00020000
 #define	PDB_POOL	0x00040000
 int pmapdebug = 0
-	| PDB_INIT
+/*	| PDB_INIT */
 /*	| PDB_FOLLOW */
 /*	| PDB_VP */
 /*	| PDB_PV */
@@ -182,6 +182,9 @@ pmap_pde_set(struct pmap *pm, vaddr_t va, paddr_t ptp)
 	if (ptp & PGOFSET)
 		panic("pmap_pde_set, unaligned ptp 0x%x", ptp);
 #endif
+	DPRINTF(PDB_FOLLOW|PDB_VP,
+	    ("pmap_pde_set(%p, 0x%x, 0x%x)\n", pm, va, ptp));
+
 	asm("stwas	%0, 0(%1)\n\tsync"
 	    :: "r" (ptp), "r" ((paddr_t)pm->pm_pdir + ((va >> 20) & 0xffc)));
 }
@@ -251,8 +254,14 @@ pmap_pde_ptp(struct pmap *pm, pt_entry_t *pde)
 static __inline void
 pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 {
+	DPRINTF(PDB_FOLLOW|PDB_PV,
+	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, va, ptp));
+
 	ptp->wire_count--;
-	if (ptp->wire_count <= 1) {
+	if (ptp->wire_count <= 1 && pmap != pmap_kernel()) {
+		DPRINTF(PDB_FOLLOW|PDB_PV,
+		    ("pmap_pde_release: disposing ptp %p\n", ptp));
+
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
@@ -770,7 +779,7 @@ enter:
 
 	simple_unlock(&pmap->pm_obj.vmobjlock);
 
-	DPRINTF(PDB_FOLLOW, ("pmap_enter: leaving\n"));
+	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_enter: leaving\n"));
 
 	return (0);
 }
