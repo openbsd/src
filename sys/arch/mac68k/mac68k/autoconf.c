@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 1997/01/24 01:35:43 briggs Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 1997/11/28 21:09:54 gene Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/lock.h>
 
 #include <dev/cons.h>
 
@@ -71,6 +72,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/inode.h>
 #include <ufs/ffs/ffs_extern.h>
 
 #include "ether.h"
