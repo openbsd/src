@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.11 1998/02/23 08:55:43 niklas Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.12 1998/03/01 12:42:40 niklas Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -834,11 +834,11 @@ writeshifted(to, shiftx, shifty)
         for (y = shifty; y < 64; y++) {
 
                 /* image */
-                line = iptr[y];
+                line = iptr[(int)y];
 		*tptr++ = line << shiftx;
 
                 /* mask */
-                line = mptr[y];
+                line = mptr[(int)y];
 		*tptr++ = line << shiftx;
 	}
 
