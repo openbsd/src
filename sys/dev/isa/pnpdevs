@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.63 1999/03/15 20:54:05 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.64 1999/03/16 17:56:28 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -441,3 +441,5 @@ ym		@@@1001 # ALS100+
 ym		YMH0021	# OPL3-SA2 Sound Board
 sb		GRV0003	# UltraSound Plug & Play SB Compatible A
 wss		CSCA800	# AdLib NSC 16 PNP
+sb		@@@0001	# Avance Sound Chip
+joy		@P@0001	# Avance Sound Chip
