@@ -40,6 +40,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	mcd*	Mitsumi CD-ROM
+#	acd*	ATAPI CD-ROM
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	contatenated disk devices
@@ -88,7 +89,7 @@ case $i in
 
 all)
 	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
-	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
+	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 acd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
@@ -99,7 +100,7 @@ all)
 
 floppy)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1
-	sh MAKEDEV st0 st1 cd0 cd1 mcd0 ttyv0
+	sh MAKEDEV st0 st1 cd0 cd1 mcd0 acd0 ttyv0
 	;;
 
 std)
@@ -262,11 +263,12 @@ ch*)
 	umask 77
 	;;
 
-cd*|mcd*)
+cd*|mcd*|acd*)
 	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=6; chr=15;;
 	mcd*) name=mcd; blk=7; chr=39;;
+	acd*) name=acd; blk=18; chr=24;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
