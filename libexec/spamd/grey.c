@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.9 2004/03/10 00:33:56 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.10 2004/03/11 17:29:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -196,11 +196,11 @@ greyscan(char *dbname)
 				    "deleting %s from %s", a, dbname);
 			}
 			if (db->del(db, &dbk, 0)) {
-				db->sync(db, 0);
 				db->close(db);
 				db = NULL;
 				return(-1);
 			}
+			db->sync(db, 0);
 		} else if (gd.pass  <= now) {
 			int tuple = 0;
 			char *cp;
@@ -217,11 +217,15 @@ greyscan(char *dbname)
 				tuple = 1;
 				*cp = '\0';
 			}
-			if ((addwhiteaddr(a) == -1) && db->del(db, &dbk, 0))
+			if ((addwhiteaddr(a) == -1) && db->del(db, &dbk, 0)) {
+				db->sync(db, 0);
 				goto bad;
+			}
 			if (tuple) {
-				if (db->del(db, &dbk, 0))
+				if (db->del(db, &dbk, 0)) {
+					db->sync(db, 0);
 					goto bad;
+				}
 				/* re-add entry, keyed only by ip */
 				memset(&dbk, 0, sizeof(dbk));
 				dbk.size = strlen(a);
@@ -230,10 +234,14 @@ greyscan(char *dbname)
 				gd.expire = now + whiteexp;
 				dbd.size = sizeof(gd);
 				dbd.data = &gd;
-				if (db->put(db, &dbk, &dbd, 0))
+				if (db->put(db, &dbk, &dbd, 0)) {
+					db->sync(db, 0);
 					goto bad;
+				}
+				db->sync(db, 0);
 				syslog_r(LOG_DEBUG, &sdata,
 				    "whitelisting %s in %s", a, dbname);
+
 			}
 			if (debug)
 				fprintf(stderr, "whitelisted %s\n", a);
@@ -294,6 +302,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		dbd.size = sizeof(gd);
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
+		db->sync(db, 0);
 		if (r)
 			goto bad;
 		if (debug)
@@ -303,6 +312,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		if (dbd.size != sizeof(gd)) {
 			/* whatever this is, it doesn't belong */
 			db->del(db, &dbk, 0);
+			db->sync(db, 0);
 			goto bad;
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
@@ -316,6 +326,7 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		dbd.size = sizeof(gd);
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
+		db->sync(db, 0);
 		if (r)
 			goto bad;
 		if (debug)
