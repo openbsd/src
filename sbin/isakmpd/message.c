@@ -1,8 +1,8 @@
-/*	$OpenBSD: message.c,v 1.27 2000/01/30 10:18:56 niklas Exp $	*/
-/*	$EOM: message.c,v 1.141 2000/01/30 10:21:29 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.28 2000/01/31 08:38:28 niklas Exp $	*/
+/*	$EOM: message.c,v 1.142 2000/01/31 08:39:44 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
