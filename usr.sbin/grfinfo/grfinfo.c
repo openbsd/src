@@ -1,3 +1,5 @@
+/*	$OpenBSD: grfinfo.c,v 1.3 1997/02/03 05:10:59 downsj Exp $	*/
+
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -19,7 +21,6 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$Id: grfinfo.c,v 1.2 1997/01/15 23:43:56 millert Exp $
  */
 
 #include <stdio.h>
@@ -28,7 +29,7 @@
 #include <dev/grfioctl.h>
 
 int aflg = 0;
-int tflg = 1;
+int tflg = 0;
 char *pname;
 char *dname, *tname();
 struct grfinfo gi;
@@ -40,6 +41,8 @@ struct grf_info {
 	GRFGATOR,	"gatorbox",
 	GRFBOBCAT,	"topcat",
 	GRFRBOX,	"renaissance",
+	GRFFIREEYE,	"fireeye",
+	GRFHYPERION,	"hyperion",
 	GRFDAVINCI,	"davinci",
 	-1,		"unknown",
 };
@@ -72,7 +75,7 @@ main(argc, argv)
 	getinfo();
 	if (aflg)
 		printall();
-	else if (tflg)
+	else
 		printf("%s\n", tname());
 	exit(0);
 }
