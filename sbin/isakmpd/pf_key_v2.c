@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.107 2002/06/09 08:13:06 todd Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.108 2002/06/10 20:54:51 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -737,8 +737,16 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
   /* Setup the SPIRANGE extension.  */
   spirange.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
   spirange.sadb_spirange_len = sizeof spirange / PF_KEY_V2_CHUNK;
-  spirange.sadb_spirange_min = IPSEC_SPI_LOW;
-  spirange.sadb_spirange_max = 0xffffffff;
+  if (proto == IPSEC_PROTO_IPCOMP)
+    {
+      spirange.sadb_spirange_min = CPI_RESERVED_MAX + 1;
+      spirange.sadb_spirange_max = CPI_PRIVATE_MIN - 1;
+    }
+  else
+    {
+      spirange.sadb_spirange_min = IPSEC_SPI_LOW;
+      spirange.sadb_spirange_max = 0xffffffff;
+    }
   spirange.sadb_spirange_reserved = 0;
   if (pf_key_v2_msg_add (getspi, (struct sadb_ext *)&spirange, 0) == -1)
     goto cleanup;
