@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.314 2003/07/10 15:03:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.315 2003/08/07 19:13:00 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -237,7 +237,7 @@ ask_until () {
 # $resp holds device selected at exit, or 'done'
 ask_which () {
 	local _name=$1 _query=$2 _devs=$3 _defdev=$4
-	
+
 	set -- $_devs
 	if [[ $# -lt 1 ]]; then
 		echo "Done - no available ${_name}s found."
@@ -927,7 +927,7 @@ install_url() {
 			eval _${_url_type}_server_ip=${1%%/*}
 			eval _${_url_type}_server_dir=${1#*/}/$SETDIR
 			# Repeat loop to get user to confirm server address.
- 			;;
+			;;
 		*)	eval _${_url_type}_server_ip=$resp
 			break
 			;;

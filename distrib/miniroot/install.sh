@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.134 2003/07/03 15:19:01 krw Exp $
+#	$OpenBSD: install.sh,v 1.135 2003/08/07 19:12:59 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -165,7 +165,7 @@ if [ ! -f /etc/fstab ]; then
 				# But we really don't want it in the installed
 				# /etc/fstab.
 				grep -v "^$SWAPDEV" $SWAPLIST > $SWAPLIST.tmp
-				mv $SWAPLIST.tmp $SWAPLIST	
+				mv $SWAPLIST.tmp $SWAPLIST
 			else
 				echo "ERROR: Unable to use $SWAPDEV for swap space."
 				DISK=
