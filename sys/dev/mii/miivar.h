@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.5 2000/04/24 21:13:33 niklas Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.6 2000/06/30 01:02:33 art Exp $	*/
 /*	$NetBSD: miivar.h,v 1.7.6.1 1999/04/23 15:40:35 perry Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 #define	_DEV_MII_MIIVAR_H_
 
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 /*
  * Media Independent Interface autoconfiguration defintions.
@@ -125,6 +126,7 @@ struct mii_softc {
 	int mii_capabilities;		/* capabilities from BMSR */
 	int mii_ticks;			/* MII_TICK counter */
 	int mii_active;			/* last active media */
+	struct timeout mii_phy_timo;	/* timeout handle */
 };
 typedef struct mii_softc mii_softc_t;
 

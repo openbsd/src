@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.3 1999/12/07 22:01:31 jason Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.4 2000/06/30 01:02:33 art Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.2.6.1 1999/04/23 15:40:26 perry Exp $	*/
 
 /*-
@@ -136,7 +136,8 @@ mii_phy_auto(mii, waitfor)
 	 */
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
 		mii->mii_flags |= MIIF_DOINGAUTO;
-		timeout(mii_phy_auto_timeout, mii, hz >> 1);
+		timeout_set(&mii->mii_phy_timo, mii_phy_auto_timeout, mii);
+		timeout_add(&mii->mii_phy_timo, hz / 2);
 	}
 	return (EJUSTRETURN);
 }
@@ -186,7 +187,7 @@ mii_phy_down(sc)
 {
 	if (sc->mii_flags & MIIF_DOINGAUTO) {
 		sc->mii_flags &= ~MIIF_DOINGAUTO;
-		untimeout(mii_phy_auto_timeout, sc);
+		timeout_del(&sc->mii_phy_timo);
 	}
 }
 
