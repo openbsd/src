@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.105 2004/12/14 10:17:28 mcbride Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.106 2005/03/05 23:39:34 cloder Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -809,7 +809,7 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
 
 	LOG_DBG((LOG_MESSAGE, 40,
 	    "ipsec_validate_id_information: proto %d port %d type %d",
-	    proto, port, type));
+	    proto, ntohs(port), type));
 	if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
 		return -1;
 
@@ -843,7 +843,7 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
 	}
 
 	if (exchange->phase == 1
-	    && (proto != IPPROTO_UDP || port != UDP_DEFAULT_PORT)
+	    && (proto != IPPROTO_UDP || ntohs(port) != UDP_DEFAULT_PORT)
 	    && (proto != 0 || port != 0)) {
 		/*
 		 * XXX SSH's ISAKMP tester fails this test (proto 17 - port
@@ -1812,7 +1812,7 @@ ipsec_get_proto_port(char *section, u_int8_t *tproto, u_int16_t *port)
 	pstr = conf_get_str(section, "Port");
 	if (!pstr)
 		return 0;
-	*port = (u_int16_t)atoi(pstr);
+	*port = htons((u_int16_t)atoi(pstr));
 	if (!*port) {
 		se = getservbyname(pstr,
 		    pe ? pe->p_name : (pstr ? pstr : NULL));
