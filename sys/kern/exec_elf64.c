@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.8 1999/11/25 13:41:30 art Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.9 2000/12/14 16:54:41 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -94,7 +94,7 @@ struct elf64_probe_entry {
 #ifdef COMPAT_NETBSD
 	{ netbsd_elf64_probe, 1 << OOS_NETBSD },
 #endif
-#ifdef NATIVE_ELF
+#ifdef NATIVE_EXEC_ELF
 	{ 0, 1 << OOS_OPENBSD }
 #endif
 };
@@ -545,7 +545,7 @@ exec_elf64_makecmds(p, epp)
 			    0;
 	if (!error)
 		p->p_os = os;
-#ifndef NATIVE_ELF
+#ifndef NATIVE_EXEC_ELF
 	else
 		goto bad;
 #endif /* NATIVE_ELF */
