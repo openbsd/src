@@ -1,6 +1,8 @@
+/*	$OpenBSD: memccpy.c,v 1.3 1997/08/20 04:09:39 millert Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: memccpy.c,v 1.2 1996/08/19 08:34:03 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$OpenBSD: memccpy.c,v 1.3 1997/08/20 04:09:39 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>

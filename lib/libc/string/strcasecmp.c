@@ -1,6 +1,8 @@
+/*	$OpenBSD: strcasecmp.c,v 1.3 1997/08/20 04:13:57 millert Exp $	*/
+
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,11 +33,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcasecmp.c,v 1.2 1996/08/19 08:34:09 tholo Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <string.h>
+
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$OpenBSD: strcasecmp.c,v 1.3 1997/08/20 04:13:57 millert Exp $";
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 typedef unsigned char u_char;
 
