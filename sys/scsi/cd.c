@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.16 1996/10/31 01:09:20 niklas Exp $	*/
+/*	$OpenBSD: cd.c,v 1.17 1996/12/05 13:10:24 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
@@ -1046,6 +1046,7 @@ cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
 	struct disklabel *lp = cd->sc_dk.dk_label;
+	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
@@ -1055,8 +1056,12 @@ cdgetdisklabel(cd)
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
+		/* as long as it's not 0 - readdisklabel divides by it (?) */
+	}
 
-	strncpy(lp->d_typename, "SCSI CD-ROM", 16);
+	strncpy(lp->d_typename, "SCSI disk", 16);
 	lp->d_type = DTYPE_SCSI;
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = cd->params.disksize;
@@ -1064,19 +1069,25 @@ cdgetdisklabel(cd)
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
 
-	lp->d_partitions[0].p_offset = 0;
-	lp->d_partitions[0].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[0].p_fstype = FS_ISO9660;
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
+	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	if (errstring) {
+		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
+		return;
+	}
 }
 
 /*

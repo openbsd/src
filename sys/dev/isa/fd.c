@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.29 1996/11/29 22:54:55 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.30 1996/12/05 13:13:05 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -953,7 +953,9 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct disklabel buffer;
+	struct disklabel dl, *lp = &dl;
+	struct cpu_disklabel cdl;
+	char *msg;
 	int error;
 
 	switch (cmd) {
@@ -962,16 +964,38 @@ fdioctl(dev, cmd, addr, flag, p)
 			return EIO;
 		return (0);
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
+		bzero(lp, sizeof(*lp));
+		bzero(&cdl, sizeof(struct cpu_disklabel));
 
-		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = 128 << fd->sc_type->secsize;
+		lp->d_secsize = 128 << fd->sc_type->secsize;
+		lp->d_secpercyl = fd->sc_type->seccyl;
+		lp->d_ntracks = fd->sc_type->heads;
+		lp->d_nsectors = fd->sc_type->seccyl;
+		lp->d_ncylinders = fd->sc_type->tracks;
+		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
-			return EINVAL;
+		strncpy(lp->d_typename, "floppy disk", 16);
+		lp->d_type = DTYPE_FLOPPY;
+		strncpy(lp->d_packname, "fictitious", 16);
+		lp->d_secperunit = fd->sc_type->size;
+		lp->d_rpm = 300;
+		lp->d_interleave = 1;
+		lp->d_flags = D_REMOVABLE;
 
-		*(struct disklabel *)addr = buffer;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_npartitions = RAW_PART + 1;
+
+		lp->d_magic = DISKMAGIC;
+		lp->d_magic2 = DISKMAGIC;
+		lp->d_checksum = dkcksum(lp);
+
+		if ((msg = readdisklabel(dev, fdstrategy, lp, &cdl)) != NULL)
+			printf("readdisklabel: %s\n", msg);
+
+		*(struct disklabel *)addr = *lp;
 		return 0;
 
 	case DIOCWLABEL:
@@ -984,11 +1008,11 @@ fdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
+		error = setdisklabel(lp, (struct disklabel *)addr, 0, NULL);
 		if (error)
 			return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		error = writedisklabel(dev, fdstrategy, lp, NULL);
 		return error;
 
         case FD_FORM:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.14 1996/10/05 07:17:00 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.15 1996/12/05 13:11:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -958,18 +958,20 @@ acdgetdisklabel(acd)
 	struct acd_softc *acd;
 {
 	struct disklabel *lp = acd->sc_dk.dk_label;
+	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(acd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-#if 0	/* XXX */
 	lp->d_secsize = acd->params.blksize;
-#endif
-	lp->d_secsize = 2048;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (acd->params.disksize / 100) + 1;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
+		/* as long as it's not 0 - readdisklabel divides by it (?) */
+	}
 
 	strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
 	lp->d_type = DTYPE_SCSI;	/* XXX */
@@ -979,19 +981,25 @@ acdgetdisklabel(acd)
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
 
-	lp->d_partitions[0].p_offset = 0;
-	lp->d_partitions[0].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[0].p_fstype = FS_ISO9660;
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit, RAW_PART),
+	    acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+	if (errstring) {
+		printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);
+		return;
+	}
 }
 
 /*
