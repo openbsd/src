@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.15 1998/03/20 02:22:29 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.16 1998/03/20 02:45:28 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.15 1998/03/20 02:22:29 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.16 1998/03/20 02:45:28 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,15 @@ in_status(force)
 	}
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
+
+	/*
+	 * We keep the interface address and reset it before each
+	 * ioctl() so we can get ifaliases information (as opposed
+ 	 * to the primary interface netmask/dstaddr/broadaddr, if
+	 * the ifr_addr field is zero).
+	 */
 	memcpy(&sin2, &ifr.ifr_addr, sizeof(sin2));
+
 	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
