@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.36 1999/06/22 16:28:27 espie Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.37 1999/07/05 20:08:37 deraadt Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -194,12 +194,16 @@ ERROR: COMPILING ISAPNP FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  */
 struct isapnp_softc {
 	struct device		sc_dev;
-	int			sc_read_port;
-	bus_space_tag_t		sc_iot;
-	bus_space_tag_t		sc_memt;
+	TAILQ_HEAD(, isadev)
+		sc_subdevs;		/* list of all children */
+
+	bus_space_tag_t sc_iot;		/* isa io space tag */
+	bus_space_tag_t sc_memt;	/* isa mem space tag */
 #if NISADMA > 0
-	bus_dma_tag_t		sc_dmat;
-#endif
+	bus_dma_tag_t sc_dmat;		/* isa DMA tag */
+#endif /* NISADMA > 0 */
+
+	int			sc_read_port;
 	bus_space_handle_t	sc_addr_ioh;
 	bus_space_handle_t	sc_wrdata_ioh;
 	bus_space_handle_t	sc_read_ioh;

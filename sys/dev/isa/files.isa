@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.53 1999/06/22 16:20:04 niklas Exp $
+#	$OpenBSD: files.isa,v 1.54 1999/07/05 20:08:36 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -293,9 +293,12 @@ file	dev/isa/opl_ess.c		opl_ess
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
+
 device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
-attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
+
+attach	gus at isa with gus_isa
+file	dev/isa/gus_isa.c		gus & (gus_isa | gus_isapnp) needs-flag
 
 # Yamaha OPL2/OPL3 FM synth
 attach	opl at isa with opl_isa
