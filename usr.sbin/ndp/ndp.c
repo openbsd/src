@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.11 2001/07/23 18:42:32 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.12 2001/11/08 09:52:02 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.69 2001/07/23 14:46:31 itojun Exp $	*/
 
 /*
@@ -915,7 +915,7 @@ ifinfo(argc, argv)
 		/* NOTREACHED */
 	}
 	bzero(&nd, sizeof(nd));
-	strcpy(nd.ifname, ifname);
+	strncpy(nd.ifname, ifname, sizeof(nd.ifname));
 	if (ioctl(s, SIOCGIFINFO_IN6, (caddr_t)&nd) < 0) {
  		err(1, "ioctl(SIOCGIFINFO_IN6)");
 		/* NOTREACHED */
