@@ -1,24 +1,19 @@
+#	$OpenBSD: Makefile,v 1.2 1996/08/24 07:47:06 etheisen Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
-FILES=	tmac.r tmac.andoc tmac.s tmac.e
 MSRCS=  doc doc-ditroff doc-common doc-nroff doc-syms
+BINDIR=	/usr/share/tmac/mdoc
 
-LINKS=	${BINDIR}/tmac/tmac.andoc ${BINDIR}/tmac/tmac.an
+STRIP_SED = ${.CURDIR}/../strip.sed
 NOOBJ=	noobj
-
-# old macros not currently installed...
-# OFILES=	tmac.a tmac.cp
 
 all clean cleandir depend lint tags:
 
 beforeinstall:
 	for i in ${MSRCS}; do \
-		sed -f strip.sed < $$i > ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
-		chmod 444 ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
+		sed -f ${STRIP_SED} < $$i > ${DESTDIR}${BINDIR}/$$i; \
+		chown ${BINOWN}.${BINGRP} ${DESTDIR}${BINDIR}/$$i; \
+		chmod 444 ${DESTDIR}${BINDIR}/$$i; \
 	done
-	install -c -o ${BINOWN} -g ${BINOWN} -m 444 ${FILES} \
-		${DESTDIR}${BINDIR}/tmac
-
 
 .include <bsd.prog.mk>

@@ -1,3 +1,5 @@
+.\"	$OpenBSD: doc,v 1.2 1996/08/24 07:47:07 etheisen Exp $
+.\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,13 +40,13 @@
 .ftr C CR
 .\}
 .if t \{\
-.       so /usr/share/tmac/tmac.doc-ditroff
+.       so /usr/share/tmac/mdoc/doc-ditroff
 .\}
 .if n \{\
-.       so /usr/share/tmac/tmac.doc-nroff
+.       so /usr/share/tmac/mdoc/doc-nroff
 .\}
-.so /usr/share/tmac/tmac.doc-common
-.so /usr/share/tmac/tmac.doc-syms
+.so /usr/share/tmac/mdoc/doc-common
+.so /usr/share/tmac/mdoc/doc-syms
 .\" NS Db macro - start/stop DEBUG MODE
 .\" NS Db register DEBUG MODE
 .\" NS iN register DEBUG MODE (inline if 1, to stderr if 0 (default))
