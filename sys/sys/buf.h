@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.21 2001/03/20 17:30:07 gluk Exp $	*/
+/*	$OpenBSD: buf.h,v 1.22 2001/04/06 18:59:17 gluk Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ extern struct bio_ops {
 	void	(*io_complete) __P((struct buf *));
 	void	(*io_deallocate) __P((struct buf *));
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
-	int	(*io_countdeps) __P((struct buf *, int));
+	int	(*io_countdeps) __P((struct buf *, int, int));
 } bioops;
  
 
@@ -261,10 +261,10 @@ buf_movedeps(struct buf *bp, struct buf *bp2)
 }
 
 static __inline int
-buf_countdeps(struct buf *bp, int i)
+buf_countdeps(struct buf *bp, int i, int islocked)
 {
         if (bioops.io_countdeps)
-                return ((*bioops.io_countdeps)(bp, i));
+                return ((*bioops.io_countdeps)(bp, i, islocked));
         else
                 return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.21 2001/04/04 20:19:03 gluk Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.22 2001/04/06 18:59:16 gluk Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -168,7 +168,7 @@ void softdep_disk_io_initiation __P((struct buf *));
 void softdep_disk_write_complete __P((struct buf *));
 void softdep_deallocate_dependencies __P((struct buf *));
 void softdep_move_dependencies __P((struct buf *, struct buf *));
-int softdep_count_dependencies __P((struct buf *bp, int));
+int softdep_count_dependencies __P((struct buf *bp, int, int));
 
 struct bio_ops bioops = {
 	softdep_disk_io_initiation,		/* io_start */
@@ -4780,9 +4780,10 @@ clear_inodedeps(p)
  * is set, return number of dependencies, otherwise just yes or no.
  */
 int
-softdep_count_dependencies(bp, wantcount)
+softdep_count_dependencies(bp, wantcount, islocked)
 	struct buf *bp;
 	int wantcount;
+	int islocked;
 {
 	struct worklist *wk;
 	struct inodedep *inodedep;
@@ -4793,7 +4794,8 @@ softdep_count_dependencies(bp, wantcount)
 	int i, retval;
 
 	retval = 0;
-	ACQUIRE_LOCK(&lk);
+	if (!islocked)
+		ACQUIRE_LOCK(&lk);
 	LIST_FOREACH(wk, &bp->b_dep, wk_list) {
 		switch (wk->wk_type) {
 
@@ -4845,14 +4847,16 @@ softdep_count_dependencies(bp, wantcount)
 			continue;
 
 		default:
-			FREE_LOCK(&lk);
+			if (!islocked)
+				FREE_LOCK(&lk);
 			panic("softdep_check_for_rollback: Unexpected type %s",
 			    TYPENAME(wk->wk_type));
 			/* NOTREACHED */
 		}
 	}
 out:
-	FREE_LOCK(&lk);
+	if (!islocked)
+		FREE_LOCK(&lk);
 	return retval;
 }
 
