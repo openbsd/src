@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.29 2001/08/08 03:11:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.30 2001/08/27 18:54:56 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -384,8 +384,10 @@ typedef struct hifn_mac_command {
 #define	HIFN_MAC_CMD_ALG_MASK		0x0001
 #define	HIFN_MAC_CMD_ALG_SHA1		0x0000
 #define	HIFN_MAC_CMD_ALG_MD5		0x0001
-#define	HIFN_MAC_CMD_MODE_MASK		0x0004
+#define	HIFN_MAC_CMD_MODE_MASK		0x000c
 #define	HIFN_MAC_CMD_MODE_HMAC		0x0000
+#define	HIFN_MAC_CMD_MODE_SSL_MAC	0x0004
+#define	HIFN_MAC_CMD_MODE_HASH		0x0008
 #define	HIFN_MAC_CMD_MODE_FULL		0x0004
 #define	HIFN_MAC_CMD_TRUNC		0x0010
 #define	HIFN_MAC_CMD_RESULT		0x0020
