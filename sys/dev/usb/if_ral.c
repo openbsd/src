@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.15 2005/03/23 12:41:47 dlg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.16 2005/03/23 13:07:35 dlg Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -395,8 +395,9 @@ USB_ATTACH(ural)
 	/* retrieve MAC address and various other things from EEPROM */
 	ural_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT2570 (rev 0x%02x), RF %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->asic_rev, ural_get_rf(sc->rf_rev));
+	printf("%s: MAC/BBP RT2570 (rev 0x%02x), RF %s, address %s\n",
+	    USBDEVNAME(sc->sc_dev), sc->asic_rev, ural_get_rf(sc->rf_rev),
+	    ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
