@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.90 2001/08/08 03:46:44 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.91 2001/08/11 06:40:35 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -104,15 +104,7 @@ int	hifn_init_pubrng __P((struct hifn_softc *));
 void	hifn_rng __P((void *));
 void	hifn_tick __P((void *));
 
-struct hifn_stats {
-	u_int64_t hst_ibytes;
-	u_int64_t hst_obytes;
-	u_int32_t hst_ipackets;
-	u_int32_t hst_opackets;
-	u_int32_t hst_invalid;
-	u_int32_t hst_nomem;
-	u_int32_t hst_abort;
-} hifnstats;
+struct hifn_stats hifnstats;
 
 int
 hifn_probe(parent, match, aux)

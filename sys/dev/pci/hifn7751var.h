@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.31 2001/08/08 03:46:44 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.32 2001/08/11 06:40:35 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -38,6 +38,8 @@
 
 #ifndef __HIFN7751VAR_H__
 #define __HIFN7751VAR_H__
+
+#ifdef _KERNEL
 
 /*
  *  Some configurable values for the driver
@@ -227,8 +229,6 @@ struct hifn_command {
 #define HIFN_CRYPTO_BAD_INPUT	(-1)
 #define HIFN_CRYPTO_RINGS_FULL	(-2)
 
-#ifdef _KERNEL
-
 /**************************************************************************
  *
  *  Function:  hifn_crypto
@@ -262,5 +262,15 @@ struct hifn_command {
 #define HIFN_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x7ff))
 
 #endif /* _KERNEL */
+
+struct hifn_stats {
+	u_int64_t hst_ibytes;
+	u_int64_t hst_obytes;
+	u_int32_t hst_ipackets;
+	u_int32_t hst_opackets;
+	u_int32_t hst_invalid;
+	u_int32_t hst_nomem;
+	u_int32_t hst_abort;
+};
 
 #endif /* __HIFN7751VAR_H__ */
