@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.371 2005/04/03 19:33:59 krw Exp $
+#	$OpenBSD: install.sub,v 1.372 2005/04/05 01:00:46 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -584,7 +584,7 @@ v6_info() {
 	ifconfig $1 inet6 | sed -n '
 		1s/.*<UP,.*/UP/p
 		1s/.*<.*/DOWN/p
-		/inet6/s/prefixlen//
+		/scopeid/d
 		/inet6/s///p'
 }
 
@@ -711,7 +711,7 @@ v6_config() {
 	v6_defroute $_ifs
 	[[ $resp == none ]] && return
 	route -n add -inet6 -host default "$resp" || return
-	echo "!route -n add -host -inet6 default $resp" >>$_hn
+	echo "!route -qn add -host -inet6 default $resp" >>$_hn
 }
 
 v4_defroute() {
