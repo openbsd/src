@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.10 1998/01/11 20:39:09 provos Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.11 1999/02/19 17:26:17 art Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -443,6 +443,9 @@ found:;
 			scn = MSDOSFSROOT;
 		}
 	}
+
+	if (cluster == MSDOSFSROOT)
+		blkoff = diroff;
 
 	if (isadir) {
 		cluster = scn;
