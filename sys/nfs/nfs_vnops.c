@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.50 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.51 2002/05/21 21:07:09 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2737,8 +2737,8 @@ again:
 			    bp->b_flags |= B_ASYNC;
 			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
 			    bp->b_dirtyoff = bp->b_dirtyend = 0;
-			    splx(s);
 			    biodone(bp);
+			    splx(s);
 			}
 		}
 	}
@@ -2940,7 +2940,9 @@ nfs_writebp(bp, force)
 		if (!retv) {
 			bp->b_dirtyoff = bp->b_dirtyend = 0;
 			bp->b_flags &= ~B_NEEDCOMMIT;
+			s = splbio();
 			biodone(bp);
+			splx(s);
 		} else if (retv == NFSERR_STALEWRITEVERF)
 			nfs_clearcommit(bp->b_vp->v_mount);
 	}
