@@ -412,7 +412,7 @@ lereset(dev)
 		ler2->ler2_tmd[i].tmd3 = 0;
 	}
 
-bzero(&ler2->ler2_rbuf[0][0], (LERBUF + LETBUF) * LEMTU);
+bzero((void *)&ler2->ler2_rbuf[0][0], (LERBUF + LETBUF) * LEMTU);
 	/* lance will stuff packet into receive buffer 0 next */
 	sc->sc_rmd = 0;
 
@@ -483,14 +483,14 @@ lestart(ifp)
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
 	if (m == 0)
 		return;
-	len = leput(sc->sc_r2->ler2_tbuf[0], m);
+	len = leput((char *)sc->sc_r2->ler2_tbuf[0], m);
 #if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
 	if (sc->sc_if.if_bpf)
-		bpf_tap(sc->sc_if.if_bpf, sc->sc_r2->ler2_tbuf[0], len);
+		bpf_tap(sc->sc_if.if_bpf, (u_char *)sc->sc_r2->ler2_tbuf[0], len);
 #endif
 
 #ifdef PACKETSTATS
@@ -672,7 +672,7 @@ lerint(sc)
 				return;
 			}
 		} else {
-			leread(sc, sc->sc_r2->ler2_rbuf[bix], len);
+			leread(sc, (char *)sc->sc_r2->ler2_rbuf[bix], len);
 #ifdef PACKETSTATS
 			lerpacketsizes[len]++;
 #endif
