@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.8 2004/04/19 18:21:09 otto Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.9 2004/04/25 17:32:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <netdb.h>
 
 #include "grey.h"
 
@@ -39,14 +40,17 @@ dbupdate(char *dbname, char *ip, int add)
 	struct gdata	gd;
 	time_t		now;
 	int		r;
-	struct in_addr	ia;
+	struct addrinfo hints;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
 		err(1, "cannot open %s for writing", dbname);
-	if (inet_pton(AF_INET, ip, &ia) != 1) {
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(ip, NULL, &hints, NULL) != 0) {
 		warnx("invalid ip address %s", ip);
 		goto bad;
 	}
@@ -157,7 +161,7 @@ dblist(char *dbname)
 		cp = strchr(a, '\n');
 		if (cp == NULL)
 			/* this is a whitelist entry */
-			printf("WHITE:%s:::%d:%d:%d:%d:%d\n", a, gd.first,
+			printf("WHITE|%s|||%d|%d|%d|%d|%d\n", a, gd.first,
 			    gd.pass, gd.expire, gd.bcount, gd.pcount);
 		else {
 			char *from, *to;
@@ -173,7 +177,7 @@ dblist(char *dbname)
 			}
 			*to = '\0';
 			to++;
-			printf("GREY:%s:%s:%s:%d:%d:%d:%d:%d\n",
+			printf("GREY|%s|%s|%s|%d|%d|%d|%d|%d\n",
 			    a, from, to, gd.first, gd.pass, gd.expire,
 			    gd.bcount, gd.pcount);
 		}
