@@ -1,3 +1,5 @@
+/*	$OpenBSD: theo.c,v 1.19 2001/12/25 16:54:51 hugh Exp $	*/
+
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
