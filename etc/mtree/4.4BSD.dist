@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.140 2002/12/31 16:22:25 miod Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.141 2003/01/20 20:50:22 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1782,6 +1782,12 @@ authpf		uname=root gname=authpf mode=0770
 
 # ./var/empty
 empty		mode=0755
+
+# ./var/empty/dev
+dev		mode=0555
+# ./var/empty/dev
+..
+
 # ./var/empty
 ..
 
