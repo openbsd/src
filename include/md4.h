@@ -1,5 +1,5 @@
 /* MD4.H - header file for MD4C.C
- * $OpenBSD: md4.h,v 1.2 1996/09/29 14:53:09 millert Exp $
+ * $OpenBSD: md4.h,v 1.3 1996/09/30 03:55:47 millert Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -25,18 +25,19 @@
 
 #ifndef _MD4_H_
 #define _MD4_H_
+
 /* MD4 context. */
 typedef struct MD4Context {
-  u_int32_t state[4];		/* state (ABCD) */
-  u_int32_t count[2];		/* number of bits, modulo 2^64 (lsb first) */
-  unsigned char buffer[64];	/* input buffer */
+    u_int32_t state[4];		/* state (ABCD) */
+    u_int32_t count[2];		/* number of bits, modulo 2^64 (lsb first) */
+    unsigned char buffer[64];	/* input buffer */
 } MD4_CTX;
 
-void   MD4Init(MD4_CTX *);
-void   MD4Update(MD4_CTX *, const unsigned char *, unsigned int);
-void   MD4Final(unsigned char [16], MD4_CTX *);
-char * MD4End(MD4_CTX *, char *);
-char * MD4File(char *, char *);
-char * MD4Data(const unsigned char *, unsigned int, char *);
+void   MD4Init __P((MD4_CTX *));
+void   MD4Update __P((MD4_CTX *, const unsigned char *, unsigned int));
+void   MD4Final __P((unsigned char [16], MD4_CTX *));
+char * MD4End __P((MD4_CTX *, char *));
+char * MD4File __P((char *, char *));
+char * MD4Data __P((const unsigned char *, unsigned int, char *));
 
 #endif /* _MD4_H_ */

@@ -10,11 +10,6 @@
 #ifndef _SHA1_H
 #define _SHA1_H
 
-/* Useful defines/typedefs */
-
-typedef unsigned char   BYTE;
-typedef u_int32_t	LONG;
-
 /* The SHA1 block size and message digest sizes, in bytes */
 
 #define SHA1_BLOCKSIZE   64
@@ -23,10 +18,10 @@ typedef u_int32_t	LONG;
 /* The structure for storing SHA1 info */
 
 typedef struct {
-	       LONG digest[ 5 ];            /* Message digest */
-	       LONG countLo, countHi;       /* 64-bit bit count */
-	       LONG data[ 16 ];             /* SHA1 data buffer */
-	       } SHA1_INFO;
+	u_int32_t digest[ 5 ];		/* Message digest */
+	u_int32_t countLo, countHi;	/* 64-bit bit count */
+	u_int32_t data[ 16 ];		/* SHA1 data buffer */
+} SHA1_INFO;
 
 /* The next def turns on the change to the algorithm introduced by NIST at
  * the behest of the NSA.  It supposedly corrects a weakness in the original
@@ -53,9 +48,9 @@ typedef struct {
  */
 #define NEW_SHA1
 
-void sha1Init (SHA1_INFO *);
-void sha1Transform (SHA1_INFO *);
-void sha1Final (SHA1_INFO *);
-void sha1Update (SHA1_INFO *, BYTE *, int);
+void sha1Init __P((SHA1_INFO *));
+void sha1Transform __P((SHA1_INFO *));
+void sha1Final __P((SHA1_INFO *));
+void sha1Update __P((SHA1_INFO *, unsigned char *, int));
 
 #endif /* _SHA1_H */
