@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.3 1998/08/30 03:39:19 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.4 1998/08/31 18:58:36 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)list.c	5.23 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: list.c,v 8.9 1996/11/26 10:11:26 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.3 1998/08/30 03:39:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.4 1998/08/31 18:58:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -527,6 +527,8 @@ strip_domain(string, domain)
 }
 
 
+#define NAME_SLOP 80
+
 PrintListInfo(file, msg, eom, qtype, domain)
     FILE	*file;
     u_char	*msg, *eom;
@@ -539,7 +541,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
     u_int32_t		ttl;
     int			n, pref, count;
     struct in_addr	inaddr;
-    char		name[NAME_LEN];
+    char		name[NAME_LEN + NAME_SLOP];
     char		name2[NAME_LEN];
     Boolean		stripped;
 
@@ -568,7 +570,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 	cp += nameLen + QFIXEDSZ;
     }
     for (count = ntohs(headerPtr->ancount); count > 0; count--) {
-	nameLen = dn_expand(msg, eom, cp, name, sizeof name);
+	nameLen = dn_expand(msg, eom, cp, name, NAME_LEN);
 	if (nameLen < 0)
 	    return (ERROR);
 	cp += nameLen;
@@ -598,7 +600,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 	    }
 	}
 	if (!stripped && nameLen < sizeof(name)-1) {
-	    strcat(name, ".");
+	    strncat(name, ".", sizeof(name) - strlen(name) - 1);
 	}
 
 	fprintf(file, NAME_FORMAT, name);

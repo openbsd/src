@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1998/08/30 03:39:20 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1998/08/31 18:58:37 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -66,7 +66,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1998/08/30 03:39:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1998/08/31 18:58:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -981,6 +981,7 @@ res_dnsrch(cp)
     int n;
 
     (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
     if ((cp = strchr(_res.defdname, '\n')) != NULL)
 	    *cp = '\0';
     /*
@@ -1125,8 +1126,9 @@ ReadRC()
     if ((cp = getenv("HOME")) != NULL &&
 	(strlen(cp) + strlen(_PATH_NSLOOKUPRC)) < sizeof(buf)) {
 
-	(void) strcpy(buf, cp);
-	(void) strcat(buf, _PATH_NSLOOKUPRC);
+	(void) strncpy(buf, cp, sizeof buf - 1);
+	buf[sizeof buf - 1] = '\0';
+	(void) strncat(buf, _PATH_NSLOOKUPRC, sizeof buf - strlen(buf) - 1);
 
 	if ((fp = fopen(buf, "r")) != NULL) {
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
