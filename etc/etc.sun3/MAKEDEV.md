@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/02/21 13:09:03 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/21 18:36:55 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -69,9 +69,6 @@ test -d /usr/etc && PATH=$PATH:/usr/etc
 dnl
 divert(7)dnl
 dnl
-ramdisk)
-	R std random bpf0 sd0 sd1 rd0
-	;;
 _std(2, 3, 37, 7, 16)
 	M kd		c 1 0 600
 	M eeprom	c 3 11 640 kmem
