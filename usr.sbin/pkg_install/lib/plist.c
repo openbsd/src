@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.9 2000/04/28 22:13:55 espie Exp $	*/
+/*	$OpenBSD: plist.c,v 1.10 2001/04/02 10:13:40 espie Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.9 2000/04/28 22:13:55 espie Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.10 2001/04/02 10:13:40 espie Exp $";
 #endif
 
 /*
@@ -54,6 +54,7 @@ static cmd_t	cmdv[] = {
 	{	"mtree",	PLIST_MTREE,		1	},
 	{	"dirrm",	PLIST_DIR_RM,		1	},
 	{	"option",	PLIST_OPTION,		1	},
+	{	"newdepend",	PLIST_NEWDEP,		1	},
 	{	NULL,		FAIL,			0	}
 };
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.17 2001/03/22 20:42:03 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.18 2001/04/02 10:13:38 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.17 2001/03/22 20:42:03 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.18 2001/04/02 10:13:38 espie Exp $";
 #endif
 
 /*
@@ -77,6 +77,7 @@ pkg_do(char *pkg)
     char pkg_fullname[FILENAME_MAX];
     char playpen[FILENAME_MAX];
     char extract_contents[FILENAME_MAX];
+    char solve_deps[FILENAME_MAX+50];
     char *where_to, *tmp, *extract;
     char *dbdir;
     FILE *cfile;
@@ -90,6 +91,8 @@ pkg_do(char *pkg)
     strcpy(playpen, FirstPen);
     dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
+    snprintf(solve_deps, sizeof solve_deps, "pkg%s dependencies solve %s",
+	Verbose ? " -v": "", CONTENTS_FNAME);
     /* Are we coming in for a second pass, everything already extracted? */
     /* (Slave mode) */
     if (!pkg) {
@@ -119,6 +122,7 @@ pkg_do(char *pkg)
 	    }
 	    where_to = Home;
 	    strcpy(pkg_fullname, pkg);
+	    system(solve_deps);
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
 		warnx(
@@ -156,6 +160,7 @@ pkg_do(char *pkg)
 		pkg_fullname);
 		goto bomb;
 	    }
+	    system(solve_deps);
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
 		warnx(
@@ -331,6 +336,7 @@ pkg_do(char *pkg)
 		    if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 			if (Verbose)
 			    printf("Finished loading `%s' over FTP\n", p->name);
+			system(solve_deps);
 			if (!fexists(CONTENTS_FNAME)) {
 			    warnx("autoloaded package `%s' has no %s file?",
 				  p->name, CONTENTS_FNAME);
