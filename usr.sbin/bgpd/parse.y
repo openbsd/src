@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.144 2004/11/11 10:35:15 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.145 2004/11/18 17:07:38 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -724,7 +724,7 @@ peeropts	: REMOTEAS asnumber	{
 			free($7);
 		}
 		| ANNOUNCE CAPABILITIES yesno {
-			curpeer->conf.capabilities = $3;
+			curpeer->conf.announce_capa = $3;
 		}
 		| SET filter_set_opt	{
 			if (merge_filterset(&curpeer->conf.attrset, &$2) == -1)
@@ -1745,7 +1745,10 @@ alloc_peer(void)
 	p->next = NULL;
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_UNDEF;
-	p->conf.capabilities = 1;
+	p->conf.announce_capa = 1;
+	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
+	p->conf.capabilities.mp_v6 = SAFI_NONE;
+	p->conf.capabilities.refresh = 1;
 
 	return (p);
 }

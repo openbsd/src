@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.147 2004/11/18 15:40:58 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.148 2004/11/18 17:07:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,6 +201,12 @@ struct peer_auth {
 	u_int8_t		enc_keylen_out;
 };
 
+struct capabilities {
+	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 2858 */
+	u_int8_t	mp_v6;
+	u_int8_t	refresh;	/* route refresh, RFC 2918 */
+};
+
 struct peer_config {
 	u_int32_t		 id;
 	u_int32_t		 groupid;
@@ -222,7 +228,8 @@ struct peer_config {
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	struct peer_auth	 auth;
-	u_int8_t		 capabilities;
+	u_int8_t		 announce_capa;
+	struct capabilities	 capabilities;
 	u_int8_t		 reflector_client;
 	char			 if_depend[IFNAMSIZ];
 	enum reconf_action	 reconf_action;
