@@ -5,16 +5,15 @@
 + handle PKGPATH
 + replace symlinks with @symlink commands at pkg_create time
 + basic validation of packing list at end of reading it...
-- add better error handling
++ don't store @pkgdep in packing-lists, makes for a lot of traffic, use
+separate +REQUIRE file instead. Automatically convert from the old model.
++ add better error handling
 - let package delete log files it cannot delete
 - smart package dependency handling
 
 Known update issues:
 - pkg_add -r can have two conflicting packages (or more) n-to-m updates
 should be handled.
-
-- don't store @pkgdep in packing-lists, makes for a lot of traffic, use
-separate +REQUIRE file instead. Issue: converting from the old model.
 
 - switch all runtime dependencies to @newdepend.  Stuff older @libdepend
 into newer @wantlib keyword.  Makes for more systematic handling (adjust
