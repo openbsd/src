@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.17 1997/07/24 22:03:15 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.18 1997/07/29 05:53:22 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,8 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
+		bpfattach(&ifp->if_bpf, ifp, DLT_NULL,
+		    sizeof(struct tunnel_header));
 #endif
 	}
 }
@@ -332,6 +333,7 @@ tun_output(ifp, m0, dst, rt)
 	struct rtentry *rt;
 {
 	struct tun_softc *tp = ifp->if_softc;
+	struct tunnel_header *th;
 	struct proc	*p;
 	int		s;
 
@@ -345,11 +347,9 @@ tun_output(ifp, m0, dst, rt)
 	}
 	ifp->if_lastchange = time;
 
-	M_PREPEND( m0, sizeof(struct tunnel_header), M_DONTWAIT );
-	{
-		struct tunnel_header	*th = mtod( m0, struct tunnel_header * );
-		th->tun_af = dst->sa_family;
-	}
+	M_PREPEND(m0, sizeof(struct tunnel_header), M_DONTWAIT);
+	th = mtod(m0, struct tunnel_header *);
+	th->tun_af = dst->sa_family;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -542,7 +542,7 @@ tunwrite(dev, uio, ioflag)
 	int		unit;
 	struct ifnet	*ifp;
 	struct ifqueue	*ifq;
-	struct tunnel_header	*th;
+	struct tunnel_header *th;
 	struct mbuf	*top, **mp, *m;
 	int		isr;
 	int		error=0, s, tlen, mlen;
@@ -596,14 +596,13 @@ tunwrite(dev, uio, ioflag)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
 
-	th = mtod( top, struct tunnel_header * );
-		/* strip the tunnel header */
+	th = mtod(top, struct tunnel_header *);
+	/* strip the tunnel header */
 	top->m_data += sizeof(*th);
 	top->m_len  -= sizeof(*th);
 	top->m_pkthdr.len -= sizeof(*th);
 
-	switch( th->tun_af )
-	{
+	switch (th->tun_af) {
 #ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;
@@ -640,16 +639,15 @@ tunwrite(dev, uio, ioflag)
 	}
 
 	s = splimp();
-	if( IF_QFULL(ifq) )
-	{
-		IF_DROP( ifq );
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
 		splx(s);
 		ifp->if_collisions++;
 		m_freem(top);
 		return ENOBUFS;
 	}
-	IF_ENQUEUE( ifq, top );
-	schednetisr( isr );
+	IF_ENQUEUE(ifq, top);
+	schednetisr(isr);
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	splx(s);
