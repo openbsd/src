@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.55 1997/11/19 23:44:21 deraadt Exp $
+#	$OpenBSD: rc,v 1.56 1997/11/23 11:54:16 maja Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -350,6 +350,13 @@ fi
 # rbootd isn't run.
 if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
 	echo -n ' rbootd';		rbootd ${rbootd_flags}
+fi
+
+# $mopd_flags is imported from /etc/rc.conf;
+# If $mopd_flags == NO or /tftpboot/mop doesn't exist, then
+# mopd isn't run.
+if [ "X${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
+	echo -n ' mopd';		mopd ${mopd_flags}
 fi
 
 if [ -x /usr/sbin/screenblank ]; then
