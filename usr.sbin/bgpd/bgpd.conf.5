@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.38 2004/09/28 12:09:31 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.39 2004/11/09 10:37:42 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -88,13 +88,15 @@ number to
 .Ar as-number .
 The AS numbers are assigned by local RIRs, such as
 .Pp
-.Bl -tag -width xxxxx -compact
-.It RIPE
-for Europe,
-.It ARIN
-for America, and
+.Bl -tag -width xxxxxxxx -compact
 .It APNIC
-for the Asian-Pacific region.
+for the Asia Pacific region,
+.It ARIN
+for North America, parts of the Caribbean and Africa,
+.It LACNIC
+for Latin America and Caribbean, and
+.It RIPE NCC
+for Europe, the Middle East and parts of Asia and Africa.
 .El
 .Pp
 For example,
