@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.477 2001/12/23 16:45:51 nate Exp 
+ *		OpenBSD: pcidevs,v 1.478 2001/12/24 19:43:30 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1833,13 +1833,14 @@
 #define	PCI_PRODUCT_SIS_620	0x0620		/* 620 Host-PCI */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* 630 Host-PCI */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host-PCI */
+#define	PCI_PRODUCT_SIS_735	0x0735		/* 735 Host-PCI */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100BaseTX */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* Trident 4D WAVE */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
 #define	PCI_PRODUCT_SIS_5512	0x5512		/* 5512 */
 #define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 EIDE */
-#define	PCI_PRODUCT_SIS_5571	0x5571		/* 5571 */
+#define	PCI_PRODUCT_SIS_5571	0x5571		/* 5571 Host-PCI */
 #define	PCI_PRODUCT_SIS_5581	0x5581		/* 5581 */
 #define	PCI_PRODUCT_SIS_5582	0x5582		/* 5582 */
 #define	PCI_PRODUCT_SIS_5591	0x5591		/* 5591 Host-PCI */
