@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsakeygen.c,v 1.18 2004/02/25 16:01:29 hshoexer Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.19 2004/02/26 15:27:05 hshoexer Exp $	*/
 /*	$EOM: rsakeygen.c,v 1.10 2000/12/21 15:18:53 ho Exp $	*/
 
 /*
@@ -46,14 +46,6 @@
 #define nibble2c(x) ((x) >= 10 ? ('a' - 10 + (x)) : ('0' + (x)))
 
 #define TEST_STRING "!Dies ist ein Test"
-
-static void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
-{
-  int i;
-
-  for (i = 0; i < len; i += 2, asc += 2)
-    *bin++ = hexchar2bin (asc);
-}
 
 int
 main (void)
