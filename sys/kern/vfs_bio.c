@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.33 2001/03/09 17:08:43 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.34 2001/03/13 16:47:50 gluk Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -94,7 +94,8 @@ u_long	bufhash;
 #define	BQ_EMPTY	3		/* buffer headers with no memory */
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-int needbuffer;
+int needbuffer = 0;
+int syncer_needbuffer = 0;
 struct bio_ops bioops;
 
 /*
@@ -107,8 +108,16 @@ static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int count_lock_queue __P((void));
 
-
-int lodirtybufs, hidirtybufs, numdirtybufs;
+/* We are currently use only *cleanbufs, but count all num*bufs */
+int numdirtybufs;	/* number of all dirty buffers */
+int lodirtybufs, hidirtybufs;
+int numfreebufs;	/* number of buffers on LRU+AGE free lists */
+int numcleanbufs;	/* number of clean buffers on LRU+AGE free lists */
+int numemptybufs;	/* number of buffers on EMPTY list */
+int locleanbufs;
+#ifdef DEBUG
+int mincleanbufs;
+#endif
 
 void
 bremfree(bp)
@@ -130,6 +139,18 @@ bremfree(bp)
 		if (dp == &bufqueues[BQUEUES])
 			panic("bremfree: lost tail");
 	}
+	if (bp->b_bufsize <= 0) {
+		numemptybufs--;
+	} else if (!ISSET(bp->b_flags, B_LOCKED)) {
+		numfreebufs--;
+		if (!ISSET(bp->b_flags, B_DELWRI)) {
+			numcleanbufs--;
+#ifdef DEBUG
+			if (mincleanbufs > numcleanbufs)
+				mincleanbufs = numcleanbufs;
+#endif
+		}
+	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
 }
 
@@ -144,6 +165,9 @@ bufinit()
 	register int i;
 	int base, residual;
 
+	numfreebufs = 0;
+	numcleanbufs = 0;
+	numemptybufs = 0;
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
@@ -163,16 +187,37 @@ bufinit()
 		else
 			bp->b_bufsize = base * CLBYTES;
 		bp->b_flags = B_INVAL;
-		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
+		if (bp->b_bufsize) {
+			dp = &bufqueues[BQ_AGE];
+			numfreebufs++;
+			numcleanbufs++;
+		} else {
+			dp = &bufqueues[BQ_EMPTY];
+			numemptybufs++;
+		}
 		binsheadfree(bp, dp);
 		binshash(bp, &invalhash);
 	}
 
 	hidirtybufs = nbuf / 4 + 20;
 	numdirtybufs = 0;
-
 	lodirtybufs = hidirtybufs / 2;
 
+	/*
+	 * Reserve 5% of bufs for syncer's needs,
+	 * but not more then 25% and if possible
+	 * not less then 16 bufs. locleanbufs
+	 * value must be not too small, but probably
+	 * there are no reason to set it more then 32.
+	 */
+	locleanbufs = nbuf / 20;
+	if (locleanbufs < 16)
+		locleanbufs = 16;
+	if (locleanbufs > nbuf/4)
+		locleanbufs = nbuf / 4;
+#ifdef DEBUG
+	mincleanbufs = locleanbufs;
+#endif
 }
 
 static __inline struct buf *
@@ -435,6 +480,10 @@ buf_dirty(bp)
 		SET(bp->b_flags, B_DELWRI);
 		reassignbuf(bp);
 		++numdirtybufs;
+#ifdef DIAGNOSTIC
+		if (numdirtybufs > nbuf)
+			panic("buf_dirty: incorrect number of dirty bufs");
+#endif
 	}
 }
 
@@ -449,6 +498,10 @@ buf_undirty(bp)
 		CLR(bp->b_flags, B_DELWRI);
 		reassignbuf(bp);
 		--numdirtybufs;
+#ifdef DIAGNOSTIC
+		if (numdirtybufs < 0)
+			panic("buf_undirty: incorrect number of dirty bufs");
+#endif
 	}
 }
 
@@ -509,12 +562,16 @@ brelse(bp)
 			reassignbuf(bp);
 			brelvp(bp);
 		}
-		if (bp->b_bufsize <= 0)
+		if (bp->b_bufsize <= 0) {
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
-		else
+			numemptybufs++;
+		} else {
 			/* invalid data */
 			bufq = &bufqueues[BQ_AGE];
+			numfreebufs++;
+			numcleanbufs++;
+		}
 		binsheadfree(bp, bufq);
 	} else {
 		/*
@@ -524,12 +581,17 @@ brelse(bp)
 		if (ISSET(bp->b_flags, B_LOCKED))
 			/* locked in core */
 			bufq = &bufqueues[BQ_LOCKED];
-		else if (ISSET(bp->b_flags, B_AGE))
-			/* stale but valid data */
-			bufq = &bufqueues[BQ_AGE];
-		else
-			/* valid data */
-			bufq = &bufqueues[BQ_LRU];
+		else {
+			numfreebufs++;
+			if (!ISSET(bp->b_flags, B_DELWRI))
+				numcleanbufs++;
+			if (ISSET(bp->b_flags, B_AGE))
+				/* stale but valid data */
+				bufq = &bufqueues[BQ_AGE];
+			else
+				/* valid data */
+				bufq = &bufqueues[BQ_LRU];
+		}
 		binstailfree(bp, bufq);
 	}
 
@@ -540,8 +602,16 @@ already_queued:
 	/* Allow disk interrupts. */
 	splx(s);
 
+	/* Wake up syncer process waiting for any buffer to become free. */
+	if (syncer_needbuffer) {
+		syncer_needbuffer = 0;
+		wakeup_one(&syncer_needbuffer);
+	}
+	if (numcleanbufs < locleanbufs + min(locleanbufs, 4))
+		speedup_syncer();
+
 	/* Wake up any processes waiting for any buffer to become free. */
-	if (needbuffer) {
+	if (needbuffer && (numcleanbufs > locleanbufs)) {
 		needbuffer = 0;
 		wakeup(&needbuffer);
 	}
@@ -609,9 +679,9 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	 */
 	bh = BUFHASH(vp, blkno);
 start:
-        bp = bh->lh_first;
-        for (; bp != NULL; bp = bp->b_hash.le_next) {
-                if (bp->b_lblkno != blkno || bp->b_vp != vp)
+	bp = bh->lh_first;
+	for (; bp != NULL; bp = bp->b_hash.le_next) {
+		if (bp->b_lblkno != blkno || bp->b_vp != vp)
 			continue;
 
 		s = splbio();
@@ -632,7 +702,7 @@ start:
 			break;
 		}
 		splx(s);
-        }
+	}
 
 	if (bp == NULL) {
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
@@ -769,11 +839,21 @@ getnewbuf(slpflag, slptimeo)
 
 start:
 	s = splbio();
+	if ((numcleanbufs <= locleanbufs) && curproc != syncerproc) {
+		/* wait for a free buffer of any kind */
+		if (needbuffer == 0)
+			speedup_syncer();
+		needbuffer = 1;
+		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
+		splx(s);
+		return (0);
+	}
 	if ((bp = bufqueues[BQ_AGE].tqh_first) == NULL &&
 	    (bp = bufqueues[BQ_LRU].tqh_first) == NULL) {
 		/* wait for a free buffer of any kind */
-		needbuffer = 1;
-		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
+		syncer_needbuffer = 1;
+		tsleep(&syncer_needbuffer, slpflag|(PRIBIO-3), "getnewbuf",
+			slptimeo);
 		splx(s);
 		return (0);
 	}
@@ -836,7 +916,7 @@ start:
 		crfree(bp->b_wcred);
 		bp->b_wcred = NOCRED;
 	}
-	
+
 	bremhash(bp);
 	return (bp);
 }
@@ -913,6 +993,7 @@ biodone(bp)
 	}
 }
 
+#ifdef DEBUG
 /*
  * Return a count of buffers on the "locked" queue.
  */
@@ -927,6 +1008,7 @@ count_lock_queue()
 		n++;
 	return (n);
 }
+#endif /* DEBUG */
 
 #ifdef DEBUG
 /*
@@ -941,23 +1023,39 @@ vfs_bufstats()
 	register struct buf *bp;
 	register struct bqueues *dp;
 	int counts[MAXBSIZE/CLBYTES+1];
+	int totals[BQUEUES];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 
+	s = splbio();
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
 		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
 			counts[j] = 0;
-		s = splbio();
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
 			counts[bp->b_bufsize/CLBYTES]++;
 			count++;
 		}
-		splx(s);
+		totals[i] = count;
 		printf("%s: total-%d", bname[i], count);
 		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
 			if (counts[j] != 0)
 				printf(", %d-%d", j * CLBYTES, counts[j]);
 		printf("\n");
 	}
+	if (totals[BQ_EMPTY] != numemptybufs)
+		printf("numemptybufs counter wrong: %d != %d\n",
+			totals[BQ_EMPTY], numemptybufs);
+	if ((totals[BQ_LRU] + totals[BQ_AGE]) != numfreebufs)
+		printf("numfreebufs counter wrong: %d != %d\n",
+			totals[BQ_LRU] + totals[BQ_AGE], numemptybufs);
+	if ((totals[BQ_LRU] + totals[BQ_AGE]) < numcleanbufs ||
+	    (numcleanbufs < 0))
+		printf("numcleanbufs counter wrong: %d < %d\n",
+			totals[BQ_LRU] + totals[BQ_AGE], numcleanbufs);
+	printf("numcleanbufs: %d\n", numcleanbufs);
+	printf("syncer eating up to %d bufs from %d reserved\n",
+			locleanbufs - mincleanbufs, locleanbufs);
+	printf("numdirtybufs: %d\n", numdirtybufs);
+	splx(s);
 }
 #endif /* DEBUG */
