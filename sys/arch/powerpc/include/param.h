@@ -1,3 +1,4 @@
+/*	$OpenBSD: param.h,v 1.2 1996/12/28 06:25:17 rahnds Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-

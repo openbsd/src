@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpu.h,v 1.2 1996/12/28 06:25:08 rahnds Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 1996/09/30 16:34:24 ws Exp $	*/
 
 /*-

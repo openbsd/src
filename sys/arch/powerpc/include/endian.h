@@ -1,3 +1,4 @@
+/*	$OpenBSD: endian.h,v 1.3 1996/12/28 06:25:05 rahnds Exp $	*/
 /*	$NetBSD: endian.h,v 1.2 1996/10/13 03:16:41 christos Exp $	*/
 
 /*-

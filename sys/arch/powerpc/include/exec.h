@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec.h,v 1.3 1996/12/28 06:25:06 rahnds Exp $	*/
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -24,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.2 1996/12/23 02:42:35 deraadt Exp $
+ *	$Id: exec.h,v 1.3 1996/12/28 06:25:06 rahnds Exp $
  */
 
 #ifndef _PPC_EXEC_H_
