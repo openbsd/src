@@ -452,7 +452,7 @@ const EVP_CIPHER cryptodev_arc4_cipher = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	NULL,
 	NULL,
 	NULL
@@ -466,7 +466,7 @@ const EVP_CIPHER cryptodev_des_cbc = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL
@@ -480,7 +480,7 @@ const EVP_CIPHER cryptodev_3des_cbc = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL
@@ -493,7 +493,7 @@ const EVP_CIPHER cryptodev_bf_cbc = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL
@@ -506,7 +506,7 @@ const EVP_CIPHER cryptodev_cast_cbc = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL
@@ -519,7 +519,7 @@ const EVP_CIPHER cryptodev_aes_cbc = {
 	cryptodev_init_key,
 	cryptodev_cipher,
 	cryptodev_cleanup,
-	sizeof(struct session_op),
+	sizeof(struct dev_crypto_state),
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL
