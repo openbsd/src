@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.9 1996/05/31 10:37:24 niklas Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.10 1997/01/16 08:03:56 kstailey Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -521,7 +521,7 @@ db_boot_sync_cmd(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	boot(RB_AUTOBOOT);
+	boot(RB_AUTOBOOT | RB_TIMEBAD);
 }
 
 void
@@ -531,7 +531,7 @@ db_boot_crash_cmd(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	boot(RB_NOSYNC | RB_DUMP);
+	boot(RB_NOSYNC | RB_DUMP | RB_TIMEBAD);
 }
 
 void
@@ -541,5 +541,5 @@ db_boot_dump_cmd(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	boot(RB_DUMP);
+	boot(RB_DUMP | RB_TIMEBAD);
 }
