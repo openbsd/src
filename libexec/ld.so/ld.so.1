@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.1 2003/06/27 01:13:00 deraadt Exp $
+.\"	$OpenBSD: ld.so.1,v 1.2 2003/07/09 15:34:07 jmc Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -72,14 +72,11 @@ file, prepared by the
 .Xr ldconfig 8
 utility, in which the full path specification of the shared objects can be
 looked up by hashing on the 3-tuple
-.Ao
-library-name, major-version-number, minor-version-number
-.Ac Ns \&.
+.Aq library-name , major-version-number , minor-version-number .
 .Pp
 .Nm
 recognises a number of environment variables that can be used to modify
 its behaviour as follows:
-.Pp
 .Bl -tag -width "LD_TRACE_LOADED_OBJECTS_PROGNAME"
 .It Ev LD_LIBRARY_PATH
 A colon separated list of directories, overriding the default search path
@@ -114,12 +111,10 @@ option and allows
 .Xr ldd 1
 to be operated as a filter more conveniently.
 The following conversions can be used:
-.Bl -tag -indent "LD_TRACE_LOADED_OBJECTS_FMT1 " -width "xxxx"
+.Bl -tag -width "xxxx"
 .It \&%a
 The main program's name
-.Po also known as
-.Dq __progname
-.Pc .
+.Pq also known as Dq __progname .
 .It \&%A
 The value of the environment variable
 .Ev LD_TRACE_LOADED_OBJECTS_PROGNAME
@@ -156,18 +151,15 @@ When set, do not include a set of built-in standard directory paths for
 searching. This might be useful when running on a system with a completely
 non-standard filesystem layout.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact
 .It Pa /var/run/ld.so.hints
 library location hints built by
 .Xr ldconfig 8
 .El
-.Pp
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr link 5 ,
 .Xr ldconfig 8
 .Sh HISTORY
 The shared library model employed first appeared in SunOS 4.0.
-
