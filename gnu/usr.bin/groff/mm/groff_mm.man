@@ -1,22 +1,5 @@
-.ig \"-*- nroff -*-
-Copyright (C) 1991-1995 Free Software Foundation, Inc.
-
-Permission is granted to make and distribute verbatim copies of
-this manual provided the copyright notice and this permission notice
-are preserved on all copies.
-
-Permission is granted to copy and distribute modified versions of this
-manual under the conditions for verbatim copying, provided that the
-entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions, except that this permission notice may be included in
-translations approved by the Free Software Foundation instead of in
-the original English.
-..
-.\" $Id: groff_mm.man,v 1.1.1.1 1996/09/14 19:01:55 etheisen Exp $
+.\"
+.\" $Id: groff_mm.man,v 1.1.1.2 1996/09/15 01:48:07 etheisen Exp $
 .\"
 .de T2
 .ne 2v
@@ -35,7 +18,7 @@ the original English.
 groff_mm \- groff mm macros
 .SH SYNOPSIS
 .B groff
-.B \-m@TMAC_M_PREFIX@m
+.B \-m@TMAC_M@
 [
 .IR options .\|.\|.
 ]
@@ -55,9 +38,9 @@ the macros OK and PM is not implemented.
 .B \(bu
 groff mm does not support cut marks
 .LP
-\fBm@TMAC_M_PREFIX@m\fP is intended to be international. Therefore it is 
+\fBm@TMAC_M@\fP is intended to be international. Therefore it is 
 possible to write short national macrofiles which change all
-english text to the preferred language. Use \fBm@TMAC_M_PREFIX@mse\fP as an example.
+english text to the preferred language. Use \fBm@TMAC_M@se\fP as an example.
 .LP
 New macros: \fBAPP\fP, \fBAPPSK\fP, \fBB1\fP, \fBB2\fP, \fBBVL\fP,
 \fBCOVER\fP, \fBCOVEND\fP, \fBGETHN\fP, \fBGETPN\fP, \fBGETR\fP,
@@ -211,6 +194,9 @@ room number or name and up to three extra arguments.
 Approval signature, generates an approval line with place for
 signature and date. The string \fBAPPROVED:\fP can be changed
 with variable \fBLetapp\fP, and the string \fBDate\fP in \fBLetdate\fP.
+.TP
+.B "AVL [name]"
+Letter signature, generates a line with place for signature. 
 .TP
 .B "B [bold-text [prev-font-tex [bold...]]]"
 Begin boldface
@@ -493,7 +479,7 @@ justification (ljust).
 .fi
 .DT
 Argument greater than or equal to 11 is considered as arg 0.
-Default for m@TMAC_M_PREFIX@mm is 10.
+Default for m@TMAC_M@m is 10.
 .TP
 .B FE
 Footnote end.
@@ -828,7 +814,12 @@ List item precedes every item in a list. Without argument \fBLS\fP
 will print the mark determined by the current list type. By giving
 \fBLI\fP one argument, it will use that as the mark instead.
 Two arguments to \fBLI\fP will make \fImark\fP a prefix to
-the current mark. A zero length \fImark\fP will make a hanging
+the current mark.
+There will be no separating space between the prefix
+and the mark if the second argument is \fB2\fP instead of \fB1\fP.
+This behaviour can also be achieved by setting number register
+\fBLimsp\fP to zero.
+A zero length \fImark\fP will make a hanging
 indent instead.
 .sp
 A blank line is normally printed before the list item. This behaviour
@@ -1069,7 +1060,7 @@ on the first page.
 .TP
 .B PE
 Picture end.
-Ends a picture for \fB@g@pic\fP, see the manual for \fB@g@pic\fP.
+Ends a picture for \fB@TMAC_M@pic\fP, see the manual for \fB@TMAC_M@pic\fP.
 .TP
 .B "PF [arg]"
 Page footer.
@@ -1242,6 +1233,10 @@ The user-defined macros \fBTX\fP and \fBTY\fP are used if \fBTC\fP is called
 with at most four arguments. \fBRX\fP is called before the printing
 of \fICONTENTS\fP, and \fBTY\fP is called instead of printing \fICONTENTS\fP.
 .sp
+Equivalent macros can be defined for list of figures, tables, equations
+and excibits by defining \fBTXxx\fP or \fBTYxx\fP, where \fBxx\fP
+is \fFg\fP, \fBTB\fP, \fBEC\fP or \fBEX\fP.
+.sp
 String \fBCi\fP can be set to control the indentations for each heading-level.
 It must be scaled, like \fB.ds\ Ci\ .25i\ .5i\ .75i\ 1i\ 1i\fP.
 The indentation is normally controlled by the maxlength of headings
@@ -1372,7 +1367,7 @@ Floating displays does not generate line break.
 .LP
 .\"########################################################################
 .LP
-.B "Strings used in m@TMAC_M_PREFIX@m:"
+.B "Strings used in m@TMAC_M@:"
 .TP
 .B App
 A string containing the word "APPENDIX".
@@ -1487,7 +1482,7 @@ Contains \e(tm, trade mark.
 Argument to \fB.nm\fP in \fB.VERBON\fP, default: \fB1\fP.
 .\"-----------------------------------
 .LP
-.B "Number variables used in m@TMAC_M_PREFIX@m:"
+.B "Number variables used in m@TMAC_M@:"
 .TP
 .B Aph
 Print an appendix-page for every new appendix 
@@ -1585,6 +1580,13 @@ Default: Lf=1, Lt=1, Lx=1, Le=0.
 .TP
 .B Li
 List indent, used by .AL, default 6.
+.TP
+.B Limsp
+Flag for space between prefix and mark in automatic lists (.AL).
+.br
+0\ ==\ no space
+.br
+1\ ==\ space
 .TP
 .B Ls
 List space, if current listlevel > Ls then no spacing will occur around lists.
@@ -1714,7 +1716,7 @@ variable \fBlet*lo-\fP\fItype\fP.
 Jörgen Hägg, Lund, Sweden <jh@axis.se>.
 .SH FILES
 .TP
-.B @MACRODIR@/tmac.@TMAC_M_PREFIX@m
+.B @MACRODIR@/tmac.@TMAC_M@
 .TP
 .B @TMAC_MDIR@/*.cov
 .TP
@@ -1729,4 +1731,4 @@ Jörgen Hägg, Lund, Sweden <jh@axis.se>.
 .BR @g@eqn (@MAN1EXT@)
 .br
 .BR mm (@MAN7EXT@)
-.BR m@TMAC_M_PREFIX@mse (@MAN7EXT@)
+.BR m@TMAC_M@se (@MAN7EXT@)

@@ -1,5 +1,5 @@
 .\"------------
-.\" $Id: 4.MT,v 1.1.1.1 1996/09/14 19:01:56 etheisen Exp $
+.\" $Id: 4.MT,v 1.1.1.2 1996/09/15 01:48:08 etheisen Exp $
 .\" Cover sheet. Memorandum type 4
 .\"------------
 .de cov@print-title

@@ -1,3 +1,22 @@
+Mon Apr 24 07:37:52 1995 Jörgen Hägg (jh at axis.se)
+
+	* version 1.28
+	* Added AVL (AV without date)
+	* Fixed nroff scaling for W and L.
+	* Added support for register E and roman/bold
+	  for all Subject/Date/From strings.
+	* Added support for register C (1-4), (for DRAFTs and other types)
+	* Will protest if not used with groff.
+	* Change of the internal number registers @ps and @vs, they
+	  are now in units, and is set in the new macros .@ps and .@vs.
+	  @ps and @vs is now corrected to the real point and vertical size.
+	* Macro EQ has now correct pointsize.
+	* Figures should now get the right page number in the index.
+	* User-defined macros can now be defined for list of
+	  figures, tables, equations and exhibits (T{X,Y}{FG,TB,EC,EX}.
+	* Space may be omitted between prefix and mark in automatic lists (.AL)
+	  See .LI
+
 Tue Jan 10 07:51:37 1995 Jörgen Hägg (jh at axis.se)
 
 	* version 1.27

@@ -3,8 +3,8 @@
 .ds RE \\$2
 ..
 .\"
-.\" $Id: tmac.m,v 1.1.1.1 1996/09/14 19:01:55 etheisen Exp $
-.@revision $Revision: 1.1.1.1 $
+.\" $Id: tmac.m,v 1.1.1.2 1996/09/15 01:48:05 etheisen Exp $
+.@revision $Revision: 1.1.1.2 $
 .ig
 
 Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
@@ -22,11 +22,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-
-Almost complete. The letter format is not included.
-Maybe as a separate package.
-Should be better as time goes.
+Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Please send bugreports with examples to jh@axis.se.
 
@@ -36,6 +32,8 @@ Extern names	module@name
 Env.var		environ:name
 Index		array!index
 ..
+.if !\n(.g .ab These mm macros require groff.
+.if \n(.C .ab The groff mm macros do not work in compatibility mode.
 .warn
 .\" ######## init #######
 .\"	Contents level [0:7], contents saved if heading level <= Cl
@@ -137,32 +135,56 @@ Index		array!index
 .\" This is for cover macro .MT
 .\" .ds @language
 .\"
+.nr @copy_type 0
+.if r C .nr @copy_type \n[C]
+.\" >0 if Subject/Date/From should be bold, roman otherwise
+.ie n .ds @sdf_font R
+.el .ds @sdf_font B
+.if \n[@copy_type]=4 \{\
+.	ls 2
+.	nr Pi 10
+.	nr Pt 1
+.\}
+.\"
+.\"
+.if r E \{\
+.	ie \n[E] .ds @sdf_font B
+.	el .ds @sdf_font R
+.\}
+.\"
 .\"	Current pointsize and vertical space, always in points.
 .ie r S \{\
-.	nr @ps \n[S]
-.	nr @vs \n[S]+2
+.	ps (p;\n[S])
+.	vs (p;\n[S]+2)
 .\}
 .el \{\
-.	nr @ps 10
-.	nr @vs 12
+.	ps (p;10)
+.	vs 12p
 .\}
+.nr @ps \n[.ps]
+.nr @vs \n[.v]
 .\"
 .\"	Page length
-.ie r L .nr @pl \n[L]
-.el .nr @pl \n[.p]
-.\"	page width
-.ie r W .nr @ll \n[W]
-.el .nr @ll 6i
-.\"	page offset
-.ie r O .nr @po \n[O]
-.el .nr @po \n(.o
+.ie r L \{\
+.	ie n .pl (v;\n[L])
+.	el .pl \n[L]
+.\}
+.nr @pl \n[.p]
 .\"
-.\" cheating...
-.pl \n[@pl]u
-.ll \n[@ll]u
-.lt \n[@ll]u
-.po \n[@po]u
+.\"	page width
+.ie r W \{\
+.	ie n .ll (n;\n[W])
+.	el .ll \n[W]
+.\}
+.el .ll 6i
+.nr @ll \n[.l]
 .nr @cur-ll \n[@ll]
+.lt \n[@ll]u
+.\"
+.\"	page offset
+.if r O .po \n[O]
+.\"
+.nr @po \n[.o]
 .\"
 .\" non-zero if escape mechanism is turned off. Used by VERBON/OFF
 .nr @verbose-flag 0
@@ -195,6 +217,9 @@ Index		array!index
 .ds Liex Exhibit
 .ds Liec Equation
 .ds Licon CONTENTS
+.\" Flag for space between mark and prefix 1==space, 0==no space
+.\" Can also be controlled by using '.LI mark 2'
+.nr Limsp 1
 .\"
 .\" Lsp controls the height of an empty line. Normally 0.5v
 .\" Normally used for nroff compatibility.
@@ -269,6 +294,12 @@ Index		array!index
 .ds Letns!13 Complete Memorandum to
 .ds Letns!14 CC:
 .\"
+.\" Text printed below the footer. Controlled by @copy_type (C).
+.ds Pg_type!0
+.ds Pg_type!1 OFFICIAL FILE COPY 
+.ds Pg_type!2 DATE FILE COPY
+.ds Pg_type!3 D\ R\ A\ F\ T
+.ds Pg_type!4 D\ R\ A\ F\ T
 .\" Max lines in return address
 .nr Letwam 14
 .\"--------------------------
@@ -278,7 +309,7 @@ Index		array!index
 .\"
 .\"---------------------------------------------
 .\" set local variables.
-.ie d @language .mso mm/\\*[@language]_locale
+.ie d @language .mso mm/\*[@language]_locale
 .el .mso mm/locale
 .\"---------------------------------------------
 .if \n[D] .tm Groff mm, version \*[RE].
@@ -291,8 +322,8 @@ Index		array!index
 .el 'nh
 'in 0
 'ti 0
-'ps \\n[@ps]
-'vs \\n[@vs]
+.ps \\n[@ps]u
+.vs \\n[@vs]u
 ..
 .de @warning
 'tm WARNING:(\\n[.F]) input line \\n[.c]:\\$*
@@ -468,14 +499,22 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" Hope this doesn't break anything else :-)
 .\" Don't break if arg_4 is a '1'.
 .if ''\\$4' .br
-.if !''\\$1' .nr @ll \\$1
-.if !''\\$2' .nr @pl \\$2
-.if !''\\$3' .nr @po \\$3
-.ll \\n[@ll]u
-.lt \\n[@ll]u
-.po \\n[@po]u
-.pl \\n[@pl]u
-.nr @cur-ll \\n[@ll]
+.if !''\\$1' \{\
+.	ll \\$1
+.	nr @ll \n[.l]
+.	nr @cur-ll \\n[@ll]
+.	lt \\n[@ll]u
+.\}
+.\"
+.if !''\\$2' \{\
+.	pl \\$2
+.	nr @pl \n[.p]
+.\}
+.\"
+.if !''\\$3' \{\
+.	po \\$3
+.	nr @po \n[.o]
+.\}
 'in 0
 .pg@move-trap
 ..
@@ -529,28 +568,30 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"
 .\" set point size
 .if !'\\*[misc*a]'C' \{\
-.	ie '\\*[misc*a]'P' .nr @ps \\n[misc*S-ps]
+.	ie '\\*[misc*a]'P' .ps \\n[misc*S-ps]u
 .	el \{\
-.		ie '\\*[misc*a]'D' .nr @ps 10
-.		el .nr @ps \\*[misc*a]
+.		ie '\\*[misc*a]'D' .ps 10p
+.		el .ps (p;\\*[misc*a])
 .	\}
 .\}
 .\"
 .\" set vertical spacing
 .if !'\\*[misc*b]'C' \{\
-.	ie '\\*[misc*b]'P' .nr @vs \\n[misc*S-vs]
+.	ie '\\*[misc*b]'P' .vs \\n[misc*S-vs]u
 .	el \{\
-.		ie '\\*[misc*b]'D' .nr @vs \\n[@ps]+2
-.		el .nr @vs \\*[misc*b]
+.		ie '\\*[misc*b]'D' .vs \\n[@ps]u+2p
+.		el .vs (p;\\*[misc*b])
 .	\}
 .\}
-'ps \\n[@ps]
-'vs \\n[@vs]
-.if \\n[D]>1 .tm point-size \\n[@ps] (\\n[.s]), vertical spacing \\n[@vs] (\\n[.v])
+.nr @ps \\n[.ps]
+.nr @vs \\n[.v]
+.\"
+.if \\n[D]>1 .tm S[\\n[.c]]: point-size \\n[@ps]u, vertical spacing \\n[@vs]u
 .nr misc*S-ps \\n[misc*S-ps1]
 .nr misc*S-vs \\n[misc*S-vs1]
 .nr misc*S-ps1 \\n[@ps]
 .nr misc*S-vs1 \\n[@vs]
+.pg@move-trap
 ..
 .\"------------
 .de HC
@@ -779,8 +820,9 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .el \\$2\\$3\\*[hd*suf-space]\&\c
 .ft 1
 .\" restore pointsize and vertical size.
-.ps \\n[@ps]
-.vs \\n[@vs]
+.ps \\n[@ps]u
+.vs \\n[@vs]u
+.br
 .\"
 .\" table of contents
 .if (\\n[hd*level]<=\\n[Cl])&\w@\\$2@ \{\
@@ -1024,6 +1066,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	el .tl \\*[pg*even-footer]
 .	ie (\\n[%]=1)&(\\n[N]=1) .tl \\*[pg*header]
 .	el .tl \\*[pg*footer]
+.	tl ''\\*[Pg_type!\\n[@copy_type]]''
 .\}
 .ev
 .\" be sure that floating displays and footnotes will be
@@ -1044,12 +1087,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 'in 0
 'ti 0
 .ie \\n[Pgps] \{\
-.	ps \\n[@ps]
-.	vs \\n[@vs]
+.	ps \\n[@ps]u
+.	vs \\n[@vs]u
 .\}
 .el \{\
-.	ps \\n[pg*ps]
-.	vs \\n[pg*vs]
+.	ps \\n[pg*ps]u
+.	vs \\n[pg*vs]u
 .\}
 .lt \\n[@ll]u
 ..
@@ -1258,8 +1301,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ds pg*mul-fam \\n[.fam]
 .nr pg*mul-font \\n[.f]
 .ev pg*mul-ev
-.ps \\n[@ps]
-.vs \\n[@vs]
+.ps \\n[@ps]u
+.vs \\n[@vs]u
 .fam \\*[pg*mul-fam]
 .ft \\n[pg*mul-font]
 .fi
@@ -1328,8 +1371,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .el 'hy 0
 .ll \\n[@cur-ll]u
 .lt \\n[@cur-ll]u
-.ps (\\n[@ps]-2)
-.vs (\\n[@vs]-1)
+.ps (p;\\n[@ps]u-2)
+.vs (p;\\n[@vs]u-1)
 ..
 .\"-----------------
 .\" set footnote format
@@ -1390,6 +1433,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\"-----------------
 .\" begin footnote
+.\" Change environment, switch to diversion and print the foot-note mark.
 .de FS
 .if \\n[ft*busy] .@error "FS: missing FE"
 .nr ft*busy 1
@@ -1418,6 +1462,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\"-----------------
 .\" end footnote
+.\" End the diversion, back to previous environment, and adjust
+.\" the trap to the new foot-note size.
 .de FE
 .nr ft*busy 0
 .br
@@ -1816,7 +1862,10 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .if \\n[li*type]=5 .ds li*c-mark <\\n[li*cnt!\\n[li*lvl]]>
 .if \\n[li*type]=6 .ds li*c-mark {\\n[li*cnt!\\n[li*lvl]]}
 .if \\n[.$]=1 .ds li*c-mark \\$1
-.if \\n[.$]=2 .ds li*c-mark \\$1\ \\*[li*c-mark]
+.ie \\n[.$]=2 \{\
+.	ie (\\$2=2):(\\n[Limsp]=0) .ds li*c-mark \\$1\\*[li*c-mark]
+.	el .ds li*c-mark \\$1\ \\*[li*c-mark]
+.\}
 .if '\\*[li*c-mark]'\ ' .ds li*c-mark
 .\"
 .\" determine where the text begins
@@ -2020,6 +2069,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ds eq*lable "\\$1
 .di eq*div
 .misc@ev-keep eq*ev
+.ps \\n[@ps]u
+.vs \\n[@vs]u
 .in 0
 .nf
 ..
@@ -2112,10 +2163,10 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\}
 .if d toc*list .toc*list
 .\" print LIST OF XXX
-.if d lix*dsfg .lix@print-ds fg "\\*[Lf]"
-.if d lix*dstb .lix@print-ds tb "\\*[Lt]"
-.if d lix*dsec .lix@print-ds ec "\\*[Le]"
-.if d lix*dsex .lix@print-ds ex "\\*[Lx]"
+.if d lix*dsfg .lix@print-ds fg FG "\\*[Lf]" \\n[.$]
+.if d lix*dstb .lix@print-ds tb TB "\\*[Lt]" \\n[.$]
+.if d lix*dsec .lix@print-ds ec EC "\\*[Le]" \\n[.$]
+.if d lix*dsex .lix@print-ds ex EX "\\*[Lx]" \\n[.$]
 ..
 .\"-----------
 .\" .toc@read-Ci lev1 lev2 lev3 lev4 ... lev7
@@ -2231,20 +2282,20 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	if 0\\$6=1 .ds lix*lable \\*[Li\\$1]\ \\*[lix*numb]\\$5\\*[lix*ds-form]
 .	if 0\\$6=2 .ds lix*lable \\*[Li\\$1]\ \\$5\\*[lix*ds-form]
 .\}
-.ie \\n[Sectp] .ds lix*pgnr \\*[hd*sect-pg]
-.el .ds lix*pgnr \\n[%]
 .\" print line if not between DS/DE
-.ie \\n[ds*lvl]<1 .lix@print-text "\\*[lix*lable]" "\\*[lix*text]"
-.el .lix@embedded-text "\\*[lix*lable]" "\\*[lix*text]"
+.ie \\n[ds*lvl]<1&\\n[df*float]=0 \{\
+.	lix@print-text "\\*[lix*lable]" "\\*[lix*text]" \\$1 \\$2 \\$7
+.\}
+.el \{\
+.	lix@embedded-text "\\*[lix*lable]" "\\*[lix*text]" \\$1 \\$2 \\$7
+.\}
 .\"
-.\" save line for LIST OF XXX
-.if !r lix*wth\\$1 .nr lix*wth\\$1 0
-.if \w@\\*[lix*lable]@>\\n[lix*wth\\$1] .nr lix*wth\\$1 \w@\\*[lix*lable]@
-.if \\n[\\$2] .lix@ds-save \\$1 \\*[lix*pgnr] "\\$4" "\\*[lix*lable]"
-.if !'\\$7'' .SETR \\$7 \\*[lix*numb]
 ..
 .\"-----------
+.\" lable text type stringvar refname
 .de lix@print-text
+.ie \\n[Sectp] .ds lix*pgnr \\*[hd*sect-pg]
+.el .ds lix*pgnr \\n[%]
 .SP \\n[Lsp]u
 .misc@ev-keep lix
 .init@reset
@@ -2257,14 +2308,23 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 \fB\\$1\fP\\$2
 .br
 .ev
+.\" save line for LIST OF XXX, wth is the width of the lable
+.if !r lix*wth\\$3 .nr lix*wth\\$3 0
+.\" find the maximum width
+.if \w@\\*[lix*lable]@>\\n[lix*wth\\$3] .nr lix*wth\\$3 \w@\\*[lix*lable]@
+.if \\n[\\$4] .lix@ds-save \\$3 \\*[lix*pgnr] "\\*[lix*text]" "\\*[lix*lable]"
+.\" save reference to the figure
+.if !'\\$5'' .SETR \\$5 \\*[lix*numb]
 ..
 .\" hide printout until diversion is evaluated
 .de lix@embedded-text
-\!.SP \\n[Lsp]u
+\!.ie \\\\n[Sectp] .ds lix*pgnr \\\\*[hd*sect-pg]
+\!.el .ds lix*pgnr \\\\n[%]
+\!.SP \\\\n[Lsp]u
 \!.misc@ev-keep lix
 \!.init@reset
 \!.br
-\!.ie (\w@\\$1\\$2@)>(\\n[.l]-\\n[.i]) \{\
+\!.ie (\w@\\$1\\$2@)>(\\\\n[.l]-\\\\n[.i]) \{\
 .	in +\w@\\$1@u
 \!.	ti 0
 \!.\}
@@ -2272,6 +2332,13 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 \!\fB\\$1\fP\\$2
 \!.br
 \!.ev
+.\" save line for LIST OF XXX, wth is the width of the lable
+\!.if !r lix*wth\\$3 .nr lix*wth\\$3 0
+.\" find the maximum width
+\!.if \w@\\*[lix*lable]@>\\\\n[lix*wth\\$3] .nr lix*wth\\$3 \w@\\*[lix*lable]@
+\!.if \\\\n[\\$4] .lix@ds-save \\$3 \\\\*[lix*pgnr] "\\*[lix*text]" "\\*[lix*lable]"
+.\" save reference to the figure
+\!.if !'\\$5'' .SETR \\$5 \\*[lix*numb]
 ..
 .\"------------
 .\" print complete list of XXXX
@@ -2279,9 +2346,14 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" arg: fg,tb,ec,ex text
 .if !\\n[Cp] .pg@next-page
 .\" print LIST OF XXXX
-.ce
-\\$2
-.SP 3
+.\" execute user-defined macros
+.if \\$4<=4 .if d TX\\$2 .TX\\$2
+.ie d TY\\$2 .if \\$4<=4 .TY\\$2
+.el \{\
+.	ce
+\\$3
+.	SP 3
+.\}
 .in \\n[lix*wth\\$1]u
 .fi
 .lix*ds\\$1
@@ -2366,8 +2438,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" jump to new environment.
 .ev box*ev
 .di box*div
-.ps \\n[@ps]
-.vs \\n[@vs]
+.ps \\n[@ps]u
+.vs \\n[@vs]u
 .in 1n
 .ll (u;\\n[box*wid]-1n)
 .hy \\n[.hy]
@@ -2857,7 +2929,18 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .sp 2
 .ie n ______________________________      ______________
 .el \D'l 25m 0'\h'4m'\D'l 12m 0'
-\Z'\\$1'\h'29m'\\*[Letdate]
+\Z'\\$1'\h'29m'\f[\\*[@sdf_font]]\\*[Letdate]\fP
+.fi
+..
+.\"------------------------
+.\" Letter signature
+.de AVL
+.ne 6v
+.nf
+.sp 3
+.ie n ______________________________
+.el \D'l 25m 0'
+\Z'\\$1'
 .fi
 ..
 .\"------------------------
@@ -3007,7 +3090,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	el \{\
 .		sp
 .		if '\\*[let*type]'SB' .ti +5m
-\\*[LetSJ] \\*[let*lo-SJ]
+\\*[LetSJ] \f[\\*[@sdf_font]]\\*[let*lo-SJ]\fP
 .	\}
 .\}
 ..
