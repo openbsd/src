@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.4 1997/06/30 11:46:21 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.5 1999/12/09 00:48:03 millert Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.4 1997/06/30 11:46:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.5 1999/12/09 00:48:03 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -174,6 +174,8 @@ r_columnate()
 
 	maxlength = (maxlength + TAB) & ~(TAB - 1);
 	numcols = termwidth / maxlength;
+	if (numcols == 0)
+		numcols = 1;
 	numrows = entries / numcols;
 	if (entries % numcols)
 		++numrows;
