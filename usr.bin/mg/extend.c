@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.27 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.28 2002/07/03 03:47:59 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -189,9 +189,9 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 				if (pref_map != NULL)
 					ele->k_prefmap = pref_map;
 				else {
-					if (!(mp = malloc(sizeof(KEYMAP) +
+					if ((mp = malloc(sizeof(KEYMAP) +
 					    (MAPINIT - 1) *
-					    sizeof(MAP_ELEMENT)))) {
+					    sizeof(MAP_ELEMENT))) == NULL) {
 						ewprintf("Out of memory");
 						ele->k_funcp[c - ele->k_base] =
 						    curmap->map_default;

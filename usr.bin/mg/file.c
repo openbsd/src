@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.20 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.21 2002/07/03 03:47:59 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -196,6 +196,8 @@ insertfile(char *fname, char *newname, int needinfo)
 	lp1 = NULL;
 	if (line == NULL) {
 		line = malloc(NLINE);
+		if (line == NULL)
+			panic("out of memory");
 		linesize = NLINE;
 	}
 

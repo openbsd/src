@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.22 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: echo.c,v 1.23 2002/07/03 03:47:59 vincent Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -742,11 +742,18 @@ free_file_list(LIST *lp)
 static LIST *
 copy_list(LIST *lp)
 {
-	LIST	*current, *last;
+	LIST	*current, *last, *nxt;
 
 	last = NULL;
 	while (lp) {
 		current = (LIST *)malloc(sizeof(LIST));
+		if (current == NULL) {
+			for (current = last; current; current = nxt) {
+				nxt = current->l_next;
+				free(current);
+				return (NULL);
+			}
+		}
 		current->l_next = last;
 		current->l_name = lp->l_name;
 		last = (LIST *)current;
