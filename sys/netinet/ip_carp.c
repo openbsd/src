@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.4 2003/10/20 03:01:01 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.5 2003/10/20 06:57:29 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -124,7 +124,7 @@ struct carp_if {
 #define	CARP_LOG1(sc,s,a) if (carp_opts[CARPCTL_LOG])			\
 	log(LOG_INFO, "%s: " s "\n", (sc)->sc_ac.ac_if.if_xname, (a));
 
-void	carp_sha1_generate (struct carp_softc *, u_int32_t *, 
+void	carp_sha1_generate (struct carp_softc *, u_int32_t *,
 	    unsigned char *);
 int	carp_sha1_verify (struct carp_softc *, u_int32_t *,
 	    unsigned char *);
@@ -152,14 +152,14 @@ carp_sha1_generate(struct carp_softc *sc, u_int32_t counter[2], unsigned char md
 	/* XXX this should probably use the crypto framework */
 	SHA1_CTX sha1ctx;
 	u_int8_t version = CARP_VERSION, type = CARP_ADVERTISEMENT;
+	u_int8_t vhid = sc->sc_vhid & 0xff;
 	struct ifaddr *ifa;
 
 	SHA1Init(&sha1ctx);
 
 	SHA1Update(&sha1ctx, (void *)&version, sizeof(version));
 	SHA1Update(&sha1ctx, (void *)&type, sizeof(type));
-	SHA1Update(&sha1ctx, (void *)&sc->sc_vhid, sizeof(sc->sc_vhid));
-	SHA1Update(&sha1ctx, (void *)counter, sizeof(*counter));
+	SHA1Update(&sha1ctx, (void *)&vhid, sizeof(vhid));
 	SHA1Update(&sha1ctx, (void *)&sc->sc_key, sizeof(sc->sc_key));
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
@@ -167,6 +167,7 @@ carp_sha1_generate(struct carp_softc *sc, u_int32_t counter[2], unsigned char md
 			    (void *)&ifatoia(ifa)->ia_addr.sin_addr.s_addr,
 			    sizeof(u_int32_t));
 	}
+	SHA1Update(&sha1ctx, (void *)counter, sizeof(sc->sc_counter));
 
 	SHA1Final(md, &sha1ctx);
 }
@@ -364,7 +365,7 @@ carp_input(struct mbuf *m, ...)
 		}
 		break;
 	case BACKUP:
-		/* 
+		/*
 		 * If we're pre-empting masters who advertise slower than us,
 		 * and this one claims to be slower, treat him as down.
 		 */
@@ -373,7 +374,7 @@ carp_input(struct mbuf *m, ...)
 			break;
 		}
 
-		/* 
+		/*
 		 *  If the master is going to advertise at such a low frequency
 		 *  that he's guaranteed to time out, we'd might as well just
 		 *  treat him as timed out now.
@@ -383,7 +384,7 @@ carp_input(struct mbuf *m, ...)
 			carp_master_down(sc);
 			break;
 		}
-		
+
 		/*
 		 * Otherwise, we reset the counter and wait for the next
 		 * advertisement.
