@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.4 1997/01/26 23:05:12 downsj Exp $
+	$OpenBSD: syscalls.master,v 1.5 1998/02/17 01:48:07 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.2 1995/10/07 06:27:28 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -201,8 +201,9 @@
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
 131	UNIMPL		flock
 132	STD		{ int osf1_sys_setgid(gid_t gid); }
-133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t to, int tolen); }
+133	STD		{ int osf1_sys_sendto(int s, const void *buf, \
+			    size_t len, int flags, const struct sockaddr *to, \
+			    int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	UNIMPL		socketpair
 136	NOARGS		{ int sys_mkdir(char *path, int mode); }

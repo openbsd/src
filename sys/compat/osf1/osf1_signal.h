@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.h,v 1.2 1996/08/02 20:35:27 niklas Exp $	*/
+/*	$OpenBSD: osf1_signal.h,v 1.3 1998/02/17 01:48:08 millert Exp $	*/
 
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H
@@ -49,7 +49,7 @@ typedef u_long	osf1_sigset_t;
 typedef void	(*osf1_handler_t) __P((int));
 
 struct osf1_sigaction {
-	osf1_handler_t	sa_handler;
+	osf1_handler_t	sa__handler;
 	osf1_sigset_t	sa_mask;
 	int		sa_flags;
 };
@@ -73,7 +73,7 @@ struct osf1_sigaltstack {
 #define OSF1_SS_ONSTACK		0x00000001
 #define	OSF1_SS_DISABLE		0x00000002
 
-extern int osf1_to_linux_sig[];
+extern int osf1_to_bsd_sig[];
 void bsd_to_osf1_sigaltstack __P((const struct sigaltstack *, struct osf1_sigaltstack *));
 void bsd_to_osf1_sigset __P((const sigset_t *, osf1_sigset_t *));
 void osf1_to_bsd_sigaltstack __P((const struct osf1_sigaltstack *, struct sigaltstack *));

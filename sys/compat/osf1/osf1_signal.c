@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.5 1997/09/15 06:09:58 millert Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.6 1998/02/17 01:48:07 millert Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ osf1_to_bsd_sigaction(osa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = osa->sa_handler;
+	bsa->sa_handler = osa->sa__handler;
 	osf1_to_bsd_sigset(&osa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((osa->sa_flags & OSF1_SA_ONSTACK) != 0)
@@ -171,7 +171,7 @@ bsd_to_osf1_sigaction(bsa, osa)
 	struct osf1_sigaction *osa;
 {
 
-	osa->sa_handler = bsa->sa_handler;
+	osa->sa__handler = bsa->sa_handler;
 	bsd_to_osf1_sigset(&bsa->sa_mask, &osa->sa_mask);
 	osa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
