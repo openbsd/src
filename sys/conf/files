@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.314 2004/08/05 17:04:51 pefo Exp $
+#	$OpenBSD: files,v 1.315 2004/09/14 23:49:28 henning Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -695,7 +695,6 @@ file net/radix_mpath.c			!small_kernel
 file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
-file net/route_src.c			!small_kernel
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
