@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.198 2004/02/13 14:14:52 miod Exp $
+#	$OpenBSD: Makefile,v 1.199 2004/02/16 19:03:30 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -351,17 +351,24 @@ cleandir:
 	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
 	    ${MAKE} MACHINE=$$m clean; done
 
+MAKEDEVSRC=	MAKEDEV.mi MAKEDEV.sub MAKEDEV.common
+MAKEDEVDOC=	MAKEDEV.man MAKEDEV.mansub MAKEDEV.common
 m4: etc.${M}/MAKEDEV
+man: ${.CURDIR}/../share/man/man8/man.${M}/MAKEDEV.8
 
-etc.${M}/MAKEDEV: MAKEDEV.sub MAKEDEV.mi etc.${M}/MAKEDEV.md
-	echo "==> etc.${M}/MAKEDEV"
+etc.${M}/MAKEDEV: ${MAKEDEVSRC} etc.${M}/MAKEDEV.md
+	@echo "==> etc.${M}/MAKEDEV"
 	m4 -DMACHINE=${M} MAKEDEV.mi > etc.${M}/.MAKEDEV.tmp && \
 	    mv etc.${M}/.MAKEDEV.tmp etc.${M}/MAKEDEV || \
 	    rm etc.${M}/.MAKEDEV.tmp
 
-allarchs: MAKEDEV.sub MAKEDEV.mi
+${.CURDIR}/../share/man/man8/man.${M}/MAKEDEV.8: ${MAKEDEVDOC} etc.${M}/MAKEDEV.md
+	m4 -DMACHINE=${M} MAKEDEV.man > \
+	    ${.CURDIR}/../share/man/man8/man8.${M}/MAKEDEV.8
+
+allarchs: ${MAKEDEVSRC} ${MAKEDEVDOC}
 	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-	    ${MAKE} M=$$m m4; done
+	    ${MAKE} M=$$m m4 man; done
 
 distrib:
 	cd ${.CURDIR}/../distrib && \
@@ -370,7 +377,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.198 2004/02/13 14:14:52 miod Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.199 2004/02/16 19:03:30 miod Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
