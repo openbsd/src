@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_union.8,v 1.10 2000/11/09 17:53:02 aaron Exp $
+.\"	$OpenBSD: mount_union.8,v 1.11 2001/06/08 13:46:52 aaron Exp $
 .\"	$NetBSD: mount_union.8,v 1.4 1995/09/29 06:44:02 jtc Exp $
 .\"
 .\" Copyright (c) 1994
@@ -184,6 +184,11 @@ accessible via
 .Xr fstab 5 ,
 .Xr mount 8 ,
 .Xr mount_null 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Bx 4.4 .
 .Sh BUGS
 Without whiteout support from the filesystem backing the upper layer,
 there is no way that delete and rename operations on lower layer
@@ -197,8 +202,3 @@ Running
 .Xr find 1
 over a union tree has the side-effect of creating
 a tree of shadow directories in the upper layer.
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Bx 4.4 .
