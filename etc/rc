@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.136 2000/05/03 02:40:16 deraadt Exp $
+#	$OpenBSD: rc,v 1.137 2000/05/12 06:10:26 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -537,7 +537,7 @@ fi
 if [ X${kerberos_slave} = X"YES" ]; then
 	echo 'kerberos slave server'
 	/usr/libexec/kerberos -s >> /var/log/kerberos.log &
-	/usr/libexec/kpropd -i &
+	/usr/libexec/kpropd -i -p /usr/sbin/kdb_util &
 fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
