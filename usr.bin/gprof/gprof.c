@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.3 1996/10/02 02:59:49 tholo Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.4 1998/08/11 02:54:08 deraadt Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.3 1996/10/02 02:59:49 tholo Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.4 1998/08/11 02:54:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -725,8 +725,7 @@ funcsymbol( nlistp )
     }
 	/*
 	 *	can't have any `funny' characters in name,
-	 *	where `funny' includes	`.', .o file names
-	 *			and	`$', pascal labels.
+	 *	where `funny' means `.', .o file names
 	 *	need to make an exception for sparc .mul & co.
 	 *	perhaps we should just drop this code entirely...
 	 */
@@ -744,7 +743,7 @@ funcsymbol( nlistp )
     }
 #endif
     while ( c = *name++ ) {
-	if ( c == '.' || c == '$' ) {
+	if ( c == '.' ) {
 	    return FALSE;
 	}
     }
