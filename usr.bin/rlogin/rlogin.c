@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.17 1997/08/31 18:00:43 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.18 1997/09/03 18:01:01 kstailey Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.17 1997/08/31 18:00:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.18 1997/09/03 18:01:01 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -380,6 +380,10 @@ doit(omask)
 		}
 		sleep(1);
 
+		msg("\aconnection closed.");
+		exit(1);
+	}
+
 	/*
 	 * Use sigaction() instead of signal() to avoid getting SIGCHLDs
 	 * for stopped children.
@@ -388,10 +392,6 @@ doit(omask)
 	sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
 	sa.sa_handler = catch_child;
 	(void)sigaction(SIGCHLD, &sa, NULL);
-
-		msg("\aconnection closed.");
-		exit(1);
-	}
 
 	/*
 	 * We may still own the socket, and may have a pending SIGURG (or might
