@@ -4,15 +4,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: toupper_.c,v 1.2 1996/08/19 08:26:56 tholo Exp $";
+static char rcsid[] = "$OpenBSD: toupper_.c,v 1.3 2001/06/27 07:17:09 pjanzen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <ctype.h>
-
-#if EOF != -1
-#error "EOF != -1"
-#endif
 
 const short _C_toupper_[1 + 256] = {
 	EOF,
@@ -57,5 +53,7 @@ int
 toupper(c)
 	int c;
 {
+	if (c != (unsigned char) c)
+		return(c);
 	return((_toupper_tab_ + 1)[c]);
 }
