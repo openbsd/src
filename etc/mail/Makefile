@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2003/09/25 15:34:25 millert Exp $
+# $OpenBSD: Makefile,v 1.3 2004/06/24 18:27:45 tom Exp $
 #
 # Generate the various .db versions from their source files.
 # The sendmail .mc files are not built here.  They live in
 # /usr/share/sendmail/cf and have their own Makefile.
 #
 
-.for DB in access aliases mailertable virtusertable userdb
+.for DB in access aliases genericstable mailertable virtusertable userdb
 . if exists(${DB})
 DB_FILES+= ${DB}.db
 . endif
@@ -50,6 +50,9 @@ access.db: access
 
 aliases.db: aliases
 	sendmail -bi
+
+genericstable.db: genericstable
+	makemap hash ${.ALLSRC} < ${.ALLSRC}
 
 mailertable.db: mailertable
 	makemap hash ${.ALLSRC} < ${.ALLSRC}
