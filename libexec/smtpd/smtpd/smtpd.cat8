@@ -1,0 +1,317 @@
+
+NAME
+
+     smtpd - Obtuse Systems SMTP message storing daemon
+
+SYNOPSIS
+
+version 1
+smtpd [ -c chrootdir ] [ -d spooldir ] [ -u user ] [ -g group ] [ -m myname
+] [ -s maxsize ] [ -H ] [ -P ]
+version 2
+smtpd [ -c chrootdir ] [ -d spooldir ] [ -u user ] [ -g group ] [ -m myname
+] [ -s maxsize ] [ -H ] [ -P ] [ -D ] [ -L ]
+
+DESCRIPTION
+
+     The smtpd daemon talks the Simple Mail Transfer Protocol (SMTP) with
+     other SMTP daemons to receive mail from them, and saves it into a spool
+     directory for later processing. It is the store portion of an SMTP
+     store and foward proxy. The symbiotic companion program smtpfwdd is
+     used to forward the spooled mail on to its eventual destination.
+
+     smtpd is invoked from a super-server such as inetd or juniperd.
+
+OPTIONS
+
+        o -c chrootdir Specify a different directory to chroot to on startup
+          than the default spool directory (/usr/spool/smtpd). This
+          directory should be readable and writable only to the user that
+          smtpd runs as.
+        o -d spooldir Specify a different spool directory within the
+          chrooted subtree. The default is ".", making smtpd spool files to
+          the directory it chroots itself to.
+        o -u user Specify a user to run as. This user must not be root but
+          should normally be a user that is able to run sendmail and use the
+          -f option to specify the sender of a mail message.
+        o -g group Specify a group to run as. Same as user above.
+        o -H Disable host checking against the DNS. By default smtpd checks
+          and will complain in the syslogs if the DNS information on a host
+          seems to indicate a possible spoof or misconfiguration.
+        o -m myname Specify the hostname the daemon should announce itself
+          as. the default is whatever gethostname() returns.
+        o -s maxsize Specify (in bytes) the maximum size of mail message the
+          daemon should accept. The default is not to have a maximum size.
+        o -P Enable paranoid mode of operation, in this mode connections are
+          dropped from any client feeding smtpd a suspicious hostname,
+          FROM:, or RCPT: line containing characters indicative of an
+          attempt to do something evil, or any message headers that aren't
+          8bit clean. The default is to log such occuurances and substitute
+          for the offending characters, but not drop the connection.
+        o -D Tells smtpd to run as a daemon, listening on port 25. The
+          default is not to run as a daemon (i.e. it should normally be
+          spawned from juniperd or inetd.
+        o -L Suppress children in daemon mode (above) from doing an
+          openlog() call. This means your syslogs won't have pid
+          information, but is useful if you don't want to have to set up
+          your chroot jail for smtpd in a manner that an openlog() call will
+          work in it.
+
+FILES
+
+     The address checking file is normally /etc/smtpd_check_rules,
+     unless otherwise configured at compile time.
+
+     The address check file, when enabled is read for each RCPT line
+     in the SMTP dialogue. Each rule is checked with the current
+     source (SMTP client machine and possibly user from ident) and the
+     current FROM: and RCPT: addresses. rules are read from top to
+     bottom of the file, and the first match stops the check, with the
+     action determined by the first field of the rule.
+
+     Anything on a line after a pound sign (#) is ignored as a comment.
+
+     An address check rule line has four fields:
+	
+[allow|deny|noto]:SourceList:FromList:ToList[:XXX message for deny/noto]
+
+     The first field must normally be one of the strings
+     "allow","deny", or "noto". This determines the disposition of a
+     message which matches a the rule. A matching "allow" rule allows
+     the smtp connection to proceed. A matching "deny" rule will
+     terminate the smtp connection when matched with a failure, and
+     the message will not be delivered to *any* of it's recipients. A
+     "noto" rule will prevent the delivery of a message to the
+     matching combination, failing that RCPT command, and returning a
+     550 code in the SMTP dialogue, but will allow delivery to
+     continue if other rules allow further recipients. If NOTO_DELAY
+     and DENY_DELAY are set nonzero in the makefile at compile time,
+     there are two additional rule keywords; "noto_delay", and
+     "deny_delay". These rules function exactely like a noto or deny,
+     except that smtpd will sleep for the delay amount before
+     returning the error code to the client, causing a "pregnant
+     pause" in the SMTP dialogue. The Second Field is a List of Source
+     Patterns, separated by white space. These match against the
+     incoming SMTP connection's originating hostname, IP address and
+     possibly username returned by an ident call.
+
+     The Third field is a list of Address Patterns, separated by white
+     space. These match against the MAIL FROM: portion of the smtp
+     dialogue.
+
+     The Fourth field is a list of Address Patterns, separated by
+     white space. These match against the RCPT TO: portion of the smtp
+     dialogue.
+
+     The Fifth field is optional, and if present is used on matching
+     the rule if it is a deny or noto rule. It should be the complete
+     smtp dialogue message to be sent to the remote smtp client. It
+     should start with an appropriate smtp error code. The following
+     substitutions are made in the string:
+
+   * %F is replaced with the MAIL FROM: address.
+   * %T is replaced with the RCPT TO: address.
+   * %H is replaced with the connecting hostname, or "UNKNOWN"
+   * %U is replaced with the connecting user from ident, or "UNKNOWN"
+   * %I is replaced with the connecting host IP address.
+
+     For a rule to match a match must be successfully made against all
+     three lists. A match against a list occurs when any of the
+     patterns in it match. EXCEPT, the keyword "EXCEPT" may be used in
+     a list to indicate exceptions to matches: For example: pattern1
+     pattern2 pattern3 EXCEPT pattern4 will match against any string
+     that matches pattern1 pattern2 or pattern3, except for those that
+     also match pattern4.
+
+     All characters in patterns except in specials must be lower
+     case. lower case letters in patterns match against both upper and
+     lower case letters in sources. '*' in a pattern matches 0 or more
+     characters. If smtpd was compiled with USE_REGEX set in the
+     makefile, a pattern may be enclosed in slashes "//", to indicate
+     that it is a POSIX style regular expression, which is matched
+     against case insensitively.
+
+     Source Patterns:
+
+     A Source Pattern is a pattern to match the source of a
+     connection. It consistes of two parts, and optional user part,
+     with an ampersand(@), followed by the required host part. Each
+     part is treated independently. The user part (If present) will
+     check against the user value returned by smtpd performing an
+     ident query to the connecting machine. No ident query is made
+     unless a rule requests one. The Host Part matches against the
+     hostname or IP address of the connecting machine. IP addresses
+     may be specified using a netmask of the form a.b.c.d/bits. Each
+     part may consist of the following specials:
+
+   * ALL matches everything, including empty string
+   * KNOWN matches a known reply from the network, in the case of resolved
+     hostnames or ident values.
+   * UNKNOWN matches an unknown reply from the network, in the case of
+     resolved hostnames or ident values.
+   * TRUSTED matches a connection arriving on a trusted interface (If smtpd
+     was compiled with JUNIPER_SUPPORT and you are running on an machien
+     with the Juniper firewall toolkit)
+   * UNTRUSTED matches a connection arriving on an untrusted interface (If
+     smtpd was compiled with JUNIPER_SUPPORT and you are running on an
+     machien with the Juniper firewall toolkit)
+   * NS=pattern matches a connection arriving from a source whose nameserver
+     or mail exchanger matches pattern. (if NS_MATCH set to 1 in Makefile)
+
+   Example Source Patterns:
+
+hobbes.obtuse.com - matches only a connection from machine
+"hobbes.obtuse.com" (or "HoBBeS.obTuSe.CoM")
+*obtuse.com - matches any hostname ending in "obtuse.com"
+(hobbes.obtuse.com or hobbes.AcutelyObtuse.com)
+KNOWN - Matches only machines whose address resolves to a hostname.
+UNKNOWN - Matches only machines whose address does not resolve to a
+hostname.
+UKKNOWN EXCEPT TRUSTED - Matches a connection from a machine whose address
+does not resolve to a hostname, except if the connection is via a trusted
+interface.
+KNOWN@KNOWN - Matches only machines whose address resolves AND returns
+something as the user via ident. (No ident call is made by smtpd unless a
+rule requires one)
+129.128.13.2 - Matches a connection from host IP 129.128.13.2
+129.128.13.0/24 - Matches a connection from class C 129.128.13.
+129.128.13.* - Matches a connection from class C 129.128.13.
+beck@hobbes.obtuse.com - matches only a connection from machine
+"hobbes.obtuse.com", with ident returned as "beck" (or "bEcK").
+KNOWN@hobbes.obtuse.com - matches only a connection from machine
+"hobbes.obtuse.com", with any known ident value.
+UNKNOWN@hobbes.obtuse.com - matches only a connection from machine
+"hobbes.obtuse.com", with any unknown ident value.
+
+     Address patterns:
+
+     An address pattern may consist of a user and host part, separated
+     by an ampersand (@). Each part or the whole pattern may consist
+     of one of the following specials:
+
+   * ALL matches everything, including empty string
+   * USER ** (special) means this part must match the ident user for the
+     connection.
+   * NS=pattern to match Nameserver or MX, may apper on right of @, or by
+     itself. (if NS_MATCH set to 1 in Makefile)
+
+     Address pattern examples:
+
+   * ALL matches anything.
+   * spamford@cyberpromo.com matches "spamford@cyberpromo.com"
+   * ALL@cyberpromo.com matches any address from "cyberpromo.com"
+   * *@cyberpromo.com same as above
+   * ALL@*cyberpromo.com matches any address from anything ending in
+     cyberpromo.com.
+   * ALL@NS=*cyberpromo.com matches any address where the RHS uses a
+     nameserver or MX ending in "cyberpromo.com".
+   * sales@ALL matches "sales" from anywhere.
+   * USER@obtuse.com The ident reply from the connecting host must be (case
+     insensitively) the user part of the address that ends in obtuse.com.
+   * /^[0-9]+@.*$/ (assuming USE_REGEX = 1 when built) Match any addressthat
+     is all numbers in the user part
+
+     Example Rules:
+
+#Allow anything from anywhere to an address ending in obtuse.com:
+allow:ALL:ALL:ALL@*obtuse.com
+#don't allow unregistered hosts, unless via a trusted interface
+
+deny:UNKNOWN EXCEPT TRUSTED:ALL:ALL
+
+#deny mail from anything ending in .cyberpromo.com
+deny:ALL:*.cyberpromo.com:ALL
+#and deny anything relayed by a host ending in .cyberpromo.com
+deny:*.cyberpromo.com:ALL:ALL
+
+
+#Simple ident example, useful *only* if you can trust the ident
+#value returnd by the machine. (You can't unless you control it
+#or trust the person that does not to make it lie)
+#Allow mail if the user part of the FROM address matches ident.
+allow:KNOWN@idents.trusted.here:USER@idents.trusted.here:ALL
+
+# A more complex example. The typical university case of making
+# sure users don't subscribe other users to majordomo mailing lists by
+# forging mail via smtp.
+# allow users that mta's run as to send anything
+allow:root@ALL daemon@all uucp@all:ALL:ALL
+# other known users can send to majordomo only as themselves according
+# to ident.
+allow:KNOWN@ALL:USER@ALL:majordomo@ALL
+# Below shows a custom message too
+deny:ALL:ALL:majordomo@ALL:550 You can't send majordomo mail from %F when you are %U@%H (ip %I).
+
+# The normal antispam case, assumes JUNIPER_SUPPORT,
+# We trust everything from inside on a trusted interface to go out
+allow:UNTRUSTED:ALL:ALL
+# DNS registerd clients can talk to me, with mail for my domains
+allow:KNOWN:ALL:*my.domain *myother.domain
+# unregistered clients get punted.
+deny:UNKNOWN:ALL:ALL
+# otherwise mail to nonlocal users won't get relayed.
+noto:ALL:ALL:ALL
+
+     About NS= rules
+
+     The NS= rules match things in a somewhat strange way. Namely,
+     they will chop off bits from the left of what they are given
+     until they find something with a record for it. Specifically, if
+     you are looking for an NS=*cyberpromo.com, and the address you
+     are matching against is someone@completely.bogus.cyberpromo.com,
+     the NS=match will try first "completely.bogus.cyberpromo.com",
+     then "bogus.cyberpromo.com", and then finally "cyberpromo.com",
+     for which it will find cyberpromo's nameserver and mx
+     records. The exception to this is the case of NS=UNKNOWN or
+     NS=KNOWN. These will match whether a host, or rhs of an address
+     is known or unknown to the dns. A host is UNKNOWN if:
+
+   * a gethostbyname() call fails to find a hostent for it, AND no
+     Nameserver (NS) or Mail Exchanger (MX) records may be found for it in
+     the DNS.
+
+     When you specify NS=KNOWN or NS=UNKNOWN smtpd will not attempt to
+     work it's way down the string to find out who owns
+     it. i.e. completely.bogus.cyberpromo.com would match
+     NS=*cyberpromo.com, but would not match NS=KNOWN, and would match
+     NS=UNKNOWN. The major effect of this is that the following rule:
+     noto:ALL:NS=UNKNOWN:ALL Should effectively block any mail that
+     gives a MAIL FROM: address in the smtp dialogue with no hope of
+     being replyable to via smtp from your machine.
+
+BUGS
+
+     Mistakes in these rules can discard legitimate mail and annoy
+     your users and other postmasters a very great deal!. When
+     combined with custom return codes it is possible to write rules
+     that completely break the smtp protocol. It is important to test
+     your rules out and be absolutely sure they do exactly what you
+     want and no more.
+
+BUGS
+
+     Since sendmail is not normally running as a daemon when using smtpd and
+     smtpfwdd, one must use cron to periodically invoke sendmail -q so that
+     queued messages are retried for eventual delivery, alternatively sendmail
+     may be run standalone, but not listening to the network if your version
+     of sendmail supports doing this correctly.
+
+     Mistakes in the rules file can discard legitimate mail and annoy
+     your users and other postmasters a very great deal!. When
+     combined with custom return codes it is possible to write rules
+     that completely break the smtp protocol. It is important to test
+     your rules out and be absolutely sure they do exactly what you
+     want and no more.
+
+NOTES
+
+     smtpd and smtpfwdd are also available separately from Juniper
+     under quite friendly BSD style copyright terms. It can be
+     obtained using anonymous ftp in the directory
+     ftp://ftp.obtuse.com/pub/smtpd.
+
+SEE ALSO
+
+     juniperd
+     smtpfwdd
+
