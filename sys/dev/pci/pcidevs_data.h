@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.377 2001/03/14 22:49:00 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.378 2001/03/24 20:06:20 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -49,6 +49,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
 	    "3c339",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C359,
+	    "3c359",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450,
@@ -2689,6 +2693,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NKK, PCI_PRODUCT_NKK_NDR4600,
 	    "NDR4600 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BS21,
+	    "BS21 10/100",
 	},
 	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128,
@@ -6009,6 +6017,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ESSTECH,
 	    "ESS",
+	},
+	{
+	    PCI_VENDOR_NORTEL,
+	    "Nortel Networks",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ,

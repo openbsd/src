@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.377 2001/03/14 22:49:00 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.378 2001/03/24 20:06:20 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -500,6 +500,7 @@
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
+#define	PCI_VENDOR_NORTEL	0x126c		/* Nortel Networks */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta */
@@ -571,6 +572,7 @@
 /* 3Com Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 */
 #define	PCI_PRODUCT_3COM_3C339	0x3390		/* 3c339 */
+#define	PCI_PRODUCT_3COM_3C359	0x3590		/* 3c359 */
 #define	PCI_PRODUCT_3COM_3C450	0x4500		/* 3c450 */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 10Mbps */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595 100Base-TX */
@@ -1440,6 +1442,9 @@
 
 /* NKK products */
 #define	PCI_PRODUCT_NKK_NDR4600	0xA001		/* NDR4600 Host-PCI */
+
+/* Nortel Networks products */
+#define	PCI_PRODUCT_NORTEL_BS21	0x1211		/* BS21 10/100 */
 
 /* Number Nine products */
 #define	PCI_PRODUCT_NUMBER9_I128	0x2309		/* Imagine-128 */
