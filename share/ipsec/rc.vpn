@@ -102,9 +102,9 @@ eval_and_echo () {
 #
 
 # Create the SAs
-eval_and_echo "$ipsecadm new esp -src $VPN_MY_EXT_IP -dst $VPN_PEER_EXT_IP -tunnel $VPN_MY_EXT_IP $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -enc $VPN_ENC -auth $VPN_AUTH -iv $VPN_IV -key $VPN_KEY -authkey $VPN_AUTHKEY"
+eval_and_echo "$ipsecadm new esp -src $VPN_MY_EXT_IP -dst $VPN_PEER_EXT_IP -forcetunnel -spi $VPN_SPI_OUT -enc $VPN_ENC -auth $VPN_AUTH -key $VPN_KEY -authkey $VPN_AUTHKEY"
 
-eval_and_echo "$ipsecadm new esp -src $VPN_PEER_EXT_IP -dst $VPN_MY_EXT_IP -tunnel $VPN_PEER_EXT_IP $VPN_MY_EXT_IP -spi $VPN_SPI_IN -enc $VPN_ENC -auth $VPN_AUTH -iv $VPN_IV -key $VPN_KEY -authkey $VPN_AUTHKEY"
+eval_and_echo "$ipsecadm new esp -src $VPN_PEER_EXT_IP -dst $VPN_MY_EXT_IP -forcetunnel -spi $VPN_SPI_IN -enc $VPN_ENC -auth $VPN_AUTH -key $VPN_KEY -authkey $VPN_AUTHKEY"
 
 
 #
@@ -112,7 +112,7 @@ eval_and_echo "$ipsecadm new esp -src $VPN_PEER_EXT_IP -dst $VPN_MY_EXT_IP -tunn
 #
 
 # Route between the two external IPs
-eval_and_echo "ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $VPN_PEER_EXT_IP 255.255.255.255 -local"
+eval_and_echo "ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $VPN_PEER_EXT_IP 255.255.255.255 -local"
 
 # Routes from each internal subnet, to each internal subnet on the far side
 mycount=0
@@ -129,7 +129,7 @@ do
 	    eval next_peer_mask=\$VPN_PEER_INT_MASK_${peercount}
 	    if [ -n "${next_peer_ip}" ]; then
 		# set an IPSec route for this pair of networks
-		eval_and_echo "$ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $next_peer_ip $next_peer_mask"
+		eval_and_echo "$ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $next_peer_ip $next_peer_mask"
 		peercount=`expr ${peercount} + 1`
 	    else
 		    break;
@@ -151,7 +151,7 @@ do
     if [ -n "${next_peer_ip}" ]; then
 
         # Route from my ext IP to each remote internal subnet
-	eval_and_echo "$ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $next_peer_ip $next_peer_mask -local"
+	eval_and_echo "$ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $next_peer_ip $next_peer_mask -local"
 	peercount=`expr ${peercount} + 1`
     else
 	break;
@@ -166,12 +166,9 @@ do
     eval next_my_ip=\$VPN_MY_INT_IP_${mycount}
     eval next_my_mask=\$VPN_MY_INT_MASK_${mycount}
     if [ -n "${next_my_ip}" ]; then
-	eval_and_echo $ipsecadm flow -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $VPN_PEER_EXT_IP 255.255.255.255
+	eval_and_echo $ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $VPN_PEER_EXT_IP 255.255.255.255
 	mycount=`expr ${mycount} + 1`
     else
 	break;
     fi
 done
-
-
-
