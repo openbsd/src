@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.4 2001/06/23 18:30:36 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.5 2001/06/23 21:00:49 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -84,8 +84,136 @@
 #define CRYPTO_SHA1_KPDK	10
 #define CRYPTO_RIJNDAEL128_CBC	11 /* 128 bit blocksize */
 #define CRYPTO_AES_CBC		11 /* 128 bit blocksize -- the same as above */
+#define CRYPTO_ALGORITHM_MAX	17 /* Keep updated - including public key */
 
-#define CRYPTO_ALGORITHM_MAX	11 /* Keep this updated */
+/* Begin public key additions */
+#define CRYPTO_DH_SEND		12 /* Compute public value */
+#define CRYPTO_DH_RECEIVE	13 /* Compute DH shared secret */
+#define CRYPTO_RSA_ENCRYPT	14 /* RSA public key encryption */
+#define CRYPTO_RSA_DECRYPT	15 /* RSA public key decryption */
+#define CRYPTO_DSA_SIGN		16 /* DSA sign */
+#define CRYPTO_DSA_VERIFY	17 /* DSA verify */
+
+/* Algorithm flags */
+#define	CRYPTO_ALG_FLAG_SUPPORTED	0x00000001 /* Algorithm is supported */
+#define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x00000002 /* Has HW RNG for DH/DSA */
+#define	CRYPTO_ALG_FLAG_DSA_SHA		0x00000004 /* Can do SHA on msg */
+
+#define SYMMETRIC		0
+#define PUBLIC_KEY		1
+
+/* 
+ * Diffie-Hellman structure which defines fields needed to operate on the
+ * input. Should be passed in the cryptoini->cri_key field.
+ */
+struct DH_key {
+	/* 
+	 * CRYPTO_DH_SEND - Enable or disable the random number generator.
+	 * If disabled, private key and length should be stored in
+	 * DH_buf; otherwise only the length is needed and the generated
+	 * private key is stored in DH_buf->priv_key.
+	 */
+    
+	/* Length of key-related variables */
+	u_int16_t	dhk_gen_length;	/* SEND - generator length */
+	u_int16_t	dhk_mod_length;	/* SEND/RECEIVE - modulus length */
+ 
+	/* Input/output buffers for key generation */
+	caddr_t		dhk_generator;	/* SEND - generator to use */
+	caddr_t		dhk_modulus;	/* SEND/RECEIVE - modulus to use */   
+};  
+
+/*
+ * These are inputs for DH processing - the private keys and public
+ * keys are stored here because For DH-Send, if RNG_ENABLE, the
+ * private key does not have to be provided.  Should be passed to the
+ * cryptop->crp_buf.
+ */
+struct DH_buf {
+	/* Length of variables */
+	u_int16_t dh_public_key_length;	/* SEND/RECEIVE - public value len */
+	u_int16_t dh_ss_key_length;	/* RECEIVE - shared secret key len */
+	u_int16_t dh_priv_key_length;	/* SEND/RECEIVE - Private key length */
+    
+	/* Input/output buffers */
+	caddr_t	dh_priv_key; /* 
+			      * Buffer for private key the private key
+			      * buffer is placed here because it can
+			      * be both an input and an output.  If
+			      * CRD_F_RNG_NEEDED is set, then priv_key
+			      * is an input - otherwise it does not
+			      * have to be given and will be an output
+			      * after the public key generation.
+			      */
+	caddr_t	dh_pub_key; /* SEND/RECEIVE - I/O buffer for public key */
+	caddr_t	dh_ss_key;  /* RECEIVE - output buffer for shared secret key */
+};
+
+/* 
+ * RSA structure which defines fields needed to operate on the input.
+ * Should be passed to the cryptoini->cri_key field.
+ */
+struct RSA_key {
+	/* Length of variables (in bits) */
+	u_int16_t 	rsak_exponent_length;  	/* Length of exponent */
+	u_int16_t	rsak_mod_length;	/* Length of modulus */
+	u_int16_t	rsak_p_length;		/* Length of prime number p */
+	u_int16_t	rsak_q_length;		/* Length of prime number q */
+	u_int16_t 	rsak_priv_key_length;	/* Length of private key */
+
+	/* Input/output buffers */
+	caddr_t		rsak_exponent;
+	caddr_t		rsak_modulus;
+	caddr_t		rsak_prime_p;
+	caddr_t		rsak_prime_q;
+	caddr_t		rsak_priv_coeff;
+	caddr_t		rsak_priv_key;
+};
+  
+/*
+ * These are inputs for RSA processing - they are the data buffers for
+ * the input and output message. Should be passed through cryptop->crp_buf.
+ */
+struct RSA_buf {
+	u_int16_t	rsa_in_buf_length;	/* Length of input buffer */
+	u_int16_t	rsa_out_buf_length;	/* Length of output buffer */
+
+	caddr_t		rsa_in_buf;		/* Input message buffer */
+	caddr_t		rsa_out_buf;		/* Output message buffer */
+};
+
+/*
+ * DSA structure which defines fields needed to operate on the input.
+ * Should be passed to the cyprtonini->cri_key field.
+ */    
+struct DSA_key {
+	u_int16_t	dsak_p_length;	/* Length of modulus p */
+
+	caddr_t		dsak_generator;	/* Generator to use, dsak_p_length */
+	caddr_t		dsak_mod_q;	/* Modulus q to use, 160 bits */
+	caddr_t		dsak_mod_p;	/* Modulus p to use, dsak_p_length */
+	caddr_t		dsak_pub_key;	/* VERIFY - public key, dsak_p_length */
+	caddr_t		dsak_priv_key;	/* SIGN - private key, 160 bits */
+};
+
+/*
+ * DSA structure which defines the input and output buffers.
+ * Should be passed to the cryptop->crp_buf field.
+ */
+struct DSA_buf {
+	u_int16_t	dsa_msg_len;	/* Message length */
+
+	/* r,s,v are all 160 bits */
+	caddr_t		dsa_r_param;	/* Input for VERIFY; output for SIGN */
+	caddr_t		dsa_s_param;	/* Input for VERIFY; output for SIGN */
+	caddr_t		dsa_v_param;	/* Output for VERIFY; should be
+					 * compared against r_param. */
+	caddr_t		dsa_msg_buf;	/* Message buffer (hash or message) */
+	caddr_t		dsa_rnd_num;	/* Random value from SW, 160 bits;
+					 * if not provided, framework will
+					 * provide one.
+					 */
+};
 
 /* Standard initialization structure beginning */
 struct cryptoini {
@@ -104,10 +232,11 @@ struct cryptodesc {
 	int		crd_inject;	/* Where to inject results, if applicable */
 	int		crd_flags;
 
-#define CRD_F_ENCRYPT		0x1	/* Set when doing encryption */
-#define CRD_F_IV_PRESENT	0x2	/* When encrypting, IV is already in
+#define	CRD_F_ENCRYPT		0x01	/* Set when doing encryption */
+#define	CRD_F_IV_PRESENT	0x02	/* When encrypting, IV is already in
 					   place, so don't copy. */
-#define CRD_F_IV_EXPLICIT	0x4	/* IV explicitly provided */
+#define	CRD_F_IV_EXPLICIT	0x04	/* IV explicitly provided */
+#define	CRD_F_DSA_SHA_NEEDED	0x08	/* Compute SHA-1 of buffer for DSA */
 
 	struct cryptoini	CRD_INI; /* Initialization/context data */
 #define crd_iv		CRD_INI.cri_iv
@@ -145,7 +274,9 @@ struct cryptop {
 	caddr_t		crp_buf;	/* Data to be processed */
 	caddr_t		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
+
 	int (*crp_callback)(struct cryptop *); /* Callback function */
+
 	struct cryptop	*crp_next;
 	caddr_t		crp_iv;
 	caddr_t		crp_mac;
@@ -161,7 +292,16 @@ struct cryptop {
 /* Crypto capabilities structure */
 struct cryptocap {
 	u_int32_t	cc_sessions;
-	u_int8_t	cc_alg[CRYPTO_ALGORITHM_MAX + 1]; /* Supported */
+
+	/* 
+	 * Largest possible operator length (in bits) for each type of
+	 * encryption algorithm - especially important for public key
+	 * operations.
+	 */
+	u_int16_t	cc_max_op_len[CRYPTO_ALGORITHM_MAX + 1]; 
+
+	u_int8_t	cc_alg[CRYPTO_ALGORITHM_MAX + 1];
+
 	u_int8_t	cc_flags;
 #define CRYPTOCAP_F_CLEANUP   0x1
 #define CRYPTOCAP_F_SOFTWARE  0x02
@@ -205,12 +345,12 @@ struct crypt_op {
 #define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
 #define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
 
-
 #ifdef _KERNEL
+int	crypto_check_alg(struct cryptoini *);
 int	crypto_newsession(u_int64_t *, struct cryptoini *, int);
 int	crypto_freesession(u_int64_t);
 int	crypto_dispatch(struct cryptop *);
-int	crypto_register(u_int32_t, int,
+int	crypto_register(u_int32_t, int, u_int16_t, u_int32_t, 
 	    int (*)(u_int32_t *, struct cryptoini *), int (*)(u_int64_t),
 	    int (*)(struct cryptop *));
 int	crypto_unregister(u_int32_t, int);

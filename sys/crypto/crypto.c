@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.20 2001/06/23 18:30:35 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.21 2001/06/23 21:00:48 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -223,7 +223,8 @@ crypto_get_driverid(void)
  * supported by the driver.
  */
 int
-crypto_register(u_int32_t driverid, int alg,
+crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
+    u_int32_t flags,
     int (*newses)(u_int32_t *, struct cryptoini *),
     int (*freeses)(u_int64_t), int (*process)(struct cryptop *))
 {
@@ -241,7 +242,10 @@ crypto_register(u_int32_t driverid, int alg,
 	 * XXX relative performances.
 	 */
 
-	crypto_drivers[driverid].cc_alg[alg] = 1;
+	crypto_drivers[driverid].cc_alg[alg] = 
+	    flags | CRYPTO_ALG_FLAG_SUPPORTED;
+
+	crypto_drivers[driverid].cc_max_op_len[alg] = maxoplen;
 
 	if (crypto_drivers[driverid].cc_process == NULL) {
 		crypto_drivers[driverid].cc_newsession = newses;

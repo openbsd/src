@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.23 2001/06/23 18:30:36 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.24 2001/06/23 21:00:49 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -706,18 +706,28 @@ swcr_init(void)
 {
 	swcr_id = crypto_get_driverid();
 	if (swcr_id >= 0) {
-		crypto_register(swcr_id, CRYPTO_DES_CBC, swcr_newsession,
+		crypto_register(swcr_id, CRYPTO_DES_CBC, 0, 0, swcr_newsession,
 		    swcr_freesession, swcr_process);
-		crypto_register(swcr_id, CRYPTO_3DES_CBC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_BLF_CBC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_CAST_CBC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_SKIPJACK_CBC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_SHA1_HMAC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_MD5_KPDK, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_SHA1_KPDK, NULL, NULL, NULL);
-		crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_3DES_CBC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_BLF_CBC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_CAST_CBC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_SKIPJACK_CBC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_MD5_HMAC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_SHA1_HMAC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_MD5_KPDK, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_SHA1_KPDK, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, 0, 0,
+		    NULL, NULL, NULL);
 		return;
 	}
 
