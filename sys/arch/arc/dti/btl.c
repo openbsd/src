@@ -52,6 +52,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -68,6 +69,7 @@
 
 #include <dev/isa/isavar.h>
 #include <arc/dti/btlreg.h>
+#include <arc/arc/arctype.h>    /* XXX for cpu types */
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
@@ -98,8 +100,10 @@ struct bt_mbx {
 	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
 
+extern int cputype;  /* XXX */
+
 #define KVTOPHYS(x)	(((int)(x) & 0x7fffff) | 0x800000)
-#define PHYSTOKV(x)	(((int)(x) & 0x7fffff) | TYNE_V_BOUNCE)
+#define PHYSTOKV(x)	(((int)(x) & 0x7fffff) | (cputype == DESKSTATION_TYNE ? TYNE_V_BOUNCE : 0))
 
 #include "aha.h"
 #include "btl.h"
@@ -368,6 +372,8 @@ btattach(parent, self, aux)
 	struct bt_ccb *ccb;
 	struct bt_buf *buf;
 	u_int bouncearea;
+	u_int bouncebase;
+	u_int bouncesize;
 
 	if (bt_find(ia, sc) != 0)
 		panic("btattach: bt_find of %s failed", self->dv_xname);
@@ -376,8 +382,15 @@ btattach(parent, self, aux)
 	/*
 	 * create mbox area
 	 */
-	sc->sc_mbx = (struct bt_mbx *)TYNE_V_BOUNCE;
-	bouncearea = TYNE_V_BOUNCE + sizeof(struct bt_mbx);
+	if (cputype == DESKSTATION_TYNE) {
+		bouncebase = TYNE_V_BOUNCE;
+		bouncesize = TYNE_S_BOUNCE;
+	} else {
+		bouncesize = TYNE_S_BOUNCE; /* Good enough? XXX */
+		bouncebase = (u_int) malloc( bouncesize, M_DEVBUF, M_NOWAIT);
+    }
+	bouncearea = bouncebase + sizeof(struct bt_mbx);
+	sc->sc_mbx = (struct bt_mbx *)bouncebase;
 
 	bt_inquire_setup_information(sc);
 	bt_init(sc);
@@ -398,7 +411,7 @@ btattach(parent, self, aux)
 	/*
 	 * fill up with bufs's
 	 */
-	while ((bouncearea + sizeof(struct bt_buf)) < (TYNE_V_BOUNCE + TYNE_S_BOUNCE)) {
+	while ((bouncearea + sizeof(struct bt_buf)) < bouncebase + bouncesize) {
 		buf = (struct bt_buf *)bouncearea;
 		bouncearea +=  sizeof(struct bt_buf);
 		TAILQ_INSERT_HEAD(&sc->sc_free_buf, buf, chain);
