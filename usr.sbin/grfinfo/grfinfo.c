@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfinfo.c,v 1.4 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: grfinfo.c,v 1.5 2002/09/06 22:08:36 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
@@ -23,15 +23,19 @@
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
  */
 
+#include <errno.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <dev/grfioctl.h>
 
-int aflg = 0;
-int tflg = 0;
-char *pname;
-char *dname, *tname();
+int getinfo(char *);
+void printall(void);
+char *tname(void);
+void usage(void);
+
 struct grfinfo gi;
 
 struct grf_info {
@@ -47,65 +51,83 @@ struct grf_info {
 	-1,		"unknown",
 };
 
+int
 main(argc, argv)
 	char **argv;
 {
-	extern int optind, optopt;
-	extern char *optarg;
+	int aflg, tflg;
 	int c;
+	char *dname;
 
-	pname = argv[0];
-	while ((c = getopt(argc, argv, "at")) != -1)
+	aflg = tflg = 0;
+	while ((c = getopt(argc, argv, "at")) != -1) {
 		switch (c) {
-		/* everything */
 		case 'a':
+			if (tflg != 0)
+				usage();
 			aflg++;
 			break;
-		/* type */
 		case 't':
+			if (aflg != 0)
+				usage();
 			tflg++;
 			break;
-		/* bogon */
 		case '?':
+		default:
 			usage();
 		}
-	if (optind == argc)
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
 		usage();
-	dname = argv[optind];
-	getinfo();
-	if (aflg)
-		printall();
-	else
-		printf("%s\n", tname());
+	while (argc-- != 0) {
+		dname = *argv++;
+		if (getinfo(dname)) {
+			printf("%s: ", dname);
+			if (aflg)
+				printall();
+			else
+				printf("%s\n", tname());
+		}
+	}
 	exit(0);
 }
 
-getinfo()
+int
+getinfo(dname)
+	char *dname;
 {
 	int f;
 
-	f = open(dname, 0);
-	if (f < 0 || ioctl(f, GRFIOCGINFO, &gi) < 0) {
-		if (tflg)
-			printf("none\n");
-		else
-			perror(dname);
-		exit(1);
+	f = opendev(dname, 0, OPENDEV_BLCK, NULL);
+	if (f < 0) {
+		warn("open(%s)", dname);
+		return 0;
 	}
+	if (ioctl(f, GRFIOCGINFO, &gi) < 0) {
+		warn("ioctl(%s)", dname);
+		close(f);
+		return 0;
+	}
+
 	close(f);
+	return 1;
 }
 
+void
 printall()
 {
-	printf("%s: %d x %d ", dname, gi.gd_dwidth, gi.gd_dheight);
+	printf("%d x %d, ", gi.gd_dwidth, gi.gd_dheight);
 	if (gi.gd_colors < 3)
-		printf("monochrome");
+		printf("monochrome, ");
 	else {
-		printf("%d color", gi.gd_colors);
+		printf("%d colors, ", gi.gd_colors);
 		if (gi.gd_planes)
-			printf(", %d plane", gi.gd_planes);
+			printf("%d planes, ", gi.gd_planes);
 	}
-	printf(" %s\n", tname());
+	printf("%s\n", tname());
 	printf("registers: 0x%x bytes at 0x%x\n",
 	       gi.gd_regsize, gi.gd_regaddr);
 	printf("framebuf:  0x%x bytes at 0x%x (%d x %d)\n",
@@ -132,8 +154,11 @@ tname()
 	return(gp->grf_name);
 }
 
+void
 usage()
 {
-	fprintf(stderr, "usage: %s [-at] device\n", pname);
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-at] device\n", __progname);
 	exit(1);
 }

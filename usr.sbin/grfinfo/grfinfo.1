@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grfinfo.1,v 1.5 2000/11/09 17:53:13 aaron Exp $
+.\"	$OpenBSD: grfinfo.1,v 1.6 2002/09/06 22:08:36 miod Exp $
 .\"	$NetBSD: grfinfo.1,v 1.1 1997/01/31 23:06:53 carrel Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,31 +43,31 @@
 .Nd display information about grf graphics devices
 .Sh SYNOPSIS
 .Nm grfinfo
-.Op Fl at
-.Ar file
+.Op Fl a
+.Op Fl t
+.Ar device ...
 .Sh DESCRIPTION
-The
-.Nm grfinfo
-utility displays information about grf graphics frame buffer devices.
-By default, only the frame buffer type is displayed.
-.Ar file
-is the device file for the graphics frame buffer.
+.Nm
+displays information about the graphics framebuffer
+.Ar device
+list.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Display all possible information.
+For each
+.Ar device ,
+display the type and all possible information.
 .It Fl t
-Display only the type, even if an error occurs.
+For each
+.Ar device ,
+display the type.
 .El
-.Sh DIAGNOSTICS
-The
-.Nm grfinfo
-utility exits 0 on success or >0 if an error occurred.
-If the
+.Pp
+If no options are given, the type will be printed (that is,
+.Nm
+will behave as if
 .Fl t
-option is used and an error occurs, no error message is displayed, and the
-type is displayed as
-.Dq none .
+had been passed).
 .Sh SEE ALSO
 .Xr grf 4
