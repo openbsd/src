@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.3 1998/07/05 06:50:20 deraadt Exp $	*/
+/*	$OpenBSD: be.c,v 1.4 1998/07/05 09:25:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -70,6 +70,7 @@ int	bematch __P((struct device *, void *, void *));
 void	beattach __P((struct device *, struct device *, void *));
 
 void	beinit __P((struct besoftc *));
+void	be_meminit __P((struct besoftc *));
 void	bestart __P((struct ifnet *));
 void	bestop __P((struct besoftc *));
 void	bewatchdog __P((struct ifnet *));
@@ -80,6 +81,8 @@ int	betint __P((struct besoftc *));
 int	berint __P((struct besoftc *));
 int	beqint __P((struct besoftc *));
 int	beeint __P((struct besoftc *));
+void	be_tcvr_init __P((struct besoftc *sc));
+void	be_tcvr_setspeed __P((struct besoftc *sc));
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -136,6 +139,13 @@ beattach(parent, self, aux)
 	sc->sc_memsize = qec->sc_bufsiz;
 	sc->sc_conf3 = getpropint(ca->ca_ra.ra_node, "busmaster-regval", 0);
 
+	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
+	if (sc->sc_burst == -1)
+		sc->sc_burst = qec->sc_burst;
+
+	/* Clamp at parent's burst sizes */
+	sc->sc_burst &= qec->sc_burst;
+
 	sc->sc_ih.ih_fun = beintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih);
@@ -154,6 +164,8 @@ beattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	    sizeof(struct ether_header));
 	printf("\n");
 }
 
@@ -253,11 +265,10 @@ int
 beintr(v)
 	void *v;
 {
-	int r = 0;
 	struct besoftc *sc = (struct besoftc *)v;
 	u_int32_t why;
+	int r = 0;
 
-#if 1
 	why = sc->sc_qr->stat;
 
 	if (why & QEC_STAT_TX)
@@ -270,8 +281,6 @@ beintr(v)
 		r |= beeint(sc);
 	if (r)
 		printf("%s: intr: why=%08x\n", sc->sc_dev.dv_xname, why);
-
-#endif
 	return (r);
 }
 
@@ -315,10 +324,6 @@ beioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splnet();
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -405,85 +410,123 @@ beioctl(ifp, cmd, data)
 		}
 		break;
 	default:
+		if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+			splx(s);
+			return error;
+		}
 		error = EINVAL;
+		break;
 	}
 	splx(s);
 	return error;
 }
 
 void
+be_tcvr_init(sc)
+	struct besoftc *sc;
+{
+}
+
+void
+be_tcvr_setspeed(sc)
+	struct besoftc *sc;
+{
+}
+
+void
 beinit(sc)
 	struct besoftc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int s = splimp();
+	int i;
 
 	bestop(sc);
-#if 0
+
+	/* init QEC */
 	sc->sc_qr->msize = sc->sc_memsize;
 	sc->sc_qr->rsize = sc->sc_memsize / 2;
 	sc->sc_qr->tsize = sc->sc_memsize / 2;
 	sc->sc_qr->psize = 2048;
-	/*sc->sc_qr->ctrl = QEC_CTRL_BMODE | QEC_CTRL_B32;*/
-
-	be_meminit(sc);
-
-	be_write32(&treg->int_mask, 0xffff);
-
-	c = be_read32(&treg->cfg);
-	if (sc->sc_flags & HFLAG_FENABLE)
-		be_write32(&treg->cfg, c & ~(TCV_CFG_BENABLE));
-	else
-		be_write32(&treg->cfg, c | TCV_CFG_BENABLE);
-
-	be_tcvr_check(sc);
-	switch (sc->tcvr_type) {
-	case none:
-		printf("%s: no transceiver type!\n", sc->sc_dev.dv_xname);
-		return;
-	case internal:
-		be_write32(&breg->xif_cfg, 0);
-		break;
-	case external:
-		be_write32(&breg->xif_cfg, BIGMAC_XCFG_MIIDISAB);
-		break;
-	}
-	be_tcvr_reset(sc);
-
-	be_reset_tx(sc);
-	be_reset_rx(sc);
-
-	be_write32(&breg->jsize, BE_DEFAULT_JSIZE);
-	be_write32(&breg->ipkt_gap1, BE_DEFAULT_IPKT_GAP1);
-	be_write32(&breg->ipkt_gap2, BE_DEFAULT_IPKT_GAP2);
-	be_write32(&breg->htable3, 0);
-	be_write32(&breg->htable2, 0);
-	be_write32(&breg->htable1, 0);
-	be_write32(&breg->htable0, 0);
-
-	be_write32(&erxreg->rx_ring,
-		sc->sc_block_addr +
-		((u_long) &sc->sc_block->be_rxd[0]) - ((u_long)sc->sc_block));
-	be_write32(&etxreg->tx_ring,
-		sc->sc_block_addr +
-		((u_long) &sc->sc_block->be_txd[0]) - ((u_long)sc->sc_block));
-
 	if (sc->sc_burst & SBUS_BURST_64)
-		be_write32(&greg->cfg, GREG_CFG_BURST64);
+		i = QEC_CTRL_B64;
 	else if (sc->sc_burst & SBUS_BURST_32)
-		be_write32(&greg->cfg, GREG_CFG_BURST32);
-	else if (sc->sc_burst & SBUS_BURST_16)
-		be_write32(&greg->cfg, GREG_CFG_BURST16);
-	else {
-		printf("%s: burst size unknown\n", sc->sc_dev.dv_xname);
-		be_write32(&greg->cfg, 0);
+		i = QEC_CTRL_B32;
+	else
+		i = QEC_CTRL_B16;
+	sc->sc_qr->ctrl = QEC_CTRL_BMODE | i;
+
+	/* Allocate memory if not done yet */
+	if (sc->sc_desc_dva == NULL)
+		sc->sc_desc_dva = (struct be_desc *)dvma_malloc(
+		    sizeof(struct be_desc), &sc->sc_desc, M_NOWAIT);
+	if (sc->sc_bufs_dva == NULL)
+		sc->sc_bufs_dva = (struct be_bufs *)dvma_malloc(
+		    sizeof(struct be_bufs), &sc->sc_bufs, M_NOWAIT);
+
+	/* chain descriptors into buffers */
+	sc->sc_txnew = 0;
+	sc->sc_rxnew = 0;
+	sc->sc_txold = 0;
+	sc->sc_rxold = 0;
+	for (i = 0; i < RX_RING_SIZE; i++) {
+		sc->sc_desc->be_rxd[i].rx_addr =
+		    (u_int32_t)&sc->sc_bufs_dva->rx_buf[i][0];
+		sc->sc_desc->be_rxd[i].rx_flags = 0;
+	}
+	for (i = 0; i < TX_RING_SIZE; i++) {
+		sc->sc_desc->be_txd[i].tx_addr = 0;
+		sc->sc_desc->be_txd[i].tx_flags = 0;
 	}
 
-	/* XXX TODO: set interrupt mask: (GOTFRAME | RCNTEXP) */
-	be_write32(&greg->imask, GREG_IMASK_SENTFRAME | GREG_IMASK_TXPERR);
+	be_tcvr_init(sc);
+	be_tcvr_setspeed(sc);
 
-	be_write32(&etxreg->tx_rsize, (TX_RING_SIZE >> ETX_RSIZE_SHIFT) - 1);
-	be_write32(&etxreg->cfg, be_read32(&etxreg->cfg) | ETX_CFG_DMAENABLE);
-	be_write32(&breg->rx_cfg, BIGMAC_RXCFG_HENABLE);
+	bestop(sc);
 
-	be_auto_negotiate(sc);
-#endif
+	sc->sc_br->mac_addr2 = (sc->sc_arpcom.ac_enaddr[4] << 8) |
+	    sc->sc_arpcom.ac_enaddr[5];
+	sc->sc_br->mac_addr1 = (sc->sc_arpcom.ac_enaddr[2] << 8) |
+	    sc->sc_arpcom.ac_enaddr[3];
+	sc->sc_br->mac_addr0 = (sc->sc_arpcom.ac_enaddr[0] << 8) |
+	    sc->sc_arpcom.ac_enaddr[1];
+
+	sc->sc_br->htable3 = 0;
+	sc->sc_br->htable2 = 0;
+	sc->sc_br->htable1 = 0;
+	sc->sc_br->htable0 = 0;
+
+	sc->sc_br->rx_cfg = BE_RXCFG_HENABLE | BE_RXCFG_FIFO;
+	DELAY(20);
+
+	sc->sc_br->tx_cfg = BE_TXCFG_FIFO;
+	sc->sc_br->rand_seed = 0xbd;
+
+	sc->sc_br->xif_cfg = BE_XCFG_ODENABLE | BE_XCFG_RESV;
+
+	sc->sc_cr->rxds = (u_int32_t)&sc->sc_desc_dva->be_rxd[0];
+	sc->sc_cr->txds = (u_int32_t)&sc->sc_desc_dva->be_txd[0];
+
+	sc->sc_cr->rxwbufptr = 0;
+	sc->sc_cr->rxrbufptr = 0;
+	sc->sc_cr->txwbufptr = sc->sc_memsize;
+	sc->sc_cr->txrbufptr = sc->sc_memsize;
+	
+	sc->sc_br->imask = 0;
+
+	sc->sc_cr->rimask = 0;
+	sc->sc_cr->timask = 0;
+	sc->sc_cr->qmask = 0;
+	sc->sc_cr->bmask = 0;
+
+	sc->sc_br->jsize = 4;
+
+	sc->sc_cr->ccnt = 0;
+
+	sc->sc_br->tx_cfg |= BE_TXCFG_ENABLE;
+	sc->sc_br->rx_cfg |= BE_RXCFG_ENABLE;
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.3 1998/07/05 06:50:21 deraadt Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.4 1998/07/05 09:25:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -46,4 +46,11 @@ struct besoftc {
 	u_int	sc_rev;
 
 	int	sc_promisc;
+	int	sc_burst;
+
+	int	sc_txnew, sc_txold;
+	int	sc_rxnew, sc_rxold;
+
+	struct	be_desc *sc_desc, *sc_desc_dva;
+	struct	be_bufs	*sc_bufs, *sc_bufs_dva;
 };
