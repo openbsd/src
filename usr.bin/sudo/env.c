@@ -88,6 +88,7 @@ static char *format_env		__P((char *, ...));
  */
 static const char *initial_badenv_table[] = {
     "IFS",
+    "CDPATH",
     "LOCALDOMAIN",
     "RES_OPTIONS",
     "HOSTALIASES",
@@ -141,7 +142,7 @@ static size_t env_size;		/* size of new_environ in char **'s */
 static size_t env_len;		/* number of slots used, not counting NULL */
 
 /*
- * Zero out environment and replace with a minimal set of
+ * Zero out environment and replace with a minimal set of KRB5CCNAME
  * USER, LOGNAME, HOME, TZ, PATH (XXX - should just set path to default)
  * May set user_path, user_shell, and/or user_prompt as side effects.
  */
@@ -149,14 +150,19 @@ char **
 zero_env(envp)
     char **envp;
 {
-    static char *newenv[8];
+    static char *newenv[9];
     char **ep, **nep = newenv;
+    char **ne_last = &newenv[(sizeof(newenv) / sizeof(newenv[0])) - 1];
     extern char *prev_user;
 
     for (ep = envp; *ep; ep++) {
 	switch (**ep) {
 	    case 'H':
 		if (strncmp("HOME=", *ep, 5) == 0)
+		    break;
+		continue;
+	    case 'K':
+		if (strncmp("KRB5CCNAME=", *ep, 11) == 0)
 		    break;
 		continue;
 	    case 'L':
@@ -195,8 +201,12 @@ zero_env(envp)
 	    if (**nep == **ep)
 		break;
 	}
-	if (*nep == NULL)
-	    *nep++ = *ep;
+	if (*nep == NULL) {
+	    if (nep < ne_last)
+		*nep++ = *ep;
+	    else
+		errx(1, "internal error, attempt to write outside newenv");
+	}
     }
 
 #ifdef HAVE_LDAP
@@ -205,7 +215,10 @@ zero_env(envp)
      * or files in the current directory.
      *
      */	     
-    *nep++ = "LDAPNOINIT=1";
+    if (nep < ne_last)
+	*nep++ = "LDAPNOINIT=1";
+    else
+	errx(1, "internal error, attempt to write outside newenv");
 #endif
 
     return(&newenv[0]);

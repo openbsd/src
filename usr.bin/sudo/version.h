@@ -23,6 +23,6 @@
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static const char version[] = "1.6.8p2";
+static const char version[] = "1.6.8p4";
 
 #endif /* _SUDO_VERSION_H */
