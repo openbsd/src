@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.25 2001/12/10 03:34:51 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.26 2001/12/11 01:43:54 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ ui_init (void)
 
       ui_socket = open (ui_fifo, O_RDWR | O_NONBLOCK, 0);
       if (ui_socket == -1)
-	log_fatal ("ui_init: open (\"%s\", O_RDONLY | O_NONBLOCK, 0) failed",
+	log_fatal ("ui_init: open (\"%s\", O_RDWR | O_NONBLOCK, 0) failed",
 		   ui_fifo);
     }
 }
