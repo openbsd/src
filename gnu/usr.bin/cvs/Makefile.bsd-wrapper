@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/19 09:23:39 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.2 1995/12/19 10:43:28 deraadt Exp $
 
 all:	config.status
 	${MAKE}
@@ -6,10 +6,10 @@ all:	config.status
 .FORCE:	.IGNORE
 
 config: .FORCE
-	${.CURDIR}/configure --prefix=/usr
+	sh ${.CURDIR}/configure --prefix=/usr
 
 config.status:
-	${.CURDIR}/configure --prefix=/usr
+	sh ${.CURDIR}/configure --prefix=/usr
 
 install:
 	${MAKE} prefix=${DESTDIR}/usr install
