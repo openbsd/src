@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.1 2002/02/23 18:30:13 deraadt Exp $
+.\"	$OpenBSD: xf86.4,v 1.2 2002/03/27 15:19:13 jason Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -34,10 +34,11 @@
 .Sh SYNOPSIS
 .Cd "option APERTURE"
 .Sh DESCRIPTION
-On the
-.Va i386
-and
+On
+.Va i386 Ns ,
 .Va macppc Ns ,
+and
+.Va sparc64 Ns ,
 the
 .Pa /dev/xf86
 driver provides access to the memory and I/O ports of a VGA board for
@@ -64,14 +65,16 @@ the aperture driver is disabled.
 Opening it returns
 .Dv EPERM. 
 .It 1
-the aperture driver allows access to standard VGA framebuffer and
-BIOS.
+the aperture driver allows access to standard VGA framebuffer and BIOS.
+Access to PCI configuration registers is also allowed.
 .It 2
+in addition to allowing access to PCI configuration registers,
 the aperture driver allows access to the whole 1st megabyte of physical
 memory, permitting use of the int10 emulation in XFree86 4.0.x.
 Note that this can cause some security problems, since the process that
 has access to the aperture driver can also access part of the kernel
-memory. 
+memory.
+This mode is not supported on sparc64.
 .El
 .Sh SEE ALSO
 .Xr XF86_Accel 1 ,
