@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.517 2002/06/05 22:35:16 mickey Exp $
+	$OpenBSD: pcidevs,v 1.518 2002/06/06 19:10:56 danh Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -893,6 +893,7 @@ product ATI RAGE128_SK		0x534b	Rage 128 SK
 product ATI RAGE128_SL		0x534c	Rage 128 SL
 product ATI RAGE128_SM		0x534d	Rage 128 SM
 product ATI RAGE128		0x534e	Rage 128
+product ATI RAGE128_TF		0x5446	Rage 128 TF
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VU		0x5655	Mach64 VU
 product ATI MACH64_VV		0x5656	Mach64 VV
