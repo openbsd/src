@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)asctime.c	7.8";
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.5 1998/11/20 11:18:55 d Exp $";
+static char elsieid[] = "@(#)asctime.c	7.9";
+static char rcsid[] = "$OpenBSD: asctime.c,v 1.6 1999/01/29 07:09:26 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -15,13 +15,13 @@ static char rcsid[] = "$OpenBSD: asctime.c,v 1.5 1998/11/20 11:18:55 d Exp $";
 #include "thread_private.h"
 
 /*
-** A la X3J11, with core dump avoidance.
+** A la ISO/IEC 9945-1, ANSI/IEEE Std 1003.1, Second Edition, 1996-07-12.
 */
 
 char *
-asctime_r(timeptr, result)
+asctime_r(timeptr, buf)
 register const struct tm *	timeptr;
-char *result;
+char *				buf;
 {
 	static const char	wday_name[][3] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -30,7 +30,6 @@ char *result;
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-
 	register const char *	wn;
 	register const char *	mn;
 	int size;
@@ -50,27 +49,25 @@ char *result;
 	 * P1003 8.3.5.2 says that asctime_r() can only assume at most
 	 * a 26 byte buffer.  *XXX*
 	 */
-	size = snprintf(result, 26, "%.3s %.3s%3d %02d:%02d:%02d %d\n",
+	size = snprintf(buf, 26, "%.3s %.3s%3d %02d:%02d:%02d %d\n",
 		wn, mn,
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec,
 		TM_YEAR_BASE + timeptr->tm_year);
 	if (size >= 26)
 		return NULL;
-	return result;
+	return buf;
 }
 
 /*
- * Theoretically, the worst case string is of the form
- * "www mmm-2147483648 -2147483648:-2147483648:-2147483648 -2147483648\n"
- * but we only provide space for 26 since asctime_r won't use any more.
- * "www mmmddd hh:mm:ss yyyy\n"
- */
+** A la X3J11, with core dump avoidance.
+*/
+
 char *
 asctime(timeptr)
 const struct tm *	timeptr;
 {
-
+	/* asctime_r won't exceed this buffer: */
 	static char result[26];
 	_THREAD_PRIVATE_KEY(asctime)
 	char *resultp = (char*) _THREAD_PRIVATE(asctime, result, NULL);
@@ -80,4 +77,3 @@ const struct tm *	timeptr;
 	else
 		return asctime_r(timeptr, resultp);
 }
-
