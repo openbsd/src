@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.76 2002/08/03 20:07:58 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.77 2002/08/03 20:19:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -564,12 +564,14 @@ $syscall
 	 * t4:	user stack
 	 *
 	 */
-	ldil	L%curproc, t3
-	ldw	R%curproc(sr1, t3), t3
-	ldw	P_ADDR(sr1, t3), t2	/* XXX can use ,sl */
+	ldil	L%curproc, t2
+	ldw	R%curproc(sr1, t2), t2
+	ldw	P_ADDR(sr1, t2), t3	/* XXX can use ,sl */
 
 	/* calculate kernel sp, load, create kernel stack frame */
-	ldo	NBPG+TRAPFRAME_SIZEOF(t2), t3
+	ldo	NBPG(t3), t3
+	stw	t3, P_MD_REGS(sr1, t2)
+	ldo	TRAPFRAME_SIZEOF(t3), t3
 	stw	t4, TF_R19 -TRAPFRAME_SIZEOF(sr1, t3)	/* t4 for vfork() */
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
 	stw	sp, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
@@ -581,7 +583,7 @@ $syscall
 	stw	t1, TF_CR22-TRAPFRAME_SIZEOF(sr1, t3)	/* ipsw */
 	mfsp	sr3, t1
 	stw	t1, TF_SR3-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	r28, TF_CR8-TRAPFRAME_SIZEOF(sr1, t3)	/* pidr1 */
+	stw	ret0, TF_CR8-TRAPFRAME_SIZEOF(sr1, t3)	/* pidr1 */
 	/* now we can allow interrupts to happen */
 	mtctl	r1, eiem
 
@@ -763,14 +765,10 @@ $syscall_return
 	ldw  8(t3), r1 ! ldw 12(t3), t1 ! stw r1,  8(t2) ! stw t1, 12(t2)
 	ldw 16(t3), r1 ! ldw 20(t3), t1 ! stw r1, 16(t2) ! stw t1, 20(t2)
 	ldw 24(t3), r1 ! ldw 28(t3), t1 ! stw r1, 24(t2) ! stw t1, 28(t2)
-	fdc	r0(t2)
-	ldi	32, t4
 	ldw 32(t3), r1 ! ldw 36(t3), t1 ! stw r1, 32(t2) ! stw t1, 36(t2)
 	ldw 40(t3), r1 ! ldw 44(t3), t1 ! stw r1, 40(t2) ! stw t1, 44(t2)
 	ldw 48(t3), r1 ! ldw 52(t3), t1 ! stw r1, 48(t2) ! stw t1, 52(t2)
 	ldw 56(t3), r1 ! ldw 60(t3), t1 ! stw r1, 56(t2) ! stw t1, 60(t2)
-	fdc	t4(t2)
-	sync
 
 	/* 1b. restore most of the general registers */
 	ldw	TF_CR11(t3), t1
@@ -1410,7 +1408,7 @@ $dtlbna_t
 	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
 	mfctl	tr7, r1							! \
-	xor,=	r16, r17, r0		/* do not store if unchanged */	! \
+	sub,=	r16, r17, r0		/* do not store if unchanged */	! \
 	stws	r17, 0(r25)		/* store back w/ the bits */	! \
 	shd	r17, r0, 13, r25					! \
 	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
@@ -1609,7 +1607,6 @@ $trapnowvirt
 
 	copy	sp, r3
 	stw,mb	r0, -HPPA_FRAME_SIZE(r3)
-	stw	t3, HPPA_FRAME_ARG(1)(sp)
 
 	/*
 	 * Copy partially saved state from the store into the frame
@@ -1704,17 +1701,16 @@ $trapnowvirt
 	bv,n	r0(t1)
 	nop
 
-	ldw	HPPA_FRAME_ARG(1)(sp), t3
 	/* see if curproc have changed */
-	ldw	TF_FLAGS(t3), arg0
+	ldw	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF+TF_FLAGS(sp), arg0
 	bb,>=,n	arg0, TFF_LAST_POS, $syscall_return
-	nop
+	ldo	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF(sp), t3
 
 	/* see if curproc have really changed */
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
 	comb,=,n r0, t2, $syscall_return
-	nop
+	ldo	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF(sp), t3
 
 	/* means curproc have actually changed */
 	b	$syscall_return
