@@ -482,5 +482,3 @@
 ./usr/libdata/perl5/site_perl/arc-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/arc-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/i82365_pcivar.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/svreg.ph
-./usr/libdata/perl5/site_perl/arc-openbsd/dev/pci/svvar.ph

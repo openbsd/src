@@ -1676,5 +1676,3 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/i82365_pcivar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/svreg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/svvar.ph

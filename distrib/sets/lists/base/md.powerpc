@@ -1671,5 +1671,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/i82365_pcivar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/svreg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/svvar.ph
+

@@ -1736,5 +1736,3 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/i82365_pcivar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/svreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/svvar.ph

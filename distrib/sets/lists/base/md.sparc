@@ -1723,5 +1723,3 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/i82365_pcivar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/svreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/svvar.ph
