@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.50 2004/06/22 20:49:22 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.51 2004/07/15 16:38:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,10 +68,10 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.50 2004/06/22 20:49:22 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.51 2004/07/15 16:38:57 millert Exp $";
 #endif
 
-void wi_getval(char *, struct wi_req *);
+int  wi_getval(char *, struct wi_req *);
 void wi_setval(char *, struct wi_req *);
 void wi_printstr(struct wi_req *);
 void wi_setstr(char *, int, char *);
@@ -94,18 +94,18 @@ __dead void usage(void);
 char *portid(char *);
 int  get_if_flags(int, const char *);
 int  set_if_flags(int, const char *, int);
-int	wi_hex2int(char c);
-void	wi_str2key(char *s, struct wi_key *k);
+int  wi_hex2int(char c);
+void wi_str2key(char *s, struct wi_key *k);
 
 const struct wi_card_ident wi_card_ident[] = {
 	WI_CARD_IDS
 };
 
-void
+int
 wi_getval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
-	int			s;
+	int			error, s;
 
 	bzero((char *)&ifr, sizeof(ifr));
 
@@ -116,10 +116,11 @@ wi_getval(char *iface, struct wi_req *wreq)
 	if (s == -1)
 		err(1, "socket");
 
-	if (ioctl(s, SIOCGWAVELAN, &ifr) == -1)
+	if ((error = ioctl(s, SIOCGWAVELAN, &ifr)) == -1)
 		warn("SIOCGWAVELAN (0x%x)", wreq->wi_type);
 
 	close(s);
+	return (error);
 }
 
 void
@@ -454,7 +455,8 @@ wi_printaplist(char *iface)
 	wreq.wi_len = WI_MAX_DATALEN;
 	wreq.wi_type = WI_RID_PRISM2;
 
-	wi_getval(iface, &wreq);
+	if (wi_getval(iface, &wreq) == -1)
+		goto done;
 	prism2 = wreq.wi_val[0];
 
 	/* send out a scan request */
@@ -478,7 +480,8 @@ wi_printaplist(char *iface)
 	wreq.wi_len = WI_MAX_DATALEN;
 	wreq.wi_type = WI_RID_SCAN_RES;
 
-	wi_getval(iface, &wreq);
+	if (wi_getval(iface, &wreq) == -1)
+		goto done;
 
 	if (prism2) {
 		wi_p2_h = (struct wi_scan_p2_hdr *)wreq.wi_val;
@@ -548,6 +551,7 @@ wi_printaplist(char *iface)
 			printf("]\n");
 		}
 	}
+done:
 	set_if_flags(s, iface, flags);
 	close(s);
 	return;
