@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.76 2002/12/31 16:22:25 miod Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.77 2003/02/05 19:13:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.76 2002/12/31 16:22:25 miod Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.77 2003/02/05 19:13:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1003,7 +1003,7 @@ display_partition(f, lp, mp, i, unit, width)
 	char unit;
 	int width;
 {
-	struct partition *pp = &lp->d_partitions[i];
+	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size, p_offset;
 
 	if (width == 0)
