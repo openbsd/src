@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.7 2003/04/07 21:13:54 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.8 2003/04/25 20:07:09 pvalchev Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.7 2003/04/07 21:13:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.8 2003/04/25 20:07:09 pvalchev Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -160,10 +160,9 @@ usage:		(void)fprintf(stderr,
 		else {
 			if (uflag) {
 				for (step = 0; step < argc; step++) {
-					(void)asprintf(&cmd,
+					if (asprintf(&cmd,
 					    "mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
-					    outfile, argv[step], outfile);
-					if (cmd == NULL)
+					    outfile, argv[step], outfile) == -1)
 						err(1, "out of space");
 					system(cmd);
 					free(cmd);
@@ -176,9 +175,8 @@ usage:		(void)fprintf(stderr,
 			put_entries(head);
 			(void)fclose(outf);
 			if (uflag) {
-				(void)asprintf(&cmd, "sort -o %s %s",
-				    outfile, outfile);
-				if (cmd == NULL)
+				if (asprintf(&cmd, "sort -o %s %s",
+				    outfile, outfile) == -1)
 						err(1, "out of space");
 				system(cmd);
 				free(cmd);

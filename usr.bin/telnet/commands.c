@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.43 2003/04/03 12:05:58 hin Exp $	*/
+/*	$OpenBSD: commands.c,v 1.44 2003/04/25 20:07:09 pvalchev Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1680,8 +1680,7 @@ env_init()
 			hbuf[sizeof hbuf-1] = '\0';
 		}
 
-		asprintf (&cp, "%s%s", hbuf, cp2);
-		if (cp == NULL)
+		if (asprintf (&cp, "%s%s", hbuf, cp2) == -1)
 			err(1, "asprintf");
 
 		free(ep->value);

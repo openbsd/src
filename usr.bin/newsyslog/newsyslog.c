@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.63 2003/02/12 19:17:36 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.64 2003/04/25 20:07:09 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.63 2003/02/12 19:17:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.64 2003/04/25 20:07:09 pvalchev Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -1079,8 +1079,7 @@ openmail(void)
 	FILE *ret;
 	char *cmdbuf = NULL;
 
-	asprintf(&cmdbuf, "%s -t", SENDMAIL);
-	if (cmdbuf) {
+	if (asprintf(&cmdbuf, "%s -t", SENDMAIL) != -1) {
 		ret = popen(cmdbuf, "w");
 		free(cmdbuf);
 		return (ret);
