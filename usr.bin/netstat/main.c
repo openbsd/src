@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2000/01/21 03:24:06 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2000/06/30 20:04:01 itojun Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.21 2000/01/21 03:24:06 angelos Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.22 2000/06/30 20:04:01 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,10 @@ struct protox {
 
 #ifdef INET6
 struct protox ip6protox[] = {
+	{ N_TCBTABLE,	N_TCPSTAT,	1,	ip6protopr,
+	  tcp_stats,	"tcp" },
+	{ N_UDBTABLE,	N_UDPSTAT,	1,	ip6protopr,
+	  udp_stats,	"udp" },
 	{ -1,		N_IP6STAT,	1,	0,
 	  ip6_stats,	"ip6" },
 	{ -1,		N_ICMP6STAT,	1,	0,

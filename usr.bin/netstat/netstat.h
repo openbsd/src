@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.14 2000/01/21 03:24:06 angelos Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.15 2000/06/30 20:04:01 itojun Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -69,6 +69,9 @@ char	*plural __P((int));
 char	*plurales __P((int));
 
 void	protopr __P((u_long, char *));
+#ifdef INET6
+void	ip6protopr __P((u_long, char *));
+#endif
 void	tcp_stats __P((u_long, char *));
 void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
