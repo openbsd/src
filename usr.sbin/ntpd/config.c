@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.11 2004/08/12 16:33:59 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.12 2004/08/24 15:23:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,8 @@ host_dns(const char *s, struct ntp_addr **hn)
 	if (error) {
 		log_warnx("could not parse \"%s\": %s", s,
 		    gai_strerror(error));
-		if (error == EAI_AGAIN || error == EAI_NODATA)
+		if (error == EAI_AGAIN || error == EAI_NODATA ||
+		    error == EAI_NONAME)
 			return (0);
 		else
 			return (-1);
