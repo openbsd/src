@@ -1,4 +1,4 @@
-/*	$OpenBSD: playit.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: playit.c,v 1.5 1999/12/12 15:03:48 d Exp $	*/
 /*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  *  Hunt
@@ -127,6 +127,8 @@ playit()
 			ch = GETCHR();
 			/* FALLTHROUGH */
 		  default:
+			if (!isprint(ch))
+				ch = ' ';
 			display_put_ch(ch);
 			if (Otto_mode)
 				switch (ch) {
@@ -175,7 +177,7 @@ one_more_time:
 
 	if (FD_ISSET(STDIN_FILENO, &readfds))
 		send_stuff();
-	if (! FD_ISSET(Socket, &readfds))
+	if (!FD_ISSET(Socket, &readfds))
 		goto one_more_time;
 	icnt = read(Socket, ibuf, sizeof ibuf);
 	if (icnt <= 0) {
@@ -201,11 +203,13 @@ send_stuff()
 
 	/* Drain the user's keystrokes: */
 	count = read(STDIN_FILENO, Buf, sizeof Buf);
-	if (count <= 0)
+	if (count < 0)
+		err(1, "read");
+	if (count == 0)
 		return;
 
 	if (nchar_send <= 0 && !no_beep) {
-		(void) write(1, "\7", 1);	/* CTRL('G') */
+		display_beep();
 		return;
 	}
 
