@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.163 2001/02/22 08:03:22 deraadt Exp $
+#	$OpenBSD: rc,v 1.164 2001/02/23 06:50:10 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -254,6 +254,9 @@ fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
 	echo -n ' amd'
+	if [ ! -d ${amd_dir} ]; then
+		mkdir -p -m 755 ${amd_dir}
+	fi
 	(cd /etc/amd; amd -l syslog -x error,noinfo,nostats -p \
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
 fi
