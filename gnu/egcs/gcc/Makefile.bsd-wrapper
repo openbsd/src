@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/08/16 00:05:20 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2000/03/28 21:56:00 deraadt Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -10,6 +10,7 @@ LANGUAGES=--enable-languages=c
 LANGUAGES=--enable-languages='c,c++,objc,f77' 
 MAN+= cp/g++.1 f/g77.1
 MLINKS+=	g++.1 c++.1
+MLINKS+=	g77.1 f77.1
 .endif
 
 GXX_INCDIR=	/usr/include/g++
