@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.2 2001/02/01 03:38:16 smurph Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.3 2001/03/07 01:57:56 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,8 +124,8 @@ struct  vs_softc {
 	u_long  sc_chnl;		/* channel 0 or 1 for dual bus cards */
 	u_long  sc_qhp;			/* Command queue head pointer */
 	struct   vsreg  *sc_vsreg;
-#define SIOP_NACB 8
-	struct vs_tinfo sc_tinfo[8];
+#define SSH_NACB 8
+	struct vs_tinfo sc_tinfo[SSH_NACB];
 	u_char  sc_flags;
 	u_char  sc_sien;
 	u_char  sc_dien;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.3 2001/01/13 05:18:58 smurph Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.1 2001/03/07 01:57:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -50,11 +50,11 @@
 #endif /* MVME187 */
 
 #if defined(MVME187)
-#include <mvme88k/dev/siopreg.h>
-#include <mvme88k/dev/siopvar.h>
+#include <mvme88k/dev/sshreg.h>
+#include <mvme88k/dev/sshvar.h>
 #else
-#include <mvme68k/dev/siopreg.h>
-#include <mvme68k/dev/siopvar.h>
+#include <mvme68k/dev/sshreg.h>
+#include <mvme68k/dev/sshvar.h>
 #endif /* defined(MVME187) */
 
 #if !defined(MVME187)
@@ -84,12 +84,12 @@ int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
 
 int	afscprint	__P((void *auxp, char *));
-int	siopintr	__P((struct siop_softc *));
-int	afsc_dmaintr	__P((struct siop_softc *));
+int	sshintr	__P((struct ssh_softc *));
+int	afsc_dmaintr	__P((struct ssh_softc *));
 
 struct scsi_adapter afsc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
+	ssh_scsicmd,
+	ssh_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
@@ -101,12 +101,12 @@ struct scsi_device afsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-struct cfattach siop_ca = {
-        sizeof(struct siop_softc), afscmatch, afscattach,
+struct cfattach ssh_ca = {
+        sizeof(struct ssh_softc), afscmatch, afscattach,
 };    
  
-struct cfdriver siop_cd = {
-        NULL, "siop", DV_DULL, 0 
+struct cfdriver ssh_cd = {
+        NULL, "ssh", DV_DULL, 0 
 }; 
 
 int
@@ -119,7 +119,7 @@ afscmatch(pdp, vcf, args)
 	int ret;
 
 	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 4)) <=0){
-	    printf("==> siop: failed address check returning %ld.\n", ret);
+	    printf("==> ssh: failed address check returning %ld.\n", ret);
 	    return(0);
 	}
 
@@ -131,17 +131,17 @@ afscattach(parent, self, auxp)
 	struct device *parent, *self;
 	void *auxp;
 {
-	struct siop_softc *sc = (struct siop_softc *)self;
+	struct ssh_softc *sc = (struct ssh_softc *)self;
 	struct confargs *ca = auxp;
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	int tmp;
 	extern int cpuspeed;
 
-	sc->sc_siopp = rp = ca->ca_vaddr;
+	sc->sc_sshp = rp = ca->ca_vaddr;
 
 	/*
-	 * siop uses sc_clock_freq to define the dcntl & ctest7 reg values
-	 * (was 0x0221, but i added SIOP_CTEST7_SC0 for snooping control)
+	 * ssh uses sc_clock_freq to define the dcntl & ctest7 reg values
+	 * (was 0x0221, but i added SSH_CTEST7_SC0 for snooping control)
 	 * XXX does the clock frequency change for the 33MHz processors?
 	 */
 	sc->sc_clock_freq = cpuspeed * 2;
@@ -150,7 +150,7 @@ afscattach(parent, self, auxp)
 	if (cputyp == CPU_177)
 		sc->sc_clock_freq = cpuspeed;
 #endif
-	sc->sc_dcntl = SIOP_DCNTL_EA;
+	sc->sc_dcntl = SSH_DCNTL_EA;
 /*X*/	if (sc->sc_clock_freq <= 25)
 /*X*/		sc->sc_dcntl |= (2 << 6);
 /*X*/	else if (sc->sc_clock_freq <= 37)
@@ -160,15 +160,15 @@ afscattach(parent, self, auxp)
 /*X*/	else
 /*X*/		sc->sc_dcntl |= (3 << 6);
 
-	sc->sc_ctest0 = SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
+	sc->sc_ctest0 = SSH_CTEST0_BTD | SSH_CTEST0_EAN;
 
 #ifdef MVME187
 	/*
 	 * MVME187 doesn't implement snooping...
 	 */
-	sc->sc_ctest7 = SIOP_CTEST7_TT1;
+	sc->sc_ctest7 = SSH_CTEST7_TT1;
 #else
-	sc->sc_ctest7 = SIOP_CTEST7_SNOOP | SIOP_CTEST7_TT1 | SIOP_CTEST7_STD;
+	sc->sc_ctest7 = SSH_CTEST7_SNOOP | SSH_CTEST7_TT1 | SSH_CTEST7_STD;
 #endif /* MVME187 */
 
 	sc->sc_link.adapter_softc = sc;
@@ -181,7 +181,7 @@ afscattach(parent, self, auxp)
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	siopinitialize(sc);
+	sshinitialize(sc);
 
 	switch (ca->ca_bustype) {
 #if NMC > 0
@@ -248,16 +248,16 @@ afscprint(auxp, pnp)
 
 int
 afsc_dmaintr(sc)
-	struct siop_softc *sc;
+	struct ssh_softc *sc;
 {
-	siop_regmap_p rp;
+	ssh_regmap_p rp;
 	u_char	istat;
 
-	rp = sc->sc_siopp;
-	istat = rp->siop_istat;
-	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
+	rp = sc->sc_sshp;
+	istat = rp->ssh_istat;
+	if ((istat & (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0)
 		return (0);
-	if ((rp->siop_sien | rp->siop_dien) == 0)
+	if ((rp->ssh_sien | rp->ssh_dien) == 0)
 		return (0);	/* no interrupts enabled */
 
 	/*
@@ -270,14 +270,14 @@ afsc_dmaintr(sc)
 	 * (may need to deal with stacked interrupts?)
 	 */
 	sc->sc_istat = istat;
-	if (istat & SIOP_ISTAT_SIP) {
-		sc->sc_sstat0 = rp->siop_sstat0;
+	if (istat & SSH_ISTAT_SIP) {
+		sc->sc_sstat0 = rp->ssh_sstat0;
 	}
-	if (istat & SIOP_ISTAT_DIP) {
+	if (istat & SSH_ISTAT_DIP) {
 		delay(3);
-		sc->sc_dstat = rp->siop_dstat;
+		sc->sc_dstat = rp->ssh_dstat;
 	}
-	siopintr(sc);
+	sshintr(sc);
 	sc->sc_intrcnt.ev_count++;
 	return (1);
 }
@@ -290,6 +290,6 @@ afsc_dump()
 
 	for (i = 0; i < afsccd.cd_ndevs; ++i)
 		if (afsccd.cd_devs[i])
-			siop_dump(afsccd.cd_devs[i]);
+			ssh_dump(afsccd.cd_devs[i]);
 }
 #endif

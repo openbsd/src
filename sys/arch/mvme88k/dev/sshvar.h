@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
+/*	$OpenBSD: sshvar.h,v 1.1 2001/03/07 01:57:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -36,10 +36,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
+ *	@(#)sshvar.h	7.1 (Berkeley) 5/8/90
  */
-#ifndef _SIOPVAR_H_
-#define _SIOPVAR_H_
+#ifndef _SSHVAR_H_
+#define _SSHVAR_H_
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -52,7 +52,7 @@
 /*
  * Data Structure for SCRIPTS program
  */
-struct siop_ds {
+struct ssh_ds {
 /*00*/	long	scsi_addr;		/* SCSI ID & sync */
 /*04*/	long	idlen;			/* Identify message */
 /*08*/	char	*idbuf;
@@ -82,8 +82,8 @@ struct siop_ds {
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
-struct siop_acb {
-/*00*/	TAILQ_ENTRY(siop_acb) chain;
+struct ssh_acb {
+/*00*/	TAILQ_ENTRY(ssh_acb) chain;
 /*08*/	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 /*0c*/	int		flags;	/* Status */
 #define ACB_FREE	0x00
@@ -91,7 +91,7 @@ struct siop_acb {
 #define ACB_DONE	0x04
 #define ACB_CHKSENSE	0x08
 /*10*/	struct scsi_generic cmd;  /* SCSI command block */
-/*1c*/	struct siop_ds ds;
+/*1c*/	struct ssh_ds ds;
 /*a0*/	void	*iob_buf;
 /*a4*/	u_long	iob_curbuf;
 /*a8*/	u_long	iob_len, iob_curlen;
@@ -110,7 +110,7 @@ struct siop_acb {
  * probably have been a "per target+lunit" structure, but we'll leave it at
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
-struct siop_tinfo {
+struct ssh_tinfo {
 	int	cmds;		/* #commands processed */
 	int	dconns;		/* #disconnects */
 	int	touts;		/* #timeouts */
@@ -122,7 +122,7 @@ struct siop_tinfo {
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
 
-struct	siop_softc {
+struct	ssh_softc {
 	struct	device sc_dev;
 	struct	intrhand sc_ih;
 	struct	evcnt sc_intrcnt;
@@ -134,18 +134,18 @@ struct	siop_softc {
 	u_long	sc_intcode;
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	u_long	sc_scriptspa;		/* physical address of scripts */
-	siop_regmap_p	sc_siopp;	/* the SIOP */
+	ssh_regmap_p	sc_sshp;	/* the SSH */
 	u_long	sc_active;		/* number of active I/O's */
 
 	/* Lists of command blocks */
-	TAILQ_HEAD(acb_list, siop_acb) free_list,
+	TAILQ_HEAD(acb_list, ssh_acb) free_list,
 				       ready_list,
 				       nexus_list;
 
-	struct siop_acb *sc_nexus;	/* current command */
-#define SIOP_NACB 8
-	struct siop_acb *sc_acb;	/* the real command blocks */
-	struct siop_tinfo sc_tinfo[8];
+	struct ssh_acb *sc_nexus;	/* current command */
+#define SSH_NACB 8
+	struct ssh_acb *sc_acb;	/* the real command blocks */
+	struct ssh_tinfo sc_tinfo[8];
 
 	u_short	sc_clock_freq;
 	u_char	sc_dcntl;
@@ -165,10 +165,10 @@ struct	siop_softc {
 };
 
 /* sc_flags */
-#define	SIOP_INTSOFF	0x80	/* Interrupts turned off */
-#define	SIOP_INTDEFER	0x40	/* Level 6 interrupt has been deferred */
-#define	SIOP_ALIVE	0x01	/* controller initialized */
-#define SIOP_SELECTED	0x04	/* bus is in selected state. Needed for
+#define	SSH_INTSOFF	0x80	/* Interrupts turned off */
+#define	SSH_INTDEFER	0x40	/* Level 6 interrupt has been deferred */
+#define	SSH_ALIVE	0x01	/* controller initialized */
+#define SSH_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
 
 /* sync states */
@@ -198,7 +198,7 @@ struct	siop_softc {
 #define	STS_INTERMED	0x10	/* Intermediate status sent */
 #define	STS_EXT		0x80	/* Extended status valid */
 
-void siop_minphys __P((struct buf *bp));
-int siop_scsicmd __P((struct scsi_xfer *));
+void ssh_minphys __P((struct buf *bp));
+int ssh_scsicmd __P((struct scsi_xfer *));
 
-#endif /* _SIOPVAR_H */
+#endif /* _SSHVAR_H */
