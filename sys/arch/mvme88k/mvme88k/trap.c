@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2003/08/09 21:19:59 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2003/09/01 18:22:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -248,8 +248,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 
 #if defined(DDB)
 	case T_KDB_BREAK:
-		/*FALLTHRU*/
-	case T_KDB_BREAK+T_USER:
 		{
 			int s = splhigh();
 			db_enable_interrupt();
@@ -259,8 +257,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			return;
 		}
 	case T_KDB_ENTRY:
-		/*FALLTHRU*/
-	case T_KDB_ENTRY+T_USER:
 		{
 			int s = splhigh();
 			db_enable_interrupt();
@@ -534,6 +530,14 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		break;
 	case T_PRIVINFLT+T_USER:
 	case T_ILLFLT+T_USER:
+#ifndef DDB
+	case T_KDB_BREAK:
+	case T_KDB_ENTRY:
+#endif
+	case T_KDB_BREAK+T_USER:
+	case T_KDB_ENTRY+T_USER:
+	case T_KDB_TRACE:
+	case T_KDB_TRACE+T_USER:
 		sig = SIGILL;
 		break;
 	case T_BNDFLT+T_USER:
@@ -759,8 +763,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		splx(s);
 		return;
 	case T_KDB_BREAK:
-		/*FALLTHRU*/
-	case T_KDB_BREAK+T_USER:
 		s = splhigh();
 		db_enable_interrupt();
 		ddb_break_trap(T_KDB_BREAK,(db_regs_t*)frame);
@@ -768,8 +770,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		splx(s);
 		return;
 	case T_KDB_ENTRY:
-		/*FALLTHRU*/
-	case T_KDB_ENTRY+T_USER:
 		s = splhigh();
 		db_enable_interrupt();
 		ddb_entry_trap(T_KDB_ENTRY,(db_regs_t*)frame);
@@ -1020,6 +1020,14 @@ m88110_user_fault:
 		break;
 	case T_PRIVINFLT+T_USER:
 	case T_ILLFLT+T_USER:
+#ifndef DDB
+	case T_KDB_BREAK:
+	case T_KDB_ENTRY:
+	case T_KDB_TRACE:
+#endif
+	case T_KDB_BREAK+T_USER:
+	case T_KDB_ENTRY+T_USER:
+	case T_KDB_TRACE+T_USER:
 		sig = SIGILL;
 		break;
 	case T_BNDFLT+T_USER:
@@ -1333,7 +1341,8 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 	 *    any pointers.
 	 */
 
-	if (error == 0) {
+	switch (error) {
+	case 0:
 		/*
 		 * If fork succeeded and we are the child, our stack
 		 * has moved and the pointer tf is no longer valid,
@@ -1348,13 +1357,8 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->epsr &= ~PSR_C;
 		tf->snip = tf->sfip & ~NIP_E;
 		tf->sfip = tf->snip + 4;
-	} else if (error > 0) {
-		/* error != ERESTART && error != EJUSTRETURN*/
-		tf->r[2] = error;
-		tf->epsr |= PSR_C;   /* fail */
-		tf->snip = tf->snip & ~NIP_E;
-		tf->sfip = tf->sfip & ~FIP_E;
-	} else if (error == ERESTART) {
+		break;
+	case ERESTART:
 		/*
 		 * If (error == ERESTART), back up the pipe line. This
 		 * will end up reexecuting the trap.
@@ -1362,9 +1366,18 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->epsr &= ~PSR_C;
 		tf->sfip = tf->snip & ~FIP_E;
 		tf->snip = tf->sxip & ~NIP_E;
-	} else {
+		break;
+	case EJUSTRETURN:
 		/* if (error == EJUSTRETURN), leave the ip's alone */
 		tf->epsr &= ~PSR_C;
+		break;
+	default:
+		/* error != ERESTART && error != EJUSTRETURN*/
+		tf->r[2] = error;
+		tf->epsr |= PSR_C;   /* fail */
+		tf->snip = tf->snip & ~NIP_E;
+		tf->sfip = tf->sfip & ~FIP_E;
+		break;
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
@@ -1379,7 +1392,7 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 
 #ifdef M88110
 
-/* Instruction pointers opperate differently on mc88110 */
+/* Instruction pointers operate differently on mc88110 */
 void
 m88110_syscall(register_t code, struct m88100_saved_state *tf)
 {
