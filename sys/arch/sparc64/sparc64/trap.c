@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2002/01/23 15:19:10 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -87,7 +87,7 @@
 #include <machine/svr4_32_machdep.h>
 #endif
 
-#include <sparc/fpu/fpu_extern.h>
+#include <sparc64/fpu/fpu_extern.h>
 #include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
