@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.15 2003/06/02 19:32:31 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.16 2003/06/03 23:41:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.15 2003/06/02 19:32:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.16 2003/06/03 23:41:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.15 2003/06/02 19:32:31 millert
 #include <errno.h>
 #include <locale.h>
 #include <regex.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -123,7 +122,6 @@ char		**fnames;	/* The list of file names */
 int		nfiles;		/* Number of files left to process */
 char		*shell;		/* The name of the shell to use */
 int		shellp;		/* A previous shell command exists */
-sigjmp_buf	restore;
 char		Line[LINSIZ];	/* Line buffer */
 int		Lpp = 24;	/* lines per page */
 char		*Clear;		/* clear screen */
@@ -142,6 +140,8 @@ int		soglitch;	/* terminal has standout mode glitch */
 int		ulglitch;	/* terminal has underline mode glitch */
 int		pstate = 0;	/* current UL state */
 
+volatile sig_atomic_t signo;	/* signal received */
+
 struct {
 	long chrctr, line;
 } context, screen_start;
@@ -151,17 +151,18 @@ extern char	*__progname;	/* program name (crt0) */
 
 int   colon(char *, int, int);
 int   command(char *, FILE *);
+int   do_shell(char *);
 int   expand(char *, size_t, char *);
 int   getline(FILE *, int *);
 int   magic(FILE *, char *);
 int   number(char *);
 int   readch(void);
+int   search(char *, FILE *, int);
+int   ttyin(char *, int, char);
 void  argscan(char *);
-void  chgwinsz(int);
 void  copy_file(FILE *);
-void  do_shell(char *);
 void  doclear(void);
-void  end_it(int);
+void  end_it(void);
 void  erasep(int);
 void  error(char *);
 void  errwrite(char *);
@@ -169,21 +170,19 @@ void  errwrite1(char *);
 void  execute(char *filename, char *cmd, char *, char *, char *);
 void  initterm(void);
 void  kill_line(void);
-void  onquit(int);
-void  onsusp(int);
+void  onsignal(int);
 void  prbuf(char *, int);
 void  putch(int);
 void  rdline(FILE *);
 void  reset_tty(void);
 void  screen(FILE *, int);
-void  search(char *, FILE *, int);
 void  set_tty(void);
 void  show(int);
 void  skipf(int);
 void  skiplns(int, FILE *);
-void  ttyin(char *, int, char);
 FILE *checkf(char *, int *);
 __dead void usage(void);
+struct sigaction sa;
 
 int
 main(int argc, char **argv)
@@ -200,6 +199,11 @@ main(int argc, char **argv)
 	char		initbuf[80];
 
 	setlocale(LC_ALL, "");
+
+	/* all signals just use a stub handler and interrupt syscalls */
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sa.sa_handler = onsignal;
 
 	nfiles = argc;
 	fnames = argv;
@@ -250,11 +254,16 @@ main(int argc, char **argv)
 	else
 		f = stdin;
 	if (!no_tty) {
-		signal(SIGQUIT, onquit);
-		signal(SIGINT, end_it);
-		signal(SIGWINCH, chgwinsz);
-		if (signal(SIGTSTP, SIG_IGN) == SIG_DFL) {
-			signal(SIGTSTP, onsusp);
+		struct sigaction osa;
+
+		(void)sigaction(SIGQUIT, &sa, NULL);
+		(void)sigaction(SIGINT, &sa, NULL);
+		(void)sigaction(SIGWINCH, &sa, NULL);
+		if (sigaction(SIGTSTP, &osa, NULL) == 0 &&
+		    osa.sa_handler == SIG_DFL) {
+			(void)sigaction(SIGTSTP, &sa, NULL);
+			(void)sigaction(SIGTTIN, &sa, NULL);
+			(void)sigaction(SIGTTOU, &sa, NULL);
 			catch_susp++;
 		}
 		tcsetattr(STDERR_FILENO, TCSANOW, &otty);
@@ -275,8 +284,7 @@ main(int argc, char **argv)
 				}
 			}
 			if (srchopt) {
-				search(initbuf, stdin, 1);
-				if (noscroll)
+				if (search(initbuf, stdin, 1) == 0 && noscroll)
 					left--;
 			} else if (initopt)
 				skiplns(initline, stdin);
@@ -291,21 +299,18 @@ main(int argc, char **argv)
 		if ((f = checkf(fnames[fnum], &clearit)) != NULL) {
 			context.line = context.chrctr = 0;
 			Currline = 0;
-			if (firstf)
-				sigsetjmp(restore, 1);
+		restart:
 			if (firstf) {
 				firstf = 0;
 				if (srchopt) {
-					search(initbuf, f, 1);
+					if (search(initbuf, f, 1) < 0)
+						goto restart;
 					if (noscroll)
 						left--;
 				} else if (initopt)
 					skiplns(initline, f);
-			}
-			else if (fnum < nfiles && !no_tty) {
-				sigsetjmp(restore, 1);
+			} else if (fnum < nfiles && !no_tty)
 				left = command(fnames[fnum], f);
-			}
 			if (left != 0) {
 				if ((noscroll || clearit) &&
 				    (file_size != LONG_MAX)) {
@@ -340,7 +345,6 @@ main(int argc, char **argv)
 					within = 0;
 				}
 			}
-			sigsetjmp(restore, 1);
 			fflush(stdout);
 			fclose(f);
 			screen_start.line = screen_start.chrctr = 0L;
@@ -550,7 +554,6 @@ screen(FILE *f, int num_lines)
 		if (Pause && clreol)
 			clreos();
 		Ungetc(c, f);
-		sigsetjmp(restore, 1);
 		Pause = 0;
 		startup = 0;
 		if ((num_lines = command(NULL, f)) == 0)
@@ -569,61 +572,10 @@ screen(FILE *f, int num_lines)
 }
 
 /*
- * Come here if a quit signal is received.
- */
-void
-onquit(int dummy)
-{
-	int save_errno = errno;
-
-	signal(SIGQUIT, SIG_IGN);
-	if (!inwait) {
-		putchar('\n');
-		if (!startup) {
-			signal(SIGQUIT, onquit);
-			errno = save_errno;
-			siglongjmp(restore, 1);
-		} else
-			Pause++;
-	} else if (!dum_opt && notell) {
-		write(STDERR_FILENO, QUIT_IT, sizeof(QUIT_IT) - 1);
-		promptlen += sizeof(QUIT_IT) - 1;
-		notell = 0;
-	}
-	signal(SIGQUIT, onquit);
-	errno = save_errno;
-}
-
-/*
- * Come here if a signal for a window size change is received
- */
-void
-chgwinsz(int dummy)
-{
-	int save_errno = errno;
-	struct winsize win;
-
-	(void)signal(SIGWINCH, SIG_IGN);
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != -1) {
-		if (win.ws_row != 0) {
-			Lpp = win.ws_row;
-			nscroll = Lpp/2 - 1;
-			if (nscroll <= 0)
-				nscroll = 1;
-			dlines = Lpp - (noscroll ? 1 : 2);
-		}
-		if (win.ws_col != 0)
-			Mcol = win.ws_col;
-	}
-	(void)signal(SIGWINCH, chgwinsz);
-	errno = save_errno;
-}
-
-/*
  * Clean up terminal state and exit. Also come here if interrupt signal received
  */
 void
-end_it(int dummy)
+end_it(void)
 {
 	reset_tty();
 	if (clreol) {
@@ -984,7 +936,7 @@ command(char *filename, FILE *f)
 			ret(nscroll);
 		case 'q':
 		case 'Q':
-			end_it(0);
+			end_it();
 		case 's':
 		case 'f':
 			if (nlines == 0)
@@ -1062,15 +1014,25 @@ command(char *filename, FILE *f)
 			if (lastp) {
 				/* Use previous r.e. */
 				write(STDERR_FILENO, "\r", 1);
-				search(NULL, f, nlines);
+				if (search(NULL, f, nlines) < 0)
+					break;
 			} else {
-				ttyin(cmdbuf, sizeof(cmdbuf) - 2, '/');
+				if (ttyin(cmdbuf, sizeof(cmdbuf) - 2, '/') < 0) {
+					kill_line();
+					prompt(filename);
+					continue;
+				}
 				write(STDERR_FILENO, "\r", 1);
-				search(cmdbuf, f, nlines);
+				if (search(cmdbuf, f, nlines) < 0)
+					break;
 			}
 			ret(dlines-1);
 		case '!':
-			do_shell(filename);
+			if (do_shell(filename) < 0) {
+				kill_line();
+				prompt(filename);
+				continue;
+			}
 			break;
 		case '?':
 		case 'h':
@@ -1156,7 +1118,7 @@ colon(char *filename, int cmd, int nlines)
 	case 'n':
 		if (nlines == 0) {
 			if (fnum >= nfiles - 1)
-				end_it(0);
+				end_it();
 			nlines++;
 		}
 		putchar('\r');
@@ -1175,11 +1137,14 @@ colon(char *filename, int cmd, int nlines)
 		skipf (-nlines);
 		return (0);
 	case '!':
-		do_shell(filename);
+		if (do_shell(filename) < 0) {
+			kill_line();
+			prompt(filename);
+		}
 		return (-1);
 	case 'q':
 	case 'Q':
-		end_it(0);
+		end_it();
 	default:
 		write(STDERR_FILENO, &bell, 1);
 		return (-1);
@@ -1211,7 +1176,7 @@ number(char *cmd)
 	return (i);
 }
 
-void
+int
 do_shell(char *filename)
 {
 	char cmdbuf[200];
@@ -1223,7 +1188,8 @@ do_shell(char *filename)
 	if (lastp)
 		fputs(shell_line, stdout);
 	else {
-		ttyin(cmdbuf, sizeof(cmdbuf) - 2, '!');
+		if (ttyin(cmdbuf, sizeof(cmdbuf) - 2, '!') < 0)
+			return (-1);
 		if (expand(shell_line, sizeof(shell_line), cmdbuf)) {
 			kill_line();
 			promptlen = printf("!%s", shell_line);
@@ -1239,7 +1205,7 @@ do_shell(char *filename)
 /*
  * Search for nth ocurrence of regular expression contained in buf in the file
  */
-void
+int
 search(char *buf, FILE *file, int n)
 {
 	long startline = Ftell(file);
@@ -1261,10 +1227,13 @@ search(char *buf, FILE *file, int n)
 			regerror(rv, &reg, ebuf, sizeof(ebuf));
 			regfree(&reg);
 			error(ebuf);
+			return (-1);
 		}
 		initialized = 1;
-	} else if (!initialized)
+	} else if (!initialized) {
 		error("No previous regular expression");
+		return (-1);
+	}
 	while (!feof(file)) {
 		line3 = line2;
 		line2 = line1;
@@ -1306,6 +1275,7 @@ search(char *buf, FILE *file, int n)
 		} else if (rv != REG_NOMATCH) {
 			regerror(rv, &reg, ebuf, sizeof(ebuf));
 			error(ebuf);
+			return (-1);
 		}
 	}
 	if (feof(file)) {
@@ -1314,10 +1284,12 @@ search(char *buf, FILE *file, int n)
 			Fseek (file, startline);
 		} else {
 			fputs("\nPattern not found\n", stdout);
-			end_it(0);
+			end_it();
 		}
 		error("Pattern not found");
+		return (-1);
 	}
+	return (0);
 }
 
 void
@@ -1335,7 +1307,7 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 	fflush(stdout);
 	reset_tty();
 	for (n = 10; (id = fork()) < 0 && n > 0; n--)
-		sleep (5);
+		sleep(5);
 	if (id == 0) {
 		if (!isatty(0)) {
 			close(0);
@@ -1346,16 +1318,27 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 		exit(1);
 	}
 	if (id > 0) {
-		signal(SIGINT, SIG_IGN);
-		signal(SIGQUIT, SIG_IGN);
-		if (catch_susp)
-			signal(SIGTSTP, SIG_DFL);
-		while(wait(0) > 0)
+		sa.sa_flags = SA_RESTART;
+		sa.sa_handler = SIG_IGN;
+		(void)sigaction(SIGINT, &sa, NULL);
+		(void)sigaction(SIGQUIT, &sa, NULL);
+		if (catch_susp) {
+			sa.sa_handler = SIG_DFL;
+			(void)sigaction(SIGTSTP, &sa, NULL);
+			(void)sigaction(SIGTTIN, &sa, NULL);
+			(void)sigaction(SIGTTOU, &sa, NULL);
+		}
+		while (wait(NULL) > 0)
 			continue;
-		signal(SIGINT, end_it);
-		signal(SIGQUIT, onquit);
-		if (catch_susp)
-			signal(SIGTSTP, onsusp);
+		sa.sa_flags = 0;
+		sa.sa_handler = onsignal;
+		(void)sigaction(SIGINT, &sa, NULL);
+		(void)sigaction(SIGQUIT, &sa, NULL);
+		if (catch_susp) {
+			(void)sigaction(SIGTSTP, &sa, NULL);
+			(void)sigaction(SIGTTIN, &sa, NULL);
+			(void)sigaction(SIGTTOU, &sa, NULL);
+		}
 	} else
 		write(STDERR_FILENO, "can't fork\n", 11);
 	set_tty();
@@ -1532,17 +1515,91 @@ retry:
 }
 
 int
+handle_signal(int sig)
+{
+	int ch = -1;
+
+	signo = 0;
+
+	switch (sig) {
+	case SIGQUIT:
+		if (!inwait) {
+			putchar('\n');
+			if (startup)
+				Pause++;
+		} else if (!dum_opt && notell) {
+			write(STDERR_FILENO, QUIT_IT,
+			    sizeof(QUIT_IT) - 1);
+			promptlen += sizeof(QUIT_IT) - 1;
+			notell = 0;
+		}
+		break;
+	case SIGTSTP:
+	case SIGTTIN:
+	case SIGTTOU:
+		/* XXX - should use saved values instead of SIG_DFL */
+		sa.sa_handler = SIG_DFL;
+		sa.sa_flags = SA_RESTART;
+		(void)sigaction(SIGTSTP, &sa, NULL);
+		(void)sigaction(SIGTTIN, &sa, NULL);
+		(void)sigaction(SIGTTOU, &sa, NULL);
+		reset_tty();
+		kill(getpid(), sig);
+
+		sa.sa_handler = onsignal;
+		sa.sa_flags = 0;
+		(void)sigaction(SIGTSTP, &sa, NULL);
+		(void)sigaction(SIGTTIN, &sa, NULL);
+		(void)sigaction(SIGTTOU, &sa, NULL);
+		set_tty();
+		if (!no_intty)
+			ch = '\f';	/* force redraw */
+		break;
+	case SIGINT:
+		end_it();
+		break;
+	case SIGWINCH: {
+		struct winsize win;
+
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != 0)
+			break;
+		if (win.ws_row != 0) {
+			Lpp = win.ws_row;
+			nscroll = Lpp/2 - 1;
+			if (nscroll <= 0)
+				nscroll = 1;
+			dlines = Lpp - (noscroll ? 1 : 2);
+		}
+		if (win.ws_col != 0)
+			Mcol = win.ws_col;
+		if (!no_intty)
+			ch = '\f';	/* force redraw */
+		break;
+	} default:
+		/* NOTREACHED */
+		break;
+	}
+	return (ch);
+}
+
+int
 readch(void)
 {
 	int ch;
 
 	errno = 0;
 	/* We know stderr is hooked up to /dev/tty so this is safe. */
+again:
 	if (read(STDERR_FILENO, &ch, 1) <= 0) {
-		if (errno != EINTR)
-			end_it(0);
-		else
-			ch = otty.c_cc[VKILL];
+		if (signo != 0) {
+			if ((ch = handle_signal(signo)) == -1)
+				goto again;
+		} else {
+			if (errno != EINTR)
+				end_it();
+			else
+				ch = otty.c_cc[VKILL];
+		}
 	}
 	return (ch);
 }
@@ -1557,7 +1614,7 @@ static char CARAT = '^';
 		write(STDERR_FILENO, &BS, 1);			\
 } while (0)
 
-void
+int
 ttyin(char *buf, int nmax, char pchar)
 {
 	char	cbuf, ch, *sptr;
@@ -1585,7 +1642,7 @@ ttyin(char *buf, int nmax, char pchar)
 			} else {
 				if (!eraseln)
 					promptlen = maxlen;
-				siglongjmp(restore, 1);
+				return (-1);
 			}
 		} else if ((ch == otty.c_cc[VKILL]) && !slash) {
 			if (hard) {
@@ -1633,6 +1690,8 @@ ttyin(char *buf, int nmax, char pchar)
 		promptlen = maxlen;
 	if (sptr - buf >= nmax - 1)
 		error("Line too long");
+
+	return (0);
 }
 
 int
@@ -1716,7 +1775,6 @@ error(char *mess)
 		fputs(mess, stdout);
 	fflush(stdout);
 	errors++;
-	siglongjmp(restore, 1);
 }
 
 void
@@ -1759,37 +1817,12 @@ rdline(FILE *f)
 }
 
 /*
- * Come here when we get a suspend signal from the terminal
+ * Come here when we get a signal we can handle.
  */
 void
-onsusp(int dummy)
+onsignal(int sig)
 {
-	int save_errno = errno;
-	sigset_t mask, omask;
-
-	/* ignore SIGTTOU so we don't get stopped if csh grabs the tty */
-	signal(SIGTTOU, SIG_IGN);
-	reset_tty();
-	fflush(stdout);
-	signal(SIGTTOU, SIG_DFL);
-	/* Send the TSTP signal to suspend our process group */
-	signal(SIGTSTP, SIG_DFL);
-
-	/* unblock SIGTSTP or we won't be able to suspend ourself */
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGTSTP);
-	sigprocmask(SIG_UNBLOCK, &mask, &omask);
-
-	kill(0, SIGTSTP);
-	/* Pause for station break */
-
-	/* We're back */
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	signal(SIGTSTP, onsusp);
-	set_tty();
-	errno = save_errno;
-	if (inwait)
-		siglongjmp(restore, 1);
+	signo = sig;
 }
 
 __dead void
