@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.131 2000/04/24 18:56:56 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.132 2000/05/15 06:14:25 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -588,7 +588,7 @@ setup_buffers(maxaddr)
 	if (!ALLOC_PGS(CHUNKSZ, ISADMA_LIMIT, saved_pgs)) {
 		/*
 		 * Then, grab as much ISA DMAable memory as possible
-		 * for the buffer * cache as it is nice to not need to
+		 * for the buffer cache as it is nice to not need to
 		 * bounce all buffer I/O.
 		 */
 		for (left = bufpages; left > 0; left -= chunk) {
