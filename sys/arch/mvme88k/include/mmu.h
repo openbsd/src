@@ -1,13 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.11 2001/08/12 12:03:02 heko Exp $ */
-/*
- * Ashura Project
- */
-/*
- * HISTORY
- *
- * Original SCCS ID in ISEDL 
- * @(#)mmu.h 1.22		 90/09/20 19:13:34
- */
+/*	$OpenBSD: mmu.h,v 1.12 2001/08/24 22:47:18 miod Exp $ */
 
 #ifndef	__MACHINE_MMU_H__
 #define	__MACHINE_MMU_H__
@@ -212,17 +203,6 @@ typedef union batc_template {
     	printf("%s: addr  %x not page aligned.\n", who, ad)
 
 /*
- * Flags for cmmu_store() <cmmu.s>
- */
-#define STORE_CMD	0
-#define STORE_UAPR	4
-#define STORE_SAPR	8
-#define STORE_BATCWP	0x400
-
-#define C_CMMU		0
-#define D_CMMU		0x1000
-
-/*
  * Parameters for ATC(TLB) fulsh
  */
 
@@ -246,7 +226,7 @@ typedef union batc_template {
 #define CACHE_MASK	(~(unsigned)(CACHE_INH | CACHE_GLOBAL | CACHE_WT))
 
 /*
- * Prototype for invalidate_pte found in "motorola/m88k/m88100/misc.s"
+ * Prototype for invalidate_pte found in locore_asm_routines.S
  */
 unsigned invalidate_pte(pt_entry_t *pointer);
 
