@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.40 2002/03/14 01:27:06 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.41 2002/03/17 18:22:25 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -489,12 +489,12 @@ vn_select(fp, which, p)
  * acquire requested lock.
  */
 int
-vn_lock(vp, flags, p)
-	struct vnode *vp;
-	int flags;
-	struct proc *p;
+vn_lock(struct vnode *vp, int flags, struct proc *p)
 {
 	int error;
+
+	if ((flags & LK_RECURSEFAIL) == 0)
+		flags |= LK_CANRECURSE;
 	
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
@@ -505,7 +505,7 @@ vn_lock(vp, flags, p)
 			tsleep((caddr_t)vp, PINOD, "vn_lock", 0);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp, flags | LK_INTERLOCK | LK_CANRECURSE, p);
+			error = VOP_LOCK(vp, flags | LK_INTERLOCK, p);
 			if (error == 0)
 				return (error);
 		}
