@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.41 2000/07/06 00:59:01 todd Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.42 2000/09/15 22:28:50 aaron Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -444,6 +444,24 @@ epconfig(sc, chipset, enaddr)
 
 	ep_reset_cmd(sc, EP_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, EP_COMMAND, TX_RESET);
+}
+
+int
+ep_detach(self)
+	struct device *self;
+{
+	struct ep_softc *sc = (struct ep_softc *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	if (sc->ep_flags & EP_FLAGS_MII)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (0);
 }
 
 /*
