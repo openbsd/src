@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.17 1997/05/31 15:34:56 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.18 1997/07/18 00:30:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,10 +35,13 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
-#include <libsa.h>
+#include <machine/biosvar.h>
+#include "libsa.h"
 #include "biosdev.h"
 
 extern int debug;
+
+struct BIOS_regs	BIOS_regs;
 
 struct biosdisk {
 	u_int	dinfo;
@@ -262,7 +265,7 @@ const struct bd_error {
 	{ 0xE0, EIO    , "status register error" },
 	{ 0xFF, EIO    , "sense operation failed" }
 };
-int	bd_nents = NENTS(bd_errors);
+const int bd_nents = NENTS(bd_errors);
 
 int
 biosstrategy(void *devdata, int rw,
