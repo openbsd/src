@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.3 1999/09/29 18:16:21 dugsong Exp $
+.\" $Id: sshd.8,v 1.4 1999/10/01 22:23:48 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -302,9 +302,7 @@ nothing is logged in the system log, except fatal errors.  The default
 is
 .Dq no .
 .It Cm RandomSeed
-Specifies the file containing the random seed for the server; this
-file is created automatically and updated regularly.  The default is
-.Pa /etc/ssh_random_seed .
+Obsolete.  Random number generation uses other techniques.
 .It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
 files is sufficient.  Normally, this method should not be permitted
@@ -536,9 +534,6 @@ manually.  This file should be world-readable but writable only by
 root.  Its contents should match the private part.  This file is not
 really used for anything; it is only provided for the convenience of
 the user so its contents can be copied to known hosts files.
-.It Pa /etc/ssh_random_seed
-This file contains a seed for the random number generator.  This file
-should only be accessible by root.
 .It Pa /var/run/sshd.pid
 Contains the process ID of the
 .Nm

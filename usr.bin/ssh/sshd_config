@@ -3,7 +3,6 @@
 Port 22
 ListenAddress 0.0.0.0
 HostKey /etc/ssh_host_key
-RandomSeed /etc/ssh_random_seed
 ServerKeyBits 768
 LoginGraceTime 600
 KeyRegenerationInterval 3600
