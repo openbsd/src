@@ -29,13 +29,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: radixsort.3,v 1.7 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: radixsort.3,v 1.8 2003/05/12 07:15:15 pjanzen Exp $
 .\"
 .Dd January 27, 1994
 .Dt RADIXSORT 3
 .Os
 .Sh NAME
-.Nm radixsort
+.Nm radixsort ,
+.Nm sradixsort
 .Nd radix sort
 .Sh SYNOPSIS
 .Fd #include <limits.h>
@@ -51,8 +52,10 @@ and
 .Fn sradixsort
 functions are implementations of radix sort.
 .Pp
-These functions sort an array of pointers to byte strings, the initial
-member of which is referenced by
+These functions sort an array of
+.Fa nmemb
+pointers to byte strings.
+The initial member is referenced by
 .Fa base .
 The byte strings may contain any values; the end of each string
 is denoted by the user-specified value
@@ -86,7 +89,7 @@ has a sorting weight of 0.
 .Pp
 The
 .Fn sradixsort
-function is stable, that is, if two elements compare as equal, their
+function is stable; that is, if two elements compare as equal, their
 order in the sorted array is unchanged.
 The
 .Fn sradixsort
