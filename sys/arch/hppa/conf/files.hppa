@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.9 1999/02/24 22:03:25 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.10 1999/02/25 16:37:12 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -134,6 +134,16 @@ file	arch/hppa/gsc/hil.c		hil
 
 attach	pckbc at gsc with pckbc_gsc
 file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
+
+# PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
+device	aone: audio, mulaw, auconv
+attach	aone at gsc
+file	arch/hppa/gsc/aone.c		aone
+
+# CS4215 based 16bit mono/stereo audio iface (most of others not w/ aone)
+device	atwo: audio, mulaw, auconv
+attach	atwo at gsc
+file	arch/hppa/gsc/atwo.c		atwo
 
 # these we don't know yet
 #device	medusa: fddi
