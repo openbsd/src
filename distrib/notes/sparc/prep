@@ -26,10 +26,10 @@ and scsi-id#0 to sd3. The remaining drives will be dynamically mapped
 to other sd* numbers.
 
 This is mostly a non-issue if you have only one drive on your system,
-but can get really confusing if you have multiple drives.  If you plan
+but can get confusing if you have multiple drives.  If you plan
 to eliminate SunOS altogether it may be best to correct the scsi-id's
 of your drives, while if you plan to leave SunOS installed, it may
-be better to install OpenBSD on an external drive with scsi-id 1 or 0.
+be better to install OpenBSD on a drive with scsi-id 1 or 0.
 
 Some OpenBoot proms provide and environment variable that controls
 the drive<->scsi-id mapping, you can change this to reflect the natural
@@ -41,18 +41,24 @@ the scsi-id's to sd0->scsi-id 0 or your desired scheme, this helps
 prevent accidents if you change the SCSI bus configuration or a drive
 is down.
 
-Your OpenBOOT ROM may need some setup.  make sure you boot from `new
-command mode'.  If your machine comes up and gives you a `>' prompt
+Your OpenBOOT ROM may need some setup.  If you are running OpenBSD on
+a sun4c, or sun4m system, the ROM must be set to "new" command mode.
+If your sun4c or sun4m machine comes up and gives you a `>' prompt
 instead of `ok', type:
 
     >n
     ok setenv sunmon-compat? false
     ok
 
-This is needed because OpenBSD cannot handle the old-mode yet, and will
-firework on you.
+This is needed because OpenBSD relies on the behaviour of the "new" command
+mode.  OpenBSD will not boot correctly on sun4c or sun4m systems that 
+are not running in "new" command mode.  The sun4 systems such as the 4/110, 
+4/200, and 4/300 system do not have a "new" command mode, and will work
+fine as-is.
+
 
 Also, you cannot use the security modes of the sparc OpenBOOT ROM.
+Make sure that the ROM security modes are disabled:
 
     ok setenv security-mode none
 
@@ -74,6 +80,10 @@ both OpenBSD and SunOS environments on the same system.
     about missing . and .. entries.  Do *not* try to "correct" these
     problems, as attempting to do so will completely trash the filesystem.
 
+    You should avoid using the new OpenBSD "-s enable" option to the 
+    "tunefs" command, which enable the soft update feature.  
+    Although untested, it is likely that SunOS would be confused by a 
+    filesystem with soft update flags enabled.
 
 OpenBSD supports both OpenBSD "native" disklabels and "Sun compatible"
 disklabels.  Unless you have some really good reason, you should stick
