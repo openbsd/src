@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.3 1999/08/20 14:11:34 niklas Exp $	*/
+/*	$OpenBSD: common.c,v 1.4 1999/08/24 20:41:04 niklas Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -55,6 +55,11 @@ __load_rtld(dp)
 
 	crt.crt_ldfd = open(crt.crt_ldso, 0, 0);
 	if (crt.crt_ldfd == -1) {
+		/* If we don't need ld.so then just return instead bail out. */
+		if (!LD_NEED(dp)) {
+			ld_entry = 0;
+			return;
+		}
 		_FATAL("No ld.so\n");
 	}
 
