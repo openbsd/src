@@ -100,11 +100,12 @@ fgoto(in_refresh)
 		outcol %= COLS;
 		if (AM == 0) {
 			while (l > 0) {
-				if (__pfast)
+				if (__pfast) {
 					if (CR)
 						tputs(CR, 0, __cputchar);
 					else
 						putchar('\r');
+				}
 				if (NL)
 					tputs(NL, 0, __cputchar);
 				else
@@ -297,7 +298,7 @@ plod(cnt, in_refresh)
 	 * If it will be cheaper, or if we can't back up, then send a return
 	 * preliminarily.
 	 */
-	if (j > i + 1 || outcol > destcol && !BS && !BC) {
+	if (j > i + 1 || (outcol > destcol && !BS && !BC)) {
 		/*
 		 * BUG: this doesn't take the (possibly long) length of CR
 		 * into account.
@@ -383,7 +384,7 @@ dontcr:	while (outline < destline) {
 		 * Move one char to the right.  We don't use ND space because
 		 * it's better to just print the char we are moving over.
 		 */
-		if (in_refresh)
+		if (in_refresh) {
 			if (plodflg)	/* Avoid a complex calculation. */
 				plodcnt--;
 			else {
@@ -395,7 +396,7 @@ dontcr:	while (outline < destline) {
 				else
 					goto nondes;
 			}
-		else
+		} else
 nondes:			if (ND)
 				tputs(ND, 0, plodput);
 			else

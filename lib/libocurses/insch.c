@@ -63,12 +63,13 @@ winsch(win, ch)
 	__touchline(win, win->cury, win->curx, win->maxx - 1, 0);
 	if (win->cury == LINES - 1 && 
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||
-	    win->lines[LINES -1]->line[COLS - 1].attr != 0))
+	    win->lines[LINES -1]->line[COLS - 1].attr != 0)) {
 		if (win->flags & __SCROLLOK) {
 			wrefresh(win);
 			scroll(win);
 			win->cury--;
 		} else
 			return (ERR);
+	}
 	return (OK);
 }
