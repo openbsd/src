@@ -2036,7 +2036,9 @@ IDTVEC(fpu)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
-	pushl	_cpl
+#if 0
+	pushl	_cpl			# this is apparently not used for anything
+#endif
 	pushl	%esp
 	incl	_cnt+V_TRAP
 	call	_npxintr
