@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.2 1999/12/25 07:09:43 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.3 1999/12/31 22:19:43 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -570,41 +570,51 @@ esp_input(struct mbuf *m, ...)
 #ifdef INET6
 /* IPv6 AH wrapper */
 int
-ah6_input(struct mbuf *m, ...)
+ah6_input(struct mbuf **mp, int *offp, int proto)
 {
-    int *skip, protoff;
+    struct mbuf *m = *mp;
+    int protoff;
+    u_int8_t nxt;
 
-    va_list ap;
-	
-    va_start(ap, m);
-    skip = va_arg(ap, int *);
-    protoff = va_arg(ap, int);
-    va_end(ap);
+    /*
+     * XXX assuming that it is first hdr, i.e.
+     * offp == sizeof(struct ip6_hdr)
+     */
+    if (*offp != sizeof(struct ip6_hdr)) {
+	m_freem(m);
+	return IPPROTO_DONE;	/* not quite */
+    }
 
-    ipsec_common_input(m, *skip, protoff, AF_INET6, IPPROTO_AH);
+    protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    ipsec_common_input(m, *offp, protoff, AF_INET6, proto);
 
     /* Retrieve new protocol */
-    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &protoff);
-    return protoff;
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
+    return nxt;
 }
 
 /* IPv6 ESP wrapper */
 int
-esp6_input(struct mbuf *m, ...)
+esp6_input(struct mbuf **mp, int *offp, int proto)
 {
-    int *skip, protoff;
+    struct mbuf *m = *mp;
+    int protoff;
+    u_int8_t nxt;
 
-    va_list ap;
-	
-    va_start(ap, m);
-    skip = va_arg(ap, int *);
-    protoff = va_arg(ap, int);
-    va_end(ap);
+    /*
+     * XXX assuming that it is first hdr, i.e.
+     * offp == sizeof(struct ip6_hdr)
+     */
+    if (*offp != sizeof(struct ip6_hdr)) {
+	m_freem(m);
+	return IPPROTO_DONE;	/* not quite */
+    }
 
-    ipsec_common_input(m, *skip, protoff, AF_INET6, IPPROTO_ESP);
+    protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    ipsec_common_input(m, *offp, protoff, AF_INET6, proto);
 
     /* Retrieve new protocol */
-    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &protoff);
-    return protoff;
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
+    return nxt;
 }
 #endif /* INET6 */
