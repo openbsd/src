@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.c,v 1.14 1998/06/09 18:10:02 mickey Exp $	*/
+/*	$OpenBSD: vm_page.c,v 1.15 1998/10/30 18:28:03 mickey Exp $	*/
 /*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -565,10 +565,11 @@ vm_page_physload(start, end, avail_start, avail_end)
 		/* # of pages */
 		npages = end - start;
 		MALLOC(pgs, struct vm_page *, sizeof(struct vm_page) * npages, 
-		    M_VMPAGE, M_NOWAIT);
+		    M_VMPGDATA, M_NOWAIT);
 		if (pgs == NULL) {
-	printf("vm_page_physload: can not malloc vm_page structs for segment\n");
-			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
+			printf("vm_page_physload: "
+			       "can not malloc vm_page structs for segment\n"
+			       "\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
 		}
 		/* zero data, init phys_addr, and free pages */
@@ -578,9 +579,10 @@ vm_page_physload(start, end, avail_start, avail_end)
 			pgs[lcv].phys_addr = paddr;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
-				vm_page_free(&pgs[i]);
+				vm_page_free(&pgs[lcv]);
 		}
-/* XXXCDC: incomplete: need to update v_free_count, what else? */
+/* XXXCDC: incomplete: need to update v_free_count, what else?
+	   v_free_count is updated in vm_page_free, actualy */
 /* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
 #endif
 	} else {
@@ -680,10 +682,11 @@ vm_page_physrehash()
 	/*
 	 * malloc new buckets
 	 */
-	MALLOC(newbuckets, struct pglist *, sizeof(struct pglist) * bucketcount, 
-	    M_VMPBUCKET, M_NOWAIT);
+	MALLOC(newbuckets, struct pglist*, sizeof(struct pglist) * bucketcount, 
+	       M_VMPBUCKET, M_NOWAIT);
 	if (newbuckets == NULL) {
-    printf("vm_page_physrehash: WARNING: could not grow page hash table\n");
+		printf("vm_page_physrehash: "
+		       "WARNING: could not grow page hash table\n");
 		return;
 	}
 	for (lcv = 0; lcv < bucketcount; lcv++)
