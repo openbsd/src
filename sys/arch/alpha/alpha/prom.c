@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.5 1997/01/24 19:56:42 niklas Exp $	*/
+/*	$OpenBSD: prom.c,v 1.6 2000/06/08 11:57:21 art Exp $	*/
 /*	$NetBSD: prom.c,v 1.12 1996/11/13 21:13:11 cgd Exp $	*/
 
 /* 
@@ -55,7 +55,7 @@ extern struct prom_vec prom_dispatch_v;
 pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
 
 #ifdef NEW_PMAP
-#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_pmap.dir[0] : rom_ptep)
+#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_map.pmap->dir[0] : rom_ptep)
 #endif
 
 void

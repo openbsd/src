@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/06/05 11:02:55 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2000/06/08 11:57:21 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ cpu_fork(p1, p2, stack, stacksize)
 #else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
 	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
-	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
+	    p2->p_pid, p2->p_md.md_pcbpaddr,&p2->p_vmspace->vm_map.pmap);
 #endif
 
 	/*
