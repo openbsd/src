@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.22 2004/01/31 13:04:41 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.23 2004/10/04 21:37:49 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -151,12 +151,14 @@ function.
 .Sh SED REGULAR EXPRESSIONS
 The
 .Nm
-regular expressions are basic regular expressions (BRE's; see
+regular expressions are basic regular expressions
+.Pq BREs .
+See
 .Xr re_format 7
-for more information).
+for more information on regular expressions.
 In addition,
 .Nm
-has the following two additions to BRE's:
+has the following two additions to BREs:
 .Pp
 .Bl -enum -compact
 .It
