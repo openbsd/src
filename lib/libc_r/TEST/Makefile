@@ -29,17 +29,7 @@ SRCS =		${TESTS:=.c}
 CLEANFILES +=	${TESTS} 
 SKIP_TESTS +=	test_sock_2a
 
-# This list used to include p_bench_semaphore, but the semaphore support isn't
-# defined for all targets (or used for any).
-
-BENCHMARKS = p_bench_read p_bench_mutex p_bench_yield \
-	p_bench_getpid p_bench_pthread_create
-
-SRCS +=		${BENCHMARKS:=.c}
-CLEANFILES +=	${BENCHMARKS} 
-
-
-all : tests # benchmarks
+all : tests
 
 tests : ${TESTS}
 	@faillist= ; ulimit -t 5; \
@@ -62,8 +52,6 @@ tests : ${TESTS}
 	else \
 		echo; echo "All tests passed OK."; exit 0; \
 	fi
-
-benchmarks: ${BENCHMARKS}
 
 .include <bsd.prog.mk>
 .include <bsd.dep.mk>
