@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 1998/12/05 17:44:48 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 1999/01/16 07:53:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -77,7 +77,6 @@
 	.import	boothowto, data
 	.import	bootdev, data
 	.import istackptr, data
-
 /*
  * Declare data sections
  */
@@ -165,7 +164,7 @@ ENTRY(__start)
 	 * to keep the spl() routines consistent we need to put the correct
 	 * spl level into eiem
 	 */
-	ldi	SPLHIGH,r1
+	ldi	INT_NONE,r1
 	mtctl	r1,eiem
 
 	/*
@@ -370,6 +369,10 @@ $bsd_syscall
 	 * Don't let anything else get on the gateway page.
 	 */
 	.align  NBPG
+        .export $syscall,entry
+$syscall
+
+$syscall_return
 
 /*
  * interrupt vector table
@@ -393,22 +396,11 @@ $bsd_syscall
 #define	CTRAP(name, reason) \
 	.import	TLABEL(name), code	! \
 	nop				! \
-	mtctl	r1, tr7			! \
 	ldil	L%TLABEL(name), r1	! \
 	.call				! \
 	be	R%TLABEL(name)(sr4, r1)	! \
 	ldi	reason, r1		! \
-	nop ! .word 0, 0
-
-#define	ITRAP(name, reason) \
-	.import	TLABEL(name), code	! \
-	nop				! \
-	mtctl	r1, tr7			! \
-	ldil	L%TLABEL(name), r1	! \
-	.call				! \
-	be	R%TLABEL(name)(sr4, r1)	! \
-	ldi	reason, r1		! \
-	nop ! .word 0, 0
+	nop ! .word 0, 0, 0
 
 	.align NBPG
 	.export $ivaaddr, code
@@ -476,8 +468,8 @@ TLABEL(hpmc)
 
 	.export	TLABEL(tlbd), code
 TLABEL(tlbd)
-	mfctl	ior,r9		/* Offset */
-	mfctl	isr,r8		/* Space  */
+	mfctl	ior, r9		/* Offset */
+	mfctl	isr, r8		/* Space  */
 
 	mfsp	sr1, r25	/* Need a space reg, so save it in a shadow */
 	mtsp	r8, sr1		/* Put the space id where we can use it */
@@ -492,8 +484,8 @@ TLABEL(tlbd)
 	or	r16,r8,r16		   /* or in the space id */
 	depi	1,0,1,r16		   /* and set the valid bit */
 
-	mtctl	r24, cr28
-	mtctl	r16, cr29
+	mtctl	r24, tr7
+	mtctl	r16, tr6
 	
 	/*
 	 * Chase the list of entries for this hash bucket until we find
@@ -529,8 +521,8 @@ TLABEL(itlb)
 
 	.export	TLABEL(dtlb), code
 TLABEL(dtlb)
-	mfctl	ior,r9		/* Offset */
-	mfctl	isr,r8		/* Space  */
+	mfctl	ior, r9		/* Offset */
+	mfctl	isr, r8		/* Space  */
 	/* FALL THROUGH */
 
 $tlbmiss
@@ -564,8 +556,8 @@ $tlbmiss
 	 * Switch r24 to point to the corresponding VTOP table entry so
 	 * we can move onto chasing the hash chain.
 	 */
-	mtctl	r24,cr28
-	mtctl	r16,cr29
+	mtctl	r24, tr7
+	mtctl	r16, tr6
 
 	/*
 	 * Chase the list of entries for this hash bucket until we find
@@ -600,8 +592,8 @@ $hash_loop
 	 * control registers.
 	 */
 $tlb_inshpt
-	mfctl	cr28,r24
-	mfctl	cr29,r8
+	mfctl	tr7, r24
+	mfctl	tr6, r8
 
 	stw	r16,hpt_tlbprot(r24)
 	stw	r17,hpt_tlbpage(r24)
@@ -615,8 +607,8 @@ $tlb_gothpt
 $tlb_gothptld
 	comib,=,n T_ITLBMISS,r1,$itlb
 	idtlba	r17,(sr1, r9)
+	b	$tlbret
 	idtlbp	r16,(sr1, r9)
-	b,n	$tlbret
 $itlb
 	iitlba	r17,(sr1, r9)
 	iitlbp	r16,(sr1, r9)
@@ -749,13 +741,6 @@ TLABEL(all)
 	mtctl	t1,pidr3
 	mtctl	t1,pidr4
 
-	copy	r0, t1
-
-	/*
-	 * Save trap flags
-	 */
-	mtctl	t1,tr6
-
 	/*
 	 * load the space queue
 	 */
@@ -776,7 +761,7 @@ TLABEL(all)
 	 * Load up a real value into eiem to reflect an spl level of splhigh.
 	 * Right now interrupts are still off.
 	 */
-	ldi	SPLHIGH,t1
+	ldi	INT_NONE,t1
 	mtctl	t1,eiem
 
 	/*
@@ -793,12 +778,6 @@ TLABEL(all)
 	mtctl	t1,pcoq
 	ldo	4(t1),t1
 	mtctl	t1,pcoq
-
-	/*
-	 * Restore trap flags
-	 */
-
-	mfctl	tr6,t1
 
 	/*
 	 * Must do rfir not rfi since we may be called from tlbmiss routine
@@ -1125,11 +1104,10 @@ EXIT(longjmp)
 
 	/* Leave this down here.  It avoids a nasty, hard-to-fix bug in gas. */
 	.space $PRIVATE$
-#ifndef	BFD_SUBSPA_BUG
-	.subspa $GLOBAL$
-#endif
 
 	.export $global$,data
 $global$
+	.word 0
 
 	.end
+
