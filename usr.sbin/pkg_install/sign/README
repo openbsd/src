@@ -1,0 +1,21 @@
+To sign packages in a transparent way:
+gzip files can handle an EXTRA_FIELD at the beginning that
+stores anything we wish.
+
+So it's just a question to choose a format for the signature, and to
+embed it there.
+
+We put a specific cookie `S, i, g, P, G, P, length'
+at the beginning of the extra-field, so that eventually we can put
+more information in that field (like several signatures),
+followed by the signature output by PGP.
+
+The checker just needs to extract the signature, pass it off to PGP,
+followed by the uncompressed archive.
+
+* Signed archives that just look like normal .tar.gz files,
+* Possibility to grab the files off the net and extract stuff/verify
+signatures on the fly (just need to wedge the checker as an intermediate
+pipe)
+* Pretty simple, small portable code to be able to check signatures
+everywhere (the signer itself needs getpass and corresponding functionality)

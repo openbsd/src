@@ -1,0 +1,20 @@
+# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/27 21:40:03 espie Exp $
+
+PROG= pkg_sign
+SRCS= main.c sign.c  
+
+.if exists(${.CURDIR}/../lib/${__objdir})
+LDADD+=		-L${.CURDIR}/../lib/${__objdir} -linstall
+DPADD+=		${.CURDIR}/../lib/${__objdir}/libinstall.a
+.else
+LDADD+=		-L${.CURDIR}/../lib -linstall
+DPADD+=		${.CURDIR}/../lib/libinstall.a
+.endif
+
+LINKS=	${BINDIR}/pkg_sign ${BINDIR}/check_sign
+MANLINKS=pkg_sign.1	check_sign.1
+
+CLEANFILES=varmain.o
+
+.include <bsd.prog.mk>
+
