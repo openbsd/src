@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.3 2004/08/06 18:54:57 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.4 2004/08/11 06:09:32 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1428,9 +1428,8 @@ spc_dataout_pio(sc, p, n)
 
 		n -= xfer;
 		out += xfer;
-
-		while (xfer-- > 0)
-			bus_space_write_1(iot, ioh, DREG, *p++);
+		bus_space_write_multi_1(iot, ioh, DREG, p, xfer);
+		p += xfer;
 	}
 
 	if (out == 0) {
@@ -1547,9 +1546,8 @@ spc_datain_pio(sc, p, n)
 
 		n -= xfer;
 		in += xfer;
-
-		while (xfer-- > 0)
-			*p++ = bus_space_read_1(iot, ioh, DREG);
+		bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
+		p += xfer;
 
 		if (intstat != 0)
 			goto phasechange;
