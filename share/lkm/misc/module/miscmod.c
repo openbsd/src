@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: miscmod.c,v 1.1.1.1 1995/10/18 08:44:20 deraadt Exp $
+ *	$Id: miscmod.c,v 1.2 1999/02/14 04:44:51 fgsch Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -45,6 +45,7 @@
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include <sys/syscall.h>
 
 
 extern int	misccall();
@@ -89,8 +90,7 @@ int			cmd;
 	int			i;
 	struct lkm_misc		*args = lkmtp->private.lkm_misc;
 	int			err = 0;	/* default = success*/
-	extern int		nsysent;	/* init_sysent.c*/
-	extern int		lkmnosys();	/* allocable slot*/
+	extern int		sys_lkmnosys();	/* allocable slot*/
 
 	switch( cmd) {
 	case LKM_E_LOAD:
@@ -110,11 +110,11 @@ int			cmd;
 		/*
 		 * Search the table looking for a slot...
 		 */
-		for( i = 0; i < nsysent; i++)
-			if( sysent[ i].sy_call == lkmnosys)
+		for( i = 0; i < SYS_MAXSYSCALL; i++)
+			if( sysent[ i].sy_call == sys_lkmnosys)
 				break;		/* found it!*/
 		/* out of allocable slots?*/
-		if( i == nsysent) {
+		if( i == SYS_MAXSYSCALL) {
 			err = ENFILE;
 			break;
 		}
