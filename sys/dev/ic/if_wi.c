@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.22 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.23 2002/03/26 18:59:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,7 +122,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.22 2002/03/14 01:26:54 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.23 2002/03/26 18:59:11 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -765,24 +765,17 @@ wi_write_record(sc, ltv)
 			break;
 		case WI_RID_DEFLT_CRYPT_KEYS: {
 				int error;
+				int keylen;
 				struct wi_ltv_str ws;
 				struct wi_ltv_keys *wk = (struct wi_ltv_keys *)ltv;
+				keylen = wk->wi_keys[sc->wi_tx_key].wi_keylen;
+
 				for (i = 0; i < 4; i++) {
 					bzero(&ws, sizeof(ws));
-					if (wk->wi_keys[i].wi_keylen <= 5) {
-						/* 5 Octet WEP Keys */
-						ws.wi_len = 4;
-						bcopy(&wk->wi_keys[i].wi_keydat,
-						    ws.wi_str, 5);
-						ws.wi_str[5] = '\0';
-					} else {
-						/* 13 Octet WEP Keys */
-						ws.wi_len = 8;
-						bcopy(&wk->wi_keys[i].wi_keydat,
-						    ws.wi_str, 13);
-						ws.wi_str[13] = '\0';
-					}
+					ws.wi_len = (keylen > 5) ? 8 : 4;
 					ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
+					bcopy(&wk->wi_keys[i].wi_keydat,
+					    ws.wi_str, keylen);
 					error = wi_write_record(sc,
 					    (struct wi_ltv_gen *)&ws);
 					if (error)
