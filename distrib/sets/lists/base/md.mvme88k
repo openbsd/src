@@ -363,7 +363,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zlib.ph
-./usr/libdata/perl5/m88k-openbsd/5.6.1/B/Concise.pm
+./usr/libdata/perl5/m88k-openbsd/5.8.0/B/Concise.pm
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wi_hostap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/altq
 ./usr/libdata/perl5/site_perl/m88k-openbsd/altq/altq.ph
