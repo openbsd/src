@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.6 2001/03/01 16:11:17 aaron Exp $
+.\"	$OpenBSD: isp.4,v 1.7 2001/09/01 07:21:59 mjacob Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -46,7 +46,9 @@ connected to
 .Tn Qlogic
 ISP1000 (SBus), ISP1020 (PCI), ISP1040(PCI), ISP1080(PCI),
 .Tn SCSI
-host adapters or ISP2100(PCI)
+host adapters or ISP2100(PCI), ISP2200(PCI)
+.Tn FibreChannel
+or ISP2300(PCI) 2-Gigabit
 .Tn FibreChannel
 host adapters.
 .Pp
@@ -71,8 +73,6 @@ The driver currently ignores some NVRAM settings.
 .Pp
 The driver currently doesn't do error recovery for timed out commands
 very gracefully.
-.Pp
-Fabric Support (for FibreChannel) is not supported yet.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
