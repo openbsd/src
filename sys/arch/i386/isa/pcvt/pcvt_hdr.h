@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.26 1999/10/16 18:56:35 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.27 1999/10/20 19:15:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -618,6 +618,7 @@ EXTERN	u_char	*more_chars;		/* response buffer via kbd */
 EXTERN	int	char_count;		/* response char count */
 EXTERN	u_char	color;			/* color or mono display */
 EXTERN	u_char	pcdisp;			/* vt220 or traditional pc features */
+EXTERN	u_char	pcdisp_special;		/* are we printing special chars */
 
 EXTERN	u_short	kern_attr;		/* kernel messages char attributes */
 EXTERN	u_short	user_attr;		/* character attributes */
