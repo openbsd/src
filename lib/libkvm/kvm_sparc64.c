@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.1 2001/08/28 21:49:16 art Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.2 2001/12/05 02:23:11 art Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/vmparam.h>
 #include <machine/pmap.h>
 #include <machine/kcore.h>
 

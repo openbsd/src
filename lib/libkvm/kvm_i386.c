@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.9 2001/11/06 19:17:36 art Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.10 2001/12/05 02:23:11 art Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.9 2001/11/06 19:17:36 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.10 2001/12/05 02:23:11 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,8 @@ static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.9 2001/11/06 19:17:36 art Exp $";
 #include <kvm.h>
 
 #include <uvm/uvm_extern.h>
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 
 #include <limits.h>
 #include <db.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.9 2001/11/06 19:17:36 art Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.10 2001/12/05 02:23:11 art Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -41,6 +41,8 @@
 #include <kvm.h>
 
 #include <uvm/uvm_extern.h>
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 
 #include <limits.h>
 #include <db.h>
