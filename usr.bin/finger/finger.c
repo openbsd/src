@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.10 2000/01/12 11:08:05 aaron Exp $	*/
+/*	$OpenBSD: finger.c,v 1.11 2001/07/04 06:30:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.10 2000/01/12 11:08:05 aaron Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.11 2001/07/04 06:30:44 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -78,6 +78,7 @@ static char rcsid[] = "$OpenBSD: finger.c,v 1.10 2000/01/12 11:08:05 aaron Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <err.h>
 #include "finger.h"
 #include "extern.h"
@@ -132,7 +133,7 @@ main(argc, argv)
 	argv += optind;
 
 	/* If a domainname is set, increment mflag. */
-	if ((getdomainname(&domain, sizeof(domain)) == 0) && domain[0])
+	if ((getdomainname(domain, sizeof(domain)) == 0) && domain[0])
 		mflag++;
 	/* If _PATH_MP_DB is larger than 1MB, increment mflag. */
 	if (stat(_PATH_MP_DB, &sb) == 0) {
