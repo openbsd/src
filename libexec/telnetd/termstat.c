@@ -1,3 +1,6 @@
+/*	$OpenBSD: termstat.c,v 1.2 1996/03/28 23:22:05 niklas Exp $	*/
+/*	$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)termstat.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: termstat.c,v 1.1.1.1 1995/10/18 08:43:25 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: termstat.c,v 1.2 1996/03/28 23:22:05 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -302,7 +309,7 @@ localstat()
 			nfrontp += 7;
 			editmode = useeditmode;
 		}
-							
+
 
 		/*
 		 * Check for changes to special characters in use.
@@ -404,7 +411,7 @@ clientstat(code, parm1, parm2)
 					uselinemode = 1;
 				}
 			}
-		
+
 			/*
 			 * Quit now if we can't do it.
 			 */
@@ -445,7 +452,7 @@ clientstat(code, parm1, parm2)
 				send_will(TELOPT_ECHO, 1);
 		}
 		break;
-	
+
 	case LM_MODE:
 	    {
 		register int ack, changed;
@@ -494,7 +501,7 @@ clientstat(code, parm1, parm2)
  					IAC, SE);
  				nfrontp += 7;
  			}
- 		
+
 			editmode = useeditmode;
 		}
 
@@ -528,9 +535,9 @@ clientstat(code, parm1, parm2)
 		(void) ioctl(pty, TIOCSWINSZ, (char *)&ws);
 	    }
 #endif	/* TIOCSWINSZ */
-		
+
 		break;
-	
+
 	case TELOPT_TSPEED:
 	    {
 		def_tspeed = parm1;
@@ -595,7 +602,7 @@ _termstat()
  *
  * Some things should not be done until after the login process has started
  * and all the pty modes are set to what they are supposed to be.  This
- * function is called when the pty state has been processed for the first time. 
+ * function is called when the pty state has been processed for the first time.
  * It calls other functions that do things that were deferred in each module.
  */
 	void
@@ -614,7 +621,7 @@ defer_terminit()
 	if (def_col || def_row) {
 		struct winsize ws;
 
-		bzero((char *)&ws, sizeof(ws));
+		memset((char *)&ws, 0, sizeof(ws));
 		ws.ws_col = def_col;
 		ws.ws_row = def_row;
 		(void) ioctl(pty, TIOCSWINSZ, (char *)&ws);

@@ -1,3 +1,6 @@
+/*	$OpenBSD: slc.c,v 1.2 1996/03/28 23:21:58 niklas Exp $	*/
+/*	$NetBSD: slc.c,v 1.5 1996/02/28 20:38:16 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: slc.c,v 1.1.1.1 1995/10/18 08:43:24 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$NetBSD: slc.c,v 1.5 1996/02/28 20:38:16 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: slc.c,v 1.2 1996/03/28 23:21:58 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include "telnetd.h"

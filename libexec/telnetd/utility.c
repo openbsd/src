@@ -1,3 +1,6 @@
+/*	$OpenBSD: utility.c,v 1.2 1996/03/28 23:22:06 niklas Exp $	*/
+/*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)utility.c	8.2 (Berkeley) 12/15/93"; */
-static char *rcsid = "$Id: utility.c,v 1.1.1.1 1995/10/18 08:43:25 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: utility.c,v 1.2 1996/03/28 23:22:06 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/utsname.h>
@@ -214,7 +221,7 @@ netclear()
 		next = nextitem(next);
 	    } while (wewant(next) && (nfrontp > next));
 	    length = next-thisitem;
-	    bcopy(thisitem, good, length);
+	    memmove(good, thisitem, length);
 	    good += length;
 	    thisitem = next;
 	} else {
@@ -305,7 +312,7 @@ writenet(ptr, len)
 		netflush();
 	}
 
-	bcopy(ptr, nfrontp, len);
+	memmove(nfrontp, ptr, len);
 	nfrontp += len;
 
 }  /* end of writenet */
@@ -336,7 +343,7 @@ fatalperror(f, msg)
 {
 	char buf[BUFSIZ], *strerror();
 
-	(void) sprintf(buf, "%s: %s\r\n", msg, strerror(errno));
+	(void) sprintf(buf, "%s: %s", msg, strerror(errno));
 	fatal(f, buf);
 }
 
@@ -406,7 +413,7 @@ putchr(cc)
  * between two % signs and expand it...
  */
 static char fmtstr[] = { "%l:%M\
-%P on %A, %d %B %Y" };
+%p on %A, %d %B %Y" };
 
 	void
 putf(cp, where)
@@ -418,9 +425,9 @@ putf(cp, where)
 	char db[100];
 	struct utsname utsinfo;
 #ifdef	STREAMSPTY
-	extern char *index();
+	extern char *strchr();
 #else
-	extern char *rindex();
+	extern char *strrchr();
 #endif
 
 	uname(&utsinfo);
@@ -437,9 +444,9 @@ putf(cp, where)
 		case 't':
 #ifdef	STREAMSPTY
 			/* names are like /dev/pts/2 -- we want pts/2 */
-			slash = index(line+1, '/');
+			slash = strchr(line+1, '/');
 #else
-			slash = rindex(line, '/');
+			slash = strrchr(line, '/');
 #endif
 			if (slash == (char *) 0)
 				putstr(line);
@@ -509,7 +516,7 @@ printsub(direction, pointer, length)
     register int i;
     char buf[512];
 
-        if (!(diagnostic & TD_OPTIONS))
+	if (!(diagnostic & TD_OPTIONS))
 		return;
 
 	if (direction) {
@@ -700,7 +707,7 @@ printsub(direction, pointer, length)
 		    break;
 		}
 		break;
-		
+
 	    case LM_SLC:
 		sprintf(nfrontp, "SLC");
 		nfrontp += strlen(nfrontp);
@@ -850,7 +857,7 @@ printsub(direction, pointer, length)
 			nfrontp += strlen(nfrontp);
 
 			break;
-				
+
 		    default:
 			sprintf(nfrontp, " %d", pointer[i]);
 			nfrontp += strlen(nfrontp);
@@ -953,7 +960,7 @@ printsub(direction, pointer, length)
 	case TELOPT_AUTHENTICATION:
 	    sprintf(nfrontp, "AUTHENTICATION");
 	    nfrontp += strlen(nfrontp);
-	
+
 	    if (length < 2) {
 		sprintf(nfrontp, " (empty suboption??\?)");
 		nfrontp += strlen(nfrontp);
@@ -1034,9 +1041,9 @@ printsub(direction, pointer, length)
 
 	default:
 	    if (TELOPT_OK(pointer[0]))
-	        sprintf(nfrontp, "%s (unknown)", TELOPT(pointer[0]));
+		sprintf(nfrontp, "%s (unknown)", TELOPT(pointer[0]));
 	    else
-	        sprintf(nfrontp, "%d (unknown)", pointer[i]);
+		sprintf(nfrontp, "%d (unknown)", pointer[i]);
 	    nfrontp += strlen(nfrontp);
 	    for (i = 1; i < length; i++) {
 		sprintf(nfrontp, " %d", pointer[i]);
@@ -1071,13 +1078,13 @@ printdata(tag, ptr, cnt)
 		nfrontp += strlen(nfrontp);
 		for (i = 0; i < 20 && cnt; i++) {
 			sprintf(nfrontp, "%02x", *ptr);
-			nfrontp += strlen(nfrontp); 
+			nfrontp += strlen(nfrontp);
 			if (isprint(*ptr)) {
 				xbuf[i] = *ptr;
 			} else {
 				xbuf[i] = '.';
 			}
-			if (i % 2) { 
+			if (i % 2) {
 				*nfrontp = ' ';
 				nfrontp++;
 			}
@@ -1087,6 +1094,6 @@ printdata(tag, ptr, cnt)
 		xbuf[i] = '\0';
 		sprintf(nfrontp, " %s\r\n", xbuf );
 		nfrontp += strlen(nfrontp);
-	} 
+	}
 }
 #endif /* DIAGNOSTICS */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: rstat_proc.c,v 1.2 1996/03/28 23:21:51 niklas Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.1.1.1 1995/10/18 08:43:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.2 1996/03/28 23:21:51 niklas Exp $";
 #endif
 
 /*
@@ -88,10 +90,6 @@ struct nlist nl[] = {
 	{ "_boottime" },
 #define X_HZ		5
 	{ "_hz" },
-#ifdef vax
-#define	X_AVENRUN	6
-	{ "_avenrun" },
-#endif
 	"",
 };
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
@@ -238,13 +236,6 @@ updatestat()
 		     sizeof (stats_all.s1.cp_time))
 	    != sizeof (stats_all.s1.cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
-	}
-#endif
-#ifdef vax
- 	if (kvm_read(kfd, (long)nl[X_AVENRUN].n_value, (char *)avrun,
-		     sizeof (avrun)) != sizeof (avrun)) {
-		syslog(LOG_ERR, "can't read avenrun from kmem");
 		exit(1);
 	}
 #endif

@@ -1,3 +1,6 @@
+/*	$OpenBSD: global.c,v 1.2 1996/03/28 23:21:57 niklas Exp $	*/
+/*	$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: global.c,v 1.1.1.1 1995/10/18 08:43:24 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: global.c,v 1.2 1996/03/28 23:21:57 niklas Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -44,6 +51,6 @@ static char *rcsid = "$Id: global.c,v 1.1.1.1 1995/10/18 08:43:24 deraadt Exp $"
  * we will actually allocate the space.
  */
 
-#include "defs.h"
+#include <defs.h>
 #define extern
-#include "ext.h"
+#include <ext.h>

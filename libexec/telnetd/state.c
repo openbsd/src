@@ -1,3 +1,6 @@
+/*	$OpenBSD: state.c,v 1.3 1996/03/28 23:21:59 niklas Exp $	*/
+/*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)state.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: state.c,v 1.2 1995/10/28 02:33:51 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: state.c,v 1.3 1996/03/28 23:21:59 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -355,7 +362,7 @@ gotiac:			switch (c) {
 		char	xbuf2[BUFSIZ];
 		register char *cp;
 		int n = pfrontp - opfrontp, oc;
-		bcopy(opfrontp, xptyobuf, n);
+		memmove(xptyobuf, opfrontp, n);
 		pfrontp = opfrontp;
 		pfrontp += term_input(xptyobuf, pfrontp, n, BUFSIZ+NETSLOP,
 					xbuf2, &oc, BUFSIZ);
@@ -377,7 +384,7 @@ gotiac:			switch (c) {
  * All state defaults are negative, and resp defaults to 0.
  *
  * When initiating a request to change state to new_state:
- * 
+ *
  * if ((want_resp == 0 && new_state == my_state) || want_state == new_state) {
  *	do nothing;
  * } else {
@@ -691,7 +698,6 @@ wontoption(option)
 			 */
 			if (lmodetype != REAL_LINEMODE)
 				break;
-			lmodetype = KLUDGE_LINEMODE;
 # endif	/* KLUDGELINEMODE */
 			clientstat(TELOPT_LINEMODE, WONT, 0);
 			break;
@@ -1463,8 +1469,8 @@ doclientstat()
 	clientstat(TELOPT_LINEMODE, WILL, 0);
 }
 
-#define	ADD(c)	 *ncp++ = c;
-#define	ADD_DATA(c) { *ncp++ = c; if (c == SE) *ncp++ = c; }
+#define	ADD(c)	 *ncp++ = c
+#define	ADD_DATA(c) { *ncp++ = c; if (c == SE || c == IAC) *ncp++ = c; }
 	void
 send_status()
 {
@@ -1493,14 +1499,10 @@ send_status()
 		if (my_want_state_is_will(i)) {
 			ADD(WILL);
 			ADD_DATA(i);
-			if (i == IAC)
-				ADD(IAC);
 		}
 		if (his_want_state_is_will(i)) {
 			ADD(DO);
 			ADD_DATA(i);
-			if (i == IAC)
-				ADD(IAC);
 		}
 	}
 
@@ -1515,15 +1517,14 @@ send_status()
 		ADD(SE);
 
 		if (restartany >= 0) {
-			ADD(SB)
+			ADD(SB);
 			ADD(TELOPT_LFLOW);
 			if (restartany) {
 				ADD(LFLOW_RESTART_ANY);
 			} else {
 				ADD(LFLOW_RESTART_XON);
 			}
-			ADD(SE)
-			ADD(SB);
+			ADD(SE);
 		}
 	}
 
@@ -1536,8 +1537,6 @@ send_status()
 		ADD(TELOPT_LINEMODE);
 		ADD(LM_MODE);
 		ADD_DATA(editmode);
-		if (editmode == IAC)
-			ADD(IAC);
 		ADD(SE);
 
 		ADD(SB);
