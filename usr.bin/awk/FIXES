@@ -458,3 +458,20 @@ May 27, 1996:
 
 	thanks to jeffrey friedl for several of these.
 
+May 28, 1996:
+	fixed appalling but apparently unimportant bug in parsing octal
+	numbers in reg exprs.
+
+	explicit hex in reg exprs now limited to 2 chars: \xa, \xaa.
+
+Jun 28, 1996:
+	changed field-splitting to conform to posix definition: fields are
+	split using the value of FS at the time of input; it used to be
+	the value when the field or NF was first referred to, a much less
+	predictable definition.  thanks to arnold robbins for encouragement
+	to do the right thing.
+
+Jun 29, 1996:
+	fixed awful bug in new field splitting; didn't get all the places
+	where input was done.
+

@@ -38,6 +38,7 @@ char	*recdata;
 char	*record;
 char	*fields;
 Cell	*fldtab;
+char	inputFS[100];	/* BUG: unchecked */
 
 #define	MAXFLD	200
 int	nfields	= MAXFLD;	/* can be set from commandline in main */
@@ -158,6 +159,7 @@ int readrec(char *buf, int bufsize, FILE *inf)	/* read one record into buf */
 	char *rr;
 	int nrr;
 
+	strcpy(inputFS, *FS);	/* for subsequent field splitting */
 	if ((sep = **RS) == 0) {
 		sep = '\n';
 		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
@@ -228,9 +230,9 @@ void fldbld(void)	/* create fields from current record */
 	r = recloc->sval;
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
-	if (strlen(*FS) > 1) {	/* it's a regular expression */
-		i = refldbld(r, *FS);
-	} else if ((sep = **FS) == ' ') {	/* default whitespace */
+	if (strlen(inputFS) > 1) {	/* it's a regular expression */
+		i = refldbld(r, inputFS);
+	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */
 		for (i = 0; ; ) {
 			while (*r == ' ' || *r == '\t' || *r == '\n')
 				r++;
@@ -249,7 +251,7 @@ void fldbld(void)	/* create fields from current record */
 			*fr++ = 0;
 		}
 		*fr = 0;
-	} else if ((sep = **FS) == 0) {		/* new: FS="" => 1 char/field */
+	} else if ((sep = *inputFS) == 0) {		/* new: FS="" => 1 char/field */
 		for (i = 0; *r != 0; r++) {
 			char buf[2];
 			i++;
@@ -381,10 +383,10 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	if (r > rec + recsize - 1)
 		ERROR "built giant record `%.30s...'; try -mr n", record FATAL;
 	*r = '\0';
-	dprintf( ("in recbld FS=%o, recloc=%p\n", **FS, recloc) );
+	dprintf( ("in recbld inputFS=%s, recloc=%p\n", inputFS, recloc) );
 	recloc->tval = REC | STR | DONTFREE;
 	recloc->sval = record = rec;
-	dprintf( ("in recbld FS=%o, recloc=%p\n", **FS, recloc) );
+	dprintf( ("in recbld inputFS=%s, recloc=%p\n", inputFS, recloc) );
 	dprintf( ("recbld = |%s|\n", record) );
 	donerec = 1;
 }

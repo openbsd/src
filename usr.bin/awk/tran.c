@@ -82,7 +82,7 @@ void syminit(void)	/* initialize symbol table with builtin vars */
 	ORS = &setsymtab("ORS", "\n", 0.0, STR|DONTFREE, symtab)->sval;
 	OFMT = &setsymtab("OFMT", "%.6g", 0.0, STR|DONTFREE, symtab)->sval;
 	CONVFMT = &setsymtab("CONVFMT", "%.6g", 0.0, STR|DONTFREE, symtab)->sval;
-	FILENAME = &setsymtab("FILENAME", "-", 0.0, STR|DONTFREE, symtab)->sval;
+	FILENAME = &setsymtab("FILENAME", "", 0.0, STR|DONTFREE, symtab)->sval;
 	nfloc = setsymtab("NF", "", 0.0, NUM, symtab);
 	NF = &nfloc->fval;
 	nrloc = setsymtab("NR", "", 0.0, NUM, symtab);

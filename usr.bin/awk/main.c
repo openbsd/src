@@ -22,15 +22,15 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 USE OR PERFORMANCE OF THIS SOFTWARE.
 ****************************************************************/
 
-char	*version = "version May 27, 1996";
+char	*version = "version June 29, 1996";
 
 #define DEBUG
 #include <stdio.h>
 #include <ctype.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <locale.h>
 #include "awk.h"
 #include "awkgram.h"
 

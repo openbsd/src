@@ -227,11 +227,12 @@ void freetr(Node *p)	/* free parse tree */
 /* to be seen literally;  \056 is not a metacharacter. */
 
 int hexstr(char **pp)	/* find and eval hex string at pp, return new p */
-{
+{			/* only pick up one 8-bit byte (2 chars) */
 	char *p;
 	int n = 0;
+	int i;
 
-	for (p = *pp; isxdigit(*p); p++) {
+	for (i = 0, p = *pp; i < 2 && isxdigit(*p); i++, p++) {
 		if (isdigit(*p))
 			n = 16 * n + *p - '0';
 		else if (*p >= 'a' && *p <= 'f')
@@ -243,7 +244,7 @@ int hexstr(char **pp)	/* find and eval hex string at pp, return new p */
 	return n;
 }
 
-#define isoctdigit(c) ((c) >= '0' && (c) <= '8')	/* multiple use of arg */
+#define isoctdigit(c) ((c) >= '0' && (c) <= '7')	/* multiple use of arg */
 
 int quoted(char **pp)	/* pick up next thing after a \\ */
 			/* and increment *pp */

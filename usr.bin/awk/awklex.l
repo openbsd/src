@@ -1,4 +1,4 @@
-%Start A strng sc reg comment
+%Start A str sc reg comment
 
 %{
 /****************************************************************
@@ -211,7 +211,7 @@ WS	[ \t]
 			}
 		  }
 		}
-<A>\"		{ BEGIN strng; caddreset(gs); }
+<A>\"		{ BEGIN str; caddreset(gs); }
 
 <A>"}"		{ if (--bracecnt < 0) ERROR "extra }" SYNTAX; BEGIN sc; RET(';'); }
 <A>"]"		{ if (--brackcnt < 0) ERROR "extra ]" SYNTAX; RET(']'); }
@@ -231,28 +231,28 @@ WS	[ \t]
 		  RET(REGEXPR); }
 <reg>.		{ CADD; }
 
-<strng>\"	{ BEGIN A;
+<str>\"		{ BEGIN A;
 		  cadd(gs, 0); s = tostring(gs->cbuf);
 		  cunadd(gs);
 		  cadd(gs, ' '); cadd(gs, 0);
 		  yylval.cp = setsymtab(gs->cbuf, s, 0.0, CON|STR, symtab);
 		  RET(STRING); }
-<strng>\n	{ ERROR "newline in string %.10s...", gs->cbuf SYNTAX; lineno++; BEGIN A; }
-<strng>"\\\""	{ cadd(gs, '"'); }
-<strng>"\\"n	{ cadd(gs, '\n'); }
-<strng>"\\"t	{ cadd(gs, '\t'); }
-<strng>"\\"f	{ cadd(gs, '\f'); }
-<strng>"\\"r	{ cadd(gs, '\r'); }
-<strng>"\\"b	{ cadd(gs, '\b'); }
-<strng>"\\"v	{ cadd(gs, '\v'); }	/* these ANSIisms may not be known by */
-<strng>"\\"a	{ cadd(gs, '\007'); }	/* your compiler. hence 007 for bell */
-<strng>"\\\\"	{ cadd(gs, '\\'); }
-<strng>"\\"({O}{O}{O}|{O}{O}|{O}) { int n;
+<str>\n		{ ERROR "newline in string %.10s...", gs->cbuf SYNTAX; lineno++; BEGIN A; }
+<str>"\\\""	{ cadd(gs, '"'); }
+<str>"\\"n	{ cadd(gs, '\n'); }
+<str>"\\"t	{ cadd(gs, '\t'); }
+<str>"\\"f	{ cadd(gs, '\f'); }
+<str>"\\"r	{ cadd(gs, '\r'); }
+<str>"\\"b	{ cadd(gs, '\b'); }
+<str>"\\"v	{ cadd(gs, '\v'); }	/* these ANSIisms may not be known by */
+<str>"\\"a	{ cadd(gs, '\007'); }	/* your compiler. hence 007 for bell */
+<str>"\\\\"	{ cadd(gs, '\\'); }
+<str>"\\"({O}{O}{O}|{O}{O}|{O}) { int n;
 		  sscanf(yytext+1, "%o", &n); cadd(gs, n); }
-<strng>"\\"x({H}+) { int n;	/* ANSI permits any number! */
+<str>"\\"x({H}+) { int n;	/* ANSI permits any number! */
 		  sscanf(yytext+2, "%x", &n); cadd(gs, n); }
-<strng>"\\".	{ cadd(gs, yytext[1]); }
-<strng>.	{ CADD; }
+<str>"\\".	{ cadd(gs, yytext[1]); }
+<str>.		{ CADD; }
 
 %%
 

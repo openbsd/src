@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.2 1996/07/06 05:40:03 etheisen Exp $
+.\"	$OpenBSD: awk.1,v 1.3 1997/01/20 19:43:18 millert Exp $
 .de EX
 .nf
 .ft CW
@@ -426,6 +426,7 @@ Variable names with special meanings:
 .TP
 .B CONVFMT
 conversion format used when converting numbers
+(default
 .BR "%.6g" )
 .TP
 .B FS
@@ -484,12 +485,14 @@ Thus local variables may be created by providing excess parameters in
 the function definition.
 .SH EXAMPLES
 .TP
-.B
+.EX
 length($0) > 72
+.EE
 Print lines longer than 72 characters.
 .TP
-.B
+.EX
 { print $2, $1 }
+.EE
 Print first two fields in opposite order.
 .PP
 .EX
@@ -510,8 +513,9 @@ END	{ print "sum is", s, " average is", s/NR }
 .IP
 Add up first column, print sum and average.
 .TP
-.B
+.EX
 /start/, /stop/
+.EE
 Print all lines between start/stop pairs.
 .PP
 .EX

@@ -108,7 +108,7 @@ Cell *execute(Node *u)	/* execute a node of the parse tree */
 	for (a = u; ; a = a->nnext) {
 		curnode = a;
 		if (isvalue(a)) {
-			x = (Cell *)(a->narg[0]);
+			x = (Cell *) (a->narg[0]);
 			if ((x->tval & FLD) && !donefld)
 				fldbld();
 			else if ((x->tval & REC) && !donerec)
@@ -353,8 +353,6 @@ Cell *getline(Node **a, int n)	/* get next line from specific input */
 		x = execute(a[2]);		/* filename */
 		if ((int) a[1] == '|')	/* input pipe */
 			a[1] = (Node *) LE;	/* arbitrary flag */
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		fp = openfile((int) a[1], getsval(x));
 		tempfree(x);
 		if (fp == NULL)
@@ -407,8 +405,6 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 	buf[0] = 0;
 	for (np = a[1]; np; np = np->nnext) {
 		y = execute(np);	/* subscript */
-		if ((y->tval & STR) == 0)
-			y = copycell(y);
 		s = getsval(y);
 		strcat(buf, s);		/* BUG: unchecked! */
 		if (np->nnext)
@@ -448,8 +444,6 @@ Cell *adelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		buf[0] = 0;
 		for (np = a[1]; np; np = np->nnext) {
 			y = execute(np);	/* subscript */
-			if ((y->tval & STR) == 0)
-				y = copycell(y);
 			s = getsval(y);
 			strcat(buf, s);
 			if (np->nnext)
@@ -481,8 +475,6 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 	buf[0] = 0;
 	for (p = a[0]; p; p = p->nnext) {
 		x = execute(p);	/* expr */
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		s = getsval(x);
 		strcat(buf, s);
 		tempfree(x);
@@ -511,15 +503,11 @@ Cell *matchop(Node **a, int n)	/* ~ and match() */
 		mode = 1;
 	}
 	x = execute(a[1]);	/* a[1] = target text */
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	s = getsval(x);
 	if (a[0] == 0)		/* a[1] == 0: already-compiled reg expr */
 		i = (*mf)((fa *) a[2], s);
 	else {
 		y = execute(a[2]);	/* a[2] = regular expr */
-		if ((y->tval & STR) == 0)
-			y = copycell(y);
 		t = getsval(y);
 		pfa = makedfa(t, mode);
 		i = (*mf)(pfa, s);
@@ -587,10 +575,6 @@ Cell *relop(Node **a, int n)	/* a[0 < a[1], etc. */
 		j = x->fval - y->fval;
 		i = j<0? -1: (j>0? 1: 0);
 	} else {
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
-		if ((y->tval & STR) == 0)
-			y = copycell(y);
 		i = strcmp(getsval(x), getsval(y));
 	}
 	tempfree(x);
@@ -649,8 +633,6 @@ Cell *indirect(Node **a, int n)	/* $( a[0] ) */
 	char *s;
 
 	x = execute(a[0]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	m = getfval(x);
 	if (m == 0 && !isnumber(s = getsval(x)))	/* suspicion! */
 		ERROR "illegal field $(%s), name \"%s\"", s, x->nval FATAL;
@@ -674,8 +656,6 @@ Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 	y = execute(a[1]);
 	if (a[2] != 0)
 		z = execute(a[2]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	s = getsval(x);
 	k = strlen(s) + 1;
 	if (k <= 1) {
@@ -719,12 +699,8 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 	Awkfloat v = 0.0;
 
 	x = execute(a[0]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	s1 = getsval(x);
 	y = execute(a[1]);
-	if ((y->tval & STR) == 0)
-		y = copycell(y);
 	s2 = getsval(y);
 
 	z = gettemp();
@@ -805,8 +781,6 @@ int format(char *buf, int bufsize, char *s, Node *a)	/* printf-like conversions 
 		if (a == NULL)
 			ERROR "not enough args in printf(%s)", os FATAL;
 		x = execute(a);
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		a = a->nnext;
 		switch (flag) {
 		case 0:	sprintf((char *)p, "%s", fmt);	/* unknown, so dump it too */
@@ -847,8 +821,6 @@ Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
 
 	y = a[0]->nnext;
 	x = execute(a[0]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	if (format(buf, sizeof buf, getsval(x), y) == -1)
 		ERROR "sprintf string %.30s... too long", buf FATAL;
 	tempfree(x);
@@ -868,8 +840,6 @@ Cell *awkprintf(Node **a, int n)		/* printf */
 
 	y = a[0]->nnext;
 	x = execute(a[0]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	if (format(buf, sizeof buf, getsval(x), y) == -1)
 		ERROR "printf string %.30s... too long", buf FATAL;
 	tempfree(x);
@@ -894,14 +864,10 @@ Cell *arith(Node **a, int n)	/* a[0] + a[1], etc.  also -a[0] */
 	Cell *x, *y, *z;
 
 	x = execute(a[0]);
-	if ((x->tval & NUM) == 0)
-		x = copycell(x);
 	i = getfval(x);
 	tempfree(x);
 	if (n != UMINUS) {
 		y = execute(a[1]);
-		if ((y->tval & NUM) == 0)
-			y = copycell(y);
 		j = getfval(y);
 		tempfree(y);
 	}
@@ -1047,10 +1013,6 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 
 	x = execute(a[0]);
 	y = execute(a[1]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
-	if ((y->tval & STR) == 0)
-		y = copycell(y);
 	getsval(x);
 	getsval(y);
 	n1 = strlen(x->sval);
@@ -1117,15 +1079,11 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	int n, tempstat;
 
 	y = execute(a[0]);	/* source string */
-	if ((y->tval & STR) == 0)
-		y = copycell(y);
 	s = getsval(y);
 	if (a[2] == 0)		/* fs string */
 		fs = *FS;
 	else if ((int) a[3] == STRING) {	/* split(str,arr,"string") */
 		x = execute(a[2]);
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		fs = getsval(x);
 	} else if ((int) a[3] == REGEXPR)
 		fs = (char*) "(regexpr)";	/* split(str,arr,/regexpr/) */
@@ -1433,8 +1391,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	nextarg = a[1]->nnext;
 	switch (t) {
 	case FLENGTH:
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		u = strlen(getsval(x)); break;
 	case FLOG:
 		u = errcheck(log(getfval(x)), "log"); break;
@@ -1461,8 +1417,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FSYSTEM:
 		fflush(stdout);		/* in case something is buffered already */
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		u = (Awkfloat) system((char *)getsval(x)) / 256;   /* 256 is unix-dep */
 		break;
 	case FRAND:
@@ -1478,8 +1432,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FTOUPPER:
 	case FTOLOWER:
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		strcpy(buf, getsval(x));
 		if (t == FTOUPPER) {
 			for (p = buf; *p; p++)
@@ -1495,8 +1447,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		setsval(x, buf);
 		return x;
 	case FFLUSH:
-		if ((x->tval & STR) == 0)
-			x = copycell(x);
 		if ((fp = openfile(GT, getsval(x))) == NULL)
 			u = EOF;
 		else
@@ -1519,8 +1469,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 
 Cell *printstat(Node **a, int n)	/* print a[0] */
 {
-	extern char **OFMT, **CONVFMT;
-	char **save;
 	Node *x;
 	Cell *y;
 	FILE *fp;
@@ -1531,12 +1479,7 @@ Cell *printstat(Node **a, int n)	/* print a[0] */
 		fp = redirect((int)a[1], a[2]);
 	for (x = a[0]; x != NULL; x = x->nnext) {
 		y = execute(x);
-		if ((y->tval & STR) == 0)
-			y = copycell(y);
-		save = CONVFMT;
-		CONVFMT = OFMT;
 		fputs((char *)getsval(y), fp);
-		CONVFMT = save;
 		tempfree(y);
 		if (x->nnext == NULL)
 			fputs((char *)*ORS, fp);
@@ -1565,8 +1508,6 @@ FILE *redirect(int a, Node *b)	/* set up all i/o redirections */
 	char *fname;
 
 	x = execute(b);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	fname = getsval(x);
 	fp = openfile(a, fname);
 	if (fp == NULL)
@@ -1642,8 +1583,6 @@ Cell *closefile(Node **a, int n)
 
 	n = 0;
 	x = execute(a[0]);
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	getsval(x);
 	for (i = 0; i < FOPEN_MAX; i++)
 		if (files[i].fname && strcmp(x->sval, files[i].fname) == 0) {
@@ -1691,8 +1630,6 @@ Cell *sub(Node **a, int nnn)	/* substitute command */
 	fa *pfa;
 
 	x = execute(a[3]);	/* target string */
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	t = getsval(x);
 	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
 		pfa = (fa *) a[1];	/* regular expression */
@@ -1702,8 +1639,6 @@ Cell *sub(Node **a, int nnn)	/* substitute command */
 		tempfree(y);
 	}
 	y = execute(a[2]);	/* replacement string */
-	if ((y->tval & STR) == 0)
-		y = copycell(y);
 	result = false;
 	if (pmatch(pfa, t)) {
 		pb = buf;
@@ -1749,21 +1684,15 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 	mflag = 0;	/* if mflag == 0, can replace empty string */
 	num = 0;
 	x = execute(a[3]);	/* target string */
-	if ((x->tval & STR) == 0)
-		x = copycell(x);
 	t = getsval(x);
 	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
 		pfa = (fa *) a[1];	/* regular expression */
 	else {
 		y = execute(a[1]);
-		if ((y->tval & STR) == 0)
-			y = copycell(y);
 		pfa = makedfa(getsval(y), 1);
 		tempfree(y);
 	}
 	y = execute(a[2]);	/* replacement string */
-	if ((y->tval & STR) == 0)
-		y = copycell(y);
 	if (pmatch(pfa, t)) {
 		tempstat = pfa->initstat;
 		pfa->initstat = 2;
