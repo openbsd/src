@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.8 2000/04/17 04:44:50 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.9 2000/04/27 15:40:37 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.53 2000/04/16 14:01:42 itojun Exp $	*/
 
 /*
@@ -850,7 +850,7 @@ in6_ifdetach(ifp)
 #endif
 		}
 
-		free(ia, M_IFADDR);
+		free(oia, M_IFADDR);
 	}
 
 	/* cleanup multicast address kludge table, if there is any */
