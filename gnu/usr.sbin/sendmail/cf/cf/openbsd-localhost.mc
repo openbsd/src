@@ -18,13 +18,16 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-localhost.mc $Revision: 1.1 $')
+VERSIONID(`@(#)openbsd-localhost.mc $Revision: 1.2 $')
 OSTYPE(openbsd)
 FEATURE(nouucp, `reject')
+FEATURE(`no_default_msa')
 MAILER(local)
 MAILER(smtp)
 DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, address=::1, Name=MTA6, M=O')dnl
+DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Port=587, Name=MSA, M=E')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::1, Port=587, Name=MSA6, M=O, M=E')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure) 
 dnl on T_AAAA (IPv6) lookups.
