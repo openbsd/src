@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.9 1998/06/15 17:54:48 mickey Exp $
+.\"	$OpenBSD: printf.3,v 1.10 1998/07/14 21:18:07 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -587,6 +587,7 @@ and
 are pointers to strings:
 .Bd -literal -offset indent
 #include <stdio.h>
+
 fprintf(stdout, "%s, %s %d, %.2d:%.2d\en",
 	weekday, month, day, hour, min);
 .Ed
@@ -596,6 +597,7 @@ to five decimal places:
 .Bd -literal -offset indent
 #include <math.h>
 #include <stdio.h>
+
 fprintf(stdout, "pi = %.5f\en", 4 * atan(1.0));
 .Ed
 .Pp
@@ -604,10 +606,12 @@ To allocate a 128 byte string and print into it:
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
 char *newfmt(const char *fmt, ...)
 {
 		char *p;
 		va_list ap;
+
 		if ((p = malloc(128)) == NULL)
 			return (NULL);
 		va_start(ap, fmt);
