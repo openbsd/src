@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.25 2001/10/26 01:28:06 nate Exp $	*/
+/*	$OpenBSD: sio.c,v 1.26 2001/10/26 11:14:09 art Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #include <dev/pci/pcidevs.h>
 
 #include <alpha/pci/siovar.h>
+
+#include "isadma.h"
 
 struct sio_softc {
 	struct device	sc_dv;
@@ -203,8 +205,10 @@ sio_bridge_callback(v)
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
 	sa.sa_iba.iba_memt = sc->sc_memt;
+#if NISADMA > 0
 	sa.sa_iba.iba_dmat =
 		alphabus_dma_get_tag(sc->sc_dmat, ALPHA_BUS_ISA);
+#endif
 	sa.sa_iba.iba_ic = &ic;
 	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }
