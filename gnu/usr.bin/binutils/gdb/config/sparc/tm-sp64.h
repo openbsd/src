@@ -283,6 +283,15 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
 
+/* Select the sparc64 disassembler */
+
+#undef TM_PRINT_INSN_MACH
+#define TM_PRINT_INSN_MACH bfd_mach_sparc_v9a
+
+#undef REG_STRUCT_HAS_ADDR
+#define REG_STRUCT_HAS_ADDR(gcc_p, type) \
+    (TYPE_LENGTH (type) > 32)
+
 #define TARGET_READ_SP() \
     sparc64_read_sp()
 
@@ -294,7 +303,3 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define TARGET_WRITE_FP(val) \
     sparc64_write_fp(val)
-
-#undef REG_STRUCT_HAS_ADDR
-#define REG_STRUCT_HAS_ADDR(gcc_p, type) \
-    (TYPE_LENGTH (type) > 32)
