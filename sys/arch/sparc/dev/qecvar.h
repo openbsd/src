@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.2 1998/07/04 07:07:22 deraadt Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.3 1998/07/04 07:57:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -34,5 +34,4 @@ struct qec_softc {
 	int	sc_burst;		/* DVMA burst size in effect */
 	caddr_t	sc_buffer;		/* VA of the buffer we provide */
 	int	sc_bufsiz;		/* Size of buffer */
-	int	nattached;		/* number of attached devices */
 };
