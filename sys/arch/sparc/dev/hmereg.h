@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.7 1999/01/07 03:14:43 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.8 2000/06/18 17:39:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -337,31 +337,11 @@ struct hme_tcvr {
     (HME_FLAG_POLLENABLE | HME_FLAG_FENABLE | HME_FLAG_LANCE | HME_FLAG_RXCV)
 
 /*
- * Copies of the hardware registers
- */
-struct hme_swr {
-	u_int32_t bmcr;
-	u_int32_t bmsr;
-	u_int32_t phyidr1;
-	u_int32_t phyidr2;
-	u_int32_t anar;
-	u_int32_t anlpar;
-	u_int32_t aner;
-};
-
-/*
  * Transceiver type
  */
 #define HME_TCVR_EXTERNAL	0
 #define HME_TCVR_INTERNAL	1
 #define HME_TCVR_NONE		2
-
-/*
- * Autonegotiation time states
- */
-#define HME_TIMER_DONE		0	/* not doing/waiting for anything */
-#define HME_TIMER_AUTONEG	1	/* autonegotiating */
-#define HME_TIMER_LINKUP	2	/* waiting for link up */
 
 struct hme_rxd {
 	volatile u_int32_t	rx_flags;
