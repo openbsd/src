@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.12 2004/10/04 21:14:38 jmc Exp $
+.\"	$OpenBSD: systrace.4,v 1.13 2004/11/07 20:42:11 marius Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -275,6 +275,19 @@ Set the working directory of the current process to that of the
 named process.
 .It Dv STRIOCRESCWD
 Restore the working directory of the current process.
+.It Dv STRIOCINJECT
+Inject a buffer into the stackgap of the traced process.  This
+accommodates for the manipulation of non-scalar arguments.  The actual
+replacement is not done until system call time, and its presence in
+the stackgap is only guaranteed for the duration of that system call.
+.Bd -literal
+struct systrace_inject {
+	/* On return, this contains the stackgap address. */
+	caddr_t stri_addr;
+	size_t  stri_len;
+	pid_t   stri_pid;
+};
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width "/dev/systrace" -compact
