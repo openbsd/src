@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.7 1996/11/28 23:27:51 niklas Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.8 1997/06/11 03:13:19 downsj Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -82,6 +82,10 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif	/* DDB */
+
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
@@ -124,11 +128,23 @@ void	ncr5380_cmd_timeout __P((void *));
 
 #define	NCR_DBG_BREAK	1
 #define	NCR_DBG_CMDS	2
-int ncr5380_debug = 0;
+int ncr5380_debug = NCR_DBG_BREAK|NCR_DBG_CMDS;
+struct ncr5380_softc *ncr5380_debug_sc;
+
 #define	NCR_BREAK() \
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
+
 static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
 static void ncr5380_show_sense __P((struct scsi_xfer *));
+
+#ifdef DDB
+void ncr5380_trace __P((char *, long));
+void ncr5380_clear_trace __P((void));
+void ncr5380_show_trace __P((void));
+void ncr5380_show_req __P((struct sci_req *));
+void ncr5380_show_req __P((struct sci_req *));
+void ncr5380_show_state __P((void));
+#endif	/* DDB */
 
 #else	/* NCR5380_DEBUG */
 
