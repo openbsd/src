@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.7 1997/02/16 10:31:23 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.8 1997/02/16 10:55:08 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.7 1997/02/16 10:31:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.8 1997/02/16 10:55:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -462,7 +462,7 @@ getrpcportnam(port)
 		    PMAPVERS, &socket, 50, 500)) == NULL)
 			return (NULL);
 		if (clnt_call(client, PMAPPROC_DUMP, xdr_void, NULL,
-		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS)
+		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
 			clnt_destroy(client);
 			return (NULL);
 		}
