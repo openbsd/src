@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.12 2001/03/22 03:05:57 smart Exp $	*/
-/*	$NetBSD: uvm_vnode.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.13 2001/06/23 19:24:34 smart Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.25 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.9 2001/03/22 03:05:55 smart Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.27 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.10 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.31 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -161,13 +161,6 @@ struct vmi_list vmi_list;
 simple_lock_data_t vmi_list_slock;
 
 /*
- * local functions
- */
-
-static int uvm_km_get __P((struct uvm_object *, vaddr_t, 
-	vm_page_t *, int *, int, vm_prot_t, int, int));
-
-/*
  * local data structues
  */
 
@@ -175,233 +168,12 @@ static struct vm_map		kernel_map_store;
 static struct uvm_object	kmem_object_store;
 static struct uvm_object	mb_object_store;
 
-static struct uvm_pagerops km_pager = {
-	NULL,	/* init */
-	NULL, /* reference */
-	NULL, /* detach */
-	NULL, /* fault */
-	NULL, /* flush */
-	uvm_km_get, /* get */
-	/* ... rest are NULL */
-};
-
 /*
- * uvm_km_get: pager get function for kernel objects
- *
- * => currently we do not support pageout to the swap area, so this
- *    pager is very simple.    eventually we may want an anonymous 
- *    object pager which will do paging.
- * => XXXCDC: this pager should be phased out in favor of the aobj pager
+ * All pager operations here are NULL, but the object must have
+ * a pager ops vector associated with it; various places assume
+ * it to be so.
  */
-
-
-static int
-uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
-	struct uvm_object *uobj;
-	vaddr_t offset;
-	struct vm_page **pps;
-	int *npagesp;
-	int centeridx, advice, flags;
-	vm_prot_t access_type;
-{
-	vaddr_t current_offset;
-	vm_page_t ptmp;
-	int lcv, gotpages, maxpages;
-	boolean_t done;
-	UVMHIST_FUNC("uvm_km_get"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "flags=%d", flags,0,0,0);
-	
-	/*
-	 * get number of pages
-	 */
-
-	maxpages = *npagesp;
-
-	/*
-	 * step 1: handled the case where fault data structures are locked.
-	 */
-
-	if (flags & PGO_LOCKED) {
-
-		/*
-		 * step 1a: get pages that are already resident.   only do
-		 * this if the data structures are locked (i.e. the first time
-		 * through).
-		 */
-
-		done = TRUE;	/* be optimistic */
-		gotpages = 0;	/* # of pages we got so far */
-
-		for (lcv = 0, current_offset = offset ; 
-		    lcv < maxpages ; lcv++, current_offset += PAGE_SIZE) {
-
-			/* do we care about this page?  if not, skip it */
-			if (pps[lcv] == PGO_DONTCARE)
-				continue;
-
-			/* lookup page */
-			ptmp = uvm_pagelookup(uobj, current_offset);
-			
-			/* null?  attempt to allocate the page */
-			if (ptmp == NULL) {
-				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, 0);
-				if (ptmp) {
-					/* new page */
-					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
-					UVM_PAGE_OWN(ptmp, NULL);
-					uvm_pagezero(ptmp);
-				}
-			}
-
-			/*
-			 * to be useful must get a non-busy, non-released page
-			 */
-			if (ptmp == NULL ||
-			    (ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
-				if (lcv == centeridx ||
-				    (flags & PGO_ALLPAGES) != 0)
-					/* need to do a wait or I/O! */
-					done = FALSE;
-				continue;
-			}
-
-			/*
-			 * useful page: busy/lock it and plug it in our
-			 * result array
-			 */
-
-			/* caller must un-busy this page */
-			ptmp->flags |= PG_BUSY;	
-			UVM_PAGE_OWN(ptmp, "uvm_km_get1");
-			pps[lcv] = ptmp;
-			gotpages++;
-
-		}	/* "for" lcv loop */
-
-		/*
-		 * step 1b: now we've either done everything needed or we
-		 * to unlock and do some waiting or I/O.
-		 */
-
-		UVMHIST_LOG(maphist, "<- done (done=%d)", done, 0,0,0);
-
-		*npagesp = gotpages;
-		if (done)
-			return(VM_PAGER_OK);		/* bingo! */
-		else
-			return(VM_PAGER_UNLOCK);	/* EEK!   Need to
-							 * unlock and I/O */
-	}
-
-	/*
-	 * step 2: get non-resident or busy pages.
-	 * object is locked.   data structures are unlocked.
-	 */
-
-	for (lcv = 0, current_offset = offset ; 
-	    lcv < maxpages ; lcv++, current_offset += PAGE_SIZE) {
-		
-		/* skip over pages we've already gotten or don't want */
-		/* skip over pages we don't _have_ to get */
-		if (pps[lcv] != NULL ||
-		    (lcv != centeridx && (flags & PGO_ALLPAGES) == 0))
-			continue;
-
-		/*
-		 * we have yet to locate the current page (pps[lcv]).   we
-		 * first look for a page that is already at the current offset.
-		 * if we find a page, we check to see if it is busy or
-		 * released.  if that is the case, then we sleep on the page
-		 * until it is no longer busy or released and repeat the
-		 * lookup.    if the page we found is neither busy nor
-		 * released, then we busy it (so we own it) and plug it into
-		 * pps[lcv].   this 'break's the following while loop and
-		 * indicates we are ready to move on to the next page in the
-		 * "lcv" loop above.
-		 *
-		 * if we exit the while loop with pps[lcv] still set to NULL,
-		 * then it means that we allocated a new busy/fake/clean page
-		 * ptmp in the object and we need to do I/O to fill in the
-		 * data.
-		 */
-
-		while (pps[lcv] == NULL) {	/* top of "pps" while loop */
-			
-			/* look for a current page */
-			ptmp = uvm_pagelookup(uobj, current_offset);
-
-			/* nope?   allocate one now (if we can) */
-			if (ptmp == NULL) {
-
-				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, 0);
-
-				/* out of RAM? */
-				if (ptmp == NULL) {
-					simple_unlock(&uobj->vmobjlock);
-					uvm_wait("kmgetwait1");
-					simple_lock(&uobj->vmobjlock);
-					/* goto top of pps while loop */
-					continue;
-				}
-
-				/* 
-				 * got new page ready for I/O.  break pps
-				 * while loop.  pps[lcv] is still NULL.
-				 */
-				break;		
-			}
-
-			/* page is there, see if we need to wait on it */
-			if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
-				ptmp->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(ptmp,&uobj->vmobjlock,
-				    FALSE, "uvn_get",0);
-				simple_lock(&uobj->vmobjlock);
-				continue;	/* goto top of pps while loop */
-			}
-			
-			/* 
-			 * if we get here then the page has become resident
-			 * and unbusy between steps 1 and 2.  we busy it now
-			 * (so we own it) and set pps[lcv] (so that we exit
-			 * the while loop).  caller must un-busy.
-			 */
-			ptmp->flags |= PG_BUSY;
-			UVM_PAGE_OWN(ptmp, "uvm_km_get2");
-			pps[lcv] = ptmp;
-		}
-
-		/*
-		 * if we own the a valid page at the correct offset, pps[lcv]
-		 * will point to it.   nothing more to do except go to the
-		 * next page.
-		 */
-
-		if (pps[lcv])
-			continue;			/* next lcv */
-
-		/*
-		 * we have a "fake/busy/clean" page that we just allocated.  
-		 * do the needed "i/o" (in this case that means zero it).
-		 */
-
-		uvm_pagezero(ptmp);
-		ptmp->flags &= ~(PG_FAKE);
-		pps[lcv] = ptmp;
-
-	}	/* lcv loop */
-
-	/*
-	 * finally, unlock object and return.
-	 */
-
-	simple_unlock(&uobj->vmobjlock);
-	UVMHIST_LOG(maphist, "<- done (OK)",0,0,0,0);
-	return(VM_PAGER_OK);
-}
+static struct uvm_pagerops	km_pager;
 
 /*
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
@@ -1106,7 +878,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	vaddr_t va;
 
  again:
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL) {
 		if (waitok) {
 			uvm_wait("plpg");

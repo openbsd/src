@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.13 2001/06/08 08:09:38 art Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.40 1999/07/08 18:11:03 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.14 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.44 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /*
  *
@@ -724,7 +724,7 @@ ReFault:
 		npages = nback + nforw + 1;
 		centeridx = nback;
 
-		narrow = FALSE;	/* ensure only once per-fault */
+		narrow = TRUE;	/* ensure only once per-fault */
 
 	} else {
 		
@@ -843,8 +843,8 @@ ReFault:
 			uvmexp.fltnamap++;
 			pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
-			    (anon->an_ref > 1) ?
-			    (enter_prot & ~VM_PROT_WRITE) : enter_prot, 
+			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
+			    enter_prot, 
 			    VM_MAPENT_ISWIRED(ufi.entry), 0);
 		}
 		simple_unlock(&anon->an_lock);

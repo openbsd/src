@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.9 2001/03/22 03:05:54 smart Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.21 1999/07/07 05:32:26 thorpej Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.10 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.25 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -705,28 +705,211 @@ uao_detach(uobj)
 }
 
 /*
- * uao_flush: uh, yea, sure it's flushed.  really!
+ * uao_flush: "flush" pages out of a uvm object
+ *
+ * => object should be locked by caller.  we may _unlock_ the object
+ *	if (and only if) we need to clean a page (PGO_CLEANIT).
+ *	XXXJRT Currently, however, we don't.  In the case of cleaning
+ *	XXXJRT a page, we simply just deactivate it.  Should probably
+ *	XXXJRT handle this better, in the future (although "flushing"
+ *	XXXJRT anonymous memory isn't terribly important).
+ * => if PGO_CLEANIT is not set, then we will neither unlock the object
+ *	or block.
+ * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
+ *	for flushing.
+ * => NOTE: we rely on the fact that the object's memq is a TAILQ and
+ *	that new pages are inserted on the tail end of the list.  thus,
+ *	we can make a complete pass through the object in one go by starting
+ *	at the head and working towards the tail (new pages are put in
+ *	front of us).
+ * => NOTE: we are allowed to lock the page queues, so the caller
+ *	must not be holding the lock on them [e.g. pagedaemon had
+ *	better not call us with the queues locked]
+ * => we return TRUE unless we encountered some sort of I/O error
+ *	XXXJRT currently never happens, as we never directly initiate
+ *	XXXJRT I/O
+ *
+ * comment on "cleaning" object and PG_BUSY pages:
+ *	this routine is holding the lock on the object.  the only time
+ *	that is can run into a PG_BUSY page that it does not own is if
+ *	some other process has started I/O on the page (e.g. either
+ *	a pagein or a pageout).  if the PG_BUSY page is being paged
+ *	in, then it can not be dirty (!PG_CLEAN) because no one has
+ *	had a change to modify it yet.  if the PG_BUSY page is being
+ *	paged out then it means that someone else has already started
+ *	cleaning the page for us (how nice!).  in this case, if we
+ *	have syncio specified, then after we make our pass through the
+ *	object we need to wait for the other PG_BUSY pages to clear
+ *	off (i.e. we need to do an iosync).  also note that once a
+ *	page is PG_BUSY is must stary in its object until it is un-busyed.
+ *	XXXJRT We never actually do this, as we are "flushing" anonymous
+ *	XXXJRT memory, which doesn't have persistent backing store.
+ *
+ * note on page traversal:
+ *	we can traverse the pages in an object either by going down the
+ *	linked list in "uobj->memq", or we can go over the address range
+ *	by page doing hash table lookups for each address.  depending
+ *	on how many pages are in the object it may be cheaper to do one
+ *	or the other.  we set "by_list" to true if we are using memq.
+ *	if the cost of a hash lookup was equal to the cost of the list
+ *	traversal we could compare the number of pages in the start->stop
+ *	range to the total number of pages in the object.  however, it
+ *	seems that a hash table lookup is more expensive than the linked
+ *	list traversal, so we multiply the number of pages in the
+ *	start->stop range by a penalty which we define below.
  */
+
+#define	UAO_HASH_PENALTY 4	/* XXX: a guess */
+
 boolean_t
-uao_flush(uobj, start, end, flags)
+uao_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vaddr_t start, end;
+	vaddr_t start, stop;
 	int flags;
 {
+	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
+	struct vm_page *pp, *ppnext;
+	boolean_t retval, by_list;
+	vaddr_t curoff;
+	UVMHIST_FUNC("uao_flush"); UVMHIST_CALLED(maphist);
+
+	curoff = 0;	/* XXX: shut up gcc */
+
+	retval = TRUE;	/* default to success */
+
+	if (flags & PGO_ALLPAGES) {
+		start = 0;
+		stop = aobj->u_pages << PAGE_SHIFT;
+		by_list = TRUE;		/* always go by the list */
+	} else {
+		start = trunc_page(start);
+		stop = round_page(stop);
+		if (stop > (aobj->u_pages << PAGE_SHIFT)) {
+			printf("uao_flush: strange, got an out of range "
+			    "flush (fixed)\n");
+			stop = aobj->u_pages << PAGE_SHIFT;
+		}
+		by_list = (uobj->uo_npages <=
+		    ((stop - start) >> PAGE_SHIFT) * UAO_HASH_PENALTY);
+	}
+
+	UVMHIST_LOG(maphist,
+	    " flush start=0x%lx, stop=0x%x, by_list=%d, flags=0x%x",
+	    start, stop, by_list, flags);
 
 	/*
- 	 * anonymous memory doesn't "flush"
- 	 */
-	/*
- 	 * XXX
-	 * Deal with:
-	 *
-	 *	PGO_DEACTIVATE	for sequential access, via uvm_fault(), and
-	 *			for MADV_DONTNEED
-	 *
-	 *	PGO_FREE	for MADV_FREE and MSINVALIDATE
+	 * Don't need to do any work here if we're not freeing
+	 * or deactivating pages.
 	 */
-	return TRUE;
+	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
+		UVMHIST_LOG(maphist,
+		    "<- done (no work to do)",0,0,0,0);
+		return (retval);
+	}
+
+	/*
+	 * now do it.  note: we must update ppnext in the body of loop or we
+	 * will get stuck.  we need to use ppnext because we may free "pp"
+	 * before doing the next loop.
+	 */
+
+	if (by_list) {
+		pp = uobj->memq.tqh_first;
+	} else {
+		curoff = start;
+		pp = uvm_pagelookup(uobj, curoff);
+	}
+
+	ppnext = NULL;	/* XXX: shut up gcc */
+	uvm_lock_pageq();	/* page queues locked */
+
+	/* locked: both page queues and uobj */
+	for ( ; (by_list && pp != NULL) ||
+	    (!by_list && curoff < stop) ; pp = ppnext) {
+		if (by_list) {
+			ppnext = pp->listq.tqe_next;
+
+			/* range check */
+			if (pp->offset < start || pp->offset >= stop)
+				continue;
+		} else {
+			curoff += PAGE_SIZE;
+			if (curoff < stop)
+				ppnext = uvm_pagelookup(uobj, curoff);
+
+			/* null check */
+			if (pp == NULL)
+				continue;
+		}
+		
+		switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
+		/*
+		 * XXX In these first 3 cases, we always just
+		 * XXX deactivate the page.  We may want to
+		 * XXX handle the different cases more specifically
+		 * XXX in the future.
+		 */
+		case PGO_CLEANIT|PGO_FREE:
+		case PGO_CLEANIT|PGO_DEACTIVATE:
+		case PGO_DEACTIVATE:
+ deactivate_it:
+			/* skip the page if it's loaned or wired */
+			if (pp->loan_count != 0 ||
+			    pp->wire_count != 0)
+				continue;
+
+			/* zap all mappings for the page. */
+			pmap_page_protect(PMAP_PGARG(pp),
+			    VM_PROT_NONE);
+
+			/* ...and deactivate the page. */
+			uvm_pagedeactivate(pp);
+
+			continue;
+
+		case PGO_FREE:
+			/*
+			 * If there are multiple references to
+			 * the object, just deactivate the page.
+			 */
+			if (uobj->uo_refs > 1)
+				goto deactivate_it;
+
+			/* XXX skip the page if it's loaned or wired */
+			if (pp->loan_count != 0 ||
+			    pp->wire_count != 0)
+				continue;
+
+			/*
+			 * mark the page as released if its busy.
+			 */
+			if (pp->flags & PG_BUSY) {
+				pp->flags |= PG_RELEASED;
+				continue;
+			}
+
+			/* zap all mappings for the page. */
+			pmap_page_protect(PMAP_PGARG(pp),
+			    VM_PROT_NONE);
+
+			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
+			uvm_pagefree(pp);
+
+			continue;
+
+		default:
+			panic("uao_flush: weird flags");
+		}
+#ifdef DIAGNOSTIC
+		panic("uao_flush: unreachable code");
+#endif
+	}
+
+	uvm_unlock_pageq();
+
+	UVMHIST_LOG(maphist,
+	    "<- done, rv=%d",retval,0,0,0);
+	return (retval);
 }
 
 /*

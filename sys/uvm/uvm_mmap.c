@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.14 2001/06/08 08:09:39 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.30 1999/07/08 00:52:45 thorpej Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.15 2001/06/23 19:24:34 smart Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.35 1999/07/17 21:35:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -93,7 +93,7 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-		syscallarg(int) incr;
+		syscallarg(intptr_t) incr;
 	} */ *uap = v;
 #endif
 
@@ -198,16 +198,16 @@ sys_mincore(p, v, retval)
 		lim = end < entry->end ? end : entry->end;
 
 		/*
-		 * Special case for mapped devices; these are always
-		 * considered resident.
+		 * Special case for objects with no "real" pages.  Those
+		 * are always considered resident (mapped devices).
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
-			extern struct uvm_pagerops uvm_deviceops; /* XXX */
 #ifdef DIAGNOSTIC
 			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
 				panic("mincore: user map has kernel object");
 #endif
-			if (entry->object.uvm_obj->pgops == &uvm_deviceops) {
+			if (entry->object.uvm_obj->pgops->pgo_releasepg
+			    == NULL) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
@@ -215,8 +215,8 @@ sys_mincore(p, v, retval)
 			}
 		}
 
-		uobj = entry->object.uvm_obj;	/* top layer */
-		amap = entry->aref.ar_amap;	/* bottom layer */
+		amap = entry->aref.ar_amap;	/* top layer */
+		uobj = entry->object.uvm_obj;	/* bottom layer */
 
 		if (amap != NULL)
 			amap_lock(amap);
@@ -621,7 +621,9 @@ sys_msync(p, v, retval)
 	/*
 	 * translate MS_ flags into PGO_ flags
 	 */
-	uvmflags = PGO_CLEANIT | (flags & MS_INVALIDATE) ? PGO_FREE : 0;
+	uvmflags = PGO_CLEANIT;
+	if (flags & MS_INVALIDATE)
+		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
 	else
@@ -980,7 +982,7 @@ sys_mlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -1027,7 +1029,7 @@ sys_munlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -1258,7 +1260,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 				goto bad;
 			}
 			retval = uvm_map_pageable(map, *addr, *addr + size,
-			    FALSE, TRUE);
+			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {
 				/* unmap the region! */
 				(void) uvm_unmap(map, *addr, *addr + size);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.15 2001/06/08 08:09:39 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.27 1999/07/08 18:11:03 thorpej Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.16 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29 1999/07/25 06:30:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -105,6 +105,31 @@ unsigned maxsmap = MAXSSIZ;	/* kern_resource.c: RLIMIT_STACK max */
 int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 				/* XXX: see uvm_kernacc */
 
+
+/*
+ * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
+ */
+
+void
+uvm_sleep(event, slock, canintr, msg, timo)
+	void *event;
+	struct simplelock *slock;
+	boolean_t canintr;
+	const char *msg;
+	int timo;
+{
+	int s, pri;
+
+	pri = PVM;
+	if (canintr)
+		pri |= PCATCH;
+
+	s = splhigh();
+	if (slock != NULL)
+		simple_unlock(slock);
+	(void) tsleep(event, pri, (char *)msg, timo);
+	splx(s);
+}
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
@@ -298,7 +323,7 @@ uvm_fork(p1, p2, shared, stack, stacksize)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
-	 * p_stats currently point at fields in the user struct.  Copy
+	 * p_stats currently points at a field in the user struct.  Copy
 	 * parts of p_stats, and zero out the rest.
 	 */
 	p2->p_stats = &up->u_stats;

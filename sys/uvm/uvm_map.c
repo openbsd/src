@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.15 2001/05/10 14:51:21 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.63 1999/07/07 21:51:35 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.16 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.68 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1717,6 +1717,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	boolean_t set_max;
 {
 	vm_map_entry_t current, entry;
+	int rv = KERN_SUCCESS;
 	UVMHIST_FUNC("uvm_map_protect"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_prot=0x%x)",
 	map, start, end, new_prot);
@@ -1737,11 +1738,13 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 
 	current = entry;
 	while ((current != &map->header) && (current->start < end)) {
-		if (UVM_ET_ISSUBMAP(current))
-			return (KERN_INVALID_ARGUMENT);
+		if (UVM_ET_ISSUBMAP(current)) {
+			rv = KERN_INVALID_ARGUMENT;
+			goto out;
+		}
 		if ((new_prot & current->max_protection) != new_prot) {
-			vm_map_unlock(map);
-			return (KERN_PROTECTION_FAILURE);
+			rv = KERN_PROTECTION_FAILURE;
+			goto out;
 		}
 		current = current->next;
 	}
@@ -1773,12 +1776,43 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 			    current->protection & MASK(entry));
 		}
 
+		/*
+		 * If the map is configured to lock any future mappings,
+		 * wire this entry now if the old protection was VM_PROT_NONE
+		 * and the new protection is not VM_PROT_NONE.
+		 */
+
+		if ((map->flags & VM_MAP_WIREFUTURE) != 0 &&
+		    VM_MAPENT_ISWIRED(entry) == 0 &&
+		    old_prot == VM_PROT_NONE &&
+		    new_prot != VM_PROT_NONE) {
+			if (uvm_map_pageable(map, entry->start,
+			    entry->end, FALSE,
+			    UVM_LK_ENTER|UVM_LK_EXIT) != KERN_SUCCESS) {
+				/*
+				 * If locking the entry fails, remember the
+				 * error if it's the first one.  Note we
+				 * still continue setting the protection in
+				 * the map, but will return the resource
+				 * shortage condition regardless.
+				 *
+				 * XXX Ignore what the actual error is,
+				 * XXX just call it a resource shortage
+				 * XXX so that it doesn't get confused
+				 * XXX what uvm_map_protect() itself would
+				 * XXX normally return.
+				 */
+				rv = KERN_RESOURCE_SHORTAGE;
+			}
+		}
+
 		current = current->next;
 	}
 	
+ out:
 	vm_map_unlock(map);
-	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
-	return(KERN_SUCCESS);
+	UVMHIST_LOG(maphist, "<- done, rv=%d",rv,0,0,0);
+	return (rv);
 }
 
 #undef  max
@@ -1825,10 +1859,6 @@ uvm_map_inherit(map, start, end, new_inheritance)
 		entry = temp_entry->next;
 	}
 
-	/*
-	 * XXXJRT: disallow holes?
-	 */
-
 	while ((entry != &map->header) && (entry->start < end)) {
 		UVM_MAP_CLIP_END(map, entry, end);
 
@@ -1870,6 +1900,10 @@ uvm_map_advice(map, start, end, new_advice)
 	} else {
 		entry = temp_entry->next;
 	}
+
+	/*
+	 * XXXJRT: disallow holes?
+	 */
 
 	while ((entry != &map->header) && (entry->start < end)) {
 		UVM_MAP_CLIP_END(map, entry, end);
@@ -1913,10 +1947,11 @@ uvm_map_advice(map, start, end, new_advice)
  */
 
 int
-uvm_map_pageable(map, start, end, new_pageable, islocked)
+uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	vm_map_t map;
 	vaddr_t start, end;
-	boolean_t new_pageable, islocked;
+	boolean_t new_pageable;
+	int lockflags;
 {
 	vm_map_entry_t entry, start_entry, failed_entry;
 	int rv;
@@ -1932,8 +1967,9 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 		panic("uvm_map_pageable: map %p not pageable", map);
 #endif
 
-	if (islocked == FALSE)
+	if ((lockflags & UVM_LK_ENTER) == 0)
 		vm_map_lock(map);
+
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	/* 
@@ -1945,7 +1981,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 	 */
 
 	if (uvm_map_lookup_entry(map, start, &start_entry) == FALSE) {
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 	 
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
 		return (KERN_INVALID_ADDRESS);
@@ -1967,7 +2004,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 			    (entry->end < end &&
 			     (entry->next == &map->header ||
 			      entry->next->start > entry->end))) {
-				vm_map_unlock(map);
+				if ((lockflags & UVM_LK_EXIT) == 0)
+					vm_map_unlock(map);
 				UVMHIST_LOG(maphist,
 				    "<- done (INVALID UNWIRE ARG)",0,0,0,0);
 				return (KERN_INVALID_ARGUMENT);
@@ -1987,7 +2025,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
 		return(KERN_SUCCESS);
 
@@ -2055,7 +2094,8 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				entry->wired_count--;
 				entry = entry->prev;
 			}
-			vm_map_unlock(map);
+			if ((lockflags & UVM_LK_EXIT) == 0)
+				vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID WIRE)",0,0,0,0);
 			return (KERN_INVALID_ARGUMENT);
 		}
@@ -2123,15 +2163,24 @@ uvm_map_pageable(map, start, end, new_pageable, islocked)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
-		vm_map_unlock(map);
+		if ((lockflags & UVM_LK_EXIT) == 0)
+			vm_map_unlock(map);
 		UVMHIST_LOG(maphist, "<- done (RV=%d)", rv,0,0,0);
 		return(rv);
 	}
 
 	/* We are holding a read lock here. */
-	vm_map_unbusy(map);
-	vm_map_unlock_read(map);
-	
+	if ((lockflags & UVM_LK_EXIT) == 0) {
+		vm_map_unbusy(map);
+		vm_map_unlock_read(map);
+	} else {
+		/*
+		 * Get back to an exclusive (write) lock.
+		 */
+		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+	}
+
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
 	return(KERN_SUCCESS);
 }
@@ -2323,20 +2372,29 @@ uvm_map_pageable_all(map, flags, limit)
 		/*
 		 * first drop the wiring count on all the entries
 		 * which haven't actually been wired yet.
+		 *
+		 * Skip VM_PROT_NONE entries like we did above.
 		 */
 		failed_entry = entry;
 		for (/* nothing */; entry != &map->header;
-		     entry = entry->next)
+		     entry = entry->next) {
+			if (entry->protection == VM_PROT_NONE)
+				continue;
 			entry->wired_count--;
+		}
 
 		/*
 		 * now, unwire all the entries that were successfully
 		 * wired above.
+		 *
+		 * Skip VM_PROT_NONE entries like we did above.
 		 */
 		for (entry = map->header.next; entry != failed_entry;
 		     entry = entry->next) {
+			if (entry->protection == VM_PROT_NONE)
+				continue;
 			entry->wired_count--;
-			if (VM_MAPENT_ISWIRED(entry) == 0)
+			if (VM_MAPENT_ISWIRED(entry))
 				uvm_map_entry_unwire(map, entry);
 		}
 		vm_map_unlock(map);
@@ -2471,6 +2529,7 @@ uvm_map_clean(map, start, end, flags)
 			case PGO_CLEANIT|PGO_FREE:
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
+ deactivate_it:
 				/* skip the page if it's loaned or wired */
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
@@ -2515,12 +2574,19 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			case PGO_FREE:
+				/*
+				 * If there are multiple references to
+				 * the amap, just deactivate the page.
+				 */
+				if (amap_refs(amap) > 1)
+					goto deactivate_it;
+
 				/* XXX skip the page if it's wired */
 				if (pg->wire_count != 0) {
 					simple_unlock(&anon->an_lock);
 					continue;
 				}
-				amap_unadd(&entry->aref, offset);
+				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
 				simple_unlock(&anon->an_lock);
 				if (refs == 0)

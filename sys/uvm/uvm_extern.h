@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.12 2001/05/10 07:59:06 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.32 1999/07/02 23:20:58 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.13 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.34 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /*
  *
@@ -136,6 +136,12 @@
 #define UVM_PGA_USERESERVE		0x0001
 
 /*
+ * lockflags that control the locking behavior of various functions.
+ */
+#define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
+#define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
+
+/*
  * structures
  */
 
@@ -150,6 +156,7 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct simplelock;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -282,6 +289,8 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
+void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
+			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t));
 void			uvm_exit __P((struct proc *));
@@ -360,7 +369,7 @@ struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
-vaddr_t			uvm_pagealloc_contig __P((vaddr_t, vaddr_t, 
+vaddr_t			uvm_pagealloc_contig __P((vaddr_t, vaddr_t,
 				vaddr_t, vaddr_t));
 void			uvm_pagerealloc __P((struct vm_page *, 
 					     struct uvm_object *, vaddr_t));

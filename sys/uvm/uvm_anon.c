@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.6 2001/01/29 02:07:42 niklas Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.2 1999/03/26 17:34:15 chs Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.7 2001/06/23 19:24:33 smart Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.3 1999/08/14 06:25:48 ross Exp $	*/
 
 /*
  *
@@ -76,6 +76,7 @@ uvm_anon_init()
 	for (lcv = 0 ; lcv < nanon ; lcv++) {
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
+		simple_lock_init(&uvm.afree->an_lock);
 	}
 	simple_lock_init(&uvm.afreelock);
 }
@@ -108,6 +109,7 @@ uvm_anon_add(pages)
 		simple_lock_init(&anon->an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
+		simple_lock_init(&uvm.afree->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 }
