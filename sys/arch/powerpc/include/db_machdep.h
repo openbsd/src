@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1 1996/12/28 06:09:17 rahnds Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -89,7 +89,7 @@ db_regs_t	ddb_regs;		/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK	ddb_regs.iar -= 4;
+#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->iar -= 4)
 
 #define SR_SINGLESTEP 0x8000
 #define	db_clear_single_step(regs)	((regs)->msr &= ~SR_SINGLESTEP)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.4 1996/04/21 22:19:10 deraadt Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.5 1997/03/21 00:48:41 niklas Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -79,7 +79,7 @@ db_stop_at_pc(regs, is_breakpoint)
 	     * Breakpoint trap.  Fix up the PC if the
 	     * machine requires it.
 	     */
-	    FIXUP_PC_AFTER_BREAK
+	    FIXUP_PC_AFTER_BREAK(regs);
 	    pc = PC_REGS(regs);
 	}
 #endif

@@ -51,7 +51,7 @@ db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK		ddb_regs.pc -= BKPT_SIZE;
+#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->pc -= BKPT_SIZE)
 
 #define	db_clear_single_step(regs)	((regs)->psl &= ~PSL_T)
 #define	db_set_single_step(regs)	((regs)->psl |=  PSL_T)
