@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.18 2000/11/07 21:54:45 art Exp $
+#	$OpenBSD: Makefile.alpha,v 1.19 2001/01/16 15:31:52 art Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -109,7 +109,11 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: genassym.o
+.if defined(DESTDIR)
+	${CC} -o $@ -nostdlib -L${DESTDIR}/usr/lib ${DESTDIR}/usr/lib/crtbegin.o ${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crt0.o genassym.o -lgcc -lc -lgcc
+.else
 	${CC} -o $@ genassym.o
+.endif
 
 genassym.o: ${ALPHA}/alpha/genassym.c
 	${HOSTED_C}
