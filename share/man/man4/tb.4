@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tb.4,v 1.7 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: tb.4,v 1.8 2003/10/04 16:47:17 deraadt Exp $
 .\"	$NetBSD: tb.4,v 1.3.6.1 1996/05/31 00:37:45 cgd Exp $
 .\"
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
@@ -88,6 +88,15 @@ requests to get/set the operating mode, and to get/set the tablet type
 and operating mode by
 .Em or Ns -ing
 the two values together.
+.Pp
+Calling
+.Xr read 2
+on the device always succeeds, returning the last sample,
+although the
+.Xr select 2
+and
+.Xr poll 2
+system calls will correctly report the read state for new samples.
 .Pp
 The line discipline supports digitizing devices which are
 compatible with Hitachi,
