@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.49 2001/10/01 16:52:18 jakob Exp $
+#	$OpenBSD: security,v 1.50 2002/02/18 18:13:06 pvalchev Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -8,19 +8,13 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 umask 077
 
-DIR=/tmp/_secure$$
+DIR=`mktemp -d /tmp/_secure.XXXXXX` || exit 1
 ERR=$DIR/_secure1
 TMP1=$DIR/_secure2
 TMP2=$DIR/_secure3
 TMP3=$DIR/_secure4
 LIST=$DIR/_secure5
 OUTPUT=$DIR/_secure6
-
-if ! mkdir $DIR ; then
-	echo "tmp directory ${DIR} already exists, looks like:"
-	ls -alqF $DIR
-	exit 1
-fi
 
 trap 'rm -rf $DIR; exit 1' 0 1 2 3 13 15
 
