@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtok.3,v 1.6 1999/06/29 18:01:34 aaron Exp $
+.\"	$OpenBSD: strtok.3,v 1.7 1999/07/03 15:58:50 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOK 3
@@ -73,10 +73,44 @@ The
 .Fn strtok
 function
 returns a pointer to the beginning of each subsequent token in the string,
-after replacing the separator character itself with a
-.Dv NUL
+after replacing the separator character itself with an
+.Tn ASCII NUL
 character.
 When no more tokens remain, a null pointer is returned.
+.Pp
+Since
+.Fn strtok
+modifies the string,
+.Fa str
+should not point to an area in the initialized data segment.
+.Pp
+.Sh EXAMPLES
+The following will construct an array of pointers to each individual word in
+the string
+.Va s :
+.Bd -literal -offset indent
+#define MAXTOKENS	128
+
+char s[512], *p, *tokens[MAXTOKENS];
+int i = 0;
+
+snprintf(s, sizeof(s), "cat dog horse cow");
+
+for ((p = strtok(s, " ")); p; (p = strtok(NULL, " ")), i++) {
+    if (i < MAXTOKENS)
+        tokens[i] = p;
+}
+tokens[i] = '\e0';
+.Ed
+.Pp
+That is, tokens[0] will point to
+.Qq cat ,
+tokens[1] will point to
+.Qq dog ,
+tokens[2] will point to
+.Qq horse ,
+and tokens[3] will point to
+.Qq cow .
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
@@ -107,3 +141,4 @@ may return a non-null value.
 Since this implementation always alters the next starting point,
 such a sequence of calls would always return
 .Dv NULL .
+
