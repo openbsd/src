@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strerror.3,v 1.4 2000/10/23 19:14:41 aaron Exp $
+.\"	$OpenBSD: strerror.3,v 1.5 2002/11/21 20:45:05 marc Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRERROR 3
@@ -45,6 +45,8 @@
 .Fd #include <string.h>
 .Ft char *
 .Fn strerror "int errnum"
+.Ft int
+.Fn strerror_r "int errnum" "char *strerrbuf" "size_t buflen"
 .Sh DESCRIPTION
 The
 .Fn strerror
@@ -58,6 +60,20 @@ characters, including the trailing NUL.
 The array pointed to is not to be modified by the program, but may be
 overwritten by subsequent calls to
 .Fn strerror .
+.Pp
+.Fn strerror_r
+is a thread safe version of
+.Fn strerror
+that places the error message in the given buffer
+.Fa strerrbuf .
+If the error message is larger then
+.Fa buflen
+the message will be truncated to fit within buflen and
+.Er ERANGE
+is returned.
+.Fn strerror_r
+returns zero upon successful completion.
+An error number is returned, otherwise.
 .Sh SEE ALSO
 .Xr intro 2 ,
 .Xr perror 3 ,
@@ -67,3 +83,7 @@ The
 .Fn strerror
 function conforms to
 .St -ansiC .
+The
+.Fn strerror_r
+function conforms to
+.St -p1003.1 .
