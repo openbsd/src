@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.50 2002/02/08 18:29:08 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.51 2002/02/08 18:43:54 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -263,6 +263,11 @@ restart:
 	    (u_int)new >= maxfiles)
 		return (EBADF);
 	if (old == new) {
+		/*
+		 * NOTE! This doesn't clear the close-on-exec flag. This might
+		 * or might not be the intended behavior from the start, but
+		 * this is what everyone else does.
+		 */
 		*retval = new;
 		return (0);
 	}
