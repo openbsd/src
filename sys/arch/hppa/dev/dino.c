@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.14 2004/09/15 21:30:21 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.15 2004/09/18 07:02:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -141,6 +141,10 @@ dinomatch(parent, cfdata, aux)
 	/* there will be only one */
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BRIDGE ||
 	    ca->ca_type.iodc_sv_model != HPPA_BRIDGE_DINO)
+		return (0);
+
+	/* do not match on the elroy family */
+	if (ca->ca_type.iodc_model == 0x78)
 		return (0);
 
 	return (1);
@@ -1572,9 +1576,6 @@ dinoattach(parent, self, aux)
 		}
 		break;
 
-	/* case 0x782:	p = "Elroy"; */
-	/* case 0x783:	p = "Mercury"; */
-	/* case 0x783:	p = "Quicksilver"; AGP */
 	default:
 		p = "Mojo";
 		break;
