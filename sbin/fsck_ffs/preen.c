@@ -290,6 +290,7 @@ blockcheck(origname)
 	char *origname;
 {
 	struct stat stslash, stblock, stchar;
+	struct fstab *fsp;
 	char *newname, *raw;
 	int retried = 0;
 
@@ -330,6 +331,11 @@ retry:
 	 * Not a block or character device, just return name and
 	 * let the user decide whether to use it.
 	 */
+	if ((fsp = getfsfile(origname))) {
+	    newname = fsp->fs_spec;
+	    retried++;
+	    goto retry;
+    	}
 	return (origname);
 }
 
