@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2o.h,v 1.3 2001/06/27 03:39:17 mickey Exp $	*/
+/*	$OpenBSD: i2o.h,v 1.4 2001/06/27 06:06:28 nate Exp $	*/
 /*	$NetBSD: i2o.h,v 1.3 2001/03/20 13:01:48 ad Exp $	*/
 
 /*-
@@ -1047,7 +1047,7 @@ struct i2o_lan_send_reply {
 };
 
 #define	I2O_LAN_RECIEVE_POST		0x3e
-struct i2o_lan_recieve_post {
+struct i2o_lan_receive_post {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
@@ -1065,7 +1065,7 @@ struct i2o_lan_pdb {
 #define	I2O_LAN_FRAG_VALID		0x00
 #define	I2O_LAN_FRAG_VALID_MASK		foo
 
-struct i2o_lan_recieve_reply {
+struct i2o_lan_receive_reply {
 	u_int32_t	msgflags;
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
