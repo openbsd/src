@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.5 1997/06/04 00:15:16 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.6 1997/06/18 18:48:25 kstailey Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.5 1997/06/04 00:15:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.6 1997/06/18 18:48:25 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ ls_tty(arcn)
 		/*
 		 * no locale specified format
 		 */
-		if ((arcn->sb.st_mtime + SIXMONTHS) <= time((time_t *)NULL))
+		if ((arcn->sb.st_mtime + SIXMONTHS) <= time(NULL))
 			timefrmt = OLDFRMT;
 		else
 			timefrmt = CURFRMT;

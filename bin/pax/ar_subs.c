@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.7 1997/06/04 00:15:14 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.8 1997/06/18 18:48:24 kstailey Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.7 1997/06/04 00:15:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.8 1997/06/18 18:48:24 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ list()
 	if (vflag && ((uidtb_start() < 0) || (gidtb_start() < 0)))
 		return;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 
 	/*
 	 * step through the archive until the format says it is done
@@ -150,7 +150,7 @@ list()
 	 * the patterns supplied by the user were all matched
 	 */
 	(void)(*frmt->end_rd)();
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	pat_chk();
 }
@@ -194,7 +194,7 @@ extract()
 	if (iflag && (name_start() < 0))
 		return;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 
 	/*
 	 * step through each entry on the archive until the format read routine
@@ -359,7 +359,7 @@ extract()
 	 * to avoid chance for multiple entry into the cleanup code.
 	 */
 	(void)(*frmt->end_rd)();
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	proc_dir();
 	pat_chk();
@@ -415,7 +415,7 @@ wr_archive(arcn, is_app)
 	 */
 	wr_one = is_app;
 
-	now = time((time_t *)NULL);
+	now = time(NULL);
 
 	/*
 	 * while there are files to archive, process them one at at time
@@ -552,7 +552,7 @@ wr_archive(arcn, is_app)
 		(*frmt->end_wr)();
 		wr_fin();
 	}
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	if (tflag)
 		proc_dir();
@@ -980,7 +980,7 @@ copy()
 	 * patterns were selected block off signals to avoid chance for
 	 * multiple entry into the cleanup code.
 	 */
-	(void)sigprocmask(SIG_BLOCK, &s_mask, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_BLOCK, &s_mask, NULL);
 	ar_close();
 	proc_dir();
 	ftree_chk();

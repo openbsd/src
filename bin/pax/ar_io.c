@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.13 1997/03/25 09:30:19 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.14 1997/06/18 18:48:23 kstailey Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.13 1997/03/25 09:30:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.14 1997/06/18 18:48:23 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1183,7 +1183,7 @@ ar_next()
 	if (sigprocmask(SIG_BLOCK, &s_mask, &o_mask) < 0)
 		syswarn(0, errno, "Unable to set signal mask");
 	ar_close();
-	if (sigprocmask(SIG_SETMASK, &o_mask, (sigset_t *)NULL) < 0)
+	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
 		syswarn(0, errno, "Unable to restore signal mask");
 
 	if (done || !wr_trail || strcmp(NM_TAR, argv0) == 0)

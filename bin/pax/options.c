@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.25 1997/05/29 15:47:18 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.26 1997/06/18 18:48:26 kstailey Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.25 1997/05/29 15:47:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.26 1997/06/18 18:48:26 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -817,9 +817,9 @@ tar_options(argc, argv)
 		{
 			int sawpat = 0;
 				
-			while (*argv != (char *)NULL) {
+			while (*argv != NULL) {
 				if (strcmp(*argv, "-C") == 0) {
-					if(*++argv == (char *)NULL)
+					if(*++argv == NULL)
 						break;
 					chdname = *argv++;
 
@@ -840,14 +840,14 @@ tar_options(argc, argv)
 		break;
 	case ARCHIVE:
 	case APPND:
-		if (chdname != (char *)NULL) {	/* initial chdir() */
+		if (chdname != NULL) {	/* initial chdir() */
 			if (ftree_add(chdname, 1) < 0)
 				tar_usage();
 		}
 
-		while (*argv != (char *)NULL) {
+		while (*argv != NULL) {
 			if (!strcmp(*argv, "-C")) {
-				if (*++argv == (char *)NULL)
+				if (*++argv == NULL)
 					break;
 				if (ftree_add(*argv++, 1) < 0)
 					tar_usage();
@@ -862,9 +862,9 @@ tar_options(argc, argv)
 		maxflt = 0;
 		break;
 	}
-	if (!fstdin && ((arcname == (char *)NULL) || (*arcname == '\0'))) {
+	if (!fstdin && ((arcname == NULL) || (*arcname == '\0'))) {
 		arcname = getenv("TAPE");
-		if ((arcname == (char *)NULL) || (*arcname == '\0'))
+		if ((arcname == NULL) || (*arcname == '\0'))
 			arcname = _PATH_DEFTAPE;
 	}
 }
@@ -1132,12 +1132,12 @@ cpio_options(argc, argv)
 	switch (act) {
 		case LIST:
 		case EXTRACT:
-			while (*argv != (char *)NULL)
+			while (*argv != NULL)
 				if (pat_add(*argv++, NULL) < 0)
 					cpio_usage();
 			break;
 		case COPY:
-			if (*argv == (char *)NULL) {
+			if (*argv == NULL) {
 				paxwarn(0, "Destination directory was not supplied");
 				cpio_usage();
 			}
@@ -1149,7 +1149,7 @@ cpio_options(argc, argv)
 			/* FALL THROUGH */
 		case ARCHIVE:
 		case APPND:
-			if (*argv != (char *)NULL)
+			if (*argv != NULL)
 				cpio_usage();
 			/*
 			 * no read errors allowed on updates/append operation!

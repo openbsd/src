@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.3 1996/06/23 14:20:41 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.4 1997/06/18 18:48:27 kstailey Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.3 1996/06/23 14:20:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.4 1997/06/18 18:48:27 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ usr_add(str)
 #		ifdef NET2_STAT
 		uid = (uid_t)atoi(str+1);
 #		else
-		uid = (uid_t)strtoul(str+1, (char **)NULL, 10);
+		uid = (uid_t)strtoul(str+1, NULL, 10);
 #		endif
 	endpwent();
 
@@ -269,7 +269,7 @@ grp_add(str)
 #		ifdef NET2_STAT
 		gid = (gid_t)atoi(str+1);
 #		else
-		gid = (gid_t)strtoul(str+1, (char **)NULL, 10);
+		gid = (gid_t)strtoul(str+1, NULL, 10);
 #		endif
 	endgrent();
 
@@ -449,7 +449,7 @@ trng_add(str)
 	/*
 	 * start off with the current time
 	 */
-	pt->low_time = pt->high_time = time((time_t *)NULL);
+	pt->low_time = pt->high_time = time(NULL);
 	if (*str != '\0') {
 		/*
 		 * add lower limit
