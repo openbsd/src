@@ -87,6 +87,14 @@ True if
 .Ar file
 exists and its set group ID flag
 is set.
+.It Fl h Ar file
+True if
+.Ar file
+exists and is a symbolic link.
+This operator is for COMPATABILITY purposes,
+do not rely on it's existance.  Use
+.Fl L
+instead.
 .It Fl k Ar file
 True if
 .Ar file
