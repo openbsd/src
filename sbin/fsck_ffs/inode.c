@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.16 1995/12/14 22:17:26 thorpej Exp $	*/
+/*	$NetBSD: inode.c,v 1.17 1995/12/17 06:03:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.16 1995/12/14 22:17:26 thorpej Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.17 1995/12/17 06:03:36 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ ckinode(dp, idesc)
 	struct dinode *dp;
 	register struct inodesc *idesc;
 {
-	register daddr_t *ap;
+	register ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
 	quad_t remsize, sizepb;
@@ -452,7 +452,7 @@ pinode(ino)
 	register struct dinode *dp;
 	register char *p;
 	struct passwd *pw;
-	char *ctime();
+	time_t t;
 
 	printf(" I=%lu ", ino);
 	if (ino < ROOTINO || ino > maxino)
@@ -469,7 +469,8 @@ pinode(ino)
 	if (preen)
 		printf("%s: ", cdevname);
 	printf("SIZE=%qu ", dp->di_size);
-	p = ctime(&dp->di_mtime);
+	t = dp->di_mtime;
+	p = ctime(&t);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
 
