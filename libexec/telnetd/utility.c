@@ -546,7 +546,9 @@ printsub(int direction, unsigned char *pointer, int length)
        			       		/* length of suboption data */
 {
     int i = 0;
+#ifdef AUTHENTICATION
     unsigned char buf[512];
+#endif
 
     if (!(diagnostic & TD_OPTIONS))
 	return;

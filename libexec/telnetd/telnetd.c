@@ -53,6 +53,10 @@ struct	sysv sysv;
 struct	socksec ss;
 #endif	/* _SC_CRAY_SECURE_SYS */
 
+#ifndef ENCRYPTION
+#define	encrypt_delay()	0
+#endif
+
 #ifdef AUTHENTICATION
 int	auth_level = 0;
 #endif
@@ -363,8 +367,11 @@ main(int argc, char **argv)
 	} else {
 #ifdef KRB5
 	    port = krb5_getportbyname (NULL, "telnet", "tcp", 23);
-#else
+#elif defined(KRB4)
 	    port = k_getportbyname("telnet", "tcp", htons(23));
+#else
+	    sp = getservbyname ("telnet", "tcp");
+	    port = sp ? sp->s_port : htons(23);
 #endif
 	}
 	mini_inetd (port);

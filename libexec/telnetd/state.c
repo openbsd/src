@@ -118,8 +118,9 @@ telrcv(void)
 	     * if CRMOD is set, which it normally is).
 	     */
 	    if ((c == '\r') && his_state_is_wont(TELOPT_BINARY)) {
-		int nc = *netip;
 #ifdef ENCRYPTION
+		int nc = *netip;
+
 		if (decrypt_input)
 		    nc = (*decrypt_input)(nc & 0xff);
 #endif
