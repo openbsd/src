@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.34 2000/10/10 13:35:11 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.35 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
        */
       len = GET_ISAKMP_GEN_LENGTH (buf);
 
-      /* Ignore private payloads. */
+      /* Ignore private payloads.  */
       if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN)
 	{
 	  LOG_DBG ((LOG_MESSAGE, 30,
@@ -943,7 +943,9 @@ message_recv (struct message *msg)
 
   if (GET_ISAKMP_HDR_NEXT_PAYLOAD (buf) >= ISAKMP_PAYLOAD_RESERVED_MIN)
     {
-      log_print ("message_recv: invalid payload type %d in ISAKMP header (check  passphrases, if applicable and in Phase 1)",
+      log_print ("message_recv: "
+		 "invalid payload type %d in ISAKMP header "
+		 "(check passphrases, if applicable and in Phase 1)",
 		 GET_ISAKMP_HDR_NEXT_PAYLOAD (buf));
       message_drop (msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
       return -1;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.43 2001/01/10 21:41:54 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.44 2001/01/26 12:12:52 niklas Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -792,7 +792,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 #endif
 
 	default:
-	  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_set_spi: unknown encryption algorithm %d", proto->id));
+	  LOG_DBG ((LOG_SYSDEP, 50,
+		    "pf_key_v2_set_spi: unknown encryption algorithm %d",
+		    proto->id));
 	  return -1;
 	}
 
@@ -827,7 +829,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	case IPSEC_AUTH_DES_MAC:
 	case IPSEC_AUTH_KPDK:
 	  /* XXX We should be supporting KPDK */
-	  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_set_spi: unknown authentication algorithm %d", iproto->auth));
+	  LOG_DBG ((LOG_SYSDEP, 50,
+		    "pf_key_v2_set_spi: unknown authentication algorithm %d",
+		    iproto->auth));
 	  return -1;
 
 	default:
@@ -870,7 +874,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 #endif
 
 	default:
-	  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_set_spi: unknown authentication algorithm %d", proto->id));
+	  LOG_DBG ((LOG_SYSDEP, 50,
+		    "pf_key_v2_set_spi: unknown authentication algorithm %d",
+		    proto->id));
 	  goto cleanup;
 	}
       break;
@@ -1021,7 +1027,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   addr = 0;
 
 #if 0
-  /* XXX I am not sure about what to do here just yet. */
+  /* XXX I am not sure about what to do here just yet.  */
   if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
     {
       len = sizeof *addr + PF_KEY_V2_ROUND (dstlen);
@@ -2308,14 +2314,18 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  pwd = getpwuid (srcident->sadb_ident_id);
 		  if (pwd == NULL)
 		    {
-		      log_error ("pf_key_v2_acquire: could not acquire username from provided ID %d", srcident->sadb_ident_id);
+		      log_error ("pf_key_v2_acquire: could not acquire "
+				 "username from provided ID %d",
+				 srcident->sadb_ident_id);
 		      goto fail;
 		    }
 
 		  if (slen != 0)
 		    if (strcmp (pwd->pw_name, (char *)(srcident + 1)) != 0)
 		      {
-			log_error ("pf_key_v2_acquire: provided user name and ID do not match (%s != %s)", (char *)(srcident + 1), pwd->pw_name);
+			log_error ("pf_key_v2_acquire: provided user name and "
+				   "ID do not match (%s != %s)",
+				   (char *)(srcident + 1), pwd->pw_name);
 			goto fail;
 		      }
 		}
@@ -2409,14 +2419,18 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  pwd = getpwuid (dstident->sadb_ident_id);
 		  if (pwd == NULL)
 		    {
-		      log_error ("pf_key_v2_acquire: could not acquire username from provided ID %d", dstident->sadb_ident_id);
+		      log_error ("pf_key_v2_acquire: could not acquire "
+				 "username from provided ID %d",
+				 dstident->sadb_ident_id);
 		      goto fail;
 		    }
 
 		  if (slen != 0)
 		    if (strcmp (pwd->pw_name, (char *)(dstident + 1)) != 0)
 		      {
-			log_error ("pf_key_v2_acquire: provided user name and ID do not match (%s != %s)", (char *)(dstident + 1), pwd->pw_name);
+			log_error ("pf_key_v2_acquire: provided user name and "
+				   "ID do not match (%s != %s)",
+				   (char *)(dstident + 1), pwd->pw_name);
 			goto fail;
 		      }
 		}

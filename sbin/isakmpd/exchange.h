@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.15 2000/10/07 06:59:46 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.16 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ struct exchange {
   void *recv_cert;
   void *recv_key;
 
-  /* XXX This is no longer necessary, it is covered by policy. */
+  /* XXX This is no longer necessary, it is covered by policy.  */
 
   /* Acceptable authorities for cert requests */
   TAILQ_HEAD (aca_head, certreq_aca) aca_list;

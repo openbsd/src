@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.25 2000/10/07 06:58:37 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.26 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ reinit (void)
   if (regrand)
     srandom (strtoul (optarg, 0, 0));
 
-  /* Reread config file. */
+  /* Reread config file.  */
   conf_reinit ();
 
   /* Try again to link in libcrypto (good if we started without /usr).  */
@@ -211,14 +211,14 @@ reinit (void)
   tzset ();
 
 #ifdef USE_POLICY
-  /* Reread the policies. */
+  /* Reread the policies.  */
   policy_init ();
 #endif
 
   /* Reinitialize certificates */
   cert_init();
 
-  /* Reinitialize our connection list. */
+  /* Reinitialize our connection list.  */
   connection_reinit ();
 
   /*

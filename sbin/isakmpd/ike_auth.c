@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.31 2000/12/19 19:03:05 mickey Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.32 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -565,9 +565,10 @@ rsa_sig_decode_hash (struct message *msg)
       return -1;
     }
 
-  /* XXX Assume we should use the same kind of certification as the
-     XXX remote...moreover, just use the first CERT payload to
-     XXX decide what to use. */
+  /*
+   * XXX Assume we should use the same kind of certification as the remote...
+   * moreover, just use the first CERT payload to decide what to use.
+   */
   p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_CERT]);
   if (!p)
     handler = cert_get (ISAKMP_CERTENC_KEYNOTE);

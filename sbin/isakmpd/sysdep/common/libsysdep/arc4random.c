@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.2 2001/01/26 12:04:19 niklas Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.3 2001/01/26 12:10:56 niklas Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -93,10 +93,8 @@ arc4_stir(as)
 		read(fd, rdat.rnd, sizeof(rdat.rnd));
 		close(fd);
 	}
-	/*
-	 * fd < 0?  Ah, what the heck. We'll just take whatever was on the
-	 * stack...
-	 */
+	/* fd < 0?  Ah, what the heck. We'll just take whatever was on the
+	 * stack... */
 
 	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.19 2001/01/10 00:42:00 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.20 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1233,25 +1233,35 @@ policy_callback (char *name)
       LOG_DBG ((LOG_SA, 80, "esp_group_desc == %s", esp_group_desc));
       LOG_DBG ((LOG_SA, 80, "comp_group_desc == %s", comp_group_desc));
       LOG_DBG ((LOG_SA, 80, "remote_filter_type == %s", remote_filter_type));
-      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_upper == %s", remote_filter_addr_upper));
-      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_lower == %s", remote_filter_addr_lower));
-      LOG_DBG ((LOG_SA, 80, "remote_filter == %s", (remote_filter ? remote_filter : "")));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_upper == %s",
+		remote_filter_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "remote_filter_addr_lower == %s",
+		remote_filter_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "remote_filter == %s",
+		(remote_filter ? remote_filter : "")));
       LOG_DBG ((LOG_SA, 80, "remote_filter_port == %s", remote_filter_port));
       LOG_DBG ((LOG_SA, 80, "remote_filter_proto == %s", remote_filter_proto));
       LOG_DBG ((LOG_SA, 80, "local_filter_type == %s", local_filter_type));
-      LOG_DBG ((LOG_SA, 80, "local_filter_addr_upper == %s", local_filter_addr_upper));
-      LOG_DBG ((LOG_SA, 80, "local_filter_addr_lower == %s", local_filter_addr_lower));
-      LOG_DBG ((LOG_SA, 80, "local_filter == %s", (local_filter ? local_filter : "")));
+      LOG_DBG ((LOG_SA, 80, "local_filter_addr_upper == %s",
+		local_filter_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "local_filter_addr_lower == %s",
+		local_filter_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "local_filter == %s",
+		(local_filter ? local_filter : "")));
       LOG_DBG ((LOG_SA, 80, "local_filter_port == %s", local_filter_port));
       LOG_DBG ((LOG_SA, 80, "local_filter_proto == %s", local_filter_proto));
       LOG_DBG ((LOG_SA, 80, "remote_id_type == %s", remote_id_type));
-      LOG_DBG ((LOG_SA, 80, "remote_id_addr_upper == %s", remote_id_addr_upper));
-      LOG_DBG ((LOG_SA, 80, "remote_id_addr_lower == %s", remote_id_addr_lower));
+      LOG_DBG ((LOG_SA, 80, "remote_id_addr_upper == %s",
+		remote_id_addr_upper));
+      LOG_DBG ((LOG_SA, 80, "remote_id_addr_lower == %s",
+		remote_id_addr_lower));
       LOG_DBG ((LOG_SA, 80, "remote_id == %s", (remote_id ? remote_id : "")));
       LOG_DBG ((LOG_SA, 80, "remote_id_port == %s", remote_id_port));
       LOG_DBG ((LOG_SA, 80, "remote_id_proto == %s", remote_id_proto));
-      LOG_DBG ((LOG_SA, 80, "remote_negotiation_address == %s", remote_ike_address));
-      LOG_DBG ((LOG_SA, 80, "local_negotiation_address == %s", local_ike_address));
+      LOG_DBG ((LOG_SA, 80, "remote_negotiation_address == %s",
+		remote_ike_address));
+      LOG_DBG ((LOG_SA, 80, "local_negotiation_address == %s",
+		local_ike_address));
       LOG_DBG ((LOG_SA, 80, "pfs == %s", pfs));
       LOG_DBG ((LOG_SA, 80, "initiator == %s", initiator));
       LOG_DBG ((LOG_SA, 80, "phase1_group_desc == %s", phase1_group));
@@ -1478,7 +1488,7 @@ policy_init (void)
     log_fatal ("policy_init: calloc (%d, %d) failed", st.st_size,
 	       sizeof (char));
 
-  /* Just in case there are short reads... */
+  /* Just in case there are short reads...  */
   for (len = 0; len < st.st_size; len += i)
     {
       i = read (fd, ptr + len, st.st_size - len);

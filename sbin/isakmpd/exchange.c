@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.38 2001/01/22 08:37:05 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.39 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ exchange_create (int phase, int initiator, int doi, int type)
 				     exchange, &expiration);
   if (!exchange->death)
     {
-      /* If we don't give up we might start leaking... */
+      /* If we don't give up we might start leaking...  */
       exchange_free_aux (exchange);
       return 0;
     }
@@ -1085,7 +1085,7 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
 		    int level)
 {
   char buf[LOG_SIZE];
-  /* Don't risk overflowing the final log buffer. */
+  /* Don't risk overflowing the final log buffer.  */
   int bufsize_max = LOG_SIZE - strlen (header) - 32; 
   struct sa *sa;
 
@@ -1644,7 +1644,7 @@ exchange_establish (char *name,
       trpt = conf_get_str (name, "Transport");
       if (!trpt)
 	{
-	  /* Phase 1 transport defaults to "udp". */
+	  /* Phase 1 transport defaults to "udp".  */
 	  trpt = ISAKMP_DEFAULT_TRANSPORT;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.11 2000/11/23 12:56:59 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.12 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ connection_reinit (void)
   LOG_DBG ((LOG_MISC, 30, 
 	    "connection_reinit: reinitializing connection list"));
 
-  /* Remove all present connections. */
+  /* Remove all present connections.  */
 
   for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
     connection_teardown (conn->name);

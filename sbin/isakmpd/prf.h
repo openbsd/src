@@ -1,4 +1,4 @@
-/*	$OpenBSD: prf.h,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
+/*	$OpenBSD: prf.h,v 1.4 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: prf.h,v 1.1 1998/07/11 20:06:22 provos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #ifndef _PRF_H_
 #define _PRF_H_
 
-/* Enumeration of possible PRF - Pseudo-Random Functions. */
+/* Enumeration of possible PRF - Pseudo-Random Functions.  */
 enum prfs {
   PRF_HMAC = 0,			/* No PRFs in drafts, this is the default */
 };

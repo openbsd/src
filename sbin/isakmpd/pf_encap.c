@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_encap.c,v 1.18 2000/12/12 01:46:29 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.19 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
@@ -281,7 +281,8 @@ pf_encap_write (struct encap_msghdr *em)
     }
   if ((size_t)n != em->em_msglen)
     {
-      log_error ("pf_encap_write: write (%d, ...) returned prematurely", pf_encap_socket);
+      log_error ("pf_encap_write: write (%d, ...) returned prematurely",
+		 pf_encap_socket);
       return -1;
     }
   return 0;

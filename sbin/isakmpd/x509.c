@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.36 2001/01/26 11:09:12 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.37 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -118,12 +118,14 @@ x509_generate_kn (X509 *cert)
   RSA *key;
   char **new_asserts;
 
-  LOG_DBG ((LOG_CRYPTO, 90, "x509_generate_kn: generating KeyNote policy for certificate %p", cert));
+  LOG_DBG ((LOG_CRYPTO, 90,
+	    "x509_generate_kn: generating KeyNote policy for certificate %p",
+	    cert));
 
   issuer = LC (X509_get_issuer_name, (cert));
   subject = LC (X509_get_subject_name, (cert));
 
-  /* Missing or self-signed, ignore cert but don't report failure */
+  /* Missing or self-signed, ignore cert but don't report failure.  */
   if (!issuer || !subject || !LC (X509_name_cmp, (issuer, subject)))
       return 1;
 
@@ -232,7 +234,7 @@ x509_generate_kn (X509 *cert)
       return 0;
     }
 
-  /* We could print the assertion here, but log_print() truncates... */
+  /* We could print the assertion here, but log_print() truncates...  */
 
   free (buf);
 

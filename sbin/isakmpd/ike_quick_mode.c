@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.41 2001/01/26 11:08:43 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.42 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -141,20 +141,24 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
   if (keynote_policy_asserts_num)
     {
-      keynote_ids = calloc (keynote_policy_asserts_num, sizeof(int));
-      if (keynote_ids == NULL)
+      keynote_ids = calloc (keynote_policy_asserts_num, sizeof *keynote_ids);
+      if (!keynote_ids)
         {
-            log_print ("check_policy: failed to allocate %d bytes for book keeping", keynote_policy_asserts_num * sizeof(int));
+            log_print ("check_policy: "
+		       "failed to allocate %d bytes for book keeping",
+		       keynote_policy_asserts_num * sizeof *keynote_ids);
             return 0;
         }
     }
 
   if (x509_policy_asserts_num)
     {
-      x509_ids = calloc (x509_policy_asserts_num, sizeof(int));
-      if (x509_ids == NULL)
+      x509_ids = calloc (x509_policy_asserts_num, sizeof *x509_ids);
+      if (!x509_ids)
         {
-          log_print ("check_policy: failed to allocate %d bytes for book keeping", x509_policy_asserts_num * sizeof(int));
+          log_print ("check_policy: "
+		     "failed to allocate %d bytes for book keeping",
+		     x509_policy_asserts_num * sizeof *x509_ids);
           free (keynote_ids);
           return 0;
         }
@@ -186,8 +190,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   switch (isakmp_sa->recv_certtype)
     {
     case ISAKMP_CERTENC_NONE:
-      /* For shared keys, just duplicate the passphrase with the
-         appropriate prefix tag. */
+      /*
+       * For shared keys, just duplicate the passphrase with the
+       * appropriate prefix tag.
+       */
       nprinc = 1;
       principal = calloc (nprinc, sizeof(*principal));
       if (principal == NULL)
@@ -754,7 +760,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  proto->spi_sz[1] = spi_sz;
 	  proto->spi[1] = spi;
 
-	  /* Let the DOI get at proto for initializing its own data. */
+	  /* Let the DOI get at proto for initializing its own data.  */
 	  if (doi->proto_init)
 	    doi->proto_init (proto, prot->field);
 

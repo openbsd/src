@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.25 2001/01/26 11:08:08 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.26 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ udp_init ()
 
   LIST_INIT (&udp_listen_list);
 
-  /* Bind the ISAKMP UDP port on all network interfaces we have. */
+  /* Bind the ISAKMP UDP port on all network interfaces we have.  */
   /* XXX need to check errors */
   if_map (udp_bind_if, &port);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2000/12/12 01:45:55 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2001/01/26 12:12:51 niklas Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ conf_find_trans_xf (int phase, char *xf)
   struct conf_trans *node;
   char *p;
 
-  /* Find the relevant transforms and suites, if any. */
+  /* Find the relevant transforms and suites, if any.  */
   for (node = TAILQ_FIRST (&conf_trans_queue); node;
        node = TAILQ_NEXT (node, link))
     if (( phase == 1 && !strcmp ("Transforms", node->tag)) ||
@@ -995,8 +995,10 @@ conf_end (int transaction, int commit)
   return 0;
 }
 
-/* Dump running configuration upon SIGUSR1. */
-/* XXX Configuration is "stored in reverse order", so reverse it. */
+/*
+ * Dump running configuration upon SIGUSR1.
+ * XXX Configuration is "stored in reverse order", so reverse it.
+ */
 struct dumper {
   char *s, *v;
   struct dumper *next;
@@ -1005,7 +1007,7 @@ struct dumper {
 static void
 conf_report_dump (struct dumper *node)
 {
-  /* Recursive, cleanup when we're done. */
+  /* Recursive, cleanup when we're done.  */
 
   if (node->next)
     conf_report_dump (node->next);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.14 2000/12/12 05:12:45 todd Exp $	*/
+/*	$OpenBSD: log.c,v 1.15 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -133,16 +133,17 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	   * We may need to explicitly close stdout to do this properly.
 	   * XXX - Figure out how to match two FILE *'s and rewrite.
 	   */  
-	  if (fileno (log_output) != -1)
-	    if (fileno (stdout) == fileno (log_output))
-	      fclose (stdout);
+	  if (fileno (log_output) != -1
+	      && fileno (stdout) == fileno (log_output))
+	    fclose (stdout);
 	  fclose (log_output);
 
 	  /* Fallback to syslog.  */
 	  log_to (0);
 
-	  /* (Re)send current message to syslog(). */
-	  syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, "%s", buffer);
+	  /* (Re)send current message to syslog().  */
+	  syslog (class == LOG_REPORT ? LOG_ALERT
+		  : syslog_level, "%s", buffer);
 	}
     }
   else

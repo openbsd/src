@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.35 2001/01/22 08:14:24 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.36 2001/01/26 12:12:52 niklas Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -783,7 +783,7 @@ sa_setup_expirations (struct sa *sa)
 	= timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
       if (!sa->soft_death)
 	{
-	  /* If we don't give up we might start leaking... */
+	  /* If we don't give up we might start leaking...  */
 	  sa_delete (sa, 1);
 	  return -1;
 	}
@@ -801,7 +801,7 @@ sa_setup_expirations (struct sa *sa)
 	= timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
       if (!sa->death)
 	{
-	  /* If we don't give up we might start leaking... */
+	  /* If we don't give up we might start leaking...  */
 	  sa_delete (sa, 1);
 	  return -1;
 	}
