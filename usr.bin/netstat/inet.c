@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.66 2003/07/07 21:36:52 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.67 2003/09/04 03:20:17 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.66 2003/07/07 21:36:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.67 2003/09/04 03:20:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -779,7 +779,7 @@ esp_stats(u_long off, char *name)
 }
 
 /*
- * Dump ESP statistics structure.
+ * Dump IP-in-IP statistics structure.
  */
 void
 ipip_stats(u_long off, char *name)
