@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1998/06/02 20:46:40 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1999/09/06 13:10:48 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1998/06/02 20:46:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1999/09/06 13:10:48 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.10 1998/06/02 20:46:40 deraadt Exp $
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <err.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -89,7 +90,6 @@ int ilevel = 0; 		/* input file stack pointer    */
 int oindex = 0; 		/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
 char *m4wraps = "";             /* m4wrap string default..     */
-char *progname;			/* name of this program        */
 char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
 char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
@@ -160,8 +160,6 @@ main(argc,argv)
 	char *p;
 	register FILE *ifp;
 
-	progname = basename(argv[0]);
-
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);
 
@@ -205,7 +203,7 @@ main(argc,argv)
 			if (p[0] == '-' && p[1] == '\0')
 				ifp = stdin;
 			else if ((ifp = fopen(p, "r")) == NULL)
-				oops("%s: %s", p, strerror(errno));
+				err(1, "%s", p);
 			sp = -1;
 			fp = 0; 
 			infile[0] = ifp;
@@ -258,7 +256,7 @@ do_look_ahead(t, token)
 	int i;
 
 	if (t != token[0])
-		oops("internal error", "");
+		errx(1, "internal error");
 
 	for (i = 1; *++token; i++) {
 		t = gpbc();
@@ -323,7 +321,7 @@ macro() {
 		}
 		else if (t == EOF) {
 			if (sp > -1)
-				oops("unexpected end of input", "");
+				errx(1, "unexpected end of input");
 			if (ilevel <= 0)
 				break;			/* all done thanks.. */
 			--ilevel;
@@ -347,7 +345,7 @@ macro() {
 					nlpar++;
 					s = lquote;
 				} else if (l == EOF)
-					oops("missing right quote", "");
+					errx(1, "missing right quote");
 				else {
 					chars[0] = l;
 					chars[1] = '\0';
@@ -406,7 +404,7 @@ macro() {
 				chrsave(EOS);
 
 				if (sp == STACKMAX)
-					oops("internal stack overflow", "");
+					errx(1, "internal stack overflow");
 
 				if (CALTYP == MACRTYPE)
 					expand((char **) mstack+fp+1, sp-fp);
@@ -456,7 +454,7 @@ register char *tp;
 		h = (h << 5) + h + (*tp++ = c);
 	putback(c);
 	if (tp == etp)
-		oops("token too long", "");
+		errx(1, "token too long");
 
 	*tp = EOS;
 

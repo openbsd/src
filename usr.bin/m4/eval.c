@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.11 1998/04/25 18:47:18 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.12 1999/09/06 13:10:48 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.11 1998/04/25 18:47:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.12 1999/09/06 13:10:48 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.11 1998/04/25 18:47:18 millert Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <err.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -195,7 +196,7 @@ register int td;
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))
-				oops("%s: %s", argv[2], strerror(errno));
+				err(1, "%s", argv[2]);
 		break;
 
 	case SINCTYPE:
@@ -206,7 +207,7 @@ register int td;
 	case PASTTYPE:
 		if (argc > 2)
 			if (!dopaste(argv[2]))
-				oops("%s: %s", argv[2], strerror(errno));
+				err(1, "%s", argv[2]);
 		break;
 
 	case SPASTYPE:
@@ -371,7 +372,7 @@ register int td;
 		break;
 
 	default:
-		oops("%s: major botch.", "eval");
+		errx(1, "eval: major botch.");
 		break;
 	}
 }
@@ -460,9 +461,9 @@ register char *defn;
 	register ndptr p;
 
 	if (!*name)
-		oops("null definition.");
+		errx(1, "null definition.");
 	if (STREQ(name, defn))
-		oops("%s: recursive definition.", name);
+		errx(1, "%s: recursive definition.", name);
 	if ((p = lookup(name)) == nil)
 		p = addent(name);
 	else if (p->defn != null)
@@ -506,9 +507,9 @@ register char *defn;
 	register ndptr p;
 
 	if (!*name)
-		oops("null definition");
+		errx(1, "null definition");
 	if (STREQ(name, defn))
-		oops("%s: recursive definition.", name);
+		errx(1, "%s: recursive definition.", name);
 	p = addent(name);
 	if (!*defn)
 		p->defn = null;
@@ -573,7 +574,7 @@ doincl(ifile)
 char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
-		oops("too many include files.");
+		errx(1, "too many include files.");
 	if ((infile[ilevel + 1] = fopen(ifile, "r")) != NULL) {
 		ilevel++;
 		bbase[ilevel] = bufbase = bp;
@@ -670,7 +671,7 @@ register int n;
 		m4temp[UNIQUE] = n + '0';
 		if ((fd = open(m4temp, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
 		    (outfile[n] = fdopen(fd, "w")) == NULL)
-			oops("%s: cannot divert.", m4temp);
+			err(1, "%s: cannot divert", m4temp);
 	}
 	active = outfile[n];
 }

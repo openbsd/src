@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.4 1997/12/10 20:24:16 deraadt Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.5 1999/09/06 13:10:48 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
  * other important constants
  */
 
-#define EOS             (char) 0
+#define EOS             '\0'
 #define MAXINP          10              /* maximum include files   */
 #define MAXOUT          10              /* maximum # of diversions */
 #define MAXSTR          512             /* maximum size of string  */

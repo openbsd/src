@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.2 1996/06/26 05:36:12 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.3 1999/09/06 13:10:48 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include "mdef.h"
 #include "stdd.h"

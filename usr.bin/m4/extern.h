@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/12/10 20:24:12 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 1999/09/06 13:10:48 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-char	*basename __P((char *));
 char	*xalloc __P((unsigned long));
 int	expr __P((char *));
 ndptr	addent __P((char *));
@@ -66,7 +65,6 @@ void	killdiv __P((void));
 ndptr	lookup __P((char *));
 void	map __P((char *, char *, char *, char *));
 void	onintr __P((int));
-void	oops __P((const char *, ...));
 void	pbnum __P((int));
 void	pbstr __P((char *));
 void	putback __P((int));
@@ -94,6 +92,5 @@ extern char lquote[];		/* left quote character (`) */
 extern char *m4temp;		/* filename for diversions */
 extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
-extern char *progname;		/* program name */
 extern char rquote[];		/* right quote character (') */
 extern char scommt[];		/* start character for comment */

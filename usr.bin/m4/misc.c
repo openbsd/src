@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 1999/09/06 13:10:49 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.7 1999/09/06 13:10:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,9 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
+#include <err.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -59,21 +61,18 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $"
 /*
  * find the index of second str in the first str.
  */
-int
+ptrdiff_t
 indx(s1, s2)
-char *s1;
-char *s2;
+const char *s1;
+const char *s2;
 {
-	register char *t;
-	register char *p;
-	register char *m;
+	char *r;
 
-	for (p = s1; *p; p++) {
-		for (t = p, m = s2; *m && *m == *t; m++, t++);
-		if (!*m)
-			return (p - s1);
-	}
-	return (-1);
+	r = strstr(s1, s2);
+	if (r)
+		return (r - s1);
+	else
+		return (-1);
 }
 /*
  *  putback - push character back onto input
@@ -85,7 +84,7 @@ pbent c;
 	if (bp < endpbb)
 		*bp++ = c;
 	else
-		oops("too many characters pushed back");
+		errx(1, "too many characters pushed back");
 }
 
 /*
@@ -110,7 +109,7 @@ register char *s;
 		if (zp < endpbb)
 			*zp++ = *es--;
 	if ((bp = zp) == endpbb)
-		oops("too many characters pushed back");
+		errx(1, "too many characters pushed back");
 }
 
 /*
@@ -142,7 +141,7 @@ char c;
 	if (ep < endest)
 		*ep++ = c;
 	else
-		oops("string space overflow");
+		errx(1, "string space overflow");
 }
 
 /*
@@ -156,12 +155,12 @@ int n;
 	register FILE *dfil;
 
 	if (active == outfile[n])
-		oops("%s: diversion still active.", "undivert");
+		errx(1, "undivert: diversion still active");
 	(void) fclose(outfile[n]);
 	outfile[n] = NULL;
 	m4temp[UNIQUE] = n + '0';
 	if ((dfil = fopen(m4temp, "r")) == NULL)
-		oops("%s: cannot undivert.", m4temp);
+		err(1, "%s: cannot undivert", m4temp);
 	else
 		while ((c = getc(dfil)) != EOF)
 			putc(c, active);
@@ -172,14 +171,14 @@ int n;
 #else
 	if (unlink(m4temp) == -1)
 #endif
-		oops("%s: cannot unlink.", m4temp);
+		err(1, "%s: cannot unlink", m4temp);
 }
 
 void
 onintr(signo)
 	int signo;
 {
-	oops("interrupted.");
+	errx(1, "interrupted.");
 }
 
 /*
@@ -209,7 +208,7 @@ unsigned long n;
 	register char *p = malloc(n);
 
 	if (p == NULL)
-		oops("malloc: %s", strerror(errno));
+		err(1, "malloc");
 	return p;
 }
 
@@ -219,21 +218,8 @@ const char *s;
 {
 	register char *p = strdup(s);
 	if (p == NULL)
-		oops("strdup: %s", strerror(errno));
+		err(1, "strdup");
 	return p;
-}
-
-char *
-basename(s)
-register char *s;
-{
-	register char *p;
-	extern char *strrchr();
-
-	if ((p = strrchr(s, '/')) == NULL)
-		return s;
-
-	return ++p;
 }
 
 void
@@ -243,31 +229,3 @@ usage()
 	exit(1);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-oops(const char *fmt, ...)
-#else
-oops(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "%s: ", progname);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
-}
