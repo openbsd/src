@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.51 2003/08/07 01:16:11 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.52 2004/01/13 18:10:53 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -132,6 +132,9 @@ ssize_t  pwrite(int, const void *, size_t, off_t);
 int	 acct(const char *);
 char	*brk(const char *);
 int	 chroot(const char *);
+#if !defined(_XOPEN_SOURCE)
+int	 closefrom(int);
+#endif
 char	*crypt(const char *, const char *);
 int	 des_cipher(const char *, char *, int32_t, int);
 int	 des_setkey(const char *key);
