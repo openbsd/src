@@ -131,17 +131,3 @@ diff -r1.9 fdisk.c
 ---
 > 	if (getshort(&mboot.signature) != BOOT_MAGIC) {
 > 		warnx("invalid fdisk partition table found!\n");
-Index: src/sys/kern/vfs_cache.c
-# Probably a bug in the port, but this makes the system MANY TIMES
-# more stablility.
-===================================================================
-RCS file: /cvs/src/sys/kern/vfs_cache.c,v
-retrieving revision 1.2
-diff -r1.2 vfs_cache.c
-74a75,78
-> #ifdef __powerpc__
-> /* WRONG, hack for stability for now -- XXX */
-> int doingcache = 0;                   /* 1 => enable the cache */
-> #else
-75a80
-> #endif
