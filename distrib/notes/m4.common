@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.51 2004/02/27 17:49:14 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.52 2004/03/08 22:32:06 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -739,7 +739,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	<drive>:"
 
 	Note that, when installing, the boot floppy can be write-protected
-	(i.e  read-only).-:})dnl
+	(i.e. read-only).-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
