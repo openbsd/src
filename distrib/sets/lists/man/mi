@@ -495,7 +495,6 @@
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
 ./usr/share/man/cat1/pl2pm.0
-./usr/share/man/cat1/pmax
 ./usr/share/man/cat1/pod2html.0
 ./usr/share/man/cat1/pod2man.0
 ./usr/share/man/cat1/pod2text.0
@@ -676,7 +675,6 @@
 ./usr/share/man/cat3/mac68k
 ./usr/share/man/cat3/mvme68k
 ./usr/share/man/cat3/mvme88k
-./usr/share/man/cat3/pmax
 ./usr/share/man/cat3/powerpc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sun3
@@ -1106,16 +1104,6 @@
 ./usr/share/man/cat4/pckbd.0
 ./usr/share/man/cat4/pcmcia.0
 ./usr/share/man/cat4/pcscp.0
-./usr/share/man/cat4/pmax
-./usr/share/man/cat4/pmax/asc.0
-./usr/share/man/cat4/pmax/dz.0
-./usr/share/man/cat4/pmax/intro.0
-./usr/share/man/cat4/pmax/ioasic.0
-./usr/share/man/cat4/pmax/le.0
-./usr/share/man/cat4/pmax/lk201.0
-./usr/share/man/cat4/pmax/scc.0
-./usr/share/man/cat4/pmax/sii.0
-./usr/share/man/cat4/pmax/tc.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
@@ -1397,7 +1385,6 @@
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/phones.0
-./usr/share/man/cat5/pmax
 ./usr/share/man/cat5/powerpc
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
@@ -1699,7 +1686,6 @@
 ./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
-./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/powerpc
 ./usr/share/man/cat8/powerpc/MAKEDEV.0
@@ -1884,7 +1870,6 @@
 ./usr/share/man/cat9/mac68k
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
-./usr/share/man/cat9/pmax
 ./usr/share/man/cat9/powerpc
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sun3
@@ -1899,7 +1884,6 @@
 ./usr/share/man/man1/mac68k
 ./usr/share/man/man1/mvme68k
 ./usr/share/man/man1/mvme88k
-./usr/share/man/man1/pmax
 ./usr/share/man/man1/powerpc
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sun3
@@ -1917,7 +1901,6 @@
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/mvme88k
-./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sun3
@@ -1935,7 +1918,6 @@
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/mvme68k
 ./usr/share/man/man8/mvme88k
-./usr/share/man/man8/pmax
 ./usr/share/man/man8/powerpc
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sun3
@@ -1951,7 +1933,6 @@
 ./usr/share/man/ps1/mac68k
 ./usr/share/man/ps1/mvme68k
 ./usr/share/man/ps1/mvme88k
-./usr/share/man/ps1/pmax
 ./usr/share/man/ps1/powerpc
 ./usr/share/man/ps1/sparc
 ./usr/share/man/ps1/sun3
@@ -1968,7 +1949,6 @@
 ./usr/share/man/ps3/mac68k
 ./usr/share/man/ps3/mvme68k
 ./usr/share/man/ps3/mvme88k
-./usr/share/man/ps3/pmax
 ./usr/share/man/ps3/powerpc
 ./usr/share/man/ps3/sparc
 ./usr/share/man/ps3/sun3
@@ -1984,7 +1964,6 @@
 ./usr/share/man/ps4/mac68k
 ./usr/share/man/ps4/mvme68k
 ./usr/share/man/ps4/mvme88k
-./usr/share/man/ps4/pmax
 ./usr/share/man/ps4/powerpc
 ./usr/share/man/ps4/sparc
 ./usr/share/man/ps4/sun3
@@ -1999,7 +1978,6 @@
 ./usr/share/man/ps5/mac68k
 ./usr/share/man/ps5/mvme68k
 ./usr/share/man/ps5/mvme88k
-./usr/share/man/ps5/pmax
 ./usr/share/man/ps5/powerpc
 ./usr/share/man/ps5/sparc
 ./usr/share/man/ps5/sun3
@@ -2016,7 +1994,6 @@
 ./usr/share/man/ps8/mac68k
 ./usr/share/man/ps8/mvme68k
 ./usr/share/man/ps8/mvme88k
-./usr/share/man/ps8/pmax
 ./usr/share/man/ps8/powerpc
 ./usr/share/man/ps8/sparc
 ./usr/share/man/ps8/sun3
@@ -2031,7 +2008,6 @@
 ./usr/share/man/ps9/mac68k
 ./usr/share/man/ps9/mvme68k
 ./usr/share/man/ps9/mvme88k
-./usr/share/man/ps9/pmax
 ./usr/share/man/ps9/powerpc
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sun3

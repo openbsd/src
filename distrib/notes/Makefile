@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/03/28 21:11:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2001/06/25 00:29:45 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -23,7 +23,6 @@ allarchs:
 	    make MACHINE=i386 MACHINE_ARCH=i386; \
 	    make MACHINE=mac68k MACHINE_ARCH=m68k; \
 	    make MACHINE=mvme68k MACHINE_ARCH=m68k; \
-	    make MACHINE=pmax MACHINE_ARCH=mips; \
 	    make MACHINE=powerpc MACHINE_ARCH=powerpc; \
 	    make MACHINE=sparc MACHINE_ARCH=sparc; \
 	    make MACHINE=sun3 MACHINE_ARCH=m68k; \
