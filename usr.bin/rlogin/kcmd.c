@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcmd.c,v 1.4 1996/08/18 18:21:24 tholo Exp $	*/
+/*	$OpenBSD: kcmd.c,v 1.5 1996/10/16 06:17:56 millert Exp $	*/
 /*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$OpenBSD: kcmd.c,v 1.4 1996/08/18 18:21:24 tholo Exp $";
+static char rcsid[] = "$OpenBSD: kcmd.c,v 1.5 1996/10/16 06:17:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,10 @@ kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
 		herror(*ahost);
 		return (-1);
 	}
-	host_save = malloc(strlen(hp->h_name) + 1);
-	strcpy(host_save, hp->h_name);
+	if ((host_save = strdup(hp->h_name)) == NULL) {
+		warn("can't allocate memory");
+		return (-1);
+	}
 	*ahost = host_save;
 
 	/* If realm is null, look up from table */
