@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.88 2003/03/07 15:16:33 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.89 2003/03/10 07:22:04 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -113,12 +113,10 @@ Evaluation of
 .Ar anchor
 rules from the main ruleset is described in
 .Xr pf.conf 5 .
+For example, to show all filter rules inside anchor
+.Cm foo :
 .Bd -literal -offset indent
-Example:
-Show all filter rules inside anchor foo
-.Xo Ic # pfctl -a\ 
-.Ic foo -s rules
-.Xc
+# pfctl -a foo -s rules
 .Ed
 .It Fl A
 Load only the queue rules present in the rule file.
@@ -149,7 +147,7 @@ order.
 Flush the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
-.Bl -tag -width "F tables " -compact
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl F Ar nat
 Flush the NAT rules.
 .It Fl F Ar queue
@@ -177,17 +175,18 @@ from the first
 .Ar host
 to the second
 .Ar host .
+For example, to kill all of the state entries originating from
+.Cm host :
 .Bd -literal -offset indent
-Example:
-Kill all of the state entries originating from host
-.Xo Ic # pfctl -k\ 
-.Ic host
-.Xc
+# pfctl -k host
+.Ed
 .Pp
-Kill all of the state entries from host1 to host2
-.Xo Ic # pfctl -k host1\ 
-.Ic -k host2
-.Xc
+To kill all of the state entries from
+.Cm host1
+to
+.Cm host2 :
+.Bd -literal -offset indent
+# pfctl -k host1 -k host2
 .Ed
 .It Fl h
 Help.
@@ -210,7 +209,7 @@ Other rules and options are ignored.
 Show the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
-.Bl -tag -width "s timeouts " -compact
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
 .It Fl s Ar queue
@@ -263,7 +262,7 @@ Specify the
 .Ar command
 (may be abbreviated) to apply to the table.
 Commands include:
-.Bl -tag -width "T Replace " -compact
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl T Ar kill
 Kill a table.
 .It Fl T Ar flush
@@ -285,9 +284,12 @@ Clear all the statistics of a table.
 .It Fl T Ar load
 Load only the table definitions from
 .Xr pf.conf 5 .
-Used in conjunction with the
+This is used in conjunction with the
 .Fl f
-flag, like in: "pfctl -Tl -f pf.conf".
+flag, as in:
+.Bd -literal -offset indent
+# pfctl -Tl -f pf.conf
+.Ed
 .El
 .Pp
 For the
@@ -334,18 +336,10 @@ For example, the following commands define a wide open firewall which will keep
 track of packets going to or coming from the OpenBSD ftp server.
 The following commands configure the firewall and send 10 pings to the ftp
 server:
-.Pp
 .Bd -literal -offset indent
-.Xo Ic # printf \&"table\ 
-.Ic <test> { ftp.openbsd.org }\en \e
-.Xc
-.Xo Ic \  \  pass out\ 
-.Ic to <test> keep state\en"\ 
-.Ic \&| pfctl -f-
-.Xc
-.Xo Ic # ping -qc10\ 
-.Ic ftp.openbsd.org
-.Xc
+# printf \&"table <test> { ftp.openbsd.org }\en \e
+\  \  pass out to <test> keep state\en" \&| pfctl -f-
+# ping -qc10 ftp.openbsd.org
 .Ed
 .Pp
 We can now use the table
@@ -355,29 +349,14 @@ and bytes that are being passed or blocked by rules referencing the table.
 The time at which the current accounting started is also shown with the
 .Ar Cleared
 line.
-.Pp
 .Bd -literal -offset indent
-.Xo Ic # pfctl -t\ 
-.Ic  test -vTshow
-.Xc
-.Xo Ic \ \ \ 
-.Ic 129.128.5.191
-.Xc
-.Xo Ic \ \ \ \ Cleared: \ \ \ \ Thu\ 
-.Ic  Feb 13 18:55:18 2003
-.Xc
-.Xo Ic \ \ \ \ In/Block\ 
-.Ic : \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ In/Pass\ 
-.Ic : \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ Out/Block\ 
-.Ic : \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ Out/Pass\ 
-.Ic : \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Xc
+# pfctl -t test -vTshow
+\ \ \ 129.128.5.191
+\ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
+\ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+\ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+\ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+\ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
 .Ed
 .Pp
 Similarly, it is possible to view global information about the tables
@@ -389,44 +368,19 @@ command.
 This will display the number of addresses on each table,
 the number of rules which reference the table, and the global
 packet statistics for the whole table:
-.Pp
 .Bd -literal -offset indent
-.Xo Ic # pfctl\ 
-.Ic -vvsTables
-.Xc
-.Xo Ic --a\ 
-.Ic -r   test
-.Xc
-.Xo Ic \ \ \ \ Addresses\ 
-.Ic : \ \ 1
-.Xc
-.Xo Ic \ \ \ \ References\ 
-.Ic : \ 1
-.Xc
-.Xo Ic \ \ \ \ Cleared\ 
-.Ic : \ \ \ \ Thu Feb 13 18:55:18 2003
-.Xc
-.Xo Ic \ \ \ \ Evaluations\ 
-.Ic : [\ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ In\ 
-.Ic /Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ In\ 
-.Ic /Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ In\ 
-.Ic /XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ Out\ 
-.Ic /Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ Out\ 
-.Ic /Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-.Xc
-.Xo Ic \ \ \ \ Out\ 
-.Ic /XPass: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-.Xc
+# pfctl -vvsTables
+--a -r test
+\ \ \ \ Addresses: \ \ 1
+\ \ \ \ References: \ 1
+\ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
+\ \ \ \ Evaluations: [\ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
+\ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+\ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+\ \ \ \ In/XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+\ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+\ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+\ \ \ \ Out/XPass: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
 .Ed
 .Pp
 As we can see here, only one packet - the initial ping request - matched the
@@ -483,7 +437,7 @@ See previous section for its effect on table commands.
 Set the debug
 .Ar level
 (may be abbreviated) to one of the following:
-.Bl -tag -width "x urgent " -compact
+.Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl x Ar none
 Don't generate debug messages.
 .It Fl x Ar urgent
