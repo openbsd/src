@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.110 2004/01/14 19:34:05 grange Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.111 2004/01/21 19:03:44 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -195,6 +195,11 @@ main(framep)
 	curproc = p = &proc0;
 
 	/*
+	 * Initialize timeouts.
+	 */
+	timeout_startup();
+
+	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
 	 */
@@ -216,11 +221,6 @@ main(framep)
 
 	/* Initalize sockets. */
 	soinit();
-
-	/*
-	 * Initialize timeouts.
-	 */
-	timeout_startup();
 
 	/* Initialize sysctls (must be done before any processes run) */
 	sysctl_init();
