@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6.h,v 1.9 2001/12/06 03:28:49 itojun Exp $	*/
+/*	$OpenBSD: ip6.h,v 1.10 2003/05/14 17:46:23 itojun Exp $	*/
 /*	$KAME: ip6.h,v 1.14 2000/10/09 01:04:09 itojun Exp $	*/
 
 /*
@@ -207,41 +207,6 @@ struct ip6_frag {
 #define IPV6_MAXPACKET	65535	/* ip6 max packet size without Jumbo payload*/
 
 #ifdef _KERNEL
-/*
- * IP6_EXTHDR_CHECK ensures that region between the IP6 header and the
- * target header (including IPv6 itself, extension headers and
- * TCP/UDP/ICMP6 headers) are continuous. KAME requires drivers
- * to store incoming data into one internal mbuf or one or more external
- * mbufs(never into two or more internal mbufs). Thus, the third case is
- * supposed to never be matched but is prepared just in case.
- */
-
-#define IP6_EXTHDR_CHECK(m, off, hlen, ret)				\
-do {									\
-    if ((m)->m_next != NULL) {						\
-	if ((m)->m_flags & M_EXT) {					\
-		if ((m)->m_len < (off) + (hlen)) {			\
-			ip6stat.ip6s_exthdrtoolong++;			\
-			m_freem(m);					\
-			return ret;					\
-		}							\
-	} else {							\
-		if ((m)->m_len < (off) + (hlen)) {			\
-			ip6stat.ip6s_exthdrtoolong++;			\
-			m_freem(m);					\
-			return ret;					\
-		}							\
-	}								\
-    } else {								\
-	if ((m)->m_len < (off) + (hlen)) {				\
-		ip6stat.ip6s_tooshort++;				\
-		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);	\
-		m_freem(m);						\
-		return ret;						\
-	}								\
-    }									\
-} while (0)
-
 /*
  * IP6_EXTHDR_GET ensures that intermediate protocol header (from "off" to
  * "len") is located in single mbuf, on contiguous memory region.
