@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.9 1996/08/25 09:51:47 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.10 1996/08/31 09:15:12 pefo Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@ struct	emul {
 					/* Set registers before execution */
 	void	(*e_setregs) __P((struct proc *, struct exec_package *,
 				  u_long, register_t *));
+	int	(*e_fixup) __P((struct proc *, struct exec_package *));
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 };
