@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.413 2001/07/06 17:06:48 jason Exp 
+ *		OpenBSD: pcidevs,v 1.414 2001/07/07 11:22:00 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1421,6 +1421,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
 	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
+	    "PERC 3/Di",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
