@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.370 2003/05/01 16:16:08 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.371 2003/05/01 16:22:12 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -242,6 +242,7 @@ int	 findeol(void);
 int	 yylex(void);
 int	 atoul(char *, u_long *);
 int	 getservice(char *);
+int	 rule_label(struct pf_rule *, char *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -704,18 +705,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				r.log = $2.log;
 				r.quick = $2.quick;
 				r.af = $4;
-				if ($5.label) {
-					if (strlcpy(r.label, $5.label,
-					    sizeof(r.label)) >=
-					    sizeof(r.label)) {
-						yyerror("rule label too long "
-						    "(max %d chars)",
-						    sizeof(r.label)-1);
-						YYERROR;
-					}
-					free($5.label);
-				}
-
+				if (rule_label(&r, $5.label))
+					YYERROR;
 				j = calloc(1, sizeof(struct node_if));
 				if (j == NULL)
 					err(1, "antispoof: calloc");
@@ -739,18 +730,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					r.log = $2.log;
 					r.quick = $2.quick;
 					r.af = $4;
-					if ($5.label) {
-						if (strlcpy(r.label, $5.label,
-						    sizeof(r.label)) >=
-						    sizeof(r.label)) {
-							yyerror("rule label too"
-							    " long (max %d"
-							    " chars)",
-							    sizeof(r.label)-1);
-							YYERROR;
-						}
-						free($5.label);
-					}
+					if (rule_label(&r, $5.label))
+						YYERROR;
 					h = ifa_lookup(i->ifname,
 					    PFCTL_IFLOOKUP_HOST);
 					expand_rule(&r, NULL, NULL, NULL, h,
@@ -1234,6 +1215,8 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.af = $6;
 			r.flags = $9.flags.b1;
 			r.flagset = $9.flags.b2;
+			if (rule_label(&r, $9.label))
+				YYERROR;
 
 			if ($9.flags.b1 || $9.flags.b2) {
 				for (proto = $7; proto != NULL &&
@@ -1295,7 +1278,6 @@ pfrule		: action dir logquick interface route af proto fromto
 					memcpy(&r.rpool.key, $5.key,
 					    sizeof(struct pf_poolhashkey));
 			}
-
 			if (r.rt && r.rt != PF_FASTROUTE) {
 				decide_address_family($5.host, &r.af);
 				remove_invalid_hosts(&$5.host, &r.af);
@@ -1316,17 +1298,6 @@ pfrule		: action dir logquick interface route af proto fromto
 					}
 				}
 			}
-
-			if ($9.label) {
-				if (strlcpy(r.label, $9.label,
-				    sizeof(r.label)) >= sizeof(r.label)) {
-					yyerror("rule label too long (max "
-					    "%d chars)", sizeof(r.label)-1);
-					YYERROR;
-				}
-				free($9.label);
-			}
-
 			if ($9.queues.qname != NULL) {
 				if (strlcpy(r.qname, $9.queues.qname,
 				    sizeof(r.qname)) >= sizeof(r.qname)) {
@@ -4093,6 +4064,22 @@ getservice(char *n)
 		}
 		return (s->s_port);
 	}
+}
+
+int
+rule_label(struct pf_rule *r, char *s)
+{
+	if (s) {
+		if (strlcpy(r->label, s, sizeof(r->label)) >=
+		    sizeof(r->label)) {
+			yyerror("rule label too long (max %d chars)",
+			    sizeof(r->label)-1);
+			free(s);
+			return (-1);
+		}
+		free(s);
+	}
+	return (0);
 }
 
 u_int16_t
