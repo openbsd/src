@@ -1,5 +1,5 @@
-/*	$OpenBSD: traceroute6.c,v 1.19 2002/05/21 19:11:08 deraadt Exp $	*/
-/*	$KAME: traceroute6.c,v 1.39 2000/12/22 15:11:05 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.20 2002/05/26 13:15:18 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -341,19 +341,13 @@ char *hostname;
 int nprobes = 3;
 int first_hop = 1;
 int max_hops = 30;
-u_short ident;
+u_short srcport;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 int options;			/* socket options */
 int verbose;
 int waittime = 5;		/* time to wait for response (in seconds) */
 int nflag;			/* print addresses numerically */
 int lflag;			/* print both numerical address & hostname */
-
-#ifdef KAME_SCOPEID
-const int niflag = NI_WITHSCOPEID;
-#else
-const int niflag = 0;
-#endif
 
 int
 main(argc, argv)
@@ -775,8 +769,7 @@ main(argc, argv)
 			exit(1);
 		}
 		if (getnameinfo((struct sockaddr *)&Src, Src.sin6_len,
-		    src0, sizeof(src0), NULL, 0,
-		    NI_NUMERICHOST | niflag)) {
+		    src0, sizeof(src0), NULL, 0, NI_NUMERICHOST)) {
 			fprintf(stderr, "getnameinfo failed for source\n");
 			exit(1);
 		}
@@ -784,33 +777,28 @@ main(argc, argv)
 		close(dummy);
 	}
 
-#if 1
-	ident = (getpid() & 0xffff) | 0x8000;
-#else
-	ident = 0;	/* let the kernel pick one */
-#endif
-	Src.sin6_port = htons(ident);
+	Src.sin6_port = htons(0);
 	if (bind(sndsock, (struct sockaddr *)&Src, Src.sin6_len) < 0) {
 		perror("bind");
 		exit(1);
 	}
 
-	if (ident == 0) {
+	{
 		int len;
 
 		len = sizeof(Src);
-		if (getsockname(sndsock, (struct sockaddr *)&Src, &i) < 0) {
+		if (getsockname(sndsock, (struct sockaddr *)&Src, &len) < 0) {
 			perror("getsockname");
 			exit(1);
 		}
-		ident = ntohs(Src.sin6_port);
+		srcport = ntohs(Src.sin6_port);
 	}
 
 	/*
 	 * Message to users
 	 */
 	if (getnameinfo((struct sockaddr *)&Dst, Dst.sin6_len, hbuf,
-	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | niflag))
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "traceroute6");
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
@@ -912,7 +900,7 @@ wait_for_reply(sock, mhdr)
 	struct timeval wait;
 	int cc = 0, fdsn;
 
-	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	fdsn = howmany(sock + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
 		err(1, "malloc");
 	memset(fdsp, 0, fdsn);
@@ -1093,8 +1081,7 @@ packet_ok(mhdr, cc, seq)
 	if (cc < hlen + sizeof(struct icmp6_hdr)) {
 		if (verbose) {
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
-			    hbuf, sizeof(hbuf), NULL, 0,
-			    NI_NUMERICHOST | niflag) != 0)
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "invalid", sizeof(hbuf));
 			printf("packet too short (%d bytes) from %s\n", cc,
 			    hbuf);
@@ -1107,8 +1094,7 @@ packet_ok(mhdr, cc, seq)
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (verbose) {
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
-			    hbuf, sizeof(hbuf), NULL, 0,
-			    NI_NUMERICHOST | niflag) != 0)
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "invalid", sizeof(hbuf));
 			printf("data too short (%d bytes) from %s\n", cc, hbuf);
 		}
@@ -1156,8 +1142,8 @@ packet_ok(mhdr, cc, seq)
 				warnx("failed to get upper layer header");
 			return(0);
 		}
-		if (up->uh_sport == htons(ident) &&
-		    up->uh_dport == htons(port+seq))
+		if (up->uh_sport == htons(srcport) &&
+		    up->uh_dport == htons(port + seq))
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
 	}
 	if (verbose) {
@@ -1166,7 +1152,7 @@ packet_ok(mhdr, cc, seq)
 		char sbuf[NI_MAXHOST+1], dbuf[INET6_ADDRSTRLEN];
 
 		if (getnameinfo((struct sockaddr *)from, from->sin6_len,
-		    sbuf, sizeof(sbuf), NULL, 0, NI_NUMERICHOST | niflag) != 0)
+		    sbuf, sizeof(sbuf), NULL, 0, NI_NUMERICHOST) != 0)
 			strlcpy(sbuf, "invalid", sizeof(hbuf));
 		printf("\n%d bytes from %s to %s", cc, sbuf,
 		    rcvpktinfo ? inet_ntop(AF_INET6, &rcvpktinfo->ipi6_addr,
@@ -1244,7 +1230,7 @@ print(mhdr, cc)
 	char hbuf[NI_MAXHOST];
 
 	if (getnameinfo((struct sockaddr *)from, from->sin6_len,
-	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST | niflag) != 0)
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 		strlcpy(hbuf, "invalid", sizeof(hbuf));
 	if (nflag)
 		printf(" %s", hbuf);
@@ -1274,6 +1260,7 @@ void
 tvsub(out, in)
 	register struct timeval *out, *in;
 {
+
 	if ((out->tv_usec -= in->tv_usec) < 0)   {
 		out->tv_sec--;
 		out->tv_usec += 1000000;
@@ -1317,7 +1304,7 @@ inetname(sa)
 		return cp;
 
 	if (getnameinfo(sa, sa->sa_len, line, sizeof(line), NULL, 0,
-	    NI_NUMERICHOST | niflag) != 0)
+	    NI_NUMERICHOST) != 0)
 		strlcpy(line, "invalid", sizeof(line));
 	return line;
 }
@@ -1325,6 +1312,7 @@ inetname(sa)
 void
 usage()
 {
+
 	fprintf(stderr,
 "usage: traceroute6 [-dlnrv] [-f firsthop] [-g gateway] [-m hoplimit] [-p port]\n"
 "       [-q probes] [-s src] [-w waittime] target [datalen]\n");
