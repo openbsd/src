@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.45 2001/06/26 23:24:11 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.46 2001/07/01 22:05:50 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -275,8 +275,7 @@ which can be used in packet filters to specify those
 packets that have been or will be processed by
 .Tn IPsec.
 .Pp
-.Xr ipnat 8
-can also be applied to
+NAT can also be applied to
 .Nm enc#
 interfaces, but special care should be taken because of the interactions
 between NAT and the IPsec flow matching, especially on the packet output path.

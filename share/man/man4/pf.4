@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.2 2001/06/25 05:45:52 kjell Exp $
+.\"	$OpenBSD: pf.4,v 1.3 2001/07/01 22:05:51 angelos Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -43,9 +43,17 @@ interface is a packet filter pseudo-device for IPv4.
 is administered using the
 .Xr pfctl 8
 utility, or through an ioctl interface.
+.Sh FILES
+.Bl -tag -width /dev/pf -compact
+.It Pa /dev/pf
+packet filtering device.
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr pfctl 8
-.\"
+.Sh HISTORY
+The
+.Nm
+packet filtering mechanism first appeared in
+.Ox 3.0 .
 .Sh BUGS
-Probably Several
+Probably several.
