@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2002/02/04 18:13:05 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2002/02/06 19:29:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -377,6 +377,8 @@ pmap_alloc_pv(void)
 #endif
 	pvp->pvp_freelist = pv->pv_next;
 	pv->pv_next = NULL;
+	pv->pv_hash = NULL;
+	pv->pv_pmap = NULL;
 
 	return pv;
 }
@@ -453,8 +455,12 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 		DPRINTF(PDB_ENTER, ("pmap_enter_pv: adding to the list\n"));
 #ifdef PMAPDEBUG
 		for (npv = pv; npv; npv = npv->pv_next)
-			if (pmap == npv->pv_pmap && va == npv->pv_va)
-				panic("pmap_enter_pv: already in pv_tab");
+			if (pmap == npv->pv_pmap && va == npv->pv_va) {
+				printf("pmap_enter_pv: %p already in pv_tab",
+				    npv);
+				pmap_enter_va(npv); /* HACK UGLY HACK HACK */
+				return (npv);
+			}
 #endif
 		hpv = pv;
 		npv = pv->pv_next;
@@ -503,8 +509,8 @@ pmap_remove_pv(struct pv_entry *ppv, struct pv_entry *pv)
 		ppv = pv->pv_next;
 		pmap_remove_va(pv);
 		if (ppv) {
-			/*npv->pv_tlbprot |= pv->pv_tlbprot &
-			    (TLB_DIRTY | TLB_REF);*/
+			ppv->pv_tlbprot |= pv->pv_tlbprot &
+			    (TLB_DIRTY | TLB_REF);
 			*pv = *ppv;
 			pmap_free_pv(ppv);
 		} else
@@ -514,6 +520,8 @@ pmap_remove_pv(struct pv_entry *ppv, struct pv_entry *pv)
 			;
 
 		if (pv) {
+			pv->pv_tlbprot |= ppv->pv_tlbprot &
+			    (TLB_DIRTY | TLB_REF);
 			pv->pv_next = ppv->pv_next;
 			pmap_remove_va(ppv);
 			pmap_free_pv(ppv);
@@ -1098,15 +1106,16 @@ pmap_page_protect(pg, prot)
 				pv->pv_tlbprot &= ~TLB_AR_MASK;
 				pv->pv_tlbprot |= tlbprot;
 
-				pmap_clear_va(pv->pv_space, pv->pv_va);
-
 				/*
 				 * Purge the current TLB entry (if any)
 				 * to force a fault and reload with the
 				 * new protection.
 				 */
-				pdtlb(pv->pv_space, pv->pv_va);
+				ficache(pv->pv_space, pv->pv_va, NBPG);
 				pitlb(pv->pv_space, pv->pv_va);
+				fdcache(pv->pv_space, pv->pv_va, NBPG);
+				pdtlb(pv->pv_space, pv->pv_va);
+				pmap_clear_va(pv->pv_space, pv->pv_va);
 			}
 		}
 		splx(s);
@@ -1175,14 +1184,15 @@ pmap_protect(pmap, sva, eva, prot)
 			pv->pv_tlbprot &= ~TLB_AR_MASK;
 			pv->pv_tlbprot |= tlbprot;
 
-			pmap_clear_va(space, pv->pv_va);
-
 			/*
 			 * Purge the current TLB entry (if any) to force
 			 * a fault and reload with the new protection.
 			 */
-			pitlb(space, pv->pv_va);
-			pdtlb(space, pv->pv_va);
+			ficache(space, sva, NBPG);
+			pitlb(space, sva);
+			fdcache(space, sva, NBPG);
+			pdtlb(space, sva);
+			pmap_clear_va(space, sva);
 		}
 	}
 }
@@ -1503,10 +1513,8 @@ pmap_kenter_pa(va, pa, prot)
 		pv->pv_pmap = pmap_kernel();
 		pv->pv_space = HPPA_SID_KERNEL;
 		pv->pv_tlbpage = tlbbtop(pa);
-		pv->pv_tlbprot = HPPA_PID_KERNEL |
+		pv->pv_tlbprot = HPPA_PID_KERNEL | TLB_WIRED | 
 		    pmap_prot(pmap_kernel(), prot) |
-		    TLB_WIRED | /* TLB_REF | TLB_DIRTY | */
-		    TLB_UNCACHEABLE |
 		    ((pa & HPPA_IOSPACE) == HPPA_IOSPACE? TLB_UNCACHEABLE : 0);
 		pmap_enter_va(pv);
 	}
