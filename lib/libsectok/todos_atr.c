@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan CITI
  */
-static char *rcsid = "$Id: todos_atr.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
+static char *rcsid = "$Id: todos_atr.c,v 1.3 2001/06/07 20:19:43 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -128,7 +128,7 @@ static struct bps {
 };
 
 
-#define SCGETC if (todos_scgetc(ttyn, ap, (len ? BYTETIME : ATRTIME)) != SCEOK) goto timedout; else len++
+#define SCGETC if (scgetc(ttyn, ap, (len ? BYTETIME : ATRTIME)) != SCEOK) goto timedout; else len++
 
 int
 todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
@@ -266,9 +266,9 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 		    pps[3] ^= pps[j];
 
 		for (j = 0; j < 4; j++)
-		    todos_scputc(ttyn, pps[j]);
+		    scputc(ttyn, pps[j]);
 		for (j = 0; j < 4; j++)
-		    if (todos_scgetc(ttyn, &c, 100) != SCEOK || c != pps[j])
+		    if (scgetc(ttyn, &c, 100) != SCEOK || c != pps[j])
 			break;
 		if (j != 4)
 		    continue;

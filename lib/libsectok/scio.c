@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan, October 1997
  */
-static char *rcsid = "$Id: scio.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
+static char *rcsid = "$Id: scio.c,v 1.3 2001/06/07 20:19:43 rees Exp $";
 
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -101,7 +101,7 @@ todos_scopen(int ttyn, int flags, int *ep)
 #endif
     if (i & TIOCM_RI) {
 	/* Todos reader */
-	todos_scsleep(20);
+	scsleep(20);
 	sc[ttyn].flags |= (SCOXCTS | SCOXDTR);
     }
 
@@ -245,7 +245,7 @@ todos_scfdopen(int ttyn, int fd, int flags, int *ep)
 
     /* The open may or may not have reset the card.  Wait a while then flush
        anything that came in on the port. */
-    todos_scsleep(250);
+    scsleep(250);
     todos_scdrain(ttyn);
 
     return ttyn;
@@ -335,7 +335,7 @@ todos_scclose(int ttyn)
  */
 
 int
-todos_scgetc(int ttyn, unsigned char *cp, int ms)
+scgetc(int ttyn, unsigned char *cp, int ms)
 {
     int fd = sc[ttyn].fd;
     fd_set fdset;
@@ -371,7 +371,7 @@ todos_scgetc(int ttyn, unsigned char *cp, int ms)
 /* write one byte to the card */
 
 int
-todos_scputc(int ttyn, int ic)
+scputc(int ttyn, int ic)
 {
     int fd = sc[ttyn].fd;
     unsigned char c0, c1;
@@ -385,7 +385,7 @@ todos_scputc(int ttyn, int ic)
     write(fd, &c0, 1);
 
     /* gobble up the echo */
-    code = todos_scgetc(ttyn, &c1, 200);
+    code = scgetc(ttyn, &c1, 200);
 #ifdef GOBBLEDEBUG
     if (sc[ttyn].flags & SCOINVRT)
 	c1 = todos_scinvert[c1];
@@ -399,20 +399,21 @@ todos_scputc(int ttyn, int ic)
     return code;
 }
 
-int todos_scputblk(int ttyn, unsigned char *bp, int n)
+int
+scputblk(int ttyn, unsigned char *bp, int n)
 {
     int fd = sc[ttyn].fd;
     unsigned char c;
 
     write(fd, bp, n);
     while (n--)
-	todos_scgetc(ttyn, &c, 30);
+	scgetc(ttyn, &c, 30);
 
     return SCEOK;
 }
 
 void
-todos_scsleep(int ms)
+scsleep(int ms)
 {
     struct timeval tv;
 

@@ -1,11 +1,9 @@
 /*
  * T=1 protocol engine
  *
- * See copyright notice at end of file
- *
  * Jim Rees, University of Michigan, October 1997
  */
-static char *rcsid = "$Id: scT1.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
+static char *rcsid = "$Id: scT1.c,v 1.2 2001/06/07 20:19:43 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -22,10 +20,15 @@ static char *rcsid = "$Id: scT1.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
 #endif
 
 #include "sectok.h"
-#include "todos_scrw.h"
+
+#ifdef __palmos__
+#undef printf
+#undef sprintf
+#define printf palmprintf
+#endif
 
 int
-todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p)
+scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p)
 {
     int i, len, n;
     unsigned char *bp, *obp, tbuf[256];
@@ -57,7 +60,7 @@ todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char
 
     obp = obuf ? obuf : tbuf;
 
-    n = todos_scioT1Iblk(ttyn, len, tbuf, obp);
+    n = scioT1Iblk(ttyn, len, tbuf, obp);
 
     if (n >= 2) {
 	*sw1p = obp[n-2];
@@ -68,7 +71,7 @@ todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char
 }
 
 int
-todos_scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf)
+scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf)
 {
     int n;
     unsigned char tbuf[256];
@@ -79,7 +82,7 @@ todos_scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf)
     ssn ^= 0x40;
     tbuf[2] = ilen;
     memcpy(&tbuf[3], ibuf, ilen);
-    n = todos_scioT1pkt(ttyn, tbuf, tbuf);
+    n = scioT1pkt(ttyn, tbuf, tbuf);
     if (n < 0)
 	return n;
     memcpy(obuf, &tbuf[3], tbuf[2]);
@@ -87,7 +90,7 @@ todos_scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf)
 }
 
 int
-todos_scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf)
+scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf)
 {
     int i, len;
     unsigned char edc, *bp;
@@ -102,11 +105,11 @@ todos_scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf)
 
     /* Wait BGT = 22 etu */
 
-    todos_scsleep(scparam[ttyn].etu * 22 / 1000 + 1);
+    scsleep(scparam[ttyn].etu * 22 / 1000 + 1);
 
     /* Send the packet */
 
-    todos_scputblk(ttyn, ibuf, len);
+    scputblk(ttyn, ibuf, len);
 
     /* Read return packet */
 
@@ -114,7 +117,7 @@ todos_scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf)
 
     /* Read three byte header */
     for (i = 0; i < 3; i++) {
-	if (todos_scgetc(ttyn, bp++, (i == 0) ? scparam[ttyn].bwt : scparam[ttyn].cwt) != SCEOK) {
+	if (scgetc(ttyn, bp++, (i == 0) ? scparam[ttyn].bwt : scparam[ttyn].cwt) != SCEOK) {
 #ifdef DEBUG
 	    printf("T=1 header read timeout\n");
 #endif
@@ -125,7 +128,7 @@ todos_scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf)
 
     /* Read data and edc */
     for (i = 0; i < len + 1; i++) {
-	if (todos_scgetc(ttyn, bp++, scparam[ttyn].cwt) != SCEOK) {
+	if (scgetc(ttyn, bp++, scparam[ttyn].cwt) != SCEOK) {
 #ifdef DEBUG
 	    printf("T=1 data read timeout\n");
 #endif

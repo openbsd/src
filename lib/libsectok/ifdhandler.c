@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan CITI, August 2000
  */
-static char *rcsid = "$Id: ifdhandler.c,v 1.2 2001/06/07 16:09:59 rees Exp $";
+static char *rcsid = "$Id: ifdhandler.c,v 1.3 2001/06/07 20:19:42 rees Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>

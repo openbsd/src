@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan, October 1997
  */
-static char *rcsid = "$Id: scrw.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
+static char *rcsid = "$Id: scrw.c,v 1.3 2001/06/07 20:19:43 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -19,19 +19,11 @@ static char *rcsid = "$Id: scrw.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
 #include <stdio.h>
 #include <string.h>
 #endif
-#ifdef SCPERF 
+#ifdef SCPERF
 #define SCPERF_FIRST_APPEARANCE
 #endif /* SCPERF */
 #include "sectok.h"
 #include "todos_scrw.h"
-
-/* Global interface bytes */
-#define TA1 (tpb[0][0])
-#define TB1 (tpb[0][1])
-#define TC1 (tpb[0][2])
-#define TD1 (tpb[0][3])
-#define TC2 (tpb[1][2])
-#define TA2 (tpb[1][0])
 
 /* external variable */
 #ifdef BYTECOUNT
@@ -39,10 +31,6 @@ extern int num_getc, num_putc;
 #endif /* BYTECOUNT */
 
 struct scparam scparam[4];
-
-#ifndef NO_T_EQ_1
-int todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
-#endif
 
 /* reset the card, and return answer to reset (atr) */
 
@@ -77,7 +65,7 @@ todos_scxreset(int ttyn, int flags, unsigned char *atr, int *ep)
     }
 
     /* 7816-3 sec 5.2 says >= 40000 clock cycles, ~=12 msec */
-    todos_scsleep(20);
+    scsleep(20);
 
     todos_scdtr(ttyn, !(flags & SCRTODOS));
 
@@ -97,9 +85,9 @@ todos_scioproc(int ttyn, int io, unsigned char *cp)
 
     /* Wait extra guard time if needed */
     if (!io && scparam[ttyn].n)
-	todos_scsleep(((scparam[ttyn].n * scparam[ttyn].etu) + 999) / 1000);
+	scsleep(((scparam[ttyn].n * scparam[ttyn].etu) + 999) / 1000);
 
-    code = (!io ? todos_scputc(ttyn, *cp) : todos_scgetc(ttyn, cp, scparam[ttyn].cwt));
+    code = (!io ? scputc(ttyn, *cp) : scgetc(ttyn, cp, scparam[ttyn].cwt));
 
     return code;
 }
@@ -111,7 +99,7 @@ static int
 todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, int *sw1p, int *sw2p)
 {
     int n = 0, ack, ackxins;
-    unsigned char *bp = buf, c;
+    unsigned char *bp = buf, c, apdu[5];
 #ifdef BYTECOUNT
     int tmp_num_getc, tmp_num_putc;
 #endif /* BYTECOUNT */
@@ -128,12 +116,13 @@ todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigne
 #ifdef DEBUG
     printf("scioT0 %3s %02x %02x %02x %02x %02x\n", io ? "out" : "in", cla, ins, p1, p2, p3);
 #endif
-  
-    c = cla; todos_scioproc(ttyn, 0, &c);
-    c = ins; todos_scioproc(ttyn, 0, &c);
-    c = p1;  todos_scioproc(ttyn, 0, &c);
-    c = p2;  todos_scioproc(ttyn, 0, &c);
-    c = p3;  todos_scioproc(ttyn, 0, &c);
+
+    apdu[0] = cla;
+    apdu[1] = ins;
+    apdu[2] = p1;
+    apdu[3] = p2;
+    apdu[4] = p3;
+    scputblk(ttyn, apdu, 5);
 
 #ifdef SCPERF
     SetTime("Finish sending APDU");
@@ -141,7 +130,7 @@ todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigne
 
     while (1) {
 	/* read ack byte; see 7816-3 8.2.2 */
-	if (todos_scgetc(ttyn, &c, scparam[ttyn].cwt) != SCEOK) {
+	if (scgetc(ttyn, &c, scparam[ttyn].cwt) != SCEOK) {
 #ifdef DEBUG
 	    printf("%d ms timeout reading ack\n", scparam[ttyn].cwt);
 #endif
@@ -160,7 +149,7 @@ todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigne
 	if ((ack & 0xf0) == 0x60 || (ack & 0xf0) == 0x90) {
 	    /* SW1; get SW2 and return */
 	    *sw1p = ack;
-	    if (todos_scgetc(ttyn, &c, scparam[ttyn].cwt) != SCEOK) {
+	    if (scgetc(ttyn, &c, scparam[ttyn].cwt) != SCEOK) {
 #ifdef DEBUG
 		printf("%d ms timeout reading sw2\n", scparam[ttyn].cwt);
 #endif
@@ -215,7 +204,7 @@ todos_scioT0(int ttyn, int io, int cla, int ins, int p1, int p2, int p3, unsigne
 #ifdef BYTECOUNT
     tmp_num_putc = num_putc - tmp_num_putc;
     tmp_num_getc = num_getc - tmp_num_getc - tmp_num_putc;
-    MESSAGE3("#getc=%d, #putc=%d\n", tmp_num_getc, tmp_num_putc); 
+    MESSAGE3("#getc=%d, #putc=%d\n", tmp_num_getc, tmp_num_putc);
 #endif /* BYTECOUNT */
 
     return n;
@@ -240,7 +229,7 @@ todos_scrw(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *
 	}
 #ifndef NO_T_EQ_1
     } else if (scparam[ttyn].t == 1) {
-	r = todos_scioT1(ttyn, cla, ins, p1, p2, ilen, ibuf, olen, obuf, sw1p, sw2p);
+	r = scioT1(ttyn, cla, ins, p1, p2, ilen, ibuf, olen, obuf, sw1p, sw2p);
 #endif
     } else
 	r = -1;
@@ -253,27 +242,27 @@ copyright 1997, 1999, 2000
 the regents of the university of michigan
 all rights reserved
 
-permission is granted to use, copy, create derivative works 
-and redistribute this software and such derivative works 
-for any purpose, so long as the name of the university of 
-michigan is not used in any advertising or publicity 
-pertaining to the use or distribution of this software 
-without specific, written prior authorization.  if the 
-above copyright notice or any other identification of the 
-university of michigan is included in any copy of any 
-portion of this software, then the disclaimer below must 
+permission is granted to use, copy, create derivative works
+and redistribute this software and such derivative works
+for any purpose, so long as the name of the university of
+michigan is not used in any advertising or publicity
+pertaining to the use or distribution of this software
+without specific, written prior authorization.  if the
+above copyright notice or any other identification of the
+university of michigan is included in any copy of any
+portion of this software, then the disclaimer below must
 also be included.
 
-this software is provided as is, without representation 
-from the university of michigan as to its fitness for any 
-purpose, and without warranty by the university of 
-michigan of any kind, either express or implied, including 
-without limitation the implied warranties of 
-merchantability and fitness for a particular purpose. the 
-regents of the university of michigan shall not be liable 
-for any damages, including special, indirect, incidental, or 
-consequential damages, with respect to any claim arising 
-out of or in connection with the use of the software, even 
-if it has been or is hereafter advised of the possibility of 
+this software is provided as is, without representation
+from the university of michigan as to its fitness for any
+purpose, and without warranty by the university of
+michigan of any kind, either express or implied, including
+without limitation the implied warranties of
+merchantability and fitness for a particular purpose. the
+regents of the university of michigan shall not be liable
+for any damages, including special, indirect, incidental, or
+consequential damages, with respect to any claim arising
+out of or in connection with the use of the software, even
+if it has been or is hereafter advised of the possibility of
 such damages.
 */

@@ -1,12 +1,20 @@
 /*
  * See copyright notice at end of file
  *
- * $Id: todos_scrw.h,v 1.2 2001/06/07 16:10:01 rees Exp $
+ * $Id: todos_scrw.h,v 1.3 2001/06/07 20:19:43 rees Exp $
  */
 
 extern unsigned char todos_scinvert[];
 
 /* forward declarations */
+
+int scgetc(int ttyn, unsigned char *cp, int ms);
+int scputc(int ttyn, int ic);
+int scputblk(int ttyn, unsigned char *bp, int n);
+void scsleep(int ms);
+int scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
+int scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf);
+int scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf);
 
 int todos_scopen(int ttyn, int flags, int *ep);
 int todos_scsetflags(int ttyn, int flags, int mask);
@@ -17,14 +25,7 @@ int todos_scdsr(int ttyn);
 int todos_scclose(int ttyn);
 int todos_scxreset(int ttyn, int flags, unsigned char *atr, int *ep);
 int todos_scdtr(int ttyn, int cmd);
-int todos_scgetc(int ttyn, unsigned char *cp, int ms);
-int todos_scputc(int ttyn, int ic);
-int todos_scputblk(int ttyn, unsigned char *bp, int n);
-void todos_scsleep(int ms);
 void todos_scdrain(int ttyn);
-int todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned char *ibuf, int olen, unsigned char *obuf, int *sw1p, int *sw2p);
-int todos_scioT1Iblk(int ttyn, int ilen, unsigned char *ibuf, unsigned char *obuf);
-int todos_scioT1pkt(int ttyn, unsigned char *ibuf, unsigned char *obuf);
 int todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param);
 
 /*
