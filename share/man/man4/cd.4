@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.10 2002/09/26 07:55:39 miod Exp $
+.\"	$OpenBSD: cd.4,v 1.11 2003/09/05 22:44:34 jmc Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -31,15 +31,17 @@
 .Os
 .Sh NAME
 .Nm cd
-.Nd SCSI CD-ROM driver
+.Nd ATAPI and SCSI CD-ROM driver
 .Sh SYNOPSIS
 .Cd "cd* at scsibus? target ? lun ?"
 .Cd "#cd0 at scsibus0 target 6 lun 0" Pq fixed-configuration example
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for a SCSI CD-ROM (Compact Disc-Read Only Memory)
-drive.
+driver provides support for ATAPI and SCSI CD-ROM
+.Pq Compact Disc Read-Only Memory
+drives, via
+.Xr scsibus 4 .
 In an attempt to look like a regular disk, the
 .Nm
 driver synthesizes a partition table, with one partition covering the entire
@@ -73,7 +75,7 @@ configuration as all resources are dynamically allocated.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
-calls which apply to SCSI CD-ROM drives are defined in the header files
+calls which apply to CD-ROM drives are defined in the header files
 .Aq Pa sys/cdio.h
 and
 .Aq Pa sys/disklabel.h .

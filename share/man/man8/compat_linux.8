@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.32 2003/09/02 11:23:14 jmc Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.33 2003/09/05 22:44:34 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -380,7 +380,7 @@ Only the DSP device is emulated, the following link should be created:
 .Ss Other links Linux binaries may require
 CD-ROM support requires a link to the cdrom device, similar to:
 .Pp
-.D1 /emul/linux/dev/cdrom -> /dev/cd0a   (first SCSI CD-ROM)
+.D1 /emul/linux/dev/cdrom -> /dev/cd0a   (first CD-ROM)
 .Ss File systems
 Many Linux binaries expect
 .Pa /proc
