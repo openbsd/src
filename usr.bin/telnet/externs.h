@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.4 1998/03/12 17:31:32 deraadt Exp $	*/
+/*	$OpenBSD: externs.h,v 1.5 2001/01/22 11:03:38 fgsch Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -447,7 +447,7 @@ extern char
     *Ibackp,           /* Oldest byte of 3270 data */
     Ibuf[],            /* 3270 buffer */
     *Ifrontp,          /* Where next 3270 byte goes */
-    tline[],
+    tline[200],
     *transcom;         /* Transparent command */
 
 extern int
