@@ -39,7 +39,8 @@
 #include <arpa/inet.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipmon.c	1.20 3/24/96 (C)1993-1996 Darren Reed";
+static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.4 1996/07/18 04:58:47 dm Exp $";
 #endif
 
 #include "ip_fil.h"
@@ -137,7 +138,7 @@ int	opts;
 	struct	tm	*tm;
 	char	c[3], pname[8], *t, *proto;
 	u_short	hl, p;
-	int	i, lvl, res;
+	int	i, lvl, res, len;
 
 	res = (opts & 2) ? 1 : 0;
 	t = line;
@@ -150,15 +151,20 @@ int	opts;
 			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
 		t += strlen(t);
 	}
-#if !defined (__OpenBSD__) && !defined (__NetBSD__)
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %c%c%ld @%hd ",
-		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
-		lp->ifname[0], lp->ifname[1], lp->unit, lp->rule);
-#else /* OpenBSD or NetBSD */
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
 	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %s @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
 		lp->ifname, lp->rule);
-#endif /* OpenBSD or NetBSD */
+#else
+	for (len = 0; len < 3; len++)
+		if (!lp->ifname[len])
+			break;
+	if (lp->ifname[len])
+		len++;
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %*.*s%ld @%hd ",
+		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
+		len, len, lp->ifname, lp->unit, lp->rule);
+#endif
 	pr = getprotobynumber((int)p);
 	if (!pr) {
 		proto = pname;
@@ -342,5 +348,7 @@ char *argv[];
 			(iplci.hlen + iplci.plen));
 		printpacket(log, buf, &iplci, opts);
 	}
-	return 0;
+	/* NOTREACHED */
+	exit(0);
+	/* NOTREACHED */
 }

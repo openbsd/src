@@ -17,9 +17,13 @@
  *     easy solution)
  *  2) There needs to be a way to flush the NATs table completely. Either
  *     an ioctl, or an easy way of doing it from ipnat.c.
+ *
+ * Missing from RFC 1631: ICMP header checksum recalculations.
+ *
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_nat.c	1.9 4/10/96 (C) 1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.4 1996/07/18 05:01:05 dm Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -60,6 +64,7 @@ static	char	sccsid[] = "@(#)ip_nat.c	1.9 4/10/96 (C) 1995 Darren Reed";
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
 #include "ip_fil.h"
+#include "ip_fil_compat.h"
 #include "ip_nat.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
@@ -103,19 +108,21 @@ extern	kmutex_t	ipf_nat;
 /*
  * Handle ioctls which manipulate the NAT.
  */
-int nat_ioctl(data, cmd)
+int nat_ioctl(data, cmd, mode)
 caddr_t data;
-int cmd;
+int cmd, mode;
 {
 	register ipnat_t *nat, *n, **np;
-	int error = 0;
+	ipnat_t natd;
+	int error = 0, ret;
 
 	/*
 	 * For add/delete, look to see if the NAT entry is already present
 	 */
 	MUTEX_ENTER(&ipf_nat);
 	if ((cmd == SIOCADNAT) || (cmd == SIOCRMNAT)) {
-		nat = (ipnat_t *)data;
+		IRCOPY(data, &natd, sizeof(natd));
+		nat = &natd;
 		for (np = &nat_list; (n = *np); np = &n->in_next)
 			if (!bcmp((char *)&nat->in_port, (char *)&n->in_port,
 					IPN_CMPSIZ))
@@ -125,6 +132,10 @@ int cmd;
 	switch (cmd)
 	{
 	case SIOCADNAT :
+		if (!(mode & FWRITE)) {
+			error = EPERM;
+			break;
+		}
 		if (n) {
 			error = EEXIST;
 			break;
@@ -148,6 +159,10 @@ int cmd;
 		*np = n;
 		break;
 	case SIOCRMNAT :
+		if (!(mode & FWRITE)) {
+			error = EPERM;
+			break;
+		}
 		if (!n) {
 			error = ESRCH;
 			break;
@@ -165,11 +180,7 @@ int cmd;
 	    {
 		natlookup_t nl;
 		nat_t	*na;
-#if !SOLARIS && defined(_KERNEL)
-		int	s;
-#endif
 
-		SPLNET(s);
 		IRCOPY((char *)data, (char *)&nl, sizeof(nl));
 		if ((na = nat_lookupredir(&nl))) {
 			nl.nl_inip = na->nat_outip;
@@ -177,9 +188,24 @@ int cmd;
 			IWCOPY((char *)&nl, (char *)data, sizeof(nl));
 		} else
 			error = ESRCH;
-		SPLX(s);
 		break;
 	    }
+	case SIOCFLNAT :
+		if (!(mode & FWRITE)) {
+			error = EPERM;
+			break;
+		}
+		ret = flush_nattable();
+		IWCOPY((caddr_t)&ret, data, sizeof(ret));
+		break;
+	case SIOCCNATL :
+		if (!(mode & FWRITE)) {
+			error = EPERM;
+			break;
+		}
+		ret = clear_natlist();
+		IWCOPY((caddr_t)&ret, data, sizeof(ret));
+		break;
 	}
 	MUTEX_EXIT(&ipf_nat);
 	return error;
@@ -187,9 +213,49 @@ int cmd;
 
 
 /*
+ * flush_nattable - clear the NAT table of all mapping entries.
+ */
+int flush_nattable()
+{
+	nat_t *nat, **natp;
+	int i, j = 0;
+
+	for (natp = &nat_table[0][0], i = NAT_SIZE - 1; i >= 0; i--, natp++)
+		while ((nat = *natp)) {
+			*natp = nat->nat_next;
+			KFREE((caddr_t)nat);
+			j++;
+		}
+
+	for (natp = &nat_table[1][0], i = NAT_SIZE - 1; i >= 0; i--, natp++)
+		while ((nat = *natp)) {
+			*natp = nat->nat_next;
+			KFREE((caddr_t)nat);
+			j++;
+		}
+	return j;
+}
+
+
+/*
+ * clear_natlist - delete all entries in the active NAT mapping list.
+ */
+int clear_natlist()
+{
+	register ipnat_t *n, **np;
+	int i = 0;
+
+	for (np = &nat_list; (n = *np); i++) {
+		*np = n->in_next;
+		KFREE(n);
+	}
+	return i;
+}
+
+
+/*
  * Create a new NAT table entry.
  */
-
 nat_t *nat_new(np, ip, hlen, flags, direction)
 ipnat_t *np;
 ip_t *ip;
@@ -212,7 +278,6 @@ int direction;
 	/* Give me a new nat */
 	if (!(nat = (nat_t *)KMALLOC(sizeof(*nat))))
 		return NULL;
-
 
 	/*
 	 * Search the current table for a match.

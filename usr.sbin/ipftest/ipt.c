@@ -39,7 +39,8 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipt.c	1.17 3/9/96 (C) 1993-1996 Darren Reed";
+static	char	sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
+static	char	rcsid[] = "$Id: ipt.c,v 1.5 1996/07/18 04:59:25 dm Exp $";
 #endif
 
 extern	int	fr_check();
@@ -49,8 +50,6 @@ extern	struct	ipread	snoop, etherf, tcpd, pcap, iptext, iphex;
 extern	void	debug(), verbose();
 
 struct frentry	*ft_in  = NULL, *ft_out = NULL;
-struct	ipread 	*readers[] = { &iptext, &etherf, &tcpd, &snoop, &pcap, &iphex,
-				NULL };
 
 int	opts = 0;
 
@@ -58,7 +57,7 @@ int main(argc,argv)
 int argc;
 char *argv[];
 {
-	struct	ipread	**r = readers;
+	struct	ipread	*r = &iptext;
 	struct	frentry	*f;
 	struct	ip	*ip;
 	u_long	buf[64];
@@ -66,7 +65,7 @@ char *argv[];
 	char	*rules = NULL, *datain = NULL, *iface = NULL;
 	int	fd, i, dir = 0;
 
-	while ((c = getopt(argc, argv, "bdEHi:I:Pr:STv")) != -1)
+	while ((c = getopt(argc, argv, "bdEHi:I:Pr:STvX")) != -1)
 		switch (c)
 		{
 		case 'b' :
@@ -88,29 +87,22 @@ char *argv[];
 			opts |= OPT_VERBOSE;
 			break;
 		case 'E' :
-			for (i = 0, r = readers; *r; i++, r++)
-				if (*r == &etherf)
-					break;
+			r = &etherf;
 			break;
 		case 'H' :
-			for (i = 0, r = readers; *r; i++, r++)
-				if (*r == &iphex)
-					break;
+			r = &iphex;
 			break;
 		case 'P' :
-			for (i = 0, r = readers; *r; i++, r++)
-				if (*r == &pcap)
-					break;
+			r = &pcap;
 			break;
 		case 'S' :
-			for (i = 0, r = readers; *r; i++, r++)
-				if (*r == &snoop)
-					break;
+			r = &snoop;
 			break;
 		case 'T' :
-			for (i = 0, r = readers; *r; i++, r++)
-				if (*r == &tcpd)
-					break;
+			r = &tcpd;
+			break;
+		case 'X' :
+			r = &iptext;
 			break;
 		}
 
@@ -119,7 +111,7 @@ char *argv[];
 		exit(-1);
 	}
 
-	initparse ();
+	initparse();
 
 	if (rules) {
 		struct	frentry *fr;
@@ -171,15 +163,15 @@ char *argv[];
 	}
 
 	if (datain)
-		fd = (*(*r)->r_open)(datain);
+		fd = (*r->r_open)(datain);
 	else
-		fd = (*(*r)->r_open)("-");
+		fd = (*r->r_open)("-");
 
 	if (fd < 0)
 		exit(-1);
 
 	ip = (struct ip *)buf;
-	while ((i = (*(*r)->r_readip)(buf, sizeof(buf), &iface, &dir)) > 0) {
+	while ((i = (*r->r_readip)(buf, sizeof(buf), &iface, &dir)) > 0) {
 		ip->ip_off = ntohs(ip->ip_off);
 		ip->ip_len = ntohs(ip->ip_len);
 		switch (fr_check(ip, ip->ip_hl << 2, iface, dir))
@@ -202,6 +194,6 @@ char *argv[];
 		putchar('\n');
 		dir = 0;
 	}
-	(*(*r)->r_close)();
+	(*r->r_close)();
 	return 0;
 }

@@ -6,7 +6,8 @@
  * to the original author and the contributors.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_state.c	1.6 3/24/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
+static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1996/07/18 05:01:08 dm Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -48,6 +49,7 @@ static	char	sccsid[] = "@(#)ip_state.c	1.6 3/24/96 (C) 1993-1995 Darren Reed";
 #include <syslog.h>
 #endif
 #include "ip_fil.h"
+#include "ip_fil_compat.h"
 #include "ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
@@ -82,9 +84,9 @@ ips_stat_t *fr_statetstats()
 /*
  * Create a new ipstate structure and hang it off the hash table.
  */
-int fr_addstate(ip, hlen, pass)
+int fr_addstate(ip, fin, pass)
 ip_t *ip;
-int hlen;
+fr_info_t *fin;
 u_int pass;
 {
 	ipstate_t ips;
@@ -106,7 +108,7 @@ u_int pass;
 	{
 	case IPPROTO_ICMP :
 	    {
-		struct icmp *ic = (struct icmp *)((char *)ip + hlen);
+		struct icmp *ic = (struct icmp *)fin->fin_dp;
 
 		switch (ic->icmp_type)
 		{
@@ -129,7 +131,7 @@ u_int pass;
 	    }
 	case IPPROTO_TCP :
 	    {
-		register tcphdr_t *tcp = (tcphdr_t *)((char *)ip + hlen);
+		register tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
 		/*
 		 * The endian of the ports doesn't matter, but the ack and
@@ -154,7 +156,7 @@ u_int pass;
 	    }
 	case IPPROTO_UDP :
 	    {
-		register tcphdr_t *tcp = (tcphdr_t *)((char *)ip + hlen);
+		register tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 
 		hv += (is->is_dport = tcp->th_dport);
 		hv += (is->is_sport = tcp->th_sport);
@@ -175,7 +177,9 @@ u_int pass;
 	MUTEX_ENTER(&ipf_state);
 	is->is_next = ips_table[hv];
 	ips_table[hv] = is;
-	is->is_pass = pass & ~(FR_LOGFIRST|FR_LOG);
+	is->is_pass = pass;
+	if (pass & FR_LOGFIRST)
+		is->is_pass &= ~(FR_LOGFIRST|FR_LOG);
 	ips_num++;
 	MUTEX_EXIT(&ipf_state);
 	return 0;
@@ -303,9 +307,12 @@ fr_info_t *fin;
 					 * timeout.
 					 */
 #ifdef	_KERNEL
-					if ((tcp->th_flags & TCP_CLOSE) &&
-					    !is->is_age)
-						is->is_age = 120;
+					if (!is->is_age) {
+						if (tcp->th_flags & TH_FIN)
+							is->is_age = 120;
+						if (tcp->th_flags & TH_RST)
+							is->is_age = 1;
+					}
 					MUTEX_EXIT(&ipf_state);
 					return is->is_pass;
 #else

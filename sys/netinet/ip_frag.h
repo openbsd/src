@@ -6,6 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
+ * $Id: ip_frag.h,v 1.3 1996/07/18 05:01:03 dm Exp $
  */
 
 #ifndef	__IP_FRAG_H_
@@ -25,11 +26,6 @@ typedef	struct	ipfr	{
 	u_char	ipfr_pass;
 } ipfr_t;
 
-#if defined(__STDC__) || defined(__GNUC__)
-#define	SIOCGFRST	_IOR('r', 76, struct ipfrstat)
-#else
-#define	SIOCGFRST	_IOR(r, 76, struct ipfrstat)
-#endif
 
 typedef	struct	ipfrstat {
 	u_long	ifs_exists;	/* add & already exists */

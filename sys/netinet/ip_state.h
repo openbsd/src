@@ -6,6 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
+ * $Id: ip_state.h,v 1.2 1996/07/18 05:01:09 dm Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -55,11 +56,6 @@ typedef struct ipstate {
 #define	is_sport	is_tcp.ts_sport
 #define	is_dport	is_tcp.ts_dport
 
-#if defined(__STDC__) || defined(__GNUC__)
-#define	SIOCGIPST	_IOR('r', 75, struct ips_stat)
-#else
-#define	SIOCGIPST	_IOR(r, 75, struct ips_stat)
-#endif
 
 typedef	struct	ips_stat {
 	u_long	iss_hits;

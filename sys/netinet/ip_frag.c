@@ -7,6 +7,7 @@
  */
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
+static	char	rcsid[] = "$Id: ip_frag.c,v 1.3 1996/07/18 05:01:02 dm Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -46,6 +47,7 @@ static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
 #include "ip_fil.h"
+#include "ip_fil_compat.h"
 #include "ip_frag.h"
 #include "ip_nat.h"
 #include "ip_state.h"

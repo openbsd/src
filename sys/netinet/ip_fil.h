@@ -5,7 +5,8 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * @(#)ip_fil.h	1.32 3/24/96
+ * @(#)ip_fil.h	1.35 6/5/96
+ * $Id: ip_fil.h,v 1.4 1996/07/18 05:00:59 dm Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -14,207 +15,6 @@
 #ifdef _KERNEL
 #define IPFILTER_LOG
 #endif /* _KERNEL */
-
-#ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
-#endif
-#define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
-
-#ifndef	IP_OFFMASK
-#define	IP_OFFMASK	0x1fff
-#endif
-
-#ifndef	MAX
-#define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif
-
-#ifdef _KERNEL
-# if SOLARIS
-#  define	MUTEX_ENTER(x)	mutex_enter(x)
-#  define	MUTEX_EXIT(x)	mutex_exit(x)
-#  define	MTOD(m,t)	(t)((m)->b_rptr)
-#  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
-#  define	IWCOPY(a,b,c)	copyout((a), (b), (c))
-# else
-#  define	MUTEX_ENTER(x)	;
-#  define	MUTEX_EXIT(x)	;
-#  ifndef linux
-#   define	MTOD(m,t)	mtod(m,t)
-#   define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-#   define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-#  endif
-# endif /* SOLARIS */
-
-# ifdef sun
-#  if defined(__svr4__) || defined(__SVR4)
-#   define	GETUNIT(n)	get_unit((n))
-#  else
-#   include	<sys/kmem_alloc.h>
-#   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
-#  endif
-# else
-#  define	GETUNIT(n)	ifunit((n))
-# endif /* sun */
-
-# if defined(sun) && !defined(linux)
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
-#  define	SLEEP(id, n)	sleep((id), PZERO+1)
-#  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
-#  if SOLARIS
-typedef	struct	qif	{
-	struct	qif	*qf_next;
-	ill_t	*qf_ill;
-	kmutex_t	qf_lock;
-	void	*qf_iptr;
-	void	*qf_optr;
-	queue_t	*qf_in;
-	queue_t	*qf_out;
-	void	*qf_wqinfo;
-	void	*qf_rqinfo;
-	char	qf_name[8];
-	int	(*qf_inp)();
-	int	(*qf_outp)();
-	/*
-	 * in case the ILL has disappeared...
-	 */
-	int	qf_hl;	/* header length */
-} qif_t;
-#   define	SPLNET(x)	;
-#   undef	SPLX
-#   define	SPLX(x)		;
-#   ifdef	sparc
-#    define	ntohs(x)	(x)
-#    define	ntohl(x)	(x)
-#    define	htons(x)	(x)
-#    define	htonl(x)	(x)
-#   endif
-#   define	KMALLOC(x)	kmem_alloc((x), KM_SLEEP)
-#   define	GET_MINOR(x)	getminor(x)
-#  else
-#   define	KMALLOC(x)	new_kmem_alloc((x), KMEM_SLEEP)
-#  endif /* __svr4__ */
-# endif /* sun && !linux */
-# ifndef	GET_MINOR
-#  define	GET_MINOR(x)	minor(x)
-# endif
-# if BSD >= 199306 || defined(__FreeBSD__)
-#  include <vm/vm.h>
-#  if !defined(__FreeBSD__)
-#   include <vm/vm_extern.h>
-#   include <sys/proc.h>
-extern	vm_map_t	kmem_map;
-#  else
-#   include <vm/vm_kern.h>
-#  endif /* __FreeBSD__ */
-#  define	KMALLOC(x)	kmem_alloc(kmem_map, (x))
-#  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
-					  sizeof(*(x)))
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
-#  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
-# endif /* BSD */
-# if defined(NetBSD1_0) && (NetBSD1_0 > 1)
-#  define	SPLNET(x)	x = splsoftnet()
-# else
-#  if !SOLARIS
-#   define	SPLNET(x)	x = splnet()
-#   define	SPLX(x)		(void) splx(x)
-#  endif
-# endif
-#else
-# define	MUTEX_ENTER(x)	;
-# define	MUTEX_EXIT(x)	;
-# define	SPLNET(x)	;
-# define	SPLX(x)		;
-# define	KMALLOC(x)	malloc(x)
-# define	KFREE(x)	free(x)
-# define	GETUNIT(x)	(x)
-# define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-# define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
-#endif /* KERNEL */
-
-#ifdef linux
-# define	ICMP_UNREACH	ICMP_DEST_UNREACH
-# define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
-# define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
-# define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
-# define	icmp	icmphdr
-# define	icmp_type	type
-# define	icmp_code	code
-
-# define	TH_FIN	0x01
-# define	TH_SYN	0x02
-# define	TH_RST	0x04
-# define	TH_PUSH	0x08
-# define	TH_ACK	0x10
-# define	TH_URG	0x20
-
-typedef	struct	{
-	__u16	th_sport;
-	__u16	th_dport;
-	__u32	th_seq;
-	__u32	th_ack;
-	__u8	th_x;
-	__u8	th_flags;
-	__u16	th_win;
-	__u16	th_sum;
-	__u16	th_urp;
-} tcphdr_t;
-
-typedef	struct	{
-	__u16	uh_sport;
-	__u16	uh_dport;
-	__u16	uh_ulen;
-	__u16	uh_sun;
-} udphdr_t;
-
-typedef	struct	{
-# if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(vax)
-	__u8	ip_hl:4;
-	__u8	ip_v:4;
-# else
-	__u8	ip_hl:4;
-	__u8	ip_v:4;
-# endif
-	__u8	ip_tos;
-	__u16	ip_len;
-	__u16	ip_id;
-	__u16	ip_off;
-	__u8	ip_ttl;
-	__u8	ip_p;
-	__u16	ip_sum;
-	__u32	ip_src;
-	__u32	ip_dst;
-} ip_t;
-
-# define	SPLX(x)		(void)
-# define	SPLNET(x)	(void)
-
-# define	bcopy(a,b,c)	memmove(b,a,c)
-# define	bcmp(a,b,c)	memcmp(a,b,c)
-
-# define	UNITNAME(n)	dev_get((n))
-# define	ifnet	device
-
-# define	KMALLOC(x)	kmalloc((x), GFP_ATOMIC)
-# define	KFREE(x)	kfree_s((x), sizeof(*(x)))
-# define	IRCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_READ, \
-						     (b) ,sizeof((b))); \
-				 if (!error) \
-					memcpy_fromfs((b), (a), (c)); \
-				}
-# define	IWCOPY(a,b,c)	{ \
-				 error = verify_area(VERIFY_WRITE, \
-						     (b) ,sizeof((b))); \
-				 if (!error) \
-					memcpy_tofs((b), (a), (c)); \
-				}
-#else
-typedef	struct	tcphdr	tcphdr_t;
-typedef	struct	udphdr	udphdr_t;
-typedef	struct	ip	ip_t;
-#endif /* linux */
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -256,6 +56,9 @@ typedef	struct	ip	ip_t;
 #define	SIOCFRENB	_IOW('r', 72, u_int)
 #define	SIOCFRSYN	_IOW('r', 73, u_int)
 #define	SIOCFRZST	_IOWR('r', 74, struct friostat)
+#define	SIOCFLNAT	_IOWR('r', 75, int)
+#define	SIOCCNATL	_IOWR('r', 76, int)
+#define	SIOCZRLST	_IOWR('r', 77, struct frentry)
 #else
 #define	SIOCADAFR	_IOW(r, 60, struct frentry)
 #define	SIOCRMAFR	_IOW(r, 61, struct frentry)
@@ -272,6 +75,9 @@ typedef	struct	ip	ip_t;
 #define SIOCFRENB	_IOW(r, 72, u_int)
 #define	SIOCFRSYN	_IOW(r, 73, u_int)
 #define	SIOCFRZST	_IOWR(r, 74, struct friostat)
+#define	SIOCFLNAT	_IOWR(r, 75, int)
+#define	SIOCCNATL	_IOWR(r, 76, int)
+#define	SIOCZRLST	_IOWR(r, 77, struct frentry)
 #endif
 #define	SIOCADDFR	SIOCADAFR
 #define	SIOCDELFR	SIOCRMAFR
@@ -311,6 +117,12 @@ typedef	struct	fr_info	{
 
 #define	FI_CSIZE	(sizeof(struct fr_ip) + 11)
 
+typedef	struct	frdest	{
+	void	*fd_ifp;
+	struct	in_addr	fd_ip;
+	char	fd_ifname[IFNAMSIZ];
+} frdest_t;
+
 typedef	struct	frentry {
 	struct	frentry	*fr_next;
 	struct	ifnet	*fr_ifa;
@@ -336,8 +148,11 @@ typedef	struct	frentry {
 	u_short	fr_stop;	/* top port for <> and >< */
 	u_short	fr_dtop;	/* top port for <> and >< */
 	u_long	fr_flags;	/* per-rule flags && options (see below) */
+	int	(*fr_func)();	/* call this function */
 	char	fr_icode;	/* return ICMP code */
 	char	fr_ifname[IFNAMSIZ];
+	struct	frdest	fr_tif;	/* "to" interface */
+	struct	frdest	fr_dif;	/* duplicate packet interfaces */
 } frentry_t;
 
 #define	fr_proto	fr_ip.fi_p
@@ -356,29 +171,35 @@ typedef	struct	frentry {
 /*
  * fr_flags
 */
-#define	FR_BLOCK	0x0001
-#define	FR_PASS		0x0002
-#define	FR_OUTQUE	0x0004
-#define	FR_INQUE	0x0008
-#define	FR_LOG		0x0010	/* Log */
-#define	FR_LOGB		0x0021	/* Log-fail */
-#define	FR_LOGP		0x0022	/* Log-pass */
-#define	FR_LOGBODY	0x0040	/* Log the body */
-#define	FR_LOGFIRST	0x0080
-#define	FR_RETRST	0x0100
-#define	FR_RETICMP	0x0200
-#define	FR_NOMATCH	0x0400
-#define	FR_ACCOUNT	0x0800	/* count packet bytes */
-#define	FR_KEEPFRAG	0x1000
-#define	FR_KEEPSTATE	0x2000
-#define	FR_INACTIVE	0x4000
-#define	FR_QUICK	0x8000
+#define	FR_BLOCK	0x00001
+#define	FR_PASS		0x00002
+#define	FR_OUTQUE	0x00004
+#define	FR_INQUE	0x00008
+#define	FR_LOG		0x00010	/* Log */
+#define	FR_LOGB		0x00011	/* Log-fail */
+#define	FR_LOGP		0x00012	/* Log-pass */
+#define	FR_LOGBODY	0x00020	/* Log the body */
+#define	FR_LOGFIRST	0x00040
+#define	FR_RETRST	0x00080
+#define	FR_RETICMP	0x00100
+#define	FR_NOMATCH	0x00200
+#define	FR_ACCOUNT	0x00400	/* count packet bytes */
+#define	FR_KEEPFRAG	0x00800
+#define	FR_KEEPSTATE	0x01000
+#define	FR_INACTIVE	0x02000
+#define	FR_QUICK	0x04000
+#define	FR_FASTROUTE	0x08000
+#define	FR_CALLNOW	0x10000
+#define	FR_DUP		0x20000
+
+#define	FR_LOGMASK	(FR_LOG|FR_LOGP|FR_LOGB)
 /*
  * recognized flags for SIOCGETFF and SIOCSETFF
  */
 #define	FF_LOGPASS	0x100000
 #define	FF_LOGBLOCK	0x200000
 #define	FF_LOGNOMATCH	0x400000
+#define	FF_LOGGING	(FF_LOGPASS|FF_LOGBLOCK|FF_LOGNOMATCH)
 
 #define	FR_NONE 0
 #define	FR_EQUAL 1
@@ -437,14 +258,14 @@ typedef	struct ipl_ci	{
 	u_char	hlen;
 	u_char	plen;
 	u_short	rule;
-	u_long	flags:24;
-#if !defined (__OpenBSD__) && !defined (__NetBSD__)
+	u_long	flags:24;			/* XXX FIXME do we care about the extra bytes? */
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+	u_long	filler:8;			/* XXX FIXME do we care? */
+	u_char	ifname[IFNAMSIZ];
+#else
 	u_long	unit:8;
 	u_char	ifname[4];
-#else /* OpenBSD or NetBSD */
-	u_long : 0;
-	u_char	ifname[IFNAMSIZ];
-#endif /* OpenBSD or NetBSD */
+#endif
 } ipl_ci_t;
 
 

@@ -6,6 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
+ * $Id: ip_nat.h,v 1.3 1996/07/18 05:01:06 dm Exp $
  */
 
 #ifndef	__IP_NAT_H_
@@ -20,11 +21,15 @@
 #define	SIOCRMNAT	_IOW('r', 81, struct ipnat)
 #define	SIOCGNATS	_IOR('r', 82, struct natstat)
 #define	SIOCGNATL	_IOWR('r', 83, struct natlookup)
+#define SIOCGFRST	_IOR('r', 84, struct ipfrstat)
+#define SIOCGIPST	_IOR('r', 85, struct ips_stat)
 #else
 #define	SIOCADNAT	_IOW(r, 80, struct ipnat)
 #define	SIOCRMNAT	_IOW(r, 81, struct ipnat)
 #define	SIOCGNATS	_IOR(r, 82, struct natstat)
 #define	SIOCGNATL	_IOWR(r, 83, struct natlookup)
+#define SIOCGFRST	_IOR(r, 84, struct ipfrstat)
+#define SIOCGIPST	_IOR(r, 85, struct ips_stat)
 #endif
 
 #define	NAT_SIZE	367

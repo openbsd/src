@@ -6,7 +6,8 @@
  * to the original author and the contributors.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_fil.c	2.37 4/10/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.4 1996/07/18 05:00:58 dm Exp $";
 #endif
 
 #ifndef	linux
@@ -28,6 +29,7 @@ static	char	sccsid[] = "@(#)ip_fil.c	2.37 4/10/96 (C) 1993-1995 Darren Reed";
 #endif
 #include <net/route.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
@@ -38,6 +40,7 @@ static	char	sccsid[] = "@(#)ip_fil.c	2.37 4/10/96 (C) 1993-1995 Darren Reed";
 #include <syslog.h>
 #endif
 #include "ip_fil.h"
+#include "ip_fil_compat.h"
 #include "ip_frag.h"
 #include "ip_nat.h"
 #include "ip_state.h"
@@ -62,7 +65,7 @@ int	ipl_unreach = ICMP_UNREACH_FILTER;
 int	send_reset();
 
 #ifdef	IPFILTER_LOG
-#define	LOGSIZE	8192
+# define LOGSIZE	8192
 int	ipllog();
 static	char	iplbuf[LOGSIZE];
 static	caddr_t	iplh = iplbuf, iplt = iplbuf;
@@ -74,17 +77,17 @@ static	int	iplbusy = 0;
 static	int	(*fr_savep)();
 
 #if _BSDI_VERSION >= 199510
-#include <sys/device.h>
-#include <sys/conf.h>
+# include <sys/device.h>
+# include <sys/conf.h>
 
 int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int	iplopen __P((dev_t, int, int, struct proc *));
 int	iplclose __P((dev_t, int, int, struct proc *));
-#ifdef IPFILTER_LOG
+# ifdef IPFILTER_LOG
 int	iplread __P((dev_t, struct uio *, int));
-#else
-#define iplread noread
-#endif
+# else
+#  define iplread	noread
+# endif
 int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 
 struct cfdriver iplcd = {
@@ -97,7 +100,7 @@ struct devsw iplsw = {
 	nostrat, nodump, nopsize, 0,
 	nostop
 };
-#endif
+#endif /* _BSDI_VERSION >= 199510 */
 
 #ifdef	IPFILTER_LKM
 int iplidentify(s)
@@ -243,23 +246,32 @@ int mode;
 	SPLNET(s);
 	switch (cmd) {
 	case FIONREAD :
+#ifdef IPFILTER_LOG
 		*(int *)data = iplused;
+#endif
 		break;
 #ifndef	IPFILTER_LKM
 	case SIOCFRENB :
 	{
 		u_int	enable;
 
-		IRCOPY(data, (caddr_t)&enable, sizeof(enable));
-		if (enable)
-			error = iplattach();
-		else
-			error = ipldetach();
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
+			if (enable)
+				error = iplattach();
+			else
+				error = ipldetach();
+		}
 		break;
 	}
 #endif
 	case SIOCSETFF :
-		IRCOPY(data, (caddr_t)&fr_flags, sizeof(fr_flags));
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			IRCOPY(data, (caddr_t)&fr_flags, sizeof(fr_flags));
 		break;
 	case SIOCGETFF :
 		IWCOPY((caddr_t)&fr_flags, data, sizeof(fr_flags));
@@ -267,17 +279,28 @@ int mode;
 	case SIOCINAFR :
 	case SIOCRMAFR :
 	case SIOCADAFR :
-		error = frrequest(cmd, (struct frentry *)data, fr_active);
+	case SIOCZRLST :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			error = frrequest(cmd, data, fr_active);
 		break;
 	case SIOCINIFR :
 	case SIOCRMIFR :
 	case SIOCADIFR :
-		error = frrequest(cmd, (struct frentry *)data, 1-fr_active);
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			error = frrequest(cmd, data, 1 - fr_active);
 		break;
 	case SIOCSWAPA :
-		bzero((char *)frcache, sizeof(frcache[0]) * 2);
-		*(u_int *)data = fr_active;
-		fr_active = 1 - fr_active;
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			bzero((char *)frcache, sizeof(frcache[0]) * 2);
+			*(u_int *)data = fr_active;
+			fr_active = 1 - fr_active;
+		}
 		break;
 	case SIOCGETFS :
 	{
@@ -298,23 +321,35 @@ int mode;
 		break;
 	}
 	case	SIOCFRZST :
-		frzerostats(data);
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			frzerostats(data);
 		break;
 	case	SIOCIPFFL :
-		frflush(data);
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			frflush(data);
 		break;
 #ifdef	IPFILTER_LOG
 	case	SIOCIPFFB :
-		*(int *)data = iplused;
-		iplh = iplt = iplbuf;
-		iplused = 0;
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			*(int *)data = iplused;
+			iplh = iplt = iplbuf;
+			iplused = 0;
+		}
 		break;
 #endif /* IPFILTER_LOG */
 	case SIOCADNAT :
 	case SIOCRMNAT :
 	case SIOCGNATS :
 	case SIOCGNATL :
-		error = nat_ioctl(data, cmd);
+	case SIOCFLNAT :
+	case SIOCCNATL :
+		error = nat_ioctl(data, cmd, mode);
 		break;
 	case SIOCGFRST :
 		IWCOPY((caddr_t)ipfr_fragstats(), data, sizeof(ipfrstat_t));
@@ -323,7 +358,7 @@ int mode;
 		IWCOPY((caddr_t)fr_statetstats(), data, sizeof(ips_stat_t));
 		break;
 	default :
-		error = -EINVAL;
+		error = EINVAL;
 		break;
 	}
 	SPLX(s);
@@ -331,14 +366,19 @@ int mode;
 }
 
 
-static int frrequest(req, fp, set)
+static int frrequest(req, data, set)
 int req, set;
-register struct frentry *fp;
+caddr_t data;
 {
-	register struct frentry *f, **fprev;
-	register struct frentry **ftail;
+	register frentry_t *fp, *f, **fprev;
+	register frentry_t **ftail;
+	frentry_t fr;
+	frdest_t *fdp;
 	struct frentry frd;
 	int error = 0, in;
+
+	fp = &fr;
+	IRCOPY(data, (caddr_t)fp, sizeof(*fp));
 
 	bzero((char *)frcache, sizeof(frcache[0]) * 2);
 
@@ -357,6 +397,24 @@ register struct frentry *fp;
 		if (!fp->fr_ifa)
 			fp->fr_ifa = (struct ifnet *)-1;
 	}
+
+	fdp = &fp->fr_dif;
+	fp->fr_flags &= ~FR_DUP;
+	if (*fdp->fd_ifname) {
+		fdp->fd_ifp = GETUNIT(fdp->fd_ifname);
+		if (!fdp->fd_ifp)
+			fdp->fd_ifp = (struct ifnet *)-1;
+		else
+			fp->fr_flags |= FR_DUP;
+	}
+
+	fdp = &fp->fr_tif;
+	if (*fdp->fd_ifname) {
+		fdp->fd_ifp = GETUNIT(fdp->fd_ifname);
+		if (!fdp->fd_ifp)
+			fdp->fd_ifp = (struct ifnet *)-1;
+	}
+
 	/*
 	 * Look for a matching filter rule, but don't include the next or
 	 * interface pointer in the comparison (fr_next, fr_ifa).
@@ -365,6 +423,19 @@ register struct frentry *fp;
 		if (bcmp((char *)&f->fr_ip, (char *)&fp->fr_ip,
 			 FR_CMPSIZ) == 0)
 			break;
+
+	/*
+	 * If zero'ing statistics, copy current to caller and zero.
+	 */
+	if (req == SIOCZRLST) {
+		if (!f)
+			return ESRCH;
+		IWCOPY((caddr_t)f, data, sizeof(*f));
+		f->fr_hits = 0;
+		f->fr_bytes = 0;
+		return 0;
+	}
+
 	if (!f) {
 		ftail = fprev;
 		if (req != SIOCINAFR && req != SIOCINIFR)
@@ -417,10 +488,8 @@ int flags;
 {
 	u_int min = minor(dev);
 
-	if ((flags & FWRITE) || min)
+	if (min)
 		min = ENXIO;
-	else
-		iplbusy++;
 	return min;
 }
 
@@ -440,8 +509,6 @@ int flags;
 
 	if (min)
 		min = ENXIO;
-	else if (iplbusy > 0)
-		iplbusy--;
 	return min;
 }
 
@@ -467,12 +534,14 @@ register struct uio *uio;
 
 	if (!uio->uio_resid)
 		return 0;
+	iplbusy++;
 	while (!iplused) {
 		error = SLEEP(iplbuf, "ipl sleep");
-		if (error)
+		if (error) {
+			iplbusy--;
 			return error;
+		}
 	}
-
 	SPLNET(s);
 
 	sx = sz = MIN(uio->uio_resid, iplused);
@@ -499,6 +568,7 @@ register struct uio *uio;
 			iplh = iplt = iplbuf;
 	}
 	SPLX(s);
+	iplbusy--;
 	return ret;
 }
 # endif /* IPFILTER_LOG */
@@ -553,16 +623,15 @@ struct mbuf *m;
 	iplci.hlen = (u_char)hlen;
 	iplci.plen = (flags & FR_LOGBODY) ? (u_char)mlen : 0 ;
 	iplci.rule = fin->fin_rule;
-#if !defined (__OpenBSD__) && !defined (__NetBSD__)
+# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606))
+	strcpy(iplci.ifname, ifp->if_xname);
+# else
 	iplci.unit = (u_char)ifp->if_unit;
-	iplci.ifname[0] = ifp->if_name[0];
-	iplci.ifname[1] = ifp->if_name[1];
-	iplci.ifname[2] = ifp->if_name[2];
-	iplci.ifname[3] = ifp->if_name[3];
-#else /* OpenBSD or NetBSD */
-	bcopy (ifp->if_xname, iplci.ifname, IFNAMSIZ);
-#endif /* OpenBSD or NetBSD */
-
+	if ((iplci.ifname[0] = ifp->if_name[0]))
+		if ((iplci.ifname[1] = ifp->if_name[1]))
+			if ((iplci.ifname[2] = ifp->if_name[2]))
+				iplci.ifname[3] = ifp->if_name[3];
+# endif
 	if (iplh == iplbuf + LOGSIZE)
 		iplh = iplbuf;
 	tail = (iplh >= iplt) ? (iplbuf + LOGSIZE - iplh) : (iplt - iplh);
@@ -665,11 +734,7 @@ struct tcpiphdr *ti;
 	tp->ti_len = htons(sizeof(struct tcphdr));
 	tcp->th_sum = in_cksum(m, sizeof(struct tcpiphdr));
 
-	ip->ip_hl = sizeof(struct ip) >> 2;
-	ip->ip_v = IPVERSION;
 	ip->ip_tos = ((struct ip *)ti)->ip_tos;
-	ip->ip_id = ((struct ip *)ti)->ip_id;
-	ip->ip_off = ((struct ip *)ti)->ip_off;
 	ip->ip_p = ((struct ip *)ti)->ip_p;
 	ip->ip_len = sizeof (struct tcpiphdr);
 #if BSD < 199306
@@ -681,7 +746,7 @@ struct tcpiphdr *ti;
 	/*
 	 * extra 0 in case of multicast
 	 */
-	(void) ip_output(m, (struct mbuf *)0, 0, IP_FORWARDING, 0);
+	(void) ip_output(m, (struct mbuf *)0, 0, 0, 0);
 	return 0;
 }
 
@@ -689,7 +754,175 @@ struct tcpiphdr *ti;
 #ifndef	IPFILTER_LKM
 iplinit()
 {
-	(void) iplattach();
+	/* (void) iplattach(); */
 	ip_init();
 }
 #endif
+
+
+void ipfr_fastroute(m0, fin, fdp)
+struct mbuf *m0;
+fr_info_t *fin;
+frdest_t *fdp;
+{
+	register struct ip *ip, *mhip;
+	register struct mbuf *m = m0;
+	register struct route *ro;
+	struct ifnet *ifp = fdp->fd_ifp;
+	int len, off, error = 0, s;
+	int hlen = fin->fin_hlen;
+	struct route iproute;
+	struct sockaddr_in *dst;
+
+	ip = mtod(m0, struct ip *);
+	/*
+	 * Route packet.
+	 */
+	ro = &iproute;
+	bzero((caddr_t)ro, sizeof (*ro));
+	dst = (struct sockaddr_in *)&ro->ro_dst;
+	dst->sin_family = AF_INET;
+	dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
+#if	BSD >= 199306 && !(defined(__NetBSD__))
+# ifdef	RTF_CLONING
+	rtalloc_ign(ro, RTF_CLONING);
+# else
+	rtalloc_ign(ro, RTF_PRCLONING);
+# endif
+#else
+	rtalloc(ro);
+#endif
+	if (!ifp) {
+		if (!(fin->fin_fr->fr_flags & FR_FASTROUTE)) {
+			error = -2;
+			goto bad;
+		}
+		if (ro->ro_rt == 0 || (ifp = ro->ro_rt->rt_ifp) == 0) {
+			if (in_localaddr(ip->ip_dst))
+				error = EHOSTUNREACH;
+			else
+				error = ENETUNREACH;
+			goto bad;
+		}
+		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
+	}
+	ro->ro_rt->rt_use++;
+
+	/*	
+	 * If small enough for interface, can just send directly.
+	 */
+	if (ip->ip_len <= ifp->if_mtu) {
+#ifndef sparc
+		ip->ip_id = htons(ip->ip_id);
+		ip->ip_len = htons(ip->ip_len);
+		ip->ip_off = htons(ip->ip_off);
+#endif
+		if (!ip->ip_sum)
+			ip->ip_sum = in_cksum(m, hlen);
+#if	BSD >= 199306
+		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
+					  ro->ro_rt);
+
+#else
+		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst);
+#endif
+		goto done;
+	}
+	/*
+	 * Too large for interface; fragment if possible.
+	 * Must be able to put at least 8 bytes per fragment.
+	 */
+	if (ip->ip_off & IP_DF) {
+		error = EMSGSIZE;
+		goto bad;
+	}
+	len = (ifp->if_mtu - hlen) &~ 7;
+	if (len < 8) {
+		error = EMSGSIZE;
+		goto bad;
+	}
+
+    {
+	int mhlen, firstlen = len;
+	struct mbuf **mnext = &m->m_act;
+
+	/*
+	 * Loop through length of segment after first fragment,
+	 * make new header and copy data of each part and link onto chain.
+	 */
+	m0 = m;
+	mhlen = sizeof (struct ip);
+	for (off = hlen + len; off < ip->ip_len; off += len) {
+		MGET(m, M_DONTWAIT, MT_HEADER);
+		if (m == 0) {
+			error = ENOBUFS;
+			goto bad;
+		}
+#if BSD >= 199306
+		m->m_data += max_linkhdr;
+#else
+		m->m_off = MMAXOFF - hlen;
+#endif
+		mhip = mtod(m, struct ip *);
+		bcopy((char *)ip, (char *)mhip, sizeof(*ip));
+		if (hlen > sizeof (struct ip)) {
+			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
+			mhip->ip_hl = mhlen >> 2;
+		}
+		m->m_len = mhlen;
+		mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
+		if (ip->ip_off & IP_MF)
+			mhip->ip_off |= IP_MF;
+		if (off + len >= ip->ip_len)
+			len = ip->ip_len - off;
+		else
+			mhip->ip_off |= IP_MF;
+		mhip->ip_len = htons((u_short)(len + mhlen));
+		m->m_next = m_copy(m0, off, len);
+		if (m->m_next == 0) {
+			error = ENOBUFS;	/* ??? */
+			goto sendorfree;
+		}
+#ifndef sparc
+		mhip->ip_off = htons((u_short)mhip->ip_off);
+#endif
+		mhip->ip_sum = 0;
+		mhip->ip_sum = in_cksum(m, mhlen);
+		*mnext = m;
+		mnext = &m->m_act;
+	}
+	/*
+	 * Update first fragment by trimming what's been copied out
+	 * and updating header, then send each fragment (in order).
+	 */
+	m_adj(m0, hlen + firstlen - ip->ip_len);
+	ip->ip_len = htons((u_short)(hlen + firstlen));
+	ip->ip_off = htons((u_short)(ip->ip_off | IP_MF));
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(m0, hlen);
+sendorfree:
+	for (m = m0; m; m = m0) {
+		m0 = m->m_act;
+		m->m_act = 0;
+		if (error == 0)
+#if BSD >= 199306
+			error = (*ifp->if_output)(ifp, m,
+			    (struct sockaddr *)dst, ro->ro_rt);
+#else
+			error = (*ifp->if_output)(ifp, m,
+			    (struct sockaddr *)dst);
+#endif
+		else
+			m_freem(m);
+	}
+    }	
+done:
+	if (ro->ro_rt) {
+		RTFREE(ro->ro_rt);
+	}
+	return;
+bad:
+	m_freem(m);
+	goto done;
+}

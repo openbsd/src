@@ -47,6 +47,7 @@ etherfind -n -t
 
 #ifndef lint
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
+static	char	rcsid[] = "$Id: ipft_ef.c,v 1.4 1996/07/18 04:59:22 dm Exp $";
 #endif
 
 static	int	etherf_open(), etherf_close(), etherf_readip();

@@ -30,26 +30,112 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
+#include "ip_fil_compat.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipft_tx.c	1.6 2/4/96 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
+static	char	rcsid[] = "$Id: ipft_tx.c,v 1.4 1996/07/18 04:59:24 dm Exp $";
 #endif
 
 extern	int	opts;
-extern	u_short	portnum();
 extern	u_long	buildopts();
 
+static	char	*tx_proto = "";
+
 static	int	text_open(), text_close(), text_readip(), parseline();
+
+static	char	tcp_flagset[] = "FSRPAU";
+static	u_char	tcp_flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH,
+				TH_ACK, TH_URG };
 
 struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
 static	int	tfd = -1;
+
+static	u_long	tx_hostnum();
+static	u_short	tx_portnum();
+
+
+/*
+ * returns an ip address as a long var as a result of either a DNS lookup or
+ * straight inet_addr() call
+ */
+u_long	tx_hostnum(host, resolved)
+char	*host;
+int	*resolved;
+{
+	struct	hostent	*hp;
+	struct	netent	*np;
+
+	*resolved = 0;
+	if (!strcasecmp("any",host))
+		return 0L;
+	if (isdigit(*host))
+		return inet_addr(host);
+
+	if (!(hp = gethostbyname(host))) {
+		if (!(np = getnetbyname(host))) {
+			*resolved = -1;
+			fprintf(stderr, "can't resolve hostname: %s\n", host);
+			return 0;
+		}
+		return np->n_net;
+	}
+	return *(u_long *)hp->h_addr;
+}
+
+
+/*
+ * find the port number given by the name, either from getservbyname() or
+ * straight atoi()
+ */
+u_short	tx_portnum(name)
+char	*name;
+{
+	struct	servent	*sp, *sp2;
+	u_short	p1 = 0;
+
+	if (isdigit(*name))
+		return (u_short)atoi(name);
+	if (!tx_proto)
+		tx_proto = "tcp/udp";
+	if (strcasecmp(tx_proto, "tcp/udp")) {
+		sp = getservbyname(name, tx_proto);
+		if (sp)
+			return ntohs(sp->s_port);
+		(void) fprintf(stderr, "unknown service \"%s\".\n", name);
+		return 0;
+	}
+	sp = getservbyname(name, "tcp");
+	if (sp)
+		p1 = sp->s_port;
+	sp2 = getservbyname(name, "udp");
+	if (!sp || !sp2) {
+		(void) fprintf(stderr, "unknown tcp/udp service \"%s\".\n",
+			name);
+		return 0;
+	}
+	if (p1 != sp2->s_port) {
+		(void) fprintf(stderr, "%s %d/tcp is a different port to ",
+			name, p1);
+		(void) fprintf(stderr, "%s %d/udp\n", name, sp->s_port);
+		return 0;
+	}
+	return ntohs(p1);
+}
+
+
+char	*tx_icmptypes[] = {
+	"echorep", (char *)NULL, (char *)NULL, "unreach", "squench",
+	"redir", (char *)NULL, (char *)NULL, "echo", (char *)NULL,
+	(char *)NULL, "timex", "paramprob", "timest", "timestrep",
+	"inforeq", "inforep", "maskreq", "maskrep", "END"
+};
 
 static	int	text_open(fname)
 char	*fname;
@@ -119,16 +205,15 @@ struct	ip	*ip;
 char	**ifn;
 int	*out;
 {
-	extern	char	*proto;
 	tcphdr_t	th, *tcp = &th;
 	struct	icmp	icmp, *ic = &icmp;
-	char	*cps[20], **cpp, c, opts[68];
+	char	*cps[20], **cpp, c, ipopts[68];
 	int	i, r;
 
 	bzero((char *)ip, MAX(sizeof(*tcp), sizeof(*ic)) + sizeof(*ip));
 	bzero((char *)tcp, sizeof(*tcp));
 	bzero((char *)ic, sizeof(*ic));
-	bzero(opts, sizeof(opts));
+	bzero(ipopts, sizeof(ipopts));
 	ip->ip_hl = sizeof(*ip) >> 2;
 	ip->ip_v = IPVERSION;
 	for (i = 0, cps[0] = strtok(line, " \b\t\r\n"); cps[i] && i < 19; )
@@ -160,15 +245,15 @@ int	*out;
 		if (c == 't') {
 			ip->ip_p = IPPROTO_TCP;
 			ip->ip_len += sizeof(struct tcphdr);
-			proto = "tcp";
+			tx_proto = "tcp";
 		} else if (c == 'u') {
 			ip->ip_p = IPPROTO_UDP;
 			ip->ip_len += sizeof(struct udphdr);
-			proto = "udp";
+			tx_proto = "udp";
 		} else {
 			ip->ip_p = IPPROTO_ICMP;
 			ip->ip_len += sizeof(struct icmp);
-			proto = "icmp";
+			tx_proto = "icmp";
 		}
 		cpp++;
 	} else
@@ -185,9 +270,9 @@ int	*out;
 			return 1;
 		}
 		*last++ = '\0';
-		tcp->th_sport = htons(portnum(last));
+		tcp->th_sport = htons(tx_portnum(last));
 	}
-	ip->ip_src.s_addr = hostnum(*cpp, &r);
+	ip->ip_src.s_addr = tx_hostnum(*cpp, &r);
 	cpp++;
 	if (!*cpp)
 		return 1;
@@ -201,27 +286,28 @@ int	*out;
 			return 1;
 		}
 		*last++ = '\0';
-		tcp->th_dport = htons(portnum(last));
+		tcp->th_dport = htons(tx_portnum(last));
 	}
-	ip->ip_dst.s_addr = hostnum(*cpp, &r);
+	ip->ip_dst.s_addr = tx_hostnum(*cpp, &r);
 	cpp++;
 	if (*cpp && ip->ip_p == IPPROTO_TCP) {
-		extern	char	flagset[];
-		extern	u_char	flags[];
+		extern	char	tcp_flagset[];
+		extern	u_char	tcp_flags[];
 		char	*s, *t;
 
 		for (s = *cpp; *s; s++)
-			if ((t  = index(flagset, *s)))
-				tcp->th_flags |= flags[t - flagset];
+			if ((t  = index(tcp_flagset, *s)))
+				tcp->th_flags |= tcp_flags[t - tcp_flagset];
 		if (tcp->th_flags)
 			cpp++;
 		assert(tcp->th_flags != 0);
 	} else if (*cpp && ip->ip_p == IPPROTO_ICMP) {
-		extern	char	*icmptypes[];
+		extern	char	*tx_icmptypes[];
 		char	**s, *t;
 		int	i;
 
-		for (s = icmptypes, i = 0; !*s || strcmp(*s, "END"); s++, i++)
+		for (s = tx_icmptypes, i = 0; !*s || strcmp(*s, "END");
+		     s++, i++)
 			if (*s && !strncasecmp(*cpp, *s, strlen(*s))) {
 				ic->icmp_type = i;
 				if ((t = index(*cpp, ',')))
@@ -235,9 +321,9 @@ int	*out;
 		u_long	olen;
 
 		cpp++;
-		olen = buildopts(*cpp, opts);
+		olen = buildopts(*cpp, ipopts);
 		if (olen) {
-			bcopy(opts, (char *)(ip + 1), olen);
+			bcopy(ipopts, (char *)(ip + 1), olen);
 			ip->ip_hl += olen >> 2;
 		}
 	}

@@ -3,7 +3,7 @@
 .SH NAME
 ipftest - test packet filter rules with arbitary input.
 .SH SYNOPSIS
-ipftest [-vbdPSTE] [-I interface] -r <filename> [-i <filename>]
+ipftest [-vbdPSTEHX] [-I interface] -r <filename> [-i <filename>]
 .SH DESCRIPTION
 .LP
 .PP
@@ -77,6 +77,12 @@ option combinations:
 		tcpdump -nqte
 .fi
 .LP
+.IP -H
+The input file is to be hex digits, representing the binary makeup of the
+packet.  No length correction is made, if an incorrect length is put in
+the IP header.
+.IP -X
+The input file is composed of text descriptions of IP packets.
 .IP -E
 The input file is to be text output from etherfind.  The text formats which
 are currently supported are those which result from the following etherfind

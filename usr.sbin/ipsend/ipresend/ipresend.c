@@ -15,7 +15,7 @@
  * This was written and tested (successfully) on SunOS 4.1.x.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipresend.c	1.1 1/11/96 (C)1995 Darren Reed";
+static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -43,24 +43,29 @@ static	char	sccsid[] = "@(#)ipresend.c	1.1 1/11/96 (C)1995 Darren Reed";
 
 extern	char	*optarg;
 extern	int	optind;
-extern	struct	ipread	snoop, pcap;
+extern	struct	ipread	snoop, pcap, etherf, iphex, tcpd, iptext;
 
-#ifdef	linux
+int	opts = 0;
+#ifndef	DEFAULT_DEVICE
+# ifdef	linux
 char	default_device[] = "eth0";
-#else
-# ifdef	sun
-char	default_device[] = "le0";
 # else
-#  ifdef	ultrix
-char	default_device[] = "ln0";
+#  ifdef	sun
+char	default_device[] = "le0";
 #  else
-#   ifdef	__bsdi__
-char	default_device[] = "ef0";
+#   ifdef	ultrix
+char	default_device[] = "ln0";
 #   else
+#    ifdef	__bsdi__
+char	default_device[] = "ef0";
+#    else
 char	default_device[] = "lan0";
+#    endif
 #   endif
 #  endif
 # endif
+#else
+char	default_device[] = DEFAULT_DEVICE;
 #endif
 
 
@@ -89,13 +94,9 @@ char	**argv;
 	char	c, *s, *resend = NULL;
 	int	mtu = 1500;
 
-	while ((c = getopt(argc, argv, "R:d:g:m:r:")) != -1)
+	while ((c = getopt(argc, argv, "EHPSTXd:g:m:r:")) != -1)
 		switch (c)
 		{
-		case 'R' :
-			resend = optarg;
-			ipr = &pcap;
-			break;
 		case 'd' :
 			dev = optarg;
 			break;
@@ -111,8 +112,24 @@ char	**argv;
 			    }
 		case 'r' :
 			resend = optarg;
+			break;
+		case 'E' :
+			ipr = &etherf;
+			break;
+		case 'H' :
+			ipr = &iphex;
+			break;
+		case 'P' :
+			ipr = &pcap;
+			break;
+		case 'S' :
 			ipr = &snoop;
 			break;
+		case 'T' :
+			ipr = &tcpd;
+			break;
+		case 'X' :
+			ipr = &iptext;
 			break;
 		default :
 			fprintf(stderr, "Unknown option \"%c\"\n", c);
