@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.24 2002/09/06 18:33:16 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.24 2002/09/06 18:33:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -82,7 +82,7 @@ void print_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
 void nuke_entry(struct sockaddr_dl *sdl,
 	struct sockaddr_inarp *sin, struct rt_msghdr *rtm);
-void ether_print(const u_char *);
+void ether_print(const char *);
 int file(char *);
 int get(const char *);
 int getinetaddr(const char *, struct in_addr *);
@@ -243,7 +243,7 @@ set(argc, argv)
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm;
-	u_char *eaddr;
+	char *eaddr;
 	struct ether_addr *ea;
 	char *host = argv[0];
 
@@ -522,9 +522,10 @@ nuke_entry(sdl, sin, rtm)
 }
 
 void
-ether_print(cp)
-	const u_char *cp;
+ether_print(const char *scp)
 {
+	const u_char *cp = (u_char *)scp;
+
 	(void)printf("%02x:%02x:%02x:%02x:%02x:%02x",
 	    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 }
