@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.20 2003/03/30 20:47:42 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.21 2003/03/30 20:52:42 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -342,8 +342,7 @@ addid(id, type, name)
 	char *name;
 {
 	struct fileusage *fup, **fhp;
-	int len;
-	extern char *calloc();
+	size_t len;
 
 	if ((fup = lookup(id, type)))
 		return (fup);
