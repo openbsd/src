@@ -1,9 +1,44 @@
-/*	$OpenBSD: apci.c,v 1.6 2001/05/10 01:57:19 millert Exp $	*/
-/*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
+/*	$OpenBSD: apci.c,v 1.7 2001/05/10 20:17:54 millert Exp $	*/
+/*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
+
+/*-
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*      
  * Copyright (c) 1997 Michael Smith.  All rights reserved.
- * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -124,8 +159,6 @@ int	apcimctl __P((struct apci_softc *, int, int));
 void	apciinit __P((struct apciregs *, int));
 void	apcitimeout __P((void *));
 
-int	apcicheckdca __P((void));
-
 cdev_decl(apci);
 
 #define	APCIUNIT(x)	(minor(x) & 0x7f)
@@ -182,16 +215,11 @@ apcimatch(parent, match, aux)
 	case FRODO_APCI_OFFSET(1):
 	case FRODO_APCI_OFFSET(2):
 	case FRODO_APCI_OFFSET(3):
-		break;
-	default:
-		return (0);
+		/* Yup, we exist! */
+		return (1);
 	}
 
-	/* Make sure there's not a DCA in the way. */
-	if (fa->fa_offset == FRODO_APCI_OFFSET(1) && apcicheckdca())
-		return (0);
-
-	return (1);
+	return (0);
 }
 
 void
@@ -228,7 +256,7 @@ apciattach(parent, self, aux)
 	if ((apci->ap_iir & IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		sc->sc_flags |= APCI_HASFIFO;
 
-	/* Establish out interrupt handler. */
+	/* Establish our interrupt handler. */
 	frodo_intr_establish(parent, apciintr, sc, fa->fa_line,
 	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
 
@@ -884,45 +912,6 @@ apcitimeout(arg)
 	timeout_add(&sc->sc_timeout, hz);
 }
 
-int
-apcicheckdca()
-{
-	caddr_t va;
-	int rv = 0;
-
-	/*
-	 * On systems that also have a dca at select code 9, we
-	 * cannot use the second UART, as it is mapped to select
-	 * code 9 by the firmware.  We check for this by mapping
-	 * select code 9 and checking for a dca.  Yuck.
-	 */
-	va = iomap(dio_scodetopa(9), NBPG);
-	if (va == NULL) {
-		printf("apcicheckdca: can't map scode 9!\n");
-		return (1);	/* Safety. */
-	}
-
-	/* Check for hardware. */
-	if (badaddr(va)) {
-		/* Nothing there, assume APCI. */
-		goto unmap;
-	}
-
-	/* Check DIO ID against DCA IDs. */
-	switch (DIO_ID(va)) {
-	case DIO_DEVICE_ID_DCA0:
-	case DIO_DEVICE_ID_DCA0REM:
-	case DIO_DEVICE_ID_DCA1:
-	case DIO_DEVICE_ID_DCA1REM:
-		rv = 1;
-	}
- unmap:
-	iounmap(va, NBPG);
-
-	return (rv);
-}
-
-
 /*
  * The following routines are required for the APCI to act as the console.
  */
@@ -945,34 +934,29 @@ apcicnprobe(cp)
 	if (conforced)
 		return;
 
-	/* These can only exist on 400-series machines. */
-	switch (machineid) {
-	case HP_400:
-	case HP_425:
-	case HP_433:
-		break;
-
-	default:
+	/*
+	 * The APCI can only be a console on a 425e; on other 4xx
+	 * models, the "first" serial port is mapped to the DCA
+	 * at select code 9.  See frodo.c for the autoconfiguration
+	 * version of this check.
+	 */
+	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return;
-	}
 
-	/* Make sure a DCA isn't in the way. */
-	if (apcicheckdca() == 0) {
 #ifdef APCI_FORCE_CONSOLE
-		cp->cn_pri = CN_REMOTE;
-		conforced = 1;
-		conscode = -2;			/* XXX */
+	cp->cn_pri = CN_REMOTE;
+	conforced = 1;
+	conscode = -2;			/* XXX */
 #else
-		cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_NORMAL;
 #endif
-		/*
-		 * If our priority is higher than the currently-remembered
-		 * console, install ourselves.
-		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) ||
-		    conforced)
-			cn_tab = cp;
-	}
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * console, install ourselves.
+	 */
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || conforced)
+		cn_tab = cp;
 }
 
 /* ARGSUSED */
