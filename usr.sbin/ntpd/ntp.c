@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.12 2004/07/06 23:26:38 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.13 2004/07/07 01:01:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,9 +165,18 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 			if (p->next > 0 && p->next < nextaction)
 				nextaction = p->next;
-			if ((p->next > 0 && p->next <= time(NULL)) ||
-			    (p->deadline > 0 && p->deadline <= time(NULL)))
+
+			if (p->next > 0 && p->next <= time(NULL))
 				client_query(p);
+
+			if  (p->deadline > 0 && p->deadline <= time(NULL)) {
+				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
+				    --p->trustlevel < TRUSTLEVEL_BADPEER)
+					log_info("peer %s now invalid",
+					    log_sockaddr(
+					    (struct sockaddr *)&p->ss));
+				client_query(p);
+			}
 
 			if (p->state == STATE_QUERY_SENT) {
 				pfd[i].fd = p->query->fd;
@@ -287,15 +296,11 @@ ntp_adjtime(struct ntpd_conf *conf)
 	double		 offset, offset_median = 0;
 	int		 offset_cnt = 0;
 
-	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		if (!p->valid)
-			continue;
-
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		if (get_peer_update(p, &offset) == 0) {
 			offset_median += offset;
 			offset_cnt++;
 		}
-	}
 
 	offset_median /= offset_cnt;
 
@@ -322,16 +327,26 @@ get_peer_update(struct ntp_peer *p, double *offset)
 			best = i;
 		}
 
-	for (; i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].good) {
+	for (; i < OFFSET_ARRAY_SIZE; i++) {
+		if (p->reply[i].good &&
+		    p->reply[i].rcvd + REPLY_MAXAGE < time(NULL))
+			p->reply[i].good = 0;
+
+		if (p->reply[i].good)
 			good++;
 			if (p->reply[i].delay < p->reply[best].delay)
 				best = i;
-		}
+	}
 
-	/* XXX lower trust in the peer when too few good replies received */
+	/* lower trust in the peer when too few good replies received */
+	if (good < 8 && p->trustlevel > 0) {
+		if (p->trustlevel >= TRUSTLEVEL_BADPEER)
+			log_info("peer %s now invalid",
+			    log_sockaddr((struct sockaddr *)&p->ss));
+		p->trustlevel /= 2;
+	}
 
-	if (good == 0)
+	if (good == 0 || p->trustlevel < TRUSTLEVEL_BADPEER)
 		return (-1);
 
 	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)

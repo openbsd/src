@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.13 2004/07/06 23:26:38 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.14 2004/07/07 01:01:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,9 +36,17 @@
 #define	NTPD_OPT_VERBOSE	0x0001
 #define	NTPD_OPT_VERBOSE2	0x0002
 
-#define	INTERVAL_ADJTIME	240	/* call adjtime every n seconds */
-#define	INTERVAL_QUERY		30	/* sync with peers every n seconds */
+#define	INTERVAL_ADJTIME		240	/* call adjtime every n secs */
+#define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
+#define	INTERVAL_QUERY_PATHETIC		60
+#define	INTERVAL_QUERY_AGRESSIVE	5
+
+#define	TRUSTLEVEL_BADPEER		6
+#define	TRUSTLEVEL_PATHETIC		2
+#define	TRUSTLEVEL_AGRESSIVE		8
+
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
+#define	REPLY_MAXAGE		300
 #define	OFFSET_ARRAY_SIZE	8
 
 enum client_state {
@@ -70,7 +78,7 @@ struct ntp_peer {
 	time_t				 deadline;
 	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
 	u_int8_t			 shift;
-	u_int8_t			 valid;
+	u_int8_t			 trustlevel;
 };
 
 struct ntpd_conf {

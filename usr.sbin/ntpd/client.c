@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.11 2004/07/06 23:26:38 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.12 2004/07/07 01:01:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,7 @@ client_peer_init(struct ntp_peer *p)
 	p->state = STATE_NONE;
 	p->next = time(NULL);
 	p->shift = 0;
-	p->valid = 0;
+	p->trustlevel = TRUSTLEVEL_PATHETIC;
 
 	return (0);
 }
@@ -144,18 +144,31 @@ client_dispatch(struct ntp_peer *p)
 	p->reply[p->shift].rcvd = time(NULL);
 	p->reply[p->shift].good = 1;
 
-	p->state = STATE_REPLY_RECEIVED;
-	p->next = time(NULL) + INTERVAL_QUERY;
+	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
+		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
+	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
+		p->next = time(NULL) + INTERVAL_QUERY_AGRESSIVE;
+	else
+		p->next = time(NULL) + INTERVAL_QUERY_NORMAL;
+
 	p->deadline = 0;
+	p->state = STATE_REPLY_RECEIVED;
 
 	log_debug("reply received from %s: offset %f delay %f",
 	    log_sockaddr((struct sockaddr *)&fsa), p->reply[p->shift].offset,
 	    p->reply[p->shift].delay);
 
-	if (++p->shift >= OFFSET_ARRAY_SIZE) {
-		p->shift = 0;
-		p->valid = 1;
+	/* every received reply which we do not discard increases trust */
+	if (p->trustlevel < 10) {
+		if (p->trustlevel < TRUSTLEVEL_BADPEER &&
+		    p->trustlevel + 1 >= TRUSTLEVEL_BADPEER)
+			log_info("peer %s now valid",
+			    log_sockaddr((struct sockaddr *)&fsa));
+		p->trustlevel++;
 	}
+
+	if (++p->shift >= OFFSET_ARRAY_SIZE)
+		p->shift = 0;
 
 	return (0);
 }
