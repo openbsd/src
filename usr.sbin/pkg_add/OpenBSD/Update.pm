@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.34 2004/11/18 21:56:03 espie Exp $
+# $OpenBSD: Update.pm,v 1.35 2004/11/27 14:02:50 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -45,6 +45,10 @@ sub mark_lib
 }
 
 sub unmark_lib
+{
+}
+
+sub build_context
 {
 }
 
@@ -173,6 +177,25 @@ sub unmark_lib
 	delete $libs->{"$libname"};
 }
 
+package OpenBSD::PackingElement::Wantlib;
+sub build_context
+{
+	my ($self, $hash) = @_;
+	$hash->{$self->{name}} = 1;
+}
+
+package OpenBSD::PackingElement::Depend;
+sub build_context
+{
+	my ($self, $hash) = @_;
+	$hash->{$self->{def}} = 1;
+}
+
+package OpenBSD::PackingElement::PkgDep;
+sub build_context
+{
+}
+
 package OpenBSD::PackingElement::NewDepend;
 use OpenBSD::Error;
 sub validate_depend
@@ -267,9 +290,27 @@ sub split_libs
 	my $items = [];
 
 	my $splitted = OpenBSD::PackingList->new();
+
 	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname());
-	# we conflict with the package we just removed...
-	OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
+	if (defined $plist->{conflict}) {
+		for my $item (@{$plist->{conflict}}) {
+			$item->clone()->add_object($splitted);
+		}
+	}
+	if (defined $plist->{pkgcfl}) {
+		for my $item (@{$plist->{pkgcfl}}) {
+			$item->clone()->add_object($splitted);
+		}
+	}
+	if (defined $plist->{'no-default-conflict'}) {
+		# we conflict with the package we just removed...
+		OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
+	} else {
+		require OpenBSD::PackageName;
+
+		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname());
+		OpenBSD::PackingElement::Conflict->add($splitted, $stem."-*");
+	}
 
 	for my $item (@{$plist->{items}}) {
 		if ($item->isa("OpenBSD::PackingElement::Lib") &&
@@ -380,5 +421,20 @@ sub adjust_dependency
 	}
 	$l->delete($from);
 	$l->add($into);
+}
+
+sub is_needed
+{
+	my ($plist, $state) = @_;
+	my $new_context = {};
+	$plist->visit('build_context', $new_context);
+	my $oplist = OpenBSD::PackingList->from_installation($plist->pkgname());
+	my $old_context = {};
+	$oplist->visit('build_context', $old_context);
+	my $n = join(',', sort keys %$new_context);
+	my $o = join(',', sort keys %$old_context);
+	print "Comparing full signature $o vs. $n\n" if $state->{very_verbose};
+	return join(',', sort keys %$new_context) ne 
+	    join(',', sort keys %$old_context);
 }
 1;
