@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.18 2000/04/15 11:45:55 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.19 2000/10/07 14:07:08 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -78,10 +78,10 @@ This argument must be a colon
 .Pq Sq \&:
 separated list of all the
 user database fields, although they may be empty.
-In YP environments this operation is not supported, only local additions
-can be done and that requires use of the
+This operation is not supported in YP environments; only local additions
+can be performed which requires the
 .Fl l
-flag.
+flag to be specified.
 .It Fl l
 In environments where YP is enabled, always alter local information as
 opposed to information in YP.
