@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 1999/08/14 03:42:16 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 1999/08/25 14:59:16 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -69,9 +69,9 @@
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
-#define	UADDR		0xC1000000	/* u-area lives here */
-#define	UPAGES		(2)		/* pages of u-area */
-#define	USPACE		(UPAGES * NBPG)	/* pages for user struct */
+#define	UADDR		0x7ffe6000	/* u-area lives here */
+#define	UPAGES		(4)		/* pages of u-area */
+#define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
 
 /*
  * Constants related to network buffer management.
