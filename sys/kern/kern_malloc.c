@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.42 2001/11/28 19:28:14 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.43 2001/12/05 01:57:15 provos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -49,7 +49,31 @@
 static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
-int nkmempages;
+#ifdef NKMEMCLUSTERS
+#error NKMEMCLUSTERS is obsolete; remove it from your kernel config file and use NKMEMPAGES instead or let the kernel auto-size
+#endif
+
+/*
+ * Default number of pages in kmem_map.  We attempt to calculate this
+ * at run-time, but allow it to be either patched or set in the kernel
+ * config file.
+ */
+#ifndef NKMEMPAGES
+#define	NKMEMPAGES	0
+#endif
+int	nkmempages = NKMEMPAGES;
+
+/*
+ * Defaults for lower- and upper-bounds for the kmem_map page count.
+ * Can be overridden by kernel config options.
+ */
+#ifndef	NKMEMPAGES_MIN
+#define	NKMEMPAGES_MIN	NKMEMPAGES_MIN_DEFAULT
+#endif
+
+#ifndef NKMEMPAGES_MAX
+#define	NKMEMPAGES_MAX	NKMEMPAGES_MAX_DEFAULT
+#endif
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
@@ -409,6 +433,43 @@ free(addr, type)
 }
 
 /*
+ * Compute the number of pages that kmem_map will map, that is,
+ * the size of the kernel malloc arena.
+ */
+void
+kmeminit_nkmempages()
+{
+	int npages;
+
+	if (nkmempages != 0) {
+		/*
+		 * It's already been set (by us being here before, or
+		 * by patching or kernel config options), bail out now.
+		 */
+		return;
+	}
+
+	/*
+	 * We use the following (simple) formula:
+	 *
+	 *	- Starting point is physical memory / 4.
+	 *
+	 *	- Clamp it down to NKMEMPAGES_MAX.
+	 *
+	 *	- Round it up to NKMEMPAGES_MIN.
+	 */
+	npages = physmem / 4;
+
+	if (npages > NKMEMPAGES_MAX)
+		npages = NKMEMPAGES_MAX;
+
+	if (npages < NKMEMPAGES_MIN)
+		npages = NKMEMPAGES_MIN;
+
+	nkmempages = npages;
+}
+
+/*
  * Initialize the kernel memory allocator
  */
 void
@@ -417,18 +478,22 @@ kmeminit()
 #ifdef KMEMSTATS
 	long indx;
 #endif
-	int npg;
 
 #ifdef DIAGNOSTIC
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("kmeminit: minbucket too small/struct freelist too big");
 #endif
 
-	npg = VM_KMEM_SIZE / PAGE_SIZE;
+	/*
+	 * Compute the number of kmem_map pages, if we have not
+	 * done so already.
+	 */
+	kmeminit_nkmempages();
+
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
-		(vsize_t)(npg * sizeof(struct kmemusage)));
+		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), 
+		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages * PAGE_SIZE), 
 			VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
@@ -439,13 +504,11 @@ kmeminit()
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = npg * PAGE_SIZE * 6 / 10;
+		kmemstats[indx].ks_limit = nkmempages * PAGE_SIZE * 6 / 10;
 #endif
 #ifdef MALLOC_DEBUG
 	debug_malloc_init();
 #endif
-
-	nkmempages = npg;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2001/09/11 03:50:46 jason Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2001/12/05 01:57:15 provos Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -213,9 +213,12 @@ extern int nbpg, pgofset, pgshift;
 
 #define MSGBUFSIZE	NBPG
 
-#ifndef NKMEMCLUSTERS
-#define NKMEMCLUSTERS	(16 * 1024 * 1024 / PAGE_SIZE)
-#endif
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))

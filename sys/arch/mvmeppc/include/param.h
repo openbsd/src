@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2001/09/02 19:40:24 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 2001/12/05 01:57:15 provos Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -51,9 +51,13 @@
 #define MSGBUFSIZE	(NBPG*2)
 
 /*
- * Size of kernel malloc arena in logical pages.
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(16 * 1024 * 1024 / PAGE_SIZE)
+#ifndef NKMEMPAGES_MIN_DEFAULT
+#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
+#ifndef NKMEMPAGES_MAX_DEFAULT
+#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2001/11/30 17:45:06 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2001/12/05 01:57:14 provos Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -91,11 +91,11 @@
 #endif
 
 /*
- * Size of kernel malloc arena in logical pages
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
  */
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(16 * 1024 * 1024 / PAGE_SIZE)
-#endif
+#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
