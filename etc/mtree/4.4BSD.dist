@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.52 1998/05/23 19:22:32 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.53 1998/07/12 08:44:33 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -162,11 +162,6 @@ rpc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
 rpcsvc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
-..
-
-# ./usr/include/ss
-ss		gname=bin uname=root mode=0755
-# ./usr/include/ss
 ..
 
 # ./usr/include
