@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.36 2000/12/02 02:09:26 angelos Exp $	*/
-/*	$EOM: exchange.c,v 1.134 2000/10/16 18:16:58 provos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.37 2000/12/12 01:45:17 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1417,10 +1417,13 @@ exchange_finalize (struct message *msg)
     {
       struct sa *sa = TAILQ_FIRST (&exchange->sa_list);
 
-      ipsec_clone_id (&sa->id_i, &sa->id_i_len, exchange->id_i,
-		      exchange->id_i_len);
-      ipsec_clone_id (&sa->id_r, &sa->id_r_len, exchange->id_r,
-		      exchange->id_r_len);
+      if (exchange->id_i && exchange->id_r)
+	{
+          ipsec_clone_id (&sa->id_i, &sa->id_i_len, exchange->id_i,
+		          exchange->id_i_len);
+          ipsec_clone_id (&sa->id_r, &sa->id_r_len, exchange->id_r,
+		          exchange->id_r_len);
+	}
 
       TAILQ_REMOVE (&exchange->sa_list, sa, next);
 
