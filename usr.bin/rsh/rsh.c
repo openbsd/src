@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.5 1996/07/22 10:09:04 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.6 1996/07/24 17:31:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.5 1996/07/22 10:09:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.6 1996/07/24 17:31:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,6 +163,7 @@ main(argc, argv)
 	if (!argv[optind]) {
 		if (asrsh)
 			*argv = "rlogin";
+		setuid(getuid());
 		execv(_PATH_RLOGIN, argv);
 		(void)fprintf(stderr, "rsh: can't exec %s.\n", _PATH_RLOGIN);
 		exit(1);
