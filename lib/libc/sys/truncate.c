@@ -31,9 +31,9 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: truncate.c,v 1.5 1996/09/15 09:31:57 tholo Exp $";
-#endif /* LIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: truncate.c,v 1.6 1997/04/26 08:50:13 tholo Exp $";
+#endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
