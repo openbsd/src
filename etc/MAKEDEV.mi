@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.60 2003/06/18 18:08:59 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.61 2003/10/11 03:32:15 tedu Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -335,7 +335,7 @@ __devitem(ccd, ccd*, concatenated disk devices)dnl
 __devitem(raid, raid*, RAIDframe disk devices)dnl
 __devitem(vnd, vnd*, "file" pseudo-disks)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)
-	dodisk svnd $U major_vnd_b major_vnd_c $U 128{--}ifstep(vnd)-})dnl
+	dodisk svnd $U major_vnd_b major_vnd_c $U 2048{--}ifstep(vnd)-})dnl
 __devitem(ra, ra*, {-MSCP disks (ra??, hd??)-})dnl
 __devitem(hp, hp*, {-massbuss rm??-})dnl
 __devitem(hk, hk*, {-unibus rk06 and rk07-})dnl

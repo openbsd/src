@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.51 2003/04/15 20:10:46 jmc Exp $
+#	$OpenBSD: MAKEDEV,v 1.52 2003/10/11 03:32:15 tedu Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -286,7 +286,7 @@ vnd*)
 	for name in vnd svnd; do
 		case $name in
 		vnd) off=0;;
-		svnd) off=128;;
+		svnd) off=2048;;
 		esac
 		rm -f {r,}${name}${unit}[a-p]
 		minor=$(($unit * 16 + $off))
