@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yptest.c,v 1.2 1996/01/20 00:37:58 chuck Exp $";
+static char rcsid[] = "$Id: yptest.c,v 1.3 1996/04/24 22:00:41 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -36,7 +36,7 @@ static char rcsid[] = "$Id: yptest.c,v 1.2 1996/01/20 00:37:58 chuck Exp $";
 #include <strings.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
 static int
@@ -101,8 +101,8 @@ main()
   case 0:
   	for(y=ypml; y; ) {
 		ypml=y;
-		printf("%s\n",ypml->ypml_name);
-		y=ypml->ypml_next;
+		printf("%s\n",ypml->map);
+		y=ypml->next;
 	}
   }
 
