@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.72 2002/09/23 23:03:31 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.73 2002/10/31 18:02:27 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1704,8 +1704,7 @@ ip6_pcbopts(pktopt, m, so)
 		/*
 		 * Only turning off any previous options.
 		 */
-		if (opt)
-			free(opt, M_IP6OPT);
+		free(opt, M_IP6OPT);
 		if (m)
 			(void)m_free(m);
 		return (0);
@@ -1716,6 +1715,7 @@ ip6_pcbopts(pktopt, m, so)
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
+		free(opt, M_IP6OPT);
 		return (error);
 	}
 	*pktopt = opt;
