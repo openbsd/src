@@ -1,0 +1,77 @@
+.\"	$OpenBSD: cvsintro.7,v 1.1 2004/11/26 15:57:16 jfb Exp $
+.\"
+.\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 15, 2004
+.Dt CVSINTRO 7
+.Os
+.Sh NAME
+.Nm cvsintro
+.Nd introduction to Concurrent Versioning System
+.Sh DESCRIPTION
+Concurrent Versions System is a popular open source version control system.
+Although it is mostly used to track changes to software source code for
+development teams, there are very few limitations to the kind of data that
+can be managed by the system, and it can be used for document archival
+purposes as well.
+.Pp
+This document provides an introduction to using OpenCVS to manage repositories.
+It will first cover some of the aspects of using and managing CVS and,
+where appropriate, explain the main differences between OpenCVS and other
+distributions.
+
+.Sh CREATING A REPOSITORY
+Before CVS can be used, a repository must be created.
+A repository is simply a directory where the CVS daemon can store the version
+information for the files that it will host.
+
+
+.Sh CREATING A MODULE
+
+.Sh PROPAGATING CHANGES
+
+.Sh REMOVING FILES
+
+.Pp
+.Sh SEE ALSO
+.Xr rcs 1 ,
+.Xr diff 1 ,
+.Xr patch 1 ,
+.Xr cvsd 8
+.Sh CAVEATS
+This CVS implementation does not fully conform to the GNU CVS version.
+In some cases, this was done explicitly because GNU CVS has inconsistencies
+or ambiguous behaviour.
+Some things have also been left out or modified to enhance the overall
+security of the system.
+.Pp
+Among other things, support for the pserver connection mechanism has been
+dropped because of security issues with the authentication mechanism.
+.Sh HISTORY
+The OpenCVS project is a BSD-licensed rewrite of the original
+Concurrent Versioning System written by Jean-Francois Brousseau.
+The original CVS code was written in large parts by Dick Grune,
+Brian Berliner and Jeff Polk.
+.Sh AUTHORS
+.An Jean-Francois Brousseau
