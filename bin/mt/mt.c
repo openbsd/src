@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.16 1997/03/29 21:23:10 tholo Exp $	*/
+/*	$OpenBSD: mt.c,v 1.17 1997/04/16 04:19:07 millert Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.16 1997/03/29 21:23:10 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.17 1997/04/16 04:19:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ main(argc, argv)
 		tape = NULL;
 	} else {
 		if ((tape = getenv("TAPE")) == NULL)
-			tape = DEFTAPE;
+			tape = _PATH_DEFTAPE;
 	}
 
 	while ((ch = getopt(argc, argv, "f:t:")) != -1) {

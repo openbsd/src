@@ -1,5 +1,5 @@
-/*	$OpenBSD: mtio.h,v 1.3 1996/04/17 17:05:49 dm Exp $	*/
-/*	$NetBSD: mtio.h,v 1.12 1995/03/29 22:10:07 briggs Exp $	*/
+/*	$OpenBSD: mtio.h,v 1.4 1997/04/16 04:19:09 millert Exp $	*/
+/*	$NetBSD: mtio.h,v 1.14 1997/04/15 06:50:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *
  *	@(#)mtio.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_MTIO_H_
+#define _SYS_MTIO_H_
 
 /*
  * Structures and definitions for mag tape io control commands
@@ -118,10 +121,6 @@ struct mtget {
 #define MTIOCIEOT	_IO('m', 3)			/* ignore EOT error */
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
-#ifndef _KERNEL
-#define	DEFTAPE	"/dev/nrst0"
-#endif
-
 #ifdef	_KERNEL
 /*
  * minor device number
@@ -134,4 +133,6 @@ struct mtget {
 #define	T_1600BPI	010		/* select 1600 bpi */
 #define	T_6250BPI	020		/* select 6250 bpi */
 #define	T_BADBPI	030		/* undefined selection */
-#endif
+#endif /* _KERNEL */
+
+#endif /* !_SYS_MTIO_H_ */
