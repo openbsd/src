@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.2 2000/04/18 14:32:49 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.3 2000/06/22 08:24:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1956,7 +1956,11 @@ void xl_init(xsc)
 	/*
 	 * Program the multicast filter, if necessary.
 	 */
+#if 0
 	if (sc->xl_type == XL_TYPE_905B)
+#else
+	if (0)	/* xl_setmulti_hash() does not work right */
+#endif
 		xl_setmulti_hash(sc);
 	else
 		xl_setmulti(sc);
@@ -2227,7 +2231,11 @@ xl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
+#if 0
 			if (sc->xl_type == XL_TYPE_905B)
+#else
+			if (0)	/* xl_setmulti_hash() does not work right */
+#endif
 				xl_setmulti_hash(sc);
 			else
 				xl_setmulti(sc);
