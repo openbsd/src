@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.9 1998/11/20 15:57:21 deraadt Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.10 2001/08/17 13:52:28 mickey Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -94,9 +94,6 @@ static int	cgeightmatch(struct device *, void *, void *);
 #if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
 #endif
-
-/* cdevsw prototypes */
-cdev_decl(cgeight);
 
 struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach

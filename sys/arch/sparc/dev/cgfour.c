@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.9 1998/11/20 15:57:21 deraadt Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.10 2001/08/17 13:52:28 mickey Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -98,9 +98,6 @@ static int	cgfourmatch __P((struct device *, void *, void *));
 #if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
 #endif
-
-/* cdevsw prototypes */
-cdev_decl(cgfour);
 
 struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach

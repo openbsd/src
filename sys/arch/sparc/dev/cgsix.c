@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.14 2001/05/10 10:34:43 art Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.15 2001/08/17 13:52:28 mickey Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -125,9 +125,6 @@ struct cgsix_softc {
 static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cgsixmatch __P((struct device *, void *, void *));
 static void	cg6_unblank __P((struct device *));
-
-/* cdevsw prototypes */
-cdev_decl(cgsix);
 
 struct cfattach cgsix_ca = {
 	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.5 2001/05/10 10:34:43 art Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.6 2001/08/17 13:52:28 mickey Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -104,9 +104,6 @@
 static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, void *, void *);
 static void	cgfourteenunblank(struct device *);
-
-/* cdevsw prototypes */
-cdev_decl(cgfourteen);
 
 struct cfattach cgfourteen_ca = {
 	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach

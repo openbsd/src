@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.14 2001/04/06 04:42:05 csapuntz Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.15 2001/08/17 13:52:28 mickey Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -95,9 +95,6 @@ static int	cgtwomatch __P((struct device *, void *, void *));
 static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
-
-/* cdevsw prototypes */
-cdev_decl(cgtwo);
 
 struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach

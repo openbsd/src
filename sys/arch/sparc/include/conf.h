@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.11 2001/06/27 06:23:28 angelos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.12 2001/08/17 13:52:29 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -75,6 +75,8 @@ cdev_decl(cgeight);
 cdev_decl(tcx);
 
 cdev_decl(cgfourteen);
+
+cdev_decl(p9100);
 
 bdev_decl(xd);
 cdev_decl(xd);
