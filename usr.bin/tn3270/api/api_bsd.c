@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_bsd.c,v 1.4 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: api_bsd.c,v 1.5 2003/11/15 00:26:36 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_bsd.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: api_bsd.c,v 1.4 2003/06/03 02:56:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: api_bsd.c,v 1.5 2003/11/15 00:26:36 tedu Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -42,6 +42,8 @@ static char rcsid[] = "$OpenBSD: api_bsd.c,v 1.4 2003/06/03 02:56:18 millert Exp
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+#include <pwd.h>
+#include <unistd.h>
 
 #include "../ctlr/api.h"
 #include "api_exch.h"
@@ -120,7 +122,7 @@ char	*string;		/* if non-zero, where to connect to */
 	return -1;
     }
     keyfile = fopen(keyname, "r");
-    if (keyfile == 0) {
+    if (keyfile == NULL) {
 	perror("fopen");
 	return -1;
     }
@@ -128,6 +130,7 @@ char	*string;		/* if non-zero, where to connect to */
 	perror("fscanf");
 	return -1;
     }
+    fclose(keyfile);
     sd.length = strlen(inkey)+1;
     if (api_exch_outtype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
 	return -1;
@@ -137,7 +140,7 @@ char	*string;		/* if non-zero, where to connect to */
     }
     while ((i = api_exch_nextcommand()) != EXCH_CMD_ASSOCIATED) {
 	int passwd_length;
-	char *passwd, *getpass();
+	char *passwd;
 	char buffer[200];
 
 	switch (i) {
@@ -163,7 +166,10 @@ char	*string;		/* if non-zero, where to connect to */
 		return -1;
 	    }
 	    buffer[sd.length] = 0;
-	    passwd = getpass(buffer);		/* Go to terminal */
+	    if ((passwd = getpass(buffer)) == NULL) { /* Go to terminal */
+	    	perror("getpass");
+	        return -1;
+	    }
 	    passwd_length = strlen(passwd);
 	    if (api_exch_intype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
 		return -1;
