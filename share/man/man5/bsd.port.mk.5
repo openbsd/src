@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.121 2003/08/21 20:24:12 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.122 2003/09/03 09:10:30 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -49,13 +49,13 @@ decided yet how to define it.
 .Sh TARGETS
 .Bl -tag -width do-configure
 .It Ar {build,run,all}-dir-depends
-Print all dependencies for a port in order to build it, run it, 
+Print all dependencies for a port in order to build it, run it,
 or both.
 The output is formatted as package specification pairs, in a form suitable
 for
 .Xr tsort 1 .
 .It Ar full-{build,run,all}-depends
-Print all dependencies a package depends upon for building, running, 
+Print all dependencies a package depends upon for building, running,
 or both, as a list of package names.
 .It Ar {build,lib,run}-depends-list
 Print a list of first level package specifications a port depends as
@@ -266,7 +266,7 @@ See
 .It Ar licence-check
 Check that
 .Ev PERMIT_PACKAGE_*
-settings match: 
+settings match:
 if any dependency has a more restrictive setting, warn about it.
 This warning is advisory, because the automated license checking cannot
 figure out which ports were used only for building and did not taint
@@ -1361,7 +1361,7 @@ User settings.
 If set to
 .Xr sudo 8
 in
-.Xr mk.conf ,
+.Xr mk.conf 5 ,
 the ports tree will only invoke root's privileges for the parts that
 really require it.
 .It Ev SUPDISTFILES
@@ -1604,7 +1604,7 @@ and
 .Ar print-run-depends
 instead.
 .It Ar print-depends-list
-Renamed into 
+Renamed into
 .Ar print-build-depends
 .It Ar print-package-depends
 Renamed into
