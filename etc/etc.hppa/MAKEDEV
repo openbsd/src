@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.7 2001/06/28 02:58:54 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.8 2001/09/06 19:24:46 mickey Exp $
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
@@ -104,7 +104,7 @@ case $i in
 all)
 	sh MAKEDEV std fd st0 st1 ccd0 ccd1 ccd2
 	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV hil com0 com1 com2 com3 
+	sh MAKEDEV hil tty00 tty01 tty02 tty03 
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV pf tun0 tun1 tun2 tun3 lkm random xfs0 altq
 	sh MAKEDEV local
@@ -112,7 +112,7 @@ all)
 
 raminst)
 	sh MAKEDEV std fd st0 st1 sd0 sd1 sd2 sd3 rd0 rd1
-	sh MAKEDEV pty0 hil com0 com1
+	sh MAKEDEV pty0 hil tty00 tty01
 	sh MAKEDEV bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
