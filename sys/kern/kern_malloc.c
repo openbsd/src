@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.53 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.54 2003/06/26 01:01:06 mickey Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ extern struct lock sysctl_kmemlock;
 /*
  * This structure provides a set of masks to catch unaligned frees.
  */
-long addrmask[] = { 0,
+const long addrmask[] = { 0,
 	0x00000001, 0x00000003, 0x00000007, 0x0000000f,
 	0x0000001f, 0x0000003f, 0x0000007f, 0x000000ff,
 	0x000001ff, 0x000003ff, 0x000007ff, 0x00000fff,
