@@ -4,21 +4,21 @@
 .\" This package is an SSL implementation written
 .\" by Eric Young (eay@cryptsoft.com).
 .\" The implementation was written so as to conform with Netscapes SSL.
-.\" 
+.\"
 .\" This library is free for commercial and non-commercial use as long as
 .\" the following conditions are aheared to.  The following conditions
 .\" apply to all code found in this distribution, be it the RC4, RSA,
 .\" lhash, DES, etc., code; not just the SSL code.  The SSL documentation
 .\" included with this distribution is covered by the same copyright terms
 .\" except that the holder is Tim Hudson (tjh@cryptsoft.com).
-.\" 
+.\"
 .\" Copyright remains Eric Young's, and as such any Copyright notices in
 .\" the code are not to be removed.
 .\" If this package is used in a product, Eric Young should be given attribution
 .\" as the author of the parts of the library used.
 .\" This can be in the form of a textual message at program startup or
 .\" in documentation (online or textual) provided with the package.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -33,12 +33,12 @@
 .\"     Eric Young (eay@cryptsoft.com)"
 .\"    The word 'cryptographic' can be left out if the rouines from the library
 .\"    being used are not cryptographic related :-).
-.\" 4. If you include any Windows specific code (or a derivative thereof) from 
+.\" 4. If you include any Windows specific code (or a derivative thereof) from
 .\"    the apps directory (application code) you must include an
 .\"    acknowledgement:
 .\"    "This product includes software written by Tim Hudson
 .\"	(tjh@cryptsoft.com)"
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,13 +50,13 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\" 
+.\"
 .\" The licence and distribution terms for any publically available version or
 .\" derivative of this code cannot be changed.  i.e. this code cannot simply be
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
-.\" 
-.TH DES_CRYPT 3 
+.\"
+.TH DES_CRYPT 3
 .SH NAME
 des_read_password, des_read_2password,
 des_string_to_key, des_string_to_2key, des_read_pw_string,
@@ -263,7 +263,7 @@ converts a string into a valid des key.
 .PP
 .I des_string_to_2key
 converts a string into 2 valid des keys.
-This routine is best suited for used to generate keys for use with
+This routine is best suited for use to generate keys for use with
 .I des_3ecb_encrypt.
 .PP
 .I des_random_key
@@ -279,7 +279,7 @@ If the
 .I des_check_key
 flag is non-zero,
 .I des_set_key
-will check that the key passed is of odd parity and is not a week or
+will check that the key passed is of odd parity and is not a weak or
 semi-weak key.
 If the parity is wrong,
 then -1 is returned.
@@ -336,7 +336,7 @@ No meaningful value is returned.
 encrypts/decrypts the
 .I input
 block by using triple ecb DES encryption.
-This involves encrypting the input with 
+This involves encrypting the input with
 .I ks1,
 decryption with the key schedule
 .I ks2,
@@ -370,12 +370,12 @@ and initialisation vector provided by the
 argument.
 If the
 .I length
-argument is not an integral multiple of eight bytes, 
+argument is not an integral multiple of eight bytes,
 the last block is copied to a temporary area and zero filled.
 The output is always
 an integral multiple of eight bytes.
 To make multiple cbc encrypt calls on a large amount of data appear to
-be one 
+be one
 .I des_cbc_encrypt
 call, the
 .I ivec
@@ -413,7 +413,7 @@ encryption.
 .PP
 .I des_cfb_encrypt
 encrypt/decrypts using cipher feedback mode.  This method takes an
-array of characters as input and outputs and array of characters.  It
+array of characters as input and outputs an array of characters.  It
 does not require any padding to 8 character groups.  Note: the ivec
 variable is changed and the new changed value needs to be passed to
 the next call to this function.  Since this function runs a complete
@@ -421,8 +421,8 @@ DES ecb encryption per numbits, this function is only suggested for
 use when sending small numbers of characters.
 .PP
 .I des_ofb_encrypt
-encrypt using output feedback mode.  This method takes an
-array of characters as input and outputs and array of characters.  It
+encrypts using output feedback mode.  This method takes an
+array of characters as input and outputs an array of characters.  It
 does not require any padding to 8 character groups.  Note: the ivec
 variable is changed and the new changed value needs to be passed to
 the next call to this function.  Since this function runs a complete
@@ -462,7 +462,7 @@ The data is encrypted via
 for the key and
 .I iv
 as a starting vector.
-The actual data send down
+The actual data sent down
 .I fd
 consists of 4 bytes (in network byte order) containing the length of the
 following encrypted data.  The encrypted data then follows, padded with random
@@ -492,9 +492,9 @@ I have used them in implementing a version of rlogin in which all
 data is encrypted.
 .PP
 .I des_rw_mode
-is used to specify the encryption mode to use with 
+is used to specify the encryption mode to use with
 .I des_enc_read
-and 
+and
 .I des_end_write.
 If set to
 .I DES_PCBC_MODE
@@ -510,7 +510,7 @@ sets the parity of the passed
 to odd.  This routine is not part of the standard MIT library.
 .PP
 .I des_is_weak_key
-returns 1 is the passed key is a weak key (pick again :-),
+returns 1 if the passed key is a weak key (pick again :-),
 0 if it is ok.
 This routine is not part of the standard MIT library.
 .PP
@@ -541,7 +541,7 @@ input byte and the low half of the second input byte.  The second 12
 bits will have the low 8 bits taken from the 3rd input byte and the
 top 4 bits taken from the 4th input byte.  The same holds for output.
 This function has been implemented this way because most people will
-be using a multiple of 8 and because once you get into pulling bytes input
+be using a multiple of 8 and because once you get into pulling input
 bytes apart things get ugly!
 .PP
 .I des_read_pw_string
@@ -559,8 +559,8 @@ NOTE: extensive work has been done on this library since this document
 was originally written.  Please try to read des.doc from the libdes
 distribution since it is far more up to date and documents more of the
 functions.  Libdes is now also being shipped as part of SSLeay, a
-general cryptographic library that amonst other things implements
-netscapes SSL protocol.  The most recent version can be found in
+general cryptographic library that amongst other things implements
+Netscape's SSL protocol.  The most recent version can be found in
 SSLeay distributions.
 .SH AUTHOR
 Eric Young (eay@mincom.oz.au or eay@psych.psy.uq.oz.au)

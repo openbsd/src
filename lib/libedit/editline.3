@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.10 2000/04/15 02:15:27 aaron Exp $
+.\"	$OpenBSD: editline.3,v 1.11 2003/05/23 12:41:13 jmc Exp $
 .\"	$NetBSD: editline.3,v 1.4 1997/01/14 04:17:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ Refer to
 .Xr editrc 5
 for more information.
 .Pp
-.Em NOTE:
+.Em NOTE :
 .Va argv[0]
 may be modified by
 .Fn el_parse .
@@ -308,7 +308,7 @@ for more information.
 .It Dv EL_ADDFN , Xo
 .Fa "const char *name" ,
 .Fa "const char *help" ,
-.Fa "unsigned char (*func)(EditLine *e, int ch)
+.Fa "unsigned char (*func)(EditLine *e, int ch)"
 .Xc
 Add a user defined function,
 .Fn func ,
@@ -530,4 +530,4 @@ should not modify the supplied
 .Va argv[0] .
 .Pp
 The tokenization functions are not publically defined in
-.Fd <histedit.h>
+.Aq Pa histedit.h .
