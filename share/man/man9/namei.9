@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.5 2003/07/25 02:25:38 tedu Exp $
+.\"	$OpenBSD: namei.9,v 1.6 2003/07/25 02:27:33 deraadt Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,13 +116,13 @@ structure
 This structure describes the subset of information from the nameidata
 structure that is passed through to the vnode operations.
 See
-.Xr vnodeops 9
+.Xr VOP_LOOKUP 9
 for more information.
 The details of the componentname structure are not absolutely necessary
 since the members are initialised by the helper macro
 .Fn NDINIT .
 It is useful to know the operations and flags as specified in
-.Xr vnodeops 9 .
+.Xr VOP_LOOKUP 9 .
 .Pp
 The
 .Nm
@@ -295,7 +295,7 @@ The name lookup subsystem is implemented within the file
 .\" .Xr namecache 9 ,
 .Xr vfs 9 ,
 .Xr vnode 9 ,
-.Xr vnodeops 9
+.Xr VOP_LOOKUP 9
 .Sh BUGS
 It is unfortunate that much of the
 .Nm

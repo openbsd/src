@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2003/07/24 20:15:44 mickey Exp $
+#	$OpenBSD: Makefile,v 1.75 2003/07/25 02:27:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -19,7 +19,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 \
 	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 vget.9 \
 	vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 vrele.9 \
-	vnode.9 vnodeops.9 vn_lock.9 vrecycle.9 vwaitforio.9
+	vnode.9 VOP_LOOKUP.9 vn_lock.9 vrecycle.9 vwaitforio.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -207,15 +207,16 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 srandom.9 kern.9 getsn.9
 
 # VOP functions
-MLINKS+=vnodeops.9 VOP_CREATE.9 vnodeops.9 VOP_FSYNC.9 \
-	vnodeops.9 VOP_GETEXTATTR.9 vnodeops.9 VOP_ISLOCKED.9 \
-	vnodeops.9 VOP_LOOKUP.9 vnodeops.9 VOP_LINK.9 vnodeops.9 VOP_LOCK.9 \
-	vnodeops.9 VOP_MKDIR.9 vnodeops.9 VOP_PRINT.9 \
-	vnodeops.9 VOP_READLINK.9 vnodeops.9 VOP_REALOCBLKS.9 \
-	vnodeops.9 VOP_RECLAIM.9 vnodeops.9 VOP_REMOVE.9 \
-	vnodeops.9 VOP_REVOKE.9 vnodeops.9 VOP_RMDIR.9 \
-	vnodeops.9 VOP_SETEXTATTR.9 vnodeops.9 VOP_STRATEGY.9 \
-	vnodeops.9 VOP_SYMLINK.9 vnodeops.9 VOP_UNLOCK.9 \
-	vnodeops.9 VOP_WHITEOUT.9
+MLINKS+=VOP_LOOKUP.9 VOP_CREATE.9 VOP_LOOKUP.9 VOP_FSYNC.9 \
+	VOP_LOOKUP.9 VOP_GETEXTATTR.9 VOP_LOOKUP.9 VOP_ISLOCKED.9 \
+	VOP_LOOKUP.9 VOP_LOOKUP.9 VOP_LOOKUP.9 VOP_LINK.9 \
+	VOP_LOOKUP.9 VOP_LOCK.9 \
+	VOP_LOOKUP.9 VOP_MKDIR.9 VOP_LOOKUP.9 VOP_PRINT.9 \
+	VOP_LOOKUP.9 VOP_READLINK.9 VOP_LOOKUP.9 VOP_REALOCBLKS.9 \
+	VOP_LOOKUP.9 VOP_RECLAIM.9 VOP_LOOKUP.9 VOP_REMOVE.9 \
+	VOP_LOOKUP.9 VOP_REVOKE.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
+	VOP_LOOKUP.9 VOP_SETEXTATTR.9 VOP_LOOKUP.9 VOP_STRATEGY.9 \
+	VOP_LOOKUP.9 VOP_SYMLINK.9 VOP_LOOKUP.9 VOP_UNLOCK.9 \
+	VOP_LOOKUP.9 VOP_WHITEOUT.9
 
 .include <bsd.prog.mk>
