@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.135 2001/12/25 01:30:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.136 2002/01/04 09:34:35 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -55,7 +55,7 @@ distribution-etc-root-var distribution distrib-dirs release snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
-distribution-etc-root-var: distrib-dirs
+distribution-etc-root-var: distrib-dirs allarchs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
@@ -317,5 +317,29 @@ snap_md:
 # nothing here -- look in the machine-dependent Makefile.inc
 
 .endif	# DESTDIR check
+
+MAKEDEVARCHS+=sparc64
+
+all:
+	@make M=${MACHINE} m4
+
+clean:
+	rm -f etc.${MACHINE}/MAKEDEV
+
+cleandir:
+	@cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
+		make MACHINE=$$m clean; done
+
+m4: etc.${M}/MAKEDEV
+
+etc.${M}/MAKEDEV: MAKEDEV.sub MAKEDEV.mi etc.${M}/MAKEDEV.md
+	@echo "==> etc.${M}/MAKEDEV"
+	@m4 -DMACHINE=${M} MAKEDEV.mi > etc.${M}/.MAKEDEV.tmp && \
+	mv etc.${M}/.MAKEDEV.tmp etc.${M}/MAKEDEV || \
+	rm etc.${M}/.MAKEDEV.tmp
+
+allarchs: MAKEDEV.sub MAKEDEV.mi
+	@cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
+	make M=$$m m4; done
 
 .include <bsd.prog.mk>
