@@ -4,11 +4,11 @@ queue  wim bandwidth 1Mb cbq( default )
   [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
 queue  the bandwidth 1Mb 
   [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue  minibar bandwidth 8Mb priority 7 
+queue  minibar bandwidth 3Mb priority 7 
   [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
 queue  is bandwidth 1Mb 
   [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
-queue  empty bandwidth 9Mb 
+queue  empty bandwidth 4Mb 
   [ qid=6 ifname=lo0 ifbandwidth=10Mb ]
 @0 pass in on lo0 proto tcp from any to any port = ssh keep state queue(the, minibar)
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=3 ]

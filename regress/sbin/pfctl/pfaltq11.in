@@ -10,6 +10,6 @@ queue  sub2 bandwidth 50%
 queue  sub3 bandwidth 50%
 queue drei bandwidth 10% subseven
 queue vier bandwidth 10% hfsc(default)
-queue fuenf bandwidth 50% subseven
+queue fuenf bandwidth 5% subseven
 queue  subseven bandwidth 90%
 

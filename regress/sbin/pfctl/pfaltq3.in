@@ -3,13 +3,13 @@
 # -two differently named queues must not share a qid, even on different ifs
 
 altq on lo0 tbrsize 1824 bandwidth 10Mb cbq queue { eins zwei drei }
-altq on tun1000000 tbrsize 1824 bandwidth 33600b cbq queue { vier zwei fuenf }
+altq on tun1000000 tbrsize 1824 bandwidth 128000b cbq queue { vier zwei fuenf }
 queue eins bandwidth 10% cbq(default)
-queue zwei bandwidth 80% { sub2 sub3 }
+queue zwei bandwidth 60% { sub2 sub3 }
 queue  sub2 bandwidth 50%
 queue  sub3 bandwidth 50%
-queue drei bandwidth 10% subseven
-queue vier bandwidth 50% cbq(default)
-queue fuenf bandwidth 50% subseven
+queue drei bandwidth 30% subseven
+queue vier bandwidth 25% cbq(default)
+queue fuenf bandwidth 15% subseven
 queue  subseven bandwidth 90%
 

@@ -22,7 +22,7 @@ queue   sub3 bandwidth 13.40Kb
   [ qid=6 ifname=tun1000000 ifbandwidth=33.60Kb ]
 queue  vier bandwidth 3.36Kb hfsc( default ) 
   [ qid=8 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue  fuenf bandwidth 16.80Kb {subseven}
+queue  fuenf bandwidth 1.68Kb {subseven}
   [ qid=9 ifname=tun1000000 ifbandwidth=33.60Kb ]
-queue   subseven bandwidth 15.12Kb 
+queue   subseven bandwidth 1.44Kb 
   [ qid=10 ifname=tun1000000 ifbandwidth=33.60Kb ]
