@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1997/01/30 00:51:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/08/19 08:05:16 niklas Exp $
 
 PROG =	rpc.lockd
 SRCS =	nlm_prot_svc.c lockd.c procs.c
@@ -7,7 +7,7 @@ MAN =	rpc.lockd.8
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
 
-CFLAGS+= -I.
+CFLAGS+= -I. -DSYSLOG
 
 CLEANFILES= nlm_prot_svc.c nlm_prot.h
 
