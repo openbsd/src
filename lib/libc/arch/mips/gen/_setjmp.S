@@ -39,7 +39,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.5 1996/08/19 08:15:51 tholo Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.6 1996/09/23 21:27:53 imp Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -96,7 +96,7 @@ LEAF(_longjmp)
 	lw	ra, (2 * 4)(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
 
-	addu	sp, sp, 32			# don't matter, sanity
+	addu	sp, sp, 32			# does not matter, sanity
 	lw	s0, ((S0 + 3) * 4)(a0)
 	lw	s1, ((S1 + 3) * 4)(a0)
 	lw	s2, ((S2 + 3) * 4)(a0)
