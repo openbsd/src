@@ -1,4 +1,4 @@
-/*	$OpenBSD: privs.h,v 1.7 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: privs.h,v 1.8 2003/10/20 21:10:19 jmc Exp $	*/
 
 /* 
  *  privs.h - header for privileged operations 
@@ -34,7 +34,7 @@
  * with the option of getting them back later.  This is done by
  * utilizing POSIX saved user and groups ids (or setreuid amd setregid if
  * POSIX saved ids are not available).  Call RELINQUISH_PRIVS once
- * at the beginning of the main program.  This will cause all operatons
+ * at the beginning of the main program.  This will cause all operations
  * to be executed with the real userid.  When you need the privileges
  * of the setuid/setgid invocation, call PRIV_START; when you no longer
  * need it, call PRIV_END.  Note that it is an error to call PRIV_START

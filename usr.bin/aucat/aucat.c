@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.8 2003/07/10 00:06:50 david Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.9 2003/10/20 21:10:19 jmc Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -38,7 +38,7 @@
 #include <err.h>
 
 /* 
- * aucat: concatinate and play Sun 8-bit .au files
+ * aucat: concatenate and play Sun 8-bit .au files
  */
 
 int	playfile(int, char *);
