@@ -1838,6 +1838,7 @@
 ./usr/share/man/cat2/clock_gettime.0
 ./usr/share/man/cat2/clock_settime.0
 ./usr/share/man/cat2/close.0
+./usr/share/man/cat2/closefrom.0
 ./usr/share/man/cat2/connect.0
 ./usr/share/man/cat2/dup.0
 ./usr/share/man/cat2/dup2.0

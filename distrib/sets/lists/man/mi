@@ -1247,9 +1247,11 @@
 ./usr/share/man/cat4/macppc/bm.0
 ./usr/share/man/cat4/macppc/intro.0
 ./usr/share/man/cat4/macppc/kauaiata.0
+./usr/share/man/cat4/macppc/ki2c.0
 ./usr/share/man/cat4/macppc/kmem.0
 ./usr/share/man/cat4/macppc/macobio.0
 ./usr/share/man/cat4/macppc/mem.0
+./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
 ./usr/share/man/cat4/macppc/zstty.0
