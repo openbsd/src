@@ -164,7 +164,6 @@ gets(cp)
 		switch (c) {
 		case '\n':
 		case '\r':
-			printf("%c", '\n');
 			*lp++ = '\0';
 			return;
 		case '\b':
