@@ -1,4 +1,5 @@
-#	$NetBSD: files.amiga,v 1.33 1996/01/28 19:57:47 chopps Exp $
+#     $OpenBSD: files.amiga,v 1.6 1996/02/26 22:50:33 niklas Exp $
+#     $NetBSD: files.amiga,v 1.34 1996/02/24 08:59:21 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -124,7 +125,7 @@ device	mfcs at mfc
 device	mfcp at mfc
 file	arch/amiga/dev/mfc.c		mfcs mfcp needs-count
 
-define	scsi {}
+include "../../../scsi/files.scsi"
 
 # wd 33c93 contrllers
 define	sbic 
@@ -199,31 +200,39 @@ file	arch/amiga/dev/bzsc.c		bzsc needs-flag
 device	idesc at mainbus: scsi
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
-device	scsibus at scsi	{target = -1, lun = -1}
+#
+# ISA devices
+#
+define	bridge {}
 
-device	cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-major	{cd = 6}
-device	sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
-major	{sd = 4}
-device	st at scsibus: tape
-file	scsi/st.c			st needs-flag
-major	{st = 5}
-device	ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-device	uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
-device	su at scsibus: disk
-file	scsi/su.c			su needs-flag
+# GoldenGate bridge
+device	ggbus at zbus: bridge
+file	arch/amiga/isa/ggbus.c		ggbus needs-flag
+file	arch/amiga/isa/ggbus_pio.c	ggbus
 
+# CrossLink bridge
+device	cross at zbus: bridge
+file	arch/amiga/isa/cross.c		cross needs-flag
+file	arch/amiga/isa/cross_pio.c	cross
+
+device	isa at bridge {[port = -1], [size = 0],	# XXX
+		       [iomem = -1], [iosiz = 0],
+		       [irq = -1], [drq = -1]}
+
+# Dummy busses needed for some multi-homed devices specified in files.isa
+define	pci { }
+device	pcmciabus at isa {}
+
+include	"../../../dev/isa/files.isa"
+file	arch/amiga/isa/isa_machdep.c	isa		needs-flag # XXX
+
+# XXX should really use if_ed instead
+device	isaed at isa: ifnet, ether
+file	arch/amiga/isa/if_isaed.c	isaed
 
 # list of standard files...
 file	dev/cons.c			ite ser
 file	dev/cninit.c			ite ser
-file	scsi/scsi_base.c		scsi
-file	scsi/scsi_ioctl.c		scsi
-file	scsi/scsiconf.c			scsi
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
 file	arch/amiga/amiga/cia.c
@@ -239,6 +248,12 @@ file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/m68k/m68k/copy.s
+
+major	{sd = 4}
+major	{st = 5}
+major	{vnd = 6}
+major	{cd = 7}
+major	{ccd = 8}
 
 # Compatibility modules
 
