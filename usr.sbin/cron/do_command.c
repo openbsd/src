@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.20 2002/07/15 22:16:50 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.21 2002/07/15 22:38:36 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.20 2002/07/15 22:16:50 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.21 2002/07/15 22:38:36 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -245,7 +245,7 @@ child_process(entry *e, user *u) {
 		setgid(e->pwd->pw_gid);
 		initgroups(usernm, e->pwd->pw_gid);
 		setlogin(usernm);
-		setuid(e->pw->pw_uid);	/* we aren't root after this... */
+		setuid(e->pwd->pw_uid);	/* we aren't root after this... */
 
 #endif /* LOGIN_CAP */
 		chdir(env_get("HOME", e->envp));
