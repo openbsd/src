@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.12 1996/10/24 23:25:05 downsj Exp $
+#	$OpenBSD: BABY,v 1.13 1997/02/08 09:23:57 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -77,7 +77,7 @@ option		EON		# OSI tunneling over IP
 option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
 
-config		bsd	root on sd0 swap on sd0 and sd1 and sd2
+config		bsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and sd4
 
 mainbus0 at root
 
