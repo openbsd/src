@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.151 1999/06/21 09:33:29 maja Exp $
+$OpenBSD: pcidevs,v 1.152 1999/06/22 08:30:08 maja Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -856,6 +856,7 @@ product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 /* ESS Technology Inc products */
 product ESSTECH	MAESTROII	0x1968	Maestro II
 product ESSTECH SOLO1		0x1969	SOLO-1 AudioDrive
+product ESSTECH MAESTRO2E	0x1978	Maestro 2E
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI
