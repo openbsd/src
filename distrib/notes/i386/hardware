@@ -24,6 +24,9 @@ Supported devices include:
 		Adaptec AHA-294x[W] cards and some onboard PCI designs using
 			the AIC7870 chip.  This driver does *not* currently
 			work with non-PCI AIC-7xxx boards or the Adaptec 3940.
+		Adaptec AIC-7770-based SCSI host adapters (including the
+			Adaptec AHA-274x, AHA-284x families).
+		WD-7000 SCSI host adapters.
 		Buslogic 54x (Adaptec AHA-154x clones; driver on kcadp floppy)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
@@ -33,7 +36,6 @@ Supported devices include:
 			ST01/02
 			Future Domain TMC-885
 			Future Domain TMC-950
-
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
@@ -71,6 +73,7 @@ Supported devices include:
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
 		Novell NE1000, NE2000
 		Digital DEFPA PCI FDDI adapters
+		Intel EtherExpress 100 Fast Ethernet adapters.
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
@@ -95,7 +98,11 @@ Supported devices include:
 		ProAudio Spectrum [*] [+]
 	Miscellaneous:
 		OPTi(82C929) chipset for multi-interface CD-ROM, and
-		sound ISA cards.
+			sound ISA cards.
+		PCI-PCI bridges and cards which include them, such as
+			the AHA-394x SCSI host adapter and some
+			DC21x4x-based multi-Ethernet cards.
+		APM power management.
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
@@ -111,18 +118,11 @@ although it is not in the kernel on the installation floppy.
 
 Hardware the we do NOT currently support, but get many questions
 about:
-	Adaptec AIC-7770-based SCSI host adapters (including the
-		Adaptec AHA-274x, AHA-284x families).
 	NCR 5380-based SCSI host adapters.
-	APM power management -- if your system supports it, turn it off!
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
-	WD-7000 SCSI host adapters.
-	PCI-PCI bridges and cards which include them, such as the AHA-394x
-		SCSI host adapter and some DC21x4x-based multi-Ethernet cards.
 	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
 		run fine using one processor only.)
-	Intel EtherExpress 100 Fast Ethernet adapters.
 
 We are planning future support for many of these devices.
 
@@ -181,7 +181,7 @@ Novell NE1000, or NE2000 Ethernet boards
 		ed1	0x250	2		iomem 0xd8000
 		ed2	0x300	10		iomem 0xcc000 [X SEE BELOW]
 
-3COM 3c509, 3c579, 3c595 Ethernet boards (the 3c590 has problems)
+3COM 3c509, 3c579, 3c595, 3c900, 3c905 Ethernet boards
 		ep0	any	any
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
@@ -193,6 +193,10 @@ PCNet-PCI based Ethernet boards; see above for partial list
 
 DC21x4x based Ethernet boards; see above for partial list
 		de0	any	any 	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
+
+Intel EtherExpress 100 Ethernet boards
+		fxp0	any	any 	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
 
 
