@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.24 1999/09/10 10:09:28 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.25 2000/11/16 15:15:58 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -61,8 +61,14 @@ main(argc, argv)
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
-	(void)strncpy(defaultseed, hostname, sizeof(defaultseed) - 1);
-	defaultseed[SKEY_NAMELEN] = '\0';
+	for (i = 0, p = defaultseed; hostname[i] && i < SKEY_NAMELEN; i++) {
+		if (isalpha(hostname[i])) {
+			if (isupper(*p))
+				*p++ = tolower(hostname[i]);
+		} else if (isdigit(hostname[i]))
+			*p++ = hostname[i];
+	}
+	*p = '\0';
 	(void)time(&now);
 	(void)sprintf(tbuf, "%05ld", (long) (now % 100000));
 	(void)strncat(defaultseed, tbuf, sizeof(defaultseed) - 5);
@@ -162,10 +168,23 @@ main(argc, argv)
 				     skey.seed);
 
 			/*
+			 * Sanity check old seed.
+			 */
+			l = strlen(skey.seed);
+			for (p = skey.seed; *p; p++) {
+				if (isalpha(*p)) {
+					if (isupper(*p))
+						*p = tolower(*p);
+				} else if (!isdigit(*p)) {
+					memmove(p, p + 1, l - (p - skey.seed));
+					l--;
+				}
+			}
+
+			/*
 			 * Let's be nice if they have an skey.seed that
 			 * ends in 0-8 just add one
 			 */
-			l = strlen(skey.seed);
 			if (l > 0) {
 				lastc = skey.seed[l - 1];
 				if (isdigit(lastc) && lastc != '9') {
@@ -220,6 +239,8 @@ main(argc, argv)
 				     defaultseed);
 			(void)fgets(seed, sizeof(seed), stdin);
 			rip(seed);
+			if (seed[0] == '\0')
+				(void)strcpy(seed, defaultseed);
 			for (p = seed; *p; p++) {
 				if (isalpha(*p)) {
 					if (isupper(*p))
@@ -236,8 +257,7 @@ main(argc, argv)
 			(void)printf("Notice: Seed truncated to %d characters.\n",
 				     SKEY_MAX_SEED_LEN);
 			seed[SKEY_MAX_SEED_LEN] = '\0';
-		} else if (seed[0] == '\0')
-			(void)strcpy(seed, defaultseed);
+		}
 
 		for (i = 0;; i++) {
 			if (i >= 2)
