@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.177 2002/06/11 04:14:26 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.178 2002/06/11 23:03:54 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -202,7 +202,7 @@ static void load_public_identity_files(void);
 int
 main(int ac, char **av)
 {
-	int i, opt, exit_status, cerr;
+	int i, opt, exit_status;
 	u_short fwd_port, fwd_host_port;
 	char sfwd_port[6], sfwd_host_port[6];
 	char *p, *cp, buf[256];
@@ -593,10 +593,11 @@ again:
 	}
 	/* Open a connection to the remote host. */
 
-	cerr = ssh_connect(host, &hostaddr, options.port, IPv4or6,
+	if (ssh_connect(host, &hostaddr, options.port, IPv4or6,
 	    options.connection_attempts,
 	    original_effective_uid == 0 && options.use_privileged_port,
-	    options.proxy_command);
+	    options.proxy_command) < 0)
+		exit(1);
 
 	/*
 	 * If we successfully made the connection, load the host private key
@@ -609,8 +610,8 @@ again:
 	sensitive_data.nkeys = 0;
 	sensitive_data.keys = NULL;
 	sensitive_data.external_keysign = 0;
-	if (!cerr && (options.rhosts_rsa_authentication ||
-	    options.hostbased_authentication)) {
+	if (options.rhosts_rsa_authentication ||
+	    options.hostbased_authentication) {
 		sensitive_data.nkeys = 3;
 		sensitive_data.keys = xmalloc(sensitive_data.nkeys*sizeof(Key));
 
@@ -651,9 +652,6 @@ again:
 	if (stat(buf, &st) < 0)
 		if (mkdir(buf, 0700) < 0)
 			error("Could not create directory '%.200s'.", buf);
-
-	if (cerr)
-		exit(1);
 
 	/* load options.identity_files */
 	load_public_identity_files();
