@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 1998/08/30 07:30:13 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.94 1998/09/28 05:13:13 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1230,11 +1230,17 @@ haltsys:
 			 * Turn off, if we can.  But try to turn disk off and
 		 	 * wait a bit first--some disk drives are slow to
 			 * clean up and users have reported disk corruption.
+			 *
+			 * If apm_set_powstate() fails the first time, don't
+			 * try to turn the system off.
 		 	 */
 			delay(500000);
-			apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
-			delay(500000);
-			apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+			if (apm_set_powstate(APM_DEV_DISK(0xff),
+					     APM_SYS_OFF) == 0) {
+				delay(500000);
+				(void) apm_set_powstate(APM_DEV_ALLDEVS,
+							APM_SYS_OFF);
+			}
 		}
 #endif
 		printf("\n");
