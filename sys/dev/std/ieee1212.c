@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212.c,v 1.4 2002/12/13 21:35:11 tdeval Exp $	*/
+/*	$OpenBSD: ieee1212.c,v 1.5 2002/12/30 11:26:48 tdeval Exp $	*/
 /*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
@@ -352,7 +352,9 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 			    "CRC: 0x%04hx, CRC1: 0x%04hx, CRC2: 0x%04hx\n",
 			    (unsigned short)romcrc, (unsigned short)crc,
 			    (unsigned short)crc1, (unsigned short)crc2));
+#if 0	/* Continue anyway. We'll choke later if any entry is invalid. */
 			return NULL;
+#endif
 		}
 	}
 	if (romcrc == crc2)
