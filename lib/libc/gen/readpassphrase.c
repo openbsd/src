@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.10 2001/12/07 22:16:48 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.11 2001/12/07 23:55:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.10 2001/12/07 22:16:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.11 2001/12/07 23:55:35 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -49,7 +49,8 @@ static void handler(int);
 char *
 readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 {
-	int input, output;
+	ssize_t nr;
+	int input, output, save_errno;
 	char ch, *p, *end;
 	struct termios term, oterm;
 	struct sigaction sa, saveint, savehup, savequit, saveterm, savetstp;
@@ -91,8 +92,8 @@ restart:
 	/* Turn off echo if possible. */
 	if (tcgetattr(input, &oterm) == 0) {
 		memcpy(&term, &oterm, sizeof(term));
-		if (!(flags & RPP_ECHO_ON) && (term.c_lflag & ECHO))
-			term.c_lflag &= ~ECHO;
+		if (!(flags & RPP_ECHO_ON))
+			term.c_lflag &= ~(ECHO | ECHONL);
 		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE)
 			term.c_cc[VSTATUS] = _POSIX_VDISABLE;
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
@@ -103,7 +104,7 @@ restart:
 
 	(void)write(output, prompt, strlen(prompt));
 	end = buf + bufsiz - 1;
-	for (p = buf; read(input, &ch, 1) == 1 && ch != '\n' && ch != '\r';) {
+	for (p = buf; (nr = read(input, &ch, 1)) == 1 && ch != '\n' && ch != '\r';) {
 		if (p < end) {
 			if ((flags & RPP_SEVENBIT))
 				ch &= 0x7f;
@@ -117,6 +118,7 @@ restart:
 		}
 	}
 	*p = '\0';
+	save_errno = errno;
 	if (!(term.c_lflag & ECHO))
 		(void)write(output, "\n", 1);
 
@@ -141,10 +143,10 @@ restart:
 			signo = 0;
 			goto restart;
 		}
-
 	}
 
-	return(buf);
+	errno = save_errno;
+	return(nr == -1 ? NULL : buf);
 }
 
 char *

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.5 2001/12/07 22:16:48 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.6 2001/12/07 23:55:35 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 20, 2000
+.Dd December 7, 2001
 .Dt READPASSPHRASE 3
 .Os
 .Sh NAME
@@ -73,16 +73,34 @@ The calling process should zero the passphrase as soon as possible to
 avoid leaving the cleartext passphrase visible in the process's address
 space.
 .Sh RETURN VALUES
-On success,
+Upon successful completion,
 .Fn readpassphrase
 returns a pointer to the null-terminated passphrase.
-If the
-.Dv RPP_REQUIRE_TTY
-flag is set and
-.Pa /dev/tty
-is inaccessible,
+If an error is encountered, the terminal state is restored and
+a null pointer is returned.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EINTR
+The
 .Fn readpassphrase
-returns a null pointer.
+function was interrupted by a signal.
+.It Bq Er EINVAL
+The
+.Ar bufsiz
+argument was zero.
+.It Bq Er EIO
+The process is a member of a background process attempting to read
+from its controlling terminal, the process is ignoring or blocking
+the SIGTTIN signal or the process group is orphaned.
+.It Bq Er EMFILE
+The process has already reached its limit for open file descriptors.
+.It Bq Er ENFILE
+The system file table is full.
+.It Bq Er ENOTTY
+There is no controlling terminal and the
+.Dv RPP_REQUIRE_TTY
+flag was specified.
+.El
 .Sh EXAMPLES
 The following code fragment will read a passphrase from
 .Pa /dev/tty
@@ -138,6 +156,12 @@ will reprint the prompt and the user may then enter a passphrase.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr getpass 3
+.Sh STANDARDS
+The
+.Fn readpassphrase
+function is an
+.Ox
+extension and should not be used if portability is desired.
 .Sh HISTORY
 The
 .Fn readpassphrase
