@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.16 2004/03/22 21:04:36 jmc Exp $
+.\"	$OpenBSD: pfsync.4,v 1.17 2004/03/31 08:28:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .Os
 .Sh NAME
 .Nm pfsync
-.Nd packet filter states table logging interface
+.Nd packet filter state table logging interface
 .Sh SYNOPSIS
 .Cd "pseudo-device pfsync"
 .Sh DESCRIPTION
@@ -68,20 +68,20 @@ state into one message where possible.
 The maximum number of times this can be done before the update is sent out
 is controlled by the
 .Ar maxupd
-to ifconfig.
+to ifconfig
 (see
 .Xr ifconfig 8
-and the example below for more details)
+and the example below for more details).
 .Pp
 Each packet retrieved on this interface has a header associated
 with it of length
 .Dv PFSYNC_HDRLEN .
 The header indicates the version of the protocol, address family,
-action taken on the following states and the number of state
+action taken on the following states, and the number of state
 table entries attached in this packet.
-This structure, defined in
+This structure is defined in
 .Aq Pa net/if_pfsync.h
-looks like:
+as:
 .Bd -literal -offset indent
 struct pfsync_header {
 	u_int8_t version;
@@ -95,7 +95,7 @@ States can be synchronised between two or more firewalls using this
 interface, by specifying a synchronisation interface using
 .Xr ifconfig 8 .
 For example, the following command sets fxp0 as the synchronisation
-interface.
+interface:
 .Bd -literal -offset indent
 # ifconfig pfsync0 syncif fxp0
 .Ed
@@ -135,8 +135,8 @@ is shut down, the second firewall takes over automatically.
 Both firewalls in this example have three
 .Xr sis 4
 interfaces.
-sis0 is the external interface, on the 10.0.0.0/24 subnet, sis1 is the
-internal interface, on the 192.168.0.0/24 subnet, and sis2 is the
+sis0 is the external interface, on the 10.0.0.0/24 subnet; sis1 is the
+internal interface, on the 192.168.0.0/24 subnet; and sis2 is the
 .Nm
 interface, using the 192.168.254.0/24 subnet.
 A crossover cable connects the two firewalls via their sis2 interfaces.
