@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.8 2004/08/06 08:17:40 espie Exp $
+# $OpenBSD: pkg_info,v 1.9 2004/08/12 10:35:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,6 +21,18 @@ use warnings;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use Getopt::Std;
+
+sub printfile
+{
+	my $filename = shift;
+	local $_;
+
+	open my $fh, '<', $filename or return;
+	while(<$fh>) {
+		print;
+	}
+	close $fh;
+}
 
 sub get_line
 {
@@ -47,52 +59,38 @@ sub print_info
 	} else {
 		print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
 		if ($opt_c) {
-			require File::Copy;
-
 			print $opt_p, "Comment:\n" unless $opt_q;
-			File::Copy::copy($dir.COMMENT, \*STDOUT);
+			printfile($dir.COMMENT);
 			print "\n";
 		}
 		if ($opt_R && -f $dir.REQUIRED_BY) {
-			require File::Copy;
-
 			print $opt_p, "Required by:\n" unless $opt_q;
-			File::Copy::copy($dir.REQUIRED_BY, \*STDOUT);
+			printfile($dir.REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
-			require File::Copy;
-
 			print $opt_p, "Description:\n" unless $opt_q;
-			File::Copy::copy($dir.DESC, \*STDOUT);
+			printfile($dir.DESC);
 			print "\n";
 		}
 		if ($opt_D && -f $dir.DISPLAY) {
-			require File::Copy;
-
 			print $opt_p, "Install notice:\n" unless $opt_q;
-			File::Copy::copy($dir.DISPLAY, \*STDOUT);
+			printfile($dir.DISPLAY);
 			print "\n";
 		}
 		if ($opt_i && -f $dir.INSTALL) {
-			require File::Copy;
-
 			print $opt_p, "Install script:\n" unless $opt_q;
-			File::Copy::copy($dir.INSTALL, \*STDOUT);
+			printfile($dir.INSTALL);
 			print "\n";
 		}
 		if ($opt_k && -f $dir.DEINSTALL) {
-			require File::Copy;
-
 			print $opt_p, "De-Install script:\n" unless $opt_q;
-			File::Copy::copy($dir.DEINSTALL, \*STDOUT);
+			printfile($dir.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
 		if ($opt_r && -f $dir.REQUIRE) {
-			require File::Copy;
-
 			print $opt_p, "Require script:\n" unless $opt_q;
-			File::Copy::copy($dir.REQUIRE, \*STDOUT);
+			printfile($dir.REQUIRE, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
