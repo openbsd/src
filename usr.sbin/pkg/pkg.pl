@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg.pl,v 1.6 2001/11/08 20:43:00 espie Exp $
+# $OpenBSD: pkg.pl,v 1.7 2001/11/17 10:42:11 espie Exp $
 #
 # Copyright (c) 2001 Marc Espie.
 # 
@@ -244,13 +244,54 @@ sub check_dependencies
 	return pattern_match($pattern, \@list) ? 1 : 0;
 }
 
+sub check_lib_specs
+{
+	my $base = shift;
+	my $dir;
+	for my $spec (split(/,/, shift)) {
+		print "checking $spec " if $verbose;
+		if ($spec =~ m|.*/|) {
+			$dir = "$base/$&";
+			$spec = $';
+		} else {
+			$dir = "$base/lib";
+		}
+		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+			my ($libname, $major, $minor) = ($1, $2, $3);
+			unless (opendir(DIRECTORY, $dir)) {
+				print "base directory not found\n" if $verbose;
+				return undef;
+			}
+			my @candidates = 
+			    grep { /^lib\Q$libname\E\.so\.$major\.(\d+)$/ 
+			    	&& $1 >= $minor } 
+			    readdir(DIRECTORY);
+			close(DIRECTORY);
+			if (@candidates == 0) {
+				print "not found\n" if $verbose;
+				return undef;
+			} else {
+			    print "found ", $candidates[0], "\n" if $verbose;
+			}
+		} else {
+			print "bad spec\n" if $verbose;
+			return undef;
+		}
+	}
+	return 1;
+}
+
 sub solve_dependencies
 {
 	my $file = shift;
 	my $pkgname;
 	my %verify;
 	my @lines;
+	my $prefix;
 
+	if (defined $ENV{'PKG_PREFIX'}) {
+		$prefix = $ENV{'PKG_PREFIX'};
+	}
 	open(FILE, '<', $file);
 	# Parse the old plist, scanning for what we want to handle only.
 	while (<FILE>) {
@@ -270,9 +311,12 @@ sub solve_dependencies
 			unless (defined $verify{$name}) {
 				$verify{$name} = [];
 			}
-			push(@{$verify{$name}}, [$pattern, $def]);
+			push(@{$verify{$name}}, [$pattern, $def, $libspec]);
 			push(@lines, "\@comment libdepend $libspec:$name:$pattern:$def");
 		} else {
+			if (m/^\@cwd\s+/ && !defined $prefix) {
+				$prefix = $';
+			}
 			push(@lines, $_);
 		}
 	}
@@ -301,6 +345,14 @@ sub solve_dependencies
 			} else {
 			    print "Not found\n" if $verbose;
 		    	}
+			# library dependency check: if the libraries don't
+			# match, the package found is bad. Revert to
+			# the default package
+			if (@{$dep} > 2) {
+				unless (check_lib_specs($prefix, $dep->[2])) {
+					$r = '';
+				}
+			}
 			# unshift so that base dependencies happen first.
 			if ($r) {
 				unshift @lines, "\@pkgdep $r";
