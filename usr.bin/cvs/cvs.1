@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.34 2005/01/27 17:17:52 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.35 2005/01/28 23:41:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -50,17 +50,19 @@ repository.
 Although it is more commonly used to track changes in source code, there
 are no real limitations to the type of files that you can store in a
 repository.
+For a general introduction to CVS, see
+.Xr cvsintro 7 .
 .Pp
-Unless the
-.Fl f
-option is specified,
 .Nm
-reads its startup configuration file
-.Pa .cvsrc
+reads its startup configuration file,
+.Pa .cvsrc ,
 from the home directory of the user who invoked it.
 This file is used to specify implicit options passed to
 .Nm
 or one of its commands whenever it is invoked.
+The defaults in the configuration file can be overridden with the
+.Fl f
+option (see below).
 See
 .Xr cvsrc 5
 for further information.
@@ -123,10 +125,15 @@ or
 .Ic checkout
 commands.
 .Pp
-Although adding a file does not involve a log message, it is possible to
-specify one to include with the action, using the
-.Fl m
-option.
+The
+.Ic add
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl m Ar msg
+Attach log message
+.Ar msg .
+By default, no log message is required.
+.El
 .Pp
 Aliases:
 .Ic ad ,
@@ -151,8 +158,14 @@ The information given is the last revision when a modification occurred,
 the author's name, and the date of the revision.
 .Pp
 The
-.Fl f
-flag is used to force the use of the head revision if the specified
+.Ic annotate
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl D Ar date
+Show the annotations as of the latest revision no later than
+.Ar date .
+.It Fl f
+Force the use of the head revision if the specified
 tag or date is not found.
 This can be used in combination with
 .Fl D
@@ -161,21 +174,17 @@ or
 to ensure that there is some output from the
 .Ic annotate
 command, even if only to show Revision 1.1 of the file.
-The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
-The
-.Fl D
-flag shows the annotations as of the latest revision no later than
-.Ar date .
-The
-.Fl r
-flag shows annotations as of revision
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Show annotations as of revision
 .Ar rev
 (can be a revision number or a tag).
+.El
 .Pp
 Aliases:
 .Ic ann .
@@ -206,29 +215,30 @@ command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory only.
-Sometimes one might want to force a file to be committed, even though
-it is unchanged: this can be done using the
-.Fl f
-flag, which also has the effect of disabling recursive behaviour,
-which can be requested with the
-.Fl R
-flag.
-When using the
-.Fl n
-flag, programs listed in the CVSROOT/modules file do not get executed.
-The
-.Fl m
-flag can be used to specify a log message on the command line which
-suppresses the editor invocation, or use the
-.Fl F
-flag to specify a
+.Ic commit
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl F Ar logfile
+Specify a
 .Ar file
-as argument which contains the log message.
-The
-.Fl r
-flag can be used to commit to a particular symbolic or numerical revision.
+which contains the log message.
+.It Fl f
+Force a file to be committed, even though it is unchanged.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl m Ar msg
+Specify a log message on the command line (suppresses the editor invocation).
+.It Fl n
+Do not execute programs listed in the
+.Pa CVSROOT/modules
+file.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Commit to a particular symbolic or numerical revision.
+.El
 .Pp
 Aliases:
 .Ic ci ,
@@ -256,39 +266,34 @@ Aliases:
 .Pp
 The
 .Ic edit
-command is used to make a file that is being watched (read-only)
+command is used to make a file that is being watched
+(and therefore read-only)
 readable and writable and to inform others that you are planning to edit it.
 Notifications terminate when the
 .Ic commit
 command is issued.
 Editing rights on the file can be given up using the
 .Ic unedit
-command.
-This command terminates the temporary notifications.
+command, which terminates the temporary notifications.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
-The
-.Fl a
-flag specifies the temporary notification wanted:
-.Bl -tag -width "commitXX"
+.Ic edit
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl a Ar action
+Specify the temporary notification wanted:
+.Pp
+.Bl -tag -width "commitXX" -compact
 .It Cm commit
-Another user has committed changes to the
-.Ar file .
+Another user has committed changes to the file.
 .It Cm edit
 Another user has issued the
 .Ic edit
-command on the
-.Ar file .
+command on the file.
 .It Cm unedit
 Another user has issued the
 .Ic unedit
-command on the
-.Ar file .
+command on the file.
 .It Cm all
 All of the above.
 .It Cm none
@@ -300,6 +305,13 @@ The
 flag may appear more than once, or not at all.
 If omitted, the action defaults to
 .Cm all .
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .It Xo Ic editors
 .Op Fl lR
 .Op Ar file ...
@@ -316,11 +328,16 @@ when the edition first started, the host from where the edition
 has been requested and the path to the edited file are listed.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
+.Ic editors
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .It Ic export
 Export sources from CVS;
 similar to
@@ -345,13 +362,6 @@ Aliases:
 .Pp
 Import sources into CVS using vendor branches.
 .Pp
-The
-.Fl b
-flag specifies the first-level branch number.
-The
-.Fl m
-flag specifies the log message to send.
-.Pp
 At least three arguments are required:
 .Ar repository
 specifies the location of the sources to be imported;
@@ -359,8 +369,17 @@ specifies the location of the sources to be imported;
 is a tag for the entire branch;
 .Ar releasetag
 is used to identify the files you created with
-.Nm
-.Ic import .
+.Ic cvs import .
+.Pp
+The
+.Ic import
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl b Ar branch
+Specify the first-level branch number.
+.It Fl m Ar msg
+Specify the log message to send.
+.El
 .Pp
 Aliases:
 .Ic im ,
@@ -375,9 +394,11 @@ Print out history information for files.
 Aliases:
 .Ic lo .
 .It Ic login
-Prompt for password for authenticating server.
+Prompt for a password for an authenticating server.
 .It Ic logout
-Remove entry in .cvspass for remote repository.
+Remove an entry in
+.Pa .cvspass
+for a remote repository.
 .It Ic rdiff
 Create
 .Xr patch 1
@@ -400,16 +421,20 @@ Files are not actually removed from the repository until the
 command has been run subsequently.
 .Pp
 The
-.Fl f
-flag locally removes the file.
+.Ic remove
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl f
+Force local file removal.
 If this flag is not used, the file must be locally removed beforehand for
 the command to be valid.
-The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .Pp
 Aliases:
 .Ic rm ,
@@ -429,17 +454,21 @@ The
 command is used to display the state of checked out files.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
-The
-.Fl v
-flag causes the symbolic tags for the file to be displayed.
+.Ic status
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl v
+Display symbolic tags for
+.Ar file .
 .Pp
-The following are the different possible states:
-.Bl -tag -width "Unresolved ConflictXX"
+The state may be one of the following:
+.Bl -tag -width "Locally modified"
 .It Cm Locally Added
 The file has been added with the
 .Ic add
@@ -447,7 +476,7 @@ command, but has not been committed to the repository with the
 .Ic commit
 command.
 .It Cm Locally Modified
-The file is up to date, but has been locally modified since then.
+The file is up to date, but has been locally modified.
 .It Cm Locally Removed
 The file has been removed with the
 .Ic remove
@@ -458,7 +487,6 @@ command.
 The file has not been modified; a new version is available.
 .It Cm Needs Merge
 The file has been modified and a newer version is available.
-A merge is necessary.
 .It Cm Needs Patch
 Same as
 .Ic Needs Checkout
@@ -469,12 +497,13 @@ A merge has been done, but unresolved conflicts still remain.
 .It Cm Up-to-date
 The file is up to date.
 .El
+.El
 .Pp
 Aliases:
 .Ic st ,
 .Ic stat .
 .It Xo Ic tag
-.Op Fl bdl
+.Op Fl bdlR
 .Op Fl r Ar old_tag
 .Op Ar symbolic_tag
 .Op Ar file ...
@@ -484,18 +513,20 @@ Add a symbolic tag to a checked out version of
 .Ar file .
 .Pp
 The
-.Fl b
-flag is used to specify a branch tag.
-If the
-.Fl d
-flag is specified the tag will be deleted.
-The
-.Fl l
-flag is used to specify a local change only and disables the recursive
-behaviour.
-If the
-.Fl r
-flag is used,
+.Ic tag
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl b
+Specify a branch tag.
+.It Fl d
+Delete tag.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar old_tag
 .Nm
 will only tag the files with
 .Ar symbolic_tag
@@ -503,6 +534,7 @@ if they are already tagged with
 .Ar old_tag .
 When done, it will remove the old tag
 leaving only the new tag behind on exactly the same files.
+.El
 .Pp
 Aliases:
 .Ic ta ,
@@ -523,13 +555,18 @@ will ask if you want to go back to the previous version, and lose the
 modifications done on the file, or stay in edition mode on it.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
+.Ic unedit
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .It Xo Ic update
-.Op Fl ACdP
+.Op Fl AlPR
 .Op Ar file ...
 .Xc
 .Pp
@@ -539,17 +576,20 @@ command is used to merge any of the changes that have occurred on the remote
 repository into the local one where the command was run.
 .Pp
 The
-.Fl A
-flag resets any sticky tags, dates, or kopts that have been set on the tree.
-The
-.Fl l
-flag is used to specify a local change only and disables the recursive
-behaviour.
-The
-.Fl P
-flag causes
-.Nm
-to prune any directories that have become empty as a result of the update.
+.Ic update
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl A
+Reset any sticky tags, dates, or kopts that have been set on the tree.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl P
+Prune any directories that have become empty as a result of the update.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .Pp
 For each file updated, a single letter prefix is given to
 specify the state of the file.
@@ -645,39 +685,40 @@ made available with the
 command.
 .Pp
 The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
-The
-.Fl a
-flag specifies the permanent notification wanted for
+.Ic watch
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl a Ar action
+Specify the permanent notification wanted for
 .Ar add | remove :
 .Pp
 .Bl -tag -width "commitXX" -compact
 .It Cm commit
-Another user has committed changes to the
-.Ar file .
+Another user has committed changes to the file.
 .It Cm edit
-Another user is editing the
-.Ar file .
+Another user is editing the file.
 .It Cm unedit
-Another user has finished editing the
-.Ar file .
+Another user has finished editing the file.
 .It Cm all
 All of the above.
 .It Cm none
 No notification.
 .El
 .Pp
-If no speficiation is requested using the
+If no specification is requested using the
 .Ar add
 or
 .Ar remove
 arguments, it implies the
 .Fl a Ar all
 option.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .It Xo Ic watchers
 .Op Fl lR
 .Op Ar file ...
@@ -703,21 +744,25 @@ Temporary watch of the end of file edition.
 Permanent watch of the end of file edition.
 .El
 .Pp
-The
-.Fl l
-flag is used to limit the scope of the search to the local directory
-only and to disable recursive behaviour, which can be requested with the
-.Fl R
-flag.
-.Pp
 The temporary watches are set using the
 .Ic edit
 command, until the
 .Ic commit
 or
 .Ic unedit
-command is issued on the
-.Ar file .
+command is issued on a file.
+.Pp
+The
+.Ic watchers
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.El
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width CVS_CLIENT_LOG
@@ -780,6 +825,7 @@ post-commit logging.
 .Xr patch 1 ,
 .Xr rcs 1 ,
 .Xr cvsrc 5 ,
+.Xr cvsintro 7 ,
 .Xr cvsd 8
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original
