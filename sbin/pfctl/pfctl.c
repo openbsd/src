@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.100 2002/12/07 20:45:04 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.101 2002/12/09 18:26:09 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1215,20 +1215,28 @@ main(int argc, char *argv[])
 		char *t = strchr(anchoropt, ':');
 
 		if (t == NULL) {
-			if (strlen(anchoropt) >= sizeof(anchorname))
-				err(1, "anchor name '%s' too long",
+			if (strlcpy(anchorname, anchoropt,
+			    sizeof(anchorname)) >= sizeof(anchorname))
+				errx(1, "anchor name '%s' too long",
 				    anchoropt);
-			strcpy(anchorname, anchoropt);
 		} else {
+			char *p;
+
 			if (t == anchoropt || !strlen(t+1))
-				err(1, "anchor names '%s' invalid",
+				errx(1, "anchor names '%s' invalid", anchoropt);
+			if ((p = malloc(strlen(anchoropt) + 1)) == NULL)
+				err(1, "malloc");
+			strlcpy(p, anchoropt, strlen(anchoropt) + 1);
+			if ((t = strsep(&p, ":")) == NULL)
+				errx(1, "anchor names '%s' invalid",
 				    anchoropt);
-			if (t-anchoropt >= sizeof(anchorname) ||
-			    strlen(t+1) >= sizeof(rulesetname))
-				err(1, "anchor names '%s' too long",
-				    anchoropt);
-			strncpy(anchorname, anchoropt, t-anchoropt);
-			strcpy(rulesetname, t+1);
+			if (strlcpy(anchorname, t, sizeof(anchorname)) >=
+			    sizeof(anchorname))
+				errx(1, "anchor name '%s' too long", t);
+			if (strlcpy(rulesetname, p, sizeof(rulesetname)) >=
+			    sizeof(rulesetname))
+				errx(1, "ruleset name '%s' too long", p);
+			free(t);
 		}
 	}
 
