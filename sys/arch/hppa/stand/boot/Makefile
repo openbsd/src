@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2002/12/19 00:28:54 mickey Exp $
+#	$OpenBSD: Makefile,v 1.15 2003/01/16 19:13:05 mickey Exp $
 
 MAN=	boot.8
 MANSUBDIR=/hppa
@@ -17,6 +17,9 @@ STRIP?=	strip
 SADIR=	${.CURDIR}/..
 CRTBEGIN=
 CRTEND=
+LINKS=	${BINDIR}/boot.lif ${BINDIR}/sdboot \
+	${BINDIR}/boot.lif ${BINDIR}/stboot \
+	${BINDIR}/boot.lif ${BINDIR}/xxboot
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
@@ -25,11 +28,9 @@ DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 
 all:	boot.lif
 
-.if exists(${.CURDIR}/../../compile/GENERIC/bsd)
-bsd: ${.CURDIR}/../../compile/GENERIC/bsd
-	gzip -9 -c ${.CURDIR}/../../compile/GENERIC/bsd > bsd
-ADDBOOT+=bsd
-.endif
+realinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    boot.lif ${DESTDIR}${BINDIR}
 
 # probably we should check for 256k limit for ISL
 boot.lif:	${PROG} ${ADDBOOT}
