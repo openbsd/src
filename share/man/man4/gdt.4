@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.22 2004/04/12 05:49:13 deraadt Exp $
+.\"	$OpenBSD: gdt.4,v 1.23 2004/08/26 00:04:49 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist <niklas@openbsd.org>
 .\"
@@ -103,11 +103,11 @@ driver provides support for all currently known ICP Vortex adapters:
 .Tn GDT8x63RZ , and
 .Tn GDT8x86RZ .
 .Pp
-Also supported, are select Intel RAID controllers containing
-firmware derived from ICP Vortex.
+Some Intel RAID controllers containing firmware derived from ICP Vortex
+are also supported.
 .Pp
-Although the controllers are actual RAID controllers the driver makes them
-look just like SCSI controllers.
+Although the controllers are actual RAID controllers,
+the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Sh DIAGNOSTICS
 .Bl -diag
