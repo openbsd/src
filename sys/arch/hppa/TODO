@@ -24,10 +24,10 @@ hardware manuals (man4.hppa/*):				mickey@
 * hil manual
 * add more to lasi and asp (also wax when studied enough)
 
-gcc/egcs/binutils:					espie@ mickey@
+gcc/egcs/binutils:					fgsch@ mickey@
 * binutils 2.10.1 do not grok it, i use -current (;
 
-boots (sys/arch/hppa/stand/*):				mickey@ fries@
+boots (sys/arch/hppa/stand/*):				mickey@ miod@
 * almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
@@ -55,7 +55,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.14 2002/02/12 16:19:01 mickey Exp $
+$OpenBSD: TODO,v 1.15 2002/03/01 23:37:04 mickey Exp $
 
 --
 	paranoic mickey
