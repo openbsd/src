@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_null.8,v 1.18 2003/02/09 07:26:45 jmc Exp $
+.\"	$OpenBSD: mount_null.8,v 1.19 2003/02/28 11:25:34 tedu Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -140,7 +140,7 @@ Vnode stacks are instead created on demand as files are accessed.
 The initial mount creates a single vnode stack for the
 root of the new null layer.
 All other vnode stacks are created as a result of vnode operations on
-this or other null vnode stacks.
+null vnode stacks.
 .Pp
 New vnode stacks come into existence as a result of
 an operation which returns a vnode.
@@ -199,12 +199,12 @@ by mapping any vnode arguments to the lower layer.
 The first approach is to call the aliasing layer's bypass routine.
 This method is most suitable when you wish to invoke the operation
 currently being handled on the lower layer.
-It has the advantage the bypass routine already must do argument mapping.
+It has the advantage that the bypass routine already must do argument mapping.
 An example of this is
 .Em null_getattrs
 in the null layer.
 .Pp
-A second approach is to directly invoked vnode operations on
+A second approach is to directly invoke vnode operations on
 the lower layer with the
 .Em VOP_OPERATIONNAME
 interface.
