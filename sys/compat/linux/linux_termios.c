@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.14 2002/05/07 20:31:17 jasoni Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.15 2003/04/05 20:30:18 millert Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -52,10 +52,10 @@
 
 static speed_t linux_speeds[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800,
-	9600, 19200, 38400, 57600, 115200
+	9600, 19200, 38400, 57600, 115200, 230400
 };
 
-static int linux_spmasks[] = {
+static const int linux_spmasks[] = {
 	LINUX_B0, LINUX_B50, LINUX_B75, LINUX_B110, LINUX_B134, LINUX_B150,
 	LINUX_B200, LINUX_B300, LINUX_B600, LINUX_B1200, LINUX_B1800,
 	LINUX_B2400, LINUX_B4800, LINUX_B9600, LINUX_B19200, LINUX_B38400,
