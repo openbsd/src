@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.10 2001/08/22 13:54:56 art Exp $
+#	$OpenBSD: files.sparc64,v 1.11 2001/08/22 21:50:37 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -31,6 +31,9 @@ attach psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho
+
+attach	hme at pci with hme_pci
+file	dev/pci/if_hme_pci.c		hme_pci
 
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho
