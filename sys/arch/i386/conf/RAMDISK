@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.93 2000/08/29 15:20:24 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.94 2000/09/15 17:38:29 mickey Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -121,6 +121,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+#twe*	at pcu? dev ? function ?	# 3ware Escalade RAID controllers
+#scsibus* at twe?
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
