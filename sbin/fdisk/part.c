@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.4 1997/10/16 01:47:12 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.5 1997/10/16 01:53:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -101,7 +101,7 @@ PRT_printall()
 {
 	int i;
 
-	printf("Choose from the following types\n");
+	printf("Choose from the following Partition id values:\n");
 	for(i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
 		printf("%02X %s%s", part_types[i].type,
 		    part_types[i].sname, (i+1) % 4 ? "   " : "\n");
