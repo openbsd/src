@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.9 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.10 2002/06/09 05:23:26 miod Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ again:
 		s = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
 		    hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq) == 0)
-			sleep(sc, PRIBIO+1);
+			tsleep(sc, PRIBIO+1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */

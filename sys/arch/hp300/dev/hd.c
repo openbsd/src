@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.17 2002/06/09 02:11:47 jsyn Exp $	*/
+/*	$OpenBSD: hd.c,v 1.18 2002/06/09 05:23:26 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ hdopen(dev, flags, mode, p)
 	 * Wait for any pending opens/closes to complete
 	 */
 	while (rs->sc_flags & (HDF_OPENING|HDF_CLOSING))
-		sleep((caddr_t)rs, PRIBIO);
+		tsleep((caddr_t)rs, PRIBIO, "hdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -629,7 +629,7 @@ hdclose(dev, flag, mode, p)
 		s = splbio();
 		while (rs->sc_tab.b_active) {
 			rs->sc_flags |= HDF_WANTED;
-			sleep((caddr_t)&rs->sc_tab, PRIBIO);
+			tsleep((caddr_t)&rs->sc_tab, PRIBIO, "hdclose", 0);
 		}
 		splx(s);
 		rs->sc_flags &= ~(HDF_CLOSING);

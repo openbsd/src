@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.13 2002/05/23 15:31:57 art Exp $	*/
+/*	$OpenBSD: st.c,v 1.14 2002/06/09 05:23:26 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -1180,7 +1180,7 @@ again:
 		if (bp->b_flags & B_DONE)
 			break;
 		bp->b_flags |= B_WANTED;
-		sleep((caddr_t)bp, PRIBIO);
+		tsleep((caddr_t)bp, PRIBIO, "stcommand", 0);
 	}
 	bp->b_flags = B_BUSY|B_READ;
 	splx(s);
