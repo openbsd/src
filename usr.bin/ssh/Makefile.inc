@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2001/07/26 13:40:56 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2001/07/29 14:00:07 markus Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
@@ -7,7 +7,8 @@ CDIAGFLAGS=	-Wall
 CDIAGFLAGS+=	-Wpointer-arith
 CDIAGFLAGS+=	-Wno-uninitialized
 #CDIAGFLAGS+=	-Wstrict-prototypes
-CFDIAGLAGS+=	-Wmissing-prototypes
+CDIAGFLAGS+=	-Wmissing-prototypes
+CDIAGFLAGS+=	-Wunused
 
 #DEBUG=-g
 
