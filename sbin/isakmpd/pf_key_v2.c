@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.26 2000/06/19 02:25:31 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.40 2000/06/19 02:13:37 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.27 2000/06/20 05:55:27 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.41 2000/06/20 03:35:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -404,15 +404,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
 
   msg->sadb_msg_version = PF_KEY_V2;
   msg->sadb_msg_errno = 0;
-#ifdef KAME
-  if (!msg->sadb_msg_mode)
-    msg->sadb_msg_mode = IPSEC_MODE_ANY;
-  msg->sadb_msg_reqid = 0;	/* XXX */
-  msg->sadb_msg_reserved1 = 0;
-  msg->sadb_msg_reserved2 = 0;
-#else
   msg->sadb_msg_reserved = 0;
-#endif
   msg->sadb_msg_pid = getpid ();
   if (!msg->sadb_msg_seq)
     msg->sadb_msg_seq = pf_key_v2_seq ();
@@ -515,9 +507,6 @@ pf_key_v2_open ()
 
   /* Register it to get ESP and AH acquires from the kernel.  */
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   msg.sadb_msg_type = SADB_REGISTER;
   msg.sadb_msg_satype = SADB_SATYPE_ESP;
   regmsg = pf_key_v2_msg_new (&msg, 0);
@@ -540,9 +529,6 @@ pf_key_v2_open ()
   ret = 0;
 
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   msg.sadb_msg_type = SADB_REGISTER;
   msg.sadb_msg_satype = SADB_SATYPE_AH;
   regmsg = pf_key_v2_msg_new (&msg, 0);
@@ -594,6 +580,9 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
   struct pf_key_v2_msg *getspi = 0, *ret = 0;
   u_int8_t *spi = 0;
   int len, err;
+#ifdef KAME
+  struct sadb_x_sa2 ssa2;
+#endif
 
   msg.sadb_msg_type = SADB_GETSPI;
   switch (proto)
@@ -613,12 +602,18 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
    * from the acquire message.
    */
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = IPSEC_MODE_TUNNEL;	/* XXX */
-#endif
   getspi = pf_key_v2_msg_new (&msg, 0);
   if (!getspi)
     goto cleanup;
+
+#ifdef KAME
+  memset(&ssa2, 0, sizeof(ssa2));
+  ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  ssa2.sadb_x_sa2_len = sizeof(ssa2) / PF_KEY_V2_CHUNK;
+  ssa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (getspi, (struct sadb_ext *)&ssa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /* Setup the ADDRESS extensions.  */
   len = sizeof (struct sadb_address) + PF_KEY_V2_ROUND (srclen); 
@@ -736,6 +731,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
   size_t len;
+#ifdef KAME
+  struct sadb_x_sa2 ssa2;
+#endif
 
   msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
   switch (proto->proto)
@@ -846,14 +844,21 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 				       sizeof ssa.sadb_sa_spi, proto->proto,
 				       dst, dstlen)
        : 0);
-  msg.sadb_msg_mode = iproto->encap_mode == IPSEC_ENCAP_TUNNEL
-    ? IPSEC_MODE_TUNNEL : IPSEC_MODE_TRANSPORT;
 #else
   msg.sadb_msg_seq = 0;
 #endif
   update = pf_key_v2_msg_new (&msg, 0);
   if (!update)
     goto cleanup;
+
+#ifdef KAME
+  memset(&ssa2, 0, sizeof(ssa2));
+  ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  ssa2.sadb_x_sa2_len = sizeof(ssa2) / PF_KEY_V2_CHUNK;
+  ssa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)&ssa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /* Setup the rest of the SA extension.  */
   ssa.sadb_sa_exttype = SADB_EXT_SA;
@@ -1113,6 +1118,9 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
   int err;
+#ifdef KAME
+  struct sadb_x_sa2 ssa2;
+#endif
 
 #ifndef SADB_X_SAFLAGS_INGRESS_FLOW
   if (ingress)
@@ -1133,12 +1141,18 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   flow = pf_key_v2_msg_new (&msg, 0);
   if (!flow)
     goto cleanup;
+
+#ifdef KAME
+  memset(&ssa2, 0, sizeof(ssa2));
+  ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  ssa2.sadb_x_sa2_len = sizeof(ssa2) / PF_KEY_V2_CHUNK;
+  ssa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /* Setup the SA extension.  */
   ssa.sadb_sa_exttype = SADB_EXT_SA;
@@ -1155,6 +1169,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 #endif
   if (!delete && !ingress)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
+
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
 
@@ -1315,16 +1330,25 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
   int err;
+#ifdef KAME
+  struct sadb_x_sa2 ssa2;
+#endif
 
   msg.sadb_msg_type = delete ? SADB_X_SPDDELETE : SADB_X_SPDADD;
   msg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   flow = pf_key_v2_msg_new (&msg, 0);
   if (!flow)
     goto cleanup;
+
+#ifdef KAME
+  memset(&ssa2, 0, sizeof(ssa2));
+  ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  ssa2.sadb_x_sa2_len = sizeof(ssa2) / PF_KEY_V2_CHUNK;
+  ssa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /*
    * Setup the ADDRESS extensions.
@@ -1594,6 +1618,9 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   struct sockaddr *saddr;
   int saddrlen, len, err;
   struct pf_key_v2_msg *delete = 0, *ret = 0;
+#ifdef KAME
+  struct sadb_x_sa2 ssa2;
+#endif
 
   /*
    * If the SA was outbound and it has not yet been replaced, or it's
@@ -1617,9 +1644,6 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   delete = pf_key_v2_msg_new (&msg, 0);
   if (!delete)
     goto cleanup;
@@ -1635,6 +1659,15 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   ssa.sadb_sa_flags = 0;
   if (pf_key_v2_msg_add (delete, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
+
+#ifdef KAME
+  memset(&ssa2, 0, sizeof(ssa2));
+  ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  ssa2.sadb_x_sa2_len = sizeof(ssa2) / PF_KEY_V2_CHUNK;
+  ssa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (delete, (struct sadb_ext *)&ssa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /*
    * Setup the ADDRESS extensions.
@@ -1876,6 +1909,9 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   struct sockaddr *saddr;
   int saddrlen, err;
   size_t len;
+#ifdef KAME
+  struct sadb_x_sa2 kamesa2;
+#endif
 
   msg.sadb_msg_type = SADB_X_GRPSPIS;
   switch (proto1->proto)
@@ -1891,9 +1927,6 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef KAME
-  msg.sadb_msg_mode = 0;
-#endif
   grpspis = pf_key_v2_msg_new (&msg, 0);
   if (!grpspis)
     goto cleanup;
@@ -1910,6 +1943,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&sa1, 0) == -1)
     goto cleanup;
 
+#ifndef KAME
   sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
   sa2.sadb_sa_len = sizeof sa2 / PF_KEY_V2_CHUNK;
   memcpy (&sa2.sadb_sa_spi, proto2->spi[incoming], sizeof sa2.sadb_sa_spi);
@@ -1920,6 +1954,14 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   sa2.sadb_sa_flags = 0;
   if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&sa2, 0) == -1)
     goto cleanup;
+#else
+  memset(&kamesa2, 0, sizeof(kamesa2));
+  kamesa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
+  kamesa2.sadb_x_sa2_len = sizeof(kamesa2) / PF_KEY_V2_CHUNK;
+  kamesa2.sadb_x_sa2_mode = 0;
+  if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&kamesa2, 0) == -1)
+    goto cleanup;
+#endif
 
   /*
    * Setup the ADDRESS extensions.
