@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.222 2002/05/18 17:56:03 krw Exp $
+#	$OpenBSD: install.sub,v 1.223 2002/05/20 02:45:08 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -131,6 +131,9 @@ leave your system in an inconsistent state.
 
 If you hit Control-C and restart the ${MODE}, the ${MODE} program will
 remember many of your old answers.
+
+At any prompt except password prompts you can run a shell command by
+typing '!foo', or escape to a shell by typing '!'.
 __EOT
 }
 
@@ -420,7 +423,7 @@ getrootdisk() {
 
 The installation program needs to know which disk to consider the root disk.
 Note the unit number may be different than the unit number you used in the
-boot program (especially on a PC with multiple disk controllers).
+boot program (especially on a machine with multiple disk controllers).
 Available disks are:
 
 $_DKDEVS
@@ -2224,9 +2227,3 @@ esac
 
 # Deal with terminal issues
 set_term
-
-cat << __EOT
-
-At any prompt except password prompts you can run a shell command by
-typing '!foo', or escape to a shell by typing '!'.
-__EOT
