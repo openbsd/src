@@ -2922,6 +2922,7 @@
 ./usr/share/man/cat3/clrtoeol.0
 ./usr/share/man/cat3/color_content.0
 ./usr/share/man/cat3/color_set.0
+./usr/share/man/cat3/com_err.0
 ./usr/share/man/cat3/confstr.0
 ./usr/share/man/cat3/copysign.0
 ./usr/share/man/cat3/copysignf.0

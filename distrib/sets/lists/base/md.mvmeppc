@@ -33,6 +33,7 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/specs
 ./usr/lib/libasn1.so.13.0
 ./usr/lib/libc.so.30.0
+./usr/lib/libcom_err.so.13.0
 ./usr/lib/libcrypto.so.10.0
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
