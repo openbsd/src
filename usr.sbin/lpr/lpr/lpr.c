@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.20 2001/08/30 17:38:13 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.21 2001/11/19 20:26:51 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.20 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.21 2001/11/19 20:26:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -581,7 +581,7 @@ cleanup(signo)
 			while (dfname[i]-- != 'A');
 			dfname[i] = 'z';
 		} while (dfname[i-2]-- != 'd');
-	exit(1);
+	_exit(1);
 }
 
 /*
