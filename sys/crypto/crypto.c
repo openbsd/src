@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.34 2002/04/23 19:13:04 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.35 2002/04/23 22:20:47 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -588,4 +588,33 @@ void
 crypto_kdone(struct cryptkop *krp)
 {
 	krp->krp_callback(krp);
+}
+
+int
+crypto_getfeat(int *featp)
+{
+	int kalgs[CRK_ALGORITHM_MAX];
+	extern int cryptodevallowsoft;
+	int hid, kalg, feat = 0;
+
+	for (hid = 0; hid < crypto_drivers_num; hid++) {
+		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
+		    cryptodevallowsoft == 0)
+			continue;
+		if (crypto_drivers[hid].cc_kprocess == NULL)
+			continue;
+		for (kalg = 0; kalg < CRK_ALGORITHM_MAX; kalg++)
+			if ((crypto_drivers[hid].cc_kalg[kalg] &
+			    CRYPTO_ALG_FLAG_SUPPORTED) == 0)
+				kalgs[kalg] = 1;
+	}
+
+	if (kalgs[CRK_MOD_EXP] && kalgs[CRK_MOD_EXP_CRT])
+		feat |= CRSFEAT_RSA;
+	if (kalgs[CRK_DSA_VERIFY] && kalgs[CRK_DSA_SIGN])
+		feat |= CRSFEAT_DSA;
+	if (kalgs[CRK_DH_COMPUTE_KEY] && kalgs[CRK_MOD_EXP])
+		feat |= CRSFEAT_DH;
+	*featp = feat;
+	return (0);
 }
