@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 1996/12/28 06:22:02 rahnds Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 2001/06/24 05:08:11 drahn Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.1 1996/09/30 16:34:47 ws Exp $	*/
 
 /*
@@ -32,7 +32,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <netinet/in.h>
 
 /*
  * First cut for in_cksum.
