@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.97 2002/11/22 16:47:28 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.98 2002/12/19 00:57:07 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -505,11 +505,7 @@ start_init(arg)
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)))
 		panic("init: couldn't allocate argument space");
-#ifdef MACHINE_STACK_GROWS_UP
-	p->p_vmspace->vm_maxsaddr = (caddr_t)addr + PAGE_SIZE;
-#else
 	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
-#endif
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
 #ifdef MACHINE_STACK_GROWS_UP

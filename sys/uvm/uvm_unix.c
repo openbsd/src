@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.22 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.23 2002/12/19 00:57:07 mickey Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ uvm_grow(p, sp)
 	 * For user defined stacks (from sendsig).
 	 */
 #ifdef MACHINE_STACK_GROWS_UP
-	if (sp > (vaddr_t)vm->vm_maxsaddr)
+	if (sp > (vaddr_t)vm->vm_minsaddr)
 #else
 	if (sp < (vaddr_t)vm->vm_maxsaddr)
 #endif

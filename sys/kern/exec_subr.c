@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.23 2002/11/06 00:17:28 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.24 2002/12/19 00:57:07 mickey Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -317,11 +317,12 @@ exec_setup_stack(p, epp)
 {
 
 #ifdef MACHINE_STACK_GROWS_UP
-	epp->ep_maxsaddr = USRSTACK + MAXSSIZ;
+	epp->ep_maxsaddr = USRSTACK;
+	epp->ep_minsaddr = USRSTACK + MAXSSIZ;
 #else
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-#endif
 	epp->ep_minsaddr = USRSTACK;
+#endif
 	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
 
 	/*
@@ -337,10 +338,10 @@ exec_setup_stack(p, epp)
 	 */
 #ifdef MACHINE_STACK_GROWS_UP
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    (epp->ep_maxsaddr - (epp->ep_minsaddr + epp->ep_ssize)),
-	    epp->ep_minsaddr + epp->ep_ssize, NULLVP, 0, VM_PROT_NONE);
+	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
+	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0, VM_PROT_NONE);
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    epp->ep_minsaddr, NULLVP, 0,
+	    epp->ep_maxsaddr, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE);
 #else
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
