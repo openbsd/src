@@ -164,7 +164,7 @@ static struct {
 };
 
 /*
- * Return a fd if /dev/crypto seems usable, 0 otherwise.
+ * Return a fd if /dev/crypto seems usable, -1 otherwise.
  */
 static int
 open_dev_crypto(void)
