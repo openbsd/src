@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.22 2004/12/13 05:49:03 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.23 2004/12/19 06:17:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -5258,6 +5258,54 @@ ahd_sglist_allocsize(struct ahd_softc *ahd)
 	return (best_list_size);
 }
 
+/*
+ * Perform initial initialization for a controller structure.
+ */
+struct ahd_softc *
+ahd_alloc(void *platform_arg, char *name)
+{
+	struct ahd_softc *ahd = (struct ahd_softc *)platform_arg;
+
+	ahd->seep_config = malloc(sizeof(*ahd->seep_config),
+				  M_DEVBUF, M_NOWAIT);
+	if (ahd->seep_config == NULL)
+		return (NULL);
+
+	LIST_INIT(&ahd->pending_scbs);
+	LIST_INIT(&ahd->timedout_scbs);
+
+	/* We don't know our unit number until the OSM sets it */
+	ahd->name = name;
+	ahd->unit = -1;
+	ahd->bus_description = NULL;
+	ahd->channel = 'A';
+	ahd->chip = AHD_NONE;
+	ahd->features = AHD_FENONE;
+	ahd->bugs = AHD_BUGNONE;
+	ahd->flags = AHD_SPCHK_ENB_A|AHD_RESET_BUS_A|AHD_TERM_ENB_A
+		   | AHD_EXTENDED_TRANS_A|AHD_STPWLEVEL_A;
+	ahd->int_coalescing_timer = AHD_INT_COALESCING_TIMER_DEFAULT;
+	ahd->int_coalescing_maxcmds = AHD_INT_COALESCING_MAXCMDS_DEFAULT;
+	ahd->int_coalescing_mincmds = AHD_INT_COALESCING_MINCMDS_DEFAULT;
+	ahd->int_coalescing_threshold = AHD_INT_COALESCING_THRESHOLD_DEFAULT;
+	ahd->int_coalescing_stop_threshold =
+	    AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
+
+	if (ahd_platform_alloc(ahd, platform_arg) != 0) {
+		free(ahd->seep_config, M_DEVBUF);
+		return (NULL);
+	}	
+
+#ifdef AHD_DEBUG
+	if ((ahd_debug & AHD_SHOW_MEMORY) != 0) {
+		printf("%s: scb size = 0x%x, hscb size = 0x%x\n",
+		       ahd_name(ahd), (u_int)sizeof(struct scb),
+		       (u_int)sizeof(struct hardware_scb));
+	}
+#endif
+	return (ahd);
+}
+
 int
 ahd_softc_init(struct ahd_softc *ahd)
 {
@@ -5396,15 +5444,10 @@ ahd_free(struct ahd_softc *ahd)
 		free(ahd->black_hole, M_DEVBUF);
 	}
 #endif
-	if (ahd->name != NULL)
-		free(ahd->name, M_DEVBUF);
 	if (ahd->seep_config != NULL)
 		free(ahd->seep_config, M_DEVBUF);
 	if (ahd->saved_stack != NULL)
 		free(ahd->saved_stack, M_DEVBUF);
-#ifndef __FreeBSD__
-	free(ahd, M_DEVBUF);
-#endif
 	return;
 }
 
@@ -6042,7 +6085,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	scb_data->scbs_left -= newcount;
 	scb_data->sgs_left -= newcount;
 	for (i = 0; i < newcount; i++) {
-		struct scb_platform_data *pdata;
+		struct scb_platform_data *pdata = NULL;
 		u_int col_tag;
 #ifndef __linux__
 		int error;
@@ -6053,12 +6096,13 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (next_scb == NULL)
 			break;
 
-		pdata = (struct scb_platform_data *)malloc(sizeof(*pdata),
-							   M_DEVBUF, M_NOWAIT);
-		if (pdata == NULL) {
-			free(next_scb, M_DEVBUF);
-			break;
-		}
+		if (sizeof(*pdata) > 0) {
+			pdata = malloc(sizeof(*pdata), M_DEVBUF, M_NOWAIT);
+			if (pdata == NULL) {
+				free(next_scb, M_DEVBUF);
+				break;
+			}
+		}	
 		next_scb->platform_data = pdata;
 		next_scb->hscb_map = hscb_map;
 		next_scb->sg_map = sg_map;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.16 2004/12/13 04:07:26 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.17 2004/12/19 06:17:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -653,6 +653,7 @@ struct scb {
 	} links2;
 #define pending_links links2.le
 #define collision_links links2.le
+	LIST_ENTRY(scb)		  timedout_links;
 	struct scb		 *col_scb;
 	struct scsi_xfer	 *xs;
 
@@ -699,6 +700,8 @@ struct scb_data {
 	 * Mapping from tag to SCB.
 	 */
 	struct	scb *scbindex[AHD_SCB_MAX];
+
+	u_int		 recovery_scbs;	/* Transactions currently in recovery */
 
 	SLIST_HEAD(, map_node) hscb_maps;
 	SLIST_HEAD(, map_node) sg_maps;
@@ -1115,6 +1118,11 @@ struct ahd_softc {
 	LIST_HEAD(, scb)	  pending_scbs;
 
 	/*
+	 * SCBs whose timeout routine has been called.
+	 */
+	LIST_HEAD(, scb)	  timedout_scbs;
+
+	/*
 	 * Current register window mode information.
 	 */
 	ahd_mode		  dst_mode;
@@ -1392,7 +1400,7 @@ int		ahd_match_scb(struct ahd_softc *ahd, struct scb *scb,
 			      u_int tag, role_t role);
 
 /****************************** Initialization ********************************/
-/*struct ahd_softc	*ahd_alloc(void *platform_arg, char *name);*/
+struct ahd_softc	*ahd_alloc(void *platform_arg, char *name);
 int			 ahd_softc_init(struct ahd_softc *);
 void			 ahd_controller_info(struct ahd_softc *ahd, char *buf,
 			 		     size_t bufsz);

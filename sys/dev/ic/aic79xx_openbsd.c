@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.13 2004/12/13 04:07:26 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.14 2004/12/19 06:17:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -664,12 +664,13 @@ ahd_platform_set_tags(struct ahd_softc *ahd,
 int
 ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 {
-	ahd->platform_data = malloc(sizeof(struct ahd_platform_data), M_DEVBUF,
-	    M_NOWAIT /*| M_ZERO*/);
-	if (ahd->platform_data == NULL)
-		return (ENOMEM);
-
-	memset(ahd->platform_data, 0, sizeof(struct ahd_platform_data));
+	if (sizeof(struct ahd_platform_data) > 0) {
+		ahd->platform_data = malloc(sizeof(struct ahd_platform_data),
+		    M_DEVBUF, M_NOWAIT);
+		if (ahd->platform_data == NULL)
+			return (ENOMEM);
+		bzero(ahd->platform_data, sizeof(struct ahd_platform_data));
+	}	
 
 	return (0);
 }
@@ -677,7 +678,8 @@ ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 void
 ahd_platform_free(struct ahd_softc *ahd)
 {
-	free(ahd->platform_data, M_DEVBUF);
+	if (sizeof(struct ahd_platform_data) > 0)
+		free(ahd->platform_data, M_DEVBUF);
 }
 
 int

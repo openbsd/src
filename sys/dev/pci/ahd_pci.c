@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.10 2004/12/10 17:43:19 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.11 2004/12/19 06:17:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -337,47 +337,23 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	const struct ahd_pci_identity *entry;
 	struct pci_attach_args *pa = aux;
 	struct ahd_softc *ahd = (void *)self;
-	struct scb_data *shared_scb_data;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t command, devconfig, memtype, reg, subid;
 	uint16_t device, subvendor; 
 	int error, ioh_valid, ioh2_valid, l, memh_valid, offset;
 
-	shared_scb_data = NULL;
 	ahd->dev_softc = pa;
-
-	ahd_set_name(ahd, ahd->sc_dev.dv_xname);
 	ahd->parent_dmat = pa->pa_dmat;
+
+	if (ahd_alloc(ahd, ahd->sc_dev.dv_xname) == NULL)
+		return;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahd_find_pci_device(pa->pa_id, subid);
 	if (entry == NULL)
 		return;
-
-	ahd->seep_config = malloc(sizeof(*ahd->seep_config),
-				M_DEVBUF, M_NOWAIT);
-	if (ahd->seep_config == NULL) {
-		printf("%s: cannot malloc seep_config!\n", ahd_name(ahd));
-		return;
-	}
-	memset(ahd->seep_config, 0, sizeof(*ahd->seep_config));
-
-	LIST_INIT(&ahd->pending_scbs);
-
-	ahd->flags = AHD_SPCHK_ENB_A|AHD_RESET_BUS_A|AHD_TERM_ENB_A
-	    | AHD_EXTENDED_TRANS_A|AHD_STPWLEVEL_A;
-	ahd->int_coalescing_timer = AHD_INT_COALESCING_TIMER_DEFAULT;
-	ahd->int_coalescing_maxcmds = AHD_INT_COALESCING_MAXCMDS_DEFAULT;
-	ahd->int_coalescing_mincmds = AHD_INT_COALESCING_MINCMDS_DEFAULT;
-	ahd->int_coalescing_threshold = AHD_INT_COALESCING_THRESHOLD_DEFAULT;
-	ahd->int_coalescing_stop_threshold = AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
-
-	if (ahd_platform_alloc(ahd, NULL) != 0) {
-		ahd_free(ahd);
-		return;
-	}
 
 	/*
 	 * Record if this is a HostRAID board.
