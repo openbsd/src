@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.4 1996/06/23 14:32:23 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.5 1996/08/02 15:39:28 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.4 1996/06/23 14:32:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.5 1996/08/02 15:39:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,6 @@ main(argc, argv)
 		case 'd':
 			debugonly = 1;
 			break;
-		case '?':
 		default:
 			usage((char *)NULL);
 		}
@@ -268,7 +267,7 @@ bad:			usage(*argv);
 		rtm = (struct rt_msghdr *)next;
 		if (verbose)
 			print_rtmsg(rtm, rtm->rtm_msglen);
-		if ((rtm->rtm_flags & RTF_GATEWAY) == 0)
+		if ((rtm->rtm_flags & (RTF_GATEWAY|RTF_STATIC|RTF_LLINFO)) == 0)
 			continue;
 		if (af) {
 			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
