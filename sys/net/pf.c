@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.326 2003/03/04 11:23:43 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.327 2003/03/09 20:26:12 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3022,14 +3022,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		    dst->state >= TCPS_FIN_WAIT_2)
 			(*state)->expire = time.tv_sec +
 			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_FIN_WAIT);
-		else if (src->state >= TCPS_CLOSING ||
-		    dst->state >= TCPS_CLOSING)
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSING);
 		else if (src->state < TCPS_ESTABLISHED ||
 		    dst->state < TCPS_ESTABLISHED)
 			(*state)->expire = time.tv_sec +
 			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_OPENING);
+		else if (src->state >= TCPS_CLOSING ||
+		    dst->state >= TCPS_CLOSING)
+			(*state)->expire = time.tv_sec +
+			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSING);
 		else
 			(*state)->expire = time.tv_sec +
 			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_ESTABLISHED);
