@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.9 1999/03/24 14:41:17 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.68 1999/03/24 11:04:55 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.10 1999/03/31 00:52:06 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.69 1999/03/30 21:45:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -251,7 +251,10 @@ sa_create (struct exchange *exchange, struct transport *t)
    */
   sa = calloc (1, sizeof *sa);
   if (!sa)
-    return -1;
+    {
+      log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
+      return -1;
+    }
   sa->transport = t;
   sa->phase = exchange->phase;
   memcpy (sa->cookies, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
@@ -262,14 +265,20 @@ sa_create (struct exchange *exchange, struct transport *t)
   sa->data = calloc (1, sa->doi->sa_size);
   if (!sa->data)
     {
+      log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
       free (sa);
-      return 0;
+      return -1;
     }
 
   TAILQ_INIT (&sa->protos);
 
   sa_enter (sa);
   TAILQ_INSERT_TAIL (&exchange->sa_list, sa, next);
+
+  log_debug (LOG_MISC, 90,
+	     "sa_create: sa %p phase %d added to exchange %p (%s)", sa,
+	     sa->phase, exchange,
+	     exchange->name ? exchange->name : "<unnamed>");
   return 0;
 }
 
@@ -293,10 +302,11 @@ sa_dump (char *header, struct sa *sa)
        proto = TAILQ_NEXT (proto, link))
     {
       log_debug (LOG_MISC, 10,
-		 "%s: suite %d proto %d "
-		 "spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p",
-		 header, proto->no, proto->proto, proto->spi_sz[0],
-		 proto->spi[0], proto->spi_sz[1], proto->spi[1]);
+		 "%s: suite %d proto %d", header, proto->no, proto->proto);
+      log_debug (LOG_MISC, 10,
+		 "%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
+		 proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
+		 proto->spi[1]);
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
 	  {
@@ -358,16 +368,16 @@ sa_free_aux (struct sa *sa)
 {
   struct proto *proto;
 
+  if (sa->last_sent_in_setup)
+    message_free (sa->last_sent_in_setup);
+  while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
+    proto_free (proto);
   if (sa->data)
     {
       if (sa->doi && sa->doi->free_sa_data)
 	sa->doi->free_sa_data (sa->data);
       free (sa->data);
     }
-  if (sa->last_sent_in_setup)
-    message_free (sa->last_sent_in_setup);
-  while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
-    proto_free (proto);
   LIST_REMOVE (sa, link);
   free (sa);
 }
@@ -533,4 +543,25 @@ sa_flag (char *attr)
       return sa_flag_map[i].flag;
   log_print (LOG_MISC, 10, "sa_flag: attribute \"%s\" unknown", attr);
   return 0;
+}
+
+/* Is SA equal to V_SA?  */
+static int
+sa_equal (struct sa *sa, void *v_sa)
+{
+  return sa == v_sa;
+}
+
+/*
+ * Mark SA as replaced.  As SA has potentially disappeared before we get
+ * called, check if it still exists before marking.
+ */
+void
+sa_mark_replaced (struct sa *sa)
+{
+  if (sa_find (sa_equal, sa))
+    {
+      log_debug (LOG_MISC, 90, "SA %p marked as replaced", sa);
+      sa->flags |= SA_FLAG_REPLACED;
+    }
 }
