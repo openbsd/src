@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.35 2001/08/19 19:03:58 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.36 2001/08/19 19:57:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -242,6 +242,8 @@ pfctl_show_states(int dev, u_int8_t proto)
 			break;
 		if (len == 0 && ps.ps_len != 0)
 			len = ps.ps_len;
+		if (ps.ps_len == 0)
+			return (0);	/* no states */
 		len *= 2;
 	}
 	p = ps.ps_states;
