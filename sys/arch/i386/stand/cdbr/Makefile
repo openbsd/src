@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2004/06/22 23:12:18 tom Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/08/24 15:24:05 tom Exp $
 #
 
 PROG=	cdbr
 SRCS=	cdbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
+AFLAGS+=-DOSREV=\"${OSREV}\"
+AFLAGS+=-DMACH=\"${MACHINE}\" -DMACH_U=\"${MACHINE:U}\"
 LD=ld
 ORG=	0x0000
 LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start

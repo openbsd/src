@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdbr.S,v 1.1 2004/06/22 23:12:18 tom Exp $	*/
+/*	$OpenBSD: cdbr.S,v 1.2 2004/08/24 15:24:05 tom Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -172,9 +172,7 @@ lookup_path:
 	orb	%al, %al		/* Is it double nul? */
 	jnz	lookup_path		/* No, try it */
 	movw	$msg_failed, %si	/* Failed message */
-	call	display_string
-	movw	$loader_paths, %si
-	jmp	err_stop		/* Halt */
+	jmp	err_stop		/* Print it and halt */
 
 lookup_found:				/* Found a loader file */
 
@@ -218,6 +216,9 @@ load_done:
 
 	/* Now we can start the loaded program */
 
+	movw	loader, %cx		/* Tell cdboot where it is */
+					/* (Older versions of cdbr have */
+					/*  %cx == 0 from the jcxz load_done) */
 	movb	drive, %dl		/* Get the boot drive number */
 	ljmp	$BOOTSEG, $0		/* Go run cdboot */
 
@@ -490,9 +491,8 @@ signon:		.asciz	"CD-ROM: "
 crlf:		.asciz	"\r\n"
 msg_load2big:	.asciz  "File too big"
 msg_badread:	.asciz  "Read error: 0x"
-msg_novd:	.asciz  "Unable to find Primary Volume Descriptor"
+msg_novd:	.asciz  "No Primary Volume Descriptor"
 msg_loading:	.asciz  "Loading "
-msg_failed:	.asciz	"Can't find "
 
 /* State for searching dir */
 rec_lba:	.long	0x0			/* LBA (adjusted for EA) */
@@ -502,12 +502,6 @@ name_len:	.byte	0x0			/* Length of current name */
 twiddle_index:	.byte	0x0
 twiddle_chars:	.ascii	"|/-\\"
 
-/* loader_paths is a list of ASCIZ strings followed by a term NUL byte */
-loader:		.word	0			/* The one we end up using */
-loader_paths:	.asciz  "/cdboot"
-		.asciz	"/CDBOOT"
-		.byte 0
-
 /* Packet for LBA (CD) read */
 edd_packet:	.byte	0x10			/* Length */
 		.byte	0			/* Reserved */
@@ -515,6 +509,21 @@ edd_len:	.byte	0x0			/* Num to read */
 		.byte	0			/* Reserved */
 edd_addr:	.word	0x0, 0x0		/* Seg:Off */
 edd_lba:	.quad	0x0			/* LBA */
+
+/* The data from here must be last in the file, only followed by 0x00 bytes */
+
+loader:		.word	0			/* The path we end up using */
+
+msg_failed:	.ascii	"Can't find "		/* This string runs into... */
+
+/* loader_paths is a list of ASCIZ strings followed by a term NUL byte */
+loader_paths:	.asciz  "/cdboot"
+		.asciz	"/CDBOOT"
+		.ascii	"/", OSREV, "/", MACH, "/cdboot"
+		.byte	0			/* NUL-term line above */
+		.ascii	"/", OSREV, "/", MACH_U, "/CDBOOT"
+		.byte	0			/* NUL-term line above */
+		.byte	0			/* Terminate the list */
 
 	. = BOOTSECTSIZE
 
