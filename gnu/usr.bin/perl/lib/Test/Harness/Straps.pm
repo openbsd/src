@@ -1,12 +1,12 @@
 # -*- Mode: cperl; cperl-indent-level: 4 -*-
-# $Id: Straps.pm,v 1.18 2003/08/15 01:29:23 andy Exp $
+# $Id: Straps.pm,v 1.35 2003/12/31 02:34:22 andy Exp $
 
 package Test::Harness::Straps;
 
 use strict;
 use vars qw($VERSION);
 use Config;
-$VERSION = '0.15';
+$VERSION = '0.19';
 
 use Test::Harness::Assert;
 use Test::Harness::Iterator;
@@ -89,8 +89,9 @@ Initialize the internal state of a strap to make it ready for parsing.
 sub _init {
     my($self) = shift;
 
-    $self->{_is_vms}   = $^O eq 'VMS';
-    $self->{_is_win32} = $^O eq 'Win32';
+    $self->{_is_vms}   = ( $^O eq 'VMS' );
+    $self->{_is_win32} = ( $^O =~ /^(MS)?Win32$/ );
+    $self->{_is_macos} = ( $^O eq 'MacOS' );
 }
 
 =head1 Analysis
@@ -261,14 +262,9 @@ sub analyze_file {
 
     local $ENV{PERL5LIB} = $self->_INC2PERL5LIB;
 
-    my $cmd = $self->{_is_vms}   ? "MCR $^X" :
-              $self->{_is_win32} ? Win32::GetShortPathName($^X)
-                                 : $^X;
-
-    my $switches = $self->_switches($file);
-
     # *sigh* this breaks under taint, but open -| is unportable.
-    unless( open(FILE, "$cmd $switches $file|") ) {
+    my $line = $self->_command_line($file);
+    unless( open(FILE, "$line|") ) {
         print "can't run $file. $!\n";
         return;
     }
@@ -298,6 +294,53 @@ else {
     *_wait2exit = sub { POSIX::WEXITSTATUS($_[0]) }
 }
 
+=head2 C<_command_line( $file )>
+
+  my $command_line = $self->_command_line();
+
+Returns the full command line that will be run to test I<$file>.
+
+=cut
+
+sub _command_line {
+    my $self = shift;
+    my $file = shift;
+
+    my $command =  $self->_command();
+    my $switches = $self->_switches($file);
+
+    $file = qq["$file"] if ($file =~ /\s/) && ($file !~ /^".*"$/);
+    my $line = "$command $switches $file";
+
+    return $line;
+}
+
+
+=head2 C<_command>
+
+  my $command = $self->_command();
+
+Returns the command that runs the test.  Combine this with _switches()
+to build a command line.
+
+Typically this is C<$^X>, but you can set C<$ENV{HARNESS_COMMAND}>
+to use a different Perl than what you're running the harness under.
+This might be to run a threaded Perl, for example.
+
+You can also overload this method if you've built your own strap subclass,
+such as a PHP interpreter for a PHP-based strap.
+
+=cut
+
+sub _command {
+    my $self = shift;
+
+    return $ENV{HARNESS_PERL}           if defined $ENV{HARNESS_PERL};
+    return "MCR $^X"                    if $self->{_is_vms};
+    return Win32::GetShortPathName($^X) if $self->{_is_win32};
+    return $^X;
+}
+
 
 =head2 C<_switches>
 
@@ -310,28 +353,58 @@ Formats and returns the switches necessary to run the test.
 sub _switches {
     my($self, $file) = @_;
 
+    my @existing_switches = $self->_cleaned_switches( $Test::Harness::Switches, $ENV{HARNESS_PERL_SWITCHES} );
+    my @derived_switches;
+
     local *TEST;
     open(TEST, $file) or print "can't open $file. $!\n";
-    my $first = <TEST>;
-    my $s = $Test::Harness::Switches || '';
-    $s .= " $ENV{'HARNESS_PERL_SWITCHES'}"
-      if exists $ENV{'HARNESS_PERL_SWITCHES'};
-
-    if ($first =~ /^#!.*\bperl.*\s-\w*([Tt]+)/) {
-        # When taint mode is on, PERL5LIB is ignored.  So we need to put
-        # all that on the command line as -Is.
-        $s .= join " ", qq[ "-$1"], map {qq["-I$_"]} $self->_filtered_INC;
-    }
-    elsif ($^O eq 'MacOS') {
-        # MacPerl's putenv is broken, so it will not see PERL5LIB.
-        $s .= join " ", map {qq["-I$_"]} $self->_filtered_INC;
-    }
-
+    my $shebang = <TEST>;
     close(TEST) or print "can't close $file. $!\n";
 
-    return $s;
+    my $taint = ( $shebang =~ /^#!.*\bperl.*\s-\w*([Tt]+)/ );
+    push( @derived_switches, "-$1" ) if $taint;
+
+    # When taint mode is on, PERL5LIB is ignored.  So we need to put
+    # all that on the command line as -Is.
+    # MacPerl's putenv is broken, so it will not see PERL5LIB, tainted or not.
+    if ( $taint || $self->{_is_macos} ) {
+	my @inc = $self->_filtered_INC;
+	push @derived_switches, map { "-I$_" } @inc;
+    }
+
+    # Quote the argument if there's any whitespace in it, or if
+    # we're VMS, since VMS requires all parms quoted.  Also, don't quote
+    # it if it's already quoted.
+    for ( @derived_switches ) {
+	$_ = qq["$_"] if ((/\s/ || $self->{_is_vms}) && !/^".*"$/ );
+    }
+    return join( " ", @existing_switches, @derived_switches );
 }
 
+=head2 C<_cleaned_switches>
+
+  my @switches = $self->_cleaned_switches( @switches_from_user );
+
+Returns only defined, non-blank, trimmed switches from the parms passed.
+
+=cut
+
+sub _cleaned_switches {
+    my $self = shift;
+
+    local $_;
+
+    my @switches;
+    for ( @_ ) {
+	my $switch = $_;
+	next unless defined $switch;
+	$switch =~ s/^\s+//;
+	$switch =~ s/\s+$//;
+	push( @switches, $switch ) if $switch ne "";
+    }
+
+    return @switches;
+}
 
 =head2 C<_INC2PERL5LIB>
 
@@ -363,12 +436,18 @@ sub _filtered_INC {
     my($self, @inc) = @_;
     @inc = @INC unless @inc;
 
-    # VMS has a 255-byte limit on the length of %ENV entries, so
-    # toss the ones that involve perl_root, the install location
-    # for VMS
     if( $self->{_is_vms} ) {
+	# VMS has a 255-byte limit on the length of %ENV entries, so
+	# toss the ones that involve perl_root, the install location
         @inc = grep !/perl_root/i, @inc;
+
+    } elsif ( $self->{_is_win32} ) {
+	# Lose any trailing backslashes in the Win32 paths
+	s/[\\\/+]$// foreach @inc;
     }
+
+    my %dupes;
+    @inc = grep !$dupes{$_}++, @inc;
 
     return @inc;
 }
@@ -501,8 +580,8 @@ sub _is_test {
 
     # We pulverize the line down into pieces in three parts.
     if( my($not, $num, $extra)    = $line  =~ /$Report_Re/ox ) {
-        my($name, $control) = split /(?:[^\\]|^)#/, $extra if $extra;
-        my($type, $reason)  = $control =~ /^\s*(\S+)(?:\s+(.*))?$/ if $control;
+        my ($name, $control) = $extra ? split(/(?:[^\\]|^)#/, $extra) : ();
+        my ($type, $reason)  = $control ? $control =~ /^\s*(\S+)(?:\s+(.*))?$/ : ();
 
         $test->{number} = $num;
         $test->{ok}     = $not ? 0 : 1;
@@ -520,7 +599,7 @@ sub _is_test {
         return $YES;
     }
     else{
-        # Sometimes the "not " and "ok" will be on seperate lines on VMS.
+        # Sometimes the "not " and "ok" will be on separate lines on VMS.
         # We catch this and remember we saw it.
         if( $line =~ /^not\s+$/ ) {
             $self->{saw_lone_not} = 1;
@@ -662,6 +741,5 @@ Andy Lester C<< <andy@petdance.com> >>.
 L<Test::Harness>
 
 =cut
-
 
 1;

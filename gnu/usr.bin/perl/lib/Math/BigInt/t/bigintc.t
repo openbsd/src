@@ -14,8 +14,17 @@ use Math::BigInt::Calc;
 
 BEGIN
   {
-  plan tests => 258;
+  plan tests => 300;
   }
+
+my ($BASE_LEN, $AND_BITS, $XOR_BITS, $OR_BITS, $BASE_LEN_SMALL, $MAX_VAL) =
+  Math::BigInt::Calc->_base_len();
+
+print "# BASE_LEN = $BASE_LEN\n";
+print "# MAX_VAL = $MAX_VAL\n";
+print "# AND_BITS = $AND_BITS\n";
+print "# XOR_BITS = $XOR_BITS\n";
+print "# IOR_BITS = $OR_BITS\n";
 
 # testing of Math::BigInt::Calc
 
@@ -156,6 +165,16 @@ ok ($C->_acmp($x,$y),-1);
 ok ($C->_acmp($y,$x),1);
 ok ($C->_acmp($x,$x),0);
 ok ($C->_acmp($y,$y),0);
+$x = $C->_new(\"12");
+$y = $C->_new(\"12");
+ok ($C->_acmp($x,$y),0);
+$x = $C->_new(\"21");
+ok ($C->_acmp($x,$y),1);
+ok ($C->_acmp($y,$x),-1);
+$x = $C->_new(\"123456789");
+$y = $C->_new(\"1987654321");
+ok ($C->_acmp($x,$y),-1);
+ok ($C->_acmp($y,$x),+1);
 
 $x = $C->_new(\"1234567890123456789");
 $y = $C->_new(\"987654321012345678");
@@ -204,6 +223,64 @@ ok (${$C->_str($C->_root($x,$n))},'4');	# 4.xx => 4.0
 $x = $C->_new(\"81"); $n = $C->_new(\"4"); 	# 3*3*3*3 == 81
 ok (${$C->_str($C->_root($x,$n))},'3');
 
+# _pow (and _root)
+$x = $C->_new(\"0"); $n = $C->_new(\"3"); 	# 0 ** y => 0
+ok (${$C->_str($C->_pow($x,$n))}, 0);
+$x = $C->_new(\"3"); $n = $C->_new(\"0"); 	# x ** 0 => 1
+ok (${$C->_str($C->_pow($x,$n))}, 1);
+$x = $C->_new(\"1"); $n = $C->_new(\"3"); 	# 1 ** y => 1
+ok (${$C->_str($C->_pow($x,$n))}, 1);
+$x = $C->_new(\"5"); $n = $C->_new(\"1"); 	# x ** 1 => x
+ok (${$C->_str($C->_pow($x,$n))}, 5);
+
+$x = $C->_new(\"81"); $n = $C->_new(\"3"); 	# 81 ** 3 == 531441 
+ok (${$C->_str($C->_pow($x,$n))},81 ** 3);
+
+ok (${$C->_str($C->_root($x,$n))},81);
+
+$x = $C->_new(\"81");
+ok (${$C->_str($C->_pow($x,$n))},81 ** 3);
+ok (${$C->_str($C->_pow($x,$n))},'150094635296999121'); # 531441 ** 3 ==
+
+ok (${$C->_str($C->_root($x,$n))},'531441');
+ok (${$C->_str($C->_root($x,$n))},'81');
+
+$x = $C->_new(\"81"); $n = $C->_new(\"14"); 	
+ok (${$C->_str($C->_pow($x,$n))},'523347633027360537213511521');
+ok (${$C->_str($C->_root($x,$n))},'81');
+
+$x = $C->_new(\"523347633027360537213511520");
+ok (${$C->_str($C->_root($x,$n))},'80');
+
+$x = $C->_new(\"523347633027360537213511522");
+ok (${$C->_str($C->_root($x,$n))},'81');
+
+my $res = [ qw/ 9 31 99 316 999 3162 9999/ ];
+
+# 99 ** 2 = 9801, 999 ** 2 = 998001 etc
+for my $i (2 .. 9)
+  {
+  $x = '9' x $i; $x = $C->_new(\$x);
+  $n = $C->_new(\"2");
+  my $rc = '9' x ($i-1). '8' . '0' x ($i-1) . '1';
+  print "# _pow( ", '9' x $i, ", 2) \n" unless
+   ok (${$C->_str($C->_pow($x,$n))},$rc);
+ 
+  if ($i <= 7)
+    {
+    $x = '9' x $i; $x = $C->_new(\$x);
+    $n = '9' x $i; $n = $C->_new(\$n);
+    print "# _root( ", '9' x $i, ", ", 9 x $i, ") \n" unless
+     ok (${$C->_str($C->_root($x,$n))},'1');
+
+    $x = '9' x $i; $x = $C->_new(\$x);
+    $n = $C->_new(\"2");
+    print "# _root( ", '9' x $i, ", ", 9 x $i, ") \n" unless
+     ok (${$C->_str($C->_root($x,$n))}, $res->[$i-2]);
+    }
+  }
+
+##############################################################################
 # _fac
 $x = $C->_new(\"0"); ok (${$C->_str($C->_fac($x))},'1');
 $x = $C->_new(\"1"); ok (${$C->_str($C->_fac($x))},'1');
@@ -214,6 +291,11 @@ $x = $C->_new(\"5"); ok (${$C->_str($C->_fac($x))},'120');
 $x = $C->_new(\"10"); ok (${$C->_str($C->_fac($x))},'3628800');
 $x = $C->_new(\"11"); ok (${$C->_str($C->_fac($x))},'39916800');
 $x = $C->_new(\"12"); ok (${$C->_str($C->_fac($x))},'479001600');
+$x = $C->_new(\"13"); ok (${$C->_str($C->_fac($x))},'6227020800');
+
+# test that _fac modifes $x in place for small arguments
+$x = $C->_new(\"3"); $C->_fac($x); ok (${$C->_str($x)},'6');
+$x = $C->_new(\"13"); $C->_fac($x); ok (${$C->_str($x)},'6227020800');
 
 ##############################################################################
 # _inc and _dec

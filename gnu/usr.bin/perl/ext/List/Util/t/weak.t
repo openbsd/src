@@ -35,7 +35,7 @@ BEGIN {
 
 eval <<'EOT' unless $skip;
 use Scalar::Util qw(weaken isweak);
-print "1..17\n";
+print "1..22\n";
 
 ######################### End of black magic.
 
@@ -44,6 +44,7 @@ $cnt = 0;
 sub ok {
 	++$cnt;
 	if($_[0]) { print "ok $cnt\n"; } else {print "not ok $cnt\n"; }
+	return $_[0];
 }
 
 $| = 1;
@@ -205,6 +206,29 @@ weaken($x->{Y} = \$a);
 ok(isweak($x->{Y}));
 ok(!isweak($x->{Z}));
 
+#
+# Case 7: test weaken on a read only ref
+#
+
+if ($] < 5.008003) {
+    # Doesn't work for older perls, see bug [perl #24506]
+    print "# Skip next 5 tests on perl $]\n";
+    for (1..5) {
+	ok(1);
+    }
+}
+else {
+    $a = eval '\"hello"';
+    ok(ref($a)) or print "# didn't get a ref from eval\n";
+    $b = $a;
+    eval{weaken($b)};
+    # we didn't die
+    ok($@ eq "") or print "# died with $@\n";
+    ok(isweak($b));
+    ok($$b eq "hello") or print "# b is '$$b'\n";
+    $a="";
+    ok(not $b) or print "# b didn't go away\n";
+}
 
 package Dest;
 

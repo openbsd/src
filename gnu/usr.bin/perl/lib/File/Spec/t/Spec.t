@@ -224,7 +224,7 @@ if ($^O eq 'MacOS') {
 [ "Win32->canonpath('\\..\\')",         '\\'                  ],
 [ "Win32->canonpath('/../')",           '\\'                  ],
 [ "Win32->canonpath('/..\\')",          '\\'                  ],
-[ "Win32->can('_cwd')",                 qr/CODE/              ],
+[ "Win32->can('_cwd')",                 '/CODE/'              ],
 
 # FakeWin32 subclass (see below) just sets CWD to C:\one\two
 

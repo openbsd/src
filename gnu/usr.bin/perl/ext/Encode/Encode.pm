@@ -1,9 +1,9 @@
 #
-# $Id: Encode.pm,v 1.98 2003/08/20 11:16:34 dankogai Exp dankogai $
+# $Id: Encode.pm,v 1.99 2003/12/29 02:47:16 dankogai Exp dankogai $
 #
 package Encode;
 use strict;
-our $VERSION = do { my @r = (q$Revision: 1.9801 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.99 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 sub DEBUG () { 0 }
 use XSLoader ();
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -195,11 +195,15 @@ sub encode_utf8($)
     return $str;
 }
 
-sub decode_utf8($)
+sub decode_utf8($;$)
 {
-    my ($str) = @_;
-    return undef unless utf8::decode($str);
-    return $str;
+    my ($str, $check) = @_;
+    if ($check){
+	return decode("utf8", $str, $check);
+    }else{
+	return undef unless utf8::decode($str);
+	return $str;
+    }
 }
 
 predefine_encodings(1);

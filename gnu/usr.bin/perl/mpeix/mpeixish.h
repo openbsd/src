@@ -87,9 +87,7 @@
  */
 /* #define ALTERNATE_SHEBANG "#!" / **/
 
-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX)
-# include <signal.h>
-#endif
+#include <signal.h>
 
 #ifndef SIGABRT
 #    define SIGABRT SIGILL

@@ -151,7 +151,7 @@ BEGIN
 }
 
 my $splice_tests = 10 + 12 + 1; # ten regressions, plus the randoms
-my $total_tests = 158 ;
+my $total_tests = 168 ;
 $total_tests += $splice_tests if $FA ;
 print "1..$total_tests\n";   
 
@@ -1014,6 +1014,52 @@ EOM
    unlink $Dfile;
 }
 
+{
+   # Check low-level API works with filter
+
+   use warnings ;
+   use strict ;
+   my (@h, $db) ;
+   my $Dfile = "xxy.db";
+   unlink $Dfile;
+
+   ok(159, $db = tie(@h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) );
+
+
+   $db->filter_fetch_key   (sub { ++ $_ } );
+   $db->filter_store_key   (sub { -- $_ } );
+   $db->filter_fetch_value (sub { $_ = unpack("i", $_) } );
+   $db->filter_store_value (sub { $_ = pack("i", $_) } );
+
+   $_ = 'fred';
+
+   my $key = 22 ;
+   my $value = 34 ;
+
+   $db->put($key, $value) ;
+   ok 160, $key == 22;
+   ok 161, $value == 34 ;
+   ok 162, $_ eq 'fred';
+   #print "k [$key][$value]\n" ;
+
+   my $val ;
+   $db->get($key, $val) ;
+   ok 163, $key == 22;
+   ok 164, $val == 34 ;
+   ok 165, $_ eq 'fred';
+
+   $key = 51 ;
+   $value = 454;
+   $h[$key] = $value ;
+   ok 166, $key == 51;
+   ok 167, $value == 454 ;
+   ok 168, $_ eq 'fred';
+
+   undef $db ;
+   untie @h;
+   unlink $Dfile;
+}
+
 # Only test splice if this is a newish version of Perl
 exit unless $FA ;
 
@@ -1041,36 +1087,36 @@ exit unless $FA ;
     my $offset ;
     $a = '';
     splice(@a, $offset);
-    ok(159, $a =~ /^Use of uninitialized value /);
+    ok(169, $a =~ /^Use of uninitialized value /);
     $a = '';
     splice(@tied, $offset);
-    ok(160, $a =~ /^Use of uninitialized value in splice/);
+    ok(170, $a =~ /^Use of uninitialized value in splice/);
 
     no warnings 'uninitialized';
     $a = '';
     splice(@a, $offset);
-    ok(161, $a eq '');
+    ok(171, $a eq '');
     $a = '';
     splice(@tied, $offset);
-    ok(162, $a eq '');
+    ok(172, $a eq '');
 
     # uninitialized length
     use warnings;
     my $length ;
     $a = '';
     splice(@a, 0, $length);
-    ok(163, $a =~ /^Use of uninitialized value /);
+    ok(173, $a =~ /^Use of uninitialized value /);
     $a = '';
     splice(@tied, 0, $length);
-    ok(164, $a =~ /^Use of uninitialized value in splice/);
+    ok(174, $a =~ /^Use of uninitialized value in splice/);
 
     no warnings 'uninitialized';
     $a = '';
     splice(@a, 0, $length);
-    ok(165, $a eq '');
+    ok(175, $a eq '');
     $a = '';
     splice(@tied, 0, $length);
-    ok(166, $a eq '');
+    ok(176, $a eq '');
 
     # offset past end of array
     use warnings;
@@ -1079,17 +1125,17 @@ exit unless $FA ;
     my $splice_end_array = ($a =~ /^splice\(\) offset past end of array/);
     $a = '';
     splice(@tied, 3);
-    ok(167, !$splice_end_array || $a =~ /^splice\(\) offset past end of array/);
+    ok(177, !$splice_end_array || $a =~ /^splice\(\) offset past end of array/);
 
     no warnings 'misc';
     $a = '';
     splice(@a, 3);
-    ok(168, $a eq '');
+    ok(178, $a eq '');
     $a = '';
     splice(@tied, 3);
-    ok(169, $a eq '');
+    ok(179, $a eq '');
 
-    ok(170, safeUntie \@tied);
+    ok(180, safeUntie \@tied);
     unlink $Dfile;
 }
 
@@ -1150,7 +1196,7 @@ my @tests = ([ [ 'falsely', 'dinosaur', 'remedy', 'commotion',
 	       'void' ],
 	    );
 
-my $testnum = 171;
+my $testnum = 181;
 my $failed = 0;
 require POSIX; my $tmp = POSIX::tmpnam();
 foreach my $test (@tests) {

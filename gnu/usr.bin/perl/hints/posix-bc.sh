@@ -23,7 +23,7 @@ esac
 # -DUSE_PURE_BISON
 # -D_XOPEN_SOURCE_EXTENDED alters system headers.
 # Prepend your favorites with Configure -Dccflags=your_favorites
-ccflags="$ccflags -Kc_names_unlimited,enum_long,llm_case_lower,llm_keep,no_integer_overflow -DPOSIX_BC -DUSE_PURE_BISON -D_XOPEN_SOURCE_EXTENDED"
+ccflags="$ccflags -Kc_names_unlimited,enum_long,llm_case_lower,llm_keep,no_integer_overflow -DPOSIX_BC -DUSE_PURE_BISON -DYYMAXDEPTH=65000 -DYYINITDEPTH=1000 -D_XOPEN_SOURCE_EXTENDED"
 
 # Now, what kind of BS2000 system are we running on?
 echo

@@ -1,4 +1,4 @@
-Unicode/Collate version 0.30
+Unicode/Collate version 0.33
 ===============================
 
 NAME
@@ -23,6 +23,22 @@ SYNOPSIS
 INSTALLATION
 
 Perl 5.6.1 or later
+(recommended: Perl 5.8.0 or later)
+
+To use this module, it is recommended to install a table file
+in the UCA format, by copying it into the directory
+where F<Unicode/Collate.pm> is installed;
+e.g. into F<perl/lib/Unicode/Collate/> directory
+if you have F<perl/lib/Unicode/Collate.pm>.
+
+The most preferable one is "The Default Unicode Collation Element Table",
+available from the Unicode consortium's website:
+
+  http://www.unicode.org/Public/UCA/latest/allkeys.txt (latest version)
+
+Though this distribution contains a subset of allkeys.txt, named "keys.txt",
+this one is intended only for doing a test of this module
+and practically useless for any other purpose.
 
 To install this module type the following:
 
@@ -31,17 +47,25 @@ To install this module type the following:
    make test
    make install
 
-To use this module, it is better to install a table file in the UCA format,
-by copying it into the lib/Unicode/Collate directory.
+(!! XSUB for Unicode::Collate is an EXPERIMENTAL support !!)
+If you have a C compiler and want to use XSUB edition,
+type the following (!! "enableXS" must run before "Makefile.PL" !!):
 
-The most preferable one is "The Default Unicode Collation Element Table",
-available from the Unicode consortium's website:
+   perl enableXS
+   perl Makefile.PL
+   make
+   make test
+   make install
 
-    http://www.unicode.org/reports/tr10/allkeys.txt
+If you decide to install pure Perl (i.e. non-XS) edition after trying
+to build XSUB, type the following:
 
-Though this distribution contains a subset of allkeys.txt, named "keys.txt",
-this one is intended only for doing a test of this module
-and practically useless for any other purpose.
+   make clean
+   perl disableXS
+   perl Makefile.PL
+   make
+   make test
+   make install
 
 DEPENDENCIES
 

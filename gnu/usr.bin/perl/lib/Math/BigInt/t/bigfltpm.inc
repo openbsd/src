@@ -1201,6 +1201,8 @@ abc:1:abc:NaN
 &ffac
 Nanfac:NaN
 -1:NaN
++inf:inf
+-inf:NaN
 0:1
 1:1
 2:2
@@ -1260,6 +1262,7 @@ NaN:inf:NaN
 # fourths root
 16:4:2
 81:4:3
+# see t/bigroot() for more tests
 &fsqrt
 +0:0
 -1:NaN

@@ -34,7 +34,7 @@ EOM
 use DB_File; 
 use Fcntl;
 
-print "1..177\n";
+print "1..187\n";
 
 unlink glob "__db.*";
 
@@ -1490,4 +1490,49 @@ ok(165,1);
    unlink $Dfile;
 }
 
+{
+   # Check low-level API works with filter
+
+   use warnings ;
+   use strict ;
+   my (%h, $db) ;
+   my $Dfile = "xxy.db";
+   unlink $Dfile;
+
+   ok(178, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE ) );
+
+
+   $db->filter_fetch_key   (sub { $_ = unpack("i", $_) } );
+   $db->filter_store_key   (sub { $_ = pack("i", $_) } );
+   $db->filter_fetch_value (sub { $_ = unpack("i", $_) } );
+   $db->filter_store_value (sub { $_ = pack("i", $_) } );
+
+   $_ = 'fred';
+
+   my $key = 22 ;
+   my $value = 34 ;
+
+   $db->put($key, $value) ;
+   ok 179, $key == 22;
+   ok 180, $value == 34 ;
+   ok 181, $_ eq 'fred';
+   #print "k [$key][$value]\n" ;
+
+   my $val ;
+   $db->get($key, $val) ;
+   ok 182, $key == 22;
+   ok 183, $val == 34 ;
+   ok 184, $_ eq 'fred';
+
+   $key = 51 ;
+   $value = 454;
+   $h{$key} = $value ;
+   ok 185, $key == 51;
+   ok 186, $value == 454 ;
+   ok 187, $_ eq 'fred';
+
+   undef $db ;
+   untie %h;
+   unlink $Dfile;
+}
 exit ;

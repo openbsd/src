@@ -52,6 +52,10 @@ my %classes =
    " \t"       => [ qw(space) ],
 
    "abcde\001" => [],
+
+   # An empty string. Always true (al least in old days) [bug #24554]
+   ''     => [ qw(print graph alnum alpha lower upper digit xdigit
+                  punct cntrl space) ],
   );
 
 

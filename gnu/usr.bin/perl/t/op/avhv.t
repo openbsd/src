@@ -3,12 +3,18 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
+
+use warnings;
+no warnings 'deprecated';
+use strict;
+use vars qw(@fake %fake);
 
 require Tie::Array;
 
 package Tie::BasicArray;
-@ISA = 'Tie::Array';
+@Tie::BasicArray::ISA = 'Tie::Array';
 sub TIEARRAY  { bless [], $_[0] }
 sub STORE     { $_[0]->[$_[1]] = $_[2] }
 sub FETCH     { $_[0]->[$_[1]] }
@@ -17,9 +23,9 @@ sub STORESIZE { $#{$_[0]} = $_[1]+1 }
 
 package main;
 
-print "1..29\n";
+plan tests => 36;
 
-$sch = {
+my $sch = {
     'abc' => 1,
     'def' => 2,
     'jkl' => 3,
@@ -33,21 +39,22 @@ $a->{'abc'} = 'ABC';
 $a->{'def'} = 'DEF';
 $a->{'jkl'} = 'JKL';
 
-@keys = keys %$a;
-@values = values %$a;
+my @keys = keys %$a;
+my @values = values %$a;
 
-if ($#keys == 2 && $#values == 2) {print "ok 1\n";} else {print "not ok 1\n";}
+is ($#keys, 2);
+is ($#values, 2);
 
-$i = 0;		# stop -w complaints
+my $i = 0;	# stop -w complaints
 
-while (($key,$value) = each %$a) {
+while (my ($key,$value) = each %$a) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
 	$key =~ y/a-z/A-Z/;
 	$i++ if $key eq $value;
     }
 }
 
-if ($i == 3) {print "ok 2\n";} else {print "not ok 2\n";}
+is ($i, 3);
 
 # quick check with tied array
 tie @fake, 'Tie::StdArray';
@@ -55,7 +62,7 @@ $a = \@fake;
 $a->[0] = $sch;
 
 $a->{'abc'} = 'ABC';
-if ($a->{'abc'} eq 'ABC') {print "ok 3\n";} else {print "not ok 3\n";}
+is ($a->{'abc'}, 'ABC');
 
 # quick check with tied array
 tie @fake, 'Tie::BasicArray';
@@ -63,122 +70,107 @@ $a = \@fake;
 $a->[0] = $sch;
 
 $a->{'abc'} = 'ABC';
-if ($a->{'abc'} eq 'ABC') {print "ok 4\n";} else {print "not ok 4\n";}
+is ($a->{'abc'}, 'ABC');
 
 # quick check with tied array & tied hash
 require Tie::Hash;
-tie %fake, Tie::StdHash;
+tie %fake, 'Tie::StdHash';
 %fake = %$sch;
 $a->[0] = \%fake;
 
 $a->{'abc'} = 'ABC';
-if ($a->{'abc'} eq 'ABC') {print "ok 5\n";} else {print "not ok 5\n";}
+is ($a->{'abc'}, 'ABC');
 
 # hash slice
-my $slice = join('', 'x',@$a{'abc','def'},'x');
-print "not " if $slice ne 'xABCx';
-print "ok 6\n";
+{
+  no warnings 'uninitialized';
+  my $slice = join('', 'x',@$a{'abc','def'},'x');
+  is ($slice, 'xABCx');
+}
 
 # evaluation in scalar context
 my $avhv = [{}];
-print "not " if %$avhv;
-print "ok 7\n";
+ok (!%$avhv);
 
 push @$avhv, "a";
-print "not " if %$avhv;
-print "ok 8\n";
+ok (!%$avhv);
 
 $avhv = [];
 eval { $a = %$avhv };
-print "not " unless $@ and $@ =~ /^Can't coerce array into hash/;
-print "ok 9\n";
+like ($@, qr/^Can't coerce array into hash/);
 
 $avhv = [{foo=>1, bar=>2}];
-print "not " unless %$avhv =~ m,^\d+/\d+,;
-print "ok 10\n";
+like (%$avhv, qr,^\d+/\d+,);
 
 # check if defelem magic works
 sub f {
-    print "not " unless $_[0] eq 'a';
+    is ($_[0], 'a');
     $_[0] = 'b';
-    print "ok 11\n";
 }
 $a = [{key => 1}, 'a'];
 f($a->{key});
-print "not " unless $a->[1] eq 'b';
-print "ok 12\n";
+is ($a->[1], 'b');
 
 # check if exists() is behaving properly
 $avhv = [{foo=>1,bar=>2,pants=>3}];
-print "not " if exists $avhv->{bar};
-print "ok 13\n";
+ok (!exists $avhv->{bar});
 
 $avhv->{pants} = undef;
-print "not " unless exists $avhv->{pants};
-print "ok 14\n";
-print "not " if exists $avhv->{bar};
-print "ok 15\n";
+ok (exists $avhv->{pants});
+ok (!exists $avhv->{bar});
 
 $avhv->{bar} = 10;
-print "not " unless exists $avhv->{bar} and $avhv->{bar} == 10;
-print "ok 16\n";
+ok (exists $avhv->{bar});
+is ($avhv->{bar}, 10);
 
-$v = delete $avhv->{bar};
-print "not " unless $v == 10;
-print "ok 17\n";
+my $v = delete $avhv->{bar};
+is ($v, 10);
 
-print "not " if exists $avhv->{bar};
-print "ok 18\n";
+ok (!exists $avhv->{bar});
 
 $avhv->{foo} = 'xxx';
 $avhv->{bar} = 'yyy';
 $avhv->{pants} = 'zzz';
-@x = delete @{$avhv}{'foo','pants'};
-print "# @x\nnot " unless "@x" eq "xxx zzz";
-print "ok 19\n";
+my @x = delete @{$avhv}{'foo','pants'};
+is ("@x", "xxx zzz");
 
-print "not " unless "$avhv->{bar}" eq "yyy";
-print "ok 20\n";
+is ("$avhv->{bar}", "yyy");
 
 # hash assignment
 %$avhv = ();
-print "not " unless ref($avhv->[0]) eq 'HASH';
-print "ok 21\n";
+is (ref($avhv->[0]), 'HASH');
 
-%hv = %$avhv;
-print "not " if grep defined, values %hv;
-print "ok 22\n";
-print "not " if grep ref, keys %hv;
-print "ok 23\n";
+my %hv = %$avhv;
+ok (!grep defined, values %hv);
+ok (!grep ref, keys %hv);
 
 %$avhv = (foo => 29, pants => 2, bar => 0);
-print "not " unless "@$avhv[1..3]" eq '29 0 2';
-print "ok 24\n";
+is ("@$avhv[1..3]", '29 0 2');
 
 my $extra;
 my @extra;
 ($extra, %$avhv) = ("moo", foo => 42, pants => 53, bar => "HIKE!");
-print "not " unless "@$avhv[1..3]" eq '42 HIKE! 53' and $extra eq 'moo';
-print "ok 25\n";
+is ("@$avhv[1..3]", '42 HIKE! 53');
+is ($extra, 'moo');
 
 %$avhv = ();
 (%$avhv, $extra) = (foo => 42, pants => 53, bar => "HIKE!");
-print "not " unless "@$avhv[1..3]" eq '42 HIKE! 53' and !defined $extra;
-print "ok 26\n";
+is ("@$avhv[1..3]", '42 HIKE! 53');
+ok (!defined $extra);
 
 @extra = qw(whatever and stuff);
 %$avhv = ();
 (%$avhv, @extra) = (foo => 42, pants => 53, bar => "HIKE!");
-print "not " unless "@$avhv[1..3]" eq '42 HIKE! 53' and @extra == 0;
-print "ok 27\n";
+is ("@$avhv[1..3]", '42 HIKE! 53');
+is (@extra, 0);
 
 %$avhv = ();
 (@extra, %$avhv) = (foo => 42, pants => 53, bar => "HIKE!");
-print "not " unless ref $avhv->[0] eq 'HASH' and @extra == 6;
-print "ok 28\n";
+is (ref $avhv->[0], 'HASH');
+is (@extra, 6);
 
 # Check hash slices (BUG ID 20010423.002)
 $avhv = [{foo=>1, bar=>2}];
 @$avhv{"foo", "bar"} = (42, 53);
-print "not " unless $avhv->{foo} == 42 && $avhv->{bar} == 53;
-print "ok 29\n";
+is ($avhv->{foo}, 42);
+is ($avhv->{bar}, 53);

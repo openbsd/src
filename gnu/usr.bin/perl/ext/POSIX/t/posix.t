@@ -11,7 +11,7 @@ BEGIN {
 }
 
 require "./test.pl";
-plan(tests => 61);
+plan(tests => 65);
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno);
@@ -259,6 +259,13 @@ ok( POSIX::isspace("\t"), 'isspace' );
 ok(!POSIX::isspace('_'),  'isspace' );
 ok( POSIX::isxdigit('f'), 'isxdigit' );
 ok(!POSIX::isxdigit('g'), 'isxdigit' );
+# metaphysical question : what should be returned for an empty string ?
+# anyway this shouldn't segfault (bug #24554)
+ok( POSIX::isalnum(''),   'isalnum empty string' );
+ok( POSIX::isalnum(undef),'isalnum undef' );
+# those functions should stringify their arguments
+ok(!POSIX::isalpha([]),   'isalpha []' );
+ok( POSIX::isprint([]),   'isprint []' );
  
 # Check that output is not flushed by _exit. This test should be last
 # in the file, and is not counted in the total number of tests.

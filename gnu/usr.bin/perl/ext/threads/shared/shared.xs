@@ -418,6 +418,77 @@ Perl_sharedsv_share(pTHX_ SV *sv)
     }
 }
 
+#if defined(WIN32) || defined(OS2)
+#  define ABS2RELMILLI(abs)        \
+    do {                                \
+        abs -= (double)time(NULL);      \
+        if (abs > 0) { abs *= 1000; }   \
+        else         { abs  = 0;    }   \
+    } while (0)
+#endif /* WIN32 || OS2 */
+
+bool
+Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
+{
+#if defined(NETWARE) || defined(FAKE_THREADS) || defined(I_MACH_CTHREADS)
+    Perl_croak_nocontext("cond_timedwait not supported on this platform");
+#else
+#  ifdef WIN32
+    int got_it = 0;
+
+    ABS2RELMILLI(abs);
+
+    cond->waiters++;
+    MUTEX_UNLOCK(mut);
+    /* See comments in win32/win32thread.h COND_WAIT vis-a-vis race */
+    switch (WaitForSingleObject(cond->sem, (DWORD)abs)) {
+        case WAIT_OBJECT_0:   got_it = 1; break;
+        case WAIT_TIMEOUT:                break;
+        default:
+            /* WAIT_FAILED? WAIT_ABANDONED? others? */
+            Perl_croak_nocontext("panic: cond_timedwait (%ld)",GetLastError());
+            break;
+    }
+    MUTEX_LOCK(mut);
+    cond->waiters--;
+    return got_it;
+#  else
+#    ifdef OS2
+    int rc, got_it = 0;
+    STRLEN n_a;
+
+    ABS2RELMILLI(abs);
+
+    if ((rc = DosResetEventSem(*cond,&n_a)) && (rc != ERROR_ALREADY_RESET))
+        Perl_rc = rc, croak_with_os2error("panic: cond_timedwait-reset");
+    MUTEX_UNLOCK(mut);
+    if (CheckOSError(DosWaitEventSem(*cond,abs))
+        && (rc != ERROR_INTERRUPT))
+        croak_with_os2error("panic: cond_timedwait");
+    if (rc == ERROR_INTERRUPT) errno = EINTR;
+    MUTEX_LOCK(mut);
+    return got_it;
+#    else         /* hope you're I_PTHREAD! */
+    struct timespec ts;
+    int got_it = 0;
+
+    ts.tv_sec = (long)abs;
+    abs -= (NV)ts.tv_sec;
+    ts.tv_nsec = (long)(abs * 1000000000.0);
+
+    switch (pthread_cond_timedwait(cond, mut, &ts)) {
+        case 0:         got_it = 1; break;
+        case ETIMEDOUT:             break;
+        default:
+            Perl_croak_nocontext("panic: cond_timedwait");
+            break;
+    }
+    return got_it;
+#    endif /* OS2 */
+#  endif /* WIN32 */
+#endif /* NETWARE || FAKE_THREADS || I_MACH_CTHREADS */
+}
+
 /* MAGIC (in mg.h sense) hooks */
 
 int
@@ -911,13 +982,14 @@ EXISTS(shared_sv *shared, SV *index)
 CODE:
 	dTHXc;
 	bool exists;
-	SHARED_EDIT;
 	if (SvTYPE(SHAREDSvPTR(shared)) == SVt_PVAV) {
+	    SHARED_EDIT;
 	    exists = av_exists((AV*) SHAREDSvPTR(shared), SvIV(index));
 	}
 	else {
 	    STRLEN len;
 	    char *key = SvPV(index,len);
+	    SHARED_EDIT;
 	    exists = hv_exists((HV*) SHAREDSvPTR(shared), key, len);
 	}
 	SHARED_RELEASE;
@@ -1039,19 +1111,36 @@ lock_enabled(SV *ref)
 	Perl_sharedsv_lock(aTHX_ shared);
 
 void
-cond_wait_enabled(SV *ref)
-	PROTOTYPE: \[$@%]
-	CODE:
+cond_wait_enabled(SV *ref_cond, SV *ref_lock = 0)
+	PROTOTYPE: \[$@%];\[$@%]
+	PREINIT:
 	shared_sv* shared;
+	perl_cond* user_condition;
 	int locks;
-	if(!SvROK(ref))
+	int same = 0;
+
+	CODE:
+	if (!ref_lock || ref_lock == ref_cond) same = 1;
+
+	if(!SvROK(ref_cond))
             Perl_croak(aTHX_ "Argument to cond_wait needs to be passed as ref");
-	ref = SvRV(ref);
-	if(SvROK(ref))
-	    ref = SvRV(ref);
-	shared = Perl_sharedsv_find(aTHX_ ref);
+	ref_cond = SvRV(ref_cond);
+	if(SvROK(ref_cond))
+	    ref_cond = SvRV(ref_cond);
+	shared = Perl_sharedsv_find(aTHX_ ref_cond);
 	if(!shared)
 	    croak("cond_wait can only be used on shared values");
+
+	user_condition = &shared->user_cond;
+	if (! same) {
+	    if (!SvROK(ref_lock))
+	        Perl_croak(aTHX_ "cond_wait lock needs to be passed as ref");
+	    ref_lock = SvRV(ref_lock);
+	    if (SvROK(ref_lock)) ref_lock = SvRV(ref_lock);
+	    shared = Perl_sharedsv_find(aTHX_ ref_lock);
+	    if (!shared)
+	        croak("cond_wait lock must be a shared value");
+	}
 	if(shared->lock.owner != aTHX)
 	    croak("You need a lock before you can cond_wait");
 	/* Stealing the members of the lock object worries me - NI-S */
@@ -1063,13 +1152,69 @@ cond_wait_enabled(SV *ref)
 	/* since we are releasing the lock here we need to tell other
 	people that is ok to go ahead and use it */
 	COND_SIGNAL(&shared->lock.cond);
-	COND_WAIT(&shared->user_cond, &shared->lock.mutex);
+	COND_WAIT(user_condition, &shared->lock.mutex);
 	while(shared->lock.owner != NULL) {
-		COND_WAIT(&shared->lock.cond,&shared->lock.mutex);
-	}	
+	    /* OK -- must reacquire the lock */
+	    COND_WAIT(&shared->lock.cond, &shared->lock.mutex);
+	}
 	shared->lock.owner = aTHX;
 	shared->lock.locks = locks;
 	MUTEX_UNLOCK(&shared->lock.mutex);
+
+int
+cond_timedwait_enabled(SV *ref_cond, double abs, SV *ref_lock = 0)
+	PROTOTYPE: \[$@%]$;\[$@%]
+	PREINIT:
+	shared_sv* shared;
+	perl_cond* user_condition;
+	int locks;
+	int same = 0;
+
+	CODE:
+	if (!ref_lock || ref_cond == ref_lock) same = 1;
+
+	if(!SvROK(ref_cond))
+	    Perl_croak(aTHX_ "Argument to cond_timedwait needs to be passed as ref");
+	ref_cond = SvRV(ref_cond);
+	if(SvROK(ref_cond))
+	    ref_cond = SvRV(ref_cond);
+	shared = Perl_sharedsv_find(aTHX_ ref_cond);
+	if(!shared)
+	    croak("cond_timedwait can only be used on shared values");
+    
+	user_condition = &shared->user_cond;
+	if (! same) {
+	    if (!SvROK(ref_lock))
+	        Perl_croak(aTHX_ "cond_timedwait lock needs to be passed as ref");
+	    ref_lock = SvRV(ref_lock);
+	    if (SvROK(ref_lock)) ref_lock = SvRV(ref_lock);
+	    shared = Perl_sharedsv_find(aTHX_ ref_lock);
+	    if (!shared)
+	        croak("cond_timedwait lock must be a shared value");
+	}
+	if(shared->lock.owner != aTHX)
+	    croak("You need a lock before you can cond_wait");
+
+	MUTEX_LOCK(&shared->lock.mutex);
+	shared->lock.owner = NULL;
+	locks = shared->lock.locks;
+	shared->lock.locks = 0;
+	/* since we are releasing the lock here we need to tell other
+	people that is ok to go ahead and use it */
+	COND_SIGNAL(&shared->lock.cond);
+	RETVAL = Perl_sharedsv_cond_timedwait(user_condition, &shared->lock.mutex, abs);
+	while (shared->lock.owner != NULL) {
+	    /* OK -- must reacquire the lock... */
+	    COND_WAIT(&shared->lock.cond, &shared->lock.mutex);
+	}
+	shared->lock.owner = aTHX;
+	shared->lock.locks = locks;
+	MUTEX_UNLOCK(&shared->lock.mutex);
+
+	if (RETVAL == 0)
+            XSRETURN_UNDEF;
+	OUTPUT:
+	RETVAL
 
 void
 cond_signal_enabled(SV *ref)

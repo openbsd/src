@@ -122,10 +122,10 @@
  	-@test -f extra.pods && rm -f `cat extra.pods`
  	-@rm -f extra.pods
  	-@for x in `grep -l '^=[a-z]' README.* | grep -v README.vms` ; do \
-@@ -793,18 +794,7 @@
- 	$(MAKE) install.perl install.man STRIPFLAGS=$(STRIPFLAGS) INSTALLFLAGS=-n
- 
- install.perl:	all installperl
+@@ -798,18 +799,7 @@
+ INSTALL_DEPENDENCE = all
+
+ install.perl:	$(INSTALL_DEPENDENCE) installperl
 -	if [ -n "$(COMPILE)" ]; \
 -	then \
 -		cd utils; $(MAKE) compile; \
@@ -142,7 +142,7 @@
  
  # XXX Experimental. Hardwired values, but useful for testing.
  # Eventually Configure could ask for some of these values.
-@@ -920,16 +910,16 @@
+@@ -925,16 +915,16 @@
  #
  # DynaLoader may be needed for extensions that use Makefile.PL.
  
@@ -163,7 +163,7 @@
  	@$(LDLIBPTH) sh ext/util/make_ext nonxs $@ MAKE=$(MAKE) LIBPERL_A=$(LIBPERL)
  
  .PHONY: clean _tidy _mopup _cleaner1 _cleaner2 \
-@@ -1069,7 +1059,7 @@
+@@ -1074,7 +1064,7 @@
  
  test_prep_pre: preplibrary utilities $(nonxs_ext)
  
@@ -172,7 +172,7 @@
  	PERL=./perl $(MAKE) _test_prep
  
  _test_tty:
-@@ -1157,7 +1147,7 @@
+@@ -1167,7 +1157,7 @@
  
  # Can't depend on lib/Config.pm because that might be where miniperl
  # is crashing.

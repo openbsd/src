@@ -836,7 +836,9 @@ sub idx {
 
 =head1 AUTHOR
 
-Marek Rouchal E<lt>marek@saftsack.fs.uni-bayreuth.deE<gt>, borrowing
+Please report bugs using L<http://rt.cpan.org>.
+
+Marek Rouchal E<lt>marekr@cpan.orgE<gt>, borrowing
 a lot of things from L<pod2man> and L<pod2roff> as well as other POD
 processing tools by Tom Christiansen, Brad Appleton and Russ Allbery.
 

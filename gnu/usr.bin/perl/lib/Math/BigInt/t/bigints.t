@@ -28,8 +28,8 @@ BEGIN
   plan tests => 51;
   }
 
-# testing of Math::BigInt::BitVect, primarily for interface/api and not for the
-# math functionality
+# testing of Math::BigInt:Scalar (used by the testsuite),
+# primarily for interface/api and not for the math functionality
 
 use Math::BigInt::Scalar;
 

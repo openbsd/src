@@ -25,7 +25,7 @@ ok(1);
 
 #########################
 
-# Fix me when UCA and/or key.txt is upgraded.
+# Fix me when UCA and/or keys.txt is upgraded.
 my $UCA_Version = "11";
 my $Base_Unicode_Version = "4.0";
 my $Key_Version = "3.1.1";

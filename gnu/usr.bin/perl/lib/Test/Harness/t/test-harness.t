@@ -19,26 +19,8 @@ my $SAMPLE_TESTS = $ENV{PERL_CORE}
                     : File::Spec->catdir($Curdir, 't',   'sample-tests');
 
 
-# For shutting up Test::Harness.
-# Has to work on 5.004 which doesn't have Tie::StdHandle.
-package My::Dev::Null;
-
-sub WRITE  {}
-sub PRINT  {}
-sub PRINTF {}
-sub TIEHANDLE {
-    my $class = shift;
-    my $fh    = do { local *HANDLE;  \*HANDLE };
-    return bless $fh, $class;
-}
-sub READ {}
-sub READLINE {}
-sub GETC {}
-
-
-package main;
-
 use Test::More;
+use Dev::Null;
 
 my $IsMacPerl = $^O eq 'MacOS';
 my $IsVMS     = $^O eq 'VMS';
@@ -335,6 +317,23 @@ my %samples = (
                                   all_ok => 1,
                                  },
 
+            taint_warn        => {
+                                  total => {
+                                            bonus      => 0,
+                                            max        => 1,
+                                            'ok'       => 1,
+                                            files      => 1,
+                                            bad        => 0,
+                                            good       => 1,
+                                            tests      => 1,
+                                            sub_skipped=> 0,
+                                            'todo'     => 0,
+                                            skipped    => 0,
+                                           },
+                                  failed => { },
+                                  all_ok => 1,
+                                 },
+
             'die'             => {
                                   total => {
                                             bonus      => 0,
@@ -470,20 +469,25 @@ my %samples = (
                                  },
            );
 
-plan tests => (keys(%samples) * 8) + 1;
+plan tests => (keys(%samples) * 8);
 
-use_ok('Test::Harness');
-use Test::Harness; # So that we don't get "used only once" warnings on the next line
+use Test::Harness;
 $Test::Harness::Switches = '"-Mstrict"';
 
-tie *NULL, 'My::Dev::Null' or die $!;
+tie *NULL, 'Dev::Null' or die $!;
 
-while (my($test, $expect) = each %samples) {
+for my $test ( sort keys %samples ) {
+SKIP: {
+    skip "-t introduced in 5.8.0", 8 if $test eq 'taint_warn' and $] < 5.008;
+
+    my $expect = $samples{$test};
+
     # _run_all_tests() runs the tests but skips the formatting.
     my($totals, $failed);
     my $warning = '';
     my $test_path = File::Spec->catfile($SAMPLE_TESTS, $test);
 
+    print STDERR "# $test\n" if $ENV{TEST_VERBOSE};
     eval {
         select NULL;    # _run_all_tests() isn't as quiet as it should be.
         local $SIG{__WARN__} = sub { $warning .= join '', @_; };
@@ -530,4 +534,5 @@ WARN
         skip "bignum has known warnings", 1 if $test eq 'bignum';
         is( $warning, '' );
     }
+}
 }

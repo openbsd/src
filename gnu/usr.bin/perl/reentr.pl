@@ -695,7 +695,7 @@ EOF
 		if ($func =~ /^get/) {
 		    my $rv = $v ? ", $v" : "";
 		    if ($r eq 'I') {
-			$call = qq[((PL_REENTRANT_RETINT = $call)$test ? $true : (((PL_REENTRANT_RETINT == ERANGE) || (errno == ERANGE)) ? Perl_reentrant_retry("$func"$rv) : 0))];
+			$call = qq[((PL_REENTRANT_RETINT = $call)$test ? $true : (((PL_REENTRANT_RETINT == ERANGE) || (errno == ERANGE)) ? ($seenm{$func}{$seenr{$func}})Perl_reentrant_retry("$func"$rv) : 0))];
 			my $arg = join(", ", map { $seenm{$func}{substr($a,$_,1)}." ".$v[$_] } 0..$seenu{$func}-1);
 			my $ret = $seenr{$func} eq 'V' ? "" : "return ";
 			push @wrap, <<EOF;

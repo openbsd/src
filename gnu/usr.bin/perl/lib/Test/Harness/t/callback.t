@@ -13,12 +13,10 @@ BEGIN {
 use Test::More;
 use File::Spec;
 
-my $Curdir = File::Spec->curdir;
-my $SAMPLE_TESTS = $ENV{PERL_CORE}
-                    ? File::Spec->catdir($Curdir, 'lib', 'sample-tests')
-                    : File::Spec->catdir($Curdir, 't',   'sample-tests');
-
-%samples = (
+BEGIN {
+    use vars qw( %samples );
+    
+    %samples = (
             bailout     => [qw( header test test test bailout )],
             combined    => ['header', ('test') x 10],
             descriptive => ['header', ('test') x 5 ],
@@ -42,10 +40,16 @@ my $SAMPLE_TESTS = $ENV{PERL_CORE}
             with_comments => [qw( other header other test other test test
                                   test other other test other )],
            );
+    plan tests => 2 + scalar keys %samples;
+}
 
-plan tests => 2 + scalar keys %samples;
+BEGIN { use_ok( 'Test::Harness::Straps' ); }
 
-use_ok( 'Test::Harness::Straps' );
+my $Curdir = File::Spec->curdir;
+my $SAMPLE_TESTS = $ENV{PERL_CORE}
+                    ? File::Spec->catdir($Curdir, 'lib', 'sample-tests')
+                    : File::Spec->catdir($Curdir, 't',   'sample-tests');
+
 my $strap = Test::Harness::Straps->new;
 isa_ok( $strap, 'Test::Harness::Straps' );
 $strap->{callback} = sub {
@@ -53,7 +57,9 @@ $strap->{callback} = sub {
     push @out, $type;
 };
 
-while( my($test, $expect) = each %samples ) {
+for my $test ( sort keys %samples ) {
+    my $expect = $samples{$test};
+
     local @out = ();
     $strap->analyze_file(File::Spec->catfile($SAMPLE_TESTS, $test));
 

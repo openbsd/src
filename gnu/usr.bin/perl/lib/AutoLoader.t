@@ -16,7 +16,7 @@ BEGIN
 	unshift @INC, $dir;
 }
 
-use Test::More tests => 14;
+use Test::More tests => 17;
 
 # First we must set up some autoloader files
 my $fulldir = File::Spec->catdir( $dir, 'auto', 'Foo' );
@@ -73,18 +73,27 @@ require AutoLoader;
 AutoLoader->import( 'AUTOLOAD' );
 
 sub new { bless {}, shift };
+sub foo;
+sub bar;
+sub bazmarkhianish; 
 
 package main;
 
 my $foo = new Foo;
 
+my $result = $foo->can( 'foo' );
+ok( $result,               'can() first time' );
 is( $foo->foo, 'foo', 'autoloaded first time' );
 is( $foo->foo, 'foo', 'regular call' );
+is( $result,   \&Foo::foo, 'can() returns ref to regular installed sub' );
 
 eval {
     $foo->will_fail;
 };
 like( $@, qr/^Can't locate/, 'undefined method' );
+
+$result = $foo->can( 'will_fail' );
+ok( ! $result,               'can() should fail on undefined methods' );
 
 # Used to be trouble with this
 eval {

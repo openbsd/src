@@ -47,7 +47,7 @@ Anod	|int	|perl_parse	|PerlInterpreter* interp|XSINIT_t xsinit \
 				|int argc|char** argv|char** env
 Anp	|bool	|doing_taint	|int argc|char** argv|char** env
 #if defined(USE_ITHREADS)
-Anod	|PerlInterpreter*|perl_clone|PerlInterpreter* interp, UV flags
+Anod	|PerlInterpreter*|perl_clone|PerlInterpreter* interp|UV flags
 #  if defined(PERL_IMPLICIT_SYS)
 Ano	|PerlInterpreter*|perl_clone_using|PerlInterpreter *interp|UV flags \
 				|struct IPerlMem* m|struct IPerlMem* ms \
@@ -1013,8 +1013,6 @@ s	|HEK*	|save_hek_flags	|const char *str|I32 len|U32 hash|int flags
 s	|void	|hv_magic_check	|HV *hv|bool *needs_copy|bool *needs_store
 s	|void	|unshare_hek_or_pvn|HEK* hek|const char* sv|I32 len|U32 hash
 s	|HEK*	|share_hek_flags|const char* sv|I32 len|U32 hash|int flags
-s	|SV**	|hv_fetch_flags	|HV* tb|const char* key|I32 klen|I32 lval \
-                                |int flags
 s	|void	|hv_notallowed	|int flags|const char *key|I32 klen|const char *msg
 #endif
 
@@ -1411,5 +1409,14 @@ p	|int	|get_debug_opts	|char **s
 
 
 
-END_EXTERN_C
 
+Apd	|void	|hv_clear_placeholders|HV* hb
+
+#if defined(PERL_IN_HV_C) || defined(PERL_DECL_PROT)
+sM	|SV*	|hv_delete_common|HV* tb|SV* key_sv|const char* key|STRLEN klen|int k_flags|I32 d_flags|U32 hash
+sM	|HE*	|hv_fetch_common|HV* tb|SV* key_sv|const char* key|STRLEN klen|int flags|int action|SV* val|U32 hash
+#endif
+Apd	|SV*	|hv_scalar	|HV* hv|
+p	|SV*	|magic_scalarpack|HV* hv|MAGIC*	mg
+
+END_EXTERN_C

@@ -1,3 +1,13 @@
+Sat Jan  3 18:49:18 GMT 2004   Nicholas Clark <nick@ccl4.org>
+
+    Version 2.09
+
+	Fix minor problems with the CPAN release
+	1: Make Storable.xs work on 5.8.2 and later (already in the core)
+	2: Ship the linux hints file
+	3: Ship Test::More for the benefit of Perls pre 5.6.2
+	4: Correct Makefile.PL to only install in core for 5.8.0 and later
+
 Sat Sep  6 01:08:20 IST 2003   Abhijit Menon-Sen <ams@wiw.org>
 
     Version 2.08

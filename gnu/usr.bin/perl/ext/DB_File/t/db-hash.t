@@ -23,7 +23,7 @@ BEGIN {
 use DB_File; 
 use Fcntl;
 
-print "1..143\n";
+print "1..151\n";
 
 unlink glob "__db.*";
 
@@ -580,7 +580,8 @@ EOM
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $k = 'Fred'; $v ='';
    ok(74, ! $db->seq($k, $v, R_FIRST) ) ;
-   ok(75, $k eq "FRED") ;
+   ok(75, $k eq "Fred") ;
+    #print "k [$k]\n" ;
    ok(76, $v eq "[Jxe]") ;
    #                   fk   sk     fv    sv
    ok(77, checkOutput( "FRED", "fred", "[Jxe]", "")) ;
@@ -874,14 +875,14 @@ EOM
 #
 #    ok(128, $@ =~ /^DB_File hash callback: recursion detected/);
 #    {
-#        no warnings;
+#        local ($^W) = 0; #no warnings;
 #        untie %hash;
 #    }
 #    unlink $Dfile;
 #}
 
-ok(127,1);
-ok(128,1);
+#ok(127,1);
+#ok(128,1);
 
 {
     # Check that two hash's don't interact
@@ -899,8 +900,8 @@ ok(128,1);
  
  
     my (%h);
-    ok(129, tie(%hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh1 ) );
-    ok(130, tie(%hash2, 'DB_File',$Dfile2, O_RDWR|O_CREAT, 0640, $dbh2 ) );
+    ok(127, tie(%hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh1 ) );
+    ok(128, tie(%hash2, 'DB_File',$Dfile2, O_RDWR|O_CREAT, 0640, $dbh2 ) );
 
     $hash1{DEFG} = 5;
     $hash1{XYZ} = 2;
@@ -910,11 +911,11 @@ ok(128,1);
     $hash2{xyz} = 2;
     $hash2{abcde} = 5;
 
-    ok(131, $h1_count > 0);
-    ok(132, $h1_count == $h2_count);
+    ok(129, $h1_count > 0);
+    ok(130, $h1_count == $h2_count);
 
-    ok(133, safeUntie \%hash1);
-    ok(134, safeUntie \%hash2);
+    ok(131, safeUntie \%hash1);
+    ok(132, safeUntie \%hash2);
     unlink $Dfile, $Dfile2;
 }
 
@@ -929,12 +930,12 @@ ok(128,1);
     unlink $Dfile;
 
     tie %hash1, 'DB_File',$Dfile, undef;
-    ok(135, $warn_count == 0);
+    ok(133, $warn_count == 0);
     $warn_count = 0;
     tie %hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, undef;
-    ok(136, $warn_count == 0);
+    ok(134, $warn_count == 0);
     tie %hash1, 'DB_File',$Dfile, undef, undef;
-    ok(137, $warn_count == 0);
+    ok(135, $warn_count == 0);
     $warn_count = 0;
 
     untie %hash1;
@@ -950,7 +951,7 @@ ok(128,1);
    my $Dfile = "xxy.db";
    unlink $Dfile;
 
-   ok(138, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
+   ok(136, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
 
    $db->filter_fetch_key   (sub { }) ;
    $db->filter_store_key   (sub { }) ;
@@ -960,10 +961,10 @@ ok(128,1);
    $_ = "original" ;
 
    $h{"fred"} = "joe" ;
-   ok(139, $h{"fred"} eq "joe");
+   ok(137, $h{"fred"} eq "joe");
 
    eval { grep { $h{$_} } (1, 2, 3) };
-   ok (140, ! $@);
+   ok (138, ! $@);
 
 
    # delete the filters
@@ -974,17 +975,62 @@ ok(128,1);
 
    $h{"fred"} = "joe" ;
 
-   ok(141, $h{"fred"} eq "joe");
+   ok(139, $h{"fred"} eq "joe");
 
-   ok(142, $db->FIRSTKEY() eq "fred") ;
+   ok(140, $db->FIRSTKEY() eq "fred") ;
    
    eval { grep { $h{$_} } (1, 2, 3) };
-   ok (143, ! $@);
+   ok (141, ! $@);
 
    undef $db ;
    untie %h;
    unlink $Dfile;
 }
 
+{
+   # Check low-level API works with filter
+
+   use warnings ;
+   use strict ;
+   my (%h, $db) ;
+   my $Dfile = "xxy.db";
+   unlink $Dfile;
+
+   ok(142, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
+
+
+   $db->filter_fetch_key   (sub { $_ = unpack("i", $_) } );
+   $db->filter_store_key   (sub { $_ = pack("i", $_) } );
+   $db->filter_fetch_value (sub { $_ = unpack("i", $_) } );
+   $db->filter_store_value (sub { $_ = pack("i", $_) } );
+
+   $_ = 'fred';
+
+   my $key = 22 ;
+   my $value = 34 ;
+
+   $db->put($key, $value) ;
+   ok 143, $key == 22;
+   ok 144, $value == 34 ;
+   ok 145, $_ eq 'fred';
+   #print "k [$key][$value]\n" ;
+
+   my $val ;
+   $db->get($key, $val) ;
+   ok 146, $key == 22;
+   ok 147, $val == 34 ;
+   ok 148, $_ eq 'fred';
+
+   $key = 51 ;
+   $value = 454;
+   $h{$key} = $value ;
+   ok 149, $key == 51;
+   ok 150, $value == 454 ;
+   ok 151, $_ eq 'fred';
+
+   undef $db ;
+   untie %h;
+   unlink $Dfile;
+}
 
 exit ;

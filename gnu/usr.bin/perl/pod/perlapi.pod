@@ -1076,6 +1076,21 @@ Clears a hash, making it empty.
 =for hackers
 Found in file hv.c
 
+=item hv_clear_placeholders
+
+Clears any placeholders from a hash.  If a restricted hash has any of its keys
+marked as readonly and the key is subsequently deleted, the key is not actually
+deleted but is marked by assigning it a value of &PL_sv_placeholder.  This tags
+it so it will be ignored by future operations such as iterating over the hash,
+but will still allow the hash to have a value reaasigned to the key at some
+future point.  This function clears any such placeholder keys from the hash.
+See Hash::Util::lock_keys() for an example of its use.
+
+	void	hv_clear_placeholders(HV* hb)
+
+=for hackers
+Found in file hv.c
+
 =item hv_delete
 
 Deletes a key/value pair in the hash.  The value SV is removed from the
@@ -1252,6 +1267,15 @@ Found in file hv.c
 Adds magic to a hash.  See C<sv_magic>.
 
 	void	hv_magic(HV* hv, GV* gv, int how)
+
+=for hackers
+Found in file hv.c
+
+=item hv_scalar
+
+Evaluates the hash in scalar context and returns the result. Handles magic when the hash is tied.
+
+	SV*	hv_scalar(HV* hv)
 
 =for hackers
 Found in file hv.c

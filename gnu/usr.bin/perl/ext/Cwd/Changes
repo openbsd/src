@@ -1,0 +1,42 @@
+Revision history for Perl extension Cwd.
+
+2.12  Fri Dec 19 17:04:52 CST 2003
+
+ - Fixed a bug on Cygwin - the output of realpath() should have been
+   tainted, but wasn't.  [Reported by Tom Wyant]
+
+2.10  Mon Dec 15 07:50:12 CST 2003
+
+ (Note that this release was mistakenly packaged as version 2.11, even
+ though it had an internal $VERSION variable of 2.10.  Not sure how
+ THAT happened...)
+
+ - There was a dependency in the Makefile.PL on Module::Build, which
+   isn't necessary.  I've removed it.
+
+2.09  Thu Dec 11 20:30:58 CST 2003
+
+ - The module should now build & install using version 5.6 of perl.
+
+ - We now note a build-time dependency on version 0.19 of
+   Module::Build, which is necessary because we don't use the standard
+   lib/-based file layout.  No version of Module::Build is required if
+   you use the Makefile.PL, just if you use the Build.PL .
+
+ - Removed some gratuitous uses of 5.6-isms like our(), with the aim
+   of backporting this module to perl 5.005.
+
+ - Simplified all code that autoloads Carp.pm and calls
+   carp()/croak().
+
+ - Removed some redundant OS/2 code at the suggestion of Michael
+   Schwern and Ilya Zakharevich.
+
+ - Make sure the correct version of Cwd.pm is loaded in the regression
+   tests. [Sam Vilain]
+
+2.08  Wed Oct 15 20:56 CDT 2003
+
+  - Code extracted from perl 5.8.1 and packaged as a separate CPAN
+    release by Ken Williams.
+

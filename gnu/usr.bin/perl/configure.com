@@ -932,6 +932,7 @@ $!
 $!     EOD
 $!     echo "     ","VMS_VAX"
 $!     echo "     ","VMS_AXP"
+$!     echo "     ","VMS_IA64"
 $!        : Now look for a hint file osname_osvers, unless one has been
 $!        : specified already.
 $!     TYPE SYS$INPUT:
@@ -1105,17 +1106,24 @@ $! Please try to use either archname .EQS. "VMS_VAX" or archname .EQS.
 $! "VMS_AXP" from here on to allow cross-platform configuration (e.g.
 $! configure a VAX build on an Alpha).
 $!
-$ IF (F$GETSYI("HW_MODEL") .LT. 1024)
+$ IF (F$GETSYI("HW_MODEL") .LT. 1024 .AND. F$GETSYI("HW_MODEL") .GT. 0)
 $ THEN 
 $   archname = "VMS_VAX"
-$   otherarch = "an Alpha"
+$   otherarch = "an Alpha or IA64"
 $   alignbytes="8"
 $   arch_type = "ARCH-TYPE=__VAX__"
 $ ELSE
-$   archname = "VMS_AXP"
-$   otherarch = "a VAX"
+$   IF (F$GETSYI("ARCH_TYPE") .EQ. 2)
+$   THEN
+$       archname = "VMS_AXP"
+$       otherarch = "a VAX or IA64"
+$       arch_type = "ARCH-TYPE=__AXP__"
+$   ELSE
+$       archname = "VMS_IA64"
+$       otherarch = "a VAX or Alpha"
+$       arch_type = "ARCH-TYPE=__IA64__"
+$   ENDIF
 $   alignbytes="8"
-$   arch_type = "ARCH-TYPE=__AXP__"
 $ ENDIF
 $ dflt = archname
 $ rp = "What is your architecture name? [''archname'] "
@@ -1141,6 +1149,10 @@ $   sharedperl = "Y"
 $   IF (archname.EQS."VMS_AXP")
 $   THEN
 $     macros = macros + """AXE=1"","
+$   ENDIF
+$   IF (archname.EQS."VMS_IA64")
+$   THEN
+$     macros = macros + """IXE=1"","
 $   ENDIF
 $ ENDIF
 $!
@@ -1581,7 +1593,8 @@ $     echo "You also have: ''line' ''archsufx' ''F$GETSYI("VERSION")'"
 $     vms_cc_available = vms_cc_available + "cc/decc "
 $   ENDIF
 $ ELSE
-$   IF (F$LOCATE("DEC",line).NE.F$LENGTH(line)).or.(F$LOCATE("Compaq",line).NE.F$LENGTH(line))
+$   IF (F$LOCATE("DEC",line).NE.F$LENGTH(line)).or.(F$LOCATE("Compaq",line).NE.F$LENGTH(line)) -
+    .or.(F$LOCATE("hp",line).NE.F$LENGTH(line))
 $   THEN 
 $     vms_cc_dflt = "/decc"
 $     vms_cc_available = vms_cc_available + "cc/decc "
@@ -1715,7 +1728,8 @@ $ IF ans.NES.""
 $ THEN
 $   ans = F$EDIT(ans,"TRIM, COMPRESS, LOWERCASE")
 $   Mcc = ans
-$   IF (F$LOCATE("dec",ans).NE.F$LENGTH(ans)).or.(F$LOCATE("compaq",ans).NE.F$LENGTH(ans))
+$   IF (F$LOCATE("dec",ans).NE.F$LENGTH(ans)).or.(F$LOCATE("compaq",ans).NE.F$LENGTH(ans)) -
+    .or.(F$LOCATE("hp",ans).NE.F$LENGTH(ans))
 $   THEN
 $     Mcc = "cc/decc"
 $! CPQ ?
@@ -2002,7 +2016,12 @@ $ THEN
 $   read CONFIG line
 $   archsufx = "VAX"
 $ ELSE
-$   archsufx = "AXP"
+$   IF archname .EQS. "VMS_AXP"
+$   THEN
+$       archsufx = "AXP"
+$   ELSE
+$       archsufx = "IA64"
+$   ENDIF
 $ ENDIF
 $ CLOSE CONFIG
 $ line = F$EDIT(line,"TRIM,COMPRESS")
@@ -2249,7 +2268,7 @@ $   usemultiplicity="undef"
 $ ENDIF
 $!
 $! Ask if they want to build with 64-bit support
-$ IF (archname.eqs."VMS_AXP").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
+$ IF (archname.NES."VMS_VAX").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
 $ THEN
 $   bool_dflt = "n"
 $   IF F$TYPE(use64bitint) .NES. "" 
@@ -2354,8 +2373,8 @@ $       use_5005_threads="N"
 $     ELSE
 $       use_5005_threads="Y"
 $     ENDIF
-$     ! Are they on VMS 7.1 on an alpha?
-$     if (archname.eqs."VMS_AXP").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
+$     ! Are they on VMS 7.1 on an alpha or itanium?
+$     if (archname.nes."VMS_VAX").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
 $     THEN
 $       echo ""
 $       echo "Threaded perl can be linked to use multiple kernel threads"
@@ -2376,7 +2395,7 @@ $       ENDIF
 $     ENDIF
 $   ENDIF
 $ ENDIF
-$ IF archname .EQS. "VMS_AXP"
+$ IF archname .NES. "VMS_VAX"
 $ THEN
 $! Case sensitive?
 $   echo ""
@@ -2940,11 +2959,20 @@ $   dlext="axe"
 $   exe_ext=".axe"
 $   lib_ext=".alb"
 $ ELSE
-$   obj_ext=".obj"
-$   so="exe"
-$   dlext="exe"
-$   exe_ext=".exe"
-$   lib_ext=".olb"
+$   IF (sharedperl .AND. archname .EQS. "VMS_IA64")
+$   THEN
+$     obj_ext=".ibj"
+$     so="ixe"
+$     dlext="ixe"
+$     exe_ext=".ixe"
+$     lib_ext=".ilb"
+$   ELSE
+$     obj_ext=".obj"
+$     so="exe"
+$     dlext="exe"
+$     exe_ext=".exe"
+$     lib_ext=".olb"
+$   ENDIF
 $ ENDIF
 $ dlobj="dl_vms''obj_ext'"
 $!
@@ -5081,7 +5109,13 @@ $   WS "    iss =  ((iss&1)==1 && code == 0x1234);"
 $   WS "    printf(""%d\n"",iss);"
 $   WS "}"
 $   CS
-$   GOSUB compile
+$   IF (F$EXTRACT(0,7,archname) .EQS. "VMS_AXP")
+$   THEN
+$     GOSUB compile
+$   ELSE
+$     ! Causes SS$_BADSTACK on OpenVMS I64 v8.1 (but hey, it was undocumented)
+$     tmp = "0"	
+$   ENDIF
 $   IF tmp .EQS. "1"
 $   THEN
 $       echo4 "Yep, we can."
@@ -6366,7 +6400,8 @@ $   echo ""
 $   echo4 "The perl.cld file is now being written..."
 $   OPEN/WRITE CONFIG 'file_2_find'
 $   ext = ".exe"
-$   IF (sharedperl .AND. archname .EQS. "VMS_AXP") THEN ext := .AXE
+$   IF (sharedperl .AND. F$EXTRACT(0,7,archname) .EQS. "VMS_AXP") THEN ext := .AXE
+$   IF (sharedperl .AND. F$EXTRACT(0,8,archname) .EQS. "VMS_IA64") THEN ext := .IXE
 $   IF (use_vmsdebug_perl)
 $   THEN
 $     WRITE CONFIG "define verb dbgperl"

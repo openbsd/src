@@ -6,7 +6,7 @@ BEGIN {
         chdir 't';
     }
 }
-use Test::More tests => 157;
+use Test::More tests => 159;
 use strict;
 
 my @Exported_Funcs;
@@ -272,6 +272,20 @@ like( $@, qr/^Attempt to access disallowed key 'I_DONT_EXIST' in a restricted ha
 		 "iterating with each for $message");
     }
   }
+}
+
+# Check clear works on locked empty hashes - SEGVs on 5.8.2.
+{
+    my %hash;
+    lock_hash(%hash);
+    %hash = ();
+    ok(keys(%hash) == 0, 'clear empty lock_hash() hash');
+}
+{
+    my %hash;
+    lock_keys(%hash);
+    %hash = ();
+    ok(keys(%hash) == 0, 'clear empty lock_keys() hash');
 }
 
 my $hash_seed = hash_seed();

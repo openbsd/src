@@ -4,6 +4,7 @@ Makefile.PL		    Generic Makefile template
 Storable.pm		    The perl side of Storable
 Storable.xs		    The C side of Storable
 ChangeLog		    Changes since baseline
+hints/linux.pl		    Hint file to drop gcc to -O2
 t/blessed.t		    See if Storable works
 t/canonical.t		    See if Storable works
 t/code.t		    Test (de)serialization of code references
@@ -30,3 +31,6 @@ t/tied_hook.t		    See if Storable works
 t/tied_items.t		    See if Storable works
 t/utf8.t		    See if Storable works
 t/utf8hash.t		    See if Storable works
+# t/Test/Builder.pm	    For testing the CPAN release on pre 5.6.2
+# t/Test/More.pm		    For testing the CPAN release on pre 5.6.2
+# t/Test/Simple.pm	    For testing the CPAN release on pre 5.6.2

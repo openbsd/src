@@ -1545,12 +1545,6 @@ suffixes.  C<-S> is meaningless.  (Win32)
 C<-x> (or C<-X>) determine if a file has an executable file type.
 (S<RISC OS>)
 
-=item alarm SECONDS
-
-=item alarm
-
-Not implemented. (Win32)
-
 =item binmode FILEHANDLE
 
 Meaningless.  (S<Mac OS>, S<RISC OS>)

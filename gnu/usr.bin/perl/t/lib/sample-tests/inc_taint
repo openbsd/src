@@ -1,0 +1,7 @@
+#!/usr/bin/perl -Tw
+
+use lib qw(t/lib);
+use Test::More tests => 1;
+
+ok( grep(/we_added_this_lib/, @INC) );
+

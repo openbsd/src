@@ -1,5 +1,173 @@
 Revision history for Perl extension Test::Harness
 
+2.40	    Tue Dec 30 20:38:59 CST 2003
+    [FIXES]
+    * Test::Harness::Straps should now properly quote on VMS.
+
+    [ENHANCEMENTS]
+    * prove now takes a -l option to add lib/ to @INC.  Now when you're
+      building a module, you don't have to do a make before you run
+      the prove.  Thanks to David Wheeler for the idea.
+
+    [INTERNALS]
+    * Internal functions corestatus() and canonfailed() prepended with
+      underscores, to indicate such.
+
+    * Gratuitous text-only changes in Test::Harness::Iterator.
+    
+    * All tests now do their use_ok() in a BEGIN block.  Some of the
+      use_ok() calls were too much of a hassle to put into a BEGIN block,
+      so I changed them to regular use calls.
+
+
+2.38	    Mon Nov 24 22:36:18 CST 2003
+    Released.  See changes below.
+
+2.37_03	    Tue Nov 18 23:51:38 CST 2003
+    [ENHANCEMENTS]
+    * prove -V now shows the Perl version being used.
+    * Now there's a HARNESS_DEBUG flag that shows diagnostics as the
+      harness runs the tests.  This is different from HARNESS_VERBOSE,
+      which shows test output, but not information about the harness
+      itself.
+    * Added _command_line() to the Strap API.
+
+    [FIXES]
+    * Bad interaction with Module::Build:  The strap was only checking
+      $ENV{HARNESS_PERL_SWITCHES} for definedness, but not emptiness.
+      It now also strips any leading or trailing whitesapce from the
+      switches.
+    * Test::Harness and prove only quote those parms that actually need
+      to be quoted: Have some whitespace and aren't already quoted.
+
+2.36        Fri Nov 14 09:24:44 CST 2003
+    [FIXES]
+    * t/prove-includes.t properly ignores PROVE_SWITCHES that you may
+      already have set.
+
+2.35_02     Thu Nov 13 09:57:36 CST 2003
+    [ENHANCEMENTS]
+    * prove's --blib now works just like the blib pragma.
+
+2.35_01     Wed Nov 12 23:08:45 CST 2003
+    [FIXES]
+    * Fixed taint-handling and path preservation under MacOS.  Thanks to
+      Schwern for the patch and the tests.
+
+    * Preserves case of -t or -T in the shebang line of the test.
+
+    [ENHANCEMENTS]
+    * Added -t to prove analogous to Perl's -t.  Removed the --taint
+      switch.
+
+    * prove can take default options from the PROVE_SWITCHES variable.
+
+    * Added HARNESS_PERL to allow you to specify the Perl interpreter
+      to run the tests as.
+
+    * prove's --perl switch sets the HARNESS_PERL on the fly for you.
+
+    * Quotes the switches and filename in the subprogram.  This helps
+      with filenames with spaces that are subject to shell mangling.
+
+
+2.34        Sat Nov  8 22:09:15 CST 2003
+    [FIXES]
+    * Allowed prove to run on Perl versions < 5.6.0.
+
+    [ENHANCEMENTS]
+    * Command-line switches to prove may now be stacked.
+    * Added check for proper Pod::Usage version.
+    * "make clean" does a better job of cleaning up after itself.
+
+
+2.32        Fri Nov  7 09:41:21 CST 2003
+    Test::Harness now includes a powerful development tool to help
+    programmers work with automated tests.  The prove utility runs
+    test files against the harness, like a "make test", but with many
+    advantages:
+
+    * prove is designed as a development tool
+        Perl users typically run the test harness through a makefile via
+        "make test". That's fine for module distributions, but it's
+        suboptimal for a test/code/debug development cycle.
+
+    * prove is granular
+        prove lets your run against only the files you want to check.
+        Running "prove t/live/ t/master.t" checks every *.t in t/live, plus
+        t/master.t.
+
+    * prove has an easy verbose mode
+        To get full test program output from "make test", you must set
+        "HARNESS_VERBOSE" in the environment. prove has a "-v" option.
+
+    * prove can run under taint mode
+        prove's "-T" runs your tests under "perl -T".
+
+    * prove can shuffle tests
+        You can use prove's "--shuffle" option to try to excite problems
+        that don't show up when tests are run in the same order every time.
+
+    * Not everything is a module
+        More and more users are using Perl's testing tools outside the
+        context of a module distribution, and may not even use a makefile at
+        all.
+
+    Prove requires Pod::Usage, which is standard after Perl 5.004.
+
+    I'm very excited about prove, and hope that developers will begin
+    adopting it to their coding cycles.  I welcome your comments at
+    andy@petdance.com.
+
+    There are also some minor bug fixes in Test::Harness itself, listed
+    below in the 2.31_* notes.
+     
+
+2.31_05     Thu Nov  6 14:56:22 CST 2003
+    [FIXES]
+    - If a MacPerl script had a shebang with -T, the -T wouldn't get
+      passed as a switch.
+    - Removed the -T on three *.t files, which didn't need them, and 
+      which were causing problems.
+    - Conditionally installs bin/prove, depending on whether Pod::Usage
+      is available, which prove needs.
+    - Removed old leftover code from Makefile.PL.
+
+2.31_04     Mon Nov  3 23:36:06 CST 2003
+    Minor tweaks here and there, almost ready to release.
+
+2.31_03     Mon Nov  3 08:50:36 CST 2003
+    [FEATURES]
+    - prove is almost feature-complete.  Removed the handling of
+      --exclude for excluding certain tests.  It may go back in the
+      future.
+    - prove -d is now debug.  Dry is prove -D.
+
+2.31_02     Fri Oct 31 23:46:03 CST 2003
+    [FEATURES]
+    - Added many more switches to prove: -d for dry run, and -b for
+      blib.
+
+    [FIXES]
+    - T:H:Straps now recognizes MSWin32 in $^0.
+    - RT#3811: Could do regex matching on garbage in _is_test().
+      Fixed by Yves Orton
+    - RT#3827: Strips backslashes from and normalizes @INC entries
+      for Win32.  Fixed by Yves Orton.
+
+    [INTERNALS]
+    - Added $self->{_is_macos} to the T:H:Strap object.
+    - t/test-harness.t sorts its test results, rather than relying on
+      internal key order.
+
+2.31_01
+    [FEATURES]
+    - Added "prove" script to run a test or set of tests through the
+      harness.  Thanks to Curtis Poe for the foundation.
+
+    [DOCUMENTATION]
+    - Fixed POD problem in Test::Harness::Assert
+
 2.30        Thu Aug 14 20:04:00 CDT 2003
     No functional changes in this version.  It's only to make some doc
     tweaks, and bump up the version number in T:H:Straps.
@@ -9,10 +177,10 @@ Revision history for Perl extension Test::Harness
     - Incorporated the TODO file into Harness.pm proper.
     - Cleaned up formatting in Test::Harness::Straps.
 
-2.29	    Wed Jul 17 14:08:00 CDT 2003
+2.29        Wed Jul 17 14:08:00 CDT 2003
     - Released as 2.29.
 
-2.28_91	    Sun Jul 13 00:10:00 CDT 2003
+2.28_91     Sun Jul 13 00:10:00 CDT 2003
     [ENHANCEMENTS]
     - Added support for HARNESS_OK_SLOW.  This will make a significant
       speedup for slower connections.
@@ -25,7 +193,7 @@ Revision history for Perl extension Test::Harness
     - Fixed the prototype for the canonfailed() function, not that
       it matters since it's never called without parens.
 
-2.28_90	    Sat Jul 05 20:21:00 CDT 2003
+2.28_90     Sat Jul 05 20:21:00 CDT 2003
     [ENHANCEMENTS]
     - Now, when you run a test harnessed, the numbers don't fly by one
       at a time, one update per second.  This significantly speeds

@@ -1,6 +1,6 @@
 package PerlIO;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 # Map layer name to package that defines it
 our %alias;
@@ -61,30 +61,65 @@ The following layers are currently defined:
 
 =over 4
 
-=item unix
+=item :unix
 
-Low level layer which calls C<read>, C<write> and C<lseek> etc.
+Lowest level layer which provides basic PerlIO operations in terms of
+UNIX/POSIX numeric file descriptor calls
+(open(), read(), write(), lseek(), close()).
 
-=item stdio
+=item :stdio
 
 Layer which calls C<fread>, C<fwrite> and C<fseek>/C<ftell> etc.  Note
 that as this is "real" stdio it will ignore any layers beneath it and
 got straight to the operating system via the C library as usual.
 
-=item perlio
+=item :perlio
 
-This is a re-implementation of "stdio-like" buffering written as a
-PerlIO "layer".  As such it will call whatever layer is below it for
-its operations.
+A from scratch implementation of buffering for PerlIO. Provides fast
+access to the buffer for C<sv_gets> which implements perl's readline/E<lt>E<gt>
+and in general attempts to minimize data copying.
 
-=item crlf
+C<:perlio> will insert a C<:unix> layer below itself to do low level IO.
 
-A layer which does CRLF to "\n" translation distinguishing "text" and
-"binary" files in the manner of MS-DOS and similar operating systems.
-(It currently does I<not> mimic MS-DOS as far as treating of Control-Z
-as being an end-of-file marker.)
+=item :crlf
 
-=item utf8
+A layer that implements DOS/Windows like CRLF line endings.  On read
+converts pairs of CR,LF to a single "\n" newline character.  On write
+converts each "\n" to a CR,LF pair.  Note that this layer likes to be
+one of its kind: it silently ignores attempts to be pushed into the
+layer stack more than once.
+
+It currently does I<not> mimic MS-DOS as far as treating of Control-Z
+as being an end-of-file marker.
+
+(Gory details follow) To be more exact what happens is this: after
+pushing itself to the stack, the C<:crlf> layer checks all the layers
+below itself to find the first layer that is capable of being a CRLF
+layer but is not yet enabled to be a CRLF layer.  If it finds such a
+layer, it enables the CRLFness of that other deeper layer, and then
+pops itself off the stack.  If not, fine, use the one we just pushed.
+
+The end result is that a C<:crlf> means "please enable the first CRLF
+layer you can find, and if you can't find one, here would be a good
+spot to place a new one."
+
+Based on the C<:perlio> layer.
+
+=item :mmap
+
+A layer which implements "reading" of files by using C<mmap()> to
+make (whole) file appear in the process's address space, and then
+using that as PerlIO's "buffer". This I<may> be faster in certain
+circumstances for large files, and may result in less physical memory
+use when multiple processes are reading the same file.
+
+Files which are not C<mmap()>-able revert to behaving like the C<:perlio>
+layer. Writes also behave like C<:perlio> layer as C<mmap()> for write
+needs extra house-keeping (to extend the file) which negates any advantage.
+
+The C<:mmap> layer will not exist if platform does not support C<mmap()>.
+
+=item :utf8
 
 Declares that the stream accepts perl's internal encoding of
 characters.  (Which really is UTF-8 on ASCII machines, but is
@@ -104,7 +139,7 @@ and then read it back in.
 	$in = <F>;
 	close(F);
 
-=item bytes
+=item :bytes
 
 This is the inverse of C<:utf8> layer. It turns off the flag
 on the layer below so that data read from it is considered to
@@ -112,14 +147,20 @@ be "octets" i.e. characters in range 0..255 only. Likewise
 on output perl will warn if a "wide" character is written
 to a such a stream.
 
-=item raw
+=item :raw
 
 The C<:raw> layer is I<defined> as being identical to calling
 C<binmode($fh)> - the stream is made suitable for passing binary data
 i.e. each byte is passed as-is. The stream will still be
-buffered. Unlike in the earlier versions of Perl C<:raw> is I<not>
-just the inverse of C<:crlf> - other layers which would affect the
-binary nature of the stream are also removed or disabled.
+buffered.
+
+In Perl 5.6 and some books the C<:raw> layer (previously sometimes also
+referred to as a "discipline") is documented as the inverse of the
+C<:crlf> layer. That is no longer the case - other layers which would
+alter binary nature of the stream are also disabled.  If you want UNIX
+line endings on a platform that normally does CRLF translation, but still
+want UTF-8 or encoding defaults the appropriate thing to do is to add
+C<:perlio> to PERLIO environment variable.
 
 The implementation of C<:raw> is as a pseudo-layer which when "pushed"
 pops itself and then any layers which do not declare themselves as suitable
@@ -135,7 +176,7 @@ a known base on which to build e.g.
 
 will construct a "binary" stream, but then enable UTF-8 translation.
 
-=item pop
+=item :pop
 
 A pseudo layer that removes the top-most layer. Gives perl code
 a way to manipulate the layer stack. Should be considered
@@ -150,6 +191,12 @@ An example of a possible use might be:
     binmode($fh,":pop");            # back to un-encocded
 
 A more elegant (and safer) interface is needed.
+
+=item :win32
+
+On Win32 platforms this I<experimental> layer uses native "handle" IO
+rather than unix-like numeric file descriptor layer. Known to be
+buggy as of perl 5.8.2.
 
 =back
 
@@ -270,7 +317,7 @@ B<Implementation details follow, please close your eyes.>
 The arguments to layers are by default returned in parenthesis after
 the name of the layer, and certain layers (like C<utf8>) are not real
 layers but instead flags on real layers: to get all of these returned
-separately use the optional C<separate> argument:
+separately use the optional C<details> argument:
 
    my @layer_and_args_and_flags = PerlIO::get_layers($fh, details => 1);
 

@@ -98,6 +98,8 @@ L<Pod::Parser> and L<Pod::Select>
 
 =head1 AUTHOR
 
+Please report bugs using L<http://rt.cpan.org>.
+
 Brad Appleton E<lt>bradapp@enteract.comE<gt>
 
 Based on code for B<Pod::Text::pod2text(1)> written by

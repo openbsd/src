@@ -382,7 +382,8 @@ listed in C<@ISA>) automatically:
     }
 
 So, C<SUPER::speak> means look in the current package's C<@ISA> for
-C<speak>, invoking the first one found.
+C<speak>, invoking the first one found. Note that it does I<not> look in
+the C<@ISA> of C<$class>.
 
 =head2 Where we're at so far...
 

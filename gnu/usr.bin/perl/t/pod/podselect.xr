@@ -34,6 +34,8 @@ SEE ALSO
     the Pod::Parser manpage and the Pod::Select manpage
 
 AUTHOR
+    Please report bugs using http://rt.cpan.org.
+
     Brad Appleton <bradapp@enteract.com>
 
     Based on code for Pod::Text::pod2text(1) written by Tom Christiansen

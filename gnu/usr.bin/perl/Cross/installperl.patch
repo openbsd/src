@@ -3,7 +3,7 @@
 @@ -3,8 +3,8 @@
  BEGIN {
      require 5.004;
-     chdir '..' if !-d 'lib' and -d '..\lib';
+     chdir '..' if !-d 'lib' and -d '../lib';
 -    @INC = 'lib';
 -    $ENV{PERL5LIB} = 'lib';
 +#    @INC = 'lib';
@@ -11,7 +11,7 @@
  }
  
  use strict;
-@@ -931,7 +931,7 @@
+@@ -946,7 +946,7 @@
  		print " " if (@opts);
  		print "$file\n";
  	    }

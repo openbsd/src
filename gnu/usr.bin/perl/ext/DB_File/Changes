@@ -1,4 +1,11 @@
 
+1.808 22nd December 2003
+
+   * Added extra DBM Filter tests.
+
+   * Fixed a memory leak in ParseOpenInfo, which whould occur if the
+     opening of the database failed. Leak spotted by Adrian Enache.
+
 1.807 1st November 2003
 
    * Fixed minor typos on pod documetation - reported by Jeremy Mates &

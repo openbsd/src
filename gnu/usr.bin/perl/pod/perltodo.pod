@@ -687,7 +687,7 @@ This emulation should also go near pp_sys.pp_truncate().
 
 chdir, chmod, chown, chroot, exec, glob, link, lstat, mkdir, open,
 opendir, qx, readdir, readlink, rename, rmdir, stat, symlink, sysopen,
-system, truncate, unlink, utime.  All these could potentially accept
+system, truncate, unlink, utime, -X.  All these could potentially accept
 Unicode filenames either as input or output (and in the case of system
 and qx Unicode in general, as input or output to/from the shell).
 Whether a filesystem - an operating system pair understands Unicode in

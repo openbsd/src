@@ -4,7 +4,7 @@
 
 SRCDIR     = ..
 PV         = 58
-INST_VER   = 5.8.2
+INST_VER   = 5.8.3
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -736,6 +736,7 @@ $(CONFIGPM): .\config.h ..\config.sh ..\minimod.pl
 	cd .. && $(HPERL) configpm --cross=$(CROSS_NAME) --no-glossary
 	-mkdir $(XCOREDIR)
 	$(XCOPY) ..\*.h $(XCOREDIR)\*.*
+	$(XCOPY) ..\*.inc $(XCOREDIR)\*.*
 	$(XCOPY) *.h $(XCOREDIR)\*.*
 	$(XCOPY) ..\ext\re\re.pm $(LIBDIR)\*.*
 	$(RCOPY) include $(XCOREDIR)\*.*

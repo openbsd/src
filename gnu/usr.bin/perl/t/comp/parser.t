@@ -9,7 +9,7 @@ BEGIN {
 }
 
 require "./test.pl";
-plan( tests => 41 );
+plan( tests => 42 );
 
 eval '%@x=0;';
 like( $@, qr/^Can't modify hash dereference in repeat \(x\)/, '%@x=0' );
@@ -128,10 +128,16 @@ EOF
 {
     local $SIG{__WARN__} = sub { }; # silence mandatory warning
     eval q{ my $x = -F 1; };
-    like( $@, qr/syntax error .* near "F 1"/, "unknown filetest operators" );
+    like( $@, qr/(?:syntax|parse) error .* near "F 1"/, "unknown filetest operators" );
     is(
         eval q{ sub F { 42 } -F 1 },
 	'-42',
 	'-F calls the F function'
     );
+}
+
+# Bug #24762
+{
+    eval q{ *foo{CODE} ? 1 : 0 };
+    is( $@, '', "glob subscript in conditional" );
 }

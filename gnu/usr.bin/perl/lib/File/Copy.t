@@ -9,10 +9,11 @@ BEGIN {
 $| = 1;
 
 my @pass = (0,1);
-my $tests = $^O eq 'MacOS' ? 15 : 12;
+my $tests = $^O eq 'MacOS' ? 17 : 14;
 printf "1..%d\n", $tests * scalar(@pass);
 
 use File::Copy;
+use Config;
 
 for my $pass (@pass) {
 
@@ -83,6 +84,7 @@ for my $pass (@pass) {
   print "# foo=`$foo'\nnot " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
   printf "ok %d\n", 9+$loopconst;
 
+  my $test_i;
   if ($^O eq 'MacOS') {
 	
     copy "file-$$", "lib";	
@@ -122,7 +124,8 @@ for my $pass (@pass) {
 	unless $@ =~ /are identical/ && -s "copy-$$";
 
     unlink ":lib:file-$$" or die "unlink: $!";
-  
+
+    $test_i = 15;
   } else {
     
     copy "file-$$", "lib";
@@ -142,8 +145,42 @@ for my $pass (@pass) {
 	unless $@ =~ /are identical/ && -s "copy-$$";
 
     unlink "lib/file-$$" or die "unlink: $!";
-  
+
+    $test_i = 12;
   }
+
+  if ($Config{d_symlink}) {
+    open(F, ">file-$$") or die $!;
+    print F "dummy content\n";
+    close F;
+    symlink("file-$$", "symlink-$$") or die $!;
+    eval { copy("file-$$", "symlink-$$") };
+    print "not " if $@ !~ /are identical/ || -z "file-$$";
+    printf "ok %d\n", (++$test_i)+$loopconst;
+    unlink "symlink-$$";
+    unlink "file-$$";
+  } else {
+    printf "ok %d # Skipped: no symlinks on this platform\n", (++$test_i)+$loopconst;
+  }
+
+  if ($Config{d_link}) {
+    if ($^O ne 'MSWin32') {
+      open(F, ">file-$$") or die $!;
+      print F "dummy content\n";
+      close F;
+      link("file-$$", "hardlink-$$") or die $!;
+      eval { copy("file-$$", "hardlink-$$") };
+      print "not " if $@ !~ /are identical/ || -z "file-$$";
+      printf "ok %d\n", (++$test_i)+$loopconst;
+      unlink "hardlink-$$";
+      unlink "file-$$";
+    } else {
+      printf "ok %d # Skipped: can't test hardlinks on MSWin32\n", (++$test_i)+$loopconst;
+    }
+  } else {
+    printf "ok %d # Skipped: no hardlinks on this platform\n", (++$test_i)+$loopconst;
+  }
+
 }
 
 

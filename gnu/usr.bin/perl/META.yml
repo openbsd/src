@@ -1,11 +1,12 @@
 name: perl
-version: 5.008001
+version: 5.008003
 abstract: Practical Extraction and Reporting Language
 author: perl5-porters@perl.org
 license: perl
 distribution_type: core
 private:
   directory:
+    - ext/Cwd
     - ext/Data/Dumper
     - ext/DB_File
     - ext/Devel/PPPort
@@ -14,10 +15,8 @@ private:
     - ext/Filter/Util/Call
     - ext/List/Util
     - ext/MIME/Base64
-    - ext/PerlIO
     - ext/Safe
     - ext/Storable
-    - ext/threads
     - ext/Time/HiRes
     - ext/Unicode/Normalize
     - lib/Attribute/Handlers
@@ -25,6 +24,7 @@ private:
     - lib/CGI
     - lib/Class/ISA
     - lib/CPAN
+    - lib/Digest
     - lib/ExtUtils/t
     - lib/File/Spec
     - lib/File/Temp
@@ -65,8 +65,8 @@ private:
     - lib/CGI.pm
     - lib/Class/ISA.pm
     - lib/CPAN.pm
+    - lib/Cwd.pm
     - lib/Digest.pm
-    - lib/Digest.t
     - lib/ExtUtils/Command
     - lib/ExtUtils/Command.pm
     - lib/ExtUtils/Install.pm

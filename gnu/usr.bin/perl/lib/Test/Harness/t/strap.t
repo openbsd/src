@@ -1,4 +1,4 @@
-#!/usr/bin/perl -Tw
+#!/usr/bin/perl -w
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -14,7 +14,7 @@ use strict;
 
 use Test::More tests => 170;
 
-use_ok('Test::Harness::Straps');
+BEGIN { use_ok('Test::Harness::Straps'); }
 
 my $strap = Test::Harness::Straps->new;
 isa_ok( $strap, 'Test::Harness::Straps', 'new()' );
@@ -35,7 +35,8 @@ my %comments = (
                 "#"                                 => '',
                );
 
-while( my($line, $line_comment) = each %comments ) {
+for my $line ( sort keys %comments ) {
+    my $line_comment = $comments{$line};
     my $strap = Test::Harness::Straps->new;
     isa_ok( $strap, 'Test::Harness::Straps' );
 
@@ -101,7 +102,8 @@ my %headers = (
                                            }
 );
 
-while( my($header, $expect) = each %headers ) {
+for my $header ( sort keys %headers ) {
+    my $expect = $headers{$header};
     my $strap = Test::Harness::Straps->new;
     isa_ok( $strap, 'Test::Harness::Straps' );
 
@@ -169,7 +171,8 @@ my %tests = (
                                    },
             );
 
-while( my($line, $expect) = each %tests ) {
+for my $line ( sort keys %tests ) {
+    my $expect = $tests{$line};
     my %test;
     ok( $strap->_is_test($line, \%test),    "_is_test() spots '$line'" );
 
@@ -204,7 +207,8 @@ my %bails = (
              'bail out! - Out of coffee' => '- Out of coffee',
             );
 
-while( my($line, $expect) = each %bails ) {
+for my $line ( sort keys %bails ) {
+    my $expect = $bails{$line};
     my $strap = Test::Harness::Straps->new;
     isa_ok( $strap, 'Test::Harness::Straps' );
 

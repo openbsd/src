@@ -18,7 +18,7 @@ sub ok {
     return $ok;
 }
 
-print "1..19\n";
+print "1..20\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -108,4 +108,12 @@ sub beq { use bytes; $_[0] eq $_[1]; }
 {
     my $a; ($a .= 5) . 6;
     ok($a == 5, '($a .= 5) . 6 - present since 5.000');
+}
+
+{
+    # [perl #24508] optree construction bug
+    sub strfoo { "x" }
+    my ($x, $y);
+    $y = ($x = '' . strfoo()) . "y";
+    ok( "$x,$y" eq "x,xy", 'figures out correct target' );
 }

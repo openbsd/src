@@ -1,4 +1,4 @@
-Unicode/Normalize version 0.25
+Unicode/Normalize version 0.28
 ===================================
 
 Unicode::Normalize - Unicode Normalization Forms
@@ -24,7 +24,8 @@ SYNOPSIS
 
 INSTALLATION
 
-Perl 5.6.1 or later (Caution: Perl 5.6.0 is not recommended.)
+Perl 5.6.1 or later.
+(Perl 5.8.0 or later is recommended.)
 
 To install this module (XSUB: needs a C compiler), type the following:
 
@@ -85,9 +86,7 @@ CAVEAT
 
 COPYRIGHT AND LICENCE
 
-  SADAHIRO Tomoyuki
-
-  SADAHIRO@cpan.org
+  SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
   http://homepage1.nifty.com/nomenclator/perl/
 

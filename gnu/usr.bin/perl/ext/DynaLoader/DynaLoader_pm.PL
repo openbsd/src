@@ -510,8 +510,6 @@ sub dl_find_symbol_anywhere
 
 DynaLoader - Dynamically load C libraries into Perl code
 
-dl_error(), dl_findfile(), dl_expandspec(), dl_load_file(), dl_unload_file(), dl_find_symbol(), dl_find_symbol_anywhere(), dl_undef_symbols(), dl_install_xsub(), dl_load_flags(), bootstrap() - routines used by DynaLoader modules
-
 =head1 SYNOPSIS
 
     package YourPackage;

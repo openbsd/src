@@ -401,6 +401,10 @@ elsif ($PLATFORM eq 'os2') {
 		    nthreads_cond
 		    os2_cond_wait
 		    os2_stat
+		    os2_execname
+		    async_mssleep
+		    msCounter
+		    InfoTable
 		    pthread_join
 		    pthread_create
 		    pthread_detach
@@ -1344,6 +1348,10 @@ foreach my $symbol (sort keys %export) {
 if ($PLATFORM eq 'os2') {
 	print <<EOP;
     dll_perlmain=main
+    fill_extLibpath
+    dir_subst
+    Perl_OS2_handler_install
+
 ; LAST_ORDINAL=$sym_ord
 EOP
 }

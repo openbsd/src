@@ -11,7 +11,9 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.25';
+no warnings 'utf8';
+
+our $VERSION = '0.28';
 our $PACKAGE = __PACKAGE__;
 
 require Exporter;
@@ -180,7 +182,7 @@ each other. C<FCD()> will return one of these equivalent forms.
 
 returns the FCC form ("Fast C Contiguous"; cf. UTN #5).
 
-Note: FCD is unique, as well as four normalization forms (NF*).
+Note: FCC is unique, as well as four normalization forms (NF*).
 
 =item C<$normalized_string = normalize($form_name, $string)>
 
@@ -277,7 +279,7 @@ returns C<YES> (C<1>) or C<NO> (C<empty string>).
 
 returns C<YES> (C<1>), C<NO> (C<empty string>), or C<MAYBE> (C<undef>).
 
-If a string is not in C<FCD>, it must not be in <FCC>.
+If a string is not in FCD, it must not be in FCC.
 So C<checkFCC($not_FCD_string)> should return C<NO>.
 
 =item C<$result = check($form_name, $string)>
@@ -393,7 +395,7 @@ SADAHIRO Tomoyuki, <SADAHIRO@cpan.org>
 
 =over 4
 
-=item http://www.unicode.org/unicode/reports/tr15/
+=item http://www.unicode.org/reports/tr15/
 
 Unicode Normalization Forms - UAX #15
 

@@ -145,3 +145,5 @@ $rm -f t001$_o t001$_exe t001.kp
 EOCBU
 
 
+# VOS 14.7 has minimal support for dynamic linking. Too minimal for perl.
+usedl="undef"

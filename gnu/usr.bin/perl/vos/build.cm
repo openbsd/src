@@ -160,10 +160,10 @@
 & &if (command_status) ^= 0 &then &return
 &
 !&compiler& <<perl.c &diag& &cpu& &cflags& -o perl&s& &+
-     -DARCHLIB="/system/ported/lib/perl5/5.8.2/&obj2&" &+
-     -DARCHLIB_EXP="/system/ported/lib/perl5/5.8.2/&obj2&" &+
-     -DSITEARCH="/system/ported/lib/perl5/site_perl/5.8.2/&obj2&" &+
-     -DSITEARCH_EXP="/system/ported/lib/perl5/site_perl/5.8.2/&obj2&" &+
+     -DARCHLIB="/system/ported/lib/perl5/5.8.3/&obj2&" &+
+     -DARCHLIB_EXP="/system/ported/lib/perl5/5.8.3/&obj2&" &+
+     -DSITEARCH="/system/ported/lib/perl5/site_perl/5.8.3/&obj2&" &+
+     -DSITEARCH_EXP="/system/ported/lib/perl5/site_perl/5.8.3/&obj2&" &+
      -DARCHNAME="&obj2&"
 &if (command_status) ^= 0 &then &return
 !&compiler& <<perlapi.c &diag& &cpu& &cflags& -o perlapi&s&

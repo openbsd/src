@@ -321,17 +321,22 @@ ok( 1 );
     local $SIG{__WARN__} = sub { $@ = shift };
     open F, ">a";
     binmode F;
-    print F "foo", chr(0xE4), "\n";
-    print F "foo", chr(0xF6), "\n";
+    my ($chrE4, $chrF6) = (chr(0xE4), chr(0xF6));
+    if (ord('A') == 193)	# EBCDIC
+    { ($chrE4, $chrF6) = (chr(0x43), chr(0xEC)); }
+    print F "foo", $chrE4, "\n";
+    print F "foo", $chrF6, "\n";
     close F;
     open F, "<:utf8", "a";
     undef $@;
     my $line = <F>;
-    like( $@, qr/utf8 "\\xE4" does not map to Unicode .+ <F> line 1/,
+    my ($chrE4, $chrF6) = ("E4", "F6");
+    if (ord('A') == 193) { ($chrE4, $chrF6) = ("43", "EC"); } # EBCDIC
+    like( $@, qr/utf8 "\\x$chrE4" does not map to Unicode .+ <F> line 1/,
 	  "<:utf8 readline must warn about bad utf8");
     undef $@;
     $line .= <F>;
-    like( $@, qr/utf8 "\\xF6" does not map to Unicode .+ <F> line 2/,
+    like( $@, qr/utf8 "\\x$chrF6" does not map to Unicode .+ <F> line 2/,
 	  "<:utf8 rcatline must warn about bad utf8");
     close F;
 }

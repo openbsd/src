@@ -586,7 +586,7 @@ sub _fresh_perl {
 }
 
 #
-# run_perl_is
+# fresh_perl_is
 #
 # Combination of run_perl() and is().
 #
@@ -600,7 +600,7 @@ sub fresh_perl_is {
 }
 
 #
-# run_perl_like
+# fresh_perl_like
 #
 # Combination of run_perl() and like().
 #

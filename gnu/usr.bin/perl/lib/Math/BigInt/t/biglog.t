@@ -68,6 +68,7 @@ ok ($cl->new(0.0001)->blog(), -$ten * 4);
 
 # also cached
 ok ($cl->new(2)->blog(), '0.6931471805599453094172321214581765680755');
+ok ($cl->new(4)->blog(), $cl->new(2)->blog * 2);
 
 # These are still slow, so do them only to 10 digits
 
@@ -97,7 +98,6 @@ ok ($cl->new('10')->bpow('0.6',10),   '3.981071706');
 
 # blog should handle bigint input
 ok (Math::BigFloat::blog(Math::BigInt->new(100),10), 2);
-ok (Math::BigInt->new(100)->blog(10), 'NaN');
 
 # test for bug in bsqrt() not taking negative _e into account
 test_bpow ('200','0.5',10,      '14.14213562');

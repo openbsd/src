@@ -1254,8 +1254,10 @@ __END__
 
 =head1 AUTHOR
 
+Please report bugs using L<http://rt.cpan.org>.
+
 Brad Appleton E<lt>bradapp@enteract.comE<gt> (initial version),
-Marek Rouchal E<lt>marek@saftsack.fs.uni-bayreuth.deE<gt>
+Marek Rouchal E<lt>marekr@cpan.orgE<gt>
 
 Based on code for B<Pod::Text::pod2text()> written by
 Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>

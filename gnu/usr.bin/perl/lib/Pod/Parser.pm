@@ -10,7 +10,7 @@
 package Pod::Parser;
 
 use vars qw($VERSION);
-$VERSION = 1.13;  ## Current version of this package
+$VERSION = 1.14;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -1763,6 +1763,8 @@ the same subclass in order to combine their functionality without
 causing any namespace clashes due to multiple inheritance.
 
 =head1 AUTHOR
+
+Please report bugs using L<http://rt.cpan.org>.
 
 Brad Appleton E<lt>bradapp@enteract.comE<gt>
 

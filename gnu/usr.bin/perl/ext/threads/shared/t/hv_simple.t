@@ -32,7 +32,7 @@ sub skip {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { print "1..14\n" };
+BEGIN { print "1..15\n" };
 use threads;
 use threads::shared;
 ok(1,1,"loaded");
@@ -63,5 +63,10 @@ ok(10, $seen{1} == 1, "Keys..");
 ok(11, $seen{2} == 1, "Keys..");
 ok(12, $seen{3} == 1, "Keys..");
 ok(13, $seen{"foo"} == 1, "Keys..");
+
+# bugid #24407: the stringification of the numeric 1 got allocated to the
+# wrong thread memory pool, which crashes on Windows.
+ok(14, exists $hash{1}, "Check numeric key");
+
 threads->create(sub { %hash = () })->join();
-ok(14, keys %hash == 0, "Check clear");
+ok(15, keys %hash == 0, "Check clear");

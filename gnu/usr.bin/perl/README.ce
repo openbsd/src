@@ -2,17 +2,17 @@ If you read this file _as_is_, just ignore the funny characters you
 see.  It is written in the POD format (see pod/perlpod.pod) which is
 specifically designed to be readable as is.
 
-=head1 Name
+=head1 NAME
 
-Perl for WinCE
+perlce - Perl for WinCE
 
-=head1 Description
+=head1 DESCRIPTION
 
 This file gives the instructions for building Perl5.8 and above for
 WinCE.  Please read and understand the terms under which this
 software is distributed.
 
-=head1 Build
+=head1 BUILD
 
 This section describes the steps to be performed to build PerlCE.
 You may find additional and newer information about building perl
@@ -126,7 +126,7 @@ in this case.
 All questions related to building for WinCE devices could be asked in
 perlce-users@lists.sourceforge.net mailing list.
 
-=head1 Acknowledgements
+=head1 ACKNOWLEDGEMENTS
 
 The port for Win32 was used as a reference.
 

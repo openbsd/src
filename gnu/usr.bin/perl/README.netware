@@ -2,11 +2,11 @@ If you read this file _as_is_, just ignore the funny characters you
 see.  It is written in the POD format (see pod/perlpod.pod) which is
 specifically designed to be readable as is.
 
-=head1 Name
+=head1 NAME
 
-Perl for NetWare
+perlnetware - Perl for NetWare
 
-=head1 Description
+=head1 DESCRIPTION
 
 This file gives instructions for building Perl 5.7 and above, and also 
 Perl modules for NetWare. Before you start, you may want to read the
@@ -14,7 +14,7 @@ README file found in the top level directory into which the Perl source
 code distribution was extracted. Make sure you read and understand
 the terms under which the software is being distributed.
 
-=head1 Build
+=head1 BUILD
 
 This section describes the steps to be performed to build a Perl NLM
 and other associated NLMs.
@@ -94,7 +94,7 @@ a release build, else will be copied under I<Debug> folder for debug builds.
 
 The make process also creates the Perl extensions as I<<Extension>.nlm>
 
-=head1 Install
+=head1 INSTALL
 
 To install NetWare Perl onto a NetWare server, first map the Sys
 volume of a NetWare server to I<i:>. This is because the makefile by
@@ -110,7 +110,7 @@ Example: At the command prompt Type "nmake nwinstall".
           This will cause the binaries to be installed on the local machine.
           (Typically under the c:\perl folder)
 
-=head1 Build new extensions
+=head1 BUILD NEW EXTENSIONS
 
 To build extensions other than standard extensions, NetWare Perl has
 to be installed on Windows along with Windows Perl. The Perl for
@@ -179,18 +179,18 @@ module.
 
 =back
 
-=head1 Acknowledgements
+=head1 ACKNOWLEDGEMENTS
 
 The makefile for Win32 is used as a reference to create the makefile
 for NetWare.  Also, the make process for NetWare port uses
 miniperl.exe to run scripts during the make and installation process.
 
-=head1 Authors
+=head1 AUTHORS
 
 Anantha Kesari H Y (hyanantha@novell.com)
 Aditya C (caditya@novell.com)
 
-=head1 Date
+=head1 DATE
 
 =over 4
 

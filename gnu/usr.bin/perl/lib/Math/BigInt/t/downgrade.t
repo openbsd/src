@@ -10,7 +10,7 @@ BEGIN
   my $location = $0; $location =~ s/downgrade.t//;
   unshift @INC, $location; # to locate the testing files
   chdir 't' if -d 't';
-  plan tests => 12;
+  plan tests => 15;
   }
 
 use Math::BigInt upgrade => 'Math::BigFloat';
@@ -35,6 +35,12 @@ ok (ref(Math::BigFloat->new('1')),'Math::BigInt');
 ok (ref(Math::BigFloat->new('10')),'Math::BigInt');
 ok (ref(Math::BigFloat->new('-10')),'Math::BigInt');
 ok (ref(Math::BigFloat->new('-10.0E1')),'Math::BigInt');
+
+# bug until v1.67:
+ok (Math::BigFloat->new('0.2E0'), '0.2');
+ok (Math::BigFloat->new('0.2E1'), '2');
+# until v1.67 resulted in 200:
+ok (Math::BigFloat->new('0.2E2'), '20');
 
 # disable, otherwise it screws calculations
 Math::BigFloat->upgrade(undef);

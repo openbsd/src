@@ -1,6 +1,6 @@
 package OS2::DLL;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 use Carp;
 use XSLoader;
@@ -58,6 +58,20 @@ sub load {
   $load_with_dirs->(@_, @libs);
 }
 
+sub libPath_find {
+  my ($name, $flags, @path) = (shift, shift);
+  $flags = 0x7 unless defined $flags;
+  push @path, split /;/, OS2::extLibpath	if $flags & 0x1;	# BEGIN
+  push @path, split /;/, OS2::libPath		if $flags & 0x2;
+  push @path, split /;/, OS2::extLibpath(1)	if $flags & 0x4;	# END
+  s,(?![/\\])$,/, for @path;
+  s,\\,/,g for @path;
+  $name .= ".dll" unless $name =~ /\.[^\\\/]*$/;
+  $_ .= $name for @path;
+  -f $_ and return $_ for @path;
+  return;
+}
+
 package OS2::DLL::dll;
 use Carp;
 @ISA = 'OS2::DLL';
@@ -100,6 +114,16 @@ sub find
 		${"${p}::"}{$_} = sub { shift; $f->(@_) };
 	}
 	return 1;
+}
+
+sub handle	{ shift->{Handle} }
+sub fullname	{ OS2::DLLname(0x202, shift->handle) }
+#sub modname	{ OS2::DLLname(0x201, shift->handle) }
+
+sub has_f32 {
+   my $handle = shift->handle;
+   my $name = shift;
+   DynaLoader::dl_find_symbol($handle, $name);
 }
 
 XSLoader::load 'OS2::DLL';
@@ -185,6 +209,37 @@ through the wrapper.
 Unless used inside REXX environment (see L<OS2::REXX>), the REXX runtime
 environment (variable pool, queue etc.) is not available to the called
 function.
+
+=head1 Inspecting the module
+
+=over
+
+=item $module->handle
+
+=item $module->fullname
+
+Return the (integer) handle and full path name of a loaded DLL.
+
+TODO: the module name (whatever is specified in the C<LIBRARY> statement
+of F<.def> file when linking) via OS2::Proc.
+
+=item $module->has_f32($name)
+
+Returns the address of a 32-bit entry point with name $name, or 0 if none
+found.  (Keep in mind that some entry points may be 16-bit, and some may have
+capitalized names comparing to callable-from-C counterparts.)  Name of the
+form C<#197> will find entry point with ordinal 197.
+
+=item libPath_find($name [, $flags])
+
+Looks for the DLL $name on C<BEGINLIBPATH>, C<LIBPATH>, C<ENDLIBPATH> if
+bits 0x1, 0x2, 0x4 of $flags are set correspondingly.  If called with no
+arguments, looks on all 3 locations.  Returns the full name of the found
+file.  B<DLL is not loaded.>
+
+$name has F<.dll> appended unless it already has an extension.
+
+=back
 
 =head1 Low-level API
 

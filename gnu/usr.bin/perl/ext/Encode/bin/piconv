@@ -10,7 +10,7 @@ my %Scheme =  map {$_ => 1} qw(from_to decode_encode perlio);
 use File::Basename;
 my $name = basename($0);
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case);
 
 my %Opt;
 

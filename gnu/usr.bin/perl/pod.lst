@@ -1,18 +1,18 @@
-# O	- Header, omit from toc
-# o	- Item, omit from toc
-# I	- Header, include in toc
+# h	- Header
+# o	- Omit from toc
 # r	- top level READMEs to be copied/symlinked
-# a	- Item, for auxiliary documentation
-# a	- Header for auxiliary documentation
+# a	- for auxiliary documentation
 # number - indent by
+# D	- this version's perldelta
+# d	- copied to this name
 
-I Overview
+h Overview
 
   perl			Perl overview (this section)
   perlintro		Perl introduction for beginners
   perltoc		Perl documentation table of contents
 
-I Tutorials
+h Tutorials
 
   perlreftut		Perl references short introduction
   perldsc		Perl data structures intro
@@ -43,7 +43,7 @@ I Tutorials
 2 perlfaq8		System Interaction
 2 perlfaq9		Networking
 
-I Reference Manual
+h Reference Manual
 
   perlsyn		Perl syntax
   perldata		Perl data structures
@@ -94,7 +94,7 @@ I Reference Manual
 
   perlfilter		Perl source filters
 
-I Internals and C Language Interface
+h Internals and C Language Interface
 
   perlembed		Perl ways to embed perl in your C or C++ application
   perldebguts		Perl debugging guts and tips
@@ -111,7 +111,7 @@ I Internals and C Language Interface
 
   perlhack		Perl hackers guide
 
-I Miscellaneous
+h Miscellaneous
 
   perlbook		Perl book information
   perltodo		Perl things to do
@@ -119,7 +119,9 @@ I Miscellaneous
   perldoc		Look up Perl documentation in Pod format
 
   perlhist		Perl history records
-  perldelta		Perl changes since previous version
+d perldelta		Perl changes since previous version
+D perl583delta		Perl changes in version 5.8.3
+  perl582delta		Perl changes in version 5.8.2
   perl581delta		Perl changes in version 5.8.1
   perl58delta		Perl changes in version 5.8.0
   perl573delta		Perl changes in version 5.7.3
@@ -134,14 +136,14 @@ I Miscellaneous
   perlartistic		Perl Artistic License
   perlgpl		GNU General Public License
 
-O Language-Specific
+ho Language-Specific
 
-or perlcn		Perl for Simplified Chinese (in EUC-CN)
-or perljp		Perl for Japanese (in EUC-JP)
-or perlko		Perl for Korean (in EUC-KR)
-or perltw		Perl for Traditional Chinese (in Big5)
+ro perlcn		Perl for Simplified Chinese (in EUC-CN)
+ro perljp		Perl for Japanese (in EUC-JP)
+ro perlko		Perl for Korean (in EUC-KR)
+ro perltw		Perl for Traditional Chinese (in Big5)
 
-I Platform-Specific
+h Platform-Specific
 
 r perlaix		Perl notes for AIX
 r perlamiga		Perl notes for AmigaOS
@@ -176,7 +178,7 @@ r perlvms		Perl notes for VMS
 r perlvos		Perl notes for Stratus VOS
 r perlwin32		Perl notes for Windows
 
-AO Auxiliary Documentation
+aoh Auxiliary Documentation
 
 ao a2p
 ao c2ph

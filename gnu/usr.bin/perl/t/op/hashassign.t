@@ -8,7 +8,7 @@ BEGIN {
 
 # use strict;
 
-plan tests => 206;
+plan tests => 213;
 
 my @comma = ("key", "value");
 
@@ -272,4 +272,20 @@ foreach my $chr (60, 200, 600, 6000, 60000) {
 
 }
 
-
+# now some tests for hash assignment in scalar and list context with
+# duplicate keys [perl #24380]
+{
+    my %h; my $x; my $ar;
+    is( (join ':', %h = (1) x 8), '1:1',
+	'hash assignment in list context removes duplicates' );
+    is( scalar( %h = (1,2,1,3,1,4,1,5) ), 2,
+	'hash assignment in scalar context' );
+    is( scalar( ($x,%h) = (0,1,2,1,3,1,4,1,5) ), 3,
+	'scalar + hash assignment in scalar context' );
+    $ar = [ %h = (1,2,1,3,1,4,1,5) ];
+    is( $#$ar, 1, 'hash assignment in list context' );
+    is( "@$ar", "1 5", '...gets the last values' );
+    $ar = [ ($x,%h) = (0,1,2,1,3,1,4,1,5) ];
+    is( $#$ar, 2, 'scalar + hash assignment in list context' );
+    is( "@$ar", "0 1 5", '...gets the last values' );
+}

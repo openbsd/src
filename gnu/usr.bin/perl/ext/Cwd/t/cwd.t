@@ -1,12 +1,11 @@
 #!./perl
 
+use Cwd;
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
 }
 
 use Config;
-use Cwd;
 use strict;
 use warnings;
 use File::Spec;

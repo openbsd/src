@@ -90,7 +90,6 @@ sub filter_blocks
 			   || $Perl6 && $source =~ /when|given/;
 	pos $source = 0;
 	my $text = "";
-	$DB::single = 1;
 	component: while (pos $source < length $source)
 	{
 		if ($source =~ m/(\G\s*use\s+Switch\b)/gc)

@@ -16,7 +16,7 @@ our @EXPORT = qw( print_double print_int print_long
 		  print_float print_long_double have_long_double print_flush
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 bootstrap XS::APItest $VERSION;
 

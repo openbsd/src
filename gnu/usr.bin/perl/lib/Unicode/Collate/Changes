@@ -1,14 +1,36 @@
 Revision history for Perl module Unicode::Collate.
 
+0.33  Sat Dec 13 14:07:27 2003
+    - documentation improvement: in "entry", "overrideHangul", etc.
+
+0.32  Wed Dec  3 23:38:18 2003
+    - A matching part from index(), match() etc. will include illegal
+      code points (as well as ignorable characters) following a grapheme.
+    - Contraction with illegal code point will be invalid.
+    - Added some tests in illegal.t; added view.t.
+    - Some tests are separated from test.t into altern.t and rearrang.t.
+    - modified XSUB internals.
+
+0.31  Sun Nov 16 15:40:15 2003
+    - Illegal code points (surrogate and noncharacter; they are definitely
+      ignorable) will be distinguished from NULL ("\0");
+      but porting is not successful in the case of ((Pure Perl) and
+      (Perl 5.7.3 or before)). If perl 5.6.X is used, XSUB may help it
+      in place of broken CORE::unpack('U*') in older perl.
+    - added illegal.t and illegalp.t.
+    - added XSUB (EXPERIMENTAL!) where some functions are implemented
+      in XSUB. Pure Perl is also supported.
+
 0.30  Mon Oct 13 21:26:37 2003
     - fix: Completely ignorable in table should be able to be overrided
       by non-ignorable in entry.
     - fix: Maximum length for contraction must not be shortened
-      by a shorter contraction following.
+      by a shorter contraction following in table and/or entry.
     - added normal.t.
     - some doc fixes
 
 0.29  Mon Oct 13 12:18:23 2003
+    - now UCA Version 11 (but no functionality is different from Version 9).
     - supported hangul_terminator.
     - fix: Base_Unicode_Version falsely returns Perl's Unicode version.
       C4 in UTS #10 requires UTS's Unicode version.

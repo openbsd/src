@@ -31,42 +31,42 @@
 &if ^ (exists -directory &MDS&>ported>lib>perl5)
 &then !create_dir &MDS&>ported>lib>perl5
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.2)
-&then !create_dir &MDS&>ported>lib>perl5>5.8.2
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.3)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.3
 &
-!copy_file <lib>*.pm &MDS&>ported>lib>perl5>5.8.2>*.pm -delete
-!copy_file <lib>*.pl &MDS&>ported>lib>perl5>5.8.2>*.pl -delete
-!copy_file <lib>*.pod &MDS&>ported>lib>perl5>5.8.2>*.pod -delete
+!copy_file <lib>*.pm &MDS&>ported>lib>perl5>5.8.3>*.pm -delete
+!copy_file <lib>*.pl &MDS&>ported>lib>perl5>5.8.3>*.pl -delete
+!copy_file <lib>*.pod &MDS&>ported>lib>perl5>5.8.3>*.pod -delete
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.2>68k)
-&then !create_dir &MDS&>ported>lib>perl5>5.8.2>68k
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.3>68k)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.3>68k
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.2>860)
-&then !create_dir &MDS&>ported>lib>perl5>5.8.2>860
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.3>860)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.3>860
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.2>7100)
-&then !create_dir &MDS&>ported>lib>perl5>5.8.2>7100
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.3>7100)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.3>7100
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.2>8000)
-&then !create_dir &MDS&>ported>lib>perl5>5.8.2>8000
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.3>8000)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.3>8000
 &
 &if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl)
 &then !create_dir &MDS&>ported>lib>perl5>site_perl
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.2)
-&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.2
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.3)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.3
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.2>68k)
-&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.2>68k
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.3>68k)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.3>68k
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.2>860)
-&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.2>860
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.3>860)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.3>860
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.2>7100)
-&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.2>7100
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.3>7100)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.3>7100
 &
-&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.2>8000)
-&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.2>8000
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.3>8000)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.3>8000
 &
 !copy_file obj&obj&>perl.pm &MDS&>ported>command_library>&name&.pm.new -delete
 !rename &MDS&>ported>command_library>&name&.pm *.(date).(time) -delete

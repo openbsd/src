@@ -1,4 +1,4 @@
-#!/usr/bin/perl -Tw
+#!/usr/bin/perl -w
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -14,7 +14,7 @@ use strict;
 
 use Test::More tests => 7;
 
-use_ok( 'Test::Harness::Assert' );
+BEGIN { use_ok( 'Test::Harness::Assert' ); }
 
 
 ok( defined &assert,                'assert() exported' );

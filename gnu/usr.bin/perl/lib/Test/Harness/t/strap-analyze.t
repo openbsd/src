@@ -460,15 +460,18 @@ my %samples = (
                        },
 );
 
-plan tests => (keys(%samples) * 5) + 4;
+plan tests => (keys(%samples) * 5) + 3;
 
-use_ok('Test::Harness::Straps');
+use Test::Harness::Straps;
 
 $SIG{__WARN__} = sub { 
     warn @_ unless $_[0] =~ /^Enormous test number/ ||
                    $_[0] =~ /^Can't detailize/
 };
-while( my($test, $expect) = each %samples ) {
+
+for my $test ( sort keys %samples ) {
+    my $expect = $samples{$test};
+
     for (0..$#{$expect->{details}}) {
         $expect->{details}[$_]{type} = ''
             unless exists $expect->{details}[$_]{type};
@@ -504,10 +507,11 @@ while( my($test, $expect) = each %samples ) {
     }
 
     is_deeply(\%results, $expect, "  the rest $test" );
+} # for %samples
+
+NON_EXISTENT_FILE: {
+    my $strap = Test::Harness::Straps->new;
+    isa_ok( $strap, 'Test::Harness::Straps' );
+    ok( !$strap->analyze_file('I_dont_exist') );
+    is( $strap->{error}, "I_dont_exist does not exist" );
 }
-
-
-my $strap = Test::Harness::Straps->new;
-isa_ok( $strap, 'Test::Harness::Straps' );
-ok( !$strap->analyze_file('I_dont_exist') );
-is( $strap->{error}, "I_dont_exist does not exist" );

@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 1.8 2003/06/18 09:29:02 dankogai Exp $
+ $Id: Unicode.xs,v 1.9 2003/12/29 02:47:16 dankogai Exp dankogai $
  */
 
 #define PERL_NO_GET_CONTEXT
@@ -54,7 +54,7 @@ enc_unpack(pTHX_ U8 **sp,U8 *e,STRLEN size,U8 endian)
 void
 enc_pack(pTHX_ SV *result,STRLEN size,U8 endian,UV value)
 {
-    U8 *d = (U8 *)SvGROW(result,SvCUR(result)+size);
+    U8 *d = (U8 *)SvGROW(result,SvCUR(result)+size+1);
     switch(endian) {
     case 'v':
     case 'V':

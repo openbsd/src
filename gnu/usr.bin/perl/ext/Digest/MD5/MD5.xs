@@ -1,4 +1,4 @@
-/* $Id: MD5.xs,v 1.40 2003/07/22 05:59:27 gisle Exp $ */
+/* $Id: MD5.xs,v 1.42 2003/12/06 22:35:16 gisle Exp $ */
 
 /* 
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define PERL_NO_GET_CONTEXT     /* we want efficiency */
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -81,6 +82,11 @@ extern "C" {
    #endif
 #else
    #define SvPVbyte SvPV
+#endif
+
+#ifndef dTHX
+   #define pTHX_
+   #define aTHX_
 #endif
 
 /* Perl does not guarantee that U32 is exactly 32 bits.  Some system
@@ -460,7 +466,7 @@ MD5Final(U8* digest, MD5_CTX *ctx)
 #define INT2PTR(any,d)	(any)(d)
 #endif
 
-static MD5_CTX* get_md5_ctx(SV* sv)
+static MD5_CTX* get_md5_ctx(pTHX_ SV* sv)
 {
     if (SvROK(sv)) {
 	sv = SvRV(sv);
@@ -521,7 +527,7 @@ static char* base64_16(const unsigned char* from, char* to)
 #define F_HEX 1
 #define F_B64 2
 
-static SV* make_mortal_sv(const unsigned char *src, int type)
+static SV* make_mortal_sv(pTHX_ const unsigned char *src, int type)
 {
     STRLEN len;
     char result[33];
@@ -571,7 +577,7 @@ new(xclass)
 	    sv_setref_pv(ST(0), sclass, (void*)context);
 	    SvREADONLY_on(SvRV(ST(0)));
 	} else {
-	    context = get_md5_ctx(xclass);
+	    context = get_md5_ctx(aTHX_ xclass);
 	}
         MD5Init(context);
 	XSRETURN(1);
@@ -580,7 +586,7 @@ void
 clone(self)
 	SV* self
     PREINIT:
-	MD5_CTX* cont = get_md5_ctx(self);
+	MD5_CTX* cont = get_md5_ctx(aTHX_ self);
 	char *myname = sv_reftype(SvRV(self),TRUE);
 	MD5_CTX* context;
     PPCODE:
@@ -602,7 +608,7 @@ void
 add(self, ...)
 	SV* self
     PREINIT:
-	MD5_CTX* context = get_md5_ctx(self);
+	MD5_CTX* context = get_md5_ctx(aTHX_ self);
 	int i;
 	unsigned char *data;
 	STRLEN len;
@@ -618,7 +624,7 @@ addfile(self, fh)
 	SV* self
 	InputStream fh
     PREINIT:
-	MD5_CTX* context = get_md5_ctx(self);
+	MD5_CTX* context = get_md5_ctx(aTHX_ self);
 	STRLEN fill = context->bytes_low & 0x3F;
 	unsigned char buffer[4096];
 	int  n;
@@ -662,7 +668,7 @@ digest(context)
     PPCODE:
         MD5Final(digeststr, context);
 	MD5Init(context);  /* In case it is reused */
-        ST(0) = make_mortal_sv(digeststr, ix);
+        ST(0) = make_mortal_sv(aTHX_ digeststr, ix);
         XSRETURN(1);
 
 void
@@ -709,5 +715,5 @@ md5(...)
 	    MD5Update(&ctx, data, len);
 	}
 	MD5Final(digeststr, &ctx);
-        ST(0) = make_mortal_sv(digeststr, ix);
+        ST(0) = make_mortal_sv(aTHX_ digeststr, ix);
         XSRETURN(1);
