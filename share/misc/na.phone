@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.20 2001/07/13 19:06:26 mickey Exp $
+#	$OpenBSD: na.phone,v 1.21 2001/07/13 20:26:20 mickey Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -182,6 +182,10 @@
 340:St John:US Virgin Islands:
 340:St Thomas:US Virgin Islands:
 345::Cayman Islands:
+347:The Bronx:New York:NY
+347:Brooklyn:New York:NY
+347:Queens:New York:NY
+347:Staten Island:New York:NY
 352:Gainsville:Florida:FL
 352:Leesburg:Florida:FL
 352:Ocala:Florida:FL
@@ -289,20 +293,25 @@
 484:Reading:Pennsylvania:PA
 484:Upper Darby:Pennsylvania:PA
 500::Personal Communication Service:
+501:Fayetteville:Arkansas:AR
+501:Fort Smith:Arkansas:AR
 501:Little Rock:Arkansas:AR
 502:Frankfort:Kentucky:KY
+502:Georgetown:Kentucky:KY
 502:Louisville:Kentucky:KY
-502:Paducah:Kentucky:KY
-502:Shelbyville:Kentucky:KY
 503:Astoria:Oregon:OR
+503:Beaverton:Oregon:OR
 503:Portland:Oregon:OR
 503:Salem:Oregon:OR
 504:Baton Rouge:Louisiana:LA
+504:Kenner:Louisiana:LA
+504:Matairie:Louisiana:LA
 504:New Orleans:Louisiana:LA
 505::New Mexico:NM
 506::New Brunswick:NB
-507:Austin:Minnesota:MN
+507:Fairbault:Minnesota:MN
 507:Rochester:Minnesota:MN
+507:Winona:Minnesota:MN
 508:Fall River:Massachusetts:MA
 508:New Bedford:Massachusetts:MA
 508:Worcester:Massachusetts:MA
@@ -310,86 +319,163 @@
 509:Spokane:Washington:WA
 509:Walla Walla:Washington:WA
 509:Yakima:Washington:WA
+510:Berkeley:California:CA
+510:East Bay:California:CA
 510:Oakland:California:CA
-512:Alamo:Texas:TX
+510:Richmond:California:CA
 512:Austin:Texas:TX
-512:Corpus Christi:Texas:TX
-513:Camden:Ohio:OH
+512:San Marcos:Texas:TX
+512:Taylor:Texas:TX
 513:Cincinnati:Ohio:OH
-513:Dayton:Ohio:OH
+513:Fairfield:Ohio:OH
+513:Middletown:Ohio:OH
 514:Montreal:Quebec:PQ
+514:Pointe Claire:Quebec:PQ
+515:Ames:Iowa:IA
 515:Des Moines:Iowa:IA
-515:Mason City:Iowa:IA
+515:Fort Dodge:Iowa:IA
+516:Far Rockaway:New York:NY
 516:Hempstead:New York:NY
+516:Jamaica:New York:NY
 516:Long Island (Nassau & Suffolk County):New York:NY
-517:Bay City:Michigan:MI
 517:East Lansing:Michigan:MI
-517:Jackson:Michigan:MI
+517:Midland:Michigan:MI
+517:Saginaw:Michigan:MI
 518:Albany:New York:NY
 518:Schenectady:New York:NY
 518:Troy:New York:NY
 519:London:Ontario:ON
+519:Stratford:Ontario:ON
+519:Windsor:Ontario:ON
+520:Flagstaff:Arizona:AZ
 520:Tucson:Arizona:AZ
+520:Yuma:Arizona:AZ
+525:Mexico City area:Mexico:MX
+530:Chico:California:CA
+530:Redding:California:CA
+530:Marysville:California:CA
+530:Nevada City:California:CA
+530:Davis:California:CA
+540:Fredericksburg:Virginia:VA
 540:Roanoke:Virginia:VA
+540:Salem:Virginia:VA
 541:Bend:Oregon:OR
 541:Corvallis:Oregon:OR
 541:Eugene:Oregon:OR
 541:Medford:Oregon:OR
 541:Pendleton:Oregon:OR
+559:Fresno:California:CA
+559:Clovis:California:CA
 561:Boca Raton:Florida:FL
+561:Miami:Florida:FL
 561:Sebastian:Florida:FL
+562:Long Beach:California:CA
+562:Norwalk:California:CA
+562:Lakewood:California:CA
+570:Camp Hill:Pennsylvania:PA
 570:Scranton:Pennsylvania:PA
 570:Wikes-Barre:Pennsylvania:PA
-573:Jefferson City:Missouri:MO
+571:Arlington:Virginia:VA
+571:McLean:Virginia:VA
+571:Tysons Corner:Virginia:VA
+571:Annandale:Virginia:VA
+573:Cape Girardeau:Missouri:MO
+573:Columbia:Missouri:MO
+573:Hannibal:Missouri:MO
+580:Lawton:Oklahoma:OK
+580:Enid:Oklahoma:OK
+580:Ponca City:Oklahoma:OK
 600::Canadian Services:
-601::Mississippi:MS
+601:Clinton:Mississippi:MS
+601:Jackson:Mississippi:MS
+601:Vicksburg:Mississippi:MS
 602:Phoenix (metro):Arizona:AZ
-603::New Hampshire:NH
+603:Concord:New Hampshire:NH
+603:Dover:New Hampshire:NH
+603:Manchester:New Hampshire:NH
+604:Richmond:British Columbia:BC
 604:Vancouver:British Columbia:BC
 605::South Dakota:SD
 606:Ashland:Kentucky:KY
-606:Winchester:Kentucky:KY
+606:Middlesboro:Kentucky:KY
+606:Somerset:Kentucky:KY
 607:Binghamton:New York:NY
 607:Elmira:New York:NY
-608:Beloit:Wisconsin:WI
+607:Ithaca:New York:NY
+608:La Crosse:Wisconsin:WI
 608:Madison:Wisconsin:WI
-609:Allentown:New Jersey:NJ
+608:Sun Prairie:Wisconsin:WI
 609:Atlantic City:New Jersey:NJ
+609:Mount Holly:New Jersey:NJ
+609:Trenton:New Jersey:NJ
 610:Allentown:Pennsylvania:PA
+610:Bethlehem:Pennsylvania:PA
+610:Chester:Pennsylvania:PA
 610:Reading:Pennsylvania:PA
 612:Minneapolis:Minnesota:MN
-612:St. Louis Park:Minnesota:MN
-612:St. Paul:Minnesota:MN
+613:Cornwall:Ontario:ON
 613:Ottawa:Ontario:ON
 614:Columbus:Ohio:OH
-614:Steubenville:Ohio:OH
-615:Madison:Tennessee:TN
+614:Grove City:Ohio:OH
+614:Westerville:Ohio:OH
+615:Hendersonville:Tennessee:TN
+615:Murfreesboro:Tennessee:TN
 615:Nashville:Tennessee:TN
 616:Battle Creek:Michigan:MI
 616:Grand Rapids:Michigan:MI
 616:Kalamazoo:Michigan:MI
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
+617:Dorchester:Massachusetts:MA
+617:Newton:Massachusetts:MA
 618:Alton:Illinois:IL
-618:Cairo:Illinois:IL
-618:Madison:Illinois:IL
-618:Mt. Vernon:Illinois:IL
+618:Centralia:Illinois:IL
+618:Granite City:Illinois:IL
+619:Chula Vista:California:CA
+619:El Cajon:California:CA
 619:San Diego:California:CA
+620:Dodge City:Kansas:KS
+620:Garden City:Kansas:KS
+620:Hutchinson:Kansas:KS
+623:Glendale:Arizona:AZ
+623:Phoenix:Arizona:AZ
 623:Sun City:Arizona:AZ
+626:Pasadena:California:CA
+626:Alhambra:California:CA
+626:West Covina:California:CA
 630:Chicago Suburbs (Cellular and Pagers):Illinois:IL
 646:Manhattan:New York:NY
 646:New York City Cellular and Pagers:New York:NY
 647:Toronto:Ontario:ON
+649::Turks & Caicos:
+650 CA   California: Daly City, Redwood City, San Mateo (split from 415)
+651 MN   Minnesota: St. Paul, Hastings (split from Mineapolis, see 612)
+660 MO   Missouri: Sedalia, Marshall, Kirksville
 661:Bakersfield:California:CA
+661:Lancaster:California:CA
+661:Mojave:California:CA
+661:Newhall:California:CA
+661:Palmdale:California:CA
+661:Santa Clarita:California:CA
 664::Montserrat:
+670 --   Northern Mariana Islands (CNMI, US Commonwealth)
+671 --   Guam: Yigo, Dededo
+678 GA   Georgia: Atlanta, Marietta, Smyrna (overlay; see 404, 770)
+680 PW   Palau: 
+682 TX   Texas: Fort Worth, Arlington, Bedford
+684 AS   American Samoa: Pago Pago
+691 FM   Federated Micronesia: Yap, Chuuk
+692 MH   Marshal Islands: Ebeye
 700::Interexchange Carrier Services:
 701::North Dakota:ND
 702::Nevada:NV
 703:Alexandria:Virginia:VA
 703:Arlington:Virginia:VA
-703:Fredericksburg:Virginia:VA
-704:Asheville:North Carolina:NC
+703:McLean:Virginia:VA
+703:Tysons Corner:Virginia:VA
 704:Charlotte:North Carolina:NC
+704:Concord:North Carolina:NC
+704:Gastonia:North Carolina:NC
 705:North Bay:Ontario:ON
 705:Sault Ste. Marie:Ontario:ON
 706:Athens:Georgia:GA
@@ -406,6 +492,7 @@
 712:Council Bluffs:Iowa:IA
 712:Sioux City:Iowa:IA
 713:Houston:Texas:TX
+713:Humble:Texas:TX
 714:Anaheim:California:CA
 715:Eau Claire:Wisconsin:WI
 715:Wausau:Wisconsin:WI
@@ -414,7 +501,7 @@
 716:Rochester:New York:NY
 717:Harrisburg:Pennsylvania:PA
 717:Lancaster:Pennsylvania:PA
-718:Bronx:New York:NY
+718:The Bronx:New York:NY
 718:Brooklyn:New York:NY
 718:Queens:New York:NY
 718:Staten Island:New York:NY
@@ -430,24 +517,62 @@
 724:New Castle:Pennsylvania:PA
 724:Uniontown:Pennsylvania:PA
 724:Washington:Pennsylvania:PA
-732::New Jersey:NJ
+727:Tampa:Florida:FL
+727:Saint Petersburg:Florida:FL
+727:Clearwater:Florida:FL
+727:Pinellas:Florida:FL
+731:Jackson:Tennessee:TN
+731:Union City:Tennessee:TN
+731:Brownsville:Tennessee:TN
+732:Bound Brook:New Jersey:NJ
+732:Edison:New Jersey:NJ
+732:New Brunswick:New Jersey:NJ
+732:Toms Rive:New Jersey:NJ
 734:Ann Arbor:Michigan:MI
+734:Canton:Michigan:MI
+734:Monroe:Michigan:MI
+740:Marion:Ohio:OH
+740:Delaware:Ohio:OH
+740:Lancaster:Ohio:OH
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
+760:Oceanside:California:CA
+760:Escondido:California:CA
+760:Carlsbad:California:CA
+760:Vista:California:CA
+763:Elk River:Minnesota:MN
+763:Andover:Minnesota:MN
+763:Anoka:Minnesota:MN
 765:Kokomo:Indiana:IN
 765:Lafayette:Indiana:IN
+767::Dominica:
 770:Atlanta(Metro) outside 285 beltway:Georgia:GA
 770:La Grange:Georgia:GA
 770:Marietta:Georgia:GA
 770:Norcross:Georgia:GA
-773:Chicago:Illinois:IL
+773:Chicago(outside the loop):Illinois:IL
+775:Carson City:Nevada:NV
+775:Elko:Nevada:NV
+775:Sparks:Nevada:NV
 780:Edmonton:Alberta:AB
+780:Jasper:Alberta:AB
 781:Lynn:Massachusetts:MA
 781:Waltham:Massachusetts:MA
 781:Weymouth:Massachusetts:MA
+784::St. Vincent/Grenadines:
+785:Lawrence:Kansas:KS
+785:Manhattan:Kansas:KS
+785:Salina:Kansas:KS
+785:Topeka:Kansas:KS
+786:Miami:Florida:FL
+786:Hialeah:Florida:FL
+786:Homestead:Florida:FL
 787::Puerto Rico:PR
 800::Toll-Free:
-801::Utah:UT
+801:Ogden:Utah:UT
+801:Orem:Utah:UT
+801:Provo:Utah:UT
+801:Salt Lake City(metro):Utah:UT
 802::Vermont:VT
 803:Charleston:South Carolina:SC
 803:Columbia:South Carolina:SC
@@ -455,7 +580,10 @@
 804:Charlottesville:Virginia:VA
 804:Newport News:Virginia:VA
 804:Richmond:Virginia:VA
-805:Bakersfield:California:CA
+805:San Luis Obispo:California:CA
+805:Santa Barbara:California:CA
+805:Simi Valley:California:CA
+805:Thousand Oaks:California:CA
 806:Amarillo:Texas:TX
 806:Lubbock:Texas:TX
 807:Thunder Bay:Ontario:ON
@@ -493,15 +621,48 @@
 818:San Fernando:California:CA
 818:Van Nuys:California:CA
 819:Sherbrooke:Quebec:PQ
+828:Asheville:Carolina:NC
+828:Hickory:Carolina:NC
+828:Boone:Carolina:NC
+830:Eagle Pass:Texas:TX
+830:Del Rio:Texas:TX
+830:Kerrville:Texas:TX
+831:Santa Cruz:California:CA
+831:Monterey:California:CA
+831:Seaside:California:CA
+832:Houston:Texas:TX
+832:Spring:Texas:TX
 835:Allentown:Pennsylvania:PA
 835:Reading:Pennsylvania:PA
+843:Beaufort:South Carolina:SC
+843:Charleston:South Carolina:SC
+843:Myrtle Beach:South Carolina:SC
 847:Arlington Heights:Illinois:IL
+850:Tallahassee:Florida:FL
+850:Pensacola:Florida:FL
+850:Panama City:Florida:FL
+856:Camden:Jersey:NJ
+856:Vineland:Jersey:NJ
+856:Cherry Hill:Jersey:NJ
+858:Del Mar:California:CA
+858:La Jolla:California:CA
+858:Rancho Santa Fe:California:CA
+859:Covington:Kentucky:KY
+859:Lexington:Kentucky:KY
+859:Richmond:Kentucky:KY
+860:Bristol:Connecticut:CT
 860:Hartford:Connecticut:CT
+860:Manchester:Connecticut:CT
 864:Greeville:South Carolina:SC
 864:Spartanburg:South Carolina:SC
+865:Knoxville:Tennessee:TN
+865:Maryville:Tennessee:TN
 866::Toll-Free:
+867:Yukon and Northwest Territories:Yukon:YT
+868::Trinidad and Tobago:
 869::St Kitts and Nevis:KN
 870:Pine Bluff:Arkansas:AR
+876::Jamaica:
 877::Toll-Free:
 878:New Castle:Pennsylvania:PA
 878:Pittsburgh:Pennsylvania:PA
@@ -517,11 +678,8 @@
 902::Prince Edward Island:PE
 903:Paris:Texas:TX
 903:Tyler:Texas:TX
-904:Apalachicola:Florida:FL
-904:Atlantic Beach:Florida:FL
+904:Daytona Beach:Florida:FL
 904:Jacksonville:Florida:FL
-904:Pensacola:Florida:FL
-904:Tallahassee:Florida:FL
 905:Hamilton:Ontario:ON
 905:Mississauga:Ontario:ON
 905:Niagra Falls:Ontario:ON
@@ -529,7 +687,11 @@
 906:Marquette:Michigan:MI
 906:Sault Ste. Marie:Michigan:MI
 907::Alaska:AK
-908:Asbury Park:New Jersey:NJ
+908:Basking Ridge:New Jersey:NJ
+908:Bridgewater:New Jersey:NJ
+908:Elizabeth:New Jersey:NJ
+908:Somerville:New Jersey:NJ
+908:Union:New Jersey:NJ
 909:Riverside:California:CA
 909:San Bernardio:California:CA
 910:Fayetteville:North Carolina:NC
@@ -539,12 +701,11 @@
 912:Macon:Georgia:GA
 912:Savannah:Georgia:GA
 913:Kansas City:Kansas:KS
-913:Lawrence:Kansas:KS
-913:Salina:Kansas:KS
-913:Topeka:Kansas:KS
+913:Leavenworth:Kansas:KS
+913:Olathe:Kansas:KS
 914:New Rochelle:New York:NY
 914:Peekskill:New York:NY
-914:Poughkeepsie:New York:NY
+914:Mount Vernon:New York:NY
 914:White Plains:New York:NY
 914:Yonkers:New York:NY
 915:Abilene:Texas:TX
@@ -557,18 +718,54 @@
 919:Burlington:North Carolina:NC
 919:Durham:North Carolina:NC
 919:Raleigh:North Carolina:NC
-937::Ohio:OH
+920:Appleton:Wisconsin:WI
+920:Green Bay:Wisconsin:WI
+920:Oshkosh:Wisconsin:WI
+925:Antioch:California:CA
+925:Concord:California:CA
+925:Pleasanton:California:CA
+925:Walnut Creek:California:CA
+931:Columbia:Tennessee:TN
+931:Knoxville:Tennessee:TN
+931:Nashville:Tennessee:TN
+936:Center:Texas:TX
+936:Huntsville:Texas:TX
+936:Nacogdoches:Texas:TX
+937:Dayton:Ohio:OH
+937:Springfield:Ohio:OH
+940:Denton:Texas:TX
+940:Wichita Falls:Texas:TX
 941:Fort Myers:Florida:FL
 941:Naples:Florida:FL
 941:Sarasota:Florida:FL
+949:Costa Mesa:California:CA
+949:Irvine:California:CA
+949:Mission Viejo:California:CA
+952:Minnetonka:Minnesota:MN
+952:Eden Prairie:Minnesota:MN
 954:Fort Lauderdale:Florida:FL
+956:Brownsville:Texas:TX
+956:Laredo:Texas:TX
+956:McAllen:Texas:TX
 970:Aspen:Colorado:CO
 970:Durango:Colorado:CO
 970:Ft. Collins:Colorado:CO
 970:Grand Junction:Colorado:CO
 970:Steamboat Sprints:Colorado:CO
+971:Beaverton:Oregon:OR
+971:Portland:Oregon:OR
+971:Salem:Oregon:OR
 972:Dallas suburbs:Texas:TX
 972:Irving:Texas:TX
+973:Irvington:New Jersey:NJ
+973:Morristown:New Jersey:NJ
+973:Newark:New Jersey:NJ
+973:Passaic:New Jersey:NJ
 978:Fitchburg:Massachusetts:MA
 978:Gloucester:Massachusetts:MA
 978:Lowell:Massachusetts:MA
+979:College Station:Texas:TX
+979:Lake Jackson:Texas:TX
+985:Covington:Louisiana:LA
+985:Hammond:Louisiana:LA
+985:Slidell:Louisiana:LA
