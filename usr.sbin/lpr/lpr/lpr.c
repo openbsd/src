@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.13 1997/06/20 17:45:14 kstailey Exp $ */
+/*	$OpenBSD: lpr.c,v 1.14 1997/06/20 17:46:16 kstailey Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.13 1997/06/20 17:45:14 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.14 1997/06/20 17:46:16 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ copy(f, n)
    */
 				printf("%s: %s: copy file is too large\n",
 				       name, n);
-				printf("%s: %s: WARNING: I stupidly sent a bunch of stuff to the printer anyway", name, n);
+				printf("%s: %s: WARNING: I stupidly sent a bunch of stuff to the printer anyway\n", name, n);
 				break;
 			}
 		}
