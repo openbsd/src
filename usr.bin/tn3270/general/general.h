@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	4.2 (Berkeley) 4/26/91
- *	$Id: general.h,v 1.2 1996/01/02 11:21:36 deraadt Exp $
+ *	$Id: general.h,v 1.3 1996/02/23 15:15:28 niklas Exp $
  */
 
 /*
@@ -64,4 +64,6 @@
 				    } \
 				}
 #define	memcmp(s1,s2,n)		bcmp(s1,s2,n)
-#endif	/* defined(unix) && !defined(__NetBSD__) */
+#else /* !(defined(unix) && !defined(__NetBSD__)) */
+#include <string.h>
+#endif	/* !(defined(unix) && !defined(__NetBSD__)) */
