@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 1999/11/26 17:58:17 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2000/07/03 17:07:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -160,6 +160,7 @@ cpuattach(parent, self, aux)
 
 	printf("\n");
 
+	/* sanity against luser amongst config editors */
 	if (ca->ca_irq == 31) {
 		sc->sc_ih = cpu_intr_establish(IPL_CLOCK, ca->ca_irq,
 					       clock_intr, NULL /*trapframe*/,
