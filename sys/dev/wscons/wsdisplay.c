@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.21 2001/04/14 13:25:09 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.22 2001/04/16 15:00:49 jbm Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1265,11 +1265,13 @@ wsdisplaystart(tp)
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
-		if ((scr == sc->sc_focus) && (IS_SEL_EXISTS(sc->sc_focus)))
-			/* hide a potential selection */
-			remove_selection(sc);
-		/* hide a potential mouse cursor */
-		mouse_hide(sc);
+		if (scr == sc->sc_focus) {
+			if (IS_SEL_EXISTS(sc->sc_focus))
+				/* hide a potential selection */
+				remove_selection(sc);
+			/* hide a potential mouse cursor */
+			mouse_hide(sc);
+		}
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
 		    buf, n, 0);
 	}
