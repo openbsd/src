@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.8 2001/08/30 07:40:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -453,7 +453,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 }
 
 void
-_thread_fd_unlock_debug(int fd, int lock_type, const char *fname, int lineno)
+_thread_fd_unlock_debug(int fd, int lock_type, char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 	int	ret;
@@ -577,7 +577,7 @@ _thread_fd_unlock_debug(int fd, int lock_type, const char *fname, int lineno)
 
 int
 _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
-		const char *fname, int lineno)
+		char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 	int	ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.13 2001/08/29 18:33:54 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.14 2001/08/30 07:40:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -57,7 +57,6 @@
 #include "pthread_private.h"
 
 /* Global thread variables. */
-struct timeval	kern_inc_prio_time = { 0, 0 };
 _stack_list_t	_stackq;
 
 extern int _thread_autoinit_dummy_decl;
@@ -175,6 +174,10 @@ _thread_init(void)
 		 */
 		_thread_initial->magic = PTHREAD_MAGIC;
 
+		/* Set the initial cancel state */
+		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
+		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
+
 		/* Default the priority of the initial thread: */
 		_thread_initial->base_priority = PTHREAD_DEFAULT_PRIORITY;
 		_thread_initial->active_priority = PTHREAD_DEFAULT_PRIORITY;
@@ -204,12 +207,10 @@ _thread_init(void)
 		_thread_initial->cleanup = NULL;
 		_thread_initial->flags = 0;
 		_thread_initial->error = 0;
-		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
-		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
 		_SPINLOCK_INIT(&_thread_initial->lock);
 		TAILQ_INIT(&_thread_list);
 		TAILQ_INSERT_HEAD(&_thread_list, _thread_initial, tle);
-		_thread_run = _thread_initial;
+		_set_curthread(_thread_initial);
 
 		/* Initialise the global signal action structure: */
 		sigfillset(&act.sa_mask);
@@ -227,13 +228,16 @@ _thread_init(void)
 
 			/* Get the signal handler details: */
 			else if (_thread_sys_sigaction(i, NULL,
-						       &_thread_sigact[i - 1]) != 0) {
+			    &_thread_sigact[i - 1]) != 0) {
 				/*
 				 * Abort this process if signal
 				 * initialisation fails: 
 				 */
 				PANIC("Cannot read signal handler info");
 			}
+
+			/* Initialize the SIG_DFL dummy handler count. */
+			_thread_dfl_count[i] = 0;
 		}
 
 		/*
@@ -308,10 +312,6 @@ _thread_init(void)
 	    pthread_cond_init(&_gc_cond,NULL) != 0)
 		PANIC("Failed to initialise garbage collector mutex or condvar");
 
-	gettimeofday(&kern_inc_prio_time, NULL);
-
 	_thread_autoinit_dummy_decl = 0;
-
-	return;
 }
 #endif
