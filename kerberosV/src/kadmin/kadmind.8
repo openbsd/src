@@ -5,7 +5,8 @@
 .Nm kadmind
 .Nd "server for administrative access to kerberos database"
 .Sh SYNOPSIS
-.Nm
+.Nm kadmind
+.Bk -words
 .Oo Fl c Ar file \*(Ba Xo
 .Fl -config-file= Ns Ar file
 .Xc
@@ -24,6 +25,7 @@
 .Fl -ports= Ns Ar port
 .Xc
 .Oc
+.Ek
 .Sh DESCRIPTION
 .Nm
 listens for requests for changes to the Kerberos database and performs
@@ -47,7 +49,7 @@ daemon is responsible for the Kerberos 5 password changing protocol
 .Xr passwd 1 )
 .
 .Pp
-This daemon should only be run on ther master server, and not on any
+This daemon should only be run on the master server, and not on any
 slaves.
 .Pp
 Principals are always allowed to change their own password and list
@@ -113,7 +115,7 @@ enable debugging
 .Fl p Ar port Ns ,
 .Fl -ports= Ns Ar port
 .Xc
-ports to listen to. By default, if run as a daemon, it listen to ports
+ports to listen to. By default, if run as a daemon, it listens to ports
 749, and 751 (if built with Kerberos 4 support), but you can add any
 number of ports with this option. The port string is a whitespace
 separated list of port specifications, with the special string 

@@ -58,19 +58,19 @@ Show the mail submission queue specified in
 .Pa /etc/mail/submit.cf
 instead of the MTA queue specified in
 .Pa /etc/mail/sendmail.cf .
-.It Fl q\fR[\fI!\fR]I Ar substr
+.It Fl q\fR[\fI!\fR] Ns Cm I Ar substr
 Limit processed jobs to those containing
 .Ar substr
 as a substring of the queue id or not when
 .Sq !
 is specified.
-.It Fl q\fR[\fI!\fR]R Ar substr
+.It Fl q\fR[\fI!\fR] Ns Cm R Ar substr
 Limit processed jobs to those containing
 .Ar substr
 as a substring of one of the recipients or not when
 .Sq !
 is specified.
-.It Fl q\fR[\fI!\fR]S Ar substr
+.It Fl q\fR[\fI!\fR] Ns Cm S Ar substr
 Limit processed jobs to those containing
 .Ar substr
 as a substring of the sender or not when

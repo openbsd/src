@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.47 2002/12/03 20:05:10 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.48 2003/02/05 10:29:49 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -43,6 +43,7 @@
 .Nd ISAKMP/Oakley a.k.a. IKE key management daemon
 .Sh SYNOPSIS
 .Nm isakmpd
+.Bk -words
 .Op Fl 4
 .Op Fl 6
 .Op Fl c Ar config-file
@@ -57,6 +58,7 @@
 .Op Fl l Ar packetlog-file
 .Op Fl r Ar seed
 .Op Fl R Ar report-file
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -70,10 +72,10 @@ The way
 .Nm
 goes about its work is by maintaining an internal configuration
 as well as a policy database which describes what kinds of SAs to negotiate,
-and by listening for different events that triggers these negotiations.
+and by listening for different events that trigger these negotiations.
 The events that control
 .Nm
-consists of negotiation initiations from a remote party, user input via
+consist of negotiation initiations from a remote party, user input via
 a FIFO or by signals, upcalls from the kernel via a
 .Dv PF_KEY
 socket, and lastly by scheduled events triggered by timers running out.
@@ -84,7 +86,7 @@ will be to implement so called "virtual private
 networks" or VPNs for short.
 The
 .Xr vpn 8
-manual page describes how to setup
+manual page describes how to set up
 .Nm
 for a simple VPN.
 For other uses, some more knowledge of IKE as a protocol is required.
@@ -113,9 +115,9 @@ option is used to make the daemon run in the foreground, logging to stderr.
 .Ar class Ns No = Ns Ar level
 .Xc
 Debugging class.
-This argument is possible to specify many times.
+It's possible to specify this argument many times.
 It takes a parameter of the form
-.Ar class Ns No = Ns Ar level
+.Ar class Ns No = Ns Ar level ,
 where both
 .Ar class
 and
@@ -185,7 +187,7 @@ option.
 When the
 .Fl n
 option is given, the kernel will not take part in the negotiations.
-This is a non-destructive mode so to say, in that it won't alter any
+This is a non-destructive mode, so to speak, in that it won't alter any
 SAs in the IPsec stack.
 .It Fl p Ar listen-port
 The
@@ -211,13 +213,13 @@ As option
 .Fl L
 above, but capture to a specified file.
 .It Fl r Ar seed
-If given a deterministic random number sequence will be used internally.
+If given, a deterministic random number sequence will be used internally.
 This is useful for setting up regression tests.
 .It Fl R Ar report-file
 When you signal
 .Nm
 a
-.Dv SIGUSR1
+.Dv SIGUSR1 ,
 it will report its internal state to a report file, normally
 .Pa /var/run/isakmpd.report ,
 but this can be changed by feeding
@@ -233,11 +235,11 @@ Either there is an already existing PKI
 should take part in, or there will be a need to setup one.
 In the former case, what is needed to be done varies depending on the
 actual Certificate Authority used, and is therefore not covered here,
-more than mentioning that
+other than mentioning that
 .Xr openssl 1
 needs to be used to create a certificate signing request that the
 CA understands.
-The latter case however is described here:
+The latter case, however, is described here:
 .Pp
 .Bl -enum
 .It
@@ -249,11 +251,11 @@ Create your own CA as root.
 	-out /etc/ssl/private/ca.csr
 .Ed
 .Pp
-You are now being asked to enter information that will be incorporated
+You are then asked to enter information that will be incorporated
 into your certificate request.
-What you are about to enter is what is called a Distinguished Name or a DN.
+What you are about to enter is what is called a Distinguished Name (DN).
 There are quite a few fields but you can leave some blank.
-For some fields there will be a default value, if you enter '.', the field
+For some fields there will be a default value; if you enter '.', the field
 will be left blank.
 .Pp
 .Bd -literal
@@ -285,7 +287,7 @@ You have to add some extensions to the certificate in order to make it
 usable for
 .Nm isakmpd .
 There are two possible ways to add the extensions to the certificate.
-Either you have to to run
+Either you have to run
 .Xr certpatch 8
 or you have to make use of an OpenSSL configuration file, for example
 .Pa /etc/ssl/x509v3.cnf .
@@ -332,11 +334,11 @@ on your local system.
 Also carry over the CA cert
 .Pa /etc/ssl/ca.crt
 and put it in
-.Pa /etc/isakmpd/ca/.
+.Pa /etc/isakmpd/ca/ .
 .El
 .Pp
 To revoke certificates, create a Certificate Revocation List (CRL) file
-and install it to the
+and install it in the
 .Pa /etc/isakmpd/crls/
 directory. See
 .Xr openssl 1
@@ -399,7 +401,7 @@ optionally specify which file
 should capture the packets to.
 .Pp
 .It Ic "Q"
-Cleanly shutdown of the daemon, as when sent a SIGTERM signal.
+Cleanly shutdown the daemon, as when sent a SIGTERM signal.
 .Pp
 .It Ic "r"
 Report
@@ -464,7 +466,7 @@ The same mode requirements as
 .Nm isakmpd.conf .
 .It Pa /etc/isakmpd/pubkeys/
 Directory in which trusted public keys can be kept.
-The keys must be named after a fashion described above.
+The keys must be named in the fashion described above.
 .It Pa /var/run/isakmpd.pid
 The PID of the current daemon.
 .It Pa /var/run/isakmpd.fifo

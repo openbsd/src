@@ -7,7 +7,8 @@
 .Nm kdc
 .Nd Kerberos 5 server
 .Sh SYNOPSIS
-.Nm
+.Nm kdc
+.Bk -words
 .Oo Fl c Ar file \*(Ba Xo
 .Fl -config-file= Ns Ar file
 .Xc
@@ -27,10 +28,11 @@
 .Xc
 .Oc
 .Op Fl -addresses= Ns Ar list of addresses
+.Ek
 .Sh DESCRIPTION
 .Nm
 serves requests for tickets. When it starts, it first checks the flags
-passed, any options that are not specified with a command line flag is
+passed; any options that are not specified with a command line flag are
 taken from a config file, or from a default compiled-in value.
 .Pp
 Options supported:
@@ -45,8 +47,8 @@ This is the only value that can't be specified in the config file.
 Turn off the requirement for pre-autentication in the initial AS-REQ
 for all principals. The use of pre-authentication makes it more
 difficult to do offline password attacks. You might want to turn it
-off if you have clients that doesn't do pre-authentication. Since the
-version 4 protocol doesn't support any pre-authentication, so serving
+off if you have clients that don't do pre-authentication. Since the
+version 4 protocol doesn't support any pre-authentication, serving
 version 4 clients is just about the same as not requiring
 pre-athentication. The default is to require
 pre-authentication. Adding the require-preauth per principal is a more
@@ -89,8 +91,8 @@ will listen on all the locally configured addresses.  If only a subset
 is desired, or the automatic detection fails, this option might be used.
 .El
 .Pp
-All activities , are logged to one or more destinations, see 
-.Xr krb5.conf 5 ,
+All activities are logged to one or more destinations; see 
+.Xr krb5.conf 5
 and
 .Xr krb5_openlog 3 .
 The entity used for logging is
@@ -106,7 +108,7 @@ All options should be in a section called
 .Dq kdc .
 All the command-line options can preferably be added in the
 configuration file.  The only difference is the pre-authentication flag,
-that has to be specified as:
+which has to be specified as:
 .Pp
 .Dl require-preauth = no
 .Pp

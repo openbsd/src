@@ -7,7 +7,8 @@
 .Nm kadmin
 .Nd Kerberos administration utility
 .Sh SYNOPSIS
-.Nm
+.Nm kadmin
+.Bk -words
 .Oo Fl p Ar string \*(Ba Xo
 .Fl -principal= Ns Ar string
 .Xc
@@ -40,10 +41,11 @@
 .Op Fl h | Fl -help
 .Op Fl v | Fl -version
 .Op Ar command
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
-program is used to make modification to the Kerberos database, either remotely via the 
+program is used to make modifications to the Kerberos database, either remotely via the 
 .Xr kadmind 8
 daemon, or locally (with the 
 .Fl l 
@@ -60,7 +62,7 @@ principal to authenticate as
 .Fl K Ar string Ns ,
 .Fl -keytab= Ns Ar string
 .Xc
-keytab for authentication pricipal
+keytab for authentication principal
 .It Xo
 .Fl c Ar file Ns ,
 .Fl -config-file= Ns Ar file
@@ -145,7 +147,7 @@ removes a principal
 .Ar principal enctypes...
 .Pp
 .Bd -ragged -offset indent
-removes some enctypes from a principal, this can be useful the service
+removes some enctypes from a principal; this can be useful if the service
 belonging to the principal is known to not handle certain enctypes
 .Ed
 .Pp
@@ -198,12 +200,12 @@ modifies certain attributes of a principal
 .Nm privileges
 .Pp
 .Bd -ragged -offset indent
-lists the operations you are allowd to perform
+lists the operations you are allowed to perform
 .Ed
 .Pp
 .Ed
 .Pp
-When running in local mode, the following commands can also be used.
+When running in local mode, the following commands can also be used:
 .Bd -ragged -offset indent
 .Nm dump
 .Op Fl d | Fl -decrypt
@@ -221,7 +223,7 @@ form to the specified file, or standard out
 .Ar realm
 .Pp
 .Bd -ragged -offset indent
-initialises the Kerberos database with entries for a new realm, it's
+initialises the Kerberos database with entries for a new realm; it's
 possible to have more than one realm served by one server
 .Ed
 .Pp

@@ -68,9 +68,9 @@ A good use for
 would be for adding keys to a keyfile.  A system manager could
 ask a kerberos administrator to create a new service key with 
 .Xr kadmin 8
-and could supply an initial password.  Then, he could use 
+and could supply an initial password.  Then he could use 
 .Nm
-to add the key to the keyfile and then to change the key so that it
+to add the key to the keyfile and then change the key so that it
 will be random and unknown to either the system manager or the
 kerberos administrator.
 .Nm
@@ -86,8 +86,8 @@ where
 is the name of the keyfile, and a copy of the file with all new
 keys changed or added so far can be found in 
 .Pa filename Ns .work.
-The original keyfile is left unmodified until the program exits at
-which point it is removed and replaced it with the workfile.
+The original keyfile is left unmodified until the program exits, at
+which point it is removed and replaced with the workfile.
 Appending the workfile to the backup copy and replacing the keyfile
 with the result should always give a usable keyfile, although the
 resulting keyfile will have some out of date keys in it.
