@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.12 2004/01/28 23:31:28 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.13 2004/01/30 23:12:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -242,8 +242,11 @@ pfkey_reply(int sd, u_int32_t *spip)
 	}
 
 	if (hdr.sadb_msg_type == SADB_GETSPI) {
-		if (spip == NULL)
+		if (spip == NULL) {
+			bzero(data, len);
+			free(data);
 			return (0);
+		}
 
 		msg = (struct sadb_msg *)data;
 		for (ext = (struct sadb_ext *)(msg + 1);
