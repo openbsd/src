@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.23 2001/05/30 21:42:09 deraadt Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.24 2001/06/01 19:47:20 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.20 2001/05/30 21:42:04 deraadt Exp 
+ *	OpenBSD: miidevs,v 1.21 2001/06/01 19:47:13 deraadt Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -119,6 +119,8 @@
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_BCM5221	0x001e
+#define	MII_STR_BROADCOM_BCM5221	"BCM5221 100baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
