@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: makebuf.c,v 1.3 1998/11/25 05:18:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: makebuf.c,v 1.4 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ __smakebuf(fp)
 		fp->_bf._size = 1;
 		return;
 	}
-	__cleanup = _cleanup;
+	__atexit_register_cleanup(_cleanup);
 	flags |= __SMBF;
 	fp->_bf._base = fp->_p = p;
 	fp->_bf._size = size;

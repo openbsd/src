@@ -32,19 +32,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: abort.c,v 1.7 2001/08/12 12:03:01 heko Exp $";
+static char *rcsid = "$OpenBSD: abort.c,v 1.8 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "thread_private.h"
-
-void (*__cleanup)();
+#include "atexit.h"
 
 void
 abort()
 {
+	struct atexit *p = __atexit;
 	static int cleanup_called = 0;
 	sigset_t mask;
 
@@ -64,9 +64,13 @@ abort()
 	/*
 	 * POSIX requires we flush stdio buffers on abort
 	 */
-	if (cleanup_called == 0 && __cleanup != NULL) {
-		cleanup_called = 1;
-		(*__cleanup)();
+	if (cleanup_called == 0) {
+		while (p != NULL && p->next != NULL)
+			p = p->next;
+		if (p != NULL && p->fns[0] != NULL) {
+			cleanup_called = 1;
+			(*p->fns[0])();
+		}
 	}
 
 	(void)kill(getpid(), SIGABRT);

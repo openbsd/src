@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.1 2002/07/29 19:51:41 dhartmei Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.2 2002/09/14 22:03:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -39,9 +39,6 @@
 #include <signal.h>
 #include "/usr/src/lib/libc/stdlib/atexit.h"
 
-extern struct atexit *__atexit;
-extern void (*__cleanup)();
-
 void	handle_first();
 void	handle_middle();
 void	handle_last();
@@ -57,8 +54,10 @@ main(int argc, char *argv[])
 	int i;
 
 	if (argc != 2 || (strcmp(argv[1], "-valid") &&
-	    strcmp(argv[1], "-invalid"))) {
-		fprintf(stderr, "%s -valid/-invalid\n", argv[0]);
+	    strcmp(argv[1], "-invalid-atexit") &&
+	    strcmp(argv[1], "-invalid-cleanup"))) {
+		fprintf(stderr, "%s -valid/-invalid-atexit/-invalid-cleanup\n",
+		    argv[0]);
 		return (1);
 	}
 	fprintf(stderr, "main()\n");
@@ -77,11 +76,20 @@ main(int argc, char *argv[])
 		return (1);
 	}
 	/* this is supposed to segfault */
-	if (strcmp(argv[1], "-valid")) {
+	if (!strcmp(argv[1], "-invalid-atexit")) {
 		signal(SIGSEGV, handle_signal);
 		__atexit->fns[0] = handle_invalid;
+	} else if (!strcmp(argv[1], "-invalid-cleanup")) {
+		struct atexit *p = __atexit;
+
+		signal(SIGSEGV, handle_signal);
+		while (p != NULL && p->next != NULL)
+			p = p->next;
+		if (p == NULL)
+			fprintf(stderr, "p == NULL, no page found\n");
+		p->fns[0] = handle_invalid;
 	}
-	__cleanup = handle_cleanup;
+	__atexit_register_cleanup(handle_cleanup);
 	counter = 0;
 	fprintf(stderr, "main() returns\n");
 	return (0);

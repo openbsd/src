@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: exit.c,v 1.7 2002/08/30 07:58:07 dhartmei Exp $";
+static char *rcsid = "$OpenBSD: exit.c,v 1.8 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,8 +41,6 @@ static char *rcsid = "$OpenBSD: exit.c,v 1.7 2002/08/30 07:58:07 dhartmei Exp $"
 #include <unistd.h>
 #include "atexit.h"
 #include "thread_private.h"
-
-void (*__cleanup)();
 
 /*
  * This variable is zero until a process has created a thread.
@@ -67,13 +65,13 @@ exit(status)
 		p = __atexit;
 		while (p != NULL) {
 			for (n = p->ind; --n >= 0;)
-				(*p->fns[n])();
+				if (p->fns[n] != NULL)
+					(*p->fns[n])();
 			q = p;
 			p = p->next;
 			munmap(q, pgsize);
 		}
 	}
-	if (__cleanup)
-		(*__cleanup)();
+	/* cleanup, if registered, was called through fns[0] in the last page */
 	_exit(status);
 }

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: findfp.c,v 1.2 1996/08/19 08:32:36 tholo Exp $";
+static char rcsid[] = "$OpenBSD: findfp.c,v 1.3 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -141,9 +141,10 @@ f_prealloc()
 }
 
 /*
- * exit() calls _cleanup() through *__cleanup, set whenever we
- * open or buffer a file.  This chicanery is done so that programs
- * that do not use stdio need not link it all in.
+ * exit() and abort() call _cleanup() through the callback registered
+ * with __atexit_register_cleanup(), set whenever we open or buffer a
+ * file. This chicanery is done so that programs that do not use stdio
+ * need not link it all in.
  *
  * The name `_cleanup' is, alas, fairly well known outside stdio.
  */
@@ -161,6 +162,6 @@ void
 __sinit()
 {
 	/* make sure we clean up on exit */
-	__cleanup = _cleanup;		/* conservative */
+	__atexit_register_cleanup(_cleanup); /* conservative */
 	__sdidinit = 1;
 }

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setvbuf.c,v 1.3 2001/07/09 06:57:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setvbuf.c,v 1.4 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -155,7 +155,7 @@ nbf:
 		/* begin/continue reading, or stay in intermediate state */
 		fp->_w = 0;
 	}
-	__cleanup = _cleanup;
+	__atexit_register_cleanup(_cleanup);
 
 	return (ret);
 }

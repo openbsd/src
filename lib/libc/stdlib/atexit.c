@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: atexit.c,v 1.6 2002/09/06 22:48:34 henning Exp $";
+static char *rcsid = "$OpenBSD: atexit.c,v 1.7 2002/09/14 22:03:14 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,6 +40,20 @@ static char *rcsid = "$OpenBSD: atexit.c,v 1.6 2002/09/06 22:48:34 henning Exp $
 
 int __atexit_invalid = 1;
 struct atexit *__atexit;
+
+/*
+ * Function pointers are stored in a linked list of pages. The list
+ * is initially empty, and pages are allocated on demand. The first
+ * function pointer in the first allocated page (the last one in
+ * the linked list) is reserved for the cleanup function.
+ *
+ * Outside the following two functions, all pages are mprotect()'ed
+ * to prevent unintentional/malicious corruption.
+ *
+ * The free(malloc(1)) is a workaround causing malloc_init() to
+ * ensure that malloc.c gets the first mmap() call for its sbrk()
+ * games.
+ */
 
 /*
  * Register a function to be performed at exit.
@@ -61,9 +75,6 @@ atexit(fn)
 	}
 	if (p == NULL) {
 		if (__atexit_invalid) {
-			/* malloc.c wants the first mmap() for sbrk()
-			   games ('nice hack'), so enforce
-			   malloc_init() with a dummy call.  */
 			free(malloc(1));
 			__atexit_invalid = 0;
 		}
@@ -71,7 +82,11 @@ atexit(fn)
 		    MAP_ANON | MAP_PRIVATE, -1, 0);
 		if (p == MAP_FAILED)
 			return (-1);
-		p->ind = 0;
+		if (__atexit == NULL) {
+			p->fns[0] = NULL;
+			p->ind = 1;
+		} else
+			p->ind = 0;
 		p->max = (pgsize - ((char *)&p->fns[0] - (char *)p)) /
 		    sizeof(p->fns[0]);
 		p->next = __atexit;
@@ -81,4 +96,40 @@ atexit(fn)
 	if (mprotect(p, pgsize, PROT_READ))
 		return (-1);
 	return (0);
+}
+
+/*
+ * Register the cleanup function
+ */
+void
+__atexit_register_cleanup(fn)
+	void (*fn)();
+{
+	register struct atexit *p = __atexit;
+	register int pgsize = getpagesize();
+
+	if (pgsize < sizeof(*p))
+		return;
+	while (p != NULL && p->next != NULL)
+		p = p->next;
+	if (p == NULL) {
+		if (__atexit_invalid) {
+			free(malloc(1));
+			__atexit_invalid = 0;
+		}
+		p = mmap(NULL, pgsize, PROT_READ | PROT_WRITE,
+		    MAP_ANON | MAP_PRIVATE, -1, 0);
+		if (p == MAP_FAILED)
+			return;
+		p->ind = 1;
+		p->max = (pgsize - ((char *)&p->fns[0] - (char *)p)) /
+		    sizeof(p->fns[0]);
+		p->next = NULL;
+		__atexit = p;
+	} else {
+		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
+		    return;
+	}
+	p->fns[0] = fn;
+	mprotect(p, pgsize, PROT_READ);
 }
