@@ -1,4 +1,4 @@
-/*	$Id: siop.c,v 1.2 1995/11/07 08:49:31 deraadt Exp $ */
+/*	$Id: siop.c,v 1.3 1995/11/30 09:51:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1265,15 +1265,17 @@ bad_phase:
 	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
 	    kvtop(&acb->ds), kvtop(rp), rp->siop_dsp,
 	    *((long *)&rp->siop_dcmd));
-	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
+	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x "
+	    "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
 	    istat, dstat, sstat0, rp->siop_dsps, rp->siop_dsa,
-	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1], rp->siop_sfbr);
+	     rp->siop_sbcl, acb->stat[0], acb->msg[0], acb->msg[1],
+	    rp->siop_sfbr);
 #ifdef DEBUG
 	if (siop_debug & 0x20)
 		panic("siopchkintr: **** temp ****");
-#endif
 #ifdef DDB
-	Debugger ();
+	/* Debugger(); */
+#endif
 #endif
 	siopreset (sc);		/* hard reset */
 	*status = -1;
