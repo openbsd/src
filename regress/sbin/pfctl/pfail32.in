@@ -1,4 +1,4 @@
 # queue doubly defined on one interface
-altq on lo0 cbq bandwidth 100Kb queue { eins, zwei }
+altq on gif3 cbq bandwidth 100Kb queue { eins, zwei }
 queue eins cbq (default) { zwei }
 queue zwei
