@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.39 2005/01/14 20:58:43 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.40 2005/02/04 18:16:40 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -279,14 +279,6 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
-#if 0
-	root->cr_srverr = fdopen(errfd[0], "r");
-	if (root->cr_srverr == NULL) {
-		cvs_log(LP_ERR, "failed to create pipe stream");
-		return (-1);
-	}
-#endif
-
 	/* make the streams line-buffered */
 	(void)setvbuf(root->cr_srvin, NULL, _IOLBF, 0);
 	(void)setvbuf(root->cr_srvout, NULL, _IOLBF, 0);
@@ -298,13 +290,15 @@ cvs_connect(struct cvsroot *root)
 	 * requests.
 	 */
 
-	vresp = cvs_resp_getvalid();
-	if (vresp == NULL) {
+	if ((vresp = cvs_resp_getvalid()) == NULL) {
 		cvs_log(LP_ERR, "can't generate list of valid responses");
 		return (-1);
 	}
 
 	if (cvs_sendreq(root, CVS_REQ_VALIDRESP, vresp) < 0) {
+		cvs_log(LP_ERR, "failed to get valid responses");
+		free(vresp);
+		return (-1);
 	}
 	free(vresp);
 
@@ -313,21 +307,24 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
+	/* don't fail if this request doesn't work */
 	if (cvs_sendreq(root, CVS_REQ_VERSION, NULL) < 0)
-		cvs_log(LP_ERR, "failed to get remote version");
+		cvs_log(LP_WARN, "failed to get remote version");
 
 	/* now share our global options with the server */
-	if (verbosity == 1)
-		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-q");
-	else if (verbosity == 0)
-		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q");
+	if ((verbosity == 1) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-q") < 0))
+		return (-1);
+	else if ((verbosity == 0) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q") < 0))
+		return (-1);
 
-	if (cvs_nolog)
-		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l");
-	if (cvs_readonly)
-		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r");
-	if (cvs_trace)
-		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t");
+	if (cvs_nolog && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l") < 0))
+		return (-1);
+	if (cvs_readonly && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
+		return (-1);
+	if (cvs_trace && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t") < 0))
+		return (-1);
 
 	/* now send the CVSROOT to the server unless it's an init */
 	if ((cvs_cmdop != CVS_OP_INIT) &&
@@ -337,10 +334,6 @@ cvs_connect(struct cvsroot *root)
 	/* not sure why, but we have to send this */
 	if (cvs_sendreq(root, CVS_REQ_USEUNCHANGED, NULL) < 0)
 		return (-1);
-
-#ifdef CVS_ZLIB
-	/* if compression was requested, initialize it */
-#endif
 
 	cvs_log(LP_DEBUG, "connected to %s", root->cr_host);
 
