@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.10 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.11 2003/06/26 07:27:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.10 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.11 2003/06/26 07:27:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,8 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.10 2003/06/03 02:56:08 millert Exp $";
 #include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <pwd.h>
+#include <grp.h>
 
 /* Derived from the print routines in the ls(1) source code. */
 
@@ -54,12 +56,9 @@ static void printtime(time_t);
 #define NAME_WIDTH	8
 
 void
-printlong(name, accpath, sb)
-	char *name;			/* filename to print */
-	char *accpath;			/* current valid path to filename */
-	struct stat *sb;		/* stat buffer */
+printlong(char *name, char *accpath, struct stat *sb)
 {
-	char modep[15], *user_from_uid(), *group_from_gid();
+	char modep[15];
 
 	(void)printf("%6u %4lld ", sb->st_ino, (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
@@ -80,8 +79,7 @@ printlong(name, accpath, sb)
 }
 
 static void
-printtime(ftime)
-	time_t ftime;
+printtime(time_t ftime)
 {
 	int i;
 	char *longstring;
@@ -103,8 +101,7 @@ printtime(ftime)
 }
 
 static void
-printlink(name)
-	char *name;
+printlink(char *name)
 {
 	int lnklen;
 	char path[MAXPATHLEN];

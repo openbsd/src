@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.28 2003/06/26 07:27:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.28 2003/06/26 07:27:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt E
 #include <unistd.h>
 
 #include "find.h"
+#include "extern.h"
 
 #define	COMPARE(a, b) {							\
 	switch (plan->flags) {						\
@@ -74,6 +75,46 @@ static char rcsid[] = "$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt E
 }
 
 static PLAN *palloc(enum ntype, int (*)(PLAN *, FTSENT *));
+static long find_parsenum(PLAN *plan, char *option, char *vp, char *endch);
+static PLAN *palloc(enum ntype t, int (*f)(PLAN *, FTSENT *));
+
+int	f_amin(PLAN *, FTSENT *);
+int	f_atime(PLAN *, FTSENT *);
+int	f_cmin(PLAN *, FTSENT *);
+int	f_ctime(PLAN *, FTSENT *);
+int	f_always_true(PLAN *, FTSENT *);
+int	f_empty(PLAN *, FTSENT *);
+int	f_exec(PLAN *, FTSENT *);
+int	f_execdir(PLAN *, FTSENT *);
+int	f_flags(PLAN *, FTSENT *);
+int	f_fstype(PLAN *, FTSENT *);
+int	f_group(PLAN *, FTSENT *);
+int	f_inum(PLAN *, FTSENT *);
+int	f_empty(PLAN *, FTSENT *);
+int	f_links(PLAN *, FTSENT *);
+int	f_ls(PLAN *, FTSENT *);
+int	f_maxdepth(PLAN *, FTSENT *);
+int	f_mindepth(PLAN *, FTSENT *);
+int	f_mtime(PLAN *, FTSENT *);
+int	f_mmin(PLAN *, FTSENT *);
+int	f_name(PLAN *, FTSENT *);
+int	f_iname(PLAN *, FTSENT *);
+int	f_newer(PLAN *, FTSENT *);
+int	f_anewer(PLAN *, FTSENT *);
+int	f_cnewer(PLAN *, FTSENT *);
+int	f_nogroup(PLAN *, FTSENT *);
+int	f_nouser(PLAN *, FTSENT *);
+int	f_path(PLAN *, FTSENT *);
+int	f_perm(PLAN *, FTSENT *);
+int	f_print(PLAN *, FTSENT *);
+int	f_print0(PLAN *, FTSENT *);
+int	f_prune(PLAN *, FTSENT *);
+int	f_size(PLAN *, FTSENT *);
+int	f_type(PLAN *, FTSENT *);
+int	f_user(PLAN *, FTSENT *);
+int	f_expr(PLAN *, FTSENT *);
+int	f_not(PLAN *, FTSENT *);
+int	f_or(PLAN *, FTSENT *);
 
 extern int dotfd;
 extern time_t now;
@@ -150,8 +191,7 @@ f_amin(plan, entry)
 }
 
 PLAN *
-c_amin(arg)
-	char *arg;
+c_amin(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -180,8 +220,7 @@ f_atime(plan, entry)
 }
  
 PLAN *
-c_atime(arg)
-	char *arg;
+c_atime(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -211,8 +250,7 @@ f_cmin(plan, entry)
 }
 
 PLAN *
-c_cmin(arg)
-	char *arg;
+c_cmin(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -241,8 +279,7 @@ f_ctime(plan, entry)
 }
  
 PLAN *
-c_ctime(arg)
-	char *arg;
+c_ctime(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -270,7 +307,7 @@ f_always_true(plan, entry)
 }
  
 PLAN *
-c_depth(void)
+c_depth(char *ignore, char ***ignored, int unused)
 {
 	isdepth = 1;
 
@@ -312,7 +349,7 @@ f_empty(plan, entry)
 }
 
 PLAN *
-c_empty(void)
+c_empty(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -377,9 +414,7 @@ f_exec(plan, entry)
  *	strings, but also flags meaning that the string has to be massaged.
  */
 PLAN *
-c_exec(argvp, isok)
-	char ***argvp;
-	int isok;
+c_exec(char *unused, char ***argvp, int isok)
 {
 	PLAN *new;			/* node returned */
 	int cnt;
@@ -498,8 +533,7 @@ f_execdir(plan, entry)
  *	strings, but also flags meaning that the string has to be massaged.
  */
 PLAN *
-c_execdir(argvp)
-	char ***argvp;
+c_execdir(char *ignored, char ***argvp, int unused)
 {
 	PLAN *new;			/* node returned */
 	int cnt;
@@ -567,8 +601,7 @@ f_flags(plan, entry)
 }
 
 PLAN *
-c_flags(flags_str)
-	char *flags_str;
+c_flags(char *flags_str, char ***ignored, int unused)
 {
 	PLAN *new;
 	u_int32_t flags, notflags;
@@ -597,7 +630,7 @@ c_flags(flags_str)
  *	basis.
  */
 PLAN *
-c_follow(void)
+c_follow(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_PHYSICAL;
 	ftsoptions |= FTS_LOGICAL;
@@ -672,8 +705,7 @@ f_fstype(plan, entry)
 }
  
 PLAN *
-c_fstype(arg)
-	char *arg;
+c_fstype(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
     
@@ -718,8 +750,7 @@ f_group(plan, entry)
 }
  
 PLAN *
-c_group(gname)
-	char *gname;
+c_group(char *gname, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct group *g;
@@ -754,8 +785,7 @@ f_inum(plan, entry)
 }
  
 PLAN *
-c_inum(arg)
-	char *arg;
+c_inum(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
     
@@ -780,8 +810,7 @@ f_links(plan, entry)
 }
  
 PLAN *
-c_links(arg)
-	char *arg;
+c_links(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
     
@@ -807,7 +836,7 @@ f_ls(plan, entry)
 }
  
 PLAN *
-c_ls(void)
+c_ls(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
@@ -833,8 +862,7 @@ f_maxdepth(plan, entry)
 }
 
 PLAN *
-c_maxdepth(arg)
-	char *arg;
+c_maxdepth(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -859,8 +887,7 @@ f_mindepth(plan, entry)
 }
 
 PLAN *
-c_mindepth(arg)
-	char *arg;
+c_mindepth(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -886,8 +913,7 @@ f_mtime(plan, entry)
 }
  
 PLAN *
-c_mtime(arg)
-	char *arg;
+c_mtime(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -917,8 +943,7 @@ f_mmin(plan, entry)
 }
 
 PLAN *
-c_mmin(arg)
-	char *arg;
+c_mmin(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -945,8 +970,7 @@ f_name(plan, entry)
 }
  
 PLAN *
-c_name(pattern)
-	char *pattern;
+c_name(char *pattern, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -970,8 +994,7 @@ f_iname(plan, entry)
 }
  
 PLAN *
-c_iname(pattern)
-	char *pattern;
+c_iname(char *pattern, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -999,8 +1022,7 @@ f_newer(plan, entry)
 }
  
 PLAN *
-c_newer(filename)
-	char *filename;
+c_newer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
@@ -1033,8 +1055,7 @@ f_anewer(plan, entry)
 }
  
 PLAN *
-c_anewer(filename)
-	char *filename;
+c_anewer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
@@ -1067,8 +1088,7 @@ f_cnewer(plan, entry)
 }
  
 PLAN *
-c_cnewer(filename)
-	char *filename;
+c_cnewer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
@@ -1097,7 +1117,7 @@ f_nogroup(plan, entry)
 }
  
 PLAN *
-c_nogroup(void)
+c_nogroup(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -1119,7 +1139,7 @@ f_nouser(plan, entry)
 }
  
 PLAN *
-c_nouser(void)
+c_nouser(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -1141,8 +1161,7 @@ f_path(plan, entry)
 }
  
 PLAN *
-c_path(pattern)
-	char *pattern;
+c_path(char *pattern, char ***ignored, int unused)
 {
 	PLAN *new;
 
@@ -1175,8 +1194,7 @@ f_perm(plan, entry)
 }
  
 PLAN *
-c_perm(perm)
-	char *perm;
+c_perm(char *perm, char ***ignored, int unused)
 {
 	PLAN *new;
 	mode_t *set;
@@ -1225,7 +1243,7 @@ f_print0(plan, entry)
 }
  
 PLAN *
-c_print(void)
+c_print(char *ignore, char ***ignored, int unused)
 {
 	isoutput = 1;
 
@@ -1233,7 +1251,7 @@ c_print(void)
 }
 
 PLAN *
-c_print0(void)
+c_print0(char *ignore, char ***ignored, int unused)
 {
 	isoutput = 1;
 
@@ -1257,7 +1275,7 @@ f_prune(plan, entry)
 }
  
 PLAN *
-c_prune(void)
+c_prune(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_PRUNE, f_prune));
 }
@@ -1285,8 +1303,7 @@ f_size(plan, entry)
 }
  
 PLAN *
-c_size(arg)
-	char *arg;
+c_size(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 	char endch;
@@ -1317,8 +1334,7 @@ f_type(plan, entry)
 }
  
 PLAN *
-c_type(typestring)
-	char *typestring;
+c_type(char *typestring, char ***ignored, int unused)
 {
 	PLAN *new;
 	mode_t  mask;
@@ -1379,8 +1395,7 @@ f_user(plan, entry)
 }
  
 PLAN *
-c_user(username)
-	char *username;
+c_user(char *username, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct passwd *p;
@@ -1408,7 +1423,7 @@ c_user(username)
  *	different device ID (st_dev, see stat() S5.6.2 [POSIX.1])
  */
 PLAN *
-c_xdev(void)
+c_xdev(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions |= FTS_XDEV;
 
@@ -1439,15 +1454,15 @@ f_expr(plan, entry)
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 PLAN *
-c_openparen(void)
+c_openparen(char *ignore, char ***ignored, int unused)
 {
-	return (palloc(N_OPENPAREN, (int (*)())-1));
+	return (palloc(N_OPENPAREN, (int (*)(PLAN *, FTSENT *))-1));
 }
  
 PLAN *
-c_closeparen(void)
+c_closeparen(char *ignore, char ***ignored, int unused)
 {
-	return (palloc(N_CLOSEPAREN, (int (*)())-1));
+	return (palloc(N_CLOSEPAREN, (int (*)(PLAN *, FTSENT *))-1));
 }
  
 /*
@@ -1469,7 +1484,7 @@ f_not(plan, entry)
 }
  
 PLAN *
-c_not(void)
+c_not(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_NOT, f_not));
 }
@@ -1500,15 +1515,13 @@ f_or(plan, entry)
 }
 
 PLAN *
-c_or(void)
+c_or(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_OR, f_or));
 }
 
 static PLAN *
-palloc(t, f)
-	enum ntype t;
-	int (*f)(PLAN *, FTSENT *);
+palloc(enum ntype t, int (*f)(PLAN *, FTSENT *))
 {
 	PLAN *new;
 

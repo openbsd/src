@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.9 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: find.c,v 1.10 2003/06/26 07:27:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.9 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: find.c,v 1.10 2003/06/26 07:27:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,16 +95,16 @@ find_formplan(argv)
 	 */
 	if (!isoutput) {
 		if (plan == NULL) {
-			new = c_print();
+			new = c_print(NULL, NULL, 0);
 			tail = plan = new;
 		} else {
-			new = c_openparen();
+			new = c_openparen(NULL, NULL, 0);
 			new->next = plan;
 			plan = new;
-			new = c_closeparen();
+			new = c_closeparen(NULL, NULL, 0);
 			tail->next = new;
 			tail = new;
-			new = c_print();
+			new = c_print(NULL, NULL, 0);
 			tail->next = new;
 			tail = new;
 		}

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.12 2003/06/03 02:56:08 millert Exp $*/
+/* *	$OpenBSD: find.h,v 1.13 2003/06/26 07:27:29 deraadt Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -106,12 +106,12 @@ typedef struct _plandata {
 #define	e_len		p_un.ex._e_len
 
 typedef struct _option {
-	char *name;			/* option name */
-	enum ntype token;		/* token type */
-	PLAN *(*create)();		/* create function: DON'T PROTOTYPE! */
-#define	O_NONE		0x01		/* no call required */
-#define	O_ZERO		0x02		/* pass: nothing */
-#define	O_ARGV		0x04		/* pass: argv, increment argv */
+	char *name;				/* option name */
+	enum ntype token;			/* token type */
+	PLAN *(*create)(char *, char ***, int);	/* create function */
+#define	O_NONE		0x01			/* no call required */
+#define	O_ZERO		0x02			/* pass: nothing */
+#define	O_ARGV		0x04			/* pass: argv, increment argv */
 #define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC || N_EXECDIR */
 	int flags;
 } OPTION;
