@@ -53,11 +53,15 @@ httpd \- Apache hypertext transfer protocol server
 .SH SYNOPSIS
 .B httpd 
 [
-.B \-hlvX?
+.B \-hlvVSt?
 ] [
 .BI \-d " serverroot"
 ] [
 .BI \-f " config"
+] [
+.BI \-C " directive"
+] [
+.BI \-c " directive"
 ]
 .SH DESCRIPTION
 .B httpd
@@ -80,6 +84,16 @@ Paths in this manual page  reflect those
 compiled into httpd by default with OpenBSD.
 .SH OPTIONS
 .TP 12
+.BI \-c " directive" 
+Process directive "directive" 
+.BI after
+reading config files.
+.TP
+.BI \-C " directive" 
+Process directive "directive" 
+.BI before
+reading config files.
+.TP
 .BI \-d " serverroot"
 Set the initial value for the ServerRoot directive to \fIserverroot\fP. This
 can be overridden by the ServerRoot command in the configuration file. The
@@ -97,13 +111,17 @@ places where the directive is valid.
 .B \-l
 Output a list of modules compiled into the server.
 .TP
-.B \-X
-Run in single-process mode, for internal debugging purposes only; the daemon
-does not detach from the terminal or fork any children. Do NOT use this mode
-to provide ordinary web service.
+.B \-S
+Print the parsed settings (currently only vhost settings), and then exit.
+.TP
+.B \-t
+Run a syntax test for the configuration files, and then exit.
 .TP
 .B \-v
 Print the version of httpd, and then exit.
+.TP
+.B \-V
+Print the compiled in settings for httpd, and then exit.
 .TP
 .B \-?
 Print a list of the httpd options, and then exit.
