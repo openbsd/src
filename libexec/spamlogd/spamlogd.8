@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.2 2004/02/27 18:25:49 beck Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.3 2004/02/28 14:53:06 matthieu Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -75,8 +75,8 @@ An example
 .Xr pf.conf 5
 configuration for logging such connections is as follows:
 .Bd -literal -offset 4n
-$EXT_IF = "fxp0"
-$MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
+EXT_IF = "fxp0"
+MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
 pass in log on $EXT_IF inet proto tcp to $MAILHOSTS \e
 	port smtp keep state
 pass out log on $EXT_IF inet proto tcp from $MAILHOSTS \e
