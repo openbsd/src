@@ -1,14 +1,20 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zic.c	7.101";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.15 2000/09/06 23:05:12 millert Exp $";
+static char elsieid[] = "@(#)zic.c	7.107";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.16 2002/04/04 19:12:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
-#ifdef __unix__
-#include "sys/stat.h"			/* for umask manifest constants */
-#endif /* defined __unix__ */
+
+#if HAVE_SYS_STAT_H
+#include "sys/stat.h"
+#endif
+#ifdef S_IRUSR
+#define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+#else
+#define MKDIR_UMASK 0755 
+#endif
 
 /*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
@@ -1588,16 +1594,16 @@ const int			zonecount;
 	typecnt = 0;
 	charcnt = 0;
 	/*
-	** A guess that may well be corrected later.
-	*/
-	stdoff = 0;
-	/*
 	** Thanks to Earl Chew (earl@dnd.icp.nec.com.au)
 	** for noting the need to unconditionally initialize startttisstd.
 	*/
 	startttisstd = FALSE;
 	startttisgmt = FALSE;
 	for (i = 0; i < zonecount; ++i) {
+		/*
+		** A guess that may well be corrected later.
+		*/
+		stdoff = 0;
 		zp = &zpfirst[i];
 		usestart = i > 0 && (zp - 1)->z_untiltime > min_time;
 		useuntil = i < (zonecount - 1);
@@ -1617,8 +1623,7 @@ const int			zonecount;
 			if (usestart) {
 				addtt(starttime, type);
 				usestart = FALSE;
-			}
-			else if (stdoff != 0)
+			} else if (stdoff != 0)
 				addtt(min_time, type);
 		} else for (year = min_year; year <= max_year; ++year) {
 			if (useuntil && year > zp->z_untilrule.r_hiyear)
@@ -2176,7 +2181,7 @@ char * const	argname;
 			** created by some other multiprocessor, so we get
 			** to do extra checking.
 			*/
-			if (mkdir(name, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) != 0) {
+			if (mkdir(name, MKDIR_UMASK) != 0) {
 				const char *e = strerror(errno);
 
 				if (errno != EEXIST || !itsdir(name)) {

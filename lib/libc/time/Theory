@@ -1,4 +1,5 @@
-@(#)Theory	7.12
+$OpenBSD: Theory,v 1.8 2002/04/04 19:12:09 millert Exp $
+@(#)Theory	7.13
 
 
 ----- Outline -----
@@ -35,7 +36,7 @@ POSIX.1 has the following properties and limitations.
 		stdoffset[dst[offset],date[/time],date[/time]]
 
 	where:
-	
+
 	std and dst
 		are 3 or more characters specifying the standard
 		and daylight saving time (DST) zone names.
@@ -179,11 +180,34 @@ so much the better.
 
 ----- Names of time zone rule files -----
 
-The names of this package's installed time zone rule files are chosen to
-help minimize possible future incompatibilities due to political events.
-Ordinarily, names of countries are not used, to avoid incompatibilities
-when countries change their name (e.g. Zaire->Congo) or
-when locations change countries (e.g. Hong Kong from UK colony to China).
+The time zone rule file naming conventions attempt to strike a balance
+among the following goals:
+
+ * Uniquely identify every national region where clocks have all
+   agreed since 1970.  This is essential for the intended use: static
+   clocks keeping local civil time.
+
+ * Indicate to humans as to where that region is.  This simplifes use.
+
+ * Be robust in the presence of political changes.  This reduces the
+   number of updates and backward-compatibility hacks.  For example,
+   names of countries are ordinarily not used, to avoid
+   incompatibilities when countries change their name
+   (e.g. Zaire->Congo) or when locations change countries
+   (e.g. Hong Kong from UK colony to China).
+
+ * Be portable to a wide variety of implementations.
+   This promotes use of the technology.
+
+ * Use a consistent naming convention over the entire world.
+   This simplifies both use and maintenance.
+
+This naming convention is not intended for use by inexperienced users
+to select TZ values by themselves (though they can of course examine
+and reuse existing settings).  Distributors should provide
+documentation and/or a simple selection interface that explains the
+names; see the 'tzselect' program supplied with this distribution for
+one example.
 
 Names normally have the form AREA/LOCATION, where AREA is the name
 of a continent or ocean, and LOCATION is the name of a specific
@@ -272,7 +296,7 @@ in decreasing order of importance:
 		requires at least three characters for an
 		abbreviation.  POSIX.1-1996 says that an abbreviation
 		cannot start with ':', and cannot contain ',', '-',
-		'+', NUL, or a digit.  Draft 5 of POSIX 1003.1-200x
+		'+', NUL, or a digit.  Draft 7 of POSIX 1003.1-200x
 		changes this rule to say that an abbreviation can
 		contain only '-', '+', and alphanumeric characters in
 		the current locale.  To be portable to both sets of
@@ -397,8 +421,8 @@ Newsgroups: soc.genealogy.german
 Date: Tue, 9 Feb 1999 02:32:48 -800
 Message-ID: <199902091032.CAA09644@netcom10.netcom.com>
 
-The following is a(n incomplete) listing, arranged chronologically, of 
-European states, with the date they converted from the Julian to the 
+The following is a(n incomplete) listing, arranged chronologically, of
+European states, with the date they converted from the Julian to the
 Gregorian calendar:
 
 04/15 Oct 1582 - Italy (with exceptions), Spain, Portugal, Poland (Roman
@@ -475,9 +499,9 @@ Gregorian calendar:
 
 1760-1812      - Graub"unden
 
-The Russian empire (including Finland and the Baltic states) did not 
+The Russian empire (including Finland and the Baltic states) did not
 convert to the Gregorian calendar until the Soviet revolution of 1917.
 
-Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen 
-Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend 
+Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen
+Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend
 (Hannover:  Hahnsche Buchhandlung, 1941), pp. 26-28.

@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.70";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.20 2001/06/27 00:58:57 lebel Exp $";
+static char elsieid[] = "@(#)localtime.c	7.75";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.21 2002/04/04 19:12:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -320,8 +320,8 @@ register struct state * const	sp;
 	{
 		struct tzhead *	tzhp;
 		union {
-		  struct tzhead tzhead;
-		  char		buf[sizeof *sp + sizeof *tzhp];
+			struct tzhead	tzhead;
+			char		buf[sizeof *sp + sizeof *tzhp];
 		} u;
 		int		ttisstdcnt;
 		int		ttisgmtcnt;
@@ -968,9 +968,9 @@ tzset_basic P((void))
 		return;
 	}
 
-	if (lcl_is_set > 0  &&  strcmp(lcl_TZname, name) == 0)
+	if (lcl_is_set > 0 && strcmp(lcl_TZname, name) == 0)
 		return;
-	lcl_is_set = (strlen(name) < sizeof(lcl_TZname));
+	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
 		(void) strcpy(lcl_TZname, name);
 
@@ -989,6 +989,8 @@ tzset_basic P((void))
 		*/
 		lclptr->leapcnt = 0;		/* so, we're off a little */
 		lclptr->timecnt = 0;
+		lclptr->typecnt = 0;
+		lclptr->ttis[0].tt_isdst = 0;
 		lclptr->ttis[0].tt_gmtoff = 0;
 		lclptr->ttis[0].tt_abbrind = 0;
 		(void) strcpy(lclptr->chars, gmt);
@@ -1409,7 +1411,9 @@ const int		do_norm_secs;
 	}
 	if (increment_overflow(&yourtm.tm_year, -TM_YEAR_BASE))
 		return WRONG;
-	if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
+	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
+		saved_seconds = 0;
+	else if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
 		/*
 		** We can't set tm_sec to 0, because that might push the
 		** time below the minimum representable time.

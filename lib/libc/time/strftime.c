@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)strftime.c	7.62";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.7 2000/09/06 23:05:11 millert Exp $";
+static char elsieid[] = "@(#)strftime.c	7.64";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.8 2002/04/04 19:12:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -534,7 +534,7 @@ label:
 				if (t->tm_isdst == 0)
 #ifdef USG_COMPAT
 					diff = -timezone;
-#else /* defined USG_COMPAT */
+#else /* !defined USG_COMPAT */
 					continue;
 #endif /* !defined USG_COMPAT */
 				else
@@ -606,7 +606,6 @@ _loc P((void))
 	static const char	locale_home[] = LOCALE_HOME;
 	static const char	lc_time[] = "LC_TIME";
 	static char *		locale_buf;
-	static char		locale_buf_C[] = "C";
 
 	int			fd;
 	int			oldsun;	/* "...ain't got nothin' to do..." */
@@ -645,8 +644,8 @@ _loc P((void))
 	** Slurp the locale file into the cache.
 	*/
 	namesize = strlen(name) + 1;
-	if (sizeof(filename) <
-		sizeof(locale_home) + namesize + sizeof(lc_time))
+	if (sizeof filename  <
+		((sizeof locale_home) + namesize + (sizeof lc_time)))
 			goto no_locale;
 	oldsun = 0;
 	(void) sprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
@@ -668,8 +667,7 @@ _loc P((void))
 		goto bad_locale;
 	bufsize = namesize + st.st_size;
 	locale_buf = NULL;
-	nlbuf = (lbuf == NULL || lbuf == locale_buf_C) ?
-		malloc(bufsize) : realloc(lbuf, bufsize);
+	nlbuf = (lbuf == NULL) ? malloc(bufsize) : realloc(lbuf, bufsize);
 	if (nlbuf == NULL) {
 		if (lbuf)
 			free(lbuf);
@@ -723,7 +721,7 @@ bad_locale:
 	(void) close(fd);
 no_locale:
 	localebuf = C_time_locale;
-	locale_buf = locale_buf_C;
+	locale_buf = NULL;
 	return &localebuf;
 }
 #endif /* defined LOCALE_HOME */
