@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.1 1997/08/14 14:00:22 downsj Exp $	*/
+/*	$OpenBSD: machine.c,v 1.2 1997/08/17 23:18:47 kstailey Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -497,7 +497,8 @@ char *(*get_userid)();
 	    PP(pp, p_nice) - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(VP(pp, vm_rssize))),
-	    state_abbrev[(unsigned char) PP(pp, p_stat)],
+	    (PP(pp, p_stat) == SSLEEP && PP(pp, p_slptime) > MAXSLP)
+	     ? "idle" : state_abbrev[(unsigned char) PP(pp, p_stat)],
 	    p_wait,
 	    format_time(cputime),
 	    100.0 * pct,
