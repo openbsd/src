@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.19 2004/11/21 04:49:26 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.20 2004/12/28 14:38:27 deraadt Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -127,8 +127,7 @@ struct cfdriver mpt_cd = {
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-static struct scsi_device mpt_dev = 
-{
+static struct scsi_device mpt_dev = {
 	NULL, /* Use default error handler */
 	NULL, /* have a queue, served by this */
 	NULL, /* have no async handler */
@@ -256,7 +255,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 		    mpt->mpt_dev_page1[sc_link->target].Configuration);
 	}
 
-	/* 
+	/*
 	 * use INQUIRY for PPR two reasons:
 	 * 1) actually transfer data at requested speed
 	 * 2) no need to test for TUR QUIRK
@@ -268,25 +267,25 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	}
 
 	/* read page 0 back to figure out if the PPR worked */
-        page0 = mpt->mpt_dev_page0[sc_link->target];
-        if (mpt_read_cfg_page(mpt, sc_link->target, &page0.Header)) {
-                mpt_prt(mpt, "unable to read Device Page 0");
-                return 0;
-        }
+	page0 = mpt->mpt_dev_page0[sc_link->target];
+	if (mpt_read_cfg_page(mpt, sc_link->target, &page0.Header)) {
+		mpt_prt(mpt, "unable to read Device Page 0");
+		return 0;
+	}
 
-        if (mpt->verbose > 1) {
-                mpt_prt(mpt,
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt,
 		    "SPI Tgt %d Page 0: NParms %x Information %x",
 		    sc_link->target,
 		    page0.NegotiatedParameters, page0.Information);
-        }
+	}
 
 	if (!(page0.NegotiatedParameters & 0x07) && (speed == U320)) {
 		/*
 		 * if lowest 3 aren't set the PPR probably failed,
 		 * retry with other parameters
 		 */
-        	if (mpt->verbose > 1) {
+		if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U320 PPR failed");
 		}
 		return 0;
@@ -295,7 +294,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) &&
 	    (speed == U160)) {
 		/* if transfer period > 0x09 then U160 PPR failed, retry */
-        	if (mpt->verbose > 1) {
+		if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U160 PPR failed");
 		}
 		return 0;
@@ -445,10 +444,10 @@ mpt_attach(mpt_softc_t *mpt)
 #endif
 
 #if NBIO > 0
-        if (bio_register(&mpt->mpt_dev, mpt_ioctl) != 0)
-                panic("%s: controller registration failed",
-                    mpt->mpt_dev.dv_xname);
-#endif  
+	if (bio_register(&mpt->mpt_dev, mpt_ioctl) != 0)
+		panic("%s: controller registration failed",
+		    mpt->mpt_dev.dv_xname);
+#endif
 
 	mpt_prt(mpt, "IM support: %x", mpt->im_support);
 	/*mpt_prt(mpt, "IM support: %x %x", mpt->im_support,
@@ -635,7 +634,7 @@ mpt_intr(void *arg)
 
 	/*
 	 * Speed up trick to save one PCI read.
-	 * Reply FIFO replies 0xffffffff whenever 
+	 * Reply FIFO replies 0xffffffff whenever
 	 * MPT_OFFSET_INTR_STATUS & MPT_INTR_REPLY_READY == 0
 	 *
 	 */
@@ -762,7 +761,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		mpt_reply = MPT_REPLY_PTOV(mpt, reply);
 		if (mpt->verbose > 1) {
 			uint32_t *pReply = (uint32_t *) mpt_reply;
-			
+
 			mpt_prt(mpt, "Address Reply (index %u):",
 			    mpt_reply->MsgContext & 0xffff);
 			mpt_prt(mpt, "%08x %08x %08x %08x",
@@ -878,7 +877,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 #if 0 /*XXX report xfer mode not impl */
 		if (mpt->mpt_report_xfer_mode != 0) {
 			if ((mpt->mpt_report_xfer_mode &
-			     (1 << periph->periph_target)) != 0)
+			    (1 << periph->periph_target)) != 0)
 				mpt_get_xfer_mode(mpt, periph);
 		}
 #endif
@@ -916,7 +915,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 #if 0 /* XXX xfer mode */
 			/* Report the xfer mode, if necessary. */
 			if ((mpt->mpt_report_xfer_mode &
-			     (1 << periph->periph_target)) != 0)
+			    (1 << periph->periph_target)) != 0)
 				mpt_get_xfer_mode(mpt, periph);
 #endif
 			xs->resid = 0;
@@ -982,7 +981,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-		
+
 	if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
 		memcpy(&xs->sense, req->sense_vbuf,
 		    sizeof(xs->sense));
@@ -1122,7 +1121,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 
 			se = (SGE_SIMPLE32 *) &mpt_req->SGL;
 			for (i = 0; i < MPT_NSGL_FIRST(mpt) - 1;
-			     i++, se++, seg++) {
+			    i++, se++, seg++) {
 				uint32_t tf;
 
 				bzero(se, sizeof(*se));
@@ -1192,9 +1191,8 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 			}
 			bus_dmamap_sync(mpt->sc_dmat, req->dmap, 0,
 			    req->dmap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    				BUS_DMASYNC_PREREAD
-						      : BUS_DMASYNC_PREWRITE);
+			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
 		} else {
 			int i;
 			uint32_t flags;
@@ -1207,7 +1205,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 			/* Copy the segments into our SG list. */
 			se = (SGE_SIMPLE32 *) &mpt_req->SGL;
 			for (i = 0; i < req->dmap->dm_nsegs;
-			     i++, se++) {
+			    i++, se++) {
 				uint32_t tf;
 
 				bzero(se, sizeof(*se));
@@ -1225,9 +1223,8 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 			}
 			bus_dmamap_sync(mpt->sc_dmat, req->dmap, 0,
 			    req->dmap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    				BUS_DMASYNC_PREREAD
-						      : BUS_DMASYNC_PREWRITE);
+			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
 		}
 	} else {
 		/*
@@ -1238,7 +1235,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 		bzero(se, sizeof(*se));
 		MPI_pSGE_SET_FLAGS(se,
 		    (MPI_SGE_FLAGS_LAST_ELEMENT | MPI_SGE_FLAGS_END_OF_BUFFER |
-		     MPI_SGE_FLAGS_SIMPLE_ELEMENT | MPI_SGE_FLAGS_END_OF_LIST));
+		    MPI_SGE_FLAGS_SIMPLE_ELEMENT | MPI_SGE_FLAGS_END_OF_LIST));
 	}
 
 	if (mpt->verbose > 1)
@@ -1458,7 +1455,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		mpt_prt(mpt, "Unknown async event: 0x%x", msg->Event);
 		break;
 	}
-	
+
 	if (msg->AckRequired) {
 		MSG_EVENT_ACK *ackp;
 		request_t *req;
@@ -1496,8 +1493,8 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
 	 * in a higher layer.
 	 */
 	if (xs->cmd->opcode == INQUIRY ||
-             xs->cmd->opcode == TEST_UNIT_READY ||
-             xs->cmd->opcode == REQUEST_SENSE)
+	    xs->cmd->opcode == TEST_UNIT_READY ||
+	    xs->cmd->opcode == REQUEST_SENSE)
 		return;
 
 	/* Set the queue behavior. */
@@ -1610,7 +1607,7 @@ fw_fail1:
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, img_sz);
 fw_fail0:
 	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
- 
+
 	mpt->fw = NULL;
 	return (error);
 }
@@ -1627,9 +1624,9 @@ mpt_free_fw_mem(mpt_softc_t *mpt)
 #if NBIO > 0
 int
 mpt_ioctl(dev, cmd, addr)
-        struct device *dev;
-        u_long cmd;
-        caddr_t addr;
+	struct device *dev;
+	u_long cmd;
+	caddr_t addr;
 {
 	int error = 0;
 	int rv;
@@ -1639,54 +1636,53 @@ mpt_ioctl(dev, cmd, addr)
 	mpt_softc_t *mpt = (mpt_softc_t *)dev;
 
 	switch (cmd) {
-		case MPT_IOCTL_DUMMY:
-			dummy = (struct mpt_dummy *)addr;
-			if (mpt->verbose > 2) {
-				printf("%s: MPT_IOCTL_DUMMY %d\n",
-				    dev->dv_xname, dummy->x++);
-			}
-			break;
-		case MPT_IOCTL_MFG0:
-			/* Retrieve Manufacturing Page 0 */
-			mfgp0.Header.PageNumber = 0;
-			mfgp0.Header.PageType = MPI_CONFIG_PAGETYPE_MANUFACTURING;
-			rv = mpt_read_cfg_page(mpt, 0, &mfgp0.Header);
-			if (rv) {
-				mpt_prt(mpt, "Could not retrieve MFG PAGE 0.");
-				error = EINVAL;
-			}
-			else {  
-				if (mpt->verbose > 2) {
-					printf("Chip name: %s\n",
-					    mfgp0.ChipName);
-					printf("Chip Revision: %s\n",
-					    mfgp0.ChipRevision);
-					printf("Board name: %s\n",
-					    mfgp0.BoardName);
-					printf("Board assembly: %s\n",
-					    mfgp0.BoardAssembly);
-					printf("Board tracer number: %s\n",
-					    mfgp0.BoardTracerNumber);
-				}
-				pmfg0 = (struct mpt_mfg0 *)addr;
-				memcpy(&pmfg0->cpm0, &mfgp0,
-				    sizeof(fCONFIG_PAGE_MANUFACTURING_0));
-			}
-			break;
-			/* Retrieve Manufacturing Page 1 */
-		case MPT_IOCTL_MFG1:
-			break;
-			/* Retrieve Manufacturing Page 2 */
-		case MPT_IOCTL_MFG2:
-			break;
-			/* Retrieve Manufacturing Page 3 */
-		case MPT_IOCTL_MFG3:
-			break;
-			/* Retrieve Manufacturing Page 4 */
-		case MPT_IOCTL_MFG4:
-			break;
-		default:
+	case MPT_IOCTL_DUMMY:
+		dummy = (struct mpt_dummy *)addr;
+		if (mpt->verbose > 2) {
+			printf("%s: MPT_IOCTL_DUMMY %d\n",
+			    dev->dv_xname, dummy->x++);
+		}
+		break;
+	case MPT_IOCTL_MFG0:
+		/* Retrieve Manufacturing Page 0 */
+		mfgp0.Header.PageNumber = 0;
+		mfgp0.Header.PageType = MPI_CONFIG_PAGETYPE_MANUFACTURING;
+		rv = mpt_read_cfg_page(mpt, 0, &mfgp0.Header);
+		if (rv) {
+			mpt_prt(mpt, "Could not retrieve MFG PAGE 0.");
 			error = EINVAL;
+		} else {
+			if (mpt->verbose > 2) {
+				printf("Chip name: %s\n",
+				    mfgp0.ChipName);
+				printf("Chip Revision: %s\n",
+				    mfgp0.ChipRevision);
+				printf("Board name: %s\n",
+				    mfgp0.BoardName);
+				printf("Board assembly: %s\n",
+				    mfgp0.BoardAssembly);
+				printf("Board tracer number: %s\n",
+				    mfgp0.BoardTracerNumber);
+			}
+			pmfg0 = (struct mpt_mfg0 *)addr;
+			memcpy(&pmfg0->cpm0, &mfgp0,
+			    sizeof(fCONFIG_PAGE_MANUFACTURING_0));
+		}
+		break;
+	case MPT_IOCTL_MFG1:
+		/* Retrieve Manufacturing Page 1 */
+		break;
+	case MPT_IOCTL_MFG2:
+		/* Retrieve Manufacturing Page 2 */
+		break;
+	case MPT_IOCTL_MFG3:
+		/* Retrieve Manufacturing Page 3 */
+		break;
+	case MPT_IOCTL_MFG4:
+		/* Retrieve Manufacturing Page 4 */
+		break;
+	default:
+		error = EINVAL;
 	}
 	return (error);
 }
