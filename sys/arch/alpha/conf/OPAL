@@ -1,4 +1,4 @@
-#	$OpenBSD: OPAL,v 1.5 1997/01/24 19:57:00 niklas Exp $
+#	$OpenBSD: OPAL,v 1.6 1997/02/26 16:31:16 niklas Exp $
 #
 # OPAL, kernel for a DEC Multia at Applitron
 
@@ -37,6 +37,7 @@ option		SYSVSHM
 
 # Networking options
 option		INET		# Internet protocol suite
+option		IPSEC		# IP-SEC encapsulation
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 option		COMPAT_43
@@ -154,3 +155,4 @@ pseudo-device	pty		64
 pseudo-device	sl		4
 pseudo-device	vnd		4
 pseudo-device	rd		1
+pseudo-device	enc		4
