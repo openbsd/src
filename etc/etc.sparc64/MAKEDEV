@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.25 2002/12/05 04:30:21 kjc Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.56 2003/01/06 17:19:16 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.26 2003/05/21 18:49:00 jason Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.59 2003/05/21 18:48:59 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -91,6 +91,7 @@
 #	*random	inkernel random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
 #	bppmag[mno]	magma parallel port device
+#	bpp*	parallel port devices
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp[jkl]	spif parallel port device
 #	crypto	hardware crypto access driver
@@ -156,7 +157,7 @@ dodisk()
 		M r$1$2$d	c $4 $(($n+$count)) 640
 		let count=count+1
 	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
+	MKlist="$MKlist;chown root:operator $1$2? r$1$2?"
 }
 
 dodisk2()
@@ -188,7 +189,7 @@ M() {
 	mklist="$mklist $1"
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
+		MKlist="$MKlist;chown $7:$G $1"
 	} || {
 		case $G in
 		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
@@ -275,6 +276,10 @@ spif*)
 		n=$(($n+1))
 	done
 	M bpp${nam}0 c 109 $(($offset+0)) 600
+	;;
+
+bpp*)
+	M bpp$U c 107 $U 600
 	;;
 
 magma*)
@@ -553,15 +558,15 @@ local)
 	;;
 
 all)
-	R cuaa cuab cuac cuad ttya ttyb ttyc ttyd vnd0 vnd1 vnd2 vnd3
-	R sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 ccd0 ccd1 ccd2
-	R ccd3 wscons pci usbs audio0 uk0 random lpa0 lpa1 lpa2 lpt0
-	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1 crypto pf
-	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
-	R fd
+	R cuaa cuab cuac cuad ttya ttyb ttyc ttyd bpp0 vnd0 vnd1 vnd2
+	R vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3
+	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
+	R pty2 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
+	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 ccd0 ccd1
+	R ccd2 ccd3 wscons pci usbs audio0 uk0 random lpa0 lpa1 lpa2
+	R lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
+	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

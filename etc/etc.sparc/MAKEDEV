@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.17 2003/04/13 22:55:43 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.58 2003/04/10 16:11:12 millert Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.18 2003/05/21 18:49:00 jason Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.59 2003/05/21 18:48:59 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -76,6 +76,7 @@
 #	bppmag[mno]	magma parallel port device
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp[jkl]	spif parallel port device
+#	bpp*	parallel port devices
 #	xfs*	XFS filesystem devices
 #	raid*	RAIDframe disk devices
 #	fd	makes fd/* for the fdescfs
@@ -233,6 +234,10 @@ fd)
 
 xfs*)
 	M xfs$U c 51 $U 600
+	;;
+
+bpp*)
+	M bpp$U c 104 $U 600
 	;;
 
 spif*)
@@ -468,14 +473,14 @@ local)
 	;;
 
 all)
-	R presto0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
-	R sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
-	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
-	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac
-	R cuad ttya ttyb ttyc ttyd wscons audio0 uk0 random lkm pf
-	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
-	R fd
+	R presto0 bpp0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0
+	R sd1 sd2 sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2
+	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
+	R pty1 pty2 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
+	R fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa
+	R cuab cuac cuad ttya ttyb ttyc ttyd wscons audio0 uk0 random
+	R lkm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
+	R st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)
