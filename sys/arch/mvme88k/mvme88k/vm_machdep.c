@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2001/01/13 05:19:00 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2001/03/08 00:03:31 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -84,7 +84,6 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 {
 	struct switchframe *p2sf;
-	int off, ssz;
 	int cpu;
 	struct ksigframe {
 		void (*func)(struct proc *);
@@ -320,7 +319,7 @@ vm_offset_t
 iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 {
 	vm_offset_t		iova, tva, off, ppa;
-	register int 		npf, s;
+	register int 		s;
 
 	if (len == 0)
 		return NULL;
@@ -412,7 +411,6 @@ unmapiodev(kva, size)
 	void *kva;
 	int size;
 {
-	int ix;
 	vm_offset_t va;
 	va = (vm_offset_t)kva;
 	iomap_mapout(va, size);

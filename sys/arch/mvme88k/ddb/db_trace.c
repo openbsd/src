@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 1999/02/09 06:36:25 smurph Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2001/03/08 00:02:18 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -105,7 +105,7 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 /* st r1, r31, IMM */
 #define ST_R1_R31_IMM(I)    (((I) & 0xffff0000U) == 0x243f0000U)
 
-static trace_flags = 0;
+static int trace_flags = 0;
 #define TRACE_DEBUG_FLAG		0x01
 #define TRACE_SHOWCALLPRESERVED_FLAG	0x02
 #define TRACE_SHOWADDRESS_FLAG		0x04
@@ -145,6 +145,8 @@ db_setf_regs(
 	*valuep = *regp;
     else if (op == DB_VAR_SET)
 	*regp = *valuep;
+
+    return (0);	/* silence warning */
 }
 
 #define N(s, x)  {s, (long *)&(((db_regs_t *) 0)->x), db_setf_regs}

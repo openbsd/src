@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.6 2001/03/08 00:03:22 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -34,7 +34,7 @@
  */
 
 #ifndef  _M88K_DB_MACHDEP_H_
-#define  _M88K_DB_MACHDEP_H_ 1
+#define  _M88K_DB_MACHDEP_H_
 
 #include <sys/types.h>
 #include <vm/vm_prot.h>
@@ -52,6 +52,8 @@
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM       	"tb0 0, r0, 132"
 #define DDB_ENTRY_TRAP_NO	132
+
+void gimmeabreak __P((void));
 
 typedef vm_offset_t   db_addr_t;
 typedef int           db_expr_t;
@@ -99,7 +101,14 @@ extern int quiet_db_read_bytes;
 /* These versions are not constantly doing SPL */
 /*#define	cnmaygetc	db_getc*/
 /*#define	cngetc		db_getc*/
-#define	cnputc		db_putc
+/*#define	cnputc		db_putc*/
+
+unsigned inst_load __P((unsigned));
+unsigned inst_store __P((unsigned));
+boolean_t inst_branch __P((unsigned));
+db_addr_t next_instr_address __P((db_addr_t, unsigned));
+db_addr_t branch_taken __P((u_int, db_addr_t,
+    db_expr_t (*) __P((db_regs_t *, int)), db_regs_t *));
 
 /* breakpoint/watchpoint foo */
 #define IS_BREAKPOINT_TRAP(type,code) ((type)==T_KDB_BREAK)

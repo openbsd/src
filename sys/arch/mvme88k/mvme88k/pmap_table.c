@@ -73,7 +73,6 @@ pmap_table_t
 pmap_table_build(endoftext)
 unsigned endoftext;
 {
-	extern int kernelstart;
 	unsigned int i;
 	pmap_table_t bt, pbt;
 

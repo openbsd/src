@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 2000/10/18 21:00:38 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 2001/03/08 00:03:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -251,7 +251,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 #ifdef DEBUG
@@ -313,6 +313,7 @@ setdisklabel(olp, nlp, openmask, clp)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)();
@@ -339,7 +340,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_cylin = 0; /* contained in block 0 */
 	(*strat)(bp);
 
-	if (error = biowait(bp)) {
+	if ((error = biowait(bp)) != 0 ) {
 		/* nothing */
 	} else {
 		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
@@ -584,7 +585,6 @@ cputobsdlabel(lp, clp)
 	int i;
 
 	if (clp->version == 0) {
-		struct cpu_disklabel_old *clpo = (void *) clp;
 #ifdef DEBUG
 		if (disksubr_debug > 0) {
 			printf("Reading old disklabel\n");

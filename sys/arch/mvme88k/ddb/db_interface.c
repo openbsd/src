@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2001/02/01 03:38:12 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2001/03/08 00:02:18 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -54,18 +54,6 @@ int 	db_active = 0;
 int 	db_noisy = 0;
 int	quiet_db_read_bytes = 0;
 
-/*
- * Received keyboard interrupt sequence.
- */
-kdb_kintr(regs)
-        register struct m88100_saved_state *regs;
-{
-        if (db_active == 0 && (boothowto & RB_KDB)) {
-                printf("\n\nkernel: keyboard interrupt\n");
-                m88k_db_trap(-1, regs);
-        }
-}
-
 /************************/
 /* PRINTING *************/
 /************************/
@@ -89,7 +77,7 @@ m88k_db_str2(char *str, int arg1, int arg2)
 }
 
 /************************/
-/* DB_REGISTERS ****/
+/* 	DB_REGISTERS ****/
 /************************/
 
 /*
@@ -137,33 +125,28 @@ m88k_dmx_print(unsigned t, unsigned d, unsigned a, unsigned no)
 				 24, 16, 0, 0,  0, 0, 0, 0};
     int reg = REG(t);
 
-    if (XMEM(t))
-    {
+    if (XMEM(t)) {
 	db_printf("xmem%s%s r%d(0x%x) <-> mem(0x%x),",
 	    XMEM_MODE(t), DAS(t), reg,
 	    (((t)>>2 & 0xf) == 0xf) ? d : (d & 0xff), a );
 	return 1;
-    }
-    else
-    {
-	if (MODE(t) == 0xf)
-	{
+    } else {
+	if (MODE(t) == 0xf) {
 	    /* full or double word */
-	    if (STORE(t))
+	    if (STORE(t)) {
 		if (DOUB(t) && no == 2)
 		    db_printf("st.d%s -> mem(0x%x) (** restart sxip **)",
 			DAS(t), a);
 		else
 		    db_printf("st%s (0x%x) -> mem(0x%x)", DAS(t), d, a);
-	    else /* load */
+	    } else { /* load */
 		if (DOUB(t) && no == 2)
 		    db_printf("ld.d%s r%d <- mem(0x%x), r%d <- mem(0x%x)",
 			DAS(t), reg, a, reg+1, a+4);
 		else
 		    db_printf("ld%s r%d <- mem(0x%x)",  DAS(t), reg, a);
-	}
-	else
-	{
+	    }
+	} else {
 	    /* fractional word - check if load or store */
 	    a += addr_mod[MODE(t)];
 	    if (STORE(t))
@@ -355,15 +338,15 @@ m88k_db_pause(unsigned volatile ticks)
 /*
  *  m88k_db_trap - field a TRACE or BPT trap
  */
-
+void
 m88k_db_trap(
     int type,
     register struct m88100_saved_state *regs)
 {
 
+#if 0
     int i;
 
-#if 0
     if ((i = db_spl()) != 7)
 	m88k_db_str1("WARNING: spl is not high in m88k_db_trap (spl=%x)\n", i);
 #endif /* 0 */
@@ -410,15 +393,15 @@ extern int trap_types;
  * Print trap reason.
  */
 kdbprinttrap(type, code)
-	int	type, code;
-{
+	int type, code;
+{       
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)
-		printf("type %d", type);
-	else
+		printf("type %d", type); 
+	else    
 		printf("%s", trap_type[type]);
 	printf(" trap\n");
-}
+}       
 
 void
 Debugger(void)
@@ -525,7 +508,6 @@ db_write_bytes(char *addr, int size, char *data)
     register char	*dst;
     int i = size;
     vm_offset_t physaddr;
-    pte_template_t 	*pte;
 
     dst = (char *)addr;
 	
@@ -563,7 +545,6 @@ m88k_db_where(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
     struct m88100_saved_state *s;
     char *name;
     int *offset;
-    int i;
     int l;
 
     s = DDB_REGS;

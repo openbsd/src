@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.5 2001/02/01 03:38:20 smurph Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.6 2001/03/08 00:03:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -711,6 +711,7 @@ m18x_cmmu_get_by_mode(int cpu, int mode)
 	printf("can't figure out first %s CMMU for CPU %d\n",
 	       (mode == DATA_CMMU) ? "data" : "instruction", cpu);
 	panic("m18x_cmmu_get_by_mode");
+	/* NOTREACHED */
 }
 #endif
 
@@ -1187,7 +1188,7 @@ m18x_cmmu_set_pair_batc_entry(unsigned cpu,
 void
 m18x_cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 
 	if (cpu > max_cpus) {
 		cpu = cpu_number();
@@ -1303,7 +1304,7 @@ m18x_cmmu_pmap_activate(unsigned cpu,
 void
 m18x_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 
 
 #if !defined(BROKEN_MMU_MASK)
@@ -1383,7 +1384,7 @@ m18x_cmmu_flush_cache(vm_offset_t physaddr, int size)
 void
 m18x_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 
 
 
@@ -1454,7 +1455,7 @@ m18x_cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 void
 m18x_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 { 
-	register s = splhigh();
+	register int s = splhigh();
 
 #if !defined(BROKEN_MMU_MASK)
 	if (size < 0 || size > NBSG ) {
@@ -1520,7 +1521,7 @@ m18x_cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 void
 m18x_cmmu_sync_cache(vm_offset_t physaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 	int cpu;
 	cpu = cpu_number();
 
@@ -1602,7 +1603,7 @@ m18x_cmmu_sync_cache(vm_offset_t physaddr, int size)
 void
 m18x_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 	int cpu;
 	cpu = cpu_number();
 
@@ -1685,7 +1686,7 @@ m18x_cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 void
 m18x_cmmu_inval_cache(vm_offset_t physaddr, int size)
 {
-	register s = splhigh();
+	register int s = splhigh();
 	int cpu;
 	cpu = cpu_number();
 
@@ -1768,9 +1769,9 @@ m18x_cmmu_inval_cache(vm_offset_t physaddr, int size)
 void
 m18x_dma_cachectl(vm_offset_t va, int size, int op)
 {
+#if !defined(BROKEN_MMU_MASK)
 	int count;
 
-#if !defined(BROKEN_MMU_MASK)
 	while (size) {
 		count = NBPG - ((int)va & PGOFSET);
 

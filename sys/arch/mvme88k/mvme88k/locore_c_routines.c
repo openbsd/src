@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.8 2001/02/01 03:38:20 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.9 2001/03/08 00:03:31 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,12 +30,17 @@
  *****************************************************************RCS**/
 /* This file created by Omron Corporation, 1990. */
 
+#include <sys/types.h>
+#include <sys/systm.h>
+
+#include <machine/param.h>
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/m88100.h>		/* DMT_VALID		*/
 #include <assym.s>			/* EF_NREGS, etc.	*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
+#include <machine/locore.h>
 #ifdef DDB
    #include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
@@ -96,7 +101,6 @@ dae_print(unsigned *eframe)
 	register int x;
 	register struct dmt_reg *dmtx;
 	register unsigned  dmax, dmdx;
-	register unsigned  v, reg;
 	static char *bytes[] =
 	{
 		"____", "___x", "__x_", "__xx",
@@ -419,7 +423,6 @@ unsigned curlevel;
 void
 setlevel(int level)
 {
-	m88k_psr_type psr;
 	register unsigned int mask;
 	register int cpu = cpu_number(); 
 	if (level > 7) {
@@ -447,7 +450,6 @@ setlevel(int level)
 void
 db_setlevel(int level)
 {
-	m88k_psr_type psr;
 	register unsigned int mask;
 	register int cpu = cpu_number(); 
 

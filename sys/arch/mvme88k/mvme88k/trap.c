@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2001/02/01 03:38:22 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2001/03/08 00:03:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -124,7 +124,6 @@ char  *pbus_exception_type[] = {
 	"Write Violation",
 };
 
-extern ret_addr;
 #define NSIR	8
 void (*sir_routines[NSIR])();
 void *sir_args[NSIR];
@@ -211,7 +210,6 @@ trap(unsigned type, struct m88100_saved_state *frame)
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
-	int su = 0;
 	int result;
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
@@ -1285,12 +1283,13 @@ error_reset(struct m88100_saved_state *frame)
 	bugreturn();  /* This gets us to Bug instead of a loop forever */
 }
 
+void
 syscall(register_t code, struct m88100_saved_state *tf)
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, new;
+	int error;
 	struct args {
 		int i[8];
 	} args;
@@ -1445,12 +1444,13 @@ syscall(register_t code, struct m88100_saved_state *tf)
 }
 
 /* Instruction pointers opperate differently on mc88110 */
+void
 m197_syscall(register_t code, struct m88100_saved_state *tf)
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
 	register struct proc *p;
-	int error, new;
+	int error;
 	struct args {
 		int i[8];
 	} args;
@@ -1826,15 +1826,11 @@ int
 cpu_singlestep(p)
 register struct proc *p;
 {
-	register unsigned va;
 	struct trapframe *sstf = USER_REGS(p); /*p->p_md.md_tf;*/
 	unsigned pc, brpc;
 	int i;
 	int bpinstr = SSBREAKPOINT;
 	unsigned curinstr;
-	unsigned inst;
-	struct uio uio;
-	struct iovec iov;
 
 	pc = PC_REGS(sstf);
 	/*

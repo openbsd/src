@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.7 2001/02/01 03:38:19 smurph Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.8 2001/03/08 00:03:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -160,7 +160,6 @@ setup_cmmu_config(void)
       break;
 #endif 
    }
-   return;
 }
 
 void 
@@ -179,7 +178,6 @@ cmmu_dump_config(void)
       break;
 #endif 
    }
-   return;
 }
 
 #ifdef DDB
@@ -232,7 +230,6 @@ cpu_configuration_print(int master)
 #endif 
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -257,7 +254,6 @@ cmmu_init(void)
 		break;
 #endif /* MVME197 */
 	}
-	return;
 }
 
 /*
@@ -281,7 +277,6 @@ cmmu_shutdown_now(void)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 #define PARITY_ENABLE
@@ -309,7 +304,6 @@ cmmu_parity_enable(void)
    }
 #endif  /* PARITY_ENABLE */
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -364,7 +358,6 @@ cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -437,7 +430,6 @@ cmmu_set_sapr(unsigned ap)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 void
@@ -458,13 +450,12 @@ cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 void
 cmmu_set_uapr(unsigned ap)
 {
-	register s = splhigh();
+	register int s = splhigh();
 	CMMU_LOCK;
 	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
@@ -481,7 +472,6 @@ cmmu_set_uapr(unsigned ap)
 	}
 	CMMU_UNLOCK;
 	splx(s);
-	return;
 }
 
 /*
@@ -514,7 +504,6 @@ cmmu_set_batc_entry(
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -542,7 +531,6 @@ cmmu_set_pair_batc_entry(
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /**
@@ -571,7 +559,6 @@ cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -597,7 +584,7 @@ cmmu_pmap_activate(
 		  batc_template_t i_batc[BATC_MAX],
 		  batc_template_t d_batc[BATC_MAX])
 {
-	register s = splhigh();
+	register int s = splhigh();
 	CMMU_LOCK;
 	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
@@ -614,7 +601,6 @@ cmmu_pmap_activate(
 	}
 	CMMU_UNLOCK;
 	splx(s);
-	return;
 }
 
 /**
@@ -651,7 +637,6 @@ cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -685,7 +670,6 @@ cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -717,7 +701,6 @@ cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 /*
@@ -731,6 +714,7 @@ cmmu_flush_data_cache(vm_offset_t physaddr, int size)
    cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
+#if 0
 /*
  * sync dcache (and icache too)
  */
@@ -752,7 +736,6 @@ cmmu_sync_cache(vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 static void
@@ -773,7 +756,6 @@ cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 static void
@@ -794,8 +776,8 @@ cmmu_inval_cache(vm_offset_t physaddr, int size)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
+#endif
 
 void
 dma_cachectl(vm_offset_t va, int size, int op)
@@ -815,7 +797,6 @@ dma_cachectl(vm_offset_t va, int size, int op)
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 #if DDB
@@ -848,7 +829,6 @@ cmmu_show_translation(
 #endif /* MVME197 */
    }
    CMMU_UNLOCK;
-   return;
 }
 
 
@@ -868,7 +848,6 @@ cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
       break;
 #endif /* MVME197 */
    }
-   return;
 }
 
 void
@@ -887,6 +866,5 @@ show_cmmu_info(unsigned addr)
       break;
 #endif /* MVME197 */
    }
-   return;
 }
 #endif /* end if DDB */
