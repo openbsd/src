@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.99 2002/11/20 15:01:13 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.100 2003/02/26 18:57:44 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.97 2002/11/20 14:58:53 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.98 2003/02/26 18:57:31 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -96,6 +96,7 @@
 #define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
+#define	PCMCIA_VENDOR_AIRVAST	0x50c2	/* AirVast Technology */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
 #define	PCMCIA_VENDOR_DUAL	0x890f	/* Dual */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
@@ -154,6 +155,10 @@
 #define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0007
 #define	PCMCIA_CIS_AIRONET_350	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_AIRONET_350	0x000a
+
+/* AirVast */
+#define	PCMCIA_CIS_AIRVAST_WN_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRVAST_WN_100	0x7300
 
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
