@@ -75,6 +75,17 @@
 
 #define obj_fix_adjustable(fixP) 0
 
+#define TC_FIX_TYPE PTR
+#define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
+
+#define TC_START_LABEL(C,STR) \
+  (c == ':' || (c == '/' && arm_data_in_code ()))
+int arm_data_in_code PARAMS ((void));
+
+#define tc_canonicalize_symbol_name(str) \
+  arm_canonicalize_symbol_name (str);
+char *arm_canonicalize_symbol_name PARAMS ((char *));
+
 #if 0	/* It isn't as simple as this */
 #define tc_frob_symbol(sym,punt)	\
 {	if (S_IS_LOCAL (sym))		\

@@ -103,7 +103,11 @@ enum m68k_register
   URP,
   BUSCR,			/* 68060 added these */
   PCR,
-#define last_movec_reg PCR
+  ROMBAR,			/* mcf5200 added these */
+  RAMBAR0,
+  RAMBAR1,
+  MBAR,
+#define last_movec_reg MBAR
   /* end of movec ordering constraints */
 
   FPI,

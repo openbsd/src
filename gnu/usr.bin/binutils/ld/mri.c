@@ -264,8 +264,10 @@ mri_draw_tree ()
 	  lang_add_wild(aptr->name, (char *)NULL);
 	}
       }
-	
-      lang_leave_output_section_statement(0, "*default*");
+
+      lang_leave_output_section_statement
+	(0, "*default*", (struct lang_output_section_phdr_list *) NULL);
+
       p = p->next;
     }
   }

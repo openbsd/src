@@ -2224,10 +2224,11 @@ _bfd_generic_link_output_symbols (output_bfd, input_bfd, info, psymalloc)
 
       /* This switch is straight from the old code in
 	 write_file_locals in ldsym.c.  */
-      if (info->strip == strip_some
-	  && (bfd_hash_lookup (info->keep_hash, bfd_asymbol_name (sym),
-			       false, false)
-	      == (struct bfd_hash_entry *) NULL))
+      if (info->strip == strip_all
+	  || (info->strip == strip_some
+	      && (bfd_hash_lookup (info->keep_hash, bfd_asymbol_name (sym),
+				   false, false)
+		  == (struct bfd_hash_entry *) NULL)))
 	output = false;
       else if ((sym->flags & (BSF_GLOBAL | BSF_WEAK)) != 0)
 	{

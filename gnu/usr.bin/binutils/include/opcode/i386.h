@@ -1,5 +1,5 @@
 /* i386-opcode.h -- Intel 80386 opcode table
-   Copyright 1989, 1991, 1992, 1995 Free Software Foundation.
+   Copyright 1989, 91, 92, 93, 94, 95, 1996 Free Software Foundation.
 
 This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
@@ -556,8 +556,9 @@ static const template i386_optab[] = {
 {"fadd", 1, 0xd8c0, _, ShortForm, { FloatReg, 0, 0} },
 {"fadd", 2, 0xd8c0, _, ShortForm|FloatD, { FloatReg, FloatAcc, 0} },
 {"fadd", 0, 0xdcc1, _, NoModrm, { 0, 0, 0} }, /* alias for fadd %st, %st(1) */
-{"faddp", 1, 0xdac0, _, ShortForm, { FloatReg, 0, 0} },
-{"faddp", 2, 0xdac0, _, ShortForm|FloatD, { FloatReg, FloatAcc, 0} },
+{"faddp", 1, 0xdec0, _, ShortForm, { FloatReg, 0, 0} },
+{"faddp", 2, 0xdec0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"faddp", 2, 0xdec0, _, ShortForm, { FloatAcc, FloatReg, 0} },
 {"faddp", 0, 0xdec1, _, NoModrm, { 0, 0, 0} }, /* alias for faddp %st, %st(1) */
 {"fadds", 1, 0xd8, 0, Modrm, { Mem, 0, 0} },
 {"fiaddl", 1, 0xda, 0, Modrm, { Mem, 0, 0} },
@@ -575,8 +576,8 @@ static const template i386_optab[] = {
 {"fsub", 2, 0xdce0, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #endif
 {"fsub", 0, 0xdce1, _, NoModrm, { 0, 0, 0} },
-{"fsubp", 1, 0xdae0, _, ShortForm, { FloatReg, 0, 0} },
-{"fsubp", 2, 0xdae0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fsubp", 1, 0xdee0, _, ShortForm, { FloatReg, 0, 0} },
+{"fsubp", 2, 0xdee0, _, ShortForm, { FloatReg, FloatAcc, 0} },
 #ifdef NON_BROKEN_OPCODES
 {"fsubp", 2, 0xdee8, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #else
@@ -597,8 +598,8 @@ static const template i386_optab[] = {
 {"fsubr", 2, 0xdce8, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #endif
 {"fsubr", 0, 0xdce9, _, NoModrm, { 0, 0, 0} },
-{"fsubrp", 1, 0xdae8, _, ShortForm, { FloatReg, 0, 0} },
-{"fsubrp", 2, 0xdae8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fsubrp", 1, 0xdee8, _, ShortForm, { FloatReg, 0, 0} },
+{"fsubrp", 2, 0xdee8, _, ShortForm, { FloatReg, FloatAcc, 0} },
 #ifdef NON_BROKEN_OPCODES
 {"fsubrp", 2, 0xdee0, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #else
@@ -614,8 +615,9 @@ static const template i386_optab[] = {
 {"fmul", 1, 0xd8c8, _, ShortForm, { FloatReg, 0, 0} },
 {"fmul", 2, 0xd8c8, _, ShortForm|FloatD, { FloatReg, FloatAcc, 0} },
 {"fmul", 0, 0xdcc9, _, NoModrm, { 0, 0, 0} },
-{"fmulp", 1, 0xdac8, _, ShortForm, { FloatReg, 0, 0} },
-{"fmulp", 2, 0xdac8, _, ShortForm|FloatD, { FloatReg, FloatAcc, 0} },
+{"fmulp", 1, 0xdec8, _, ShortForm, { FloatReg, 0, 0} },
+{"fmulp", 2, 0xdec8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fmulp", 2, 0xdec8, _, ShortForm, { FloatAcc, FloatReg, 0} },
 {"fmulp", 0, 0xdec9, _, NoModrm, { 0, 0, 0} },
 {"fmuls", 1, 0xd8, 1, Modrm, { Mem, 0, 0} },
 {"fimull", 1, 0xda, 1, Modrm, { Mem, 0, 0} },
@@ -633,8 +635,8 @@ static const template i386_optab[] = {
 {"fdiv", 2, 0xdcf0, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #endif
 {"fdiv", 0, 0xdcf1, _, NoModrm, { 0, 0, 0} },
-{"fdivp", 1, 0xdaf0, _, ShortForm, { FloatReg, 0, 0} },
-{"fdivp", 2, 0xdaf0, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fdivp", 1, 0xdef0, _, ShortForm, { FloatReg, 0, 0} },
+{"fdivp", 2, 0xdef0, _, ShortForm, { FloatReg, FloatAcc, 0} },
 #ifdef NON_BROKEN_OPCODES
 {"fdivp", 2, 0xdef8, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #else
@@ -655,8 +657,8 @@ static const template i386_optab[] = {
 {"fdivr", 2, 0xdcf8, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #endif
 {"fdivr", 0, 0xdcf9, _, NoModrm, { 0, 0, 0} },
-{"fdivrp", 1, 0xdaf8, _, ShortForm, { FloatReg, 0, 0} },
-{"fdivrp", 2, 0xdaf8, _, ShortForm, { FloatReg, FloatAcc, 0} },
+{"fdivrp", 1, 0xdef8, _, ShortForm, { FloatReg, 0, 0} },
+{"fdivrp", 2, 0xdef8, _, ShortForm, { FloatReg, FloatAcc, 0} },
 #ifdef NON_BROKEN_OPCODES
 {"fdivrp", 2, 0xdef0, _, ShortForm, { FloatAcc, FloatReg, 0} },
 #else
@@ -715,6 +717,8 @@ static const template i386_optab[] = {
 {"frstor", 1, 0xdd, 4, Modrm, { Mem, 0, 0} },
 
 {"ffree", 1, 0xddc0, _, ShortForm, { FloatReg, 0, 0} },
+/* P6:free st(i), pop st */
+{"ffreep", 1, 0xdfc0, _, ShortForm, { FloatReg, 0, 0} },
 {"fnop", 0, 0xd9d0, _, NoModrm, { 0, 0, 0} },
 {"fwait", 0, 0x9b, _, NoModrm, { 0, 0, 0} },
 

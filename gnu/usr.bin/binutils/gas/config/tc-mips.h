@@ -58,12 +58,6 @@ extern int mips_local_label PARAMS ((const char *));
 #define TARGET_BYTES_BIG_ENDIAN		1
 #endif
 
-#if TARGET_BYTES_BIG_ENDIAN
-#define BYTE_ORDER	BIG_ENDIAN
-#else
-#define BYTE_ORDER      LITTLE_ENDIAN
-#endif
-
 /* The endianness of the target format may change based on command
    line arguments.  */
 #define TARGET_FORMAT mips_target_format()

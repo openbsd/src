@@ -1,3 +1,59 @@
+Fri Aug 30 12:16:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gmon.h: Replace #elif with #else/#endif.
+
+Thu Aug 29 17:04:10 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86-*-*): Recognize i686 for pentium pro.
+	* configure: Regenerate.
+
+Thu Aug 22 17:12:30 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Set and substitute HLDENV.
+	* configure: Rebuild.
+	* Makefile.in (HLDENV): New variable.
+	(gprof): Use $(HLDENV).
+
+Wed Aug  7 14:43:51 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* core.c (read_function_mappings): Cast xmalloc return.
+
+Thu Jul  4 12:01:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gprof.c (VERSION): Define as "2.7.1".
+
+	* Released binutils 2.7.
+
+	* bb_exit_func.c: Rename from __bb_exit_func.c, so that it can be
+	stored on a System V file system.
+
+Thu Jun 27 11:36:22 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Call AC_ISC_POSIX.
+	* configure: Rebuild.
+	* Makefile.in (gprof): Pass $(CFLAGS) during link.
+	* hertz.c: Don't include <sys/time.h>; let sysdep.h handle that.
+	If HAVE_SETITIMER is not defined, try using sysconf.
+
+Mon Jun 24 18:27:28 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (exec_prefix, bindir, libdir, mandir, infodir, datadir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): added.
+	* configure: Rebuilt.
+
+Mon Jun 24 12:03:09 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: On alpha*-*-osf*, link against libbfd.a if not
+	using shared libraries.
+	* configure: Rebuild with autoconf 2.10.
+
+Tue Jun 18 17:35:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* core.c (core_create_line_syms): Use xstrdup rather than strdup.
+	* source.c (source_file_lookup_path): Likewise.
+
 Mon Apr  8 14:44:33 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* configure.in: Permit --enable-shared to specify a list of

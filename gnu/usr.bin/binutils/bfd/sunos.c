@@ -863,12 +863,15 @@ sunos_add_dynamic_symbols (abfd, info, symsp, sym_countp, stringsp)
   unsigned long need;
 
   /* Make sure we have all the required sections.  */
-  if (! sunos_create_dynamic_sections (abfd, info,
-				       (((abfd->flags & DYNAMIC) != 0
-					 && ! info->relocateable)
-					? true
-					: false)))
-    return false;
+  if (info->hash->creator == abfd->xvec)
+    {
+      if (! sunos_create_dynamic_sections (abfd, info,
+					   (((abfd->flags & DYNAMIC) != 0
+					     && ! info->relocateable)
+					    ? true
+					    : false)))
+	return false;
+    }
 
   /* There is nothing else to do for a normal object.  */
   if ((abfd->flags & DYNAMIC) == 0)

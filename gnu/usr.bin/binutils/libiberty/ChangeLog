@@ -1,3 +1,93 @@
+Thu Aug 29 16:48:45 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config.table (i[345]86-*-*): Recognize i686 for pentium pro.
+
+Tue Aug 27 13:47:58 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* pexecute.c (pexecute) [MPW]: Remove old bogus code that
+	messed with arguments that included a '/', add escape chars
+	to double quotes, remove const decl from arg that Mac
+	compilers don't seem to like.
+
+Sat Aug 17 04:44:27 1996  Geoffrey Noer  <noer@cygnus.com>
+
+	* pexecute.c: Update test for win32 (&& ! cygwin32).
+	* choose-temp.c: fix WIN32 preprocessor defines
+
+Thu Aug 15 12:26:48 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Add @DASH_C_FLAG@ and @SEGMENT_FLAG({Default})@
+	to editing of default makefile rule.
+
+Sun Aug 11 21:03:27 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* alloca-norm.h:  Include <malloc.h> if _WIN32.
+	* argv.c:  Include non-prototyped decls for malloc and string
+	functions if ! _WIN32 or if __GNUC__.
+
+Thu Aug  8 12:42:40 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* config.h-vms: New file.
+	* makefile.vms: Use it.
+
+Wed Aug  7 17:16:12 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* getopt.c (_getopt_internal):  If argc is 0, just return (before
+	we reference *argv and segfault).
+
+Mon Aug  5 01:29:08 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (distclean): Add multilib.out.
+
+Thu Jul 18 17:40:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* alloca-norm.h: Change #ifdef sparc to #if defined (sparc) &&
+	defined (sun).  From Andrew Gierth <ANDREWG@microlise.co.uk>.
+
+Mon Jul  1 13:40:44 1996  Ken Raeburn  <raeburn@cygnus.com>
+
+	Tue May 28 15:29:03 1996  Pat Rankin  <rankin@eql.caltech.edu>
+
+	* vmsbuild.com (REQUIRD_OFILES): Add choose-temp.o and xstrdup.o.
+
+	Thu Jan 25 18:20:04 1996  Pat Rankin  <rankin@eql.caltech.edu>
+
+	* vmsbuild.com: Changes to handle DEFFUNC(on_exit).
+	(do_ofiles): Allow nonexistent source file in pass 3.
+	(chk_deffunc): New routine.
+
+Tue Jun 25 19:24:43 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* pexecute.c (PEXECUTE_VERBOSE): Define.
+	(MPW pexecute): Check flags & PEXECUTE_VERBOSE instead of verbose_flag.
+
+Tue Jun 25 23:11:48 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (docdir): Removed.
+
+Tue Jun 25 23:01:07 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (oldincludedir): Removed.
+
+Tue Jun 25 22:50:07 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (datadir): Set to $(prefix)/share.
+
+Thu Jun 20 21:17:52 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cplus-dem.c (demangle_arm_pt): Reindent.  Avoid endless loop by
+	checking for errors from do_type.
+
+Tue Jun 18 14:36:19 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* makefile.vms: New file.
+	* xmalloc.c: If VMS, include <stdlib.h> and <unixlib.h> rather
+	than declaring malloc, realloc, and sbrk.
+
+Mon Jun 10 13:17:17 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* pexecute.c: New file.
+
 Wed Jun  5 16:57:45 1996  Richard Henderson  <rth@tamu.edu>
 
 	* xmalloc.c: Declare sbrk.

@@ -121,7 +121,8 @@ struct external_PE_filehdr
 
 
 #define FILHDR struct external_PE_filehdr
-
+#undef FILHSZ
+#define FILHSZ 152
 
 #endif
 
@@ -158,7 +159,7 @@ typedef struct
 
 
 #undef AOUTSZ
-#define AOUTSZ sizeof(PEAOUTHDR)
+#define AOUTSZ (AOUTHDRSZ + 196)
 
 #undef  E_FILNMLEN
 #define E_FILNMLEN	18	/* # characters in a file name		*/

@@ -42,32 +42,32 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 extern int fprintf PARAMS ((FILE *, const char *, ...));
 #endif
 
-char *default_target = NULL;	/* default at runtime */
+static char *default_target = NULL;	/* default at runtime */
 
 extern char *program_version;
 
-int show_version = 0;		/* show the version number */
-int dump_section_contents;	/* -s */
-int dump_section_headers;	/* -h */
-boolean dump_file_header;	/* -f */
-int dump_symtab;		/* -t */
-int dump_dynamic_symtab;	/* -T */
-int dump_reloc_info;		/* -r */
-int dump_dynamic_reloc_info;	/* -R */
-int dump_ar_hdrs;		/* -a */
-int dump_private_headers;	/* -p */
-int with_line_numbers;		/* -l */
-boolean with_source_code;	/* -S */
-int show_raw_insn;		/* --show-raw-insn */
-int dump_stab_section_info;	/* --stabs */
-boolean disassemble;		/* -d */
-boolean disassemble_all;	/* -D */
-boolean formats_info;		/* -i */
-char *only;			/* -j secname */
-int wide_output;		/* -w */
-bfd_vma start_address = (bfd_vma) -1; /* --start-address */
-bfd_vma stop_address = (bfd_vma) -1;  /* --stop-address */
-int dump_debugging;		/* --debugging */
+static int show_version = 0;		/* show the version number */
+static int dump_section_contents;	/* -s */
+static int dump_section_headers;	/* -h */
+static boolean dump_file_header;	/* -f */
+static int dump_symtab;			/* -t */
+static int dump_dynamic_symtab;		/* -T */
+static int dump_reloc_info;		/* -r */
+static int dump_dynamic_reloc_info;	/* -R */
+static int dump_ar_hdrs;		/* -a */
+static int dump_private_headers;	/* -p */
+static int with_line_numbers;		/* -l */
+static boolean with_source_code;	/* -S */
+static int show_raw_insn;		/* --show-raw-insn */
+static int dump_stab_section_info;	/* --stabs */
+static boolean disassemble;		/* -d */
+static boolean disassemble_all;		/* -D */
+static boolean formats_info;		/* -i */
+static char *only;			/* -j secname */
+static int wide_output;			/* -w */
+static bfd_vma start_address = (bfd_vma) -1; /* --start-address */
+static bfd_vma stop_address = (bfd_vma) -1;  /* --stop-address */
+static int dump_debugging;		/* --debugging */
 
 /* Extra info to pass to the disassembler address printing function.  */
 struct objdump_disasm_info {
@@ -77,25 +77,28 @@ struct objdump_disasm_info {
 };
 
 /* Architecture to disassemble for, or default if NULL.  */
-char *machine = (char *) NULL;
+static char *machine = (char *) NULL;
+
+/* Endianness to disassemble for, or default if BFD_ENDIAN_UNKNOWN.  */
+static enum bfd_endian endian = BFD_ENDIAN_UNKNOWN;
 
 /* The symbol table.  */
-asymbol **syms;
+static asymbol **syms;
 
 /* Number of symbols in `syms'.  */
-long symcount = 0;
+static long symcount = 0;
 
 /* The sorted symbol table.  */
-asymbol **sorted_syms;
+static asymbol **sorted_syms;
 
 /* Number of symbols in `sorted_syms'.  */
-long sorted_symcount = 0;
+static long sorted_symcount = 0;
 
 /* The dynamic symbol table.  */
-asymbol **dynsyms;
+static asymbol **dynsyms;
 
 /* Number of symbols in `dynsyms'.  */
-long dynsymcount = 0;
+static long dynsymcount = 0;
 
 /* Forward declarations.  */
 
@@ -112,7 +115,7 @@ static void
 dump_dynamic_relocs PARAMS ((bfd * abfd));
 
 static void
-dump_reloc_set PARAMS ((bfd *, arelent **, long));
+dump_reloc_set PARAMS ((bfd *, asection *, arelent **, long));
 
 static void
 dump_symbols PARAMS ((bfd *abfd, boolean dynamic));
@@ -132,7 +135,7 @@ show_line PARAMS ((bfd *, asection *, bfd_vma));
 static const char *
 endian_string PARAMS ((enum bfd_endian));
 
-void
+static void
 usage (stream, status)
      FILE *stream;
      int status;
@@ -148,7 +151,7 @@ Usage: %s [-ahifdDprRtTxsSlw] [-b bfdname] [-m machine] [-j section-name]\n\
        [--syms] [--all-headers] [--dynamic-syms] [--dynamic-reloc]\n\
        [--wide] [--version] [--help] [--private-headers]\n\
        [--start-address=addr] [--stop-address=addr]\n\
-       [--show-raw-insn] objfile...\n\
+       [--show-raw-insn] [-EB|-EL] [--endian={big|little}] objfile...\n\
 at least one option besides -l (--line-numbers) must be given\n");
   list_supported_targets (program_name, stream);
   exit (status);
@@ -156,7 +159,8 @@ at least one option besides -l (--line-numbers) must be given\n");
 
 /* 150 isn't special; it's just an arbitrary non-ASCII char value.  */
 
-#define OPTION_START_ADDRESS (150)
+#define OPTION_ENDIAN (150)
+#define OPTION_START_ADDRESS (OPTION_ENDIAN + 1)
 #define OPTION_STOP_ADDRESS (OPTION_START_ADDRESS + 1)
 
 static struct option long_options[]=
@@ -170,6 +174,7 @@ static struct option long_options[]=
   {"disassemble-all", no_argument, NULL, 'D'},
   {"dynamic-reloc", no_argument, NULL, 'R'},
   {"dynamic-syms", no_argument, NULL, 'T'},
+  {"endian", required_argument, NULL, OPTION_ENDIAN},
   {"file-headers", no_argument, NULL, 'f'},
   {"full-contents", no_argument, NULL, 's'},
   {"headers", no_argument, NULL, 'h'},
@@ -347,7 +352,7 @@ slurp_dynamic_symtab (abfd)
    COUNT is the number of elements in SYMBOLS.
    Return the number of useful symbols. */
 
-long
+static long
 remove_useless_symbols (symbols, count)
      asymbol **symbols;
      long count;
@@ -905,7 +910,7 @@ objdump_sprintf (va_alist)
 }
 #endif
 
-void
+static void
 disassemble_data (abfd)
      bfd *abfd;
 {
@@ -950,6 +955,16 @@ disassemble_data (abfd)
       abfd->arch_info = info;
     }
 
+  if (endian != BFD_ENDIAN_UNKNOWN)
+    {
+      struct bfd_target *xvec;
+
+      xvec = (struct bfd_target *) xmalloc (sizeof (struct bfd_target));
+      memcpy (xvec, abfd->xvec, sizeof (struct bfd_target));
+      xvec->byteorder = endian;
+      abfd->xvec = xvec;
+    }
+
   disassemble_fn = disassembler (abfd);
   if (!disassemble_fn)
     {
@@ -959,6 +974,7 @@ disassemble_data (abfd)
       exit (1);
     }
 
+  disasm_info.flavour = bfd_get_flavour (abfd);
   disasm_info.arch = bfd_get_arch (abfd);
   disasm_info.mach = bfd_get_mach (abfd);
   if (bfd_big_endian (abfd))
@@ -1171,14 +1187,13 @@ disassemble_data (abfd)
    could be a direct-mapped table, but instead we build one the first
    time we need it.  */
 
-void dump_section_stabs PARAMS ((bfd *abfd, char *stabsect_name,
-				 char *strsect_name));
+static void dump_section_stabs PARAMS ((bfd *abfd, char *stabsect_name,
+					char *strsect_name));
 
 /* Dump the stabs sections from an object file that has a section that
-   uses Sun stabs encoding.  It has to use some hooks into BFD because
-   string table sections are not normally visible to BFD callers.  */
+   uses Sun stabs encoding.  */
 
-void
+static void
 dump_stabs (abfd)
      bfd *abfd;
 {
@@ -1188,7 +1203,7 @@ dump_stabs (abfd)
   dump_section_stabs (abfd, "$GDB_SYMBOLS$", "$GDB_STRINGS$");
 }
 
-static struct internal_nlist *stabs;
+static bfd_byte *stabs;
 static bfd_size_type stab_size;
 
 static char *strtab;
@@ -1199,7 +1214,7 @@ static bfd_size_type stabstr_size;
    If the section exists and was read, allocate the space and return true.
    Otherwise return false.  */
 
-boolean
+static boolean
 read_section_stabs (abfd, stabsect_name, strsect_name)
      bfd *abfd;
      char *stabsect_name;
@@ -1225,7 +1240,7 @@ read_section_stabs (abfd, stabsect_name, strsect_name)
   stab_size    = bfd_section_size (abfd, stabsect);
   stabstr_size = bfd_section_size (abfd, stabstrsect);
 
-  stabs  = (struct internal_nlist *) xmalloc (stab_size);
+  stabs  = (bfd_byte *) xmalloc (stab_size);
   strtab = (char *) xmalloc (stabstr_size);
   
   if (! bfd_get_section_contents (abfd, stabsect, (PTR) stabs, 0, stab_size))
@@ -1252,20 +1267,25 @@ read_section_stabs (abfd, stabsect_name, strsect_name)
   return true;
 }
 
-#define SWAP_SYMBOL(symp, abfd) \
-{ \
-    (symp)->n_strx = bfd_h_get_32(abfd,			\
-				  (unsigned char *)&(symp)->n_strx);	\
-    (symp)->n_desc = bfd_h_get_16 (abfd,			\
-				   (unsigned char *)&(symp)->n_desc);  	\
-    (symp)->n_value = bfd_h_get_32 (abfd,			\
-				    (unsigned char *)&(symp)->n_value);	\
-}
+/* Stabs entries use a 12 byte format:
+     4 byte string table index
+     1 byte stab type
+     1 byte stab other field
+     2 byte stab desc field
+     4 byte stab value
+   FIXME: This will have to change for a 64 bit object format.  */
+
+#define STRDXOFF (0)
+#define TYPEOFF (4)
+#define OTHEROFF (5)
+#define DESCOFF (6)
+#define VALOFF (8)
+#define STABSIZE (12)
 
 /* Print ABFD's stabs section STABSECT_NAME (in `stabs'),
    using string table section STRSECT_NAME (in `strtab').  */
 
-void
+static void
 print_section_stabs (abfd, stabsect_name, strsect_name)
      bfd *abfd;
      char *stabsect_name;
@@ -1273,8 +1293,10 @@ print_section_stabs (abfd, stabsect_name, strsect_name)
 {
   int i;
   unsigned file_string_table_offset = 0, next_file_string_table_offset = 0;
-  struct internal_nlist *stabp = stabs,
-  *stabs_end = (struct internal_nlist *) (stab_size + (char *) stabs);
+  bfd_byte *stabp, *stabs_end;
+
+  stabp = stabs;
+  stabs_end = stabp + stab_size;
 
   printf ("Contents of %s section:\n\n", stabsect_name);
   printf ("Symnum n_type n_othr n_desc n_value  n_strx String\n");
@@ -1284,41 +1306,50 @@ print_section_stabs (abfd, stabsect_name, strsect_name)
      We start the index at -1 because there is a dummy symbol on
      the front of stabs-in-{coff,elf} sections that supplies sizes.  */
 
-  for (i = -1; stabp < stabs_end; stabp++, i++)
+  for (i = -1; stabp < stabs_end; stabp += STABSIZE, i++)
     {
       const char *name;
+      unsigned long strx;
+      unsigned char type, other;
+      unsigned short desc;
+      bfd_vma value;
 
-      SWAP_SYMBOL (stabp, abfd);
+      strx = bfd_h_get_32 (abfd, stabp + STRDXOFF);
+      type = bfd_h_get_8 (abfd, stabp + TYPEOFF);
+      other = bfd_h_get_8 (abfd, stabp + OTHEROFF);
+      desc = bfd_h_get_16 (abfd, stabp + DESCOFF);
+      value = bfd_h_get_32 (abfd, stabp + VALOFF);
+
       printf ("\n%-6d ", i);
       /* Either print the stab name, or, if unnamed, print its number
 	 again (makes consistent formatting for tools like awk). */
-      name = bfd_get_stab_name (stabp->n_type);
+      name = bfd_get_stab_name (type);
       if (name != NULL)
 	printf ("%-6s", name);
-      else if (stabp->n_type == N_UNDF)
+      else if (type == N_UNDF)
 	printf ("HdrSym");
       else
-	printf ("%-6d", stabp->n_type);
-      printf (" %-6d %-6d ", stabp->n_other, stabp->n_desc);
-      printf_vma (stabp->n_value);
-      printf (" %-6lu", stabp->n_strx);
+	printf ("%-6d", type);
+      printf (" %-6d %-6d ", other, desc);
+      printf_vma (value);
+      printf (" %-6lu", strx);
 
       /* Symbols with type == 0 (N_UNDF) specify the length of the
 	 string table associated with this file.  We use that info
 	 to know how to relocate the *next* file's string table indices.  */
 
-      if (stabp->n_type == N_UNDF)
+      if (type == N_UNDF)
 	{
 	  file_string_table_offset = next_file_string_table_offset;
-	  next_file_string_table_offset += stabp->n_value;
+	  next_file_string_table_offset += value;
 	}
       else
 	{
 	  /* Using the (possibly updated) string table offset, print the
 	     string (if any) associated with this symbol.  */
 
-	  if ((stabp->n_strx + file_string_table_offset) < stabstr_size)
-	    printf (" %s", &strtab[stabp->n_strx + file_string_table_offset]);
+	  if ((strx + file_string_table_offset) < stabstr_size)
+	    printf (" %s", &strtab[strx + file_string_table_offset]);
 	  else
 	    printf (" *");
 	}
@@ -1326,7 +1357,7 @@ print_section_stabs (abfd, stabsect_name, strsect_name)
   printf ("\n\n");
 }
 
-void
+static void
 dump_section_stabs (abfd, stabsect_name, strsect_name)
      bfd *abfd;
      char *stabsect_name;
@@ -1340,8 +1371,15 @@ dump_section_stabs (abfd, stabsect_name, strsect_name)
        s != NULL;
        s = s->next)
     {
-      if (strncmp (stabsect_name, s->name, strlen (stabsect_name)) == 0
-	  && strncmp (strsect_name, s->name, strlen (strsect_name)) != 0)
+      int len;
+
+      len = strlen (stabsect_name);
+
+/* If the prefix matches, and the files section name ends with a nul or a digit,
+   then we match.  Ie: we want either an exact match or a a section followed by 
+   a number.  */
+      if (strncmp (stabsect_name, s->name, len) == 0
+	  && (s->name[len] == '\000' || isdigit (s->name[len])))
 	{
 	  if (read_section_stabs (abfd, s->name, strsect_name))
 	    {
@@ -1386,6 +1424,7 @@ bfd *abfd;
 {
   bfd_print_private_bfd_data (abfd, stdout);
 }
+
 static void
 display_bfd (abfd)
      bfd *abfd;
@@ -1684,7 +1723,7 @@ dump_relocs (abfd)
 	  else
 	    {
 	      printf ("\n");
-	      dump_reloc_set (abfd, relpp, relcount);
+	      dump_reloc_set (abfd, a, relpp, relcount);
 	      printf ("\n\n");
 	    }
 	  free (relpp);
@@ -1723,7 +1762,7 @@ dump_dynamic_relocs (abfd)
       else
 	{
 	  printf ("\n");
-	  dump_reloc_set (abfd, relpp, relcount);
+	  dump_reloc_set (abfd, (asection *) NULL, relpp, relcount);
 	  printf ("\n\n");
 	}
       free (relpp);
@@ -1731,12 +1770,15 @@ dump_dynamic_relocs (abfd)
 }
 
 static void
-dump_reloc_set (abfd, relpp, relcount)
+dump_reloc_set (abfd, sec, relpp, relcount)
      bfd *abfd;
+     asection *sec;
      arelent **relpp;
      long relcount;
 {
   arelent **p;
+  char *last_filename, *last_functionname;
+  unsigned int last_line;
 
   /* Get column headers lined up reasonably.  */
   {
@@ -1750,11 +1792,17 @@ dump_reloc_set (abfd, relpp, relcount)
     printf ("OFFSET %*s TYPE %*s VALUE \n", width, "", 12, "");
   }
 
+  last_filename = NULL;
+  last_functionname = NULL;
+  last_line = 0;
+
   for (p = relpp; relcount && *p != (arelent *) NULL; p++, relcount--)
     {
       arelent *q = *p;
-      CONST char *sym_name;
-      CONST char *section_name;
+      const char *filename, *functionname;
+      unsigned int line;
+      const char *sym_name;
+      const char *section_name;
 
       if (start_address != (bfd_vma) -1
 	  && q->address < start_address)
@@ -1762,6 +1810,37 @@ dump_reloc_set (abfd, relpp, relcount)
       if (stop_address != (bfd_vma) -1
 	  && q->address > stop_address)
 	continue;
+
+      if (with_line_numbers
+	  && sec != NULL
+	  && bfd_find_nearest_line (abfd, sec, syms, q->address,
+				    &filename, &functionname, &line))
+	{
+	  if (functionname != NULL
+	      && (last_functionname == NULL
+		  || strcmp (functionname, last_functionname) != 0))
+	    {
+	      printf ("%s():\n", functionname);
+	      if (last_functionname != NULL)
+		free (last_functionname);
+	      last_functionname = xstrdup (functionname);
+	    }
+	  if (line > 0
+	      && (line != last_line
+		  || (filename != NULL
+		      && last_filename != NULL
+		      && strcmp (filename, last_filename) != 0)))
+	    {
+	      printf ("%s:%u\n", filename == NULL ? "???" : filename, line);
+	      last_line = line;
+	      if (last_filename != NULL)
+		free (last_filename);
+	      if (filename == NULL)
+		last_filename = NULL;
+	      else
+		last_filename = xstrdup (filename);
+	    }
+	}
 
       if (q->sym_ptr_ptr && *q->sym_ptr_ptr)
 	{
@@ -1801,10 +1880,6 @@ dump_reloc_set (abfd, relpp, relcount)
 /* The length of the longest architecture name + 1.  */
 #define LONGEST_ARCH sizeof("rs6000:6000")
 
-#ifndef L_tmpnam
-#define L_tmpnam 25
-#endif
-
 static const char *
 endian_string (endian)
      enum bfd_endian endian;
@@ -1823,13 +1898,11 @@ endian_string (endian)
 static void
 display_target_list ()
 {
-  extern char *tmpnam ();
   extern bfd_target *bfd_target_vector[];
-  char tmparg[L_tmpnam];
   char *dummy_name;
   int t;
 
-  dummy_name = tmpnam (tmparg);
+  dummy_name = choose_temp_base ();
   for (t = 0; bfd_target_vector[t]; t++)
     {
       bfd_target *p = bfd_target_vector[t];
@@ -1859,6 +1932,7 @@ display_target_list ()
 		  bfd_printable_arch_mach ((enum bfd_architecture) a, 0));
     }
   unlink (dummy_name);
+  free (dummy_name);
 }
 
 /* Print a table showing which architectures are supported for entries
@@ -1871,8 +1945,6 @@ display_info_table (first, last)
      int last;
 {
   extern bfd_target *bfd_target_vector[];
-  extern char *tmpnam ();
-  char tmparg[L_tmpnam];
   int t, a;
   char *dummy_name;
 
@@ -1882,7 +1954,7 @@ display_info_table (first, last)
     printf ("%s ", bfd_target_vector[t]->name);
   putchar ('\n');
 
-  dummy_name = tmpnam (tmparg);
+  dummy_name = choose_temp_base ();
   for (a = (int) bfd_arch_obscure + 1; a < (int) bfd_arch_last; a++)
     if (strcmp (bfd_printable_arch_mach (a, 0), "UNKNOWN!") != 0)
       {
@@ -1929,6 +2001,7 @@ display_info_table (first, last)
 	putchar ('\n');
       }
   unlink (dummy_name);
+  free (dummy_name);
 }
 
 /* Print tables of all the target-architecture combinations that
@@ -1994,8 +2067,8 @@ main (argc, argv)
 
   bfd_init ();
 
-  while ((c = getopt_long (argc, argv, "pib:m:VdDlfahrRtTxsSj:w", long_options,
-			   (int *) 0))
+  while ((c = getopt_long (argc, argv, "pib:m:VdDlfahrRtTxsSj:wE:",
+			   long_options, (int *) 0))
 	 != EOF)
     {
       if (c != 'l' && c != OPTION_START_ADDRESS && c != OPTION_STOP_ADDRESS)
@@ -2077,6 +2150,29 @@ main (argc, argv)
 	  break;
 	case OPTION_STOP_ADDRESS:
 	  stop_address = parse_vma (optarg, "--stop-address");
+	  break;
+	case 'E':
+	  if (strcmp (optarg, "B") == 0)
+	    endian = BFD_ENDIAN_BIG;
+	  else if (strcmp (optarg, "L") == 0)
+	    endian = BFD_ENDIAN_LITTLE;
+	  else
+	    {
+	      fprintf (stderr, "%s: unrecognized -E option\n", program_name);
+	      usage (stderr, 1);
+	    }
+	  break;
+	case OPTION_ENDIAN:
+	  if (strncmp (optarg, "big", strlen (optarg)) == 0)
+	    endian = BFD_ENDIAN_BIG;
+	  else if (strncmp (optarg, "little", strlen (optarg)) == 0)
+	    endian = BFD_ENDIAN_LITTLE;
+	  else
+	    {
+	      fprintf (stderr, "%s: unrecognized --endian type `%s'\n",
+		      program_name, optarg);
+	      usage (stderr, 1);
+	    }
 	  break;
 	default:
 	  usage (stderr, 1);

@@ -40,6 +40,7 @@ SECTION
 
 static INLINE struct elf_segment_map *make_mapping
   PARAMS ((bfd *, asection **, unsigned int, unsigned int, boolean));
+static boolean map_sections_to_segments PARAMS ((bfd *));
 static int elf_sort_sections PARAMS ((const PTR, const PTR));
 static boolean assign_file_positions_for_segments PARAMS ((bfd *));
 static boolean assign_file_positions_except_relocs PARAMS ((bfd *));
@@ -211,6 +212,15 @@ _bfd_elf_make_section_from_shdr (abfd, hdr, name)
       || strncmp (name, ".stab", sizeof ".stab" - 1) == 0)
     flags |= SEC_DEBUGGING;
 
+  /* As a GNU extension, if the name begins with .gnu.linkonce, we
+     only link a single copy of the section.  This is used to support
+     g++.  g++ will emit each template expansion in its own section.
+     The symbols will be defined as weak, so that multiple definitions
+     are permitted.  The GNU linker extension is to actually discard
+     all but one of the sections.  */
+  if (strncmp (name, ".gnu.linkonce", sizeof ".gnu.linkonce" - 1) == 0)
+    flags |= SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
+
   if (! bfd_set_section_flags (abfd, newsect, flags))
     return false;
 
@@ -227,7 +237,11 @@ _bfd_elf_make_section_from_shdr (abfd, hdr, name)
 	      && phdr->p_paddr != 0
 	      && phdr->p_vaddr != phdr->p_paddr
 	      && phdr->p_vaddr <= hdr->sh_addr
-	      && phdr->p_vaddr + phdr->p_memsz >= hdr->sh_addr + hdr->sh_size)
+	      && phdr->p_vaddr + phdr->p_memsz >= hdr->sh_addr + hdr->sh_size
+	      && ((flags & SEC_LOAD) == 0
+		  || (phdr->p_offset <= hdr->sh_offset
+		      && (phdr->p_offset + phdr->p_filesz
+			  >= hdr->sh_offset + hdr->sh_size))))
 	    {
 	      newsect->lma += phdr->p_paddr - phdr->p_vaddr;
 	      break;
@@ -1045,7 +1059,8 @@ elf_fake_sections (abfd, asect, failedptrarg)
 
   this_hdr->sh_flags = 0;
 
-  if ((asect->flags & SEC_ALLOC) != 0)
+  if ((asect->flags & SEC_ALLOC) != 0
+      || asect->user_set_vma)
     this_hdr->sh_addr = asect->vma;
   else
     this_hdr->sh_addr = 0;
@@ -1740,42 +1755,96 @@ map_sections_to_segments (abfd)
       && (dynsec->flags & SEC_LOAD) == 0)
     dynsec = NULL;
 
-  /* Deal with -Ttext or something similar such that the
-     first section is not adjacent to the program headers.  */
-  if (count
-      && ((sections[0]->lma % maxpagesize) <
-	  (elf_tdata (abfd)->program_header_size % maxpagesize)))
-    phdr_in_section = false;
+  /* Deal with -Ttext or something similar such that the first section
+     is not adjacent to the program headers.  This is an
+     approximation, since at this point we don't know exactly how many
+     program headers we will need.  */
+  if (count > 0)
+    {
+      bfd_size_type phdr_size;
+
+      phdr_size = elf_tdata (abfd)->program_header_size;
+      if (phdr_size == 0)
+	phdr_size = get_elf_backend_data (abfd)->s->sizeof_phdr;
+      if ((abfd->flags & D_PAGED) == 0
+	  || sections[0]->lma % maxpagesize < phdr_size % maxpagesize)
+	phdr_in_section = false;
+    }
 
   for (i = 0, hdrpp = sections; i < count; i++, hdrpp++)
     {
       asection *hdr;
+      boolean new_segment;
 
       hdr = *hdrpp;
 
       /* See if this section and the last one will fit in the same
-         segment.  Don't put a loadable section after a non-loadable
-         section.  If we are building a dynamic executable, don't put
-         a writable section in a read only segment (we don't do this
-         for a non-dynamic executable because some people prefer to
-         have only one program segment; anybody can use PHDRS in their
-         linker script to control what happens anyhow).  */
-      if (last_hdr == NULL
-	  || ((BFD_ALIGN (last_hdr->lma + last_hdr->_raw_size, maxpagesize)
-	       >= hdr->lma)
-	      && ((last_hdr->flags & SEC_LOAD) != 0
-		  || (hdr->flags & SEC_LOAD) == 0)
-	      && (dynsec == NULL
-		  || writable
-		  || (hdr->flags & SEC_READONLY) != 0)))
+         segment.  */
+
+      if (last_hdr == NULL)
 	{
+	  /* If we don't have a segment yet, then we don't need a new
+	     one (we build the last one after this loop).  */
+	  new_segment = false;
+	}
+      else if (last_hdr->lma - last_hdr->vma != hdr->lma - hdr->vma)
+	{
+	  /* If this section has a different relation between the
+             virtual address and the load address, then we need a new
+             segment.  */
+	  new_segment = true;
+	}
+      else if (BFD_ALIGN (last_hdr->lma + last_hdr->_raw_size, maxpagesize)
+	       < hdr->lma)
+	{
+	  /* If putting this section in this segment would force us to
+             skip a page in the segment, then we need a new segment.  */
+	  new_segment = true;
+	}
+      else if ((abfd->flags & D_PAGED) == 0)
+	{
+	  /* If the file is not demand paged, which means that we
+             don't require the sections to be correctly aligned in the
+             file, then there is no other reason for a new segment.  */
+	  new_segment = false;
+	}
+      else if ((last_hdr->flags & SEC_LOAD) == 0
+	       && (hdr->flags & SEC_LOAD) != 0)
+	{
+	  /* We don't want to put a loadable section after a
+             nonloadable section in the same segment.  */
+	  new_segment = true;
+	}
+      else if (! writable
+	       && (hdr->flags & SEC_READONLY) == 0
+	       && (BFD_ALIGN (last_hdr->lma + last_hdr->_raw_size, maxpagesize)
+		   == hdr->lma))
+	{
+	  /* We don't want to put a writable section in a read only
+             segment, unless they are on the same page in memory
+             anyhow.  We already know that the last section does not
+             bring us past the current section on the page, so the
+             only case in which the new section is not on the same
+             page as the previous section is when the previous section
+             ends precisely on a page boundary.  */
+	  new_segment = true;
+	}
+      else
+	{
+	  /* Otherwise, we can use the same segment.  */
+	  new_segment = false;
+	}
+
+      if (! new_segment)
+	{
+	  if ((hdr->flags & SEC_READONLY) == 0)
+	    writable = true;
 	  last_hdr = hdr;
 	  continue;
 	}
 
-      /* This section won't fit in the program segment.  We must
-         create a new program header holding all the sections from
-         phdr_index until hdr.  */
+      /* We need a new program segment.  We must create a new program
+         header holding all the sections from phdr_index until hdr.  */
 
       m = make_mapping (abfd, sections, phdr_index, i, phdr_in_section);
       if (m == NULL)
@@ -1786,6 +1855,8 @@ map_sections_to_segments (abfd)
 
       if ((hdr->flags & SEC_READONLY) == 0)
 	writable = true;
+      else
+	writable = false;
 
       last_hdr = hdr;
       phdr_index = i;
@@ -1846,6 +1917,13 @@ elf_sort_sections (arg1, arg2)
   else if (sec1->vma > sec2->vma)
     return 1;
 
+  /* Sort by LMA.  Normally the LMA and the VMA will be the same, and
+     this will do nothing.  */
+  if (sec1->lma < sec2->lma)
+    return -1;
+  else if (sec1->lma > sec2->lma)
+    return 1;
+
   /* Put !SEC_LOAD sections after SEC_LOAD ones.  */
 
 #define TOEND(x) (((x)->flags & SEC_LOAD) == 0)
@@ -1885,7 +1963,7 @@ assign_file_positions_for_segments (abfd)
   struct elf_segment_map *m;
   unsigned int alloc;
   Elf_Internal_Phdr *phdrs;
-  file_ptr off;
+  file_ptr off, voff;
   bfd_vma filehdr_vaddr, filehdr_paddr;
   bfd_vma phdrs_vaddr, phdrs_paddr;
   Elf_Internal_Phdr *p;
@@ -1964,7 +2042,13 @@ assign_file_positions_for_segments (abfd)
       if (p->p_type == PT_LOAD
 	  && m->count > 0
 	  && (m->sections[0]->flags & SEC_LOAD) != 0)
-	off += (m->sections[0]->vma - off) % bed->maxpagesize;
+	{
+	  if ((abfd->flags & D_PAGED) != 0)
+	    off += (m->sections[0]->vma - off) % bed->maxpagesize;
+	  else
+	    off += ((m->sections[0]->vma - off)
+		    % (1 << bfd_get_section_alignment (abfd, m->sections[0])));
+	}
 
       if (m->count == 0)
 	p->p_vaddr = 0;
@@ -1978,7 +2062,8 @@ assign_file_positions_for_segments (abfd)
       else
 	p->p_paddr = m->sections[0]->lma;
 
-      if (p->p_type == PT_LOAD)
+      if (p->p_type == PT_LOAD
+	  && (abfd->flags & D_PAGED) != 0)
 	p->p_align = bed->maxpagesize;
       else if (m->count == 0)
 	p->p_align = bed->s->file_align;
@@ -2056,6 +2141,7 @@ assign_file_positions_for_segments (abfd)
 	    }
 	}
 
+      voff = off;
       for (i = 0, secpp = m->sections; i < m->count; i++, secpp++)
 	{
 	  asection *sec;
@@ -2064,6 +2150,7 @@ assign_file_positions_for_segments (abfd)
 
 	  sec = *secpp;
 	  flags = sec->flags;
+	  align = 1 << bfd_get_section_alignment (abfd, sec);
 
 	  if (p->p_type == PT_LOAD)
 	    {
@@ -2073,13 +2160,17 @@ assign_file_positions_for_segments (abfd)
                  the page size.  */
 	      if ((flags & SEC_ALLOC) != 0)
 		{
-		  adjust = (sec->vma - off) % bed->maxpagesize;
+		  if ((abfd->flags & D_PAGED) != 0)
+		    adjust = (sec->vma - voff) % bed->maxpagesize;
+		  else
+		    adjust = (sec->vma - voff) % align;
 		  if (adjust != 0)
 		    {
 		      if (i == 0)
 			abort ();
 		      p->p_memsz += adjust;
 		      off += adjust;
+		      voff += adjust;
 		      if ((flags & SEC_LOAD) != 0)
 			p->p_filesz += adjust;
 		    }
@@ -2089,6 +2180,8 @@ assign_file_positions_for_segments (abfd)
 
 	      if ((flags & SEC_LOAD) != 0)
 		off += sec->_raw_size;
+	      if ((flags & SEC_ALLOC) != 0)
+		voff += sec->_raw_size;
 	    }
 
 	  p->p_memsz += sec->_raw_size;
@@ -2096,7 +2189,6 @@ assign_file_positions_for_segments (abfd)
 	  if ((flags & SEC_LOAD) != 0)
 	    p->p_filesz += sec->_raw_size;
 
-	  align = 1 << bfd_get_section_alignment (abfd, sec);
 	  if (align > p->p_align)
 	    p->p_align = align;
 
@@ -2308,7 +2400,10 @@ assign_file_positions_except_relocs (abfd)
 		(hdr->bfd_section == NULL
 		 ? "*unknown*"
 		 : hdr->bfd_section->name)));
-	      off += (hdr->sh_addr - off) % bed->maxpagesize;
+	      if ((abfd->flags & D_PAGED) != 0)
+		off += (hdr->sh_addr - off) % bed->maxpagesize;
+	      else
+		off += (hdr->sh_addr - off) % hdr->sh_addralign;
 	      off = _bfd_elf_assign_file_position_for_section (hdr, off,
 							       false);
 	    }
@@ -2403,6 +2498,12 @@ prep_headers (abfd)
       break;
     case bfd_arch_powerpc:
       i_ehdrp->e_machine = EM_PPC;
+      break;
+    case bfd_arch_alpha:
+      i_ehdrp->e_machine = EM_ALPHA;
+      break;
+    case bfd_arch_sh:
+      i_ehdrp->e_machine = EM_SH;
       break;
       /* also note that EM_M32, AT&T WE32100 is unknown to bfd */
     default:

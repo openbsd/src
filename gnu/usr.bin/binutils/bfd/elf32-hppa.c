@@ -939,12 +939,13 @@ elf32_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
    relocation with modifications based on format and field.  */
 
 elf32_hppa_reloc_type **
-hppa_elf_gen_reloc_type (abfd, base_type, format, field, ignore)
+hppa_elf_gen_reloc_type (abfd, base_type, format, field, ignore, sym)
      bfd *abfd;
      elf32_hppa_reloc_type base_type;
      int format;
      int field;
      int ignore;
+     asymbol *sym;
 {
   elf32_hppa_reloc_type *finaltype;
   elf32_hppa_reloc_type **final_types;

@@ -10,6 +10,14 @@ Changes since binutils 2.6
 
 * Added --remove-leading-char argument to objcopy.
 
+* The objdump --line-numbers option is now meaningful with --reloc.
+
+* Added --line-numbers option to nm.
+
+* Added --endian/-EB/-EL option to objdump.
+
+* Added support for Alpha OpenVMS/AXP.
+
 Changes since binutils 2.5
 
 * Added -N/--strip-symbol and -K/--keep-symbol arguments to strip and objcopy.

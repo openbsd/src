@@ -99,6 +99,7 @@ exp_print_token (code)
 	{ NEXT,"NEXT" },
 	{ SIZEOF,"SIZEOF" },
 	{ ADDR,"ADDR" },
+	{ LOADADDR,"LOADADDR" },
 	{ MEMORY,"MEMORY" },
 	{ DEFINED,"DEFINED" },
 	{ TARGET_K,"TARGET" },
@@ -146,15 +147,13 @@ new_abs (value)
 static void 
 check (os, name, op)
      lang_output_section_statement_type *os;
-     CONST char *name;
-     CONST char *op;
+     const char *name;
+     const char *op;
 {
-  if (os == (lang_output_section_statement_type *)NULL) {
-    einfo("%F%P: %s uses undefined section %s\n", op, name);
-  }
-  if (os->processed == false) {
-    einfo("%F%P: %s forward reference of section %s\n",op, name);
-  }
+  if (os == NULL)
+    einfo ("%F%P: %s uses undefined section %s\n", op, name);
+  if (! os->processed)
+    einfo ("%F%P: %s forward reference of section %s\n", op, name);
 }
 
 etree_type *
@@ -296,6 +295,16 @@ fold_binary (tree, current_section, allocation_done, dot, dotp)
 	      BOP(ANDAND,&&);
 	      BOP(OROR,||);
 
+	    case MAX:
+	      if (result.value < other.value)
+		result = other;
+	      break;
+
+	    case MIN:
+	      if (result.value > other.value)
+		result = other;
+	      break;
+
 	    default:
 	      FAIL();
 	    }
@@ -401,27 +410,47 @@ fold_name (tree, current_section, allocation_done, dot)
 	break;
 
       case ADDR:
+	if (allocation_done != lang_first_phase_enum)
+	  {
+	    lang_output_section_statement_type *os;
 
-	if (allocation_done != lang_first_phase_enum) {
-	  lang_output_section_statement_type *os =
-	    lang_output_section_find(tree->name.name);
-	  check(os,tree->name.name,"ADDR");
-	  result =    new_rel((bfd_vma)0,  os);
-	}
-	else {
-	  result = invalid();
-	}
+	    os = lang_output_section_find (tree->name.name);
+	    check (os, tree->name.name, "ADDR");
+	    result = new_rel (0, os);
+	  }
+	else
+	  result = invalid ();
 	break;
+
+      case LOADADDR:
+	if (allocation_done != lang_first_phase_enum)
+	  {
+	    lang_output_section_statement_type *os;
+
+	    os = lang_output_section_find (tree->name.name);
+	    check (os, tree->name.name, "LOADADDR");
+	    if (os->load_base == NULL)
+	      result = new_rel (0, os);
+	    else
+	      result = exp_fold_tree_no_dot (os->load_base,
+					     abs_output_section,
+					     allocation_done);
+	  }
+	else
+	  result = invalid ();
+	break;
+
       case SIZEOF:
-	if(allocation_done != lang_first_phase_enum) {
-	  lang_output_section_statement_type *os = 
-	    lang_output_section_find(tree->name.name);
-	  check(os,tree->name.name,"SIZEOF");
-	  result = new_abs((bfd_vma)(os->bfd_section->_raw_size));
-	}
-	else {
-	  result = invalid();
-	}
+	if (allocation_done != lang_first_phase_enum)
+	  {
+	    lang_output_section_statement_type *os;
+
+	    os = lang_output_section_find (tree->name.name);
+	    check (os, tree->name.name, "SIZEOF");
+	    result = new_abs (os->bfd_section->_raw_size);
+	  }
+	else
+	  result = invalid ();
 	break;
 
       default:
@@ -441,15 +470,18 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 {
   etree_value_type result;
 
-  if (tree == (etree_type *)NULL) {
-    result.valid = false;
-  }
-  else {
-    switch (tree->type.node_class) 
+  if (tree == NULL)
     {
-     case etree_value:
-      result = new_rel(tree->value.value, current_section);
+      result.valid = false;
+      return result;
+    }
+
+  switch (tree->type.node_class) 
+    {
+    case etree_value:
+      result = new_rel (tree->value.value, current_section);
       break;
+
     case etree_rel:
       if (allocation_done != lang_final_phase_enum)
 	result.valid = false;
@@ -459,114 +491,121 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 			   + tree->rel.section->output_offset),
 			  current_section);
       break;
-     case etree_unary:
-      result = exp_fold_tree(tree->unary.child,
-			     current_section,
-			     allocation_done, dot, dotp);
-      if (result.valid == true)
-      {
-	switch(tree->type.node_code) 
+
+    case etree_unary:
+      result = exp_fold_tree (tree->unary.child,
+			      current_section,
+			      allocation_done, dot, dotp);
+      if (result.valid)
 	{
-	 case ALIGN_K:
-	  if (allocation_done != lang_first_phase_enum) {
-	    result = new_rel_from_section(ALIGN_N(dot,
-						result.value) ,
-					  current_section);
-
-	  }
-	  else {
-	    result.valid = false;
-	  }
-	  break;
-	 case ABSOLUTE:
-	  if (allocation_done != lang_first_phase_enum && result.valid)
+	  switch (tree->type.node_code) 
 	    {
-	      result.value += result.section->bfd_section->vma;
-	      result.section = abs_output_section;
+	    case ALIGN_K:
+	      if (allocation_done != lang_first_phase_enum)
+		result = new_rel_from_section (ALIGN_N (dot, result.value),
+					       current_section);
+	      else
+		result.valid = false;
+	      break;
+
+	    case ABSOLUTE:
+	      if (allocation_done != lang_first_phase_enum && result.valid)
+		{
+		  result.value += result.section->bfd_section->vma;
+		  result.section = abs_output_section;
+		}
+	      else 
+		result.valid = false;
+	      break;
+
+	    case '~':
+	      make_abs (&result);
+	      result.value = ~result.value;
+	      break;
+
+	    case '!':
+	      make_abs (&result);
+	      result.value = !result.value;
+	      break;
+
+	    case '-':
+	      make_abs (&result);
+	      result.value = -result.value;
+	      break;
+
+	    case NEXT:
+	      /* Return next place aligned to value.  */
+	      if (allocation_done == lang_allocating_phase_enum)
+		{
+		  make_abs (&result);
+		  result.value = ALIGN_N (dot, result.value);
+		}
+	      else
+		result.valid = false;
+	      break;
+
+	    default:
+	      FAIL ();
+	      break;
 	    }
-	  else 
+	}
+      break;
+
+    case etree_trinary:
+      result = exp_fold_tree (tree->trinary.cond, current_section,
+			      allocation_done, dot, dotp);
+      if (result.valid)
+	result = exp_fold_tree ((result.value
+				 ? tree->trinary.lhs
+				 : tree->trinary.rhs),
+				current_section,
+				allocation_done, dot, dotp);
+      break;
+
+    case etree_binary:
+      result = fold_binary (tree, current_section, allocation_done,
+			    dot, dotp);
+      break;
+
+    case etree_assign:
+    case etree_provide:
+      if (tree->assign.dst[0] == '.' && tree->assign.dst[1] == 0)
+	{
+	  /* Assignment to dot can only be done during allocation */
+	  if (tree->type.node_class == etree_provide)
+	    einfo ("%F%S can not PROVIDE assignment to location counter\n");
+	  if (allocation_done == lang_allocating_phase_enum
+	      || (allocation_done == lang_final_phase_enum
+		  && current_section == abs_output_section))
 	    {
-	      result.valid = false;
+	      result = exp_fold_tree (tree->assign.src,
+				      current_section,
+				      lang_allocating_phase_enum, dot,
+				      dotp);
+	      if (! result.valid)
+		einfo ("%F%S invalid assignment to location counter\n");
+	      else
+		{
+		  if (current_section == NULL)
+		    einfo ("%F%S assignment to location counter invalid outside of SECTION\n");
+		  else
+		    {
+		      bfd_vma nextdot;
+
+		      nextdot = (result.value
+				 + current_section->bfd_section->vma);
+		      if (nextdot < dot
+			  && current_section != abs_output_section)
+			{
+			  einfo ("%F%S cannot move location counter backwards (from %V to %V)\n",
+				 dot, nextdot);
+			}
+		      else
+			*dotp = nextdot; 
+		    }
+		}
 	    }
-	  break;
-	 case '~':
-	  make_abs(&result);
-	  result.value = ~result.value;
-	  break;
-	 case '!':
-	  make_abs(&result);
-	  result.value = !result.value;
-	  break;
-	 case '-':
-	  make_abs(&result);
-	  result.value = -result.value;
-	  break;
-	 case NEXT:
-	  if (allocation_done ==lang_allocating_phase_enum) {
-	    make_abs(&result);
-	    result.value = ALIGN_N(dot, result.value);
-	  }
-	  else {
-	    /* Return next place aligned to value */
-	    result.valid = false;
-	  }
-	  break;
-	 default:
-	  FAIL();
 	}
-      }
-
-      break;
-     case etree_trinary:
-
-      result = exp_fold_tree(tree->trinary.cond,
-			     current_section,
-			     allocation_done, dot, dotp);
-      if (result.valid) {
-	result = exp_fold_tree(result.value ?
-			       tree->trinary.lhs:tree->trinary.rhs,
-			       current_section,
-			       allocation_done, dot, dotp);
-      }
-
-      break;
-     case etree_binary:
-      result = fold_binary(tree, current_section, allocation_done,
-			   dot, dotp);
-      break;
-     case etree_assign:
-     case etree_provide:
-      if (tree->assign.dst[0] == '.' && tree->assign.dst[1] == 0) {
-	/* Assignment to dot can only be done during allocation */
-	if (tree->type.node_class == etree_provide)
-	  einfo ("%F%S can not PROVIDE assignment to location counter\n");
-	if (allocation_done == lang_allocating_phase_enum
-	    || (allocation_done == lang_final_phase_enum
-		&& current_section == abs_output_section)) {
-	  result = exp_fold_tree(tree->assign.src,
-				 current_section,
-				 lang_allocating_phase_enum, dot, dotp);
-	  if (result.valid == false) {
-	    einfo("%F%S invalid assignment to location counter\n");
-	  }
-	  else {
-	    if (current_section ==
-		(lang_output_section_statement_type  *)NULL) {
-	      einfo("%F%S assignment to location counter invalid outside of SECTION\n");
-	    }
-	    else {
-	      bfd_vma nextdot =result.value +
-	       current_section->bfd_section->vma;
-	      if (nextdot < dot && current_section != abs_output_section) {
-		einfo("%F%S cannot move location counter backwards (from %V to %V)\n", dot, nextdot);
-	      }
-	      else {
-		*dotp = nextdot; 
-	      }
-	    }
-	  }
-	}
-      }
       else
 	{
 	  result = exp_fold_tree (tree->assign.src,
@@ -574,12 +613,15 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 				  dot, dotp);
 	  if (result.valid)
 	    {
+	      boolean create;
 	      struct bfd_link_hash_entry *h;
 
+	      if (tree->type.node_class == etree_assign)
+		create = true;
+	      else
+		create = false;
 	      h = bfd_link_hash_lookup (link_info.hash, tree->assign.dst,
-					(tree->type.node_class == etree_assign
-					 ? true : false),
-					false, false);
+					create, false, false);
 	      if (h == (struct bfd_link_hash_entry *) NULL)
 		{
 		  if (tree->type.node_class == etree_assign)
@@ -591,7 +633,7 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 		       && h->type != bfd_link_hash_common)
 		{
 		  /* Do nothing.  The symbol was defined by some
-                     object.  */
+		     object.  */
 		}
 	      else
 		{
@@ -602,20 +644,20 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 		  h->u.def.section = result.section->bfd_section;
 		}
 	    }
-	}  
+	}
       break;
-     case etree_name:
-      result = fold_name(tree, current_section, allocation_done, dot);
-      break;
-     default:
-      einfo("%F%S need more of these %d\n",tree->type.node_class );
 
+    case etree_name:
+      result = fold_name (tree, current_section, allocation_done, dot);
+      break;
+
+    default:
+      FAIL ();
+      break;
     }
-  }
 
   return result;
 }
-
 
 static etree_value_type 
 exp_fold_tree_no_dot (tree, current_section, allocation_done)
@@ -844,30 +886,24 @@ exp_print_tree (tree)
   }
 }
 
-
-
-
 bfd_vma
 exp_get_vma (tree, def, name, allocation_done)
      etree_type *tree;
-      bfd_vma def;
+     bfd_vma def;
      char *name;
      lang_phase_type allocation_done;
 {
   etree_value_type r;
 
-  if (tree != (etree_type *)NULL) {
-    r = exp_fold_tree_no_dot(tree,
-		 abs_output_section,
-		      allocation_done);
-    if (r.valid == false && name) {
-      einfo("%F%S nonconstant expression for %s\n",name);
+  if (tree != NULL)
+    {
+      r = exp_fold_tree_no_dot (tree, abs_output_section, allocation_done);
+      if (! r.valid && name != NULL)
+	einfo ("%F%S nonconstant expression for %s\n", name);
+      return r.value;
     }
-    return r.value;
-  }
-  else {
+  else
     return def;
-  }
 }
 
 int 

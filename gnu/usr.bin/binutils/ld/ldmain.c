@@ -1,5 +1,5 @@
 /* Main program of GNU linker.
-   Copyright (C) 1991, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
 This file is part of GLD, the Gnu Linker.
@@ -15,9 +15,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
+along with GLD; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -45,6 +45,12 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #endif
 
 #include <string.h>
+
+#ifdef HAVE_SBRK
+#ifdef NEED_DECLARATION_SBRK
+extern PTR sbrk ();
+#endif
+#endif
 
 static char *get_emulation PARAMS ((int, char **));
 static void set_scripts_dir PARAMS ((void));
@@ -321,8 +327,10 @@ main (argc, argv)
 
   if (config.map_file != NULL)
     lang_map ();
-  if (link_info.notice_all)
+  if (command_line.cref)
     output_cref (config.map_file != NULL ? config.map_file : stdout);
+  if (nocrossref_list != NULL)
+    check_nocrossrefs ();
 
   /* Even if we're producing relocateable output, some non-fatal errors should
      be reported in the exit status.  (What non-fatal errors, if any, do we
@@ -676,10 +684,9 @@ add_archive_element (info, abfd, name)
 
   /* FIXME: The following fields are not set: header.next,
      header.type, closed, passive_position, symbol_count,
-     next_real_file, is_archive, target, real, common_section,
-     common_output_section, complained.  This bit of code is from the
-     old decode_library_subfile function.  I don't know whether any of
-     those fields matters.  */
+     next_real_file, is_archive, target, real.  This bit of code is
+     from the old decode_library_subfile function.  I don't know
+     whether any of those fields matters.  */
 
   ldlang_add_file (input);
 
@@ -1032,6 +1039,9 @@ warning_callback (info, warning, symbol, abfd, section, address)
 
       if (! info.found)
 	einfo ("%B: %s\n", abfd, warning);
+
+      if (entry == NULL)
+	free (asymbols);
     }
 
   return true;
@@ -1242,7 +1252,7 @@ notice (info, name, abfd, section, value)
 	   bfd_is_und_section (section) ? "reference to" : "definition of",
 	   name);
 
-  if (info->notice_all)
+  if (command_line.cref || nocrossref_list != NULL)
     add_cref (name, abfd, section, value);
 
   return true;

@@ -256,7 +256,7 @@ struct xcoff_link_hash_entry
 	 set), this is the offset in toc_section.  */
       bfd_vma toc_offset;
       /* If the TOC entry comes from an input file, this is set to the
-         symbo lindex of the C_HIDEXT XMC_TC symbol.  */
+         symbol index of the C_HIDEXT XMC_TC or XMC_TD symbol.  */
       long toc_indx;
     } u;
 
@@ -300,6 +300,8 @@ struct xcoff_link_hash_entry
 #define XCOFF_HAS_SIZE (04000)
   /* Symbol is a function descriptor.  */
 #define XCOFF_DESCRIPTOR (010000)
+  /* Multiple definitions have been for the symbol.  */
+#define XCOFF_MULTIPLY_DEFINED (020000)
 
   /* The storage mapping class.  */
   unsigned char smclas;
@@ -1061,12 +1063,21 @@ _bfd_xcoff_bfd_link_add_symbols (abfd, info)
     {
     case bfd_object:
       return xcoff_link_add_object_symbols (abfd, info);
+
     case bfd_archive:
-      /* We need to look through the archive for stripped dynamic
-         objects, because they will not appear in the archive map even
-         though they should, perhaps, be included.  Also, if the
-         linker has no map, we just consider each object file in turn,
-         since that apparently is what the AIX native linker does.  */
+      /* If the archive has a map, do the usual search.  We then need
+         to check the archive for stripped dynamic objects, because
+         they will not appear in the archive map even though they
+         should, perhaps, be included.  If the archive has no map, we
+         just consider each object file in turn, since that apparently
+         is what the AIX native linker does.  */
+      if (bfd_has_map (abfd))
+	{
+	  if (! (_bfd_generic_link_add_archive_symbols
+		 (abfd, info, xcoff_link_check_archive_element)))
+	    return false;
+	}
+
       {
 	bfd *member;
 
@@ -1087,14 +1098,9 @@ _bfd_xcoff_bfd_link_add_symbols (abfd, info)
 	      }
 	    member = bfd_openr_next_archived_file (abfd, member);
 	  }
-
-	if (! bfd_has_map (abfd))
-	  return true;
-
-	/* Now do the usual search.  */
-	return (_bfd_generic_link_add_archive_symbols
-		(abfd, info, xcoff_link_check_archive_element));
       }
+
+      return true;
 
     default:
       bfd_set_error (bfd_error_wrong_format);
@@ -1202,7 +1208,10 @@ xcoff_link_check_ar_symbols (abfd, info, pneeded)
 	     defines it.  We also don't bring in symbols to satisfy
 	     undefined references in shared objects.  */
 	  if (h != (struct bfd_link_hash_entry *) NULL
-	      && h->type == bfd_link_hash_undefined)
+	      && h->type == bfd_link_hash_undefined
+	      && (info->hash->creator != abfd->xvec
+		  || (((struct xcoff_link_hash_entry *) h)->flags
+		      & XCOFF_DEF_DYNAMIC) == 0))
 	    {
 	      if (! (*info->callbacks->add_archive_element) (info, abfd, name))
 		return false;
@@ -1278,8 +1287,12 @@ xcoff_link_check_dynamic_ar_symbols (abfd, info, pneeded)
       h = bfd_link_hash_lookup (info->hash, name, false, false, true);
 
       /* We are only interested in symbols that are currently
-         undefined.  */
-      if (h != NULL && h->type == bfd_link_hash_undefined)
+         undefined.  At this point we know that we are using an XCOFF
+         hash table.  */
+      if (h != NULL
+	  && h->type == bfd_link_hash_undefined
+	  && (((struct xcoff_link_hash_entry *) h)->flags
+	      & XCOFF_DEF_DYNAMIC) == 0)
 	{
 	  if (! (*info->callbacks->add_archive_element) (info, abfd, name))
 	    return false;
@@ -1402,65 +1415,71 @@ xcoff_link_add_symbols (abfd, info)
 	return false;
     }
 
-  /* We need to build a .loader section, so we do it here.  This won't
-     work if we're producing an XCOFF output file with no XCOFF input
-     files.  FIXME.  */
-  if (xcoff_hash_table (info)->loader_section == NULL)
+  if (info->hash->creator == abfd->xvec)
     {
-      asection *lsec;
+      /* We need to build a .loader section, so we do it here.  This
+	 won't work if we're producing an XCOFF output file with no
+	 XCOFF input files.  FIXME.  */
+      if (xcoff_hash_table (info)->loader_section == NULL)
+	{
+	  asection *lsec;
 
-      lsec = bfd_make_section_anyway (abfd, ".loader");
-      if (lsec == NULL)
-	goto error_return;
-      xcoff_hash_table (info)->loader_section = lsec;
-      lsec->flags |= SEC_HAS_CONTENTS | SEC_IN_MEMORY;
-    }
-  /* Likewise for the linkage section.  */
-  if (xcoff_hash_table (info)->linkage_section == NULL)
-    {
-      asection *lsec;
+	  lsec = bfd_make_section_anyway (abfd, ".loader");
+	  if (lsec == NULL)
+	    goto error_return;
+	  xcoff_hash_table (info)->loader_section = lsec;
+	  lsec->flags |= SEC_HAS_CONTENTS | SEC_IN_MEMORY;
+	}
+      /* Likewise for the linkage section.  */
+      if (xcoff_hash_table (info)->linkage_section == NULL)
+	{
+	  asection *lsec;
 
-      lsec = bfd_make_section_anyway (abfd, ".gl");
-      if (lsec == NULL)
-	goto error_return;
-      xcoff_hash_table (info)->linkage_section = lsec;
-      lsec->flags |= SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY;
-      lsec->alignment_power = 2;
-    }
-  /* Likewise for the TOC section.  */
-  if (xcoff_hash_table (info)->toc_section == NULL)
-    {
-      asection *tsec;
+	  lsec = bfd_make_section_anyway (abfd, ".gl");
+	  if (lsec == NULL)
+	    goto error_return;
+	  xcoff_hash_table (info)->linkage_section = lsec;
+	  lsec->flags |= (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
+			  | SEC_IN_MEMORY);
+	  lsec->alignment_power = 2;
+	}
+      /* Likewise for the TOC section.  */
+      if (xcoff_hash_table (info)->toc_section == NULL)
+	{
+	  asection *tsec;
 
-      tsec = bfd_make_section_anyway (abfd, ".tc");
-      if (tsec == NULL)
-	goto error_return;
-      xcoff_hash_table (info)->toc_section = tsec;
-      tsec->flags |= SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY;
-      tsec->alignment_power = 2;
-    }
-  /* Likewise for the descriptor section.  */
-  if (xcoff_hash_table (info)->descriptor_section == NULL)
-    {
-      asection *dsec;
+	  tsec = bfd_make_section_anyway (abfd, ".tc");
+	  if (tsec == NULL)
+	    goto error_return;
+	  xcoff_hash_table (info)->toc_section = tsec;
+	  tsec->flags |= (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
+			  | SEC_IN_MEMORY);
+	  tsec->alignment_power = 2;
+	}
+      /* Likewise for the descriptor section.  */
+      if (xcoff_hash_table (info)->descriptor_section == NULL)
+	{
+	  asection *dsec;
 
-      dsec = bfd_make_section_anyway (abfd, ".ds");
-      if (dsec == NULL)
-	goto error_return;
-      xcoff_hash_table (info)->descriptor_section = dsec;
-      dsec->flags |= SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY;
-      dsec->alignment_power = 2;
-    }
-  /* Likewise for the .debug section.  */
-  if (xcoff_hash_table (info)->debug_section == NULL)
-    {
-      asection *dsec;
+	  dsec = bfd_make_section_anyway (abfd, ".ds");
+	  if (dsec == NULL)
+	    goto error_return;
+	  xcoff_hash_table (info)->descriptor_section = dsec;
+	  dsec->flags |= (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
+			  | SEC_IN_MEMORY);
+	  dsec->alignment_power = 2;
+	}
+      /* Likewise for the .debug section.  */
+      if (xcoff_hash_table (info)->debug_section == NULL)
+	{
+	  asection *dsec;
 
-      dsec = bfd_make_section_anyway (abfd, ".debug");
-      if (dsec == NULL)
-	goto error_return;
-      xcoff_hash_table (info)->debug_section = dsec;
-      dsec->flags |= SEC_HAS_CONTENTS | SEC_IN_MEMORY;
+	  dsec = bfd_make_section_anyway (abfd, ".debug");
+	  if (dsec == NULL)
+	    goto error_return;
+	  xcoff_hash_table (info)->debug_section = dsec;
+	  dsec->flags |= SEC_HAS_CONTENTS | SEC_IN_MEMORY;
+	}
     }
 
   if ((abfd->flags & DYNAMIC) != 0
@@ -2069,7 +2088,8 @@ xcoff_link_add_symbols (abfd, info)
 
       /* Check for magic symbol names.  */
       if ((smtyp == XTY_SD || smtyp == XTY_CM)
-	  && aux.x_csect.x_smclas != XMC_TC)
+	  && aux.x_csect.x_smclas != XMC_TC
+	  && aux.x_csect.x_smclas != XMC_TD)
 	{
 	  int i;
 
@@ -2110,12 +2130,25 @@ xcoff_link_add_symbols (abfd, info)
 	      || sym._n._n_n._n_offset == 0)
 	    copy = true;
 
+	  /* The AIX linker appears to only detect multiple symbol
+	     definitions when there is a reference to the symbol.  If
+	     a symbol is defined multiple times, and the only
+	     references are from the same object file, the AIX linker
+	     appears to permit it.  It does not merge the different
+	     definitions, but handles them independently.  On the
+	     other hand, if there is a reference, the linker reports
+	     an error.
+
+	     This matters because the AIX <net/net_globals.h> header
+	     file actually defines an initialized array, so we have to
+	     actually permit that to work.
+
+	     We also have to handle the case of statically linking a
+	     shared object, which will cause symbol redefinitions,
+	     although this is an easier case to detect.  */
+
 	  if (info->hash->creator == abfd->xvec)
 	    {
-	      /* If we are statically linking a shared object, it is
-                 OK for symbol redefinitions to occur.  I can't figure
-                 out just what the XCOFF linker is doing, but
-                 something like this is required for -bnso to work.  */
 	      if (! bfd_is_und_section (section))
 		*sym_hash = xcoff_link_hash_lookup (xcoff_hash_table (info),
 						    name, true, copy, false);
@@ -2130,18 +2163,71 @@ xcoff_link_add_symbols (abfd, info)
 		  && ! bfd_is_und_section (section)
 		  && ! bfd_is_com_section (section))
 		{
-		  if ((abfd->flags & DYNAMIC) != 0)
+		  /* This is a second definition of a defined symbol.  */
+		  if ((abfd->flags & DYNAMIC) != 0
+		      && ((*sym_hash)->smclas != XMC_GL
+			  || aux.x_csect.x_smclas == XMC_GL
+			  || ((*sym_hash)->root.u.def.section->owner->flags
+			      & DYNAMIC) == 0))
 		    {
+		      /* The new symbol is from a shared library, and
+                         either the existing symbol is not global
+                         linkage code or this symbol is global linkage
+                         code.  If the existing symbol is global
+                         linkage code and the new symbol is not, then
+                         we want to use the new symbol.  */
 		      section = bfd_und_section_ptr;
 		      value = 0;
 		    }
 		  else if (((*sym_hash)->root.u.def.section->owner->flags
 			    & DYNAMIC) != 0)
 		    {
+		      /* The existing symbol is from a shared library.
+                         Replace it.  */
 		      (*sym_hash)->root.type = bfd_link_hash_undefined;
 		      (*sym_hash)->root.u.undef.abfd =
 			(*sym_hash)->root.u.def.section->owner;
 		    }
+		  else if ((*sym_hash)->root.next != NULL
+			   || info->hash->undefs_tail == &(*sym_hash)->root)
+		    {
+		      /* This symbol has been referenced.  In this
+                         case, we just continue and permit the
+                         multiple definition error.  See the comment
+                         above about the behaviour of the AIX linker.  */
+		    }
+		  else if ((*sym_hash)->smclas == aux.x_csect.x_smclas)
+		    {
+		      /* The symbols are both csects of the same
+                         class.  There is at least a chance that this
+                         is a semi-legitimate redefinition.  */
+		      section = bfd_und_section_ptr;
+		      value = 0;
+		      (*sym_hash)->flags |= XCOFF_MULTIPLY_DEFINED;
+		    }
+		}
+	      else if (((*sym_hash)->flags & XCOFF_MULTIPLY_DEFINED) != 0
+		       && ((*sym_hash)->root.type == bfd_link_hash_defined
+			   || (*sym_hash)->root.type == bfd_link_hash_defweak)
+		       && (bfd_is_und_section (section)
+			   || bfd_is_com_section (section)))
+		{
+		  /* This is a reference to a multiply defined symbol.
+		     Report the error now.  See the comment above
+		     about the behaviour of the AIX linker.  We could
+		     also do this with warning symbols, but I'm not
+		     sure the XCOFF linker is wholly prepared to
+		     handle them, and that would only be a warning,
+		     not an error.  */
+		  if (! ((*info->callbacks->multiple_definition)
+			 (info, (*sym_hash)->root.root.string,
+			  (bfd *) NULL, (asection *) NULL, 0,
+			  (*sym_hash)->root.u.def.section->owner,
+			  (*sym_hash)->root.u.def.section,
+			  (*sym_hash)->root.u.def.value)))
+		    goto error_return;
+		  /* Try not to give this error too many times.  */
+		  (*sym_hash)->flags &= ~XCOFF_MULTIPLY_DEFINED;
 		}
 	    }
 
@@ -2207,7 +2293,7 @@ xcoff_link_add_symbols (abfd, info)
   /* Make sure that we have seen all the relocs.  */
   for (o = abfd->sections; o != first_csect; o = o->next)
     {
-      /* Reset the section size and the line numebr count, since the
+      /* Reset the section size and the line number count, since the
 	 data is now attached to the csects.  Don't reset the size of
 	 the .debug section, since we need to read it below in
 	 bfd_xcoff_size_dynamic_sections.  */
@@ -2474,6 +2560,61 @@ xcoff_link_add_dynamic_symbols (abfd, info)
 	  h->root.u.def.section = bfd_abs_section_ptr;
 	  h->root.u.def.value = ldsym.l_value;
 	}
+
+      /* If this symbol defines a function descriptor, then it
+	 implicitly defines the function code as well.  */
+      if (h->smclas == XMC_DS
+	  || (h->smclas == XMC_XO && name[0] != '.'))
+	h->flags |= XCOFF_DESCRIPTOR;
+      if ((h->flags & XCOFF_DESCRIPTOR) != 0)
+	{
+	  struct xcoff_link_hash_entry *hds;
+
+	  hds = h->descriptor;
+	  if (hds == NULL)
+	    {
+	      char *dsnm;
+
+	      dsnm = bfd_malloc (strlen (name) + 2);
+	      if (dsnm == NULL)
+		return false;
+	      dsnm[0] = '.';
+	      strcpy (dsnm + 1, name);
+	      hds = xcoff_link_hash_lookup (xcoff_hash_table (info), dsnm,
+					    true, true, true);
+	      free (dsnm);
+	      if (hds == NULL)
+		return false;
+
+	      if (hds->root.type == bfd_link_hash_new)
+		{
+		  hds->root.type = bfd_link_hash_undefined;
+		  hds->root.u.undef.abfd = abfd;
+		  /* We do not want to add this to the undefined
+                     symbol list.  */
+		}
+
+	      hds->descriptor = h;
+	      h->descriptor = hds;
+	    }
+
+	  hds->flags |= XCOFF_DEF_DYNAMIC;
+	  if (hds->smclas == XMC_UA)
+	    hds->smclas = XMC_PR;
+
+	  /* An absolute symbol appears to actually define code, not a
+	     function descriptor.  This is how some math functions are
+	     implemented on AIX 4.1.  */
+	  if (h->smclas == XMC_XO
+	      && (hds->root.type == bfd_link_hash_undefined
+		  || hds->root.type == bfd_link_hash_undefweak))
+	    {
+	      hds->smclas = XMC_XO;
+	      hds->root.type = bfd_link_hash_defined;
+	      hds->root.u.def.section = bfd_abs_section_ptr;
+	      hds->root.u.def.value = ldsym.l_value;
+	    }
+	}
     }
 
   if (buf != NULL && ! coff_section_data (abfd, lsec)->keep_contents)
@@ -2654,7 +2795,6 @@ xcoff_mark (info, sec)
 			  && h->root.root.string[0] == '.'
 			  && h->descriptor != NULL
 			  && ((h->descriptor->flags & XCOFF_DEF_DYNAMIC) != 0
-			      || info->shared
 			      || ((h->descriptor->flags & XCOFF_IMPORT) != 0
 				  && (h->descriptor->flags
 				      & XCOFF_DEF_REGULAR) == 0))))
@@ -3362,9 +3502,24 @@ xcoff_build_ldsyms (h, p)
   struct xcoff_loader_info *ldinfo = (struct xcoff_loader_info *) p;
   size_t len;
 
-  /* If all defined symbols should be exported, mark them now.  */
+  /* If this is a final link, and the symbol was defined as a common
+     symbol in a regular object file, and there was no definition in
+     any dynamic object, then the linker will have allocated space for
+     the symbol in a common section but the XCOFF_DEF_REGULAR flag
+     will not have been set.  */
+  if (h->root.type == bfd_link_hash_defined
+      && (h->flags & XCOFF_DEF_REGULAR) == 0
+      && (h->flags & XCOFF_REF_REGULAR) != 0
+      && (h->flags & XCOFF_DEF_DYNAMIC) == 0
+      && (h->root.u.def.section->owner->flags & DYNAMIC) == 0)
+    h->flags |= XCOFF_DEF_REGULAR;
+
+  /* If all defined symbols should be exported, mark them now.  We
+     don't want to export the actual functions, just the function
+     descriptors.  */
   if (ldinfo->export_defineds
-      && (h->flags & XCOFF_DEF_REGULAR) != 0)
+      && (h->flags & XCOFF_DEF_REGULAR) != 0
+      && h->root.root.string[0] != '.')
     h->flags |= XCOFF_EXPORT;
 
   /* We don't want to garbage collect symbols which are not defined in
@@ -3378,17 +3533,16 @@ xcoff_build_ldsyms (h, p)
 	      != ldinfo->info->hash->creator)))
     h->flags |= XCOFF_MARK;
 
-  /* If this symbol is called and defined in a dynamic object, or not
-     defined at all when building a shared object, or imported, then
-     we need to set up global linkage code for it.  (Unless we did
-     garbage collection and we didn't need this symbol.)  */
+  /* If this symbol is called and defined in a dynamic object, or it
+     is imported, then we need to set up global linkage code for it.
+     (Unless we did garbage collection and we didn't need this
+     symbol.)  */
   if ((h->flags & XCOFF_CALLED) != 0
       && (h->root.type == bfd_link_hash_undefined
 	  || h->root.type == bfd_link_hash_undefweak)
       && h->root.root.string[0] == '.'
       && h->descriptor != NULL
       && ((h->descriptor->flags & XCOFF_DEF_DYNAMIC) != 0
-	  || ldinfo->info->shared
 	  || ((h->descriptor->flags & XCOFF_IMPORT) != 0
 	      && (h->descriptor->flags & XCOFF_DEF_REGULAR) == 0))
       && (! xcoff_hash_table (ldinfo->info)->gc
@@ -3467,11 +3621,10 @@ xcoff_build_ldsyms (h, p)
       else
 	{
 	  (*_bfd_error_handler)
-	    ("attempt to export undefined symbol `%s'",
+	    ("warning: attempt to export undefined symbol `%s'",
 	     h->root.root.string);
-	  ldinfo->failed = true;
-	  bfd_set_error (bfd_error_invalid_operation);
-	  return false;
+	  h->ldsym = NULL;
+	  return true;
 	}
     }
 
@@ -5085,6 +5238,7 @@ xcoff_link_input_bfd (finfo, input_bfd)
 	    {
 	      struct xcoff_link_hash_entry *h = NULL;
 	      struct internal_ldrel ldrel;
+	      boolean quiet;
 
 	      *rel_hash = NULL;
 
@@ -5097,12 +5251,13 @@ xcoff_link_input_bfd (finfo, input_bfd)
 	      if (r_symndx != -1)
 		{
 		  h = obj_xcoff_sym_hashes (input_bfd)[r_symndx];
-		  if  (h != NULL
-		       && (irel->r_type == R_TOC
-			   || irel->r_type == R_GL
-			   || irel->r_type == R_TCL
-			   || irel->r_type == R_TRL
-			   || irel->r_type == R_TRLA))
+		  if (h != NULL
+		      && h->smclas != XMC_TD
+		      && (irel->r_type == R_TOC
+			  || irel->r_type == R_GL
+			  || irel->r_type == R_TCL
+			  || irel->r_type == R_TRL
+			  || irel->r_type == R_TRLA))
 		    {
 		      /* This is a TOC relative reloc with a symbol
                          attached.  The symbol should be the one which
@@ -5209,6 +5364,7 @@ xcoff_link_input_bfd (finfo, input_bfd)
 		    }
 		}
 
+	      quiet = false;
 	      switch (irel->r_type)
 		{
 		default:
@@ -5260,7 +5416,17 @@ xcoff_link_input_bfd (finfo, input_bfd)
 		    }
 		  else
 		    {
-		      if (h->ldindx < 0)
+		      if (! finfo->info->relocateable
+			  && (h->flags & XCOFF_DEF_DYNAMIC) == 0
+			  && (h->flags & XCOFF_IMPORT) == 0)
+			{
+			  /* We already called the undefined_symbol
+			     callback for this relocation, in
+			     _bfd_ppc_xcoff_relocate_section.  Don't
+			     issue any more warnings.  */
+			  quiet = true;
+			}
+		      if (h->ldindx < 0 && ! quiet)
 			{
 			  (*_bfd_error_handler)
 			    ("%s: `%s' in loader reloc but not loader sym",
@@ -5274,7 +5440,8 @@ xcoff_link_input_bfd (finfo, input_bfd)
 		  ldrel.l_rtype = (irel->r_size << 8) | irel->r_type;
 		  ldrel.l_rsecnm = o->output_section->target_index;
 		  if (xcoff_hash_table (finfo->info)->textro
-		      && strcmp (o->output_section->name, ".text") == 0)
+		      && strcmp (o->output_section->name, ".text") == 0
+		      && ! quiet)
 		    {
 		      (*_bfd_error_handler)
 			("%s: loader reloc in read-only section %s",
@@ -6051,6 +6218,10 @@ _bfd_ppc_xcoff_relocate_section (output_bfd, info, input_bfd,
 		     (info, h->root.root.string, input_bfd, input_section,
 		      rel->r_vaddr - input_section->vma)))
 		return false;
+
+	      /* Don't try to process the reloc.  It can't help, and
+                 it may generate another error.  */
+	      continue;
 	    }
 	}
 
@@ -6113,21 +6284,23 @@ _bfd_ppc_xcoff_relocate_section (output_bfd, info, input_bfd,
              address instruction which may be changed to a load
              instruction.  FIXME: I don't know if this is the correct
              implementation.  */
-	  if (h != NULL && h->toc_section == NULL)
+	  if (h != NULL && h->smclas != XMC_TD)
 	    {
-	      (*_bfd_error_handler)
-		("%s: TOC reloc at 0x%x to symbol `%s' with no TOC entry",
-		 bfd_get_filename (input_bfd), rel->r_vaddr,
-		 h->root.root.string);
-	      bfd_set_error (bfd_error_bad_value);
-	      return false;
-	    }
-	  if (h != NULL)
-	    {
+	      if (h->toc_section == NULL)
+		{
+		  (*_bfd_error_handler)
+		    ("%s: TOC reloc at 0x%x to symbol `%s' with no TOC entry",
+		     bfd_get_filename (input_bfd), rel->r_vaddr,
+		     h->root.root.string);
+		  bfd_set_error (bfd_error_bad_value);
+		  return false;
+		}
+
 	      BFD_ASSERT ((h->flags & XCOFF_SET_TOC) == 0);
 	      val = (h->toc_section->output_section->vma
 		     + h->toc_section->output_offset);
 	    }
+
 	  val = ((val - xcoff_data (output_bfd)->toc)
 		 - (sym->n_value - xcoff_data (input_bfd)->toc));
 	  addend = 0;
@@ -6200,7 +6373,11 @@ _bfd_ppc_xcoff_relocate_section (output_bfd, info, input_bfd,
 
 	  pnext = contents + (rel->r_vaddr - input_section->vma) + 4;
 	  next = bfd_get_32 (input_bfd, pnext);
-	  if (h->smclas == XMC_GL)
+
+	  /* The _ptrgl function is magic.  It is used by the AIX
+             compiler to call a function through a pointer.  */
+	  if (h->smclas == XMC_GL
+	      || strcmp (h->root.root.string, "._ptrgl") == 0)
 	    {
 	      if (next == 0x4def7b82		/* cror 15,15,15 */
 		  || next == 0x4ffffb82)	/* cror 31,31,31 */

@@ -301,6 +301,13 @@ forget_types PARAMS ((struct work_stuff *));
 static void
 string_prepends PARAMS ((string *, string *));
 
+static int
+arm_pt PARAMS ((struct work_stuff *, const char *, int, const char **,
+		const char **));
+
+static void
+demangle_arm_pt PARAMS ((struct work_stuff *, const char **, int, string *));
+
 /*  Translate count to integer, consuming tokens in the process.
     Conversion terminates on the first non-digit character.
     Trying to consume something that isn't a count results in
@@ -1139,26 +1146,43 @@ demangle_arm_pt (work, mangled, n, declp)
 
   /* ARM template? */
   if (arm_pt (work, *mangled, n, &p, &args))
-  {
-    string arg;
-    string_init (&arg);
-    string_appendn (declp, *mangled, p - *mangled);
-    string_append (declp, "<");
-    /* should do error checking here */
-    while (args < e) {
-      string_clear (&arg);
-      do_type (work, &args, &arg);
-      string_appends (declp, &arg);
-      string_append (declp, ",");
+    {
+      string pt, arg;
+      int success;
+
+      string_init (&pt);
+      string_init (&arg);
+      string_appendn (&pt, *mangled, p - *mangled);
+      string_append (&pt, "<");
+      success = 1;
+      while (args < e)
+	{
+	  string_clear (&arg);
+	  if (! do_type (work, &args, &arg))
+	    {
+	      success = 0;
+	      break;
+	    }
+	  string_appends (&pt, &arg);
+	  string_append (&pt, ",");
+	}
+      if (success)
+	{
+	  --pt.p;
+	  string_append (&pt, ">");
+	  string_appends (declp, &pt);
+	}
+      else
+	{
+	  string_appendn (declp, *mangled, n);
+	}
+      string_delete (&pt);
+      string_delete (&arg);
     }
-    string_delete (&arg);
-    --declp->p;
-    string_append (declp, ">");
-  }
   else
-  {
-    string_appendn (declp, *mangled, n);
-  }
+    {
+      string_appendn (declp, *mangled, n);
+    }
   *mangled += n;
 }
 

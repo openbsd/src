@@ -1,5 +1,6 @@
 /* hash.c - hash table lookup strings -
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -551,7 +552,7 @@ hash_grow (handle)		/* make a hash table grow */
    */
   temp = handle->hash_stat[STAT_SIZE];
   newwhere = ((struct hash_entry *)
-	      xmalloc ((unsigned long) ((temp << GROW_FACTOR + 1)
+	      xmalloc ((unsigned long) ((temp << (GROW_FACTOR + 1))
 					/* +1 for wall slot */
 					* sizeof (struct hash_entry))));
   if (newwhere == NULL)
@@ -820,7 +821,7 @@ hash_print_statistics (file, name, h)
   used = h->hash_stat[STAT_USED];
   pct = (used * 100 + sz / 2) / sz;
 
-  fprintf (file, "%s hash statistics:\n\t%d/%d slots used (%d%%)\n",
+  fprintf (file, "%s hash statistics:\n\t%lu/%lu slots used (%lu%%)\n",
 	   name, used, sz, pct);
 
 #define P(name, off)							\

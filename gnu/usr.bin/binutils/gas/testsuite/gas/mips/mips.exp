@@ -5,6 +5,7 @@ if [istarget mips*-*-*] then {
     set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] ]
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
     set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
+    set ilocks [expr [istarget *4300*-*-elf*] || [istarget *4100*-*-elf*]]
 
     run_dump_test "abs"
     run_dump_test "add"
@@ -14,7 +15,7 @@ if [istarget mips*-*-*] then {
     run_dump_test "bgeu"
     run_dump_test "blt"
     run_dump_test "bltu"
-    run_dump_test "div"
+    if !$ilocks { run_dump_test "div" } else { run_dump_test "div-ilocks" }
     run_dump_test "jal"
     if $svr4pic { run_dump_test "jal-svr4pic" }
     if $svr4pic { run_dump_test "jal-xgot" }
@@ -37,7 +38,7 @@ if [istarget mips*-*-*] then {
     if $svr4pic { run_dump_test "lif-xgot" }
     if $empic { run_dump_test "lif-empic" }
     run_dump_test "mips4"
-    run_dump_test "mul"
+    if !$ilocks { run_dump_test "mul" } else { run_dump_test "mul-ilocks" }
     run_dump_test "rol"
     if !$aout { run_dump_test "sb" }
     run_dump_test "trunc"

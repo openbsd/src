@@ -53,8 +53,12 @@ extern "C" {
 
 /* These two lines get substitutions done by commands in Makefile.in.  */
 #define BFD_VERSION  "@VERSION@"
-#define BFD_ARCH_SIZE @WORDSIZE@
+#define BFD_ARCH_SIZE @wordsize@
 #define BFD_HOST_64BIT_LONG @BFD_HOST_64BIT_LONG@
+#if @BFD_HOST_64_BIT_DEFINED@
+#define BFD_HOST_64_BIT @BFD_HOST_64_BIT@
+#define BFD_HOST_U_64_BIT @BFD_HOST_U_64_BIT@
+#endif
 
 #if BFD_ARCH_SIZE >= 64
 #define BFD64
@@ -114,27 +118,29 @@ typedef long int file_ptr;
 /* Support for different sizes of target format ints and addresses.
    If the type `long' is at least 64 bits, BFD_HOST_64BIT_LONG will be
    set to 1 above.  Otherwise, if gcc is being used, this code will
-   use gcc's "long long" type.  Otherwise, the compilation will fail
-   if 64-bit targets are requested.  */
+   use gcc's "long long" type.  Otherwise, BFD_HOST_64_BIT must be
+   defined above.  */
 
 #ifdef BFD64
 
 #ifndef BFD_HOST_64_BIT
 #if BFD_HOST_64BIT_LONG
 #define BFD_HOST_64_BIT long
+#define BFD_HOST_U_64_BIT unsigned long
 #else
 #ifdef __GNUC__
 #define BFD_HOST_64_BIT long long
+#define BFD_HOST_U_64_BIT unsigned long long
 #else /* ! defined (__GNUC__) */
  #error No 64 bit integer type available
 #endif /* ! defined (__GNUC__) */
 #endif /* ! BFD_HOST_64BIT_LONG */
 #endif /* ! defined (BFD_HOST_64_BIT) */
 
-typedef unsigned BFD_HOST_64_BIT bfd_vma;
+typedef BFD_HOST_U_64_BIT bfd_vma;
 typedef BFD_HOST_64_BIT bfd_signed_vma;
-typedef unsigned BFD_HOST_64_BIT bfd_size_type;
-typedef unsigned BFD_HOST_64_BIT symvalue;
+typedef BFD_HOST_U_64_BIT bfd_size_type;
+typedef BFD_HOST_U_64_BIT symvalue;
 
 #ifndef fprintf_vma
 #if BFD_HOST_64BIT_LONG
@@ -193,7 +199,7 @@ typedef enum bfd_format {
    to another, and are not necessarily correct).  */
 
 /* No flags.  */
-#define NO_FLAGS    	0x00
+#define BFD_NO_FLAGS   	0x00
 
 /* BFD contains relocation entries.  */
 #define HAS_RELOC   	0x01

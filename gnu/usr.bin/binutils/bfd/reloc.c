@@ -1,5 +1,5 @@
 /* BFD support for handling relocation entries.
-   Copyright (C) 1990, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -428,6 +428,7 @@ bfd_get_reloc_size (howto)
     case 2: return 4;
     case 3: return 0;
     case 4: return 8;
+    case 8: return 16;
     case -2: return 4;
     default: abort ();
     }
@@ -621,6 +622,7 @@ bfd_perform_relocation (abfd, reloc_entry, data, input_section, output_bfd,
 	  /* WTF?? */
 	  if (abfd->xvec->flavour == bfd_target_coff_flavour
 	      && strcmp (abfd->xvec->name, "aixcoff-rs6000") != 0
+	      && strcmp (abfd->xvec->name, "xcoff-powermac") != 0
 	      && strcmp (abfd->xvec->name, "coff-Intel-little") != 0
 	      && strcmp (abfd->xvec->name, "coff-Intel-big") != 0)
 	    {
@@ -1083,6 +1085,7 @@ bfd_install_relocation (abfd, reloc_entry, data_start, data_start_offset,
       /* WTF?? */
       if (abfd->xvec->flavour == bfd_target_coff_flavour
 	  && strcmp (abfd->xvec->name, "aixcoff-rs6000") != 0
+	  && strcmp (abfd->xvec->name, "xcoff-powermac") != 0
 	  && strcmp (abfd->xvec->name, "coff-Intel-little") != 0
 	  && strcmp (abfd->xvec->name, "coff-Intel-big") != 0)
 	{
@@ -1883,8 +1886,8 @@ ENUMDOC
 ENUM
   BFD_RELOC_ALPHA_GPDISP_HI16
 ENUMDOC
-  Alpha ECOFF relocations.  Some of these treat the symbol or "addend"
-     in some special way.
+  Alpha ECOFF and ELF relocations.  Some of these treat the symbol or
+     "addend" in some special way.
   For GPDISP_HI16 ("gpdisp") relocations, the symbol is ignored when
      writing; when reading, it will be the absolute section symbol.  The
      addend is the displacement in bytes of the "lda" instruction from
@@ -1896,6 +1899,13 @@ ENUMDOC
      with GPDISP_HI16 relocs.  The addend is ignored when writing the
      relocations out, and is filled in with the file's GP value on
      reading, for convenience.
+
+ENUM
+  BFD_RELOC_ALPHA_GPDISP
+ENUMDOC
+  The ELF GPDISP relocation is exactly the same as the GPDISP_HI16
+     relocation except that there is no accompanying GPDISP_LO16
+     relocation.
 
 ENUM
   BFD_RELOC_ALPHA_LITERAL
@@ -1928,6 +1938,12 @@ ENUMDOC
   The HINT relocation indicates a value that should be filled into the
      "hint" field of a jmp/jsr/ret instruction, for possible branch-
      prediction logic which may be provided on some processors.
+
+ENUM
+  BFD_RELOC_ALPHA_LINKAGE
+ENUMDOC
+  The LINKAGE relocation outputs a linkage pair in the object file,
+     which is filled by the linker.
 
 ENUM
   BFD_RELOC_MIPS_JMP
@@ -2129,11 +2145,67 @@ ENUMX
   BFD_RELOC_ARM_LITERAL
 ENUMX
   BFD_RELOC_ARM_IN_POOL
+ENUMX
+  BFD_RELOC_ARM_OFFSET_IMM8
+ENUMX
+  BFD_RELOC_ARM_HWLITERAL
+ENUMX
+  BFD_RELOC_ARM_THUMB_ADD
+ENUMX
+  BFD_RELOC_ARM_THUMB_IMM
+ENUMX
+  BFD_RELOC_ARM_THUMB_SHIFT
+ENUMX
+  BFD_RELOC_ARM_THUMB_OFFSET
 ENUMDOC
   These relocs are only used within the ARM assembler.  They are not
   (at present) written to any object files.
 
+ENUM
+  BFD_RELOC_SH_PCDISP8BY2
+ENUMX
+  BFD_RELOC_SH_PCDISP12BY2
+ENUMX
+  BFD_RELOC_SH_IMM4
+ENUMX
+  BFD_RELOC_SH_IMM4BY2
+ENUMX
+  BFD_RELOC_SH_IMM4BY4
+ENUMX
+  BFD_RELOC_SH_IMM8
+ENUMX
+  BFD_RELOC_SH_IMM8BY2
+ENUMX
+  BFD_RELOC_SH_IMM8BY4
+ENUMX
+  BFD_RELOC_SH_PCRELIMM8BY2
+ENUMX
+  BFD_RELOC_SH_PCRELIMM8BY4
+ENUMX
+  BFD_RELOC_SH_SWITCH16
+ENUMX
+  BFD_RELOC_SH_SWITCH32
+ENUMX
+  BFD_RELOC_SH_USES
+ENUMX
+  BFD_RELOC_SH_COUNT
+ENUMX
+  BFD_RELOC_SH_ALIGN
+ENUMX
+  BFD_RELOC_SH_CODE
+ENUMX
+  BFD_RELOC_SH_DATA
+ENUMX
+  BFD_RELOC_SH_LABEL
+ENUMDOC
+  Hitachi SH relocs.  Not all of these appear in object files.
+
 COMMENT
+
+COMMENT
+
+COMMENT
+
 ENDSENUM
   BFD_RELOC_UNUSED
 CODE_FRAGMENT

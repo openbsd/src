@@ -196,35 +196,21 @@ gld${EMULATION_NAME}_find_so (inp)
   alc = (char *) xmalloc (strlen (inp->filename) + 1);
   strcpy (alc, inp->filename);
   strstr (alc, ".so.")[2] = 'a';
-  if (stat (alc, &st) == 0)
+  if (stat (alc, &st) != 0)
+    free (alc);
+  else
     {
       lang_input_statement_type *sa;
-      char *a;
 
-      /* Add the .sa file to the statement list just after the .so
+      /* Add the .sa file to the statement list just before the .so
 	 file.  This is really a hack.  */
       sa = ((lang_input_statement_type *)
 	    xmalloc (sizeof (lang_input_statement_type)));
-      sa->header.next = inp->header.next;
-      sa->header.type = lang_input_statement_enum;
-      a = (char *) xmalloc (strlen (alc) + 1);
-      strcpy (a, alc);
-      sa->filename = a;
-      sa->local_sym_name = a;
-      sa->the_bfd = NULL;
-      sa->asymbols = NULL;
-      sa->symbol_count = 0;
-      sa->next = NULL;
-      sa->next_real_file = inp->next_real_file;
-      sa->is_archive = false;
-      sa->search_dirs_flag = false;
-      sa->just_syms_flag = false;
-      sa->loaded = false;
-      sa->real = true;
-      sa->complained = false;
+      *sa = *inp;
 
-      /* Put the new statement next on the list of statements and next
-	 on the list of input files.  */
+      inp->filename = alc;
+      inp->local_sym_name = alc;
+
       inp->header.next = (lang_statement_union_type *) sa;
       inp->next_real_file = (lang_statement_union_type *) sa;
     }
@@ -367,7 +353,6 @@ gld${EMULATION_NAME}_after_open ()
     {
       struct bfd_link_needed_list *ll;
       const char *lname;
-      const char *lib_path;
       search_dirs_type *search;
 
       lname = l->name;
@@ -449,9 +434,13 @@ EOF
 if [ "x${host}" = "x${target}" ] ; then
   if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
 cat >>e${EMULATION_NAME}.c <<EOF
-      lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
-      if (gld${EMULATION_NAME}_search_needed (lib_path, lname))
-	continue;
+      {
+	const char *lib_path;
+
+	lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
+	if (gld${EMULATION_NAME}_search_needed (lib_path, lname))
+	  continue;
+      }
 EOF
   fi
 fi

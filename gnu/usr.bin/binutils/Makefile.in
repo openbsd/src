@@ -28,7 +28,7 @@ tooldir = $(exec_prefix)/$(target)
 
 program_transform_name =
 
-datadir = $(prefix)/lib
+datadir = $(prefix)/share
 mandir = $(prefix)/man
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
@@ -41,7 +41,6 @@ man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
 infodir = $(prefix)/info
 includedir = $(prefix)/include
-docdir = $(datadir)/doc
 GDB_NLM_DEPS = 
 
 SHELL = /bin/sh
@@ -137,7 +136,8 @@ OTHERS =
 TARGET_CONFIGDIRS = libiberty libgloss newlib libio librx libstdc++ libg++ winsup
 
 # Target libraries are put under this directory:
-TARGET_SUBDIR = . # Changed by configure to $(target_alias) if cross.
+# Changed by configure to $(target_alias) if cross.
+TARGET_SUBDIR = .
 
 # This is set by the configure script to the arguments passed to configure.
 CONFIG_ARGUMENTS = 
@@ -390,6 +390,7 @@ GCC_FLAGS_TO_PASS = $(BASE_FLAGS_TO_PASS) $(EXTRA_GCC_FLAGS)
 ALL_MODULES = \
 	all-apache \
 	all-autoconf \
+	all-bash \
 	all-bfd \
 	all-binutils \
 	all-byacc \
@@ -439,8 +440,6 @@ ALL_MODULES = \
 
 # This is a list of the check targets for all of the modules which are
 # compiled using $(FLAGS_TO_PASS).
-# This is a list of the check targets for all of the modules which are
-# compiled using $(FLAGS_TO_PASS).
 #
 # The list is in two parts.  The first lists those tools which
 # are tested as part of the host's native tool-chain, and not
@@ -452,6 +451,7 @@ NATIVE_CHECK_MODULES = \
 CROSS_CHECK_MODULES = \
 	check-apache \
 	check-autoconf \
+	check-bash \
 	check-bfd \
 	check-binutils \
 	check-cvs \
@@ -501,6 +501,7 @@ CHECK_MODULES=$(NATIVE_CHECK_MODULES) $(CROSS_CHECK_MODULES)
 INSTALL_MODULES = \
 	install-apache \
 	install-autoconf \
+	install-bash \
 	install-bfd \
 	install-binutils \
 	install-byacc \
@@ -633,6 +634,7 @@ INSTALL_TARGET_MODULES = \
 CLEAN_MODULES = \
 	clean-apache \
 	clean-autoconf \
+	clean-bash \
 	clean-bfd \
 	clean-binutils \
 	clean-byacc \
@@ -833,6 +835,7 @@ $(CLEAN_MODULES) $(CLEAN_X11_MODULES) clean-gcc:
 .PHONY: $(CLEAN_TARGET_MODULES)
 $(CLEAN_TARGET_MODULES):
 	@dir=`echo $@ | sed -e 's/clean-target-//'`; \
+	rm -f $(TARGET_SUBDIR)/$${dir}/multilib.out $(TARGET_SUBDIR)/$${dir}/tmpmulti.out; \
 	if [ -f $(TARGET_SUBDIR)/$${dir}/Makefile ] ; then \
 	  r=`pwd`; export r; \
 	  srcroot=`cd $(srcdir); pwd`; export srcroot; \
@@ -987,6 +990,24 @@ $(INSTALL_MODULES): install-dirs
 # target tools.
 .PHONY: $(CONFIGURE_TARGET_MODULES)
 $(CONFIGURE_TARGET_MODULES):
+	@dir=`echo $@ | sed -e 's/configure-target-//'`; \
+	if [ -d $(TARGET_SUBDIR)/$${dir} ]; then \
+	  r=`pwd`; export r; \
+	  $(CC_FOR_TARGET) --print-multi-lib > $(TARGET_SUBDIR)/$${dir}/tmpmulti.out 2> /dev/null; \
+	  if [ -s $(TARGET_SUBDIR)/$${dir}/tmpmulti.out ]; then \
+	    if [ -f $(TARGET_SUBDIR)/$${dir}/multilib.out ]; then \
+	      if cmp $(TARGET_SUBDIR)/$${dir}/multilib.out $(TARGET_SUBDIR)/$${dir}/tmpmulti.out > /dev/null; then \
+		rm -f $(TARGET_SUBDIR)/$${dir}/tmpmulti.out; \
+	      else \
+		echo "Multilibs changed for $${dir}, reconfiguring"; \
+		rm -f $(TARGET_SUBDIR)/$${dir}/multilib.out $(TARGET_SUBDIR)/$${dir}/Makefile; \
+		mv $(TARGET_SUBDIR)/$${dir}/tmpmulti.out $(TARGET_SUBDIR)/$${dir}/multilib.out; \
+	      fi; \
+	    else \
+	      mv $(TARGET_SUBDIR)/$${dir}/tmpmulti.out $(TARGET_SUBDIR)/$${dir}/multilib.out; \
+	    fi; \
+	  fi; \
+	fi; exit 0	# break command into two pieces
 	@dir=`echo $@ | sed -e 's/configure-target-//'`; \
 	if [ -f $(TARGET_SUBDIR)/$${dir}/Makefile ] ; then \
 	  true; \
@@ -1213,6 +1234,7 @@ install-dosrel-fake:
 # This is a list of inter-dependencies among modules.
 all-apache:
 all-autoconf: all-m4
+all-bash:
 all-bfd:
 all-binutils: all-libiberty all-opcodes all-bfd all-flex all-byacc
 all-byacc:
@@ -1420,29 +1442,36 @@ taz: $(DEVO_SUPPORT) $(SUPPORT_FILES) \
 	    <configure.in >proto-toplev/configure.in
 	#
 	mkdir proto-toplev/texinfo
-	ln -s ../../texinfo/texinfo.tex proto-toplev/texinfo/
-	ln -s ../../texinfo/gpl.texinfo proto-toplev/texinfo/
-	ln -s ../../texinfo/lgpl.texinfo proto-toplev/texinfo/
-	ln -s ../../texinfo/tex3patch   proto-toplev/texinfo/
+	ln -s ../../texinfo/texinfo.tex		proto-toplev/texinfo/
+	ln -s ../../texinfo/gpl.texinfo		proto-toplev/texinfo/
+	ln -s ../../texinfo/lgpl.texinfo	proto-toplev/texinfo/
+	if test -r texinfo/util/tex3patch ; then \
+	  mkdir proto-toplev/texinfo/util && \
+	  ln -s ../../../texinfo/util/tex3patch	proto-toplev/texinfo/util ; \
+	else true; fi
 	chmod og=u `find . -print`
-	(VER=`sed <$(TOOL)/Makefile.in -n 's/^VERSION *= *//p'`; \
-		echo "==> Making $(TOOL)-$$VER.tar.gz"; \
-		rm -f $(TOOL)-$$VER; ln -s proto-toplev $(TOOL)-$$VER; \
-		tar cfh - $(TOOL)-$$VER \
-		| $(GZIPPROG) -v -9 >$(TOOL)-$$VER.tar.gz )
+	$(MAKE) -f Makefile.in do-tar-gz TOOL=$(TOOL) \
+		VER=`sed <$(TOOL)/Makefile.in -n 's/^VERSION *= *//p'`
+
+do-tar-gz:
+	echo "==> Making $(TOOL)-$(VER).tar.gz"
+	-rm -f $(TOOL)-$(VER)
+	ln -s proto-toplev $(TOOL)-$(VER)
+	tar cfh $(TOOL)-$(VER).tar $(TOOL)-$(VER)
+	$(GZIPPROG) -v -9 $(TOOL)-$(VER).tar
 
 TEXINFO_SUPPORT= texinfo/texinfo.tex texinfo/gpl.texinfo texinfo/lgpl.texinfo
 DIST_SUPPORT= $(DEVO_SUPPORT) $(TEXINFO_SUPPORT)
 
 .PHONY: gas.tar.gz
-GAS_SUPPORT_DIRS= bfd include libiberty opcodes
+GAS_SUPPORT_DIRS= bfd include libiberty opcodes make-all.com setup.com
 gas.tar.gz: $(DIST_SUPPORT) $(GAS_SUPPORT_DIRS) gas
 	$(MAKE) -f Makefile.in taz TOOL=gas \
 		SUPPORT_FILES="$(GAS_SUPPORT_DIRS)"
 
 # The FSF "binutils" release includes gprof and ld.
 .PHONY: binutils.tar.gz
-BINUTILS_SUPPORT_DIRS= bfd gas include libiberty opcodes ld gprof
+BINUTILS_SUPPORT_DIRS= bfd gas include libiberty opcodes ld gprof make-all.com setup.com
 binutils.tar.gz: $(DIST_SUPPORT) $(BINUTILS_SUPPORT_DIRS) binutils
 	$(MAKE) -f Makefile.in taz TOOL=binutils \
 		SUPPORT_FILES="$(BINUTILS_SUPPORT_DIRS) makeall.bat configure.bat"

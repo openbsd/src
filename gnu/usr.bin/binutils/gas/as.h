@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #ifndef GAS
 #define GAS 1
@@ -79,7 +80,9 @@ void *alloca ();
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 #endif
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -145,6 +148,9 @@ void *alloca ();
 #endif /* !__MWERKS__ */
 
 /* Other stuff from config.h.  */
+#ifdef NEED_DECLARATION_STRSTR
+extern char *strstr ();
+#endif
 #ifdef NEED_DECLARATION_MALLOC
 extern PTR malloc ();
 extern PTR realloc ();
@@ -189,15 +195,6 @@ extern PTR bfd_alloc_by_size_t PARAMS ((bfd *abfd, size_t sz));
 #define __FILE__ "unknown"
 #endif /* __FILE__ */
 
-#ifndef __STDC__
-#ifndef const
-#define const
-#endif
-#ifndef volatile
-#define volatile
-#endif
-#endif /* ! __STDC__ */
-
 #ifndef FOPEN_WB
 #ifdef GO32
 #include "fopen-bin.h"
@@ -221,11 +218,6 @@ extern PTR bfd_alloc_by_size_t PARAMS ((bfd *abfd, size_t sz));
       as_fatal("Case value %ld unexpected at line %d of file \"%s\"\n", \
 	       (long) val, __LINE__, __FILE__); \
 	   }
-
-/* Version 2.1 of Solaris had problems with this declaration, but I
-   think that bug has since been fixed.  If it causes problems on your
-   system, just delete it.  */
-extern char *strstr ();
 
 #include "flonum.h"
 
@@ -437,11 +429,6 @@ struct frag
   relax_stateT fr_type;
   relax_substateT fr_subtype;
 
-  /* Track the alignment and offset of the current frag.  With this,
-     sometimes we can avoid creating new frags for .align directives.  */
-  unsigned short align_mask;
-  unsigned short align_offset;
-
   /* These are needed only on the NS32K machines.  But since we don't
      include targ-cpu.h until after this structure has been defined,
      we can't really conditionalize it.  This code should be
@@ -450,6 +437,10 @@ struct frag
      In the meantime, if we get stuck like this with any other target,
      create a union here.  */
   char fr_pcrel_adjust, fr_bsr;
+
+  /* Where the frag was created, or where it became a variant frag.  */
+  char *fr_file;
+  unsigned int fr_line;
 
   /* Data begins here.  */
   char fr_literal[1];
@@ -551,7 +542,7 @@ typedef struct _pseudo_type pseudo_typeS;
 #endif
 
 #ifdef USE_STDARG
-#if __GNUC__ >= 2
+#if (__GNUC__ >= 2) && !defined(VMS)
 /* for use with -Wformat */
 #define PRINTF_LIKE(FCN)	void FCN (const char *format, ...) \
 					__attribute__ ((format (printf, 1, 2)))

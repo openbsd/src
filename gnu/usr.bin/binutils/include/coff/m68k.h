@@ -47,7 +47,7 @@ struct external_filehdr {
 #define PAGEMAGICPEXECPAGED   0413 /* pure executable (paged) */
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -66,8 +66,8 @@ typedef struct
 }
 AOUTHDR;
 
-#define AOUTSZ (sizeof(AOUTHDR))
-
+#define AOUTSZ 28
+#define AOUTHDRSZ 28
 
 
 /********************** SECTION HEADER **********************/
@@ -95,7 +95,7 @@ struct external_scnhdr {
 #define _COMMENT ".comment"
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 
 /********************** LINE NUMBERS **********************/
@@ -115,7 +115,7 @@ struct external_lineno {
 
 
 #define	LINENO	struct external_lineno
-#define	LINESZ	sizeof(LINENO) 
+#define	LINESZ	6
 
 
 /********************** SYMBOLS **********************/
@@ -216,6 +216,10 @@ struct external_reloc {
 
 #define RELOC struct external_reloc
 
-#define RELSZ sizeof(struct external_reloc)
+#ifdef M68K_COFF_OFFSET
+#define RELSZ 14
+#else
+#define RELSZ 10
+#endif
 
 #endif /* GNU_COFF_M68K_H */

@@ -178,9 +178,10 @@ Kinds of operands:
 	?	Privileged Register in rs1 (v9)
 	*	Prefetch function constant. (v9)
 	x	OPF field (v9 impdep).
+	0	32/64 bit immediate for set or setx (v9) insns
 
 The following chars are unused: (note: ,[] are used as punctuation)
-[3450]
+[345]
 
 */
 

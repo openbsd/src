@@ -66,11 +66,14 @@ static void s_seg PARAMS ((int));
 static void s_proc PARAMS ((int));
 static void s_reserve PARAMS ((int));
 static void s_common PARAMS ((int));
+static void s_empty PARAMS ((int));
+static void s_uacons PARAMS ((int));
 
 const pseudo_typeS md_pseudo_table[] =
 {
   {"align", s_align_bytes, 0},	/* Defaulting is invalid (0) */
   {"common", s_common, 0},
+  {"empty", s_empty, 0},
   {"global", s_globl, 0},
   {"half", cons, 2},
   {"optim", s_ignore, 0},
@@ -81,14 +84,15 @@ const pseudo_typeS md_pseudo_table[] =
   {"word", cons, 4},
   {"xword", cons, 8},
 #ifdef OBJ_ELF
-  {"uaxword", cons, 8},
-#endif
-#ifdef OBJ_ELF
   /* these are specific to sparc/svr4 */
   {"pushsection", obj_elf_section, 0},
   {"popsection", obj_elf_previous, 0},
-  {"uaword", cons, 4},
-  {"uahalf", cons, 2},
+  {"uahalf", s_uacons, 2},
+  {"uaword", s_uacons, 4},
+  {"uaxword", s_uacons, 8},
+  {"2byte", s_uacons, 2},
+  {"4byte", s_uacons, 4},
+  {"8byte", s_uacons, 8},
 #endif
   {NULL, 0, 0},
 };
@@ -430,7 +434,6 @@ s_common (ignore)
 	  char *p;
 	  int align;
 
-	allocate_bss:
 	  old_sec = now_seg;
 	  old_subsec = now_subseg;
 	  align = temp;
@@ -498,6 +501,18 @@ s_common (ignore)
   }
 }
 
+/* Handle the .empty pseudo-op.  This supresses the warnings about
+   invalid delay slot usage.  */
+
+static void
+s_empty (ignore)
+     int ignore;
+{
+  /* The easy way to implement is to just forget about the last
+     instruction.  */
+  last_insn = NULL;
+}
+
 static void
 s_seg (ignore)
      int ignore;
@@ -550,6 +565,76 @@ s_proc (ignore)
       ++input_line_pointer;
     }
   ++input_line_pointer;
+}
+
+/* This static variable is set by s_uacons to tell sparc_cons_align
+   that the expession does not need to be aligned.  */
+
+static int sparc_no_align_cons = 0;
+
+/* This handles the unaligned space allocation pseudo-ops, such as
+   .uaword.  .uaword is just like .word, but the value does not need
+   to be aligned.  */
+
+static void
+s_uacons (bytes)
+     int bytes;
+{
+  /* Tell sparc_cons_align not to align this value.  */
+  sparc_no_align_cons = 1;
+  cons (bytes);
+}
+
+/* We require .word, et. al., to be aligned correctly.  We do it by
+   setting up an rs_align_code frag, and checking in HANDLE_ALIGN to
+   make sure that no unexpected alignment was introduced.  */
+
+void
+sparc_cons_align (nbytes)
+     int nbytes;
+{
+  int nalign;
+  char *p;
+
+  if (sparc_no_align_cons)
+    {
+      /* This is an unaligned pseudo-op.  */
+      sparc_no_align_cons = 0;
+      return;
+    }
+
+  nalign = 0;
+  while ((nbytes & 1) == 0)
+    {
+      ++nalign;
+      nbytes >>= 1;
+    }
+
+  if (nalign == 0)
+    return;
+
+  if (now_seg == absolute_section)
+    {
+      if ((abs_section_offset & ((1 << nalign) - 1)) != 0)
+	as_bad ("misaligned data");
+      return;
+    }
+
+  p = frag_var (rs_align_code, 1, 1, (relax_substateT) 0,
+		(symbolS *) NULL, (long) nalign, (char *) NULL);
+
+  record_alignment (now_seg, nalign);
+}
+
+/* This is where we do the unexpected alignment check.  */
+
+void
+sparc_handle_align (fragp)
+     fragS *fragp;
+{
+  if (fragp->fr_type == rs_align_code
+      && fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix != 0)
+    as_bad_where (fragp->fr_file, fragp->fr_line, "misaligned data");
 }
 
 /* sparc64 priviledged registers */

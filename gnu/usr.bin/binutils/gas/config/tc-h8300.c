@@ -47,6 +47,7 @@ const char line_comment_chars[] = "#";
 void cons ();
 
 int Hmode;
+int Smode;
 #define PSIZE (Hmode ? L_32 : L_16)
 #define DMODE (L_16)
 #define DSYMMODE (Hmode ? L_24 : L_16)
@@ -57,9 +58,15 @@ void
 h8300hmode ()
 {
   Hmode = 1;
+  Smode = 0;
 }
 
-
+void
+h8300smode ()
+{
+  Smode = 1;
+  Hmode = 1;
+}
 void
 sbranch (size)
      int size;
@@ -76,6 +83,7 @@ const pseudo_typeS md_pseudo_table[] =
 {
 
   {"h8300h", h8300hmode, 0},
+  {"h8300s", h8300smode, 0},
   {"sbranch", sbranch, L_8},
   {"lbranch", sbranch, L_16},
 
@@ -212,6 +220,12 @@ parse_reg (src, mode, reg, direction)
       *reg = 0;
       return 3;
     }
+  if (src[0] == 'e' && src[1] == 'x' && src[2] == 'r')
+    {
+      *mode = EXR;
+      *reg = 0;
+      return 3;
+    }
   if (src[0] == 'f' && src[1] == 'p')
     {
       *mode = PSIZE | REG | direction;
@@ -225,7 +239,7 @@ parse_reg (src, mode, reg, direction)
       *mode = L_32 | REG | direction;
       *reg = src[2] - '0';
       if (!Hmode)
-	as_warn ("Reg only legal for H8/300-H");
+	as_warn ("Reg not valid for H8/300");
 
       return 3;
     }
@@ -235,7 +249,7 @@ parse_reg (src, mode, reg, direction)
       *mode = L_16 | REG | direction;
       *reg = src[1] - '0' + 8;
       if (!Hmode)
-	as_warn ("Reg only legal for H8/300-H");
+	as_warn ("Reg not valid for H8/300");
       return 2;
     }
 
@@ -302,6 +316,10 @@ skip_colonthing (ptr, exp, mode)
 	  if (*ptr == '2')
 	    {
 	      *mode |= L_24;
+	    }
+	  else if (*ptr == '3')
+	    {
+	      *mode |= L_32;
 	    }
 	  else if (*ptr == '1')
 	    {
@@ -376,6 +394,39 @@ get_operand (ptr, op, dst, direction)
   unsigned int len;
 
   op->mode = E;
+
+  /* Gross.  Gross.  ldm and stm have a format not easily handled
+     by get_operand.  We deal with it explicitly here.  */
+  if (src[0] == 'e' && src[1] == 'r' && isdigit(src[2])
+      && src[3] == '-' && src[4] == 'e' && src[5] == 'r' && isdigit(src[6]))
+    {
+      int low, high;
+
+      low = src[2] - '0';
+      high = src[6] - '0';
+
+      if (high < low)
+	as_bad ("Invalid register list for ldm/stm\n");
+
+      if (low % 2)
+	as_bad ("Invalid register list for ldm/stm\n");
+
+      if (high - low > 4)
+	as_bad ("Invalid register list for ldm/stm\n");
+
+      if (high - low != 2
+	  && low % 4)
+	as_bad ("Invalid register list for ldm/stm\n");
+
+      /* Even sicker.  We encode two registers into op->reg.  One
+	 for the low register to save, the other for the high
+	 register to save;  we also set the high bit in op->reg
+	 so we know this is "very special".  */
+      op->reg = 0x80000000 | (high << 8) | low;
+      op->mode = REG;
+      *ptr = src + 7;
+      return;
+    }
 
   len = parse_reg (src, &op->mode, &op->reg, direction);
   if (len)
@@ -523,6 +574,14 @@ get_operand (ptr, op, dst, direction)
 
       return;
     }
+  else if (strncmp (src, "mach", 4) == 0
+	   || strncmp (src, "macl", 4) == 0)
+    {
+      op->reg = src[3] == 'l';
+      op->mode = MACREG;
+      *ptr = src + 4;
+      return;
+    }
   else
     {
       src = parse_exp (src, &op->exp);
@@ -605,97 +664,114 @@ get_operands (noperands, op_end, operand)
    */
 static
 struct h8_opcode *
-get_specific (opcode, operands)
+get_specific (opcode, operands, size)
      struct h8_opcode *opcode;
      struct h8_op *operands;
+     int size;
 {
   struct h8_opcode *this_try = opcode;
   int found = 0;
 
   unsigned int this_index = opcode->idx;
 
+  /* There's only one ldm/stm and it's easier to just
+     get out quick for them.  */
+  if (strcmp (opcode->name, "stm.l") == 0
+      || strcmp (opcode->name, "ldm.l") == 0)
+    return this_try;
+
   while (this_index == opcode->idx && !found)
     {
-      unsigned int i;
       found = 1;
 
       this_try = opcode++;
-      for (i = 0; i < this_try->noperands && found; i++)
+      if (this_try->noperands == 0)
 	{
-	  op_type op = this_try->args.nib[i];
-	  int x = operands[i].mode;
+	  int this_size;
 
-	  if ((op & (DISP | REG)) == (DISP | REG)
-	      && ((x & (DISP | REG)) == (DISP | REG)))
-	    {
-	      dispreg = operands[i].reg;
-	    }
-	  else if (op & REG)
-	    {
-	      if (!(x & REG))
-		found = 0;
+	  this_size = this_try->how & SN;
+	  if (this_size != size && (this_size != SB || size != SN))
+	    found = 0;
+	}
+      else
+	{
+	  unsigned int i;
 
-	      if (x & L_P)
+	  for (i = 0; i < this_try->noperands && found; i++)
+	    {
+	      op_type op = this_try->args.nib[i];
+	      int x = operands[i].mode;
+
+	      if ((op & (DISP | REG)) == (DISP | REG)
+		  && ((x & (DISP | REG)) == (DISP | REG)))
 		{
-		  x = (x & ~L_P) | (Hmode ? L_32 : L_16);
+		  dispreg = operands[i].reg;
 		}
-	      if (op & L_P)
+	      else if (op & REG)
 		{
-		  op = (op & ~L_P) | (Hmode ? L_32 : L_16);
+		  if (!(x & REG))
+		    found = 0;
+
+		  if (x & L_P)
+		    x = (x & ~L_P) | (Hmode ? L_32 : L_16);
+		  if (op & L_P)
+		    op = (op & ~L_P) | (Hmode ? L_32 : L_16);
+
+		  opsize = op & SIZE;
+
+		  /* The size of the reg is v important */
+		  if ((op & SIZE) != (x & SIZE))
+		    found = 0;
 		}
-
-	      opsize = op & SIZE;
-
-	      /* The size of the reg is v important */
-	      if ((op & SIZE) != (x & SIZE))
-		found = 0;
-	    }
-	  else if ((op & ABSJMP) && (x & ABS))
-	    {
-	      operands[i].mode &= ~ABS;
-	      operands[i].mode |= ABSJMP;
-	      /* But it may not be 24 bits long */
-	      if (!Hmode)
+	      else if ((op & ABSJMP) && (x & ABS))
 		{
-		  operands[i].mode &= ~SIZE;
-		  operands[i].mode |= L_16;
+		  operands[i].mode &= ~ABS;
+		  operands[i].mode |= ABSJMP;
+		  /* But it may not be 24 bits long */
+		  if (!Hmode)
+		    {
+		      operands[i].mode &= ~SIZE;
+		      operands[i].mode |= L_16;
+		    }
 		}
-
-
-	    }
-	  else if ((op & (KBIT | DBIT)) && (x & IMM))
-	    {
-	      /* This is ok if the immediate value is sensible */
-
-	    }
-	  else if (op & PCREL)
-	    {
-
-	      /* The size of the displacement is important */
-	      if ((op & SIZE) != (x & SIZE))
-		found = 0;
-
-	    }
-	  else if ((op & (DISP | IMM | ABS))
-		   && (op & (DISP | IMM | ABS)) == (x & (DISP | IMM | ABS)))
-	    {
-	      /* Got a diplacement,will fit if no size or same size as try */
-	      if (op & ABS && op & L_8) 
+	      else if ((op & (KBIT | DBIT)) && (x & IMM))
 		{
-		  /* We want an 8 bit abs here, but one which looks like 16 bits will do fine */
-		  if (x & L_16)
-		    found= 1;
+		  /* This is ok if the immediate value is sensible */
 		}
-	      else
-	      if ((x & SIZE) != 0
-		  && ((op & SIZE) != (x & SIZE)))
-		found = 0;
+	      else if (op & PCREL)
+		{
+		  /* The size of the displacement is important */
+		  if ((op & SIZE) != (x & SIZE))
+		    found = 0;
+		}
+	      else if ((op & (DISP | IMM | ABS))
+		       && (op & (DISP | IMM | ABS)) == (x & (DISP | IMM | ABS)))
+		{
+		  /* Promote a L_24 to L_32 if it makes us match.  */
+		  if ((x & L_24) && (op & L_32))
+		    {
+		      x &= ~L_24;
+		      x |= L_32;
+		    }
+		  /* Promote an L8 to L_16 if it makes us match.  */
+		  if (op & ABS && op & L_8 && op & DISP) 
+		    {
+		      if (x & L_16)
+			found= 1;
+		    }
+		  else if ((x & SIZE) != 0
+			   && ((op & SIZE) != (x & SIZE)))
+		    found = 0;
+		}
+	      else if ((op & MACREG) != (x & MACREG))
+		{
+		  found = 0;
+		}
+	      else if ((op & MODE) != (x & MODE))
+		{
+		  found = 0;
+		}	
 	    }
-	  else if ((op & MODE) != (x & MODE))
-	    {
-	      found = 0;
-	    }
-
 	}
     }
   if (found)
@@ -806,8 +882,9 @@ do_a_fix_imm (offset, operand, relaxmode)
 	{
 
 	case L_24:
+	case L_32:
 	  size = 4;
-	  where = -1;
+	  where = (operand->mode & SIZE) == L_24 ? -1 : 0;
 	  if (relaxmode == 2)
 	    idx = R_MOV24B1;
 	  else if (relaxmode == 1)
@@ -817,11 +894,6 @@ do_a_fix_imm (offset, operand, relaxmode)
 	  break;
 	default:
 	  as_bad("Can't work out size of operand.\n");
-	case L_32:
-	  size = 4;
-	  where = 0;
-	  idx = R_RELLONG;
-	  break;
 	case L_16:
 	  size = 2;
 	  where = 0;
@@ -869,17 +941,14 @@ build_bytes (this_try, operand)
   char *p = asnibbles;
 
   if (!(this_try->inbase || Hmode))
-    {
-      as_warn ("Opcode `%s' only available in this mode on H8/300-H",
-	       this_try->name);
-    }
+    as_warn ("Opcode `%s' not available in H8/300 mode", this_try->name);
 
   while (*nibble_ptr != E)
     {
       int d;
       c = *nibble_ptr++;
 
-      d = (c & DST) != 0;
+      d = (c & (DST | SRC_IN_DST)) != 0;
 
       if (c < 16)
 	{
@@ -938,7 +1007,7 @@ build_bytes (this_try, operand)
 		  break;
 		case 4:
 		  if (!Hmode)
-		    as_warn ("#4 only valid in h8/300 mode.");
+		    as_warn ("#4 not valid on H8/300.");
 		  nib = 9;
 		  break;
 
@@ -959,10 +1028,28 @@ build_bytes (this_try, operand)
 	    {
 	      nib |= 0x8;
 	    }
+
+	  if (c & MACREG)
+	    {
+	      nib = 2 + operand[d].reg;
+	    }
 	}
       nibble_count++;
 
       *p++ = nib;
+    }
+
+  /* Disgusting.  Why, oh why didn't someone ask us for advice
+     on the assembler format.  */
+  if (strcmp (this_try->name, "stm.l") == 0
+      || strcmp (this_try->name, "ldm.l") == 0)
+    {
+      int high, low;
+      high = (operand[this_try->name[0] == 'l' ? 1 : 0].reg >> 8) & 0xf;
+      low = operand[this_try->name[0] == 'l' ? 1 : 0].reg & 0xf;
+
+      asnibbles[2] = high - low;
+      asnibbles[7] = (this_try->name[0] == 'l') ? high : low;
     }
 
   for (i = 0; i < this_try->length; i++)
@@ -1137,6 +1224,7 @@ md_assemble (str)
 
   char *dot = 0;
   char c;
+  int size;
 
   /* Drop leading whitespace */
   while (*str == ' ')
@@ -1182,7 +1270,25 @@ md_assemble (str)
   *op_end = c;
   prev_opcode = opcode;
 
-  opcode = get_specific (opcode, operand);
+  size = SN;
+  if (dot)
+    {
+      switch (*dot)
+	{
+	case 'b':
+	  size = SB;
+	  break;
+
+	case 'w':
+	  size = SW;
+	  break;
+
+	case 'l':
+	  size = SL;
+	  break;
+	}
+    }
+  opcode = get_specific (opcode, operand, size);
 
   if (opcode == 0)
     {

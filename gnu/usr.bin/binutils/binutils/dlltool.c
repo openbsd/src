@@ -25,6 +25,11 @@
    DLLs to run on a system which understands PE format image files.
    (eg, Windows NT)
 
+   See "Peering Inside the PE: A Tour of the Win32 Portable Executable
+   File Format", MSJ 1994, Volume 9 for more information.
+   Also see "Microsoft Portable Executable and Common Object File Format,
+   Specification 4.1" for more information.
+
    A DLL contains an export table which contains the information
    which the runtime loader needs to tie up references from a
    referencing program. 
@@ -1194,7 +1199,7 @@ typedef struct
 
 static sinfo secdata[NSECS] = 
 {
-  { TEXT,   ".text",    SEC_CODE | SEC_HAS_CONTENTS, 3},
+  { TEXT,   ".text",    SEC_CODE | SEC_HAS_CONTENTS, 2},
   { DATA,   ".data",    SEC_DATA,                    2},
   { BSS,    ".bss",     0,                           2},
   { IDATA7, ".idata$7", SEC_HAS_CONTENTS,            2},
@@ -1223,7 +1228,7 @@ static sinfo secdata[NSECS] =
 {
   { TEXT,   ".text",    SEC_CODE | SEC_HAS_CONTENTS, 3},
   { PDATA,  ".pdata",   SEC_HAS_CONTENTS,            2},
-  { RDATA,  ".rdata",   SEC_HAS_CONTENTS,            2},
+  { RDATA,  ".reldata", SEC_HAS_CONTENTS,            2},
   { IDATA5, ".idata$5", SEC_HAS_CONTENTS,            2},
   { IDATA4, ".idata$4", SEC_HAS_CONTENTS,            2},
   { IDATA6, ".idata$6", SEC_HAS_CONTENTS,            1},
@@ -1485,13 +1490,8 @@ make_one_lib_file (exp, i)
 
 	      if (machine == MPPC)
 		{
-#if 1
 		  rel->howto = bfd_reloc_type_lookup (abfd, 
 						      BFD_RELOC_16_GOTOFF);
-#else
-		  rel->howto = bfd_reloc_type_lookup (abfd, 
-						      BFD_RELOC_PPC_TOC16);
-#endif
 		  rel->sym_ptr_ptr = iname_pp;
 		}
 	      else
@@ -1554,7 +1554,7 @@ make_one_lib_file (exp, i)
 	      rpp[0] = rel;
 	      rel->address = 0;
 	      rel->addend = 0;
-	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_32);
+	      rel->howto = bfd_reloc_type_lookup (abfd, BFD_RELOC_RVA);
 	      rel->sym_ptr_ptr = iname_lab_pp;
 	      sec->orelocation = rpp;
 	      sec->reloc_count = 1;

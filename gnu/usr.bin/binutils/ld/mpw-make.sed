@@ -23,7 +23,7 @@
 # Hack up ldmain compile.
 /^"{o}"ldmain.c.o \\Option-f .* config.status$/,/^$/c\
 "{o}"ldmain.c.o \\Option-f  "{s}"ldmain.c\
-	{CC} -d DEFAULT_EMULATION='"'{EMUL}'"' -d SCRIPTDIR='"'{scriptdir}'"' {ALL_CFLAGS} "{s}"ldmain.c -o "{o}"ldmain.c.o\
+	{CC} @DASH_C_FLAG@ -d DEFAULT_EMULATION='"'{EMUL}'"' -d SCRIPTDIR='"'{scriptdir}'"' {ALL_CFLAGS} "{s}"ldmain.c -o "{o}"ldmain.c.o\
 
 
 # Remove ldemul-list.h build, rely on configure to make one.

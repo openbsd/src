@@ -629,7 +629,7 @@ dump_section_relocs (abfd, sec, stream_)
     }
 }
 #else
-#define dump_section_relocs(ABFD,SEC,STREAM)	(void)(ABFD,SEC,STREAM)
+#define dump_section_relocs(ABFD,SEC,STREAM)	((void) 0)
 #endif
 
 #ifndef EMIT_SECTION_SYMBOLS
@@ -674,13 +674,27 @@ adjust_reloc_syms (abfd, sec, xxx)
 	    goto done;
 	  }
 
+	if (bfd_is_abs_section (symsec))
+	  {
+	    /* The fixup_segment routine will not use this symbol in a
+               relocation unless TC_FORCE_RELOCATION returns 1.  */
+	    if (TC_FORCE_RELOCATION (fixp))
+	      {
+		fixp->fx_addsy->sy_used_in_reloc = 1;
+#ifdef UNDEFINED_DIFFERENCE_OK
+		if (fixp->fx_subsy != NULL)
+		  fixp->fx_subsy->sy_used_in_reloc = 1;
+#endif
+	      }
+	    goto done;
+	  }
+
 	/* If it's one of these sections, assume the symbol is
 	   definitely going to be output.  The code in
 	   md_estimate_size_before_relax in tc-mips.c uses this test
 	   as well, so if you change this code you should look at that
 	   code.  */
 	if (bfd_is_und_section (symsec)
-	    || bfd_is_abs_section (symsec)
 	    || bfd_is_com_section (symsec))
 	  {
 	    fixp->fx_addsy->sy_used_in_reloc = 1;
@@ -746,9 +760,13 @@ adjust_reloc_syms (abfd, sec, xxx)
 
 	/* If the section symbol isn't going to be output, the relocs
 	   at least should still work.  If not, figure out what to do
-	   when we run into that case.  */
+	   when we run into that case.
+
+	   We refetch the segment when calling section_symbol, rather
+	   than using symsec, because S_GET_VALUE may wind up changing
+	   the section when it calls resolve_symbol_value. */
 	fixp->fx_offset += S_GET_VALUE (sym);
-	fixp->fx_addsy = section_symbol (symsec);
+	fixp->fx_addsy = section_symbol (S_GET_SEGMENT (sym));
 	fixp->fx_addsy->sy_used_in_reloc = 1;
 
       done:
@@ -828,9 +846,13 @@ write_relocs (abfd, sec, xxx)
 	  n--;
 	  continue;
 	}
+
+#if 0
+      /* This test is triggered inappropriately for the SH.  */
       if (fixp->fx_where + fixp->fx_size
 	  > fixp->fx_frag->fr_fix + fixp->fx_frag->fr_offset)
 	abort ();
+#endif
 
       s = bfd_install_relocation (stdoutput, reloc,
 				  fixp->fx_frag->fr_literal,
@@ -1411,7 +1433,7 @@ write_object_file ()
 #else
 	  fix_new_exp (lie->frag,
 		       lie->word_goes_here - lie->frag->fr_literal,
-		       2, &exp, 0, BFD_RELOC_NONE);
+		       2, &exp, 0, BFD_RELOC_16);
 #endif
 #else
 #if defined(TC_SPARC) || defined(TC_A29K) || defined(NEED_FX_R_TYPE)
@@ -1622,6 +1644,13 @@ write_object_file ()
 
   PROGRESS (1);
 
+#ifdef tc_frob_file_before_adjust
+  tc_frob_file_before_adjust ();
+#endif
+#ifdef obj_frob_file_before_adjust
+  obj_frob_file_before_adjust ();
+#endif
+
   bfd_map_over_sections (stdoutput, adjust_reloc_syms, (char *)0);
 
   /* Set up symbol table, and write it out.  */
@@ -1783,6 +1812,7 @@ write_object_file ()
  */
 
 #ifndef md_relax_frag
+#ifdef TC_GENERIC_RELAX_TABLE
 
 /* Subroutines of relax_segment.  */
 static int 
@@ -1796,6 +1826,7 @@ is_dnrange (f1, f2)
   return 0;
 }
 
+#endif /* defined (TC_GENERIC_RELAX_TABLE) */
 #endif /* ! defined (md_relax_frag) */
 
 /* Relax_align. Advance location counter to next address that has 'alignment'

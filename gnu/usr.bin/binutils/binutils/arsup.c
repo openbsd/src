@@ -110,7 +110,7 @@ ar_directory (ar_name, list, output)
 {
   bfd *arch;
 
-  arch = open_inarch (ar_name);
+  arch = open_inarch (ar_name, (char *) NULL);
   if (output)
     {
       outfile = fopen(output,"w");
@@ -231,7 +231,7 @@ ar_addlib (name, list)
     {
       bfd *arch;
 
-      arch = open_inarch (name);
+      arch = open_inarch (name, (char *) NULL);
       if (arch != NULL)
 	map_over_list (arch, ar_addlib_doer, list);
 

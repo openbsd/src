@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990, 1991, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
    them with octal escapes), and isn't useful without an understanding of what
@@ -288,33 +288,72 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
      bfd *core_bfd;
      bfd *exec_bfd;
 {
-  FILE *fd;
   struct core_dump coredata;
   struct ld_info ldinfo;
-  char pathname [1024];
+  int size;
+  char *path, *s;
+  size_t alloc;
   const char *str1, *str2;
+  boolean ret;
 
-  /* Use bfd_xxx routines, rather than O/S primitives, do error checking!!
-  								FIXMEmgo */
-  /* Actually should be able to use bfd_get_section_contents now that
-     we have a .ldinfo section.  */
-  fd = fopen (core_bfd->filename, FOPEN_RB);
+  if (bfd_seek (core_bfd, 0, SEEK_SET) != 0
+      || bfd_read (&coredata, sizeof coredata, 1, core_bfd) != sizeof coredata)
+    return false;
 
-  fread (&coredata, sizeof (struct core_dump), 1, fd);
-  fseek (fd, (long)coredata.c_tab, 0);
-  fread (&ldinfo, (char*)&ldinfo.ldinfo_filename[0] - (char*)&ldinfo.ldinfo_next,
-	 1, fd);
-  fscanf (fd, "%s", pathname);
+  if (bfd_seek (core_bfd, (long) coredata.c_tab, SEEK_SET) != 0)
+    return false;
+
+  size = (char *) &ldinfo.ldinfo_filename[0] - (char *) &ldinfo.ldinfo_next;
+  if (bfd_read (&ldinfo, size, 1, core_bfd) != size)
+    return false;
+
+  alloc = 100;
+  path = bfd_malloc (alloc);
+  if (path == NULL)
+    return false;
+  s = path;
+
+  while (1)
+    {
+      if (bfd_read (s, 1, 1, core_bfd) != 1)
+	{
+	  free (path);
+	  return false;
+	}
+      if (*s == '\0')
+	break;
+      ++s;
+      if (s == path + alloc)
+	{
+	  char *n;
+
+	  alloc *= 2;
+	  n = bfd_realloc (path, alloc);
+	  if (n == NULL)
+	    {
+	      free (path);
+	      return false;
+	    }
+	  s = n + (path - s);
+	  path = n;
+	}
+    }
   
-  str1 = strrchr (pathname, '/');
+  str1 = strrchr (path, '/');
   str2 = strrchr (exec_bfd->filename, '/');
 
   /* step over character '/' */
-  str1 = str1 ? str1+1 : &pathname[0];
-  str2 = str2 ? str2+1 : exec_bfd->filename;
+  str1 = str1 != NULL ? str1 + 1 : path;
+  str2 = str2 != NULL ? str2 + 1 : exec_bfd->filename;
 
-  fclose (fd);
-  return strcmp (str1, str2) == 0;
+  if (strcmp (str1, str2) == 0)
+    ret = true;
+  else
+    ret = false;
+
+  free (path);
+
+  return ret;
 }
 
 char *

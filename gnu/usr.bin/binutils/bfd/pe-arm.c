@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_BIG_SYM armpe_big_vec
 #define TARGET_BIG_NAME "pe-arm-big"
 
-#define COFF_OBJ_WITH_PE
 #define COFF_WITH_PE
 #define PCRELOFFSET true
 #define COFF_LONG_SECTION_NAMES

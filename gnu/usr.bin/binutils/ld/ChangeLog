@@ -1,3 +1,407 @@
+Fri Aug 30 18:32:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (sh-*-elf*): New target.
+	* emulparams/shelf.sh: New file.
+	* emulparams/shlelf.sh: New file.
+	* Makefile.in (ALL_EMULATIONS): Add eshelf.o and eshlelf.o.
+	(eshelf.c, eshlelf.c): New targets.
+	* scripttempl/elf.sc: If EMBEDDED is defined, then don't add
+	SIZEOF_HEADERS to TEXT_START_ADDR.  Expand CTOR_START and CTOR_END
+	around .ctors, and DTOR_START and DTOR_END around .dtors.  Expand
+	OTHER_RELOCATING_SECTIONS if RELOCATING.
+
+Thu Aug 29 16:57:46 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.{host,tgt} (i[345]86-*-*): Recognize i686 for pentium
+	pro.
+
+Mon Aug 26 12:58:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldgram.y (section): Add opt_nocrossrefs; pass value to
+	lang_enter_overlay.
+	(opt_nocrossrefs): New nonterminal.
+	* ldlex.l: Recognize NOCROSSREFS keyword in EXPRESSION mode.
+	* ldlang.c (overlay_nocrossrefs): New static variable.
+	(lang_enter_overlay): Add nocrossrefs parameter.
+	(lang_leave_overlay): Only add nocrossrefs if overlay_nocrossrefs
+	is set.  Initialize overlay_nocrossrefs.
+	* ldlang.h (lang_enter_overlay): Update declaration.
+	* ld.texinfo (Overlays): Update documentation.
+
+	* ldver.c (ldversion): Print GNU ld in the version message.
+
+Thu Aug 22 17:10:40 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.host: Set HLDENV.
+	* configure.in: Substitute HLDENV.
+	* configure: Rebuild.
+	* Makefile.in (HLDENV): New variable.
+	($(LD_PROG)): Use $(HLDENV).
+
+Thu Aug 22 11:16:02 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Add @DASH_C_FLAG@ to compiler edit.
+
+Wed Aug 21 11:26:37 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/elf.sc: Put .gnu.linkonce* sections in appropriate
+	containing sections.
+
+Mon Aug 19 13:01:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.c: Include sysdep.h.
+
+Mon Aug 19 11:28:29 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* genscripts.sh: Undo 8/16 change.
+
+
+Fri Aug 16 19:18:08 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* genscripts.sh: Explicitly reset any shell variables set or used
+	by the various .sc scripts to allow inadvertant use of these
+	names as normal environment variables by the person running
+	configure.
+
+
+Fri Aug 16 14:15:41 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* scripttempl/armcoff.sc (__bss_start__, __bss_end__,
+ 	__data_start__, __data_end__): Added to keep in sync. with the
+ 	default ARM crt0.s. Added __CTOR_LIST__ and __DTOR_LIST__ support.
+
+Thu Aug  8 14:24:56 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldcref.c (check_reloc_refs): If info->same, look for any symbol
+	defined in info->defsec, not just the section symbol.
+
+Wed Aug  7 14:40:48 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* configure.in: Call BFD_NEED_DECLARATION on strstr and sbrk.
+	* acconfig.h (NEED_DECLARATION_STRSTR): New macro.
+	(NEED_DECLARATION_SBRK): New macro.
+	* configure, config.in: Rebuild.
+	* sysdep.h (strstr): Declare if NEED_DECLARATION_STRSTR.
+	* ldmain.c (sbrk): Declare if HAVE_SBRK and
+	NEED_DECLARATION_SBRK.
+
+	* ldlang.c (lang_record_phdrs): Cast xmalloc and xrealloc return.
+
+Mon Aug  5 16:26:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlex.l: Recognize OVERLAY.
+	* ldgram.y: Add section_phdr field to %union.
+	(section): Handle phdr_opt result.  Add OVERLAY case.
+	(opt_exp_without_type): New nonterminal.
+	(phdr_opt): Return list of phdrs.
+	(overlay_section): New nonterminal.
+	* ldlang.c: Include <ctype.h>.
+	(lang_leave_output_section_statement): Add phdrs parameter.
+	Change all callers.
+	(lang_section_in_phdr): Remove.
+	(overlay_vma, overlay_lmn, overlay_max): New static variables.
+	(struct overlay_list): Define.
+	(overlay_list): New static variable.
+	(lang_enter_overlay, lang_enter_overlay_section): New functions.
+	(lang_leave_overlay_section, lang_leave_overlay): New functions.
+	* ldlang.h (lang_leave_output_section_statement): Update
+	declaration for new parameter.
+	(lang_section_in_phdr): Don't declare.
+	(lang_enter_overlay, lang_enter_overlay_section): Declare.
+	(lang_leave_overlay_section, lang_leave_overlay): Declare.
+	* ld.texinfo (Overlays): New node under SECTIONS, documenting
+	overlays.
+
+	* ldlex.l: Recognize MAX and MIN.
+	* ldgram.y (MAX, MIN): New terminals.
+	(exp): Recognize MAX and MIN.
+	* ldexp.c (fold_binary): Handle MAX and MIN.
+	* ld.texinfo (Arithmetic Functions): Document MAX and MIN.
+
+	* ld.texinfo (PHDRS): Use @cindex, not @kindex, for program header
+	index entries.
+
+	* ldgram.y (SIZEOF, ADDR): Do not specify type.
+
+	* ldcref.c (check_nocrossref): Skip symbols with no output
+	sections.
+
+Fri Aug  2 14:57:49 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldgram.y (LOADADDR): New terminal.
+	(exp): Handle LOADADDR.
+	* ldlex.l: Recognize LOADADDR.
+	* ldexp.c (exp_print_token): Add LOADADDR.
+	(fold_name): Implement LOADADDR.
+	* ldlang.c (exp_init_os): Treat LOADADDR like ADDR.
+	* ld.texinfo (Arithmetic Functions): Document LOADADDR.
+
+Thu Aug  1 12:52:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.h (check_nocrossrefs): Declare.
+	* ldlang.h (struct lang_nocrossref): Define.
+	(struct lang_nocrossrefs): Define.
+	(nocrossref_list): Declare.
+	(lang_add_nocrossref): Declare.
+	* ldlex.l: Recognize NOCROSSREFS keyword.
+	* ldgram.y (%union): Add nocrossref field.
+	(NOCROSSREFS): New terminal.
+	(ifile_p1): Recognize NOCROSSREFS.
+	(nocrossref_list): New nonterminal.
+	* ldlang.c (nocrossref_list): Define.
+	(lang_add_nocrossref): New function.
+	* ldmain.c (main): If nocrossref_list is not NULL, call
+	check_nocrossrefs.
+	(warning_callback): Free symbols if there is no place to store
+	them.
+	(notice): Call add_cref if nocrossref_list is not NULL.
+	* ldcref.c: Include "ldexp.h" and "ldlang.h".
+	(check_nocrossrefs): New function.
+	(check_nocrossref): New static function.
+	(struct check_refs_info): Define.
+	(check_refs, check_reloc_refs): New static functions.
+	* Makefile.in: Rebuild dependencies.
+	* ld.texinfo (Option Commands): Document NOCROSSREFS.
+
+	* ld.texinfo (Section Placement): Improve the wording of the
+	wildcard documentation.  Mention that wildcards are only searched
+	for on the command line, not in the file system.
+
+	* emultempl/sunos.em (gld${EMULATION_NAME}_after_open): Move
+	definition of lib_path inside condition where it is used.
+
+Tue Jul 30 14:46:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (lang_size_sections): Add the section VMA to the result
+	value when computing the address of a section.
+
+	* ld.h (args_type): Add cref field.
+	* lexsup.c (parse_args): Set command_line.cref.
+	* ldmain.c (main): Check command_line.cref rather than
+	link_info.notice_all.
+	(notice): Likewise.
+
+	* ldcref.c (output_one_cref): Don't crash if a symbol is defined
+	in a section without an owner.
+
+Mon Jul 29 17:23:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.h, fnmatch.c: New files.
+	* ldlex.l: Remove unused definition of FILENAME.  Add definition
+	of WILDCHAR.  In SCRIPT mode, accept any sequence of WILDCHAR as a
+	NAME.
+	* ldgram.y (file_NAME_list): Accept '*' and '?' specially.
+	(input_section_spec): Accept '?' specially.
+	(statement): Change exp to mustbe_exp in length and FILL cases.
+	(section): Call ldlex_script before section statements, and call
+	ldlex_popstate after them.
+	* ldlang.c: Include "fnmatch.h".
+	(wildcardp): New static function.
+	(wild_section): Permit the section name to be a wildcard.
+	(wild_file): New static function, broken out of wild.
+	(wild): Call wild_file.  Permit the file name to be a wildcard.
+	(open_input_bfds): Don't call lookup_name for a wildcard pattern.
+	* Makefile.in: Rebuild dependencies.
+ 	(CFILES): Add fnmatch.c.
+	(HFILES): Add fnmatch.h.
+	(OFILES): Add fnmatch.o.
+	* ld.texinfo: Document that file and section names can now be
+	wildcard patterns.
+
+	* ldlang.c (lang_place_orphans): Correct condition: place a common
+	section if not relocateable or if common definitions are forced.
+
+Thu Jul 18 16:25:39 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (sparc*-*-sysv4*): New target.  From Andrew Gierth
+	<ANDREWG@microlise.co.uk>.
+
+	* configure.host: Change irix5 to irix[56]*.
+	* configure.tgt: Likewise.
+
+Wed Jul 17 10:52:46 1996  Kim Knuttila  <krk@cygnus.com>
+
+	* emultempl/pe.em (sort_sections): Pay attention to return code.
+
+	* ldmisc.c (demangle): Remove all prefix '.'s from a name.
+
+Mon Jul 15 11:49:49 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_place_orphan): Round
+ 	the value of __start_SECNAME to the alignment required by the
+ 	section to be placed.
+
+Tue Jul  9 12:09:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (mips*el-*-elf*): Use elf32elmip.
+	(mips*-*-elf*): Use elf32ebmip.
+	* emulparams/elf32bmip.sh (EMBEDDED): Don't define.
+	* emulparams/elf32lmip.sh (EMBEDDED): Don't define.
+	* emulparams/elf32elmip.sh: New file; copy of elf32lmip.sh with
+	EMBEDDED defined.
+	* emulparams/elf32ebmip.sh: New file; copy of elf32bmip.sh with
+	EMBEDDED defined.
+	* emulparams/elf32b4300.sh (EMBEDDED): Define.
+	* emulparams/elf32l4300.sh (EMBEDDED): Define.
+	* Makefile.in (ALL_EMULATIONS): Add eelf32ebmip.o eelf32elmip.o.
+	(eelf32ebmip.c, eelf32elmip.c): New targets.
+
+Thu Jul  4 12:01:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldver.c (ldversion): Set version to cygnus-2.7.1.
+
+	* Released binutils 2.7.
+
+	* emulparams/pc532macha.sh: Rename from pc532machaout.sh to avoid
+	System V file name limitations.
+	* configure.tgt (nc32k-pc532-mach*, ns32k-pc532-ux*): Use
+	pc532macha rather than pc532machaout.
+	* Makefile.in (ALL_EMULATIONS): Change epc532machaout.o to
+	epc532macha.o.
+	(epc532macha.c): Rename target from epc532machaout.c.
+
+Wed Jul  3 11:40:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (print_padding_statement): Use %u, not %x, to print
+	fill value.
+
+Sun Jun 30 11:16:43 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-eppcmac.c: Update to reflect May 23 change to aix.em.
+
+Thu Jun 27 14:03:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/sunos.em (gld${EMULATION_NAME}_find_so): Put the .sa
+	file just before the .so file, rather than just after.
+
+	* configure.host: Use -print-file-name=FILE rather than piping
+	-print-libgcc-file-name through sed.
+	(i[345]86*-*-sco*, i[345]86-*-isc*): Create crtbegin.o and
+	crtend.o files, in case gcc doesn't use them.
+	* Makefile.in (mostlyclean): Remove crtbegin.o and crtend.o.
+
+Wed Jun 26 15:57:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (mips*-dec-osf*): New target.
+
+Tue Jun 25 22:15:29 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	(AC_PROG_INSTALL): Added.
+	* configure: Rebuilt.
+
+Mon Jun 24 18:48:16 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc (_GLOBAL_OFFSET_TABLE_): Don't do a
+	PROVIDE of _GLOBAL_OFFSET_TABLE_, since it needs to be at a
+	non-fixed location.
+
+Mon Jun 24 17:55:31 1996  Jouke Numan  <jnuman@bazis.nl>
+
+	* ldlang.h (enum section_type): Define.
+	(lang_output_section_statement_type): Remove loadable field.  Add
+	sectype field.
+	(lang_enter_output_section_statement): Change flags parameter in
+	prototype to sectype.
+	* ldgram.y (typebits): Remove.
+	(sectype): New static variable.
+	(opt_at): Use sectype rather than typebits.
+	(type): Set sectype rather than typebits.
+	(atype): Likewise.
+	* ldlex.l: Recognize DSECT, COPY, INFO, and OVERLAY in
+	EXPRESSION mode.
+	* ldlang.c (lang_output_section_statement_lookup): Set sectype
+	field rather than loadable field.
+	(wild_doit): Check sectype rather than loadable.
+	(lang_record_phdrs): Likewise.
+	(lang_enter_output_section_statement): Rename flags parameter to
+	sectype.  Set sectype field rather than loadable field.  Set flags
+	field based on sectype.
+
+Mon Jun 24 12:00:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/elf.sc: Force .stab* and .comment sections to start
+	at 0.
+
+	* configure.in: On alpha*-*-osf*, link against libbfd.a if not
+	using shared libraries.
+	* configure: Rebuild with autoconf 2.10.
+
+Fri Jun 21 17:40:56 1996  Joel Sherrill  <joel@merlin.gcs.redstone.army.mil>
+
+	* configure.tgt: Add support for *-*-rtems* configurations.
+
+Fri Jun 21 13:05:51 1996  Richard Henderson  <rth@tamu.edu>
+
+	* configure.tgt (alpha-*-linuxecoff*): New target.
+	(alpha-*-linux*): Use elf64alpha.
+	* emulparams/elf64alpha.sh: New file.
+	* emultempl/elf32.em: If ELFSIZE is not set, set it to 32.  Use
+	${ELFSIZE} rather than 32 when calling BFD routines.
+	(hold_rodata): New static variable.
+	(gld${EMULATION_NAME}_place_orphan): Use hold_rodata for a
+	readonly section that is not code.
+	(gld${EMULATION_NAME}_place_section): Set hold_rodata.  Don't use
+	a .rel section unless its bfd_section field is not NULL.
+	* Makefile.in (ALL_EMULATIONS): Add eelf64alpha.o.
+	(eelf64alpha.c): New target.
+
+Fri Jun 21 12:45:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmisc.c (vfinfo): Correct handling of 0 in %W case.
+
+Thu Jun 20 13:55:28 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Add enough support to understand the gcc svr3.ifile script:
+	* ldlex.l: Recognize BLOCK and GROUP in EXPRESSION context.  Add
+	BIND keyword.
+	* ldgram.y: Add BIND token.
+	(section): Recognize GROUP.
+	(opt_ext_with_type): Recognize a couple of cases of BIND.
+	* ldlang.c (init_os): Don't do anything if section is already
+	initialized.  Call exp_init_os on addr_tree field.
+	(exp_init_os): New static function.
+	(map_input_to_output_sections): Call exp_init_os on assignment
+	expression.
+	(lang_place_orphans): Check for common sections by name COMMON
+	rather than by common_section field.  Don't warn about absence of
+	[COMMON] command.
+
+	* ldlang.h (lang_input_statement_type): Remove useless fields
+	common_section, common_output_section, and complained, as well as
+	all references to them.
+
+	* ldexp.c: Reindent a lot of code.
+	(exp_fold_tree): Call FAIL rather than einfo in default case.
+
+Wed Jun 19 11:40:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.host (m88*-*-dgux*): Quote HOSTING_CRT0.  From
+	<randall.hron@medaphis.com>.
+
+Tue Jun 18 15:53:09 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* scripttempl/h8300s.sc: New file for H8/S.
+	* emulpararms/h8300s.sh: New file for H8/S.
+	* Makefile.in (ALL_EMULATIONS): Add H8/S.
+	(e_h8300s.c): Add dependencies.
+	* configure.tgt: Add H8/S to targ_extra_emuls.
+
+Tue Jun 18 17:55:39 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (i[345]86*-*-isc*): New target.  From
+	<uddeborg@carmen.se>.
+
+Wed Jun 12 12:46:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lexsup.c: Include "libiberty.h".
+ 	(parse_args): Copy the -Y argument into memory.
+ 	(set_default_dirlist): Don't put the ':' back into the directory
+	list.
+
 Fri Jun  7 11:27:42 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* emultempl/sunos.em: Include libiberty.h.

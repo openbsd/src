@@ -49,7 +49,6 @@ extern int errno;
 #else
 extern char *strchr ();
 extern char *strrchr ();
-extern char *strstr ();
 #endif
 #endif
 
@@ -65,12 +64,32 @@ extern char *strstr ();
 #endif
 #endif
 
+#ifdef NEED_DECLARATION_STRSTR
+extern char *strstr ();
+#endif
+
+#ifdef HAVE_SBRK
+#ifdef NEED_DECLARATION_SBRK
+extern char *sbrk ();
+#endif
+#endif
+
 #ifndef O_RDONLY
 #define O_RDONLY 0
 #endif
 
 #ifndef O_RDWR
 #define O_RDWR 2
+#endif
+
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+#ifndef SEEK_CUR
+#define SEEK_CUR 1
+#endif
+#ifndef SEEK_END
+#define SEEK_END 2
 #endif
 
 /* bucomm.c */

@@ -101,7 +101,15 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 /* Need this for PIC relocations */
 #define NEED_FX_R_TYPE
 
+
+#ifdef TE_386BSD
+/* The BSDI linker apparently rejects objects with a machine type of
+   M_386 (100).  */
+#define AOUT_MACHTYPE 0
+#else
 #define AOUT_MACHTYPE 100
+#endif
+
 #undef REVERSE_SORT_RELOCS
 
 #endif /* ! BFD_ASSEMBLER */
@@ -114,10 +122,12 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 #define tc_coff_symbol_emit_hook(a)	;	/* not used */
 
 #ifndef OBJ_AOUT
+#ifndef TE_PE
 /* Local labels starts with .L */
 #define LOCAL_LABEL(name) (name[0] == '.' \
 		 && (name[1] == 'L' || name[1] == 'X' || name[1] == '.'))
 #define FAKE_LABEL_NAME ".L0\001"
+#endif
 #endif
 #define LOCAL_LABELS_FB 1
 
@@ -392,6 +402,8 @@ if (fragP->fr_type == rs_align_code) 					\
 
 void i386_print_statistics PARAMS ((FILE *));
 #define tc_print_statistics i386_print_statistics
+
+#define md_number_to_chars number_to_chars_littleendian
 
 #ifdef SCO_ELF
 #define tc_init_after_args() sco_id ()

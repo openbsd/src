@@ -97,7 +97,9 @@ fetch_data (info, addr)
 #define Iw OP_I, w_mode
 #define Jb OP_J, b_mode
 #define Jv OP_J, v_mode
+#if 0
 #define ONE OP_ONE, 0
+#endif
 #define Cd OP_C, d_mode
 #define Dd OP_D, d_mode
 #define Td OP_T, d_mode
@@ -139,13 +141,22 @@ fetch_data (info, addr)
 #define fs OP_REG, fs_reg
 #define gs OP_REG, gs_reg
 
-int OP_E(), OP_indirE(), OP_G(), OP_I(), OP_sI(), OP_REG();
-int OP_J(), OP_SEG();
-int OP_DIR(), OP_OFF(), OP_DSSI(), OP_ESDI(), OP_ONE(), OP_C();
-int OP_D(), OP_T(), OP_rm();
+typedef int op_rtn PARAMS ((int bytemode, int aflag, int dflag));
 
-static void dofloat (), putop (), append_prefix (), set_op ();
-static int get16 (), get32 ();
+static op_rtn OP_E, OP_G, OP_I, OP_indirE, OP_sI, OP_REG, OP_J, OP_DIR, OP_OFF;
+static op_rtn OP_ESDI, OP_DSSI, OP_SEG, OP_C, OP_D, OP_T, OP_rm, OP_ST;
+static op_rtn OP_STi;
+#if 0
+static op_rtn OP_ONE;
+#endif
+
+static void append_prefix PARAMS ((void));
+static void set_op PARAMS ((int op));
+static void putop PARAMS ((char *template, int aflag, int dflag));
+static void dofloat PARAMS ((int aflag, int dflag));
+static int get16 PARAMS ((void));
+static int get32 PARAMS ((void));
+static void ckprefix PARAMS ((void));
 
 #define b_mode 1
 #define v_mode 2
@@ -212,15 +223,15 @@ static int get16 (), get32 ();
 
 struct dis386 {
   char *name;
-  int (*op1)();
+  op_rtn *op1;
   int bytemode1;
-  int (*op2)();
+  op_rtn *op2;
   int bytemode2;
-  int (*op3)();
+  op_rtn *op3;
   int bytemode3;
 };
 
-struct dis386 dis386[] = {
+static struct dis386 dis386[] = {
   /* 00 */
   { "addb",	Eb, Gb },
   { "addS",	Ev, Gv },
@@ -511,7 +522,7 @@ struct dis386 dis386[] = {
   { GRP5 },
 };
 
-struct dis386 dis386_twobyte[] = {
+static struct dis386 dis386_twobyte[] = {
   /* 00 */
   { GRP6 },
   { GRP7 },
@@ -732,7 +743,7 @@ static disassemble_info *the_info;
 static int mod;
 static int rm;
 static int reg;
-static void oappend ();
+static void oappend PARAMS ((char *s));
 
 static char *names32[]={
   "%eax","%ecx","%edx","%ebx", "%esp","%ebp","%esi","%edi",
@@ -750,7 +761,7 @@ static char *index16[] = {
   "bx+si","bx+di","bp+si","bp+di","si","di","bp","bx"
 };
 
-struct dis386 grps[][8] = {
+static struct dis386 grps[][8] = {
   /* GRP1b */
   {
     { "addb",	Eb, Ib },
@@ -1007,9 +1018,6 @@ ckprefix ()
     }
 }
 
-static int dflag;
-static int aflag;		
-
 static char op1out[100], op2out[100], op3out[100];
 static int op_address[3], op_ad, op_index[3];
 static int start_pc;
@@ -1024,8 +1032,23 @@ static int start_pc;
  * The function returns the length of this instruction in bytes.
  */
 
+int print_insn_x86 PARAMS ((bfd_vma pc, disassemble_info *info, int aflag,
+			    int dflag));
 int
 print_insn_i386 (pc, info)
+     bfd_vma pc;
+     disassemble_info *info;
+{
+  if (info->mach == bfd_mach_i386_i386)
+    return print_insn_x86 (pc, info, 1, 1);
+  else if (info->mach == bfd_mach_i386_i8086)
+    return print_insn_x86 (pc, info, 0, 0);
+  else
+    abort ();
+}
+
+int
+print_insn_x86 (pc, info, aflag, dflag)
      bfd_vma pc;
      disassemble_info *info;
 {
@@ -1083,10 +1106,6 @@ print_insn_i386 (pc, info)
       return (1);
     }
   
-  /* these would be initialized to 0 if disassembling for 8086 or 286 */
-  dflag = 1;
-  aflag = 1;
-  
   if (prefixes & PREFIX_DATA)
     dflag ^= 1;
   
@@ -1119,29 +1138,29 @@ print_insn_i386 (pc, info)
 
   if (dp->name == NULL && dp->bytemode1 == FLOATCODE)
     {
-      dofloat ();
+      dofloat (aflag, dflag);
     }
   else
     {
       if (dp->name == NULL)
 	dp = &grps[dp->bytemode1][reg];
       
-      putop (dp->name);
+      putop (dp->name, aflag, dflag);
       
       obufp = op1out;
       op_ad = 2;
       if (dp->op1)
-	(*dp->op1)(dp->bytemode1);
+	(*dp->op1)(dp->bytemode1, aflag, dflag);
       
       obufp = op2out;
       op_ad = 1;
       if (dp->op2)
-	(*dp->op2)(dp->bytemode2);
+	(*dp->op2)(dp->bytemode2, aflag, dflag);
       
       obufp = op3out;
       op_ad = 0;
       if (dp->op3)
-	(*dp->op3)(dp->bytemode3);
+	(*dp->op3)(dp->bytemode3, aflag, dflag);
     }
   
   obufp = obuf + strlen (obuf);
@@ -1200,7 +1219,7 @@ print_insn_i386 (pc, info)
   return (codep - inbuf);
 }
 
-char *float_mem[] = {
+static char *float_mem[] = {
   /* d8 */
   "fadds",
   "fmuls",
@@ -1277,7 +1296,6 @@ char *float_mem[] = {
 
 #define ST OP_ST, 0
 #define STi OP_STi, 0
-int OP_ST(), OP_STi();
 
 #define FGRPd9_2 NULL, NULL, 0
 #define FGRPd9_4 NULL, NULL, 1
@@ -1289,7 +1307,7 @@ int OP_ST(), OP_STi();
 #define FGRPde_3 NULL, NULL, 7
 #define FGRPdf_4 NULL, NULL, 8
 
-struct dis386 float_reg[][8] = {
+static struct dis386 float_reg[][8] = {
   /* d8 */
   {
     { "fadd",	ST, STi },
@@ -1381,7 +1399,7 @@ struct dis386 float_reg[][8] = {
 };
 
 
-char *fgrps[][8] = {
+static char *fgrps[][8] = {
   /* d9_2  0 */
   {
     "fnop","(bad)","(bad)","(bad)","(bad)","(bad)","(bad)","(bad)",
@@ -1430,7 +1448,9 @@ char *fgrps[][8] = {
 };
 
 static void
-dofloat ()
+dofloat (aflag, dflag)
+     int aflag;
+     int dflag;
 {
   struct dis386 *dp;
   unsigned char floatop;
@@ -1439,9 +1459,9 @@ dofloat ()
   
   if (mod != 3)
     {
-      putop (float_mem[(floatop - 0xd8) * 8 + reg]);
+      putop (float_mem[(floatop - 0xd8) * 8 + reg], aflag, dflag);
       obufp = op1out;
-      OP_E (v_mode);
+      OP_E (v_mode, aflag, dflag);
       return;
     }
   codep++;
@@ -1449,7 +1469,7 @@ dofloat ()
   dp = &float_reg[floatop - 0xd8][reg];
   if (dp->name == NULL)
     {
-      putop (fgrps[dp->bytemode1][rm]);
+      putop (fgrps[dp->bytemode1][rm], aflag, dflag);
       /* instruction fnstsw is only one with strange arg */
       if (floatop == 0xdf
 	  && FETCH_DATA (the_info, codep + 1)
@@ -1458,29 +1478,33 @@ dofloat ()
     }
   else
     {
-      putop (dp->name);
+      putop (dp->name, aflag, dflag);
       obufp = op1out;
       if (dp->op1)
-	(*dp->op1)(dp->bytemode1);
+	(*dp->op1)(dp->bytemode1, aflag, dflag);
       obufp = op2out;
       if (dp->op2)
-	(*dp->op2)(dp->bytemode2);
+	(*dp->op2)(dp->bytemode2, aflag, dflag);
     }
 }
 
 /* ARGSUSED */
-int
-OP_ST (ignore)
+static int
+OP_ST (ignore, aflag, dflag)
      int ignore;
+     int aflag;
+     int dflag;
 {
   oappend ("%st");
   return (0);
 }
 
 /* ARGSUSED */
-int
-OP_STi (ignore)
+static int
+OP_STi (ignore, aflag, dflag)
      int ignore;
+     int aflag;
+     int dflag;
 {
   sprintf (scratchbuf, "%%st(%d)", rm);
   oappend (scratchbuf);
@@ -1490,8 +1514,10 @@ OP_STi (ignore)
 
 /* capital letters in template are macros */
 static void
-putop (template)
+putop (template, aflag, dflag)
      char *template;
+     int aflag;
+     int dflag;
 {
   char *p;
   
@@ -1548,17 +1574,21 @@ append_prefix ()
     oappend ("%gs:");
 }
 
-int
-OP_indirE (bytemode)
+static int
+OP_indirE (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   oappend ("*");
-  return OP_E (bytemode);
+  return OP_E (bytemode, aflag, dflag);
 }
 
-int
-OP_E (bytemode)
+static int
+OP_E (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   int disp;
 
@@ -1688,9 +1718,11 @@ OP_E (bytemode)
   return 0;
 }
 
-int
-OP_G (bytemode)
+static int
+OP_G (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   switch (bytemode) 
     {
@@ -1748,9 +1780,11 @@ set_op (op)
   op_address[op_ad] = op;
 }
 
-int
-OP_REG (code)
+static int
+OP_REG (code, aflag, dflag)
      int code;
+     int aflag;
+     int dflag;
 {
   char *s;
   
@@ -1784,9 +1818,11 @@ OP_REG (code)
   return (0);
 }
 
-int
-OP_I (bytemode)
+static int
+OP_I (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   int op;
   
@@ -1814,9 +1850,11 @@ OP_I (bytemode)
   return (0);
 }
 
-int
-OP_sI (bytemode)
+static int
+OP_sI (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   int op;
   
@@ -1844,9 +1882,11 @@ OP_sI (bytemode)
   return (0);
 }
 
-int
-OP_J (bytemode)
+static int
+OP_J (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   int disp;
   int mask = -1;
@@ -1881,9 +1921,11 @@ OP_J (bytemode)
 }
 
 /* ARGSUSED */
-int
-OP_SEG (dummy)
+static int
+OP_SEG (dummy, aflag, dflag)
      int dummy;
+     int aflag;
+     int dflag;
 {
   static char *sreg[] = {
     "%es","%cs","%ss","%ds","%fs","%gs","%?","%?",
@@ -1893,9 +1935,11 @@ OP_SEG (dummy)
   return (0);
 }
 
-int
-OP_DIR (size)
+static int
+OP_DIR (size, aflag, dflag)
      int size;
+     int aflag;
+     int dflag;
 {
   int seg, offset;
   
@@ -1934,9 +1978,11 @@ OP_DIR (size)
 }
 
 /* ARGSUSED */
-int
-OP_OFF (bytemode)
+static int
+OP_OFF (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   int off;
 
@@ -1953,9 +1999,11 @@ OP_OFF (bytemode)
 }
 
 /* ARGSUSED */
-int
-OP_ESDI (dummy)
-    int dummy;
+static int
+OP_ESDI (dummy, aflag, dflag)
+     int dummy;
+     int aflag;
+     int dflag;
 {
   oappend ("%es:(");
   oappend (aflag ? "%edi" : "%di");
@@ -1964,9 +2012,11 @@ OP_ESDI (dummy)
 }
 
 /* ARGSUSED */
-int
-OP_DSSI (dummy)
-    int dummy;
+static int
+OP_DSSI (dummy, aflag, dflag)
+     int dummy;
+     int aflag;
+     int dflag;
 {
   oappend ("%ds:(");
   oappend (aflag ? "%esi" : "%si");
@@ -1974,19 +2024,28 @@ OP_DSSI (dummy)
   return (0);
 }
 
+#if 0
+/* Not used.  */
+
 /* ARGSUSED */
-int
-OP_ONE (dummy)
-    int dummy;
+static int
+OP_ONE (dummy, aflag, dflag)
+     int dummy;
+     int aflag;
+     int dflag;
 {
   oappend ("1");
   return (0);
 }
 
+#endif
+
 /* ARGSUSED */
-int
-OP_C (dummy)
-    int dummy;
+static int
+OP_C (dummy, aflag, dflag)
+     int dummy;
+     int aflag;
+     int dflag;
 {
   codep++; /* skip mod/rm */
   sprintf (scratchbuf, "%%cr%d", reg);
@@ -1995,9 +2054,11 @@ OP_C (dummy)
 }
 
 /* ARGSUSED */
-int
-OP_D (dummy)
-    int dummy;
+static int
+OP_D (dummy, aflag, dflag)
+     int dummy;
+     int aflag;
+     int dflag;
 {
   codep++; /* skip mod/rm */
   sprintf (scratchbuf, "%%db%d", reg);
@@ -2006,9 +2067,11 @@ OP_D (dummy)
 }
 
 /* ARGSUSED */
-int
-OP_T (dummy)
+static int
+OP_T (dummy, aflag, dflag)
      int dummy;
+     int aflag;
+     int dflag;
 {
   codep++; /* skip mod/rm */
   sprintf (scratchbuf, "%%tr%d", reg);
@@ -2016,9 +2079,11 @@ OP_T (dummy)
   return (0);
 }
 
-int
-OP_rm (bytemode)
+static int
+OP_rm (bytemode, aflag, dflag)
      int bytemode;
+     int aflag;
+     int dflag;
 {
   switch (bytemode) 
     {

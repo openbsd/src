@@ -1,5 +1,5 @@
 /* ELF object file format.
-   Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 /* HP PA-RISC support was contributed by the Center for Software Science
@@ -91,6 +92,11 @@ extern void obj_elf_version PARAMS ((int));
 extern void obj_elf_init_stab_section PARAMS ((segT));
 #define INIT_STAB_SECTION(seg) obj_elf_init_stab_section (seg)
 
+/* For now, always set ECOFF_DEBUGGING for an Alpha target.  */
+#ifdef TC_ALPHA
+#define ECOFF_DEBUGGING 1
+#endif
+
 /* For now, always set ECOFF_DEBUGGING for a MIPS target.  */
 #ifdef TC_MIPS
 #define ECOFF_DEBUGGING 1
@@ -127,6 +133,7 @@ extern void elf_pop_insert PARAMS ((void));
 
 #ifndef OBJ_MAYBE_ELF
 #define obj_ecoff_set_ext elf_ecoff_set_ext
+extern void elf_ecoff_set_ext ();
 #endif
 
 #endif /* _OBJ_ELF_H */

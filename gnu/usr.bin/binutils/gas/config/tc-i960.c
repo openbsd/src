@@ -1,5 +1,6 @@
 /* tc-i960.c - All the i80960-specific stuff
-   Copyright (C) 1989, 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -14,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* See comment on md_parse_option for 80960-specific invocation options. */
 
@@ -1695,6 +1697,10 @@ mem_fmt (args, oP, callx)
 	}
     }
 
+  /* Parse the displacement; this must be done before emitting the
+     opcode, in case it is an expression using `.'.  */
+  parse_expr (instr.e, &expr);
+
   /* Output opcode */
   outP = emit (instr.opcode);
 
@@ -1703,8 +1709,7 @@ mem_fmt (args, oP, callx)
       return;
     }
 
-  /* Parse and process the displacement */
-  parse_expr (instr.e, &expr);
+  /* Process the displacement */
   switch (expr.X_op)
     {
     case O_illegal:

@@ -87,6 +87,8 @@ make_a_section_from_file (abfd, hdr, target_index)
       if (*p == '\0' && strindex >= 0)
 	{
 	  strings = _bfd_coff_read_string_table (abfd);
+	  if (strings == NULL)
+	    return false;
 	  /* FIXME: For extra safety, we should make sure that
              strindex does not run us past the end, but right now we
              don't know the length of the string table.  */
@@ -207,7 +209,8 @@ coff_real_object_p (abfd, nscns, internal_f, internal_a)
 	  bfd_coff_swap_scnhdr_in (abfd,
 				   (PTR) (external_sections + i * scnhsz),
 				   (PTR) & tmp);
-	  make_a_section_from_file (abfd, &tmp, i + 1);
+	  if (! make_a_section_from_file (abfd, &tmp, i + 1))
+	    goto fail;
 	}
     }
 
@@ -1554,6 +1557,12 @@ _bfd_coff_read_string_table (abfd)
 
   if (obj_coff_strings (abfd) != NULL)
     return obj_coff_strings (abfd);
+
+  if (obj_sym_filepos (abfd) == 0)
+    {
+      bfd_set_error (bfd_error_no_symbols);
+      return NULL;
+    }
 
   if (bfd_seek (abfd,
 		(obj_sym_filepos (abfd)

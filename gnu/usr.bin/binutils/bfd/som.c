@@ -1438,12 +1438,13 @@ hppa_som_reloc (abfd, reloc_entry, symbol_in, data,
    and a field selector, return one or more appropriate SOM relocations.  */
 
 int **
-hppa_som_gen_reloc_type (abfd, base_type, format, field, sym_diff)
+hppa_som_gen_reloc_type (abfd, base_type, format, field, sym_diff, sym)
      bfd *abfd;
      int base_type;
      int format;
      enum hppa_reloc_field_selector_type_alt field;
      int sym_diff;
+     asymbol *sym;
 {
   int *final_type, **final_types;
 
@@ -1604,9 +1605,32 @@ hppa_som_gen_reloc_type (abfd, base_type, format, field, sym_diff)
 	*final_type = R_DLT_REL;
       /* A relocation in the data space is always a full 32bits.  */
       else if (format == 32)
-	*final_type = R_DATA_ONE_SYMBOL;
+	{
+	  *final_type = R_DATA_ONE_SYMBOL;
 
+	  /* If there's no SOM symbol type associated with this BFD
+	     symbol, then set the symbol type to ST_DATA.
+
+	     Only do this if the type is going to default later when
+	     we write the object file.
+
+	     This is done so that the linker never encounters an
+	     R_DATA_ONE_SYMBOL reloc involving an ST_CODE symbol.
+
+	     This allows the compiler to generate exception handling
+	     tables.
+
+	     Note that one day we may need to also emit BEGIN_BRTAB and
+	     END_BRTAB to prevent the linker from optimizing away insns
+	     in exception handling regions.  */
+	  if (som_symbol_data (sym)->som_type == SYMBOL_TYPE_UNKNOWN
+	      && (sym->flags & BSF_SECTION_SYM) == 0
+	      && (sym->flags & BSF_FUNCTION) == 0
+	      && ! bfd_is_com_section (sym->section))
+	    som_symbol_data (sym)->som_type = SYMBOL_TYPE_DATA;
+	}
       break;
+
 
     case R_HPPA_GOTOFF:
       /* More PLABEL special cases.  */
@@ -1687,7 +1711,7 @@ som_object_setup (abfd, file_hdrp, aux_hdrp)
     return 0;
 
   /* Set BFD flags based on what information is available in the SOM.  */
-  abfd->flags = NO_FLAGS;
+  abfd->flags = BFD_NO_FLAGS;
   if (file_hdrp->symbol_total)
     abfd->flags |= HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS;
 
@@ -2631,8 +2655,6 @@ som_write_fixups (abfd, current_offset, total_reloc_sizep)
 		 later relocation.  */
 	      switch (bfd_reloc->howto->type)
 		{
-		/* This only needs to handle relocations that may be
-		   made by hppa_som_gen_reloc.  */
 		case R_ENTRY:
 		case R_ALT_ENTRY:
 		case R_EXIT:
@@ -2647,6 +2669,8 @@ som_write_fixups (abfd, current_offset, total_reloc_sizep)
 		case R_COMP2:
 		case R_BEGIN_BRTAB:
 		case R_END_BRTAB:
+		case R_BEGIN_TRY:
+		case R_END_TRY:
 		case R_N0SEL:
 		case R_N1SEL:
 		  reloc_offset = bfd_reloc->address;
@@ -2780,6 +2804,7 @@ som_write_fixups (abfd, current_offset, total_reloc_sizep)
 		case R_RSEL:
 		case R_BEGIN_BRTAB:
 		case R_END_BRTAB:
+		case R_BEGIN_TRY:
 		case R_N0SEL:
 		case R_N1SEL:
 		  bfd_put_8 (abfd, bfd_reloc->howto->type, p);
@@ -2787,6 +2812,29 @@ som_write_fixups (abfd, current_offset, total_reloc_sizep)
 		  p += 1;
 		  break;
 
+		case R_END_TRY:
+		  /* The end of a exception handling region.  The reloc's
+		     addend contains the offset of the exception handling
+		     code.  */
+		  if (bfd_reloc->addend == 0)
+		    bfd_put_8 (abfd, bfd_reloc->howto->type, p);
+		  else if (bfd_reloc->addend < 1024)
+		    {
+		      bfd_put_8 (abfd, bfd_reloc->howto->type + 1, p);
+		      bfd_put_8 (abfd, bfd_reloc->addend / 4, p + 1);
+		      p = try_prev_fixup (abfd, &subspace_reloc_size,
+					  p, 2, reloc_queue);
+		    }
+		  else
+		    {
+		      bfd_put_8 (abfd, bfd_reloc->howto->type + 2, p);
+		      bfd_put_8 (abfd, (bfd_reloc->addend / 4) >> 16, p + 1);
+		      bfd_put_16 (abfd, bfd_reloc->addend / 4, p + 2);
+		      p = try_prev_fixup (abfd, &subspace_reloc_size,
+					  p, 4, reloc_queue);
+		    }
+		  break;
+		      
 		case R_COMP1:
 		  /* The only time we generate R_COMP1, R_COMP2 and 
 		     R_CODE_EXPR relocs is for the difference of two
@@ -3705,9 +3753,8 @@ som_bfd_derive_misc_symbol_info (abfd, sym, info)
 	  info->arg_reloc = som_symbol_data (sym)->tc_data.hppa_arg_reloc;
 	}
 
-      /* If the type is unknown at this point, it should be ST_DATA or
-	 ST_CODE (function/ST_ENTRY symbols were handled  as special
-	 cases above). */
+      /* For unknown symbols set the symbol's type based on the symbol's
+	 section (ST_DATA for DATA sections, ST_CODE for CODE sections).  */
       else if (som_symbol_data (sym)->som_type == SYMBOL_TYPE_UNKNOWN)
 	{
 	  if (sym->section->flags & SEC_CODE)
@@ -3715,6 +3762,9 @@ som_bfd_derive_misc_symbol_info (abfd, sym, info)
 	  else
 	    info->symbol_type = ST_DATA;
 	}
+  
+      else if (som_symbol_data (sym)->som_type == SYMBOL_TYPE_UNKNOWN)
+	info->symbol_type = ST_DATA;
 
       /* From now on it's a very simple mapping.  */
       else if (som_symbol_data (sym)->som_type == SYMBOL_TYPE_ABSOLUTE)

@@ -260,16 +260,17 @@ binary_set_section_contents (abfd, sec, data, offset, size)
       bfd_vma low;
       asection *s;
 
-      /* The lowest section VMA sets the virtual address of the start
-         of the file.  We use the set the file position of all the
+      /* The lowest section LMA sets the virtual address of the start
+         of the file.  We use this to set the file position of all the
          sections.  */
-      low = abfd->sections->vma;
+      low = abfd->sections->lma;
       for (s = abfd->sections->next; s != NULL; s = s->next)
-	if (s->vma < low)
-	  low = s->vma;
+	if ((s->flags & SEC_HAS_CONTENTS) != 0
+	    && s->lma < low)
+	  low = s->lma;
 
       for (s = abfd->sections; s != NULL; s = s->next)
-	s->filepos = s->vma - low;
+	s->filepos = s->lma - low;
 
       abfd->output_has_begun = true;
     }

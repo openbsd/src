@@ -46,7 +46,7 @@ symbolS abs_symbol;
 #ifdef DEBUG_SYMS
 #define debug_verify_symchain verify_symbol_chain
 #else
-#define debug_verify_symchain (void)
+#define debug_verify_symchain(root, last) ((void) 0)
 #endif
 
 struct obstack notes;
@@ -229,7 +229,7 @@ colon (sym_name)		/* just seen "x:" - rattle symbols & frags */
 	    {
 	      symbolP->sy_frag = frag_now;
 #ifdef OBJ_VMS
-	      S_GET_OTHER(symbolP) = const_flag;
+	      S_SET_OTHER(symbolP, const_flag);
 #endif
 	      S_SET_VALUE (symbolP, (valueT) frag_now_fix ());
 	      S_SET_SEGMENT (symbolP, now_seg);
@@ -281,8 +281,8 @@ colon (sym_name)		/* just seen "x:" - rattle symbols & frags */
 			 data.  */
 		      symbolP->sy_frag = frag_now;
 #ifdef OBJ_VMS
-		      S_GET_OTHER(symbolP) = const_flag;
-#endif /* OBJ_VMS */
+		      S_SET_OTHER(symbolP, const_flag);
+#endif
 		      S_SET_VALUE (symbolP, (valueT) frag_now_fix ());
 		      S_SET_SEGMENT (symbolP, now_seg);	/* keep N_EXT bit */
 		    }
@@ -639,7 +639,35 @@ resolve_symbol_value (symp)
 
       symp->sy_resolving = 1;
 
-    reduce:
+      /* Simplify addition or subtraction of a constant by folding the
+         constant into X_add_number.  */
+      if (symp->sy_value.X_op == O_add
+	  || symp->sy_value.X_op == O_subtract)
+	{
+	  resolve_symbol_value (symp->sy_value.X_add_symbol);
+	  resolve_symbol_value (symp->sy_value.X_op_symbol);
+	  if (S_GET_SEGMENT (symp->sy_value.X_op_symbol) == absolute_section)
+	    {
+	      right = S_GET_VALUE (symp->sy_value.X_op_symbol);
+	      if (symp->sy_value.X_op == O_add)
+		symp->sy_value.X_add_number += right;
+	      else
+		symp->sy_value.X_add_number -= right;
+	      symp->sy_value.X_op = O_symbol;
+	      symp->sy_value.X_op_symbol = NULL;
+	    }
+	  else if ((S_GET_SEGMENT (symp->sy_value.X_add_symbol)
+		    == absolute_section)
+		   && symp->sy_value.X_op == O_add)
+	    {
+	      left = S_GET_VALUE (symp->sy_value.X_add_symbol);
+	      symp->sy_value.X_add_symbol = symp->sy_value.X_op_symbol;
+	      symp->sy_value.X_add_number += left;
+	      symp->sy_value.X_op = O_symbol;
+	      symp->sy_value.X_op_symbol = NULL;
+	    }
+	}
+
       switch (symp->sy_value.X_op)
 	{
 	case O_absent:
@@ -708,39 +736,6 @@ resolve_symbol_value (symp)
 	  resolved = symp->sy_value.X_add_symbol->sy_resolved;
 	  break;
 
-	case O_add:
-	  resolve_symbol_value (symp->sy_value.X_add_symbol);
-	  resolve_symbol_value (symp->sy_value.X_op_symbol);
-	  seg_left = S_GET_SEGMENT (symp->sy_value.X_add_symbol);
-	  seg_right = S_GET_SEGMENT (symp->sy_value.X_op_symbol);
-	  /* This case comes up with PIC support.  */
-	  {
-	    symbolS *s_left = symp->sy_value.X_add_symbol;
-	    symbolS *s_right = symp->sy_value.X_op_symbol;
-
-	    if (seg_left == absolute_section)
-	      {
-		symbolS *t;
-		segT ts;
-		t = s_left;
-		s_left = s_right;
-		s_right = t;
-		ts = seg_left;
-		seg_left = seg_right;
-		seg_right = ts;
-	      }
-	    if (seg_right == absolute_section
-		&& s_right->sy_resolved)
-	      {
-		symp->sy_value.X_add_number += S_GET_VALUE (s_right);
-		symp->sy_value.X_op_symbol = 0;
-		symp->sy_value.X_add_symbol = s_left;
-		symp->sy_value.X_op = O_symbol;
-		goto reduce;
-	      }
-	  }
-	  /* fall through */
-
 	case O_multiply:
 	case O_divide:
 	case O_modulus:
@@ -750,6 +745,7 @@ resolve_symbol_value (symp)
 	case O_bit_or_not:
 	case O_bit_exclusive_or:
 	case O_bit_and:
+	case O_add:
 	case O_subtract:
 	case O_eq:
 	case O_ne:
@@ -763,18 +759,30 @@ resolve_symbol_value (symp)
 	  resolve_symbol_value (symp->sy_value.X_op_symbol);
 	  seg_left = S_GET_SEGMENT (symp->sy_value.X_add_symbol);
 	  seg_right = S_GET_SEGMENT (symp->sy_value.X_op_symbol);
-	  if (seg_left != seg_right
-	      && seg_left != undefined_section
-	      && seg_right != undefined_section)
-	    as_bad ("%s is operation on symbols in different sections",
-		    S_GET_NAME (symp));
-	  if ((S_GET_SEGMENT (symp->sy_value.X_add_symbol)
-	       != absolute_section)
-	      && symp->sy_value.X_op != O_subtract)
-	    as_bad ("%s is illegal operation on non-absolute symbols",
-		    S_GET_NAME (symp));
 	  left = S_GET_VALUE (symp->sy_value.X_add_symbol);
 	  right = S_GET_VALUE (symp->sy_value.X_op_symbol);
+
+	  /* Subtraction is permitted if both operands are in the same
+	     section.  Otherwise, both operands must be absolute.  We
+	     already handled the case of addition or subtraction of a
+	     constant above.  This will probably need to be changed
+	     for an object file format which supports arbitrary
+	     expressions, such as IEEE-695.  */
+	  if ((seg_left != absolute_section
+	       || seg_right != absolute_section)
+	      && (symp->sy_value.X_op != O_subtract
+		  || seg_left != seg_right))
+	    {
+	      char *file;
+	      unsigned int line;
+
+	      if (expr_symbol_where (symp, &file, &line))
+		as_bad_where (file, line, "invalid section for operation");
+	      else
+		as_bad ("invalid section for operation setting %s",
+			S_GET_NAME (symp));
+	    }
+
 	  switch (symp->sy_value.X_op)
 	    {
 	    case O_multiply:		val = left * right; break;
@@ -1358,7 +1366,10 @@ S_SET_EXTERNAL (s)
      symbolS *s;
 {
   if ((s->bsym->flags & BSF_WEAK) != 0)
-    as_warn ("%s already declared as weak", S_GET_NAME (s));
+    {
+      /* Let .weak override .global.  */
+      return;
+    }
   s->bsym->flags |= BSF_GLOBAL;
   s->bsym->flags &= ~(BSF_LOCAL|BSF_WEAK);
 }
@@ -1368,7 +1379,10 @@ S_CLEAR_EXTERNAL (s)
      symbolS *s;
 {
   if ((s->bsym->flags & BSF_WEAK) != 0)
-    as_warn ("%s already declared as weak", S_GET_NAME (s));
+    {
+      /* Let .weak override.  */
+      return;
+    }
   s->bsym->flags |= BSF_LOCAL;
   s->bsym->flags &= ~(BSF_GLOBAL|BSF_WEAK);
 }
@@ -1377,8 +1391,6 @@ void
 S_SET_WEAK (s)
      symbolS *s;
 {
-  if ((s->bsym->flags & BSF_GLOBAL) != 0)
-    as_warn ("%s already declared as global", S_GET_NAME (s));
   s->bsym->flags |= BSF_WEAK;
   s->bsym->flags &= ~(BSF_GLOBAL|BSF_LOCAL);
 }

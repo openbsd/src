@@ -239,6 +239,18 @@ obj_emit_relocations (where, fixP, segment_address_in_file)
 	  sym = sym->sy_value.X_add_symbol;
 	fixP->fx_addsy = sym;
 
+	if (! sym->sy_resolved && ! S_IS_DEFINED (sym))
+	  {
+	    char *file;
+	    unsigned int line;
+
+	    if (expr_symbol_where (sym, &file, &line))
+	      as_bad_where (file, line, "unresolved relocation");
+	    else
+	      as_bad ("bad relocation: symbol `%s' not in symbol table",
+		      S_GET_NAME (sym));
+	  }
+
 	tc_aout_fix_to_chars (*where, fixP, segment_address_in_file);
 	*where += md_reloc_size;
       }

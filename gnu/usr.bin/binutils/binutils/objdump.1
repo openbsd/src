@@ -24,6 +24,9 @@ objdump \- display information from object files.
 .RB "[\|" \-\-debugging "\|]" 
 .RB "[\|" \-d | \-\-disassemble "\|]" 
 .RB "[\|" \-D | \-\-disassemble-all "\|]" 
+.RB "[\|" \-EB | \-EL | \-\-endian=\c
+.I {big|little}\c
+\&\|]
 .RB "[\|" \-f | \-\-file\-headers "\|]"
 .RB "[\|" \-h | \-\-section\-headers
 .RB "| " \-\-headers "\|]" 
@@ -152,6 +155,16 @@ Like \fB\-d\fP, but disassemble the contents of all sections, not just
 those expected to contain instructions.
 
 .TP
+.B \-EB
+.TP
+.B \-EL
+.TP
+.BI "\-\-endian=" "{big|little}"
+Specify the endianness of the object files.  This only affects
+disassembly.  This can be useful when disassembling a file format which
+does not describe endianness information, such as S-records.
+
+.TP
 .B \-f
 .TP
 .B \-\-file\-headers
@@ -200,21 +213,16 @@ Display information only for section \c
 .B \-\-line\-numbers
 Label the display (using debugging information) with the filename
 and source line numbers corresponding to the object code shown.
-Only useful with \fB\-d\fP or \fB\-D\fP.
+Only useful with \fB\-d\fP, \fB\-D\fP, or \fB\-r\fP.
 
 .TP
 .BI "\-m " "machine"\c
 .TP
 .BI "\-\-architecture=" "machine"
-Specify the object files \c
-.I objfile\c
-\& are for architecture
-\c
-.I machine\c
-\&.  You can list available architectures using the `\|\c
-.B \-i\c
-\|'
-option. 
+Specify the architecture to use when disassembling object files.  This
+can be useful when disasembling object files which do not describe
+architecture information, such as S-records.  You can list the available
+architectures with the \fB\-i\fP option. 
 
 .TP
 .B \-r

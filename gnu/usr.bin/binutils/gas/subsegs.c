@@ -1,5 +1,5 @@
 /* subsegs.c - subsegments -
-   Copyright (C) 1987, 1990, 1991, 1992, 1993, 1994
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /*
  * Segments & sub-segments.
@@ -208,12 +209,9 @@ subseg_set_rest (seg, subseg)
      segT seg;
      subsegT subseg;
 {
-  long tmp;			/* JF for obstack alignment hacking */
   register frchainS *frcP;	/* crawl frchain chain */
   register frchainS **lastPP;	/* address of last pointer */
   frchainS *newP;		/* address of new frchain */
-  register fragS *former_last_fragP;
-  register fragS *new_fragP;
 
   mri_common_symbol = NULL;
 
@@ -523,7 +521,7 @@ section_symbol (sec)
 
   if (! EMIT_SECTION_SYMBOLS
 #ifdef BFD_ASSEMBLER
-      && symbol_table_frozen
+      || symbol_table_frozen
 #endif
       )
     /* Here we know it won't be going into the symbol table.  */

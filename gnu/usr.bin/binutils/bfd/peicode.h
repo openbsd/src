@@ -23,7 +23,34 @@ Most of this hacked by  Steve Chamberlain,
 			sac@cygnus.com
 */
 
+/* Hey look, some documentation [and in a place you expect to find it]!
 
+   The main reference for the pei format is "Microsoft Portable Executable
+   and Common Object File Format Specification 4.1".  Get it if you need to
+   do some serious hacking on this code.
+
+   Another reference:
+   "Peering Inside the PE: A Tour of the Win32 Portable Executable
+   File Format", MSJ 1994, Volume 9.
+
+   The *sole* difference between the pe format and the pei format is that the
+   latter has an MSDOS 2.0 .exe header on the front that prints the message
+   "This app must be run under Windows." (or some such).
+   (FIXME: Whether that statement is *really* true or not is unknown.
+   Are there more subtle differences between pe and pei formats?
+   For now assume there aren't.  If you find one, then for God sakes
+   document it here!)
+
+   The Microsoft docs use the word "image" instead of "executable" because
+   the former can also refer to a DLL (shared library).  Confusion can arise
+   because the `i' in `pei' also refers to "image".  The `pe' format can
+   also create images (i.e. executables), it's just that to run on a win32
+   system you need to use the pei format.
+
+   FIXME: Please add more docs here so the next poor fool that has to hack
+   on this code has a chance of getting something accomplished without
+   wasting too much time.
+*/
 
 #define coff_bfd_print_private_bfd_data pe_print_private_bfd_data
 #define coff_mkobject pe_mkobject
@@ -213,7 +240,7 @@ coff_swap_reloc_out (abfd, src, dst)
 #ifdef SWAP_OUT_RELOC_EXTRA
   SWAP_OUT_RELOC_EXTRA(abfd,reloc_src, reloc_dst);
 #endif
-  return sizeof(struct external_reloc);
+  return RELSZ;
 }
 
 
@@ -241,7 +268,6 @@ coff_swap_filehdr_in (abfd, src, dst)
     }
   else 
     {
-      filehdr_dst->f_symptr = 0;
       filehdr_dst->f_nsyms = 0;
       filehdr_dst->f_flags &= ~HAS_SYMS;
     }
@@ -377,7 +403,7 @@ coff_swap_filehdr_out (abfd, in, out)
 
 
 
-  return sizeof(FILHDR);
+  return FILHSZ;
 }
 #else
 
@@ -399,7 +425,7 @@ coff_swap_filehdr_out (abfd, in, out)
   bfd_h_put_16(abfd, filehdr_in->f_opthdr, (bfd_byte *) filehdr_out->f_opthdr);
   bfd_h_put_16(abfd, filehdr_in->f_flags, (bfd_byte *) filehdr_out->f_flags);
 
-  return sizeof(FILHDR);
+  return FILHSZ;
 }
 
 #endif
@@ -494,7 +520,7 @@ coff_swap_sym_out (abfd, inp, extp)
   bfd_h_put_8(abfd,  in->n_sclass , ext->e_sclass);
   bfd_h_put_8(abfd,  in->n_numaux , ext->e_numaux);
 
-  return sizeof(SYMENT);
+  return SYMESZ;
 }
 
 static void
@@ -609,7 +635,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
       memcpy (ext->x_file.x_fname, in->x_file.x_fname, FILNMLEN);
 #endif
     }
-    return sizeof (AUXENT);
+    return AUXESZ;
 
 
   case C_STAT:
@@ -627,7 +653,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
 		    (bfd_byte *) ext->x_scn.x_associated);
       bfd_h_put_8 (abfd, in->x_scn.x_comdat,
 		   (bfd_byte *) ext->x_scn.x_comdat);
-      return sizeof (AUXENT);
+      return AUXESZ;
     }
     break;
   }
@@ -666,7 +692,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
       PUT_LNSZ_SIZE (abfd, in->x_sym.x_misc.x_lnsz.x_size, ext);
     }
 
-  return sizeof(AUXENT);
+  return AUXESZ;
 }
 
 
@@ -695,7 +721,7 @@ coff_swap_lineno_out (abfd, inp, outp)
 	  ext->l_addr.l_symndx);
 
   PUT_LINENO_LNNO (abfd, in->l_lnno, ext);
-  return sizeof(struct external_lineno);
+  return LINESZ;
 }
 
 
@@ -768,6 +794,16 @@ coff_swap_aouthdr_in (abfd, aouthdr_ext1, aouthdr_int1)
     aouthdr_int->text_start += a->ImageBase;
   if (aouthdr_int->dsize) 
     aouthdr_int->data_start += a->ImageBase;
+
+#ifdef POWERPC_LE_PE
+  /* These three fields are normally set up by ppc_relocate_section.
+     In the case of reading a file in, we can pick them up from
+     the DataDirectory.
+  */
+  first_thunk_address = a->DataDirectory[12].VirtualAddress ;
+  thunk_size = a->DataDirectory[12].Size;
+  import_table_size = a->DataDirectory[1].Size;
+#endif
 }
 
 
@@ -784,7 +820,7 @@ static void add_data_entry (abfd, aout, idx, name, base)
   if (sec != NULL)
     {
       aout->DataDirectory[idx].VirtualAddress = sec->vma - base;
-      aout->DataDirectory[idx].Size = sec->_cooked_size;
+      aout->DataDirectory[idx].Size = pei_section_data (abfd, sec)->virt_size;
       sec->flags |= SEC_DATA;
     }
 }
@@ -948,7 +984,7 @@ coff_swap_aouthdr_out (abfd, in, out)
       }
   }
 
-  return sizeof(AOUTHDR);
+  return AOUTSZ;
 }
 
 static void
@@ -997,7 +1033,7 @@ coff_swap_scnhdr_out (abfd, in, out)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *)in;
   SCNHDR *scnhdr_ext = (SCNHDR *)out;
-  unsigned int ret = sizeof (SCNHDR);
+  unsigned int ret = SCNHSZ;
   bfd_vma ps;
   bfd_vma ss;
 
@@ -1066,7 +1102,6 @@ coff_swap_scnhdr_out (abfd, in, out)
     else if (strcmp (scnhdr_int->s_name, ".rdata") == 0
 	     || strcmp (scnhdr_int->s_name, ".edata") == 0)
       flags =  IMAGE_SCN_MEM_READ | SEC_DATA;     
-    /* ppc-nt additions */
     else if (strcmp (scnhdr_int->s_name, ".pdata") == 0)
       flags = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_ALIGN_4BYTES |
 			  IMAGE_SCN_MEM_READ ;
@@ -1078,9 +1113,8 @@ coff_swap_scnhdr_out (abfd, in, out)
     else if (strcmp (scnhdr_int->s_name, ".ydata") == 0)
       flags =  IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_ALIGN_8BYTES |
 	       IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE ;
-    else if (strcmp (scnhdr_int->s_name, ".drectve") == 0)
+    else if (strncmp (scnhdr_int->s_name, ".drectve", strlen(".drectve")) == 0)
       flags =  IMAGE_SCN_LNK_INFO | IMAGE_SCN_LNK_REMOVE ;
-    /* end of ppc-nt additions */
 #ifdef POWERPC_LE_PE
     else if (strncmp (scnhdr_int->s_name, ".stabstr", strlen(".stabstr")) == 0)
       {
@@ -1122,7 +1156,7 @@ coff_swap_scnhdr_out (abfd, in, out)
 
 static char * dir_names[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] = 
 {
-  "Export Directory [.edata]",
+  "Export Directory [.edata (or where ever we found it)]",
   "Import Directory [parts of .idata]",
   "Resource Directory [.rsrc]",
   "Exception Directory [.pdata]",
@@ -1204,6 +1238,11 @@ pe_print_idata(abfd, vfile)
       fprintf (file,
 	       "\tcode-base %08lx toc (loadable/actual) %08lx/%08lx\n", 
 	       start_address, loadable_toc_address, toc_address);
+    }
+  else 
+    {
+      fprintf(file,
+	      "\nNo reldata section! Function descriptor not decoded.\n");
     }
 #endif
 
@@ -1427,7 +1466,7 @@ pe_print_edata(abfd, vfile)
 	   "Name \t\t\t\t");
   fprintf_vma (file, edt.name);
   fprintf (file,
-	   "%s\n", data + edt.name + adj);
+	   " %s\n", data + edt.name + adj);
 
   fprintf(file,
 	  "Ordinal Base \t\t\t%ld\n", edt.base);
@@ -1654,7 +1693,7 @@ static const char *tbl[6] =
 "LOW",
 "HIGHLOW",
 "HIGHADJ",
-"unknown"
+"MIPS_JMPADDR"
 };
 
 static boolean

@@ -149,7 +149,8 @@ DESCRIPTION
 .  bfd_target_som_flavour,
 .  bfd_target_os9k_flavour,
 .  bfd_target_versados_flavour,
-.  bfd_target_msdos_flavour
+.  bfd_target_msdos_flavour,
+.  bfd_target_evax_flavour
 .};
 .
 .enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };
@@ -178,7 +179,7 @@ The order of bytes within the header parts of a file.
 .  enum bfd_endian header_byteorder;
 
 A mask of all the flags which an executable may have set -
-from the set <<NO_FLAGS>>, <<HAS_RELOC>>, ...<<D_PAGED>>.
+from the set <<BFD_NO_FLAGS>>, <<HAS_RELOC>>, ...<<D_PAGED>>.
 
 .  flagword object_flags;       
 
@@ -480,6 +481,7 @@ extern const bfd_target armpei_little_vec;
 extern const bfd_target armpei_big_vec;
 extern const bfd_target b_out_vec_big_host;
 extern const bfd_target b_out_vec_little_host;
+extern const bfd_target bfd_elf64_alpha_vec;
 extern const bfd_target bfd_elf32_big_generic_vec;
 extern const bfd_target bfd_elf32_bigmips_vec;
 extern const bfd_target bfd_elf64_bigmips_vec;
@@ -493,6 +495,8 @@ extern const bfd_target bfd_elf32_m68k_vec;
 extern const bfd_target bfd_elf32_m88k_vec;
 extern const bfd_target bfd_elf32_powerpc_vec;
 extern const bfd_target bfd_elf32_powerpcle_vec;
+extern const bfd_target bfd_elf32_sh_vec;
+extern const bfd_target bfd_elf32_shl_vec;
 extern const bfd_target bfd_elf32_sparc_vec;
 extern const bfd_target bfd_elf64_big_generic_vec;
 extern const bfd_target bfd_elf64_little_generic_vec;
@@ -501,6 +505,7 @@ extern const bfd_target demo_64_vec;
 extern const bfd_target ecoff_big_vec;
 extern const bfd_target ecoff_little_vec;
 extern const bfd_target ecoffalpha_little_vec;
+extern const bfd_target evax_alpha_vec;
 extern const bfd_target h8300coff_vec;
 extern const bfd_target h8500coff_vec;
 extern const bfd_target host_aout_vec;
@@ -554,6 +559,7 @@ extern const bfd_target pmac_xcoff_vec;
 extern const bfd_target rs6000coff_vec;
 extern const bfd_target shcoff_vec;
 extern const bfd_target shlcoff_vec;
+extern const bfd_target sparcle_aout_vec;
 extern const bfd_target sparclynx_aout_vec;
 extern const bfd_target sparclynx_coff_vec;
 extern const bfd_target sparcnetbsd_vec;
@@ -617,6 +623,9 @@ const bfd_target * const bfd_target_vector[] = {
 	   --enable-targets=all, objdump or gdb should be able to examine
 	   the file even if we don't recognize the machine type.  */
 	&bfd_elf32_big_generic_vec,
+#ifdef BFD64
+	&bfd_elf64_alpha_vec,
+#endif
 	&bfd_elf32_bigmips_vec,
 #ifdef BFD64
 	&bfd_elf64_bigmips_vec,
@@ -648,8 +657,9 @@ const bfd_target * const bfd_target_vector[] = {
 #endif
 	&ecoff_big_vec,
 	&ecoff_little_vec,
-#if 0
+#ifdef BFD64
 	&ecoffalpha_little_vec,
+	&evax_alpha_vec,
 #endif
 	&h8300coff_vec,
 	&h8500coff_vec,
@@ -742,6 +752,7 @@ const bfd_target * const bfd_target_vector[] = {
 	&ppcboot_vec,
 	&shcoff_vec,
 	&shlcoff_vec,
+	&sparcle_aout_vec,
 	&sparclynx_aout_vec,
 	&sparclynx_coff_vec,
 	&sparcnetbsd_vec,

@@ -25,12 +25,12 @@ prefix = @prefix@
 
 program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 tooldir = $(exec_prefix)/$(target_alias)
 
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -40,15 +40,14 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
-docdir = $(datadir)/doc
+infodir = @infodir@
+includedir = @includedir@
 
 SHELL = /bin/sh
 
 INSTALL = `cd $(srcdir)/..;pwd`/install.sh -c
-INSTALL_PROGRAM = $(INSTALL)
-INSTALL_DATA = $(INSTALL) -m 644
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
 INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
 INSTALL_XFORM1 = $(INSTALL_XFORM) -b=.1 -m 644
 
@@ -58,6 +57,7 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 HLDFLAGS = @HLDFLAGS@
+HLDENV = @HLDENV@
 RPATH_ENVVAR = @RPATH_ENVVAR@
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
@@ -76,7 +76,7 @@ LEX_OPTIONS = -I -Cem
 LEX = `if [ -f ../flex/flex ] ; then echo ../flex/flex ; else echo flex ; fi`
 
 # Distribution version
-VERSION=cygnus-2.6
+VERSION=cygnus-2.7.1
 # Distribution name
 DIST_NAME=binutils-${VERSION}
 
@@ -114,7 +114,8 @@ STAGESTUFF = $(PROGS) *.o
 # Files that can be generated, but should be in the distribution.
 # Don't build $(DEMANGLER_PROG).1, since its name may vary with the
 # configuration.
-DISTSTUFF=arparse.c arparse.h arlex.c nlmheader.c sysinfo.c sysinfo.h syslex.c
+DISTSTUFF=arparse.c arparse.h arlex.c nlmheader.c sysinfo.c sysinfo.h \
+	syslex.c deflex.c
 
 # Stuff that goes in tooldir/ if appropriate
 TOOL_PROGS = nm.new strip.new ar ranlib $(DLLTOOL_PROG)
@@ -245,25 +246,25 @@ info: binutils.info
 dvi: binutils.dvi
 
 $(SIZE_PROG): $(ADDL_DEPS) size.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(SIZE_PROG) size.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(SIZE_PROG) size.o $(ADDL_LIBS) $(EXTRALIBS)
 
 $(OBJCOPY_PROG): $(ADDL_DEPS) objcopy.o not-strip.o $(WRITE_DEBUG_OBJS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJCOPY_PROG) objcopy.o not-strip.o $(WRITE_DEBUG_OBJS) $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJCOPY_PROG) objcopy.o not-strip.o $(WRITE_DEBUG_OBJS) $(ADDL_LIBS) $(EXTRALIBS)
 
 $(STRINGS_PROG): $(ADDL_DEPS) strings.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(STRINGS_PROG) strings.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(STRINGS_PROG) strings.o $(ADDL_LIBS) $(EXTRALIBS)
 
 $(STRIP_PROG): $(ADDL_DEPS) objcopy.o is-strip.o $(WRITE_DEBUG_OBJS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(STRIP_PROG) objcopy.o is-strip.o $(WRITE_DEBUG_OBJS) $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(STRIP_PROG) objcopy.o is-strip.o $(WRITE_DEBUG_OBJS) $(ADDL_LIBS) $(EXTRALIBS)
 
 $(NM_PROG): $(ADDL_DEPS) nm.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(NM_PROG) nm.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(NM_PROG) nm.o $(ADDL_LIBS) $(EXTRALIBS)
 
 #libbfd is searched twice here ($(BFDLIB) and $(ADDL_LIBS)) because when a
 #shared libbfd is built with --enable-commonbfdlib, all of libopcodes is
 #available in libbfd.so and we don't want to link anything from libopcodes.a
 $(OBJDUMP_PROG): $(ADDL_DEPS) objdump.o prdbg.o $(DEBUG_OBJS) $(OPCODES_DEP)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJDUMP_PROG) objdump.o prdbg.o $(DEBUG_OBJS) $(BFDLIB) $(OPCODES) $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJDUMP_PROG) objdump.o prdbg.o $(DEBUG_OBJS) $(BFDLIB) $(OPCODES) $(ADDL_LIBS) $(EXTRALIBS)
 
 underscore.c: stamp-under ; @true
 
@@ -280,7 +281,7 @@ cplus-dem.o: $(BASEDIR)/libiberty/cplus-dem.c $(INCDIR)/getopt.h
 	$(CC) -c -DMAIN -DVERSION='"$(VERSION)"' $(ALL_CFLAGS) $(BASEDIR)/libiberty/cplus-dem.c
 
 $(DEMANGLER_PROG): cplus-dem.o $(LIBIBERTY) underscore.o $(DEMANGLER_PROG).1
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(DEMANGLER_PROG) cplus-dem.o $(LIBIBERTY) $(EXTRALIBS) underscore.o
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(DEMANGLER_PROG) cplus-dem.o $(LIBIBERTY) $(EXTRALIBS) underscore.o
 
 arparse.c: arparse.y
 	$(BISON) $(BISONFLAGS)  $(srcdir)/arparse.y
@@ -296,10 +297,10 @@ arlex.c: arlex.l
 	mv lex.yy.c arlex.c
 
 $(AR_PROG): $(ADDL_DEPS) ar.o arparse.o arlex.o not-ranlib.o arsup.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(AR_PROG) ar.o arparse.o arlex.o arsup.o not-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(AR_PROG) ar.o arparse.o arlex.o arsup.o not-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
 
 $(RANLIB_PROG): $(ADDL_DEPS) ar.o is-ranlib.o arparse.o arlex.o arsup.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(RANLIB_PROG) ar.o arparse.o arlex.o arsup.o is-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(RANLIB_PROG) ar.o arparse.o arlex.o arsup.o is-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
 
 # This rule creates a single binary that switches between ar and ranlib
 # by looking at argv[0].  Use this kludge to save some disk space.
@@ -309,14 +310,14 @@ $(RANLIB_PROG): $(ADDL_DEPS) ar.o is-ranlib.o arparse.o arlex.o arsup.o
 # Alternatively, you can install ranlib.sh as ranlib.
 
 ar_with_ranlib: $(ADDL_DEPS) ar.o maybe-ranlib.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(AR_PROG) ar.o maybe-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(AR_PROG) ar.o maybe-ranlib.o $(ADDL_LIBS) $(EXTRALIBS)
 	-rm -f $(RANLIB_PROG)
 	-ln $(AR_PROG) $(RANLIB_PROG)
 
 # objcopy and strip in one binary that uses argv[0] to decide its action.
 
 objcopy_with_strip: $(ADDL_DEPS) objcopy.o maybe-strip.o
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJCOPY_PROG) objcopy.o maybe-strip.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(OBJCOPY_PROG) objcopy.o maybe-strip.o $(ADDL_LIBS) $(EXTRALIBS)
 	-rm -f $(STRIP_PROG)
 	-ln $(OBJCOPY_PROG) $(STRIP_PROG)
 
@@ -362,10 +363,10 @@ sysinfo.o: sysinfo.c
 	fi
 
 srconv: srconv.o coffgrok.o $(ADDL_DEPS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ srconv.o coffgrok.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ srconv.o coffgrok.o $(ADDL_LIBS) $(EXTRALIBS)
 
 dlltool: dlltool.o defparse.o deflex.o cplus-dem.o $(ADDL_DEPS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ dlltool.o defparse.o deflex.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ dlltool.o defparse.o deflex.o $(ADDL_LIBS) $(EXTRALIBS)
 
 defparse.c:defparse.y
 	$(BISON)  $(BISONFLAGS)  $(srcdir)/defparse.y
@@ -382,10 +383,10 @@ dlltool.o:dlltool.c
 	$(CC) -c @DLLTOOL_DEFS@ $(ALL_CFLAGS) $(srcdir)/dlltool.c
 
 coffdump: coffdump.o coffgrok.o $(ADDL_DEPS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@  coffdump.o coffgrok.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@  coffdump.o coffgrok.o $(ADDL_LIBS) $(EXTRALIBS)
 
 sysdump: sysdump.o $(ADDL_DEPS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ sysdump.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ sysdump.o $(ADDL_LIBS) $(EXTRALIBS)
 
 # Depend upon sysinfo.c to avoid building both nlmheader.c and sysinfo.c
 # simultaneously.
@@ -401,7 +402,7 @@ nlmconv.o: nlmconv.c $(INCDIR)/coff/sym.h $(INCDIR)/coff/ecoff.h
 	$(CC) -c -DLD_NAME="\"$${ldname}\"" @NLMCONV_DEFS@ $(ALL_CFLAGS) $(srcdir)/nlmconv.c
 
 $(NLMCONV_PROG): nlmconv.o nlmheader.o $(ADDL_DEPS)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ nlmconv.o nlmheader.o $(ADDL_LIBS) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ nlmconv.o nlmheader.o $(ADDL_LIBS) $(EXTRALIBS)
 
 # Targets to rebuild dependencies in this Makefile.
 # Have to get rid of .dep1 here so that "$?" later includes all of $(CFILES).

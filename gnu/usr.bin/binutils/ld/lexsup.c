@@ -19,6 +19,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 
 #include "bfd.h"
 #include "sysdep.h"
+#include "libiberty.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -437,6 +438,7 @@ parse_args (argc, argv)
 	  config.dynamic_link = false;
 	  break;
 	case OPTION_CREF:
+	  command_line.cref = true;
 	  link_info.notice_all = true;
 	  break;
 	case 'd':
@@ -703,7 +705,7 @@ parse_args (argc, argv)
 	case 'Y':
 	  if (strncmp (optarg, "P,", 2) == 0)
 	    optarg += 2;
-	  default_dirlist = optarg;
+	  default_dirlist = xstrdup (optarg);
 	  break;
 	case 'y':
 	  add_ysym (optarg);
@@ -766,12 +768,11 @@ set_default_dirlist (dirlist_ptr)
     {
       p = strchr (dirlist_ptr, ':');
       if (p != NULL)
-	*p = 0;
-      if (*dirlist_ptr)
+	*p = '\0';
+      if (*dirlist_ptr != '\0')
 	ldfile_add_library_path (dirlist_ptr, true);
       if (p == NULL)
 	break;
-      *p = ':';
       dirlist_ptr = p + 1;
     }
 }

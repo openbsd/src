@@ -54,6 +54,12 @@ void tc_aout_pre_write_hook ();
 
 extern int sparc_pic_code;
 
+/* We require .word, et. al., to be aligned correctly.  */
+#define md_cons_align(nbytes) sparc_cons_align (nbytes)
+extern void sparc_cons_align PARAMS ((int));
+#define HANDLE_ALIGN(fragp) sparc_handle_align (fragp)
+extern void sparc_handle_align ();
+
 #if defined (OBJ_ELF) || defined (OBJ_AOUT)
 
 /* This expression evaluates to false if the relocation is for a local
@@ -61,11 +67,18 @@ extern int sparc_pic_code;
    True if we are willing to perform this relocation while building
    the .o file.
 
-   If we are generating PIC, and the reloc is against an externally
-   visible symbol, we do not want gas to do the relocation.  */
+   If the reloc is against an externally visible symbol, then the
+   a.out assembler should not do the relocation if generating PIC, and
+   the ELF assembler should never do the relocation.  */
+
+#ifdef OBJ_ELF
+#define obj_relocate_extern 0
+#else
+#define obj_relocate_extern (! sparc_pic_code)
+#endif
 
 #define TC_RELOC_RTSYM_LOC_FIXUP(FIX)  \
-  (! sparc_pic_code \
+  (obj_relocate_extern \
    || (FIX)->fx_addsy == NULL \
    || (! S_IS_EXTERNAL ((FIX)->fx_addsy) \
        && ! S_IS_WEAK ((FIX)->fx_addsy) \

@@ -43,7 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define YYDEBUG 1
 #endif
 
-static int typebits;
+static enum section_type sectype;
 
 lang_memory_region_type *region;
 
@@ -75,15 +75,21 @@ static int error_index;
       union etree_union *at;
       union etree_union *flags;
     } phdr;
+  struct lang_nocrossref *nocrossref;
+  struct lang_output_section_phdr_list *section_phdr;
 }
 
 %type <etree> exp opt_exp_with_type mustbe_exp opt_at phdr_type phdr_val
+%type <etree> opt_exp_without_type
 %type <integer> fill_opt
 %type <name> memspec_opt casesymlist
 %token <integer> INT  
 %token <name> NAME LNAME
-%type  <integer> length
+%type <integer> length
 %type <phdr> phdr_qualifiers
+%type <nocrossref> nocrossref_list
+%type <section_phdr> phdr_opt
+%type <integer> opt_nocrossrefs
 
 %right <token> PLUSEQ MINUSEQ MULTEQ DIVEQ  '=' LSHIFTEQ RSHIFTEQ   ANDEQ OREQ 
 %right <token> '?' ':'
@@ -102,7 +108,7 @@ static int error_index;
 %right UNARY
 %token END 
 %left <token> '('
-%token <token> ALIGN_K BLOCK QUAD LONG SHORT BYTE
+%token <token> ALIGN_K BLOCK BIND QUAD LONG SHORT BYTE
 %token SECTIONS PHDRS
 %token '{' '}'
 %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
@@ -111,8 +117,9 @@ static int error_index;
 %token MEMORY DEFSYMEND
 %token NOLOAD DSECT COPY INFO OVERLAY
 %token NAME LNAME DEFINED TARGET_K SEARCH_DIR MAP ENTRY
-%token <integer> SIZEOF NEXT ADDR
-%token STARTUP HLL SYSLIB FLOAT NOFLOAT
+%token <integer> NEXT
+%token SIZEOF ADDR LOADADDR MAX MIN
+%token STARTUP HLL SYSLIB FLOAT NOFLOAT NOCROSSREFS
 %token ORIGIN FILL
 %token LENGTH CREATE_OBJECT_SYMBOLS INPUT GROUP OUTPUT CONSTRUCTORS
 %token ALIGNMOD AT PROVIDE
@@ -299,6 +306,10 @@ ifile_p1:
 		{ lang_add_map($3); }
 	|	INCLUDE filename 
 		{ ldfile_open_command_file($2); } ifile_list END
+	|	NOCROSSREFS '(' nocrossref_list ')'
+		{
+		  lang_add_nocrossref ($3);
+		}
 	;
 
 input_list:
@@ -338,11 +349,21 @@ statement_anywhere:
 	|	assignment end
 	;
 
+/* The '*' and '?' cases are there because the lexer returns them as
+   separate tokens rather than as NAME.  */
 file_NAME_list:
 		NAME
-			{ lang_add_wild($1, current_file); }
+			{ lang_add_wild ($1, current_file); }
+	|	'*'
+			{ lang_add_wild ("*", current_file); }
+	|	'?'
+			{ lang_add_wild ("?", current_file); }
 	|	file_NAME_list opt_comma NAME
-			{ lang_add_wild($3, current_file); }
+			{ lang_add_wild ($3, current_file); }
+	|	file_NAME_list opt_comma '*'
+			{ lang_add_wild ("*", current_file); }
+	|	file_NAME_list opt_comma '?'
+			{ lang_add_wild ("?", current_file); }
 	;
 
 input_section_spec:
@@ -358,7 +379,14 @@ input_section_spec:
 		']'
 	|	NAME
 			{
-			current_file =$1;
+			current_file = $1;
+			}
+		'(' file_NAME_list ')'
+	|	'?'
+		/* This case is needed because the lexer returns a
+                   single question mark as '?' rather than NAME.  */
+			{
+			current_file = "?";
 			}
 		'(' file_NAME_list ')'
 	|	'*'
@@ -381,12 +409,12 @@ statement:
 		  lang_add_attribute(lang_constructors_statement_enum); 
 		}
 	| input_section_spec
-        | length '(' exp ')'
+        | length '(' mustbe_exp ')'
         	        {
 			lang_add_data((int) $1,$3);
 			}
   
-	| FILL '(' exp ')'
+	| FILL '(' mustbe_exp ')'
 			{
 			  lang_add_fill
 			    (exp_get_value_int($3,
@@ -552,6 +580,30 @@ floating_point_support:
 			{ lang_float(false); }
 	;
 		
+nocrossref_list:
+		/* empty */
+		{
+		  $$ = NULL;
+		}
+	|	NAME nocrossref_list
+		{
+		  struct lang_nocrossref *n;
+
+		  n = (struct lang_nocrossref *) xmalloc (sizeof *n);
+		  n->name = $1;
+		  n->next = $2;
+		  $$ = n;
+		}
+	|	NAME ',' nocrossref_list
+		{
+		  struct lang_nocrossref *n;
+
+		  n = (struct lang_nocrossref *) xmalloc (sizeof *n);
+		  n->name = $1;
+		  n->next = $3;
+		  $$ = n;
+		}
+	;
 
 mustbe_exp:		 { ldlex_expression(); }
 		exp
@@ -621,6 +673,8 @@ exp	:
 			{ $$ = exp_nameop(SIZEOF,$3); }
 	|	ADDR '(' NAME ')'
 			{ $$ = exp_nameop(ADDR,$3); }
+	|	LOADADDR '(' NAME ')'
+			{ $$ = exp_nameop(LOADADDR,$3); }
 	|	ABSOLUTE '(' exp ')'
 			{ $$ = exp_unop(ABSOLUTE, $3); }
 	|	ALIGN_K '(' exp ')'
@@ -629,6 +683,10 @@ exp	:
 			{ $$ = exp_unop(ALIGN_K,$3); }
 	|	NAME
 			{ $$ = exp_nameop(NAME,$1); }
+	|	MAX '(' exp ',' exp ')'
+			{ $$ = exp_binop (MAX, $3, $5 ); }
+	|	MIN '(' exp ',' exp ')'
+			{ $$ = exp_binop (MIN, $3, $5 ); }
 	;
 
 
@@ -639,37 +697,86 @@ opt_at:
 
 section:	NAME 		{ ldlex_expression(); }
 		opt_exp_with_type 
-		opt_at   	{ ldlex_popstate(); }
+		opt_at   	{ ldlex_popstate (); ldlex_script (); }
 		'{'
 			{
-			lang_enter_output_section_statement($1,$3,typebits,0,0,0,$4);
+			  lang_enter_output_section_statement($1, $3,
+							      sectype,
+							      0, 0, 0, $4);
 			}
 		statement_list_opt 	
- 		'}' {ldlex_expression();} memspec_opt phdr_opt fill_opt
+ 		'}' { ldlex_popstate (); ldlex_expression (); }
+		memspec_opt phdr_opt fill_opt
 		{
-		  ldlex_popstate();
-		  lang_leave_output_section_statement($13, $11);
+		  ldlex_popstate ();
+		  lang_leave_output_section_statement ($13, $11, $12);
 		}
 		opt_comma
+	|	OVERLAY
+			{ ldlex_expression (); }
+		opt_exp_without_type opt_nocrossrefs opt_at
+			{ ldlex_popstate (); ldlex_script (); }
+		'{' 
+			{
+			  lang_enter_overlay ($3, $5, (int) $4);
+			}
+		overlay_section
+		'}'
+			{ ldlex_popstate (); ldlex_expression (); }
+		memspec_opt phdr_opt fill_opt
+			{
+			  ldlex_popstate ();
+			  lang_leave_overlay ($14, $12, $13);
+			}
+		opt_comma
+	|	/* The GROUP case is just enough to support the gcc
+		   svr3.ifile script.  It is not intended to be full
+		   support.  I'm not even sure what GROUP is supposed
+		   to mean.  */
+		GROUP { ldlex_expression (); }
+		opt_exp_with_type
+		{
+		  ldlex_popstate ();
+		  lang_add_assignment (exp_assop ('=', ".", $3));
+		}
+		'{' sec_or_group_p1 '}'
 	;
 
 type:
-	   NOLOAD  { typebits = SEC_NEVER_LOAD; }
-	|  DSECT   { typebits = 0; }
-	|  COPY    { typebits = 0; }
-	|  INFO    { typebits = 0; }
-	|  OVERLAY { typebits = 0; }
+	   NOLOAD  { sectype = noload_section; }
+	|  DSECT   { sectype = dsect_section; }
+	|  COPY    { sectype = copy_section; }
+	|  INFO    { sectype = info_section; }
+	|  OVERLAY { sectype = overlay_section; }
 	;
 
 atype:
 	 	'(' type ')'
-  	| 	/* EMPTY */ { typebits = 0; }
+  	| 	/* EMPTY */ { sectype = normal_section; }
 	;
 
-
 opt_exp_with_type:
-		exp atype ':'		{ $$ = $1; ;}
-	|	atype ':'		{ $$= (etree_type *)NULL;  }
+		exp atype ':'		{ $$ = $1; }
+	|	atype ':'		{ $$ = (etree_type *)NULL;  }
+	|	/* The BIND cases are to support the gcc svr3.ifile
+		   script.  They aren't intended to implement full
+		   support for the BIND keyword.  I'm not even sure
+		   what BIND is supposed to mean.  */
+		BIND '(' exp ')' atype ':' { $$ = $3; }
+	|	BIND '(' exp ')' BLOCK '(' exp ')' atype ':'
+		{ $$ = $3; }
+	;
+
+opt_exp_without_type:
+		exp ':'		{ $$ = $1; }
+	|	':'		{ $$ = (etree_type *) NULL;  }
+	;
+
+opt_nocrossrefs:
+		/* empty */
+			{ $$ = 0; }
+	|	NOCROSSREFS
+			{ $$ = 1; }
 	;
 
 memspec_opt:
@@ -680,10 +787,38 @@ memspec_opt:
 
 phdr_opt:
 		/* empty */
+		{
+		  $$ = NULL;
+		}
 	|	phdr_opt ':' NAME
 		{
-		  lang_section_in_phdr ($3);
+		  struct lang_output_section_phdr_list *n;
+
+		  n = ((struct lang_output_section_phdr_list *)
+		       xmalloc (sizeof *n));
+		  n->name = $3;
+		  n->used = false;
+		  n->next = $1;
+		  $$ = n;
 		}
+	;
+
+overlay_section:
+		/* empty */
+	|	overlay_section
+		NAME
+			{
+			  ldlex_script ();
+			  lang_enter_overlay_section ($2);
+			}
+		'{' statement_list_opt '}'
+			{ ldlex_popstate (); ldlex_expression (); }
+		phdr_opt fill_opt
+			{
+			  ldlex_popstate ();
+			  lang_leave_overlay_section ($9, $8);
+			}
+		opt_comma
 	;
 
 phdrs:

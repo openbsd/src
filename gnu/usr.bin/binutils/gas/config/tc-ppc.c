@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -87,6 +88,7 @@ static void ppc_toc PARAMS ((int));
 static bfd_reloc_code_real_type ppc_elf_suffix PARAMS ((char **));
 static void ppc_elf_cons PARAMS ((int));
 static void ppc_elf_rdata PARAMS ((int));
+static void ppc_elf_lcomm PARAMS ((int));
 static void ppc_elf_validate_fix PARAMS ((fixS *, segT));
 #endif
 
@@ -171,6 +173,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "short",	ppc_elf_cons,	2 },
   { "rdata",	ppc_elf_rdata,	0 },
   { "rodata",	ppc_elf_rdata,	0 },
+  { "lcomm",	ppc_elf_lcomm,	0 },
 #endif
 
 #ifdef TE_PE
@@ -425,28 +428,31 @@ static const struct pd_reg pre_defined_registers[] =
 /* Given NAME, find the register number associated with that name, return
    the integer value associated with the given name or -1 on failure.  */
 
-static int reg_name_search PARAMS ( (char * name) );
+static int reg_name_search
+  PARAMS ((const struct pd_reg *, int, const char * name));
 
 static int
-reg_name_search (name)
-     char *name;
+reg_name_search (regs, regcount, name)
+     const struct pd_reg *regs;
+     int regcount;
+     const char *name;
 {
   int middle, low, high;
   int cmp;
 
   low = 0;
-  high = REG_NAME_CNT - 1;
+  high = regcount - 1;
 
   do
     {
       middle = (low + high) / 2;
-      cmp = strcasecmp (name, pre_defined_registers[middle].name);
+      cmp = strcasecmp (name, regs[middle].name);
       if (cmp < 0)
 	high = middle - 1;
       else if (cmp > 0)
 	low = middle + 1;
       else
-	return pre_defined_registers[middle].value;
+	return regs[middle].value;
     }
   while (low <= high);
 
@@ -483,7 +489,7 @@ register_name (expressionP)
     return false;
 
   c = get_symbol_end ();
-  reg_number = reg_name_search (name);
+  reg_number = reg_name_search (pre_defined_registers, REG_NAME_CNT, name);
 
   /* look to see if it's in the register table */
   if (reg_number >= 0) 
@@ -505,7 +511,55 @@ register_name (expressionP)
       return false;
     }
 }
+
+/* This function is called for each symbol seen in an expression.  It
+   handles the special parsing which PowerPC assemblers are supposed
+   to use for condition codes.  */
 
+/* Whether to do the special parsing.  */
+static boolean cr_operand;
+
+/* Names to recognize in a condition code.  This table is sorted.  */
+static const struct pd_reg cr_names[] =
+{
+  { "cr0", 0 },
+  { "cr1", 1 },
+  { "cr2", 2 },
+  { "cr3", 3 },
+  { "cr4", 4 },
+  { "cr5", 5 },
+  { "cr6", 6 },
+  { "cr7", 7 },
+  { "eq", 2 },
+  { "gt", 1 },
+  { "lt", 0 },
+  { "so", 3 },
+  { "un", 3 }
+};
+
+/* Parsing function.  This returns non-zero if it recognized an
+   expression.  */
+
+int
+ppc_parse_name (name, expr)
+     const char *name;
+     expressionS *expr;
+{
+  int val;
+
+  if (! cr_operand)
+    return 0;
+
+  val = reg_name_search (cr_names, sizeof cr_names / sizeof cr_names[0],
+			 name);
+  if (val < 0)
+    return 0;
+
+  expr->X_op = O_constant;
+  expr->X_add_number = val;
+
+  return 1;
+}
 
 /* Local variables.  */
 
@@ -604,7 +658,7 @@ const int md_long_jump_size = 4;
 #endif
 
 #ifdef OBJ_ELF
-CONST char *md_shortopts = "b:l:usm:VQ:";
+CONST char *md_shortopts = "b:l:usm:K:VQ:";
 #else
 CONST char *md_shortopts = "um:";
 #endif
@@ -644,6 +698,18 @@ md_parse_option (c, arg)
 	{
 	  target_big_endian = 1;
 	  set_target_endian = 1;
+	}
+      else
+	return 0;
+
+      break;
+
+    case 'K':
+      /* Recognize -K PIC */
+      if (strcmp (arg, "PIC") == 0)
+	{
+	  mrelocatable = true;
+	  ppc_flags |= EF_PPC_RELOCATABLE_LIB;
 	}
       else
 	return 0;
@@ -1002,6 +1068,7 @@ ppc_insert_operand (insn, operand, val, file, line)
   return insn;
 }
 
+
 #ifdef OBJ_ELF
 /* Parse @got, etc. and return the desired relocation.  */
 static bfd_reloc_code_real_type
@@ -1073,7 +1140,8 @@ ppc_elf_suffix (str_p)
     return BFD_RELOC_UNUSED;
 
   for (ch = *str, str2 = ident;
-       str2 < ident + sizeof(ident) - 1 && isalnum (ch) || ch == '@';
+       (str2 < ident + sizeof (ident) - 1
+	&& (isalnum (ch) || ch == '@'));
        ch = *++str)
     {
       *str2++ = (islower (ch)) ? ch : tolower (ch);
@@ -1154,6 +1222,115 @@ ppc_elf_rdata (xxx)
   input_line_pointer = save_line;
 }
 
+/* Pseudo op to make file scope bss items */
+static void
+ppc_elf_lcomm(xxx)
+     int xxx;
+{
+  register char *name;
+  register char c;
+  register char *p;
+  offsetT size;
+  register symbolS *symbolP;
+  offsetT align;
+  segT old_sec;
+  int old_subsec;
+  char *pfrag;
+  int align2;
+
+  name = input_line_pointer;
+  c = get_symbol_end ();
+
+  /* just after name is now '\0' */
+  p = input_line_pointer;
+  *p = c;
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer != ',')
+    {
+      as_bad ("Expected comma after symbol-name: rest of line ignored.");
+      ignore_rest_of_line ();
+      return;
+    }
+
+  input_line_pointer++;		/* skip ',' */
+  if ((size = get_absolute_expression ()) < 0)
+    {
+      as_warn (".COMMon length (%ld.) <0! Ignored.", (long) size);
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* The third argument to .lcomm is the alignment.  */
+  if (*input_line_pointer != ',')
+    align = 3;
+  else
+    {
+      ++input_line_pointer;
+      align = get_absolute_expression ();
+      if (align <= 0)
+	{
+	  as_warn ("ignoring bad alignment");
+	  align = 3;
+	}
+    }
+
+  *p = 0;
+  symbolP = symbol_find_or_make (name);
+  *p = c;
+
+  if (S_IS_DEFINED (symbolP))
+    {
+      as_bad ("Ignoring attempt to re-define symbol `%s'.",
+	      S_GET_NAME (symbolP));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (S_GET_VALUE (symbolP) && S_GET_VALUE (symbolP) != (valueT) size)
+    {
+      as_bad ("Length of .lcomm \"%s\" is already %ld. Not changed to %ld.",
+	      S_GET_NAME (symbolP),
+	      (long) S_GET_VALUE (symbolP),
+	      (long) size);
+
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* allocate_bss: */
+  old_sec = now_seg;
+  old_subsec = now_subseg;
+  if (align)
+    {
+      /* convert to a power of 2 alignment */
+      for (align2 = 0; (align & 1) == 0; align >>= 1, ++align2);
+      if (align != 1)
+	{
+	  as_bad ("Common alignment not a power of 2");
+	  ignore_rest_of_line ();
+	  return;
+	}
+    }
+  else
+    align2 = 0;
+
+  record_alignment (bss_section, align2);
+  subseg_set (bss_section, 0);
+  if (align2)
+    frag_align (align2, 0);
+  if (S_GET_SEGMENT (symbolP) == bss_section)
+    symbolP->sy_frag->fr_symbol = 0;
+  symbolP->sy_frag = frag_now;
+  pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
+		    (char *) 0);
+  *pfrag = 0;
+  S_SET_SIZE (symbolP, size);
+  S_SET_SEGMENT (symbolP, bss_section);
+  S_CLEAR_EXTERNAL (symbolP);
+  subseg_set (old_sec, old_subsec);
+  demand_empty_rest_of_line ();
+}
+
 /* Validate any relocations emitted for -mrelocatable, possibly adding
    fixups for word relocations in writable segments, so we can adjust
    them at runtime.  */
@@ -1190,9 +1367,8 @@ ppc_elf_validate_fix (fixp, seg)
 	}
     }
 }
-
 #endif /* OBJ_ELF */
-
+
 #ifdef TE_PE
 
 /*
@@ -1288,9 +1464,8 @@ parse_toc_entry(toc_kind)
   *toc_kind = t;             /* set return value */
   return 1;
 }
-
 #endif
-
+
 
 /* We need to keep a list of fixups.  We can't simply generate them as
    we go, because that would require us to first create the frag, and
@@ -1561,8 +1736,15 @@ md_assemble (str)
 
       else
 #endif		/* TE_PE */
-	if (!register_name(&ex))
-	  expression (&ex);
+	{
+	  if (! register_name (&ex))
+	    {
+	      if ((operand->flags & PPC_OPERAND_CR) != 0)
+		cr_operand = true;
+	      expression (&ex);
+	      cr_operand = false;
+	    }
+	}
 
       str = input_line_pointer;
       input_line_pointer = hold;
@@ -1590,7 +1772,12 @@ md_assemble (str)
 		break;
 
 	      case BFD_RELOC_LO16:
-		ex.X_add_number = ((ex.X_add_number & 0xffff) ^ 0x8000) - 0x8000;
+		if (ex.X_unsigned)
+		  ex.X_add_number &= 0xffff;
+		else
+		  ex.X_add_number = (((ex.X_add_number & 0xffff)
+				      ^ 0x8000)
+				     - 0x8000);
 		break;
 
 	      case BFD_RELOC_HI16:
@@ -1598,8 +1785,8 @@ md_assemble (str)
 		break;
 
 	      case BFD_RELOC_HI16_S:
-		ex.X_add_number = ((ex.X_add_number >> 16) & 0xffff)
-		  + ((ex.X_add_number >> 15) & 1);
+		ex.X_add_number = (((ex.X_add_number >> 16) & 0xffff)
+				   + ((ex.X_add_number >> 15) & 1));
 		break;
 	      }
 #endif
@@ -1612,13 +1799,25 @@ md_assemble (str)
 	  /* For the absoulte forms of branchs, convert the PC relative form back into
 	     the absolute.  */
 	  if ((operand->flags & PPC_OPERAND_ABSOLUTE) != 0)
-	    switch (reloc)
-	      {
-	      case BFD_RELOC_PPC_B26:		reloc = BFD_RELOC_PPC_BA26;		break;
-	      case BFD_RELOC_PPC_B16:		reloc = BFD_RELOC_PPC_BA16;		break;
-	      case BFD_RELOC_PPC_B16_BRTAKEN:	reloc = BFD_RELOC_PPC_BA16_BRTAKEN;	break;
-	      case BFD_RELOC_PPC_B16_BRNTAKEN:	reloc = BFD_RELOC_PPC_BA16_BRNTAKEN;	break;
-	      }
+	    {
+	      switch (reloc)
+		{
+		case BFD_RELOC_PPC_B26:
+		  reloc = BFD_RELOC_PPC_BA26;
+		  break;
+		case BFD_RELOC_PPC_B16:
+		  reloc = BFD_RELOC_PPC_BA16;
+		  break;
+		case BFD_RELOC_PPC_B16_BRTAKEN:
+		  reloc = BFD_RELOC_PPC_BA16_BRTAKEN;
+		  break;
+		case BFD_RELOC_PPC_B16_BRNTAKEN:
+		  reloc = BFD_RELOC_PPC_BA16_BRNTAKEN;
+		  break;
+		default:
+		  break;
+		}
+	    }
 
 	  /* We need to generate a fixup for this expression.  */
 	  if (fc >= MAX_INSN_FIXUPS)
@@ -4203,7 +4402,31 @@ ppc_fix_adjustable (fix)
   return 0;
 }
 
-#endif
+/* A reloc from one csect to another must be kept.  The assembler
+   will, of course, keep relocs between sections, and it will keep
+   absolute relocs, but we need to force it to keep PC relative relocs
+   between two csects in the same section.  */
+
+int
+ppc_force_relocation (fix)
+     fixS *fix;
+{
+  /* At this point fix->fx_addsy should already have been converted to
+     a csect symbol.  If the csect does not include the fragment, then
+     we need to force the relocation.  */
+  if (fix->fx_pcrel
+      && fix->fx_addsy != NULL
+      && fix->fx_addsy->sy_tc.subseg != 0
+      && (fix->fx_addsy->sy_frag->fr_address > fix->fx_frag->fr_address
+	  || (fix->fx_addsy->sy_tc.next != NULL
+	      && (fix->fx_addsy->sy_tc.next->sy_frag->fr_address
+		  <= fix->fx_frag->fr_address))))
+    return 1;
+
+  return 0;
+}
+
+#endif /* OBJ_XCOFF */
 
 /* See whether a symbol is in the TOC section.  */
 
@@ -4413,7 +4636,13 @@ md_apply_fix3 (fixp, valuep, seg)
 	case BFD_RELOC_PPC_EMB_RELSDA:
 	case BFD_RELOC_PPC_TOC16:
 	  if (fixp->fx_pcrel)
-	    abort ();
+	    as_bad_where (fixp->fx_file, fixp->fx_line,
+			  "cannot emit PC relative %s relocation%s%s",
+			  bfd_get_reloc_code_name (fixp->fx_r_type),
+			  fixp->fx_addsy != NULL ? " against " : "",
+			  (fixp->fx_addsy != NULL
+			   ? S_GET_NAME (fixp->fx_addsy)
+			   : ""));
 
 	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
 			      value, 2);

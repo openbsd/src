@@ -535,7 +535,10 @@ gld_${EMULATION_NAME}_before_allocation()
   {
     LANG_FOR_EACH_INPUT_STATEMENT (is)
       {
-	ppc_process_before_allocation(is->the_bfd, &link_info);
+	if (!ppc_process_before_allocation(is->the_bfd, &link_info))
+	  {
+	    einfo("Errors encountered processing file %s", is->filename);
+	  }
       }
   }
 

@@ -47,6 +47,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #include "libiberty.h"
 #include "obstack.h"
 #include "listing.h"
+#include "ecoff.h"
 
 #ifndef TC_START_LABEL
 #define TC_START_LABEL(x,y) (x==':')
@@ -206,7 +207,6 @@ static void do_align PARAMS ((int, char *, int));
 static int hex_float PARAMS ((int, char *));
 static void do_org PARAMS ((segT, expressionS *, int));
 char *demand_copy_string PARAMS ((int *lenP));
-int is_it_end_of_statement PARAMS ((void));
 static segT get_segmented_expression PARAMS ((expressionS *expP));
 static segT get_known_segmented_expression PARAMS ((expressionS * expP));
 static void pobegin PARAMS ((void));
@@ -1597,7 +1597,8 @@ s_fill (ignore)
     }
   else if (temp_repeat <= 0)
     {
-      as_warn ("Repeat < 0, .fill ignored");
+      if (temp_repeat < 0)
+	as_warn ("Repeat < 0, .fill ignored");
       temp_size = 0;
     }
 
@@ -1841,6 +1842,11 @@ s_lcomm (needs_align)
        else
 	 align = 0;
 
+#ifdef OBJ_EVAX
+       /* FIXME: This needs to be done in a more general fashion.  */
+       align = 3;
+#endif
+
        record_alignment(bss_seg, align);
      }
 
@@ -1877,7 +1883,7 @@ s_lcomm (needs_align)
   else
     {
       /* Assume some objects may require alignment on some systems.  */
-#ifdef TC_ALPHA
+#if defined (TC_ALPHA) && ! defined (VMS)
       if (temp > 1)
 	{
 	  align = ffs (temp) - 1;
@@ -2932,6 +2938,10 @@ cons_worker (nbytes, rva)
       return;
     }
 
+#ifdef md_cons_align
+  md_cons_align (nbytes);
+#endif
+
   c = 0;
   do
     {
@@ -3129,7 +3139,8 @@ emit_expr (exp, nbytes)
       use = get & unmask;
       if ((get & mask) != 0 && (get & mask) != mask)
 	{		/* Leading bits contain both 0s & 1s. */
-	  as_warn ("Value 0x%lx truncated to 0x%lx.", get, use);
+	  as_warn ("Value 0x%lx truncated to 0x%lx.",
+		   (unsigned long) get, (unsigned long) use);
 	}
       /* put bytes in right order. */
       md_number_to_chars (p, use, (int) nbytes);
@@ -3203,11 +3214,31 @@ emit_expr (exp, nbytes)
 #ifdef TC_CONS_FIX_NEW
       TC_CONS_FIX_NEW (frag_now, p - frag_now->fr_literal, nbytes, exp);
 #else
-      fix_new_exp (frag_now, p - frag_now->fr_literal, (int) nbytes, exp, 0,
-		   /* @@ Should look at CPU word size.  */
-		   nbytes == 2 ? BFD_RELOC_16
-		      : nbytes == 8 ? BFD_RELOC_64
-		      : BFD_RELOC_32);
+      {
+	bfd_reloc_code_real_type r;
+
+	switch (nbytes)
+	  {
+	  case 1:
+	    r = BFD_RELOC_8;
+	    break;
+	  case 2:
+	    r = BFD_RELOC_16;
+	    break;
+	  case 4:
+	    r = BFD_RELOC_32;
+	    break;
+	  case 8:
+	    r = BFD_RELOC_64;
+	    break;
+	  default:
+	    as_bad ("unsupported BFD relocation size %u", nbytes);
+	    r = BFD_RELOC_32;
+	    break;
+	  }
+	fix_new_exp (frag_now, p - frag_now->fr_literal, (int) nbytes, exp,
+		     0, r);
+      }
 #endif
 #else
 #ifdef TC_CONS_FIX_NEW

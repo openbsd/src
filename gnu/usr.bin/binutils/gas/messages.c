@@ -1,5 +1,5 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987, 1991, 1992, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,10 +14,12 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #include "as.h"
+#include "libiberty.h"
 
 #include <stdio.h>
 #ifdef HAVE_ERRNO_H
@@ -501,7 +503,7 @@ fprint_value (file, val)
 {
   if (sizeof (val) <= sizeof (long))
     {
-      fprintf (file, "%ld", val);
+      fprintf (file, "%ld", (long) val);
       return;
     }
 #ifdef BFD_ASSEMBLER
@@ -521,7 +523,7 @@ sprint_value (buf, val)
 {
   if (sizeof (val) <= sizeof (long))
     {
-      sprintf (buf, "%ld", val);
+      sprintf (buf, "%ld", (long) val);
       return;
     }
 #ifdef BFD_ASSEMBLER

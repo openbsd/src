@@ -96,6 +96,17 @@ typedef struct lang_output_statement_struct
   const char *name;
 } lang_output_statement_type;
 
+/* Section types specified in a linker script.  */
+
+enum section_type
+{
+  normal_section,
+  dsect_section,
+  copy_section,
+  noload_section,
+  info_section,
+  overlay_section
+};
 
 /* This structure holds a list of program headers describing segments
    in which this section should be placed.  */
@@ -120,7 +131,7 @@ typedef struct lang_output_section_statement_struct
     
   asection *bfd_section;
   int flags;			/* Or together of all input sections */
-  int loadable;			/* set from NOLOAD flag in script */
+  enum section_type sectype;
   struct memory_region_struct *region;
   size_t block_value;
   fill_type fill;
@@ -243,9 +254,6 @@ typedef struct lang_input_statement_struct
   /*    unsigned int globals_in_this_file;*/
   const char *target;
   boolean real;
-  asection *common_section;
-  asection *common_output_section;
-  boolean complained;
 } lang_input_statement_type;
 
 typedef struct
@@ -335,6 +343,25 @@ struct lang_phdr
   etree_type *flags;
 };
 
+/* This structure is used to hold a list of sections which may not
+   cross reference each other.  */
+
+struct lang_nocrossref
+{
+  struct lang_nocrossref *next;
+  const char *name;
+};
+
+/* The list of nocrossref lists.  */
+
+struct lang_nocrossrefs
+{
+  struct lang_nocrossrefs *next;
+  struct lang_nocrossref *list;
+};
+
+extern struct lang_nocrossrefs *nocrossref_list;
+
 extern lang_output_section_statement_type *abs_output_section;
 extern boolean lang_has_input_file;
 extern etree_type *base;
@@ -353,7 +380,7 @@ extern void lang_add_output PARAMS ((const char *, int from_script));
 extern void lang_enter_output_section_statement
   PARAMS ((const char *output_section_statement_name,
 	   etree_type * address_exp,
-	   int flags,
+	   enum section_type sectype,
 	   bfd_vma block_value,
 	   etree_type *align,
 	   etree_type *subalign,
@@ -370,8 +397,8 @@ extern void lang_add_assignment PARAMS ((union etree_union *));
 extern void lang_add_attribute PARAMS ((enum statement_enum));
 extern void lang_startup PARAMS ((const char *));
 extern void lang_float PARAMS ((enum bfd_boolean));
-extern void lang_leave_output_section_statement PARAMS ((bfd_vma,
-							 const char *));
+extern void lang_leave_output_section_statement
+  PARAMS ((bfd_vma, const char *, struct lang_output_section_phdr_list *));
 extern void lang_abs_symbol_at_end_of PARAMS ((const char *, const char *));
 extern void lang_abs_symbol_at_beginning_of PARAMS ((const char *,
 						     const char *));
@@ -430,6 +457,12 @@ extern void wild_doit
 extern void lang_new_phdr
   PARAMS ((const char *, etree_type *, boolean, boolean, etree_type *,
 	   etree_type *));
-extern void lang_section_in_phdr PARAMS ((const char *));
+extern void lang_add_nocrossref PARAMS ((struct lang_nocrossref *));
+extern void lang_enter_overlay PARAMS ((etree_type *, etree_type *, int));
+extern void lang_enter_overlay_section PARAMS ((const char *));
+extern void lang_leave_overlay_section
+  PARAMS ((bfd_vma, struct lang_output_section_phdr_list *));
+extern void lang_leave_overlay
+  PARAMS ((bfd_vma, const char *, struct lang_output_section_phdr_list *));
 
 #endif

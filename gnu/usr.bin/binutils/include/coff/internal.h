@@ -265,7 +265,13 @@ struct internal_aouthdr
 struct internal_scnhdr
 {
   char s_name[SCNNMLEN];	/* section name			*/
-  bfd_vma s_paddr;		/* physical address, aliased s_nlib */
+
+  /* Physical address, aliased s_nlib.
+     In the pei format, this field is the virtual section size
+     (the size of the section after being loaded int memory),
+     NOT the physical address.  */
+  bfd_vma s_paddr;
+
   bfd_vma s_vaddr;		/* virtual address		*/
   bfd_vma s_size;		/* section size			*/
   bfd_vma s_scnptr;		/* file ptr to raw data for section */
@@ -650,6 +656,14 @@ struct internal_reloc
 /* This reloc identifies mov.[wl] insns which formerlly had
    a 32/24bit absolute address and how have a 16bit absolute address.  */
 #define R_MOVL2 	0x4d
+
+/* This reloc identifies a bCC:8 which will have it's condition
+   inverted and its target redirected to the target of the branch
+   in the following insn.  */
+#define R_BCC_INV	0x4e
+
+/* This reloc identifies a jmp instruction that has been deleted.  */
+#define R_JMP_DEL	0x4f
 
 /* Z8k modes */
 #define R_IMM16   0x01		/* 16 bit abs */

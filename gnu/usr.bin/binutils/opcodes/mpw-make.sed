@@ -3,8 +3,10 @@
 # Empty HDEFINES.
 /HDEFINES/s/@HDEFINES@//
 
-/INCDIR=/s/"{srcdir}":/"{topsrcdir}"/
-/^CSEARCH = .*$/s/$/ -i "{INCDIR}":mpw: -i ::extra-include:/
+# Fix pathnames to include directories.
+/^INCDIR = /s/^INCDIR = .*$/INCDIR = "{topsrcdir}"include/
+/^CSEARCH = /s/$/ -i "{INCDIR}":mpw: -i ::extra-include:/
+
 /BFD_MACHINES/s/@BFD_MACHINES@/{BFD_MACHINES}/
 /archdefs/s/@archdefs@/{ARCHDEFS}/
 

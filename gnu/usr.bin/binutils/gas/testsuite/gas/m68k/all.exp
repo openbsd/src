@@ -10,14 +10,7 @@ if [istarget m68*-*-*] then {
 
     gas_test_error "p2410.s" "" "out-of-range 'bras'"
 
-    if [expr [istarget m68*-*-hpux*] || [istarget m68*-*-sun*] \
-		|| [istarget m68*-*-*aout*] \
-		|| [istarget m68*-*-coff*] \
-		|| [istarget m68*-*-vxworks*] \
-		] then {
-	run_dump_test "schwab"
-    }
-
+    run_dump_test pcrel
     run_dump_test operands
     run_dump_test cas
     run_dump_test bitfield

@@ -12,6 +12,7 @@
 # Whack out unused host define bits.
 /HDEFINES/s/@HDEFINES@//
 
+# Don't build specialized tools.
 /BUILD_NLMCONV/s/@BUILD_NLMCONV@//
 /BUILD_SRCONV/s/@BUILD_SRCONV@//
 /BUILD_DLLTOOL/s/@BUILD_DLLTOOL@//
@@ -37,9 +38,14 @@
 /BISON/s/^BISON =.*$/BISON = byacc/
 #/BISONFLAGS/s/^BISONFLAGS =.*$/BISONFLAGS = /
 
+# Embed the version in symbolic doublequotes that will expand to
+# the right thing for each compiler.
+/VERSION/s/'"{VERSION}"'/{dq}{VERSION}{dq}/
+
 # '+' is a special char to MPW, don't use it ever.
 /c++filt/s/c++filt/cplusfilt/
 
+# All of the binutils use the same Rez file, change names to refer to it.
 /^{[A-Z]*_PROG}/s/$/ "{s}"mac-binutils.r/
 /{[A-Z]*_PROG}\.r/s/{[A-Z]*_PROG}\.r/mac-binutils.r/
 

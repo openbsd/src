@@ -1,3 +1,207 @@
+Tue Sep  3 14:05:29 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (ieee_enum_type): Don't check index into a NULL names
+	array.
+	* nm.c (sort_symbols_by_size): Always initialize next.
+	* rdcoff.c (parse_coff_type): Warn about an incomprehensible
+	type rather than crashing.
+	* rddbg.c (read_symbol_stabs_debugging_info): Initialize f.
+	* stabs.c (parse_stab_members): Set context in all cases.
+
+Thu Aug 29 16:56:52 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86-*-*): Recognize i686 for pentium pro.
+	* configure: Regenerate.
+
+Thu Aug 29 11:29:20 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (L_tmpnam): Never define.
+	(display_target_list): Use choose_temp_base instead of tmpnam.
+	(display_info_table): Likewise.
+
+Tue Aug 27 18:15:01 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (parse_stab): An N_FUN symbol with an empty string
+	indicates the end of a function.
+
+Thu Aug 22 17:08:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* wrstabs.c (struct string_hash_entry): Add next field.
+	(struct stab_write_handle): Change strings to a pointer to
+	string_hash_entry.  Add last_strings field.  Remove strings_alloc
+	field.
+	(string_hash_newfunc): Initialize next field.
+	(stab_write_symbol): Copy string into hash table rather than into
+	buffer.  Keep a list of hash table entries.
+	(write_stabs_in_sections_debugging_info): Initialize last_string.
+	Copy strings from list of hash table entries in memory.
+	(stab_modify_type): If the entry on the stack is a definition,
+	make a new definition rather than failing an assert.
+	(stab_array_type): The size is only zero if high is strictly less
+	than low.
+
+	* ieee.c (struct ieee_info): Add saw_filename field.
+	(parse_ieee): Initialize saw_filename.
+	(parse_ieee_bb): Set saw_filename for a BB1 or BB2.  In a BB1,
+	discard the current variables and types.  In a BB10, if no
+	filename has been seen, call debug_set_filename.
+	(parse_ieee_ty): In case 'g', the type is optional.
+
+	* prdbg.c (pr_fix_visibility): Don't abort on
+	DEBUG_VISIBILITY_IGNORE.
+
+	* debug.c (debug_name_type): Correct error message.
+
+	* configure.in: Substitute HLDENV.
+	* configure: Rebuild.
+	* Makefile.in (HLDENV): New variable.  Use it whenever linking a
+	program.
+
+Thu Aug 15 19:30:41 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Add symbolic doublequotes around the version
+	number.
+
+Thu Aug  8 12:27:52 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* makefile.vms: Add better support for DEC C compilation.
+	Add new macros as in Makefile.in.
+
+Wed Aug  7 14:27:33 1996  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* configure.in: Call BFD_NEED_DECLARATION on strstr and sbrk.
+	* acconfig.h (NEED_DECLARATION_STRSTR): New macro.
+	(NEED_DECLARATION_SBRK): New macro.
+	* configure, config.in: Rebuild.
+	* bucomm.h (strstr): Declare if NEED_DECLARATION_STRSTR.
+	(sbrk): Declare if HAVE_SBRK and NEED_DECLARATION_SBRK.
+
+	* prdbg.c (pr_end_struct_type): Avoid using a string constant in
+	assert, for the benefit of broken assert macros.
+
+Fri Jul 26 14:06:50 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (disassemble_data): Set disasm_info.flavour from
+	abfd.
+
+Tue Jul 23 13:59:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dlltool.c (secdata): In non DLLTOOL_PPC case, change alignment
+	of .text section to 2.
+
+Mon Jul 22 08:46:15 1996  Stu Grossman  (grossman@lisa.cygnus.com)
+
+	* objdump.c (dump_section_stabs):  Fix test for stabs sections
+	ending with numbers.  This fixes a problem with .stab being
+	confused with .stab.index.
+
+Wed Jul 10 13:32:28 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (stab_demangle_fund_type): Return a void * for a
+	template, rather than simply aborting.
+
+Mon Jul  8 15:28:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ar.c (open_inarch): Add file parameter.  Change all callers.  If
+	this is a newly created archive, set the target based on the
+	file.
+	* arsup.h (open_inarch): Update declaration.
+
+Thu Jul  4 12:00:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (VERSION): Set to cygnus-2.7.1.
+
+	* Released binutils 2.7.
+
+	* rdcoff.c (parse_coff): Get address to pass to debug_end_function
+	from function size, not value of .ef symbol.  From Ning
+	Mosberger-Tang <ning@AZStarNet.com>.
+
+Sat Jun 29 21:18:09 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objcopy.c (strip_main): Add -o option, and handle it.
+	(strip_usage): Mention -o.
+	* binutils.texi, strip.1: Mention -o.
+
+Mon Jun 24 17:19:02 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+	INSTALL_PROGRAM, INSTALL_DATA): Use autoconf set values.
+	(docdir): Removed.
+	* configure.in (AC_PREREQ): Autoconf 2.5 or higher.	
+
+Mon Jun 24 11:59:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (endian): New static variable.
+	(usage): Mention -EB/-EL/--endian.
+	(long_options): Add "endian".
+	(disassemble_data): If endianness was specified, replace
+	abfd->xvec with a copy of itself with the given endianness.
+	(main): Handle -EB/-EL/--endian.
+	* binutils.texi, objdump.1: Mention -EB/-EL/--endian.
+
+	* objdump.c: Make most variables and functions static.
+
+	* configure.in: On alpha*-*-osf*, link against libbfd.a if not
+	using shared libraries.
+	* configure: Rebuild with autoconf 2.10.
+
+Sun Jun 23 14:47:36 1996  Kim Knuttila  <krk@cygnus.com>
+
+	* dlltool.c (secdata): Changed .rdata to .reldata so .reloc will work.
+	(make_one_lib_file): Removed cruft. (#if 1)
+
+Wed Jun 19 14:46:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (stabs): Change from struct internal_nlist * to
+	bfd_byte *.
+	(print_section_stabs): Fetch stabs information directly, rather
+	than assuming that struct internal_nlist is the right size.
+
+	* binutils.texi: Document change to binary format: file position
+	based on load address, not section VMA.
+
+	* bucomm.h: Define SEEK_SET, SEEK_CUR, and SEEK_END if they are
+	not already defined.
+
+Tue Jun 18 18:25:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (DISTSTUFF): Add deflex.c.
+
+Tue Jun 18 15:03:44 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* config.h-vms, makefile.vms: New files.
+
+Mon Jun 17 09:47:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dlltool.c (make_one_lib_file): Use BFD_RELOC_RVA rather than
+	BFD_RELOC_32 in IDATA7.
+
+Wed Jun 12 11:52:06 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* nm.c (struct get_relocs_info): Define.
+	(line_numbers): New static variable.
+	(long_options): Add "line-numbers".
+	(usage): Mention -l and --line-numbers.
+	(main): Handle -l.
+	(print_symbol): Print line numbers if requested.
+	(get_relocs): New static function.
+	* binutils.texi, nm.1: Document -l/--line-numbers.
+
+Tue Jun 11 20:12:15 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (dump_reloc_set): Add sec parameter.  Change all
+	callers.  If with_line_numbers is set, display line numbers of
+	relocation entries.
+	* binutils.texi, objdump.1: Document -l with -r.
+
+Mon Jun 10 23:42:59 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ar.c (open_inarch): Report BFD error message if an archive can
+	not be recognized.  List matching formats if the file is
+	ambiguously recognized.
+	(ranlib_touch): Likewise.
+
 Thu Jun  6 13:56:14 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* README: Add notes on how to build if you don't have ar.

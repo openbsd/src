@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
-   Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -97,7 +97,7 @@ const bfd_target *lynx_core_file_p ();
 #endif /* LYNX_CORE */
 
 
-#define KEEPIT flags
+#define KEEPIT udata.i
 
 extern reloc_howto_type aout_32_ext_howto_table[];
 extern reloc_howto_type aout_32_std_howto_table[];
@@ -157,8 +157,7 @@ NAME(lynx,swap_std_reloc_out) (abfd, g, natptr)
 	{
 	  /* Fill in symbol */
 	  r_extern = 1;
-	  r_index = stoi ((*(g->sym_ptr_ptr))->KEEPIT);
-
+	  r_index = (*g->sym_ptr_ptr)->KEEPIT;
 	}
     }
   else
@@ -243,7 +242,7 @@ NAME(lynx,swap_ext_reloc_out) (abfd, g, natptr)
       else
 	{
 	  r_extern = 1;
-	  r_index = stoi ((*(g->sym_ptr_ptr))->KEEPIT);
+	  r_index = (*g->sym_ptr_ptr)->KEEPIT;
 	}
     }
   else

@@ -1499,6 +1499,15 @@ coff_set_arch_mach_hook (abfd, filehdr)
       break;
 #endif
 
+#ifdef H8300SMAGIC
+    case H8300SMAGIC:
+      arch = bfd_arch_h8300;
+      machine = bfd_mach_h8300s;
+      /* !! FIXME this probably isn't the right place for this */
+      abfd->flags |= BFD_IS_RELAXABLE;
+      break;
+#endif
+
 #ifdef SH_ARCH_MAGIC_BIG
     case SH_ARCH_MAGIC_BIG:
     case SH_ARCH_MAGIC_LITTLE:
@@ -1949,6 +1958,9 @@ coff_set_flags (abfd, magicp, flagsp)
 	case bfd_mach_h8300h:
 	  *magicp = H8300HMAGIC;
 	  return true;
+	case bfd_mach_h8300s:
+	  *magicp = H8300SMAGIC;
+	  return true;
 	}
       break;
 #endif
@@ -2322,6 +2334,7 @@ coff_write_object_contents (abfd)
   file_ptr sym_base;
   unsigned long reloc_size = 0;
   unsigned long lnno_size = 0;
+  boolean long_section_names;
   asection *text_sec = NULL;
   asection *data_sec = NULL;
   asection *bss_sec = NULL;
@@ -2396,6 +2409,7 @@ coff_write_object_contents (abfd)
   if (bfd_seek (abfd, scn_base, SEEK_SET) != 0)
     return false;
 
+  long_section_names = false;
   for (current = abfd->sections;
        current != NULL;
        current = current->next)
@@ -2429,6 +2443,7 @@ coff_write_object_contents (abfd)
 	    memset (section.s_name, 0, SCNNMLEN);
 	    sprintf (section.s_name, "/%lu", (unsigned long) string_size);
 	    string_size += len + 1;
+	    long_section_names = true;
 	  }
       }
 #endif
@@ -2444,10 +2459,11 @@ coff_write_object_contents (abfd)
       section.s_paddr = current->lma;
       section.s_size =  current->_raw_size;
 
-#ifdef COFF_OBJ_WITH_PE
+#ifdef COFF_WITH_PE
       section.s_paddr = 0;
 #endif
 #ifdef COFF_IMAGE_WITH_PE
+      /* Reminder: s_paddr holds the virtual size of the section.  */
       if (coff_section_data (abfd, current) != NULL
 	  && pei_section_data (abfd, current) != NULL)
 	section.s_paddr = pei_section_data (abfd, current)->virt_size;
@@ -2823,7 +2839,10 @@ coff_write_object_contents (abfd)
     }
   else
     {
-      internal_f.f_symptr = 0;
+      if (long_section_names)
+	internal_f.f_symptr = sym_base;
+      else
+	internal_f.f_symptr = 0;
       internal_f.f_flags |= F_LSYMS;
     }
 
@@ -2967,7 +2986,7 @@ coff_set_section_contents (abfd, section, location, offset, count)
   if (abfd->output_has_begun == false)	/* set by bfd.c handler */
     coff_compute_section_file_positions (abfd);
 
-#ifdef _LIB
+#if defined(_LIB) && !defined(TARG_AUX)
 
    /* The physical address field of a .lib section is used to hold the
       number of shared libraries in the section.  This code counts the

@@ -835,6 +835,8 @@ extern boolean bfd_elf32_add_dynamic_entry
   PARAMS ((struct bfd_link_info *, bfd_vma, bfd_vma));
 extern boolean bfd_elf32_link_create_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
+extern Elf_Internal_Rela *_bfd_elf32_link_read_relocs
+  PARAMS ((bfd *, asection *, PTR, Elf_Internal_Rela *, boolean));
 
 extern const bfd_target *bfd_elf64_object_p PARAMS ((bfd *));
 extern const bfd_target *bfd_elf64_core_file_p PARAMS ((bfd *));
@@ -876,6 +878,8 @@ extern boolean bfd_elf64_add_dynamic_entry
   PARAMS ((struct bfd_link_info *, bfd_vma, bfd_vma));
 extern boolean bfd_elf64_link_create_dynamic_sections
   PARAMS ((bfd *, struct bfd_link_info *));
+extern Elf_Internal_Rela *_bfd_elf64_link_read_relocs
+  PARAMS ((bfd *, asection *, PTR, Elf_Internal_Rela *, boolean));
 
 #define bfd_elf32_link_record_dynamic_symbol _bfd_elf_link_record_dynamic_symbol
 #define bfd_elf64_link_record_dynamic_symbol _bfd_elf_link_record_dynamic_symbol

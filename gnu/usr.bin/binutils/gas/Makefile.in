@@ -34,12 +34,12 @@ prefix = @prefix@
 
 program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 tooldir = $(exec_prefix)/$(target_alias)
 
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -49,17 +49,16 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
-docdir = $(datadir)/doc
+infodir = @infodir@
+includedir = @includedir@
 
-VERSION=cygnus-2.6
+VERSION=cygnus-2.7.1
 
 SHELL = /bin/sh
 
 INSTALL = $${srcroot}/install.sh -c
-INSTALL_PROGRAM = $(INSTALL)
-INSTALL_DATA = $(INSTALL)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
 INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
 INSTALL_XFORM1= $(INSTALL_XFORM) -b=.1
 
@@ -76,6 +75,7 @@ CC = @CC@
 CFLAGS = -g
 LDFLAGS =
 HLDFLAGS = @HLDFLAGS@
+HLDENV = @HLDENV@
 RPATH_ENVVAR = @RPATH_ENVVAR@
 
 MAKEOVERRIDES=
@@ -259,7 +259,7 @@ STAGESTUFF = *.o as.new gasp.new
 $(OBJS): @ALL_OBJ_DEPS@
 
 as.new: $(OBJS) $(LIBDEPS)
-	$(CC) $(HLDFLAGS) $(ALL_CFLAGS) $(LDFLAGS) -o as.new $(OBJS) $(LIBS) $(LOADLIBES)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(ALL_CFLAGS) $(LDFLAGS) -o as.new $(OBJS) $(LIBS) $(LOADLIBES)
 
 $(OBJS): config.h as.h targ-env.h obj-format.h targ-cpu.h flonum.h expr.h \
 	struc-symbol.h write.h frags.h hash.h read.h symbols.h tc.h obj.h \
@@ -317,12 +317,7 @@ check:  site.exp
 	$(RUNTEST) --tool gas --srcdir $${srcdir}/testsuite $(RUNTESTFLAGS)
 
 config.status: configure
-	if [ -r config.status ]; then \
-	  sh ./config.status --recheck ; \
-	else \
-	  echo You must configure gas.  Look at the INSTALL file for details. ; \
-	  exit 1 ; \
-	fi
+	$(SHELL) config.status --recheck
 
 config.h: config-stamp ; @true
 config-stamp: Makefile conf
@@ -339,7 +334,7 @@ config-stamp: Makefile conf
 # Compiling object files from source files.
 
 TARG_CPU_DEP_a29k    =
-TARG_CPU_DEP_alpha   = $(srcdir)/config/alpha-opcode.h subsegs.h
+TARG_CPU_DEP_alpha   = $(srcdir)/../include/opcode/alpha.h subsegs.h
 TARG_CPU_DEP_arm     = subsegs.h
 TARG_CPU_DEP_generic =
 TARG_CPU_DEP_h8300   = $(srcdir)/../include/opcode/h8300.h

@@ -136,7 +136,6 @@ SECTIONS
 		${RELOCATING+PROVIDE (_GOT2_END_ = .);}
 
 		${RELOCATING+PROVIDE (_GOT_START_ = .);}
-		${RELOCATING+PROVIDE (_GLOBAL_OFFSET_TABLE_ = .);}
   .got		${RELOCATING-0} : { *(.got) }
   .got.plt	${RELOCATING-0} : { *(.got.plt) }
   ${CREATE_SHLIB+${SDATA2}}

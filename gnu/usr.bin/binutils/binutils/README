@@ -86,6 +86,9 @@ a single shared library will be built containing the bfd, opcodes, and
 libiberty libraries.  It will be installed as libbfd.  This option
 will make the binutils programs as small as possible.
 
+To build under openVMS/AXP, see the file make-all.com in the top level
+directory.
+
 If you don't have ar
 ====================
 

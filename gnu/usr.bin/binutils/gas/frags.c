@@ -1,6 +1,6 @@
 /* frags.c - manage frags -
-
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,7 +112,6 @@ frag_new (old_frags_var_max_size)
 {
   fragS *former_last_fragP;
   frchainS *frchP;
-  long tmp;
 
   assert (frchain_now->frch_last == frag_now);
 
@@ -130,6 +129,8 @@ frag_new (old_frags_var_max_size)
   assert (former_last_fragP != 0);
   assert (former_last_fragP == frag_now);
   frag_now = frag_alloc (&frchP->frch_obstack);
+
+  as_where (&frag_now->fr_file, &frag_now->fr_line);
 
   /* Generally, frag_now->points to an address rounded up to next
      alignment.  However, characters will add to obstack frags
@@ -219,6 +220,7 @@ frag_var (type, max_chars, var, subtype, symbol, offset, opcode)
   /* default these to zero. */
   frag_now->fr_pcrel_adjust = 0;
   frag_now->fr_bsr = 0;
+  as_where (&frag_now->fr_file, &frag_now->fr_line);
   frag_new (max_chars);
   return (retval);
 }
@@ -254,6 +256,7 @@ frag_variant (type, max_chars, var, subtype, symbol, offset, opcode)
   /* default these to zero. */
   frag_now->fr_pcrel_adjust = 0;
   frag_now->fr_bsr = 0;
+  as_where (&frag_now->fr_file, &frag_now->fr_line);
   frag_new (max_chars);
   return (retval);
 }				/* frag_variant() */

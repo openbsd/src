@@ -201,6 +201,7 @@ Here is a brief summary of how to invoke @code{@value{AS}}.  For details,
 @ifset A29K
 @c am29k has no machine-dependent assembler options
 @end ifset
+
 @ifset H8
 @c Hitachi family chips have no machine-dependent assembler options
 @end ifset
@@ -347,6 +348,7 @@ Generate ``little endian'' format output.
 @end table
 @end ifset
 
+
 @ifset I960
 The following options are available when @value{AS} is configured for the
 Intel 80960 processor.
@@ -374,8 +376,8 @@ Motorola 68000 series.
 @item -l
 Shorten references to undefined symbols, to one word instead of two.
 
-@item -m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040
-@itemx | -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -mcpu32
+@item -m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060
+@itemx | -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -mcpu32 | -m5200
 Specify what processor in the 68000 family is the target.  The default
 is normally the 68020, but this can be changed at configuration time.
 
@@ -1326,18 +1328,6 @@ This means you may not nest these comments.
 @cindex line comment character
 Anything from the @dfn{line comment} character to the next newline
 is considered a comment and is ignored.  The line comment character is
-@ifset VAX
-@samp{#} on the Vax;
-@end ifset
-@ifset I960
-@samp{#} on the i960;
-@end ifset
-@ifset SPARC
-@samp{!} on the SPARC;
-@end ifset
-@ifset M680X0
-@samp{|} on the 680x0;
-@end ifset
 @ifset A29K
 @samp{;} for the AMD 29K family;
 @end ifset
@@ -1350,8 +1340,20 @@ is considered a comment and is ignored.  The line comment character is
 @ifset HPPA
 @samp{;} for the HPPA;
 @end ifset
+@ifset I960
+@samp{#} on the i960;
+@end ifset
 @ifset SH
 @samp{!} for the Hitachi SH;
+@end ifset
+@ifset SPARC
+@samp{!} on the SPARC;
+@end ifset
+@ifset M680X0
+@samp{|} on the 680x0;
+@end ifset
+@ifset VAX
+@samp{#} on the Vax;
 @end ifset
 @ifset Z8000
 @samp{!} for the Z8000;
@@ -1619,13 +1621,11 @@ An octal character code.  The numeric code is 3 octal digits.
 For compatibility with other Unix systems, 8 and 9 are accepted as digits:
 for example, @code{\008} has the value 010, and @code{\009} the value 011.
 
-@ifset HPPA
-@cindex @code{\@var{xdd}} (hex character code)
-@cindex hex character code (@code{\@var{xdd}})
-@item \@code{x} @var{hex-digit} @var{hex-digit}
-A hex character code.  The numeric code is 2 hexadecimal digits.  Either
-upper or lower case @code{x} works.
-@end ifset
+@cindex @code{\@var{xd...}} (hex character code)
+@cindex hex character code (@code{\@var{xd...}})
+@item \@code{x} @var{hex-digits...}
+A hex character code.  All trailing hex digits are combined.  Either upper or
+lower case @code{x} works.
 
 @cindex @code{\\} (@samp{\} character)
 @cindex backslash (@code{\\})
@@ -1803,11 +1803,11 @@ One of the letters @samp{DFPRSX} (in upper or lower case).
 @ifset H8
 One of the letters @samp{DFPRSX} (in upper or lower case).
 @end ifset
-@ifset I960
-One of the letters @samp{DFT} (in upper or lower case).
-@end ifset
 @ifset HPPA
 The letter @samp{E} (upper case only).
+@end ifset
+@ifset I960
+One of the letters @samp{DFT} (in upper or lower case).
 @end ifset
 @end ifclear
 
@@ -2980,7 +2980,9 @@ storage boundary.  The first expression (which must be absolute) is the
 alignment required, as described below.
 The second expression (also absolute) gives the value to be stored in
 the padding bytes.  It (and the comma) may be omitted.  If it is
-omitted, the padding bytes are zero.
+omitted, the padding bytes are zero.  
+For the alpha, if the section is marked as containing code and the
+padding expression is omitted, then the space is filled with no-ops.
 
 The way the required alignment is specified varies from system to system.
 For the a29k, hppa, m68k, m88k, w65, sparc, and Hitachi SH, and i386 using ELF
@@ -4323,9 +4325,6 @@ include details on any machine's instruction set.  For details on that
 subject, see the hardware manufacturer's manual.
 
 @menu
-@ifset VAX
-* Vax-Dependent::               VAX Dependent Features
-@end ifset
 @ifset A29K
 * AMD29K-Dependent::            AMD 29K Dependent Features
 @end ifset
@@ -4338,8 +4337,8 @@ subject, see the hardware manufacturer's manual.
 @ifset HPPA
 * HPPA-Dependent::              HPPA Dependent Features
 @end ifset
-@ifset SH
-* SH-Dependent::                Hitachi SH Dependent Features
+@ifset I80386
+* i386-Dependent::              Intel 80386 Dependent Features
 @end ifset
 @ifset I960
 * i960-Dependent::              Intel 80960 Dependent Features
@@ -4347,17 +4346,20 @@ subject, see the hardware manufacturer's manual.
 @ifset M680X0
 * M68K-Dependent::              M680x0 Dependent Features
 @end ifset
+@ifset MIPS
+* MIPS-Dependent::              MIPS Dependent Features
+@end ifset
+@ifset SH
+* SH-Dependent::                Hitachi SH Dependent Features
+@end ifset
 @ifset SPARC
 * Sparc-Dependent::             SPARC Dependent Features
 @end ifset
 @ifset Z8000
 * Z8000-Dependent::             Z8000 Dependent Features
 @end ifset
-@ifset MIPS
-* MIPS-Dependent::              MIPS Dependent Features
-@end ifset
-@ifset I80386
-* i386-Dependent::              80386 Dependent Features
+@ifset VAX
+* Vax-Dependent::               VAX Dependent Features
 @end ifset
 @end menu
 
@@ -4372,10 +4374,6 @@ subject, see the hardware manufacturer's manual.
 @c node and sectioning commands; hence the repetition of @chapter BLAH
 @c in both conditional blocks.
 
-
-@ifset VAX
-@include c-vax.texi
-@end ifset
 
 @ifset A29K
 @include c-a29k.texi
@@ -4400,6 +4398,7 @@ family.
 @end ifclear
 @end ifset
 
+
 @ifset H8/300
 @include c-h8300.texi
 @end ifset
@@ -4412,8 +4411,8 @@ family.
 @include c-hppa.texi
 @end ifset
 
-@ifset SH
-@include c-sh.texi
+@ifset I80386
+@include c-i386.texi
 @end ifset
 
 @ifset I960
@@ -4424,24 +4423,28 @@ family.
 @include c-m68k.texi
 @end ifset
 
+@ifset MIPS
+@include c-mips.texi
+@end ifset
+
 @ifset NS32K
 @include c-ns32k.texi
+@end ifset
+
+@ifset SH
+@include c-sh.texi
 @end ifset
 
 @ifset SPARC
 @include c-sparc.texi
 @end ifset
 
-@ifset I80386
-@include c-i386.texi
-@end ifset
-
 @ifset Z8000
 @include c-z8k.texi
 @end ifset
 
-@ifset MIPS
-@include c-mips.texi
+@ifset VAX
+@include c-vax.texi
 @end ifset
 
 @ifset GENERIC
@@ -4510,8 +4513,8 @@ required the proverbial one-bit fix.
 
 Ian Lance Taylor of Cygnus Support merged the Motorola and MIT syntax for the
 68k, completed support for some COFF targets (68k, i386 SVR3, and SCO Unix),
-added support for MIPS ECOFF and ELF targets, and made a few other minor
-patches.
+added support for MIPS ECOFF and ELF targets, wrote the initial RS/6000 and
+PowerPC assembler, and made a few other minor patches.
 
 Steve Chamberlain made @code{@value{AS}} able to generate listings.
 
@@ -4527,6 +4530,8 @@ Support (original, incomplete implementation for SPARC), Pete Hoogenboom and
 Jeff Law at the University of Utah (HPPA mainly), Michael Meissner of the Open
 Software Foundation (i386 mainly), and Ken Raeburn of Cygnus Support (sparc,
 and some initial 64-bit support).
+
+Richard Henderson rewrote the Alpha assembler.
 
 Several engineers at Cygnus Support have also provided many small bug fixes and
 configuration enhancements.

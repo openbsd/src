@@ -60,6 +60,13 @@ enum reloc_type
     R_386_RELATIVE,
     R_386_GOTOFF,
     R_386_GOTPC,
+    FIRST_INVALID_RELOC,
+    LAST_INVALID_RELOC = 19,
+    /* The remaining relocs are a GNU extension.  */
+    R_386_16 = 20,
+    R_386_PC16,
+    R_386_8,
+    R_386_PC8,
     R_386_max
   };
 
@@ -93,6 +100,20 @@ static reloc_howto_type elf_howto_table[]=
   HOWTO(R_386_RELATIVE,  0,2,32,false,0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_RELATIVE", true,0xffffffff,0xffffffff,false),
   HOWTO(R_386_GOTOFF,    0,2,32,false,0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_GOTOFF",   true,0xffffffff,0xffffffff,false),
   HOWTO(R_386_GOTPC,     0,2,32,true,0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_GOTPC",    true,0xffffffff,0xffffffff,true),
+  { 11 },
+  { 12 },
+  { 13 },
+  { 14 },
+  { 15 },
+  { 16 },
+  { 17 },
+  { 18 },
+  { 19 },
+  /* The remaining relocs are a GNU extension.  */
+  HOWTO(R_386_16,	 0,1,16,false,0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_16",	    true,0xffff,0xffff,false),
+  HOWTO(R_386_PC16,	 0,1,16,true, 0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_PC16",	    true,0xffff,0xffff,true),
+  HOWTO(R_386_8,	 0,0,8,false,0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_8",	    true,0xff,0xff,false),
+  HOWTO(R_386_PC8,	 0,0,8,true, 0,complain_overflow_bitfield, bfd_elf_generic_reloc,"R_386_PC8",	    true,0xff,0xff,true),
 };
 
 #ifdef DEBUG_GEN_RELOC
@@ -152,6 +173,23 @@ elf_i386_reloc_type_lookup (abfd, code)
       TRACE ("BFD_RELOC_386_GOTPC");
       return &elf_howto_table[ (int)R_386_GOTPC ];
 
+      /* The remaining relocs are a GNU extension.  */
+    case BFD_RELOC_16:
+      TRACE ("BFD_RELOC_16");
+      return &elf_howto_table[(int) R_386_16];
+
+    case BFD_RELOC_16_PCREL:
+      TRACE ("BFD_RELOC_16_PCREL");
+      return &elf_howto_table[(int) R_386_PC16];
+
+    case BFD_RELOC_8:
+      TRACE ("BFD_RELOC_8");
+      return &elf_howto_table[(int) R_386_8];
+
+    case BFD_RELOC_8_PCREL:
+      TRACE ("BFD_RELOC_8_PCREL");
+      return &elf_howto_table[(int) R_386_PC8];
+
     default:
       break;
     }
@@ -166,20 +204,22 @@ elf_i386_info_to_howto (abfd, cache_ptr, dst)
      arelent		*cache_ptr;
      Elf32_Internal_Rela *dst;
 {
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_386_max);
-
-  cache_ptr->howto = &elf_howto_table[ELF32_R_TYPE(dst->r_info)];
+  abort ();
 }
 
 static void
 elf_i386_info_to_howto_rel (abfd, cache_ptr, dst)
-     bfd		*abfd;
-     arelent		*cache_ptr;
+     bfd *abfd;
+     arelent *cache_ptr;
      Elf32_Internal_Rel *dst;
 {
-  BFD_ASSERT (ELF32_R_TYPE(dst->r_info) < (unsigned int) R_386_max);
+  enum reloc_type type;
 
-  cache_ptr->howto = &elf_howto_table[ELF32_R_TYPE(dst->r_info)];
+  type = (enum reloc_type) ELF32_R_TYPE (dst->r_info);
+  BFD_ASSERT (type < R_386_max);
+  BFD_ASSERT (type < FIRST_INVALID_RELOC || type > LAST_INVALID_RELOC);
+
+  cache_ptr->howto = &elf_howto_table[(int) type];
 }
 
 /* Functions for the i386 ELF linker.  */
@@ -858,7 +898,10 @@ elf_i386_relocate_section (output_bfd, info, input_bfd, input_section,
       bfd_reloc_status_type r;
 
       r_type = ELF32_R_TYPE (rel->r_info);
-      if (r_type < 0 || r_type >= (int) R_386_max)
+      if (r_type < 0
+	  || r_type >= (int) R_386_max
+	  || (r_type >= (int) FIRST_INVALID_RELOC
+	      && r_type <= (int) LAST_INVALID_RELOC))
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  return false;

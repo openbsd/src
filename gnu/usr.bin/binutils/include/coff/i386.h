@@ -42,7 +42,7 @@ struct external_filehdr {
 		       && (x).f_magic != LYNXCOFFMAGIC)
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -64,7 +64,8 @@ typedef struct
 AOUTHDR;
 
 
-#define AOUTSZ (sizeof(AOUTHDR))
+#define AOUTSZ 28
+#define AOUTHDRSZ 28
 
 #define OMAGIC          0404    /* object files, eg as output */
 #define ZMAGIC          0413    /* demand load format, eg normal ld output */
@@ -96,7 +97,7 @@ struct external_scnhdr {
 };
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 /*
  * names of "special" sections

@@ -2797,7 +2797,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "fnmadd.", A(63,31,1), A_MASK,	PPCCOM,		{ FRT,FRA,FRC,FRB } },
 { "fnma.",   A(63,31,1), A_MASK,	PWRCOM,		{ FRT,FRA,FRC,FRB } },
 
-{ "fcmpo",   X(63,30),	X_MASK|(3<<21),	COM,		{ BF, FRA, FRB } },
+{ "fcmpo",   X(63,32),	X_MASK|(3<<21),	COM,		{ BF, FRA, FRB } },
 
 { "mtfsb1",  XRC(63,38,0), XRARB_MASK,	COM,		{ BT } },
 { "mtfsb1.", XRC(63,38,1), XRARB_MASK,	COM,		{ BT } },

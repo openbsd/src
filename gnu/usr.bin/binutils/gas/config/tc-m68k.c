@@ -160,6 +160,11 @@ static const enum m68k_register m68060_control_regs[] = {
   USP, VBR, URP, SRP, PCR,
   0
 };
+static const enum m68k_register mcf5200_control_regs[] = {
+  CACR, TC, ITT0, ITT1, DTT0, DTT1, VBR, ROMBAR, 
+  RAMBAR0, RAMBAR1, MBAR,
+  0
+};
 #define cpu32_control_regs m68010_control_regs
 
 static const enum m68k_register *control_regs;
@@ -213,7 +218,7 @@ struct m68k_it
   reloc[5];			/* Five is enough??? */
 };
 
-#define cpu_of_arch(x)		((x) & m68000up)
+#define cpu_of_arch(x)		((x) & (m68000up|mcf5200))
 #define float_of_arch(x)	((x) & mfloat)
 #define mmu_of_arch(x)		((x) & mmmu)
 
@@ -341,6 +346,7 @@ static const struct m68k_cpu archs[] = {
   { cpu32,  "cpu32", 0 },
   { m68881, "68881", 0 },
   { m68851, "68851", 0 },
+  { mcf5200, "5200", 0 },
   /* Aliases (effectively, so far as gas is concerned) for the above
      cpus.  */
   { m68020, "68k", 1 },
@@ -352,6 +358,7 @@ static const struct m68k_cpu archs[] = {
   { m68020, "68ec020", 1 },
   { m68030, "68ec030", 1 },
   { m68040, "68ec040", 1 },
+  { m68060, "68ec060", 1 },
   { cpu32,  "68330", 1 },
   { cpu32,  "68331", 1 },
   { cpu32,  "68332", 1 },
@@ -755,7 +762,49 @@ tc_gen_reloc (section, fixp)
     abort ();
 
   if (fixp->fx_r_type != BFD_RELOC_NONE)
-    code = fixp->fx_r_type;
+    {
+      code = fixp->fx_r_type;
+
+      /* Since DIFF_EXPR_OK is defined in tc-m68k.h, it is possible
+         that fixup_segment converted a non-PC relative reloc into a
+         PC relative reloc.  In such a case, we need to convert the
+         reloc code.  */
+      if (fixp->fx_pcrel)
+	{
+	  switch (code)
+	    {
+	    case BFD_RELOC_8:
+	      code = BFD_RELOC_8_PCREL;
+	      break;
+	    case BFD_RELOC_16:
+	      code = BFD_RELOC_16_PCREL;
+	      break;
+	    case BFD_RELOC_32:
+	      code = BFD_RELOC_32_PCREL;
+	      break;
+	    case BFD_RELOC_8_PCREL:
+	    case BFD_RELOC_16_PCREL:
+	    case BFD_RELOC_32_PCREL:
+	    case BFD_RELOC_8_GOT_PCREL:
+	    case BFD_RELOC_16_GOT_PCREL:
+	    case BFD_RELOC_32_GOT_PCREL:
+	    case BFD_RELOC_8_GOTOFF:
+	    case BFD_RELOC_16_GOTOFF:
+	    case BFD_RELOC_32_GOTOFF:
+	    case BFD_RELOC_8_PLT_PCREL:
+	    case BFD_RELOC_16_PLT_PCREL:
+	    case BFD_RELOC_32_PLT_PCREL:
+	    case BFD_RELOC_8_PLTOFF:
+	    case BFD_RELOC_16_PLTOFF:
+	    case BFD_RELOC_32_PLTOFF:
+	      break;
+	    default:
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    "Cannot make %s relocation PC relative",
+			    bfd_get_reloc_code_name (code));
+	    }
+	}
+    }
   else
     {
 #define F(SZ,PCREL)		(((SZ) << 1) + (PCREL))
@@ -787,16 +836,12 @@ tc_gen_reloc (section, fixp)
 #else
   if (!fixp->fx_pcrel)
     reloc->addend = fixp->fx_addnumber;
-  else if ((fixp->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)
+  else
     reloc->addend = (section->vma
 		     + (fixp->fx_pcrel_adjust == 64
 			? -1 : fixp->fx_pcrel_adjust)
 		     + fixp->fx_addnumber
 		     + md_pcrel_from (fixp));
-  else
-    reloc->addend = (fixp->fx_offset
-		     + (fixp->fx_pcrel_adjust == 64
-			? -1 : fixp->fx_pcrel_adjust));
 #endif
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
@@ -947,12 +992,10 @@ m68k_ip (instring)
       /* If we didn't get the right number of ops, or we have no
 	 common model with this pattern then reject this pattern. */
 
+      ok_arch |= opcode->m_arch;
       if (opsfound != opcode->m_opnum
 	  || ((opcode->m_arch & current_architecture) == 0))
-	{
-	  ++losing;
-	  ok_arch |= opcode->m_arch;
-	}
+	++losing;
       else
 	{
 	  for (s = opcode->m_operands, opP = &the_ins.operands[0];
@@ -1333,7 +1376,9 @@ m68k_ip (instring)
 		  break;
 
 		case 'O':
-		  if (opP->mode != DREG && opP->mode != IMMED)
+		  if (opP->mode != DREG
+		      && opP->mode != IMMED
+		      && opP->mode != ABSL)
 		    losing++;
 		  break;
 
@@ -1514,7 +1559,7 @@ m68k_ip (instring)
 	      && !(ok_arch & current_architecture))
 	    {
 	      char buf[200], *cp;
-	      int len;
+
 	      strcpy (buf,
 		      "invalid instruction for this architecture; needs ");
 	      cp = buf + strlen (buf);
@@ -1556,8 +1601,7 @@ m68k_ip (instring)
 		      }
 		  }
 		}
-	      len = cp - buf + 1;
-	      cp = malloc (len);
+	      cp = xmalloc (strlen (buf) + 1);
 	      strcpy (cp, buf);
 	      the_ins.error = cp;
 	    }
@@ -1850,13 +1894,13 @@ m68k_ip (instring)
 		      || opP->index.size == SIZE_LONG)
 		    nextword |= 0x800;
 
-		  if (cpu_of_arch (current_architecture) < m68020)
+		  if ((opP->index.scale != 1 
+		       && cpu_of_arch (current_architecture) < m68020)
+		      || (opP->index.scale == 8 
+			  && current_architecture == mcf5200))
 		    {
-		      if (opP->index.scale != 1)
-			{
-			  opP->error =
-			    "scale factor invalid on this architecture; needs 68020 or higher";
-			}
+		      opP->error =
+			"scale factor invalid on this architecture; needs cpu32 or 68020 or higher";
 		    }
 
 		  switch (opP->index.scale)
@@ -1988,6 +2032,8 @@ m68k_ip (instring)
 	      /* Figure out innner displacement stuff */
 	      if (opP->mode == POST || opP->mode == PRE)
 		{
+		  if (cpu_of_arch (current_architecture) & cpu32)
+		    opP->error = "invalid operand mode for this architecture; needs 68020 or higher";
 		  switch (siz2)
 		    {
 		    case SIZE_UNSPEC:
@@ -2360,6 +2406,18 @@ m68k_ip (instring)
 	      break;
 	    case PCR:
 	      tmpreg = 0x808;
+	      break;
+            case ROMBAR:
+	      tmpreg = 0xC00;
+	      break;
+	    case RAMBAR0:
+	      tmpreg = 0xC04;
+	      break;
+	    case RAMBAR1:
+	      tmpreg = 0xC05;
+	      break;
+	    case MBAR:
+	      tmpreg = 0xC0F;
 	      break;
 	    default:
 	      abort ();
@@ -2942,28 +3000,51 @@ static const struct init_entry init_table[] =
   { "ccr", CCR },
   { "cc", CCR },
 
-  { "usp", USP },
-  { "isp", ISP },
-  { "sfc", SFC },
+  /* control registers */
+  { "sfc", SFC },		/* Source Function Code */
   { "sfcr", SFC },
-  { "dfc", DFC },
+  { "dfc", DFC },		/* Destination Function Code */
   { "dfcr", DFC },
-  { "cacr", CACR },
-  { "caar", CAAR },
+  { "cacr", CACR },		/* Cache Control Register */
+  { "caar", CAAR },		/* Cache Address Register */
 
-  { "vbr", VBR },
+  { "usp", USP },		/* User Stack Pointer */
+  { "vbr", VBR },		/* Vector Base Register */
+  { "msp", MSP },		/* Master Stack Pointer */
+  { "isp", ISP },		/* Interrupt Stack Pointer */
 
-  { "msp", MSP },
-  { "itt0", ITT0 },
-  { "itt1", ITT1 },
-  { "dtt0", DTT0 },
-  { "dtt1", DTT1 },
-  { "mmusr", MMUSR },
-  { "tc", TC },
-  { "srp", SRP },
-  { "urp", URP },
+  { "itt0", ITT0 },		/* Instruction Transparent Translation Reg 0 */
+  { "itt1", ITT1 },		/* Instruction Transparent Translation Reg 1 */
+  { "dtt0", DTT0 },		/* Data Transparent Translation Register 0 */
+  { "dtt1", DTT1 },		/* Data Transparent Translation Register 1 */
+
+  /* 68ec040 versions of same */
+  { "iacr0", ITT0 },		/* Instruction Access Control Register 0 */
+  { "iacr1", ITT1 },		/* Instruction Access Control Register 0 */
+  { "dacr0", DTT0 },		/* Data Access Control Register 0 */
+  { "dacr1", DTT1 },		/* Data Access Control Register 0 */
+
+  /* mcf5200 versions of same */
+  { "acr2", ITT0 },		/* Access Control Unit 2 */
+  { "acr3", ITT1 },		/* Access Control Unit 3 */
+  { "acr0", DTT0 },		/* Access Control Unit 0 */
+  { "acr1", DTT1 },		/* Access Control Unit 1 */
+
+  { "tc", TC },			/* MMU Translation Control Register */
+  { "tcr", TC },
+
+  { "mmusr", MMUSR },		/* MMU Status Register */
+  { "srp", SRP },		/* User Root Pointer */
+  { "urp", URP },		/* Supervisor Root Pointer */
+
   { "buscr", BUSCR },
   { "pcr", PCR },
+
+  { "rombar", ROMBAR },		/* ROM Base Address Register */
+  { "rambar0", RAMBAR0 },	/* ROM Base Address Register */
+  { "rambar1", RAMBAR1 },	/* ROM Base Address Register */
+  { "mbar", MBAR },		/* Module Base Address Register */
+  /* end of control registers */
 
   { "ac", AC },
   { "bc", BC },
@@ -3377,6 +3458,20 @@ md_begin ()
      */
   alt_notend_table['@'] = 1;
 
+  /* We need to put digits in alt_notend_table to handle
+       bfextu %d0{24:1},%d0
+     */
+  alt_notend_table['0'] = 1;
+  alt_notend_table['1'] = 1;
+  alt_notend_table['2'] = 1;
+  alt_notend_table['3'] = 1;
+  alt_notend_table['4'] = 1;
+  alt_notend_table['5'] = 1;
+  alt_notend_table['6'] = 1;
+  alt_notend_table['7'] = 1;
+  alt_notend_table['8'] = 1;
+  alt_notend_table['9'] = 1;
+
 #ifndef MIT_SYNTAX_ONLY
   /* Insert pseudo ops, these have to go into the opcode table since
      gas expects pseudo ops to start with a dot */
@@ -3488,6 +3583,9 @@ m68k_init_after_args ()
       break;
     case cpu32:
       control_regs = cpu32_control_regs;
+      break;
+    case mcf5200:
+      control_regs = mcf5200_control_regs;
       break;
     default:
       abort ();
@@ -6269,7 +6367,8 @@ md_parse_option (c, arg)
 
     case OPTION_BITWISE_OR:
       {
-	char *n, *t, *s;
+	char *n, *t;
+	const char *s;
 
 	n = (char *) xmalloc (strlen (m68k_comment_chars) + 1);
 	t = n;
@@ -6297,7 +6396,7 @@ md_show_usage (stream)
 -l			use 1 word for refs to undefined symbols [default 2]\n\
 -m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060\n\
  | -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -m68360\n\
- | -mcpu32\n\
+ | -mcpu32 | -m5200\n\
 			specify variant of 680X0 architecture [default 68020]\n\
 -m68881 | -m68882 | -mno-68881 | -mno-68882\n\
 			target has/lacks floating-point coprocessor\n\

@@ -70,7 +70,9 @@ static int mips_output_flavor () { return OUTPUT_FLAVOR; }
 
 #include "ecoff.h"
 
+#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
 static char *mips_regmask_frag;
+#endif
 
 #define AT  1
 #define PIC_CALL_REG 25
@@ -143,6 +145,10 @@ static int mips_4100 = -1;
 /* Whether the processor uses hardware interlocks, and thus does not
    require nops to be inserted.  */
 static int interlocks = -1;
+
+/* As with "interlocks" this is used by hardware that has FP
+   (co-processor) interlocks.  */
+static int cop_interlocks = -1;
 
 /* MIPS PIC level.  */
 
@@ -688,10 +694,15 @@ md_begin ()
   if (mips_4100 < 0)
     mips_4100 = 0;
 
-  if (mips_4650 || mips_4010 || mips_4100)
+  if (mips_4650 || mips_4010 || mips_4100 || mips_cpu == 4300)
     interlocks = 1;
   else
     interlocks = 0;
+
+  if (mips_cpu == 4300)
+    cop_interlocks = 1;
+  else
+    cop_interlocks = 0;
 
   if (mips_isa < 2 && mips_trap)
     as_bad ("trap exception not supported at ISA 1");
@@ -998,7 +1009,8 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
       /* The previous insn might require a delay slot, depending upon
 	 the contents of the current insn.  */
       if (mips_isa < 4
-	  && ((prev_pinfo & INSN_LOAD_COPROC_DELAY)
+	  && (((prev_pinfo & INSN_LOAD_COPROC_DELAY)
+               && ! cop_interlocks)
 	      || (mips_isa < 2
 		  && (prev_pinfo & INSN_LOAD_MEMORY_DELAY))))
 	{
@@ -1015,7 +1027,8 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	    ++nops;
 	}
       else if (mips_isa < 4
-	       && ((prev_pinfo & INSN_COPROC_MOVE_DELAY)
+	       && (((prev_pinfo & INSN_COPROC_MOVE_DELAY)
+                    && ! cop_interlocks)
 		   || (mips_isa < 2
 		       && (prev_pinfo & INSN_COPROC_MEMORY_DELAY))))
 	{
@@ -1068,7 +1081,8 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	    }
 	}
       else if (mips_isa < 4
-	       && (prev_pinfo & INSN_WRITE_COND_CODE))
+	       && (prev_pinfo & INSN_WRITE_COND_CODE)
+               && ! cop_interlocks)
 	{
 	  /* The previous instruction sets the coprocessor condition
 	     codes, but does not require a general coprocessor delay
@@ -1083,7 +1097,8 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	{
 	  /* The previous instruction reads the LO register; if the
 	     current instruction writes to the LO register, we must
-	     insert two NOPS.  The R4650 and VR4100 have interlocks.  */
+	     insert two NOPS.  The R4650, VR4100 and VR4300 have
+	     interlocks.  */
 	  if (! interlocks
 	      && (mips_optimize == 0
 		  || (pinfo & INSN_WRITE_LO)))
@@ -1093,7 +1108,8 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	{
 	  /* The previous instruction reads the HI register; if the
 	     current instruction writes to the HI register, we must
-	     insert a NOP.  The R4650 and VR4100 have interlocks.  */
+	     insert a NOP.  The R4650, VR4100 and VR4300 have
+	     interlocks.  */
 	  if (! interlocks
 	      && (mips_optimize == 0
 		  || (pinfo & INSN_WRITE_HI)))
@@ -1105,15 +1121,16 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	 coprocessor instruction which requires a general coprocessor
 	 delay and then reading the condition codes 2) reading the HI
 	 or LO register and then writing to it (except on the R4650,
-	 and VR4100 which have interlocks).  If we are not already
-	 emitting a NOP instruction, we must check for these cases
-	 compared to the instruction previous to the previous
+	 VR4100, and VR4300 which have interlocks).  If we are not
+	 already emitting a NOP instruction, we must check for these
+	 cases compared to the instruction previous to the previous
 	 instruction.  */
       if (nops == 0
 	  && ((mips_isa < 4
 	       && (prev_prev_insn.insn_mo->pinfo & INSN_COPROC_MOVE_DELAY)
 	       && (prev_prev_insn.insn_mo->pinfo & INSN_WRITE_COND_CODE)
-	       && (pinfo & INSN_READ_COND_CODE))
+	       && (pinfo & INSN_READ_COND_CODE)
+               && ! cop_interlocks)
 	      || ((prev_prev_insn.insn_mo->pinfo & INSN_READ_LO)
 		  && (pinfo & INSN_WRITE_LO)
 		  && ! interlocks)
@@ -1132,10 +1149,16 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
       /* Now emit the right number of NOP instructions.  */
       if (nops > 0)
 	{
+	  fragS *old_frag;
+	  unsigned long old_frag_offset;
 	  int i;
+
+	  old_frag = frag_now;
+	  old_frag_offset = frag_now_fix ();
 
 	  for (i = 0; i < nops; i++)
 	    emit_nop ();
+
 	  if (listing)
 	    {
 	      listing_prev_line ();
@@ -1149,12 +1172,18 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
                  all needed nop instructions themselves.  */
 	      frag_grow (40);
 	    }
+
 	  if (insn_label != NULL)
 	    {
 	      assert (S_GET_SEGMENT (insn_label) == now_seg);
 	      insn_label->sy_frag = frag_now;
 	      S_SET_VALUE (insn_label, (valueT) frag_now_fix ());
 	    }
+
+#ifndef NO_ECOFF_DEBUGGING
+	  if (ECOFF_DEBUGGING)
+	    ecoff_fix_loc (old_frag, old_frag_offset);
+#endif
 	}
     }
   
@@ -1492,10 +1521,11 @@ mips_emit_delays ()
 
       nop = 0;
       if ((mips_isa < 4
-	   && (prev_insn.insn_mo->pinfo
-	       & (INSN_LOAD_COPROC_DELAY
-		  | INSN_COPROC_MOVE_DELAY
-		  | INSN_WRITE_COND_CODE)))
+	   && (! cop_interlocks
+               && (prev_insn.insn_mo->pinfo
+                   & (INSN_LOAD_COPROC_DELAY
+                      | INSN_COPROC_MOVE_DELAY
+                      | INSN_WRITE_COND_CODE))))
 	  || (! interlocks
 	      && (prev_insn.insn_mo->pinfo
 		  & (INSN_READ_LO
@@ -1507,14 +1537,16 @@ mips_emit_delays ()
 	{
 	  nop = 1;
 	  if ((mips_isa < 4
-	       && (prev_insn.insn_mo->pinfo & INSN_WRITE_COND_CODE))
+	       && (! cop_interlocks
+                   && prev_insn.insn_mo->pinfo & INSN_WRITE_COND_CODE))
 	      || (! interlocks
 		  && ((prev_insn.insn_mo->pinfo & INSN_READ_HI)
 		      || (prev_insn.insn_mo->pinfo & INSN_READ_LO))))
 	    emit_nop ();
 	}
       else if ((mips_isa < 4
-		&& (prev_prev_insn.insn_mo->pinfo & INSN_WRITE_COND_CODE))
+		&& (! cop_interlocks
+                    && prev_prev_insn.insn_mo->pinfo & INSN_WRITE_COND_CODE))
 	       || (! interlocks
 		   && ((prev_prev_insn.insn_mo->pinfo & INSN_READ_HI)
 		       || (prev_prev_insn.insn_mo->pinfo & INSN_READ_LO))))
@@ -5279,7 +5311,10 @@ mips_ip (str, ip)
 		      else
 			goto notreg;
 		    }
-		  if (regno == AT && ! mips_noat)
+		  if (regno == AT
+		      && ! mips_noat
+		      && *args != 'E'
+		      && *args != 'G')
 		    as_warn ("Used $at without \".set noat\"");
 		  c = *args;
 		  if (*s == ' ')
@@ -5421,8 +5456,9 @@ mips_ip (str, ip)
 
 	    case 'I':
 	      my_getExpression (&imm_expr, s);
-	      if (imm_expr.X_op != O_big)
-		check_absolute_expr (ip, &imm_expr);
+	      if (imm_expr.X_op != O_big
+		  && imm_expr.X_op != O_constant)
+		insn_error = "absolute expression required";
 	      s = expr_end;
 	      continue;
 
@@ -5573,7 +5609,7 @@ mips_ip (str, ip)
 	    case 'j':		/* 16 bit signed immediate */
 	      imm_reloc = BFD_RELOC_LO16;
 	      c = my_getSmallExpression (&imm_expr, s);
-	      if (c)
+	      if (c != '\0')
 		{
 		  if (c != 'l')
 		    {
@@ -5589,18 +5625,21 @@ mips_ip (str, ip)
 			imm_reloc = BFD_RELOC_HI16;
 		    }
 		}
-	      else if (imm_expr.X_op != O_big)
-		check_absolute_expr (ip, &imm_expr);
 	      if (*args == 'i')
 		{
-		  if (imm_expr.X_op == O_big
-		      || imm_expr.X_add_number < 0
-		      || imm_expr.X_add_number >= 0x10000)
+		  if ((c == '\0' && imm_expr.X_op != O_constant)
+		      || ((imm_expr.X_add_number < 0
+                           || imm_expr.X_add_number >= 0x10000)
+                          && imm_expr.X_op == O_constant))
 		    {
 		      if (insn + 1 < &mips_opcodes[NUMOPCODES] &&
 			  !strcmp (insn->name, insn[1].name))
 			break;
-		      as_bad ("16 bit expression not in range 0..65535");
+		      if (imm_expr.X_op != O_constant
+			  && imm_expr.X_op != O_big)
+			insn_error = "absolute expression required";
+		      else
+			as_bad ("16 bit expression not in range 0..65535");
 		    }
 		}
 	      else
@@ -5623,9 +5662,10 @@ mips_ip (str, ip)
 		    max = 0x8000;
 		  else
 		    max = 0x10000;
-		  if (imm_expr.X_op == O_big
-		      || imm_expr.X_add_number < -0x8000
-		      || imm_expr.X_add_number >= max
+		  if ((c == '\0' && imm_expr.X_op != O_constant)
+		      || ((imm_expr.X_add_number < -0x8000
+                           || imm_expr.X_add_number >= max)
+                          && imm_expr.X_op == O_constant)
 		      || (more
 			  && imm_expr.X_add_number < 0
 			  && mips_isa >= 3
@@ -5634,7 +5674,11 @@ mips_ip (str, ip)
 		    {
 		      if (more)
 			break;
-		      as_bad ("16 bit expression not in range -32768..32767");
+		      if (imm_expr.X_op != O_constant
+			  && imm_expr.X_op != O_big)
+			insn_error = "absolute expression required";
+		      else
+			as_bad ("16 bit expression not in range -32768..32767");
 		    }
 		}
 	      s = expr_end;
@@ -7351,6 +7395,14 @@ md_section_align (seg, addr)
 {
   int align = bfd_get_section_alignment (stdoutput, seg);
 
+#ifdef OBJ_ELF
+  /* We don't need to align ELF sections to the full alignment.
+     However, Irix 5 may prefer that we align them at least to a 16
+     byte boundary.  */
+  if (align > 16)
+    align = 16;
+#endif
+
   return ((addr + (1 << align) - 1) & (-1 << align));
 }
 
@@ -7472,6 +7524,7 @@ tc_gen_reloc (section, fixp)
 {
   static arelent *retval[4];
   arelent *reloc;
+  bfd_reloc_code_real_type code;
 
   reloc = retval[0] = (arelent *) xmalloc (sizeof (arelent));
   retval[1] = NULL;
@@ -7604,20 +7657,53 @@ tc_gen_reloc (section, fixp)
 	abort ();
     }
 
+  /* Since DIFF_EXPR_OK is defined in tc-mips.h, it is possible that
+     fixup_segment converted a non-PC relative reloc into a PC
+     relative reloc.  In such a case, we need to convert the reloc
+     code.  */
+  code = fixp->fx_r_type;
+  if (fixp->fx_pcrel)
+    {
+      switch (code)
+	{
+	case BFD_RELOC_8:
+	  code = BFD_RELOC_8_PCREL;
+	  break;
+	case BFD_RELOC_16:
+	  code = BFD_RELOC_16_PCREL;
+	  break;
+	case BFD_RELOC_32:
+	  code = BFD_RELOC_32_PCREL;
+	  break;
+	case BFD_RELOC_8_PCREL:
+	case BFD_RELOC_16_PCREL:
+	case BFD_RELOC_32_PCREL:
+	case BFD_RELOC_16_PCREL_S2:
+	case BFD_RELOC_PCREL_HI16_S:
+	case BFD_RELOC_PCREL_LO16:
+	  break;
+	default:
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			"Cannot make %s relocation PC relative",
+			bfd_get_reloc_code_name (code));
+	}
+    }
+
   /* To support a PC relative reloc when generating embedded PIC code
      for ECOFF, we use a Cygnus extension.  We check for that here to
      make sure that we don't let such a reloc escape normally.  */
   if (OUTPUT_FLAVOR == bfd_target_ecoff_flavour
-      && fixp->fx_r_type == BFD_RELOC_16_PCREL_S2
+      && code == BFD_RELOC_16_PCREL_S2
       && mips_pic != EMBEDDED_PIC)
     reloc->howto = NULL;
   else
-    reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+    reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
 
   if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-		    "Can not represent relocation in this object file format");
+		    "Can not represent %s relocation in this object file format",
+		    bfd_get_reloc_code_name (code));
       retval[0] = NULL;
     }
 

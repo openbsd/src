@@ -1,3 +1,105 @@
+Thu Aug 29 11:32:23 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/arm/arm7t.d: Explicitly force little-endian assembly.
+
+Fri Aug 16 00:19:10 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/hppa/basic/purge.s: Use "%sr4" on pitlb, pitlbe
+	fic and fice instructions to test 3bit space identifiers.
+	* gas/hppa/basic/system.s: Similarly for iitlba and
+	iitlbp.
+	* gas/hppa/basic/basic.exp: Corresponding changes.
+
+Thu Aug 15 16:25:05 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/arm/arm.exp: Change inst.s test to check objdump.
+	* gas/arm/inst.d: Added.
+	
+Thu Aug 15 16:06:02 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/arm/thumb.s: Added.
+	* gas/arm/immed.s: Added.
+	* gas/arm/arch4t.s: Added.
+	* gas/arm/arm.exp: Updated to run the new tests.
+
+Tue Aug  6 11:06:29 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/h8300/misch.s: Reenable "eepmov.w" test.
+	* gas/h8300/miscs.s: Likewise.
+	* gas/h8300/h8300.exp: Check for correct assembly of "eepmov.w"
+	on the H8/300H and H8/S.  Don't expect it to fail.
+
+Wed Jul 31 10:57:44 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/asi.s: Update ASI_AS_IF_USER_{PRIMARY,SECONDARY}_LITTLE.
+
+Wed Jul 31 15:55:12 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/arm/arm7t.s: Added.
+	* gas/arm/arm7t.d: Added.
+	* gas/arm/arm.exp: Updated to run the new test.
+
+Mon Jul  8 14:27:39 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/pcrel.d: Rename from schwab.d.
+	* gas/m68k/pcrel.s: Rename from schwab.s.
+
+Mon Jul  8 14:23:26 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* gas/m68k/schwab.d: Correct for ELF format.
+	* gas/m68k/all.exp: Run "schwab" test for all targets.
+
+Thu Jul  4 14:23:36 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Avoid DOS file naming problems:
+	* gas/h8300/branch.s: Rename from branches.s.
+	* gas/h8300/branchh.s: Rename from branchesh.s.
+	* gas/h8300/branchs.s: Rename from branchess.s.
+	* gas/h8300/rotsh.s: Rename from rotshift.s.
+	* gas/h8300/rotshh.s: Rename from rotshifth.s.
+	* gas/h8300/rotshs.s: Rename from rotshifts.s.
+	* gas/h8300/h8300.exp: Corresponding changes.
+
+Thu Jul  4 14:01:46 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/mips/mips.exp: Add new tests for processors with interlocks
+ 	on div and mul.
+	* gas/mips/div-ilocks.d: Added.
+	* gas/mips/mul-ilocks.d: Added.
+	
+Wed Jul  3 14:20:04 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/all/gas.exp: Remove setup_xfail for h8300*-*-* for two tests
+	which now pass.
+	* gas/h8300/h8300.exp: Fix regexp of mov32bug test to work on a 64
+	bit host.
+
+Sat Jun 29 18:21:51 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/all/gas.exp: Add setup_xfail for vax*-*-vms* for 930509a
+	test.
+	* gas/vax/quad.exp: Expect a nop after the movq.
+
+Tue Jun 18 12:39:49 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* gas/h8300/cbranchh.s: Switch into h8300h mode.
+	* gas/h8300/h8300.exp (H8/300H misc tests): Fix test names.
+
+	* gas/h8300/{addsubs.s,bitops1s.s,bitops2s.s}: New tests for the
+	H8/S.
+	* gas/h8300/{bitops3.s,bitops4.s,cbranchs.s,logicals.s}: Likewise.
+	* gas/h8300/{branchess.s,compares.s,macs.s,decimals.s}: Likewise.
+	* gas/h8300/{incdecs.s,divmuls.s,miscs.s,multiples.s}: Likewise.
+	* gas/h8300/{movbs.s,movws.s,movls.s,pushpops.s}: Likewise.
+	* gas/h8300/{rotshifts.s,extends.s}: Likewise.
+	* gas/h8300/h8300.exp: Run them.
+
+Mon Jun 10 14:14:40 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/all/cofftag.s, gas/all/cofftag.d: New test for COFF enum tag
+	with the same name as a global variable.
+	* gas/all/gas.exp: Run cofftag test for any COFF target.
+
 Thu Jun  6 12:30:05 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/m68k/all.exp: Pass -m68020 when assembling the disperr.s
@@ -273,13 +375,11 @@ Mon Aug 14 16:03:07 1995  Ian Lance Taylor  <ian@cygnus.com>
 	* gasp/gasp.exp: Run them.  Also, clean up the test names used in
 	pass and fail.
 
-start-sanitize-sh3e
 Sun Aug 13 00:39:24 1995  Jeff Law  (law@snake.cs.utah.edu)
 
 	* gas/sh/basic.exp: Update now that we know the right
 	bit patters for the new sts instructions.
 
-end-sanitize-sh3e
 Thu Aug 10 00:46:21 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/mri/char.d: Fix for little endian machines.
@@ -321,12 +421,10 @@ Mon Aug  7 22:39:28 1995  Ian Lance Taylor  <ian@cygnus.com>
 	* gas/m68k/all.exp: Run new tests.  Run schwab test for
 	m68k-*-coff*.
 
-start-sanitize-sh3e
 Mon Aug  7 03:01:32 1995  Jeff Law  (law@snake.cs.utah.edu)
 
 	* gas/sh/*: New tests for the hitachi-sh.
 
-end-sanitize-sh3e
 Tue Aug  1 18:02:47 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/mri/*: New tests for MRI mode.

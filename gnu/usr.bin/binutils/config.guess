@@ -260,7 +260,7 @@ EOF
 	case "${UNAME_MACHINE}" in
 	    9000/31? )            HP_ARCH=m68000 ;;
 	    9000/[34]?? )         HP_ARCH=m68k ;;
-	    9000/7?? | 9000/8?[679] ) HP_ARCH=hppa1.1 ;;
+	    9000/7?? | 9000/8?[1679] ) HP_ARCH=hppa1.1 ;;
 	    9000/8?? )            HP_ARCH=hppa1.0 ;;
 	esac
 	HPUX_REV=`echo ${UNAME_RELEASE}|sed -e 's/[^.]*.[0B]*//'`
@@ -375,16 +375,18 @@ EOF
 	# The BFD linker knows what the default object file format is, so
 	# first see if it will tell us.
 	ld_help_string=`ld --help 2>&1`
-	if echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: elf_i[345]86"; then
+	if echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: elf_i[3456]86"; then
 	  echo "${UNAME_MACHINE}-unknown-linux" ; exit 0
-	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: i[345]86linux"; then
+	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: i[3456]86linux"; then
 	  echo "${UNAME_MACHINE}-unknown-linuxaout" ; exit 0
-	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: i[345]86coff"; then
+	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: i[3456]86coff"; then
 	  echo "${UNAME_MACHINE}-unknown-linuxcoff" ; exit 0
 	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: m68kelf"; then
 	  echo "${UNAME_MACHINE}-unknown-linux" ; exit 0
 	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: m68klinux"; then
 	  echo "${UNAME_MACHINE}-unknown-linuxaout" ; exit 0
+	elif echo "$ld_help_string" | grep >/dev/null 2>&1 "supported emulations: elf32ppc"; then
+	  echo "powerpc-unknown-linux" ; exit 0
 	elif test "${UNAME_MACHINE}" = "alpha" ; then
 	  echo alpha-unknown-linux ; exit 0
 	elif test "${UNAME_MACHINE}" = "sparc" ; then

@@ -484,6 +484,7 @@ static int pa_parse_nonneg_add_cmpltr PARAMS ((char **, int));
 static void pa_align PARAMS ((int));
 static void pa_block PARAMS ((int));
 static void pa_brtab PARAMS ((int));
+static void pa_try PARAMS ((int));
 static void pa_call PARAMS ((int));
 static void pa_call_args PARAMS ((struct call_desc *));
 static void pa_callinfo PARAMS ((int));
@@ -500,6 +501,7 @@ static void pa_type_args PARAMS ((symbolS *, int));
 static void pa_import PARAMS ((int));
 static void pa_label PARAMS ((int));
 static void pa_leave PARAMS ((int));
+static void pa_level PARAMS ((int));
 static void pa_origin PARAMS ((int));
 static void pa_proc PARAMS ((int));
 static void pa_procend PARAMS ((int));
@@ -592,6 +594,7 @@ const pseudo_typeS md_pseudo_table[] =
      not the log2 of the requested alignment.  */
   {"align", pa_align, 8},
   {"begin_brtab", pa_brtab, 1},
+  {"begin_try", pa_try, 1},
   {"block", pa_block, 1},
   {"blockz", pa_block, 0},
   {"byte", pa_cons, 1},
@@ -604,6 +607,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"double", pa_float_cons, 'd'},
   {"end", pa_end, 0},
   {"end_brtab", pa_brtab, 0},
+  {"end_try", pa_try, 0},
   {"enter", pa_enter, 0},
   {"entry", pa_entry, 0},
   {"equ", pa_equ, 0},
@@ -617,6 +621,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"label", pa_label, 0},
   {"lcomm", pa_lcomm, 0},
   {"leave", pa_leave, 0},
+  {"level", pa_level, 0},
   {"long", pa_cons, 4},
   {"lsym", pa_lsym, 0},
   {"nsubspa", pa_subspace, 1},
@@ -2622,7 +2627,8 @@ tc_gen_reloc (section, fixp)
 			       fixp->fx_r_type,
 			       hppa_fixp->fx_r_format,
 			       hppa_fixp->fx_r_field,
-			       fixp->fx_subsy != NULL);
+			       fixp->fx_subsy != NULL,
+			       fixp->fx_addsy->bsym);
 
   for (n_relocs = 0; codes[n_relocs]; n_relocs++)
     ;
@@ -2760,6 +2766,7 @@ tc_gen_reloc (section, fixp)
 	case R_RSEL:
 	case R_BEGIN_BRTAB:
 	case R_END_BRTAB:
+	case R_BEGIN_TRY:
 	case R_N0SEL:
 	case R_N1SEL:
 	  /* There is no symbol or addend associated with these fixups.  */
@@ -2767,6 +2774,7 @@ tc_gen_reloc (section, fixp)
 	  relocs[i]->addend = 0;
 	  break;
 
+	case R_END_TRY:
 	case R_ENTRY:
 	case R_EXIT:
 	  /* There is no symbol associated with these fixups.  */
@@ -2920,8 +2928,18 @@ md_apply_fix (fixP, valp)
   if (fixP->fx_r_type == R_HPPA_ENTRY
       || fixP->fx_r_type == R_HPPA_EXIT
       || fixP->fx_r_type == R_HPPA_BEGIN_BRTAB
-      || fixP->fx_r_type == R_HPPA_END_BRTAB)
+      || fixP->fx_r_type == R_HPPA_END_BRTAB
+      || fixP->fx_r_type == R_HPPA_BEGIN_TRY)
     return 1;
+
+  /* Disgusting.  We must set fx_offset ourselves -- R_HPPA_END_TRY
+     fixups are considered not adjustable, which in turn causes
+     adjust_reloc_syms to not set fx_offset.  Ugh.  */
+  if (fixP->fx_r_type == R_HPPA_END_TRY)
+    {
+      fixP->fx_offset = *valp;
+      return 1;
+    }
 #endif
 
   /* There should have been an HPPA specific fixup associated
@@ -4068,6 +4086,31 @@ pa_brtab (begin)
   demand_empty_rest_of_line ();
 }
 
+/* Handle a .begin_try and .end_try pseudo-op.  */
+
+static void
+pa_try (begin)
+     int begin;
+{
+#ifdef OBJ_SOM
+  expressionS exp;
+  char *where = frag_more (0);
+
+  if (! begin)
+    expression (&exp);
+
+  /* The TRY relocations are only availble in SOM (to denote
+     the beginning and end of exception handling regions).  */
+
+  fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
+		NULL, (offsetT) 0, begin ? NULL : &exp,
+		0, begin ? R_HPPA_BEGIN_TRY : R_HPPA_END_TRY,
+		e_fsel, 0, 0, NULL);
+#endif
+
+  demand_empty_rest_of_line ();
+}
+
 /* Handle a .CALL pseudo-op.  This involves storing away information
    about where arguments are to be found so the linker can detect
    (and correct) argument location mismatches between caller and callee.  */
@@ -4857,6 +4900,35 @@ pa_leave (unused)
   pa_check_current_space_and_subspace ();
 
   abort ();
+}
+
+/* Handle a .LEVEL pseudo-op.  */
+
+static void
+pa_level (unused)
+     int unused;
+{
+  char *level;
+
+  level = input_line_pointer;
+  if (strncmp (level, "1.0", 3) == 0)
+    {
+      input_line_pointer += 3;
+      if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 10))
+	as_warn ("could not set architecture and machine");
+    }
+  else if (strncmp (level, "1.1", 3) == 0)
+    {
+      input_line_pointer += 3;
+      if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 11))
+	as_warn ("could not set architecture and machine");
+    }
+  else
+    {
+      as_bad ("Unrecognized .LEVEL argument\n");
+      ignore_rest_of_line ();
+    }
+  demand_empty_rest_of_line ();
 }
 
 /* Handle a .ORIGIN pseudo-op.  */
@@ -6368,6 +6440,8 @@ hppa_force_relocation (fixp)
   if (fixp->fx_r_type == R_HPPA_ENTRY || fixp->fx_r_type == R_HPPA_EXIT
       || fixp->fx_r_type == R_HPPA_BEGIN_BRTAB
       || fixp->fx_r_type == R_HPPA_END_BRTAB
+      || fixp->fx_r_type == R_HPPA_BEGIN_TRY
+      || fixp->fx_r_type == R_HPPA_END_TRY
       || (fixp->fx_addsy != NULL && fixp->fx_subsy != NULL
 	  && (hppa_fixp->segment->flags & SEC_CODE) != 0))
     return 1;

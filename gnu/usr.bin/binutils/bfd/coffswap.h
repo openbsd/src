@@ -225,7 +225,7 @@ coff_swap_reloc_out (abfd, src, dst)
   SWAP_OUT_RELOC_EXTRA(abfd,reloc_src, reloc_dst);
 #endif
 
-  return sizeof(struct external_reloc);
+  return RELSZ;
 }
 
 #endif /* NO_COFF_RELOCS */
@@ -266,7 +266,7 @@ coff_swap_filehdr_out (abfd, in, out)
   bfd_h_put_16(abfd, filehdr_in->f_opthdr, (bfd_byte *) filehdr_out->f_opthdr);
   bfd_h_put_16(abfd, filehdr_in->f_flags, (bfd_byte *) filehdr_out->f_flags);
 
-  return sizeof(FILHDR);
+  return FILHSZ;
 }
 
 
@@ -335,7 +335,7 @@ coff_swap_sym_out (abfd, inp, extp)
       }
   bfd_h_put_8(abfd,  in->n_sclass , ext->e_sclass);
   bfd_h_put_8(abfd,  in->n_numaux , ext->e_numaux);
-  return sizeof(SYMENT);
+  return SYMESZ;
 }
 
 static void
@@ -472,7 +472,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
       memcpy (ext->x_file.x_fname, in->x_file.x_fname, FILNMLEN);
 #endif
     }
-    return sizeof (AUXENT);
+    return AUXESZ;
 
 #ifdef RS6000COFF_C
   /* RS/6000 "csect" auxents */
@@ -490,7 +490,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
 	PUTBYTE (abfd, in->x_csect.x_smclas,	ext->x_csect.x_smclas);
 	PUTWORD (abfd, in->x_csect.x_stab,	ext->x_csect.x_stab);
 	PUTHALF (abfd, in->x_csect.x_snstab,	ext->x_csect.x_snstab);
-	return sizeof (AUXENT);
+	return AUXESZ;
       }
     break;
 #endif
@@ -504,7 +504,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
       PUT_SCN_SCNLEN(abfd, in->x_scn.x_scnlen, ext);
       PUT_SCN_NRELOC(abfd, in->x_scn.x_nreloc, ext);
       PUT_SCN_NLINNO(abfd, in->x_scn.x_nlinno, ext);
-      return sizeof (AUXENT);
+      return AUXESZ;
     }
     break;
   }
@@ -543,7 +543,7 @@ coff_swap_aux_out (abfd, inp, type, class, indx, numaux, extp)
       PUT_LNSZ_SIZE (abfd, in->x_sym.x_misc.x_lnsz.x_size, ext);
     }
 
-  return sizeof(AUXENT);
+  return AUXESZ;
 }
 
 #endif /* NO_COFF_SYMBOLS */
@@ -575,7 +575,7 @@ coff_swap_lineno_out (abfd, inp, outp)
 	  ext->l_addr.l_symndx);
 
   PUT_LINENO_LNNO (abfd, in->l_lnno, ext);
-  return sizeof(struct external_lineno);
+  return LINESZ;
 }
 
 #endif /* NO_COFF_LINENOS */
@@ -712,7 +712,7 @@ coff_swap_aouthdr_out (abfd, in, out)
   bfd_h_put_32(abfd, aouthdr_in->fprmask, (bfd_byte *) aouthdr_out->fprmask);
 #endif
 
-  return sizeof(AOUTHDR);
+  return AOUTSZ;
 }
 
 static void
@@ -759,7 +759,7 @@ coff_swap_scnhdr_out (abfd, in, out)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *)in;
   SCNHDR *scnhdr_ext = (SCNHDR *)out;
-  unsigned int ret = sizeof (SCNHDR);
+  unsigned int ret = SCNHSZ;
 
   memcpy(scnhdr_ext->s_name, scnhdr_int->s_name, sizeof(scnhdr_int->s_name));
 

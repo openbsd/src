@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 /*
  * This is really a branch office of as-read.c. I split it out to clearly
@@ -39,6 +40,19 @@ static void current_location PARAMS ((expressionS *));
 static void clean_up_expression PARAMS ((expressionS * expressionP));
 
 extern const char EXP_CHARS[], FLT_CHARS[];
+
+/* We keep a mapping of expression symbols to file positions, so that
+   we can provide better error messages.  */
+
+struct expr_symbol_line
+{
+  struct expr_symbol_line *next;
+  symbolS *sym;
+  char *file;
+  unsigned int line;
+};
+
+static struct expr_symbol_line *expr_symbol_lines;
 
 /* Build a dummy symbol to hold a complex expression.  This is how we
    build expressions up out of other expressions.  The symbol is put
@@ -50,6 +64,7 @@ make_expr_symbol (expressionP)
 {
   const char *fake;
   symbolS *symbolP;
+  struct expr_symbol_line *n;
 
   if (expressionP->X_op == O_symbol
       && expressionP->X_add_number == 0)
@@ -73,7 +88,38 @@ make_expr_symbol (expressionP)
   if (expressionP->X_op == O_constant)
     resolve_symbol_value (symbolP);
 
+  n = (struct expr_symbol_line *) xmalloc (sizeof *n);
+  n->sym = symbolP;
+  as_where (&n->file, &n->line);
+  n->next = expr_symbol_lines;
+  expr_symbol_lines = n;
+
   return symbolP;
+}
+
+/* Return the file and line number for an expr symbol.  Return
+   non-zero if something was found, 0 if no information is known for
+   the symbol.  */
+
+int
+expr_symbol_where (sym, pfile, pline)
+     symbolS *sym;
+     char **pfile;
+     unsigned int *pline;
+{
+  register struct expr_symbol_line *l;
+
+  for (l = expr_symbol_lines; l != NULL; l = l->next)
+    {
+      if (l->sym == sym)
+	{
+	  *pfile = l->file;
+	  *pline = l->line;
+	  return 1;
+	}
+    }
+
+  return 0;
 }
 
 /*
@@ -966,10 +1012,22 @@ operand (expressionP)
 	  name = --input_line_pointer;
 	  c = get_symbol_end ();
 
+#ifdef md_parse_name
+	  /* This is a hook for the backend to parse certain names
+             specially in certain contexts.  If a name always has a
+             specific value, it can often be handled by simply
+             entering it in the symbol table.  */
+	  if (md_parse_name (name, expressionP))
+	    {
+	      *input_line_pointer = c;
+	      break;
+	    }
+#endif
+
 #ifdef TC_I960
 	  /* The MRI i960 assembler permits
 	         lda sizeof code,g13
-	     */
+	     FIXME: This should use md_parse_name.  */
 	  if (flag_mri
 	      && (strcasecmp (name, "sizeof") == 0
 		  || strcasecmp (name, "startof") == 0))

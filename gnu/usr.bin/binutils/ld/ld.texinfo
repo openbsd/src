@@ -1582,6 +1582,14 @@ SECTIONS@{ @dots{}
 @end group
 @end smallexample
 
+@kindex LOADADDR(@var{section})
+@cindex section load address
+@item LOADADDR(@var{section})
+Return the absolute load address of the named @var{section}.  This is
+normally the same as @code{ADDR}, but it may be different if the
+@code{AT} keyword is used in the section definition (@pxref{Section
+Options}).
+
 @kindex ALIGN(@var{exp})
 @cindex rounding up location counter
 @item ALIGN(@var{exp})
@@ -1673,6 +1681,14 @@ SECTIONS@{ @dots{}
 Return the size in bytes of the output file's headers.  You can use this number
 as the start address of the first section, if you choose, to facilitate
 paging. 
+
+@kindex MAX
+@item MAX(@var{exp1}, @var{exp2})
+Returns the maximum of @var{exp1} and @var{exp2}.
+
+@kindex MIN
+@item MIN(@var{exp1}, @var{exp2})
+Returns the minimum of @var{exp1} and @var{exp2}.
 
 @end table
 
@@ -1814,6 +1830,7 @@ output file will match the order in the first input file.
 * Section Placement::           Section Placement
 * Section Data Expressions::    Section Data Expressions
 * Section Options::             Optional Section Attributes
+* Overlays::			Overlays
 @end menu
 
 @node Section Definition
@@ -1877,7 +1894,7 @@ beginning of the section.
 The @var{contents} of a section definition may include any of the
 following kinds of statement.  You can include as many of these as you
 like in a single section definition, separated from one another by
-whitespace. 
+whitespace.
 
 @table @code
 @kindex @var{filename}
@@ -1962,8 +1979,30 @@ were in an input-file section named @code{COMMON}, regardless of the
 input file's format.
 @end table
 
-For example, the following command script arranges the output file into
-three consecutive sections, named @code{.text}, @code{.data}, and
+In any place where you may use a specific file or section name, you may
+also use a wildcard pattern.  The linker handles wildcards much as the
+Unix shell does.  A @samp{*} character matches any number of characters.
+A @samp{?} character matches any single character.  The sequence
+@samp{[@var{chars}]} will match a single instance of any of the
+@var{chars}; the @samp{-} character may be used to specify a range of
+characters, as in @samp{[a-z]} to match any lower case letter.  A
+@samp{\} character may be used to quote the following character.
+
+When a file name is matched with a wildcard, the wildcard characters
+will not match a @samp{/} character (used to separate directory names on
+Unix).  A pattern consisting of a single @samp{*} character is an
+exception; it will always match any file name.  In a section name, the
+wildcard characters will match a @samp{/} character.
+
+Wildcards only match files which are explicitly specified on the command
+line.  The linker does not search directories to expand wildcards.
+However, if you specify a simple file name---a name with no wildcard
+characters---in a linker script, and the file name is not also specified
+on the command line, the linker will attempt to open the file as though
+it appeared on the command line.
+
+In the following example, the command script arranges the output file
+into three consecutive sections, named @code{.text}, @code{.data}, and
 @code{.bss}, taking the input for each from the correspondingly named
 sections of all the input files:
 
@@ -2007,6 +2046,24 @@ SECTIONS @{
 @}
 @end group
 @end smallexample        
+
+This example shows how wildcard patterns might be used to partition
+files.  All @code{.text} sections are placed in @code{.text}, and all
+@code{.bss} sections are placed in @code{.bss}.  For all files beginning
+with an upper case character, the @code{.data} section is placed into
+@code{.DATA}; for all other files, the @code{.data} section is placed
+into @code{.data}.
+
+@smallexample
+@group
+SECTIONS @{
+  .text : @{ *(.text) @}
+  .DATA : @{ [A-Z]*(.data) @}
+  .data : @{ *(.data) @}
+  .bss : @{ *(.bss) @}
+@}
+@end group
+@end smallexample
 
 @node Section Data Expressions
 @subsection Section Data Expressions
@@ -2303,11 +2360,115 @@ of a section definition.
 
 @end table
 
+@node Overlays
+@subsection Overlays
+@kindex OVERLAY
+@cindex overlays
+
+The @code{OVERLAY} command provides an easy way to describe sections
+which are to be loaded as part of a single memory image but are to be
+run at the same memory address.  At run time, some sort of overlay
+manager will copy the overlaid sections in and out of the runtime memory
+address as required, perhaps by simply manipulating addressing bits.
+This approach can be useful, for example, when a certain region of
+memory is faster than another.
+
+The @code{OVERLAY} command is used within a @code{SECTIONS} command.  It
+appears as follows:
+@smallexample
+@group
+  OVERLAY @var{start} : [ NOCROSSREFS ] AT ( @var{ldaddr} )
+   @{
+     @var{secname1} @{ @var{contents} @} :@var{phdr} =@var{fill}
+     @var{secname2} @{ @var{contents} @} :@var{phdr} =@var{fill}
+     @dots{}
+   @} >@var{region} :@var{phdr} =@var{fill}
+@end group
+@end smallexample
+
+Everything is optional except @code{OVERLAY} (a keyword), and each
+section must have a name (@var{secname1} and @var{secname2} above).  The
+section definitions within the @code{OVERLAY} construct are identical to
+those within the general @code{SECTIONS} contruct (@pxref{SECTIONS}),
+except that no addresses and no memory regions may be defined for
+sections within an @code{OVERLAY}.
+
+The sections are all defined with the same starting address.  The load
+addresses of the sections are arranged such that they are consecutive in
+memory starting at the load address used for the @code{OVERLAY} as a
+whole (as with normal section definitions, the load address is optional,
+and defaults to the start address; the start address is also optional,
+and defaults to @code{.}).
+
+If the @code{NOCROSSREFS} keyword is used, and there any references
+among the sections, the linker will report an error.  Since the sections
+all run at the same address, it normally does not make sense for one
+section to refer directly to another.  @xref{Option Commands,
+NOCROSSREFS}.
+
+For each section within the @code{OVERLAY}, the linker automatically
+defines two symbols.  The symbol @code{__load_start_@var{secname}} is
+defined as the starting load address of the section.  The symbol
+@code{__load_stop_@var{secname}} is defined as the final load address of
+the section.  Any characters within @var{secname} which are not legal
+within C identifiers are removed.  C (or assembler) code may use these
+symbols to move the overlaid sections around as necessary.
+
+At the end of the overlay, the value of @code{.} is set to the start
+address of the overlay plus the size of the largest section.
+
+Here is an example.  Remember that this would appear inside a
+@code{SECTIONS} construct.
+
+@smallexample
+@group
+  OVERLAY 0x1000 : AT (0x4000)
+   @{
+     .text0 @{ o1/*.o(.text) @}
+     .text1 @{ o2/*.o(.text) @}
+   @}
+@end group
+@end smallexample
+
+This will define both @code{.text0} and @code{.text1} to start at
+address 0x1000.  @code{.text0} will be loaded at address 0x4000, and
+@code{.text1} will be loaded immediately after @code{.text0}.  The
+following symbols will be defined: @code{__load_start_text0},
+@code{__load_stop_text0}, @code{__load_start_text1},
+@code{__load_stop_text1}.
+
+C code to copy overlay @code{.text1} into the overlay area might look
+like the following.
+
+@smallexample
+@group
+  extern char __load_start_text1, __load_stop_text1;
+  memcpy ((char *) 0x1000, &__load_start_text1,
+          &__load_stop_text1 - &__load_start_text1);
+@end group
+@end smallexample
+
+Note that the @code{OVERLAY} command is just syntactic sugar, since
+everything it does can be done using the more basic commands.  The above
+example could have been written identically as follows.
+
+@smallexample
+@group
+  .text0 0x1000 : AT (0x4000) @{ o1/*.o(.text) @}
+  __load_start_text0 = LOADADDR (.text0);
+  __load_stop_text0 = LOADADDR (.text0) + SIZEOF (.text0);
+  .text1 0x1000 : AT (0x4000 + SIZEOF (.text0)) @{ o2/*.o(.text) @}
+  __load_start_text1 = LOADADDR (.text1);
+  __load_stop_text1 = LOADADDR (.text1) + SIZEOF (.text1);
+  . = 0x1000 + MAX (SIZEOF (.text0), SIZEOF (.text1));
+@end group
+@end smallexample
+
 @node PHDRS
 @section ELF Program Headers
 @kindex PHDRS
-@kindex program headers
-@kindex ELF program headers
+@cindex program headers
+@cindex ELF program headers
 
 The ELF object file format uses @dfn{program headers}, which are read by
 the system loader and describe how the program should be loaded into
@@ -2664,6 +2825,24 @@ the environment variable @code{GNUTARGET}, if available, to select the
 output file format.  If that variable is also absent, @code{ld} uses
 the default format configured for your machine in the BFD libraries.
 @end ifclear
+
+@cindex cross references
+@kindex NOCROSSREFS ( @var{sections} )
+@item NOCROSSREFS ( @var{section} @var{section} @dots{} )
+This command may be used to tell @code{ld} to issue an error about any
+references among certain sections.
+
+In certain types of programs, particularly on embedded systems, when one
+section is loaded into memory, another section will not be.  Any direct
+references between the two sections would be errors.  For example, it
+would be an error if code in one section called a function defined in
+the other section.
+
+The @code{NOCROSSREFS} command takes a list of section names.  If
+@code{ld} detects any cross references between the sections, it reports
+an error and returns a non-zero exit status.  The @code{NOCROSSREFS}
+command uses output section names, defined in the @code{SECTIONS}
+command.  It does not use the names of input sections.
 @end table
 
 @ifset GENERIC

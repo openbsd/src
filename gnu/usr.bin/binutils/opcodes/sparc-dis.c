@@ -200,7 +200,6 @@ print_insn_sparc (memaddr, info)
   FILE *stream = info->stream;
   bfd_byte buffer[4];
   unsigned long insn;
-  register unsigned int i;
   register struct opcode_hash *op;
   /* Nonzero of opcode table has been initialized.  */
   static int opcodes_initialized = 0;
@@ -228,7 +227,10 @@ print_insn_sparc (memaddr, info)
       }
   }
 
-  insn = bfd_getb32 (buffer);
+  if (info->endian == BFD_ENDIAN_BIG)
+    insn = bfd_getb32 (buffer);
+  else
+    insn = bfd_getl32 (buffer);
 
   info->insn_info_valid = 1;			/* We do return this info */
   info->insn_type = dis_nonbranch;		/* Assume non branch insn */
@@ -257,11 +259,10 @@ print_insn_sparc (memaddr, info)
 	  /* Nonzero means we have an annulled branch.  */
 	  int is_annulled = 0;
 
-	  /* Do we have an `add' or `or' instruction where rs1 is the same
-	     as rsd, and which has the i bit set?  */
-	  if ((opcode->match == 0x80102000 || opcode->match == 0x80002000)
+	  /* Do we have an `add' or `or' instruction combining an
+             immediate with rs1?  */
+	  if (opcode->match == 0x80102000 || opcode->match == 0x80002000)
 	  /*			  (or)				 (add)  */
-	      && X_RS1 (insn) == X_RD (insn))
 	    imm_added_to_rs1 = 1;
 
 	  if (X_RS1 (insn) != X_RD (insn)
@@ -629,7 +630,10 @@ print_insn_sparc (memaddr, info)
 	      errcode =
 		(*info->read_memory_func)
 		  (memaddr - 4, buffer, sizeof (buffer), info);
-	      prev_insn = bfd_getb32 (buffer);
+	      if (info->endian == BFD_ENDIAN_BIG)
+		prev_insn = bfd_getb32 (buffer);
+	      else
+		prev_insn = bfd_getl32 (buffer);
 
 	      if (errcode == 0)
 		{
@@ -646,7 +650,10 @@ print_insn_sparc (memaddr, info)
 		    {
 		      errcode = (*info->read_memory_func)
 			(memaddr - 8, buffer, sizeof (buffer), info);
-		      prev_insn = bfd_getb32 (buffer);
+		      if (info->endian == BFD_ENDIAN_BIG)
+			prev_insn = bfd_getb32 (buffer);
+		      else
+			prev_insn = bfd_getl32 (buffer);
 		    }
 		}
 

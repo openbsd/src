@@ -1,6 +1,5 @@
 /* write.h
-
-   Copyright (C) 1987, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1987, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -153,29 +152,34 @@ COMMON fixS **seg_fix_rootP, **seg_fix_tailP;	/* -> one of above. */
 extern long string_byte_count;
 extern int section_alignment[];
 
-bit_fixS *bit_fix_new PARAMS ((int size, int offset, long base_type,
-			       long base_adj, long min, long max, long add));
-void append PARAMS ((char **charPP, char *fromP, unsigned long length));
-void record_alignment PARAMS ((segT seg, int align));
-void write_object_file PARAMS ((void));
-void relax_segment PARAMS ((struct frag * seg_frag_root, segT seg_type));
+extern bit_fixS *bit_fix_new
+  PARAMS ((int size, int offset, long base_type, long base_adj, long min,
+	   long max, long add));
+extern void append PARAMS ((char **charPP, char *fromP, unsigned long length));
+extern void record_alignment PARAMS ((segT seg, int align));
+extern void write_object_file PARAMS ((void));
+extern void relax_segment
+  PARAMS ((struct frag * seg_frag_root, segT seg_type));
 
-void number_to_chars_littleendian PARAMS ((char *, valueT, int));
-void number_to_chars_bigendian    PARAMS ((char *, valueT, int));
+extern void number_to_chars_littleendian PARAMS ((char *, valueT, int));
+extern void number_to_chars_bigendian    PARAMS ((char *, valueT, int));
 
 #ifdef BFD_ASSEMBLER
-fixS *fix_new PARAMS ((fragS * frag, int where, int size,
-		       symbolS * add_symbol, offsetT offset, int pcrel,
-		       bfd_reloc_code_real_type r_type));
-fixS *fix_new_exp PARAMS ((fragS * frag, int where, int size,
-			   expressionS *exp, int pcrel,
-			   bfd_reloc_code_real_type r_type));
+extern fixS *fix_new
+  PARAMS ((fragS * frag, int where, int size, symbolS * add_symbol,
+	   offsetT offset, int pcrel, bfd_reloc_code_real_type r_type));
+extern fixS *fix_new_exp
+  PARAMS ((fragS * frag, int where, int size, expressionS *exp, int pcrel,
+	   bfd_reloc_code_real_type r_type));
 #else
-fixS *fix_new PARAMS ((fragS * frag, int where, int size,
-		       symbolS * add_symbol, offsetT offset, int pcrel,
-		       int r_type));
-fixS *fix_new_exp PARAMS ((fragS * frag, int where, int size,
-			   expressionS *exp, int pcrel, int r_type));
+extern fixS *fix_new
+  PARAMS ((fragS * frag, int where, int size, symbolS * add_symbol,
+	   offsetT offset, int pcrel, int r_type));
+extern fixS *fix_new_exp
+  PARAMS ((fragS * frag, int where, int size, expressionS *exp, int pcrel,
+	   int r_type));
 #endif
+
+extern void write_print_statistics PARAMS ((FILE *));
 
 /* end of write.h */

@@ -482,15 +482,6 @@ void	bfd_assert PARAMS ((const char*,int));
 FILE *	bfd_cache_lookup_worker PARAMS ((bfd *));
 
 extern bfd *bfd_last_cache;
-    
-/* Now Steve, what's the story here? */
-#ifdef lint
-#define itos(x) "l"
-#define stoi(x) 1
-#else
-#define itos(x) ((char*)(x))
-#define stoi(x) ((int)(x))
-#endif
 
 /* List of supported target vectors, and the default vector (if
    bfd_default_vector[0] is NULL, there is no default).  */
@@ -514,6 +505,14 @@ extern boolean _bfd_ecoff_get_accumulated_ss PARAMS ((PTR, bfd_byte *));
 
 extern bfd_vma _bfd_get_gp_value PARAMS ((bfd *));
 extern void _bfd_set_gp_value PARAMS ((bfd *, bfd_vma));
+
+/* Function shared by the COFF and ELF SH backends, which have no
+   other common header files.  */
+
+extern boolean _bfd_sh_align_load_span
+  PARAMS ((bfd *, asection *, bfd_byte *,
+	   boolean (*) (bfd *, asection *, PTR, bfd_byte *, bfd_vma),
+	   PTR, bfd_vma **, bfd_vma *, bfd_vma, bfd_vma, boolean *));
 
 /* And more follows */
 
@@ -630,9 +629,11 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_SPARC_5",
   "BFD_RELOC_ALPHA_GPDISP_HI16",
   "BFD_RELOC_ALPHA_GPDISP_LO16",
+  "BFD_RELOC_ALPHA_GPDISP",
   "BFD_RELOC_ALPHA_LITERAL",
   "BFD_RELOC_ALPHA_LITUSE",
   "BFD_RELOC_ALPHA_HINT",
+  "BFD_RELOC_ALPHA_LINKAGE",
   "BFD_RELOC_MIPS_JMP",
   "BFD_RELOC_HI16",
   "BFD_RELOC_HI16_S",
@@ -708,6 +709,33 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_ARM_LDR_IMM",
   "BFD_RELOC_ARM_LITERAL",
   "BFD_RELOC_ARM_IN_POOL",
+  "BFD_RELOC_ARM_OFFSET_IMM8",
+  "BFD_RELOC_ARM_HWLITERAL",
+  "BFD_RELOC_ARM_THUMB_ADD",
+  "BFD_RELOC_ARM_THUMB_IMM",
+  "BFD_RELOC_ARM_THUMB_SHIFT",
+  "BFD_RELOC_ARM_THUMB_OFFSET",
+  "BFD_RELOC_SH_PCDISP8BY2",
+  "BFD_RELOC_SH_PCDISP12BY2",
+  "BFD_RELOC_SH_IMM4",
+  "BFD_RELOC_SH_IMM4BY2",
+  "BFD_RELOC_SH_IMM4BY4",
+  "BFD_RELOC_SH_IMM8",
+  "BFD_RELOC_SH_IMM8BY2",
+  "BFD_RELOC_SH_IMM8BY4",
+  "BFD_RELOC_SH_PCRELIMM8BY2",
+  "BFD_RELOC_SH_PCRELIMM8BY4",
+  "BFD_RELOC_SH_SWITCH16",
+  "BFD_RELOC_SH_SWITCH32",
+  "BFD_RELOC_SH_USES",
+  "BFD_RELOC_SH_COUNT",
+  "BFD_RELOC_SH_ALIGN",
+  "BFD_RELOC_SH_CODE",
+  "BFD_RELOC_SH_DATA",
+  "BFD_RELOC_SH_LABEL",
+
+
+
  "@@overflow: BFD_RELOC_UNUSED@@",
 };
 #endif

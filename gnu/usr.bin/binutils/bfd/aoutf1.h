@@ -1,5 +1,5 @@
 /* A.out "format 1" file handling code for BFD.
-   Copyright 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -796,6 +796,8 @@ static CONST struct aout_backend_data sunos4_aout_backend =
 #define MY_write_object_contents	NAME(aout,sunos4_write_object_contents)
 #define MY_backend_data			&sunos4_aout_backend
 
+#ifndef TARGET_IS_LITTLE_ENDIAN_P
 #define TARGET_IS_BIG_ENDIAN_P
+#endif
 
 #include "aout-target.h"

@@ -1,6 +1,22 @@
+Sun Aug  4 22:25:40 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: Fix end of line matching in srec tests
+	to work with TCL 7.5.
+
+Sat Jun 29 12:51:30 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: Simple copy test works for i960 b.out
+	targets.
+
+Mon Jun 24 14:33:04 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: On OSF/1, the simple copy test will
+	succeed with gas, and fail with /bin/as, so mark it as an expected
+	failure only if it fails.
+
 Tue Mar 26 16:55:08 1996  Jeffrey A Law  (law@cygnus.com)
 
-	* binutils-all/objcopy.exp: No longer expect adjust-sectin-vma
+	* binutils-all/objcopy.exp: No longer expect adjust-section-vma
 	test to fail for hppa*-*-proelf*.
 
 Mon Mar 11 08:25:14 1996  Jeffrey A Law  (law@cygnus.com)

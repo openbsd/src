@@ -1,5 +1,6 @@
 #    Makefile template for Configure for the opcodes library.
-#    Copyright (C) 1990, 1991, 1992, 1995 Free Software Foundation, Inc.
+#    Copyright (C) 1990, 91, 92, 93, 94, 95, 1996
+#    Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -23,11 +24,11 @@ prefix = @prefix@
 
 program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -37,10 +38,8 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
-oldincludedir =
-docdir = $(srcdir)/doc
+infodir = @infodir@
+includedir = @includedir@
 
 SHELL = /bin/sh
 
@@ -77,7 +76,7 @@ TARGETLIB = libopcodes.a
 # To circumvent a Sun make VPATH bug, each file listed here
 # should also have a foo.o: foo.c line further along in this file.
 
-ALL_MACHINES = a29k-dis.o alpha-dis.o h8300-dis.o h8500-dis.o \
+ALL_MACHINES = a29k-dis.o alpha-dis.o alpha-opc.o h8300-dis.o h8500-dis.o \
 	hppa-dis.o i386-dis.o i960-dis.o m68k-dis.o m68k-opc.o \
 	m88k-dis.o mips-dis.o mips-opc.o sh-dis.o sparc-dis.o \
 	sparc-opc.o z8k-dis.o ns32k-dis.o ppc-dis.o ppc-opc.o \
@@ -214,7 +213,8 @@ sparc-opc.o: sparc-opc.c $(INCDIR)/opcode/sparc.h
 z8k-dis.o: z8k-dis.c z8k-opc.h $(INCDIR)/dis-asm.h
 ns32k-dis.o: ns32k-dis.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/ns32k.h
 sh-dis.o: sh-dis.c sh-opc.h $(INCDIR)/dis-asm.h
-alpha-dis.o: alpha-dis.c alpha-opc.h $(INCDIR)/dis-asm.h
+alpha-dis.o: alpha-dis.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/alpha.h
+alpha-opc.o: alpha-opc.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/alpha.h
 hppa-dis.o: hppa-dis.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/hppa.h
 m88k-dis.o: m88k-dis.c $(INCDIR)/dis-asm.h $(INCDIR)/opcode/m88k.h
 arm-dis.o: arm-dis.c arm-opc.h $(INCDIR)/dis-asm.h
@@ -268,7 +268,7 @@ install: $(ALLLIBS)
 	    ts=lib`echo $(SHLIB) | sed -e 's,^\.\./bfd/,,' -e 's/^lib//' | sed '$(program_transform_name)'`; \
 	    ln -sf $$ts $(libdir)/$$tf; \
 	  elif [ "$$f" = "$(SHLIB)" ]; then \
-	    $(INSTALL_PROGRAM) $$f $(libdir)/$$tf; \
+	    @INSTALL_SHLIB@ \
 	  else \
 	    $(INSTALL_DATA) $$f $(libdir)/$$tf; \
 	    $(RANLIB) $(libdir)/$$tf; \

@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define TARGET_SYM i386pe_vec
 #define TARGET_NAME "pe-i386"
-#define COFF_OBJ_WITH_PE
 #define COFF_WITH_PE
 #define PCRELOFFSET true
 #define TARGET_UNDERSCORE '_'

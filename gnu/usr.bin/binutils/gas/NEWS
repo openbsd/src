@@ -1,10 +1,33 @@
 -*- text -*-
 
+Changes since 2.7:
+
+Motorola ColdFire 5200 support added (configure for m68k and use -m5200).
+
+Alpha/VMS support added.
+
 Changes since 2.6:
 
 The PowerPC assembler now allows the use of symbolic register names (r0, etc.)
 if -mregnames is used.  Symbolic names preceded by a '%' (%r0, etc.) can be
 used any time.  PowerPC 860 move to/from SPR instructions have been added.
+
+Alpha Linux (ELF) support added.
+
+PowerPC ELF support added.
+
+m68k Linux (ELF) support added.
+
+i960 Hx/Jx support added.
+
+i386/PowerPC gnu-win32 support added.
+
+SCO ELF support added.  For OpenServer 5 targets (i386-unknown-sco3.2v5) the
+default is to build COFF-only support.  To get a set of tools that generate ELF
+(they'll understand both COFF and ELF), you must configure with
+target=i386-unknown-sco3.2v5elf.
+
+m88k-motorola-sysv* support added.
 
 Changes since 2.5:
 

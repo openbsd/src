@@ -1,3 +1,201 @@
+Tue Sep  3 12:09:46 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc-opc.c (sparc_opcodes): Add setuw, setsw, setx.
+
+Mon Aug 19 15:21:38 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc-dis.c (print_insn_sparc): Handle little endian sparcs.
+
+Thu Aug 15 13:11:13 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Update editing of include pathnames to be
+	more general.
+
+Thu Aug 15 16:28:41 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* arm-opc.h: Added "bx" instruction definition.
+
+Wed Aug 14 17:00:04 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha-opc.c (EV4EXTHWINDEX): Field width should be 8 not 5.
+
+Thu Aug  8 12:43:52 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* makefile.vms: Update for alpha-opc changes.
+
+Wed Aug  7 11:55:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386-dis.c (print_insn_i386): Actually return the correct value.
+ 	(ONE, OP_ONE): #ifdef out; not used.
+
+Wed Jul 31 16:21:41 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* m68k-opc.c: Add cpushl for the mcf5200.  From Ken Rose
+	<rose@netcom.com>.
+
+Wed Jul 31 14:39:27 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* arm-opc.h: (arm_opcodes): Added halfword and sign-extension
+ 	memory transfer instructions. Add new format string entries %h and %s.
+	* arm-dis.c: (print_insn_arm): Provide decoding of the new
+	formats %h and %s.
+
+Fri Jul 26 14:01:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* alpha-dis.c (print_insn_alpha_osf): Remove.
+	(print_insn_alpha_vms): Remove.
+	(print_insn_alpha): Make globally visible.  Chose the register
+	names based on info->flavour.
+	* disassemble.c: Always return print_insn_alpha for the alpha.
+
+Mon Jul 22 15:38:53 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* m68k-opc.c (m68k_opcodes): Make opcode masks for the ColdFire
+ 	move ccr/sr insns more strict so that the disassembler only
+ 	selects them when the addressing mode is data register.
+
+Mon Jul 22 13:47:23 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sparc-opc.c: Fix opcode values for fpack16, and fpackfix.  Fix
+	operands for fexpand and fpmerge.  From Christian Kuehnke
+	<Christian.Kuehnke@arbi.informatik.uni-oldenburg.de>.
+
+Mon Jul 22 13:17:06 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha-dis.c (print_insn_alpha): No longer the user-visible
+	print routine.  Take new regnames and cpumask arguments.
+	Kill the environment variable nonsense.
+	(print_insn_alpha_osf): New function.  Do OSF/1 style regnames.
+	(print_insn_alpha_vms): New function.  Do VMS style regnames.
+	* disassemble.c (disassembler): Test bfd flavour to pick
+	between OSF and VMS routines.  Default to OSF.
+
+Thu Jul 18 17:19:34 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Call AC_SUBST (INSTALL_SHLIB).
+	* configure: Rebuild.
+	* Makefile.in (install): Use @INSTALL_SHLIB@.
+
+Wed Jul 17 10:12:05 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* m68k-opc.c (m68k_opcodes): Fix bugs in coldfire insns relating
+ 	to bcc, trapfl, subxl, and wddata discovered by Andreas Schwab.
+
+Mon Jul 15 16:59:55 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* i386-dis.c:  Get rid of print_insn_i8086.  Use info.mach to
+	distinguish between variants of the instruction set.
+	* sparc-dis.c:  Get rid of print_insn_sparclite.  Use info.mach to
+	distinguish between variants of the instruction set.
+
+Fri Jul 12 10:12:01 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* i386-dis.c (print_insn_i8086):  New routine to disassemble using
+	the 8086 instruction set.
+	* i386-dis.c:  General cleanups.  Make most things static.  Add
+	prototypes.  Get rid of static variables aflags and dflags.  Pass
+	them as args (to almost everything).
+
+Thu Jul 11 11:58:44 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300-dis.c (bfd_h8_disassemble): Handle macregs in ldmac insns.
+
+	* h8300-dis.c (bfd_h8_disassemble): Handle "ldm.l" and "stm.l".
+
+	* h8300-dis.c (bfd_h8_disassemble): "abs" is implicitly two
+	if the next arg is marked with SRC_IN_DST.  Gross.
+
+	* h8300-dis.c (bfd_h8_disassemble): Print "exr" when
+	we're looking for and find EXR.
+
+	* h8300-dis.c (bfd_h8_disassemble): We don't have a match
+	if we're looking for KBIT and we don't find it.
+
+	* h8300-dis.c (bfd_h8_disassemble): Mask off unwanted bits
+	for L_3 and L_2.
+
+	* h8300-dis.c (bfd_h8_disassemble): Don't set plen for
+	3bit immediate operands.
+
+Tue Jul  9 10:55:20 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Released binutils 2.7.
+
+	* alpha-opc.c: Add new case of "mov".  From Klaus Kaempf
+	<kkaempf@progis.ac-net.de>.
+
+Thu Jul  4 11:42:51 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* alpha-opc.c: Correct second case of "mov" to use OPRL.
+
+Wed Jul  3 16:03:47 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* sparc-dis.c (print_insn_sparclite):  New routine to print
+	sparclite instructions.
+
+Wed Jul  3 14:21:18 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* m68k-opc.c (m68k_opcodes): Add coldfire support.
+
+Fri Jun 28 15:53:51 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc-opc.c (asi_table): Add #ASI_N, #ASI_N_L, #ASI_NUCLEUS,
+	#ASI_NUCLEUS_LITTLE.  Rename #ASI_AS_IF_USER_{PRIMARY,SECONDARY}_L
+	to #ASI_AS_IF_USER_{PRIMARY,SECONDARY}_LITTLE.
+
+Tue Jun 25 22:58:31 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir):
+	Use autoconf-set values.
+	(docdir, oldincludedir): Removed.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+
+Fri Jun 21 13:53:36 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha-opc.c: New file.
+	* alpha-opc.h: Remove.
+	* alpha-dis.c: Complete rewrite to use new opcode table.
+	* configure.in: For bfd_alpha_arch, use alpha-opc.o.
+	* configure: Rebuild with autoconf 2.10.
+	* Makefile.in (ALL_MACHINES): Add alpha-opc.o.
+	(alpha-dis.o): Depend upon $(INCDIR)/opcode/alpha.h, not
+	alpha-opc.h.
+	(alpha-opc.o): New target.
+
+Wed Jun 19 15:55:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sparc-dis.c (print_insn_sparc): Remove unused local variable i.
+	Set imm_added_to_rs1 even if the source and destination register
+	are not the same.
+
+	* sparc-opc.c: Add some two operand forms of the wr instruction.
+
+Tue Jun 18 15:58:27 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* h8300-dis.c (bfd_h8_disassemble): Rename "hmode" argument
+	to just "mode".
+
+	* disassemble.c (disassembler): Handle H8/S.
+	* h8300-dis.c (print_insn_h8300s): New function for H8/S.
+
+Tue Jun 18 18:06:50 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sparc-opc.c: Add beq/teq as aliases for be/te.
+
+	* ppc-opc.c: Fix fcmpo opcode.  From Sergei Steshenko
+	<sergei@msil.sps.mot.com>.
+
+Tue Jun 18 15:08:54 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* makefile.vms: New file.
+
+	* alpha-dis.c (print_insn_alpha): Print lda ra,lit(rz) as mov.
+
+Mon Jun 10 18:50:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* h8300-dis.c (bfd_h8_disassemble): Always print ABS8MEM with :8,
+	regardless of plen.
+
 Tue Jun  4 09:15:53 1996  Doug Evans  <dje@canuck.cygnus.com>
 
 	* i386-dis.c (OP_OFF): Call append_prefix.

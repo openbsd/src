@@ -634,9 +634,13 @@ alpha_adjust_reloc_in (abfd, intern, rptr)
     case ALPHA_R_SREL16:
     case ALPHA_R_SREL32:
     case ALPHA_R_SREL64:
-      /* The PC relative relocs do not seem to use the section VMA as
-	 a negative addend.  */
-      rptr->addend = 0;
+      /* This relocs appear to be fully resolved when they are against
+         internal symbols.  Against external symbols, BRADDR at least
+         appears to be resolved against the next instruction.  */
+      if (! intern->r_extern)
+	rptr->addend = 0;
+      else
+	rptr->addend = - (intern->r_vaddr + 4);
       break;
 
     case ALPHA_R_GPREL32:
@@ -1553,11 +1557,16 @@ alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 
 	case ALPHA_R_REFLONG:
 	case ALPHA_R_REFQUAD:
-	case ALPHA_R_BRADDR:
 	case ALPHA_R_HINT:
+	  relocatep = true;
+	  break;
+
+	case ALPHA_R_BRADDR:
 	case ALPHA_R_SREL16:
 	case ALPHA_R_SREL32:
 	case ALPHA_R_SREL64:
+	  if (r_extern)
+	    addend += - (r_vaddr + 4);
 	  relocatep = true;
 	  break;
 

@@ -32,6 +32,9 @@ CC_SMrC = SMrC -d MPW
 
 CC_MWCPPC = MWCPPC -d MPW -enum int -mpw_chars -sym on -w off
 
+# Note that GCC does *not* wire in a definition of "pascal", so that
+# it can be handled in another way if desired.
+
 CC_68K_GCC = gC -Dpascal= -DANSI_PROTOTYPES -DMPW
 
 CC_PPC_GCC = gC -Dpowerc=1 -Dpascal= -DANSI_PROTOTYPES -DMPW
@@ -39,12 +42,6 @@ CC_PPC_GCC = gC -Dpowerc=1 -Dpascal= -DANSI_PROTOTYPES -DMPW
 # Nothing for the default CFLAGS.
 
 CFLAGS = 
-
-# These two definitions must *not* have any trailing blanks.
-
-SEGFLAG_68K = -s 
-
-SEGFLAG_PPC = -d dumdum_ 
 
 # Tool to use for making libraries/archives.
 
@@ -120,7 +117,8 @@ EXTRALIBS_PPC = \Option-d
 	"{PPCLibraries}"MathLib.xcoff \Option-d
 	"{PPCLibraries}"StdCLib.xcoff \Option-d
 	"{PPCLibraries}"PPCToolLibs.o \Option-d
-	"{PPCLibraries}"PPCCRuntime.o
+	"{PPCLibraries}"PPCCRuntime.o \Option-d
+	"{GCCPPCLibraries}"libgcc.xcoff
 
 EXTRALIBS_MWCPPC = \Option-d
 	"{MWPPCLibraries}"MWStdCRuntime.Lib \Option-d

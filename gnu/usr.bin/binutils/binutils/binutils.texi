@@ -580,7 +580,7 @@ nm [ -a | --debug-syms ]  [ -g | --extern-only ]
    [ -r | --reverse-sort ]  [ --size-sort ] [ -u | --undefined-only ]
    [ -t @var{radix} | --radix=@var{radix} ] [ -P | --portability ]
    [ --target=@var{bfdname} ] [ -f @var{format} | --format=@var{format} ]
-   [ --defined-only ]
+   [ --defined-only ] [-l | --line-numbers ]
    [ --no-demangle ] [ -V | --version ]  [ --help ]  [ @var{objfile}@dots{} ]
 @end smallexample
 
@@ -722,6 +722,15 @@ either upper or lower case.
 @cindex external symbols
 Display only external symbols.
 
+@item -l
+@itemx --line-numbers
+@cindex symbol line numbers
+For each symbol, use debugging information to try to find a filename and
+line number.  For a defined symbol, look for the line number of the
+address of the symbol.  For an undefined symbol, look for the line
+number of a relocation entry which refers to the symbol.  If line number
+information can be found, print it after the other symbol information.
+
 @item -n
 @itemx -v
 @itemx --numeric-sort 
@@ -832,7 +841,7 @@ output target of @samp{binary} (e.g., use @samp{-O binary}).  When
 @code{objcopy} generates a raw binary file, it will essentially produce
 a memory dump of the contents of the input object file.  All symbols and
 relocation information will be discarded.  The memory dump will start at
-the virtual address of the lowest section copied into the output file.
+the load address of the lowest section copied into the output file.
 
 When generating an S-record or a raw binary file, it may be helpful to
 use @samp{-S} to remove sections containing debugging information.  In
@@ -1008,6 +1017,7 @@ Show a summary of the options to @code{objcopy}.
 objdump [ -a | --archive-headers ] 
         [ -b @var{bfdname} | --target=@var{bfdname} ] [ --debugging ]
         [ -d | --disassemble ]  [ -D | --disassemble-all ] 
+        [ -EB | -EL | --endian=@{big | little @} ]
         [ -f | --file-headers ]
         [ -h | --section-headers | --headers ]  [ -i | --info ]
         [ -j @var{section} | --section=@var{section} ]
@@ -1080,6 +1090,15 @@ expected to contain instructions.
 Like @samp{-d}, but disassemble the contents of all sections, not just
 those expected to contain instructions.
 
+@item -EB
+@itemx -EL
+@itemx --endian=@{big|little@}
+@cindex endianness
+@cindex disassembly endianness
+Specify the endianness of the object files.  This only affects
+disassembly.  This can be useful when disassembling a file format which
+does not describe endianness information, such as S-records.
+
 @item -f
 @itemx --file-header
 @cindex object file header
@@ -1120,16 +1139,18 @@ Display information only for section @var{name}.
 @item -l
 @itemx --line-numbers
 @cindex source filenames for object files
-Label the display (using debugging information) with the filename
-and source line numbers corresponding to the object code shown.
-Only useful with @samp{-d} or @samp{-D}.
+Label the display (using debugging information) with the filename and
+source line numbers corresponding to the object code or relocs shown.
+Only useful with @samp{-d}, @samp{-D}, or @samp{-r}.
 
 @item -m @var{machine}
 @itemx --architecture=@var{machine}
 @cindex architecture
-Specify that the object files @var{objfile} are for architecture
-@var{machine}.  You can list available architectures using the @samp{-i}
-option. 
+@cindex disassembly architecture
+Specify the architecture to use when disassembling object files.  This
+can be useful when disasembling object files which do not describe
+architecture information, such as S-records.  You can list the available
+architectures with the @samp{-i} option.
 
 @item -r
 @itemx --reloc
@@ -1425,6 +1446,7 @@ strip [ -F @var{bfdname} | --target=@var{bfdname} | --target=@var{bfdname} ]
       [ -N @var{symbolname} | --strip-symbol=@var{symbolname} ]
       [ -x | --discard-all ] [ -X | --discard-locals ]
       [ -R @var{sectionname} | --remove-section=@var{sectionname} ]
+      [ -o @var{file} ]
       [ -v | --verbose ]  [ -V | --version ]  [ --help ]
       @var{objfile}@dots{}
 @end smallexample
@@ -1485,6 +1507,11 @@ be given more than once.
 Remove symbol @var{symbolname} from the source file. This option may be
 given more than once, and may be combined with strip options other than
 @code{-K}.
+
+@item -o @var{file}
+Put the stripped output in @var{file}, rather than replacing the
+existing file.  When this argument is used, only one @var{objfile}
+argument may be specified.
 
 @item -x
 @itemx --discard-all

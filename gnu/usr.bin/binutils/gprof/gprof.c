@@ -30,7 +30,7 @@
 #include "source.h"
 #include "sym_ids.h"
 
-#define VERSION "2.6"
+#define VERSION "2.7.1"
 
 const char *whoami;
 const char *function_mapping_file;

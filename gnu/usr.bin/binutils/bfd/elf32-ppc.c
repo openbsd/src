@@ -104,6 +104,8 @@ static reloc_howto_type *ppc_elf_reloc_type_lookup
 static void ppc_elf_info_to_howto
   PARAMS ((bfd *abfd, arelent *cache_ptr, Elf32_Internal_Rela *dst));
 static void ppc_elf_howto_init PARAMS ((void));
+static bfd_reloc_status_type ppc_elf_addr16_ha_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 static boolean ppc_elf_set_private_flags PARAMS ((bfd *, flagword));
 static boolean ppc_elf_copy_private_bfd_data PARAMS ((bfd *, bfd *));
 static boolean ppc_elf_merge_private_bfd_data PARAMS ((bfd *, bfd *));
@@ -276,7 +278,7 @@ static reloc_howto_type ppc_elf_howto_raw[] =
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
+	 ppc_elf_addr16_ha_reloc, /* special_function */
 	 "R_PPC_ADDR16_HA",	/* name */
 	 false,			/* partial_inplace */
 	 0,			/* src_mask */
@@ -1052,6 +1054,44 @@ ppc_elf_info_to_howto (abfd, cache_ptr, dst)
   cache_ptr->howto = ppc_elf_howto_table[ELF32_R_TYPE (dst->r_info)];
 }
 
+/* Handle the R_PPC_ADDR16_HA reloc.  */
+
+static bfd_reloc_status_type
+ppc_elf_addr16_ha_reloc (abfd, reloc_entry, symbol, data, input_section,
+			 output_bfd, error_message)
+     bfd *abfd;
+     arelent *reloc_entry;
+     asymbol *symbol;
+     PTR data;
+     asection *input_section;
+     bfd *output_bfd;
+     char **error_message;
+{
+  bfd_vma relocation;
+
+  if (output_bfd != NULL)
+    {
+      reloc_entry->address += input_section->output_offset;
+      return bfd_reloc_ok;
+    }
+
+  if (reloc_entry->address > input_section->_cooked_size)
+    return bfd_reloc_outofrange;
+
+  if (bfd_is_com_section (symbol->section))
+    relocation = 0;
+  else
+    relocation = symbol->value;
+
+  relocation += symbol->section->output_section->vma;
+  relocation += symbol->section->output_offset;
+  relocation += reloc_entry->addend;
+
+  reloc_entry->addend += (relocation & 0x8000) << 1;
+
+  return bfd_reloc_continue;
+}
+
 /* Function to set whether a module needs the -mrelocatable bit set. */
 
 static boolean
@@ -1150,8 +1190,11 @@ ppc_elf_merge_private_bfd_data (ibfd, obfd)
 	    ("%s: compiled normally and linked with modules compiled with -mrelocatable",
 	     bfd_get_filename (ibfd));
 	}
-      else if ((new_flags & EF_PPC_RELOCATABLE_LIB) != 0)
-	elf_elfheader (obfd)->e_flags |= EF_PPC_RELOCATABLE_LIB;
+      /* If -mrelocatable-lib is linked with an object without -mrelocatable-lib, turn off
+	 the -mrelocatable-lib, since at least one module isn't relocatable.  */
+      else if ((old_flags & EF_PPC_RELOCATABLE_LIB) != 0
+	       && (new_flags & EF_PPC_RELOCATABLE_LIB) == 0)
+	elf_elfheader (obfd)->e_flags &= ~EF_PPC_RELOCATABLE_LIB;
 
 
       /* Do not warn about eabi vs. V.4 mismatch, just or in the bit if any module uses it */

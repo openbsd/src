@@ -930,6 +930,12 @@ bfd_slurp_armap (abfd)
     return do_slurp_bsd_armap (abfd);
   else if (!strncmp (nextname, "/               ", 16))
     return do_slurp_coff_armap (abfd);
+  else if (!strncmp (nextname, "/SYM64/         ", 16))
+    {
+      /* Irix 6 archive--must be recognized by code in elf64-mips.c.  */
+      bfd_set_error (bfd_error_wrong_format);
+      return false;
+    }
 
   bfd_has_map (abfd) = false;
   return true;
@@ -1873,8 +1879,13 @@ bsd_write_armap (arch, elength, map, orl_count, stridx)
   bfd_ardata (arch)->armap_datepos = (SARMAG
 				      + offsetof (struct ar_hdr, ar_date[0]));
   sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
+#ifndef _WIN32
   sprintf (hdr.ar_uid, "%ld", (long) getuid ());
   sprintf (hdr.ar_gid, "%ld", (long) getgid ());
+#else
+  sprintf (hdr.ar_uid, "%ld", (long) 666);
+  sprintf (hdr.ar_gid, "%ld", (long) 42);
+#endif
   sprintf (hdr.ar_size, "%-10d", (int) mapsize);
   strncpy (hdr.ar_fmag, ARFMAG, 2);
   for (i = 0; i < sizeof (struct ar_hdr); i++)

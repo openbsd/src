@@ -1,4 +1,4 @@
-AC_PREREQ(2.0)
+AC_PREREQ(2.5)
 AC_INIT(z8k-dis.c)
 #    configure.in script for the opcodes library.
 #    Copyright (C) 1995, 1996 Free Software Foundation, Inc.
@@ -111,6 +111,7 @@ AC_SUBST(COMMON_SHLIB)
 AC_SUBST(SHLIB_DEP)
 AC_SUBST(BFD_PICLIST)
 AC_SUBST(SHLINK)
+AC_SUBST(INSTALL_SHLIB)
 
 AC_CHECK_HEADERS(string.h strings.h)
 
@@ -156,7 +157,7 @@ if test x${all_targets} = xfalse ; then
 	case "$arch" in
 	bfd_a29k_arch)		ta="$ta a29k-dis.o" ;;
 	bfd_alliant_arch)	;;
-	bfd_alpha_arch)		ta="$ta alpha-dis.o" ;;
+	bfd_alpha_arch)		ta="$ta alpha-dis.o alpha-opc.o" ;;
 	bfd_arm_arch)		ta="$ta arm-dis.o" ;;
 	bfd_convex_arch)	;;
 	bfd_h8300_arch)		ta="$ta h8300-dis.o" ;;

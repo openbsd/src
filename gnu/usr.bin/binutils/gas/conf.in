@@ -44,11 +44,17 @@
 #undef TARGET_OS
 #undef TARGET_VENDOR
 
+/* Sometimes the system header files don't declare strstr.  */
+#undef NEED_DECLARATION_STRSTR
+
 /* Sometimes the system header files don't declare malloc and realloc.  */
 #undef NEED_DECLARATION_MALLOC
 
 /* Sometimes the system header files don't declare free.  */
 #undef NEED_DECLARATION_FREE
+
+/* Sometimes the system header files don't declare sbrk.  */
+#undef NEED_DECLARATION_SBRK
 
 /* Sometimes errno.h doesn't declare errno itself.  */
 #undef NEED_DECLARATION_ERRNO

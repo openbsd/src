@@ -275,7 +275,6 @@ do_scrub_chars (get, tostart, tolen)
   char *fromend;
   int fromlen;
   register int ch, ch2 = 0;
-  int not_cpp_line = 0;
 
   /*State 0: beginning of normal line
 	  1: After first whitespace on line (flush more white)
@@ -670,9 +669,6 @@ do_scrub_chars (get, tostart, tolen)
 	      || ch == '/'
 	      || IS_LINE_SEPARATOR (ch))
 	    {
-	      /* cpp never outputs a leading space before the #, so
-		 try to avoid being confused.  */
-	      not_cpp_line = 1;
 	      if (scrub_m68k_mri)
 		{
 		  /* In MRI mode, we keep these spaces.  */
@@ -901,29 +897,29 @@ do_scrub_chars (get, tostart, tolen)
 	  break;
 
 	case LEX_IS_LINE_COMMENT_START:
-	  if (state == 0)	/* Only comment at start of line.  */
+	  /* FIXME-someday: The two character comment stuff was badly
+	     thought out.  On i386, we want '/' as line comment start
+	     AND we want C style comments.  hence this hack.  The
+	     whole lexical process should be reworked.  xoxorich.  */
+	  if (ch == '/')
 	    {
-	      /* FIXME-someday: The two character comment stuff was
-		 badly thought out.  On i386, we want '/' as line
-		 comment start AND we want C style comments.  hence
-		 this hack.  The whole lexical process should be
-		 reworked.  xoxorich.  */
-	      if (ch == '/')
+	      ch2 = GET ();
+	      if (ch2 == '*')
 		{
-		  ch2 = GET ();
-		  if (ch2 == '*')
-		    {
-		      state = -2;
-		      break;
-		    }
-		  else
-		    {
-		      UNGET (ch2);
-		    }
-		} /* bad hack */
+		  state = -2;
+		  break;
+		}
+	      else
+		{
+		  UNGET (ch2);
+		}
+	    } /* bad hack */
 
-	      if (ch != '#')
-		not_cpp_line = 1;
+	  if (state == 0 || state == 1)	/* Only comment at start of line.  */
+	    {
+	      int startch;
+
+	      startch = ch;
 
 	      do
 		{
@@ -936,9 +932,9 @@ do_scrub_chars (get, tostart, tolen)
 		  PUT ('\n');
 		  break;
 		}
-	      if (ch < '0' || ch > '9' || not_cpp_line)
+	      if (ch < '0' || ch > '9' || state != 0 || startch != '#')
 		{
-		  /* Non-numerics:  Eat whole comment line */
+		  /* Not a cpp line.  */
 		  while (ch != EOF && !IS_NEWLINE (ch))
 		    ch = GET ();
 		  if (ch == EOF)
@@ -947,7 +943,7 @@ do_scrub_chars (get, tostart, tolen)
 		  PUT ('\n');
 		  break;
 		}
-	      /* Numerics begin comment.  Perhaps CPP `# 123 "filename"' */
+	      /* Loks like `# 123 "filename"' from cpp.  */
 	      UNGET (ch);
 	      old_state = 4;
 	      state = -1;

@@ -88,7 +88,7 @@ _bfd_new_bfd ()
   nbfd->section_count = 0;
   nbfd->usrdata = (PTR)NULL;
   nbfd->cacheable = false;
-  nbfd->flags = NO_FLAGS;
+  nbfd->flags = BFD_NO_FLAGS;
   nbfd->mtime_set = false;
 
   return nbfd;
@@ -226,7 +226,7 @@ bfd_fdopenr (filename, target, fd)
     bfd_set_error (bfd_error_invalid_target);
     return NULL;
   }
-#if defined(VMS) || defined(__GO32__) || defined (WINGDB)
+#if defined(VMS) || defined(__GO32__)
   nbfd->iostream = (PTR)fopen(filename, FOPEN_RB);
 #else
   /* (O_ACCMODE) parens are to avoid Ultrix header file bug */

@@ -496,7 +496,7 @@ const struct i960_opcode i960_opcodes[] = {
 	{ R_2D(0x658),	"intctl",	I_JX,	REG,	2, { RSL, RS, 0 } },
 	{ R_0(0x5b4),	"intdis",	I_JX,	REG,	0, {   0,  0, 0 } },
 	{ R_0(0x5b5),	"inten",	I_JX,	REG,	0, {   0,  0, 0 } },
-	{ R_0(0x65d),	"halt",		I_JX,	REG,	0, {   0,  0, 0 } },
+	{ R_0(0x65d),	"halt",		I_JX,	REG,	1, { RSL,  0, 0 } },
 
 	/* Hx extensions.  */
 	{ 0xac000000,	"dcinva",	I_HX,	MEM1,	1, {   M,  0, 0 } },

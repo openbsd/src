@@ -1,3 +1,175 @@
+Sat Aug 31 11:45:57 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-config.in: Test for mpw-true, true, and null-command scripts.
+	(host_libs, host_tools): Copy from configure.in.
+	* mpw-configure: Don't complain about directories not found.
+
+Thu Aug 29 16:44:58 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (i[345]86): Recognize i686 for pentium pro.
+	(i[3456]86-*-dgux*): Use config/mh-sysv for the host configuration
+	file.
+
+	* config.guess (i[345]86): Ditto.
+
+Wed Aug 21 18:56:38 1996  Fred Fish  <fnf@cygnus.com>
+
+	* configure: Fix three locations where shell scripts were
+	being run directly rather than with config_shell.
+
+Thu Aug 15 12:19:33 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-configure: Handle multiple enable/disable options and
+	pass them down recursively, handle -c and -s flags appropriately
+	depending on choice of compiler, add escape mechanism for
+	quoted arguments to gC.
+
+Mon Aug 12 13:15:13 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (powerpc*-*-*): For eabi, system V.4, Linux, and
+	solaris targets, use config/mt-ppc to set C{,XX}FLAGS_FOR_TARGETS
+	so that -mrelocatable-lib and -mno-eabi are used.
+
+	* Makefile.in (CONFIGURE_TARGET_MODULES): If target compiler does
+	not support --print-multi-lib, don't abort.
+
+Sun Aug 11 20:51:50 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* config/mh-cygwin32 (CFLAGS):  Define _WIN32 to be compatible
+	with normal Windows compilation environment.
+
+Thu Aug  8 12:18:59 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* make-all.com: Run config-a-gas.
+	* setup.com: Don't copy subdirectory files around.
+
+Tue Jul 30 17:49:31 1996  Brendan Kehoe  <brendan@cygnus.com>
+
+	* configure.in (*-*-ose): Remove exclusion of libgloss for this
+	target, it now compiles correctly.
+
+Sat Jul 27 15:10:43 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-config.in: Generate Mac include for elf/dwarf2.h.
+
+Mon Jul 22 13:28:51 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* configure.in (native_only): Add prms.
+
+Mon Jul 22 12:27:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (GAS_SUPPORT_DIRS): Add make-all.com and setup.com.
+	(BINUTILS_SUPPORT_DIRS): Likewise.
+
+Mon Jul 15 11:53:00 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config.guess (HP 9000/811): Recognize this as a PA1.1
+	machine.
+
+Fri Jul 12 23:21:17 1996  Ken Raeburn  <raeburn@cygnus.com>
+
+	* Makefile.in (do-tar-gz): New target, split out from tail end of
+	taz target.  Run each command separately, don't use pipes.
+	(taz): Use it.
+
+Fri Jul 12 12:08:04 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-configure: Look for g-mpw-make.sed in config/mpw.
+	* mpw-build.in: No builds should depend on building byacc or flex,
+	they are assumed to be installed already.
+
+Fri Jul 12 09:52:52 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (CONFIGURE_TARGET_MODULES): Set r environment
+	variable that CC_FOR_TARGET needs.
+
+Thu Jul 11 10:09:45 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Makefile.in (CONFIGURE_TARGET_MODULES): Determine if the multlib
+	options have changed since the last time the subdirectory was
+	configured, and if it has, reconfigure.
+	(CLEAN_TARGET_MODULES): Delete multilib.out and tmpmulti.out, which
+	CONFIGURE_TARGET_MODULES uses to remember the old multilib options.
+
+Wed Jul 10 18:56:59 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (ALL_MODULES,CROSS_CHECK_MODULES,INSTALL_MODULES,
+	CLEAN_MODULES): Add bash.
+	(all-bash): New target.
+
+Mon Jul  8 17:33:14 1996  Jim Wilson  <wilson@cygnus.com>
+
+	* configure.in (mips-sgi-irix6*): Use mh-irix6 instead of mh-irix5.
+
+
+Fri Jun 28 12:14:35 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-configure: Add support for --bindir.
+	* mpw-build.in: Use a GCC-specific build script for GCC actions.
+
+Wed Jun 26 17:20:12 1996  Geoffrey Noer  <noer@cygnus.com>
+
+	* configure.in: add bash, time, gawk to list of hosttools and things
+	to only build for native toolchains
+
+Tue Jun 25 23:09:03 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (docdir): Remove.
+
+Tue Jun 25 19:00:08 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (datadir): Set to $(prefix)/share.
+
+Mon Jun 24 23:26:07 1996  Geoffrey Noer  <noer@cygnus.com>
+
+	* configure.in: build diff and patch for cygwin32-hosted
+	toolchains.
+
+Mon Jun 24 15:01:12 1996  Joel Sherrill  <joel@merlin.gcs.redstone.army.mil>
+
+	* config.sub: Accept -rtems*.
+
+Sun Jun 23 22:41:54 1996  Geoffrey Noer  <noer@cygnus.com>
+
+        * configure.in: enable dosrel for cygwin32-hosted builds,
+                remove diff from the list of things not buildable
+                via Canadian Cross
+
+Sat Jun 22 11:39:01 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (TARGET_SUBDIR): Move comment to previous line so we
+ 	don't get ". ".
+
+Fri Jun 21 17:24:48 1996  Jim Wilson  <wilson@cygnus.com>
+
+	* configure.in (mips*-sgi-irix6*): Set noconfigdirs appropriately.
+
+Thu Jun 20 16:57:40 1996  Ken Raeburn  <raeburn@cygnus.com>
+
+	* Makefile.in (taz): Handle case where tex3patch didn't even get
+	checked out.  Also, if it was found, put the symlink in a new util
+	subdirectory.
+
+Thu Jun 20 12:20:33 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config.guess (*:Linux:*:*): Add support for PowerPC Linux.
+
+Tue Jun 18 14:24:12 1996  Klaus Kaempf  (kkaempf@progis.de)
+
+	* config.sub: Recognize -openvms.
+	* configure.in (alpha*-*-*vms*): Set noconfigdirs.
+	* make-all.com, setup.com: New files.
+
+Mon Jun 17 16:34:46 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (taz): tex3patch moved to texinfo/util.
+
+Sat Jun 15 17:13:25 1996  Geoffrey Noer <noer@cygnus.com>
+
+	* configure: enable_gdbtk=no for cygwin32-hosted toolchains
+	* configure.in: remove make from disable-if-Can-Cross list
+		enable gdb if ${host} and ${target} are cygwin32
+
 Fri Jun  7 18:16:52 1996  Harlan Stenn <harlan@pfcs.com>
 
 	* config.guess (i?86-ncr-sysv*):  Emit minor release numbers.

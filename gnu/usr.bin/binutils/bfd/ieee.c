@@ -1001,6 +1001,29 @@ get_section_entry (abfd, ieee, index)
      ieee_data_type *ieee;
      unsigned int index;
 {
+  if (index >= ieee->section_table_size)
+    {
+      unsigned int c, i;
+      asection **n;
+
+      c = ieee->section_table_size;
+      if (c == 0)
+	c = 20;
+      while (c <= index)
+	c *= 2;
+
+      n = ((asection **)
+	   bfd_realloc (ieee->section_table, c * sizeof (asection *)));
+      if (n == NULL)
+	return NULL;
+
+      for (i = ieee->section_table_size; i < c; i++)
+	n[i] = NULL;
+
+      ieee->section_table = n;
+      ieee->section_table_size = c;
+    }
+
   if (ieee->section_table[index] == (asection *) NULL)
     {
       char *tmp = bfd_alloc (abfd, 11);
@@ -1040,8 +1063,6 @@ ieee_slurp_sections (abfd)
 		unsigned int section_index;
 		next_byte (&(ieee->h));
 		section_index = must_parse_int (&(ieee->h));
-		/* Fixme to be nice about a silly number of sections */
-		BFD_ASSERT (section_index < NSECTIONS);
 
 		section = get_section_entry (abfd, ieee, section_index);
 
@@ -1372,7 +1393,8 @@ ieee_object_p (abfd)
   ieee->external_reference_min_index = IEEE_REFERENCE_BASE;
   ieee->external_reference_max_index = 0;
   ieee->h.abfd = abfd;
-  memset ((PTR) ieee->section_table, 0, sizeof (ieee->section_table));
+  ieee->section_table = NULL;
+  ieee->section_table_size = 0;
 
   processor = ieee->mb.processor = read_id (&(ieee->h));
   if (strcmp (processor, "LIBRARY") == 0)
@@ -3136,7 +3158,8 @@ ieee_set_section_contents (abfd, section, location, offset, count)
     {
       if (section->contents == NULL)
 	{
-	  section->contents = bfd_alloc (abfd, section->_raw_size);
+	  section->contents = ((unsigned char *)
+			       bfd_alloc (abfd, section->_raw_size));
 	  if (section->contents == NULL)
 	    return false;
 	}

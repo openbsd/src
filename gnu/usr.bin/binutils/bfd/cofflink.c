@@ -382,7 +382,6 @@ coff_link_add_symbols (abfd, info)
 		{
 		  (*sym_hash)->class = sym.n_sclass;
 		  (*sym_hash)->type = sym.n_type;
-		  (*sym_hash)->numaux = sym.n_numaux;
 		  (*sym_hash)->auxbfd = abfd;
 		  if (sym.n_numaux != 0)
 		    {
@@ -391,6 +390,7 @@ coff_link_add_symbols (abfd, info)
 		      bfd_byte *eaux;
 		      union internal_auxent *iaux;
 
+		      (*sym_hash)->numaux = sym.n_numaux;
 		      alloc = ((union internal_auxent *)
 			       bfd_hash_allocate (&info->hash->table,
 						  (sym.n_numaux
@@ -466,6 +466,7 @@ _bfd_coff_final_link (abfd, info)
   bfd_size_type symesz;
   struct coff_final_link_info finfo;
   boolean debug_merge_allocated;
+  boolean long_section_names;
   asection *o;
   struct bfd_link_order *p;
   size_t max_sym_count;
@@ -521,6 +522,7 @@ _bfd_coff_final_link (abfd, info)
   max_lineno_count = 0;
   max_reloc_count = 0;
 
+  long_section_names = false;
   for (o = abfd->sections; o != NULL; o = o->next)
     {
       o->reloc_count = 0;
@@ -565,6 +567,20 @@ _bfd_coff_final_link (abfd, info)
 	  o->flags |= SEC_RELOC;
 	  o->rel_filepos = rel_filepos;
 	  rel_filepos += o->reloc_count * relsz;
+	}
+
+      if (bfd_coff_long_section_names (abfd)
+	  && strlen (o->name) > SCNNMLEN)
+	{
+	  /* This section has a long name which must go in the string
+             table.  This must correspond to the code in
+             coff_write_object_contents which puts the string index
+             into the s_name field of the section header.  That is why
+             we pass hash as false.  */
+	  if (_bfd_stringtab_add (finfo.strtab, o->name, false, false)
+	      == (bfd_size_type) -1)
+	    goto error_return;
+	  long_section_names = true;
 	}
     }
 
@@ -869,7 +885,7 @@ _bfd_coff_final_link (abfd, info)
     }
 
   /* Write out the string table.  */
-  if (obj_raw_syment_count (abfd) != 0)
+  if (obj_raw_syment_count (abfd) != 0 || long_section_names)
     {
       if (bfd_seek (abfd,
 		    (obj_sym_filepos (abfd)
@@ -1538,7 +1554,12 @@ _bfd_coff_link_input_bfd (finfo, input_bfd)
 	  if (*indexp < 0)
 	    {
 	      h = *sym_hash;
-	      BFD_ASSERT (h->numaux == isymp->n_numaux);
+
+	      /* The m68k-motorola-sysv assembler will sometimes
+                 generate two symbols with the same name, but only one
+                 will have aux entries.  */
+	      BFD_ASSERT (isymp->n_numaux == 0
+			  || h->numaux == isymp->n_numaux);
 	    }
 
 	  esym += isymesz;

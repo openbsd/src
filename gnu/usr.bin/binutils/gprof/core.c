@@ -66,7 +66,8 @@ DEFUN (read_function_mappings, (filename), const char *filename)
     }
 
   /* Now we know how big we need to make our table.  */
-  symbol_map = xmalloc (count * sizeof (struct function_map));
+  symbol_map = ((struct function_map *)
+		xmalloc (count * sizeof (struct function_map)));
 
   /* Rewind the input file so we can read it again.  */
   rewind (file);
@@ -589,7 +590,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 	}
 
       /* make name pointer a malloc'ed string: */
-      ltab.limit->name = strdup (ltab.limit->name);
+      ltab.limit->name = xstrdup (ltab.limit->name);
       ltab.limit->file = source_file_lookup_path (filename);
 
       ltab.limit->addr = core_text_sect->vma + offset;

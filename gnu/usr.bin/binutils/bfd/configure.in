@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_PREREQ(2.3)
+AC_PREREQ(2.5)
 AC_INIT(libbfd.c)
 
 AC_ARG_ENABLE(64-bit-bfd,
@@ -74,6 +74,8 @@ fi
 
 AC_PROG_CC
 
+AC_ISC_POSIX
+
 # Permit host specific settings.
 . ${srcdir}/configure.host
 
@@ -107,23 +109,39 @@ fi
 AC_SUBST(COMMON_SHLIB)
 AC_SUBST(PICLIST)
 AC_SUBST(SHLINK)
+AC_SUBST(INSTALL_SHLIB)
 
-HOST_64BIT_LONG=0
+VERSION=`cat ${srcdir}/VERSION`
+AC_SUBST(VERSION)
+
+BFD_HOST_64BIT_LONG=0
+BFD_HOST_64_BIT_DEFINED=0
+BFD_HOST_64_BIT=
+BFD_HOST_U_64_BIT=
 if test "x${HOST_64BIT_TYPE}" = "xlong"; then
-  HOST_64BIT_LONG=1
+  BFD_HOST_64BIT_LONG=1
+elif test "x${HOST_64BIT_TYPE}" != "x"; then
+  BFD_HOST_64_BIT_DEFINED=1
+  BFD_HOST_64_BIT=${HOST_64BIT_TYPE}
+  BFD_HOST_U_64_BIT=${HOST_U_64BIT_TYPE}
 fi
-AC_SUBST(HOST_64BIT_LONG)
+AC_SUBST(BFD_HOST_64BIT_LONG)
+AC_SUBST(BFD_HOST_64_BIT_DEFINED)
+AC_SUBST(BFD_HOST_64_BIT)
+AC_SUBST(BFD_HOST_U_64_BIT)
 
 BFD_CC_FOR_BUILD
 
 AC_CHECK_HEADERS(stddef.h string.h strings.h stdlib.h time.h unistd.h)
 AC_CHECK_HEADERS(fcntl.h sys/file.h sys/time.h)
 AC_HEADER_TIME
-AC_CHECK_FUNCS(fcntl getpagesize)
+AC_CHECK_FUNCS(fcntl getpagesize setitimer sysconf)
 
 BFD_BINARY_FOPEN
 
+BFD_NEED_DECLARATION(strstr)
 BFD_NEED_DECLARATION(malloc)
+BFD_NEED_DECLARATION(realloc)
 BFD_NEED_DECLARATION(free)
 
 # If we are configured native, pick a core file support file.
@@ -142,61 +160,61 @@ if test "${target}" = "${host}"; then
   hppa*-*-bsd*)		COREFILE="hpux-core.o hppabsd-core.o"
 			COREFLAG="-DHPUX_CORE -DHPPABSD_CORE" ;;
 changequote(,)dnl
-  i[345]86-sequent-bsd*)
+  i[3456]86-sequent-bsd*)
 changequote([,])dnl
 	COREFILE=trad-core.o;
 	AC_DEFINE(TRAD_HEADER,"hosts/symmetry.h")
 	;;
 changequote(,)dnl
-  i[345]86-sequent-sysv4*) ;;
-  i[345]86-sequent-sysv*)
+  i[3456]86-sequent-sysv4*) ;;
+  i[3456]86-sequent-sysv*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/symmetry.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-bsd* | i[345]86-*-freebsd*)
+  i[3456]86-*-bsd* | i[3456]86-*-freebsd*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/i386bsd.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-netbsd*)
+  i[3456]86-*-netbsd*)
 changequote([,])dnl
 	COREFILE=netbsd-core.o
 	;;
 changequote(,)dnl
-  i[345]86-*-openbsd*)
+  i[3456]86-*-openbsd*)
 changequote([,])dnl
 	COREFILE=netbsd-core.o
 	;;
 changequote(,)dnl
-  i[345]86-esix-sysv3*)
+  i[3456]86-esix-sysv3*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/esix.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-sco* | i[345]86-*-isc*)
+  i[3456]86-*-sco* | i[3456]86-*-isc*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/i386sco.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-mach3*)
+  i[3456]86-*-mach3*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/i386mach3.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-linux*)
+  i[3456]86-*-linux*)
 changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/i386linux.h")
 	;;
 changequote(,)dnl
-  i[345]86-*-isc*)	COREFILE=trad-core.o ;;
-  i[345]86-*-aix*)	COREFILE=aix386-core.o ;;
+  i[3456]86-*-isc*)	COREFILE=trad-core.o ;;
+  i[3456]86-*-aix*)	COREFILE=aix386-core.o ;;
 changequote([,])dnl
   i860-*-mach3* | i860-*-osf1*)
 	COREFILE=trad-core.o
@@ -430,6 +448,8 @@ do
     apollocoff_vec)		tb="$tb coff-apollo.o" ;;
     b_out_vec_big_host)		tb="$tb bout.o aout32.o" ;;
     b_out_vec_little_host)	tb="$tb bout.o aout32.o" ;;
+    bfd_elf64_alpha_vec)	tb="$tb elf64-alpha.o elf64.o $elf"
+				target64=true ;;
     bfd_elf32_big_generic_vec) 	tb="$tb elf32-gen.o elf32.o $elf" ;;
     bfd_elf32_bigmips_vec) 	tb="$tb elf32-mips.o elf32.o $elf ecofflink.o" ;;
     bfd_elf64_bigmips_vec) 	tb="$tb elf64-mips.o elf64.o elf32-mips.o elf32.o $elf ecofflink.o"
@@ -445,6 +465,8 @@ do
     bfd_elf32_m88k_vec)		tb="$tb elf32-m88k.o elf32.o $elf" ;;
     bfd_elf32_powerpc_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
     bfd_elf32_powerpcle_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
+    bfd_elf32_sh_vec)		tb="$tb elf32-sh.o elf32.o $elf coff-sh.o" ;;
+    bfd_elf32_shl_vec)		tb="$tb elf32-sh.o elf32.o $elf coff-sh.o" ;;
     bfd_elf32_sparc_vec)	tb="$tb elf32-sparc.o elf32.o $elf" ;;
     bfd_elf64_big_generic_vec) 	tb="$tb elf64-gen.o elf64.o $elf"
 				target64=true ;;
@@ -459,6 +481,8 @@ do
     ecoff_little_vec)		tb="$tb coff-mips.o ecoff.o ecofflink.o" ;;
     ecoffalpha_little_vec)	tb="$tb coff-alpha.o ecoff.o ecofflink.o"
 				target64=true ;;
+    evax_alpha_vec)		tb="$tb evax-alpha.o evax-emh.o evax-egsd.o evax-etir.o evax-misc.o"
+ 				target64=true ;;
     h8300coff_vec)		tb="$tb coff-h8300.o reloc16.o" ;;
     h8500coff_vec)		tb="$tb coff-h8500.o reloc16.o" ;;
     host_aout_vec)		tb="$tb host-aout.o aout32.o" ;;
@@ -510,6 +534,7 @@ do
     shcoff_vec)			tb="$tb coff-sh.o cofflink.o" ;;
     shlcoff_vec)		tb="$tb coff-sh.o cofflink.o" ;;
     som_vec)			tb="$tb som.o" ;;
+    sparcle_aout_vec)		tb="$tb aout-sparcle.o aout32.o" ;;
     sparclynx_aout_vec)		tb="$tb sparclynx.o lynx-core.o aout32.o" ;;
     sparclynx_coff_vec)		tb="$tb cf-sparclynx.o lynx-core.o" ;;
     sparcnetbsd_vec)		tb="$tb sparcnetbsd.o aout32.o" ;;
@@ -570,7 +595,7 @@ case ${host64}-${target64}-${want64} in
   *true*)
     wordsize=64
     all_backends='$(BFD64_BACKENDS) $(BFD32_BACKENDS)'
-    if test -z "$GCC" && test "$HOST_64BIT_LONG" = "0"; then
+    if test -z "$GCC" && test "$BFD_HOST_64BIT_LONG" = "0" && test "$BFD_HOST_64_BIT_DEFINED" = "0"; then
       AC_MSG_WARN([You have requested a 64 bit BFD configuration, but])
       AC_MSG_WARN([your compiler may not have a 64 bit integral type])
     fi
@@ -600,5 +625,5 @@ case ${want_mmap}+${ac_cv_func_mmap} in
 esac
 
 rm -f doc/config.status
-AC_OUTPUT(Makefile doc/Makefile,
+AC_OUTPUT(Makefile doc/Makefile bfd-in3.h:bfd-in2.h,
 [case x$CONFIG_HEADERS in xconfig.h:config.in) echo > stamp-h ;; esac])

@@ -29,19 +29,6 @@
 #define KEEP_RELOC_INFO
 #endif
 
-
-/* structure used to keep the filenames which
-   are too long around so that we can stick them
-   into the string table */
-struct filename_list 
-{
-  char *filename;
-  struct filename_list *next;
-};
-
-static struct filename_list *filename_list_head;
-static struct filename_list *filename_list_tail;
-
 const char *s_get_name PARAMS ((symbolS * s));
 static symbolS *def_symbol_in_progress;
 
@@ -291,7 +278,6 @@ c_symbol_merge (debug, normal)
   SF_SET_DEBUG_FIELD (normal, SF_GET_DEBUG_FIELD (debug));
 }
 
-static symbolS *previous_file_symbol;
 void
 c_dot_file_symbol (filename)
      char *filename;
@@ -315,57 +301,12 @@ c_dot_file_symbol (filename)
   }
 #endif
 
-  S_SET_VALUE (symbolP, (long) previous_file_symbol);
-
-  previous_file_symbol = symbolP;
-
   /* Make sure that the symbol is first on the symbol chain */
   if (symbol_rootP != symbolP)
     {
-      if (symbolP == symbol_lastP)
-	{
-	  symbol_lastP = symbol_lastP->sy_previous;
-	}			/* if it was the last thing on the list */
-
       symbol_remove (symbolP, &symbol_rootP, &symbol_lastP);
       symbol_insert (symbolP, symbol_rootP, &symbol_rootP, &symbol_lastP);
-      symbol_rootP = symbolP;
     }				/* if not first on the list */
-}
-
-/*
- * Build a 'section static' symbol.
- */
-
-char *
-c_section_symbol (name, value, length, nreloc, nlnno)
-     char *name;
-     long value;
-     long length;
-     unsigned short nreloc;
-     unsigned short nlnno;
-{
-  symbolS *symbolP;
-
-  symbolP = symbol_new (name,
-			(name[1] == 't'
-			 ? text_section
-			 : name[1] == 'd'
-			 ? data_section
-			 : bss_section),
-			value,
-			&zero_address_frag);
-
-  S_SET_STORAGE_CLASS (symbolP, C_STAT);
-  S_SET_NUMBER_AUXILIARY (symbolP, 1);
-
-  SA_SET_SCN_SCNLEN (symbolP, length);
-  SA_SET_SCN_NRELOC (symbolP, nreloc);
-  SA_SET_SCN_NLINNO (symbolP, nlnno);
-
-  SF_SET_STATICS (symbolP);
-
-  return (char *) symbolP;
 }
 
 /* Line number handling */
@@ -606,14 +547,17 @@ obj_coff_endef (ignore)
 #endif /* C_AUTOARG */
     case C_AUTO:
     case C_REG:
-    case C_MOS:
-    case C_MOE:
-    case C_MOU:
     case C_ARG:
     case C_REGPARM:
     case C_FIELD:
-    case C_EOS:
       SF_SET_DEBUG (def_symbol_in_progress);
+      S_SET_SEGMENT (def_symbol_in_progress, absolute_section);
+      break;
+
+    case C_MOS:
+    case C_MOE:
+    case C_MOU:
+    case C_EOS:
       S_SET_SEGMENT (def_symbol_in_progress, absolute_section);
       break;
 
@@ -671,7 +615,8 @@ obj_coff_endef (ignore)
 	 previous definition. */
 
       c_symbol_merge (def_symbol_in_progress, symbolP);
-      /* FIXME-SOON Should *def_symbol_in_progress be free'd? xoxorich. */
+      symbol_remove (def_symbol_in_progress, &symbol_rootP, &symbol_lastP);
+
       def_symbol_in_progress = symbolP;
 
       if (SF_GET_FUNCTION (def_symbol_in_progress)
@@ -689,10 +634,15 @@ obj_coff_endef (ignore)
 	}
     }
 
-  if (SF_GET_TAG (def_symbol_in_progress)
-      && symbol_find_base (S_GET_NAME (def_symbol_in_progress), DO_NOT_STRIP) == NULL)
+  if (SF_GET_TAG (def_symbol_in_progress))
     {
-      tag_insert (S_GET_NAME (def_symbol_in_progress), def_symbol_in_progress);
+      symbolS *oldtag;
+
+      oldtag = symbol_find_base (S_GET_NAME (def_symbol_in_progress),
+				 DO_NOT_STRIP);
+      if (oldtag == NULL || ! SF_GET_TAG (oldtag))
+	tag_insert (S_GET_NAME (def_symbol_in_progress),
+		    def_symbol_in_progress);
     }
 
   if (SF_GET_FUNCTION (def_symbol_in_progress))
@@ -1019,18 +969,6 @@ coff_frob_symbol (symp, punt)
 	      coff_last_function = 0;
 	    }
 	}
-      else if (SF_GET_TAG (symp))
-	last_tagP = symp;
-      else if (S_GET_STORAGE_CLASS (symp) == C_EOS)
-	next_set_end = last_tagP;
-      else if (S_GET_STORAGE_CLASS (symp) == C_FILE)
-	{
-	  if (S_GET_VALUE (symp))
-	    {
-	      S_SET_VALUE ((symbolS *) S_GET_VALUE (symp), 0xdeadbeef);
-	      S_SET_VALUE (symp, 0);
-	    }
-	}
       if (S_IS_EXTERNAL (symp))
 	S_SET_STORAGE_CLASS (symp, C_EXT);
       else if (SF_GET_LOCAL (symp))
@@ -1041,6 +979,11 @@ coff_frob_symbol (symp, punt)
 
       /* more ... */
     }
+
+  if (SF_GET_TAG (symp))
+    last_tagP = symp;
+  else if (S_GET_STORAGE_CLASS (symp) == C_EOS)
+    next_set_end = last_tagP;
 
 #ifdef OBJ_XCOFF
   /* This is pretty horrible, but we have to set *punt correctly in
@@ -1054,7 +997,11 @@ coff_frob_symbol (symp, punt)
 #endif
 
   if (set_end != (symbolS *) NULL
-      && ! *punt)
+      && ! *punt
+      && ((symp->bsym->flags & BSF_NOT_AT_END) != 0
+	  || (S_IS_DEFINED (symp)
+	      && ! S_IS_COMMON (symp)
+	      && (! S_IS_EXTERNAL (symp) || SF_GET_FUNCTION (symp)))))
     {
       SA_SET_SYM_ENDNDX (set_end, symp);
       set_end = NULL;
@@ -1131,7 +1078,11 @@ coff_adjust_section_syms (abfd, sec, x)
       }
   }
   if (bfd_get_section_size_before_reloc (sec) == 0
-      && nrelocs == 0 && nlnno == 0)
+      && nrelocs == 0
+      && nlnno == 0
+      && sec != text_section
+      && sec != data_section
+      && sec != bss_section)
     return;
   secsym = section_symbol (sec);
   SA_SET_SCN_NRELOC (secsym, nrelocs);
@@ -1250,10 +1201,7 @@ coff_adjust_symtab ()
 {
   if (symbol_rootP == NULL
       || S_GET_STORAGE_CLASS (symbol_rootP) != C_FILE)
-    {
-      assert (previous_file_symbol == 0);
-      c_dot_file_symbol ("fake");
-    }
+    c_dot_file_symbol ("fake");
 }
 
 void
@@ -1261,7 +1209,7 @@ coff_frob_section (sec)
      segT sec;
 {
   segT strsec;
-  char *strname, *p;
+  char *p;
   fragS *fragp;
   bfd_vma size, n_entries, mask;
 
@@ -1279,7 +1227,10 @@ coff_frob_section (sec)
   /* If the section size is non-zero, the section symbol needs an aux
      entry associated with it, indicating the size.  We don't know
      all the values yet; coff_frob_symbol will fill them in later.  */
-  if (size)
+  if (size != 0
+      || sec == text_section
+      || sec == data_section
+      || sec == bss_section)
     {
       symbolS *secsym = section_symbol (sec);
 
@@ -1412,6 +1363,18 @@ const short seg_N_TYPE[] =
 
 int function_lineoff = -1;	/* Offset in line#s where the last function
 				   started (the odd entry for line #0) */
+
+/* structure used to keep the filenames which
+   are too long around so that we can stick them
+   into the string table */
+struct filename_list 
+{
+  char *filename;
+  struct filename_list *next;
+};
+
+static struct filename_list *filename_list_head;
+static struct filename_list *filename_list_tail;
 
 static symbolS *last_line_symbol;
 
@@ -1690,6 +1653,18 @@ do_relocs_for (abfd, h, file_cursor)
 		      /* Turn the segment of the symbol into an offset.  */
 		      if (symbol_ptr)
 			{
+			  if (! symbol_ptr->sy_resolved)
+			    {
+			      char *file;
+			      unsigned int line;
+
+			      if (expr_symbol_where (symbol_ptr, &file, &line))
+				as_bad_where (file, line,
+					      "unresolved relocation");
+			      else
+				as_bad ("bad relocation: symbol `%s' not in symbol table",
+					S_GET_NAME (symbol_ptr));
+			    }
 			  dot = segment_info[S_GET_SEGMENT (symbol_ptr)].dot;
 			  if (dot)
 			    {
@@ -2270,10 +2245,15 @@ obj_coff_endef (ignore)
 	}			/* if function */
     }				/* normal or mergable */
 
-  if (SF_GET_TAG (def_symbol_in_progress)
-      && symbol_find_base (S_GET_NAME (def_symbol_in_progress), DO_NOT_STRIP) == NULL)
+  if (SF_GET_TAG (def_symbol_in_progress))
     {
-      tag_insert (S_GET_NAME (def_symbol_in_progress), def_symbol_in_progress);
+      symbolS *oldtag;
+
+      oldtag = symbol_find_base (S_GET_NAME (def_symbol_in_progress),
+				 DO_NOT_STRIP);
+      if (oldtag == NULL || ! SF_GET_TAG (oldtag))
+	tag_insert (S_GET_NAME (def_symbol_in_progress),
+		    def_symbol_in_progress);
     }
 
   if (SF_GET_FUNCTION (def_symbol_in_progress))
@@ -3989,9 +3969,15 @@ fixup_segment (segP, this_segment_type)
 
 	      add_number += S_GET_VALUE (add_symbolP);
 	      add_number -= md_pcrel_from (fixP);
-#if defined (TC_I386) || defined (TE_LYNX)
-	      /* On the 386 we must adjust by the segment
-		 vaddr as well.  Ian Taylor.  */
+#if defined (TC_I386) || defined (TE_LYNX) || defined (TC_I960)
+	      /* On the 386 we must adjust by the segment vaddr as
+		 well.  Ian Taylor.  I changed the i960 to work this
+		 way as well.  This is compatible with the current GNU
+		 linker behaviour.  I do not know what other i960 COFF
+		 assemblers do.  This is not a common case: normally,
+		 only assembler code will contain a PC relative reloc,
+		 and only branches which do not originate in the .text
+		 section will have a non-zero address.  */
 	      add_number -= segP->scnhdr.s_vaddr;
 #endif
 	      pcrel = 0;	/* Lie. Don't want further pcrel processing. */
@@ -4073,9 +4059,10 @@ fixup_segment (segP, this_segment_type)
 	    {
 	      fixP->fx_addsy = &abs_symbol;
 	    }			/* if there's an add_symbol */
-#if defined (TC_I386) || defined (TE_LYNX)
-	  /* On the 386 we must adjust by the segment vaddr
-	     as well.  Ian Taylor.  */
+#if defined (TC_I386) || defined (TE_LYNX) || defined (TC_I960)
+	  /* On the 386 we must adjust by the segment vaddr as well.
+	     Ian Taylor.  As noted above, I made the i960 work this
+	     way as well.  */
 	  add_number -= segP->scnhdr.s_vaddr;
 #endif
 	}			/* if pcrel */

@@ -34,7 +34,7 @@ exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
 
-datadir = $(prefix)/lib
+datadir = $(prefix)/share
 
 mandir = $(prefix)/man
 man1dir = $(mandir)/man1
@@ -48,8 +48,6 @@ man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
 infodir = $(prefix)/info
 includedir = $(prefix)/include
-oldincludedir =
-docdir = $(datadir)/doc
 
 SHELL = /bin/sh
 
@@ -294,7 +292,7 @@ clean: mostlyclean
 	rm -f *.a required-list
 	@$(MULTICLEAN) multi-clean DO=clean
 distclean: clean
-	rm -f *~ Makefile config.status alloca-conf.h xhost-mkfrag TAGS
+	rm -f *~ Makefile config.status alloca-conf.h xhost-mkfrag TAGS multilib.out
 	@$(MULTICLEAN) multi-clean DO=distclean
 maintainer-clean realclean: distclean
 

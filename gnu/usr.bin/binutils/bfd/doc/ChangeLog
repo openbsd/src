@@ -1,3 +1,8 @@
+Tue Jun 18 18:32:28 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* chew.c (kill_bogus_lines): Reset sl when not at the start of a
+	line.  From Uwe Ohse <uwe@tirka.gun.de>.
+
 Tue Jan 30 14:10:46 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	From Ronald F. Guilmette <rfg@monkeys.com>:

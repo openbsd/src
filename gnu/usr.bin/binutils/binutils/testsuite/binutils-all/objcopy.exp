@@ -56,7 +56,7 @@ if ![string match "" $got] then {
     setup_xfail "i*86-*-sysv3" "i*86-*-isc*" "i*86-*-sco*" "i*86-*-coff"
     setup_xfail "i*86-*-aix*" "i*86-*-go32*"
     setup_xfail "a29k-*-udi" "a29k-*-coff" "a29k-*-vxworks*"
-    setup_xfail "i960-*-vxworks*" "i960-*-coff"
+    setup_xfail "i960-*-coff"
     setup_xfail "h8300-*-hms" "h8300-*-coff"
     setup_xfail "h8500-*-hms" "h8500-*-coff"
     setup_xfail "hppa*-*-*"
@@ -69,6 +69,12 @@ if ![string match "" $got] then {
     } else {
 	send_log "$exec_output\n"
 	verbose "$exec_output" 1
+
+	# On OSF/1, this succeeds with gas and fails with /bin/as.
+	setup_xfail "alpha*-*-osf*"
+
+	# This fails for COFF i960-vxworks targets.
+	setup_xfail "i960-*-vxworks*"
 
 	fail "objcopy (simple copy)"
     }
@@ -87,19 +93,19 @@ if ![string match "" $got] then {
     gets $file line
     send_log "$line\n"
     verbose $line
-    if ![string match $line "S0130000746D706469722F636F70792E7372656397\r"] {
+    if ![string match "S0130000746D706469722F636F70792E7372656397*" $line] {
 	send_log "bad header\n"
 	fail "objcopy -O srec"
     } else {
 	while {[gets $file line] != -1 \
-	       && [regexp "^S\[123\]\[0-9a-fA-F\]+\r$" $line]} {
+	       && [regexp "^S\[123\]\[0-9a-fA-F\]+\[\r\n\]*$" $line]} {
 	    send_log "$line\n"
 	    verbose $line
 	    set line "**EOF**"
 	}
 	send_log "$line\n"
 	verbose $line
-	if ![regexp "^S\[789\]\[0-9a-fA-F\]+\r$" $line] then {
+	if ![regexp "^S\[789\]\[0-9a-fA-F\]+\[\r\n\]*$" $line] then {
 	    send_log "bad trailer\n"
 	    fail "objcopy -O srec"
 	} else {

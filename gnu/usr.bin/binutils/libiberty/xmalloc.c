@@ -29,10 +29,15 @@ Boston, MA 02111-1307, USA.  */
 #define ptrdiff_t long
 #endif
 
+#if VMS
+#include <stdlib.h>
+#include <unixlib.h>
+#else
 /* For systems with larger pointers than ints, these must be declared.  */
 PTR malloc PARAMS ((size_t));
 PTR realloc PARAMS ((PTR, size_t));
 PTR sbrk PARAMS ((ptrdiff_t));
+#endif
 
 /* The program name if set.  */
 static const char *name = "";

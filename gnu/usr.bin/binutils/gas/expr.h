@@ -137,10 +137,12 @@ extern LITTLENUM_TYPE generic_bignum[];
 
 typedef char operator_rankT;
 
-char get_symbol_end PARAMS ((void));
-void expr_begin PARAMS ((void));
-segT expr PARAMS ((int rank, expressionS * resultP));
-unsigned int get_single_number PARAMS ((void));
-struct symbol *make_expr_symbol PARAMS ((expressionS * expressionP));
+extern char get_symbol_end PARAMS ((void));
+extern void expr_begin PARAMS ((void));
+extern segT expr PARAMS ((int rank, expressionS * resultP));
+extern unsigned int get_single_number PARAMS ((void));
+extern struct symbol *make_expr_symbol PARAMS ((expressionS * expressionP));
+extern int expr_symbol_where
+  PARAMS ((struct symbol *, char **, unsigned int *));
 
 /* end of expr.h */

@@ -1,3 +1,58 @@
+Tue Aug 13 16:10:30 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* obstack.h:  Change bcopy to memcpy.  Works better on Posix
+	systems, which generally lack bcopy.
+
+Mon Aug 12 17:03:18 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* ansidecl.h:  Change WIN32 to _WIN32.
+
+Fri Jul 26 13:58:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dis-asm.h: Add flavour field.
+	(print_insn_alpha): Declare.
+	(print_insn_alpha_osf, print_insn_alpha_vms): Don't declare.
+	(INIT_DISASSEMBLE_INFO): Initialize flavour field.
+
+Tue Jul 23 17:37:58 1996  Fred Fish  <fnf@cygnus.com>
+
+	* libiberty.h (PRIVATE_XMALLOC): Enclose xmalloc/xrealloc
+	definitions inside #ifndef so that programs that want to
+	can define PRIVATE_XMALLOC and then define xmalloc and
+	xrealloc anyway they want.
+	(basename): Document in source that we can't declare the
+ 	parameter type because it is declared inconsistently across
+	different systems.
+
+Mon Jul 22 13:16:13 1996  Richard Henderson  <rth@tamu.edu>
+
+	* dis-asm.h (print_insn_alpha): Don't declare.
+	(print_insn_alpha_osf, print_insn_alpha_vms): Declare.
+
+Mon Jul 15 16:55:38 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* dis-asm.h:  Get rid of decls for print_insn_i8086,
+	print_insn_sparc64 and print_insn_sparclite.
+	* (INIT_DISASSEMBLE_INFO):  Split into two pieces.  One,
+	INIT_DISASSEMBLE_INFO_NO_ARCH inits everything except for endian,
+	mach, and arch.
+
+Fri Jul 12 10:19:27 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* dis-asm.h (print_insn_i8086):  Declare.
+
+Wed Jul  3 16:02:39 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* dis-asm.h (print_insn_sparclite):  Declare.
+
+Tue Jun 18 16:02:46 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* dis-asm.h (print_insn_h8300s): Declare.
+
+Tue Jun 18 15:11:33 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* fopen-vms.h: New file.
+
 Tue Jun  4 18:58:16 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* bfdlink.h (struct bfd_link_info): Add notice_all field.

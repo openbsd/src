@@ -139,6 +139,11 @@ typedef struct ecoff_tdata
      the memory just for the infrequently called find_nearest_line.  */
   struct ecoff_find_line *find_line_info;
 
+  /* Whether the .rdata section is in the text segment for this
+     particular ECOFF file.  This is not valid until
+     ecoff_compute_section_file_positions is called.  */
+  boolean rdata_in_text;
+
 } ecoff_data_type;
 
 /* Each canonical asymbol really looks like this.  */

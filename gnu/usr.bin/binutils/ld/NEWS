@@ -1,5 +1,18 @@
 -*- text -*-
 
+Changes since version 2.7:
+
+* Linker scripts may now contain shell wildcard characters for file and section
+  names.
+
+* The NOCROSSREFS command was added to the linker script language.
+
+* The LOADADDR expression was added to the linker script language.
+
+* MAX and MIN functions were added to the linker script language.
+
+* The OVERLAY construct was added to the linker script language.
+
 Changes since version 2.6:
 
 * New option --cref to print out a cross reference table.

@@ -28,11 +28,11 @@ prefix = @prefix@
 
 program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 tooldir = $(exec_prefix)/$(target_alias)
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -42,9 +42,9 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
-docdir = $(datadir)/doc
+infodir = @infodir@
+includedir = @includedir@
+
 # We put the scripts in the directory $(scriptdir)/ldscripts.
 # We can't put the scripts in $(datadir) because the SEARCH_DIR
 # directives need to be different for native and cross linkers.
@@ -53,8 +53,8 @@ scriptdir = $(tooldir)/lib
 SHELL = /bin/sh
 
 INSTALL = `cd $(srcdir); pwd`/../install.sh -c
-INSTALL_PROGRAM = $(INSTALL)
-INSTALL_DATA = $(INSTALL)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
 INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
 INSTALL_XFORM1 = $(INSTALL_XFORM) -b=.1
 
@@ -64,6 +64,7 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 HLDFLAGS = @HLDFLAGS@
+HLDENV = @HLDENV@
 RPATH_ENVVAR = @RPATH_ENVVAR@
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
@@ -209,10 +210,13 @@ ALL_EMULATIONS = \
 	eelf32_sparc.o \
 	eelf32b4300.o \
 	eelf32bmip.o \
+	eelf32ebmip.o \
+	eelf32elmip.o \
 	eelf32l4300.o \
 	eelf32lmip.o \
 	eelf32lppc.o \
 	eelf32ppc.o \
+	eelf64alpha.o \
 	eelf64_sparc.o \
 	eelf_i386.o \
 	egld960.o \
@@ -220,6 +224,7 @@ ALL_EMULATIONS = \
 	ego32.o \
 	eh8300.o \
 	eh8300h.o \
+	eh8300s.o \
 	eh8500.o \
 	eh8500b.o \
 	eh8500c.o \
@@ -258,13 +263,15 @@ ALL_EMULATIONS = \
 	emipslit.o \
 	enews.o \
 	ens32knbsd.o \
-	epc532machaout.o \
+	epc532macha.o \
 	eppcmacos.o \
 	eppcnw.o \
 	eppcpe.o \
 	eriscix.o \
 	esa29200.o \
 	esh.o \
+	eshelf.o \
+	eshlelf.o \
 	eshl.o \
 	esparcaout.o \
 	esparclynx.o \
@@ -281,18 +288,18 @@ ALL_EMULATIONS = \
 
 CFILES = ldctor.c ldemul.c ldexp.c ldfile.c ldlang.c \
 	ldmain.c ldmisc.c ldver.c ldwrite.c lexsup.c \
-	mri.c ldcref.c
+	mri.c ldcref.c fnmatch.c
 
 HFILES = config.h ld.h ldctor.h ldemul.h ldexp.h ldfile.h \
 	ldlang.h ldlex.h ldmain.h ldmisc.h ldver.h \
-	ldwrite.h mri.h
+	ldwrite.h mri.h fnmatch.h
 
 GENERATED_CFILES = ldgram.c ldlex.c
 GENERATED_HFILES = ldgram.h ldemul-list.h
 
 OFILES = ldgram.o ldlex.o lexsup.o ldlang.o mri.o ldctor.o ldmain.o \
 	ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o \
-	ldfile.o ldcref.o ${EMULATION_OFILES}
+	ldfile.o ldcref.o fnmatch.o ${EMULATION_OFILES}
 
 LINTSOURCES = $(CFILES) $(GENERATED_CFILES) e*.c
 
@@ -385,6 +392,12 @@ eelf32b4300.c: $(srcdir)/emulparams/elf32b4300.sh \
 eelf32bmip.c: $(srcdir)/emulparams/elf32bmip.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32bmip "$(tdir_elf32bmip)"
+eelf32ebmip.c: $(srcdir)/emulparams/elf32ebmip.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32ebmip "$(tdir_elf32ebmip)"
+eelf32elmip.c: $(srcdir)/emulparams/elf32elmip.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32elmip "$(tdir_elf32elmip)"
 eelf32l4300.c: $(srcdir)/emulparams/elf32l4300.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32l4300 "$(tdir_elf32l4300)"
@@ -397,6 +410,9 @@ eelf32lppc.c: $(srcdir)/emulparams/elf32lppc.sh \
 eelf32ppc.c: $(srcdir)/emulparams/elf32ppc.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elfppc.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32ppc "$(tdir_elf32ppc)"
+eelf64alpha.c: $(srcdir)/emulparams/elf64alpha.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64alpha "$(tdir_elf64alpha)"
 eelf64_sparc.c: $(srcdir)/emulparams/elf64_sparc.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64_sparc "$(tdir_elf64_sparc)"
@@ -418,6 +434,9 @@ eh8300.c: $(srcdir)/emulparams/h8300.sh \
 eh8300h.c: $(srcdir)/emulparams/h8300h.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300h.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} h8300h "$(tdir_h8300h)"
+eh8300s.c: $(srcdir)/emulparams/h8300s.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8300s.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} h8300s "$(tdir_h8300s)"
 eh8500.c: $(srcdir)/emulparams/h8500.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/h8500.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} h8500 "$(tdir_h8500)"
@@ -532,9 +551,9 @@ enews.c: $(srcdir)/emulparams/news.sh \
 ens32knbsd.c:	$(srcdir)/emulparams/ns32knbsd.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} ns32knbsd "$(tdir_ns32knbsd)"
-epc532machaout.c: $(srcdir)/emulparams/pc532machaout.sh \
+epc532macha.c: $(srcdir)/emulparams/pc532macha.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
-	${GENSCRIPTS} pc532machaout "$(tdir_pc532machaout)"
+	${GENSCRIPTS} pc532macha "$(tdir_pc532macha)"
 eppcmacos.c:	$(srcdir)/emulparams/ppcmacos.sh \
   $(srcdir)/emultempl/aix.em $(srcdir)/scripttempl/aix.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} ppcmacos "$(tdir_ppcmacos)"
@@ -553,6 +572,12 @@ esa29200.c: $(srcdir)/emulparams/sa29200.sh \
 esh.c: $(srcdir)/emulparams/sh.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sh.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} sh "$(tdir_sh)"
+eshelf.c: $(srcdir)/emulparams/shelf.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shelf "$(tdir_shelf)"
+eshlelf.c: $(srcdir)/emulparams/shlelf.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shlelf "$(tdir_shlelf)"
 eshl.c: $(srcdir)/emulparams/shl.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sh.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} shl "$(tdir_shl)"
@@ -594,7 +619,7 @@ ez8002.c: $(srcdir)/emulparams/z8002.sh \
 	${GENSCRIPTS} z8002 "$(tdir_z8002)"
 
 $(LD_PROG): $(OFILES) $(BFDDEP) $(LIBIBERTY)
-	$(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(LD_PROG) $(OFILES) $(BFDLIB) $(LIBIBERTY) $(EXTRALIBS)
+	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $(LD_PROG) $(OFILES) $(BFDLIB) $(LIBIBERTY) $(EXTRALIBS)
 
 # The generated emulation files mostly have the same dependencies.
 $(EMULATION_OFILES): ../bfd/bfd.h sysdep.h config.h $(INCDIR)/bfdlink.h \
@@ -856,7 +881,7 @@ diststuff: $(LDDISTSTUFF) info
 mostlyclean:
 	-rm -f $(STAGESTUFF) ld.?? ld.??? ldlex.[qp] config.log
 	-rm -f ld ld1 ld2 ld3 *.o y.output cdtest cdtest.out cdtest.tmp
-	-rm -f cdtest-ur cdtest-ur.out cdtest-ur.tmp
+	-rm -f cdtest-ur cdtest-ur.out cdtest-ur.tmp crtbegin.o crtend.o
 	-rm -f ldemul-list.h
 	-rm -fr tmpdir
 clean: mostlyclean
@@ -989,7 +1014,7 @@ ldlang.o: ldlang.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/libiberty.h $(INCDIR)/bfdlink.h ld.h ldmain.h \
   ldgram.h ldexp.h ldlang.h ldemul.h ldlex.h ldmisc.h \
-  ldctor.h ldfile.h
+  ldctor.h ldfile.h fnmatch.h
 ldmain.o: ldmain.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/libiberty.h $(INCDIR)/progress.h $(INCDIR)/bfdlink.h \
@@ -1008,16 +1033,17 @@ ldwrite.o: ldwrite.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   ldlang.h ldwrite.h ldmisc.h ldgram.h ldmain.h
 lexsup.o: lexsup.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
-  $(INCDIR)/getopt.h $(INCDIR)/bfdlink.h ld.h ldmain.h \
-  ldmisc.h ldexp.h ldlang.h ldgram.h ldlex.h ldfile.h \
-  ldver.h ldemul.h
+  $(INCDIR)/libiberty.h $(INCDIR)/getopt.h $(INCDIR)/bfdlink.h \
+  ld.h ldmain.h ldmisc.h ldexp.h ldlang.h ldgram.h ldlex.h \
+  ldfile.h ldver.h ldemul.h
 mri.o: mri.c ../bfd/bfd.h $(INCDIR)/ansidecl.h $(INCDIR)/obstack.h \
   sysdep.h config.h $(INCDIR)/fopen-same.h ld.h ldexp.h \
   ldlang.h ldmisc.h mri.h ldgram.h
 ldcref.o: ldcref.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/libiberty.h ld.h ldmain.h \
-  ldmisc.h
+  ldmisc.h ldexp.h ldlang.h
+fnmatch.o: fnmatch.c
 ldgram.o: ldgram.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/bfdlink.h ld.h ldexp.h ldver.h ldlang.h ldemul.h \

@@ -302,7 +302,7 @@ __extension__								\
      _obstack_newchunk (__o, __len);					\
    if (!__o->alloc_failed)						\
      {									\
-        bcopy (where, __o->next_free, __len);				\
+        memcpy (__o->next_free, where, __len);				\
 	__o->next_free += __len;					\
      }									\
    (void) 0; })
@@ -315,7 +315,7 @@ __extension__								\
      _obstack_newchunk (__o, __len + 1);				\
    if (!__o->alloc_failed)						\
      {									\
-       bcopy (where, __o->next_free, __len);				\
+       memcpy (__o->next_free, where, __len);				\
        __o->next_free += __len;						\
        *(__o->next_free)++ = 0;						\
      }									\
@@ -433,7 +433,7 @@ __extension__								\
   (((h)->next_free + (h)->temp > (h)->chunk_limit)			\
    ? (_obstack_newchunk ((h), (h)->temp), 0) : 0),			\
   ((h)->alloc_failed ? 0 :						\
-  (bcopy (where, (h)->next_free, (h)->temp),				\
+  (memcpy ((h)->next_free, where, (h)->temp),				\
   (h)->next_free += (h)->temp)))
 
 #define obstack_grow0(h,where,length)					\
@@ -441,7 +441,7 @@ __extension__								\
   (((h)->next_free + (h)->temp + 1 > (h)->chunk_limit)			\
    ? (_obstack_newchunk ((h), (h)->temp + 1), 0) : 0),			\
   ((h)->alloc_failed ? 0 :						\
-  (bcopy (where, (h)->next_free, (h)->temp),				\
+  (memcpy ((h)->next_free, where, (h)->temp),				\
   (h)->next_free += (h)->temp,						\
   *((h)->next_free)++ = 0)))
 

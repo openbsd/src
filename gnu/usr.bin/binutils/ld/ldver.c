@@ -30,7 +30,8 @@ void
 ldversion (noisy)
      int noisy;
 {
-  fprintf (stdout,"ld version cygnus-2.6 (with BFD %s)\n", BFD_VERSION);
+  fprintf (stdout, "GNU ld version cygnus-2.7.1 (with BFD %s)\n",
+	   BFD_VERSION);
 
   if (noisy) 
     {

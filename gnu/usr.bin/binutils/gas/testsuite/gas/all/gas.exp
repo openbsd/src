@@ -23,8 +23,6 @@ gas_test "float.s" ""   "" "simple FP constants"
 # This test is meaningless for the PA; the difference of two undefined
 # symbols is something that is (and must be) supported on the PA.
 if ![istarget hppa*-*-*] then {
-    # the h8300 fails because we skip all the logic in fixup_segment
-    setup_xfail "h8300*-*-*"
     gas_test_error "diff1.s" "" "difference of two undefined symbols"
 }
 
@@ -82,13 +80,31 @@ proc do_930509a {} {
 # This test is meaningless for the PA; the difference of two symbols
 # must not be resolved by the assembler.
 if ![istarget hppa*-*-*] then {
-    # the h8300 fails because we skip all the logic in fixup_segment
-    setup_xfail "h8300*-*-*"
+    # the vax fails because VMS can apparently actually handle this
+    # case in relocs, so gas doesn't handle it itself.
+    setup_xfail "vax*-*-vms*"
     do_930509a
 }
 
 if ![istarget hppa*-*-*] then {
     run_dump_test struct
+}
+
+# This test is for any COFF target.
+if { [istarget *-*-coff*] \
+     || [istarget *-*-pe*] \
+     || [istarget a29k-*-udi*] \
+     || [istarget a29k-*-ebmon*] \
+     || [istarget a29k-*-sym*] \
+     || [istarget a29k-*-vxworks*] \
+     || [istarget i*86-*-aix*] \
+     || [istarget i*86-*-sco*] \
+     || [istarget i*86-*-isc*] \
+     || [istarget i*86-*-go32*] \
+     || [istarget i*86-*-cygwin*] \
+     || [istarget i*86-*-*nt] \
+     || ([istarget i960-*-vxworks5.*] && ![istarget i960-*-vxworks5.0*]) } {
+    run_dump_test cofftag
 }
 
 # FIXME: this is here cause of a bug in DejaGnu 1.1.1. When it is no longer

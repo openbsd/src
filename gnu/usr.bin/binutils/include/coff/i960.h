@@ -77,8 +77,8 @@ AOUTHDR;
 /* compute size of a header */
 
 /*#define AOUTSZ(aout) (sizeof(AOUTHDR)+(aout.tagentries*sizeof(TAGBITS)))*/
-#define AOUTSZ (sizeof(AOUTHDR))
-
+#define AOUTSZ 32
+#define AOUTHDRSZ 32
 
 
 /********************** SECTION HEADER **********************/
@@ -100,7 +100,7 @@ struct external_scnhdr {
 
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	44
 
 /*
  * names of "special" sections
@@ -227,9 +227,9 @@ union external_auxent {
 
 
 #define	SYMENT	struct external_syment
-#define	SYMESZ	sizeof(SYMENT)			/* FIXME - calc by hand */
+#define	SYMESZ	24
 #define	AUXENT	union external_auxent
-#define	AUXESZ	sizeof(AUXENT)			/* FIXME - calc by hand */
+#define	AUXESZ	24
 
 #	define _ETEXT	"_etext"
 

@@ -1413,15 +1413,29 @@ do_align (idx, in)
      int idx;
      sb *in;
 {
-  int al;
+  int al, have_fill, fill;
+
   idx = exp_get_abs ("align needs absolute expression.\n", idx, in, &al);
+  idx = sb_skip_white (idx, in);
+  have_fill = 0;
+  fill = 0;
+  if (! eol (idx, in))
+    {
+      idx = sb_skip_comma (idx, in);
+      idx = exp_get_abs (".align needs absolute fill value.\n", idx, in,
+			 &fill);
+      have_fill = 1;
+    }
 
   if (al != 1
       && al != 2
       && al != 4)
     WARNING ((stderr, "alignment must be one of 1, 2 or 4.\n"));
 
-  fprintf (outfile, ".align	%d\n", al);
+  fprintf (outfile, ".align	%d", al);
+  if (have_fill)
+    fprintf (outfile, ",%d", fill);
+  fprintf (outfile, "\n");
 }
 
 /* .res[.b|.w|.l] <size> */

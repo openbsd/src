@@ -1,3 +1,23 @@
+Fri Aug 30 17:06:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* common.h (EM_SH): Define.
+
+Mon Jul 22 18:59:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips.h (SHT_MIPS_IFACE, SHT_MIPS_CONTENT): Define.
+	(SHT_MIPS_SYMBOL_LIB): Define.
+	(SHF_MIPS_MERGE, SHF_MIPS_ADDR32, SHF_MIPS_ADDR64): Define.
+	(SHF_MIPS_NOSTRIP, SHF_MIPS_LOCAL, SHF_MIPS_NAMES): Define.
+
+Thu Jul 18 19:12:15 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* dwarf2.h: New file.
+
+Fri Jun 21 12:33:24 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha.h: New file.
+	* common.h (EM_ALPHA): Define.
+
 Fri May 31 17:28:05 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* mips.h (Elf_External_Options, Elf_Internal_Options): Define.

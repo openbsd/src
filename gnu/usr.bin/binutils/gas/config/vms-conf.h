@@ -12,6 +12,9 @@
    This function is required for alloca.c support on those systems.  */
 #undef CRAY_STACKSEG_END
 
+/* Define if you have alloca, as a function or macro.  */
+#undef HAVE_ALLOCA
+
 /* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
 #undef HAVE_ALLOCA_H
 
@@ -65,12 +68,37 @@
 
 #undef MANY_SEGMENTS
 
-/* Needed only for sparc configuration */
+/* Needed only for sparc configuration.  */
 #undef SPARC_V9
 #undef SPARC_ARCH64
 
+/* Needed only for some configurations that can produce multiple output
+   formats.  */
+#undef DEFAULT_EMULATION
+#undef EMULATIONS
+#undef USE_EMULATIONS
+#undef OBJ_MAYBE_AOUT
+#undef OBJ_MAYBE_BOUT
+#undef OBJ_MAYBE_COFF
+#undef OBJ_MAYBE_ECOFF
+#undef OBJ_MAYBE_ELF
+#undef OBJ_MAYBE_GENERIC
+#undef OBJ_MAYBE_HP300
+#undef OBJ_MAYBE_IEEE
+#undef OBJ_MAYBE_SOM
+#undef OBJ_MAYBE_VMS
+
+/* Used for some of the COFF configurations, when the COFF code needs
+   to select something based on the CPU type before it knows it... */
+#undef I386COFF
+#undef M68KCOFF
+#undef M88KCOFF
+
 /* Define if you have the remove function.  */
 #define HAVE_REMOVE
+
+/* sbrk() is available, but we don't want gas to use it.  */
+#undef HAVE_SBRK
 
 /* Define if you have the unlink function.  */
 #undef HAVE_UNLINK

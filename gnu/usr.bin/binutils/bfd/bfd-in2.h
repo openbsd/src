@@ -53,8 +53,12 @@ extern "C" {
 
 /* These two lines get substitutions done by commands in Makefile.in.  */
 #define BFD_VERSION  "@VERSION@"
-#define BFD_ARCH_SIZE @WORDSIZE@
+#define BFD_ARCH_SIZE @wordsize@
 #define BFD_HOST_64BIT_LONG @BFD_HOST_64BIT_LONG@
+#if @BFD_HOST_64_BIT_DEFINED@
+#define BFD_HOST_64_BIT @BFD_HOST_64_BIT@
+#define BFD_HOST_U_64_BIT @BFD_HOST_U_64_BIT@
+#endif
 
 #if BFD_ARCH_SIZE >= 64
 #define BFD64
@@ -114,27 +118,29 @@ typedef long int file_ptr;
 /* Support for different sizes of target format ints and addresses.
    If the type `long' is at least 64 bits, BFD_HOST_64BIT_LONG will be
    set to 1 above.  Otherwise, if gcc is being used, this code will
-   use gcc's "long long" type.  Otherwise, the compilation will fail
-   if 64-bit targets are requested.  */
+   use gcc's "long long" type.  Otherwise, BFD_HOST_64_BIT must be
+   defined above.  */
 
 #ifdef BFD64
 
 #ifndef BFD_HOST_64_BIT
 #if BFD_HOST_64BIT_LONG
 #define BFD_HOST_64_BIT long
+#define BFD_HOST_U_64_BIT unsigned long
 #else
 #ifdef __GNUC__
 #define BFD_HOST_64_BIT long long
+#define BFD_HOST_U_64_BIT unsigned long long
 #else /* ! defined (__GNUC__) */
  #error No 64 bit integer type available
 #endif /* ! defined (__GNUC__) */
 #endif /* ! BFD_HOST_64BIT_LONG */
 #endif /* ! defined (BFD_HOST_64_BIT) */
 
-typedef unsigned BFD_HOST_64_BIT bfd_vma;
+typedef BFD_HOST_U_64_BIT bfd_vma;
 typedef BFD_HOST_64_BIT bfd_signed_vma;
-typedef unsigned BFD_HOST_64_BIT bfd_size_type;
-typedef unsigned BFD_HOST_64_BIT symvalue;
+typedef BFD_HOST_U_64_BIT bfd_size_type;
+typedef BFD_HOST_U_64_BIT symvalue;
 
 #ifndef fprintf_vma
 #if BFD_HOST_64BIT_LONG
@@ -193,7 +199,7 @@ typedef enum bfd_format {
    to another, and are not necessarily correct).  */
 
 /* No flags.  */
-#define NO_FLAGS    	0x00
+#define BFD_NO_FLAGS   	0x00
 
 /* BFD contains relocation entries.  */
 #define HAS_RELOC   	0x01
@@ -1181,6 +1187,8 @@ enum bfd_architecture
   ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9a)
   bfd_arch_mips,       /* MIPS Rxxxx */
   bfd_arch_i386,       /* Intel 386 */
+#define bfd_mach_i386_i386 0
+#define bfd_mach_i386_i8086 1
   bfd_arch_we32k,      /* AT&T WE32xxx */
   bfd_arch_tahoe,      /* CCI/Harris Tahoe */
   bfd_arch_i860,       /* Intel 860 */
@@ -1192,6 +1200,7 @@ enum bfd_architecture
   bfd_arch_h8300,      /* Hitachi H8/300 */
 #define bfd_mach_h8300   1
 #define bfd_mach_h8300h  2
+#define bfd_mach_h8300s  3
   bfd_arch_powerpc,    /* PowerPC */
   bfd_arch_rs6000,     /* IBM RS/6000 */
   bfd_arch_hppa,       /* HP PA RISC */
@@ -1580,8 +1589,8 @@ relocation types already defined. */
   BFD_RELOC_SPARC_6,
   BFD_RELOC_SPARC_5,
 
-/* Alpha ECOFF relocations.  Some of these treat the symbol or "addend"
-in some special way.
+/* Alpha ECOFF and ELF relocations.  Some of these treat the symbol or
+"addend" in some special way.
 For GPDISP_HI16 ("gpdisp") relocations, the symbol is ignored when
 writing; when reading, it will be the absolute section symbol.  The
 addend is the displacement in bytes of the "lda" instruction from
@@ -1593,6 +1602,11 @@ with GPDISP_HI16 relocs.  The addend is ignored when writing the
 relocations out, and is filled in with the file's GP value on
 reading, for convenience. */
   BFD_RELOC_ALPHA_GPDISP_LO16,
+
+/* The ELF GPDISP relocation is exactly the same as the GPDISP_HI16
+relocation except that there is no accompanying GPDISP_LO16
+relocation. */
+  BFD_RELOC_ALPHA_GPDISP,
 
 /* The Alpha LITERAL/LITUSE relocs are produced by a symbol reference;
 the assembler turns it into a LDQ instruction to load the address of
@@ -1620,6 +1634,10 @@ The GNU linker currently doesn't do any of this optimizing. */
 "hint" field of a jmp/jsr/ret instruction, for possible branch-
 prediction logic which may be provided on some processors. */
   BFD_RELOC_ALPHA_HINT,
+
+/* The LINKAGE relocation outputs a linkage pair in the object file,
+which is filled by the linker. */
+  BFD_RELOC_ALPHA_LINKAGE,
 
 /* Bits 27..2 of the relocation address shifted right 2 bits;
 simple reloc otherwise. */
@@ -1735,6 +1753,35 @@ not stored in the instruction. */
   BFD_RELOC_ARM_LDR_IMM,
   BFD_RELOC_ARM_LITERAL,
   BFD_RELOC_ARM_IN_POOL,
+  BFD_RELOC_ARM_OFFSET_IMM8,
+  BFD_RELOC_ARM_HWLITERAL,
+  BFD_RELOC_ARM_THUMB_ADD,
+  BFD_RELOC_ARM_THUMB_IMM,
+  BFD_RELOC_ARM_THUMB_SHIFT,
+  BFD_RELOC_ARM_THUMB_OFFSET,
+
+/* Hitachi SH relocs.  Not all of these appear in object files. */
+  BFD_RELOC_SH_PCDISP8BY2,
+  BFD_RELOC_SH_PCDISP12BY2,
+  BFD_RELOC_SH_IMM4,
+  BFD_RELOC_SH_IMM4BY2,
+  BFD_RELOC_SH_IMM4BY4,
+  BFD_RELOC_SH_IMM8,
+  BFD_RELOC_SH_IMM8BY2,
+  BFD_RELOC_SH_IMM8BY4,
+  BFD_RELOC_SH_PCRELIMM8BY2,
+  BFD_RELOC_SH_PCRELIMM8BY4,
+  BFD_RELOC_SH_SWITCH16,
+  BFD_RELOC_SH_SWITCH32,
+  BFD_RELOC_SH_USES,
+  BFD_RELOC_SH_COUNT,
+  BFD_RELOC_SH_ALIGN,
+  BFD_RELOC_SH_CODE,
+  BFD_RELOC_SH_DATA,
+  BFD_RELOC_SH_LABEL,
+
+
+
   BFD_RELOC_UNUSED };
 typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
 reloc_howto_type *
@@ -2261,7 +2308,8 @@ enum bfd_flavour {
   bfd_target_som_flavour,
   bfd_target_os9k_flavour,
   bfd_target_versados_flavour,
-  bfd_target_msdos_flavour
+  bfd_target_msdos_flavour,
+  bfd_target_evax_flavour
 };
 
 enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };

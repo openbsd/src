@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989, 1990, 1991, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -13,14 +13,16 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
 the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public
-License along with GAS; see the file COPYING.  If not, write
-to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+You should have received a copy of the GNU General Public License
+along with GAS; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA. */
 
 #include "as.h"
 #include "libiberty.h"
 #include "obstack.h"
 #include "subsegs.h"
+#include "ecoff.h"
 
 /* We need this, despite the apparent object format dependency, since
    it defines stab types, which all object formats can use now. */

@@ -142,7 +142,9 @@ _bfd_ecoff_new_section_hook (abfd, section)
 {
   section->alignment_power = 4;
 
-  if (strcmp (section->name, _TEXT) == 0)
+  if (strcmp (section->name, _TEXT) == 0
+      || strcmp (section->name, _INIT) == 0
+      || strcmp (section->name, _FINI) == 0)
     section->flags |= SEC_CODE | SEC_LOAD | SEC_ALLOC;
   else if (strcmp (section->name, _DATA) == 0
 	   || strcmp (section->name, _SDATA) == 0)
@@ -2041,6 +2043,7 @@ ecoff_compute_section_file_positions (abfd)
   asection *current;
   unsigned int i;
   file_ptr old_sofar;
+  boolean rdata_in_text;
   boolean first_data, first_nonalloc;
   const bfd_vma round = ecoff_backend (abfd)->round;
 
@@ -2060,6 +2063,27 @@ ecoff_compute_section_file_positions (abfd)
 
   qsort (sorted_hdrs, abfd->section_count, sizeof (asection *),
 	 ecoff_sort_hdrs);
+
+  /* Some versions of the OSF linker put the .rdata section in the
+     text segment, and some do not.  */
+  rdata_in_text = ecoff_backend (abfd)->rdata_in_text;
+  if (rdata_in_text)
+    {
+      for (i = 0; i < abfd->section_count; i++)
+	{
+	  current = sorted_hdrs[i];
+	  if (strcmp (current->name, _RDATA) == 0)
+	    break;
+	  if ((current->flags & SEC_CODE) == 0
+	      && strcmp (current->name, _PDATA) != 0
+	      && strcmp (current->name, _RCONST) != 0)
+	    {
+	      rdata_in_text = false;
+	      break;
+	    }
+	}
+    }
+  ecoff_data (abfd)->rdata_in_text = rdata_in_text;
 
   first_data = true;
   first_nonalloc = true;
@@ -2088,7 +2112,7 @@ ecoff_compute_section_file_positions (abfd)
 	  && (abfd->flags & D_PAGED) != 0
 	  && ! first_data
 	  && (current->flags & SEC_CODE) == 0
-	  && (! ecoff_backend (abfd)->rdata_in_text
+	  && (! rdata_in_text
 	      || strcmp (current->name, _RDATA) != 0)
 	  && strcmp (current->name, _PDATA) != 0
 	  && strcmp (current->name, _RCONST) != 0)
@@ -2543,7 +2567,7 @@ _bfd_ecoff_write_object_contents (abfd)
 
       if ((section.s_flags & STYP_TEXT) != 0
 	  || ((section.s_flags & STYP_RDATA) != 0
-	      && backend->rdata_in_text)
+	      && ecoff_data (abfd)->rdata_in_text)
 	  || section.s_flags == STYP_PDATA
 	  || (section.s_flags & STYP_DYNAMIC) != 0
 	  || (section.s_flags & STYP_LIBLIST) != 0
@@ -2914,6 +2938,8 @@ ecoff_armap_hash (s, rehash, size, hlog)
 {
   unsigned int hash;
 
+  if (hlog == 0)
+    return 0;
   hash = *s++;
   while (*s != '\0')
     hash = ((hash >> 27) | (hash << 5)) + *s++;
@@ -3258,14 +3284,22 @@ const bfd_target *
 _bfd_ecoff_archive_p (abfd)
      bfd *abfd;
 {
+  struct artdata *tdata_hold;
   char armag[SARMAG + 1];
 
-  if (bfd_read ((PTR) armag, 1, SARMAG, abfd) != SARMAG
-      || strncmp (armag, ARMAG, SARMAG) != 0)
+  tdata_hold = abfd->tdata.aout_ar_data;
+
+  if (bfd_read ((PTR) armag, 1, SARMAG, abfd) != SARMAG)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
       return (const bfd_target *) NULL;
+    }
+
+  if (strncmp (armag, ARMAG, SARMAG) != 0)
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return NULL;
     }
 
   /* We are setting bfd_ardata(abfd) here, but since bfd_ardata
@@ -3275,7 +3309,10 @@ _bfd_ecoff_archive_p (abfd)
     (struct artdata *) bfd_zalloc (abfd, sizeof (struct artdata));
 
   if (bfd_ardata (abfd) == (struct artdata *) NULL)
-    return (const bfd_target *) NULL;
+    {
+      abfd->tdata.aout_ar_data = tdata_hold;
+      return (const bfd_target *) NULL;
+    }
 
   bfd_ardata (abfd)->first_file_filepos = SARMAG;
   bfd_ardata (abfd)->cache = NULL;
@@ -3288,10 +3325,43 @@ _bfd_ecoff_archive_p (abfd)
       || _bfd_ecoff_slurp_extended_name_table (abfd) == false)
     {
       bfd_release (abfd, bfd_ardata (abfd));
-      abfd->tdata.aout_ar_data = (struct artdata *) NULL;
+      abfd->tdata.aout_ar_data = tdata_hold;
       return (const bfd_target *) NULL;
     }
   
+  if (bfd_has_map (abfd))
+    {
+      bfd *first;
+
+      /* This archive has a map, so we may presume that the contents
+	 are object files.  Make sure that if the first file in the
+	 archive can be recognized as an object file, it is for this
+	 target.  If not, assume that this is the wrong format.  If
+	 the first file is not an object file, somebody is doing
+	 something weird, and we permit it so that ar -t will work.  */
+
+      first = bfd_openr_next_archived_file (abfd, (bfd *) NULL);
+      if (first != NULL)
+	{
+	  boolean fail;
+
+	  first->target_defaulted = false;
+	  fail = false;
+	  if (bfd_check_format (first, bfd_object)
+	      && first->xvec != abfd->xvec)
+	    {
+	      (void) bfd_close (first);
+	      bfd_release (abfd, bfd_ardata (abfd));
+	      abfd->tdata.aout_ar_data = tdata_hold;
+	      bfd_set_error (bfd_error_wrong_format);
+	      return NULL;
+	    }
+
+	  /* We ought to close first here, but we can't, because we
+             have no way to remove it from the archive cache.  FIXME.  */
+	}
+    }
+
   return abfd->xvec;
 }
 

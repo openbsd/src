@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_PREREQ(2.0)
+AC_PREREQ(2.5)
 AC_INIT(ar.c)
 
 AC_ARG_ENABLE(targets,
@@ -39,6 +39,7 @@ AC_ARG_PROGRAM
 
 HDEFINES=
 HLDFLAGS=
+HLDENV=
 RPATH_ENVVAR=LD_LIBRARY_PATH
 
 AC_PROG_CC
@@ -47,6 +48,7 @@ AC_PROG_CC
 
 AC_SUBST(HDEFINES)
 AC_SUBST(HLDFLAGS)
+AC_SUBST(HLDENV)
 AC_SUBST(RPATH_ENVVAR)
 AR=${AR-ar}
 AC_SUBST(AR)
@@ -58,20 +60,33 @@ AC_PROG_INSTALL
 # need to handle some hosts specially.
 BFDLIB='-L../bfd -lbfd'
 OPCODES='-L../opcodes -lopcodes'
-if test "${shared}" = "true"; then
-  case "${host}" in
-  *-*-sunos*)
-    # On SunOS, we must link against the name we are going to install,
-    # not -lbfd, since SunOS does not support SONAME.
-    if test "${shared_bfd}" = "true"; then
-      BFDLIB='-L../bfd -l`echo bfd | sed '"'"'$(program_transform_name)'"'"'`'
-    fi
-    if test "${shared_opcodes}" = "true"; then
-      OPCODES='-L../opcodes -l`echo opcodes | sed '"'"'$(program_transform_name)'"'"'`'
-    fi
-    ;;
-  esac
-fi
+case "${host}" in
+*-*-sunos*)
+  # On SunOS, we must link against the name we are going to install,
+  # not -lbfd, since SunOS does not support SONAME.
+  if test "${shared_bfd}" = "true"; then
+    BFDLIB='-L../bfd -l`echo bfd | sed '"'"'$(program_transform_name)'"'"'`'
+  fi
+  if test "${shared_opcodes}" = "true"; then
+    OPCODES='-L../opcodes -l`echo opcodes | sed '"'"'$(program_transform_name)'"'"'`'
+  fi
+  ;;
+alpha*-*-osf*)
+  # On Alpha OSF/1, the native linker searches all the -L
+  # directories for any LIB.so files, and only then searches for any
+  # LIB.a files.  That means that if there is an installed
+  # libbfd.so, but this build is not done with --enable-shared, the
+  # link will wind up being against the install libbfd.so rather
+  # than the newly built libbfd.  To avoid this, we must explicitly
+  # link against libbfd.a when --enable-shared is not used.
+  if test "${shared_bfd}" != "true"; then
+    BFDLIB='../bfd/libbfd.a'
+  fi
+  if test "${shared_opcodes}" != "true"; then
+    OPCODES='../opcodes/libopcodes.a'
+  fi
+  ;;
+esac
 AC_SUBST(BFDLIB)
 AC_SUBST(OPCODES)
 
@@ -117,6 +132,8 @@ if test $bu_cv_header_utime_h = yes; then
 fi
 
 BFD_NEED_DECLARATION(fprintf)
+BFD_NEED_DECLARATION(strstr)
+BFD_NEED_DECLARATION(sbrk)
 
 BFD_BINARY_FOPEN
 
@@ -153,7 +170,7 @@ do
     else
 	case $targ in
 changequote(,)dnl
-	i[345]86*-*-netware*) 
+	i[3456]86*-*-netware*) 
 changequote([,])dnl
 	  BUILD_NLMCONV='$(NLMCONV_PROG)'
 	  NLMCONV_DEFS="$NLMCONV_DEFS -DNLMCONV_I386"

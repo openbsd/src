@@ -18,7 +18,7 @@ struct external_filehdr {
 };
 
 #define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+#define	FILHSZ	20
 
 /* Bits for f_flags:
  *	F_RELFLG	relocation info stripped from file
@@ -58,8 +58,8 @@ typedef struct
 }
 AOUTHDR;
 
-#define AOUTSZ (sizeof(AOUTHDR))
-
+#define AOUTSZ 28
+#define AOUTHDRSZ 28
 
 /********************** SECTION HEADER **********************/
 
@@ -77,7 +77,7 @@ struct external_scnhdr {
 };
 
 #define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	sizeof(SCNHDR)
+#define	SCNHSZ	40
 
 /*
  * names of "special" sections

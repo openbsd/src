@@ -26,11 +26,11 @@ prefix = @prefix@
 
 program_transform_name = @program_transform_name@
 exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -40,8 +40,8 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
+infodir = @infodir@
+includedir = @includedir@
 oldincludedir =
 docdir = doc
 
@@ -198,6 +198,7 @@ BFD32_BACKENDS = \
 	elf32-m88k.o \
 	elf32-mips.o \
 	elf32-ppc.o \
+	elf32-sh.o \
 	elf32-sparc.o \
 	elf32.o \
 	elflink.o \
@@ -283,6 +284,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-m88k.c \
 	elf32-mips.c \
 	elf32-ppc.c \
+	elf32-sh.c \
 	elf32-sparc.c \
 	elf32.c \
 	elflink.c \
@@ -334,10 +336,16 @@ BFD64_BACKENDS = \
 	aout64.o \
 	coff-alpha.o \
 	demo64.o \
+	elf64-alpha.o \
 	elf64-gen.o \
 	elf64-mips.o \
 	elf64-sparc.o \
 	elf64.o \
+	evax-alpha.o \
+	evax-egsd.o \
+	evax-etir.o \
+	evax-emh.o \
+	evax-misc.o \
 	nlm32-alpha.o \
 	nlm64.o
 
@@ -345,10 +353,16 @@ BFD64_BACKENDS_CFILES = \
 	aout64.c \
 	coff-alpha.c \
 	demo64.c \
+	elf64-alpha.c \
 	elf64-gen.c \
 	elf64-mips.c \
 	elf64-sparc.c \
 	elf64.c \
+	evax-alpha.c \
+	evax-egsd.c \
+	evax-etir.c \
+	evax-emh.c \
+	evax-misc.c \
 	nlm32-alpha.c \
 	nlm64.c
 
@@ -418,7 +432,7 @@ CFILES = \
 
 HFILES = aout-target.h aoutf1.h aoutx.h coffcode.h \
 	 coffswap.h ecoffswap.h elf32-hppa.h elf32-target.h elf64-target.h \
-	 elfcode.h hppa_stubs.h libaout.h libbfd.h \
+	 elfcode.h evax.h hppa_stubs.h libaout.h libbfd.h \
 	 libcoff.h libecoff.h elf-bfd.h libhppa.h libieee.h libnlm.h \
 	 liboasys.h nlm-target.h nlmcode.h som.h genlink.h netbsd.h ns32k.h
 
@@ -554,11 +568,11 @@ do_mostlyclean:
 	rm -f *.o *~ core *.E *.p *.ip aout-params.h gen-aout config.log \
 		pic/*.o
 do_clean: do_mostlyclean
-	rm -f libbfd.a TAGS bfd.h stmp-bfd.h ofiles stamp-ofiles \
+	rm -f libbfd.a TAGS bfd.h stmp-bfd.h bfd-tmp.h ofiles stamp-ofiles \
 		elf32-target.h elf64-target.h $(SHLIB) $(SHLINK) \
 		piclist stamp-piclist
 do_distclean: do_clean
-	rm -f Makefile config.status config.cache config.h stamp-h
+	rm -f Makefile config.status config.cache config.h stamp-h bfd-in3.h
 	rm -rf pic stamp-picdir
 do_maintainer_clean: do_distclean
 	rm -f $(srcdir)/bfd-in2.h $(srcdir)/libbfd.h $(srcdir)/libcoff.h
@@ -646,7 +660,7 @@ install: $(ALLLIBS)
 	    ts=lib`echo $(SHLIB) | sed -e 's/^lib//' | sed '$(program_transform_name)'`; \
 	    ln -sf $$ts $(libdir)/$$tf; \
 	  elif [ "$$f" = "$(SHLIB)" ]; then \
-	    $(INSTALL_PROGRAM) $$f $(libdir)/$$tf; \
+	    @INSTALL_SHLIB@ \
 	  else \
 	    $(INSTALL_DATA) $$f $(libdir)/$$tf; \
 	    $(RANLIB) $(libdir)/$$tf; \
@@ -728,15 +742,15 @@ BFDIN_H= $(srcdir)/bfd-in2.h
 
 $(BFD_H): stmp-bfd.h ; @true
 
-stmp-bfd.h : $(srcdir)/bfd-in2.h Makefile
-	rm -f bfd.h-new
-	sed -e 's/@WORDSIZE@/$(WORDSIZE)/' \
-	    -e "s/@VERSION@/`cat $(srcdir)/VERSION`/" \
-	    -e 's/@BFD_HOST_64BIT_LONG@/@HOST_64BIT_LONG@/' \
-		< $(srcdir)/bfd-in2.h \
-		> bfd.h-new
-	$(srcdir)/../move-if-change bfd.h-new $(BFD_H)
+stmp-bfd.h: bfd-in3.h
+	rm -f bfd-tmp.h
+	cp bfd-in3.h bfd-tmp.h
+	$(srcdir)/../move-if-change bfd-tmp.h $(BFD_H)
+	rm -f bfd-tmp.h
 	touch stmp-bfd.h
+
+bfd-in3.h: bfd-in2.h config.status
+	CONFIG_FILES=bfd-in3.h:bfd-in2.h CONFIG_HEADERS= $(SHELL) ./config.status
 
 # Could really use a "copy-if-change"...
 headers:
@@ -771,6 +785,8 @@ bfd.dvi:
 
 bfd.ps: 
 	(cd $(docdir); $(MAKE) bfd.ps $(FLAGS_TO_PASS))
+
+
 
 
 $(OFILES): stamp-picdir
@@ -840,6 +856,9 @@ aout-adobe.o: aout-adobe.c $(INCDIR)/aout/adobe.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def libaout.h $(INCDIR)/bfdlink.h
 aout-ns32k.o: aout-ns32k.c $(INCDIR)/aout/aout64.h \
   ns32k.h libaout.h $(INCDIR)/bfdlink.h
+aout-sparcle.o: aout-sparcle.c $(INCDIR)/bfdlink.h libaout.h aoutf1.h \
+  $(INCDIR)/aout/sun4.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
 aout0.o: aout0.c aoutf1.h $(INCDIR)/aout/sun4.h libaout.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
@@ -946,6 +965,9 @@ elf32-mips.o: elf32-mips.c $(INCDIR)/bfdlink.h genlink.h \
 elf32-ppc.o: elf32-ppc.c $(INCDIR)/bfdlink.h elf-bfd.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
   $(INCDIR)/elf/ppc.h elf32-target.h
+elf32-sh.o: elf32-sh.c $(INCDIR)/bfdlink.h elf-bfd.h \
+  $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
+  elf32-target.h
 elf32-sparc.o: elf32-sparc.c $(INCDIR)/bfdlink.h elf-bfd.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
   $(INCDIR)/elf/sparc.h elf32-target.h
@@ -959,8 +981,8 @@ hp300hpux.o: hp300hpux.c $(INCDIR)/aout/hp300hpux.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h \
   aout-target.h
 som.o: som.c
-i386aout.o: i386aout.c libaout.h $(INCDIR)/bfdlink.h \
-  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+i386aout.o: i386aout.c $(INCDIR)/aout/aout64.h libaout.h \
+  $(INCDIR)/bfdlink.h aout-target.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 i386bsd.o: i386bsd.c libaout.h $(INCDIR)/bfdlink.h \
   aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
@@ -1065,11 +1087,17 @@ coff-alpha.o: coff-alpha.c $(INCDIR)/bfdlink.h $(INCDIR)/coff/internal.h \
 demo64.o: demo64.c aoutf1.h $(INCDIR)/aout/sun4.h libaout.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
+elf64-alpha.o: elf64-alpha.c elf-bfd.h $(INCDIR)/elf/common.h \
+  $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
+  $(INCDIR)/elf/alpha.h $(INCDIR)/coff/internal.h $(INCDIR)/coff/sym.h \
+  $(INCDIR)/coff/symconst.h $(INCDIR)/coff/ecoff.h $(INCDIR)/coff/alpha.h \
+  $(INCDIR)/aout/ar.h libcoff.h libecoff.h ecoffswap.h \
+  elf64-target.h
 elf64-gen.o: elf64-gen.c elf-bfd.h $(INCDIR)/elf/common.h \
   $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
   elf64-target.h
-elf64-mips.o: elf64-mips.c $(INCDIR)/bfdlink.h genlink.h \
-  elf-bfd.h $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h \
+elf64-mips.o: elf64-mips.c $(INCDIR)/aout/ar.h $(INCDIR)/bfdlink.h \
+  genlink.h elf-bfd.h $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h \
   $(INCDIR)/elf/external.h $(INCDIR)/elf/mips.h $(INCDIR)/coff/sym.h \
   $(INCDIR)/coff/symconst.h $(INCDIR)/coff/internal.h \
   $(INCDIR)/coff/ecoff.h $(INCDIR)/coff/alpha.h ecoffswap.h \
@@ -1080,6 +1108,11 @@ elf64-sparc.o: elf64-sparc.c elf-bfd.h $(INCDIR)/elf/common.h \
 elf64.o: elf64.c elfcode.h $(INCDIR)/bfdlink.h elf-bfd.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
   elfcore.h elflink.h
+evax-alpha.o: evax-alpha.c $(INCDIR)/bfdlink.h evax.h
+evax-egsd.o: evax-egsd.c $(INCDIR)/bfdlink.h evax.h
+evax-etir.o: evax-etir.c $(INCDIR)/bfdlink.h evax.h
+evax-emh.o: evax-emh.c $(INCDIR)/bfdlink.h evax.h
+evax-misc.o: evax-misc.c $(INCDIR)/bfdlink.h evax.h
 nlm32-alpha.o: nlm32-alpha.c $(INCDIR)/nlm/alpha-ext.h \
   libnlm.h $(INCDIR)/nlm/common.h $(INCDIR)/nlm/internal.h \
   $(INCDIR)/nlm/external.h nlmswap.h nlm-target.h

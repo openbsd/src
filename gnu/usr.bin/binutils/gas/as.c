@@ -15,8 +15,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 /*
  * Main program for AS; a 32-bit assembler of GNU.
@@ -44,6 +45,12 @@
 #include "sb.h"
 #include "macro.h"
 
+#ifdef HAVE_SBRK
+#ifdef NEED_DECLARATION_SBRK
+extern PTR sbrk ();
+#endif
+#endif
+
 static void perform_an_assembly_pass PARAMS ((int argc, char **argv));
 static int macro_expr PARAMS ((const char *, int, sb *, int *));
 
@@ -67,6 +74,17 @@ int chunksize = 5000;
    Then the chunk sizes for gas and bfd will be reduced.  */
 int debug_memory = 0;
 
+/* We build a list of defsyms as we read the options, and then define
+   them after we have initialized everything.  */
+
+struct defsym_list
+{
+  struct defsym_list *next;
+  char *name;
+  valueT value;
+};
+
+static struct defsym_list *defsyms;
 
 void
 print_version_id ()
@@ -129,7 +147,6 @@ Options:\n\
 extern struct emulation mipsbelf, mipslelf, mipself;
 extern struct emulation mipsbecoff, mipslecoff, mipsecoff;
 
-static const char *emulation_name;
 static struct emulation *const emulations[] = { EMULATIONS };
 static const int n_emulations = sizeof (emulations) / sizeof (emulations[0]);
 
@@ -183,6 +200,7 @@ const char *
 default_emul_bfd_name ()
 {
   abort ();
+  return NULL;
 }
 
 void
@@ -379,7 +397,7 @@ parse_args (pargc, pargv)
 	  {
 	    char *s;
 	    long i;
-	    symbolS *sym;
+	    struct defsym_list *n;
 
 	    for (s = optarg; *s != '\0' && *s != '='; s++)
 	      ;
@@ -387,9 +405,11 @@ parse_args (pargc, pargv)
 	      as_fatal ("bad defsym; format is --defsym name=value");
 	    *s++ = '\0';
 	    i = strtol (s, (char **) NULL, 0);
-	    sym = symbol_new (optarg, absolute_section, (valueT) i,
-			      &zero_address_frag);
-	    symbol_table_insert (sym);
+	    n = (struct defsym_list *) xmalloc (sizeof *n);
+	    n->next = defsyms;
+	    n->name = optarg;
+	    n->value = i;
+	    defsyms = n;
 	  }
 	  break;
 
@@ -584,6 +604,22 @@ main (argc, argv)
 #ifdef tc_init_after_args
   tc_init_after_args ();
 #endif
+
+  /* Now that we have fully initialized, and have created the output
+     file, define any symbols requested by --defsym command line
+     arguments.  */
+  while (defsyms != NULL)
+    {
+      symbolS *sym;
+      struct defsym_list *next;
+
+      sym = symbol_new (defsyms->name, absolute_section, defsyms->value,
+			&zero_address_frag);
+      symbol_table_insert (sym);
+      next = defsyms->next;
+      free (defsyms);
+      defsyms = next;
+    }
 
   PROGRESS (1);
 

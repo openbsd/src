@@ -50,10 +50,10 @@ fi
 # these tools are built for the host environment
 #
 host_tools="texinfo byacc flex bison binutils ld gas gcc gdb make patch
-	    prms send-pr gprof gdbtest tgas etc expect dejagnu sim
-            m4 autoconf ispell grep diff rcs cvs fileutils shellutils
+	    prms send-pr gprof gdbtest tgas etc expect dejagnu sim bash
+            m4 autoconf ispell grep diff rcs cvs fileutils shellutils time
 	    textutils wdiff find emacs emacs19 uudecode hello tar gzip indent
-	    recode release sed utils guile perl apache inet"
+	    recode release sed utils guile perl apache inet gawk"
 
 
 # these libraries are built for the target environment, and are built after
@@ -81,9 +81,10 @@ target_tools="target-examples target-groff"
 
 # directories to be built in the native environment only
 #
-native_only="autoconf cvs emacs emacs19 fileutils find grep gzip hello
+native_only="autoconf cvs emacs emacs19 fileutils find gawk grep gzip hello
 	     indent ispell m4 rcs recode sed shellutils tar textutils gash
-	     uudecode wdiff gprof target-groff guile perl apache inet"
+	     uudecode wdiff gprof target-groff guile perl apache inet time
+	     bash prms"
 
 # directories to be built in a cross environment only
 #
@@ -120,20 +121,23 @@ case "${host}" in
   m88k-motorola-sysv*)    host_makefile_frag=config/mh-delta88;;
   mips*-dec-ultrix*)      host_makefile_frag=config/mh-decstation ;;
   mips*-nec-sysv4*)	  host_makefile_frag=config/mh-necv4 ;;
-  mips*-sgi-irix[56]*)    host_makefile_frag=config/mh-irix5 ;;
+  mips*-sgi-irix6*)	  host_makefile_frag=config/mh-irix6 ;;
+  mips*-sgi-irix5*)	  host_makefile_frag=config/mh-irix5 ;;
   mips*-sgi-irix4*)       host_makefile_frag=config/mh-irix4 ;;
   mips*-sgi-irix3*)       host_makefile_frag=config/mh-sysv ;;
   mips*-*-sysv4*)	  host_makefile_frag=config/mh-sysv4 ;;
   mips*-*-sysv*)	  host_makefile_frag=config/mh-riscos ;;
-  i[345]86-ncr-sysv4.3)   host_makefile_frag=config/mh-ncrsvr43 ;;
-  i[345]86-ncr-sysv4*)    host_makefile_frag=config/mh-ncr3000 ;;
-  i[345]86-*-sco3.2v5*)   host_makefile_frag=config/mh-sysv ;;
-  i[345]86-*-sco*)        host_makefile_frag=config/mh-sco ;;
-  i[345]86-*-isc*)	  host_makefile_frag=config/mh-sysv ;;
-  i[345]86-*-linux*)      host_makefile_frag=config/mh-linux ;;
-  i[345]86-*-solaris2*)   host_makefile_frag=config/mh-sysv4 ;;
-  i[345]86-*-aix*)	  host_makefile_frag=config/mh-aix386 ;;
-  i[345]86-*-go32*)	  host_makefile_frag=config/mh-go32 ;;
+  i[3456]86-*-dgux*)	  host_makefile_frag=config/mh-sysv4 ;;
+  i[3456]86-ncr-sysv4.3)  host_makefile_frag=config/mh-ncrsvr43 ;;
+  i[3456]86-ncr-sysv4*)   host_makefile_frag=config/mh-ncr3000 ;;
+  i[3456]86-*-sco3.2v5*)  host_makefile_frag=config/mh-sysv ;;
+  i[3456]86-*-sco*)       host_makefile_frag=config/mh-sco ;;
+  i[3456]86-*-isc*)	  host_makefile_frag=config/mh-sysv ;;
+  i[3456]86-*-linux*)     host_makefile_frag=config/mh-linux ;;
+  i[3456]86-*-solaris2*)  host_makefile_frag=config/mh-sysv4 ;;
+  i[3456]86-*-aix*)	  host_makefile_frag=config/mh-aix386 ;;
+  i[3456]86-*-go32*)	  host_makefile_frag=config/mh-go32 ;;
+  *-cygwin32*)	  	  host_makefile_frag=config/mh-cygwin32 ;;
   vax-*-ultrix2*)         host_makefile_frag=config/mh-vaxult2 ;;
   *-*-solaris2*)          host_makefile_frag=config/mh-solaris ;;
   m68k-sun-sunos*)	  host_makefile_frag=config/mh-sun3 ;;
@@ -190,7 +194,7 @@ if [ x${shared} = xyes ]; then
   waugh=
   case "${host}" in
     hppa*)		waugh=config/mh-papic ;;
-    i[345]86-*)		waugh=config/mh-x86pic ;;
+    i[3456]86-*)	waugh=config/mh-x86pic ;;
     sparc64-*)		waugh=config/mh-sparcpic ;;
     *)			waugh=config/mh-${host_cpu}pic ;;
   esac
@@ -209,8 +213,14 @@ fi
 
 case "${target}" in
   v810*)		target_makefile_frag=config/mt-v810 ;;
-  i[345]86-*-netware*)  target_makefile_frag=config/mt-netware ;;
+  i[3456]86-*-netware*) target_makefile_frag=config/mt-netware ;;
   powerpc-*-netware*)   target_makefile_frag=config/mt-netware ;;
+  powerpc*-*-eabi* | \
+  powerpc*-*-elf* | \
+  powerpc*-*-linux* | \
+  powerpc*-*-rtem* | \
+  powerpc*-*-sysv* | \
+  powerpc*-*-solaris*)	target_makefile_frag=config/mt-ppc ;;
 esac
 
 skipdirs=
@@ -312,7 +322,7 @@ fi
 # Default to using --with-stabs for certain targets.
 if [ x${with_stabs} = x ]; then
   case "${target}" in
-  mips*-*-* | alpha*-*-osf* | i[345]86*-*-sysv4* | i[345]86*-*-unixware*)
+  mips*-*-* | alpha*-*-osf* | i[3456]86*-*-sysv4* | i[3456]86*-*-unixware*)
     with_stabs=yes;
     withoptions="${withoptions} --with-stabs"
     ;;
@@ -353,7 +363,9 @@ done
 # Configure extra directories which are host specific
 
 case "${host}" in
-	i[345]86-*-go32*)
+	i[3456]86-*-go32*)
+	  configdirs="$configdirs dosrel" ;;
+	*-cygwin32*)
 	  configdirs="$configdirs dosrel" ;;
 esac
 
@@ -364,14 +376,14 @@ esac
 noconfigdirs=""
 
 case "${host}" in
-  i[345]86-*-vsta)
+  i[3456]86-*-vsta)
     noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet"
     ;;
-  i[345]86-*-go32)
+  i[3456]86-*-go32)
     noconfigdirs="tcl tk expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet"
 	;;
   *-*-cygwin32)
-     noconfigdirs="patch diff tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs guile perl apache inet"
+     noconfigdirs="tk tcl expect dejagnu cvs autoconf bison send-pr gprof rcs guile perl texinfo apache inet"
     ;;
   ppc*-*-pe)
      noconfigdirs="patch diff make tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs guile perl apache inet"
@@ -386,14 +398,14 @@ case "${target}" in
   *-*-vxworks*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
-  *-*-ose)
-    noconfigdirs="$noconfigdirs target-libgloss"
-    ;;
   alpha-dec-osf*)
     # ld works, but does not support shared libraries.  emacs doesn't
     # work.  newlib is not 64 bit ready.  I'm not sure about fileutils or grep.
     # gas doesn't generate exception information.
     noconfigdirs="$noconfigdirs gas ld emacs fileutils grep target-newlib target-libgloss"
+    ;;
+  alpha*-*-*vms*)
+    noconfigdirs="$noconfigdirs gdb ld target-newlib target-libgloss"
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
@@ -423,7 +435,7 @@ case "${target}" in
     esac
     noconfigdirs="$noconfigdirs ld shellutils"
     ;;
-  i[345]86-*-go32)
+  i[3456]86-*-go32)
     # but don't build gdb
     noconfigdirs="$noconfigdirs gdb target-libg++ target-libstdc++ target-libio target-librx"
     ;;
@@ -434,29 +446,29 @@ case "${target}" in
     skipdirs=`echo " ${skipdirs} " | sed -e 's/ target-newlib / /'`
 
     # Can't build gdb for cygwin32 if not native.
-    case "${host}:${build}" in
-      *-*-cygwin32 | *-*-cygwin32:*-*-cygwin32) ;; # keep gdb
+    case "${host}" in
+      *-*-cygwin32) ;; # keep gdb
       *) noconfigdirs="$noconfigdirs gdb"
     esac
     ;;    
-  i[345]86-*-pe)
+  i[3456]86-*-pe)
     noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-libio target-librx target-libgloss"
     ;;
-  i[345]86-*-sco3.2v5*)
+  i[3456]86-*-sco3.2v5*)
     # The linker does not yet know about weak symbols in COFF,
     # and is not configured to handle mixed ELF and COFF.
     noconfigdirs="$noconfigdirs gprof ld target-libgloss"
     ;;
-  i[345]86-*-sco*)
+  i[3456]86-*-sco*)
     noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
-  i[345]86-*-solaris2*)
+  i[3456]86-*-solaris2*)
     # The linker does static linking correctly, but the Solaris C library
     # has bugs such that some important functions won't work when statically
     # linked.  (See man pages for getpwuid, for example.)
     noconfigdirs="$noconfigdirs ld target-libgloss"
     ;;
-  i[345]86-*-sysv4*)
+  i[3456]86-*-sysv4*)
     # The SYSV4 C compiler doesn't handle Emacs correctly
     case "${CC}" in
 	"" | cc*) noconfigdirs="$noconfigdirs emacs emacs19" ;;
@@ -502,6 +514,12 @@ case "${target}" in
     # emacs is emacs 18, which does not work on Irix 5 (emacs19 does work)
     noconfigdirs="$noconfigdirs ld gprof emacs target-libgloss"
     ;;
+  mips*-*-irix6*)
+    # The GNU linker does not support shared libraries.
+    # emacs is emacs 18, which does not work on Irix 5 (emacs19 does work)
+    # BFD does not have Irix 6 support yet.
+    noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb readline mmalloc sim gprof emacs target-libgloss"
+    ;;
   mips*-dec-bsd*)
     noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
@@ -516,8 +534,8 @@ case "${target}" in
     ;;
   sh-*-*)
     case "${host}" in
-      i[345]86-*-vsta) ;; # don't add gprof back in
-      i[345]86-*-go32) ;; # don't add gprof back in
+      i[3456]86-*-vsta) ;; # don't add gprof back in
+      i[3456]86-*-go32) ;; # don't add gprof back in
       *) skipdirs=`echo " ${skipdirs} " | sed -e 's/ gprof / /'` ;;
     esac
     noconfigdirs="$noconfigdirs target-libgloss"
@@ -566,7 +584,7 @@ esac
 # If we are building a Canadian Cross, discard tools that can not be built
 # using a cross compiler.  FIXME: These tools should be fixed.
 if [ "${build}" != "${host}" ]; then
-  noconfigdirs="$noconfigdirs expect dejagnu make texinfo diff"
+  noconfigdirs="$noconfigdirs tcl tk expect dejagnu"
 fi
 
 # Make sure we don't let GNU ld be added if we didn't want it.
@@ -708,7 +726,7 @@ fi
 if [ x${shared} = xyes ]; then
   case "${target}" in
     hppa*)		target_makefile_frag=config/mt-papic ;;
-    i[345]86-*)		target_makefile_frag=config/mt-x86pic ;;
+    i[3456]86-*)		target_makefile_frag=config/mt-x86pic ;;
     *)			target_makefile_frag=config/mt-${target_cpu}pic ;;
   esac
 fi

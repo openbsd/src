@@ -103,6 +103,9 @@ Assemble for the 68060.
 @itemx -m68360
 Assemble for the CPU32 family of chips.
 
+@item -m5200
+Assemble for the ColdFire family of chips.
+
 @item -m68881
 @itemx -m68882
 Assemble 68881 floating point instructions.  This is the default for the

@@ -41,7 +41,7 @@ static const struct sh_opcode *sh_insn_info PARAMS ((unsigned int));
 static boolean sh_align_loads
   PARAMS ((bfd *, asection *, struct internal_reloc *, bfd_byte *, boolean *));
 static boolean sh_swap_insns
-  PARAMS ((bfd *, asection *, struct internal_reloc *, bfd_byte *, bfd_vma));
+  PARAMS ((bfd *, asection *, PTR, bfd_byte *, bfd_vma));
 static boolean sh_relocate_section
   PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
 	   struct internal_reloc *, struct internal_syment *, asection **));
@@ -1883,7 +1883,8 @@ sh_insn_uses_freg (insn, op, freg)
 
 /* See whether instructions I1 and I2 conflict, assuming I1 comes
    before I2.  OP1 and OP2 are the corresponding sh_opcode structures.
-   This should return true if the instructions can be swapped safely.  */
+   This should return true if there is a conflict, or false if the
+   instructions can be swapped safely.  */
 
 static boolean
 sh_insns_conflict (i1, op1, i2, op2)
@@ -1902,7 +1903,7 @@ sh_insns_conflict (i1, op1, i2, op2)
     return true;
 
   if ((f1 & SETSSP) != 0 && (f2 & USESSP) != 0)
-    return false;
+    return true;
   if ((f2 & SETSSP) != 0 && (f1 & USESSP) != 0)
     return true;
 
@@ -1972,6 +1973,189 @@ sh_load_use (i1, op1, i2, op2)
   return false;
 }
 
+/* Try to align loads and stores within a span of memory.  This is
+   called by both the ELF and the COFF sh targets.  ABFD and SEC are
+   the BFD and section we are examining.  CONTENTS is the contents of
+   the section.  SWAP is the routine to call to swap two instructions.
+   RELOCS is a pointer to the internal relocation information, to be
+   passed to SWAP.  PLABEL is a pointer to the current label in a
+   sorted list of labels; LABEL_END is the end of the list.  START and
+   STOP are the range of memory to examine.  If a swap is made,
+   *PSWAPPED is set to true.  */
+
+boolean
+_bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
+			 plabel, label_end, start, stop, pswapped)
+     bfd *abfd;
+     asection *sec;
+     bfd_byte *contents;
+     boolean (*swap) PARAMS ((bfd *, asection *, PTR, bfd_byte *, bfd_vma));
+     PTR relocs;
+     bfd_vma **plabel;
+     bfd_vma *label_end;
+     bfd_vma start;
+     bfd_vma stop;
+     boolean *pswapped;
+{
+  bfd_vma i;
+
+  /* Instructions should be aligned on 2 byte boundaries.  */
+  if ((start & 1) == 1)
+    ++start;
+
+  /* Now look through the unaligned addresses.  */
+  i = start;
+  if ((i & 2) == 0)
+    i += 2;
+  for (; i < stop; i += 4)
+    {
+      unsigned int insn;
+      const struct sh_opcode *op;
+      unsigned int prev_insn = 0;
+      const struct sh_opcode *prev_op = NULL;
+
+      insn = bfd_get_16 (abfd, contents + i);
+      op = sh_insn_info (insn);
+      if (op == NULL
+	  || (op->flags & (LOAD | STORE)) == 0)
+	continue;
+
+      /* This is a load or store which is not on a four byte boundary.  */
+
+      while (*plabel < label_end && **plabel < i)
+	++*plabel;
+
+      if (i > start)
+	{
+	  prev_insn = bfd_get_16 (abfd, contents + i - 2);
+	  prev_op = sh_insn_info (prev_insn);
+
+	  /* If the load/store instruction is in a delay slot, we
+	     can't swap.  */
+	  if (prev_op == NULL
+	      || (prev_op->flags & DELAY) != 0)
+	    continue;
+	}
+      if (i > start
+	  && (*plabel >= label_end || **plabel != i)
+	  && prev_op != NULL
+	  && (prev_op->flags & (LOAD | STORE)) == 0
+	  && ! sh_insns_conflict (prev_insn, prev_op, insn, op))
+	{
+	  boolean ok;
+
+	  /* The load/store instruction does not have a label, and
+	     there is a previous instruction; PREV_INSN is not
+	     itself a load/store instruction, and PREV_INSN and
+	     INSN do not conflict.  */
+
+	  ok = true;
+
+	  if (i >= start + 4)
+	    {
+	      unsigned int prev2_insn;
+	      const struct sh_opcode *prev2_op;
+
+	      prev2_insn = bfd_get_16 (abfd, contents + i - 4);
+	      prev2_op = sh_insn_info (prev2_insn);
+
+	      /* If the instruction before PREV_INSN has a delay
+		 slot--that is, PREV_INSN is in a delay slot--we
+		 can not swap.  */
+	      if (prev2_op == NULL
+		  || (prev2_op->flags & DELAY) != 0)
+		ok = false;
+
+	      /* If the instruction before PREV_INSN is a load,
+		 and it sets a register which INSN uses, then
+		 putting INSN immediately after PREV_INSN will
+		 cause a pipeline bubble, so there is no point to
+		 making the swap.  */
+	      if (ok
+		  && (prev2_op->flags & LOAD) != 0
+		  && sh_load_use (prev2_insn, prev2_op, insn, op))
+		ok = false;
+	    }
+
+	  if (ok)
+	    {
+	      if (! (*swap) (abfd, sec, relocs, contents, i - 2))
+		return false;
+	      *pswapped = true;
+	      continue;
+	    }
+	}
+
+      while (*plabel < label_end && **plabel < i + 2)
+	++*plabel;
+
+      if (i + 2 < stop
+	  && (*plabel >= label_end || **plabel != i + 2))
+	{
+	  unsigned int next_insn;
+	  const struct sh_opcode *next_op;
+
+	  /* There is an instruction after the load/store
+	     instruction, and it does not have a label.  */
+	  next_insn = bfd_get_16 (abfd, contents + i + 2);
+	  next_op = sh_insn_info (next_insn);
+	  if (next_op != NULL
+	      && (next_op->flags & (LOAD | STORE)) == 0
+	      && ! sh_insns_conflict (insn, op, next_insn, next_op))
+	    {
+	      boolean ok;
+
+	      /* NEXT_INSN is not itself a load/store instruction,
+		 and it does not conflict with INSN.  */
+
+	      ok = true;
+
+	      /* If PREV_INSN is a load, and it sets a register
+		 which NEXT_INSN uses, then putting NEXT_INSN
+		 immediately after PREV_INSN will cause a pipeline
+		 bubble, so there is no reason to make this swap.  */
+	      if (prev_op != NULL
+		  && (prev_op->flags & LOAD) != 0
+		  && sh_load_use (prev_insn, prev_op, next_insn, next_op))
+		ok = false;
+
+	      /* If INSN is a load, and it sets a register which
+		 the insn after NEXT_INSN uses, then doing the
+		 swap will cause a pipeline bubble, so there is no
+		 reason to make the swap.  However, if the insn
+		 after NEXT_INSN is itself a load or store
+		 instruction, then it is misaligned, so
+		 optimistically hope that it will be swapped
+		 itself, and just live with the pipeline bubble if
+		 it isn't.  */
+	      if (ok
+		  && i + 4 < stop
+		  && (op->flags & LOAD) != 0)
+		{
+		  unsigned int next2_insn;
+		  const struct sh_opcode *next2_op;
+
+		  next2_insn = bfd_get_16 (abfd, contents + i + 4);
+		  next2_op = sh_insn_info (next2_insn);
+		  if ((next2_op->flags & (LOAD | STORE)) == 0
+		      && sh_load_use (insn, op, next2_insn, next2_op))
+		    ok = false;
+		}
+
+	      if (ok)
+		{
+		  if (! (*swap) (abfd, sec, relocs, contents, i))
+		    return false;
+		  *pswapped = true;
+		  continue;
+		}
+	    }
+	}
+    }
+
+  return true;
+}
+
 /* Look for loads and stores which we can align to four byte
    boundaries.  See the longer comment above sh_relax_section for why
    this is desirable.  This sets *PSWAPPED if some instruction was
@@ -2015,7 +2199,7 @@ sh_align_loads (abfd, sec, internal_relocs, contents, pswapped)
 
   for (irel = internal_relocs; irel < irelend; irel++)
     {
-      bfd_vma start, stop, i;
+      bfd_vma start, stop;
 
       if (irel->r_type != R_SH_CODE)
 	continue;
@@ -2030,162 +2214,10 @@ sh_align_loads (abfd, sec, internal_relocs, contents, pswapped)
       else
 	stop = sec->_cooked_size;
 
-      /* Instructions should be aligned on 2 byte boundaries.  */
-      if ((start & 1) == 1)
-	++start;
-
-      /* Now look through the unaligned addresses.  */
-      i = start;
-      if ((i & 2) == 0)
-	i += 2;
-      for (; i < stop; i += 4)
-	{
-	  unsigned int insn;
-	  const struct sh_opcode *op;
-	  unsigned int prev_insn = 0;
-	  const struct sh_opcode *prev_op = NULL;
-
-	  insn = bfd_get_16 (abfd, contents + i);
-	  op = sh_insn_info (insn);
-	  if (op == NULL
-	      || (op->flags & (LOAD | STORE)) == 0)
-	    continue;
-
-	  /* This is a load or store which is not on a four byte
-             boundary.  */
-
-	  while (label < label_end && *label < i)
-	    ++label;
-
-	  if (i > start)
-	    {
-	      prev_insn = bfd_get_16 (abfd, contents + i - 2);
-	      prev_op = sh_insn_info (prev_insn);
-
-	      /* If the load/store instruction is in a delay slot, we
-		 can't swap.  */
-	      if (prev_op == NULL
-		  || (prev_op->flags & DELAY) != 0)
-		continue;
-	    }
-	  if (i > start
-	      && (label >= label_end || *label != i)
-	      && prev_op != NULL
-	      && (prev_op->flags & (LOAD | STORE)) == 0
-	      && ! sh_insns_conflict (prev_insn, prev_op, insn, op))
-	    {
-	      boolean ok;
-
-	      /* The load/store instruction does not have a label, and
-		 there is a previous instruction; PREV_INSN is not
-		 itself a load/store instruction, and PREV_INSN and
-		 INSN do not conflict.  */
-
-	      ok = true;
-
-	      if (i >= start + 4)
-		{
-		  unsigned int prev2_insn;
-		  const struct sh_opcode *prev2_op;
-
-		  prev2_insn = bfd_get_16 (abfd, contents + i - 4);
-		  prev2_op = sh_insn_info (prev2_insn);
-
-		  /* If the instruction before PREV_INSN has a delay
-		     slot--that is, PREV_INSN is in a delay slot--we
-		     can not swap.  */
-		  if (prev2_op == NULL
-		      || (prev2_op->flags & DELAY) != 0)
-		    ok = false;
-
-		  /* If the instruction before PREV_INSN is a load,
-                     and it sets a register which INSN uses, then
-                     putting INSN immediately after PREV_INSN will
-                     cause a pipeline bubble, so there is no point to
-                     making the swap.  */
-		  if (ok
-		      && (prev2_op->flags & LOAD) != 0
-		      && sh_load_use (prev2_insn, prev2_op, insn, op))
-		    ok = false;
-		}
-
-	      if (ok)
-		{
-		  if (! sh_swap_insns (abfd, sec, internal_relocs,
-				       contents, i - 2))
-		    goto error_return;
-		  *pswapped = true;
-		  continue;
-		}
-	    }
-
-	  while (label < label_end && *label < i + 2)
-	    ++label;
-
-	  if (i + 2 < stop
-	      && (label >= label_end || *label != i + 2))
-	    {
-	      unsigned int next_insn;
-	      const struct sh_opcode *next_op;
-
-	      /* There is an instruction after the load/store
-                 instruction, and it does not have a label.  */
-	      next_insn = bfd_get_16 (abfd, contents + i + 2);
-	      next_op = sh_insn_info (next_insn);
-	      if (next_op != NULL
-		  && (next_op->flags & (LOAD | STORE)) == 0
-		  && ! sh_insns_conflict (insn, op, next_insn, next_op))
-		{
-		  boolean ok;
-
-		  /* NEXT_INSN is not itself a load/store instruction,
-                     and it does not conflict with INSN.  */
-
-		  ok = true;
-
-		  /* If PREV_INSN is a load, and it sets a register
-		     which NEXT_INSN uses, then putting NEXT_INSN
-		     immediately after PREV_INSN will cause a pipeline
-		     bubble, so there is no reason to make this swap.  */
-		  if (prev_op != NULL
-		      && (prev_op->flags & LOAD) != 0
-		      && sh_load_use (prev_insn, prev_op, next_insn, next_op))
-		    ok = false;
-
-		  /* If INSN is a load, and it sets a register which
-                     the insn after NEXT_INSN uses, then doing the
-                     swap will cause a pipeline bubble, so there is no
-                     reason to make the swap.  However, if the insn
-                     after NEXT_INSN is itself a load or store
-                     instruction, then it is misaligned, so
-                     optimistically hope that it will be swapped
-                     itself, and just live with the pipeline bubble if
-                     it isn't.  */
-		  if (ok
-		      && i + 4 < stop
-		      && (op->flags & LOAD) != 0)
-		    {
-		      unsigned int next2_insn;
-		      const struct sh_opcode *next2_op;
-
-		      next2_insn = bfd_get_16 (abfd, contents + i + 4);
-		      next2_op = sh_insn_info (next2_insn);
-		      if ((next2_op->flags & (LOAD | STORE)) == 0
-			   && sh_load_use (insn, op, next2_insn, next2_op))
-			ok = false;
-		    }
-
-		  if (ok)
-		    {
-		      if (! sh_swap_insns (abfd, sec, internal_relocs,
-					   contents, i))
-			goto error_return;
-		      *pswapped = true;
-		      continue;
-		    }
-		}
-	    }
-	}
+      if (! _bfd_sh_align_load_span (abfd, sec, contents, sh_swap_insns,
+				     (PTR) internal_relocs, &label,
+				     label_end, start, stop, pswapped))
+	goto error_return;
     }
 
   free (labels);
@@ -2201,13 +2233,14 @@ sh_align_loads (abfd, sec, internal_relocs, contents, pswapped)
 /* Swap two SH instructions.  */
 
 static boolean
-sh_swap_insns (abfd, sec, internal_relocs, contents, addr)
+sh_swap_insns (abfd, sec, relocs, contents, addr)
      bfd *abfd;
      asection *sec;
-     struct internal_reloc *internal_relocs;
+     PTR relocs;
      bfd_byte *contents;
      bfd_vma addr;
 {
+  struct internal_reloc *internal_relocs = (struct internal_reloc *) relocs;
   unsigned short i1, i2;
   struct internal_reloc *irel, *irelend;
 

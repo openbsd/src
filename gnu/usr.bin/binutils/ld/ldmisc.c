@@ -72,8 +72,10 @@ demangle (string)
       && bfd_get_symbol_leading_char (output_bfd) == string[0])
     ++string;
 
-  /* This is a hack for better error reporting on XCOFF.  */
-  if (string[0] == '.')
+  /* This is a hack for better error reporting on XCOFF, or the MS PE   */
+  /* format.  Xcoff has a single '.', while the NT PE for PPC has '..'. */
+  /* So we remove all of them.                                          */
+  while(string[0] == '.')
     ++string;
 
   res = cplus_demangle (string, DMGL_ANSI | DMGL_PARAMS);
@@ -151,6 +153,8 @@ vfinfo (fp, fmt, arg)
 		sprintf_vma (buf, value);
 		for (p = buf; *p == '0'; ++p)
 		  ;
+		if (*p == '\0')
+		  --p;
 		len = strlen (p);
 		while (len < 8)
 		  {

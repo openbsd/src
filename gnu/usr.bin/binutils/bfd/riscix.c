@@ -338,7 +338,7 @@ riscix_swap_std_reloc_out (abfd, g, natptr)
 	{
 	  /* Fill in symbol */
 	  r_extern = 1;
-	  r_index =  stoi((*(g->sym_ptr_ptr))->flags);
+	  r_index = (*g->sym_ptr_ptr)->udata.i;
 	}
     }
   else
@@ -496,7 +496,7 @@ riscix_some_aout_object_p (abfd, execp, callback_to_real_object_p)
   execp = abfd->tdata.aout_data->a.hdr;
 
   /* Set the file flags */
-  abfd->flags = NO_FLAGS;
+  abfd->flags = BFD_NO_FLAGS;
   if (execp->a_drsize || execp->a_trsize)
     abfd->flags |= HAS_RELOC;
   /* Setting of EXEC_P has been deferred to the bottom of this function */

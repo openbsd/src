@@ -588,6 +588,15 @@ elf_object_p (abfd)
 	goto got_no_match;
       elf_swap_shdr_in (abfd, &x_shdr, i_shdrp + shindex);
       elf_elfsections (abfd)[shindex] = i_shdrp + shindex;
+
+      /* If the section is loaded, but not page aligned, clear
+         D_PAGED.  */
+      if ((i_shdrp[shindex].sh_flags & SHF_ALLOC) != 0
+	  && i_shdrp[shindex].sh_type != SHT_NOBITS
+	  && (((i_shdrp[shindex].sh_addr - i_shdrp[shindex].sh_offset)
+	       % ebd->maxpagesize)
+	      != 0))
+	abfd->flags &= ~D_PAGED;
     }
   if (i_ehdrp->e_shstrndx)
     {
@@ -738,6 +747,8 @@ write_relocs (abfd, sec, data)
 	  sym = *ptr->sym_ptr_ptr;
 	  if (sym == last_sym)
 	    n = last_sym_idx;
+	  else if (bfd_is_abs_section (sym->section) && sym->value == 0)
+	    n = STN_UNDEF;
 	  else
 	    {
 	      last_sym = sym;
@@ -750,7 +761,8 @@ write_relocs (abfd, sec, data)
 	      last_sym_idx = n;
 	    }
 
-	  if ((*ptr->sym_ptr_ptr)->the_bfd->xvec != abfd->xvec
+	  if ((*ptr->sym_ptr_ptr)->the_bfd != NULL
+	      && (*ptr->sym_ptr_ptr)->the_bfd->xvec != abfd->xvec
 	      && ! _bfd_elf_validate_reloc (abfd, ptr))
 	    {
 	      *failedp = true;

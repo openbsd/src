@@ -21,7 +21,10 @@ extern char **buildargv PARAMS ((char *));
 
 extern void freeargv PARAMS ((char **));
 
-/* Return the last component of a path name.  */
+/* Return the last component of a path name.  Note that we can't use a
+   prototype here because the parameter is declared inconsistently
+   across different systems, sometimes as "char *" and sometimes as
+   "const char *" */
 
 extern char *basename ();
 
@@ -98,6 +101,8 @@ typedef void libiberty_voidfn PARAMS ((int status));
 __volatile__ libiberty_voidfn xexit;
 #endif
 
+#ifndef PRIVATE_XMALLOC
+
 /* Set the program name used by xmalloc.  */
 
 extern void xmalloc_set_program_name PARAMS ((const char *));
@@ -118,6 +123,8 @@ extern PTR xmalloc ();
    xmalloc.  */
 
 extern PTR xrealloc ();
+
+#endif	/* PRIVATE_XMALLOC */
 
 /* Copy a string into a memory buffer without fail.  */
 

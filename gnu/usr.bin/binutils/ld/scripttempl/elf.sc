@@ -16,6 +16,7 @@
 #	OTHER_BSS_SYMBOLS - symbols that appear at the start of the
 #		.bss section besides __bss_start.
 #	DATA_PLT - .plt should be in data segment, not text segment.
+#	EMBEDDED - whether this is for an embedded system. 
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -27,6 +28,14 @@ if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHI
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
 PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
+
+# if this is for an embedded system, don't add SIZEOF_HEADERS.
+if [ -z "$EMBEDDED" ]; then
+   test -z "${TEXT_BASE_ADDRESS}" && TEXT_BASE_ADDRESS="${TEXT_START_ADDR} + SIZEOF_HEADERS"
+else
+   test -z "${TEXT_BASE_ADDRESS}" && TEXT_BASE_ADDRESS="${TEXT_START_ADDR}"
+fi
+
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
 	      "${LITTLE_OUTPUT_FORMAT}")
@@ -44,7 +53,7 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  ${CREATE_SHLIB-${RELOCATING+. = ${TEXT_START_ADDR} + SIZEOF_HEADERS;}}
+  ${CREATE_SHLIB-${RELOCATING+. = ${TEXT_BASE_ADDRESS};}}
   ${CREATE_SHLIB+${RELOCATING+. = SIZEOF_HEADERS;}}
   ${CREATE_SHLIB-${INTERP}}
   .hash        ${RELOCATING-0} : { *(.hash)		}
@@ -78,11 +87,12 @@ SECTIONS
     *(.text)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
+    *(.gnu.linkonce.t*)
   } =${NOP-0}
   ${RELOCATING+_etext = .;}
   ${RELOCATING+PROVIDE (etext = .);}
   .fini    ${RELOCATING-0} : { *(.fini)    } =${NOP-0}
-  .rodata  ${RELOCATING-0} : { *(.rodata)  }
+  .rodata  ${RELOCATING-0} : { *(.rodata) *(.gnu.linkonce.r*) }
   .rodata1 ${RELOCATING-0} : { *(.rodata1) }
   ${RELOCATING+${OTHER_READONLY_SECTIONS}}
 
@@ -94,12 +104,23 @@ SECTIONS
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data)
+    *(.gnu.linkonce.d*)
     ${CONSTRUCTING+CONSTRUCTORS}
   }
   .data1 ${RELOCATING-0} : { *(.data1) }
   ${RELOCATING+${OTHER_READWRITE_SECTIONS}}
-  .ctors       ${RELOCATING-0} : { *(.ctors)   }
-  .dtors       ${RELOCATING-0} : { *(.dtors)   }
+  .ctors       ${RELOCATING-0} :
+  {
+    ${CONSTRUCTING+${CTOR_START}}
+    *(.ctors)
+    ${CONSTRUCTING+${CTOR_END}}
+  }
+  .dtors       ${RELOCATING-0} :
+  {
+    ${CONSTRUCTING+${DTOR_START}}
+    *(.dtors)
+    ${CONSTRUCTING+${DTOR_END}}
+  }
   .got         ${RELOCATING-0} : { *(.got.plt) *(.got) }
   .dynamic     ${RELOCATING-0} : { *(.dynamic) }
   ${DATA_PLT+${PLT}}
@@ -121,10 +142,15 @@ SECTIONS
   ${RELOCATING+_end = . ;}
   ${RELOCATING+PROVIDE (end = .);}
 
-  /* These are needed for ELF backends which have not yet been
-     converted to the new style linker.  */
+  /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }
+  .stab.excl 0 : { *(.stab.excl) }
+  .stab.exclstr 0 : { *(.stab.exclstr) }
+  .stab.index 0 : { *(.stab.index) }
+  .stab.indexstr 0 : { *(.stab.indexstr) }
+
+  .comment 0 : { *(.comment) }
 
   /* DWARF debug sections.
      Symbols in the .debug DWARF section are relative to the beginning of the
@@ -136,6 +162,8 @@ SECTIONS
   .debug_pubnames 0 : { *(.debug_pubnames) }
   .debug_sfnames  0 : { *(.debug_sfnames) }
   .line           0 : { *(.line) }
+
+  ${RELOCATING+${OTHER_RELOCATING_SECTIONS}}
 
   /* These must appear regardless of ${RELOCATING}.  */
   ${OTHER_SECTIONS}

@@ -449,7 +449,7 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
   execp = abfd->tdata.aout_data->a.hdr;
 
   /* Set the file flags */
-  abfd->flags = NO_FLAGS;
+  abfd->flags = BFD_NO_FLAGS;
   if (execp->a_drsize || execp->a_trsize)
     abfd->flags |= HAS_RELOC;
   /* Setting of EXEC_P has been deferred to the bottom of this function */
@@ -2672,7 +2672,49 @@ NAME(aout,find_nearest_line)
       aout_symbol_type  *q = (aout_symbol_type *)(*p);
     next:
       switch (q->type){
+      case N_TEXT:
+	/* If this looks like a file name symbol, and it comes after
+           the line number we have found so far, but before the
+           offset, then we have probably not found the right line
+           number.  */
+	if (q->symbol.value <= offset
+	    && ((q->symbol.value > low_line_vma
+		 && (line_file_name != NULL
+		     || *line_ptr != 0))
+		|| (q->symbol.value > low_func_vma
+		    && func != NULL)))
+	  {
+	    const char *symname;
+
+	    symname = q->symbol.name;
+	    if (strcmp (symname + strlen (symname) - 2, ".o") == 0)
+	      {
+		if (q->symbol.value > low_line_vma)
+		  {
+		    *line_ptr = 0;
+		    line_file_name = NULL;
+		  }
+		if (q->symbol.value > low_func_vma)
+		  func = NULL;
+	      }
+	  }
+	break;
+
       case N_SO:
+	/* If this symbol is less than the offset, but greater than
+           the line number we have found so far, then we have not
+           found the right line number.  */
+	if (q->symbol.value <= offset)
+	  {
+	    if (q->symbol.value > low_line_vma)
+	      {
+		*line_ptr = 0;
+		line_file_name = NULL;
+	      }
+	    if (q->symbol.value > low_func_vma)
+	      func = NULL;
+	  }
+
 	main_file_name = current_file_name = q->symbol.name;
 	/* Look ahead to next symbol to check if that too is an N_SO. */
 	p++;

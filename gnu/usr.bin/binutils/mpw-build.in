@@ -72,14 +72,11 @@ Else If "{BuildTarget}" =~ /all-byacc/
 	"{ThisScript}" do-byacc
 Else If "{BuildTarget}" =~ /all-flex/
 	"{ThisScript}" all-libiberty
-	"{ThisScript}" all-byacc
 	"{ThisScript}" do-flex
 Else If "{BuildTarget}" =~ /all-binutils/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
-	"{ThisScript}" all-flex
 	"{ThisScript}" do-binutils
 Else If "{BuildTarget}" =~ /all-gas/
 	"{ThisScript}" all-libiberty
@@ -88,7 +85,6 @@ Else If "{BuildTarget}" =~ /all-gas/
 	"{ThisScript}" do-gas
 Else If "{BuildTarget}" =~ /all-gcc/
 	"{ThisScript}" all-libiberty
-	"{ThisScript}" all-byacc
 	"{ThisScript}" all-gas
 	"{ThisScript}" all-binutils
 	"{ThisScript}" do-gcc
@@ -96,19 +92,15 @@ Else If "{BuildTarget}" =~ /all-gdb/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
 	"{ThisScript}" do-gdb
 Else If "{BuildTarget}" =~ /all-grez/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
-	"{ThisScript}" all-byacc
 	"{ThisScript}" do-grez
 Else If "{BuildTarget}" =~ /all-ld/
 	"{ThisScript}" all-libiberty
 	"{ThisScript}" all-bfd
 	"{ThisScript}" all-opcodes
-	"{ThisScript}" all-byacc
-	"{ThisScript}" all-flex
 	"{ThisScript}" do-ld
 Else If "{BuildTarget}" =~ /do-byacc/
 	SetDirectory :byacc:
@@ -136,10 +128,7 @@ Else If "{BuildTarget}" =~ /do-gas/
 	::mpw-build all
 Else If "{BuildTarget}" =~ /do-gcc/
 	SetDirectory :gcc:
-	# Need separate step to build all the insn-... etc files.
-	::mpw-build stamps-h
-	::mpw-build stamps-c
-	::mpw-build all
+	:mpw-build all
 Else If "{BuildTarget}" =~ /do-gdb/
 	SetDirectory :gdb:
 	::mpw-build all
@@ -166,7 +155,7 @@ Else If "{BuildTarget}" =~ /install-gas/
 	::mpw-build install
 Else If "{BuildTarget}" =~ /install-gcc/
 	SetDirectory :gcc:
-	::mpw-build install
+	:mpw-build install
 Else If "{BuildTarget}" =~ /install-gdb/
 	SetDirectory :gdb:
 	::mpw-build install
@@ -190,7 +179,7 @@ Else If "{BuildTarget}" =~ /install-only-gas/
 	::mpw-build install-only
 Else If "{BuildTarget}" =~ /install-only-gcc/
 	SetDirectory :gcc:
-	::mpw-build install-only
+	:mpw-build install-only
 Else If "{BuildTarget}" =~ /install-only-gdb/
 	SetDirectory :gdb:
 	::mpw-build install-only

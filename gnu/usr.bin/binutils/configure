@@ -80,7 +80,7 @@ subdirs=
 target_alias=NOTARGET
 target_makefile_frag=
 undefs=NOUNDEFS
-version="$Revision: 1.2 $"
+version="$Revision: 1.3 $"
 x11=default
 
 ### we might need to use some other shell than /bin/sh for running subshells
@@ -340,7 +340,7 @@ case "${fatal}" in
 			# Neither --host option nor undefs were present.
 			# Call config.guess.
 			guesssys=`echo ${progname} | sed 's/configure$/config.guess/'`
-			if host_alias=`${guesssys}`
+			if host_alias=`${config_shell} ${guesssys}`
 			then
 				# If the string we are going to use for
 				# the target is a prefix of the string
@@ -426,7 +426,7 @@ configsub=`echo ${progname} | sed 's/configure$/config.sub/'`
 moveifchange=`echo ${progname} | sed 's/configure$/move-if-change/'`
 
 # this is a hack.  sun4 must always be a valid host alias or this will fail.
-if ${configsub} sun4 >/dev/null 2>&1 ; then
+if ${config_shell} ${configsub} sun4 >/dev/null 2>&1 ; then
         true
 else
         echo '***' cannot find config.sub.  1>&2
@@ -434,7 +434,7 @@ else
 fi
 
 touch config.junk
-if ${moveifchange} config.junk config.trash ; then
+if ${config_shell} ${moveifchange} config.junk config.trash ; then
         true
 else
         echo '***' cannot find move-if-change.  1>&2
@@ -844,6 +844,8 @@ export CXX
 
 case "$host" in
 	*go32*)
+	    enable_gdbtk=no ;;
+	*cygwin32*)
 	    enable_gdbtk=no ;;
 esac
 

@@ -1,6 +1,12 @@
 
+/* Whether strstr must be declared even if <string.h> is included.  */
+#undef NEED_DECLARATION_STRSTR
+
 /* Whether fprintf must be declared even if <stdio.h> is included.  */
 #undef NEED_DECLARATION_FPRINTF
+
+/* Whether sbrk must be declared even if <unistd.h> is included.  */
+#undef NEED_DECLARATION_SBRK
 @TOP@
 
 /* Is the type time_t defined in <time.h>?  */

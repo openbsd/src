@@ -266,7 +266,7 @@ Usage: %s [-vVsSgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-R section]\n\
        [--strip-all] [--strip-debug] [--strip-unneeded] [--discard-all]\n\
        [--discard-locals] [--keep-symbol symbol] [-K symbol]\n\
        [--strip-symbol symbol] [-N symbol] [--remove-section=section]\n\
-       [--verbose] [--version] [--help] file...\n",
+       [-o file] [--verbose] [--version] [--help] file...\n",
 	   program_name);
   list_supported_targets (program_name, stream);
   exit (exit_status);
@@ -1505,8 +1505,9 @@ strip_main (argc, argv)
   boolean show_version = false;
   int c, i;
   struct section_list *p;
+  char *output_file = NULL;
 
-  while ((c = getopt_long (argc, argv, "I:O:F:K:N:R:sSgxXVv",
+  while ((c = getopt_long (argc, argv, "I:O:F:K:N:R:o:sSgxXVv",
 			   strip_options, (int *) 0)) != EOF)
     {
       switch (c)
@@ -1554,6 +1555,9 @@ strip_main (argc, argv)
 	    }
 	  add_strip_symbol (optarg);
 	  break;
+	case 'o':
+	  output_file = optarg;
+	  break;
 	case 'x':
 	  discard_locals = locals_all;
 	  break;
@@ -1591,24 +1595,31 @@ strip_main (argc, argv)
     output_target = input_target;
 
   i = optind;
-  if (i == argc)
+  if (i == argc
+      || (output_file != NULL && (i + 1) < argc))
     strip_usage (stderr, 1);
 
   for (; i < argc; i++)
     {
       int hold_status = status;
+      char *tmpname;
 
-      char *tmpname = make_tempname (argv[i]);
+      if (output_file != NULL)
+	tmpname = output_file;
+      else
+	tmpname = make_tempname (argv[i]);
       status = 0;
       copy_file (argv[i], tmpname, input_target, output_target);
       if (status == 0)
 	{
-	  smart_rename (tmpname, argv[i]);
+	  if (output_file == NULL)
+	    smart_rename (tmpname, argv[i]);
 	  status = hold_status;
 	}
       else
 	unlink (tmpname);
-      free (tmpname);
+      if (output_file == NULL)
+	free (tmpname);
     }
 
   return 0;

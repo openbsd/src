@@ -1,3 +1,31 @@
+Thu Aug  8 14:29:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/cross2.t: Map XCOFF sections to .text or .data.
+
+	* lib/ld.exp: Use verbose -log instead of calling both verbose and
+	send_log.
+
+Wed Aug  7 18:00:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/phdrs.exp: New test.
+	* ld-scripts/phdrs.s, ld-scripts/phdrs.t: New files.
+
+Sun Aug  4 21:58:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/crossref.exp: On a29k targets, use --defsym to define
+	V_SPILL and V_FILL.
+
+Thu Aug  1 14:10:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/crossref.exp: New test.
+	* ld-scripts/{cross1.c, cross2.c, cross3.c}: New files.
+	* ld-scripts/{cross1.t, cross2.t}: New files.
+
+Sat Jun 29 13:40:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-sh/sh.exp: Fix debugging messages.
+	* ld-sh/sh1.s: Use .align 4.
+
 Wed May  1 16:45:13 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* ld-sh/sh.exp: Use -O when compiling with -mrelax.

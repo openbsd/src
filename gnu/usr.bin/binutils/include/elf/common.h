@@ -90,9 +90,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define EM_PPC	       20	/* PowerPC */
 
+#define EM_SH	       42	/* Hitachi SH */
+
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
-   with official or non-GNU unofficial values.  */
+   with official or non-GNU unofficial values.
+
+   NOTE: Do not just increment the most recent number by one.
+   Somebody else somewhere will do exactly the same thing, and you
+   will have a collision.  Instead, pick a random number.  */
 
 /* Cygnus PowerPC ELF backend.  Written in the absence of an ABI.  */
 #define EM_CYGNUS_POWERPC 0x9025
@@ -100,6 +106,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Old version of PowerPC, this should be removed shortly. */
 #define EM_PPC_OLD	17
 
+
+
+/* Alpha backend magic number.  Written in the absence of an ABI.  */
+#define EM_ALPHA	0x9026
+
+
+
+/* See the above comment before you add a new EM_* value here.  */
 
 /* Values for e_version */
 

@@ -6,7 +6,7 @@ case "${host}" in
   arm-*-riscix*)	frag=mh-riscix ;;
   m68k-apollo-bsd*)	frag=mh-a68bsd ;;
   m68k-apollo-sysv*)	frag=mh-apollo68 ;;
-  i[345]86-ncr-sysv4*)	frag=mh-ncr3000 ;;
+  i[3456]86-ncr-sysv4*)	frag=mh-ncr3000 ;;
   *-*-cxux7*)		frag=mh-cxux7 ;;
   *-*-lynxos*)		frag=mh-lynxos ;;
   *-*-dgux*)		frag=mh-sysv ;;
@@ -47,9 +47,9 @@ case "${enable_shared}" in
 esac
 if [ "${shared}" = "yes" ]; then
   case "${host}" in
-    hppa*-*-*)	  frags="${frags} ../../config/mh-papic" ;;
-    i[345]86-*-*) frags="${frags} ../../config/mh-x86pic" ;;
-    *-*-*)	  frags="${frags} ../../config/mh-${host_cpu}pic" ;;
+    hppa*-*-*)	   frags="${frags} ../../config/mh-papic" ;;
+    i[3456]86-*-*) frags="${frags} ../../config/mh-x86pic" ;;
+    *-*-*)	   frags="${frags} ../../config/mh-${host_cpu}pic" ;;
   esac
 fi
 

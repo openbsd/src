@@ -1,3 +1,29 @@
+Fri Jun 28 12:54:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* pe.h (FILHSZ): Define.
+
+Wed Jun 26 16:24:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* All files: Define FILHSZ, AOUTSZ, AOUTHDRSZ, SCNHSZ, SYMESZ,
+	AUXESZ, LINESZ, RELSZ as numeric constants rather than uses of
+	sizeof.  Define AOUTHDRSZ in all files.
+	* pe.h (AOUTSZ): Define by adding to AOUTHDRSZ.
+
+Fri Jun 21 11:17:46 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha.h: Add declarations for relocation types added for Alpha
+ 	OSF/1 3.0.
+
+Tue Jun 18 16:04:29 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* h8300.h (H8300SMAGIC): Define.
+	(H8300SBADMAG): Define.
+
+Mon Jun 10 11:53:28 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* internal.h (R_BCC_INV, R_JMP_DEL): New relocations for
+	relaxing in the H8/300 series.
+
 Thu May 16 15:49:22 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* sh.h (R_SH_CODE, R_SH_DATA, R_SH_LABEL): Define.

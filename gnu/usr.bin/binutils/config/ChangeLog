@@ -1,3 +1,38 @@
+Sat Aug 17 04:56:25 1996  Geoffrey Noer  <noer@skaro.cygnus.com>
+
+	* mh-cygwin32: don't -D_WIN32 here anymore
+
+Thu Aug 15 19:46:44 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-mh-mpw (SEGFLAG_68K, SEGFLAG_PPC): Remove.
+	(EXTRALIBS_PPC): Add libgcc.xcoff.
+
+Thu Aug  8 14:51:47 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* mt-ppc: New file, add -mrelocatable-lib and -mno-eabi to all
+	target builds for PowerPC eabi targets.
+
+Fri Jul 12 12:06:01 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw: New subdir, Mac MPW configuration support bits.
+
+Mon Jul  8 17:30:52 1996  Jim Wilson  <wilson@cygnus.com>
+
+	* mh-irix6: New file.
+
+Mon Jul  8 15:15:37 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* mt-sparcpic (PICFLAG_FOR_TARGET): Use -fPIC.
+
+Fri Jul  5 11:49:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mh-irix4 (RANLIB): Don't define; Irix 4 does have ranlib.
+
+Sun Jun 23 22:59:25 1996  Geoffrey Noer  <noer@cygnus.com>
+
+	* mh-cygwin32: new file.  Like mh-go32 without the CFLAGS entry.
+	* .Sanitize: listed new file
+
 Tue Mar 26 14:10:41 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* mh-go32 (CFLAGS): Define.

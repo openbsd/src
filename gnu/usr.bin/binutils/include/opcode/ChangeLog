@@ -1,3 +1,78 @@
+Fri Aug 16 14:44:15 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* mips.h (OP_SH_LOCC, OP_SH_HICC, OP_MASK_CC, OP_SH_COP1NORM,
+ 	OP_MASK_COP1NORM, OP_SH_COP1SPEC, OP_MASK_COP1SPEC,
+ 	OP_MASK_COP1SCLR, OP_MASK_COP1CMP, OP_SH_COP1CMP, OP_SH_FORMAT,
+ 	OP_MASK_FORMAT, OP_SH_TRUE, OP_MASK_TRUE, OP_SH_GE, OP_MASK_GE,
+ 	OP_SH_UNSIGNED, OP_MASK_UNSIGNED, OP_SH_HINT, OP_MASK_HINT):
+ 	Defined.
+
+Fri Aug 16 00:15:15 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* hppa.h (pitlb, pitlbe, iitlba, iitlbp, fic, fice): Accept
+	a 3 bit space id instead of a 2 bit space id.
+
+Tue Aug  6 11:13:22 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (SN): Define.
+	(eepmov.b): Renamed from "eepmov"
+	(nop, bpt, rte, rts, sleep, clrmac): These have no size associated
+	with them.
+
+Mon Jul 22 12:15:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i960.h (i960_opcodes): "halt" takes an argument.  From Stephen
+	Williams <steve@icarus.com>.
+
+Thu Jul 11 12:09:15 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (band, bclr): Force high bit of immediate nibble to zero.
+
+Wed Jul  3 14:30:12 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+ 	* m68k.h (mcf5200): New macro.
+	Document names of coldfire control registers.
+
+Tue Jul  2 23:05:45 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (SRC_IN_DST): Define.
+
+	* h8300.h (UNOP3): Mark the register operand in this insn
+	as a source operand, not a destination operand.
+	(SHIFT_2, SHIFT_IMM): Remove.  Eliminate all references.
+	(UNOP3): Change SHIFT_IMM to IMM for H8/S bitops.  Mark
+	register operand with SRC_IN_DST.
+
+Fri Jun 21 13:52:17 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha.h: New file.
+
+Thu Jun 20 15:02:57 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rs6k.h: Remove obsolete file.
+
+Wed Jun 19 15:29:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386.h: Correct opcode values for faddp, fsubp, fsubrp, fmulp,
+	fdivp, and fdivrp.  Add ffreep.
+
+Tue Jun 18 16:06:00 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* h8300.h: Reorder various #defines for readability.
+	(ABS32SRC, ABS32DST, DSP32LIST, ABS32LIST, A32LIST): Define.
+	(BITOP): Accept additional (unused) argument.  All callers changed.
+	(EBITOP): Likewise.
+	(O_LAST): Bump.
+	(ldc, stc, movb, movw, movl): Use 32bit offsets and absolutes.
+	
+	* h8300.h (EXR, SHIFT_2, MACREG, SHIFT_IMM, RDINC): Define.
+	(O_TAS, O_CLRMAC, O_LDMAC, O_MAC, O_LDM, O_STM): Define.
+	(BITOP, EBITOP): Handle new H8/S addressing modes for
+	bit insns.
+	(UNOP3): Handle new shift/rotate insns on the H8/S.
+	(insns using exr): New instructions.
+	(tas, mac, ldmac, clrmac, ldm, stm): New instructions.
+	
 Thu May 23 16:56:48 1996  Jeffrey A Law  (law@cygnus.com)
 
 	* h8300.h (add.l): Undo Apr 5th change.  The manual I had

@@ -47,10 +47,12 @@ struct raw_phdr
      * a size that is a multiple of 8.
      */
     char pad[4];
-#elif defined (BSD44_FORMAT)
+#else
+#ifdef BSD44_FORMAT
     char version[4];			/* version number */
     char profrate[4];			/* profiling clock rate */
     char spare[3*4];			/* reserved */
+#endif
 #endif
   };
 
