@@ -255,9 +255,6 @@ char *argv[];
 		fprintf(stderr,"PCVT_SIGWINCH        = %s",
 			(pcvtinfo.compile_opts & CONF_SIGWINCH) ? "ON" : "OFF");
 		next();
-		fprintf(stderr,"PCVT_SLOW_INTERRUPT  = %s",
-			(pcvtinfo.compile_opts & CONF_SLOW_INTERRUPT) ? "ON" : "OFF");
-		next();
 		fprintf(stderr,"PCVT_SW0CNOUTP       = %s",
 			(pcvtinfo.compile_opts & CONF_SW0CNOUTP) ? "ON" : "OFF");
 		next();
