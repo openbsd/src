@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpvar.h,v 1.2 1997/07/06 16:05:03 niklas Exp $	*/
+/*	$OpenBSD: if_fxpvar.h,v 1.3 1998/07/02 21:15:47 downsj Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -59,7 +59,11 @@ struct fxp_softc {
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
+	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
+	int all_mcasts;			/* receive all multicasts */
+	int need_mcsetup;		/* multicast filter needs programming */
 	int tx_queued;			/* # of active TxCB's */
+	int rx_idle_secs;		/* # of seconds RX has been idle */
 	int promisc_mode;		/* promiscuous mode enabled */
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */

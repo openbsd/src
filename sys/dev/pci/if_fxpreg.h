@@ -1,5 +1,4 @@
-/*	$OpenBSD: if_fxpreg.h,v 1.4 1998/03/10 21:37:45 deraadt Exp $	*/
-/*	$NetBSD: if_fxpreg.h,v 1.2 1997/06/05 02:01:57 thorpej Exp $	*/
+/*	$OpenBSD: if_fxpreg.h,v 1.5 1998/07/02 21:15:46 downsj Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -27,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: if_fxpreg.h,v 1.8 1997/03/21 08:00:13 davidg Exp
+ *	$FreeBSD: if_fxpreg.h,v 1.13 1998/06/08 09:47:46 bde Exp $
  */
 
 #define FXP_VENDORID_INTEL	0x8086
@@ -81,7 +80,6 @@
 #define FXP_SCB_STATACK_FR		0x40
 #define FXP_SCB_STATACK_CXTNO		0x80
 
-#define FXP_SCB_COMMAND_MASK		0xff
 #define FXP_SCB_COMMAND_CU_NOP		0x00
 #define FXP_SCB_COMMAND_CU_START	0x10
 #define FXP_SCB_COMMAND_CU_RESUME	0x20
@@ -102,11 +100,13 @@
  * Command block definitions
  */
 struct fxp_cb_nop {
+	void *fill[2];
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
 };
 struct fxp_cb_ias {
+	void *fill[2];
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -114,69 +114,96 @@ struct fxp_cb_ias {
 };
 /* I hate bit-fields :-( */
 struct fxp_cb_config {
+	void *fill[2];
 	volatile u_int16_t	cb_status;
 	volatile u_int16_t	cb_command;
 	volatile u_int32_t	link_addr;
-	volatile u_int8_t	byte_count:6,
+	volatile u_int		byte_count:6,
 				:2;
-	volatile u_int8_t	rx_fifo_limit:4,
+	volatile u_int		rx_fifo_limit:4,
 				tx_fifo_limit:3,
 				:1;
 	volatile u_int8_t	adaptive_ifs;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	rx_dma_bytecount:7,
+	volatile u_int		:8;
+	volatile u_int		rx_dma_bytecount:7,
 				:1;
-	volatile u_int8_t	tx_dma_bytecount:7,
+	volatile u_int		tx_dma_bytecount:7,
 				dma_bce:1;
-	volatile u_int8_t	late_scb:1,
+	volatile u_int		late_scb:1,
 				:1,
 				tno_int:1,
 				ci_int:1,
 				:3,
 				save_bf:1;
-	volatile u_int8_t	disc_short_rx:1,
+	volatile u_int		disc_short_rx:1,
 				underrun_retry:2,
 				:5;
-	volatile u_int8_t	mediatype:1,
+	volatile u_int		mediatype:1,
 				:7;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:3,
+	volatile u_int		:8;
+	volatile u_int		:3,
 				nsai:1,
 				preamble_length:2,
 				loopback:2;
-	volatile u_int8_t	linear_priority:3,
+	volatile u_int		linear_priority:3,
 				:5;
-	volatile u_int8_t	linear_pri_mode:1,
+	volatile u_int		linear_pri_mode:1,
 				:3,
 				interfrm_spacing:4;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	promiscuous:1,
+	volatile u_int		:8;
+	volatile u_int		:8;
+	volatile u_int		promiscuous:1,
 				bcast_disable:1,
 				:5,
 				crscdt:1;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	:8;
-	volatile u_int8_t	stripping:1,
+	volatile u_int		:8;
+	volatile u_int		:8;
+	volatile u_int		stripping:1,
 				padding:1,
 				rcv_crc_xfer:1,
 				:5;
-	volatile u_int8_t	:6,
+	volatile u_int		:6,
 				force_fdx:1,
 				fdx_pin_en:1;
-	volatile u_int8_t	:6,
+	volatile u_int		:6,
 				multi_ia:1,
 				:1;
-	volatile u_int8_t	:3,
+	volatile u_int		:3,
 				mc_all:1,
 				:4;
 };
+
+#define MAXMCADDR 80
+struct fxp_cb_mcs {
+	struct fxp_cb_tx *next;
+	struct mbuf *mb_head;
+	volatile u_int16_t cb_status;
+	volatile u_int16_t cb_command;
+	volatile u_int32_t link_addr;
+	volatile u_int16_t mc_cnt;
+	volatile u_int8_t mc_addr[MAXMCADDR][6];
+};
+
+/*
+ * Number of DMA segments in a TxCB. Note that this is carefully
+ * chosen to make the total struct size an even power of two. It's
+ * critical that no TxCB be split across a page boundry since
+ * no attempt is made to allocate physically contiguous memory.
+ * 
+ */
+#ifdef __alpha__ /* XXX - should be conditional on pointer size */
+#define FXP_NTXSEG      28
+#else
+#define FXP_NTXSEG      29
+#endif
+
 struct fxp_tbd {
 	volatile u_int32_t tb_addr;
 	volatile u_int32_t tb_size;
 };
-
 struct fxp_cb_tx {
+	struct fxp_cb_tx *next;
+	struct mbuf *mb_head;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -187,9 +214,7 @@ struct fxp_cb_tx {
 	/*
 	 * The following isn't actually part of the TxCB.
 	 */
-	volatile struct fxp_tbd tbd[29];
-	struct mbuf *mb_head;
-	struct fxp_cb_tx *next;
+	volatile struct fxp_tbd tbd[FXP_NTXSEG];
 };
 
 /*
@@ -203,7 +228,7 @@ struct fxp_cb_tx {
 #define FXP_CB_COMMAND_NOP	0x0
 #define FXP_CB_COMMAND_IAS	0x1
 #define FXP_CB_COMMAND_CONFIG	0x2
-#define FXP_CB_COMMAND_MAS	0x3
+#define FXP_CB_COMMAND_MCAS	0x3
 #define FXP_CB_COMMAND_XMIT	0x4
 #define FXP_CB_COMMAND_RESRV	0x5
 #define FXP_CB_COMMAND_DUMP	0x6
