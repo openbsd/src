@@ -84,7 +84,7 @@ main(pp)
 	void *addr;
 	int io, i;
 
-	printf(">> NetBSD sdboot [%s]\n", version);
+	printf(">> OpenBSD sdboot [%s]\n", version);
 
 	bugargs = pp;
 	parse_args(pp);
@@ -290,7 +290,7 @@ parse_args(pargs)
 	struct mvmeprom_args *pargs;
 {
 	char *ptr = pargs->arg_start;
-	char *name = "/netbsd";
+	char *name = "/bsd";
 	char c;
 	int howto = 0;
 

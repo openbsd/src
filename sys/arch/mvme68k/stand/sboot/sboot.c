@@ -106,7 +106,7 @@ do_cmd(buf)
 			printf("received secondary boot program.\n");
 		}
 		if (*++buf == '\0')
-			buf = "netbsd";
+			buf = "bsd";
 		go(buf);
 		break;
 	case 'h':

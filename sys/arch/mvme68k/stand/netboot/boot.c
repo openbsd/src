@@ -48,7 +48,7 @@
 #define LOADADDR	0x10000
 
 extern char		*version;
-char	defname[32] = "netbsd";
+char	defname[32] = "bsd";
 char	line[80];
 
 #if 0
@@ -64,7 +64,7 @@ main()
 	extern char *oparg, *opargend;
 	int ask = 0;
 
-	printf(">> NetBSD netboot [%s]\n", version);
+	printf(">> OpenBSD netboot [%s]\n", version);
 	printf("model MVME%x\n", cputyp);
 
 	*opargend = '\0';
