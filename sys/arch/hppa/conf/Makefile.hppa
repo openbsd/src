@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.1 1998/07/02 20:48:43 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.2 1998/07/07 20:51:01 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -50,10 +50,10 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa \
 		-DBFD_SUBSPA_BUG
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float \
-		-mfast-indirect-calls -mpa-risc-1-0
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -mdisable-fpregs \
+		-mfast-indirect-calls -mpa-risc-1-0 -mportable-runtime
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-n -Ttext 0 -e start
+LINKFLAGS=	-x -N -Ttext 12000 -e start
 STRIPFLAGS=	-d
 
 HOSTED_CC=	${HOSTCC}
@@ -101,7 +101,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
