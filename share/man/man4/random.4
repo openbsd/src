@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.10 2000/06/19 03:21:51 deraadt Exp $
+.\"	$OpenBSD: random.4,v 1.11 2001/06/22 11:39:21 mpech Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -50,7 +50,6 @@ devices produce random output data with different random qualities.
 Entropy data is collected from system activity (like disk and
 network device interrupts and such), and then run through various
 hash or message digest functions to generate the output.
-.Pp
 .Bl -hang -width /dev/srandomX
 .It /dev/random
 This device is reserved for future support of hardware
@@ -83,8 +82,12 @@ providing a second level of ARC4 hashed data.
 .Xr md5 9 ,
 .Xr random 9
 .Sh FILES
-.Bl -tag -width /dev/srandom
-.It Pa /dev/random, /dev/srandom, /dev/urandom, /dev/prandom, /dev/arandom
+.Bl -tag -width /dev/srandom -compact
+.It Pa /dev/random
+.It Pa /dev/srandom
+.It Pa /dev/urandom
+.It Pa /dev/prandom
+.It Pa /dev/arandom
 .El
 .Sh BUGS
 No randomness testing suite provided.
