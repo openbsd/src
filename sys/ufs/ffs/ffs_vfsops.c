@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.20 1998/11/27 22:52:42 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.21 1998/12/05 17:01:09 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -970,6 +970,9 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
+#ifdef DIAGNOSTIC
+	vp->v_flag |= VLOCKSWORK;
+#endif
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
 	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
