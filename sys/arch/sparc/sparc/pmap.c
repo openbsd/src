@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 1999/01/11 05:11:59 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 1999/04/22 17:07:30 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6397,6 +6397,45 @@ pmap_redzone()
 		return;
 	}
 #endif
+}
+
+/*
+ * Activate the address space for the specified process.  If the
+ * process is the current process, load the new MMU context.
+ */
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int s;
+
+	/*
+	 * This is essentially the same thing that happens in cpu_switch()
+	 * when the newly selected process is about to run, except that we
+	 * have to make sure to clean the register windows before we set
+	 * the new context.
+	 */
+
+	s = splpmap();
+	if (p == curproc) {
+		write_user_windows();
+		if (pmap->pm_ctx == NULL) {
+			ctx_alloc(pmap);	/* performs setcontext() */
+		} else {
+			setcontext(pmap->pm_ctxnum);
+		}
+	}
+	splx(s);
+}
+
+/*
+ * Deactivate the address space of the specified process.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
 }
 
 #ifdef DEBUG

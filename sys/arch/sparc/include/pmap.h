@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 1997/11/07 08:11:41 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 1999/04/22 17:07:29 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -246,6 +246,9 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 /* FUNCTION DECLARATIONS FOR COMMON PMAP MODULE */
 
+struct proc;
+void		pmap_activate __P((struct proc *));
+void		pmap_deactivate __P((struct proc *));
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vm_offset_t, vm_offset_t *));
