@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.3 1996/06/25 04:51:53 dm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.4 1998/04/07 05:56:13 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.3 1996/06/25 04:51:53 dm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.4 1998/04/07 05:56:13 marc Exp $";
 #endif
 
 /*
@@ -168,14 +168,18 @@ pkg_do(char *pkg)
 	    /*
 	     * Apply a crude heuristic to see how much space the package will
 	     * take up once it's unpacked.  I've noticed that most packages
-	     * compress an average of 75%, so multiply by 4 for good measure.
+	     * compress an average of 75%, so multiply by 4 for good
+	     * measure.  Ignore if extract is null as we've already
+	     * extracted the full file, anyway.
 	     */
 
-	    if (!inPlace && min_free(playpen) < sb.st_size * 4) {
+	    if (!extract && !inPlace && min_free(playpen) < sb.st_size * 4) {
 		whinge("Projected size of %d exceeds available free space.\n"
-		       "Please set your PKG_TMPDIR variable to point to a location with more\n"
+		       "Please set your PKG_TMPDIR variable to point to a"
+		       "location with more\n"
 		       "free space and try again.", sb.st_size * 4);
-		whinge("Not extracting %s\ninto %s, sorry!", pkg_fullname, where_to);
+		whinge("Not extracting %s\ninto %s, sorry!", pkg_fullname,
+		       where_to);
 		goto bomb;
 	    }
 
@@ -183,8 +187,9 @@ pkg_do(char *pkg)
 	    if (inPlace && Fake)
 		goto success;
 
-	    /* Finally unpack the whole mess */
-	    if (unpack(pkg_fullname, NULL)) {
+	    /* Finally unpack the whole mess.  If extract is null we already
+	       did so so don't bother doing it again. */
+	    if (extract && unpack(pkg_fullname, NULL)) {
 		whinge("Unable to extract `%s'!", pkg_fullname);
 		goto bomb;
 	    }
