@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.13 1999/11/09 04:51:35 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -116,7 +116,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 struct isabr_softc {
 	struct	device sc_dv;
-	struct	p4e_isa_bus p4e_isa_cs;
+	struct	ppc_isa_bus ppc_isa_cs;
 	struct	bushook sc_bus;
 };
 
@@ -137,14 +137,14 @@ void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
 void	isabr_iointr __P((unsigned int, struct clockframe *));
 void	isabr_initicu __P((void));
-void	intr_calculatemasks __P((void));
+static void	intr_calculatemasks __P((void));
 
-struct p4e_bus_space	p4e_isa_io = {
-	MPC106_V_ISA_IO_SPACE, 1 
+struct ppc_bus_space	ppc_isa_io = {
+	MPC106_P_ISA_IO_SPACE, 1 
 };
 
-struct p4e_bus_space	p4e_isa_mem = {
-	MPC106_V_PCI_MEM_SPACE, 1
+struct ppc_bus_space	ppc_isa_mem = {
+	MPC106_P_PCI_MEM_SPACE, 1
 };
 
 int
@@ -202,8 +202,8 @@ isabrattach(parent, self, aux)
 	sc->sc_bus.bh_dv = (struct device *)sc;
 	sc->sc_bus.bh_type = BUS_ISABR;
 
-	sc->p4e_isa_cs.ic_intr_establish = isabr_intr_establish;
-	sc->p4e_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
+	sc->ppc_isa_cs.ic_intr_establish = isabr_intr_establish;
+	sc->ppc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
 	{
 		int i;
@@ -215,9 +215,9 @@ isabrattach(parent, self, aux)
 	}
 
 	iba.iba_busname = "isa";
-	iba.iba_iot = (bus_space_tag_t)&p4e_isa_io;
-	iba.iba_memt = (bus_space_tag_t)&p4e_isa_mem;
-	iba.iba_ic = &sc->p4e_isa_cs;
+	iba.iba_iot = (bus_space_tag_t)&ppc_isa_io;
+	iba.iba_memt = (bus_space_tag_t)&ppc_isa_mem;
+	iba.iba_ic = &sc->ppc_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
 
@@ -231,7 +231,7 @@ isabrprint(aux, pnp)
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
         printf(" isa_io_base 0x%lx isa_mem_base 0x%lx",
-		p4e_isa_io.bus_base, p4e_isa_mem.bus_base);
+		ppc_isa_io.bus_base, ppc_isa_mem.bus_base);
         return (UNCONF);
 }
 
@@ -274,7 +274,7 @@ isa_setirqstat(int irq, int enabled, int type)
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-void
+static void
 intr_calculatemasks()
 {
 	int irq, level;
