@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.15 2002/02/12 07:56:49 beck Exp $
+# $OpenBSD: Configure,v 1.16 2002/02/21 23:33:14 miod Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -1635,8 +1635,8 @@ case "$PLAT" in
 	    LIBS="-lsocket $LIBS"
 	fi
 	# Auto-detect presence of libdl for dynamic loading
-	if ${SHELL} /helpers/TestCompile lib dl; then
-	    if ${SHELL} /helpers/TestCompile func dlopen; then
+	if ${SHELL} ./helpers/TestCompile lib dl; then
+	    if ${SHELL} ./helpers/TestCompile func dlopen; then
 		LIBS="$LIBS -ldl"
 		TLIB='-ldl'
     	   fi
@@ -1650,7 +1650,7 @@ case "$PLAT" in
 	    CFLAGS="$CFLAGS -DNEED_UNION_SEMUN"
 	fi
 	# Test for the presence of the _rini_struct typedef:
-	if TCADDINCL='#include <pwd.h>' ${SHELL} /helpers/TestCompile sizeof _rini_struct; then
+	if TCADDINCL='#include <pwd.h>' ${SHELL} ./helpers/TestCompile sizeof _rini_struct; then
 	    CFLAGS="$CFLAGS -DHAVE_RINI_STRUCT"
 	fi
 	# Test whether initgroups() must be emulated:
