@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.5 1999/08/08 19:16:25 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.6 1999/12/04 21:39:29 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -179,7 +179,8 @@ HIDE struct audio_hw_if eso_hw_if = {
 
 HIDE const char * const eso_rev2model[] = {
 	"ES1938",
-	"ES1946"
+	"ES1946",
+	"ES1946 rev E"
 };
 
 
