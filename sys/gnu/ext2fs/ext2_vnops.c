@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vnops.c,v 1.2 1996/07/14 04:15:04 downsj Exp $	*/
+/*	$OpenBSD: ext2_vnops.c,v 1.3 1996/09/23 13:01:45 mickey Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -230,6 +230,7 @@ static struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 #endif /* FIFO */
 
 #ifdef DEBUG
+#ifndef FFS
 /*
  * Enabling cluster read/write operations.
  */
@@ -238,6 +239,10 @@ int doclusterread = 1;
 struct ctldebug debug11 = { "doclusterread", &doclusterread };
 int doclusterwrite = 1;
 struct ctldebug debug12 = { "doclusterwrite", &doclusterwrite };
+#else
+extern int doclusterread;
+extern int doclusterwrite;
+#endif
 #else
 /* XXX for ufs_readwrite */
 #define doclusterread 1
