@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.13 1997/07/30 06:32:40 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.14 1997/07/30 07:19:31 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.13 1997/07/30 06:32:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.14 1997/07/30 07:19:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,10 @@ setfile(name)
 	shudclob = 1;
 	edit = isedit;
 	strcpy(prevfile, mailname);
-	if (name != mailname)
-		strcpy(mailname, name);
+	if (name != mailname) {
+		strncpy(mailname, name, sizeof(mailname) - 1);
+		mailname[sizeof(mailname) - 1] = '\0';
+	}
 	mailsize = fsize(ibuf);
 	(void)snprintf(tempname, sizeof(tempname),
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);

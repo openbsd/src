@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.13 1997/07/30 06:32:39 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.14 1997/07/30 07:19:30 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.13 1997/07/30 06:32:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.14 1997/07/30 07:19:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,8 @@ cont:
 			hp->h_bcc = cat(hp->h_bcc, extract(&linebuf[2], GBCC));
 			break;
 		case 'd':
-			strcpy(linebuf + 2, getdeadletter());
+			strncpy(linebuf + 2, getdeadletter(), sizeof(linebuf) - 3);
+			linebuf[sizeof(linebuf) - 1] = '\0';
 			/* fall into . . . */
 		case 'r':
 		case '<':

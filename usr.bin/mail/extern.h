@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.10 1997/07/30 06:32:39 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.11 1997/07/30 07:19:30 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.10 1997/07/30 06:32:39 millert Exp $
+ *	$OpenBSD: extern.h,v 1.11 1997/07/30 07:19:30 millert Exp $
  */
 
 struct name;
@@ -167,7 +167,7 @@ int	 isfileaddr __P((char *));
 int	 ishead __P((char []));
 int	 isign __P((char *, struct ignoretab []));
 int	 isprefix __P((char *, char *));
-void	 istrcpy __P((char *, char *));
+void	 istrncpy __P((char *, char *, size_t));
 const struct cmd *
 	 lex __P((char []));
 void	 load __P((char *));

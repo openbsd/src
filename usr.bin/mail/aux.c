@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.9 1997/07/28 15:20:28 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.10 1997/07/30 07:19:29 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.9 1997/07/28 15:20:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.10 1997/07/30 07:19:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -277,19 +277,24 @@ ishfield(linebuf, colon, field)
 }
 
 /*
- * Copy a string, lowercasing it as we go.
+ * Copy a string, lowercasing it as we go.  ``dsize'' should be
+ * the real size (not len) of the dest string (guarantee NULL term).
  */
 void
-istrcpy(dest, src)
+istrncpy(dest, src, dsize)
 	register char *dest, *src;
+	register size_t dsize;
 {
 
-	do {
-		if (isupper(*src))
-			*dest++ = tolower(*src);
-		else
-			*dest++ = *src;
-	} while (*src++ != 0);
+	if (dsize != 0) {
+		while (--dsize != 0 && *src != '\0') {
+			if (isupper(*src))
+				*dest++ = tolower(*src++);
+			else
+				*dest++ = *src++;
+		}
+		*dest = '\0';
+	}
 }
 
 /*
@@ -695,7 +700,7 @@ isign(field, ignore)
 	 * Lower-case the string, so that "Status" and "status"
 	 * will hash to the same place.
 	 */
-	istrcpy(realfld, field);
+	istrncpy(realfld, field, sizeof(realfld));
 	if (ignore[1].i_count > 0)
 		return(!member(realfld, ignore + 1));
 	else
