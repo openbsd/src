@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.106 2003/07/14 13:58:15 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.107 2003/07/14 14:09:24 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1254,6 +1254,14 @@ in
 .Ev MULTI_PACKAGES ) .
 Add other
 variables as needed.
+.It Ev SUDO
+User settings.
+If set to
+.Xr sudo 8
+in
+.Xr mk.conf ,
+the ports tree will only invoke root's privileges for the parts that
+really require it.
 .It Ev SUPDISTFILES
 Supplementary files that need to be retrieved under some specific
 circumstances.
@@ -1474,6 +1482,10 @@ instead.
 Likewise, use
 .Ev EXTRACT_CASES
 instead.
+.It Ev FETCH_BEFORE_ARGS , Ev FETCH_AFTER_ARGS
+Set
+.Ev FETCH_CMD
+to point to a script that does any required special treatment instead.
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
@@ -1482,10 +1494,9 @@ instead.
 Use
 .Ev CONFIGURE_STYLE
 instead.
-.It Ev FETCH_BEFORE_ARGS , Ev FETCH_AFTER_ARGS
-Set
-.Ev FETCH_CMD
-to point to a script that does any required special treatment instead.
+.It Ev HAVE_MOTIF
+Old user settings.
+No longer needed since OpenMotif is now free.
 .It Ev MASTERDIR
 From
 .Fx .
