@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.19 2000/02/16 22:34:20 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.20 2000/03/13 23:40:18 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.21 2000/02/15 08:04:01 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.22 2000/02/23 15:23:24 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -380,7 +380,6 @@ u_int flags;
 		pass = fr_flags;
 	WRITE_ENTER(&ipf_state);
 
-	is->is_rout = pass & FR_OUTQUE ? 1 : 0;
 	is->is_pass = pass;
 	is->is_pkts = 1;
 	is->is_bytes = ip->ip_len;
@@ -565,7 +564,7 @@ tcphdr_t *tcp;
 
 	if (rev == 0) {
 		if (!out) {
-			if (is->is_ifpin == ifp)
+			if (is->is_ifpin == NULL || is->is_ifpin == ifp)
 				ret = 1;
 		} else {
 			if (is->is_ifpout == NULL || is->is_ifpout == ifp)
@@ -573,7 +572,7 @@ tcphdr_t *tcp;
 		}
 	} else {
 		if (out) {
-			if (is->is_ifpin == ifp)
+			if (is->is_ifpin == NULL || is->is_ifpin == ifp)
 				ret = 1;
 		} else {
 			if (is->is_ifpout == NULL || is->is_ifpout == ifp)
@@ -639,7 +638,7 @@ tcphdr_t *tcp;
 	}
 
 	if (!rev) {
-		if (out && (out == is->is_rout)) {
+		if (out) {
 			if (!is->is_ifpout)
 				is->is_ifpout = ifp;
 		} else {
@@ -647,7 +646,7 @@ tcphdr_t *tcp;
 				is->is_ifpin = ifp;
 		}
 	} else {
-		if (!out && (out != is->is_rout)) {
+		if (out) {
 			if (!is->is_ifpin)
 				is->is_ifpin = ifp;
 		} else {

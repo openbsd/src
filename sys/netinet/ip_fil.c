@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.31 2000/02/18 07:47:02 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.32 2000/03/13 23:40:17 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.17 2000/02/10 01:47:28 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.18 2000/02/22 11:40:06 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -227,8 +227,8 @@ int iplattach()
 {
 	char *defpass;
 	int s;
-# ifdef __sgi
-	int error;
+# if defined(__sgi) || (defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000))
+	int error = 0;
 # endif
 
 	SPL_NET(s);
@@ -249,13 +249,27 @@ int iplattach()
 		return -1;
 
 # ifdef NETBSD_PF
+#  if __NetBSD_Version__ >= 104200000
+	error = pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+			      &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+	if (error) {
+		appr_unload();
+		ip_natunload();
+		fr_stateunload();
+		return error;
+	}
+#  else
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+#  endif
 # endif
 
 # ifdef __sgi
 	error = ipfilter_sgi_attach();
 	if (error) {
 		SPL_X(s);
+		appr_unload();
+		ip_natunload();
+		fr_stateunload();
 		return error;
 	}
 # endif
@@ -302,6 +316,9 @@ int iplattach()
 int ipldetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
+#if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
+	int error = 0;
+#endif
 
 #ifdef	_KERNEL
 # if (__FreeBSD_version >= 300000)
@@ -327,13 +344,21 @@ int ipldetach()
 	fr_running = 0;
 
 # ifdef NETBSD_PF
+#  if __NetBSD_Version__ >= 104200000
+	error = pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
+			      &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+	if (error)
+		return error;
+#  else
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+#  endif
 # endif
 
 # ifdef __sgi
 	ipfilter_sgi_detach();
 # endif
 
+	appr_unload();
 	ipfr_unload();
 	ip_natunload();
 	fr_stateunload();

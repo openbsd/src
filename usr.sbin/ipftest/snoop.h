@@ -1,4 +1,4 @@
-/*	$OpenBSD: snoop.h,v 1.8 2000/02/16 22:34:25 kjell Exp $	*/
+/*	$OpenBSD: snoop.h,v 1.9 2000/03/13 23:40:20 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

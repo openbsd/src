@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_log.c,v 1.7 2000/02/16 22:34:19 kjell Exp $	*/
+/*	$OpenBSD: ip_log.c,v 1.8 2000/03/13 23:40:18 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.

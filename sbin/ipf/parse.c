@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.32 2000/02/16 22:34:21 kjell Exp $	*/
+/*	$OpenBSD: parse.c,v 1.33 2000/03/13 23:40:19 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.8 2000/01/27 08:49:42 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.11 2000/03/04 05:19:25 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -68,9 +68,12 @@ void	optprint __P((u_short *, u_long, u_long));
 int	countbits __P((u_32_t));
 char	*portname __P((int, int));
 int	ratoi __P((char *, int *, int, int));
+int	loglevel __P((char **, u_short *, int));
+void	printlog __P((frentry_t *));
 #if defined(__OpenBSD__)
 extern int     if_addr __P((char *, struct in_addr *));
 #endif
+
 
 char	*proto = NULL;
 char	flagset[] = "FSRPAU";
@@ -188,42 +191,16 @@ int     linenum;
 		}
 		if (!strcasecmp(*(cpp+1), "first")) {
 			fil.fr_flags |= FR_LOGFIRST;
+			cpp++;
+		}
+		if (*cpp && !strcasecmp(*(cpp+1), "or-block")) {
+			fil.fr_flags |= FR_LOGORBLOCK;
+			cpp++;
 		}
 		if (!strcasecmp(*(cpp+1), "level")) {
-			int fac, pri;
-			char *s;
-
-			fac = 0;
-			pri = 0;
-			if (!*++cpp) {
-				fprintf(stderr, "%d: %s\n", linenum,
-					"missing identifier after level");
+			cpp++;
+			if (loglevel(cpp, &fil.fr_loglevel, linenum) == -1)
 				return NULL;
-			}
-			s = index(*cpp, '.');
-			if (s) {
-				*s++ = '\0';
-				fac = fac_findname(*cpp);
-				if (fac == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown facility", *cpp);
-					return NULL;
-				}
-				pri = pri_findname(s);
-				if (pri == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown priority", s);
-					return NULL;
-				}
-			} else {
-				pri = pri_findname(*cpp);
-				if (pri == -1) {
-					fprintf(stderr, "%d: %s %s\n", linenum,
-						"Unknown priority", *cpp);
-					return NULL;
-				}
-			}
-			fil.fr_loglevel = fac|pri;
 			cpp++;
 		}
 	} else {
@@ -322,6 +299,12 @@ int     linenum;
 				}
 			}
 			fil.fr_loglevel = fac|pri;
+			cpp++;
+		}
+		if (*cpp && !strcasecmp(*cpp, "level")) {
+			if (loglevel(cpp, &fil.fr_loglevel, linenum) == -1)
+				return NULL;
+			cpp++;
 			cpp++;
 		}
 	}
@@ -642,6 +625,50 @@ int     linenum;
 	}
 */
 	return &fil;
+}
+
+
+int loglevel(cpp, facpri, linenum)
+char **cpp;
+u_short *facpri;
+int linenum;
+{
+	int fac, pri;
+	char *s;
+
+	fac = 0;
+	pri = 0;
+	if (!*++cpp) {
+		fprintf(stderr, "%d: %s\n", linenum,
+			"missing identifier after level");
+		return -1;
+	}
+
+	s = index(*cpp, '.');
+	if (s) {
+		*s++ = '\0';
+		fac = fac_findname(*cpp);
+		if (fac == -1) {
+			fprintf(stderr, "%d: %s %s\n", linenum,
+				"Unknown facility", *cpp);
+			return -1;
+		}
+		pri = pri_findname(s);
+		if (pri == -1) {
+			fprintf(stderr, "%d: %s %s\n", linenum,
+				"Unknown priority", s);
+			return -1;
+		}
+	} else {
+		pri = pri_findname(*cpp);
+		if (pri == -1) {
+			fprintf(stderr, "%d: %s %s\n", linenum,
+				"Unknown priority", *cpp);
+			return -1;
+		}
+	}
+	*facpri = fac|pri;
+	return 0;
 }
 
 
@@ -1302,6 +1329,12 @@ int     linenum;
 	}
 
 	(*cp)++;
+	if (!**cp) {
+		fprintf(stderr, "%d: Missing state/frag after keep\n",
+			linenum);
+		return -1;
+	}
+
 	if (**cp && strcasecmp(**cp, "state") && strcasecmp(**cp, "frags")) {
 		fprintf(stderr, "%d: Unrecognised state keyword \"%s\"\n",
 			linenum, **cp);
@@ -1386,7 +1419,7 @@ struct	frentry	*fp;
 				    "<>", "><"};
 	struct	protoent	*p;
 	int	ones = 0, pr;
-	char	*s, *u;
+	char	*s;
 	u_char	*t;
 	u_short	sec[2];
 
@@ -1409,11 +1442,7 @@ struct	frentry	*fp;
 		} else if ((fp->fr_flags & FR_RETMASK) == FR_RETRST)
 			printf(" return-rst");
 	} else if ((fp->fr_flags & FR_LOGMASK) == FR_LOG) {
-		printf("log");
-		if (fp->fr_flags & FR_LOGBODY)
-			printf(" body");
-		if (fp->fr_flags & FR_LOGFIRST)
-			printf(" first");
+		printlog(fp);
 	} else if (fp->fr_flags & FR_ACCOUNT)
 		printf("count");
 	else if (fp->fr_flags & FR_AUTH)
@@ -1430,29 +1459,8 @@ struct	frentry	*fp;
 
 	if (((fp->fr_flags & FR_LOGB) == FR_LOGB) ||
 	    ((fp->fr_flags & FR_LOGP) == FR_LOGP)) {
-		printf("log ");
-		if (fp->fr_flags & FR_LOGBODY)
-			printf("body ");
-		if (fp->fr_flags & FR_LOGFIRST)
-			printf("first ");
-		if (fp->fr_flags & FR_LOGORBLOCK)
-			printf("or-block ");
-		if (fp->fr_loglevel != 0xffff) {
-			if (fp->fr_loglevel & LOG_FACMASK) {
-				s = fac_toname(fp->fr_loglevel);
-				if (s == NULL)
-					s = "!!!";
-			} else
-				s = "";
-			u = pri_toname(fp->fr_loglevel);
-			if (u == NULL)
-				u = "!!!";
-			if (*s)
-				printf("level %s.%s ", s, u);
-			else
-				printf("level %s ", u);
-		}
-			
+		printlog(fp);
+		putchar(' ');
 	}
 	if (fp->fr_flags & FR_QUICK)
 		printf("quick ");
@@ -1600,6 +1608,37 @@ struct frentry *fp;
 	}
 	putchar('\n');
 	(void)fflush(stdout);
+}
+
+
+void printlog(fp)
+frentry_t *fp;
+{
+	char *s, *u;
+
+	printf("log");
+	if (fp->fr_flags & FR_LOGBODY)
+		printf(" body");
+	if (fp->fr_flags & FR_LOGFIRST)
+		printf(" first");
+	if (fp->fr_flags & FR_LOGORBLOCK)
+		printf(" or-block");
+	if (fp->fr_loglevel != 0xffff) {
+		printf(" level ");
+		if (fp->fr_loglevel & LOG_FACMASK) {
+			s = fac_toname(fp->fr_loglevel);
+			if (s == NULL)
+				s = "!!!";
+		} else
+			s = "";
+		u = pri_toname(fp->fr_loglevel);
+		if (u == NULL)
+			u = "!!!";
+		if (*s)
+			printf("%s.%s", s, u);
+		else
+			printf("%s", u);
+	}
 }
 
 

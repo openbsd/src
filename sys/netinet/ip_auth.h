@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_auth.h,v 1.6 2000/02/16 22:34:18 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.h,v 1.7 2000/03/13 23:40:17 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed & Guido Van Rooij.

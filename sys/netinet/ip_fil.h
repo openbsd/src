@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.h,v 1.16 2000/02/16 22:34:18 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.h,v 1.17 2000/03/13 23:40:17 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $IPFilter: ip_fil.h,v 2.3.2.7 2000/01/27 08:49:41 darrenr Exp $
+ * $IPFilter: ip_fil.h,v 2.3.2.8 2000/02/23 11:16:36 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -295,6 +295,7 @@ typedef	struct	filterstats {
 	u_long	fr_bad;		/* bad IP packets to the filter */
 	u_long	fr_notip;	/* packets passed through no on ip queue */
 	u_long	fr_drop;	/* packets dropped - no info for them! */
+	u_long	fr_copy;	/* messages copied due to db_ref > 1 */
 #endif
 } filterstats_t;
 

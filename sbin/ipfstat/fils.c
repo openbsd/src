@@ -1,4 +1,4 @@
-/*	$OpenBSD: fils.c,v 1.19 2000/02/16 22:34:22 kjell Exp $	*/
+/*	$OpenBSD: fils.c,v 1.20 2000/03/13 23:40:19 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -53,7 +53,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: fils.c,v 2.2.2.5 2000/01/27 08:49:40 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fils.c,v 2.2.2.6 2000/02/23 11:16:35 darrenr Exp $";
 #endif
 
 #define	F_IN	0
@@ -244,6 +244,8 @@ struct	friostat	*fp;
 			fp->f_st[0].fr_notip, fp->f_st[1].fr_notip);
 	printf("   bad packets:\t\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_bad, fp->f_st[1].fr_bad);
+	printf("copied messages:\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_copy, fp->f_st[1].fr_copy);
 #endif
 	printf(" input packets:\t\tblocked %lu passed %lu nomatch %lu",
 			fp->f_st[0].fr_block, fp->f_st[0].fr_pass,

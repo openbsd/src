@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.h,v 1.12 2000/02/16 22:34:20 kjell Exp $	*/
+/*	$OpenBSD: ip_state.h,v 1.13 2000/03/13 23:40:18 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $IPFilter: ip_state.h,v 2.1.2.3 2000/02/15 08:04:03 darrenr Exp $
+ * $IPFilter: ip_state.h,v 2.1.2.4 2000/02/23 15:23:27 darrenr Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -58,7 +58,6 @@ typedef struct ipstate {
 	struct	in_addr	is_src;
 	struct	in_addr	is_dst;
 	u_char	is_p;			/* Protocol */
-	u_char	is_rout;		/* Is rule in/out ? */
 	u_32_t	is_flags;
 	u_32_t	is_opt;			/* packet options set */
 	u_32_t	is_optmsk;		/*    "      "    mask */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.35 2000/02/16 22:34:22 kjell Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.36 2000/03/13 23:40:19 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

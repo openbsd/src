@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_proxy.h,v 1.6 2000/02/16 22:34:19 kjell Exp $	*/
+/*	$OpenBSD: ip_proxy.h,v 1.7 2000/03/13 23:40:18 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_proxy.h,v 2.1.2.1 1999/09/19 12:18:20 darrenr Exp $
+ * $IPFilter: ip_proxy.h,v 2.1.2.2 2000/02/22 11:41:15 darrenr Exp $
  */
 
 #ifndef	__IP_PROXY_H__
@@ -74,6 +74,7 @@ typedef	struct	aproxy	{
 	int	apr_ref;	/* +1 per rule referencing it */
 	int	apr_flags;
 	int	(* apr_init) __P((void));
+	void	(* apr_fini) __P((void));
 	int	(* apr_new) __P((fr_info_t *, ip_t *,
 				 ap_session_t *, struct nat *));
 	int	(* apr_inpkt) __P((fr_info_t *, ip_t *,
@@ -122,6 +123,7 @@ extern	ap_session_t	*ap_sess_list;
 extern	aproxy_t	ap_proxies[];
 
 extern	int	appr_init __P((void));
+extern	void	appr_unload __P((void));
 extern	int	appr_ok __P((ip_t *, tcphdr_t *, struct ipnat *));
 extern	void	appr_free __P((aproxy_t *));
 extern	void	aps_free __P((ap_session_t *));

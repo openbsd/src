@@ -1,4 +1,4 @@
-/*	$OpenBSD: kmem.c,v 1.14 2000/02/16 22:34:22 kjell Exp $	*/
+/*	$OpenBSD: kmem.c,v 1.15 2000/03/13 23:40:19 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
