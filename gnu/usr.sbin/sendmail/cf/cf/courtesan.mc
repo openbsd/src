@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.3 2001/01/15 21:08:51 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.4 2001/07/25 17:27:56 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -20,7 +20,7 @@ FEATURE(use_cw_file)dnl
 FEATURE(redirect)dnl
 MASQUERADE_AS(courtesan.com)dnl
 FEATURE(masquerade_envelope)dnl
-FEATURE(mailnametable)dnl
+FEATURE(genericstable, `hash -o /etc/mail/mailnames')dnl
 dnl
 dnl Virtual domains
 FEATURE(stickyhost)dnl
@@ -32,11 +32,14 @@ FEATURE(blacklist_recipients)dnl
 FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
 FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
 FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
-dnl FEATURE(dnsbl, `relays.orbs.org', `Open spam relay - see http://www.orbs.org/')dnl
 dnl
 dnl Then, we enumerate which mailers we support
 MAILER(local)
 MAILER(smtp)
+dnl
+dnl We want to support IPv6
+DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
 dnl
 dnl Finally, we have the local cf-style goo
 LOCAL_CONFIG
