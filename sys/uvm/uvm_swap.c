@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.4 1999/06/04 00:15:42 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.5 1999/06/04 00:23:17 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -263,6 +263,8 @@ static void sw_reg_start __P((struct swapdev *));
 static void uvm_swap_aiodone __P((struct uvm_aiodesc *));
 static void uvm_swap_bufdone __P((struct buf *));
 static int uvm_swap_io __P((struct vm_page **, int, int, int));
+
+static void swapmount __P((void));
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -1948,7 +1950,65 @@ uvm_swap_aiodone(aio)
 	splx(s);
 
 	/*
+	 * Setup the initial swap partition
+	 */
+	swapmount();
+
+	/*
 	 * done!
 	 */
 }
 
+static void
+swapmount()
+{
+	struct swapdev *sdp;
+	struct swappri *spp;
+	struct vnode *vp;
+	dev_t swap_dev = swdevt[0].sw_dev;
+
+	/*
+	 * No locking here since we happen to know that we will just be called
+	 * once before any other process has forked.
+	 */
+
+	if (swap_dev == NODEV) {
+		printf("swapmount: no device\n");
+		return;
+	}
+
+	if (bdevvp(swap_dev, &vp)) {
+		printf("swapmount: no device 2\n");
+		return;
+	}
+
+	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK);
+	spp = malloc(sizeof(*spp), M_VMSWAP, M_WAITOK);
+	bzero(sdp, sizeof(*sdp));
+
+	sdp->swd_flags = SWF_FAKE;
+	sdp->swd_dev = swap_dev;
+	sdp->swd_vp = vp;
+	swaplist_insert(sdp, spp, 0);
+	sdp->swd_pathlen = strlen("swap_device") + 1;
+	sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
+	if (copystr("swap_device", sdp->swd_path, sdp->swd_pathlen, 0))
+		panic("swapmount: copystr");
+
+	printf("Adding swap(%d, %d):", major(swap_dev), minor(swap_dev));
+
+	if (swap_on(curproc, sdp)) {
+		printf(" failed!\n");
+		swaplist_find(vp, 1);
+		swaplist_trim();
+		vput(sdp->swd_vp);
+		free(sdp->swd_path, M_VMSWAP);
+		free(sdp, M_VMSWAP);
+		free(spp, M_VMSWAP);
+		return;
+	}
+
+	printf(" ok.\n");
+
+	VOP_UNLOCK(vp, 0, curproc);
+}
