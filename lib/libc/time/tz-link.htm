@@ -2,7 +2,7 @@
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	"DTD/xhtml1-strict.dtd">
-<!-- $OpenBSD: tz-link.htm,v 1.4 2002/04/04 19:12:09 millert Exp $ -->
+<!-- $OpenBSD: tz-link.htm,v 1.5 2003/01/07 17:37:37 millert Exp $ -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <title>Sources for Time Zone and Daylight Saving Time Data</title>
@@ -10,7 +10,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"' />
 <meta name="DC.Creator" content="Eggert, Paul" />
 <meta name="DC.Contributor" content="Olson, Arthur David" />
-<meta name="DC.Date" content="2002-03-26" />
+<meta name="DC.Date" content="2002-10-10" />
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time" />
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm" />
@@ -20,7 +20,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	7.35
+@(#)tz-link.htm	7.37
 </address>
 <p>
 Please send corrections to this web page to the
@@ -36,15 +36,16 @@ to UTC offsets and daylight-saving rules.
 This database (often called <code>tz</code> or <code>zoneinfo</code>)
 is used by several implementations,
 including
+<a href="http://www.gnu.org/software/libc/">the GNU C Library</a> used in
 <a href="http://www.linux.org/">GNU/Linux</a>,
 <a href="http://www.freebsd.org/">FreeBSD</a>,
 <a href="http://www.netbsd.org/">NetBSD</a>,
 <a href="http://www.openbsd.org/">OpenBSD</a>,
 <a href="http://www.delorie.com/djgpp/">DJGPP</a>,
-<a href="http://www.hp.com/products1/unix/operating/index.html">HP-UX</a>,
+<a href="http://www.hp.com/products1/unix/operating/">HP-UX</a>,
 <a href="http://www.sgi.com/developers/technology/irix.html">IRIX</a>,
-<a href="http://www.caldera.com/products/openunix/">Open UNIX</a>,
-<a href="http://www.sun.com/solaris/">Solaris</a>, and
+<a href="http://www.caldera.com/products/openunix/">Open UNIX/UnixWare</a>,
+<a href="http://wwws.sun.com/software/solaris/">Solaris</a>, and
 <a href="http://www.tru64unix.compaq.com/">Tru64</a>.</p>
 <p>
 Each location in the database represents a national region where all
@@ -120,7 +121,7 @@ is a web interface to a time zone database derived from
 <li><a href="http://primates.ximian.com/~damon/icalendar/">Olson ->
 VTIMEZONE Converter</a> describes a program Vzic that
 compiles <code>tz</code> source into VTIMEZONE text as specified by
-the <a href="ftp://ftp.isi.edu/in-notes/rfc2445.txt">iCalendar</a>
+the <a href="ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt">iCalendar</a>
 specification published by the <a
 href="http://www.ietf.org/html.charters/calsch-charter.html">IETF
 Calendaring and Scheduling Working Group</a>. Vzic is freely
@@ -132,8 +133,8 @@ href="http://www.w3.org/People/Berners-Lee/">Tim Berners-Lee</a> and
 <a
 href="http://developer.iplanet.com/docs/wpapers/calendar/ietf.txt">another</a>
 used by the <a
-href="http://www.iplanet.com/products/iplanet_calendar/">iPlanet
-Calendar Server</a>.</li>
+href="http://wwws.sun.com/software/products/calendar_srvr/home_calendar.html">Sun
+ONE Calendar Server</a>.</li>
 </ul>
 <h2>Other <code>tz</code> binary file readers</h2>
 <ul>
@@ -154,15 +155,15 @@ It is freely available under the GNU LGPL.</li>
 href="http://www1.tip.nl/~t876506/AboutTimeZonesHC.html">HyperCard
 time zones calculator</a> is a HyperCard stack.</li>
 <li><a
-href="http://www20.Brinkster.com/timezone50/">Time Zone Converter</a> is a
+href="http://www.cimmyt.org/timezone/">Time Zone Converter</a> is a
 Microsoft Windows program.</li>
 </ul>
 <h2>Other time zone databases</h2>
 <ul>
-<li><a href="http://www.astro.ch/cgi-bin/atlw3/aq.cgi?lang=e">Astrodienst
+<li><a href="http://www.astro.com/cgi-bin/atlw3/aq.cgi?lang=e">Astrodienst
 - Atlas Query</a> is Astrodienst's Web version of Shanks's
 excellent time zone history atlases published in both <a
-href="http://astrocom.com/software/pcatlas.html">computer</a> and <a
+href="http://astrocom.com/software/pcatlas.php">computer</a> and <a
 href="http://astrocom.com/books/xrefa.php#SHANKS">book</a> form by <a
 href="http://astrocom.com/">Astro Communications Services</a>.</li>
 <li><a href="http://worldtime.com/">WORLDTIME: interactive atlas,
@@ -216,18 +217,17 @@ Time Zones</a> publishes the same data in other formats.</li>
 <li>The US Geological Survey's National Atlas of the United States
 publishes the <a href="http://www.nationalatlas.gov/timeznm.html">Time
 Zones of the United States</a> in the public domain.</li>
-<li>The National Weather Service publishes <a
-href="http://isl715.nws.noaa.gov/mapdata/newcat/county/county_all.htm">outlines
-of US counties and their time zones</a> in the public domain.</li>
 <li>The GeoCommunity lists several commercial sources for <a
 href="http://spatialnews.geocomm.com/features/timezones/">International
 Time Zones and Time Zone Data</a>.</li>
 </ul>
 <h2>Daylight saving time concepts and history</h2>
 <ul>
+<li><a href="http://physics.nist.gov/time">A Walk through Time</a>
+surveys the evolution of timekeeping.</li>
 <li><a href="http://webexhibits.com/daylightsaving/">About Daylight
 Saving Time - History, rationale, laws and dates</a>
-is a good overall history of DST.</li>
+is an overall history of DST.</li>
 <li><a href="http://toi.iriti.cnr.it/">The
 Time of Internet</a>
 describes time zones and daylight saving time,
@@ -277,10 +277,10 @@ covers the history of local time in the Netherlands from ancient times.</dd>
 <dt>United Kingdom</dt>
 <dd><a
 href="http://student.cusu.cam.ac.uk/~jsm28/british-time/">History of
-legal time in Britain</a> is an excellent discussion for the country
+legal time in Britain</a> discusses in detail the country
 with perhaps the best-documented history of clock adjustments.
 The National Physical Laboratory also maintains an <a
-href="http://www.npl.co.uk/npl/ctm/summer_time_archive.html">archive
+href="http://www.npl.co.uk/time/summer_time_archive.html">archive
 of summer time dates</a>.</dd>
 </dl></li>
 </ul>
@@ -288,7 +288,7 @@ of summer time dates</a>.</dd>
 <ul>
 <li><a
 href="http://literature.agilent.com/litwebbin/purl.cgi?org_id=tmo&amp;pub_id=5965-7984E">The
-Science of Timekeeping</a> is an excellent and thorough introduction
+Science of Timekeeping</a> is a thorough introduction
 to the theory and practice of precision timekeeping.</li>
 <li><a href="http://www.ntp.org/">Time Synchronization Server</a> discusses
 the Network Time Protocol (NTP), used to synchronize clocks of
@@ -298,7 +298,7 @@ charset="macintosh">A
 Few Facts Concerning GMT, UT, and the RGO</a>
 answers questions like "What is the difference between GMT and UTC?"</li>
 <li><a
-href="http://sadira.gb.nrao.edu/~rfisher/Ephemerides/times.html">Astronomical
+href="http://www.gb.nrao.edu/~rfisher/Ephemerides/times.html">Astronomical
 Times</a> explains more abstruse astronomical time scales like TT, TCG,
 and TDB.</li>
 <li>The <a href="http://www.iau.org/">IAU</a>'s <a
@@ -315,7 +315,7 @@ the Earth Orientation Parameters Product Center of the
 International Earth Rotation Service, the committee that decides
 when leap seconds occur.</li>
 <li>The <a
-href="http://rom.usno.navy.mil/cgi-bin/wa">Leap
+href="http://rom.usno.navy.mil/archives/leapsecs.html">Leap
 Second Discussion List</a> covers <a
 href="http://www.findarticles.com/cf_0/m0BPW/11_10/57821998/p1/article.jhtml">McCarthy
 and Klepczynski's proposal to discontinue leap seconds</a>.
@@ -332,17 +332,20 @@ the International Standard Date and Time Notation</a> is a good
 summary of ISO
 8601:1988 - Data elements and interchange formats - Information interchange
 - Representation of dates and times (which has been superseded by
-<a href="http://www.iso.ch/cate/d26780.html">ISO 8601:2000</a>).</li>
+<a href="http://www.iso.org/iso/en/CatalogueDetailPage.CatalogueDetail?CSNUMBER=26780">ISO 8601:2000</a>).</li>
 <li>
 Section 3.3 of <a
-href="ftp://ftp.isi.edu/in-notes/rfc2822.txt">Internet RFC 2822</a>
+href="ftp://ftp.rfc-editor.org/in-notes/rfc2822.txt">Internet RFC 2822</a>
 specifies the time notation used in email and <a
-href="ftp://ftp.isi.edu/in-notes/rfc2616.txt">HTTP</a> headers.</li>
+href="ftp://ftp.rfc-editor.org/in-notes/rfc2616.txt">HTTP</a> headers.</li>
 <li>
-<a
-href="ftp://ftp.isi.edu/internet-drafts/draft-ietf-impp-datetime-05.txt">Date
-and Time on the Internet: Timestamps</a> proposes an ISO 8601 profile
-for use in new Internet protocols.</li>
+<a href="ftp://ftp.rfc-editor.org/in-notes/rfc3339.txt">Internet RFC
+3339</a> specifies an ISO 8601 profile for use in new Internet
+protocols.</li>
+<li>
+<a href="http://www.exit109.com/~ghealton/y2k/yrexamples.html">The
+Best of Dates, the Worst of Dates</a> covers many problems encountered
+by software developers when handling dates and time stamps.</li>
 <li>
 Alphabetic time zone abbreviations should not be used as unique
 identifiers for UTC offsets as they are ambiguous in practice. For
