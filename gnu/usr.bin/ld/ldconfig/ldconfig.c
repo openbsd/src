@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.4 1996/10/29 01:01:06 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.5 1996/12/18 04:55:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -37,7 +37,9 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ar.h>
@@ -118,7 +120,7 @@ char	*argv[];
 			return rval;
 		if (justread) {
 			listhints();
-			return;
+			return 0;
 		}
 	}
 
@@ -217,7 +219,8 @@ int	dewey[], ndewey;
 					dir, file);
 
 			free(shp->name);
-			shp->name = strdup(name);
+			if ((shp->name = strdup(name)) == NULL)
+				errx(1, "virtual memory exhausted");
 			free(shp->path);
 			shp->path = concat(dir, "/", file);
 			bcopy(dewey, shp->dewey, sizeof(shp->dewey));
@@ -235,7 +238,8 @@ int	dewey[], ndewey;
 		printf("Adding %s/%s\n", dir, file);
 
 	shp = (struct shlib_list *)xmalloc(sizeof *shp);
-	shp->name = strdup(name);
+	if ((shp->name = strdup(name)) == NULL)
+		errx(1, "virtual memory exhausted");
 	shp->path = concat(dir, "/", file);
 	bcopy(dewey, shp->dewey, MAXDEWEY);
 	shp->ndewey = ndewey;
@@ -302,7 +306,7 @@ buildhints()
 	hdr.hh_ehints = hdr.hh_strtab + hdr.hh_strtab_sz;
 
 	if (verbose)
-		printf("Totals: entries %d, buckets %d, string size %d\n",
+		printf("Totals: entries %d, buckets %ld, string size %d\n",
 					nhints, hdr.hh_nbucket, strtab_sz);
 
 	/* Allocate buckets and string table */
@@ -340,11 +344,13 @@ buildhints()
 
 		/* Insert strings in string table */
 		bp->hi_namex = str_index;
-		strcpy(strtab + str_index, shp->name);
+		strncpy(strtab + str_index, shp->name, strtab_sz - str_index - 1);
+		strtab[strtab_sz-1] = '\0';
 		str_index += 1 + strlen(shp->name);
 
 		bp->hi_pathx = str_index;
-		strcpy(strtab + str_index, shp->path);
+		strncpy(strtab + str_index, shp->path, strtab_sz - str_index - 1);
+		strtab[strtab_sz-1] = '\0';
 		str_index += 1 + strlen(shp->path);
 
 		/* Copy versions */
@@ -353,7 +359,8 @@ buildhints()
 	}
 
 	/* Copy search directories */
-	strcpy(strtab + str_index, dir_list);
+	strncpy(strtab + str_index, dir_list, strtab_sz - str_index - 1);
+	strtab[strtab_sz-1] = '\0';
 	str_index += 1 + strlen(dir_list);
 
 	/* Sanity check */
@@ -428,13 +435,13 @@ readhints()
 
 	hdr = (struct hints_header *)addr;
 	if (HH_BADMAG(*hdr)) {
-		warnx("%s: Bad magic: %o",
+		warnx("%s: Bad magic: %lo",
 			_PATH_LD_HINTS, hdr->hh_magic);
 		return -1;
 	}
 
 	if (hdr->hh_version != LD_HINTS_VERSION_2) {
-		warnx("Unsupported version: %d", hdr->hh_version);
+		warnx("Unsupported version: %ld", hdr->hh_version);
 		return -1;
 	}
 
@@ -467,8 +474,10 @@ readhints()
 
 		/* Allocate new list element */
 		shp = (struct shlib_list *)xmalloc(sizeof *shp);
-		shp->name = strdup(strtab + bp->hi_namex);
-		shp->path = strdup(strtab + bp->hi_pathx);
+		if ((shp->name = strdup(strtab + bp->hi_namex)) == NULL)
+			errx(1, "virtual memory exhausted");
+		if ((shp->path = strdup(strtab + bp->hi_pathx)) == NULL)
+			errx(1, "virtual memory exhausted");
 		bcopy(bp->hi_dewey, shp->dewey, sizeof(shp->dewey));
 		shp->ndewey = bp->hi_ndewey;
 		shp->next = NULL;
@@ -476,7 +485,8 @@ readhints()
 		*shlib_tail = shp;
 		shlib_tail = &shp->next;
 	}
-	dir_list = strdup(strtab + hdr->hh_dirlist);
+	if ((dir_list = strdup(strtab + hdr->hh_dirlist)) == NULL)
+		errx(1, "virtual memory exhausted");
 
 	return 0;
 }
