@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.59 1998/10/03 20:54:21 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.60 1998/10/06 19:48:57 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -61,6 +61,18 @@ ppp
 # ./etc/sliphome
 sliphome
 # ./etc/sliphome
+..
+
+# ./etc/ssl
+ssl
+
+# ./etc/ssl/private
+private		uname=root mode=0700
+
+# ./etc/ssl
+..
+
+# ./etc
 ..
 
 # ./etc/uucp
@@ -167,6 +179,11 @@ rpc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
 rpcsvc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
+..
+
+# ./usr/include/ssl
+ssl		gname=bin uname=root mode=0755
+# ./usr/include/ssl
 ..
 
 # ./usr/include
