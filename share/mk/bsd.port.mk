@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.47 1998/11/05 10:36:14 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.48 1998/11/17 06:39:25 form Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -965,12 +965,16 @@ IGNORE=	"uses X11, but ${X11BASE} not found"
 IGNORE=	"is marked as broken: ${BROKEN}"
 .elif defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
-.if ${MACHINE_ARCH} == "${__ARCH}"
+.if (${MACHINE_ARCH} == "${__ARCH}") || (${ARCH} == "${__ARCH}")
 __ARCH_OK=	1
 .endif
 .endfor
 .if !defined(__ARCH_OK)
+.if ${MACHINE_ARCH} == "${ARCH}"
 IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE_ARCH}"
+.else
+IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE_ARCH} \(${ARCH}\)"
+.endif
 .endif
 .elif defined(COMES_WITH)
 .if ( ${OPSYS_VER} >= ${COMES_WITH} )
