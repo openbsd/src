@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.2 2003/12/23 15:59:02 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.3 2003/12/23 18:52:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -211,7 +211,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		 */
 		rde_send_kroute(xp, pte->active);
 
-		if (xp != NULL || xp->aspath->state == NEXTHOP_UNREACH)
+		if (xp == NULL || xp->aspath->state == NEXTHOP_UNREACH)
 			pte->active = NULL;
 		else {
 			pte->active = xp;
