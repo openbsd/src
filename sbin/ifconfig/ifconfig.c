@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.47 2001/05/02 06:44:23 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.48 2001/05/07 13:53:26 markus Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.47 2001/05/02 06:44:23 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.48 2001/05/07 13:53:26 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ const struct	cmd {
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,       0,              settunnel } ,
 	{ "tunnel",  	NEXTARG2,       0,              settunnel } ,
-	{ "tunneldelete",  0,       	0,              deletetunnel } ,
+	{ "deletetunnel",  0,       	0,              deletetunnel } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
