@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.296 2004/05/05 23:16:02 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.297 2004/05/09 10:51:55 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1565,7 +1565,7 @@ option is similar to
 but routes packets that pass in the opposite direction (replies) to the
 specified interface.
 Opposite direction is only defined in the context of a state entry, and
-.Ar route-to
+.Ar reply-to
 is useful only in rules that create state.
 It can be used on systems with multiple external connections to
 route all outgoing packets of a connection through the interface
