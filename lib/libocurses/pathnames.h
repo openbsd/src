@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1998/11/19 17:12:26 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2001/08/24 15:59:48 heko Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/02/27 10:18:43 cgd Exp $	*/
 
 /*
@@ -37,4 +37,4 @@
  */
 
 #define	_PATH_TERMCAP	"/usr/share/misc/termcap"
-#define	_PATH_DEF	__CONCAT(".termcap ",_PATH_TERMCAP)
+#define	_PATH_DEF	(".termcap " _PATH_TERMCAP)
