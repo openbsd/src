@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.14 2003/09/07 07:50:29 tedu Exp $
+ *	$Id: pppctl.c,v 1.15 2003/10/31 08:48:16 otto Exp $
  */
 
 #include <sys/types.h>
@@ -398,10 +398,7 @@ main(int argc, char **argv)
                 History *hist;
                 const char *l, *env;
                 int size;
-#ifdef __NetBSD__
                 HistEvent hev = { 0, "" };
-#endif
-
 
                 hist = history_init();
                 if ((env = getenv("EL_SIZE"))) {
@@ -410,13 +407,8 @@ main(int argc, char **argv)
                       size = 20;
                 } else
                     size = 20;
-#ifdef __NetBSD__
                 history(hist, &hev, H_SETSIZE, size);
                 edit = el_init("pppctl", stdin, stdout, stderr);
-#else
-                history(hist, H_EVENT, size);
-                edit = el_init("pppctl", stdin, stdout);
-#endif
                 el_source(edit, NULL);
                 el_set(edit, EL_PROMPT, GetPrompt);
                 if ((env = getenv("EL_EDITOR"))) {
@@ -429,11 +421,7 @@ main(int argc, char **argv)
                 el_set(edit, EL_HIST, history, (const char *)hist);
                 while ((l = smartgets(edit, &len, fd))) {
                     if (len > 1)
-#ifdef __NetBSD__
                         history(hist, &hev, H_ENTER, l);
-#else
-                        history(hist, H_ENTER, l);
-#endif
                     write(fd, l, len);
                     if (Receive(fd, REC_SHOW) != 0)
                         break;

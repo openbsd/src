@@ -1,4 +1,4 @@
-/*	$OpenBSD: clit.c,v 1.4 2002/08/09 02:23:48 aaron Exp $	*/
+/*	$OpenBSD: clit.c,v 1.5 2003/10/31 08:47:31 otto Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -136,9 +136,7 @@ void *
 cmdinit(struct clit *cmds, int ncmds)
 {
 	struct clitenv *env;
-#ifdef __NetBSD__
 	HistEvent ev;
-#endif
 
 	if ((env = malloc(sizeof(*env))) == NULL)
 		err(1, "Can't init cmd interpreter.");
@@ -147,17 +145,10 @@ cmdinit(struct clit *cmds, int ncmds)
 	env->ncmds = ncmds;
 
 	env->hist = history_init();
-#ifdef __NetBSD__
 	history(env->hist, &ev, H_SETSIZE, 100);
-#else
-	history(env->hist, H_EVENT, 100);
-#endif
 
-#ifdef __NetBSD__
 	env->el = el_init(__progname, stdin, stdout, stderr);
-#else
-	env->el = el_init(__progname, stdin, stdout);
-#endif
+
 	el_set(env->el, EL_EDITOR, "emacs");
 	el_set(env->el, EL_PROMPT, prompt);
 	el_set(env->el, EL_HIST, history, env->hist);
@@ -203,17 +194,11 @@ cmdloop(void *arg)
 		struct clit *cmdp;
 		char **ap;
 		int argc, res;
-#ifdef __NetBSD__
 		HistEvent ev;
-#endif
 
 		memset(argv, 0, sizeof(char *) * maxargs);
 
-#ifdef __NetBSD__
 		history(hist, &ev, H_ENTER, elline);
-#else
-		history(hist, H_ENTER, elline);
-#endif
 
 		orgline = line = strdup(elline);
 		if (line == NULL)
@@ -237,7 +222,7 @@ cmdloop(void *arg)
 		/*
 		 * Editline commands.
 		 */
-		if (el_parse(el, argc, argv) != -1)
+		if (el_parse(el, argc, (const char **)argv) != -1)
 			goto cmdout;
 
 		if ((res = name_to_cmd(argv[0], env->cmds, env->ncmds,

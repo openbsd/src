@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2003/10/31 08:47:31 otto Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.35 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.36 2003/10/31 08:47:31 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -937,10 +937,12 @@ alarmtimer(wait)
 void
 controlediting()
 {
+	HistEvent hev;
+
 	if (editing && el == NULL && hist == NULL) {
-		el = el_init(__progname, stdin, ttyout); /* init editline */
+		el = el_init(__progname, stdin, ttyout, stderr); /* init editline */
 		hist = history_init();		/* init the builtin history */
-		history(hist, H_EVENT, 100);	/* remember 100 events */
+		history(hist, &hev, H_SETSIZE, 100);	/* remember 100 events */
 		el_set(el, EL_HIST, history, hist);	/* use history */
 
 		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */

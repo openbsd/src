@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2003/10/31 08:47:31 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.54 2003/07/02 21:04:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.55 2003/10/31 08:47:31 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,6 +386,9 @@ cmdscanner(top)
 {
 	struct cmd *c;
 	int num;
+#ifndef SMALL
+	HistEvent hev;
+#endif
 
 	if (!top 
 #ifndef SMALL
@@ -433,7 +436,7 @@ cmdscanner(top)
 			}
 			memcpy(line, buf, (size_t)num);
 			line[num] = '\0';
-			history(hist, H_ENTER, buf);
+			history(hist, &hev, H_ENTER, buf);
 		}
 #endif /* !SMALL */
 
@@ -453,7 +456,7 @@ cmdscanner(top)
 			 *       them will not elicit an error.
 			 */
 			if (editing &&
-			    el_parse(el, margc, margv) != 0)
+			    el_parse(el, margc, (const char **)margv) != 0)
 #endif /* !SMALL */
 				fputs("?Invalid command.\n", ttyout);
 			continue;

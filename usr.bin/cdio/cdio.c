@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.30 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.31 2003/10/31 08:47:31 otto Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -1242,6 +1242,7 @@ input(int *cmd)
 	char *buf;
 	int siz = 0;
 	char *p;
+	HistEvent hev;
 
 	do {
 		if ((buf = (char *) el_gets(el, &siz)) == NULL || !siz) {
@@ -1250,7 +1251,7 @@ input(int *cmd)
 			return (0);
 		}
 		if (strlen(buf) > 1)
-			history(hist, H_ENTER, buf);
+			history(hist, &hev, H_ENTER, buf);
 		p = parse(buf, cmd);
 	} while (!p);
 	return (p);
@@ -1359,10 +1360,12 @@ prompt(void)
 void
 switch_el(void)
 {
+	HistEvent hev;
+
 	if (el == NULL && hist == NULL) {
-		el = el_init(__progname, stdin, stdout);
+		el = el_init(__progname, stdin, stdout, stderr);
 		hist = history_init();
-		history(hist, H_EVENT, 100);
+		history(hist, &hev, H_SETSIZE, 100);
 		el_set(el, EL_HIST, history, hist);
 		el_set(el, EL_EDITOR, "emacs");
 		el_set(el, EL_PROMPT, prompt);
