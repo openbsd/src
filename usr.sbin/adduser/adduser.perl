@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.40 2003/03/11 04:45:54 david Exp $
+#	$OpenBSD: adduser.perl,v 1.41 2003/04/03 18:55:33 jmc Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.40 2003/03/11 04:45:54 david Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.41 2003/04/03 18:55:33 jmc Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -455,7 +455,7 @@ sub add_group {
     local(@l) = split(',', $groupmembers{$gid});
     # group(5): A group cannot have more than 200 members. 
     # The maximum line length of /etc/group is 1024 characters. 
-    # Longer lines will be skiped.
+    # Longer lines will be skipped.
     if ($#l >= 200 || 
 	length($groupmembers{$gid}) > 1024 - 50) { # 50 is for group name
 	warn "WARNING, group line ``$gid{$gid}'' is either too long or has\n" .
