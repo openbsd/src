@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.12 2000/06/30 16:00:20 millert Exp $	*/
+/*	$OpenBSD: strip.c,v 1.13 2000/10/12 10:15:38 art Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.12 2000/06/30 16:00:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.13 2000/10/12 10:15:38 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ main(argc, argv)
 			ERROR(EFTYPE);
 		}
 		if ((ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ|PROT_WRITE,
-		    MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
+		    MAP_SHARED, fd, (off_t)0)) == MAP_FAILED) {
 			(void)close(fd);
 			ERROR(errno);
 		}
