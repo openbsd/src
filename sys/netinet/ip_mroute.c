@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.13 1999/01/08 21:51:22 provos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.14 1999/02/05 04:23:43 angelos Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -463,7 +463,9 @@ ip_mrouter_done()
 			expire_mfc(rt);
 		}
 	}
+
 	free(mfchashtbl, M_MRTABLE);
+	mfchashtbl = 0;
 	
 	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
