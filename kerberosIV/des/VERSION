@@ -1,13 +1,140 @@
-Release apon comp.sources.misc
+Version 3.21 22/11/95
+	After some emailing back and forth with 
+	Colin Plumb <colin@nyx10.cs.du.edu>, I've tweaked a few things
+	and in a future version I will probably put in some of the
+	optimisation he suggested for use with the DES_USE_PTR option.
+	Extra routines from Mark Murray <mark@grondar.za> for use in
+	freeBSD.  They mostly involve random number generation for use
+	with kerberos.  They involve evil machine specific system calls
+	etc so I would normally suggest pushing this stuff into the
+	application and/or using RAND_seed()/RAND_bytes() if you are
+	using this DES library as part of SSLeay.
+	Redone the read_pw() function so that it is cleaner and
+	supports termios, thanks to Sameer Parekh <sameer@c2.org>
+	for the initial patches for this.
+	Renamed 3ecb_encrypt() to ecb3_encrypt().  This has been
+	 done just to make things more consistent.
+	I have also now added triple DES versions of cfb and ofb.
+
+Version 3.20
+	Damn, Damn, Damn, as pointed out by Mike_Spreitzer.PARC@xerox.com,
+	my des_random_seed() function was only copying 4 bytes of the
+	passed seed into the init structure.  It is now fixed to copy 8.
+	My own suggestion is to used something like MD5 :-)
+
+Version 3.19 
+	While looking at my code one day, I though, why do I keep on
+	calling des_encrypt(in,out,ks,enc) when every function that
+	calls it has in and out the same.  So I dropped the 'out'
+	parameter, people should not be using this function.
+
+Version 3.18 30/08/95
+	Fixed a few bit with the distribution and the filenames.
+	3.17 had been munged via a move to DOS and back again.
+	NO CODE CHANGES
+
+Version 3.17 14/07/95
+	Fixed ede3 cbc which I had broken in 3.16.  I have also
+	removed some unneeded variables in 7-8 of the routines.
+
+Version 3.16 26/06/95
+	Added des_encrypt2() which does not use IP/FP, used by triple
+	des routines.  Tweaked things a bit elsewhere. %13 speedup on
+	sparc and %6 on a R4400 for ede3 cbc mode.
+
+Version 3.15 06/06/95
+	Added des_ncbc_encrypt(), it is des_cbc mode except that it is
+	'normal' and copies the new iv value back over the top of the
+	passed parameter.
+	CHANGED des_ede3_cbc_encrypt() so that it too now overwrites
+	the iv.  THIS WILL BREAK EXISTING CODE, but since this function
+	only new, I feel I can change it, not so with des_cbc_encrypt :-(.
+	I need to update the documentation.
+
+Version 3.14 31/05/95
+	New release upon the world, as part of my SSL implementation.
+	New copyright and usage stuff.  Basically free for all to use
+	as long as you say it came from me :-)
+
+Version 3.13 31/05/95
+	A fix in speed.c, if HZ is not defined, I set it to 100.0
+	which is reasonable for most unixes except SunOS 4.x.
+	I now have a #ifdef sun but timing for SunOS 4.x looked very
+	good :-(.  At my last job where I used SunOS 4.x, it was
+	defined to be 60.0 (look at the old INSTALL documentation), at
+	the last release had it changed to 100.0 since I now work with
+	Solaris2 and SVR4 boxes.
+	Thanks to  Rory Chisholm <rchishol@math.ethz.ch> for pointing this
+	one out.
+
+Version 3.12 08/05/95
+	As pointed out by The Crypt Keeper <tck@bend.UCSD.EDU>,
+	my D_ENCRYPT macro in crypt() had an un-necessary variable.
+	It has been removed.
+
+Version 3.11 03/05/95
+	Added des_ede3_cbc_encrypt() which is cbc mode des with 3 keys
+	and one iv.  It is a standard and I needed it for my SSL code.
+	It makes more sense to use this for triple DES than
+	3cbc_encrypt().  I have also added (or should I say tested :-)
+	cfb64_encrypt() which is cfb64 but it will encrypt a partial
+	number of bytes - 3 bytes in 3 bytes out.  Again this is for
+	my SSL library, as a form of encryption to use with SSL
+	telnet.
+
+Version 3.10 22/03/95
+	Fixed a bug in 3cbc_encrypt() :-(.  When making repeated calls
+	to cbc3_encrypt, the 2 iv values that were being returned to
+	be used in the next call were reversed :-(.
+	Many thanks to Bill Wade <wade@Stoner.COM> for pointing out
+	this error.
+
+Version 3.09 01/02/95
+	Fixed des_random_key to far more random, it was rather feeble
+	with regards to picking the initial seed.  The problem was
+	pointed out by Olaf Kirch <okir@monad.swb.de>.
+
+Version 3.08 14/12/94
+	Added Makefile.PL so libdes can be built into perl5.
+	Changed des_locl.h so RAND is always defined.
+
+Version 3.07 05/12/94
+	Added GNUmake and stuff so the library can be build with
+	glibc.
+
+Version 3.06 30/08/94
+	Added rpc_enc.c which contains _des_crypt.  This is for use in
+	secure_rpc v 4.0
+	Finally fixed the cfb_enc problems.
+	Fixed a few parameter parsing bugs in des (-3 and -b), thanks
+	to Rob McMillan <R.McMillan@its.gu.edu.au>
+
+Version 3.05 21/04/94
+	for unsigned long l; gcc does not produce ((l>>34) == 0)
+	This causes bugs in cfb_enc.
+	Thanks to Hadmut Danisch <danisch@ira.uka.de>
+
+Version 3.04 20/04/94
+	Added a version number to des.c and libdes.a
+
+Version 3.03 12/01/94
+	Fixed a bug in non zero iv in 3cbc_enc.
+
+Version 3.02 29/10/93
+	I now work in a place where there are 6+ architectures and 14+
+	OS versions :-).
+	Fixed TERMIO definition so the most sys V boxes will work :-)
+
+Release upon comp.sources.misc
 Version 3.01 08/10/93
 	Added des_3cbc_encrypt()
 
 Version 3.00 07/10/93
 	Fixed up documentation.
-	quad_cksum definitly compatable with MIT's now.
+	quad_cksum definitely compatible with MIT's now.
 
 Version 2.30 24/08/93
-	Tripple DES now defaults to tripple cbc but can do tripple ecb
+	Triple DES now defaults to triple cbc but can do triple ecb
 	 with the -b flag.
 	Fixed some MSDOS uuen/uudecoding problems, thanks to
 	Added prototypes.
@@ -19,13 +146,13 @@ Version 2.22 29/06/93
 Version 2.21 03/06/93
 	des(1) with no arguments gives quite a bit of help.
 	Added -c (generate ckecksum) flag to des(1).
-	Added -3 (tripple DES) flag to des(1).
+	Added -3 (triple DES) flag to des(1).
 	Added cfb and ofb routines to the library.
 
 Version 2.20 11/03/93
 	Added -u (uuencode) flag to des(1).
 	I have been playing with byte order in quad_cksum to make it
-	 compatible with MIT's version.  All I can say is aviod this
+	 compatible with MIT's version.  All I can say is avid this
 	 function if possible since MIT's output is endian dependent.
 
 Version 2.12 14/10/92
@@ -158,7 +285,7 @@ Version 1.51 07/06/1991 eay
 	Fixed bug in quad_cksum.c (thanks to hughes@logos.ucs.indiana.edu)
 
 Version 1.50 28/05/1991 eay
-	Optimized the code a bit more for the sparc.  I have improved the
+	Optimised the code a bit more for the sparc.  I have improved the
 	speed of the inner des_encrypt by speeding up the initial and
 	final permutations.
 

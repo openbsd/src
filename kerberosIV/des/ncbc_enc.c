@@ -1,4 +1,4 @@
-/* lib/des/cfb_enc.c */
+/* lib/des/ncbc_enc.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
  * All rights reserved.
  * 
@@ -47,114 +47,74 @@
 
 #include "des_locl.h"
 
-/* The input and output are loaded in multiples of 8 bits.
- * What this means is that if you hame numbits=12 and length=2
- * the first 12 bits will be retrieved from the first byte and half
- * the second.  The second 12 bits will come from the 3rd and half the 4th
- * byte.
- */
-void des_cfb_encrypt(in, out, numbits, length, schedule, ivec, encrypt)
-unsigned char *in;
-unsigned char *out;
-int numbits;
+void des_ncbc_encrypt(input, output, length, schedule, ivec, encrypt)
+des_cblock (*input);
+des_cblock (*output);
 long length;
 des_key_schedule schedule;
 des_cblock (*ivec);
 int encrypt;
 	{
-	register unsigned long d0,d1,v0,v1,n=(numbits+7)/8;
-	register unsigned long mask0,mask1;
-	register unsigned long l=length;
-	register int num=numbits;
-	unsigned long ti[2];
+	register unsigned long tin0,tin1;
+	register unsigned long tout0,tout1,xor0,xor1;
+	register unsigned char *in,*out;
+	register long l=length;
+	unsigned long tin[2];
 	unsigned char *iv;
 
-	if (num > 64) return;
-	if (num > 32)
-		{
-		mask0=0xffffffffL;
-		if (num == 64)
-			mask1=mask0;
-		else	mask1=(1L<<(num-32))-1;
-		}
-	else
-		{
-		if (num == 32)
-			mask0=0xffffffffL;
-		else	mask0=(1L<<num)-1;
-		mask1=0x00000000;
-		}
-
+	in=(unsigned char *)input;
+	out=(unsigned char *)output;
 	iv=(unsigned char *)ivec;
-	c2l(iv,v0);
-	c2l(iv,v1);
+
 	if (encrypt)
 		{
-		while (l >= n)
+		c2l(iv,tout0);
+		c2l(iv,tout1);
+		for (; l>0; l-=8)
 			{
-			l-=n;
-			ti[0]=v0;
-			ti[1]=v1;
-			des_encrypt((unsigned long *)ti,schedule,DES_ENCRYPT);
-			c2ln(in,d0,d1,n);
-			in+=n;
-			d0=(d0^ti[0])&mask0;
-			d1=(d1^ti[1])&mask1;
-			l2cn(d0,d1,out,n);
-			out+=n;
-			/* 30-08-94 - eay - changed because l>>32 and
-			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
-				{ v0=v1; v1=d0; }
-			else if (num == 64)
-				{ v0=d0; v1=d1; }
-			else if (num > 32) /* && num != 64 */
+			if (l >= 8)
 				{
-				v0=((v1>>(num-32))|(d0<<(64-num)))&0xffffffffL;
-				v1=((d0>>(num-32))|(d1<<(64-num)))&0xffffffffL;
+				c2l(in,tin0);
+				c2l(in,tin1);
 				}
-			else /* num < 32 */
-				{
-				v0=((v0>>num)|(v1<<(32-num)))&0xffffffffL;
-				v1=((v1>>num)|(d0<<(32-num)))&0xffffffffL;
-				}
+			else
+				c2ln(in,tin0,tin1,l);
+			tin0^=tout0; tin[0]=tin0;
+			tin1^=tout1; tin[1]=tin1;
+			des_encrypt((unsigned long *)tin,schedule,DES_ENCRYPT);
+			tout0=tin[0]; l2c(tout0,out);
+			tout1=tin[1]; l2c(tout1,out);
 			}
+		iv=(unsigned char *)ivec;
+		l2c(tout0,iv);
+		l2c(tout1,iv);
 		}
 	else
 		{
-		while (l >= n)
+		c2l(iv,xor0);
+		c2l(iv,xor1);
+		for (; l>0; l-=8)
 			{
-			l-=n;
-			ti[0]=v0;
-			ti[1]=v1;
-			des_encrypt((unsigned long *)ti,schedule,DES_ENCRYPT);
-			c2ln(in,d0,d1,n);
-			in+=n;
-			/* 30-08-94 - eay - changed because l>>32 and
-			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
-				{ v0=v1; v1=d0; }
-			else if (num == 64)
-				{ v0=d0; v1=d1; }
-			else if (num > 32) /* && num != 64 */
+			c2l(in,tin0); tin[0]=tin0;
+			c2l(in,tin1); tin[1]=tin1;
+			des_encrypt((unsigned long *)tin,schedule,DES_DECRYPT);
+			tout0=tin[0]^xor0;
+			tout1=tin[1]^xor1;
+			if (l >= 8)
 				{
-				v0=((v1>>(num-32))|(d0<<(64-num)))&0xffffffffL;
-				v1=((d0>>(num-32))|(d1<<(64-num)))&0xffffffffL;
+				l2c(tout0,out);
+				l2c(tout1,out);
 				}
-			else /* num < 32 */
-				{
-				v0=((v0>>num)|(v1<<(32-num)))&0xffffffffL;
-				v1=((v1>>num)|(d0<<(32-num)))&0xffffffffL;
-				}
-			d0=(d0^ti[0])&mask0;
-			d1=(d1^ti[1])&mask1;
-			l2cn(d0,d1,out,n);
-			out+=n;
+			else
+				l2cn(tout0,tout1,out,l);
+			xor0=tin0;
+			xor1=tin1;
 			}
+		iv=(unsigned char *)ivec;
+		l2c(xor0,iv);
+		l2c(xor1,iv);
 		}
-	iv=(unsigned char *)ivec;
-	l2c(v0,iv);
-	l2c(v1,iv);
-	v0=v1=d0=d1=ti[0]=ti[1]=0;
+	tin0=tin1=tout0=tout1=xor0=xor1=0;
+	tin[0]=tin[1]=0;
 	}
 

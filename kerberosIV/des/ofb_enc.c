@@ -1,6 +1,50 @@
-/*	$Id: ofb_enc.c,v 1.1.1.1 1995/12/14 06:52:44 tholo Exp $	*/
+/* lib/des/ofb_enc.c */
+/* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
+ * All rights reserved.
+ * 
+ * This file is part of an SSL implementation written
+ * by Eric Young (eay@mincom.oz.au).
+ * The implementation was written so as to conform with Netscapes SSL
+ * specification.  This library and applications are
+ * FREE FOR COMMERCIAL AND NON-COMMERCIAL USE
+ * as long as the following conditions are aheared to.
+ * 
+ * Copyright remains Eric Young's, and as such any Copyright notices in
+ * the code are not to be removed.  If this code is used in a product,
+ * Eric Young should be given attribution as the author of the parts used.
+ * This can be in the form of a textual message at program startup or
+ * in documentation (online or textual) provided with the package.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *    This product includes software developed by Eric Young (eay@mincom.oz.au)
+ * 
+ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * The licence and distribution terms for any publically available version or
+ * derivative of this code cannot be changed.  i.e. this code cannot simply be
+ * copied and put under another distribution licence
+ * [including the GNU Public Licence.]
+ */
 
-/* Copyright (C) 1993 Eric Young - see README for more details */
 #include "des_locl.h"
 
 /* The input and output are loaded in multiples of 8 bits.
@@ -9,55 +53,59 @@
  * the second.  The second 12 bits will come from the 3rd and half the 4th
  * byte.
  */
-int des_ofb_encrypt(unsigned char *in, unsigned char *out, int numbits, long int length, struct des_ks_struct *schedule, des_cblock (*ivec))
-{
-  register u_int32_t d0,d1,v0,v1,n=(numbits+7)/8;
-  register u_int32_t mask0,mask1;
-  register long l=length;
-  register int num=numbits;
-  u_int32_t ti[2];
-  unsigned char *iv;
+void des_ofb_encrypt(in, out, numbits, length, schedule, ivec)
+unsigned char *in;
+unsigned char *out;
+int numbits;
+long length;
+des_key_schedule schedule;
+des_cblock (*ivec);
+	{
+	register unsigned long d0,d1,v0,v1,n=(numbits+7)/8;
+	register unsigned long mask0,mask1;
+	register long l=length;
+	register int num=numbits;
+	unsigned long ti[2];
+	unsigned char *iv;
 
-  if (num > 64) return(0);
-  if (num > 32)
-    {
-      mask0=0xffffffff;
-      if (num >= 64)
-	mask1=mask0;
-      else
-	mask1=(1L<<(num-32))-1;
-    }
-  else
-    {
-      if (num == 32)
-	mask0=0xffffffff;
-      else
-	mask0=(1L<<num)-1;
-      mask1=0x00000000;
-    }
+	if (num > 64) return;
+	if (num > 32)
+		{
+		mask0=0xffffffffL;
+		if (num >= 64)
+			mask1=mask0;
+		else
+			mask1=(1L<<(num-32))-1;
+		}
+	else
+		{
+		if (num == 32)
+			mask0=0xffffffffL;
+		else
+			mask0=(1L<<num)-1;
+		mask1=0x00000000;
+		}
 
-  iv=(unsigned char *)ivec;
-  c2l(iv,v0);
-  c2l(iv,v1);
-  ti[0]=v0;
-  ti[1]=v1;
-  while (l-- > 0)
-    {
-      des_encrypt(ti,ti,
-		  schedule,DES_ENCRYPT);
-      c2ln(in,d0,d1,n);
-      in+=n;
-      d0=(d0^ti[0])&mask0;
-      d1=(d1^ti[1])&mask1;
-      l2cn(d0,d1,out,n);
-      out+=n;
-    }
-  v0=ti[0];
-  v1=ti[1];
-  iv=(unsigned char *)ivec;
-  l2c(v0,iv);
-  l2c(v1,iv);
-  v0=v1=d0=d1=ti[0]=ti[1]=0;
-  return(0);
-}
+	iv=(unsigned char *)ivec;
+	c2l(iv,v0);
+	c2l(iv,v1);
+	ti[0]=v0;
+	ti[1]=v1;
+	while (l-- > 0)
+		{
+		des_encrypt((unsigned long *)ti,schedule,DES_ENCRYPT);
+		c2ln(in,d0,d1,n);
+		in+=n;
+		d0=(d0^ti[0])&mask0;
+		d1=(d1^ti[1])&mask1;
+		l2cn(d0,d1,out,n);
+		out+=n;
+		}
+	v0=ti[0];
+	v1=ti[1];
+	iv=(unsigned char *)ivec;
+	l2c(v0,iv);
+	l2c(v1,iv);
+	v0=v1=d0=d1=ti[0]=ti[1]=0;
+	}
 
