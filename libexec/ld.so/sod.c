@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.2 2001/05/11 16:21:11 art Exp $       */
+/*      $OpenBSD: sod.c,v 1.3 2001/05/12 10:39:54 art Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -145,7 +145,7 @@ _dl_maphints()
 	}
 
 	hsize = PAGSIZ;
-	addr = (void *) _dl_mmap(0, hsize, PROT_READ, MAP_COPY, hfd, 0);
+	addr = (void *) _dl_mmap(0, hsize, PROT_READ, MAP_PRIVATE, hfd, 0);
 
 	if (addr == MAP_FAILED) {
 		_dl_close(hfd);
@@ -171,7 +171,7 @@ _dl_maphints()
 
 	if (hheader->hh_ehints > hsize) {
 		if ((caddr_t)_dl_mmap(addr+hsize, hheader->hh_ehints - hsize,
-				PROT_READ, MAP_COPY|MAP_FIXED,
+				PROT_READ, MAP_PRIVATE|MAP_FIXED,
 				hfd, hsize) != (caddr_t)(addr+hsize)) {
 
 			_dl_munmap((caddr_t)hheader, hsize);

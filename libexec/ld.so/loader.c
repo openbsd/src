@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.7 2001/04/02 23:11:20 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.8 2001/05/12 10:39:54 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -663,7 +663,7 @@ _dl_malloc(int size)
 	   (_dl_malloc_pool + size > _dl_malloc_base + 4096)) {
 		_dl_malloc_pool = (void *)_dl_mmap((void *)0, 4096,
 						PROT_READ|PROT_WRITE,
-						MAP_ANON|MAP_COPY, -1, 0);
+						MAP_ANON|MAP_PRIVATE, -1, 0);
 		if(_dl_malloc_pool == 0 ||
 			_dl_malloc_pool == MAP_FAILED )
 		{
