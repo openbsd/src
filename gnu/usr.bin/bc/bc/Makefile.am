@@ -25,7 +25,7 @@ libmath.h: libmath.b
 	echo \"\" > libmath.h
 	$(MAKE) fbc
 	./fbc -c $(srcdir)/libmath.b </dev/null >libmath.h
-	$(srcdir)/fix-libmath_h
+	sh $(srcdir)/fix-libmath_h
 	rm -f ./fbc
 
 install-data-local:
