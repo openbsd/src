@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/03/21 15:08:36 cgd Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/07/23 21:49:07 pjanzen Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	cfscores
