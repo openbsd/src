@@ -1,30 +1,10 @@
-#	$OpenBSD: RAMDISK,v 1.9 2005/01/03 21:54:14 deraadt Exp $
-# $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
-#
-# GENERIC machine description file
-#
-# This machine description file is used to generate the default OpenBSD
-# kernel.  The generic kernel does not include all options, subsystems
-# and device drivers, but should be useful for most applications.
-#
-# The machine description file can be customised for your specific
-# machine to reduce the kernel size and improve its performance.
-#
-# For further information on compiling OpenBSD kernels, see the config(8)
-# man page.
-#
-# For further information on hardware support for this architecture, see
-# the intro(4) man page.  For further information about kernel options
-# for this architecture, see the options(4) man page.  For an explanation
-# of each device driver in this file see the section 4 man page for the
-# device.
+#	$OpenBSD: RAMDISK,v 1.10 2005/01/04 21:01:53 miod Exp $
 
 machine	cats	arm
 
 # include "../../../conf/GENERIC"
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
-option		COMPAT_43	# and 4.3BSD
 option		FFS		# UFS
 option		NFSCLIENT	# Network File System client
 option		CD9660		# ISO 9660 + Rock Ridge file system
@@ -35,21 +15,12 @@ option		DDB		# kernel debugger
 option		EXT2FS		# Second Extended Filesystem
 option          FIFO            # FIFOs; RECOMMENDED
 
-options		SYSCALL_DEBUG
 options	ARM32
 options FOOTBRIDGE_INTR
 
 # estimated number of users
 
 maxusers	32
-
-# Standard system options
-
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-#options 	INSECURE	# disable kernel securelevel
-
-#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 
@@ -60,18 +31,6 @@ options 	CPU_SA110	# Support the SA110 core
 
 #options 	ARMFPE		# ARM Ltd FPE
 
-
-
-
-# Compatibility options
-
-option WSDISPLAY_COMPAT_USL		# VT handling
-option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option WSDISPLAY_DEFAULTSCREENS=6	# can get raw scancodes
-option WSDISPLAY_COMPAT_PCVT		# can get raw scancodes
-
-
-#config		bsd	swap generic
 config                bsd     root on rd0a swap on rd0b
 
 # The main bus device
@@ -85,9 +44,6 @@ footbridge0	at mainbus?
 
 # footbridge uart
 fcom0	at footbridge?
-
-# system clock via footbridge
-#clock*	at footbridge?
 
 # time-of-day device via footbridge or RTC
 todclock0	at todservice?
@@ -205,85 +161,19 @@ uhub*	at uhub?
 # USB HID device
 uhidev*	at uhub?
 
-# USB Mice
-ums*	at uhidev?
-wsmouse*	at ums?
-
 # USB Keyboards
 ukbd*	at uhidev?
 wskbd*	at ukbd? mux 1
-
-# USB Generic HID devices
-uhid*	at uhidev?
-
-# USB Printer
-ulpt*	at uhub?
-
-# USB Modem
-umodem*	at uhub?
-ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub?
 atapiscsi* at umass?
 scsibus* at umass?
 
-# USB audio
-uaudio*	at uhub?
-audio*	at uaudio?
-
-# USB MIDI
-umidi*	at uhub?
-midi*	at umidi?
-
 # USB Ethernet adapters
 aue*	at uhub?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub?		# CATC USB-EL1201A based adapters
 kue*	at uhub?		# Kawasaki LSI KL5KUSB101B based adapters
-
-# Prolofic PL2301/PL2302 host-to-host adapter
-upl*	at uhub?
-
-# Serial adapters
-# FTDI FT8U100AX serial adapter
-uftdi*	at uhub?
-ucom*	at uftdi?
-
-uplcom*	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom?
-
-umct*	at uhub?		# MCT USB-RS232 serial adapter
-ucom*	at umct?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub?
-
-# USB Handspring Visor
-uvisor*	at uhub?
-ucom*	at uvisor?
-
-# USB scanners
-uscanner* at uhub?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub?
-scsibus* at usscanner?
-
-# Y@P firmware loader
-#uyap* at uhub?
-
-# USB Generic driver
-ugen* at uhub?
-
-# Audio Devices
-
-# PCI audio devices
-#eap*	at pci?			# Ensoniq AudioPCI
-#sv*	at pci?			# S3 SonicVibes
-
-# Audio support
-#audio*	at eap?
-#audio*	at sv?
 
 vga*		at pci?
 wsdisplay*	at vga?
@@ -299,12 +189,10 @@ isa*	at pcib?		# ISA bus
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-pms*		at pckbc?	# PS/2 mouse for wsmouse
 wskbd*		at pckbd?
-wsmouse*	at pms?
 
-pcppi0	at isa?
-sysbeep0	at pcppi?
+#pcppi0	at isa?
+#sysbeep0	at pcppi?
 
 # ISA Plug-and-Play serial interfaces
 #com*	at isapnp?			# Modems and serial boards
@@ -317,11 +205,6 @@ com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 #com2	at isa? port 0x3e8 irq 9
 #com3	at isa? port 0x2e8 irq 10
-
-# ISA parallel printer interfaces
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278 irq 5
-#lpt2	at isa? port 0x3bc
 
 # ISA floppy
 #fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
@@ -336,29 +219,9 @@ lc0 at isa? port 0x200 irq ?
 lc1 at isa? port 0x280 irq ?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-spkr0	at pcppi?			# PC speaker
+#spkr0	at pcppi?			# PC speaker
 
 ds1687rtc0	at isa? port 0x72		# Dallas RTC
-
-# ISA Plug-and-Play audio devices
-#ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
-#sb*	at isapnp?			# SoundBlaster-compatible audio
-#wss*	at isapnp?			# Windows Sound System
-
-# MPU 401 UARTs
-#mpu*	at sb?
-
-# MIDI support
-midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at mpu?			# MPU 401
-
-# Joysticks
-
-# ISA Plug-and-Play joysticks
-#joy*	at isapnp?			# Game ports (usually on audio cards)
-
-# ISA joysticks. Probe is a little strange; add only if you have one.
-#joy0	at isa? port 0x201
 
 # Pseudo-Devices
 
@@ -369,10 +232,8 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
 pseudo-device	rd		1	# ram disk
 
-
 option		BOOT_CONFIG	# boot-time kernel config
 
 # RAMDISK stuff
 option		MINIROOTSIZE=8192
 option		RAMDISK_HOOKS
-
