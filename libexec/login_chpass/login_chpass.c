@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.10 2002/09/06 18:45:06 deraadt Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.11 2003/08/12 13:14:08 hin Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -62,13 +62,6 @@
 # undef passwd
 #endif
 
-#ifdef KERBEROS
-# include <netinet/in.h>
-# include <kerberosIV/krb.h>
-# include <kerberosIV/kadm.h>
-# include <kerberosIV/kadm_err.h>
-#endif
-
 #define	_PATH_LOGIN_LCHPASS	"/usr/libexec/auth/login_lchpass"
 
 #define BACK_CHANNEL	3
@@ -82,11 +75,6 @@ struct passwd *ypgetpwnam(char *);
 void	kbintr(int);
 #endif
 
-#ifdef KERBEROS
-int	get_pw_new_pwd(char *, int, krb_principal *, int);
-char	realm[REALM_SZ];
-#endif
-
 void	local_chpass(char **);
 void	krb_chpass(char *, char *, char **);
 void	yp_chpass(char *);
@@ -94,7 +82,7 @@ void	yp_chpass(char *);
 int
 main(int argc, char *argv[])
 {
-	char *username, *instance;
+	char *username;
 	struct rlimit rl;
 	int c;
 
@@ -132,17 +120,6 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* Instance ignored for all but Kerberos. */
-	instance = strchr(username, '.');
-	if (instance)
-		*instance++ = '\0';
-	else
-		instance = "";
-
-#ifdef KERBEROS
-	if (krb_get_lrealm(realm, 0) == KSUCCESS)
-		krb_chpass(username, instance, argv);
-#endif
 #ifdef  YP
 	if (_yp_check(NULL))
 		yp_chpass(username);
@@ -279,66 +256,5 @@ kbintr(int signo)
 	writev(STDERR_FILENO, iv, 3);
 
 	_exit(1);
-}
-#endif
-
-#ifdef KERBEROS
-void
-krb_chpass(char *username, char *instance, char *argv[])
-{
-	int rval;
-	char pword[MAX_KPW_LEN];
-	char tktstring[MAXPATHLEN];
-	krb_principal principal;
-	sigset_t set;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGINT);
-	sigaddset(&set, SIGQUIT);
-	(void)sigprocmask(SIG_BLOCK, &set, NULL);
-
-	memset(&principal, 0, sizeof(principal));
-	krb_get_default_principal(principal.name,
-	    principal.instance, principal.realm);
-
-	snprintf(tktstring, sizeof(tktstring), "%s.chpass.%s.%ld",
-	    TKT_ROOT, username, (long)getpid());
-	krb_set_tkt_string(tktstring);
-
-	(void)setpriority(PRIO_PROCESS, 0, -4);
-
-	if (get_pw_new_pwd(pword, sizeof(pword), &principal, 0)) {
-		dest_tkt();
-		exit(1);
-	}
-
-	rval = kadm_init_link (PWSERV_NAME, KRB_MASTER, principal.realm);
-	if (rval != KADM_SUCCESS)
-		com_err(argv[0], rval, "while initializing");
-	else {
-		des_cblock newkey;
-		char *pw_msg; /* message from server */
-
-		des_string_to_key(pword, &newkey);
-		rval = kadm_change_pw_plain((u_char *)&newkey, pword, &pw_msg);
-		memset(newkey, 0, sizeof(newkey));
-
-		if (rval == KADM_INSECURE_PW)
-			warnx("Insecure password: %s", pw_msg);
-		else if (rval != KADM_SUCCESS)
-			com_err(argv[0], rval, "attempting to change password.");
-	}
-	memset(pword, 0, sizeof(pword));
-
-	if (rval != KADM_SUCCESS)
-		fprintf(stderr, "Password NOT changed.\n");
-	else
-		printf("Password changed.\n");
-
-	dest_tkt();
-
-	if (rval == 0)
-		(void)writev(BACK_CHANNEL, iov, 2);
-	exit(rval);
 }
 #endif

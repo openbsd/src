@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_chpass.8,v 1.4 2003/02/03 17:46:57 jmc Exp $
+.\" $OpenBSD: login_chpass.8,v 1.5 2003/08/12 13:14:08 hin Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -50,8 +50,7 @@ utility is typically called from
 .Xr login 1 .
 It is functionally the same as calling the program:
 .Dq passwd Ar user .
-This will change the user's kerberos password, if configured,
-or use the
+This will use the
 .Xr login_lchpass 8
 utility to change the user's local password.
 .Pp
