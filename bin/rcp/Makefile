@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2003/05/14 08:01:02 mho Exp $
+#	$OpenBSD: Makefile,v 1.10 2003/07/16 19:10:13 deraadt Exp $
 
 PROG=	rcp
 SRCS=	rcp.c util.c
@@ -12,8 +12,8 @@ BINMODE=555
 #.PATH:	${.CURDIR}/../../usr.bin/rsh
 #SRCS+=	krcmd.c kcmd.c
 #CFLAGS+=-DKERBEROS
-#LDADD+=	-lkrb -ldes
 #DPADD+=	${LIBKRB} ${LIBDES}
+#LDADD+=	-lkrb -ldes
 #.endif
 
 .include <bsd.prog.mk>

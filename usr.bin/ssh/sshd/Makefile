@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2003/07/15 19:02:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.58 2003/07/16 19:10:13 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -23,23 +23,23 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV
 SRCS+=  auth-krb5.c auth2-krb5.c
+DPADD+= ${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
-DPADD+= ${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 .endif # KERBEROS5
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto -lutil -lz -ldes
 DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ} ${LIBDES}
+LDADD+=	-lcrypto -lutil -lz -ldes
 
 .if (${TCP_WRAPPERS:L} == "yes")
 CFLAGS+= -DLIBWRAP
-LDADD+= -lwrap
 DPADD+= ${LIBWRAP}
+LDADD+= -lwrap
 .endif
 
 #.if (${SKEY:L} == "yes")
 #CFLAGS+= -DSKEY
-#LDADD+= -lskey
 #DPADD+= ${SKEY}
+#LDADD+= -lskey
 #.endif
