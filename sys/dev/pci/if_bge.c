@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.44 2004/12/16 14:30:31 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.45 2004/12/17 03:13:59 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2053,7 +2053,7 @@ bge_reset(sc)
 	struct bge_softc *sc;
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
-	u_int32_t cachesize, command, pcistate, reset;
+	u_int32_t cachesize, command, pcistate, new_pcistate, reset;
 	int i, val = 0;
 
 	/* Save some important PCI state. */
@@ -2113,6 +2113,7 @@ bge_reset(sc)
 	 * general communications memory at 0xB50.
 	 */
 	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
 	/*
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
@@ -2141,10 +2142,17 @@ bge_reset(sc)
 	 * results.
 	 */
 	for (i = 0; i < BGE_TIMEOUT; i++) {
-		if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) ==
-		    pcistate)
+		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    BGE_PCI_PCISTATE);
+		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==
+		    (pcistate & ~BGE_PCISTATE_RESERVED))
 			break;
 		DELAY(10);
+	}
+	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) != 
+	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
+		printf("%s: pcistate failed to revert\n",
+		    sc->bge_dev.dv_xname);
 	}
 
 	/* Fix up byte swapping */

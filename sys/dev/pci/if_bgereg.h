@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.16 2004/12/16 14:30:32 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.17 2004/12/17 03:13:59 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -309,6 +309,15 @@
 #define BGE_PCISTATE_EXPROM_RETRY	0x00000040
 #define BGE_PCISTATE_FLATVIEW_MODE	0x00000100
 #define BGE_PCISTATE_PCI_TGT_RETRY_MAX	0x00000E00
+
+/*
+ * The following bits in PCI state register are reserved.
+ * If we check that the register values reverts on reset,
+ * do not check these bits. On some 5704C (rev A3) and some
+ * Altima chips, these bits do not revert until much later
+ * in the bge driver's bge_reset() chip-reset state machine.
+ */
+#define BGE_PCISTATE_RESERVED	((1 << 12) + (1 <<7))
 
 /*
  * PCI Clock Control register -- note, this register is read only
