@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.148 2004/11/11 13:14:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.149 2004/11/11 13:29:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1221,7 +1221,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 	bzero(&nexthop, sizeof(nexthop));
 	switch (afi) {
 	case AFI_IPv6:
-		/* 
+		/*
 		 * RFC2545 describes that there may be a link-local
 		 * address carried in nexthop. Yikes!
 		 * This is not only silly, it is wrong and we just ignore

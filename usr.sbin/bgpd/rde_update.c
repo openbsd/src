@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.32 2004/11/11 13:06:45 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.33 2004/11/11 13:29:37 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -278,7 +278,7 @@ up_generate_updates(struct rde_peer *peer,
 			/*
 			 * route reflector redistribution rules:
 			 * 1. if announce is set		-> announce
-			 * 2. old non-client, new non-client	-> no 
+			 * 2. old non-client, new non-client	-> no
 			 * 3. old client, new non-client	-> yes
 			 * 4. old non-client, new client	-> yes
 			 * 5. old client, new client		-> yes
@@ -320,7 +320,7 @@ up_generate_updates(struct rde_peer *peer,
 			return;
 
 		/*
-		 * Don't send messages back to originator 
+		 * Don't send messages back to originator
 		 * this is not specified in the RFC but seems logical.
 		 */
 		if ((attr = attr_optget(old->aspath,
@@ -375,7 +375,7 @@ up_generate_updates(struct rde_peer *peer,
 			/*
 			 * route reflector redistribution rules:
 			 * 1. if announce is set		-> announce
-			 * 2. old non-client, new non-client	-> no 
+			 * 2. old non-client, new non-client	-> no
 			 * 3. old client, new non-client	-> yes
 			 * 4. old non-client, new client	-> yes
 			 * 5. old client, new client		-> yes
@@ -449,7 +449,7 @@ up_generate_updates(struct rde_peer *peer,
 		}
 
 		/*
-		 * Don't send messages back to originator 
+		 * Don't send messages back to originator
 		 * this is not specified in the RFC but seems logical.
 		 */
 		if ((attr = attr_optget(new->aspath,
