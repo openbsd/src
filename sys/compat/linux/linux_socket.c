@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.4 1997/11/26 08:45:46 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.5 1997/11/26 08:51:08 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -198,7 +198,37 @@ linux_connect(p, uap, retval)
 	SCARG(&bca, name) = (caddr_t) lca.name;
 	SCARG(&bca, namelen) = lca.namelen;
 
-	return sys_connect(p, &bca, retval);
+	error = sys_connect(p, &bca, retval);
+
+	if (error == EISCONN) {
+		struct sys_getsockopt_args bga;
+		void *status, *statusl;
+		int stat, statl = sizeof stat;
+		caddr_t sg;
+
+		sg = stackgap_init(p->p_emul);
+		status = stackgap_alloc(&sg, sizeof stat);
+		statusl = stackgap_alloc(&sg, sizeof statusl);
+
+		if ((error = copyout(&statl, statusl, sizeof statl)))
+			return error;
+
+		SCARG(&bga, s) = lca.s;
+		SCARG(&bga, level) = SOL_SOCKET;
+		SCARG(&bga, name) = SO_ERROR;
+		SCARG(&bga, val) = status;
+		SCARG(&bga, avalsize) = statusl;
+		
+		error = sys_getsockopt(p, &bga, retval);
+		if (error)
+			return error;
+		if ((error = copyin(status, &stat, sizeof stat)))
+			return error;
+		if (stat)
+			return stat;
+		return EISCONN;
+	}
+	return error;
 }
 
 int
