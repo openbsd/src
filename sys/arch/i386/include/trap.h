@@ -57,11 +57,12 @@
 #define	T_BOUND		11	/* bounds check fault */
 #define	T_DNA		12	/* device not available fault */
 #define	T_DOUBLEFLT	13	/* double fault */
-#define	T_FPOPFLT	14	/* fp coprocessor operand fetch fault */
+#define	T_FPOPFLT	14	/* fp coprocessor operand fetch fault (![P]Pro)*/
 #define	T_TSSFLT	15	/* invalid tss fault */
 #define	T_SEGNPFLT	16	/* segment not present fault */
 #define	T_STKFLT	17	/* stack fault */
-#define	T_RESERVED	18	/* reserved fault base */
+#define	T_MACHK		18	/* machine check ([P]Pro) */
+#define	T_RESERVED	19	/* reserved fault base */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100

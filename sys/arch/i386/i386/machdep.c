@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 1997/04/02 22:02:55 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 1997/04/04 16:14:09 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1223,6 +1223,7 @@ init386(first_avail)
 	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386TGT, SEL_KPL);
 	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL);
 	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 18], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
 
 	setregion(&region, gdt, sizeof(gdt) - 1);

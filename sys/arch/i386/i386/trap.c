@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 1997/02/09 03:53:58 tholo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 1997/04/04 16:14:09 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -153,11 +153,12 @@ char	*trap_type[] = {
 	"bounds check fault",			/* 11 T_BOUND */
 	"FPU not available fault",		/* 12 T_DNA */
 	"double fault",				/* 13 T_DOUBLEFLT */
-	"FPU operand fetch fault",		/* 14 T_FPOPFLT */
+	"FPU operand fetch fault",		/* 14 T_FPOPFLT (![P]Pro) */
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
-	"reserved trap",			/* 18 T_RESERVED */
+	"machine check",			/* 18 T_MACHK ([P]Pro) */
+	"reserved trap",			/* 19 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
