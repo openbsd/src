@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.3 2000/11/13 15:35:17 aaron Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.4 2001/02/01 05:56:14 aaron Exp $	*/
 /*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
@@ -110,20 +110,31 @@ wsmux_setmax(n)
 	int n;
 {
 	int i;
+	struct wsmux_softc **wsmuxdevs_tmp = NULL;
 
 	if (n >= nwsmux) {
-		i = nwsmux;
-		nwsmux = n + 1;
-		if (nwsmux != 0) {
-			if (wsmuxdevs)
-				free(wsmuxdevs, M_DEVBUF);
+		if (wsmuxdevs != NULL) {
+			wsmuxdevs_tmp = malloc(nwsmux * sizeof(*wsmuxdevs_tmp),
+			    M_DEVBUF, M_NOWAIT);
+			if (wsmuxdevs_tmp == 0)
+				panic("wsmux_setmax: no mem\n");
+			for (i = 0; i < nwsmux; i++)
+				wsmuxdevs_tmp[i] = wsmuxdevs[i];
+			free(wsmuxdevs, M_DEVBUF);
 		}
-		wsmuxdevs = malloc(nwsmux * sizeof (*wsmuxdevs), 
-				   M_DEVBUF, M_NOWAIT);
+
+		wsmuxdevs = malloc(n + 1 * sizeof(*wsmuxdevs), 
+		    M_DEVBUF, M_NOWAIT);
 		if (wsmuxdevs == 0)
 			panic("wsmux_setmax: no memory\n");
-		for (; i < nwsmux; i++)
+		for (; i < n + 1; i++)
 			wsmuxdevs[i] = 0;
+		if (wsmuxdevs_tmp != NULL) {
+			for (i = 0; i < nwsmux; i++)
+				wsmuxdevs[i] = wsmuxdevs_tmp[i];
+			free(wsmuxdevs_tmp, M_DEVBUF);
+		}
+		nwsmux = n + 1;
 	}
 }
 
