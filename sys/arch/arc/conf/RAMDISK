@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 1997/08/01 11:19:52 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.5 1997/08/01 11:22:12 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -58,9 +58,6 @@ options 	INET		# Internet protocols
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MULTICAST	# Multicast support
 #options 	MROUTING	# Multicast routing support
-
-# Special options
-option		MACHINE_NONCONTIG # Support noncontigous memory.
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 1997/08/01 11:18:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.20 1997/08/01 11:22:09 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -58,9 +58,6 @@ option		IPFILTER_LOG	# use /dev/ipl to log IPF
 #option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #option		MULTICAST	# Multicast support
 #option		MROUTING	# Multicast routing support
-
-# Special options
-option		MACHINE_NONCONTIG # Support noncontigous memory.
 
 # Specify storage configuration (its a joke..)
 config		bsd	swap generic

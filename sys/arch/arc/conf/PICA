@@ -53,9 +53,6 @@ options 	GATEWAY		# IP packet forwarding
 #options 	TPIP
 #options 	EON
 
-# Special options
-#options 	MACHINE_NONCONTIG # Support noncontigous memory.
-
 # Specify storage configuration
 config		bsd	root on sd0 swap on sd0 and sd1
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.8 1997/04/29 05:16:40 deraadt Exp $
+#	$OpenBSD: ARCTIC,v 1.9 1997/08/01 11:22:09 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -57,7 +57,6 @@ option		COMPAT_43	# compatibility with 4.3BSD binaries
 #option		COMPAT_ULTRIX	# Ultrix binary compatibility (no go yet)
 
 # Special options
-option	 	MACHINE_NONCONTIG	# Support noncontigous memory.
 option		PCCONS_FORCE_WORD	# Max out at 16bit accesses to the
 					# VGA memory
 
