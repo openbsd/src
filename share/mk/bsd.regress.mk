@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.regress.mk,v 1.6 2002/01/03 01:47:23 art Exp $
+#	$OpenBSD: bsd.regress.mk,v 1.7 2002/01/03 02:20:29 art Exp $
 # No man pages for regression tests.
 NOMAN=
 
@@ -11,6 +11,9 @@ NOPROG=
 .endif
 
 .include <bsd.prog.mk>
+
+.MAIN: all
+all: regress
 
 # XXX - Need full path to REGRESSLOG, otherwise there will be much pain.
 
