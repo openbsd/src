@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.13 2001/07/16 02:56:48 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.14 2001/07/16 03:44:22 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	if (ovp->v_type != VREG &&
 	    ovp->v_type != VDIR &&
 	    ovp->v_type != VLNK)
-		return (EINVAL);
+		return (0);
 
 	if (ovp->v_type == VLNK &&
 		(oip->i_e2fs_size < ovp->v_mount->mnt_maxsymlinklen ||
