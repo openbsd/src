@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.5 1997/12/21 14:27:23 brian Exp $
+ *	$Id: pppctl.c,v 1.6 1997/12/27 13:44:15 brian Exp $
  */
 
 #include <sys/types.h>
@@ -99,12 +99,7 @@ Receive(int fd, int display)
         }
         len += Result;
         Buffer[len] = '\0';
-        if (TimedOut) {
-            if (display & REC_VERBOSE)
-                write(1,Buffer,len);
-            Result = -1;
-            break;
-        } else if (len > 2 && !strcmp(Buffer+len-2, "> ")) {
+        if (len > 2 && !strcmp(Buffer+len-2, "> ")) {
             prompt = strrchr(Buffer, '\n');
             if (display & (REC_SHOW|REC_VERBOSE)) {
                 if (display & REC_VERBOSE)
@@ -137,6 +132,17 @@ Receive(int fd, int display)
             } else
                 Result = 0;
             break;
+        }
+        if (len == sizeof Buffer - 1) {
+            int flush;
+            if ((last = strrchr(Buffer, '\n')) == NULL)
+                /* Yeuch - this is one mother of a line ! */
+                flush = sizeof Buffer / 2;
+            else
+                flush = last - Buffer + 1;
+            write(1, Buffer, flush);
+            strcpy(Buffer, Buffer + flush);
+            len -= flush;
         }
     }
 
