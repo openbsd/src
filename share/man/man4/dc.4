@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.3 2000/01/10 08:15:36 deraadt Exp $
+.\"	$OpenBSD: dc.4,v 1.4 2000/01/18 21:48:58 aaron Exp $
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -311,7 +311,7 @@ it is transfered successfully.
 .Pp
 The ADMtek AL981 chip (and possibly the AN985 as well) has been observed
 to sometimes wedge on transmit: this appears to happen when the driver
-queues a sequence of frames which cause it to wrap from the end of the
+queues a sequence of frames which cause it to wrap from the end of
 the transmit descriptor ring back to the beginning. The
 .Nm
 driver attempts to avoid this condition by not queing any frames past

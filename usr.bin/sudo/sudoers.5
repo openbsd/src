@@ -1,7 +1,11 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.1.1.1 $$Date: 1999/11/18 16:29:01 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.2 $$Date: 2000/01/18 21:49:02 $
 '''
 ''' $Log: sudoers.5,v $
+''' Revision 1.2  2000/01/18 21:49:02  aaron
+''' Repair duplicate word occurences; (as found by a Perl script sent to us from
+''' Tom Christiansen <tchrist@perl.com>).
+'''
 ''' Revision 1.1.1.1  1999/11/18 16:29:01  millert
 ''' sudo 1.6, now with a BSD license
 '''
@@ -567,7 +571,7 @@ more digits, in which case it is treated as a uid).  Both the
 comment character and any text after it, up to the end of the line,
 are ignored.
 .PP
-The reserved word \fB\s-1ALL\s0\fR is a a built in \fIalias\fR that always causes
+The reserved word \fB\s-1ALL\s0\fR is a built in \fIalias\fR that always causes
 a match to succeed.  It can be used wherever one might otherwise
 use a \f(CWCmnd_Alias\fR, \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR, or \f(CWHost_Alias\fR.
 You should not try to define your own \fIalias\fR called \fB\s-1ALL\s0\fR as the
