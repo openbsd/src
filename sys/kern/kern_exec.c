@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.34 1999/11/05 01:18:01 mickey Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.35 2000/01/19 23:03:04 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -521,7 +521,8 @@ sys_execve(p, v, retval)
 
 			flags = FREAD | (i == 0 ? 0 : FWRITE);
 
-			if (p->p_fd->fd_ofiles[i] == NULL) {
+			if (i < p->p_fd->fd_nfiles ||
+			    p->p_fd->fd_ofiles[i] == NULL) {
 				if ((error = falloc(p, &fp, &indx)) != 0)
 					continue;
 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
