@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.13 2001/12/06 00:27:29 deraadt Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.14 2002/02/01 06:19:19 itojun Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -115,7 +115,7 @@ The proxy does libwrap operations after determining the destination
 of the captured control connection, so that tcp wrapper rules may
 be written based on the destination as well as the source of ftp connections.
 .It Fl r
-Use reverse host (reverse DNS) lookups for logging and libwrap use
+Use reverse host (reverse DNS) lookups for logging and libwrap use.
 By default the proxy does not look up hostnames for libwrap or logging
 purposes.
 .It Fl m Ar minport
