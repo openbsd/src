@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.8 1996/11/28 23:33:06 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.9 1997/01/05 02:04:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -38,8 +38,7 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm.h>
-#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -67,8 +66,8 @@ int	cross_io_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *));
 int	cross_mem_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *));
-int	cross_io_unmap __P((bus_space_handle_t, bus_size_t));
-int	cross_mem_unmap __P((bus_space_handle_t, bus_size_t));
+int	cross_io_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int	cross_mem_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 int	crossintr __P((void *));
 
@@ -101,7 +100,7 @@ struct pagerops crosspagerops = {
 	NULL
 };
 
-struct vm_pager crosspager;
+struct pager_struct cross_pager;
 
 int
 crossmatch(parent, match, aux)
@@ -129,16 +128,37 @@ crossattach(parent, self, aux)
 	int i;
 
 	bcopy(zap, &sc->sc_zargs, sizeof(struct zbus_args));
+	sc->sc_status = CROSS_STATUS_ADDR(zap->va);
+	sc->sc_imask = 1 << CROSS_MASTER;
+
 	sc->sc_iot.bs_data = sc;
 	sc->sc_iot.bs_map = cross_io_map;
 	sc->sc_iot.bs_unmap = cross_io_unmap;
 	sc->sc_iot.bs_swapped = 1;
+
 	sc->sc_memt.bs_data = sc;
 	sc->sc_memt.bs_map = cross_mem_map;
 	sc->sc_memt.bs_unmap = cross_mem_unmap;
 	sc->sc_memt.bs_swapped = 1;
-	sc->sc_status = CROSS_STATUS_ADDR(zap->va);
-	sc->sc_imask = 1 << CROSS_MASTER;
+
+	sc->sc_ic.ic_data = sc;
+	sc->sc_ic.ic_attach_hook = cross_attach_hook;
+	sc->sc_ic.ic_intr_establish = cross_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = cross_intr_disestablish;
+
+	sc->sc_pager.pg_ops = &crosspagerops;
+	sc->sc_pager.pg_type = PG_DFLT;
+	sc->sc_pager.pg_flags = 0;
+	sc->sc_pager.pg_data = sc;
+
+	/* Allocate a bunch of pages used for the bank-switching logic.  */
+	for (i = 0; i < CROSS_BANK_SIZE / NBPG; i++) {
+		VM_PAGE_INIT(&sc->sc_page[i], NULL, 0);
+		sc->sc_page[i].phys_addr = (vm_offset_t)zap->pa +
+		    CROSS_XL_MEM + i * NBPG;
+		sc->sc_page[i].flags |= PG_FICTITIOUS;
+		vm_page_free(&sc->sc_page[i]);
+	}
 
 	/* Enable interrupts lazily in cross_intr_establish.  */
 	CROSS_ENABLE_INTS(zap->va, 0);
@@ -148,19 +168,6 @@ crossattach(parent, self, aux)
 	printf(": pa 0x%08x va 0x%08x size 0x%x\n", zap->pa, zap->va,
 	    zap->size);
 
-	sc->sc_ic.ic_data = sc;
-	sc->sc_ic.ic_attach_hook = cross_attach_hook;
-	sc->sc_ic.ic_intr_establish = cross_intr_establish;
-	sc->sc_ic.ic_intr_disestablish = cross_intr_disestablish;
-
-	/* Allocate a bunch of pages used for the bank-switching logic.  */
-	for (i = 0; i < CROSS_BANK_SIZE / NBPG; i++) {
-		VM_PAGE_INIT(&sc->sc_page[i], NULL, 0);
-		sc->sc_page[i].phys_addr = zap->pa + CROSS_XL_MEM + i * NBPG;
-		sc->sc_page[i].flags |= PG_FICTITIOUS;
-		vm_page_free(&sc->sc_page[i]);
-	}
-		
 	iba.iba_busname = "isa";
 	iba.iba_iot = &sc->sc_iot;
 	iba.iba_memt = &sc->sc_memt;
@@ -200,6 +207,7 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 	int cacheable;
 	bus_space_handle_t *handle;
 {
+	struct cross_softc *sc = (struct cross_softc *)bst->bs_data;
 	bus_addr_t banked_start;
 	bus_size_t banked_size;
 	vm_object_t object;
@@ -207,8 +215,7 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 	int error;
 
 	/*
-	 * XXX When we do have a good enough extent-manager do extent
-	 * checking here.
+	 * XXX Do extent checking here.
 	 */
 
 	/*
@@ -220,10 +227,11 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 	    ~(CROSS_BANK_SIZE - 1);
 
 	/* Create the object that will take care of the bankswitching.  */
-	object = vm_allocate_object(banked_size);
+	object = vm_object_allocate(banked_size);
 	if (object == NULL)
 		goto fail_obj;
-	vm_object_setpager(object, cross_pager, 0, 0);
+	vm_object_enter(object, &sc->sc_pager);
+	vm_object_setpager(object, &sc->sc_pager, banked_start, FALSE);
 
 	/*
 	 * When done like this double mappings will be possible, thus
@@ -240,7 +248,7 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 		goto fail_insert;
 
 	/* Tell caller where to find his data.  */
-	*handle = (bus_space_handle_t)(kva + (addr << 1)  - banked_addr));
+	*handle = (bus_space_handle_t)(kva + (addr << 1) - banked_start);
 	return 0;
 
 fail_insert:
@@ -266,7 +274,11 @@ cross_mem_unmap(bst, handle, sz)
 	bus_space_handle_t handle;
 	bus_size_t sz;
 {
-	/* Remove traphandler */
+#if 0
+	struct cross_softc *sc = (struct cross_softc *)bst->bs_data;
+#endif
+
+	/* Remove the object handling this mapping.  */
 	return 0;
 }
 
@@ -351,10 +363,12 @@ cross_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	ih->ih_what = ih_what;
 	ih->ih_mask = 1 << cross_int_map[irq + 1];
 	ih->ih_status = sc->sc_status;
+
 	ih->ih_isr.isr_intr = crossintr;
 	ih->ih_isr.isr_arg = ih;
 	ih->ih_isr.isr_ipl = 6;
 	ih->ih_isr.isr_mapped_ipl = level;
+
 	*p = ih;
 	add_isr(&ih->ih_isr);
 
@@ -404,6 +418,7 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 	int		npages;
 	boolean_t	sync;
 {
+	struct cross_softc *sc = (struct cross_softc *)pager->pg_data;
 	int i;
 	vm_object_t object, old_object;
 	vm_offset_t offset;
@@ -411,7 +426,7 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 	while(npages--) {
 		i = ((*mlist)->offset & (CROSS_BANK_SIZE - 1)) / NBPG;
 		object = (*mlist)->object;
-		old_object = sc->sc_page[i].offset;
+		old_object = sc->sc_page[i].object;
 		offset = (*mlist)->offset;
 		vm_page_lock_queues();
 		vm_object_lock(object);
@@ -420,14 +435,15 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 		vm_page_free(*mlist);
 
 		/* generate A13-A19 for correct page */
-		*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+		*CROSS_HANDLE_TO_XLP_LATCH((bus_space_handle_t)sc->sc_zargs.va) =
+		    object->paging_offset >> 13 | CROSS_SBHE;
 
-		vm_page_rename(sc->sc_page[i], object, offset);
+		vm_page_rename(&sc->sc_page[i], object, offset);
 		if (old_object)
 			vm_object_unlock(old_object);
 		vm_object_unlock(object);
 		vm_page_unlock_queues();
-		mlist++:
+		mlist++;
 	}
 	return VM_PAGER_OK;
 }
