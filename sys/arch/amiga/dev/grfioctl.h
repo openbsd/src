@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfioctl.h,v 1.3 1997/01/16 09:24:29 niklas Exp $	*/
-/*	$NetBSD: grfioctl.h,v 1.12 1996/06/03 18:55:08 is Exp $	*/
+/*	$OpenBSD: grfioctl.h,v 1.4 1997/09/10 21:03:48 niklas Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.13 1997/07/29 17:54:11 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,8 @@
 /* these are changeable values, encapsulated in their own structure, so
    no the whole thing has to be copied when setting parameters. */
 struct grfdyninfo {
-	int	gdi_fbx;			/* frame buffer x offset */
-	int	gdi_fby;			/* frame buffer y offset */
+	int	gdi_fbx;		/* frame buffer x offset */
+	int	gdi_fby;		/* frame buffer y offset */
 	int	gdi_dwidth;		/* displayed part width */
 	int	gdi_dheight;		/* displayed part height */
 	int	gdi_dx;			/* displayed part x offset */
@@ -84,24 +84,32 @@ struct	grfinfo {
    modifications in the future to really become hardware-independant. */
 
 struct grfvideo_mode {
-  u_char  mode_num;		/* index in mode table */
-  char	  mode_descr[80];	/* description of mode */
-  u_long  pixel_clock;		/* in Hz. */
-  u_short disp_width;		/* width of displayed video (incl overscan) */
-  u_short disp_height;		/* height "" */
-  u_short depth;		/* number of bitplanes resp. bits per pixel */
-  u_short hblank_start;		
-  u_short hblank_stop;		
-  u_short hsync_start;		/* video-parameters, take care not to   */
-  u_short hsync_stop;		/* use parameters that violete specs of */
-  u_short htotal;		/* your monitor !                       */
-  u_short vblank_start;
-  u_short vblank_stop;
-  u_short vsync_start;
-  u_short vsync_stop;
-  u_short vtotal;
+	u_char	mode_num;		/* index in mode table */
+	char	mode_descr[80];		/* description of mode */
+	u_long	pixel_clock;		/* in Hz. */
+	u_short	disp_width;		/* width of displayed video (incl overscan) */
+	u_short	disp_height;		/* height "" */
+	u_short	depth;			/* number of bitplanes resp. bits per pixel */
+	u_short	hblank_start;
+	u_short	hsync_start;		/* video-parameters, take care not to   */
+	u_short	hsync_stop;		/* use parameters that violete specs of */
+	u_short	htotal;			/* your monitor !                       */
+	u_short	vblank_start;
+	u_short	vsync_start;
+	u_short	vsync_stop;
+	u_short	vtotal;
+	u_short	disp_flags;		/* GRF_FLAGS_xxxx */
 };
 
+/* values for grfvideo_mode->disp_flags */
+#define	GRF_FLAGS_DEFAULT	0x00	/* default */
+#define	GRF_FLAGS_DBLSCAN	0x01	/* doublescan */
+#define	GRF_FLAGS_LACE		0x02	/* interlace */
+#define	GRF_FLAGS_PHSYNC	0x04	/* +hsync */
+#define	GRF_FLAGS_NHSYNC	0x08	/* -hsync */
+#define	GRF_FLAGS_PVSYNC	0x10	/* +vsync */
+#define	GRF_FLAGS_NVSYNC	0x20	/* -vsync */
+#define	GRF_FLAGS_SYNC_ON_GREEN	0x40	/* sync-on-green */
 
 /*
  * BSD ioctls
@@ -140,11 +148,11 @@ struct grfvideo_mode {
  * Maxium value of "index" can be deduced from grfinfo->gd_colors.
  */
 struct grf_colormap {
-  int	 index;	    /* start at red[index],green[index],blue[index] */
-  int	 count;	    /* till < red[index+count],... */
-  u_char *red;
-  u_char *green;
-  u_char *blue;
+	int	index;		/* start at red[index],green[index],blue[index] */
+	int	count;		/* till < red[index+count],... */
+	u_char	*red;
+	u_char	*green;
+	u_char	*blue;
 };
 
 /* write the selected slots into the active colormap */
@@ -159,7 +167,7 @@ struct grf_colormap {
  * if a given grf doesn't implement hardware sprites.
  */
 struct grf_position {
-  u_short x, y;		/* 0,0 is upper left corner */
+	u_short x, y;		/* 0,0 is upper left corner */
 };
 #define GRFIOCSSPRITEPOS _IOW('G', 52, struct grf_position)
 #define GRFIOCGSPRITEPOS _IOR('G', 53, struct grf_position)
@@ -172,12 +180,12 @@ struct grf_spriteinfo {
 #define GRFSPRSET_CMAP	  (1<<3)
 #define GRFSPRSET_SHAPE	  (1<<4)
 #define GRFSPRSET_ALL	  0x1f
-  u_short  enable;	    /* sprite is displayed if == 1 */
-  struct grf_position pos;  /* sprite location */
-  struct grf_position hot;  /* sprite hot spot */
-  struct grf_colormap cmap; /* colormap for the sprite. */
-  struct grf_position size; /* x == width, y == height */
-  u_char *image, *mask;	    /* sprite bitmap and mask */
+	u_short  enable;	    /* sprite is displayed if == 1 */
+	struct grf_position pos;  /* sprite location */
+	struct grf_position hot;  /* sprite hot spot */
+	struct grf_colormap cmap; /* colormap for the sprite. */
+	struct grf_position size; /* x == width, y == height */
+	u_char *image, *mask;	    /* sprite bitmap and mask */
 };
 
 #define GRFIOCSSPRITEINF _IOW('G', 54, struct grf_spriteinfo)
@@ -207,11 +215,11 @@ struct grf_spriteinfo {
 #define GRFBBOPset		0xf	/* 1 */
 
 struct grf_bitblt {
-  u_short op;		/* see above */
-  u_short src_x, src_y;	/* upper left corner of source-region */
-  u_short dst_x, dst_y;	/* upper left corner of dest-region */
-  u_short w, h;		/* width, height of region */
-  u_short mask;		/* bitmask to apply */
+	u_short op;		/* see above */
+	u_short src_x, src_y;	/* upper left corner of source-region */
+	u_short dst_x, dst_y;	/* upper left corner of dest-region */
+	u_short w, h;		/* width, height of region */
+	u_short mask;		/* bitmask to apply */
 };
 
 #define GRFIOCBITBLT	_IOW('G', 57, struct grf_bitblt)
