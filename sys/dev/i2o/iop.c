@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.15 2001/06/27 06:11:09 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.16 2001/06/27 06:59:33 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -1372,7 +1372,7 @@ iop_reset(struct iop_softc *sc)
 	mf.statuslow = pa & ~(u_int32_t)0;
 	mf.statushigh = sizeof pa > sizeof mf.statuslow ? pa >> 32 : 0;
 
-	*sw = 0;
+	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
