@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.19 2002/03/22 23:29:50 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.20 2002/04/29 22:30:34 mickey Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -772,6 +772,19 @@ const struct puc_device_description puc_devices[] = {
 	{   /* "Lava Computers dual serial port", */
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,		0, 0	},
 	    {	0xffff,	0xfffc,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/*
+         * Lava Computers Quattro-PCI serial ports.
+         * A second version of the Quattro-PCI with different PCI ids.
+         */
+	{   /* "Lava Computers Quattro-PCI 4-port serial", */
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_AB2,		0, 0	},
+	    {	0xffff,	0xfffe,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },

@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.504 2002/04/28 20:54:56 nate Exp $
+	$OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1421,8 +1421,12 @@ product LMC DS1			0x0006	DS1
 
 /* Lava */
 product LAVA TWOSP_2S		0x0100	Dual Serial
+product LAVA QUATTRO_AB	0x0101  Dual Serial
+product LAVA QUATTRO_CD	0x0102  Dual Serial
 product LAVA IOFLEX_2S_0	0x0110	Serial
 product LAVA IOFLEX_2S_1	0x0111	Serial
+product LAVA QUATTRO_AB2	0x0120  Dual Serial
+product LAVA QUATTRO_CD2	0x0121  Dual Serial
 product LAVA OCTOPUS550_0	0x0180	Quad Serial
 product LAVA OCTOPUS550_1	0x0181	Quad Serial
 product LAVA LAVAPORT_0		0x0201	Serial
