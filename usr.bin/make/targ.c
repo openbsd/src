@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.16 2000/04/17 23:57:46 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.17 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.16 2000/04/17 23:57:46 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.17 2000/06/10 01:32:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,9 +102,9 @@ static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
 
-static int TargPrintOnlySrc __P((ClientData, ClientData));
-static int TargPrintName __P((ClientData, ClientData));
-static int TargPrintNode __P((ClientData, ClientData));
+static void TargPrintOnlySrc __P((ClientData));
+static void TargPrintName __P((ClientData));
+static void TargPrintNode __P((ClientData, ClientData));
 #ifdef CLEANUP
 static void TargFreeGN __P((ClientData));
 #endif
@@ -429,34 +429,21 @@ Targ_SetMain (gn)
     mainTarg = gn;
 }
 
-static int
-TargPrintName (gnp, ppath)
+static void
+TargPrintName(gnp)
     ClientData     gnp;
-    ClientData	    ppath;
 {
-    GNode *gn = (GNode *) gnp;
-    printf ("%s ", gn->name);
-#ifdef notdef
-    if (ppath) {
-	if (gn->path) {
-	    printf ("[%s]  ", gn->path);
-	}
-	if (gn == mainTarg) {
-	    printf ("(MAIN NAME)  ");
-	}
-    }
-#endif /* notdef */
-    return (ppath ? 0 : 0);
+    GNode *gn = (GNode *)gnp;
+
+    printf("%s ", gn->name);
 }
 
 
-int
-Targ_PrintCmd (cmd, dummy)
+void
+Targ_PrintCmd(cmd)
     ClientData cmd;
-    ClientData dummy;
 {
-    printf ("\t%s\n", (char *) cmd);
-    return (dummy ? 0 : 0);
+    printf("\t%s\n", (char *)cmd);
 }
 
 /*-
@@ -543,51 +530,48 @@ Targ_PrintType (type)
  *	print the contents of a node
  *-----------------------------------------------------------------------
  */
-static int
-TargPrintNode (gnp, passp)
+static void
+TargPrintNode(gnp, passp)
     ClientData   gnp;
     ClientData	 passp;
 {
-    GNode         *gn = (GNode *) gnp;
-    int	    	  pass = *(int *) passp;
+    GNode         *gn = (GNode *)gnp;
+    int	    	  pass = *(int *)passp;
     if (!OP_NOP(gn->type)) {
 	printf("#\n");
-	if (gn == mainTarg) {
+	if (gn == mainTarg)
 	    printf("# *** MAIN TARGET ***\n");
-	}
 	if (pass == 2) {
-	    if (gn->unmade) {
+	    if (gn->unmade)
 		printf("# %d unmade children\n", gn->unmade);
-	    } else {
+	    else
 		printf("# No unmade children\n");
-	    }
 	    if (! (gn->type & (OP_JOIN|OP_USE|OP_EXEC))) {
-		if (gn->mtime != OUT_OF_DATE) {
+		if (gn->mtime != OUT_OF_DATE)
 		    printf("# last modified %s: %s\n",
 			      Targ_FmtTime(gn->mtime),
 			      (gn->made == UNMADE ? "unmade" :
 			       (gn->made == MADE ? "made" :
 				(gn->made == UPTODATE ? "up-to-date" :
 				 "error when made"))));
-		} else if (gn->made != UNMADE) {
+		else if (gn->made != UNMADE)
 		    printf("# non-existent (maybe): %s\n",
 			      (gn->made == MADE ? "made" :
 			       (gn->made == UPTODATE ? "up-to-date" :
 				(gn->made == ERROR ? "error when made" :
 				 "aborted"))));
-		} else {
+		else
 		    printf("# unmade\n");
-		}
 	    }
 	    if (!Lst_IsEmpty (gn->iParents)) {
 		printf("# implicit parents: ");
-		Lst_ForEach(gn->iParents, TargPrintName, NULL);
-		fputc ('\n', stdout);
+		Lst_Every(gn->iParents, TargPrintName);
+		fputc('\n', stdout);
 	    }
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    printf("# parents: ");
-	    Lst_ForEach(gn->parents, TargPrintName, NULL);
+	    Lst_Every(gn->parents, TargPrintName);
 	    fputc ('\n', stdout);
 	}
 
@@ -600,16 +584,14 @@ TargPrintNode (gnp, passp)
 	    case OP_DOUBLEDEP:
 		printf(":: "); break;
 	}
-	Targ_PrintType (gn->type);
-	Lst_ForEach(gn->children, TargPrintName, NULL);
-	fputc ('\n', stdout);
-	Lst_ForEach(gn->commands, Targ_PrintCmd, NULL);
+	Targ_PrintType(gn->type);
+	Lst_Every(gn->children, TargPrintName);
+	fputc('\n', stdout);
+	Lst_Every(gn->commands, Targ_PrintCmd);
 	printf("\n\n");
-	if (gn->type & OP_DOUBLEDEP) {
+	if (gn->type & OP_DOUBLEDEP)
 	    Lst_ForEach(gn->cohorts, TargPrintNode, &pass);
-	}
     }
-    return (0);
 }
 
 /*-
@@ -617,24 +599,19 @@ TargPrintNode (gnp, passp)
  * TargPrintOnlySrc --
  *	Print only those targets that are just a source.
  *
- * Results:
- *	0.
- *
  * Side Effects:
  *	The name of each file is printed preceeded by #\t
  *
  *-----------------------------------------------------------------------
  */
-static int
-TargPrintOnlySrc(gnp, dummy)
+static void
+TargPrintOnlySrc(gnp)
     ClientData 	  gnp;
-    ClientData 	  dummy;
 {
-    GNode   	  *gn = (GNode *) gnp;
+    GNode   	  *gn = (GNode *)gnp;
+
     if (OP_NOP(gn->type))
 	printf("#\t%s [%s]\n", gn->name, gn->path ? gn->path : gn->name);
-
-    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -658,7 +635,7 @@ Targ_PrintGraph (pass)
     Lst_ForEach(allTargets, TargPrintNode, &pass);
     printf("\n\n");
     printf("#\n#   Files that are only sources:\n");
-    Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
+    Lst_Every(allTargets, TargPrintOnlySrc);
     printf("#*** Global Variables:\n");
     Var_Dump (VAR_GLOBAL);
     printf("#*** Command-line Variables:\n");

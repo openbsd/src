@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.40 2000/06/10 01:26:37 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.41 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.40 2000/06/10 01:26:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.41 2000/06/10 01:32:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,15 +248,15 @@ static struct {
 static void ParseErrorInternal __P((char *, unsigned long, int, char *, ...));
 static void ParseVErrorInternal __P((char *, unsigned long, int, char *, va_list));
 static int ParseFindKeyword __P((char *));
-static int ParseLinkSrc __P((ClientData, ClientData));
+static void ParseLinkSrc __P((ClientData, ClientData));
 static int ParseDoOp __P((ClientData, ClientData));
 static int ParseAddDep __P((ClientData, ClientData));
 static void ParseDoSrc __P((int, char *, Lst));
 static int ParseFindMain __P((ClientData, ClientData));
-static int ParseAddDir __P((ClientData, ClientData));
-static int ParseClearPath __P((ClientData, ClientData));
+static void ParseAddDir __P((ClientData, ClientData));
+static void ParseClearPath __P((ClientData));
 static void ParseDoDependency __P((char *));
-static int ParseAddCmd __P((ClientData, ClientData));
+static void ParseAddCmd __P((ClientData, ClientData));
 static int __inline ParseReadc __P((void));
 static void ParseUnreadc __P((int));
 static void ParseHasCommands __P((ClientData));
@@ -422,37 +422,32 @@ Parse_Error(va_alist)
  *	ParseDoDependency. If the specType isn't 'Not', the parent
  *	isn't linked as a parent of the child.
  *
- * Results:
- *	Always = 0
- *
  * Side Effects:
  *	New elements are added to the parents list of cgn and the
  *	children list of cgn. the unmade field of pgn is updated
  *	to reflect the additional child.
  *---------------------------------------------------------------------
  */
-static int
-ParseLinkSrc (pgnp, cgnp)
+static void
+ParseLinkSrc(pgnp, cgnp)
     ClientData     pgnp;	/* The parent node */
     ClientData     cgnp;	/* The child node */
 {
-    GNode          *pgn = (GNode *) pgnp;
-    GNode          *cgn = (GNode *) cgnp;
+    GNode          *pgn = (GNode *)pgnp;
+    GNode          *cgn = (GNode *)cgnp;
     if (Lst_Member(pgn->children, cgn) == NULL) {
 	Lst_AtEnd(pgn->children, cgn);
-	if (specType == Not) {
+	if (specType == Not)
 	    Lst_AtEnd(cgn->parents, pgn);
-	}
 	pgn->unmade += 1;
     }
-    return (0);
 }
 
 /*-
  *---------------------------------------------------------------------
  * ParseDoOp  --
  *	Apply the parsed operator to the given target node. Used in a
- *	Lst_ForEach call by ParseDoDependency once all targets have
+ *	Lst_Find call by ParseDoDependency once all targets have
  *	been found and their operator parsed. If the previous and new
  *	operators are incompatible, a major error is taken.
  *
@@ -714,21 +709,17 @@ ParseFindMain(gnp, dummy)
  * ParseAddDir --
  *	Front-end for Dir_AddDir to make sure Lst_ForEach keeps going
  *
- * Results:
- *	=== 0
- *
  * Side Effects:
  *	See Dir_AddDir.
  *
  *-----------------------------------------------------------------------
  */
-static int
+static void
 ParseAddDir(path, name)
     ClientData	  path;
     ClientData    name;
 {
-    Dir_AddDir((Lst) path, (char *) name);
-    return(0);
+    Dir_AddDir((Lst)path, (char *)name);
 }
 
 /*-
@@ -736,21 +727,16 @@ ParseAddDir(path, name)
  * ParseClearPath --
  *	Front-end for Dir_ClearPath to make sure Lst_ForEach keeps going
  *
- * Results:
- *	=== 0
- *
  * Side Effects:
  *	See Dir_ClearPath
  *
  *-----------------------------------------------------------------------
  */
-static int
-ParseClearPath(path, dummy)
+static void
+ParseClearPath(path)
     ClientData path;
-    ClientData dummy;
 {
-    Dir_ClearPath((Lst) path);
-    return(dummy ? 0 : 0);
+    Dir_ClearPath((Lst)path);
 }
 
 /*-
@@ -1152,7 +1138,7 @@ ParseDoDependency (line)
 		beSilent = TRUE;
 		break;
 	    case ExPath:
-		Lst_ForEach(paths, ParseClearPath, NULL);
+		Lst_Every(paths, ParseClearPath);
 		break;
 	    default:
 		break;
@@ -1277,7 +1263,7 @@ ParseDoDependency (line)
 
 		while ((gn = (GNode *)Lst_DeQueue(sources)) != NULL)
 		    ParseDoSrc(tOp, gn->name, curSrcs);
-		Lst_Destroy (sources, NOFREE);
+		Lst_Destroy(sources, NOFREE);
 		cp = line;
 	    } else {
 		if (*cp) {
@@ -1577,18 +1563,15 @@ Parse_DoVar (line, ctxt)
  * ParseAddCmd  --
  *	Lst_ForEach function to add a command line to all targets
  *
- * Results:
- *	Always 0
- *
  * Side Effects:
  *	A new element is added to the commands list of the node.
  */
-static int
+static void
 ParseAddCmd(gnp, cmd)
     ClientData gnp;	/* the node to which the command is to be added */
     ClientData cmd;	/* the command to add */
 {
-    GNode *gn = (GNode *) gnp;
+    GNode *gn = (GNode *)gnp;
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
 	Lst_AtEnd(gn->commands, cmd);
@@ -1597,7 +1580,6 @@ ParseAddCmd(gnp, cmd)
 	    gn->fname = Parse_Getfilename();
 	}
     }
-    return(0);
 }
 
 /*-
@@ -2422,9 +2404,6 @@ test_char:
  * ParseFinishLine --
  *	Handle the end of a dependency group.
  *
- * Results:
- *	Nothing.
- *
  * Side Effects:
  *	inLine set FALSE. 'targets' list destroyed.
  *
@@ -2434,8 +2413,8 @@ static void
 ParseFinishLine()
 {
     if (inLine) {
-	Lst_ForEach(targets, Suff_EndTransform, NULL);
-	Lst_Destroy (targets, ParseHasCommands);
+	Lst_Every(targets, Suff_EndTransform);
+	Lst_Destroy(targets, ParseHasCommands);
 	targets = NULL;
 	inLine = FALSE;
     }
@@ -2527,7 +2506,7 @@ Parse_File(name, stream)
 			 * in a dependency spec, add the command to the list of
 			 * commands of all targets in the dependency spec
 			 */
-			Lst_ForEach (targets, ParseAddCmd, cp);
+			Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
 			Lst_AtEnd(targCmds, line);
 #endif
@@ -2663,7 +2642,7 @@ void
 Parse_End()
 {
 #ifdef CLEANUP
-    Lst_Destroy(targCmds, (void (*) __P((ClientData))) free);
+    Lst_Destroy(targCmds, (SimpleProc)free);
     Lst_Destroy(fileNames, (void (*) __P((ClientData))) free);
     if (targets)
 	Lst_Destroy(targets, NOFREE);

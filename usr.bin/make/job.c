@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.26 2000/06/10 01:26:36 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.27 2000/06/10 01:32:22 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.26 2000/06/10 01:26:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.27 2000/06/10 01:32:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,11 +292,11 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 #define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
 
 
-static int JobCondPassSig __P((ClientData, ClientData));
+static void JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
 static int JobCmpPid __P((ClientData, ClientData));
 static int JobPrintCommand __P((ClientData, ClientData));
-static int JobSaveCommand __P((ClientData, ClientData));
+static void JobSaveCommand __P((ClientData, ClientData));
 static void JobClose __P((Job *));
 #ifdef REMOTE
 static int JobCmpRmtID __P((Job *, ClientData));
@@ -322,15 +322,12 @@ static void JobRestartJobs __P((void));
  *	Pass a signal to a job if the job is remote or if USE_PGRP
  *	is defined.
  *
- * Results:
- *	=== 0
- *
  * Side Effects:
  *	None, except the job may bite it.
  *
  *-----------------------------------------------------------------------
  */
-static int
+static void
 JobCondPassSig(jobp, signop)
     ClientData	    	jobp;	    /* Job to biff */
     ClientData	    	signop;	    /* Signal to send it */
@@ -356,7 +353,6 @@ JobCondPassSig(jobp, signop)
     }
     KILL(job->pid, signo);
 #endif
-    return 0;
 }
 
 /*-
@@ -663,22 +659,18 @@ JobPrintCommand(cmdp, jobp)
  *	Save a command to be executed when everything else is done.
  *	Callback function for JobFinish...
  *
- * Results:
- *	Always returns 0
- *
  * Side Effects:
  *	The command is tacked onto the end of postCommands's commands list.
  *
  *-----------------------------------------------------------------------
  */
-static int
+static void
 JobSaveCommand(cmd, gn)
     ClientData   cmd;
     ClientData   gn;
 {
     cmd = (ClientData) Var_Subst((char *) cmd, (GNode *) gn, FALSE);
     Lst_AtEnd(postCommands->commands, cmd);
-    return(0);
 }
 
 
@@ -965,11 +957,7 @@ JobFinish(job, status)
 	 * the parents. In addition, any saved commands for the node are placed
 	 * on the .END target.
 	 */
-	if (job->tailCmds != NULL) {
-	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
-			     JobSaveCommand,
-			    job->node);
-	}
+	Lst_ForEachFrom(job->tailCmds, JobSaveCommand, job->node);
 	job->node->made = MADE;
 	Make_Update(job->node);
 	free((Address)job);
@@ -1850,11 +1838,7 @@ JobStart(gn, flags, previous)
 	 */
 	if (cmdsOK) {
 	    if (aborting == 0) {
-		if (job->tailCmds != NULL) {
-		    Lst_ForEachFrom(job->node->commands, job->tailCmds,
-				    JobSaveCommand,
-				   job->node);
-		}
+ 		Lst_ForEachFrom(job->tailCmds, JobSaveCommand, job->node);
 		Make_Update(job->node);
 	    }
 	    free((Address)job);

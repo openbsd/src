@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.15 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.16 2000/06/10 01:32:22 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.15 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.16 2000/06/10 01:32:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ struct For_ {
     unsigned long	level;		/* Nesting level		*/
 };
 
-static int ForExec __P((ClientData, ClientData));
+static void ForExec __P((ClientData, ClientData));
 static void build_words_list __P((Lst, const char *));
 
 /* Cut a string into words, stuff that into list.  */
@@ -268,7 +268,7 @@ For_Accumulate(arg, line)
  *	Expand the for loop for this index and push it in the Makefile
  *-----------------------------------------------------------------------
  */
-static int
+static void
 ForExec(namep, argp)
     ClientData namep;
     ClientData argp;
@@ -286,7 +286,6 @@ ForExec(namep, argp)
     
     Parse_FromString(Buf_Retrieve(&arg->buf), arg->lineno);
     Var_Delete(arg->var, VAR_GLOBAL);
-    return 0;
 }
 
 
@@ -307,6 +306,6 @@ For_Run(arg)
     Lst_ForEach(arg->lst, ForExec, arg);
     free(arg->var);
     free(arg->text);
-    Lst_Destroy(arg->lst, (void (*) __P((ClientData)))free);
+    Lst_Destroy(arg->lst, (SimpleProc)free);
     free(arg);
 }

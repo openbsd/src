@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.14 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.15 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.14 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.15 2000/06/10 01:32:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,12 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 				 * is non-zero when Job_Empty() returns
 				 * TRUE, there's a cycle in the graph */
 
-static int MakeAddChild __P((ClientData, ClientData));
-static int MakeAddAllSrc __P((ClientData, ClientData));
-static int MakeTimeStamp __P((ClientData, ClientData));
-static int MakeHandleUse __P((ClientData, ClientData));
+static void MakeAddChild __P((ClientData, ClientData));
+static void MakeAddAllSrc __P((ClientData, ClientData));
+static void MakeTimeStamp __P((ClientData, ClientData));
+static void MakeHandleUse __P((ClientData, ClientData));
 static Boolean MakeStartJobs __P((void));
-static int MakePrintStatus __P((ClientData, ClientData));
+static void MakePrintStatus __P((ClientData, ClientData));
 /*-
  *-----------------------------------------------------------------------
  * Make_TimeStamp --
@@ -113,23 +113,21 @@ static int MakePrintStatus __P((ClientData, ClientData));
  *	field of the child is greater than it.
  *-----------------------------------------------------------------------
  */
-int
-Make_TimeStamp (pgn, cgn)
+void
+Make_TimeStamp(pgn, cgn)
     GNode *pgn;	/* the current parent */
     GNode *cgn;	/* the child we've just examined */
 {
-    if (cgn->mtime > pgn->cmtime) {
+    if (cgn->mtime > pgn->cmtime)
 	pgn->cmtime = cgn->mtime;
-    }
-    return (0);
 }
 
-static int
-MakeTimeStamp (pgn, cgn)
+static void
+MakeTimeStamp(pgn, cgn)
     ClientData pgn;	/* the current parent */
     ClientData cgn;	/* the child we've just examined */
 {
-    return Make_TimeStamp((GNode *) pgn, (GNode *) cgn);
+    Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
 
 /*-
@@ -269,9 +267,8 @@ Make_OODate (gn)
      * have their mtime stay below their children's mtime to keep parents from
      * thinking they're out-of-date.
      */
-    if (!oodate) {
+    if (!oodate)
 	Lst_ForEach(gn->parents, MakeTimeStamp, gn);
-    }
 
     return (oodate);
 }
@@ -282,25 +279,20 @@ Make_OODate (gn)
  *	Function used by Make_Run to add a child to the list l.
  *	It will only add the child if its make field is FALSE.
  *
- * Results:
- *	Always returns 0
- *
  * Side Effects:
  *	The given list is extended
  *-----------------------------------------------------------------------
  */
-static int
-MakeAddChild (gnp, lp)
+static void
+MakeAddChild(gnp, lp)
     ClientData     gnp;		/* the node to add */
     ClientData     lp;		/* the list to which to add it */
 {
-    GNode          *gn = (GNode *) gnp;
-    Lst            l = (Lst) lp;
+    GNode          *gn = (GNode *)gnp;
+    Lst            l = (Lst)lp;
 
-    if (!gn->make && !(gn->type & OP_USE)) {
+    if (!gn->make && !(gn->type & OP_USE))
 	Lst_EnQueue(l, gn);
-    }
-    return (0);
 }
 
 /*-
@@ -317,22 +309,19 @@ MakeAddChild (gnp, lp)
  *	its commands are always added to the target node, even if the
  *	target already has commands.
  *
- * Results:
- *	returns 0.
- *
  * Side Effects:
  *	Children and commands may be added to the parent and the parent's
  *	type may be changed.
  *
  *-----------------------------------------------------------------------
  */
-int
-Make_HandleUse (cgn, pgn)
-    register GNode	*cgn;	/* The .USE node */
-    register GNode   	*pgn;	/* The target of the .USE node */
+void
+Make_HandleUse(cgn, pgn)
+    GNode	*cgn;	/* The .USE node */
+    GNode   	*pgn;	/* The target of the .USE node */
 {
-    register GNode	*gn; 	/* A child of the .USE node */
-    register LstNode	ln; 	/* An element in the children list */
+    GNode	*gn; 	/* A child of the .USE node */
+    LstNode	ln; 	/* An element in the children list */
 
     if (cgn->type & (OP_USE|OP_TRANSFORM)) {
 	if ((cgn->type & OP_USE) || Lst_IsEmpty(pgn->commands)) {
@@ -369,14 +358,13 @@ Make_HandleUse (cgn, pgn)
 	    pgn->unmade--;
 	}
     }
-    return (0);
 }
-static int
-MakeHandleUse (pgn, cgn)
+static void
+MakeHandleUse(pgn, cgn)
     ClientData pgn;	/* the current parent */
     ClientData cgn;	/* the child we've just examined */
 {
-    return Make_HandleUse((GNode *) pgn, (GNode *) cgn);
+    Make_HandleUse((GNode *)pgn, (GNode *)cgn);
 }
 
 /*-
@@ -557,15 +545,12 @@ Make_Update (cgn)
  *	variable if it was actually made (since .JOIN nodes don't have
  *	modification times, the comparison is rather unfair...)..
  *
- * Results:
- *	Always returns 0
- *
  * Side Effects:
  *	The ALLSRC variable for the given node is extended.
  *-----------------------------------------------------------------------
  */
-static int
-MakeAddAllSrc (cgnp, pgnp)
+static void
+MakeAddAllSrc(cgnp, pgnp)
     ClientData	cgnp;	/* The child to add */
     ClientData	pgnp;	/* The parent to whose ALLSRC variable it should be */
 			/* added */
@@ -610,7 +595,6 @@ MakeAddAllSrc (cgnp, pgnp)
 	    Var_Append(OODATE, child, pgn);
 	}
     }
-    return (0);
 }
 
 /*-
@@ -742,16 +726,9 @@ MakeStartJobs ()
  *	Print the status of a top-level node, viz. it being up-to-date
  *	already or not created due to an error in a lower level.
  *	Callback function for Make_Run via Lst_ForEach.
- *
- * Results:
- *	Always returns 0.
- *
- * Side Effects:
- *	A message may be printed.
- *
  *-----------------------------------------------------------------------
  */
-static int
+static void
 MakePrintStatus(gnp, cyclep)
     ClientData  gnp;	    /* Node to examine */
     ClientData 	cyclep;	    /* True if gn->unmade being non-zero implies
@@ -788,7 +765,6 @@ MakePrintStatus(gnp, cyclep)
 	    printf ("`%s' not remade because of errors.\n", gn->name);
 	}
     }
-    return (0);
 }
 
 
@@ -855,7 +831,7 @@ Make_Run (targs)
 	}
     }
 
-    Lst_Destroy (examine, NOFREE);
+    Lst_Destroy(examine, NOFREE);
 
     if (queryFlag) {
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.11 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.12 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -60,15 +60,18 @@
 
 typedef	struct	Lst	*Lst;
 typedef	struct	LstNode	*LstNode;
-typedef int (*FindProc)__P((ClientData, ClientData));
+typedef int (*FindProc) __P((ClientData, ClientData));
+typedef void (*SimpleProc) __P((ClientData));
+typedef void (*ForEachProc) __P((ClientData, ClientData));
+typedef ClientData (*DuplicateProc) __P((ClientData));
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
  *	not to be freed.
  * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
  */
-#define NOFREE		((void (*) __P((ClientData))) 0)
-#define NOCOPY		((ClientData (*) __P((ClientData))) 0)
+#define NOFREE		((SimpleProc)0)
+#define NOCOPY		((DuplicateProc)0)
 
 #define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
 #define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
@@ -79,9 +82,9 @@ typedef int (*FindProc)__P((ClientData, ClientData));
 /* Create a new list */
 Lst		Lst_Init __P((void));
 /* Duplicate an existing list */
-Lst		Lst_Duplicate __P((Lst, ClientData (*)(ClientData)));
+Lst		Lst_Duplicate __P((Lst, DuplicateProc));
 /* Destroy an old one */
-void		Lst_Destroy __P((Lst, void (*)(ClientData)));
+void		Lst_Destroy __P((Lst, SimpleProc));
 /* True if list is empty */
 Boolean		Lst_IsEmpty __P((Lst));
 
@@ -124,22 +127,20 @@ ClientData	Lst_Datum __P((LstNode));
 
 /* Find an element starting from somewhere */
 LstNode		Lst_FindFrom __P((LstNode, FindProc, ClientData));
+
+/* Apply a function to all elements of a lst */
+#define Lst_ForEach(l, proc, d)	Lst_ForEachFrom(Lst_First(l), proc, d)
+/* Apply a function to all elements of a lst starting from a certain point.  */
+void		Lst_ForEachFrom __P((LstNode, ForEachProc, ClientData));
+void		Lst_Every __P((Lst, SimpleProc));
+
+
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
 LstNode		Lst_Member __P((Lst, ClientData));
-/* Apply a function to all elements of a lst */
-void		Lst_ForEach __P((Lst, int (*)(ClientData, ClientData),
-				 ClientData));
-/*
- * Apply a function to all elements of a lst starting from a certain point.
- * If the list is circular, the application will wrap around to the
- * beginning of the list again.
- */
-void		Lst_ForEachFrom __P((Lst, LstNode,
-				     int (*)(ClientData, ClientData),
-				     ClientData));
+
 /*
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions

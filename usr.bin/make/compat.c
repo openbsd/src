@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.25 2000/06/10 01:26:36 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.26 2000/06/10 01:32:22 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.25 2000/06/10 01:26:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.26 2000/06/10 01:32:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
 static void CompatInterrupt __P((int));
 static int CompatRunCommand __P((ClientData, ClientData));
-static int CompatMake __P((ClientData, ClientData));
+static void CompatMake __P((ClientData, ClientData));
 static int shellneed __P((char **av));
 
 /*-
@@ -423,16 +423,13 @@ CompatRunCommand (cmdp, gnp)
  * CompatMake --
  *	Make a target.
  *
- * Results:
- *	0
- *
  * Side Effects:
  *	If an error is detected and not being ignored, the process exits.
  *
  *-----------------------------------------------------------------------
  */
-static int
-CompatMake (gnp, pgnp)
+static void
+CompatMake(gnp, pgnp)
     ClientData	gnp;	    /* The node to make */
     ClientData  pgnp;	    /* Parent to abort if necessary */
 {
@@ -462,7 +459,7 @@ CompatMake (gnp, pgnp)
 	if (!gn->make) {
 	    gn->made = ABORTED;
 	    pgn->make = FALSE;
-	    return (0);
+	    return;
 	}
 
 	if (Lst_Member (gn->iParents, pgn) != NULL) {
@@ -483,7 +480,7 @@ CompatMake (gnp, pgnp)
 	    if (DEBUG(MAKE)) {
 		printf("up-to-date.\n");
 	    }
-	    return (0);
+	    return;
 	} else if (DEBUG(MAKE)) {
 	    printf("out-of-date.\n");
 	}
@@ -642,8 +639,6 @@ CompatMake (gnp, pgnp)
 		break;
 	}
     }
-
-    return (0);
 }
 
 /*-
@@ -716,7 +711,7 @@ Compat_Run(targs)
      */
     errors = 0;
     while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
-	CompatMake (gn, gn);
+	CompatMake(gn, gn);
 
 	if (gn->made == UPTODATE) {
 	    printf ("`%s' is up to date.\n", gn->name);

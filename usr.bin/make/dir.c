@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.17 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.18 2000/06/10 01:32:22 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.17 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.18 2000/06/10 01:32:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,8 +197,8 @@ static int DirFindName __P((ClientData, ClientData));
 static int DirMatchFiles __P((char *, Path *, Lst));
 static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
-static int DirPrintWord __P((ClientData, ClientData));
-static int DirPrintDir __P((ClientData, ClientData));
+static void DirPrintWord __P((ClientData));
+static void DirPrintDir __P((ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -534,25 +534,15 @@ DirExpandInt(word, path, expansions)
 /*-
  *-----------------------------------------------------------------------
  * DirPrintWord --
- *	Print a word in the list of expansions. Callback for Dir_Expand
- *	when DEBUG(DIR), via Lst_ForEach.
- *
- * Results:
- *	=== 0
- *
- * Side Effects:
- *	The passed word is printed, followed by a space.
- *
+ *	Print a word in the list of expansions, followed by a space. 
+ *	Callback for Dir_Expand when DEBUG(DIR), via Lst_ForEach.
  *-----------------------------------------------------------------------
  */
-static int
-DirPrintWord(word, dummy)
+static void
+DirPrintWord(word)
     ClientData  word;
-    ClientData  dummy;
 {
-    printf("%s ", (char *) word);
-
-    return(dummy ? 0 : 0);
+    printf("%s ", (char *)word);
 }
 
 /*-
@@ -663,7 +653,7 @@ Dir_Expand (word, path, expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, NULL);
+	Lst_Every(expansions, DirPrintWord);
 	fputc('\n', stdout);
     }
 }
@@ -1297,17 +1287,15 @@ Dir_PrintDirectories()
     }
 }
 
-static int DirPrintDir (p, dummy)
+static void DirPrintDir(p)
     ClientData	p;
-    ClientData	dummy;
 {
-    printf ("%s ", ((Path *) p)->name);
-    return (dummy ? 0 : 0);
+    printf("%s ", ((Path *)p)->name);
 }
 
 void
-Dir_PrintPath (path)
+Dir_PrintPath(path)
     Lst	path;
 {
-    Lst_ForEach(path, DirPrintDir, NULL);
+    Lst_Every(path, DirPrintDir);
 }

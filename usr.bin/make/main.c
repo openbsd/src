@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2000/04/03 02:58:46 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.30 2000/04/03 02:58:46 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.31 2000/06/10 01:32:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -834,7 +834,7 @@ main(argc, argv)
 	Lst_Destroy(targs, NOFREE);
 	Lst_Destroy(variables, NOFREE);
 	Lst_Destroy(makefiles, NOFREE);
-	Lst_Destroy(create, (void (*) __P((ClientData))) free);
+	Lst_Destroy(create, (SimpleProc)free);
 
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
@@ -1211,11 +1211,9 @@ usage()
 }
 
 
-int
-PrintAddr(a, b)
+void
+PrintAddr(a)
     ClientData a;
-    ClientData b;
 {
     printf("%lx ", (unsigned long) a);
-    return b ? 0 : 0;
 }

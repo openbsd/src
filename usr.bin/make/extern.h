@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2000/04/17 23:45:23 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2000/06/10 01:32:22 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -75,13 +75,13 @@ void Error __P((char *, ...));
 void Fatal __P((char *, ...));
 void Punt __P((char *, ...));
 void DieHorribly __P((void));
-int PrintAddr __P((ClientData, ClientData));
+void PrintAddr __P((ClientData));
 void Finish __P((int));
 
 /* make.c */
-int Make_TimeStamp __P((GNode *, GNode *));
+void Make_TimeStamp __P((GNode *, GNode *));
 Boolean Make_OODate __P((GNode *));
-int Make_HandleUse __P((GNode *, GNode *));
+void Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));
 Boolean Make_Run __P((Lst));
@@ -114,7 +114,7 @@ char *interval_dup __P((const char *begin, const char *end));
 void Suff_ClearSuffixes __P((void));
 Boolean Suff_IsTransform __P((char *));
 GNode *Suff_AddTransform __P((char *));
-int Suff_EndTransform __P((ClientData, ClientData));
+void Suff_EndTransform __P((ClientData));
 void Suff_AddSuffix __P((char *));
 Lst Suff_GetPath __P((char *));
 void Suff_DoPaths __P((void));
@@ -136,7 +136,7 @@ Boolean Targ_Ignore __P((GNode *));
 Boolean Targ_Silent __P((GNode *));
 Boolean Targ_Precious __P((GNode *));
 void Targ_SetMain __P((GNode *));
-int Targ_PrintCmd __P((ClientData, ClientData));
+void Targ_PrintCmd __P((ClientData));
 char *Targ_FmtTime __P((time_t));
 void Targ_PrintType __P((int));
 void Targ_PrintGraph __P((int));

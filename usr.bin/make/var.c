@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.30 2000/03/26 16:21:33 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.31 2000/06/10 01:32:23 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.30 2000/03/26 16:21:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.31 2000/06/10 01:32:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ static char *VarQuote __P((char *));
 static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
 						ClientData),
 			    ClientData));
-static int VarPrintVar __P((ClientData, ClientData));
+static void VarPrintVar __P((ClientData));
 static Boolean VarUppercase __P((char *word, Boolean addSpace, Buffer buf, ClientData dummy));
 static Boolean VarLowercase __P((char *word, Boolean addSpace, Buffer buf, ClientData dummy));
 
@@ -2330,14 +2330,13 @@ Var_End ()
 
 
 /****************** PRINT DEBUGGING INFO *****************/
-static int
-VarPrintVar(vp, dummy)
+static void
+VarPrintVar(vp)
     ClientData vp;
-    ClientData dummy;
 {
-    Var    *v = (Var *) vp;
+    Var    *v = (Var *)vp;
+
     printf("%-16s = %s\n", v->name, VarValue(v));
-    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -2350,5 +2349,5 @@ void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {
-    Lst_ForEach(ctxt->context, VarPrintVar, NULL);
+    Lst_Every(ctxt->context, VarPrintVar);
 }
