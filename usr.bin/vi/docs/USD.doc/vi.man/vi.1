@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.12 2001/09/15 15:41:19 miod Exp $
+.\"	$OpenBSD: vi.1,v 1.13 2003/01/12 18:15:16 deraadt Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -150,7 +150,7 @@ edit sessions.
 Batch mode is useful when running
 .I \&ex
 scripts.
-Prompts, informative messages and other user oriented message
+Prompts, informative messages and other user oriented messages
 are turned off,
 and no startup files or environmental variables are read.
 This is the POSIX 1003.2 interface for the historic ``\-'' argument.
@@ -277,7 +277,7 @@ Open a new line above the line the cursor is on, and start
 entering text.
 .TP
 .B <escape>
-Once you've entered input mode using the one of the
+Once you've entered input mode using one of the
 .BR \&a ,
 .BR \&i ,
 .BR \&O
@@ -325,7 +325,7 @@ will refuse to quit).
 .B :q!<carriage-return>
 Quit, discarding any modifications that you may have made.
 .PP
-One final caution.
+One final caution:
 Unusual characters can take up more than one column on the screen,
 and long lines can take up more than a single screen line.
 The above commands work on ``physical'' characters and lines,
@@ -413,7 +413,7 @@ Scroll backwards
 lines.
 .TP
 .B "<control-W>"
-Switch to the next lower screen in the window, or, to the first
+Switch to the next lower screen in the window, or to the first
 screen if there are no lower screens in the window.
 .TP
 .B "[count] <control-Y>"
@@ -550,7 +550,7 @@ Move to line
 .IR count ,
 or the last line of the file if
 .I count
-not specified.
+is not specified.
 .TP
 .B "[count] H"
 Move to the screen line
@@ -1087,7 +1087,7 @@ Skip leading comments in shell, C and C++ language files.
 The directory where temporary files are created.
 .TP
 .B "edcompatible, ed [off]"
-Remember the values of the ``c'' and ``g'' suffices to the
+Remember the values of the ``c'' and ``g'' suffixes to the
 .B substitute
 commands, instead of initializing them as unset for each new
 command.
@@ -1365,8 +1365,8 @@ Set the window size if the baud rate is greater than 1200 baud.
 .B "warn [on]"
 .I \&Ex
 only.
-This option causes a warning message to the terminal if the file has
-been modified, since it was last written, before a
+This option causes a warning message to be printed on the terminal 
+if the file has been modified since it was last written, before a
 .B \&!
 command.
 .TP

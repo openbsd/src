@@ -14,7 +14,7 @@
 reads the configuration file
 .Pa krb5.conf ,
 or the file given on the command line,
-and parses it, thereby verifying that the syntax is not correctly wrong.
+and parses it, thereby verifying that the syntax is correct.
 .Pp
 If the file is syntactically correct,
 .Nm 
@@ -29,19 +29,19 @@ include:
 Usually means that <something> is misspelled, or that it contains
 weird characters. The parsing done by
 .Nm
-is more strict than the one performed by libkrb5, and so strings that
-work in real life, might be reported as bad.
+is more strict than the one performed by libkrb5, so strings that
+work in real life might be reported as bad.
 .It "<path>: host not found (<hostname>)"
 Means that <path> is supposed to point to a host, but it can't be
 recognised as one.
 .It <path>: unknown or wrong type
-Means that <path> is either is a string when it should be a list, vice
+Means that <path> is either a string when it should be a list, vice
 versa, or just that
 .Nm 
 is confused.
 .It <path>: unknown entry
-Means that <string> is not known by
-.Nm "" .
+Means that <string> is unknown to
+.Nm Ns .
 .El
 .Sh ENVIRONMENT
 .Ev KRB5_CONFIG
@@ -52,7 +52,7 @@ points to the configuration file to read.
 .Xr krb5.conf 5
 .Sh BUGS
 Since each application can put almost anything in the config file,
-it's hard to come up with a water tight verification process. Most of
+it's hard to come up with a watertight verification process. Most of
 the default settings are sanity checked, but this does not mean that
 every problem is discovered, or that everything that is reported as a
 possible problem actually is one. This tool should thus be used with
