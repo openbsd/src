@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.74 2002/08/03 19:04:24 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.75 2002/08/03 19:07:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2375,7 +2375,6 @@ $setrunqueue_ok
 	ldw	R%whichqs(t2), t3
 	mtctl	t1, sar
 	vdepi	1, 1, t3
-	stw	t3, R%whichqs(t2)
 
 #if 0
 	/* this actually trashes all the regs we use, be advised ;) */
@@ -2394,8 +2393,9 @@ $setrunqueue_ok
 	stw	t4, P_FORW(arg0)
 	stw	arg0, P_BACK(t4)
 	stw	arg0, P_FORW(t2)
-	bv	0(rp)
 	stw	t2, P_BACK(arg0)
+	bv	0(rp)
+	stw	t3, R%whichqs(t2)
 Lsrqfmt
 	.asciz	"setrunqueue: bit=%x, qs=%p\n"
 	.align	8
@@ -2408,9 +2408,9 @@ EXIT(setrunqueue)
 	.align	32
 ENTRY(remrunqueue,0)
 	ldb	P_PRIORITY(arg0), t2
-	extru	t2, 29, 5, t1
-	mtsar	t1
+	extru	t2, 29, 5, arg2
 	ldil	L%whichqs, t2
+	mtsar	arg2
 	ldw	R%whichqs(t2), t3
 
 #ifdef DIAGNOSTIC
@@ -2418,7 +2418,6 @@ ENTRY(remrunqueue,0)
 
 Lremrunqueue_panic
 	copy	arg0, arg1
-	copy	t1, arg2
 	ldil	L%panic, r1
 	ldil	L%Lrrqpstr, arg0
 	ldo	R%panic(r1), r1
@@ -2426,6 +2425,7 @@ Lremrunqueue_panic
 	.call
 	blr	%r0, rp
 	bv,n	%r0(r1)
+	nop
 
 Lrrqpstr
 	.asciz	"remrunqueue(%p), bit=%x"
@@ -2437,12 +2437,9 @@ remrunqueue_ok
 	ldw	P_FORW(arg0), arg0
 	stw	arg0, P_FORW(t4)
 	stw	t4, P_BACK(arg0)
-	comb,<>	t4, arg0, Lqnempty
-	nop
-
 	vdepi	0, 1, t3
+	sub,<>	t4, arg0, r0
 	stw	t3, R%whichqs(t2)
-Lqnempty
 	bv	0(rp)
 	nop
 EXIT(remrunqueue)
