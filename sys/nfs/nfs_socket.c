@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.20 2001/03/28 20:03:08 angelos Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.21 2001/05/20 08:32:35 angelos Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1515,11 +1515,8 @@ nfs_realign(m, hsiz)
 		olen = m->m_len;
 		fcp = mtod(m, caddr_t);
 		if ((long)fcp & 0x3) {
-		        if (m->m_flags & M_PKTHDR) {
-			        if (m->m_pkthdr.tdbi) /* XXX */
-				        free(m->m_pkthdr.tdbi, M_TEMP);
-				m->m_pkthdr.tdbi = NULL;
-			}
+		        if (m->m_flags & M_PKTHDR)
+				m_tag_delete_chain(m, NULL);
 			m->m_flags &= ~M_PKTHDR;
 			if (m->m_flags & M_EXT)
 				m->m_data = m->m_ext.ext_buf +
@@ -1540,19 +1537,12 @@ nfs_realign(m, hsiz)
 		if (olen <= hsiz && mlen > hsiz)
 			mlen = hsiz;
 	
-		/*
-		 * Loop through the mbuf list consolidating data.
-		 */
+		/* Loop through the mbuf list consolidating data. */
 		while (m) {
 			while (olen > 0) {
 				if (mlen == 0) {
-				        if (m2->m_flags & M_PKTHDR) {
-					        /* XXX */
-					        if (m2->m_pkthdr.tdbi)
-						        free(m2->m_pkthdr.tdbi,
-							     M_TEMP);
-						m2->m_pkthdr.tdbi = NULL;
-					}
+				        if (m2->m_flags & M_PKTHDR)
+						m_tag_delete_chain(m2, NULL);
 					m2->m_flags &= ~M_PKTHDR;
 					if (m2->m_flags & M_EXT)
 						m2->m_data = m2->m_ext.ext_buf;
