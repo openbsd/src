@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.47 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.48 2004/01/07 12:38:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -529,7 +529,7 @@ kroute_dispatch_msg(void)
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_CHANGE:
-			if (nexthop == 0) {
+			if (nexthop == 0 && !(flags & F_CONNECTED)) {
 				logit(LOG_CRIT,
 				    "kroute_dispatch_msg: no nexthop for %s/%u",
 				    log_ntoa(s.r.prefix), s.r.prefixlen);
