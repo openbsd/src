@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.6 1999/12/17 06:28:16 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.7 1999/12/17 06:41:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -39,6 +39,8 @@
 #include <machine/intr.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+
+#include <dev/isa/isavar.h>	/* this must die, Die, DIE!!!! */
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
