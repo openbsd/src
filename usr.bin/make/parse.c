@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.38 2000/04/17 23:45:24 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.39 2000/04/17 23:54:47 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.38 2000/04/17 23:45:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.39 2000/04/17 23:54:47 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1592,8 +1592,13 @@ ParseAddCmd(gnp, cmd)
 {
     GNode *gn = (GNode *) gnp;
     /* if target already supplied, ignore commands */
-    if (!(gn->type & OP_HAS_COMMANDS))
+    if (!(gn->type & OP_HAS_COMMANDS)) {
 	Lst_AtEnd(gn->commands, cmd);
+	if (!gn->lineno) {
+	    gn->lineno = Parse_Getlineno();
+	    gn->fname = Parse_Getfilename();
+	}
+    }
     return(0);
 }
 

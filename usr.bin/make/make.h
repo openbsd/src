@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.17 2000/02/02 13:47:48 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.18 2000/04/17 23:54:47 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ typedef struct GNode {
     Lst	    	    preds;  	/* Nodes that must be made before this one */
 
     Lst             context;   	/* The local variables */
+    unsigned long   lineno;	/* First line number of commands.  */
+    const char *    fname;	/* File name of commands.  */
     Lst             commands;  	/* Creation commands */
 
     struct _Suff    *suffix;	/* Suffix for the node (determined by
