@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.22 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.23 2001/12/07 03:48:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.22 2001/11/19 19:02:15 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.23 2001/12/07 03:48:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,6 +152,9 @@ getnewpasswd(pw, lc, authenticated)
 	int tries, pwd_tries;
 	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN];
 
+	(void)signal(SIGINT, kbintr);
+	(void)signal(SIGQUIT, kbintr);
+
 	if (!authenticated) {
 		(void)printf("Changing local password for %s.\n", pw->pw_name);
 		if (uid && pw->pw_passwd[0] &&
@@ -187,6 +190,9 @@ getnewpasswd(pw, lc, authenticated)
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
+
 	return(crypt(buf, salt));
 }
 
