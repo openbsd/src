@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rand.c,v 1.4 1998/11/22 07:41:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rand.c,v 1.5 1998/12/07 16:44:41 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ rand_r(seed)
 u_int *seed;
 {
 	*seed = *seed * 1103515245 + 12345;
-	return (u_int)(*seed / 65536) % ((u_int)RAND_MAX + 1);
+	return (u_int)(*seed) % ((u_int)RAND_MAX + 1);
 }
 
 int
