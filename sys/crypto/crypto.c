@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.17 2001/05/13 15:39:26 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.18 2001/06/06 18:58:52 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -24,27 +24,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/sysctl.h>
-#include <sys/errno.h>
-#include <sys/md5k.h>
-#include <dev/rndvar.h>
-#include <crypto/sha1.h>
-#include <crypto/rmd160.h>
-#include <crypto/cast.h>
-#include <crypto/skipjack.h>
-#include <crypto/blf.h>
+#include <sys/proc.h>
+#include <sys/pool.h>
 #include <crypto/crypto.h>
-#include <crypto/xform.h>
 
 struct cryptocap *crypto_drivers = NULL;
 int crypto_drivers_num = 0;
 
-struct cryptop *cryptop_queue = NULL;
-struct cryptodesc *cryptodesc_queue = NULL;
-
-int crypto_queue_num = 0;
-int crypto_queue_max = CRYPTO_MAX_CACHED;
+struct pool cryptop_pool;
+struct pool cryptodesc_pool;
+int crypto_pool_initialized = 0;
 
 struct cryptop *crp_req_queue = NULL;
 struct cryptop **crp_req_queue_tail = NULL;
@@ -57,10 +46,12 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 {
     struct cryptoini *cr;
     u_int32_t hid, lid;
-    int err;
+    int err, s;
 
     if (crypto_drivers == NULL)
       return EINVAL;
+
+    s = splimp();
 
     /*
      * The algorithm we use here is pretty stupid; just use the
@@ -103,7 +94,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
      */
 
     if (hid == crypto_drivers_num)
-      return EINVAL;
+    {
+	splx(s);
+	return EINVAL;
+    }
 
     /* Call the driver initialization routine */
     lid = hid; /* Pass the driver ID */
@@ -116,6 +110,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
         crypto_drivers[hid].cc_sessions++;
     }
 
+    splx(s);
     return err;
 }
 
@@ -126,8 +121,8 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 int
 crypto_freesession(u_int64_t sid)
 {
+    int err = 0, s;
     u_int32_t hid;
-    int err = 0;
 
     if (crypto_drivers == NULL)
       return EINVAL;
@@ -137,6 +132,8 @@ crypto_freesession(u_int64_t sid)
 
     if (hid >= crypto_drivers_num)
       return ENOENT;
+
+    s = splimp();
 
     if (crypto_drivers[hid].cc_sessions)
       crypto_drivers[hid].cc_sessions--;
@@ -153,6 +150,7 @@ crypto_freesession(u_int64_t sid)
 	(crypto_drivers[hid].cc_sessions == 0))
       bzero(&crypto_drivers[hid], sizeof(struct cryptocap));
 
+    splx(s);
     return err;
 }
 
@@ -163,7 +161,7 @@ int32_t
 crypto_get_driverid(void)
 {
     struct cryptocap *newdrv;
-    int i;
+    int i, s = splimp();
 
     if (crypto_drivers_num == 0)
     {
@@ -172,6 +170,7 @@ crypto_get_driverid(void)
 				M_CRYPTO_DATA, M_NOWAIT);
 	if (crypto_drivers == NULL)
 	{
+	    splx(s);
 	    crypto_drivers_num = 0;
 	    return -1;
 	}
@@ -183,29 +182,46 @@ crypto_get_driverid(void)
       if ((crypto_drivers[i].cc_process == NULL) &&
 	  !(crypto_drivers[i].cc_flags & CRYPTOCAP_F_CLEANUP) &&
 	  (crypto_drivers[i].cc_sessions == 0))
-	return i;
+      {
+	  crypto_drivers[i].cc_sessions = 1; /* Mark */
+	  splx(s);
+	  return i;
+      }
 
     /* Out of entries, allocate some more */
     if (i == crypto_drivers_num)
     {
 	/* Be careful about wrap-around */
 	if (2 * crypto_drivers_num <= crypto_drivers_num)
-	  return -1;
+	{
+	    splx(s);
+	    return -1;
+	}
 
 	newdrv = malloc(2 * crypto_drivers_num * sizeof(struct cryptocap),
 			M_CRYPTO_DATA, M_NOWAIT);
 	if (newdrv == NULL)
-	  return -1;
+	{
+	    splx(s);
+	    return -1;
+	}
 
         bcopy(crypto_drivers, newdrv,
 	      crypto_drivers_num * sizeof(struct cryptocap));
 	bzero(&newdrv[crypto_drivers_num],
 	      crypto_drivers_num * sizeof(struct cryptocap));
+
+	newdrv[i].cc_sessions = 1; /* Mark */
 	crypto_drivers_num *= 2;
+
+	free(crypto_drivers, M_CRYPTO_DATA);
+	crypto_drivers = newdrv;
+	splx(s);
 	return i;
     }
 
     /* Shouldn't really get here... */
+    splx(s);
     return -1;
 }
 
@@ -218,9 +234,13 @@ crypto_register(u_int32_t driverid, int alg,
     int (*newses)(u_int32_t *, struct cryptoini *),
     int (*freeses)(u_int64_t), int (*process)(struct cryptop *))
 {
+    int s;
+
     if ((driverid >= crypto_drivers_num) || (alg <= 0) ||
 	(alg > CRYPTO_ALGORITHM_MAX) || (crypto_drivers == NULL))
       return EINVAL;
+
+    s = splimp();
 
     /*
      * XXX Do some performance testing to determine placing.
@@ -235,8 +255,10 @@ crypto_register(u_int32_t driverid, int alg,
 	crypto_drivers[driverid].cc_newsession = newses;
 	crypto_drivers[driverid].cc_process = process;
 	crypto_drivers[driverid].cc_freesession = freeses;
+	crypto_drivers[driverid].cc_sessions = 0; /* Unmark */
     }
 
+    splx(s);
     return 0;
 }
 
@@ -249,14 +271,17 @@ crypto_register(u_int32_t driverid, int alg,
 int
 crypto_unregister(u_int32_t driverid, int alg)
 {
+    int i, s = splimp();
     u_int32_t ses;
-    int i;
 
     /* Sanity checks */
     if ((driverid >= crypto_drivers_num) || (alg <= 0) ||
         (alg > CRYPTO_ALGORITHM_MAX) || (crypto_drivers == NULL) ||
 	(crypto_drivers[driverid].cc_alg[alg] == 0))
-      return EINVAL;
+    {
+	splx(s);
+	return EINVAL;
+    }
 
     crypto_drivers[driverid].cc_alg[alg] = 0;
 
@@ -278,6 +303,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	}
     }
 
+    splx(s);
     return 0;
 }
 
@@ -287,17 +313,21 @@ crypto_unregister(u_int32_t driverid, int alg)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-    int s = splhigh();
+    int s = splimp();
 
     if (crp_req_queue == NULL) {
 	crp_req_queue = crp;
 	crp_req_queue_tail = &(crp->crp_next);
+	splx(s);
+
 	wakeup((caddr_t) &crp_req_queue);
-    } else {
+    }
+    else
+    {
 	*crp_req_queue_tail = crp;
 	crp_req_queue_tail = &(crp->crp_next);
+	splx(s);
     }
-    splx(s);
     return 0;
 }
 
@@ -371,31 +401,15 @@ crypto_freereq(struct cryptop *crp)
     if (crp == NULL)
       return;
 
-    s = splhigh();
+    s = splimp();
 
     while ((crd = crp->crp_desc) != NULL)
     {
 	crp->crp_desc = crd->crd_next;
-
-	if (crypto_queue_num + 1 > crypto_queue_max)
-	  FREE(crd, M_CRYPTO_OPS);
-	else
-	{
-	    crd->crd_next = cryptodesc_queue;
-	    cryptodesc_queue = crd;
-	    crypto_queue_num++;
-	}
+	pool_put(&cryptodesc_pool, crd);
     }
 
-    if (crypto_queue_num + 1 > crypto_queue_max)
-      FREE(crp, M_CRYPTO_OPS);
-    else
-    {
-        crp->crp_next = cryptop_queue;
-        cryptop_queue = crp;
-        crypto_queue_num++;
-    }
-
+    pool_put(&cryptop_pool, crp);
     splx(s);
 }
 
@@ -407,45 +421,35 @@ crypto_getreq(int num)
 {
     struct cryptodesc *crd;
     struct cryptop *crp;
-    int s = splhigh();
+    int s = splimp();
 
-    if (cryptop_queue == NULL)
+    if (crypto_pool_initialized == 0)
     {
-        MALLOC(crp, struct cryptop *, sizeof(struct cryptop), M_CRYPTO_OPS,
-	       M_NOWAIT);
-        if (crp == NULL)
-        {
-            splx(s);
-            return NULL;
-        }
+	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0, PR_FREEHEADER,
+		  "cryptop", 0, NULL, NULL, M_CRYPTO_OPS);
+
+	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
+		  PR_FREEHEADER, "cryptodesc", 0, NULL, NULL, M_CRYPTO_OPS);
+	crypto_pool_initialized = 1;
     }
-    else
+
+    crp = pool_get(&cryptop_pool, 0);
+    if (crp == NULL)
     {
-	crp = cryptop_queue;
-	cryptop_queue = crp->crp_next;
-        crypto_queue_num--;
+	splx(s);
+	return NULL;
     }
 
     bzero(crp, sizeof(struct cryptop));
 
     while (num--)
     {
-        if (cryptodesc_queue == NULL)
+	crd = pool_get(&cryptodesc_pool, 0);
+	if (crd == NULL)
 	{
-	    MALLOC(crd, struct cryptodesc *, sizeof(struct cryptodesc),
-		   M_CRYPTO_OPS, M_NOWAIT);
-	    if (crd == NULL)
-	    {
-                splx(s);
-		crypto_freereq(crp);
-	        return NULL;
-	    }
-	}
-	else
-	{
-	    crd = cryptodesc_queue;
-	    cryptodesc_queue = crd->crd_next;
-	    crypto_queue_num--;
+	    splx(s);
+	    crypto_freereq(crp);
+	    return NULL;
 	}
 
 	bzero(crd, sizeof(struct cryptodesc));
@@ -466,7 +470,7 @@ crypto_thread(void)
     struct cryptop *crp;
     int s;
 
-    s = splhigh();
+    s = splimp();
 
     for (;;)
     {
@@ -479,11 +483,8 @@ crypto_thread(void)
 
 	/* Remove from the queue */
 	crp_req_queue = crp->crp_next;
-	splx(s);
 
 	crypto_invoke(crp);
-
-	s = splhigh();
     }
 }
 

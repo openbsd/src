@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.h,v 1.18 2001/06/01 00:16:01 angelos Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.19 2001/06/06 18:58:53 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -27,10 +27,6 @@
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL  4
 #define CRYPTO_SW_SESSIONS      32
-
-#ifndef CRYPTO_MAX_CACHED
-#define CRYPTO_MAX_CACHED	128
-#endif
 
 /* HMAC values */
 #define HMAC_BLOCK_LEN		64
