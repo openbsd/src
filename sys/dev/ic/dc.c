@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.2 2000/06/12 15:17:13 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.3 2000/06/12 16:46:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -174,6 +174,7 @@ int dc_ifmedia_upd	__P((struct ifnet *));
 void dc_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
 void dc_delay		__P((struct dc_softc *));
+void dc_eeprom_width	__P((struct dc_softc *));
 void dc_eeprom_idle	__P((struct dc_softc *));
 void dc_eeprom_putbyte	__P((struct dc_softc *, int));
 void dc_eeprom_getword	__P((struct dc_softc *, int, u_int16_t *));
@@ -221,6 +222,83 @@ void dc_delay(sc)
 		CSR_READ_4(sc, DC_BUSCTL);
 }
 
+void dc_eeprom_width(sc)
+	struct dc_softc		*sc;
+{
+	u_int16_t word;
+	int i;
+
+	/* Force EEPROM to idle state. */
+	dc_eeprom_idle(sc);
+
+	/* Enter EEPROM access mode. */
+	CSR_WRITE_4(sc, DC_SIO, DC_SIO_EESEL);
+	dc_delay(sc);
+	DC_SETBIT(sc, DC_SIO, DC_SIO_ROMCTL_READ);
+	dc_delay(sc);
+	DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+	dc_delay(sc);
+	DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CS);
+	dc_delay(sc);
+
+	for (i = 3; i--;) {
+		if (6 & (1 << i))
+			DC_SETBIT(sc, DC_SIO, DC_SIO_EE_DATAIN);
+		else
+			DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_DATAIN);
+		dc_delay(sc);
+		DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+		DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+	}
+
+	for (i = 1; i <= 12; i++) {
+		DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+		if (!(CSR_READ_4(sc, DC_SIO) & DC_SIO_EE_DATAOUT)) {
+			DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+			dc_delay(sc);
+			break;
+		}
+		DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+	}
+
+	/* Turn off EEPROM access mode. */
+	dc_eeprom_idle(sc);
+
+	if (i < 4 || i > 12) {
+		printf("forcing eeprom width to 12, ");
+		sc->dc_romwidth = 6;
+	} else {
+		printf("eeprom width is %d, ", i);
+		sc->dc_romwidth = i;
+	}
+
+	/* Enter EEPROM access mode. */
+	CSR_WRITE_4(sc, DC_SIO, DC_SIO_EESEL);
+	dc_delay(sc);
+	DC_SETBIT(sc, DC_SIO, DC_SIO_ROMCTL_READ);
+	dc_delay(sc);
+	DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+	dc_delay(sc);
+	DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CS);
+	dc_delay(sc);
+
+	printf("\n");
+	for (i = 0; i < 256; i++) {
+		if (DC_IS_PNIC(sc))
+			dc_eeprom_getword_pnic(sc, i, &word);
+		else
+			dc_eeprom_getword(sc, i, &word);
+		printf("%04x%s", word, ((i & 15) == 15)? "\n": " ");
+	}
+
+	/* Turn off EEPROM access mode. */
+	dc_eeprom_idle(sc);
+}
+
 void dc_eeprom_idle(sc)
 	struct dc_softc		*sc;
 {
@@ -266,15 +344,27 @@ void dc_eeprom_putbyte(sc, addr)
 	 * specifying the "read" opcode.
 	 */
 	if (DC_IS_CENTAUR(sc))
-		d = addr | (DC_EECMD_READ << 2);
+		d = DC_EECMD_READ >> 4;
 	else
-		d = addr | DC_EECMD_READ;
+		d = DC_EECMD_READ >> 6;
+
+	for (i = 3; i--; ) {
+		if (d & (1 << i))
+			DC_SETBIT(sc, DC_SIO, DC_SIO_EE_DATAIN);
+		else
+			DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_DATAIN);
+		dc_delay(sc);
+		DC_SETBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+		DC_CLRBIT(sc, DC_SIO, DC_SIO_EE_CLK);
+		dc_delay(sc);
+	}
 
 	/*
 	 * Feed in each bit and strobe the clock.
 	 */
-	for (i = 0x400; i; i >>= 1) {
-		if (d & i) {
+	for (i = sc->dc_romwidth; i--;) {
+		if (addr & (1 << i)) {
 			SIO_SET(DC_SIO_EE_DATAIN);
 		} else {
 			SIO_CLR(DC_SIO_EE_DATAIN);
@@ -1214,6 +1304,8 @@ void dc_attach_common(sc)
 {
 	struct ifnet		*ifp;
 	int			mac_offset;
+
+	dc_eeprom_width(sc);
 
 	/*
 	 * Get station address from the EEPROM.
