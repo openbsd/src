@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.25 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: gus.c,v 1.26 2003/06/08 00:41:47 miod Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@
  * For more detailed information, see the GUS developers' kit
  * available on the net at:
  *
- * ftp://freedom.nmsu.edu/pub/ultrasound/gravis/util/
- *	gusdkXXX.zip (developers' kit--get rev 2.22 or later)
+ * http://www.gravis.com/Public/sdk/GUSDK222.ZIP
+ *
  *		See ultrawrd.doc inside--it's MS Word (ick), but it's the bible
  *
  */
@@ -2203,7 +2203,7 @@ gus_init_cs4231(sc)
 	sc->sc_codec.sc_iot = sc->sc_iot;
 	sc->sc_codec.sc_iobase = port+GUS_MAX_CODEC_BASE;
 
-	if (ad1848_probe(&sc->sc_codec) == 0) {
+	if (ad1848_mapprobe(&sc->sc_codec, sc->sc_codec.sc_iobase) == 0) {
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
 		return (0);
 	} else {
@@ -3455,7 +3455,7 @@ gus_subattach(sc, ia)
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire
 	 * the GUS to only use one IRQ channel, but we give the user the
-	 * option of using two DMA channels (the other one given by the flags
+	 * option of using two DMA channels (the other one given by the drq2
 	 * option in the config file).  Two DMA channels are needed for full-
 	 * duplex operation.
 	 *
@@ -3503,7 +3503,7 @@ gus_subattach(sc, ia)
 		sc->sc_flags |= GUS_MIXER_INSTALLED;
 		gus_init_ics2101(sc);
 	}
-	if (sc->sc_revision < 0xa || !gus_init_cs4231(sc)) {
+	if (sc->sc_revision < 10 || !gus_init_cs4231(sc)) {
 		/* Not using the CS4231, so create our DMA maps. */
 		if (sc->sc_drq != -1) {
 			if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
@@ -3551,15 +3551,25 @@ gus_subattach(sc, ia)
 	}
 
 	sc->sc_dsize = i;
-	snprintf(gus_device.version, sizeof gus_device.version, "3.%d",
+	/*
+	 * The "official" (3.x) version number cannot easily be obtained.
+	 * The revision register does not correspond to the minor number
+	 * of the board version. Simply use the revision register as
+	 * identification.
+	 */
+	snprintf(gus_device.version, sizeof gus_device.version, "%d",
 	    sc->sc_revision);
 
-	printf(": ver 3.%d, %dKB DRAM, ",
-	       sc->sc_revision, sc->sc_dsize);
-	if (HAS_MIXER(sc))
-		printf("ICS2101 mixer, ");
-	if (HAS_CODEC(sc))
-		printf("%s codec/mixer, ", sc->sc_codec.chip_name);
+	printf(": ver %d", sc->sc_revision);
+	if (sc->sc_revision >= 10)
+		printf(", MAX");
+	else {
+		if (HAS_MIXER(sc))
+			printf(", ICS2101 mixer");
+		if (HAS_CODEC(sc))
+			printf(", %s codec/mixer", sc->sc_codec.chip_name);
+	}
+	printf(", %dKB DRAM, ", sc->sc_dsize);
 	if (sc->sc_recdrq == sc->sc_drq) {
 		printf("half-duplex");
 	} else {
