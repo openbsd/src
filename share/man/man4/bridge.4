@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.21 2000/04/03 21:19:36 aaron Exp $
+.\"	$OpenBSD: bridge.4,v 1.22 2000/05/02 18:43:49 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,7 +40,9 @@
 .Sh DESCRIPTION
 The
 .Nm bridge
-device creates a logical link between two or more Ethernet interfaces.
+device creates a logical link between two or more Ethernet interfaces or
+encapsulation interfaces (see
+.Xr enc 4 ).
 This link between the interfaces selectively forwards frames from
 each interface on the bridge to every other interface on the bridge.
 A bridge can serve several services, including, isolation of traffic between
@@ -503,6 +505,7 @@ No such member interface in the bridge.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
+.Xr enc 4 ,
 .Xr ip 4 ,
 .Xr ipf 4 ,
 .Xr netintro 4 ,
