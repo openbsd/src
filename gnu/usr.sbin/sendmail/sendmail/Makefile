@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2001/09/11 19:02:49 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/09/12 19:17:10 millert Exp $
 
 PROG=	sendmail
 
@@ -10,6 +10,10 @@ WANT_LIBSMUTIL=1
 ENVDEF+= -DSTARTTLS
 LDADD+= -lssl -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
+
+# To build with Cyrus SASL support (untested)
+#ENVDEF+= -DSASL
+#LDADD+= -lsasl
 
 # To build with mail filter support (untested)
 #WANT_LIBMILTER=1
