@@ -1,0 +1,10 @@
+#
+#	$OpenBSD: ttys,v 1.1 2004/04/21 18:23:44 miod Exp $
+#
+# name	getty				type	status		comments
+#
+# If the console is marked insecure, single-user requires
+# the root password.
+console	"/usr/libexec/getty Pc"		unknown	on   secure
+# siotty(4) serial console port
+ttya	"/usr/libexec/getty Pc"		unknown	off  secure	# console
