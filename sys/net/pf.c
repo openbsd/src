@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.242 2002/08/12 16:41:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.243 2002/08/28 15:43:02 pefo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1205,7 +1205,8 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af,
 		h2->ip_sum = 0;
 		h2->ip_len = len;
 		h2->ip_off = ip_mtudisc ? IP_DF : 0;
-		ip_output(m, NULL, NULL, 0, NULL, NULL);
+		ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL,
+		  (void *)NULL);
 		break;
 #endif /* INET */
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.9 2002/03/26 19:12:56 niklas Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.10 2002/08/28 15:43:03 pefo Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -468,7 +468,7 @@ tpip_output_dg(struct mbuf *m0, ...)
 	}
 #endif
 
-	error = ip_output(m, (struct mbuf *) 0, ro, IP_ALLOWBROADCAST, NULL);
+	error = ip_output(m, (struct mbuf *)0, ro, IP_ALLOWBROADCAST, (void *)NULL, (void *)NULL);
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {

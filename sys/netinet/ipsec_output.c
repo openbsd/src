@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.24 2002/07/01 18:29:28 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.25 2002/08/28 15:43:03 pefo Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -410,7 +410,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		NTOHS(ip->ip_len);
 		NTOHS(ip->ip_off);
 
-		return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL);
+		return ip_output(m, (void *)NULL, (void *)NULL, IP_RAWOUTPUT, (void *)NULL, (void *)NULL);
 #endif /* INET */
 
 #ifdef INET6

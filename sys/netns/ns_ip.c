@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.14 2001/06/27 03:49:55 angelos Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.15 2002/08/28 15:43:03 pefo Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ nsipoutput(ifp, m, dst, rt)
 	/*
 	 * Output final datagram.
 	 */
-	error =  (ip_output(m, (struct mbuf *)0, &ro, SO_BROADCAST, NULL));
+	error =  (ip_output(m, (struct mbuf *)0, &ro, SO_BROADCAST, (void *)NULL, (void *)NULL));
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;

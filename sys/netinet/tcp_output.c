@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.52 2002/06/09 16:26:11 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.53 2002/08/28 15:43:03 pefo Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1111,7 +1111,7 @@ send:
 			&tp->t_inpcb->inp_route,
 			(ip_mtudisc ? IP_MTUDISC : 0) |
 				  (so->so_options & SO_DONTROUTE),
-			0, tp->t_inpcb);
+			(void *)NULL, tp->t_inpcb);
 		break;
 #endif /* INET */
 #ifdef INET6
