@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.28 2000/06/08 23:32:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.29 2000/10/09 20:25:10 mickey Exp $
 
 CFLAGS=${DEBUG} -Os -Wall -Werror
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
 SACFLAGS=-D_STANDALONE
+DEBUGLIBS=no
 DEBUGFLAGS=
 # DEBUGFLAGS+=-DDEBUG
 # DEBUGFLAGS+=-DGIDT_DEBUG
