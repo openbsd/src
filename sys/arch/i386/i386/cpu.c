@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2004/07/14 19:24:29 tom Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.12 2004/09/09 09:29:52 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -336,7 +336,7 @@ cpu_init(ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
-		(*ci->cpu_setup)(NULL, 0, 0);
+		(*ci->cpu_setup)(ci->ci_dev.dv_xname, 0, 0);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
