@@ -1,4 +1,4 @@
-.\"	$OpenBSD: basename.1,v 1.3 1997/11/15 20:23:52 deraadt Exp $
+.\"	$OpenBSD: basename.1,v 1.4 1998/07/04 08:52:32 deraadt Exp $
 .\"	$NetBSD: basename.1,v 1.9 1995/03/25 18:17:45 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -41,14 +41,12 @@
 .Dt BASENAME 1
 .Os
 .Sh NAME
-.Nm basename , dirname
-.Nd return filename or directory portion of pathname
+.Nm basename
+.Nd return filename portion of pathname
 .Sh SYNOPSIS
 .Nm basename
 .Ar string
 .Op Ar suffix
-.Nm dirname
-.Ar string
 .Sh DESCRIPTION
 .Nm Basename
 deletes any prefix ending with the last slash
@@ -61,35 +59,25 @@ if given.
 The resulting filename is written to the standard output.
 A non-existent suffix is ignored.
 .Pp
-.Nm Dirname
-deletes the filename portion, beginning
-with the last slash
-.Ql \&/
-character to the end of
-.Ar string , 
-and writes the result to the standard output.
 .Sh EXAMPLES 
 The following line sets the shell variable
 .Ev FOO
 to
-.Pa /usr/bin .
+.Pa ls .
 .Pp
-.Dl FOO=`dirname /usr/bin/trail`
+.Dl FOO=`basename /usr/bin/trail`
 .Pp
 .Sh DIAGNOSTICS
-Both the
+The
 .Nm basename
-and
-.Nm dirname
-utilities
+utility
 exit 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
+.Xr dirname 1 ,
 .Xr csh 1 ,
 .Xr sh 1
 .Sh STANDARDS
 The
 .Nm basename
-and
-.Nm dirname
-utilities conform to
+utility conform to
 .St -p1003.2-92 .

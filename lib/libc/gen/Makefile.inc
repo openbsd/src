@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 1997/12/22 10:13:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 1998/07/04 08:52:34 deraadt Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -43,7 +43,8 @@ errlst.o errlst.po:
 .endif	# _NOTDEF_XXX_
 
 MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
-	devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 fts.3 \
+	devname.3 directory.3 dirname.3 err.3 exec.3 fnmatch.3 frexp.3 \
+	ftok.3 fts.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
@@ -99,4 +100,3 @@ MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=vis.3 strvis.3 vis.3 strvisx.3 unvis.3 strunvis.3
-MLINKS+=basename.3 dirname.3
