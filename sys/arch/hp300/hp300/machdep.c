@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2002/03/14 20:31:30 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.81 2002/03/23 13:28:33 espie Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -418,6 +418,9 @@ allocsys(v)
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 
 #ifdef SYSVSHM
+	shminfo.shmmax = shmmaxpgs;
+	shminfo.shmall = shmmaxpgs;
+	shminfo.shmseg = shmseg;
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
 #ifdef SYSVSEM 
