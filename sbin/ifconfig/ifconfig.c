@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.40 2000/08/03 07:34:41 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.41 2000/11/10 18:18:05 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.40 2000/08/03 07:34:41 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.41 2000/11/10 18:18:05 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ printif(ifrm, ifaliases)
 			continue;
 		}
 
-		if (!strcmp(namep, ifa->ifa_name)) {
+		if (!namep || !strcmp(namep, ifa->ifa_name)) {
 			register const struct afswtch *p;
 
 			if (ifa->ifa_addr->sa_family == AF_INET &&
@@ -645,7 +645,6 @@ printif(ifrm, ifaliases)
 				noinet = 0;
 			continue;
 		}
-
 	}
 	freeifaddrs(ifap);
 	if (count == 0) {
@@ -1765,6 +1764,8 @@ in6_alias(creq)
 			printf(" duplicated");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED)
 			printf(" detached");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
+			printf(" deprecated");
 	}
 
 	if (scopeid)
@@ -2096,14 +2097,40 @@ in6_getaddr(s, which)
 	char *s;
 	int which;
 {
-	struct sockaddr_in6 *sin = sin6tab[which];
+#ifndef KAME_SCOPEID
+	struct sockaddr_in6 *sin6 = sin6tab[which];
 
-	sin->sin6_len = sizeof(*sin);
+	sin->sin6_len = sizeof(*sin6);
 	if (which != MASK)
-		sin->sin6_family = AF_INET6;
+		sin6->sin6_family = AF_INET6;
 
-	if (inet_pton(AF_INET6, s, &sin->sin6_addr) != 1)
+	if (inet_pton(AF_INET6, s, &sin6->sin6_addr) != 1)
 		errx(1, "%s: bad value", s);
+#else
+	struct sockaddr_in6 *sin6 = sin6tab[which];
+	struct addrinfo hints, *res;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	error = getaddrinfo(s, "0", &hints, &res);
+	if (error)
+		errx(1, "%s: %s", s, gai_strerror(error));
+	if (res->ai_addrlen != sizeof(struct sockaddr_in6))
+		errx(1, "%s: bad value", s);
+	memcpy(sin6, res->ai_addr, res->ai_addrlen);
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
+	    *(u_int16_t *)&sin6->sin6_addr.s6_addr[2] == 0 &&
+	    sin6->sin6_scope_id) {
+		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] = 
+		    htons(sin6->sin6_scope_id & 0xffff);
+		sin6->sin6_scope_id = 0;
+	}
+#endif
+	freeaddrinfo(res);
+#endif
 }
 
 void
