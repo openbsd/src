@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.4 2004/02/16 12:58:45 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.5 2004/02/16 13:21:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -764,4 +764,43 @@ aspath_strlen(void *data, u_int16_t len)
 			total_size += 2;
 	}
 	return total_size;
+}
+
+/* we need to be able to search more than one as */
+int
+aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
+{
+	u_int8_t	*seg;
+	int		 final;
+	u_int16_t	 len, seg_size;
+	u_int8_t	 i, seg_type, seg_len;
+	
+	final = 0;
+	seg = a->data;
+	for (len = a->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		final = (len == seg_size);
+
+		if (type == AS_SOURCE && !final)
+			/* not yet in the final segment */
+			continue;
+
+		ENSURE(seg_size <= len);
+		for (i = 0; i < seg_len; i++)
+			if (as == aspath_extract(seg, i)) {
+				if (final && i + 1 >= seg_len)
+					/* the final (rightmost) as */
+					if (type == AS_TRANSIT)
+						return (0);
+					else
+						return (1);
+				else if (type != AS_SOURCE)
+					return (1);
+			}
+	}
+	return (0);
 }

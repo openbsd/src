@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.25 2004/02/16 12:58:45 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.26 2004/02/16 13:21:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -241,6 +241,7 @@ u_int32_t	 aspath_hash(struct aspath *);
 int		 aspath_compare(struct aspath *, struct aspath *);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
+int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
 
 /* rde_rib.c */
 void		 path_init(u_int32_t);
