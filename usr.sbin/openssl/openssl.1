@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.10 2003/07/16 09:05:58 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.11 2003/08/08 10:13:33 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2204,7 +2204,7 @@ The options are as follows:
 This specifies the input format.
 The
 .Ar DER
-argument uses an ASN1 DER encoded form compatible with RFC2459 (PKIX)
+argument uses an ASN1 DER encoded form compatible with RFC 2459 (PKIX)
 DSS-Parms that is a SEQUENCE consisting of p, q and g, respectively.
 The
 .Ar PEM
@@ -3164,7 +3164,7 @@ If neither option is present then the
 field is omitted meaning fresh revocation information is immediately available.
 .El
 .Sh OCSP RESPONSE VERIFICATION
-OCSP Response follows the rules specified in RFC2560.
+OCSP Response follows the rules specified in RFC 2560.
 .Pp
 Initially the OCSP responder certificate is located and the signature on
 the OCSP request checked using the responder certificate's public key.
@@ -3460,8 +3460,8 @@ For compatibility with some CAs it will also accept:
 .Sh PKCS7 RESTRICTIONS
 There is no option to print out all the fields of a PKCS#7 file.
 .Pp
-The PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC2315.
-They cannot currently parse, for example, the new CMS as described in RFC2630.
+The PKCS#7 routines only understand PKCS#7 v 1.5 as specified in RFC 2315.
+They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .\"
 .\" PKCS8
 .\"
@@ -4460,12 +4460,12 @@ value is used then only
 and
 .Em BMPStrings
 will be used.
-This follows the PKIX recommendation in RFC2459.
+This follows the PKIX recommendation in RFC 2459.
 If the
 .Fl utf8only
 option is used then only
 .Em UTF8Strings
-will be used: this is the PKIX recommendation in RFC2459 after 2003.
+will be used: this is the PKIX recommendation in RFC 2459 after 2003.
 Finally, the
 .Ar nombstr
 option just uses
@@ -7237,7 +7237,7 @@ Only the first four will normally be used.
 Use the old format.
 This is equivalent to specifying no name options at all.
 .It Ar RFC2253
-Displays names compatible with RFC2253; equivalent to
+Displays names compatible with RFC 2253; equivalent to
 .Ar esc_2253 , esc_ctrl ,
 .Ar esc_msb , utf8 , dump_nostr , dump_unknown ,
 .Ar dump_der , sep_comma_plus , dn_rev and sname .
@@ -7258,7 +7258,7 @@ It is equivalent to
 and
 .Ar align .
 .It Ar esc_2253
-Escape the "special" characters required by RFC2253 in a field that is
+Escape the "special" characters required by RFC 2253 in a field that is
 .Cm \& ,+"<>; .
 Additionally,
 .Cm \&#
@@ -7282,7 +7282,7 @@ Without the option, all escaping is done with the
 character.
 .It Ar utf8
 Convert all strings to UTF8 format first.
-This is required by RFC2253.
+This is required by RFC 2253.
 If you are lucky enough to have a UTF8 compatible terminal then the use
 of this option (and
 .Em not
@@ -7336,7 +7336,7 @@ for the AVA separator.
 It also indents the fields by four characters.
 .It Ar dn_rev
 Reverse the fields of the DN.
-This is required by RFC2253.
+This is required by RFC 2253.
 As a side effect, this also reverses the order of multiple AVAs but this is
 permissible.
 .It Ar nofname , sname , lname , oid
