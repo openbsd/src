@@ -1,4 +1,4 @@
-#	$OpenBSD: bootptab,v 1.2 1996/05/26 10:25:17 deraadt Exp $
+#	$OpenBSD: bootptab,v 1.3 1997/06/16 17:44:11 dm Exp $
 #
 # /etc/bootptab: database for bootp server (/etc/bootpd)
 # Last update Mon 11/7/88 18:03
@@ -49,13 +49,13 @@
 
 # First, we define a global entry which specifies the stuff every host uses.
 
-global.dummy:\
-        :sm=255.255.255.0:\
-        :hd=/home/nfsclient:bf=null:\
-        :ds=128.32.149.141:\
-        :ns=0x80020b4d 0x80020ffd:\
-        :ts=0x80020b4d 0x80020ffd:\
-        :to=18000:
+#.global.dummy:\
+#        :sm=255.255.255.0:\
+#        :hd=/home/nfsclient:bf=null:\
+#        :ds=128.32.149.141:\
+#        :ns=0x80020b4d 0x80020ffd:\
+#        :ts=0x80020b4d 0x80020ffd:\
+#        :to=18000:
 
 # Next, we can define different master entries for each subnet. . .
 
