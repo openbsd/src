@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.3 2000/03/02 14:46:50 todd Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.4 2000/05/03 00:36:48 bjc Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -32,205 +32,153 @@
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
 .\"
-.TH MAKEDEV 8 "March 22, 1991"
-.UC 7
-.SH NAME
+.Dd March 22, 1991
+.Dt MAKEDEV 8
+.Sh NAME
 MAKEDEV \- create system and device special files
-.SH SYNOPSIS
-MAKEDEV name ...
-.SH DESCRIPTION
+.Sh SYNOPSIS
+.Nm MAKEDEV 
+.Ar name 
+.Ar ...
+.Sh DESCRIPTION
 The shell script
-.IR MAKEDEV ,
-found in the ``/dev'' directory, is used to create the common special
+.Nm MAKEDEV ,
+found in the
+.Pa /dev
+directory, is used to create the common special
 files.
 See
-.IR special (8)
+.Xr special 8
 for a more complete discussion of special files.
-.PP
-.I MAKEDEV
+.Pp
+.Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are two special devices, ``std'' and ``local''.
-The former creates the standard devices for the architecture.
-The latter is for devices specific to the local site, and
-executes the shell file ``MAKEDEV.local''.
-.PP
+There are three special device names,
+.Ar all ,
+.Ar std ,
+and 
+.Ar local .
+.Ar All 
+creates device files for all devices on the VAX. If units are expected for
+a device,
+.Nm MAKEDEV
+supplies the standard numbers. The
+.Ar std
+argument creates the standard devices for the VAX.  Finally, the
+.Ar local
+argument is for devices specific to the local site, and executes the
+shell file
+.Pa MAKEDEV.local .
+.Pp
 The VAX supports the following devices.
 Where a device name is followed by a hash sign (``#''), the hash sign
 must be replaced by a unit number.
-.TP 10
-std
-the standard devices (console, crl, csa1, csa2, drum, fd/*, floppy,
-kUmem, klog, kmem, mem, null, stderr, stdin, stdout, tty, tu0, tu1)
-.br
-.ns
-.TP 10
-local
-configuration specific devices
-.br
-.ns
-.TP 10
-ad#
-unibus interface to data translation a/d converter
-.br
-.ns
-.TP 10
-ct#
-unibus parallel interface to CAT typesetter
-.br
-.ns
-.TP 10
-dh#
-unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
-.br
-.ns
-.TP 10
-dhu#
-unibus dhu11
-.br
-.ns
-.TP 10
-dmf#
-unibus dmf32
-.br
-.ns
-.TP 10
-dmz#
-unibus dmz32
-.br
-.ns
-.TP 10
-dn#
-unibus dn11 and emulations (e.g. Able Quadracall)
-.br
-.ns
-.TP 10
-dz#
-unibus dz11 and dz32
-.br
-.ns
-.TP 10
-hk#
-unibus rk06 and rk07
-.br
-.ns
-.TP 10
-hp#
-massbus rm??
-.br
-.ns
-.TP 10
-ht#
-massbus tm03 & tu??
-.br
-.ns
-.TP 10
-ik#
-unibus interface to ikonas frame buffer
-.br
-.ns
-.TP 10
-kra#
-bi kdb50 w/ ra??
-.br
-.ns
-.TP 10
-lp#
-unibus lp11 parallel interface
-.br
-.ns
-.TP 10
-mt#
-massbus tu78
-.br
-.ns
-.TP 10
-np#
-unibus ethernet co-processor interface, for downloading.
-.br
-.ns
-.TP 10
-ps#
-unibus interface to e&s picture system 2
-.br
-.ns
-.TP 10
-pty#
-set of 16 master and slave pseudo terminals
-.br
-.ns
-.TP 10
-qv#
-qvss (microvax) display
-.br
-.ns
-.TP 10
-ra#
-unibus uda50 w/ ra??
-.br
-.ns
-.TP 10
-rb#
+.Pp
+.Sy Pseudo\-names
+.Bl -tag -width indent 
+.It Ar all
+All known devices for the VAX.
+.It Ar std
+The standard devices (console, crl, csa1, csa2, drum, fd/*, floppy,
+kUmem, klog, kmem, mem, null, stderr, stdin, stdout, tty, tu0, tu1, zero)
+.It Ar local
+Configuration\-specific devices
+.El
+.Pp
+.Sy Device names
+.Bl -tag -width indent
+.It Ar ad#
+Unibus interface to data translation a/d converter
+.It Ar bpf#
+Berkeley Packet Filters
+.It Ar ccd#
+``Concatenated'' pseudo-disks
+.It Ar cd#
+SCSI CD-ROM drives
+.It Ar ch#
+SCSI changer
+.It Ar ct#
+Unibus parallel interface to CAT typesetter
+.It Ar dh#
+Unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
+.It Ar dhu#
+Unibus dhu11
+.It Ar dmf#
+Unibus dmf32
+.It Ar dmz#
+Unibus dmz32
+.It Ar dn#
+Unibus dn11 and emulations (e.g. Able Quadracall)
+.It Ar dz#
+Unibus dz11 and dz32
+.It Ar hk#
+Unibus rk06 and rk07
+.It Ar hp#
+Massbus rm??
+.It Ar ht#
+Massbus tm03 & tu??
+.It Ar ik#
+Unibus interface to ikonas frame buffer
+.It Ar lp#
+Unibus lp11 parallel interface
+.It Ar md#
+Memory pseudo-disk devices
+.It Ar mt#
+MSCP tape drives (TU81, TK50, etc.)
+.It Ar np#
+Unibus Ethernet co-processor interface, for downloading.
+.It Ar ps#
+Unibus interface to e&s picture system 2
+.It Ar pty#
+Set of master and slave pseudo terminals
+.It Ar qv#
+QVSS (MicroVAX) display
+.It Ar ra#
+Unibus uda50 w/ ra??
+.It Ar random
+Random number generator
+.It Ar rb#
 730 idc w/ rb80 and/or rb02
-.br
-.ns
-.TP 10
-rl#
-unibus rl02
-.br
-.ns
-.TP 10
-rx#
-unibus rx211 floppy disk 
-.br
-.ns
-.TP 10
-tm#
-unibus tm11 & te10 emulations (e.g. Emulex tc-11)
-.br
-.ns
-.TP
-tms#
-unibus/qbus TMSCP (e.g. TU81, TK50)
-.br
-.ns
-.TP 10
-ts#
-unibus ts11
-.br
-.ns
-.TP 10
-ttyv0
-qvss (microvax) display reserved pty
-.br
-.ns
-.TP 10
-up#
-other unibus devices (e.g. on Emulex sc-21v controller)
-.br
-.ns
-.TP 10
-ut#
-unibus tu45 emulations (e.g.si 9700)
-.br
-.ns
-.TP 10
-uu#
-tu58 cassettes on dl11 controller
-.br
-.ns
-.TP 10
-va#
-unibus varian parallel interface
-.br
-.ns
-.TP 10
-vp#
-unibus versatec parallel interface
-.SH FILES
-/dev		The special file directory.
-.SH SEE ALSO
-.IR mknod (8), 
-.IR intro (4),
-.IR config (8),
-.IR special (8)
+.It Ar rl#
+Unibus rl02
+.It Ar rx#
+Unibus rx211 floppy disk 
+.It Ar sd#
+SCSI disks
+.It Ar ss#
+SCSI scanner
+.It Ar st#
+SCSI tape drives
+.It Ar tm#
+Unibus tm11 & te10 emulations (e.g. Emulex tc-11)
+.It Ar ts#
+Unibus ts11
+.It Ar ttyv0
+QVSS (MicroVAX) display reserved pty
+.It Ar uk#
+SCSI unknown
+.It Ar up#
+Other Unibus devices (e.g. on Emulex sc-21v controller)
+.It Ar ut#
+Unibus TU45 emulations (e.g. 9700)
+.It Ar uu#
+TU58 cassettes on dl11 controller
+.It Ar va#
+Unibus Varian parallel interface
+.It Ar vnd#
+``File'' pseudo-disks
+.It Ar vp#
+Unibus Versatec parallel interface
+.El
+.Pp
+.Sh FILES
+.Bl -tag -width XXXX -compact
+.It Pa /dev
+The special file directory.
+.El
+.Sh SEE ALSO
+.Xr mknod 8 , 
+.Xr intro 4 ,
+.Xr config 8 ,
+.Xr special 8
