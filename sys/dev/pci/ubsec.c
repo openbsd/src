@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.29 2000/08/15 17:50:12 mickey Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.30 2000/08/17 13:54:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -637,18 +637,15 @@ ubsec_process(crp)
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
+				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
 			else {
 				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
 				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
 			}
 
-			m_copyback(q->q_src_m, enccrd->crd_inject, 8,
-			    (caddr_t)&q->q_ctx.pc_iv);
-
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
+				    8, (caddr_t)q->q_ctx.pc_iv);
 		} else {
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
@@ -656,7 +653,7 @@ ubsec_process(crp)
 				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
 			else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
+				    8, (caddr_t)q->q_ctx.pc_iv);
 		}
 
 		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
@@ -684,15 +681,32 @@ ubsec_process(crp)
 	}
 
 	if (enccrd && maccrd) {
-		dskip = sskip = (macoffset > encoffset) ? encoffset : macoffset;
-		coffset = macoffset - encoffset;
-		if (coffset < 0)
-			coffset = -coffset;
-		if ((encoffset + enccrd->crd_len) >
-		    (macoffset + maccrd->crd_len))
-			stheend = dtheend = enccrd->crd_len;
-		else
-			stheend = dtheend = maccrd->crd_len;
+		/*
+		 *
+		 * ubsec cannot handle packets where the end of encryption
+		 * and authentication are not the same, or where the
+		 * encrypted part begins before the authenticated part.
+		 */
+		if (((encoffset + enccrd->crd_len) !=
+		    (macoffset + maccrd->crd_len)) ||
+		    (enccrd->crd_skip < maccrd->crd_skip)) {
+			err = EINVAL;
+			goto errout;
+		}
+		sskip = maccrd->crd_skip;
+		dskip = enccrd->crd_skip;
+		stheend = maccrd->crd_len;
+		dtheend = enccrd->crd_len;
+		coffset = enccrd->crd_skip - maccrd->crd_skip;
+#ifdef UBSEC_DEBUG
+		printf("mac: skip %d, len %d, inject %d\n",
+ 		    maccrd->crd_skip, maccrd->crd_len, maccrd->crd_inject);
+		printf("enc: skip %d, len %d, inject %d\n",
+		    enccrd->crd_skip, enccrd->crd_len, enccrd->crd_inject);
+		printf("src: skip %d, len %d\n", sskip, stheend);
+		printf("dst: skip %d, len %d\n", dskip, dtheend);
+		printf("ubs: coffset %d, pktlen %d\n", coffset, stheend);
+#endif
 	} else {
 		dskip = sskip = macoffset + encoffset;
 		dtheend = stheend = (enccrd)?enccrd->crd_len:maccrd->crd_len;
@@ -861,7 +875,17 @@ ubsec_process(crp)
 			printf("  pb v %08x p %08x\n", pb, vtophys(pb));
 #endif
 			pb->pb_addr = q->q_dst_packp[i];
-			pb->pb_len = q->q_dst_packl[i];
+
+			if (dtheend) {
+				if (q->q_src_packl[i] > dtheend) {
+					pb->pb_len = dtheend;
+					dtheend = 0;
+				} else {
+					pb->pb_len = q->q_src_packl[i];
+					dtheend -= pb->pb_len;
+				}
+			} else
+				pb->pb_len = q->q_src_packl[i];
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
@@ -930,7 +954,7 @@ ubsec_callback(q)
 				continue;
 			m_copydata((struct mbuf *)crp->crp_buf,
 			    crd->crd_skip + crd->crd_len - 8, 8,
-			    (u_int8_t *)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
+			    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			break;
 		}
 	}
@@ -940,7 +964,7 @@ ubsec_callback(q)
 		    crd->crd_alg != CRYPTO_SHA1_HMAC96)
 			continue;
 		m_copyback((struct mbuf *)crp->crp_buf,
-		    crd->crd_inject, 12, (u_int8_t *)&q->q_macbuf[0]);
+		    crd->crd_inject, 12, (caddr_t)q->q_macbuf);
 		break;
 	}
 
