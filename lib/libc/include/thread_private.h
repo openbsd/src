@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.3 2000/01/06 07:47:09 d Exp $ */
+/* $OpenBSD: thread_private.h,v 1.4 2000/01/06 08:57:29 d Exp $ */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
@@ -23,7 +23,7 @@ extern int __isthreaded;
  */
 
 #ifdef _NO_WEAK_ALIASES
-#defined _THREAD_SAFE
+#ifdef _THREAD_SAFE
 #define WEAK_NAME(name)			__CONCAT(_weak,name)
 #else
 #define WEAK_NAME(name)			name
