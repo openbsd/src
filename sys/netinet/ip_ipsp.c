@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.37 1999/03/04 21:51:27 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.38 1999/03/24 17:00:47 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -471,9 +471,7 @@ handle_expirations(void *arg)
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
 	    (tdb->tdb_exp_timeout <= time.tv_sec))
 	{
-/* XXX
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-*/
+	    pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	    tdb_delete(tdb, 0);
 	    continue;
 	}
@@ -481,9 +479,7 @@ handle_expirations(void *arg)
 	  if ((tdb->tdb_flags & TDBF_FIRSTUSE) &&
 	      (tdb->tdb_first_use + tdb->tdb_exp_first_use <= time.tv_sec))
 	  {
-/* XXX
-   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-*/
+	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	      tdb_delete(tdb, 0);
 	      continue;
 	  }
@@ -492,9 +488,7 @@ handle_expirations(void *arg)
 	if ((tdb->tdb_flags & TDBF_SOFT_TIMER) &&
 	    (tdb->tdb_soft_timeout <= time.tv_sec))
 	{
-/* XXX
-   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-*/
+	    pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	    tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 	}
 	else
@@ -502,9 +496,7 @@ handle_expirations(void *arg)
 	      (tdb->tdb_first_use + tdb->tdb_soft_first_use <=
 	       time.tv_sec))
 	  {
-/* XXX
-   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-*/
+	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	      tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	  }
     }
@@ -714,7 +706,9 @@ tdb_delete(struct tdb *tdbp, int delchain)
 	ipsec_in_use--;
     }
 
-    cleanup_expirations(&tdbp->tdb_dst, tdbp->tdb_spi, tdbp->tdb_sproto);
+    /* removal of a larval SA should not remove the mature SA's expirations */
+    if ((tdbp->tdb_flags & TDBF_INVALID) == 0)
+      cleanup_expirations(&tdbp->tdb_dst, tdbp->tdb_spi, tdbp->tdb_sproto);
 
     if (tdbp->tdb_srcid)
       FREE(tdbp->tdb_srcid, M_XDATA);
@@ -834,7 +828,7 @@ ipsp_kern(int off, char **bufp, int len)
 		    else
 		      i = 1;
 
-		    l += sprintf(buffer + l, "halviv");
+		    l += sprintf(buffer + l, "halfiv");
 		}
 
 		if (tdb->tdb_flags & TDBF_PFS)

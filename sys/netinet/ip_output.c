@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.42 1999/03/06 20:59:41 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.43 1999/03/24 17:00:47 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 #endif
 
 #ifdef IPSEC
-extern void	encap_sendnotify __P((int, struct tdb *, void *));
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.24 1999/02/25 20:14:36 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.25 1999/03/24 17:00:44 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -273,9 +273,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     if ((tdb->tdb_flags & TDBF_BYTES) &&
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
-/* XXX
-   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-*/
+	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	  tdb_delete(tdb, 0);
 	  m_freem(m);
 	  return NULL;
@@ -285,9 +283,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
 	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
     {
-/* XXX
-   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-*/
+	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
     }
 
@@ -504,9 +500,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if ((tdb->tdb_flags & TDBF_BYTES) &&
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
-/* XXX
-   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-*/
+	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	  tdb_delete(tdb, 0);
 	  m_freem(m);
 	  return EINVAL;
@@ -516,9 +510,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
 	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
     {
-/* XXX
-   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-*/
+	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;      /* Turn off checking */
     }
 

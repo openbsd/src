@@ -59,9 +59,7 @@ struct pfkeyv2_socket {
 
 static struct pfkeyv2_socket *pfkeyv2_sockets = NULL;
 
-#if 0 /* XXX */
 static uint32_t pfkeyv2_seq = 1;
-#endif 
 
 static int nregistered = 0;
 static int npromisc = 0;
@@ -83,16 +81,28 @@ static struct sadb_alg aalgs[] = {
 extern int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);
 int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
-int pfkeyv2_parsemessage(void *p, int len, void **headers);
+
+void export_address(void **, struct sockaddr *);
+void export_identity(void **, struct tdb *, int);
+void export_lifetime(void **, struct tdb *, int);
+void export_sa(void **, struct tdb *);
+void import_address(struct sockaddr *, struct sadb_address *);
+void import_identity(struct tdb *, struct sadb_ident *, int);
+void import_key(struct ipsecinit *, struct sadb_key *, int);
+void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
+void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
+int pfdatatopacket(void *, int, struct mbuf **);
 int pfkeyv2_acquire(void *);
-int pfkeyv2_init(void);
-int pfkeyv2_cleanup(void);
-int pfkeyv2_expire(struct tdb *);
+int pfkeyv2_create(struct socket *);
+int pfkeyv2_get(struct tdb *, void **, void **);
+int pfkeyv2_release(struct socket *);
+int pfkeyv2_send(struct socket *, void *, int);
+int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
 
 #define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
 
-static int
+int
 pfdatatopacket(void *data, int len, struct mbuf **packet)
 {
   if (!(*packet = m_devget(data, len, 0, NULL, NULL)))
@@ -101,7 +111,7 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
   return 0;
 }
 
-static int
+int
 pfkeyv2_create(struct socket *socket)
 {
   struct pfkeyv2_socket *pfkeyv2_socket;
@@ -120,7 +130,7 @@ pfkeyv2_create(struct socket *socket)
   return 0;
 }
 
-static int
+int
 pfkeyv2_release(struct socket *socket)
 {
   struct pfkeyv2_socket **pp;
@@ -148,7 +158,7 @@ pfkeyv2_release(struct socket *socket)
   return 0;
 }
 
-static void
+void
 import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 {
   if (!sadb_sa)
@@ -176,7 +186,7 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
     tdb->tdb_flags |= TDBF_INVALID;
 }
 
-static void 
+void
 export_sa(void **p, struct tdb *tdb)
 {
   struct sadb_sa *sadb_sa = (struct sadb_sa *)*p;
@@ -207,7 +217,7 @@ export_sa(void **p, struct tdb *tdb)
   *p += sizeof(struct sadb_sa);
 }
 
-static void
+void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
   struct expiration *exp;
@@ -288,7 +298,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
   }
 }
 
-static void
+void
 export_lifetime(void **p, struct tdb *tdb, int type)
 {
   struct sadb_lifetime *sadb_lifetime = (struct sadb_lifetime *)*p;
@@ -340,7 +350,7 @@ export_lifetime(void **p, struct tdb *tdb, int type)
   *p += sizeof(struct sadb_lifetime);
 }
 
-static void
+void
 import_address(struct sockaddr *sa, struct sadb_address *sadb_address)
 {
   int salen;
@@ -370,7 +380,7 @@ import_address(struct sockaddr *sa, struct sadb_address *sadb_address)
   sa->sa_len = salen;
 }
 
-static void
+void
 export_address(void **p, struct sockaddr *sa)
 {
   struct sadb_address *sadb_address = (struct sadb_address *)*p;
@@ -384,7 +394,7 @@ export_address(void **p, struct sockaddr *sa)
   *p += PADUP(SA_LEN(sa));
 }
 
-static void
+void
 import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 {
   if (!sadb_ident)
@@ -409,7 +419,7 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
   }
 }
 
-static void
+void
 export_identity(void **p, struct tdb *tdb, int type)
 {
   struct sadb_ident *sadb_ident = (struct sadb_ident *)*p;
@@ -429,7 +439,7 @@ export_identity(void **p, struct tdb *tdb, int type)
   }
 }
 
-static void
+void
 import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
 {
   if (!sadb_key)
@@ -444,7 +454,7 @@ import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
   }
 }
 
-static int
+int
 pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		    u_int8_t satype, int count)
 {
@@ -555,7 +565,7 @@ ret:
 extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
 extern uint32_t sadb_exts_required_out[SADB_MAX+1];
 
-static int
+int
 pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 {
   int rval, i;
@@ -646,7 +656,7 @@ struct dump_state {
 };
 
 #if 0 /* XXX Need to add a tdb_walk routine for this to work */
-static int
+int
 pfkeyv2_dump_walker(struct tdb *sa, void *state)
 {
   struct dump_state *dump_state = (struct dump_state *)state;
@@ -670,7 +680,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
 }
 #endif /* 0 */
 
-static int
+int
 pfkeyv2_send(struct socket *socket, void *message, int len)
 {
   void *headers[SADB_EXT_MAX + 1];
@@ -1521,10 +1531,74 @@ ret:
 }
 
 int
-pfkeyv2_expire(struct tdb *sa)
+pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 {
-  /* XXX missing */
-  return 0;
+  int rval = 0;
+  int i;
+  u_int8_t satype;
+  void *p, *headers[SADB_EXT_MAX+1], *buffer;
+
+  switch (sa->tdb_sproto) {
+    case IPPROTO_AH:
+      satype = sa->tdb_xform->xf_type == XF_OLD_AH ? SADB_SATYPE_X_AH_OLD : SADB_SATYPE_AH;
+      break;
+    case IPPROTO_ESP:
+      satype = sa->tdb_xform->xf_type == XF_OLD_ESP ? SADB_SATYPE_X_ESP_OLD : SADB_SATYPE_ESP;
+      break;
+    case IPPROTO_IPIP:
+      satype = SADB_SATYPE_X_IPIP;
+      break;
+    default:
+      rval = EOPNOTSUPP;
+      goto ret;
+  }
+
+  i = sizeof(struct sadb_msg) + sizeof(struct sadb_sa) +
+      2 * sizeof(struct sadb_lifetime) +
+      sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa)) +
+      sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_dst.sa));
+
+  if (!(p = malloc(i, M_TEMP, M_DONTWAIT))) {
+    rval = ENOMEM;
+    goto ret;
+  }
+
+  bzero(headers, sizeof(headers));
+
+  buffer = p;
+  bzero(p, i);
+
+  headers[0] = p;
+  p += sizeof(struct sadb_msg);
+  ((struct sadb_msg *)headers[0])->sadb_msg_version = PF_KEY_V2;
+  ((struct sadb_msg *)headers[0])->sadb_msg_type    = SADB_EXPIRE;
+  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = satype;
+  ((struct sadb_msg *)headers[0])->sadb_msg_len     = i / sizeof(uint64_t);
+  ((struct sadb_msg *)headers[0])->sadb_msg_seq     = pfkeyv2_seq++;
+
+  headers[SADB_EXT_SA] = p;
+  export_sa(&p, sa);
+
+  headers[SADB_EXT_LIFETIME_CURRENT] = p;
+  export_lifetime(&p, sa, 2);
+
+  headers[type] = p;
+  export_lifetime(&p, sa, type == SADB_EXT_LIFETIME_SOFT ? 1 : 0);
+
+  headers[SADB_EXT_ADDRESS_SRC] = p;
+  export_address(&p, (struct sockaddr *)&sa->tdb_src);
+
+  headers[SADB_EXT_ADDRESS_DST] = p;
+  export_address(&p, (struct sockaddr *)&sa->tdb_dst);
+
+  if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_BROADCAST,
+				  NULL, 0, 0))!= 0)
+    goto ret;
+
+  rval = 0;
+
+ret:
+  return rval;
 }
 
 int

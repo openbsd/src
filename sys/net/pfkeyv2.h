@@ -230,7 +230,7 @@ struct sadb_protocol {
 #define SADB_SAFLAGS_X_HALFIV    0x02    /* Used for ESP-old */
 #define SADB_SAFLAGS_X_TUNNEL	 0x04    /* Force tunneling */
 #define SADB_SAFLAGS_X_CHAINDEL  0x08    /* Delete whole SA chain */
-#define SADB_SAFLAGS_X_LOCALFLOW 0x10    /* Delete whole SA chain */
+#define SADB_SAFLAGS_X_LOCALFLOW 0x10    /* Add flow with 0.0.0.0 as src */
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1
@@ -241,9 +241,12 @@ struct sadb_protocol {
 
 #define SADB_KEY_FLAGS_MAX 0
 
-#ifdef KERNEL
+#ifdef _KERNEL
+struct tdb;
+
 int pfkeyv2_init(void);
 int pfkeyv2_cleanup(void);
-int pfkeyv2_parsemessage(void *p, int len, void **headers);
-#endif /* KERNEL */
+int pfkeyv2_parsemessage(void *, int, void **);
+int pfkeyv2_expire(struct tdb *, u_int16_t);
+#endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H */
