@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 1996/05/15 08:56:15 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.7 1996/05/27 21:48:08 chuck Exp $
 
 machine		mvme68k m68k
 
@@ -49,6 +49,7 @@ pseudo-device	ppp 2
 pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	pty
+pseudo-device	rd 2
 
 mainbus0 at root
 

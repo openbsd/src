@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.4 1996/05/10 12:42:21 deraadt Exp $
+#	$OpenBSD: files.mvme68k,v 1.5 1996/05/27 21:48:08 chuck Exp $
 
 # config file for mvme68k
 
@@ -88,6 +88,11 @@ device lptwo
 attach lptwo at pcctwo
 file	arch/mvme68k/dev/lptwo.c		lptwo needs-count
 
+# RAM disk for boot tape
+pseudo-device rd
+file dev/ramdisk.c				rd needs-flag
+file arch/mvme68k/dev/rd_root.c			ramdisk_hooks
+
 device vme { }
 attach vme at pcc, mc, pcctwo
 device vmes { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
@@ -107,6 +112,7 @@ file	arch/mvme68k/dev/xd.c			xd needs-flag
 major { sd = 4 }
 major { cd = 6 }
 major { vnd = 8 }
+major { rd = 9 }
 major { xd = 10 }
 
 file arch/mvme68k/mvme68k/autoconf.c
