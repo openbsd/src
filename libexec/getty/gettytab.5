@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
-.\"	$Id: gettytab.5,v 1.6 1998/06/15 17:55:34 mickey Exp $
+.\"	$Id: gettytab.5,v 1.7 1998/11/25 03:20:02 aaron Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETTYTAB 5
@@ -170,7 +170,7 @@ use raw for input, use cbreak
 .It "ub	bool	false	do unbuffered output (of prompts etc)"
 .It "we	str" Ta So Li ^W Sc Ta
 .No "word erase character"
-.It "xc	bool	false	do
+.It "xc	bool	false	do"
 .Tn NOT
 echo control chars as
 .Ql ^X
@@ -180,7 +180,8 @@ echo control chars as
 (start output) character
 .El
 .Pp
-The following capabilities are no longer supported by getty(8):
+The following capabilities are no longer supported by
+.Xr getty 8 :
 .Bl -column Namexx /usr/bin/login Default
 .It "bd	num	0	backspace delay"
 .It "cb	bool	false	use crt backspace mode"
