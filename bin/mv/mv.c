@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.13 1999/01/12 04:42:23 aaron Exp $	*/
+/*	$OpenBSD: mv.c,v 1.14 1999/07/26 21:29:45 aaron Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.13 1999/01/12 04:42:23 aaron Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.14 1999/07/26 21:29:45 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ do_move(from, to)
 		int ask = 1;
 		int ch, first;
 
-		if (iflg) {
+		if (iflg && !access(from, F_OK)) {
 			(void)fprintf(stderr, "overwrite %s? ", to);
 		} else if (stdin_ok && access(to, W_OK) && !stat(to, &sb)) {
 			strmode(sb.st_mode, modep);
