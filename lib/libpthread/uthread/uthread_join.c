@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_join.c,v 1.8 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_join.c,v 1.9 2001/12/19 02:02:52 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -133,7 +133,6 @@ pthread_join(pthread_t pthread, void **thread_return)
 		 * The thread return value and error are set by the thread we're
 		 * joining to when it exits or detaches:
 		 */
-		ret = curthread->join_status.error;
 		ret = curthread->join_status.error;
 		if ((ret == 0) && (thread_return != NULL))
 			*thread_return = curthread->join_status.ret;

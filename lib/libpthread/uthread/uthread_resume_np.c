@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_resume_np.c,v 1.4 1999/11/25 07:01:42 d Exp $	*/
+/*	$OpenBSD: uthread_resume_np.c,v 1.5 2001/12/19 02:02:52 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,20 +41,49 @@
 int
 pthread_resume_np(pthread_t thread)
 {
-	int ret;
+	int	ret;
+	enum	pthread_susp old_suspended;
 
 	/* Find the thread in the list of active threads: */
 	if ((ret = _find_thread(thread)) == 0) {
-		/* The thread exists. Is it suspended? */
-		if (thread->state != PS_SUSPENDED) {
+		/* Cancel any pending suspensions: */
+		old_suspended = thread->suspended;
+		thread->suspended = SUSP_NO;
+
+		/* Is it currently suspended? */
+		if (thread->state == PS_SUSPENDED) {
 			/*
 			 * Defer signals to protect the scheduling queues
 			 * from access by the signal handler:
 			 */
 			_thread_kern_sig_defer();
 
-			/* Allow the thread to run. */
-			PTHREAD_NEW_STATE(thread,PS_RUNNING);
+			switch (old_suspended) {
+			case SUSP_MUTEX_WAIT:
+				/* Set the thread's state back. */
+				PTHREAD_SET_STATE(thread,PS_MUTEX_WAIT);
+				break;
+			case SUSP_COND_WAIT:
+				/* Set the thread's state back. */
+				PTHREAD_SET_STATE(thread,PS_COND_WAIT);
+				break;
+			case SUSP_JOIN:
+				/* Set the thread's state back. */
+				PTHREAD_SET_STATE(thread,PS_JOIN);
+				break;
+			case SUSP_NOWAIT:
+				/* Allow the thread to run. */
+				PTHREAD_SET_STATE(thread,PS_RUNNING);
+				PTHREAD_WAITQ_REMOVE(thread);
+				PTHREAD_PRIOQ_INSERT_TAIL(thread);
+				break;
+			case SUSP_NO:
+			case SUSP_YES:
+				/* Allow the thread to run. */
+				PTHREAD_SET_STATE(thread,PS_RUNNING);
+				PTHREAD_PRIOQ_INSERT_TAIL(thread);
+				break;
+			}
 
 			/*
 			 * Undefer and handle pending signals, yielding if

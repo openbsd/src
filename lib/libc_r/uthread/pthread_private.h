@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.31 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.32 2001/12/19 02:02:52 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -120,6 +120,14 @@
  * called with preemption deferred (see thread_kern_sched_[un]defer).
  */
 #if defined(_PTHREADS_INVARIANTS)
+#include <assert.h>
+#define PTHREAD_ASSERT(cond, msg) do {	\
+	if (!(cond))			\
+		PANIC(msg);		\
+} while (0)
+#define PTHREAD_ASSERT_NOT_IN_SYNCQ(thrd) \
+	PTHREAD_ASSERT((((thrd)->flags & PTHREAD_FLAGS_IN_SYNCQ) == 0),	\
+	    "Illegal call from signal handler");
 #define PTHREAD_NEW_STATE(thrd, newstate) do {				\
 	if (_thread_kern_new_state != 0)				\
 		PANIC("Recursive PTHREAD_NEW_STATE");			\
@@ -137,6 +145,8 @@
 	PTHREAD_SET_STATE(thrd, newstate);				\
 } while (0)
 #else
+#define PTHREAD_ASSERT(cond, msg)
+#define PTHREAD_ASSERT_NOT_IN_SYNCQ(thrd)
 #define PTHREAD_NEW_STATE(thrd, newstate) do {				\
 	if ((thrd)->state != newstate) {				\
 		if ((thrd)->state == PS_RUNNING) {			\
@@ -645,7 +655,7 @@ struct pthread {
 	int	error;
 
 	/*
-	 * The joiner is the thread that is joining this thraed. The
+	 * The joiner is the thread that is joining to this thread.  The
 	 * join status keeps track of a join operation to another thread.
 	 */
 	struct pthread		*joiner;
@@ -653,8 +663,7 @@ struct pthread {
 
 	/*
 	 * The current thread can belong to only one scheduling queue at
-	 * a time (ready or waiting queue).  It can also belong to (only)
-	 * one of:
+	 * a time (ready or waiting queue).  It can also belong to:
 	 *
 	 *   o A queue of threads waiting for a mutex
 	 *   o A queue of threads waiting for a condition variable
@@ -662,18 +671,25 @@ struct pthread {
 	 *   o A queue of threads needing work done by the kernel thread
 	 *     (waiting for a spinlock or file I/O)
 	 *
+	 * A thread can also be joining a thread (the joiner field above).
+	 *
+	 * It must not be possible for a thread to belong to any of the
+	 * above queues while it is handling a signal.  Signal handlers
+	 * may longjmp back to previous stack frames circumventing normal
+	 * control flow.  This could corrupt queue integrity if the thread
+	 * retains membership in the queue.  Therefore, if a thread is a
+	 * member of one of these queues when a signal handler is invoked,
+	 * it must remove itself from the queue before calling the signal
+	 * handler and reinsert itself after normal return of the handler.
+	 *
 	 * Use pqe for the scheduling queue link (both ready and waiting),
-	 * and qe for other links.
+	 * sqe for synchronization (mutex and condition variable) queue
+	 * links, and qe for all other links.
 	 */
 
-	/* Priority queue entry for this thread: */
-	pthread_entry_t		pqe;
-
-	/* Priority queue entry for this thread: */
-	pthread_entry_t		sqe;
-
-	/* Queue entry for this thread: */
-	pthread_entry_t		qe;
+	pthread_entry_t		pqe;	/* priority queue link */
+	pthread_entry_t		sqe;	/* synchronization queue link */
+	pthread_entry_t		qe;	/* all other queues link */
 
 	/* Wait data. */
 	union pthread_wait_data data;
@@ -704,19 +720,19 @@ struct pthread {
 	 */
 	int		yield_on_sig_undefer;
 
-	/* Miscellaneous data. */
+	/* Miscellaneous flags; only set with signals deferred. */
 	int		flags;
 #define PTHREAD_FLAGS_PRIVATE	0x0001
 #define PTHREAD_EXITING		0x0002
-#define PTHREAD_FLAGS_IN_WAITQ	0x0004	/* in waiting queue using pqe link*/
-#define PTHREAD_FLAGS_IN_PRIOQ	0x0008	/* in priority queue using pqe link*/
+#define PTHREAD_FLAGS_IN_WAITQ	0x0004	/* in waiting queue using pqe link */
+#define PTHREAD_FLAGS_IN_PRIOQ	0x0008	/* in priority queue using pqe link */
 #define PTHREAD_FLAGS_IN_WORKQ	0x0010	/* in work queue using qe link */
 #define PTHREAD_FLAGS_IN_FILEQ	0x0020	/* in file lock queue using qe link */
 #define PTHREAD_FLAGS_IN_FDQ	0x0040	/* in fd lock queue using qe link */
-#define PTHREAD_FLAGS_IN_CONDQ	0x0080	/* in condition queue using sqe link*/
-#define PTHREAD_FLAGS_IN_MUTEXQ	0x0100	/* in mutex queue using sqe link*/
+#define PTHREAD_FLAGS_IN_CONDQ	0x0080	/* in condition queue using sqe link */
+#define PTHREAD_FLAGS_IN_MUTEXQ	0x0100	/* in mutex queue using sqe link */
 #define PTHREAD_FLAGS_TRACE	0x0200	/* for debugging purposes */
-#define PTHREAD_FLAGS_IN_SYNQ	\
+#define PTHREAD_FLAGS_IN_SYNCQ	\
     (PTHREAD_FLAGS_IN_CONDQ | PTHREAD_FLAGS_IN_MUTEXQ)
 
 	/*
@@ -992,12 +1008,30 @@ SCLASS volatile int	_spinblock_count
 #endif
 ;
 
+/* Used to maintain pending and active signals: */
+struct sigstatus {
+	int		pending;	/* Is this a pending signal? */
+	int		blocked;	/*
+					 * A handler is currently active for
+					 * this signal; ignore subsequent
+					 * signals until the handler is done.
+					 */
+	int		signo;		/* arg 1 to signal handler */
+	siginfo_t	siginfo;	/* arg 2 to signal handler */
+	struct sigcontext uc;		/* arg 3 to signal handler */
+};
+
+SCLASS struct sigstatus	_thread_sigq[NSIG];
+
 /* Indicates that the signal queue needs to be checked. */
 SCLASS volatile int	_sigq_check_reqd
 #ifdef GLOBAL_PTHREAD_PRIVATE
 = 0
 #endif
 ;
+
+/* The signal stack. */
+SCLASS struct sigaltstack _thread_sigstack;
 
 /* Thread switch hook. */
 SCLASS pthread_switch_routine_t _sched_switch_hook

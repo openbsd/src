@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.8 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.9 2001/12/19 02:02:52 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -59,17 +59,6 @@ pthread_cancel(pthread)
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 				break;
 
-			case PS_MUTEX_WAIT:
-			case PS_COND_WAIT:
-			case PS_FDLR_WAIT:
-			case PS_FDLW_WAIT:
-			case PS_FILE_WAIT:
-				pthread->interrupted = 1;
-				pthread->cancelflags |= PTHREAD_CANCEL_NEEDED;
-				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
-				pthread->continuation = finish_cancellation;
-				break;
-
 			case PS_JOIN:
 				/*
 				 * Disconnect the thread from the joinee and
@@ -85,9 +74,39 @@ pthread_cancel(pthread)
 				break;
 
 			case PS_SUSPENDED:
-				/* Simply wake: */
-				/* XXX may be incorrect */
+				if (pthread->suspended == SUSP_NO ||
+				    pthread->suspended == SUSP_YES ||
+				    pthread->suspended == SUSP_JOIN ||
+				    pthread->suspended == SUSP_NOWAIT) {
+					/*
+					 * This thread isn't in any scheduling
+					 * queues; just change it's state:
+					 */
+					pthread->cancelflags |=
+					    PTHREAD_CANCELLING;
+					PTHREAD_SET_STATE(pthread, PS_RUNNING);
+					break;
+				}
+				/* FALLTHROUGH */
+			case PS_MUTEX_WAIT:
+			case PS_COND_WAIT:
+			case PS_FDLR_WAIT:
+			case PS_FDLW_WAIT:
+			case PS_FILE_WAIT:
+				/*
+				 * Threads in these states may be in queues.
+				 * In order to preserve queue integrity, the
+				 * cancelled thread must remove itself from the
+				 * queue.  Mark the thread as interrupted and
+				 * needing cancellation, and set the state to
+				 * running.  When the thread resumes, it will
+				 * remove itself from the queue and call the
+				 * cancellation completion routine.
+				 */
+				pthread->interrupted = 1;
+				pthread->cancelflags |= PTHREAD_CANCEL_NEEDED;
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
+				pthread->continuation = finish_cancellation;
 				break;
 
 			case PS_DEAD:
