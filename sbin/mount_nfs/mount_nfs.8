@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.18 2000/04/15 02:15:15 aaron Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.19 2000/05/24 15:43:28 mickey Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -244,11 +244,26 @@ when mounting servers that do not support TCP mounts.
 .It Fl x Ar retrans
 Set the retransmit timeout count for soft mounts to the specified value.
 .El
+In versions prior to
+.Ox 2.7
+.Nm nfsiod
+daemons were running to improve perfomance of client NFS I/O.
+This is no longer done this way.
+Use
+.Xr sysctl 8
+or modify
+.Xr sysctl.conf 5
+to adjust the
+.Nm vfs.nfs.iothreads
+value, which is the number of kernel threads created
+to serve asynchronous NFS I/O requests.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Xr fstab 5 ,
-.Xr mount 8
+.Xr mount 8 ,
+.Xr nfsd 8 ,
+.Xr sysctl 8
 .Sh BUGS
 Due to the way that Sun RPC is implemented on top of UDP (unreliable datagram)
 transport, tuning such mounts is really a black art that can only be expected
