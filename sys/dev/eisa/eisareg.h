@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisareg.h,v 1.3 1996/04/21 22:20:42 deraadt Exp $	*/
+/*	$OpenBSD: eisareg.h,v 1.4 1996/05/05 12:42:24 deraadt Exp $	*/
 /*	$NetBSD: eisareg.h,v 1.3 1996/04/09 22:46:13 cgd Exp $	*/
 
 /*
@@ -56,6 +56,14 @@
 #define	EISA_SLOTOFF_PID	0xc82		/* offset of product id regs */
 #define	EISA_NPIDREGS		2
 
+#ifdef AHA284X_HACK
+/*
+ * AHA-284x (VL bus) requires priming a register with the following values.
+ */
+#define	EISA_SLOTOFF_PRIMING	EISA_SLOTOFF_VID	/* offset */
+#define	EISA_PRIMING_VID(index)	(0x80 + (index))	/* value for vendor */
+#define	EISA_PRIMING_PID(index)	(0x82 + (index))	/* value for product */
+#endif
 
 /*
  * EISA ID functions, used to manipulate and decode EISA ID registers.

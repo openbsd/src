@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.2 1996/04/21 22:20:23 deraadt Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.3 1996/05/05 12:42:23 deraadt Exp $	*/
 /*	$NetBSD: eisa.c,v 1.11 1996/04/09 22:46:11 cgd Exp $	*/
 
 /*
@@ -156,9 +156,14 @@ eisaattach(parent, self, aux)
 		}
 
 		/* Get the vendor ID bytes */
-		for (i = 0; i < EISA_NVIDREGS; i++)
+		for (i = 0; i < EISA_NVIDREGS; i++) {
+#ifdef EISA_SLOTOFF_PRIMING
+			bus_io_write_1(bc, slotioh,
+			    EISA_SLOTOFF_PRIMING, EISA_PRIMING_VID(i));
+#endif
 			ea.ea_vid[i] = bus_io_read_1(bc, slotioh,
 			    EISA_SLOTOFF_VID + i);
+		}
 
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
@@ -181,9 +186,14 @@ eisaattach(parent, self, aux)
 		}
 
 		/* Get the product ID bytes */
-		for (i = 0; i < EISA_NPIDREGS; i++)
+		for (i = 0; i < EISA_NPIDREGS; i++) {
+#ifdef EISA_SLOTOFF_PRIMING
+			bus_io_write_1(bc, slotioh,
+			    EISA_SLOTOFF_PRIMING, EISA_PRIMING_PID(i));
+#endif
 			ea.ea_pid[i] = bus_io_read_1(bc, slotioh,
 			    EISA_SLOTOFF_PID + i);
+		}
 
 		/* Create the ID string from the vendor and product IDs */
 		ea.ea_idstring[0] = EISA_VENDID_0(ea.ea_vid);

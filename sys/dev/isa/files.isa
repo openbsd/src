@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.14 1996/05/04 13:29:31 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.15 1996/05/05 12:42:34 deraadt Exp $
 #	$NetBSD: files.isa,v 1.18 1996/04/25 02:15:42 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -71,15 +71,10 @@ device	aha: scsi, isadma
 attach	aha at isa
 file	dev/isa/aha.c			aha
 
-# Adapctec AIC-6[32]60 ICs
+# Adaptec AIC-6[32]60 ICs
 device	aic: scsi, isadma
 attach	aic at isa
 file	dev/isa/aic6360.c		aic
-
-# Adaptec 7770-based EISA, VLB, etc. controllers
-device	ahe: scsi, aic7xxx
-attach	ahe at isa
-file	dev/isa/aha284x.c		ahe
 
 # BusLogic BT-74x EISA family (XXX; should be EISA.  it's special)
 device	bt: scsi, isadma

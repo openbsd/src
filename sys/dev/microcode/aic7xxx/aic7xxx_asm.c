@@ -43,12 +43,13 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$Id: aic7xxx_asm.c,v 1.1.1.1 1995/10/18 08:52:39 deraadt Exp $";
+static char id[] = "$Id: aic7xxx_asm.c,v 1.2 1996/05/05 12:42:38 deraadt Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define MEMORY		448
 #define MAXLINE		1024
@@ -67,10 +68,9 @@ static char id[] = "$Id: aic7xxx_asm.c,v 1.1.1.1 1995/10/18 08:52:39 deraadt Exp
 int debug;
 int lineno, LC;
 char *filename;
-FILE *ifp, *ofp;
 unsigned char M[MEMORY][4];
 
-void 
+void
 error(char *s)
 {
 	fprintf(stderr, "%s: %s at line %d\n", filename, s, lineno);
@@ -107,7 +107,7 @@ typedef struct sym_t {
 	struct sym_t	*next;		/* MUST BE FIRST */
 	char		*name;
 	int		value;
-	int		npatch; 
+	int		npatch;
 	int		*patch;
 } sym_t;
 
@@ -151,7 +151,7 @@ lookup(char *name)
 	return(NULL);
 }
 
-void 
+void
 patch(sym_t *p, int location)
 {
 	p->npatch += 1;
@@ -223,7 +223,7 @@ getl(int *n)
 
 	i = 0;
 
-	while (fgets(buf, sizeof(buf), ifp)) {
+	while (fgets(buf, sizeof(buf), stdin)) {
 
 		lineno += 1;
 
@@ -244,7 +244,7 @@ rescan:
 			else
 				error("too many tokens");
 		if (quote) {
-			quote++; 
+			quote++;
 			p = strchr(quote, '\"');
 			if (!p)
 				error("unterminated string constant");
@@ -256,7 +256,7 @@ rescan:
 			else
 				error("too many tokens");
 			goto rescan;
-		}		
+		}
 		if (i) {
 			*n = i;
 			return(a);
@@ -336,7 +336,7 @@ struct {
 	{ 0,      0, 0,  0, 	0,			0,	0,	0 }
 };
 
-int 
+int
 eval_operand(char **a, int spec)
 {
 	int i;
@@ -536,7 +536,7 @@ crack(char **a, int n)
 #undef A
 
 void
-assemble(void)
+assemble(FILE *ofile)
 {
 	int n;
 	char **a;
@@ -559,7 +559,7 @@ assemble(void)
 			continue;
 
 		if (n == 3 && !strcmp("VERSION", *a))
-			fprintf(ofp, "#define %s \"%s\"\n", a[1], a[2]);
+			fprintf(ofile, "#define %s \"%s\"\n", a[1], a[2]);
 		else {
 			if (n == 3 && !strcmp("=", a[1]))
 				define(*a, strtol(a[2], NULL, 0));
@@ -569,7 +569,7 @@ assemble(void)
 	}
 
 	backpatch();
-	output(ofp);
+	output(ofile);
 
 	if (debug)
 		output(stderr);
@@ -577,12 +577,15 @@ assemble(void)
 
 int
 main(int argc, char **argv)
-{ int my_version_print_flag;
+{
 	int c;
+	int pid;
+	int ifile;
+	FILE *ofile;
+	int fd[2];
 
-  my_version_print_flag=0;
-
-	while ((c = getopt(argc, argv, "dho:vD")) != EOF) {
+	ofile = NULL;
+	while ((c = getopt(argc, argv, "dho:vD:")) != EOF) {
 		switch (c) {
 		    case 'd':
 			debug = !0;
@@ -599,23 +602,20 @@ main(int argc, char **argv)
 			break;
 		    }
 		    case 'o':
-		        ofp = fopen(optarg, "w");
-			if (!ofp) {
+		        
+			if ((ofile = fopen(optarg, "w")) == NULL) {
 				perror(optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		    case 'h':
-			printf("usage: %s [-d] [-Dname] [-ooutput] input\n", 
+			printf("usage: %s [-d] [-Dname] [-ooutput] input\n",
 				*argv);
 			exit(EXIT_SUCCESS);
 			break;
 		    case 'v':
-                        if (!my_version_print_flag)
-                          { printf("%s\n",id);
-
-			    my_version_print_flag=1;
-                          }
+			printf("%s\n", id);
+			exit(EXIT_SUCCESS);
 			break;
 		    default:
 			exit(EXIT_FAILURE);
@@ -624,28 +624,62 @@ main(int argc, char **argv)
 	}
 
 	if (argc - optind != 1) {
-          if (my_version_print_flag)
-            { exit(EXIT_SUCCESS);
-            }
 		fprintf(stderr, "%s: must have one input file\n", *argv);
 		exit(EXIT_FAILURE);
 	}
 	filename = argv[optind];
 
-	ifp = fopen(filename, "r");
-	if (!ifp) {
+	
+	if ((ifile = open(filename, O_RDONLY)) < 0) {
 		perror(filename);
 		exit(EXIT_FAILURE);
 	}
 
-	if (!ofp) {
-		ofp = fopen(ADOTOUT, "w");
-		if (!ofp) {
+	if (!ofile) {
+		if ((ofile = fopen(ADOTOUT, "w")) == NULL) {
 			perror(ADOTOUT);
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	assemble();
-	exit(EXIT_SUCCESS);
+	if (pipe(fd) < 0) {
+		perror("pipe failed");
+		exit(1);
+	}
+
+	if ((pid = fork()) < 0 ) {
+		perror("fork failed");
+		exit(1);
+	}
+	else if (pid > 0) {		/* Parent */
+		close(fd[1]);		/* Close write end */
+		if (fd[0] != STDIN_FILENO) {
+			if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO) {
+				perror("dup2 error on stdin");
+				exit(EXIT_FAILURE);
+			}
+			close(fd[0]);
+		}
+		assemble(ofile);
+		exit(EXIT_SUCCESS);
+	}
+	else {				/* Child */
+		close(fd[0]);		/* Close Read end */
+		if (fd[1] != STDOUT_FILENO) {
+			if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
+				perror("dup2 error on stdout");
+				exit(EXIT_FAILURE);
+			}
+			close(fd[1]);
+		}
+		if (ifile != STDIN_FILENO) {
+			if (dup2(ifile, STDIN_FILENO) != STDIN_FILENO) {
+				perror("dup2 error on stdin");
+				exit(EXIT_FAILURE);
+			}
+			close(ifile);
+		}
+		execl("/usr/bin/cpp", "/usr/bin/cpp", "-P", "-", "-", NULL);
+	}
+	return(EXIT_SUCCESS);
 }

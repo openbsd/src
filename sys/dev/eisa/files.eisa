@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.4 1996/05/02 13:38:03 deraadt Exp $
+#	$OpenBSD: files.eisa,v 1.5 1996/05/05 12:42:25 deraadt Exp $
 #	$NetBSD: files.eisa,v 1.8 1996/04/25 02:16:39 thorpej Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -13,6 +13,11 @@ file	dev/eisa/eisa.c			eisa	needs-flag
 device	ahb: scsi
 attach	ahb at eisa
 file	dev/eisa/aha1742.c		ahb
+
+# Adaptec AHA-27/284X and aic7770 motherboard SCSI controllers
+device	ahe: scsi, aic7xxx
+attach	ahe at eisa
+file	dev/eisa/aic7770.c		ahe
 
 # 3Com 3c579 and 3c509 masquerading as EISA Ethernet Controllers
 # device declaration in sys/conf/files
