@@ -1,4 +1,4 @@
-/*	$Id: dev_net.c,v 1.3 1995/11/07 08:50:59 deraadt Exp $ */
+/*	$Id: dev_net.c,v 1.4 1995/11/17 22:13:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -138,7 +138,7 @@ net_mountroot(f, devname)
 	/* Get boot info using RARP and Sun bootparams. */
 
 	/* Get our IP address.  (rarp.c) */
-	if ((myip.s_addr = rarp_getipaddress(netdev_sock)) == 0)
+	if (rarp_getipaddress(netdev_sock) == -1)
 		return (EIO);
 	printf("boot: client IP address: %s\n", intoa(myip.s_addr));
 
