@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 1999/04/10 02:16:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 1999/05/26 16:08:43 espie Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -58,10 +58,13 @@ bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
 	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
 
+
 bsd:
 	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
 	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
-	    make clean && make
+	    make clean && COPTS=-Os make
+#	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
+#	    make clean && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
