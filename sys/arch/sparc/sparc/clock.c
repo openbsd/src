@@ -258,8 +258,8 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_reg, 0, EEPROM_SIZE,
-	    ca->ca_bustype);
+	eeprom_va = (char *)mapiodev(ra->ra_reg, 0,
+	    sizeof(struct eeprom), ca->ca_bustype);
 
 	eeprom_nvram = 0;
 #endif /* SUN4 */
