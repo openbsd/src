@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.3 1999/08/05 17:42:58 niklas Exp $	*/
+/*	$OpenBSD: eso.c,v 1.4 1999/08/05 18:10:54 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -233,12 +233,11 @@ eso_attach(parent, self, aux)
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
-	printf(": ESS Solo-1 PCI AudioDrive ");
 	if (sc->sc_revision <=
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
-		printf("%s\n", eso_rev2model[sc->sc_revision]);
+		printf(": %s\n", eso_rev2model[sc->sc_revision]);
 	else
-		printf("(unknown rev. 0x%02x)\n", sc->sc_revision);
+		printf(": (unknown rev. 0x%02x)\n", sc->sc_revision);
 
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
