@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.11 2001/02/18 18:22:26 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.12 2001/09/03 17:45:43 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.11 2001/02/18 18:22:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.12 2001/09/03 17:45:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ int running = 0;
 int slow = 0;
 int score = 0;
 int start_len = LENGTH;
+int visible_len;
 int lastch;
 char outbuf[BUFSIZ];
 
@@ -122,6 +123,10 @@ main(argc, argv)
 	keypad(stdscr, TRUE);
 	slow = (baudrate() <= 1200);
 	clear();
+	if (COLS < 18 || LINES < 5) {
+		endwin();
+		errx(1, "screen too small");
+	}
 	if (argc == 2)
 		start_len = atoi(argv[1]);
 	if ((start_len <= 0) || (start_len > ((LINES-3) * (COLS-2)) / 3))
@@ -189,6 +194,7 @@ life()
 	}
 	tail = np;
 	tail->prev = NULL;
+	visible_len = start_len + 1;
 }
 
 void
@@ -219,8 +225,13 @@ void
 newpos(bp)
 	struct body * bp;
 {
+	if (visible_len == (LINES-3) * (COLS-3) - 1) {
+		endwin();
+		printf("\nYou won!\nYour final score was %d\n\n", score);
+		exit(0);
+	}
 	do {
-		bp->y = rnd(LINES-3)+ 2;
+		bp->y = rnd(LINES-3)+ 1;
 		bp->x = rnd(COLS-3) + 1;
 		wmove(tv, bp->y, bp->x);
 	} while(winch(tv) != ' ');
@@ -286,6 +297,7 @@ process(ch)
 		nh = tail->next;
 		free(tail);
 		tail = nh;
+		visible_len--;
 	}
 	else growing--;
 	display(head, BODY);
@@ -309,6 +321,7 @@ process(ch)
 	nh->x = x;
 	display(nh, HEAD);
 	head = nh;
+	visible_len++;
 	if (!(slow && running)) {
 		wmove(tv, head->y, head->x);
 		wrefresh(tv);
