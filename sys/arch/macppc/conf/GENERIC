@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.73 2005/03/15 21:12:28 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.74 2005/03/16 18:56:47 deraadt Exp $g
 #
 # PPC GENERIC config file
 #
@@ -66,7 +66,10 @@ em*		at pci?		# Intel Pro/1000 ethernet
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
 an*		at pci?		# Cisco/Aironet
+atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
+ral*		at pci?		# Ralink RT2500
+#rtw*		at pci?		# Realtek 8180
 iop*		at pci?		# I2O processor
 ioprbs*		at iop?		# I2O arrays
 iopsp*		at iop?		# I2O SCSI pass-through

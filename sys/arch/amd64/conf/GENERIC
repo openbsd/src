@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: GENERIC,v 1.57 2005/03/16 18:56:48 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -280,6 +280,10 @@ stge*	at pci?				# Sundance TC9021 GigE
 vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
+#ath*	at pci?				# Atheros AR5k (802.11a/b/g)
+#ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
+atw*	at pci?				# ADMtek ADM8211 (802.11)
+#atw*	at cardbus?			# ADMtek ADM8211 (802.11)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 #wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
@@ -287,6 +291,10 @@ wi*	at pci?				# WaveLAN IEEE 802.11DS
 #an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 #ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
+ral*	at pci?				# Ralink RT2500
+#ral*	at cardbus?			# Ralink RT2500
+rtw*	at pci?				# Realtek 8180
+#rtw*	at cardbus?			# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
