@@ -1,4 +1,9 @@
-/*	$OpenBSD: util.h,v 1.1 2004/10/09 20:26:57 mickey Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2004/10/09 22:11:11 millert Exp $	*/
+
+/*
+ * Placed in the public domain by Todd C. Miller <Todd.Miller@courtesan.com>
+ * on October 9, 2004.
+ */
 
 #define	MMAP(ptr, len, prot, flags, fd, off)	do {		\
 	if ((ptr = mmap(NULL, len, prot, flags, fd, off)) == MAP_FAILED) { \
