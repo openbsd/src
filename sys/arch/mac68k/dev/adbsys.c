@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.4 1996/06/23 15:38:12 briggs Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.5 1996/10/28 14:46:24 briggs Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.21 1996/06/21 06:10:56 scottr Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 
 #include <machine/adbsys.h>
 #include <machine/cpu.h>
+#include <machine/macinfo.h>
 #include <machine/viareg.h>
 
 #include "adbvar.h"
