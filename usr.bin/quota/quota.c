@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.9 1997/01/17 07:13:08 millert Exp $	*/
+/*	$OpenBSD: quota.c,v 1.10 1998/07/10 08:17:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.9 1997/01/17 07:13:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.10 1998/07/10 08:17:39 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -411,14 +411,14 @@ timeprt(seconds)
 	minutes = (seconds + 30) / 60;
 	hours = (minutes + 30) / 60;
 	if (hours >= 36) {
-		sprintf(buf, "%ddays", (hours + 12) / 24);
+		snprintf(buf, sizeof buf, "%ddays", (hours + 12) / 24);
 		return (buf);
 	}
 	if (minutes >= 60) {
-		sprintf(buf, "%2d:%d", minutes / 60, minutes % 60);
+		snprintf(buf, sizeof buf, "%2d:%d", minutes / 60, minutes % 60);
 		return (buf);
 	}
-	sprintf(buf, "%2d", minutes);
+	snprintf(buf, sizeof buf, "%2d", minutes);
 	return (buf);
 }
 
@@ -471,7 +471,8 @@ getprivs(id, quotatype)
 				continue;
 		} else
 			continue;
-		strcpy(qup->fsname, fst[i].f_mntonname);
+		strncpy(qup->fsname, fst[i].f_mntonname, sizeof qup->fsname-1);
+		qup->fsname[sizeof qup->fsname-1] = '\0';
 		if (quphead == NULL)
 			quphead = qup;
 		else
