@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.11 2002/05/21 07:13:37 deraadt Exp $
+.\" $OpenBSD: authpf.8,v 1.12 2002/06/11 18:57:15 kjell Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -54,10 +54,8 @@ This, combined with properly set up filter rules and secure switches
 can be used to ensure users are held accountable for their network traffic.
 .Pp
 .Nm
-can add and filter rules using the syntax of
-.Xr pf.conf 5
-and translation rules using the syntax of
-.Xr nat.conf 5 .
+can add filter and translation rules using the syntax described in
+.Xr pf.conf 5 .
 .Nm
 requires that the
 .Xr pf 4
@@ -72,22 +70,19 @@ On startup,
 retrieves the client's connecting IP address via the
 .Ev SSH_CLIENT
 environment variable, and after performing additional access checks,
-a filter rule template file is read to determine what filter rules to add.
-Optionally, a translation rule template file is read to determine translation
-rules to add. On session exit the same rules that were added at startup are
-removed.
+a template file is read to determine what filter and translation (if
+any) rules to add.
+On session exit the same rules that were added at startup are removed.
 By default, filter rules are added at the end of the active
 .Xr pf 4
 filter list, and translation rules are added at the start of the active
 .Xr pf 4
 nat and rdr lists.
 .Sh FILTER AND TRANSLATION RULES
-Filter and Translation rules for
+Filter and translation rules for
 .Nm
 use the same format described in
-.Xr pf.conf 5
-and
-.Xr nat.conf 5 .
+.Xr pf.conf 5 .
 The only difference is that these rules may (and probably should) use
 the macro
 .Em user_ip
@@ -102,11 +97,11 @@ and then in
 Per-user rules from the
 .Pa /etc/authpf/users/$USER/
 directory are intended to be used when non-default rules
-are needed on an individual user basis. It is important to ensure
-that a user can not write or change these configuration files in
-this case.
+are needed on an individual user basis.
+It is important to ensure that a user can not write or change
+these configuration files in this case.
 .Pp
-Filter rules are loaded from the file
+Filter and translation rules are loaded from the file
 .Pa /etc/authpf/users/$USER/authpf.rules .
 If this file does not exist the file
 .Pa /etc/authpf/authpf.rules
@@ -117,13 +112,9 @@ file must exist in one of the above locations for
 .Nm
 to run.
 .Pp
-Translation rules are loaded from the file
-.Pa /etc/authpf/users/$USER/authpf.nat .
-If this file does not exist the file
-.Pa /etc/authpf/authpf.nat
-is used.
+Translation rules are also loaded from this file.
 The use of translation rules in an
-.Pa authpf.nat
+.Pa authpf.rules
 file is optional.
 .Sh CONFIGURATION
 Options are controlled by the
@@ -151,7 +142,7 @@ meaning filter rules are added to the start of the active rdr list.
 .Sh USER MESSAGES
 On successful invocation,
 .Nm
-displays a message telling the user they have been authenticated.
+displays a message telling the user he or she has been authenticated.
 It will additionally display the contents of the file
 .Pa /etc/authpf/authpf.message
 if the file exists and is readable.
