@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.38 2003/11/29 14:21:57 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.39 2003/11/29 14:24:49 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1
@@ -46,9 +46,6 @@ CLEANFILES=	.gdbinit */.gdbinit *.info* \
 		genrtl.c genrtl.h fixinc.sh fixinc/Makefile \
 		po/Makefile  po/Makefile.in  po/POTFILES
 
-CXX_HEADERS=	${.CURDIR}/gcc/cp/inc/typeinfo ${.CURDIR}/cp/inc/exception \
-		${.CURDIR}/gcc/cp/inc/new ${.CURDIR}/gcc/cp/inc/new.h
-
 .if ${MACHINE} == "arc" || ${MACHINE} == "pmax" || ${MACHINE} == "wgrisc"
 M_ARCH=		mipsel
 .elif ${MACHINE} == "hkmips" || ${MACHINE} == "sgi"
@@ -86,14 +83,6 @@ config.status: gcc/Makefile.in gcc/configure gcc/c-parse.in
 		--with-local-prefix=/usr ${CF} \
 		${LANGUAGES} --enable-cpp --disable-nls \
 		--with-gxx-include-dir=${GXX_INCDIR} ${GCCARCH} && touch config.status
-
-includes:
-	@-for i in ${CXX_HEADERS}; do \
-		j=`basename $$i` \
-		cmp -s $$i ${DESTDIR}/${GXX_INCDIR}/$$j || \
-		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i \
-		    ${DESTDIR}/${GXX_INCDIR}; \
-	done
 
 .ifdef NOMAN
 maninstall:
