@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.28 2000/04/11 16:22:09 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.29 2000/04/11 19:59:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -96,7 +96,7 @@ u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int32_t));
 int	hifn_process __P((struct cryptop *));
-void	hifn_callback __P((struct hifn_command *, u_int8_t *));
+void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
 
 struct hifn_stats {
@@ -1023,18 +1023,45 @@ hifn_crypto(sc, cmd)
 		return (-1);
 
 	if (nicealign == 0) {
-		cmd->dst_l = cmd->src_l;
-		MGETHDR(cmd->dst_m, M_DONTWAIT, MT_DATA);
-		if (cmd->dst_m == NULL)
+		int totlen, len;
+		struct mbuf *m, *top, **mp;
+
+		totlen = cmd->dst_l = cmd->src_l;
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL)
 			return (-1);
-		if (cmd->src_l > MHLEN) {
-			MCLGET(cmd->dst_m, M_DONTWAIT);
-			if ((cmd->dst_m->m_flags & M_EXT) == 0) {
-				m_freem(cmd->dst_m);
-				return (-1);
-			}
+		len = MHLEN;
+		if (totlen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
 		}
-	} else
+		m->m_len = len;
+		top = NULL;
+		mp = &top;
+
+		while (totlen > 0) {
+			if (top) {
+				MGET(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL) {
+					m_freem(top);
+					return (-1);
+				}
+				len = MLEN;
+			}
+			if (top && totlen >= MINCLSIZE) {
+				MCLGET(m, M_DONTWAIT);
+				if (m->m_flags & M_EXT)
+					len = MCLBYTES;
+			}
+			m->m_len = len = min(totlen, len);
+			totlen -= len;
+			*mp = m;
+			mp = &m->m_next;
+		}
+		cmd->dst_m = top;
+	}
+	else
 		cmd->dst_m = cmd->src_m;
 
 	cmd->dst_l = hifn_mbuf(cmd->dst_m, &cmd->dst_npa,
@@ -1209,7 +1236,7 @@ hifn_intr(arg)
 		}
 
 		/* position is done, notify producer with callback */
-		cmd->dest_ready_callback(cmd, macbuf);
+		cmd->dest_ready_callback(sc, cmd, macbuf);
 	
 		if (++dma->resk == HIFN_D_RES_RSIZE)
 			dma->resk = 0;
@@ -1226,15 +1253,6 @@ hifn_intr(arg)
 		u--;
 	}
 	dma->srck = i; dma->srcu = u;
-
-	i = dma->dstk; u = dma->dstu;
-	while (u != 0 && (dma->dstr[i].l & HIFN_D_VALID) == 0) {
-		hifnstats.hst_obytes += dma->dstr[i].l & 0xffff;
-		if (++i == HIFN_D_DST_RSIZE)
-			i = 0;
-		u--;
-	}
-	dma->dstk = i; dma->dstu = u;
 
 	i = dma->cmdk; u = dma->cmdu;
 	while (u != 0 && (dma->cmdr[i].l & HIFN_D_VALID) == 0) {
@@ -1516,16 +1534,36 @@ errout:
 }
 
 void
-hifn_callback(cmd, macbuf)
+hifn_callback(sc, cmd, macbuf)
+	struct hifn_softc *sc;
 	struct hifn_command *cmd;
 	u_int8_t *macbuf;
 {
+	struct hifn_dma *dma = sc->sc_dma;
 	struct cryptop *crp = (struct cryptop *)cmd->private_data;
 	struct cryptodesc *crd;
+	struct mbuf *m;
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (cmd->src_m != cmd->dst_m)) {
 		m_freem(cmd->src_m);
 		crp->crp_buf = (caddr_t)cmd->dst_m;
+	}
+
+	if ((m = cmd->dst_m) != NULL) {
+		while (m) {
+			m->m_len = dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
+			hifnstats.hst_obytes += m->m_len;
+			m = m->m_next;
+			if (++dma->dstk == HIFN_D_DST_RSIZE)
+				dma->dstk = 0;
+			dma->dstu--;
+		}
+	}
+	else {
+		hifnstats.hst_obytes += dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
+		if (++dma->dstk == HIFN_D_DST_RSIZE)
+			dma->dstk = 0;
+		dma->dstu--;
 	}
 
 	if ((cmd->flags & HIFN_ENCODE) &&

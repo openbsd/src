@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.11 2000/04/10 18:40:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.12 2000/04/11 19:59:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -175,6 +175,8 @@
  *  An unsigned long quantity (i.e. large enough to hold a pointer), that
  *  can be used by the callback routine if desired.
  */
+struct hifn_softc;
+
 typedef struct hifn_command {
 	u_int	flags;
 	volatile u_int result_flags;
@@ -199,7 +201,7 @@ typedef struct hifn_command {
 	u_short mac_header_skip, mac_process_len;
 	u_short crypt_header_skip, crypt_process_len;
 
-	void (*dest_ready_callback)(struct hifn_command *, u_int8_t *);
+	void (*dest_ready_callback)(struct hifn_softc *, struct hifn_command *, u_int8_t *);
 	u_long private_data;
 	struct hifn_softc *softc;
 } hifn_command_t;
