@@ -103,7 +103,7 @@ char *ttyname(int fd);
 #include <curses.h>	/* for bool typedef */
 #include <dump_entry.h>
 
-MODULE_ID("$From: tset.c,v 0.36 1999/02/23 11:05:30 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.37 1999/03/14 12:30:02 tom Exp $")
 
 extern char **environ;
 
@@ -135,15 +135,8 @@ CaselessCmp(const char *a, const char *b) /* strcasecmp isn't portable */
 }
 
 #if !HAVE_STRDUP
-static char *strdup (char *s)
-{
-  char *p;
-
-  p = malloc(strlen(s)+1);
-  if (p)
-    strcpy(p,s);
-  return(p);
-}
+#define strdup _nc_strdup
+extern char *_nc_strdup(const char *);
 #endif /* not HAVE_STRDUP */
 
 static void

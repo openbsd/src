@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.5 1999/03/11 21:08:08 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.6 1999/03/15 19:00:18 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.36 1999/03/06 23:37:55 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.37 1999/03/14 12:29:30 tom Exp $")
 
 #define INDENT			8
 
@@ -470,7 +470,7 @@ int fmt_entry(TERMTYPE *tterm,
 {
 int	i, j;
 char    buffer[MAX_TERMINFO_LENGTH];
-char *	name;
+NCURSES_CONST char *name;
 int	predval, len;
 int	num_bools = 0;
 int	num_values = 0;
@@ -809,7 +809,7 @@ void compare_entry(void (*hook)(int t, int i, const char *name), TERMTYPE *tp GC
 /* compare two entries */
 {
     int	i, j;
-    char * name;
+    NCURSES_CONST char * name;
 
     (void) fputs("    comparing booleans.\n", stdout);
     for_each_boolean(j,tp)
