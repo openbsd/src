@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.47 2003/01/26 02:49:59 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.48 2003/01/27 00:59:20 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -32,33 +32,21 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <net/pfvar.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <arpa/nameser.h>
 
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <login_cap.h>
-#include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <resolv.h>
 
 #include <pfctl_parser.h>
 
