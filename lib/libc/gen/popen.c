@@ -104,6 +104,12 @@ popen(program, type)
 			}
 			(void)close(pdes[1]);
 		}
+		/*
+		 * because vfork() instead of fork(), must leak FILE *,
+		 * but luckily we are terminally headed for an execl()
+		 */
+		for (cur = pidlist; cur; cur = cur->next)
+			close(fileno(cur->fp));
 		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
 		_exit(127);
 		/* NOTREACHED */
