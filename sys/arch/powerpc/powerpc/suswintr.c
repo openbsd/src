@@ -1,4 +1,4 @@
-/*	$OpenBSD: suswintr.c,v 1.2 1996/12/28 06:22:21 rahnds Exp $	*/
+/*	$OpenBSD: suswintr.c,v 1.3 2001/07/09 01:21:30 mickey Exp $	*/
 /*	$NetBSD: suswintr.c,v 1.1 1996/09/30 16:34:54 ws Exp $	*/
 
 /*-
@@ -32,6 +32,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/systm.h>
+
 /*
  * Emulate suswintr
  *
@@ -39,8 +42,8 @@
  */
 int
 suswintr(addr,s)
-	char *addr;
-	unsigned short s;
+	caddr_t addr;
+	u_int s;
 {
 	return -1;
 }

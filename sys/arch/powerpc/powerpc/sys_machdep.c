@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.2 1996/12/28 06:22:25 rahnds Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 2001/07/09 01:21:30 mickey Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 1996/09/30 16:34:56 ws Exp $	*/
 
 /*
@@ -33,6 +33,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 int
 sys_sysarch(p, v, retval)
