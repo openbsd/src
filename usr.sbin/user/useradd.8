@@ -1,5 +1,5 @@
-.\" $OpenBSD: useradd.8,v 1.15 2003/05/14 06:42:09 jsyn Exp $
-.\" $NetBSD: useradd.8,v 1.10 2001/02/21 12:16:07 agc Exp $
+.\" $OpenBSD: useradd.8,v 1.16 2003/06/08 23:32:23 millert Exp $
+.\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -42,7 +42,7 @@
 .Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar password-change-secs
+.Op Fl f Ar inactive-time
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
 .Op Fl L Ar login-class
@@ -58,7 +58,7 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar password-change-secs
+.Op Fl f Ar inactive-time
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
 .Op Fl k Ar skel-dir
@@ -77,21 +77,24 @@ utility adds a user to the system, creating and
 populating a home directory if necessary.
 Any skeleton files will be provided
 for the new user if they exist in the
-.Pa /etc/skel
-directory.
+.Ar skel-dir
+directory (see the
+.Fl k
+option).
 Default values for
 the base directory,
 the time of password expiry,
-seconds until password change,
+the time of account expiry,
 primary group,
 the skeleton directory,
 the range from which the uid will be allocated,
 and default login shell
 can be provided in the
 .Pa /etc/usermgmt.conf
-file.
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
 .Pp
-The first format of the command shown above (utilising the
+The first form of the command shown above (using the
 .Fl D
 option)
 sets and displays the defaults for the
@@ -104,40 +107,46 @@ without any further options,
 will show the current defaults which
 will be used by the
 .Nm
-utility. Together with one of the options shown for the first version
+utility.
+Together with one of the options shown for the first version
 of the command,
 .Fl D
 will set the default to be the new value.
+See
+.Xr usermgmt.conf 5
+for more information.
 .It Fl b Ar base-dir
-sets the base directory. This is the directory to which the user name
-is added, which will be created if the
+sets the base directory.
+This is the directory to which the user directory is added,
+which will be created if the
 .Fl m
 option is specified and no
 .Fl d
 option is specified.
 .It Fl e Ar expiry-time
-sets the time at which the current password will expire for new users.
-.It Fl f Ar password-change-secs
-provides the number of seconds since the epoch (UTC) at
-which the current password must be changed. This
-can be used to implement password aging.
-A value of
-0 can be used to switch off this feature.
-The default value for this field is 0.
-See
-.Xr passwd 5
-for more details.
+sets the default time at which the current password will expire for new
+users.
+It should be entered in the form
+.Dq month day year ,
+where month is the month name (the first three characters are
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.
+A value of 0 can be used to disable this feature.
+.It Fl f Ar inactive-time
+sets the default time at which new user accounts will expire.
+Also see the
+.Fl e
+option above.
 .It Fl g Ar gid | groupname | Li =uid
-sets the default group for any user added using the
-.Nm
-command.
+sets the default group for new users.
 .It Fl k Ar skel-dir
 sets the skeleton directory in which to find files with
 which to populate new users' home directories.
 .It Fl L Ar login-class
-This option sets the login class for the user being created.  See
+sets the default login class for new users.
+See
 .Xr login.conf 5
-for more information on login classes.
+for more information on user login classes.
 .It Xo
 .Fl r Ar low Ns Li .. Ns Ar high
 .Xc
@@ -145,27 +154,23 @@ sets the low and high bounds of uid ranges for new users. A new user
 can only be created if there are uids which can be assigned from one
 of the free ranges.
 .It Fl s Ar shell
-sets the login shell for new users.
+sets the default login shell for new users.
 .El
 .Pp
 In the second form of the command,
-after setting any defaults, and then values from that file,
-the command line options are processed:
+after setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl G Ar secondary-group[,group,...]
-is the secondary groups to which the user will be added in the
+are the secondary groups to which the user will be added in the
 .Pa /etc/group
 file.
 .It Fl b Ar base-directory
 is the base directory name, in which the user's new home
-directory will be created, should the -m option be specified.
-This value can be preset for all users
-by using the
-.Ar base_dir
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic base_dir Ar path-to-base-dir
+directory will be created, should the
+.Fl m
+option be specified.
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
@@ -173,23 +178,23 @@ the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
 is the home directory which will be created and populated for the user,
 should the -m option be specified.
-.It Fl e Ar secs-to-expiry
-provides the number of seconds since the epoch (UTC) at
-which the current password change expire. This
-can be used to implement password aging.
-A value of
-0 can be used to switch off this feature.
-The default value for this field is 0.
+.It Fl e Ar expiry-time
+sets the time at which the current password will expire for new
+users.
+It should be entered in the form
+.Dq month day year ,
+where month is the month name (the first three characters are
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.
+A value of 0 can be used to disable this feature.
 See
 .Xr passwd 5
 for more details.
-This value can be preset for all users
-by using the
-.Ar expire
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic expire Ar secs-to-expiry
+.It Fl f Ar inactive-time
+sets the time at which new user accounts will expire.
+Also see the
+.Fl e
+option above.
 .It Fl g Ar gid | name | Li =uid
 gives the group name or identifier to be used for the new user's primary group.
 If this is
@@ -198,36 +203,13 @@ then a uid and gid will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
 to describe the new group.
-This value can be preset for all users
-by using the
-.Ar gid
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.br \" XXX This shouldn't be needed -- mdoc bug? --bjh21
-.Bd -ragged -offset indent -compact
-.Ic group
-.Ar gid | name | Li =uid
-.Ed
 .It Fl k Ar skeleton directory
 gives the skeleton directory in which to find files
 with which to populate the new user's home directory.
-This value can be preset for all users by using the
-.Ar skel_dir
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic skel_dir Ar path-to-skeleton-dir
 .It Fl L Ar login-class
 This option sets the login class for the user being created.  See
 .Xr login.conf 5
-for more information on login classes. This value can be preset
-for all users by using the
-.Ar class
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic class Ar login-class
+for more information on user login classes.
 .It Fl m
 create a new home directory for the new user.
 .It Fl o
@@ -237,24 +219,11 @@ specifies an already-encrypted password for the new user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
-This value can be preset for all users
-by using the
-.Ar password
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic password Ar encrypted-password
-.Pp
-If this option is not specified, the account will be disabled by default.
+If this option is not specified, and no default exists in
+.Pa /etc/usermgmt.conf ,
+the account will be disabled by default.
 .It Fl s Ar shell
 specifies the login shell for the new user.
-This value can be preset for all users
-by using the
-.Ar shell
-field in the
-.Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic shell Ar login-shell
 .It Fl u Ar uid
 specifies a uid for the new user.
 Boundaries for this value can be preset for all users
@@ -262,10 +231,7 @@ by using the
 .Ar range
 field in the
 .Pa /etc/usermgmt.conf
-file - they have the format:
-.Bd -unfilled -offset indent -compact
-.Ic range Ar starting-uid Ns Li .. Ns Ar ending-uid
-.Ed
+file.
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
@@ -281,7 +247,7 @@ and the new information is not available to programs.
 .Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
@@ -293,6 +259,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr group 5 ,
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
 .Xr pwd_mkdb 8 ,
 .Xr user 8 ,
 .Xr userdel 8 ,
@@ -305,4 +272,6 @@ utility first appeared in
 .Sh AUTHORS
 The
 .Nm
-utility was written by Alistair G. Crooks (agc@netbsd.org).
+utility was written by
+.An Alistair G. Crooks
+.Aq agc@NetBSD.org .

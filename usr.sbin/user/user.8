@@ -1,4 +1,4 @@
-.\" $OpenBSD: user.8,v 1.9 2001/09/18 01:50:44 millert Exp $
+.\" $OpenBSD: user.8,v 1.10 2003/06/08 23:32:23 millert Exp $
 .\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -38,22 +38,24 @@
 .Nm user
 .Nd manage user login information on the system
 .Sh SYNOPSIS
-.Nm user add
+.Nm user
+.Cm add
 .Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl r Ar low..high
-.Nm user add
+.Nm user
+.Cm add
 .Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
 .Op Fl L Ar login-class
@@ -62,22 +64,26 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
-.Nm user del
+.Nm user
+.Cm del
 .Fl D
 .Op Fl p Ar preserve-value
-.Nm user del
+.Nm user
+.Cm del
 .Op Fl prv
 .Ar user
-.Nm user info
+.Nm user
+.Cm info
 .Op Fl ev
 .Ar user
-.Nm user mod
+.Nm user
+.Cm mod
 .Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl l Ar new-login
@@ -100,14 +106,14 @@ For a full explanation of the options, please see the relevant manual page.
 .Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/skel/.[A-z]*
 Skeleton files for new user
 .It Pa /etc/usermgmt.conf
 Configuration file for
-.Xr user 8 ,
+.Nm ,
 .Xr group 8
 and those backend commands
 .El
@@ -115,6 +121,7 @@ and those backend commands
 .Xr chpass 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
 .Xr useradd 8 ,
 .Xr userdel 8 ,
 .Xr userinfo 8 ,
@@ -127,4 +134,6 @@ utility first appeared in
 .Sh AUTHORS
 The
 .Nm
-utility was written by Alistair G. Crooks (agc@netbsd.org).
+utility was written by
+.An Alistair G. Crooks
+.Aq agc@NetBSD.org .

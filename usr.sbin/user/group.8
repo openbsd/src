@@ -1,5 +1,5 @@
-.\" $OpenBSD: group.8,v 1.10 2002/11/22 04:38:54 millert Exp $
-.\" $NetBSD: group.8,v 1.5 2000/10/03 19:32:23 bjh21 Exp $
+.\" $OpenBSD: group.8,v 1.11 2003/06/08 23:32:23 millert Exp $
+.\" $NetBSD: group.8,v 1.10 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -38,17 +38,21 @@
 .Nm group
 .Nd manage group information on the system
 .Sh SYNOPSIS
-.Nm group add
+.Nm group
+.Cm add
 .Op Fl ov
 .Op Fl g Ar gid
 .Ar group
-.Nm group del
+.Nm group
+.Cm del
 .Op Fl v
 .Ar group
-.Nm group info
+.Nm group
+.Cm info
 .Op Fl ev
 .Ar group
-.Nm group mod
+.Nm group
+.Cm mod
 .Op Fl ov
 .Op Fl g Ar gid
 .Op Fl n Ar newname
@@ -68,7 +72,7 @@ For a full explanation of the options, please see the relevant manual page.
 .Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Sh SEE ALSO
 .Xr group 5 ,
 .Xr groupadd 8 ,
@@ -84,4 +88,6 @@ utility first appeared in
 .Sh AUTHORS
 The
 .Nm
-utility was written by Alistair G. Crooks (agc@netbsd.org).
+utility was written by
+.An Alistair G. Crooks
+.Aq agc@NetBSD.org .
