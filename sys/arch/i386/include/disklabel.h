@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 1996/09/22 09:58:12 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 1996/09/24 04:27:24 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
 #define	MAXPARTITIONS	16		/* number of partitions */
-#define	RAW_PART	3		/* raw partition: XX?d (XXX) */
+#define	RAW_PART	2		/* raw partition: ie. rsd0c */
 
 /* DOS partition table -- located in boot block */
 #define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
