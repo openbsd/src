@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.2 1996/08/14 03:02:53 dm Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.3 1996/08/14 22:03:16 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -34,6 +34,14 @@ struct pctrst {
 #define P6CTR_E  0x040000   /* Edge detect */
 #define P6CTR_EN 0x400000   /* Enable counters (counter 0 only) */
 #define P6CTR_I  0x800000   /* Invert counter mask */
+
+/* Unit Mask bits */
+#define P6CTR_UM_M 0x0800   /* Modified cache lines */
+#define P6CTR_UM_E 0x0400   /* Exclusive cache lines */
+#define P6CTR_UM_S 0x0200   /* Shared cache lines */
+#define P6CTR_UM_I 0x0100   /* Invalid cache lines */
+#define P6CTR_UM_MESI (P6CTR_UM_M|P6CTR_UM_E|P6CTR_UM_S|P6CTR_UM_I)
+#define P6CTR_UM_A 0x2000   /* Any initiator (as opposed to self) */
 
 /* ioctl to set which counter a device tracks. */
 #define PCIOCRD _IOR('c', 1, struct pctrst)   /* Read counter value */
@@ -115,7 +123,7 @@ struct pctrst {
 })
 
 #define wrmsr(msr, v) \
-     __asm __volatile (".byte 0xf, 0x30" :: "A" (v), "c" (msr));
+     __asm __volatile (".byte 0xf, 0x30" :: "A" ((u_quad_t) (v)), "c" (msr));
 
 #endif /* _KERNEL */
 #endif /* ! _I386_PERFCNT_H_ */

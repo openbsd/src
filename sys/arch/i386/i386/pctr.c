@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.4 1996/08/14 03:02:54 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.5 1996/08/14 22:03:15 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -56,11 +56,12 @@ pctrattach (int num)
   if (usep6ctr)
     printf ("pctr: Pentium Pro user-level performance counters enabled\n");
   else if (usep5ctr)
-    printf ("pctr: Pentium performance counters enabled\n");
+    printf ("pctr: Pentium performance counters and user-level "
+	    "cycle counter enabled\n");
   else if (usetsc)
-    printf ("pctr: Cycle counter enabled\n");
+    printf ("pctr: user-level cycle counter enabled\n");
   else
-    printf ("pctr: Performance counters not supported by CPU\n");
+    printf ("pctr: no performance counters in CPU\n");
 }
 
 int
@@ -99,7 +100,7 @@ p5ctrsel (int fflag, u_int cmd, u_int fn)
   msr11 &= ~(0x1ffLL << shift);
   msr11 |= fn << shift;
   wrmsr (0x11, msr11);
-  wrmsr (msr, 0LL);
+  wrmsr (msr, 0);
 
   return 0;
 }
@@ -135,8 +136,9 @@ p6ctrsel (int fflag, u_int cmd, u_int fn)
   if (fn & 0x380000)
     return EINVAL;
 
+  wrmsr (msrval, 0);
   wrmsr (msrsel, fn);
-  wrmsr (msrval, 0LL);
+  wrmsr (msrval, 0);
 
   return 0;
 }
@@ -148,8 +150,8 @@ p6ctrrd (struct pctrst *st)
   st->pctr_fn[1] = rdmsr (P6MSR_CTRSEL1);
   __asm __volatile ("cli");
   st->pctr_tsc = rdtsc ();
-  st->pctr_hwc[0] = rdmsr (P6MSR_CTR0);
-  st->pctr_hwc[1] = rdmsr (P6MSR_CTR1);
+  st->pctr_hwc[0] = rdpmc (0);
+  st->pctr_hwc[1] = rdpmc (1);
   __asm __volatile ("sti");
 }
 
