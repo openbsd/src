@@ -1,4 +1,4 @@
-.\" $OpenBSD: security.8,v 1.6 2003/06/06 19:28:06 jmc Exp $
+.\" $OpenBSD: security.8,v 1.7 2003/09/25 09:22:01 jmc Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
@@ -19,7 +19,9 @@ The
 .Nm
 script is normally run from the
 .Pa /etc/daily
-script, which sends mails to root on a daily basis.
+script (see
+.Xr daily 8
+for further details), which sends mails to root on a daily basis.
 .Pp
 The
 .Nm
@@ -83,6 +85,9 @@ For details on really protecting yourself against modified binaries, see
 .It
 Check for content changes in those files specified by
 .Pa /etc/changelist .
+See
+.Xr changelist 5
+for further details.
 .El
 .Pp
 The intent of the
@@ -90,12 +95,14 @@ The intent of the
 script is to point out some obvious holes to the system administrator.
 .Sh FILES
 .Bl -tag -width /dev/changelist -compact
+.It Pa /etc/changelist
 .It Pa /etc/daily
 .It Pa /etc/mtree
-.It Pa /etc/changelist
 .It Pa /var/backups
 .El
 .Sh SEE ALSO
+.Xr changelist 5 ,
+.Xr daily 8 ,
 .Xr mtree 8
 .Sh BUGS
 The name of this script may provide a false sense of
