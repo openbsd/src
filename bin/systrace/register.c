@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.5 2002/07/16 14:24:59 provos Exp $	*/
+/*	$OpenBSD: register.c,v 1.6 2002/07/16 14:28:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -172,6 +172,9 @@ systrace_initcb(void)
 	X(intercept_register_sccb("linux", "symlink", trans_cb, NULL));
 	intercept_register_transstring("linux", "symlink", 0);
 	intercept_register_translink("linux", "symlink", 1);
+	X(intercept_register_sccb("linux", "link", trans_cb, NULL));
+	intercept_register_translink("linux", "link", 0);
+	intercept_register_translink("linux", "link", 1);
 	X(intercept_register_sccb("linux", "readlink", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "readlink", 0);
 	alias = systrace_new_alias("linux", "readlink", "linux", "fsread");
