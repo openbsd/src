@@ -1,8 +1,11 @@
-# 	$OpenBSD: FLOPPY,v 1.13 1997/04/29 05:15:59 deraadt Exp $
+# 	$OpenBSD: FLOPPY,v 1.14 1997/06/22 21:42:40 downsj Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
+
+# maxusers means mostly "let's get small" in terms of kernel malloc's
+maxusers	2
 
 #option		INSECURE	# default to secure
 

@@ -49,6 +49,8 @@ option		LKM
 option		COMPAT_SUNOS		# compatibility with SunOS binaries
 option		COMPAT_SVR4		# compatibility with SVR4 binaries
 
+maxusers	16		# estimated number of users
+
 config		bsd	swap generic
 
 mainbus0 at root
