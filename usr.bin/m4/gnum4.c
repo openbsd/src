@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.5 2000/03/11 15:54:44 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.6 2000/04/10 17:16:30 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -184,7 +184,7 @@ dobuiltin(argv, argc)
 	argv[1] = NULL;
 	n = builtin_type(argv[2]);
 	if (n != -1)
-		eval(argv+1, argc, n);
+		eval(argv+1, argc-1, n);
 	else
 		errx(1, "unknown builtin %s", argv[2]);
 } 
