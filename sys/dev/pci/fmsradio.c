@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsradio.c,v 1.1 2002/05/06 16:37:43 mickey Exp $	*/
+/*	$OpenBSD: fmsradio.c,v 1.2 2002/05/09 14:52:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -29,8 +29,9 @@
 /* Device Driver for FM Tuners attached to FM801 */
 
 /* Currently supported tuners:
- *  o MediaForte SoundForte SF64-PCR PCI Radio Card
- *  o MediaForte SoundForte SF256-PCP-R PCI Sound Card with FM Radio
+ *  o SoundForte RadioLink SF64-PCR PCI Radio Card
+ *  o SoundForte Quad X-treme SF256-PCP-R PCI Sound Card with FM Radio
+ *  o SoundForte Theatre X-treme 5.1 SF256-PCS PCI Sound Card with FM Radio
  */
 
 #include "radio.h"
@@ -62,6 +63,7 @@
 #define TUNER_UNKNOWN		0
 #define TUNER_SF256PCPR		1
 #define TUNER_SF64PCR		2
+#define TUNER_SF256PCS		3
 #define TUNER_NOT_ATTACHED	0xFFFF
 
 #define SF64PCR_CAPS		RADIO_CAPS_DETECT_STEREO |	\
@@ -72,6 +74,11 @@
 				RADIO_CAPS_LOCK_SENSITIVITY
 
 #define SF256PCPR_CAPS		RADIO_CAPS_SET_MONO |	\
+				RADIO_CAPS_HW_SEARCH |	\
+				RADIO_CAPS_HW_AFC |	\
+				RADIO_CAPS_LOCK_SENSITIVITY
+
+#define SF256PCS_CAPS		RADIO_CAPS_SET_MONO |	\
 				RADIO_CAPS_HW_SEARCH |	\
 				RADIO_CAPS_HW_AFC |	\
 				RADIO_CAPS_LOCK_SENSITIVITY
@@ -95,6 +102,13 @@
 #define PCPR_DATA_ON		(1 << 1)
 #define PCPR_DATA_OFF		(0 << 1)
 
+#define PCS_WREN_ON		(0 << 2)
+#define PCS_WREN_OFF		(1 << 2)
+#define PCS_CLOCK_ON		(1 << 3)
+#define PCS_CLOCK_OFF		(0 << 3)
+#define PCS_DATA_ON		(1 << 1)
+#define PCS_DATA_OFF		(0 << 1)
+
 /*
  * Function prototypes
  */
@@ -112,6 +126,12 @@ void	sf256pcpr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 u_int32_t	sf256pcpr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 int	sf256pcpr_probe(struct fmsradio_if *);
 
+void	sf256pcs_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf256pcs_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf256pcs_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
+u_int32_t	sf256pcs_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	sf256pcs_probe(struct fmsradio_if *);
+
 int
 fmsradio_attach(struct fmsradio_if *sc, char *devname)
 {
@@ -123,9 +143,11 @@ fmsradio_attach(struct fmsradio_if *sc, char *devname)
 
 	sc->card = TUNER_UNKNOWN;
 	if ((sc->card = sf64pcr_probe(sc)) == TUNER_SF64PCR)
-		printf("%s: SoundForte SF64-PCR FM Radio\n", devname);
+		printf("%s: SF64-PCR FM Radio\n", devname);
 	else if ((sc->card = sf256pcpr_probe(sc)) == TUNER_SF256PCPR)
-		printf("%s: SoundForte SF256-PCP-R FM Radio\n", devname);
+		printf("%s: SF256-PCP-R FM Radio\n", devname);
+	else if ((sc->card = sf256pcs_probe(sc)) == TUNER_SF256PCS)
+		printf("%s: SF256-PCS FM Radio\n", devname);
 	else {
 		sc->card = TUNER_NOT_ATTACHED;
 		return 0;
@@ -134,6 +156,87 @@ fmsradio_attach(struct fmsradio_if *sc, char *devname)
 	fmsradio_set_mute(sc);
 
 	return sc->card;
+}
+
+/* SF256-PCS specific routines */
+int
+sf256pcs_probe(struct fmsradio_if *sc)
+{
+	u_int32_t freq;
+
+	sc->tea.init = sf256pcs_init;
+	sc->tea.rset = sf256pcs_rset;
+	sc->tea.write_bit = sf256pcs_write_bit;
+	sc->tea.read = sf256pcs_hw_read;
+
+	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
+	freq = sf256pcs_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+	if (tea5757_decode_freq(freq, sc->tea.flags & TEA5757_TEA5759)
+			!= sc->freq)
+			return TUNER_UNKNOWN;
+
+	return TUNER_SF256PCS;
+}
+
+u_int32_t
+sf256pcs_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
+{
+	u_int32_t res = 0ul;
+	u_int16_t i, d;
+
+	d  = FM_IO_GPIO | PCS_WREN_OFF;
+
+	/* Now read data in */
+	d |= FM_IO_GPIO1_IN | PCS_DATA_ON;
+
+	bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_OFF);
+
+	/* Read the register */
+	i = 24;
+	while (i--) {
+		res <<= 1;
+		bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_ON);
+		bus_space_write_2(iot, ioh, offset, d | PCS_CLOCK_OFF);
+		res |= bus_space_read_2(iot, ioh, offset) & PCS_DATA_ON ? 1 : 0;
+	}
+
+	return (res & (TEA5757_DATA | TEA5757_FREQ));
+}
+
+void
+sf256pcs_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
+		int bit)
+{
+	u_int16_t data, wren;
+
+	wren = FM_IO_GPIO | FM_IO_GPIO2_IN | PCS_WREN_ON;
+	data = bit ? PCPR_DATA_ON : PCS_DATA_OFF;
+
+	bus_space_write_2(iot, ioh, off, PCS_CLOCK_OFF | wren | data);
+	bus_space_write_2(iot, ioh, off, PCS_CLOCK_ON  | wren | data);
+	bus_space_write_2(iot, ioh, off, PCS_CLOCK_OFF | wren | data);
+}
+
+void
+sf256pcs_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
+		u_int32_t d)
+{
+	d  = FM_IO_GPIO | FM_IO_GPIO1_IN;
+	d |= PCS_WREN_ON | PCS_DATA_OFF | PCS_CLOCK_OFF;
+
+	bus_space_write_2(iot, ioh, offset, d);
+	bus_space_write_2(iot, ioh, offset, d);
+}
+
+void
+sf256pcs_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset,
+		u_int32_t d)
+{
+	d  = FM_IO_GPIO | FM_IO_GPIO1_IN;
+	d |= PCS_WREN_OFF | PCS_DATA_OFF | PCS_CLOCK_OFF;
+
+	bus_space_write_2(iot, ioh, offset, d);
+	bus_space_write_2(iot, ioh, offset, d);
 }
 
 /* SF256-PCP-R specific routines */
@@ -327,18 +430,26 @@ fmsradio_set_mute(struct fmsradio_if *sc)
 {
 	u_int16_t v, mute, unmute;
 
-	mute = FM_IO_GPIO | FM_IO_GPIO3_IN;
+	mute = unmute = FM_IO_GPIO;
 	switch (sc->card) {
+	case TUNER_SF256PCS:
+		mute |= FM_IO_GPIO1_IN;
+		unmute |= FM_IO_GPIO1_IN | FM_IO_GPIO2;
+		break;
 	case TUNER_SF256PCPR:
-		unmute = FM_IO_GPIO | FM_IO_GPIO3_IN | FM_IO_GPIO2;
+		mute |= FM_IO_GPIO3_IN;
+		unmute |= FM_IO_GPIO3_IN | FM_IO_GPIO2;
 		break;
 	case TUNER_SF64PCR:
-		unmute = FM_IO_GPIO | FM_IO_GPIO3_IN | FM_IO_GPIO1;
+		mute |= FM_IO_GPIO3_IN;
+		unmute |= FM_IO_GPIO3_IN | FM_IO_GPIO1;
 		break;
 	default:
 		return;
 	}
 	v = (sc->mute || !sc->vol) ? mute : unmute;
+	bus_space_write_2(sc->tea.iot, sc->tea.ioh, sc->tea.offset, v);
+	DELAY(64);
 	bus_space_write_2(sc->tea.iot, sc->tea.ioh, sc->tea.offset, v);
 }
 
@@ -358,6 +469,11 @@ fmsradio_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	switch (sc->card) {
+	case TUNER_SF256PCS:
+		ri->caps = SF256PCS_CAPS;
+		buf = sf256pcs_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+		ri->info = 0; /* UNSUPPORTED */
+		break;
 	case TUNER_SF256PCPR:
 		ri->caps = SF256PCPR_CAPS;
 		buf = sf256pcpr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
