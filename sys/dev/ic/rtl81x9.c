@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.9 2001/09/11 20:05:25 miod Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.10 2001/10/24 16:56:56 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,7 +114,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>              /* for vtophys */
+#include <vm/vm.h>	/* for vtophys */
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>
@@ -187,19 +187,17 @@ void rl_eeprom_putbyte(sc, addr)
 	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x400; i; i >>= 1) {
-		if (d & i) {
+		if (d & i)
 			EE_SET(RL_EE_DATAIN);
-		} else {
+		else
 			EE_CLR(RL_EE_DATAIN);
-		}
+
 		DELAY(100);
 		EE_SET(RL_EE_CLK);
 		DELAY(150);
 		EE_CLR(RL_EE_CLK);
 		DELAY(100);
 	}
-
-	return;
 }
 
 /*
@@ -239,8 +237,6 @@ void rl_eeprom_getword(sc, addr, dest)
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	*dest = word;
-
-	return;
 }
 
 /*
@@ -264,8 +260,6 @@ void rl_read_eeprom(sc, dest, off, cnt, swap)
 		else
 			*ptr = word;
 	}
-
-	return;
 }
 
 
@@ -299,8 +293,6 @@ void rl_mii_sync(sc)
 		MII_CLR(RL_MII_CLK);
 		DELAY(1);
 	}
-
-	return;
 }
 
 /*
@@ -316,11 +308,10 @@ void rl_mii_send(sc, bits, cnt)
 	MII_CLR(RL_MII_CLK);
 
 	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-                if (bits & i) {
+		if (bits & i)
 			MII_SET(RL_MII_DATAOUT);
-                } else {
+		else
 			MII_CLR(RL_MII_DATAOUT);
-                }
 		DELAY(1);
 		MII_CLR(RL_MII_CLK);
 		DELAY(1);
@@ -334,7 +325,6 @@ void rl_mii_send(sc, bits, cnt)
 int rl_mii_readreg(sc, frame)
 	struct rl_softc		*sc;
 	struct rl_mii_frame	*frame;
-	
 {
 	int			i, ack, s;
 
@@ -347,11 +337,11 @@ int rl_mii_readreg(sc, frame)
 	frame->mii_opcode = RL_MII_READOP;
 	frame->mii_turnaround = 0;
 	frame->mii_data = 0;
-	
+
 	CSR_WRITE_2(sc, RL_MII, 0);
 
 	/*
- 	 * Turn on data xmit.
+	 * Turn on data xmit.
 	 */
 	MII_SET(RL_MII_DIR);
 
@@ -427,7 +417,6 @@ fail:
 int rl_mii_writereg(sc, frame)
 	struct rl_softc		*sc;
 	struct rl_mii_frame	*frame;
-	
 {
 	int			s;
 
@@ -439,9 +428,9 @@ int rl_mii_writereg(sc, frame)
 	frame->mii_stdelim = RL_MII_STARTDELIM;
 	frame->mii_opcode = RL_MII_WRITEOP;
 	frame->mii_turnaround = RL_MII_TURNAROUND;
-	
+
 	/*
- 	 * Turn on data output.
+	 * Turn on data output.
 	 */
 	MII_SET(RL_MII_DIR);
 
@@ -550,11 +539,10 @@ void rl_setmulti(sc)
 	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 	CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
-
-	return;
 }
 
-void rl_reset(sc)
+void
+rl_reset(sc)
 	struct rl_softc		*sc;
 {
 	register int		i;
@@ -569,13 +557,13 @@ void rl_reset(sc)
 	if (i == RL_TIMEOUT)
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
-        return;
 }
 
 /*
  * Initialize the transmit descriptors.
  */
-int rl_list_tx_init(sc)
+int
+rl_list_tx_init(sc)
 	struct rl_softc		*sc;
 {
 	struct rl_chain_data	*cd;
@@ -621,11 +609,12 @@ int rl_list_tx_init(sc)
  * bytes of space preceecing it so that it will be safe for us to do the
  * 2-byte backstep even if reading from the ring at offset 0.
  */
-void rl_rxeof(sc)
+void
+rl_rxeof(sc)
 	struct rl_softc		*sc;
 {
-        struct mbuf		*m;
-        struct ifnet		*ifp;
+	struct mbuf		*m;
+	struct ifnet		*ifp;
 	int			total_len = 0;
 	u_int32_t		rxstat;
 	caddr_t			rxbufpos;
@@ -660,14 +649,14 @@ void rl_rxeof(sc)
 		 */
 		if ((u_int16_t)(rxstat >> 16) == RL_RXSTAT_UNFINISHED)
 			break;
-	
+
 		if (!(rxstat & RL_RXSTAT_RXOK)) {
 			ifp->if_ierrors++;
 			rl_init(sc);
 			return;
 		}
 
-		/* No errors; receive the packet. */	
+		/* No errors; receive the packet. */
 		total_len = rxstat >> 16;
 		rx_bytes += total_len + 4;
 
@@ -675,7 +664,7 @@ void rl_rxeof(sc)
 		 * XXX The RealTek chip includes the CRC with every
 		 * received frame, and there's no way to turn this
 		 * behavior off (at least, I can't find anything in
-	 	 * the manual that explains how to do it) so we have
+		 * the manual that explains how to do it) so we have
 		 * to trim off the CRC manually.
 		 */
 		total_len -= ETHER_CRC_LEN;
@@ -739,8 +728,6 @@ void rl_rxeof(sc)
 #endif
 		ether_input_mbuf(ifp, m);
 	}
-
-	return;
 }
 
 /*
@@ -932,7 +919,7 @@ void rl_start(ifp)
 #endif
 		/*
 		 * Transmit the frame.
-	 	 */
+		 */
 		CSR_WRITE_4(sc, RL_CUR_TXADDR(sc),
 		    vtophys(mtod(RL_CUR_TXMBUF(sc), caddr_t)));
 		CSR_WRITE_4(sc, RL_CUR_TXSTAT(sc),
@@ -956,8 +943,6 @@ void rl_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 void rl_init(xsc)
@@ -1002,24 +987,20 @@ void rl_init(xsc)
 	rxcfg |= RL_RXCFG_RX_INDIV;
 
 	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		rxcfg |= RL_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/*
 	 * Set capture broadcast bit to capture broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		rxcfg |= RL_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RL_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -1051,8 +1032,6 @@ void rl_init(xsc)
 
 	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
 	timeout_add(&sc->sc_tick_tmo, hz);
-
-	return;
 }
 
 /*
@@ -1163,8 +1142,6 @@ void rl_watchdog(ifp)
 	rl_txeof(sc);
 	rl_rxeof(sc);
 	rl_init(sc);
-
-	return;
 }
 
 /*
@@ -1197,8 +1174,6 @@ void rl_stop(sc)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 int
@@ -1278,7 +1253,7 @@ rl_attach(sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 #if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU; 
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 #endif
 
 	/*
@@ -1327,9 +1302,9 @@ rl_miibus_readreg(self, phy, reg)
 
 	if (sc->rl_type == RL_8139) {
 		/*
-	 	* The RTL8139 PHY is mapped into PCI registers, unforunately
-	 	* it has no phyid, or phyaddr, so assume it is phyaddr 0.
-	 	*/
+		* The RTL8139 PHY is mapped into PCI registers, unforunately
+		* it has no phyid, or phyaddr, so assume it is phyaddr 0.
+		*/
 		if (phy != 0)
 			return(0);
 
@@ -1414,7 +1389,6 @@ void
 rl_miibus_statchg(self)
 	struct device *self;
 {
-	return;
 }
 
 void
