@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.42 2001/01/03 19:24:04 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.43 2001/01/04 06:26:49 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -344,9 +344,18 @@ getuptime()
 	static time_t now;
 	static struct timeval boottime;
 	time_t uptime;
+	int mib[2];
+	size_t size;
 
-	if (boottime.tv_sec == 0)
-		kread(X_BOOTTIME, &boottime, sizeof(boottime));
+	if (boottime.tv_sec == 0) {
+		size = sizeof(boottime);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_BOOTTIME;
+		if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
+			printf("Can't get kerninfo: %s\n", strerror(errno));
+			bzero(&boottime, sizeof(boottime));
+		}
+	}
 	(void)time(&now);
 	uptime = now - boottime.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10)
