@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.6 1997/01/10 23:18:40 niklas Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.7 1997/02/01 00:09:31 niklas Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ skip_readahead:
 	if (rbp == NULL)
 		rbp = bp;
 	if (rbp)
-		vp->v_maxra = rbp->b_lblkno + (rbp->b_bufsize / size) - 1;
+		vp->v_maxra = rbp->b_lblkno + (rbp->b_bcount / size) - 1;
 
 	if (bp)
 		return(biowait(bp));
@@ -315,8 +315,8 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	if (bp->b_flags & (B_DONE | B_DELWRI))
 		return (bp);
 
-	b_save = malloc(sizeof(struct buf *) * run + sizeof(struct cluster_save),
-	    M_SEGMENT, M_WAITOK);
+	b_save = malloc(sizeof(struct buf *) * run +
+	    sizeof(struct cluster_save), M_SEGMENT, M_WAITOK);
 	b_save->bs_bufsize = b_save->bs_bcount = size;
 	b_save->bs_nchildren = 0;
 	b_save->bs_children = (struct buf **)(b_save + 1);
@@ -352,29 +352,16 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 				if (tbp->b_bufsize > MAXBSIZE)
 					panic("cluster_rbuild: too much memory");
 #endif
+				/* This buffer is *not* valid.  */
+				tbp->b_flags |= B_INVAL;
 				brelse(tbp);
 				break;
 			}
-			if (tbp->b_bufsize > size) {
-				/*
-				 * XXX if the source and destination regions
-				 * overlap we have to copy backward to avoid
-				 * clobbering any valid pages (i.e. pagemove
-				 * implementations typically can't handle
-				 * overlap).
-				 */
-				bdata += tbp->b_bufsize;
-				while (bdata > (char *)tbp->b_data) {
-					bdata -= CLBYTES;
-					pagemove(bdata, bdata + size, CLBYTES);
-				}
-			} else 
-				pagemove(bdata, bdata + size, tbp->b_bufsize);
+			pagemove(bdata, bdata + tbp->b_bufsize, size);
 		}
 		tbp->b_blkno = bn;
 		tbp->b_flags |= flags | B_READ | B_ASYNC;
-		++b_save->bs_nchildren;
-		b_save->bs_children[i - 1] = tbp;
+		b_save->bs_children[b_save->bs_nchildren++] = tbp;
 	}
 	/*
 	 * The cluster may have been terminated early, adjust the cluster
@@ -471,7 +458,13 @@ cluster_callback(bp)
 	if (bp->b_bufsize != bsize) {
 		if (bp->b_bufsize < bsize)
 			panic("cluster_callback: too little memory");
-		pagemove(cp, (char *)bp->b_data + bsize, bp->b_bufsize - bsize);
+		if (bp->b_bufsize < cp - (char *)bp->b_data)
+			pagemove(cp, (char *)bp->b_data + bsize,
+			    bp->b_bufsize - bsize);
+		else
+			pagemove((char *)bp->b_data + bp->b_bufsize,
+			    (char *)bp->b_data + bsize,
+			    cp - ((char *)bp->b_data + bsize));
 	}
 	bp->b_bcount = bsize;
 	bp->b_iodone = NULL;
@@ -667,8 +660,8 @@ redo:
 	}
 
 	--len;
-	b_save = malloc(sizeof(struct buf *) * len + sizeof(struct cluster_save),
-	    M_SEGMENT, M_WAITOK);
+	b_save = malloc(sizeof(struct buf *) * len +
+	    sizeof(struct cluster_save), M_SEGMENT, M_WAITOK);
 	b_save->bs_bcount = bp->b_bcount;
 	b_save->bs_bufsize = bp->b_bufsize;
 	b_save->bs_nchildren = 0;
