@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.11 2004/11/13 06:11:31 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.12 2004/11/14 01:25:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -586,15 +586,6 @@ struct map_node {
 	bus_addr_t		 busaddr;
 	uint8_t			*vaddr;
 	SLIST_ENTRY(map_node)	 links;
-};
-
-struct ahd_pci_busdata {
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	u_int dev;
-	u_int func;
-	pcireg_t class;
-	int pcix_off;
 };
 
 /*
@@ -1310,7 +1301,7 @@ struct ahd_softc {
 
 	/* Adapter interrupt routine */
 	void			  *ih;
-	struct ahd_pci_busdata	  *bus_data;
+	int			   pcix_off;
 };
 
 TAILQ_HEAD(ahd_softc_tailq, ahd_softc);

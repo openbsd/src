@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.13 2004/11/13 04:22:54 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.14 2004/11/14 01:25:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -5398,10 +5398,11 @@ ahd_shutdown(void *arg)
 int
 ahd_reset(struct ahd_softc *ahd, int reinit)
 {
+	const pci_chipset_tag_t pc = ahd->dev_softc->pa_pc;
+	const pcitag_t tag = ahd->dev_softc->pa_tag;
 	u_int	 sxfrctl1;
 	int	 wait;
-	uint32_t cmd;
-	struct ahd_pci_busdata  *bd = ahd->bus_data;
+	pcireg_t cmd;
 	
 	/*
 	 * Preserve the value of the SXFRCTL1 register for all channels.
@@ -5413,10 +5414,10 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 	sxfrctl1 = ahd_inb(ahd, SXFRCTL1);
 
-	cmd = pci_conf_read(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG);
+	cmd = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 
 	if ((ahd->bugs & AHD_PCIX_CHIPRST_BUG) != 0) {
-		uint32_t mod_cmd;
+		pcireg_t mod_cmd;
 
 		/*
 		 * A4 Razor #632
@@ -5428,7 +5429,7 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * PERR and SERR responses during the CHIPRST.
 		 */
 		mod_cmd = cmd & ~(PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
-		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, mod_cmd);
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, mod_cmd);
 	}
 	ahd_outb(ahd, HCNTRL, CHIPRST | ahd->pause);
 
@@ -5454,7 +5455,7 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * Clear any latched PCI error status and restore
 		 * previous SERR and PERR response enables.
 		 */
-		pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG, cmd |
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, cmd |
 		    (PCI_STATUS_PARITY_ERROR | PCI_STATUS_TARGET_TARGET_ABORT |
 		    PCI_STATUS_MASTER_TARGET_ABORT | PCI_STATUS_MASTER_ABORT |
 		    PCI_STATUS_SPECIAL_ERROR));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.9 2004/10/10 15:08:10 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.10 2004/11/14 01:25:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -972,18 +972,6 @@ ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 	}
 
 	ahd_unlock(ahd, &s);
-}
-
-uint32_t
-ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
-{
-	return (pci_conf_read(pci->pa_pc, pci->pa_tag, reg));
-}
-
-void
-ahd_pci_write_config(ahd_dev_softc_t pci, int reg, uint32_t value, int width)
-{
-	pci_conf_write(pci->pa_pc, pci->pa_tag, reg, value);
 }
 
 int
