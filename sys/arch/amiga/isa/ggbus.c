@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.3 1996/04/27 18:38:58 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.4 1996/06/04 13:40:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -59,46 +60,50 @@ void	ggbusattach __P((struct device *, struct device *, void *));
 int	ggbusmatch __P((struct device *, void *, void *));
 int	ggbusprint __P((void *, char *));
 
-int	ggbus_io_map(bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
-	    bus_io_handle_t *);
-int	ggbus_mem_map(bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t, int,
-	    bus_mem_handle_t *);
+int	ggbus_io_map __P((bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
+	    bus_io_handle_t *));
+int	ggbus_mem_map __P((bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t,
+	    int, bus_mem_handle_t *));
 
-void	ggbus_io_read_multi_1(bus_io_handle_t, bus_io_size_t, u_int8_t *,
-	    bus_io_size_t);
-void	ggbus_io_read_multi_2(bus_io_handle_t, bus_io_size_t, u_int16_t *,
-	    bus_io_size_t);
+void	ggbus_io_read_multi_1 __P((bus_io_handle_t, bus_io_size_t, u_int8_t *,
+	    bus_io_size_t));
+void	ggbus_io_read_multi_2 __P((bus_io_handle_t, bus_io_size_t, u_int16_t *,
+	    bus_io_size_t));
 
-void	ggbus_io_write_multi_1(bus_io_handle_t, bus_io_size_t,
-	    const u_int8_t *, bus_io_size_t);
-void	ggbus_io_write_multi_2(bus_io_handle_t, bus_io_size_t,
-	    const u_int16_t *, bus_io_size_t);
+void	ggbus_io_write_multi_1 __P((bus_io_handle_t, bus_io_size_t,
+	    const u_int8_t *, bus_io_size_t));
+void	ggbus_io_write_multi_2 __P((bus_io_handle_t, bus_io_size_t,
+	    const u_int16_t *, bus_io_size_t));
 
 /*
  * Note that the following unified access functions are prototyped for the
  * I/O access case.  We use casts to get type correctness.
  */
-int	ggbus_unmap(bus_io_handle_t, bus_io_size_t);
+int	ggbus_unmap __P((bus_io_handle_t, bus_io_size_t));
 
-__inline u_int8_t ggbus_read_1(bus_io_handle_t, bus_io_size_t);
-__inline u_int16_t ggbus_read_2(bus_io_handle_t, bus_io_size_t);
+__inline u_int8_t ggbus_read_1 __P((bus_io_handle_t, bus_io_size_t));
+__inline u_int16_t ggbus_read_2 __P((bus_io_handle_t, bus_io_size_t));
 
-__inline void ggbus_write_1(bus_io_handle_t, bus_io_size_t, u_int8_t);
-__inline void ggbus_write_2(bus_io_handle_t, bus_io_size_t, u_int16_t);
+__inline void ggbus_write_1 __P((bus_io_handle_t, bus_io_size_t, u_int8_t));
+__inline void ggbus_write_2 __P((bus_io_handle_t, bus_io_size_t, u_int16_t));
 
 /*
  * In order to share the access function implementations for I/O and memory
  * access we cast the functions for the memory access case.  These typedefs
  * make that casting look nicer.
  */
-typedef int (*bus_mem_unmap_t)(bus_mem_handle_t, bus_mem_size_t);
-typedef u_int8_t (*bus_mem_read_1_t)(bus_mem_handle_t, bus_mem_size_t);
-typedef u_int16_t (*bus_mem_read_2_t)(bus_mem_handle_t, bus_mem_size_t);
-typedef void (*bus_mem_write_1_t)(bus_mem_handle_t, bus_mem_size_t, u_int8_t);
-typedef void (*bus_mem_write_2_t)(bus_mem_handle_t, bus_mem_size_t, u_int16_t);
+typedef int (*bus_mem_unmap_t) __P((bus_mem_handle_t, bus_mem_size_t));
+typedef u_int8_t (*bus_mem_read_1_t) __P((bus_mem_handle_t, bus_mem_size_t));
+typedef u_int16_t (*bus_mem_read_2_t) __P((bus_mem_handle_t, bus_mem_size_t));
+typedef void (*bus_mem_write_1_t) __P((bus_mem_handle_t, bus_mem_size_t,
+	    u_int8_t));
+typedef void (*bus_mem_write_2_t) __P((bus_mem_handle_t, bus_mem_size_t,
+	    u_int16_t));
 
-void	ggbus_attach_hook(struct device *, struct device *,
-	    struct isabus_attach_args *);
+int	ggbusintr __P((void *));
+
+void	ggbus_attach_hook __P((struct device *, struct device *,
+	    struct isabus_attach_args *));
 void	*ggbus_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	ggbus_intr_disestablish __P((void *, void *));

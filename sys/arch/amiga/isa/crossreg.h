@@ -1,4 +1,4 @@
-/*	$OpenBSD: crossreg.h,v 1.2 1996/04/27 18:38:56 niklas Exp $	*/
+/*	$OpenBSD: crossreg.h,v 1.3 1996/06/04 13:40:13 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -108,7 +108,7 @@
 #define CROSS_XLP_INTABLE 0
 #define CROSS_XLP_LATCH 2
 #define CROSS_HANDLE_TO_XLP_LATCH(va) \
-    ((volatile u_int16_t *)((va) & 0xffff | CROSS_XLP_LATCH))
+    ((volatile u_int16_t *)(((va) & 0xffff) | CROSS_XLP_LATCH))
 
 #define CROSS_MEMORY_OFFSET (CROSS_XL_MEM - 2 * 0x90000)
 #define CROSS_SBHE 0x40
