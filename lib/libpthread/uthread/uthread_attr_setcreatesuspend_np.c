@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setcreatesuspend_np.c,v 1.3 1999/11/25 07:01:31 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setcreatesuspend_np.c,v 1.4 2001/08/10 14:37:20 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -42,8 +42,7 @@ pthread_attr_setcreatesuspend_np(pthread_attr_t *attr)
 {
 	int	ret;
 	if (attr == NULL || *attr == NULL) {
-		errno = EINVAL;
-		ret = -1;
+		ret = EINVAL;
 	} else {
 		(*attr)->suspend = PTHREAD_CREATE_SUSPENDED;
 		ret = 0;

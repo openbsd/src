@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setprio.c,v 1.3 1999/11/25 07:01:32 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setprio.c,v 1.4 2001/08/10 14:37:20 fgsch Exp $	*/
 /*
  * Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,8 +41,7 @@ int pthread_attr_setprio(pthread_attr_t *attr, int priority)
 {
 	int	ret;
 	if (attr == NULL || *attr == NULL) {
-		errno = EINVAL;
-		ret = -1;
+		ret = EINVAL;
 	} else {
 		(*attr)->prio = priority;
 		ret = 0;
