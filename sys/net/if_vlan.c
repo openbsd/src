@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.28 2001/10/05 06:32:34 drahn Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.29 2001/12/11 05:13:37 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -116,8 +116,8 @@ int vlan_setmulti(struct ifnet *ifp)
 	ifr_p = (struct ifreq *)&sc->ifv_p->if_data;
 
 	/* First, remove any existing filter entries. */
-	while(sc->vlan_mc_listhead.slh_first != NULL) {
-		mc = sc->vlan_mc_listhead.slh_first;
+	while (!SLIST_EMPTY(&sc->vlan_mc_listhead)) {
+		mc = SLIST_FIRST(&sc->vlan_mc_listhead);
 		error = ether_delmulti(ifr_p, &sc->ifv_ac);
 		if (error)
 			return(error);
@@ -528,9 +528,8 @@ vlan_unconfig(struct ifnet *ifp)
 	 * while we were alive and remove them from the parent's list
 	 * as well.
 	 */
-	while(ifv->vlan_mc_listhead.slh_first != NULL) {
-
-		mc = ifv->vlan_mc_listhead.slh_first;
+	while (!SLIST_EMPTY(&ifv->vlan_mc_listhead)) {
+		mc = SLIST_FIRST(&ifv->vlan_mc_listhead);
 		error = ether_delmulti(ifr_p, &ifv->ifv_ac);
 		error = ether_delmulti(ifr, &ifv->ifv_ac);
 		if (error)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.3 1998/09/17 12:29:55 deraadt Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.4 2001/12/11 05:13:37 jason Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ raw_input(m0, va_alist)
 	va_end(ap);
 
 	last = 0;
-	for (rp = rawcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
+	LIST_FOREACH(rp, &rawcb, rcb_list) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&
