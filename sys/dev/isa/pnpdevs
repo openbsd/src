@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.65 1999/03/17 18:46:28 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.66 1999/03/22 04:59:43 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -388,6 +388,7 @@ com/pccom	USR3031 # U.S. Robotics 56K FAX INT
 #ep		TCM5098 # 3COM 3c509B		(PNP80F7)
 #le		TKN0010	# Lance Ethernet on TEKNOR board (PNP828C)
 #le		ADV55AA	# AMD PCnet-ISA II Ethernet Netwo (PNP828C)
+le		CSI2203	# Cabletron E22xx Adapter
 #le		BRI1001	# BOCALANcard COMBO	(PNP8200)
 #ne		@@@9519	# ACCTON EN166X MPX2 ETHERNET CAR (PNP80D6)
 #ne		RTL8019	# Realtek Plug & Play Ethernet Ca (PNP80D6)
