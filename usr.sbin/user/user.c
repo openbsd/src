@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.31 2002/03/14 06:51:42 mpech Exp $ */
+/* $OpenBSD: user.c,v 1.32 2002/04/03 22:35:26 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -827,12 +827,28 @@ adduser(char *login, user_t *up)
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
 	if (up->u_uid == UID_MAX) {
-		for (i = 0 ; i < up->u_rc ; i++) {
-			if (getnextuid(sync_uid_gid, &up->u_uid, up->u_rv[i].r_from, up->u_rv[i].r_to)) {
-				break;
+		int got_id = 0;
+
+		/*
+		 * Look for a free UID in the command line ranges (if any).
+		 * These start after the ranges specified in the config file.
+		 */
+		for (i = up->u_defrc; got_id == 0 && i < up->u_rc ; i++){ 
+			got_id = getnextuid(sync_uid_gid, &up->u_uid,
+			    up->u_rv[i].r_from, up->u_rv[i].r_to);
+	 	}
+		/*
+		 * If there were no free UIDs in the command line ranges,
+		 * try the ranges from the config file (there will always
+		 * be at least one default).
+		 */
+		if (got_id == 0) {
+			for (i = 0; got_id == 0 && i < up->u_defrc; i++) { 
+				got_id = getnextuid(sync_uid_gid, &up->u_uid,
+				    up->u_rv[i].r_from, up->u_rv[i].r_to);
 			}
 		}
-		if (i == up->u_rc) {
+		if (got_id == 0) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			errx(EXIT_FAILURE, "can't get next uid for %u", up->u_uid);
