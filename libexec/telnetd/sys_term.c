@@ -352,6 +352,8 @@ getnpty()
 static char Xline[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 char *line = Xline;
 
+int	slavefd = -1;
+
 #ifdef	_CRAY
 char myline[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 #endif	/* CRAY */
@@ -373,7 +375,7 @@ int getpty(int *ptynum)
     int master;
     int slave;
     if(openpty(&master, &slave, line, 0, 0) == 0){
-	close(slave);
+	slavefd = slave;
 	return master;
     }
     return -1;
@@ -829,6 +831,10 @@ void getptyslave(void)
      * so that we can re-set them if we need to.
      */
 
+    if (slavefd != -1) {
+	t = slavefd;
+	goto gottty;
+    }
 
     /*
      * Make sure that we don't have a controlling tty, and
@@ -856,6 +862,7 @@ void getptyslave(void)
 # endif
 
     t = cleanopen(line);
+gottty:
     if (t < 0)
 	fatalperror(net, line);
 
