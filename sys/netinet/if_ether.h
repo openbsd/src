@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.10 1999/12/08 06:50:19 itojun Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.11 2000/02/10 05:49:28 jason Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -60,6 +60,8 @@ struct	ether_header {
 #define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
 #define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
 #define	ETHERTYPE_IPV6		0x86DD	/* IPv6 protocol */
+#define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
+#define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
