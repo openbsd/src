@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.185 2002/11/13 18:24:53 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.186 2002/11/13 22:44:11 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -375,7 +375,7 @@ varset		: STRING PORTUNARY string		{
 		}
 		;
 
-scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
+scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 		{
 			struct pf_rule r;
 
@@ -392,30 +392,20 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 					yyerror("scrub rules don't support "
 					    "'! <if>'");
 					YYERROR;
-				} else if ($3->next) {
-					yyerror("scrub rules don't support "
-					    "{} expansion");
-					YYERROR;
 				}
-				memcpy(r.ifname, $3->ifname,
-				    sizeof(r.ifname));
-				free($3);
 			}
-			if ($5)
-				r.rule_flag |= PFRULE_NODF;
+			r.af = $4;
 			if ($6)
-				r.min_ttl = $6;
+				r.rule_flag |= PFRULE_NODF;
 			if ($7)
-				r.max_mss = $7;
+				r.min_ttl = $7;
 			if ($8)
-				r.rule_flag |= $8;
+				r.max_mss = $8;
+			if ($9)
+				r.rule_flag |= $9;
 
-			r.nr = pf->rule_nr++;
-			if (rule_consistent(&r) < 0)
-				yyerror("skipping scrub rule due to errors");
-			else
-				pfctl_add_rule(pf, &r);
-
+			expand_rule(&r, $3, NULL, $5.src.host, $5.src.port,
+			    $5.dst.host, $5.dst.port, NULL, NULL, NULL); 
 		}
 		;
 
