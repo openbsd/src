@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.5 1997/06/12 02:55:48 mickey Exp $
+.\"	$OpenBSD: ddb.4,v 1.6 1997/06/15 02:05:59 mickey Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -193,6 +193,14 @@ single-step through some low-level code paths or user space code.
 On machines with software-emulated single-stepping (e.g., pmax),
 stepping through code executed by interrupt handlers will probably
 do the wrong thing.
+.It call <name>[(<args>)]
+Call the named function with argument(s) listed in parentheses,
+wich maybe omitted if there is no one.
+Current upper limit for number of arguments is 10.
+.It callout
+See
+.Nm show all callout
+command.
 .It continue[/c]
 Continue execution until a breakpoint or watchpoint.
 If /c, count instructions while executing.
@@ -201,14 +209,25 @@ Some machines (e.g., pmax) also count loads and stores.
 Warning: when counting, the debugger is really silently single-stepping.
 This means that single-stepping on low-level code may cause strange
 behavior.
+.It dwatch <addr>
+Delete watchpoint at 
+.Nm <addr>
+address, that was previously set with
+.Nm watch
+command.
 .It hangman [/s[0-9]]
-This is tiny and handy tool to anylyze random kernel hangs.
+This is tiny and handy tool for random kernel hangs analysis, which
+depth is controlled by the optional argument of the default value of five.
 It uses some sophisticated heuristics to spot the global symbol that
 caused the hang. Since the discovering algorythm is a probabilistic one
 you may spend substantial time to figure the exact symbol name.
+This smart thing requires a little of your attention, the input it accepts
+is mostly of the same format as that of the famous
+.Xr hangman 6
+game, to which it, apparently, is obliged by the name.
 Hint: the
 .Xr nm 1
-may help.
+might help.
 .It until[/p]
 Stop at the next call or return instruction.
 If 'p' option is specified, print the call nesting depth and the
@@ -233,6 +252,10 @@ Search memory for a value. This command might fail in interesting
 ways if it doesn't find the searched-for value.  This is because
 ddb doesn't always recover from touching bad memory.  The optional
 count argument limits the search.
+.It ps[/m]
+A synonym for 'show all procs'.
+.It show all callout
+Display callout table contents.
 .It show all procs[/m]
 Display all process information.
 This version of
@@ -244,8 +267,14 @@ supported in the machine, or the bottom of the stack of the
 target process is not in the main memory at that time.
 The 'm' options will alter the 'ps' display to show vm_map
 addresses for the process and not show other info.
-.It ps[/m]
-A synonym for 'show all procs'.
+.It show breaks
+Prints the list of all breakpoints had been set.
+.It show map[/f] <addr>
+Prints the vm_map at 'addr'. If the 'f' option is specified the
+complete map is printed.
+.It show object[/f] <addr>
+Prints the vm_object at 'addr'. If the 'f' option is specified the
+complete object is printed.
 .It show registers
 Display the register set.
 If 'u' option is specified, it displays user registers instead of
@@ -253,12 +282,6 @@ kernel or currently saved one.
 .Pp
 Warning: The support of 'u' option depends on the machine.  If
 not supported, incorrect information will be displayed.
-.It show map[/f] <addr>
-Prints the vm_map at 'addr'. If the 'f' option is specified the
-complete map is printed.
-.It show object[/f] <addr>
-Prints the vm_object at 'addr'. If the 'f' option is specified the
-complete object is printed.
 .It show watches
 Displays all watchpoints.
 .It watch <addr>,<size>
@@ -339,4 +362,11 @@ multiple of right hand side.
 .It "*<expr>"
 indirection.  It may be followed by a ':' and  modifiers as described above.
 .Sh SEE ALSO
-.Xr hangman 6 .
+.Xr gdb 1 ,
+.Xr hangman 6 ,
+.Xr nm 1 .
+.Sh HISTORY
+This kernel facility first appeared in MACH 2 operating system
+developed by CMU.
+Hangman (wich stays for "hangs maniacal analyzer") first appeared in
+OpenBSD 1.2.
