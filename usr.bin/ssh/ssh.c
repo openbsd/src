@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.81 2001/01/13 19:14:09 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.82 2001/01/15 21:40:10 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -505,14 +505,14 @@ main(int ac, char **av)
 	/* Do not allocate a tty if stdin is not a tty. */
 	if (!isatty(fileno(stdin)) && !force_tty_flag) {
 		if (tty_flag)
-			fprintf(stderr, "Pseudo-terminal will not be allocated because stdin is not a terminal.\n");
+			log("Pseudo-terminal will not be allocated because stdin is not a terminal.\n");
 		tty_flag = 0;
 	}
 
 	/* Get user data. */
 	pw = getpwuid(original_real_uid);
 	if (!pw) {
-		fprintf(stderr, "You don't exist, go away!\n");
+		log("You don't exist, go away!\n");
 		exit(1);
 	}
 	/* Take a copy of the returned structure. */
