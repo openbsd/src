@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.24 2001/12/17 00:41:50 krw Exp $
+#	$OpenBSD: list,v 1.25 2002/04/18 22:17:19 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -41,13 +41,12 @@ LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
-SYMLINK	../../instbin		usr/sbin/chroot
-SYMLINK	../../instbin		usr/bin/ftp
-SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-SYMLINK	../../instbin		usr/bin/sed
-SYMLINK	../../instbin		usr/bin/sort
-SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/bin/build usr/bin/vi
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/sort
+LINK	instbin			usr/bin/tip
+LINK	instbin			usr/bin/build usr/bin/vi
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
