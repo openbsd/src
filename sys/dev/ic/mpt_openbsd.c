@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.4 2004/03/14 23:14:36 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.5 2004/03/15 09:53:33 deraadt Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -100,8 +100,6 @@
 /* __KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $"); */
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
-
-#include <machine/stdarg.h>		/* for mpt_prt() */
 
 static void	mpt_run_ppr(mpt_softc_t *);
 static int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int speed);
