@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.9 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: sub.c,v 1.10 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.9 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.10 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,7 @@ int rhbufi;			/* rhs substitution buffer index */
 
 /* extract_subst_tail: extract substitution tail from the command buffer */
 int
-extract_subst_tail(flagp, np)
-	int *flagp;
-	int *np;
+extract_subst_tail(int *flagp, int *np)
 {
 	char delimiter;
 
@@ -79,7 +77,7 @@ extract_subst_tail(flagp, np)
 /* extract_subst_template: return pointer to copy of substitution template
    in the command buffer */
 char *
-extract_subst_template()
+extract_subst_template(void)
 {
 	int n = 0;
 	int i = 0;
@@ -121,10 +119,7 @@ int rbufsz;			/* substitute_matching_text buffer size */
 /* search_and_replace: for each line in a range, change text matching a pattern
    according to a substitution template; return status  */
 int
-search_and_replace(pat, gflag, kth)
-	pattern_t *pat;
-	int gflag;
-	int kth;
+search_and_replace(pattern_t *pat, int gflag, int kth)
 {
 	undo_t *up;
 	char *txt;
@@ -178,11 +173,7 @@ search_and_replace(pat, gflag, kth)
 /* substitute_matching_text: replace text matched by a pattern according to
    a substitution template; return pointer to the modified text */
 int
-substitute_matching_text(pat, lp, gflag, kth)
-	pattern_t *pat;
-	line_t *lp;
-	int gflag;
-	int kth;
+substitute_matching_text(pattern_t *pat, line_t *lp, int gflag, int kth)
 {
 	int off = 0;
 	int changed = 0;
@@ -239,11 +230,7 @@ substitute_matching_text(pat, lp, gflag, kth)
 /* apply_subst_template: modify text according to a substitution template;
    return offset to end of modified text */
 int
-apply_subst_template(boln, rm, off, re_nsub)
-	char *boln;
-	regmatch_t *rm;
-	int off;
-	int re_nsub;
+apply_subst_template(char *boln, regmatch_t *rm, int off, int re_nsub)
 {
 	int j = 0;
 	int k = 0;

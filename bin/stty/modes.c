@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.6 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: modes.c,v 1.7 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: modes.c,v 1.9 1996/05/07 18:20:09 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: modes.c,v 1.6 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: modes.c,v 1.7 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,9 +206,7 @@ const struct modes omodes[] = {
 #define	CHK(s)	(!strcmp(name, s))
 
 int
-msearch(argvp, ip)
-	char ***argvp;
-	struct info *ip;
+msearch(char ***argvp, struct info *ip)
 {
 	const struct modes *mp;
 	char *name;

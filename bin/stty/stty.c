@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.10 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: stty.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: stty.c,v 1.10 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: stty.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,7 @@ static char rcsid[] = "$OpenBSD: stty.c,v 1.10 2003/06/02 23:32:09 millert Exp $
 #include "extern.h"
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct info i;
 	enum FMT fmt;
@@ -154,7 +152,7 @@ args:	argc -= optind;
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-a|-e|-g] [-f file] [operands]\n",
 	    __progname);

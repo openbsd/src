@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.22 2003/06/03 01:52:39 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.23 2003/06/11 23:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,6 +47,7 @@ struct hash_functions {
 	char * (*file)();
 	char * (*data)();
 };
+
 struct hash_functions functions[] = {
 	{
 		"MD5",
@@ -386,7 +387,7 @@ digest_test(struct hash_functions *hf)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-p | -t | -x | -c [ checksum_file ... ]",
 	    __progname);

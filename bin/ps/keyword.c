@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.17 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.18 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.17 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.18 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ VAR var[] = {
 };
 
 void
-showkey()
+showkey(void)
 {
 	VAR *v;
 	int i;
@@ -208,8 +208,7 @@ showkey()
 }
 
 void
-parsefmt(p)
-	char *p;
+parsefmt(char *p)
 {
 	static struct varent *vtail;
 
@@ -242,8 +241,7 @@ parsefmt(p)
 }
 
 static VAR *
-findvar(p)
-	char *p;
+findvar(char *p)
 {
 	VAR *v, key;
 	char *hp;
@@ -277,8 +275,7 @@ findvar(p)
 }
 
 static int
-vcmp(a, b)
-	const void *a, *b;
+vcmp(const void *a, const void *b)
 {
 	return (strcmp(((VAR *)a)->name, ((VAR *)b)->name));
 }

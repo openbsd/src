@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.13 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.13 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ extern int kvm_sysctl_only;
 	kvm_read(kd, psnl[x].n_value, &v, sizeof v) != sizeof(v)
 
 int
-donlist()
+donlist(void)
 {
 	int rval, mib[2];
 	size_t siz;
@@ -109,8 +109,7 @@ donlist()
 			warnx("maxslp: %s", kvm_geterr(kd));
 			eval = rval = 1;
 		}
-	}
-	else {
+	} else {
 		siz = sizeof (fscale);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSCALE;
@@ -145,8 +144,7 @@ donlist()
 }
 
 void
-nlisterr(nl)
-	struct nlist nl[];
+nlisterr(struct nlist nl[])
 {
 	int i;
 

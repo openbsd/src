@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.11 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.12 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.11 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.12 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,17 +104,14 @@ static struct key {
 };
 
 static int
-c_key(a, b)
-	const void *a, *b;
+c_key(const void *a, const void *b)
 {
 
 	return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
 }
 
 int
-ksearch(argvp, ip)
-	char ***argvp;
-	struct info *ip;
+ksearch(char ***argvp, struct info *ip)
 {
 	char *name;
 	struct key *kp, tmp;
@@ -143,15 +140,13 @@ ksearch(argvp, ip)
 }
 
 void
-f_all(ip)
-	struct info *ip;
+f_all(struct info *ip)
 {
 	print(&ip->t, &ip->win, ip->ldisc, BSD);
 }
 
 void
-f_cbreak(ip)
-	struct info *ip;
+f_cbreak(struct info *ip)
 {
 
 	if (ip->off)
@@ -166,8 +161,7 @@ f_cbreak(ip)
 }
 
 void
-f_columns(ip)
-	struct info *ip;
+f_columns(struct info *ip)
 {
 
 	ip->win.ws_col = atoi(ip->arg);
@@ -175,8 +169,7 @@ f_columns(ip)
 }
 
 void
-f_dec(ip)
-	struct info *ip;
+f_dec(struct info *ip)
 {
 
 	ip->t.c_cc[VERASE] = (u_char)0177;
@@ -189,8 +182,7 @@ f_dec(ip)
 }
 
 void
-f_ek(ip)
-	struct info *ip;
+f_ek(struct info *ip)
 {
 
 	ip->t.c_cc[VERASE] = CERASE;
@@ -199,16 +191,14 @@ f_ek(ip)
 }
 
 void
-f_everything(ip)
-	struct info *ip;
+f_everything(struct info *ip)
 {
 
 	print(&ip->t, &ip->win, ip->ldisc, BSD);
 }
 
 void
-f_extproc(ip)
-	struct info *ip;
+f_extproc(struct info *ip)
 {
 
 	if (ip->off) {
@@ -222,8 +212,7 @@ f_extproc(ip)
 }
 
 void
-f_ispeed(ip)
-	struct info *ip;
+f_ispeed(struct info *ip)
 {
 
 	cfsetispeed(&ip->t, atoi(ip->arg));
@@ -231,8 +220,7 @@ f_ispeed(ip)
 }
 
 void
-f_lcase(ip)
-	struct info *ip;
+f_lcase(struct info *ip)
 {
 	if (ip->off) {
 		ip->t.c_iflag &= ~IUCLC;
@@ -247,8 +235,7 @@ f_lcase(ip)
 }
 
 void
-f_nl(ip)
-	struct info *ip;
+f_nl(struct info *ip)
 {
 
 	if (ip->off) {
@@ -262,8 +249,7 @@ f_nl(ip)
 }
 
 void
-f_ospeed(ip)
-	struct info *ip;
+f_ospeed(struct info *ip)
 {
 
 	cfsetospeed(&ip->t, atoi(ip->arg));
@@ -271,8 +257,7 @@ f_ospeed(ip)
 }
 
 void
-f_raw(ip)
-	struct info *ip;
+f_raw(struct info *ip)
 {
 
 	if (ip->off)
@@ -286,8 +271,7 @@ f_raw(ip)
 }
 
 void
-f_rows(ip)
-	struct info *ip;
+f_rows(struct info *ip)
 {
 
 	ip->win.ws_row = atoi(ip->arg);
@@ -295,8 +279,7 @@ f_rows(ip)
 }
 
 void
-f_sane(ip)
-	struct info *ip;
+f_sane(struct info *ip)
 {
 
 	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS));
@@ -310,24 +293,21 @@ f_sane(ip)
 }
 
 void
-f_size(ip)
-	struct info *ip;
+f_size(struct info *ip)
 {
 
 	(void)printf("%d %d\n", ip->win.ws_row, ip->win.ws_col);
 }
 
 void
-f_speed(ip)
-	struct info *ip;
+f_speed(struct info *ip)
 {
 
 	(void)printf("%d\n", cfgetospeed(&ip->t));
 }
 
 void
-f_tty(ip)
-	struct info *ip;
+f_tty(struct info *ip)
 {
 	int tmp;
 
@@ -337,16 +317,14 @@ f_tty(ip)
 }
 
 void
-f_ostart(ip)
-	struct info *ip;
+f_ostart(struct info *ip)
 {
 	if (ioctl (ip->fd, TIOCSTART) < 0)
 		err(1, "TIOCSTART");
 }
 
 void
-f_ostop(ip)
-	struct info *ip;
+f_ostop(struct info *ip)
 {
 	if (ioctl (ip->fd, TIOCSTOP) < 0)
 		err(1, "TIOCSTOP");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.18 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.19 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.18 2003/06/02 23:32:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.19 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,7 @@ static int	compute_columns(DISPLAY *, int *);
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
 void
-printscol(dp)
-	DISPLAY *dp;
+printscol(DISPLAY *dp)
 {
 	FTSENT *p;
 
@@ -82,8 +81,7 @@ printscol(dp)
 }
 
 void
-printlong(dp)
-	DISPLAY *dp;
+printlong(DISPLAY *dp)
 {
 	struct stat *sp;
 	FTSENT *p;
@@ -133,9 +131,7 @@ printlong(dp)
 }
 
 static int
-compute_columns(dp, pnum)
-	DISPLAY *dp;
-	int	*pnum;
+compute_columns(DISPLAY *dp, int *pnum)
 {
 	int colwidth;
 	extern int termwidth;
@@ -162,8 +158,7 @@ compute_columns(dp, pnum)
 }
 
 void
-printcol(dp)
-	DISPLAY *dp;
+printcol(DISPLAY *dp)
 {
 	static FTSENT **array;
 	static int lastentries = -1;
@@ -218,9 +213,7 @@ printcol(dp)
  * return # of characters printed, no trailing characters.
  */
 static int
-printaname(p, inodefield, sizefield)
-	FTSENT *p;
-	u_long sizefield, inodefield;
+printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 {
 	struct stat *sp;
 	int chcnt;
@@ -239,8 +232,7 @@ printaname(p, inodefield, sizefield)
 }
 
 static void
-printtime(ftime)
-	time_t ftime;
+printtime(time_t ftime)
 {
 	int i;
 	char *longstring;
@@ -265,8 +257,7 @@ printtime(ftime)
 }
 
 void
-printacol(dp)
-	DISPLAY *dp;
+printacol(DISPLAY *dp)
 {
 	FTSENT *p;
 	int chcnt, col, colwidth;
@@ -296,8 +287,7 @@ printacol(dp)
 }
 
 void
-printstream(dp)
-	DISPLAY *dp;
+printstream(DISPLAY *dp)
 {
 	extern int termwidth;
 	FTSENT *p;
@@ -328,8 +318,7 @@ printstream(dp)
 }
 
 static int
-printtype(mode)
-	u_int mode;
+printtype(u_int mode)
 {
 	switch (mode & S_IFMT) {
 	case S_IFDIR:
@@ -356,8 +345,7 @@ printtype(mode)
 }
 
 static void
-printlink(p)
-	FTSENT *p;
+printlink(FTSENT *p)
 {
 	int lnklen;
 	char name[MAXPATHLEN], path[MAXPATHLEN];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.9 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: conv.c,v 1.10 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: conv.c,v 1.6 1996/02/20 19:29:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: conv.c,v 1.9 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: conv.c,v 1.10 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: conv.c,v 1.9 2003/06/02 23:32:07 millert Exp $"
  * Worst case buffer calculation is (ibs + obs - 1).
  */
 void
-def()
+def(void)
 {
 	size_t cnt;
 	u_char *inp;
@@ -87,7 +87,7 @@ def()
 }
 
 void
-def_close()
+def_close(void)
 {
 	/* Just update the count, everything is already in the buffer. */
 	if (in.dbcnt)
@@ -112,7 +112,7 @@ void unblock_close() { errx(1, "%s", no_block); }
  * max out buffer: obs + cbsz
  */
 void
-block()
+block(void)
 {
 	static int intrunc;
 	int ch = -1;
@@ -197,7 +197,7 @@ block()
 }
 
 void
-block_close()
+block_close(void)
 {
 	/*
 	 * Copy any remaining data into the output buffer and pad to a record.
@@ -224,7 +224,7 @@ block_close()
  * max out buffer: obs + cbsz
  */
 void
-unblock()
+unblock(void)
 {
 	size_t cnt;
 	u_char *inp;
@@ -258,7 +258,7 @@ unblock()
 }
 
 void
-unblock_close()
+unblock_close(void)
 {
 	size_t cnt;
 	u_char *t;

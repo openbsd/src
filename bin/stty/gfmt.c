@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfmt.c,v 1.5 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: gfmt.c,v 1.6 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: gfmt.c,v 1.5 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: gfmt.c,v 1.6 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,8 +48,7 @@ static char rcsid[] = "$OpenBSD: gfmt.c,v 1.5 2003/06/02 23:32:09 millert Exp $"
 #include "extern.h"
 
 static void
-gerr(s)
-	char *s;
+gerr(char *s)
 {
 	if (s)
 		errx(1, "illegal gfmt1 option -- %s", s);
@@ -58,10 +57,7 @@ gerr(s)
 }
 
 void
-gprint(tp, wp, ldisc)
-	struct termios *tp;
-	struct winsize *wp;
-	int ldisc;
+gprint(struct termios *tp, struct winsize *wp, int ldisc)
 {
 	const struct cchar *cp;
 
@@ -73,9 +69,7 @@ gprint(tp, wp, ldisc)
 }
 
 void
-gread(tp, s)
-	struct termios *tp;
-	char *s;
+gread(struct termios *tp, char *s)
 {
 	const struct cchar *cp;
 	char *ep, *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.10 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.10 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.11 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,11 +52,7 @@ static void  bput(char *);
 static char *ccval(const struct cchar *, int);
 
 void
-print(tp, wp, ldisc, fmt)
-	struct termios *tp;
-	struct winsize *wp;
-	int ldisc;
-	enum FMT fmt;
+print(struct termios *tp, struct winsize *wp, int ldisc, enum FMT fmt)
 {
 	const struct cchar *p;
 	long tmp;
@@ -220,8 +216,7 @@ static int col;
 static char *label;
 
 static void
-binit(lb)
-	char *lb;
+binit(char *lb)
 {
 
 	if (col) {
@@ -232,8 +227,7 @@ binit(lb)
 }
 
 static void
-bput(s)
-	char *s;
+bput(char *s)
 {
 
 	if (col == 0) {
@@ -249,9 +243,7 @@ bput(s)
 }
 
 static char *
-ccval(p, c)
-	const struct cchar *p;
-	int c;
+ccval(const struct cchar *p, int c)
 {
 	static char buf[5];
 	char *bp;

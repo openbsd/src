@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.13 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: args.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.13 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,7 @@ static char *oper;
  * args -- parse JCL syntax of dd.
  */
 void
-jcl(argv)
-	char **argv;
+jcl(char **argv)
 {
 	struct arg *ap, tmp;
 	char *arg;
@@ -179,32 +178,28 @@ jcl(argv)
 }
 
 static int
-c_arg(a, b)
-	const void *a, *b;
+c_arg(const void *a, const void *b)
 {
 
 	return (strcmp(((struct arg *)a)->name, ((struct arg *)b)->name));
 }
 
 static void
-f_bs(arg)
-	char *arg;
+f_bs(char *arg)
 {
 
 	in.dbsz = out.dbsz = get_bsz(arg);
 }
 
 static void
-f_cbs(arg)
-	char *arg;
+f_cbs(char *arg)
 {
 
 	cbsz = get_bsz(arg);
 }
 
 static void
-f_count(arg)
-	char *arg;
+f_count(char *arg)
 {
 
 	if ((cpy_cnt = get_bsz(arg)) == 0)
@@ -212,16 +207,14 @@ f_count(arg)
 }
 
 static void
-f_files(arg)
-	char *arg;
+f_files(char *arg)
 {
 
 	files_cnt = get_bsz(arg);
 }
 
 static void
-f_ibs(arg)
-	char *arg;
+f_ibs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
@@ -229,16 +222,14 @@ f_ibs(arg)
 }
 
 static void
-f_if(arg)
-	char *arg;
+f_if(char *arg)
 {
 
 	in.name = arg;
 }
 
 static void
-f_obs(arg)
-	char *arg;
+f_obs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
@@ -246,24 +237,21 @@ f_obs(arg)
 }
 
 static void
-f_of(arg)
-	char *arg;
+f_of(char *arg)
 {
 
 	out.name = arg;
 }
 
 static void
-f_seek(arg)
-	char *arg;
+f_seek(char *arg)
 {
 
 	out.offset = get_off(arg);
 }
 
 static void
-f_skip(arg)
-	char *arg;
+f_skip(char *arg)
 {
 
 	in.offset = get_off(arg);
@@ -272,8 +260,7 @@ f_skip(arg)
 #ifdef	NO_CONV
 /* Build a small version (i.e. for a ramdisk root) */
 static void
-f_conv(arg)
-	char *arg;
+f_conv(char *arg)
 {
 	errx(1, "conv option disabled");
 }
@@ -302,8 +289,7 @@ static const struct conv {
 };
 
 static void
-f_conv(arg)
-	char *arg;
+f_conv(char *arg)
 {
 	struct conv *cp, tmp;
 
@@ -322,8 +308,7 @@ f_conv(arg)
 }
 
 static int
-c_conv(a, b)
-	const void *a, *b;
+c_conv(const void *a, const void *b)
 {
 
 	return (strcmp(((struct conv *)a)->name, ((struct conv *)b)->name));
@@ -343,8 +328,7 @@ c_conv(a, b)
  *	   the product of the indicated values.
  */
 static size_t
-get_bsz(val)
-	char *val;
+get_bsz(char *val)
 {
 	size_t num, t;
 	char *expr;
@@ -414,8 +398,7 @@ erange:				errx(1, "%s: %s", oper, strerror(ERANGE));
  *	   the product of the indicated values.
  */
 static off_t
-get_off(val)
-	char *val;
+get_off(char *val)
 {
 	off_t num, t;
 	char *expr;

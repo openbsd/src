@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,9 +117,7 @@ seterrmsg(char *s)
 
 /* ed: line editor */
 int
-main(argc, argv)
-	volatile int argc;
-	char ** volatile argv;
+main(volatile int argc, char ** volatile argv)
 {
 	int c, n;
 	int status = 0;
@@ -288,7 +286,7 @@ int first_addr, second_addr, addr_cnt;
 /* extract_addr_range: get line addresses from the command buffer until an
    illegal address is seen; return status */
 int
-extract_addr_range()
+extract_addr_range(void)
 {
 	int addr;
 
@@ -326,7 +324,7 @@ extract_addr_range()
 
 /*  next_addr: return the next line address in the command buffer */
 int
-next_addr()
+next_addr(void)
 {
 	char *hd;
 	int addr = current_addr;
@@ -486,7 +484,7 @@ volatile sig_atomic_t cols = 72;	/* wrap column */
 /* exec_command: execute the next command in command buffer; return print
    request, if any */
 int
-exec_command()
+exec_command(void)
 {
 	extern int u_current_addr;
 	extern int u_addr_last;
@@ -930,8 +928,7 @@ exec_command()
 
 /* check_addr_range: return status of address range check */
 int
-check_addr_range(n, m)
-	int n, m;
+check_addr_range(int n, int m)
 {
 	if (addr_cnt == 0) {
 		first_addr = n;
@@ -950,9 +947,7 @@ check_addr_range(n, m)
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
 int
-get_matching_node_addr(pat, dir)
-	pattern_t *pat;
-	int dir;
+get_matching_node_addr(pattern_t *pat, int dir)
 {
 	char *s;
 	int n = current_addr;
@@ -977,7 +972,7 @@ get_matching_node_addr(pat, dir)
 
 /* get_filename: return pointer to copy of filename in the command buffer */
 char *
-get_filename()
+get_filename(void)
 {
 	static char *file = NULL;
 	static int filesz = 0;
@@ -1018,7 +1013,7 @@ get_filename()
 /* get_shell_command: read a shell command from stdin; return substitution
    status */
 int
-get_shell_command()
+get_shell_command(void)
 {
 	static char *buf = NULL;
 	static int n = 0;
@@ -1084,8 +1079,7 @@ get_shell_command()
 /* append_lines: insert text from stdin to after line n; stop when either a
    single period is read or EOF; return status */
 int
-append_lines(n)
-	int n;
+append_lines(int n)
 {
 	int l;
 	char *lp = ibuf;
@@ -1134,9 +1128,7 @@ append_lines(n)
 
 /* join_lines: replace a range of lines with the joined text of those lines */
 int
-join_lines(from, to)
-	int from;
-	int to;
+join_lines(int from, int to)
 {
 	static char *buf = NULL;
 	static int n;
@@ -1173,8 +1165,7 @@ join_lines(from, to)
 
 /* move_lines: move a range of lines */
 int
-move_lines(addr)
-	int addr;
+move_lines(int addr)
 {
 	line_t *b1, *a1, *b2, *a2;
 	int n = INC_MOD(second_addr, addr_last);
@@ -1218,8 +1209,7 @@ move_lines(addr)
 
 /* copy_lines: copy a range of lines; return status */
 int
-copy_lines(addr)
-	int addr;
+copy_lines(int addr)
 {
 	line_t *lp, *np = get_addressed_line_node(first_addr);
 	undo_t *up = NULL;
@@ -1255,8 +1245,7 @@ copy_lines(addr)
 
 /* delete_lines: delete a range of lines */
 int
-delete_lines(from, to)
-	int from, to;
+delete_lines(int from, int to)
 {
 	line_t *n, *p;
 
@@ -1281,10 +1270,7 @@ delete_lines(from, to)
 
 /* display_lines: print a range of lines to stdout */
 int
-display_lines(from, to, gflag)
-	int from;
-	int to;
-	int gflag;
+display_lines(int from, int to, int gflag)
 {
 	line_t *bp;
 	line_t *ep;
@@ -1313,9 +1299,7 @@ int markno;				/* line marker count */
 
 /* mark_line_node: set a line node mark */
 int
-mark_line_node(lp, n)
-	line_t *lp;
-	int n;
+mark_line_node(line_t *lp, int n)
 {
 	if (!islower(n)) {
 		seterrmsg("invalid mark character");
@@ -1329,8 +1313,7 @@ mark_line_node(lp, n)
 
 /* get_marked_node_addr: return address of a marked line */
 int
-get_marked_node_addr(n)
-	int n;
+get_marked_node_addr(int n)
 {
 	if (!islower(n)) {
 		seterrmsg("invalid mark character");
@@ -1342,8 +1325,7 @@ get_marked_node_addr(n)
 
 /* unmark_line_node: clear line node mark */
 void
-unmark_line_node(lp)
-	line_t *lp;
+unmark_line_node(line_t *lp)
 {
 	int i;
 
@@ -1357,8 +1339,7 @@ unmark_line_node(lp)
 
 /* dup_line_node: return a pointer to a copy of a line node */
 line_t *
-dup_line_node(lp)
-	line_t *lp;
+dup_line_node(line_t *lp)
 {
 	line_t *np;
 
@@ -1376,9 +1357,7 @@ dup_line_node(lp)
 /* has_trailing_escape:  return the parity of escapes preceding a character
    in a string */
 int
-has_trailing_escape(s, t)
-	char *s;
-	char *t;
+has_trailing_escape(char *s, char *t)
 {
     return (s == t || *(t - 1) != '\\') ? 0 : !has_trailing_escape(s, t - 1);
 }
@@ -1386,8 +1365,7 @@ has_trailing_escape(s, t)
 
 /* strip_escapes: return copy of escaped string of at most length MAXPATHLEN */
 char *
-strip_escapes(s)
-	char *s;
+strip_escapes(char *s)
 {
 	static char *file = NULL;
 	static int filesz = 0;
@@ -1405,8 +1383,7 @@ strip_escapes(s)
 
 
 void
-signal_hup(signo)
-	int signo;
+signal_hup(int signo)
 {
 	int save_errno = errno;
 
@@ -1419,8 +1396,7 @@ signal_hup(signo)
 
 
 void
-signal_int(signo)
-	int signo;
+signal_int(int signo)
 {
 	int save_errno = errno;
 
@@ -1433,8 +1409,7 @@ signal_int(signo)
 
 
 void
-handle_hup(signo)
-	int signo;
+handle_hup(int signo)
 {
 	char path[MAXPATHLEN];
 	char *hup = NULL;		/* hup filename */
@@ -1454,8 +1429,7 @@ handle_hup(signo)
 
 
 void
-handle_int(signo)
-	int signo;
+handle_int(int signo)
 {
 	if (!sigactive)
 		_exit(1);
@@ -1469,8 +1443,7 @@ handle_int(signo)
 
 
 void
-handle_winch(signo)
-	int signo;
+handle_winch(int signo)
 {
 	int save_errno = errno;
 	struct winsize ws;		/* window size structure */
@@ -1488,8 +1461,7 @@ handle_winch(signo)
 
 /* is_legal_filename: return a legal filename */
 int
-is_legal_filename(s)
-	char *s;
+is_legal_filename(char *s)
 {
 	if (red && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
 		seterrmsg("shell access restricted");

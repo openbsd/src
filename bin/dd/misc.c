@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.12 2003/06/02 23:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.13 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.12 2003/06/02 23:32:07 millert Exp $
 #include "extern.h"
 
 void
-summary()
+summary(void)
 {
 	struct timeval nowtv;
 	char buf[4][100];
@@ -105,8 +105,7 @@ summary()
 
 /* ARGSUSED */
 void
-summaryx(notused)
-	int notused;
+summaryx(int notused)
 {
 	int save_errno = errno;
 
@@ -116,8 +115,7 @@ summaryx(notused)
 
 /* ARGSUSED */
 void
-terminate(notused)
-	int notused;
+terminate(int notused)
 {
 
 	summary();

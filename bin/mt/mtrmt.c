@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.13 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -85,8 +85,7 @@ static	void rmtgets(char *, int);
 static	int rmtreply(char *);
 
 int
-rmthost(host)
-	char *host;
+rmthost(char *host)
 {
 	int len = strlen(host) + 1;
 
@@ -118,7 +117,7 @@ rmtconnaborted(void)
 }
 
 void
-rmtgetconn()
+rmtgetconn(void)
 {
 	char *cp;
 	static struct servent *sp = NULL;
@@ -174,8 +173,7 @@ rmtgetconn()
 }
 
 static int
-okname(cp0)
-	char *cp0;
+okname(char *cp0)
 {
 	char *cp;
 	int c;
@@ -191,9 +189,7 @@ okname(cp0)
 }
 
 int
-rmtopen(tape, mode)
-	char *tape;
-	int mode;
+rmtopen(char *tape, int mode)
 {
 	char buf[256];
 
@@ -203,7 +199,7 @@ rmtopen(tape, mode)
 }
 
 void
-rmtclose()
+rmtclose(void)
 {
 
 	if (rmtstate != TS_OPEN)
@@ -215,7 +211,7 @@ rmtclose()
 struct	mtget mts;
 
 struct mtget *
-rmtstatus()
+rmtstatus(void)
 {
 	int i;
 	char *cp;
@@ -229,8 +225,7 @@ rmtstatus()
 }
 
 int
-rmtioctl(cmd, count)
-	int cmd, count;
+rmtioctl(int cmd, int count)
 {
 	char buf[256];
 
@@ -241,8 +236,7 @@ rmtioctl(cmd, count)
 }
 
 static int
-rmtcall(cmd, buf)
-	char *cmd, *buf;
+rmtcall(char *cmd, char *buf)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
@@ -251,8 +245,7 @@ rmtcall(cmd, buf)
 }
 
 static int
-rmtreply(cmd)
-	char *cmd;
+rmtreply(char *cmd)
 {
 	char *cp;
 	char code[30], emsg[BUFSIZ];
@@ -281,7 +274,7 @@ rmtreply(cmd)
 }
 
 int
-rmtgetb()
+rmtgetb(void)
 {
 	char c;
 
@@ -292,9 +285,7 @@ rmtgetb()
 
 /* Get a line (guaranteed to have a trailing newline). */
 void
-rmtgets(line, len)
-	char *line;
-	int len;
+rmtgets(char *line, int len)
 {
 	char *cp = line;
 

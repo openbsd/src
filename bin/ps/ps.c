@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.32 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.33 2003/06/11 23:42:12 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.32 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.33 2003/06/11 23:42:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,9 +103,7 @@ kvm_t *kd;
 int kvm_sysctl_only;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct kinfo_proc *kp;
 	struct varent *vent;
@@ -385,7 +383,7 @@ main(argc, argv)
 }
 
 static void
-scanvars()
+scanvars(void)
 {
 	struct varent *vent;
 	VAR *v;
@@ -404,8 +402,7 @@ scanvars()
 }
 
 static void
-saveuser(ki)
-	KINFO *ki;
+saveuser(KINFO *ki)
 {
 	struct usave *usp;
 
@@ -419,8 +416,7 @@ saveuser(ki)
 }
 
 static int
-pscomp(a, b)
-	const void *a, *b;
+pscomp(const void *a, const void *b)
 {
 	int i;
 #define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
@@ -452,8 +448,7 @@ pscomp(a, b)
  * feature is available with the option 'T', which takes no argument.
  */
 static char *
-kludge_oldps_options(s)
-	char *s;
+kludge_oldps_options(char *s)
 {
 	size_t len;
 	char *newopts, *ns, *cp;
@@ -503,7 +498,7 @@ kludge_oldps_options(s)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
             "usage: %s [-][acCehjklmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
