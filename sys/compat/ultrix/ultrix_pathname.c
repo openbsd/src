@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_pathname.c,v 1.3 1996/08/02 20:35:52 niklas Exp $	*/
+/*	$OpenBSD: ultrix_pathname.c,v 1.4 2000/04/21 15:50:21 millert Exp $	*/
 /*	$NetBSD: ultrix_pathname.c,v 1.2 1996/04/07 17:23:07 jonathan Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ ultrix_sys_open(p, v, retval)
 	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
 	r |=	((l & 0x0080) ? O_SHLOCK : 0);
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
-	r |=	((l & 0x2000) ? O_FSYNC : 0);
+	r |=	((l & 0x2000) ? O_SYNC : 0);
 
 	SCARG(uap, flags) = r;
 	ret = sys_open(p, (struct sys_open_args *)uap, retval);

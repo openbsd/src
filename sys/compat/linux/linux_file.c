@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.12 2000/04/19 08:34:56 csapuntz Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.13 2000/04/21 15:50:20 millert Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ linux_to_bsd_ioflags(lflags)
 	res |= cvtto_bsd_mask(lflags, LINUX_O_NOCTTY, O_NOCTTY);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_TRUNC, O_TRUNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_NDELAY, O_NDELAY);
-	res |= cvtto_bsd_mask(lflags, LINUX_O_SYNC, O_FSYNC);
+	res |= cvtto_bsd_mask(lflags, LINUX_O_SYNC, O_SYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_FASYNC, O_ASYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_APPEND, O_APPEND);
 
@@ -112,7 +112,7 @@ bsd_to_linux_ioflags(bflags)
 	res |= cvtto_linux_mask(bflags, O_NOCTTY, LINUX_O_NOCTTY);
 	res |= cvtto_linux_mask(bflags, O_TRUNC, LINUX_O_TRUNC);
 	res |= cvtto_linux_mask(bflags, O_NDELAY, LINUX_O_NDELAY);
-	res |= cvtto_linux_mask(bflags, O_FSYNC, LINUX_O_SYNC);
+	res |= cvtto_linux_mask(bflags, O_SYNC, LINUX_O_SYNC);
 	res |= cvtto_linux_mask(bflags, O_ASYNC, LINUX_FASYNC);
 	res |= cvtto_linux_mask(bflags, O_APPEND, LINUX_O_APPEND);
 

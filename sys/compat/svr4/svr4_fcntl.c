@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.14 1999/10/07 16:14:28 brad Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.15 2000/04/21 15:50:21 millert Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -95,7 +95,7 @@ svr4_to_bsd_flags(l)
 	r |= (l & SVR4_O_RDWR) ? O_RDWR : 0;
 	r |= (l & SVR4_O_NDELAY) ? O_NONBLOCK : 0;
 	r |= (l & SVR4_O_APPEND) ? O_APPEND : 0;
-	r |= (l & SVR4_O_SYNC) ? O_FSYNC : 0;
+	r |= (l & SVR4_O_SYNC) ? O_SYNC : 0;
 #if 0
 	/* Dellism ??? */
 	r |= (l & SVR4_O_RAIOSIG) ? O_ASYNC : 0;
@@ -120,7 +120,7 @@ bsd_to_svr4_flags(l)
 	r |= (l & O_RDWR) ? SVR4_O_RDWR : 0;
 	r |= (l & O_NDELAY) ? SVR4_O_NONBLOCK : 0;
 	r |= (l & O_APPEND) ? SVR4_O_APPEND : 0;
-	r |= (l & O_FSYNC) ? SVR4_O_SYNC : 0;
+	r |= (l & O_SYNC) ? SVR4_O_SYNC : 0;
 #if 0
 	/* Dellism ??? */
 	r |= (l & O_ASYNC) ? SVR4_O_RAIOSIG : 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.22 2000/01/22 23:06:34 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.23 2000/04/21 15:50:21 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -744,7 +744,7 @@ sunos_sys_open(p, v, retval)
 	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
 	r |=	((l & 0x0080) ? O_SHLOCK : 0);
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
-	r |=	((l & 0x2000) ? O_FSYNC : 0);
+	r |=	((l & 0x2000) ? O_SYNC : 0);
 
 	SCARG(uap, flags) = r;
 	ret = sys_open(p, (struct sys_open_args *)uap, retval);

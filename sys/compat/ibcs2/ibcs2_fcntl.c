@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_fcntl.c,v 1.5 1997/12/20 16:32:10 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_fcntl.c,v 1.6 2000/04/21 15:50:22 millert Exp $	*/
 /*	$NetBSD: ibcs2_fcntl.c,v 1.6 1996/05/03 17:05:20 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ cvt_o_flags(flags)
 	if (flags & IBCS2_O_RDWR) r |= O_RDWR;
 	if (flags & (IBCS2_O_NDELAY | IBCS2_O_NONBLOCK)) r |= O_NONBLOCK;
 	if (flags & IBCS2_O_APPEND) r |= O_APPEND;
-	if (flags & IBCS2_O_SYNC) r |= O_FSYNC;
+	if (flags & IBCS2_O_SYNC) r |= O_SYNC;
 	if (flags & IBCS2_O_CREAT) r |= O_CREAT;
 	if (flags & IBCS2_O_TRUNC) r |= O_TRUNC;
 	if (flags & IBCS2_O_EXCL) r |= O_EXCL;
@@ -131,7 +131,7 @@ ioflags2oflags(flags)
 	if (flags & IBCS2_O_RDWR) r |= O_RDWR;
 	if (flags & IBCS2_O_NDELAY) r |= O_NONBLOCK;
 	if (flags & IBCS2_O_APPEND) r |= O_APPEND;
-	if (flags & IBCS2_O_SYNC) r |= O_FSYNC;
+	if (flags & IBCS2_O_SYNC) r |= O_SYNC;
 	if (flags & IBCS2_O_NONBLOCK) r |= O_NONBLOCK;
 	if (flags & IBCS2_O_CREAT) r |= O_CREAT;
 	if (flags & IBCS2_O_TRUNC) r |= O_TRUNC;
@@ -152,7 +152,7 @@ oflags2ioflags(flags)
 	if (flags & O_RDWR) r |= IBCS2_O_RDWR;
 	if (flags & O_NDELAY) r |= IBCS2_O_NONBLOCK;
 	if (flags & O_APPEND) r |= IBCS2_O_APPEND;
-	if (flags & O_FSYNC) r |= IBCS2_O_SYNC;
+	if (flags & O_SYNC) r |= IBCS2_O_SYNC;
 	if (flags & O_NONBLOCK) r |= IBCS2_O_NONBLOCK;
 	if (flags & O_CREAT) r |= IBCS2_O_CREAT;
 	if (flags & O_TRUNC) r |= IBCS2_O_TRUNC;
