@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.17 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.18 2003/10/26 17:01:11 avsm Exp $	*/
 
 /*-
  *
@@ -107,28 +107,27 @@
  */
 #define IPX_HOSTADDRLEN	6
 #define IPX_NETADDRLEN	4
-#define XXX	__attribute__((__packed__))
 
 typedef
 union ipx_host {
-	u_int8_t	c_host[IPX_HOSTADDRLEN]		XXX;
-	u_int16_t	s_host[IPX_HOSTADDRLEN/2]	XXX;
+	u_int8_t	c_host[IPX_HOSTADDRLEN]		__packed;
+	u_int16_t	s_host[IPX_HOSTADDRLEN/2]	__packed;
 } ipx_host_t;
 
 typedef
 union ipx_net {
-	u_int8_t	c_net[IPX_NETADDRLEN]		XXX;
-	u_int16_t	s_net[IPX_NETADDRLEN/2]		XXX;
-	u_int32_t	l_net				XXX;
+	u_int8_t	c_net[IPX_NETADDRLEN]		__packed;
+	u_int16_t	s_net[IPX_NETADDRLEN/2]		__packed;
+	u_int32_t	l_net				__packed;
 } ipx_net_t;
 
 typedef	u_int16_t	ipx_port_t;
 
 typedef
 struct ipx_addr {
-	ipx_net_t	ipx_net				XXX;
-	ipx_host_t	ipx_host			XXX;
-	ipx_port_t	ipx_port			XXX;
+	ipx_net_t	ipx_net				__packed;
+	ipx_host_t	ipx_host			__packed;
+	ipx_port_t	ipx_port			__packed;
 } ipx_addr_t;
 
 /*
@@ -149,14 +148,13 @@ struct sockaddr_ipx {
  * Definitions for IPX Internet Datagram Protocol
  */
 struct ipx {
-	u_int16_t	ipx_sum XXX;	/* Checksum */
-	u_int16_t	ipx_len XXX;	/* Length, in bytes, including header */
-	u_int8_t	ipx_tc  XXX;	/* Transport Control (i.e. hop count) */
-	u_int8_t	ipx_pt  XXX;	/* Packet Type (i.e. lev 2 protocol) */
-	ipx_addr_t	ipx_dna XXX;	/* Destination Network Address */
-	ipx_addr_t	ipx_sna XXX;	/* Source Network Address */
+	u_int16_t  ipx_sum __packed;	/* Checksum */
+	u_int16_t  ipx_len __packed;	/* Length, in bytes, including header */
+	u_int8_t   ipx_tc  __packed;	/* Transport Control (i.e. hop count) */
+	u_int8_t   ipx_pt  __packed;	/* Packet Type (i.e. lev 2 protocol) */
+	ipx_addr_t ipx_dna __packed;	/* Destination Network Address */
+	ipx_addr_t ipx_sna __packed;	/* Source Network Address */
 };
-#undef	XXX
 
 #define ipx_neteqnn(a,b) \
 	(((a).s_net[0]==(b).s_net[0]) && ((a).s_net[1]==(b).s_net[1]))

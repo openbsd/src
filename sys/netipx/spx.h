@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx.h,v 1.7 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: spx.h,v 1.8 2003/10/26 17:01:11 avsm Exp $	*/
 
 /*-
  *
@@ -41,24 +41,22 @@
 
 #include <sys/queue.h>
 
-#define	XXX	__attribute__((__packed__));
-
 /*
  * Definitions for IPX style Sequenced Packet Protocol
  */
 
 struct spxhdr {
-	u_int8_t	spx_cc	XXX;	/* connection control */
-	u_int8_t	spx_dt	XXX;	/* datastream type */
-#define	SPX_SP		0x80		/* system packet */
-#define	SPX_SA		0x40		/* send acknowledgement */
-#define	SPX_OB		0x20		/* attention (out of band data) */
-#define	SPX_EM		0x10		/* end of message */
-	u_int16_t	spx_sid	XXX;	/* source connection identifier */
-	u_int16_t	spx_did	XXX;	/* destination connection identifier */
-	u_int16_t	spx_seq	XXX;	/* sequence number */
-	u_int16_t	spx_ack	XXX;	/* acknowledge number */
-	u_int16_t	spx_alo	XXX;	/* allocation number */
+	u_int8_t  spx_cc  __packed;	/* connection control */
+	u_int8_t  spx_dt  __packed;	/* datastream type */
+#define	SPX_SP	  0x80			/* system packet */
+#define	SPX_SA	  0x40			/* send acknowledgement */
+#define	SPX_OB	  0x20			/* attention (out of band data) */
+#define	SPX_EM	  0x10			/* end of message */
+	u_int16_t spx_sid __packed;	/* source connection identifier */
+	u_int16_t spx_did __packed;	/* destination connection identifier */
+	u_int16_t spx_seq __packed;	/* sequence number */
+	u_int16_t spx_ack __packed;	/* acknowledge number */
+	u_int16_t spx_alo __packed;	/* allocation number */
 };
 
 /*
@@ -66,8 +64,8 @@ struct spxhdr {
  * containing a Sequenced Packet Protocol packet.
  */
 struct spx {
-	struct ipx	si_i XXX;
-	struct spxhdr 	si_s XXX;
+	struct ipx	si_i __packed;
+	struct spxhdr 	si_s __packed;
 };
 
 #define SI(x)	((struct spx *)x)
