@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.53 2002/04/11 02:11:19 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.54 2002/04/16 00:18:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.53 2002/04/11 02:11:19 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.54 2002/04/16 00:18:21 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -476,6 +476,9 @@ wi_rxeof(sc)
 		return;
 	}
 
+	/*
+	 * Drop undecryptable or packets with receive errors here
+	 */
 	if (rx_frame.wi_status & htole16(WI_STAT_ERRSTAT)) {
 		ifp->if_ierrors++;
 		return;
@@ -492,6 +495,10 @@ wi_rxeof(sc)
 		ifp->if_ierrors++;
 		return;
 	}
+
+	/* Align the data after the ethernet header */
+	m->m_data = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header))
+	    - sizeof(struct ether_header);
 
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
@@ -584,8 +591,8 @@ wi_rxeof(sc)
 	ifp->if_ipackets++;
 
 	if (sc->wi_ptype == WI_PORTTYPE_AP) {
-
-		/* Give host AP code first crack at data packets.
+		/*
+		 * Give host AP code first crack at data packets.
 		 * If it decides to handle it (or drop it), it will return
 		 * a non-zero.  Otherwise, it is destined for this host.
 		 */
