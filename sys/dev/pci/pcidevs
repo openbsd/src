@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.147 1999/06/01 17:09:09 mickey Exp $
+$OpenBSD: pcidevs,v 1.148 1999/06/03 16:13:05 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -220,7 +220,7 @@ vendor STB		0x10b4	STB Systems
 vendor PLX		0x10b5	PLX Technology
 vendor MADGE		0x10b6	Madge Networks
 vendor 3COM		0x10B7	3Com
-vendor SMC		0x10b8	Standard Microsystems
+vendor SMC		0x10b8	SMC
 vendor ALI		0x10b9	Acer Labs
 vendor MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
 vendor DAPHA		0x10bb	Dapha Electronics
