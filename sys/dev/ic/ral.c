@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.26 2005/03/11 20:22:57 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.27 2005/03/11 20:25:52 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1670,7 +1670,9 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 		*(uint16_t *)wh->i_dur = htole16(d0.d_data_dur);
 
-		if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+		    IEEE80211_FC0_TYPE_MGT &&
+		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			desc->flags |= htole32(RAL_TX_INSERT_TIMESTAMP);
 	}
