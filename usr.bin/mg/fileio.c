@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.27 2002/03/27 17:42:37 millert Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.28 2002/04/15 23:24:42 deraadt Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -68,8 +68,8 @@ ffwopen(const char *fn, BUFFER *bp)
 	 * future writes will do the same thing.
 	 */
 	if (bp && bp->b_fi.fi_mode) {
-		chmod(fn, bp->b_fi.fi_mode & 07777);
-		chown(fn, bp->b_fi.fi_uid, bp->b_fi.fi_gid);
+		fchmod(fd, bp->b_fi.fi_mode & 07777);
+		fchown(fd, bp->b_fi.fi_uid, bp->b_fi.fi_gid);
 	}
 	return (FIOSUC);
 }
