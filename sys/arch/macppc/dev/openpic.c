@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.8 2002/01/17 16:17:23 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.9 2002/01/21 05:11:29 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 
 #include <uvm/uvm.h>
+#include <ddb/db_var.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -704,7 +705,8 @@ int
 openpic_prog_button (void *arg)
 {
 #ifdef DDB
-        Debugger();
+	if (db_console)
+		Debugger();
 #else
 	printf("programmer button pressed, debugger not available\n");
 #endif
