@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.7 2001/01/26 20:08:51 mickey Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.8 2001/05/22 11:04:50 fgsch Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ struct cfattach awi_pcmcia_ca = {
 };
 
 static struct awi_pcmcia_product {
-	u_int32_t	app_vendor;	/* vendor ID */
-	u_int32_t	app_product;	/* product ID */
+	u_int16_t	app_vendor;	/* vendor ID */
+	u_int16_t	app_product;	/* product ID */
 	const char	*app_cisinfo[4]; /* CIS information */
 	const char	*app_name;	/* product name */
 } awi_pcmcia_products[] = {

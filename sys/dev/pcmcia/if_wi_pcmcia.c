@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.1 2001/05/15 02:40:35 millert Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.2 2001/05/22 11:04:50 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,8 +92,8 @@ struct cfattach wi_pcmcia_ca = {
 };
 
 static const struct wi_pcmcia_product {
-	u_int32_t	pp_vendor;
-	u_int32_t	pp_product;
+	u_int16_t	pp_vendor;
+	u_int16_t	pp_product;
 	const char	*pp_cisinfo[4];
 	const char	*pp_name;
 	int		pp_prism2;
