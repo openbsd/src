@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.10 1999/02/26 04:22:03 art Exp $	*/
+/*	$OpenBSD: vector.s,v 1.11 2001/05/05 23:25:52 art Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -35,11 +35,7 @@
 
 #define ICU_HARDWARE_MASK
 
-#if defined(UVM)
 #define MY_COUNT _C_LABEL(uvmexp)
-#else
-#define MY_COUNT _cnt
-#endif
 
 /*
  * These macros are fairly self explanatory.  If ICU_SPECIAL_MASK_MODE is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2001/05/05 21:26:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2001/05/05 23:25:42 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -61,9 +61,7 @@
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -200,11 +198,7 @@ trap(frame)
 	vm_prot_t vftype, ftype;
 	union sigval sv;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 
 	/* SIGSEGV and SIGBUS need this */
 	if (frame.tf_err & PGEX_W) {
@@ -371,11 +365,7 @@ trap(frame)
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
-#if defined(UVM)
 		uvmexp.softs++;
-#else
-		cnt.v_soft++;
-#endif
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -444,9 +434,6 @@ trap(frame)
 		int rv;
 		extern vm_map_t kernel_map;
 		unsigned nss;
-#ifndef PMAP_NEW
-		unsigned v;
-#endif
 
 		if (vm == NULL)
 			goto we_re_toast;
@@ -490,32 +477,7 @@ trap(frame)
 			}
 		}
 
-#ifndef PMAP_NEW
-		/* check if page table is mapped, if not, fault it first */
-		if ((PTD[pdei(va)] & PG_V) == 0) {
-			v = trunc_page((vaddr_t)vtopte(va));
-#if defined(UVM)
-			rv = uvm_fault(map, v, 0, ftype);
-#else
-			rv = vm_fault(map, v, ftype, FALSE);
-#endif
-			if (rv != KERN_SUCCESS)
-				goto nogo;
-			/* check if page table fault, increment wiring */
-#if defined(UVM)
-			uvm_map_pageable(map, v, round_page(v+1), FALSE);
-#else
-			vm_map_pageable(map, v, round_page(v+1), FALSE);
-#endif
-		} else
-			v = 0;
-#endif
-
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
-#else
-		rv = vm_fault(map, va, ftype, FALSE);
-#endif
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -524,19 +486,11 @@ trap(frame)
 			goto out;
 		}
 
-#ifndef PMAP_NEW
-	nogo:
-#endif
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
-#if defined(UVM)
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
 			    map, va, ftype, rv);
-#else
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-			    map, va, ftype, rv);
-#endif
 			goto we_re_toast;
 		}
 		sv.sival_int = rcr2();
@@ -620,15 +574,9 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-#if defined(UVM)
 	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
 	    != KERN_SUCCESS)
 		return 1;
-#else
-	if (vm_fault(&vm->vm_map, va, VM_PROT_READ | VM_PROT_WRITE, FALSE)
-	    != KERN_SUCCESS)
-		return 1;
-#endif
 
 	if (nss > vm->vm_ssize)
 		vm->vm_ssize = nss;
@@ -654,11 +602,7 @@ syscall(frame)
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 #ifdef DIAGNOSTIC
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");

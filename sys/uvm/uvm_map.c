@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.11 2001/03/22 03:05:55 smart Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.12 2001/05/05 23:25:55 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.56 1999/06/16 19:34:24 thorpej Exp $	*/
 
 /* 
@@ -2698,25 +2698,6 @@ uvmspace_exec(p)
 		nvm = uvmspace_alloc(map->min_offset, map->max_offset, 
 			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
 
-#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
-		/* 
-		 * allocate zero fill area in the new vmspace's map for user
-		 * page tables for ports that have old style pmaps that keep
-		 * user page tables in the top part of the process' address
-		 * space.
-		 *
-		 * XXXCDC: this should go away once all pmaps are fixed
-		 */
-		{ 
-			vaddr_t addr = VM_MAXUSER_ADDRESS;
-			if (uvm_map(&nvm->vm_map, &addr, VM_MAX_ADDRESS - addr,
-			    NULL, UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL,
-			    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_NORMAL,
-			    UVM_FLAG_FIXED|UVM_FLAG_COPYONW)) != KERN_SUCCESS)
-				panic("vm_allocate of PT page area failed");
-		}
-#endif
-
 		/*
 		 * install new vmspace and drop our ref to the old one.
 		 */
@@ -2788,16 +2769,6 @@ uvmspace_fork(vm1)
 	pmap_t          new_pmap;
 	boolean_t	protect_child;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
-
-#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
-	/*    
-	 * avoid copying any of the parent's pagetables or other per-process
-	 * objects that reside in the map by marking all of them non-inheritable
-	 * XXXCDC: should go away
-	 */
-	(void) uvm_map_inherit(old_map, VM_MAXUSER_ADDRESS, VM_MAX_ADDRESS, 
-			 VM_INHERIT_NONE);
-#endif
 
 	vm_map_lock(old_map);
 
@@ -3065,25 +3036,6 @@ uvmspace_fork(vm1)
 
 	new_map->size = old_map->size;
 	vm_map_unlock(old_map); 
-
-#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
-	/* 
-	 * allocate zero fill area in the new vmspace's map for user
-	 * page tables for ports that have old style pmaps that keep
-	 * user page tables in the top part of the process' address
-	 * space.
-	 *
-	 * XXXCDC: this should go away once all pmaps are fixed
-	 */
-	{
-		vaddr_t addr = VM_MAXUSER_ADDRESS;
-		if (uvm_map(new_map, &addr, VM_MAX_ADDRESS - addr, NULL,
-		    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL,
-		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_NORMAL,
-		    UVM_FLAG_FIXED|UVM_FLAG_COPYONW)) != KERN_SUCCESS)
-			panic("vm_allocate of PT page area failed");
-	}
-#endif
 
 #ifdef SYSVSHM
 	if (vm1->vm_shm)

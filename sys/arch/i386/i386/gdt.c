@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.13 2001/04/30 13:17:38 art Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.14 2001/05/05 23:25:35 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -45,9 +45,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/gdt.h>
 
@@ -168,16 +166,9 @@ gdt_init()
 	min_len = MINGDTSIZ * sizeof(union descriptor);
 	gdt_size = MINGDTSIZ;
 
-#if defined(UVM)
 	dynamic_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
 	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt,
 	    (vaddr_t)dynamic_gdt + min_len, FALSE);
-#else
-	dynamic_gdt = (union descriptor *)kmem_alloc_pageable(kernel_map,
-	    max_len);
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt,
-	    (vm_offset_t)dynamic_gdt + min_len, FALSE);
-#endif
 	bcopy(gdt, dynamic_gdt, NGDT * sizeof(union descriptor));
 
 	setregion(&region, dynamic_gdt, max_len - 1);
@@ -193,13 +184,8 @@ gdt_grow()
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-#if defined(UVM)
 	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + old_len,
 	    (vaddr_t)dynamic_gdt + new_len, FALSE);
-#else
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + old_len,
-	    (vm_offset_t)dynamic_gdt + new_len, FALSE);
-#endif
 }
 
 void
@@ -210,13 +196,8 @@ gdt_shrink()
 	old_len = gdt_size * sizeof(union descriptor);
 	gdt_size >>= 1;
 	new_len = old_len >> 1;
-#if defined(UVM)
 	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + new_len,
 	    (vaddr_t)dynamic_gdt + old_len, TRUE);
-#else
-	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + new_len,
-	    (vm_offset_t)dynamic_gdt + old_len, TRUE);
-#endif
 }
 
 /*
@@ -306,13 +287,8 @@ tss_free(pcb)
 }
 
 void
-#ifdef PMAP_NEW
 ldt_alloc(pmap, ldt, len)
 	struct pmap *pmap;
-#else
-ldt_alloc(pcb, ldt, len)
-	struct pcb *pcb;
-#endif
 	union descriptor *ldt;
 	size_t len;
 {
@@ -321,33 +297,20 @@ ldt_alloc(pcb, ldt, len)
 	slot = gdt_get_slot();
 	setsegment(&dynamic_gdt[slot].sd, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0,
 	    0);
-#ifdef PMAP_NEW
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
 	simple_unlock(&pmap->pm_lock);
-#else
-	pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
-#endif
 }
 
 void
-#ifdef PMAP_NEW
 ldt_free(pmap)
 	struct pmap *pmap;
-#else
-ldt_free(pcb)
-	struct pcb *pcb;
-#endif
 {
 	int slot;
 
-#ifdef PMAP_NEW
 	simple_lock(&pmap->pm_lock);
 	slot = IDXSEL(pmap->pm_ldt_sel);
 	simple_unlock(&pmap->pm_lock);
-#else
-	slot = IDXSEL(pcb->pcb_ldt_sel);
-#endif
 
 	gdt_put_slot(slot);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.17 2001/05/05 20:56:39 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.18 2001/05/05 23:25:49 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -131,10 +131,8 @@
  */
 
 /* XXX Compatibility */
-#ifdef PMAP_NEW
 #define APTDPTDI	PDSLOT_APTE
 #define PTDPTDI		PDSLOT_PTE
-#endif
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
@@ -161,17 +159,9 @@
 /*
  * pmap specific data stored in the vm_physmem[] array 
  */
-#if defined(PMAP_NEW)
 struct pmap_physseg {
 	struct pv_head *pvhead;		/* pv_head array */
 	char *attrs;			/* attrs array */
 };
-#else
-struct pmap_physseg {
-	struct pv_entry *pvent;		/* pv_entry array */
-	char *attrs;			/* attrs array */
-}; 
-#endif               
-
 
 #endif /* _MACHINE_VM_PARAM_H_ */

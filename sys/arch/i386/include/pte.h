@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2001/01/26 23:05:29 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2001/05/05 23:25:49 art Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -171,9 +171,6 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define PG_PS		0x00000080	/* 4MB page size */
 #define PG_G		0x00000100	/* global, don't TLB flush */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
-#ifndef PMAP_NEW
-#define PG_W		PG_AVAIL1	/* page is wired */
-#endif
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define PG_FRAME	0xfffff000	/* page frame mask */

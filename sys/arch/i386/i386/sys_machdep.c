@@ -59,9 +59,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -94,21 +92,12 @@ i386_user_cleanup(pcb)
 	struct pcb *pcb;
 {
 
-#ifdef PMAP_NEW
 	ldt_free(pcb->pcb_pmap);
-#else
-	ldt_free(pcb);
-#endif
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
-#if defined(UVM)
 	uvm_km_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
 	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
-#else
-	kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
-#endif
 	pcb->pcb_ldt = 0;
 }
 
@@ -165,13 +154,8 @@ i386_set_ldt(p, args, retval)
 {
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-#ifdef PMAP_NEW
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-#endif
 	int fsslot, gsslot;
-#ifndef PMAP_NEW
-	int s;
-#endif
 	struct i386_set_ldt_args ua;
 	union descriptor desc;
 
@@ -193,49 +177,24 @@ i386_set_ldt(p, args, retval)
 	 */
 
 	/* allocate user ldt */
-#ifdef PMAP_NEW
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
-#else
-	if (pcb->pcb_ldt == 0 || (ua.start + ua.num) > pcb->pcb_ldt_len) {
-#endif
 		size_t old_len, new_len;
 		union descriptor *old_ldt, *new_ldt;
 
-#ifdef PMAP_NEW
 		if (pmap->pm_flags & PMF_USER_LDT) {
 			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
 			old_ldt = pmap->pm_ldt;
-#else
-		if (pcb->pcb_flags & PCB_USER_LDT) {
-			old_len = pcb->pcb_ldt_len * sizeof(union descriptor);
-			old_ldt = pcb->pcb_ldt;
-#endif
 		} else {
 			old_len = NLDT * sizeof(union descriptor);
 			old_ldt = ldt;
-#ifdef PMAP_NEW
 			pmap->pm_ldt_len = 512;
-#else
-			pcb->pcb_ldt_len = 512;
-#endif
 		}
-#ifdef PMAP_NEW
 		while ((ua.start + ua.num) > pmap->pm_ldt_len)
 			pmap->pm_ldt_len *= 2;
 		new_len = pmap->pm_ldt_len * sizeof(union descriptor);
-#else
-		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
-			pcb->pcb_ldt_len *= 2;
-		new_len = pcb->pcb_ldt_len * sizeof(union descriptor);
-#endif
-#if defined(UVM)
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, new_len);
-#else
-		new_ldt = (union descriptor *)kmem_alloc(kernel_map, new_len);
-#endif
 		bcopy(old_ldt, new_ldt, old_len);
 		bzero((caddr_t)new_ldt + old_len, new_len - old_len);
-#ifdef PMAP_NEW
 		pmap->pm_ldt = new_ldt;
 
 		if (pmap->pm_flags & PCB_USER_LDT)
@@ -244,15 +203,6 @@ i386_set_ldt(p, args, retval)
 			pmap->pm_flags |= PCB_USER_LDT;
 		ldt_alloc(pmap, new_ldt, new_len);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-#else
-		pcb->pcb_ldt = new_ldt;
-
-		if (pcb->pcb_flags & PCB_USER_LDT)
-			ldt_free(pcb);
-		else
-			pcb->pcb_flags |= PCB_USER_LDT;
-		ldt_alloc(pcb, new_ldt, new_len);
-#endif
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
 
@@ -263,11 +213,7 @@ i386_set_ldt(p, args, retval)
 		 */
 
 		if (old_ldt != ldt)
-#if defined(UVM)
 			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
-#else
-			kmem_free(kernel_map, (vaddr_t)old_ldt, old_len);
-#endif
 #ifdef LDT_DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);
 #endif
@@ -342,28 +288,17 @@ i386_set_ldt(p, args, retval)
 		}
 	}
 
-#ifndef PMAP_NEW
-	s = splhigh();
-#endif
-
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
 		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
 			goto out;
 
-#ifdef PMAP_NEW
 		pmap->pm_ldt[n] = desc;
-#else
-		pcb->pcb_ldt[n] = desc;
-#endif
 	}
 
 	*retval = ua.start;
 
 out:
-#ifndef PMAP_NEW
-	splx(s);
-#endif
 	return (error);
 }
 #endif	/* USER_LDT */

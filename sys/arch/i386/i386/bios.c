@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.42 2001/02/28 19:16:06 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.43 2001/05/05 23:25:34 art Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -396,11 +396,7 @@ bios32_service(service, e, ei)
 
 	endpa = i386_round_page(BIOS32_END);
 
-#if defined(UVM)
 	sva = va = uvm_km_valloc(kernel_map, endpa);
-#else
-	sva = va = kmem_alloc_pageable(kernel_map, endpa);
-#endif
 	if (va == 0)
 		return (0);
 

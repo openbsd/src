@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.43 2001/04/24 22:13:00 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.44 2001/05/05 23:25:32 art Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -11,7 +11,7 @@ option		I586_CPU
 option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
-option		UVM		# use the UVM virtual memory system
+option		UVM		# use the UVM virtual memory system. REQUIRED
 
 #option		DUMMY_NOPS	# speed hack; recommended
 

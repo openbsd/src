@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.12 2001/05/05 21:26:45 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.13 2001/05/05 23:25:54 art Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.23 1999/05/28 20:49:51 thorpej Exp $	*/
 
 /* 
@@ -157,17 +157,6 @@ uvm_useracc(addr, len, rw)
 {
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
-
-#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
-	/*
-	 * XXX - specially disallow access to user page tables - they are
-	 * in the map.  This is here until i386 & pc532 pmaps are fixed...
-	 */
-	if ((vaddr_t) addr >= VM_MAXUSER_ADDRESS
-	    || (vaddr_t) addr + len > VM_MAXUSER_ADDRESS
-	    || (vaddr_t) addr + len <= (vaddr_t) addr)
-		return (FALSE);
-#endif
 
 	rv = uvm_map_checkprot(&curproc->p_vmspace->vm_map,
 			trunc_page((vaddr_t)addr), round_page((vaddr_t)addr+len), prot);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.54 2001/03/22 23:36:51 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.55 2001/05/05 23:25:37 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -121,17 +121,9 @@
  * Within PTmap, the page directory can be found (third indirection).
  */
 	.globl	_PTmap,_PTD,_PTDpde
-#ifdef PMAP_NEW
 	.set	_PTmap,(PDSLOT_PTE << PDSHIFT)
 	.set	_PTD,(_PTmap + PDSLOT_PTE * NBPG)
 	.set	_PTDpde,(_PTD + PDSLOT_PTE * 4)		# XXX 4 == sizeof pde
-#else
-	.set	_PTmap,(PTDPTDI << PDSHIFT)
-	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
-	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
-	.globl	_Sysmap
-	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
-#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
@@ -428,11 +420,7 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
-#ifdef PMAP_NEW
 #define	TABLESIZE	((1+UPAGES) * NBPG) /* + nkpde * NBPG */
-#else
-#define	TABLESIZE	((1+UPAGES+NKPDE) * NBPG)
-#endif
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
@@ -462,7 +450,6 @@ try586:	/* Use the `cpuid' instruction. */
 	addl	$PGOFSET, %esi			# page align up
 	andl	$~PGOFSET, %esi
 
-#ifdef PMAP_NEW
 	/*
 	 * Calculate the size of the kernel page table directory, and
 	 * how many entries it will have.
@@ -483,11 +470,6 @@ try586:	/* Use the `cpuid' instruction. */
 	addl	%esi,%ecx			# end of tables
 	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
-#else
-	/* Clear memory for bootstrap tables. */
-	movl	%esi, %edi
-	movl	$((TABLESIZE + 3) >> 2), %ecx	# size of tables
-#endif
 	xorl	%eax, %eax
 	cld
 	rep
@@ -531,14 +513,10 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
-#ifdef PMAP_NEW
 	movl	RELOC(_nkpde),%ecx
 	shll	$PGSHIFT,%ecx
 	addl	$TABLESIZE,%ecx
 	addl	%esi,%ecx				# end of tables
-#else
-	leal	(TABLESIZE)(%esi),%ecx			# end of tables
-#endif
 	subl	%edx,%ecx				# subtract end of text
 	shrl	$PGSHIFT,%ecx
 	fillkpt
@@ -551,46 +529,23 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Construct a page table directory.
 */
-#ifdef PMAP_NEW
 	movl	RELOC(_nkpde),%ecx			# count of pde s,
 	leal	(PROC0PDIR+0*4)(%esi),%ebx		# where temp maps!
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0
 	fillkpt
-#else
-/*
- * Install a PDE for temporary double map of kernel text.
- * Maps two pages, in case the kernel is larger than 4M.
- * XXX: should the number of pages to map be decided at run-time?
- */
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# calc Sysmap physaddr
-	movl	%eax,(PROC0PDIR+0*4)(%esi)		# map it in
-	addl	$NBPG, %eax				# 2nd Sysmap page
-	movl	%eax,(PROC0PDIR+1*4)(%esi)		# map it too
-	/* code below assumes %eax == sysmap physaddr, so we adjust it back */
-	subl	$NBPG, %eax
-#endif
 
 /*
  * Map kernel PDEs: this is the real mapping used 
  * after the temp mapping outlives its usefulness.
  */
-#ifdef PMAP_NEW
 	movl	RELOC(_nkpde),%ecx			# count of pde s,
 	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# map them high
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0
-#else
-	movl	$NKPDE,%ecx				# count of pde's
-	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# map them high
-#endif
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
-#ifdef PMAP_NEW
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
-#else
-	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# phys addr from above
-#endif
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_PTDpaddr)
@@ -608,27 +563,18 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
-#ifdef PMAP_NEW
 	movl	_nkpde,%ecx		# for this many pde s,
 	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
 	addl	$(KERNBASE), %ebx	# now use relocated address
 1:	movl	$0,(%ebx)
 	addl	$4,%ebx	# next pde
 	loop	1b
-#else
-	movl	$0,(PROC0PDIR+0*4)(%esi)
-	movl	$0,(PROC0PDIR+1*4)(%esi)
-#endif
 
 	/* Relocate atdevbase. */
-#ifdef PMAP_NEW
 	movl	_nkpde,%edx
 	shll	$PGSHIFT,%edx
 	addl	$(TABLESIZE+KERNBASE),%edx
 	addl	%esi,%edx
-#else
-	leal	(TABLESIZE+KERNBASE)(%esi),%edx
-#endif
 	movl	%edx,_atdevbase
 
 	/* Set up bootstrap stack. */
@@ -638,14 +584,10 @@ begin:
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
-#ifdef PMAP_NEW
 	movl	_nkpde,%eax
 	shll	$PGSHIFT,%eax
 	addl	$TABLESIZE,%eax
 	addl	%esi,%eax		# skip past stack and page tables
-#else
-	leal	(TABLESIZE)(%esi),%eax	# skip past stack and page tables
-#endif
 	pushl	%eax
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp
@@ -824,7 +766,6 @@ ENTRY(bcopyb)
 	cld
 	ret
 
-#if defined(UVM)
 /*
  * kcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes, abort on fault.
@@ -882,7 +823,6 @@ ENTRY(kcopy)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
-#endif
 	
 /*
  * bcopyw(caddr_t from, caddr_t to, size_t len);
@@ -1668,11 +1608,7 @@ ENTRY(longjmp)
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
-#ifdef UVM
 	.globl	_C_LABEL(whichqs),_C_LABEL(qs),_C_LABEL(uvmexp),_C_LABEL(panic)
-#else
-	.globl	_whichqs,_qs,_cnt,_panic
-#endif
 	
 /*
  * setrunqueue(struct proc *p);
@@ -1967,12 +1903,8 @@ switch_return:
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-#if defined(UVM)
 	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-#else
-	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free,_tss_free
-#endif
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
@@ -2148,11 +2080,7 @@ IDTVEC(fpu)
 	INTRENTRY
 	pushl	_cpl			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
-#if defined(UVM)
 	incl	_C_LABEL(uvmexp)+V_TRAP
-#else
-	incl	_cnt+V_TRAP
-#endif
 	call	_npxintr
 	addl	$8,%esp			# pop address and if_ppl
 	INTRFASTEXIT

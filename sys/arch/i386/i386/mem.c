@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.16 2001/05/05 20:56:38 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.17 2001/05/05 23:25:39 art Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -59,9 +59,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include "mtrr.h"
 
@@ -189,15 +187,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -258,11 +250,7 @@ mmmmap(dev, off, prot)
 /* minor device 1 is kernel memory */
 	case 1:
 		/* XXX - writability, executability checks? */
-#if defined(UVM)
 		if (!uvm_kernacc((caddr_t)off, NBPG, B_READ))
-#else
-		if (!kernacc((caddr_t)off, NBPG, B_READ))
-#endif
 			return -1;
 		return i386_btop(vtophys(off));
 #ifdef APERTURE
