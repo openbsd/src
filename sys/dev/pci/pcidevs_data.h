@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.683 2003/10/22 11:00:59 henning Exp 
+ *		OpenBSD: pcidevs,v 1.684 2003/10/28 00:11:38 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3561,6 +3561,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IRE, PCI_PRODUCT_IRE_ADSP2141,
 	    "ADSP 2141",
+	},
+	{
+	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8212,
+	    "IT8212",
 	},
 	{
 	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8330G,
