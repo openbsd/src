@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.52 2005/02/24 23:10:48 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.53 2005/02/28 05:59:00 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2225,6 +2225,7 @@ atu_stop(struct ifnet *ifp, int disable)
 	int s;
 
 	s = splnet();
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	/* Stop transfers. */
@@ -2264,6 +2265,5 @@ atu_stop(struct ifnet *ifp, int disable)
 	/* Let's be nice and turn off the radio before we leave */
 	atu_switch_radio(sc, 0);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	splx(s);
 }
