@@ -79,9 +79,9 @@ NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 NORMAL_G=	gspa < $< | gspahextoc > $*.c; ${CC} -c ${CFLAGS} ${PROF} $*.c
 
 %OBJS
-  
+
 %CFILES
-  
+
 %SFILES
 
 # load lines for config "xxx" will be emitted as:
