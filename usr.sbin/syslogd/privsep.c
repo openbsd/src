@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2003/10/22 19:37:38 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.8 2003/10/24 21:21:27 canacar Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -57,7 +57,6 @@ enum priv_state {
 	STATE_CONFIG,		/* parsing config file for first time */
 	STATE_RUNNING,		/* running and accepting network traffic */
 	STATE_QUIT,		/* shutting down */
-	STATE_RESTART		/* kill child and re-exec to restart */
 };
 
 enum cmd_types {
@@ -72,7 +71,7 @@ enum cmd_types {
 };
 
 static int priv_fd = -1;
-static pid_t child_pid;
+static pid_t child_pid = -1;
 static char config_file[MAXPATHLEN];
 static struct stat cf_info;
 static int allow_gethostbyaddr = 0;
@@ -92,11 +91,12 @@ static void sig_pass_to_chld(int);
 static void sig_got_chld(int);
 static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
+static int  may_read(int, void *, size_t);
 
 int
 priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 {
-	int i, fd, socks[2], cmd, addr_len, addr_af, result;
+	int i, fd, socks[2], cmd, addr_len, addr_af, result, restart;
 	size_t path_len, hostname_len;
 	char path[MAXPATHLEN], hostname[MAXHOSTNAMELEN];
 	struct stat cf_stat;
@@ -185,9 +185,11 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	TAILQ_INIT(&lognames);
 	increase_state(STATE_CONFIG);
+	restart = 0;
 
 	while (cur_state < STATE_QUIT) {
-		must_read(socks[0], &cmd, sizeof(int));
+		if (may_read(socks[0], &cmd, sizeof(int)))
+			break;
 		switch (cmd) {
 		case PRIV_OPEN_TTY:
 			dprintf("[priv]: msg PRIV_OPEN_TTY received\n");
@@ -247,9 +249,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			    &cf_stat.st_mtimespec, <) ||
 			    cf_info.st_size != cf_stat.st_size) {
 				dprintf("config file modified: restarting\n");
-				result = 1;
+				restart = result = 1;
 				must_write(socks[0], &result, sizeof(int));
-				increase_state(STATE_RESTART);
 			} else {
 				result = 0;
 				must_write(socks[0], &result, sizeof(int));
@@ -310,7 +311,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		if (funixn[i] && funix[i] != -1)
 			(void)unlink(funixn[i]);
 
-	if (cur_state == STATE_RESTART) {
+	if (restart) {
 		int r;
 
 		wait(&r);
@@ -391,7 +392,7 @@ increase_state(int state)
 {
 	if (state <= cur_state)
 		errx(1, "attempt to decrease or match current state");
-	if (state < STATE_INIT || state > STATE_RESTART)
+	if (state < STATE_INIT || state > STATE_QUIT)
 		errx(1, "attempt to switch to invalid state");
 	cur_state = state;
 }
@@ -598,7 +599,8 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 static void
 sig_pass_to_chld(int sig)
 {
-	kill(child_pid, sig);
+	if (child_pid != -1)
+		kill(child_pid, sig);
 }
 
 /* When child dies, move into the shutdown state */
@@ -607,6 +609,28 @@ sig_got_chld(int sig)
 {
 	if (cur_state < STATE_QUIT)
 		cur_state = STATE_QUIT;
+}
+
+/* Read all data or return 1 for error.  */
+static int
+may_read(int fd, void *buf, size_t n)
+{
+	char *s = buf;
+	ssize_t res, pos = 0;
+
+	while (n > pos) {
+		res = read(fd, s + pos, n - pos);
+		switch (res) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+		case 0:
+			return (1);
+		default:
+			pos += res;
+		}
+	}
+	return (0);
 }
 
 /* Read data with the assertion that it all must come through, or
