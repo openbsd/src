@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.21 1997/06/02 03:08:55 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.22 1997/06/20 04:55:00 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.21 1997/06/02 03:08:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.22 1997/06/20 04:55:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -117,7 +117,7 @@ int	authok;
 
 struct	passwd *pwd;
 int	failures;
-char	term[64], *envinit[1], *hostname, *tty;
+char	term[64], *hostname, *tty;
 char	*username = NULL, *rusername = NULL;
 
 int
@@ -436,7 +436,8 @@ main(argc, argv)
 
 	/* Destroy environment unless user has requested its preservation. */
 	if (!pflag)
-		environ = envinit;
+		if ((environ = calloc(1, sizeof (char *))) == NULL)
+			err(1, "calloc");
 	else {
 		char **cpp, **cpp2;
 
