@@ -1,4 +1,4 @@
-.\"     $OpenBSD: txp.4,v 1.3 2001/04/30 00:22:59 deraadt Exp $
+.\"     $OpenBSD: txp.4,v 1.4 2001/05/08 05:11:33 jason Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -57,17 +57,17 @@ This driver supports the following cards:
 3Com 3CR990SVR97
 .El
 .Pp
-Only basic Ethernet functions are provided.
-There is no support currently for
+Basic Ethernet functions are provided as well as support for
 .Xr vlan 4
-hardware tagging assistance,
+tag removal and insertion assistance.
+There is no support currently for
 .Xr ip 4 ,
 .Xr tcp 4 ,
 and
-.Xr udp 4 ,
+.Xr udp 4
 checksum offloading,
 .Xr tcp 4
-segmentation offloading, nor
+segmentation, nor
 .Xr ipsec 4
 acceleration.
 .Pp
