@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.17 2001/04/15 23:32:31 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.18 2001/04/17 00:50:16 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.17 2001/04/15 23:32:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.18 2001/04/17 00:50:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-int	needuser, needcomm, needenv, commandonly;
+int	needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU, SORTSTART } sortby = SORTSTART;
 
@@ -296,9 +296,6 @@ main(argc, argv)
 	if (!all && ttydev == NODEV && pid == -1 && uid == (uid_t)-1)
 		uid = getuid();
 
-	if (sortby == SORTSTART)
-		needuser = 1;
-
 	/*
 	 * scan requested variables, noting what structures are needed,
 	 * and adjusting header widths as appropiate.
@@ -332,8 +329,7 @@ main(argc, argv)
 		err(1, NULL);
 	for (i = nentries; --i >= 0; ++kp) {
 		kinfo[i].ki_p = kp;
-		if (needuser)
-			saveuser(&kinfo[i]);
+		saveuser(&kinfo[i]);
 	}
 	/*
 	 * print header
@@ -382,8 +378,6 @@ scanvars()
 		if (v->width < i)
 			v->width = i;
 		totwidth += v->width + 1;	/* +1 for space */
-		if (v->flag & USER)
-			needuser = 1;
 		if (v->flag & COMM)
 			needcomm = 1;
 	}
