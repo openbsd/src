@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.4 1996/04/21 23:47:27 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.5 1996/06/23 13:16:21 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -382,8 +382,8 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	(void)fclose(fp);
 
 	/* Create the core file. */
-	(void)snprintf(path, sizeof(path), "%s/bsd.%d.core%s",
-	    dirname, bounds, compress ? ".Z" : "");
+	(void)snprintf(path, sizeof(path), "%s/%s.%d.core%s",
+	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
@@ -450,8 +450,8 @@ err2:			syslog(LOG_WARNING,
 
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
-	(void)snprintf(path, sizeof(path), "%s/bsd.%d%s",
-	    dirname, bounds, compress ? ".Z" : "");
+	(void)snprintf(path, sizeof(path), "%s/%s.%d%s",
+	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
