@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.61 2004/05/28 23:50:14 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.62 2004/07/31 11:31:30 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -267,24 +267,6 @@ scsi_test_unit_ready(sc_link, retries, flags)
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, retries, 10000, NULL, flags);
-}
-
-/*
- * Do a scsi operation, asking a device to run as SCSI-II if it can.
- */
-int 
-scsi_change_def(sc_link, flags)
-	struct scsi_link *sc_link;
-	int flags;
-{
-	struct scsi_changedef scsi_cmd;
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = CHANGE_DEFINITION;
-	scsi_cmd.how = SC_SCSI_2;
-
-	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, 2, 100000, NULL, flags);
 }
 
 /*

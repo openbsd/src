@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.91 2004/05/09 14:08:11 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.92 2004/07/31 11:31:30 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -654,12 +654,6 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 	}
 #endif
-
-#ifdef SCSI_2_DEF
-	/* Some devices need to be told to go to SCSI2. */
-	/* However some just explode if you tell them this... leave it out. */
-	scsi_change_def(sc_link, scsi_autoconf | SCSI_SILENT);
-#endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
 	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);

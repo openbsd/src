@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.16 2004/02/21 00:47:42 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.17 2004/07/31 11:31:29 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -153,18 +153,6 @@ struct scsi_prevent {
 };
 #define	PR_PREVENT 0x01
 #define PR_ALLOW   0x00
-
-struct scsi_changedef {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused1;
-	u_int8_t how;
-	u_int8_t unused[4];
-	u_int8_t datalen;
-	u_int8_t control;
-};
-#define SC_SCSI_1 0x01
-#define SC_SCSI_2 0x03
 
 /*
  * Opcodes
