@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.13 1997/09/09 15:11:28 imp Exp $
+#	$OpenBSD: bsd.port.mk,v 1.14 1997/09/21 10:58:41 niklas Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -63,6 +63,12 @@ OpenBSD_MAINTAINER=	imp@OpenBSD.ORG
 # MAINTAINER	- The e-mail address of the contact person for this port
 #				  (default: ports@FreeBSD.ORG).
 # CATEGORIES	- A list of descriptive categories into which this port falls.
+# WRKOBJDIR		- A top level directory where, if defined, the separate working
+#				  directories will get created, and symbolically linked to from
+#				  ${WRKDIR} (see below).  This is useful for building ports on
+#				  several architectures, then ${PORTSDIR} can be NFS-mounted
+#				  while ${WRKOBJDIR} is local to every arch.
+
 #
 # Variables that typically apply to an individual port.  Non-Boolean
 # variables without defaults are *mandatory*.
@@ -295,6 +301,9 @@ OPSYS!=	uname -s
 
 .if (${OPSYS} == "OpenBSD")
 NOMANCOMPRESS?=	yes
+DEF_UMASK?=		022
+.else
+DEF_UMASK?=		0022
 .endif
 
 .if exists(${.CURDIR}/Makefile.${ARCH}-${OPSYS})
@@ -332,6 +341,13 @@ WRKDIR?=		${.CURDIR}
 WRKSRC?=		${WRKDIR}
 .else
 WRKSRC?=		${WRKDIR}/${DISTNAME}
+.endif
+
+.if defined(WRKOBJDIR)
+# XXX Is pwd -P available in FreeBSD's /bin/sh?
+__canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
+__canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
+PORTSUBDIR=		${__canonical_CURDIR:S,${__canonical_PORTSDIR}/,,}
 .endif
 
 .if exists(${.CURDIR}/patches.${ARCH}-${OPSYS})
@@ -558,6 +574,7 @@ GZCAT?=		/usr/bin/gzcat
 GZIP?=		-9
 GZIP_CMD?=	/usr/bin/gzip -nf ${GZIP}
 LDCONFIG?=	/sbin/ldconfig
+LN?=		/bin/ln
 MKDIR?=		/bin/mkdir -p
 MV?=		/bin/mv
 RM?=		/bin/rm
@@ -965,8 +982,16 @@ do-fetch:
 .if !target(do-extract)
 do-extract:
 .if !defined(NO_WRKDIR)
+.if defined(WRKOBJDIR)
+	@${RM} -rf ${WRKOBJDIR}/${PORTSUBDIR}
+	@${MKDIR} -p ${WRKOBJDIR}/${PORTSUBDIR}
+	@echo "${WRKDIR} -> ${WRKOBJDIR}/${PORTSUBDIR}"
+	@# XXX whatif a build is going on right now?  Is this wise?
+	@${LN} -sf ${WRKOBJDIR}/${PORTSUBDIR} ${WRKDIR}
+.else
 	@${RM} -rf ${WRKDIR}
 	@${MKDIR} ${WRKDIR}
+.endif
 .endif
 	@for file in ${EXTRACT_ONLY}; do \
 		if ! (cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
@@ -1145,7 +1170,7 @@ _PORT_USE: .USE
 		exit 1; \
 	fi
 .endif
-	@if [ `${SH} -c umask` != 0022 ]; then \
+	@if [ `${SH} -c umask` != ${DEF_UMASK} ]; then \
 		${ECHO_MSG} "===>  Warning: your umask is \"`${SH} -c umask`"\".; \
 		${ECHO_MSG} "      If this is not desired, set it to an appropriate value"; \
 		${ECHO_MSG} "      and install this port again by \`\`make reinstall''."; \
