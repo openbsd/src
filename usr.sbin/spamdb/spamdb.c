@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.2 2004/02/26 08:18:56 deraadt Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.3 2004/02/26 08:28:57 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include "grey.h"
-#define PATH_SPAMD_DB "/var/db/spamd"
 
 extern struct passwd *pw;
 extern FILE * grey;
