@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.62 1998/02/06 00:06:00 deraadt Exp $
+#	$OpenBSD: rc,v 1.63 1998/02/07 21:17:37 beck Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -333,6 +333,13 @@ fi
 if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
 	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
 fi
+
+# $smtpfwdd_flags is imported from /etc/rc.conf;
+# If $smtpfwdd_flags == NO, smtpfwdd isn't run.
+if [ "X${smtpfwdd_flags}" != X"NO" ]; then
+	echo -n ' smtpfwdd';	/usr/libexec/smtpfwdd ${smtpfwdd_flags}
+fi
+
 
 if [ X${inetd} = X"YES" ]; then
 	echo -n ' inetd';		inetd
