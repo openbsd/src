@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.85 2005/03/30 05:29:04 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.86 2005/03/30 05:34:30 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -62,9 +62,7 @@
 union	sockunion {
 	struct sockaddr		sa;
 	struct sockaddr_in	sin;
-#ifdef INET6
 	struct sockaddr_in6	sin6;
-#endif
 	struct sockaddr_ipx	sipx;
 	struct sockaddr_dl	sdl;
 	struct sockaddr_rtin	rtin;
@@ -96,9 +94,7 @@ void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
-#ifdef INET6
-int	inet6_makenetandmask(struct sockaddr_in6 *);
-#endif
+int	 inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
 __dead void usage(char *);
@@ -218,11 +214,9 @@ flushroutes(int argc, char **argv)
 			case K_INET:
 				af = AF_INET;
 				break;
-#ifdef INET6
 			case K_INET6:
 				af = AF_INET6;
 				break;
-#endif
 			case K_IPX:
 				af = AF_IPX;
 				break;
@@ -372,12 +366,10 @@ newroute(int argc, char **argv)
 				af = AF_INET;
 				aflen = sizeof(struct sockaddr_in);
 				break;
-#ifdef INET6
 			case K_INET6:
 				af = AF_INET6;
 				aflen = sizeof(struct sockaddr_in6);
 				break;
-#endif
 			case K_SA:
 				af = PF_ROUTE;
 				aflen = sizeof(union sockunion);
@@ -590,11 +582,9 @@ show(int argc, char *argv[])
 			case K_INET:
 				af = AF_INET;
 				break;
-#ifdef INET6
 			case K_INET6:
 				af = AF_INET6;
 				break;
-#endif
 			case K_IPX:
 				af = AF_IPX;
 				break;
@@ -656,7 +646,6 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 	sin->sin_len = 1 + cp - (char *)sin;
 }
 
-#ifdef INET6
 /*
  * XXX the function may need more improvement...
  */
@@ -684,7 +673,6 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6)
 		return (0);
 	}
 }
-#endif
 
 /*
  * Interpret an argument as a network address of some kind,
@@ -746,7 +734,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 	}
 
 	switch (afamily) {
-#ifdef INET6
 	case AF_INET6:
 	    {
 		struct addrinfo hints, *res;
@@ -766,7 +753,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 			errx(1, "%s: resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
-#ifdef __KAME__
 		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
 		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
 		    su->sin6.sin6_scope_id) {
@@ -774,7 +760,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 				htons(su->sin6.sin6_scope_id);
 			su->sin6.sin6_scope_id = 0;
 		}
-#endif
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (which == RTA_DST)
 				return (inet6_makenetandmask(&su->sin6));
@@ -782,7 +767,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 		} else
 			return (1);
 	    }
-#endif
 
 	case AF_IPX:
 		if (which == RTA_DST) {
@@ -856,11 +840,9 @@ prefixlen(char *s)
 	case AF_INET:
 		max = sizeof(struct in_addr) * 8;
 		break;
-#ifdef INET6
 	case AF_INET6:
 		max = sizeof(struct in6_addr) * 8;
 		break;
-#endif
 	default:
 		errx(1, "prefixlen is not supported with af %d", af);
 		/* NOTREACHED */
@@ -879,7 +861,6 @@ prefixlen(char *s)
 		so_mask.sin.sin_len = sizeof(struct sockaddr_in);
 		so_mask.sin.sin_addr.s_addr = htonl(0xffffffff << (32 - len));
 		break;
-#ifdef INET6
 	case AF_INET6:
 		so_mask.sin6.sin6_family = AF_INET6;
 		so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
@@ -891,7 +872,6 @@ prefixlen(char *s)
 			*((u_char *)&so_mask.sin6.sin6_addr + q) =
 			    (0xff00 >> r) & 0xff;
 		break;
-#endif
 	}
 	return (len == max);
 }
@@ -1043,9 +1023,7 @@ mask_addr(union sockunion *addr, union sockunion *mask, int which)
 	switch (addr->sa.sa_family) {
 	case AF_IPX:
 	case AF_INET:
-#ifdef INET6
 	case AF_INET6:
-#endif
 	case 0:
 		return;
 	}
@@ -1333,7 +1311,6 @@ sodump(sup su, char *which)
 	case AF_INET:
 		printf("%s: inet %s; ", which, inet_ntoa(su->sin.sin_addr));
 		break;
-#ifdef INET6
 	case AF_INET6:
 	    {
 		char ntop_buf[NI_MAXHOST];
@@ -1343,7 +1320,6 @@ sodump(sup su, char *which)
 		    ntop_buf, sizeof(ntop_buf)));
 		break;
 	    }
-#endif
 	case AF_IPX:
 		printf("%s: ipx %s; ", which, ipx_ntoa(su->sipx.sipx_addr));
 		break;
