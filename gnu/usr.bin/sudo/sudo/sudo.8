@@ -1,14 +1,14 @@
 .rn '' }`
-''' $OpenBSD: sudo.8,v 1.8 1999/02/17 13:02:06 espie Exp $
+''' $OpenBSD: sudo.8,v 1.9 1999/02/19 04:32:51 millert Exp $
 '''
-''' $RCSfile: sudo.8,v $$Revision: 1.8 $$Date: 1999/02/17 13:02:06 $
+''' $RCSfile: sudo.8,v $$Revision: 1.9 $$Date: 1999/02/19 04:32:51 $
 '''
 ''' $Log: sudo.8,v $
-''' Revision 1.8  1999/02/17 13:02:06  espie
-''' Grammar
+''' Revision 1.9  1999/02/19 04:32:51  millert
+''' sudo 1.5.8
 '''
-''' Revision 1.7  1998/11/21 01:34:53  millert
-''' sudo 1.5.7
+''' Revision 1.30  1999/02/17 16:40:55  millert
+''' fix grammar; espie@openbsd.org
 '''
 '''
 .de Sh
@@ -101,7 +101,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudo 8 "1.5.7" "5/Nov/98" "MAINTENANCE COMMANDS"
+.TH sudo 8 "1.5.8" "17/Feb/99" "MAINTENANCE COMMANDS"
 .UC
 .if n .hy 0
 .if n .na
@@ -199,7 +199,7 @@
 sudo \- execute a command as the superuser
 .SH "SYNOPSIS"
 \fBsudo\fR \fB\-V\fR | \fB\-h\fR | \fB\-l\fR | \fB\-v\fR | \fB\-k\fR | \fB\-s\fR | \fB\-H\fR |
-[ \fB\-b\fR ] | [ \fB\-p\fR prompt ] [ \fB\-u\fR username/#uid] \fIcommand\fR
+[ \fB\-b\fR ] | [ \fB\-r\fR realm ] | [ \fB\-p\fR prompt ] [ \fB\-u\fR username/#uid] \fIcommand\fR
 .SH "DESCRIPTION"
 \fBsudo\fR allows a permitted user to execute a \fIcommand\fR
 as the superuser (real and effective uid and gid are set
@@ -208,7 +208,7 @@ to \f(CW0\fR and root's group as set in the passwd file respectively).
 \fBsudo\fR determines who is an authorized user by consulting the
 file \fI/etc/sudoers\fR.  By giving \fBsudo\fR the \f(CW-v\fR flag a user
 can update the time stamp without running a \fIcommand.\fR
-The password prompt itself will also time out if the password is
+The password prompt itself will also time out if the user's password is
 not entered with N minutes (again, this is defined at installation
 time and defaults to 5 minutes).
 .PP
@@ -230,19 +230,24 @@ The \f(CW-h\fR (\fIhelp\fR) option causes \fBsudo\fR to print the version
 of \fBsudo\fR and a usage message before exiting.
 .Ip "-v" 4
 If given the \f(CW-v\fR (\fIvalidate\fR) option, \fBsudo\fR will update the
-user's timestamp file, prompting for a password if necessary.
+user's timestamp file, prompting for the user's password if necessary.
 This extends the \fBsudo\fR timeout to for another N minutes
 (where N is defined at installation time and defaults to 5
 minutes) but does not run a command.
 .Ip "-k" 4
 The \f(CW-k\fR (\fIkill\fR) option to \fBsudo\fR removes the user's timestamp
-file, thus requiring a password the next time \fBsudo\fR is run.
+file, thus requiring the user's password the next time \fBsudo\fR is run.
 This option does not require a password and was added to
 allow a user to revoke \fBsudo\fR permissions from a .logout file.
 .Ip "-b" 4
 The \f(CW-b\fR (\fIbackground\fR) option tells \fBsudo\fR to run the given
 command in the background.  Note that if you use the \f(CW-b\fR
 option you cannot use shell job control to manipulate the command.
+.Ip "-r" 4
+The \f(CW-r\fR (\fIrealm\fR) option is only available if \fBsudo\fR was configured
+with \fBKerberos\fR version 5 support.  It allows the user to specify a
+\fBKerberos\fR realm other than the system default to use when authenticating
+the user via \fBKerberos\fR.
 .Ip "-p" 4
 The \f(CW-p\fR (\fIprompt\fR) option allows you to override the default
 password prompt and use a custom one.  If the password prompt
@@ -266,62 +271,58 @@ The \f(CW--\fR flag indicates that \fBsudo\fR should stop processing command
 line arguments.  It is most useful in conjunction with the \f(CW-s\fR flag.
 .SH "RETURN VALUES"
 \fBsudo\fR quits with an exit value of 1 if there is a
-configuration/permission problem or if \fBsudo\fR cannot execute
-the given command.  In the latter case the error string is
-printed to stderr via \fIperror\fR\|(3).  If \fBsudo\fR cannot \fIstat\fR\|(2)
-one or more entries in the user's PATH the error is printed
-on stderr via \fIperror\fR\|(3).  (If the directory does not exist
-or if it is not really a directory, the entry is ignored and
-no error is printed.)  This should not happen under normal
-circumstances.  The most common reason for \fIstat\fR\|(3) to return
-\*(L"permission denied\*(R" is if you are running an automounter and
-one of the directories in your PATH is on a machine that is
-currently unreachable.
+configuration/permission problem or if \fBsudo\fR cannot execute the
+given command.  In the latter case the error string is printed to
+stderr via \fIperror\fR\|(3).  If \fBsudo\fR cannot \fIstat\fR\|(2) one or more entries
+in the user's PATH the error is printed on stderr via \fIperror\fR\|(3).
+(If the directory does not exist or if it is not really a directory,
+the entry is ignored and no error is printed.)  This should not
+happen under normal circumstances.  The most common reason for
+\fIstat\fR\|(3) to return \*(L"permission denied\*(R" is if you are running an
+automounter and one of the directories in your PATH is on a machine
+that is currently unreachable.
 .SH "SECURITY NOTES"
-\fBsudo\fR tries to be safe when executing external commands.
-Variables that control how dynamic loading and binding is
-done can be used to subvert the program that \fBsudo\fR runs.
-To combat this the \f(CWLD_*\fR, \f(CWSHLIB_PATH\fR (HP\-UX only),
-\f(CWLIBPATH\fR (AIX only), and \f(CW_RLD_*\fR environment variables are
-removed from the environment passed on to all commands executed.
-\fBsudo\fR will also remove the \f(CWIFS\fR, \f(CWENV\fR, \f(CWBASH_ENV\fR
-and \f(CWKRB_CONF\fR variables as they too can pose a threat.
+\fBsudo\fR tries to be safe when executing external commands.  Variables
+that control how dynamic loading and binding is done can be used
+to subvert the program that \fBsudo\fR runs.  To combat this the
+\f(CWLD_*\fR, \f(CW_RLD_*\fR, \f(CWSHLIB_PATH\fR (HP\-UX only), and \f(CWLIBPATH\fR (AIX
+only) environment variables are removed from the environment passed
+on to all commands executed.  \fBsudo\fR will also remove the \f(CWIFS\fR,
+\f(CWENV\fR, \f(CWBASH_ENV\fR, \f(CWKRB_CONF\fR and \f(CWKRB5_CONFIG\fR variables as
+they too can pose a threat.
 .PP
-To prevent command spoofing, \fBsudo\fR checks "." and "" (both
-denoting current directory) last when searching for a command
-in the user's PATH (if one or both are in the PATH).
-Note, however, that the actual PATH environment variable
-is \fInot\fR modified and is passed unchanged to the program that
-\fBsudo\fR executes.
+To prevent command spoofing, \fBsudo\fR checks "." and "" (both denoting
+current directory) last when searching for a command in the user's
+PATH (if one or both are in the PATH).  Note, however, that the
+actual PATH environment variable is \fInot\fR modified and is passed
+unchanged to the program that \fBsudo\fR executes.
 .PP
-For security reasons, if your OS supports shared libraries,
-\fBsudo\fR should always be statically linked unless the
-dynamic loader disables user-defined library search paths
-for setuid programs.  (Most modern dynamic loaders do this.)
+For security reasons, if your OS supports shared libraries, \fBsudo\fR
+should always be statically linked unless the dynamic loader disables
+user-defined library search paths for setuid programs.  (Most modern
+dynamic loaders do this.)
 .PP
 \fBsudo\fR will check the ownership of its timestamp directory
-(\fI/var/run/sudo\fR or \fI/tmp/.odus\fR by default) and ignore
-the directory's contents if it is not owned by root and
-only read, writable, and executable by root.  On systems
-that allow users to give files away to root (via chown),
-if the timestamp directory is located in a directory writable
-by anyone (ie: \fI/tmp\fR), it is possible for a user to create
-the timestamp directory before \fBsudo\fR is run.
-However, because \fBsudo\fR checks the ownership and mode of
-the directory, the only damage that can be done is to \*(L"hide\*(R"
-files by putting them in the timestamp dir.  This is unlikely
-to happen since once the timestamp dir is owned by root and
-inaccessible by any other user the user placing files there
-would be unable to get them back out.  To get around this
-issue you can use a directory that is not world-writable
-for the timestamps (\fI/var/adm/sudo\fR for instance).
+(\fI/var/run/sudo\fR or \fI/tmp/.odus\fR by default) and ignore the
+directory's contents if it is not owned by root and only read,
+writable, and executable by root.  On systems that allow users to
+give files away to root (via chown), if the timestamp directory is
+located in a directory writable by anyone (ie: \fI/tmp\fR), it is
+possible for a user to create the timestamp directory before \fBsudo\fR
+is run.  However, because \fBsudo\fR checks the ownership and mode of
+the directory, the only damage that can be done is to \*(L"hide\*(R" files
+by putting them in the timestamp dir.  This is unlikely to happen
+since once the timestamp dir is owned by root and inaccessible by
+any other user the user placing files there would be unable to get
+them back out.  To get around this issue you can use a directory
+that is not world-writable for the timestamps (\fI/var/adm/sudo\fR for
+instance).
 .PP
-\f(CWsudo\fR will not honor timestamp files set far in the
-future.  Timestamp files with a date greater than
-current_time + 2 * \f(CWTIMEOUT\fR will be ignored and
-sudo will log the anomaly.  This is done to keep a user
-from creating his/her own timestamp file with a bogus
-date.
+\f(CWsudo\fR will not honor timestamp files set far in the future.
+Timestamp files with a date greater than current_time + 2 * \f(CWTIMEOUT\fR
+will be ignored and sudo complain about a \*(L"preposterous stampfile
+date\*(R".  This is done to keep a user from creating his/her own
+timestamp file with a bogus date.
 .SH "FILES"
 .PP
 .Vb 1
@@ -401,6 +402,8 @@ that make setuid shell scripts unsafe on some operating systems.
 .IX Item "-k"
 
 .IX Item "-b"
+
+.IX Item "-r"
 
 .IX Item "-p"
 

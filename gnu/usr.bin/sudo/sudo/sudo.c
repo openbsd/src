@@ -1,7 +1,8 @@
-/*	$OpenBSD: sudo.c,v 1.11 1998/11/21 01:34:53 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.12 1999/02/19 04:32:51 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -83,6 +84,9 @@
 #ifdef HAVE_DCE
 #include <pthread.h>
 #endif /* HAVE_DCE */
+#ifdef HAVE_KERB5
+#include <krb5.h>
+#endif /* HAVE_KERB5 */
 
 #include "sudo.h"
 #include "version.h"
@@ -98,7 +102,7 @@ extern char *getenv	__P((char *));
 #endif /* STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$From: sudo.c,v 1.213 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.219 1999/02/11 06:41:31 millert Exp $";
 #endif /* lint */
 
 
@@ -147,6 +151,12 @@ static char *runas_homedir = NULL;
 extern struct interface *interfaces;
 extern int num_interfaces;
 extern int printmatches;
+int arg_prompt = 0;	/* was -p used? */
+#ifdef HAVE_KERB5
+krb5_context sudo_context = NULL;
+char *realm = NULL;
+int xrealm = 0;
+#endif /* HAVE_KERB5 */
 
 /*
  * Table of "bad" envariables to remove and len for strncmp()
@@ -163,7 +173,10 @@ struct env_table badenv_table[] = {
 #endif /* _AIX */
 #ifdef HAVE_KERB4
     { "KRB_CONF", 8 },
-#endif
+#endif /* HAVE_KERB4 */
+#ifdef HAVE_KERB5
+    { "KRB5_CONFIG", 11 },
+#endif /* HAVE_KERB5 */
     { "ENV=", 4 },
     { "BASH_ENV=", 9 },
     { (char *) NULL, 0 }
@@ -181,7 +194,8 @@ int main(argc, argv)
     int argc;
     char **argv;
 {
-    int rtn, cmnd_status = FOUND;
+    int rtn, serrno;
+    int cmnd_status = FOUND;
     int sudo_mode = MODE_RUN;
     extern char ** environ;
 
@@ -280,8 +294,10 @@ int main(argc, argv)
 
     rtn = check_sudoers();	/* check mode/owner on _PATH_SUDO_SUDOERS */
     if (rtn != ALL_SYSTEMS_GO) {
+	serrno = errno;
 	log_error(rtn);
 	set_perms(PERM_FULL_USER, sudo_mode);
+	errno = serrno;
 	inform_user(rtn);
 	exit(1);
     }
@@ -418,6 +434,10 @@ static void load_globals(sudo_mode)
 #ifdef FQDN
     struct hostent *h_ent;
 #endif /* FQDN */
+#ifdef HAVE_KERB5 
+    krb5_error_code retval;
+    char *lrealm;
+#endif /* HAVE_KERB5 */
 
     /*
      * Get a local copy of the user's struct passwd with the shadow password
@@ -440,6 +460,38 @@ static void load_globals(sudo_mode)
 	inform_user(GLOBAL_NO_PW_ENT);
 	exit(1);
     }
+
+#ifdef HAVE_KERB5
+    if (retval = krb5_init_context(&sudo_context)) {
+	log_error(GLOBAL_KRB5_INIT_ERR);
+	inform_user(GLOBAL_KRB5_INIT_ERR);
+	exit(1);
+    }
+    krb5_init_ets(sudo_context);
+
+    if (retval = krb5_get_default_realm(sudo_context, &lrealm)) {
+	log_error(GLOBAL_KRB5_INIT_ERR);
+	inform_user(GLOBAL_KRB5_INIT_ERR);
+	exit(1);
+    }
+
+    if (realm) {
+	if (strcmp(realm, lrealm) != 0)
+	    xrealm = 1; /* User supplied realm is not the system default */
+	free(lrealm);
+    } else
+	realm = lrealm;
+
+    if (!arg_prompt) {
+	p = malloc(strlen(user_name) + strlen(realm) + 17);
+	if (p == NULL) {
+	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
+	    exit(1);
+	}
+	sprintf(p, "Password for %s@%s: ", user_name, realm);
+	prompt = p;
+    }
+#endif /* HAVE_KERB5 */
 
     /* Set euid == user and ruid == root */
     set_perms(PERM_ROOT, sudo_mode);
@@ -510,7 +562,7 @@ static void load_globals(sudo_mode)
      */
     if ((p = strchr(host, '.'))) {
 	*p = '\0';
-	if ((shost = strdup(host)) == NULL) {
+	if ((shost = (char *) strdup(host)) == NULL) {
 	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}
@@ -564,12 +616,26 @@ static int parse_args()
 	    usage(1);			/* only one -? option allowed */
 
 	switch (NewArgv[0][1]) {
+#ifdef HAVE_KERB5
+	    case 'r':
+		/* must have an associated realm */
+		if (NewArgv[1] == NULL)
+		    usage(1);
+
+		realm = NewArgv[1];
+
+		/* shift Argv over and adjust Argc */
+		NewArgc--;
+		NewArgv++;
+		break;
+#endif /* HAVE_KERB5 */
 	    case 'p':
 		/* must have an associated prompt */
 		if (NewArgv[1] == NULL)
 		    usage(1);
 
 		prompt = NewArgv[1];
+		arg_prompt = 1;
 
 		/* shift Argv over and adjust Argc */
 		NewArgc--;
@@ -658,7 +724,13 @@ static int parse_args()
 static void usage(exit_val)
     int exit_val;
 {
-    (void) fprintf(stderr, "usage: %s -V | -h | -l | -v | -k | -H | [-b] [-p prompt] [-u username/#uid] -s | <command>\n", Argv[0]);
+    (void) fprintf(stderr,
+		   "usage: %s -V | -h | -l | -v | -k | -H | [-b] [-p prompt] ",
+		   Argv[0]);
+#ifdef HAVE_KERB5
+    (void) fprintf(stderr, "[-r realm] ");
+#endif /* HAVE_KERB5 */
+    (void) fprintf(stderr, "[-u username/#uid] -s | <command>\n");
     exit(exit_val);
 }
 
@@ -836,7 +908,7 @@ static int check_sudoers()
      */
     set_perms(PERM_SUDOERS, 0);
 
-    if (lstat(_PATH_SUDO_SUDOERS, &statbuf) != 0 && rootstat != 0)
+    if (rootstat != 0 && lstat(_PATH_SUDO_SUDOERS, &statbuf) != 0)
 	rtn = NO_SUDOERS_FILE;
     else if (!S_ISREG(statbuf.st_mode))
 	rtn = SUDOERS_NOT_FILE;

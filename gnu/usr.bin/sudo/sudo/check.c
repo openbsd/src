@@ -1,7 +1,8 @@
-/*	$OpenBSD: check.c,v 1.13 1998/11/21 01:34:51 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.14 1999/02/19 04:32:49 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -64,6 +65,9 @@
 #ifdef HAVE_KERB4
 #  include <krb.h>
 #endif /* HAVE_KERB4 */
+#ifdef HAVE_KERB5
+#  include <krb5.h>
+#endif /* HAVE_KERB5 */
 #ifdef HAVE_PAM
 #  include <security/pam_appl.h>
 #  include <security/pam_misc.h>
@@ -83,6 +87,9 @@
 #ifdef HAVE_OPIE
 #  include <opie.h>
 #endif /* HAVE_OPIE */
+#ifdef HAVE_AUTHSRV
+#  include <firewall.h>
+#endif
 #ifdef HAVE_UTIME
 #  ifdef HAVE_UTIME_H
 #    include <utime.h>
@@ -96,7 +103,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$From: check.c,v 1.163 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.170 1999/02/07 00:43:24 millert Exp $";
 #endif /* lint */
 
 /*
@@ -111,6 +118,10 @@ static char *expand_prompt		__P((char *, char *, char *));
 #ifdef HAVE_KERB4
 static int   sudo_krb_validate_user	__P((struct passwd *, char *));
 #endif /* HAVE_KERB4 */
+#ifdef HAVE_KERB5
+static int   sudo_krb5_validate_user	__P((struct passwd *, char *));
+static int   verify_krb_v5_tgt		__P((krb5_ccache));
+#endif /* HAVE_KERB5 */
 #ifdef HAVE_PAM
 static void pam_attempt_auth            __P((void));
 #endif /* HAVE_PAM */
@@ -136,6 +147,11 @@ struct skey skey;
 #ifdef HAVE_OPIE
 struct opie opie;
 #endif
+#ifdef HAVE_KERB5
+extern krb5_context sudo_context;
+extern char *realm;
+extern int xrealm;
+#endif /* HAVE_KERB5 */
 
 
 
@@ -238,7 +254,7 @@ static int check_timestamp()
 
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s: path too long: %s/%s.%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s:%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name, p);
 	exit(1);                                              
     }
@@ -410,11 +426,11 @@ void remove_timestamp()
 
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s: path too long: %s/%s.%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s:%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name, p);
 	exit(1);                                              
     }
-    (void) sprintf(timestampfile, "%s/%s.%s", _PATH_SUDO_TIMEDIR, user_name, p);
+    (void) sprintf(timestampfile, "%s/%s:%s", _PATH_SUDO_TIMEDIR, user_name, p);
 #else
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + 1 >
 	sizeof(timestampfile)) {
@@ -487,6 +503,90 @@ static void check_passwd()
     exit(1);
 }
 #else /* !HAVE_SECURID */
+#ifdef HAVE_AUTHSRV
+static void check_passwd()
+{
+    char *pass;			/* this is what gets entered */
+    Cfg *confp;
+
+    char        cbuf[128];
+    char        ubuf[128], buf[128];
+    register int counter = TRIES_FOR_PASSWORD;
+
+    if ((confp = cfg_read("sudo")) == (Cfg *)-1) {
+	fprintf(stderr, "Cannot read config.\n");
+	exit(1);
+    }
+
+    /* Initialize Auth Client */
+    auth_open(confp);
+
+    /* get welcome message from auth server */
+    if (auth_recv(buf, sizeof(buf))) {
+	sprintf(buf, "Lost connection to server");
+	fprintf(stderr, "%s\n", buf);
+	exit(1);
+    }
+
+    if (strncmp(buf, "Authsrv ready", 13)) {
+	fprintf(stderr, "Auth server error %s\n", buf);
+	auth_close();
+	exit(1);
+    }
+
+    /*
+     * you get TRIES_FOR_PASSWORD times to guess your password
+     */
+    while (counter > 0) {
+
+	sprintf(cbuf,"authorize	%s	sudo",user_name);
+
+	auth_send(cbuf);
+	auth_recv(cbuf,sizeof(cbuf));
+
+	if (!strncmp(cbuf, "challenge ", 10)) {
+	    sprintf(buf, "Challenge \"%s\": ", &cbuf[10]);
+	    pass = GETPASS(buf, PASSWORD_TIMEOUT * 60);
+	} else if (!strncmp(cbuf, "password", 8)) {
+	    pass = GETPASS(buf, PASSWORD_TIMEOUT * 60);
+	} else {
+	    fprintf(stderr, "Server sent %s\n", cbuf);
+	    auth_close();
+	    exit(1);
+	}
+
+	sprintf(cbuf, "response '%s'", pass);
+	auth_send(cbuf);
+	auth_recv(cbuf, sizeof(cbuf));
+
+	if (!strncmp(cbuf, "ok", 2)) {
+	    /* Success */
+	    /*inform_user(cbuf);*/
+	    set_perms(PERM_USER, 0);
+	    auth_close();
+	    return;
+	} else {
+	    fprintf(stderr, "Server returned %s\n", cbuf);
+	}
+	pass_warn(stderr);
+	--counter;		/* otherwise, try again  */
+    }
+
+    set_perms(PERM_USER, 0);
+
+    auth_close();
+
+    if (counter > 0) {
+	log_error(PASSWORD_NOT_CORRECT);
+	inform_user(PASSWORD_NOT_CORRECT);
+    } else {
+	log_error(PASSWORDS_NOT_CORRECT);
+	inform_user(PASSWORDS_NOT_CORRECT);
+    }
+    exit(1);
+}
+#else /* !HAVE_AUTHSRV */
+
 static void check_passwd()
 {
     char *pass;			/* this is what gets entered */
@@ -513,15 +613,11 @@ static void check_passwd()
 
 #ifdef HAVE_AUTHENTICATE
 	/* use AIX authenticate() function */
-#  ifdef USE_GETPASS
-	pass = (char *) getpass(prompt);
-#  else
-	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60);
-#  endif /* USE_GETPASS */
+	pass = GETPASS(buf, PASSWORD_TIMEOUT * 60);
 	reenter = 1;
 	if (authenticate(user_name, pass, &reenter, &message) == 0)
 	    return;		/* valid password */
-#else
+#else /* HAVE_AUTHENTICATE */
 #  ifdef HAVE_SKEY
 	/* rewrite the prompt if using s/key since the challenge can change */
 	set_perms(PERM_ROOT, 0);
@@ -536,24 +632,12 @@ static void check_passwd()
 #  endif /* HAVE_OPIE */
 
 	/* get a password from the user */
-#  ifdef USE_GETPASS
-#    ifdef HAVE_KERB4
+#  if defined(HAVE_KERB4) && defined(USE_GETPASS)
 	(void) des_read_pw_string(kpass, sizeof(kpass) - 1, prompt, 0);
 	pass = kpass;
-#    else
-	pass = (char *) getpass(prompt);
-#    endif /* HAVE_KERB4 */
 #  else
-	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60);
-#  endif /* USE_GETPASS */
-
-	/* Exit loop on nil password */
-	if (!pass || *pass == '\0') {
-	    if (counter == TRIES_FOR_PASSWORD)
-		exit(1);
-	    else
-		break;
-	}
+	pass = (char *) GETPASS(prompt, PASSWORD_TIMEOUT * 60);
+#  endif /* HAVE_KERB4 */
 
 #  ifdef HAVE_SKEY
 	/* Only check s/key db if the user exists there */
@@ -601,6 +685,11 @@ static void check_passwd()
 	    return;
 #    endif /* HAVE_KERB4 */
 
+#    ifdef HAVE_KERB5
+	if (sudo_krb5_validate_user(user_pw_ent, pass) == 0)
+	    return;
+#    endif /* HAVE_KERB5 */
+
 #    ifdef HAVE_AFS
 	if (ka_UserAuthenticateGeneral(KA_USERAUTH_VERSION,
                                        user_name,	/* name */
@@ -623,6 +712,14 @@ static void check_passwd()
 #  endif /* !OTP_ONLY || (!HAVE_SKEY && !HAVE_OPIE) */
 #endif /* HAVE_AUTHENTICATE */
 
+	/* Exit loop on nil password, but give it a chance to match first. */
+	if (!pass || *pass == '\0') {
+	    if (counter == TRIES_FOR_PASSWORD)
+		exit(1);
+	    else
+		break;
+	}
+
 	--counter;		/* otherwise, try again  */
 	pass_warn(stderr);
     }
@@ -637,6 +734,7 @@ static void check_passwd()
 
     exit(1);
 }
+#endif /* HAVE_AUTHSRV */
 #endif /* HAVE_SECURID */
 
 
@@ -691,6 +789,150 @@ static int sudo_krb_validate_user(pw, pass)
     return(!(k_errno == INTK_OK));
 }
 #endif /* HAVE_KERB4 */
+
+
+#ifdef HAVE_KERB5
+/********************************************************************
+ *
+ *  sudo_krb5_validate_user()
+ *
+ *  Validate a user via Kerberos 5. We may lose a bit of memory, but it's
+ *  OK since we're a short lived program. I'd rather do that than contort
+ *  the code to handle the cleanup.
+ */
+static int sudo_krb5_validate_user(pw, pass)
+    struct passwd *pw;
+    char *pass;
+{
+    krb5_error_code	retval;
+    krb5_principal	princ;
+    krb5_creds		creds;
+    krb5_ccache		ccache;
+    char		cache_name[64];
+    char		*princ_name;
+    krb5_get_init_creds_opt opts;
+
+    /* Initialize */
+    if (!sudo_context)
+	return -1;
+    krb5_get_init_creds_opt_init(&opts);
+
+    princ_name = malloc(strlen(pw->pw_name) + strlen(realm) + 2);
+    if (!princ_name) {
+	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
+	exit(1);
+    }
+
+    sprintf(princ_name, "%s@%s", pw->pw_name, realm);
+    if (retval = krb5_parse_name(sudo_context, princ_name, &princ))
+	return retval;
+
+    /* Set the ticket file to be in /tmp so we don't need to change perms. */
+    (void) sprintf(cache_name, "FILE:/tmp/sudocc_%ld", getpid());
+    if (retval = krb5_cc_resolve(sudo_context, cache_name, &ccache))
+	return retval;
+
+    if (retval = krb5_get_init_creds_password(sudo_context, &creds, princ,
+					      pass, krb5_prompter_posix, NULL,	
+					      0, NULL, &opts))
+	return retval;
+
+    /* Stash the TGT so we can verify it. */
+    if (retval = krb5_cc_initialize(sudo_context, ccache, princ))
+	return retval;
+    if (retval = krb5_cc_store_cred(sudo_context, ccache, &creds)) {
+	(void) krb5_cc_destroy(sudo_context, ccache);
+	return retval;
+    }
+
+    retval = verify_krb_v5_tgt(ccache);
+    (void) krb5_cc_destroy(sudo_context, ccache);
+    return (retval == -1);
+}
+
+
+/*
+ * This routine with some modification is from the MIT V5B6 appl/bsd/login.c
+ *
+ * Verify the Kerberos ticket-granting ticket just retrieved for the
+ * user.  If the Kerberos server doesn't respond, assume the user is
+ * trying to fake us out (since we DID just get a TGT from what is
+ * supposedly our KDC).  If the host/<host> service is unknown (i.e.,
+ * the local keytab doesn't have it), let her in.
+ *
+ * Returns 1 for confirmation, -1 for failure, 0 for uncertainty.
+ */
+static int verify_krb_v5_tgt(ccache)
+    krb5_ccache		ccache;
+{
+    char		phost[BUFSIZ];
+    krb5_error_code	retval;
+    krb5_principal	princ;
+    krb5_keyblock *	keyblock = 0;
+    krb5_data		packet;
+    krb5_auth_context	auth_context = NULL;
+
+    packet.data = 0;
+
+    /*
+     * Get the server principal for the local host.
+     * (Use defaults of "host" and canonicalized local name.)
+     */
+    if (krb5_sname_to_principal(sudo_context, NULL, NULL,
+				KRB5_NT_SRV_HST, &princ))
+	return -1;
+
+    /* Extract the name directly. */
+    strncpy(phost, krb5_princ_component(c, princ, 1)->data, BUFSIZ);
+    phost[BUFSIZ - 1] = '\0';
+
+    /*
+     * Do we have host/<host> keys?
+     * (use default keytab, kvno IGNORE_VNO to get the first match,
+     * and enctype is currently ignored anyhow.)
+     */
+    if (retval = krb5_kt_read_service_key(sudo_context, NULL, princ, 0,
+					  ENCTYPE_DES_CBC_MD5, &keyblock)) {
+	/* Keytab or service key does not exist */
+	if (xrealm)
+	    retval = -1;
+	else
+	    retval = 0;
+	goto cleanup;
+    }
+    if (keyblock)
+	krb5_free_keyblock(sudo_context, keyblock);
+
+    /* Talk to the kdc and construct the ticket. */
+    retval = krb5_mk_req(sudo_context, &auth_context, 0, "host", phost,
+			 NULL, ccache, &packet);
+    if (auth_context) {
+	krb5_auth_con_free(sudo_context, auth_context);
+	auth_context = NULL; /* setup for rd_req */
+    }
+    if (retval) {
+	retval = -1;
+	goto cleanup;
+    }
+
+    /* Try to use the ticket. */
+    retval = krb5_rd_req(sudo_context, &auth_context, &packet, princ,
+			 NULL, NULL, NULL);
+    if (retval) {
+	retval = -1;
+    } else {
+	retval = 1;
+    }
+
+cleanup:
+    if (packet.data)
+	krb5_free_data_contents(sudo_context, &packet);
+    krb5_free_principal(sudo_context, princ);
+    return retval;
+
+}
+#endif /* HAVE_KERB5 */
+
 
 #ifdef HAVE_PAM
 /********************************************************************

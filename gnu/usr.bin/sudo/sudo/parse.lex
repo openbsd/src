@@ -1,8 +1,7 @@
 %{
-/*	$OpenBSD: parse.lex,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
-
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +48,7 @@
 #include "sudo.tab.h"
 
 #ifndef lint
-static const char rcsid[] = "$From: parse.lex,v 1.82 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.85 1999/02/03 04:32:16 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */

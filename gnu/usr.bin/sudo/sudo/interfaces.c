@@ -1,7 +1,8 @@
-/*	$OpenBSD: interfaces.c,v 1.8 1998/12/07 21:32:39 millert Exp $	*/
+/*	$OpenBSD: interfaces.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -81,7 +82,7 @@ extern char *realloc	__P((VOID *, size_t));
 #endif /* !STDC_HEADERS && !__GNUC__ */
 
 #ifndef lint
-static const char rcsid[] = "$From: interfaces.c,v 1.46 1998/12/07 21:16:00 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.49 1999/02/03 04:32:15 millert Exp $";
 #endif /* lint */
 
 /*

@@ -1,7 +1,8 @@
-/*	$OpenBSD: visudo.c,v 1.9 1998/11/21 01:34:54 millert Exp $	*/
+/*	$OpenBSD: visudo.c,v 1.10 1999/02/19 04:32:51 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,7 +73,7 @@ extern int stat		__P((const char *, struct stat *));
 #endif /* POSIX_SIGNALS && !SA_RESETHAND */
 
 #ifndef lint
-static const char rcsid[] = "$From: visudo.c,v 1.95 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.98 1999/02/03 04:32:18 millert Exp $";
 #endif /* lint */
 
 /*

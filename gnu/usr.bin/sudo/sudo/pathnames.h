@@ -1,8 +1,9 @@
-/*	$OpenBSD: pathnames.h,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.8 1999/02/19 04:32:51 millert Exp $	*/
 
 /* pathnames.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: pathnames.h.in,v 1.34 1998/09/20 23:10:04 millert Exp $
+ *  $Sudo: pathnames.h.in,v 1.37 1999/02/03 04:32:16 millert Exp $
  */
 
 /*

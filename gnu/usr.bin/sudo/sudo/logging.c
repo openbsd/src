@@ -1,7 +1,8 @@
-/*	$OpenBSD: logging.c,v 1.8 1998/11/21 01:34:52 millert Exp $	*/
+/*	$OpenBSD: logging.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -69,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$From: logging.c,v 1.106 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.110 1999/02/03 04:32:15 millert Exp $";
 #endif /* lint */
 
 /*
@@ -289,6 +290,12 @@ void log_error(code)
 		"allocation failure; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=",
 		tty, cwd, runas_user);
 	    break;
+
+#ifdef HAVE_KERB5
+	case GLOBAL_KRB5_INIT_ERR:
+	    (void) sprintf(p, "Could not initialize Kerberos V");
+	    break;
+#endif /* HAVE_KERB5 */
 
 	default:
 	    strcat(p, "found a weird error : ");

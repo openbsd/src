@@ -1,8 +1,9 @@
-/*	$OpenBSD: config.h,v 1.6 1998/11/21 01:34:51 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.7 1999/02/19 04:32:49 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: config.h.in,v 1.109 1998/11/18 20:31:25 millert Exp $
+ *  $Sudo: config.h.in,v 1.114 1999/02/03 04:32:13 millert Exp $
  */
 
 /*
@@ -141,11 +142,6 @@
 
 /* Define if you use Kerberos.  */
 /* #undef HAVE_KERB5 */
-
-/* Keberos v5 has v4 compatibility */
-#ifdef HAVE_KERB5
-#  define HAVE_KERB4
-#endif /* HAVE_KERB5 */
 
 /* Define if you use SIA.  */
 /* #undef HAVE_SIA */
@@ -371,6 +367,9 @@
 /* Define to the path of the editor visudo should use. */
 #define EDITOR _PATH_VI
 
+/* Define if root should not be allowed to use sudo.  */
+/* #undef NO_ROOT_SUDO */
+
 /* Define to be the user that gets sudo mail.  */
 #define ALERTMAIL "root"
 
@@ -390,16 +389,16 @@
 #define LOGGING SLOG_SYSLOG
 
 /* Define to be the syslog facility to use.  */
-#define LOGFAC LOG_AUTHPRIV
+#define LOGFAC LOG_LOCAL2
 
 /* Define to be the max chars per log line (for line wrapping).  */
 #define MAXLOGFILELEN 80
 
 /* Define if you want to ignore '.' and '' in $PATH */
-/* #undef IGNORE_DOT_PATH */
+#define IGNORE_DOT_PATH 1
 
 /* Define if you want "command not allowed" instead of "command not found" */
-#define DONT_LEAK_PATH_INFO 1
+/* #undef DONT_LEAK_PATH_INFO */
 
 /* Define SHORT_MESSAGE for a short lecture or NO_MESSAGE for none.  */
 #define SHORT_MESSAGE 1

@@ -1,7 +1,8 @@
-/*	$OpenBSD: getspwuid.c,v 1.8 1998/11/21 01:34:52 millert Exp $	*/
+/*	$OpenBSD: getspwuid.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,7 +73,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$From: getspwuid.c,v 1.40 1998/11/18 04:16:13 millert Exp $";
+static const char rcsid[] = "$Sudo: getspwuid.c,v 1.43 1999/02/03 04:32:14 millert Exp $";
 #endif /* lint */
 
 #ifndef STDC_HEADERS

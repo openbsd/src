@@ -1,8 +1,8 @@
 %{
-/*	$OpenBSD: parse.yacc,v 1.11 1998/11/21 01:34:53 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.7
+ *  CU sudo version 1.5.8
+ *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@
 #endif /* !HAVE_STRCASECMP */
 
 #ifndef lint
-static const char rcsid[] = "$From: parse.yacc,v 1.122 1998/11/20 19:26:16 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.127 1999/02/11 06:41:31 millert Exp $";
 #endif /* lint */
 
 /*
@@ -148,10 +148,10 @@ void yyerror(s)
 {
     /* save the line the first error occured on */
     if (errorlineno == -1)
-	errorlineno = sudolineno - 1;
+	errorlineno = sudolineno ? sudolineno - 1 : 0;
 #ifndef TRACELEXER
     (void) fprintf(stderr, ">>> sudoers file: %s, line %d <<<\n", s,
-	sudolineno - 1);
+	sudolineno ? sudolineno - 1 : 0);
 #else
     (void) fprintf(stderr, "<*> ");
 #endif
@@ -511,7 +511,7 @@ cmndalias	:	ALIAS {
 				in_alias = TRUE;
 				/* Allocate space for ga_list if necesary. */
 				expand_ga_list();
-				if (!(ga_list[ga_list_len-1].alias = strdup($1))){
+				if (!(ga_list[ga_list_len-1].alias = (char *) strdup($1))){
 				    (void) fprintf(stderr,
 				      "%s: cannot allocate memory!\n", Argv[0]);
 				    exit(1);
@@ -544,7 +544,7 @@ runasalias	:	ALIAS {
 				in_alias = TRUE;
 				/* Allocate space for ga_list if necesary. */
 				expand_ga_list();
-				if (!(ga_list[ga_list_len-1].alias = strdup($1))){
+				if (!(ga_list[ga_list_len-1].alias = (char *) strdup($1))){
 				    (void) fprintf(stderr,
 				      "%s: cannot allocate memory!\n", Argv[0]);
 				    exit(1);

@@ -1,4 +1,6 @@
-/*	$OpenBSD: options.h,v 1.10 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: options.h,v 1.11 1999/02/19 04:32:50 millert Exp $	*/
+
+/*	$OpenBSD: options.h,v 1.11 1999/02/19 04:32:50 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.6

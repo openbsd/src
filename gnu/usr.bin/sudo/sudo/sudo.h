@@ -1,7 +1,8 @@
-/*	$OpenBSD: sudo.h,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
+/*	$OpenBSD: sudo.h,v 1.8 1999/02/19 04:32:51 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -27,7 +28,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $From: sudo.h,v 1.133 1998/11/08 20:56:52 millert Exp $
+ *  $Sudo: sudo.h,v 1.138 1999/02/07 00:43:24 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -165,6 +166,9 @@ struct generic_alias {
 #define BAD_STAMPDIR             0x0E
 #define BAD_STAMPFILE            0x0F
 #define BAD_ALLOCATION           0x10
+#ifdef HAVE_KERB5
+#define GLOBAL_KRB5_INIT_ERR     ( 0x11 | GLOBAL_PROBLEM )
+#endif /* HAVE_KERB5 */
 
 /*
  * Boolean values
@@ -212,6 +216,15 @@ struct generic_alias {
 #define user_gid		(user_pw_ent -> pw_gid)
 #define user_shell		(user_pw_ent -> pw_shell)
 #define user_dir		(user_pw_ent -> pw_dir)
+
+/*
+ * Use either tgetpass() or system getpass()
+ */
+#ifdef USE_GETPASS
+#define GETPASS(p, t)		getpass(p)
+#else
+#define GETPASS(p, t)		tgetpass(p, t)
+#endif
 
 /*
  * Function prototypes
