@@ -696,6 +696,7 @@ static int Refresh_Current_Field(FORM * form)
 	  wsyncup(form->w);
 	}
     }
+  wrefresh(form->w);	/* Will this catch them all? --Toby. */
   untouchwin(form->w);
   return Position_Form_Cursor(form);
 }
