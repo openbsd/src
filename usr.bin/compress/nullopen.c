@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullopen.c,v 1.1 2003/09/05 06:08:15 deraadt Exp $	*/
+/*	$OpenBSD: nullopen.c,v 1.2 2004/01/22 18:49:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -29,7 +29,7 @@
  */
 
 const char null_rcsid[] =
-    "$OpenBSD: nullopen.c,v 1.1 2003/09/05 06:08:15 deraadt Exp $";
+    "$OpenBSD: nullopen.c,v 1.2 2004/01/22 18:49:35 millert Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -103,9 +103,6 @@ int
 null_flush(void *cookie, int flush)
 {
 	null_stream *s = (null_stream*)cookie;
-	size_t len;
-	int done = 0;
-	int err;
 
 	if (s == NULL || s->mode != 'w') {
 		errno = EBADF;
