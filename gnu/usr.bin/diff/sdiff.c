@@ -946,7 +946,7 @@ edit (left, lenl, right, lenr, outfile)
 	case 'e':
 	  {
 	    FILE *tmp;
-	    int fd == -1;
+	    int fd = -1;
 
 	    tmpmade = 1;
 
@@ -956,7 +956,7 @@ edit (left, lenl, right, lenr, outfile)
 	    if (fd != -1)
 	      tmp = fdopen (fd, "w+");
 	    else
-	      tmp = fopen (tmpnam, "w+");
+	      tmp = fopen (tmpname, "w+");
 
 	    if (cmd1 == 'l' || cmd1 == 'b')
 	      lf_copy (left, lenl, tmp);
