@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.56 2002/12/30 21:50:29 grange Exp $	*/
+/*	$OpenBSD: sd.c,v 1.57 2003/04/06 03:02:44 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -997,10 +997,10 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	lp->d_type = DTYPE_SCSI;
 	if (sd->type == T_OPTICAL)
 		strncpy(lp->d_typename, "SCSI optical",
-		    sizeof(lp->d_typename) - 1);
+		    sizeof(lp->d_typename));
 	else
 		strncpy(lp->d_typename, "SCSI disk",
-		    sizeof(lp->d_typename) - 1);
+		    sizeof(lp->d_typename));
 
 	if (strlen(sd->name.vendor) + strlen(sd->name.product) + 1 <
 	    sizeof(lp->d_packname))
@@ -1008,7 +1008,7 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 		    sd->name.product);
 	else
 		strncpy(lp->d_packname, sd->name.product,
-		    sizeof(lp->d_packname) - 1);
+		    sizeof(lp->d_packname));
 
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = 3600;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.20 2002/12/25 20:56:59 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.21 2003/04/06 03:02:43 krw Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ hdgetinfo(dev, rs, lp, spoofonly)
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_type = DTYPE_HPIB;
 	strncpy(lp->d_typename, hdidentinfo[rs->sc_type].ri_desc,
-	    sizeof(lp->d_typename) - 1);
+	    sizeof(lp->d_typename));
 	strcpy(lp->d_packname, "fictitious");
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_rpm = 3600;

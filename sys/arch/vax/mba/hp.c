@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.12 2002/06/08 08:50:26 art Exp $ */
+/*	$OpenBSD: hp.c,v 1.13 2003/04/06 03:02:44 krw Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -165,7 +165,8 @@ hpattach(parent, self, aux)
 	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
-	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
+	printf(": %.*s, size = %d sectors\n",
+	    (int)sizeof(dl->d_typename), dl->d_typename, dl->d_secperunit);
 	/*
 	 * check if this was what we booted from.
 	 */
