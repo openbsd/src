@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.72 1998/04/05 23:53:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.73 1998/04/13 16:12:28 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1771,7 +1771,7 @@ while : ; do
 		break;
 		;;
 	"?")
-		ls ${_zonepath}/usr/share/zoneinfo
+		ls -F ${_zonepath}/usr/share/zoneinfo
 		;;
 	*)
 		_a=$resp
@@ -1781,7 +1781,7 @@ while : ; do
 			echo -n "Select a sub-timezone [\`?' for list]: "
 			getresp ""
 			case "$resp" in
-			"?") ls ${_zonepath}/usr/share/zoneinfo/$_a ;;
+			"?") ls -F ${_zonepath}/usr/share/zoneinfo/$_a ;;
 			*)	_a=${_a}/${resp}
 				if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
 					break;
