@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.3 1997/08/13 14:24:01 niklas Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.4 1997/08/13 15:17:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -72,7 +72,7 @@ int
 pc_getc(dev)
 	dev_t dev;
 {
-	u_int8_t rv;
+	register int rv;
 
 	if (dev & 0x80) {
 		__asm __volatile(DOINT(0x16) "; setnz %%al" : "=a" (rv) :
@@ -117,7 +117,7 @@ void
 com_init(cn)
 	struct consdev *cn;
 {
-	int unit = minor(cn->cn_dev);
+	register int unit = minor(cn->cn_dev);
 
 	/* 9600-N-1 */
 	__asm __volatile(DOINT(0x14) : : "a" (0xe3), "d" (unit) :
@@ -138,7 +138,7 @@ com_getc(dev)
 	}
 
 	do
-		__asm __volatile(DOINT(0x14) "\n\t" : "=a" (rv) :
+		__asm __volatile(DOINT(0x14) : "=a" (rv) :
 		    "a" (0x200), "d" (minor(dev)) : "%ecx", "cc" );
 	while (rv & 0x8000);
 
@@ -150,8 +150,8 @@ com_putc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int rv;
+	register int rv;
 
-	__asm __volatile(DOINT(0x14) "\n\t" : "=a" (rv) :
+	__asm __volatile(DOINT(0x14) : "=a" (rv) :
 	    "d" (minor(dev)), "a" (c | 0x100) : "%ecx", "cc" );
 }
