@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.42 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: commands.c,v 1.43 2003/04/03 12:05:58 hin Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ makeargv()
     margc = 0;
     cp = line;
     if (*cp == '!') {		/* Special case shell escape */
-	strcpy(saveline, line);	/* save for shell command */
+	strlcpy(saveline, line, sizeof(saveline)); /* save for shell command */
 	*argp++ = "!";		/* No room in string to get this */
 	margc++;
 	cp++;
@@ -2293,7 +2293,7 @@ tn(argc, argv)
 	return 0;
     }
     if (argc < 2) {
-	(void) strcpy(line, "open ");
+	strlcpy(line, "open ", sizeof(line));
 	printf("(to) ");
 	(void) fgets(&line[strlen(line)], sizeof(line) - strlen(line), stdin);
 	makeargv();
@@ -2397,7 +2397,7 @@ tn(argc, argv)
 
 	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
 		    NULL, 0, niflags) != 0) {
-		strcpy(hbuf, "(invalid)");
+		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	    }
 	    printf("Trying %s...\r\n", hbuf);
 	}
@@ -2457,7 +2457,7 @@ tn(argc, argv)
 
 	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
 		    NULL, 0, niflags) != 0) {
-		strcpy(hbuf, "(invalid)");
+		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	    }
 	    fprintf(stderr, "telnet: connect to address %s: %s\n", hbuf,
 		strerror(errno));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tn3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: tn3270.c,v 1.5 2003/04/03 12:05:58 hin Exp $	*/
 /*	$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $	*/
 
 /*
@@ -389,12 +389,12 @@ settranscom(argc, argv)
 	if (argc == 1) {
 	   return 1;
 	}
-	transcom = tline;
-	(void) strcpy(transcom, argv[1]);
+	strlcpy(tline, argv[1], sizeof(tline));
 	for (i = 2; i < argc; ++i) {
-	    (void) strcat(transcom, " ");
-	    (void) strcat(transcom, argv[i]);
+		strlcat(tline, " ", sizeof(tline));
+		strlcat(tline, argv[i], sizeof(tline));
 	}
+	transcom = tline;
 	return 1;
 }
 #endif	/* defined(unix) */
