@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.9 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.10 2003/06/27 19:01:52 deraadt Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -40,6 +40,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#ifndef _KERNEL
+#include "pcap.h"
+#endif
 
 #ifndef UNALIGNED_ACCESS
 #define BPF_ALIGN
