@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.43 2002/03/15 02:11:01 itojun Exp $	*/
+/*	$OpenBSD: socket.h,v 1.44 2002/09/10 20:51:37 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ struct cmsghdr {
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
-#define SCM_CREDS	0x02		/* credientials (struct sockcred) */
+#define SCM_CREDS	0x02		/* credentials (struct sockcred) */
 
 /*
  * 4.3 compat sockaddr, move to compat file later
