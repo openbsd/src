@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.108 1999/09/03 18:11:48 deraadt Exp $
+#	$OpenBSD: rc,v 1.109 1999/09/04 21:07:23 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -340,7 +340,8 @@ if [ "$vibackup" != "/var/tmp/vi.recover/vi.*" ]; then
 	for i in $vibackup; do
 		# Unmodified vi editor backup files either have the
 		# execute bit set or are zero length.  Delete them.
-		if [ -x $i -o ! -s $i ]; then
+		# Anything that is not a normal file gets deleted too.
+		if [ -x $i -o ! -s $i -o ! -f $i ]; then
 			rm $i
 		fi
 	done
@@ -352,9 +353,13 @@ if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 		# Delete any recovery files that are zero length, corrupted,
 		# or that have no corresponding backup file.  Else send mail
 		# to the user.
-		recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
-		if [ -n "$recfile" -a -s "$recfile" ]; then
-			sendmail -t < $i
+		if [ -f $i ]; then
+			recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
+			if [ -n "$recfile" -a -s "$recfile" ]; then
+				sendmail -t < $i
+			else
+				rm $i
+			fi
 		else
 			rm $i
 		fi
