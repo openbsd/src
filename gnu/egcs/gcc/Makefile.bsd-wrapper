@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/05/31 21:30:24 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/08/16 00:05:20 niklas Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -35,11 +35,11 @@ M_ARCH=		${MACHINE_ARCH}
 GCCARCH=	${M_ARCH}-unknown-openbsd`uname -r`
 
 all:	config.status
-	${MAKE} ${GNUCFLAGS} CC=${CC} LDFLAGS=${LDSTATIC} \
+	${MAKE} ${GNUCFLAGS} CC="${CC}" LDFLAGS="${LDSTATIC}" \
 		build_infodir=. all doc
 
 tree-check.h: config.status
-	${MAKE} ${GNUCFLAGS} CC=${CC} LDFLAGS=${LDSTATIC} \
+	${MAKE} ${GNUCFLAGS} CC="${CC}" LDFLAGS="${LDSTATIC}" \
 		build_infodir=. tree-check.h
 
 
