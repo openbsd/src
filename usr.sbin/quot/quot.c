@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.9 2000/06/07 03:55:03 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.10 2000/11/21 04:23:09 millert Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.9 2000/06/07 03:55:03 millert Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.10 2000/11/21 04:23:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -608,9 +608,8 @@ main(argc, argv)
 	cnt = getmntinfo(&mp, MNT_NOWAIT);
 	if (all) {
 		for (; --cnt >= 0; mp++) {
-			if (!strcmp(mp->f_fstypename, MOUNT_FFS) ||
-			    !strcmp(mp->f_fstypename, MOUNT_MFS) ||
-			    !strcmp(mp->f_fstypename, "ufs")) {
+			if (strcmp(mp->f_fstypename, MOUNT_FFS) == 0 ||
+			    strcmp(mp->f_fstypename, "ufs") == 0) {
 				if ((nm = strrchr(mp->f_mntfromname, '/'))) {
 					snprintf(dev, sizeof(dev), "%sr%s",
 					    _PATH_DEV, nm + 1);
