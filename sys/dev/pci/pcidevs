@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.136 1999/05/06 01:12:19 jason Exp $
+$OpenBSD: pcidevs,v 1.137 1999/05/07 18:31:36 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -503,6 +503,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
+vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor INVERTEX		0x14e1	Invertex
 vendor DELTA		0x1500	Delta
@@ -949,6 +950,11 @@ product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
 
 /* KTI */
 product KTI KTIE		0x3000	KTI
+
+/* LAN Media Corporation */
+product LMC HSSI		0x0003	HSSI
+product LMC DS3			0x0004	DS3
+product LMC SSI			0x0005	SSI
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
