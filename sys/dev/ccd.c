@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.26 1998/01/21 12:16:04 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.27 1998/01/24 21:12:36 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1031,6 +1031,7 @@ ccdiodone(vbp)
 	long count = bp->b_bcount, off;
 	char *comptype;
 
+	s = splbio();
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdiodone(%p)\n", cbp);
@@ -1061,7 +1062,7 @@ ccdiodone(vbp)
 	}
 	cbflags = cbp->cb_flags;
 
-	if (!old_io)
+	if (!old_io) {
 		/*
 		 * Gather all the pieces and put them where they should be.
 		 */
@@ -1077,7 +1078,6 @@ ccdiodone(vbp)
 			off += cbp->cb_sg[i].cs_sglen;
 		}
 
-	if (!old_io) {
 		kmem_free(ccdmap, (vm_offset_t)vbp->b_data, count);
 		if (ccd_need_kvm) {
 			ccd_need_kvm = 0;
