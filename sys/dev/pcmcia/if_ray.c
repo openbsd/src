@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.26 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.27 2005/04/03 01:35:06 uwe Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1032,6 +1032,8 @@ ray_ioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCSRAYPARAM:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCSRAYPARAM\n", ifp->if_xname));
 		if ((error = copyin(ifr->ifr_data, &pr, sizeof(pr))))
 			break;
@@ -1058,6 +1060,8 @@ ray_ioctl(ifp, cmd, data)
 		error = error2 ? error2 : error;
 		break;
 	case SIOCS80211NWID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCS80211NWID\n", ifp->if_xname));
 		/*
 		 * if later people overwrite thats ok -- the latest version
