@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.7 2000/10/18 16:32:11 aaron Exp $
+.\"	$OpenBSD: enc.4,v 1.8 2000/11/20 08:00:00 deraadt Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -60,7 +60,7 @@ interface is to allow an administrator to see outgoing packets before
 they have been processed by
 .Xr ipsec 4 ,
 or incoming packets after they have been similarly processed, via
-.Xr tcpdump 1 .
+.Xr tcpdump 8 .
 .Pp
 The
 .Dq enc0
@@ -72,14 +72,14 @@ an IPsec SA to another
 interface, all IPsec traffic could be filtered based on
 .Dq enc0 ,
 and all IPsec traffic could be seen by invoking
-.Xr tcpdump 1
+.Xr tcpdump 8
 on the
 .Dq enc0
 interface.
 IPsec SAs that have been assigned to some other
 .Nm
 interface can be snooped via
-.Xr tcpdump 1
+.Xr tcpdump 8
 or filtered via
 .Xr ipf 5
 through that
@@ -94,7 +94,7 @@ or all incoming packets after they have been similarly processed:
 #> tcpdump -i enc0
 .Ed
 .Sh SEE ALSO
-.Xr tcpdump 1 ,
+.Xr tcpdump 8 ,
 .Xr bpf 4 ,
 .Xr inet 4 ,
 .Xr ipsec 4 ,
@@ -105,5 +105,5 @@ or all incoming packets after they have been similarly processed:
 The
 .Cm PROMISC
 flag is not cleared on the enc0 interface after
-.Xr tcpdump
+.Xr tcpdump 8
 is stopped.

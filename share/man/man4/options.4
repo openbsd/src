@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.55 2000/10/22 15:00:11 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.56 2000/11/20 08:00:01 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -468,7 +468,7 @@ A reasonable way to derive a value of
 should a large number of namei cache misses be noticed with a tool such as
 .Xr systat 1 ,
 is to examine the system's current computed value with
-.Xr sysctl 1 ,
+.Xr sysctl 8 ,
 (which calls this parameter "kern.maxvnodes") and to increase this value
 until either the namei cache hit rate improves or it is determined that
 the system does not benefit substantially from an increase in the size of
@@ -746,7 +746,7 @@ enables logging of IP packets using ip-filter.
 This option sets the default policy of ip-filter to block packets that
 exit the rule-set unmatched.
 Otherwise they are silently passed. See
-.Xr ipf 1
+.Xr ipf 8
 for details.
 .It Cd option PPP_FILTER
 This option turns on
@@ -918,8 +918,6 @@ and/or
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
 .Xr msgsnd 2 ,
-.Xr ntp_adjtime 2 ,
-.Xr ntp_gettime 2 ,
 .Xr semctl 2 ,
 .Xr semget 2 ,
 .Xr semop 2 ,

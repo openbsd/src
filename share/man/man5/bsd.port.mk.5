@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.17 2000/10/26 00:37:04 aaron Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.18 2000/11/20 08:00:02 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -380,7 +380,7 @@ File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
 Leave empty if no message is needed.
 .It Ev MTREE_FILE
-.Xr mtree 1
+.Xr mtree 8
 specification to check when creating a PLIST with the
 .Ar plist
 target.
@@ -724,7 +724,7 @@ Starting with
 the operating system installation script runs the /usr/local specification
 globally, instead of embedding it in each package.
 So packages no longer record an
-.Xr mtree 1
+.Xr mtree 8
 specification.
 Use an explicit
 .Sq @exec
@@ -843,7 +843,7 @@ process after tweaking a few variables.
 .Pp
 .Ar fake
 first creates a skeleton tree under ${WRKINST}, using the
-.Xr mtree 1
+.Xr mtree 8
 specification
 .Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
 .Pp

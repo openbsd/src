@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2000/11/09 16:17:01 mickey Exp $
+#	$OpenBSD: Makefile,v 1.28 2000/11/20 08:00:05 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -54,5 +54,6 @@ MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 MLINKS+=vm_map_copy.9 vm_copy.9
 MLINKS+=vm_map_inherit.9 vm_inherit.9
 MLINKS+=vm_map_protect.9 vm_protect.9
+MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
 
 .include <bsd.prog.mk>

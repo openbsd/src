@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.46 2000/10/18 16:50:22 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.47 2000/11/20 08:00:04 deraadt Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -274,7 +274,7 @@ trust management system.
 needs to be configured such that all packets from the outside are blocked
 by default.
 Only successfully IPsec-processed packets (from the
-.Xr enc0 4
+.Xr enc 4
 interface), or key management packets (for
 .Xr photurisd 8 ,
 .Tn UDP
@@ -312,7 +312,7 @@ If there are no other
 .Xr ipf 5
 rules, the "quick" clause can be added to the last four rules.
 NAT rules can also be used on the
-.Xr enc0 4
+.Xr enc 4
 interface.
 Note that it is strongly encouraged that instead of detailed IPF
 rules, the SPD (IPsec flow database) be utilized to specify security
