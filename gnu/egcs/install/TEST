@@ -12,8 +12,8 @@
    distribution contains testsuites; only if you downloaded the "core"
    compiler plus any front ends, you do not have the testsuites.
 
-   Second, you must have a new version of dejagnu on your system; dejagnu
-   1.3 will not work. We have made dejagnu snapshots available at
+   Second, you must have a current version of dejagnu installed; dejagnu
+   1.3 is not sufficient. We have made dejagnu snapshots available at
    [2]ftp://gcc.gnu.org/pub/gcc/infrastructure until a new version of
    dejagnu has been released.
 

@@ -190,46 +190,52 @@ found on <a href="http://www.bitwizard.nl/sig11/">www.bitwizard.nl.</a></p>
 <hr>
 <h3><a name="ix86-*-sco3.2v5*">i?86-*-sco3.2v5*</a></h3>
 
+<p>Unlike earlier versions of GCC, the ability to generate COFF with this
+target is no longer provided.   
+
+<p>Earlier versions of GCC emitted Dwarf-1 when generating ELF to allow
+the system debugger to be used.  That support was too burdensome to
+maintain.  GCC now emits only dwarf-2 for this target.  This means you
+may use either the UDK debugger or GDB to debug programs built by this
+version of GCC.
+
 <p>If you are building languages other than C, you must follow the instructions
 about invoking `<code>make bootstrap</code>' because the native OpenServer
 compiler will build a <code>cc1plus</code> that will not correctly parse many
 valid C++ programs including those in <code>libgcc.a</code>.  <b>You must do a `<code>make bootstrap</code>' if you are building with the native compiler.</b></p>
 
 <p>Use of the `<code>-march-pentiumpro</code>' flag can result in
-unrecognized opcodes when using the native assembler.  While
-it's rather rare to see these emitted by GCC yet, errors of the basic form:</p>
+unrecognized opcodes when using the native assembler on OS versions before
+5.0.6. (Support for P6 opcodes was added to the native ELF assembler in
+that version.)  While it's rather rare to see these emitted by GCC yet, 
+errors of the basic form:</p>
 <pre>
   /usr/tmp/ccaNlqBc.s:22:unknown instruction: fcomip
   /usr/tmp/ccaNlqBc.s:50:unknown instruction: fucomip
 </pre>
-<p>are symptoms of this problem.   You may work around this by not
-building affected files with that flag or by using the GNU assembler.   
-Users of GNU assembler should see the note below for hazards on doing so.</p>
 
-<p>If you choose to configure with <code>--enable-shared</code> you should also
-specify <code>--with-gnu-as --disable-multilib</code> even if you are not
-using the GNU assembler.   In doing so you will give up the ability
-to generate COFF executables as described below.   This combination 
-of flags is necessary to suppress negative interactions with multilibing.</p>
+<p>are symptoms of this problem.  You may work around this by not
+building affected files with that flag, by using the GNU assembler, or
+by using the assembler provided with the current version of the OS.
+Users of GNU assembler should see the note below for hazards on doing
+so.</p>
 
-<p>The native SCO assembler that is provided with the OS at no charge
-is normally required.  If, however, you must be able to use the GNU
-assembler (perhaps you're compiling code with asms that require GAS syntax) 
-you may configure this package using the flags <code>--with-gnu-as</code>.  
-You must use a recent version of GNU binutils; versions past 2.9.1 seems to work well.
-If you select this option, you will be unable to reliably build COFF
-images.  In general, the <code>--with-gnu-as</code> option isn't as well tested as the native assembler.</p>
+<p>The native SCO assembler that is provided with the OS at no
+charge is normally required.  If, however, you must be able to use
+the GNU assembler (perhaps you're compiling code with asms that
+require GAS syntax) you may configure this package using the flags
+<code>--with-gnu-as</code>.  You must use a recent version of GNU
+binutils; versions past 2.9.1 seem to work well.
 
-<p>Unlike various prereleases of GCC that used <code>-belf</code> and 
-defaulted to COFF, you must now use the <code>-melf</code> and 
-<code>-mcoff</code> flags to toggle between the two object file formats.     
-ELF is now the default.</p>
+In general, the <code>--with-gnu-as</code> option isn't as well tested
+as the native assembler.</p>
 
-<p>Look in <code>gcc/config/i386/sco5.h</code> (search for "messy") for additional OpenServer-specific flags.</p>
+<p>Look in <code>gcc/config/i386/sco5.h</code> (search for "messy") for
+additional OpenServer-specific flags.</p>
 
-<p>Systems based on OpenServer before 5.0.4 (`<code>uname -X</code>' will
-tell you what you're running) require TLS597 from ftp.sco.com/TLS for
-C++ constructors and destructors to work right.</p>
+<p>Systems based on OpenServer before 5.0.4 (`<code>uname -X</code>'
+will tell you what you're running) require TLS597 from ftp.sco.com/TLS
+for C++ constructors and destructors to work right.</p>
 
 <p>The system linker in (at least) 5.0.4 and 5.0.5 will sometimes
 do the wrong thing for a construct that GCC will emit for PIC

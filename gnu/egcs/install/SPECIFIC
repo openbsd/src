@@ -158,6 +158,15 @@
 
   i?86-*-sco3.2v5*
 
+   Unlike earlier versions of GCC, the ability to generate COFF with this
+   target is no longer provided.
+
+   Earlier versions of GCC emitted Dwarf-1 when generating ELF to allow
+   the system debugger to be used. That support was too burdensome to
+   maintain. GCC now emits only dwarf-2 for this target. This means you
+   may use either the UDK debugger or GDB to debug programs built by this
+   version of GCC.
+
    If you are building languages other than C, you must follow the
    instructions about invoking `make bootstrap' because the native
    OpenServer compiler will build a cc1plus that will not correctly parse
@@ -165,33 +174,25 @@
    `make bootstrap' if you are building with the native compiler._
 
    Use of the `-march-pentiumpro' flag can result in unrecognized opcodes
-   when using the native assembler. While it's rather rare to see these
-   emitted by GCC yet, errors of the basic form:
+   when using the native assembler on OS versions before 5.0.6. (Support
+   for P6 opcodes was added to the native ELF assembler in that version.)
+   While it's rather rare to see these emitted by GCC yet, errors of the
+   basic form:
   /usr/tmp/ccaNlqBc.s:22:unknown instruction: fcomip
   /usr/tmp/ccaNlqBc.s:50:unknown instruction: fucomip
 
    are symptoms of this problem. You may work around this by not building
-   affected files with that flag or by using the GNU assembler. Users of
+   affected files with that flag, by using the GNU assembler, or by using
+   the assembler provided with the current version of the OS. Users of
    GNU assembler should see the note below for hazards on doing so.
-
-   If you choose to configure with --enable-shared you should also
-   specify --with-gnu-as --disable-multilib even if you are not using the
-   GNU assembler. In doing so you will give up the ability to generate
-   COFF executables as described below. This combination of flags is
-   necessary to suppress negative interactions with multilibing.
 
    The native SCO assembler that is provided with the OS at no charge is
    normally required. If, however, you must be able to use the GNU
    assembler (perhaps you're compiling code with asms that require GAS
    syntax) you may configure this package using the flags --with-gnu-as.
    You must use a recent version of GNU binutils; versions past 2.9.1
-   seems to work well. If you select this option, you will be unable to
-   reliably build COFF images. In general, the --with-gnu-as option isn't
-   as well tested as the native assembler.
-
-   Unlike various prereleases of GCC that used -belf and defaulted to
-   COFF, you must now use the -melf and -mcoff flags to toggle between
-   the two object file formats. ELF is now the default.
+   seem to work well. In general, the --with-gnu-as option isn't as well
+   tested as the native assembler.
 
    Look in gcc/config/i386/sco5.h (search for "messy") for additional
    OpenServer-specific flags.

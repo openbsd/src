@@ -151,10 +151,12 @@ GCC.  A partial list of supported <tt>options</tt>:
   <tt>
   grep language= */config-lang.in
   </tt><br>
-  Currently, you can use any of the following: <tt>CHILL</tt>, <tt>c++</tt>,
-  <tt>f77</tt>, <tt>java</tt> and <tt>objc</tt>. Please note, that this switch
-  does not work with EGCS 1.1.2 or older versions of egcs.  It is supported
-  in GCC 2.95 and newer versions.<br>
+  Currently, you can use any of the following: <code>c++</code>,
+  <code>f77</code>, <code>java</code> and <code>objc</code>.
+  <code>CHILL</code> is not currently maintained, and will almost
+  certainly fail to compile.  Note that this switch does not work with
+  EGCS 1.1.2 or older versions of egcs.  It is supported in GCC 2.95
+  and newer versions.  <br>
   If you do not pass this flag, all languages available in the <tt>gcc</tt> sub-tree
   will be configured.  Re-defining LANGUAGES when calling <tt>make bootstrap</tt>
   <b>*does not*</b> work anymore, as those language sub-directories might not have been

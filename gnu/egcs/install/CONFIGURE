@@ -111,8 +111,9 @@
        be built. For a list of valid values for _lang_x you can issue the
        following command in the gcc directory of your GCC source tree:
        grep language= */config-lang.in
-       Currently, you can use any of the following: CHILL, c++, f77, java
-       and objc. Please note, that this switch does not work with EGCS
+       Currently, you can use any of the following: c++, f77, java and
+       objc. CHILL is not currently maintained, and will almost certainly
+       fail to compile. Note that this switch does not work with EGCS
        1.1.2 or older versions of egcs. It is supported in GCC 2.95 and
        newer versions.
        If you do not pass this flag, all languages available in the gcc
