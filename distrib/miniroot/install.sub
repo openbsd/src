@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.56 1998/03/23 05:29:21 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.57 1998/03/23 05:33:38 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1092,8 +1092,8 @@ __install_cdrom_1
 	cat << \__install_cdrom_2
 
 There are two CD-ROM filesystem types currently supported by this program:
-	1) ISO-9660 (cd9660)
-	2) Berkeley Fast Filesystem (ffs)
+	cd9660		ISO-9660
+	ffs		Berkeley Fast Filesystem
 
 __install_cdrom_2
 	resp=""		# force one iteration
