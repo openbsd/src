@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.19 2000/08/07 20:30:34 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.20 2000/11/18 11:07:31 aaron Exp $
 .\"
 .\" Copyright (c) 1997-2000 Michael Shalayeff
 .\" All rights reserved.
@@ -34,15 +34,16 @@
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
-.Nm boot , boot.conf
+.Nm boot ,
+.Nm boot.conf
 .Nd
 i386-specific second-stage bootstrap
 .Sh DESCRIPTION
-The main purpose of this program is to load the system kernel, dealing with
-the downfalls of the PC BIOS architecture.
+The main purpose of this program is to load the system kernel while dealing
+with the downfalls of the PC BIOS architecture.
 .Pp
 As described in
-.Xr boot_i386 8
+.Xr boot_i386 8 ,
 this program is loaded by the
 .Xr biosboot 8
 primary bootstrap loader and provides a convenient way to load the kernel.
@@ -50,6 +51,7 @@ This program acts as an enhanced boot monitor for PC systems, providing
 common interface for the kernel to start from.
 .Pp
 Basic operations include:
+.Pp
 .Bl -bullet -compact
 .It
 Detecting and switching between multiple consoles.
@@ -66,55 +68,59 @@ Providing an interactive command line.
 .Pp
 The sequence of its operation is as follows: initialization,
 parsing the configuration file, then an interactive command line.
-While at the command line you have 5 seconds to type any commands,
-if needed. If time expires, the kernel will be loaded according to
-the current variable settings (See the
+While at the command line you have 5 seconds to type any commands, if needed.
+If time expires, the kernel will be loaded according to
+the current variable settings (see the
 .Nm set
-command).  Each time a kernel load fails, the timeout
-is increased by one second. The sequence of
+command).
+Each time a kernel load fails, the timeout is increased by one second.
+The sequence of
 .Nm
 operations is as follows:
 .Bl -enum
 .It
 Set up a protected mode environment which catches and reports processor
-exceptions, and provides a simple protected-mode BIOS interface.
+exceptions and provides a simple protected-mode BIOS interface.
 .It
 Probe for console devices, which includes the (default) PC VGA+Keyboard
 console (pc0) and up to four serial consoles (com0 through com3) connected
-to the serial ports. Display messages to the default console about the
-devices found.
+to the serial ports.
+Display messages to the default console about the devices found.
 .It
-Detect memory. Conventional memory is detected by quering the BIOS.
+Detect memory.
+Conventional memory is detected by querying the BIOS.
 Extended memory is detected by probing page-by-page through the address
-space, rather than asking the BIOS; many BIOS cannot report larger than
+space, rather than asking the BIOS; many BIOS's cannot report larger than
 64M of memory.
-All the memory found is reported to the default console device.
+All memory found is reported to the default console device.
 .It
-Probe for APM support in the BIOS. Message printed if support is present.
+Probe for APM support in the BIOS.
+Display a message if support is present.
 .It
 If the file
 .Pa /etc/boot.conf
 exists on the filesystem
 .Nm
-was loaded from, open and parse it. This file may contain any commands
+was loaded from, open and parse it.
+This file may contain any commands
 .Nm
 accepts at the interactive prompt.
 Though default settings usually suffice, they can be changed here.
 .It
 The header line
 .Pp
-.Dl OpenBSD BOOT [x.xx]
+.Dl >> OpenBSD/i386 BOOT [x.xx]
 .Pp
 is displayed to the active console, where
 .Ar x.xx
-is a version number of the
+is the version number of the
 .Nm
 program, followed by the
 .Pp
 .Dl boot>
 .Pp
-prompt, which means you are in the interactive mode and may enter
-commands. If you do not,
+prompt, which means you are in the interactive mode and may enter commands.
+If you do not,
 .Nm
 will proceed loading kernel with the current parameters after the
 timeout period has expired.
@@ -127,7 +133,8 @@ prompt:
 .It boot Op Ar image Op Fl abcds
 Boots kernel image specified by
 .Ar image
-with any options given. Image specification consists of a pair
+with any options given.
+Image specification consists of a pair
 .Em device : filename ,
 either or both of each maybe omitted (':' is not needed if both are omitted),
 in which case values from
@@ -141,7 +148,8 @@ on the console device.
 Prints a list of available commands and machine dependent
 commands, if any.
 .It machine Op Ar command
-Issues machine-dependent commands. These are defined for i386 architecture:
+Issues machine-dependent commands.
+These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
 .It Nm diskinfo
 Prints list of hard disks installed on your system including:
@@ -150,7 +158,8 @@ BIOS device number, and the BIOS geometry.
 If used without any arguments this command will print out
 the memory configuration as determined through BIOS routines.
 Otherwise the arguments would specify the expressions to modify the
-memory configuration. The expression would have a form of:
+memory configuration.
+The expression would have a form of:
 .Pp
 .Dl [+-]<size>@<address>
 .Pp
@@ -224,18 +233,20 @@ Displays or sets the
 .Ar speed
 for a console
 .Ar device .
-If changing baudrate for the currently
-active console, gives you five seconds of pause
-before changing the baud rate to allow you to change your terminal's
-speed to match.  If changing speed
+If changing the baudrate for the currently active console,
+.Nm
+offers you five seconds of grace time before committing the change
+to allow you to change your terminal's speed to match.
+If changing speed
 .Em not
-for the active console, sets the baudrate value to be used the
+for the active console, the baudrate is set for the
 .Em next
 time you switch to a serial console.
-The baudrate value is not used for the pc0 console.
+The baudrate value is not used for the
+.Li pc0
+console.
 .Pp
-The default baudrate if not specifically
-set is 9600 baud.
+The default baudrate is 9600bps.
 .It time
 Displays system time and date.
 .El
@@ -259,9 +270,7 @@ kernel image
 RFC 1950 describes the zlib library interface.
 .Pp
 The official home page for the version of zlib used in this
-operating system see http://quest.jpl.nasa.gov/zlib/ .
-.Sh BUGS
-Well, nobody is perfect.
+operating system see http://quest.jpl.nasa.gov/zlib/.
 .Sh HISTORY
 This program was written by Michael Shalayeff for
 .Ox 2.1 .
