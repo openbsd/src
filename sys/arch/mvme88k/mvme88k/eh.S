@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.60 2004/08/03 21:15:38 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.61 2004/08/04 22:03:45 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,10 +40,10 @@
 #include <machine/mvme187.h>
 #define	PFSR_SAVE_187 \
 	or.u	TMP,  r0,   hi16(SBC_CMMU_I); \
-	ld	TMP2, TMP,  lo16(SBC_CMMU_I) + 0x108; \
+	ld	TMP2, TMP,  lo16(SBC_CMMU_I) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_IPFSR); \
 	or.u	TMP,  r0,   hi16(SBC_CMMU_D); \
-	ld	TMP2, TMP,  lo16(SBC_CMMU_D) + 0x108; \
+	ld	TMP2, TMP,  lo16(SBC_CMMU_D) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_DPFSR);
 #else
 #define	PFSR_SAVE_187
@@ -116,44 +116,44 @@ ASLOCAL(pfsr188_quad)
 	 * handle a bunch of CMMU faults at once in trap.c.
 	 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I0) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_I0) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I1) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_I1) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I2) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_I2) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_I3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_I3) + REG_OFF(CMMU_PFSR)
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D0) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_D0) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D1) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_D1) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D2) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_D2) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_D3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_D3) + REG_OFF(CMMU_PFSR)
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
@@ -171,24 +171,24 @@ ASLOCAL(pfsr188_double)
 
 	/* CPU 0 -> CMMU 0 and 1 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I0) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_I0) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_I1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_I1) + REG_OFF(CMMU_PFSR)
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D0) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_D0) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_D1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_D1) + REG_OFF(CMMU_PFSR)
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
@@ -196,24 +196,24 @@ ASLOCAL(pfsr188_double)
 5:
 	/* CPU 1 -> CMMU 2 and 3 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I2) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_I2) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_I3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_I3) + REG_OFF(CMMU_PFSR)
 1:
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + REG_OFF(CMMU_PFSR)
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D2) + 0x108
+	 st	r0,   TMP,  lo16(VME_CMMU_D2) + REG_OFF(CMMU_PFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
-	st	r0,   TMP,  lo16(VME_CMMU_D3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + REG_OFF(CMMU_PFSR)
+	st	r0,   TMP,  lo16(VME_CMMU_D3) + REG_OFF(CMMU_PFSR)
 2:
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
@@ -230,37 +230,37 @@ ASLOCAL(pfsr188_straight)
 
 	/* must be CPU3 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + REG_OFF(CMMU_PFSR)
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + REG_OFF(CMMU_PFSR)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 1:
 	/* must be CPU0 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + REG_OFF(CMMU_PFSR)
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + REG_OFF(CMMU_PFSR)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 2:
 	/* must be CPU1 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + REG_OFF(CMMU_PFSR)
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + REG_OFF(CMMU_PFSR)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 3:
 	/* must be CPU2 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + REG_OFF(CMMU_PFSR)
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
+	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + REG_OFF(CMMU_PFSR)
 	br.n	_ASM_LABEL(pfsr_done)
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR)
 #endif

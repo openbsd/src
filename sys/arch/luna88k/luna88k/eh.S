@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.3 2004/08/02 08:34:57 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.4 2004/08/04 22:03:42 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -46,37 +46,37 @@
 1: \
 	/* must be CPU0 */ \
 	or.u	TMP,  r0,   hi16(CMMU_I0); \
-	ld	TMP2, TMP,  lo16(CMMU_I0) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_I0) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_IPFSR); \
 	or.u	TMP,  r0,   hi16(CMMU_D0); \
-	ld	TMP2, TMP,  lo16(CMMU_D0) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_D0) + REG_OFF(CMMU_PFSR); \
 	br.n	_ASM_LABEL(pfsr_done); \
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR); \
 2: \
 	/* must be CPU1 */ \
 	or.u	TMP,  r0,   hi16(CMMU_I1); \
-	ld	TMP2, TMP,  lo16(CMMU_I1) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_I1) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_IPFSR); \
 	or.u	TMP,  r0,   hi16(CMMU_D1); \
-	ld	TMP2, TMP,  lo16(CMMU_D1) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_D1) + REG_OFF(CMMU_PFSR); \
 	br.n	_ASM_LABEL(pfsr_done); \
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR); \
 3: \
 	/* must be CPU2 */ \
 	or.u	TMP,  r0,   hi16(CMMU_I2); \
-	ld	TMP2, TMP,  lo16(CMMU_I2) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_I2) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_IPFSR); \
 	or.u	TMP,  r0,   hi16(CMMU_D2); \
-	ld	TMP2, TMP,  lo16(CMMU_D2) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_D2) + REG_OFF(CMMU_PFSR); \
 	br.n	_ASM_LABEL(pfsr_done); \
 	 st	TMP2, r31,  REG_OFF(EF_DPFSR); \
 4: \
 	/* must be CPU3 */ \
 	or.u	TMP,  r0,   hi16(CMMU_I3); \
-	ld	TMP2, TMP,  lo16(CMMU_I3) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_I3) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_IPFSR); \
 	or.u	TMP,  r0,   hi16(CMMU_D3); \
-	ld	TMP2, TMP,  lo16(CMMU_D3) + 0x108; \
+	ld	TMP2, TMP,  lo16(CMMU_D3) + REG_OFF(CMMU_PFSR); \
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 
 #include <m88k/m88k/eh_common.S>
