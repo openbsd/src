@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2002/05/17 21:45:48 hin Exp $
+# $OpenBSD: Makefile,v 1.8 2002/05/18 16:43:36 deraadt Exp $
 
 LIB	= roken
 
@@ -21,7 +21,6 @@ SRCS=	base64.c		\
 	estrdup.c		\
 	ewrite.c		\
 	getaddrinfo_hostspec.c	\
-	getprogname.c		\
 	get_default_username.c	\
 	get_window_size.c	\
 	getarg.c		\
@@ -39,7 +38,6 @@ SRCS=	base64.c		\
 	rtbl.c			\
 	tm2time.c		\
 	verify.c		\
-	setprogname.c		\
 	strcollect.c		\
 	strlwr.c		\
 	strndup.c		\
@@ -52,5 +50,6 @@ SRCS=	base64.c		\
 	write_pid.c
 
 install:
+
 
 .include <bsd.lib.mk>
