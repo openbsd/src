@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.13 2005/03/19 09:52:54 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.14 2005/03/19 10:18:49 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -478,6 +478,9 @@ USB_DETACH(ural)
 {
 	USB_DETACH_START(ural, sc);
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s;
+
+	s = splusb();
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	timeout_del(&sc->scan_ch);
@@ -500,6 +503,8 @@ USB_DETACH(ural)
 #endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
+
+	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
@@ -767,6 +772,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ural_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	int s;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -780,6 +786,8 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 	}
 
+	s = splnet();
+
 	m_freem(data->m);
 	data->m = NULL;
 	ieee80211_release_node(ic, data->ni);
@@ -792,6 +800,8 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ural_start(ifp);
+
+	splx(s);
 }
 
 Static void
@@ -805,7 +815,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m;
-	int len;
+	int s, len;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -842,6 +852,8 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
 	m->m_flags |= M_HASFCS; /* hardware appends FCS */
 
+	s = splnet();
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -870,6 +882,8 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
+
+	splx(s);
 
 	MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 	if (data->m == NULL) {
