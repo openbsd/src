@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.43 2003/05/14 01:13:48 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.44 2003/05/25 21:55:44 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -282,6 +282,10 @@ wsdisplay* at tvtwo?
 # Fujitsu AG-10e framebuffer.
 agten* at sbus?
 wsdisplay* at agten?
+
+# Southland Media Systems MGX/MGXPlus framebuffer.
+mgx* at sbus?
+wsdisplay* at mgx?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
