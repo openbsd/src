@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.35 2002/05/30 07:09:23 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.36 2002/05/30 16:06:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.35 2002/05/30 07:09:23 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.36 2002/05/30 16:06:45 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -88,8 +88,8 @@ void wi_printkeys(struct wi_req *);
 void wi_printcardid(struct wi_req *, int);
 void wi_dumpstats(char *);
 void wi_dumpstations(char *);
-void usage(void);
 void printb(char *, unsigned short, char *);
+__dead void usage(void);
 char *portid(char *);
 
 void
@@ -504,10 +504,10 @@ struct wi_table wi_table[] = {
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t"},
 	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t" },
 	{ WI_RID_SYMBOL_DIVERSITY, WI_WORDS, "Antenna diversity (0=auto,1=pri,2=aux):\t"},
-	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t"},
+	{ WI_RID_MICROWAVE_OVEN, WI_BOOL, "Microwave oven robustness:\t\t"},
 	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1=firm,3=disable):\t\t"},
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t" },
-	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
+	{ WI_RID_PM_ENABLED, WI_BOOL, "Power Management:\t\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t" },
 	{ WI_RID_STA_IDENTITY, WI_CARDINFO, "Card info:\t\t\t\t" },
 	{ 0, NULL }
@@ -714,7 +714,7 @@ wi_dumpstations(iface)
 	}
 }
 
-void
+__dead void
 usage()
 {
 	extern char *__progname;
