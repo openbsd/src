@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_mmap.c,v 1.43 1995/12/05 22:54:42 pk Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.4 1996/03/03 17:45:32 niklas Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.45 1996/02/10 00:08:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,9 +80,11 @@ sys_sbrk(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sys_sbrk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
+#endif
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -94,90 +97,16 @@ sys_sstk(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sys_sstk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
+#endif
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_OSF1) || \
-    defined(COMPAT_FREEBSD)
-/* ARGSUSED */
-int
-compat_43_sys_getpagesize(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-
-	*retval = PAGE_SIZE;
-	return (0);
-}
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_OSF1 || COMPAT_FREEBSD */
-
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
-int
-compat_43_sys_mmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct compat_43_sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(long) pos;
-	} */ *uap = v;
-	struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(long) pad;
-		syscallarg(off_t) pos;
-	} */ nargs;
-	static const char cvtbsdprot[8] = {
-		0,
-		PROT_EXEC,
-		PROT_WRITE,
-		PROT_EXEC|PROT_WRITE,
-		PROT_READ,
-		PROT_EXEC|PROT_READ,
-		PROT_WRITE|PROT_READ,
-		PROT_EXEC|PROT_WRITE|PROT_READ,
-	};
-#define	OMAP_ANON	0x0002
-#define	OMAP_COPY	0x0020
-#define	OMAP_SHARED	0x0010
-#define	OMAP_FIXED	0x0100
-#define	OMAP_INHERIT	0x0800
-
-	SCARG(&nargs, addr) = SCARG(uap, addr);
-	SCARG(&nargs, len) = SCARG(uap, len);
-	SCARG(&nargs, prot) = cvtbsdprot[SCARG(uap, prot)&0x7];
-	SCARG(&nargs, flags) = 0;
-	if (SCARG(uap, flags) & OMAP_ANON)
-		SCARG(&nargs, flags) |= MAP_ANON;
-	if (SCARG(uap, flags) & OMAP_COPY)
-		SCARG(&nargs, flags) |= MAP_COPY;
-	if (SCARG(uap, flags) & OMAP_SHARED)
-		SCARG(&nargs, flags) |= MAP_SHARED;
-	else
-		SCARG(&nargs, flags) |= MAP_PRIVATE;
-	if (SCARG(uap, flags) & OMAP_FIXED)
-		SCARG(&nargs, flags) |= MAP_FIXED;
-	if (SCARG(uap, flags) & OMAP_INHERIT)
-		SCARG(&nargs, flags) |= MAP_INHERIT;
-	SCARG(&nargs, fd) = SCARG(uap, fd);
-	SCARG(&nargs, pos) = SCARG(uap, pos);
-	return (sys_mmap(p, &nargs, retval));
-}
-#endif
 
 /*
  * Memory Map (mmap) system call.  Note that the file offset
@@ -210,6 +139,7 @@ sys_mmap(p, v, retval)
 	vm_prot_t prot, maxprot;
 	caddr_t handle;
 	int fd, flags, error;
+	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
 
 	addr = (vm_offset_t) SCARG(uap, addr);
 	size = (vm_size_t) SCARG(uap, len);
@@ -253,9 +183,10 @@ sys_mmap(p, v, retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 		/* Address range must be all in user VM space. */
-		if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
+		if (VM_MAXUSER_ADDRESS > 0 &&
+		    addr + size > VM_MAXUSER_ADDRESS)
 			return (EINVAL);
-		if (VM_MIN_ADDRESS > 0 && addr < VM_MIN_ADDRESS)
+		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
 		if (addr > addr + size)
 			return (EINVAL);
@@ -436,6 +367,8 @@ sys_munmap(p, v, retval)
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	vm_map_t map;
+	vm_offset_t vm_min_address = VM_MIN_ADDRESS;
+	
 
 	addr = (vm_offset_t) SCARG(uap, addr);
 	size = (vm_size_t) SCARG(uap, len);
@@ -463,7 +396,7 @@ sys_munmap(p, v, retval)
 	 */
 	if (VM_MAXUSER_ADDRESS > 0 && addr + size > VM_MAXUSER_ADDRESS)
 		return (EINVAL);
-	if (VM_MIN_ADDRESS > 0 && addr < VM_MIN_ADDRESS)
+	if (vm_min_address > 0 && addr < vm_min_address)
 		return (EINVAL);
 	if (addr > addr + size)
 		return (EINVAL);
@@ -589,11 +522,13 @@ sys_madvise(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sys_madvise_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
 	} */ *uap = v;
+#endif
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -606,11 +541,13 @@ sys_mincore(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sys_mincore_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
+#endif
 
 	/* Not yet implemented */
 	return (EOPNOTSUPP);
@@ -658,7 +595,7 @@ sys_mlock(p, v, retval)
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
 #else
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 #endif
 
@@ -701,7 +638,7 @@ sys_munlock(p, v, retval)
 		return (EINVAL);
 
 #ifndef pmap_wired_count
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 #endif
 
@@ -803,7 +740,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		(void) pager_cache(object, FALSE);
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): ANON *addr %x size %x pager %x\n",
+			printf("vm_mmap(%d): ANON *addr %x size %x pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}
@@ -833,7 +770,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	else {
 #ifdef DEBUG
 		if (object == NULL)
-			printf("vm_mmap: no object: vp %x, pager %x\n",
+			printf("vm_mmap: no object: vp %p, pager %p\n",
 			       vp, pager);
 #endif
 		/*
@@ -984,7 +921,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		}
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): FILE *addr %x size %x pager %x\n",
+			printf("vm_mmap(%d): FILE *addr %x size %x pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}

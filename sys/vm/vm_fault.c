@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_fault.c,v 1.16 1994/09/07 20:25:07 mycroft Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.2 1996/03/03 17:45:28 niklas Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.17 1996/02/05 01:53:55 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -571,7 +572,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			copy_offset = first_offset
 				- copy_object->shadow_offset;
 			copy_m = vm_page_lookup(copy_object, copy_offset);
-			if (page_exists = (copy_m != NULL)) {
+			if ((page_exists = (copy_m != NULL)) != 0) {
 				if (copy_m->flags & PG_BUSY) {
 #ifdef DOTHREADS
 					int	wait_result;

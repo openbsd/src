@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_page.c,v 1.26 1995/06/26 14:40:11 leo Exp $	*/
+/*    $OpenBSD: vm_page.c,v 1.2 1996/03/03 17:45:35 niklas Exp $    */
+/*    $NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $    */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -195,9 +196,8 @@ vm_page_bootstrap(startp, endp)
 	 *	map (they should use their own maps).
 	 */
 
-	kentry_data_size = MAX_KMAP * sizeof(struct vm_map) +
-			   MAX_KMAPENT * sizeof(struct vm_map_entry);
-	kentry_data_size = round_page(kentry_data_size);
+	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
+				      MAX_KMAPENT*sizeof(struct vm_map_entry));
 	kentry_data = (vm_offset_t) pmap_steal_memory(kentry_data_size);
 	
 	/*
@@ -542,7 +542,12 @@ pmap_startup(startp, endp)
 		i = pmap_page_index(paddr) - first_page;
 
 		/* Don't trust pmap_page_index()... */
-		if (i < 0 || i >= vm_page_count)
+		if (
+#if 0
+		    /* Cannot happen; i is unsigned */
+		    i < 0 ||
+#endif
+			    i >= vm_page_count)
 			panic("pmap_startup: bad i=0x%x", i);
 	}
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_glue.c,v 1.48 1995/12/09 04:28:19 mycroft Exp $	*/
+/*    $OpenBSD: vm_glue.c,v 1.9 1996/03/03 17:45:29 niklas Exp $    */
+/*    $NetBSD: vm_glue.c,v 1.52 1996/02/12 21:51:59 christos Exp $    */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,6 +69,9 @@
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -179,14 +183,10 @@ vslock(addr, len)
 }
 
 void
-vsunlock(addr, len, dirtied)
+vsunlock(addr, len)
 	caddr_t	addr;
 	u_int	len;
-	int dirtied;
 {
-#ifdef	lint
-	dirtied++;
-#endif
 	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), TRUE);
 }
@@ -392,7 +392,7 @@ loop:
 	}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %x pri %d\n", pp, ppri);
+		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
 #endif
 	/*
 	 * Nothing to do, back to sleep
@@ -410,7 +410,7 @@ loop:
 	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%x, pri %d free %d\n",
+			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
@@ -502,7 +502,7 @@ swapout_threads()
 			p = outp2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %x\n", p);
+			printf("swapout_threads: no duds, try procp %p\n", p);
 #endif
 		if (p)
 			swapout(p);
@@ -518,7 +518,7 @@ swapout(p)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: pid %d(%s)@%x, stat %x pri %d free %d\n",
+		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
 		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
 		       p->p_slptime, cnt.v_free_count);
 #endif

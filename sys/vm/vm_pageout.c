@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_pageout.c,v 1.22 1995/06/28 02:58:51 cgd Exp $	*/
+/*	$OpenBSD: vm_pageout.c,v 1.2 1996/03/03 17:45:36 niklas Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.23 1996/02/05 01:54:07 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,6 +70,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>

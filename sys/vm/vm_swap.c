@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_swap.c,v 1.31 1995/10/07 06:29:02 mycroft Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.2 1996/03/03 17:45:38 niklas Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/dmap.h>		/* XXX */
@@ -48,6 +48,9 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+#include <vm/vm_conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -60,6 +63,8 @@ int	nswap, nswdev;
 int	niswdev;		/* number of interleaved swap devices */
 int	niswap;			/* size of interleaved swap area */
 #endif
+
+int swfree __P((struct proc *, int));
 
 /*
  * Set up swap devices.
@@ -239,7 +244,7 @@ swstrategy(bp)
 		panic("swstrategy");
 	VHOLD(sp->sw_vp);
 	if ((bp->b_flags & B_READ) == 0) {
-		if (vp = bp->b_vp) {
+		if ((vp = bp->b_vp) != NULL) {
 			vp->v_numoutput--;
 			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
 				vp->v_flag &= ~VBWAIT;
@@ -254,19 +259,23 @@ swstrategy(bp)
 	VOP_STRATEGY(bp);
 }
 
+/*ARGSUSED*/
 int
-swread(dev, uio)
+swread(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 
 	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
+/*ARGSUSED*/
 int
-swwrite(dev, uio)
+swwrite(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -293,10 +302,10 @@ sys_swapon(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, name), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_type != VBLK) {
@@ -315,7 +324,7 @@ sys_swapon(p, v, retval)
 				return (EBUSY);
 			}
 			sp->sw_vp = vp;
-			if (error = swfree(p, sp - swdevt)) {
+			if ((error = swfree(p, sp - swdevt)) != 0) {
 				vrele(vp);
 				return (error);
 			}
@@ -359,7 +368,7 @@ swfree(p, index)
 	vp = sp->sw_vp;
 	/* If root on swap, then the skip open/close operations. */
 	if (vp != rootvp) {
-		if (error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)) != 0)
 			return (error);
 	}
 	sp->sw_flags |= SW_FREED;

@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_pager.c,v 1.18 1995/05/07 19:27:30 cgd Exp $	*/
+/*	$OpenBSD: vm_pager.c,v 1.2 1996/03/03 17:45:37 niklas Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.20 1996/02/10 00:08:13 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -72,6 +73,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -339,7 +341,7 @@ vm_pager_unmap_pages(kva, npages)
 		if (m->flags & PG_PAGEROWNED)
 			m->flags &= ~PG_PAGEROWNED;
 		else
-			printf("vm_pager_unmap_pages: %x(%x/%x) not owned\n",
+			printf("vm_pager_unmap_pages: %p(%x/%x) not owned\n",
 			       m, va, VM_PAGE_TO_PHYS(m));
 	}
 #endif

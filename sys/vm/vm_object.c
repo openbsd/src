@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_object.c,v 1.31 1995/12/06 00:38:11 pk Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.3 1996/03/03 17:45:34 niklas Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.33 1996/02/10 00:08:11 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -387,7 +388,7 @@ vm_object_page_clean(object, start, end, syncio, de_queue)
 	boolean_t		de_queue;
 {
 	register vm_page_t	p;
-	int onqueue;
+	int onqueue = 0;
 	boolean_t noerror = TRUE;
 
 	if (object == NULL)
@@ -427,7 +428,7 @@ again:
 	 * Loop through the object page list cleaning as necessary.
 	 */
 	for (p = object->memq.tqh_first; p != NULL; p = p->listq.tqe_next) {
-		if ((start == end || p->offset >= start && p->offset < end) &&
+		if ((start == end || (p->offset >= start && p->offset < end)) &&
 		    !(p->flags & PG_FICTITIOUS)) {
 			if ((p->flags & PG_CLEAN) &&
 			    pmap_is_modified(VM_PAGE_TO_PHYS(p)))
@@ -1460,8 +1461,6 @@ vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
-        extern void _vm_object_print();
-        
         _vm_object_print(object, full, printf);
 }
 

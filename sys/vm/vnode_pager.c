@@ -1,4 +1,5 @@
-/*	$NetBSD: vnode_pager.c,v 1.16 1994/06/29 06:48:47 cgd Exp $	*/
+/*	$OpenBSD: vnode_pager.c,v 1.2 1996/03/03 17:45:40 niklas Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.18 1996/02/10 00:08:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -128,7 +129,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 
 #ifdef DEBUG
 	if (vpagerdebug & (VDB_FOLLOW|VDB_ALLOC))
-		printf("vnode_pager_alloc(%x, %x, %x)\n", handle, size, prot);
+		printf("vnode_pager_alloc(%p, %x, %x)\n", handle, size, prot);
 #endif
 	/*
 	 * Pageout to vnode, no can do yet.
@@ -192,7 +193,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 	}
 #ifdef DEBUG
 	if (vpagerdebug & VDB_ALLOC)
-		printf("vnode_pager_setup: vp %x sz %x pager %x object %x\n",
+		printf("vnode_pager_setup: vp %p sz %x pager %p object %p\n",
 		       vp, vnp->vnp_size, pager, object);
 #endif
 	return(pager);
@@ -210,9 +211,9 @@ vnode_pager_dealloc(pager)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_dealloc(%x)\n", pager);
+		printf("vnode_pager_dealloc(%p)\n", pager);
 #endif
-	if (vp = vnp->vnp_vp) {
+	if ((vp = vnp->vnp_vp) != NULL) {
 		vp->v_vmdata = NULL;
 		vp->v_flag &= ~VTEXT;
 #if NOTDEF
@@ -236,7 +237,7 @@ vnode_pager_getpage(pager, mlist, npages, sync)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_getpage(%x, %x, %x, %x)\n",
+		printf("vnode_pager_getpage(%p, %p, %x, %x)\n",
 		       pager, mlist, npages, sync);
 #endif
 	return(vnode_pager_io((vn_pager_t)pager->pg_data,
@@ -254,7 +255,7 @@ vnode_pager_putpage(pager, mlist, npages, sync)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_putpage(%x, %x, %x, %x)\n",
+		printf("vnode_pager_putpage(%p, %p, %x, %x)\n",
 		       pager, mlist, npages, sync);
 #endif
 	if (pager == NULL)
@@ -285,7 +286,7 @@ vnode_pager_haspage(pager, offset)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_haspage(%x, %x)\n", pager, offset);
+		printf("vnode_pager_haspage(%p, %x)\n", pager, offset);
 #endif
 
 	/*
@@ -298,7 +299,7 @@ vnode_pager_haspage(pager, offset)
 		VOP_UNLOCK(vnp->vnp_vp);
 #ifdef DEBUG
 		if (vpagerdebug & (VDB_FAIL|VDB_SIZE))
-			printf("vnode_pager_haspage: pg %x, off %x, size %x\n",
+			printf("vnode_pager_haspage: pg %p, off %x, size %x\n",
 			       pager, offset, vnp->vnp_size);
 #endif
 		return(FALSE);
@@ -318,7 +319,7 @@ vnode_pager_haspage(pager, offset)
 	if (err) {
 #ifdef DEBUG
 		if (vpagerdebug & VDB_FAIL)
-			printf("vnode_pager_haspage: BMAP err %d, pg %x, off %x\n",
+			printf("vnode_pager_haspage: BMAP err %d, pg %p, off %x\n",
 			       err, pager, offset);
 #endif
 		return(TRUE);
@@ -338,7 +339,7 @@ vnode_pager_cluster(pager, offset, loffset, hoffset)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_cluster(%x, %x) ", pager, offset);
+		printf("vnode_pager_cluster(%p, %x) ", pager, offset);
 #endif
 	loff = offset;
 	if (loff >= vnp->vnp_size)
@@ -403,7 +404,7 @@ vnode_pager_setsize(vp, nsize)
 
 #ifdef DEBUG
 	if (vpagerdebug & (VDB_FOLLOW|VDB_SIZE))
-		printf("vnode_pager_setsize: vp %x obj %x osz %d nsz %d\n",
+		printf("vnode_pager_setsize: vp %p obj %p osz %d nsz %d\n",
 		       vp, object, vnp->vnp_size, nsize);
 #endif
 	/*
@@ -467,10 +468,10 @@ vnode_pager_uncache(vp)
 #ifdef DEBUG
 	if (!VOP_ISLOCKED(vp)) {
 #ifdef NFSCLIENT
-		extern int (**nfsv2_vnodeop_p)();
-		extern int (**spec_nfsv2nodeop_p)();
+		extern int (**nfsv2_vnodeop_p) __P((void *));
+		extern int (**spec_nfsv2nodeop_p) __P((void *));
 #ifdef FIFO
-		extern int (**fifo_nfsv2nodeop_p)();
+		extern int (**fifo_nfsv2nodeop_p) __P((void *));
 #endif
 
 		if (vp->v_op != nfsv2_vnodeop_p
@@ -522,7 +523,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 
 #ifdef DEBUG
 	if (vpagerdebug & VDB_FOLLOW)
-		printf("vnode_pager_io(%x, %x, %c): vnode %x\n",
+		printf("vnode_pager_io(%p, %p, %c): vnode %p\n",
 		       vnp, m, rw == UIO_READ ? 'R' : 'W', vnp->vnp_vp);
 #endif
 	foff = m->offset + m->object->paging_offset;
@@ -545,7 +546,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 		vm_pager_unmap_pages(kva, npages);
 #ifdef DEBUG
 		if (vpagerdebug & VDB_SIZE)
-			printf("vnode_pager_io: vp %x, off %d size %d\n",
+			printf("vnode_pager_io: vp %p, off %d size %d\n",
 			       vnp->vnp_vp, foff, vnp->vnp_size);
 #endif
 		return(VM_PAGER_BAD);
@@ -565,7 +566,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 	auio.uio_procp = (struct proc *)0;
 #ifdef DEBUG
 	if (vpagerdebug & VDB_IO)
-		printf("vnode_pager_io: vp %x kva %x foff %x size %x",
+		printf("vnode_pager_io: vp %p kva %x foff %x size %x",
 		       vnp->vnp_vp, kva, foff, size);
 #endif
 	if (rw == UIO_READ)
