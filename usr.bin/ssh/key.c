@@ -305,3 +305,16 @@ key_write(Key *key, FILE *f)
 	}
 	return success;
 }
+char *
+key_type(Key *k)
+{
+	switch (k->type) {
+	case KEY_RSA:
+		return "RSA";
+		break;
+	case KEY_DSA:
+		return "DSA";
+		break;
+	}
+	return "unknown";
+}
