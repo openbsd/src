@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.76 2004/12/08 08:16:44 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.77 2004/12/08 17:06:12 pat Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1391,7 +1391,8 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 }
 
 void
-carp_multicast_cleanup(struct carp_softc *sc) {
+carp_multicast_cleanup(struct carp_softc *sc)
+{
 	struct ip_moptions *imo = &sc->sc_imo;
 	struct ip6_moptions *im6o = &sc->sc_im6o;
 
@@ -1432,8 +1433,8 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 
 		if (ifp->if_carp == NULL) {
 			MALLOC(ncif, struct carp_if *, sizeof(*cif),
-			    M_IFADDR, M_WAITOK);
-			if (!ncif)
+			    M_IFADDR, M_NOWAIT);
+			if (ncif == NULL)
 				return (ENOBUFS);
 			if ((error = ifpromisc(ifp, 1))) {
 				FREE(ncif, M_IFADDR);
@@ -1456,13 +1457,16 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		/* join multicast groups */
 		if (sc->sc_naddrs < 0 &&
 		    (error = carp_join_multicast(sc, ifp)) != 0) {
-			FREE(ncif, M_IFADDR);
+			if (ncif != NULL)
+				FREE(ncif, M_IFADDR);
 			return (error);
 		}
 
 		if (sc->sc_naddrs6 < 0 &&
-		    (error = carp_join_multicast(sc, ifp)) != 0) {
-			FREE(ncif, M_IFADDR);
+		    (error = carp_join_multicast6(sc, ifp)) != 0) {
+			if (ncif != NULL)
+				FREE(ncif, M_IFADDR);
+			carp_multicast_cleanup(sc);
 			return (error);
 		}
 
