@@ -1,4 +1,4 @@
-/*	$OpenBSD: execve.c,v 1.1.1.1 2001/08/15 14:37:11 fgsch Exp $	*/
+/*	$OpenBSD: execve.c,v 1.2 2002/12/13 20:21:04 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -66,8 +66,10 @@ main()
 		CHECKn(ttynm = ttyname(STDOUT_FILENO));
 		printf("tty is %s\n", ttynm);
 		CHECKe(fd = open(ttynm, O_RDWR));
-	} else
-		PANIC("stdout is not a tty: this test needs a tty");
+	} else {
+		printf("IGNORED: stdout is not a tty: this test needs a tty\n");
+		SUCCEED;
+	}
 
 	CHECKn(printf("This output is necessary to set the stdout fd to NONBLOCKING\n"));
 
