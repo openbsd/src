@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.220 2002/06/08 07:58:06 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.221 2002/06/09 01:44:31 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5112,9 +5112,13 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir)
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & IP_DF) {
-		error = EMSGSIZE;
 		ipstat.ips_cantfrag++;
-		goto bad;
+		if (r->rt != PF_DUPTO) {
+			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
+			    ifp);
+			goto done;
+		} else
+			goto bad;
 	}
 
 	m1 = m0;
@@ -5217,15 +5221,16 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir)
 	}
 
 	/*
-	 * Do not fragment packets (yet).  Not much is done here for dealing
-	 * with errors.  Actions on errors depend on whether the packet
-	 * was generated locally or being forwarded.
+	 * If the packet is too large for the outgoing interface,
+	 * send back an icmp6 error.
 	 */
 	if (m0->m_pkthdr.len <= ifp->if_mtu) {
 		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
 		    NULL);
-	} else
-		m_freem(m0);
+	} else if (r->rt != PF_DUPTO)
+		icmp6_error(m0, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+	else
+		goto bad;
 
 done:
 	if (r->rt != PF_DUPTO)
