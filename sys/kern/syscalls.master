@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.37 1999/06/07 07:17:42 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.38 2000/02/07 04:49:27 assar Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -295,11 +295,7 @@
 158	STD		{ int sys_ofstatfs(int fd, struct ostatfs *buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFSCLIENT) || defined(NFSSERVER)
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
-#else
-161	UNIMPL		getfh
-#endif
 162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
 			    ogetdomainname
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
@@ -520,3 +516,8 @@
 			    struct statfs *buf); }
 262	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 263	STD		{ int sys_pipe(int *fdp); }
+264	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
+265	STD		{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat *sb); }
+266	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs *buf); }
