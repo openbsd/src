@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.9 1999/02/26 03:47:46 niklas Exp $	*/
-/*	$EOM: message.c,v 1.106 1999/02/25 11:39:15 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.10 1999/03/02 15:12:00 niklas Exp $	*/
+/*	$EOM: message.c,v 1.107 1999/03/02 14:23:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <machine/endian.h>
 #include <stdlib.h>
 #include <string.h>
 

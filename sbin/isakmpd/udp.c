@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.7 1999/02/26 03:51:33 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.30 1999/02/25 11:39:25 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.8 1999/03/02 15:12:00 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.31 1999/03/02 14:26:13 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -60,6 +60,11 @@
 
 #define BACKLOG 16
 #define UDP_SIZE 65536
+
+/* If a system doesn't have SO_REUSEPORT, SO_REUSEADDR will have to do.  */
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT SO_REUSEADDR
+#endif
 
 /* XXX IPv4 specific.  */
 struct udp_transport {
@@ -198,7 +203,9 @@ udp_bind (in_addr_t addr, in_port_t port)
   struct sockaddr_in src;
 
   memset (&src, 0, sizeof src);
+#ifndef USE_OLD_SOCKADDR
   src.sin_len = sizeof src;
+#endif
   src.sin_family = AF_INET;
   src.sin_addr.s_addr = addr;
   src.sin_port = port;
@@ -222,8 +229,12 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
    * Well UDP is an internet protocol after all so drop other ifreqs.
    * XXX IPv6 support is missing.
    */
+#ifdef USE_OLD_SOCKADDR
+  if (ifrp->ifr_addr.sa_family != AF_INET)
+#else
   if (ifrp->ifr_addr.sa_family != AF_INET
       || ifrp->ifr_addr.sa_len != sizeof (struct sockaddr_in))
+#endif
     return;
 
   /*
@@ -295,7 +306,9 @@ udp_create (char *name)
     }
 
   memset (&dst, 0, sizeof dst);
+#ifndef USE_OLD_SOCKADDR
   dst.sin_len = sizeof dst;
+#endif
   dst.sin_family = AF_INET;
   dst.sin_addr.s_addr = addr;
   dst.sin_port = htons (port);
