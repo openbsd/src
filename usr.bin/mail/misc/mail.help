@@ -33,5 +33,5 @@ A <recipient list> consists of recipient addresses or aliases separated by
 spaces.  Aliases are defined in .mailrc in your home directory.
 
 <file> is a full or relative pathname, +folder, % (system inbox), %user
-(specified user's syetem inbox), # (previous file), & (mbox file), or an
+(specified user's system inbox), # (previous file), & (mbox file), or an
 expression understood by ${SHELL:-/bin/sh} -c 'echo ...'.
