@@ -372,7 +372,7 @@ main(int argc, char **argv)
 
     /*	freopen(_PATH_DEVNULL, "w", stderr); */
     signal(SIGPIPE, lostconn);
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, SIG_DFL);
 #ifdef SIGURG
     if (signal(SIGURG, myoob) == SIG_ERR)
 	syslog(LOG_ERR, "signal: %m");

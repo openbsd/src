@@ -275,7 +275,7 @@ des_rand_data(unsigned char *data, int size)
 #ifdef HAVE_SETITIMER
     setitimer(ITIMER_REAL, &tv, &otv);
 #else
-    ochld = signal(SIGCHLD, SIG_IGN);
+    ochld = signal(SIGCHLD, SIG_DFL);
     pid = fork();
     if(pid == -1){
 	signal(SIGCHLD, ochld != SIG_ERR ? ochld : SIG_DFL);

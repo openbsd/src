@@ -211,7 +211,7 @@ wait_for_connection(krb5_context context,
 	    }
 	}
     }
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, SIG_DFL);
     while(1) {
 	int status;
 	pid_t pid;

@@ -343,7 +343,7 @@ static void
 stop(int all)
 {
 	mode(0);
-	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, SIG_DFL);
 	kill(all ? 0 : getpid(), SIGTSTP);
 	signal(SIGCHLD, catch_child);
 	mode(1);
@@ -492,7 +492,7 @@ doit(void)
 	    done(1);
 	}
 	if (child == 0) {
-	        signal(SIGCHLD, SIG_IGN);
+	        signal(SIGCHLD, SIG_DFL);
 	        signal(SIGTTOU, SIG_IGN);
 		if (reader() == 0)
 		    errx(1, "connection closed.\r");

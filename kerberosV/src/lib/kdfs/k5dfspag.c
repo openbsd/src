@@ -281,7 +281,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
   /* Make sure that telnetd.c's SIGCHLD action don't happen right now... */
   memset((char *)&newsig, 0, sizeof(newsig));
-  newsig.sa_handler = SIG_IGN;
+  newsig.sa_handler = SIG_DFL;
   sigaction(SIGCHLD, &newsig, &oldsig);
 
   pid = fork();

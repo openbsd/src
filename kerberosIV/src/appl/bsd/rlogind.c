@@ -519,7 +519,7 @@ doit(int f, struct sockaddr_in *fromp)
     signal(SIGCHLD, cleanup);
     setsid();
     protocol(f, master);
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, SIG_DFL);
     cleanup(0);
 }
 
