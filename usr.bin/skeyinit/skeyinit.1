@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.3 1996/06/26 05:39:23 deraadt Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.4 1996/09/27 15:49:03 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -21,6 +21,8 @@ You should use a secure login connection to generate
 your first one time password.
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl x
+displays pass phrase in hexidecimal instead of ASCII.
 .It Fl s
 allows the user to set the seed and count for complete control
 of the parameters.
@@ -35,6 +37,10 @@ allows the user to zero their S/Key entry.
 .It Ar user
 the username to be changed/added. By default the current user is
 operated on.
+.It Fl 4 
+Selects MD4 as the hash algorithm.
+.It Fl 5 
+Selects MD5 as the hash algorithm.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys
 .It Pa /etc/skeykeys
