@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.9 2001/07/28 05:36:18 pvalchev Exp $ */
+/* $OpenBSD: gnum4.c,v 1.10 2001/09/16 21:08:55 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -308,6 +308,7 @@ add_replace(string, re, replace, pm)
 		if (*p == '\\') {
 			if (p[1] == '\\') {
 				addchar(p[1]);
+				p++;
 				continue;
 			}
 			if (p[1] == '&') {
