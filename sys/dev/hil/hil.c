@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.5 2003/02/18 02:40:51 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.6 2003/02/19 00:03:30 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -301,6 +301,9 @@ hil_intr(void *v)
 {
 	struct hil_softc *sc = v;
 	u_int8_t c, stat;
+
+	if (cold)
+		return (0);
 
 	stat = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
@@ -627,10 +630,8 @@ pollon(struct hil_softc *sc)
 void
 hil_set_poll(struct hil_softc *sc, int on)
 {
-	if (on)
-		pollon(sc);
-	else
-		polloff(sc);
+	/* Always work in auto polled mode... */
+	pollon(sc);
 }
 
 int
