@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.16 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.17 2002/03/01 12:17:58 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -469,7 +469,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			 * apply reference count to knote structure, and
 			 * do not release it at the end of this routine.
 			 */
-			FRELE(fp);
+			if (fp != NULL)
+				FRELE(fp);
 			fp = NULL;
 
 			kn->kn_sfflags = kev->fflags;
