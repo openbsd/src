@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.80 2002/10/04 02:29:36 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.81 2002/10/10 20:27:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.80 2002/10/04 02:29:36 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.81 2002/10/10 20:27:46 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -170,6 +170,10 @@ STATIC int wi_set_debug(struct wi_softc *, struct wi_req *);
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
 	NULL, "wi", DV_IFNET
+};
+
+const struct wi_card_ident wi_card_ident[] = {
+	WI_CARD_IDS
 };
 
 int
@@ -2231,64 +2235,28 @@ STATIC void
 wi_get_id(sc)
 	struct wi_softc *sc;
 {
-	struct wi_ltv_ver	ver;
-	u_int16_t		pri_fw_ver[3];
-	const char		*p;
+	struct wi_ltv_ver		ver;
+	const struct wi_card_ident	*id;
+	u_int16_t			pri_fw_ver[3];
+	const char			*chip_id;
 
 	/* get chip identity */
 	bzero(&ver, sizeof(ver));
 	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
-	switch (letoh16(ver.wi_ver[0])) {
-		case WI_NIC_EVB2:
-			p = "PRISM I HFA3841(EVB2)";
-			sc->sc_firmware_type = WI_INTERSIL;
+	for (id = wi_card_ident; id->firm_type != WI_NOTYPE; id++) {
+		if (ver.wi_ver[0] == id->card_id)
 			break;
-		case WI_NIC_HWB3763:
-			p = "PRISM II HWB3763 rev.B";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_HWB3163:
-			p = "PRISM II HWB3163 rev.A";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_HWB3163B:
-			p = "PRISM II HWB3163 rev.B";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_EVB3:
-			p = "PRISM II  HFA3842(EVB3)";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_HWB1153:
-			p = "PRISM I HFA1153";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_P2_SST:
-			p = "PRISM II HWB3163 SST-flash";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_PRISM2_5:
-			p = "PRISM 2.5 ISL3873";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_3874A:
-			p = "PRISM 2.5 ISL3874A(PCI)";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		case WI_NIC_37300P:
-			p = "PRISM 2.5 ISL37300P";
-			sc->sc_firmware_type = WI_INTERSIL;
-			break;
-		default:
-			if (ver.wi_ver[0] & htole16(0x8000)) {
-				p = "Unknown PRISM2 chip";
-				sc->sc_firmware_type = WI_INTERSIL;
-			} else {
-				sc->sc_firmware_type = WI_LUCENT;
-			}
-			break;
+	}
+	if (id->firm_type != WI_NOTYPE) {
+		sc->sc_firmware_type = id->firm_type;
+		chip_id = id->card_name;
+	} else if (ver.wi_ver[0] & htole16(0x8000)) {
+		sc->sc_firmware_type = WI_INTERSIL;
+		chip_id = "Unknown PRISM2 chip";
+	} else {
+		sc->sc_firmware_type = WI_LUCENT;
 	}
 
 	/* get primary firmware version (XXX - how to do Lucent?) */
@@ -2338,14 +2306,12 @@ wi_get_id(sc)
 	} else {
 		printf("\n%s: %s%s, Firmware %d.%d.%d (primary), %d.%d.%d (station), ",
 		    WI_PRT_ARG(sc),
-		    sc->sc_firmware_type == WI_SYMBOL ? "Symbol " : "", p,
-		    pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
+		    sc->sc_firmware_type == WI_SYMBOL ? "Symbol " : "",
+		    chip_id, pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
 		    sc->sc_sta_firmware_ver / 10000,
 		    (sc->sc_sta_firmware_ver % 10000) / 100,
 		    sc->sc_sta_firmware_ver % 100);
 	}
-
-	return;
 }
 
 STATIC int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.40 2002/07/25 22:27:50 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.41 2002/10/10 20:27:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.40 2002/07/25 22:27:50 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.41 2002/10/10 20:27:46 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -86,7 +86,7 @@ void wi_printaplist(char *);
 void wi_dumpinfo(char *);
 void wi_setkeys(char *, int, char *);
 void wi_printkeys(struct wi_req *);
-void wi_printcardid(struct wi_req *, int);
+void wi_printcardid(struct wi_req *, u_int16_t);
 void wi_dumpstats(char *);
 void wi_dumpstations(char *);
 void printb(char *, unsigned short, char *);
@@ -94,6 +94,10 @@ __dead void usage(void);
 char *portid(char *);
 int  get_if_flags(int, const char *);
 int  set_if_flags(int, const char *, int);
+
+const struct wi_card_ident wi_card_ident[] = {
+	WI_CARD_IDS
+};
 
 void
 wi_getval(iface, wreq)
@@ -373,58 +377,29 @@ wi_printkeys(wreq)
 void
 wi_printcardid(wreq, chip_id)
 	struct wi_req *wreq;
-	int chip_id;
+	u_int16_t chip_id;
 {
-	char *chip_name;
+	const char *chip_name;
+	const struct wi_card_ident *id;
 
 	if (wreq->wi_len < 4)
 		return;
 
-	/* Copied from wi_get_id() in if_wi.c */
-	switch (chip_id) {
-	case WI_NIC_EVB2:
-		chip_name = "PRISM I HFA3841(EVB2)";
-		break;
-	case WI_NIC_HWB3763:
-		chip_name = "PRISM II HWB3763 rev.B";
-		break;
-	case WI_NIC_HWB3163:
-		chip_name = "PRISM II HWB3163 rev.A";
-		break;
-	case WI_NIC_HWB3163B:
-		chip_name = "PRISM II HWB3163 rev.B";
-		break;
-	case WI_NIC_EVB3:
-		chip_name = "PRISM II  HFA3842(EVB3)";
-		break;
-	case WI_NIC_HWB1153:
-		chip_name = "PRISM I HFA1153";
-		break;
-	case WI_NIC_P2_SST:
-		chip_name = "PRISM II HWB3163 SST-flash";
-		break;
-	case WI_NIC_PRISM2_5:
-		chip_name = "PRISM 2.5 ISL3873";
-		break;
-	case WI_NIC_37300P:
-		chip_name = "PRISM 2.5 ISL37300P";
-		break;
-	case WI_NIC_LUCENT:
-		chip_name = "Lucent";
-		break;
-	case WI_NIC_SONY:
-		chip_name = "Sony";
-		break;
-	case WI_NIC_LUCENT_EM:
-		chip_name = "Lucent (embedded)";
-		break;
-	default:
-		if (chip_id & 0x8000)
-			chip_name = "Unknown PRISM II chip";
+	for (id = wi_card_ident; id->firm_type != WI_NOTYPE; id++) {
+		if (chip_id == id->card_id)
+			break;
+	}
+	if (id->firm_type != WI_NOTYPE)
+		chip_name = id->card_name;
+	else {
+		if (chip_id & htole16(0x8000))
+			chip_name = "Unknown PRISM chip";
 		else
 			chip_name = "Unknown Lucent chip";
 	}
-	if (chip_id & 0x8000)
+
+	/* XXX - doesn't decode Symbol firmware */
+	if (chip_id & htole16(0x8000))
 		printf("[ %s, Firmware %d.%d.%d ]", chip_name,
 		    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
 		    letoh16(wreq->wi_val[1]));
@@ -660,7 +635,7 @@ wi_dumpinfo(iface)
 	wreq.wi_type = WI_RID_CARD_ID;
 	wreq.wi_len = 5;
 	wi_getval(iface, &wreq);
-	chip_id = letoh16(wreq.wi_val[0]);
+	chip_id = wreq.wi_val[0];
 
 	/* Check for WEP support. */
 	bzero((char *)&wreq, sizeof(wreq));
