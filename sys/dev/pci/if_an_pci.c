@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.8 2002/05/22 15:30:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -98,7 +98,8 @@ an_pci_match(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AIRONET &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AIRONET_PCI352 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AIRONET_PC4500 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AIRONET_PC4800))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AIRONET_PC4800 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AIRONET_PC4800_1))
 		return(1);
 
 	return(0);
