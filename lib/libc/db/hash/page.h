@@ -1,3 +1,5 @@
+/*	$OpenBSD: page.h,v 1.5 1999/02/15 05:11:24 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: page.h,v 1.4 1997/07/23 21:00:28 kstailey Exp $
+ *	@(#)page.h	8.2 (Berkeley) 5/31/94
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$OpenBSD: hash_log2.c,v 1.4 1999/02/15 05:11:24 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,10 +37,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash_log2.c,v 1.3 1996/08/19 08:20:38 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)hash_log2.c	8.4 (Berkeley) 11/7/95";
+#else
+static char rcsid[] = "$OpenBSD: hash_log2.c,v 1.4 1999/02/15 05:11:24 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
-
-#include <sys/types.h>
 
 #include <db.h>
 
@@ -46,7 +50,7 @@ u_int32_t
 __log2(num)
 	u_int32_t num;
 {
-	register u_int32_t i, limit;
+	u_int32_t i, limit;
 
 	limit = 1;
 	for (i = 0; limit < num; limit = limit << 1, i++);

@@ -1,3 +1,5 @@
+/*	$OpenBSD: bt_page.c,v 1.5 1999/02/15 05:11:23 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_page.c,v 1.4 1997/11/13 06:35:06 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)bt_page.c	8.3 (Berkeley) 7/14/94";
+#else
+static char rcsid[] = "$OpenBSD: bt_page.c,v 1.5 1999/02/15 05:11:23 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -96,5 +102,5 @@ __bt_new(t, npg)
 		F_SET(t, B_METADIRTY);
 		return (h);
 	}
-	return (mpool_new(t->bt_mp, npg));
+	return (mpool_new(t->bt_mp, npg, MPOOL_PAGE_NEXT));
 }

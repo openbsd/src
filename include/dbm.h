@@ -32,7 +32,7 @@
 
 __BEGIN_DECLS
 int	dbmclose __P((void));
-int	dbminit __P((char *));
+int	dbminit __P((const char *));
 int	delete __P((datum));
 datum	fetch __P((datum));
 datum	firstkey __P((void));

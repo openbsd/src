@@ -1,3 +1,5 @@
+/*	$OpenBSD: recno.h,v 1.4 1999/02/15 05:11:25 millert Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: recno.h,v 1.3 1996/08/19 08:21:13 tholo Exp $
+ *	@(#)recno.h	8.1 (Berkeley) 6/4/93
  */
 
 enum SRCHOP { SDELETE, SINSERT, SEARCH};	/* Rec_search operation. */

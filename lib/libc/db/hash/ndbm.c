@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.7 1999/02/12 04:57:51 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.8 1999/02/15 05:11:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.7 1999/02/12 04:57:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.8 1999/02/15 05:11:24 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ static void no_open_db __P((void));
 
 int
 dbminit(file)
-	char *file;
+	const char *file;
 {
 	if (__cur_db != NULL)
 		(void)dbm_close(__cur_db);

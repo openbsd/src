@@ -1,3 +1,5 @@
+/*	$OpenBSD: hash_func.c,v 1.5 1999/02/15 05:11:24 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash_func.c,v 1.4 1996/09/15 09:30:49 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)hash_func.c	8.4 (Berkeley) 11/7/95";
+#else
+static char rcsid[] = "$OpenBSD: hash_func.c,v 1.5 1999/02/15 05:11:24 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,58 +58,54 @@ static u_int32_t hash3 __P((const void *, size_t));
 #endif
 static u_int32_t hash4 __P((const void *, size_t));
 
-/* Global default hash function */
+/* Default hash function. */
 u_int32_t (*__default_hash) __P((const void *, size_t)) = hash4;
 
+#ifdef notdef
 /*
- * HASH FUNCTIONS
- *
  * Assume that we've already split the bucket to which this key hashes,
  * calculate that bucket, and check that in fact we did already split it.
  *
- * This came from ejb's hsearch.
+ * EJB's original hsearch hash.
  */
-
-#ifdef notdef
-
-
 #define PRIME1		37
 #define PRIME2		1048583
 
-static u_int32_t
-hash1(keyarg, len)
-	const void *keyarg;
-	register size_t len;
+u_int32_t
+hash1(key, len)
+	const void *key;
+	size_t len;
 {
-	register const u_char *key;
-	register u_int32_t h;
+	u_int32_t h;
+	u_int8_t *k;
 
+	h = 0;
+	k = (u_int8_t *)key;
 	/* Convert string to integer */
-	for (key = keyarg, h = 0; len--;)
-		h = h * PRIME1 ^ (*key++ - ' ');
+	while (len--)
+		h = h * PRIME1 ^ (*k++ - ' ');
 	h %= PRIME2;
 	return (h);
 }
 
 /*
- * Phong's linear congruential hash
+ * Phong Vo's linear congruential hash
  */
 #define dcharhash(h, c)	((h) = 0x63c63cd9*(h) + 0x9c39c33d + (c))
 
-static u_int32_t
-hash2(keyarg, len)
-	const void *keyarg;
+u_int32_t
+hash2(key, len)
+	const void *key;
 	size_t len;
 {
-	register const u_char *e, *key;
-	register u_int32_t h;
-	register u_char c;
+	u_int32_t h;
+	u_int8_t *e, c, *k;
 
-	key = keyarg;
-	e = key + len;
-	for (h = 0; key != e;) {
-		c = *key++;
-		if (!c && key > e)
+	k = (u_int8_t *)key;
+	e = k + len;
+	for (h = 0; k != e;) {
+		c = *k++;
+		if (!c && k > e)
 			break;
 		dcharhash(h, c);
 	}
@@ -117,102 +119,88 @@ hash2(keyarg, len)
  * all 8 bytes.  Essentially, this saves us 7 cmp & branch instructions.  If
  * this routine is heavily used enough, it's worth the ugly coding.
  *
- * OZ's original sdbm hash
+ * Ozan Yigit's original sdbm hash.
  */
-static u_int32_t
-hash3(keyarg, len)
-	const void *keyarg;
-	register size_t len;
+u_int32_t
+hash3(key, len)
+	const void *key;
+	size_t len;
 {
-	register const u_char *key;
-	register size_t loop;
-	register u_int32_t h;
+	u_int32_t n, loop;
+	u_int8_t *k;
 
-#define HASHC   h = *key++ + 65599 * h
+#define HASHC   n = *k++ + 65599 * n
 
-	h = 0;
-	key = keyarg;
+	n = 0;
+	k = (u_int8_t *)key;
 	if (len > 0) {
 		loop = (len + 8 - 1) >> 3;
 
 		switch (len & (8 - 1)) {
 		case 0:
-			do {
+			do {	/* All fall throughs */
 				HASHC;
-				/* FALLTHROUGH */
 		case 7:
 				HASHC;
-				/* FALLTHROUGH */
 		case 6:
 				HASHC;
-				/* FALLTHROUGH */
 		case 5:
 				HASHC;
-				/* FALLTHROUGH */
 		case 4:
 				HASHC;
-				/* FALLTHROUGH */
 		case 3:
 				HASHC;
-				/* FALLTHROUGH */
 		case 2:
 				HASHC;
-				/* FALLTHROUGH */
 		case 1:
 				HASHC;
 			} while (--loop);
 		}
+
 	}
-	return (h);
+	return (n);
 }
-#endif
+#endif /* notdef */
 
-/* Hash function from Chris Torek. */
-static u_int32_t
-hash4(keyarg, len)
-	const void *keyarg;
-	register size_t len;
+/* Chris Torek's hash function. */
+u_int32_t
+hash4(key, len)
+	const void *key;
+	size_t len;
 {
-	register const u_char *key;
-	register size_t loop;
-	register u_int32_t h;
+	u_int32_t h, loop;
+	u_int8_t *k;
 
-#define HASH4a   h = (h << 5) - h + *key++;
-#define HASH4b   h = (h << 5) + h + *key++;
+#define HASH4a   h = (h << 5) - h + *k++;
+#define HASH4b   h = (h << 5) + h + *k++;
 #define HASH4 HASH4b
 
 	h = 0;
-	key = keyarg;
+	k = (u_int8_t *)key;
 	if (len > 0) {
 		loop = (len + 8 - 1) >> 3;
 
 		switch (len & (8 - 1)) {
 		case 0:
-			do {
+			do {	/* All fall throughs */
 				HASH4;
-				/* FALLTHROUGH */
 		case 7:
 				HASH4;
-				/* FALLTHROUGH */
 		case 6:
 				HASH4;
-				/* FALLTHROUGH */
 		case 5:
 				HASH4;
-				/* FALLTHROUGH */
 		case 4:
 				HASH4;
-				/* FALLTHROUGH */
 		case 3:
 				HASH4;
-				/* FALLTHROUGH */
 		case 2:
 				HASH4;
-				/* FALLTHROUGH */
 		case 1:
 				HASH4;
 			} while (--loop);
 		}
+
 	}
 	return (h);
 }

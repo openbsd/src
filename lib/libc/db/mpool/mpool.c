@@ -1,3 +1,5 @@
+/*	$OpenBSD: mpool.c,v 1.6 1999/02/15 05:11:25 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.5 1998/08/28 20:49:11 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
+#else
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.6 1999/02/15 05:11:25 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -116,9 +122,10 @@ mpool_filter(mp, pgin, pgout, pgcookie)
  *	Get a new page of memory.
  */
 void *
-mpool_new(mp, pgnoaddr)
+mpool_new(mp, pgnoaddr, flags)
 	MPOOL *mp;
 	pgno_t *pgnoaddr;
+	u_int flags;
 {
 	struct _hqh *head;
 	BKT *bp;
@@ -137,8 +144,13 @@ mpool_new(mp, pgnoaddr)
 	 */
 	if ((bp = mpool_bkt(mp)) == NULL)
 		return (NULL);
-	*pgnoaddr = bp->pgno = mp->npages++;
-	bp->flags = MPOOL_PINNED;
+	if (flags == MPOOL_PAGE_REQUEST) {
+		mp->npages++;
+		bp->pgno = *pgnoaddr;
+	} else
+		bp->pgno = *pgnoaddr = mp->npages++;
+
+	bp->flags = MPOOL_PINNED | MPOOL_INUSE;
 
 	head = &mp->hqh[HASHKEY(bp->pgno)];
 	CIRCLEQ_INSERT_HEAD(head, bp, hq);
@@ -146,6 +158,33 @@ mpool_new(mp, pgnoaddr)
 	return (bp->page);
 }
 
+int
+mpool_delete(mp, page)
+	MPOOL *mp;
+	void *page;
+{
+	struct _hqh *head;
+	BKT *bp;
+
+	bp = (BKT *)((char *)page - sizeof(BKT));
+
+#ifdef DEBUG
+	if (!(bp->flags & MPOOL_PINNED)) {
+		(void)fprintf(stderr,
+		    "mpool_delete: page %d not pinned\n", bp->pgno);
+		abort();
+	}
+#endif
+
+	/* Remove from the hash and lru queues. */
+	head = &mp->hqh[HASHKEY(bp->pgno)];
+	CIRCLEQ_REMOVE(head, bp, hq);
+	CIRCLEQ_REMOVE(&mp->lqh, bp, q);
+
+	free(bp);
+	return (RET_SUCCESS);
+}	
+	
 /*
  * mpool_get
  *	Get a page.
@@ -162,12 +201,6 @@ mpool_get(mp, pgno, flags)
 	off_t off;
 	int nr;
 
-	/* Check for attempt to retrieve a non-existent page. */
-	if (pgno >= mp->npages) {
-		errno = EINVAL;
-		return (NULL);
-	}
-
 #ifdef STATISTICS
 	++mp->pageget;
 #endif
@@ -175,7 +208,7 @@ mpool_get(mp, pgno, flags)
 	/* Check for a page that is cached. */
 	if ((bp = mpool_look(mp, pgno)) != NULL) {
 #ifdef DEBUG
-		if (bp->flags & MPOOL_PINNED) {
+		if (!(flags & MPOOL_IGNOREPIN) && bp->flags & MPOOL_PINNED) {
 			(void)fprintf(stderr,
 			    "mpool_get: page %d already pinned\n", bp->pgno);
 			abort();
@@ -207,15 +240,26 @@ mpool_get(mp, pgno, flags)
 	off = mp->pagesize * pgno;
 	if (lseek(mp->fd, off, SEEK_SET) != off)
 		return (NULL);
+
 	if ((nr = read(mp->fd, bp->page, mp->pagesize)) != mp->pagesize) {
-		if (nr >= 0)
-			errno = EFTYPE;
-		return (NULL);
+		if (nr > 0) {
+			/* A partial read is definitely bad. */
+			errno = EINVAL;
+			return (NULL);
+		} else {
+			/*
+			 * A zero-length reads, means you need to create a
+			 * new page.
+			 */
+			memset(bp->page, 0, mp->pagesize);
+		}
 	}
 
 	/* Set the page number, pin the page. */
 	bp->pgno = pgno;
-	bp->flags = MPOOL_PINNED;
+	if (!(flags & MPOOL_IGNOREPIN))
+		bp->flags = MPOOL_PINNED;
+	bp->flags |= MPOOL_INUSE;
 
 	/*
 	 * Add the page to the head of the hash chain and the tail
@@ -257,7 +301,8 @@ mpool_put(mp, page, flags)
 	}
 #endif
 	bp->flags &= ~MPOOL_PINNED;
-	bp->flags |= flags & MPOOL_DIRTY;
+	if (flags & MPOOL_DIRTY)
+		bp->flags |= flags & MPOOL_DIRTY;
 	return (RET_SUCCESS);
 }
 
@@ -345,6 +390,7 @@ mpool_bkt(mp)
 				bp->page = spage;
 			}
 #endif
+			bp->flags = 0;
 			return (bp);
 		}
 
@@ -355,6 +401,7 @@ new:	if ((bp = (BKT *)malloc(sizeof(BKT) + mp->pagesize)) == NULL)
 #endif
 	memset(bp, 0xff, sizeof(BKT) + mp->pagesize);
 	bp->page = (char *)bp + sizeof(BKT);
+	bp->flags = 0;
 	++mp->curcache;
 	return (bp);
 }
@@ -402,7 +449,8 @@ mpool_look(mp, pgno)
 
 	head = &mp->hqh[HASHKEY(pgno)];
 	for (bp = head->cqh_first; bp != (void *)head; bp = bp->hq.cqe_next)
-		if (bp->pgno == pgno) {
+		if ((bp->pgno == pgno) &&
+			(bp->flags & MPOOL_INUSE == MPOOL_INUSE)) {
 #ifdef STATISTICS
 			++mp->cachehit;
 #endif

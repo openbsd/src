@@ -1,3 +1,5 @@
+/*	$OpenBSD: bt_debug.c,v 1.4 1999/02/15 05:11:22 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_debug.c,v 1.3 1996/08/19 08:20:04 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
+#else
+static char rcsid[] = "$OpenBSD: bt_debug.c,v 1.4 1999/02/15 05:11:22 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -86,10 +92,9 @@ __bt_dump(dbp)
 	}
 #undef X
 
-	for (i = P_ROOT; (h = mpool_get(t->bt_mp, i, 0)) != NULL; ++i) {
+	for (i = P_ROOT;
+	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
 		__bt_dpage(h);
-		(void)mpool_put(t->bt_mp, h, 0);
-	}
 }
 
 /*
@@ -141,10 +146,8 @@ __bt_dnpage(dbp, pgno)
 	PAGE *h;
 
 	t = dbp->internal;
-	if ((h = mpool_get(t->bt_mp, pgno, 0)) != NULL) {
+	if ((h = mpool_get(t->bt_mp, pgno, MPOOL_IGNOREPIN)) != NULL)
 		__bt_dpage(h);
-		(void)mpool_put(t->bt_mp, h, 0);
-	}
 }
 
 /*
@@ -264,7 +267,8 @@ __bt_stat(dbp)
 	t = dbp->internal;
 	pcont = pinternal = pleaf = 0;
 	nkeys = ifree = lfree = 0;
-	for (i = P_ROOT; (h = mpool_get(t->bt_mp, i, 0)) != NULL; ++i) {
+	for (i = P_ROOT;
+	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
 		switch (h->flags & P_TYPE) {
 		case P_BINTERNAL:
 		case P_RINTERNAL:
@@ -281,22 +285,18 @@ __bt_stat(dbp)
 			++pcont;
 			break;
 		}
-		(void)mpool_put(t->bt_mp, h, 0);
-	}
 
 	/* Count the levels of the tree. */
 	for (i = P_ROOT, levels = 0 ;; ++levels) {
-		h = mpool_get(t->bt_mp, i, 0);
+		h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN);
 		if (h->flags & (P_BLEAF|P_RLEAF)) {
 			if (levels == 0)
 				levels = 1;
-			(void)mpool_put(t->bt_mp, h, 0);
 			break;
 		}
 		i = F_ISSET(t, R_RECNO) ?
 		    GETRINTERNAL(h, 0)->pgno :
 		    GETBINTERNAL(h, 0)->pgno;
-		(void)mpool_put(t->bt_mp, h, 0);
 	}
 
 	(void)fprintf(stderr, "%d level%s with %ld keys",

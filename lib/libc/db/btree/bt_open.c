@@ -1,3 +1,5 @@
+/*	$OpenBSD: bt_open.c,v 1.6 1999/02/15 05:11:22 millert Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_open.c,v 1.5 1997/07/23 21:00:25 kstailey Exp $";
+#if 0
+static char sccsid[] = "@(#)bt_open.c	8.11 (Berkeley) 11/2/95";
+#else
+static char rcsid[] = "$OpenBSD: bt_open.c,v 1.6 1999/02/15 05:11:22 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -356,18 +362,25 @@ nroot(t)
 	PAGE *meta, *root;
 	pgno_t npg;
 
-	if ((meta = mpool_get(t->bt_mp, 0, 0)) != NULL) {
-		mpool_put(t->bt_mp, meta, 0);
-		return (RET_SUCCESS);
+	if ((root = mpool_get(t->bt_mp, 1, 0)) != NULL) {
+		if (root->lower == 0 &&
+		    root->pgno == 0 &&
+		    root->linp[0] == 0) {
+			mpool_delete(t->bt_mp, root);
+			errno = EINVAL;
+		} else {
+			mpool_put(t->bt_mp, root, 0);
+			return (RET_SUCCESS);
+		}
 	}
 	if (errno != EINVAL)		/* It's OK to not exist. */
 		return (RET_ERROR);
 	errno = 0;
 
-	if ((meta = mpool_new(t->bt_mp, &npg)) == NULL)
+	if ((meta = mpool_new(t->bt_mp, &npg, MPOOL_PAGE_NEXT)) == NULL)
 		return (RET_ERROR);
 
-	if ((root = mpool_new(t->bt_mp, &npg)) == NULL)
+	if ((root = mpool_new(t->bt_mp, &npg, MPOOL_PAGE_NEXT)) == NULL)
 		return (RET_ERROR);
 
 	if (npg != P_ROOT)
