@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.2 2003/01/09 18:24:42 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.3 2003/01/09 18:27:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -40,7 +40,6 @@
 #include <arpa/inet.h>
 
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
