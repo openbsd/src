@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.22 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: style.9,v 1.23 2002/01/12 16:23:36 millert Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -442,6 +442,57 @@ calls are not followed by a space.
 Note that
 .Xr indent 1
 does not understand this rule.
+.Pp
+Use of the
+.Dq register
+specifier is discouraged in new code.
+Optimizing compilers such as gcc can generally do a better job
+of choosing which variables to be placed in registers to improve
+code performance.
+The exception to this is in functions containing assembly code where the
+.Dq register
+specifier is required for proper code generation in the absence of
+compiler optimization.
+.Pp
+When using
+.Fn longjmp
+or
+.Fn vfork
+in a program, the
+.Fl W
+or
+.Fl Wall
+flag should be used to verify that that compiler does not generate
+warnings such as
+.Bd -literal -offset 0i
+warning: variable `foo' might be clobbered by `longjmp' or `vfork'.
+.Ed
+.Pp
+If any warnings of this type occur you must apply the
+.Dq volatile
+specifier to the variable in question.
+Failure to do so may result in improper code generation when optimization
+is enabled.
+Note that for pointers, the
+.Dq volatile
+should go after to the type, not before.
+Use
+.Bd -literal -offset 0i
+char * volatile foo;
+.Ed
+.Pp
+not:
+.Bd -literal -offset 0i
+volatile char *foo;
+.Ed
+.Pp
+Global flags set inside signal handlers should be of type
+.Dq volatile sig_atomic_t
+if possible.
+This guarantees that the variable may be accessed as an atomic entity,
+even when a signal has been delivered.
+Global variables of other types (such as structures) are not
+guaranteed to have consistent values when accessed via a signal handler.
 .Pp
 .Dv NULL
 is the preferred null pointer constant.
