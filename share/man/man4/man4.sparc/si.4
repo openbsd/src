@@ -1,4 +1,4 @@
-.\"	$OpenBSD: si.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: si.4,v 1.6 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -12,7 +12,8 @@
 .Nd NCR 5380 "Sun SCSI 3" VME SCSI controller
 .Sh SYNOPSIS
 .Cd "si0     at vmes0 addr 0xff200000 level 3 vect 0x40           " Pq sun4
-.Cd "si0     at vmes0 addr 0xff200000 level 3 vect 0x40 flags 0x07" Pq sun4
+.Cd "#si0     at vmes0 addr 0xff200000 level 3 vect 0x40 flags 0x07" Pq sun4
+.Cd "scsibus* at si?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -34,8 +35,16 @@ device flags may be OR'd together to enable any combination of
 the features listed above.
 If no flags are specified, the device will use DMA by default.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
 .Xr esp 4 ,
-.Xr sw 4
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr sw 4 ,
+.Xr uk 4
 .Sh HISTORY
 The
 .Nm

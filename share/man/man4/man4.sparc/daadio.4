@@ -1,4 +1,4 @@
-.\"     $OpenBSD: daadio.4,v 1.3 2002/08/29 07:24:52 wcobb Exp $
+.\"     $OpenBSD: daadio.4,v 1.4 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,8 +36,6 @@
 .Nm daadio
 .Nd MATRIX MD-DAADIO digital/analog, analog/digital, parallel i/o board
 .Sh SYNOPSISA
-.Cd "fga0 at iommu0"
-.Cd "fvme* at fga0"
 .Cd "daadio* at fvme? addr 0x0 level 1 vect 0x1f"
 .Sh DESCRIPTION
 The
@@ -119,7 +117,8 @@ struct daadio_adc {
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr fga 4
+.Xr fvme 4 ,
+.Xr intro 4
 .Sh HISTORY
 .Ox
 support for the

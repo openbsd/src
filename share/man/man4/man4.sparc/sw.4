@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sw.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: sw.4,v 1.6 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -12,6 +12,8 @@
 .Nd NCR 5380 "SCSI Weird" Sun 4/100 on-board SCSI controller
 .Sh SYNOPSIS
 .Cd "sw0     at obio0 addr 0x0a000000 level 3" Pq sun4/100
+.Cd "#sw0     at obio0 addr 0x0a000000 level 3 flags 0x07" Pq sun4/100
+.Cd "scsibus* at sw?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -37,15 +39,23 @@ The
 device flags may be OR'd together to enable any combination of
 the features listed above.
 If no flags are specified, the device will use polled DMA by default.
-.Sh BUGS
-The
-.Nm
-driver only supports polled DMA at this time.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
 .Xr esp 4 ,
-.Xr si 4
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr si 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Nx .
+.Sh BUGS
+The
+.Nm
+driver only supports polled DMA at this time.

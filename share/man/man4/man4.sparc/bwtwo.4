@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bwtwo.4,v 1.13 2002/08/31 10:47:16 miod Exp $
+.\"	$OpenBSD: bwtwo.4,v 1.14 2002/10/01 21:02:18 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -44,6 +44,7 @@
 .Nm bwtwo
 .Nd monochromatic frame buffer
 .Sh SYNOPSIS
+.Cd "bwtwo0 at sbus0 slot ? offset ?" Pq "sun4c on-board"
 .Cd "bwtwo* at sbus? slot ? offset ?" Pq "sun4c and sun4m"
 .Cd "bwtwo0 at obio0 addr 0xfd000000 level 4" Pq sun4/200
 .Cd "bwtwo0 at obio0 addr 0xfb300000 level 4" Pq "sun4/300 in P4 slot"
@@ -67,6 +68,7 @@ interface.
 .Xr cgthree 4 ,
 .Xr cgtwelve 4 ,
 .Xr cgtwo 4 ,
+.Xr intro 4 ,
 .Xr pnozz 4 ,
 .Xr sbus 4 ,
 .Xr tcx 4 ,

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pnozz.4,v 1.8 2002/08/31 10:47:16 miod Exp $
+.\"     $OpenBSD: pnozz.4,v 1.9 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm pnozz
 .Nd Tadpole Weitek p9100 frame buffer
 .Sh SYNOPSIS
-.Cd "pnozz0 at sbus0 slot ? offset ?"
+.Cd "pnozz0 at sbus? slot ? offset ?"
 .Cd "wsdisplay* at pnozz?"
 .Sh DESCRIPTION
 The
@@ -71,6 +71,7 @@ is closed or the screen is blanked.
 .Xr cgthree 4 ,
 .Xr cgtwelve 4 ,
 .Xr cgtwo 4 ,
+.Xr intro 4 ,
 .Xr sbus 4 ,
 .Xr tctrl 4 ,
 .Xr tcx 4 ,

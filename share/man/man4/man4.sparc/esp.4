@@ -1,4 +1,4 @@
-.\"	$OpenBSD: esp.4,v 1.6 2002/02/20 17:18:33 jason Exp $
+.\"	$OpenBSD: esp.4,v 1.7 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -27,10 +27,11 @@ The
 is an on-board or SBus SCSI controller based on the NCR 53c94 chip, found
 on Sun 4/300, sun4c and sun4m workstations.
 .Sh DEVICE FLAGS
-.Bl -tag -width speaker -compact
-.It Bits 0-7 disable disconnect/reselect for the corresponding target
-.It ""
-.It Bits 8-15 disable synchronous negotiation for target "[bit - 8]"
+.Bl -tag -width "Bits XX-XX" -compact
+.It Bits 0-7
+Disable disconnect/reselect for the corresponding target
+.It Bits 8-15
+Disable synchronous negotiation for target "[bit - 8]"
 .El
 .Pp
 The
@@ -42,6 +43,13 @@ that tape devices normally have one of these targets.
 Tape devices should be allowed to disconnect for the SCSI bus to operate
 acceptably.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr intro 4 ,
 .Xr sbus 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
 .Xr si 4 ,
-.Xr sw 4
+.Xr st 4 ,
+.Xr sw 4 ,
+.Xr uk 4

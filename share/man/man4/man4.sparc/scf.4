@@ -1,4 +1,4 @@
-.\"     $OpenBSD: scf.4,v 1.2 2000/11/10 20:02:19 todd Exp $
+.\"     $OpenBSD: scf.4,v 1.3 2002/10/01 21:02:19 miod Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -64,7 +64,8 @@ The
 .Nm
 device responds to the following
 .Xr ioctl 2
-calls defined in <machine/scfio.h>:
+calls defined in
+.Aq Pa machine/scfio.h :
 .Bl -tag -width
 .It Dv SCFIOCSLED1
 .Pq Li "u_int8_t"
@@ -131,6 +132,7 @@ bits determine which window of 512 KBytes is active for reading/writing.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr intro 4 ,
 .Xr sysctl 8
 .Sh HISTORY
 .Ox
@@ -141,5 +143,6 @@ first appeared in
 .Sh AUTHORS
 The driver for the
 .Nm
-was written by Jason L. Wright <jason@thought.net> under contract with
-RTMX Incorporated.
+was written by
+.An Jason L. Wright Aq jason@thought.net
+under contract with RTMX Incorporated.

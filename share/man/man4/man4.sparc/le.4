@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.14 2002/02/20 17:18:33 jason Exp $
+.\"	$OpenBSD: le.4,v 1.15 2002/10/01 21:02:19 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -44,7 +44,8 @@
 .Nm le
 .Nd SPARC AMD 7990 LANCE ethernet interface
 .Sh SYNOPSIS
-.Cd "le* at sbus? slot ? offset ?            " Pq "sun4c onboard"
+.Cd "le0 at sbus0 slot ? offset ?            " Pq "sun4c onboard"
+.Cd "le* at sbus? slot ? offset ?            " Pq Sbus
 .Cd "lebuffer* at sbus? slot ? offset ?      " Pq Sbus
 .Cd "le* at lebuffer?                        " Pq Sbus
 .Cd "ledma0 at sbus0 slot ? offset ?         " Pq "sun4m onboard"
@@ -103,9 +104,13 @@ For BNC, set 1-6 ON, 7-8 OFF; for AUI set 1-6 OFF, and 7-8 ON.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr be 4 ,
+.Xr hme 4 ,
 .Xr ie 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
+.Xr netintro 4 ,
 .Xr qe 4 ,
-.Xr sbus 4
+.Xr sbus 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
