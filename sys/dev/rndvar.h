@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.1 1996/03/29 12:09:58 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.2 1996/04/24 21:26:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -46,10 +46,10 @@
 
 #ifdef _KERNEL
 
-extern void add_keyboard_randomness __P((u_char));
 extern void add_mouse_randomness __P((u_int32_t));
 extern void add_net_randomness __P((int));
 extern void add_blkdev_randomness __P((dev_t));
+extern void add_tty_randomness __P((dev_t, int));
 
 extern void get_random_bytes __P((void *, size_t));
 

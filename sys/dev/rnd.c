@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.2 1996/04/17 04:59:48 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.3 1996/04/24 21:26:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -266,7 +266,7 @@ struct timer_rand_state {
 /* tags for different random sources */
 #define	ENT_NET		0x100
 #define	ENT_BLKDEV	0x200
-#define ENT_IRQ		0x300
+#define ENT_TTY		0x300
 
 /* device functions prototypes: XXX move em to dev_conf.h */
 cdev_decl(rnd);
@@ -278,6 +278,7 @@ static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
 static struct timer_rand_state net_timer_state[32];	/* XXX */
 static struct timer_rand_state *blkdev_timer_state;
+static struct timer_rand_state *tty_timer_state;
 static int	rnd_sleep = 0;
 
 #ifndef MIN
@@ -297,6 +298,9 @@ rndattach(num)
 	blkdev_timer_state = malloc(nblkdev*sizeof(*blkdev_timer_state),
 				    M_DEVBUF, M_WAITOK);
 	bzero(blkdev_timer_state, nblkdev*sizeof(*blkdev_timer_state));
+	tty_timer_state = malloc(nchrdev*sizeof(*tty_timer_state),
+				    M_DEVBUF, M_WAITOK);
+	bzero(tty_timer_state, nchrdev*sizeof(*tty_timer_state));
 	extract_timer_state.dont_count_entropy = 1;
 }
 
@@ -466,11 +470,23 @@ void
 add_blkdev_randomness(dev)
 	dev_t	dev;
 {
-	if (major(dev) >= nblkdev || blkdev_timer_state == NULL)
+	if (major(dev) <= nblkdev || blkdev_timer_state == NULL)
 		return;
 
 	add_timer_randomness(&random_state, &blkdev_timer_state[major(dev)],
 			     ENT_BLKDEV + major(dev));
+}
+
+void
+add_tty_randomness(dev, c)
+	dev_t	dev;
+	int	c;
+{
+	if (major(dev) <= nchrdev || tty_timer_state == NULL)
+		return;
+
+	add_timer_randomness(&random_state, &tty_timer_state[major(dev)],
+			     ENT_TTY + c);
 }
 
 #if POOLWORDS % 16
