@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.103 2003/02/10 22:34:30 jason Exp $
+dnl	$OpenBSD: hardware,v 1.104 2003/02/12 01:43:02 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -388,7 +388,9 @@ Supported hardware {:-include-:}:
 		  (See special notice later in this document)
 		SMC 8416 EtherEZ PnP (with PnP mode off) [B]
 		SMC 9432 (EtherPower II) EPIC 10/100 [C]
-		Sun Happy Meal (hme, qfe) [G]
+		Sun Happy Meal PCI adapters, including: [G]
+		    Fast Ethernet
+		    Quad Fast Ethernet
 		Sundance ST201-based PCI adapters, including: [G]
 		    D-Link DFE-550TX
 		Texas Instruments ThunderLAN PCI adapters, including: [C]
