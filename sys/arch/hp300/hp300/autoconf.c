@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2004/08/03 21:46:58 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -93,14 +93,14 @@
 #include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
-#include <hp300/dev/scsivar.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 /*
  * The following several variables are related to
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold;		    /* if 1, still working on cold-start */
 
 struct	extent *extio;
 
@@ -340,16 +340,16 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (strncmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    strncmp(dev->dv_xname, "nhpib", 5) == 0 ||
+	    strncmp(dev->dv_xname, "spc", 3) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "hd", 2) == 0) {
+	if (strncmp(dev->dv_xname, "hd", 2) == 0) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -357,11 +357,13 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "sd", 2) == 0) {
-		struct oscsi_attach_args *osa = aux;
+	if (strncmp(dev->dv_xname, "cd", 2) == 0 ||
+	    strncmp(dev->dv_xname, "sd", 2) == 0 ||
+	    strncmp(dev->dv_xname, "st", 2) == 0) {
+		struct scsibus_attach_args *sa = aux;
 
-		dd->dd_slave = osa->osa_target;
-		dd->dd_punit = osa->osa_lun;
+		dd->dd_slave = sa->sa_sc_link->target;
+		dd->dd_punit = sa->sa_sc_link->lun;
 		goto linkup;
 	}
 
@@ -374,13 +376,13 @@ device_register(dev, aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (strncmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    strncmp(dev->dv_xname, "nhpib", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (strncmp(dev->dv_xname, "spc", 3) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -417,7 +419,9 @@ struct nam2blk {
 	{ "ct",		0 },
 	{ "hd",		2 },
 	{ "sd",		4 },
+	{ "st",		7 },
 	{ "rd",		8 },
+	{ "cd",		9 },
 };
 
 static int
@@ -860,16 +864,18 @@ findbootdev()
 		if (booted_device == NULL)
 			return;
 
+#ifdef DIAGNOSTIC
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && bcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && bcmp(booted_device->dv_xname, "hd", 2))) {
+		if ((type == 0 && strncmp(booted_device->dv_xname, "ct", 2)) ||
+		    (type == 2 && strncmp(booted_device->dv_xname, "hd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
 			booted_device = NULL;
 		}
+#endif
 		return;
 	}
 
@@ -882,15 +888,19 @@ findbootdev()
 		if (booted_device == NULL)  
 			return; 
 
+#ifdef DIAGNOSTIC
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && bcmp(booted_device->dv_xname, "sd", 2))) {
+		if (strncmp(booted_device->dv_xname, "cd", 2) != 0 &&
+		    strncmp(booted_device->dv_xname, "sd", 2) != 0 &&
+		    strncmp(booted_device->dv_xname, "st", 2) != 0) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
 			booted_device = NULL; 
 		}
+#endif
 		return;
 	}
 
@@ -925,23 +935,11 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	for (dd = dev_data_list.lh_first; dd != NULL;
 	    dd = dd->dd_list.le_next) {
 		/*
-		 * XXX We don't yet have the extra bus indirection
-		 * XXX for SCSI, so we have to do a little bit of
-		 * XXX extra work.
+		 * "sd" / "st" / "cd" -> "scsibus" -> "spc"
+		 * "hd" -> "hpibbus" -> "fhpib"
 		 */
-		if (bcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
-			/*
-			 * "sd" -> "oscsi"
-			 */
-			if (dd->dd_dev->dv_parent != cdd->dd_dev)
-				continue;
-		} else {
-			/*
-			 * "hd" -> "hpibbus" -> "fhpib"
-			 */
-			if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
-				continue;
-		}
+		if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+			continue;
 
 		if (dd->dd_slave == slave &&
 		    dd->dd_punit == punit) {
@@ -965,13 +963,13 @@ setbootdev()
 	 *
 	 *	0 == ct
 	 *	2 == hd
-	 *	4 == sd
+	 *	4 == scsi
 	 *	6 == le
 	 *
-	 * Allare bdevsw major numbers, except for le, which
-	 * is just special.
-	 *
-	 * We can't mount root on a tape, so we ignore those.
+	 * All are bdevsw major numbers, except for le, which
+	 * is just special. SCSI needs specific care since the
+	 * ROM wants to see 4, but depending upon the real device
+	 * we booted from, we might have a different major value.
 	 */
 
 	/*
@@ -999,9 +997,12 @@ setbootdev()
 	/*
 	 * Determine device type.
 	 */
-	if (bcmp(root_device->dv_xname, "hd", 2) == 0)
+	if (strncmp(root_device->dv_xname, "hd", 2) == 0)
 		type = 2;
-	else if (bcmp(root_device->dv_xname, "sd", 2) == 0)
+	else if (strncmp(root_device->dv_xname, "cd", 2) == 0 ||
+	    strncmp(root_device->dv_xname, "sd", 2) == 0 ||
+	    strncmp(root_device->dv_xname, "st", 2) == 0)
+		/* force scsi disk regardless of the actual device */
 		type = 4;
 	else {
 		printf("WARNING: strange root device!\n");
@@ -1010,43 +1011,20 @@ setbootdev()
 
 	/*
 	 * Get parent's info.
+	 *
+	 * "hd" -> "hpibbus" -> "fhpib"
+	 * "sd" / "cd" / "st" -> "scsibus" -> "spc"
 	 */
-	switch (type) {
-	case 2:
-		/*
-		 * "hd" -> "hpibbus" -> "fhpib"
-		 */
-		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
-		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
-			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
-				/*
-				 * Found it!
-				 */
-				bootdev = MAKEBOOTDEV(type,
-				    ctlr, dd->dd_slave, dd->dd_punit,
-				    DISKPART(rootdev));
-				break;
-			}
+	for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
+	    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
+		if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
+			/*
+			 * Found it!
+			 */
+			bootdev = MAKEBOOTDEV(type, ctlr, dd->dd_slave,
+			    dd->dd_punit, DISKPART(rootdev));
+			break;
 		}
-		break;
-
-	case 4:
-		/*
-		 * "sd" -> "oscsi"
-		 */
-		for (cdd = dev_data_list_scsi.lh_first, ctlr = 0;
-		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) { 
-			if (cdd->dd_dev == root_device->dv_parent) {
-				/*
-				 * Found it!
-				 */
-				bootdev = MAKEBOOTDEV(type,
-				    ctlr, dd->dd_slave, dd->dd_punit,
-				    DISKPART(rootdev));
-				break;
-			}
-		}
-		break;
 	}
 
  out:
@@ -1086,8 +1064,7 @@ dev_data_insert(dd, ddlist)
 
 #ifdef DIAGNOSTIC
 	if (dd->dd_scode < 0 || dd->dd_scode > 255) {
-		printf("bogus select code for %s\n", dd->dd_dev->dv_xname);
-		panic("dev_data_insert");
+		panic("bogus select code for %s", dd->dd_dev->dv_xname);
 	}
 #endif
 

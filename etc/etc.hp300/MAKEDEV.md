@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2004/04/11 18:05:23 millert Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2004/08/03 21:46:46 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -20,11 +20,10 @@ dnl *** hp300 specific device scripts/descriptions
 dnl
 __devitem(ct, ct*, HP300 HP-IB cartridge tape drives,{-\&ct-})dnl
 __devitem(hd, {-hd*-}, HP300 HP-IB disks)dnl
-_mkdev(st_hp300, ct*|mt*|st*,
+_mkdev(ct, ct*|mt*,
 {-case $i in
 	ct*) name=ct blk=major_ct_b chr=major_ct_c;;
 	mt*) name=mt blk=major_mt_b chr=major_mt_c;;
-	st*) name=st blk=major_st_hp300_b chr=major_st_hp300_c;;
 	esac
 	case $U in
 	[0-7])
@@ -42,7 +41,6 @@ _mkdev(st_hp300, ct*|mt*|st*,
 		echo bad unit for tape in: $1
 		;;
 	esac-})dnl
-__devitem(st_hp300, st*, Exabyte tape,st)dnl
 __devitem(grf, grf*, Raw interface to HP300 graphics devices)dnl
 dnl
 dnl
@@ -53,14 +51,16 @@ _DEV(std)
 _DEV(local)
 _TITLE(dis)
 _DEV(ccd, 17, 5)
+_DEV(cd, 18, 9)
 _DEV(hd, 9, 2)
 _DEV(rd, 34, 8)
 _DEV(sd, 8, 4)
 _DEV(vnd, 19, 6)
 _TITLE(tap)
+_DEV(ch, 39)
 _DEV(ct, 7, 0)
 _DEV(mt, 16, 1)
-_DEV(st_hp300, 20, 7)
+_DEV(st, 20, 7)
 _TITLE(term)
 _DEV(apci)
 _DEV(dca, 12)
@@ -82,15 +82,17 @@ _DEV(hil, 14)
 _DEV(lkm, 24)
 _DEV(pf, 33)
 _DEV(rnd, 32)
-_DEV(tun, 23)
+_DEV(ss, 38)
 _DEV(systrace, 50)
+_DEV(tun, 23)
+_DEV(uk, 37)
 _DEV(xfs, 51)
 dnl
 divert(__mddivert)dnl
 dnl
 ramdisk)
 	_recurse std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
-	_recurse sd0 sd1 sd2 sd3 sd4 rd0 pty0
+	_recurse sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
 	_recurse hil grf0 apci0 ite0 dca0 dcm0 dcm1
 	_recurse bpf0 bpf1 tun0 tun1 lkm random
 	;;
@@ -192,7 +194,7 @@ hil)
 dnl
 target(all, ses, 0)dnl
 target(all, ch, 0)dnl
-target(all, ss, 0, 1)dnl
+target(all, ss, 0)dnl
 target(all, xfs, 0)dnl
 twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
 twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
@@ -203,21 +205,24 @@ target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
+target(all, st, 0, 1)dnl
+target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 target( all, grf, 0)dnl
 dnl XXX target( all, hil, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target( all, hil, )dnl
-twrget( all, st_hp300, st, 0, 1)dnl
 target( all, dca, 0, 1)dnl
 target( all, dcm, 0, 1, 2, 3)dnl
 target( all, hd, 0, 1, 2)dnl
 target( all, ct, 0, 1)dnl
 target( all, ite, 0)dnl
 target( all, ttye, 0, 1, 2, 3, 4, 5, 6)dnl
+target(ramd, cd, 0, 1)dnl
 target(ramd, ct, 0, 1)dnl
 target(ramd, hd, 0, 1, 2)dnl
 target(ramd, sd, 0, 1, 2)dnl
+target(ramd, st, 0, 1)dnl
 target(ramd, rd, 0, 1)dnl
 target(ramd, pty, 0)dnl
 target(ramd, hil, )dnl

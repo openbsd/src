@@ -1,14 +1,12 @@
-/*	$OpenBSD: acvar.h,v 1.6 2003/06/02 23:27:44 millert Exp $	*/
-/*	$NetBSD: acvar.h,v 1.4 1997/03/31 07:32:15 scottr Exp $	*/
+/*	$OpenBSD: hp98265reg.h,v 1.1 2004/08/03 21:46:56 miod Exp $	*/
+/*	$NetBSD: hp98265reg.h,v 1.1 2003/08/01 01:18:45 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * Van Jacobson of Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,63 +32,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: acvar.h 1.1 91/06/19$
- *
- *	@(#)acvar.h	8.1 (Berkeley) 6/10/93
+ *	@(#)scsireg.h	8.1 (Berkeley) 6/10/93
  */
 
-struct	ac_softc {
-	struct	device sc_dev;
-	int	sc_target;
-	int	sc_lun;
-	int	sc_flags;
-	struct	buf *sc_bp;
-	struct	scsi_fmt_cdb *sc_cmd;
-	struct	acinfo sc_einfo;
-	short	sc_picker;
-	struct	scsiqueue sc_sq;
-};
+/*
+ * HP 98265A SCSI Interface Hardware Description.
+ */
 
-#define	ACF_ALIVE	0x01
-#define ACF_OPEN	0x02
-#define ACF_ACTIVE	0x04
+#define SPC_OFFSET	32
+#define SPC_SIZE	(32 * 2)	/* XXX */
 
-#define ACCMD_INITES	0x07
-#define	ACCMD_MODESENSE	0x1A
-#define ACCMD_READES	0xB8
-#define ACCMD_MOVEM	0xA5
+#define HPSCSI_ID	0x00
+#define  ID_MASK	0x1f
+#define  SCSI_ID	0x07
+#define  ID_WORD_DMA	0x20
 
-struct	ac_restathdr {
-	short	ac_felt;	/* first element reported */
-	short	ac_nelt;	/* number of elements reported */
-	long	ac_bcount;	/* length of report (really only 24 bits) */
-};
+#define HPSCSI_CSR	0x01
+#define  CSR_IE		0x80
+#define  CSR_IR		0x40
+#define  SCSI_IPL(csr)	((((csr) >> 4) & 3) + 3)
+#define  CSR_DMA32	0x08
+#define  CSR_DMAIN	0x04
+#define  CSR_DE1	0x02
+#define  CSR_DE0	0x01
 
-struct	ac_restatphdr {
-	char	ac_type;	/* type code */
-	char	ac_res;
-	short	ac_dlen;	/* element descriptor length */
-	long	ac_bcount;	/* byte count (really only 24 bits) */
-};
+#define HPSCSI_WRAP	0x02
+#define  WRAP_REQ	0x80
+#define  WRAP_ACK	0x40
+#define  WRAP_BSY	0x08
+#define  WRAP_MSG	0x04
+#define  WRAP_CD	0x02
+#define  WRAP_IO	0x01
 
-struct	ac_restatdb {
-	short	ac_eaddr;	/* element address */
-	u_int	ac_res1:2,
-		ac_ie:1,	/* import enabled (IEE only) */
-		ac_ee:1,	/* export enabled (IEE only) */
-		ac_acc:1,	/* accessible from MTE */
-		ac_exc:1,	/* element in abnormal state */
-		ac_imp:1,	/* 1 == user inserted medium (IEE only) */
-		ac_full:1;	/* element contains media */
-};
-
-#ifdef _KERNEL
-int	accommand(dev_t, int, char *, int);
-
-void	acstart(void *);
-void	acgo(void *);
-void	acintr(void *, int);
-
-int	acgeteinfo(dev_t);
-void	acconvert(char *, char *, int);
-#endif /* _KERNEL */
+#define HPSCSI_HCONF	0x03
+#define  HCONF_TP	0x80
+#define  SCSI_SYNC_XFER(hconf) (((hconf) >> 5) & 3)
+#define  HCONF_SD	0x10
+#define  HCONF_PARITY	0x08

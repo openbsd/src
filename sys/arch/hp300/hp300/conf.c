@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2004/08/03 21:46:58 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -40,17 +40,21 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include "ccd.h"
+#include "cd.h"
+#include "ch.h"
 #include "ct.h"
 bdev_decl(ct);
 #include "mt.h"
 bdev_decl(mt);
 #include "hd.h"
 bdev_decl(hd);
-#include "sd.h"
-#include "ccd.h"
-#include "vnd.h"
-#include "st.h"
 #include "rd.h"
+#include "sd.h"
+#include "ss.h"
+#include "st.h"
+#include "uk.h"
+#include "vnd.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -63,12 +67,13 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_tape_init(NST,st),		/* 7: SCSI tape */
 	bdev_disk_init(NRD,rd),		/* 8: RAM disk */
-	bdev_lkm_dummy(),		/* 9 */
+	bdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
+	bdev_lkm_dummy(),		/* 15 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -146,7 +151,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
-	cdev_notdef(),			/* 18 */
+	cdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
@@ -165,9 +170,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
 	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 36: Kernel symbols device */
-	cdev_notdef(),			/* 37 */
-	cdev_notdef(),			/* 38 */
-	cdev_notdef(),			/* 39 */
+	cdev_uk_init(NUK,uk),		/* 37 */
+	cdev_ss_init(NSS,ss),		/* 38 */
+	cdev_ch_init(NCH,ch),		/* 39 */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_notdef(),			/* 42 */
@@ -252,7 +257,7 @@ int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	5,
-	/* 18 */	NODEV,
+	/* 18 */	9,
 	/* 19 */	6,
 	/* 20 */	7,
 	/* 21 */	NODEV,

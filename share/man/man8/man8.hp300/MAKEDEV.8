@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.24 2004/06/03 18:40:17 grange Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.25 2004/08/03 21:46:51 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June  3, 2004
+.Dd July 27, 2004
 .Dt MAKEDEV 8 hp300
 .Os
 .Sh NAME
@@ -78,6 +78,9 @@ Creates configuration-specific devices, by invoking the shell file
 .It Ar ccd*
 Concatenated disk devices, see
 .Xr ccd 4 .
+.It Ar cd*
+ATAPI and SCSI CD-ROM drives, see
+.Xr cd 4 .
 .It Ar hd*
 HP300 HP-IB disks, see
 .Xr hd 4 .
@@ -96,6 +99,9 @@ pseudo-disk devices, see
 .Pp
 .Sy Tapes
 .Bl -tag -width tenletters -compact
+.It Ar ch*
+SCSI media changers, see
+.Xr ch 4 .
 .It Ar ct*
 HP300 HP-IB cartridge tape drives, see
 .Xr \&ct 4 .
@@ -103,7 +109,7 @@ HP300 HP-IB cartridge tape drives, see
 (Magnetic) 9-track reel tape drives, see
 .Xr mt 4 .
 .It Ar st*
-Exabyte tape, see
+SCSI tape drives, see
 .Xr st 4 .
 .El
 .Pp
@@ -170,12 +176,18 @@ Packet Filter, see
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
-.It Ar tun*
-Network tunnel driver, see
-.Xr tun 4 .
+.It Ar ss*
+SCSI scanners, see
+.Xr ss 4 .
 .It Ar systrace*
 System call tracing device, see
 .Xr systrace 4 .
+.It Ar tun*
+Network tunnel driver, see
+.Xr tun 4 .
+.It Ar uk*
+SCSI unknown devices, see
+.Xr uk 4 .
 .It Ar xfs*
 XFS filesystem node, see
 .Xr mount_xfs 8 .

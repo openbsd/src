@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.21 2004/07/10 03:40:32 deraadt Exp $
+#	$OpenBSD: files.hp300,v 1.22 2004/08/03 21:46:54 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -7,9 +7,6 @@
 maxpartitions 16
 
 maxusers 2 8 64
-
-# NOTE!  The order of these lines is significant!  Don't change them
-# unless you absolutely know what you're doing!
 
 #
 # Mainbus
@@ -130,12 +127,10 @@ file	arch/hp300/dev/hpib.c		hpibbus
 device	ct: tape
 attach	ct at hpibbus
 file	arch/hp300/dev/ct.c		ct needs-flag
-major	{ct = 0}
 
 device	mt: tape
 attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
-major	{mt = 1}
 
 device	hd: disk
 attach	hd at hpibbus
@@ -149,24 +144,16 @@ file	arch/hp300/dev/ppi.c		ppi needs-flag
 # RAM disk
 major	{rd = 8}
 
-# Old HP SCSI layer
-device	oscsi { target = -1, lun = -1 }
-attach	oscsi at dio
-file	arch/hp300/dev/scsi.c		oscsi
+# SCSI devices
+include	"scsi/files.scsi"
 
-# Old HP SCSI devices
-device	sd: disk
-attach	sd at oscsi
-file	arch/hp300/dev/sd.c		sd needs-flag
+device	spc: scsi
+attach	spc at dio
+file	arch/hp300/dev/spc.c		spc	needs-flag
+file	arch/hp300/dev/mb89352.c	spc
+
 major	{sd = 4}
-
-device	st: tape
-attach	st at oscsi
-file	arch/hp300/dev/st.c		st needs-flag
-
-device	ac
-attach	ac at oscsi
-file	arch/hp300/dev/ac.c		ac needs-flag
+major	{cd = 9}
 
 # Human (Hilarious) Interface Loop
 # XXX should be a real device
@@ -197,8 +184,6 @@ file	arch/hp300/dev/dma.c
 
 file	dev/cons.c
 file	dev/cninit.c
-
-major	{vnd = 6}
 
 #
 # HP-UX binary compatibility
