@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2001/12/19 07:04:41 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2001/12/22 19:15:40 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -214,9 +214,9 @@ GLOBAL(start_text)	/* This is the *real* start upon poweron or reset */
 	
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<4>
-	set	r11, r11, 1<29>
-	set	r11, r11, 1<25>
+	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
+/*	set	r11, r11, 1<PSR_SERIAL_MODE_BIT> */
+	set	r11, r11, 1<PSR_SERIALIZE_BIT>
 	stcr	r11, PSR
 	stcr	r0,  VBR     /* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2001/12/16 23:49:46 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.19 2001/12/22 19:15:40 smurph Exp $	*/
 
 /*
  * Mach Operating System
@@ -241,6 +241,13 @@
 #define	PSR_FPU_DISABLE_BIT		3
 #define	PSR_BIG_ENDIAN_MODE		30
 #define	PSR_SUPERVISOR_MODE_BIT		31
+/* 
+ * mc88110 PSR bit definitions (MVME197) 
+ */
+#define PSR_GRAPHICS_DISABLE_BIT	4
+#define PSR_SERIAL_MODE_BIT		29
+#define PSR_CARRY_BIT			28
+#define PSR_SERIALIZE_BIT		25
 
 /*
  * Status bits for an SXIP/SNIP/SFIP address.
