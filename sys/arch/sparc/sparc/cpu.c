@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2000/02/19 21:45:56 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2000/02/19 22:04:23 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -1311,6 +1311,7 @@ fsrtoname(impl, vers, fver, buf)
 void
 replacemul()
 {
+#ifdef notyet
 	extern void *_umulreplace, *_umulreplace_end;
 	extern void *_mulreplace, *_mulreplace_end;
 	extern char *_mul, *_umul;
@@ -1330,4 +1331,5 @@ replacemul()
 		pmap_writetext(_mul + (i<<2), j);
 	}
 	splx(s);
+#endif
 }
