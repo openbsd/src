@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/08/25 11:37:26 espie Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/08/25 16:15:15 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ trap(type, code, v, frame)
 	struct proc *p;
 	int i, s;
 	u_int ucode;
-	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
+	u_quad_t sticks;
 	int typ = 0;
 	union sigval sv;
 
@@ -326,7 +326,7 @@ trap(type, code, v, frame)
 	switch (type) {
 
 	default:
-	dopanic:
+dopanic:
 		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
 		printf("%s program counter = 0x%x\n",
 		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
@@ -521,12 +521,12 @@ trap(type, code, v, frame)
 	 * XXX: Trace traps are a nightmare.
 	 *
 	 *	HP-UX uses trap #1 for breakpoints,
-	 *	NetBSD/m68k uses trap #2,
+	 *	OpenBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
 	 *	DDB and KGDB uses trap #15 (for kernel breakpoints;
 	 *	handled elsewhere).
 	 *
-	 * NetBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
+	 * OpenBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
@@ -575,7 +575,7 @@ trap(type, code, v, frame)
 		 * IPL while processing the SIR.
 		 */
 		spl1();
-		/* fall into... */
+		/* FALLTHROUGH */
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
@@ -612,7 +612,7 @@ trap(type, code, v, frame)
 		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
 		    p->p_addr->u_pcb.pcb_onfault == subail)
 			goto copyfault;
-		/* fall into ... */
+		/* FALLTHROUGH */
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
@@ -1160,7 +1160,7 @@ syscall(code, frame)
 		/* nothing to do */
 		break;
 	default:
-	bad:
+bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2001/08/25 11:37:26 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2001/08/25 16:15:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -748,9 +748,6 @@ void
 boot(howto)
 	int howto;
 {
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&howto;
-#endif
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(&curproc->p_addr->u_pcb);
@@ -784,7 +781,7 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
- haltsys:
+haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
