@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1996/05/02 06:43:13 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1996/05/04 09:16:04 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
 	cdev_gen_ipf(NIPF,ipl),         /* 34: IP filter log */
+	cdev_ss_init(NSS,ss),           /* 35: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -258,9 +259,9 @@ chrtoblk(dev)
  * the standalone boot.  I think it best that they both use the same
  * known algorithm unless we see a pressing need otherwise.
  */
-cons_decl(ser);
-cons_decl(ite);
 cons_decl(com);
+cons_decl(ite);
+cons_decl(ser);
 
 struct	consdev constab[] = {
 #if NSER > 0
