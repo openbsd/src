@@ -1,0 +1,127 @@
+.\"	$OpenBSD: spamd.8,v 1.1 2002/12/21 01:41:54 deraadt Exp $
+.\"
+.\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd Dec 18, 2002
+.Dt SPAMD 8
+.Os
+.Sh NAME
+.Nm spamd
+.Nd spam deferral daemon
+.Sh SYNOPSIS
+.Nm spamd
+.Op Fl 45d
+.Op Fl r Ar reply
+.Op Fl c Ar maxcon
+.Op Fl p Ar port
+.Sh DESCRIPTION
+.Nm
+is a a fake
+.Xr sendmail 8 Ns -like
+daemon which absorbs false mail.
+If the
+.Xr pf 4
+packet filter is configured to redirect port 25 (SMTP) to this daemon,
+it will attempt to waste the time and resources of the spam sender.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.Pp
+.It Fl 4
+Return error code 450 to the spammer.
+.It Fl 5
+Return error code 550 to the spammer.
+.It Fl d
+Debug mode.
+.Nm
+does not
+.Xr fork 2
+into the background.
+.It Fl r
+The SMTP error to return to the spammer, ie 450, 451, 550.  This defaults
+to 450.
+.It Fl c
+the Maximum number of concurrent connections to allow.
+.It Fl p
+Specify the port number that
+.Nm
+should operate on.
+.El
+.Pp
+.Nm
+is designed to be very efficient so that it does not slow down the
+receiving machine.  SPAM is never accepted, but always rejected with
+either a 450 or 550 error message.
+.Pp
+There are currently two methods that are being used to
+fight spam.
+.Bl -enum -offset indent
+.It
+Block (or slowly block) This works well, the spammers are blocked, and cannot
+access your hosts services.  Unfortunately this does little to combat the
+problem of spam in general, allowing the spammer to continue to spam others.
+.It
+Accept & drop via a
+.Xr sendmail 8
+addon.  This works well for many sites also.  All the mail that is recieved
+by your host is processed by a set of rules, and the spam is either deleted
+or flagged for further action.  Unfortunately this method can sonsume a
+considerable amount of your systems resources.
+.El
+.Pp
+What
+.Nm
+does, is to defer the spammers connections.  It does this in a manner
+designed to use as few local resources  as possible, while consuming as much
+of the spammers resources as possible.
+.Nm
+replies to the spammers mail with error codes which cause will cause mail
+to be stored in remote mail queues, taking up disk
+space, and to be resent multiple times, using network resources.
+.Pp
+.Nm
+does not follow the pollicy of playing nice with your neighbor.  Clients
+which reach
+.Nm
+have already been flagged as being spammers.  The only way to combat spam is
+to remove the senders ability to deliver it.  In this case, that means force
+the delivery of spam to have a very high overhead for the remote relay.
+.Pp
+.Nm
+is best started from
+.Xr rc 8
+and is used in conjuction with
+.Xr spamd-setup 8
+which proceses a list of spammers addresses, and applies appropriate
+.Xr pfctl 8
+rdr rules.
+.Pp
+.Sh SEE ALSO
+.Xr spamd-setup 8 ,
+.Xr pfctl 8
+.Sh HISTORY
+The
+.Nm
+command
+appeared in
+.Tn OpenBSD 3.2.
