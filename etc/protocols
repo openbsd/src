@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.15 2002/12/11 12:35:53 henning Exp $
+#	$OpenBSD: protocols,v 1.16 2002/12/30 22:17:03 mcbride Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
@@ -63,7 +63,7 @@ swipe	53	SWIPE		# IP with Encryption
 nhrp	54	NHRP		# NBMA Next Hop Resolution Protocol
 mobileip 55	MOBILEIP	# MobileIP encapsulation
 skip	57	SKIP		# SKIP
-ipv6-icmp 58	IPv6-ICMP	# ICMP for IPv6
+ipv6-icmp 58	IPv6-ICMP icmp6	# ICMP for IPv6
 ipv6-nonxt 59	IPv6-NoNxt	# No Next Header for IPv6
 ipv6-opts 60	IPv6-Opts	# Destination Options for IPv6
 any	61	any		# host internal protocol
