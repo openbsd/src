@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1995/05/30 15:38:14 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9.2.1 1995/10/30 23:36:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -46,10 +46,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/disklabel.h>
-
 #include <sys/device.h>
+#include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/dkbad.h>
 
 #include <machine/sun_disklabel.h>
 
@@ -423,4 +423,28 @@ disklabel_bsd_to_sun(lp, cp)
 	sl->sl_cksum = cksum;
 
 	return(0);
+}
+
+/*
+ * Search the bad sector table looking for the specified sector.
+ * Return index if found.
+ * Return -1 if not found.
+ */
+int
+isbad(bt, cyl, trk, sec)
+	register struct dkbad *bt;
+{
+	register int i;
+	register long blk, bblk;
+
+	blk = ((long)cyl << 16) + (trk << 8) + sec;
+	for (i = 0; i < 126; i++) {
+		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
+			bt->bt_bad[i].bt_trksec;
+		if (blk == bblk)
+			return (i);
+		if (blk < bblk || bblk < 0)
+			break;
+	}
+	return (-1);
 }
