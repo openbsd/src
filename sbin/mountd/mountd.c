@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.20 1997/08/13 18:59:26 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.21 1997/09/13 12:24:49 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1321,7 +1321,7 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			*exflagsp |= MNT_EXKERB;
 			opt_flags |= OP_KERB;
 		} else if (cpoptarg && (!strcmp(cpopt, "mask") ||
-			!strcmp(cpopt, "m"))) {
+		    !strcmp(cpopt, "m"))) {
 			if (get_net(cpoptarg, &grp->gr_ptr.gt_net, 1)) {
 				syslog(LOG_ERR, "Bad mask: %s", cpoptarg);
 				return (1);
@@ -1329,7 +1329,7 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			usedarg++;
 			opt_flags |= OP_MASK;
 		} else if (cpoptarg && (!strcmp(cpopt, "network") ||
-			!strcmp(cpopt, "n"))) {
+		    !strcmp(cpopt, "n"))) {
 			if (grp->gr_type != GT_NULL) {
 				syslog(LOG_ERR, "Network/host conflict");
 				return (1);
