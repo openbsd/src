@@ -1,4 +1,4 @@
-/*	$OpenBSD: errmsg.c,v 1.4 1997/09/16 11:01:15 deraadt Exp $	*/
+/*	$OpenBSD: errmsg.c,v 1.5 2001/04/29 18:12:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -71,6 +71,6 @@ int cod;
 
 	return(unk);
 #else
-	return strerror(cod);
+	return strerror(cod < 0 ? errno : cod);
 #endif
 }
