@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.h,v 1.4 2000/02/01 21:01:39 espie Exp $*/
+/* *	$OpenBSD: md.h,v 1.5 2000/04/17 22:23:44 deraadt Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -39,7 +39,7 @@
 #endif
 #endif
 
-#define	MAX_ALIGNMENT		(sizeof (long))
+#define	MAX_ALIGNMENT		(sizeof (double))
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #define PAGSIZ			__LDPGSZ
