@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.12 2003/12/21 23:28:39 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.13 2003/12/22 11:00:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -137,7 +137,7 @@ main(int argc, char *argv[])
 	}
 
 	if (parse_config(conffile, &conf, &mrtconf))
-		fatal("config file has errors", 0);
+		exit (1);
 
 	signal(SIGTERM, sighdlr);
 	signal(SIGKILL, sighdlr);
