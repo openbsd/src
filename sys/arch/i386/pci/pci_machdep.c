@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.19 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.20 2001/08/27 08:20:04 art Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -409,8 +409,10 @@ pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+#if NPCIBIOS > 0
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
+#endif
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
 
