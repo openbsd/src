@@ -82,5 +82,9 @@
 #define NVRAM_EXTLO	(MC_NVRAM_START + 9)	/* low byte; RTC off. 0x17 */
 #define NVRAM_EXTHI	(MC_NVRAM_START + 10)	/* high byte; RTC off. 0x18 */
 
+/* NVRAM bytes 34 and 35: extended memory POSTed size */
+#define NVRAM_PEXTLO	(MC_NVRAM_START + 34)	/* low byte; RTC off. 0x30 */
+#define NVRAM_PEXTHI	(MC_NVRAM_START + 35)	/* high byte; RTC off. 0x31 */
+
 /* NVRAM byte 36: current century.  (please increment in Dec99!) */
 #define NVRAM_CENTURY	(MC_NVRAM_START + 36)	/* RTC offset 0x32 */
