@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.16 2001/02/08 15:02:01 deraadt Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.17 2001/02/08 17:57:59 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -519,7 +519,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_LMKDIR:
 		if (mkdir(path1, 0777) == -1)
-			error("Couldn't create local directory to "
+			error("Couldn't create local directory "
 			    "\"%s\": %s", path1, strerror(errno));
 		break;
 	case I_LLS:
