@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.21 2004/04/13 17:04:49 millert Exp $	*/
+/*	$OpenBSD: paths.h,v 1.22 2005/04/02 17:04:52 millert Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #define	_PATH_FSIRAND	"/sbin/fsirand"
 #define _PATH_KLOG      "/dev/klog"
 #define	_PATH_KMEM	"/dev/kmem"
+#define	_PATH_KSHELL	"/bin/ksh"
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm_bsd.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
