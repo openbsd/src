@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.52 2005/02/02 18:57:09 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.53 2005/02/03 10:53:33 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,7 @@ struct ntp_peer {
 	u_int32_t			 id;
 	u_int8_t			 shift;
 	u_int8_t			 trustlevel;
+	int				 lasterror;
 };
 
 struct ntpd_conf {
@@ -238,6 +239,7 @@ int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *, u_int8_t);
+void	client_log_error(struct ntp_peer *, const char *, int);
 void	update_scale(double);
 time_t	scale_interval(time_t);
 time_t	error_interval(void);

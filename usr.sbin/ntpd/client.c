@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.55 2005/01/28 12:37:20 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.56 2005/02/03 10:53:33 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@ client_peer_init(struct ntp_peer *p)
 	p->state = STATE_NONE;
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
+	p->lasterror = 0;
 
 	return (client_addr_init(p));
 }
@@ -182,8 +183,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETUNREACH || errno == ENETDOWN ||
 		    errno == ECONNREFUSED) {
-			log_warn("recvfrom %s",
-			    log_sockaddr((struct sockaddr *)&p->addr->ss));
+			client_log_error(p, "recvfrom", errno);
 			set_next(p, error_interval());
 			return (0);
 		} else
@@ -310,4 +310,18 @@ client_update(struct ntp_peer *p)
 			p->reply[i].good = 0;
 
 	return (0);
+}
+
+void
+client_log_error(struct ntp_peer *peer, const char *operation, int error)
+{
+	const char *address;
+
+	address = log_sockaddr((struct sockaddr *)&peer->addr->ss);
+	if (peer->lasterror == error) {
+		log_debug("%s %s", operation, address);
+		return;
+	}
+	peer->lasterror = error;
+	log_warn("%s %s", operation, address);
 }
