@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.20 2004/01/07 02:16:33 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.21 2004/01/07 03:47:46 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.20 2004/01/07 02:16:33 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.21 2004/01/07 03:47:46 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,7 +148,7 @@ struct miniproc {
 	} while (/*CONSTCOND*/0);
 
 
-#define	PTRTOINT64(foo)	((u_int64_t)(const register_t)(const void *)(foo))
+#define	PTRTOINT64(foo)	((u_int64_t)(u_long)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
@@ -163,7 +163,6 @@ static char	**kvm_argv(kvm_t *, const struct miniproc *, u_long, int, int);
 static int	kvm_deadprocs(kvm_t *, int, int, u_long, u_long, int);
 static char	**kvm_doargv(kvm_t *, const struct miniproc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *));
-static char	**kvm_doargv2(kvm_t *, pid_t, int, int);
 static int	kvm_proclist(kvm_t *, int, int, struct proc *,
 		    struct kinfo_proc *, int);
 static int	proc_verify(kvm_t *, const struct miniproc *);
@@ -949,7 +948,6 @@ kvm_arg_sysctl(kvm_t *kd, pid_t pid, int nchr, int env)
 	int mib[4];
 	size_t len, orglen;
 	int ret;
-	char **argv, *arg;
 	char *buf;
 
 	orglen = kd->nbpg;
