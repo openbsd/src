@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.21 2004/04/01 23:14:19 tedu Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.22 2004/06/29 16:59:46 mickey Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.21 2004/04/01 23:14:19 tedu Exp $";
+  "$OpenBSD: fmt.c,v 1.22 2004/06/29 16:59:46 mickey Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -359,7 +359,7 @@ process_named_file(const char *name)
 	FILE *f;
 
 	if ((f = fopen(name, "r")) == NULL) {
-		perror(name);
+		warn(name);
 		++n_errors;
 	} else {
 		process_stream(f, name);
@@ -468,7 +468,7 @@ process_stream(FILE *stream, const char *name)
 
 	new_paragraph(output_in_paragraph ? last_indent : first_indent, 0);
 	if (ferror(stream)) {
-		perror(name);
+		warn(name);
 		++n_errors;
 	}
 }
@@ -633,7 +633,7 @@ center_stream(FILE *stream, const char *name)
 	}
 
 	if (ferror(stream)) {
-		perror(name);
+		warn(name);
 		++n_errors;
 	}
 }
@@ -708,9 +708,10 @@ xrealloc(void *ptr, size_t nbytes)
 void
 usage(void)
 {
+	extern char *__progname;
 
 	fprintf(stderr,
-		"Usage:   fmt [-cmps] [-d chars] [-l num] [-t num]\n"
+		"Usage:   %s [-cmps] [-d chars] [-l num] [-t num]\n"
 		"             [-w width | -width | goal [maximum]] [file ...]\n"
 		"Options: -c     center each line instead of formatting\n"
 		"         -d <chars> double-space after <chars> at line end\n"
@@ -721,7 +722,6 @@ usage(void)
 		"         -s     coalesce whitespace inside lines\n"
 		"         -t <n> have tabs every <n> columns\n"
 		"         -w <n> set maximum width to <n>\n"
-		"         goal   set target width to goal\n");
-	exit (0);
+		"         goal   set target width to goal\n", __progname);
+	exit (1);
 }
-
