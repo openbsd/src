@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.7,v 1.2 1994/11/30 19:07:19 jtc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.6 1998/09/06 12:41:41 pjanzen Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ a detailed explanation on using the package,
 see the tutorial sampler
 .Xr mdoc.samples 7 .
 .Pp
-The macros are described in two groups, the first
+The macros are described in two groups.  The first
 includes the structural and physical page layout macros.
 The second contains the manual and general text domain
 macros which differentiate the
@@ -123,7 +123,7 @@ of the subject should be given.
 Gotchas and caveats.
 .It Ar other
 Customized headers may be added at
-the authors discretion.
+the author's discretion.
 .El
 .It Li \&.Ss
 Subsection Headers.
@@ -247,7 +247,7 @@ and then calls the callable content macro
 .Ql \&Ar
 which operates on the argument
 .Ql file .
-Some macros may be callable, but are not parsed and vice versa.
+Some macros may be callable but are not parsed, or vice versa.
 These macros are indicated in the
 .Em parsed
 and
@@ -265,7 +265,7 @@ one at a time.
 The string
 .Ql "),"
 is not recognized as punctuation and will be output with a leading white
-space and in what ever font the calling macro uses.
+space and in whatever font the calling macro uses.
 The
 argument list
 .Ql "] ) ,"
