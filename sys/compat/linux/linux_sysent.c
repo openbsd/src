@@ -1,3 +1,5 @@
+/*	$OpenBSD: linux_sysent.c,v 1.14 1999/12/06 19:37:49 aaron Exp $	*/
+
 /*
  * System call switch table.
  *
@@ -68,8 +70,8 @@ struct sysent linux_sysent[] = {
 	    sys_setuid },			/* 23 = setuid */
 	{ 0, 0,
 	    sys_getuid },			/* 24 = getuid */
-	{ 0, 0,
-	    sys_nosys },			/* 25 = unimplemented stime */
+	{ 1, s(struct linux_sys_stime_args),
+	    linux_sys_stime },			/* 25 = stime */
 	{ 0, 0,
 	    sys_nosys },			/* 26 = unimplemented ptrace */
 	{ 1, s(struct linux_sys_alarm_args),

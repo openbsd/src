@@ -1,3 +1,5 @@
+/*	$OpenBSD: linux_syscallargs.h,v 1.14 1999/12/06 19:37:49 aaron Exp $	*/
+
 /*
  * System call argument lists.
  *
@@ -73,6 +75,10 @@ struct linux_sys_mount_args {
 
 struct linux_sys_umount_args {
 	syscallarg(char *) specialfile;
+};
+
+struct linux_sys_stime_args {
+	syscallarg(linux_time_t *) t;
 };
 
 struct linux_sys_alarm_args {
@@ -371,6 +377,7 @@ int	linux_sys_mount	__P((struct proc *, void *, register_t *));
 int	linux_sys_umount	__P((struct proc *, void *, register_t *));
 int	sys_setuid	__P((struct proc *, void *, register_t *));
 int	sys_getuid	__P((struct proc *, void *, register_t *));
+int	linux_sys_stime	__P((struct proc *, void *, register_t *));
 int	linux_sys_alarm	__P((struct proc *, void *, register_t *));
 int	linux_sys_pause	__P((struct proc *, void *, register_t *));
 int	linux_sys_utime	__P((struct proc *, void *, register_t *));
