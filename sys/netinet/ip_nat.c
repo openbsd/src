@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.c,v 1.14 1998/02/17 01:39:05 dgregor Exp $       */
+/*       $OpenBSD: ip_nat.c,v 1.15 1998/06/27 08:07:58 deraadt Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.14 1998/02/17 01:39:05 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.15 1998/06/27 08:07:58 deraadt Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -498,10 +498,8 @@ struct in_addr *inp;
 	}
 	if (!ifa)
 		sin = NULL;
-	if (!sin) {
-		KFREE(nat);
+	if (!sin)
 		return -1;
-	}
 #  endif /* (BSD < 199306) && (!__sgi && IFF_DRVLOCK) */
 	in = sin->sin_addr;
 	in.s_addr = ntohl(in.s_addr);
