@@ -1,77 +1,79 @@
+# $OpenBSD: usr_sbin_named,v 1.2 2003/02/04 14:52:51 jakob Exp $
+#
 # Policy for named that uses named user and chroots to /var/named
 # This policy works for the default configuration of named.
+#
 Policy: /usr/sbin/named, Emulation: native
 	native-__sysctl: permit
 	native-accept: permit
+	native-bind: sockaddr match "inet-*:0" then permit
 	native-bind: sockaddr match "inet-*:53" then permit
+	native-bind: sockaddr match "inet-*:953" then permit
 	native-break: permit
 	native-chdir: filename eq "/" then permit
-	native-chdir: filename eq "/namedb" then permit
 	native-chroot: filename eq "/var/named" then permit
 	native-close: permit
 	native-connect: sockaddr eq "/dev/log" then permit
+	native-connect: sockaddr match "inet-*" then permit
 	native-dup2: permit
 	native-exit: permit
 	native-fcntl: permit
 	native-fork: permit
-	native-fsread: filename eq "/" then permit
+	native-fsread: filename sub "<non-existent filename>" then deny[enoent]
+	native-fsread: filename eq "/etc/malloc.conf" then permit
 	native-fsread: filename eq "/dev/arandom" then permit
 	native-fsread: filename eq "/etc/group" then permit
-	native-fsread: filename eq "/etc/localtime" then permit
-	native-fsread: filename eq "/etc/malloc.conf" then permit
-	native-fsread: filename eq "/etc/protocols" then permit
-	native-fsread: filename eq "/etc/resolv.conf" then permit
-	native-fsread: filename eq "/etc/services" then permit
+	native-fsread: filename eq "/etc/named.conf" then permit
+	native-fsread: filename eq "/etc/named.keys" then permit
+	native-fsread: filename eq "/etc/rndc.key" then permit
 	native-fsread: filename eq "/etc/spwd.db" then permit
-	native-fsread: filename eq "/named.boot" then permit
-	native-fsread: filename eq "/usr/lib" then permit
-	native-fsread: filename eq "/usr/libexec/ld.so" then permit
-	native-fsread: filename eq "/var/run/ld.so.hints" then permit
-	native-fsread: filename eq "<non-existent filename>" then deny[enoent]
-	native-fsread: filename match "/namedb/*" then permit
+	native-fsread: filename match "/master/*" then permit
+	native-fsread: filename match "/slave/*" then permit
+	native-fsread: filename match "/standard/*" then permit
 	native-fsread: filename match "/usr/lib/*" then permit
+	native-fsread: filename eq "/usr/libexec/ld.so" then permit
 	native-fsread: filename match "/usr/share/nls/*" then permit
 	native-fsread: filename match "/usr/share/zoneinfo/*" then permit
+	native-fsread: filename eq "/var/run/ld.so.hints" then permit
+	native-fsread: filename eq "/var/run/named.pid" then permit
 	native-fstat: permit
-	native-fswrite: filename eq "/dev/console" then permit
+	native-fswrite: filename sub "<non-existent filename>" then deny[enoent]
 	native-fswrite: filename eq "/dev/null" then permit
-	native-fswrite: filename eq "/named.pid" then permit
-	native-geteuid: permit
-	native-getgid: permit
-	native-getpeername: permit
+	native-fswrite: filename match "/master/*" then permit
+	native-fswrite: filename match "/slave/*" then permit
+	native-fswrite: filename eq "/var/run/named.pid" then permit
+	native-fswrite: filename match "/var/tmp/*" then permit
+	native-fsync: permit
 	native-getpid: permit
-	native-getpriority: permit
 	native-getrlimit: permit
+	native-getsockname: permit
 	native-getsockopt: permit
 	native-gettimeofday: permit
 	native-getuid: permit
+	native-geteuid: permit
 	native-issetugid: permit
+	native-kill: permit
 	native-listen: permit
 	native-lseek: permit
 	native-mmap: permit
 	native-mprotect: permit
 	native-munmap: permit
-	native-nanosleep: permit
-	native-pipe: permit
 	native-pread: permit
 	native-read: permit
-	native-recvfrom: permit
+	native-recvmsg: permit
+	native-rename: filename match "/slave/*" and filename[1] match "/slave/*" then permit
 	native-select: permit
+	native-sendmsg: permit
 	native-sendto: true then permit
 	native-setgid: gid eq "70" then permit
 	native-setgroups: permit
-	native-setitimer: permit
-	native-setpriority: permit
 	native-setrlimit: permit
 	native-setsid: permit
 	native-setsockopt: permit
-	native-setuid: uname eq "named" then permit
+	native-setuid: uid eq "70" and uname eq "named" then permit
 	native-sigaction: permit
 	native-sigprocmask: permit
 	native-sigreturn: permit
 	native-socket: permit
-	native-umask: permit
-	native-wait4: permit
+	native-utimes: permit
 	native-write: permit
-	native-writev: permit
-
