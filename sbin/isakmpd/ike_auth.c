@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.78 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.79 2003/08/08 08:46:59 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -582,6 +582,7 @@ rsa_sig_decode_hash (struct message *msg)
   u_int32_t *id_cert_len;
   size_t id_len;
   int found = 0, n, i, id_found;
+  char *tag;
 #if defined (USE_DNSSEC)
   u_int8_t *rawkey = 0;
   u_int32_t rawkeylen;
@@ -680,10 +681,11 @@ rsa_sig_decode_hash (struct message *msg)
       handler = cert_get (GET_ISAKMP_CERT_ENCODING (p->p));
       if (!handler)
 	{
+	  tag = constant_lookup (isakmp_certenc_cst,
+				 GET_ISAKMP_CERT_ENCODING (p->p));
 	  LOG_DBG ((LOG_MISC, 30,
 		    "rsa_sig_decode_hash: no handler for %s CERT encoding",
-		    constant_lookup (isakmp_certenc_cst,
-				     GET_ISAKMP_CERT_ENCODING (p->p))));
+		    tag ? tag : "<unknown>"));
 	  continue;
 	}
 

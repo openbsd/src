@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.78 2003/07/25 08:31:16 markus Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.79 2003/08/08 08:46:59 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1056,6 +1056,7 @@ ipsec_responder (struct message *msg)
   struct exchange *exchange = msg->exchange;
   int (**script) (struct message *) = 0;
   struct payload *p;
+  char *tag;
   u_int16_t type;
 
   /* Check that a new exchange is coherent with the IKE rules.  */
@@ -1094,13 +1095,14 @@ ipsec_responder (struct message *msg)
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
-          type = GET_ISAKMP_NOTIFY_MSG_TYPE (p->p);
+	  type = GET_ISAKMP_NOTIFY_MSG_TYPE (p->p);
+	  tag = constant_lookup (isakmp_notify_cst, type);
 	  LOG_DBG ((LOG_EXCHANGE, 10,
 		    "ipsec_responder: got NOTIFY of type %s",
-		    constant_lookup (isakmp_notify_cst, type)));
+		    tag ? tag : "<unknown>"));
 
-          if (type == ISAKMP_NOTIFY_INVALID_SPI)
-              ipsec_invalid_spi (msg, p);
+	  if (type == ISAKMP_NOTIFY_INVALID_SPI)
+	    ipsec_invalid_spi (msg, p);
 
 	  p->flags |= PL_MARK;
 	}

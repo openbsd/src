@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.83 2003/06/15 10:32:15 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.84 2003/08/08 08:46:59 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1018,7 +1018,7 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   struct conf_list *flags;
   struct conf_list_node *flag;
 #endif
-  char *name = 0, *policy = 0, *str;
+  char *name = 0, *policy = 0, *str, *tag;
   u_int32_t want_doi;
   u_int8_t type;
 
@@ -1098,11 +1098,12 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
 	}
       if (type != GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base))
 	{
+	  tag = constant_lookup (isakmp_exch_cst,
+				 GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0]
+							   .iov_base));
 	  log_print ("exchange_setup_p1: expected exchange type %s got %s",
-		     str,
-		     constant_lookup (isakmp_exch_cst,
-				      GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0]
-								.iov_base)));
+		     str, tag ? tag : "<unknown>");
+		     
 	  return 0;
 	}
     }

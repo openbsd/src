@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.38 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.39 2003/08/08 08:46:59 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -1207,7 +1207,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
   struct conf_list *life_conf;
   struct conf_list_node *xf = vs->xf, *life;
   char *tag = constant_lookup (ike_attr_cst, type);
-  char *str;
+  char *tag2, *str;
   struct constant_map *map;
   struct attr_node *node;
   int rv;
@@ -1256,9 +1256,10 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  LIST_INSERT_HEAD (&vs->attrs, node, link);
 	  return 0;
 	}
+      tag2 = constant_lookup (map, decode_16 (value));
       LOG_DBG ((LOG_NEGOTIATION, 70,
 		"attribute_unacceptable: %s: got %s, expected %s", tag,
-		constant_lookup (map, decode_16 (value)), str));
+		tag2 ? tag2 : "<unknown>", str));
       return 1;
 
     case IKE_ATTR_GROUP_PRIME:
