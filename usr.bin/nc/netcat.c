@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.27 2001/06/26 23:06:53 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.28 2001/06/26 23:25:22 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -188,7 +188,6 @@ main(argc, argv)
 			if (uflag) {
 				int rv;
 				char buf[1024];
-				char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 				struct sockaddr_storage z;
 
 				len = sizeof(z);
@@ -442,7 +441,7 @@ atelnet(nfd, buf, size)
 	unsigned char *buf;
 	unsigned int size;
 {
-	int ret, pos = 0;
+	int ret;
 	unsigned char *p, *end;
 	unsigned char obuf[4];
 
