@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.47 2003/12/27 14:28:41 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.48 2003/12/28 14:34:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -327,7 +327,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->StartTimer = 0;
 
 			/* allocate read buffer */
-			peer->rbuf = calloc(1, sizeof(struct peer_buf_read));
+			peer->rbuf = calloc(1, sizeof(struct buf_read));
 			if (peer->rbuf == NULL)
 				fatal(NULL);
 			peer->rbuf->wpos = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.43 2003/12/27 14:24:42 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.44 2003/12/28 14:34:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ struct bgpd_config {
 	struct peer		*peers;
 };
 
-struct peer_buf_read {
+struct buf_read {
 	u_char			 buf[READ_BUF_SIZE];
 	u_char			*rptr;
 	ssize_t			 wpos;
@@ -143,7 +143,7 @@ struct peer {
 	int			 sock;
 	int			 events;
 	struct msgbuf		 wbuf;
-	struct peer_buf_read	*rbuf;
+	struct buf_read		*rbuf;
 	struct peer		*next;
 };
 
@@ -187,19 +187,9 @@ struct mrtdump_config {
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
 #define	MAX_IMSGSIZE		8192
 
-struct imsg_readbuf {
-	u_char			 buf[MAX_IMSGSIZE];
-	ssize_t			 read_len;
-	u_int32_t		 peerid;
-	u_int16_t		 pkt_len;
-	u_int8_t		 type;
-	u_char			*wptr;
-	u_int8_t		 seen_hdr;
-};
-
 struct imsgbuf {
 	int			sock;
-	struct imsg_readbuf	r;
+	struct buf_read		r;
 	struct msgbuf		w;
 };
 
