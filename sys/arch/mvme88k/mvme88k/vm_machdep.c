@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.50 2003/05/30 20:47:53 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.51 2003/06/01 00:22:12 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -64,7 +64,6 @@
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/cpu_number.h>
 #include <machine/locore.h>
 #include <machine/trap.h>
 
@@ -98,7 +97,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void *arg;
 {
 	struct switchframe *p2sf;
-	int cpu;
 	struct ksigframe {
 		void (*func)(void *);
 		void *proc;
@@ -107,7 +105,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	extern void proc_trampoline(void);
         extern void save_u_area(struct proc *, vm_offset_t);
 
-	cpu = cpu_number();
 /*	
 	savectx(p1->p_addr->u_pcb);
 */
