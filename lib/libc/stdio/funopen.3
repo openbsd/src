@@ -1,4 +1,4 @@
-.\"	$OpenBSD: funopen.3,v 1.4 1996/09/20 03:08:24 tholo Exp $
+.\"	$OpenBSD: funopen.3,v 1.5 1996/09/20 03:13:38 tholo Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,14 +82,16 @@ and
 must match those, respectively, of
 .Xr read 2 ,
 .Xr write 2 ,
-.Xr seek 2 ,
+.Xr lseek 2 ,
 and
 .Xr close 2
-with the single exception that they are passed the
+with the exceptions that they are passed the
 .Fa cookie
 argument specified to 
 .Fn funopen
-in place of the traditional file descriptor argument.
+in place of the traditional file descriptor argument and that
+the seek function takes an fpos_t argument and not an off_t
+argument.
 .Pp
 Read and write
 .Tn I/O
