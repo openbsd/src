@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.3 1996/01/13 03:52:44 chuck Exp $
+ * id: $Id: xd.c,v 1.4 1996/02/08 04:43:47 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -1067,9 +1067,6 @@ xdstrategy(bp)
 		return;
 	}
 
-	/* Instrumentation. */
-	disk_busy(&xd->sc_dk);
-
 	/* done! */
 
 	splx(s);
@@ -1424,6 +1421,9 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	    bp->b_bcount / XDFM_BPS, dbuf, bp);
 
 	xdc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XDCMD_RD : XDCMD_WR, 0);
+
+	/* Instrumentation. */
+	disk_busy(&xdsc->sc_dk);
 
 	/* now submit [note that xdc_submit_iorq can never fail on NORM reqs] */
 
@@ -1911,9 +1911,9 @@ xdc_remove_iorq(xdcsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			XDC_FREE(xdcsc, rqno);
 			disk_unbusy(&iorq->xd->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
+			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;
 		case XD_SUB_WAIT:
