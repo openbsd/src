@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.61 2001/06/23 20:59:42 angelos Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.62 2001/06/23 22:02:55 angelos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -617,7 +617,7 @@ ubsec_process(crp)
 		q->q_dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
-		goto errout;	/* XXX only handle mbufs right now */
+		goto errout;	/* XXX we don't handle contiguous blocks! */
 	}
 
 	q->q_mcr = (struct ubsec_mcr *)malloc(sizeof(struct ubsec_mcr),
@@ -692,15 +692,13 @@ ubsec_process(crp)
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(q->q_src_m, enccrd->crd_inject,
+					m_copyback(q->q_src_m,
+					    enccrd->crd_inject,
 					    8, (caddr_t)ctx.pc_iv);
-				else if (crp->crp_flags & CRYPTO_F_IOV) {
-					if (crp->crp_iv == NULL)
-						bzero((caddr_t)ctx.pc_iv, 8);
-					else
-						bcopy(crp->crp_iv,
-						    (caddr_t)ctx.pc_iv, 8);
-				}
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					cuio_copyback(q->q_src_io,
+					    enccrd->crd_inject,
+					    8, (caddr_t)ctx.pc_iv);
 			}
 		} else {
 			ctx.pc_flags |= UBS_PKTCTX_INBOUND;
@@ -710,13 +708,10 @@ ubsec_process(crp)
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)ctx.pc_iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				if (crp->crp_iv == NULL)
-					bzero((caddr_t)ctx.pc_iv, 8);
-				else
-					bcopy(crp->crp_iv,
-					    (caddr_t)ctx.pc_iv, 8);
-			}
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copydata(q->q_src_io,
+				    enccrd->crd_inject, 8,
+				    (caddr_t)ctx.pc_iv);
 		}
 
 		ctx.pc_deskey[0] = ses->ses_deskey[0];

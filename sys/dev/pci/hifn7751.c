@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.76 2001/06/23 21:43:40 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.77 2001/06/23 22:02:53 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1432,7 +1432,7 @@ hifn_process(crp)
 		cmd->dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
-		goto errout;	/* XXX only handle mbufs right now */
+		goto errout;	/* XXX we don't handle contiguous buffers! */
 	}
 
 	crd1 = crp->crp_desc;
@@ -1495,14 +1495,13 @@ hifn_process(crp)
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(cmd->src_m, enccrd->crd_inject,
+					m_copyback(cmd->src_m,
+					    enccrd->crd_inject,
 					    HIFN_IV_LENGTH, cmd->iv);
-				else if (crp->crp_flags & CRYPTO_F_IOV) {
-					if (crp->crp_iv == NULL)
-						bzero(cmd->iv, 8);
-					else
-						bcopy(crp->crp_iv, cmd->iv, 8);
-				}
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					cuio_copyback(cmd->src_io,
+					    enccrd->crd_inject,
+					    HIFN_IV_LENGTH, cmd->iv);
 			}
 		} else {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
@@ -1510,12 +1509,9 @@ hifn_process(crp)
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				if (crp->crp_iv == NULL)
-					bzero(cmd->iv, 8);
-				else
-					bcopy(crp->crp_iv, cmd->iv, 8);
-			}
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copyback(cmd->src_io, enccrd->crd_inject,
+				    HIFN_IV_LENGTH, cmd->iv);
 		}
 
 		if (enccrd->crd_alg == CRYPTO_DES_CBC)
