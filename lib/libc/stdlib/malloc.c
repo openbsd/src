@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.37 1999/11/09 19:25:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.38 1999/11/10 20:12:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1272,30 +1272,6 @@ realloc(void *ptr, size_t size)
         r = irealloc(ptr, size);
     }
     UTRACE(ptr, size, r);
-    malloc_active--;
-    THREAD_UNLOCK();
-    if (malloc_xmalloc && !r)
-	wrterror("out of memory.\n");
-    return (r);
-}
-
-void *
-calloc(size_t num, size_t size)
-{
-    register void *r;
-
-    malloc_func = " in calloc():";
-    THREAD_LOCK();
-    if (malloc_active++) {
-	wrtwarning("recursive call.\n");
-        malloc_active--;
-	return (0);
-    }
-    size *= num;
-    r = imalloc(size);
-    if (r && !malloc_zero)
-	memset(r, 0, size)
-    UTRACE(0, size, r);
     malloc_active--;
     THREAD_UNLOCK();
     if (malloc_xmalloc && !r)
