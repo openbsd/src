@@ -1,0 +1,164 @@
+.\"	$OpenBSD: compat_ibcs2.8,v 1.1 1998/02/09 21:58:21 deraadt Exp $
+.\"
+.\" Copyright (c) 1998 Scott Bartram
+.\" Copyright (c) 1995 Frank van der Linden
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed for the NetBSD Project
+.\"      by Scott Bartram and Frank van der Linden
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Based on compat_linux.8
+.\"
+.Dd February 8, 1998
+.Dt COMPAT_IBCS2 8
+.Os OpenBSD
+.Sh NAME
+.Nm compat_ibcs2
+.Nd setup procedure for running iBCS2 binaries
+.Sh DESCRIPTION
+.Nx
+supports running Intel Binary Compatibilty Standard 2 (iBCS2)
+binaries.  This only applies to i386 systems for now.  Binaries
+are suported from SCO UNIX and other systems derived from UNIX
+System V Release 3. iBCS2 support is only well tested using SCO
+binaries. XENIX binaries are also supported although not as well
+tested.  SVR4 binaries are supported by the
+.Dv COMPAT_SVR4
+option.
+.Pp
+iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats. Binaries
+from SCO OpenServer (version 5.x) are the only ELF binaries that have
+been tested.  Most programs should work, but not ones that use or
+depend on:
+.sp
+.Bl -tag -width 123 -compact -offset indent
+.It kernel internal data structures
+.br
+.It STREAMS drivers (other than TCP/IP sockets)
+.br
+.It local X displays (uses a STREAMS pipe)
+.br
+.It virtual 8086 mode
+.El
+.sp
+The iBCS2 compatibility feature is active for kernels compiled with
+the
+.Dv COMPAT_IBCS2
+option enabled.  If support for iBCS2 ELF executables is desired,
+the
+.Dv EXEC_ELF32
+option should be enabled in addition to
+.Dv COMPAT_IBCS2 .
+.Pp
+Many COFF-format programs and most ELF-format programs are dynamically
+linked. This means that you will also need the shared libraries that
+the program depends on.  Also, you will need to create a "shadow root"
+directory for iBCS2 binaries on your OpenBSD system. This directory is
+named /emul/ibcs2.  Any file operations done by iBCS2 programs run
+under OpenBSD will look in this directory first. So, if an iBCS2
+program opens, for example, /etc/passwd, OpenBSD will first try to open
+/emul/ibcs2/etc/passwd, and if that does not exist open the 'real'
+/etc/passwd file. It is recommended that you install iBCS2 packages
+that include configuration files, etc. under /emul/ibcs2, to avoid
+naming conflicts with possible OpenBSD counterparts. Shared libraries
+should also be installed in the shadow tree.
+.Pp
+Generally, you will need to look for the shared libraries that
+iBCS2 binaries depend on only the first few times that you install
+an iBCS2 program on your OpenBSD system. After a while, you will
+have a sufficient set of iBCS2 shared libraries on your system to
+be able to run newly imported iBCS2 binaries without any extra
+work.
+
+.Ss Setting up shared libraries
+How to get to know which shared libraries iBCS2 binaries need, and
+where to get them? Depending on the file type of the executable, there
+are different possibilities (when following these instructions: you
+will need to be root on your OpenBSD system to do the necessary
+installation steps).
+
+.Bl -tag -width 123 -compact
+.It 1. COFF binaries
+You can simply copy all of the available shared libraries since they
+are fairly small in size. The COFF shared libraries are typically
+found in /shlib and can be obtained from the following sources:
+.sp
+.nf
+SCO UNIX version 3.x (aka ODT)
+SCO UNIX version 5.x (aka OpenServer)
+SCO UnixWare
+Many versions of SVR4.2/x86
+.fi
+.sp
+After copying the shared libraries, you should have at least the
+following files on your system:
+.Pp
+.nf
+/emul/ibcs2/shlib/libc_s
+/emul/ibcs2/shlib/libnsl_s
+/emul/ibcs2/shlib/protlib_s
+.fi
+.Pp
+.It 2. ELF binaries
+You can simply copy all of the available shared libraries from the
+source system or distribution or use the `ldd-elf' program (in
+development) to determine the libraries required by a specific binary.
+.Pp
+After copying the shared libraries, you should have at least the
+following files on your system:
+.Pp
+.nf
+/emul/ibcs2/usr/lib/libc.so.1
+/emul/ibcs2/usr/lib/libcrypt.so
+/emul/ibcs2/usr/lib/libndbm.so
+/emul/ibcs2/usr/lib/libsocket.so.1
+.fi
+.Pp
+.El
+If you don't have access to a SCO system, you will need to get the
+extra files you need from a SCO distribution. As of January 1998, SCO
+sells a copy of SCO OpenServer (iBCS2) and/or SCO UnixWare (SVR4) for
+personal/non-commercial use for only the cost of shipping (about
+$20US). The distribution comes on an ISO9660-format CDROM which can be
+mounted and used to copy the necessary files.
+.Pp
+Run the following script to copy the basic set of files from a SCO
+distribution directory mounted somewhere locally:
+.Pp
+.nf
+/usr/share/examples/emul/ibcs2/ibcs2-setup [directory]
+.fi
+.Pp
+You should now be set up for SCO binaries which only need standard
+shared libs.
+.Sh BUGS
+The information about SCO distributions may become outdated.
+.Pp
+Attempting to a use a nameserver on the local host does not currently
+work due to an absurd shortcut taken by the iBCS2 network code
+(remember that there are no kernel sockets).
+.Pp
+16/32/64 bit offsets may not be handled correctly in all cases.
