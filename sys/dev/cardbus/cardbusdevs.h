@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.15 2003/09/27 19:38:54 fgsch Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.16 2004/04/07 15:48:09 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.14 2003/09/27 19:38:10 fgsch Exp 
+ *	OpenBSD: cardbusdevs,v 1.15 2004/04/07 15:47:52 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -81,6 +81,7 @@
 /* Abocom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 */
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* PCM200 */
+#define	CARDBUS_PRODUCT_ABOCOM_TE100	0xab06		/* TE100 */
 
 /* Accton products */
 #define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX503x */
