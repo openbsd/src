@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.13 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.14 2003/02/24 22:32:46 tedu Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	}
 
 	xmp = (struct null_mount *) malloc(sizeof(struct null_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+				M_MISCFSMNT, M_WAITOK);
 
 	/*
 	 * Save reference to underlying FS
@@ -149,7 +149,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	if (error) {
 		vrele(lowerrootvp);
-		free(xmp, M_UFSMNT);	/* XXX */
+		free(xmp, M_MISCFSMNT);
 		return (error);
 	}
 
@@ -243,7 +243,7 @@ nullfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the null_mount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.14 2002/08/23 22:21:44 art Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.15 2003/02/24 22:32:46 tedu Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ portal_mount(mp, path, data, ndp, p)
 		M_TEMP, M_WAITOK);
 
 	fmp = (struct portalmount *) malloc(sizeof(struct portalmount),
-				 M_UFSMNT, M_WAITOK);	/* XXX */
+				 M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	VTOPORTAL(rvp)->pt_arg = 0;
@@ -203,7 +203,7 @@ portal_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the portalmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return (0);
 }

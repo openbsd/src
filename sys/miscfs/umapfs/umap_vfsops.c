@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.18 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.19 2003/02/24 22:32:46 tedu Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ umapfs_mount(mp, path, data, ndp, p)
 #endif
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+				M_MISCFSMNT, M_WAITOK);
 
 	/*
 	 * Save reference to underlying FS
@@ -198,7 +198,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 */
 	if (error) {
 		vrele(lowerrootvp);
-		free(amp, M_UFSMNT);	/* XXX */
+		free(amp, M_MISCFSMNT);
 		return (error);
 	}
 
@@ -291,7 +291,7 @@ umapfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return (0);
 }
