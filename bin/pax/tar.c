@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.14 1998/10/19 05:46:12 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.15 2000/01/21 05:11:36 tholo Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.14 1998/10/19 05:46:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.15 2000/01/21 05:11:36 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -463,7 +463,11 @@ tar_rd(arcn, buf)
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 	arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
-	arcn->sb.st_size = (size_t)asc_ul(hd->size, sizeof(hd->size), OCT);
+#ifdef NET2_STAT
+	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
+#else
+	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
+#endif
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
@@ -858,7 +862,11 @@ ustar_rd(arcn, buf)
 	 */
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
-	arcn->sb.st_size = (size_t)asc_ul(hd->size, sizeof(hd->size), OCT);
+#ifdef NET2_STAT
+	arcn->sb.st_size = (off_t)asc_ul(hd->size, sizeof(hd->size), OCT);
+#else
+	arcn->sb.st_size = (off_t)asc_uqd(hd->size, sizeof(hd->size), OCT);
+#endif
 	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
