@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.h,v 1.3 1996/10/30 22:41:49 niklas Exp $	*/
+/*	$OpenBSD: wscons_emul.h,v 1.4 1997/04/08 23:30:27 michaels Exp $	*/
 /*	$NetBSD: wscons_emul.h,v 1.2 1996/04/12 06:10:32 cgd Exp $	*/
 
 /*
@@ -45,6 +45,8 @@ struct wscons_emul_data {
 #define	ANSICONS_STATE_NORMAL	0		/* normal processing */
 #define	ANSICONS_STATE_HAVEESC	1		/* seen start of ctl seq */
 #define	ANSICONS_STATE_CONTROL	2		/* processing ctl seq */
+
+#define JUMPSCROLL		1		/* lines to scroll at once */
 
 void	wscons_emul_attach __P((struct wscons_emul_data *,
 	    const struct wscons_odev_spec *));

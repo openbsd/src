@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.4 1997/01/24 19:58:31 niklas Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.5 1997/04/08 23:30:26 michaels Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -130,19 +130,11 @@ wscons_emul_input_normal(we, c)
 		if (we->ac_crow >= we->ac_nrow)
 			panic("wscons_emul: didn't scroll (1)");
 #endif
-
-#if 0
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 1, 0,
-		    we->ac_nrow - 1);
+		(*we->ac_ef->wef_copyrows)(we->ac_efa, JUMPSCROLL, 0,
+		    we->ac_nrow - JUMPSCROLL);
 		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 1, 1);
-#else
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 10, 0,
-		    we->ac_nrow - 10);
-		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 10, 10);
-		we->ac_crow -= 10 - 1;
-#endif
+		    we->ac_nrow - JUMPSCROLL, JUMPSCROLL);
+		we->ac_crow -= JUMPSCROLL - 1;
 		break;
 
 	case ASCII_VT:
@@ -193,19 +185,11 @@ wscons_emul_input_normal(we, c)
 			panic("wscons_emul: didn't scroll (2)");
 #endif
 
-#if 0
-		/* scroll all of the rows up one; leave current row # alone */
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 1, 0,
-		    we->ac_nrow - 1);
+		(*we->ac_ef->wef_copyrows)(we->ac_efa, JUMPSCROLL, 0,
+		    we->ac_nrow - JUMPSCROLL);
 		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 1, 1);
-#else
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 10, 0,
-		    we->ac_nrow - 10);
-		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 10, 10);
-		we->ac_crow -= 10 - 1;
-#endif
+		    we->ac_nrow - JUMPSCROLL, JUMPSCROLL);
+		we->ac_crow -= JUMPSCROLL - 1;
 		break;
 	}
 
