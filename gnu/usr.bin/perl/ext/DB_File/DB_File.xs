@@ -734,7 +734,7 @@ INFO * recno ;
     printf ("  cachesize = %d\n", recno->db_RE_cachesize) ;
     printf ("  psize     = %d\n", recno->db_RE_psize) ;
     printf ("  lorder    = %d\n", recno->db_RE_lorder) ;
-    printf ("  reclen    = %ul\n", (unsigned long)recno->db_RE_reclen) ;
+    printf ("  reclen    = %lu\n", (unsigned long)recno->db_RE_reclen) ;
     printf ("  bval      = %d 0x%x\n", recno->db_RE_bval, recno->db_RE_bval) ;
     printf ("  bfname    = %d [%s]\n", recno->db_RE_bfname, recno->db_RE_bfname) ;
 }
