@@ -1,7 +1,7 @@
-/*	$OpenBSD: wax.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: wax.c,v 1.3 2003/04/03 21:45:14 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,28 @@
 
 #include <hppa/dev/cpudevs.h>
 
+#include <hppa/gsc/gscbusvar.h>
+
+#define	WAX_IOMASK	0xfff00000
+
+struct wax_regs {
+	u_int32_t wax_irr;	/* int requset register */
+	u_int32_t wax_imr;	/* int mask register */
+	u_int32_t wax_ipr;	/* int pending register */
+	u_int32_t wax_icr;	/* int command? register */
+	u_int32_t wax_iar;	/* int acquire? register */
+};
+
 struct wax_softc {
-	struct  device sc_dv;
+	struct device sc_dv;
+	struct gscbus_ic sc_ic;
+
+	struct wax_regs volatile *sc_regs;
 };
 
 int	waxmatch(struct device *, void *, void *);
 void	waxattach(struct device *, struct device *, void *);
+void	wax_gsc_attach(struct device *);
 
 struct cfattach wax_ca = {
 	sizeof(struct wax_softc), waxmatch, waxattach
@@ -79,4 +95,49 @@ waxattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct wax_softc *sc = (struct wax_softc *)self;
+	struct confargs *ca = aux;
+	struct gsc_attach_args ga;
+	bus_space_handle_t ioh;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
+			  IOMOD_HPASIZE, 0, &ioh)) {
+#ifdef DEBUG
+		printf(": can't map IO space\n");
+#endif
+		return;
+	}
+
+	sc->sc_regs = (struct wax_regs *)ca->ca_hpa;
+
+	printf("\n");
+
+#if 0
+	/* interrupts guts */
+	s = splhigh();
+	sc->sc_regs->wax_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
+	sc->sc_regs->wax_icr = 0;
+	sc->sc_regs->wax_imr = ~0U;
+	in = sc->sc_regs->wax_irr;
+	sc->sc_regs->wax_imr = 0;
+	splx(s);
+#endif
+
+	sc->sc_ic.gsc_type = gsc_wax;
+	sc->sc_ic.gsc_dv = sc;
+	sc->sc_ic.gsc_base = sc->sc_regs;
+
+	ga.ga_ca = *ca;	/* clone from us */
+	ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+	ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+	ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+	ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+	ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+	ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+	ga.ga_dp.dp_mod = 0;
+
+	ga.ga_name = "gsc";
+	ga.ga_hpamask = WAX_IOMASK;
+	ga.ga_ic = &sc->sc_ic;
+	config_found(self, &ga, gscprint);
 }
