@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.686 2003/10/31 03:49:10 drahn Exp 
+ *		OpenBSD: pcidevs,v 1.687 2003/10/31 03:53:02 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1475,8 +1475,8 @@
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
 
 /* Mentor */
-#define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* MENTOR Host-PCI */
-#define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* MENTOR PCI-PCI */
+#define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* Host-PCI */
+#define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* PCI-PCI */
 
 /* Mitsubishi Electronics */
 #define	PCI_PRODUCT_MITSUBISHIELEC_GUI	0x0304		/* GUI Accel */
