@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.309 2000/09/04 13:13:18 itojun Exp 
+ *		OpenBSD: pcidevs,v 1.310 2000/09/12 00:27:05 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1879,6 +1879,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Efficent Networks",
 	    "155P-MF1 ATM (ASIC)",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_EFSS25,
+	    0,
+	    "Efficent Networks",
+	    "25SS-3010 ATM (ASIC)",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
