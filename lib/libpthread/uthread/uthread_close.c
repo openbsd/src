@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.9 2003/02/04 22:14:27 marc Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.10 2003/02/14 03:58:42 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -47,7 +47,6 @@ close(int fd)
 	int		flags;
 	int		ret;
 	struct stat	sb;
-	struct fd_table_entry	*entry;
 
 	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
@@ -100,11 +99,7 @@ close(int fd)
 
 		/* XXX: Assumes well behaved threads. */
 		/* XXX: Defer real close to avoid race condition */
-		entry = _thread_fd_table[fd];
-		_thread_fd_table[fd] = NULL;
-		if (--entry->refcnt == 0)
-			free(entry);
-
+		_thread_fd_table_remove(fd);
 		/* Close the file descriptor: */
 		ret = _thread_sys_close(fd);
 	}

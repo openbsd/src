@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.20 2003/02/05 06:20:36 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.21 2003/02/14 03:58:42 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -233,10 +233,8 @@ _thread_fd_table_dup(int from_fd, int to_fd)
 		entry = _thread_fd_table[to_fd];
 		if (entry != NULL) {
 			ret = _FD_LOCK(to_fd, FD_RDWR, NULL);
-			if (ret != -1) {
-				if (--entry->refcnt == 0)
-					free(entry);
-			}
+			if (ret != -1)
+				_thread_fd_table_remove(to_fd);
 		} else
 			ret = 0;
 
@@ -251,6 +249,26 @@ _thread_fd_table_dup(int from_fd, int to_fd)
 		ret = 0;
 
 	return (ret);
+}
+
+/*
+ * Remove an fd entry from the table and free it if it's reference count
+ * goes to zero.   The entry is assumed to be locked with a RDWR lock!  It
+ * will be unlocked if it is not freed.
+ */
+void
+_thread_fd_table_remove(int fd)
+{
+	struct fd_table_entry	*entry;
+
+	_SPINLOCK(&fd_table_lock);
+	entry = _thread_fd_table[fd];
+	if (--entry->refcnt == 0)
+		free(entry);
+	else
+		_FD_UNLOCK(fd, FD_RDWR);
+	_thread_fd_table[fd] = NULL;
+	_SPINUNLOCK(&fd_table_lock);
 }
 
 /*
