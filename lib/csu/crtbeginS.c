@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.2 2002/02/16 21:27:20 millert Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.3 2003/06/26 23:19:18 deraadt Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static void	__dtors(void);
 static void	__ctors(void);
 
 void
-__dtors()
+__dtors(void)
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
 	void (**p)(void);
@@ -68,7 +68,7 @@ __dtors()
 }
 
 static void
-__ctors()
+__ctors(void)
 {
 	void (**p)(void) = __CTOR_LIST__ + 1;
 
@@ -78,7 +78,7 @@ __ctors()
 }
 
 void
-_init()
+_init(void)
 {
 	static int initialized = 0;
 
@@ -93,7 +93,7 @@ _init()
 }
 
 void
-_fini()
+_fini(void)
 {
 	/*
 	 * since the _init() function sets up the destructors to be called
