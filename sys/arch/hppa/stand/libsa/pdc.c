@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.14 2003/04/16 07:20:50 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.15 2003/04/30 04:09:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -226,7 +226,6 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	 * double buffer it all the time, to cache
 	 */
 	for (; size; size -= ret, buf += ret, blk += ret, xfer += ret) {
-		twiddle();
 		offset = blk & IOPGOFSET;
 		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 		    (rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
