@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.9 2004/08/12 21:03:46 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.10 2004/11/26 16:05:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -50,11 +50,13 @@
 int
 cvs_checkout(int argc, char **argv)
 {
-	int ch;
+	int i, ch;
 	struct cvsroot *root;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "c")) != -1) {
 		switch (ch) {
+		case 'c':
+			break;
 		default:
 			return (EX_USAGE);
 		}
@@ -70,24 +72,42 @@ cvs_checkout(int argc, char **argv)
 	}
 
 	cvs_files = cvs_file_get(".", 0);
-	if (cvs_files == NULL)
-		return (EX_DATAERR);
+	if (cvs_files == NULL) {
+		return (EX_USAGE);
+	}
 
 	root = CVS_DIR_ROOT(cvs_files);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_connect(root);
 
-		if ((cvs_sendarg(root, argv[0], 0) < 0) ||
-		    (cvs_senddir(root, cvs_files) < 0) ||
+		/* first send the expand modules command */
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				break;
+
+		if ((cvs_senddir(root, cvs_files) < 0) ||
 		    (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0))
 			cvs_log(LP_ERR, "failed to expand module");
 
 		/* XXX not too sure why we have to send this arg */
-		if ((cvs_sendarg(root, "-N", 0) < 0) ||
-		    (cvs_sendarg(root, argv[0], 0) < 0) ||
-		    (cvs_senddir(root, cvs_files) < 0) ||
-		    (cvs_sendreq(root, CVS_REQ_CO, NULL) < 0))
+		if (cvs_sendarg(root, "-N", 0) < 0)
+			exit(1);
+
+		for (i = 0; i < argc; i++)
+			if (cvs_sendarg(root, argv[i], 0) < 0)
+				exit(EX_OSERR);
+
+		if ((cvs_senddir(root, cvs_files) < 0) ||
+		    (cvs_sendreq(root, CVS_REQ_CO, NULL) < 0)) {
 			cvs_log(LP_ERR, "failed to checkout");
+		}
 	}
 
 	return (0);
