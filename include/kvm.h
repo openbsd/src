@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.h,v 1.6 1994/10/26 00:55:58 cgd Exp $	*/
+/*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -44,6 +44,7 @@
 
 #include <nlist.h>
 #include <sys/cdefs.h>
+#include <stdio.h>
 
 __BEGIN_DECLS
 
@@ -51,6 +52,9 @@ typedef struct __kvm kvm_t;
 
 struct kinfo_proc;
 int	  kvm_close __P((kvm_t *));
+int	  kvm_dump_inval __P((kvm_t *));
+int	  kvm_dump_mkheader __P((kvm_t *, off_t));
+int	  kvm_dump_wrtheader __P((kvm_t *, FILE *, int));
 char	**kvm_getargv __P((kvm_t *, const struct kinfo_proc *, int));
 char	**kvm_getenvv __P((kvm_t *, const struct kinfo_proc *, int));
 char	 *kvm_geterr __P((kvm_t *));
