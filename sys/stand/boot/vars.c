@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.10 2003/08/11 06:23:07 deraadt Exp $	*/
+/*	$OpenBSD: vars.c,v 1.11 2004/01/29 00:54:08 tom Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -33,7 +33,7 @@
 #include <lib/libkern/funcs.h>
 #include "cmd.h"
 
-extern const char version[];
+extern char prog_ident[];
 extern int debug;
 
 static int Xaddr(void);
@@ -91,7 +91,7 @@ Xset(void)
 {
 	const struct cmd_table *ct;
 
-	printf(">> OpenBSD/" MACHINE_ARCH " BOOT %s\n", version);
+	printf("%s\n", prog_ident);
 	for (ct = cmd_set; ct->cmd_name != NULL; ct++) {
 		printf("%s\t ", ct->cmd_name);
 		(*ct->cmd_exec)();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.29 2003/08/11 06:23:07 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.30 2004/01/29 00:54:08 tom Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -44,6 +44,9 @@ static const char *const kernels[] = {
 	NULL
 };
 
+char prog_ident[40];
+char *progname = "BOOT";
+
 extern	const char version[];
 struct cmd_state cmd;
 int bootprompt = 1;
@@ -57,7 +60,9 @@ boot(dev_t bootdev)
 
 	machdep();
 
-	printf(">> OpenBSD/" MACHINE " BOOT %s\n", version);
+	snprintf(prog_ident, sizeof(prog_ident),
+	    ">> OpenBSD/" MACHINE " %s %s", progname, version);
+	printf("%s\n", prog_ident);
 
 	devboot(bootdev, cmd.bootdev);
 	strlcpy(cmd.image, bootfile, sizeof(cmd.image));
