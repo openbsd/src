@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -557,6 +557,7 @@
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
+#define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */

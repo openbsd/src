@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7277,6 +7277,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETSEC,
 	    "NetSec",
+	},
+	{
+	    PCI_VENDOR_ATHEROS,
+	    "Atheros",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN,
