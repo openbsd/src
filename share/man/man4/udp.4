@@ -44,6 +44,8 @@
 .Fd #include <netinet/in.h>
 .Ft int
 .Fn socket AF_INET SOCK_DGRAM 0
+.Ft int
+.Fn socket AF_INET6 SOCK_DGRAM 0
 .Sh DESCRIPTION
 .Tn UDP
 is a simple, unreliable datagram protocol which is used
@@ -100,7 +102,9 @@ Options at the
 transport level may be used with
 .Tn UDP ;
 see
-.Xr ip 4 .
+.Xr ip 4
+or
+.Xr ip6 4 .
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
@@ -132,6 +136,7 @@ exists.
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr ip 4 ,
+.Xr ip6 4 ,
 .Xr netintro 4
 .Sh HISTORY
 The

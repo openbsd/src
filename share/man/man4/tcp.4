@@ -44,6 +44,8 @@
 .Fd #include <netinet/in.h>
 .Ft int
 .Fn socket AF_INET SOCK_STREAM 0
+.Ft int
+.Fn socket AF_INET6 SOCK_STREAM 0
 .Sh DESCRIPTION
 The
 .Tn TCP
@@ -146,7 +148,9 @@ Options at the
 transport level may be used with
 .Tn TCP ;
 see
-.Xr ip 4 .
+.Xr ip 4
+or
+.Xr ip6 4 .
 Incoming connection requests that are source-routed are noted,
 and the reverse source route is used in responding.
 .Sh DIAGNOSTICS
@@ -183,6 +187,7 @@ exists.
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr ip 4 ,
+.Xr ip6 4 ,
 .Xr netintro 4
 .Sh HISTORY
 The
