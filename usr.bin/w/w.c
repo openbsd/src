@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.21 1997/12/24 16:13:25 mickey Exp $	*/
+/*	$OpenBSD: w.c,v 1.22 1997/12/24 19:57:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -231,7 +231,7 @@ main(argc, argv)
 			exit (0);
 	}
 
-#define HEADER	"USER     TTY FROM              LOGIN@  IDLE WHAT\n"
+#define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT\n"
 #define WUSED	(sizeof (HEADER) - sizeof ("WHAT\n"))
 	(void)printf(HEADER);
 
@@ -325,7 +325,7 @@ main(argc, argv)
 			    ep->utmp.ut_host + UT_HOSTSIZE - x, x);
 			p = buf;
 		}
-		(void)printf("%-*.*s %3.3s %-*.*s ",
+		(void)printf("%-*.*s %-2.2s %-*.*s ",
 		    UT_NAMESIZE, UT_NAMESIZE, ep->utmp.ut_name,
 		    strncmp(ep->utmp.ut_line, "tty", 3) ?
 		    ep->utmp.ut_line : ep->utmp.ut_line + 3,
