@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.11 2003/02/28 20:32:02 jason Exp $
+.\"	$OpenBSD: math.3,v 1.12 2003/02/28 20:38:09 jason Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -52,13 +52,13 @@ Declarations for these functions may be obtained from the include file
 .Sh LIST OF FUNCTIONS
 .Bl -column "copysign" "lgamma(3)" "inverse trigonometric function" "ULPs"
 .It \fIName\fP Ta \fIManual\fP Ta \fIDescription\fP Ta "\fIULPs\fP"
-.It acos Ta sin(3) Ta "inverse trigonometric function" Ta 3
-.It acosh Ta asinh(3) Ta "inverse hyperbolic function" Ta 3
-.It asin Ta sin(3) Ta "inverse trigonometric function" Ta 3
+.It acos Ta acos(3) Ta "inverse trigonometric function" Ta 3
+.It acosh Ta acosh(3) Ta "inverse hyperbolic function" Ta 3
+.It asin Ta asin(3) Ta "inverse trigonometric function" Ta 3
 .It asinh Ta asinh(3) Ta "inverse hyperbolic function" Ta 3
-.It atan Ta sin(3) Ta "inverse trigonometric function" Ta 1
-.It atanh Ta asinh(3) Ta "inverse hyperbolic function" Ta 3
-.It atan2 Ta sin(3) Ta "inverse trigonometric function" Ta 2
+.It atan Ta tan(3) Ta "inverse trigonometric function" Ta 1
+.It atanh Ta atanh(3) Ta "inverse hyperbolic function" Ta 3
+.It atan2 Ta tan2(3) Ta "inverse trigonometric function" Ta 2
 .It cabs Ta hypot(3) Ta "complex absolute value" Ta 1
 .It cbrt Ta sqrt(3) Ta "cube root" Ta 1
 .It ceil Ta floor(3) Ta "integer no less than" Ta 0
@@ -69,14 +69,12 @@ Declarations for these functions may be obtained from the include file
 .It erfc Ta erf(3) Ta "complementary error function" Ta ???
 .It exp Ta exp(3) Ta "exponential" Ta 1
 .It expm1 Ta exp(3) Ta "exp(x)-1" Ta 1
-.It fabs Ta floor(3) Ta "absolute value" Ta 0
+.It fabs Ta fabs(3) Ta "absolute value" Ta 0
 .It floor Ta floor(3) Ta "integer no greater than" Ta 0
 .It hypot Ta hypot(3) Ta "Euclidean distance" Ta 1
 .It ilogb Ta ieee(3) Ta "exponent extraction" Ta 0
 .It isinf Ta isinf(3) Ta "check exceptions"
 .It isnan Ta isnan(3) Ta "check exceptions"
-.It isinff Ta isinff(3) Ta "check exceptions"
-.It isnanf Ta isnanf(3) Ta "check exceptions"
 .It j0 Ta j0(3) Ta "bessel function" Ta ???
 .It j1 Ta j0(3) Ta "bessel function" Ta ???
 .It jn Ta j0(3) Ta "bessel function" Ta ???
@@ -86,13 +84,13 @@ Declarations for these functions may be obtained from the include file
 .It log1p Ta exp(3) Ta "log(1+x)" Ta 1
 .It pow Ta exp(3) Ta "exponential x**y" Ta 60-500
 .It remainder Ta ieee(3) Ta "remainder" Ta 0
-.It rint Ta floor(3) Ta "round to nearest integer" Ta 0
+.It rint Ta rint(3) Ta "round to nearest integer" Ta 0
 .It scalbn Ta ieee(3) Ta "exponent adjustment" Ta 0
 .It sin Ta sin(3) Ta "trigonometric function" Ta 1
 .It sinh Ta sinh(3) Ta "hyperbolic function" Ta 3
 .It sqrt Ta sqrt(3) Ta "square root" Ta 1
-.It tan Ta sin(3) Ta "trigonometric function" Ta 3
-.It tanh Ta sinh(3) Ta "hyperbolic function" Ta 3
+.It tan Ta tan(3) Ta "trigonometric function" Ta 3
+.It tanh Ta tanh(3) Ta "hyperbolic function" Ta 3
 .It y0 Ta j0(3) Ta "bessel function" Ta ???
 .It y1 Ta j0(3) Ta "bessel function" Ta ???
 .It yn Ta j0(3) Ta "bessel function" Ta ???
