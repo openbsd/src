@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.61 2002/04/24 18:10:25 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.62 2002/05/19 21:08:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -176,7 +176,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-dehnqrvz] [-F modifier] ", __progname);
-	fprintf(stderr, "[-N file] [-O level] [-R file] [-k host] ");
+	fprintf(stderr, "[-N file] [-O level] [-R file] [-k host]\n");
+	fprintf(stderr, "             ");
 	fprintf(stderr, "[-l interface] [-m modifier] [-s modifier] ");
 	fprintf(stderr, "[-t modifier] [-x level]\n");
 
