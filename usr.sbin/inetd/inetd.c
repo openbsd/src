@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.96 2002/05/31 23:48:41 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.97 2002/06/01 01:57:44 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.96 2002/05/31 23:48:41 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.97 2002/06/01 01:57:44 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -294,6 +294,16 @@ void	dodie(void);
 void	logpid(void);
 void	spawn(struct servtab *, int);
 int	gettcp(struct servtab *);
+int	setconfig(void);
+void	endconfig(void);
+void	register_rpc(struct servtab *);
+void	unregister_rpc(struct servtab *);
+void	freeconfig(struct servtab *);
+void	print_service(char *, struct servtab *);
+void	setup(struct servtab *);
+struct servtab *getconfigent(void);
+struct servtab *enter(struct servtab *);
+int	matchconf(struct servtab *, struct servtab *);
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
@@ -426,17 +436,6 @@ main(argc, argv)
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGPIPE, &sa, &sapipe);
 
-	{
-		/* space for daemons to overwrite environment for ps */
-#define	DUMMYSIZE	100
-		char dummy[DUMMYSIZE];
-
-		(void)memset(dummy, 'x', DUMMYSIZE - 1);
-		dummy[DUMMYSIZE - 1] = '\0';
-
-		(void)setenv("inetd_dummy", dummy, 1);
-	}
-
 	for (;;) {
 		int n, ctrl = -1;
 
@@ -539,8 +538,7 @@ gettcp(sep)
 		    sbuf, sizeof(sbuf), NI_NUMERICSERV) == 0 &&
 		    atoi(sbuf) == 20) {
 			/*
-			 * ignore things that
-			 * look like ftp bounce
+			 * ignore things that look like ftp bounce
 			 */
 			close(ctrl);
 			return -1;
@@ -645,18 +643,6 @@ doreap(void)
 			}
 	}
 }
-
-int setconfig(void);
-void endconfig(void);
-
-void register_rpc(struct servtab *);
-void unregister_rpc(struct servtab *);
-void freeconfig(struct servtab *);
-void print_service(char *, struct servtab *);
-void setup(struct servtab *);
-struct servtab *getconfigent(void);
-struct servtab *enter(struct servtab *);
-int matchconf(struct servtab *, struct servtab *);
 
 void
 config(int sig)
@@ -1822,10 +1808,9 @@ machtime()
 {
 	struct timeval tv;
 
-	if (gettimeofday(&tv, NULL) < 0) {
-		fprintf(stderr, "Unable to get time of day\n");
+	if (gettimeofday(&tv, NULL) < 0)
 		return (0L);
-	}
+
 	return (htonl((u_int)tv.tv_sec + 2208988800UL));
 }
 
