@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.22 1995/02/23 19:14:46 chopps Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.23 1996/01/28 19:19:12 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -901,11 +901,35 @@ rt_getvmode (gp, vm)
   vm->disp_width   = md->MW;
   vm->disp_height  = md->MH;
   vm->depth        = md->DEP;
-  vm->hblank_start = md->HBS;
-  vm->hblank_stop  = md->HBE;
-  vm->hsync_start  = md->HSS;
-  vm->hsync_stop   = md->HSE;
-  vm->htotal       = md->HT;
+
+  /*
+   * From observation of the monitor definition table above, I guess that
+   * the horizontal timings are in units of longwords. Hence, I get the
+   * pixels by multiplication with 32 and division by the depth.
+   * The text modes, apparently marked by depth == 4, are even more wierd.
+   * According to a comment above, they are computed from a depth==8 mode
+   * (thats for us: * 32 / 8) by applying another factor of 4 / font width.
+   * Reverse applying the latter formula most of the constants cancel
+   * themselves and we are left with a nice (* font width).
+   * That is, internal timings are in units of longwords for graphics  
+   * modes, or in units of characters widths for text modes.
+   * We better don't WRITE modes until this has been real live checked.
+   * 			- Ignatios Souvatzis
+   */
+
+  if (md->DEP == 4) {
+	vm->hblank_start = md->HBS * 32 / md->DEP;
+	vm->hblank_stop  = md->HBE * 32 / md->DEP;
+	vm->hsync_start  = md->HSS * 32 / md->DEP;
+	vm->hsync_stop   = md->HSE * 32 / md->DEP;
+	vm->htotal       = md->HT * 32 / md->DEP;
+  } else {
+	vm->hblank_start = md->HBS * md->FX;
+	vm->hblank_stop  = md->HBE * md->FX;
+	vm->hsync_start  = md->HSS * md->FX;
+	vm->hsync_stop   = md->HSE * md->FX;
+	vm->htotal       = md->HT * md->FX;
+  }
   vm->vblank_start = md->VBS;
   vm->vblank_stop  = md->VBE;
   vm->vsync_start  = md->VSS;
