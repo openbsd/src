@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
+.\"     $OpenBSD: vget.9,v 1.7 2004/08/03 14:09:25 pedro Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -73,6 +73,13 @@ The vnode
 .Fa vp
 is in the process of being cleaned out from the underlying
 file system.
+.It Bq Er EBUSY
+The vnode
+.Fa vp
+is in the process of being cleaned out from the underlying file system, and
+it wasn't possible to sleep on it because the
+.Dv LK_NOWAIT
+flag was specified.
 .El
 .Sh SEE ALSO
 .Xr vnode 9 ,
