@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.20 1999/06/07 01:38:44 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.21 1999/06/07 01:40:01 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -324,7 +324,8 @@ sys_socketpair(p, v, retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof (int));
-	return (error);
+	if (error == 0)
+		return (error);
 free4:
 	ffree(fp2);
 	fdp->fd_ofiles[sv[1]] = NULL;
