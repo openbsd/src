@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ises.4,v 1.1 2001/01/29 08:47:28 ho Exp $
+.\"	$OpenBSD: ises.4,v 1.2 2001/05/17 02:17:11 brad Exp $
 .\"
 .\" Copyright (c) 2000 Håkan Olsson (ho@crt.se)
 .\" All rights reserved.
@@ -44,17 +44,18 @@ The
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
 SHA1-HMAC96 and RMD160-HMAC96 operations in
 .Xr ipsec 4 ,
-as well as provide strong random data for the system entropy pool.
+as well as provide strong random data to the
+.Xr random 4
+subsystem.
 .Sh BUGS
 The cryptographic functions are not yet supported.
 Also not yet supported are the chip's two LNAUs (Large Number Arithmetic
 Units), which would be useful in OpenSSL applications.
 .Sh SEE ALSO
-.Xr crypto 9 ,
 .Xr crypt 3 ,
 .Xr ipsec 4 ,
-.Xr random 9 ,
-.Xr openssl 1
+.Xr random 4
+.Xr crypto 9 ,
 .Sh HISTORY
 The
 .Nm
