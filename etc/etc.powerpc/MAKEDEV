@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.39 2001/02/13 14:21:33 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 2001/03/03 06:09:25 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -574,6 +574,14 @@ wscons)
 	sh $this ttyCcfg
 	sh $this wsmux
 	;;
+wsmux|wsmouse|wskbd)
+	rm -f wsmouse wskbd
+	mknod wsmouse c 70 0
+	mknod wskbd c 70 1
+	chown root.wheel wsmouse wskbd
+	chmod 600 wsmouse wskbd
+	;;
+
 wskbd*)
 	unit=${i##*[a-z]}
 	rm -f wskbd${unit} 
@@ -589,14 +597,6 @@ wsmouse*)
 	# XXX
 	chmod 660 wsmouse${unit}
 	chown root.wheel wsmouse${unit}
-	;;
-
-wsmux|wsmouse|wskbd)
-	rm -f wsmouse wskbd
-	mknod wsmouse c 69 0
-	mknod wskbd c 69 1
-	chown root.wheel wsmouse wskbd
-	chmod 600 wsmouse wskbd
 	;;
 
 xfs*)
