@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.27 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.28 2001/08/18 02:24:02 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -186,6 +186,7 @@ struct scsi_link {
 #define	ADEV_NOTUR		0x1000
 #define	ADEV_NODOORLOCK		0x2000
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
+	u_int8_t inquiry_flags2;	/* copy of flags2 from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */

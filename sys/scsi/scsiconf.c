@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.58 2001/06/24 21:29:04 mickey Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.59 2001/08/18 02:24:02 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -517,6 +517,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEAC", "FC-1",                 ""},     SDEV_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "NEC ", "SD120S-200      ",	 "0001"}, SDEV_NOLUNS},
+        {{T_DIRECT, T_FIXED,
+         "MICROP", "4421-07   0329SJ",   ""},     SDEV_NOTAGS},
+        {{T_DIRECT, T_FIXED,
+         "SEAGATE", "ST150176LW",        "0002"}, SDEV_NOTAGS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
@@ -746,6 +750,7 @@ scsi_probedev(scsi, target, lun)
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
 	sc_link->inquiry_flags = 0;
+	sc_link->inquiry_flags2 = 0;
 
 	/*
 	 * Ask the device what it is
@@ -821,6 +826,7 @@ scsi_probedev(scsi, target, lun)
 	 * Save INQUIRY "flags" (SID_Linked, etc.) for low-level drivers.
 	 */
 	sc_link->inquiry_flags = inqbuf.flags;
+	sc_link->inquiry_flags2 = inqbuf.flags2;
 
 	/*
 	 * note what BASIC type of device it is

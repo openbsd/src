@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.9 2001/08/06 14:29:59 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.10 2001/08/18 02:24:02 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -131,7 +131,8 @@ siop_setuptables(siop_cmd)
 	struct scsi_xfer *xs = siop_cmd->xs;
 	int target = xs->sc_link->target;
 	int lun = xs->sc_link->lun;
-	int targ_flags = sc->targets[target]->flags;
+	int *targ_flags = &sc->targets[target]->flags;
+	int quirks;
 
 	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
 	memset(siop_cmd->siop_tables.msg_out, 0, 8);
@@ -141,16 +142,32 @@ siop_setuptables(siop_cmd)
 		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 0);
 	siop_cmd->siop_tables.t_msgout.count= htole32(1);
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (targ_flags & TARF_PPR) {
+		*targ_flags = 0;
+		quirks = xs->sc_link->quirks;
+
+		if ((quirks & SDEV_NOTAGS) == 0) {
+			*targ_flags |= TARF_TAG;
+			xs->sc_link->openings += SIOP_NTAG - SIOP_OPENINGS;
+		}
+		if ((quirks & SDEV_NOWIDE) == 0)
+			*targ_flags |= TARF_WIDE;
+		if ((quirks & SDEV_NOSYNC) == 0)
+			*targ_flags |= TARF_SYNC;
+
+		if (*targ_flags & (TARF_WIDE | TARF_SYNC))
+			siop_add_dev(sc, target, lun);
+
+		if ((sc->features & SF_CHIP_C10)
+		    && (*targ_flags & TARF_WIDE)
+		    && (xs->sc_link->inquiry_flags2 & (SID_CLOCKING | SID_QAS | SID_IUS))) {
 			sc->targets[target]->status = TARST_PPR_NEG;
-			if (sc->min_dt_sync != 0)
-				siop_ppr_msg(siop_cmd, 1, sc->min_dt_sync, sc->maxoff);
-			else
-				siop_ppr_msg(siop_cmd, 1, sc->min_st_sync, sc->maxoff);
-		} else if (targ_flags & TARF_WIDE) {
+			siop_ppr_msg(siop_cmd, 1, 
+				     (sc->min_dt_sync == 0) ? sc->min_st_sync : sc->min_dt_sync,
+				     sc->maxoff);
+		} else if (*targ_flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
 			siop_wdtr_msg(siop_cmd, 1, MSG_EXT_WDTR_BUS_16_BIT);
-		} else if (targ_flags & TARF_SYNC) {
+		} else if (*targ_flags & TARF_SYNC) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
 			siop_sdtr_msg(siop_cmd, 1, sc->min_st_sync, sc->maxoff);
 		} else {
@@ -158,7 +175,7 @@ siop_setuptables(siop_cmd)
 			siop_print_info(sc, target);
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
-	    (targ_flags & TARF_TAG) &&
+	    (*targ_flags & TARF_TAG) &&
 	    siop_cmd->status != CMDST_SENSE) {
 		siop_cmd->flags |= CMDFL_TAG;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.11 2001/07/04 22:55:03 espie Exp $ */
+/*	$OpenBSD: siop.c,v 1.12 2001/08/18 02:24:02 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -212,6 +212,11 @@ siop_attach(sc)
 	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script);
 #endif
 
+	/*
+	 * sc->sc_link is the template for all device sc_link's
+	 * for devices attached to this adapter. It is passed to
+	 * the upper layers in config_found().
+	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = SIOP_OPENINGS;
 	sc->sc_link.adapter_buswidth =
@@ -225,6 +230,9 @@ siop_attach(sc)
 	sc->sc_link.adapter = &siop_adapter;
 	sc->sc_link.device = &siop_dev;
 	sc->sc_link.flags  = 0;
+	sc->sc_link.quirks = 0;
+	if ((sc->features & SF_BUS_WIDE) == 0)
+	  sc->sc_link.quirks |= SDEV_NOWIDE;
 
 	for (i = 0; i < 16; i++)
 		sc->targets[i] = NULL;
@@ -1189,7 +1197,7 @@ siop_handle_reset(sc)
 			}
 		}
 		sc->targets[target]->status = TARST_ASYNC;
-		sc->targets[target]->flags &= ~(TARF_ISWIDE | TARF_ISDT | TARF_ISQAS | TARF_ISIUS);
+		sc->targets[target]->flags  = 0;
 	}
 	/* Next commands from the urgent list */
 	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
@@ -1237,7 +1245,6 @@ int
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
-	struct scsi_inquiry_data *inqdata;
 	struct siop_softc *sc = (struct siop_softc *)xs->sc_link->adapter_softc;
 	struct siop_cmd *siop_cmd;
 	int s, error, i;
@@ -1365,32 +1372,9 @@ siop_scsicmd(xs)
 			siop_intr(sc);
 			if (xs->flags & ITSDONE) {
 				if ((xs->cmd->opcode == INQUIRY)
-				    && (xs->sc_link->lun == 0)
-				    && (xs->error == XS_NOERROR)) {
-					inqdata = (struct scsi_inquiry_data *)xs->data;
-
-					if (inqdata->flags & SID_CmdQue) {
-						sc->targets[target]->flags |= TARF_TAG;
-						xs->sc_link->openings += SIOP_NTAG - SIOP_OPENINGS;
-					}
-
-					if ((inqdata->flags & SID_WBus16) && (sc->features & SF_BUS_WIDE))
-						sc->targets[target]->flags |= TARF_WIDE;
-					if (inqdata->flags & SID_Sync)
-						sc->targets[target]->flags |= TARF_SYNC;
-
-					if ((sc->features & SF_CHIP_C10)
-					    && (sc->targets[target]->flags & TARF_WIDE)
-					    && (inqdata->flags2 & (SID_CLOCKING | SID_QAS | SID_IUS)))
-						sc->targets[target]->flags |= TARF_PPR;
-
+				    && (xs->error == XS_NOERROR)
+				    && (sc->targets[target]->status == TARST_PROBING))
 					sc->targets[target]->status = TARST_ASYNC;
-					
-					if (sc->targets[target]->flags
-					    & (TARF_WIDE | TARF_SYNC | TARF_PPR)) {
-						siop_add_dev(sc, target, lun);
-					}
-				}
 				break;
 			}
 			delay(1000);
