@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.51 2004/09/23 18:00:58 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.52 2004/09/27 21:12:40 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -22,7 +22,7 @@ file	arch/sparc64/dev/central.c		central
 
 define fhc {}
 device fhc
-file	arch/sparc64/dev/fhc.c			fhc
+file	arch/sparc64/dev/fhc.c			fhc needs-flag
 
 attach fhc at central with fhc_central
 file	arch/sparc64/dev/fhc_central.c		fhc_central

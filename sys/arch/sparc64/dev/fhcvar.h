@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcvar.h,v 1.5 2004/09/27 19:23:07 jason Exp $	*/
+/*	$OpenBSD: fhcvar.h,v 1.6 2004/09/27 21:12:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -50,6 +50,7 @@ struct fhc_softc {
 	bus_space_tag_t sc_cbt;
 	int sc_nrange;
 	struct fhc_range *sc_range;
+	struct timeout sc_to;
 	bus_space_handle_t sc_preg;	/* internal regs */
 	bus_space_handle_t sc_ireg;	/* ign regs */
 	bus_space_handle_t sc_freg;	/* fanfail regs */
@@ -73,3 +74,5 @@ struct fhc_attach_args {
 
 #define	fhc_bus_map(t, slot, offset, sz, flags, hp)		\
     bus_space_map(t, BUS_ADDR(slot, offset), sz, flags, hp)
+
+void fhc_led_blink(void *);
