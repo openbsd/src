@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.45 2002/05/15 02:29:01 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.46 2002/05/15 03:16:55 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -645,7 +645,7 @@ maninstall:
 .endif
 
 # XXX .PATH order is critical because of non-unique filenames
-.PATH: ${.CURDIR}/openssl/doc/crypto ${.CURDIR}/openssl/doc/ssl ${.CURDIR}/openssl/doc/apps
+.PATH: ${.CURDIR}/src/doc/crypto ${.CURDIR}/src/doc/ssl ${.CURDIR}/src/doc/apps
 .SUFFIXES: .pod
 .pod.cat3:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
