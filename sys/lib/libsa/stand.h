@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.24 1997/05/30 23:06:28 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.25 1997/05/30 23:09:10 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ char	*ttyname __P((int)); /* match userland decl, but ignore !0 */
 void	putc __P((int));    
 int	getc __P((void));
 int	ischar __P((void));
-void	sleep __P((u_int));
+u_int	sleep __P((u_int));
 void	usleep __P((u_int));
 
 void	putchar __P((int));    
