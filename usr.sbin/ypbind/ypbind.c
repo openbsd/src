@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.26 1997/06/11 23:16:33 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.27 1997/06/12 19:55:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.26 1997/06/11 23:16:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.27 1997/06/12 19:55:41 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -79,6 +79,7 @@ struct _dom_binding {
 	int dom_socket;
 	CLIENT *dom_client;
 	long dom_vers;
+	time_t dom_first_t;
 	time_t dom_check_t;
 	time_t dom_ask_t;
 	int dom_lockfd;
@@ -165,8 +166,21 @@ ypbindproc_domain_2x(transp, argp, clnt)
 
 	for (ypdb = ypbindlist; ypdb && count < 100; ypdb = ypdb->dom_pnext)
 		count++;
-	if (count >= 100)
-		return NULL;	/* prevent DOS: sorry, you lose */
+	if (count >= 100) {
+		struct _dom_binding *ypdbo = NULL;
+		
+		/* OK, find an old inactive domain, and kill it */
+		for (ypdb = ypbindlist; ypdb; ypdbo = ypdb, ypdb = ypdb->dom_pnext)
+			if (ypdb->dom_alive == 0 && 
+			    ypdb->dom_first_t + 120 < time(NULL)) {
+				if (ypdb == ypbindlist)
+					ypbindlist = ypdb->dom_pnext;
+				else
+					ypdbo->dom_pnext = ypdb->dom_pnext;
+				free(ypdb);
+				break;
+			}
+	}
 
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
 		if (!strcmp(ypdb->dom_domain, *argp))
