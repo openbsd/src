@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.418 2001/07/20 11:28:56 peter Exp $
+	$OpenBSD: pcidevs,v 1.419 2001/07/21 17:47:33 nate Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -523,6 +523,7 @@ vendor SIIG		0x131f	SIIG
 vendor KAWASAKI		0x136b	Kawasaki
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
+vendor LEVEL1		0x1394	Level 1
 vendor HIFN		0x13a3	Hifn
 vendor TRIWARE		0x13c1	3ware
 vendor SUNDANCE		0x13f0	Sundance
@@ -1326,6 +1327,9 @@ product LAVA OCTOPUS950_1	0x0181	Quad Serial
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
+
+/* Level 1 (Intel) */
+product LEVEL1 LXT1001		0x0001	LXT1001 Gigabit MAC
 
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
