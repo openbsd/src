@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.3 2002/01/04 05:42:30 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.4 2002/01/04 08:22:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -55,6 +55,31 @@
 #define	CGTHREE_VID_OFFSET	0x800000
 #define	CGTHREE_VID_SIZE	(1024 * 1024)
 
+union bt_cmap {
+	u_int8_t cm_map[256][3];	/* 256 r/b/g entries */
+	u_int32_t cm_chip[256 * 3 / 4];	/* the way the chip is loaded */
+};
+
+#define	BT_ADDR		0x00		/* map address register */
+#define	BT_CMAP		0x04		/* colormap data register */
+#define	BT_CTRL		0x08		/* control register */
+#define	BT_OMAP		0x0c		/* overlay (cursor) map register */
+
+#define	BT_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
+#define	BT_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg))
+
+#define	BT_INIT(sc) do {					\
+	BT_WRITE((sc), BT_ADDR, 0x06);	/* command reg */	\
+	BT_WRITE((sc), BT_CTRL, 0x73);	/* overlay plane */	\
+	BT_WRITE((sc), BT_ADDR, 0x04);  /* read mask */		\
+	BT_WRITE((sc), BT_CTRL, 0xff);	/* color planes */	\
+} while (0)
+
+#define	BT_D4M3(x)	((((x) >> 2) << 1) + ((x) >> 2)) /* (x / 4) * 3 */
+#define	BT_D4M4(x)	((x) & ~3)			 /* (x / 4) * 4 */
+
 struct cgthree_softc {
 	struct device sc_dev;
 	struct sbusdev sc_sd;
@@ -67,6 +92,7 @@ struct cgthree_softc {
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	struct rcons sc_rcons;
 	struct raster sc_raster;
+	union bt_cmap sc_cmap;
 };
 
 struct wsdisplay_emulops cgthree_emulops = {
@@ -105,6 +131,11 @@ int cgthree_show_screen __P((void *, void *, int,
     void (*cb) __P((void *, int, int)), void *));
 paddr_t cgthree_mmap __P((void *, off_t, int));
 int cgthree_is_console __P((int));
+void cgthree_loadcmap __P((struct cgthree_softc *, u_int, u_int));
+int cg3_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
+int cg3_bt_getcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
+void cgthree_setcolor __P((struct cgthree_softc *, u_int,
+    u_int8_t, u_int8_t, u_int8_t));
 
 static int a2int __P((char *, int));
 
@@ -147,7 +178,7 @@ cgthreeattach(parent, self, aux)
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbus_attach_args *sa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	int console;
+	int console, i;
 	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -160,7 +191,7 @@ cgthreeattach(parent, self, aux)
 	}
 
 	/*
-	 * Map just BT, FHC, THC, and video RAM.
+	 * Map just CTRL and video RAM.
 	 */
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGTHREE_CTRL_OFFSET,
@@ -198,6 +229,11 @@ cgthreeattach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
+	BT_WRITE(sc, BT_ADDR, 0);
+	for (i = 0; i < 256 * 3 / 4; i++)
+		sc->sc_cmap.cm_chip[i] = BT_READ(sc, BT_CMAP);
+	BT_INIT(sc);
+
 	sc->sc_rcons.rc_sp = &sc->sc_raster;
 	sc->sc_raster.width = sc->sc_width;
 	sc->sc_raster.height = sc->sc_height;
@@ -227,9 +263,20 @@ cgthreeattach(parent, self, aux)
 
 	printf("\n");
 
-	if (console)
+	if (console) {
+		cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+		cgthree_setcolor(sc, 255, 255, 255, 255);
+		cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
+		cgthree_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
+		cgthree_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
+		cgthree_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
+		cgthree_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
+		cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
+		cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+
 		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rcons,
 		    *sc->sc_rcons.rc_ccolp, *sc->sc_rcons.rc_crowp, defattr);
+	}
 
 	waa.console = console;
 	waa.scrdata = &cgthree_screenlist;
@@ -255,6 +302,8 @@ cgthree_ioctl(v, cmd, data, flags, p)
 {
 	struct cgthree_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_cmap *cm;
+	int error;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -271,12 +320,20 @@ cgthree_ioctl(v, cmd, data, flags, p)
 		*(u_int *)data = sc->sc_linebytes;
 		break;
 
-#if 0
 	case WSDISPLAYIO_GETCMAP:
-		return vgafb_getcmap(vc, (struct wsdisplay_cmap *)data);
+		cm = (struct wsdisplay_cmap *)data;
+		error = cg3_bt_getcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
+		break;
+
 	case WSDISPLAYIO_PUTCMAP:
-		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
-#endif
+		cm = (struct wsdisplay_cmap *)data;
+		error = cg3_bt_putcmap(&sc->sc_cmap, cm);
+		if (error)
+			return (error);
+		cgthree_loadcmap(sc, cm->index, cm->count);
+		break;
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
@@ -387,4 +444,84 @@ cgthree_is_console(node)
 	extern int fbnode;
 
 	return (fbnode == node);
+}
+
+void
+cgthree_setcolor(sc, index, r, g, b)
+	struct cgthree_softc *sc;
+	u_int index;
+	u_int8_t r, g, b;
+{
+	union bt_cmap *bcm = &sc->sc_cmap;
+
+	bcm->cm_map[index][0] = r;
+	bcm->cm_map[index][1] = g;
+	bcm->cm_map[index][2] = b;
+	cgthree_loadcmap(sc, index, 1);
+}
+
+void
+cgthree_loadcmap(sc, start, ncolors)
+	struct cgthree_softc *sc;
+	u_int start, ncolors;
+{
+	u_int cstart;
+	int count;
+
+	cstart = BT_D4M3(start);
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+	BT_WRITE(sc, BT_ADDR, BT_D4M4(start));
+	while (--count >= 0) {
+		BT_WRITE(sc, BT_CMAP, sc->sc_cmap.cm_chip[cstart]);
+		cstart++;
+	}
+}
+
+int
+cg3_bt_getcmap(bcm, rcm)
+	union bt_cmap *bcm;
+	struct wsdisplay_cmap *rcm;
+{
+	u_int index = rcm->index, count = rcm->count, i;
+	int error;
+
+	if (index >= 256 || index + count > 256)
+		return (EINVAL);
+	for (i = 0; i < count; i++) {
+		if ((error = copyout(&bcm->cm_map[index + i][0],
+		    &rcm->red[i], 1)) != 0)
+			return (error);
+		if ((error = copyout(&bcm->cm_map[index + i][1],
+		    &rcm->green[i], 1)) != 0)
+			return (error);
+		if ((error = copyout(&bcm->cm_map[index + i][2],
+		    &rcm->blue[i], 1)) != 0)
+			return (error);
+	}
+	return (0);
+}
+
+int
+cg3_bt_putcmap(bcm, rcm)
+	union bt_cmap *bcm;
+	struct wsdisplay_cmap *rcm;
+{
+	u_int index = rcm->index, count = rcm->count, i;
+	int error;
+
+	if (index >= 256 || rcm->count > 256 ||
+	    (rcm->index + rcm->count) > 256)
+		return (EINVAL);
+	for (i = 0; i < count; i++) {
+		if ((error = copyin(&rcm->red[i],
+		    &bcm->cm_map[index + i][0], 1)) != 0)
+			return (error);
+		if ((error = copyin(&rcm->green[i],
+		    &bcm->cm_map[index + i][1], 1)) != 0)
+			return (error);
+		if ((error = copyin(&rcm->blue[i],
+		    &bcm->cm_map[index + i][2], 1)) != 0)
+			return (error);
+	}
+	return (0);
 }
