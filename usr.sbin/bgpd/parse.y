@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2004/03/08 10:33:34 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.73 2004/03/08 10:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -141,6 +141,7 @@ number		: STRING			{
 
 			if (atoul($1, &ulval) == -1) {
 				yyerror("\"%s\" is not a number", $1);
+				free($1);
 				YYERROR;
 			} else
 				$$ = ulval;
@@ -169,8 +170,10 @@ yesno		:  STRING		{
 				$$ = 1;
 			else if (!strcmp($1, "no"))
 				$$ = 0;
-			else
+			else {
+				free($1);
 				YYERROR;
+			}
 			free($1);
 		}
 		;
@@ -257,8 +260,10 @@ conf_main	: AS asnumber		{
 			TAILQ_INSERT_TAIL(netconf, n, network_l);
 		}
 		| DUMP TABLE STRING optnumber		{
-			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1)
+			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1) {
+				free($3);
 				YYERROR;
+			}
 			free($3);
 		}
 		| mrtdump
@@ -273,10 +278,15 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 				action = $3 ? MRT_UPDATE_IN : MRT_UPDATE_OUT;
 			else {
 				yyerror("unknown mrt msg dump type");
+				free($2);
+				free($4);
 				YYERROR;
 			}
-			if (add_mrtconfig(action, $4, $5, curpeer) == -1)
+			if (add_mrtconfig(action, $4, $5, curpeer) == -1) {
+				free($2);
+				free($4);
 				YYERROR;
+			}
 			free($2);
 			free($4);
 		}
@@ -292,8 +302,10 @@ address		: STRING		{
 			if (!host($1, &$$, &len)) {
 				yyerror("could not parse address spec \"%s\"",
 				     $1);
+				free($1);
 				YYERROR;
 			}
+			free($1);
 
 			if (($$.af == AF_INET && len != 32) ||
 			    ($$.af == AF_INET6 && len != 128)) {
@@ -302,7 +314,6 @@ address		: STRING		{
 				    len, $$.af == AF_INET ? 32 : 128);
 				YYERROR;
 			}
-			free($1);
 		}
 		;
 
@@ -313,14 +324,14 @@ prefix		: STRING '/' number	{
 				fatal(NULL);
 
 			if (!host(s, &$$.prefix, &$$.len)) {
-				free(s);
 				yyerror("could not parse address \"%s/%u\"",
 				     $1, $3);
+				free(s);
+				free($1);
 				YYERROR;
 			}
-
-			free(s);
 			free($1);
+			free(s);
 		}
 		;
 
@@ -362,13 +373,14 @@ group		: GROUP string optnl '{' optnl {
 			    sizeof(curgroup->conf.group)) {
 				yyerror("group name \"%s\" too long: max %u",
 				    $2, sizeof(curgroup->conf.group) - 1);
+				free($2);
 				YYERROR;
 			}
+			free($2);
 			if (get_id(curgroup)) {
 				yyerror("get_id failed");
 				YYERROR;
 			}
-			free($2);
 		}
 		    groupopts_l '}' {
 			free(curgroup);
@@ -402,6 +414,7 @@ peeropts	: REMOTEAS asnumber	{
 			    sizeof(curpeer->conf.descr)) {
 				yyerror("descr \"%s\" too long: max %u",
 				    $2, sizeof(curpeer->conf.descr) - 1);
+				free($2);
 				YYERROR;
 			}
 			free($2);
@@ -444,7 +457,7 @@ peeropts	: REMOTEAS asnumber	{
 			else if (!strcmp($2, "all"))
 				curpeer->conf.announce_type = ANNOUNCE_ALL;
 			else {
-				yyerror("unknown announcement type");
+				free($2);
 				YYERROR;
 			}
 			free($2);
@@ -464,6 +477,7 @@ peeropts	: REMOTEAS asnumber	{
 			    sizeof(curpeer->conf.tcp_md5_key)) {
 				yyerror("tcp md5sig password too long: max %u",
 				    sizeof(curpeer->conf.tcp_md5_key) - 1);
+				free($4);
 				YYERROR;
 			}
 			free($4);
@@ -475,11 +489,13 @@ peeropts	: REMOTEAS asnumber	{
 			if (strlen($4) / 2 >=
 			    sizeof(curpeer->conf.tcp_md5_key)) {
 				yyerror("key too long");
+				free($4);
 				YYERROR;
 			}
 
 			if (strlen($4) % 2) {
 				yyerror("key must be of even length");
+				free($4);
 				YYERROR;
 			}
 
@@ -489,6 +505,7 @@ peeropts	: REMOTEAS asnumber	{
 				s[2] = 0;
 				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
 					yyerror("key must be specified in hex");
+					free($4);
 					YYERROR;
 				}
 				curpeer->conf.tcp_md5_key[i] =
