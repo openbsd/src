@@ -247,6 +247,7 @@ product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 
 /* Netgear */
 product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
+product NETGEAR FA411		0x0411 Netgear FA411
 
 /* Nokia */
 product NOKIA C020_WLAN		0x20c0 Nokia C020
