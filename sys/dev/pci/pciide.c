@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.22 2000/04/10 07:06:17 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.23 2000/05/04 19:42:53 millert Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -446,6 +446,14 @@ pciide_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct pciide_product_desc *pp;
+
+	/*
+ 	 * Some IDE controllers have severe bugs when used in PCI mode.
+	 * We punt and attach them to the ISA bus instead.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_PCTECH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_PCTECH_RZ1000)
+		return (0);
 
 	/*
 	 * Check the ID register to see that it's a PCI IDE controller.
