@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2005/03/29 19:34:07 kettenis Exp $	*/
 /*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
@@ -136,6 +136,8 @@ struct pcb {
 	char	pcb_pil;	/* %pil when switch() was called -- prolly not needed */
 
 	const char *lastcall;	/* DEBUG -- name of last system call */
+	u_int64_t	pcb_wcookie;
+
 	/* the following MUST be aligned on a 64-bit boundary */
 	struct	rwindow64 pcb_rw[PCB_MAXWIN];	/* saved windows */
 };
@@ -149,6 +151,7 @@ struct pcb {
 struct md_coredump {
 	struct	trapframe64 md_tf;
 	struct	fpstate64 md_fpstate;
+	u_int64_t md_wcookie;
 };
 
 #ifdef _KERNEL

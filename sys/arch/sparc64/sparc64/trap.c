@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2004/12/06 20:12:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.34 2005/03/29 19:34:07 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -758,9 +758,12 @@ rwindow_save(p)
 	 while (i > 0) {
 		rwdest = rw[i--].rw_in[6];
 		if (rwdest & 1) {
+			struct rwindow64 rwstack = rw[i];
+
 			rwdest += BIAS;
-			if (copyout((caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
-			    sizeof(*rw))) {
+			rwstack.rw_in[7] ^= p->p_addr->u_pcb.pcb_wcookie;
+			if (copyout((caddr_t)&rwstack, (caddr_t)(u_long)rwdest,
+			    sizeof(rwstack))) {
 				return (-1);
 			}
 		} else {

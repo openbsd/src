@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2004/12/01 14:31:25 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2005/03/29 19:34:07 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -189,6 +189,7 @@ member	pcb_cwp
 member	pcb_pil
 member	pcb_rw
 member	pcb_sp
+member	pcb_wcookie
 member	pcb_pc
 member	PCB_LASTCALL	lastcall
 define	PCB_SIZE	sizeof(struct pcb)
