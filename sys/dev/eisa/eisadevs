@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.18 2003/03/29 00:15:40 mickey Exp $
+$OpenBSD: eisadevs,v 1.19 2004/03/31 20:06:53 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -599,6 +599,7 @@ product HWP 1440	Terminal Multiplexor Board (D2040A)
 product HWP 1450	HP-IB Interface board (82335A)
 product HWP 1460	ScanJet Plus Interface (88290A)
 product HWP 1461	ScanJet Plus Interface (88290A)
+product HWP 1510	SS8-E MUX
 product HWP 1801	StarLAN 10 PC Link II (27240A)
 product HWP 1810	ThinLAN Interface Board (27210B)
 product HWP 1811	ThinLAN PC Adapter Card (27250A)
@@ -606,12 +607,14 @@ product HWP 1820	EtherTwist Adapter Card/8 (27245-60002)
 product HWP 1832	EtherTwist PC LAN Adapter/16 TP Plus (27247B)
 product HWP 1840	EtherTwist EISA LAN Adapter/32
 product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 1870	PSI
 product HWP 18A0	EtherTwist PC LAN Adapter/16 TL Plus (27252A)
 product HWP 18C0	EtherTwist PC LAN Adapter NC/16 TP (J2405A)
 product HWP 18E0	100Mbps EISA ATM Card
 product HWP 1940	10/100VG Selectable EISA LAN Adapter (J2577A)
 product HWP 1980	ATM Adapter -- J2802A
-product HWP 1990	Hewlett-Packard EISA 100VG AnyLAN adapter card
+product HWP 1990	100VG AnyLAN adapter card
+product HWP 19A0	Low-cost PSI
 product HWP 1C00	Serial/Parallel Interface Board (24540B)
 product HWP 2002	ScanJet II Interface (C1752A)
 product HWP 2051	EISA Test Adapter Card
