@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.6 1998/08/05 16:33:25 millert Exp $	*/
+/*	$OpenBSD: uio.h,v 1.7 1999/01/20 22:08:59 art Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -54,13 +54,13 @@ enum uio_seg {
 
 #ifdef _KERNEL
 struct uio {
-	struct	iovec *uio_iov;
-	int	uio_iovcnt;
-	off_t	uio_offset;
-	size_t	uio_resid;
-	enum	uio_seg uio_segflg;
-	enum	uio_rw uio_rw;
-	struct	proc *uio_procp;
+	struct	iovec *uio_iov;	/* pointer to array of iovecs */
+	int	uio_iovcnt;	/* number of iovecs in array */
+	off_t	uio_offset;	/* offset into file this uio corresponds to */
+	size_t	uio_resid;	/* residual i/o count */
+	enum	uio_seg uio_segflg; /* see above */
+	enum	uio_rw uio_rw;	/* see above */
+	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
 
 /*
