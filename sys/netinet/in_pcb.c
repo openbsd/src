@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.72 2003/12/21 14:57:19 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.73 2003/12/21 15:12:27 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -562,7 +562,7 @@ in_setpeeraddr(inp, nam)
  *
  * Must be called at splsoftnet.
  */
-void
+int
 in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
@@ -574,6 +574,7 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcb *inp, *oinp;
 	struct in_addr faddr;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+	int nmatch = 0;
 
 	splassert(IPL_SOFTNET);
 
@@ -586,10 +587,10 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 #endif /* INET6 */
 
 	if (dst->sa_family != AF_INET)
-		return;
+		return (0);
 	faddr = satosin(dst)->sin_addr;
 	if (faddr.s_addr == INADDR_ANY)
-		return;
+		return (0);
 
 	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
 	    inp != CIRCLEQ_END(&table->inpt_queue);) {
@@ -609,9 +610,11 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 		}
 		oinp = inp;
 		inp = CIRCLEQ_NEXT(inp, inp_queue);
+		nmatch++;
 		if (notify)
 			(*notify)(oinp, errno);
 	}
+	return (nmatch);
 }
 
 void

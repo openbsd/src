@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.39 2003/12/21 14:57:19 markus Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.40 2003/12/21 15:12:27 markus Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -560,11 +560,11 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	u_int32_t flowinfo;
 
 	if ((unsigned)cmd >= PRC_NCMDS || dst->sa_family != AF_INET6)
-		return 1;
+		return (0);
 
 	sa6_dst = (struct sockaddr_in6 *)dst;
 	if (IN6_IS_ADDR_UNSPECIFIED(&sa6_dst->sin6_addr))
-		return 1;
+		return (0);
 	if (IN6_IS_ADDR_V4MAPPED(&sa6_dst->sin6_addr))
 		printf("Huh?  Thought in6_pcbnotify() never got "
 		       "called with mapped!\n");
@@ -671,7 +671,7 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 		if (notify)
 			(*notify)(inp, errno);
 	}
-	return 0;
+	return (nmatch);
 }
 
 /*
