@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.198 2004/06/21 19:26:01 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.199 2004/06/25 00:42:58 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -47,7 +47,7 @@ struct ip;
 #define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
-enum	{ PF_INOUT, PF_IN, PF_OUT };
+enum	{ PF_FORWARD, PF_IN, PF_OUT };
 enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
@@ -1367,7 +1367,7 @@ void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
 	    struct pf_pdesc *);
 int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *,
-	    struct pf_pdesc *);
+	    struct pf_pdesc *, struct mbuf **);
 int	pf_normalize_tcp(int, struct pfi_kif *, struct mbuf *, int, int, void *,
 	    struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.31 2004/06/24 15:01:32 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.32 2004/06/25 00:42:58 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -429,28 +429,33 @@ ip6_forward(m, srcrt)
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
 #if NPF > 0 
-	if (pf_test6(PF_OUT, rt->rt_ifp, &m, NULL) != PF_PASS) {
+	if (pf_test6(PF_FORWARD, rt->rt_ifp, &m, NULL) != PF_PASS) {
 		m_freem(m);
 		goto senderr;
 	}
 	if (m == NULL)
 		goto senderr;
-
-	ip6 = mtod(m, struct ip6_hdr *);
 #endif 
 
-	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
-	if (error) {
-		in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
-		ip6stat.ip6s_cantforward++;
-	} else {
-		ip6stat.ip6s_forward++;
-		in6_ifstat_inc(rt->rt_ifp, ifs6_out_forward);
-		if (type)
-			ip6stat.ip6s_redirectsent++;
-		else {
-			if (mcopy)
-				goto freecopy;
+#if NPF > 0
+	for (; m; m = m->m_nextpkt)
+#else
+	if (1)
+#endif
+	{
+		error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
+		if (error) {
+			in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
+			ip6stat.ip6s_cantforward++;
+		} else {
+			ip6stat.ip6s_forward++;
+			in6_ifstat_inc(rt->rt_ifp, ifs6_out_forward);
+			if (type)
+				ip6stat.ip6s_redirectsent++;
+			else {
+				if (mcopy)
+					goto freecopy;
+			}
 		}
 	}
 
