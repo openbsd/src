@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.2 1997/05/16 19:17:51 niklas Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.3 1997/05/16 20:59:45 niklas Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ main(argc,argv)
 	}
 
 	if (N_BADMAG(head)) {
-		printf("%s: bad magic number\n");
+		printf("%s: bad magic number\n", file);
 		exit(1);
 	}
 
@@ -121,12 +121,14 @@ main(argc,argv)
 	 */
 	data_off = N_DATOFF(head);
 
+#ifdef BROKEN_NMAGIC
 	/*
 	 * XXX it seems that our ld has a bug when generating NMAGIC files.
 	 * the data segment ends up one page too far into the file.
 	 */
 	if (N_GETMAGIC(head) == NMAGIC)
 		data_off += __LDPGSZ;
+#endif
 
 	data_len = head.a_data;
 	/* align... */
