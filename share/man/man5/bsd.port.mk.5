@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.104 2003/07/12 16:19:50 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.105 2003/07/14 13:48:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -162,6 +162,11 @@ Extract the distfiles under
 Refer to
 .Ev EXTRACT_CASES
 for a complete description.
+Do not use
+.Ev pre-extract
+and
+.Ev do-extract 
+hooks.
 .It Ar fake
 Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
@@ -219,6 +224,13 @@ Verify that the
 hold all shared libraries used for the port.
 See
 .Xr library-specs 7 .
+.It Ar link-categories
+Create symbolic links in other directories that correspond to the port's
+.Ev CATEGORIES .
+Note that this does not affect bulk package building, since those links
+don't appear in the upper-level Makefiles.
+See also
+.Ar unlink-categories .
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
 cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES} minus
@@ -286,10 +298,19 @@ If a port needs special configuration or build options to enable regression
 testing, define a
 .Sq regress
 .Ev FLAVOR .
+.it Ar reinstall
+Force reinstallation of a port, by first cleaning the old installation.
+.It AR repackage
+For rebuilding of the packages of a port, by first removing the old packages.
 .It Ar show
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
+.It Ar unlink-categories
+Remove symbolic links in other directories that correspond to the port's
+.Ev CATEGORIES .
+See also
+.Ar link-categories .
 .It Ar update-patches
 Create or update patches for a port, using
 .Xr diff 1
@@ -1439,14 +1460,6 @@ instead.
 Likewise, use
 .Ev EXTRACT_CASES
 instead.
-.It Ev USE_BZIP2
-The framework will automatically detect the presence of
-.Pa .tar.bz2
-files to extract.
-.It Ev USE_ZIP
-The framework will automatically detect the presence of
-.Pa .zip
-files to extract.
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
@@ -1455,6 +1468,10 @@ instead.
 Use
 .Ev CONFIGURE_STYLE
 instead.
+.It Ev FETCH_BEFORE_ARGS , Ev FETCH_AFTER_ARGS
+Set
+.Ev FETCH_CMD
+to point to a script that does any required special treatment instead.
 .It Ev MASTERDIR
 From
 .Fx .
@@ -1500,6 +1517,8 @@ should always be kept up-to-date.
 .It Ev NO_CONFIGURE
 If ${CONFIGURE_SCRIPT} does not exist, no automatic configuration will
 be done anyway.
+.It Ev NO_DESCRIBE
+All ports should generate a description.
 .It Ev NO_EXTRACT
 Set EXTRACT_ONLY= instead.
 .It Ev NO_INSTALL_MANPAGES
@@ -1517,6 +1536,8 @@ specification.
 Use an explicit
 .Sq @exec
 command if needed.
+.It Ev NO_PACKAGE
+All ports should generate a package, preferably before install.
 .It Ev NO_PATCH
 The absence of a patches directory does the same.
 Use PATCHDIR and PATCH_LIST if patches need to be changed dynamically.
@@ -1603,10 +1624,18 @@ Most package files gets transformed, instead of only the packing list.
 Use
 .Ev CONFIGURE_STYLE
 instead.
+.It Ev USE_BZIP2
+The framework will automatically detect the presence of
+.Pa .tar.bz2
+files to extract.
 .It Ev USE_IMAKE
 Use
 .Ev CONFIGURE_STYLE
 instead.
+.It Ev USE_ZIP
+The framework will automatically detect the presence of
+.Pa .zip
+files to extract.
 .It Ev VARNAME
 Use make show=name instead of make show VARNAME=name.
 .El
