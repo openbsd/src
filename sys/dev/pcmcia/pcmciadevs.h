@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.117 2004/06/04 18:04:38 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.118 2004/09/25 01:58:21 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.114 2004/06/04 18:03:35 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.115 2004/09/25 01:57:08 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -45,6 +45,7 @@
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu */
 #define	PCMCIA_VENDOR_NETGEAR2	0x000b	/* Netgear */
+#define	PCMCIA_VENDOR_SENAO	0x000b	/* Senao */
 #define	PCMCIA_VENDOR_PANASONIC	0x0032	/* Matsushita Electric Industrial Co. */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia */
@@ -444,6 +445,12 @@
 /* Sandisk */
 #define	PCMCIA_CIS_SANDISK_SDCFB	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SANDISK_SDCFB	0x0401
+
+/* Senao */
+#define	PCMCIA_CIS_SENAO_EL2511CD2EM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SENAO_EL2511CD2EM	0x7100
+#define	PCMCIA_CIS_SENAO_EL2511CDM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SENAO_EL2511CDM	0x7110
 
 /* Simple Technology */
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
