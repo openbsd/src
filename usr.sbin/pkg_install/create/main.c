@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:44:10 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1998/04/04 22:44:16 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.4 1997/01/15 23:44:10 millert Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.5 1998/04/04 22:44:16 deraadt Exp $";
 #endif
 
 /*
@@ -159,24 +159,22 @@ usage(const char *name, const char *fmt, ...)
     }
     va_end(args);
     fprintf(stderr, "Usage: %s [args] pkg\n\n", name);
-    fprintf(stderr, "Where args are one or more of:\n\n");
-
-    fprintf(stderr, "-c [-]file Get one-line comment from file (-or arg)\n");
-    fprintf(stderr, "-d [-]file Get description from file (-or arg)\n");
-    fprintf(stderr, "-f file    get list of files from file (- for stdin)\n");
-    fprintf(stderr, "-h         follow symbolic links\n");
-    fprintf(stderr, "-i script  install script\n");
-    fprintf(stderr, "-k script  de-install script\n");
-    fprintf(stderr, "-D file    install notice\n");
-    fprintf(stderr, "-m file    mtree spec for directories\n");
-    fprintf(stderr, "-P pkgs    set package dependency list to pkgs\n");
-    fprintf(stderr, "-p prefix  install prefix will be arg\n");
-    fprintf(stderr, "-r script  pre/post requirements script\n");
-    fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "-X file    exclude files listed in file\n");
-    fprintf(stderr, "-v         verbose\n");
-    fprintf(stderr, "-Y         assume `yes' answer to all questions\n");
-    fprintf(stderr, "-N         assume `no' answer to all questions\n");
-    fprintf(stderr, "-O         print a revised packing list and exit\n");
+    fprintf(stderr, "\t-c [-]file Get one-line comment from file (-or arg)\n");
+    fprintf(stderr, "\t-d [-]file Get description from file (-or arg)\n");
+    fprintf(stderr, "\t-f file    get list of files from file (- for stdin)\n");
+    fprintf(stderr, "\t-h         follow symbolic links\n");
+    fprintf(stderr, "\t-i script  install script\n");
+    fprintf(stderr, "\t-k script  de-install script\n");
+    fprintf(stderr, "\t-D file    install notice\n");
+    fprintf(stderr, "\t-m file    mtree spec for directories\n");
+    fprintf(stderr, "\t-P pkgs    set package dependency list to pkgs\n");
+    fprintf(stderr, "\t-p prefix  install prefix will be arg\n");
+    fprintf(stderr, "\t-r script  pre/post requirements script\n");
+    fprintf(stderr, "\t-t temp    use temp as template for mktemp()\n");
+    fprintf(stderr, "\t-X file    exclude files listed in file\n");
+    fprintf(stderr, "\t-v         verbose\n");
+    fprintf(stderr, "\t-Y         assume `yes' answer to all questions\n");
+    fprintf(stderr, "\t-N         assume `no' answer to all questions\n");
+    fprintf(stderr, "\t-O         print a revised packing list and exit\n");
     exit(1);
 }

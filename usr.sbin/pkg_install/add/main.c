@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.3 1997/01/15 23:44:09 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1998/04/04 22:44:13 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.3 1997/01/15 23:44:09 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.4 1998/04/04 22:44:13 deraadt Exp $";
 #endif
 
 /*
@@ -158,14 +158,13 @@ usage(const char *name, const char *fmt, ...)
     }
     va_end(args);
     fprintf(stderr, "Usage: %s [args] pkg [ .. pkg ]\n", name);
-    fprintf(stderr, "Where args are one or more of:\n\n");
-    fprintf(stderr, "-v         verbose\n");
-    fprintf(stderr, "-p arg     override prefix with arg\n");
-    fprintf(stderr, "-I         don't execute pkg install script, if any\n");
-    fprintf(stderr, "-R         don't record installation (can't delete!)\n");
-    fprintf(stderr, "-n         don't actually install, just show steps\n");
-    fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "-S         run in SLAVE mode\n");
-    fprintf(stderr, "-M         run in MASTER mode\n");
+    fprintf(stderr, "\t-v         verbose\n");
+    fprintf(stderr, "\t-p arg     override prefix with arg\n");
+    fprintf(stderr, "\t-I         don't execute pkg install script, if any\n");
+    fprintf(stderr, "\t-R         don't record installation (can't delete!)\n");
+    fprintf(stderr, "\t-n         don't actually install, just show steps\n");
+    fprintf(stderr, "\t-t temp    use temp as template for mktemp()\n");
+    fprintf(stderr, "\t-S         run in SLAVE mode\n");
+    fprintf(stderr, "\t-M         run in MASTER mode\n");
     exit(1);
 }

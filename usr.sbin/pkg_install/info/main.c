@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.7 1997/12/14 10:04:01 gene Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/04/04 22:44:20 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.7 1997/12/14 10:04:01 gene Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.8 1998/04/04 22:44:20 deraadt Exp $";
 #endif
 
 /*
@@ -159,24 +159,23 @@ usage(const char *name, const char *fmt, ...)
     }
     va_end(args);
     fprintf(stderr, "Usage: %s [args] pkg [ .. pkg ]\n", name);
-    fprintf(stderr, "Where args are one or more of:\n\n");
-    fprintf(stderr, "-a         show all installed packages (if any)\n");
-    fprintf(stderr, "-I         print 'index' of packages\n");
-    fprintf(stderr, "-c         print `one line comment'\n");
-    fprintf(stderr, "-d         print description\n");
-    fprintf(stderr, "-D         print install notice\n");
-    fprintf(stderr, "-f         show packing list\n");
-    fprintf(stderr, "-i         show install script\n");
-    fprintf(stderr, "-k         show deinstall script\n");
-    fprintf(stderr, "-r         show requirements script\n");
-    fprintf(stderr, "-R         show packages depending on this package\n");
-    fprintf(stderr, "-p         show prefix\n");
-    fprintf(stderr, "-l <str>   Prefix each info catagory with <str>\n");
-    fprintf(stderr, "-L         show installed files\n");
-    fprintf(stderr, "-q         minimal output (``quiet'' mode)\n");
-    fprintf(stderr, "-v         show all information\n");
-    fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "-e pkg     returns 0 if pkg is installed, 1 otherwise\n");
-    fprintf(stderr, "\n[no args = -a -I]\n");
+    fprintf(stderr, "\t-a         show all installed packages (if any)\n");
+    fprintf(stderr, "\t-I         print 'index' of packages\n");
+    fprintf(stderr, "\t-c         print `one line comment'\n");
+    fprintf(stderr, "\t-d         print description\n");
+    fprintf(stderr, "\t-D         print install notice\n");
+    fprintf(stderr, "\t-f         show packing list\n");
+    fprintf(stderr, "\t-i         show install script\n");
+    fprintf(stderr, "\t-k         show deinstall script\n");
+    fprintf(stderr, "\t-r         show requirements script\n");
+    fprintf(stderr, "\t-R         show packages depending on this package\n");
+    fprintf(stderr, "\t-p         show prefix\n");
+    fprintf(stderr, "\t-l <str>   Prefix each info catagory with <str>\n");
+    fprintf(stderr, "\t-L         show installed files\n");
+    fprintf(stderr, "\t-q         minimal output (``quiet'' mode)\n");
+    fprintf(stderr, "\t-v         show all information\n");
+    fprintf(stderr, "\t-t temp    use temp as template for mktemp()\n");
+    fprintf(stderr, "\t-e pkg     returns 0 if pkg is installed, 1 otherwise\n");
+    fprintf(stderr, "\t[default: args = -a -I]\n");
     exit(1);
 }
