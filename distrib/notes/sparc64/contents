@@ -1,11 +1,13 @@
-dnl	$OpenBSD: contents,v 1.19 2002/03/23 23:58:50 miod Exp $
+dnl	$OpenBSD: contents,v 1.20 2002/04/07 23:31:04 miod Exp $
 TopPart
 
 OpenBSDminiroot
 				It can be copied to the swap partition of
 				an existing OpenBSD, Solaris, NetBSD or Linux
-				installation to allow installing or upgrading
-				to OpenBSD OSREV.
+dnl uncomment when upgrades are available again
+dnl				installation to allow installing or upgrading
+dnl				to OpenBSD OSREV.
+				installation to allow installing OpenBSD OSREV.
 
 OpenBSDfloppy
 				This floppy image will boot on SBus-based

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2002/03/30 22:52:58 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2002/04/07 23:31:04 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -173,12 +173,7 @@ OpenBSDCommonURL
 
 After completing an installation:
 
-Now try a reboot.  (If needed, swap your scsi id's first).  Initially
-I'd suggest you "boot sd()bsd -bs", then try multiuser after that.
-if you boot single-user the OpenBSD incantation to make the root
-filesystem writable is
-
-    OpenBSD# mount -u /dev/sd0a /
+Now try a reboot.  (If needed, swap your scsi id's first).
 
 The UltraSPARC OpenFirmware will normally load the kernel from the device
 and filename as instructed by the ``boot-device'' and ``boot-file''

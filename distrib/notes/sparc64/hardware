@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.21 2002/04/05 17:07:11 jason Exp $
+dnl	$OpenBSD: hardware,v 1.22 2002/04/07 23:31:04 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -13,12 +13,12 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Ultra 10
 		Ultra 30
 dnl XXX uncomment machine entries as they become supported
-dnl XXX Does u60 work? 220R does.
-dnl		Ultra 60 / Enterprise 220R
+dnl		Ultra 60
 dnl		Ultra 80 / Enterprise 420R
 dnl		Ultra 450 / Enterprise 450
 dnl		Enterprise 3000
 dnl		SUNBlade 1000
+dnl		SUNBlade 2000
 		SPARCengineUltra AX
 		SPARCengineUltra AXi
 	- faithful clones of the above Sun systems.
@@ -56,6 +56,7 @@ Supported devices {:-include-:}:
 		PCI Fast Ethernet (hme)
 		PCI Quad Fast Ethernet (hme)
 		PCI GEM Ethernet (gem) [not fully supported]
+		PCI Davicom DM9102 Ethernet (dc)
 
 	Serial ports: 
 		onboard SBUS Zilog 8530 (zs)
@@ -100,4 +101,4 @@ Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines.
 	Floppy driver (except for booting).
 	SBUS and PCI cards other than those listed above.
-	UPA Framebuffers(i.e Creator Series Framebuffers)
+	UPA Framebuffers (i.e. Creator Series Framebuffers)
