@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.22 2002/06/13 02:19:27 jason Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.23 2002/07/31 16:47:50 jason Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
@@ -232,7 +232,7 @@ std)
 	M klog		c 16 0 600
 	M mouse		c 13 0 666
 	M fb		c 22 0 666
-	M openprom	c 70 0 644
+	M openprom	c 70 0 640 kmem
 	;;
 
 mouse*)
