@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.83 2003/01/17 17:36:04 deraadt Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.84 2003/01/17 17:48:55 millert Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -79,9 +79,9 @@ is set to a list of files to ignore.
 Invoking
 .Ar checksum
 with REFETCH=true
-will try to fetch a version without mismatched checksums off the
+will try to fetch a version with the correct checksum from the
 .Ox
-main archive site.
+main archive site in the case of a checksum mismatch.
 .It Ar clean
 Clean ports contents. 
 By default, it will clean the work directory.
