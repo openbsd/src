@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.6 1997/02/04 16:44:13 kstailey Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.7 1997/02/04 16:58:48 kstailey Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct icmp {
 #define		ICMP_UNREACH_NET_UNKNOWN 	6	/* unknown net */
 #define		ICMP_UNREACH_HOST_UNKNOWN 	7	/* unknown host */
 #define		ICMP_UNREACH_ISOLATED		8	/* src host isolated */
-#define		ICMP_UNREACH_NET_PROHIB		9	/* prohibited access */
+#define		ICMP_UNREACH_NET_PROHIB		9	/* for crypto devs */
 #define		ICMP_UNREACH_HOST_PROHIB 	10	/* ditto */
 #define		ICMP_UNREACH_TOSNET		11	/* bad tos for net */
 #define		ICMP_UNREACH_TOSHOST		12	/* bad tos for host */
