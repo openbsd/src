@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.14 2001/08/18 22:06:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -52,8 +52,7 @@ void
 usage()
 {
 
-	fprintf(stderr,
-	    "usage: modstat [-i moduleid] [-n modulename]\n");
+	fprintf(stderr, "usage: modstat [-i moduleid] [-n modulename]\n");
 	exit(1);
 }
 
@@ -72,9 +71,10 @@ dostat(devfd, modnum, modname)
 	int modnum;
 	char *modname;
 {
+	char name[MAXLKMNAME];
 	struct lmc_stat	sbuf;
-	char name[MAXLKMNAME] = "";
 
+	bzero(&name, sizeof name);
 	bzero(&sbuf, sizeof sbuf);
 	sbuf.id = modnum;
 	sbuf.name = name;
@@ -82,7 +82,7 @@ dostat(devfd, modnum, modname)
 	if (modname != NULL) {
 		if (strlen(modname) >= sizeof(name))
 			return 4;
-		strcpy(sbuf.name, modname);
+		strlcpy(sbuf.name, modname, sizeof(name));
 	}
 
 	if (ioctl(devfd, LMSTAT, &sbuf) == -1) {
@@ -97,42 +97,23 @@ dostat(devfd, modnum, modname)
 		}
 	}
 
-	/*
-	 * Decode this stat buffer...
-	 */
+	/* Decode this stat buffer... */
 	printf("%-7s %3d %3ld %08lx %04lx %8lx %3ld %s\n",
-	    type_names[sbuf.type],
-	    sbuf.id,		/* module id */
-	    sbuf.offset,	/* offset into modtype struct */
-	    (long)sbuf.area,		/* address module loaded at */
-	    (long)sbuf.size,		/* size in pages(K) */
-	    (long)sbuf.private,	/* kernel address of private area */
-	    (long)sbuf.ver,		/* Version; always 1 for now */
-	    sbuf.name		/* name from private area */
-	);
+	    type_names[sbuf.type], sbuf.id, sbuf.offset,
+	    (long)sbuf.area, (long)sbuf.size, (long)sbuf.private,
+	    (long)sbuf.ver, sbuf.name);
 
-	/*
-	 * Done (success).
-	 */
 	return 0;
 }
 
 int devfd;
-
-void
-cleanup()
-{
-
-	close(devfd);
-}
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c;
-	int modnum = -1;
+	int c, modnum = -1;
 	char *modname = NULL;
 
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
@@ -164,22 +145,15 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	atexit(cleanup);
-
 	printf("Type     Id Off Loadaddr Size Info     Rev Module Name\n");
 
-	/*
-	 * Oneshot?
-	 */
 	if (modnum != -1 || modname != NULL) {
 		if (dostat(devfd, modnum, modname))
 			exit(3);
 		exit(0);
 	}
 
-	/*
-	 * Start at 0 and work up until "EINVAL".
-	 */
+	/* Start at 0 and work up until we receive EINVAL. */
  	for (modnum = 0; dostat(devfd, modnum, NULL) < 2; modnum++)
  		;
 
