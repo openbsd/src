@@ -1,4 +1,4 @@
-/* $OpenBSD: config.h,v 1.5 2003/07/21 14:00:41 deraadt Exp $	 */
+/*	$OpenBSD: config.h,v 1.6 2003/07/21 14:32:21 deraadt Exp $	*/
 
 /*
  * config.h This file was produced by running the config.h.SH script, which

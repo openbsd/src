@@ -1,4 +1,4 @@
-/* $OpenBSD: patch.c,v 1.20 2003/07/21 14:00:41 deraadt Exp $	 */
+/*	$OpenBSD: patch.c,v 1.21 2003/07/21 14:32:21 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.20 2003/07/21 14:00:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.21 2003/07/21 14:32:21 deraadt Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"

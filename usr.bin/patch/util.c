@@ -1,7 +1,7 @@
-/* $OpenBSD: util.c,v 1.14 2003/07/21 14:30:31 deraadt Exp $	 */
+/*	$OpenBSD: util.c,v 1.15 2003/07/21 14:32:21 deraadt Exp $	*/
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: util.c,v 1.14 2003/07/21 14:30:31 deraadt Exp $";
+static char     rcsid[] = "$OpenBSD: util.c,v 1.15 2003/07/21 14:32:21 deraadt Exp $";
 #endif				/* not lint */
 
 #include "EXTERN.h"
