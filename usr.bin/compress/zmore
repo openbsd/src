@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -38,9 +38,8 @@ while test $# -ne 0; do
 done
 
 # No files means read from stdin
-# XXX - cannot distinguish between gzip or compress, assume gzip
 if [ $# -eq 0 ]; then
-	compress -cdfgq 2>&1 | ${PAGER-more} $flags
+	compress -cdfq 2>&1 | ${PAGER-more} $flags
 	exit 0
 fi
 
