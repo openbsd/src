@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.3 1995/02/27 12:54:39 cgd Exp $	*/
+/*	$NetBSD: gmon.c,v 1.5 1995/11/21 22:23:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.3 1995/02/27 12:54:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.5 1995/11/21 22:23:47 jtc Exp $";
 #endif
 #endif
 
@@ -47,7 +47,9 @@ static char rcsid[] = "$NetBSD: gmon.c,v 1.3 1995/02/27 12:54:39 cgd Exp $";
 #include <sys/sysctl.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 
 extern char *minbrk asm ("minbrk");
@@ -142,6 +144,9 @@ _mcleanup()
 	struct clockinfo clockinfo;
 	int mib[2];
 	size_t size;
+	char *profdir;
+	char *proffile;
+	char  buf[PATH_MAX];
 #ifdef DEBUG
 	int log, len;
 	char buf[200];
@@ -166,9 +171,53 @@ _mcleanup()
 	}
 
 	moncontrol(0);
-	fd = open("gmon.out", O_CREAT|O_TRUNC|O_WRONLY, 0666);
+
+	if ((profdir = getenv("PROFDIR")) != NULL) {
+		extern char *__progname;
+		char *s, *t;
+		pid_t pid;
+		long divisor;
+
+		/* If PROFDIR contains a null value, no profiling 
+		   output is produced */
+		if (*profdir == '\0') {
+			return;
+		}
+		
+		t = buf;
+		s = profdir;
+		while((*t = *s) != '\0') {
+			t++;
+			s++;
+		}
+		*t++ = '/';
+
+		/* 
+		 * Copy and convert pid from a pid_t to a string.  For 
+		 * best performance, divisor should be initialized to
+		 * the largest power of 10 less than PID_MAX.
+		 */
+		pid = getpid();
+		divisor=10000;
+		while (divisor > pid) divisor /= 10;	/* skip leading zeros */
+		do {
+			*t++ = (pid/divisor) + '0';
+			pid %= divisor;
+		} while (divisor /= 10);
+		*t++ = '.';
+
+		s = __progname;
+		while ((*t++ = *s++) != '\0')
+			;
+
+		proffile = buf;
+	} else {
+		proffile = "gmon.out";
+	}
+
+	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (fd < 0) {
-		perror("mcount: gmon.out");
+		perror( proffile );
 		return;
 	}
 #ifdef DEBUG
@@ -227,7 +276,7 @@ moncontrol(mode)
 
 	if (mode) {
 		/* start */
-		profil((char *)p->kcount, p->kcountsize, (int)p->lowpc,
+		profil((char *)p->kcount, p->kcountsize, p->lowpc,
 		    s_scale);
 		p->state = GMON_PROF_ON;
 	} else {
