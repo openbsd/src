@@ -1,7 +1,6 @@
-
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 2001/09/07 16:53:50 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 2001/09/07 19:26:03 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -55,6 +54,7 @@
 #
 # Terminal ports:
 #	tty[a-z]*	Zilog 8530 Serial Port
+#	cua[a-z]*	Zilog 8530 Serial Port
 #	com*	NS16x50 serial ports
 #
 # Pseudo terminals:
@@ -193,6 +193,7 @@ all)
 	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	R xfs0 tcx0 lkm audio0 local
+	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
 	;;
 floppy)
 	R std fd0 wd0 wd1 sd0 sd1
@@ -214,40 +215,33 @@ std)M console	c 0 0 600
 	M stdout	c 24 1
 	M stderr	c 24 2
 	M kbd		c 29 0 666
-	mklist=""
-	M mem		c 3 0 640
-	M kmem		c 3 1 640
-	M drum		c 7 0 640
-	MKlist="$MKlist;chown root.kmem $mklist";;
-tty[a-z])
-	rm -f tty$unit
-	case $unit in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
-	*) echo unknown tty device $i ;;
-	esac
-	M tty$unit c 12 $n
-	chown uucp.wheel tty$unit
-	;;
-cua[a-z])
-	rm -f cua$unit
-	case $unit in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
-	*) echo unknown cua device $i ;;  
-	esac
-	M cua$unit c 12 $(($n+128)) wheel uucp
-	;;
+	M mem		c 3 0 640 kmem
+	M kmem		c 3 1 640 kmem
+	M drum		c 7 0 640 kmem;;
 mouse*)name=${i##mouse-}
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
+tty[a-z])u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=4 ;;
+	d) n=5 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c 12 $n 660 dialer uucp;;
+cua[a-z])u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=4 ;;
+	d) n=5 ;;
+	*) echo unknown cua device $i ;;  
+	esac
+	M cua$u c 12 $(($n+128)) 660 dialer uucp;;
 pty*)case $U in
 	0) off=0 name=p;;
 	1) off=16 name=q;;
