@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.9 2003/05/28 16:42:50 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.9 2003/05/28 16:42:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.10 2003/05/28 17:44:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,6 @@ main(int argc, char **argv)
 {
 	FILE * volatile f;
 	char		*s;
-	char		*p;
 	volatile int	left;
 	volatile int	initline;
 	volatile int	prnames = 0;
@@ -215,22 +214,18 @@ main(int argc, char **argv)
 		argscan(s);
 	while (--nfiles > 0) {
 		if ((ch = (*++fnames)[0]) == '-')
-			argscan(*fnames+1);
+			argscan(*fnames + 1);
 		else if (ch == '+') {
 			s = *fnames;
 			if (*++s == '/') {
 				srchopt++;
-				/* XXX - clean me (millert) */
-				for (++s, p = initbuf;
-				    p < initbuf + 79 && *s != '\0';)
-					*p++ = *s++;
-				*p = '\0';
+				(void)strlcpy(initbuf, ++s, sizeof(initbuf));
 			} else {
 				initopt++;
 				for (initline = 0; *s != '\0'; s++) {
 					if (isdigit(*s))
 						initline =
-						    initline * 10 + *s -'0';
+						    initline * 10 + *s - '0';
 				}
 				--initline;
 			}
@@ -376,7 +371,7 @@ argscan(char *s)
 				dlines = 0;
 				seen_num = 1;
 			}
-			dlines = dlines*10 + *s - '0';
+			dlines = (dlines * 10) + (*s - '0');
 			break;
 		case 'd':
 			dum_opt = 1;
@@ -411,7 +406,6 @@ argscan(char *s)
 		s++;
 	}
 }
-
 
 /*
  * Check whether the file named by fs is an ASCII file which the user may
@@ -492,7 +486,7 @@ putch(int ch)
 	putchar(ch);
 }
 
-#define STOP -10
+#define	STOP	(-10)
 
 /*
  * Print out the contents of the file f, one screenful at a time.
@@ -834,7 +828,7 @@ prbuf(char *s, int n)
 			putchar(*s++);
 		else {
 			if (*s == ' ' && pstate == 0 && ulglitch &&
-			    wouldul(s+1, n-1)) {
+			    wouldul(s + 1, n - 1)) {
 				s++;
 				continue;
 			}
@@ -846,12 +840,13 @@ prbuf(char *s, int n)
 				c = *s++;
 			if (state != pstate) {
 				if (c == ' ' && state == 0 && ulglitch &&
-				    wouldul(s, n-1))
+				    wouldul(s, n - 1))
 					state = 1;
 				else
 					tputs(state ? ULenter : ULexit, 1, putch);
 			}
-			if (c != ' ' || pstate == 0 || state != 0 || ulglitch == 0)
+			if (c != ' ' || pstate == 0 || state != 0 ||
+			    ulglitch == 0)
 				putchar(c);
 			if (state && *chUL) {
 				fputs(chBS, stdout);
@@ -1066,7 +1061,7 @@ command(char *filename, FILE *f)
 				write(STDERR_FILENO, "\r", 1);
 				search(NULL, f, nlines);
 			} else {
-				ttyin(cmdbuf, 78, '/');
+				ttyin(cmdbuf, sizeof(cmdbuf) - 2, '/');
 				write(STDERR_FILENO, "\r", 1);
 				search(cmdbuf, f, nlines);
 			}
@@ -1387,8 +1382,8 @@ skiplns(int n, FILE *f)
 }
 
 /*
- * Skip nskip files in the file list (from the command line). Nskip may be
- * negative.
+ * Skip nskip files in the file list (from the command line).
+ * Nskip may be negative.
  */
 void
 skipf(int nskip)
@@ -1430,8 +1425,8 @@ initterm(void)
 
 retry:
 	if (!(no_tty = tcgetattr(STDOUT_FILENO, &otty))) {
-		docrterase = (otty.c_cc[VERASE] != 255);
-		docrtkill =  (otty.c_cc[VKILL] != 255);
+		docrterase = (otty.c_cc[VERASE] != _POSIX_VDISABLE);
+		docrtkill =  (otty.c_cc[VKILL] != _POSIX_VDISABLE);
 		/*
 		 * Wait until we're in the foreground before we save the
 		 * the terminal modes.
