@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.7 1997/01/21 19:29:08 kstailey Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.8 1997/02/06 15:00:27 kstailey Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.7 1997/01/21 19:29:08 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.8 1997/02/06 15:00:27 kstailey Exp $";
 #endif
 #endif				/* lint */
 
@@ -172,7 +172,7 @@ main(argc, argv)
 		char		buf[80];
 
 		ltm = localtime(&tim);
-		(void) strftime(buf, 80, "%a %b %d %H:%M:%S %Z %Y\n", ltm);
+		(void) strftime(buf, 80, "%a %b %e %H:%M:%S %Z %Y\n", ltm);
 		(void) fputs(buf, stdout);
 
 		if (slidetime)
