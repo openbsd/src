@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2001/06/27 06:19:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2001/06/30 12:14:43 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -549,7 +549,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 	pt_entry_t	*pte;
 	pte_template_t	template;
 #ifdef MVME197
-	static mvme197_atc_initialized = FALSE;
+	static m197_atc_initialized = FALSE;
 #endif
 	/*
 	 * cache mode is passed in the top 16 bits.
