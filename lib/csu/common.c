@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.4 1999/08/24 20:41:04 niklas Exp $	*/
+/*	$OpenBSD: common.c,v 1.5 1999/12/09 18:10:24 espie Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -165,8 +165,8 @@ __load_rtld(dp)
 
 void *
 dlopen(name, mode)
-	char	*name;
-	int	mode;
+	const char	*name;
+	int		mode;
 {
 	if (ld_entry == NULL)
 		return NULL;
@@ -186,8 +186,8 @@ dlclose(fd)
 
 void *
 dlsym(fd, name)
-	void	*fd;
-	char	*name;
+	void		*fd;
+	const char	*name;
 {
 	if (ld_entry == NULL)
 		return NULL;

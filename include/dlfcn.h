@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.2 1997/09/21 10:45:32 niklas Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.3 1999/12/09 18:10:23 espie Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -40,9 +40,9 @@
  * User interface to the run-time linker.
  */
 __BEGIN_DECLS
-extern void	*dlopen __P((char *, int));
+extern void	*dlopen __P((const char *, int));
 extern int	dlclose __P((void *));
-extern void	*dlsym __P((void *, char *));
+extern void	*dlsym __P((void *, const char *));
 extern int	dlctl __P((void *, int, void *));
 extern char	*dlerror __P((void));
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.4 1999/05/18 15:50:09 espie Exp $	*/
+/*	$OpenBSD: link.h,v 1.5 1999/12/09 18:10:23 espie Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -167,9 +167,9 @@ struct so_debug {
  * Entry points into ld.so - user interface to the run-time linker.
  */
 struct ld_entry {
-	void	*(*dlopen) __P((char *, int));
+	void	*(*dlopen) __P((const char *, int));
 	int	(*dlclose) __P((void *));
-	void	*(*dlsym) __P((void *, char *));
+	void	*(*dlsym) __P((void *, const char *));
 	int	(*dlctl) __P((void *, int, void *));
 	void	(*dlexit) __P((void));
 	void	(*dlrsrvd[3]) __P((void));
