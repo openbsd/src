@@ -19,17 +19,24 @@ option		VNODEPAGER
 option		DEVPAGER
 
 option		COMPAT_43
+option		COMPAT_ULTRIX
 option		NATIVE_ELF
 option		FFS
 option		FIFO
+option		UNION
+option		NULLFS
 option		CD9660
 option		MSDOSFS
 option		INET
 option		NFSCLIENT
 option		NFSSERVER
+option		SYSVMSG
+option		SYSVSEM
+option		SYSVSHM
 option		KTRACE
+option		BOOT_CONFIG
 
-config		bsd	root on rz0a swap on rz0b and rz1b dumps on rz0b
+config		bsd root on rz0a swap on rz0b and rz1b and rz2b dumps on rz0b
 
 mainbus0	at root
 cpu*		at mainbus0
@@ -53,9 +60,13 @@ rz6		at oldscsibus? target ? drive ?
 tz0		at oldscsibus? target ? drive ?
 tz1		at oldscsibus? target ? drive ?
 
-pseudo-device	loop
+pseudo-device	loop		1
 pseudo-device	fb		1
 pseudo-device	rasterconsole	1
 pseudo-device	sl		1
-pseudo-device	bpfilter	8
-pseudo-device	pty		32
+pseudo-device	ppp		1
+pseudo-device	tun		1
+pseudo-device	vnd		4
+pseudo-device	ccd		4
+pseudo-device	bpfilter	32
+pseudo-device	pty		64
