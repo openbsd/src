@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.c,v 1.6 1997/12/21 23:15:06 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.7 1998/01/13 05:30:29 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -53,7 +53,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: sudo.c,v 1.177 1997/11/23 06:53:37 millert Exp $";
+static char rcsid[] = "Id: sudo.c,v 1.179 1998/01/13 04:48:42 millert Exp $";
 #endif /* lint */
 
 #define MAIN

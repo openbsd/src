@@ -1,7 +1,7 @@
-/*	$OpenBSD: getspwuid.c,v 1.3 1997/11/23 07:15:42 millert Exp $	*/
+/*	$OpenBSD: getspwuid.c,v 1.4 1998/01/13 05:30:22 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.3
+ *  CU sudo version 1.5.4
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: getspwuid.c,v 1.21 1996/11/14 02:37:16 millert Exp $";
+static char rcsid[] = "Id: getspwuid.c,v 1.22 1998/01/13 04:48:17 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

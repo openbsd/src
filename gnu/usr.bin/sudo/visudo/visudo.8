@@ -1,18 +1,11 @@
 .rn '' }`
-''' $OpenBSD: visudo.8,v 1.3 1997/11/23 07:15:51 millert Exp $
+''' $OpenBSD: visudo.8,v 1.4 1998/01/13 05:30:32 millert Exp $
 '''
-''' $RCSfile: visudo.8,v $$Revision: 1.3 $$Date: 1997/11/23 07:15:51 $
+''' $RCSfile: visudo.8,v $$Revision: 1.4 $$Date: 1998/01/13 05:30:32 $
 '''
 ''' $Log: visudo.8,v $
-''' Revision 1.3  1997/11/23 07:15:51  millert
-''' OpenBSD tags (and preserve sudo tags)
-''' updates from my sudo source tree:
-''' logging.c: deal with maxfilelen < 0 case
-''' sudo.c: correct error message if mode/owner wrong and not statable by owner
-''' compat.h: fix seteuid macro
-'''
-''' Revision 1.2  1996/11/17 16:34:08  millert
-''' Updated to sudo 1.5.3
+''' Revision 1.4  1998/01/13 05:30:32  millert
+''' sudo 1.5.4
 '''
 '''
 .de Sh
@@ -57,16 +50,36 @@
 .if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
 .ds L" ""
 .ds R" ""
+'''   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
+'''   \*(L" and \*(R", except that they are used on ".xx" lines,
+'''   such as .IP and .SH, which do another additional levels of
+'''   double-quote interpretation
+.ds M" """
+.ds S" """
+.ds N" """""
+.ds T" """""
 .ds L' '
 .ds R' '
+.ds M' '
+.ds S' '
+.ds N' '
+.ds T' '
 'br\}
 .el\{\
 .ds -- \(em\|
 .tr \*(Tr
 .ds L" ``
 .ds R" ''
+.ds M" ``
+.ds S" ''
+.ds N" ``
+.ds T" ''
 .ds L' `
 .ds R' '
+.ds M' `
+.ds S' '
+.ds N' `
+.ds T' '
 .ds PI \(*p
 'br\}
 .\"	If the F register is turned on, we'll generate
@@ -85,10 +98,8 @@
 .nr % 0
 .rr F
 .\}
-.TH visudo 8 "1.5.3" "13/Nov/96" "MAINTENANCE COMMANDS"
-.IX Title "visudo 8"
+.TH visudo 8 "1.5.4" "13/Nov/96" "MAINTENANCE COMMANDS"
 .UC
-.IX Name "visudo - edit the sudoers file"
 .if n .hy 0
 .if n .na
 .ds C+ C\v'-.1v'\h'-1p'\s-2+\h'-1p'+\s0\v'.1v'\h'-1p'
@@ -182,13 +193,10 @@
 .\}
 .rm #[ #] #H #V #F C
 .SH "NAME"
-.IX Header "NAME"
 visudo \- edit the sudoers file
 .SH "SYNOPSIS"
-.IX Header "SYNOPSIS"
 \fBvisudo\fR [ \fB\-V\fR ]
 .SH "DESCRIPTION"
-.IX Header "DESCRIPTION"
 \fBvisudo\fR edits the \fIsudoers\fR file in a safe fashion, analogous to
 \fIvipw\fR\|(8).  \fBvisudo\fR locks the \fIsudoers\fR file against multiple
 simultaneous edits, provides basic sanity checks, and checks
@@ -213,21 +221,17 @@ When editing the \fIsudoers\fR file after a parse error has been
 detected the cursor will be placed on the line where the error
 occurred (if the editor supports this feature).
 .SH "OPTIONS"
-.IX Header "OPTIONS"
 \fBvisudo\fR accepts the following command line option:
 .Ip "-V" 4
-.IX Item "-V"
 The \f(CW-V\fR (version) option causes \fBvisudo\fR to print the version number
 and exit.
 .SH "FILES"
-.IX Header "FILES"
 .PP
 .Vb 2
 \& /etc/sudoers           file of authorized users.
 \& /etc/stmp              lock file for visudo.
 .Ve
 .SH "ENVIRONMENT VARIABLES"
-.IX Header "ENVIRONMENT VARIABLES"
 The following are used only if \fBvisudo\fR was compiled with the
 \fIENV_EDITOR\fR option:
 .PP
@@ -236,7 +240,6 @@ The following are used only if \fBvisudo\fR was compiled with the
 \& VISUAL                 Used by visudo if EDITOR is not set.
 .Ve
 .SH "AUTHOR"
-.IX Header "AUTHOR"
 Many people have worked on \fIsudo\fR over the years, this version of
 \fBvisudo\fR was written by:
 .PP
@@ -247,7 +250,6 @@ See the HISTORY file in the sudo distribution for more details.
 .PP
 Please send all bugs, comments, and changes to sudo-bugs@courtesan.com.
 .SH "DISCLAIMER"
-.IX Header "DISCLAIMER"
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -257,7 +259,6 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 675 Mass Ave, Cambridge, MA 02139, USA.
 .SH "CAVEATS"
-.IX Header "CAVEATS"
 Due to the syntax of the \fIsudoers\fR file, there is no way
 for \fBvisudo\fR to tell the difference between a mistyped
 {Host,User,Cmnd}_Alias and a user or host name.
@@ -265,11 +266,36 @@ for \fBvisudo\fR to tell the difference between a mistyped
 There is no easy way to prevent a user from gaining a root shell if 
 the editor used by \fBvisudo\fR allows shell escapes.
 .SH "BUGS"
-.IX Header "BUGS"
 The \fI\-V\fR flag gives the version of the \fIsudo\fR package rather than
 the individual \fBvisudo\fR program.
 .SH "SEE ALSO"
-.IX Header "SEE ALSO"
 \fIsudo\fR\|(8), \fIvipw\fR\|(8).
 
 .rn }` ''
+.IX Title "visudo 8"
+.IX Name "visudo - edit the sudoers file"
+
+.IX Header "NAME"
+
+.IX Header "SYNOPSIS"
+
+.IX Header "DESCRIPTION"
+
+.IX Header "OPTIONS"
+
+.IX Item "-V"
+
+.IX Header "FILES"
+
+.IX Header "ENVIRONMENT VARIABLES"
+
+.IX Header "AUTHOR"
+
+.IX Header "DISCLAIMER"
+
+.IX Header "CAVEATS"
+
+.IX Header "BUGS"
+
+.IX Header "SEE ALSO"
+

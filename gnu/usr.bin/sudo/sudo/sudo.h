@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.h,v 1.3 1997/11/23 07:15:49 millert Exp $	*/
+/*	$OpenBSD: sudo.h,v 1.4 1998/01/13 05:30:30 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -27,7 +27,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  Id: sudo.h,v 1.114 1996/11/14 20:08:32 millert Exp $
+ *  Id: sudo.h,v 1.115 1998/01/13 04:48:42 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H

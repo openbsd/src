@@ -1,7 +1,7 @@
-/*	$OpenBSD: logging.c,v 1.4 1997/11/23 07:15:45 millert Exp $	*/
+/*	$OpenBSD: logging.c,v 1.5 1998/01/13 05:30:26 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: logging.c,v 1.87 1997/08/06 18:58:06 millert Exp $";
+static char rcsid[] = "Id: logging.c,v 1.88 1998/01/13 04:48:42 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

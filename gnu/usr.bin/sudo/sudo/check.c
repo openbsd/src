@@ -1,7 +1,7 @@
-/*	$OpenBSD: check.c,v 1.5 1997/11/23 07:15:40 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.6 1998/01/13 05:30:20 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.3 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: check.c,v 1.122 1996/11/14 02:37:16 millert Exp $";
+static char rcsid[] = "Id: check.c,v 1.124 1998/01/13 04:48:01 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -530,7 +530,7 @@ static void check_passwd()
 	/* Exit loop on nil password */
 	if (!pass || *pass == '\0') {
 	    if (counter == TRIES_FOR_PASSWORD)
-		exit(0);
+		exit(1);
 	    else
 		break;
 	}
@@ -870,7 +870,7 @@ static void reminder()
     (void) fprintf(stderr, "\n%s\n%s\n\n%s\n%s\n\n",
 #else
     (void) fprintf(stderr, "\n%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
-	"    CU sudo version 1.5.3, based on Root Group sudo version 1.1",
+	"    CU sudo version 1.5.4, based on Root Group sudo version 1.1",
 	"    sudo version 1.1, Copyright (C) 1991 The Root Group, Inc.",
 	"    sudo comes with ABSOLUTELY NO WARRANTY.  This is free software,",
 	"    and you are welcome to redistribute it under certain conditions.",

@@ -1,7 +1,7 @@
-/*	$OpenBSD: options.h,v 1.7 1997/11/23 07:15:46 millert Exp $	*/
+/*	$OpenBSD: options.h,v 1.8 1998/01/13 05:30:26 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.3
+ *  CU sudo version 1.5.4
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: options.h,v 1.34 1996/11/14 03:50:03 millert Exp $
+ *  Id: options.h,v 1.35 1998/01/13 04:48:42 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H

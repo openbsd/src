@@ -1,7 +1,7 @@
-/*	$OpenBSD: insults.h,v 1.3 1997/11/23 07:15:45 millert Exp $	*/
+/*	$OpenBSD: insults.h,v 1.4 1998/01/13 05:30:25 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.3
+ *  CU sudo version 1.5.4
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: insults.h,v 1.2 1996/11/17 16:33:59 millert Exp $
+ *  Id: insults.h,v 1.24 1998/01/13 04:48:17 millert Exp $
  */
 
 #ifndef _SUDO_INSULTS_H
