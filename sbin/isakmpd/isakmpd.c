@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.41 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.42 2002/06/07 01:07:18 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -348,6 +348,7 @@ main (int argc, char *argv[])
   size_t mask_size;
   struct timeval tv, *timeout;
 
+  log_to (stderr);
   parse_args (argc, argv);
   init ();
   if (!debug)
