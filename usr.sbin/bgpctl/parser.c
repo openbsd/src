@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2004/08/20 15:49:35 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.9 2004/10/26 13:12:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -173,40 +173,29 @@ int			 parse_asnum(const char *, u_int16_t *);
 struct parse_result *
 parse(int argc, char *argv[])
 {
-	int			 curarg = 1;
 	const struct token	*table = t_main;
 	const struct token	*match;
-	char			*word;
 
 	bzero(&res, sizeof(res));
-	if (argc == 1)
-		return (&res);
 
-	for (;;) {
-		if (argc > curarg)
-			word = argv[curarg];
-		else
-			word = NULL;
-
-		if ((match = match_token(word, table)) == NULL) {
+	while (argc > 0) {
+		if ((match = match_token(argv[0], table)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
 			return (NULL);
 		}
 
-		curarg++;
+		argc--;
+		argv++;
 
-		if (match->type == NOTOKEN)
-			break;
-
-		if (match->next == NULL)
+		if (match->type == NOTOKEN || match->next == NULL)
 			break;
 
 		table = match->next;
 	}
 
-	if (curarg < argc) {
-		fprintf(stderr, "superfluous argument: %s\n", argv[curarg]);
+	if (argc > 0) {
+		fprintf(stderr, "superfluous argument: %s\n", argv[0]);
 		return (NULL);
 	}
 

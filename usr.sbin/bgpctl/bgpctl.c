@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.67 2004/10/26 11:46:08 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.68 2004/10/26 13:12:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -99,8 +99,8 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
-	argc -= (optind - 1);
-	argv += (optind - 1);
+	argc -= optind;
+	argv += optind;
 
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
