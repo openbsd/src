@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.13 2000/08/19 13:43:23 nate Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.14 2000/09/07 18:44:29 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -284,15 +284,15 @@ crypto_dispatch(struct cryptop *crp)
 {
     int s = splhigh();
 
-    if (crp_req_queue == NULL)
-      crp_req_queue = crp;
-    else
-      *crp_req_queue_tail = crp;
-
-    crp_req_queue_tail = &(crp->crp_next);
-    wakeup((caddr_t) &crp_req_queue);
+    if (crp_req_queue == NULL) {
+	crp_req_queue = crp;
+	crp_req_queue_tail = &(crp->crp_next);
+	wakeup((caddr_t) &crp_req_queue);
+    } else {
+	*crp_req_queue_tail = crp;
+	crp_req_queue_tail = &(crp->crp_next);
+    }
     splx(s);
-
     return 0;
 }
 
