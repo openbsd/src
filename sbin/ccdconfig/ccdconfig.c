@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.10 1997/11/26 22:34:05 niklas Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.11 1998/07/08 22:24:54 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -176,11 +176,18 @@ main(argc, argv)
 	switch (action) {
 	case CCD_CONFIG:
 	case CCD_UNCONFIG:
+		setegid(getgid());
+		setgid(getgid());
+
 		exit(do_single(argc, argv, action));
 		/* NOTREACHED */
 
 	case CCD_CONFIGALL:
 	case CCD_UNCONFIGALL:
+
+		setegid(getgid());
+		setgid(getgid());
+
 		exit(do_all(action));
 		/* NOTREACHED */
 
@@ -505,6 +512,9 @@ dump_ccd(argc, argv)
 		warnx("can't open kvm: %s", errbuf);
 		return (1);
 	}
+
+	setegid(getgid());
+	setgid(getgid());
 
 	if (kvm_nlist(kd, nl))
 		KVM_ABORT(kd, "ccd-related symbols not available");
