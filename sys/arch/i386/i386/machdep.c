@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 1999/11/27 04:22:08 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.121 2000/01/15 08:59:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -715,7 +715,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium II (Klamath)", "Pentium Pro",
 				"Pentium II (Deschutes)",
 				"Pentium II (Celeron)",
-				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium III", "Pentium III (Coppermine)",
+				0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro"	/* Default */
 			},
 			intel686_cpu_setup
