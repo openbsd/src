@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.47 2003/05/06 12:22:08 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.48 2003/05/10 21:44:53 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -539,6 +539,9 @@ vprintf(fmt, ap)
 	consintr = savintr;		/* reenable interrupts */
 }
 
+__warn_references(sprintf,
+    "warning: sprintf() is often misused, please use snprintf()");
+
 /*
  * sprintf: print a message to a buffer
  */
@@ -555,11 +558,13 @@ sprintf(char *buf, const char *fmt, ...)
 	return(retval);
 }
 
+__warn_references(vsprintf,
+    "warning: vsprintf() is often misused, please use vsnprintf()");
+
 /*
  * vsprintf: print a message to the provided buffer [already have a
  *	va_list]
  */
-
 int
 vsprintf(buf, fmt, ap)
 	char *buf;
