@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.15 2002/06/10 19:18:48 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.16 2002/06/13 00:15:00 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -101,7 +101,7 @@ errorcode = /* empty */ | "[" string "]"
 .Ed
 .Pp
 The
-.Va cmd-string
+.Va cmdstring
 is an arbitrary string enclosed with quotation marks.
 The
 .Va errorcode
@@ -119,6 +119,29 @@ rule for the
 .Va execve
 system call.
 In that case, the current policy is inherited for the new binary.
+.Pp
+The filter operations have the following meaning:
+.Bl -hang -width Dinpath -offset AAA
+.It match
+Evaluates to true if file name globbing according to
+.Xr fnmatch 3
+succeeds.
+.It eq
+Evaluates to true if the system call argument matches 
+.Va cmdstring
+exactly.
+.It neq
+This is the logical negation of
+.Va eq .
+.It sub
+Performs a substring match on the system call argument.
+.It nsub
+This is the logical negation of
+.Va sub .
+.It inpath
+Evaluates to true if the system call argument is a subpath of
+.Va cmdstring .
+.El
 .Pp
 Policy entries may contain an appended predicate.
 Predicates have the following format:
