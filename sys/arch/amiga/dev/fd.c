@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.12 1997/08/08 21:46:35 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.13 2001/02/16 13:48:43 espie Exp $	*/
 /*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
@@ -144,6 +144,8 @@ struct fd_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
 	struct buf bufq;	/* queue of buf's */
+	struct timeout calibrate_to;
+	struct timeout motor_to;
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
 	int cachetrk;		/* cahced track -1 for none */
@@ -401,6 +403,8 @@ fdattach(pdp, dp, auxp)
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
 
+	timeout_set(&sc->calibrate_to, fdcalibrate, sc);
+	timeout_set(&sc->motor_to, fdmotoroff, sc);
 	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;
 	sc->type = ap->type;
@@ -1481,11 +1485,11 @@ fdcalibrate(arg)
 	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and dma
 	 */
 	if (loopcnt < 8)
-		timeout(fdcalibrate, sc, hz / 8);
+		timeout_add(&sc->calibrate_to, hz / 8);
 	else {
 		loopcnt = 0;
 		fdc_indma = NULL;
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		timeout_add(&sc->motor_to, 3 * hz / 2);
 		fddmastart(sc, sc->cachetrk);
 	}
 }
@@ -1499,7 +1503,7 @@ fddmadone(sc, timeo)
 	printf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
 #endif
 	fdc_indma = NULL;
-	untimeout(fdmotoroff, sc);
+	timeout_del(&sc->motor_to);
 	FDDMASTOP;
 
 	/*
@@ -1515,7 +1519,7 @@ fddmadone(sc, timeo)
 		/*
 		 * motor runs for 1.5 seconds after last dma
 		 */
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		timeout_add(&sc->motor_to, 3 * hz / 2);
 	}
 	if (sc->flags & FDF_DIRTY) {
 		/*
@@ -1563,7 +1567,7 @@ fddmadone(sc, timeo)
 			/*
 			 * this will be restarted at end of calibrate loop.
 			 */
-			untimeout(fdmotoroff, sc);
+			timeout_del(&sc->motor_to);
 			fdcalibrate(sc);
 			return;
 		}
