@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.14 2004/12/08 19:28:10 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.15 2004/12/08 20:00:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -146,6 +146,7 @@ extern u_int cvs_version_sent;
 int
 cvs_resp_handle(struct cvsroot *root, char *line)
 {
+	int ret;
 	char *cp, *cmd;
 	struct cvs_resp *resp;
 
@@ -163,7 +164,12 @@ cvs_resp_handle(struct cvsroot *root, char *line)
 		return (-1);
 	}
 
-	return (*cvs_resp_swtab[resp->resp_id].hdlr)(root, resp->resp_id, cp);
+	ret = (*cvs_resp_swtab[resp->resp_id].hdlr)(root, resp->resp_id, cp);
+
+	if (ret == -1)
+		cvs_log(LP_ERR, "error in handling of `%s' response", cmd);
+
+	return (ret);
 }
 
 
@@ -535,19 +541,11 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	mode_t fmode;
 	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
-	CVSFILE *cf;
 	CVSENTRIES *entfile;
 	struct cvs_ent *ep;
 	struct timeval tv[2];
 
 	STRIP_SLASH(line);
-
-	/* find parent directory of file */
-	cf = cvs_file_find(cvs_files, line);
-	if (cf == NULL) {
-		cvs_log(LP_ERR, "failed to find directory %s", line);
-		return (-1);
-	}
 
 	/* read the remote path of the file */
 	if (cvs_getln(root, path, sizeof(path)) < 0)
@@ -567,18 +565,26 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		return (-1);
 	}
 
-	if (type == CVS_RESP_CREATED) {
-		/* set the timestamp as the last one received from Mod-time */
+	if (cvs_modtime != CVS_DATE_DMSEC) {
 		ep->ce_mtime = cvs_modtime;
-		cvs_ent_add(entfile, ep);
-	} else if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED)) {
+		cvs_modtime = CVS_DATE_DMSEC;	/* invalidate */
+	} else
+		ep->ce_mtime = time(&(ep->ce_mtime));
+
+	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
+	    (type == CVS_RESP_MERGED)) {
 		if (cvs_ent_remove(entfile, ep->ce_name) < 0)
 			cvs_log(LP_WARN, "failed to remove entry for `%s'",
 			    ep->ce_name);
-
-		cvs_ent_add(entfile, ep);
-	} else if (type == CVS_RESP_MERGED) {
 	}
+
+	if (cvs_ent_add(entfile, ep) < 0) {
+		cvs_ent_free(ep);
+		cvs_ent_close(entfile);
+		return (-1);
+	}
+
+	cvs_ent_close(entfile);
 
 	fbuf = cvs_recvfile(root, &fmode);
 	if (fbuf == NULL)
