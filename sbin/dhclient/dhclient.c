@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.59 2004/09/15 18:15:18 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.60 2004/09/15 23:33:41 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -165,6 +165,7 @@ get_ifa(char *cp, int n)
 	return (NULL);
 }
 
+/* ARGSUSED */
 void
 routehandler(struct protocol *p)
 {
@@ -1654,7 +1655,7 @@ rewrite_client_leases(void)
 		write_client_lease(ifi, ifi->client->active, 1);
 
 	fflush(leaseFile);
-	ftruncate(fileno(leaseFile), ftell(leaseFile));
+	ftruncate(fileno(leaseFile), ftello(leaseFile));
 	fsync(fileno(leaseFile));
 }
 
