@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 1996/12/23 02:42:39 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 1997/01/12 13:02:07 downsj Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -42,6 +42,9 @@
  *
  *	@(#)exec.h	8.3 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_EXEC_H_
+#define _SYS_EXEC_H_
 
 /*
  * The following structure is found at the top of the user stack of each
@@ -215,3 +218,5 @@ extern int	exec_maxhdrsz;
 
 #include <sys/exec_aout.h>
 #include <machine/exec.h>
+
+#endif /* !_SYS_EXEC_H_ */
