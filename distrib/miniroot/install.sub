@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.189 2002/03/26 01:50:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.190 2002/03/30 00:50:57 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -329,12 +329,12 @@ ftp_list_files() {
 	# log in via ftp to host $1 as user $2 with password $3
 	# and return a list of all files in the directory $4 on stdout
 
-	ftp ${_ftp_active} -V -n "$1"  << __ptf
+	ftp ${_ftp_active} -V -n "$1"  << __EOT
 user "$2" "$3"
 cd "$4"
 ls
 quit
-__ptf
+__EOT
 }
 
 get_localdir() {
@@ -890,7 +890,7 @@ glob_selection() {
 	fi
 	# This is safe in single user mode.
 	_tfile=/tmp/install_case.$$
-	cat >$_tfile << OOF
+	cat >$_tfile << __EOT
 	case \$_f in
 		$_selection)
 			# Add/remove file to extraction list
@@ -906,7 +906,7 @@ glob_selection() {
 			_matched=\$(( \$_matched + 1 ))
 			;;
 	esac
-OOF
+__EOT
 	set +o noglob
 
 	# Eww.
@@ -2320,12 +2320,12 @@ donetconfig() {
 		echo "The host table is as follows:"
 		echo
 		cat /tmp/hosts
-	cat << __hosts_table_1
+	cat << __EOT
 
 You may want to edit the host table in the event that you are doing an
 NFS installation or an FTP installation without a name server and want
 to refer to the server by name rather than by its numeric ip address.
-__hosts_table_1
+__EOT
 		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
 		getresp "n"
 		case "$resp" in
@@ -2338,13 +2338,13 @@ __hosts_table_1
 		esac
 	fi
 
-	cat << \__network_config_2
+	cat << __EOT
 
 You will now be given the opportunity to escape to the command shell to do
 any additional network configuration you may need.  This may include adding
 additional routes, if needed.  In addition, you might take this opportunity
 to redo the default route in the event that it failed above.
-__network_config_2
+__EOT
 	echo -n "Escape to shell? [n] "
 	getresp "n"
 	case "$resp" in

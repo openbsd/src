@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.86 2002/03/19 12:16:13 krw Exp $
+#	$OpenBSD: install.sh,v 1.87 2002/03/30 00:50:57 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -170,13 +170,13 @@ if [ ! -f /etc/fstab ]; then
 		# Assume partition 'a' of $ROOTDISK is for the root filesystem.
 		# Loop and get the rest.
 		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-		cat << __get_filesystems_1
+		cat << __EOT
 
 You will now have the opportunity to enter filesystem information for ${DISK}.
 You will be prompted for the mount point (full path, including the prepending
 '/' character) for each BSD partition on ${DISK}.  Enter "none" to skip a
 partition or "done" when you are finished.
-__get_filesystems_1
+__EOT
 
 		if [ "${DISK}" = "${ROOTDISK}" ]; then
 			echo
@@ -291,14 +291,14 @@ fi
 
 # Get network configuration information, and store it for placement in the
 # root filesystem later.
-cat << \__network_config_1
+cat << __EOT
 
 You will now be given the opportunity to configure the network.  This will be
 useful if you need to transfer the installation sets via FTP, HTTP, or NFS.
 Even if you choose not to transfer installation sets that way, this information
 will be preserved and copied into the new root filesystem.
 
-__network_config_1
+__EOT
 echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in

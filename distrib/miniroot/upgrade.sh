@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.23 2002/03/26 01:50:08 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.24 2002/03/30 00:50:57 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -139,13 +139,13 @@ cp /mnt/etc/hosts /tmp/hosts
 
 # Start up the network in same/similar configuration as the installed system
 # uses.
-cat << \__network_config_1
+cat << __EOT
 
 The upgrade program would now like to enable the network.  It will use the
 configuration already stored on the root filesystem.  This is required
 if you wish to use the network installation capabilities of this program.
 
-__network_config_1
+__EOT
 echo -n	"Enable network? [y] "
 getresp "y"
 case "$resp" in
@@ -155,14 +155,14 @@ case "$resp" in
 			exit 1
 		fi
 
-		cat << \__network_config_2
+		cat << __EOT
 
 You will now be given the opportunity to escape to the command shell to
 do any additional network configuration you may need.  This may include
 adding additional routes, if needed.  In addition, you might take this
 opportunity to redo the default route in the event that it failed above.
 
-__network_config_2
+__EOT
 		echo -n "Escape to shell? [n] "
 		getresp "n"
 		case "$resp" in
@@ -182,7 +182,7 @@ esac
 echo	"The fstab is configured as follows:\n"
 cat /tmp/fstab
 
-cat << \__fstab_config_1
+cat << __EOT
 
 You may wish to edit the fstab.  For example, you may need to resolve
 dependencies in the order which the filesystems are mounted.
@@ -193,7 +193,7 @@ NOTE:	1) this fstab is used only during the upgrade. It will not be
 	2) all non-ffs filesystems, and filesystems with the 'noauto'
 	   option, will be ignored during the upgrade.
 
-__fstab_config_1
+__EOT
 echo -n	"Edit the fstab with ${EDITOR}? [n] "
 getresp "n"
 case "$resp" in
@@ -273,11 +273,11 @@ get_timezone
 		echo "Moving /etc/sendmail.cf -> /etc/mail/sendmail.cf"
 		test -d /mnt/etc/mail || mkdir /mnt/etc/mail
 		mv /mnt/etc/sendmail.cf /mnt/etc/mail/sendmail.cf
-		ed - /mnt/etc/rc << \__rc_edit
+		ed - /mnt/etc/rc << __EOT
 1,$s/etc\/sendmail.cf/etc\/mail\/sendmail.cf/g
 w
 q
-__rc_edit
+__EOT
 	fi
 
 	echo -n "Making devices..."
