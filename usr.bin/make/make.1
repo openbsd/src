@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.31 2000/04/12 21:47:49 aaron Exp $
+.\"	$OpenBSD: make.1,v 1.32 2000/06/06 15:32:25 ericj Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1223,7 +1223,7 @@ For loops are expanded before tests, so a fragment such as:
 \&.if ${TMACHINE} = ${MACHINE}
      ...
 \&.endif
-\&.fi
+\&.endfor
 .Ed
 .Pp
 won't work, and should be rewritten the other way around.
