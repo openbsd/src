@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile.inc,v 1.4 2002/11/05 22:19:55 marc Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2003/01/20 18:12:11 marc Exp $
 
-.PATH: ${LIBC_RSRCDIR}/thread
+.PATH: ${SRCDIR}/thread
 
 SRCS+=	thread_storage.c thread_malloc_lock.c

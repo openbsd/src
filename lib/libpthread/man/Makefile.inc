@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.15 2002/02/20 05:16:20 fgsch Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2003/01/20 18:12:11 marc Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
 
-.PATH: ${LIBC_RSRCDIR}/man
+.PATH: ${SRCDIR}/man
 
 MAN+=	\
 	pthread_attr_init.3 \

@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2002/01/17 04:47:14 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2003/01/20 18:12:11 marc Exp $
 
-.PATH:	 ${LIBC_RSRCDIR}/sys ${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
+.PATH:	 ${SRCDIR}/sys ${SRCDIR}/arch/${MACHINE_ARCH}
 
 SRCS+=	uthread_error.c
 SRCS+=	_atomic_lock.c slow_atomic_lock.c
 
-.if exists(${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep_asm.S)
+.if exists(${SRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep_asm.S)
 SRCS+=	uthread_machdep_asm.S
 .endif
-.if exists(${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep.c)
+.if exists(${SRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep.c)
 SRCS+=	uthread_machdep.c
 .endif
 
@@ -33,7 +33,7 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 SRCS+= _sys_aliases.c
 CLEANFILES += _sys_aliases.c
 
-_sys_aliases.c: ${LIBC_RSRCDIR}/Makefile ${LIBCSRCDIR}/sys/Makefile.inc
+_sys_aliases.c: ${SRCDIR}/Makefile ${LIBCSRCDIR}/sys/Makefile.inc
 	echo '#include <sys/cdefs.h>' > ${.TARGET}
 	for fn in ${ASM:R} ${PSEUDO:R} ""; do \
 		case $$fn in ${HIDDEN_SYSCALLS:.o=|}"") : stays hidden ;; \
