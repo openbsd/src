@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 1999/11/09 04:13:54 rahnds Exp $ */
+/*	$OpenBSD: intr.h,v 1.5 2000/03/31 04:16:34 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -49,6 +49,10 @@
 #define	IST_LEVEL	3
 
 #ifndef _LOCORE
+
+#define PPC_NIRQ	65
+#define PPC_CLK_IRQ	64
+extern int intrcnt[PPC_NIRQ];
 
 void setsoftclock __P((void));
 void clearsoftclock __P((void));
