@@ -1,7 +1,7 @@
-/*	$OpenBSD: logging.c,v 1.6 1998/03/31 06:41:03 millert Exp $	*/
+/*	$OpenBSD: logging.c,v 1.7 1998/09/15 02:42:44 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: logging.c,v 1.94 1998/03/31 05:05:38 millert Exp $";
+static char rcsid[] = "$From: logging.c,v 1.97 1998/09/10 22:51:09 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -89,12 +89,6 @@ static void syslog_wrapper	__P((int, char *, char *, char *));
 static char *logline;
 extern int errorlineno;
 
-/*
- * length of syslog-like header info used for mail and file logs
- * is len("Mon MM HH:MM:SS : username : ")
- */
-#define LOG_HEADER_LEN		29
-
 #ifdef BROKEN_SYSLOG
 #define MAXSYSLOGTRIES		16	/* num of retries for broken syslogs */
 #define SYSLOG(a,b,c,d)		syslog_wrapper(a,b,c,d)
@@ -138,7 +132,7 @@ void log_error(code)
     int code;
 {
     char *p;
-    int count;
+    int count, header_length;
     time_t now;
 #if (LOGGING & SLOG_FILE)
     mode_t oldmask;
@@ -150,9 +144,19 @@ void log_error(code)
 #endif /* LOGGING & SLOG_SYSLOG */
 
     /*
+     * length of syslog-like header info used for mail and file logs
+     * is len("DDD MM HH:MM:SS : username : ") with an additional
+     * len("HOST=hostname : ") if HOST_IN_LOG is defined.
+     */
+    header_length = 21 + strlen(user_name);
+#ifdef HOST_IN_LOG
+    header_length += 8 + strlen(shost);
+#endif
+
+    /*
      * Allocate enough memory for logline so we won't overflow it
      */
-    count = LOG_HEADER_LEN + 136 + 2 * MAXPATHLEN + strlen(tty) + strlen(cwd) +
+    count = header_length + 136 + 2 * MAXPATHLEN + strlen(tty) + strlen(cwd) +
 	    strlen(runas_user);
     if (cmnd_args)
 	count += strlen(cmnd_args);
@@ -170,12 +174,16 @@ void log_error(code)
      */
     now = time((time_t) 0);
     p = ctime(&now) + 4;
-    (void) sprintf(logline, "%15.15s : %8.8s : ", p, user_name);
+#ifdef HOST_IN_LOG
+    (void) sprintf(logline, "%15.15s : %s : HOST=%s : ", p, user_name, shost);
+#else
+    (void) sprintf(logline, "%15.15s : %s : ", p, user_name);
+#endif
 
     /*
      * we need a pointer to the end of logline for cheap appends.
      */
-    p = logline + LOG_HEADER_LEN;
+    p = logline + header_length;
 
     switch (code) {
 
@@ -318,7 +326,7 @@ void log_error(code)
     /*
      * Log the full line, breaking into multiple syslog(3) calls if necesary
      */
-    p = &logline[LOG_HEADER_LEN];	/* skip past the date and user */
+    p = &logline[header_length];	/* skip past the date, host, and user */
     for (count = 0; count < strlen(logline) / MAXSYSLOGLEN + 1; count++) {
 	if (strlen(p) > MAXSYSLOGLEN) {
 	    /*
@@ -368,6 +376,9 @@ void log_error(code)
 	char *beg, *oldend, *end;
 	int maxlen = MAXLOGFILELEN;
 
+#ifndef WRAP_LOG
+       (void) fprintf(fp, "%s\n", logline);
+#else
 	/*
 	 * Print out logline with word wrap
 	 */
@@ -415,6 +426,7 @@ void log_error(code)
 		beg = NULL;			/* exit condition */
 	    }
 	}
+#endif
 
 	(void) fclose(fp);
     }
@@ -538,9 +550,15 @@ static void send_mail()
 static RETSIGTYPE reapchild(sig)
     int sig;
 {
-    int save_errno = errno;
+    int pid, status, save_errno = errno;
 
+#ifdef sudo_waitpid
+    do {
+	pid = sudo_waitpid(-1, &status, WNOHANG);
+    } while (pid == -1);
+#else
     (void) wait(NULL);
+#endif
 #ifndef POSIX_SIGNALS
     (void) signal(SIGCHLD, reapchild);
 #endif /* POSIX_SIGNALS */

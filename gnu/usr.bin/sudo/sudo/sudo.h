@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.h,v 1.5 1998/03/31 06:41:12 millert Exp $	*/
+/*	$OpenBSD: sudo.h,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -27,7 +27,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  Id: sudo.h,v 1.122 1998/03/31 05:05:45 millert Exp $
+ *  $From: sudo.h,v 1.126 1998/09/07 02:51:05 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -190,8 +190,8 @@ struct generic_alias {
 #ifndef HAVE_STRDUP
 char *strdup		__P((const char *));
 #endif
-#ifndef HAVE_GETWD
-char *getwd		__P((char *));
+#ifndef HAVE_GETCWD
+char *getcwd		__P((char *, size_t size));
 #endif
 #if !defined(HAVE_PUTENV) && !defined(HAVE_SETENV)
 int putenv		__P((const char *));

@@ -1,7 +1,7 @@
-/*	$OpenBSD: visudo.c,v 1.7 1998/03/31 06:41:20 millert Exp $	*/
+/*	$OpenBSD: visudo.c,v 1.8 1998/09/15 02:42:45 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: visudo.c,v 1.7 1998/03/31 06:41:20 millert Exp $";
+static char rcsid[] = "$From: visudo.c,v 1.91 1998/09/08 00:42:02 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -107,7 +107,7 @@ int NewArgc = 0;
 char *sudoers = _PATH_SUDO_SUDOERS;
 char *stmp = _PATH_SUDO_STMP;
 int parse_error = FALSE;
-char *runas_user = "root";
+char *runas_user = RUNAS_DEFAULT;
 
 /*
  * For the parsing routines
@@ -224,7 +224,7 @@ int main(argc, argv)
 	 */
 	if (strlen(Editor) + strlen(stmp) + 30 > sizeof(buf)) {
 	    (void) fprintf(stderr, "%s: Buffer too short (line %d).\n",
-			   __LINE__, Argv[0]);
+			   Argv[0], __LINE__);
 	    Exit(-1);
 	}
 	if (parse_error == TRUE)
@@ -276,7 +276,7 @@ int main(argc, argv)
 	    if (yyparse() && parse_error != TRUE) {
 		(void) fprintf(stderr,
 		    "%s: Failed to parse temporary file (%s), unknown error.\n",
-		    Argv[0], stmp, sudoers);
+		    Argv[0], stmp);
 		parse_error = TRUE;
 	    }
 	} else {

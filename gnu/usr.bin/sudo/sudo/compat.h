@@ -1,7 +1,7 @@
-/*	$OpenBSD: compat.h,v 1.5 1998/03/31 06:40:50 millert Exp $	*/
+/*	$OpenBSD: compat.h,v 1.6 1998/09/15 02:42:43 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: compat.h,v 1.36 1998/03/31 05:05:29 millert Exp $
+ *  $From: compat.h,v 1.39 1998/09/09 00:45:17 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -85,6 +85,13 @@
 #ifndef S_IRWXU
 #  define S_IRWXU		0000700		/* rwx for owner */
 #endif /* S_IRWXU */
+
+/*
+ * Some OS's may not have this.
+ */
+#ifndef howmany
+#define howmany(x, y)	(((x) + ((y) - 1)) / (y))
+#endif
 
 /*
  * We need to know how long the longest password may be.

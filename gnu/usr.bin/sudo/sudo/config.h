@@ -1,8 +1,8 @@
-/*	$OpenBSD: config.h,v 1.4 1998/03/31 06:40:51 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 1998/09/15 02:42:43 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: config.h.in,v 1.87 1998/03/31 05:05:30 millert Exp $
+ *  $From: config.h.in,v 1.95 1998/09/11 23:23:33 millert Exp $
  */
 
 /*
@@ -73,6 +73,12 @@
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef ssize_t */
 
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* #undef dev_t */
+
+/* Define to `unsigned int' if <sys/types.h> doesn't define.  */
+/* #undef ino_t */
+
 /* Define to be nil if C compiler doesn't support "const."  */
 /* #undef const */
 
@@ -108,6 +114,9 @@
 #  define HAVE_KERB4
 #endif /* HAVE_KERB5 */
 
+/* Define if you use PAM.  */
+/* #undef HAVE_PAM */
+
 /* Define if you use AFS.  */
 /* #undef HAVE_AFS */
 
@@ -124,10 +133,7 @@
 #define HAVE_TZSET 1
 
 /* Define if you have getcwd(3).  */
-/* #undef HAVE_GETCWD */
-
-/* Define if you have getwd(3).  */
-#define HAVE_GETWD 1
+#define HAVE_GETCWD 1
 
 /* Define if you have strdup(3).  */
 #define HAVE_STRDUP 1
@@ -195,8 +201,17 @@
 /* Define if you have bigcrypt(3). */
 /* #undef HAVE_BIGCRYPT */
 
+/* Define if you have set_auth_parameters(3). */
+/* #undef HAVE_SET_AUTH_PARAMETERS */
+
 /* Define if you have seteuid(3). */
 #define HAVE_SETEUID 1
+
+/* Define if you have waitpid(2). */
+#define HAVE_WAITPID 1
+
+/* Define if you have wait3(2). */
+/* #undef HAVE_WAIT3 */
 
 /* Define if you have the <malloc.h> header file.  */
 /* #undef HAVE_MALLOC_H */
@@ -274,6 +289,23 @@
 /* Define if your syslog(3) does not guarantee the message will be logged */
 /* and syslog(3) returns non-zero to denote failure */
 /* #undef BROKEN_SYSLOG */
+
+/*
+ * Emulate a subset of waitpid() if we don't have it.
+ */
+#ifdef HAVE_WAITPID
+#define sudo_waitpid(p, s, o)	waitpid(p, s, o)
+#else
+#ifdef HAVE_WAIT3
+#define sudo_waitpid(p, s, o)	wait3(s, o, NULL)
+#endif
+#endif
+
+/* Define if you want the hostname to be entered into the log file */
+/* #undef HOST_IN_LOG */
+
+/* Define if you want the log file line to be wrapped */
+#define WRAP_LOG 1
 
 /*
  * Paths to commands used by sudo.  There are used by pathnames.h.

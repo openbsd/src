@@ -1,7 +1,7 @@
-/*	$OpenBSD: version.h,v 1.5 1998/03/31 06:41:17 millert Exp $	*/
+/*	$OpenBSD: version.h,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: version.h,v 1.45 1998/01/21 05:49:20 millert Exp $
+ *  $From: version.h,v 1.46 1998/04/06 03:36:33 millert Exp $
  */
 
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static char version[] = "1.5.5";
+static char version[] = "1.5.6";
 
 #endif /* _SUDO_VERSION_H */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo_setenv.c,v 1.5 1998/03/31 06:41:14 millert Exp $	*/
+/*	$OpenBSD: sudo_setenv.c,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: sudo_setenv.c,v 1.25 1998/03/31 05:05:46 millert Exp $";
+static char rcsid[] = "$From: sudo_setenv.c,v 1.26 1998/04/06 03:35:47 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

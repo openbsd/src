@@ -1,7 +1,7 @@
-/*	$OpenBSD: options.h,v 1.9 1998/03/31 06:41:04 millert Exp $	*/
+/*	$OpenBSD: options.h,v 1.10 1998/09/15 02:42:44 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: options.h,v 1.42 1998/03/31 05:15:42 millert Exp $
+ *  $From: options.h,v 1.45 1998/09/15 02:25:48 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H
@@ -33,6 +33,7 @@
 
 /* User-configurable Sudo runtime options */
 
+#define RUNAS_DEFAULT "root"	/* default user to run cmd as if no -u flag */
 /*#define FQDN			/* expect fully qualified hosts in sudoers */
 #define LOGGING SLOG_SYSLOG	/* log via SLOG_SYSLOG, SLOG_FILE, SLOG_BOTH */
 #define LOGFAC LOG_AUTHPRIV	/* syslog facility for sudo to use */

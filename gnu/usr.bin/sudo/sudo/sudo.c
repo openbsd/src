@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.c,v 1.9 1998/06/27 20:21:55 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.10 1998/09/15 02:42:45 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -53,7 +53,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: sudo.c,v 1.190 1998/03/31 05:05:45 millert Exp $";
+static char rcsid[] = "$From: sudo.c,v 1.197 1998/09/13 19:32:48 millert Exp $";
 #endif /* lint */
 
 #define MAIN
@@ -143,14 +143,14 @@ char **Argv;
 int NewArgc = 0;
 char **NewArgv = NULL;
 struct passwd *user_pw_ent;
-char *runas_user = "root";
+char *runas_user = RUNAS_DEFAULT;
 char *cmnd = NULL;
 char *cmnd_args = NULL;
 char *tty = "unknown";
 char *prompt;
-char host[MAXHOSTNAMELEN + 1];
+char host[MAXHOSTNAMELEN];
 char *shost;
-char cwd[MAXPATHLEN + 1];
+char cwd[MAXPATHLEN];
 FILE *sudoers_fp = NULL;
 struct stat cmnd_st;
 static char *runas_homedir = NULL;
@@ -195,7 +195,7 @@ int main(argc, argv)
     int sudo_mode = MODE_RUN;
     extern char ** environ;
 
-#if (SHADOW_TYPE == SPW_SECUREWARE)
+#if (SHADOW_TYPE == SPW_SECUREWARE) && defined(HAVE_SET_AUTH_PARAMETERS)
     (void) set_auth_parameters(argc, argv);
 #endif /* SPW_SECUREWARE */
 
@@ -275,8 +275,7 @@ int main(argc, argv)
 
 	/* add the shell as argv[0] */
 	if (user_shell && *user_shell) {
-	    if ((NewArgv[0] = strrchr(user_shell, '/') + 1) == (char *) 1)
-		NewArgv[0] = user_shell;
+	    NewArgv[0] = user_shell;
 	} else {
 	    (void) fprintf(stderr, "%s: Unable to determine shell.", Argv[0]);
 	    exit(1);
@@ -419,7 +418,7 @@ static void load_globals(sudo_mode)
     if ((user_pw_ent = sudo_getpwuid(getuid())) == NULL) {
 	/* need to make a fake user_pw_ent */
 	struct passwd pw_ent;
-	char pw_name[MAX_UID_T_LEN+1];
+	char pw_name[MAX_UID_T_LEN + 1];
 
 	/* fill in uid and name fields with the uid */
 	pw_ent.pw_uid = getuid();
@@ -469,10 +468,10 @@ static void load_globals(sudo_mode)
     /*
      * so we know where we are... (do as user)
      */
-    if (!getwd(cwd)) {
+    if (!getcwd(cwd, sizeof(cwd))) {
 	/* try as root... */
 	set_perms(PERM_ROOT, sudo_mode);
-	if (!getwd(cwd)) {
+	if (!getcwd(cwd, sizeof(cwd))) {
 	    (void) fprintf(stderr, "%s:  Can't get working directory!\n",
 			   Argv[0]);
 	    (void) strcpy(cwd, "unknown");
@@ -484,7 +483,7 @@ static void load_globals(sudo_mode)
      * load the host global variable from gethostname() and use
      * gethostbyname() if we want to be sure it is fully qualified.
      */
-    if ((gethostname(host, MAXHOSTNAMELEN))) {
+    if ((gethostname(host, sizeof(host)))) {
 	strcpy(host, "localhost");
 	log_error(GLOBAL_NO_HOSTNAME);
 	inform_user(GLOBAL_NO_HOSTNAME);
@@ -765,7 +764,7 @@ static void add_env(contiguous)
 static int load_cmnd(sudo_mode)
     int sudo_mode;
 {
-    if (strlen(NewArgv[0]) > MAXPATHLEN) {
+    if (strlen(NewArgv[0]) >= MAXPATHLEN) {
 	errno = ENAMETOOLONG;
 	(void) fprintf(stderr, "%s: %s: Pathname too long\n", Argv[0],
 		       NewArgv[0]);

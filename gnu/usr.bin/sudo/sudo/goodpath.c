@@ -1,7 +1,7 @@
-/*	$OpenBSD: goodpath.c,v 1.5 1998/03/31 06:40:55 millert Exp $	*/
+/*	$OpenBSD: goodpath.c,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: goodpath.c,v 1.21 1998/03/31 05:05:33 millert Exp $";
+static char rcsid[] = "$From: goodpath.c,v 1.22 1998/04/06 03:35:35 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

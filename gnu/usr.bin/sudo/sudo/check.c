@@ -1,7 +1,7 @@
-/*	$OpenBSD: check.c,v 1.9 1998/04/08 02:53:00 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.10 1998/09/15 02:42:43 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: check.c,v 1.133 1998/03/31 05:05:28 millert Exp $";
+static char rcsid[] = "$From: check.c,v 1.140 1998/09/11 23:19:53 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -79,6 +79,10 @@ static char rcsid[] = "Id: check.c,v 1.133 1998/03/31 05:05:28 millert Exp $";
 #ifdef HAVE_KERB4
 #  include <krb.h>
 #endif /* HAVE_KERB4 */
+#ifdef HAVE_PAM
+#  include <security/pam_appl.h>
+#  include <security/pam_misc.h>
+#endif /* HAVE_PAM */
 #ifdef HAVE_AFS
 #  include <afs/stds.h>
 #  include <afs/kautils.h>
@@ -114,6 +118,9 @@ static void  reminder			__P((void));
 #ifdef HAVE_KERB4
 static int   sudo_krb_validate_user	__P((struct passwd *, char *));
 #endif /* HAVE_KERB4 */
+#ifdef HAVE_PAM
+static void pam_attempt_auth            __P((void));
+#endif /* HAVE_PAM */
 #ifdef HAVE_SKEY
 static char *sudo_skeyprompt		__P((struct skey *, char *));
 #endif /* HAVE_SKEY */
@@ -126,12 +133,18 @@ int   user_is_exempt			__P((void));
  * Globals
  */
 static int   timedir_is_good;
-static char  timestampfile[MAXPATHLEN + 1];
+static char  timestampfile[MAXPATHLEN];
 #ifdef HAVE_SECURID
 union config_record configure;
 #endif /* HAVE_SECURID */
 #ifdef HAVE_SKEY
 struct skey skey;
+#endif
+#ifdef HAVE_PAM
+static struct pam_conv conv = {
+	misc_conv,
+	NULL
+};
 #endif
 #ifdef HAVE_OPIE
 struct opie opie;
@@ -166,7 +179,11 @@ void check_user()
 	if (rtn == 2)
 	    reminder();		/* do the reminder if ticket file is new */
 #endif /* NO_MESSAGE */
+#ifdef HAVE_PAM
+	pam_attempt_auth();
+#else  /* !HAVE_PAM */
 	check_passwd();
+#endif /* HAVE_PAM */
     }
 
     update_timestamp();
@@ -572,7 +589,7 @@ static void check_passwd()
 	    set_perms(PERM_USER, 0);
 	}
 #  endif /* HAVE_OPIE */
-#  if !defined(HAVE_SKEY) || !defined(SKEY_ONLY)
+#  if !defined(OTP_ONLY) || (!defined(HAVE_SKEY) && !defined(HAVE_OPIE))
 	/*
 	 * If we use shadow passwords with a different crypt(3)
 	 * check that here, else use standard crypt(3).
@@ -641,7 +658,7 @@ static void check_passwd()
 	if (dce_pwent(user_name, pass))
 	    return;
 #    endif /* HAVE_DCE */
-#  endif /* !HAVE_SKEY || !SKEY_ONLY */
+#  endif /* !OTP_ONLY || (!HAVE_SKEY && !HAVE_OPIE) */
 #endif /* HAVE_AUTHENTICATE */
 
 	--counter;		/* otherwise, try again  */
@@ -717,6 +734,53 @@ static int sudo_krb_validate_user(pw_ent, pass)
 }
 #endif /* HAVE_KERB4 */
 
+#ifdef HAVE_PAM
+/********************************************************************
+ *  pam_attempt_auth()
+ *
+ *  Try to authenticate the user using Pluggable Authentication
+ *  Modules (PAM). Added 9/11/98 by Gary J. Calvin
+ */
+static void pam_attempt_auth()
+{
+    pam_handle_t *pamh=NULL;
+    int retval;
+    register int counter = TRIES_FOR_PASSWORD;
+
+    /* printf("PAM Authentication\n"); */
+    retval = pam_start("sudo", user_name, &conv, &pamh);
+    if (retval != PAM_SUCCESS) {
+        pam_end(pamh, retval);
+        exit(1);
+    }
+    while (counter > 0) {
+        retval = pam_authenticate(pamh, 0);
+        if (retval == PAM_SUCCESS) {
+            set_perms(PERM_USER, 0);
+            pam_end(pamh, retval);
+            return;
+        }
+
+        --counter;
+#ifdef USE_INSULTS
+        (void) fprintf(stderr, "%s\n", INSULT);
+#else
+        (void) fprintf(stderr, "%s\n", INCORRECT_PASSWORD);
+#endif /* USE_INSULTS */
+    }
+    set_perms(PERM_USER, 0);
+
+    if (counter > 0) {
+        log_error(PASSWORD_NOT_CORRECT);
+        inform_user(PASSWORD_NOT_CORRECT);
+    } else {
+        log_error(PASSWORDS_NOT_CORRECT);
+        inform_user(PASSWORDS_NOT_CORRECT);
+    }
+    pam_end(pamh, retval);
+    exit(1);
+}
+#endif /* HAVE_PAM */
 
 #ifdef HAVE_SKEY
 /********************************************************************
@@ -829,16 +893,16 @@ static char *sudo_opieprompt(user_opie, p)
     if ((rval = opiechallenge(user_opie, user_name, challenge)) != 0) {
 #ifdef OTP_ONLY
 	(void) fprintf(stderr,
-		       "%s: You do not exist in the s/key database.\n",
+		       "%s: You do not exist in the opie database.\n",
 		       Argv[0]);
 	exit(1);
 #else
-	/* return the original prompt if we cannot get s/key info */
+	/* return the original prompt if we cannot get opie info */
 	return(orig_prompt);
 #endif /* OTP_ONLY */
     }
 
-    /* get space for new prompt with embedded s/key challenge */
+    /* get space for new prompt with embedded opie challenge */
     if (new_prompt == NULL) {
 	/* allocate space for new prompt */
 	np_size = op_len + strlen(challenge) + 7;
@@ -886,7 +950,7 @@ static void reminder()
     (void) fprintf(stderr, "\n%s\n%s\n\n%s\n%s\n\n",
 #else
     (void) fprintf(stderr, "\n%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
-	"    CU sudo version 1.5.5, based on Root Group sudo version 1.1",
+	"    CU sudo version , based on Root Group sudo version 1.1",
 	"    sudo version 1.1, Copyright (C) 1991 The Root Group, Inc.",
 	"    sudo comes with ABSOLUTELY NO WARRANTY.  This is free software,",
 	"    and you are welcome to redistribute it under certain conditions.",

@@ -1,10 +1,10 @@
-#       $OpenBSD: Makefile,v 1.4 1997/04/19 21:26:13 millert Exp $
+#       $OpenBSD: Makefile,v 1.5 1998/09/15 02:42:43 millert Exp $
 
 PROG=	sudo
 MAN=	sudo.8 sudoers.5
 CFLAGS+=-I${.CURDIR} -I.
-SRCS=	check.c find_path.c getspwuid.c goodpath.c interfaces.c logging.c parse.c sudo.c sudo_setenv.c tgetpass.c y.tab.c lex.yy.c
-CLEANFILES+=y.tab.c y.tab.h lex.yy.c
+SRCS=	check.c find_path.c getspwuid.c goodpath.c interfaces.c logging.c parse.c sudo.c sudo_setenv.c tgetpass.c sudo.tab.c lex.yy.c
+CLEANFILES+=sudo.tab.c sudo.tab.h lex.yy.c
 
 LDADD=  -lcompat
 DPADD=  ${LIBCOMPAT}
@@ -37,5 +37,5 @@ lex.yy.c: parse.lex
 	rm -f lex.yy.c
 	$(LEX) ${.CURDIR}/parse.lex
 
-y.tab.c y.tab.h: parse.yacc
-	$(YACC) -d ${.CURDIR}/parse.yacc
+sudo.tab.c sudo.tab.h: parse.yacc
+	$(YACC) -b sudo -d ${.CURDIR}/parse.yacc

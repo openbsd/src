@@ -1,10 +1,10 @@
-#       $OpenBSD: Makefile,v 1.1 1996/10/14 05:14:57 millert Exp $
+#       $OpenBSD: Makefile,v 1.2 1998/09/15 02:42:45 millert Exp $
 
 PROG=	visudo
 MAN=	visudo.8
 CFLAGS+=-I${.CURDIR}/../sudo -I.
-SRCS=	y.tab.c lex.yy.c visudo.c
-CLEANFILES+=y.tab.c y.tab.h lex.yy.c
+SRCS=	sudo.tab.c lex.yy.c visudo.c
+CLEANFILES+=sudo.tab.c sudo.tab.h lex.yy.c
 
 LDADD=  -lcompat
 DPADD=  ${LIBCOMPAT}
@@ -19,5 +19,5 @@ lex.yy.c: ${.CURDIR}/../sudo/parse.lex
 	rm -f lex.yy.c
 	$(LEX) ${.CURDIR}/../sudo/parse.lex
 
-y.tab.c y.tab.h: ${.CURDIR}/../sudo/parse.yacc
-	$(YACC) -d ${.CURDIR}/../sudo/parse.yacc
+sudo.tab.c sudo.tab.h: ${.CURDIR}/../sudo/parse.yacc
+	$(YACC) -b sudo -d ${.CURDIR}/../sudo/parse.yacc

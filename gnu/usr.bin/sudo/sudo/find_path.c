@@ -1,7 +1,7 @@
-/*	$OpenBSD: find_path.c,v 1.5 1998/03/31 06:40:53 millert Exp $	*/
+/*	$OpenBSD: find_path.c,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: find_path.c,v 1.72 1998/03/31 05:05:31 millert Exp $";
+static char rcsid[] = "$From: find_path.c,v 1.74 1998/04/06 03:35:34 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -96,7 +96,7 @@ extern char *strdup	__P((const char *));
 char * find_path(file)
     char *file;			/* file to find */
 {
-    static char command[MAXPATHLEN + 1];	/* qualified filename */
+    static char command[MAXPATHLEN]; /* qualified filename */
     register char *n;		/* for traversing path */
     char *path = NULL;		/* contents of PATH env var */
     char *origpath;		/* so we can free path later */
@@ -107,7 +107,7 @@ char * find_path(file)
 
     command[0] = '\0';
 
-    if (strlen(file) > MAXPATHLEN) {
+    if (strlen(file) >= MAXPATHLEN) {
 	errno = ENAMETOOLONG;
 	(void) fprintf(stderr, "%s:  path too long:  %s\n", Argv[0], file);
 	exit(1);

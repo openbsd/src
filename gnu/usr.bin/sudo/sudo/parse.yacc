@@ -1,9 +1,8 @@
 %{
-
-/*	$OpenBSD: parse.yacc,v 1.9 1998/03/31 06:41:08 millert Exp $	*/
+/*      $OpenBSD: parse.yacc,v 1.10 1998/09/15 02:42:44 millert Exp $    */
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: parse.yacc,v 1.9 1998/03/31 06:41:08 millert Exp $";
+static char rcsid[] = "$From: parse.yacc,v 1.115 1998/09/15 02:25:48 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -310,7 +309,7 @@ opcmnd		:	cmnd { ; }
 		;
 
 runasspec	:	/* empty */ {
-			    $$ = (strcmp("root", runas_user) == 0);
+			    $$ = (strcmp(RUNAS_DEFAULT, runas_user) == 0);
 			}
 		|	RUNAS runaslist {
 			    $$ = $2;

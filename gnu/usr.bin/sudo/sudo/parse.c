@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.c,v 1.7 1998/03/31 06:41:05 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 1998/09/15 02:42:44 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.5
+ *  CU sudo version 1.5.6
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: parse.c,v 1.88 1998/03/31 05:05:40 millert Exp $";
+static char rcsid[] = "$From: parse.c,v 1.91 1998/09/07 02:41:33 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -213,12 +213,14 @@ int command_matches(cmnd, user_args, path, sudoers_args)
     struct stat pst;
     DIR *dirp;
     struct dirent *dent;
-    char buf[MAXPATHLEN+1];
+    char buf[MAXPATHLEN];
     static char *c;
 
     /* don't bother with pseudo commands like "validate" */
     if (strchr(cmnd, '/') == NULL)
 	return(FALSE);
+
+    plen = strlen(path);
 
     /* only need to stat cmnd once since it never changes */
     if (cmnd_st.st_dev == 0) {
@@ -251,7 +253,6 @@ int command_matches(cmnd, user_args, path, sudoers_args)
 	else
 	    return(FALSE);
     } else {
-	plen = strlen(path);
 	if (path[plen - 1] != '/') {
 #ifdef FAST_MATCH
 	    char *p;
@@ -293,6 +294,9 @@ int command_matches(cmnd, user_args, path, sudoers_args)
 	    return(FALSE);
 
 	while ((dent = readdir(dirp)) != NULL) {
+	    /* ignore paths > MAXPATHLEN (XXX - log) */
+	    if (plen + NAMLEN(dent) >= sizeof(buf))
+		continue;
 	    strcpy(buf, path);
 	    strcat(buf, dent->d_name);
 #ifdef FAST_MATCH
@@ -406,13 +410,13 @@ int netgr_matches(netgr, host, user)
 #ifdef HAVE_GETDOMAINNAME
     /* get the domain name (if any) */
     if (domain == (char *) -1) {
-	if ((domain = (char *) malloc(MAXHOSTNAMELEN + 1)) == NULL) {
+	if ((domain = (char *) malloc(MAXHOSTNAMELEN)) == NULL) {
 	    perror("malloc");
 	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}
 
-	if (getdomainname(domain, MAXHOSTNAMELEN + 1) != 0 || *domain == '\0') {
+	if (getdomainname(domain, MAXHOSTNAMELEN) != 0 || *domain == '\0') {
 	    (void) free(domain);
 	    domain = NULL;
 	}
