@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.30 2002/09/12 03:48:31 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.31 2003/01/10 22:10:19 millert Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,29 +32,19 @@
  * of PCI card supported:
  *
  * 1) Cards based on the Prism2.5 Mini-PCI chipset
- * 2) Cards that use a dumb ISA->PCI bridge
+ * 2) Cards that use a dumb PCMCIA->PCI bridge
  *
  * Only the first type are "true" PCI cards.
  *
- * The latter are often sold as "PCI wireless card adapters" and are
- * sold by several vendors.  Most are simply rebadged versions of the
- * Eumitcom WL11000P or Global Sun Technology GL24110P02.
- * These cards use the PLX 9052 dumb bridge chip to connect a PCMCIA
- * wireless card to the PCI bus.  Because it is a dumb bridge and
- * not a true PCMCIA bridge, the PCMCIA subsystem is not involved
- * (or even required).  The PLX 9052 provides multiple PCI address
- * space mappings.  The primary mappings at PCI registers 0x10 (mem)
- * and 0x14 (I/O) are for the PLX chip itself, *NOT* the PCMCIA card.
- * The mem and I/O spaces for the PCMCIA card are mapped to 0x18 and
- * 0x1C respectively.
- * The PLX 9050/9052 datasheet may be downloaded from PLX at
- *	http://www.plxtech.com/products/toolbox/9050.htm
+ * The latter are simply PCMCIA cards (or the guts of same) with some
+ * type of dumb PCMCIA->PCI bridge.  They are "dumb" in that they
+ * are not true PCMCIA bridges and really just serve to deal with
+ * the different interrupt types and timings of the ISA vs. PCI bus.
  *
- * This driver also supports the TMD7160 dumb bridge chip which is used
- * on some versions of the NDC/Sohoware NCP130.  The TMD7160 provides
- * two PCI I/O registers.  The first, at 0x14, maps to the Prism2 COR.
- * The second, at 0x18, is for the Prism2 chip itself.
- * The datasheet for the TMD7160 does not seem to be publicly available.
+ * The following bridge types are supported:
+ *  o PLX 9052 (the most common)
+ *  o TMD 7160 (found in some NDC/Sohoware NCP130 cards)
+ *  o ACEX EP1K30 (really a PLD, found in Symbol cards and their OEMs)
  */
 
 #include <sys/param.h>
@@ -91,6 +81,7 @@
 const struct wi_pci_product *wi_pci_lookup(struct pci_attach_args *pa);
 int	wi_pci_match(struct device *, void *, void *);
 void	wi_pci_attach(struct device *, struct device *, void *);
+int	wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_native_attach(struct pci_attach_args *pa, struct wi_softc *sc);
@@ -116,6 +107,8 @@ static const struct wi_pci_product {
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130, wi_pci_plx_attach },
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2, wi_pci_tmd_attach },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, wi_pci_native_attach },
+	{ PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_211818A, wi_pci_acex_attach },
+	{ PCI_VENDOR_SYMBOL, PCI_PRODUCT_SYMBOL_LA41X3, wi_pci_acex_attach },
 	{ 0, 0, 0 }
 };
 
@@ -152,6 +145,113 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	wi_attach(sc);
 }
 
+/*
+ * ACEX EP1K30-based PCMCIA->PCI bridge attachment.
+ *
+ * The ACEX EP1K30 is a programmable logic device (PLD) used as a
+ * PCMCIA->PCI bridge on the Symbol LA4123 and its OEM equivalents
+ * (such as the Nortel E-mobility 211818-A).  There are 3 I/O ports:
+ * BAR0 at 0x10 appears to be a command port.
+ * BAR1 at 0x14 contains COR at offset 0xe0.
+ * BAR2 at 0x18 maps the actual PCMCIA card.
+ *
+ * The datasheet for the ACEX EP1K30 is available from Altera but that
+ * doesn't really help much since we don't know how it is programmed.
+ * Details for this attachment were gleaned from a version of the
+ * Linux orinoco driver modified by Tobias Hoffmann based on
+ * what he discoverd from the Windows driver.
+ */
+int
+wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
+{
+	bus_space_handle_t commandh, localh, ioh;
+	bus_space_tag_t commandt, localt;
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_size_t commandsize;
+	int i;
+
+	if (pci_mapreg_map(pa, WI_ACEX_CMDRES, PCI_MAPREG_TYPE_IO,
+	    0, &commandt, &commandh, NULL, &commandsize, 0) != 0) {
+		printf(": can't map command I/O space\n");
+		return (ENXIO);
+	}
+
+	if (pci_mapreg_map(pa, WI_ACEX_LOCALRES, PCI_MAPREG_TYPE_IO,
+	    0, &localt, &localh, NULL, NULL, 0) != 0) {
+		printf(": can't map local I/O space\n");
+		return (ENXIO);
+	}
+	sc->wi_ltag = localt;
+	sc->wi_lhandle = localh;
+
+	if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
+	    0, &iot, &ioh, NULL, NULL, 0) != 0) {
+		printf(": can't map I/O space\n");
+		return (ENXIO);
+	}
+	sc->wi_btag = iot;
+	sc->wi_bhandle = ioh;
+
+	/*
+	 * Setup bridge chip.
+	 */
+	if (bus_space_read_4(commandt, commandh, 0) & 1) {
+		printf(": bridge not ready\n");
+		return (ENXIO);
+	}
+	bus_space_write_4(commandt, commandh, 2, 0x118);
+	bus_space_write_4(commandt, commandh, 2, 0x108);
+	DELAY(30 * 1000);
+	bus_space_write_4(commandt, commandh, 2, 0x8);
+	for (i = 0; i < 30; i++) {
+		DELAY(30 * 1000);
+		if (bus_space_read_4(commandt, commandh, 0) & 0x10)
+			break;
+	}
+	if (i == 30) {
+		printf(": bridge timeout\n");
+		return (ENXIO);
+	}
+	if ((bus_space_read_4(localt, localh, 0xe0) & 1) ||
+	    (bus_space_read_4(localt, localh, 0xe2) & 1) ||
+	    (bus_space_read_4(localt, localh, 0xe4) & 1)) {
+		printf(": failed bridge setup\n");
+		return (ENXIO);
+	}
+
+	if (wi_pci_common_attach(pa, sc) != 0)
+		return (ENXIO);
+
+	/* 
+	 * Enable I/O mode and level interrupts on the embedded PCMCIA
+	 * card.
+	 */
+	bus_space_write_1(localt, localh, WI_ACEX_COR_OFFSET, WI_COR_IOMODE);
+	sc->wi_cor_offset = WI_ACEX_COR_OFFSET;
+
+	/* Unmap registers we no longer need access to. */
+	bus_space_unmap(commandt, commandh, commandsize);
+
+	return (0);
+}
+
+/*
+ * PLX 9052-based PCMCIA->PCI bridge attachment.
+ *
+ * These are often sold as "PCI wireless card adapters" and are
+ * sold by several vendors.  Most are simply rebadged versions of the
+ * Eumitcom WL11000P or Global Sun Technology GL24110P02.
+ * These cards use the PLX 9052 dumb bridge chip to connect a PCMCIA
+ * wireless card to the PCI bus.  Because it is a dumb bridge and
+ * not a true PCMCIA bridge, the PCMCIA subsystem is not involved
+ * (or even required).  The PLX 9052 provides multiple PCI address
+ * space mappings.  The primary mappings at PCI registers 0x10 (mem)
+ * and 0x14 (I/O) are for the PLX chip itself, *NOT* the PCMCIA card.
+ * The mem and I/O spaces for the PCMCIA card are mapped to 0x18 and
+ * 0x1C respectively.
+ * The PLX 9050/9052 datasheet may be downloaded from PLX at
+ *	http://www.plxtech.com/products/toolbox/9050.htm
+ */
 int
 wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 {
@@ -266,6 +366,18 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	return (0);
 }
 
+/*
+ * TMD 7160-based PCMCIA->PCI bridge attachment.
+ *
+ * The TMD7160 dumb bridge chip is used on some versions of the
+ * NDC/Sohoware NCP130.  The TMD7160 provides two PCI I/O registers.
+ * The first, at 0x14, maps to the Prism2 COR.
+ * The second, at 0x18, is for the Prism2 chip itself.
+ *
+ * The datasheet for the TMD7160 does not seem to be publicly available.
+ * Details for this attachment were gleaned from a version of the
+ * Linux WLAN driver modified by NDC.
+ */
 int
 wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 {
