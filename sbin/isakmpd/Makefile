@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 1999/10/16 20:07:18 angelos Exp $
+#	$OpenBSD: Makefile,v 1.22 1999/10/16 20:09:22 angelos Exp $
 #	$EOM: Makefile,v 1.58 1999/08/26 11:21:48 niklas Exp $
 
 #
@@ -66,7 +66,7 @@ GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_num.c isakmp_num.h ipsec_fld.c ipsec_fld.h \
 		isakmp_fld.c isakmp_fld.h
-MAN=		isakmpd.8 isakmpd.conf.5 isakmp.policy.5
+MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
 		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
 
