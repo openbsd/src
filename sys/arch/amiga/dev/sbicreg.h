@@ -310,9 +310,17 @@
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
 typedef struct {
+#ifdef APOLLO
+	PAD(pad1);
+	PAD(pad2);
+#endif
         volatile unsigned char  sbic_asr;	/* r : Aux Status Register */
 #define sbic_address sbic_asr			/* w : desired register no */
-        PAD(pad1);
+        PAD(pad3);
+#ifdef APOLLO
+	PAD(pad4);
+	PAD(pad5);
+#endif
         volatile unsigned char  sbic_value;	/* rw: register value */
 } sbic_padded_ind_regmap_t;
 typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;

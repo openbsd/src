@@ -68,10 +68,19 @@ struct sdmac {
 	int		pad6[7];
 	short		pad7;
 	vu_short SP_DMA;	/* Stop DMA Transfers RW-Strobe */
+#ifndef APOLLO
 	char		pad8;
 	vu_char  SASR;		/* sbic asr */
 	char		pad9;
 	vu_char  SCMD;		/* sbic data */
+#else
+	short		pad8;
+	char		pad9;
+	vu_char  SASR;		/* sbic asr */
+	short		pad10;
+	char		pad11;
+	vu_char  SCMD;		/* sbic data */
+#endif
 };
 
 /*
