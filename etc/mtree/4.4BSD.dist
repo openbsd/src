@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.25 1996/09/06 17:27:02 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.26 1996/09/26 06:09:49 etheisen Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1291,11 +1291,6 @@ man9
 # ./usr/share/man
 ..
 
-# ./usr/share/me
-me
-# ./usr/share/me
-..
-
 # ./usr/share/misc
 misc
 # ./usr/share/misc
@@ -1304,11 +1299,6 @@ misc
 # ./usr/share/mk
 mk
 # ./usr/share/mk
-..
-
-# ./usr/share/ms
-ms
-# ./usr/share/ms
 ..
 
 # ./usr/share/nls
