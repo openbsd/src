@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.4 1996/08/11 00:17:31 deraadt Exp $	*/
+/*	$OpenBSD: units.c,v 1.5 1997/07/08 18:32:27 millert Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -120,12 +120,8 @@ readunits(char *userfile)
 			if (env) {
 				direc = strtok(env, separator);
 				while (direc) {
-					strcpy(filename, "");
-					strncat(filename, direc, 999);
-					strncat(filename, "/",
-					    999 - strlen(filename));
-					strncat(filename, UNITSFILE,
-					    999 - strlen(filename));
+					snprintf(filename, sizeof(filename),
+					    "%s/%s", direc, UNITSFILE);
 					unitfile = fopen(filename, "rt");
 					if (unitfile)
 						break;
@@ -444,10 +440,11 @@ lookupunit(char *unit)
 
 	if (unit[strlen(unit) - 1] == '^') {
 		copy = dupstr(unit);
-		copy[strlen(copy) - 1] = 0;
+		copy[strlen(copy) - 1] = '\0';
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strcpy(buffer, copy);
+				strncpy(buffer, copy, sizeof(buffer) - 1);
+				buffer[sizeof(buffer) - 1] = '\0';
 				free(copy);
 				return buffer;
 			}
@@ -459,7 +456,8 @@ lookupunit(char *unit)
 		copy[strlen(copy) - 1] = 0;
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strcpy(buffer, copy);
+				strncpy(buffer, copy, sizeof(buffer) - 1);
+				buffer[sizeof(buffer) - 1] = '\0';
 				free(copy);
 				return buffer;
 			}
@@ -468,7 +466,8 @@ lookupunit(char *unit)
 			copy[strlen(copy) - 1] = 0;
 			for (i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, copy)) {
-					strcpy(buffer, copy);
+					strncpy(buffer, copy, sizeof(buffer) - 1);
+					buffer[sizeof(buffer) - 1] = '\0';
 					free(copy);
 					return buffer;
 				}
@@ -481,9 +480,8 @@ lookupunit(char *unit)
 			strlen(prefixtable[i].prefixname))) {
 			unit += strlen(prefixtable[i].prefixname);
 			if (!strlen(unit) || lookupunit(unit)) {
-				strcpy(buffer, prefixtable[i].prefixval);
-				strcat(buffer, " ");
-				strcat(buffer, unit);
+				snprintf(buffer, sizeof(buffer),
+				    "%s %s", prefixtable[i].prefixval, unit);
 				return buffer;
 			}
 		}
@@ -671,8 +669,10 @@ main(int argc, char **argv)
 	readunits(userfile);
 
 	if (optind == argc - 2) {
-		strcpy(havestr, argv[optind]);
-		strcpy(wantstr, argv[optind + 1]);
+		strncpy(havestr, argv[optind], sizeof(havestr) - 1);
+		havestr[sizeof(havestr) - 1] = '\0';
+		strncpy(wantstr, argv[optind + 1], sizeof(wantstr) - 1);
+		wantstr[sizeof(wantstr) - 1] = '\0';
 		initializeunit(&have);
 		addunit(&have, havestr, 0);
 		completereduce(&have);
