@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.16 2003/12/30 19:41:48 otto Exp $	*/
+/*	$OpenBSD: jot.c,v 1.17 2004/01/08 18:50:02 otto Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: jot.c,v 1.16 2003/12/30 19:41:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: jot.c,v 1.17 2004/01/08 18:50:02 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -72,15 +72,17 @@ static bool	randomize;
 static bool	infinity;
 static bool	boring;
 static int	prec = -1;
-static bool	dox;
+static bool	intdata;
+static bool	longdata;
 static bool	chardata;
+static bool	nosign;
 static bool	finalnl = true;
 static char	sepstring[BUFSIZ] = "\n";
 static char	format[BUFSIZ];
 
 static void	getformat(void);
 static int	getprec(char *);
-static void	putdata(double, bool);
+static int	putdata(double, bool);
 static void	usage(void);
 
 int
@@ -275,29 +277,53 @@ main(int argc, char *argv[])
 	if (randomize) {
 		x = (ender - begin) * (ender > begin ? 1 : -1);
 		for (i = 1; i <= reps || infinity; i++) {
+			double v;
 			y = arc4random() / ((double)0xffffffff + 1);
-			putdata(y * x + begin, reps - i == 0 && !infinity);
+			v = y * x + begin;
+			if (putdata(v, reps == i && !infinity))
+				errx(1, "range error in conversion: %f", v);
 		}
 	}
 	else
 		for (i = 1, x = begin; i <= reps || infinity; i++, x += s)
-			putdata(x, reps - i == 0 && !infinity);
+			if (putdata(x, reps == i && !infinity))
+				errx(1, "range error in conversion: %f", x);
 	if (finalnl)
 		putchar('\n');
 	exit(0);
 }
 
-static void
+static int
 putdata(double x, bool last)
 {
-	if (boring)				/* repeated word */
+	if (boring)
 		printf("%s", format);
-	else if (dox)				/* scalar */
-		printf(format, (long)x);
-	else					/* real */
+	else if (longdata && nosign) {
+		if (x <= (double)ULONG_MAX && x >= 0.0)
+			printf(format, (unsigned long)x);
+		else
+			return (1);
+	} else if (longdata) {
+		if (x <= (double)LONG_MAX && x >= (double)LONG_MIN)
+			printf(format, (long)x);
+		else
+			return (1);
+	} else if (chardata || (intdata && !nosign)) {
+		if (x <= (double)INT_MAX && x >= (double)INT_MIN)
+			printf(format, (int)x);
+		else
+			return (1);
+	} else if (intdata) {
+		if (x <= (double)UINT_MAX && x >= 0.0)
+			printf(format, (unsigned int)x);
+		else
+			return (1);
+	} else
 		printf(format, x);
 	if (!last)
 		fputs(sepstring, stdout);
+
+	return (0);
 }
 
 static void
@@ -329,17 +355,15 @@ getprec(char *s)
 static void
 getformat(void)
 {
-	char	*p;
+	char	*p, *p2;
+	int dot, hash, space, sign, numbers = 0;
 	size_t sz;
 
 	if (boring)				/* no need to bother */
 		return;
 	for (p = format; *p != '\0'; p++)	/* look for '%' */
-		if (*p == '%') {
-			if (*(p+1) != '%')
-				break;
-			p++;		/* leave %% alone */
-		}
+		if (*p == '%' && *(p+1) != '%')	/* leave %% alone */
+			break;
 	sz = sizeof(format) - strlen(format) - 1;
 	if (*p == '\0' && !chardata) {
 		if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
@@ -347,43 +371,84 @@ getformat(void)
 	} else if (*p == '\0' && chardata) {
 		if (strlcpy(p, "%c", sz) >= sz)
 			errx(1, "-w word too long");
-		dox = true;
+		intdata = true;
 	} else if (*(p+1) == '\0') {
 		if (sz <= 0)
 			errx(1, "-w word too long");
 		/* cannot end in single '%' */
 		strlcat(format, "%", sizeof format);
 	} else {
-		for (; *p != '\0' && !isalpha(*p); p++)
-			/* Certain nonalphanumerics we can't allow */
-			if (*p == '$' || *p == '*')
-				break;
-		/* Allow 'l' prefix, but no other. */
-		if (*p == 'l')
-			p++;
-		switch (*p) {
-		case 'f': case 'e': case 'g': case '%':
-		case 'E': case 'G':
-			break;
-		case 's':
-			errx(1, "cannot convert numeric data to strings");
-			break;
-		case 'd': case 'o': case 'x': case 'u':
-		case 'D': case 'O': case 'X': case 'U':
-		case 'c': case 'i':
-			dox = true;
-			break;
-		default:
-			errx(1, "unknown or invalid format `%s'", format);
+		/*
+		 * Allow conversion format specifiers of the form
+		 * %[#][ ][{+,-}][0-9]*[.[0-9]*]? where ? must be one of
+		 * [l]{d,i,o,u,x} or {f,e,g,E,G,d,o,x,D,O,U,X,c,u}
+		 */
+		p2 = p++;
+		dot = hash = space = sign = numbers = 0;
+		while (!isalpha(*p)) {
+			if (isdigit(*p)) {
+				numbers++;
+				p++;
+			} else if ((*p == '#' && !(numbers|dot|sign|space|
+			    hash++)) ||
+			    (*p == ' ' && !(numbers|dot|space++)) ||
+			    ((*p == '+' || *p == '-') && !(numbers|dot|sign++))
+			    || (*p == '.' && !(dot++)))
+				p++;
+			else
+				goto fmt_broken;
 		}
-		/* Need to check for trailing stuff to print */
-		for (; *p != '\0'; p++)		/* look for '%' */
-			if (*p == '%') {
-				if (*(p+1) != '%')
-					break;
-				p++;		/* leave %% alone */
+		if (*p == 'l') {
+			longdata = true;
+			if (*++p == 'l') {
+				if (p[1] != '\0')
+					p++;
+				goto fmt_broken;
 			}
-		if (*p != '\0')
-			errx(1, "unknown or invalid format `%s'", format);
+		}
+		switch (*p) {
+		case 'o': case 'u': case 'x': case 'X':
+			intdata = nosign = true;
+			break;
+		case 'd': case 'i':
+			intdata = true;
+			break;
+		case 'D':
+			if (!longdata) {
+				intdata = true;
+				break;
+			}
+		case 'O': case 'U':
+			if (!longdata) {
+				intdata = nosign = true;
+				break;
+			}
+		case 'c':
+			if (!(intdata | longdata)) {
+				chardata = true;
+				break;
+			}
+		case 'h': case 'n': case 'p': case 'q': case 's': case 'L':
+		case '$': case '*':
+			goto fmt_broken;
+		case 'f': case 'e': case 'g': case 'E': case 'G':
+			if (!longdata)
+				break;
+			/* FALLTHROUGH */
+		default:
+fmt_broken:
+			*++p = '\0';
+			errx(1, "illegal or unsupported format '%s'", p2);
+			/* NOTREACHED */
+		}
+		while (*++p != '\0')
+			if (*p == '%' && *(p+1) != '\0' && *(p+1) != '%')
+				errx(1, "too many conversions");
+			else if (*p == '%' && *(p+1) == '%')
+				p++;
+			else if (*p == '%' && *(p+1) == '\0') {
+				strlcat(format, "%", sizeof format);
+				break;
+			}
 	}
 }
