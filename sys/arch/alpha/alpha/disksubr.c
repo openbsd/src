@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 1997/10/02 11:58:12 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 1997/10/02 12:55:12 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -683,9 +683,9 @@ writedisklabel(dev, strat, lp, osdep)
 		/* Write it in the regular place with native byte order. */
 		labeloffset = LABELOFFSET;
 		endian = BYTE_ORDER;
-		bp->bp_blkno = partoff + LABELSECTOR;
-		bp->bp_cylin = cyl;
-		bp->bp_bcount = lp->d_secsize;
+		bp->b_blkno = partoff + LABELSECTOR;
+		bp->b_cylin = cyl;
+		bp->b_bcount = lp->d_secsize;
 	}
 
 	if (endian != BYTE_ORDER) {
