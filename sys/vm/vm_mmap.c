@@ -538,6 +538,50 @@ sys_mprotect(p, v, retval)
 	return (EINVAL);
 }
 
+int
+sys_minherit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_minherit_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(int) len;
+		syscallarg(int) inherit;
+	} */ *uap = v;
+	vm_offset_t addr;
+	vm_size_t size, pageoff;
+	register vm_inherit_t inherit;
+
+	addr = (vm_offset_t)SCARG(uap, addr);
+	size = (vm_size_t)SCARG(uap, len);
+	inherit = SCARG(uap, inherit);
+#ifdef DEBUG
+	if (mmapdebug & MDB_FOLLOW)
+		printf("minherit(%d): addr %x len %x inherit %d\n", p->p_pid,
+		    addr, size, inherit);
+#endif
+	/*
+	 * Align the address to a page boundary,
+	 * and adjust the size accordingly.
+	 */
+	pageoff = (addr & PAGE_MASK);
+	addr -= pageoff;
+	size += pageoff;
+	size = (vm_size_t) round_page(size);
+	if ((int)size < 0)
+		return(EINVAL);
+
+	switch (vm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
+	    inherit)) {
+	case KERN_SUCCESS:
+		return (0);
+	case KERN_PROTECTION_FAILURE:
+		return (EACCES);
+	}
+	return (EINVAL);
+}
+
 /* ARGSUSED */
 int
 sys_madvise(p, v, retval)

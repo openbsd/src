@@ -940,6 +940,12 @@ struct sys_shmget_args {
 	syscallarg(int) shmflg;
 };
 
+struct sys_minherit_args {
+	syscallarg(caddr_t) addr;
+	syscallarg(size_t) len;
+	syscallarg(int) inherit;
+};
+
 /*
  * System call prototypes.
  */
@@ -1179,3 +1185,4 @@ int	sys_shmdt	__P((struct proc *, void *, register_t *));
 int	sys_shmget	__P((struct proc *, void *, register_t *));
 #else
 #endif
+int	sys_minherit	__P((struct proc *, void *, register_t *));

@@ -307,4 +307,23 @@ char *syscallnames[] = {
 	"#230 (unimplemented shmdt)",		/* 230 = unimplemented shmdt */
 	"#231 (unimplemented shmget)",		/* 231 = unimplemented shmget */
 #endif
+	"#232 (unimplemented)",		/* 232 = unimplemented */
+	"#233 (unimplemented)",		/* 233 = unimplemented */
+	"#234 (unimplemented)",		/* 234 = unimplemented */
+	"#235 (unimplemented)",		/* 235 = unimplemented */
+	"#236 (unimplemented)",		/* 236 = unimplemented */
+	"#237 (unimplemented)",		/* 237 = unimplemented */
+	"#238 (unimplemented)",		/* 238 = unimplemented */
+	"#239 (unimplemented)",		/* 239 = unimplemented */
+	"#240 (unimplemented)",		/* 240 = unimplemented */
+	"#241 (unimplemented)",		/* 241 = unimplemented */
+	"#242 (unimplemented)",		/* 242 = unimplemented */
+	"#243 (unimplemented)",		/* 243 = unimplemented */
+	"#244 (unimplemented)",		/* 244 = unimplemented */
+	"#245 (unimplemented)",		/* 245 = unimplemented */
+	"#246 (unimplemented)",		/* 246 = unimplemented */
+	"#247 (unimplemented)",		/* 247 = unimplemented */
+	"#248 (unimplemented)",		/* 248 = unimplemented */
+	"#249 (unimplemented)",		/* 249 = unimplemented */
+	"minherit",			/* 250 = minherit */
 };

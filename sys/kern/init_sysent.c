@@ -598,5 +598,43 @@ struct sysent sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 231 = unimplemented shmget */
 #endif
+	{ 0, 0,
+	    sys_nosys },			/* 232 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 233 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 234 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 235 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 236 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 237 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 238 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 239 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 240 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 241 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 242 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 243 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 244 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 245 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 246 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 247 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 248 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 249 = unimplemented */
+	{ 3, s(struct sys_minherit_args),
+	    sys_minherit },			/* 250 = minherit */
 };
 

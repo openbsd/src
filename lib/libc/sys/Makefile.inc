@@ -88,7 +88,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 link.2 \
-	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 mlock.2 \
+	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
+	minherit.2 mlock.2 \
 	mmap.2 mount.2 mprotect.2 msync.2 munmap.2 nfssvc.2 open.2 pathconf.2 \
 	pipe.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 recv.2 \
 	rename.2 revoke.2 rmdir.2 select.2 send.2 setgroups.2 setpgid.2 \

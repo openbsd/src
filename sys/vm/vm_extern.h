@@ -53,6 +53,7 @@ int		 compat_43_getpagesize __P((struct proc *p, void *, int *));
 int		 madvise __P((struct proc *, void *, int *));
 int		 mincore __P((struct proc *, void *, int *));
 int		 mprotect __P((struct proc *, void *, int *));
+int		 minherit __P((struct proc *, void *, int *));
 int		 msync __P((struct proc *, void *, int *));
 int		 munmap __P((struct proc *, void *, int *));
 int		 obreak __P((struct proc *, void *, int *));
