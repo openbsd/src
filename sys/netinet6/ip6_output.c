@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.64 2002/06/07 15:27:58 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.65 2002/06/07 21:47:44 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1232,7 +1232,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 				if (optlen != sizeof(int)) {
@@ -1287,10 +1286,6 @@ do { \
 
 				case IPV6_RTHDR:
 					OPTSET(IN6P_RTHDR);
-					break;
-
-				case IPV6_CHECKSUM:
-					inp->in6p_cksum = optval;
 					break;
 
 				case IPV6_FAITH:
@@ -1461,7 +1456,6 @@ do { \
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 			case IPV6_PORTRANGE:
@@ -1503,10 +1497,6 @@ do { \
 
 				case IPV6_RTHDR:
 					optval = OPTBIT(IN6P_RTHDR);
-					break;
-
-				case IPV6_CHECKSUM:
-					optval = inp->in6p_cksum;
 					break;
 
 				case IPV6_FAITH:
@@ -1607,6 +1597,82 @@ do { \
 		if (op == PRCO_SETOPT && *mp)
 			(void)m_free(*mp);
 	}
+	return(error);
+}
+
+int
+ip6_raw_ctloutput(op, so, level, optname, mp)
+	int op;
+	struct socket *so;
+	int level, optname;
+	struct mbuf **mp;
+{
+	int error = 0, optval, optlen;
+	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
+	struct inpcb *inp = sotoinpcb(so);
+	struct mbuf *m = *mp;
+
+	optlen = m ? m->m_len : 0;
+
+	if (level != IPPROTO_IPV6) {
+		if (op == PRCO_SETOPT && *mp)
+			(void)m_free(*mp);
+		return(EINVAL);
+	}
+		
+	switch (optname) {
+	case IPV6_CHECKSUM:
+		/*
+		 * For ICMPv6 sockets, no modification allowed for checksum
+		 * offset, permit "no change" values to help existing apps.
+		 *
+		 * XXX 2292bis says: "An attempt to set IPV6_CHECKSUM
+		 * for an ICMPv6 socket will fail."
+		 * The current behavior does not meet 2292bis.
+		 */
+		switch (op) {
+		case PRCO_SETOPT:
+			if (optlen != sizeof(int)) {
+				error = EINVAL;
+				break;
+			}
+			optval = *mtod(m, int *);
+			if ((optval % 2) != 0) {
+				/* the API assumes even offset values */
+				error = EINVAL;
+			} else if (so->so_proto->pr_protocol ==
+			    IPPROTO_ICMPV6) {
+				if (optval != icmp6off)
+					error = EINVAL;
+			} else
+				inp->in6p_cksum = optval;
+			break;
+
+		case PRCO_GETOPT:
+			if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
+				optval = icmp6off;
+			else
+				optval = inp->in6p_cksum;
+
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = optval;
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
+
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+
+	if (op == PRCO_SETOPT && m)
+		(void)m_free(m);
+
 	return(error);
 }
 
@@ -2253,27 +2319,23 @@ ip6_splithdr(m, exthdrs)
 /*
  * Compute IPv6 extension header length.
  */
-# define in6pcb	inpcb
-# define in6p_outputopts	inp_outputopts6
 int
-ip6_optlen(in6p)
-	struct in6pcb *in6p;
+ip6_optlen(inp)
+	struct inpcb *inp;
 {
 	int len;
 
-	if (!in6p->in6p_outputopts)
+	if (!inp->inp_outputopts6)
 		return 0;
 
 	len = 0;
 #define elen(x) \
     (((struct ip6_ext *)(x)) ? (((struct ip6_ext *)(x))->ip6e_len + 1) << 3 : 0)
 
-	len += elen(in6p->in6p_outputopts->ip6po_hbh);
-	len += elen(in6p->in6p_outputopts->ip6po_dest1);
-	len += elen(in6p->in6p_outputopts->ip6po_rthdr);
-	len += elen(in6p->in6p_outputopts->ip6po_dest2);
+	len += elen(inp->inp_outputopts6->ip6po_hbh);
+	len += elen(inp->inp_outputopts6->ip6po_dest1);
+	len += elen(inp->inp_outputopts6->ip6po_rthdr);
+	len += elen(inp->inp_outputopts6->ip6po_dest2);
 	return len;
 #undef elen
 }
-# undef in6pcb
-# undef in6p_outputopts
