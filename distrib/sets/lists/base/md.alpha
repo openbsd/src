@@ -12,7 +12,6 @@
 ./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/include/alpha
-./usr/include/alpha/ieee.h
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.9
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.9/2.95.3
@@ -425,7 +424,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fbio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/frame.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieee.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieee.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph

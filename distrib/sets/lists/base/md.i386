@@ -14,7 +14,6 @@
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/include/i386
-./usr/include/i386/ieee.h
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

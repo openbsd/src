@@ -9,7 +9,6 @@
 ./usr/bin/ldd
 ./usr/include/readline
 ./usr/include/sparc
-./usr/include/sparc/ieee.h
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so
@@ -1208,7 +1207,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/frame.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/fsr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/idprom.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ieee.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ieee.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/instr.ph

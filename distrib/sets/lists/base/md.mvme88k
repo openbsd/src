@@ -1,11 +1,7 @@
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m88k
-./usr/include/m88k/ieee.h
 ./usr/include/readline
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.9

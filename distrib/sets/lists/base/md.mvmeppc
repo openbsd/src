@@ -9,7 +9,6 @@
 ./usr/bin/readelf
 ./usr/bin/windres
 ./usr/include/powerpc
-./usr/include/powerpc/ieee.h
 ./usr/include/readline
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.9
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.9/2.95.3
@@ -1437,7 +1436,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieeefp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/intr.ph
