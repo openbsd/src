@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.20 2000/01/20 15:15:18 markus Exp $");
+RCSID("$Id: packet.c,v 1.21 2000/01/22 20:20:28 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -136,7 +136,7 @@ int
 packet_connection_is_ipv4()
 {
 	struct sockaddr_storage to;
-	socklen_t tolen;
+	socklen_t tolen = sizeof(to);
 
 	memset(&to, 0, sizeof(to));
 	if (getsockname(connection_out, (struct sockaddr *)&to, &tolen) < 0)
