@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.36 2001/11/15 07:57:29 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.37 2001/12/02 02:03:13 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
  * ansi and traditional c complers.
- * XXX: this requires that stdarg.h define: va_alist and va_dcl
  */
 #include <machine/stdarg.h>
 
@@ -266,7 +265,7 @@ log(level, fmt, va_alist)
  * logpri: log the priority level to the klog
  */
 
-void			/* XXXCDC: should be static? */
+void
 logpri(level)
 	int level;
 {
@@ -756,7 +755,7 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */
 	int n;			/* handy integer (short term usage) */
-	char *cp;		/* handy char pointer (short term usage) */
+	char *cp = NULL;	/* handy char pointer (short term usage) */
 	int flags;		/* flags as above */
 	int ret;		/* return value accumulator */
 	int width;		/* width from format (%8d), or 0 */
@@ -767,22 +766,16 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
-	int size;		/* size of converted field or string */
-	char *xdigs;		/* digits for [xX] conversion */
+	int size = 0;		/* size of converted field or string */
+	char *xdigs = NULL;	/* digits for [xX] conversion */
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
-	char *tailp;		/* tail pointer for snprintf */
+	char *tailp = NULL;	/* tail pointer for snprintf */
 
-	tailp = NULL;	/* XXX: shutup gcc */
 	if (oflags == TOBUFONLY && (vp != NULL))
 		tailp = *(char **)vp;
 
-	cp = NULL;	/* XXX: shutup gcc */
-	size = 0;	/* XXX: shutup gcc */
-
 	fmt = (char *)fmt0;
 	ret = 0;
-
-	xdigs = NULL;		/* XXX: shut up gcc warning */
 
 	/*
 	 * Scan the format for conversions (`%' character).
