@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.47 2002/06/04 22:22:37 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.48 2002/06/05 22:14:15 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.47 2002/06/04 22:22:37 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.48 2002/06/05 22:14:15 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -917,12 +917,13 @@ inet6_makenetandmask(sin6)
 			plen = "64";
 	}
 
-	if (plen) {
+	if (!plen || strcmp(plen, "128") == 0)
+		return 1;
+	else {
 		rtm_addrs |= RTA_NETMASK;
-		return prefixlen(plen);
+		(void)prefixlen(plen);
+		return 0;
 	}
-
-	return -1;
 }
 #endif
 
@@ -1020,8 +1021,7 @@ getaddr(which, s, hpp)
 #endif
 		freeaddrinfo(res);
 		if (which == RTA_DST)
-			if (inet6_makenetandmask(&su->sin6) == 128)
-				return (1);
+			return inet6_makenetandmask(&su->sin6);
 		return (0);
 	    }
 #endif
