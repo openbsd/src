@@ -199,7 +199,7 @@ do {									\
 } while (0)
 #else
 #define	vm_map_upgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL)
+	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL, curproc)
 #endif /* DIAGNOSTIC */
 
 
