@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.83 1998/09/22 18:49:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.84 1998/09/22 18:58:04 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -183,7 +183,7 @@ tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
-#inphy*	at mii? phy ?				# Intel 82555 PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 

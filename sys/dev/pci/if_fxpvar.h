@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpvar.h,v 1.5 1998/08/24 18:52:19 downsj Exp $	*/
+/*	$OpenBSD: if_fxpvar.h,v 1.6 1998/09/22 18:58:03 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -56,6 +56,7 @@ struct fxp_softc {
 #if defined(__NetBSD__)
 	struct ethercom sc_ethercom;	/* ethernet common part */
 #endif
+	struct mii_data sc_mii;		/* MII media information */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */

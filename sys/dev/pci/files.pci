@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.21 1998/09/22 06:06:48 fgsch Exp $
+#	$OpenBSD: files.pci,v 1.22 1998/09/22 18:58:02 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -76,7 +76,7 @@ attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
 # Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet
+device	fxp: ether, ifnet, mii
 attach	fxp at pci 
 file	dev/pci/if_fxp.c		fxp
 

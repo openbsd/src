@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.42 1998/09/22 18:49:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.43 1998/09/22 18:58:04 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -188,7 +188,7 @@ tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
-#inphy*	at mii? phy ?				# Intel 82555 PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 

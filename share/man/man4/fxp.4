@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.4 1998/09/05 17:41:48 deraadt Exp $
+.\"	$OpenBSD: fxp.4,v 1.5 1998/09/22 18:58:05 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -38,45 +38,21 @@ The
 .Nm
 driver provides support for the EtherExpress Pro/10 and Pro/100B PCI Fast Ethernet
 adapters based on the Intel i82557 and i82558 ethernet chip.
+The
+.Nm
+driver supports the following media types:
 .Pp
-.\" The
-.\" .Nm
-.\" driver supports the following media types:
-.\" .Pp
-.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.\" .It autoselect
-.\" Enable autoselection of the media type and options
-.\" .It 10baseT/UTP
-.\" Set 10Mbps operation
-.\" .It 100baseTX
-.\" Set 100Mbps (fast ethernet) operation
-.\" .El
-.\" .Pp
-.\" The
-.\" .Nm
-.\" driver supports the following media options:
-.\" .Pp
-.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.\" .It full-duplex
-.\" Set full duplex operation
-.\" .El
-.\" .Pp
-.\" Note that 100baseTX media type is only available on the Pro/100B. For further information
-.\" on configuring this device, see
-.\" .Xr ifconfig 8 .
-.Pp
-Media types and options are set by specifying link flags to
-.Xr ifconfig 8 .
-If none are specified, the ethernet card will perform auto-negotiation of
-link speed and options.
-.Pp
-.Bl -tag -width xxxxxxxxxxx
-.It link0
-Disable auto-negotiation.
-.It link1
-Enable 100Mbps operation.  (If unset, default to 10Mbps.)
-.It link2
-Enable full duplex operation.  (If unset, default to half duplex.)
+.Bl -tag -width xxxxxxxx
+.It media autoselect
+Enable autoselection of the media type and options
+.It media 10baseT [mediaopt half-duplex]
+Set 10Mbps operation, half-duplex
+.It media 10baseT [mediaopt full-duplex]
+Set 10Mbps operation, full-duplex
+.It media 100baseTX [mediaopt half-duplex]
+Set 100Mbps operation, half duplex
+.It media 100baseTX [mediaopt full-duplex]
+Set 100Mbps operation, full duplex
 .El
 .Pp
 Note that 100baseTX media type is only available on the Pro/100B and i82558
