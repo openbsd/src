@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_mx.c,v 1.4 1999/02/27 19:15:26 jason Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -29,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_mx.c,v 1.8 1999/01/06 17:30:06 wpaul Exp $
+ *	$FreeBSD: if_mx.c,v 1.11 1999/02/01 21:25:51 wpaul Exp $
  */
 
 /*
@@ -1260,7 +1262,7 @@ static int mx_list_rx_init(sc)
 
 	for (i = 0; i < MX_RX_LIST_CNT; i++) {
 		cd->mx_rx_chain[i].mx_ptr =
-			(struct mx_desc *)&ld->mx_rx_list[i];
+			(volatile struct mx_desc *)&ld->mx_rx_list[i];
 		if (mx_newbuf(sc, &cd->mx_rx_chain[i]) == ENOBUFS)
 			return(ENOBUFS);
 		if (i == (MX_RX_LIST_CNT - 1)) {
@@ -2242,6 +2244,7 @@ mx_attach(parent, self, aux)
 	ifp->if_start = mx_start;
 	ifp->if_watchdog = mx_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = MX_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	if (sc->mx_type == MX_TYPE_98713) {
