@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.11 1997/07/24 00:31:15 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.12 1997/08/09 23:36:28 millert Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -81,6 +81,9 @@ static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
 #define	UDBHASHSIZE	128
 #endif
 int	udbhashsize = UDBHASHSIZE;
+
+/* from in_pcb.c */
+extern	struct baddynamicports baddynamicports;
 
 void
 udp_init()
@@ -682,6 +685,9 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case UDPCTL_CHECKSUM:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &udpcksum));
+	case UDPCTL_BADDYNAMIC:
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    baddynamicports.udp, sizeof(baddynamicports.udp)));
 	default:
 		return (ENOPROTOOPT);
 	}

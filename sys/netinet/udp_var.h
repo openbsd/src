@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.3 1996/03/03 22:30:52 niklas Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.4 1997/08/09 23:36:28 millert Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -71,11 +71,13 @@ struct	udpstat {
  * Names for UDP sysctl objects
  */
 #define	UDPCTL_CHECKSUM		1	/* checksum UDP packets */
-#define UDPCTL_MAXID		2
+#define	UDPCTL_BADDYNAMIC	2	/* return bad dynamic port bitmap */
+#define UDPCTL_MAXID		3
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "checksum", CTLTYPE_INT }, \
+	{ "baddynamic", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

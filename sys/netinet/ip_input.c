@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.25 1997/02/28 03:44:53 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.26 1997/08/09 23:36:29 millert Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ extern int ipport_firstauto;
 extern int ipport_lastauto;
 extern int ipport_hifirstauto;
 extern int ipport_hilastauto;
+extern struct baddynamicports baddynamicports;
 
 extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
@@ -156,6 +157,8 @@ ip_init()
 {
 	register struct protosw *pr;
 	register int i;
+	const u_int16_t defbaddynamicports_tcp[] = DEFBADDYNAMICPORTS_TCP;
+	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -171,6 +174,13 @@ ip_init()
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
+
+	/* Fill in list of ports not to allocate dynamically. */
+	bzero((void *)&baddynamicports, sizeof(baddynamicports));
+	for (i = 0; defbaddynamicports_tcp[i] != 0; i++)
+		DP_SET(baddynamicports.tcp, defbaddynamicports_tcp[i]);
+	for (i = 0; defbaddynamicports_udp[i] != 0; i++)
+		DP_SET(baddynamicports.udp, defbaddynamicports_tcp[i]);
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };

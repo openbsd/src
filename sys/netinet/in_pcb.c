@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.17 1997/07/27 08:11:10 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.18 1997/08/09 23:36:26 millert Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
 
-static int baddynamic __P((u_int16_t));
+static int baddynamic __P((u_int16_t, u_int16_t));
 
 void
 in_pcbinit(table, hashsize)
@@ -90,28 +90,28 @@ in_pcbinit(table, hashsize)
 	table->inpt_lastport = 0;
 }
 
-/*
- * List of standard locked-down reserved ports.
- * XXX need to be able to modify this from userland. 
- */
-static u_int16_t baddynamicports[] = {
-	765, 749, 750, 751, 760, 761, 871,
-	0	/* terminator */
-};
-
+struct baddynamicports baddynamicports;
+ 
 /*
  * Check if the specified port is invalid for dynamic allocation.
  */
 static int
-baddynamic(port)
+baddynamic(port, proto)
 	u_int16_t port;
+	u_int16_t proto;
 {
-	int i;
 
-	for (i = 0; baddynamicports[i] != 0; i++)
-		if (baddynamicports[i] == port)
-			return (1);
-	return (0);
+	if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
+		return(0);
+
+	switch (proto) {
+		case IPPROTO_TCP:
+			return (DP_ISSET(baddynamicports.tcp, port));
+		case IPPROTO_UDP:
+			return (DP_ISSET(baddynamicports.udp, port));
+		default:
+			return (0);
+	}
 }
 
 int
@@ -263,7 +263,7 @@ portloop:
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (baddynamic(*lastport) ||
+			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		} else {
@@ -290,7 +290,7 @@ portloop:
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (baddynamic(*lastport) ||
+			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.14 1997/07/22 15:06:54 kstailey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.15 1997/08/09 23:36:31 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.14 1997/07/22 15:06:54 kstailey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.15 1997/08/09 23:36:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,12 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.14 1997/07/22 15:06:54 kstailey Exp
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 
+#include <net/route.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp_var.h>
 #include <netinet/ip_var.h>
@@ -127,6 +130,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
 #define RNDSTATS	0x00000008
+#define BADDYNAMIC	0x00000020
 
 /* prototypes */
 void usage();
@@ -348,9 +352,34 @@ parse(string, flags)
 	case CTL_NET:
 		if (mib[1] == PF_INET) {
 			len = sysctl_inet(string, &bufp, mib, flags, &type);
-			if (len >= 0)
-				break;
-			return;
+			if (len < 0)
+				return;
+			if (mib[3] == TCPCTL_BADDYNAMIC ||
+			    mib[3] == UDPCTL_BADDYNAMIC) {
+				u_int32_t newbaddynamic[DP_MAPSIZE];
+				in_port_t port;
+
+				special |= BADDYNAMIC;
+				if (newval != NULL) {
+					(void)memset((void *)&newbaddynamic, 0,
+					    sizeof(newbaddynamic));
+					while (newval &&
+					    (cp = strsep((char **)&newval,
+					    ", \t")) && *cp) {
+						port = atoi(cp);
+						if (port < IPPORT_RESERVED/2 ||
+						    port >= IPPORT_RESERVED)
+							errx(1, "invalid port, "
+							    "range is %d to %d",
+							    IPPORT_RESERVED/2,
+							    IPPORT_RESERVED-1);
+						DP_SET(newbaddynamic, port);
+					}
+					newval = (void *)newbaddynamic;
+					newsize = sizeof(newbaddynamic);
+				}
+			}
+			break;
 		}
 		if (mib[1] == PF_IPX) {
 			len = sysctl_ipx(string, &bufp, mib, flags, &type);
@@ -481,6 +510,27 @@ parse(string, flags)
 		    rndstats->rnd_enqs, rndstats->rnd_deqs,
 		    rndstats->rnd_drops, rndstats->rnd_drople,
 		    rndstats->rnd_asleep, rndstats->rnd_queued);
+		return;
+	}
+	if (special & BADDYNAMIC) {
+		in_port_t port;
+		u_int32_t *baddynamic = (u_int32_t *)buf;
+
+		if (!nflag)
+			printf("%s%s", string, newsize ? ":" : " =");
+		for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED; port++)
+			if (DP_ISSET(baddynamic, port))
+				printf(" %hd", port);
+		if (newsize != 0) {
+			if (!nflag)
+				fputs(" ->", stdout);
+			baddynamic = (u_int32_t *)newval;
+			for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED;
+			    port++)
+				if (DP_ISSET(baddynamic, port))
+					printf(" %hd", port);
+		}
+		putchar('\n');
 		return;
 	}
 	switch (type) {

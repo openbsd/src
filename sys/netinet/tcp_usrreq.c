@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.11 1997/07/24 00:25:25 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.12 1997/08/09 23:36:26 millert Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -74,6 +74,9 @@
  */
 extern	char *tcpstates[];
 extern	int tcptv_keep_init;
+
+/* from in_pcb.c */
+extern	struct baddynamicports baddynamicports;
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -587,6 +590,10 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	case TCPCTL_SLOWHZ:
 		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
+
+	case TCPCTL_BADDYNAMIC:
+		return (sysctl_struct(oldp, oldlenp, newp, newlen,
+		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
 
 	default:
 		return (ENOPROTOOPT);

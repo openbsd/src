@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.4 1997/02/28 04:03:48 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.5 1997/08/09 23:36:25 millert Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -86,6 +86,21 @@ struct inpcbtable {
 #define	INPLOOKUP_SETLOCAL	2
 
 #define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
+
+/* macros for handling bitmap of ports not to allocate dynamically */
+#define	DP_MAPBITS	(sizeof(u_int32_t) * NBBY)
+#define	DP_MAPSIZE	(howmany(IPPORT_RESERVED/2, DP_MAPBITS))
+#define	DP_SET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] |= (1 << ((p) % DP_MAPBITS)))
+#define	DP_ISSET(m, p)	((m)[((p) - IPPORT_RESERVED/2) / DP_MAPBITS] & (1 << ((p) % DP_MAPBITS)))
+
+/* default values for baddynamicports [see ip_init()] */
+#define	DEFBADDYNAMICPORTS_TCP	{ 749, 750, 751, 760, 761, 871, 0 }
+#define	DEFBADDYNAMICPORTS_UDP	{ 750, 751, 0 }
+
+struct baddynamicports {
+	u_int32_t tcp[DP_MAPSIZE];
+	u_int32_t udp[DP_MAPSIZE];
+};
 
 #ifdef _KERNEL
 void	 in_losing __P((struct inpcb *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.7 1997/06/15 13:47:28 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.8 1997/08/09 23:36:27 millert Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -236,7 +236,8 @@ struct	tcpstat {
 #define TCPCTL_KEEPIDLE		3 /* allow tcp_keepidle to be changed */
 #define TCPCTL_KEEPINTVL	4 /* allow tcp_keepintvl to be changed */
 #define TCPCTL_SLOWHZ		5 /* return kernel idea of PR_SLOWHZ */ 
-#define	TCPCTL_MAXID		6
+#define TCPCTL_BADDYNAMIC	6 /* return bad dynamic port bitmap */ 
+#define	TCPCTL_MAXID		7
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -245,6 +246,7 @@ struct	tcpstat {
 	{ "keepidle",	CTLTYPE_INT }, \
 	{ "keepintvl",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
+	{ "baddynamic", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL
