@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.8 1999/11/30 03:16:01 d Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.9 2000/01/06 07:17:09 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
