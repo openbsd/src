@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.44 1998/08/17 22:19:06 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.45 1998/08/17 23:26:17 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -660,8 +660,10 @@ sys_getfsstat(p, v, retval)
 				sp = &sb;
 			}
 			error = copyout((caddr_t)sp, sfsp, sizeof(*sp));
-			if (error)
+			if (error) {
+				vfs_unbusy(mp, p);
 				return (error);
+			}
 			sfsp += sizeof(*sp);
 		}
 		count++;
