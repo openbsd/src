@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2002/05/08 03:16:08 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2002/05/13 19:11:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -448,13 +448,8 @@ hppa_init(start)
 			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
 			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
 			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
-			if (pdc_cache.dt_conf.tc_sh) {
-				LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
-				LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
-			} else {
-				LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
-				LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
-			}
+			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
+			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
 #undef LDILDO
 		}
 	}
