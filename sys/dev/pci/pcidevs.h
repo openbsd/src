@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.190 1999/10/28 21:55:15 aaron Exp 
+ *	OpenBSD: pcidevs,v 1.192 1999/11/03 02:47:34 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -642,6 +642,7 @@
 #define	PCI_PRODUCT_ADP_398XU	0x8378		/* AHA-398XU */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944U */
 #define	PCI_PRODUCT_ADP_2940UWPro	0x8778		/* AHA-2940UWPro */
+#define	PCI_PRODUCT_ADP_AIC6915	0x6915		/* AIC-6915 */
 
 #define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940U2 */
 #define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
