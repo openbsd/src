@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.3 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.4 1999/09/29 17:42:10 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1170,7 +1170,7 @@ do_authentication(char *user, int privileged_port)
 	      xfree(client_user);
 	      break;
 	    }
-	  debug("Rhosts authentication failed for %.100s, remote %.100s.",
+	  log("Rhosts authentication failed for %.100s, remote %.100s.",
 		user, client_user);
 	  xfree(client_user);
 	  break;
@@ -1220,7 +1220,7 @@ do_authentication(char *user, int privileged_port)
 	      BN_clear_free(client_host_key_n);
 	      break;
 	    }
-	  debug("Rhosts authentication failed for %.100s, remote %.100s.",
+	  log("Rhosts authentication failed for %.100s, remote %.100s.",
 		user, client_user);
 	  xfree(client_user);
 	  BN_clear_free(client_host_key_e);
@@ -1252,7 +1252,7 @@ do_authentication(char *user, int privileged_port)
 		break;
 	      }
 	    BN_clear_free(n);
-	    debug("RSA authentication for %.100s failed.", user);
+	    log("RSA authentication for %.100s failed.", user);
 	  }
 	  break;
 
@@ -1284,7 +1284,7 @@ do_authentication(char *user, int privileged_port)
 	      authenticated = 1;
 	      break;
 	    }
-	  debug("Password authentication for %.100s failed.", user);
+	  log("Password authentication for %.100s failed.", user);
 	  memset(password, 0, strlen(password));
 	  xfree(password);
 	  break;
