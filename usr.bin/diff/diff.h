@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.10 2003/06/26 18:19:29 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.11 2003/06/26 22:04:45 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -61,7 +61,7 @@
 				   lines and no trailing . */
 
 extern int	aflag, bflag, hflag, iflag, lflag, rflag, sflag, tflag, wflag;
-extern char	*start, *ifdef1, *ifdef2, *endifname;
+extern char	*start, *ifdefname;
 extern int	opt, wantelses, inifdef, context, status, anychange;
 extern char	*tempfiles[], **diffargv;
 extern char	*file1, *file2, *efile1, *efile2;

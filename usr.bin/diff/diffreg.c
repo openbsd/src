@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.21 2003/06/26 18:19:29 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.22 2003/06/26 22:04:45 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -792,7 +792,7 @@ change(int a, int b, int c, int d)
 	}
 	if (opt == D_CONTEXT || opt == D_UNIFIED) {
 		/*
-		 * if this new change is within 'context' lines of
+		 * If this new change is within 'context' lines of
 		 * the previous change, just add it to the change
 		 * record.  If the record is full or if this
 		 * change is more than 'context' lines from the previous
@@ -849,7 +849,7 @@ change(int a, int b, int c, int d)
 	if ((opt == D_EDIT || opt == D_REVERSE) && c <= d)
 		prints(".\n");
 	if (inifdef) {
-		fprintf(stdout, "#endif /* %s */\n", endifname);
+		fprintf(stdout, "#endif /* %s */\n", ifdefname);
 		inifdef = 0;
 	}
 }
@@ -865,7 +865,6 @@ range(int a, int b, char *separator)
 static void
 fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 {
-	int oneflag = (*ifdef1 != '\0') != (*ifdef2 != '\0');
 	int i, j, c, col, nc;
 
 	/*
@@ -882,21 +881,14 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	if (a > b)
 		return;
 	if (opt == D_IFDEF) {
-		if (inifdef)
+		if (inifdef) {
 			fprintf(stdout, "#else /* %s%s */\n",
-			    oneflag && oldfile == 1 ? "!" : "", ifdef2);
-		else {
-			if (oneflag) {
-				/* There was only one ifdef given */
-				endifname = ifdef2;
-				if (oldfile)
-					fprintf(stdout, "#ifndef %s\n", endifname);
-				else
-					fprintf(stdout, "#ifdef %s\n", endifname);
-			} else {
-				endifname = oldfile ? ifdef1 : ifdef2;
-				fprintf(stdout, "#ifdef %s\n", endifname);
-			}
+			    oldfile == 1 ? "!" : "", ifdefname);
+		} else {
+			if (oldfile)
+				fprintf(stdout, "#ifndef %s\n", ifdefname);
+			else
+				fprintf(stdout, "#ifdef %s\n", ifdefname);
 		}
 		inifdef = 1 + oldfile;
 	}
@@ -917,11 +909,6 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 				col++;
 			}
 		}
-	}
-
-	if (inifdef && !wantelses) {
-		fprintf(stdout, "#endif /* %s */\n", endifname);
-		inifdef = 0;
 	}
 }
 
@@ -1023,7 +1010,7 @@ dump_context_vec(void)
 	int a, b, c, d;
 	char ch;
 
-	if (cvp > context_vec_ptr)
+	if (context_vec_start > context_vec_ptr)
 		return;
 
 	b = d = 0;		/* gcc */
@@ -1120,7 +1107,7 @@ dump_unified_vec(void)
 	int a, b, c, d;
 	char ch;
 
-	if (cvp > context_vec_ptr)
+	if (context_vec_start > context_vec_ptr)
 		return;
 
 	b = d = 0;		/* gcc */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.16 2003/06/26 21:03:08 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.17 2003/06/26 22:04:45 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -62,11 +62,8 @@ int	lflag;			/* long output format with header */
 int	rflag;			/* recursively trace directories */
 int	sflag;			/* announce files which are same */
 char	*start;			/* do file only if name >= this */
-/* Variables for -I D_IFDEF option. */
-int	wantelses;		/* -E */
-char	*ifdef1;		/* String for -1 */
-char	*ifdef2;		/* String for -2 */
-char	*endifname;		/* What we will print on next #endif */
+/* Variables for -D D_IFDEF option. */
+char	*ifdefname;		/* What we will print for #ifdef/#endif */
 int	inifdef;
 /* Variables for -c and -u context option. */
 int	context;		/* lines of context to be printed */
@@ -97,8 +94,6 @@ main(int argc, char **argv)
 {
 	int ch;
 
-	ifdef1 = "FILE1";
-	ifdef2 = "FILE2";
 	status = 2;
 	diffargv = argv;
 
@@ -121,11 +116,8 @@ main(int argc, char **argv)
 			context = 3;
 			break;
 		case 'D':
-			/* -Dfoo = -E -1 -2foo */
 			opt = D_IFDEF;
-			ifdef1 = "";
-			ifdef2 = optarg;
-			wantelses++;
+			ifdefname = optarg;
 			break;
 		case 'e':
 			opt = D_EDIT;
