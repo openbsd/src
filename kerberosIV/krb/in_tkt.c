@@ -91,10 +91,10 @@ in_tkt(pname, pinst)
        This isn't a security problem, since the ticket file, if it already
        exists, has the right uid (== ruid) and mode. */
     if (me != metoo) {
-	if (setreuid(metoo, me) < 0) {
+	if (seteuid(me) < 0) {
 	    /* can't switch??? barf! */
 	    if (krb_debug)
-		perror("in_tkt: setreuid");
+		perror("in_tkt: seteuid");
 	    return(KFAILURE);
 	} else
 	    if (krb_debug)
@@ -106,10 +106,10 @@ in_tkt(pname, pinst)
         return(KFAILURE);
     }
     if (me != metoo) {
-	if (setreuid(me, metoo) < 0) {
+	if (seteuid(metoo) < 0) {
 	    /* can't switch??? barf! */
 	    if (krb_debug)
-		perror("in_tkt: setreuid2");
+		perror("in_tkt: seteuid2");
 	    return(KFAILURE);
 	} else
 	    if (krb_debug)
