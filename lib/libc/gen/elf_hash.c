@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.4 1997/06/29 05:46:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.5 1997/07/01 05:53:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ elf_hash(name)
 
 	while (*name) {
 		h = (h << 4) + *name++;
-		if (g = h & 0xf0000000)
+		if ((g = h & 0xf0000000))
 			h ^= g >> 24;
 		h &= ~g;
 	}
