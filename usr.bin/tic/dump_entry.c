@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.11 2000/01/02 21:48:13 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.12 2000/01/05 18:15:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -769,12 +769,19 @@ dump_entry(TERMTYPE * tterm, bool limited, int numbers, int (*pred) (int
 	if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen) {
 	    /*
 	     * We pick on sgr because it's a nice long string capability that
-	     * is really just an optimization hack.
+	     * is really just an optimization hack.  Another good candidate is
+	     * acsc since it is both long and unused by BSD termcap.
 	     */
 	    char *oldsgr = set_attributes;
+	    char *oldacsc = acs_chars;
 	    set_attributes = ABSENT_STRING;
 	    PRINTF("# (sgr removed to fit entry within %d bytes)\n",
 		critlen);
+	    if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen) {
+		acs_chars = ABSENT_STRING;
+		PRINTF("# (acsc removed to fit entry within %d bytes)\n",
+		    critlen);
+	    }
 	    if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen) {
 		int oldversion = tversion;
 
@@ -795,6 +802,7 @@ dump_entry(TERMTYPE * tterm, bool limited, int numbers, int (*pred) (int
 		tversion = oldversion;
 	    }
 	    set_attributes = oldsgr;
+	    acs_chars = oldacsc;
 	}
     }
 
