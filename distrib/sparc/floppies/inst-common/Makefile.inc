@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1996/12/21 05:20:35 deraadt Exp $
+#	$Id: Makefile.inc,v 1.4 1997/02/09 16:50:37 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,14 +15,18 @@ IMAGE?=		inst${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
+.if defined(KERBEROS)
+CRUNCHCONF=	${COMMONDIR}/${CBIN}-krb.conf
+.else
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
+.endif
 MTREE=		${COMMONDIR}/mtree.conf
 
 all: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=120k count=12
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${VND} floppy3
-	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy
+	newfs -O -m 0 -o space -i 20480 -c 80 ${VND_RDEV} floppy
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -40,13 +44,18 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	crunchgen -D ${TOP}/../../.. -m ${CBIN}.mk -L ${DESTDIR}/usr/lib \
+	    ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+.if defined(KERBEROS)
+	mv ${CBIN}-krb ${CBIN}
+.endif
 
 clean cleandir:
-	/bin/rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f ${IMAGE} ${CBIN} ${CBIN}-krb.mk ${CBIN}-krb.cache \
+	    ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
