@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.131 2000/10/12 09:59:20 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.132 2000/10/13 18:34:46 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -331,6 +331,10 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			if (buf[i] == '\r') {
 				buf[i] = '\n';
 				buf[i + 1] = 0;
+				/* Kludge for F-Secure Macintosh < 1.0.2 */
+				if (i == 12 &&
+				    strncmp(buf, "SSH-1.5-W1.0", 12) == 0)
+					break;
 				continue;
 			}
 			if (buf[i] == '\n') {
