@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 1999/11/14 02:39:06 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 2000/01/17 06:56:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -125,45 +125,45 @@ struct ute {
  *
  * Revision 1.3  92/06/06  16:16:45  dalton
  * *** empty log message ***
- * 
+ *
  * Revision 1.2  92/06/06  15:42:28  dalton
  * Changed include to be a path relative to hp800.
- * 
+ *
  * Revision 1.1  92/06/06  14:05:33  dalton
  * Initial revision
- * 
+ *
  * Revision 1.2  91/04/14  20:29:49  osfrcs
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.2.2  91/04/02  10:42:50  brezak
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.1.2  91/03/30  09:20:34  brezak
  * 	Initial version.
- * 
+ *
  * Revision 1.1  88/07/11  14:05:15  14:05:15  ren (Bob Naas)
  * 	Initial revision
  *
  * Revision 5.2  87/07/02  14:45:57  14:45:57  kent (Kent McMullen)
  * added constants to support addDasm and addDCond added to ssDID.c
- * 
+ *
  * Revision 5.1  87/02/27  11:12:08  11:12:08  kent (Kent McMullen)
  * update all src to 5.1
- * 
+ *
  * Revision 5.0  87/02/18  16:31:15  16:31:15  kent (Kent McMullen)
  * update all revision numbers to 5.0 for release
- * 
+ *
  * Revision 1.1  86/07/15  08:34:55  08:34:55  kent (Kent McMullen)
  * Initial revision
- * 
+ *
  * Revision 4.1  83/10/25  17:01:22  17:01:22  djm (Daniel J Magenheimer)
  * First release for ACD v4
- * 
+ *
  * Revision 3.0  83/06/13  10:22:59  djm (Daniel Magenheimer)
  * First release for distribution
- * 
+ *
  *
  */
 
@@ -453,24 +453,24 @@ DeclBitfR(31,1,_b311)
  *
  * Revision 1.3  92/06/06  16:16:45  dalton
  * *** empty log message ***
- * 
+ *
  * Revision 1.2  92/06/06  15:42:28  dalton
  * Changed include to be a path relative to hp800.
- * 
+ *
  * Revision 1.1  92/06/06  14:05:33  dalton
  * Initial revision
- * 
+ *
  * Revision 1.2  91/04/14  20:29:49  osfrcs
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.2.2  91/04/02  10:42:50  brezak
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.1.2  91/03/30  09:20:34  brezak
  * 	Initial version.
- * 
+ *
  * Revision 6.1  89/09/06  10:39:58  burroughs
  * Added shadow registers for gr0-gr7.
  *     gr0-7 are copied into sh0-7 whenever a trap occurs
@@ -478,30 +478,30 @@ DeclBitfR(31,1,_b311)
  *     interrupt.
  *     the "sh" command displays the shadow registers
  *     = sh7 0x789 works, too.
- * 
+ *
  * Revision 6.0  89/09/01  15:46:37  15:46:37  burroughs (Greg Burroughs)
  * baseline for pcx simple offsite
- * 
+ *
  * Revision 5.2  87/09/02  14:30:23  14:30:23  kent
  * separated stat gathering for indexed vs short.
  * this will NOT work if cache hints ever get used
  * since this field was assumed always zero
- * 
+ *
  * Revision 5.1  87/02/27  11:12:16  11:12:16  kent (Kent McMullen)
  * update all src to 5.1
- * 
+ *
  * Revision 5.0  87/02/18  16:31:35  16:31:35  kent (Kent McMullen)
  * update all revision numbers to 5.0 for release
- * 
+ *
  * Revision 1.1  86/07/15  08:34:57  08:34:57  kent (Kent McMullen)
  * Initial revision
- * 
+ *
  * Revision 4.1  83/10/25  17:02:34  17:02:34  djm (Daniel J Magenheimer)
  * First release for ACD v4
- * 
+ *
  * Revision 3.0  83/06/13  10:24:45  djm (Daniel Magenheimer)
  * First release for distribution
- * 
+ *
  *
  */
 
@@ -698,51 +698,51 @@ DeclBitfR(31,1,_b311)
  *
  * Revision 1.3  92/06/06  16:16:45  dalton
  * *** empty log message ***
- * 
+ *
  * Revision 1.2  92/06/06  15:42:28  dalton
  * Changed include to be a path relative to hp800.
- * 
+ *
  * Revision 1.1  92/06/06  14:05:33  dalton
  * Initial revision
- * 
+ *
  * Revision 1.2  91/04/14  20:29:49  osfrcs
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.2.2  91/04/02  10:42:50  brezak
  * 	Initial version.
  * 	[91/03/30  09:20:34  brezak]
- * 
+ *
  * Revision 1.1.1.2  91/03/30  09:20:34  brezak
  * 	Initial version.
- * 
+ *
 ;Revision 1.1  88/07/11  14:05:21  14:05:21  ren (Bob Naas)
 ;Initial revision
 ;
  * Revision 5.1  87/02/27  11:12:23  11:12:23  kent (Kent McMullen)
  * update all src to 5.1
- * 
+ *
  * Revision 5.0  87/02/18  16:31:52  16:31:52  kent (Kent McMullen)
  * update all revision numbers to 5.0 for release
- * 
+ *
  * Revision 1.1  86/07/15  08:35:00  08:35:00  kent (Kent McMullen)
  * Initial revision
- * 
+ *
  * Revision 4.3  85/11/12  09:28:44  09:28:44  viggy (Viggy Mokkarala)
  * first mpsim version, partially stable
- * 
+ *
  * Revision 4.2  84/07/16  17:20:57  17:20:57  djm ()
  * Define field macros for COPR and SFU insts
- * 
+ *
  * Revision 4.1  83/10/25  17:10:14  djm (Daniel Magenheimer)
  * First release for ACD v4
- * 
+ *
  * Revision 3.1  83/08/03  14:09:59  djm (Daniel Magenheimer)
  * Sys calls, args, -S, bug fixes, etc.
- * 
+ *
  * Revision 3.0  83/06/13  10:25:13  djm (Daniel Magenheimer)
  * First release for distribution
- * 
+ *
  *
  */
 /*
@@ -1261,7 +1261,7 @@ iExInit(void)
 		m = &majopcs[i->majopc];
 		if (m->maxsubop < i->opcext)
 			panic("iExInit not enough space for opcode %d",
-			      i->majopc);
+			    i->majopc);
 		shft = 32 - i->extbs - i->extbl;
 		mask = (1 << i->extbl) - 1;
 		if (m->extshft || m->extmask) {
@@ -1334,10 +1334,10 @@ iaDasm(i, ofs, w)
 {
 	if (Match("addi"))
 		db_printf("%s\t%d,%%r%d,%%r%d",
-		       addDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
+		    addDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	else
 		db_printf("%s\t%d,%%r%d,%%r%d",
-		       subDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
+		    subDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	return (1);
 }
 
@@ -1350,10 +1350,10 @@ shdDasm(i, ofs, w)
 {
 	if (Match("vshd"))
 		db_printf("%s\t%%r%d,%%r%d,%%r%d",
-		       edDCond(Cond(w)), Rsa(w),Rsb(w),Rtc(w));
+		    edDCond(Cond(w)), Rsa(w),Rsb(w),Rtc(w));
 	else
 		db_printf("%s\t%%r%d,%%r%d,%d,%%r%d",
-		       edDCond(Cond(w)),Rsa(w),Rsb(w),31-Imd5(w),Rtc(w));
+		    edDCond(Cond(w)),Rsa(w),Rsb(w),31-Imd5(w),Rtc(w));
 	return (1);
 }
 
@@ -1365,7 +1365,7 @@ extrDasm(i, ofs, w)
 	int w;
 {
 	db_printf("%s\t%%r%d,%d,%d,%%r%d",
-	       edDCond(Cond(w)),Rsb(w),Imd5(w),32 - Rsc(w),Rta(w));
+	    edDCond(Cond(w)),Rsb(w),Imd5(w),32 - Rsc(w),Rta(w));
 	return (1);
 }
 
@@ -1378,7 +1378,7 @@ vextrDasm(i, ofs, w)
 	int w;
 {
 	db_printf("%s\t%%r%d,%d,%%r%d",
-	       edDCond(Cond(w)),Rsb(w),32 - Rsc(w),Rta(w));
+	    edDCond(Cond(w)),Rsb(w),32 - Rsc(w),Rta(w));
 	return (1);
 }
 
@@ -1391,7 +1391,7 @@ depDasm(i, ofs, w)
 	int w;
 {
 	db_printf("%s\t%%r%d,%d,%d,%%r%d",
-	       edDCond(Cond(w)),Rsa(w),31 - Imd5(w),32 - Rsc(w),Rtb(w));
+	    edDCond(Cond(w)),Rsa(w),31 - Imd5(w),32 - Rsc(w),Rtb(w));
 	return (1);
 }
 
@@ -1404,7 +1404,7 @@ vdepDasm(i, ofs, w)
 	int w;
 {
 	db_printf("%s\t%%r%d,%d,%%r%d",
-	       edDCond(Cond(w)),Rsa(w),32 - Rsc(w),Rtb(w));
+	    edDCond(Cond(w)),Rsa(w),32 - Rsc(w),Rtb(w));
 	return (1);
 }
 
@@ -1417,7 +1417,7 @@ depiDasm(i, ofs, w)
 	int w;
 {
 	db_printf("%s\t%d,%d,%d,%%r%d",
-	       edDCond(Cond(w)),Ima5(w),31 - Imd5(w),32 - Imc5A(w),Rtb(w));
+	    edDCond(Cond(w)),Ima5(w),31 - Imd5(w),32 - Imc5A(w),Rtb(w));
 	return (1);
 }
 
@@ -1873,17 +1873,17 @@ mmgtDasm(i, ofs, w)
 		if (ProbeI(w)) {
 			if (Dss(w))
 				db_printf("i\t(%%sr%d,%%r%d),%d,%%r%d",
-				       Dss(w),Rsb(w),Rsa(w),Rtc(w));
+				    Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
 				db_printf("i\t(%%r%d),%d,%%r%d",
-				       Rsb(w),Rsa(w),Rtc(w));
+				    Rsb(w),Rsa(w),Rtc(w));
 		} else {
 			if (Dss(w))
 				db_printf("\t(%%sr%d,%%r%d),%%r%d,%%r%d",
-				       Dss(w),Rsb(w),Rsa(w),Rtc(w));
+				    Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
 				db_printf("\t(%%r%d),%%r%d,%%r%d",
-				       Rsb(w),Rsa(w),Rtc(w));
+				    Rsb(w),Rsa(w),Rtc(w));
 		}
 	}
 	else if (Match("lha") || Match("lpa")) {
@@ -1891,7 +1891,7 @@ mmgtDasm(i, ofs, w)
 			db_printf(",m");
 		if (Dss(w))
 			db_printf("\t%%r%d(%%sr%d,%%r%d),%%r%d",
-			       Rsa(w),Dss(w),Rsb(w),Rtc(w));
+			    Rsa(w),Dss(w),Rsb(w),Rtc(w));
 		else
 			db_printf("\t%%r%d(%%r%d),%%r%d",Rsa(w),Rsb(w),Rtc(w));
 	}
@@ -1976,7 +1976,7 @@ floatDasm(i, ofs, w)
 			}
 			db_printf("%s,%s",p,fmtStrTbl[fmt]);
 			db_printf(",%s\t%%f%s,%%f%s",
-			       condStrTbl[op2], ST(r1), ST(r2));
+			    condStrTbl[op2], ST(r1), ST(r2));
 			return (1);
 		}
 		/*
@@ -2084,7 +2084,7 @@ fcoprDasm(w, op1, op2)
 		case 3: p = "fxt"; break;
 		}
 		db_printf("fcnv%s,%s,%s\t%%fr%d,%%fr%d",
-		       p, fmtStrTbl[fmt], fmtStrTbl[dfmt], r1, t);
+		    p, fmtStrTbl[fmt], fmtStrTbl[dfmt], r1, t);
 		break;
 	    case 2:
 		/* Opclass 2: 2 sources, no destination */
@@ -2095,7 +2095,7 @@ fcoprDasm(w, op1, op2)
 		default: db_printf(fcoprUndef); return (0);
 		}
 		db_printf("%s,%s,%s\t%%fr%d,%%fr%d",
-		       p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
+		    p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
 		break;
 	    case 3:
 		/* Opclass 3: 2 sources, 1 destination */
@@ -2110,7 +2110,7 @@ fcoprDasm(w, op1, op2)
 		default: db_printf(fcoprUndef); return (0);
 		}
 		db_printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
-		       p, fmtStrTbl[fmt], r1, r2, t);
+		    p, fmtStrTbl[fmt], r1, r2, t);
 		break;
 	    default:
 		    db_printf(fcoprUndef);
@@ -2140,7 +2140,7 @@ coprDasm(i, ofs, w)
 		return fcoprDasm(w, CoprExt1(w),CoprExt2(w));
 	}
 	if (Match("cldd")) {
-		dreg = 1; 
+		dreg = 1;
 		load = 1;
 		db_printf("%sldd",pfx);
 	} else if (Match("cldw")) {
@@ -2275,12 +2275,12 @@ fmpysubDasm(i, ofs, w)
 {
 	if (SinglePrec(w))
 		db_printf("SUB,SGL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
-		       fsreg[Ms1(w)], fsreg[Ms2(w)], fsreg[Mt(w)],
-		       fsreg[As(w)], fsreg[Ad(w)]);
+		    fsreg[Ms1(w)], fsreg[Ms2(w)], fsreg[Mt(w)],
+		    fsreg[As(w)], fsreg[Ad(w)]);
 	else
 		db_printf("SUB,DBL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
-		       fdreg[Ms1(w)], fdreg[Ms2(w)], fdreg[Mt(w)],
-		       fdreg[As(w)], fdreg[Ad(w)]);
+		    fdreg[Ms1(w)], fdreg[Ms2(w)], fdreg[Mt(w)],
+		    fdreg[As(w)], fdreg[Ad(w)]);
 	return (1);
 }
 
@@ -2299,12 +2299,10 @@ fmpyaddDasm(i, ofs, w)
 
 	if (Rsd(w) == 0)
 		db_printf("\t%%fcfxt,%s,%%f%s,%%f%s,%%f%s",
-		       ((SinglePrec(w)) ? "sgl" : "dbl"),
-		       ms1, ms2, mt, ad);
+		    ((SinglePrec(w)) ? "sgl" : "dbl"), ms1, ms2, mt, ad);
 	else
 		db_printf("add%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
-		       ((SinglePrec(w)) ? "sgl" : "dbl"),
-		       ms1, ms2, mt, as, ad);
+		    ((SinglePrec(w)) ? "sgl" : "dbl"), ms1, ms2, mt, as, ad);
 
 	return (1);
 }
