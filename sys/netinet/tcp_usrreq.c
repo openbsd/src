@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.9 1997/06/06 11:22:18 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.10 1997/06/14 05:49:41 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -156,10 +156,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 * be discarded here.
 	 */
 	case PRU_DETACH:
-		if (tp->t_state > TCPS_LISTEN)
-			tp = tcp_disconnect(tp);
-		else
-			tp = tcp_close(tp);
+		tp = tcp_disconnect(tp);
 		break;
 
 	/*
