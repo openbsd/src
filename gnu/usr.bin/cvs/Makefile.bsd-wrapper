@@ -1,14 +1,17 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 1996/08/13 02:45:41 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 1996/08/13 17:36:42 millert Exp $
 
 .include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CFLAGS="${CFLAGS} -DSERVER_FLOWCONTROL"
-CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 lib/getdate.c \
-		macintosh/Makefile os2/Makefile
+CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile doc/CVSvn.texi \
+                doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
+                doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvsclient.info
 
 .if defined(KERBEROS)
 KRB=--with-krb4=/usr
+.else
+KRB=--without-krb4
 .endif
 
 all:	config.status
