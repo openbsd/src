@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 1999/11/11 11:35:17 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2000/06/23 16:39:45 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.11 1999/11/11 11:35:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.12 2000/06/23 16:39:45 espie Exp $";
 #endif
 
 #include <stdio.h>
@@ -448,5 +448,32 @@ strstr(string, substring)
 		b = substring;
 	}
 	return NULL;
+}
+#endif
+
+#ifdef NEED_FGETLN
+char *
+fgetln(stream, len)
+    FILE *stream;
+    size_t *len;
+{
+    static char *buffer = NULL;
+    static size_t buflen = 0;
+
+    if (buflen == 0) {
+    	buflen = 512;
+	buffer = emalloc(buflen+1);
+    }
+    if (fgets(buffer, buflen+1, stream) == NULL)
+	return NULL;
+    *len = strlen(buffer);
+    while (*len == buflen && buffer[*len-1] != '\n') {
+	buffer = erealloc(buffer, 2*buflen + 1);
+	if (fgets(buffer + buflen, buflen + 1, stream) == NULL)
+	    return NULL;
+	*len += strlen(buffer + buflen);
+	buflen *= 2;
+    }
+    return buffer;
 }
 #endif

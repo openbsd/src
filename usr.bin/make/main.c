@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2000/06/23 16:39:45 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.36 2000/06/23 16:23:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.37 2000/06/23 16:39:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -877,7 +877,7 @@ ReadMakefile(p, q)
 	char *name, path[MAXPATHLEN + 1];
 
 	if (!strcmp(fname, "-")) {
-		Parse_File("(stdin)", stdin);
+		Parse_File(estrdup("(stdin)"), stdin);
 		Var_Set("MAKEFILE", "", VAR_GLOBAL);
 	} else {
 		if ((stream = fopen(fname, "r")) != NULL)
