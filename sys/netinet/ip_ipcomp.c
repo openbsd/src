@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.4 2002/06/18 22:26:12 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.5 2002/06/18 22:48:16 angelos Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -483,6 +483,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
          * Loop through mbuf chain; if we find an M_EXT mbuf with
          * more than one reference, replace the rest of the chain.
          */
+	mo = NULL;
 	mi = m;
 	while (mi != NULL &&
 	       (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi))) {

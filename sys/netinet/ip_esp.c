@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.71 2002/06/18 19:25:48 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.72 2002/06/18 22:48:16 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -848,6 +848,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 * Loop through mbuf chain; if we find an M_EXT mbuf with
 	 * more than one reference, replace the rest of the chain.
 	 */
+	mo = NULL;
 	mi = m;
 	while (mi != NULL &&
 	    (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.66 2002/06/18 19:21:48 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.67 2002/06/18 22:48:16 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1040,6 +1040,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	 * Loop through mbuf chain; if we find an M_EXT mbuf with
 	 * more than one reference, replace the rest of the chain.
 	 */
+	mo = NULL;
 	mi = m;
 	while (mi != NULL &&
 	    (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi))) {
