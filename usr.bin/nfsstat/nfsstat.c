@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.16 2003/01/15 22:20:15 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.17 2003/01/15 22:57:42 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.16 2003/01/15 22:20:15 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.17 2003/01/15 22:57:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ main(argc, argv)
 		if (kvm_nlist(kd, nl) != 0)
 			errx(1, "kvm_nlist: can't get names");
 	} else {
-		int mib[3];
+		int mib[4];
 		size_t len;
 
 		mib[0] = CTL_VFS;
