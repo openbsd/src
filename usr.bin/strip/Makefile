@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1999/05/10 16:14:07 espie Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/02/05 08:43:17 niklas Exp $
 
 TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
@@ -23,10 +23,10 @@ STRIP=	/usr/bin/strip
 .elif ${HOSTCC} != ${CC}
 STRIP=./hoststrip
 
-realinstall: hoststrip
+realinstall strip: hoststrip
 
 hoststrip: strip.c
-	${HOSTCC} ${.CURDIR}/strip.c -o hoststrip
+	${HOSTCC} -I${.CURDIR}/../nm ${.CURDIR}/strip.c -o hoststrip
 .else
 STRIP=./strip
 .endif
