@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.1 1996/08/23 23:42:29 downsj Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.2 1996/08/24 06:32:16 downsj Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -42,11 +42,7 @@
 #define ASTS_VOID       0x15  /* No current audio status to return */
 
 #ifndef DEFAULT_CD_DRIVE
-#  define DEFAULT_CD_DRIVE  "/dev/cd0c"
-#endif
-
-#ifndef DEFAULT_CD_PARTITION
-#  define DEFAULT_CD_PARTITION  "d"
+#  define DEFAULT_CD_DRIVE  "/dev/cd0"
 #endif
 
 #define CMD_DEBUG       1
