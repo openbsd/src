@@ -1,5 +1,5 @@
-#	$OpenBSD: files.pcmcia,v 1.7 1997/08/19 21:59:49 angelos Exp $
-#	$Id: files.pcmcia,v 1.7 1997/08/19 21:59:49 angelos Exp $
+#	$OpenBSD: files.pcmcia,v 1.8 1997/08/20 17:09:10 angelos Exp $
+#	$Id: files.pcmcia,v 1.8 1997/08/20 17:09:10 angelos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -29,5 +29,5 @@ file	dev/pcmcia/com_pcmcia.c		com_pcmcia
 attach	ep at pcmcia with ep_pcmcia
 file	dev/pcmcia/if_ep_pcmcia.c	ep_pcmcia
 
-attach 	wlp at pcmcia with wlp_pcmcia
-file   	dev/pcmcia/if_wlp_pcmcia.c	wlp_pcmcia
+#attach 	wlp at pcmcia with wlp_pcmcia
+#file   	dev/pcmcia/if_wlp_pcmcia.c	wlp_pcmcia
