@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.28 2000/01/31 19:57:20 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.29 2000/03/23 14:43:47 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/select.h>			/* For struct selinfo. */
 #include <sys/queue.h>
+#include <sys/timeout.h>		/* For struct timeout. */
 
 /*
  * One structure allocated per session.
@@ -125,6 +126,7 @@ struct	proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
+	int	p_exitsig;		/* Signal to send to parent on exit. */
 	int	p_flag;			/* P_* flags. */
 	u_char	p_os;			/* OS tag */
 	char	p_stat;			/* S* process status. */
@@ -148,11 +150,13 @@ struct	proc {
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
+	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	char	*p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
+	struct	timeout p_realit_to;	/* Alarm timeout. */
 	struct	timeval p_rtime;	/* Real time. */
 	u_quad_t p_uticks;		/* Statclock hits in user mode. */
 	u_quad_t p_sticks;		/* Statclock hits in system mode. */
