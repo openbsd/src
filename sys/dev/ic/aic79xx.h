@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.7 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.8 2004/10/24 22:07:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -105,7 +105,7 @@ struct scb_platform_data;
 #define ALL_TARGETS_MASK 0xFFFF
 #define INITIATOR_WILDCARD	(~0)
 #define	SCB_LIST_NULL		0xFF00
-#define	SCB_LIST_NULL_LE	(ahd_htole16(SCB_LIST_NULL))
+#define	SCB_LIST_NULL_LE	(aic_htole16(SCB_LIST_NULL))
 #define QOUTFIFO_ENTRY_VALID 0x80
 #define SCBID_IS_NULL(scbid) (((scbid) & 0xFF00 ) == SCB_LIST_NULL)
 
