@@ -1,129 +1,182 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.2 2001/10/04 16:56:52 mpech Exp $
-.\"	$NetBSD: boot_hp300.8,v 1.3 1995/04/23 10:33:34 cgd Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.3 2002/10/17 23:18:51 miod Exp $
 .\"
-.\" Copyright (c) 1990, 1991, 1993
-.\"	The Regents of the University of California.  All rights reserved.
-.\"
-.\" This code is derived from software contributed to Berkeley by
-.\" the Systems Programming Group of the University of Utah Computer
-.\" Science Department.
+.\" Copyright (c) 2002, Miodrag Vallat.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
+.\" 1. Redistribution of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
-.\"
-.Dd April 19, 1994
+.Dd October 2nd, 2002
 .Dt BOOT_HP300 8 hp300
 .Os
 .Sh NAME
-.Nm boot
-.Nd
-.Tn hp300-specific
-system bootstrapping procedures
+.Nm boot_hp300
+.Nd hp300 system bootstrapping procedures
 .Sh DESCRIPTION
-.Ss Power fail and crash recovery
-Normally, the system will reboot itself at power-up or after crashes.
-An automatic consistency check of the file systems will be performed,
-and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
-On an HP300, the boot procedure uses the boot ROM to load a boot program
-from an
-.Tn LIF
-format directory at the beginning of an attached disk.
-The
-.Pa /usr/mdec
-directory contains a disk boot program
-.Pa ( /usr/mdec/bootsd
+When powered on, the hp300
+firmware will proceed to its initialization, and
+will boot an operating system from the first bootable device found.
+By pressing the
+.Dq enter
+key during the initialization sequence, the user can force another
+device to be used.
+.Ss Warm starts
+After a panic, or if the system is rebooted via
+.Xr reboot 8
 or
-.Pa /usr/mdec/boothd )
-which is placed on a
-new disk automatically by
-.Xr disklabel 8
-when the
-partitions of the disk are setup.
+.Xr shutdown 8 ,
+the firmware will restart from the previous boot device.
+.Ss Bootable devices
+The following devices can be booted from the firmware:
+.Bl -bullet -compact
+.It
+Any disk successfully probed, and containing a boot program in a
+.Tn LIF
+format directory at its beginning.
+.It
+Any network interface, for which a
+.Xr rbootd 8
+server is listening on the network.
+.El
+.Ss Boot process options
+The
+.Ox
+bootloader will let the user enter a boot device, kernel
+filename and boot options.
 .Pp
-This boot program
-finds the corresponding file on the given device
-.Pf ( Ar bsd
-by default),
-loads that file into memory,
-and starts the program at the entry address specified in the program header.
+If the special line
+.Ic reset
+is entered, the bootloader will attempt to restart the machine.
 .Pp
-The boot program can be interrupted by typing ^C (ctrl-C).
-This will force the boot program to interactively prompt for a system to boot.
-If not interrupted, it will boot from the device from which the boot
-program itself was loaded.
-.Pp
-The file specifications used for an interactive boot are of the form:
-.Pp
-.Dl device(unit, minor)
-.Pp
-where
-.Ar device
-is the type of the device to be searched,
-.Ar unit
-is 8 * the hpib number plus the unit number of the disk or tape,
-and
-.Ar minor
-is the disk partition or tape file number.
-Normal line editing characters can be used when typing the file specification.
+The file specification used for an interactive boot is of the form:
+.Dl device unit partition : filename   options
+where:
+.Bl -tag -width device -compact
+.It Ar device
+is the type of the device to be searched.
 Currently,
-.Dq rd
+.Li ct Pq HP-IB tape ,
+.Li hd Pq HP-IB disk ,
+.Li le Pq network ,
 and
-.Dq sd
+.Li sd Pq SCSI disk or tape
 are the only valid
 .Ar device
 specifiers.
+.It Ar unit
+is the device id for
+.Tn SCSI devices,
+and the
+.Li "(8 * the HP-IB controller number + the device unit number)"
+formula for
+.Tn HP-IB
+devices.
+Controller and unit numbering start at zero.
+.It Ar minor
+is the disk partition letter or tape file number.
+.El
+Normal line editing characters can be used when typing the file specification.
 .Pp
 For example,
-to boot from the
+to boot the
+.Pa /bsd
+kernel from the
 .Dq a
-file system of unit 0 on HP-IB 2, type
-.Dq rd(16, 0)bsd
+file system of unit 0 on second HP-IB controller, type
+.Dq rd8a:/bsd
 at the boot prompt.
-For tapes, the minor device number gives a file offset.
 .Pp
-In an emergency, the bootstrap methods described in the paper
-.%T Installing 4.3bsd on the HP300
-can be used to boot from a distribution tape.
+The following options are recognized:
+.Bl -tag -width "-XXX" -offset indent -compact
+.It -a
+Prompt for the root filesystem device after the devices have been configured.
+.It -b
+On the next system reboot, always halt the system, even if a reboot is
+required.
+.It -c
+Enter the
+.Dq User Kernel Configuration
+mode upon startup
+.Pq see Xr boot_config 8 .
+.It -d
+Enter the debugger,
+.Xr ddb 4 ,
+as soon as the kernel console has been initialized.
+.It -s
+Boot the system single-user.
+The system will be booted multi-user unless this option is specified.
+.El
+.Pp
+If the user does not enter anything after a few seconds, the bootloader
+will attempt to boot a kernel from the device it was loaded from, with no
+options.
+The following kernel filenames will be tried, in that order:
+.Bl -item -compact
+.It
+bsd
+.It
+bsd.gz
+.It
+obsd
+.It
+obsd.gz
+.It
+bsd.old
+.It
+bsd.old.gz
+.El
+.Ss Abnormal system termination
+In case of system crashes, the kernel will usually enter the kernel
+debugger,
+.Xr ddb 4 ,
+unless it is not present in the kernel, or it is disabled via the
+.Em ddb.panic
+sysctl.
+Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
+if it was still in device configuration phase, or attempt a dump to the
+configured dump device, if possible.
+The crash dump will then be recovered by
+.Xr savecore 8
+during the next multi-user boot cycle.
+It is also possible to force other behaviours from ddb.
 .Sh FILES
-.Bl -tag -width /usr/mdec/installboot -compact
+.Bl -tag -width /usr/mdec/bootxx.lif -compact
 .It Pa /bsd
-system code
-.It Pa /usr/mdec/bootrd
+default system kernel
+.It Pa /usr/mdec/uboot.lif
 .Tn LIF
-format boot block
-.It Pa /usr/mdec/installboot
-program to install boot blocks
+format boot block, suitable for all bootable devices
+.It Pa /usr/mdec/cdboot.lif
+.Tn LIF
+format boot block, suitable for bootable cd-rom.
 .El
 .Sh SEE ALSO
-.Xr disklabel 8 ,
+.Xr ddb 4 ,
+.Xr boot_config 8 ,
 .Xr halt 8 ,
+.Xr init 8 ,
+.Xr installboot 8 ,
+.Xr rbootd 8 ,
 .Xr reboot 8 ,
+.Xr savecore 8 ,
 .Xr shutdown 8

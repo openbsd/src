@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.6 2002/01/04 21:56:04 kjell Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.7 2002/10/17 23:18:51 miod Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -30,20 +30,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-
 .Dd September 4, 1997
 .Dt BOOT_I386 8 i386
 .Os
 .Sh NAME
-.Nm boot
-.Nd
-.Tn i386-specific
-system bootstrapping procedures
+.Nm boot_i386
+.Nd i386 system bootstrapping procedures
 .Sh DESCRIPTION
-.Ss Power fail and crash recovery
-Normally, the system will reboot itself at power-up or after crashes.
-An automatic consistency check of the file systems will be performed,
-and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
 The
 .Tn "PC AT"
@@ -98,7 +91,7 @@ off an extended partition.
 In other words, the first block of an extended
 partition is really an MBR, which will then load the corresponding MBR or PBR
 out of its extended partition's partition table.
-.Sh GEOMETRY TRANSLATION
+.Ss Geometry translation
 .Em WARNING :
 This portion of the
 .Dq PC BIOS Architecture
@@ -137,28 +130,63 @@ This geometry can, and likely will,
 change whenever you move a disk from machine to machine, or from controller
 to controller.
 .Em They are controller and machine specific .
+.Ss Boot process options
+On most
+.Ox
+systems, booting
+.Ox
+from the BIOS will eventually load the
+.Ox -specific
+i386 bootstrapping code.
+This versatile program is described in a separate document,
+.Xr boot 8 .
+Other bootstrapping software may be used, and can chain-load the
+.Ox
+bootstrapping code, or directly load the kernel.
+In the latter case, refer to your bootloader documentation to know which
+options are available.
+.Ss Abnormal system termination
+In case of system crashes, the kernel will usually enter the kernel
+debugger,
+.Xr ddb 4 ,
+unless it is not present in the kernel, or it is disabled via the
+.Em ddb.panic
+sysctl.
+Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
+if it was still in device configuration phase, or attempt a dump to the
+configured dump device, if possible.
+The crash dump will then be recovered by
+.Xr savecore 8
+during the next multi-user boot cycle.
+It is also possible to force other behaviours from ddb.
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosboot -compact
 .It Pa /bsd
-system code
+default system kernel
 .It Pa /usr/mdec/mbr
 system MBR image
 .It Pa /usr/mdec/biosboot
 system primary stage bootstrap (PBR)
-.It Pa /boot
-system second stage bootstrap
+.It Pa /usr/mdec/boot
+system second stage bootstrap (usually also installed as
+.Pa /boot )
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr boot 8 ,
 .Xr halt 8 ,
+.Xr init 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
+.Xr savecore 8 ,
 .Xr shutdown 8
 .Sh BUGS
 The
 .Dq PC BIOS Architecture
 makes this process very prone to weird and
 wonderful interactions between different operating systems.
+.Pp
 There is no published standard to the MBR and PBR,
 which makes coding these a nightmare.
-Somebody *please* write me a decent BIOS, and make them (the masses) use it!
+.\" .Pp
+.\" Somebody *please* write me a decent BIOS, and make them (the masses) use it!

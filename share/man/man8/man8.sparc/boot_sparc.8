@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.4 2001/10/14 21:02:18 miod Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.5 2002/10/17 23:18:51 miod Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -40,43 +40,33 @@
 .Sh NAME
 .Nm boot
 .Nd
-.Tn sparc-specific
+.Tn sparc
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Ss Power fail and crash recovery
-Normally, the system will reboot itself at power-up or after crashes.
-An automatic consistency check of the file systems will be performed
-(as described in
-.Xr fsck 8 ) ,
-and unless this fails, the system will resume multi-user operations.
-.Ss Cold starts
+.Ss System starts
+When powered on, after a panic, or if the system is rebooted via
+.Xr reboot 8
+or
+.Xr shutdown 8 ,
+the PROM will proceed to its initialization, and will boot an operating
+system if autoboot is enabled.
+.Ss Boot process description
 System boot blocks are installed near the start of the boot disk
 using the procedure described in
 .Xr installboot 8 .
-The boot program attempts to load the kernel from partition
-.Dq a
-of the boot device,
+The boot program attempts to load the kernel from the selected
+boot device,
 which must currently be an
 .Dq sd ,
 .Dq xd
 or
 .Dq xy
-disk.
-.Pp
-The
-.Fl s
-flag to the bootloader will bring the system up in single-user mode.
-The
-.Fl a
-flag instructs the system to prompt for the location of the root filesystem
-and the primary swap partition.
-The
-.Fl c
-flag instructs the system to enter the
-.Dq User Kernel Config
-mode upon startup (see
-.Xr boot_config 8 ).
-Other flags are currently ignored.
+disk, or an
+.Tn SCSI
+cdrom
+.Pq Dq cd
+or tape drive
+.Pq Dq st .
 .Pp
 The SPARC boot ROM comes in two flavours: an
 .Dq old-style
@@ -107,56 +97,104 @@ Utter the following
 incantation in new-mode to force the ROM to always start in new-mode:
 .Pp
 .Em \	ok
-setenv sunmon-compat? false
+setenv
+.Ev Em sunmon-compat?
+false
 .Ss Old-style PROM operation
 By default, the old ROM will poll for boot devices, unless the eeprom settings
 are set to specify a particular boot device.
 The
 .Ox
 bootloader will then look for a kernel named
-.Dq bsd
+.Pa bsd
 by default, unless a different filename has been specified in the boot
 command.
 .Pp
 Refer to the
-.Dq PROM User's Manual
+.Dq "PROM User's Manual"
 for more information.
 .Ss OpenBoot PROM version 1 operation
 Older OpenBOOT PROM, as well as hybrid (dual-mode) versions operating in
 compatibility mode (with the variable
-.Dq version2?
+.Ev Em version2?
 set to false) will look for a bootloader and kernel filename as specified
 by the
-.Dq boot-from
+.Ev Em boot-from
 variable.
 To change the default so that
 .Ox
 will be loaded, type the following:
 .Pp
 .Em \	ok
-setenv boot-from sd(0,0,0)bsd
+setenv
+.Ev Em boot-from
+sd(0,0,0)bsd
 .Pp
 Replace
 .Dq sd(0,0,0)
 with the appropriate boot device if necessary.
+.Pp
+Autoboot is enabled by setting the
+.Ev Em auto-boot?
+variable to
+.Dq true ,
+and is the factory default.
 .Ss OpenBoot PROM version 2 operation
 Version 2 OpenBOOT PROM will look for a bootloader on the device specified
 by the
-.Dq boot-device
+.Ev Em boot-device
 variable.
 The
 .Ox
 bootloader will then look for a kernel named
-.Dq bsd
+.Pa bsd
 by default, unless the
-.Dq boot-file
-environment variable is set, or a different filename has been specified
+.Ev Em boot-file
+variable is set, or a different filename has been specified
 in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
-set-default boot-file
+set-default
+.Ev Em boot-file
 .Pp
+Autoboot is enabled by setting the
+.Ev Em auto-boot?
+variable to
+.Dq true ,
+and is the factory default.
+.Ss Boot process options
+The following options are recognized:
+.Bl -tag -width "-XXX" -offset indent -compact
+.It -a
+Prompt for the root filesystem and swap devices after the devices have
+been configured.
+.It -c
+Enter the
+.Dq User Kernel Configuration
+mode upon startup
+.Pq see Xr boot_config 8 .
+.It -d
+Enter the debugger ,
+.Xr ddb 4 ,
+as soon as the kernel console has been initialized.
+.It -s
+Boot the system single-user.
+The system will be booted multi-user unless this option is specified.
+.El
+.Ss Abnormal system termination
+If the system crashes, it will enter the kernel debugger,
+.Xr ddb 4 ,
+if it is configured in the kernel.
+If the crash occurred during
+initialization and the debugger is not present or is exited, the
+kernel will halt the system.
+If the crash occurred during normal operation and the debugger
+is not present or is exited, the system will attempt a dump to the
+configured dump device (which will be automatically recovered with
+.Xr savecore 8
+during the next multi-user boot cycle), and after the dump is complete
+(successful or not) the kernel will attempt a reboot.
 .Ss Accessing the PROM during runtime
 If the
 .Xr sysctl 8
@@ -164,29 +202,42 @@ variable
 .Ev ddb.console
 is enabled, at any time you can break back to the ROM by pressing the
 .Dq L1
+.Pq also known as the Dq stop key
 and
 .Dq a
 keys at the same time (if the console is a serial port the same is
 achieved by sending a
-.Dq break ) .
+.Dq break ) ,
+and entering
+.Ic machine prom
+at the prompt.
 If you do this accidentally you can continue whatever was in progress
 by typing
-.Dq go .
+.Ic go
+on an OpenBOOT PROM, or
+.Ic c
+on an old-style PROM to return to ddb,
+and then
+.Ic cont
+to return to the system.
 .Sh FILES
-.Bl -tag -width /bsdxx -compact
+.Bl -tag -width /usr/mdec/bootxx -compact
 .It Pa /bsd
-system code
-.It Pa /boot
-system bootstrap
+default system kernel
+.It Pa /usr/mdec/bootxx
+primary bootstrap for
+.Dq ffs
+file system
+.It Pa /usr/mdec/boot
+secondary bootstrap (usually also installed as
+.Pa /boot )
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr boot_config 8 ,
-.Xr crash 8 ,
-.Xr disklabel 8 ,
-.Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
 .Xr installboot 8 ,
-.Xr rc 8 ,
-.Xr shutdown 8 ,
-.Xr syslogd 8
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8

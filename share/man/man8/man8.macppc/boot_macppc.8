@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.2 2002/09/23 00:34:09 miod Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.3 2002/10/17 23:18:51 miod Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,58 +38,113 @@
 .Os
 .Sh NAME
 .Nm boot
-.Nd
-.Tn macppc-specific
-system bootstrapping procedures
+.Nd macppc system bootstrapping procedures
 .Sh DESCRIPTION
-.Ss Power fail and crash recovery
-Normally, the system will reboot itself at power-up or after crashes.
-An automatic consistency check of the file systems will be performed
-(as described in
-.Xr fsck 8 ) ,
-and unless this fails, the system will resume multi-user operations.
-.Ss Cold starts
-System boot blocks are installed either in a HFS partition or in a
-MSDOS partition on the disk. If MBR partitioning is chosen for
-the disk, the boot block will be installed automatically, for
-HFS shared disks, the
-.Dq ofwboot
-program must be installed manually.
-The ofwboot program can be loaded from any openfirmware recognized 
-disk or network device.
-.Pp
-The
-.Fl s
-flag to the bootloader will bring the system up in single-user mode.
-The
-.Fl a
-flag instructs the system to prompt for the location of the root filesystem
-and the primary swap partition.
-The
-.Fl c
-flag instructs the system to enter the
-.Dq User Kernel Config
-mode upon startup (see
-.Xr boot_config 8 ).
-Other flags are currently ignored.
-.Pp
+.Ss System startup
+When powered on, after a panic, or if the system is rebooted via
+.Xr reboot 8
+or
+.Xr shutdown 8 ,
+the
+.Tn Open Firmware
+will proceed to its initialization, and will boot an operating system
+if the
+.Ev Em auto-boot?
+variable is set to
+.Dq true ,
+or will wait for interactive commands otherwise.
+.Ss Boot process description
 The Apple OpenFirmware will normally load the kernel from the device and
 filename as instructed by the
-.Dq boot-device
+.Ev Em boot-device
 and
-.Dq boot-file
+.Ev Em boot-file
 variables.
 If the
-.Dq boot-file
+.Ev Em boot-file
 variable is empty, the
 .Ox
 bootloader will look for a kernel named
-.Dq bsd ,
+.Pa bsd ,
 unless a different filename has been specified in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
-set-default boot-device
+set-default
+.Ev Em boot-device
+.Pp
+The
+.Ox
+bootstrap program is named
+.Dq ofwboot .
+It can be installed either in a HFS partition or in a
+MSDOS partition on the disk. If MBR partitioning is chosen for
+the disk, the bootstrap program will be installed automatically during the
+.Ox
+installation procedure. For HFS shared disks, the
+.Pa ofwboot
+file must be installed manually.
+The ofwboot program can be loaded from any openfirmware recognized 
+disk or network device.
+.Ss Boot process options
+If invoked manually without parameters, or if the specified kernel could
+not be loaded, the
+.Ox
+bootloader will let the user enter a boot device, kernel
+filename and boot options.
+.Pp
+If the special line
+.Ic exit
+is entered, the bootloader will attempt to restart the machine.
+.Pp
+The file specification used is of the form:
+.Dl promdev:partition/filename options
+where:
+.Dq promdev
+is an optional
+.Tn Open Firmware
+device name (such as
+.Dq hd
+or
+.Dq ide )
+and
+.Dq partition
+is an optional disk partition number.
+Normal line editing characters can be used when typing the file
+specification.
+.Pp
+The following options are recognized:
+.Bl -tag -width "-XXX" -offset indent -compact
+.It -a
+Prompt for the root filesystem and swap devices after the devices have
+been configured.
+.It -c
+Enter the
+.Dq User Kernel Config
+mode upon startup
+.Pq see Xr boot_config 8 .
+.It -d
+Enter the debugger,
+.Xr ddb 4 ,
+as soon as the kernel console has been initialized.
+.It -s
+Boot the system single-user.
+The system will be booted multi-user unless this option is specified.
+.El
+.Ss Abnormal system termination
+In case of system crashes, the kernel will usually enter the kernel
+debugger,
+.Xr ddb 4 ,
+unless it is not present in the kernel, or it is disabled via the
+.Em ddb.panic
+sysctl.
+Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
+if it was still in device configuration phase, or attempt a dump to the
+configured dump device, if possible.
+The crash dump will then be recovered by
+.Xr savecore 8
+during the next multi-user boot cycle.
+It is also possible to force other behaviours from ddb.
 .Ss Accessing the PROM
 The prom can only be accessed during system reset, or at power-up.
 To enter OpenFirmware, press and hold 
@@ -101,18 +156,18 @@ as the machine resets until it enters the openfirmware debugger.
 .Sh FILES
 .Bl -tag -width /usr/mdec/ofwboot -compact
 .It Pa /bsd
-system code
+default system kernel
 .It Pa /usr/mdec/ofwboot
-system bootstrap
+system bootstrap (usually installed on a standalone FAT partition or an
+.Tn Apple
+HFS partition, to be readable by openfirmware).
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr boot_config 8 ,
-.Xr crash 8 ,
-.Xr disklabel 8 ,
-.Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
 .Xr installboot 8 ,
-.Xr rc 8 ,
-.Xr shutdown 8 ,
-.Xr syslogd 8
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8

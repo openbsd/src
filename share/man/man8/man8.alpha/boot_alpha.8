@@ -1,7 +1,6 @@
-.\" $OpenBSD: boot_alpha.8,v 1.5 2002/07/04 17:36:17 miod Exp $
-.\" $NetBSD: boot.8,v 1.3 2000/06/14 17:25:48 cgd Exp $
+.\"	$OpenBSD: boot_alpha.8,v 1.6 2002/10/17 23:18:48 miod Exp $
 .\"
-.\" Copyright (c) 1999 Christopher G. Demetriou
+.\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
 .\" 
 .\" Redistribution and use in source and binary forms, with or without
@@ -12,13 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"          This product includes software developed for the
-.\"          NetBSD Project.  See http://www.netbsd.org/ for
-.\"          information about NetBSD.
-.\" 4. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\" 
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,114 +22,112 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
-.\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
-.\"
-.\"
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to Berkeley by
-.\" the Systems Programming Group of the University of Utah Computer
-.\" Science Department.
-.\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"     This product includes software developed by the University of
-.\"     California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\"     @(#)boot_hp300.8        8.2 (Berkeley) 4/19/94
-.\"
-.Dd April 5, 1999
-.Dt BOOT 8 alpha
+.Dd October 2nd, 2002
+.Dt BOOT_ALPHA 8 alpha
 .Os
 .Sh NAME
 .Nm boot
 .Nd Alpha system bootstrapping procedures
 .Sh DESCRIPTION
-When the
-.Ox
-.Ns Tn /alpha
-kernel is booted normally
-it initializes itself and proceeds to start the system.
-An automatic consistency check of the file systems takes place, and unless
-this fails, the system comes up to multi-user operation.
-The proper way to shut the system down is with the
-.Xr shutdown 8
-command.
+.Ss Cold starts
+When powered on, the SRM firmware will proceed to its initialization, and
+will boot an operating system if the
+.Ev Em auto_action
+variable is set to
+.Dq boot
+or
+.Dq restart ,
+or will wait for interactive commands if set to
+.Dq halt .
+.Ss Warm starts
+After a panic, or if the system is rebooted via
+.Xr reboot 8
+or
+.Xr shutdown 8 ,
+the SRM console will only restart the system if the
+.Ev Em auto_action
+variable is set to
+.Dq boot .
+.Ss Boot process options
+The SRM console will attempt to boot a kernel named from the
+.Ev Em boot_file
+environment variable, on the device listed in the
+.Ev Em bootdef_dev
+variable.
+A list of the recognized SRM devices can be obtained with the command
+.Ic show dev
+at the SRM prompt.
+If the
+.Ev Em boot_file
+variable is not set or empty,
+.Pa /bsd
+will be used by default.
 .Pp
-If the system crashes, it will enter the kernel debugger,
+The kernel will be passed the options listed in the
+.Ev Em boot_osflags
+variable.
+Option letters are case insensitive.
+The following option letters are recognized:
+.Bl -tag -width "XXX" -offset indent -compact
+.It a
+Boot the system multi-user.
+.It b
+Enter the debugger,
 .Xr ddb 4 ,
-if it is configured in the kernel.
-If the crash occurred during
-initialization and the debugger is not present or is exited, the
-kernel will halt the system.
-If the crash occurred during normal operation and the debugger
-is not present or is exited, the system will attempt a dump to the
-configured dump device (which will be automatically recovered with
+as soon as the kernel console has been initialized.
+.It c
+Enter the
+.Dq User Kernel Configuration
+mode upon startup
+.Pq Xr boot_config 8 .
+.It d
+Create a kernel crash dump immediately after the devices have been configured.
+This option is only available on kernels compiled with
+.Qq option DEBUG .
+.It h
+On the next system reboot, always halt the system, even if a reboot is
+required.
+.It n
+Prompt for the root filesystem device after the devices have been configured.
+.It s
+Boot the system single-user.
+This is the default behaviour of the kernel if no flags are specified.
+.El
+.Ss Abnormal system termination
+In case of system crashes, the kernel will usually enter the kernel
+debugger,
+.Xr ddb 4 ,
+unless it is not present in the kernel, or it is disabled via the
+.Em ddb.panic
+sysctl.
+Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
+if it was still in device configuration phase, or attempt a dump to the
+configured dump device, if possible.
+The crash dump will then be recovered by
 .Xr savecore 8
-during the next boot cycle), and after the dump is complete (successful
-or not) the kernel will attempt a reboot.
-.\" XXX .Pp
-.\" XXX .Ss Use of SRM Console
-.\" XXX .Pp
-.\" XXX console is used to bootstrap system
-.\" XXX .Pp
-.\" XXX boot flags, boot file
-.\" XXX .Pp
-.\" XXX console device names
-.\" XXX .Pp
-.\" XXX .Ss Console Behavior at Power-on, Halt, and Reboot
-.\" XXX .Pp
-.\" XXX auto_action variable
-.\" XXX .Pp
-.\" XXX .Ss System Bootstrapping Procedure
-.\" XXX .Pp
-.\" XXX boot environment
-.\" XXX .Pp
-.\" XXX primary/secondary vs. unified bootstrap
+during the next multi-user boot cycle.
+It is also possible to force other behaviours from ddb.
 .Sh FILES
-.Bl -tag -width /usr/mdec/bootxx -compact
+.Bl -tag -width /usr/mdec/netboot -compact
 .It Pa /bsd
 default system kernel
 .It Pa /usr/mdec/bootxx
 primary bootstrap for
 .Dq ffs
 file system
-(Berkeley Fast File System)
 .It Pa /usr/mdec/boot
-secondary bootstrap
+secondary bootstrap (usually also installed as
+.Pa /boot )
 .It Pa /usr/mdec/netboot
 network bootstrap
-.It Pa /boot
-secondary bootstrap (installed)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr boot_config 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
 .Xr installboot 8 ,
+.Xr reboot 8 ,
 .Xr savecore 8 ,
 .Xr setnetbootinfo 8 ,
 .Xr shutdown 8
