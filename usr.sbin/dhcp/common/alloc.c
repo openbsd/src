@@ -129,6 +129,8 @@ struct hash_table *new_hash_table(count, name)
 	rval = dmalloc(sizeof (struct hash_table)
           - (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *))
           + (count * sizeof(struct hash_bucket *)), name);
+	if (rval == NULL)
+		return NULL;
 	rval->hash_count = count;
 	return rval;
 }
