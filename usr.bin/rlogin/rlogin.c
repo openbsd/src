@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.16 1997/08/06 06:43:40 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.17 1997/08/31 18:00:43 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.16 1997/08/06 06:43:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.17 1997/08/31 18:00:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(argc, argv)
 	one = 1;
 	host = user = NULL;
 
-	if (p = strrchr(argv[0], '/'))
+	if ((p = strrchr(argv[0], '/')))
 		++p;
 	else
 		p = argv[0];
@@ -355,12 +355,13 @@ try_connect:
 	/*NOTREACHED*/
 }
 
-int child;
+pid_t child;
 
 void
 doit(omask)
 	int omask;
 {
+	struct sigaction sa;
 
 	(void)signal(SIGINT, SIG_IGN);
 	setsignal(SIGHUP);
@@ -372,11 +373,22 @@ doit(omask)
 		done(1);
 	}
 	if (child == 0) {
+		(void)signal(SIGCHLD, SIG_DFL);
 		if (reader(omask) == 0) {
 			msg("connection closed.");
 			exit(0);
 		}
 		sleep(1);
+
+	/*
+	 * Use sigaction() instead of signal() to avoid getting SIGCHLDs
+	 * for stopped children.
+	 */
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+	sa.sa_handler = catch_child;
+	(void)sigaction(SIGCHLD, &sa, NULL);
+
 		msg("\aconnection closed.");
 		exit(1);
 	}
@@ -389,7 +401,6 @@ doit(omask)
 	 * that were set above.
 	 */
 	(void)sigsetmask(omask);
-	(void)signal(SIGCHLD, catch_child);
 	writer();
 	msg("closed connection.");
 	done(0);
@@ -418,7 +429,8 @@ done(status)
 		/* make sure catch_child does not snap it up */
 		(void)signal(SIGCHLD, SIG_DFL);
 		if (kill(child, SIGKILL) >= 0)
-			while ((w = wait(&wstatus)) > 0 && w != child);
+			while ((w = wait(&wstatus)) > 0 && w != child)
+				;
 	}
 	exit(status);
 }
@@ -444,17 +456,21 @@ void
 catch_child(signo)
 	int signo;
 {
-	union wait status;
 	int save_errno = errno;
-	int pid;
+	int status;
+	pid_t pid;
 
 	for (;;) {
-		pid = wait3((int *)&status, WNOHANG|WUNTRACED, NULL);
+		pid = wait3(&status, WNOHANG, NULL);
 		if (pid == 0)
 			break;
 		/* if the child (reader) dies, just quit */
-		if (pid < 0 || (pid == child && !WIFSTOPPED(status)))
-			done((int)(status.w_termsig | status.w_retcode));
+		if (pid == child && !WIFSTOPPED(status)) {
+			child = -1;
+			if (WIFEXITED(status))
+				done(WEXITSTATUS(status));
+			done(WTERMSIG(status));
+		}
 	}
 	errno = save_errno;
 }
@@ -573,9 +589,7 @@ stop(all)
 	int all;
 {
 	mode(0);
-	(void)signal(SIGCHLD, SIG_IGN);
 	(void)kill(all ? 0 : getpid(), SIGTSTP);
-	(void)signal(SIGCHLD, catch_child);
 	mode(1);
 	sigwinch(0);			/* check for size changes */
 }
@@ -627,7 +641,8 @@ sendwindow()
 #define	WRITING	2
 
 jmp_buf rcvtop;
-int ppid, rcvcnt, rcvstate;
+pid_t ppid;
+int rcvcnt, rcvstate;
 char rcvbuf[8 * 1024];
 
 void
@@ -724,7 +739,8 @@ int
 reader(omask)
 	int omask;
 {
-	int pid, n, remaining;
+	pid_t pid;
+	int n, remaining;
 	char *bufp;
 
 #if BSD >= 43 || defined(SUNOS4)
