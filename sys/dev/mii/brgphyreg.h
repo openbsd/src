@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.4 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.5 2001/10/05 17:45:10 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/mii/brgphyreg.h,v 1.1 2000/04/22 01:58:17 wpaul Exp $
+ * $FreeBSD: src/sys/dev/mii/brgphyreg.h,v 1.3 2001/09/25 16:41:56 wpaul Exp $
  */
 
 #ifndef _DEV_MII_BRGPHYREG_H_
@@ -159,6 +159,44 @@
 #define BRGPHY_MII_RXNOCNT	0x14	/* RX not OK counter */
 #define BRGPHY_RXNOCNT_LOCAL	0xFF00	/* Local RX not OK counter */
 #define BRGPHY_RXNOCNT_REMOTE	0x00FF	/* Local RX not OK counter */
+
+#define BRGPHY_MII_DSP_RW_PORT	0x15	/* DSP coefficient r/w port */
+
+#define BRGPHY_MII_DSP_ADDR_REG	0x17	/* DSP coefficient addr register */
+
+#define BRGPHY_DSP_TAP_NUMBER_MASK		0x00
+#define BRGPHY_DSP_AGC_A			0x00
+#define BRGPHY_DSP_AGC_B			0x01
+#define BRGPHY_DSP_MSE_PAIR_STATUS		0x02
+#define BRGPHY_DSP_SOFT_DECISION		0x03
+#define BRGPHY_DSP_PHASE_REG			0x04
+#define BRGPHY_DSP_SKEW				0x05
+#define BRGPHY_DSP_POWER_SAVER_UPPER_BOUND	0x06
+#define BRGPHY_DSP_POWER_SAVER_LOWER_BOUND	0x07
+#define BRGPHY_DSP_LAST_ECHO			0x08
+#define BRGPHY_DSP_FREQUENCY			0x09
+#define BRGPHY_DSP_PLL_BANDWIDTH		0x0A
+#define BRGPHY_DSP_PLL_PHASE_OFFSET		0x0B
+
+#define BRGPHYDSP_FILTER_DCOFFSET		0x0C00
+#define BRGPHY_DSP_FILTER_FEXT3			0x0B00
+#define BRGPHY_DSP_FILTER_FEXT2			0x0A00
+#define BRGPHY_DSP_FILTER_FEXT1			0x0900
+#define BRGPHY_DSP_FILTER_FEXT0			0x0800
+#define BRGPHY_DSP_FILTER_NEXT3			0x0700
+#define BRGPHY_DSP_FILTER_NEXT2			0x0600
+#define BRGPHY_DSP_FILTER_NEXT1			0x0500
+#define BRGPHY_DSP_FILTER_NEXT0			0x0400
+#define BRGPHY_DSP_FILTER_ECHO			0x0300
+#define BRGPHY_DSP_FILTER_DFE			0x0200
+#define BRGPHY_DSP_FILTER_FFE			0x0100
+
+#define BRGPHY_DSP_CONTROL_ALL_FILTERS		0x1000
+
+#define BRGPHY_DSP_SEL_CH_0			0x0000
+#define BRGPHY_DSP_SEL_CH_1			0x2000
+#define BRGPHY_DSP_SEL_CH_2			0x4000
+#define BRGPHY_DSP_SEL_CH_3			0x6000
 
 #define BRGPHY_MII_AUXCTL	0x18	/* AUX control */
 #define BRGPHY_AUXCTL_LOW_SQ	0x8000	/* Low squelch */
