@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2002/05/16 21:11:14 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2002/05/20 07:59:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -89,7 +89,6 @@ const char *trap_type[] = {
 };
 int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 
-u_int32_t sir;
 int want_resched, astpending;
 
 void syscall(struct trapframe *frame, int *args);
@@ -130,6 +129,7 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
+	extern u_int32_t sir;
 	struct proc *p = curproc;
 	struct pcb *pcbp;
 	vaddr_t va;
@@ -384,25 +384,25 @@ return;
 #endif
 		/* FALLTHROUGH */
 	case T_LOWERPL:
-		__asm __volatile ("ldcws 0(%1), %0"
-				  : "=r" (si) : "r" (&sir));
-		s = spl0();
+		__asm __volatile (
+		    "ldcws 0(%1), %0" : "=&r" (si) : "r" (&sir) : "memory");
 		if (si & SIR_CLOCK) {
-			splclock();
+			s = splsoftclock();
 			softclock();
-			spl0();
+			splx(s);
 		}
 
 		if (si & SIR_NET) {
 			register int ni;
 			/* use atomic "load & clear" */
-			__asm __volatile ("ldcws 0(%1), %0"
-					  : "=r" (ni) : "r" (&netisr));
-			splnet();
+			__asm __volatile (
+			    "ldcws 0(%1), %0"
+			    : "=&r" (ni) : "r" (&netisr) : "memory");
+			s = splnet();
 #define	DONETISR(m,c) if (ni & (1 << (m))) c()
 #include <net/netisr_dispatch.h>
+			splx(s);
 		}
-		splx(s);
 		break;
 
 	case T_DPROT:

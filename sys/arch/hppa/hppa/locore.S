@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.68 2002/05/20 03:46:53 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.69 2002/05/20 07:59:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -124,6 +124,14 @@ $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 	BSS(fpu_enable, 4)	/* bits to set in the ccr to enable fpu */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
+	.export netisr, data
+	.align 16
+netisr
+	.word	0
+	.export sir, data
+	.align 16
+sir
+	.word	0
 
 	.text
 	.import	$kernel_setup, entry
