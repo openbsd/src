@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.16 2001/06/24 23:50:11 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.17 2001/06/24 23:56:32 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1550,10 +1550,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		off += 8;	/* offset of h2 in mbuf chain */
 		h2 = pull_hdr(ifp, m, 0, off, sizeof(*h2), h, &dummy);
 		if (!h2) {
-			printf("packetfilter: ICMP error message too short\n");
-			return NULL;
-		}
-		if (len < off2) {
 			printf("packetfilter: ICMP error message too short\n");
 			return NULL;
 		}
