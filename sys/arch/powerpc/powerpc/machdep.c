@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1998/09/09 04:44:59 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1998/09/12 19:58:56 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -833,9 +833,31 @@ do_pending_int()
 void
 systype(char *name)
 {
-	if (strncmp (name, "MOT,", 4) == 0) {
-		system_type = PWRSTK;
-		printf("recognized system type of %s as PWRSTK\n", name);
+	/* this table may be order specific if substrings match several
+	 * computers but a longer string matches a specific 
+	 */
+	int i;
+	struct systyp {
+		char *name;
+		char *systypename;
+		int type;
+	} systypes[] = {
+		{ "MOT,",	"(PWRSTK) MCG powerstack family", PWRSTK },
+		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
+		{ NULL,"",0}
+	};
+	for (i = 0; systypes[i].name != NULL; i++) {
+		if (strncmp( name , systypes[i].name,
+			strlen (systypes[i].name)) == 0)
+		{
+			system_type = systypes[i].type;
+			printf("recognized system type of %s as %s\n",
+				name, systypes[i].systypename);
+			break;
+		}
+	}
+	if (system_type == OFWMACH) {
+		printf("System type not recognized, good luck\n");
 	}
 }
 /* 
