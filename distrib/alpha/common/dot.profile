@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.5 2002/04/01 01:31:39 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.6 2002/04/09 20:04:09 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,11 +40,12 @@ TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'
 TERM=vt220
 PAGER=more
 
+rootdisk=`dmesg|grep "^root on"|{ o=;while read x y z t;do o=/dev/$z;done;echo $o;}`
+
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	# need a writable root
-	mount -u /dev/rd0a /
+	mount -u ${rootdisk:-/dev/rd0a} /
 
 	isin() {
 		local   _a

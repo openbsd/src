@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.4 2002/04/01 01:31:39 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.5 2002/04/09 20:04:09 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -33,10 +33,12 @@ export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
 set -o emacs # emacs-style command line editing
 
+rootdisk=`dmesg|grep "^root on"|{ o=;while read x y z t;do o=/dev/$z;done;echo $o;}`
+
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	mount -u /dev/rd0a /
+	mount -u ${rootdisk:-/dev/rd0a} /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'

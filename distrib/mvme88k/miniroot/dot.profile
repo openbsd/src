@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.9 2002/04/05 03:13:18 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.10 2002/04/09 20:04:09 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -43,10 +43,12 @@ set -o emacs # emacs-style command line editing
 TERMS="sun vt* pcvt* dumb"
 TERM=vt220
 
+rootdisk=`dmesg|grep "^root on"|{ o=;while read x y z t;do o=/dev/$z;done;echo $o;}`
+
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
-	mount -u /dev/rd0a /
+	mount -u ${rootdisk:-/dev/rd0a} /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
