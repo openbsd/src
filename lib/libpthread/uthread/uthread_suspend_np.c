@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_suspend_np.c,v 1.8 2004/05/01 22:15:10 marc Exp $	*/
+/*	$OpenBSD: uthread_suspend_np.c,v 1.9 2004/09/18 19:57:35 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -106,9 +106,19 @@ suspend_common(struct pthread *thread)
 		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
 		break;
 
-	case PS_SPINBLOCK:
 	case PS_FDR_WAIT:
 	case PS_FDW_WAIT:
+		/*
+		 * Remove these threads from the work queue
+		 * and set the state to suspended:
+		 */
+		if ((thread->flags & PTHREAD_FLAGS_IN_WORKQ) != 0)
+			PTHREAD_WORKQ_REMOVE(thread);
+		PTHREAD_WAITQ_REMOVE(thread);
+		PTHREAD_SET_STATE(thread, PS_SUSPENDED);
+		break;
+
+	case PS_SPINBLOCK:
 	case PS_POLL_WAIT:
 	case PS_SELECT_WAIT:
 		/*
