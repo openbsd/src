@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.15 2000/08/18 03:26:09 itojun Exp $
+.\"	$OpenBSD: telnetd.8,v 1.16 2000/10/06 10:55:00 hin Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -50,7 +50,6 @@ protocol server
 .Op Fl S Ar tos
 .Op Fl X Ar authtype
 .Op Fl a Ar authmode
-.Op Fl edebug
 .Op Fl g Ar gettyent
 .Op Fl r Ns Ar lowpty-highpty
 .Op Fl u Ar len
@@ -174,12 +173,6 @@ Enables debugging on each socket created by
 .Dv SO_DEBUG
 in
 .Xr socket 2 ) .
-.It Fl edebug
-If
-.Nm
-has been compiled with support for data encryption, then the
-.Fl edebug
-option may be used to enable encryption debugging code.
 .It Fl g Ar gettyent
 Specifies which entry from
 .Pa /etc/gettytab
