@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.2 1996/06/26 05:40:49 deraadt Exp $	*/
+/*	$OpenBSD: value.c,v 1.3 1996/10/15 23:47:22 millert Exp $	*/
 /*	$NetBSD: value.c,v 1.3 1994/12/08 09:31:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.2 1996/06/26 05:40:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: value.c,v 1.3 1996/10/15 23:47:22 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -56,7 +56,7 @@ vinit()
 	register value_t *p;
 	register char *cp;
 	FILE *f;
-	char file[256];
+	char file[FILENAME_MAX];
 
 	for (p = vtable; p->v_name != NULL; p++) {
 		if (p->v_type&ENVIRON)
@@ -69,19 +69,24 @@ vinit()
 	 * Read the .tiprc file in the HOME directory
 	 *  for sets
 	 */
-	strcpy(file, value(HOME));
-	strcat(file, "/.tiprc");
-	if ((f = fopen(file, "r")) != NULL) {
-		register char *tp;
+	if (strlen(value(HOME)) + sizeof("/.tiprc") > sizeof(file)) {
+		fprintf(stderr, "Home directory path too long: %s\n",
+			value(HOME));
+	} else {
+		strcpy(file, value(HOME));
+		strcat(file, "/.tiprc");
+		if ((f = fopen(file, "r")) != NULL) {
+			register char *tp;
 
-		while (fgets(file, sizeof(file)-1, f) != NULL) {
-			if (vflag)
-				printf("set %s", file);
-			if (tp = rindex(file, '\n'))
-				*tp = '\0';
-			vlex(file);
+			while (fgets(file, sizeof(file)-1, f) != NULL) {
+				if (vflag)
+					printf("set %s", file);
+				if (tp = strrchr(file, '\n'))
+					*tp = '\0';
+				vlex(file);
+			}
+			fclose(f);
 		}
-		fclose(f);
 	}
 	/*
 	 * To allow definition of exception prior to fork
@@ -172,7 +177,7 @@ vtoken(s)
 	register char *cp;
 	char *expand();
 
-	if (cp = index(s, '=')) {
+	if (cp = strchr(s, '=')) {
 		*cp = '\0';
 		if (p = vlookup(s)) {
 			cp++;
@@ -185,7 +190,7 @@ vtoken(s)
 			}
 			return;
 		}
-	} else if (cp = index(s, '?')) {
+	} else if (cp = strchr(s, '?')) {
 		*cp = '\0';
 		if ((p = vlookup(s)) && vaccess(p->v_access, READ)) {
 			vprint(p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.3 1996/06/26 05:40:41 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.4 1996/10/15 23:47:20 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.6 1995/10/29 00:49:38 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.3 1996/06/26 05:40:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.4 1996/10/15 23:47:20 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -113,7 +113,7 @@ cu_take(cc)
 		printf("\r\n%s: cannot create\r\n", argv[1]);
 		return;
 	}
-	sprintf(line, "cat %s;echo \01", argv[0]);
+	snprintf(line, sizeof(line), "cat %s;echo \01", argv[0]);
 	transfer(line, fd, "\01");
 }
 
@@ -400,9 +400,9 @@ cu_put(cc)
 		return;
 	}
 	if (boolean(value(ECHOCHECK)))
-		sprintf(line, "cat>%s\r", argv[1]);
+		snprintf(line, sizeof(line), "cat>%s\r", argv[1]);
 	else
-		sprintf(line, "stty -echo;cat>%s;stty echo\r", argv[1]);
+		snprintf(line, sizeof(line), "stty -echo;cat>%s;stty echo\r", argv[1]);
 	transmit(fd, "\04", line);
 }
 
@@ -574,7 +574,7 @@ shell()
 	} else {
 		signal(SIGQUIT, SIG_DFL);
 		signal(SIGINT, SIG_DFL);
-		if ((cp = rindex(value(SHELL), '/')) == NULL)
+		if ((cp = strrchr(value(SHELL), '/')) == NULL)
 			cp = value(SHELL);
 		else
 			cp++;
@@ -665,7 +665,7 @@ execute(s)
 {
 	register char *cp;
 
-	if ((cp = rindex(value(SHELL), '/')) == NULL)
+	if ((cp = strrchr(value(SHELL), '/')) == NULL)
 		cp = value(SHELL);
 	else
 		cp++;
@@ -824,7 +824,7 @@ expand(name)
 		/* signal(SIGINT, sigint) */
 		return(name);
 	}
-	sprintf(cmdbuf, "echo %s", name);
+	snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
 	if ((pid = vfork()) == 0) {
 		Shell = value(SHELL);
 		if (Shell == NOSTR)

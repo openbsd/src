@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.3 1996/06/26 05:40:47 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.4 1996/10/15 23:47:22 millert Exp $	*/
 /*	$NetBSD: tip.h,v 1.4 1995/10/29 00:49:43 pk Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  */
 
 #include <sys/types.h>
-#include <machine/endian.h>
 #include <sys/file.h>
 #include <sys/time.h>
 

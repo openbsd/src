@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.2 1996/06/26 05:40:46 deraadt Exp $	*/
+/*	$OpenBSD: remote.c,v 1.3 1996/10/15 23:47:21 millert Exp $	*/
 /*	$NetBSD: remote.c,v 1.3 1994/12/08 09:31:03 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.2 1996/06/26 05:40:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: remote.c,v 1.3 1996/10/15 23:47:21 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -220,7 +220,7 @@ getremote(host)
 	 */
 	if (next == NOSTR)
 		return (NOSTR);
-	if ((cp = index(next, ',')) == NULL) {
+	if ((cp = strchr(next, ',')) == NULL) {
 		DV = next;
 		next = NOSTR;
 	} else {
