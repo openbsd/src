@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.s,v 1.7 1997/07/06 07:46:27 downsj Exp $	*/
+/*	$OpenBSD: copy.s,v 1.8 1999/11/13 21:34:06 deraadt Exp $	*/
 /*	$NetBSD: copy.s,v 1.28 1997/05/21 03:51:04 jeremy Exp $	*/
 
 /*-
@@ -249,7 +249,7 @@ ENTRY(copyinstr)
 	movl	sp@(8),a1		| a1 = toaddr
 	clrl	d0
 	movl	sp@(12),d1		| count
-	beq	Lcisdone		| nothing to copy
+	beq	Lcistoolong		| nothing to copy
 	subql	#1,d1			| predecrement for dbeq
 Lcisloop:
 	movsb	a0@+,d0			| copy a byte
@@ -258,6 +258,7 @@ Lcisloop:
 	beq	Lcisdone		| copied null, exit
 	subil	#0x10000,d1		| decrement high word of count
 	bcc	Lcisloop		| more room, keep going
+Lcistoolong:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
 Lcisdone:
 	tstl	sp@(16)			| length desired?
@@ -288,7 +289,7 @@ ENTRY(copyoutstr)
 	movl	sp@(8),a1		| a1 = toaddr
 	clrl	d0
 	movl	sp@(12),d1		| count
-	beq	Lcosdone		| nothing to copy
+	beq	Lcostoolong		| nothing to copy
 	subql	#1,d1			| predecrement for dbeq
 Lcosloop:
 	movb	a0@+,d0			| copy a byte
@@ -297,6 +298,7 @@ Lcosloop:
 	beq	Lcosdone		| copied null, exit
 	subil	#0x10000,d1		| decrement high word of count
 	bcc	Lcosloop		| more room, keep going
+Lcostoolong:
 	moveq	#ENAMETOOLONG,d0	| ran out of space
 Lcosdone:
 	tstl	sp@(16)			| length desired?
