@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.4 1996/08/31 09:24:05 pefo Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.5 1996/09/13 17:09:53 niklas Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -71,7 +71,7 @@ struct emul emul_svr4 = {
 	SVR4_AUX_ARGSIZ,
 	svr4_copyargs,
 	setregs,
-	NULL,
+	exec_elf_fixup,
 	svr4_sigcode,
 	svr4_esigcode,
 };
