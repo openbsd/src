@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 1998/08/11 22:06:27 provos Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 1999/02/07 20:54:09 aaron Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.4 1998/08/11 22:06:27 provos Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.5 1999/02/07 20:54:09 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,21 +53,20 @@ addfile(name)
 {
 	register char *p;
 	FILE *fp;
-	int ch;
-	char buf[2048 + 1];
+	size_t len;
 
 	if (!(fp = fopen(name, "r"))) {
 		(void)fprintf(stderr, "hexdump: can't read %s.\n", name);
 		exit(1);
 	}
-	while (fgets(buf, sizeof(buf), fp)) {
-		if (!(p = strchr(buf, '\n'))) {
-			(void)fprintf(stderr, "hexdump: line too long.\n");
-			while ((ch = getchar()) != '\n' && ch != EOF);
+	while ((p = fgetln(fp, &len))) {
+		if (*(p + len - 1) == '\n')
+			*(p + len - 1) = '\0';
+		else {
+			(void)fprintf(stderr, "hexdump: incomplete line.\n");
 			continue;
 		}
-		*p = '\0';
-		for (p = buf; *p && isspace(*p); ++p);
+		for (; *p && isspace(*p); ++p);
 		if (!*p || *p == '#')
 			continue;
 		add(p);
