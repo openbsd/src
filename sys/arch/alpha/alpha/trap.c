@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1997/11/17 01:26:38 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1998/03/01 15:00:59 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ trap(a0, a1, a2, entry, framep)
 	caddr_t v;
 	int user;
 	int typ;
+	union sigval sv;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -447,7 +448,8 @@ panic("foo");
 		goto dopanic;
 	}
 
-	trapsignal(p, i, ucode, typ, v);
+	sv.sival_ptr = v;
+	trapsignal(p, i, ucode, typ, sv);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);

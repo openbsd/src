@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 1997/10/07 22:52:05 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 1998/03/01 14:56:46 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -298,6 +298,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	vm_map_t map;
 	u_int nss;
 	int rv;
+	union sigval sv;
 
 	/*
 	 * It is only a kernel address space fault iff:
@@ -512,7 +513,8 @@ nogo:
 		printf("  type %x, code [mmu,,ssw]: %x\n", type, code);
 		panictrap(type, code, v, fp);
 	}
-	trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)v);
+	sv.sival_int = v;
+	trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, fp->f_pc, sticks); 
@@ -534,6 +536,7 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks = 0;
 	int typ, i;
+	union sigval sv;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
@@ -782,8 +785,10 @@ trap(type, code, v, frame)
 		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
 		    ucode, v, frame.f_pc);
 #endif
-	if (i)
-		trapsignal(p, i, ucode, typ, (caddr_t)ucode);
+	if (i) {
+		sv.sival_int = ucode;
+		trapsignal(p, i, ucode, typ, sv);
+	}
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, frame.f_pc, sticks); 
