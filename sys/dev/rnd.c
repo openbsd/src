@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.23 1997/06/14 21:37:08 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.24 1997/06/17 19:42:01 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -275,8 +275,9 @@ int	rnd_debug = 0x0000;
 #error No primitive polynomial available for chosen POOLWORDS
 #endif
 
-#define QEVLEN 32
-#define QEVSLOW 16
+/* p60/256kL2 reported to have some drops w/ these numbers */
+#define QEVLEN 40
+#define QEVSLOW 32 /* yet another 0.75 for 60-minutes hour /-; */
 #define QEVSBITS 4
 
 /* There is actually only one of these, globally. */
@@ -338,7 +339,7 @@ static void enqueue_randomness __P((register struct timer_rand_state*, u_int));
 void dequeue_randomness __P((void *));
 static __inline int extract_entropy __P((register char *, int));
 void	arc4_init __P((struct arc4_stream *, u_char *, int));
-static __inline void arc4_stir (register struct arc4_stream *);
+static __inline void arc4_stir __P((void));
 static __inline u_char arc4_getbyte __P((register struct arc4_stream *));
 
 /* Arcfour random stream generator.  This code is derived from section
@@ -397,7 +398,7 @@ arc4maybeinit (void)
 		if (arc4random_uninitialized > 1
 		    || random_state.entropy_count >= 128) {
 			arc4random_uninitialized--;
-			arc4_stir (&arc4random_state);
+			arc4_stir ();
 		}
 	}
 }
@@ -418,6 +419,13 @@ randomattach(void)
 	int i;
 	struct timeval tv;
 	struct rand_event *rep;
+
+	if (rnd_attached) {
+#ifdef DEBUG
+		printf("random: second attach\n");
+#endif
+		return;
+	}
 
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
@@ -520,7 +528,6 @@ enqueue_randomness(state, val)
 	register struct timer_rand_state *state;
 	u_int	val;
 {
-	int	delta, delta2;
 	u_int	nbits;
 	struct timeval	tv;
 	register struct rand_event *rep;
@@ -537,11 +544,9 @@ enqueue_randomness(state, val)
 	 * deltas in order to make our estimate.
 	 */
 	if (!state->dont_count_entropy) {
+		register int	delta, delta2;
 		delta = time - state->last_time;
-		state->last_time = time;
-
 		delta2 = delta - state->last_delta;
-		state->last_delta = delta;
 
 		if (delta < 0) delta = -delta;
 		if (delta2 < 0) delta2 = -delta2;
@@ -550,9 +555,11 @@ enqueue_randomness(state, val)
 			delta >>= 1;
 
 		if (rnd_enqueued > QEVSLOW && nbits < QEVSBITS) {
-			rndstats.rnd_drops++;
+			rndstats.rnd_drople++;
 			return;
 		}
+		state->last_time = time;
+		state->last_delta = delta;
 	}
 
 	s = splhigh();
@@ -585,6 +592,8 @@ dequeue_randomness(v)
 	void *v;
 {
 	register struct rand_event *rep;
+	register u_int32_t val, time;
+	u_int nbits;
 	int s;
 
 	rndstats.rnd_deqs++;
@@ -597,23 +606,25 @@ dequeue_randomness(v)
 		}
 		rep = event_q;
 		event_q = rep->re_next;
-		splx(s);
-
-		add_entropy_word((u_int32_t)rep->re_val);
-		add_entropy_word(rep->re_time);
-
-		random_state.entropy_count += rep->re_nbits;
-		rndstats.rnd_total += rep->re_nbits;
-
-		/* Prevent overflow */
-		if (random_state.entropy_count > POOLBITS)
-			random_state.entropy_count = POOLBITS;
-
-		s = splhigh();
+		val = rep->re_val;
+		time = rep->re_time;
+		nbits = rep->re_nbits;
 		rep->re_next = event_free;
 		event_free = rep;
 		splx(s);
 		rnd_enqueued--;
+
+		/* Prevent overflow */
+		if ((random_state.entropy_count + nbits) > POOLBITS)
+			arc4_stir();
+
+		add_entropy_word(val);
+		add_entropy_word(time);
+
+		random_state.entropy_count += nbits;
+		rndstats.rnd_total += nbits;
+		if (random_state.entropy_count > POOLBITS)
+			random_state.entropy_count = POOLBITS;
 
 		if (random_state.entropy_count > 8 && rnd_sleep != 0) {
 			rnd_sleep--;
@@ -865,7 +876,7 @@ randomselect(dev, rw, p)
 }
 
 static __inline void
-arc4_stir (register struct arc4_stream *as)
+arc4_stir (void)
 {
 	u_char buf[256];
 
@@ -905,7 +916,7 @@ randomwrite(dev, uio, flags)
 	}
 
 	if (minor(dev) == RND_ARND && !ret)
-		arc4_stir (&arc4random_state);
+		arc4_stir ();
 
 	return ret;
 }
@@ -946,7 +957,7 @@ randomioctl(dev, cmd, data, flag, p)
 			return EPERM;
 		if (random_state.entropy_count < 64)
 			return EAGAIN;
-		arc4_stir (&arc4random_state);
+		arc4_stir ();
 		ret = 0;
 		break;
 	default:

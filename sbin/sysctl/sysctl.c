@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.8 1997/06/14 21:37:12 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.9 1997/06/17 19:42:02 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.8 1997/06/14 21:37:12 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.9 1997/06/17 19:42:02 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ parse(string, flags)
 				return;
 			}
 			if (!nflag)
-				fprintf(stdout, "%s: %s\n", string,
+				fprintf(stdout, "%s = %s\n", string,
 				    state == GMON_PROF_OFF ? "off" : "running");
 			return;
 		case KERN_VNODE:
@@ -322,7 +322,7 @@ parse(string, flags)
 
 			getloadavg(loads, 3);
 			if (!nflag)
-				fprintf(stdout, "%s: ", string);
+				fprintf(stdout, "%s = ", string);
 			fprintf(stdout, "%.2f %.2f %.2f\n", 
 			    loads[0], loads[1], loads[2]);
 			return;
@@ -332,7 +332,7 @@ parse(string, flags)
 			len = sizeof(_ps);
 			sysctl(mib, 2, &_ps, &len, NULL, 0);
 			if (!nflag)
-				fprintf(stdout, "%s: ", string);
+				fprintf(stdout, "%s = ", string);
 			fprintf(stdout, "%ld\n", _ps.val);
 			return;
 		}
@@ -431,7 +431,7 @@ parse(string, flags)
 		struct clockinfo *clkp = (struct clockinfo *)buf;
 
 		if (!nflag)
-			fprintf(stdout, "%s: ", string);
+			fprintf(stdout, "%s = ", string);
 		fprintf(stdout,
 		    "tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
 		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
@@ -461,16 +461,16 @@ parse(string, flags)
 	if (special & RNDSTATS) {
 		struct rndstats *rndstats = (struct rndstats *)buf;
 		if (!nflag)
-			fprintf(stdout, "%s: ", string);
+			fprintf(stdout, "%s = ", string);
 		fprintf(stdout,
-		        "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n",
+		        "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n",
 			rndstats->rnd_total, rndstats->rnd_used,
 			rndstats->arc4_reads, rndstats->rnd_timer,
 			rndstats->rnd_mouse, rndstats->rnd_tty,
 			rndstats->rnd_disk, rndstats->rnd_net,
 			rndstats->rnd_reads, rndstats->rnd_waits,
 			rndstats->rnd_enqs, rndstats->rnd_deqs,
-			rndstats->rnd_drops);
+			rndstats->rnd_drops, rndstats->rnd_drople);
 		return;
 	}
 	switch (type) {
