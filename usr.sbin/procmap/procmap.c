@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.4 2004/02/18 00:46:25 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.5 2004/02/18 03:27:22 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -192,6 +192,7 @@ char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 void load_name_cache(kvm_t *);
 void cache_enter(struct namecache *);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -204,7 +205,6 @@ main(int argc, char *argv[])
 	struct kinfo_proc *kproc;
 	/* struct proc proc; */
 	char *kmem, *kernel;
-	extern char *__progname;
 
 	pid = -1;
 	verbose = debug = 0;
@@ -235,6 +235,8 @@ main(int argc, char *argv[])
 			kernel = optarg;
 			break;
 		case 'p':
+			if (!isdigit(optarg[0]))
+				usage();
 			pid = atoi(optarg);
 			break;
 		case 'P':
@@ -252,10 +254,7 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-adlmPsv] [-D number] "
-				"[-M core] [-N system] [-p pid] [pid ...]\n",
-				__progname);
-			exit(1);
+			usage();
 		}
 	}
 	argc -= optind;
@@ -283,6 +282,8 @@ main(int argc, char *argv[])
 			if (argc == 0)
 				pid = getppid();
 			else {
+				if (!isdigit(argv[0][0]))
+					usage();
 				pid = atoi(argv[0]);
 				argv++;
 				argc--;
@@ -689,11 +690,11 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		prot[0] = '\0';
 		prot[1] = '\0';
 		if (vme->protection & VM_PROT_READ)
-			strcat(prot, "/read");
+			strlcat(prot, "/read", sizeof(prot));
 		if (vme->protection & VM_PROT_WRITE)
-			strcat(prot, "/write");
+			strlcat(prot, "/write", sizeof(prot));
 		if (vme->protection & VM_PROT_EXECUTE)
-			strcat(prot, "/exec");
+			strlcat(prot, "/exec", sizeof(prot));
 
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf("%0*lX %6luK %-15s   %s\n",
@@ -932,4 +933,14 @@ cache_enter(struct namecache *ncp)
 	strlcpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
+}
+
+static void __dead
+usage(void)
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-adlmPsv] [-D number] "
+	    "[-M core] [-N system] [-p pid] [pid ...]\n",
+	    __progname);
+	exit(1);
 }
