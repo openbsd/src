@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.60 2004/02/27 16:44:45 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.61 2004/03/02 12:51:12 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -463,7 +463,8 @@ struct	tcpstat {
 #define	TCPCTL_SYN_CACHE_LIMIT 15 /* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	16 /* max size of hash bucket */
 #define	TCPCTL_RFC3390	       17 /* enable/disable RFC3390 increased cwnd */
-#define	TCPCTL_MAXID	       18
+#define	TCPCTL_REASS_LIMIT     18 /* max entries for tcp reass queues */
+#define	TCPCTL_MAXID	       19
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -484,6 +485,7 @@ struct	tcpstat {
 	{ "syncachelimit", 	CTLTYPE_INT }, \
 	{ "synbucketlimit", 	CTLTYPE_INT }, \
 	{ "rfc3390", 	CTLTYPE_INT }, \
+	{ "reasslimit", 	CTLTYPE_INT }, \
 }
 
 #define	TCPCTL_VARS { \
@@ -504,7 +506,8 @@ struct	tcpstat {
 	NULL, \
 	&tcp_syn_cache_limit, \
 	&tcp_syn_bucket_limit, \
-	&tcp_do_rfc3390 \
+	&tcp_do_rfc3390, \
+	NULL \
 }
 
 struct tcp_ident_mapping {
@@ -526,6 +529,9 @@ extern	struct pool sackhl_pool;
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
 extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
 
+extern	struct pool tcpqe_pool;
+extern	int tcp_reass_limit;	/* max entries for tcp reass queues */
+
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 
@@ -537,6 +543,7 @@ int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
+int	 tcp_freeq(struct tcpcb *);
 #if defined(INET6) && !defined(TCP6)
 void	 tcp6_ctlinput(int, struct sockaddr *, void *);
 #endif

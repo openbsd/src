@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.80 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.81 2004/03/02 12:51:12 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -878,6 +878,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int error, nval;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -903,6 +904,18 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		   &tcp_do_ecn));
 #endif
+	case TCPCTL_REASS_LIMIT:
+		nval = tcp_reass_limit;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
+		if (error)
+			return (error);
+		if (nval != tcp_reass_limit) {
+			error = pool_sethardlimit(&tcpqe_pool, nval, NULL, 0);
+			if (error)
+				return (error);
+			tcp_reass_limit = nval;
+		}
+		return (0);
 	default:
 		if (name[0] < TCPCTL_MAXID)
 			return (sysctl_int_arr(tcpctl_vars, name, namelen,
