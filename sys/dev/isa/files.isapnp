@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isapnp,v 1.10 1998/11/28 01:29:05 deraadt Exp $
+#	$OpenBSD: files.isapnp,v 1.11 1998/12/27 09:41:56 deraadt Exp $
 #	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
@@ -20,6 +20,8 @@ file	dev/isa/isapnpres.c		isapnp
 #attach	com at isapnp with com_isapnp
 
 attach	wdc at isapnp with wdc_isapnp
+
+attach	aha at isapnp with aha_isapnp
 
 attach	sb at isapnp with sb_isapnp
 file	dev/isa/sb_isapnp.c		sb & (sb_isa | sb_isapnp) needs-flag

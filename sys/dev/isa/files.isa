@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.47 1998/11/28 01:29:05 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.48 1998/12/27 09:41:56 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -80,8 +80,8 @@ file	dev/isa/aic_isa.c		aic_isa
 
 # Adaptec AHA-154x family
 device	aha: scsi, isa_dma
-attach	aha at isa
-file	dev/isa/aha.c			aha needs-count
+attach	aha at isa with aha_isa
+file	dev/isa/aha.c			aha needs-flag
 
 # Seagate ST0[12] ICs
 device	sea: scsi

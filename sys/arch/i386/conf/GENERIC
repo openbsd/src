@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.93 1998/11/28 01:29:16 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.94 1998/12/27 09:41:57 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -104,6 +104,7 @@ bt2	at isa? port ? irq ?
 scsibus* at bt?
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+aha*	at isapnp?
 scsibus* at aha?
 ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?

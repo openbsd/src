@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.31 1998/08/13 04:36:50 downsj Exp $	*/
+/*	$OpenBSD: aha.c,v 1.32 1998/12/27 09:41:56 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -147,7 +147,7 @@ void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_collect_mbo __P((struct aha_softc *));
 void aha_start_ccbs __P((struct aha_softc *));
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
-int aha_find __P((struct isa_attach_args *, struct aha_softc *));
+int aha_find __P((struct isa_attach_args *, struct aha_softc *, int));
 void aha_init __P((struct aha_softc *));
 void aha_inquire_setup_information __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
@@ -170,10 +170,15 @@ struct scsi_device aha_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
+int	aha_isapnp_probe __P((struct device *, void *, void *));
 int	ahaprobe __P((struct device *, void *, void *));
 void	ahaattach __P((struct device *, struct device *, void *));
 
-struct cfattach aha_ca = {
+struct cfattach aha_isapnp_ca = {
+	sizeof(struct aha_softc), aha_isapnp_probe, ahaattach
+};
+
+struct cfattach aha_isa_ca = {
 	sizeof(struct aha_softc), ahaprobe, ahaattach
 };
 
@@ -318,6 +323,15 @@ aha_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	return 0;
 }
 
+int
+aha_isapnp_probe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	return 1;
+}
+
+
 /*
  * Check if the device can be found at the port given
  * and if so, set it up ready for further work
@@ -345,7 +359,7 @@ ahaprobe(parent, match, aux)
 #endif
 
 	/* See if there is a unit at this location. */
-	if (aha_find(ia, NULL) != 0)
+	if (aha_find(ia, NULL, 0) != 0)
 		return 0;
 
 	ia->ia_msize = 0;
@@ -364,8 +378,11 @@ ahaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *sc = (void *)self;
+	int isapnp = !strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp");
 
-	if (aha_find(ia, sc) != 0)
+	if (isapnp)
+		ia->ia_iobase = ia->ipa_io[0].base;
+	if (aha_find(ia, sc, isapnp) != 0)
 		panic("ahaattach: aha_find of %s failed", self->dv_xname);
 	sc->sc_iobase = ia->ia_iobase;
 
@@ -869,9 +886,10 @@ aha_done(sc, ccb)
  * Find the board and find its irq/drq
  */
 int
-aha_find(ia, sc)
+aha_find(ia, sc, isapnp)
 	struct isa_attach_args *ia;
 	struct aha_softc *sc;
+	int isapnp;
 {
 	int iobase = ia->ia_iobase;
 	int i;
@@ -930,6 +948,8 @@ aha_find(ia, sc)
 		    config.reply.chan);
 		return 1;
 	}
+	if (isapnp)
+		irq = ia->ia_irq;
 
 	switch (config.reply.intr) {
 	case INT9:
@@ -955,6 +975,8 @@ aha_find(ia, sc)
 		    config.reply.intr);
 		return EIO;
 	}
+	if (isapnp)
+		drq = ia->ia_drq;
 
 	if (sc != NULL) {
 		/* who are we on the scsi bus? */
@@ -964,6 +986,8 @@ aha_find(ia, sc)
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
 	} else {
+		if (isapnp)
+			return (0);
 		if (ia->ia_irq == IRQUNK)
 			ia->ia_irq = irq;
 		else if (ia->ia_irq != irq)
