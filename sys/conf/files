@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.133 1999/10/29 05:23:47 angelos Exp $
+#	$OpenBSD: files,v 1.134 1999/11/08 15:36:01 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -169,6 +169,8 @@ file	dev/usb/ohci.c			ohci	needs-flag
 pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device raid: disk
+pseudo-device rd: disk
+file	dev/ramdisk.c			rd needs-flag
 
 pseudo-device pty: tty
 pseudo-device tb: tty

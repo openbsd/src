@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.10 1999/08/17 22:47:14 mickey Exp $
+#	$OpenBSD: files.mvme68k,v 1.11 1999/11/08 15:36:09 mickey Exp $
 
 # config file for mvme68k
 
@@ -88,8 +88,6 @@ attach lptwo at pcctwo
 file	arch/mvme68k/dev/lptwo.c		lptwo needs-count
 
 # RAM disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c				rd needs-flag
 file arch/mvme68k/dev/rd_root.c			ramdisk_hooks
 
 device vme { }

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.33 1999/11/05 17:15:34 espie Exp $
+#	$OpenBSD: files.amiga,v 1.34 1999/11/08 15:36:07 mickey Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -92,8 +92,6 @@ file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
 # RAM disk
-pseudo-device	rd
-file	dev/ramdisk.c			rd needs-flag
 file	arch/amiga/dev/rd_root.c	ramdisk_hooks
 
 pseudo-device	view

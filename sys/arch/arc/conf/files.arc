@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
+#	$OpenBSD: files.arc,v 1.22 1999/11/08 15:36:07 mickey Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -153,8 +153,6 @@ file	arch/arc/isa/isapnp_machdep.c	isapnp
 # Specials.
 #
 # RAM disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
 file arch/arc/dev/rd_root.c		ramdisk_hooks
 major {rd = 8}
 

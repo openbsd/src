@@ -53,8 +53,6 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # RAM disk driver
-pseudo-device	rd
-file	dev/ramdisk.c				rd needs-count
 file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
 major   {rd = 18}
 

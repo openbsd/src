@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.59 1999/10/26 13:14:35 downsj Exp $
+#	$OpenBSD: files.i386,v 1.60 1999/11/08 15:36:08 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -53,8 +53,6 @@ major	{st = 5}
 major	{cd = 6}
 
 # RAM Disk for install floppy
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
 file arch/i386/i386/rd_root.c		ramdisk_hooks
 major	{rd = 17}
 

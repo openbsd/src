@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.12 1999/08/17 22:47:15 mickey Exp $
+#	$OpenBSD: files.sun3,v 1.13 1999/11/08 15:36:11 mickey Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -178,8 +178,6 @@ file arch/sun3/dev/ms.c			ms needs-flag
 
 
 # RAM Disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
 file arch/sun3/dev/rd_root.c		ramdisk_hooks
 
 # Major numbers for root/swap device configuration

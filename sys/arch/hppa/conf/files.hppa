@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.15 1999/08/18 00:26:28 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.16 1999/11/08 15:36:08 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -107,8 +107,6 @@ major	{ccd = 1}
 major	{vnd = 2}
 
 # RAM disk
-pseudo-device rd: disk
-file	dev/ramdisk.c			rd needs-flag
 file	arch/hppa/dev/rd_root.c		ramdisk_hooks
 major	{rd = 3}
 

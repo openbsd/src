@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.6 1999/09/27 21:21:16 smurph Exp $
+#	$OpenBSD: files.mvme88k,v 1.7 1999/11/08 15:36:10 mickey Exp $
 #	
 maxpartitions 16
 
@@ -79,8 +79,6 @@ file	arch/mvme88k/dev/vmes.c			vmes needs-count
 file	arch/mvme88k/dev/vmel.c			vmel needs-count
 
 #ramdisk support
-pseudo-device rd
-file 	dev/ramdisk.c					rd needs-flag
 file 	arch/mvme88k/dev/rd_root.c			ramdisk_hooks
 
 # list of standard files

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.11 1997/11/06 19:42:31 millert Exp $
+#	$OpenBSD: files.hp300,v 1.12 1999/11/08 15:36:08 mickey Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -165,8 +165,6 @@ attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
 # RAM disk
-pseudo-device rd
-file	dev/ramdisk.c			rd needs-flag
 file	arch/hp300/dev/rd_root.c	ramdisk_hooks
 major	{rd = 8}
 

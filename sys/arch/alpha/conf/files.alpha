@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.29 1999/09/14 01:05:24 kstailey Exp $
+#	$OpenBSD: files.alpha,v 1.30 1999/11/08 15:36:07 mickey Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -42,8 +42,6 @@ major { cd = 3 }
 major { sd = 8 }
 
 # RAM Disk
-pseudo-device rd
-file	dev/ramdisk.c			rd		needs-flag
 file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
 major { rd = 6 }
 

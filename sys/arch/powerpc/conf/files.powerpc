@@ -59,8 +59,6 @@ file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk | ofrtc
 major	{ ofdisk = 4 }
 
 pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
-file arch/powerpc/powerpc/rd_root.c	ramdisk_hooks
 major   {rd = 17}
 
 include	"../../../dev/pci/files.pci"
