@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 1997/04/14 10:48:04 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.7 1997/04/21 20:03:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -48,13 +48,15 @@ char *kernels[] = {
 extern	const char version[];
 int	boothowto;
 u_int	cnvmem, extmem;
+struct cmd_state cmd = {
+	"", "", "/", (void *)0x100000, 50, ""
+};
 
 void
 boot(bootdev)
 	dev_t	bootdev;
 {
 	register char *bootfile = kernels[0];
-	register struct cmd_state *cmd;
 	register int i = 0;
 
 #ifdef DEBUG
@@ -72,34 +74,23 @@ boot(bootdev)
 
 	printf(">> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
 
-	/* XXX init cmd here to cut on .data !!! */
-	cmd = (struct cmd_state *)alloc(sizeof(*cmd));
-	devboot(bootdev, cmd->bootdev);
-	cmd->image[0] = '\0';
-	cmd->cwd[0] = '/';
-	cmd->cwd[1] = '\0';
-	cmd->addr = (void *)0x100000;
-	cmd->timeout = 50;
-
+	devboot(bootdev, cmd.bootdev);
 	while (1) {
-		strncpy(cmd->image, bootfile, sizeof(cmd->image));
+		strncpy(cmd.image, bootfile, sizeof(cmd.image));
 
 		do {
 			printf("boot> ");
-		} while(!getcmd(cmd) && !execmd(cmd));
+		} while(!getcmd(&cmd));
 
-		if (cmd->rc < 0)
-			break;
-
-		printf("booting %s: ", cmd->path);
-		exec(cmd->path, cmd->addr, boothowto);
+		printf("booting %s: ", cmd.path);
+		exec(cmd.path, cmd.addr, boothowto);
 
 		if (kernels[++i] == NULL)
 			bootfile = kernels[i=0];
 		else
 			bootfile = kernels[i];
 
-		cmd->timeout += 20;
+		cmd.timeout += 20;
 		printf(" failed(%d). will try %s\n", errno, bootfile);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.3 1997/04/01 04:50:33 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.4 1997/04/21 20:03:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,6 +32,7 @@
  *
  */
 
+struct cmd_table;
 struct cmd_state {
 	char bootdev[16]; /* device */
 	char image[32]; /* image */
@@ -40,15 +41,9 @@ struct cmd_state {
 	int timeout;
 	char path[MAXPATHLEN]; /* buffer for pathname compose */
 
-	enum { CMD_ADDR, CMD_BOOT, CMD_CD, CMD_DEVICE, CMD_DEBUG, CMD_HELP,
-	       CMD_IMAGE, CMD_LS, CMD_NOPE, CMD_REBOOT, CMD_SET,
-	       CMD_REGS,
-	       CMD_ERROR /* last !!! */
-	}	cmd;
+	const struct cmd_table *cmd;
 	int argc;
 	char *argv[8];	/* XXX i hope this is enough */
-	int rc;
 };
 
 int getcmd __P((register struct cmd_state *));
-int execmd __P((register struct cmd_state *));
