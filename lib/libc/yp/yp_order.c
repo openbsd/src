@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_order.c,v 1.1 1996/04/24 12:56:26 deraadt Exp $	 */
+/*	$OpenBSD: yp_order.c,v 1.2 1996/04/25 00:53:49 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -80,12 +80,10 @@ again:
 		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
 	/*
 	 * XXX
-	 * NIS+ YP emulation package does not impliment YPPROC_ORDER, so
-	 * we always return 0. Or should we return an error?
+	 * NIS+ YP emulation package does not impliment YPPROC_ORDER
 	 */
 	if (r == RPC_PROCUNAVAIL) {
-		*outorder = 0;
-		r = 0;
+		r = YPERR_YPERR;
 		goto bail;
 	}
 	if (r != RPC_SUCCESS) {
