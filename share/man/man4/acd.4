@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acd.4,v 1.2 1996/06/17 06:11:27 downsj Exp $
+.\"	$OpenBSD: acd.4,v 1.1 1996/08/04 06:26:14 downsj Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -24,8 +24,8 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd May 14, 1996
-.Dt ACD 4 i386
-.Os NetBSD 
+.Dt ACD 4
+.Os OpenBSD 
 .Sh NAME
 .Nm acd
 .Nd ATAPI CD-ROM driver
@@ -37,14 +37,6 @@ The
 .Nm acd 
 driver provides support for ATAPI CD-ROM drives, using standard IDE
 controllers.
-.Pp
-.Sh BUGS
-The ATAPI subsystem is only known to work on the
-.Tn i386 .
-.Pp
-Audio is not yet supported by the
-.Nm acd
-driver.
 .Sh FILES
 .Xr /dev/acd*
 .Xr /dev/racd*
