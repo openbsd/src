@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.20 2002/05/20 03:27:42 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.21 2002/12/15 17:52:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -594,6 +594,7 @@ struct pz_device {
 #define	PCL_DUPLEX	7	/* full-duplex point-to-point (RS-232, Net) */
 #define	PCL_KEYBD	8	/* half-duplex input (HIL Keyboard) */
 #define	PCL_DISPL	9	/* half-duplex ouptput (display) */
+#define	PCL_FC		10	/* fibre channel access media */
 #define	PCL_CLASS_MASK	0xf	/* XXX class mask */
 #define	PCL_NET_MASK	0x1000	/* mask for bootp/tftp device */
 
