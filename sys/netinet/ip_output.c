@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.131 2001/06/28 21:53:42 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.132 2001/06/29 18:36:17 beck Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -638,18 +638,6 @@ sendit:
 	}
 #endif /* IPSEC */
 
-	/*
-	 * Packet filter
-	 */
-#if NPF > 0
-	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
-		error = EHOSTUNREACH;
-		m_freem(m);
-		goto done;
-	}
-	ip = mtod(m, struct ip *);
-	hlen = ip->ip_hl << 2;
-#endif
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
 		if (!(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
@@ -664,6 +652,19 @@ sendit:
 			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 		}
 	}
+
+	/*
+	 * Packet filter
+	 */
+#if NPF > 0
+	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
+		error = EHOSTUNREACH;
+		m_freem(m);
+		goto done;
+	}
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+#endif
 
 	/*
 	 * If small enough for interface, can just send directly.
