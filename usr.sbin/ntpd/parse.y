@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2004/07/05 07:57:52 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2004/07/06 23:08:26 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,8 +138,8 @@ conf_main	:  LISTEN ON address	{
 		| SERVER address	{
 			struct ntp_peer		*p;
 
-			if ((p = calloc(1, sizeof(struct listen_addr))) == NULL)
-				fatal("parse conf_mail server on calloc");
+			if ((p = calloc(1, sizeof(struct ntp_peer))) == NULL)
+				fatal("parse conf_main server on calloc");
 			memcpy(&p->ss, &$2, sizeof(struct sockaddr_storage));
 			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 		}
