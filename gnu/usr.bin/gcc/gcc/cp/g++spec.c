@@ -138,7 +138,7 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 
       if (argv[i][0] == '-')
 	{
-	  if (library != 0 && (strcmp (argv[i], "-nostdlib") == 0
+	  if ((strcmp (argv[i], "-nostdlib") == 0
 			       || strcmp (argv[i], "-nodefaultlibs") == 0))
 	    {
 	      library = 0;
