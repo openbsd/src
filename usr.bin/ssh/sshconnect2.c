@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.5 2000/05/01 18:41:06 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.6 2000/05/03 17:55:21 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -283,8 +283,12 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 int
 ssh2_try_passwd(const char *server_user, const char *host, const char *service)
 {
+	static int attempt = 0;
 	char prompt[80];
 	char *password;
+
+	if (attempt++ > options.number_of_password_prompts)
+		return 0;
 
 	snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
 	    server_user, host);
