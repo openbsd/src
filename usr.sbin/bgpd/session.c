@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.19 2003/12/20 21:14:55 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.20 2003/12/20 21:16:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1294,7 +1294,7 @@ getpeerbyip(in_addr_t ip)
 {
 	struct peer *p;
 
-	/* we might want a more efftive way to find peers by IP */
+	/* we might want a more effective way to find peers by IP */
 	for (p = conf->peers; p != NULL &&
 	    p->conf.remote_addr.sin_addr.s_addr != ip; p = p->next)
 		;	/* nothing */
