@@ -1077,7 +1077,7 @@ static client_entry *gen_client(const request_rec *r) { return NULL; }
  * You must implement this yourself, and will probably consist of code
  * contacting the password server and retrieving the hash from it.
  *
- * TBD: This function should probably be in a separate source file so that
+ * TBD: This function should probably be in a seperate source file so that
  * people need not modify mod_auth_digest.c each time they install a new version
  * of apache.
  */

@@ -146,7 +146,7 @@ register int mode;
         if (file == NULL || !*file)
                 return errno = EINVAL, (DBM *) NULL;
 /*
- * need space for two separate filenames
+ * need space for two seperate filenames
  */
         n = strlen(file) * 2 + strlen(DIRFEXT) + strlen(PAGFEXT) + 2;
 
