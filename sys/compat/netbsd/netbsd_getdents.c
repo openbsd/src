@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_getdents.c,v 1.2 1999/09/15 21:00:10 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_getdents.c,v 1.3 2001/01/15 11:39:36 art Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/stat.h>
 
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
@@ -117,7 +118,7 @@ unionread:
 				vput(lvp);
 				return (error);
 			}
-			VOP_UNLOCK(lvp, 0);
+			VOP_UNLOCK(lvp, 0, p);
 			fp->f_data = (caddr_t) lvp;
 			fp->f_offset = 0;
 			error = vn_close(vp, FREAD, fp->f_cred, p);
