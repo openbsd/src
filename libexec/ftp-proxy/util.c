@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2003/06/28 01:04:57 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.17 2003/12/22 21:53:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -77,7 +77,8 @@ get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
     struct sockaddr_in *client_sa_ptr)
 {
 	struct pfioc_natlook natlook;
-	int slen, fd;
+	socklen_t slen;
+	int fd;
 
 	slen = sizeof(*real_server_sa_ptr);
 	if (getsockname(connected_fd, (struct sockaddr *)real_server_sa_ptr,
