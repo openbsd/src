@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$NetBSD: env.c,v 1.8 1995/09/28 07:34:39 perry Exp $";
+static char rcsid[] = "$NetBSD: env.c,v 1.9 1996/05/07 18:32:22 jtc Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -58,7 +58,7 @@ main(argc, argv)
 	char **argv;
 {
 	extern char **environ;
-	extern int errno, optind;
+	extern int optind;
 	char **ep, *p;
 	char *cleanenv[1];
 	int ch;
