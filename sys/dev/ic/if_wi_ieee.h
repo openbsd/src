@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.6 2002/04/06 23:48:38 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.7 2002/04/20 03:56:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -226,8 +226,10 @@ struct wi_counters {
 #define	WI_RID_WEP_MAPTABLE	0xFC29
 #define	WI_RID_CNFAUTHMODE	0xFC2A
 #define	WI_RID_SYMBOL_KEYLENGTH	0xFC2B
-#define	WI_RID_SYMBOL_PREAMBLE	0xFC2C /* Enable/disable short preamble */
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
+#define	WI_RID_SYMBOL_PREAMBLE	0xFC8C /* Enable/disable short preamble */
+#define	WI_RID_P2_SHORT_PREAMBLE	0xFCB0 /* Short preamble support */
+#define	WI_RID_P2_EXCLUDE_LONG_PREAMBLE	0xFCB1 /* Don't send long preamble */
 #define	WI_RID_BASIC_RATE	0xFCB3
 #define	WI_RID_SUPPORT_RATE	0xFCB4
 #define WI_RID_SYMBOL_DIVERSITY	0xFC87 /* Symbol antenna diversity */
