@@ -1,5 +1,5 @@
-/*	$OpenBSD: ehcireg.h,v 1.8 2004/07/07 00:58:05 deraadt Exp $ */
-/*	$NetBSD: ehcireg.h,v 1.14 2003/10/13 00:05:10 enami Exp $	*/
+/*	$OpenBSD: ehcireg.h,v 1.9 2004/07/07 00:58:42 deraadt Exp $ */
+/*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,12 +1,12 @@
-/*	$OpenBSD: ehci.c,v 1.13 2004/07/07 00:58:05 deraadt Exp $ */
-/*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
+/*	$OpenBSD: ehci.c,v 1.14 2004/07/07 00:58:42 deraadt Exp $ */
+/*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $");
 #endif
 
 #include "ohci.h"
