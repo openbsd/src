@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.26 1997/08/21 22:04:32 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.27 1997/08/21 22:15:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -406,7 +406,7 @@ Xtty()
 	dev_t dev;
 
 	if (cmd.argc == 1)
-		printf("%s", ttyname(0));
+		printf(ttyname(0));
 	else {
 		dev = ttydev(cmd.argv[1]);
 		if (dev == NODEV)
