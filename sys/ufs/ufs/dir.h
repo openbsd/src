@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.3 1996/06/24 03:35:03 downsj Exp $	*/
+/*	$OpenBSD: dir.h,v 1.4 1996/06/24 23:16:01 tholo Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ struct odirtemplate {
 	char		dotdot_name[4];	/* ditto */
 };
 
+#ifdef _KERNEL
 /*
  * For lack of a better place...
  *
@@ -163,7 +164,10 @@ struct odirtemplate {
  * ufs-like filesystems in vnop code.  Most have to do with directories.
  */
 
+struct componentname;
+struct vnode;
 struct inode;
+struct ucred;
 struct ufs_dirops {
 	int (*dirremove) __P((struct vnode *, struct componentname *));
 	int (*direnter) __P((struct inode *, struct vnode *,
@@ -174,5 +178,6 @@ struct ufs_dirops {
 	int (*checkpath) __P((struct inode *, struct inode *,
 				struct ucred *));
 };
+#endif /* _KERNEL */
 
 #endif /* !_DIR_H_ */
