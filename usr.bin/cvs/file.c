@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 2004/07/26 15:58:01 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2004/07/27 12:01:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -93,10 +93,11 @@ static RCSNUM *cvs_addedrev;
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
-static struct cvs_dir*  cvs_file_getdir  (struct cvs_file *, int);
-static void             cvs_file_freedir (struct cvs_dir *);
-static int              cvs_file_sort    (struct cvs_flist *);
-static int              cvs_file_cmp     (const void *, const void *);
+static int        cvs_file_getdir  (struct cvs_file *, int);
+static void       cvs_file_freedir (struct cvs_dir *);
+static int        cvs_file_sort    (struct cvs_flist *);
+static int        cvs_file_cmp     (const void *, const void *);
+static CVSFILE*   cvs_file_alloc   (const char *, u_int);
 
 
 
@@ -214,64 +215,38 @@ cvs_file_chkign(const char *file)
 
 
 /*
- * cvs_file_getv()
+ * cvs_file_create()
  *
- * Get a vector of all the files found in the directory <dir> and not
- * matching any of the ignore patterns.  The number of files found is
- * returned in <nfiles>.
- * Returns a pointer to a dynamically-allocated string vector on success,
- * or NULL on failure.  The returned vector should be freed with
- * cvs_freeargv().
+ * Create a new file whose path is specified in <path> and of type <type>.
  */
 
-char**
-cvs_file_getv(const char *dir, int *nfiles, int recurse)
+CVSFILE*
+cvs_file_create(const char *path, u_int type, mode_t mode)
 {
-	int nf, ret, fd;
-	long base;
-	void *dp, *ep, *tmp;
-	char fbuf[1024], **fvec;
-	struct dirent *ent;
+	int fd;
+	CVSFILE *cfp;
 
-	*nfiles = 0;
-	fvec = NULL;
-
-	fd = open(dir, O_RDONLY);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open `%s'", dir);
+	cfp = cvs_file_alloc(path, type);
+	if (cfp == NULL)
 		return (NULL);
-	}
-	ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to get directory entries");
-		(void)close(fd);
-		return (NULL);
-	}
+	cfp->cf_type = type;
 
-	dp = fbuf;
-	ep = fbuf + (size_t)ret;
-	while (dp < ep) {
-		ent = (struct dirent *)dp;
-		dp += ent->d_reclen;
-
-		if (cvs_file_chkign(ent->d_name))
-			continue;
-
-		tmp = realloc(fvec, (*nfiles + 1) * sizeof(char *));
-		if (tmp == NULL) {
-			cvs_log(LP_ERRNO, "failed to reallocate file vector");
-			(void)close(fd);
-			free(fvec);
+	if (type == DT_DIR) {
+		if (mkdir(path, mode) == -1) {
+			cvs_file_free(cfp);
 			return (NULL);
 		}
-		fvec[++(*nfiles)] = strdup(ent->d_name);
-
-		*nfiles++;
+	}
+	else {
+		fd = open(path, O_WRONLY|O_CREAT|O_EXCL, mode);
+		if (fd == -1) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+		(void)close(fd);
 	}
 
-	(void)close(fd);
-
-	return (fvec);
+	return (cfp);
 }
 
 
@@ -304,8 +279,6 @@ cvs_file_get(const char *path, int flags)
 	struct cvs_file *cfp;
 	struct cvs_ent *ent;
 
-	printf("cvs_file_get(%s)\n", path);
-
 	if (strcmp(path, ".") == 0)
 		cwd = 1;
 	else
@@ -316,12 +289,11 @@ cvs_file_get(const char *path, int flags)
 		return (NULL);
 	}
 
-	cfp = (struct cvs_file *)malloc(sizeof(*cfp));
+	cfp = cvs_file_alloc(path, IFTODT(st.st_mode));
 	if (cfp == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
 		return (NULL);
 	}
-	memset(cfp, 0, sizeof(*cfp));
 
 	ent = cvs_ent_getent(path);
 	if (ent == NULL)
@@ -348,30 +320,16 @@ cvs_file_get(const char *path, int flags)
 		cvs_ent_free(ent);
 	}
 
-	cfp->cf_path = strdup(path);
-	if (cfp->cf_path == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate file path");
-		free(cfp);
-		return (NULL);
-	}
-
-	cfp->cf_name = strrchr(cfp->cf_path, '/');
-	if (cfp->cf_name == NULL)
-		cfp->cf_name = cfp->cf_path;
-	else
-		cfp->cf_name++;
-
 	/* convert from stat mode to dirent values */
 	cfp->cf_type = IFTODT(st.st_mode);
 	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
-		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN))
+		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN)) {
+			free(cfp->cf_ddat);
 			cfp->cf_ddat = NULL;
-		else {
-			cfp->cf_ddat = cvs_file_getdir(cfp, flags);
-			if (cfp->cf_ddat == NULL) {
-				cvs_file_free(cfp);
-				return (NULL);
-			}
+		}
+		else if (cvs_file_getdir(cfp, flags) < 0) {
+			cvs_file_free(cfp);
+			return (NULL);
 		}
 	}
 
@@ -396,7 +354,7 @@ cvs_file_get(const char *path, int flags)
  * Get a cvs directory structure for the directory whose path is <dir>.
  */
 
-static struct cvs_dir*
+static int
 cvs_file_getdir(struct cvs_file *cf, int flags)
 {
 	int nf, ret, fd;
@@ -407,40 +365,32 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	struct cvs_file *cfp;
 	struct cvs_dir *cdp;
 
-	cdp = (struct cvs_dir *)malloc(sizeof(*cdp));
-	if (cdp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate dir");
-		return (NULL);
-	}
-	memset(cdp, 0, sizeof(*cdp));
-	LIST_INIT(&(cdp->cd_files));
-
 	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
 		cdp->cd_repo = strdup(pbuf);
 		if (cdp->cd_repo == NULL) {
 			free(cdp);
-			return (NULL);
+			return (-1);
 		}
 	}
 
 	cdp->cd_root = cvsroot_get(cf->cf_path);
 	if (cdp->cd_root == NULL) {
 		cvs_file_freedir(cdp);
-		return (NULL);
+		return (-1);
 	}
 
 	fd = open(cf->cf_path, O_RDONLY);
 	if (fd == -1) {
 		cvs_log(LP_ERRNO, "failed to open `%s'", cf->cf_path);
 		cvs_file_freedir(cdp);
-		return (NULL);
+		return (-1);
 	}
 	ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to get directory entries");
 		(void)close(fd);
 		cvs_file_freedir(cdp);
-		return (NULL);
+		return (-1);
 	}
 
 	dp = fbuf;
@@ -464,8 +414,9 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 		cvs_file_sort(&(cdp->cd_files));
 
 	(void)close(fd);
+	cf->cf_ddat = cdp;
 
-	return (cdp);
+	return (0);
 }
 
 
@@ -590,4 +541,54 @@ cvs_file_cmp(const void *f1, const void *f2)
 	cf1 = *(struct cvs_file **)f1;
 	cf2 = *(struct cvs_file **)f2;
 	return strcmp(cf1->cf_name, cf2->cf_name);
+}
+
+
+CVSFILE*
+cvs_file_alloc(const char *path, u_int type)
+{
+	size_t len;
+	char pbuf[MAXPATHLEN];
+	CVSFILE *cfp;
+	struct cvs_dir *ddat;
+
+	cfp = (struct cvs_file *)malloc(sizeof(*cfp));
+	if (cfp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
+		return (NULL);
+	}
+	memset(cfp, 0, sizeof(*cfp));
+
+	/* ditch trailing slashes */
+	strlcpy(pbuf, path, sizeof(pbuf));
+	len = strlen(pbuf);
+	while (pbuf[len - 1] == '/')
+		pbuf[--len] = '\0';
+
+	cfp->cf_path = strdup(pbuf);
+	if (cfp->cf_path == NULL) {
+		free(cfp);
+		return (NULL);
+	}
+
+	cfp->cf_name = strrchr(cfp->cf_path, '/');
+	if (cfp->cf_name == NULL)
+		cfp->cf_name = cfp->cf_path;
+	else
+		cfp->cf_name++;
+
+	cfp->cf_type = type;
+	cfp->cf_cvstat = CVS_FST_UNKNOWN;
+
+	if (type == DT_DIR) {
+		ddat = (struct cvs_dir *)malloc(sizeof(*ddat));
+		if (ddat == NULL) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+		memset(ddat, 0, sizeof(*ddat));
+		LIST_INIT(&(ddat->cd_files));
+		cfp->cf_ddat = ddat;
+	}
+	return (cfp);
 }

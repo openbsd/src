@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.9 2004/07/26 15:56:43 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.10 2004/07/27 12:01:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -213,6 +213,7 @@
 #define CVS_PATH_STATICENTRIES  CVS_PATH_CVSDIR "/Entries.Static"
 #define CVS_PATH_LOGENTRIES     CVS_PATH_CVSDIR "/Entries.Log"
 #define CVS_PATH_ROOTSPEC       CVS_PATH_CVSDIR "/Root"
+#define CVS_PATH_REPOSITORY     CVS_PATH_CVSDIR "/Repository"
 
 
 struct cvs_file;
@@ -244,6 +245,7 @@ struct cvsroot {
 #define CF_RECURSE  0x04    /* recurse on directory operations */
 #define CF_SORT     0x08    /* all files are sorted alphabetically */
 #define CF_KNOWN    0x10    /* only recurse in directories known to CVS */
+#define CF_CREATE   0x20    /* create if file does not exist */
 
 
 /*
@@ -402,7 +404,7 @@ struct cvsroot*  cvsroot_get   (const char *);
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
-char**   cvs_file_getv    (const char *, int *, int);
+CVSFILE* cvs_file_create  (const char *, u_int, mode_t);
 CVSFILE* cvs_file_get     (const char *, int);
 void     cvs_file_free    (struct cvs_file *);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
@@ -433,6 +435,7 @@ int    cvs_readrepo   (const char *, char *, size_t);
 int    cvs_splitpath  (const char *, char *, size_t, char *, size_t);
 int    cvs_modetostr  (mode_t, char *, size_t);
 int    cvs_strtomode  (const char *, mode_t *);
+int    cvs_mkadmin    (struct cvs_file *, mode_t);
 int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);
 int    cvs_getargv    (const char *, char **, int);
