@@ -23,9 +23,9 @@ net_addrcmp(sa1, sa2)
 		    sizeof(struct in_addr)));
 	case AF_INET6:
 		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
-		    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id)
+		    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
 			return (((struct sockaddr_in6 *)sa1)->sin6_scope_id < 
-			    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id)
+			    ((struct sockaddr_in6 *)sa2)->sin6_scope_id)
 			    ? -1 : 1;
 		return memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
 		    &((struct sockaddr_in6 *)sa2)->sin6_addr,
