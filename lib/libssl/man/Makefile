@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2002/09/26 11:41:22 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2002/10/09 08:22:49 fgsch Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -126,6 +126,7 @@ MANALL=	\
 	SSL_alert_type_string.cat3 \
 	SSL_clear.cat3 \
 	SSL_connect.cat3 \
+	SSL_do_handshake.cat3 \
 	SSL_free.cat3 \
 	SSL_get_SSL_CTX.cat3 \
 	SSL_get_ciphers.cat3 \
