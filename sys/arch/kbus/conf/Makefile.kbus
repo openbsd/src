@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.kbus,v 1.15 1996/01/14 21:06:52 thorpej Exp $
+#	$OpenBSD: Makefile.kbus,v 1.4 2000/01/10 03:49:50 millert Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
 #
-# Makefile for NetBSD/Kbus
+# Makefile for OpenBSD/Kbus
 #
 #  Edited by Philip A. Nelson
 #
@@ -86,8 +86,8 @@ SYSTEM_LD_TAIL= $(HOST)size $@ ; $(HOST)nm -n $@ > SYMMS ; chmod 755 $@
 %LOAD
 
 clean::
-	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		errs linterrs makelinks genassym
+	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 #lint: /tmp param.c
 #	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \

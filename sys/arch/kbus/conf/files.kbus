@@ -1,4 +1,4 @@
-#	$NetBSD: files.series5,v 1.16 1995/11/30 00:58:42 jtc Exp $
+#	$OpenBSD: files.kbus,v 1.2 2000/01/10 03:49:50 millert Exp $
 #
 # new style config file for kbus architecture
 #

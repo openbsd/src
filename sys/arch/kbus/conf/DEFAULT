@@ -58,8 +58,8 @@ options		INET			# IP + ICMP + TCP + UDP
 #options	COMDEF_SPEED=B19200	# default baud on the scn chips
 #options	PLIP			# PLIP driver in dev/lpt.c
 
-#config		netbsd	root on nfs swap on nfs
-config		netbsd	swap generic
+#config		bsd	root on nfs swap on nfs
+config		bsd	swap generic
 
 mainbus0 at root
 
