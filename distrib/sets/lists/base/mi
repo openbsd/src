@@ -214,7 +214,6 @@
 ./usr/bin/getconf
 ./usr/bin/getopt
 ./usr/bin/gnubc
-./usr/bin/gperf
 ./usr/bin/grep
 ./usr/bin/grodvi
 ./usr/bin/groff
@@ -2616,3 +2615,4 @@
 ./var/yp/README
 ./sbin/swapctl
 ./usr/bin/keynote
+./usr/bin/c++filt

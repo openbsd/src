@@ -10,14 +10,14 @@
 ./usr/lib/libc.so.21.2
 ./usr/lib/libc_r.so.0.0
 ./usr/lib/libcrypto.so.1.0
-./usr/lib/libcurses.so.5.1
 ./usr/lib/libcurses++.so.1.0
+./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
-./usr/lib/libg++.so.28.0
+./usr/lib/libg2c.so.5.24
 ./usr/lib/libi386.so.0.2
-./usr/lib/libiberty.so.0.1
+./usr/lib/libiberty.so.0.2
 ./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
@@ -26,16 +26,16 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libm_i387.so.0.1
 ./usr/lib/libmenu.so.1.1
+./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
 ./usr/lib/libossaudio.so.0.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
-./usr/lib/libstdc++.so.28.0
+./usr/lib/libstdc++.so.29.0
 ./usr/lib/libtermcap.so.5.1
 ./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
@@ -370,6 +370,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/fnmatch.ph
@@ -612,6 +613,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/syscallargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sysctl.ph
@@ -652,6 +654,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/tar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/term.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ttyent.ph
@@ -700,5 +703,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/swap.ph
