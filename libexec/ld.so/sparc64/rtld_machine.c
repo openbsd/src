@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2001/09/25 14:12:23 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2001/09/25 14:29:48 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -276,6 +276,8 @@ _dl_printf("COPY relocation\n");
 				fails++;
 				continue;
 			}
+
+			value += (Elf_Addr)(ooff + this->st_value);
 		}
 
 		if (RELOC_PC_RELATIVE(type)) {
