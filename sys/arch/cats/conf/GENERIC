@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2004/02/22 18:32:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.6 2004/02/26 05:01:43 drahn Exp $
 #
 # GENERIC machine description file
 # 
@@ -36,6 +36,9 @@ maxusers	32
 
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
+
+option		APERTURE	# in-kernel aperture driver for XFree86
+option		USER_PCICONF	# user-space PCI configuration
 
 # CPU options
 
