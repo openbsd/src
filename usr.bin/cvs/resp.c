@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.9 2004/12/03 21:08:40 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.10 2004/12/06 04:10:06 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -593,7 +593,10 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 /*
  * cvs_resp_removed()
  *
- * Handler for the `Removed' and `Remove-entry' responses.
+ * Handler for the `Removed' and `Remove-entry' responses.  The `Removed'
+ * response is received when both a file and its entry need to be removed from
+ * the local copy.  The `Remove-entry' is received in cases where the file is
+ * already gone but there is still an entry to remove in the Entries file.
  */
 
 static int
@@ -604,12 +607,19 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 
 	cvs_splitpath(line, base, sizeof(base), &file);
 	ef = cvs_ent_open(base, O_RDWR);
-	if (ef == NULL)
-		return (-1);
+	if (ef == NULL) {
+		cvs_log(LP_ERR, "error handling `Removed' response");
+		if (type == CVS_RESP_RMENTRY)
+			return (-1);
+	} else {
+		(void)cvs_ent_remove(ef, file);
+		cvs_ent_close(ef);
+	}
 
-	printf("Received a `Remove' on %s\n", line);
-	cvs_ent_remove(ef, file);
-	cvs_ent_close(ef);
+	if ((type == CVS_RESP_REMOVED) && (unlink(line) == -1)) {
+		cvs_log(LP_ERRNO, "failed to unlink `%s'", line);
+		return (-1);
+	}
 
 	return (0);
 }
