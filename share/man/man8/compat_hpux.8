@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.2 2002/05/22 08:46:05 mpech Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.3 2003/02/19 09:10:36 jmc Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm compat_hpux
-.Nd setup procedure for running HP-UX binaries
+.Nd setup for running HP-UX binaries under emulation
 .Sh DESCRIPTION
 .Ox
 supports running HP-UX binaries.
@@ -47,22 +47,21 @@ level hardware access.
 .Pp
 The HP-UX compatibility feature is active
 for kernels compiled with the
-.Dv COMPAT_HPUX
+.Nm COMPAT_HPUX
 and
-.Dv COMPAT_M68K4K
+.Nm COMPAT_M68K4K
 options enabled.
 HP-UX for m68k uses 4 KB page sizes, and
 .Ox
-for all m68k platforms now use 8 KB page sizes.
+for all m68k platforms now uses 8 KB page sizes.
 .Pp
 A lot of programs are dynamically linked.
-This means that you will need the HP-UX shared libraries that the program
-depends on.
-Also, you will need to create a
-.Dq shadow root
-directory for HP-UX binaries on your
+This means that the HP-UX shared libraries that the programs
+depend on are also needed.
+Additionally, a "shadow root"
+directory for HP-UX binaries on the
 .Ox
-system.
+system will have to be created.
 This directory is named
 .Pa /emul/hpux .
 Any file operations done by HP-UX programs run under
@@ -77,39 +76,42 @@ and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
 file.
-It is recommended that you install hpux packages that include configuration
-files, etc, under
+It is recommended that HP-UX packages that include configuration
+files, etc., be installed under
 .Pa /emul/hpux ,
 to avoid naming conflicts with possible
 .Ox
 counterparts.
 Shared libraries should also be installed in the shadow tree.
 .Pp
-Generally, you will need to look for the shared libraries that HP-UX
-binaries depend on only the first few times that you install a HP-UX
-program on your
+Generally, it will only be necessary to look for the shared libraries that
+HP-UX binaries depend on the first few times that HP-UX programs are
+installed on the
 .Ox
 system.
-After a while, you will have a sufficient set of HP-UX shared libraries on your
+After a while, there will be a sufficient set of HP-UX shared libraries on the
 system to be able to run newly imported HP-UX binaries without any extra work.
 .Ss Setting up shared libraries
 How to get to know which shared libraries HP-UX binaries need, and where to get
 them?
-Basically, there are 2 possibilities (when following these instructions: you
-will need to be root on your
+Basically, there are 2 possibilities. (When following these instructions, root
+privileges are required on the
 .Ox
-system to do the necessary installation steps).
+system to perform the necessary installation steps).
 .Bl -enum
 .It
-You must have login access to an HP-UX system.
+Access to an HP-UX system:
 These instructions apply to HP-UX 9.10 (the latest version of HP-UX available
 for m68k-based systems), although the instructions should be similar for earlier
 versions of HP-UX.
-By far, the easiest method is to copy the essential files locally to your
+By far, the easiest method is to copy the essential files locally to the
 .Ox
 system.
 .Pp
-Use tar, or a similar utility to collect the following files:
+Use
+.Xr tar 1 ,
+or a similar utility, to collect the following files:
+.Pp
 .Bl -item -compact
 .It
 All files in the
@@ -125,11 +127,12 @@ directory ending in
 There should be 5 files.
 .El
 .Pp
-Now, you need to copy these files to your
+Copy these files to the
 .Ox
 system, and extract them into
-.Pa /emul/hpux ,
-for example, you should end up with the following files:
+.Pa /emul/hpux .
+The following files should be present:
+.Pp
 .Bl -item -compact
 .It
 .Pa /emul/hpux/lib/dld.sl
@@ -142,30 +145,39 @@ for example, you should end up with the following files:
 .It
 .Pa /emul/hpux/lib/libcurses.sl
 .It
+.Pp
 And a whole bunch of files in
 .Pa /emul/hpux/usr/lib .
 .El
-Overall, HP-UX 9.10 has about 10 MB of shared libraries that you will have
-ended up copying to your system.
-.It
-You have access to an HP-UX system with its entire root drive exported via NFS.
-In this case, you simply mount the entire HP-UX system under
-.Pa /emul/hpux .
-For example, on your
+Overall, HP-UX 9.10 has about 10 MB of shared libraries that will need to
+be copied to the
 .Ox
-system, you might mount it as:
-.Dl mount -t nfs hpux-host.test.net:/ /emul/hpux
+system.
+.It
+Access to an HP-UX system with its entire root drive exported via NFS:
+In this case, simply mount the entire HP-UX system under
+.Pa /emul/hpux .
+For example, on the
+.Ox
+system, mount it as:
+.Pp
+.Dl $ mount -t nfs hpux-host.test.net:/ /emul/hpux
+.Pp
 Note that, in this case, the HP-UX emulation will use the configuration files
 from the HP-UX system
-.Pq Pa /etc/passwd , for example
-and this might not be what you want.
+.Po
+.Pa /etc/passwd ,
+for example,
+.Pc
+and that might not be desirable.
 .El
 .Ss Setting up X11R5
 Although the
 .Ox
-based X11R5 server is the preferred way to run X on your system, you might
-want to run the HP-UX X11R5 server instead.
-To do so, you will need to grab a few additional files:
+based X11R5 server is the preferred way to run X, it is
+possible to run the HP-UX X11R5 server instead.
+To do so, a few additional files are necessary:
+.Pp
 .Bl -item -compact
 .It
 .Pa /usr/bin/X11/X
@@ -173,18 +185,18 @@ To do so, you will need to grab a few additional files:
 .Pa /usr/lib/grmd
 .It
 The shared libraries in
-.Pa /usr/lib/X11R5
+.Pa /usr/lib/X11R5 .
 .It
 .Pa /usr/lib/Motif1.2/libXm.sl
 .It
 All the subdirectories and files in
-.Pa /usr/lib/X11/fonts
+.Pa /usr/lib/X11/fonts .
 .It
 All the files in
-.Pa /usr/lib/X11/nls/Xhp
+.Pa /usr/lib/X11/nls/Xhp .
 .It
 All the files in
-.Pa /usr/lib/X11/extensions
+.Pa /usr/lib/X11/extensions .
 .It
 .Pa /usr/lib/X11/XHPKeymaps
 .It
@@ -209,36 +221,39 @@ All the files in
 .Pa /usr/lib/X11/rgb.pag
 .El
 .Pp
-You'll also need to perform a few configuration steps:
+The following configuration steps will also need to be performed:
 .Bl -enum
 .It
 Get and extract the
 .Pa xbase.tgz
-set for your version of
+set for
 .Ox
-to provide the X11R6 clients you'll be using with your new X server.
+to provide the X11R6 clients which are going to be used with the new X server.
 .It
 Create the following directory for the X server to deposit its socket files
 in:
-.Dl mkdir -p /usr/spool/sockets/X11
-.Dl chmod 777 /usr/spool/sockets/X11
+.Pp
+.Dl $ mkdir -p /usr/spool/sockets/X11
+.Dl $ chmod 777 /usr/spool/sockets/X11
 .It
-Add the following lines to your
+Add the following lines to
 .Pa /etc/rc.local
 to create the necessary directories for the X server to deposit its files in,
-when your system boots:
-.Dl mkdir /tmp/.X11-unix
-.Dl chmod 777 /tmp/.X11-unix
-.Dl ln -s /usr/spool/sockets/X11/0 /tmp/.X11-unix/X0
+when the system boots:
+.Pp
+.Dl $ mkdir /tmp/.X11-unix
+.Dl $ chmod 777 /tmp/.X11-unix
+.Dl $ ln -s /usr/spool/sockets/X11/0 /tmp/.X11-unix/X0
 .It
-You may also want to link your X server to a more convenient location, such as:
-.Dl ln -s /emul/hpux/usr/bin/X /usr/X11R6/bin/X
+It's also possible to link the X server to a more convenient location, such as:
+.Pp
+.Dl $ ln -s /emul/hpux/usr/bin/X /usr/X11R6/bin/X
 .El
 .Sh SEE ALSO
 .Xr options 4 ,
 .Xr config 8
 .Sh BUGS
-You may not be able to run the X server on multiple framebuffers, even though
-both the X server and
+It might not be possible to run the X server on multiple framebuffers,
+even though both the X server and
 .Ox
 support them.

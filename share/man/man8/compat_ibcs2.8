@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ibcs2.8,v 1.9 2002/08/29 07:34:31 wcobb Exp $
+.\"	$OpenBSD: compat_ibcs2.8,v 1.10 2003/02/19 09:10:36 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm compat_ibcs2
-.Nd setup procedure for running iBCS2 binaries under emulation
+.Nd setup for running iBCS2 binaries under emulation
 .Sh DESCRIPTION
 .Ox
 supports running Intel Binary Compatibility Standard 2 (iBCS2)
@@ -48,7 +48,7 @@ System V Release 3.
 iBCS2 support is only well tested using SCO binaries.
 XENIX binaries are also supported although not as well tested.
 SVR4 binaries are supported by the
-.Dv COMPAT_SVR4
+.Nm COMPAT_SVR4
 option.
 .Pp
 iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
@@ -68,61 +68,69 @@ Most programs should work, but not ones that use or depend on:
 .sp
 The iBCS2 compatibility feature is active for kernels compiled with
 the
-.Dv COMPAT_IBCS2
+.Nm COMPAT_IBCS2
 option enabled.
 If support for iBCS2 ELF executables is desired,
 the
-.Dv EXEC_ELF32
+.Nm EXEC_ELF32
 option should be enabled in addition to
-.Dv COMPAT_IBCS2 .
+.Nm COMPAT_IBCS2 .
 .Pp
 Many COFF-format programs and most ELF-format programs are dynamically
 linked.
-This means that you will also need the shared libraries that the program
-depends on.
-Also, you will need to create a "shadow root" directory for iBCS2 binaries
-on your
+This means that the shared libraries that the program
+depends on will also be needed.
+Also, a "shadow root" directory for iBCS2 binaries
+on the
 .Ox
-system.
-This directory is named /emul/ibcs2.
+system will have to be created.
+This directory is named
+.Pa /emul/ibcs2 .
 Any file operations done by iBCS2 programs run
 under
 .Ox
 will look in this directory first.
-So, if an iBCS2 program opens, for example, /etc/passwd,
+So, if an iBCS2 program opens, for example,
+.Pa /etc/passwd ,
 .Ox
-will first try to open /emul/ibcs2/etc/passwd, and if that does not
-exist open the 'real' /etc/passwd file.
-It is recommended that you install iBCS2 packages that include
-configuration files, etc. under /emul/ibcs2, to avoid naming conflicts
-with possible
+will first try to open
+.Pa /emul/ibcs2/etc/passwd ,
+and if that does not exist open the `real'
+.Pa /etc/passwd
+file.
+It is recommended that iBCS2 packages that include
+configuration files, etc., be installed under
+.Pa /emul/ibcs2 ,
+to avoid naming conflicts with possible
 .Ox 
 counterparts.
 Shared libraries should also be installed in the shadow tree.
 .Pp
-Generally, you will need to look for the shared libraries that
-iBCS2 binaries depend on only the first few times that you install
-an iBCS2 program on your
+Generally, it will only be necessary to look for the shared libraries that
+iBCS2 binaries depend on the first few times
+iBCS2 programs are installed on the
 .Ox
 system.
-After a while, you will have a sufficient set of iBCS2 shared libraries
-on your system to be able to run newly imported iBCS2 binaries without
+After a while, there will be a sufficient set of iBCS2 shared libraries
+on the system to be able to run newly imported iBCS2 binaries without
 any extra work.
 .Ss Setting up shared libraries
 How to get to know which shared libraries iBCS2 binaries need, and
 where to get them?
 Depending on the file type of the executable, there are different
-possibilities (when following these instructions: you will need to be
-root on your
+possibilities.
+(When following these instructions, root privileges are required
+on the
 .Ox
-system to do the necessary installation steps).
+system to perform the necessary installation steps).
 .Pp
 .Bl -tag -width 123 -compact
 .It 1. COFF binaries
-You can simply copy all of the available shared libraries since they
+Simply copy all of the available shared libraries since they
 are fairly small in size.
-The COFF shared libraries are typically found in /shlib and can be
-obtained from the following sources:
+The COFF shared libraries are typically found in
+.Pa /shlib
+and can be obtained from the following sources:
 .sp
 .nf
 SCO UNIX version 3.x (aka ODT)
@@ -131,33 +139,37 @@ SCO UnixWare
 Many versions of SVR4.2/x86
 .fi
 .sp
-After copying the shared libraries, you should have at least the
-following files on your system:
+After copying the shared libraries, the following files should be
+present on the
+.Ox
+system:
 .Pp
 .nf
-/emul/ibcs2/shlib/libc_s
-/emul/ibcs2/shlib/libnsl_s
-/emul/ibcs2/shlib/protlib_s
+.Pa /emul/ibcs2/shlib/libc_s
+.Pa /emul/ibcs2/shlib/libnsl_s
+.Pa /emul/ibcs2/shlib/protlib_s
 .fi
 .Pp
 .It 2. ELF binaries
-You can simply copy all of the available shared libraries from the
-source system or distribution or use the `ldd-elf' program (in
+Copy all of the available shared libraries from the
+source system or distribution, or use the `ldd-elf' program (in
 development) to determine the libraries required by a specific binary.
 .Pp
-After copying the shared libraries, you should have at least the
-following files on your system:
+After copying the shared libraries, the following files should be
+present on the
+.Ox
+system:
 .Pp
 .nf
-/emul/ibcs2/usr/lib/libc.so.1
-/emul/ibcs2/usr/lib/libcrypt.so
-/emul/ibcs2/usr/lib/libndbm.so
-/emul/ibcs2/usr/lib/libsocket.so.1
+.Pa /emul/ibcs2/usr/lib/libc.so.1
+.Pa /emul/ibcs2/usr/lib/libcrypt.so
+.Pa /emul/ibcs2/usr/lib/libndbm.so
+.Pa /emul/ibcs2/usr/lib/libsocket.so.1
 .fi
 .Pp
 .El
-If you don't have access to a SCO system, you will need to get the
-extra files you need from a SCO distribution.
+If access to an SCO system is impossible, the extra files will need to be
+obtained from an SCO distribution.
 As of January 1998, SCO sells a copy of SCO OpenServer (iBCS2) and/or
 SCO UnixWare (SVR4) for personal/non-commercial use for only the cost
 of shipping (about $20US).
@@ -166,7 +178,7 @@ and used to copy the necessary files.
 .Sh BUGS
 The information about SCO distributions may become outdated.
 .Pp
-Attempting to a use a nameserver on the local host does not currently
+Attempting to use a nameserver on the local host does not currently
 work due to an absurd shortcut taken by the iBCS2 network code
 (remember that there are no kernel sockets).
 .Pp

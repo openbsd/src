@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.10 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.11 2003/02/19 09:10:36 jmc Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm compat_svr4
-.Nd setup procedure for running SVR4/iBCS2 binaries under emulation
+.Nd setup for running SVR4/iBCS2 binaries under emulation
 .Sh DESCRIPTION
 .Ox
 supports running SVR4/iBCS2 binaries.
@@ -47,7 +47,9 @@ Most programs should work, but not ones that use or depend on:
 .Bl -tag -width 123 -compact -offset indent
 .It kernel internal data structures
 .br
-.It the /proc filesystem
+.It the
+.Pa /proc
+filesystem
 .br
 .It the ticotsord loopback rpc mechanism (nis uses this)
 .br
@@ -64,28 +66,34 @@ for kernels compiled with the
 option enabled.
 .Pp
 Most SVR4 programs are dynamically linked.
-This means that you will also need the shared libraries that the program
-depends on and the runtime linker.
-Also, you will need to create a "shadow root" directory for SVR4 binaries
-on your
+This means that the shared libraries that the programs depend on
+and the runtime linker are also needed.
+Additionally, a "shadow root" directory for SVR4 binaries
+on the
 .Ox
-system.
-This directory is named /emul/svr4.
+system will have to be created.
+This directory is named
+.Pa /emul/svr4 .
 Any file operations done by SVR4 programs run under
 .Ox
 will look in this directory first.
-So, if a SVR4 program opens, for example, /etc/passwd,
+So, if a SVR4 program opens, for example,
+.Pa /etc/passwd ,
 .Ox
 will
-first try to open /emul/svr4/etc/passwd, and if that does not exist
-open the 'real' /etc/passwd file.
-It is recommended that you install SVR4 packages that include configuration
-files, etc under /emul/svr4, to avoid naming conflicts with possible
+first try to open
+.Pa /emul/svr4/etc/passwd ,
+and if that does not exist open the `real'
+.Pa /etc/passwd file .
+It is recommended that SVR4 packages that include configuration
+files, etc., be installed under
+.Pa /emul/svr4 ,
+to avoid naming conflicts with possible
 .Ox
 counterparts.
 Shared libraries should also be installed in the shadow tree.
 .Pp
-The simplest way to setup your system for SVR4 binaries is:
+The simplest way to set up the system for SVR4 binaries is:
 .Bl -tag -width 123 -compact
 .It 1.
 Make the necessary directories:
@@ -110,7 +118,7 @@ Copy files from an SVR4 system:
 .in -5
 .El
 .Pp
-If you are running OpenWindows:
+If OpenWindows is going to be run:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/openwin/lib
@@ -135,12 +143,16 @@ Setup the configuration files and devices:
 .El
 .El
 .Pp
-An alternative method is to mount a whole SVR4 partition in /emul/svr4
-and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
+An alternative method is to mount a whole SVR4 partition in
+.Pa /emul/svr4
+and then override with other mounts
+.Pa /emul/svr4/etc
+and
+.Pa /emul/svr4/dev .
 .Pp
-Clearly, you cannot use a complete SVR4
+Clearly, a complete SVR4
 .Pa /dev
-directory as
+directory cannot be used as
 .Pa /emul/svr4/dev ,
 because other device nodes, such as
 .Pa /dev/null ,
@@ -154,8 +166,9 @@ The streams emulation is incomplete (socketpair does not work yet).
 Most SVR4 executables can not handle directory offset cookies > 32
 bits.
 More recent ones, compiled for large file support (Solaris 2.6 and up) can.
-With older programs, you will see the message "svr4_getdents: dir offset
-too large for emulated program" when this happens.
+With older programs, the message
+"svr4_getdents: dir offset too large for emulated program"
+will appear when this happens.
 Currently, this can only happen on NFS mounted filesystems, mounted from
 servers that return offsets with information in the upper 32 bits.
 These errors should rarely happen, but can be avoided by mounting this

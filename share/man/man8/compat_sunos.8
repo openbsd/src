@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_sunos.8,v 1.11 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: compat_sunos.8,v 1.12 2003/02/19 09:10:36 jmc Exp $
 .\"	$NetBSD: compat_sunos.8,v 1.6 1995/06/11 23:05:17 pk Exp $
 .\"
 .\" Copyright (c) 1994 Theo de Raadt
@@ -36,7 +36,7 @@
 .Os
 .Sh NAME
 .Nm compat_sunos
-.Nd setup procedure for running SunOS binaries under emulation
+.Nd setup for running SunOS binaries under emulation
 .Sh DESCRIPTION
 OpenBSD/sparc and some of the OpenBSD/m68k architectures can run
 SunOS executables.
@@ -62,12 +62,12 @@ longer than the number of programs that fail to run.
 .Pp
 Static executables will normally run without any extra setup.
 This procedure details the directories and files that must be
-setup to allow dynamically linked executables to work.
+set up to allow dynamically linked executables to work.
 .Pp
-The files you need are on your SunOS machine.
-You need to worry about the legal issues of ensuring that you
-have a right to use the required files on your machine.
-On your
+The files needed can be found on the SunOS machine.
+The user is responsible for the legal issues of ensuring that they
+have a right to use the required files on their machine.
+On the
 .Ox
 machine, do the following:
 .Pp
@@ -86,15 +86,15 @@ machine, do the following:
 .Li cp SunOS:/usr/lib/ld.so OpenBSD:/emul/sunos/usr/lib/ld.so
 .Pp
 .It
-If you ever expect to use YP, you will want to create a link:
+If YP is going to be used, create a link:
 .nf
 .Li ln -s /var/run/ypbind.lock /etc/ypbind.lock
 .fi
 .El
 .Pp
-Alternatively, you can use an NFS mount to accomplish the same
+Alternatively, an NFS mount can accomplish the same
 effect.
-On your
+On the
 .Ox
 machine, do the following:
 .Pp
@@ -108,10 +108,10 @@ machine, do the following:
 .fi
 .El
 .Pp
-This will place the SunOS libraries on your
+This will place the SunOS libraries on the
 .Ox
-machine in a location where the SunOS compatibility code will look for
-first, where they do not conflict with the standard libraries.
+machine in a location where the SunOS compatibility code will look
+first, in order to avoid conflict with the standard libraries.
 .Sh SEE ALSO
 .Xr compat_svr4 8
 .Sh BUGS

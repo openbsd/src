@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.24 2002/05/22 22:11:56 miod Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.25 2003/02/19 09:10:36 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -35,19 +35,21 @@
 .Os
 .Sh NAME
 .Nm compat_linux
-.Nd setup procedure for running Linux binaries under emulation
+.Nd setup for running Linux binaries under emulation
 .Sh DESCRIPTION
 .Ox
 supports running Linux binaries.
 This only applies to i386 systems for now.
 Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib.
-Additionally, OSS audio is emulated, so Linux bins can access the native audio
-transparently.
-Programs that will not work include those that use the Linux /proc filesystem
+Additionally, OSS audio is emulated, so Linux binaries can access the
+native audio transparently.
+Programs that will not work include those that use the Linux
+.Pa /proc
+filesystem
 (which is different from the optional 
 .Ox
-/proc
+.Pa /proc
 filesystem), and i386-specific calls, such as enabling virtual 8086 mode.
 .Pp
 The Linux compatibility feature is active
@@ -56,48 +58,55 @@ for kernels compiled with the
 option enabled.
 .Pp
 A lot of programs are dynamically linked.
-This means, that you will also need the Linux shared libraries that
-the program depends on, and the runtime linker.
-Also, you will need to create a "shadow root" directory for Linux binaries
-on your
+This means that the Linux shared libraries that the programs depend on
+and the runtime linker are also needed.
+Additionally, a "shadow root" directory for Linux binaries
+on the
 .Ox
-system.
-This directory is named /emul/linux.
+system will have to be created.
+This directory is named
+.Pa /emul/linux .
 Any file operations done by Linux programs run under
 .Ox
 will look in this directory first.
-So, if a Linux program opens, for example, /etc/passwd,
+So, if a Linux program opens, for example,
+.Pa /etc/passwd ,
 .Ox
-will first try to open /emul/linux/etc/passwd, and if that does not exist
-open the 'real' /etc/passwd file.
-It is recommended that you install Linux packages that include configuration
-files, etc under /emul/linux, to avoid naming conflicts with possible
+will first try to open
+.Pa /emul/linux/etc/passwd ,
+and if that does not exist open the `real'
+.Pa /etc/passwd
+file.
+It is recommended that Linux packages that include configuration
+files, etc., be installed under
+.Pa /emul/linux ,
+to avoid naming conflicts with possible
 .Ox
 counterparts.
 Shared libraries should also be installed in the shadow tree.
 .Pp
-Generally, you will need to look for the shared libraries that Linux
-binaries depend on only the first few times that you install a Linux
-program on your
+Generally, it will only be necessary to look for the shared libraries
+that Linux binaries depend on the first few times that Linux programs
+are installed on the
 .Ox
 system.
-After a while, you will have a sufficient set of Linux shared libraries
-on your system to be able to run newly imported Linux binaries without
+After a while, there will be a sufficient set of Linux shared libraries
+on the system to be able to run newly imported Linux binaries without
 any extra work.
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
 to get them?
-Basically, there are 3 possibilities (when following these instructions:
-you will need to be root on your
+Basically, there are 3 possibilities.
+(When following these instructions, root privileges are required on the
 .Ox
-system to do the necessary installation steps).
+system to perform the necessary installation steps).
 .Pp
 .Bl -tag -width 123 -compact
 .It 1.
-You have access to the
+Access to the
 .Ox
 .Xr ports 7
-system.
+system:
 Install the port named
 .Nm redhat/base
 in the
@@ -110,13 +119,13 @@ necessary to run Linux applications.
 Access to a Linux system is not needed.
 .Pp
 .It 2.
-You have access to a Linux system.
-In this case you can temporarily install the binary there, see what
-shared libraries it needs, and copy them to your
+Access to a Linux system:
+In this case temporarily install the binary there, see what
+shared libraries it needs, and copy them to the
 .Ox
 system.
-Example: you have just ftp-ed the Linux binary of Doom.
-Put it on the Linux system you have access to, and check which shared
+Example: ftp the Linux binary of Doom.
+Put it on the Linux system, and check which shared
 libraries it needs by running `ldd linuxxdoom':
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -128,127 +137,144 @@ libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .fi
 .El
 .Pp
-You would need go get all the files from the last column, and
-put them under /emul/linux, with the names in the first column
+Get all the files from the last column, and put them under
+.Pa /emul/linux ,
+with the names in the first column
 as symbolic links pointing to them.
-This means you eventually have these files on your
+The following files would therefore be required on the
 .Ox
 system:
-.Pp
 .nf
-/emul/linux/usr/X11/lib/libXt.so.3.1.0
-/emul/linux/usr/X11/lib/libXt.so.3 (symbolic link to the above)
-/emul/linux/usr/X11/lib/libX11.so.3.1.0
-/emul/linux/usr/X11/lib/libX11.so.3 (symbolic link to the above)
-/emul/linux/lib/libc.so.4.6.29
-/emul/linux/lib/libc.so.4 (symbolic link to the above)
+.Pp
+.Pa /emul/linux/usr/X11/lib/libXt.so.3.1.0
+.Pa /emul/linux/usr/X11/lib/libXt.so.3 Li (symbolic link to the above)
+.Pa /emul/linux/usr/X11/lib/libX11.so.3.1.0
+.Pa /emul/linux/usr/X11/lib/libX11.so.3 Li (symbolic link to the above)
+.Pa /emul/linux/lib/libc.so.4.6.29
+.Pa /emul/linux/lib/libc.so.4 Li (symbolic link to the above)
 .fi
 .Pp
-Note that if you already have a Linux shared library with a
+Note that if a Linux shared library with a
 matching major revision number to the first column of the 'ldd'
-output, you won't need to copy the file named in the last column
-to your system, the one you already have should work.
-It is advisable to copy the shared library anyway if it is a newer version,
-though.
-You can remove the old one, as long as you make the symbolic
-link point to the new one.
-So, if you have these libraries on your system:
+output is already present, it isn't necessary to copy the file named
+in the last column to the
+.Ox
+system; the one already there should work.
+It is advisable to copy the shared library anyway, if it is a newer version.
+The old one can be removed, as long as the symbolic
+link points to the new one.
+So, if these libraries exist on the system:
 .Pp
 .nf
-/emul/linux/lib/libc.so.4.6.27
-/emul/linux/lib/libc.so.4 -> /emul/linux/lib/libc.so.4.6.27
+.Pa /emul/linux/lib/libc.so.4.6.27
+.Pa /emul/linux/lib/libc.so.4 Li -> Pa /emul/linux/lib/libc.so.4.6.27
 .fi
 .Pp
-and you find that the ldd output for a new binary you want to
-install is:
+and the ldd output for a new binary is:
 .nf
 .Pp
 libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .fi
 .Pp
-you won't need to worry about copying /lib/libc.so.4.6.29 too,
-because the program should work fine with the slightly older version.
-You can decide to replace the libc.so anyway, and that should leave
-you with:
+it isn't necessary to copy
+.Pa /lib/libc.so.4.6.29
+too, because the program should work fine with the slightly older version.
+.Pa libc.so
+can be replaced anyway, and that should leave:
 .Pp
 .nf
-/emul/linux/lib/libc.so.4.6.29
-/emul/linux/lib/libc.so.4 -> /emul/linux/lib/libc.so.4.6.29
+.Pa /emul/linux/lib/libc.so.4.6.29
+.Pa /emul/linux/lib/libc.so.4 Li -> Pa /emul/linux/lib/libc.so.4.6.29
 .fi
 .Pp
 Please note that the symbolic link mechanism is
-.Nm only
-needed for Linux binaries, the
+only needed for Linux binaries, the
 .Ox
 runtime linker takes care of looking for matching major revision numbers
-itself, you don't need to worry about that.
+itself.
 .Pp
-Finally, you must make sure that you have the Linux runtime linker
-and its config files on your system.
-You should copy these files from the Linux system to their appropriate
-place on your
+Finally, the Linux runtime linker and its config files must be present
+on the system.
+These files should be copied from the Linux system to their appropriate
+place on the
 .Ox
-system (in the /emul/linux tree):
+system (in the
+.Pa /emul/linux
+tree):
 .Pp
 .nf
-/lib/ld.so
-/etc/ld.so.cache
-/etc/ld.so.config
+.Pa /lib/ld.so
+.Pa /etc/ld.so.cache
+.Pa /etc/ld.so.config
 .fi
 .Pp
 .It 3.
-You don't have access to a Linux system.
-In that case, you should get the extra files you need from various
-ftp sites.
+No access to a Linux system:
+In that case, get the extra files from various ftp sites.
 Information on where to look for the various files is appended
 below.
-For now, let's assume you know where to get the files.
 .Pp
 Retrieve the following files (from _one_ ftp site to avoid
-any version mismatches), and install them under /emul/linux
-(i.e. /foo/bar is installed as /emul/linux/foo/bar):
+any version mismatches), and install them under
+.Pa /emul/linux
+(i.e.
+.Pa /foo/bar
+is installed as
+.Pa /emul/linux/foo/bar ) :
 .Pp
 .nf
-/sbin/ldconfig
-/usr/bin/ldd
-/lib/libc.so.x.y.z
-/lib/ld.so
+.Pa /sbin/ldconfig
+.Pa /usr/bin/ldd
+.Pa /lib/libc.so.x.y.z
+.Pa /lib/ld.so
 .fi
 .Pp
-ldconfig and ldd don't necessarily need to be under /emul/linux,
-you can install them elsewhere in the system too.
+ldconfig and ldd don't necessarily need to be under
+.Pa /emul/linux ,
+they can be installed elsewhere in the system too.
 Just make sure they don't conflict with their
 .Ox
 counterparts.
-A good idea would be to install them in /usr/local/bin as ldconfig-linux
-and ldd-linux.
+A good idea would be to install them in
+.Pa /usr/local/bin
+as ldconfig-linux and ldd-linux.
 .Pp
-Create the file /emul/linux/etc/ld.so.conf, containing the
-directories in which the Linux runtime linker should look
+Create the file
+.Pa /emul/linux/etc/ld.so.conf ,
+containing the directories in which the Linux runtime linker should look
 for shared libs.
 It is a plain text file, containing a directory
 name on each line.
-/lib and /usr/lib are standard, you could add the following:
+.Pa /lib
+and
+.Pa /usr/lib
+are standard; the following could be added:
 .Pp
 .nf
-/usr/X11/lib
-/usr/local/lib
+.Pa /usr/X11/lib
+.Pa /usr/local/lib
 .fi
 .Pp
-Note that these are mapped to /emul/linux/XXXX by OpenBSD's compat
-code, and should exist as such on your system.
+Note that these are mapped to
+.Pa /emul/linux/XXXX
+by OpenBSD's compat code, and should exist as such on the
+.Ox
+system.
 .Pp
 Run the Linux ldconfig program.
 It should be statically linked, so it doesn't need any shared libraries
 by itself.
-It will create the file /emul/linux/etc/ld.so.cache
-You should rerun the Linux version of the ldconfig program
-each time you add a new shared library.
+It will create the file
+.Pa /emul/linux/etc/ld.so.cache .
+The Linux version of the ldconfig program should be rerun
+each time a new shared library is added.
 .Pp
-You should now be set up for Linux binaries which only need
+The
+.Ox
+system should now be set up for Linux binaries which only need
 a shared libc.
-You can test this by running the Linux ldd on itself.
-Suppose that you have it installed as ldd-linux, it should produce
+Test this by running the Linux ldd on itself.
+Suppose that it is installed as ldd-linux, it should produce
 something like:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -256,33 +282,36 @@ something like:
 libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .El
 .Pp
-This been done, you are ready to install new Linux binaries.
-Whenever you install a new Linux program, you should check
-if it needs shared libraries, and if so, whether you have
-them installed in the /emul/linux tree.
-To do this, you run the Linux version ldd on the new program, and
+This being done, new Linux binaries can now be installed.
+Whenever a new Linux program is installed, it should be determined
+if it needs shared libraries, and if so, whether they are
+installed in the
+.Pa /emul/linux
+tree.
+To do this, run the Linux version ldd on the new program, and
 watch its output.
 ldd (see also the manual page for ldd(1)) will print a list
 of shared libraries that the program depends on, in the
 form  <majorname> (<jumpversion>) => <fullname>.
 .Pp
 If it prints "not found" instead of <fullname> it means that
-you need an extra library.
+an extra library is needed.
 Which library this is, is shown
-in <majorname>, which will be of the form libXXXX.so.<N>
-You will need to find a libXXXX.so.<N>.<mm> on a Linux ftp site,
-and install it on your system.
+in <majorname>, which will be of the form libXXXX.so.<N>.
+Find a libXXXX.so.<N>.<mm> on a Linux ftp site,
+and install it on the
+.Ox
+system.
 The XXXX (name) and <N> (major revision number) should match;
 the minor number(s) <mm> are less important, though it is
 advised to take the most recent version.
 .El
 .Ss Finding the necessary files.
 .Nm Note:
-the information below is valid as of the time this
-document was written (March, 1995), but certain details
+the information below is valid as of Feb 2003, but certain details
 such as names of ftp sites, directories and distribution names
-may have changed by the time you read this.
-You can also save yourself a lot of headaches by using the
+may have changed since then.
+It is much easier to use the
 .Ox
 .Xr ports 7
 system (possibility 3, above).
@@ -291,96 +320,78 @@ Linux is distributed by several groups that make their own set
 of binaries that they distribute.
 Each distribution has its own name, like "Slackware" or "Yggdrasil".
 The distributions are available on a lot of ftp sites.
-Sometimes the files are unpacked, and you can get the individual
-files you need, but mostly they are stored in distribution sets,
+Sometimes the files are unpacked, and individual files can be retrieved,
+but mostly they are stored in distribution sets,
 usually consisting of subdirectories with gzipped tar files in them.
 The primary ftp sites for the distributions are:
 .Pp
 .nf
 ftp.ibiblio.org:/pub/Linux/distributions
-tsx-11.mit.edu:/pub/linux/distributions
+distro.ibiblio.org:/pub/Linux/distributions
+.\" tsx-11.mit.edu:/pub/linux/distributions
 .fi
 .Pp
 Some European mirrors:
 .Pp
 .nf
-ftp.luth.se:/pub/linux/distributions
+.\" ftp.luth.se:/pub/linux/distributions
 .\" ftp.demon.co.uk:/pub/linux/distributions
+ftp.sunet.se:/pub/Linux/distributions
 src.doc.ic.ac.uk:/packages/linux
 .fi
 .Pp
 For simplicity, let's concentrate on Slackware here.
 This distribution consists of a number of subdirectories, containing
 separate packages.
-Normally, they're controlled by an install program, but you can
-retrieve files "by hand" too.
-First of all, you will need to look in the "contents" subdir of
-the distribution.
-You will find a lot of small textfiles here describing the contents of
-the separate packages.
-The fastest way to look something up is to retrieve all
-the files in the contents subdirectory, and grep through them for the file
-you need.
-Here is an example of a list of files that you might need, and
-in which contents-file you will find it by grepping through them:
+Normally, they're controlled by an install program, but the files can be
+retrieved "by hand" too.
+The fastest way to find something is to
+.Xr grep 1
+the file FILELIST.TXT for
+the files needed.
+Here is an example of a list of files that might be needed, and
+in which package it can be found:
 .Bd -unfilled -offset indent
 Needed                  Package
 
-ld.so                   ldso
-ldconfig                ldso
-ldd                     ldso
-libc.so.4               shlibs
-libX11.so.6.0           xf_lib
-libXt.so.6.0            xf_lib
-libX11.so.3             oldlibs
-libXt.so.3              oldlibs
+ld-2.2.5.so             glibc
+ldconfig                glibc
+ldd                     glibc
+libc.so.6               glibc
+libX11.so.6             xfree
+libXt.so.6              xfree
 .Ed
 .Pp
-So, in this case, you will need the packages ldso, shlibs, xf_lib and oldlibs.
-In each of the contents-files for these packages, look for a line saying
-"PACKAGE LOCATION", it will tell you on which 'disk' the package is,
-in our case it will tell us in which subdirectory we need to look.
-For our example, we would find the following locations:
-.Bd -unfilled -offset indent
-Package                 Location
-
-ldso                    diska2
-shlibs                  diska2
-oldlibs                 diskx6
-xf_lib                  diskx9
-.Ed
-.Pp
-The locations called "diskXX" refer to the "slakware/XX" subdirectories
-of the distribution, others may be found in the "contrib" subdirectory.
-In this case, we could now retrieve the packages we need by retrieving
-the following files (relative to the root of the Slackware distribution
-tree):
+So, in this case, the packages glibc and xfree will be needed.
+FILELIST.TXT also gives the location of the packages.
+Retrieve the packages needed from the following files
+(relative to the root of the Slackware distribution tree):
 .Pp
 .nf
-slakware/a2/ldso.tgz
-slakware/a2/shlibs.tgz
-slakware/x6/oldlibs/tgz
-slakware/x9/xf_lib.tgz
+.Pa slakware/l/glibc-2.2.5-i386.2.tgz
+.Pa slakware/x/xfree-4.2.0-i386.5.tgz
 .fi
 .Pp
-Extract the files from these gzipped tarfiles in your /emul/linux directory
-(possibly omitting or afterwards removing files you don't need), and you
-are done.
+Extract the files from these gzipped tarfiles in the
+.Pa /emul/linux
+directory
+(possibly omitting or afterwards removing unnecessary files).
 .Ss Programs using SVGAlib
 SVGAlib binaries require some extra care.
 The pcvt virtual console driver has to be in the kernel for them to work,
-and you will also have to create some symbolic links in the /emul/linux/dev
-directory, namely:
+and some symbolic links in the
+.Pa /emul/linux/dev
+directory will have to be created, namely:
 .Pp
 .nf
 /emul/linux/dev/console -> /dev/tty
-/emul/linux/dev/mouse -> whatever device your mouse is connected to
+/emul/linux/dev/mouse -> whatever device the mouse is connected to
 /emul/linux/dev/ttyS0 -> /dev/tty00
 /emul/linux/dev/ttyS1 -> /dev/tty01
 .fi
 .Pp
 Be warned: the first link mentioned here makes SVGAlib binaries
-work, but may confuse others, so you may have to remove it again at
+work, but may confuse others, so it may be necessary to remove it again at
 some point.
 .Ss Programs using OSS (Linux) audio
 Only the DSP device is emulated, the following link should be created:
@@ -388,14 +399,16 @@ Only the DSP device is emulated, the following link should be created:
 .nf
 /emul/linux/dev/dsp -> /dev/audio
 .fi
-.Ss Other links Linux bins may require
-CD-ROM support requires a link to your cdrom device, similar to:
+.Ss Other links Linux binaries may require
+CD-ROM support requires a link to the cdrom device, similar to:
 .Pp
 .nf
 /emul/linux/dev/cdrom -> /dev/cd0a   (first scsi cdrom)
 .fi
 .Ss File systems
-Many Linux binaries expect /proc to have procfs mounted on it.
+Many Linux binaries expect
+.Pa /proc
+to have procfs mounted on it.
 Some binaries will require it to be mounted using the
 .Fl o Ar linux
 option.
@@ -405,7 +418,7 @@ The information about Linux distributions may become outdated.
 Linux ELF binaries may be detected as svr4 binaries. 
 This can usually be fixed with
 .Xr elf2olf 1
-by setting the OLF opsys tag to Linux (eg: elf2olf -o linux <linux_binary>).
+by setting the OLF opsys tag to Linux (eg. elf2olf -o linux <linux_binary>).
 .Pp
 .Nm
 is currently only supported on the i386.

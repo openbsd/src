@@ -1,4 +1,4 @@
-.\" $OpenBSD: compat_osf1.8,v 1.1 2002/05/07 08:20:17 miod Exp $
+.\" $OpenBSD: compat_osf1.8,v 1.2 2003/02/19 09:10:36 jmc Exp $
 .\" $NetBSD: compat_osf1.8,v 1.8 2002/01/14 13:50:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm compat_osf1
-.Nd setup procedure for running OSF/1 binaries
+.Nd setup for running OSF/1 binaries under emulation
 .Sh DESCRIPTION
 .Ox
 supports running OSF/1 (a.k.a Digital Unix, a.k.a. Tru64) binaries on alpha
@@ -49,22 +49,22 @@ Most programs should work, including the ones that use the shared object
 libraries.
 Programs that make direct MACH system calls will not work.
 The OSF/1 compatibility feature is active for kernels compiled with the
-.Dv COMPAT_OSF1
+.Nm COMPAT_OSF1
 option enabled (see
 .Xr options 4 ) .
 .Pp
-To run dynamically linked programs, you will need the OSF/1 shared libraries,
-runtime linker, and certain configuration files found in /etc.
-These are installed in a
-.Dq shadow root
-directory called
+To run dynamically linked programs, the OSF/1 shared libraries,
+runtime linker, and certain configuration files found in
+.Pa /etc
+are also needed.
+These are installed in a "shadow root" directory called
 .Pa /emul/osf1 .
 Any file operations done by OSF/1 programs run under
-.Nx
+.Ox
 will look in this directory first, and fall back to the file system proper.
 So, if an OSF/1 program opens
 .Pa /etc/svc.conf ,
-.Nx
+.Ox
 will first try to open
 .Pa /emul/osf1/etc/svc.conf ,
 and if that file does not exist it will then try
@@ -72,9 +72,10 @@ and if that file does not exist it will then try
 Shared libraries and configuration specific to OSF/1 should be installed
 in the shadow tree.
 .Ss Setting up /emul/osf1
-You need access to an OSF/1 machine and if the licensing details permit,
-you need to copy the contents of:
+Access to an OSF/1 machine is needed and, if the licensing details permit,
+the following files will have to be copied:
 .Bl -item -compact -offset indent
+.Pp
 .It
 .Pa /shlib
 .It
@@ -88,6 +89,7 @@ you need to copy the contents of:
 (The latter is required to run Netscape Navigator or Communicator.)
 .Pp
 Also copy
+.Pp
 .Bl -item -compact -offset indent
 .It
 .Pa /etc/svc.conf
@@ -103,12 +105,13 @@ Or, simply NFS mount the appropriate directories under
 .Xr options 4 ,
 .Xr config 8
 .Sh BUGS
-Your
+The
+.Ox
+system's
 .Xr hostname 1
 .Em must
 contain a dot
 .Em or
-your
 .Xr resolv.conf 5
 must contain a
 .Li search
