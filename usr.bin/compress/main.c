@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2003/04/07 20:55:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2003/06/04 04:55:58 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -15,10 +15,9 @@ static const char license[] =
 " 2. Redistributions in binary form must reproduce the above copyright\n"
 "    notice, this list of conditions and the following disclaimer in the\n"
 "    documentation and/or other materials provided with the distribution.\n"
-" 3. All advertising materials mentioning features or use of this software\n"
-"    must display the following acknowledgement:\n"
-"      This product includes software developed by the University of\n"
-"      California, Berkeley and its contributors.\n"
+" 3. Neither the name of the University nor the names of its contributors\n"
+"    may be used to endorse or promote products derived from this software\n"
+"    without specific prior written permission.\n"
 "\n"
 " THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR\n"
 " IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES\n"
@@ -36,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.22 2003/04/07 20:55:33 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.23 2003/06/04 04:55:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
