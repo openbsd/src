@@ -63,12 +63,9 @@
 ./usr/lib/perl5/alpha-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/alpha-openbsd/5.00404/pod
 ./usr/lib/perl5/alpha-openbsd/5.00404/pod/perldiag.pod
-./usr/lib/perl5/site_perl/alpha-openbsd/ansidecl.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/bfdlink.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd
 ./usr/lib/perl5/site_perl/alpha-openbsd/a.out.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/arpa
 ./usr/lib/perl5/site_perl/alpha-openbsd/arpa/ftp.ph
@@ -77,9 +74,12 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/arpa/telnet.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/assert.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/bfd.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/blf.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/bm.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/com_err.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/cpio.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/ctype.ph
@@ -169,12 +169,12 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/memory.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/menu.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/mpool.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/ndbm.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/bpfdesc.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/encap.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_atm.ph
@@ -182,6 +182,7 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_fddi.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_llc.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_ppp.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_pppvar.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/net/if_slvar.ph
@@ -202,6 +203,7 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/nlist.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/panel.ph
@@ -288,6 +290,7 @@
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/map.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/mbuf.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/md5k.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/sys/midiio.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/mman.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/mount.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/sys/msg.ph
@@ -375,6 +378,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
-./usr/lib/perl5/site_perl/alpha-openbsd/cast.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/ncurses.ph
-./usr/lib/perl5/site_perl/alpha-openbsd/sys/midiio.ph

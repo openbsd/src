@@ -45,6 +45,8 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vid.h
 ./usr/include/machine/vmparam.h
+./usr/lib/c++rt0.o
+./usr/lib/crt0.o
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/cc1
@@ -74,9 +76,7 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/libobjc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/specs
+./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
-./usr/lib/crt0.o
-./usr/lib/gcrt0.o
-./usr/lib/c++rt0.o

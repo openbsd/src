@@ -1,6 +1,3 @@
-./usr/lib/libc_r.so.0.0
-./usr/lib/libcrypto.so.1.0
-./usr/lib/libssl.so.1.0
 ./dev/scan0
 ./dev/scan1
 ./sbin/fdisk
@@ -11,6 +8,8 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.0
+./usr/lib/libc_r.so.0.0
+./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -28,13 +27,14 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.3.0
 ./usr/lib/libossaudio.so.0.0
+./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
+./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.28.0
-./usr/lib/libotermcap.so.3.0
 ./usr/lib/libtermcap.so.5.1
 ./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
@@ -285,13 +285,9 @@
 ./usr/lib/perl5/i386-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/i386-openbsd/5.00404/pod
 ./usr/lib/perl5/i386-openbsd/5.00404/pod/perldiag.pod
-./usr/lib/perl5/site_perl/i386-openbsd/ansidecl.ph
-./usr/lib/perl5/site_perl/i386-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/i386-openbsd/bfdlink.ph
-./usr/lib/perl5/site_perl/i386-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/i386-openbsd
-./usr/lib/perl5/site_perl/i386-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/a.out.ph
+./usr/lib/perl5/site_perl/i386-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/arpa
 ./usr/lib/perl5/site_perl/i386-openbsd/arpa/ftp.ph
@@ -300,9 +296,12 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/arpa/telnet.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/assert.ph
+./usr/lib/perl5/site_perl/i386-openbsd/bfd.ph
+./usr/lib/perl5/site_perl/i386-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/blf.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/bm.ph
+./usr/lib/perl5/site_perl/i386-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/com_err.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/cpio.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ctype.ph
@@ -357,7 +356,9 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/gdt.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/ieeefp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/intr.ph
+./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_bt848.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_fd.ph
+./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_meteor.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/joystick.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/limits.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/linux_machdep.ph
@@ -380,6 +381,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/setjmp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/signal.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/specialreg.ph
+./usr/lib/perl5/site_perl/i386-openbsd/machine/spinlock.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/spkr.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/stdarg.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/svr4_machdep.ph
@@ -397,6 +399,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/memory.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/menu.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/mpool.ph
+./usr/lib/perl5/site_perl/i386-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ndbm.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net
 ./usr/lib/perl5/site_perl/i386-openbsd/net/bpf.ph
@@ -409,6 +412,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_fddi.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_llc.ph
+./usr/lib/perl5/site_perl/i386-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_ppp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_pppvar.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/net/if_slvar.ph
@@ -429,6 +433,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/nlist.ph
+./usr/lib/perl5/site_perl/i386-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/panel.ph
@@ -442,6 +447,8 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/protocols/rwhod.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/protocols/talkd.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/protocols/timed.ph
+./usr/lib/perl5/site_perl/i386-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/i386-openbsd/pthread_np.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/pwd.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ranlib.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/re_comp.ph
@@ -449,6 +456,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/regexp.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/resolv.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/rmd160.ph
+./usr/lib/perl5/site_perl/i386-openbsd/sched.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/scsi.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/search.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/setjmp.ph
@@ -457,6 +465,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/skey.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/soundcard.ph
+./usr/lib/perl5/site_perl/i386-openbsd/spinlock.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/stab.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/stdarg.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/stddef.ph
@@ -506,6 +515,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/ipc.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/kcore.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/kernel.ph
+./usr/lib/perl5/site_perl/i386-openbsd/sys/kthread.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/ktrace.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/lkm.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/localedef.ph
@@ -515,6 +525,7 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/map.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/mbuf.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/md5k.ph
+./usr/lib/perl5/site_perl/i386-openbsd/sys/midiio.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/mman.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/mount.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/sys/msg.ph
@@ -631,14 +642,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/lib/perl5/site_perl/i386-openbsd/cast.ph
-./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_bt848.ph
-./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_meteor.ph
-./usr/lib/perl5/site_perl/i386-openbsd/ncurses.ph
-./usr/lib/perl5/site_perl/i386-openbsd/sys/midiio.ph
-./usr/lib/perl5/site_perl/i386-openbsd/machine/spinlock.ph
-./usr/lib/perl5/site_perl/i386-openbsd/pthread.ph
-./usr/lib/perl5/site_perl/i386-openbsd/pthread_np.ph
-./usr/lib/perl5/site_perl/i386-openbsd/sched.ph
-./usr/lib/perl5/site_perl/i386-openbsd/spinlock.ph
-./usr/lib/perl5/site_perl/i386-openbsd/sys/kthread.ph

@@ -1,7 +1,7 @@
-./usr/bin/gdb
 ./usr/bin/c++filt
 ./usr/bin/dlltool
 ./usr/bin/gasp
+./usr/bin/gdb
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/include/ansidecl.h
@@ -27,6 +27,7 @@
 ./usr/include/machine/ieeefp.h
 ./usr/include/machine/intr.h
 ./usr/include/machine/ipkdb.h
+./usr/include/machine/kbio.h
 ./usr/include/machine/kcore.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/param.h
@@ -49,7 +50,6 @@
 ./usr/include/machine/va-ppc.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
-./usr/include/machine/kbio.h
 ./usr/include/machine/vuid_event.h
 ./usr/include/machine/wsconsio.h
 ./usr/include/obstack.h
@@ -105,9 +105,12 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/soft-float/libgcc.a
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/specs
 ./usr/lib/libbfd.a
+./usr/lib/libcrypto_pic.a
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
+./usr/lib/libotermcap_pic.a
 ./usr/lib/libreadline.a
+./usr/lib/libssl_pic.a
 ./usr/powerpc-unknown-openbsd2.4/bin/ar
 ./usr/powerpc-unknown-openbsd2.4/bin/as
 ./usr/powerpc-unknown-openbsd2.4/bin/dlltool
@@ -124,6 +127,3 @@
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
-./usr/lib/libssl_pic.a
-./usr/lib/libcrypto_pic.a
-./usr/lib/libotermcap_pic.a

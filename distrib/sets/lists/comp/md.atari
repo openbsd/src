@@ -59,15 +59,18 @@
 ./usr/include/machine/vmparam.h
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
+./usr/lib/libcrypto_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libg++_pic.a
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libotermcap_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
+./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
 ./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
@@ -79,6 +82,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libssl_pic.a
-./usr/lib/libcrypto_pic.a
-./usr/lib/libotermcap_pic.a

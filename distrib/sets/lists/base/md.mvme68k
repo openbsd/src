@@ -1,6 +1,3 @@
-./usr/lib/libc_r.so.0.0
-./usr/lib/libcrypto.so.1.0
-./usr/lib/libssl.so.1.0
 ./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/ldd
@@ -8,6 +5,8 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.0
+./usr/lib/libc_r.so.0.0
+./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -23,13 +22,14 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.3.0
 ./usr/lib/libossaudio.so.0.0
+./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
+./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.28.0
-./usr/lib/libotermcap.so.3.0
 ./usr/lib/libtermcap.so.5.1
 ./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
@@ -280,12 +280,9 @@
 ./usr/lib/perl5/m68k-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod/perldiag.pod
-./usr/lib/perl5/site_perl/m68k-openbsd/ansidecl.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/bfdlink.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/lib/perl5/site_perl/m68k-openbsd/a.out.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/ftp.ph
@@ -294,9 +291,12 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/telnet.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/assert.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/bfd.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/blf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/bm.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/com_err.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/cpio.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ctype.ph
@@ -374,6 +374,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/setjmp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/signal.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/specialreg.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/machine/spinlock.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/spkr.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/stdarg.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/svr4_machdep.ph
@@ -396,7 +397,6 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/bpfdesc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/encap.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_atm.ph
@@ -404,6 +404,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_fddi.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_llc.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_ppp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_pppvar.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_slvar.ph
@@ -424,6 +425,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/nlist.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/panel.ph
@@ -437,6 +439,8 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/protocols/rwhod.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/protocols/talkd.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/protocols/timed.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/pthread_np.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/pwd.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/ranlib.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/re_comp.ph
@@ -444,6 +448,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/regexp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/resolv.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/rmd160.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sched.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/scsi.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/search.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/setjmp.ph
@@ -452,6 +457,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/skey.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/soundcard.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/spinlock.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/stab.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/stdarg.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/stddef.ph
@@ -501,6 +507,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ipc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/kcore.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/kernel.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/kthread.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ktrace.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/lkm.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/localedef.ph
@@ -510,6 +517,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/map.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/mbuf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/md5k.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/midiio.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/mman.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/mount.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/msg.ph
@@ -601,11 +609,3 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
-./usr/lib/perl5/site_perl/m68k-openbsd/cast.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/sys/midiio.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/machine/spinlock.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/pthread.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/pthread_np.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/sched.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/spinlock.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/sys/kthread.ph

@@ -1,8 +1,3 @@
-./usr/lib/libc_r.a
-./usr/lib/libc_r_p.a
-./sbin/raidctl
-./usr/bin/midiplay
-./usr/lib/libc_r_pic.a
 ./altroot
 ./bin
 ./bin/[
@@ -115,6 +110,7 @@
 ./sbin/photurisd
 ./sbin/ping
 ./sbin/quotacheck
+./sbin/raidctl
 ./sbin/rdump
 ./sbin/reboot
 ./sbin/restore
@@ -286,6 +282,7 @@
 ./usr/bin/man
 ./usr/bin/merge
 ./usr/bin/mesg
+./usr/bin/midiplay
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
@@ -501,6 +498,9 @@
 ./usr/lib/cvs/contrib/rcs2log
 ./usr/lib/cvs/contrib/rcslock
 ./usr/lib/cvs/contrib/sccs2rcs
+./usr/lib/libc_r.a
+./usr/lib/libc_r_p.a
+./usr/lib/libc_r_pic.a
 ./usr/lib/perl5
 ./usr/lib/perl5/AnyDBM_File.pm
 ./usr/lib/perl5/AutoLoader.pm
@@ -1756,11 +1756,13 @@
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
+./usr/share/zoneinfo/America/Cancun
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Catamarca
 ./usr/share/zoneinfo/America/Cayenne
 ./usr/share/zoneinfo/America/Cayman
 ./usr/share/zoneinfo/America/Chicago
+./usr/share/zoneinfo/America/Chihuahua
 ./usr/share/zoneinfo/America/Cordoba
 ./usr/share/zoneinfo/America/Costa_Rica
 ./usr/share/zoneinfo/America/Cuiaba
@@ -1855,6 +1857,7 @@
 ./usr/share/zoneinfo/America/Yellowknife
 ./usr/share/zoneinfo/Antarctica
 ./usr/share/zoneinfo/Antarctica/Casey
+./usr/share/zoneinfo/Antarctica/Davis
 ./usr/share/zoneinfo/Antarctica/DumontDUrville
 ./usr/share/zoneinfo/Antarctica/Mawson
 ./usr/share/zoneinfo/Antarctica/McMurdo
@@ -1864,6 +1867,7 @@
 ./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/Asia
 ./usr/share/zoneinfo/Asia/Aden
+./usr/share/zoneinfo/Asia/Almaty
 ./usr/share/zoneinfo/Asia/Amman
 ./usr/share/zoneinfo/Asia/Anadyr
 ./usr/share/zoneinfo/Asia/Aqtau
@@ -1917,6 +1921,7 @@
 ./usr/share/zoneinfo/Asia/Riyadh88
 ./usr/share/zoneinfo/Asia/Riyadh89
 ./usr/share/zoneinfo/Asia/Saigon
+./usr/share/zoneinfo/Asia/Samarkand
 ./usr/share/zoneinfo/Asia/Seoul
 ./usr/share/zoneinfo/Asia/Shanghai
 ./usr/share/zoneinfo/Asia/Singapore
@@ -2212,6 +2217,7 @@
 ./var/at
 ./var/at/jobs
 ./var/at/spool
+./var/audit
 ./var/backups
 ./var/crash
 ./var/crash/minfree
@@ -2271,6 +2277,7 @@
 ./var/spool/output
 ./var/spool/uucp
 ./var/spool/uucppublic
+./var/ssyslog
 ./var/tmp
 ./var/tmp/vi.recover
 ./var/www
@@ -2499,10 +2506,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./var/audit
-./var/ssyslog
-./usr/share/zoneinfo/America/Cancun
-./usr/share/zoneinfo/America/Chihuahua
-./usr/share/zoneinfo/Antarctica/Davis
-./usr/share/zoneinfo/Asia/Almaty
-./usr/share/zoneinfo/Asia/Samarkand

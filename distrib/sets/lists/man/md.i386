@@ -7,6 +7,7 @@
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/loadfont.0
 ./usr/share/man/cat1/mcon.0
+./usr/share/man/cat1/pctr.0
 ./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat1/scon.0
 ./usr/share/man/cat1/vt220keys.0
@@ -27,4 +28,3 @@
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/mbr.0
 ./usr/share/man/cat8/zzz.0
-./usr/share/man/cat1/pctr.0

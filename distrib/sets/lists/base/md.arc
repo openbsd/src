@@ -1,5 +1,3 @@
-./usr/lib/libcrypto.so.1.0
-./usr/lib/libssl.so.1.0
 ./dev/pccons
 ./dev/scan0
 ./sbin/fdisk
@@ -14,6 +12,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.4/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.0
+./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -26,11 +25,12 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.3.0
+./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libotermcap.so.3.0
+./usr/lib/libssl.so.1.0
 ./usr/lib/libtermcap.so.5.0
 ./usr/lib/libtermlib.so.5.0
 ./usr/lib/libutil.so.4.2
@@ -88,12 +88,9 @@
 ./usr/lib/perl5/mips-openbsd/5.00404/overload.pm
 ./usr/lib/perl5/mips-openbsd/5.00404/pod
 ./usr/lib/perl5/mips-openbsd/5.00404/pod/perldiag.pod
-./usr/lib/perl5/site_perl/mips-openbsd/ansidecl.ph
-./usr/lib/perl5/site_perl/mips-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/mips-openbsd/bfdlink.ph
-./usr/lib/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd
 ./usr/lib/perl5/site_perl/mips-openbsd/a.out.ph
+./usr/lib/perl5/site_perl/mips-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa/ftp.ph
@@ -102,9 +99,12 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa/telnet.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/assert.ph
+./usr/lib/perl5/site_perl/mips-openbsd/bfd.ph
+./usr/lib/perl5/site_perl/mips-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/blf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/bm.ph
+./usr/lib/perl5/site_perl/mips-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/com_err.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/cpio.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ctype.ph
@@ -199,12 +199,12 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/memory.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/menu.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/mpool.ph
+./usr/lib/perl5/site_perl/mips-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ndbm.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net
 ./usr/lib/perl5/site_perl/mips-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/bpfdesc.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/encap.ph
-./usr/lib/perl5/site_perl/mips-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_atm.ph
@@ -212,6 +212,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_fddi.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_llc.ph
+./usr/lib/perl5/site_perl/mips-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_ppp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_pppvar.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_slvar.ph
@@ -232,6 +233,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nlist.ph
+./usr/lib/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/olf_abi.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/panel.ph
@@ -318,6 +320,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/map.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/mbuf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/md5k.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sys/midiio.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/mman.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/mount.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/msg.ph
@@ -408,6 +411,3 @@
 ./usr/mipsel-unknown-openbsd2.4/bin
 ./usr/mipsel-unknown-openbsd2.4/lib
 ./usr/mipsel-unknown-openbsd2.4/lib/ldscripts
-./usr/lib/perl5/site_perl/mips-openbsd/cast.ph
-./usr/lib/perl5/site_perl/mips-openbsd/ncurses.ph
-./usr/lib/perl5/site_perl/mips-openbsd/sys/midiio.ph

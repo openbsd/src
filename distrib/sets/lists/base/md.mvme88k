@@ -4,6 +4,7 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/include
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/include/objc
+./usr/lib/perl5/site_perl/m88k-openbsd/sys/midiio.ph
 ./usr/m88k-unknown-openbsd2.3
 ./usr/m88k-unknown-openbsd2.3/bin
 ./usr/m88k-unknown-openbsd2.3/lib
@@ -14,4 +15,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/midiio.ph
