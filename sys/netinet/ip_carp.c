@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.10 2003/10/27 06:23:57 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.11 2003/10/27 20:57:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -527,6 +527,7 @@ carp_ifdetach(struct ifnet *ifp)
 void
 carp_send_ad(void *v)
 {
+	struct timeval tv;
 	struct carp_softc *sc = v;
 	struct carp_header *ch;
 	struct mbuf *m;
@@ -542,6 +543,8 @@ carp_send_ad(void *v)
 	} else {
 		advbase = sc->sc_advbase;
 		advskew = sc->sc_advskew;
+		tv.tv_sec = advbase;
+		tv.tv_usec = advskew * 1000000 / 256;
 	}
 
 	carpstats.carps_opackets++;
@@ -553,7 +556,7 @@ carp_send_ad(void *v)
 		carpstats.carps_onomem++;
 		/* XXX maybe less ? */
 		if (advbase != 255 || advskew != 255)
-			timeout_add(&sc->sc_ad_tmo, hz * sc->sc_advbase);
+			timeout_add(&sc->sc_ad_tmo, tvtohz(&tv));
 		return;
 	}
 	len = sizeof(*ip) + sizeof(*ch);
@@ -623,7 +626,7 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_oerrors++;
 
 	if (advbase != 255 || advskew != 255)
-		timeout_add(&sc->sc_ad_tmo, hz * sc->sc_advbase);
+		timeout_add(&sc->sc_ad_tmo, tvtohz(&tv));
 }
 
 /*
