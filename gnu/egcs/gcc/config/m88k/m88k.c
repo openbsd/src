@@ -2641,7 +2641,7 @@ m88k_builtin_saveregs (arglist)
     }
 
   /* Allocate the va_list constructor */
-  block = assign_stack_local (BLKmode, 3 * UNITS_PER_WORD, BITS_PER_WORD);
+  block = assign_stack_local (BLKmode, 4 * UNITS_PER_WORD, BITS_PER_WORD);
   MEM_SET_IN_STRUCT_P (block, 1);
   RTX_UNCHANGING_P (block) = 1;
   RTX_UNCHANGING_P (XEXP (block, 0)) = 1;
@@ -2682,7 +2682,7 @@ m88k_builtin_saveregs (arglist)
     {
       emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
 			 block, ptr_mode,
-			 GEN_INT (3 * UNITS_PER_WORD), TYPE_MODE (sizetype),
+			 GEN_INT (4 * UNITS_PER_WORD), TYPE_MODE (sizetype),
 			 GEN_INT (MEMORY_USE_RW),
 			 TYPE_MODE (integer_type_node));
       if (fixed < 8)
