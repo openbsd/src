@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1996/12/21 05:20:25 deraadt Exp $
+#	$Id: Makefile,v 1.12 1997/01/25 09:16:42 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,6 +23,7 @@ bsd:
 	cd ${.CURDIR}/../../../../sys/arch/i386/compile/INST && \
 	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/INST/bsd bsd
+	strip bsd
 
 all: bsd ${CBIN}
 .ifndef FLOPPY3
