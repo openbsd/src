@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.193 1999/11/03 11:26:08 ho Exp 
+ *	OpenBSD: pcidevs,v 1.194 1999/11/09 00:24:59 chris Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1358,6 +1358,10 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9682	0x9682		/* TGUI 9682 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9750	0x9750		/* TGUI 9750 (3D Image) */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9850	0x9850		/* TGUI 9850 */
+
+/* Triones/HighPoint Technologies products */
+#define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343 EIDE */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366 EIDE */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
