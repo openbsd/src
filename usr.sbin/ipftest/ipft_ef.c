@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipft_ef.c,v 1.7 1997/06/23 16:44:48 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -47,7 +48,7 @@ etherfind -n -t
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_ef.c,v 1.6 1997/02/11 22:23:48 kstailey Exp $";
+static	char	rcsid[] = "$DRId: ipft_ef.c,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp $";
 #endif
 
 static	int	etherf_open(), etherf_close(), etherf_readip();

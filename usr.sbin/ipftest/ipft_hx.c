@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipft_hx.c,v 1.5 1997/06/23 16:44:48 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -38,7 +39,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.4 1997/02/11 22:23:50 kstailey Exp $";
+static	char	rcsid[] = "$DRId: ipft_hx.c,v 2.0.1.2 1997/02/04 13:57:56 darrenr Exp $";
 #endif
 
 extern	int	opts;
