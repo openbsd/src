@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.20 2002/07/10 18:08:11 todd Exp $	*/
+/*	$OpenBSD: config.c,v 1.21 2002/07/10 21:14:40 itojun Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -110,11 +110,10 @@ getconfig(intface)
 
 	tmp = (struct rainfo *)malloc(sizeof(*ralist));
 	if (tmp == NULL) {
-		syslog(LOG_ERR, "<%s>(%s) can't allocate enough memory",
-__func__, intface);
+		syslog(LOG_INFO, "<%s> %s: can't allocate enough memory",
+		    __func__, intface);
 		exit(1);
 	}
-
 	memset(tmp, 0, sizeof(*tmp));
 	tmp->prefix.next = tmp->prefix.prev = &tmp->prefix;
 
