@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.11 2000/06/30 16:00:29 millert Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.12 2000/10/07 16:05:45 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.29 2000/06/12 16:29:18 itojun Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #include <netdb.h>
 #include <stdio.h>
 #include <err.h>
+#include <poll.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -866,15 +867,14 @@ wait_for_reply(sock, mhdr)
 	int sock;
 	struct msghdr *mhdr;
 {
-	fd_set fds;
-	struct timeval wait;
+	struct pollfd pfd[1];
 	int cc = 0;
 
-	FD_ZERO(&fds);
-	FD_SET(sock, &fds);
-	wait.tv_sec = waittime; wait.tv_usec = 0;
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
 
-	if (select(sock+1, &fds, (fd_set *)0, (fd_set *)0, &wait) > 0)
+	if (poll(pfd, 1, waittime * 1000) > 0)
 		cc = recvmsg(rcvsock, mhdr, 0);
 
 	return(cc);
