@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2004/10/10 02:46:40 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2004/10/10 02:53:28 mickey Exp $
 
 # Missing or not installed:
-# 02.learn 03.shell 08.mh 14.jove 21.troff 22.trofftut 23.eqn 24.eqnguide
+# 03.shell 08.mh 14.jove 21.troff 22.trofftut 23.eqn 24.eqnguide
 # 25.tbl 26.refer 27.invert 28.bib 29.diction
 
 DOCDIR=	/usr/share/doc/usd
