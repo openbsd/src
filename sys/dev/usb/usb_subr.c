@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.24 2003/05/07 04:33:33 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.25 2003/05/18 18:13:22 nate Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.87 2001/08/15 00:04:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -992,12 +992,13 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	up->device = dev;
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 5; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (!err)
 			break;
-		usbd_delay_ms(dev, 200);
+		/* progressively increase the delay */
+		usbd_delay_ms(dev, 200 * (i + 1));
 	}
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
