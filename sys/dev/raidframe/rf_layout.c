@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_layout.c,v 1.4 2000/08/08 16:07:42 peter Exp $	*/
+/*	$OpenBSD: rf_layout.c,v 1.5 2002/08/09 15:10:20 tdeval Exp $	*/
 /*	$NetBSD: rf_layout.c,v 1.6 2000/04/17 19:35:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -476,17 +476,18 @@ rf_ConfigureLayout(
 		raidPtr->headSepLimit = rf_GetDefaultHeadSepLimit(raidPtr);
 	}
 
-	printf("RAIDFRAME: Configure (%s): total number of sectors is %lu (%lu MB)\n",
-	    layoutPtr->map->configName,
-	    (unsigned long) raidPtr->totalSectors,
-	    (unsigned long) (raidPtr->totalSectors / 1024 * (1 << raidPtr->logBytesPerSector) / 1024));
+#ifdef	RAIDDEBUG
 	if (raidPtr->headSepLimit >= 0) {
-		printf("RAIDFRAME(%s): Using %ld floating recon bufs with head sep limit %ld\n",
-		    layoutPtr->map->configName, (long) raidPtr->numFloatingReconBufs, (long) raidPtr->headSepLimit);
+		printf("RAIDFRAME(%s): Using %ld floating recon bufs"
+		    " with head sep limit %ld\n", layoutPtr->map->configName,
+		    (long) raidPtr->numFloatingReconBufs,
+		    (long) raidPtr->headSepLimit);
 	} else {
-		printf("RAIDFRAME(%s): Using %ld floating recon bufs with no head sep limit\n",
-		    layoutPtr->map->configName, (long) raidPtr->numFloatingReconBufs);
+		printf("RAIDFRAME(%s): Using %ld floating recon bufs"
+		    " with no head sep limit\n", layoutPtr->map->configName,
+		    (long) raidPtr->numFloatingReconBufs);
 	}
+#endif	/* RAIDDEBUG */
 
 	return (0);
 }

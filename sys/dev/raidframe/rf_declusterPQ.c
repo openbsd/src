@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_declusterPQ.c,v 1.2 1999/02/16 00:02:35 niklas Exp $	*/
+/*	$OpenBSD: rf_declusterPQ.c,v 1.3 2002/08/09 15:10:20 tdeval Exp $	*/
 /*	$NetBSD: rf_declusterPQ.c,v 1.3 1999/02/05 00:06:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -83,7 +83,9 @@ rf_ConfigureDeclusteredPQ(
 	cfgBuf += sizeof(int);
 
 	if (k <= 2) {
+#ifdef	RAIDDEBUG
 		printf("RAIDFRAME: k=%d, minimum value 2\n", k);
+#endif	/* RAIDDEBUG */
 		return (EINVAL);
 	}
 	/* 1. create layout specific structure */

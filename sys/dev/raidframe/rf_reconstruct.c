@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.11 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.12 2002/08/09 15:10:20 tdeval Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -404,15 +404,19 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			/* some component other than this has failed.
 			   Let's not make things worse than they already
 			   are... */
+#ifdef	RAIDDEBUG
 			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
 			printf("      Row: %d Col: %d   Too many failures.\n",
 			       row, col);
+#endif	/* RAIDDEBUG */
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
+#ifdef	RAIDDEBUG
 			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
 			printf("      Row: %d Col: %d   Reconstruction already occuring!\n", row, col);
+#endif	/* RAIDDEBUG */
 
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
