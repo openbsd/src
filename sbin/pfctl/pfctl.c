@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.19 2001/06/27 10:31:49 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.20 2001/06/27 19:06:32 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -47,6 +47,12 @@
 
 #include "pfctl_parser.h"
 
+#define PF_OPT_DISABLE		0x0001
+#define PF_OPT_ENABLE		0x0002
+#define PF_OPT_VERBOSE		0x0004
+#define PF_OPT_NOACTION		0x0008
+#define PF_OPT_ZEROSTATS	0x0010
+
 void	 usage(void);
 char	*load_file(char *, size_t *);
 int	 pfctl_enable(int);
@@ -59,15 +65,11 @@ int	 pfctl_show_rules(int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t);
 int	 pfctl_show_status(int);
-int	 pfctl_rules(int, char *, int, int);
-int	 pfctl_nat(int, char *, int, int);
+int	 pfctl_rules(int, char *, int);
+int	 pfctl_nat(int, char *, int);
 int	 pfctl_log(int, char *);
 
-int	 dflag = 0;
-int	 eflag = 0;
-int	 vflag = 0;
-int	 Nflag = 0;
-int	 zflag = 0;
+int	 opts = 0;
 char	*clearopt;
 char	*logopt;
 char	*natopt;
@@ -284,7 +286,7 @@ pfctl_show_status(int dev)
 }
 
 int
-pfctl_rules(int dev, char *filename, int nflag, int vflag)
+pfctl_rules(int dev, char *filename, int opts)
 {
 	struct pfioc_rule pr;
 	char *buf, *s;
@@ -294,7 +296,7 @@ pfctl_rules(int dev, char *filename, int nflag, int vflag)
 	buf = load_file(filename, &len);
 	if (buf == NULL)
 		return (1);
-	if (!nflag) {
+	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINRULES, &pr.ticket)) {
 			errx(1, "DIOCBEGINRULES");
 			free(buf);
@@ -309,20 +311,20 @@ pfctl_rules(int dev, char *filename, int nflag, int vflag)
 		nr++;
 		if (*line && (*line != '#'))
 			if (parse_rule(nr, line, &pr.rule)) {
-				if (!nflag) {
+				if ((opts & PF_OPT_NOACTION) == 0) {
 					if (ioctl(dev, DIOCADDRULE, &pr)) {
 						errx(1, "DIOCADDRULE");
 						free(buf);
 						return (1);
 					}
 				}
-				if (vflag)
+				if (opts & PF_OPT_VERBOSE)
 					print_rule(&pr.rule);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (!nflag) {
+	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket)) {
 			errx(1, "DIOCCOMMITRULES");
 			return (1);
@@ -333,7 +335,7 @@ pfctl_rules(int dev, char *filename, int nflag, int vflag)
 }
 
 int
-pfctl_nat(int dev, char *filename, int nflag, int vflag)
+pfctl_nat(int dev, char *filename, int opts)
 {
 	struct pfioc_nat pn;
 	struct pfioc_rdr pr;
@@ -341,7 +343,7 @@ pfctl_nat(int dev, char *filename, int nflag, int vflag)
 	size_t len;
 	unsigned n, nr;
 
-	if (!nflag) 
+	if ((opts & PF_OPT_NOACTION) == 0) 
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket)) {
 			errx(1, "DIOCBEGINNATS");
 			return (1);
@@ -358,19 +360,19 @@ pfctl_nat(int dev, char *filename, int nflag, int vflag)
 		nr++;
 		if (*line && (*line == 'n'))
 			if (parse_nat(nr, line, &pn.nat)) {
-				if (!nflag)
+				if ((opts & PF_OPT_NOACTION) == 0)
 					if (ioctl(dev, DIOCADDNAT, &pn)) {
 						errx(1, "DIOCADDNAT");
 						free(buf);
 						return (1);
 					}
-				if (vflag)
+				if (opts & PF_OPT_VERBOSE)
 					print_nat(&pn.nat);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (!nflag) {
+	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket)) {
 			errx(1, "DIOCCOMMITNATS");
 			return (1);
@@ -393,19 +395,19 @@ pfctl_nat(int dev, char *filename, int nflag, int vflag)
 		nr++;
 		if (*line && (*line == 'r'))
 			if (parse_rdr(nr, line, &pr.rdr)) {
-				if (!nflag)
+				if ((opts & PF_OPT_NOACTION) == 0)
 					if (ioctl(dev, DIOCADDRDR, &pr)) {
 						errx(1, "DIOCADDRDR");
 						free(buf);
 						return (1);
 					}
-				if (vflag)
+				if (opts & PF_OPT_VERBOSE)
 					print_rdr(&pr.rdr);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (!nflag) {
+	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket)) {
 			errx(1, "DIOCCOMMITRDRS");
 			return (1);
@@ -441,22 +443,22 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "c:del:Nn:r:s:vz")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dehl:Nn:r:s:vz")) != -1) {
 		switch (ch) {
 		case 'c':
 			clearopt = optarg;
 			break;
 		case 'd':
-			dflag++;
+			opts |= PF_OPT_DISABLE;
 			break;
 		case 'e':
-			eflag++;
+			opts |= PF_OPT_ENABLE;
 			break;
 		case 'l':
 			logopt = optarg;
 			break;
 		case 'N':
-			Nflag++;
+			opts |= PF_OPT_NOACTION;
 			break;
 		case 'n':
 			natopt = optarg;
@@ -468,11 +470,12 @@ main(int argc, char *argv[])
 			showopt = optarg;
 			break;
 		case 'v':
-			vflag++;
+			opts |= PF_OPT_VERBOSE;
 			break;
 		case 'z':
-			zflag++;
+			opts |= PF_OPT_ZEROSTATS;
 			break;
+		case 'h':
 		default:
 			usage();
 			/* NOTREACHED */
@@ -485,11 +488,11 @@ main(int argc, char *argv[])
 		return (1);
 	}
 
-	if (dflag)
+	if (opts & PF_OPT_DISABLE)
 		if (pfctl_disable(dev))
 			error = 1;
 
-	if (zflag)
+	if (opts & PF_OPT_ZEROSTATS)
 		if (pfctl_clear_stats(dev))
 			error = 1;
 
@@ -510,11 +513,11 @@ main(int argc, char *argv[])
 	}
 
 	if (rulesopt != NULL)
-		if (pfctl_rules(dev, rulesopt, Nflag, vflag))
+		if (pfctl_rules(dev, rulesopt, opts))
 			error = 1;
 
 	if (natopt != NULL)
-		if (pfctl_nat(dev, natopt, Nflag, vflag))
+		if (pfctl_nat(dev, natopt, opts))
 			error = 1;
 
 	if (showopt != NULL) {
@@ -540,7 +543,7 @@ main(int argc, char *argv[])
 		if (pfctl_log(dev, logopt))
 			error = 1;
 
-	if (eflag)
+	if (opts & PF_OPT_ENABLE)
 		if (pfctl_enable(dev))
 			error = 1;
 
