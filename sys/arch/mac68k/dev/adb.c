@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.4.2.1 1995/11/02 04:35:05 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.5 1995/11/01 04:40:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham

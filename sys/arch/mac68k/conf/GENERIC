@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1995/10/04 11:05:25 briggs Exp $
+#	$NetBSD: GENERIC,v 1.32 1995/11/21 05:00:37 briggs Exp $
 #
 # GENERIC
 
@@ -7,7 +7,7 @@ include	"std.mac68k"
 maxusers	16
 
 # obsolete timezone spec
-options               TIMEZONE=0, DST=1, MAXFDESCS=2048
+options         MAXFDESCS=2048
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging

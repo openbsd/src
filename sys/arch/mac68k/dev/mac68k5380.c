@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.14 1995/10/01 05:10:20 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.15 1995/11/01 04:59:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -376,9 +376,10 @@ extern	int			*nofault, mac68k_buserr_addr;
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
-			printf("pdma in: count = %d (0x%x) (pending "
-				"count %d)\n", count, count,
-				pending_5380_count);
+			printf("pdma %s: count = %d (0x%x) (pending "
+				"count %d)\n",
+				(pdma_5380_dir == 2) ? "in" : "out",
+				count, count, pending_5380_count);
 			panic("something is wrong");
 		}
 

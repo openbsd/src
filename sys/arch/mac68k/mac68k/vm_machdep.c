@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1995/06/21 03:45:10 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1995/12/09 04:37:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@ extern int fpu_type;
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-int
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -105,8 +105,6 @@ cpu_fork(p1, p2)
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
 	pcb->pcb_regs[7] = (int)p2;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-
-	return (0);
 }
 
 /*

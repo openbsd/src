@@ -1,13 +1,10 @@
-#	$NetBSD: OCELOT,v 1.5 1995/09/16 12:33:07 briggs Exp $
+#	$NetBSD: OCELOT,v 1.6 1995/11/21 05:00:34 briggs Exp $
 #
 # OCELOT
 
 include	"std.mac68k"
 
 maxusers	16
-
-# obsolete timezone spec
-options               TIMEZONE=0, DST=1, MAXFDESCS=2048
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging

@@ -1,0 +1,58 @@
+#	$NetBSD: RAMDISK,v 1.1 1995/11/21 05:02:02 briggs Exp $
+
+# RAMDISK
+# Support Root/swap on ramdisk
+#
+
+include	"std.mac68k"
+
+maxusers	2
+
+# Enable the hooks used for initializing the ram-disk
+options		RAMDISK_HOOKS
+options		MINIROOTSIZE=512	# 256K
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		DDB
+options		FFS
+options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		CD9660		# ISO-9660 w/ RockRidge
+options		KERNFS		# Kernel filesystem
+
+options		SCSI
+
+# Networking options
+options		INET
+options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+
+# Mac-specific options
+options		M68040
+options		M68030		# Includes the 020+851
+options		FPSP
+options		FPU_EMULATE
+options		COMPAT_09
+options		COMPAT_10
+options		MACHINE_NONCONTIG
+
+config		netbsd	root on rd0a swap on rd0b
+
+rd0 at mainbus?
+
+ae*	at nubus0	slot -1   id ?   claimed 0
+
+ncrscsi0	at mainbus?		# SCSI NCR 5380
+ncr96scsi0	at mainbus?		# SCSI NCR 53C96
+
+scsibus*	at scsi?
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+
+pseudo-device	ppp
+pseudo-device	sl
+pseudo-device	loop

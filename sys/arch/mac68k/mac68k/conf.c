@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1995/08/17 17:40:52 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1995/11/21 03:39:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,9 @@ bdev_decl(ch);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "rd.h"
+bdev_decl(rd);
+/* No cdev for rd */
 
 #ifdef LKM
 int	lkmenodev();
@@ -113,12 +116,16 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),        	 	/* 7 */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
-	bdev_lkm_dummy(),		/* 10 */
-	bdev_lkm_dummy(),		/* 11 */
-	bdev_lkm_dummy(),		/* 12 */
-	bdev_lkm_dummy(),		/* 13 */
+	bdev_notdef(),        	 	/* 10 */
+	bdev_notdef(),        	 	/* 11 */
+	bdev_notdef(),        	 	/* 12 */
+	bdev_disk_init(NRD,rd),	 	/* 13: RAM disk -- for install */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
+	bdev_lkm_dummy(),		/* 16 */
+	bdev_lkm_dummy(),		/* 17 */
+	bdev_lkm_dummy(),		/* 18 */
+	bdev_lkm_dummy(),		/* 19 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.5.2.1 1995/10/16 14:17:10 briggs Exp $
+#	$NetBSD: PUMA,v 1.7 1995/11/21 05:00:36 briggs Exp $
 #
 # PUMA
 
@@ -6,8 +6,7 @@ include	"std.mac68k"
 
 maxusers	16
 
-# obsolete timezone spec
-options               TIMEZONE=0, DST=1, MAXFDESCS=2048
+options         MAXFDESCS=2048
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
@@ -42,11 +41,11 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68030		# Includes the 020+851
+options		MACHINE_NONCONTIG
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
 options		COMPAT_10
-options		MACHINE_NONCONTIG
 
 config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
@@ -59,9 +58,9 @@ sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 
-pseudo-device	loop
 pseudo-device	pty		16
-pseudo-device	sl
-pseudo-device	bpfilter	4
-pseudo-device	ppp
+pseudo-device	bpfilter	16
 pseudo-device	vnd		4
+pseudo-device	loop
+pseudo-device	ppp
+pseudo-device	sl

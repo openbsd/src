@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1995/10/07 06:25:48 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 1995/11/21 04:00:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,11 +122,6 @@
 #include <vm/vm_page.h>
 
 #include <dev/cons.h>
-
-#ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
-#endif
 
 #include "via.h"
 #include "macrom.h"
@@ -840,6 +835,10 @@ boot(howto)
 			savectx(&dumppcb);
 			dumpsys();
 		}
+
+		/* run any shutdown hooks */
+		doshutdownhooks();
+
 		/*
 		 * Map ROM where the MacOS likes it, so we can reboot,
 		 * hopefully.
@@ -2066,7 +2065,7 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.sccClkConst = 122400;
+		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -2075,7 +2074,7 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.sccClkConst = 122400;
+		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;

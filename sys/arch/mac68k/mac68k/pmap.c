@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1995/10/10 04:14:30 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1995/12/03 13:52:50 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -474,7 +474,8 @@ pmap_init()
 	 * map where we want it.
 	 */
 	addr = MAC_PTBASE;
-	s = min(MAC_PTMAXSIZE, maxproc*MAC_MAX_PTSIZE);
+	s = (MAC_PTMAXSIZE / MAC_MAX_PTSIZE < maxproc) ?
+		MAC_PTMAXSIZE : (maxproc * MAC_MAX_PTSIZE);
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
@@ -1386,7 +1387,7 @@ validate:
 	if (mmutype == MMU_68040 && pmap != pmap_kernel() &&
 	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
 	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
-		checkpv = cacheable = FALSE;
+	        checkpv = cacheable = FALSE;
 
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;

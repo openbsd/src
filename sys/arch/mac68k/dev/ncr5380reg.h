@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.4 1995/10/02 09:03:54 briggs Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.5 1995/12/04 02:10:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -219,6 +219,7 @@ typedef struct	req_q {
 #define	DRIVER_NOINT	0x04	/* We are booting: no interrupts	*/
 #define	DRIVER_DMAOK	0x08	/* DMA can be used on this request	*/
 #define	DRIVER_BOUNCING	0x10	/* Using the bounce buffer		*/
+#define DRIVER_LINKCHK	0x20	/* Doing the linked command check	*/
 
 /* XXX: Should go to ncr5380var.h */
 static SC_REQ	*issue_q   = NULL;	/* Commands waiting to be issued*/

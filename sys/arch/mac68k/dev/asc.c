@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.8 1995/09/21 03:36:25 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.9 1995/11/01 04:58:21 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -84,8 +84,6 @@ ascattach(parent, dev, aux)
 	void   *aux;
 {
 	printf(" Apple sound chip.\n");
-
-	ASCBase = IOBase + ASCBase;
 }
 
 int 

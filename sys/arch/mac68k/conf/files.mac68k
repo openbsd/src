@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.35 1995/09/03 03:37:32 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.37 1995/11/21 05:06:28 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -37,9 +37,6 @@ device	ae at nubus: ifnet, ether
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
 include "../../../scsi/files.scsi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 device	ncrscsi at mainbus: scsi
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
@@ -48,7 +45,8 @@ device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
 file	arch/m68k/m68k/copy.s
-file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
+include "../../m68k/fpe/files.fpe"
+
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/disksubr.c		disk
@@ -68,7 +66,16 @@ file	arch/mac68k/mac68k/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
 
+# RAM Disk for installs
+device	rd at mainbus
+file	dev/ramdisk.c			rd needs-count
+file	arch/mac68k/dev/rd_root.c	ramdisk_hooks
+
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
 major	{vnd = 8}
+major	{rd = 13}
 
 # Compatibility modules
 
