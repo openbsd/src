@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.13 2003/06/02 20:06:16 millert Exp $
+.\"	$OpenBSD: exports.5,v 1.14 2004/09/15 22:55:30 jmc Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -197,9 +197,9 @@ For example:
 /usr /usr/local -maproot=0:10 friends
 /usr -maproot=daemon grumpy.cis.uoguelph.ca 131.104.48.16
 /usr -ro -mapall=nobody
-/u -maproot=bin: -network 131.104.48 -mask 255.255.255.0
+/u -maproot=bin: -network=131.104.48 -mask=255.255.255.0
 /u2 -maproot=root friends
-/u2 -alldirs -network cis-net -mask cis-mask
+/u2 -alldirs -network=cis-net -mask=cis-mask
 .Ed
 .Pp
 Given that
