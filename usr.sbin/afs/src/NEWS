@@ -1,3 +1,233 @@
+Changes in release 0.35:
+
+* add man-pages
+
+* handle there being no root volume when starting
+
+* improve installation procedure on solaris
+
+* improve stability on solaris/smp
+
+Changes in release 0.34.2:
+
+* make it work on Solaris/x86
+
+* make it build on NetBSD 1.5
+
+* cache-recover is no longer the default in arlad
+
+* fix directory invalidation bug on Linux
+
+Changes in release 0.34.1:
+
+* make it work on solaris
+
+Changes in release 0.34:
+
+* support for fake mount points.  When just stating a mount point,
+arlad makes up some reasonable information for the mount point, and
+the actual data for the volume is not retrieved until the contents is
+needed.  This speeds up GUIs, `ls -l /afs', and other user operations.
+Enabled with the `--fake-mp' option to arlad.
+
+* new `bos' program
+
+* update to more recent Linux (2.3.99-pre and 2.4.0-test series)
+
+* added cmd compatible lib
+
+* handle write-back of mmap-ed pages after close better
+
+* update to *BSD
+
+* even more mit-kerberos compat
+
+* more stability
+
+* bug fixes
+
+Changes in release 0.33.1:
+
+* fixes for FreeBSD and OSF
+
+Changes in release 0.33:
+
+* port to Darwin/MacOS X 10.0
+
+* updates for linux 2.3.x/2.4.x
+
+* update for NetBSD-current
+
+* fix for failing readdir on Solaris with 32-bit kernels
+
+* fix for Linux/m68k
+
+* have pts loop over all db servers
+
+* lots of new tests
+
+* some bug fixes
+
+Changes in release 0.32:
+
+* working on linux 2.3.x
+
+* fix abort bug on solaris
+
+* handle several xfs devices on linux
+
+* make `fs lq' return a volume name
+
+* bug fixes
+
+Changes in release 0.31:
+
+* better handling of out-of-memory situations under Linux
+
+* better and more robust configure
+
+* linuxconf glue, RPM spec file
+
+* some more linux 2.3 support.  remove 2.0 support.
+
+* updated to *BSD-current
+
+* solaris improvements
+
+* performance improvements
+
+* bug fixes
+
+Changes in release 0.30:
+
+* basic BulkStatus support
+
+* update to *BSD/current
+
+* more NAT friendly
+
+* rewrote cleaner-part
+
+* bug fixes
+
+Changes in release 0.29.1:
+
+* bug fixes
+
+Changes in release 0.29:
+
+* update to *BSD/current
+
+* some updating to Linux 2.3 (there are some mmap problems)
+
+* bug fixes
+
+Changes in release 0.28:
+
+* support SMP on FreeBSD
+
+* better error messages in lots of places
+
+* make mount points in a Transarc-compatible way (mode bits 0111)
+
+* a tiny bit of Transarc-compatible library code
+
+* beginning of xfs code for Windows NT and port of LWP to NT native threads
+
+* ydr now supports multiple packages in one .xg file
+
+* fixed a leak of fs-context's that caused tokens to be expired.
+
+* afsaclmgr: an acl manager written in guile-gtk
+
+* more portability
+
+* more test cases
+
+* lots of bug fixes
+
+Changes in release 0.27:
+
+* better support for Solaris 7 in 64-bit mode.  Now 32 bit pioctl's
+  should also be handled.  See INSTALL for more information on how to
+  build in 64-bits mode.
+
+* new transarc-compatible programs klog, unlog, and tokens by Chris
+  Wing <wingc@engin.umich.edu>
+
+* support for the getattr inode_operation on Linux which should give
+  ``better'' inode numbers to the applications, requires the
+  getattr-patch to Linux.
+
+* cache files in two levels of directories.  NOTE: you should remove
+  your old cache files (rm /usr/arla/cache/* or similar) since these
+  will use different names
+
+* support for generating root.afs in the client (dynroot)
+
+* more bugs related to deleting files fixed
+
+* uses the syscalls fhopen and getfh on NetBSD-current
+
+* more test cases
+
+* some more bug fixes
+
+Changes in release 0.26:
+
+* the OSF/1 port now works somewhat better than it used to do;
+  read-only mmap:ing of files in AFS should now work (this is required
+  to run programs), putpages is still not implemented so writing to
+  mmap:ed pages does not work, as does linking files in AFS (ld does
+  funny things).
+
+* fix bugs related to close in cvs and rm -rf failing
+
+* make it work on more recent NetBSD-current and FreeBSD-current
+
+* some bug fixes in the solaris port
+
+* update rhapsody port
+
+* arlad creates a /var/run/arlad.pid file
+
+* should build (and work) on Solaris 7 in 64 bits mode with a modern as
+
+* vos lock and unlock implemented
+
+* milko bug fixes
+
+Changes in release 0.25:
+
+* add milko mark three --- aka filbunke
+
+* make it build on irix, netbsd 1.4, linux 2.3.2, solaris 7, freebsd-current
+
+* compat with devfs on linux
+
+* re-written signal handling in the xfs module for linux.
+
+* restart rx_clock timer when it expires
+
+* change the names of converted cache directories to handle more cache
+  nodes
+
+* disconnected write-mode is more functional
+
+* make setgroups preserve the pag
+
+* more tests
+
+* re-organize configure
+
+* some fixes for non-gnu make
+
+Changes in release 0.24:
+
+* fixed bug when overwriting volume name in `fs setquota'
+
+* bug fixes
+
 Changes in release 0.23:
 
 * changed volume cache

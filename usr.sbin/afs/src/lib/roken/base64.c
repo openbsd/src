@@ -1,6 +1,5 @@
-/*	$OpenBSD: base64.c,v 1.1.1.1 1998/09/14 21:53:01 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: base64.c,v 1.1 1998/01/13 16:25:15 lha Exp $");
+RCSID("$Id: base64.c,v 1.2 2000/09/11 14:40:59 art Exp $");
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -61,10 +55,12 @@ int base64_encode(const void *data, int size, char **str)
   char *s, *p;
   int i;
   int c;
-  unsigned char *q;
+  const unsigned char *q;
 
   p = s = (char*)malloc(size*4/3+4);
-  q = (unsigned char*)data;
+  if (p == NULL)
+      return -1;
+  q = (const unsigned char*)data;
   i=0;
   for(i = 0; i < size;){
     c=q[i++];

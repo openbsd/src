@@ -1,4 +1,3 @@
-/*	$OpenBSD: iomgr.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -36,7 +35,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iomgr.c,v 1.21 1998/10/01 16:53:39 assar Exp $");
+RCSID("$Id: iomgr.c,v 1.3 2000/09/11 14:41:08 art Exp $");
 #endif
 
 #include <stdio.h>
@@ -98,8 +97,6 @@ struct IoRequest {
 #define badsig(signo)		(((signo) <= 0) || ((signo) >= NSIG))
 #define mysigmask(signo)		(1 << ((signo)-1))
 
-extern int errno;
-
 static long openMask;		/* mask of open files on an IOMGR abort */
 static long sigsHandled;        /* sigmask(signo) is on if we handle signo */
 static int anySigsDelivered;		/* true if any have been delivered. */
@@ -131,7 +128,7 @@ static int iomgr_errno;
 static struct timeval iomgr_badtv;
 static PROCESS iomgr_badpid;
 
-void
+static void
 FreeRequest(struct IoRequest *req)
 {
     req->next = iorFreeList; 
@@ -244,10 +241,6 @@ static void
 IOMGR(char *dummy)
 {
     for (;;) {
- /*
-  * commented out to match use - kazar	
-  * static struct timeval Poll = { 0, 0 }; 
-  */
 	int fds;
 	int nfds;
 	fd_set readfds, writefds, exceptfds;
@@ -382,7 +375,8 @@ IOMGR(char *dummy)
 	    /*
 	     * For SGI and SVR4 - poll & select can return EAGAIN ...
 	     */
-	    if (fds < 0 && errno != EINTR && errno != EAGAIN) {
+	    if (fds < 0
+		&& errno != EINTR && errno != EAGAIN && errno != ENOMEM) {
 		iomgr_errno = errno;
 		for(fds = 0; fds < FD_SETSIZE; fds++) {
 		    if (fcntl(fds, F_GETFD, 0) < 0 && errno == EBADF) 
@@ -549,7 +543,6 @@ IOMGR_SoftSig(void (*aproc)(), char *arock)
 int
 IOMGR_Initialize(void)
 {
-    extern int TM_Init();
     PROCESS pid;
 
     /* If lready initialized, just return */

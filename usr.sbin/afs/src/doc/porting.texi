@@ -1,0 +1,142 @@
+@c $Id: porting.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Porting, Oddities, Debugging, Top
+@chapter Porting
+
+The largest part of the work needed to port Arla to a new operating
+system is in porting xfs, as kernel programming always is harder, less
+portable and messier than user-space dito.  Arlad in test mode
+(@kbd{arlad --test}) should work without any porting on any system
+that's not very far away from Unix and that provides berkeley sockets
+(including cygwin32).  Therefore we will concern ourselves mostly with
+how to port the XFS module.
+
+@section XFS
+
+@enumerate
+
+@item
+It helps to have source code for your operating system.
+
+In theory, if stuff was documented well enough, you wouldn't need it.
+In practice it never is, so you find out interfaces specs and how stuff
+works by reading the source code.  If you're unable to find source code
+for your OS, try finding source for the closest match.  If your OS is
+based on BSD, try the appropriate version of BSD, for example.
+
+@item
+If you don't have source, try second best, include files.
+
+You can usually gather quite a lot of information on the workings of the
+kernel by reading the includes files in @file{<sys/*.h>}.
+
+@item
+Be lazy
+
+Try to find out what other XFS port is most similar to your OS and start
+with that code.
+
+@item
+Figure out how your kernel works.
+
+You need to figure out how a few things work in your kernel:
+
+@enumerate
+
+@item
+Loading/unloading kernel modules
+
+That varies quite a lot but it's probably easy to figure out if you
+have the source code for some other loadable module.  Sometimes you
+can get the kernel to add your cdev, system call and file system
+automatically but usually you have to write code in your `entry-point'
+to add these to the appropriate tables.
+
+@item
+Adding a new character device driver
+
+The kernel has a table of all known device drivers, ordered by major
+number.  Some kernels have one for block devices and one for character
+devices and some have a common one.  That entry usually consists of a
+number of function pointers that perform the operations (open, close,
+read, write, ...), and possible a name and some flags.  It could look
+something like the following:
+
+@example
+struct cdevsw @{
+	int (*d_open)();
+	int (*d_close)();
+	...
+@};
+
+struct cdevsw cdevsw[];
+@end example
+
+These are then usually stored in a table `cdevsw' indexed by the major
+device number. If you're really lucky there's a new way to get the
+kernel to add your `struct cdevsw' to the global table when loading the
+module or a function that does the addition for you. If not, you'll have
+to fallback on looking for a free slot in the table and putting your
+struct cdevsw there. In some cases, this is not stored in a table but
+then there'll be a way of adding entries to the new data structure so
+you don't need to worry about it.
+
+@item
+Adding a new system call
+
+This is quite similar to adding a new cdev but the table is usually
+called `sysent' instead.
+
+@item
+Adding a new file system
+
+Once again, quite similar in principle. The names of the structures
+tend to vary quite a lot more.
+
+@item
+Finding out how the VFS/Vnode switch works
+
+The structure vfsops contains function pointers for all of the file
+system operations.  You need to figure out what operations you need to
+implement (usually at least mount, unmount, root, sync, and statfs).
+
+The operations that are performed on files are vnode operations
+(usually stored in a struct vnodeops), and you need to figure which of
+these you need and how they should work.  Also, which is not as
+explicit, how vnodes are supposed to be allocated and freed and such.
+
+@end enumerate
+
+@item
+Suggested plan of action
+
+@enumerate
+
+@item
+Start by writing a minimal hello-world module and make sure you can load
+and unload it properly.
+
+@item
+Then add a device driver to the module which dummy functions and
+verify that works.
+
+@item
+Try to fit the device driver functions in @file{xfs_dev.c} into the
+device driver.
+
+@item
+Do a dummy module with a system call and verify that you can call it.
+
+@item
+Start trying to add enough of the vfs/vnode operations from
+@file{xfs_vfsops.c} and @file{xfs_vnodeops.c} so that you can build it.
+
+@item
+Debug it.
+
+@item
+Send us patches
+
+@end enumerate
+
+@end enumerate

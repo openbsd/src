@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_clock.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -25,24 +24,11 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_clock.c,v 1.5 1998/10/25 19:38:30 joda Exp $");
+RCSID("$Id: rx_clock.c,v 1.3 2000/09/11 14:41:21 art Exp $");
 
 #ifndef KERNEL
 
-#if defined(AGS_GFS_ENV)
-#define STARTVALUE 8000000	       /* Ultrix bounds smaller, too small
-				        * for general use */
-#else
-#ifdef	AFS_SUN5_ENV
-#define	STARTVALUE 10000000	       /* Max number of seconds setitimer
-				        * allows, for some reason */
-#elif defined(__uxpv__)
-#define STARTVALUE 42949672
-#else
-#define	STARTVALUE 100000000	       /* Max number of seconds setitimer
-				        * allows, for some reason */
-#endif
-#endif
+#ifdef HAVE_GETITIMER
 
 struct clock clock_now;		       /* The last elapsed time ready by
 				        * clock_GetTimer */
@@ -57,26 +43,105 @@ int clock_haveCurrentTime;
 
 int clock_nUpdates;		       /* The actual number of clock updates */
 
+/*
+ * Dynamically figured out start-value of the ITIMER_REAL interval timer
+ */
+
+static struct clock startvalue;
+
+/*
+ * The offset we need to add.
+ */
+
+static struct clock offset;
+
+/*
+ * We need to restart the timer.
+ */
+
+static int do_restart;
+
+/*
+ * When the interval timer has counted to zero, set offset and make
+ * sure it gets restarted.
+ */
+
+static void
+alrm_handler (int signo)
+{
+    clock_Add(&offset, &startvalue);
+    do_restart  = 1;
+    clock_NewTime ();
+}
+
+/*
+ * Install handler for SIGALRM
+ */
+
+static void
+set_alrm_handler (void)
+{
+#if defined(HAVE_POSIX_SIGNALS) && defined(SA_RESTART)
+    {
+	struct sigaction act;
+
+	sigemptyset(&act.sa_mask);
+	act.sa_flags   = SA_RESTART;
+	act.sa_handler = alrm_handler;
+	if (sigaction (SIGALRM, &act, NULL) < 0) {
+	    fprintf (stderr, "sigaction failed");
+	    exit (1);
+	}
+    }
+#else
+    signal (SIGALRM, alrm_handler);
+#endif
+}
+
+/*
+ * Start an interval timer counting down to `timer_val'
+ */
+
+static int
+clock_starttimer (time_t timer_val)
+{
+    struct itimerval itimer;
+
+    itimer.it_value.tv_sec     = timer_val; 
+    itimer.it_value.tv_usec    = 0;
+    itimer.it_interval.tv_sec  = 0;
+    itimer.it_interval.tv_usec = 0;
+
+    if (setitimer (ITIMER_REAL, &itimer, NULL) != 0) {
+	if (errno != EINVAL) {
+	    fprintf (stderr, "setitimer failed\n");
+	    exit (1);
+	}
+	return 1;
+    }
+    if (getitimer (ITIMER_REAL, &itimer) != 0) {
+	fprintf (stderr, "setitimer failed\n");
+	exit (1);
+    }
+    startvalue.sec  = itimer.it_value.tv_sec;
+    startvalue.usec = itimer.it_value.tv_usec;
+    do_restart  = 0;
+    set_alrm_handler ();
+    return 0;
+}
+
 /* Initialize the clock */
 void
 clock_Init(void)
 {
     static int initialized = 0;
-    struct itimerval itimer, otimer;
+    int timer_val;
 
-    if (!initialized) {
-	itimer.it_value.tv_sec = STARTVALUE;
-	itimer.it_value.tv_usec = 0;
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 0;
-
-	if (setitimer(ITIMER_REAL, &itimer, &otimer) != 0) {
-	    fprintf(stderr, "clock:  could not set interval timer; aborted\n");
-	    fflush(stderr);
-	    exit(1);
-	}
-	initialized = 1;
-    }
+    for (timer_val = INT_MAX;
+	 !initialized && clock_starttimer (timer_val);
+	 timer_val /= 2)
+	;
+    initialized = 1;
     clock_UpdateTime();
 }
 
@@ -89,18 +154,99 @@ void
 clock_UpdateTime(void)
 {
     struct itimerval itimer;
+    struct clock tmp_clock;
+
+    if (do_restart)
+	clock_starttimer (startvalue.sec);
 
     getitimer(ITIMER_REAL, &itimer);
+    tmp_clock.sec  = itimer.it_value.tv_sec;
+    tmp_clock.usec = itimer.it_value.tv_usec;
 
-    clock_now.sec = STARTVALUE - 1 - itimer.it_value.tv_sec;
-    /* The "-1" makes up for adding 1000000 usec, on the next line */
+    clock_now = offset;
+    clock_Add(&clock_now, &startvalue);
+    clock_Sub(&clock_now, &tmp_clock);
 
-    clock_now.usec = 1000000 - itimer.it_value.tv_usec;
-    if (clock_now.usec == 1000000)
-	clock_now.usec = 0, clock_now.sec++;
     clock_haveCurrentTime = 1;
     clock_nUpdates++;
 }
+
+/* Restart the interval timer */
+void
+clock_ReInit(void)
+{
+    struct clock tmp_clock;
+    struct itimerval itimer;
+
+    tmp_clock = offset;
+    clock_Add(&tmp_clock, &startvalue);
+    clock_Sub(&tmp_clock, &clock_now);
+    itimer.it_value.tv_sec  = tmp_clock.sec;
+    itimer.it_value.tv_usec = tmp_clock.usec;
+    itimer.it_interval.tv_sec  = 0;
+    itimer.it_interval.tv_usec = 0;
+
+    if (setitimer(ITIMER_REAL, &itimer, NULL) != 0) {
+	fprintf(stderr, "clock:  could not set interval timer; aborted\n");
+	fflush(stderr);
+	exit(1);
+    }
+}
+
+#else /* ! HAVE_GETITIMER */
+
+struct clock clock_now;		       /* The last elapsed time ready by
+				        * clock_GetTimer */
+
+static struct clock offset;	/* time when we start counting */
+
+/*
+ * This is set to 1 whenever the time is read, and reset to 0 whenever
+ * clock_NewTime is called.  This is to allow the caller to control the
+ * frequency with which the actual time is re-evaluated (an expensive
+ * operation)
+ */
+int clock_haveCurrentTime;
+
+int clock_nUpdates;		       /* The actual number of clock updates */
+
+/* Initialize the clock */
+
+void
+clock_Init(void)
+{
+    clock_UpdateTime();
+    offset = clock_now;
+    clock_now.sec = clock_now.usec = 0;
+}
+
+/*
+ * Compute the current time.
+ */
+
+void 
+clock_UpdateTime(void)
+{
+    struct timeval tv;
+
+    gettimeofday (&tv, NULL);
+
+    clock_now.sec  = tv.tv_sec;
+    clock_now.usec = tv.tv_usec;
+
+    clock_Sub(&clock_now, &offset);
+
+    clock_haveCurrentTime = 1;
+    clock_nUpdates++;
+}
+
+/* Restart the interval timer */
+void
+clock_ReInit(void)
+{
+}
+
+#endif /* HAVE_GETITIMER */
 
 #else				       /* KERNEL */
 #endif				       /* KERNEL */

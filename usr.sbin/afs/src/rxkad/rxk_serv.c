@@ -1,4 +1,3 @@
-/*	$OpenBSD: rxk_serv.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +42,7 @@
 #include <krb5.h>
 #endif
 
-RCSID("$KTH: rxk_serv.c,v 1.5 1999/04/18 22:21:43 map Exp $");
+RCSID("$Id: rxk_serv.c,v 1.3 2000/09/11 14:41:25 art Exp $");
 
 /* Security object specific server data */
 typedef struct rxkad_serv_class {

@@ -1,4 +1,3 @@
-/*	$OpenBSD: base64.h,v 1.1.1.1 1998/09/14 21:53:01 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: base64.h,v 1.1 1998/01/13 16:25:15 lha Exp $ */
+/* $Id: base64.h,v 1.2 2000/09/11 14:40:59 art Exp $ */
 
 #ifndef _BASE64_H_
 #define _BASE64_H_

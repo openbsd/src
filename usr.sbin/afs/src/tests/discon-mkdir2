@@ -1,0 +1,7 @@
+#!/bin/sh
+# $Id: discon-mkdir2,v 1.1 2000/09/11 14:41:28 art Exp $
+FS=${FS:-${objdir}/../appl/fs/fs}
+${FS} conn disconn
+mkdir dir || exit 1
+cd dir || exit 1
+${FS} conn conn

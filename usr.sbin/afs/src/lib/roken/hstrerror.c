@@ -1,6 +1,5 @@
-/*	$OpenBSD: hstrerror.c,v 1.1.1.1 1998/09/14 21:53:03 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,16 +33,17 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hstrerror.c,v 1.2 1998/03/28 23:16:45 rb Exp $");
+RCSID("$Id: hstrerror.c,v 1.2 2000/09/11 14:41:01 art Exp $");
 #endif
-
-#include "roken.h"
 
 #ifndef HAVE_HSTRERROR
 
-#include <stdio.h>
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
+#if (defined(SunOS) && (SunOS >= 50))
+#define hstrerror broken_proto
+#endif
+#include "roken.h"
+#if (defined(SunOS) && (SunOS >= 50))
+#undef hstrerror
 #endif
 
 #ifndef HAVE_H_ERRNO
@@ -76,14 +71,11 @@ extern int h_nerr;
 
 #endif
 
-#ifdef NEED_HSTRERROR_CONST
-const
-#endif
-char *
+const char *
 hstrerror(int herr)
 {
     if (0 <= herr && herr < h_nerr)
-	return (char *) h_errlist[herr];
+	return h_errlist[herr];
     else if(herr == -17)
 	return "unknown error";
     else

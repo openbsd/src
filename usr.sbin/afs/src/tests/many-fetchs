@@ -1,0 +1,15 @@
+#!/bin/sh
+# $Id: many-fetchs,v 1.1 2000/09/11 14:41:31 art Exp $
+
+FS=${FS:-${objdir}/../appl/fs/fs}
+
+touch foo
+
+echo "foobar" > foo
+
+for i in `awk 'BEGIN {for(i=0; i < 1000; ++i) printf "%d\n", i}' /dev/null`; do
+    ${FS} flush foo
+    cat foo > /dev/null || exit 1
+done
+
+rm foo

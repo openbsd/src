@@ -1,6 +1,5 @@
-/*	$OpenBSD: conn.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -44,7 +43,7 @@
 
 #include "arla_local.h"
 #ifdef RCSID
-RCSID("$KTH: conn.c,v 1.52 1999/04/20 20:58:07 map Exp $") ;
+RCSID("$Id: conn.c,v 1.3 2000/09/11 14:40:41 art Exp $") ;
 #endif
 
 #define CONNCACHESIZE 101
@@ -65,6 +64,10 @@ static unsigned nactive_connections;
 
 /* List of connections to probe */
 static List *connprobelist;
+
+#ifdef KERBEROS
+int conn_rxkad_level = rxkad_auth;
+#endif
 
 /*
  * Functions for handling entries into the connection cache.
@@ -102,7 +105,6 @@ re_probe (ConnCacheEntry *e)
     Listitem *item;
     struct timeval tv;
 
-    assert (!e->flags.alivep);
     assert (e->probe != NULL);
 
     if (e->probe_le != NULL)
@@ -346,7 +348,7 @@ new_connection (int32_t cell,
 		u_int32_t host,
 		u_int16_t port,
 		u_int16_t service,
-		pag_t cred,
+		xfs_pag_t cred,
 		int securityindex,
 		int (*probe)(struct rx_connection *),
 		struct rx_securityClass *securityobject)
@@ -393,7 +395,7 @@ add_connection(int32_t cell,
     ConnCacheEntry *e;
     struct rx_securityClass *securityobj;
     int securityindex;
-    pag_t cred;
+    xfs_pag_t cred;
 
     if (ce) {
 	securityindex = ce->securityindex;
@@ -406,7 +408,7 @@ add_connection(int32_t cell,
 	    krbstruct *krbdata = (krbstruct *)ce->cred_data;
 	    
 	    securityobj = rxkad_NewClientSecurityObject(
-		rxkad_auth,
+		conn_rxkad_level,
 		&krbdata->c.session,
 		krbdata->c.kvno,
 		krbdata->c.ticket_st.length,
@@ -453,8 +455,10 @@ internal_get (int32_t cell,
     ConnCacheEntry *e;
     ConnCacheEntry key;
 
+#if 0
     if (connected_mode == DISCONNECTED)
 	return NULL;
+#endif
 
     key.host          = host;
     key.port          = port;
@@ -674,7 +678,7 @@ print_conn (void *ptr, void *arg)
 	     "cell = %d (%s), "
 	     "securityindex = %d, cred = %u, "
 	     "conn = %p, alive = %d, "
-	     "killme = %d, refcount = %d\n\n",
+	     "killme = %d, refcount = %d",
 	     inet_ntoa(tmp), e->port, e->service, e->cell,
 	     cell_num2name (e->cell),
 	     e->securityindex, e->cred, e->connection,
@@ -690,14 +694,14 @@ print_conn (void *ptr, void *arg)
 void
 conn_status (void)
 {
-    arla_log(ADEBVLOG, "%u(%u) connections\n",
+    arla_log(ADEBVLOG, "%u(%u) connections",
 	     nactive_connections, nconnections);
     hashtabforeach (connhtab, print_conn, NULL);
 }
 
 struct clear_state {
     int32_t cell;
-    pag_t cred;
+    xfs_pag_t cred;
     int securityindex;
 };
 
@@ -723,7 +727,7 @@ clear_cred (void *ptr, void *arg)
  */
 
 void
-conn_clearcred(int32_t cell, pag_t cred, int securityindex)
+conn_clearcred(int32_t cell, xfs_pag_t cred, int securityindex)
 {
     struct clear_state s;
 

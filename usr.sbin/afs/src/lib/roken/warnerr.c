@@ -1,4 +1,3 @@
-/*	$OpenBSD: warnerr.c,v 1.1.1.1 1998/09/14 21:53:09 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: warnerr.c,v 1.1 1998/01/13 16:25:49 lha Exp $");
+RCSID("$Id: warnerr.c,v 1.2 2000/09/11 14:41:06 art Exp $");
 #endif
 
 #include "roken.h"
@@ -48,6 +42,12 @@ RCSID("$KTH: warnerr.c,v 1.1 1998/01/13 16:25:49 lha Exp $");
 #ifndef HAVE___PROGNAME
 const char *__progname;
 #endif
+
+const char *
+get_progname(void)
+{
+    return __progname;
+}
 
 void
 set_progname(char *argv0)
@@ -66,7 +66,7 @@ set_progname(char *argv0)
 }
 
 void
-warnerr(int doexit, int eval, int doerrno, const char *fmt, va_list ap)
+warnerr(int doerrno, const char *fmt, va_list ap)
 {
     int sverrno = errno;
     if(__progname != NULL){
@@ -82,6 +82,4 @@ warnerr(int doexit, int eval, int doerrno, const char *fmt, va_list ap)
     if(doerrno)
 	fprintf(stderr, "%s", strerror(sverrno));
     fprintf(stderr, "\n");
-    if(doexit)
-	exit(eval);
 }

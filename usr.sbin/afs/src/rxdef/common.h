@@ -1,9 +1,8 @@
-/*	$OpenBSD: common.h,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 /*
- * Common defintions for cb.xg and fs.xg
+ * Common defintions used by several *.xg files
  */
 
-/* $KTH: common.h,v 1.9 1998/10/31 02:29:18 lha Exp $ */
+/* $Id: common.h,v 1.3 2000/09/11 14:41:24 art Exp $ */
 
 %#ifndef _COMMON_
 %#define _COMMON_
@@ -80,6 +79,8 @@ const SS_OWNER       = 0x02 ;
 const SS_GROUP       = 0x04 ;
 const SS_MODEBITS    = 0x08 ;
 const SS_SEGSIZE     = 0x10 ;
+const SS_FSYNC       = 0x400; /* 1024 */
+
 
 struct AFSStoreStatus {
      unsigned long Mask;
@@ -160,7 +161,13 @@ struct AFSVolumeInfo {
     unsigned short Port7;
 };
 
-
-
+struct afsUUID {
+     u_long time_low;
+     u_short time_mid;
+     u_short time_hi_and_version;
+     char clock_seq_hi_and_reserved;
+     char clock_seq_low;
+     char node[6];
+};
 
 %#endif /* _COMMON_ */

@@ -1,0 +1,133 @@
+#
+# $Id: arla.spec.in,v 1.1 2000/09/11 14:40:52 art Exp $
+#
+# A spec file for build a arla rpm
+#
+# Build both smp and up modules for the current kernel
+#
+# Puts the configurationfiles in /etc/arla
+#
+# Note: it doesn't create the ThisCell file you have to
+#       do that yourself.
+#  
+#
+%define version @VERSION@
+%define prefix @prefix@
+
+Summary: A free AFS clone
+Name: arla
+
+Version: %{version}
+Release: 1
+Copyright: BSD
+
+Source: ftp.stacken.kth.se:/pub/arla/snap/arla-%{version}.tar.gz
+Group: System Environment/Daemons
+Distribution: Arla
+Vendor: KTH
+URL: http://www.stacken.kth.se/projekt/arla/
+
+BuildRoot:      /var/tmp/arla-%{version}-%{release}-root
+Prefix: %{prefix}
+
+Provides: arla
+Requires: krb4
+
+%description
+A free implementation of AFS
+
+%changelog
+
+* Thu Jan 21 2000 <lha@s3.kth.se>
+  Added to distribution
+
+* Thu Jan 21 2000 <lha@s3.kth.se>
+  arla 0.30
+
+* Thu Dec 16 1999 <lha@s3.kth.se>
+  arla 0.29.2
+
+* Mon Dec 13 1999 <lha@s3.kth.se>
+  arla 0.29.1
+
+* Thu Nov 25 1999 <lha@s3.kth.se>
+  arla 0.28
+
+* Mon Nov  8 1999 <lha@s3.kth.se>
+  Build a up and smp module, don't install ThisCell its up to the
+  admin to do right, patch startarla to find what module to use.
+  Do relocateable. Added krb4 requirement.
+
+* Fri Nov  5 1999 <lha@s3.kth.se>
+  First spec with a ChangeLog-entry
+
+%prep
+%setup
+%build
+
+rm -rf ${RPM_BUILD_ROOT}
+
+mkdir ${RPM_BUILD_ROOT}
+
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --sysconfdir=/etc/arla
+make
+
+cd xfs/linux
+make clean
+CPPFLAGS="-D__BOOT_KERNEL_SMP=1 -D__BOOT_KERNEL_UP=0" make
+mv xfs.o xfs.smp.o.save
+
+make clean
+CPPFLAGS="-D__BOOT_KERNEL_SMP=0 -D__BOOT_KERNEL_UP=1" make
+mv xfs.o xfs.up.o.save
+
+
+
+echo "dummy file, to be removed later" > xfs.o
+
+mv xfs.up.o.save xfs.up.o
+mv xfs.smp.o.save xfs.smp.o
+
+%install
+
+mkdir ${RPM_BUILD_ROOT}/etc
+make prefix=$RPM_BUILD_ROOT%{prefix} install
+rm $RPM_BUILD_ROOT%{prefix}/bin/xfs.o
+
+
+KERNEL_VERSION=$(uname -r | sed 's/smp$//')
+
+cp xfs/linux/xfs.{smp,up}.o $RPM_BUILD_ROOT%{prefix}/bin
+
+mkdir -p $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}/fs
+cp xfs/linux/xfs.up.o \
+    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}/fs/xfs.o
+mkdir -p $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs
+cp xfs/linux/xfs.smp.o \
+    $RPM_BUILD_ROOT/lib/modules/${KERNEL_VERSION}smp/fs/xfs.o
+
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+cp xfs/linux/bin/arla $RPM_BUILD_ROOT/etc/rc.d/init.d/arla
+chmod 555 $RPM_BUILD_ROOT/etc/rc.d/init.d/arla
+
+cp xfs/linux/libgetcwd.so $RPM_BUILD_ROOT%{prefix}/lib
+chmod 555 $RPM_BUILD_ROOT%{prefix}/lib/libgetcwd.so
+
+%post 
+
+depmod -a
+
+%files
+
+%doc README NEWS ChangeLog
+
+%config /etc/arla/CellServDB
+%config /etc/arla/arla.conf
+%config /etc/arla/SuidCells
+
+%{prefix}/bin
+%{prefix}/lib
+%{prefix}/include
+%{prefix}/cache
+/etc/rc.d/init.d
+/lib/modules

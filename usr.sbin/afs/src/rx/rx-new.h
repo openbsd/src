@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx-new.h,v 1.1 1999/04/30 01:59:14 art Exp $	*/
 /*
  * rx.h,v 1.7 1995/04/11 06:07:07 assar Exp
  */

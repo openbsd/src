@@ -1,4 +1,3 @@
-/*	$OpenBSD: reconnect.h,v 1.1 1999/04/30 01:59:10 art Exp $	*/
 /* COPYRIGHT  (C)  1998
  * THE REGENTS OF THE UNIVERSITY OF MICHIGAN
  * ALL RIGHTS RESERVED
@@ -28,12 +27,15 @@
  * SUCH DAMAGES.
  */
 
-/* $KTH: reconnect.h,v 1.3 1998/12/21 21:54:43 assar Exp $ */
+/* $Id: reconnect.h,v 1.2 2000/09/11 14:40:43 art Exp $ */
 
 #ifndef _RECONNECT_H
 #define _RECONNECT_H
 
 void 
 do_replay(char *log_file, int log_entries, VenusFid *changed_fid);
+
+VenusFid *
+fid_translate(VenusFid *fid_in);
 
 #endif /* _RECONNECT_H */

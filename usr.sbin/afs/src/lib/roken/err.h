@@ -1,4 +1,3 @@
-/*	$OpenBSD: err.h,v 1.1.1.1 1998/09/14 21:53:02 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: err.h,v 1.2 1998/05/01 20:21:15 assar Exp $ */
+/* $Id: err.h,v 1.2 2000/09/11 14:41:00 art Exp $ */
 
 #ifndef __ERR_H__
 #define __ERR_H__
@@ -50,12 +44,12 @@
 
 extern const char *__progname;
 
-#ifndef HAVE___ATTRIBUTE__
+#if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(x)
 #endif
 
-void warnerr(int doexit, int eval, int doerrno, const char *fmt, va_list ap)
-     __attribute__ ((format (printf, 4, 0)));
+void warnerr(int doerrno, const char *fmt, va_list ap)
+     __attribute__ ((format (printf, 2, 0)));
 
 void verr(int eval, const char *fmt, va_list ap)
      __attribute__ ((noreturn, format (printf, 2, 0)));

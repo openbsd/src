@@ -1,0 +1,6 @@
+#!/bin/sh
+# $Id: visit-volumes,v 1.1 2000/09/11 14:41:35 art Exp $
+ls ${AFSROOT}/nada.kth.se/* >&4 2>&4 || exit 1
+ls -l ${AFSROOT}/nada.kth.se/* >&4 2>&4 || exit 1
+ls ${AFSROOT}/nada.kth.se/*/* >&4 2>&4 || exit 1
+ls -l ${AFSROOT}/nada.kth.se/*/* >&4 2>&4 || exit 1

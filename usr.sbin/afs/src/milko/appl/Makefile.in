@@ -1,0 +1,48 @@
+# $Id: Makefile.in,v 1.1 2000/09/11 14:41:11 art Exp $
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+
+SUBDIRS		= sked perf
+
+all:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+clean:
+		SUBDIRS='$(SUBDIRS)'; \
+		 for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+realclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+distclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+mostlyclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+install:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+uninstall:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+Makefile:	Makefile.in ../../config.status
+		cd ../.. ; CONFIG_FILES=milko/appl/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+.PHONY: all clean realclean distclean mostlyclean install uninstall

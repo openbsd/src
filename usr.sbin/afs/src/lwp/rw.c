@@ -1,4 +1,3 @@
-/*	$OpenBSD: rw.c,v 1.1 1999/04/30 01:59:14 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -46,7 +45,7 @@ typedef struct QUEUE {
     struct Lock		lock;
 } queue;
 
-queue *init()
+static queue *init()
 {
     queue *q;
 
@@ -55,12 +54,12 @@ queue *init()
     return(q);
 }
 
-char empty(queue *q)
+static char empty(queue *q)
 {
     return (q->prev == q && q->next == q);
 }
 
-void insert(queue *q, char *s)
+static void insert(queue *q, char *s)
 {
     queue *new;
 
@@ -72,7 +71,7 @@ void insert(queue *q, char *s)
     new -> next = q;
 }
 
-char *Remove(queue *q)
+static char *Remove(queue *q)
 {
     queue *old;
     char *s;
@@ -97,14 +96,15 @@ int asleep;	/* Number of processes sleeping -- used for
 
 static int read_process(int id)
 {
-    int foo;
     printf("\t[Reader %d]\n", id);
-    LWP_NewRock(1, id);
+    LWP_NewRock(1, (char *)id);
     LWP_DispatchProcess();		/* Just relinquish control for now */
 
     PRE_PreemptMe();
     for (;;) {
-        register int i;
+        int i;
+	char *tmp;
+	int foo;
 
 	/* Wait until there is something in the queue */
 	asleep++;
@@ -117,7 +117,8 @@ static int read_process(int id)
 	asleep--;
 	for (i=0; i<10000; i++) ;
 	PRE_BeginCritical();
-	LWP_GetRock(1, &foo);
+	LWP_GetRock(1, &tmp);
+	foo = (int)tmp;
 	printf("[%d: %s]\n", foo, Remove(q));
 	PRE_EndCritical();
 	ReleaseReadLock(&q->lock);
@@ -237,8 +238,8 @@ main(int argc, char **argv)
     readers = (PROCESS *) calloc(nreaders, sizeof(PROCESS));
     for (i=0; i<nreaders; i++) {
         sprintf(rname, "Reader %d", i);
-	LWP_CreateProcess((void *)(read_process), STACK_SIZE, 0, (char *)i, 
-			  rname, &readers[i]);
+	LWP_CreateProcess((void (*)())(read_process),
+			  STACK_SIZE, 0, (char *)i, rname, &readers[i]);
     }
     printf("done]\n");
 

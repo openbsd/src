@@ -1,6 +1,5 @@
-/*	$OpenBSD: afsdir_check.c,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,9 +40,29 @@
  * Check a directory in afs format.
  */
 
-#include "arla_local.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <stdio.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <atypes.h>
+#include <sys/stat.h>
+#include <err.h>
+#include <roken.h>
 
-RCSID("$KTH: afsdir_check.c,v 1.8 1998/12/01 22:44:14 assar Exp $");
+#include <getarg.h>
+
+#include "ko.h"
+#include "fbuf.h"
+#include "arladeb.h"
+#include "afs_dir.h"
+
+RCSID("$Id: afsdir_check.c,v 1.3 2000/09/11 14:40:39 art Exp $");
+
+static int help_flag;
+static int verbose = 0;
 
 /*
  * Hash the filename of one entry.
@@ -81,7 +100,7 @@ getentry (DirPage0 *page0,
      return &page->entry[num % ENTRIESPERPAGE];
 }
 
-int
+static int
 check (const char *filename)
 {
     struct stat statbuf;
@@ -92,7 +111,7 @@ check (const char *filename)
     unsigned ind;
     unsigned len;
     int ret = 0;
-    unsigned npages;
+    unsigned npages = 0;
     unsigned page_entry_count;
     unsigned hash_entry_count;
     unsigned noverfill;
@@ -107,9 +126,15 @@ check (const char *filename)
 
     len = statbuf.st_size;
 
-    ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
+    if (len == 0)
+	errx (1, "length == 0");
+
+    if (len % AFSDIR_PAGESIZE != 0)
+	errx (1, "length %% AFSDIR_PAGESIZE != 0");
+
+    ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ|FBUF_PRIVATE);
     if (ret)
-	return ret;
+	err (1, "fbuf_create");
 
     page0 = (DirPage0 *)(the_fbuf.buf);
 
@@ -126,7 +151,7 @@ check (const char *filename)
 
     my_bitmaps = malloc (npages * sizeof(*my_bitmaps));
     if (my_bitmaps == NULL)
-	err (1, "malloc %u", npages * sizeof(*my_bitmaps));
+	err (1, "malloc %lu", (unsigned long)npages * sizeof(*my_bitmaps));
 
     printf ("map: ");
     for (i = 0; i < min(npages, MAXPAGES); ++i) {
@@ -143,7 +168,7 @@ check (const char *filename)
 
 	my_bitmaps[i] = malloc (sz);
 	if (my_bitmaps[i] == NULL)
-	    err (1, "malloc %u", sz);
+	    err (1, "malloc %lu", (unsigned long)sz);
 
 	memset (my_bitmaps[i], 0, sz);
 
@@ -207,6 +232,12 @@ check (const char *filename)
 
 	    entry = getentry (page0, ind - 1);
 
+	    if (verbose)
+		printf ("%s - %ld.%ld\n",
+			entry->name, 
+			(long)ntohl(entry->fid.Vnode),
+			(long)ntohl(entry->fid.Unique));
+	    
 	    if (hashentry (entry->name) != i)
 		printf ("wrong name here? hash = %u, name = *%s*\n",
 			i, entry->name);
@@ -274,6 +305,7 @@ check (const char *filename)
 
 out:    
     fbuf_end (&the_fbuf);
+    close (fd);
     if (my_bitmaps) {
 	for (i = 0; i < npages; ++i)
 	    free (my_bitmaps[i]);
@@ -282,14 +314,40 @@ out:
     return ret;
 }
 
+static struct getargs args[] = {
+    {"verbose",	'v',	arg_flag,	&verbose,
+     "run in test mode", NULL},
+    {"help",	0,	arg_flag,	&help_flag,
+     NULL, NULL},
+    {NULL,      0,      arg_end,        NULL, NULL, NULL}
+};
+
+static void
+usage (int ret)
+{
+    arg_printusage (args, NULL, "[file]", ARG_GNUSTYLE);
+    exit (ret);
+}
+
 int
 main(int argc, char **argv)
 {
-    if (argc != 2)
-	return 1;
+    int optind = 0;
+    
+    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE))
+	usage (1);
+
+    argc -= optind;
+    argv += optind;
+
+    if (help_flag)
+	usage (0);
+
+    if (argc != 1)
+	usage (1);
 
     arla_loginit ("/dev/stderr");
     arla_log_set_level ("all");
 
-    return check (argv[1]);
+    return check (argv[0]);
 }

@@ -1,7 +1,6 @@
-/*	$OpenBSD: rx_trace.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_trace.c,v 1.5 1998/09/09 10:17:53 assar Exp $");
+RCSID("$Id: rx_trace.c,v 1.3 2000/09/11 14:41:23 art Exp $");
 
 #ifdef RXTRACEON
 char rxi_tracename[80] = "/tmp/rxcalltrace";

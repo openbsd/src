@@ -1,4 +1,3 @@
-/*	$OpenBSD: testlwp.c,v 1.2 1999/04/30 01:59:14 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -44,7 +43,7 @@
  * multiple commands on the command line to run several tests at the
  * same time.
  * 
- * $KTH: testlwp.c,v 1.3 1998/10/25 19:37:33 joda Exp $
+ * $Id: testlwp.c,v 1.3 2000/09/11 14:41:10 art Exp $
  *
  */
 
@@ -175,7 +174,7 @@ SelectConsumer(void *foo)
     }
 }
 
-void
+static void
 startSelectPC (char *progname)
 {
     int pid;
@@ -299,9 +298,12 @@ int main(int argc, char **argv)
 	} else if (strcasecmp("cancel", argv[1]) == 0) {
 	    yaEndlessLoop();	 
 	} else if (strcasecmp("version", argv[1]) == 0) {
-	    printf("Version: $KTH: testlwp.c,v 1.3 1998/10/25 19:37:33 joda Exp $\n");
+	    printf("Version: "
+		   "$Id: testlwp.c,v 1.3 2000/09/11 14:41:10 art Exp $\n");
+	    exit (0);
 	} else {
 	    printf("unknown command %s\n", argv[1]);
+	    exit (1);
 	}
 
 	argc--;

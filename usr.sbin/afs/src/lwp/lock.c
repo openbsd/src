@@ -1,4 +1,3 @@
-/*	$OpenBSD: lock.c,v 1.1.1.1 1998/09/14 21:53:11 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -35,11 +34,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: lock.c,v 1.7 1998/01/27 19:58:27 art Exp $");
+RCSID("$Id: lock.c,v 1.2 2000/09/11 14:41:08 art Exp $");
 #endif
 #include "lwp.h"
 #include "lock.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
 

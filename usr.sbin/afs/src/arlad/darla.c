@@ -1,4 +1,3 @@
-/*	$OpenBSD: darla.c,v 1.1 1999/04/30 01:59:07 art Exp $	*/
 /* COPYRIGHT  (C)  1998
  * THE REGENTS OF THE UNIVERSITY OF MICHIGAN
  * ALL RIGHTS RESERVED
@@ -30,7 +29,7 @@
 
 #include "arla_local.h"
 
-RCSID("$KTH: darla.c,v 1.5 1998/12/21 21:54:03 assar Exp $");
+RCSID("$Id: darla.c,v 1.2 2000/09/11 14:40:41 art Exp $");
 
 int DARLA_Open(DARLA_file *Dfp, char *fname, int oflag)
 {
@@ -38,7 +37,7 @@ int DARLA_Open(DARLA_file *Dfp, char *fname, int oflag)
   int fd;
 
   fd = open(fname, oflag);
-  arla_log(ADEBMISC, "DARLA_Open: errno=%d\n", errno); 
+  arla_log(ADEBMISC, "DARLA_Open: errno=%d", errno); 
   if (fd > 0)
   {
     Dfp->fd = fd;
@@ -56,7 +55,7 @@ int DARLA_Close(DARLA_file *Dfp)
   ret = close(Dfp->fd);
   Dfp->fd = 0;
   Dfp->offset =0;
-  arla_log(ADEBMISC, "DARLA_Close: ret=%d\n", ret);
+  arla_log(ADEBMISC, "DARLA_Close: ret=%d", ret);
   return ret;
 }
 

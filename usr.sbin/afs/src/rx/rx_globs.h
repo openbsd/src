@@ -1,5 +1,4 @@
-/*	$OpenBSD: rx_globs.h,v 1.1.1.1 1998/09/14 21:53:15 art Exp $	*/
-/* $KTH: rx_globs.h,v 1.4 1998/02/22 19:46:16 joda Exp $ */
+/* $Id: rx_globs.h,v 1.2 2000/09/11 14:41:21 art Exp $ */
 
 /*
 ****************************************************************************
@@ -228,8 +227,8 @@ void rxi_ClearReceiveQueue(struct rx_call *);
 void rxi_ResetConnection(struct rx_connection *);
 void rxi_InitCall(void); /* obsolete ? */
 void rxi_ResetCall(struct rx_call *);
-void rxi_CallError(struct rx_call *, long);
-void rxi_ConnectionError(struct rx_connection *, long);
+void rxi_CallError(struct rx_call *, int32_t);
+void rxi_ConnectionError(struct rx_connection *, int32_t);
 void rxi_QueuePackets(void); /* obsolete ? */
 void rxi_Start(struct rxevent *, struct rx_call *);
 void rxi_CallIsIdle(void); /* obsolete ? */

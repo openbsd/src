@@ -1,0 +1,6 @@
+#!/bin/sh
+# $Id: fs-sa-la,v 1.1 2000/09/11 14:41:30 art Exp $
+FS=${FS:-${objdir}/../appl/fs/fs}
+${FS} sa . kalle-anka-nu rl 2>&4
+${FS} la >&4 2>&4
+exit 0

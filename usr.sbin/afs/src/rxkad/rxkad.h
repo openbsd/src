@@ -1,4 +1,3 @@
-/*	$OpenBSD: rxkad.h,v 1.1.1.1 1998/09/14 21:53:21 art Exp $	*/
 /* -*- C -*- */
 
 /*
@@ -39,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$KTH: rxkad.h,v 1.7 1998/02/23 03:23:24 assar Exp $ */
+/* @(#)$Id: rxkad.h,v 1.2 2000/09/11 14:41:26 art Exp $ */
 
 #ifndef __RXKAD_H
 #define __RXKAD_H

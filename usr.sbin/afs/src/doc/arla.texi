@@ -1,0 +1,222 @@
+\input texinfo @c -*- texinfo -*-
+@c %**start of header
+@c $Id: arla.texi,v 1.1 2000/09/11 14:40:52 art Exp $
+@setfilename arla.info
+@settitle ARLA
+@iftex
+@afourpaper
+@end iftex
+@c some sensible characters, please?
+@tex
+\input latin1.tex
+@end tex
+@setchapternewpage on
+@syncodeindex pg cp
+@c %**end of header
+
+@ifinfo
+@dircategory Arla
+@direntry
+* Arla: (arla).           Arla - The Free AFS Clone
+@end direntry
+@end ifinfo
+
+@c title page
+@titlepage
+@title Arla
+@subtitle A Free AFS Clone from KTH
+@subtitle Edition 0.1, for version 0.34
+@subtitle 1999 - 2000
+@author Love Hörnquist-Åstrand
+@author Assar Westerlund
+@author Harald Barth
+@author last updated $Date: 2000/09/11 14:40:52 $
+
+@comment This text will show up in the output of texi2html
+@def@fnotsupported{THIS TEXT MAY CONTAIN GARBLED OUTPUT BECAUSE THIS VIEW FORMAT DOES NOT SUPPORT TEXI FUNCTIONS}
+
+@def@copynext{@vskip 20pt plus 1fil@penalty-1000}
+@def@copyrightstart{}
+@def@copyrightend{}
+@page
+@copyrightstart
+Copyright (c) 1998 - 1999 Kungliga Tekniska Högskolan 
+(Royal Institute of Technology, Stockholm, Sweden).
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+     This product includes software developed by Kungliga Tekniska
+     Högskolan and its contributors.
+
+4. Neither the name of the Institute nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+@copynext
+
+Copyright (c) 1988, 1990, 1993
+     The Regents of the University of California.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+     This product includes software developed by the University of
+     California, Berkeley and its contributors.
+
+4. Neither the name of the University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+
+@copynext
+
+Copyright 1992 Simmule Turner and Rich Salz.  All rights reserved. 
+
+This software is not subject to any license of the American Telephone 
+and Telegraph Company or of the Regents of the University of California. 
+
+Permission is granted to anyone to use this software for any purpose on
+any computer system, and to alter it and redistribute it freely, subject
+to the following restrictions:
+
+1. The authors are not responsible for the consequences of use of this
+   software, no matter how awful, even if they arise from flaws in it.
+
+2. The origin of this software must not be misrepresented, either by
+   explicit claim or by omission.  Since few users ever read sources,
+   credits must appear in the documentation.
+
+3. Altered versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.  Since few users
+   ever read sources, credits must appear in the documentation.
+
+4. This notice may not be removed or altered.
+
+@copynext
+
+/*
+****************************************************************************
+*        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
+*                                                                          *
+* Permission to use, copy, modify, and distribute this software and its    *
+* documentation for any purpose and without fee is hereby granted,         *
+* provided that the above copyright notice appear in all copies and        *
+* that both that copyright notice and this permission notice appear in     *
+* supporting documentation, and that the name of IBM not be used in        *
+* advertising or publicity pertaining to distribution of the software      *
+* without specific, written prior permission.                              *
+*                                                                          *
+* IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL *
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL IBM *
+* BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY      *
+* DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER  *
+* IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING   *
+* OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.    *
+****************************************************************************
+*/
+
+@copyrightend
+@end titlepage
+
+@c Less filling! Tastes great!
+@iftex
+@parindent=0pt
+@global@parskip 6pt plus 1pt
+@global@chapheadingskip = 15pt plus 4pt minus 2pt 
+@global@secheadingskip = 12pt plus 3pt minus 2pt
+@global@subsecheadingskip = 9pt plus 2pt minus 2pt
+@end iftex
+@ifinfo
+@paragraphindent 0
+@end ifinfo
+
+@ifinfo
+@node Top,  , (dir), (dir)
+@comment  node-name,  next,  previous,  up
+@top Arla
+
+Arla is a free AFS implementation from KTH.
+
+@end ifinfo
+
+@menu
+* Introduction::                
+* Description of AFS infrastructure::
+* Organization of data::
+* Parts of Arla::          
+* Debugging::
+* Porting::
+* Authors::
+* Oddities::
+* Arla timeline::
+* Acknowledgments::             
+@end menu
+@c * What is AFS::           
+@c * Building and Installing::     
+@c * Unreleased parts of the arla suite::
+@c * Things that might be done better::  
+
+@include intro.texi
+@c @include whatisafs.texi
+@c @include install.texi
+@include afs-basics.texi
+@include storage.texi
+@include partsofarla.texi
+@c @include milko.texi
+@include debugging.texi
+@include porting.texi
+@include oddities.texi
+@include timeline.texi
+@include authors.texi
+@include ack.texi
+
+@c @shortcontents
+@contents
+
+@bye
+

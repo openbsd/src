@@ -1,0 +1,67 @@
+@c $Id: servers.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@c
+@c  This file contain random junk that should be ordered some day
+@c
+
+
+@section YDR
+
+@code{Ydr} is a rxgen replacement that is generating a lot more stuff
+then rxgen (like headerfiles). It also does the same thing in one run
+instead of three (rxgen does one run for ss.c cs.c and .h, and each time
+passes the whole data thru cpp).
+
+@code{Ydr} was created when there was no free rx package.
+
+Things to remeber about ydr and ydr generated code:
+
+@itemize @bullet
+
+@item When a server function is done out mashalling and writing out data
+it will free all data that contains VARRAYs. The functions you are
+intressed in is @code{generate_server_stub} and @code{genfree}.
+
+@item When a server functions fail (ie returns != 0), mashalling of 
+out-data is not done, and out-data is not freed, instead rx_Error() is
+called with that error (See @code{generate_server_stub}.
+
+@item To use ydr (to describe when is codeing a struct or running ydr on 
+a file) is called ydra.
+
+@end itemize
+
+
+@section CellServDB
+
+Transarc users a flat file called @code{CellServDB} to distribute the
+knowledge of what cells exist in the world. There is a way to represent
+that kind of information in DNS, but Transarc never implemented that in
+their software. Arla uses both ways to build its view of the AFS world.
+In spite of being organized in IPnumber - name pairs, where the name
+parts resemble comments, both values are used by Transarc software and
+confusion may arise if they are not synchronized with each other.
+
+@example
+
+>stacken.kth.se            # Stacken Computer Club, KTH, Sweden
+130.237.234.3              #milko.stacken.kth.se
+130.237.234.43             #hot.stacken.kth.se
+130.237.237.230            #fishburger.stacken.kth.se
+
+@end example
+
+Again, please note that the text after the # in the cell-name is a
+comment, @strong{but} the hostnames after the # on the rows of an
+IP-address is @strong{not} a comment. The host and the ip-address needs
+to point at the same computer.
+
+@c Creations of a volume
+@c VOLSER_ListPartions
+@c      VL_GetEntryByNameN   -> VL_NOENT
+@c      VOLSER_CreateVolume
+@c      VOLSER_SetFlags
+@c      VOLSER_EndTrans    (rcode ignored ?)
+@c      VL_CreateEntryN
+
+

@@ -1,3 +1,32 @@
+2000-08-06  Love  <lha@stacken.kth.se>
+
+	* getarg.[ch]: Add ARG_USEFIRST.
+
+1999-10-29  Simon Josefsson  <jas@pdc.kth.se>
+
+	* getarg.c (parse_option): Use new argument argc for bound
+	checking end of argv in arg_strings.
+	(arg_match_long): Pass argc to parse_option.
+	(getarg): Calculate argc.
+
+1999-10-22  Love  <lha@s3.kth.se>
+
+	* getarg.c (getarg): for ARG_SWITCHLESS, make sure we inc i for
+	the number of arguments parse_option got.
+
+1999-10-21  Love  <lha@s3.kth.se>
+
+	* getarg.c (parse_option): added support for multiple arguments in
+	arg_strings
+
+1999-10-12  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.in: install headers and libraries
+
+1999-09-13  Love  <lha@s3.kth.se>
+
+	* getarg.c (getarg): check if ARG_SHORTARG argument starts with -
+
 1999-01-03  Love  <lha@s3.kth.se>
 
 	* getarg.c (arg_match_long): Unbreak ARG_TRANSLONG and FLAGS (by

@@ -1,4 +1,3 @@
-/*	$OpenBSD: main.c,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: main.c,v 1.15 1999/03/01 08:45:13 assar Exp $");
+RCSID("$Id: main.c,v 1.3 2000/09/11 14:41:41 art Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,7 +46,6 @@ RCSID("$KTH: main.c,v 1.15 1999/03/01 08:45:13 assar Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <roken.h>
-#include <fnameutil.h>
 #include "sym.h"
 #include "output.h"
 #include <err.h>
@@ -80,12 +78,10 @@ main (int argc, char **argv)
 
     snprintf (tmp_filename, sizeof(tmp_filename),
 	      "ydr_tmp_%u.c", (unsigned)getpid());
-    foo = fopen (tmp_filename, "w");
-    if (foo == NULL)
-	errx (1, "Cannot fopen %s for writing", tmp_filename);
+    foo = efopen (tmp_filename, "w");
     filename = copy_basename (argv[argc - 1]);
     fprintf (foo, "#include \"%s\"\n", argv[argc - 1]);
-    fclose (foo);
+    efclose (foo);
 
     initsym ();
     init_generate (filename);
@@ -110,6 +106,10 @@ main (int argc, char **argv)
     strcat (arg, tmp_filename);
 
     yyin = popen (arg, "r");
+    if (yyin == NULL) {
+	unlink (tmp_filename);
+	err (1, "popen `%s'", arg);
+    }
     free (arg);
     ret = yyparse ();
     generate_server_switch (serverfile.stream, serverhdrfile.stream);
@@ -118,26 +118,6 @@ main (int argc, char **argv)
     close_generator (filename);
     unlink (tmp_filename);
 
-    if (getenv("USER") && strcmp(getenv("USER"), "art") == 0) {
-	char *foo;
-	
-	if (asprintf(&foo, "indent %s.cs.c", filename) > 0) {
-	    system(foo);
-	    free(foo);
-	}
-	if (asprintf(&foo, "indent %s.ss.c", filename) > 0) {
-	    system(foo);
-	    free(foo);
-	}
-	if (asprintf(&foo, "indent %s.ydr.c", filename) > 0) {
-	    system(foo);
-	    free(foo);
-	}
-	if (asprintf(&foo, "indent %s.h", filename) > 0) {
-	    system(foo);
-	    free(foo);
-	}
-    }
-
     return ret + parse_errors;
 }
+

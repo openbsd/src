@@ -1,6 +1,5 @@
-/*	$OpenBSD: arla_local.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,7 @@
 
 /*
  *  Include file for whole arlad
- *  $KTH: arla_local.h,v 1.42 1999/02/05 07:28:36 lha Exp $
+ *  $Id: arla_local.h,v 1.3 2000/09/11 14:40:40 art Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -56,7 +55,12 @@
 #include <errno.h>
 #include <sys/time.h>
 #if defined(HAVE_DIRENT_H)
+#define _KERNEL
 #include <dirent.h>
+#undef _KERNEL
+#if DIRENT_AND_SYS_DIR_H
+#include <sys/dir.h>
+#endif
 #elif defined(HAVE_SYS_DIR_H)
 #include <sys/dir.h>
 #endif
@@ -68,13 +72,18 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <sys/stat.h>
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -116,7 +125,6 @@
 #include "fbuf.h"
 #include "hash.h"
 #include "afs_dir.h"
-#include "ip.h"
 #include "service.h"
 #include "ports.h"
 #include "conn.h"
@@ -128,13 +136,12 @@
 #include "subr.h"
 #include "fprio.h"
 #include "bool.h"
-#include "minmax.h"
 #include "kernel.h"
 #include "messages.h"
-#include "strutil.h"
 #include "fs_errors.h"
 #include "arladeb.h"
 #include "ko.h"
+#include "xfs.h"
 
 enum connected_mode { CONNECTED  = 0,
 		      FETCH_ONLY = 1,
@@ -147,6 +154,8 @@ extern enum connected_mode connected_mode;
 #include "discon_log.h"
 #include "discon.h"
 #include "reconnect.h"
+
+#include "dynroot.h"
 
 #define SYSNAMEMAXLEN 2048
 extern char arlasysname[SYSNAMEMAXLEN];
@@ -166,4 +175,4 @@ extern char arlasysname[SYSNAMEMAXLEN];
  */
 #define ARLA_NO_AUTH_CRED 4
 
-
+extern int fake_mp;

@@ -1,6 +1,5 @@
-/*	$OpenBSD: resolve.h,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: resolve.h,v 1.3 1999/01/03 01:44:53 assar Exp $ */
+/* $Id: resolve.h,v 1.3 2000/09/11 14:41:03 art Exp $ */
 
 #ifndef __RESOLVE_H__
 #define __RESOLVE_H__
@@ -50,8 +44,20 @@
 #ifndef T_AFSDB
 #define T_AFSDB		18
 #endif
+#ifndef T_SIG
+#define T_SIG		24
+#endif
+#ifndef T_KEY
+#define T_KEY		25
+#endif
 #ifndef T_SRV
-#define T_SRV		 33
+#define T_SRV		33
+#endif
+#ifndef T_NAPTR
+#define T_NAPTR		35
+#endif
+#ifndef T_CERT
+#define T_CERT		37
 #endif
 
 struct dns_query{
@@ -72,6 +78,35 @@ struct srv_record{
     char target[1];
 };
 
+struct key_record {
+    unsigned flags;
+    unsigned protocol;
+    unsigned algorithm;
+    size_t   key_len;
+    u_char   key_data[1];
+};
+
+struct sig_record {
+    unsigned type;
+    unsigned algorithm;
+    unsigned labels;
+    unsigned orig_ttl;
+    unsigned sig_expiration;
+    unsigned sig_inception;
+    unsigned key_tag;
+    char     *signer;
+    unsigned sig_len;
+    u_char   sig_data[1];	/* also includes signer */
+};
+
+struct cert_record {
+    unsigned type;
+    unsigned tag;
+    unsigned algorithm;
+    size_t   cert_len;
+    u_char   cert_data[1];
+};
+
 struct resource_record{
     char *domain;
     unsigned type;
@@ -85,16 +120,15 @@ struct resource_record{
 	struct srv_record *srv;
 	struct in_addr *a;
 	char *txt;
+	struct key_record *key;
+	struct cert_record *cert;
+	struct sig_record *sig;
     }u;
     struct resource_record *next;
 };
 
 #ifndef T_A /* XXX if <arpa/nameser.h> isn't included */
 typedef int HEADER; /* will never be used */
-#endif
-
-#ifndef T_A
-#define T_A 1
 #endif
 
 struct dns_reply{
@@ -105,7 +139,8 @@ struct dns_reply{
 
 
 struct dns_reply* dns_lookup(const char *, const char *);
-
-void dns_free_data(struct dns_reply *r);
+void dns_free_data(struct dns_reply *);
+int dns_string_to_type(const char *name);
+const char *dns_type_to_string(int type);
 
 #endif /* __RESOLVE_H__ */

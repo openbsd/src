@@ -1,6 +1,5 @@
-/*	$OpenBSD: stds.h,v 1.1.1.1 1998/09/14 21:52:59 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: stds.h,v 1.3 1998/03/19 21:28:28 assar Exp $ */
+/* $Id: stds.h,v 1.2 2000/09/11 14:40:54 art Exp $ */
 
 #ifndef __STDS_H
 #define __STDS_H 1
@@ -50,8 +49,16 @@ typedef int32_t int32;
 typedef u_int32_t u_int32;
 #endif
 
+#ifndef HAVE_INT16
+typedef int16_t int16;
+#endif
+
+#ifndef HAVE_U_INT16
+typedef u_int16_t u_int16;
+#endif
+
 /* for compat resons with other kerberos distributions */
-#ifndef HAVE_KRB_PRINCIPAL 
+#if defined(KERBEROS) && !defined(HAVE_KRB_PRINCIPAL)
 typedef struct krb_principal{
     char name[ANAME_SZ];
     char instance[INST_SZ];

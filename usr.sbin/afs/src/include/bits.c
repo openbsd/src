@@ -1,4 +1,3 @@
-/*	$OpenBSD: bits.c,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
  * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
+RCSID("$Id: bits.c,v 1.3 2000/09/11 14:40:54 art Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -142,7 +141,7 @@ int main(int argc, char **argv)
     }
     fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
     fprintf(f, "   %*s    %s */\n\n", strlen(fn), "", 
-	    "$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
+	    "$Id: bits.c,v 1.3 2000/09/11 14:40:54 art Exp $");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");

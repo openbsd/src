@@ -39,7 +39,7 @@
 %{
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: parse.y,v 1.2 1999/04/30 01:59:19 art Exp $");
+RCSID("$Id: parse.y,v 1.3 2000/09/11 14:41:41 art Exp $");
 #endif
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ RCSID("$Id: parse.y,v 1.2 1999/04/30 01:59:19 art Exp $");
 #include "lex.h"
 
 void yyerror (char *);
+static int varcnt = 0;
 
 %}
 
@@ -114,7 +115,7 @@ declaration:	type_decl {
 		;
 
 type_decl	: T_ENUM T_IDENTIFIER enumbody ';'
-		{ $$ = define_enum ($2, $3); }
+		{ $$ = define_enum ($2, $3); varcnt = 0; }
 		| T_STRUCT T_IDENTIFIER { define_struct($2); } structbody ';'
 		{ $$ = set_struct_body ($2, $4); }
 		| T_STRUCT type structbody ';'
@@ -142,6 +143,7 @@ proc_decl:	opt_proc T_IDENTIFIER '(' params ')' flags '=' constant ';'
 		{ $$ = (Symbol *)emalloc(sizeof(Symbol));
 	          $$->type = TPROC;
 	          $$->name = $2;
+		  $$->u.proc.package = package;
 		  $$->u.proc.arguments = $4;
 		  $$->u.proc.id = $8;
 		  $$->u.proc.flags = $6; 
@@ -169,7 +171,9 @@ param_type:	T_IN    { $$ = TIN; }
 		;
 
 directive:	T_PACKAGE T_IDENTIFIER
-		{ package = $2; }
+		{ package = estrdup($2); 
+		  listaddtail (packagelist, package);
+		}
 		| T_PREFIX T_IDENTIFIER
 		{ prefix = $2; }
 		| T_VERBATIM
@@ -181,7 +185,7 @@ directive:	T_PACKAGE T_IDENTIFIER
 enumbody:	'{' enumentries '}' { $$ = $2; }
 		;
 
-enumentries:	{ $$ = listnew (); }
+enumentries:	{ $$ = listnew ();  }
 		| enumentry
 		{ $$ = listnew(); listaddhead ($$, $1); }
 		| enumentries ',' enumentry
@@ -189,8 +193,10 @@ enumentries:	{ $$ = listnew (); }
 		;
 
 enumentry:	T_IDENTIFIER '=' constant
-		{ $$ = createenumentry ($1, $3); }
-		;
+ 		{ $$ = createenumentry ($1, $3); varcnt = $3 + 1; }
+  		| T_IDENTIFIER
+  		{ $$ = createenumentry ($1, varcnt++); }
+  		;
 
 memberdecl:	T_ASIS memberdecl2
 		{ $$ = $2; $$->type->flags |= TASIS; }  

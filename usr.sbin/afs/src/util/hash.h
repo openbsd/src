@@ -1,4 +1,3 @@
-/*	$OpenBSD: hash.h,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +40,7 @@
  * hash.h. Header file for hash table functions
  */
 
-/* $KTH: hash.h,v 1.5 1998/12/01 23:09:22 assar Exp $ */
+/* $Id: hash.h,v 1.3 2000/09/11 14:41:38 art Exp $ */
 
 #include <bool.h>
 

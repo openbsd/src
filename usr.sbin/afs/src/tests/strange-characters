@@ -1,0 +1,7 @@
+#!/bin/sh
+# $Id: strange-characters,v 1.1 2000/09/11 14:41:34 art Exp $
+for i in е д ц едц; do
+  touch $i || exit 1
+  test -f $i || exit 1
+  rm $i || exit 1
+done

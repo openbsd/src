@@ -1,0 +1,75 @@
+.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
+.\" $Id: rxdebug.1,v 1.1 2000/09/11 14:41:23 art Exp $
+.Dd Aug 24, 2000
+.Dt SECTION
+.Nm rxdebug
+.Os Arla
+.Sh NAME
+.Nm rxdebug
+.Nd
+a tool to diagnose problems with rx.
+.Sh SYNOPSIS
+.Nm
+.Op Fl port Ar port
+.Op Fl nodally
+.Op Fl allconnection
+.Op Fl rxstats
+.Op Fl onlyserver
+.Op Fl onlyclient
+.Op Fl onlyport Ar port
+.Op Fl onlyhost Ar host
+.Op Fl onlyauth Ar authlevel
+.Op Fl version
+.Op Fl noconns
+.Fl servers Ar servers ...
+.Sh DESCRIPTION
+Supported options:
+.Bl -tag -width Ds
+.It Fl port Ar port
+what port should be used to talk the rx implemetation
+.It Fl nodally
+don't show dally connections.
+.It Fl allconnection
+show all connection.
+.It Fl rxstats
+show statistics about rx performance, loss of packets, etc
+.It Fl onlyserver
+show only server connections
+.It Fl onlyclient
+show only client connections
+.It Fl onlyport Ar port
+only display the connection that use
+.Ar port .
+.It Fl onlyhost Ar host
+only display the connection from
+.Ar host .
+.It Fl onlyauth Ar authlevel
+only display connection with auth level
+.Ar authlevel
+.It Fl version
+display version of the remote implementation.
+.Nm
+.It Fl noconns
+do not show any connection.
+.It servers ...
+list of the servers to talk to.
+.El
+.Sh DIAGNOSTICS
+.Nm
+is used to diagnose a rx-implementation, what version the afs-client
+are running, why rx missbehavies, or if there are performance problems.
+.Pp
+.Sh EXAMPLES
+.Bd -literal
+datan# rxdebug -servers localhost -port 4711 -status -noconn
+Trying 127.0.0.1 (port 4711):
+Free packets: 65, packet reclaims: 0, calls: 28, used FDs: 6
+not waiting for packets.
+0 calls waiting for a thread
+Done.
+data# rxdebug -servers localhost -port 4711  -version
+Trying 127.0.0.1 (port 4711):
+AFS version: arla-0.34.1
+.Ed
+.\".Sh SEE ALSO
+.\"XXX

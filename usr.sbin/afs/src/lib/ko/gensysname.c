@@ -1,6 +1,5 @@
-/*	$OpenBSD: gensysname.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,7 @@
 
 #include "ko_locl.h"
 
-RCSID("$KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $");
+RCSID("$Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $");
 
 typedef int (*test_sysname)(void);
 typedef void (*gen_sysname)(char*, size_t, const char*, 
@@ -56,17 +55,11 @@ struct sysname {
 
 enum { OUTPUT_C, OUTPUT_TEXT, OUTPUT_MACHINE } output = OUTPUT_TEXT;
 
-/* 
- * HELP:
- *
- * Add your sysname to the struct below, it's searched from top
- * to bottom, first match wins.
+/*
  *
  * The test is for hosts that can not be matched with config.guess
  * (like a linux 1.2.x/elf)
  *
- * ? will match any character
- * * will match any sequence of characters
  */
 
 static int
@@ -78,6 +71,12 @@ linux_glibc_test(void)
     ret = stat("/lib/libc.so.6", &sb);
     return ret == 0;
 }
+
+/*
+ * generic function for generating sysnames for *BSD systems.  the
+ * sysname is written into `buf' (of length `len') based on `cpu,
+ * vender, os'.
+ */
 
 #ifdef HAVE_SYS_UTSNAME_H
 static void
@@ -113,6 +112,16 @@ bsd_gen_sysname(char *buf,
 }
 #endif
 
+/* 
+ * HELP:
+ *
+ * Add your sysname to the struct below, it's searched from top
+ * to bottom, first match wins.
+ *
+ * ? will match any character
+ * * will match any sequence of characters
+ */
+
 struct sysname sysnames[] = {
     { "sparc_linux6", "sparc", "*", "linux-gnu*", &linux_glibc_test },
     { "sparc_linux5", "sparc", "*", "linux-gnu*", NULL },
@@ -120,6 +129,7 @@ struct sysname sysnames[] = {
     { "i386_linux5", "i*86*", "*pc*", "linux-gnu*", NULL },
     { "alpha_linux6", "alpha", "*", "linux-gnu*", &linux_glibc_test },
     { "alpha_linux5", "alpha", "*", "linux-gnu*", NULL },
+    { "ppc_linux22",  "powerpc", "*", "linux-gnu*", NULL },
     { "alpha_dux40",  "alpha", "*", "osf4.0*", NULL },
     { "sun4x_54",     "sparc", "*", "solaris2.4*", NULL },
     { "sun4x_551",    "sparc", "*", "solaris2.5.1*", NULL },
@@ -150,7 +160,8 @@ printsysname(const char *sysname)
 	printf("%s\n", sysname);
 	break;
     case OUTPUT_C:
-	printf("/* Generated from $KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $ */\n");
+	printf("/* Generated from $Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $ */\n\n");
+	printf("#include <ko.h>\n\n");
 	printf("const char *arla_getsysname(void) { return \"%s\" ; }\n", 
 	       sysname);
 	break;
@@ -229,7 +240,7 @@ main(int argc, char **argv)
 	usage();
 
     if (versionflag)
-	errx(0, "Version: $KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $");
+	errx(0, "Version: $Id: gensysname.c,v 1.3 2000/09/11 14:40:57 art Exp $");
 
     if (ccodeflag)
 	output = OUTPUT_C;
@@ -270,8 +281,7 @@ main(int argc, char **argv)
 	    if(sysname->gen != NULL)
 		(*sysname->gen)(sn, sizeof(sn), cpu, vendor, os);
 	    else {
-		strncpy(sn, sysname->sysname, sizeof(sn));
-		sn[sizeof(sn) - 1] = '\0';
+		strlcpy(sn, sysname->sysname, sizeof(sn));
 	    }
 	    printsysname(sn);   
 	}

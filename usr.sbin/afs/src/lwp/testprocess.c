@@ -1,4 +1,3 @@
-/*	$OpenBSD: testprocess.c,v 1.1.1.1 1998/09/14 21:53:11 art Exp $	*/
 #include <lwp.h>
 
 /*
@@ -9,7 +8,7 @@
  *
  *  Todo: really a test-program
  *
- * $KTH: testprocess.c,v 1.1 1998/06/09 11:52:53 lha Exp $
+ * $Id: testprocess.c,v 1.2 2000/09/11 14:41:10 art Exp $
  */
 
 int savecontext();

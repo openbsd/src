@@ -1,7 +1,6 @@
-/*	$OpenBSD: rx_rdwr.c,v 1.1.1.1 1998/09/14 21:53:17 art Exp $	*/
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_rdwr.c,v 1.4 1998/02/22 19:53:57 joda Exp $");
+RCSID("$Id: rx_rdwr.c,v 1.2 2000/09/11 14:41:23 art Exp $");
 
 #ifdef	AFS_SGIMP_ENV
 int 
@@ -39,10 +38,11 @@ rx_Write(struct rx_call *call, char *buf, int nbytes)
 #endif
 
 int 
-rx_ReadProc(struct rx_call *call, char *buf, int nbytes)
+rx_ReadProc(struct rx_call *call, void *vbuf, int nbytes)
 {
     struct rx_packet *rp;
     int requestCount;
+    char *buf = (char *)vbuf;
 
     SPLVAR;
 /* XXXX took out clock_NewTime from here.  Was it needed? */
@@ -249,10 +249,11 @@ MTUXXX  doesn't there need to be an "else" here ???
 }
 
 int 
-rx_WriteProc(struct rx_call *call, char *buf, int nbytes)
+rx_WriteProc(struct rx_call *call, const void *vbuf, int nbytes)
 {
     struct rx_connection *conn = call->conn;
     int requestCount = nbytes;
+    const char *buf = (const char *)vbuf;
 
     SPLVAR;
 

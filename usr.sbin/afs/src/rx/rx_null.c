@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_null.c,v 1.1.1.1 1998/09/14 21:53:16 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -21,8 +20,9 @@
 */
 
 #include "rx_locl.h"
+#include "rx_null.h"
 
-RCSID("$KTH: rx_null.c,v 1.3 1998/02/22 19:48:47 joda Exp $");
+RCSID("$Id: rx_null.c,v 1.2 2000/09/11 14:41:22 art Exp $");
 
 /* The null security object.  No authentication, no nothing. */
 
@@ -30,14 +30,14 @@ static struct rx_securityOps null_ops;
 static struct rx_securityClass null_object;
 
 struct rx_securityClass *
-rxnull_NewServerSecurityObject()
+rxnull_NewServerSecurityObject(void)
 {
     null_object.ops = &null_ops;
     return &null_object;
 }
 
 struct rx_securityClass *
-rxnull_NewClientSecurityObject()
+rxnull_NewClientSecurityObject(void)
 {
     null_object.ops = &null_ops;
     return &null_object;

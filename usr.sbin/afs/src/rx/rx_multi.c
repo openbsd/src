@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_multi.c,v 1.1.1.1 1998/09/14 21:53:16 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -22,14 +21,13 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_multi.c,v 1.3 1998/02/22 19:47:42 joda Exp $");
+RCSID("$Id: rx_multi.c,v 1.2 2000/09/11 14:41:22 art Exp $");
 
 /* multi.c and multi.h, together with some rxgen hooks, provide a way of making multiple, but similar, rx calls to multiple hosts simultaneously */
 
 struct multi_handle *
 multi_Init(struct rx_connection **conns, int nConns)
 {
-    void multi_Ready();
     struct rx_call **calls;
     short *ready;
     struct multi_handle *mh;

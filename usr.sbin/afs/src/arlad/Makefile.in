@@ -1,0 +1,198 @@
+# $Id: Makefile.in,v 1.1 2000/09/11 14:40:39 art Exp $
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+CC		= @CC@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+MKINSTALLDIRS 	= @top_srcdir@/mkinstalldirs
+
+prefix 		= @prefix@
+exec_prefix 	= @exec_prefix@
+libdir 		= @libdir@
+libexecdir 	= @libexecdir@
+bindir 		= @bindir@
+sysconfdir	= @sysconfdir@
+mandir		= @mandir@
+transform	= @program_transform_name@
+ARLACACHEDIR	= @ARLACACHEDIR@
+ARLACONFFILE	= @ARLACONFFILE@
+
+ARLA_BIN	= arlad
+
+MANPAGES	= CellServDB.5 ThisCell.5 SuidCells.5 arlad.1
+
+DEFS		= @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)\" \
+		  -DARLACACHEDIR=\"$(ARLACACHEDIR)\" \
+		  -DARLACONFFILE=\"$(ARLACONFFILE)\"
+
+SHELL		= /bin/sh
+
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+
+ETAGS		= etags
+MAKEDEPEND	= makedepend
+AFSWSROOT	= /usr/afsws
+RXKADINC	= -I$(srcdir)/../rxkad
+INCLUDES	= -I$(srcdir)/.. \
+		  @KERNEL_INCLUDE@ \
+		  -I../include \
+		  -I$(srcdir)/../include \
+		  -I$(srcdir)/../xfs/include \
+		  -I../rxdef \
+		  $(RXKADINC)
+DEFINES		= -DDEBUG
+REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
+		  -DRXDEBUG @PLWP_INC_FLAGS@
+RXKADLIB	= @RXKAD_LIBS@
+KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
+LIB_tgetent	= @LIB_tgetent@
+LIBS		= -L../lib/bufdir -lbufdir \
+		  -L../rxdef -lrxdefclient -L../rx -lrx -L../lwp \
+		  -llwp @PLWP_LIB_FLAGS@ \
+		  -L../lib/sl -lsl @LIB_readline@ \
+		  -L../lib/ko -lko -L../util -lutil\
+		  -L../lib/roken -lroken $(RXKADLIB) $(KAFS_LIBS) @LIBS@
+LIBDEPENDS	= ../rxdef/librxdefclient.a ../rx/librx.a ../lwp/liblwp.a \
+		  ../util/libutil.a ../lib/sl/libsl.a ../lib/roken/libroken.a \
+		  ../lib/ko/libko.a
+KERNEL_SRCS	= @KERNEL_SRCS@
+PROGS		= arlad afsdir_check
+SRCS		=				\
+		adir.c				\
+		afsdir_check.c			\
+		arla.c				\
+		arladeb.c			\
+		arladeb2.c			\
+		cmcb.c				\
+		conn.c				\
+		cred.c				\
+		darla.c				\
+		discon_log.c			\
+		dynroot.c			\
+		fcache.c			\
+		fprio.c				\
+		inter.c				\
+		kernel.c			\
+		messages.c			\
+		reconnect.c			\
+		subr.c				\
+		volcache.c			\
+		xfs.c				\
+		$(KERNEL_SRCS)
+
+HDRS		=				\
+		adir.h				\
+		afs_dir.h			\
+		arla_local.h			\
+		arladeb.h			\
+		cmcb.h				\
+		conn.h				\
+		cred.h				\
+		darla.h				\
+		discon.h			\
+		discon_fix.h			\
+		discon_log.h			\
+		dynroot.h			\
+		fcache.h			\
+		fprio.h				\
+		inter.h				\
+		kernel.h			\
+		messages.h			\
+		service.h			\
+		subr.h				\
+		xfs.h				\
+		volcache.h		
+
+arlad_OBJS	=				\
+		adir.o				\
+		arla.o				\
+		arladeb.o			\
+		arladeb2.o			\
+		cmcb.o				\
+		conn.o				\
+		cred.o				\
+		darla.o				\
+		discon_log.o			\
+		dynroot.o			\
+		fcache.o			\
+		fprio.o				\
+		inter.o				\
+		kernel.o			\
+		messages.o			\
+		reconnect.o			\
+		subr.o				\
+		volcache.o			\
+		xfs.o				\
+		$(KERNEL_SRCS:.c=.o)
+
+afsdir_check_OBJS =				\
+		arladeb.o			\
+		afsdir_check.o
+
+.PHONY: all install uninstall depend tags clean
+
+all:		$(PROGS)
+
+.c.o:
+		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
+
+install: all
+		$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+		PROG_BIN='$(ARLA_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/$$f; \
+		done ; \
+		$(MKINSTALLDIRS) $(DESTDIR)$(mandir) ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
+			$(INSTALL_PROGRAM) $(srcdir)/$$x \
+				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
+		done
+
+uninstall:
+		PROG_BIN='$(ARLA_BIN)'; for x in $$PROG_BIN; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(bindir)/$$f; \
+		done ; \
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			rm -rf $(DESTDIR)$(mandir)/$$f.$$e; \
+		done
+
+arlad:		$(arlad_OBJS) $(LIBDEPENDS)
+		$(CC) $(LDFLAGS) -o $@ $(arlad_OBJS) $(LIBS)
+
+afsdir_check:	$(afsdir_check_OBJS)
+		$(CC) $(LDFLAGS) -o $@ $(afsdir_check_OBJS) $(LIBS)
+
+Makefile:	Makefile.in ../config.status
+		cd ..; CONFIG_FILES=arlad/Makefile CONFIG_HEADERS= $(SHELL) config.status
+
+depend:		$(SRCS)
+		$(MAKEDEPEND) -- $(REALCFLAGS) -- $^
+
+tags:		TAGS
+
+TAGS:		$(SRCS) $(HDRS)
+		$(ETAGS) -t $(SRCS) $(HDRS)
+
+clean		:
+		rm -f $(PROGS) $(OBJS) *~ *.o core *.core
+
+mostlyclean:	clean
+
+distclean:	clean
+		rm -f Makefile config.status
+
+realclean:	distclean
+		rm -f TAGS

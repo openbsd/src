@@ -1,6 +1,5 @@
-/*	$OpenBSD: rxk_clnt.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_clnt.c,v 1.5 1999/03/12 17:09:44 assar Exp $");
+RCSID("$Id: rxk_clnt.c,v 1.3 2000/09/11 14:41:25 art Exp $");
 
 /* This code also links into the kernel so we need to use osi_Alloc()
  * to avoid calling malloc(). Similar trick with memcpy() */
@@ -308,6 +307,7 @@ rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
 	des_cblock k;
       } u;
       int32 sched[ROUNDS];
+      u_long next_epoch;
 
       u.rnd[0] = rx_nextCid;
       u.rnd[1] = rx_epoch;
@@ -326,7 +326,9 @@ rxkad_NewClientSecurityObject(/*rxkad_level*/ int level,
 
       /* Set new cid and epoch generator */
       rx_nextCid = u.rnd[0] << RX_CIDSHIFT;
-      rx_SetEpoch(u.rnd[0] ^ u.rnd[1]);
+      next_epoch = u.rnd[0] ^ u.rnd[1];
+      next_epoch &= 0x7FFFFFFF;
+      rx_SetEpoch(next_epoch);
       rxkad_EpochWasSet = 1;
       inited = 1;
     }

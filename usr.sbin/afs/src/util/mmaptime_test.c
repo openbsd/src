@@ -1,6 +1,5 @@
-/*	$OpenBSD: mmaptime_test.c,v 1.1.1.1 1998/09/14 21:53:22 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska HÅˆgskolan
+ * Copyright (c) 1998 Kungliga Tekniska Hˆgskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -18,7 +17,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Kungliga Tekniska
- *      HÅˆgskolan and its contributors.
+ *      Hˆgskolan and its contributors.
  * 
  * 4. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -41,7 +40,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: mmaptime_test.c,v 1.2 1998/07/09 19:57:58 art Exp $");
+RCSID("$Id: mmaptime_test.c,v 1.2 2000/09/11 14:41:39 art Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -49,7 +48,7 @@ RCSID("$KTH: mmaptime_test.c,v 1.2 1998/07/09 19:57:58 art Exp $");
 #include <err.h>
 #include "mmaptime.h"
 
-void
+static void
 print_time_diff(char *str, struct timeval *tv, struct timeval *tv2)
 {
     struct timeval t;

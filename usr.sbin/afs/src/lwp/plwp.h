@@ -1,9 +1,16 @@
-/*	$OpenBSD: plwp.h,v 1.1 1999/04/30 01:59:13 art Exp $	*/
+/*
+ * $Id: plwp.h,v 1.2 2000/09/11 14:41:09 art Exp $
+ */
+
 #ifndef LWP_INCLUDED
 #define LWP_INCLUDED
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#ifdef WINDOWS_THREADS_LWP
+#include <windows.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -21,6 +28,12 @@
 #define AFS_LWP_MINSTACKSIZE    (100 * 1024)
 #include <sys/time.h>
 #include <signal.h>
+
+#ifdef PTHREADS_LWP
+#include <pthread.h>
+#endif
+
+#include <roken.h>
 
 #ifndef LWP_KERNEL
 extern
@@ -86,7 +99,7 @@ int LWP_DestroyProcess(PROCESS);
 int LWP_DispatchProcess();
 int LWP_GetProcessPriority(PROCESS, int *);
 int LWP_INTERNALSIGNAL(void *, int);
-int LWP_WaitProcess(char *);
+int LWP_WaitProcess(void *);
 int LWP_MwaitProcess(int, char **);
 int LWP_StackUsed(PROCESS, int *, int *); 
 int LWP_NewRock(int, char *);
@@ -114,17 +127,19 @@ int TM_GetTimeOfDay(struct timeval *, struct timezone *);
 int FT_AGetTimeOfDay(struct timeval *, struct timezone *);
 unsigned int FT_ApproxTime(void);
 
-#include <pthread.h>
-
 /* Initial size of eventlist in a PCB; grows dynamically  */ 
 #define EVINITSIZE  5
 
-struct rock
-    {/* to hide things associated with this LWP under */
-      int  tag;		/* unique identifier for this rock */
-      pthread_key_t val;
-      /*char *value;*/	/* pointer to some arbitrary data structure */
-    };
+struct rock 
+ {/* to hide things associated with this LWP under */
+   int  tag;		/* unique identifier for this rock */
+   /* pointer to some arbitrary data structure */
+#if defined(PTHREADS_LWP)
+   pthread_key_t val;
+#elif defined(WINDOWS_THREADS_LWP)
+   LPVOID val;
+#endif
+ };
 
 #define MAXROCKS	4	/* max no. of rocks per LWP */
 
@@ -152,9 +167,15 @@ struct lwp_pcb {			/* process control block */
   struct IoRequest *iomgrRequest;
   int index;        
   struct timeval lastReady;
+#if defined(PTHREADS_LWP)
   pthread_mutex_t m;       
   pthread_cond_t c;        
   pthread_attr_t a;        
+#elif defined(WINDOWS_THREADS_LWP)
+  HANDLE m;
+  HANDLE c;
+  HANDLE t;
+#endif
 };
 
 extern int lwp_nextindex;                      /* Next lwp index to assign */

@@ -1,0 +1,61 @@
+These are re-implementations of the traditional user utilities 'klog',
+'tokens', and 'unlog' from AFS. The code is mostly written from scratch
+with the appropriate bits of glue and insight taken from KTH-KRB.
+
+The main goal in writing these programs was to achieve maximum
+compatibility with the original programs by the same name (minus any truly
+stupid bugs or security holes). In many cases, I believe users will find
+themselves in a heterogeneous environment where Arla will be used
+alongside the official AFS client on different machines, but with the same
+shared user accounts.
+
+It is not reasonable to expect such users to be forced to learn different
+syntax for the same commands on both platforms. Indeed, even small
+semantic differences quickly annoy users, and mercilessly cause scripts to
+break.
+
+While it is possible to do much of what these programs can do by using
+script wrappers on the programs from KTH-KRB, it is not possible to get
+100% of the features.
+
+These features include:
+
+[ klog ]
+	- looking up the correct ViceId for the stored token, so that the
+	  output of 'tokens' is more meaningful for those with access to
+	  several AFS accounts
+
+	- a new -timeout option, so that authentication won't hang forever
+	  if the network is down
+
+	- support for the -pipe and -setpag options from the original klog
+
+[ tokens ]
+	- the return code of the program can be used from a script to find
+	  out if any (valid) tokens are present
+
+	- the output format is identical to the original 'tokens' by
+	  default
+
+[ unlog ]
+	- you can now unlog yourself from one or more cells only, leaving
+	  the rest of your tokens intact
+
+
+appl/klog.c
+appl/klog.h
+appl/tokens.c
+appl/tokens.h
+appl/unlog.c
+appl/unlog.h
+doc/README.afsutils
+doc/TODO.afsutils
+man/klog.1
+man/tokens.1
+man/unlog.1
+
+
+Enjoy,
+
+Chris Wing
+wingc@engin.umich.edu

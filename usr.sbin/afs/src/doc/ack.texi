@@ -1,0 +1,145 @@
+@c $Id: ack.texi,v 1.1 2000/09/11 14:40:52 art Exp $
+
+@node  Acknowledgments, , Authors, Top
+@comment  node-name,  next,  previous,  up
+@appendix Acknowledgments
+
+lwp and rx are copyrighted by IBM.  We're grateful to Derrick J
+Brashear @email{shadow@@dementia.org} and Jim Doyle @email{jrd@@bu.edu} 
+for making them available.
+
+the @code{rxkad} implementation was written by Björn Grönvall 
+@email{bg@@sics.se} and is also part of the kth-krb distribution.
+
+Some of the files in @file{libroken} come from Berkeley by the way of
+NetBSD/FreeBSD
+
+@code{editline} was written by Simmule Turner and Rich Salz.
+
+The code for gluing these together were written by ourselves.
+
+Bugfixes, documentation, encouragement, and code has been contributed by:
+@table @asis
+
+@item Aaron M. Ucko 
+@email{amu@@MIT.EDU}
+
+@item Alec Wolman 
+@email{wolman@@cs.washington.edu}
+
+@item Alexandra Ellwood 
+@email{lxs@@MIT.EDU}
+
+@item Brad Keryan 
+@email{keryan@@andrew.cmu.edu}
+
+@item Constantine Sapuntzakis 
+@email{csapuntz@@openbsd.org}
+
+@item Dan Winship 
+@email{danw@@MIT.EDU}
+
+@item Derrick J Brashear 
+@email{shadow@@dementia.org}
+
+@item Harald Barth 
+@email{haba@@pdc.kth.se}
+
+@item Jim Doyle 
+@email{jrd@@bu.edu}
+
+@item John Davison 
+@email{davisoja@@clarkson.edu}
+
+@item John Hawkinson 
+@email{jhawk@@MIT.EDU}
+
+@item Karl Ramm 
+@email{kcr@@MIT.EDU}
+
+@item Mark Eichin 
+@email{eichin@@kitten.gen.ma.us}
+
+@item Per Boussard T/ED 
+@email{Per.Boussard@@era-t.ericsson.se}
+
+@item Dima Ruban 
+@email{dima@@best.net}
+
+@item Max 
+@email{davros@@cyclone.Stanford.EDU}
+
+@item Andrzej Filinski 
+@email{andrzej@@daimi.aau.dk}
+
+@item Chuck Lever 
+@email{chuckl@@netscape.com}
+
+@item WUWEI SHEN 
+@email{wwshen@@engin.umich.edu}
+
+@item Cheng Jin 
+@email{chengjin@@eecs.umich.edu}
+
+@item Paul Callaway 
+@email{pcallawa@@umich.edu}
+
+@item Brandon S. Allbery 
+@email{allbery@@ece.cmu.edu}
+
+@item Ken Raeburn 
+@email{raeburn@@raeburn.org}
+
+@item Jeffrey Hutzelman 
+@email{jhutz+@@cmu.edu}
+
+@item Hee-Seok Heo 
+@email{hsheo@@postech.ac.kr}
+
+@item Paul Ewing Jr. 
+@email{ewing@@ima.umn.edu}
+
+@item Niklas Hallqvist 
+@email{niklas@@appli.se}
+
+@item Marko Asplund 
+@email{aspa@@hip.fi}
+
+@item Chris Wing 
+@email{wingc@@engin.umich.edu}
+
+@item Simon Josefsson 
+@email{jas@@pdc.kth.se}
+
+@item Magnus Lindström 
+@email{magnus.lindstrom@@s3.kth.se}
+
+@item Greg Stark 
+@email{gsstark@@mit.edu}
+
+@item Matt 
+@email{deberg@@mit.edu}
+
+@item Björn Grönvall 
+@email{bg@@sics.se}
+
+@item Tino Schwarze 
+@email{tino.schwarze@@informatik.tu-chemnitz.de}
+
+@item David Sanderson 
+@email{david@@transarc.ibm.com}
+
+@item Roman Hodek 
+@email{Roman.Hodek@@informatik.uni-erlangen.de}
+
+
+@end table
+
+If you have done something and are not mentioned here, please send
+mail to @email{arla-drinkers@@stacken.kth.se}.
+
+If you are mentioned here and have not contributed, that's because we
+expect you to.
+
+
+

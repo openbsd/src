@@ -1,0 +1,6 @@
+#!/bin/sh
+$objdir/echo-n hej > foo || exit 1
+if test `cat foo` != "hej"; then exit 1; fi
+$objdir/echo-n hopp >> foo || exit 1
+if test `cat foo` != "hejhopp"; then exit 1; fi
+rm foo || exit 1

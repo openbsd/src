@@ -1,4 +1,3 @@
-/*	$OpenBSD: timer.h,v 1.1.1.1 1998/09/14 21:53:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -44,6 +43,11 @@ extern struct TM_Elem *TM_GetExpired();
 extern struct TM_Elem *TM_GetEarliest();
 #endif
 
+int TM_Init(register struct TM_Elem **list);
+int TM_Rescan(struct TM_Elem *tlist);
+struct TM_Elem *TM_GetExpired(struct TM_Elem *tlist);
+struct TM_Elem *TM_GetEarliest(struct TM_Elem *tlist);
+
 typedef unsigned char bool; /* XXX - this is not the correct place */
 
 bool TM_eql(register struct timeval *, register struct timeval *);
@@ -70,5 +74,7 @@ void TM_Insert(struct TM_Elem *, struct TM_Elem *);
  */
 
 int FT_Init(int, int);
+int FT_GetTimeOfDay(struct timeval * tv, struct timezone * tz);
 int FT_AGetTimeOfDay(struct timeval *, struct timezone *);
-
+int TM_GetTimeOfDay(struct timeval * tv, struct timezone * tz);
+unsigned int FT_ApproxTime(void);

@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_user.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -27,7 +26,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_user.c,v 1.14 1999/03/05 04:18:16 assar Exp $");
+RCSID("$Id: rx_user.c,v 1.3 2000/09/11 14:41:23 art Exp $");
 
 #ifndef	IPPORT_USERRESERVED
 /*

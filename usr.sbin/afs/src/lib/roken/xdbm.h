@@ -1,6 +1,5 @@
-/*	$OpenBSD: xdbm.h,v 1.1.1.1 1998/09/14 21:53:10 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,19 +31,26 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xdbm.h,v 1.1 1998/01/13 16:25:50 lha Exp $ */
+/* $Id: xdbm.h,v 1.2 2000/09/11 14:41:06 art Exp $ */
 
 /* Generic *dbm include file */
 
 #ifndef __XDBM_H__
 #define __XDBM_H__
 
-#ifdef HAVE_NDBM_H
+#if defined(HAVE_DB_H)
+#define DB_DBM_HSEARCH 1
+#include <db.h>
+#endif
+
+#ifndef DBM_INSERT
+#if defined(HAVE_NDBM_H)
 #include <ndbm.h>
 #elif defined(HAVE_DBM_H)
 #include <dbm.h>
 #elif defined(HAVE_RPCSVC_DBM_H)
 #include <rpcsvc/dbm.h>
+#endif
 #endif
 
 /* Macros to convert ndbm names to dbm names.
@@ -59,7 +60,7 @@
  * Instead, all routines call "dbm_next" instead.
  */
 
-#ifndef NDBM
+#if !defined(NDBM) && !defined(HAVE_DB_H)
 typedef char DBM;
 
 #define dbm_open(file, flags, mode) ((dbminit(file) == 0)?"":((char *)0))

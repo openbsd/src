@@ -1,0 +1,34 @@
+@c $Id: tools.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Rx protocol, LWP, , Tools and libs
+@section Rx protocol
+
+@c XXX History of RX
+
+Rx is run over UDP.
+
+One of rxgen or ydr is used to generate stub-files, ydr is better since
+it generates prototypes, too.
+
+The current implemetation of rx it not that beautiful.
+
+@node LWP, , Rx protocol, Tools and libs
+@section LWP
+
+@c XXX History of LWP
+
+LWP is a preepmtive thread package. It does it's context-switching by
+creating a private stack for each thread. The heart of the package is
+select(2).
+
+The core of the package is @file{process.S}. Its currenty built with a
+bourne-shell file. @file{Process.s} is preprocessed with @code{cpp} and
+then given to (g)as. The magic how to build this file a portable way is
+not fun.
+
+The stack is checked for overruns in context-switches, but that is often
+too late. It might be an idea to add a @cite{red zone} at the top of the
+stack to be able to detect overruns.
+
+For architectures not supported by LWP, it can be exchanged with the
+pthreads pakage.

@@ -1,6 +1,5 @@
-/*	$OpenBSD: rx_locl.h,v 1.1.1.1 1998/09/14 21:53:15 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +36,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: rx_locl.h,v 1.4 1998/03/28 16:35:46 lha Exp $ */
+/* $Id: rx_locl.h,v 1.2 2000/09/11 14:41:22 art Exp $ */
 
 #ifndef __RX_LOCL_H__
 #define __RX_LOCL_H__
@@ -50,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include <sys/time.h>
 #include <sys/types.h>

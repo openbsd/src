@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_pkt.h,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 #ifndef _RX_PACKET_
 #define _RX_PACKET_
 #include "sys/uio.h"
@@ -258,6 +257,13 @@ int rxi_AllocDataBuf(struct rx_packet *, int);
 size_t rx_SlowReadPacket(struct rx_packet*, int, int, void*);
 size_t rx_SlowWritePacket(struct rx_packet*, int, int, void*);
 int rxi_RoundUpPacket(struct rx_packet *, unsigned int);
+
+long rx_SlowGetLong(struct rx_packet *packet, int offset);
+long rx_SlowPutLong(struct rx_packet *packet, int offset, long data);
+int  rxi_FreeDataBufs(struct rx_packet *p, int first);
+
+int osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
+		int nvecs, int length);
 
 /* copy data into an RX packet */
 #define rx_packetwrite(p, off, len, in)               \

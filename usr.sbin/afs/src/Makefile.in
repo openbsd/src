@@ -1,0 +1,52 @@
+# $Id: Makefile.in,v 1.1 2000/09/11 14:40:29 art Exp $
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+
+SUBDIRS		= include lib util ydr lwp rx rxdef lib/ko lib/bufdir \
+		  @RXKAD@ xfs arlad conf appl tests doc
+
+all:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+clean:
+		SUBDIRS='$(SUBDIRS)'; \
+		 for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+realclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+distclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+mostlyclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+install:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+uninstall:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+Makefile:	Makefile.in config.status
+		$(SHELL) config.status
+
+config.status:	configure
+		$(SHELL) config.status --recheck
+
+.PHONY: all clean realclean distclean mostlyclean install uninstall

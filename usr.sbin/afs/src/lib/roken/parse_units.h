@@ -1,4 +1,3 @@
-/*	$OpenBSD: parse_units.h,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the 
  *    documentation and/or other materials provided with the distribution. 
  *
- * 3. All advertising materials mentioning features or use of this software 
- *    must display the following acknowledgement: 
- *      This product includes software developed by Kungliga Tekniska 
- *      Högskolan and its contributors. 
- *
- * 4. Neither the name of the Institute nor the names of its contributors 
+ * 3. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
  *    without specific prior written permission. 
  *
@@ -37,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: parse_units.h,v 1.2 1998/03/21 14:51:22 assar Exp $ */
+/* $Id: parse_units.h,v 1.2 2000/09/11 14:41:03 art Exp $ */
 
 #ifndef __PARSE_UNITS_H__
 #define __PARSE_UNITS_H__

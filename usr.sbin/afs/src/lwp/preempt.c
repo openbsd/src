@@ -1,4 +1,3 @@
-/*	$OpenBSD: preempt.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -33,10 +32,11 @@
 #include <lwp.h>
 #include "preempt.h"
 
-RCSID("$KTH: preempt.c,v 1.6 1999/02/01 04:56:13 assar Exp $");
+RCSID("$Id: preempt.c,v 1.3 2000/09/11 14:41:09 art Exp $");
 
 char PRE_Block = 0;		/* used in lwp.c and process.s */
 
+#ifdef HAVE_GETITIMER
 
 static RETSIGTYPE
 #if defined(AFS_POSIX_SIGNALS)
@@ -144,3 +144,19 @@ PRE_EndPreempt(void)
 
     return(LWP_SUCCESS);
 }
+
+#else /* !HAVE_GETITIMER */
+
+int 
+PRE_InitPreempt(struct timeval *slice)
+{
+    return LWP_SUCCESS;
+}
+
+int 
+PRE_EndPreempt(void)
+{
+    return LWP_SUCCESS;
+}
+
+#endif /* HAVE_GETITIMER */

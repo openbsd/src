@@ -1,6 +1,5 @@
-/*	$OpenBSD: ko.h,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ko.h,v 1.16 1999/03/03 15:39:51 assar Exp $ */
+/* $Id: ko.h,v 1.3 2000/09/11 14:40:57 art Exp $ */
 
 #ifndef __KO_H
 #define __KO_H 1
 
+#include <sys/types.h>
+#include <netinet/in.h>
 #include <atypes.h>
 #include <bool.h>
 
@@ -70,7 +71,7 @@ typedef struct {
 } cell_db_entry;
 
 typedef struct {
-    int32_t id;		/* Cell-ID */
+    int32_t id;			/* Cell-ID */
     const char *name;		/* Domain-style name */
     const char *expl;		/* Longer name */
     unsigned ndbservers;	/* # of database servers */
@@ -80,7 +81,7 @@ typedef struct {
 
 void           cell_init (int cellcachesize);
 
-const cell_db_entry *cell_dbservers (int32_t cell, int *);
+const cell_db_entry *cell_dbservers_by_id (int32_t cell, int *);
 
 const char    *cell_findnamedbbyname (const char *cell);
 const char    *cell_getthiscell (void);
@@ -90,10 +91,18 @@ const char    *cell_num2name (int32_t cell);
 cell_entry    *cell_get_by_name (const char *cellname);
 cell_entry    *cell_get_by_id (int32_t cell);
 cell_entry    *cell_new (const char *name);
+cell_entry    *cell_new_dynamic (const char *name);
 Bool           cell_issuid (cell_entry *c);
 Bool           cell_issuid_by_num (int32_t cell);
 Bool           cell_issuid_by_name (const char *cell);
 Bool	       cell_setsuid_by_num (int32_t cell);
+int            cell_setthiscell (const char *cell);
+int	       cell_foreach (int (*func) (const cell_entry *, void *), 
+			     void *arg);
+const char    *cell_expand_cell (const char *cell);
+unsigned long  cell_get_version(void);
+Bool 	       cell_is_sanep (int cell);
+const char **  cell_thesecells (void);
 
 /*
  * misc vl

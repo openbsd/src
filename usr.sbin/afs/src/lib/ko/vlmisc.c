@@ -1,4 +1,3 @@
-/*	$OpenBSD: vlmisc.c,v 1.1 1999/04/30 01:59:11 art Exp $	*/
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +38,7 @@
 
 #include "ko_locl.h"
 
-RCSID("$KTH: vlmisc.c,v 1.1 1999/03/03 15:33:21 assar Exp $");
+RCSID("$Id: vlmisc.c,v 1.2 2000/09/11 14:40:58 art Exp $");
 
 /*
  * Convert old style vldbentry `old` to newer vldbNentry style `new'
@@ -50,8 +49,7 @@ vldb2vldbN (const vldbentry *old, nvldbentry *new)
 {
     int i;
 
-    strncpy (new->name, old->name, VLDB_MAXNAMELEN);
-    new->name[VLDB_MAXNAMELEN-1] = '\0';
+    strlcpy (new->name, old->name, VLDB_MAXNAMELEN);
     if (old->nServers > MAXNSERVERS)
 	new->nServers = MAXNSERVERS;
     else

@@ -1,6 +1,10 @@
-/*	$OpenBSD: plwp.c,v 1.1 1999/04/30 01:59:13 art Exp $	*/
 /* This version of the code is derived from the Coda version of the LWP
  * library, which can be compiled as a wrapper around Mach cthreads
+ *
+ * Windows Threads support was added by Love <lha@stacken.kth.se>
+ * and debugged by Magnus <map@stacken.kth.se> and Robert <rb@abc.se>.
+ * It make have a glue layer around the windows primiptives to make
+ * it look like pthreads.
  */
 /*
 ****************************************************************************
@@ -36,7 +40,7 @@
 
 #include <lwp.h>
 
-RCSID("$KTH: plwp.c,v 1.2 1999/02/02 00:47:16 assar Exp $");
+RCSID("$Id: plwp.c,v 1.2 2000/09/11 14:41:08 art Exp $");
 
 #ifdef	AFS_AIX32_ENV
 #include <ulimit.h>
@@ -69,7 +73,7 @@ extern char PRE_Block;	/* from preempt.c */
 #ifdef DEBUG
 #define Debug(level, msg)\
 	 if (lwp_debug && lwp_debug >= level) {\
-	     printf("***LWP (%p): ", lwp_cpptr);\
+	     printf("***LWP(max=%d) (%p): ", Highest_runnable_priority, lwp_cpptr);\
 	     printf msg;\
 	     putchar('\n');\
 	 }
@@ -77,6 +81,8 @@ extern char PRE_Block;	/* from preempt.c */
 #else
 #define Debug(level, msg)
 #endif
+
+#define lwp_timerclear(t) (t)->tv_sec = (t)->tv_usec = 0
 
 /* Prototypes */
 static void Abort_LWP(char *msg) ;
@@ -139,7 +145,108 @@ int Highest_runnable_priority;	/* global variable for max priority */
 
 int Proc_Running; /* indicates forked proc got control */
 
+/*
+ * Glue for
+ */
+
+#if defined(PTHREADS_LWP)
 pthread_mutex_t run_sem, ct_mutex;
+
+#define LWP_INT_LOCK(sem)	pthread_mutex_lock(sem)
+#define LWP_INT_UNLOCK(sem)	pthread_mutex_unlock(sem)
+
+#define LWP_INT_WAIT(cond, mutex)	pthread_cond_wait(cond, mutex)
+#define LWP_INT_SIGNAL(cond)	pthread_cond_signal(cond)
+
+#define LWP_INT_EXIT(t)		pthread_exit(t)
+
+#elif defined(WINDOWS_THREADS_LWP)
+
+HANDLE run_sem, ct_mutex;
+
+#if 0
+#define LWP_INT_LOCK(sem)	WaitForSingleObject (sem, INFINITE)
+#define LWP_INT_UNLOCK(sem)	ReleaseMutex (sem)
+#endif
+
+static DWORD LWP_INT_LOCK(HANDLE *sem)
+{
+    DWORD ret = WaitForSingleObject(*sem, INFINITE);
+    if (ret == WAIT_FAILED) {
+      DWORD err = GetLastError();
+      Debug(0, ("LWP_INT_LOCK: h = %p, wait = %ld, %ld\n",
+		*sem, ret, err));
+    }
+    return ret;
+}
+
+static DWORD LWP_INT_UNLOCK(HANDLE *sem)
+{
+    DWORD ret = ReleaseMutex(*sem);
+    if (!ret) {
+      DWORD err = GetLastError();
+      Debug(0, ("LWP_INT_UNLOCK: h = %p, wait = %ld, %ld\n",
+		*sem, ret, err));
+    }
+    return ret;
+}
+
+static DWORD LWP_INT_WAIT(HANDLE *cond, HANDLE *mutex)
+{
+  DWORD ret;
+  static int times = 0;
+  int this_time = times++;
+
+  Debug(0, ("LWP_INT_WAIT(%d): cond: %p mutex: %p\n",
+	    this_time, *cond, *mutex));
+  ret = ReleaseMutex (*mutex);
+  if (!ret) {
+      DWORD err = GetLastError();
+      Debug(0, ("LWP_INT_WAIT(%d): ReleaseMutex failed: %ld error: %ld mutex\n", 
+		this_time, ret, err, *mutex));
+      abort();
+  }      
+  ret = WaitForSingleObject (*cond, INFINITE);
+  if (ret != WAIT_OBJECT_0) {
+      Debug(0, ("LWP_INT_WAIT(%d): WaitForSingleObject(cond) failed: %ld mutex: %p\n",
+		this_time, ret, *mutex));
+      abort();
+  }
+  ret = WaitForSingleObject (*mutex, INFINITE);
+  if (ret != WAIT_OBJECT_0) {
+      Debug(0, ("LWP_INT_WAIT(%d): WaitForSingleObject(mutex) failed: %ld mutex: %p\n",
+		this_time, ret, *mutex));
+      abort();
+  }
+#if 0
+  ret = SignalObjectAndWait(*mutex, *cond, INFINITE, FALSE /* XXX */);
+  if (ret != WAIT_OBJECT_0) {
+    DWORD err = GetLastError();
+    Debug(0, ("LWP_INT_WAIT(%d): SignalObjectAndWait failed: %ld error: %ld mutex: %p cond: %p\n", this_time, ret, err, *mutex, *cond));
+    /* XXX */
+    return ret;    
+  }
+  Debug(0, ("LWP_INT_WAIT(%d): woke up, waiting for mutex: cond: %p mutex: %p\n", this_time, *cond, *mutex));
+  ret = WaitForSingleObject(*mutex, INFINITE);
+  if (ret != WAIT_OBJECT_0) {
+    Debug(0, ("LWP_INT_WAIT(%d): WaitForSingleObject(mutex) failed: %ld mutex: %p\n", this_time, ret, *mutex));
+    /* XXX */
+    return ret;
+  }
+#endif
+  Debug(0, ("LWP_INT_WAIT(%d): got mutex: cond: %p mutex: %p\n",
+	    this_time, *cond, *mutex));
+  return 0;
+}
+
+#define LWP_INT_SIGNAL(cond)	do { \
+Debug(0, ("LWP_INT_SIGNAL: cond: %p\n", *cond)); \
+PulseEvent (*cond); } while (0)
+
+
+#define LWP_INT_EXIT(t)		ExitThread ((int)t); /* XXX */
+
+#endif
 
 static void
 lwpremove(register PROCESS p, register struct QUEUE *q)
@@ -213,11 +320,15 @@ LWP_GetRock(int Tag, char **Value)
 
     for (i = 0; i < lwp_cpptr->rused; i++)
         if (ra[i].tag == Tag) {
+#ifdef PTHREADS_LWP
 #ifdef PTHREAD_GETSPECIFIC_TWOARG
 	  pthread_getspecific(ra[i].val, Value);
 #else
 	  *Value = pthread_getspecific(ra[i].val);
 #endif	  
+#elif WINDOWS_THREADS_LWP
+	  *Value = TlsGetValue((unsigned long) ra[i].val);
+#endif
 	  /**Value =  ra[i].value;*/
 	  return(LWP_SUCCESS);
 	}
@@ -252,15 +363,24 @@ LWP_NewRock(int Tag, char *Value)
     /* insert new rock in rock list and increment count of rocks */
     if (lwp_cpptr->rused < MAXROCKS) {
         ra[lwp_cpptr->rused].tag = Tag;
+#if defined(LWP_THREADS)
 #ifdef HAVE_PTHREAD_KEYCREATE	
         if (pthread_keycreate(&ra[lwp_cpptr->rused].val, NULL))
 #else
         if (pthread_key_create(&ra[lwp_cpptr->rused].val, NULL))
 #endif
-	  return(LWP_EBADROCK);
+	    return(LWP_EBADROCK);
 	if (pthread_setspecific(ra[lwp_cpptr->rused].val, Value))
 	  return(LWP_EBADROCK);
-        /* ra[lwp_cpptr->rused].value = Value; */
+
+#elif defined(WINDOWS_THREADS_LWP)
+	ra[lwp_cpptr->rused].val = (LPVOID) TlsAlloc();
+	if (ra[lwp_cpptr->rused].val == (LPVOID) 0xFFFFFFFF)
+	    return(LWP_EBADROCK);
+	if (!TlsSetValue((unsigned long) ra[lwp_cpptr->rused].val, Value))
+	    return(LWP_EBADROCK);
+#endif
+
         lwp_cpptr->rused++;
         return(LWP_SUCCESS);
     }
@@ -300,7 +420,7 @@ LWP_GetProcessPriority(PROCESS pid, int *priority)
 }
 
 int 
-LWP_WaitProcess(char *event)
+LWP_WaitProcess(void *event)
 {
     char *tempev[2];
 
@@ -385,17 +505,19 @@ LWP_QWait()
     /* wake up next lwp */
     lwp_cpptr = runnable[Highest_runnable_priority].head;
     lwpremove(lwp_cpptr, &runnable[Highest_runnable_priority]);
-    timerclear(&lwp_cpptr->lastReady);
-    pthread_mutex_lock(&ct_mutex);
+    lwp_timerclear(&lwp_cpptr->lastReady);
+    LWP_INT_LOCK(&ct_mutex);
     Debug(0, ("LWP_QWait:%s going to wake up %s \n", old_cpptr->name, 
 	      lwp_cpptr->name));
-    pthread_cond_signal(&lwp_cpptr->c);
+    LWP_INT_SIGNAL(&lwp_cpptr->c);
 
     /* sleep on your own condition */
     Debug(0, ("LWP_QWait:%s going to wait on own condition \n", 
 	      old_cpptr->name));
-    pthread_cond_wait(&old_cpptr->c, &ct_mutex);
-    pthread_mutex_unlock(&ct_mutex);
+    LWP_INT_WAIT(&old_cpptr->c, &ct_mutex);
+    LWP_INT_UNLOCK(&ct_mutex);
+    Debug(0, ("LWP_QWait:%s woke up \n",
+	      old_cpptr->name));
 
     lwp_cpptr = old_cpptr;
 
@@ -434,10 +556,14 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
                   char *parm, char *name, PROCESS *pid)
 {
     PROCESS temp;
+#if defined(PTHREADS_LWP)
     pthread_t	ct;
     pthread_attr_t cta;
-    PROCESS old_cpptr;
     int retval;
+#elif defined(WINDOWS_THREADS_LWP)
+    HANDLE ct;
+#endif
+    PROCESS old_cpptr;
 
     Debug(0, ("Entered LWP_CreateProcess to create %s at priority %d\n", 
 	      name, priority));
@@ -470,23 +596,34 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
       PRE_Block = 1;
       Proc_Running = FALSE;	    /* sem set true by forked process */
       
+#if defined(PTHREADS_LWP)
       pthread_attr_init(&cta);
 #ifdef _POSIX_THREAD_ATTR_STACKSIZE
       pthread_attr_setstacksize(&cta, stacksize);
 #endif
       retval = pthread_create(&ct, &cta, (void *)Create_Process_Part2, temp);
       if (!retval) {
-	temp->a = cta;
 	pthread_detach(ct);
+	temp->a = cta;
+#elif defined(WINDOWS_THREADS_LWP)
+	Debug(0,("Before CreateThread Create_Process_Part2"));
+      ct = CreateThread (NULL, 
+			 stacksize, (LPTHREAD_START_ROUTINE) Create_Process_Part2, 
+			 temp,  0,  NULL);
+	Debug(0,("After CreateThread Create_Process_Part2"));
+      if (ct != NULL) {
+	temp->t = ct;
+#endif
 
 	/* check if max priority has changed */
 	Highest_runnable_priority = MAX(Highest_runnable_priority, priority);
 	
-	pthread_mutex_lock(&run_sem);
+	LWP_INT_LOCK(&run_sem);
 	Debug(0, ("Before creating process yields Proc_Running = %d\n", 
 		  Proc_Running));
 	while( !Proc_Running ){
-	  pthread_mutex_unlock(&run_sem);
+	  LWP_INT_UNLOCK(&run_sem);
+#if defined(PTHREADS_LWP)
 #if defined(HAVE_THR_YIELD)
 	  thr_yield();
 #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
@@ -494,11 +631,14 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
 #else
 	  pthread_yield();
 #endif
-	  pthread_mutex_lock(&run_sem);
+#elif defined(WINDOWS_THREADS_LWP)
+	  Sleep(0); /* XXX */
+#endif
+	  LWP_INT_LOCK(&run_sem);
 	  Debug(0,("After creating proc yields and gets back control Proc_Running = %d\n", 
 		    Proc_Running));
 	}
-	pthread_mutex_unlock(&run_sem);
+	LWP_INT_UNLOCK(&run_sem);
 	
 	lwp_cpptr = old_cpptr;
 	  
@@ -507,7 +647,9 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
 	return LWP_SUCCESS;
       }
     } else {
+#ifdef PTHREADS_LWP	
       pthread_attr_destroy(&cta);
+#endif
     }
     return LWP_EINIT;
 }
@@ -519,7 +661,11 @@ LWP_DestroyProcess(PROCESS pid)
 
   Debug(0, ("Entered Destroy_Process"));
   if (lwp_init) {
+#if defined(PTHREADS_LWP)
     pthread_attr_destroy(&pid->a);
+#elif defined(WINDOWS_THREADS_LWP)
+    CloseHandle (pid->t);
+#endif
     if (lwp_cpptr == pid){
       /* kill myself */
       pid->status = DESTROYED;
@@ -530,10 +676,10 @@ LWP_DestroyProcess(PROCESS pid)
       lwp_cpptr = runnable[Highest_runnable_priority].head;
       lwpremove(lwp_cpptr, &runnable[Highest_runnable_priority]);
       
-      pthread_mutex_lock(&ct_mutex);
-      pthread_cond_signal(&lwp_cpptr->c);
-      pthread_mutex_unlock(&ct_mutex);
-      pthread_exit(t);
+      LWP_INT_LOCK(&ct_mutex);
+      LWP_INT_SIGNAL(&lwp_cpptr->c);
+      LWP_INT_UNLOCK(&ct_mutex);
+      LWP_INT_EXIT(t);
     } else {
       /* kill some other process - mark status destroyed - 
 	 if process is blocked, it will be purged on next create proc;
@@ -560,6 +706,7 @@ LWP_DispatchProcess()		/* explicit voluntary preemption */
 int 
 LWP_Init(int version, int priority, PROCESS *pid)
 {
+  lwp_debug = 0;
   if (version != LWP_VERSION)
     {
       fprintf(stderr, "**** FATAL ERROR: LWP VERSION MISMATCH ****\n");
@@ -600,13 +747,21 @@ InitializeProcessSupport(int priority, PROCESS *pid)
   Initialize_PCB(temp, priority, NULL, 0, NULL, NULL,"Main Process");
   gettimeofday(&temp->lastReady, 0);
 
+#if 0
   Highest_runnable_priority = priority;
+#endif
 
   /* initialize mutex and semaphore */
   Proc_Running = TRUE;
+#if defined(PTHREADS_LWP)
   pthread_mutex_init(&run_sem, NULL);
   pthread_mutex_init(&ct_mutex, NULL);
-
+#elif defined(WINDOWS_THREADS_LWP)
+  run_sem = CreateMutex (NULL, FALSE, "run_sem");
+  if (run_sem == NULL) abort();
+  ct_mutex = CreateMutex (NULL, FALSE, "ct_mutex");
+  if (ct_mutex == NULL) abort();
+#endif
   lwp_cpptr = temp;
   Dispatcher();
   *pid = temp;
@@ -683,19 +838,22 @@ LWP_MwaitProcess(int wcount, char *evlist[]) /* wait on m of n events */
         /* wake up next lwp */
         lwp_cpptr = runnable[Highest_runnable_priority].head;
         lwpremove(lwp_cpptr, &runnable[Highest_runnable_priority]);
-	timerclear(&lwp_cpptr->lastReady);
+	lwp_timerclear(&lwp_cpptr->lastReady);
 	Debug(0, ("WaitProcess: %s Going to signal %s \n", 
-		  old_cpptr->name, lwp_cpptr->name))
-        pthread_mutex_lock(&ct_mutex);
-        pthread_cond_signal(&lwp_cpptr->c);
+		  old_cpptr->name, lwp_cpptr->name));
+        LWP_INT_LOCK(&ct_mutex);
+        LWP_INT_SIGNAL(&lwp_cpptr->c);
 
 	/* sleep on your own condition */
 	Debug(0, ("WaitProcess:%s going to wait \n", old_cpptr->name))
-	pthread_cond_wait(&old_cpptr->c, &ct_mutex);
-	pthread_mutex_unlock(&ct_mutex);
+
+	LWP_INT_WAIT(&old_cpptr->c, &ct_mutex);
+	LWP_INT_UNLOCK(&ct_mutex);
+	Debug(0, ("WaitProcess:%s woke up \n", old_cpptr->name))
 
 	/* update the global pointer */
 	lwp_cpptr = old_cpptr;
+
 	if (lwp_cpptr->priority < Highest_runnable_priority)
 	    Dispatcher();
 	return LWP_SUCCESS ;
@@ -716,7 +874,7 @@ LWP_StackUsed(PROCESS pid, int *max, int *used)
 static void 
 Abort_LWP(char *msg)
 {
-    Debug(0, ("Entered Abort_LWP"))
+    Debug(0, ("Entered Abort_LWP"));
     printf("***LWP Abort: %s\n", msg);
     Dump_Processes();
     Exit_LWP();
@@ -726,15 +884,18 @@ static void
 Create_Process_Part2(PROCESS temp)
 {
     /* set the global Proc_Running to signal the parent */
-    pthread_mutex_lock(&run_sem);
+    LWP_INT_LOCK(&run_sem);
     Proc_Running = TRUE;
-    pthread_cond_wait(&temp->c, &run_sem);
-    pthread_mutex_unlock(&run_sem);
+    LWP_INT_WAIT(&temp->c, &run_sem);
+    LWP_INT_UNLOCK(&run_sem);
+
     lwp_cpptr = temp;
 
+#if defined(PTHREADS_LWP)
 #ifdef _POSIX_THREAD_ATTR_STACKSIZE
     pthread_attr_setstacksize(&temp->a, temp->stacksize);
-#endif
+#endif /* _POSIX_THREAD_ATTR_STACKSIZE */
+#endif /* PTHREADS_LWP */
     
     (*temp->ep)(temp->parm);
     LWP_DestroyProcess(temp);
@@ -777,12 +938,18 @@ Dispatcher()		/* Lightweight process dispatcher */
 	void *t;
 	int my_priority;
 	PROCESS	old_cpptr;
+
+
 #if 1
 	int i = Highest_runnable_priority;
-	
+	    
 	Cal_Highest_runnable_priority();
-	if (Highest_runnable_priority != i)
-	  printf("hipri was %d actually %d\n", i, Highest_runnable_priority);
+	if (Highest_runnable_priority != i) {
+	    printf("hipri was %d actually %d\n", i, Highest_runnable_priority);
+#if 0
+	    Dump_Processes();
+#endif
+	}
 	Highest_runnable_priority = i;
 #endif
 	my_priority = lwp_cpptr->priority;
@@ -802,17 +969,19 @@ Dispatcher()		/* Lightweight process dispatcher */
 
 	    /* remove next process from runnable queue and signal it */
 	    lwpremove(lwp_cpptr, &runnable[Highest_runnable_priority]);
-	    pthread_mutex_lock(&ct_mutex);
+	    LWP_INT_LOCK(&ct_mutex);
 	    Debug(0, ("Dispatcher: %s going to signal %s condition\n", 
 		      old_cpptr->name, lwp_cpptr->name))
 
-	    pthread_cond_signal(&lwp_cpptr->c);
+	    LWP_INT_SIGNAL(&lwp_cpptr->c);
 
 	    /* now sleep until somebody wakes me */
 	    Debug(0, ("Dispatcher: %s going to wait on own condition\n", 
 		      old_cpptr->name))
-	    pthread_cond_wait(&old_cpptr->c, &ct_mutex);
-	    pthread_mutex_unlock(&ct_mutex);
+	    LWP_INT_WAIT(&old_cpptr->c, &ct_mutex);
+	    LWP_INT_UNLOCK(&ct_mutex);
+	    Debug(0, ("Dispatcher: %s woke up\n", 
+		      old_cpptr->name))
 
 	    /* update global pointer */
 	    lwp_cpptr = old_cpptr;
@@ -828,10 +997,10 @@ Dispatcher()		/* Lightweight process dispatcher */
 		lwp_cpptr = runnable[Highest_runnable_priority].head;
 		lwpremove(lwp_cpptr, &runnable[Highest_runnable_priority]);
 
-		pthread_mutex_lock(&ct_mutex);
-		pthread_cond_signal(&lwp_cpptr->c);
-		pthread_mutex_unlock(&ct_mutex);
-		pthread_exit(t);
+		LWP_INT_LOCK(&ct_mutex);
+		LWP_INT_SIGNAL(&lwp_cpptr->c);
+		LWP_INT_UNLOCK(&ct_mutex);
+		LWP_INT_EXIT(t);
 	}
 #if 0
 	if (PRE_Block != 1) Abort_LWP("PRE_Block not 1");
@@ -876,11 +1045,20 @@ Initialize_PCB(PROCESS temp, int priority, char *stack, int stacksize,
     temp -> prev = NULL;
     temp -> rused = 0;
     temp -> level = 1;		/* non-preemptable */
-    timerclear(&temp->lastReady);
+    lwp_timerclear(&temp->lastReady);
 
     /* initialize the mutex and condition */
+#if defined(PTHREADS_LWP)
     pthread_mutex_init(&temp->m, NULL);	
     pthread_cond_init(&temp->c, NULL);
+#elif defined(WINDOWS_THREADS_LWP)
+    temp->m = CreateMutex (NULL, FALSE, NULL);
+    if (temp->m == NULL) abort();
+    temp->c = CreateEvent (NULL, FALSE, FALSE, NULL);
+    if (temp->c == NULL) abort();
+    Debug(0, ("Init_PCB: event = %p\n", temp->c));
+#endif
+
 
     Debug(0, ("Leaving Initialize_PCB\n"))
 }
@@ -926,6 +1104,9 @@ static void
 Cal_Highest_runnable_priority()
 {
     int	i;
+#if 0
+    Dump_Processes();
+#endif
     for (i = LWP_MAX_PRIORITY; runnable[i].count == 0 && i >=0; i--);
 #if 0
     if (i < 0)

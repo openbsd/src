@@ -1,4 +1,3 @@
-/*	$OpenBSD: getopt.c,v 1.1.1.1 1998/09/14 21:53:03 art Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,22 +69,22 @@ getopt(nargc, nargv, ostr)
 		optreset = 0;
 		if (optind >= nargc || *(place = nargv[optind]) != '-') {
 			place = EMSG;
-			return(EOF);
+			return(-1);
 		}
 		if (place[1] && *++place == '-') {	/* found "--" */
 			++optind;
 			place = EMSG;
-			return(EOF);
+			return(-1);
 		}
 	}					/* option letter okay? */
 	if ((optopt = (int)*place++) == (int)':' ||
 	    !(oli = strchr(ostr, optopt))) {
 		/*
 		 * if the user didn't specify '-' as an option,
-		 * assume it means EOF.
+		 * assume it means -1 (EOF).
 		 */
 		if (optopt == (int)'-')
-			return(EOF);
+			return(-1);
 		if (!*place)
 			++optind;
 		if (opterr && *ostr != ':') {

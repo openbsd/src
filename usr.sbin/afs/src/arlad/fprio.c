@@ -1,6 +1,5 @@
-/*	$OpenBSD: fprio.c,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,7 +42,7 @@
 
 #include "arla_local.h"
 #include <kafs.h>
-RCSID("$KTH: fprio.c,v 1.6 1999/04/20 20:58:08 map Exp $");
+RCSID("$Id: fprio.c,v 1.3 2000/09/11 14:40:42 art Exp $");
 
 /* Hashtable of entries by name */
 static Hashtab *fpriohashtab;
@@ -160,7 +159,7 @@ fprio_remove(VenusFid fid)
  */
 
 void
-fprio_set(VenusFid fid, unsigned prio)
+fprio_set(VenusFid fid, Bool prio)
 {
     struct fpriorityentry *e; 
     struct fpriorityentry key; 
@@ -230,7 +229,7 @@ fprio_readin(char *file)
 	}
 
 	fid.Cell = cellnum;
-	fprio_set(fid, prio);
+	fprio_set(fid, prio ? TRUE : FALSE);
     }
     return 0;
 }
@@ -239,7 +238,7 @@ fprio_readin(char *file)
  * Find the priority of a fid
  */
 
-int 
+Bool
 fprio_get(VenusFid fid)
 {
     struct fpriorityentry a;
@@ -250,7 +249,7 @@ fprio_get(VenusFid fid)
     b = hashtabsearch(fpriohashtab, &a);
     if (b)
 	return b->priority;
-    return 0;
+    return FALSE;
 }
 
 /*
@@ -270,9 +269,8 @@ fprio_print_entry (void *ptr, void *arg)
 	comment = "";
 
     arla_log(ADEBVLOG, "%s%d:%s:%d:%d:%d", 
-	     comment, n->priority, cell?cell:"unknowncell", n->fid.fid.Volume, 
-	     n->fid.fid.Vnode, n->fid.fid.Unique);
-
+	     comment, n->priority == TRUE ? 1 : 0, cell?cell:"unknowncell", 
+	     n->fid.fid.Volume, n->fid.fid.Vnode, n->fid.fid.Unique);
     return FALSE;
 }
 
@@ -285,11 +283,10 @@ fprio_status (void)
 {
     time_t the_time = time(NULL);
 
-    arla_log(ADEBVLOG, "#fprio entries\n#\n#  Date: %s\n#\n"
-	     "#priority range from %d to %d\n#\n"
+    arla_log(ADEBVLOG, "#fprio entries\n#\n#  Date: %s\n#"
 	     "#Syntax: (# means comment)\n"
 	     "#priority:cell:volume:vnode:unique\n",
-	     ctime(&the_time), FPRIO_MIN, FPRIO_MAX);
+	     ctime(&the_time));
     hashtabforeach (fpriohashtab, fprio_print_entry, NULL);
 }
 

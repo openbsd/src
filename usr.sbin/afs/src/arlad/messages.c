@@ -1,6 +1,5 @@
-/*	$OpenBSD: messages.c,v 1.2 1999/04/30 01:59:09 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +37,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: messages.c,v 1.126 1999/04/14 15:27:36 map Exp $");
+RCSID("$Id: messages.c,v 1.3 2000/09/11 14:40:43 art Exp $");
 
 #include <xfs/xfs_message.h>
 
@@ -52,9 +51,6 @@ RCSID("$KTH: messages.c,v 1.126 1999/04/14 15:27:36 map Exp $");
 /* XXX */
 int Log_is_open;
 DARLA_file log_data;
-
-static int 
-xfs_message_wakeup (int, struct xfs_message_wakeup*, u_int);
 
 static int 
 xfs_message_getroot (int, struct xfs_message_getroot*, u_int);
@@ -101,10 +97,8 @@ xfs_message_rename (int fd, struct xfs_message_rename *h, u_int size);
 static int
 xfs_message_pioctl (int fd, struct xfs_message_pioctl *h, u_int size) ;
 
-typedef int 
-(*xfs_message_function) (int, struct xfs_message_header*, u_int);
 
-static xfs_message_function rcvfuncs[] = {
+xfs_message_function rcvfuncs[] = {
 NULL,						/* version */
 (xfs_message_function)xfs_message_wakeup,	/* wakeup */
 (xfs_message_function)xfs_message_getroot,	/* getroot */
@@ -130,61 +124,33 @@ NULL,						/* invalidnode */
 (xfs_message_function)xfs_message_pioctl,	/* pioctl */
 NULL,	                                        /* wakeup_data */
 NULL,						/* updatefid */
-NULL						/* advlock */
+NULL,						/* advlock */
+NULL						/* gc nodes */
 };
 
-static u_int *seqnums;
 
-static List *sleepers;
+/*
+ * Return 0 if ``fid1'' eq ``fid2''.
+ */
 
-/* number of times each type of message has been sent */
-
-static unsigned sent_stat[XFS_MSG_COUNT];
-
-/* number of times each type of message has been received */
-
-static unsigned recv_stat[XFS_MSG_COUNT];
-
-/* count of the number of messages in a write */
-
-static unsigned send_count[9];	/* 8 is the max the multiple stuff handles */
-
-static char *rcvfuncs_name[] = 
+int
+VenusFid_cmp (const VenusFid *fid1, const VenusFid *fid2)
 {
-  "version",
-  "wakeup",
-  "getroot",
-  "installroot",
-  "getnode",
-  "installnode",
-  "getattr",
-  "installattr",
-  "getdata",
-  "installdata",
-  "inactivenode",
-  "invalidnode",
-  "open",
-  "put_data",
-  "put_attr",
-  "create",
-  "mkdir",
-  "link",
-  "symlink",
-  "remove",
-  "rmdir",
-  "rename",
-  "pioctl",
-  "wakeup_data",
-  "updatefid",
-  "advlock"
-};
+    if (fid1->Cell == fid2->Cell &&
+	fid1->fid.Volume == fid2->fid.Volume &&
+	fid1->fid.Vnode == fid2->fid.Vnode &&
+	fid1->fid.Unique == fid2->fid.Unique)
+	return 0;
+    return 1;
+}
+
 
 /*
  *
  */
 
 long
-afsfid2inode (VenusFid *fid)
+afsfid2inode (const VenusFid *fid)
 {
     return ((fid->fid.Volume & 0x7FFF) << 16 | (fid->fid.Vnode & 0xFFFFFFFF));
 }
@@ -195,7 +161,7 @@ afsfid2inode (VenusFid *fid)
 
 static void
 afsstatus2xfs_attr (AFSFetchStatus *status,
-		    VenusFid *fid,
+		    const VenusFid *fid,
 		    struct xfs_attr *attr)
 {
      attr->valid = XA_V_NONE;
@@ -203,20 +169,22 @@ afsstatus2xfs_attr (AFSFetchStatus *status,
 	  case TYPE_FILE :
 	       XA_SET_MODE(attr, S_IFREG);
 	       XA_SET_TYPE(attr, XFS_FILE_REG);
+	       XA_SET_NLINK(attr, status->LinkCount);
 	       break;
 	  case TYPE_DIR :
 	       XA_SET_MODE(attr, S_IFDIR);
 	       XA_SET_TYPE(attr, XFS_FILE_DIR);
+	       XA_SET_NLINK(attr, status->LinkCount);
 	       break;
 	  case TYPE_LINK :
 	       XA_SET_MODE(attr, S_IFLNK);
 	       XA_SET_TYPE(attr, XFS_FILE_LNK);
+	       XA_SET_NLINK(attr, status->LinkCount);
 	       break;
 	  default :
 	       arla_warnx (ADEBMSG, "afsstatus2xfs_attr: default");
 	       abort ();
      }
-     XA_SET_NLINK(attr, status->LinkCount);
      XA_SET_SIZE(attr, status->Length);
      XA_SET_UID(attr,status->Owner);
      XA_SET_GID(attr, status->Group);
@@ -258,9 +226,9 @@ afsrights2xfsrights(u_long ar, u_int32_t FileType, u_int32_t UnixModeBits)
     return ret;
 }
 
-static void
-fcacheentry2xfsnode (VenusFid *fid,
-		     VenusFid *statfid, 
+void
+fcacheentry2xfsnode (const VenusFid *fid,
+		     const VenusFid *statfid, 
 		     AFSFetchStatus *status,
 		     struct xfs_msg_node *node,
                      AccessEntry *ae)
@@ -279,6 +247,10 @@ fcacheentry2xfsnode (VenusFid *fid,
 					      status->UnixModeBits);
     }
 }
+
+/*
+ * convert `xa' into `storestatus'
+ */
 
 int
 xfs_attr2afsstorestatus(struct xfs_attr *xa,
@@ -310,243 +282,25 @@ xfs_attr2afsstorestatus(struct xfs_attr *xa,
 }
 
 /*
- *
- */
-
-void
-xfs_message_init (void)
-{
-     unsigned i;
-
-     seqnums = (u_int *)malloc (sizeof (*seqnums) * getdtablesize ());
-     if (seqnums == NULL)
-	 arla_err (1, ADEBERROR, errno, "xfs_message_init: malloc");
-     for (i = 0; i < getdtablesize (); ++i)
-	  seqnums[i] = 0;
-     sleepers = listnew ();
-     if (sleepers == NULL)
-	 arla_err (1, ADEBERROR, errno, "xfs_message_init: listnew");
-     assert (sizeof(rcvfuncs) / sizeof(*rcvfuncs) == XFS_MSG_COUNT);
-     assert (sizeof(rcvfuncs_name) / sizeof(*rcvfuncs_name) == XFS_MSG_COUNT);
-}
-
-/*
- *
- */
-
-int
-xfs_message_receive (int fd, struct xfs_message_header *h, u_int size)
-{
-     unsigned opcode = h->opcode;
-
-     if (opcode >= XFS_MSG_COUNT || rcvfuncs[opcode] == NULL ) {
-	  arla_warnx (ADEBMSG, "Bad message opcode = %u", opcode);
-	  return -1;
-     }
-
-     ++recv_stat[opcode];
-
-     arla_warnx (ADEBMSG, "Rec message: opcode = %u (%s), size = %u",
-		 opcode, rcvfuncs_name[opcode], h->size);
-
-     return (*rcvfuncs[opcode])(fd, h, size);
-}
-
-/*
- *
- */
-
-static int
-xfs_message_send (int fd, struct xfs_message_header *h, u_int size)
-{
-     int res;
-     unsigned opcode = h->opcode;
-
-     h->size = size;
-     h->sequence_num = seqnums[fd]++;
-
-     if (opcode >= XFS_MSG_COUNT) {
-	  arla_warnx (ADEBMSG, "Bad message opcode = %u", opcode);
-	  return -1;
-     }
-
-     ++sent_stat[opcode];
-     ++send_count[1];
-
-     arla_warnx (ADEBMSG, "Send message: opcode = %u (%s), size = %u",
-		 opcode, rcvfuncs_name[opcode], h->size);
-
-     if ((res = write (fd, h, size)) < 0) {
-	 arla_warn (ADEBMSG, errno, "xfs_message_send: write");
-	 return -1;
-     } else
-	 return 0;
-}
-
-static int
-xfs_message_wakeup (int fd, struct xfs_message_wakeup *h, u_int size)
-{
-     Listitem *i;
-     struct xfs_message_header *w;
-
-     for (i = listhead (sleepers); i; i = listnext (sleepers, i)) {
-	  w = (struct xfs_message_header *)listdata(i);
-	  if (w->sequence_num == h->sleepers_sequence_num) {
-	       listdel (sleepers, i);
-	       memcpy (w, h, size);
-	       LWP_SignalProcess ((char *)w);
-	  }
-     }
-     return 0;
-}
-
-static int
-xfs_message_sleep (struct xfs_message_header *h)
-{
-     listaddtail (sleepers, h);
-     LWP_WaitProcess ((char *)h);
-     return ((struct xfs_message_wakeup *)h)->error;
-}
-
-static int __attribute__ ((unused))
-xfs_message_rpc (int fd, struct xfs_message_header *h, u_int size)
-{
-     if (size < sizeof (struct xfs_message_wakeup)) {
-	  arla_warnx (ADEBMSG, "xfs_message_rpc: Too small packet for rpc");
-	  return -1;
-     }
-     return xfs_message_send (fd, h, size) || xfs_message_sleep (h);
-}
-
-static int
-xfs_send_message_wakeup (int fd, u_int seqnum, int error)
-{
-     struct xfs_message_wakeup msg;
-     
-     msg.header.opcode = XFS_MSG_WAKEUP;
-     msg.sleepers_sequence_num = seqnum;
-     msg.error = error;
-     arla_warnx (ADEBMSG, "sending wakeup: seq = %u, error = %d",
-		 seqnum, error);
-     return xfs_message_send (fd, (struct xfs_message_header *)&msg, 
-			      sizeof(msg));
-}
-
-/*
- *
- */
-
-static int
-xfs_send_message_wakeup_vmultiple (int fd,
-				   u_int seqnum,
-				   int error,
-				   va_list args)
-{
-    struct iovec iovec[8];
-    struct xfs_message_header *h;
-    struct xfs_message_wakeup msg;
-    size_t size;
-    int i = 0;
-    int ret;
-
-    h = va_arg (args, struct xfs_message_header *);
-    size = va_arg (args, size_t);
-    while (h != NULL) {
-	h->size = size;
-	h->sequence_num = seqnums[fd]++;
-	assert (h->opcode >= 0 && h->opcode < XFS_MSG_COUNT);
-	assert (i < 8);
-	iovec[i].iov_base = (char *)h;
-	iovec[i].iov_len  = size;
-
-	++sent_stat[h->opcode];
-
-	arla_warnx (ADEBMSG, "Multi-send: opcode = %u (%s), size = %u",
-		    h->opcode, rcvfuncs_name[h->opcode], h->size);
-
-	h = va_arg (args, struct xfs_message_header *);
-	size = va_arg (args, size_t);
-	++i;
-    }
-    msg.header.opcode = XFS_MSG_WAKEUP;
-    msg.header.size  = sizeof(msg);
-    msg.header.sequence_num = seqnums[fd]++;
-    msg.sleepers_sequence_num = seqnum;
-    msg.error = error;
-    iovec[i].iov_base = (char *)&msg;
-    iovec[i].iov_len  = sizeof(msg);
-
-    ++sent_stat[XFS_MSG_WAKEUP];
-
-    arla_warnx (ADEBMSG, "multi-sending wakeup: seq = %u, error = %d",
-		seqnum, error);
-
-    ++i;
-    
-    ++send_count[i];
-
-    ret = writev (fd, iovec, i);
-    if (ret < 0) {
-	arla_warn (ADEBMSG, errno,
-		   "xfs_send_message_wakeup_vmultiple: writev");
-	return -1;
-    }
-    return 0;
-}
-
-static int
-xfs_send_message_wakeup_multiple (int fd,
-				  u_int seqnum,
-				  int error,
-				  ...)
-{
-    va_list args;
-    int ret;
-
-    va_start (args, error);
-    ret = xfs_send_message_wakeup_vmultiple (fd, seqnum, error, args);
-    va_end (args);
-    return ret;
-}
-
-static int
-xfs_send_message_wakeup_data (int fd, u_int seqnum, int error,
-			      void *data, int size)
-{
-     struct xfs_message_wakeup_data msg;
-     
-     msg.header.opcode = XFS_MSG_WAKEUP_DATA;
-     msg.sleepers_sequence_num = seqnum;
-     msg.error = error;
-     arla_warnx (ADEBMSG,
-		 "sending wakeup: seq = %u, error = %d", seqnum, error);
-
-     if (sizeof(msg) >= size && size != 0) {
-	 memcpy(msg.msg, data, size);
-     }
-
-     msg.len = size;
-
-     return xfs_message_send (fd, (struct xfs_message_header *)&msg, 
-			      sizeof(msg));
-}
-
-/*
  * Return true iff we should retry the operation.
- * Magic with `ce' has to be done as well.
+ * Also replace `ce' with anonymous creds in case it has expired.
  */
 
 static int
-try_again (int *ret, CredCacheEntry **ce, xfs_cred *cred, VenusFid *fid)
+try_again (int *ret, CredCacheEntry **ce, xfs_cred *cred, const VenusFid *fid)
 {
     switch (*ret) {
 #ifdef KERBEROS
-    case RXKADEXPIRED :
+    case RXKADEXPIRED : {
+	int32_t cell = (*ce)->cell;
+
+	conn_clearcred (0, cred->pag, 2);
 	cred_expire (*ce);
 	cred_free (*ce);
-	*ce = cred_get (0, cred->pag, CRED_ANY);
+	*ce = cred_get (cell, cred->pag, CRED_ANY);
 	assert (*ce != NULL);
 	return TRUE;
+    }
 #endif	 
     case ARLA_VSALVAGE :
 	*ret = EIO;
@@ -556,7 +310,7 @@ try_again (int *ret, CredCacheEntry **ce, xfs_cred *cred, VenusFid *fid)
 	return FALSE;
     case ARLA_VMOVED :
     case ARLA_VNOVOL :
-	if (fid) {
+	if (fid && !volcache_reliable (fid->fid.Volume, fid->Cell)) {
 	    volcache_invalidate (fid->fid.Volume, fid->Cell);
 	    return TRUE;
 	} else {
@@ -577,11 +331,13 @@ try_again (int *ret, CredCacheEntry **ce, xfs_cred *cred, VenusFid *fid)
 #endif
 	return FALSE;
     case ARLA_VBUSY :
-	arla_warnx (ADEBWARN, "Waiting for busy volume...");
+	arla_warnx_with_fid (ADEBWARN, fid,
+			     "Waiting for busy volume...");
 	IOMGR_Sleep (1);
 	return TRUE;
     case ARLA_VRESTARTING:
-	arla_warnx (ADEBWARN, "Waiting fileserver to restart...");
+	arla_warnx_with_fid (ADEBWARN, fid,
+			     "Waiting for fileserver to restart...");
 	IOMGR_Sleep (1);
 	return TRUE;
     case ARLA_VIO :
@@ -605,8 +361,9 @@ xfs_message_getroot (int fd, struct xfs_message_getroot *h, u_int size)
      AccessEntry *ae;
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
+     int32_t cell_id = cell_name2num(cell_getthiscell());
 
-     ce = cred_get (0, h->cred.pag, CRED_ANY);
+     ce = cred_get (cell_id, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
      do {
 	 ret = getroot (&root_fid, ce);
@@ -650,27 +407,37 @@ xfs_message_getnode (int fd, struct xfs_message_getnode *h, u_int size)
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
      int ret;
+     const VenusFid *report_fid = NULL;
+
+
+     arla_warnx (ADEBMSG, "getnode (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)dirfid->Cell, (unsigned long)dirfid->fid.Volume,
+		 (unsigned long)dirfid->fid.Vnode,
+		 (unsigned long)dirfid->fid.Unique, h->name);
 
      ce = cred_get (dirfid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
+     report_fid = dirfid;
      do {
-	 res = cm_lookup (*dirfid, h->name, &fid, &ce);
-	 if (res.res == 0)
+  	 res = cm_lookup (dirfid, h->name, &fid, &ce, TRUE);
+	 if (res.res == 0) {
 	     res = cm_getattr (fid, &status, &real_fid, ce, &ae);
+	     report_fid = &fid;
+	 }
 
 	 if (res.res)
 	     ret = res.error;
 	 else
 	     ret = res.res;
-     } while (try_again (&ret, &ce, &h->cred, &fid));
+     } while (try_again (&ret, &ce, &h->cred, report_fid));
 
      if (ret == 0) {
 	 fcacheentry2xfsnode (&fid, &real_fid, &status, &msg.node, ae);
 
-	 msg.node.tokens = res.tokens;
+	 msg.node.tokens = res.tokens & ~XFS_DATA_MASK;
 	 msg.parent_handle = h->parent_handle;
-	 strcpy (msg.name, h->name);
+	 strlcpy (msg.name, h->name, sizeof(msg.name));
 
 	 msg.header.opcode = XFS_MSG_INSTALLNODE;
 	 h0 = (struct xfs_message_header *)&msg;
@@ -701,6 +468,10 @@ xfs_message_getattr (int fd, struct xfs_message_getattr *h, u_int size)
      int ret;
 
      fid = (VenusFid *)&h->handle;
+     arla_warnx (ADEBMSG, "getattr (%ld.%lu.%lu.%lu)",
+		 (long)fid->Cell, (unsigned long)fid->fid.Volume,
+		 (unsigned long)fid->fid.Vnode,
+		 (unsigned long)fid->fid.Unique);
      ce = cred_get (fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
@@ -715,8 +486,7 @@ xfs_message_getattr (int fd, struct xfs_message_getattr *h, u_int size)
      if (ret == 0) {
 	 fcacheentry2xfsnode (fid, &real_fid, &status, &msg.node, ae);
 	 
-	 msg.node.tokens = res.tokens & ~XFS_DATA_MASK;
-	 /* XXX - should not clear data mask if kernel already has data */
+	 msg.node.tokens = res.tokens;
 	 msg.header.opcode = XFS_MSG_INSTALLATTR;
 	 h0 = (struct xfs_message_header *)&msg;
 	 h0_len = sizeof(msg);
@@ -746,11 +516,27 @@ xfs_message_putattr (int fd, struct xfs_message_putattr *h, u_int size)
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
      int ret;
+     struct vcache log_cache;
+     FCacheEntry *fce;
+     int log_err;
 
      fid = (VenusFid *)&h->handle;
+     arla_warnx (ADEBMSG, "putattr (%ld.%lu.%lu.%lu)",
+		 (long)fid->Cell, (unsigned long)fid->fid.Volume,
+		 (unsigned long)fid->fid.Vnode,
+		 (unsigned long)fid->fid.Unique);
      xfs_attr2afsstorestatus(&h->attr, &status);
      ce = cred_get (fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
+
+     if (connected_mode != CONNECTED) {
+	 ret = fcache_find (&fce, *fid);
+	 ReleaseWriteLock (&fce->lock);
+
+	 log_cache.fid = *fid;
+	 log_cache.DataVersion  = fce->status.DataVersion;
+	 log_cache.cred = h->cred;
+     }
 
      do {
 	 res.res = 0;
@@ -772,13 +558,17 @@ xfs_message_putattr (int fd, struct xfs_message_putattr *h, u_int size)
 	     fcacheentry2xfsnode (fid, &real_fid,
 				  &fetch_status, &msg.node, ae);
 	 
-	     msg.node.tokens = res.tokens & ~XFS_DATA_MASK;
+	     msg.node.tokens  = res.tokens;
 	     msg.header.opcode = XFS_MSG_INSTALLATTR;
 	     h0 = (struct xfs_message_header *)&msg;
 	     h0_len = sizeof(msg);
 	 } else {
 	     ret = res.error;
 	 }
+     }
+
+     if (connected_mode != CONNECTED && ret == 0) {
+	 log_err = log_dis_setattr (&log_cache, &(h->attr));
      }
 
      cred_free (ce);
@@ -808,16 +598,37 @@ xfs_message_create (int fd, struct xfs_message_create *h, u_int size)
      size_t h1_len = 0;
      struct xfs_message_header *h2 = NULL;
      size_t h2_len = 0;
-     FCacheEntry *dir_entry;
+     FCacheEntry *dir_entry   = NULL;
+     FCacheEntry *child_entry = NULL;
 
      parent_fid = (VenusFid *)&h->parent_handle;
+     arla_warnx (ADEBMSG, "create (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell,
+		 (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique, h->name);
+
      xfs_attr2afsstorestatus(&h->attr, &store_status);
+     if (connected_mode != CONNECTED) {
+	 if (!(store_status.Mask & SS_OWNER)) {
+	     store_status.Owner = h->cred.uid;
+	     store_status.Mask |= SS_OWNER;
+	 }
+	 if (!(store_status.Mask & SS_MODTIME)) {
+	     struct timeval now;
+
+	     gettimeofday (&now, NULL);
+
+	     store_status.ClientModTime = now.tv_sec;
+	     store_status.Mask |= SS_MODTIME;
+	 }
+     }
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
      do {
-	 res = cm_create(*parent_fid, h->name, &store_status,
-			 &child_fid, &fetch_status, ce);
+	 res = cm_create(parent_fid, h->name, &store_status,
+			 &child_fid, &fetch_status, &ce);
 
 	 if (res.res)
 	     ret = res.error;
@@ -826,53 +637,39 @@ xfs_message_create (int fd, struct xfs_message_create *h, u_int size)
      } while (try_again (&ret, &ce, &h->cred, parent_fid));
 
      if (res.res == 0) {
-	 FCacheEntry *child_entry;
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
-
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
 	     
 	 res = conv_dir (dir_entry, ce, 0,
 			 &msg1.cache_handle,
 			 msg1.cache_name,
 			 sizeof(msg1.cache_name));
 	 if (res.res == -1) {
-	     fcache_release(dir_entry);
 	     ret = res.error;
 	     goto out;
 	 }
-
 	 msg1.node.tokens = res.tokens;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
+			      fcache_realfid(dir_entry),
 			      &dir_entry->status,
 			      &msg1.node, 
 			      dir_entry->acccache);
 	 msg1.flag = 0;
-	 fcache_release(dir_entry);
-	 
-	 ret = fcache_get (&child_entry, child_fid, ce);
+
+	 ret = fcache_get_data (&child_entry, &child_fid, &ce);
 	 if (ret)
 	     goto out;
-
-	 ret = fcache_get_data (child_entry, ce);
-	 if (ret) {
-	     fcache_release(child_entry);
-	     goto out;
-	 }
 
 	 msg3.cache_handle = child_entry->handle;
 	 fcache_file_name (child_entry,
 			   msg3.cache_name, sizeof(msg3.cache_name));
 	 msg3.flag = 0;
-	 fcache_release(child_entry);
+	 child_entry->flags.kernelp = TRUE;
+	 child_entry->flags.datausedp = TRUE;
+	 dir_entry->flags.datausedp = TRUE;
 
 	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg1;
@@ -881,9 +678,11 @@ xfs_message_create (int fd, struct xfs_message_create *h, u_int size)
 	 fcacheentry2xfsnode (&child_fid, &child_fid,
 			      &fetch_status, &msg2.node, dir_entry->acccache);
 			      
-	 msg2.node.tokens   = XFS_ATTR_R | XFS_OPEN_NW | XFS_OPEN_NR; /* XXX */
+	 msg2.node.tokens   = XFS_ATTR_R 
+	     | XFS_OPEN_NW | XFS_OPEN_NR
+	     | XFS_DATA_R | XFS_DATA_W;
 	 msg2.parent_handle = h->parent_handle;
-	 strcpy (msg2.name, h->name);
+	 strlcpy (msg2.name, h->name, sizeof(msg2.name));
 
 	 msg2.header.opcode = XFS_MSG_INSTALLNODE;
 	 h1 = (struct xfs_message_header *)&msg2;
@@ -910,6 +709,10 @@ xfs_message_create (int fd, struct xfs_message_create *h, u_int size)
      }
 
 out:
+     if (dir_entry)
+	 fcache_release(dir_entry);
+     if (child_entry)
+	 fcache_release(child_entry);
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
@@ -934,6 +737,8 @@ xfs_message_mkdir (int fd, struct xfs_message_mkdir *h, u_int size)
      struct xfs_message_installdata msg1;
      struct xfs_message_installnode msg2;
      struct xfs_message_installdata msg3;
+     FCacheEntry *dir_entry = NULL;
+     FCacheEntry *child_entry = NULL;
 
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
@@ -942,16 +747,38 @@ xfs_message_mkdir (int fd, struct xfs_message_mkdir *h, u_int size)
      struct xfs_message_header *h2 = NULL;
      size_t h2_len = 0;
 
-     parent_fid = (VenusFid *)&h->parent_handle;
+     struct vcache log_ent_parent, log_ent_child;
+     FCacheEntry parent_entry;
+     AFSStoreStatus log_store_status;
+
+     parent_fid = fid_translate((VenusFid *)&h->parent_handle);
+     arla_warnx (ADEBMSG, "mkdir (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell, (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique, h->name);
 
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
      xfs_attr2afsstorestatus(&h->attr, &store_status);
+     if (connected_mode != CONNECTED) {
+	 if (!(store_status.Mask & SS_OWNER)) {
+	     store_status.Owner = h->cred.uid;
+	     store_status.Mask |= SS_OWNER;
+	 }
+	 if (!(store_status.Mask & SS_MODTIME)) {
+	     struct timeval now;
+
+	     gettimeofday (&now, NULL);
+
+	     store_status.ClientModTime = now.tv_sec;
+	     store_status.Mask |= SS_MODTIME;
+	 }
+     }
 
      do {
-	 res = cm_mkdir(*parent_fid, h->name, &store_status,
-			&child_fid, &fetch_status, ce);
+	 res = cm_mkdir(parent_fid, h->name, &store_status,
+			&child_fid, &fetch_status, &ce);
 	 if (res.res)
 	     ret = res.error;
 	 else
@@ -959,32 +786,23 @@ xfs_message_mkdir (int fd, struct xfs_message_mkdir *h, u_int size)
      } while(try_again (&ret, &ce, &h->cred, parent_fid));
 
      if (res.res == 0) {
-	 FCacheEntry *dir_entry;
-	 FCacheEntry *child_entry;
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
-	     
 	 res = conv_dir (dir_entry, ce, 0,
 			 &msg1.cache_handle,
 			 msg1.cache_name,
 			 sizeof(msg1.cache_name));
 	 if (res.res == -1) {
-	     fcache_release(dir_entry);
 	     ret = res.error;
 	     goto out;
 	 }
 	 msg1.node.tokens = res.tokens;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
+			      fcache_realfid(dir_entry),
 			      &dir_entry->status, &msg1.node, 
 			      dir_entry->acccache);
 	 msg1.flag = 0;
@@ -992,27 +810,22 @@ xfs_message_mkdir (int fd, struct xfs_message_mkdir *h, u_int size)
 	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg1;
 	 h0_len = sizeof(msg1);
-	 fcache_release(dir_entry);
 
-	 ret = fcache_get (&child_entry, child_fid, ce);
+	 ret = fcache_get_data (&child_entry, &child_fid, &ce);
 	 if (ret)
 	     goto out;
-
-	 ret = fcache_get_data (child_entry, ce);
-	 if (ret) {
-	     fcache_release(child_entry);
-	     goto out;
-	 }
 
 	 res = conv_dir (child_entry, ce, 0,
 			 &msg3.cache_handle,
 			 msg3.cache_name,
 			 sizeof(msg3.cache_name));
 	 if (res.res == -1) {
-	     fcache_release(child_entry);
 	     ret = res.error;
 	     goto out;
 	 }
+
+	 child_entry->flags.datausedp = TRUE;
+	 dir_entry->flags.datausedp = TRUE;
 	 msg3.flag = 0;
 
 	 msg2.node.tokens = res.tokens;
@@ -1022,20 +835,36 @@ xfs_message_mkdir (int fd, struct xfs_message_mkdir *h, u_int size)
 			      dir_entry->acccache);
 			      
 	 msg2.parent_handle = h->parent_handle;
-	 strcpy (msg2.name, h->name);
+	 strlcpy (msg2.name, h->name, sizeof(msg2.name));
 
 	 msg2.header.opcode = XFS_MSG_INSTALLNODE;
 	 h1 = (struct xfs_message_header *)&msg2;
 	 h1_len = sizeof(msg2);
-	 fcache_release(child_entry);
 
 	 msg3.header.opcode = XFS_MSG_INSTALLDATA;
 	 msg3.node = msg2.node;
 	 h2 = (struct xfs_message_header *)&msg3;
 	 h2_len = sizeof(msg3);
+	 if (connected_mode != CONNECTED)
+	     parent_entry = *dir_entry;
+     }
+
+     if (connected_mode != CONNECTED) {
+	 log_ent_parent.fid = *parent_fid;
+	 log_ent_parent.DataVersion = parent_entry.status.DataVersion;
+	 log_ent_parent.cred = h->cred;
+	 log_store_status = store_status;
+	 log_ent_child.fid = child_fid;
+	 log_ent_child.DataVersion = 1;
+	 log_dis_mkdir (&log_ent_parent, &log_ent_child, &log_store_status,
+			h->name);
      }
 
 out:
+     if (child_entry) 
+	 fcache_release(child_entry);
+     if (dir_entry)
+	 fcache_release(dir_entry);
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
@@ -1065,13 +894,22 @@ xfs_message_link (int fd, struct xfs_message_link *h, u_int size)
 
      parent_fid   = (VenusFid *)&h->parent_handle;
      existing_fid = (VenusFid *)&h->from_handle;
+     arla_warnx (ADEBMSG, "link (%ld.%lu.%lu.%lu) (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell, (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique,
+		 (long)existing_fid->Cell,
+		 (unsigned long)existing_fid->fid.Volume,
+		 (unsigned long)existing_fid->fid.Vnode,
+		 (unsigned long)existing_fid->fid.Unique,
+		 h->name);
 
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
      do {
-	 res = cm_link (*parent_fid, h->name, *existing_fid,
-			&fetch_status, ce);
+	 res = cm_link (parent_fid, h->name, *existing_fid,
+			&fetch_status, &ce);
 	 if (res.res)
 	     ret = res.error;
 	 else
@@ -1081,16 +919,10 @@ xfs_message_link (int fd, struct xfs_message_link *h, u_int size)
      if (res.res == 0) {
 	 FCacheEntry *dir_entry;
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
-	     
 	 res = conv_dir (dir_entry, ce, 0,
 			 &msg1.cache_handle,
 			 msg1.cache_name,
@@ -1101,9 +933,10 @@ xfs_message_link (int fd, struct xfs_message_link *h, u_int size)
 	     goto out;
 	 }
 	 msg1.node.tokens = res.tokens;
+	 dir_entry->flags.datausedp = TRUE;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
+			      fcache_realfid(dir_entry),
 			      &dir_entry->status, &msg1.node,
 			      dir_entry->acccache);
 	 msg1.flag = 0;
@@ -1111,15 +944,15 @@ xfs_message_link (int fd, struct xfs_message_link *h, u_int size)
 	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg1;
 	 h0_len = sizeof(msg1);
-	 fcache_release(dir_entry);
 
 	 fcacheentry2xfsnode (existing_fid, existing_fid,
 			      &fetch_status, &msg2.node,
 			      dir_entry->acccache);
-			      
+	 fcache_release(dir_entry);
+
 	 msg2.node.tokens   = XFS_ATTR_R; /* XXX */
 	 msg2.parent_handle = h->parent_handle;
-	 strcpy (msg2.name, h->name);
+	 strlcpy (msg2.name, h->name, sizeof(msg2.name));
 
 	 msg2.header.opcode = XFS_MSG_INSTALLNODE;
 	 h1 = (struct xfs_message_header *)&msg2;
@@ -1141,7 +974,7 @@ out:
 static int 
 xfs_message_symlink (int fd, struct xfs_message_symlink *h, u_int size)
 {
-     VenusFid *parent_fid, child_fid;
+     VenusFid *parent_fid, child_fid, real_fid;
      AFSStoreStatus store_status;
      AFSFetchStatus fetch_status;
      Result res;
@@ -1155,6 +988,10 @@ xfs_message_symlink (int fd, struct xfs_message_symlink *h, u_int size)
      size_t h1_len = 0;
 
      parent_fid = (VenusFid *)&h->parent_handle;
+     arla_warnx (ADEBMSG, "symlink (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell, (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique, h->name);
 
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
@@ -1162,9 +999,10 @@ xfs_message_symlink (int fd, struct xfs_message_symlink *h, u_int size)
      xfs_attr2afsstorestatus(&h->attr, &store_status);
 
      do {
-	 res = cm_symlink(*parent_fid, h->name, &store_status,
-			  &child_fid, &fetch_status,
-			  h->contents, ce);
+	 res = cm_symlink(parent_fid, h->name, &store_status,
+			  &child_fid, &real_fid,
+			  &fetch_status,
+			  h->contents, &ce);
 	 ret = res.error;
      } while (try_again (&ret, &ce, &h->cred, parent_fid));
      
@@ -1175,16 +1013,10 @@ xfs_message_symlink (int fd, struct xfs_message_symlink *h, u_int size)
      if (res.res == 0) {
 	 FCacheEntry *dir_entry;
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
-	     
 	 res = conv_dir (dir_entry, ce, 0,
 			 &msg1.cache_handle,
 			 msg1.cache_name,
@@ -1196,24 +1028,25 @@ xfs_message_symlink (int fd, struct xfs_message_symlink *h, u_int size)
 	 }
 	 msg1.flag = 0;
 	 msg1.node.tokens = res.tokens;
+	 dir_entry->flags.datausedp = TRUE;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
+			      fcache_realfid(dir_entry),
 			      &dir_entry->status, &msg1.node,
 			      dir_entry->acccache);
 	 
 	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg1;
 	 h0_len = sizeof(msg1);
-	 fcache_release(dir_entry);
 
-	 fcacheentry2xfsnode (&child_fid, &child_fid,
+	 fcacheentry2xfsnode (&child_fid, &real_fid,
 			      &fetch_status, &msg2.node,
 			      dir_entry->acccache);
+	 fcache_release(dir_entry);
 			      
 	 msg2.node.tokens   = XFS_ATTR_R; /* XXX */
 	 msg2.parent_handle = h->parent_handle;
-	 strcpy (msg2.name, h->name);
+	 strlcpy (msg2.name, h->name, sizeof(msg2.name));
 
 	 msg2.header.opcode = XFS_MSG_INSTALLNODE;
 	 h1 = (struct xfs_message_header *)&msg2;
@@ -1231,24 +1064,73 @@ out:
      return ret;
 }
 
+/* 
+ * Handle the XFS remove message in `h', that is, remove name
+ * `h->name' in directory `h->parent' with the creds from `h->cred'.
+ */
+
 static int 
 xfs_message_remove (int fd, struct xfs_message_remove *h, u_int size)
 {
      VenusFid *parent_fid;
+     VenusFid fid;
      Result res;
      CredCacheEntry *ce;
      int ret;
-     struct xfs_message_installdata msg;
+     struct xfs_message_installdata msg1;
+     struct xfs_message_installattr msg2;
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
+     struct xfs_message_header *h1 = NULL;
+     size_t h1_len = 0;
+     FCacheEntry *limbo_entry = NULL;
+     unsigned link_count;
+     FCacheEntry *dir_entry = NULL;
+     AFSFetchStatus limbo_status;
 
      parent_fid = (VenusFid *)&h->parent_handle;
+     arla_warnx (ADEBMSG, "remove (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell, (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique, h->name);
 
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
      do {
-	 res = cm_remove(*parent_fid, h->name, ce);
+	 res = cm_lookup (parent_fid, h->name, &fid, &ce, FALSE);
+	 if (res.res)
+	     ret = res.error;
+	 else
+	     ret = res.res;
+     } while (try_again (&ret, &ce, &h->cred, parent_fid));
+
+     if (ret)
+	 goto out;
+
+     /*
+      * Fetch the linkcount of the to be removed node
+      */
+
+     ret = fcache_get (&limbo_entry, fid, ce);
+     if (ret)
+	 goto out;
+
+     ret = fcache_verify_attr (limbo_entry, NULL, NULL, ce);
+     if (ret)
+	 goto out;
+     limbo_status = limbo_entry->status;
+     link_count   = limbo_status.LinkCount;
+
+     fcache_release (limbo_entry);
+     limbo_entry = NULL;
+
+     /*
+      * Do the actual work
+      */
+
+     do {
+	 res = cm_remove(parent_fid, h->name, &ce);
 
 	 if (res.res)
 	     ret = res.error;
@@ -1256,49 +1138,97 @@ xfs_message_remove (int fd, struct xfs_message_remove *h, u_int size)
 	     ret = res.res;
      } while (try_again (&ret, &ce, &h->cred, parent_fid));
 
-     if (res.res == 0) {
-	 FCacheEntry *dir_entry;
+     if (ret == 0) {
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
-	     
-	 res = conv_dir (dir_entry, ce, 0,
-			 &msg.cache_handle,
-			 msg.cache_name,
-			 sizeof(msg.cache_name));
-	 if (res.res == -1) {
-	     fcache_release(dir_entry);
-	     ret = res.error;
-	     goto out;
+	 if (!dir_entry->flags.extradirp
+	     || dir_remove_name (dir_entry, h->name,
+				 &msg1.cache_handle,
+				 msg1.cache_name,
+				 sizeof(msg1.cache_name))) {
+	     res = conv_dir (dir_entry, ce, 0,
+			     &msg1.cache_handle,
+			     msg1.cache_name,
+			     sizeof(msg1.cache_name));
+	     if (res.res == -1) {
+		 ret = res.error;
+		 goto out;
+	     }
 	 }
 
-	 msg.flag = XFS_INVALID_DNLC;
-	 msg.node.tokens = res.tokens;
+	 msg1.flag = XFS_ID_INVALID_DNLC;
+	 msg1.node.tokens = res.tokens | XFS_DATA_R;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
-			      &dir_entry->status, &msg.node,
+			      fcache_realfid(dir_entry),
+			      &dir_entry->status, &msg1.node,
 			      dir_entry->acccache);
 	 
-	 msg.header.opcode = XFS_MSG_INSTALLDATA;
-	 h0 = (struct xfs_message_header *)&msg;
-	 h0_len = sizeof(msg);
-	 fcache_release(dir_entry);
+	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
+	 h0 = (struct xfs_message_header *)&msg1;
+	 h0_len = sizeof(msg1);
+
+	 /*
+	  * Set datausedp since we push data to kernel in out:
+	  */
+
+	 dir_entry->flags.datausedp = TRUE;
+
+	 /*
+	  * Make sure that if the removed node is in the
+	  * kernel it has the right linkcount since some
+	  * might hold a reference to it.
+	  */
+
+	 ret = fcache_get (&limbo_entry, fid, ce);
+	 if (ret)
+	     goto out;
+
+	 /*
+	  * Now insert the limbo entry to get right linkcount
+	  */
+
+	 ret = fcache_verify_attr (limbo_entry, dir_entry, NULL, ce);
+	 if (ret == 0)
+	     limbo_status = limbo_entry->status;
+	 ret = 0;
+	 
+	 /* Only a silly rename when this is the last file */
+	 if (link_count == 1)
+	     limbo_entry->flags.silly = TRUE;
+
+	 msg2.header.opcode = XFS_MSG_INSTALLATTR;
+	 msg2.node.tokens   = limbo_entry->tokens;
+	 if (!limbo_entry->flags.datausedp)
+	     msg2.node.tokens &= ~XFS_DATA_MASK;
+
+	 if (link_count == 1 && limbo_status.LinkCount == 1)
+	     --limbo_status.LinkCount;
+	 fcacheentry2xfsnode (&fid,
+			      fcache_realfid(limbo_entry),
+			      &limbo_status,
+			      &msg2.node,
+			      limbo_entry->acccache);
+	 
+	 h1 = (struct xfs_message_header *)&msg2;
+	 h1_len = sizeof(msg2);
+	 
      }
 
 out:
+     if (dir_entry)
+	 fcache_release(dir_entry);
+     if (limbo_entry)
+	 fcache_release (limbo_entry);
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
 				       ret,
 				       h0, h0_len,
+				       h1, h1_len,
 				       NULL, 0);
      return ret;
 }
@@ -1306,21 +1236,66 @@ out:
 static int 
 xfs_message_rmdir (int fd, struct xfs_message_rmdir *h, u_int size)
 {
-     VenusFid *parent_fid;
+     VenusFid *parent_fid, fid;
      Result res;
      CredCacheEntry *ce;
      int ret;
-     struct xfs_message_installdata msg;
+     struct xfs_message_installdata msg0;
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
+     struct xfs_message_installdata msg1;
+     struct xfs_message_header *h1 = NULL;
+     size_t h1_len = 0;
+     FCacheEntry *limbo_entry = NULL;
+     FCacheEntry *dir_entry = NULL;
+     unsigned link_count = 0;
 
      parent_fid = (VenusFid *)&h->parent_handle;
+     arla_warnx (ADEBMSG, "rmdir (%ld.%lu.%lu.%lu) \"%s\"",
+		 (long)parent_fid->Cell, (unsigned long)parent_fid->fid.Volume,
+		 (unsigned long)parent_fid->fid.Vnode,
+		 (unsigned long)parent_fid->fid.Unique, h->name);
 
      ce = cred_get (parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
+     /*
+      * Fetch the child-entry fid.
+      */
+
      do {
-	 res = cm_rmdir(*parent_fid, h->name, ce);
+	 res = cm_lookup (parent_fid, h->name, &fid, &ce, FALSE);
+	 if (res.res)
+	     ret = res.error;
+	 else
+	     ret = res.res;
+     } while (try_again (&ret, &ce, &h->cred, parent_fid));
+
+     if (ret)
+	 goto out;
+
+     /*
+      * Need to get linkcount for silly rename.
+      */
+
+     ret = fcache_get (&limbo_entry, fid, ce);
+     if (ret)
+	 goto out;
+
+     ret = fcache_verify_attr (limbo_entry, NULL, NULL, ce);
+     if (ret)
+	 goto out;
+     link_count = limbo_entry->status.LinkCount;
+
+     fcache_release (limbo_entry);
+     limbo_entry = NULL;
+
+     /*
+      * Do the actual work
+      */
+
+     do {
+	 res = cm_rmdir(parent_fid, h->name, &ce);
 	 if (res.res)
 	     ret = res.error;
 	 else
@@ -1328,47 +1303,84 @@ xfs_message_rmdir (int fd, struct xfs_message_rmdir *h, u_int size)
      } while (try_again (&ret, &ce, &h->cred, parent_fid));
 
      if (res.res == 0) {
-	 FCacheEntry *dir_entry;
 
-	 ret = fcache_get (&dir_entry, *parent_fid, ce);
+	 ret = fcache_get_data (&dir_entry, parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
+	 if (!dir_entry->flags.extradirp
+	     || dir_remove_name (dir_entry, h->name,
+				 &msg0.cache_handle,
+				 msg0.cache_name,
+				 sizeof(msg0.cache_name))) {
+	     res = conv_dir (dir_entry, ce, 0,
+			     &msg0.cache_handle,
+			     msg0.cache_name,
+			     sizeof(msg0.cache_name));
+	     if (res.res == -1) {
+		 ret = res.error;
+		 goto out;
+	     }
 	 }
-	     
-	 res = conv_dir (dir_entry, ce, 0,
-			 &msg.cache_handle,
-			 msg.cache_name,
-			 sizeof(msg.cache_name));
-	 if (res.res == -1) {
-	     fcache_release(dir_entry);
-	     ret = res.error;
-	     goto out;
-	 }
-	 msg.flag = XFS_INVALID_DNLC;
-	 msg.node.tokens = res.tokens;
+
+	 msg0.flag = XFS_ID_INVALID_DNLC;
+	 msg0.node.tokens = res.tokens;
 
 	 fcacheentry2xfsnode (parent_fid,
-			      &dir_entry->realfid,
-			      &dir_entry->status, &msg.node,
+			      fcache_realfid(dir_entry),
+			      &dir_entry->status, &msg0.node,
 			      dir_entry->acccache);
 	 
-	 msg.header.opcode = XFS_MSG_INSTALLDATA;
-	 h0 = (struct xfs_message_header *)&msg;
-	 h0_len = sizeof(msg);
-	 fcache_release(dir_entry);
+	 msg0.header.opcode = XFS_MSG_INSTALLDATA;
+	 h0 = (struct xfs_message_header *)&msg0;
+	 h0_len = sizeof(msg0);
+
+	 ret = fcache_get (&limbo_entry, fid, ce);
+	 if (ret)
+	     goto out;
+
+	 /* Only silly rename when this is the last reference. */
+
+	 if (link_count == 2)
+	     limbo_entry->flags.silly = TRUE;
+
+	 if (limbo_entry->flags.kernelp) {
+
+	     ret = fcache_verify_attr (limbo_entry, NULL, NULL, ce);
+	     if (ret)
+		 goto out;
+
+	     msg1.header.opcode = XFS_MSG_INSTALLATTR;
+	     msg1.node.tokens   = limbo_entry->tokens;
+	     if (!limbo_entry->flags.datausedp)
+		 msg1.node.tokens &= ~XFS_DATA_MASK;
+
+	     if (link_count == 2 && limbo_entry->status.LinkCount == 2)
+		 limbo_entry->status.LinkCount = 0;
+	     fcacheentry2xfsnode (&fid,
+				  fcache_realfid(limbo_entry),
+				  &limbo_entry->status,
+				  &msg1.node,
+				  limbo_entry->acccache);
+	     
+	     h1 = (struct xfs_message_header *)&msg1;
+	     h1_len = sizeof(msg1);
+	 }
+	 dir_entry->flags.datausedp = TRUE;
      }
 
 out:
+     if (dir_entry)
+	 fcache_release(dir_entry);
+     if (limbo_entry)
+	 fcache_release (limbo_entry);
+
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
 				       ret,
 				       h0, h0_len,
+				       h1, h1_len,
 				       NULL, 0);
      return ret;
 }
@@ -1378,26 +1390,46 @@ xfs_message_rename (int fd, struct xfs_message_rename *h, u_int size)
 {
      VenusFid *old_parent_fid;
      VenusFid *new_parent_fid;
+     VenusFid child_fid;
      Result res;
      CredCacheEntry *ce;
      int ret;
      struct xfs_message_installdata msg1;
      struct xfs_message_installdata msg2;
+     struct xfs_message_installdata msg3;
      struct xfs_message_header *h0 = NULL;
      size_t h0_len = 0;
      struct xfs_message_header *h1 = NULL;
      size_t h1_len = 0;
+     struct xfs_message_header *h2 = NULL;
+     size_t h2_len = 0;
+     FCacheEntry *old_entry   = NULL;
+     FCacheEntry *new_entry   = NULL;
+     FCacheEntry *child_entry = NULL;
+     int update_child = 0;
 
      old_parent_fid = (VenusFid *)&h->old_parent_handle;
      new_parent_fid = (VenusFid *)&h->new_parent_handle;
+     arla_warnx (ADEBMSG,
+		 "rename (%ld.%lu.%lu.%lu) (%ld.%lu.%lu.%lu) \"%s\" \"%s\"",
+		 (long)old_parent_fid->Cell,
+		 (unsigned long)old_parent_fid->fid.Volume,
+		 (unsigned long)old_parent_fid->fid.Vnode,
+		 (unsigned long)old_parent_fid->fid.Unique,
+		 (long)new_parent_fid->Cell,
+		 (unsigned long)new_parent_fid->fid.Volume,
+		 (unsigned long)new_parent_fid->fid.Vnode,
+		 (unsigned long)new_parent_fid->fid.Unique,
+		 h->old_name,
+		 h->new_name);
 
      ce = cred_get (old_parent_fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
 
      do {
-	 res = cm_rename(*old_parent_fid, h->old_name,
-			 *new_parent_fid, h->new_name,
-			 ce);
+	 res = cm_rename(old_parent_fid, h->old_name,
+			 new_parent_fid, h->new_name,
+			 &child_fid, &update_child, &ce);
 	 if (res.res)
 	     ret = res.error;
 	 else
@@ -1405,76 +1437,113 @@ xfs_message_rename (int fd, struct xfs_message_rename *h, u_int size)
      } while (try_again (&ret, &ce, &h->cred, old_parent_fid));
 
      if (res.res == 0) {
-	 FCacheEntry *dir_entry;
 
-	 ret = fcache_get (&dir_entry, *old_parent_fid, ce);
+	 ret = fcache_get_data (&old_entry, old_parent_fid, &ce);
 	 if (ret)
 	     goto out;
 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
+	 if (!old_entry->flags.extradirp
+	     || dir_remove_name (old_entry, h->old_name,
+				 &msg1.cache_handle,
+				 msg1.cache_name,
+				 sizeof(msg1.cache_name))) {
+	     res = conv_dir (old_entry, ce, 0,
+			     &msg1.cache_handle,
+			     msg1.cache_name,
+			     sizeof(msg1.cache_name));
+	     if (res.res == -1) {
+		 ret = res.error;
+		 goto out;
+	     }
 	 }
-	     
-	 res = conv_dir (dir_entry, ce, 0,
-			 &msg1.cache_handle,
-			 msg1.cache_name,
-			 sizeof(msg1.cache_name));
-	 if (res.res == -1) {
-	     fcache_release(dir_entry);
-	     ret = res.error;
-	     goto out;
-	 }
-	 msg1.flag = XFS_INVALID_DNLC;
+
+	 msg1.flag = XFS_ID_INVALID_DNLC;
 	 msg1.node.tokens = res.tokens;
 
 	 fcacheentry2xfsnode (old_parent_fid,
-			      &dir_entry->realfid,
-			      &dir_entry->status, &msg1.node,
-			      dir_entry->acccache);
+			      fcache_realfid(old_entry),
+			      &old_entry->status, &msg1.node,
+			      old_entry->acccache);
 	 
 	 msg1.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg1;
 	 h0_len = sizeof(msg1);
-	 fcache_release(dir_entry);
 
-	 /* new parent */
 
-	 ret = fcache_get (&dir_entry, *new_parent_fid, ce);
+	 /*
+	  * If the new parent is the same as the old parent, reuse
+	  */
+
+	 if (VenusFid_cmp(new_parent_fid, old_parent_fid) == 0) {
+	     new_entry = old_entry;
+	     old_entry = NULL;
+	 } else {
+	     ret = fcache_get (&new_entry, *new_parent_fid, ce);
+	     if (ret)
+		 goto out;
+	 }
+	 
+	 ret = fcache_verify_data (new_entry, ce); /* XXX - fake_mp? */
 	 if (ret)
 	     goto out;
 	 
-	 ret = fcache_get_data (dir_entry, ce);
-	 if (ret) {
-	     fcache_release(dir_entry);
-	     goto out;
-	 }
-	 
-	 res = conv_dir (dir_entry, ce, 0,
+	 res = conv_dir (new_entry, ce, 0,
 			 &msg2.cache_handle,
 			 msg2.cache_name,
-			     sizeof(msg2.cache_name));
+			 sizeof(msg2.cache_name));
 	 if (res.res == -1) {
-	     fcache_release(dir_entry);
 	     ret = res.error;
 	     goto out;
 	 }
-	 msg2.flag = XFS_INVALID_DNLC;
+	 msg2.flag = XFS_ID_INVALID_DNLC;
 	 msg2.node.tokens = res.tokens;
 	 
 	 fcacheentry2xfsnode (new_parent_fid,
-			      &dir_entry->realfid,
-			      &dir_entry->status, &msg2.node,
-			      dir_entry->acccache);
+			      fcache_realfid(new_entry),
+			      &new_entry->status, &msg2.node,
+			      new_entry->acccache);
 	 
 	 msg2.header.opcode = XFS_MSG_INSTALLDATA;
 	 h1 = (struct xfs_message_header *)&msg2;
 	 h1_len = sizeof(msg2);
-	 fcache_release(dir_entry);
+
+	 if (old_entry)
+	     old_entry->flags.datausedp = TRUE;
+	 new_entry->flags.datausedp = TRUE;
+
+	 if (update_child) {
+	     ret = fcache_get_data (&child_entry, &child_fid, &ce);
+	     if (ret)
+		 goto out;
+
+	     res = conv_dir (child_entry, ce, 0,
+			     &msg3.cache_handle,
+			     msg3.cache_name,
+			     sizeof(msg3.cache_name));
+	     if (res.res == -1) {
+		 ret = res.error;
+		 goto out;
+	     }
+
+	     msg3.flag = XFS_ID_INVALID_DNLC;
+	     msg3.node.tokens = res.tokens;
+
+	     fcacheentry2xfsnode (&child_fid,
+				  fcache_realfid(child_entry),
+				  &child_entry->status, &msg3.node,
+				  child_entry->acccache);
+
+	     msg3.header.opcode = XFS_MSG_INSTALLDATA;
+	     h2 = (struct xfs_message_header *)&msg3;
+	     h2_len = sizeof(msg3);
+	 }
      }
 
 out:
+     if (old_entry) fcache_release(old_entry);
+     if (new_entry) fcache_release(new_entry);
+     if (child_entry) fcache_release(child_entry);
+     
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
@@ -1494,12 +1563,29 @@ xfs_message_putdata (int fd, struct xfs_message_putdata *h, u_int size)
      CredCacheEntry *ce;
      int ret;
      AFSStoreStatus status;
+     struct vcache log_cache;
+     FCacheEntry *fce;
+     int log_err;
 
      fid = (VenusFid *)&h->handle;
+     arla_warnx (ADEBMSG, "putdata (%ld.%lu.%lu.%lu)",
+		 (long)fid->Cell, (unsigned long)fid->fid.Volume,
+		 (unsigned long)fid->fid.Vnode,
+		 (unsigned long)fid->fid.Unique);
+
      xfs_attr2afsstorestatus(&h->attr, &status);
 
      ce = cred_get (fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
+
+     if (connected_mode != CONNECTED) {
+	 ret = fcache_find (&fce, *fid);
+
+	 ReleaseWriteLock (&fce->lock);
+
+	 log_cache.fid  = *fid;
+	 log_cache.cred = h->cred;
+     }
 
      do {
 	 res = cm_close(*fid, h->flag, &status, ce);
@@ -1509,12 +1595,17 @@ xfs_message_putdata (int fd, struct xfs_message_putdata *h, u_int size)
 	     ret = res.res;
      } while (try_again (&ret, &ce, &h->cred, fid));
 	 
-     if (ret)
+     if (ret == 0) {
+	 if (connected_mode != CONNECTED) {
+	     log_cache.DataVersion = ++fce->status.DataVersion;
+	     log_err = log_dis_store (&log_cache);
+	 }
+     } else {
 	 arla_warn (ADEBMSG, ret, "xfs_message_putdata: cm_close");
+     }
 
      cred_free (ce);
-     xfs_send_message_wakeup (fd, h->header.sequence_num,
-			      res.res ? res.error : res.res);
+     xfs_send_message_wakeup (fd, h->header.sequence_num, ret);
      return 0;
 }
 
@@ -1533,6 +1624,10 @@ xfs_message_getdata (int fd, struct xfs_message_getdata *h, u_int size)
      size_t h0_len = 0;
 
      fid = (VenusFid *)&h->handle;
+     arla_warnx (ADEBMSG, "getdata (%ld.%lu.%lu.%lu)",
+		 (long)fid->Cell, (unsigned long)fid->fid.Volume,
+		 (unsigned long)fid->fid.Vnode,
+		 (unsigned long)fid->fid.Unique);
 
      ce = cred_get (fid->Cell, h->cred.pag, CRED_ANY);
      assert (ce != NULL);
@@ -1545,20 +1640,18 @@ xfs_message_getdata (int fd, struct xfs_message_getdata *h, u_int size)
 	     ret = res.res;
      } while (try_again (&ret, &ce, &h->cred, fid));
 
-     if (res.res == 0) {
-	  fcacheentry2xfsnode (fid, &real_fid, &status, &msg.node, ae);
+     if (ret == 0) {
 	  if (status.FileType == TYPE_DIR) {
 	       FCacheEntry *entry;
 
-	       ret = fcache_get (&entry, *fid, ce);
-	       if (ret)
-		   goto out;
-
-	       ret = fcache_get_data (entry, ce);
+	       ret = fcache_get_data (&entry, fid, &ce);
 	       if (ret) {
-		   fcache_release(entry);
+		   try_again (&ret, &ce, &h->cred, NULL);
 		   goto out;
 	       }
+
+	       fcacheentry2xfsnode (fid, fcache_realfid(entry),
+				    &entry->status, &msg.node, ae);
 
 	       res = conv_dir (entry, ce, h->tokens,
 			       &msg.cache_handle,
@@ -1566,18 +1659,23 @@ xfs_message_getdata (int fd, struct xfs_message_getdata *h, u_int size)
 			       sizeof(msg.cache_name));
 	       if (res.res != -1) {
 		   msg.node.tokens = res.tokens;
-		   msg.flag = XFS_INVALID_DNLC;
+		   msg.flag = XFS_ID_INVALID_DNLC;
 	       }
+	       entry->flags.datausedp = TRUE;
 	       fcache_release(entry);
 	  } else {
-	       res = cm_open (*fid, ce, h->tokens, &msg.cache_handle,
+	       res = cm_open (fid, &ce, h->tokens, &msg.cache_handle,
 			      msg.cache_name, sizeof(msg.cache_name));
-	       if (res.res != -1)
+	       ret = res.error;
+	       if (ret == 0) {
 		   msg.node.tokens = res.tokens;
+		   fcacheentry2xfsnode (fid, &real_fid,
+					&status, &msg.node, ae);
+	       }
 	  }
      }
 
-     if (res.res != -1) {
+     if (ret == 0) {
 	 msg.header.opcode = XFS_MSG_INSTALLDATA;
 	 h0 = (struct xfs_message_header *)&msg;
 	 h0_len = sizeof(msg);
@@ -1587,22 +1685,49 @@ out:
      cred_free (ce);
      xfs_send_message_wakeup_multiple (fd,
 				       h->header.sequence_num,
-				       res.res ? res.error : res.res,
+				       ret,
 				       h0, h0_len,
 				       NULL, 0);
 
      return ret;
 }
 
+/*
+ * Send a invalid node to the kernel to invalidate `entry'
+ * and record that it's not being used in the kernel.
+ */
+
 void
-break_callback (VenusFid fid)
+break_callback (FCacheEntry *entry)
 {
      struct xfs_message_invalidnode msg;
+     enum { CALLBACK_BREAK_WARN = 100 };
+     static int failed_callbacks_break = 0;
+     int ret;
+
+     assert (entry->flags.kernelp);
+
+     entry->flags.kernelp   = FALSE;
+     entry->flags.attrusedp = FALSE;
+     entry->flags.datausedp = FALSE;
 
      msg.header.opcode = XFS_MSG_INVALIDNODE;
-     memcpy (&msg.handle, &fid, sizeof(fid));
-     xfs_message_send (kernel_fd, (struct xfs_message_header *)&msg, 
-		       sizeof(msg));
+     memcpy (&msg.handle, &entry->fid, sizeof(entry->fid));
+     ret = xfs_message_send (kernel_fd, (struct xfs_message_header *)&msg, 
+			     sizeof(msg));
+     if (ret) {
+	 arla_warnx (ADEBMSG, "break_callback: (%ld.%lu.%lu.%lu) failed",
+		     (long)entry->fid.Cell, 
+		     (unsigned long)entry->fid.fid.Volume,
+		     (unsigned long)entry->fid.fid.Vnode,
+		     (unsigned long)entry->fid.fid.Unique);
+	 ++failed_callbacks_break;
+	 if (failed_callbacks_break > CALLBACK_BREAK_WARN) {
+	     arla_warnx (ADEBWARN, "break_callback: have failed %d times",
+			 failed_callbacks_break);
+	     failed_callbacks_break = 0;
+	 }
+     }
 }
 
 /*
@@ -1615,7 +1740,7 @@ install_attr (FCacheEntry *e)
      struct xfs_message_installattr msg;
 
      msg.header.opcode = XFS_MSG_INSTALLATTR;
-     fcacheentry2xfsnode (&e->fid, &e->realfid, &e->status, &msg.node,
+     fcacheentry2xfsnode (&e->fid, fcache_realfid(e), &e->status, &msg.node,
 			  e->acccache);
      msg.node.tokens   = e->tokens;
      if (!e->flags.datausedp)
@@ -1626,7 +1751,8 @@ install_attr (FCacheEntry *e)
 }
 
 void
-update_kernelfid(VenusFid oldfid, VenusFid newfid)
+update_fid(VenusFid oldfid, FCacheEntry *old_entry,
+	   VenusFid newfid, FCacheEntry *new_entry)
 {
     struct xfs_message_updatefid msg;
 
@@ -1635,6 +1761,15 @@ update_kernelfid(VenusFid oldfid, VenusFid newfid)
     memcpy (&msg.new_handle, &newfid, sizeof(newfid));
     xfs_message_send (kernel_fd, (struct xfs_message_header *)&msg,
 		      sizeof(msg));
+    if (new_entry != NULL) {
+	new_entry->flags.kernelp   = TRUE;
+	new_entry->flags.attrusedp = TRUE;
+    }
+    if (old_entry != NULL) {
+	old_entry->flags.kernelp   = FALSE;
+	old_entry->flags.attrusedp = FALSE;
+	old_entry->flags.datausedp = FALSE;
+    }
 }
 
 static int
@@ -1647,6 +1782,10 @@ xfs_message_inactivenode (int fd, struct xfs_message_inactivenode *h,
      CredCacheEntry *ce;
 
      fid = (VenusFid *)&h->handle;
+     arla_warnx (ADEBMSG, "inactivenode (%ld.%lu.%lu.%lu)",
+		 (long)fid->Cell, (unsigned long)fid->fid.Volume,
+		 (unsigned long)fid->fid.Vnode,
+		 (unsigned long)fid->fid.Unique);
 
      ce = cred_get (fid->Cell, 0, CRED_NONE);
      assert (ce != NULL);
@@ -1660,8 +1799,11 @@ xfs_message_inactivenode (int fd, struct xfs_message_inactivenode *h,
      }
      if (h->flag & XFS_NOREFS)
 	 fcache_unused (entry);
-     if (h->flag & XFS_DELETE)
-	 entry->flags.kernelp = FALSE;
+     if (h->flag & XFS_DELETE) {
+	 entry->flags.kernelp   = FALSE;
+	 entry->flags.datausedp = FALSE;
+	 entry->flags.attrusedp = FALSE;
+     }
      fcache_release(entry);
      return 0;
 }
@@ -1715,7 +1857,7 @@ viocgetacl(int fd, struct xfs_message_pioctl *h, u_int size)
     int error;
 
     if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
-	return EINVAL;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
 
     fid.Cell = h->handle.a;
     fid.fid.Volume = h->handle.b;
@@ -1736,7 +1878,8 @@ viocgetacl(int fd, struct xfs_message_pioctl *h, u_int size)
  
     xfs_send_message_wakeup_data (fd, h->header.sequence_num, error,
 				  opaque.val, opaque.len);
-    free (opaque.val);
+    if (error == 0)
+	free (opaque.val);
     return 0;
 }
 
@@ -1750,40 +1893,44 @@ viocsetacl(int fd, struct xfs_message_pioctl *h, u_int size)
     VenusFid fid;
     AFSOpaque opaque;
     CredCacheEntry *ce;
+    FCacheEntry *e;
     int error;
 
     if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
-	return EINVAL;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
 
-    if (h->insize > AFSOPAQUEMAX)
-	return EINVAL;
+    if (h->insize > AFSOPAQUEMAX || h->insize == 0)
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
 
-    if((opaque.val=malloc(AFSOPAQUEMAX))==NULL)
-	return ENOMEM;
+    opaque.val = malloc(h->insize);
+    if(opaque.val == NULL)
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, ENOMEM);
 
-    fid.Cell = h->handle.a;
+    fid.Cell       = h->handle.a;
     fid.fid.Volume = h->handle.b;
-    fid.fid.Vnode = h->handle.c;
+    fid.fid.Vnode  = h->handle.c;
     fid.fid.Unique = h->handle.d;
 
     ce = cred_get (fid.Cell, h->cred.pag, CRED_ANY);
     assert (ce != NULL);
 
-    opaque.len=h->insize;
+    opaque.len = h->insize;
     memcpy(opaque.val, h->msg, h->insize);
 
     do {
-	error = setacl (fid, ce, &opaque);
+	error = setacl (fid, ce, &opaque, &e);
     } while (try_again (&error, &ce, &h->cred, &fid));
 
-    if (error != 0 && error != EACCES)
+    if (error == 0) {
+	install_attr (e);
+	fcache_release (e);
+    } else if (error != EACCES)
 	error = EINVAL;
 
     cred_free (ce);
     free (opaque.val);
  
-    xfs_send_message_wakeup_data (fd, h->header.sequence_num, error,
-				  NULL, 0);
+    xfs_send_message_wakeup_data (fd, h->header.sequence_num, error, NULL, 0);
     return 0;
 }
 
@@ -1801,11 +1948,11 @@ viocgetvolstat(int fd, struct xfs_message_pioctl *h, u_int size)
     char offlinemsg[AFSOPAQUEMAX];
     char motd[AFSOPAQUEMAX];
     char out[SYSNAMEMAXLEN];
-    int32_t outsize;
+    int32_t outsize = 0;
     int error;
 
     if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
-	return EINVAL;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
 
     fid.Cell = h->handle.a;
     fid.fid.Volume = h->handle.b;
@@ -1821,8 +1968,10 @@ viocgetvolstat(int fd, struct xfs_message_pioctl *h, u_int size)
     memset (out, 0, SYSNAMEMAXLEN);
 
     do {
-	error = getvolstat (fid, ce, &volstat, volumename,
-			    offlinemsg, motd);
+	error = getvolstat (fid, ce, &volstat,
+			    volumename,
+			    offlinemsg,
+			    motd);
     } while (try_again (&error, &ce, &h->cred, &fid));
 
     cred_free (ce);
@@ -1942,72 +2091,83 @@ viocsetvolstat(int fd, struct xfs_message_pioctl *h, u_int size)
 }
 
 /*
- * Get the mount point from (fid, filename) and return in `fbuf'.
- * Return 0 or error.
+ * Get the mount point at (`fid', `filename') using the cred in `ce'
+ * and returning the fcache entry in `ret_mp_entry'
+ * Return 0 or an error.
  */
 
 static int
-read_mount_point (VenusFid fid, const char *filename, fbuf *the_fbuf,
-		  CredCacheEntry *ce,
-		  FCacheEntry **ret_mp_entry)
+get_mount_point (VenusFid fid,
+		 const char *filename,
+		 CredCacheEntry **ce,
+		 FCacheEntry **ret_mp_entry)
 {
     FCacheEntry *mp_entry;
     VenusFid mp_fid;
     int error;
-    int mp_fd;
-    char *buf;
 
     if (fid.fid.Volume == 0 && fid.fid.Vnode == 0 && fid.fid.Unique == 0)
 	return EINVAL;
 
-    error = adir_lookup(fid, filename, &mp_fid, ce);
-    if (error) {
+    error = adir_lookup(&fid, filename, &mp_fid, NULL, ce);
+    if (error)
 	return error;
-    }
 
-    error = fcache_get(&mp_entry, mp_fid, ce);
-    if (error) {
+    error = fcache_get(&mp_entry, mp_fid, *ce);
+    if (error)
 	return error;
-    }
 
-    error = fcache_get_attr (mp_entry, ce);
+    error = fcache_verify_attr (mp_entry, NULL, NULL, *ce);
     if (error) {
 	fcache_release(mp_entry);
 	return error;
     }
-    if (mp_entry->status.FileType != TYPE_LINK) { /* Is not a mount point */
+
+    if ((mp_entry->status.FileType != TYPE_LINK
+	 && !mp_entry->flags.fake_mp)
+	|| mp_entry->status.Length == 0) { 	/* Is not a mount point */
 	fcache_release(mp_entry);
 	return EINVAL;
     }
-    error = fcache_get_data (mp_entry, ce);
-    if (error) {
-	fcache_release(mp_entry);
+    *ret_mp_entry = mp_entry;
+    return 0;
+}
+
+/*
+ * Read the contents of the mount point in `e' and return a fbuf in
+ * `the_fbuf' mapped READ|WRITE|PRIVATE.
+ * Return 0 or an error
+ */
+
+static int
+read_mount_point (FCacheEntry *mp_entry, CredCacheEntry *ce,
+		  int *fd, fbuf *the_fbuf)
+{
+    int error;
+    char *buf;
+
+    error = fcache_verify_data (mp_entry, ce);
+    if (error)
 	return error;
-    }
-    mp_fd = fcache_open_file (mp_entry, O_RDONLY);
-    if (mp_fd < 0) {
-	fcache_release(mp_entry);
+
+    *fd = fcache_open_file (mp_entry, O_RDONLY);
+    if (*fd < 0)
 	return errno;
-    }
-    error = fbuf_create (the_fbuf, mp_fd, mp_entry->status.Length,
-			 FBUF_READ);
+
+    error = fbuf_create (the_fbuf, *fd, mp_entry->status.Length,
+			 FBUF_READ|FBUF_WRITE|FBUF_PRIVATE);
     if (error) {
-	fcache_release(mp_entry);
+	close (*fd);
 	return error;
     }
+
     buf = (char *)(the_fbuf->buf);
     if (buf[0] != '#' && buf[0] != '%') { /* Is not a mount point */
 	fbuf_end (the_fbuf);
-	fcache_release(mp_entry);
+	close (*fd);
 	return EINVAL;
     }
 
-    if(ret_mp_entry)
-	*ret_mp_entry = mp_entry;
-    else {
-	fbuf_end (the_fbuf);
-	fcache_release (mp_entry);
-    }
     return 0;
 }
 
@@ -2020,9 +2180,11 @@ vioc_afs_stat_mt_pt(int fd, struct xfs_message_pioctl *h, u_int size)
 {
     VenusFid fid;
     int error;
+    int mp_fd;
     fbuf the_fbuf;
     CredCacheEntry *ce;
     FCacheEntry *e;
+    unsigned char *buf;
 
     fid.Cell       = h->handle.a;
     fid.fid.Volume = h->handle.b;
@@ -2034,17 +2196,35 @@ vioc_afs_stat_mt_pt(int fd, struct xfs_message_pioctl *h, u_int size)
     ce = cred_get (fid.Cell, h->cred.pag, CRED_ANY);
     assert (ce != NULL);
 
-    error = read_mount_point (fid, h->msg, &the_fbuf, ce, &e);
+    error = get_mount_point (fid, h->msg, &ce, &e);
     if (error) {
 	cred_free(ce);
-	return error;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, error);
     }
 
+    error = read_mount_point (e, ce, &mp_fd, &the_fbuf);
+    if (error) {
+	fcache_release (e);
+	cred_free(ce);
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, error);
+    }
+
+    /*
+     * To confuse us, the volume is passed up w/o the ending
+     * dot. It's not even mentioned in the ``VIOC_AFS_STAT_MT_PT''
+     * documentation.
+     */
+
+    buf = (unsigned char *)the_fbuf.buf;
+    buf[the_fbuf.len-1] = '\0';
+
     xfs_send_message_wakeup_data (fd, h->header.sequence_num, error,
-				  the_fbuf.buf, the_fbuf.len - 1);
+				  buf, the_fbuf.len);
     fbuf_end (&the_fbuf);
-    cred_free (ce);
+    close (mp_fd);
     fcache_release (e);
+    cred_free (ce);
+
     return 0;
 }
 
@@ -2058,9 +2238,9 @@ vioc_afs_delete_mt_pt(int fd, struct xfs_message_pioctl *h, u_int size)
 {
     VenusFid fid;
     int error = 0;
-    fbuf the_fbuf;
     CredCacheEntry *ce;
     struct xfs_message_remove remove_msg;
+    FCacheEntry *entry;
 
     h->msg[min(h->insize, sizeof(h->msg)-1)] = '\0';
 
@@ -2072,15 +2252,16 @@ vioc_afs_delete_mt_pt(int fd, struct xfs_message_pioctl *h, u_int size)
     ce = cred_get (fid.Cell, h->cred.pag, CRED_ANY);
     assert (ce != NULL);
 
-    error = read_mount_point (fid, h->msg, &the_fbuf, ce, NULL);
+    error = get_mount_point (fid, h->msg, &ce, &entry);
     cred_free (ce);
     if (error)
-	return error;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, error);
+    fcache_release(entry);
 
     remove_msg.header        = h->header;
     remove_msg.header.size   = sizeof(remove_msg);
     remove_msg.parent_handle = h->handle;
-    strcpy(remove_msg.name, h->msg);
+    strlcpy(remove_msg.name, h->msg, sizeof(remove_msg.name));
     remove_msg.cred          = h->cred;
 
     return xfs_message_remove (fd, &remove_msg, sizeof(remove_msg));
@@ -2093,15 +2274,16 @@ viocwhereis(int fd, struct xfs_message_pioctl *h, u_int size)
     CredCacheEntry *ce;
     FCacheEntry *e;
     int error;
-    int i;
+    int i, j;
     int32_t addresses[8];
+    int bit;
 
     if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
-	return EINVAL;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
 
-    fid.Cell = h->handle.a;
+    fid.Cell       = h->handle.a;
     fid.fid.Volume = h->handle.b;
-    fid.fid.Vnode = h->handle.c;
+    fid.fid.Vnode  = h->handle.c;
     fid.fid.Unique = h->handle.d;
 
     ce = cred_get (fid.Cell, h->cred.pag, CRED_ANY);
@@ -2110,20 +2292,32 @@ viocwhereis(int fd, struct xfs_message_pioctl *h, u_int size)
     error = fcache_get(&e, fid, ce);
     if (error) {
 	cred_free(ce);
-	return error;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, error);
     }
-    error = fcache_get_attr (e, ce);
+    error = fcache_verify_attr (e, NULL, NULL, ce);
     if (error) {
 	fcache_release(e);
 	cred_free(ce);
-	return error;
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, error);
     }
-    memset(addresses, 0, sizeof(addresses));
-    for (i = 0; (i < e->volume->entry.nServers) && (i < 8); i++)
-	addresses[i] = e->volume->entry.serverNumber[i];
 
+    bit = volcache_volid2bit (e->volume, fid.fid.Volume);
+
+    if (bit == -1) {
+	fcache_release(e);
+	cred_free(ce);
+	return xfs_send_message_wakeup (fd, h->header.sequence_num, EINVAL);
+    }
+
+    memset(addresses, 0, sizeof(addresses));
+    for (i = 0, j = 0; i < min(e->volume->entry.nServers, MAXNSERVERS); i++) {
+	u_long addr = htonl(e->volume->entry.serverNumber[i]);
+
+	if ((e->volume->entry.serverFlags[i] & bit) && addr != 0)
+	    addresses[j++] = addr;
+    }
     xfs_send_message_wakeup_data (fd, h->header.sequence_num, error,
-				  addresses, sizeof(long) * 8);
+				  addresses, sizeof(long) * j);
 
     fcache_release(e);
     cred_free (ce);
@@ -2133,7 +2327,7 @@ viocwhereis(int fd, struct xfs_message_pioctl *h, u_int size)
 
 /*
  * Return all db servers for a particular cell.
- */
+ */ 
 
 static int
 vioc_get_cell(int fd, struct xfs_message_pioctl *h, u_int size)
@@ -2152,7 +2346,7 @@ vioc_get_cell(int fd, struct xfs_message_pioctl *h, u_int size)
     if (cellname == NULL)
 	return xfs_send_message_wakeup (fd, h->header.sequence_num, EDOM);
     
-    dbservers = cell_dbservers (index, &num_dbservers);
+    dbservers = cell_dbservers_by_id (index, &num_dbservers);
 
     if (dbservers == NULL)
 	return xfs_send_message_wakeup (fd, h->header.sequence_num, EDOM);
@@ -2274,7 +2468,7 @@ vioc_new_cell(int fd, struct xfs_message_pioctl *h, u_int size)
     cellname = h->msg + 8 * sizeof(u_int32_t);
     ce = cell_get_by_name (cellname);
     if (ce == NULL) {
-	ce = cell_new (cellname);
+	ce = cell_new_dynamic (cellname);
 
 	if (ce == NULL) {
 	    free (dbs);
@@ -2312,13 +2506,15 @@ token_for_cell (int fd, struct xfs_message_pioctl *h, u_int size,
 
     ct.AuthHandle = cred->kvno;
     memcpy (ct.HandShakeKey, cred->session, sizeof(cred->session));
-    ct.ViceId = h->cred.uid;
+    ct.ViceId         = ce->uid;
     ct.BeginTimestamp = cred->issue_date + 1;
     ct.EndTimestamp   = ce->expire;
 
-    tmp = 0;
+    tmp = cred->ticket_st.length;
     memcpy (p, &tmp, sizeof(tmp));
     p += sizeof(tmp);
+    memcpy (p, cred->ticket_st.dat, tmp);
+    p += tmp;
     tmp = sizeof(ct);
     memcpy (p, &tmp, sizeof(tmp));
     p += sizeof(tmp);
@@ -2349,7 +2545,8 @@ static int
 viocgettok (int fd, struct xfs_message_pioctl *h, u_int size)
 {
     if (h->insize == 0) {
-	CredCacheEntry *ce = cred_get (0, h->cred.pag, CRED_KRB4);
+	int32_t cell_id = cell_name2num(cell_getthiscell());
+	CredCacheEntry *ce = cred_get (cell_id, h->cred.pag, CRED_KRB4);
 
 	if (ce == NULL) {
 	    xfs_send_message_wakeup (fd, h->header.sequence_num, ENOTCONN);
@@ -2441,6 +2638,9 @@ viocsettok (int fd, struct xfs_message_pioctl *h, u_int size)
 	
     cell = cell_name2num(strlwr(c.realm));
 
+    if (cell == -1)
+	return ENOENT;
+
     conn_clearcred (cell, h->cred.pag, 2);
     fcache_purge_cred(h->cred.pag, cell);
     cred_add (h->cred.pag, CRED_KRB4, 2, cell, ct.EndTimestamp,
@@ -2451,7 +2651,7 @@ viocsettok (int fd, struct xfs_message_pioctl *h, u_int size)
 static int
 viocunlog (int fd, struct xfs_message_pioctl *h, u_int size)
 {
-    pag_t cred = h->cred.pag;
+    xfs_pag_t cred = h->cred.pag;
 
     cred_remove(cred);
     fcache_purge_cred(cred, -1);
@@ -2522,8 +2722,7 @@ viocconnect(int fd, struct xfs_message_pioctl *h, u_int size)
 		DARLA_Close(&log_data);
 		Log_is_open = 0;
 
-		do_replay(ARLACACHEDIR"/discon_log",
-			  log_data.log_entries, 0);
+		do_replay("discon_log", log_data.log_entries, 0);
 	    }
 	    if (connected_mode == DISCONNECTED) {
 		connected_mode = CONNECTED ;
@@ -2562,7 +2761,7 @@ getrxkcrypt(int fd, struct xfs_message_pioctl *h, u_int size)
 	u_int32_t n;
 
 #ifdef KERBEROS
-	if (rxkad_min_level == rxkad_crypt)
+	if (conn_rxkad_level == rxkad_crypt)
 	    n = 1;
 	else
 #endif
@@ -2589,9 +2788,9 @@ setrxkcrypt(int fd, struct xfs_message_pioctl *h, u_int size)
 	memcpy (&n, h->msg, sizeof(n));
 
 	if (n == 0)
-	    rxkad_min_level = rxkad_auth;
+	    conn_rxkad_level = rxkad_auth;
 	else if(n == 1)
-	    rxkad_min_level = rxkad_crypt;
+	    conn_rxkad_level = rxkad_crypt;
 	else
 	    error = EINVAL;
     } else
@@ -2601,6 +2800,10 @@ setrxkcrypt(int fd, struct xfs_message_pioctl *h, u_int size)
     return EOPNOTSUPP;
 #endif
 }
+
+/*
+ * XXX - this function sometimes does a wakeup_data and then an ordinary wakeup is sent in xfs_message_pioctl
+ */
 
 static int
 vioc_fpriostatus (int fd, struct xfs_message_pioctl *h, u_int size)
@@ -2620,6 +2823,7 @@ vioc_fpriostatus (int fd, struct xfs_message_pioctl *h, u_int size)
     fid.fid.Unique = fprio->Unique ;
 
 
+#if 0
     switch(fprio->cmd) {
     case FPRIO_GET: {
 	unsigned prio;
@@ -2676,6 +2880,7 @@ vioc_fpriostatus (int fd, struct xfs_message_pioctl *h, u_int size)
 	error = EINVAL;
 	break;
     }
+#endif
     return error;
 }
 
@@ -2696,7 +2901,9 @@ viocvenuslog (int fd, struct xfs_message_pioctl *h, u_int size)
     volcache_status ();
     cred_status ();
     fcache_status ();
+#if 0
     fprio_status ();
+#endif
 #ifdef RXDEBUG
     rx_PrintStats(stderr);
 #endif
@@ -2731,7 +2938,7 @@ vioc_afs_sysname (int fd, struct xfs_message_pioctl *h, u_int size)
 	buf = malloc (sysname_len + 4 + 1);
 	if (buf == NULL)
 	    return xfs_send_message_wakeup (fd, h->header.sequence_num, ENOMEM);
-	*((u_int32 *)buf) = sysname_len;
+	*((u_int32_t *)buf) = sysname_len;
 	memcpy (buf + 4, arlasysname, sysname_len);
 	buf[sysname_len + 4] = '\0';
 
@@ -2792,7 +2999,7 @@ viocsetcachesize (int fd, struct xfs_message_pioctl *h, u_int size)
 static int
 viocckserv (int fd, struct xfs_message_pioctl *h, u_int size)
 {
-    int32_t cell = 0; /* Default local cell */
+    int32_t cell = cell_name2num (cell_getthiscell());
     int flags = 0;
     int num_entries;
     u_int32_t hosts[CKSERV_MAXSERVERS + 1];
@@ -2839,6 +3046,8 @@ viocgetcacheparms (int fd, struct xfs_message_pioctl *h, u_int size)
     parms[1] = fcache_usedbytes() / 1024;
     parms[2] = fcache_highvnodes();
     parms[3] = fcache_usedvnodes();
+    parms[4] = fcache_highbytes();
+    parms[5] = fcache_usedbytes();
 
     h->outsize = sizeof(parms);
     return xfs_send_message_wakeup_data(fd, h->header.sequence_num, 0,
@@ -2905,6 +3114,76 @@ vioc_gcpags (int fd, struct xfs_message_pioctl *h, u_int size)
 }
 
 /*
+ *
+ */
+
+static int
+vioc_calculate_cache (int fd, struct xfs_message_pioctl *h, u_int size)
+{
+    u_int32_t parms[16];
+    
+    memset(parms, 0, sizeof(parms));
+    
+    if (!all_powerful_p(&h->cred))
+	return EPERM;
+
+    h->outsize = sizeof(parms);
+
+    parms[0] = fcache_calculate_usage();
+    parms[1] = fcache_usedbytes();
+
+    arla_warnx (ADEBMISC, 
+		"diskusage = %d, usedbytes = %d", 
+		parms[0], parms[1]);
+    
+    return xfs_send_message_wakeup_data (fd, h->header.sequence_num, 0,
+					 &parms, sizeof(parms));
+}
+
+/*
+ *
+ */
+
+static int
+vioc_breakcallback(int fd, struct xfs_message_pioctl *h, u_int size)
+{
+    int error;
+    VenusFid fid;
+    FCacheEntry *e;
+    CredCacheEntry *ce;
+
+    if (!all_powerful_p(&h->cred))
+	return EPERM;
+
+    if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
+	return EINVAL;
+
+    fid.Cell = h->handle.a;
+    fid.fid.Volume = h->handle.b;
+    fid.fid.Vnode = h->handle.c;
+    fid.fid.Unique = h->handle.d;
+
+    ce = cred_get (fid.Cell, h->cred.pag, CRED_ANY);
+    assert (ce != NULL);
+
+    error = fcache_get(&e, fid, ce);
+    if (error)
+	return error;
+
+    if (!e->flags.kernelp) {
+	cred_free (ce);
+	return -ENOENT;
+    }
+	
+    break_callback (e);
+    
+    fcache_release (e);
+    cred_free (ce);
+
+    return 0;
+}
+
+/*
  * Handle a pioctl message in `h'
  */
 
@@ -2915,89 +3194,262 @@ xfs_message_pioctl (int fd, struct xfs_message_pioctl *h, u_int size)
 
     switch(h->opcode) {
 #ifdef KERBEROS
+#ifdef VIOCSETTOK_32
+    case VIOCSETTOK_32:
+    case VIOCSETTOK_64:
+#else
     case VIOCSETTOK:
+#endif
 	error = viocsettok (fd, h, size);
 	break;
+#ifdef VIOCGETTOK_32
+    case VIOCGETTOK_32:
+    case VIOCGETTOK_64:
+#else
     case VIOCGETTOK :
+#endif
 	return viocgettok (fd, h, size);
+#ifdef VIOCUNPAG_32
+    case VIOCUNPAG_32:
+    case VIOCUNPAG_64:
+#else
     case VIOCUNPAG:
+#endif
+#ifdef VIOCUNLOG_32
+    case VIOCUNLOG_32:
+    case VIOCUNLOG_64:
+#else
     case VIOCUNLOG:
+#endif
 	error = viocunlog (fd, h, size);
 	break;
 #endif /* KERBEROS */
+#ifdef VIOCCONNECTMODE_32
+    case VIOCCONNECTMODE_32:
+    case VIOCCONNECTMODE_64:
+#else
     case VIOCCONNECTMODE:
-	error = viocconnect(fd, h, size);
-	break;
+#endif
+	return viocconnect(fd, h, size);
+#ifdef VIOCFLUSH_32
+    case VIOCFLUSH_32:
+    case VIOCFLUSH_64:
+#else
     case VIOCFLUSH:
+#endif
         error = viocflush(fd, h, size);
 	break;
+#ifdef VIOC_FLUSHVOLUME_32
+    case VIOC_FLUSHVOLUME_32:
+    case VIOC_FLUSHVOLUME_64:
+#else
     case VIOC_FLUSHVOLUME:
+#endif
 	error = viocflushvolume(fd, h, size);
 	break;
+#ifdef VIOCGETFID_32
+    case VIOCGETFID_32:
+    case VIOCGETFID_64:
+#else
     case VIOCGETFID:
+#endif
 	return viocgetfid (fd, h, size);
+#ifdef VIOCGETAL_32
+    case VIOCGETAL_32:
+    case VIOCGETAL_64:
+#else
     case VIOCGETAL:
-	error = viocgetacl(fd, h, size);
-	break;
+#endif
+	return viocgetacl(fd, h, size);
+#ifdef VIOCSETAL_32
+    case VIOCSETAL_32:
+    case VIOCSETAL_64:
+#else
     case VIOCSETAL:
-	error = viocsetacl(fd, h, size);
-	break;
+#endif
+	return viocsetacl(fd, h, size);
+#ifdef VIOCGETVOLSTAT_32
+    case VIOCGETVOLSTAT_32:
+    case VIOCGETVOLSTAT_64:
+#else
     case VIOCGETVOLSTAT:
-	error = viocgetvolstat(fd, h, size);
-	break;
+#endif
+	return viocgetvolstat(fd, h, size);
+#ifdef VIOCSETVOLSTAT_32
+    case VIOCSETVOLSTAT_32:
+    case VIOCSETVOLSTAT_64:
+#else
     case VIOCSETVOLSTAT:
+#endif
 	error = viocsetvolstat(fd, h, size);
 	break;
+#ifdef VIOC_AFS_STAT_MT_PT_32
+    case VIOC_AFS_STAT_MT_PT_32:
+    case VIOC_AFS_STAT_MT_PT_64:
+#else
     case VIOC_AFS_STAT_MT_PT:
-	error = vioc_afs_stat_mt_pt(fd, h, size);
-	break;
+#endif
+	return vioc_afs_stat_mt_pt(fd, h, size);
+#ifdef VIOC_AFS_DELETE_MT_PT_32
+    case VIOC_AFS_DELETE_MT_PT_32:
+    case VIOC_AFS_DELETE_MT_PT_64:
+#else
     case VIOC_AFS_DELETE_MT_PT:
-	error = vioc_afs_delete_mt_pt(fd, h, size);
-	break;
+#endif
+	return vioc_afs_delete_mt_pt(fd, h, size);
+#ifdef VIOCWHEREIS_32
+    case VIOCWHEREIS_32:
+    case VIOCWHEREIS_64:
+#else
     case VIOCWHEREIS:
-	error = viocwhereis(fd, h, size);
-	break;
+#endif
+	return viocwhereis(fd, h, size);
+#ifdef VIOCNOP_32
+    case VIOCNOP_32:
+    case VIOCNOP_64:
+#else
     case VIOCNOP:
+#endif
 	error = EINVAL;
 	break;
+#ifdef VIOCGETCELL_32
+    case VIOCGETCELL_32:
+    case VIOCGETCELL_64:
+#else
     case VIOCGETCELL:
+#endif
 	return vioc_get_cell(fd, h, size);
+#ifdef VIOC_GETCELLSTATUS_32
+    case VIOC_GETCELLSTATUS_32:
+    case VIOC_GETCELLSTATUS_64:
+#else
     case VIOC_GETCELLSTATUS:
+#endif
 	return vioc_get_cellstatus(fd, h, size);
+#ifdef VIOC_SETCELLSTATUS_32
+    case VIOC_SETCELLSTATUS_32:
+    case VIOC_SETCELLSTATUS_64:
+#else
     case VIOC_SETCELLSTATUS:
+#endif
 	return vioc_set_cellstatus(fd, h, size);
+#ifdef VIOCNEWCELL_32
+    case VIOCNEWCELL_32:
+    case VIOCNEWCELL_64:
+#else
     case VIOCNEWCELL:
+#endif
 	return vioc_new_cell(fd, h, size);
+#ifdef VIOC_VENUSLOG_32
+    case VIOC_VENUSLOG_32:
+    case VIOC_VENUSLOG_64:
+#else
     case VIOC_VENUSLOG:
+#endif
 	error = viocvenuslog (fd, h, size);
 	break;
+#ifdef VIOC_AFS_SYSNAME_32
+    case VIOC_AFS_SYSNAME_32:
+    case VIOC_AFS_SYSNAME_64:
+#else
     case VIOC_AFS_SYSNAME:
+#endif
 	return vioc_afs_sysname (fd, h, size);
+#ifdef VIOC_FILE_CELL_NAME_32
+    case VIOC_FILE_CELL_NAME_32:
+    case VIOC_FILE_CELL_NAME_64:
+#else
     case VIOC_FILE_CELL_NAME:
+#endif
 	return viocfilecellname (fd, h, size);
+#ifdef VIOC_GET_WS_CELL_32
+    case VIOC_GET_WS_CELL_32:
+    case VIOC_GET_WS_CELL_64:
+#else
     case VIOC_GET_WS_CELL:
+#endif
 	return viocgetwscell (fd, h, size);
+#ifdef VIOCSETCACHESIZE_32
+    case VIOCSETCACHESIZE_32:
+    case VIOCSETCACHESIZE_64:
+#else
     case VIOCSETCACHESIZE:
+#endif
 	error = viocsetcachesize (fd, h, size);
 	break;
+#ifdef VIOCCKSERV_32
+    case VIOCCKSERV_32:
+    case VIOCCKSERV_64:
+#else
     case VIOCCKSERV:
+#endif
 	return viocckserv (fd, h, size);
+#ifdef VIOCGETCACHEPARAMS_32
+    case VIOCGETCACHEPARAMS_32:
+    case VIOCGETCACHEPARAMS_64:
+#else
     case VIOCGETCACHEPARAMS:
+#endif
 	return viocgetcacheparms (fd, h, size);
-    case VIOC_GETRXKCRYPT :
+#ifdef VIOC_GETRXKCRYPT_32
+    case VIOC_GETRXKCRYPT_32:
+    case VIOC_GETRXKCRYPT_64:
+#else
+    case VIOC_GETRXKCRYPT:
+#endif
 	return getrxkcrypt(fd, h, size);
-    case VIOC_SETRXKCRYPT :
+#ifdef VIOC_SETRXKCRYPT_32
+    case VIOC_SETRXKCRYPT_32:
+    case VIOC_SETRXKCRYPT_64:
+#else
+    case VIOC_SETRXKCRYPT:
+#endif
 	error = setrxkcrypt(fd, h, size);
 	break;
+#ifdef VIOC_FPRIOSTATUS_32
+    case VIOC_FPRIOSTATUS_32:
+    case VIOC_FPRIOSTATUS_64:
+#else
     case VIOC_FPRIOSTATUS:
+#endif
 	error = vioc_fpriostatus(fd, h, size);
 	break;
+#ifdef VIOC_AVIATOR_32
+    case VIOC_AVIATOR_32:
+    case VIOC_AVIATOR_64:
+#else
     case VIOC_AVIATOR:
+#endif
 	return viocaviator (fd, h, size);
-    case VIOC_ARLADEBUG :
+#ifdef VIOC_ARLADEBUG_32
+    case VIOC_ARLADEBUG_32:
+    case VIOC_ARLADEBUG_64:
+#else
+    case VIOC_ARLADEBUG:
+#endif
 	return vioc_arladebug (fd, h, size);
-    case VIOC_GCPAGS :
+#ifdef VIOC_GCPAGS_32
+    case VIOC_GCPAGS_32:
+    case VIOC_GCPAGS_64:
+#else
+    case VIOC_GCPAGS:
+#endif
 	error = vioc_gcpags (fd, h, size);
+	break;
+#ifdef VIOC_CALCULATE_CACHE_32
+    case VIOC_CALCULATE_CACHE_32:
+    case VIOC_CALCULATE_CACHE_64:
+#else
+    case VIOC_CALCULATE_CACHE:
+#endif
+	return vioc_calculate_cache (fd, h, size);
+#ifdef VIOC_BREAKCALLBACK_32
+    case VIOC_BREAKCALLBACK_32:
+    case VIOC_BREAKCALLBACK_64:
+#else
+    case VIOC_BREAKCALLBACK:
+#endif	
+	error = vioc_breakcallback (fd, h, size);
 	break;
     default:
 	arla_warnx (ADEBMSG, "unknown pioctl call %d", h->opcode);
@@ -3008,3 +3460,4 @@ xfs_message_pioctl (int fd, struct xfs_message_pioctl *h, u_int size)
     
     return 0;
 }
+

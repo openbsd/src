@@ -1,6 +1,5 @@
-/*	$OpenBSD: fcache.h,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,7 +40,7 @@
  * The interface for the file-cache.
  */
 
-/* $KTH: fcache.h,v 1.49 1999/04/14 15:27:35 map Exp $ */
+/* $Id: fcache.h,v 1.3 2000/09/11 14:40:42 art Exp $ */
 
 #ifndef _FCACHE_H_
 #define _FCACHE_H_
@@ -61,7 +60,7 @@
 #define NACCESS MAXRIGHTS
 
 typedef struct {
-     pag_t cred;
+     xfs_pag_t cred;
      u_long access;
 } AccessEntry;
 
@@ -74,23 +73,12 @@ enum Access { ANONE   = 0x0,
 	      ALOCK   = 0x20,
 	      AADMIN  = 0x40 };
 
-/*
- * Keep the necessary state with traversing mount points.
- * Might want to make this per-user/per-process in some distant future.
- */
-
-struct mp_traversal {
-    VenusFid parent;		/* the point where the traversal started */
-    unsigned refcount;
-};
-
-typedef struct mp_traversal mp_traversal;
-
 typedef struct {
     struct Lock lock;		/* locking information for this entry */
     VenusFid fid;		/* The fid of the file for this entry */
     unsigned refcount;		/* reference count */
     u_int32_t host;		/* the source of this entry */
+    size_t length;		/* length of our cached copy */
     AFSFetchStatus status;	/* Removed unused stuff later */
     AFSCallBack callback;	/* Callback to the AFS-server */
     AFSVolSync volsync;		/* Sync info for ro-volumes */
@@ -108,21 +96,18 @@ typedef struct {
 	unsigned mountp : 1;	/* Is this an AFS mount point? */
 	unsigned kernelp : 1;	/* Does this entry exist in the kernel? */
 	unsigned sentenced : 1;	/* This entry should die */
+	unsigned silly : 1;	/* Instead of silly-rename */
+	unsigned fake_mp : 1;	/* a `fake' mount point */
+	unsigned vol_root : 1;	/* root of a volume */
     } flags;
     u_int tokens;		/* read/write tokens for the kernel */
-#if 0
-    mp_traversal *mp_traversal;	/* valid iff flags.mountp */
-#endif
     VenusFid parent;
-    VenusFid realfid;		/* Real fid (mountpoints) */
     Listitem *lru_le;		/* lru */
-#if 0
-    Listitem *invalid_le;	/* invalidation list */
-#else
     heap_ptr invalid_ptr;	/* pointer into the heap */
-#endif
     VolCacheEntry *volume;	/* pointer to the volume entry */
-    unsigned priority;		/* the priority of keeping the file 0-100 */
+    Bool priority;		/* is the file worth keeping */
+    int hits;			/* number of lookups */
+    int cleanergen;		/* generation cleaner */
 } FCacheEntry;
 
 /*
@@ -138,10 +123,24 @@ struct fs_server_context {
 typedef struct fs_server_context fs_server_context;
 
 /*
+ * This is magic cookie for the dump of the fcache.
+ * It's supposed not to be able to be confused with an old-style
+ * dump (with no header)
+ */
+
+#define FCACHE_MAGIC_COOKIE	0xff1201ff
+
+/*
+ * current version number of the dump file
+ */
+
+#define FCACHE_VERSION		0x2
+
+/*
  * How far the cleaner will go went cleaning things up.
  */
 
-extern unsigned fprioritylevel;
+extern Bool fprioritylevel;
 
 void
 fcache_init (u_long alowvnodes,
@@ -163,13 +162,16 @@ void
 fcache_purge_host (u_long host);
 
 void
-fcache_purge_cred (pag_t cred, int32_t cell);
+fcache_purge_cred (xfs_pag_t cred, int32_t cell);
 
 void
 fcache_stale_entry (VenusFid fid, AFSCallBack callback);
 
 int
 fcache_file_name (FCacheEntry *entry, char *s, size_t len);
+
+int
+fcache_dir_name (FCacheEntry *entry, char *s, size_t len);
 
 int
 fcache_extra_file_name (FCacheEntry *entry, char *s, size_t len);
@@ -247,13 +249,17 @@ int
 fcache_find (FCacheEntry **res, VenusFid fid);
 
 int
-fcache_get_attr (FCacheEntry *e, CredCacheEntry *ce);
+fcache_get_data (FCacheEntry **res, VenusFid *fid, CredCacheEntry **ce);
 
 int
-fcache_get_data (FCacheEntry *e, CredCacheEntry *ce);
+fcache_verify_attr (FCacheEntry *entry, FCacheEntry *parent_entry,
+		    const char *prefered_name, CredCacheEntry* ce);
 
 int
-followmountpoint (VenusFid *fid, VenusFid *parent, CredCacheEntry **ce);
+fcache_verify_data (FCacheEntry *e, CredCacheEntry *ce);
+
+int
+followmountpoint (VenusFid *fid, const VenusFid *parent, CredCacheEntry **ce);
 
 void
 fcache_status (void);
@@ -267,7 +273,7 @@ getacl(VenusFid fid, CredCacheEntry *ce,
 
 int
 setacl(VenusFid fid, CredCacheEntry *ce,
-       AFSOpaque *opaque);
+       AFSOpaque *opaque, FCacheEntry **ret);
 
 int
 getvolstat(VenusFid fid, CredCacheEntry *ce,
@@ -296,6 +302,12 @@ u_long
 fcache_usedvnodes(void);
 
 int
+fcache_need_bytes(u_long needed);
+
+Bool
+fcache_need_nodes (void);
+
+int
 fcache_giveup_all_callbacks (void);
 
 int
@@ -306,7 +318,7 @@ int
 read_attr (FCacheEntry *, CredCacheEntry *);
 
 Bool
-findaccess (pag_t cred, AccessEntry *ae, AccessEntry **pos);
+findaccess (xfs_pag_t cred, AccessEntry *ae, AccessEntry **pos);
 
 void
 fcache_unused(FCacheEntry *entry);
@@ -320,9 +332,27 @@ find_first_fs (FCacheEntry *e,
 	       fs_server_context *context);
 
 ConnCacheEntry *
-find_next_fs (fs_server_context *context, ConnCacheEntry *prev_conn);
+find_next_fs (fs_server_context *context,
+	      ConnCacheEntry *prev_conn,
+	      int mark_as_dead);
 
 void
 free_fs_server_context (fs_server_context *context);
+
+void
+recon_hashtabadd(FCacheEntry *entry);
+ 
+void
+recon_hashtabdel(FCacheEntry *entry);
+
+int
+fcache_get_fbuf (FCacheEntry *centry, int *fd, fbuf *fbuf,
+		 int open_flags, int fbuf_flags);
+
+u_long
+fcache_calculate_usage (void);
+
+const VenusFid *
+fcache_realfid (const FCacheEntry *entry);
 
 #endif /* _FCACHE_H_ */

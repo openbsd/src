@@ -1,0 +1,87 @@
+.\" $Id: aklog.1,v 1.1 2000/09/11 14:40:33 art Exp $
+.Dd Aug 06, 2000
+.Dt AKLOG SECTION
+.Os Arla
+.Sh NAME
+.Nm aklog
+.Nd
+Fetches tokens from your ticket-file.
+.Sh SYNOPSIS
+.Nm
+.Op Fl cell Ar <cell name>
+.Op Fl createuser Ar <cell name>
+.Op Fl debug Ar <cell name>
+.Op Fl help Ar <cell name>
+.Op Fl hosts Ar <cell name>
+.Op Fl krbrealm Ar <cell name>
+.Op Fl noprdb Ar <cell name>
+.Op Fl path Ar <cell name>
+.Op Fl quiet Ar <cell name>
+.Op Fl unlog Ar <cell name>
+.Op Fl version Ar <cell name>
+.Op Fl zsubs Ar <cell name>
+.Ar <cell or path>
+.Sh DESCRIPTION
+Supported options:
+.Bl -tag -width Ds
+.It Fl cell Ar <cell name>
+cell to authenticate to
+.It Fl createuser Ar <cell name>
+create PTS user in remote cell
+.It Fl debug Ar <cell name>
+print debugging information
+.It Fl help Ar <cell name>
+print help
+.It Fl hosts Ar <cell name>
+print host address information (unimplemented)
+.It Fl krbrealm Ar <cell name>
+kerberos realm for cell
+.It Fl noprdb Ar <cell name>
+don't try to determine AFS ID
+.It Fl path Ar <cell name>
+AFS path to authenticate to
+.It Fl quiet Ar <cell name>
+fail silently if no ticket cache
+.It Fl unlog Ar <cell name>
+discard tokens
+.It Fl version Ar <cell name>
+print version
+.It Fl zsubs Ar <cell name>
+update zephyr subscriptions (unimplemented)
+.El
+.Sh ENVIRONMENT
+.Nm
+will look at the enviroment varibel
+.Ev AFSCELL
+for the default cellname.
+If will also use
+.Ev HOME
+to find the file ~/.TheseCells
+.Sh FILES
+.Nm
+will look for the files
+.Pa ThisCell ,
+.Pa TheseCells ,
+and
+.Pa CellServDB
+in the directories
+.Pa /usr/arla/etc
+and
+.Pa /usr/vice/etc
+.Sh DIAGNOSTICS
+For debugging you can use the flag
+.Ar Fl d
+for debugging.
+.Pp
+.Bd -literal
+datan# aklog -d
+aklog: get_afs_id for lha in cell e.kth.se using pts-db
+aklog: get_afs_id for lha@e.kth.se in cell stacken.kth.se using pts-db
+aklog: get_afs_id for lha@e.kth.se in cell nada.kth.se using pts-db
+aklog: get_afs_id for lha@e.kth.se in cell pdc.kth.se using pts-db
+.Ed
+.Sh SEE ALSO
+.Xr tokens 1 ,
+.Xr unlog 1 ,
+.Xr aklog ,
+.Xr klog 1

@@ -1,0 +1,40 @@
+@c $Id: oddities.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Oddities, Arla timeline, Porting, Top
+@chapter Oddities
+
+@c ----------------------------------------------------
+
+@section AFS
+
+@itemize @bullet
+
+@item Directories - UnixModeBits are ignored when the vnode is a directory.
+
+@item Errnos are sent over the network. Like Solaris ENOTEMPTY(93) doesn't
+ even map to an error on sunos4 where ENOTEMPTY is 66.
+
+@item Mountpoints have the mode-bits 0644, if they don't they are symlinks 
+(and have the mode-bits 0755).
+
+@end itemize
+
+@c ----------------------------------------------------
+
+@section Operating systems
+
+@itemize @bullet
+
+@item On Irix 6.5 you have to build the dirents depending on what ABI
+ of the binary you are currently running.
+
+@item . and .. need to be first in directories, this is needed since some
+programs (like make) "knows" that the two first entries are . and .. and
+thus can be skiped.
+
+@item Reclen (in struct dirent) shouldn't be too large. When its
+larger then the buffer used in opendir/readdir/closedir, you loose.
+
+@end itemize
+
+@c ----------------------------------------------------

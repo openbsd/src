@@ -1,0 +1,10 @@
+#!/bin/sh
+# $Id: mkdir,v 1.1 2000/09/11 14:41:32 art Exp $
+mkdir foo || exit 1
+echo hej > foo/1 || exit 1
+rmdir foo >/dev/null 2>&1 
+test -d foo || exit 1
+rm -f foo/1 || exit 1
+rmdir foo || exit 1
+test -d foo && exit 1
+exit 0

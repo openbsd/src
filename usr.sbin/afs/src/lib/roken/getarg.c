@@ -1,4 +1,3 @@
-/*	$OpenBSD: getarg.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getarg.c,v 1.14 1999/03/03 15:45:50 assar Exp $");
+RCSID("$Id: getarg.c,v 1.3 2000/09/11 14:41:00 art Exp $");
 #endif
 
 #include <stdio.h>
@@ -262,7 +261,8 @@ add_string(getarg_strings *s, char *value)
 }
 
 static int
-parse_option(struct getargs *arg, char *optarg, int negate)
+parse_option(struct getargs *arg, int style, char *optarg, int argc, 
+	     char **argv, int *next, int negate)
 {
     switch(arg->type){
     case arg_integer:
@@ -274,13 +274,22 @@ parse_option(struct getargs *arg, char *optarg, int negate)
 	return 0;
     }
     case arg_string:
+    case arg_generic_string:
     {
 	*(char**)arg->value = optarg;
 	return 0;
     }
     case arg_strings:
     {
-	add_string((getarg_strings*)arg->value, optarg);
+	add_string ((getarg_strings*)arg->value, optarg);
+	while ((style & ARG_TRANSLONG)
+	       && argc > *next + 1
+	       && argv[*next + 1]
+	       && argv[*next + 1][0] != '-')
+	{
+	    add_string ((getarg_strings*)arg->value, argv[*next + 1]);
+	    (*next)++;
+	}
 	return 0;
     }
     case arg_flag:
@@ -307,13 +316,15 @@ parse_option(struct getargs *arg, char *optarg, int negate)
 
 
 static int
-arg_match_long(struct getargs *args,
+arg_match_long(struct getargs *args, int argc,
 	       char **argv, int style, int *next)
 {
     char *optarg = NULL;
     int negate = 0;
     int partial_match = 0;
+    int do_generic=0;
     struct getargs *partial = NULL;
+    struct getargs *generic_arg = NULL;
     struct getargs *current = NULL;
     struct getargs *arg;
     int argv_len;
@@ -336,6 +347,20 @@ arg_match_long(struct getargs *args,
 	argv_len = p - q;
 
     for (arg = args; arg->type ; arg++) {
+	/* parse a generic argument if it has not already been filled */
+	if ( (!do_generic) && (arg->type == arg_generic_string) ) {
+	    char *hole = (char *)arg->value;
+
+	    if ( (hole) && (*hole == '\0') )
+		do_generic = 1;
+	}
+
+	if(do_generic) {
+	    generic_arg = arg;
+	    optarg = *(argv);
+	    *next = 0;
+	}
+
 	if(arg->long_name) {
 	    int len = strlen(arg->long_name);
 	    char *p = q;
@@ -361,8 +386,10 @@ arg_match_long(struct getargs *args,
 		} else if (strncmp (arg->long_name,
 				    p,
 				    p_len) == 0) {
-		    ++partial_match;
-		    partial = arg;
+		    if (!(style & ARG_USEFIRST) || !partial_match) {
+			++partial_match;
+			partial = arg;
+		    }
 		    if (style & ARG_TRANSLONG) {
 			if (ISFLAG(arg)) {
 			    optarg = "";
@@ -387,7 +414,10 @@ arg_match_long(struct getargs *args,
 	}
     }
     if (current == NULL) {
-	if (partial_match == 1)
+	/* Match a generic argument preferentially over a partial match */
+	if (generic_arg && (!partial_match || (style & ARG_USEFIRST)))
+	    current = generic_arg;
+	else if (partial_match == 1)
 	    current = partial;
 	else
 	    return ARG_ERR_NO_MATCH;
@@ -396,7 +426,7 @@ arg_match_long(struct getargs *args,
     if(*optarg == '\0' && !ISFLAG(current))
 	return ARG_ERR_NO_MATCH;
 
-    return parse_option(current, optarg, negate);
+    return parse_option(current, style, optarg, argc, argv, next, negate);
 }
 
 int
@@ -411,12 +441,21 @@ getarg(struct getargs *args,
     srand (time(NULL));
     (*optind)++;
     for(i = *optind; i < argc; i++) {
-	if(argv[i][0] != '-' && swcount != -1) {
+	if(argv[i][0] != '-' && swcount != -1 && (args[swcount].mandatoryp == arg_mandatory) ) {
+	    /* the mandatory junk up there is to prevent getarg() from
+	       automatically matching options even when not specified with
+	       their flagged name
+	    */
 	    if (!(style & ARG_SWITCHLESS))
 		break;
-	    ret = parse_option(&args[swcount], argv[i], 0);
-	    if (ret)
+	    j = 0;
+	    ret = parse_option(&args[swcount], style, argv[i],
+			       argc - i, &argv[i], &j, 0);
+	    if (ret) {
+		*optind = i;
 		return ret;
+	    }
+	    i += j;
 	    swcount++;
 	} else if(argv[i][1] == '-' || 
 		  ((style & ARG_TRANSLONG) && argv[i][1] != 0)) {
@@ -425,11 +464,13 @@ getarg(struct getargs *args,
 		break;
 	    }
 	    swcount = -1;
-	    ret = arg_match_long (args, &argv[i], style, &j);
-	    if(ret)
+	    ret = arg_match_long (args, argc - i, &argv[i], style, &j);
+	    if(ret) {
+		*optind = i;
 		return ret;
+	    }
 	    i += j;
-	}else if (style & ARG_SHORTARG) {
+	}else if (style & ARG_SHORTARG && argv[i][0] == '-') {
 	    for(j = 1; argv[i][j]; j++) {
 		for(arg = args; arg->type; arg++) {
 		    char *optarg;
@@ -450,12 +491,16 @@ getarg(struct getargs *args,
 			    i++;
 			    optarg = argv[i];
 			}
-			if(optarg == NULL)
+			if(optarg == NULL) {
+			    *optind = i - 1;
 			    return ARG_ERR_NO_ARG;
+			}
 			if(arg->type == arg_integer){
 			    int tmp;
-			    if(sscanf(optarg, "%d", &tmp) != 1)
+			    if(sscanf(optarg, "%d", &tmp) != 1) {
+				*optind = i;
 				return ARG_ERR_BAD_ARG;
+			    }
 			    *(int*)arg->value = tmp;
 			    goto out;
 			}else if(arg->type == arg_string){
@@ -465,12 +510,15 @@ getarg(struct getargs *args,
 			    add_string((getarg_strings*)arg->value, optarg);
 			    goto out;
 			}
+			*optind = i;
 			return ARG_ERR_BAD_ARG;
 		    }
 			
 		}
-		if (!arg->type)
+		if (!arg->type) {
+		    *optind = i;
 		    return ARG_ERR_NO_MATCH;
+		}
 	    }
 	out:;
 	}

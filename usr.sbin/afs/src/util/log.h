@@ -1,4 +1,3 @@
-/*	$OpenBSD: log.h,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,18 +36,20 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: log.h,v 1.5 1998/04/03 03:34:26 assar Exp $ */
+/* $Id: log.h,v 1.2 2000/09/11 14:41:39 art Exp $ */
 
 #ifndef _LOG_
 #define _LOG_
 
 #include <stdarg.h>
+#include <parse_units.h>
 
 #if HAVE_SYSLOG
 #include <syslog.h>
 #endif /* HAVE_SYSLOG */
 
 typedef struct log_method Log_method;
+typedef struct log_unit Log_unit;
 
 /*
  * Functions for handling logging
@@ -60,16 +61,27 @@ Log_method *log_open (char *progname, char *fname);
 
 void log_close (Log_method *log);
 
-void log_log (Log_method *log, unsigned level, const char *fmt, ...)
+Log_unit *log_unit_init (Log_method *method, const char *name,
+			 struct units *lognames,
+			 unsigned long default_mask);
+
+void log_unit_free (Log_method *method, Log_unit *log);
+
+void log_log (Log_unit *log, unsigned level, const char *fmt, ...)
 __attribute__((format (printf, 3, 4)))
 ;
 
-void log_vlog(Log_method *log, unsigned level, const char *fmt, va_list args)
+void log_vlog(Log_unit *log, unsigned level, const char *fmt, va_list args)
 __attribute__((format (printf, 3, 0)))
 ;
 
-unsigned log_get_mask (Log_method *log);
+unsigned log_get_mask (Log_unit *log);
 
-void log_set_mask (Log_method *log, unsigned mask);
+void log_set_mask (Log_unit *log, unsigned mask);
+
+void log_set_mask_str (Log_method *method, Log_unit *default_unit,
+		       const char *str);
+
+size_t log_mask2str (Log_method *method, Log_unit *unit, char *buf, size_t sz);
 
 #endif /* _LOG_ */

@@ -1,4 +1,3 @@
-/*	$OpenBSD: putenv.c,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: putenv.c,v 1.1 1998/01/13 16:25:31 lha Exp $");
+RCSID("$Id: putenv.c,v 1.2 2000/09/11 14:41:03 art Exp $");
 #endif
 
 #include <stdlib.h>
@@ -53,30 +47,34 @@ extern char **environ;
  *      Makes the value of the environment variable name equal to
  *      value by altering an existing variable or creating a new one.
  */
-int putenv(const char *string)
+
+int
+putenv(const char *string)
 {
     int i;
+    const char *eq = (const char *)strchr(string, '=');
     int len;
     
-    len = string - strchr(string, '=') + 1;
+    if (eq == NULL)
+	return 1;
+    len = eq - string;
 
-    if(environ == NULL){
+    if(environ == NULL) {
 	environ = malloc(sizeof(char*));
 	if(environ == NULL)
 	    return 1;
 	environ[0] = NULL;
     }
 
-    for(i = 0; environ[i]; i++)
-	if(strncmp(string, environ[i], len)){
-	    environ[len] = string;
+    for(i = 0; environ[i] != NULL; i++)
+	if(strncmp(string, environ[i], len) == 0) {
+	    environ[i] = string;
 	    return 0;
 	}
-    environ = realloc(environ, sizeof(char*) * (i + 1));
+    environ = realloc(environ, sizeof(char*) * (i + 2));
     if(environ == NULL)
 	return 1;
-    environ[i] = string;
+    environ[i]   = string;
     environ[i+1] = NULL;
     return 0;
 }
-

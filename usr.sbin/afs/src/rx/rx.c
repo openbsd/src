@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx.c,v 1.2 1999/04/30 01:59:14 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -24,7 +23,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx.c,v 1.6 1998/09/09 10:17:52 assar Exp $");
+RCSID("$Id: rx.c,v 1.3 2000/09/11 14:41:20 art Exp $");
 
 /*
  * quota system: each attached server process must be able to make
@@ -64,9 +63,6 @@ long Rx0 = 0, Rx1 = 0;
 
 struct rx_serverQueueEntry *rx_waitForPacket = 0;
 struct rx_packet *rx_allocedP = 0;
-#if 0
-static char rxrcsid[] = "@(#)$KTH: rx.c,v 1.6 1998/09/09 10:17:52 assar Exp $";
-#endif
 
 /* ------------Exported Interfaces------------- */
 
@@ -512,7 +508,7 @@ rx_NewCall(struct rx_connection * conn)
     return call;
 }
 
-int
+static int
 rxi_HasActiveCalls(struct rx_connection * aconn)
 {
     int i;
@@ -582,7 +578,8 @@ rxi_SetCallNumberVector(struct rx_connection * aconn,
 struct rx_service *
 rx_NewService(u_short port, u_short serviceId, char *serviceName,
 	      struct rx_securityClass ** securityObjects,
-	      int nSecurityObjects, long (*serviceProc) ())
+	      int nSecurityObjects,
+	      int32_t (*serviceProc) (struct rx_call *))
 {
     osi_socket socket = OSI_NULLSOCKET;
     struct rx_service *tservice;
@@ -684,7 +681,7 @@ void
 rx_ServerProc(void)
 {
     struct rx_call *call;
-    long code;
+    int32_t code;
     struct rx_service *tservice;
 
 #if defined(AFS_SGIMP_ENV)
@@ -880,7 +877,7 @@ rx_SetArrivalProc(struct rx_call * call, void (*proc) (),
  * to the caller
  */
 long
-rx_EndCall(struct rx_call * call, long rc)
+rx_EndCall(struct rx_call * call, int32_t rc)
 {
     struct rx_connection *conn = call->conn;
     struct rx_service *service;
@@ -1050,7 +1047,7 @@ rxi_PacketsUnWait(void)
  * Return this process's service structure for the
  * specified socket and service
  */
-struct rx_service *
+static struct rx_service *
 rxi_FindService(osi_socket socket, u_short serviceId)
 {
     struct rx_service **sp;
@@ -1238,11 +1235,11 @@ rxi_FindPeer(u_long host, u_short port)
 }
 
 /*
- * Destroy the specified peer structure, removing it from the peer hash
- * table
+ * Remove `peer' from the hash table.
  */
-void
-rxi_DestroyPeer(struct rx_peer * peer)
+
+static void
+rxi_RemovePeer(struct rx_peer *peer)
 {
     struct rx_peer **peer_ptr;
 
@@ -1250,11 +1247,64 @@ rxi_DestroyPeer(struct rx_peer * peer)
 	 *peer_ptr; peer_ptr = &(*peer_ptr)->next) {
 	if (*peer_ptr == peer) {
 	    *peer_ptr = peer->next;
-	    rxi_FreePeer(peer);
-	    rx_stats.nPeerStructs--;
 	    return;
 	}
     }
+}
+
+/*
+ * Destroy the specified peer structure, removing it from the peer hash
+ * table
+ */
+
+static void
+rxi_DestroyPeer(struct rx_peer * peer)
+{
+    rxi_RemovePeer(peer);
+    rxi_FreePeer(peer);
+    rx_stats.nPeerStructs--;
+}
+
+/*
+ * Add `peer' to the hash table.
+ */
+
+static struct rx_peer *
+rxi_InsertPeer(struct rx_peer *peer)
+{
+    struct rx_peer *pp;
+    int hashIndex;
+
+    hashIndex = PEER_HASH(peer->host, peer->port);
+    for (pp = rx_peerHashTable[hashIndex]; pp; pp = pp->next) {
+	if ((pp->host == peer->host) && (pp->port == peer->port))
+	    break;
+    }
+    if (pp != NULL) {
+	pp->refCount  += peer->refCount;
+	pp->nSent     += peer->nSent;
+	pp->reSends   += peer->reSends;
+	rxi_FreePeer(peer);
+	rx_stats.nPeerStructs--;
+	return pp;
+    } else {
+	peer->next = rx_peerHashTable[hashIndex];
+	rx_peerHashTable[hashIndex] = peer;
+	return peer;
+    }
+}
+
+/*
+ * Change the key of a given peer
+ */
+
+static struct rx_peer *
+rxi_ChangePeer(struct rx_peer *peer, u_long host, u_short port)
+{
+    rxi_RemovePeer(peer);
+    peer->host = host;
+    peer->port = port;
+    return rxi_InsertPeer(peer);
 }
 
 /*
@@ -1271,33 +1321,30 @@ rxi_DestroyPeer(struct rx_peer * peer)
  * server connection is created, it will be created using the supplied
  * index, if the index is valid for this service
  */
-struct rx_connection *
+static struct rx_connection *
 rxi_FindConnection(osi_socket socket, long host,
 		   u_short port, u_short serviceId, u_long cid,
 		   u_long epoch, int type, u_int securityIndex)
 {
     int hashindex;
     struct rx_connection *conn;
+    struct rx_peer *pp = NULL;
 
     hashindex = CONN_HASH(host, port, cid, epoch, type);
     for (conn = rx_connHashTable[hashindex]; conn; conn = conn->next) {
 	if ((conn->type == type) && ((cid & RX_CIDMASK) == conn->cid) &&
 	    (epoch == conn->epoch) &&
 	    (securityIndex == conn->securityIndex)) {
-	    struct rx_peer *pp = conn->peer;
+	    pp = conn->peer;
 
-	    /*
-	     * epoch's high order bits mean route for security reasons only on
-	     * the cid, not the host and port fields.
-	     */
-	    if (conn->epoch & 0x80000000)
-		break;
-	    if (((type == RX_CLIENT_CONNECTION)
-		 || (pp->host == host)) && (pp->port == port))
+	    if (type == RX_CLIENT_CONNECTION || pp->host == host)
 		break;
 	}
     }
-    if (!conn) {
+    if (conn != NULL) {
+	if (pp->host != host || pp->port != port)
+	    conn->peer = rxi_ChangePeer (pp, host, port);
+    } else {
 	struct rx_service *service;
 
 	if (type == RX_CLIENT_CONNECTION)
@@ -1447,6 +1494,7 @@ rxi_ReceivePacket(struct rx_packet * np, osi_socket socket,
      * ignore the incoming packet
      */
     if (conn->error) {
+	rxi_ConnectionError (conn, conn->error);
 	/* Don't respond to an abort packet--we don't want loops! */
 	if (np->header.type != RX_PACKET_TYPE_ABORT)
 	    np = rxi_SendConnectionAbort(conn, np);
@@ -1670,8 +1718,8 @@ rxi_ReceivePacket(struct rx_packet * np, osi_socket socket,
          * An abort packet: reset the connection, passing the error up to
          * the user
          */
-	/* What if error is zero? */
-	rxi_CallError(call, ntohl(*(long *) rx_DataOf(np)));
+	/* XXX What if error is zero? and length of packet is 0 */
+	rxi_CallError(call, ntohl(*(u_int32_t *) rx_DataOf(np)));
 	break;
     case RX_PACKET_TYPE_BUSY:
 	/* XXXX */
@@ -2604,7 +2652,7 @@ rxi_SendConnectionAbort(struct rx_connection * conn,
  * rejected.
  */
 void
-rxi_ConnectionError(struct rx_connection * conn, long error)
+rxi_ConnectionError(struct rx_connection * conn, int32_t error)
 {
     if (error) {
 	int i;
@@ -2641,7 +2689,7 @@ rxi_ResetConnection(struct rx_connection * conn)
 }
 
 void
-rxi_CallError(struct rx_call * call, long error)
+rxi_CallError(struct rx_call * call, int32_t error)
 {
     if (call->error)
 	error = call->error;
@@ -3178,7 +3226,7 @@ rxi_Send(struct rx_call *call, struct rx_packet *p)
  * turned off.  Returns 0 if conn is well, -1 otherwise.  If otherwise, call
  * may be freed! 
  */
-int 
+static int 
 rxi_CheckCall(struct rx_call *call)
 {
     struct rx_connection *conn = call->conn;
@@ -3342,7 +3390,7 @@ rxi_ChallengeOn(struct rx_connection *conn)
  * waiting calls as possible before the burst count goes down to zero,
  * again.
  */
-void 
+static void 
 rxi_DecongestionEvent(struct rxevent *event, struct rx_peer *peer,
 		      int nPackets)
 {
@@ -3951,9 +3999,10 @@ rx_PrintTheseStats(FILE *file, struct rx_stats *s, int size)
 	    s->dataPacketsSent, s->dataPacketsReSent, s->dataPacketsPushed,
 	    s->ignoreAckedPacket);
     fprintf(file,
-	    "   \t(these should be small) sendFailed %d, "
-	    "fatalErrors %ld\n",
-	    s->netSendFailures, s->fatalErrors);
+	    "   \t(these should be small) sendFailed %lu, "
+	    "fatalErrors %lu\n",
+	    (unsigned long)s->netSendFailures,
+	    (unsigned long)s->fatalErrors);
     if (s->nRttSamples) {
 	fprintf(file, "   Average rtt is %0.3f, with %d samples\n",
 		clock_Float(&s->totalRtt) / s->nRttSamples, s->nRttSamples);

@@ -1,4 +1,3 @@
-/*	$OpenBSD: mmaptime.c,v 1.1.1.1 1998/09/14 21:53:24 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +40,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: mmaptime.c,v 1.5 1998/05/24 16:07:18 lha Exp $");
+RCSID("$Id: mmaptime.c,v 1.2 2000/09/11 14:41:39 art Exp $");
 
 #include <stdio.h>
 

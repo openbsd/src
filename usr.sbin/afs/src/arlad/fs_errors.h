@@ -1,6 +1,5 @@
-/*	$OpenBSD: fs_errors.h,v 1.1 1999/04/30 01:59:08 art Exp $	*/
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,6 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* $Id: fs_errors.h,v 1.2 2000/09/11 14:40:42 art Exp $ */
 
 #ifndef _FS_ERRORS_H_
 #define _FS_ERRORS_H_ 1

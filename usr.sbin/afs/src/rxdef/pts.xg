@@ -58,11 +58,11 @@ const PR_SF_NUSERS = 0x40000000;
 const PR_SF_ALLBITS = 0xff;
 
 /* Reserved IDs */
-const SYSADMINID = -204;
-const ANYUSERID = -101;
-const AUTHUSERID = -102;
-const ANONYMOUSID = 32766;
-const PRBADID = 0x80000000;
+const PR_SYSADMINID = -204;
+const PR_ANYUSERID = -101;
+const PR_AUTHUSERID = -102;
+const PR_ANONYMOUSID = 32766;
+const PR_BADID = 0x80000000;
 
 /* Bits for struct prentry flags */
 const PRTYPE = 0x3f;
@@ -243,7 +243,7 @@ NewEntry(IN string name<PR_MAXNAMELEN>,
 	 IN long oid,
 	 OUT long *id) = 509;
 
-INewEntry(IN char name[PR_MAXNAMELEN],
+INewEntry(IN string name<PR_MAXNAMELEN>,
 	  IN long id,
 	  IN long oid) = 500;
 

@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_globs.c,v 1.1.1.1 1998/09/14 21:53:15 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -28,4 +27,4 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_globs.c,v 1.5 1998/02/26 14:38:27 art Exp $");
+RCSID("$Id: rx_globs.c,v 1.2 2000/09/11 14:41:21 art Exp $");

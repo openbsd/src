@@ -1,6 +1,5 @@
-/*	$OpenBSD: vsyslog.c,v 1.1.1.1 1998/09/14 21:53:09 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: vsyslog.c,v 1.1 1998/01/13 16:25:47 lha Exp $");
+RCSID("$Id: vsyslog.c,v 1.2 2000/09/11 14:41:06 art Exp $");
 #endif
 
 #ifndef HAVE_VSYSLOG
@@ -50,14 +44,72 @@ RCSID("$KTH: vsyslog.c,v 1.1 1998/01/13 16:25:47 lha Exp $");
 
 #include "roken.h"
 
+/*
+ * the theory behind this is that we might be trying to call vsyslog
+ * when there's no memory left, and we should try to be as useful as
+ * possible.  And the format string should say something about what's
+ * failing.
+ */
+
+static void
+simple_vsyslog(int pri, const char *fmt, va_list ap)
+{
+    syslog (pri, "%s", fmt);
+}
+
+/*
+ * do like syslog but with a `va_list'
+ */
+
 void
 vsyslog(int pri, const char *fmt, va_list ap)
 {
-    char *p;
+    char *fmt2;
+    const char *p;
+    char *p2;
+    int saved_errno = errno;
+    int fmt_len  = strlen (fmt);
+    int fmt2_len = fmt_len;
+    char *buf;
 
-    asprintf (&p, fmt, ap);
-    syslog (pri, "%s", p);
-    free (p);
+    fmt2 = malloc (fmt_len + 1);
+    if (fmt2 == NULL) {
+	simple_vsyslog (pri, fmt, ap);
+	return;
+    }
+
+    for (p = fmt, p2 = fmt2; *p != '\0'; ++p) {
+	if (p[0] == '%' && p[1] == 'm') {
+	    const char *e = strerror (saved_errno);
+	    int e_len = strlen (e);
+	    char *tmp;
+	    int pos;
+
+	    pos = p2 - fmt2;
+	    fmt2_len += e_len - 2;
+	    tmp = realloc (fmt2, fmt2_len + 1);
+	    if (tmp == NULL) {
+		free (fmt2);
+		simple_vsyslog (pri, fmt, ap);
+		return;
+	    }
+	    fmt2 = tmp;
+	    p2   = fmt2 + pos;
+	    memmove (p2, e, e_len);
+	    p2 += e_len;
+	    ++p;
+	} else
+	    *p2++ = *p;
+    }
+    *p2 = '\0';
+
+    vasprintf (&buf, fmt2, ap);
+    free (fmt2);
+    if (buf == NULL) {
+	simple_vsyslog (pri, fmt, ap);
+	return;
+    }
+    syslog (pri, "%s", buf);
+    free (buf);
 }
-
 #endif

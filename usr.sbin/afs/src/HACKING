@@ -1,0 +1,17 @@
+#!/bin/sh
+# $Id: HACKING,v 1.1 2000/09/11 14:40:28 art Exp $
+#
+# * Configuration stuff
+#
+# Arla uses GNU autoconf for configuration.  If you want to modify
+# configure.in (or acconfig.h) you'll need autoconf 2.13 and automake
+# 1.4 or later.  To re-create the configuration files, run these
+# commands:
+
+aclocal -I cf
+autoheader
+autoconf
+
+# aclocal creates a file `aclocal.m4' from all the tests in the `cf'
+# directory.  autoheader will create `include/config.h.in' and autoconf
+# the `configure' script.

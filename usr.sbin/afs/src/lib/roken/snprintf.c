@@ -1,6 +1,5 @@
-/*	$OpenBSD: snprintf.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: snprintf.c,v 1.8 1998/12/20 15:52:38 assar Exp $");
+RCSID("$Id: snprintf.c,v 1.3 2000/09/11 14:41:04 art Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -77,7 +71,6 @@ sn_reserve (struct state *state, size_t n)
 {
   return state->s + n > state->theend;
 }
-
 
 static int
 sn_append_char (struct state *state, unsigned char c)
@@ -127,7 +120,7 @@ as_append_char (struct state *state, unsigned char c)
 
 static int
 append_number(struct state *state,
-	      unsigned long num, unsigned base, unsigned char *rep,
+	      unsigned long num, unsigned base, char *rep,
 	      int width, int prec, int flags, int minusp)
 {
   int len = 0;
@@ -224,7 +217,7 @@ append_string (struct state *state,
   if(prec != -1)
     width -= prec;
   else
-    width -= strlen(arg);
+    width -= strlen((char *)arg);
   if(!(flags & minus_flag))
     while(width-- > 0)
       if((*state->append_char) (state, ' '))
@@ -270,11 +263,11 @@ append_char(struct state *state,
 
 #define PARSE_INT_FORMAT(res, arg, unsig) \
 if (long_flag) \
-     res = va_arg(arg, unsig long); \
+     res = (unsig long)va_arg(arg, unsig long); \
 else if (short_flag) \
-     res = va_arg(arg, unsig short); \
+     res = (unsig short)va_arg(arg, unsig int); \
 else \
-     res = va_arg(arg, unsig int)
+     res = (unsig int)va_arg(arg, unsig int)
 
 /*
  * zyxprintf - return 0 or -1
@@ -437,6 +430,9 @@ xyzprintf (struct state *state, const char *char_format, va_list ap)
 	*arg = state->s - state->str;
 	break;
       }
+      case '\0' :
+	  --format;
+	  /* FALLTHROUGH */
       case '%' :
 	if ((*state->append_char)(state, c))
 	  return -1;
@@ -585,7 +581,7 @@ vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
     *state.s = '\0';
     len = state.s - state.str;
     tmp = realloc (state.str, len+1);
-    if (state.str == NULL) {
+    if (tmp == NULL) {
       free (state.str);
       *ret = NULL;
       return -1;
@@ -602,12 +598,13 @@ vsnprintf (char *str, size_t sz, const char *format, va_list args)
 {
   struct state state;
   int ret;
+  unsigned char *ustr = (unsigned char *)str;
 
   state.max_sz = 0;
   state.sz     = sz;
-  state.str    = str;
-  state.s      = str;
-  state.theend = str + sz - 1;
+  state.str    = ustr;
+  state.s      = ustr;
+  state.theend = ustr + sz - 1;
   state.append_char = sn_append_char;
   state.reserve     = sn_reserve;
 

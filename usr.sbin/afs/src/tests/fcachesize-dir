@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id: fcachesize-dir,v 1.1 2000/09/11 14:41:29 art Exp $
+
+FS=${FS:-${objdir}/../appl/fs/fs}
+SIZE1=`$FS getcache -b | awk '{ print $4 ; exit }'`
+mkdir foo
+SIZE2=`$FS getcache -b | awk '{ print $4 ; exit }'`
+test $SIZE2 = `expr $SIZE1 + 2048` || exit 1
+rmdir foo
+#SIZE3=`$FS getcache -b | awk '{ print $4 ; exit }'`
+#test $SIZE3 = $SIZE1 || exit 1
+
+exit 0

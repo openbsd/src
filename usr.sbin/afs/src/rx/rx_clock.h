@@ -1,5 +1,4 @@
-/*	$OpenBSD: rx_clock.h,v 1.1.1.1 1998/09/14 21:53:15 art Exp $	*/
-/* $KTH: rx_clock.h,v 1.3 1998/02/22 19:43:17 joda Exp $ */
+/* $Id: rx_clock.h,v 1.2 2000/09/11 14:41:21 art Exp $ */
 
 /*
 ****************************************************************************
@@ -66,6 +65,9 @@ extern int clock_nUpdates;
 
 /* Initialize the clock package */
 void clock_Init (void);
+
+/* Restart the interval timer */
+void clock_ReInit(void);
 
 #define	clock_NewTime()	(clock_haveCurrentTime = 0)
 

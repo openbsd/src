@@ -1,6 +1,5 @@
-/*	$OpenBSD: subr.h,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,14 +40,46 @@
  * Header with prototypes for OS-specific functions.
  */
 
-/* $KTH: subr.h,v 1.6 1998/09/08 08:24:39 assar Exp $ */
+/* $Id: subr.h,v 1.3 2000/09/11 14:40:43 art Exp $ */
 
 #ifndef _SUBR_H_
 #define _SUBR_H_
 
+#include <fdir.h>
+
+struct write_dirent_args {
+    int fd;
+#ifdef HAVE_OFF64_T
+    off64_t off;
+#else
+    off_t off;
+#endif
+    char *buf;
+    char *ptr;
+    void *last;
+    FCacheEntry *e; 
+    CredCacheEntry *ce;
+};
+
+ino_t
+dentry2ino (const char *name, const VenusFid *fid, const FCacheEntry *parent);
+
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  xfs_cache_handle *, char *, size_t);
+
+Result
+conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
+	      xfs_cache_handle *cache_handle,
+	      char *cache_name, size_t cache_name_sz,
+	      fdir_readdir_func func,
+	      void (*flush_func)(void *),
+	      size_t blocksize);
+
+int
+dir_remove_name (FCacheEntry *e, const char *filename,
+		 xfs_cache_handle *cache_handle,
+		 char *cache_name, size_t cache_name_sz);
 
 #endif /* _SUBR_H_ */
 

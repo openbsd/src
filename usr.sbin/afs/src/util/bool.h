@@ -1,6 +1,5 @@
-/*	$OpenBSD: bool.h,v 1.1.1.1 1998/09/14 21:53:21 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,21 +40,34 @@
  * Boolean
  */
 
-/* $KTH: bool.h,v 1.2 1997/11/09 23:48:45 assar Exp $ */
+/* $Id: bool.h,v 1.2 2000/09/11 14:41:36 art Exp $ */
 
 #ifndef _BOOL_
 #define _BOOL_
 
 #ifndef FALSE
 
+#ifndef Bool
+
 typedef enum {
   FALSE = 0, TRUE = 1
 } Bool;
 
+#else /* Bool */
+
+#define FALSE	0
+#define TRUE	1
+
+#endif /* Bool */
+
 #else /* FALSE */
+
+#ifndef Bool
 
 typedef int Bool;
 
-#endif
+#endif /* Bool */
+
+#endif /* FALSE */
 
 #endif /* _BOOL_ */

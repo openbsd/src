@@ -1,0 +1,45 @@
+# $Id: Makefile.in,v 1.1 2000/09/11 14:40:54 art Exp $
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+SHELL		= /bin/sh
+
+SUBDIRS		= roken sl @editline_dir@ acl cmd
+
+all:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+install:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+uninstall:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+clean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+realclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+distclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+mostlyclean:
+		SUBDIRS='$(SUBDIRS)'; \
+		for i in $$SUBDIRS; \
+		do (cd $$i && $(MAKE) $(MFLAGS) $@) || exit 1; done
+
+.PHONY: all install uninstall clean realclean distclean mostlyclean

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1999/06/06 15:16:40 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/09/11 14:40:27 art Exp $
 
 #
 # You don't want to understand this makefile.
@@ -23,5 +23,6 @@ CFLAGS	+= -O0
 .include "Makefile.rxdef.inc"
 .include "Makefile.rxkad.inc"
 .include "Makefile.ko.inc"
+.include "Makefile.bufdir.inc"
 
 .include <bsd.lib.mk>

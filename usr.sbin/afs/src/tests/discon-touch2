@@ -1,0 +1,8 @@
+#!/bin/sh
+# $Id: discon-touch2,v 1.1 2000/09/11 14:41:29 art Exp $
+FS=${FS:-${objdir}/../appl/fs/fs}
+> foobar
+${FS} conn disconn
+touch foobar
+touch foobar
+${FS} conn conn

@@ -1,6 +1,5 @@
-/*	$OpenBSD: parse_time.c,v 1.1.1.1 1998/09/14 21:53:05 art Exp $	*/
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the 
  *    documentation and/or other materials provided with the distribution. 
  *
- * 3. All advertising materials mentioning features or use of this software 
- *    must display the following acknowledgement: 
- *      This product includes software developed by Kungliga Tekniska 
- *      Högskolan and its contributors. 
- *
- * 4. Neither the name of the Institute nor the names of its contributors 
+ * 3. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
  *    without specific prior written permission. 
  *
@@ -39,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: parse_time.c,v 1.1 1998/01/13 16:25:29 lha Exp $");
+RCSID("$Id: parse_time.c,v 1.2 2000/09/11 14:41:02 art Exp $");
 #endif
 
 #include <parse_units.h>
@@ -69,4 +63,16 @@ size_t
 unparse_time (int t, char *s, size_t len)
 {
     return unparse_units (t, time_units, s, len);
+}
+
+size_t
+unparse_time_approx (int t, char *s, size_t len)
+{
+    return unparse_units_approx (t, time_units, s, len);
+}
+
+void
+print_time_table (FILE *f)
+{
+    print_units_table (time_units, f);
 }

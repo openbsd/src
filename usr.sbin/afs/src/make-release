@@ -1,0 +1,26 @@
+#!/bin/sh
+# $Id: make-release,v 1.1 2000/09/11 14:40:29 art Exp $
+
+if [ ! -f configure.in ]; then
+	echo "Must be in top directory"
+	exit 1
+fi
+
+if [ $# -ne 1 -a $# -ne 2 ]; then
+	echo "make-release version [branch]"
+	exit 1
+fi
+
+if [ "$2" != "" ]; then
+	rev="-r $2"
+fi
+
+HV="$1" emacs -batch -q -no-site-file -l ./make-release.el || exit
+
+files="configure.in ChangeLog README LIESMICH doc/arla.texi"
+
+echo cvs ci -m \"Release $1\" $files
+cvs ci -m "Release $1" $files || exit 1
+v=`echo $1 | sed 's/\./-/g'`
+echo cvs rtag $rev arla-$v arla
+cvs rtag $rev arla-$v arla || exit 1

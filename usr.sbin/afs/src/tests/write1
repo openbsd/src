@@ -1,0 +1,4 @@
+#!/bin/sh
+echo hej > foo || exit 1
+if test X`cat foo` != X"hej"; then exit 1; fi
+rm foo || exit 1

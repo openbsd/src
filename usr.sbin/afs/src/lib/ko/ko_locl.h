@@ -1,6 +1,5 @@
-/*	$OpenBSD: ko_locl.h,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,7 @@
 
 /*
  *  Include file for whole arlad
- *  $KTH: ko_locl.h,v 1.4 1999/01/03 08:27:07 lha Exp $
+ *  $Id: ko_locl.h,v 1.3 2000/09/11 14:40:57 art Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,8 +58,13 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <sys/stat.h>
+#ifdef HAVE_SYS_IOCCOM_H
+#include <sys/ioccom.h>
+#endif
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
@@ -74,13 +78,8 @@
 #include <getarg.h>
 
 #include <hash.h>
-#include <ip.h>
-
 #include <bool.h>
 
 #include "ko.h"
-#include "kodebug.h"
-
-#include "strmatch.h"
 
 

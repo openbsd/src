@@ -1,4 +1,3 @@
-/*	$OpenBSD: cmcb.h,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: cmcb.h,v 1.2 1998/02/19 05:36:58 assar Exp $ */
+/* $Id: cmcb.h,v 1.2 2000/09/11 14:40:40 art Exp $ */
 
 #ifndef _CMCB_H_
 #define _CMCB_H_

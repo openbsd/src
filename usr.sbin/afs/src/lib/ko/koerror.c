@@ -1,6 +1,5 @@
-/*	$OpenBSD: koerror.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: koerror.c,v 1.11 1999/03/19 08:21:45 lha Exp $");
+RCSID("$Id: koerror.c,v 1.3 2000/09/11 14:40:58 art Exp $");
 #endif
 
 #include <stdio.h>
@@ -50,11 +49,13 @@ RCSID("$KTH: koerror.c,v 1.11 1999/03/19 08:21:45 lha Exp $");
 #include <vldb.h>
 #include <volumeserver.h>
 #include <pts.h>
+#include <bos.h>
+#include <ubik.h>
+#include <rx/rx.h>
+#include <rx/rxgencon.h>
 #ifdef KERBEROS
 #include <krb.h>
 #include <des.h>
-#include <rx/rx.h>
-#include <rx/rxgencon.h>
 #include <rxkad.h>
 #endif
 #include <ko.h>
@@ -69,72 +70,74 @@ static struct koerr koerrmsg[] = {
 
     /* VL server errors */
 
-    {VL_IDEXIST,        "Volume Id entry exists in vl database."},
-    {VL_IO,             "I/O related error."},
-    {VL_NAMEEXIST,      "Volume name entry exists in vl database."},
-    {VL_CREATEFAIL,     "Internal creation failure."},
-    {VL_NOENT,          "No such entry."},
-    {VL_EMPTY,          "Vl database is empty."},
-    {VL_ENTDELETED,     "Entry is deleted (soft delete)."},
-    {VL_BADNAME,        "Volume name is illegal."},
-    {VL_BADINDEX,       "Index is out of range."},
-    {VL_BADVOLTYPE,     "Bad volume type."},
-    {VL_BADPARTITION,   "Illegal server number (out of range)."},
-    {VL_BADSERVER,      "Bad partition number."},
-    {VL_REPSFULL,       "Run out of space for Replication sites."},
-    {VL_NOREPSERVER,    "No such Replication server site exists."},
-    {VL_DUPREPSERVER,   "Replication site alreay exists."},
-    {VL_RWNOTFOUND,     "Parent R/W entry no found."},
-    {VL_BADREFCOUNT,    "Illegal reference count numner."},
-    {VL_SIZEEXCEEDED,   "Vl size for attributes exceeded."},
-    {VL_BADENTRY,       "Bad incming vl entry."},
-    {VL_BADVOLIDBUMP,   "Illegal max volid increment."},
-    {VL_IDALREADHASED,  "RO/BACK id already hashed."},
-    {VL_ENTRYLOCKED,    "Vl entry is already locked."},
-    {VL_BADVOLOPER,     "Bad volume operation code."},
-    {VL_BADRELLOCKTYPE, "Bad release lock type."},
-    {VL_RERELEASE,      "Status report: last release was aborted."},
-    {VL_BADSERVERFLAG,  "Invalid replication site server flag."},
-    {VL_PERM,           "No permission access."},
-    {VL_NOMEM,          "malloc(realloc) failed to alloc enough memory"},
+    {VL_IDEXIST,        "VL - Volume Id entry exists in vl database."},
+    {VL_IO,             "VL - I/O related error."},
+    {VL_NAMEEXIST,      "VL - Volume name entry exists in vl database."},
+    {VL_CREATEFAIL,     "VL - Internal creation failure."},
+    {VL_NOENT,          "VL - No such entry."},
+    {VL_EMPTY,          "VL - Vl database is empty."},
+    {VL_ENTDELETED,     "VL - Entry is deleted (soft delete)."},
+    {VL_BADNAME,        "VL - Volume name is illegal."},
+    {VL_BADINDEX,       "VL - Index is out of range."},
+    {VL_BADVOLTYPE,     "VL - Bad volume type."},
+    {VL_BADPARTITION,   "VL - Illegal server number (out of range)."},
+    {VL_BADSERVER,      "VL - Bad partition number."},
+    {VL_REPSFULL,       "VL - Run out of space for Replication sites."},
+    {VL_NOREPSERVER,    "VL - No such Replication server site exists."},
+    {VL_DUPREPSERVER,   "VL - Replication site alreay exists."},
+    {VL_RWNOTFOUND,     "VL - Parent R/W entry no found."},
+    {VL_BADREFCOUNT,    "VL - Illegal reference count numner."},
+    {VL_SIZEEXCEEDED,   "VL - Vl size for attributes exceeded."},
+    {VL_BADENTRY,       "VL - Bad incming vl entry."},
+    {VL_BADVOLIDBUMP,   "VL - Illegal max volid increment."},
+    {VL_IDALREADHASED,  "VL - RO/BACK id already hashed."},
+    {VL_ENTRYLOCKED,    "VL - Vl entry is already locked."},
+    {VL_BADVOLOPER,     "VL - Bad volume operation code."},
+    {VL_BADRELLOCKTYPE, "VL - Bad release lock type."},
+    {VL_RERELEASE,      "VL - Status report: last release was aborted."},
+    {VL_BADSERVERFLAG,  "VL - Invalid replication site server flag."},
+    {VL_PERM,           "VL - No permission access."},
+    {VL_NOMEM,          "VL - malloc(realloc) failed to alloc enough memory"},
 
     /* VOLSER errors */
 
-    {VOLSERTRELE_ERROR,       "Internal error releasing transaction."},
-    {VOLSERNO_OP,             "Unknown internal error."},
-    {VOLSERREAD_DUMPERROR,    "Badly formatted dump."},
-    {VOLSERDUMPERROR,         "Badly formatted dump(2)."},
-    {VOLSERATTACH_ERROR,      "Could not attach volume."},
-    {VOLSERILLEGAL_PARTITION, "Illegal partition."},
-    {VOLSERDETACH_ERROR,      "Could not detach volume."},
-    {VOLSERBAD_ACCESS,        "Insufficient privilege for volume operation."},
-    {VOLSERVLDB_ERROR,        "Error from volume location database."},
-    {VOLSERBADNAME,           "Bad volume name."},
-    {VOLSERVOLMOVED,          "Volume moved."},
-    {VOLSERBADOP,             "Illegal volume operation."},
-    {VOLSERBADRELEASE,        "Volume release failed."},
-    {VOLSERVOLBUSY,           "Volume still in use by volserver."},
-    {VOLSERNO_MEMORY,         "Out of virtual memory."},
-    {VOLSERNOVOL,	      "No such volume."},
-    {VOLSERMULTIRWVOL,        "More then one read/write volume."},
-    {VOLSERFAILEDOP,          "Failed volume server operation."},
+    {VOLSERTRELE_ERROR,       "VOLSER - Internal error releasing "
+                              "transaction."},
+    {VOLSERNO_OP,             "VOLSER - Unknown internal error."},
+    {VOLSERREAD_DUMPERROR,    "VOLSER - Badly formatted dump."},
+    {VOLSERDUMPERROR,         "VOLSER - Badly formatted dump(2)."},
+    {VOLSERATTACH_ERROR,      "VOLSER - Could not attach volume."},
+    {VOLSERILLEGAL_PARTITION, "VOLSER - Illegal partition."},
+    {VOLSERDETACH_ERROR,      "VOLSER - Could not detach volume."},
+    {VOLSERBAD_ACCESS,        "VOLSER - Insufficient privilege for "
+                              "volume operation."},
+    {VOLSERVLDB_ERROR,        "VOLSER - Error from volume location database."},
+    {VOLSERBADNAME,           "VOLSER - Bad volume name."},
+    {VOLSERVOLMOVED,          "VOLSER - Volume moved."},
+    {VOLSERBADOP,             "VOLSER - Illegal volume operation."},
+    {VOLSERBADRELEASE,        "VOLSER - Volume release failed."},
+    {VOLSERVOLBUSY,           "VOLSER - Volume still in use by volserver."},
+    {VOLSERNO_MEMORY,         "VOLSER - Out of virtual memory."},
+    {VOLSERNOVOL,	      "VOLSER - No such volume."},
+    {VOLSERMULTIRWVOL,        "VOLSER - More then one read/write volume."},
+    {VOLSERFAILEDOP,          "VOLSER - Failed volume server operation."},
 
-    {PREXIST, 		      "Entry exist."},
-    {PRIDEXIST,		      "Id exist."},
-    {PRNOIDS,		      "No Ids."},
-    {PRDBFAIL,		      "Protection-database failed."},
-    {PRNOENT,		      "No entry."},
-    {PRPERM,		      "Permission denied."},
-    {PRNOTGROUP,	      "Not a group."},
-    {PRNOTUSER,	              "Not a user."},
-    {PRBADNAM,	              "Bad name."},
-    {PRBADARG,	              "Bad argument."},
-    {PRNOMORE,	              "No more (?)."},
-    {PRDBBAD,	              "Protection-database went bad."},
-    {PRGROUPEMPTY,	      "Empty group."},
-    {PRINCONSISTENT,	      "Database inconsistency."},
-    {PRBADDR,	              "Bad address."},
-    {PRTOOMANY,	              "Too many."},
+    {PREXIST, 		      "PR - Entry exist."},
+    {PRIDEXIST,		      "PR - Id exist."},
+    {PRNOIDS,		      "PR - No Ids."},
+    {PRDBFAIL,		      "PR - Protection-database failed."},
+    {PRNOENT,		      "PR - No entry."},
+    {PRPERM,		      "PR - Permission denied."},
+    {PRNOTGROUP,	      "PR - Not a group."},
+    {PRNOTUSER,	              "PR - Not a user."},
+    {PRBADNAM,	              "PR - Bad name."},
+    {PRBADARG,	              "PR - Bad argument."},
+    {PRNOMORE,	              "PR - No more (?)."},
+    {PRDBBAD,	              "PR - Protection-database went bad."},
+    {PRGROUPEMPTY,	      "PR - Empty group."},
+    {PRINCONSISTENT,	      "PR - Database inconsistency."},
+    {PRBADDR,	              "PR - Bad address."},
+    {PRTOOMANY,	              "PR - Too many."},
 
     {RXGEN_CC_MARSHAL,	      "rxgen - cc_marshal"},
     {RXGEN_CC_UNMARSHAL,      "rxgen - cc_unmarshal"},
@@ -178,6 +181,56 @@ static struct koerr koerrmsg[] = {
     {ARLA_VIO,                "arla-fs-error - I/O error"},
     {ARLA_VRESTARTING,        "arla-fs-error - restarting"},
 
+    {BZNOTACTIVE, 	      "bos - Not active"},
+    {BZNOENT,		      "bos - No entry"},
+    {BZBUSY,		      "bos - Busy"},
+    {BZNOCREATE,	      "bos - No able to create"},
+    {BZDOM,		      "bos - Out of domain"},
+    {BZACCESS,		      "bos - No access"},
+    {BZSYNTAX,		      "bos - Syntax error"},
+    {BZIO,		      "bos - I/O error"},
+    {BZNET,		      "bos - Network error"},
+    {BZBADTYPE,		      "bos - Bad type"},
+
+    /* ubik errors */
+
+    {UNOQUORUM,		      "no quorum elected"},
+    {UNOTSYNC,		      "not synchronization site (should work on sync site)"},
+    {UNHOSTS,		      "too many hosts"},
+    {UIOERROR,		      "I/O error writing dbase or log"},
+    {UINTERNAL,		      "mysterious internal error"},
+    {USYNC,		      "major synchronization error"},
+    {UNOENT,		      "file not found when processing dbase"},
+    {UBADLOCK,		      "bad lock range size (must be 1)"},
+    {UBADLOG,		      "read error reprocessing log"},
+    {UBADHOST,		      "problems with host name"},
+    {UBADTYPE,		      "bad operation for this transaction type"},
+    {UTWOENDS,		      "two commits or aborts done to transaction"},
+    {UDONE,		      "operation done after abort (or commmit)"},
+    {UNOSERVERS,	      "no servers appear to be up"},
+    {UEOF,		      "premature EOF"},
+    {ULOGIO,		      "error writing log file"},
+    {UBADFAM,		      "UBADFAM"},
+    {UBADCELL,		      "UBADCELL"},
+    {UBADSECGRP,	      "UBADSECGRP"},
+    {UBADGROUP,	              "UBADGROUP"},
+    {UBADUUID,	              "UBADUUID"},
+    {UNOMEM,	              "UNOMEM"},
+    {UNOTMEMBER,	      "UNOTMEMBER"},
+    {UNBINDINGS,	      "UNBINDINGS"},
+    {UBADPRINNAME,	      "UBADPRINNAME"},
+    {UPIPE,	              "UPIPE"},
+    {UDEADLOCK,	              "UDEADLOCK"},
+    {UEXCEPTION,	      "UEXCEPTION"},
+    {UTPQFAIL,	              "UTPQFAIL"},
+    {USKEWED,	              "USKEWED"},
+    {UNOLOCK,	              "UNOLOCK"},
+    {UNOACCESS,	              "UNOACCESS"},
+    {UNOSPC,	              "UNOSPC"},
+    {UBADPATH,	              "UBADPATH"},
+    {UBADF,	              "UBADF"},
+    {UREINITIALIZE,	      "UREINITIALIZE"},
+
     /* Not a known error */
 
     { 0L,              "Unknown error"}
@@ -188,6 +241,7 @@ static struct koerr koerrmsg[] = {
 const char *
 koerr_gettext(koerr_t err) 
 {
+    const char *ret = NULL;
     struct koerr *koerror = koerrmsg;
 
     while (koerror->code != 0) {
@@ -196,8 +250,10 @@ koerr_gettext(koerr_t err)
 	++koerror;
     }
 
-    if (koerror->code)
-	return koerror->msg;
-    else
-	return strerror(err);
+    if (koerror->code == 0)
+	ret = strerror(err);
+    if (!ret)
+	ret = koerror->msg;
+
+    return ret;
 }

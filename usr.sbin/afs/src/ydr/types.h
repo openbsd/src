@@ -1,6 +1,5 @@
-/*	$OpenBSD: types.h,v 1.2 1999/04/30 01:59:20 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: types.h,v 1.8 1999/03/19 06:06:52 lha Exp $ */
+/* $Id: types.h,v 1.3 2000/09/11 14:41:41 art Exp $ */
 
 #ifndef _YDR_TYPES_
 #define _YDR_TYPES_
@@ -69,8 +68,10 @@ typedef struct {
      Type *type;
 } StructEntry;
 
+enum argtype { TIN, TOUT, TINOUT };
+
 typedef struct {
-     enum { TIN, TOUT, TINOUT } argtype;
+     enum argtype argtype;
      char *name;
      Type *type;
 } Argument;

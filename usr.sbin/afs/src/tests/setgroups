@@ -1,0 +1,4 @@
+#!/bin/sh
+# $Id: setgroups,v 1.1 2000/09/11 14:41:34 art Exp $
+
+$objdir/test-setgroups nobody 1>&4

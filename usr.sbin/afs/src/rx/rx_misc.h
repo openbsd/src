@@ -1,4 +1,3 @@
-/*	$OpenBSD: rx_misc.h,v 1.1.1.1 1998/09/14 21:53:16 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: rx_misc.h,v 1.1 1998/01/28 04:54:16 art Exp $ */
+/* $Id: rx_misc.h,v 1.2 2000/09/11 14:41:22 art Exp $ */
 
 #ifndef __RX_MISC_H
 #define __RX_MISC_H

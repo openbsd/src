@@ -1,0 +1,13 @@
+#!/bin/sh
+# $Id: mkm-rmm,v 1.1 2000/09/11 14:41:32 art Exp $
+FS=${FS:-${objdir}/../appl/fs/fs}
+${FS} sa . system:anyuser all || exit 1
+${FS} mkm root.cell root.cell || exit 1
+test -d root.cell || exit 1 
+${FS} rmm root.cell || exit 1
+test -d root.cell && exit 1 
+${FS} mkm root.cell root.cell || exit 1
+test -d root.cell || exit 1 
+${FS} rmm root.cell || exit 1
+test -d root.cell && exit 1 
+exit 0

@@ -1,4 +1,3 @@
-/*	$OpenBSD: list.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +42,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: list.c,v 1.10 1998/12/27 02:11:06 assar Exp $");
+RCSID("$Id: list.c,v 1.3 2000/09/11 14:41:38 art Exp $");
 #endif
 
 #include <assert.h>

@@ -1,4 +1,3 @@
-/*	$OpenBSD: heaptest.c,v 1.1 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +40,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: heaptest.c,v 1.2 1999/02/13 05:03:25 assar Exp $");
+RCSID("$Id: heaptest.c,v 1.2 2000/09/11 14:41:38 art Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

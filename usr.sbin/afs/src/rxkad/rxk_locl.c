@@ -1,4 +1,3 @@
-/*	$OpenBSD: rxk_locl.c,v 1.1.1.1 1998/09/14 21:53:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +38,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_locl.c,v 1.7 1998/04/05 10:58:16 assar Exp $");
+RCSID("$Id: rxk_locl.c,v 1.2 2000/09/11 14:41:25 art Exp $");
 
 /* The header checksum is the last 16 bits of this struct after
  * encryption. Note that only the last 8 bytes change per packet. */

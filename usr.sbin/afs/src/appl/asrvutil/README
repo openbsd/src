@@ -1,0 +1,10 @@
+CURRENT STATUS:
+===============
+
+It seems to me that you can't get equivalent of changepw/kerberos thru
+the kerberos server running in the KA-server.
+
+Now I haven't found any documentation how you really get tokens from
+the ka-server. If someone helps me with that, ending the program is
+trivial (ahm, a least it should be).
+

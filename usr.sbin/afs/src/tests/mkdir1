@@ -1,0 +1,7 @@
+#!/bin/sh
+# $Id: mkdir1,v 1.1 2000/09/11 14:41:32 art Exp $
+mkdir foobar || exit 1
+test -d foobar || exit 1
+test -d foobar/. || exit 1
+test -d foobar/.. || exit 1
+rmdir foobar || exit 1

@@ -12,6 +12,8 @@ package VL_
 
 error-function conv_to_arla_errno
 
+#include "common.h"
+
 /*
  * Structures and defines for vldb data
  */
@@ -41,10 +43,22 @@ const RWVOL   = 0;
 const ROVOL   = 1;
 const BACKVOL = 2;
 
+/*
+ * Used in vlentry.server[i].flags
+ * ie for each server
+ */
+
 const VLSF_NEWREPSITE = 0x01;
 const VLSF_ROVOL      = 0x02;
 const VLSF_RWVOL      = 0x04;
 const VLSF_BACKVOL    = 0x08;
+const VLSF_UUID	      = 0x10;
+const VLSF_DONTUSE    = 0x20;
+
+/*
+ * Used in vlentry.flags
+ * ie used for whole entry
+ */
 
 const VLF_RWEXISTS    = 0x1000;
 const VLF_ROEXISTS    = 0x2000;
@@ -81,6 +95,24 @@ const VL_BADSERVERFLAG = 363545;
 const VL_PERM          = 363546;
 const VL_NOMEM         = 363547;
 
+/*
+ * States for struct vlentry
+ */
+const VLFREE           = 0x1;
+const VLDELETED        = 0x2;
+const VLLOCKED         = 0x4;
+const VLOP_MOVE        = 0x10;
+const VLOP_RELEASE     = 0x20;
+const VLOP_BACKUP      = 0x40;
+const VLOP_DELETE      = 0x80;
+const VLOP_DUMP        = 0x100;
+
+/*
+ * ReleaseType argument for VL_ReleaseLock
+ */
+const LOCKREL_TIMESTAMP = 1;
+const LOCKREL_OPCODE    = 2;
+const LOCKREL_AFSID     = 4;
 
 struct vldbentry {
      char name[VLDB_MAXNAMELEN];
@@ -176,6 +208,21 @@ struct vlheader {
 };
 
 
+const VLUPDATE_VOLUMENAME 	= 0x1;
+const VLUPDATE_FLAGS		= 0x4;
+const VLUPDATE_READONLYID	= 0x8;
+const VLUPDATE_BACKUPID		= 0x10;
+const VLUPDATE_REPSITES		= 0x20;
+const VLUPDATE_CLONEID		= 0x80;
+const VLUPDATE_VOLNAMEHASH	= 0x100;
+const VLUPDATE_RWID		= 0x200;
+
+const VLUPDATE_REPS_DELETE	= 0x100;
+const VLUPDATE_REPS_ADD		= 0x200;
+const VLUPDATE_REPS_MODSERV	= 0x400;
+const VLUPDATE_REPS_MODPART	= 0x800;
+const VLUPDATE_REPS_MODFLAG	= 0x1000;
+
 struct VldbUpdateEntry {
      u_long Mask;
      char name[VLDB_MAXNAMELEN];
@@ -200,15 +247,6 @@ struct VldbListByAttributes {
      long volumetype;
      long volumeid;
      long flag;
-};
-
-struct afsUUID {
-     u_long time_low;
-     u_short time_mid;
-     u_short time_hi_and_version;
-     char clock_seq_hi_and_reserved;
-     char clock_seq_low;
-     char node[6];
 };
 
 struct uvldbentry {
@@ -255,6 +293,12 @@ typedef vldbentry bulkentries<>;
 typedef nvldbentry nbulkentries<>;
 typedef uvldbentry ubulkentries<>;
 
+/* Mask-flags for ListAddrByAttributes */
+
+const VLADDR_IPADDR = 0x1;
+const VLADDR_INDEX  = 0x2;
+const VLADDR_UUID   = 0x4;
+
 struct ListAddrByAttributes {
     int32_t mask;
     u_int32_t ipaddr;
@@ -262,10 +306,6 @@ struct ListAddrByAttributes {
     int32_t spare;
     afsUUID uuid;
 };
-
-const VLADDR_IPADDR = 0x1;
-const VLADDR_INDEX  = 0x2;
-const VLADDR_UUID   = 0x4;
 
 typedef int32_t bulkaddrs<>;
 

@@ -1,4 +1,3 @@
-/*	$OpenBSD: emalloc.c,v 1.1 1999/04/30 01:59:11 art Exp $	*/
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: emalloc.c,v 1.2 1999/02/13 05:10:55 assar Exp $");
+RCSID("$Id: emalloc.c,v 1.2 2000/09/11 14:40:59 art Exp $");
 #endif
 
 #include <stdlib.h>
@@ -57,6 +56,6 @@ emalloc (size_t sz)
     void *tmp = malloc (sz);
 
     if (tmp == NULL && sz != 0)
-	err (1, "malloc %u", sz);
+	err (1, "malloc %lu", (unsigned long)sz);
     return tmp;
 }

@@ -1,0 +1,7 @@
+#!/bin/sh
+# $Id: rename1,v 1.1 2000/09/11 14:41:33 art Exp $
+touch foo || exit 1
+mv foo bar || exit 1
+test -f foo && exit 1
+test -f bar || exit 1
+rm bar || exit 1

@@ -1,4 +1,3 @@
-/*	$OpenBSD: setenv.c,v 1.1.1.1 1998/09/14 21:53:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +38,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: setenv.c,v 1.1 1998/01/13 16:25:35 lha Exp $");
+RCSID("$Id: setenv.c,v 1.2 2000/09/11 14:41:04 art Exp $");
 #endif
 
 #include "roken.h"

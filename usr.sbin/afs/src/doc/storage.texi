@@ -1,0 +1,150 @@
+@c $Id: storage.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Organization of data, Parts of Arla, Description of AFS infrastructure, Top
+@comment  node-name,  next,  previous,  up
+
+@chapter Organization of data
+
+This chapter how data is stored and how AFS diffrent from, for example,
+NFS. It also describes how data kept consistent and what the
+requirements was and how that inpacted on the design.
+
+@menu
+* Requirements::  
+* Data organization::
+* Callbacks::
+* Volume management::
+@end menu
+
+@node Requirements, Data organization, Organization of data, Organization of data
+@comment  node-name,  next,  previous,  up
+@heading Requirements
+
+@itemize @bullet
+@item Scalability
+
+It should be possible to use AFS with hundred-thousands of users without
+problems.
+
+Writes that are done to diffrent parts of the filesystem should not
+affect each other. It should be possible to distribute out the reads and
+writes over many file-servers. So if you have a file that is accessed by
+many clients, it should be possible to distribute out the load.
+
+If there is multiple writes to the same file, are you sure that isn't a
+database.
+
+@item Transparent to users
+
+Users should not need to know where their files are stored. It should be
+possible to move their files while they are using their files.
+
+@item Easy to admin
+
+It should be easy for a administrator to make changes to the
+filesystem. For example to change quota for a user or project. It should
+also be possible to move the users data for a fileserver to a less
+loaded one, or one with more diskspace available.
+
+Some benefits of using AFS is:
+
+@itemize @bullet
+@item user-transparent data migration
+@item an ability for on-line backups;
+@item data replication that provides both load balancing and robustness of
+critical data
+@item global name space without automounters and other add-ons;
+@item @@sys variables for platform-independent paths to binary location;
+@item enhanced security;
+@item client-side caching;
+@end itemize
+@end itemize
+
+@heading Anti-requirements
+
+@itemize @bullet
+@item No databases
+
+AFS isn't constructed for storing databases. It would be possible to use
+AFS for storing a database if a layer above provided locking and
+synchronizing of data.
+
+One of the problems is that AFS doesn't include mandatory byte-range
+locks. AFS uses advisory locking on whole files.
+
+If you need a real database, use one, they are much more efficent on
+solving a database problem. Don't use AFS.
+
+@end itemize
+
+@node Data organization, Callbacks, Requirements, Organization of data
+@comment  node-name,  next,  previous,  up
+@heading Volume
+
+A volume is a unit that is smaller then a partition. Its usually (should
+be) a well defined area, like a user's home directory, a project work
+area, or a program distribution.
+
+Quota is controlled on volume-level. All day-to-day management are done
+on volumes.
+
+@heading Partition
+
+In AFS a partition is what normally is named a partition. All partions
+that afs isusing is named a special way, @file{/vicepNN}, where NN is
+ranged from a to z, continuing with aa to zz. The fileserver (and
+volser) automaticly picks upp all partition starting with @file{/vicep}
+
+Volumes are stored in a partition. Volumes can't overlap
+partitions. Partitions are added when the fileserver is created or when
+a new disk is added to a filesystem. 
+
+@heading Volume cloning and read-only clones
+
+A clone of volume is often needed for the volume operations. A clone is
+copy-on-write copy of a volume, the clone is the read-only version.
+
+A two special versions of a clone is the read-only volume and the backup
+volume. The read-only volume is a snapshot of a read-write volume (that
+is what a clone is) that can be replicated to several fileserver to
+distribute the load. Each fileserver plus partition where the read-only
+is located is called a replication-site.
+
+The backup volume is a clone that typically is made each night to enable
+the user to retrieve yestoday's data when they happen to remove a
+file. This is a very useful feature, since it lessen the load on the
+system-administrators to restore files from backup.
+
+@heading Mountpoints
+
+The volumes are independent of each other. To clue the together there is
+a @samp{mountpoint}s. Mountpoints are really symlink that is formated a
+special way that points out a volume (and a optional cell). A
+AFS-cache-manager will show a mountpoint as directory, in fact it will
+be the root directory of the target volume.
+
+@node Callbacks, Volume management, Data organization, Organization of data
+@comment  node-name,  next,  previous,  up
+@heading Callbacks
+
+Callbacks are what enable the AFS-cache-manager to keep the files
+without asking the server if there is newer version of the file.
+
+A callback is a promise from the fileserver that it will notify the
+client if the file (or directory) changes within the timelimit of the
+callback.
+
+For read-only callbacks there is only callback given its called a volume
+callback and it will be broken when the read-only volume is updated.
+
+@node Volume management, , Callbacks, Organization of data
+@comment  node-name,  next,  previous,  up
+@heading Volume management
+
+@itemize @bullet
+@item Create
+@item Replicate
+@item Release
+@item Delete
+@item Backup
+@end itemize

@@ -1,7 +1,6 @@
-/*	$OpenBSD: rx_pkt.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_pkt.c,v 1.11 1999/03/04 01:44:19 assar Exp $");
+RCSID("$Id: rx_pkt.c,v 1.3 2000/09/11 14:41:22 art Exp $");
 
 struct rx_packet *rx_mallocedP = 0;
 struct rx_cbuf *rx_mallocedC = 0;
@@ -980,7 +979,7 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 
     case RX_DEBUGI_RXSTATS:{
 	    int i;
-	    long *s;
+	    u_int32_t *s;
 
 	    tl = sizeof(rx_stats) - ap->length;
 	    if (tl > 0)
@@ -989,7 +988,7 @@ rxi_ReceiveDebugPacket(struct rx_packet *ap, osi_socket asocket,
 		return ap;
 
 	    /* Since its all longs convert to network order with a loop. */
-	    s = (long *) &rx_stats;
+	    s = (u_int32_t *) &rx_stats;
 	    for (i = 0; i < sizeof(rx_stats) / 4; i++, s++)
 		rx_PutLong(ap, i * 4, htonl(*s));
 
@@ -1247,48 +1246,70 @@ rxi_SendSpecial(struct rx_call *call,
 }
 
 
+static void
+put32 (unsigned char **p, u_int32_t u)
+{
+    (*p)[0] = (u >> 24) & 0xFF;
+    (*p)[1] = (u >> 16) & 0xFF;
+    (*p)[2] = (u >>  8) & 0xFF;
+    (*p)[3] = (u >>  0) & 0xFF;
+    (*p) += 4;
+}
+
+static u_int32_t
+get32 (unsigned char **p)
+{
+    u_int32_t u;
+
+    u = ((*p)[0] << 24) | ((*p)[1] << 16) | ((*p)[2] << 8) | (*p)[3];
+    (*p) += 4;
+    return u;
+}
+
 /* Encode the packet's header (from the struct header in the packet to
  * the net byte order representation in the wire representation of the
  * packet, which is what is actually sent out on the wire) */
 void 
 rxi_EncodePacketHeader(struct rx_packet *p)
 {
-    u_int32_t *buf = (u_int32_t *) (p->wirevec[0].iov_base); /* MTUXXX */
+    unsigned char *buf = p->wirevec[0].iov_base;
 
-    memset((char *) buf, 0, RX_HEADER_SIZE);
-    *buf++ = htonl(p->header.epoch);
-    *buf++ = htonl(p->header.cid);
-    *buf++ = htonl(p->header.callNumber);
-    *buf++ = htonl(p->header.seq);
-    *buf++ = htonl(p->header.serial);
-    *buf++ = htonl((((unsigned long) p->header.type) << 24)
-		   | (((unsigned long) p->header.flags) << 16)
-		   | (p->header.userStatus << 8) | p->header.securityIndex);
+    memset(buf, 0, RX_HEADER_SIZE);
+    put32(&buf, p->header.epoch);
+    put32(&buf, p->header.cid);
+    put32(&buf, p->header.callNumber);
+    put32(&buf, p->header.seq);
+    put32(&buf, p->header.serial);
+    put32(&buf,
+	  ((((unsigned long) p->header.type) << 24)
+	   | (((unsigned long) p->header.flags) << 16)
+	   | (p->header.userStatus << 8) | p->header.securityIndex));
     /* Note: top 16 bits of this next word were reserved */
-    *buf++ = htonl((p->header.spare << 16) | (p->header.serviceId & 0xffff));
+    put32(&buf,
+	  ((p->header.spare << 16) | (p->header.serviceId & 0xffff)));
 }
 
 /* Decode the packet's header (from net byte order to a struct header) */
 void 
 rxi_DecodePacketHeader(struct rx_packet *p)
 {
-    u_int32_t *buf = (u_int32_t *) (p->wirevec[0].iov_base); /* MTUXXX */
+    unsigned char *buf = p->wirevec[0].iov_base;
     u_int32_t temp;
 
-    p->header.epoch = ntohl(*buf++);
-    p->header.cid = ntohl(*buf++);
-    p->header.callNumber = ntohl(*buf++);
-    p->header.seq = ntohl(*buf++);
-    p->header.serial = ntohl(*buf++);
-    temp = ntohl(*buf++);
+    p->header.epoch      = get32(&buf);
+    p->header.cid        = get32(&buf);
+    p->header.callNumber = get32(&buf);
+    p->header.seq        = get32(&buf);
+    p->header.serial     = get32(&buf);
+    temp = get32(&buf);
     /* C will truncate byte fields to bytes for me */
-    p->header.type = temp >> 24;
-    p->header.flags = temp >> 16;
-    p->header.userStatus = temp >> 8;
+    p->header.type          = temp >> 24;
+    p->header.flags         = temp >> 16;
+    p->header.userStatus    = temp >> 8;
     p->header.securityIndex = temp >> 0;
-    temp = ntohl(*buf++);
+    temp = get32(&buf);
     p->header.serviceId = (temp & 0xffff);
-    p->header.spare = temp >> 16;
+    p->header.spare     = temp >> 16;
     /* Note: top 16 bits of this last word are the security checksum */
 }
 

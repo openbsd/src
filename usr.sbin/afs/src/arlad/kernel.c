@@ -1,6 +1,5 @@
-/*	$OpenBSD: kernel.c,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,13 +37,13 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: kernel.c,v 1.17 1998/12/06 20:48:40 lha Exp $");
+RCSID("$Id: kernel.c,v 1.3 2000/09/11 14:40:42 art Exp $");
 
 /*
  * The fd we use to talk with the kernel on.
  */
 
-int kernel_fd;
+int kernel_fd = -1;
 
 /* count of the number of messages in a read */
 
@@ -130,23 +129,229 @@ sub_thread (void *v_myself)
     }
 }
 
+PROCESS version_pid;
+
+static void
+version_thread (void *foo)
+{
+    xfs_probe_version (kernel_fd, XFS_VERSION);
+}
+
+/*
+ * The tcp communication unit
+ */
+
+static int
+tcp_open (const char *filename)
+{
+    int s, ret, port;
+    struct sockaddr_in addr;
+
+    if (strlen (filename) == 0)
+	arla_errx (1, ADEBERROR, "tcp_open doesn't contain tcp-port");
+
+    port = atoi (filename);
+    if (port == 0)
+	arla_errx (1, ADEBERROR, "tcp_open couldn't parse %s as a port#",
+		   filename);
+
+    s = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s < 0) {
+	arla_warn (ADEBWARN, errno, "tcp_open: socket failed");
+	return s;
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = 0x7f000001; /* 127.0.0.1 */
+    addr.sin_port = htons(port);
+    ret = connect (s, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret < 0) {
+	arla_warn (ADEBWARN, errno, "tcp_open: connect failed");
+	return ret;
+    }
+    return ret;
+}
+
+static int
+tcp_opendef (const char *filename)
+{
+    if (strlen (filename) != 0)
+	arla_warnx (ADEBWARN, "tcp_opendef ignoring extra data");
+
+    return tcp_open ("5000"); /* XXX */
+}
+
+static ssize_t
+tcp_read (int fd, void *data, size_t len)
+{
+    int32_t slen;
+    char in_len[4];
+    if (recv (fd, in_len, sizeof(in_len), 0) != sizeof(in_len)) {
+	arla_warn (ADEBWARN, errno, "tcp_read: failed to read length");
+	return -1;
+    }
+    memcpy(&slen, in_len, sizeof(slen));
+    slen = ntohl(slen);
+    if (len < slen) {
+	arla_warnx (ADEBWARN, 
+		    "tcp_read: recv a too large messsage %d",
+		    slen);	
+	return -1;
+    }
+    return recv (fd, data, slen, 0) == slen ? slen : -1;
+}
+
+static ssize_t
+tcp_write (int fd, const void *data, size_t len)
+{
+    int32_t slen = htonl(len);
+    char out_len[4];
+    memcpy (out_len, &slen, sizeof(len));
+    if (send (fd, out_len, sizeof(len), 0) != sizeof(out_len)) {
+	arla_warn (ADEBWARN, errno, "tcp_write: failed to write length");
+	return -1;
+    }
+    return send (fd, data, len, 0) == len ? len : -1;
+}
+
+/*
+ * The cdev communication unit
+ */
+
+static int
+dev_open (const char *filename)
+{
+    char fn[MAXPATHLEN];
+    snprintf (fn, MAXPATHLEN, "/%s", filename);
+    return open (fn, O_RDWR);
+}
+
+static int
+dev_fileopen (const char *filename)
+{
+    return dev_open (filename);
+}
+
+static ssize_t
+dev_read (int fd, void *msg, size_t len)
+{
+    return read (fd, msg, len);
+}
+
+static ssize_t
+dev_write (int fd, const void *msg, size_t len)
+{
+    return write (fd, msg, len);
+}
+
+/*
+ * The null communication unit
+ */
+
+static int
+null_open (const char *filename)
+{
+    return 0;
+}
+
+static ssize_t
+null_read (int fd, void *msg, size_t len)
+{
+    return 0;
+}
+
+static ssize_t
+null_write (int fd, const void *msg, size_t len)
+{
+    return len;
+}
+
+/*
+ * Way to communticate with the kernel
+ */ 
+
+struct kern_interface {
+    char *prefix;
+    int (*open) (const char *filename);
+    ssize_t (*read) (int fd, void *msg, size_t len);
+    ssize_t (*write) (int fd, const void *msg, size_t len);
+} kern_comm[] = {
+    { "/",	dev_open, dev_read, dev_write},
+    { "file:/",	dev_fileopen, dev_read, dev_write},
+    { "tcpport:", tcp_open, tcp_read, tcp_write},
+    { "tcp",	tcp_opendef, tcp_read, tcp_write},
+    { "null",	null_open, null_read, null_write},
+    { NULL }
+} ;
+
+struct kern_interface *kern_cur = NULL;
+
+static int
+kern_open (const char *filename)
+{
+    struct kern_interface *ki = &kern_comm[0];
+    int len;
+
+    while (ki->prefix) {
+	len = strlen (ki->prefix);
+	if (strncasecmp (ki->prefix, filename, len) == 0) {
+	    break;
+	}    
+	ki++;
+    }
+    if (ki->prefix == NULL)
+	return -1;
+    kern_cur = ki;
+    return (ki->open) (filename+len);
+}
+
+ssize_t
+kern_read (int fd, void *data, size_t len)
+{
+    assert (kern_cur != NULL);
+    return (kern_cur->read) (fd, data, len);
+}
+
+ssize_t
+kern_write (int fd, const void *data, size_t len)
+{
+    assert (kern_cur != NULL);
+    return (kern_cur->write) (fd, data, len);
+}
+
+/*
+ *
+ */
+
+void
+kernel_opendevice (const char *dev)
+{
+    int fd;
+
+    fd = kern_open (dev);
+    if (fd < 0)
+	arla_err (1, ADEBERROR, errno, "kern_open %s", dev);
+    kernel_fd = fd;
+}
+
+
+/*
+ *
+ */
+
 #define WORKER_STACKSIZE (16*1024)
 
 void
 kernel_interface (struct kernel_args *args)
 {
-     int fd;
      int i;
 
-     fd = open (args->device, O_RDWR);
-     if (fd < 0)
-	 arla_err (1, ADEBERROR, errno, "open %s", args->device);
-     kernel_fd = fd;
+     assert (kernel_fd >= 0);
 
      workers = malloc (sizeof(*workers) * args->num_workers);
      if (workers == NULL)
-	 arla_err (1, ADEBERROR, errno, "malloc %u failed",
-		   sizeof(*workers) * args->num_workers);
+	 arla_err (1, ADEBERROR, errno, "malloc %lu failed",
+		   (unsigned long)sizeof(*workers) * args->num_workers);
 
      workers_high = args->num_workers;
      workers_used = 0;
@@ -160,27 +365,32 @@ kernel_interface (struct kernel_args *args)
 	     arla_errx (1, ADEBERROR, "CreateProcess of worker failed");
      }
 
-     arla_warnx(ADEBKERNEL, "Arla: selecting on fd: %d", fd);
+     if (LWP_CreateProcess (version_thread, WORKER_STACKSIZE, 1,
+			    NULL,
+			    "version", &version_pid))
+	 arla_errx (1, ADEBERROR, "CreateProcess of version thread failed");
+
+     arla_warnx(ADEBKERNEL, "Arla: selecting on fd: %d", kernel_fd);
 
      for (;;) {
 	  fd_set readset;
 	  int ret;
 	  
 	  FD_ZERO(&readset);
-	  FD_SET(fd, &readset);
+	  FD_SET(kernel_fd, &readset);
 
-	  ret = IOMGR_Select (fd + 1, &readset, NULL, NULL, NULL); 
+	  ret = IOMGR_Select (kernel_fd + 1, &readset, NULL, NULL, NULL); 
 
 	  if (ret < 0)
 	      arla_warn (ADEBKERNEL, errno, "select");
 	  else if (ret == 0)
 	      arla_warnx (ADEBKERNEL,
 			  "Arla: select returned with 0. strange.");
-	  else if (FD_ISSET(fd, &readset)) {
+	  else if (FD_ISSET(kernel_fd, &readset)) {
 	      for (i = 0; i < args->num_workers; ++i) {
 		  if (workers[i].busyp == 0) {
-		      ret = read (fd, workers[i].data,
-				  sizeof(workers[i].data));
+		      ret = kern_read (kernel_fd, workers[i].data,
+				       sizeof(workers[i].data));
 		      if (ret <= 0) {
 			  arla_warn (ADEBWARN, errno, "read");
 		      } else {

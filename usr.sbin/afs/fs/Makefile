@@ -1,15 +1,16 @@
 PROG	= fs
 BINDIR	= /usr/sbin
-SRCS	= fs.c arlalib.c fs_lib.c
 LDADD	+= -lkafs
 DPADD	+= ${LIBKAFS}
 
 .include "../Applflags.inc"
 
-.PATH: ${.CURDIR}/../src/appl
+SRCS	= fs.c
+.PATH: ${.CURDIR}/../src/appl/fs
 
-SRCS	+= arladeb.c
-
+SRCS	+= arladeb.c arlalib.c fs_lib.c
+CFLAGS	+= -I${.CURDIR}/../src/appl/lib
+.PATH: ${.CURDIR}/../src/appl/lib
 .PATH: ${.CURDIR}/../src/arlad
 
 .include <bsd.prog.mk>

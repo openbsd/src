@@ -1,6 +1,5 @@
-/*	$OpenBSD: adir.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,7 +40,7 @@
  * Interface to directory handling routines
  */
 
-/* $KTH: adir.h,v 1.10 1998/11/14 04:04:02 lha Exp $ */
+/* $Id: adir.h,v 1.3 2000/09/11 14:40:39 art Exp $ */
 
 #ifndef _ADIR_H_
 #define _ADIR_H_
@@ -49,28 +48,30 @@
 #include "fs.h"
 #include "cred.h"
 #include "fcache.h"
+#include "fdir.h"
 
-int adir_lookup (VenusFid dir, const char *name, VenusFid *file,
-		 CredCacheEntry *ce);
+int adir_lookup (VenusFid *dir, const char *name, VenusFid *file,
+		 FCacheEntry **dentry, CredCacheEntry **ce);
 
 int
-adir_lookup_fcacheentry (FCacheEntry *centry,  const char *name,
+adir_lookup_fcacheentry (FCacheEntry *centry, VenusFid dir,
+			 const char *name,
 			 VenusFid *file, CredCacheEntry *ce);
 
 int
-adir_changefid (VenusFid dir,
+adir_changefid (VenusFid *dir,
 		const char *name,
 		VenusFid *file,
-		CredCacheEntry *ce);
+		CredCacheEntry **ce);
 
 int
-adir_emptyp (VenusFid dir,
-	     CredCacheEntry *ce);
+adir_emptyp (VenusFid *dir,
+	     CredCacheEntry **ce);
 
-int adir_readdir (VenusFid dir,
+int adir_readdir (VenusFid *dir,
 		  void (*)(VenusFid *, const char *name, void *), 
 		  void *arg,
-		  CredCacheEntry *ce);
+		  CredCacheEntry **ce);
 
 int
 adir_creat (FCacheEntry *dir,

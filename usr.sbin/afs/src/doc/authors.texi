@@ -1,0 +1,36 @@
+@c $Id: authors.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Authors, Acknowledgments, Arla timeline, Top
+@chapter Authors
+
+Currently writing on arla are
+
+@table @asis
+@item Assar Westerlund, Everything
+@item Magnus Ahltorp, Everything
+@item Artur Grabowski, BSD xfs, OpenBSD maintainer
+@item Love Hörnquist-Åstrand, Everything
+@item Robert Burgess, fs, Solaris xfs
+@item Johan Danielsson, OSF/1 xfs
+@item Hans Insulander, pts, OpenBSD maintainer
+@item Mattias Amnefelt, vos, milko
+@item Harald Barth, doc
+@item Tomas Olsson, milko
+@item Mikael Vidstedt (userland, some milko stuff)
+@item Jimmy Engelbercht (bos)
+@end table
+
+Rhapsody xfs port was contributed by Alexandra Ellwood <lxs@@MIT.EDU>
+Previously, Rhapsody named Darwin.
+
+Disconnected code is written by:
+
+@table @asis
+@item WUWEI SHEN <wwshen@@engin.umich.edu>
+@item Cheng Jin <chengjin@@eecs.umich.edu>
+@item Paul Callaway <pcallawa@@umich.edu>
+@end table
+
+For more contributors look in the THANKS file in the distribution on
+@url{ftp://ftp.stacken.kth.se/pub/arla/}.
+

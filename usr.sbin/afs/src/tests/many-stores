@@ -1,0 +1,10 @@
+#!/bin/sh
+# $Id: many-stores,v 1.1 2000/09/11 14:41:31 art Exp $
+
+touch foo
+
+for i in `awk 'BEGIN {for(i=0; i < 1000; ++i) printf "%d\n", i}' /dev/null`; do
+    echo "foo$i" >> foo || exit 1
+done
+
+rm foo

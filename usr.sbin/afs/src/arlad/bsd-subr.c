@@ -1,6 +1,5 @@
-/*	$OpenBSD: bsd-subr.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,7 +42,7 @@
 #define _BSD
 #endif
 #include "arla_local.h"
-RCSID("$KTH: bsd-subr.c,v 1.32 1998/12/22 13:15:54 lha Exp $");
+RCSID("$Id: bsd-subr.c,v 1.3 2000/09/11 14:40:40 art Exp $");
 
 #ifdef __linux__
 #include <xfs/xfs_dirent.h>
@@ -51,39 +50,25 @@ RCSID("$KTH: bsd-subr.c,v 1.32 1998/12/22 13:15:54 lha Exp $");
 #define XFS_DIRENT_BLOCKSIZE 1024
 #define xfs_dirent dirent
 #endif
-#if defined(GENERIC_DIRSIZ_IN_SYS_DIRENT_H)
-#include <sys/dirent.h>
-#elif defined(DIRSIZ_IN_DIRENT_H)
-#include <dirent.h>
-#elif defined(DIRSIZ_IN_SYS_DIR_H)
-#include <sys/dir.h>
-#endif
 
 static long blocksize = XFS_DIRENT_BLOCKSIZE;	/* XXX */
-
-struct args {
-    int fd;
-    off_t off;
-    char *buf;
-    char *ptr;
-    struct xfs_dirent *last;
-    FCacheEntry *e; 
-};
 
 /*
  * Write out all remaining data in `args'
  */
 
 static void
-flushbuf (struct args *args)
+flushbuf (void *vargs)
 {
-     unsigned inc = blocksize - (args->ptr - args->buf);
+    struct write_dirent_args *args = (struct write_dirent_args *)vargs;
+    unsigned inc = blocksize - (args->ptr - args->buf);
+    struct xfs_dirent *last = (struct xfs_dirent *)args->last;
 
-     args->last->d_reclen += inc;
-     if (write (args->fd, args->buf, blocksize) != blocksize)
-	  arla_warn (ADEBWARN, errno, "write");
-     args->ptr = args->buf;
-     args->last = NULL;
+    last->d_reclen += inc;
+    if (write (args->fd, args->buf, blocksize) != blocksize)
+	arla_warn (ADEBWARN, errno, "write");
+    args->ptr = args->buf;
+    args->last = NULL;
 }
 
 /*
@@ -94,11 +79,13 @@ static void
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
      struct xfs_dirent dirent, *real;
-     struct args *args = (struct args *)arg;
+     struct write_dirent_args *args = (struct write_dirent_args *)arg;
 
      dirent.d_namlen = strlen (name);
 #ifdef _GENERIC_DIRSIZ
      dirent.d_reclen = _GENERIC_DIRSIZ(&dirent);
+#elif defined(DIRENT_SIZE)
+     dirent.d_reclen = DIRENT_SIZE(&dirent);
 #else
      dirent.d_reclen = DIRSIZ(&dirent);
 #endif
@@ -113,78 +100,90 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
      real->d_type   = DT_UNKNOWN;
 #endif
      
-     if (dirent.d_namlen == 2
-	 && strcmp(name, "..") == 0
-	 && args->e->flags.mountp) {
-	 real->d_fileno = afsfid2inode (&args->e->parent);
-     } else if (dirent.d_namlen == 1 && 
-		strcmp(name, ".") == 0 &&
-		args->e->flags.mountp) {
-	 real->d_fileno = afsfid2inode (&args->e->realfid); 
-     } else
-	 real->d_fileno = afsfid2inode (fid);
+     real->d_fileno = dentry2ino (name, fid, args->e);
      strcpy (real->d_name, name);
      args->ptr += real->d_reclen;
      args->off += real->d_reclen;
-#if 0
-     real->d_off = args->off;
-#endif
      args->last = real;
 }
-
-/*
- *
- */
 
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 	  xfs_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
 {
-     struct args args;
-     Result res;
-     int ret;
+    return conv_dir_sub (e, ce, tokens, cache_handle, cache_name,
+			 cache_name_sz, write_dirent, flushbuf, blocksize);
+}
 
-     e->flags.extradirp = TRUE;
-     fcache_extra_file_name (e, cache_name, cache_name_sz);
-     res.tokens = e->tokens |= XFS_DATA_R | XFS_OPEN_NR;
+/*
+ * remove `filename` from the converted directory for `e'
+ */
 
-     args.fd = open (cache_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-     if (args.fd == -1) {
-	  res.res = -1;
-	  res.error = errno;
-	  arla_warn (ADEBWARN, errno, "open %s", cache_name);
-	  return res;
-     }
-     ret = fcache_fhget (cache_name, cache_handle);
-     if(ret) {
-	 res.res = -1;
-	 res.error = errno;
-	 close (args.fd);
-	 arla_warn (ADEBWARN, res.error, "fcache_fhget(%s)", cache_name);
-	 return res;
-     }
+#ifndef DIRBLKSIZ
+#define DIRBLKSIZ 1024
+#endif
 
-     args.off  = 0;
-     args.buf  = (char *)malloc (blocksize);
-     if (args.buf == NULL) {
-	 arla_warn (ADEBWARN, errno, "malloc %u", (unsigned)blocksize);
-	 res.res = -1;
-	 res.error = errno;
-	 close (args.fd);
-	 return res;
-     }
-     args.ptr  = args.buf;
-     args.last = NULL;
-     args.e = e;
-     ReleaseWriteLock (&e->lock); /* XXX */
-     adir_readdir (e->fid, write_dirent, (void *)&args, ce);
-     ObtainWriteLock (&e->lock); /* XXX */
-     if (args.last)
-	  flushbuf (&args);
-     free (args.buf);
-     res.res = close (args.fd);
-     if (res.res)
-	  res.error = errno;
-     return res;
+int
+dir_remove_name (FCacheEntry *e, const char *filename,
+		 xfs_cache_handle *cache_handle,
+		 char *cache_name, size_t cache_name_sz)
+{
+    int ret;
+    int fd;
+    fbuf fb;
+    struct stat sb;
+    char *buf;
+    char *p;
+    size_t len;
+    struct xfs_dirent *dp;
+    struct xfs_dirent *last_dp;
+
+    fcache_extra_file_name (e, cache_name, cache_name_sz);
+    fd = open (cache_name, O_RDWR, 0);
+    if (fd < 0)
+	return errno;
+    fcache_fhget (cache_name, cache_handle);
+    if (fstat (fd, &sb) < 0) {
+	ret = errno;
+	close (fd);
+	return ret;
+    }
+    len = sb.st_size;
+
+    ret = fbuf_create (&fb, fd, len, FBUF_READ|FBUF_WRITE|FBUF_SHARED);
+    if (ret) {
+	close (fd);
+	return ret;
+    }
+    last_dp = NULL;
+    ret = ENOENT;
+    for (p = buf = fbuf_buf (&fb); p < buf + len; p += dp->d_reclen) {
+
+	dp = (struct xfs_dirent *)p;
+
+	assert (dp->d_reclen > 0);
+
+	if (strcmp (filename, dp->d_name) == 0) {
+	    if (last_dp != NULL) {
+		unsigned len;
+
+		/*
+		 * It's not totally clear how large we can make
+		 * d_reclen without loosing.  Not making it larger
+		 * than DIRBLKSIZ seems safe.
+		 */
+		len = last_dp->d_reclen + dp->d_reclen;
+		if (len < DIRBLKSIZ)
+		    last_dp->d_reclen = len;
+	    }
+	    dp->d_fileno = 0;
+	    ret = 0;
+	    break;
+	}
+	last_dp = dp;
+    }
+    fbuf_end (&fb);
+    close (fd);
+    return ret;
 }

@@ -1,10 +1,15 @@
 PROG	= pts
-SRCS	= pts.c arlalib.c fs_lib.c
+SRCS	= pts.c
 LDADD	+= -lkafs
 DPADD	+= ${LIBKAFS}
 
 .include "../Applflags.inc"
 
-.PATH: ${.CURDIR}/../src/appl
+.PATH: ${.CURDIR}/../src/appl/pts
+
+SRCS	+= arlalib.c fs_lib.c
+CFLAGS	+= -I${.CURDIR}/../src/appl/lib
+.PATH: ${.CURDIR}/../src/appl/lib
+.PATH: ${.CURDIR}/../src/arlad
 
 .include <bsd.prog.mk>

@@ -1,4 +1,3 @@
-/*	$OpenBSD: osi_alloc.c,v 1.1.1.1 1998/09/14 21:53:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,10 +38,12 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: osi_alloc.c,v 1.2 1997/11/09 23:48:40 assar Exp $");
+RCSID("$Id: osi_alloc.c,v 1.2 2000/09/11 14:41:25 art Exp $");
 
 #undef osi_Alloc
 #undef osi_Free
+char *osi_Alloc(int32 size);
+void osi_Free(void *p, int32 size);
 
 static char zero_malloc;
 

@@ -1,6 +1,5 @@
-/*	$OpenBSD: arladeb.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +37,7 @@
  */
 
 /*
- * $KTH: arladeb.h,v 1.19 1999/04/20 20:58:07 map Exp $
+ * $Id: arladeb.h,v 1.3 2000/09/11 14:40:40 art Exp $
  */
 
 #ifndef _arladeb_h
@@ -46,8 +45,12 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <log.h>
 
 #include <roken.h>
+
+extern Log_method* arla_log_method;
+extern Log_unit* arla_log_unit;
 
 /* masks */
 #define ADEBANY		0xffffffff
@@ -120,5 +123,14 @@ void
 arla_vwarnx (unsigned level, const char *fmt, va_list args)
 __attribute__ ((format (printf, 2, 0)))
 ;
+
+void
+arla_warnx_with_fid (unsigned level, const VenusFid *fid, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+void
+arla_vwarnx_with_fid (unsigned level, const VenusFid *fid, const char *fmt,
+		      va_list args)
+__attribute__ ((format (printf, 3, 0)));
 
 #endif				       /* _arladeb_h */

@@ -1,6 +1,5 @@
-/*	$OpenBSD: log.c,v 1.3 2000/06/29 00:12:28 deraadt Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,16 +42,19 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: log.c,v 1.13 1998/10/04 19:41:10 assar Exp $");
+RCSID("$Id: log.c,v 1.4 2000/09/11 14:41:39 art Exp $");
 #endif
 
+#include <sys/types.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <assert.h>
 #include <roken.h>
 #include "log.h"
 
@@ -60,17 +62,27 @@ RCSID("$KTH: log.c,v 1.13 1998/10/04 19:41:10 assar Exp $");
  * The structure for each logging method.
  */
 
+struct log_method;
+
+struct log_unit {
+    struct log_method *method;
+    char *name;
+    const struct units *unit;
+    unsigned mask;
+};
+
 struct log_method {
-     char *name;
-     void (*open)(Log_method *, char *progname, char *fname);
-     void (*vprint)(Log_method *, char *, va_list);
-     void (*print)(Log_method *, char *);
-     void (*close)(Log_method *);
-     union {
-	  void *v;
-	  int i;
-     } data;
-     unsigned mask;
+    char *name;
+    void (*open)(Log_method *, char *progname, char *fname);
+    void (*vprint)(Log_method *, char *, va_list);
+    void (*print)(Log_method *, char *);
+    void (*close)(Log_method *);
+    union {
+	void *v;
+	int i;
+    } data;
+    int num_units;
+    struct log_unit **units;
 };
 
 #if HAVE_SYSLOG
@@ -211,53 +223,253 @@ log_open (char *progname, char *fname)
 	       *log = special_names[i];
 	       break;
 	  }
+     if (log == NULL)
+	 return NULL;
+     log->num_units = 0;
+     log->units = NULL;
      (*log->open)(log, progname, fname);
      return log;
 }
 
 void
-log_set_mask (Log_method *log, unsigned m)
+log_set_mask (Log_unit *log, unsigned m)
 {
      log->mask = m;
 }
 
 unsigned
-log_get_mask (Log_method *log)
+log_get_mask (Log_unit *unit)
 {
-     return log->mask;
+     return unit->mask;
 }
 
-void
-log_vlog(Log_method *log, unsigned level, const char *fmt, va_list args)
+static void
+_internal_vlog (Log_method *method, const char *fmt, va_list args)
 {
-    if (level & log->mask) {
-	if (log->vprint)
-	    (*log->vprint)(log, (char *) fmt, args);
-	else {
-	    char *buf;
-	    
-	    vasprintf (&buf, fmt, args);
-	    (*log->print)(log, buf);
-	    
-	    free(buf);
-	}
+    if (method->vprint)
+	    (*method->vprint)(method, (char *) fmt, args);
+    else {
+	char *buf;
+	
+	vasprintf (&buf, fmt, args);
+	if (buf != NULL)
+	    (*method->print)(method, buf);
+	else
+	    (*method->print)(method, "not enough memory to print");
+	free(buf);
     }
 }
 
-
-void
-log_log (Log_method *log, unsigned level, const char *fmt, ...)
+static void
+_internal_log (Log_method *method, const char *fmt, ...)
 {
-     va_list args;
-
-     va_start (args, fmt);
-     log_vlog(log, level, fmt, args);
-     va_end (args);
+    va_list args;
+    
+    va_start (args, fmt);
+    _internal_vlog(method, fmt, args);
+    va_end (args);
 }
 
 void
-log_close (Log_method *log)
+log_vlog(Log_unit *unit, unsigned level, const char *fmt, va_list args)
 {
-     (*log->close)(log);
-     free (log);
+    if (level & unit->mask)
+	_internal_vlog (unit->method, fmt, args);
 }
+
+
+void
+log_log (Log_unit *log, unsigned level, const char *fmt, ...)
+{
+    va_list args;
+    
+    va_start (args, fmt);
+    log_vlog(log, level, fmt, args);
+    va_end (args);
+}
+
+void
+log_close (Log_method *method)
+{
+    int i;
+    if (method->close)
+	(*method->close)(method);
+    for (i = 0 ; i < method->num_units; i++)
+	log_unit_free (method, method->units[i]);
+    free (method->units);
+    method->units = NULL;
+    free (method);
+}
+
+Log_unit *
+log_unit_init (Log_method *method, const char *name, struct units *unit,
+	       unsigned long default_mask)
+{
+    Log_unit *u, **list;
+    
+    u = malloc (sizeof(Log_unit));
+    if (u == NULL)
+	return NULL;
+    list = realloc (method->units,
+		    (method->num_units + 1) * sizeof(Log_unit *));
+    if (list == NULL) {
+	free (u);
+	return NULL;
+    }
+    method->units = list;
+    method->units[method->num_units] = u;
+    method->num_units += 1;
+
+    u->method = method;
+    u->name   = estrdup (name);
+    u->unit   = unit;
+    u->mask   = default_mask;
+    return u;
+}
+
+void
+log_unit_free (Log_method *method, Log_unit *log)
+{
+    Log_unit **list;
+    int i;
+
+    for (i = 0; i < method->num_units; i++)
+	if (log == method->units[method->num_units])
+	    break;
+    if (i < method->num_units - 1)
+	memmove (&method->units[i], &method->units[i+1],
+		 method->num_units - i);
+
+    method->num_units -= 1;
+    list = realloc (method->units, method->num_units * sizeof(Log_unit *));
+    if (list == NULL)
+	abort();
+    method->units = list;
+
+    free (log->name);
+    assert (log->method == method);
+    log->name = NULL;
+    log->unit = NULL;
+    log->mask = 0;
+    free (log);
+}
+
+static int
+parse_word (Log_method *m, char **str, Log_unit **u, char **log_str)
+{
+    int j;
+    char *first;
+
+    if (**str == '\0') return 1;
+    while (**str != '\0' && isspace(**str) && **str == ';')
+	(*str)++;
+    if (**str == '\0') return 1;
+
+    first = *str;
+    while (**str != '\0' && !isspace(**str) && **str != ':')
+	(*str)++;
+    if (**str == ':') {
+	int best_fit = m->num_units;
+	**str = '\0';
+	(*str)++;
+	for (j = 0; j < m->num_units; j++)
+	    if (strcasecmp(m->units[j]->name, first) == 0)
+		break;
+	if (j == m->num_units) {
+	    if (best_fit != m->num_units)
+		*u = m->units[best_fit];
+	    else
+		return 1;
+	} else
+	    *u = m->units[j];
+	*log_str = *str;
+    } else {
+	*u = NULL;
+	*log_str = first;
+    }
+    while (**str != '\0' && **str != ';')
+	(*str)++;
+    if (**str == '\0')
+	return 0;
+    **str = '\0';
+    (*str)++;
+    return 0;
+}
+
+static void
+unit_parse_flags (const char *log_str, struct log_unit *unit)
+{
+    int ret;
+    ret = parse_flags (log_str, unit->unit, log_get_mask(unit));
+    if (ret < 0)
+	_internal_log (unit->method,
+		       "log internal error parsing: %s\n", 
+		       log_str);
+    else
+	log_set_mask (unit, ret);
+}
+
+void
+log_set_mask_str (Log_method *method, Log_unit *default_unit, const char *str)
+{
+    char *log_str, *ptr, *str2;
+    Log_unit *unit = NULL;
+
+    str2 = ptr = estrdup (str);
+    while (parse_word (method, &ptr, &unit, &log_str) == 0) {
+	if (unit || default_unit) {
+	    if ((unit && default_unit) && unit != default_unit)
+		_internal_log (method,
+			       "log_set_mask_str: default with unit string"
+			       "%s:%s", unit->name, log_str);
+	    if (unit == NULL)
+		unit = default_unit;
+	    unit_parse_flags (log_str, unit);
+	    unit = NULL;
+	} else {
+	    int i;
+	    for (i = 0; i < method->num_units; i++) 
+		unit_parse_flags (log_str, method->units[i]);
+	}
+    }
+    free (str2);
+}
+
+#define UPDATESZ(str,len,update) \
+	do { (str) += (update); (len) -= (update); } while (0)
+
+static size_t
+_print_unit (Log_unit *unit, char *buf, size_t sz)
+{
+    size_t ret, orig_sz = sz;
+    ret = snprintf (buf, sz, "%s:", unit->name);
+    UPDATESZ(buf,sz,ret);
+    ret = unparse_flags (log_get_mask (unit), unit->unit, buf, sz);
+    UPDATESZ(buf,sz,ret);
+    return orig_sz - sz;
+}
+
+size_t
+log_mask2str (Log_method *method, Log_unit *unit, char *buf, size_t sz)
+{
+    size_t ret, orig_sz = sz;
+    int i, printed = 0;
+
+    if (unit)
+	return _print_unit (unit, buf, sz);
+    
+    for (i = 0; i < method->num_units; i++) {
+	if (log_get_mask (method->units[i])) {
+	    if (printed) {
+		ret = snprintf (buf, sz, ";");
+		UPDATESZ(buf,sz,ret);
+	    }
+	    ret = _print_unit (method->units[i], buf, sz);
+	    UPDATESZ(buf,sz,ret);
+	    printed = 1;
+	}
+    }
+    return orig_sz - sz;
+}
+
+#undef UPDATESZ

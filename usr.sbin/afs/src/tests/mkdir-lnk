@@ -1,0 +1,12 @@
+#!/bin/sh
+mkdir foo || exit 1
+ls -ld foo | awk '{if($2 != 2) { exit(1) }}'  || exit 1
+mkdir foo/1 || exit 1
+ls -ld foo | awk '{if($2 != 3) { exit(1) }}'  || exit 1
+mkdir foo/2 || exit 1
+ls -ld foo | awk '{if($2 != 4) { exit(1) }}'  || exit 1
+rmdir foo/1 || exit 1
+ls -ld foo | awk '{if($2 != 3) { exit(1) }}'  || exit 1
+rmdir foo/2 || exit 1
+ls -ld foo | awk '{if($2 != 2) { exit(1) }}'  || exit 1
+rmdir foo || exit 1

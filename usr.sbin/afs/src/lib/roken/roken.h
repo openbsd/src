@@ -1,4 +1,3 @@
-/*	$OpenBSD: roken.h,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken.h,v 1.14 1999/02/13 05:16:59 assar Exp $ */
+/* $Id: roken.h,v 1.3 2000/09/11 14:41:03 art Exp $ */
 
 #ifndef __ROKEN_H__
 #define __ROKEN_H__
@@ -92,6 +91,10 @@
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 4
 #include <sys/ioctl.h>
+#endif
+
+#ifndef HAVE_SSIZE_T
+typedef int ssize_t;  /* XXX real hot stuff */
 #endif
 
 #if !defined(HAVE_SETSID) && defined(HAVE__SETSID)
@@ -157,11 +160,16 @@ char * strlwr(char *);
 #endif
 
 #ifndef HAVE_STRNLEN
-int strnlen(char*, int);
+size_t strnlen(const char*, size_t);
 #endif
 
 #ifndef HAVE_STRSEP
 char *strsep(char**, const char*);
+#endif
+
+#ifndef HAVE_STRSEP_COPY
+ssize_t strsep_copy(const char **stringp, const char *delim, 
+		    char *buf, size_t len);
 #endif
 
 #ifdef NEED_FCLOSE_PROTO
@@ -216,7 +224,7 @@ char* getcwd(char *path, size_t size);
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
-struct passwd *k_getpwnam (char *user);
+struct passwd *k_getpwnam (const char *user);
 struct passwd *k_getpwuid (uid_t uid);
 #endif
 
@@ -323,6 +331,8 @@ time_t tm2time (struct tm tm, int local);
 int unix_verify_user(char *user, char *password);
 
 void inaddr2str(struct in_addr addr, char *s, size_t len);
+
+struct in_addr *str2inaddr (const char *s, struct in_addr *ret);
 
 void mini_inetd (int port);
 
@@ -475,10 +485,6 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
        struct timeval *timeout);
 #endif
 
-#ifndef HAVE_SSIZE_T
-typedef int ssize_t;  /* XXX real hot stuff */
-#endif
-
 #ifdef HAVE_REPAIRABLE_HTONL
 #define htonl(x) __cpu_to_be32(x)
 #define ntohl(x) __be32_to_cpu(x)
@@ -493,5 +499,70 @@ typedef int ssize_t;  /* XXX real hot stuff */
 void *emalloc (size_t sz);
 void *erealloc (void *ptr, size_t sz);
 char *estrdup (const char *);
+
+FILE *efopen(const char *name, const char *mode);
+void efclose(FILE *);
+size_t efread (void *ptr, size_t size, size_t nitems, FILE *stream);
+size_t efwrite (const void *ptr, size_t size, size_t nitems, FILE *stream);
+FILE *epopen(const char *command, const char *type);
+
+/* eefile */
+
+struct _fileblob {
+  FILE *stream;
+  char *curname;
+  char *newname;
+};
+
+typedef struct _fileblob fileblob;
+void eefopen(const char *name, const char *mode, fileblob *f);
+void eefclose(fileblob *);
+size_t eefread (void *ptr, size_t size, size_t nitems, fileblob *stream);
+size_t eefwrite (const void *ptr, size_t size, size_t nitems,
+		 fileblob *stream);
+
+/* copy_dirname */
+
+char *copy_dirname (const char *s);
+
+/* copy_basename */
+
+char *copy_basename (const char *s);
+
+/* strsplit */
+
+int strsplit (char *str, char *pat, ...);
+int vstrsplit (char *str, char *pat, unsigned nsub, char **sub);
+
+/* strmatch */
+
+int
+strmatch (const char *pat, const char *str);
+
+/* strtrim */
+
+char *
+strtrim (char *s_str);
+
+/* timeval */
+
+void timevalfix(struct timeval *t1);
+void timevaladd(struct timeval *t1, const struct timeval *t2);
+void timevalsub(struct timeval *t1, const struct timeval *t2);
+
+/* strcollect */
+char **vstrcollect(va_list *ap);
+char **strcollect(char *first, ...);
+
+const char *
+get_progname(void);
+
+int roken_concat (char *s, size_t len, ...);
+int roken_vconcat (char *s, size_t len, va_list args);
+size_t roken_mconcat (char **s, size_t max_len, ...);
+size_t roken_vmconcat (char **s, size_t max_len, va_list args);
+
+ssize_t net_write (int fd, const void *buf, size_t nbytes);
+ssize_t net_read (int fd, void *buf, size_t nbytes);
 
 #endif /*  __ROKEN_H__ */

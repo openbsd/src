@@ -1,7 +1,7 @@
 ### rxdef stuff
 ## No, cb.ss.c is _not_ a mistake. The _client_ is the callback server.
 SRCS		+= vldb.cs.c fs.cs.c cb.ss.c pts.cs.c \
-		   volumeserver.cs.c ubik.cs.c
+		   volumeserver.cs.c ubik.cs.c bos.cs.c
 
 CLEANFILES 	+= vldb.ss.c vldb.cs.c vldb.ydr.c vldb.ss.h vldb.cs.h vldb.h \
 		   fs.ss.c fs.cs.c fs.ydr.c fs.cs.h fs.ss.h fs.h \
@@ -10,7 +10,9 @@ CLEANFILES 	+= vldb.ss.c vldb.cs.c vldb.ydr.c vldb.ss.h vldb.cs.h vldb.h \
 		   volumeserver.ss.c volumeserver.cs.c volumeserver.ydr.c \
 		   volumeserver.ss.h volumeserver.cs.h volumeserver.h \
 		   ubik.ss.c ubik.cs.c ubik.ydr.c ubik.cs.h ubik.ss.h ubik.h \
-		   vldb.td.c fs.td.c cb.td.c pts.td.c volumeserver.td.c ubik.td.c
+		   bos.ss.c bos.cs.c bos.ydr.c bos.cs.h bos.ss.h bos.h \
+		   vldb.td.c fs.td.c cb.td.c pts.td.c volumeserver.td.c \
+		   ubik.td.c bos.td.c
 
 CFLAGS		+= -I${.CURDIR}/../src/rxdef -I${.CURDIR}/../src/arlad
 
@@ -35,4 +37,7 @@ volumeserver.cs.c volumeserver.cs.h volumeserver.ss.c volumeserver.ss.h volumese
 
 ubik.cs.c ubik.cs.h ubik.ss.c ubik.ss.h ubik.ydr.c ubik.h: ubik.xg
 		$(YDR) $(YDRFLAGS) ${.CURDIR}/../src/rxdef/ubik.xg
+
+bos.cs.c bos.cs.h bos.ss.c bos.ss.h bos.ydr.c bos.h: bos.xg
+		$(YDR) $(YDRFLAGS) ${.CURDIR}/../src/rxdef/bos.xg
 

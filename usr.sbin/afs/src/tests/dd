@@ -1,0 +1,8 @@
+#!/bin/sh
+# $Id: dd,v 1.1 2000/09/11 14:41:28 art Exp $
+if test -r /dev/zero; then
+  dd if=/dev/zero of=foo bs=1k count=20 >/dev/null 2>/dev/null || exit 1
+  rm foo || exit 1
+else
+  echo "not running dd (you have no /dev/zero)"
+fi

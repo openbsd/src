@@ -1,4 +1,3 @@
-/*	$OpenBSD: mmaptime.h,v 1.1.1.1 1998/09/14 21:53:24 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: mmaptime.h,v 1.1 1998/03/28 10:45:23 lha Exp $ */
+/* $Id: mmaptime.h,v 1.2 2000/09/11 14:41:39 art Exp $ */
 
 #ifndef _UTIL_MMAPTIME_H
 #define _UTIL_MMAPTIME_H 1

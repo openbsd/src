@@ -1,6 +1,5 @@
-/*	$OpenBSD: rxk_crpt.c,v 1.2 1999/06/16 15:27:34 deraadt Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +38,27 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_crpt.c,v 1.8 1998/07/12 14:38:58 joda Exp $");
+
+/*
+ * this assumes that KRB_C_BIGENDIAN is used.
+ * if we can find out endianess at compile-time, do so,
+ * otherwise WORDS_BIGENDIAN should already have been defined
+ */
+
+#if ENDIANESS_IN_SYS_PARAM_H
+#  undef WORDS_BIGENDIAN
+#  include <sys/types.h>
+#  include <sys/param.h>
+#  if BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+#  elif BYTE_ORDER == LITTLE_ENDIAN
+   /* ok */
+#  else
+#  error where do you cut your eggs?
+#  endif
+#endif
+
+RCSID("$Id: rxk_crpt.c,v 1.3 2000/09/11 14:41:25 art Exp $");
 
 /*
  * Unrolling of the inner loops helps the most on pentium chips
@@ -77,10 +96,10 @@ RCSID("$KTH: rxk_crpt.c,v 1.8 1998/07/12 14:38:58 joda Exp $");
 #define ROT32L(x, n) ((((u_int32) x) << (n)) | (((u_int32) x) >> (32-(n))))
 #define bswap32(x) (((ROT32L(x, 16) & 0x00ff00ff)<<8) | ((ROT32L(x, 16)>>8) & 0x00ff00ff))
 
-#if defined(__alpha__) || defined(__i386__) || defined(MIPSEL)
-#define NTOH(x) bswap32(x)
-#else
+#if WORDS_BIGENDIAN
 #define NTOH(x) (x)
+#else
+#define NTOH(x) bswap32(x)
 #endif
 
 /*
@@ -94,9 +113,8 @@ RCSID("$KTH: rxk_crpt.c,v 1.8 1998/07/12 14:38:58 joda Exp $");
  * all else	ntohl
  */
 
-#if defined(__GNUC__) && defined(__i386__)
-static inline
-u_int32
+#if defined(__GNUC__) && (defined(i386) || defined(__i386__))
+static inline u_int32
 bswap(u_int32 x)
 {
   asm("bswap %0" : "=r" (x) : "0" (x));
@@ -230,7 +248,7 @@ static const u_int32 sbox3[256] = {
  u.l = sched ^ R; \
  L ^= sbox0[u.c[0]] ^ sbox1[u.c[1]] ^ sbox2[u.c[2]] ^ sbox3[u.c[3]]; }
 
-#if defined(__i386__) || defined(__alpha__)
+#ifndef WORDS_BIGENDIAN
 /* BEWARE: this code is endian dependent.
  * This should really be inline assembler on the x86.
  */

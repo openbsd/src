@@ -1,6 +1,5 @@
-/*	$OpenBSD: hash.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,7 +42,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hash.c,v 1.12 1998/12/02 00:48:38 assar Exp $");
+RCSID("$Id: hash.c,v 1.3 2000/09/11 14:41:38 art Exp $");
 #endif
 
 #include <assert.h>
@@ -241,7 +240,7 @@ hashcaseadd(const char *s)
     assert(s);
 
     for (i = 0; *s; ++s)
-	i += toupper(*s);
+	i += toupper((unsigned char)*s);
     return i;
 }
 

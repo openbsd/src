@@ -1,0 +1,78 @@
+@c $Id: debugging.texi,v 1.1 2000/09/11 14:40:53 art Exp $
+
+@node Debugging, Porting, Parts of Arla, Top
+@chapter Debugging
+
+@section Arlad
+
+If arlad is run without any arguments arlad will fork(2) and log to
+syslog(3). To disable forking use the --no-fork (-n) switch. In the
+current state of the code, arlad is allways to be started with
+the recover (-z) switch. This will invalidate your cache at startup.
+This restriction may be dropped in the future.
+
+To enable more debuggning run arla with the switch --debug=module1,module2,...
+One useful combination is 
+@example 
+   --debug=all,-cleaner 
+@end example 
+The cleaner output is usully not that intresting and can be ignored.
+
+A convenient way to debug arlad is to start it inside gdb.
+@example
+datan:~# gdb /usr/arla/bin/arlad
+(gdb) run -z -n
+@end example
+This gives you the opportunity to examine a crashed arlad.
+@example
+(gdb) bt
+@end example
+The arla team appreciates cut and paste information from
+the beginning to the end of the bt output from such a gdb run.
+
+To set the debugging with a running arlad use @code{fs arladeb} as root.
+
+@example
+datan:~# fs arladeb
+arladebug is: none
+datan:~# fs arladeb almost-all
+datan:~#
+@end example
+
+By default, arlad logs through syslog if running as a daemon and to
+stderr when running in the foreground (with @kbd{--no-fork}).
+
+@section xfs
+
+XFS debugging does almost look the same on all platforms. They
+all share same debugging flags, but not all are enabled on all
+platforms.
+
+Change the debugging with the @kbd{fs xfsdebug} command.
+
+@example
+datan:~# fs xfsdebug
+xfsdebug is: none
+datan:~# fs xfsdebug almost-all
+datan:~#
+@end example
+
+If it crashes before you have an opportunity to set the debug level, you
+will have to edit @file{xfs/@var{your-os}/xfs_deb.c} and recompile.
+
+The logging of xfs ends up in your syslog. Syslog usully logs to /var/log
+or /var/adm (look in /etc/syslog.conf).
+
+@section When reporting problems
+
+Please do not include a whole log in a email. Most people on the list
+doesn't want to read this. Instead send a pointer to a URL (http or
+ftp).
+
+@section xfs on linux
+
+There is a problem with klogd, it's too slow. Cat the @file{/proc/kmsg}
+file instead.  Remember to kill klogd, since the reader will delete the
+text from the ring-bufer, and you will only get some of the message in
+your cat.
+

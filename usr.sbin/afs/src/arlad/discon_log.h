@@ -1,4 +1,3 @@
-/*	$OpenBSD: discon_log.h,v 1.1 1999/04/30 01:59:07 art Exp $	*/
 /* COPYRIGHT  (C)  1998
  * THE REGENTS OF THE UNIVERSITY OF MICHIGAN
  * ALL RIGHTS RESERVED
@@ -262,7 +261,10 @@ typedef struct log_ent {
 
 
 long log_dis_create(struct vcache *parent, struct vcache *child, char *name);
-
+long log_dis_store(struct vcache *avc);
+long log_dis_setattr(struct vcache *tvc, struct xfs_attr *attrs);
+long log_dis_mkdir(struct vcache *pvc, struct vcache *dvc, 
+		   AFSStoreStatus *attrs, char *name);
 
 #endif /* _DISCONN_LOG_H */
 

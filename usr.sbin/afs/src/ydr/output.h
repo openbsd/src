@@ -1,4 +1,3 @@
-/*	$OpenBSD: output.h,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,14 +36,14 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: output.h,v 1.12 1999/03/04 06:43:03 assar Exp $ */
+/* $Id: output.h,v 1.3 2000/09/11 14:41:41 art Exp $ */
 
 #ifndef _OUTPUT_
 #define _OUTPUT_
 
 #include <stdio.h>
 #include <bool.h>
-#include <eefile.h>
+#include <roken.h>
 
 void generate_header (Symbol *s, FILE *f);
 void generate_sizeof (Symbol *s, FILE *f);
@@ -61,6 +60,7 @@ void init_generate (const char *filename);
 void close_generator (const char *filename);
 
 extern char *package;
+extern List *packagelist;
 
 extern char *prefix;
 

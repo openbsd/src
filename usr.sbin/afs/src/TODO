@@ -1,46 +1,70 @@
-$Id: TODO,v 1.2 1999/04/30 01:59:04 art Exp $
+
+$Id: TODO,v 1.3 2000/09/11 14:40:29 art Exp $
 
    TODO-list, in no particular order.
 
 Please mail arla-drinkers@stacken.kth.se if you want to work on
 any of these things so we don't do double work.
 
-*/Makefile.in: homogenize
+- fix weirdness with fake mount points
+  installattr (token w/o data) (ls -l ; ls foo ; ls bar)
+
+arlad: add regular pinging of file servers
+
+arlad/xfs:
+cope with removal of a directory that is later changed to a
+mountpoint
+
+fs flushall:
+-volume ?
+is this really good ?
+
+arlad: find_first_fs:
+rename/creation of a volume of the old name might cause (is known to)
+that the assert(bit); fail. (check patch)
+
+arlad/xfs:
+cope with vos remove/vos create of a volume (SoftAssert on linux)
+
+xfs/linux: 
+check that dcache-stuff works with al viro's dcache changes
+verify locking with i_zombie
+verify that we do the right thing with locking in 2.3.x
+
+xfs/*: teach xfs to read AFS directories for readdir
+
+xfs/linux: check if we can hook into vm_operations/address_space to
+figure out when cache pages are dirty and need to flushed.
 
 */Makefile.in: allow creation of shared libraries
 
-tests: make sure all tests work everywhere
-
-tests: figure out what output should be sent where and with what options
-	
-arlad/xfs: More stable, bugfixes etc
-
-xfs/solaris: verify multithreadness
-
-xfs+arlad: implement advisory locking
-
-xfs: support building as part of the kernel
-
-xfs/irix: port to Irix 6.5
-
-arlad: disconnected mode
-
-arlad: remove unused stuff from FCacheEntry
-
-arlad: fallback to disconnected mode if networking is not working
-(possibly per cell)
+*/Makefile.in: homogenize
 
 arlad/xfs: return from open before fetching the whole file
 
+arlad/xfs: cache in blocks (iff ?) file too large to fit in cache ?
+
+arlad/xfs: implement advisory locking
+
+arlad: more improvements on writing in disconnected mode
+
+arlad: fallback to disconnected mode if networking is not working (possibly per cell)
+
 arlad: more consistency checks before recovering state
 
-more tests in test suite
+arlad: remove unused stuff from FCacheEntry
 
-cache in blocks (iff ?) file to large to fit in cache ?
+xfs/aix: figure out where the PAG should be stored
 
-rewrite milko (vfs-switch ?)
+xfs/irix: fix syscall and implement setgroups wrapper
 
-autoconf -j
+xfs/irix: port to Irix 6.5
+
+xfs/solaris: verify multithreadness
+
+xfs/sunos: implement setgroups wrapper
+
+xfs: support building as part of the kernel
 
 OPTIMIZATIONS
 
@@ -53,3 +77,14 @@ of arla.
 
  - send more messages to/from arlad in one sweep. (lookup on whole path in one
    message, getattr+getdata, etc..)
+
+MILKO
+
+Filbunke, the nnp-class-server generation:
+- callbacks
+- logging
+- fsck/salvage, stability, more tests
+- SPEED, real i*op
+- volser (?)
+- pts,vldb
+- security

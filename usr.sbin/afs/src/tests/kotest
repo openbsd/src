@@ -1,0 +1,4 @@
+#!/bin/sh
+# $Id: kotest,v 1.1 2000/09/11 14:41:31 art Exp $
+
+exec ${objdir}/../lib/ko/kotest

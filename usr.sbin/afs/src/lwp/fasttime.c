@@ -1,4 +1,3 @@
-/*	$OpenBSD: fasttime.c,v 1.1.1.1 1998/09/14 21:53:11 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -39,14 +38,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: fasttime.c,v 1.6 1998/03/28 16:35:44 lha Exp $");
+RCSID("$Id: fasttime.c,v 1.2 2000/09/11 14:41:08 art Exp $");
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#ifndef	AFS_AIX_ENV
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
 
@@ -61,9 +60,7 @@ RCSID("$KTH: fasttime.c,v 1.6 1998/03/28 16:35:44 lha Exp $");
 #include <mmaptime.h>
 #endif
 
-
-extern char *valloc();
-int ft_debug;
+#include "timer.h"
 
 #define TRUE	1
 #define FALSE	0

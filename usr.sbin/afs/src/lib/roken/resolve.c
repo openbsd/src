@@ -1,6 +1,5 @@
-/*	$OpenBSD: resolve.c,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -15,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -49,31 +43,35 @@
 #endif
 #include "resolve.h"
 
-RCSID("$KTH: resolve.c,v 1.6 1998/04/27 20:13:43 assar Exp $");
+RCSID("$Id: resolve.c,v 1.2 2000/09/11 14:41:03 art Exp $");
 
 #if defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND)
 
 #define DECL(X) {#X, T_##X}
 
 static struct stot{
-    char *name;
+    const char *name;
     int type;
 }stot[] = {
     DECL(A),
     DECL(NS),
     DECL(CNAME),
+    DECL(SOA),
     DECL(PTR),
     DECL(MX),
     DECL(TXT),
     DECL(AFSDB),
+    DECL(SIG),
+    DECL(KEY),
     DECL(SRV),
+    DECL(NAPTR),
     {NULL, 	0}
 };
 
-int _resolve_debug;
+int _resolve_debug = 0;
 
-static int
-string_to_type(const char *name)
+int
+dns_string_to_type(const char *name)
 {
     struct stot *p = stot;
     for(p = stot; p->name; p++)
@@ -82,6 +80,15 @@ string_to_type(const char *name)
     return -1;
 }
 
+const char *
+dns_type_to_string(int type)
+{
+    struct stot *p = stot;
+    for(p = stot; p->name; p++)
+	if(type == p->type)
+	    return p->name;
+    return NULL;
+}
 
 void
 dns_free_data(struct dns_reply *r)
@@ -111,14 +118,19 @@ parse_reply(unsigned char *data, int len)
     struct dns_reply *r;
     struct resource_record **rr;
     
-    r = (struct dns_reply*)malloc(sizeof(struct dns_reply));
+    r = calloc(1, sizeof(*r));
     if (r == NULL)
 	return NULL;
-    memset(r, 0, sizeof(struct dns_reply));
 
     p = data;
+#if 0
+    /* doesn't work on Crays */
     memcpy(&r->h, p, sizeof(HEADER));
     p += sizeof(HEADER);
+#else
+    memcpy(&r->h, p, 12); /* XXX this will probably be mostly garbage */
+    p += 12;
+#endif
     status = dn_expand(data, data + len, p, host, sizeof(host));
     if(status < 0){
 	dns_free_data(r);
@@ -227,10 +239,75 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.txt[*p] = 0;
 	    break;
 	}
-	    
+	case T_KEY : {
+	    size_t key_len;
+
+	    key_len = size - 4;
+	    (*rr)->u.key = malloc (sizeof(*(*rr)->u.key) + key_len - 1);
+	    if ((*rr)->u.key == NULL) {
+		dns_free_data (r);
+		return NULL;
+	    }
+
+	    (*rr)->u.key->flags     = (p[0] << 8) | p[1];
+	    (*rr)->u.key->protocol  = p[2];
+	    (*rr)->u.key->algorithm = p[3];
+	    (*rr)->u.key->key_len   = key_len;
+	    memcpy ((*rr)->u.key->key_data, p + 4, key_len);
+	    break;
+	}
+	case T_SIG : {
+	    size_t sig_len;
+
+	    status = dn_expand (data, data + len, p + 18, host, sizeof(host));
+	    if (status < 0) {
+		dns_free_data (r);
+		return NULL;
+	    }
+	    sig_len = len - 18 - status;
+	    (*rr)->u.sig = malloc(sizeof(*(*rr)->u.sig)
+				  + strlen(host) + sig_len);
+	    if ((*rr)->u.sig == NULL) {
+		dns_free_data (r);
+		return NULL;
+	    }
+	    (*rr)->u.sig->type           = (p[0] << 8) | p[1];
+	    (*rr)->u.sig->algorithm      = p[2];
+	    (*rr)->u.sig->labels         = p[3];
+	    (*rr)->u.sig->orig_ttl       = (p[4] << 24) | (p[5] << 16)
+		| (p[6] << 8) | p[7];
+	    (*rr)->u.sig->sig_expiration = (p[8] << 24) | (p[9] << 16)
+		| (p[10] << 8) | p[11];
+	    (*rr)->u.sig->sig_inception  = (p[12] << 24) | (p[13] << 16)
+		| (p[14] << 8) | p[15];
+	    (*rr)->u.sig->key_tag        = (p[16] << 8) | p[17];
+	    (*rr)->u.sig->sig_len        = sig_len;
+	    memcpy ((*rr)->u.sig->sig_data, p + 18 + status, sig_len);
+	    (*rr)->u.sig->signer         = &(*rr)->u.sig->sig_data[sig_len];
+	    strcpy((*rr)->u.sig->signer, host);
+	    break;
+	}
+
+	case T_CERT : {
+	    size_t cert_len;
+
+	    cert_len = size - 5;
+	    (*rr)->u.cert = malloc (sizeof(*(*rr)->u.cert) + cert_len - 1);
+	    if ((*rr)->u.cert == NULL) {
+		dns_free_data (r);
+		return NULL;
+	    }
+
+	    (*rr)->u.cert->type      = (p[0] << 8) | p[1];
+	    (*rr)->u.cert->tag       = (p[2] << 8) | p[3];
+	    (*rr)->u.cert->algorithm = p[4];
+	    (*rr)->u.cert->cert_len  = cert_len;
+	    memcpy ((*rr)->u.cert->cert_data, p + 5, cert_len);
+	    break;
+	}
 	default:
 	    (*rr)->u.data = (unsigned char*)malloc(size);
-	    if((*rr)->u.data == NULL) {
+	    if(size != 0 && (*rr)->u.data == NULL) {
 		dns_free_data(r);
 		return NULL;
 	    }
@@ -243,35 +320,44 @@ parse_reply(unsigned char *data, int len)
     return r;
 }
 
-struct dns_reply *
-dns_lookup(const char *domain, const char *type_name)
+static struct dns_reply *
+dns_lookup_int(const char *domain, int rr_class, int rr_type)
 {
     unsigned char reply[1024];
     int len;
-    int type;
     struct dns_reply *r = NULL;
-#ifdef HAVE__RES
     u_long old_options = 0;
-#endif
     
-    type = string_to_type(type_name);
     if (_resolve_debug) {
-#ifdef HAVE__RES
         old_options = _res.options;
 	_res.options |= RES_DEBUG;
-#endif
-	fprintf(stderr, "dns_lookup(%s, %s)\n", domain, type_name);
+	fprintf(stderr, "dns_lookup(%s, %d, %s)\n", domain,
+		rr_class, dns_type_to_string(rr_type));
     }
-    len = res_search(domain, C_IN, type, reply, sizeof(reply));
+    len = res_search(domain, rr_class, rr_type, reply, sizeof(reply));
     if (_resolve_debug) {
-#ifdef HAVE__RES
         _res.options = old_options;
-#endif
-	fprintf(stderr, "dns_lookup(%s, %s) --> %d\n", domain, type_name, len);
+	fprintf(stderr, "dns_lookup(%s, %d, %s) --> %d\n",
+		domain, rr_class, dns_type_to_string(rr_type), len);
     }
     if (len >= 0)
 	r = parse_reply(reply, len);
     return r;
+}
+
+struct dns_reply *
+dns_lookup(const char *domain, const char *type_name)
+{
+    int type;
+    
+    type = dns_string_to_type(type_name);
+    if(type == -1) {
+	if(_resolve_debug)
+	    fprintf(stderr, "dns_lookup: unknown resource type: `%s'\n", 
+		    type_name);
+	return NULL;
+    }
+    return dns_lookup_int(domain, C_IN, type);
 }
 
 #else /* NOT defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND) */
@@ -290,16 +376,6 @@ dns_free_data(struct dns_reply *r)
 #endif
 
 #ifdef TEST
-static char *
-type_to_string(int type)
-{
-    struct stot *p = stot;
-    for(p = stot; p->name; p++)
-	if(type == p->type)
-	    return p->name;
-    return NULL;
-}
-
 int 
 main(int argc, char **argv)
 {
@@ -311,28 +387,47 @@ main(int argc, char **argv)
 	return 1;
     }
     for(rr = r->head; rr;rr=rr->next){
-	printf("%s %s %d ", rr->domain, type_to_string(rr->type), rr->ttl);
+	printf("%s %s %d ", rr->domain, dns_type_to_string(rr->type), rr->ttl);
 	switch(rr->type){
 	case T_NS:
+	case T_CNAME:
+	case T_PTR:
 	    printf("%s\n", (char*)rr->u.data);
 	    break;
 	case T_A:
-	    printf("%d.%d.%d.%d\n", 
-		   ((unsigned char*)rr->u.data)[0],
-		   ((unsigned char*)rr->u.data)[1],
-		   ((unsigned char*)rr->u.data)[2],
-		   ((unsigned char*)rr->u.data)[3]);
+	    printf("%s\n", inet_ntoa(*rr->u.a));
 	    break;
 	case T_MX:
 	case T_AFSDB:{
-	    struct mx_record *mx = (struct mx_record*)rr->u.data;
-	    printf("%d %s\n", mx->preference, mx->domain);
+	    printf("%d %s\n", rr->u.mx->preference, rr->u.mx->domain);
 	    break;
 	}
 	case T_SRV:{
-	    struct srv_record *srv = (struct srv_record*)rr->u.data;
+	    struct srv_record *srv = rr->u.srv;
 	    printf("%d %d %d %s\n", srv->priority, srv->weight, 
 		   srv->port, srv->target);
+	    break;
+	}
+	case T_TXT: {
+	    printf("%s\n", rr->u.txt);
+	    break;
+	}
+	case T_SIG : {
+	    struct sig_record *sig = rr->u.sig;
+	    const char *type_string = dns_type_to_string (sig->type);
+
+	    printf ("type %u (%s), algorithm %u, labels %u, orig_ttl %u, sig_expiration %u, sig_inception %u, key_tag %u, signer %s\n",
+		    sig->type, type_string ? type_string : "",
+		    sig->algorithm, sig->labels, sig->orig_ttl,
+		    sig->sig_expiration, sig->sig_inception, sig->key_tag,
+		    sig->signer);
+	    break;
+	}
+	case T_KEY : {
+	    struct key_record *key = rr->u.key;
+
+	    printf ("flags %u, protocol %u, algorithm %u\n",
+		    key->flags, key->protocol, key->algorithm);
 	    break;
 	}
 	default:
