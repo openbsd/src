@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: c++rt0.c,v 1.1.1.1 1995/10/18 08:41:17 deraadt Exp $
+ *	$Id: c++rt0.c,v 1.2 1998/02/03 21:51:52 marc Exp $
  */
 
 /*
@@ -40,8 +40,8 @@
  */
 #include <stdlib.h>
 
-void (*__CTOR_LIST__[0]) __P((void));
-void (*__DTOR_LIST__[0]) __P((void));
+extern void (*__CTOR_LIST__[]) __P((void));
+extern void (*__DTOR_LIST__[]) __P((void));
 
 static void	__dtors __P((void));
 static void	__ctors __P((void));
