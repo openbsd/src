@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.21 1995/10/05 06:20:57 mycroft Exp $	*/
+/*	$NetBSD: vnd.c,v 1.22 1995/11/06 20:28:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,6 @@
  *
  * NOTE 3: Doesn't interact with leases, should it?
  */
-#include "vnd.h"
-#if NVND > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +71,10 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/stat.h>
+#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -111,24 +113,36 @@ struct vnd_softc {
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct buf	 sc_tab;	/* transfer queue */
+	struct dkdevice  sc_dkdev;	/* generic disk device info */
 };
 
 /* sc_flags */
 #define	VNF_ALIVE	0x01
 #define VNF_INITED	0x02
+#define VNF_WANTED	0x40
+#define VNF_LOCKED	0x80
 
-#if 0	/* if you need static allocation */
-struct vnd_softc vn_softc[NVND];
-int numvnd = NVND;
-#else
 struct vnd_softc *vnd_softc;
-int numvnd;
-#endif
+int numvnd = 0;
+
+/* {b,c}devsw[] function prototypes */
+dev_type_open(vndopen);
+dev_type_close(vndclose);
+dev_type_strategy(vndstrategy);
+dev_type_ioctl(vndioctl);
+dev_type_read(vndread);
+dev_type_write(vndwrite);
+
+/* called by main() at boot time */
+void	vndattach __P((int));
 
 void	vndclear __P((struct vnd_softc *));
 void	vndstart __P((struct vnd_softc *));
 int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
+
+static	int vndlock __P((struct vnd_softc *));
+static	void vndunlock __P((struct vnd_softc *));
 
 void
 vndattach(num)
@@ -157,14 +171,42 @@ vndopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	int unit = vndunit(dev);
+	struct vnd_softc *sc;
+	int error = 0, part, pmask;
+
+	/*
+	 * XXX Should support disklabels.
+	 */
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(%x, %x, %x, %x)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
-		return(ENXIO);
-	return(0);
+		return (ENXIO);
+	sc = &vnd_softc[unit];
+
+	if (error = vndlock(sc))
+		return (error);
+
+	part = DISKPART(dev);
+	pmask = (1 << part);
+
+	/* Prevent our unit from being unconfigured while open. */
+	switch (mode) {
+	case S_IFCHR:
+		sc->sc_dkdev.dk_copenmask |= pmask;
+		break;
+
+	case S_IFBLK:
+		sc->sc_dkdev.dk_bopenmask |= pmask;
+		break;
+	}
+	sc->sc_dkdev.dk_openmask =
+	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+
+	vndunlock(sc);
+	return (0);
 }
 
 int
@@ -173,11 +215,39 @@ vndclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	int unit = vndunit(dev);
+	struct vnd_softc *sc;
+	int error = 0, part;
+
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(%x, %x, %x, %x)\n", dev, flags, mode, p);
 #endif
-	return 0;
+
+	if (unit >= numvnd)
+		return (ENXIO);
+	sc = &vnd_softc[unit];
+
+	if (error = vndlock(sc))
+		return (error);
+
+	part = DISKPART(dev);
+
+	/* ...that much closer to allowing unconfiguration... */
+	switch (mode) {
+	case S_IFCHR:
+		sc->sc_dkdev.dk_copenmask &= ~(1 << part);
+		break;
+
+	case S_IFBLK:
+		sc->sc_dkdev.dk_bopenmask &= ~(1 << part);
+		break;
+	}
+	sc->sc_dkdev.dk_openmask =
+	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+
+	vndunlock(sc);
+	return (0);
 }
 
 /*
@@ -375,29 +445,53 @@ vndiodone(vbp)
 	splx(s);
 }
 
+/* ARGSUSED */
 int
-vndread(dev, uio)
+vndread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
+	int unit = vndunit(dev);
+	struct vnd_softc *sc;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndread(%x, %x)\n", dev, uio);
 #endif
+
+	if (unit >= numvnd)
+		return (ENXIO);
+	sc = &vnd_softc[unit];
+
+	if ((sc->sc_flags & VNF_INITED) == 0)
+		return (ENXIO);
+
 	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
+/* ARGSUSED */
 int
-vndwrite(dev, uio)
+vndwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
+	int unit = vndunit(dev);
+	struct vnd_softc *sc;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndwrite(%x, %x)\n", dev, uio);
 #endif
+
+	if (unit >= numvnd)
+		return (ENXIO);
+	sc = &vnd_softc[unit];
+
+	if ((sc->sc_flags & VNF_INITED) == 0)
+		return (ENXIO);
+
 	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -415,7 +509,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
-	int error;
+	int error, part, pmask, s;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -434,7 +528,11 @@ vndioctl(dev, cmd, data, flag, p)
 
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
-			return(EBUSY);
+			return (EBUSY);
+
+		if (error = vndlock(vnd))
+			return (error);
+
 		/*
 		 * Always open for read and write.
 		 * This is probably bogus, but it lets vn_open()
@@ -442,11 +540,14 @@ vndioctl(dev, cmd, data, flag, p)
 		 * have to worry about them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if (error = vn_open(&nd, FREAD|FWRITE, 0))
+		if (error = vn_open(&nd, FREAD|FWRITE, 0)) {
+			vndunlock(vnd);
 			return(error);
+		}
 		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
 			VOP_UNLOCK(nd.ni_vp);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+			vndunlock(vnd);
 			return(error);
 		}
 		VOP_UNLOCK(nd.ni_vp);
@@ -454,6 +555,7 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 		if (error = vndsetcred(vnd, p->p_ucred)) {
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+			vndunlock(vnd);
 			return(error);
 		}
 		vndthrottle(vnd, vnd->sc_vp);
@@ -464,22 +566,55 @@ vndioctl(dev, cmd, data, flag, p)
 			printf("vndioctl: SET vp %x size %x\n",
 			    vnd->sc_vp, vnd->sc_size);
 #endif
+
+		vndunlock(vnd);
+
 		break;
 
 	case VNDIOCCLR:
 		if ((vnd->sc_flags & VNF_INITED) == 0)
-			return(ENXIO);
+			return (ENXIO);
+
+		if (error = vndlock(vnd))
+			return (error);
+
+		/*
+		 * Don't unconfigure if any other partitions are open
+		 * or if both the character and block flavors of this
+		 * partition are open.
+		 */
+		part = DISKPART(dev);
+		pmask = (1 << part);
+		if ((vnd->sc_dkdev.dk_openmask & ~pmask) ||
+		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
+		    (vnd->sc_dkdev.dk_copenmask & pmask))) {
+			vndunlock(vnd);
+			return (EBUSY);
+		}
+
 		vndclear(vnd);
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: CLRed\n");
 #endif
+
+		/* This must be atomic. */
+		s = splhigh();
+		vndunlock(vnd);
+		bzero(vnd, sizeof(struct vnd_softc));
+		splx(s);
+
 		break;
+
+	/*
+	 * XXX Should support disklabels.
+	 */
 
 	default:
 		return(ENOTTY);
 	}
-	return(0);
+
+	return (0);
 }
 
 /*
@@ -593,4 +728,39 @@ vnddump(dev, blkno, va, size)
 	/* Not implemented. */
 	return ENXIO;
 }
-#endif
+
+/*
+ * Wait interruptibly for an exclusive lock.
+ *
+ * XXX
+ * Several drivers do this; it should be abstracted and made MP-safe.
+ */
+static int
+vndlock(sc)
+	struct vnd_softc *sc;
+{
+	int error;
+
+	while ((sc->sc_flags & VNF_LOCKED) != 0) {
+		sc->sc_flags |= VNF_WANTED;
+		if ((error = tsleep(sc, PRIBIO | PCATCH, "vndlck", 0)) != 0)
+			return (error);
+	}
+	sc->sc_flags |= VNF_LOCKED;
+	return (0);
+}
+
+/*
+ * Unlock and wake up any waiters.
+ */
+static void
+vndunlock(sc)
+	struct vnd_softc *sc;
+{
+
+	sc->sc_flags &= ~VNF_LOCKED;
+	if ((sc->sc_flags & VNF_WANTED) != 0) {
+		sc->sc_flags &= ~VNF_WANTED;
+		wakeup(sc);
+	}
+}
