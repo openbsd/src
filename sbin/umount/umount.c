@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.15 1995/09/22 02:03:48 mycroft Exp $	*/
+/*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: umount.c,v 1.15 1995/09/22 02:03:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,11 +130,9 @@ main(argc, argv)
 	if ((nfshost != NULL) && (typelist == NULL))
 		maketypelist("nfs");
 		
-	if (all) {
-		if (setfsent() == 0)
-			err(1, "%s", _PATH_FSTAB);
+	if (all)
 		errs = umountall();
-	} else
+	else
 		for (errs = 0; *argv != NULL; ++argv)
 			if (umountfs(*argv) != 0)
 				errs = 1;
@@ -144,19 +142,25 @@ main(argc, argv)
 int
 umountall()
 {
-	struct statfs *mtab;
-	int rval = 0;
-	int nfsys;	/* number of mounted filesystems */
-	int i;
+	struct statfs *fs;
+	int n;
+	int rval;
 
-	if (nfsys = getmntinfo(&mtab, MNT_NOWAIT)) {
-	    for (i=nfsys - 1; i; i--) {
-		if (strcmp(mtab[i].f_mntonname, "/")) {
-		    if (umountfs(mtab[i].f_mntonname)) rval = 1;
-    	    	}
-	    }
+	n = getmntinfo(&fs, MNT_NOWAIT);
+	if (n == 0)
+		err(1, NULL);
+
+	rval = 0;
+	while (--n >= 0) {
+		/* Ignore the root. */
+		if (strncmp(fs[n].f_mntonname, "/", MNAMELEN) == 0)
+			continue;
+		if (!selected(fs[n].f_fstypename))
+			continue;
+		if (umountfs(fs[n].f_mntonname))
+			rval = 1;
 	}
-	return(rval);
+	return (rval);
 }
 
 int
