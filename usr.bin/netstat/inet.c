@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.23 1998/02/27 12:07:33 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.24 1998/03/18 02:43:04 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.23 1998/02/27 12:07:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.24 1998/03/18 02:43:04 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,6 +241,7 @@ tcp_stats(off, name)
 	p(tcps_predack, "\t%ld correct ACK header prediction%s\n");
 	p(tcps_preddat, "\t%ld correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%ld PCB cache miss%s\n");
+	p(tcps_badsyn, "\t%ld SYN packet%s received with same src/dst address/port\n");
 #undef p
 #undef p2
 #undef p3
