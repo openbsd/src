@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.1 1999/02/24 23:32:52 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.2 1999/02/25 17:43:19 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -198,14 +198,17 @@ are:
 .It Nm des
 This is available for both old and new esp.
 Notice that hardware crackers for DES can be (and have been) built for
-US$250,000. Use DES for encryption of critical information at your risk.
+US$250,000 (in 1998). Use DES for encryption of critical information
+at your own risk.
 We suggest using 3DES instead. DES support is kept for interoperability
-(with old implementations) purposes only.
+(with old implementations) purposes only.  See
+.Xr des_cipher 3 .
 .It Nm 3des 
-This is available for both old and new esp.  It is more considered to be
+This is available for both old and new esp.  It is considered
 more secure than straight DES, since it uses larger keys.
 .It Nm blf
-Blowfish encryption is available only in new esp.
+Blowfish encryption is available only in new esp. See
+.Xr blf_key 3 .
 .It Nm cast
 CAST encryption is available only in new esp.
 .It Nm skipjack
