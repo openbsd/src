@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.2 1997/09/21 05:18:07 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.3 1997/09/21 22:08:07 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -190,7 +190,7 @@ biosattach(parent, self, aux)
 		case 0xf9: p = "PC Convertible";break;
 		case 0xf8: p = "PS/2 386+";	break;
 	}
-	printf(": %s(%02x) BIOS, date %u%c%c/%c%c/%c%c\n",
+	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c\n",
 	       p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
