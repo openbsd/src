@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.4 2001/03/14 08:09:51 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.5 2001/04/16 03:18:18 deraadt Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -232,19 +232,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	u_int16_t v;
 	int r, i;
 
-	r = PCI_REVISION(pa->pa_class);
-	sc->sc_revision[1] = '\0';
-	if (r == 0x20) {
-		sc->sc_revision[0] = 'H';
-	} else if ((r >= 0x10) && (r <= 0x14)) {
-		sc->sc_revision[0] = 'A' + (r - 0x10);
-	} else {
-		sprintf(sc->sc_revision, "0x%02X", r);
-	}
-
-	printf(": VIA VT82C686A AC'97 Audio (rev %s)\n",
-		sc->sc_revision);
-
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
 			&ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
@@ -255,7 +242,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -266,7 +253,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pc;
 	sc->sc_pt = pt;
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s\n", intrstr);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 	    &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
