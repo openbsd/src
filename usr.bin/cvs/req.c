@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.3 2004/08/04 13:03:52 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.4 2004/08/04 13:55:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,6 +56,8 @@ extern int   cvs_readonly;
 
 
 static int  cvs_req_root       (int, char *);
+static int  cvs_req_validreq   (int, char *);
+static int  cvs_req_validresp  (int, char *);
 static int  cvs_req_directory  (int, char *);
 static int  cvs_req_argument   (int, char *);
 static int  cvs_req_globalopt  (int, char *);
@@ -67,8 +69,8 @@ struct cvs_reqhdlr {
 } cvs_req_swtab[CVS_REQ_MAX + 1] = {
 	{ NULL               },
 	{ cvs_req_root       },
-	{ NULL               },
-	{ NULL               },
+	{ cvs_req_validreq   },
+	{ cvs_req_validresp  },
 	{ cvs_req_directory  },
 	{ NULL               },
 	{ NULL               },
@@ -187,7 +189,43 @@ static int
 cvs_req_root(int reqid, char *line)
 {
 
+	return (0);
+}
 
+
+static int
+cvs_req_validreq(int reqid, char *line)
+{
+	char *vreq;
+
+	vreq = cvs_req_getvalid();
+	if (vreq == NULL)
+		return (-1);
+
+	cvs_sendresp(CVS_RESP_VALIDREQ, vreq);
+
+	return (0);
+}
+
+static int
+cvs_req_validresp(int reqid, char *line)
+{
+	char *sp, *ep;
+	struct cvs_resp *resp;
+
+	sp = line;
+	do {
+		ep = strchr(sp, ' ');
+		if (ep != NULL)
+			*(ep++) = '\0';
+
+		resp = cvs_resp_getbyname(sp);
+		if (resp != NULL)
+			;
+
+		if (ep != NULL)
+			sp = ep + 1;
+	} while (ep != NULL);
 
 	return (0);
 }
