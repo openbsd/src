@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 1999/02/06 01:52:23 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 1999/02/23 21:27:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.9 1999/02/06 01:52:23 millert Exp $";
+"$OpenBSD: client.c,v 1.10 1999/02/23 21:27:15 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -366,7 +366,7 @@ static int sendhardlink(opts, lp, rname, destdir)
 	       "sendhardlink: rname='%s' pathname='%s' src='%s' target='%s'\n",
 		 rname, lp->pathname, lp->src, lp->target);
 		 
-	if (*lp->target == CNULL)
+	if (lp->target == NULL)
 		(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
 			       opts, lp->pathname, rname);
 	else {
