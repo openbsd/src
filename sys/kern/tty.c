@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.18 1996/11/09 18:55:45 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.19 1996/11/11 04:28:16 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -263,7 +263,8 @@ ttyinput(c, tp)
 		if (ISSET(error, TTY_FE) && !c) {	/* Break. */
 			if (ISSET(iflag, IGNBRK))
 				goto endcase;
-			else if (ISSET(iflag, BRKINT) &&
+			ttyflush(tp, FREAD | FWRITE);
+			if (ISSET(iflag, BRKINT) &&
 			    ISSET(lflag, ISIG) &&
 			    (cc[VINTR] != _POSIX_VDISABLE))
 				c = cc[VINTR];
