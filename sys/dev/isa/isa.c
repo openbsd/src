@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.26 1997/12/25 13:28:45 downsj Exp $	*/
+/*	$OpenBSD: isa.c,v 1.27 1997/12/25 13:33:03 downsj Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -257,6 +257,6 @@ isa_drq_isfree(vsp, drq)
 	if (drq < 0 || drq > 7)
 		panic("isa_drq_isfree: drq %d out of range\n", drq);
 
-	return (!(sc->sc_drq << drq) & 1);
+	return (!((sc->sc_drq << drq) & 1));
 }
 #endif	/* DIAGNOSTIC */
