@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_input.c,v 1.5 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: llc_input.c,v 1.6 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: llc_input.c,v 1.3 1996/02/13 22:04:44 christos Exp $	*/
 
 /* 
@@ -56,7 +56,7 @@
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * This module implements LLC as specified by ISO 8802-2.

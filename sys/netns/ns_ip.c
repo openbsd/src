@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.19 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.20 2004/01/03 14:08:54 espie Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #include <netns/ns_var.h>
 #include <netns/idp.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 struct ifnet_en {
 	struct ifnet ifen_ifnet;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_subr.c,v 1.10 2003/12/21 15:30:21 miod Exp $	*/
+/*	$OpenBSD: pk_subr.c,v 1.11 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #include <netccitt/pk_var.h>
 #include <netccitt/pk_extern.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 int             pk_sendspace = 1024 * 2 + 8;
 int             pk_recvspace = 1024 * 2 + 8;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.13 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.14 2004/01/03 14:08:54 espie Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@ SOFTWARE.
 #include <netiso/iso_chksum.c>
 #endif
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * NAME:		in_getsufx()

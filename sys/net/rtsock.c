@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.33 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.34 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #include <net/route.h>
 #include <net/raw_cb.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 struct	sockaddr route_dst = { 2, PF_ROUTE, };
 struct	sockaddr route_src = { 2, PF_ROUTE, };

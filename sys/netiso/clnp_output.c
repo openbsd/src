@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_output.c,v 1.6 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: clnp_output.c,v 1.7 2004/01/03 14:08:54 espie Exp $	*/
 /*	$NetBSD: clnp_output.c,v 1.9 1996/04/13 01:34:32 cgd Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ SOFTWARE.
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 static struct clnp_fixed dt_template = {
 	ISO8473_CLNP,		/* network identifier */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_iso.c,v 1.8 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.9 2004/01/03 14:08:54 espie Exp $	*/
 /*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ SOFTWARE.
 #include <netiso/tuba_table.h>
 #endif
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * CALLED FROM:

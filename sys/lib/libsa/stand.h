@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.42 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: stand.h,v 1.43 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 #include "saioctl.h"
 #include "saerrno.h"
 

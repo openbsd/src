@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_output.c,v 1.6 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: llc_output.c,v 1.7 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: llc_output.c,v 1.3 1996/02/13 22:04:47 christos Exp $	*/
 
 /* 
@@ -56,7 +56,7 @@
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * llc_output() --- called by an upper layer (network layer) entity whenever

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.17 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.18 2004/01/03 14:08:54 espie Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #include <netns/spp_var.h>
 #include <netns/spp_debug.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * SP protocol implementation.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.8 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: exit.c,v 1.9 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #include "stand.h"
 

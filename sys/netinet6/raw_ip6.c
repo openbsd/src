@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.22 2003/12/21 14:57:19 markus Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.23 2004/01/03 14:08:54 espie Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -90,7 +90,7 @@
 #endif
 #include <netinet6/raw_ip6.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #include "faith.h"
 

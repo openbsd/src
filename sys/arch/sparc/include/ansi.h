@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.8 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.9 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: ansi.h,v 1.6 1996/11/15 22:38:59 jtc Exp $ */
 
 /*-
@@ -49,7 +49,11 @@
 #define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define _BSD_VA_LIST_	__builtin_va_list
+#else
 #define	_BSD_VA_LIST_	char *			/* va_list */
+#endif
 #define _BSD_CLOCKID_T_	int
 #define _BSD_TIMER_T_	int
 

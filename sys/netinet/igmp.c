@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.19 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.20 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <netinet/igmp_var.h>
 #include <dev/rndvar.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #define IP_MULTICASTOPTS	0
 

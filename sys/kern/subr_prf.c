@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.57 2003/12/21 15:30:21 miod Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.58 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
  * note that stdarg.h and the ansi style va_start macro is used for both
  * ansi and traditional c compilers.
  */
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.3 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.4 2004/01/03 14:08:53 espie Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #include "stand.h"
 

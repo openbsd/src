@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.5 2003/08/06 21:08:07 millert Exp $ */
+/*	$OpenBSD: ses.c,v 1.6 2004/01/03 14:08:54 espie Exp $ */
 /*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
@@ -49,7 +49,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 #ifdef	__NetBSD__
 #include <dev/scsipi/scsipi_all.h>

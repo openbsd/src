@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.22 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.23 2004/01/03 14:08:54 espie Exp $	*/
 
 /*-
  *
@@ -55,7 +55,7 @@
 #include <netipx/spx_var.h>
 #include <netipx/spx_debug.h>
 
-#include <machine/stdarg.h>
+#include <sys/stdarg.h>
 
 /*
  * SPX protocol implementation.

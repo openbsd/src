@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.16 2003/10/11 22:08:57 miod Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.17 2004/01/03 14:08:53 espie Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,11 @@
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
 struct __va_list_tag;
-#define _BSD_VA_LIST_   struct __va_list_tag * /* va_list */
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define _BSD_VA_LIST_	__builtin_va_list
+#else
+#define	_BSD_VA_LIST_	struct __va_list_tag *	/* va_list */
+#endif
 #define _BSD_CLOCKID_T_	int
 #define _BSD_TIMER_T_	int
 
