@@ -730,6 +730,7 @@
 ./usr/include/errno.h
 ./usr/include/eti.h
 ./usr/include/event.h
+./usr/include/f2c.h
 ./usr/include/fcntl.h
 ./usr/include/float.h
 ./usr/include/fnmatch.h
@@ -739,6 +740,7 @@
 ./usr/include/fts.h
 ./usr/include/ftw.h
 ./usr/include/g++
+./usr/include/g2c.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
 ./usr/include/grp.h
@@ -1509,6 +1511,10 @@
 ./usr/lib/libfl_p.a
 ./usr/lib/libform.a
 ./usr/lib/libform_p.a
+./usr/lib/libfrtbegin.a
+./usr/lib/libfrtbegin_p.a
+./usr/lib/libg2c.a
+./usr/lib/libg2c_p.a
 ./usr/lib/libgssapi.a
 ./usr/lib/libgssapi_p.a
 ./usr/lib/libhdb.a

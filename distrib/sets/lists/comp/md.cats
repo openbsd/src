@@ -300,7 +300,6 @@
 ./usr/include/g++/utility
 ./usr/include/g++/valarray
 ./usr/include/g++/vector
-./usr/include/g2c.h
 ./usr/include/ieeefp.h
 ./usr/include/unwind.h
 ./usr/lib/crtbegin.o
@@ -319,10 +318,6 @@
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin.a
-./usr/lib/libfrtbegin_p.a
-./usr/lib/libg2c.a
-./usr/lib/libg2c_p.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libiberty_pic.a
 ./usr/lib/libkadm5clnt_pic.a

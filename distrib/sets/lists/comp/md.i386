@@ -2,7 +2,6 @@
 ./usr/bin/gasp
 ./usr/bin/objcopy
 ./usr/bin/readelf
-./usr/include/f2c.h
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
@@ -166,7 +165,6 @@
 ./usr/include/g++/valarray
 ./usr/include/g++/vector
 ./usr/include/g++/vector.h
-./usr/include/g2c.h
 ./usr/include/i386
 ./usr/include/i386/ansi.h
 ./usr/include/i386/apmvar.h
@@ -255,11 +253,7 @@
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
 ./usr/lib/libform_pic.a
-./usr/lib/libfrtbegin.a
-./usr/lib/libfrtbegin_p.a
 ./usr/lib/libfrtbegin_pic.a
-./usr/lib/libg2c.a
-./usr/lib/libg2c_p.a
 ./usr/lib/libg2c_pic.a
 ./usr/lib/libgssapi_pic.a
 ./usr/lib/libi386.a
