@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.25 2001/05/08 17:30:41 aaron Exp $	*/
+/*	$OpenBSD: locore.s,v 1.26 2001/06/08 03:27:36 aaron Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -116,8 +116,8 @@ GLOBAL(macos_tt1)
 	.long	0
 GLOBAL(bletch)
 	.long	0
-GLOBAL(esym)
-	.long	0
+
+BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
