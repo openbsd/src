@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac.c,v 1.9 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: ac.c,v 1.10 2002/05/30 11:03:52 art Exp $	*/
 /*	$NetBSD: ac.c,v 1.9 1997/04/02 22:37:21 scottr Exp $	*/
 
 /*
@@ -359,6 +359,7 @@ acgo(arg)
 	struct ac_softc *sc = arg;
 	struct buf *bp = sc->sc_bp;
 	int stat;
+	int s;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
@@ -373,7 +374,9 @@ acgo(arg)
 	if (stat) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
-		(void) biodone(bp);
+		s = splbio();
+		biodone(bp);
+		splx(s);
 		scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
 	}
 }
@@ -410,7 +413,7 @@ acintr(arg, stat)
 		    stat);
 		break;
 	}
-	(void) biodone(sc->sc_bp);
+	biodone(sc->sc_bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
 }
 

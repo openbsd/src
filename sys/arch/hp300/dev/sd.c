@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.24 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.25 2002/05/30 11:03:52 art Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -798,7 +798,9 @@ sdstrategy(bp)
 bad:
 	bp->b_flags |= B_ERROR;
 done:
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.16 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: xd.c,v 1.17 2002/05/30 11:03:52 art Exp $	*/
 /*	$NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $	*/
 
 /*
@@ -1083,7 +1083,9 @@ bad:				/* tells upper layers we have an error */
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 /*
  * end of {b,c}devsw functions
