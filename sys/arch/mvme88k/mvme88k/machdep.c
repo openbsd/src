@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.72 2001/12/13 08:55:52 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.73 2001/12/14 01:33:50 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -93,6 +93,9 @@
 #include <machine/prom.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#ifdef M88100
+#include <machine/m88100.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -521,7 +524,7 @@ cpu_startup()
 		 */
 		sramva = SRAM_START;
 		uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 							     UVM_PROT_NONE,
 							     UVM_INH_NONE,
 							     UVM_ADV_NORMAL, 0));
@@ -1722,7 +1725,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 out_m188:
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
-		trap18x(T_DATAFLT, eframe);
+		m88100_trap(T_DATAFLT, eframe);
 		data_access_emulation((unsigned *)eframe);
 		eframe->dmt0 &= ~DMT_VALID;
 	}

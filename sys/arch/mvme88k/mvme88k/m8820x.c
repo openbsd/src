@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.2 2001/12/13 19:59:17 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.3 2001/12/14 01:33:50 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -75,10 +75,8 @@
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
 #define DEBUG_MSG db_printf
-#define STATIC
 #else
 #define DEBUG_MSG printf
-#define STATIC	static
 #endif /* DDB */
 
 /* On some versions of 88200, page size flushes don't work. I am using
@@ -135,7 +133,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_get_by_mode,
 	m8820x_cmmu_show_translation,
 	m8820x_cmmu_cache_state,
-	m8820x_show_cmmu_info;
+	m8820x_show_cmmu_info,
 #endif /* end if DDB */
 };
 
@@ -209,16 +207,16 @@ error("ack gag barf!");
  * May be used from "db_interface.c".
  */
 
-STATIC int      vme188_config;
+int      vme188_config;
 
 /* local prototypes */
-STATIC unsigned m8820x_cmmu_get __P((int mmu, int reg));
-STATIC void m8820x_cmmu_store __P((int, int, unsigned));
-STATIC void m8820x_cmmu_set __P((int, unsigned, int, int, int, int, vm_offset_t));
-STATIC void m8820x_cmmu_sync_cache __P((vm_offset_t, int));
-STATIC void m8820x_cmmu_sync_inval_cache __P((vm_offset_t, int));
-STATIC void m8820x_cmmu_inval_cache __P((vm_offset_t, int));
-STATIC int m8820x_cmmu_alive __P((int));
+unsigned m8820x_cmmu_get __P((int mmu, int reg));
+void m8820x_cmmu_store __P((int, int, unsigned));
+void m8820x_cmmu_set __P((int, unsigned, int, int, int, int, vm_offset_t));
+void m8820x_cmmu_sync_cache __P((vm_offset_t, int));
+void m8820x_cmmu_sync_inval_cache __P((vm_offset_t, int));
+void m8820x_cmmu_inval_cache __P((vm_offset_t, int));
+int m8820x_cmmu_alive __P((int));
 
 void
 m8820x_show_apr(value)
@@ -349,9 +347,9 @@ m8820x_setup_board_config()
 	volatile unsigned long *whoami;
 
 	master_cpu = 0;	/* temp to get things going */
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		vme188_config = 10; /* There is no WHOAMI reg on MVME187 - fake it... */
 		m8820x_cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
 		m8820x_cmmu[0].cmmu_cpu = 0;
@@ -368,7 +366,7 @@ m8820x_setup_board_config()
 		break;
 #endif /* MVME187 */
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		whoami = (volatile unsigned long *)MVME188_WHOAMI;
 		vme188_config = (*whoami & 0xf0) >> 4;
 		dprintf(DB_CMMU,("m8820x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
@@ -614,7 +612,7 @@ m8820x_setup_cmmu_config()
 }
 
 #ifdef MVME188
-static char *cmmu_strat_string[] = {
+char *cmmu_strat_string[] = {
 	"address split ",
 	"user/spv split",
 	"spv SRAM split",
@@ -633,13 +631,13 @@ m8820x_cmmu_dump_config()
 
 	DEBUG_MSG("Current CPU/CMMU configuration:\n\n");
 
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		DEBUG_MSG("VME1x7 split mode\n\n");
 #endif /* MVME187 */
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
@@ -665,7 +663,7 @@ m8820x_cmmu_dump_config()
 }
 
 /* To be implemented as a macro for speedup - XXX-em */
-STATIC void 
+void 
 m8820x_cmmu_store(mmu, reg, val)
 	int mmu, reg;
 	unsigned val;
@@ -673,14 +671,14 @@ m8820x_cmmu_store(mmu, reg, val)
 	*(volatile unsigned *)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs)) = val;
 }
 
-STATIC int 
+int 
 m8820x_cmmu_alive(mmu)
 	int mmu;
 {
 	return (m8820x_cmmu[mmu].cmmu_alive == CMMU_ALIVE);
 }
 
-STATIC unsigned 
+unsigned 
 m8820x_cmmu_get(mmu, reg)
 	int mmu, reg;
 {
@@ -691,7 +689,7 @@ m8820x_cmmu_get(mmu, reg)
  * This function is called by the MMU module and pokes values
  * into the CMMU's registers.
  */
-STATIC void 
+void 
 m8820x_cmmu_set(reg, val, flags, num, mode, access, addr)
 	int reg;
 	unsigned val;
@@ -753,7 +751,7 @@ m8820x_cmmu_get_by_mode(cpu, mode)
 }
 #endif
 
-static char *mmutypes[8] = {
+char *mmutypes[8] = {
 	"Unknown (0)",
 	"Unknown (1)",
 	"Unknown (2)",
@@ -917,7 +915,7 @@ m8820x_cmmu_init()
 		 * We enable it for instruction cmmus as well so that we can have
 		 * breakpoints, etc, and modify code.
 		 */
-		if (cputyp == CPU_188) {
+		if (brdtyp == BRD_188) {
 			tmp =
 			! CMMU_SCTR_PE |  /* not parity enable */
 			CMMU_SCTR_SE |	/* snoop enable */
@@ -982,7 +980,7 @@ m8820x_cmmu_shutdown_now()
 	 * Now set some state as we like...
 	 */
 	for (cmmu_num = 0; cmmu_num < MAX_CMMUS; cmmu_num++) {
-		if (cputyp == CPU_188) {
+		if (brdtyp == BRD_188) {
 			tmp =
 			! CMMU_SCTR_PE |   /* parity enable */
 			! CMMU_SCTR_SE |   /* snoop enable */
@@ -1346,7 +1344,7 @@ m8820x_cmmu_flush_cache(physaddr, size)
 	int size;
 {
 	int cpu = cpu_number();
-	m8820x__cmmu_flush_remote_cache(cpu, physaddr, size);
+	m8820x_cmmu_flush_remote_cache(cpu, physaddr, size);
 }
 
 /*
@@ -1459,7 +1457,7 @@ m8820x_cmmu_flush_data_cache(physaddr, size)
 /*
  * sync dcache (and icache too)
  */
-static void
+void
 m8820x_cmmu_sync_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
@@ -1514,7 +1512,7 @@ m8820x_cmmu_sync_cache(physaddr, size)
 	CMMU_UNLOCK;
 }
 
-static void 
+void 
 m8820x_cmmu_sync_inval_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
@@ -1569,7 +1567,7 @@ m8820x_cmmu_sync_inval_cache(physaddr, size)
 	splx(s);
 }
 
-static void
+void
 m8820x_cmmu_inval_cache(physaddr, size)
 	vm_offset_t physaddr;
 	int size;
