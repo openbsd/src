@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.122 2001/06/03 14:55:38 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.123 2001/06/04 21:59:42 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -2720,12 +2720,16 @@ auth_get_socket_name()
 /* removes the agent forwarding socket */
 
 void
-auth_sock_cleanup_proc(void *ignored)
+auth_sock_cleanup_proc(void *_pw)
 {
+	struct passwd *pw = _pw;
+
 	if (auth_sock_name) {
+		temporarily_use_uid(pw);
 		unlink(auth_sock_name);
 		rmdir(auth_sock_dir);
 		auth_sock_name = NULL;
+		restore_uid();
 	}
 }
 
@@ -2769,7 +2773,7 @@ auth_input_request_forwarding(struct passwd * pw)
 		 auth_sock_dir, (int) getpid());
 
 	/* delete agent socket on fatal() */
-	fatal_add_cleanup(auth_sock_cleanup_proc, NULL);
+	fatal_add_cleanup(auth_sock_cleanup_proc, pw);
 
 	/* Create the socket. */
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -2799,7 +2803,7 @@ auth_input_request_forwarding(struct passwd * pw)
 	    0, xstrdup("auth socket"), 1);
 	if (nc == NULL) {
 		error("auth_input_request_forwarding: channel_new failed");
-		auth_sock_cleanup_proc(NULL);
+		auth_sock_cleanup_proc(pw);
 		close(sock);
 		return 0;
 	}
