@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2004/05/07 15:31:13 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1151,7 +1151,7 @@ m88110_user_fault:
 
 	userret(p, frame, sticks);
 }
-#endif /* MVME197 */
+#endif /* M88110 */
 
 __dead void
 error_fatal(struct trapframe *frame)
@@ -1519,7 +1519,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		ktrsysret(p, code, error, rval[0]);
 #endif
 }
-#endif	/* MVME197 */
+#endif	/* M88110 */
 
 /*
  * Set up return-value registers as fork() libc stub expects,
