@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.45 2002/05/30 05:07:17 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.46 2002/06/03 00:59:08 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/if_atm.h>
 #include <net/if_fddi.h>
 #include <net/route.h>
 
@@ -180,17 +179,11 @@ nd6_setmtu0(ifp, ndi)
 	omaxmtu = ndi->maxmtu;
 
 	switch (ifp->if_type) {
-	case IFT_ARCNET:	/* XXX MTU handling needs more work */
-		ndi->maxmtu = MIN(60480, ifp->if_mtu);
-		break;
-	case IFT_ETHER:
-		ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
+	case IFT_ARCNET:
+		ndi->maxmtu = MIN(60480, ifp->if_mtu); /* RFC2497 */
 		break;
 	case IFT_FDDI:
 		ndi->maxmtu = MIN(FDDIMTU, ifp->if_mtu);
-		break;
-	case IFT_ATM:
-		ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
 		break;
 	default:
 		ndi->maxmtu = ifp->if_mtu;
