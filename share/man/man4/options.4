@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.23 1998/11/17 19:56:19 provos Exp $
+.\"	$OpenBSD: options.4,v 1.24 1998/11/17 23:10:13 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -39,9 +39,7 @@
 .Dt OPTIONS 4
 .Sh NAME
 .Nm option
-.Nd Miscellaneous kernel configuration options
-.Sh SYNOPSIS
-.Cd option ...
+.Nd miscellaneous kernel configuration options
 .Sh DESCRIPTION
 This manual page describes a number of miscellaneous kernel
 configuration options that may be specified in a kernel config
@@ -49,7 +47,9 @@ file. See
 .Xr config 8
 for information on how to configure and build kernels.
 .Em Note:
-Options are passed to the compile process as -D flags to the C compiler.
+options are passed to the compile process as
+.Fl D
+flags to the C compiler.
 .Ss Compatibility Options
 .Bl -ohang
 .It Cd option COMPAT_SVR4
@@ -57,7 +57,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .At V.4
 binaries built for the same architecture.  This currently includes
-the sparc, and i386.  Possibly the most widely-known operating system
+the sparc and i386.  Possibly the most widely-known operating system
 based on this binary architecture is Sun's Solaris 2.x.
 See
 .Xr compat_svr4 8 .
@@ -175,12 +175,19 @@ to be built in addition to
 .Pa bsd .
 .Pa bsd.gdb
 is useful for debugging kernel crash dumps with gdb.
-The command
-.Dl gdb -k
-invokes gdb in kernel debugger mode.
-See
-.Xr gdb 1
-for details. This also turns on
+Note that
+.Xr gdb Ns 's
+.Fl k
+flag 
+is obsolete and should not be used. Instead, the kernel can be debugged
+by starting
+.Xr gdb
+with the kernel name as an argument (no core file) and then use the
+.Xr gdb
+command
+.Dq target kcore COREFILE .
+.Pp
+This also turns on
 .Em option DEBUG .
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging. Since options are turned into
@@ -588,9 +595,8 @@ the remote end will not respond.
 Turns on NewReno fast recovery phase, which allows one lost segment
 to be recovered per round trip time. When more than
 one segment has been dropped per window, the transmission can continue
-without waiting for a retranmission timeout.  
-.Em TCP_NEWRENO
-can not be used together with
+without waiting for a retranmission timeout. This option cannot be used
+together with
 .Em TCP_SACK .
 .It Cd option TCP_SACK
 Turns on selective acknowledgements. Additional information about
@@ -598,17 +604,14 @@ segments already received can be transmitted back to the sender,
 thus indicating segments that have been lost and allowing for
 a swifter recovery. Both communication endpoints need to support
 .Em SACK .
-The fallback behaviour is NewReno.
-.Em TCP_SACK
-can not be used together with
+The fallback behaviour is NewReno. This option cannot be used
+together with
 .Em TCP_NEWRENO .
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
 outstanding data during the fast recovery phase by using 
 .Em SACK 
-information. 
-.Em TCP_FACK 
-can be used additionally to
+information. This option can be used together with
 .Em TCP_SACK .
 .It Cd option PFIL_HOOKS
 This option turns on the packet filter interface hooks.  See
@@ -760,21 +763,18 @@ and/or
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr apm 8 ,
-.Xr apmd 8 ,
-.Xr config 8 ,
-.Xr init 8 ,
+.Xr gdb 1 ,
+.Xr ktrace 1 ,
+.Xr quota 1 ,
+.Xr X 1 ,
 .Xr gettimeofday 2 ,
-.Xr sysctl 8 ,
-.Xr sysctl 3 ,
-.Xr xntpd 8 ,
-.Xr ntp_adjtime 2 ,
-.Xr ntp_gettime 2 ,
 .Xr i386_iopl 2 ,
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
 .Xr msgsnd 2 ,
+.Xr ntp_adjtime 2 ,
+.Xr ntp_gettime 2 ,
 .Xr semctl 2 ,
 .Xr semget 2 ,
 .Xr semop 2 ,
@@ -782,32 +782,35 @@ and/or
 .Xr shmctl 2 ,
 .Xr shmdt 2 ,
 .Xr shmget 2 ,
+.Xr sysctl 3 ,
 .Xr ddb 4 ,
 .Xr lkm 4 ,
 .Xr inet 4 ,
 .Xr ipsec 4 ,
 .Xr ns 4 ,
 .Xr iso 4 ,
-.Xr mrouted 8 ,
-.Xr mount_mfs 8 ,
-.Xr mount_nfs 8 ,
+.Xr xf86 4 ,
+.Xr apm 8 ,
+.Xr apmd 8 ,
+.Xr config 8 ,
+.Xr edquota 8 ,
+.Xr init 8 ,
 .Xr mount_cd9660 8 ,
-.Xr mount_msdos 8 ,
 .Xr mount_fdesc 8 ,
 .Xr mount_kernfs 8 ,
+.Xr mount_mfs 8 ,
+.Xr mount_msdos 8 ,
+.Xr mount_nfs 8 ,
 .Xr mount_null 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
 .Xr mount_umap 8 ,
 .Xr mount_union 8 ,
-.Xr edquota 8 ,
+.Xr mrouted 8 ,
 .Xr quotaon 8 ,
-.Xr quota 1 ,
 .Xr rpc.rquotad 8 ,
-.Xr ktrace 1 ,
-.Xr X 1 ,
-.Xr xf86 4 ,
-.Xr gdb 1
+.Xr sysctl 8 ,
+.Xr xntpd 8
 .Sh HISTORY
 The
 .Nm
