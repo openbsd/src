@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.17 2001/06/26 22:24:14 provos Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.18 2001/06/26 23:24:06 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -58,12 +58,14 @@ int	 pfctl_show_rules(int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t);
 int	 pfctl_show_status(int);
-int	 pfctl_rules(int, char *);
-int	 pfctl_nat(int, char *);
+int	 pfctl_rules(int, char *, int, int);
+int	 pfctl_nat(int, char *, int, int);
 int	 pfctl_log(int, char *);
 
-int	 dflag;
-int	 eflag;
+int	 dflag = 0;
+int	 eflag = 0;
+int	 vflag = 0;
+int	 Nflag = 0;
 char	*clearopt;
 char	*logopt;
 char	*natopt;
@@ -269,7 +271,7 @@ pfctl_show_status(int dev)
 }
 
 int
-pfctl_rules(int dev, char *filename)
+pfctl_rules(int dev, char *filename, int nflag, int vflag)
 {
 	struct pfioc_rule pr;
 	char *buf, *s;
@@ -279,10 +281,12 @@ pfctl_rules(int dev, char *filename)
 	buf = load_file(filename, &len);
 	if (buf == NULL)
 		return (1);
-	if (ioctl(dev, DIOCBEGINRULES, &pr.ticket)) {
-		errx(1, "DIOCBEGINRULES");
-		free(buf);
-		return (1);
+	if (!nflag) {
+		if (ioctl(dev, DIOCBEGINRULES, &pr.ticket)) {
+			errx(1, "DIOCBEGINRULES");
+			free(buf);
+			return (1);
+		}
 	}
 	n = 0;
 	nr = 0;
@@ -292,25 +296,31 @@ pfctl_rules(int dev, char *filename)
 		nr++;
 		if (*line && (*line != '#'))
 			if (parse_rule(nr, line, &pr.rule)) {
-				if (ioctl(dev, DIOCADDRULE, &pr)) {
-					errx(1, "DIOCADDRULE");
-					free(buf);
-					return (1);
+				if (!nflag) {
+					if (ioctl(dev, DIOCADDRULE, &pr)) {
+						errx(1, "DIOCADDRULE");
+						free(buf);
+						return (1);
+					}
 				}
+				if (vflag)
+					print_rule(&pr.rule);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket)) {
-		errx(1, "DIOCCOMMITRULES");
-		return (1);
+	if (!nflag) {
+		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket)) {
+			errx(1, "DIOCCOMMITRULES");
+			return (1);
+		}
+		printf("%u rules loaded\n", n);
 	}
-	printf("%u rules loaded\n", n);
 	return (0);
 }
 
 int
-pfctl_nat(int dev, char *filename)
+pfctl_nat(int dev, char *filename, int nflag, int vflag)
 {
 	struct pfioc_nat pn;
 	struct pfioc_rdr pr;
@@ -318,10 +328,12 @@ pfctl_nat(int dev, char *filename)
 	size_t len;
 	unsigned n, nr;
 
-	if (ioctl(dev, DIOCBEGINNATS, &pn.ticket)) {
-		errx(1, "DIOCBEGINNATS");
-		return (1);
-	}
+	if (!nflag) 
+		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket)) {
+			errx(1, "DIOCBEGINNATS");
+			return (1);
+		}
+
 	buf = load_file(filename, &len);
 	if (buf == NULL)
 		return (1);
@@ -333,24 +345,29 @@ pfctl_nat(int dev, char *filename)
 		nr++;
 		if (*line && (*line == 'n'))
 			if (parse_nat(nr, line, &pn.nat)) {
-				if (ioctl(dev, DIOCADDNAT, &pn)) {
-					errx(1, "DIOCADDNAT");
-					free(buf);
-					return (1);
-				}
+				if (!nflag)
+					if (ioctl(dev, DIOCADDNAT, &pn)) {
+						errx(1, "DIOCADDNAT");
+						free(buf);
+						return (1);
+					}
+				if (vflag)
+					print_nat(&pn.nat);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket)) {
-		errx(1, "DIOCCOMMITNATS");
-		return (1);
-	}
-	printf("%u nat entries loaded\n", n);
+	if (!nflag) {
+		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket)) {
+			errx(1, "DIOCCOMMITNATS");
+			return (1);
+		}
+		printf("%u nat entries loaded\n", n);
 
-	if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket)) {
-		errx(1, "DIOCBEGINRDRS");
-		return 1;
+		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket)) {
+			errx(1, "DIOCBEGINRDRS");
+			return 1;
+		}
 	}
 	buf = load_file(filename, &len);
 	if (buf == NULL)
@@ -363,20 +380,25 @@ pfctl_nat(int dev, char *filename)
 		nr++;
 		if (*line && (*line == 'r'))
 			if (parse_rdr(nr, line, &pr.rdr)) {
-				if (ioctl(dev, DIOCADDRDR, &pr)) {
-					errx(1, "DIOCADDRDR");
-					free(buf);
-					return (1);
-				}
+				if (!nflag)
+					if (ioctl(dev, DIOCADDRDR, &pr)) {
+						errx(1, "DIOCADDRDR");
+						free(buf);
+						return (1);
+					}
+				if (vflag)
+					print_rdr(&pr.rdr);
 				n++;
 			}
 	} while (s < (buf + len));
 	free(buf);
-	if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket)) {
-		errx(1, "DIOCCOMMITRDRS");
-		return (1);
+	if (!nflag) {
+		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket)) {
+			errx(1, "DIOCCOMMITRDRS");
+			return (1);
+		}
+		printf("%u rdr entries loaded\n", n);
 	}
-	printf("%u rdr entries loaded\n", n);
 	return (0);
 }
 
@@ -406,7 +428,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "c:del:n:r:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:del:Nn:r:s:v")) != -1) {
 		switch (ch) {
 		case 'c':
 			clearopt = optarg;
@@ -420,6 +442,9 @@ main(int argc, char *argv[])
 		case 'l':
 			logopt = optarg;
 			break;
+		case 'N':
+			Nflag++;
+			break;
 		case 'n':
 			natopt = optarg;
 			break;
@@ -428,6 +453,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			showopt = optarg;
+			break;
+		case 'v':
+			vflag++;
 			break;
 		default:
 			usage();
@@ -462,11 +490,11 @@ main(int argc, char *argv[])
 	}
 
 	if (rulesopt != NULL)
-		if (pfctl_rules(dev, rulesopt))
+		if (pfctl_rules(dev, rulesopt, Nflag, vflag))
 			error = 1;
 
 	if (natopt != NULL)
-		if (pfctl_nat(dev, natopt))
+		if (pfctl_nat(dev, natopt, Nflag, vflag))
 			error = 1;
 
 	if (showopt != NULL) {

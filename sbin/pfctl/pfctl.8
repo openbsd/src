@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.11 2001/06/26 17:52:40 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.12 2001/06/26 23:24:05 kjell Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -40,8 +40,10 @@
 .Op Fl c Ar set
 .Op Fl l Ar interface
 .Op Fl n Ar file
+.Op Fl N
 .Op Fl r Ar file
 .Op Fl s Ar set
+.Op Fl v
 .Sh DESCRIPTION
 The
 .Nm
@@ -98,6 +100,8 @@ Enable collection of packet and byte count statistics for interface named
 These statistics can be viewed with the
 .Fl s Ar status
 option.
+.It Fl N
+Do not actually load rules
 .It Fl n Ar file
 Load a NAT rules file
 .It Fl r Ar file
@@ -116,6 +120,8 @@ Show the contents of the state table
 .It Ar status
 Show filter statistics
 .El
+.It Fl v
+Show rules as they are parsed
 .El
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact
