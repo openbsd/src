@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.4 2001/02/16 19:08:42 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.5 2001/03/20 08:32:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -98,6 +98,22 @@ const struct wsdisplay_accessops sti_accessops = {
 	sti_load_font
 };
 
+struct wsscreen_descr sti_default_screen = {
+	"default", 0, 0,
+	&sti_emulops,
+	0, 0,
+	WSSCREEN_REVERSE | WSSCREEN_UNDERLINE
+};
+
+const struct wsscreen_descr *sti_default_scrlist[] = {
+	&sti_default_screen
+};
+
+struct wsscreen_list sti_default_screenlist = {
+	sizeof(sti_default_scrlist) / sizeof(sti_default_scrlist[0]),
+	sti_default_scrlist
+};
+
 enum sti_bmove_funcs {
 	bmf_clear, bmf_copy, bmf_invert, bmf_underline
 };
@@ -113,7 +129,6 @@ sti_attach_common(sc)
 {
 	struct sti_inqconfout cfg;
 	bus_space_handle_t fbh;
-	struct wsscreen_descr **sl;
 	struct wsemuldisplaydev_attach_args waa;
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
@@ -329,26 +344,14 @@ sti_attach_common(sc)
 	 *	calculate dimentions.
 	 */
 
-	MALLOC(sc->sc_screens, struct wsscreen_descr *,
-	    1*sizeof(*sc->sc_screens), M_DEVBUF, M_NOWAIT);
-	MALLOC(sl, struct wsscreen_descr **,
-	    1*sizeof(sc->sc_screens), M_DEVBUF, M_NOWAIT);
-
-	sl[0] = &sc->sc_screens[0];
-	sc->sc_screens[0].name = "default";
-	sc->sc_screens[0].ncols = cfg.width / ff->width;
-	sc->sc_screens[0].nrows = cfg.height / ff->height;
-	sc->sc_screens[0].textops = &sti_emulops;
-	sc->sc_screens[0].fontwidth = ff->width;
-	sc->sc_screens[0].fontheight = ff->height;
-	sc->sc_screens[0].capabilities = WSSCREEN_REVERSE | WSSCREEN_UNDERLINE;
-
-	sc->sti_screenlist.nscreens = 1;
-	sc->sti_screenlist.screens = (const struct wsscreen_descr **)sl;
+	sti_default_screen.ncols = cfg.width / ff->width;
+	sti_default_screen.nrows = cfg.height / ff->height;
+	sti_default_screen.fontwidth = ff->width;
+	sti_default_screen.fontheight = ff->height;
 
 	/* attach WSDISPLAY */
 	waa.console = sc->sc_dev.dv_unit;
-	waa.scrdata = &sc->sti_screenlist;
+	waa.scrdata = &sti_default_screenlist;
 	waa.accessops = &sti_accessops;
 	waa.accesscookie = sc;
 
