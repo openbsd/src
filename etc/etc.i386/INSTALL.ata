@@ -124,9 +124,9 @@ ATAPI or ATA Packet Interface
 !  Block mode is the name given to the use of the ATA Read
    Multiple and Write Multiple commands.  These commands generate
    a single interrupt to the host system for each block of
-   sectors transfered.  The traditional Read Sectors and Write
+   sectors transferred.  The traditional Read Sectors and Write
    Sectors commands generate an interrupt to the host for each
-   sector transfered.
+   sector transferred.
 
 CAM (Common Access Method) Committee
 
@@ -684,14 +684,14 @@ Basic Questions
 
    * Read Sectors / Write Sectors -- These commands are the old
    traditional data transfer commands.  These commands generate
-   one interrupt to the host for each sector transfered.  These
+   one interrupt to the host for each sector transferred.  These
    are PIO data in and PIO data out commands which use the host
    processor to transfer the data.
 
    * Read Multiple / Write Multiple -- These commands where
    defined in ATA-1 but were not used very much until recently.
    These commands generate one interrupt to the host for each
-   block of sectors transfered.  The number of sector per block
+   block of sectors transferred.  The number of sector per block
    is generally 4, 8 or 16.  However, when 1 sector per block is
    used, these commands are the same as the Read/Write Sectors
    commands.  These are PIO data in and PIO data out commands
