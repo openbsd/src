@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.56 2002/12/30 17:57:58 stevesk Exp $ */
+/* $OpenBSD: netcat.c,v 1.57 2002/12/30 18:00:18 stevesk Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -276,11 +276,11 @@ main(int argc, char *argv[])
 				rv = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
 				    (struct sockaddr *)&z, &len);
 				if (rv < 0)
-					errx(1, "%s", strerror(errno));
+					err(1, "recvfrom");
 
 				rv = connect(s, (struct sockaddr *)&z, len);
 				if (rv < 0)
-					errx(1, "%s", strerror(errno));
+					err(1, "connect");
 
 				connfd = s;
 			} else {
@@ -519,7 +519,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 
 	if (!uflag && s != -1) {
 		if (listen(s, 1) < 0)
-			errx(1, "%s", strerror(errno));
+			err(1, "listen");
 	}
 
 	freeaddrinfo(res);
