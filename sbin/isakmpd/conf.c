@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.20 2000/10/13 12:19:57 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.39 2000/10/13 12:20:35 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 2000/10/13 13:22:01 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.40 2000/10/13 13:04:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -51,6 +51,7 @@
 #include "app.h"
 #include "conf.h"
 #include "log.h"
+#include "util.h"
 
 struct conf_trans {
   TAILQ_ENTRY (conf_trans) link;
@@ -500,9 +501,11 @@ conf_reinit (void)
 {
   struct conf_binding *cb = 0;
   int fd, i, trans;
-  struct stat st;
   off_t sz;
   char *new_conf_addr = 0;
+
+  if (check_file_secrecy (conf_path, &sz))
+    return;
 
   fd = open (conf_path, O_RDONLY);
   if (fd == -1)
@@ -510,26 +513,7 @@ conf_reinit (void)
       log_error ("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
       return;
     }
-  if (fstat (fd, &st) == -1)
-    {
-      log_error ("conf_reinit: fstat (%d, &st) failed", fd);
-      goto fail;
-    }
-  if (st.st_uid != geteuid () && st.st_uid != getuid ())
-    {
-      log_print ("conf_reinit: not loading %s - file owner is not process "
-		 "user", conf_path);
-      close (fd);
-      return;
-    }
-  if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
-    {
-      log_print ("conf_reinit: not loading %s - too open permissions",
-		 conf_path);
-      close (fd);
-      return;
-    }
-  sz = st.st_size;
+
   new_conf_addr = malloc (sz);
   if (!new_conf_addr)
     {

@@ -1,8 +1,9 @@
-/*	$OpenBSD: util.c,v 1.7 2000/10/07 06:59:39 niklas Exp $	*/
-/*	$EOM: util.c,v 1.16 2000/10/04 16:36:56 itojun Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2000/10/13 13:22:02 niklas Exp $	*/
+/*	$EOM: util.c,v 1.17 2000/10/13 13:04:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,8 +36,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "sysdep.h"
 
@@ -160,3 +163,38 @@ hex2raw (char *s, u_int8_t *buf, size_t sz)
     }
   return 0;
 }
+
+/*
+ * Perform sanity check on files containing secret information.
+ * Returns -1 on failure, 0 otherwise.
+ * Also, if *file_size != NULL, store file size here.
+ */
+int
+check_file_secrecy (char *name, off_t *file_size)
+{
+  struct stat st;
+  
+  if (lstat (name, &st) == -1)
+    {
+      log_error ("check_file_secrecy: lstat (\"%s\") failed", name);
+      return -1;
+    }
+  if (st.st_uid != geteuid () && st.st_uid != getuid ())
+    {
+      log_print ("check_file_secrecy: "
+		 "not loading %s - file owner is not process user", name);
+      return -1;
+    }
+  if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
+    {
+      log_print ("conf_file_secrecy: not loading %s - too open permissions",
+		 name);
+      return -1;
+    }
+  
+  if (file_size)
+    *file_size = st.st_size;
+
+  return 0;
+}
+

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2000/04/07 22:21:55 niklas Exp $
-#	$EOM: Makefile,v 1.11 2000/04/07 19:20:24 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/10/13 13:22:01 niklas Exp $
+#	$EOM: Makefile,v 1.12 2000/10/13 13:04:17 ho Exp $
 
 # Test some math
 
 PROG=		b2ntest
-SRCS=		math_2n.c b2ntest.c util.c sysdep.c
+SRCS=		b2ntest.c log.c math_2n.c sysdep.c util.c
 NOMAN=
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
