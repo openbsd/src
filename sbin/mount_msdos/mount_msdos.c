@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.6 1996/11/24 23:46:46 millert Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.7 1996/12/09 13:40:55 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.6 1996/11/24 23:46:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.7 1996/12/09 13:40:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.6 1996/11/24 23:46:46 millert
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "mntopts.h"
 
@@ -70,6 +71,7 @@ main(argc, argv)
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
+	char *errcause;
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -143,8 +145,24 @@ main(argc, argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0)
-		err(1, "mount");
+	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0) {
+		switch (errno) {
+		case EMFILE:
+			errcause = "mount table full";
+			break;
+		case EINVAL:
+			if (mntflags & MNT_UPDATE)
+				errcause =
+			    "specified device does not match mounted device";
+			else 
+				errcause = "incorrect super block";
+			break;
+		default:
+			errcause = strerror(errno);
+			break;
+		}
+		errx(1, "%s on %s: %s", args.fspec, dir, errcause);
+	}
 
 	exit (0);
 }
