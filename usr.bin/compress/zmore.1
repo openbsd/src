@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zmore.1,v 1.2 2003/06/23 20:43:33 jmc Exp $
+.\"	$OpenBSD: zmore.1,v 1.3 2003/06/23 21:00:48 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -45,7 +45,8 @@ Any
 .Ar flags
 that are specified are passed to the user's preferred
 .Ev PAGER
-.No ( Ns Pa /usr/bin/more
+(which is
+.Pa /usr/bin/more
 by default).
 .Pp
 When multiple files are specified,
@@ -62,10 +63,10 @@ is the file that was just displayed and
 is the next file to be displayed.
 The following keys are recognized at the prompt:
 .Bl -tag -width "e or q" -offset indent
-.It e or q
+.It Ic e No or Ic q
 quit
 .Nm zmore .
-.It s
+.It Ic s
 skip the next file (or exit if the next file is the last).
 .El
 .Pp
