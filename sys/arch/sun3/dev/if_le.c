@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 1995/06/27 14:34:32 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22.2.1 1995/10/27 18:43:36 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -51,8 +51,17 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-/* XXX - Yes, we DO have to deal with this bug. */
+/*
+ * XXX - Be warned: Most Sun3/50 and many Sun3/60 machines have
+ * the LANCE Rev. C bug, which we MUST avoid or suffer likely
+ * NFS file corruption and worse!  That said, if you are SURE
+ * your LANCE is OK, you can remove this work-around using:
+ *  	options LANCE_REVC_BUG=0
+ * in your kernel config file.
+ */
+#ifndef	LANCE_REVC_BUG
 #define	LANCE_REVC_BUG 1
+#endif
 
 /* #define	LEDEBUG	1 */
 
@@ -168,14 +177,16 @@ le_attach(parent, self, aux)
 	ifp->if_watchdog = lewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-#ifndef	LANCE_REVC_BUG
-	/* XXX - Must be a better way... */
+
+#if LANCE_REVC_BUG == 0
+	/* The work-around precludes multicast... */
 	ifp->if_flags |= IFF_MULTICAST;
 #endif
 
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
@@ -631,7 +642,6 @@ lerint(sc)
 #endif
 			leread(sc, sc->sc_rbuf + (BUFSIZE * rmd),
 			    (int)cdm->mcnt);
-			sc->sc_if.if_ipackets++;
 		}
 
 		cdm->bcnt = -BUFSIZE;
@@ -661,42 +671,23 @@ leread(sc, buf, len)
 	struct mbuf *m;
 	struct ether_header *eh;
 
-	len -= 4;
-	if (len <= 0)
+	ifp = &sc->sc_if;
+
+	if ((len < ETHERMIN) || (len > ETHER_MAX_LEN)) {
+		log(LOG_ERR, "%s: invalid packet size %d; dropping\n",
+		    sc->sc_dev.dv_xname, len);	
+		ifp->if_ierrors++;
 		return;
-
-#ifdef	LANCE_REVC_BUG	/* XXX - Must be a better way... */
-	/*
-	 * Check for unreported packet errors.  Rev C of the LANCE chip
-	 * has a bug which can cause "random" bytes to be prepended to
-	 * the start of the packet.  The work-around is to make sure that
-	 * the Ethernet destination address in the packet matches our
-	 * address (or the broadcast address).
-	 */
-	{
-		register short *pp, *ea;
-
-		pp = (short *) buf;
-		ea = (short *) &sc->sc_enaddr;
-		if ((pp[0] == ea[0]) && (pp[1] == ea[1]) && (pp[2] == ea[2]))
-			goto ok;
-		if ((pp[0] == -1) && (pp[1] == -1) && (pp[2] == -1))
-			goto ok;
-		/* XXX - Multicast packets? */
-
-		sc->sc_if.if_ierrors++;
-		log(LOG_ERR, "%s: LANCE Rev C Extra Byte(s) bug; Packet punted\n",
-			   sc->sc_dev.dv_xname);
-		return;
-	ok:
 	}
-#endif	/* LANCE_REVC_BUG */
 
 	/* Pull packet off interface. */
-	ifp = &sc->sc_if;
 	m = leget(buf, len, ifp);
-	if (m == 0)
+	if (m == 0) {
+		ifp->if_ierrors++;
 		return;
+	}
+
+	ifp->if_ipackets++;
 
 	/* We assume that the header fit entirely in one mbuf. */
 	eh = mtod(m, struct ether_header *);
@@ -707,8 +698,29 @@ leread(sc, buf, len)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf) {
+		/* Note that BPF may see garbage! (if LANCE_REVC_BUG) */
 		bpf_mtap(ifp->if_bpf, m);
+	}
+#endif	/* NBPFILTER */
 
+#if LANCE_REVC_BUG
+	/*
+	 * Check for unreported packet errors.  Rev C of the LANCE chip
+	 * has a bug which can cause "random" bytes to be prepended to
+	 * the start of the packet.  The work-around is to make sure that
+	 * the Ethernet destination address in the packet matches our
+	 * address (or the broadcast address).  Must ALWAYS check!
+	 */
+	if (bcmp(eh->ether_dhost, sc->sc_enaddr, 6) &&
+	    bcmp(eh->ether_dhost, etherbroadcastaddr, 6))
+	{
+		/* Not for us. */
+		m_freem(m);
+		return;
+	}
+#else	/* LANCE_REVC_BUG */
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
@@ -716,19 +728,17 @@ leread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+		    bcmp(eh->ether_dhost, sc->sc_enaddr, 6) != 0)
+		{
 			m_freem(m);
 			return;
 		}
 	}
-#endif
+#endif	/* NBPFILTER */
+#endif	/* LANCE_REVC_BUG */
 
-	/* We assume that the header fit entirely in one mbuf. */
-	m->m_pkthdr.len -= sizeof(*eh);
-	m->m_len -= sizeof(*eh);
-	m->m_data += sizeof(*eh);
-
+	/* Pass the packet up, with the ether header sort-of removed. */
+	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
 }
 
