@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.13 2003/05/10 21:40:54 jmc Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.14 2003/07/21 12:43:42 jmc Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -46,17 +46,12 @@ Most programs should work, but not ones that use or depend on:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It kernel internal data structures
-.br
 .It the
 .Pa /proc
 filesystem
-.br
 .It the ticotsord loopback rpc mechanism (NIS uses this)
-.br
 .It sound and video interfaces
-.br
 .It threads (ttsession uses threads)
-.br
 .It the streams administrative driver
 .El
 .Pp
@@ -97,50 +92,35 @@ The simplest way to set up the system for SVR4 binaries is:
 .Bl -tag -width 123 -compact
 .It 1.
 Make the necessary directories:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It (me@openbsd) mkdir -p /emul/svr4/{dev,etc}
-.br
-.It (me@openbsd) mkdir -p /emul/svr4/usr/{bin,lib}
-.br
-.It (me@openbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
-.El
+.Bd -literal -offset indent
+(me@openbsd) mkdir -p /emul/svr4/{dev,etc}
+(me@openbsd) mkdir -p /emul/svr4/usr/{bin,lib}
+(me@openbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
+.Ed
 .Pp
 .It 2.
 Copy files from an SVR4 system:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It (me@svr4) cd /usr/lib
-.br
-.It (me@svr4) tar -cf -\ . | \e
-.in +5
-.It rsh openbsd 'cd /emul/svr4/usr/lib; tar -xpf -'
-.in -5
-.El
+.Bd -literal -offset indent
+(me@svr4) cd /usr/lib
+(me@svr4) tar -cf -\ . | \e
+     rsh openbsd 'cd /emul/svr4/usr/lib; tar -xpf -'
+.Ed
 .Pp
 If OpenWindows is going to be run:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It (me@svr4) cd /usr/openwin/lib
-.br
-.It (me@svr4) tar -cf -\ . | \e
-.in +5
-.It rsh openbsd 'cd /emul/svr4/usr/openwin/lib; tar -xpf -'
-.in -5
-.El
+.Bd -literal -offset indent
+(me@svr4) cd /usr/openwin/lib
+(me@svr4) tar -cf -\ . | \e
+     rsh openbsd 'cd /emul/svr4/usr/openwin/lib; tar -xpf -'
+.Ed
 .Pp
 .It 3.
 Set up the configuration files and devices:
-.Pp
-.Bl -tag -width 123 -compact -offset indent
-.It (me@openbsd) cd /usr/src/etc/etc.svr4
-.br
-.It (me@openbsd) cp netconfig nsswitch.conf /emul/svr4/etc
-.br
-.It (me@openbsd) cp SVR4_MAKEDEV /emul/svr4/dev
-.br
-.It (me@openbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
-.El
+.Bd -literal -offset indent
+(me@openbsd) cd /usr/src/etc/etc.svr4
+(me@openbsd) cp netconfig nsswitch.conf /emul/svr4/etc
+(me@openbsd) cp SVR4_MAKEDEV /emul/svr4/dev
+(me@openbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
+.Ed
 .El
 .Pp
 An alternative method is to mount a whole SVR4 partition in
