@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.3 2001/03/09 03:24:09 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.4 2001/04/24 05:04:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -173,9 +173,6 @@ ppp_to_bpf(bfd, pppfd, myea, rmea, id)
 	if (r <= 0)
 		return (-1);
 	r -= 2;
-
-	iov[0].iov_len = 2;
-	iov[1].iov_len = r;
 
 	ph.vertype = PPPOE_VERTYPE(1, 1);
 	ph.code = PPPOE_CODE_SESSION;
