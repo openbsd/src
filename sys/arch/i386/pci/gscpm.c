@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.1 2004/09/15 20:28:53 grange Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.2 2004/09/26 18:37:54 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -57,8 +57,8 @@ struct timecounter gscpm_timecounter = {
 	gscpm_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	0xffffff,		/* counter_mask */
-	14318180 / 4,		/* frequency */
-	"Geode SC1100",		/* name */
+	3579545,		/* frequency */
+	"GSCPM",		/* name */
 	1000			/* quality */
 };
 #endif	/* __HAVE_TIMECOUNTER */

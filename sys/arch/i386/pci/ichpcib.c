@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.4 2004/09/25 13:58:44 grange Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.5 2004/09/26 18:37:54 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -61,8 +61,8 @@ struct timecounter ichpcib_timecounter = {
 	ichpcib_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
 	0xffffff,		/* counter_mask */
-	14318180 / 4,		/* frequency */
-	"ICH",			/* name */
+	3579545,		/* frequency */
+	"ICHPM",		/* name */
 	1000			/* quality */
 };
 #endif	/* __HAVE_TIMECOUNTER */
