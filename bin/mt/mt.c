@@ -1,4 +1,5 @@
-/*	$NetBSD: mt.c,v 1.11 1996/03/06 06:34:20 scottr Exp $	*/
+/*	$OpenBSD: mt.c,v 1.3 1996/04/17 17:01:46 dm Exp $	*/
+/*	$NetBSD: mt.c,v 1.12 1996/03/28 07:10:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.11 1996/03/06 06:34:20 scottr Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.12 1996/03/28 07:10:05 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,11 +55,13 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.11 1996/03/06 06:34:20 scottr Exp $";
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
-#include <fcntl.h>
-#include <err.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <sys/stat.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -101,7 +104,7 @@ main(argc, argv)
 	register struct commands *comp;
 	struct mtget mt_status;
 	struct mtop mt_com;
-	int ch, len, mtfd;
+	int ch, len, mtfd, flags;
 	char *p, *tape;
 
 	uid = getuid();
@@ -143,8 +146,10 @@ main(argc, argv)
 		if (strncmp(p, comp->c_name, len) == 0)
 			break;
 	}
-	if ((mtfd = host ? rmtopen(tape, 2) :
-	    open(tape, O_WRONLY|O_CREAT, 0666)) < 0)
+
+	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
+	if ((mtfd = host ? rmtopen(tape, flags) : open(tape, flags,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0)
 		err(2, "%s", tape);
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
@@ -159,9 +164,9 @@ main(argc, argv)
 		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0)
 			err(2, "%s: %s", tape, comp->c_name);
 	} else {
-		if (host) {
+		if (host)
 			status(rmtstatus());
-		} else {
+		else {
 			if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
 				err(2, "ioctl MTIOCGET");
 			status(&mt_status);
