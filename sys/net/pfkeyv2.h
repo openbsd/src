@@ -286,8 +286,8 @@ struct sadb_cred {
 #define PFKEYV2_SENDMESSAGE_BROADCAST  3
 
 #define SADB_CREDTYPE_NONE           0
-#define SADB_CREDTYPE_X509           1
-#define SADB_CREDTYPE_KEYNOTE        2
+#define SADB_CREDTYPE_X509           1   /* ASN1 encoding of the certificate */
+#define SADB_CREDTYPE_KEYNOTE        2   /* NUL-terminated buffer */
 #define SADB_CREDTYPE_MAX            3
 
 #define PFKEYV2_AUTH_LOCAL           0
