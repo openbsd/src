@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.511 2002/05/22 15:30:36 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.512 2002/05/23 19:20:29 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1963,7 +1963,7 @@
 #define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 Gigabit Ethernet */
 
 /* Sunix */
-#define	PCI_PRODUCT_SUNIX_4065A	0x4065		/* 4065A */
+#define	PCI_PRODUCT_SUNIX_4065A	0x7168		/* 4065A */
 
 /* Surecom products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
