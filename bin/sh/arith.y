@@ -1,3 +1,4 @@
+/*	$OpenBSD: arith.y,v 1.2 1996/06/23 14:21:08 deraadt Exp $	*/
 %token ARITH_NUM ARITH_LPAREN ARITH_RPAREN 
 
 %left ARITH_OR
@@ -95,7 +96,7 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-static char sccsid[] = "$NetBSD: arith.y,v 1.6 1995/05/11 21:28:45 christos Exp $";
+static char sccsid[] = "$OpenBSD: arith.y,v 1.2 1996/06/23 14:21:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: bltin.h,v 1.2 1996/06/23 14:21:40 deraadt Exp $	*/
 /*	$NetBSD: bltin.h,v 1.7 1995/03/21 09:10:46 cgd Exp $	*/
 
 /*-

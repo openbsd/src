@@ -1,3 +1,4 @@
+/*	$OpenBSD: shell.h,v 1.4 1996/06/23 14:21:33 deraadt Exp $	*/
 /*	$NetBSD: shell.h,v 1.9 1996/03/01 01:59:00 jtc Exp $	*/
 
 /*-

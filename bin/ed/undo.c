@@ -1,3 +1,4 @@
+/*	$OpenBSD: undo.c,v 1.2 1996/06/23 14:20:04 deraadt Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -31,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $";
+static char rcsid[] = "$OpenBSD: undo.c,v 1.2 1996/06/23 14:20:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 

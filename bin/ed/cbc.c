@@ -1,3 +1,4 @@
+/*	$OpenBSD: cbc.c,v 1.2 1996/06/23 14:19:59 deraadt Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -43,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.2 1996/06/23 14:19:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 

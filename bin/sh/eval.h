@@ -1,3 +1,4 @@
+/*	$OpenBSD: eval.h,v 1.2 1996/06/23 14:21:12 deraadt Exp $	*/
 /*	$NetBSD: eval.h,v 1.9 1995/09/11 17:05:43 christos Exp $	*/
 
 /*-

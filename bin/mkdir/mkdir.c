@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkdir.c,v 1.2 1996/06/23 14:20:24 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.2 1996/06/23 14:20:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 

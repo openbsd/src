@@ -1,3 +1,4 @@
+/*	$OpenBSD: memalloc.c,v 1.3 1996/06/23 14:21:21 deraadt Exp $	*/
 /*	$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $	*/
 
 /*-
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $";
+static char rcsid[] = "$OpenBSD: memalloc.c,v 1.3 1996/06/23 14:21:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sub.c,v 1.2 1996/06/23 14:20:04 deraadt Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
@@ -32,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.2 1996/06/23 14:20:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 

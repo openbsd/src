@@ -1,3 +1,4 @@
+/*	$OpenBSD: dol.c,v 1.2 1996/06/23 14:19:18 deraadt Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.2 1996/06/23 14:19:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+$OpenBSD: POSIX,v 1.2 1996/06/23 14:19:57 deraadt Exp $
 $NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
 
 This version of ed(1) is not strictly POSIX compliant, as described in

@@ -1,3 +1,4 @@
+#	$OpenBSD: TEST.csh,v 1.2 1996/06/23 14:21:57 deraadt Exp $
 #	$NetBSD: TEST.csh,v 1.2 1995/03/21 07:03:59 cgd Exp $
 #	@(#)TEST.csh	5.2 (Berkeley) 4/30/93
 

@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: mkscripts.sh,v 1.2 1996/06/23 14:20:08 deraadt Exp $
 #	$NetBSD: mkscripts.sh,v 1.10 1995/04/23 10:07:36 cgd Exp $
 #
 # This script generates ed test scripts (.ed) from .t files

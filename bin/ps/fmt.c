@@ -1,3 +1,5 @@
+/*	$OpenBSD: fmt.c,v 1.2 1996/06/23 14:20:49 deraadt Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

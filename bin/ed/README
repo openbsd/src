@@ -1,3 +1,4 @@
+$OpenBSD: README,v 1.2 1996/06/23 14:19:58 deraadt Exp $
 $NetBSD: README,v 1.9 1995/03/21 09:04:33 cgd Exp $
 
 ed is an 8-bit-clean, POSIX-compliant line editor.  It should work with

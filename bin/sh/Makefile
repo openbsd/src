@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.4 1996/06/23 14:21:05 deraadt Exp $
 #	$NetBSD: Makefile,v 1.23 1996/02/18 12:29:18 mycroft Exp $
-#	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
 SRCS=	alias.c builtins.c cd.c echo.c error.c eval.c exec.c expand.c \

@@ -1,3 +1,4 @@
+/*	$OpenBSD: glbl.c,v 1.2 1996/06/23 14:20:01 deraadt Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -32,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $";
+static char rcsid[] = "$OpenBSD: glbl.c,v 1.2 1996/06/23 14:20:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 

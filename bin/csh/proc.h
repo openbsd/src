@@ -1,3 +1,4 @@
+/*	$OpenBSD: proc.h,v 1.2 1996/06/23 14:19:29 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.7 1995/04/29 23:21:35 mycroft Exp $	*/
 
 /*-

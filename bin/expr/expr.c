@@ -1,3 +1,4 @@
+/*	$OpenBSD: expr.c,v 1.3 1996/06/23 14:20:10 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*

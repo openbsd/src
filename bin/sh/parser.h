@@ -1,3 +1,4 @@
+/*	$OpenBSD: parser.h,v 1.2 1996/06/23 14:21:31 deraadt Exp $	*/
 /*	$NetBSD: parser.h,v 1.10 1995/05/11 21:30:02 christos Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: var.h,v 1.2 1996/06/23 14:21:37 deraadt Exp $	*/
 /*	$NetBSD: var.h,v 1.9 1995/05/11 21:30:44 christos Exp $	*/
 
 /*-

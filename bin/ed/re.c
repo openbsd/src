@@ -1,3 +1,4 @@
+/*	$OpenBSD: re.c,v 1.2 1996/06/23 14:20:03 deraadt Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -32,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $";
+static char rcsid[] = "$OpenBSD: re.c,v 1.2 1996/06/23 14:20:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 

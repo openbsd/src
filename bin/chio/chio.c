@@ -1,3 +1,4 @@
+/*	$OpenBSD: chio.c,v 1.2 1996/06/23 14:19:04 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*

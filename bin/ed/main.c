@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.2 1996/06/23 14:20:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -38,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/23 14:20:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
