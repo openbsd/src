@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.15 2003/11/03 03:19:27 deraadt Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.16 2003/11/03 05:09:39 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -734,7 +734,8 @@ carp_send_ad(void *v)
 			sc->sc_ac.ac_if.if_oerrors++;
 			carpstats.carps_onomem++;
 			/* XXX maybe less ? */
-			timeout_add(&sc->sc_ad_tmo, tvtohz(&tv));
+			if (advbase != 255 || advskew != 255)
+				timeout_add(&sc->sc_ad_tmo, tvtohz(&tv));
 			return;
 		}
 		len = sizeof(*ip6) + sizeof(ch);
@@ -1007,7 +1008,9 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		if (carp_opts[CARPCTL_PREEMPT]) {
 			carp_send_ad(sc);
 			carp_send_arp(sc);
+#ifdef INET6
 			carp_send_na(sc);
+#endif
 			sc->sc_state = MASTER;
 		} else {
 			sc->sc_state = BACKUP;
@@ -1123,8 +1126,10 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 			error = ENOBUFS;
 			goto cleanup;
 		}
-		if ((error = ifpromisc(ifp, 1)))
+		if ((error = ifpromisc(ifp, 1))) {
+			FREE(cif, M_IFADDR);
 			goto cleanup;
+		}
 
 		cif->vhif_ifp = ifp;
 		TAILQ_INIT(&cif->vhif_vrs);
@@ -1291,8 +1296,10 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 			error = ENOBUFS;
 			goto cleanup;
 		}
-		if ((error = ifpromisc(ifp, 1)))
+		if ((error = ifpromisc(ifp, 1))) {
+			FREE(cif, M_IFADDR);
 			goto cleanup;
+		}
 
 		cif->vhif_ifp = ifp;
 		TAILQ_INIT(&cif->vhif_vrs);
