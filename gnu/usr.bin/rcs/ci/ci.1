@@ -2,7 +2,7 @@
 .ds Rv \\$3
 .ds Dt \\$4
 ..
-.Id $Id: ci.1,v 1.1.1.1 1995/10/18 08:40:59 deraadt Exp $
+.Id $Id: ci.1,v 1.2 1996/04/19 12:39:59 mickey Exp $
 .ds i \&\s-1ISO\s0
 .ds r \&\s-1RCS\s0
 .ds u \&\s-1UTC\s0
@@ -255,6 +255,11 @@ overrides
 .BR \-f [\f2rev\fP]
 forces a deposit; the new revision is deposited even it is not different
 from the preceding one.
+.TP
+.BR \-L
+adds a synonym for the
+.B Id
+keyword.
 .TP
 .BR \-k [\f2rev\fP]
 searches the working file for keyword values to determine its revision number,

@@ -27,6 +27,10 @@ Report problems and direct all questions to:
 */
 
 /* $Log: rcskeys.c,v $
+/* Revision 1.2  1996/04/19 12:40:09  mickey
+/* -L<string> option added to support LOCALID behaviour.
+/* maybe set up in RCSINIT environment variable.
+/*
 /* Revision 1.1.1.1  1995/10/18 08:41:02  deraadt
 /* initial import of NetBSD tree
 /*
@@ -65,20 +69,27 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.1.1.1 1995/10/18 08:41:02 deraadt Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.2 1996/04/19 12:40:09 mickey Exp $")
 
-
-char const *const Keyword[] = {
+char local_id[keylength+1];
+char const *Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	0,
 	AUTHOR, DATE, HEADER, IDH,
-#ifdef LOCALID
-	LOCALID,
-#endif
-	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE
+	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE,
+	NULL,
 };
 
 
+	void
+setRCSlocalId(string)
+	char const *string;
+{
+	if (strlen(string) > keylength)
+		error("LocalId is too long");
+	strcpy(local_id, string);
+	Keyword[LocalId] = local_id;
+}
 
 	enum markers
 trymatch(string)
@@ -90,21 +101,22 @@ trymatch(string)
 {
         register int j;
 	register char const *p, *s;
-	for (j = sizeof(Keyword)/sizeof(*Keyword);  (--j);  ) {
-		/* try next keyword */
-		p = Keyword[j];
-		s = string;
-		while (*p++ == *s++) {
-			if (!*p)
-			    switch (*s) {
-				case KDELIM:
-				case VDELIM:
-				    return (enum markers)j;
-				default:
-				    return Nomatch;
-			    }
-		}
-        }
+	for (j = sizeof(Keyword)/sizeof(*Keyword);  (--j);  )
+		if (Keyword[j]) {
+			/* try next keyword */
+			p = Keyword[j];
+			s = string;
+			while (*p++ == *s++) {
+				if (!*p)
+			    	switch (*s) {
+					case KDELIM:
+					case VDELIM:
+				    	return (enum markers)j;
+					default:
+				    	return Nomatch;
+			    	}
+			}
+        	}
         return(Nomatch);
 }
 

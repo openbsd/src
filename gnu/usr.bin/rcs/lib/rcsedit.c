@@ -35,6 +35,10 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
+ * Revision 1.2  1996/04/19 12:40:07  mickey
+ * -L<string> option added to support LOCALID behaviour.
+ * maybe set up in RCSINIT environment variable.
+ *
  * Revision 1.1.1.1  1995/10/18 08:41:01  deraadt
  * initial import of NetBSD tree
  *
@@ -182,7 +186,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(editId, "$Id: rcsedit.c,v 1.1.1.1 1995/10/18 08:41:01 deraadt Exp $")
+libId(editId, "$Id: rcsedit.c,v 1.2 1996/04/19 12:40:07 mickey Exp $")
 
 static void editEndsPrematurely P((void)) exiting;
 static void editLineNumberOverflow P((void)) exiting;
@@ -1034,9 +1038,7 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
                 break;
 	    case Header:
 	    case Id:
-#ifdef LOCALID
 	    case LocalId:
-#endif
 		escape_string(out,
 			marker!=Header || RCSv<VERSION(4)
 			? basename(RCSname)

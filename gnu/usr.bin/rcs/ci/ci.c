@@ -28,6 +28,10 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ci.c,v $
+ * Revision 1.2  1996/04/19 12:40:00  mickey
+ * -L<string> option added to support LOCALID behaviour.
+ * maybe set up in RCSINIT environment variable.
+ *
  * Revision 1.1.1.1  1995/10/18 08:40:59  deraadt
  * initial import of NetBSD tree
  *
@@ -267,7 +271,7 @@ static struct hshentry newdelta;	/* new delta to be inserted	*/
 static struct stat workstat;
 static struct Symrev *assoclst, **nextassoc;
 
-mainProg(ciId, "ci", "$Id: ci.c,v 1.1.1.1 1995/10/18 08:40:59 deraadt Exp $")
+mainProg(ciId, "ci", "$Id: ci.c,v 1.2 1996/04/19 12:40:00 mickey Exp $")
 {
 	static char const cmdusage[] =
 		"\nci usage: ci -{fIklMqru}[rev] -d[date] -mmsg -{nN}name -sstate -ttext -T -Vn -wwho -xsuff -zzone file ...";
@@ -348,6 +352,10 @@ mainProg(ciId, "ci", "$Id: ci.c,v 1.1.1.1 1995/10/18 08:40:59 deraadt Exp $")
                 case 'k':
                         keepflag=true;
                         goto revno;
+
+		case 'L':
+			setRCSlocalId(*argv+2);
+			break;
 
                 case 'm':
 			if (msg.size) redefined('m');
