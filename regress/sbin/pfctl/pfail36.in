@@ -1,0 +1,6 @@
+# double upperlimit
+
+altq on lo0 tbrsize 1824 bandwidth 10Mb hfsc queue { eins }
+queue eins bandwidth 10% hfsc(default upperlimit(20% 20 5%) upperlimit 1Mb)
+
+
