@@ -78,8 +78,7 @@
 #ifdef i386
 #include <machine/vmparam.h>
 #define VOLATILE_XS(xs) \
-	((xs)->datalen > 0 && \
-	((vm_offset_t)((xs)->data) < VM_MIN_KERNEL_ADDRESS) && \
+	((xs)->datalen > 0 && (xs)->bp == NULL && \
 	((xs)->flags & SCSI_POLL) == 0)
 #else
 #define VOLATILE_XS(xs)	0
