@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.root,v 1.9 2002/06/09 06:15:15 todd Exp $
+#	$OpenBSD: 4.4BSD.root,v 1.10 2003/06/27 21:26:20 david Exp $
 #	$NetBSD: 4.4BSD.root,v 1.2 1996/05/12 23:30:32 thorpej Exp $
 #
 #	   user: bostic
@@ -73,13 +73,6 @@ etc             type=dir mode=0755
 /set type=file gname=wheel uname=root mode=0444
 disklabels      type=dir mode=0775
 # ./etc/disklabels
-..
-
-
-# ./etc/kerberosIV
-/set type=file gname=wheel uname=root mode=0444
-kerberosIV      type=dir mode=0755
-# ./etc/kerberosIV
 ..
 
 

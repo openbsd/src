@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.52 2003/03/30 14:58:18 jmc Exp $
+#	$OpenBSD: special,v 1.53 2003/06/27 21:26:20 david Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -32,8 +32,6 @@ group		type=file mode=0644 uname=root gname=wheel
 hosts		type=file mode=0644 uname=root gname=wheel
 hosts.equiv	type=file mode=0600 uname=root gname=wheel optional
 inetd.conf	type=file mode=0644 uname=root gname=wheel
-kerberosIV	type=dir mode=0755 uname=root gname=wheel optional ignore
-..	#kerberosIV
 kerberosV	type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#kerberosV
 host.random	type=file mode=0600 uname=root gname=wheel optional
