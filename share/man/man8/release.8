@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.9 2000/08/03 13:45:23 brad Exp $
+.\"	$OpenBSD: release.8,v 1.10 2000/09/27 00:24:25 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -258,9 +258,11 @@ create the special tools needed to build the release
 .br
 these two steps ensure
 .Va ${DESTDIR}
-exists an empty directory and
+exists as an empty directory and
 .Va ${RELEASEDIR}
 exists.
+.Va ${RELEASEDIR}
+need not be empty.
 .It
 .Li "cd /usr/src/etc && nice make release"
 .It
@@ -353,7 +355,16 @@ mechanism noted in the section on building a system release, above.
 They may be the same values used above, but be warned that the
 contents of
 .Va DESTDIR
-will be removed.
+will be removed if you follow this procedure.   However,
+.Va DESTDIR
+should not be the same directory used to build the system release.  
+It may be the same if you don't care to keep the contents of the
+system release
+.Va DESTDIR .
+(The X11
+.Va DESTDIR
+needs to be emptied for release checklist processing.)
+.Pp
 The steps to build the release are (assuming you are still root, and still in
 .Va X11BLD ) :
 .Pp
