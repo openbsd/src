@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.13 1998/03/07 21:40:07 millert Exp $
+.\"	$OpenBSD: doc-syms,v 1.14 1998/03/09 01:10:24 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -168,8 +168,7 @@
 .nr cZ \\n(.s
 .ds aa \&\f\\n(cF\s\\n(cZ
 .if \\n(aC==0 \{\
-.       ie \\n(.$==0 \&\\*(tNOpenBSD\\*(aa
-.       el .aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.       if \\n(.$==0 \&\\*(tNOpenBSD\\*(aa
 .\}
 .if \\n(.$==2 \{\
 .	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa\\$2
