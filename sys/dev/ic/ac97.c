@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.19 2001/05/16 23:34:53 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.20 2001/06/17 21:06:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -100,6 +100,11 @@ const struct audio_mixer_enum ac97_source = {
 	{ { "phone" }, 7 }}
 };
 
+/*
+ * Due to different values for each source that uses these structures,
+ * the ac97_query_devinfo function sets delta in mixer_devinfo_t using
+ * ac97_source_info.bits.
+ */
 const struct audio_mixer_value ac97_volume_stereo = {
 	{ AudioNvolume },
 	2
@@ -725,6 +730,11 @@ ac97_query_devinfo(codec_if, dip)
 			strcpy(dip->label.name, name);
 
 		bcopy(si->info, &dip->un, si->info_size);
+
+		/* Set the delta for volume sources */
+		if (dip->type == AUDIO_MIXER_VALUE)
+			dip->un.v.delta = 1 << (8 - si->bits);
+
 		return (0);
 	}
 
