@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.27 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.28 2002/05/08 22:57:58 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.27 2002/02/16 21:28:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.28 2002/05/08 22:57:58 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -137,10 +137,12 @@ parse_args(int argc, char *argv[]) {
 	Option = opt_unknown;
 	while (-1 != (argch = getopt(argc, argv, getoptargs))) {
 		switch (argch) {
+#if DEBUGGING
 		case 'x':
 			if (!set_debug_flags(optarg))
 				usage("bad debug option");
 			break;
+#endif
 		case 'u':
 			if (MY_UID(pw) != ROOT_UID) {
 				fprintf(stderr,
@@ -332,7 +334,7 @@ edit_cmd(void) {
 		perror(Filename);
 		goto fatal;
 	}
-#ifdef HAS_FCHOWN
+#ifdef HAVE_FCHOWN
 	if (fchown(t, MY_UID(pw), MY_GID(pw)) < 0) {
 		perror("fchown");
 		goto fatal;
@@ -607,7 +609,7 @@ replace_cmd(void) {
 	if (fstat(fileno(tmp), &sb))
 		sb.st_gid = -1;
 
-#ifdef HAS_FCHOWN
+#ifdef HAVE_FCHOWN
 	if (fchown(fileno(tmp), ROOT_UID, sb.st_gid) < OK) {
 		perror("fchown");
 		fclose(tmp);
@@ -623,7 +625,7 @@ replace_cmd(void) {
 	}
 #endif
 
-#ifdef HAS_FCHMOD
+#ifdef HAVE_FCHMOD
 	if (fchmod(fileno(tmp), 0600) < OK) {
 		perror("fchmod");
 		fclose(tmp);
