@@ -1763,6 +1763,7 @@
 ./usr/share/man/cat1/flex.0
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
+./usr/share/man/cat1/gcc-local.0
 ./usr/share/man/cat1/gcc.0
 ./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
