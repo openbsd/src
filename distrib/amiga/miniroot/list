@@ -1,9 +1,10 @@
-#	$OpenBSD: list,v 1.4 1997/05/18 13:16:18 niklas Exp $
+#	$OpenBSD: list,v 1.5 1997/05/19 21:38:34 niklas Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/mount_ados
+LINK	instbin			sbin/mount_msdos
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
@@ -23,11 +24,9 @@ COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 SPECIAL	cd dev; sh MAKEDEV all
 #SPECIAL	/bin/rm dev/MAKEDEV
 
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
-# and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+# and a few useful bits of the termcap file (512K and still growing 8-)
+# COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' ${CURDIR}/../../share/termcap/termcap.src > usr/share/misc/termcap
 
 # copy the kernel
 COPY	bsd	bsd
