@@ -1,5 +1,5 @@
 /* insertion.c -- insertions for Texinfo.
-   $Id: insertion.c,v 1.1.1.2 2002/06/10 13:21:17 espie Exp $
+   $Id: insertion.c,v 1.2 2004/08/17 00:28:03 espie Exp $
 
    Copyright (C) 1998, 99, 2000, 01, 02 Free Software Foundation, Inc.
 
@@ -1547,9 +1547,10 @@ cm_item ()
                  in this context, but I cannot find any way to force
                  them all render exactly one blank line.  */
               if (!itemx_flag
-                  && strncmp ((char *) output_paragraph
+                  && (output_paragraph_offset + 1 < sizeof (dl_tag) ||
+		      (strncmp ((char *) output_paragraph
                               + output_paragraph_offset - sizeof (dl_tag) + 1, 
-                              dl_tag, sizeof (dl_tag) - 1) != 0)
+                              dl_tag, sizeof (dl_tag) - 1) != 0)))
                 add_word ("<br>");
    
               add_word ("<dt>");
