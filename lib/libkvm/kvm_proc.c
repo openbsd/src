@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.19 2003/11/17 20:25:18 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.20 2004/01/07 02:16:33 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.19 2003/11/17 20:25:18 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.20 2004/01/07 02:16:33 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,25 +110,70 @@ static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.19 2003/11/17 20:25:18 millert Ex
 
 #include "kvm_private.h"
 
+/*
+ * Common info from kinfo_proc and kinfo_proc2 used by helper routines.
+ */
+struct miniproc {
+	struct	vmspace *p_vmspace;
+	char	p_stat;
+	struct	proc *p_paddr;
+	pid_t	p_pid;
+};
+
+/*
+ * Convert from struct proc and kinfo_proc{,2} to miniproc.
+ */
+#define PTOMINI(kp, p) \
+	do { \
+		(p)->p_stat = (kp)->p_stat; \
+		(p)->p_pid = (kp)->p_pid; \
+		(p)->p_paddr = NULL; \
+		(p)->p_vmspace = (kp)->p_vmspace; \
+	} while (/*CONSTCOND*/0);
+
+#define KPTOMINI(kp, p) \
+	do { \
+		(p)->p_stat = (kp)->kp_proc.p_stat; \
+		(p)->p_pid = (kp)->kp_proc.p_pid; \
+		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
+		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
+	} while (/*CONSTCOND*/0);
+
+#define KP2TOMINI(kp, p) \
+	do { \
+		(p)->p_stat = (kp)->p_stat; \
+		(p)->p_pid = (kp)->p_pid; \
+		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
+		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
+	} while (/*CONSTCOND*/0);
+
+
+#define	PTRTOINT64(foo)	((u_int64_t)(const register_t)(const void *)(foo))
+
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 
 ssize_t		kvm_uread(kvm_t *, const struct proc *, u_long, char *, size_t);
 
-static char	**kvm_argv(kvm_t *, const struct proc *, u_long, int, int);
+static char	*_kvm_ureadm(kvm_t *, const struct miniproc *, u_long, u_long *);
+static ssize_t	kvm_ureadm(kvm_t *, const struct miniproc *, u_long, char *, size_t);
+
+static char	**kvm_argv(kvm_t *, const struct miniproc *, u_long, int, int);
+
 static int	kvm_deadprocs(kvm_t *, int, int, u_long, u_long, int);
-static char	**kvm_doargv(kvm_t *, const struct kinfo_proc *, int,
+static char	**kvm_doargv(kvm_t *, const struct miniproc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *));
+static char	**kvm_doargv2(kvm_t *, pid_t, int, int);
 static int	kvm_proclist(kvm_t *, int, int, struct proc *,
 		    struct kinfo_proc *, int);
-static int	proc_verify(kvm_t *, u_long, const struct proc *);
+static int	proc_verify(kvm_t *, const struct miniproc *);
 static void	ps_str_a(struct ps_strings *, u_long *, int *);
 static void	ps_str_e(struct ps_strings *, u_long *, int *);
 
-char *
-_kvm_uread(kd, p, va, cnt)
+static char *
+_kvm_ureadm(kd, p, va, cnt)
 	kvm_t *kd;
-	const struct proc *p;
+	const struct miniproc *p;
 	u_long va;
 	u_long *cnt;
 {
@@ -208,6 +253,19 @@ _kvm_uread(kd, p, va, cnt)
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
 	return (&kd->swapspc[offset]);
+}
+
+char *
+_kvm_uread(kd, p, va, cnt)
+	kvm_t *kd;
+	const struct proc *p;
+	u_long va;
+	u_long *cnt;
+{
+	struct miniproc mp;
+
+	PTOMINI(p, &mp);
+	return (_kvm_ureadm(kd, &mp, va, cnt));
 }
 
 /*
@@ -375,6 +433,203 @@ kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
 	return (acnt + zcnt);
 }
 
+struct kinfo_proc2 *
+kvm_getproc2(kd, op, arg, esize, cnt)
+	kvm_t *kd;
+	int op, arg;
+	size_t esize;
+	int *cnt;
+{
+	size_t size;
+	int mib[6], st, nprocs;
+	struct user user;
+
+	if (esize < 0)
+		return NULL;
+
+	if (kd->procbase2 != NULL) {
+		free(kd->procbase2);
+		/*
+		 * Clear this pointer in case this call fails.  Otherwise,
+		 * kvm_close() will free it again.
+		 */
+		kd->procbase2 = 0;
+	}
+
+	if (ISALIVE(kd)) {
+		size = 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC2;
+		mib[2] = op;
+		mib[3] = arg;
+		mib[4] = esize;
+		mib[5] = 0;
+		st = sysctl(mib, 6, NULL, &size, NULL, 0);
+		if (st == -1) {
+			_kvm_syserr(kd, kd->program, "kvm_getproc2");
+			return NULL;
+		}
+
+		mib[5] = size / esize;
+		kd->procbase2 = (struct kinfo_proc2 *)_kvm_malloc(kd, size);
+		if (kd->procbase2 == 0)
+			return NULL;
+		st = sysctl(mib, 6, kd->procbase2, &size, NULL, 0);
+		if (st == -1) {
+			_kvm_syserr(kd, kd->program, "kvm_getproc2");
+			return NULL;
+		}
+		nprocs = size / esize;
+	} else {
+		char *kp2c;
+		struct kinfo_proc *kp;
+		struct kinfo_proc2 kp2, *kp2p;
+		int i;
+
+		kp = kvm_getprocs(kd, op, arg, &nprocs);
+		if (kp == NULL)
+			return NULL;
+
+		kd->procbase2 = _kvm_malloc(kd, nprocs * esize);
+		kp2c = (char *)kd->procbase2;
+		kp2p = &kp2;
+		for (i = 0; i < nprocs; i++, kp++) {
+			memset(kp2p, 0, sizeof(kp2));
+			kp2p->p_forw = PTRTOINT64(kp->kp_proc.p_forw);
+			kp2p->p_back = PTRTOINT64(kp->kp_proc.p_back);
+			kp2p->p_paddr = PTRTOINT64(kp->kp_eproc.e_paddr);
+
+			kp2p->p_addr = PTRTOINT64(kp->kp_proc.p_addr);
+			kp2p->p_fd = PTRTOINT64(kp->kp_proc.p_fd);
+			kp2p->p_stats = PTRTOINT64(kp->kp_proc.p_stats);
+			kp2p->p_limit = PTRTOINT64(kp->kp_proc.p_limit);
+			kp2p->p_vmspace = PTRTOINT64(kp->kp_proc.p_vmspace);
+			kp2p->p_sigacts = PTRTOINT64(kp->kp_proc.p_sigacts);
+			kp2p->p_sess = PTRTOINT64(kp->kp_eproc.e_sess);
+			kp2p->p_tsess = 0;
+			kp2p->p_ru = PTRTOINT64(kp->kp_proc.p_ru);
+
+			kp2p->p_eflag = 0;
+			kp2p->p_exitsig = kp->kp_proc.p_exitsig;
+			kp2p->p_flag = kp->kp_proc.p_flag;
+
+			kp2p->p_pid = kp->kp_proc.p_pid;
+
+			kp2p->p_ppid = kp->kp_eproc.e_ppid;
+#if 0
+			kp2p->p_sid = kp->kp_eproc.e_sid;
+#else
+			kp2p->p_sid = -1; /* XXX */
+#endif
+			kp2p->p__pgid = kp->kp_eproc.e_pgid;
+
+			kp2p->p_tpgid = -1;
+
+			kp2p->p_uid = kp->kp_eproc.e_ucred.cr_uid;
+			kp2p->p_ruid = kp->kp_eproc.e_pcred.p_ruid;
+			kp2p->p_gid = kp->kp_eproc.e_ucred.cr_gid;
+			kp2p->p_rgid = kp->kp_eproc.e_pcred.p_rgid;
+
+			memcpy(kp2p->p_groups, kp->kp_eproc.e_ucred.cr_groups,
+			    MIN(sizeof(kp2p->p_groups), sizeof(kp->kp_eproc.e_ucred.cr_groups)));
+			kp2p->p_ngroups = kp->kp_eproc.e_ucred.cr_ngroups;
+
+			kp2p->p_jobc = kp->kp_eproc.e_jobc;
+			kp2p->p_tdev = kp->kp_eproc.e_tdev;
+			kp2p->p_tpgid = kp->kp_eproc.e_tpgid;
+			kp2p->p_tsess = PTRTOINT64(kp->kp_eproc.e_tsess);
+
+			kp2p->p_estcpu = kp->kp_proc.p_estcpu;
+			kp2p->p_rtime_sec = kp->kp_proc.p_estcpu;
+			kp2p->p_rtime_usec = kp->kp_proc.p_estcpu;
+			kp2p->p_cpticks = kp->kp_proc.p_cpticks;
+			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
+			kp2p->p_swtime = kp->kp_proc.p_swtime;
+			kp2p->p_slptime = kp->kp_proc.p_slptime;
+			kp2p->p_schedflags = kp->kp_proc.p_schedflags;
+
+			kp2p->p_uticks = kp->kp_proc.p_uticks;
+			kp2p->p_sticks = kp->kp_proc.p_sticks;
+			kp2p->p_iticks = kp->kp_proc.p_iticks;
+
+			kp2p->p_tracep = PTRTOINT64(kp->kp_proc.p_tracep);
+			kp2p->p_traceflag = kp->kp_proc.p_traceflag;
+
+			kp2p->p_holdcnt = kp->kp_proc.p_holdcnt;
+
+			kp2p->p_siglist = kp->kp_proc.p_siglist;
+			kp2p->p_sigmask = kp->kp_proc.p_sigmask;
+			kp2p->p_sigignore = kp->kp_proc.p_sigignore;
+			kp2p->p_sigcatch = kp->kp_proc.p_sigcatch;
+
+			kp2p->p_stat = kp->kp_proc.p_stat;
+			kp2p->p_priority = kp->kp_proc.p_priority;
+			kp2p->p_usrpri = kp->kp_proc.p_usrpri;
+			kp2p->p_nice = kp->kp_proc.p_nice;
+
+			kp2p->p_xstat = kp->kp_proc.p_xstat;
+			kp2p->p_acflag = kp->kp_proc.p_acflag;
+
+			strncpy(kp2p->p_comm, kp->kp_proc.p_comm,
+			    MIN(sizeof(kp2p->p_comm), sizeof(kp->kp_proc.p_comm)));
+
+			strncpy(kp2p->p_wmesg, kp->kp_eproc.e_wmesg, sizeof(kp2p->p_wmesg));
+			kp2p->p_wchan = PTRTOINT64(kp->kp_proc.p_wchan);
+
+			strncpy(kp2p->p_login, kp->kp_eproc.e_login, sizeof(kp2p->p_login));
+
+			kp2p->p_vm_rssize = kp->kp_eproc.e_xrssize;
+			kp2p->p_vm_tsize = kp->kp_eproc.e_vm.vm_tsize;
+			kp2p->p_vm_dsize = kp->kp_eproc.e_vm.vm_dsize;
+			kp2p->p_vm_ssize = kp->kp_eproc.e_vm.vm_ssize;
+
+			kp2p->p_eflag = kp->kp_eproc.e_flag;
+
+			if (P_ZOMBIE(&kp->kp_proc) || kp->kp_proc.p_addr == NULL ||
+			    KREAD(kd, (u_long)kp->kp_proc.p_addr, &user)) {
+				kp2p->p_uvalid = 0;
+			} else {
+				kp2p->p_uvalid = 1;
+
+				kp2p->p_ustart_sec = user.u_stats.p_start.tv_sec;
+				kp2p->p_ustart_usec = user.u_stats.p_start.tv_usec;
+
+				kp2p->p_uutime_sec = user.u_stats.p_ru.ru_utime.tv_sec;
+				kp2p->p_uutime_usec = user.u_stats.p_ru.ru_utime.tv_usec;
+				kp2p->p_ustime_sec = user.u_stats.p_ru.ru_stime.tv_sec;
+				kp2p->p_ustime_usec = user.u_stats.p_ru.ru_stime.tv_usec;
+
+				kp2p->p_uru_maxrss = user.u_stats.p_ru.ru_maxrss;
+				kp2p->p_uru_ixrss = user.u_stats.p_ru.ru_ixrss;
+				kp2p->p_uru_idrss = user.u_stats.p_ru.ru_idrss;
+				kp2p->p_uru_isrss = user.u_stats.p_ru.ru_isrss;
+				kp2p->p_uru_minflt = user.u_stats.p_ru.ru_minflt;
+				kp2p->p_uru_majflt = user.u_stats.p_ru.ru_majflt;
+				kp2p->p_uru_nswap = user.u_stats.p_ru.ru_nswap;
+				kp2p->p_uru_inblock = user.u_stats.p_ru.ru_inblock;
+				kp2p->p_uru_oublock = user.u_stats.p_ru.ru_oublock;
+				kp2p->p_uru_msgsnd = user.u_stats.p_ru.ru_msgsnd;
+				kp2p->p_uru_msgrcv = user.u_stats.p_ru.ru_msgrcv;
+				kp2p->p_uru_nsignals = user.u_stats.p_ru.ru_nsignals;
+				kp2p->p_uru_nvcsw = user.u_stats.p_ru.ru_nvcsw;
+				kp2p->p_uru_nivcsw = user.u_stats.p_ru.ru_nivcsw;
+
+				kp2p->p_uctime_sec = user.u_stats.p_cru.ru_utime.tv_sec +
+				    user.u_stats.p_cru.ru_stime.tv_sec;
+				kp2p->p_uctime_usec = user.u_stats.p_cru.ru_utime.tv_usec +
+				    user.u_stats.p_cru.ru_stime.tv_usec;
+			}
+
+			memcpy(kp2c, &kp2, esize);
+			kp2c += esize;
+		}
+
+		free(kd->procbase);
+	}
+	*cnt = nprocs;
+	return (kd->procbase2);
+}
+
 struct kinfo_proc *
 kvm_getprocs(kd, op, arg, cnt)
 	kvm_t *kd;
@@ -477,10 +732,6 @@ _kvm_realloc(kd, p, n)
 	return (np);
 }
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 /*
  * Read in an argument vector from the user address space of process p.
  * addr if the user-space base address of narg null-terminated contiguous 
@@ -490,7 +741,7 @@ _kvm_realloc(kd, p, n)
 static char **
 kvm_argv(kd, p, addr, narg, maxcnt)
 	kvm_t *kd;
-	const struct proc *p;
+	const struct miniproc *p;
 	u_long addr;
 	int narg;
 	int maxcnt;
@@ -535,7 +786,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			return (0);
 	}
 	cc = sizeof(char *) * narg;
-	if (kvm_uread(kd, p, addr, (char *)kd->argv, cc) != cc)
+	if (kvm_ureadm(kd, p, addr, (char *)kd->argv, cc) != cc)
 		return (0);
 	ap = np = kd->argspc;
 	argv = kd->argv;
@@ -546,7 +797,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	while (argv < kd->argv + narg && *argv != 0) {
 		addr = (u_long)*argv & ~(kd->nbpg - 1);
 		if (addr != oaddr) {
-			if (kvm_uread(kd, p, addr, kd->argbuf, kd->nbpg) !=
+			if (kvm_ureadm(kd, p, addr, kd->argbuf, kd->nbpg) !=
 			    kd->nbpg)
 				return (0);
 			oaddr = addr;
@@ -630,10 +881,9 @@ ps_str_e(p, addr, n)
  * being wrong are very low.
  */
 static int
-proc_verify(kd, kernp, p)
+proc_verify(kd, p)
 	kvm_t *kd;
-	u_long kernp;
-	const struct proc *p;
+	const struct miniproc *p;
 {
 	struct proc kernproc;
 
@@ -641,7 +891,7 @@ proc_verify(kd, kernp, p)
 	 * Just read in the whole proc.  It's not that big relative
 	 * to the cost of the read system call.
 	 */
-	if (kvm_read(kd, kernp, &kernproc, sizeof(kernproc)) != 
+	if (kvm_read(kd, (u_long)p->p_paddr, &kernproc, sizeof(kernproc)) != 
 	    sizeof(kernproc))
 		return (0);
 	return (p->p_pid == kernproc.p_pid &&
@@ -649,13 +899,12 @@ proc_verify(kd, kernp, p)
 }
 
 static char **
-kvm_doargv(kd, kp, nchr, info)
+kvm_doargv(kd, p, nchr, info)
 	kvm_t *kd;
-	const struct kinfo_proc *kp;
+	const struct miniproc *p;
 	int nchr;
 	void (*info)(struct ps_strings *, u_long *, int *);
 {
-	const struct proc *p = &kp->kp_proc;
 	char **ap;
 	u_long addr;
 	int cnt;
@@ -678,7 +927,7 @@ kvm_doargv(kd, kp, nchr, info)
 	 * Pointers are stored at the top of the user stack.
 	 */
 	if (p->p_stat == SZOMB || 
-	    kvm_uread(kd, p, (u_long)ps, (char *)&arginfo,
+	    kvm_ureadm(kd, p, (u_long)ps, (char *)&arginfo,
 		      sizeof(arginfo)) != sizeof(arginfo))
 		return (0);
 
@@ -689,14 +938,13 @@ kvm_doargv(kd, kp, nchr, info)
 	/*
 	 * For live kernels, make sure this process didn't go away.
 	 */
-	if (ap != 0 && ISALIVE(kd) &&
-	    !proc_verify(kd, (u_long)kp->kp_eproc.e_paddr, p))
+	if (ap != 0 && ISALIVE(kd) && !proc_verify(kd, p))
 		ap = 0;
 	return (ap);
 }
 
 static char **
-kvm_arg_sysctl(kvm_t *kd, const struct kinfo_proc *kp, int nchr, int env)
+kvm_arg_sysctl(kvm_t *kd, pid_t pid, int nchr, int env)
 {
 	int mib[4];
 	size_t len, orglen;
@@ -712,7 +960,7 @@ kvm_arg_sysctl(kvm_t *kd, const struct kinfo_proc *kp, int nchr, int env)
 again:
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROC_ARGS;
-	mib[2] = (int)kp->kp_proc.p_pid;
+	mib[2] = (int)pid;
 	mib[3] = env ? KERN_PROC_ENV : KERN_PROC_ARGV;
 
 	len = orglen;
@@ -750,9 +998,12 @@ kvm_getargv(kd, kp, nchr)
 	const struct kinfo_proc *kp;
 	int nchr;
 {
+	struct miniproc p;
+
 	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp, nchr, 0));
-	return (kvm_doargv(kd, kp, nchr, ps_str_a));
+		return (kvm_arg_sysctl(kd, kp->kp_proc.p_pid, nchr, 0));
+	KPTOMINI(kp, &p);
+	return (kvm_doargv(kd, &p, nchr, ps_str_a));
 }
 
 char **
@@ -761,18 +1012,49 @@ kvm_getenvv(kd, kp, nchr)
 	const struct kinfo_proc *kp;
 	int nchr;
 {
+	struct miniproc p;
+
 	if (ISALIVE(kd))
-		return (kvm_arg_sysctl(kd, kp, nchr, 1));
-	return (kvm_doargv(kd, kp, nchr, ps_str_e));
+		return (kvm_arg_sysctl(kd, kp->kp_proc.p_pid, nchr, 1));
+	KPTOMINI(kp, &p);
+	return (kvm_doargv(kd, &p, nchr, ps_str_e));
+}
+
+char **
+kvm_getargv2(kd, kp, nchr)  
+	kvm_t *kd;
+	const struct kinfo_proc2 *kp;
+	int nchr;
+{
+	struct miniproc p;
+
+	if (ISALIVE(kd))
+		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 0));
+	KP2TOMINI(kp, &p);
+	return (kvm_doargv(kd, &p, nchr, ps_str_a));
+}
+
+char **
+kvm_getenvv2(kd, kp, nchr)  
+	kvm_t *kd;
+	const struct kinfo_proc2 *kp;
+	int nchr;
+{
+	struct miniproc p;
+
+	if (ISALIVE(kd))
+		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
+	KP2TOMINI(kp, &p);
+	return (kvm_doargv(kd, &p, nchr, ps_str_e));
 }
 
 /*
  * Read from user space.  The user context is given by p.
  */
-ssize_t
-kvm_uread(kd, p, uva, buf, len)
+static ssize_t
+kvm_ureadm(kd, p, uva, buf, len)
 	kvm_t *kd;
-	const struct proc *p;
+	const struct miniproc *p;
 	u_long uva;
 	char *buf;
 	size_t len;
@@ -781,21 +1063,34 @@ kvm_uread(kd, p, uva, buf, len)
 
 	cp = buf;
 	while (len > 0) {
-		int cc;
+		size_t cc;
 		char *dp;
 		u_long cnt;
 
-		dp = _kvm_uread(kd, p, uva, &cnt);
+		dp = _kvm_ureadm(kd, p, uva, &cnt);
 		if (dp == 0) {
 			_kvm_err(kd, 0, "invalid address (%lx)", uva);
 			return (0);
 		}
-		cc = MIN(cnt, len);
+		cc = (size_t)MIN(cnt, len);
 		bcopy(dp, cp, cc);
-
 		cp += cc;
 		uva += cc;
 		len -= cc;
 	}
 	return (ssize_t)(cp - buf);
+}
+
+ssize_t
+kvm_uread(kd, p, uva, buf, len)
+	kvm_t *kd;
+	const struct proc *p;
+	u_long uva; 
+	char *buf;
+	size_t len;
+{
+	struct miniproc mp;
+
+	PTOMINI(p, &mp);
+	return (kvm_ureadm(kd, &mp, uva, buf, len));
 }

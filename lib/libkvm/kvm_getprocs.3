@@ -1,5 +1,5 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.10 2003/06/02 20:18:40 millert Exp $
-.\"	$NetBSD: kvm_getprocs.3,v 1.3 1996/05/20 16:58:03 mrg Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.11 2004/01/07 02:16:33 millert Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,10 @@
 .Sh NAME
 .Nm kvm_getprocs ,
 .Nm kvm_getargv ,
-.Nm kvm_getenvv
+.Nm kvm_getenvv ,
+.Nm kvm_getproc2 ,
+.Nm kvm_getargv2 ,
+.Nm kvm_getenvv2
 .Nd access user process state
 .Sh SYNOPSIS
 .Fd #include <kvm.h>
@@ -51,6 +54,12 @@
 .Fn kvm_getargv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
+.Ft struct kinfo_proc2 *
+.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "int elemsize" "int *cnt"
+.Ft char **
+.Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
+.Ft char **
+.Fn kvm_getenvv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
 .Sh DESCRIPTION
 .Fn kvm_getprocs
 returns a (sub-)set of active processes in the kernel indicated by
@@ -59,8 +68,7 @@ The
 .Fa op
 and
 .Fa arg
-arguments constitute a predicate which limits the set of processes
-returned.
+arguments constitute a predicate which limits the set of processes returned.
 The value of
 .Fa op
 describes the filtering predicate as follows:
@@ -147,11 +155,44 @@ function is similar to
 .Fn kvm_getargv
 but returns the vector of environment strings.
 This data is also alterable by the process.
+.Pp
+.Fn kvm_getproc2
+is similar to
+.Fn kvm_getprocs
+but returns an array of
+.Li kinfo_proc2
+structures.
+Additionally, only the first
+.Fa elemsize
+bytes of each array entry are returned.
+If the size of the
+.Li kinfo_proc2
+structure increases in size in a future release of
+.Ox ,
+the kernel will only return the requested amount of data for
+each array entry and programs that use
+.Fn kvm_getproc2
+will continue to function without the need for recompilation.
+.Pp
+The
+.Fn kvm_getargv2
+and
+.Fn kvm_getenvv2
+functions are equivalents to the
+.Fn kvm_getargv
+and
+.Fn kvm_getenvv
+functions that use a
+.Li kinfo_proc2
+structure to specify the process.
 .Sh RETURN VALUES
 .Fn kvm_getprocs ,
 .Fn kvm_getargv ,
-and
 .Fn kvm_getenvv ,
+.Fn kvm_getproc2 ,
+.Fn kvm_getargv2 ,
+and
+.Fn kvm_getenvv2
 all return
 .Dv NULL
 on failure.
