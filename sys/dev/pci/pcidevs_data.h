@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.103 1998/11/29 02:29:04 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1575,6 +1575,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "450 PCIset (Orion) Memory Controller",
 	},
 	{
+	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
+	    0,
+	    "Intergraph",
+	    "Powerstorm 4D50T",
+	},
+	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
 	    0,
 	    "I. T. T.",
@@ -2673,10 +2679,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C561",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	    0,
 	    "VIA Technologies",
-	    "VT82C586 (Apollo VP) IDE",
+	    "VT82C586A IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
@@ -2733,10 +2739,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416MV,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    0,
 	    "VIA Technologies",
-	    "VT82C416MV",
+	    "VT82C586 (Apollo VP) IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.103 1998/11/29 02:29:04 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -896,6 +896,9 @@
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory Controller */
 
+/* Intergraph products */
+#define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
+
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
@@ -1175,7 +1178,7 @@
 /* VIA Technologies products */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
-#define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x0571		/* VT82C586 (Apollo VP) IDE */
+#define	PCI_PRODUCT_VIATECH_VT82C586A_IDE	0x0571		/* VT82C586A IDE */
 #define	PCI_PRODUCT_VIATECH_VT82C576	0x0576		/* VT82C576 3V */
 #define	PCI_PRODUCT_VIATECH_VT82C585	0x0585		/* VT82C585 (Apollo) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C586	0x0586		/* VT82C586 (Apollo VP) PCI-ISA Bridge */
@@ -1185,7 +1188,7 @@
 #define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon */
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
-#define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
+#define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x1571		/* VT82C586 (Apollo VP) IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C1595	0x1595		/* VT82C1595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
