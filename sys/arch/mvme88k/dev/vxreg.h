@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.3 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.4 2003/11/09 00:31:59 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -76,7 +76,7 @@ struct vxreg {
 #define CMD_IOCTL             0x0004
 #define CMD_CLOSE             0x0005
 #define CMD_EVENT             0x0006
-#define CMD_PROCCESED         0x00FF
+#define CMD_PROCESSED         0x00FF
 
 #define IOCTL_LDOPEN          0x4400
 #define IOCTL_LDCLOSE         0x4401

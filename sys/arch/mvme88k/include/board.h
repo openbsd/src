@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.18 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: board.h,v 1.19 2003/11/09 00:32:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -92,7 +92,7 @@
 #define FPUP_BIT	0x400		/* FPU precise exception	*/
 #define FPUI_BIT	0x800		/* FPU imprecise exception	*/
 
-/* machine dependant definitions */
+/* machine dependent definitions */
 
 #if defined(MVME187) || defined(MVME197)
 #include <machine/mvme1x7.h>

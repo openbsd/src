@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.23 2003/10/05 20:27:48 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.24 2003/11/09 00:31:59 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -1166,9 +1166,9 @@ vx_intr(arg)
 			vx_event(sc, &pkt);
 			return 1;
 			break;
-		case CMD_PROCCESED:
+		case CMD_PROCESSED:
 #ifdef DEBUG_VXT
-			printf("CMD_PROCCESED Packet\n");
+			printf("CMD_PROCESSED Packet\n");
 #endif
 			return 1;
 			break;
@@ -1397,7 +1397,7 @@ put_free_packet(sc, pp)
 {
 	struct packet *pktp = (struct packet *)pp;
 	/*bzero(pktp, sizeof(struct packet));*/
-	pktp->command = CMD_PROCCESED;
+	pktp->command = CMD_PROCESSED;
 	sc->plist_tail->link = (u_long)pktp;
 	pktp->link = NULL;
 	sc->plist_tail = pktp;
@@ -1601,7 +1601,7 @@ bpp_send(struct vxsoftc *sc, void *pkt, int wait_flag)
 
 	sc->vx_reg->ipc_cr |= IPC_CR_ATTEN;
 	if (wait_flag) {		    /* wait for a packet to return */
-		while (pktp->command != CMD_PROCCESED) {
+		while (pktp->command != CMD_PROCESSED) {
 #ifdef DEBUG_VXT
 			printf("Polling for packet 0x%x in envelope 0x%x...\n", pktp, envp);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.14 2003/10/05 20:35:22 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.15 2003/11/09 00:32:00 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -51,7 +51,7 @@ extern struct simplelock cmmu_cpu_lock;
 #define CMMU_LOCK   simple_lock(&cmmu_cpu_lock)
 #define CMMU_UNLOCK simple_unlock(&cmmu_cpu_lock)
 
-/* machine dependant cmmu function pointer structure */
+/* machine dependent cmmu function pointer structure */
 struct cmmu_p {
 	void (*cmmu_init_func)(void);
 	void (*setup_board_config_func)(void);

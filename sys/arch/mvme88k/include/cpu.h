@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2003/10/05 20:27:46 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.23 2003/11/09 00:32:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -177,7 +177,7 @@ struct switchframe {
 	void	*sf_proc;		/* proc pointer */
 };
 
-/* This struct defines the machine dependant pointers */
+/* This struct defines the machine dependent pointers */
 struct md_p {
 	void (*clock_init_func)(void);      /* interval clock init function */
 	void (*statclock_init_func)(void);  /* statistics clock init function */

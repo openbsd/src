@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.119 2003/11/06 21:09:35 mickey Exp $	*/
+/* $OpenBSD: machdep.c,v 1.120 2003/11/09 00:32:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -115,7 +115,7 @@
 struct intrhand *intr_handlers[256];
 vaddr_t interrupt_stack[MAX_CPUS];
 
-/* machine dependant function pointers. */
+/* machine dependent function pointers. */
 struct md_p md;
 
 /* prototypes */
@@ -514,7 +514,7 @@ cpu_startup()
 		panic("uarea_pages %x: UADDR not free", uarea_pages);
 
 	/*
-	 * Grab machine dependant memory spaces
+	 * Grab machine dependent memory spaces
 	 */
 	switch (brdtyp) {
 #ifdef MVME187
@@ -2315,7 +2315,7 @@ mvme_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/* zero out the machine dependant function pointers */
+	/* zero out the machine dependent function pointers */
 	bzero(&md, sizeof(struct md_p));
 
 	buginit(); /* init the bug routines */
