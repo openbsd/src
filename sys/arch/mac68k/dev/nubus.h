@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.8 1997/03/29 23:20:43 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.9 1997/04/01 13:52:34 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define    NUBUS_DRHW_TFB	0x0001
 #define    NUBUS_DRHW_WVC	0x0006
 #define    NUBUS_DRHW_M2HRVC	0x0013
+#define    NUBUS_DRHW_CB264	0x013B
 #define    NUBUS_DRHW_MICRON	0x0146
 
 /* False DrHW values for video cards masquerading as other cards */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.10 1997/03/29 23:47:13 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.11 1997/04/01 13:52:34 briggs Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.17 1997/02/24 06:20:06 scottr Exp $	*/
 
 /*
@@ -56,10 +56,7 @@ static void	load_image_data __P((caddr_t data, struct image_data *image));
 static char zero = 0;
 static void	grfmv_intr_generic __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
-
-#ifdef MYSTERY
-static void	grfmv_intr_mystery __P((void *vsc, int slot));
-#endif
+static void	grfmv_intr_cb264 __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
@@ -231,6 +228,9 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_SAM768:
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
 		break;
+	case NUBUS_DRHW_CB264:
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
+		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
 	default:
@@ -316,10 +316,9 @@ grfmv_intr_cti(vsc, slot)
 	*slotbase = (*slotbase & 0xFD);
 }
 
-#ifdef MYSTERY
 /*ARGSUSED*/
 static void
-grfmv_intr_mystery(vsc, slot)
+grfmv_intr_cb264(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
@@ -366,4 +365,3 @@ grfmv_intr_mystery(vsc, slot)
 			movl	#0x1,a0@(0xff6014)"
 		: : "g" (slotbase) : "a0","d0","d1");
 }
-#endif
