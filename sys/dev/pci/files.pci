@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.114 2001/09/21 00:01:20 art Exp $
+#	$OpenBSD: files.pci,v 1.115 2001/10/04 21:50:35 gluk Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -383,11 +383,21 @@ device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
 
+# Guillemot Maxi Radio FM 2000 Radio Card
+device	mr: radio, pci
+attach	mr at pci
+file	dev/pci/maxiradio.c		mr	needs-flag
+
+# MediaForte SoundForte SF64-PCR Radio card
+device	sf4r: radio, pci, tea5757
+attach	sf4r at pci
+file	dev/pci/sf64pcr.c		sf4r	needs-flag
+
 # National Semiconductor DP83820/DP83821 based GigE
 device	nge: ether, ifnet, mii, ifmedia, mii_phy
 attach	nge at pci
 file	dev/pci/if_nge.c		nge
- 
+
 # Cyclades-Z series of intelligent multi-port serial adapters
 device	cz
 attach	cz at pci
