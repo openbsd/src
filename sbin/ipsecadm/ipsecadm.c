@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.60 2001/07/05 08:38:36 jjbg Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.61 2001/07/06 05:01:07 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -116,10 +116,8 @@ transform xf[] = {
 int
 addrparse(const char *str, struct sockaddr *addr, struct sockaddr *mask)
 {
-    u_long prefixlen;
-    char *p, *sp, *ep;
-    char c;
-    int ret = 0;
+    u_long prefixlen = 0;
+    char *p = NULL, *sp, *ep;
     struct addrinfo hints, *res = NULL;
     u_char *ap;
     int bitlen;
@@ -672,7 +670,6 @@ main(int argc, char **argv)
 	    (i + 1 < argc))
 	{
 	    struct stat sb;
-	    unsigned char *pptr;
 	    int fd;
 
 	    if (!(mode & ESP_NEW))
