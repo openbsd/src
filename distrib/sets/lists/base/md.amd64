@@ -16,6 +16,8 @@
 ./etc/firmware/tigon2
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
+./etc/firmware/yds
+./etc/firmware/yds-license
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
