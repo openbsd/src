@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.8 1999/02/15 20:42:23 mickey Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.9 2000/01/29 21:46:59 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -37,7 +37,7 @@
  * functions/defines/etc.
  */
 
-#define	APM_VERSION	0x0101
+#define	APM_VERSION	0x0102
 
 /*
  * APM info word from boot loader
@@ -62,6 +62,8 @@
 #define	APM_ERR_UNRECOG_DEV	0x09
 #define	APM_ERR_ERANGE		0x0A
 #define	APM_ERR_NOTENGAGED	0x0B
+#define	APM_ERR_EOPNOSUPP	0x0C
+#define	APM_ERR_RTIMER_DISABLED	0x0D
 #define APM_ERR_UNABLE		0x60
 #define APM_ERR_NOEVENTS	0x80
 #define	APM_ERR_NOT_PRESENT	0x86
@@ -133,7 +135,8 @@
 #define		APM_BATT_FLAG_LOW	0x02
 #define		APM_BATT_FLAG_CRITICAL	0x04
 #define		APM_BATT_FLAG_CHARGING	0x08
-#define		APM_BATT_FLAG_NOBATTERY	0x80
+#define		APM_BATT_FLAG_NOBATTERY	0x10
+#define		APM_BATT_FLAG_NOSYSBATT	0x80
 #define		APM_BATT_LIFE_UNKNOWN	0xff
 #define		BATT_STATE(regp) ((regp)->bx & 0xff)
 #define		BATT_FLAGS(regp) (((regp)->cx & 0xff00) >> 8)
@@ -148,6 +151,7 @@
 				      ((regp)->dx & 0x7fff) : \
 				      ((regp)->dx & 0x7fff)/60)
 #define		BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
+#define		BATT_COUNT(regp)	((regp)->si)
 
 #define	APM_GET_PM_EVENT	0x530b
 #define		APM_NOEVENT		0x0000
@@ -163,7 +167,7 @@
 #define		APM_USER_STANDBY_REQ	0x0009
 #define		APM_USER_SUSPEND_REQ	0x000A
 #define		APM_SYS_STANDBY_RESUME	0x000B
-#define		APM_CAPABILITY_CHANGE	0x000C
+#define		APM_CAPABILITY_CHANGE	0x000C	/* apm v1.2 */
 /* 0x000d - 0x00ff	Reserved system events */
 /* 0x0100 - 0x01ff	Reserved device events */
 /* 0x0200 - 0x02ff	OEM-defined APM events */
@@ -186,7 +190,20 @@
 #define		APM_MGT_DISENGAGE	0x0	/* %cx */
 #define		APM_MGT_ENGAGE		0x1
 
+/* %bx - APM_DEV_APM_BIOS
+ * %bl - number of batteries
+ * %cx - capabilities
+ */
 #define	APM_GET_CAPABILITIES	0x5310
+#define		APM_NBATTERIES(regp)	((regp)->bx)
+#define		APM_GLOBAL_STANDBY	0x0001
+#define		APM_GLOBAL_SUSPEND	0x0002
+#define		APM_RTIMER_STANDBY	0x0004	/* resume time wakes up */
+#define		APM_RTIMER_SUSPEND	0x0008
+#define		APM_IRRING_STANDBY	0x0010	/* internal ring wakes up */
+#define		APM_IRRING_SUSPEND	0x0020
+#define		APM_PCCARD_STANDBY	0x0040	/* pccard wakes up */
+#define		APM_PCCARD_SUSPEND	0x0080
 
 /* %bx - APM_DEV_APM_BIOS
  * %cl - function
