@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.9 2003/05/14 05:09:43 nate Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.10 2003/08/01 04:46:13 nate Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -32,6 +32,12 @@
 
 /*
  * driver for the Marvell 88E1000 series external 1000/100/10-BT PHY.
+ */
+
+/*
+ * Support added for the Marvell 88E1011 (Alaska) 1000/100/10baseTX and
+ * 1000baseSX PHY.
+ * Nathan Binkert <nate@openbsd.org>
  */
 
 #include <sys/param.h>
@@ -84,6 +90,7 @@ eephymatch(struct device *parent, void *match, void *aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    (MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_4 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_5 ||
@@ -112,50 +119,42 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = mii->mii_flags;
 	sc->mii_anegticks = 10;
 
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 && 
+	    (PHY_READ(sc, E1000_ESSR) & E1000_ESSR_FIBER_LINK))
+		sc->mii_flags |= MIIF_HAVEFIBER;
+
 	eephy_reset(sc);
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#ifdef __OpenBSD__
-#define PRINT(s)
-#else
-#define PRINT(s)	printf("%s%s", sep, s); sep = ", "
-#endif
 
-#ifndef __OpenBSD__
-	printf("%s: ", sc->mii_dev.dv_xname);
-#endif
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst),
-			E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
-	PRINT("1000baseTX-FDX");
-	/*
-	TODO - apparently 1000BT-simplex not supported?
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
-			E1000_CR_SPEED_1000);
-	PRINT("1000baseTX");
-	*/
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
-			E1000_CR_SPEED_100 | E1000_CR_FULL_DUPLEX);
-	PRINT("100baseTX-FDX");
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
-			E1000_CR_SPEED_100);
-	PRINT("100baseTX");
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
-			E1000_CR_SPEED_10 | E1000_CR_FULL_DUPLEX);
-	PRINT("10baseTX-FDX");
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
-			E1000_CR_SPEED_10);
-	PRINT("10baseTX");
+
+	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst),
+		    E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
+		/*
+		  TODO - apparently 1000BT-simplex not supported?
+		  ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
+		      E1000_CR_SPEED_1000);
+		*/
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
+		    E1000_CR_SPEED_100 | E1000_CR_FULL_DUPLEX);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
+		    E1000_CR_SPEED_100);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
+		    E1000_CR_SPEED_10 | E1000_CR_FULL_DUPLEX);
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
+		    E1000_CR_SPEED_10);
+	} else {
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,sc->mii_inst),
+		    E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
+	}
+
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
-	PRINT("auto");
 
-#ifndef __OpenBSD__
-	printf("\n");
-#endif
 #undef ADD
-#undef PRINT
-
 }
 
 static void
@@ -243,6 +242,14 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			}
 			eephy_reset(sc);
 			(void)eephy_mii_phy_auto(sc, 1);
+			break;
+
+		case IFM_1000_SX:
+			eephy_reset(sc);
+
+			PHY_WRITE(sc, E1000_CR,
+			    E1000_CR_FULL_DUPLEX | E1000_CR_SPEED_1000);
+			PHY_WRITE(sc, E1000_AR, E1000_FA_1000X_FD);
 			break;
 
 		case IFM_1000_T:
@@ -377,27 +384,36 @@ eephy_status(struct mii_softc *sc)
 		return;
 	}
 
-	if (ssr & E1000_SSR_1000MBS)
-		mii->mii_media_active |= IFM_1000_T;
-	else if (ssr & E1000_SSR_100MBS)
-		mii->mii_media_active |= IFM_100_TX;
-	else
-		mii->mii_media_active |= IFM_10_T;
+	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		if (ssr & E1000_SSR_1000MBS)
+			mii->mii_media_active |= IFM_1000_T;
+		else if (ssr & E1000_SSR_100MBS)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+	} else {
+		if (ssr & E1000_SSR_1000MBS)
+			mii->mii_media_active |= IFM_1000_SX;
+	}
 
 	if (ssr & E1000_SSR_DUPLEX)
 		mii->mii_media_active |= IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
 
-	/* FLAG0==rx-flow-control FLAG1==tx-flow-control */
-	if ((ar & E1000_AR_PAUSE) && (lpar & E1000_LPAR_PAUSE)) {
-		mii->mii_media_active |= IFM_FLAG0 | IFM_FLAG1;
-	} else if (!(ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
-	    (lpar & E1000_LPAR_PAUSE) && (lpar & E1000_LPAR_ASM_DIR)) {
-		mii->mii_media_active |= IFM_FLAG1;
-	} else if ((ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
-	    !(lpar & E1000_LPAR_PAUSE) && (lpar & E1000_LPAR_ASM_DIR)) {
-		mii->mii_media_active |= IFM_FLAG0;
+	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		/* FLAG0==rx-flow-control FLAG1==tx-flow-control */
+		if ((ar & E1000_AR_PAUSE) && (lpar & E1000_LPAR_PAUSE)) {
+			mii->mii_media_active |= IFM_FLAG0 | IFM_FLAG1;
+		} else if (!(ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
+			   (lpar & E1000_LPAR_PAUSE) &&
+			   (lpar & E1000_LPAR_ASM_DIR)) {
+			mii->mii_media_active |= IFM_FLAG1;
+		} else if ((ar & E1000_AR_PAUSE) && (ar & E1000_AR_ASM_DIR) &&
+			   !(lpar & E1000_LPAR_PAUSE) &&
+			   (lpar & E1000_LPAR_ASM_DIR)) {
+			mii->mii_media_active |= IFM_FLAG0;
+		}
 	}
 }
 
@@ -407,10 +423,16 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 	int bmsr, i;
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		PHY_WRITE(sc, E1000_AR, E1000_AR_10T | E1000_AR_10T_FD |
-		    E1000_AR_100TX | E1000_AR_100TX_FD |
-		    E1000_AR_PAUSE | E1000_AR_ASM_DIR);
-		PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
+		if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+			PHY_WRITE(sc, E1000_AR,
+				  E1000_AR_10T | E1000_AR_10T_FD |
+				  E1000_AR_100TX | E1000_AR_100TX_FD |
+				  E1000_AR_PAUSE | E1000_AR_ASM_DIR);
+			PHY_WRITE(sc, E1000_1GCR, E1000_1GCR_1000T_FD);
+		} else {
+			PHY_WRITE(sc, E1000_AR, E1000_FA_1000X_FD |
+				  E1000_FA_SYM_PAUSE | E1000_FA_ASYM_PAUSE);
+		}
 		PHY_WRITE(sc, E1000_CR,
 		    E1000_CR_AUTO_NEG_ENABLE | E1000_CR_RESTART_AUTO_NEG);
 	}

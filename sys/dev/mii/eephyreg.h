@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephyreg.h,v 1.3 2003/05/14 05:09:43 nate Exp $	*/
+/*	$OpenBSD: eephyreg.h,v 1.4 2003/08/01 04:46:13 nate Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -119,6 +119,15 @@
 #define E1000_AR_NEXT_PAGE		0x8000
 #define E1000_AR_SPEED_MASK		0x01E0
 
+/* Autonegotiation register bits for fiber cards (Alaska Only!) */
+#define E1000_FA_1000X_FD		0x0020
+#define E1000_FA_1000X			0x0040
+#define E1000_FA_SYM_PAUSE		0x0080
+#define E1000_FA_ASYM_PAUSE		0x0100
+#define E1000_FA_FAULT1			0x1000
+#define E1000_FA_FAULT2			0x2000
+#define E1000_FA_NEXT_PAGE		0x8000
+
 #define E1000_LPAR			0x05	/* autoneg link partner abilities reg */
 #define E1000_LPAR_SELECTOR_FIELD	0x0001
 #define E1000_LPAR_10T			0x0020
@@ -131,6 +140,16 @@
 #define E1000_LPAR_REMOTE_FAULT		0x2000
 #define E1000_LPAR_ACKNOWLEDGE		0x4000
 #define E1000_LPAR_NEXT_PAGE		0x8000
+
+/* autoneg link partner ability register bits for fiber cards (Alaska Only!) */
+#define E1000_FPAR_1000X_FD		0x0020
+#define E1000_FPAR_1000X		0x0040
+#define E1000_FPAR_SYM_PAUSE		0x0080
+#define E1000_FPAR_ASYM_PAUSE		0x0100
+#define E1000_FPAR_FAULT1		0x1000
+#define E1000_FPAR_FAULT2		0x2000
+#define E1000_FPAR_ACK			0x4000
+#define E1000_FPAR_NEXT_PAGE		0x8000
 
 #define E1000_ER			0x06	/* autoneg expansion reg */
 #define E1000_ER_LP_NWAY		0x0001
@@ -281,3 +300,11 @@
 #define E1000_LCR_PULSE_340_670MS	0x5000
 #define E1000_LCR_PULSE_670_13S		0x6000
 #define E1000_LCR_PULSE_13_26S		0x7000
+
+/* The following register is found only on the 88E1011 Alaska PHY */
+#define E1000_ESSR			0x1B	/* Extended PHY specific sts */
+#define E1000_ESSR_FIBER_LINK		0x2000
+#define E1000_ESSR_GMII_COPPER		0x000f
+#define E1000_ESSR_GMII_FIBER		0x0007
+#define E1000_ESSR_TBI_COPPER		0x000d
+#define E1000_ESSR_TBI_FIBER		0x0005
