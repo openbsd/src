@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.6 1999/10/03 21:50:04 provos Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.7 1999/10/04 20:45:02 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -129,9 +129,6 @@ only by root, whereas ssh_config should be world-readable. */
    this were in the user\'s home directory, the daemon (running as root)
    might not be able to create and chown the file to the user\'s uid. */
 #define SSH_AGENT_SOCKET	"/tmp/ssh_agent.%d"
-
-/* Name of the environment variable containing the authentication fd. */
-#define SSH_AUTHFD_ENV_NAME	"SSH_AUTHENTICATION_FD"
 
 /* Name of the environment variable containing the pathname of the
    authentication socket. */

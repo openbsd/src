@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.10 1999/10/03 19:22:38 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.11 1999/10/04 20:45:01 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1380,98 +1380,50 @@ char *auth_get_socket_name()
 
 void auth_input_request_forwarding(struct passwd *pw)
 {
-  int pfd = get_permanent_fd(pw->pw_shell);
   mode_t savedumask;
+  int sock, newch;
+  struct sockaddr_un sunaddr;
   
-  if (pfd < 0) 
-    {
-      int sock, newch;
-      struct sockaddr_un sunaddr;
-      
-      if (auth_get_socket_name() != NULL)
-	fatal("Protocol error: authentication forwarding requested twice.");
-    
-      /* Allocate a buffer for the socket name, and format the name. */
-      channel_forwarded_auth_socket_name = xmalloc(100);
-      sprintf(channel_forwarded_auth_socket_name, SSH_AGENT_SOCKET, 
-	      (int)getpid());
-    
-      /* Create the socket. */
-      sock = socket(AF_UNIX, SOCK_STREAM, 0);
-      if (sock < 0)
-	packet_disconnect("socket: %.100s", strerror(errno));
+  if (auth_get_socket_name() != NULL)
+    fatal("Protocol error: authentication forwarding requested twice.");
 
-      /* Bind it to the name. */
-      memset(&sunaddr, 0, sizeof(sunaddr));
-      sunaddr.sun_family = AF_UNIX;
-      strncpy(sunaddr.sun_path, channel_forwarded_auth_socket_name, 
-	      sizeof(sunaddr.sun_path));
+  /* Allocate a buffer for the socket name, and format the name. */
+  channel_forwarded_auth_socket_name = xmalloc(100);
+  sprintf(channel_forwarded_auth_socket_name, SSH_AGENT_SOCKET, 
+          (int)getpid());
 
-      savedumask = umask(0077);
+  /* Create the socket. */
+  sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (sock < 0)
+    packet_disconnect("socket: %.100s", strerror(errno));
 
-      /* Temporarily use a privileged uid. */
-      temporarily_use_uid(pw->pw_uid);
+  /* Bind it to the name. */
+  memset(&sunaddr, 0, sizeof(sunaddr));
+  sunaddr.sun_family = AF_UNIX;
+  strncpy(sunaddr.sun_path, channel_forwarded_auth_socket_name, 
+          sizeof(sunaddr.sun_path));
 
-      if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
-	packet_disconnect("bind: %.100s", strerror(errno));
+  savedumask = umask(0077);
 
-      /* Restore the privileged uid. */
-      restore_uid();
+  /* Temporarily use a privileged uid. */
+  temporarily_use_uid(pw->pw_uid);
 
-      umask(savedumask);
+  if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
+    packet_disconnect("bind: %.100s", strerror(errno));
 
-      /* Start listening on the socket. */
-      if (listen(sock, 5) < 0)
-	packet_disconnect("listen: %.100s", strerror(errno));
+  /* Restore the privileged uid. */
+  restore_uid();
 
-      /* Allocate a channel for the authentication agent socket. */
-      newch = channel_allocate(SSH_CHANNEL_AUTH_SOCKET, sock,
-			       xstrdup("auth socket"));
-      strcpy(channels[newch].path, channel_forwarded_auth_socket_name);
-    }
-  else 
-    {
-      int sockets[2], i, cnt, newfd;
-      int *dups = xmalloc(sizeof (int) * (pfd + 1));
-      
-      if (auth_get_fd() != -1)
-	fatal("Protocol error: authentication forwarding requested twice.");
+  umask(savedumask);
 
-      /* Create a socket pair. */
-      if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0)
-	packet_disconnect("socketpair: %.100s", strerror(errno));
-    
-      /* Dup some descriptors to get the authentication fd to pfd,
-	 because some shells arbitrarily close descriptors below that.
-	 Don't use dup2 because maybe some systems don't have it?? */
-      for (cnt = 0;; cnt++) 
-	{
-	  if ((dups[cnt] = dup(packet_get_connection_in())) < 0)
-	    fatal("auth_input_request_forwarding: dup failed");
-	  if (dups[cnt] == pfd)
-	    break;
-	}
-      close(dups[cnt]);
-      
-      /* Move the file descriptor we pass to children up high where
-	 the shell won't close it. */
-      newfd = dup(sockets[1]);
-      if (newfd != pfd)
-	fatal ("auth_input_request_forwarding: dup didn't return %d.", pfd);
-      close(sockets[1]);
-      sockets[1] = newfd;
-      /* Close duped descriptors. */
-      for (i = 0; i < cnt; i++)
-	close(dups[i]);
-      free(dups);
-    
-      /* Record the file descriptor to be passed to children. */
-      channel_forwarded_auth_fd = sockets[1];
-    
-      /* Allcate a channel for the authentication fd. */
-      (void)channel_allocate(SSH_CHANNEL_AUTH_FD, sockets[0],
-			     xstrdup("auth fd"));
-    }
+  /* Start listening on the socket. */
+  if (listen(sock, 5) < 0)
+    packet_disconnect("listen: %.100s", strerror(errno));
+
+  /* Allocate a channel for the authentication agent socket. */
+  newch = channel_allocate(SSH_CHANNEL_AUTH_SOCKET, sock,
+    		       xstrdup("auth socket"));
+  strcpy(channels[newch].path, channel_forwarded_auth_socket_name);
 }
 
 /* This is called to process an SSH_SMSG_AGENT_OPEN message. */

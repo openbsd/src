@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.8 1999/10/03 19:22:38 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.9 1999/10/04 20:45:01 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -552,102 +552,50 @@ main(int ac, char **av)
       exit(1);
     }
 
-  pfd = get_permanent_fd(NULL);
-  if (pfd < 0) 
-    {
-      /* The agent uses SSH_AUTHENTICATION_SOCKET. */
-      
-      parent_pid = getpid();
-      
-      snprintf(socket_name, sizeof socket_name, SSH_AGENT_SOCKET, parent_pid);
-      
-      /* Fork, and have the parent execute the command.  The child continues as
-	 the authentication agent. */
-      if (fork() != 0)
-	{ /* Parent - execute the given command. */
-	  snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_SOCKET=%s", socket_name);
-	  putenv(buf);
-	  execvp(av[1], av + 1);
-	  perror(av[1]);
-	  exit(1);
-	}
-      
-      sock = socket(AF_UNIX, SOCK_STREAM, 0);
-      if (sock < 0)
-	{
-	  perror("socket");
-	  exit(1);
-	}
-      memset(&sunaddr, 0, sizeof(sunaddr));
-      sunaddr.sun_family = AF_UNIX;
-      strlcpy(sunaddr.sun_path, socket_name, sizeof(sunaddr.sun_path));
-      if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
-	{
-	  perror("bind");
-	  exit(1);
-	}
-      if (chmod(socket_name, 0700) < 0)
-	{
-	  perror("chmod");
-	  exit(1);
-	}
-      if (listen(sock, 5) < 0)
-	{
-	  perror("listen");
-	  exit(1);
-	}
-      new_socket(AUTH_SOCKET, sock);
-      signal(SIGALRM, check_parent_exists);
-      alarm(10);
+  /* The agent uses SSH_AUTHENTICATION_SOCKET. */
+  
+  parent_pid = getpid();
+  
+  snprintf(socket_name, sizeof socket_name, SSH_AGENT_SOCKET, parent_pid);
+  
+  /* Fork, and have the parent execute the command.  The child continues as
+     the authentication agent. */
+  if (fork() != 0)
+    { /* Parent - execute the given command. */
+      snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_SOCKET=%s", socket_name);
+      putenv(buf);
+      execvp(av[1], av + 1);
+      perror(av[1]);
+      exit(1);
     }
-  else 
+  
+  sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (sock < 0)
     {
-      /* The agent uses SSH_AUTHENTICATION_FD. */
-      int cnt, newfd;
-      
-      dups = xmalloc(sizeof (int) * (1 + pfd));
-      
-      if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0)
-	{
-	  perror("socketpair");
-	  exit(1);
-	}
-
-      /* Dup some descriptors to get the authentication fd to pfd,
-	 because some shells arbitrarily close descriptors below that.
-	 Don't use dup2 because maybe some systems don't have it?? */
-      for (cnt = 0;; cnt++) {
-	if ((dups[cnt] = dup(0)) < 0)
-	  fatal("auth_input_request_forwarding: dup failed");
-	if (dups[cnt] == pfd)
-	  break;
-      }
-      close(dups[cnt]);
-      
-      /* Move the file descriptor we pass to children up high where
-	 the shell won't close it. */
-      newfd = dup(sockets[1]);
-      if (newfd != pfd)
-	fatal("auth_input_request_forwarding: dup didn't return %d.", pfd);
-      close(sockets[1]);
-      sockets[1] = newfd;
-      /* Close duped descriptors. */
-      for (i = 0; i < cnt; i++)
-	close(dups[i]);
-      free(dups);
-      
-      if (fork() != 0)
-	{ /* Parent - execute the given command. */
-	  close(sockets[0]);
-	  snprintf(buf, sizeof buf, "SSH_AUTHENTICATION_FD=%d", sockets[1]);
-	  putenv(buf);
-	  execvp(av[1], av + 1);
-	  perror(av[1]);
-	  exit(1);
-	}
-      close(sockets[1]);
-      new_socket(AUTH_FD, sockets[0]);
+      perror("socket");
+      exit(1);
     }
+  memset(&sunaddr, 0, sizeof(sunaddr));
+  sunaddr.sun_family = AF_UNIX;
+  strlcpy(sunaddr.sun_path, socket_name, sizeof(sunaddr.sun_path));
+  if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
+    {
+      perror("bind");
+      exit(1);
+    }
+  if (chmod(socket_name, 0700) < 0)
+    {
+      perror("chmod");
+      exit(1);
+    }
+  if (listen(sock, 5) < 0)
+    {
+      perror("listen");
+      exit(1);
+    }
+  new_socket(AUTH_SOCKET, sock);
+  signal(SIGALRM, check_parent_exists);
+  alarm(10);
 
   signal(SIGINT, SIG_IGN);
   while (1)
