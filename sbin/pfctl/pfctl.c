@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.48 2001/12/10 18:08:12 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.49 2001/12/31 16:48:36 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -678,6 +678,7 @@ main(int argc, char *argv[])
 	int error = 0;
 	int dev = -1;
 	int ch;
+	int mode = O_RDONLY;
 
 	if (argc < 2)
 		usage();
@@ -686,36 +687,44 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
+			mode = O_RDWR;
 			break;
 		case 'e':
 			opts |= PF_OPT_ENABLE;
+			mode = O_RDWR;
 			break;
 		case 'q':
 			opts |= PF_OPT_QUIET;
 			break;
 		case 'F':
 			clearopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'l':
 			logopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;
 			break;
 		case 'N':
 			natopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'O':
 			hintopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'R':
 			rulesopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 's':
 			showopt = optarg;
 			break;
 		case 't':
 			timeoutopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
@@ -736,8 +745,10 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
+	if (opts & PF_OPT_NOACTION)
+		mode = O_RDONLY;
 	if ((opts & PF_OPT_NOACTION) == 0) {
-		dev = open("/dev/pf", O_RDWR);
+		dev = open("/dev/pf", mode);
 		if (dev == -1)
 			err(1, "open(\"/dev/pf\")");
 	} else {
