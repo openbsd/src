@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.170 2004/09/15 17:53:18 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.171 2004/10/17 17:42:01 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -96,7 +96,13 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/bus.h>
 #include <machine/endian.h>
+
+#include <dev/ata/atavar.h>
+#include <dev/ata/satareg.h>
+#include <dev/ic/wdcreg.h>
+#include <dev/ic/wdcvar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -120,10 +126,6 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_i31244_reg.h>
 #include <dev/pci/pciide_ite_reg.h>
 #include <dev/pci/cy82c693var.h>
-
-#include <dev/ata/atavar.h>
-#include <dev/ic/wdcreg.h>
-#include <dev/ic/wdcvar.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
