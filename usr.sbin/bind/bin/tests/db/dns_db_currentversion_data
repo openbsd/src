@@ -1,0 +1,7 @@
+#
+# test data for dns_db_currentversion
+#
+# format:
+#	filename findname findtype
+#
+dns_db_currentversion.data	rbt	vix.com.	IN	zone	a.b.c.vix.com.	A

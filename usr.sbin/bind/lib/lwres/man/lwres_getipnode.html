@@ -1,0 +1,529 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>lwres_getipnode</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+>lwres_getipnode</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN8"
+></A
+><H2
+>Name</H2
+>lwres_getipnodebyname, lwres_getipnodebyaddr, lwres_freehostent&nbsp;--&nbsp;lightweight resolver nodename / address translation API</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN13"
+></A
+><H2
+>Synopsis</H2
+><DIV
+CLASS="FUNCSYNOPSIS"
+><A
+NAME="AEN14"
+></A
+><P
+></P
+><PRE
+CLASS="FUNCSYNOPSISINFO"
+>#include &lt;lwres/netdb.h&gt;</PRE
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>struct hostent *
+lwres_getipnodebyname</CODE
+>(const char *name, int af, int flags, int *error_num);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>struct hostent *
+lwres_getipnodebyaddr</CODE
+>(const void *src, size_t len, int af, int *error_num);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_freehostent</CODE
+>(struct hostent *he);</CODE
+></P
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN34"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>These functions perform thread safe, protocol independent
+nodename-to-address and address-to-nodename 
+translation as defined in RFC2553.</P
+><P
+>They use a
+<SPAN
+CLASS="TYPE"
+>struct hostent</SPAN
+>
+which is defined in
+<TT
+CLASS="FILENAME"
+>namedb.h</TT
+>:
+<PRE
+CLASS="PROGRAMLISTING"
+>struct  hostent {
+        char    *h_name;        /* official name of host */
+        char    **h_aliases;    /* alias list */
+        int     h_addrtype;     /* host address type */
+        int     h_length;       /* length of address */
+        char    **h_addr_list;  /* list of addresses from name server */
+};
+#define h_addr  h_addr_list[0]  /* address, for backward compatibility */</PRE
+></P
+><P
+>The members of this structure are:
+<P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="CONSTANT"
+>h_name</TT
+></DT
+><DD
+><P
+>The official (canonical) name of the host.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>h_aliases</TT
+></DT
+><DD
+><P
+>A NULL-terminated array of alternate names (nicknames) for the host.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>h_addrtype</TT
+></DT
+><DD
+><P
+>The type of address being returned - usually
+<SPAN
+CLASS="TYPE"
+>PF_INET</SPAN
+>
+or
+<SPAN
+CLASS="TYPE"
+>PF_INET6</SPAN
+>.&#13;</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>h_length</TT
+></DT
+><DD
+><P
+>The length of the address in bytes.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>h_addr_list</TT
+></DT
+><DD
+><P
+>A
+<SPAN
+CLASS="TYPE"
+>NULL</SPAN
+>
+terminated array of network addresses for the host.
+Host addresses are returned in network byte order.</P
+></DD
+></DL
+></DIV
+></P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_getipnodebyname()</TT
+>
+looks up addresses of protocol family
+<TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+>
+
+for the hostname
+<TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>.
+
+The
+<TT
+CLASS="PARAMETER"
+><I
+>flags</I
+></TT
+>
+parameter contains ORed flag bits to 
+specify the types of addresses that are searched
+for, and the types of addresses that are returned. 
+The flag bits are:
+<P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="CONSTANT"
+>AI_V4MAPPED</TT
+></DT
+><DD
+><P
+>This is used with an
+<TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+>
+of AF_INET6, and causes IPv4 addresses to be returned as IPv4-mapped
+IPv6 addresses.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>AI_ALL</TT
+></DT
+><DD
+><P
+>This is used with an
+<TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+>
+of AF_INET6, and causes all known addresses (IPv6 and IPv4) to be returned.
+If AI_V4MAPPED is also set, the IPv4 addresses are return as mapped
+IPv6 addresses.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>AI_ADDRCONFIG</TT
+></DT
+><DD
+><P
+>Only return an IPv6 or IPv4 address if here is an active network
+interface of that type.  This is not currently implemented
+in the BIND 9 lightweight resolver, and the flag is ignored.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>AI_DEFAULT</TT
+></DT
+><DD
+><P
+>This default sets the
+<TT
+CLASS="CONSTANT"
+>AI_V4MAPPED</TT
+>
+and
+<TT
+CLASS="CONSTANT"
+>AI_ADDRCONFIG</TT
+>
+flag bits.</P
+></DD
+></DL
+></DIV
+></P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_getipnodebyaddr()</TT
+>
+performs a reverse lookup
+of address
+<TT
+CLASS="PARAMETER"
+><I
+>src</I
+></TT
+>
+which is
+<TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>
+bytes long.
+<TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+>
+denotes the protocol family, typically
+<SPAN
+CLASS="TYPE"
+>PF_INET</SPAN
+>
+or
+<SPAN
+CLASS="TYPE"
+>PF_INET6</SPAN
+>.&#13;</P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_freehostent()</TT
+>
+releases all the memory associated with
+the
+<SPAN
+CLASS="TYPE"
+>struct hostent</SPAN
+>
+pointer
+<TT
+CLASS="PARAMETER"
+><I
+>he</I
+></TT
+>.
+
+Any memory allocated for the
+<TT
+CLASS="CONSTANT"
+>h_name</TT
+>,
+
+<TT
+CLASS="CONSTANT"
+>h_addr_list</TT
+>
+and
+<TT
+CLASS="CONSTANT"
+>h_aliases</TT
+>
+is freed, as is the memory for the
+<SPAN
+CLASS="TYPE"
+>hostent</SPAN
+>
+structure itself.</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN116"
+></A
+><H2
+>RETURN VALUES</H2
+><P
+>If an error occurs,
+<TT
+CLASS="FUNCTION"
+>lwres_getipnodebyname()</TT
+>
+and
+<TT
+CLASS="FUNCTION"
+>lwres_getipnodebyaddr()</TT
+>
+set
+<TT
+CLASS="PARAMETER"
+><I
+>*error_num</I
+></TT
+>
+to an approriate error code and the function returns a
+<SPAN
+CLASS="TYPE"
+>NULL</SPAN
+>
+pointer.
+The error codes and their meanings are defined in
+<TT
+CLASS="FILENAME"
+>&lt;lwres/netdb.h&gt;</TT
+>:
+<P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+><TT
+CLASS="CONSTANT"
+>HOST_NOT_FOUND</TT
+></DT
+><DD
+><P
+>No such host is known.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>NO_ADDRESS</TT
+></DT
+><DD
+><P
+>The server recognised the request and the name but no address is
+available.  Another type of request to the name server for the
+domain might return an answer.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>TRY_AGAIN</TT
+></DT
+><DD
+><P
+>A temporary and possibly transient error occurred, such as a
+failure of a server to respond.  The request may succeed if
+retried.</P
+></DD
+><DT
+><TT
+CLASS="CONSTANT"
+>NO_RECOVERY</TT
+></DT
+><DD
+><P
+>An unexpected failure occurred, and retrying the request
+is pointless.</P
+></DD
+></DL
+></DIV
+></P
+><P
+><SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres_hstrerror</SPAN
+>(3)</SPAN
+>
+translates these error codes to suitable error messages.</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN149"
+></A
+><H2
+>SEE ALSO</H2
+><P
+><SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>RFC2553</SPAN
+></SPAN
+>,
+
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres</SPAN
+>(3)</SPAN
+>,
+
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres_gethostent</SPAN
+>(3)</SPAN
+>,
+
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres_getaddrinfo</SPAN
+>(3)</SPAN
+>,
+
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres_getnameinfo</SPAN
+>(3)</SPAN
+>,
+
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>lwres_hstrerror</SPAN
+>(3)</SPAN
+>.</P
+></DIV
+></BODY
+></HTML
+>

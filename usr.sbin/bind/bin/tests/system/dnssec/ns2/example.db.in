@@ -1,0 +1,66 @@
+; Copyright (C) 2000, 2001  Internet Software Consortium.
+;
+; Permission to use, copy, modify, and distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+; $ISC: example.db.in,v 1.8 2001/02/20 18:33:50 bwelling Exp $
+
+$TTL 300	; 5 minutes
+@			IN SOA	mname1. . (
+				2000042407 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns2
+			NS	ns3
+ns2			A	10.53.0.2
+ns3			A	10.53.0.3
+
+a			A	10.0.0.1
+b			A	10.0.0.2
+d			A	10.0.0.4
+
+; Used for testing ANY queries
+foo			TXT	"testing"
+foo			A	10.0.1.0
+
+; Used for testing CNAME queries
+cname1			CNAME	cname1-target
+cname1-target		TXT	"testing cname"
+
+cname2			CNAME	cname2-target
+cname2-target		TXT	"testing cname"
+
+; Used for testing DNAME queries
+dname1			DNAME	dname1-target
+foo.dname1-target	TXT	"testing dname"
+
+dname2			DNAME	dname2-target
+foo.dname2-target	TXT	"testing dname"
+
+; A secure subdomain
+secure			NS	ns.secure
+ns.secure		A	10.53.0.3
+
+; An insecure subdomain
+insecure		NS	ns.insecure
+ns.insecure		A	10.53.0.3
+
+
+; A secure subdomain we're going to inject bogus data into
+bogus			NS	ns.bogus
+ns.bogus		A	10.53.0.3
+
+z			A	10.0.0.26

@@ -1,0 +1,159 @@
+; Copyright (C) 2000, 2001  Internet Software Consortium.
+;
+; Permission to use, copy, modify, and distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+; $ISC: example.db,v 1.7 2001/01/09 21:45:49 bwelling Exp $
+
+$ORIGIN .
+$TTL 300	; 5 minutes
+example			IN SOA	ns2.example. hostmaster.example. (
+				2000042795 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+example.		NS	ns2.example.
+ns2.example.		A	10.53.0.2
+example.		NS	ns3.example.
+ns3.example.		A	10.53.0.3
+
+$ORIGIN example.
+*			MX	10 mail
+a			TXT	"foo foo foo"
+			PTR	foo.net.
+$TTL 3600	; 1 hour
+a01			A	0.0.0.0
+a02			A	255.255.255.255
+a601			A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+			A6	64 ::ffff:ffff:ffff:ffff foo.
+			A6	127 ::1 foo.
+			A6	128  .
+afsdb01			AFSDB	0 hostname
+afsdb02			AFSDB	65535 .
+$TTL 300	; 5 minutes
+b			CNAME	foo.net.
+c			A	73.80.65.49
+$TTL 3600	; 1 hour
+cert01			CERT	65534 65535 PRIVATEOID (
+				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgi
+				WCn/GxHhai6VAuHAoNUz4YoU1tVfSCSqQYn6//11U6Nl
+				d80jEeC8aTrO+KKmCaY= )
+cname01			CNAME	cname-target.
+cname02			CNAME	cname-target
+cname03			CNAME	.
+$TTL 300	; 5 minutes
+d			A	73.80.65.49
+$TTL 3600	; 1 hour
+dname01			DNAME	dname-target.
+dname02			DNAME	dname-target
+dname03			DNAME	.
+$TTL 300	; 5 minutes
+e			MX	10 mail
+			TXT	"one"
+			TXT	"three"
+			TXT	"two"
+			A	73.80.65.49
+			A	73.80.65.50
+			A	73.80.65.52
+			A	73.80.65.51
+f			A	73.80.65.52
+$TTL 3600	; 1 hour
+gpos01			GPOS	"-22.6882" "116.8652" "250.0"
+gpos02			GPOS	"" "" ""
+hinfo01			HINFO	"Generic PC clone" "NetBSD-1.4"
+hinfo02			HINFO	"PC" "NetBSD"
+isdn01			ISDN	"isdn-address"
+isdn02			ISDN	"isdn-address" "subaddress"
+isdn03			ISDN	"isdn-address"
+isdn04			ISDN	"isdn-address" "subaddress"
+key01			KEY	512 255 1 (
+				AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aR
+				yzWZriO6i2odGWWQVucZqKVsENW91IOW4vqudngPZsY3
+				GvQ/xVA8/7pyFj6b7Esga60zyGW6LFe9r8n6paHrlG5o
+				jqf0BaqHT+8= )
+kx01			KX	10 kdc
+kx02			KX	10 .
+loc01			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
+loc02			LOC	60 9 0.000 N 24 39 0.000 E 10.00m 20m 2000m 20m
+mb01			MG	madname
+mb02			MG	.
+md01			MD	madname
+			MD	.
+mf01			MF	madname
+			MF	.
+mg01			MG	mgmname
+mg02			MG	.
+minfo01			MINFO	rmailbx emailbx
+minfo02			MINFO	. .
+mr01			MR	mrname
+mr02			MR	.
+mx01			MX	10 mail
+mx02			MX	10 .
+naptr01			NAPTR	0 0 "" "" "" .
+naptr02			NAPTR	65535 65535 "blurgh" "blorf" "blegh" foo.
+nsap-ptr01		NSAP-PTR foo.
+			NSAP-PTR .
+nsap01			NSAP	0x47000580005a0000000001e133ffffff00016100
+nsap02			NSAP	0x47000580005a0000000001e133ffffff00016100
+nxt01			NXT	a.secure ( NS SOA MX SIG KEY LOC NXT )
+nxt02			NXT	. ( NSAP-PTR NXT )
+nxt03			NXT	. ( A )
+nxt04			NXT	. ( 127 )
+ptr01			PTR	example.
+px01			PX	65535 foo. bar.
+px02			PX	65535 . .
+rp01			RP	mbox-dname txt-dname
+rp02			RP	. .
+rt01			RT	0 intermediate-host
+rt02			RT	65535 .
+$TTL 300	; 5 minutes
+s			NS	ns.s
+$ORIGIN s.example.
+ns			A	73.80.65.49
+$ORIGIN example.
+$TTL 3600	; 1 hour
+sig01			SIG	NXT 1 3 3600 20000102030405 (
+				19961211100908 2143 foo
+				MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgi
+				WCn/GxHhai6VAuHAoNUz4YoU1tVfSCSqQYn6//11U6Nl
+				d80jEeC8aTrO+KKmCaY= )
+srv01			SRV	0 0 0 .
+srv02			SRV	65535 65535 65535 old-slow-box.example.com.
+$TTL 301	; 5 minutes 1 second
+t			A	73.80.65.49
+$TTL 3600	; 1 hour
+txt01			TXT	"foo"
+txt02			TXT	"foo" "bar"
+txt03			TXT	"foo"
+txt04			TXT	"foo" "bar"
+txt05			TXT	"foo bar"
+txt06			TXT	"foo bar"
+txt07			TXT	"foo bar"
+txt08			TXT	"foo\010bar"
+txt09			TXT	"foo\010bar"
+txt10			TXT	"foo bar"
+txt11			TXT	"\"foo\""
+txt12			TXT	"\"foo\""
+$TTL 300	; 5 minutes
+u			TXT	"txt-not-in-nxt"
+$ORIGIN u.example.
+a			A	73.80.65.49
+b			A	73.80.65.49
+$ORIGIN example.
+$TTL 3600	; 1 hour
+wks01			WKS	10.0.0.1 6 ( 0 1 2 21 23 )
+wks02			WKS	10.0.0.1 17 ( 0 1 2 53 )
+wks03			WKS	10.0.0.2 6 ( 65535 )
+x2501			X25	"123456789"

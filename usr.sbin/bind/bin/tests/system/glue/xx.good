@@ -1,0 +1,16 @@
+
+; <<>> DiG 9.0 <<>> +norec @10.53.0.1 -p 5300 foo.bar.xx. a
+;; global options:  printcmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41239
+;; flags: qr ad; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+
+;; QUESTION SECTION:
+;foo.bar.xx.			IN	A
+
+;; AUTHORITY SECTION:
+xx.			172800	IN	NS	b.root-servers.nil.
+
+;; ADDITIONAL SECTION:
+b.root-servers.nil.	300	IN	A	10.53.0.2
+

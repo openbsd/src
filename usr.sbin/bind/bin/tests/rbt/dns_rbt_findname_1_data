@@ -1,0 +1,9 @@
+#
+# test data for dns_rbt_findname assertion 1
+#
+# format is: <dbfile> <command> <testname> <exp_result>
+#
+dns_rbt.data	search	a.vix.com	ISC_R_SUCCESS
+dns_rbt_bitstring.data	search	\[x42/7].vix.com	ISC_R_SUCCESS
+dns_rbt_bitstring.data	search	a.\[x42/7].com	ISC_R_SUCCESS
+dns_rbt_bitstring.data	search	a.vix.\[x42/7]	ISC_R_SUCCESS

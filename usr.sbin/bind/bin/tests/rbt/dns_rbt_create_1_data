@@ -1,0 +1,7 @@
+#
+# test data for dns_rbt_create assertion 1
+#
+# format is: <dbfile> <command> <testname> <exp_result>
+#
+dns_rbt.data	create	not.used	ISC_R_SUCCESS
+dns_rbt_bitstring.data	create	not.used	ISC_R_SUCCESS

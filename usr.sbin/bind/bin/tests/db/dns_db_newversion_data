@@ -1,0 +1,7 @@
+#
+# test data for dns_db_newversion
+#
+# format:
+# filename type origin class cache newname newtype
+#
+dns_db_newversion.data	rbt	vix.com.	in	zone	a.b.c.vix.com.	A

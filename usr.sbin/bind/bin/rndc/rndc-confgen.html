@@ -1,0 +1,548 @@
+<!--
+ - Copyright (C) 2001, 2002  Internet Software Consortium.
+ -
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $ISC: rndc-confgen.html,v 1.3.2.2 2002/08/05 06:57:04 marka Exp $ -->
+
+<HTML
+><HEAD
+><TITLE
+>rndc-confgen</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+><SPAN
+CLASS="APPLICATION"
+>rndc-confgen</SPAN
+></A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN9"
+></A
+><H2
+>Name</H2
+><SPAN
+CLASS="APPLICATION"
+>rndc-confgen</SPAN
+>&nbsp;--&nbsp;rndc key generation tool</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN13"
+></A
+><H2
+>Synopsis</H2
+><P
+><B
+CLASS="COMMAND"
+>rndc-confgen</B
+>  [<TT
+CLASS="OPTION"
+>-a</TT
+>] [<TT
+CLASS="OPTION"
+>-b <TT
+CLASS="REPLACEABLE"
+><I
+>keysize</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>keyfile</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-h</TT
+>] [<TT
+CLASS="OPTION"
+>-k <TT
+CLASS="REPLACEABLE"
+><I
+>keyname</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-p <TT
+CLASS="REPLACEABLE"
+><I
+>port</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-r <TT
+CLASS="REPLACEABLE"
+><I
+>randomfile</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>address</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-t <TT
+CLASS="REPLACEABLE"
+><I
+>chrootdir</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-u <TT
+CLASS="REPLACEABLE"
+><I
+>user</I
+></TT
+></TT
+>]</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN44"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>        <B
+CLASS="COMMAND"
+>rndc-confgen</B
+> generates configuration files
+	for <B
+CLASS="COMMAND"
+>rndc</B
+>.  It can be used as a
+        convenient alternative to writing the
+        <TT
+CLASS="FILENAME"
+>rndc.conf</TT
+> file
+        and the corresponding <B
+CLASS="COMMAND"
+>controls</B
+>
+        and <B
+CLASS="COMMAND"
+>key</B
+>
+	statements in <TT
+CLASS="FILENAME"
+>named.conf</TT
+> by hand.
+        Alternatively, it can be run with the <B
+CLASS="COMMAND"
+>-a</B
+>
+        option to set up a <TT
+CLASS="FILENAME"
+>rndc.key</TT
+> file and
+        avoid the need for a <TT
+CLASS="FILENAME"
+>rndc.conf</TT
+> file
+        and a <B
+CLASS="COMMAND"
+>controls</B
+> statement altogether.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN57"
+></A
+><H2
+>OPTIONS</H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>-a</DT
+><DD
+><P
+>	      Do automatic <B
+CLASS="COMMAND"
+>rndc</B
+> configuration.
+	      This creates a file <TT
+CLASS="FILENAME"
+>rndc.key</TT
+>
+	      in <TT
+CLASS="FILENAME"
+>/etc</TT
+> (or whatever
+              <TT
+CLASS="VARNAME"
+>sysconfdir</TT
+>
+	      was specified as when <SPAN
+CLASS="ACRONYM"
+>BIND</SPAN
+> was built)
+              that is read by both <B
+CLASS="COMMAND"
+>rndc</B
+>
+              and <B
+CLASS="COMMAND"
+>named</B
+> on startup.  The
+	      <TT
+CLASS="FILENAME"
+>rndc.key</TT
+> file defines a default
+              command channel and authentication key allowing
+	      <B
+CLASS="COMMAND"
+>rndc</B
+> to communicate with
+	      <B
+CLASS="COMMAND"
+>named</B
+> with no further configuration.
+	  </P
+><P
+>	      Running <B
+CLASS="COMMAND"
+>rndc-confgen -a</B
+> allows
+	      BIND 9 and <B
+CLASS="COMMAND"
+>rndc</B
+> to be used as drop-in
+	      replacements for BIND 8 and <B
+CLASS="COMMAND"
+>ndc</B
+>,
+	      with no changes to the existing BIND 8
+	      <TT
+CLASS="FILENAME"
+>named.conf</TT
+> file.
+	  </P
+></DD
+><DT
+>-b <TT
+CLASS="REPLACEABLE"
+><I
+>keysize</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the size of the authentication key in bits.
+	       Must be between 1 and 512 bits; the default is 128.
+	  </P
+></DD
+><DT
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>keyfile</I
+></TT
+></DT
+><DD
+><P
+>	       Used with the <B
+CLASS="COMMAND"
+>-a</B
+> option to specify
+	       an alternate location for <TT
+CLASS="FILENAME"
+>rndc.key</TT
+>.
+	  </P
+></DD
+><DT
+>-h</DT
+><DD
+><P
+>	       Prints a short summary of the options and arguments to
+	       <B
+CLASS="COMMAND"
+>rndc-confgen</B
+>.
+	  </P
+></DD
+><DT
+>-k <TT
+CLASS="REPLACEABLE"
+><I
+>keyname</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the key name of the rndc authentication key.
+	       This must be a valid domain name.
+	       The default is <TT
+CLASS="CONSTANT"
+>rndc-key</TT
+>.
+	  </P
+></DD
+><DT
+>-p <TT
+CLASS="REPLACEABLE"
+><I
+>port</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the command channel port where <B
+CLASS="COMMAND"
+>named</B
+>
+	       listens for connections from <B
+CLASS="COMMAND"
+>rndc</B
+>.
+	       The default is 953.
+	  </P
+></DD
+><DT
+>-r <TT
+CLASS="REPLACEABLE"
+><I
+>randomfile</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies a source of random data for generating the
+	       authoriazation.  If the operating
+	       system does not provide a <TT
+CLASS="FILENAME"
+>/dev/random</TT
+>
+	       or equivalent device, the default source of randomness
+	       is keyboard input.  <TT
+CLASS="FILENAME"
+>randomdev</TT
+> specifies
+	       the name of a character device or file containing random
+	       data to be used instead of the default.  The special value
+	       <TT
+CLASS="FILENAME"
+>keyboard</TT
+> indicates that keyboard
+	       input should be used.
+	  </P
+></DD
+><DT
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>address</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the IP address where <B
+CLASS="COMMAND"
+>named</B
+>
+	       listens for command channel connections from
+	       <B
+CLASS="COMMAND"
+>rndc</B
+>.  The default is the loopback
+	       address 127.0.0.1.
+	  </P
+></DD
+><DT
+>-t <TT
+CLASS="REPLACEABLE"
+><I
+>chrootdir</I
+></TT
+></DT
+><DD
+><P
+>	       Used with the <B
+CLASS="COMMAND"
+>-a</B
+> option to specify
+	       a directory where <B
+CLASS="COMMAND"
+>named</B
+> will run
+	       chrooted.  An additional copy of the <TT
+CLASS="FILENAME"
+>rndc.key</TT
+>
+	       will be written relative to this directory so that
+	       it will be found by the chrooted <B
+CLASS="COMMAND"
+>named</B
+>.
+	  </P
+></DD
+><DT
+>-u <TT
+CLASS="REPLACEABLE"
+><I
+>user</I
+></TT
+></DT
+><DD
+><P
+>	       Used with the <B
+CLASS="COMMAND"
+>-a</B
+> option to set the owner
+	       of the <TT
+CLASS="FILENAME"
+>rndc.key</TT
+> file generated.  If
+	       <B
+CLASS="COMMAND"
+>-t</B
+> is also specified only the file in
+	       the chroot area has its owner changed.
+	  </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN141"
+></A
+><H2
+>EXAMPLES</H2
+><P
+>        To allow <B
+CLASS="COMMAND"
+>rndc</B
+> to be used with
+	no manual configuration, run
+    </P
+><P
+>        <TT
+CLASS="USERINPUT"
+><B
+>rndc-confgen -a</B
+></TT
+>
+    </P
+><P
+>        To print a sample <TT
+CLASS="FILENAME"
+>rndc.conf</TT
+> file and
+	corresponding <B
+CLASS="COMMAND"
+>controls</B
+> and <B
+CLASS="COMMAND"
+>key</B
+>
+	statements to be manually inserted into <TT
+CLASS="FILENAME"
+>named.conf</TT
+>,
+	run
+    </P
+><P
+>        <TT
+CLASS="USERINPUT"
+><B
+>rndc-confgen</B
+></TT
+>
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN154"
+></A
+><H2
+>SEE ALSO</H2
+><P
+>      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>rndc</SPAN
+>(8)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>rndc.conf</SPAN
+>(5)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>named</SPAN
+>(8)</SPAN
+>,
+      <I
+CLASS="CITETITLE"
+>BIND 9 Administrator Reference Manual</I
+>.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN167"
+></A
+><H2
+>AUTHOR</H2
+><P
+>        Internet Software Consortium
+    </P
+></DIV
+></BODY
+></HTML
+>

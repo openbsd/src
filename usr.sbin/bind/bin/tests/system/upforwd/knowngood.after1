@@ -1,0 +1,10 @@
+example.		3600	IN	SOA	n1.example. hostmaster.ns1.example. 2 3600 1200 604800 7200
+example.		3600	IN	NS	ns2.example.
+example.		3600	IN	NS	ns3.example.
+ns1.example.		3600	IN	A	10.53.0.1
+ns2.example.		3600	IN	A	10.53.0.2
+ns3.example.		3600	IN	A	10.53.0.3
+updated.example.	600	IN	TXT	"Foo"
+updated.example.	600	IN	A	10.10.10.1
+example.		3600	IN	SOA	n1.example. hostmaster.ns1.example. 2 3600 1200 604800 7200
+

@@ -1,0 +1,608 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>lwres_buffer</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+>lwres_buffer</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN8"
+></A
+><H2
+>Name</H2
+>lwres_buffer_init, lwres_buffer_invalidate, lwres_buffer_add, lwres_buffer_subtract, lwres_buffer_clear, lwres_buffer_first, lwres_buffer_forward, lwres_buffer_back, lwres_buffer_getuint8, lwres_buffer_putuint8, lwres_buffer_getuint16, lwres_buffer_putuint16, lwres_buffer_getuint32, lwres_buffer_putuint32, lwres_buffer_putmem, lwres_buffer_getmem&nbsp;--&nbsp;lightweight resolver buffer management</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN26"
+></A
+><H2
+>Synopsis</H2
+><DIV
+CLASS="FUNCSYNOPSIS"
+><A
+NAME="AEN27"
+></A
+><P
+></P
+><PRE
+CLASS="FUNCSYNOPSISINFO"
+>#include &lt;lwres/lwbuffer.h&gt;</PRE
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_init</CODE
+>(lwres_buffer_t *b, void *base, unsigned int length);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_invalidate</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_add</CODE
+>(lwres_buffer_t *b, unsigned int n);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_subtract</CODE
+>(lwres_buffer_t *b, unsigned int n);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_clear</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_first</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_forward</CODE
+>(lwres_buffer_t *b, unsigned int n);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_back</CODE
+>(lwres_buffer_t *b, unsigned int n);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>lwres_uint8_t
+lwres_buffer_getuint8</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_putuint8</CODE
+>(lwres_buffer_t *b, lwres_uint8_t val);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>lwres_uint16_t
+lwres_buffer_getuint16</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_putuint16</CODE
+>(lwres_buffer_t *b, lwres_uint16_t val);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>lwres_uint32_t
+lwres_buffer_getuint32</CODE
+>(lwres_buffer_t *b);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_putuint32</CODE
+>(lwres_buffer_t *b, lwres_uint32_t val);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_putmem</CODE
+>(lwres_buffer_t *b, const unsigned char *base, unsigned int length);</CODE
+></P
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>void
+lwres_buffer_getmem</CODE
+>(lwres_buffer_t *b, unsigned char *base, unsigned int length);</CODE
+></P
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN106"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>These functions provide bounds checked access to a region of memory
+where data is being read or written.
+They are based on, and similar to, the
+<TT
+CLASS="LITERAL"
+>isc_buffer_</TT
+>
+functions in the ISC library.</P
+><P
+>A buffer is a region of memory, together with a set of related
+subregions.
+The <I
+CLASS="EMPHASIS"
+>used region</I
+> and the
+<I
+CLASS="EMPHASIS"
+>available</I
+> region are disjoint, and
+their union is the buffer's region.
+The used region extends from the beginning of the buffer region to the
+last used byte.
+The available region extends from one byte greater than the last used
+byte to the end of the  buffer's region.
+The size of the used region can be changed using various
+buffer commands.
+Initially, the used region is empty.</P
+><P
+>The used region is further subdivided into two disjoint regions: the
+<I
+CLASS="EMPHASIS"
+>consumed region</I
+> and the <I
+CLASS="EMPHASIS"
+>remaining region</I
+>.
+The union of these two regions is the used region.
+The consumed region extends from the beginning of the used region to
+the byte before the <I
+CLASS="EMPHASIS"
+>current</I
+> offset (if any).
+The <I
+CLASS="EMPHASIS"
+>remaining</I
+> region the current pointer to the end of the used
+region.
+The size of the consumed region can be changed using various
+buffer commands.
+Initially, the consumed region is empty.</P
+><P
+>The <I
+CLASS="EMPHASIS"
+>active region</I
+> is an (optional) subregion of the remaining
+region.
+It extends from the current offset to an offset in the
+remaining region.
+Initially, the active region is empty.
+If the current offset advances beyond the chosen offset,
+the active region will also be empty.</P
+><P
+><PRE
+CLASS="PROGRAMLISTING"
+> 
+   /------------entire length---------------\\
+   /----- used region -----\\/-- available --\\
+   +----------------------------------------+
+   | consumed  | remaining |                |
+   +----------------------------------------+
+   a           b     c     d                e
+ 
+  a == base of buffer.
+  b == current pointer.  Can be anywhere between a and d.
+  c == active pointer.  Meaningful between b and d.
+  d == used pointer.
+  e == length of buffer.
+ 
+  a-e == entire length of buffer.
+  a-d == used region.
+  a-b == consumed region.
+  b-d == remaining region.
+  b-c == optional active region.</PRE
+></P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_init()</TT
+>
+initializes the
+<SPAN
+CLASS="TYPE"
+>lwres_buffer_t</SPAN
+>
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>
+and assocates it with the memory region of size
+<TT
+CLASS="PARAMETER"
+><I
+>length</I
+></TT
+>
+bytes starting at location
+<TT
+CLASS="PARAMETER"
+><I
+>base.</I
+></TT
+></P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_invalidate()</TT
+>
+marks the buffer
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>
+as invalid.  Invalidating a buffer after use is not required,
+but makes it possible to catch its possible accidental use.</P
+><P
+>The functions
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_add()</TT
+>
+and
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_subtract()</TT
+>
+respectively increase and decrease the used space in
+buffer
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>
+by
+<TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>
+bytes.
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_add()</TT
+>
+checks for buffer overflow and
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_subtract()</TT
+>
+checks for underflow.
+These functions do not allocate or deallocate memory.
+They just change the value of
+<TT
+CLASS="STRUCTFIELD"
+><I
+>used</I
+></TT
+>.</P
+><P
+>A buffer is re-initialised by
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_clear()</TT
+>.
+The function sets
+<TT
+CLASS="STRUCTFIELD"
+><I
+>used</I
+></TT
+> ,
+<TT
+CLASS="STRUCTFIELD"
+><I
+>current</I
+></TT
+>
+and
+<TT
+CLASS="STRUCTFIELD"
+><I
+>active</I
+></TT
+>
+to zero.</P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_first</TT
+>
+makes the consumed region of buffer
+<TT
+CLASS="PARAMETER"
+><I
+>*p</I
+></TT
+>
+empty by setting
+<TT
+CLASS="STRUCTFIELD"
+><I
+>current</I
+></TT
+>
+to zero (the start of the buffer).</P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_forward()</TT
+>
+increases the consumed region of buffer
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>
+by
+<TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>
+bytes, checking for overflow.
+Similarly,
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_back()</TT
+>
+decreases buffer
+<TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>'s
+consumed region by
+<TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>
+bytes and checks for underflow.</P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_getuint8()</TT
+>
+reads an unsigned 8-bit integer from
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>
+and returns it.
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putuint8()</TT
+>
+writes the unsigned 8-bit integer
+<TT
+CLASS="PARAMETER"
+><I
+>val</I
+></TT
+>
+to buffer
+<TT
+CLASS="PARAMETER"
+><I
+>*b</I
+></TT
+>.</P
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_buffer_getuint16()</TT
+>
+and
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_getuint32()</TT
+>
+are identical to
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putuint8()</TT
+>
+except that they respectively read an unsigned 16-bit or 32-bit integer 
+in network byte order from
+<TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>.
+Similarly,
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putuint16()</TT
+>
+and
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putuint32()</TT
+>
+writes the unsigned 16-bit or 32-bit integer
+<TT
+CLASS="PARAMETER"
+><I
+>val</I
+></TT
+>
+to buffer
+<TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>,
+in network byte order.</P
+><P
+>Arbitrary amounts of data are read or written from a lightweight
+resolver buffer with
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_getmem()</TT
+>
+and
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putmem()</TT
+>
+respectively.
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_putmem()</TT
+>
+copies
+<TT
+CLASS="PARAMETER"
+><I
+>length</I
+></TT
+>
+bytes of memory at
+<TT
+CLASS="PARAMETER"
+><I
+>base</I
+></TT
+>
+to
+<TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>.
+Conversely,
+<TT
+CLASS="FUNCTION"
+>lwres_buffer_getmem()</TT
+>
+copies
+<TT
+CLASS="PARAMETER"
+><I
+>length</I
+></TT
+>
+bytes of memory from
+<TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>
+to
+<TT
+CLASS="PARAMETER"
+><I
+>base</I
+></TT
+>.</P
+></DIV
+></BODY
+></HTML
+>

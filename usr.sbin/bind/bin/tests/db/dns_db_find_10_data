@@ -1,0 +1,8 @@
+#
+# test data for dns_db_find expiration time handling
+#
+# format:
+#	dbfile dbtype dborigin dbclass dbcache findname findtype findopts findtime expected_results
+#
+dns_db_find_10.data	rbt	vix.com.	in	cache	a.b.c.vix.com.	NS	0	1010	ISC_R_NOTFOUND
+dns_db_find_10.data	rbt	vix.com.	in	cache	a.b.c.vix.com.	NS	0	0	ISC_R_SUCCESS

@@ -1,0 +1,12 @@
+#
+# test data for dns_master_load test 8
+#
+# format is:
+#	masterfile origin class expected_result
+# where
+#	masterfile name is the name of a file containing master data
+#	origin is the origin
+#	class is the zone's class
+# 	expected_result is a text representation of a dns_result_t
+#
+master8.data	test	in	DNS_R_SEENINCLUDE

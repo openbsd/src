@@ -1,0 +1,3 @@
+updated4.example.nil.	600	IN	A	10.10.10.3
+example.nil.		300	IN	NS	ns2.example.nil.
+example.nil.		300	IN	NS	ns3.example.nil.

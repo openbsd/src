@@ -1,0 +1,6 @@
+#
+# test data for dns_rbtnodechain_init
+#
+# format is: <dbfile> <findnode> <next> <nextorigin> <prev> <prevorigin>  <first> <firstorigin> <last> <lastorigin>
+#
+dns_rbtnodechain_init.data	b.vix.com.	a	b.vix.com.	b	a.vix.com.	@	.	isc.org	.

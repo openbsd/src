@@ -1,0 +1,76 @@
+; Copyright (C) 2000, 2001  Internet Software Consortium.
+;
+; Permission to use, copy, modify, and distribute this software for any
+; purpose with or without fee is hereby granted, provided that the above
+; copyright notice and this permission notice appear in all copies.
+;
+; THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+; DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+; INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+; INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+; FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+; NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+; WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+; $ISC: root.db,v 1.4 2001/01/09 21:43:25 bwelling Exp $
+
+$TTL 300
+. 			IN SOA	gson.nominum.com. a.root.servers.nil. (
+				2000042100   	; serial
+				600         	; refresh
+				600         	; retry
+				1200    	; expire
+				600       	; minimum
+				)
+.			NS	a.root-servers.nil.
+
+root-servers.nil.	NS	a.root-servers.nil.
+a.root-servers.nil.	A	10.53.0.1
+
+; Delegate some domains that contain name servers for the sample
+; ccTLDs below.
+net.			172800	IN	NS	a.root-servers.nil.
+mil.			172800	IN	NS	a.root-servers.nil.
+se.			172800	IN	NS	ns.uu.net.
+
+;
+; A sample ccTLD
+;
+fi.			172800	IN	NS	NS.TELE.fi.
+fi.			172800	IN	NS	PRIFI.EUNET.fi.
+fi.			172800	IN	NS	NS.UU.NET.
+fi.			172800	IN	NS	T.NS.VERIO.NET.
+fi.			172800	IN	NS	HYDRA.HELSINKI.fi.
+fi.			172800	IN	NS	NS.EU.NET.
+NS.TELE.fi.		172800	IN	A	193.210.18.18
+NS.TELE.fi.		172800	IN	A	193.210.19.19
+PRIFI.EUNET.fi.		172800	IN	A	193.66.1.146
+NS.UU.NET.		172800	IN	A	137.39.1.3
+T.NS.VERIO.NET.		172800	IN	A	192.67.14.16
+HYDRA.HELSINKI.fi.	172800	IN	A	128.214.4.29
+NS.EU.NET.		172800	IN	A	192.16.202.11
+
+;
+; Another sample ccTLD
+;
+is.                     172800  IN      NS      ISGATE.is.
+is.                     172800  IN      NS      NISC.JVNC.NET.
+is.                     172800  IN      NS      NS.EU.NET.
+is.                     172800  IN      NS      SPARKY.ARL.MIL.
+is.                     172800  IN      NS      SUNIC.SUNET.SE.
+ISGATE.is.              172800  IN      A       193.4.58.51
+NISC.JVNC.NET.          172800  IN      A       128.121.50.7
+NS.EU.NET.              172800  IN      A       192.16.202.11
+SPARKY.ARL.MIL.         172800  IN      A       128.63.58.18
+SUNIC.SUNET.SE.         172800  IN      A       192.36.125.2
+
+;
+; A hypothetical ccTLD where we are authoritative for the NS glue.
+;
+xx.			172800  IN      NS      b.root-servers.nil.
+
+;
+; A hypothetical ccTLD where we have cached NS glue.
+;
+yy.			172800  IN      NS      ns.zz.

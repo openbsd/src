@@ -1,0 +1,118 @@
+1007.	[port]		config.guess, config.sub from autoconf-2.52.
+
+1008.	[port]		libtool.m4, ltmain.sh from libtool-1.4.2.
+
+1009.	[port]		OpenUNIX 8 support. [RT #1728]
+
+1024.	[port]		Compilation failed on HP-UX 11.11 due to
+			incompatible use of the SIOCGLIFCONF macro
+			name. [RT #1831]
+			[needs more work]
+
+1025.   [bug]           Don't use multicast addresses to resolve iterative
+                        queries. [RT #101]
+
+1034.   [bug]           Ignore the RD bit on multicast queries as specified
+                        in RFC 1123. [RT #137]
+
+1035.   [bug]           If we respond to multicast queries (which we
+                        currently do not), respond from a unicast address
+                        as specified in RFC 1123. [RT #137]
+
+1037.   [bug]           Negative responses whose authority section contain
+                        SOA or NS records whose owner names are not equal
+                        equal to or parents of the query name should be
+                        rejected. [RT #1862]
+
+1073.	[bug]		The ADB cache cleaning should also be space driven.
+			[RT #1915, #1938]
+			[ New function dns_adb_setadbsize() ]
+
+1079.   [bug]           BIND 8 compatibility: accept bare elements at top
+                        level of sort list treating them as if they were
+                        a single element list. [RT #1963]
+
+1080.   [bug]           BIND 8 compatibility: accept bare IP prefixes
+                        as the second element of a two-element top level
+                        sort list statement. [RT #1964]
+
+1105.	[port]		OpenUNIX 8 enable threads by default. [RT #1970]
+			[Functional change]
+
+1110.	[bug]           dig should only accept valid abbreviations of +options.
+                        [RT #2003]
+			[Potentially breaks scripts.  Leave to 9.3.0.]
+
+1143.   [bug]           When a trusted-keys statement was present and named
+                        was built without crypto support, it would leak memory.
+			[ Not applicable to 9.2 ]
+
+1150.   [bug]           named incorrectly accepted TTL values
+                        containing plus or minus signs, such as
+                        1d+1h-1s.
+			[ Uses new function isc_parse_uint32() ]
+
+1151.   [bug]           nslookup failed to check that the arguments to   
+                        the port, timeout, and retry options were
+                        valid integers and in range. [RT #2099]
+			[ Uses new function isc_parse_uint32() ]
+
+1159.	[bug]		MD and MF are not permitted to be loaded by RFC1123
+			[ Could cause zones that loaded in 9.2.0 to fail
+			to load.  Leave such breakages to 9.3.0. ]
+
+1187.	[bug]		named was incorrectly returning DNSSEC records
+			in negative responses when the DO bit was not set.
+			[ Requires API change (new arguement) to
+			dns_rdataset_towire(), dns_rdataset_towirepartial()
+			and dns_rdataset_towirepartial() ]
+
+1192.   [bug]           The seconds fields in LOC records were restricted
+                        to three decimal places.  More decimal places should
+                        be allowed but warned about.
+
+1209.   [bug]           Dig, host, nslookup were not checking the message ids
+                        on the responses. [RT #2454]
+
+1233.   [bug]           The flags field of a KEY record can be expressed in
+                        hex as well as decimal.
+			[ Not applicable to 9.2.x ]
+
+1234.   [bug]           'rrset-order' and 'sortlist' should be additive
+                        not exclusive.
+
+1271.   [bug]           "recursion available: {denied,approved}" was too
+                        confusing.
+
+1348.   [port]          Win32: Rewrote code to use I/O Completion Ports
+                        in socket.c and eliminating a host of socket
+                        errors. Performance is enhanced.
+			[review for 9.2.3]
+
+1255.   [bug]           When verifying that an NXT proves nonexistence, check
+                        the rcode of the message and only do the matching NXT
+                        check.  That is, for NXDOMAIN responses, check that
+                        the name is in the range between the NXT owner and
+                        next name, and for NOERROR NODATA responses, check
+                        that the type is not present in the NXT bitmap.
+			[required changes from DS support]
+
+1322.   [bug]           dnssec-signzone usage message was misleading.
+			[DS specific]
+
+1247.   [bug]           Don't reset the interface index for link/site local
+                        addresses. [RT #2576]
+			[depends on new functions]
+
+1224.   [bug]           'rrset-order' and 'sortlist' should be additive
+                        not exclusive.
+			[tightly coupled with 'cyclic' and 'random' support]
+
+1321.   [bug]           If the last RRset in a zone is glue, dnssec-signzone
+                        would incorrectly duplicate its output and sign it.
+			[DS specific]
+
+1328.   [bug]           The validator could incorrectly verify an invalid
+                        negative proof.
+			[DS specific]
+

@@ -1,0 +1,93 @@
+# Copyright (C) 1999-2001  Internet Software Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# $ISC: rbt_test.txt,v 1.13 2001/01/09 21:41:33 bwelling Exp $
+
+add a.vix.com
+add b.vix.com
+add c.vix.com
+print
+add a.b.c.d.e.f.vix.com
+add b.b.c.d.e.f.vix.com
+add c.b.c.d.e.f.vix.com
+print
+add a.d.e.f.vix.com
+add q.d.e.f.vix.com
+add d.e.f.vix.com
+print
+add g.h.vix.com
+print
+search q.d.e.f.vix.com
+search just-parent.a.vix.com
+search no-real-parent.vix.com
+search does.not.exist.at.all
+forward
+backward
+# existing name
+check vix.com.
+# greater than stop node, which has down pointer
+check zzz.com.
+# less than lowest in level (would be left link from stop node)
+check 0.vix.com
+# greater than stop node, no down pointer
+check d.vix.com
+# superdomain stored in existing node
+check f.vix.com
+# common ancestor stored in existing node; existing is successor
+check a.e.f.vix.com
+# common ancestor stored in existing node; existing is less but not predecessor
+check z.e.f.vix.com
+#
+check g.vix.com
+#
+check i.vix.com
+#
+check b.c.vix.com
+nuke d.e.f.vix.com
+print
+add x.a.vix.com
+add y.x.a.vix.com
+print
+delete a.vix.com
+delete x.a.vix.com
+print
+delete b.vix.com
+delete c.vix.com
+print
+delete y.x.a.vix.com
+print
+delete g.h.vix.com.
+add \[b100000].vix.com.
+add \[b010000].vix.com.
+add \[b001000].vix.com.
+add \[b000100].vix.com.
+add \[b000010].vix.com.
+add \[b000001].vix.com.
+p
+search \[b000100].vix.com.
+# zap the entire tree
+add vix.com.
+nuke vix.com.
+add a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.
+add b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.
+print
+add .
+# zap it again
+nuke .
+# test splitting of maximal bitstring
+add \[xFFFF/16].\[xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF/256].com
+add \[xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF/128].com
+print
+quit

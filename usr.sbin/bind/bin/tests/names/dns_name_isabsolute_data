@@ -1,0 +1,8 @@
+#
+# test data for dns_name_isabsolute
+# format is:
+#	<testname> <tab> <expected value>
+#
+\[x42/7].	1
+a.b.c.\[x42/7]	0
+\[o033/9].z.	1

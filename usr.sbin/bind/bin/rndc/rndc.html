@@ -1,0 +1,421 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>rndc</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+><SPAN
+CLASS="APPLICATION"
+>rndc</SPAN
+></A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN9"
+></A
+><H2
+>Name</H2
+><SPAN
+CLASS="APPLICATION"
+>rndc</SPAN
+>&nbsp;--&nbsp;name server control utility</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN13"
+></A
+><H2
+>Synopsis</H2
+><P
+><B
+CLASS="COMMAND"
+>rndc</B
+>  [<TT
+CLASS="OPTION"
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>config-file</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-k <TT
+CLASS="REPLACEABLE"
+><I
+>key-file</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>server</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-p <TT
+CLASS="REPLACEABLE"
+><I
+>port</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-V</TT
+>] [<TT
+CLASS="OPTION"
+>-y <TT
+CLASS="REPLACEABLE"
+><I
+>key_id</I
+></TT
+></TT
+>] {command}</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN34"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>        <B
+CLASS="COMMAND"
+>rndc</B
+> controls the operation of a name
+	server.  It supersedes the <B
+CLASS="COMMAND"
+>ndc</B
+> utility
+	that was provided in old BIND releases.  If
+	<B
+CLASS="COMMAND"
+>rndc</B
+> is invoked with no command line
+	options or arguments, it prints a short summary of the
+	supported commands and the available options and their
+	arguments.
+    </P
+><P
+>        <B
+CLASS="COMMAND"
+>rndc</B
+> communicates with the name server
+	over a TCP connection, sending commands authenticated with
+	digital signatures.  In the current versions of
+	<B
+CLASS="COMMAND"
+>rndc</B
+> and <B
+CLASS="COMMAND"
+>named</B
+> named
+        the only supported authentication algorithm is HMAC-MD5,
+	which uses a shared secret on each end of the connection.
+	This provides TSIG-style authentication for the command
+	request and the name server's response.  All commands sent
+	over the channel must be signed by a key_id known to the
+	server.
+    </P
+><P
+>        <B
+CLASS="COMMAND"
+>rndc</B
+> reads a configuration file to
+	determine how to contact the name server and decide what
+	algorithm and key it should use.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN46"
+></A
+><H2
+>OPTIONS</H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>config-file</I
+></TT
+></DT
+><DD
+><P
+>	      Use <TT
+CLASS="REPLACEABLE"
+><I
+>config-file</I
+></TT
+>
+	      as the configuration file instead of the default,
+	      <TT
+CLASS="FILENAME"
+>/etc/rndc.conf</TT
+>.
+	  </P
+></DD
+><DT
+>-k <TT
+CLASS="REPLACEABLE"
+><I
+>key-file</I
+></TT
+></DT
+><DD
+><P
+>	      Use <TT
+CLASS="REPLACEABLE"
+><I
+>key-file</I
+></TT
+>
+	      as the key file instead of the default,
+	      <TT
+CLASS="FILENAME"
+>/etc/rndc.key</TT
+>.  The key in
+	      <TT
+CLASS="FILENAME"
+>/etc/rndc.key</TT
+> will be used to authenticate
+	      commands sent to the server if the <TT
+CLASS="REPLACEABLE"
+><I
+>config-file</I
+></TT
+>
+	      does not exist.
+	  </P
+></DD
+><DT
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>server</I
+></TT
+></DT
+><DD
+><P
+>	       <TT
+CLASS="REPLACEABLE"
+><I
+>server</I
+></TT
+> is
+	       the name or address of the server which matches a
+	       server statement in the configuration file for
+	       <B
+CLASS="COMMAND"
+>rndc</B
+>.  If no server is supplied on the
+	       command line, the host named by the default-server clause
+	       in the option statement of the configuration file will be
+	       used.
+	  </P
+></DD
+><DT
+>-p <TT
+CLASS="REPLACEABLE"
+><I
+>port</I
+></TT
+></DT
+><DD
+><P
+>	       Send commands to TCP port
+	       <TT
+CLASS="REPLACEABLE"
+><I
+>port</I
+></TT
+> instead
+	       of BIND 9's default control channel port, 953.
+	  </P
+></DD
+><DT
+>-V</DT
+><DD
+><P
+>	       Enable verbose logging.
+	  </P
+></DD
+><DT
+>-y <TT
+CLASS="REPLACEABLE"
+><I
+>keyid</I
+></TT
+></DT
+><DD
+><P
+>	       Use the key <TT
+CLASS="REPLACEABLE"
+><I
+>keyid</I
+></TT
+>
+	       from the configuration file.
+	       <TT
+CLASS="REPLACEABLE"
+><I
+>keyid</I
+></TT
+> must be
+	       known by named with the same algorithm and secret string
+	       in order for control message validation to succeed.
+	       If no <TT
+CLASS="REPLACEABLE"
+><I
+>keyid</I
+></TT
+>
+	       is specified, <B
+CLASS="COMMAND"
+>rndc</B
+> will first look
+	       for a key clause in the server statement of the server
+	       being used, or if no server statement is present for that
+	       host, then the default-key clause of the options statement.
+	       Note that the configuration file contains shared secrets
+	       which are used to send authenticated control commands
+	       to name servers.  It should therefore not have general read
+	       or write access.
+	  </P
+></DD
+></DL
+></DIV
+><P
+>      For the complete set of commands supported by <B
+CLASS="COMMAND"
+>rndc</B
+>,
+      see the BIND 9 Administrator Reference Manual or run
+      <B
+CLASS="COMMAND"
+>rndc</B
+> without arguments to see its help message.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN94"
+></A
+><H2
+>LIMITATIONS</H2
+><P
+>        <B
+CLASS="COMMAND"
+>rndc</B
+> does not yet support all the commands of
+	the BIND 8 <B
+CLASS="COMMAND"
+>ndc</B
+> utility.
+    </P
+><P
+>        There is currently no way to provide the shared secret for a
+        <TT
+CLASS="OPTION"
+>key_id</TT
+> without using the configuration file.
+    </P
+><P
+>        Several error messages could be clearer.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN102"
+></A
+><H2
+>SEE ALSO</H2
+><P
+>      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>rndc.conf</SPAN
+>(5)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>named</SPAN
+>(8)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>named.conf</SPAN
+>(5)</SPAN
+>
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>ndc</SPAN
+>(8)</SPAN
+>,
+      <I
+CLASS="CITETITLE"
+>BIND 9 Administrator Reference Manual</I
+>.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN118"
+></A
+><H2
+>AUTHOR</H2
+><P
+>        Internet Software Consortium
+    </P
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,293 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\BINDInstall.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\BINDInstall.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_BINDINSTALL_DIALOG DIALOGEX 0, 0, 210, 234
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "BIND 9 Installer"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Target Directory:",IDC_STATIC,7,69,54,8
+    EDITTEXT        IDC_TARGETDIR,7,82,196,14,ES_AUTOHSCROLL
+    GROUPBOX        "Progress",IDC_STATIC,7,157,196,70
+    RTEXT           "",IDC_COPY_TAG,10,191,84,8
+    LTEXT           "",IDC_COPY_FILE,100,191,97,8
+    RTEXT           "",IDC_SERVICE_TAG,10,202,84,8
+    LTEXT           "",IDC_REG_SERVICE,100,203,97,8
+    RTEXT           "",IDC_MESSAGE_TAG,10,213,84,8
+    DEFPUSHBUTTON   "&Install",IDC_INSTALL,153,7,50,14
+    LTEXT           "",IDC_REG_MESSAGE,100,214,97,8
+    RTEXT           "",IDC_DIR_TAG,10,180,84,8
+    PUSHBUTTON      "E&xit",IDC_EXIT,153,39,50,14
+    CONTROL         "&Automatic Startup",IDC_AUTO_START,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,112,72,10
+    GROUPBOX        "Options",IDC_STATIC,7,102,196,49
+    PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,153,23,50,14
+    CTEXT           "Version Unknown",IDC_VERSION,7,7,61,10,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    CONTROL         "&Keep Config Files After Uninstall",IDC_KEEP_FILES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,122,116,10
+    PUSHBUTTON      "Browse",IDC_BROWSE,7,22,50,14
+    RTEXT           "Current Operation:",IDC_CURRENT_TAG,36,166,58,8
+    LTEXT           "",IDC_CURRENT,100,166,97,8
+    LTEXT           "",IDC_CREATE_DIR,100,180,97,8
+    CONTROL         "&Start BIND Service After Install",IDC_START,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,132,113,10
+END
+
+IDD_BROWSE DIALOG DISCARDABLE  0, 0, 227, 117
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Directory"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,170,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,170,24,50,14
+    LISTBOX         IDC_DIRLIST,7,28,155,82,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_CURDIR,7,7,155,14,ES_AUTOHSCROLL
+    COMBOBOX        IDC_DRIVES,170,98,50,74,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,5,0,0
+ PRODUCTVERSION 1,5,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "Internet Software Consortium\0"
+            VALUE "FileDescription", "ISC BIND Install Utility\0"
+            VALUE "FileVersion", "1.5.0\0"
+            VALUE "InternalName", "BINDInstall\0"
+            VALUE "LegalCopyright", "Copyright © 2000\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "BINDInstall.EXE\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "ISC BIND\0"
+            VALUE "ProductVersion", "9.2.0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_BINDINSTALL_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 203
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 227
+    END
+
+    IDD_BROWSE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 110
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_MAINFRAME           "BIND 9 Installer"
+    IDS_CREATEDIR           "Directory %s does not exist.\nDo you wish to create it?"
+    IDS_SUCCESS             "BIND installation completed successfully"
+    IDS_FAIL                "BIND installation failed"
+    IDS_DIREXIST            "Directory %s exists.\n Install here anyway?"
+    IDS_INSTALL_DIR         "Create Directories..."
+    IDS_INSTALL_FILE        "Copy Files..."
+    IDS_INSTALL_SERVICE     "Register Service..."
+    IDS_INSTALL_MESSAGE     "Register Messages..."
+    IDS_UNINSTALL           "Do you wish to uninstall BIND?"
+    IDS_UNINSTALL_DONE      "BIND Uninstall Completed"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_CREATE_KEY          "Creating BIND registry key"
+    IDS_ADD_REMOVE          "Setting up Add/Remove Programs entry"
+    IDS_CLEANUP             "Cleaning up"
+    IDS_INSTALL_DONE        "Finished Installing"
+    IDS_CREATE_DIR          "Creating directory %s"
+    IDS_REMOVE_DIR          "Removing directory %s"
+    IDS_COPY_FILE           "Copying file %s"
+    IDS_DELETE_FILE         "Deleting file %s"
+    IDS_OPEN_SCM            "Opening Service Control Manager"
+    IDS_CREATE_SERVICE      "Creating BIND service"
+    IDS_OPEN_SERVICE        "Opening BIND service"
+    IDS_REMOVE_SERVICE      "Removing BIND service"
+    IDS_REGISTER_MESSAGES   "Registering BIND message source"
+    IDS_UNREGISTER_MESSAGES "Unregistering BIND message source"
+    IDS_STOP_SERVICE        "Stopping BIND service"
+    IDS_START_SERVICE       "Starting BIND service"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_UNINSTALL_DIR       "Remove Directories..."
+    IDS_UNINSTALL_FILES     "Delete Files..."
+    IDS_UNINSTALL_SERVICE   "Unregister Service..."
+    IDS_UNINSTALL_MESSAGE   "Unregister Messages..."
+    IDS_ERR_OPEN_SCM        "Could not open Service Control Manager\n(%s)"
+    IDS_ERR_OPEN_SERVICE    "Could not open BIND Service\n(%s)"
+    IDS_ERR_STOP_SERVICE    "Could not stop BIND Service\n(%s)"
+    IDS_ERR_NONCRIT_FILE    "An error occurred while copying non-critical file %s\n(%s)\nDo you wish to continue?"
+    IDS_ERR_COPY_FILE       "An error occurred while copying file %s\n(%s)\nInstallation will be terminated"
+    IDS_ERR_CREATE_SERVICE  "Error creating service\n(%s)"
+    IDS_ERR_REMOVE_SERVICE  "Error removing service\n(%s)"
+    IDS_REBOOT              "BINDInstall needs to restart Windows.\nDo you wish to restart now?"
+    IDS_BAD_PRIVILEGES      "This user cannot acquire the privileges necessary to install BIND.  Please ensure you are logged on as a member of the Administrators group."
+    IDS_ERR_CREATE_DIR      "An error occurred while creating directory %s\n(%s)"
+    IDS_VERSION             "Version %s"
+    IDS_ERR_CREATE_KEY      "An error occured while creating registry keys\n(%s)"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ERR_SET_VALUE       "An error occured while setting registry key values\n(%s)"
+    IDS_NO_VERSION          "Version Unknown"
+    IDS_EXISTING_NEWER      "%s\nThe existing version of this file is newer than the version being installed.\nDo you wish to overwrite the existing file?"
+    IDS_FILE_BAD            "Could not retrieve version info for file %s.  Do you wish to continue?\n(Continuing may overwrite a newer version of the file) "
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\BINDInstall.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

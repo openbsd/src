@@ -1,0 +1,30 @@
+#
+# test data for dns_name_fromwire_7
+# format:
+#	<msgfile> <testname_offset> <downcase>
+#	<dc_method> <exp_name> <exp_result>
+#
+# where msgfile contains a DNS message in hex form
+#
+# and where testname_offset is the byte offset in this message of
+# the start of a name
+#
+# and where downcase is 1 or 0
+#
+# and where dc_method is one of
+#	DNS_COMPRESS_ALL
+#	DNS_COMPRESS_GLOBAL14
+#	DNS_COMPRESS_NONE
+#
+# and where exp_name is the expected name after any decompression
+# or case conversion
+#
+# and where exp_result may be one of
+#		ISC_R_NOSPACE
+#		DNS_R_BADLABELTYPE
+#		DNS_R_DISALLOWED
+#		DNS_R_BADPOINTER
+#		ISC_R_UNEXPECTEDEND
+#		DNS_R_TOOMANYHOPS
+#
+wire_test7.data	25	1	DNS_COMPRESS_ALL	vix.com.	ISC_R_UNEXPECTEDEND

@@ -1,0 +1,51 @@
+
+This is a simple test environment for running bind9 system tests
+involving multiple name servers.
+
+There are multiple test suites, each in a separate subdirectory and
+involving a different DNS setup.  They are:
+
+  dnssec/	DNSSEC tests
+  forward/	Forwarding tests
+  glue/		Glue handling tests
+  limits/	Tests of handling of large data (close to server limits)
+  lwresd/	Tests of the lightweight resolver library and daemon
+  notify/	More NOTIFY tests
+  nsupdate/	Dynamic update and IXFR tests
+  resolver/     Regression tests for resolver bugs that have been fixed
+		(not a complete resolver test suite)
+  stub/		Tests of stub zone functionality
+  unknown/	Unknown type and class tests
+  upforwd/	Update forwarding tests
+  views/	Tests of the "views" statement
+  xfer/		Zone transfer tests
+  xferquota/	Zone transfer quota tests
+
+Typically each test suite sets up 2-5 name servers and then performs
+one or more tests against them.  Within the test suite subdirectory,
+each name server has a separate subdirectory containing its
+configuration data.  By convention, these subdirectories are named
+"ns1", "ns2", etc.
+
+The tests are completely self-contained and do not require access to
+the real DNS.  Generally, one of the test servers (ns1) is set up as a
+root name server and is listed in the hints file of the others.
+
+To enable all servers to run on the same machine, they bind to
+separate virtual IP address on the loopback interface.  ns1 runs on
+10.53.0.1, ns2 on 10.53.0.2, etc.  Before running any tests, you must
+set up these addresses by running "ifconfig.sh up" as root.
+
+The servers use port 5300 instead of the usual port 53, so they can be
+run without root privileges once the interfaces have been set up.
+
+The tests can be run individually like this:
+
+  sh run.sh xfer
+  sh run.sh notify
+  etc.
+
+To run all the tests, just type "make test".
+
+
+$ISC: README,v 1.9.4.2 2001/09/17 21:43:09 gson Exp $

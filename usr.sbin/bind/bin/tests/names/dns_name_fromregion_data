@@ -1,0 +1,13 @@
+#
+# test data for dns_name_fromregion
+# format:
+#	<test_name>
+# where: exp_order may be one of: -1, 0, 1
+#
+# and where: exp_nlabels and exp_nbits are not tested if < 0
+#
+#c.d.\[x31].abc.\[b110011]
+a.b.c.d.
+a.b.c.d.[A].[aaa.
+Ba\x\aa.b.c\[\[o\\.Z
+Ba\x\aa.b.c\[\[o\\\..\.Z

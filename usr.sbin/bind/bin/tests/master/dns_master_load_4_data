@@ -1,0 +1,12 @@
+#
+# test data for dns_master_load test 4
+#
+# format is:
+#	masterfile origin class expected_result
+# where
+#	masterfile name is the name of a file containing master data
+#	origin is the origin
+#	class is the zone's class
+# 	expected_result is a text representation of a dns_result_t
+#
+master4.data	test	in	ISC_R_SUCCESS

@@ -1,0 +1,234 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>named-checkzone</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+><SPAN
+CLASS="APPLICATION"
+>named-checkzone</SPAN
+></A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN9"
+></A
+><H2
+>Name</H2
+><SPAN
+CLASS="APPLICATION"
+>named-checkzone</SPAN
+>&nbsp;--&nbsp;zone file validity checking tool</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN13"
+></A
+><H2
+>Synopsis</H2
+><P
+><B
+CLASS="COMMAND"
+>named-checkzone</B
+>  [<TT
+CLASS="OPTION"
+>-d</TT
+>] [<TT
+CLASS="OPTION"
+>-j</TT
+>] [<TT
+CLASS="OPTION"
+>-q</TT
+>] [<TT
+CLASS="OPTION"
+>-v</TT
+>] [<TT
+CLASS="OPTION"
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>class</I
+></TT
+></TT
+>] {zonename} {filename}</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN29"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>        <B
+CLASS="COMMAND"
+>named-checkzone</B
+> checks the syntax and integrity of
+	a zone file.  It performs the same checks as <B
+CLASS="COMMAND"
+>named</B
+>
+	does when loading a zone.  This makes
+	<B
+CLASS="COMMAND"
+>named-checkzone</B
+> useful for checking zone
+	files before configuring them into a name server.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN35"
+></A
+><H2
+>OPTIONS</H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>-d</DT
+><DD
+><P
+>	      Enable debugging.
+	  </P
+></DD
+><DT
+>-q</DT
+><DD
+><P
+>	      Quiet mode - exit code only.
+	  </P
+></DD
+><DT
+>-v</DT
+><DD
+><P
+>	      Print the version of the <B
+CLASS="COMMAND"
+>named-checkzone</B
+>
+	      program and exit.
+	  </P
+></DD
+><DT
+>-j</DT
+><DD
+><P
+>              When loading the zone file read the journal if it exists.
+          </P
+></DD
+><DT
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>class</I
+></TT
+></DT
+><DD
+><P
+>	      Specify the class of the zone.  If not specified "IN" is assumed.
+	  </P
+></DD
+><DT
+>zonename</DT
+><DD
+><P
+>	       The domain name of the zone being checked.
+	  </P
+></DD
+><DT
+>filename</DT
+><DD
+><P
+>	       The name of the zone file.
+	  </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN68"
+></A
+><H2
+>RETURN VALUES</H2
+><P
+>        <B
+CLASS="COMMAND"
+>named-checkzone</B
+> returns an exit status of 1 if
+	errors were detected and 0 otherwise.
+  </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN72"
+></A
+><H2
+>SEE ALSO</H2
+><P
+>      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>named</SPAN
+>(8)</SPAN
+>,
+      <I
+CLASS="CITETITLE"
+>RFC 1035</I
+>,
+      <I
+CLASS="CITETITLE"
+>BIND 9 Administrator Reference Manual</I
+>.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN80"
+></A
+><H2
+>AUTHOR</H2
+><P
+>        Internet Software Consortium
+    </P
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,6 @@
+#
+# test data for dns_rbtnodechain_next
+#
+# format is: <dbfile> <startname> <expected_name> <expected_origin>
+#
+dns_rbtnodechain_next.data	c.vix.com.	a	c.vix.com.

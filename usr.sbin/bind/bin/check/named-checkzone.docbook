@@ -1,0 +1,165 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
+<!--
+ - Copyright (C) 2001, 2002  Internet Software Consortium.
+ -
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $ISC: named-checkzone.docbook,v 1.3.2.2 2002/08/05 06:57:01 marka Exp $ -->
+
+<refentry>
+  <refentryinfo>
+    <date>June 13, 2000</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>named-checkzone</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>named-checkzone</application></refname>
+    <refpurpose>zone file validity checking tool</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>named-checkzone</command>
+      <arg><option>-d</option></arg>
+      <arg><option>-j</option></arg>
+      <arg><option>-q</option></arg>
+      <arg><option>-v</option></arg>
+      <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
+      <arg choice="req">zonename</arg>
+      <arg choice="req">filename</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+        <command>named-checkzone</command> checks the syntax and integrity of
+	a zone file.  It performs the same checks as <command>named</command>
+	does when loading a zone.  This makes
+	<command>named-checkzone</command> useful for checking zone
+	files before configuring them into a name server.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+      <varlistentry>
+        <term>-d</term>
+	<listitem>
+	  <para>
+	      Enable debugging.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-q</term>
+	<listitem>
+	  <para>
+	      Quiet mode - exit code only.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+	<listitem>
+	  <para>
+	      Print the version of the <command>named-checkzone</command>
+	      program and exit.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-j</term>
+        <listitem>
+          <para>
+              When loading the zone file read the journal if it exists.
+          </para>   
+        </listitem>
+
+      <varlistentry>
+        <term>-c <replaceable class="parameter">class</replaceable></term>
+	<listitem>
+	  <para>
+	      Specify the class of the zone.  If not specified "IN" is assumed.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>zonename</term>
+	<listitem>
+	  <para>
+	       The domain name of the zone being checked.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>filename</term>
+	<listitem>
+	  <para>
+	       The name of the zone file.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>RETURN VALUES</title>
+    <para>
+        <command>named-checkzone</command> returns an exit status of 1 if
+	errors were detected and 0 otherwise.
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>named</refentrytitle>
+	<manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>RFC 1035</citetitle>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHOR</title>
+    <para>
+        <corpauthor>Internet Software Consortium</corpauthor>
+    </para>
+  </refsect1>
+
+</refentry>
+
+<!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->
+

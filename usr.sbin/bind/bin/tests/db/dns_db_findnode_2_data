@@ -1,0 +1,7 @@
+#
+# test data for dns_db_findnode 2
+#
+# format:
+# filename type origin class cache newname
+#
+dns_db_findnode_2.data	rbt	vix.com.	in	zone	a.b.c.vix.com.

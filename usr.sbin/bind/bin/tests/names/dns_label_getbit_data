@@ -1,0 +1,10 @@
+#
+# format is:
+#	<testname> <tab> <labelpos> <tab> <bitpos> <tab> <expected value>
+#
+\[x42/7]	0	6	1
+a.b.c.\[x42/7]	3	5	0
+\[o033/9]	0	2	0
+\[o033/9]	0	3	0
+\[o033/9]	0	4	1
+\[b0101/4]	0	1	1

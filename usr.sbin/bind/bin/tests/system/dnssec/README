@@ -1,0 +1,16 @@
+Copyright (C) 2000, 2001  Internet Software Consortium.
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+$ISC: README,v 1.5 2001/01/09 21:42:42 bwelling Exp $
+
+The test setup for the DNSSEC tests has a secure root.
+
+ns1 is the root server.
+
+ns2 and ns3 are authoritative servers for the various test domains.
+
+ns4 is a caching-only server, configured with the correct trusted key
+for the root.
+
+ns4 is a caching-only server, configured with the an incorrect trusted
+key for the root.  It is used for testing failure cases.

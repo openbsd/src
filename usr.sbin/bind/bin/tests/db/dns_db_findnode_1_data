@@ -1,0 +1,9 @@
+#
+# test data for dns_db_findnode, case ISC_R_SUCCESS
+#
+# format:
+# filename type origin class cache existingname rdatatype
+#
+dns_db_findnode_1.data	rbt	vix.com.	in	zone	a.vix.com.	NS	ISC_R_SUCCESS
+dns_db_findnode_1.data	rbt	vix.com.	in	zone	b.vix.com.	A	ISC_R_SUCCESS
+dns_db_findnode_1.data	rbt	vix.com.	in	zone	c.vix.com.	A	ISC_R_NOTFOUND

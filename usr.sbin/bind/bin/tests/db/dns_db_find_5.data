@@ -1,0 +1,10 @@
+$TTL 1000
+@		in	soa	localhost. postmaster.localhost. (
+				1993050801	;serial
+				3600		;refresh
+				1800		;retry
+				604800		;expiration
+				3600 )		;minimum
+a.b.c		in	DNAME	x.y.z
+a.x.y.z		in	A	1.2.3.4
+

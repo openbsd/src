@@ -1,0 +1,9 @@
+#
+# test data for dns_db_find DNS_R_GLUE
+#
+# format:
+#	dbfile dbtype dborigin dbclass dbcache findname findtype findopts findtime expected_results
+#
+dns_db_find_2.data	rbt	vix.com.	in	zone	a.fx.vix.com.	A	DNS_DBFIND_GLUEOK	0	DNS_R_GLUE
+dns_db_find_2.data	rbt	vix.com.	in	zone	fx.vix.com.	NS	DNS_DBFIND_GLUEOK	0	DNS_R_GLUE
+dns_db_find_2.data	rbt	vix.com.	in	zone	a.fx.vix.com.	NS	DNS_DBFIND_GLUEOK	0	DNS_R_DELEGATION

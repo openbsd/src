@@ -1,0 +1,31 @@
+include.		300	IN	SOA	ns.include. hostmaster.include. 1 3600 1800 1814400 3600
+include.		300	IN	NS	ns.include.
+a.include.		300	IN	A	10.0.0.1
+a.include.		300	IN	A	10.0.0.99
+a.a.include.		300	IN	A	10.0.1.1
+b.foo.a.include.	300	IN	A	10.0.2.2
+b.include.		300	IN	A	10.0.0.2
+b.include.		300	IN	A	10.0.0.99
+a.b.include.		300	IN	A	10.0.1.1
+c.b.include.		300	IN	A	10.0.0.3
+b.foo.b.include.	300	IN	A	10.0.2.2
+ns.include.		300	IN	A	127.0.0.1
+include.		300	IN	SOA	ns.include. hostmaster.include. 1 3600 1800 1814400 3600
+ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
+ttl2.			1	IN	NS	ns.ttl2.
+a.ttl2.			1	IN	TXT	"inherited ttl 1"
+b.ttl2.			2	IN	TXT	"explicit ttl 2"
+c.ttl2.			2	IN	TXT	"inherited ttl 2"
+d.ttl2.			3	IN	TXT	"default ttl 3"
+e.ttl2.			2	IN	TXT	"explicit ttl 2"
+f.ttl2.			3	IN	TXT	"default ttl 3"
+ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
+ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
+ttl2.			1	IN	NS	ns.ttl2.
+a.ttl2.			1	IN	TXT	"inherited ttl 1"
+b.ttl2.			2	IN	TXT	"explicit ttl 2"
+c.ttl2.			2	IN	TXT	"inherited ttl 2"
+d.ttl2.			3	IN	TXT	"default ttl 3"
+e.ttl2.			2	IN	TXT	"explicit ttl 2"
+f.ttl2.			3	IN	TXT	"default ttl 3"
+ttl2.			1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3

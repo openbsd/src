@@ -1,0 +1,9 @@
+#
+# test data for dns_name_toregion
+# format:
+#	<test_name>
+#
+c.d.\[x31].abc.\[b110011]
+a.b.c.d.
+a.b.c.d.[A].[aaa.
+Ba\x\aa.b.c\[\[o\\.Z

@@ -1,0 +1,186 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>lwres_inetntop</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+>lwres_inetntop</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN8"
+></A
+><H2
+>Name</H2
+>lwres_net_ntop&nbsp;--&nbsp;lightweight resolver IP address presentation</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN11"
+></A
+><H2
+>Synopsis</H2
+><DIV
+CLASS="FUNCSYNOPSIS"
+><A
+NAME="AEN12"
+></A
+><P
+></P
+><PRE
+CLASS="FUNCSYNOPSISINFO"
+>#include &lt;lwres/net.h&gt;</PRE
+><P
+><CODE
+><CODE
+CLASS="FUNCDEF"
+>const char *
+lwres_net_ntop</CODE
+>(int af, const void *src, char *dst, size_t size);</CODE
+></P
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN21"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+><TT
+CLASS="FUNCTION"
+>lwres_net_ntop()</TT
+> converts an IP address of
+protocol family <TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+> &mdash; IPv4 or IPv6 &mdash;
+at location <TT
+CLASS="PARAMETER"
+><I
+>src</I
+></TT
+> from network format to its
+conventional representation as a string.  For IPv4 addresses, that
+string would be a dotted-decimal.  An IPv6 address would be
+represented in colon notation as described in RFC1884.</P
+><P
+>The generated string is copied to <TT
+CLASS="PARAMETER"
+><I
+>dst</I
+></TT
+> provided
+<TT
+CLASS="PARAMETER"
+><I
+>size</I
+></TT
+> indicates it is long enough to store the
+ASCII representation of the address.</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN30"
+></A
+><H2
+>RETURN VALUES</H2
+><P
+>If successful, the function returns <TT
+CLASS="PARAMETER"
+><I
+>dst</I
+></TT
+>:
+a pointer to a string containing the presentation format of the
+address.  <TT
+CLASS="FUNCTION"
+>lwres_net_ntop()</TT
+> returns
+<SPAN
+CLASS="TYPE"
+>NULL</SPAN
+> and sets the global variable
+<TT
+CLASS="CONSTANT"
+>errno</TT
+> to <SPAN
+CLASS="ERRORCODE"
+>EAFNOSUPPORT</SPAN
+> if
+the protocol family given in <TT
+CLASS="PARAMETER"
+><I
+>af</I
+></TT
+> is not
+supported.</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN39"
+></A
+><H2
+>SEE ALSO</H2
+><P
+><SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>RFC1884</SPAN
+></SPAN
+>,
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>inet_ntop</SPAN
+>(3)</SPAN
+>,
+<SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>errno</SPAN
+>(3)</SPAN
+>.</P
+></DIV
+></BODY
+></HTML
+>

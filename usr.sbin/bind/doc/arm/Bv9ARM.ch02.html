@@ -1,0 +1,323 @@
+<HTML
+><HEAD
+><TITLE
+>BIND Resource Requirements</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"><LINK
+REL="HOME"
+TITLE="BIND 9 Administrator Reference Manual"
+HREF="Bv9ARM.html"><LINK
+REL="PREVIOUS"
+TITLE="Introduction "
+HREF="Bv9ARM.ch01.html"><LINK
+REL="NEXT"
+TITLE="Nameserver Configuration"
+HREF="Bv9ARM.ch03.html"></HEAD
+><BODY
+CLASS="chapter"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>BIND 9 Administrator Reference Manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="Bv9ARM.ch01.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="Bv9ARM.ch03.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="chapter"
+><H1
+><A
+NAME="ch02"
+>Chapter 2. <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> Resource Requirements</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>2.1. <A
+HREF="Bv9ARM.ch02.html#AEN223"
+>Hardware requirements</A
+></DT
+><DT
+>2.2. <A
+HREF="Bv9ARM.ch02.html#AEN231"
+>CPU Requirements</A
+></DT
+><DT
+>2.3. <A
+HREF="Bv9ARM.ch02.html#AEN235"
+>Memory Requirements</A
+></DT
+><DT
+>2.4. <A
+HREF="Bv9ARM.ch02.html#AEN240"
+>Nameserver Intensive Environment Issues</A
+></DT
+><DT
+>2.5. <A
+HREF="Bv9ARM.ch02.html#AEN243"
+>Supported Operating Systems</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN223"
+>2.1. Hardware requirements</A
+></H1
+><P
+><SPAN
+CLASS="acronym"
+>DNS</SPAN
+> hardware requirements have traditionally been quite modest.
+For many installations, servers that have been pensioned off from
+active duty have performed admirably as <SPAN
+CLASS="acronym"
+>DNS</SPAN
+> servers.</P
+><P
+>The DNSSEC and IPv6 features of <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9 may prove to be quite
+CPU intensive however, so organizations that make heavy use of these
+features may wish to consider larger systems for these applications.
+<SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9 is now fully multithreaded, allowing full utilization of
+multiprocessor systems for installations that need it.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN231"
+>2.2. CPU Requirements</A
+></H1
+><P
+>CPU requirements for <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9 range from i486-class machines
+for serving of static zones without caching, to enterprise-class
+machines if you intend to process many dynamic updates and DNSSEC
+signed zones, serving many thousands of queries per second.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN235"
+>2.3. Memory Requirements</A
+></H1
+><P
+>The memory of the server has to be large enough to fit the
+cache and zones loaded off disk.  The <B
+CLASS="command"
+>max-cache-size</B
+>
+option can be used to limit the amount of memory used by the cache,
+at the expense of reducing cache hit rates and causing more <SPAN
+CLASS="acronym"
+>DNS</SPAN
+>
+traffic. It is still good practice to have enough memory to load
+all zone and cache data into memory &#8212; unfortunately, the best way
+to determine this for a given installation is to watch the nameserver
+in operation. After a few weeks the server process should reach
+a relatively stable size where entries are expiring from the cache as
+fast as they are being inserted. Ideally, the resource limits should
+be set higher than this stable size.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN240"
+>2.4. Nameserver Intensive Environment Issues</A
+></H1
+><P
+>For nameserver intensive environments, there are two alternative
+configurations that may be used. The first is where clients and
+any second-level internal nameservers query a main nameserver, which
+has enough memory to build a large cache. This approach minimizes
+the bandwidth used by external name lookups. The second alternative
+is to set up second-level internal nameservers to make queries independently.
+In this configuration, none of the individual machines needs to
+have as much memory or CPU power as in the first alternative, but
+this has the disadvantage of making many more external queries,
+as none of the nameservers share their cached data.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN243"
+>2.5. Supported Operating Systems</A
+></H1
+><P
+>ISC <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9 compiles and runs on the following operating
+systems:</P
+><P
+></P
+><UL
+><LI
+><P
+>IBM AIX 4.3</P
+></LI
+><LI
+><P
+>Compaq Digital/Tru64 UNIX 4.0D</P
+></LI
+><LI
+><P
+>Compaq Digital/Tru64 UNIX 5 (with IPv6 EAK)</P
+></LI
+><LI
+><P
+>HP HP-UX 11</P
+></LI
+><LI
+><P
+>IRIX64 6.5</P
+></LI
+><LI
+><P
+>Sun Solaris 2.6, 7, 8</P
+></LI
+><LI
+><P
+>NetBSD 1.5 (with unproven-pthreads 0.17)</P
+></LI
+><LI
+><P
+>FreeBSD 3.4-STABLE, 3.5, 4.0, 4.1</P
+></LI
+><LI
+><P
+>Red Hat Linux 6.0, 6.1, 6.2, 7.0</P
+></LI
+></UL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="Bv9ARM.ch01.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="Bv9ARM.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="Bv9ARM.ch03.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Introduction</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Nameserver Configuration</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

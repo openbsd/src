@@ -1,0 +1,1561 @@
+<HTML
+><HEAD
+><TITLE
+>Nameserver Configuration</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.73
+"><LINK
+REL="HOME"
+TITLE="BIND 9 Administrator Reference Manual"
+HREF="Bv9ARM.html"><LINK
+REL="PREVIOUS"
+TITLE="BIND Resource Requirements"
+HREF="Bv9ARM.ch02.html"><LINK
+REL="NEXT"
+TITLE="Advanced Concepts"
+HREF="Bv9ARM.ch04.html"></HEAD
+><BODY
+CLASS="chapter"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>BIND 9 Administrator Reference Manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="Bv9ARM.ch02.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="Bv9ARM.ch04.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="chapter"
+><H1
+><A
+NAME="ch03"
+>Chapter 3. Nameserver Configuration</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>3.1. <A
+HREF="Bv9ARM.ch03.html#sample_configuration"
+>Sample Configurations</A
+></DT
+><DT
+>3.2. <A
+HREF="Bv9ARM.ch03.html#AEN281"
+>Load Balancing</A
+></DT
+><DT
+>3.3. <A
+HREF="Bv9ARM.ch03.html#notify"
+>Notify</A
+></DT
+><DT
+>3.4. <A
+HREF="Bv9ARM.ch03.html#AEN369"
+>Nameserver Operations</A
+></DT
+></DL
+></DIV
+><P
+>In this section we provide some suggested configurations along
+with guidelines for their use. We also address the topic of reasonable
+option setting.</P
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="sample_configuration"
+>3.1. Sample Configurations</A
+></H1
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN271"
+>3.1.1. A Caching-only Nameserver</A
+></H2
+><P
+>The following sample configuration is appropriate for a caching-only
+name server for use by clients internal to a corporation.  All queries
+from outside clients are refused.</P
+><PRE
+CLASS="programlisting"
+>&#13;// Two corporate subnets we wish to allow queries from.
+acl "corpnets" { 192.168.4.0/24; 192.168.7.0/24; };
+options {
+     directory "/etc/namedb";           // Working directory
+     pid-file "named.pid";              // Put pid file in working dir
+     allow-query { "corpnets"; };
+};
+// Root server hints
+zone "." { type hint; file "root.hint"; };
+// Provide a reverse mapping for the loopback address 127.0.0.1
+zone "0.0.127.in-addr.arpa" {
+     type master;
+     file "localhost.rev";
+     notify no;
+};
+</PRE
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN275"
+>3.1.2. An Authoritative-only Nameserver</A
+></H2
+><P
+>This sample configuration is for an authoritative-only server
+that is the master server for "<TT
+CLASS="filename"
+>example.com</TT
+>"
+and a slave for the subdomain "<TT
+CLASS="filename"
+>eng.example.com</TT
+>".</P
+><PRE
+CLASS="programlisting"
+>&#13;options {
+     directory "/etc/namedb";           // Working directory
+     pid-file "named.pid";              // Put pid file in working dir
+     allow-query { any; };              // This is the default
+     recursion no;                      // Do not provide recursive service
+};
+// Root server hints
+zone "." { type hint; file "root.hint"; };
+
+// Provide a reverse mapping for the loopback address 127.0.0.1
+zone "0.0.127.in-addr.arpa" {
+     type master;
+     file "localhost.rev";
+     notify no;
+};
+// We are the master server for example.com
+zone "example.com" {
+     type master;
+     file "example.com.db";
+     // IP addresses of slave servers allowed to transfer example.com
+     allow-transfer {
+          192.168.4.14;
+          192.168.5.53;
+     };
+};
+// We are a slave server for eng.example.com
+zone "eng.example.com" {
+     type slave;
+     file "eng.example.com.bk";
+     // IP address of eng.example.com master server
+     masters { 192.168.4.12; };
+};
+</PRE
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN281"
+>3.2. Load Balancing</A
+></H1
+><P
+>Primitive load balancing can be achieved in <SPAN
+CLASS="acronym"
+>DNS</SPAN
+> using multiple
+A records for one name.</P
+><P
+>For example, if you have three WWW servers with network addresses
+of 10.0.0.1, 10.0.0.2 and 10.0.0.3, a set of records such as the
+following means that clients will connect to each machine one third
+of the time:</P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN286"
+></A
+><P
+></P
+><TABLE
+CELLPADDING="3"
+BORDER="1"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>Name</P
+></TD
+><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>TTL</P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>CLASS</P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>TYPE</P
+></TD
+><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>Resource Record (RR) Data</P
+></TD
+></TR
+><TR
+><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>www</TT
+></P
+></TD
+><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>600</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>IN</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>A</TT
+></P
+></TD
+><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>10.0.0.1</TT
+></P
+></TD
+></TR
+><TR
+><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+></P
+></TD
+><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>600</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>IN</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>A</TT
+></P
+></TD
+><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>10.0.0.2</TT
+></P
+></TD
+></TR
+><TR
+><TD
+WIDTH="84"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+></P
+></TD
+><TD
+WIDTH="48"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>600</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>IN</TT
+></P
+></TD
+><TD
+WIDTH="72"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>A</TT
+></P
+></TD
+><TD
+WIDTH="195"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><TT
+CLASS="literal"
+>10.0.0.3</TT
+></P
+></TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>When a resolver queries for these records, <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> will rotate
+    them and respond to the query with the records in a different
+    order.  In the example above, clients will randomly receive
+    records in the order 1, 2, 3; 2, 3, 1; and 3, 1, 2. Most clients
+    will use the first record returned and discard the rest.</P
+><P
+>For more detail on ordering responses, check the
+    <B
+CLASS="command"
+>rrset-order</B
+> substatement in the
+    <B
+CLASS="command"
+>options</B
+> statement, see
+    <A
+HREF="Bv9ARM.ch06.html#rrset_ordering"
+><I
+>RRset Ordering</I
+></A
+>.
+    This substatement is not supported in
+    <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9, and only the ordering scheme described above is
+    available.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="notify"
+>3.3. Notify</A
+></H1
+><P
+><SPAN
+CLASS="acronym"
+>DNS</SPAN
+> Notify is a mechanism that allows master nameservers to
+    notify their slave servers of changes to a zone's data. In
+    response to a <B
+CLASS="command"
+>NOTIFY</B
+> from a master server, the
+    slave will check to see that its version of the zone is the
+    current version and, if not, initiate a transfer.</P
+><P
+><SPAN
+CLASS="acronym"
+>DNS</SPAN
+>
+    Notify is fully documented in RFC 1996. See also the description
+    of the zone option <B
+CLASS="command"
+>also-notify</B
+>, see
+    <A
+HREF="Bv9ARM.ch06.html#zone_transfers"
+>Section 6.2.14.6</A
+>. For more information about
+    <B
+CLASS="command"
+>notify</B
+>, see <A
+HREF="Bv9ARM.ch06.html#boolean_options"
+>Section 6.2.14.1</A
+>.</P
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN369"
+>3.4. Nameserver Operations</A
+></H1
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN371"
+>3.4.1. Tools for Use With the Nameserver Daemon</A
+></H2
+><P
+>There are several indispensable diagnostic, administrative
+and monitoring tools available to the system administrator for controlling
+and debugging the nameserver daemon. We describe several in this
+section </P
+><DIV
+CLASS="sect3"
+><H3
+CLASS="sect3"
+><A
+NAME="diagnostic_tools"
+>3.4.1.1. Diagnostic Tools</A
+></H3
+><P
+></P
+><DIV
+CLASS="variablelist"
+><DL
+><DT
+><B
+CLASS="command"
+>dig</B
+></DT
+><DD
+><P
+>The domain information groper (<B
+CLASS="command"
+>dig</B
+>) is
+a command line tool that can be used to gather information from
+the Domain Name System servers. Dig has two modes: simple interactive
+mode for a single query, and batch mode which executes a query for
+each in a list of several query lines. All query options are accessible
+from the command line.</P
+><P
+><B
+CLASS="command"
+>dig</B
+>  [@<TT
+CLASS="replaceable"
+><I
+>server</I
+></TT
+>]  <TT
+CLASS="replaceable"
+><I
+>domain</I
+></TT
+>  [<TT
+CLASS="replaceable"
+><I
+>query-type</I
+></TT
+>] [<TT
+CLASS="replaceable"
+><I
+>query-class</I
+></TT
+>] [+<TT
+CLASS="replaceable"
+><I
+>query-option</I
+></TT
+>] [-<TT
+CLASS="replaceable"
+><I
+>dig-option</I
+></TT
+>] [%<TT
+CLASS="replaceable"
+><I
+>comment</I
+></TT
+>]</P
+><P
+>The usual simple use of dig will take the form</P
+><P
+><B
+CLASS="command"
+>dig @server domain query-type query-class</B
+></P
+><P
+>For more information and a list of available commands and
+options, see the <B
+CLASS="command"
+>dig</B
+> man page.</P
+></DD
+><DT
+><B
+CLASS="command"
+>host</B
+></DT
+><DD
+><P
+>The <B
+CLASS="command"
+>host</B
+> utility
+provides a simple <SPAN
+CLASS="acronym"
+>DNS</SPAN
+> lookup using a command-line interface for
+looking up Internet hostnames. By default, the utility converts
+between host names and Internet addresses, but its functionality
+can be extended with the use of options.</P
+><P
+><B
+CLASS="command"
+>host</B
+>  [-aCdlrTwv] [-c <TT
+CLASS="replaceable"
+><I
+>class</I
+></TT
+>] [-N <TT
+CLASS="replaceable"
+><I
+>ndots</I
+></TT
+>] [-t <TT
+CLASS="replaceable"
+><I
+>type</I
+></TT
+>] [-W <TT
+CLASS="replaceable"
+><I
+>timeout</I
+></TT
+>] [-R <TT
+CLASS="replaceable"
+><I
+>retries</I
+></TT
+>]  <TT
+CLASS="replaceable"
+><I
+>hostname</I
+></TT
+>  [<TT
+CLASS="replaceable"
+><I
+>server</I
+></TT
+>]</P
+><P
+>For more information and a list of available commands and
+options, see the <B
+CLASS="command"
+>host</B
+> man page.</P
+></DD
+><DT
+><B
+CLASS="command"
+>nslookup</B
+></DT
+><DD
+><P
+><B
+CLASS="command"
+>nslookup</B
+> is a program used to query Internet
+domain nameservers. <B
+CLASS="command"
+>nslookup</B
+> has two modes: interactive
+and non-interactive. Interactive mode allows the user to query nameservers
+for information about various hosts and domains or to print a list
+of hosts in a domain. Non-interactive mode is used to print just
+the name and requested information for a host or domain.</P
+><P
+><B
+CLASS="command"
+>nslookup</B
+>  [-option...] [<TT
+CLASS="replaceable"
+><I
+>host-to-find</I
+></TT
+> | -  [server]]</P
+><P
+>Interactive mode is entered when no arguments are given (the
+default nameserver will be used) or when the first argument is a
+hyphen (`-') and the second argument is the host name or Internet address
+of a nameserver.</P
+><P
+>Non-interactive mode is used when the name or Internet address
+of the host to be looked up is given as the first argument. The
+optional second argument specifies the host name or address of a nameserver.</P
+><P
+>Due to its arcane user interface and frequently inconsistent
+behavior, we do not recommend the use of <B
+CLASS="command"
+>nslookup</B
+>.
+Use <B
+CLASS="command"
+>dig</B
+> instead.</P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="sect3"
+><H3
+CLASS="sect3"
+><A
+NAME="admin_tools"
+>3.4.1.2. Administrative Tools</A
+></H3
+><P
+>Administrative tools play an integral part in the management
+of a server.</P
+><P
+></P
+><DIV
+CLASS="variablelist"
+><DL
+><DT
+><A
+NAME="named-checkconf"
+><B
+CLASS="command"
+>named-checkconf</B
+></A
+></DT
+><DD
+><P
+>The <B
+CLASS="command"
+>named-checkconf</B
+> program
+              checks the syntax of a <TT
+CLASS="filename"
+>named.conf</TT
+> file.</P
+><P
+><B
+CLASS="command"
+>named-checkconf</B
+>  [-t <TT
+CLASS="replaceable"
+><I
+>directory</I
+></TT
+>] [<TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>]</P
+></DD
+><DT
+><A
+NAME="named-checkzone"
+><B
+CLASS="command"
+>named-checkzone</B
+></A
+></DT
+><DD
+><P
+>The <B
+CLASS="command"
+>named-checkzone</B
+> program checks a master file for
+              syntax and consistency.</P
+><P
+><B
+CLASS="command"
+>named-checkzone</B
+>  [-dq] [-c <TT
+CLASS="replaceable"
+><I
+>class</I
+></TT
+>]  <TT
+CLASS="replaceable"
+><I
+>zone</I
+></TT
+>  [<TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>]</P
+></DD
+><DT
+><A
+NAME="rndc"
+><B
+CLASS="command"
+>rndc</B
+></A
+></DT
+><DD
+><P
+>The remote name daemon control
+              (<B
+CLASS="command"
+>rndc</B
+>) program allows the system
+              administrator to control the operation of a nameserver.
+              If you run <B
+CLASS="command"
+>rndc</B
+> without any options
+              it will display a usage message as follows:</P
+><P
+><B
+CLASS="command"
+>rndc</B
+>  [-c <TT
+CLASS="replaceable"
+><I
+>config</I
+></TT
+>] [-s <TT
+CLASS="replaceable"
+><I
+>server</I
+></TT
+>] [-p <TT
+CLASS="replaceable"
+><I
+>port</I
+></TT
+>] [-y <TT
+CLASS="replaceable"
+><I
+>key</I
+></TT
+>]  <TT
+CLASS="replaceable"
+><I
+>command</I
+></TT
+>  [<TT
+CLASS="replaceable"
+><I
+>command</I
+></TT
+>...]</P
+><P
+><B
+CLASS="command"
+>command</B
+> is one of the following:</P
+><P
+></P
+><DIV
+CLASS="variablelist"
+><DL
+><DT
+><TT
+CLASS="userinput"
+><B
+>reload</B
+></TT
+></DT
+><DD
+><P
+>Reload configuration file and zones.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>reload <TT
+CLASS="replaceable"
+><I
+>zone</I
+></TT
+>
+       [<SPAN
+CLASS="optional"
+><TT
+CLASS="replaceable"
+><I
+>class</I
+></TT
+>
+           [<SPAN
+CLASS="optional"
+><TT
+CLASS="replaceable"
+><I
+>view</I
+></TT
+></SPAN
+>]</SPAN
+>]</B
+></TT
+></DT
+><DD
+><P
+>Reload the given zone.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>refresh <TT
+CLASS="replaceable"
+><I
+>zone</I
+></TT
+>
+       [<SPAN
+CLASS="optional"
+><TT
+CLASS="replaceable"
+><I
+>class</I
+></TT
+>
+           [<SPAN
+CLASS="optional"
+><TT
+CLASS="replaceable"
+><I
+>view</I
+></TT
+></SPAN
+>]</SPAN
+>]</B
+></TT
+></DT
+><DD
+><P
+>Schedule zone maintenance for the given zone.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>reconfig</B
+></TT
+></DT
+><DD
+><P
+>Reload the configuration file and load new zones,
+   but do not reload existing zone files even if they have changed.
+   This is faster than a full <B
+CLASS="command"
+>reload</B
+> when there
+   is a large number of zones because it avoids the need to examine the
+   modification times of the zones files.
+   </P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>stats</B
+></TT
+></DT
+><DD
+><P
+>Write server statistics to the statistics file.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>querylog</B
+></TT
+></DT
+><DD
+><P
+>Toggle query logging. Query logging can also be enabled
+   by explictly directing the <B
+CLASS="command"
+>queries</B
+>
+   <B
+CLASS="command"
+>category</B
+> to a <B
+CLASS="command"
+>channel</B
+> in the
+   <B
+CLASS="command"
+>logging</B
+> section of
+   <TT
+CLASS="filename"
+>named.conf</TT
+>.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>dumpdb</B
+></TT
+></DT
+><DD
+><P
+>Dump the server's caches to the dump file. </P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>stop</B
+></TT
+></DT
+><DD
+><P
+>Stop the server,
+   making sure any recent changes
+   made through dynamic update or IXFR are first saved to the master files
+   of the updated zones.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>halt</B
+></TT
+></DT
+><DD
+><P
+>Stop the server immediately.  Recent changes
+   made through dynamic update or IXFR are not saved to the master files,
+   but will be rolled forward from the journal files when the server
+   is restarted.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>trace</B
+></TT
+></DT
+><DD
+><P
+>Increment the servers debugging level by one. </P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>trace <TT
+CLASS="replaceable"
+><I
+>level</I
+></TT
+></B
+></TT
+></DT
+><DD
+><P
+>Sets the server's debugging level to an explicit
+   value.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>notrace</B
+></TT
+></DT
+><DD
+><P
+>Sets the server's debugging level to 0.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>flush</B
+></TT
+></DT
+><DD
+><P
+>Flushes the server's cache.</P
+></DD
+><DT
+><TT
+CLASS="userinput"
+><B
+>status</B
+></TT
+></DT
+><DD
+><P
+>Display status of the server.
+Note the number of zones includes the internal <B
+CLASS="command"
+>bind/CH</B
+> zone
+and the default <B
+CLASS="command"
+>./IN</B
+> hint zone if there is not a
+explicit root zone configured.</P
+></DD
+></DL
+></DIV
+><P
+>In <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> 9.2, <B
+CLASS="command"
+>rndc</B
+>
+supports all the commands of the BIND 8 <B
+CLASS="command"
+>ndc</B
+>
+utility except <B
+CLASS="command"
+>ndc start</B
+>, which was also
+not supported in <B
+CLASS="command"
+>ndc</B
+>'s channel mode.</P
+><P
+>A configuration file is required, since all
+communication with the server is authenticated with
+digital signatures that rely on a shared secret, and
+there is no way to provide that secret other than with a
+configuration file.  The default location for the
+<B
+CLASS="command"
+>rndc</B
+> configuration file is
+<TT
+CLASS="filename"
+>/etc/rndc.conf</TT
+>, but an alternate
+location can be specified with the <TT
+CLASS="option"
+>-c</TT
+>
+option.  If the configuration file is not found,
+<B
+CLASS="command"
+>rndc</B
+> will also look in
+<TT
+CLASS="filename"
+>/etc/rndc.key</TT
+> (or whatever
+<TT
+CLASS="varname"
+>sysconfdir</TT
+> was defined when
+the <SPAN
+CLASS="acronym"
+>BIND</SPAN
+> build was configured).
+The <TT
+CLASS="filename"
+>rndc.key</TT
+> file is generated by
+running <B
+CLASS="command"
+>rndc-confgen -a</B
+> as described in
+<A
+HREF="Bv9ARM.ch06.html#controls_statement_definition_and_usage"
+>Section 6.2.4</A
+>.</P
+><P
+>The format of the configuration file is similar to
+that of <TT
+CLASS="filename"
+>named.conf</TT
+>, but limited to
+only four statements, the <B
+CLASS="command"
+>options</B
+>,
+<B
+CLASS="command"
+>key</B
+>, <B
+CLASS="command"
+>server</B
+> and
+<B
+CLASS="command"
+>include</B
+>
+statements.  These statements are what associate the
+secret keys to the servers with which they are meant to
+be shared.  The order of statements is not
+significant.</P
+><P
+>The <B
+CLASS="command"
+>options</B
+> statement has three clauses:
+<B
+CLASS="command"
+>default-server</B
+>, <B
+CLASS="command"
+>default-key</B
+>, 
+and <B
+CLASS="command"
+>default-port</B
+>.
+<B
+CLASS="command"
+>default-server</B
+> takes a
+host name or address argument  and represents the server that will
+be contacted if no <TT
+CLASS="option"
+>-s</TT
+>
+option is provided on the command line.  
+<B
+CLASS="command"
+>default-key</B
+> takes
+the name of key as its argument, as defined by a <B
+CLASS="command"
+>key</B
+> statement.
+<B
+CLASS="command"
+>default-port</B
+> specifies the port to which
+<B
+CLASS="command"
+>rndc</B
+> should connect if no
+port is given on the command line or in a
+<B
+CLASS="command"
+>server</B
+> statement.</P
+><P
+>The <B
+CLASS="command"
+>key</B
+> statement names a key with its
+string argument. The string is required by the server to be a valid
+domain name, though it need not actually be hierarchical; thus,
+a string like "<TT
+CLASS="userinput"
+><B
+>rndc_key</B
+></TT
+>" is a valid name.
+The <B
+CLASS="command"
+>key</B
+> statement has two clauses:
+<B
+CLASS="command"
+>algorithm</B
+> and <B
+CLASS="command"
+>secret</B
+>.
+While the configuration parser will accept any string as the argument
+to algorithm, currently only the string "<TT
+CLASS="userinput"
+><B
+>hmac-md5</B
+></TT
+>"
+has any meaning.  The secret is a base-64 encoded string.</P
+><P
+>The <B
+CLASS="command"
+>server</B
+> statement uses the key clause
+to associate a <B
+CLASS="command"
+>key</B
+>-defined key with a server.
+The argument to the <B
+CLASS="command"
+>server</B
+> statement is a
+host name or address (addresses must be double quoted).  The argument
+to the key clause is the name of the key as defined by the <B
+CLASS="command"
+>key</B
+> statement.
+The <B
+CLASS="command"
+>port</B
+> clause can be used to 
+specify the port to which <B
+CLASS="command"
+>rndc</B
+> should connect
+on the given server.</P
+><P
+>A sample minimal configuration file is as follows:</P
+><PRE
+CLASS="programlisting"
+>&#13;key rndc_key {
+     algorithm "hmac-md5";
+     secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";
+};
+options {
+     default-server localhost;
+     default-key    rndc_key;
+};
+</PRE
+><P
+>This file, if installed as <TT
+CLASS="filename"
+>/etc/rndc.conf</TT
+>,
+would allow the command:</P
+><P
+><TT
+CLASS="prompt"
+>$ </TT
+><TT
+CLASS="userinput"
+><B
+>rndc reload</B
+></TT
+></P
+><P
+>to connect to 127.0.0.1 port 953 and cause the nameserver
+to reload, if a nameserver on the local machine were running with
+following controls statements:</P
+><PRE
+CLASS="programlisting"
+>&#13;controls {
+        inet 127.0.0.1 allow { localhost; } keys { rndc_key; };
+};
+</PRE
+><P
+>and it had an identical key statement for
+<TT
+CLASS="literal"
+>rndc_key</TT
+>.</P
+><P
+>Running the <B
+CLASS="command"
+>rndc-confgen</B
+> program will
+conveniently create a <TT
+CLASS="filename"
+>rndc.conf</TT
+>
+file for you, and also display the
+corresponding <B
+CLASS="command"
+>controls</B
+> statement that you need to
+add to <TT
+CLASS="filename"
+>named.conf</TT
+>.  Alternatively,
+you can run <B
+CLASS="command"
+>rndc-confgen -a</B
+> to set up
+a <TT
+CLASS="filename"
+>rndc.key</TT
+> file and not modify 
+<TT
+CLASS="filename"
+>named.conf</TT
+> at all.
+</P
+></DD
+></DL
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN663"
+>3.4.2. Signals</A
+></H2
+><P
+>Certain UNIX signals cause the name server to take specific
+actions, as described in the following table.  These signals can
+be sent using the <B
+CLASS="command"
+>kill</B
+> command.</P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN667"
+></A
+><P
+></P
+><TABLE
+CELLPADDING="3"
+BORDER="1"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><B
+CLASS="command"
+>SIGHUP</B
+></P
+></TD
+><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>Causes the server to read <TT
+CLASS="filename"
+>named.conf</TT
+> and
+reload the database. </P
+></TD
+></TR
+><TR
+><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+><B
+CLASS="command"
+>SIGTERM</B
+></P
+></TD
+><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>Causes the server to clean up and exit.</P
+></TD
+></TR
+><TR
+><TD
+WIDTH="108"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&#13;<P
+><B
+CLASS="command"
+>SIGINT</B
+></P
+>
+</TD
+><TD
+WIDTH="384"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><P
+>Causes the server to clean up and exit.</P
+></TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="Bv9ARM.ch02.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="Bv9ARM.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="Bv9ARM.ch04.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><SPAN
+CLASS="acronym"
+>BIND</SPAN
+> Resource Requirements</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Advanced Concepts</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

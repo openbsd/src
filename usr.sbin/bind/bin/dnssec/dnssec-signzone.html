@@ -1,0 +1,553 @@
+<!--
+ - Copyright (C) 2000, 2001  Internet Software Consortium.
+ - 
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ - 
+ - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
+ - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+ - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+-->
+<HTML
+><HEAD
+><TITLE
+>dnssec-signzone</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.61
+"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><H1
+><A
+NAME="AEN1"
+><SPAN
+CLASS="APPLICATION"
+>dnssec-signzone</SPAN
+></A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN9"
+></A
+><H2
+>Name</H2
+><SPAN
+CLASS="APPLICATION"
+>dnssec-signzone</SPAN
+>&nbsp;--&nbsp;DNSSEC zone signing tool</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN13"
+></A
+><H2
+>Synopsis</H2
+><P
+><B
+CLASS="COMMAND"
+>dnssec-signzone</B
+>  [<TT
+CLASS="OPTION"
+>-a</TT
+>] [<TT
+CLASS="OPTION"
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>class</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-d <TT
+CLASS="REPLACEABLE"
+><I
+>directory</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>start-time</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-e <TT
+CLASS="REPLACEABLE"
+><I
+>end-time</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-f <TT
+CLASS="REPLACEABLE"
+><I
+>output-file</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-h</TT
+>] [<TT
+CLASS="OPTION"
+>-i <TT
+CLASS="REPLACEABLE"
+><I
+>interval</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-n <TT
+CLASS="REPLACEABLE"
+><I
+>nthreads</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-o <TT
+CLASS="REPLACEABLE"
+><I
+>origin</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-p</TT
+>] [<TT
+CLASS="OPTION"
+>-r <TT
+CLASS="REPLACEABLE"
+><I
+>randomdev</I
+></TT
+></TT
+>] [<TT
+CLASS="OPTION"
+>-t</TT
+>] [<TT
+CLASS="OPTION"
+>-v <TT
+CLASS="REPLACEABLE"
+><I
+>level</I
+></TT
+></TT
+>] {zonefile} [key...]</P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN56"
+></A
+><H2
+>DESCRIPTION</H2
+><P
+>        <B
+CLASS="COMMAND"
+>dnssec-signzone</B
+> signs a zone.  It generates NXT
+	and SIG records and produces a signed version of the zone.  If there
+	is a <TT
+CLASS="FILENAME"
+>signedkey</TT
+> file from the zone's parent,
+	the parent's signatures will be incorporated into the generated
+	signed zone file.  The security status of delegations from the the
+        signed zone (that is, whether the child zones are secure or not) is
+        determined by the presence or absence of a
+	<TT
+CLASS="FILENAME"
+>signedkey</TT
+> file for each child zone.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN62"
+></A
+><H2
+>OPTIONS</H2
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>-a</DT
+><DD
+><P
+>	      Verify all generated signatures.
+	  </P
+></DD
+><DT
+>-c <TT
+CLASS="REPLACEABLE"
+><I
+>class</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the DNS class of the zone.
+	  </P
+></DD
+><DT
+>-d <TT
+CLASS="REPLACEABLE"
+><I
+>directory</I
+></TT
+></DT
+><DD
+><P
+>	       Look for <TT
+CLASS="FILENAME"
+>signedkey</TT
+> files in
+	       <TT
+CLASS="OPTION"
+>directory</TT
+> as the directory 
+	  </P
+></DD
+><DT
+>-s <TT
+CLASS="REPLACEABLE"
+><I
+>start-time</I
+></TT
+></DT
+><DD
+><P
+>	       Specify the date and time when the generated SIG records
+	       become valid.  This can be either an absolute or relative
+	       time.  An absolute start time is indicated by a number
+	       in YYYYMMDDHHMMSS notation; 20000530144500 denotes
+	       14:45:00 UTC on May 30th, 2000.  A relative start time is
+	       indicated by +N, which is N seconds from the current time.
+	       If no <TT
+CLASS="OPTION"
+>start-time</TT
+> is specified, the current
+	       time is used.
+	  </P
+></DD
+><DT
+>-e <TT
+CLASS="REPLACEABLE"
+><I
+>end-time</I
+></TT
+></DT
+><DD
+><P
+>	       Specify the date and time when the generated SIG records
+	       expire.  As with <TT
+CLASS="OPTION"
+>start-time</TT
+>, an absolute
+	       time is indicated in YYYYMMDDHHMMSS notation.  A time relative
+	       to the start time is indicated with +N, which is N seconds from
+	       the start time.  A time realtive to the current time is
+	       indicated with now+N.  If no <TT
+CLASS="OPTION"
+>end-time</TT
+> is
+	       specified, 30 days from the start time is used as a default.
+	  </P
+></DD
+><DT
+>-f <TT
+CLASS="REPLACEABLE"
+><I
+>output-file</I
+></TT
+></DT
+><DD
+><P
+>	       The name of the output file containing the signed zone.  The
+	       default is to append <TT
+CLASS="FILENAME"
+>.signed</TT
+> to the
+	       input file.
+	  </P
+></DD
+><DT
+>-h</DT
+><DD
+><P
+>	       Prints a short summary of the options and arguments to
+	       <B
+CLASS="COMMAND"
+>dnssec-signzone</B
+>.
+	  </P
+></DD
+><DT
+>-i <TT
+CLASS="REPLACEABLE"
+><I
+>interval</I
+></TT
+></DT
+><DD
+><P
+>	       When a previously signed zone is passed as input, records
+	       may be resigned.  The <TT
+CLASS="OPTION"
+>interval</TT
+> option
+	       specifies the cycle interval as an offset from the current
+	       time (in seconds).  If a SIG record expires after the
+	       cycle interval, it is retained.  Otherwise, it is considered
+	       to be expiring soon, and it will be replaced.
+	  </P
+><P
+>	       The default cycle interval is one quarter of the difference
+	       between the signature end and start times.  So if neither
+	       <TT
+CLASS="OPTION"
+>end-time</TT
+> or <TT
+CLASS="OPTION"
+>start-time</TT
+>
+	       are specified, <B
+CLASS="COMMAND"
+>dnssec-signzone</B
+> generates
+	       signatures that are valid for 30 days, with a cycle
+	       interval of 7.5 days.  Therefore, if any existing SIG records
+	       are due to expire in less than 7.5 days, they would be
+	       replaced.
+	  </P
+></DD
+><DT
+>-n <TT
+CLASS="REPLACEABLE"
+><I
+>ncpus</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the number of threads to use.  By default, one
+	       thread is started for each detected CPU.
+	  </P
+></DD
+><DT
+>-o <TT
+CLASS="REPLACEABLE"
+><I
+>origin</I
+></TT
+></DT
+><DD
+><P
+>	       The zone origin.  If not specified, the name of the zone file
+	       is assumed to be the origin.
+	  </P
+></DD
+><DT
+>-p</DT
+><DD
+><P
+>	       Use pseudo-random data when signing the zone.  This is faster,
+	       but less secure, than using real random data.  This option
+	       may be useful when signing large zones or when the entropy
+	       source is limited.
+	  </P
+></DD
+><DT
+>-r <TT
+CLASS="REPLACEABLE"
+><I
+>randomdev</I
+></TT
+></DT
+><DD
+><P
+>	       Specifies the source of randomness.  If the operating
+	       system does not provide a <TT
+CLASS="FILENAME"
+>/dev/random</TT
+>
+	       or equivalent device, the default source of randomness
+	       is keyboard input.  <TT
+CLASS="FILENAME"
+>randomdev</TT
+> specifies
+	       the name of a character device or file containing random
+	       data to be used instead of the default.  The special value
+	       <TT
+CLASS="FILENAME"
+>keyboard</TT
+> indicates that keyboard
+	       input should be used.
+	  </P
+></DD
+><DT
+>-t</DT
+><DD
+><P
+>	       Print statistics at completion.
+	  </P
+></DD
+><DT
+>-v <TT
+CLASS="REPLACEABLE"
+><I
+>level</I
+></TT
+></DT
+><DD
+><P
+>	       Sets the debugging level.
+	  </P
+></DD
+><DT
+>zonefile</DT
+><DD
+><P
+>	       The file containing the zone to be signed.
+	       Sets the debugging level.
+	  </P
+></DD
+><DT
+>key</DT
+><DD
+><P
+>	       The keys used to sign the zone.  If no keys are specified, the
+	       default all zone keys that have private key files in the
+	       current directory.
+	  </P
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN154"
+></A
+><H2
+>EXAMPLE</H2
+><P
+>        The following command signs the <TT
+CLASS="USERINPUT"
+><B
+>example.com</B
+></TT
+>
+	zone with the DSA key generated in the <B
+CLASS="COMMAND"
+>dnssec-keygen</B
+>
+	man page.  The zone's keys must be in the zone.  If there are
+	<TT
+CLASS="FILENAME"
+>signedkey</TT
+> files associated with this zone
+	or any child zones, they must be in the current directory.
+	<TT
+CLASS="USERINPUT"
+><B
+>example.com</B
+></TT
+>, the following command would be
+	issued:
+    </P
+><P
+>        <TT
+CLASS="USERINPUT"
+><B
+>dnssec-signzone -o example.com db.example.com Kexample.com.+003+26160</B
+></TT
+>
+    </P
+><P
+>        The command would print a string of the form:
+    </P
+><P
+>        In this example, <B
+CLASS="COMMAND"
+>dnssec-signzone</B
+> creates
+	the file <TT
+CLASS="FILENAME"
+>db.example.com.signed</TT
+>.  This file
+	should be referenced in a zone statement in a
+	<TT
+CLASS="FILENAME"
+>named.conf</TT
+> file.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN168"
+></A
+><H2
+>SEE ALSO</H2
+><P
+>      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>dnssec-keygen</SPAN
+>(8)</SPAN
+>,
+      <SPAN
+CLASS="CITEREFENTRY"
+><SPAN
+CLASS="REFENTRYTITLE"
+>dnssec-signkey</SPAN
+>(8)</SPAN
+>,
+      <I
+CLASS="CITETITLE"
+>BIND 9 Administrator Reference Manual</I
+>,
+      <I
+CLASS="CITETITLE"
+>RFC 2535</I
+>.
+    </P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN179"
+></A
+><H2
+>AUTHOR</H2
+><P
+>        Internet Software Consortium
+    </P
+></DIV
+></BODY
+></HTML
+>
