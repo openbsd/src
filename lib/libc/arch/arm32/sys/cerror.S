@@ -1,4 +1,4 @@
-/* $NetBSD: cerror.S,v 1.2 1996/05/12 19:55:06 mark Exp $ */
+/* $NetBSD: cerror.S,v 1.2.4.1 1996/06/16 13:16:01 mark Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cerror.s	5.1 (Berkeley) 4/23/90
- *	$Id: cerror.S,v 1.2 1996/05/22 11:39:20 deraadt Exp $
+ *	$Id: cerror.S,v 1.3 1996/06/23 10:08:29 deraadt Exp $
  */
 
 #include "SYS.h"
@@ -46,6 +46,7 @@ cerror:
 	ldr	r1, Lerrno
 	str	r0, [r1]
 	mvn	r0, #0x00000000
+	mvn	r1, #0x00000000
 	mov	r15, r14
 
 Lerrno:
