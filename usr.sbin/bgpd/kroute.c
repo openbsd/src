@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.62 2004/01/11 02:35:14 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.63 2004/01/11 19:14:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,11 +265,11 @@ kr_nexthop_add(in_addr_t key)
 		struct kroute_nexthop	 nh;
 
 		bzero(&nh, sizeof(nh));
-		nh.nexthop = key;
+		nh.nexthop.v4.s_addr = key;
 		if (h->kroute != NULL) {
 			nh.valid = 1;
 			nh.connected = h->kroute->r.flags & F_CONNECTED;
-			nh.gateway = h->kroute->r.nexthop;
+			nh.gateway.v4.s_addr = h->kroute->r.nexthop;
 		}
 		send_nexthop_update(&nh);
 	} else {
@@ -589,7 +589,7 @@ knexthop_validate(struct knexthop_node *kn)
 		was_valid = 1;
 
 	bzero(&n, sizeof(n));
-	n.nexthop = kn->nexthop;
+	n.nexthop.v4.s_addr = kn->nexthop;
 	kroute_detach_nexthop(kn);
 
 	if ((kr = kroute_match(kn->nexthop)) == NULL) {	/* no match */
@@ -603,7 +603,7 @@ knexthop_validate(struct knexthop_node *kn)
 			if (!was_valid) {
 				n.valid = 1;
 				n.connected = kr->r.flags & F_CONNECTED;
-				n.gateway = kr->r.nexthop;
+				n.gateway.v4.s_addr = kr->r.nexthop;
 				send_nexthop_update(&n);
 			}
 		}
@@ -756,11 +756,12 @@ if_change(u_short ifindex, int flags)
 		RB_FOREACH(n, knexthop_tree, &knt)
 			if (n->kroute == kkr->kr) {
 				bzero(&nh, sizeof(nh));
-				nh.nexthop = n->nexthop;
+				nh.nexthop.v4.s_addr = n->nexthop;
 				if (!(kkr->kr->r.flags & F_DOWN)) {
 					nh.valid = 1;
 					nh.connected = 1;
-					nh.gateway = kkr->kr->r.nexthop;
+					nh.gateway.v4.s_addr =
+					    kkr->kr->r.nexthop;
 				}
 				send_nexthop_update(&nh);
 			}
