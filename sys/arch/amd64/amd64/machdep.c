@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2004/02/24 00:20:45 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2004/02/24 20:26:24 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -546,6 +546,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
+	dev_t dev;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -559,7 +560,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
-
+	case CPU_CHR2BLK:
+		if (namelen != 2)
+			return (ENOTDIR);		/* overloaded */
+		dev = chrtoblk((dev_t)name[1]);
+		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
 		if (securelevel > 0)
