@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.173 2001/06/12 06:36:03 fgsch Exp $
+#	$OpenBSD: rc,v 1.174 2001/06/22 14:46:42 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -206,7 +206,7 @@ if [ X"${portmap}" = X"YES" ]; then
 	echo -n ' portmap';		portmap
 fi
 
-if [ -d /var/yp/binding ]; then
+if [ -d /var/yp/binding -a X`domainname` != X ]; then
 	if [ -d /var/yp/`domainname` ]; then
 		# yp server capabilities needed...
 		echo -n ' ypserv';		ypserv ${ypserv_flags}
