@@ -55,6 +55,28 @@ mips-*-riscos*)		HDEFINES="-G 4" ;;
 
 m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
 
+*-*-solaris*)		HOST_64BIT_TYPE="long long"
+			HOST_U_64BIT_TYPE="unsigned long long"
+			;;
+
+*-*-windows*)
+			host64=true
+			HOST_64BIT_TYPE=__int64
+			HOST_U_64BIT_TYPE="unsigned __int64"
+# The following krock is necessary because we can't run the build compiler
+# (MSVC) on the configure host, so we have to explicitly set the values here.
+# Note that this file is never run through autoconf, so we can't use any
+# autoconf macros here.  Because of this, we have to muck with autoconf
+# variables explicitly.
+			ac_cv_func_mmap=no
+			ac_cv_header_time=no
+			ac_cv_func_getpagesize=no
+			ac_cv_func_madvise=no
+			ac_cv_func_mprotect=no
+			ac_cv_header_sys_file_h=no
+			ac_cv_header_sys_time_h=no
+			ac_cv_header_unistd_h=no
+			;;
 esac
 
 # If we are configuring with --enable-shared, adjust the shared

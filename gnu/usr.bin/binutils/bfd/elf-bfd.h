@@ -719,6 +719,7 @@ extern void _bfd_elf_no_info_to_howto PARAMS ((bfd *, arelent *,
 					       Elf_Internal_Rela *));
 
 extern boolean bfd_section_from_shdr PARAMS ((bfd *, unsigned int shindex));
+extern boolean bfd_section_from_phdr PARAMS ((bfd *, Elf_Internal_Phdr *, int));
 
 extern int _bfd_elf_symbol_from_bfd_symbol PARAMS ((bfd *, asymbol **));
 

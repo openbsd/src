@@ -38,7 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
-#include "assert.h"
 
 #define MYARM(OP) CAT(aoutarm_,OP)
 reloc_howto_type 	*MYARM(bfd_reloc_type_lookup)

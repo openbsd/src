@@ -1,0 +1,43 @@
+;******************************************************************************
+;* Copyright 1991 Advanced Micro Devices, Inc.
+;*
+;* This software is the property of Advanced Micro Devices, Inc  (AMD)  which
+;* specifically  grants the user the right to modify, use and distribute this
+;* software provided this notice is not removed or altered.  All other rights
+;* are reserved by AMD.
+;*
+;* AMD MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS
+;* SOFTWARE.  IN NO EVENT SHALL AMD BE LIABLE FOR INCIDENTAL OR CONSEQUENTIAL
+;* DAMAGES IN CONNECTION WITH OR ARISING FROM THE FURNISHING, PERFORMANCE, OR
+;* USE OF THIS SOFTWARE.
+;*
+;* Comments about this software should be directed to udi@amd.com. If access
+;* to electronic mail isn't available, send mail to:
+;*
+;* Advanced Micro Devices, Inc.
+;* 29K Support Products
+;* Mail Stop 573
+;* 5900 E. Ben White Blvd.
+;* Austin, TX 78741
+;*****************************************************************************
+;*       $Id: udidos.ah,v 1.2 1996/11/23 04:11:22 niklas Exp $
+;*/
+;
+; The following structure is filled in by a small assembly
+; language piece of code that runs when UDIDisconnect is
+; called by the DFE. It is used by a small piece of assembly
+; code on the DFE side IF the TIP used DOS Exit to clean it-
+; self up. The DFE side code then "returns" on behalf of the
+; TIP.
+; This structure should track with a C language version of
+; the same structure in udidos.h.
+DOSTerm STRUC
+TermFunc    dd	?
+sds	dw	?
+sss	dw	?
+ssi	dw	?
+sdi	dw	?
+ssp	dw	?
+retval	dw	?
+sbp	dw	?
+DOSTerm	ENDS

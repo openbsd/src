@@ -31,7 +31,7 @@ send_user "Version [binutil_version $OBJDUMP]"
 
 set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -i"]
 
-set cpus_expected "(a29k|alliant|alpha|arm|convex|h8|hppa|i386|i860|i960|m68k|m88k|mips|ns32k|powerpc|pyramid|romp|rs6000|sh|sparc|tahoe|vax|we32k|z8k|z8001|z8002)"
+set cpus_expected "(a29k|alliant|alpha|arm|convex|h8|hppa|i386|i860|i960|m68k|m88k|mips|mn10200|mn10300|ns32k|powerpc|pyramid|romp|rs6000|sh|sparc|tahoe|vax|we32k|z8k|z8001|z8002)"
 
 set want "BFD header file version.*srec.*header .* endian.*, data .* endian.*$cpus_expected"
 

@@ -6,6 +6,7 @@ if [istarget mips*-*-*] then {
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
     set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
     set ilocks [expr [istarget *4300*-*-elf*] || [istarget *4100*-*-elf*]]
+    set 64bit [istarget mips64*-*-*]
 
     run_dump_test "abs"
     run_dump_test "add"
@@ -16,6 +17,7 @@ if [istarget mips*-*-*] then {
     run_dump_test "blt"
     run_dump_test "bltu"
     if !$ilocks { run_dump_test "div" } else { run_dump_test "div-ilocks" }
+    if $64bit { run_dump_test "dli" }
     run_dump_test "jal"
     if $svr4pic { run_dump_test "jal-svr4pic" }
     if $svr4pic { run_dump_test "jal-xgot" }

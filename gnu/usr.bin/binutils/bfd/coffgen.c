@@ -56,6 +56,17 @@ static boolean coff_write_native_symbol
 static void coff_pointerize_aux
   PARAMS ((bfd *, combined_entry_type *, combined_entry_type *,
 	   unsigned int, combined_entry_type *));
+static boolean make_a_section_from_file
+  PARAMS ((bfd *, struct internal_scnhdr *, unsigned int));
+static const bfd_target *coff_real_object_p
+  PARAMS ((bfd *, unsigned, struct internal_filehdr *, 
+	   struct internal_aouthdr *));
+static void fixup_symbol_value
+  PARAMS ((coff_symbol_type *, struct internal_syment *));
+static char *build_debug_section
+  PARAMS ((bfd *));
+static char *copy_name
+  PARAMS ((bfd *, char *, int));
 
 #define STRING_SIZE_SIZE (4)
 

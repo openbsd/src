@@ -34,7 +34,7 @@ static enum sparc_opcode_arch_val current_architecture = SPARC_OPCODE_ARCH_V6;
 
 /* The maximum architecture level we can bump up to.
    In a 32 bit environment, don't allow bumping up to v9 by default.
-   The native assembler works this way. The user is required to pass
+   The native assembler works this way.  The user is required to pass
    an explicit argument before we'll create v9 object files.  However, if
    we don't see any v9 insns, a v9 object file is not created.  */
 #ifdef SPARC_ARCH64
@@ -57,6 +57,13 @@ static enum sparc_opcode_arch_val warn_after_architecture;
 int sparc_pic_code;
 
 extern int target_big_endian;
+
+/* V9 has big and little endian data, but instructions are always big endian.
+   The sparclet has bi-endian support but both data and insns have the same
+   endianness.  Global `target_big_endian' is used for data.  The following
+   macro is used for instructions.  */
+#define INSN_BIG_ENDIAN (target_big_endian \
+			 || SPARC_OPCODE_ARCH_V9_P (max_architecture))
 
 /* handle of the OPCODE hash table */
 static struct hash_control *op_hash;
@@ -83,13 +90,13 @@ const pseudo_typeS md_pseudo_table[] =
   {"skip", s_space, 0},
   {"word", cons, 4},
   {"xword", cons, 8},
+  {"uahalf", s_uacons, 2},
+  {"uaword", s_uacons, 4},
+  {"uaxword", s_uacons, 8},
 #ifdef OBJ_ELF
   /* these are specific to sparc/svr4 */
   {"pushsection", obj_elf_section, 0},
   {"popsection", obj_elf_previous, 0},
-  {"uahalf", s_uacons, 2},
-  {"uaword", s_uacons, 4},
-  {"uaxword", s_uacons, 8},
   {"2byte", s_uacons, 2},
   {"4byte", s_uacons, 4},
   {"8byte", s_uacons, 8},
@@ -188,6 +195,17 @@ sparc_ffs (mask)
   return i;
 }
 
+/* Implement big shift right.  */
+static bfd_vma
+BSR (val, amount)
+     bfd_vma val;
+     int amount;
+{
+  if (sizeof (bfd_vma) <= 4 && amount >= 32)
+    as_fatal ("Support for 64-bit arithmetic not compiled in.");
+  return val >> amount;
+}
+
 #if 0
 static void print_insn PARAMS ((struct sparc_it *insn));
 #endif
@@ -201,7 +219,18 @@ static int special_case;
  * 4 bytes.
  */
 #define	SPECIAL_CASE_SET	1
-#define	SPECIAL_CASE_FDIV	2
+#define SPECIAL_CASE_SETSW	2
+#define SPECIAL_CASE_SETX	3
+/* FIXME: sparc-opc.c doesn't have necessary "S" trigger to enable this.  */
+#define	SPECIAL_CASE_FDIV	4
+
+/* Bit masks of various insns.  */
+#define NOP_INSN 0x01000000
+#define OR_INSN 0x80100000
+#define FMOVS_INSN 0x81A00020
+#define SETHI_INSN 0x01000000
+#define SLLX_INSN 0x81281000
+#define SRA_INSN 0x81380000
 
 /* The last instruction to be assembled.  */
 static const struct sparc_opcode *last_insn;
@@ -725,8 +754,6 @@ md_begin ()
   qsort (priv_reg_table, sizeof (priv_reg_table) / sizeof (priv_reg_table[0]),
 	 sizeof (priv_reg_table[0]), cmp_reg_entry);
 
-  target_big_endian = 1;
-
   /* If -bump, record the architecture level at which we start issuing
      warnings.  The behaviour is different depending upon whether an
      architecture was explicitly specified.  If it wasn't, we issue warnings
@@ -779,19 +806,46 @@ sparc_md_end ()
 #endif
 }
 
+/* Utility to output one insn.  */
+
+static void
+output_insn (insn, the_insn)
+     const struct sparc_opcode *insn;
+     struct sparc_it *the_insn;
+{
+  char *toP = frag_more (4);
+
+  /* put out the opcode */
+  if (INSN_BIG_ENDIAN)
+    number_to_chars_bigendian (toP, (valueT) the_insn->opcode, 4);
+  else
+    number_to_chars_littleendian (toP, (valueT) the_insn->opcode, 4);
+
+  /* put out the symbol-dependent stuff */
+  if (the_insn->reloc != BFD_RELOC_NONE)
+    {
+      fix_new_exp (frag_now,	/* which frag */
+		   (toP - frag_now->fr_literal),	/* where */
+		   4,		/* size */
+		   &the_insn->exp,
+		   the_insn->pcrel,
+		   the_insn->reloc);
+    }
+
+  last_insn = insn;
+}
+
 void
 md_assemble (str)
      char *str;
 {
   const struct sparc_opcode *insn;
-  char *toP;
-  int rsd;
 
   know (str);
+  special_case = 0;
   sparc_ip (str, &insn);
 
-  /* We warn about attempts to put a floating point branch in a delay
-     slot.  */
+  /* We warn about attempts to put a floating point branch in a delay slot.  */
   if (insn != NULL
       && last_insn != NULL
       && (insn->flags & F_FBR) != 0
@@ -807,95 +861,231 @@ md_assemble (str)
       && (insn->flags & F_FBR) != 0
       && (last_insn->flags & F_FLOAT) != 0)
     {
+      struct sparc_it nop_insn;
+
+      nop_insn.opcode = NOP_INSN;
+      nop_insn.reloc = BFD_RELOC_NONE;
+      output_insn (insn, &nop_insn);
       as_warn ("FP branch preceded by FP instruction; NOP inserted");
-      toP = frag_more (4);
-      md_number_to_chars (toP, (valueT) 0x01000000, 4);
     }
-
-  /* See if "set" operand is absolute and small; skip sethi if so. */
-  if (special_case == SPECIAL_CASE_SET
-      && the_insn.exp.X_op == O_constant)
-    {
-      if (the_insn.exp.X_add_number >= -(1 << 12)
-	  && the_insn.exp.X_add_number < (1 << 12))
-	{
-	  the_insn.opcode = 0x80102000	/* or %g0,imm,... */
-	    | (the_insn.opcode & 0x3E000000)	/* dest reg */
-	    | (the_insn.exp.X_add_number & 0x1FFF);	/* imm */
-	  special_case = 0;	/* No longer special */
-	  the_insn.reloc = BFD_RELOC_NONE;	/* No longer relocated */
-	}
-    }
-
-  toP = frag_more (4);
-  /* put out the opcode */
-  md_number_to_chars (toP, (valueT) the_insn.opcode, 4);
-
-  /* put out the symbol-dependent stuff */
-  if (the_insn.reloc != BFD_RELOC_NONE)
-    {
-      fix_new_exp (frag_now,	/* which frag */
-		   (toP - frag_now->fr_literal),	/* where */
-		   4,		/* size */
-		   &the_insn.exp,
-		   the_insn.pcrel,
-		   the_insn.reloc);
-    }
-
-  last_insn = insn;
 
   switch (special_case)
     {
+    case 0:
+      /* normal insn */
+      output_insn (insn, &the_insn);
+      break;
+
     case SPECIAL_CASE_SET:
-      special_case = 0;
-      assert (the_insn.reloc == BFD_RELOC_HI22);
-      /* See if "set" operand has no low-order bits; skip OR if so. */
-      if (the_insn.exp.X_op == O_constant
-	  && ((the_insn.exp.X_add_number & 0x3FF) == 0))
-	return;
-      toP = frag_more (4);
-      rsd = (the_insn.opcode >> 25) & 0x1f;
-      the_insn.opcode = 0x80102000 | (rsd << 25) | (rsd << 14);
-      md_number_to_chars (toP, (valueT) the_insn.opcode, 4);
-      fix_new_exp (frag_now,	/* which frag */
-		   (toP - frag_now->fr_literal),	/* where */
-		   4,		/* size */
-		   &the_insn.exp,
-		   the_insn.pcrel,
-		   BFD_RELOC_LO10);
-      return;
+      {
+	int need_hi22_p = 0;
+
+	/* "set" is not defined for negative numbers in v9: it doesn't yield
+	   what you expect it to.  */
+	if (SPARC_OPCODE_ARCH_V9_P (max_architecture)
+	    && the_insn.exp.X_op == O_constant)
+	  {
+	    if (the_insn.exp.X_add_number < 0)
+	      as_warn ("set: used with negative number");
+	    else if (the_insn.exp.X_add_number > 0xffffffff)
+	      as_warn ("set: number larger than 4294967295");
+	  }
+
+	/* See if operand is absolute and small; skip sethi if so.  */
+	if (the_insn.exp.X_op != O_constant
+	    || the_insn.exp.X_add_number >= (1 << 12)
+	    || the_insn.exp.X_add_number < -(1 << 12))
+	  {
+	    output_insn (insn, &the_insn);
+	    need_hi22_p = 1;
+	  }
+	/* See if operand has no low-order bits; skip OR if so.  */
+	if (the_insn.exp.X_op != O_constant
+	    || (need_hi22_p && (the_insn.exp.X_add_number & 0x3FF) != 0)
+	    || ! need_hi22_p)
+	  {
+	    int rd = (the_insn.opcode & RD (~0)) >> 25;
+	    the_insn.opcode = (OR_INSN | (need_hi22_p ? RS1 (rd) : 0)
+			       | RD (rd)
+			       | IMMED
+			       | (the_insn.exp.X_add_number
+				  & (need_hi22_p ? 0x3ff : 0x1fff)));
+	    the_insn.reloc = (the_insn.exp.X_op != O_constant
+			      ? BFD_RELOC_LO10
+			      : BFD_RELOC_NONE);
+	    output_insn (insn, &the_insn);
+	  }
+	break;
+      }
+
+    case SPECIAL_CASE_SETSW:
+      {
+	/* FIXME: Not finished.  */
+	break;
+      }
+
+    case SPECIAL_CASE_SETX:
+      {
+#define SIGNEXT32(x) ((((x) & 0xffffffff) ^ 0x80000000) - 0x80000000)
+	int upper32 = SIGNEXT32 (BSR (the_insn.exp.X_add_number, 32));
+	int lower32 = SIGNEXT32 (the_insn.exp.X_add_number);
+#undef SIGNEXT32
+	int tmpreg = (the_insn.opcode & RS1 (~0)) >> 14;
+	int dstreg = (the_insn.opcode & RD (~0)) >> 25;
+	/* Output directly to dst reg if lower 32 bits are all zero.  */
+	int upper_dstreg = (the_insn.exp.X_op == O_constant
+			    && lower32 == 0) ? dstreg : tmpreg;
+	int need_hh22_p = 0, need_hm10_p = 0, need_hi22_p = 0, need_lo10_p = 0;
+
+	/* The tmp reg should not be the dst reg.  */
+	if (tmpreg == dstreg)
+	  as_warn ("setx: temporary register same as destination register");
+
+	/* Reset X_add_number, we've extracted it as upper32/lower32.
+	   Otherwise fixup_segment will complain about not being able to
+	   write an 8 byte number in a 4 byte field.  */
+	the_insn.exp.X_add_number = 0;
+
+	/* ??? Obviously there are other optimizations we can do
+	   (e.g. sethi+shift for 0x1f0000000) and perhaps we shouldn't be
+	   doing some of these.  Later.  If you do change things, try to
+	   change all of this to be table driven as well.  */
+
+	/* What to output depends on the number if it's constant.
+	   Compute that first, then output what we've decided upon.  */
+	if (the_insn.exp.X_op != O_constant)
+	  need_hh22_p = need_hm10_p = need_hi22_p = need_lo10_p = 1;
+	else
+	  {
+	    /* Only need hh22 if `or' insn can't handle constant.  */
+	    if (upper32 < -(1 << 12) || upper32 >= (1 << 12))
+	      need_hh22_p = 1;
+
+	    /* Does bottom part (after sethi) have bits?  */
+	    if ((need_hh22_p && (upper32 & 0x3ff) != 0)
+		/* No hh22, but does upper32 still have bits we can't set
+		   from lower32?  */
+		|| (! need_hh22_p
+		    && upper32 != 0
+		    && (upper32 != -1 || lower32 >= 0)))
+	      need_hm10_p = 1;
+
+	    /* If the lower half is all zero, we build the upper half directly
+	       into the dst reg.  */
+	    if (lower32 != 0
+		/* Need lower half if number is zero.  */
+		|| (! need_hh22_p && ! need_hm10_p))
+	      {
+		/* No need for sethi if `or' insn can handle constant.  */
+		if (lower32 < -(1 << 12) || lower32 >= (1 << 12)
+		    /* Note that we can't use a negative constant in the `or'
+		       insn unless the upper 32 bits are all ones.  */
+		    || (lower32 < 0 && upper32 != -1))
+		  need_hi22_p = 1;
+
+		/* Does bottom part (after sethi) have bits?  */
+		if ((need_hi22_p && (lower32 & 0x3ff) != 0)
+		    /* No sethi.  */
+		    || (! need_hi22_p && (lower32 & 0x1fff) != 0)
+		    /* Need `or' if we didn't set anything else.  */
+		    || (! need_hi22_p && ! need_hh22_p && ! need_hm10_p))
+		  need_lo10_p = 1;
+	      }
+	  }
+
+	if (need_hh22_p)
+	  {
+	    the_insn.opcode = (SETHI_INSN | RD (upper_dstreg)
+			       | ((upper32 >> 10) & 0x3fffff));
+	    the_insn.reloc = (the_insn.exp.X_op != O_constant
+			      ? BFD_RELOC_SPARC_HH22 : BFD_RELOC_NONE);
+	    output_insn (insn, &the_insn);
+	  }
+
+	if (need_hm10_p)
+	  {
+	    the_insn.opcode = (OR_INSN
+			       | (need_hh22_p ? RS1 (upper_dstreg) : 0)
+			       | RD (upper_dstreg)
+			       | IMMED
+			       | (upper32
+				  & (need_hh22_p ? 0x3ff : 0x1fff)));
+	    the_insn.reloc = (the_insn.exp.X_op != O_constant
+			      ? BFD_RELOC_SPARC_HM10 : BFD_RELOC_NONE);
+	    output_insn (insn, &the_insn);
+	  }
+
+	if (need_hi22_p)
+	  {
+	    the_insn.opcode = (SETHI_INSN | RD (dstreg)
+			       | ((lower32 >> 10) & 0x3fffff));
+	    the_insn.reloc = BFD_RELOC_HI22;
+	    output_insn (insn, &the_insn);
+	  }
+
+	if (need_lo10_p)
+	  {
+	    /* FIXME: One nice optimization to do here is to OR the low part
+	       with the highpart if hi22 isn't needed and the low part is
+	       positive.  */
+	    the_insn.opcode = (OR_INSN | (need_hi22_p ? RS1 (dstreg) : 0)
+			       | RD (dstreg)
+			       | IMMED
+			       | (lower32
+				  & (need_hi22_p ? 0x3ff : 0x1fff)));
+	    the_insn.reloc = BFD_RELOC_LO10;
+	    output_insn (insn, &the_insn);
+	  }
+
+	/* If we needed to build the upper part, shift it into place.  */
+	if (need_hh22_p || need_hm10_p)
+	  {
+	    the_insn.opcode = (SLLX_INSN | RS1 (upper_dstreg) | RD (upper_dstreg)
+			       | IMMED | 32);
+	    the_insn.reloc = BFD_RELOC_NONE;
+	    output_insn (insn, &the_insn);
+	  }
+
+	/* If we needed to build both upper and lower parts, OR them together.  */
+	if ((need_hh22_p || need_hm10_p)
+	    && (need_hi22_p || need_lo10_p))
+	  {
+	    the_insn.opcode = (OR_INSN | RS1 (dstreg) | RS2 (upper_dstreg)
+			       | RD (dstreg));
+	    the_insn.reloc = BFD_RELOC_NONE;
+	    output_insn (insn, &the_insn);
+	  }
+	/* We didn't need both regs, but we may have to sign extend lower32.  */
+	else if (need_hi22_p && upper32 == -1)
+	  {
+	    the_insn.opcode = (SRA_INSN | RS1 (dstreg) | RD (dstreg)
+			       | IMMED | 0);
+	    the_insn.reloc = BFD_RELOC_NONE;
+	    output_insn (insn, &the_insn);
+	  }
+	break;
+      }
 
     case SPECIAL_CASE_FDIV:
-      /* According to information leaked from Sun, the "fdiv" instructions
-	 on early SPARC machines would produce incorrect results sometimes.
-	 The workaround is to add an fmovs of the destination register to
-	 itself just after the instruction.  This was true on machines
-	 with Weitek 1165 float chips, such as the Sun-4/260 and /280. */
-      special_case = 0;
-      assert (the_insn.reloc == BFD_RELOC_NONE);
-      toP = frag_more (4);
-      rsd = (the_insn.opcode >> 25) & 0x1f;
-      the_insn.opcode = 0x81A00020 | (rsd << 25) | rsd;	/* fmovs dest,dest */
-      md_number_to_chars (toP, (valueT) the_insn.opcode, 4);
-      return;
+      {
+	int rd = (the_insn.opcode >> 25) & 0x1f;
 
-    case 0:
-      return;
+	output_insn (insn, &the_insn);
+
+	/* According to information leaked from Sun, the "fdiv" instructions
+	   on early SPARC machines would produce incorrect results sometimes.
+	   The workaround is to add an fmovs of the destination register to
+	   itself just after the instruction.  This was true on machines
+	   with Weitek 1165 float chips, such as the Sun-4/260 and /280. */
+	assert (the_insn.reloc == BFD_RELOC_NONE);
+	the_insn.opcode = FMOVS_INSN | rd | RD (rd);
+	output_insn (insn, &the_insn);
+	break;
+      }
 
     default:
-      as_fatal ("failed sanity check.");
+      as_fatal ("failed special case insn sanity check");
     }
-}
-
-/* Implement big shift right.  */
-static bfd_vma
-BSR (val, amount)
-     bfd_vma val;
-     int amount;
-{
-  if (sizeof (bfd_vma) <= 4 && amount >= 32)
-    as_fatal ("Support for 64-bit arithmetic not compiled in.");
-  return val >> amount;
 }
 
 /* Parse an argument that can be expressed as a keyword.
@@ -1624,6 +1814,10 @@ sparc_ip (str, pinsn)
 		}
 	      break;
 
+	    case '0':		/* 64 bit immediate (setx insn) */
+	      the_insn.reloc = BFD_RELOC_NONE; /* reloc handled elsewhere */
+	      goto immediate;
+
 	    case 'h':		/* high 22 bits */
 	      the_insn.reloc = BFD_RELOC_HI22;
 	      goto immediate;
@@ -1694,7 +1888,7 @@ sparc_ip (str, pinsn)
 
 		char *s1;
 
-		for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++);;
+		for (s1 = s; *s1 && *s1 != ',' && *s1 != ']'; s1++) ;
 
 		if (s1 != s && isdigit (s1[-1]))
 		  {
@@ -1851,9 +2045,20 @@ sparc_ip (str, pinsn)
 	      break;
 
 	    case 'S':
-	      if (strcmp (str, "set") == 0)
+	      if (strcmp (str, "set") == 0
+		  || strcmp (str, "setuw") == 0)
 		{
 		  special_case = SPECIAL_CASE_SET;
+		  continue;
+		}
+	      else if (strcmp (str, "setsw") == 0)
+		{
+		  special_case = SPECIAL_CASE_SETSW;
+		  continue;
+		}
+	      else if (strcmp (str, "setx") == 0)
+		{
+		  special_case = SPECIAL_CASE_SETX;
 		  continue;
 		}
 	      else if (strncmp (str, "fdiv", 4) == 0)
@@ -2081,15 +2286,13 @@ md_atof (type, litP, sizeP)
      char *litP;
      int *sizeP;
 {
-  int prec;
+  int i,prec;
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
-  LITTLENUM_TYPE *wordP;
   char *t;
   char *atof_ieee ();
 
   switch (type)
     {
-
     case 'f':
     case 'F':
     case 's':
@@ -2118,28 +2321,45 @@ md_atof (type, litP, sizeP)
       *sizeP = 0;
       return "Bad call to MD_ATOF()";
     }
+
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
     input_line_pointer = t;
   *sizeP = prec * sizeof (LITTLENUM_TYPE);
-  for (wordP = words; prec--;)
+
+  if (target_big_endian)
     {
-      md_number_to_chars (litP, (valueT) (*wordP++), sizeof (LITTLENUM_TYPE));
-      litP += sizeof (LITTLENUM_TYPE);
+      for (i = 0; i < prec; i++)
+	{
+	  md_number_to_chars (litP, (valueT) words[i], sizeof (LITTLENUM_TYPE));
+	  litP += sizeof (LITTLENUM_TYPE);
+	}
     }
+  else
+    {
+      for (i = prec - 1; i >= 0; i--)
+	{
+	  md_number_to_chars (litP, (valueT) words[i], sizeof (LITTLENUM_TYPE));
+	  litP += sizeof (LITTLENUM_TYPE);
+	}
+    }
+     
   return 0;
 }
 
-/*
- * Write out big-endian.
- */
+/* Write a value out to the object file, using the appropriate
+   endianness.  */
+
 void
 md_number_to_chars (buf, val, n)
      char *buf;
      valueT val;
      int n;
 {
-  number_to_chars_bigendian (buf, val, n);
+  if (target_big_endian)
+    number_to_chars_bigendian (buf, val, n);
+  else
+    number_to_chars_littleendian (buf, val, n);
 }
 
 /* Apply a fixS to the frags, now that we know the value it ought to
@@ -2152,6 +2372,7 @@ md_apply_fix (fixP, value)
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   offsetT val;
+  long insn;
 
   val = *value;
 
@@ -2208,172 +2429,148 @@ md_apply_fix (fixP, value)
     fixP->fx_addnumber -= 2 * S_GET_VALUE (fixP->fx_addsy);
 #endif
 
-  switch (fixP->fx_r_type)
+  /* If this is a data relocation, just output VAL.  */
+
+  if (fixP->fx_r_type == BFD_RELOC_16)
     {
-    case BFD_RELOC_16:
-      buf[0] = val >> 8;
-      buf[1] = val;
-      break;
+      md_number_to_chars (buf, val, 2);
+    }
+  else if (fixP->fx_r_type == BFD_RELOC_32)
+    {
+      md_number_to_chars (buf, val, 4);
+    }
+  else if (fixP->fx_r_type == BFD_RELOC_64)
+    {
+      md_number_to_chars (buf, val, 8);
+    }
+  else
+    {
+      /* It's a relocation against an instruction.  */
 
-    case BFD_RELOC_32:
-      buf[0] = val >> 24;
-      buf[1] = val >> 16;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_32_PCREL_S2:
-      val = val >> 2;
-      /* FIXME: This increment-by-one deserves a comment of why it's
-	 being done!  */
-      if (! sparc_pic_code
-	  || fixP->fx_addsy == NULL
-	  || (fixP->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)
-	++val;
-      buf[0] |= (val >> 24) & 0x3f;
-      buf[1] = val >> 16;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_64:
-      {
-	bfd_vma valh = BSR (val, 32);
-	buf[0] = valh >> 24;
-	buf[1] = valh >> 16;
-	buf[2] = valh >> 8;
-	buf[3] = valh;
-	buf[4] = val >> 24;
-	buf[5] = val >> 16;
-	buf[6] = val >> 8;
-	buf[7] = val;
-      }
-      break;
-
-    case BFD_RELOC_SPARC_11:
-      if (! in_signed_range (val, 0x7ff))
-	as_bad ("relocation overflow.");
-
-      buf[2] |= (val >> 8) & 0x7;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_10:
-      if (! in_signed_range (val, 0x3ff))
-	as_bad ("relocation overflow.");
-
-      buf[2] |= (val >> 8) & 0x3;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_6:
-      if (! in_bitfield_range (val, 0x3f))
-	as_bad ("relocation overflow.");
-
-      buf[3] |= val & 0x3f;
-      break;
-
-    case BFD_RELOC_SPARC_5:
-      if (! in_bitfield_range (val, 0x1f))
-	as_bad ("relocation overflow.");
-
-      buf[3] |= val & 0x1f;
-      break;
-
-    case BFD_RELOC_SPARC_WDISP16:
-      /* FIXME: simplify */
-      if (((val > 0) && (val & ~0x3fffc))
-	  || ((val < 0) && (~(val - 1) & ~0x3fffc)))
-	{
-	  as_bad ("relocation overflow.");
-	}
-
-      /* FIXME: The +1 deserves a comment.  */
-      val = (val >> 2) + 1;
-      buf[1] |= ((val >> 14) & 0x3) << 4;
-      buf[2] |= (val >> 8) & 0x3f;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_WDISP19:
-      /* FIXME: simplify */
-      if (((val > 0) && (val & ~0x1ffffc))
-	  || ((val < 0) && (~(val - 1) & ~0x1ffffc)))
-	{
-	  as_bad ("relocation overflow.");
-	}
-
-      /* FIXME: The +1 deserves a comment.  */
-      val = (val >> 2) + 1;
-      buf[1] |= (val >> 16) & 0x7;
-      buf[2] = (val >> 8) & 0xff;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_HH22:
-      val = BSR (val, 32);
-      /* intentional fallthrough */
-
-    case BFD_RELOC_SPARC_LM22:
-    case BFD_RELOC_HI22:
-      if (!fixP->fx_addsy)
-	{
-	  buf[1] |= (val >> 26) & 0x3f;
-	  buf[2] = val >> 18;
-	  buf[3] = val >> 10;
-	}
+      if (INSN_BIG_ENDIAN)
+	insn = bfd_getb32 ((unsigned char *) buf);
       else
+	insn = bfd_getl32 ((unsigned char *) buf);
+    
+      switch (fixP->fx_r_type)
 	{
-	  buf[2] = 0;
-	  buf[3] = 0;
+	case BFD_RELOC_32_PCREL_S2:
+	  val = val >> 2;
+	  /* FIXME: This increment-by-one deserves a comment of why it's
+	     being done!  */
+	  if (! sparc_pic_code
+	      || fixP->fx_addsy == NULL
+	      || (fixP->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)
+	    ++val;
+	  insn |= val & 0x3fffffff;
+	  break;
+
+	case BFD_RELOC_SPARC_11:
+	  if (! in_signed_range (val, 0x7ff))
+	    as_bad ("relocation overflow.");
+	  insn |= val & 0x7ff;
+	  break;
+
+	case BFD_RELOC_SPARC_10:
+	  if (! in_signed_range (val, 0x3ff))
+	    as_bad ("relocation overflow.");
+	  insn |= val & 0x3ff;
+	  break;
+
+	case BFD_RELOC_SPARC_6:
+	  if (! in_bitfield_range (val, 0x3f))
+	    as_bad ("relocation overflow.");
+	  insn |= val & 0x3f;
+	  break;
+
+	case BFD_RELOC_SPARC_5:
+	  if (! in_bitfield_range (val, 0x1f))
+	    as_bad ("relocation overflow.");
+	  insn |= val & 0x1f;
+	  break;
+
+	case BFD_RELOC_SPARC_WDISP16:
+	  /* FIXME: simplify */
+	  if (((val > 0) && (val & ~0x3fffc))
+	      || ((val < 0) && (~(val - 1) & ~0x3fffc)))
+	    as_bad ("relocation overflow.");
+	  /* FIXME: The +1 deserves a comment.  */
+	  val = (val >> 2) + 1;
+	  insn |= ((val & 0xc000) << 6) | (val & 0x3fff);
+	  break;
+
+	case BFD_RELOC_SPARC_WDISP19:
+	  /* FIXME: simplify */
+	  if (((val > 0) && (val & ~0x1ffffc))
+	      || ((val < 0) && (~(val - 1) & ~0x1ffffc)))
+	    as_bad ("relocation overflow.");
+	  /* FIXME: The +1 deserves a comment.  */
+	  val = (val >> 2) + 1;
+	  insn |= val & 0x7ffff;
+	  break;
+
+	case BFD_RELOC_SPARC_HH22:
+	  val = BSR (val, 32);
+	  /* intentional fallthrough */
+
+	case BFD_RELOC_SPARC_LM22:
+	case BFD_RELOC_HI22:
+	  if (!fixP->fx_addsy)
+	    {
+	      insn |= (val >> 10) & 0x3fffff;
+	    }
+	  else
+	    {
+	      /* FIXME: Need comment explaining why we do this.  */
+	      insn &= ~0xffff;
+	    }
+	  break;
+
+	case BFD_RELOC_SPARC22:
+	  if (val & ~0x003fffff)
+	    as_bad ("relocation overflow");
+	  insn |= (val & 0x3fffff);
+	  break;
+
+	case BFD_RELOC_SPARC_HM10:
+	  val = BSR (val, 32);
+	  /* intentional fallthrough */
+
+	case BFD_RELOC_LO10:
+	  if (!fixP->fx_addsy)
+	    {
+	      insn |= val & 0x3ff;
+	    }
+	  else
+	    {
+	      /* FIXME: Need comment explaining why we do this.  */
+	      insn &= ~0xff;
+	    }
+	  break;
+
+	case BFD_RELOC_SPARC13:
+	  if (! in_signed_range (val, 0x1fff))
+	    as_bad ("relocation overflow");
+	  insn |= val & 0x1fff;
+	  break;
+
+	case BFD_RELOC_SPARC_WDISP22:
+	  val = (val >> 2) + 1;
+	  /* FALLTHROUGH */
+	case BFD_RELOC_SPARC_BASE22:
+	  insn |= val & 0x3fffff;
+	  break;
+
+	case BFD_RELOC_NONE:
+	default:
+	  as_bad ("bad or unhandled relocation type: 0x%02x", fixP->fx_r_type);
+	  break;
 	}
-      break;
 
-    case BFD_RELOC_SPARC22:
-      if (val & ~0x003fffff)
-	{
-	  as_bad ("relocation overflow");
-	}			/* on overflow */
-      buf[1] |= (val >> 16) & 0x3f;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_HM10:
-      val = BSR (val, 32);
-      /* intentional fallthrough */
-
-    case BFD_RELOC_LO10:
-      if (!fixP->fx_addsy)
-	{
-	  buf[2] |= (val >> 8) & 0x03;
-	  buf[3] = val;
-	}
+      if (INSN_BIG_ENDIAN)
+	bfd_putb32 (insn, (unsigned char *) buf);
       else
-	buf[3] = 0;
-      break;
-
-    case BFD_RELOC_SPARC13:
-      if (! in_signed_range (val, 0x1fff))
-	as_bad ("relocation overflow");
-
-      buf[2] |= (val >> 8) & 0x1f;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_SPARC_WDISP22:
-      val = (val >> 2) + 1;
-      /* FALLTHROUGH */
-    case BFD_RELOC_SPARC_BASE22:
-      buf[1] |= (val >> 16) & 0x3f;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case BFD_RELOC_NONE:
-    default:
-      as_bad ("bad or unhandled relocation type: 0x%02x", fixP->fx_r_type);
-      break;
+	bfd_putl32 (insn, (unsigned char *) buf);
     }
 
   /* Are we finished with this relocation now?  */
@@ -2621,6 +2818,12 @@ struct option md_longopts[] = {
   {"sparc", no_argument, NULL, OPTION_SPARC},
 #define OPTION_XARCH (OPTION_MD_BASE + 2)
   {"xarch", required_argument, NULL, OPTION_XARCH},
+#ifdef SPARC_BIENDIAN
+#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 3)
+  {"EL", no_argument, NULL, OPTION_LITTLE_ENDIAN},
+#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 4)
+  {"EB", no_argument, NULL, OPTION_BIG_ENDIAN},
+#endif
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof(md_longopts);
@@ -2674,6 +2877,15 @@ md_parse_option (c, arg)
     case OPTION_SPARC:
       /* Ignore -sparc, used by SunOS make default .s.o rule.  */
       break;
+
+#ifdef SPARC_BIENDIAN
+    case OPTION_LITTLE_ENDIAN:
+      target_big_endian = 0;
+      break;
+    case OPTION_BIG_ENDIAN:
+      target_big_endian = 1;
+      break;
+#endif
 
 #ifdef OBJ_AOUT
     case 'k':
@@ -2743,6 +2955,11 @@ md_show_usage (stream)
 -q			ignored\n\
 -Qy, -Qn		ignored\n\
 -s			ignored\n");
+#endif
+#ifdef SPARC_BIENDIAN
+  fprintf (stream, "\
+-EL			generate code for a little endian machine\n\
+-EB			generate code for a big endian machine\n");
 #endif
 }
 

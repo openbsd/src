@@ -1,0 +1,101 @@
+#
+# Makefile
+#   Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+#
+
+#
+# Makefile for devo/util/msdos/bin
+#
+
+srcdir = .
+
+prefix = /usr/local
+
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+tooldir = $(exec_prefix)
+
+SHELL = /bin/sh
+
+INSTALL = `cd $(srcdir); pwd`/../../../install.sh -c
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL)
+
+AR_FLAGS = qv
+MAKEINFO = makeinfo
+
+EXES=make.exe info.exe makeinfo.exe \
+     killtip.uue mondfe.uue montip.uue pcserver.uue uditest.uue uditrace.uue
+UUDECODE=uudecode
+
+.NOEXPORT:
+MAKEOVERRIDES=
+
+#### Host, target, and site specific Makefile fragments come in here.
+###
+
+# These are roughly topologically sorted in order to make porting more
+# streamlined.
+FLAGS_TO_PASS = \
+	"CC=$(CC)" \
+	"CFLAGS=$(CFLAGS)" \
+	"AR=$(AR)" \
+	"RANLIB=$(RANLIB)" \
+	"AR_FLAGS=$(AR_FLAGS)" \
+	"AS=$(AS)" \
+	"CROSS_CFLAGS=$(CROSS_CFLAGS)" \
+	"TARGET_CFLAGS=$(TARGET_CFLAGS)" \
+	"INCLUDES=$(INCLUDES)"
+
+all: ${EXES}
+
+install:
+	@for file in ${EXES}; do \
+	   ${INSTALL_PROGRAM} $$file ${bindir}/$$file; \
+	done
+
+clean mostlyclean:
+	-rm -f *.exe
+
+distclean maintainer-clean realclean: clean
+	-rm -f *~ core
+	-rm -f Makefile config.status 
+
+.PHONY: info install-info clean-info
+info:
+install-info:
+clean-info:
+
+force:
+
+make.exe: ${srcdir}/make.uue
+	${UUDECODE} ${srcdir}/make.uue
+
+makeinfo.exe: ${srcdir}/makeinfo.uue
+	${UUDECODE} ${srcdir}/makeinfo.uue
+
+info.exe: ${srcdir}/info.uue
+	${UUDECODE} ${srcdir}/info.uue
+
+Makefile: Makefile.in configure.in $(host_makefile_frag) $(target_makefile_frag)
+	$(SHELL) config.status
+
+
+
+
+

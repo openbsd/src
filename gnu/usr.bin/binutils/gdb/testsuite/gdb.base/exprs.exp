@@ -1,0 +1,2178 @@
+#   Copyright (C) 1988, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "exprs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+execute_anywhere "rm -f ${binfile}.ci"
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci file"
+    return -1
+}
+source ${binfile}.ci
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+#
+# test expressions with "char" types
+#
+send "set variable v_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_char == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_char == 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print char ==" }
+		    -re "$prompt $"                      { fail "print char ==" }
+		    timeout                              { fail "(timeout) print char ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print char ==" }
+	    timeout                              { fail "(timeout) print char ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print char ==" }
+    timeout                                      { fail "(timeout) print char ==" }
+}
+
+
+send "set variable v_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_char != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_char != 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print char !=" }
+		    -re "$prompt $"                      { fail "print char !=" }
+		    timeout                              { fail "(timeout) print char !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print char !=" }
+	    timeout                              { fail "(timeout) print char !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print char !=" }
+    timeout                                      { fail "(timeout) print char !=" }
+}
+
+
+send "set variable v_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_char < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_char < 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print char <" }
+		    -re "$prompt $"                      { fail "print char <" }
+		    timeout                              { fail "(timeout) print char <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print char <" }
+	    timeout                              { fail "(timeout) print char <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print char <" }
+    timeout                                      { fail "(timeout) print char <" }
+}
+
+
+send "set variable v_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_char > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_char > 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print char >" }
+		    -re "$prompt $"                      { fail "print char >" }
+		    timeout                              { fail "(timeout) print char >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print char >" }
+	    timeout                              { fail "(timeout) print char >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print char >" }
+    timeout                                      { fail "(timeout) print char >" }
+}
+
+
+#
+# test expressions with "signed char" types
+#
+send "set variable v_signed_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_char == 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed char ==" }
+		    -re "$prompt $"                      { fail "print signed char ==" }
+		    timeout                              { fail "(timeout) print signed char ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char ==" }
+	    timeout                              { fail "(timeout) print signed char ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char ==" }
+    timeout                                      { fail "(timeout) print signed char ==" }
+}
+
+
+send "set variable v_signed_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_char != 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed char !=" }
+		    -re "$prompt $"                      { fail "print signed char !=" }
+		    timeout                              { fail "(timeout) print signed char !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char !=" }
+	    timeout                              { fail "(timeout) print signed char !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char !=" }
+    timeout                                      { fail "(timeout) print signed char !=" }
+}
+
+
+send "set variable v_signed_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_char < 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed char <" }
+		    -re "$prompt $"                      { fail "print signed char <" }
+		    timeout                              { fail "(timeout) print signed char <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char <" }
+	    timeout                              { fail "(timeout) print signed char <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char <" }
+    timeout                                      { fail "(timeout) print signed char <" }
+}
+
+
+send "set variable v_signed_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_char > 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed char >" }
+		    -re "$prompt $"                      { fail "print signed char >" }
+		    timeout                              { fail "(timeout) print signed char >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char >" }
+	    timeout                              { fail "(timeout) print signed char >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char >" }
+    timeout                                      { fail "(timeout) print signed char >" }
+}
+
+
+# make char a minus
+if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
+send "set variable v_signed_char=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_char == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed char == (minus)" }
+		    -re "$prompt $"                      { fail "print signed char == (minus)" }
+		    timeout                              { fail "(timeout) print signed char == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char == (minus)" }
+	    timeout                              { fail "(timeout) print signed char == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char == (minus)" }
+    timeout                                      { fail "(timeout) print signed char == (minus)" }
+}
+
+
+if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
+send "set variable v_signed_char=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_char != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed char != (minus)" }
+		    -re "$prompt $"                      { fail "print signed char != (minus)" }
+		    timeout                              { fail "(timeout) print signed char != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char != (minus)" }
+	    timeout                              { fail "(timeout) print signed char != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char != (minus)" }
+    timeout                                      { fail "(timeout) print signed char != (minus)" }
+}
+
+
+if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
+send "set variable v_signed_char=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_char < 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed char < (minus)" }
+		    -re "$prompt $"                      { fail "print signed char < (minus)" }
+		    timeout                              { fail "(timeout) print signed char < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char < (minus)" }
+	    timeout                              { fail "(timeout) print signed char < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char < (minus)" }
+    timeout                                      { fail "(timeout) print signed char < (minus)" }
+}
+
+if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
+send "set variable v_signed_char=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_char > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_char > 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed char > (minus)" }
+		    -re "$prompt $"                      { fail "print signed char > (minus)" }
+		    timeout                              { fail "(timeout) print signed char > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed char > (minus)" }
+	    timeout                              { fail "(timeout) print signed char > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed char > (minus)" }
+    timeout                                      { fail "(timeout) print signed char > (minus)" }
+}
+
+
+#
+# test expressions with "unsigned char" types
+#
+send "set variable v_unsigned_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_char == 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned char ==" }
+		    -re "$prompt $"                      { fail "print unsigned char ==" }
+		    timeout                              { fail "(timeout) print unsigned char ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char ==" }
+	    timeout                              { fail "(timeout) print unsigned char ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char ==" }
+    timeout                                      { fail "(timeout) print unsigned char ==" }
+}
+
+
+send "set variable v_unsigned_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_char != 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned char !=" }
+		    -re "$prompt $"                      { fail "print unsigned char !=" }
+		    timeout                              { fail "(timeout) print unsigned char !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char !=" }
+	    timeout                              { fail "(timeout) print unsigned char !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char !=" }
+    timeout                                      { fail "(timeout) print unsigned char !=" }
+}
+
+
+send "set variable v_unsigned_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_char < 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned char <" }
+		    -re "$prompt $"                      { fail "print unsigned char <" }
+		    timeout                              { fail "(timeout) print unsigned char <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char <" }
+	    timeout                              { fail "(timeout) print unsigned char <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char <" }
+    timeout                                      { fail "(timeout) print unsigned char <" }
+}
+
+
+send "set variable v_unsigned_char=127\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_char > 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned char >" }
+		    -re "$prompt $"                      { fail "print unsigned char >" }
+		    timeout                              { fail "(timeout) print unsigned char >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char >" }
+	    timeout                              { fail "(timeout) print unsigned char >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char >" }
+    timeout                                      { fail "(timeout) print unsigned char >" }
+}
+
+
+# make char a minus
+# FIXME:  gdb mishandles the cast (unsigned char) on the i960, so I've
+# set up an expected failure for this case.
+send "set variable v_unsigned_char=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_char == ~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+			setup_xfail "i960-*-*" 1821
+			send "print v_unsigned_char == (unsigned char)~0\n"
+			expect {
+			    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned char == (~0)" }
+			    -re "$prompt $"                      { fail "print unsigned char == (~0)" }
+			    timeout                              { fail "(timeout) print unsigned char == (~0)" }
+			}
+		    }
+		    -re "$prompt $"                      { fail "print unsigned char == (~0)" }
+		    timeout                              { fail "(timeout) print unsigned char == (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char == (~0)" }
+	    timeout                              { fail "(timeout) print unsigned char == (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char == (~0)" }
+    timeout                                      { fail "(timeout) print unsigned char == (~0)" }
+}
+
+
+# FIXME:  gdb mishandles the cast (unsigned char) on the i960, so I've
+# set up an expected failure for this case.
+send "set variable v_unsigned_char=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		setup_xfail "i960-*-*" 1821
+		send "print v_unsigned_char != (unsigned char)~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned char != (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned char != (~0)" }
+		    timeout                              { fail "(timeout) print unsigned char != (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char != (~0)" }
+	    timeout                              { fail "(timeout) print unsigned char != (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char != (~0)" }
+    timeout                                      { fail "(timeout) print unsigned char != (~0)" }
+}
+
+
+send "set variable v_unsigned_char=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_char < 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned char < (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned char < (~0)" }
+		    timeout                              { fail "(timeout) print unsigned char < (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char < (~0)" }
+	    timeout                              { fail "(timeout) print unsigned char < (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char < (~0)" }
+    timeout                                      { fail "(timeout) print unsigned char < (~0)" }
+}
+
+
+send "set variable v_unsigned_char=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_char > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_char > 127\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned char > (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned char > (~0)" }
+		    timeout                              { fail "(timeout) print unsigned char > (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned char > (~0)" }
+	    timeout                              { fail "(timeout) print unsigned char > (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned char > (~0)" }
+    timeout                                      { fail "(timeout) print unsigned char > (~0)" }
+}
+
+
+#
+# test expressions with "short" types
+#
+send "set variable v_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_short == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed short ==" }
+		    -re "$prompt $"                      { fail "print signed short ==" }
+		    timeout                              { fail "(timeout) print signed short ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short ==" }
+	    timeout                              { fail "(timeout) print signed short ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short ==" }
+    timeout                                      { fail "(timeout) print signed short ==" }
+}
+
+
+send "set variable v_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_short != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed short !=" }
+		    -re "$prompt $"                      { fail "print signed short !=" }
+		    timeout                              { fail "(timeout) print signed short !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short !=" }
+	    timeout                              { fail "(timeout) print signed short !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short !=" }
+    timeout                                      { fail "(timeout) print signed short !=" }
+}
+
+
+send "set variable v_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed short <" }
+		    -re "$prompt $"                      { fail "print signed short <" }
+		    timeout                              { fail "(timeout) print signed short <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short <" }
+	    timeout                              { fail "(timeout) print signed short <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short <" }
+    timeout                                      { fail "(timeout) print signed short <" }
+}
+
+
+send "set variable v_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed short >" }
+		    -re "$prompt $"                      { fail "print signed short >" }
+		    timeout                              { fail "(timeout) print signed short >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short >" }
+	    timeout                              { fail "(timeout) print signed short >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short >" }
+    timeout                                      { fail "(timeout) print signed short >" }
+}
+
+
+# make short a minus
+send "set variable v_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_short == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed short == (minus)" }
+		    -re "$prompt $"                      { fail "print signed short == (minus)" }
+		    timeout                              { fail "(timeout) print signed short == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short == (minus)" }
+	    timeout                              { fail "(timeout) print signed short == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short == (minus)" }
+    timeout                                      { fail "(timeout) print signed short == (minus)" }
+}
+
+
+send "set variable v_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_short != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed short != (minus)" }
+		    -re "$prompt $"                      { fail "print signed short != (minus)" }
+		    timeout                              { fail "(timeout) print signed short != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short != (minus)" }
+	    timeout                              { fail "(timeout) print signed short != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short != (minus)" }
+    timeout                                      { fail "(timeout) print signed short != (minus)" }
+}
+
+
+send "set variable v_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed short < (minus)" }
+		    -re "$prompt $"                      { fail "print signed short < (minus)" }
+		    timeout                              { fail "(timeout) print signed short < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short < (minus)" }
+	    timeout                              { fail "(timeout) print signed short < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short < (minus)" }
+    timeout                                      { fail "(timeout) print signed short < (minus)" }
+}
+
+
+send "set variable v_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed short > (minus)" }
+		    -re "$prompt $"                      { fail "print signed short > (minus)" }
+		    timeout                              { fail "(timeout) print signed short > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed short > (minus)" }
+	    timeout                              { fail "(timeout) print signed short > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed short > (minus)" }
+    timeout                                      { fail "(timeout) print signed short > (minus)" }
+}
+
+
+#
+# test expressions with "signed short" types
+#
+send "set variable v_signed_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_short == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed short ==" }
+		    -re "$prompt $"                      { fail "print signed signed short ==" }
+		    timeout                              { fail "(timeout) print signed signed short ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short ==" }
+	    timeout                              { fail "(timeout) print signed signed short ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short ==" }
+    timeout                                      { fail "(timeout) print signed signed short ==" }
+}
+
+
+send "set variable v_signed_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_short != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed short !=" }
+		    -re "$prompt $"                      { fail "print signed signed short !=" }
+		    timeout                              { fail "(timeout) print signed signed short !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short !=" }
+	    timeout                              { fail "(timeout) print signed signed short !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short !=" }
+    timeout                                      { fail "(timeout) print signed signed short !=" }
+}
+
+
+send "set variable v_signed_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed short <" }
+		    -re "$prompt $"                      { fail "print signed signed short <" }
+		    timeout                              { fail "(timeout) print signed signed short <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short <" }
+	    timeout                              { fail "(timeout) print signed signed short <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short <" }
+    timeout                                      { fail "(timeout) print signed signed short <" }
+}
+
+
+send "set variable v_signed_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed short >" }
+		    -re "$prompt $"                      { fail "print signed signed short >" }
+		    timeout                              { fail "(timeout) print signed signed short >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short >" }
+	    timeout                              { fail "(timeout) print signed signed short >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short >" }
+    timeout                                      { fail "(timeout) print signed signed short >" }
+}
+
+
+# make short a minus
+send "set variable v_signed_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_short == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed short == (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed short == (minus)" }
+		    timeout                              { fail "(timeout) print signed signed short == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short == (minus)" }
+	    timeout                              { fail "(timeout) print signed signed short == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short == (minus)" }
+    timeout                                      { fail "(timeout) print signed signed short == (minus)" }
+}
+
+
+send "set variable v_signed_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_short != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed short != (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed short != (minus)" }
+		    timeout                              { fail "(timeout) print signed signed short != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short != (minus)" }
+	    timeout                              { fail "(timeout) print signed signed short != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short != (minus)" }
+    timeout                                      { fail "(timeout) print signed signed short != (minus)" }
+}
+
+
+send "set variable v_signed_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed short < (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed short < (minus)" }
+		    timeout                              { fail "(timeout) print signed signed short < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short < (minus)" }
+	    timeout                              { fail "(timeout) print signed signed short < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short < (minus)" }
+    timeout                                      { fail "(timeout) print signed signed short < (minus)" }
+}
+
+
+send "set variable v_signed_short=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed short > (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed short > (minus)" }
+		    timeout                              { fail "(timeout) print signed signed short > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed short > (minus)" }
+	    timeout                              { fail "(timeout) print signed signed short > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed short > (minus)" }
+    timeout                                      { fail "(timeout) print signed signed short > (minus)" }
+}
+
+
+#
+# test expressions with "unsigned short" types
+#
+send "set variable v_unsigned_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_short == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned short ==" }
+		    -re "$prompt $"                      { fail "print unsigned short ==" }
+		    timeout                              { fail "(timeout) print unsigned short ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short ==" }
+	    timeout                              { fail "(timeout) print unsigned short ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short ==" }
+    timeout                                      { fail "(timeout) print unsigned short ==" }
+}
+
+
+send "set variable v_unsigned_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_short != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned short !=" }
+		    -re "$prompt $"                      { fail "print unsigned short !=" }
+		    timeout                              { fail "(timeout) print unsigned short !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short !=" }
+	    timeout                              { fail "(timeout) print unsigned short !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short !=" }
+    timeout                                      { fail "(timeout) print unsigned short !=" }
+}
+
+
+send "set variable v_unsigned_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned short <" }
+		    -re "$prompt $"                      { fail "print unsigned short <" }
+		    timeout                              { fail "(timeout) print unsigned short <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short <" }
+	    timeout                              { fail "(timeout) print unsigned short <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short <" }
+    timeout                                      { fail "(timeout) print unsigned short <" }
+}
+
+
+send "set variable v_unsigned_short=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned short >" }
+		    -re "$prompt $"                      { fail "print unsigned short >" }
+		    timeout                              { fail "(timeout) print unsigned short >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short >" }
+	    timeout                              { fail "(timeout) print unsigned short >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short >" }
+    timeout                                      { fail "(timeout) print unsigned short >" }
+}
+
+
+# make short a minus
+send "set variable v_unsigned_short=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		setup_xfail "h8300*-*-*"
+		send "print v_unsigned_short == ~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+			send "print v_unsigned_short == (unsigned short)~0\n"
+			expect {
+			    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned short == (~0)" }
+			    -re "$prompt $"                      { fail "print unsigned short == (~0)" }
+			    timeout                              { fail "(timeout) print unsigned short == (~0)" }
+			}
+		    }
+		    -re "$prompt $"                      { fail "print unsigned short == (~0)" }
+		    timeout                              { fail "(timeout) print unsigned short == (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short == (~0)" }
+	    timeout                              { fail "(timeout) print unsigned short == (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short == (~0)" }
+    timeout                                      { fail "(timeout) print unsigned short == (~0)" }
+}
+
+
+send "set variable v_unsigned_short=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_short != (unsigned short)~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned short != (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned short != (~0)" }
+		    timeout                              { fail "(timeout) print unsigned short != (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short != (~0)" }
+	    timeout                              { fail "(timeout) print unsigned short != (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short != (~0)" }
+    timeout                                      { fail "(timeout) print unsigned short != (~0)" }
+}
+
+
+send "set variable v_unsigned_short=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_short < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned short < (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned short < (~0)" }
+		    timeout                              { fail "(timeout) print unsigned short < (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short < (~0)" }
+	    timeout                              { fail "(timeout) print unsigned short < (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short < (~0)" }
+    timeout                                      { fail "(timeout) print unsigned short < (~0)" }
+}
+
+
+send "set variable v_unsigned_short=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_short > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_short > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned short > (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned short > (~0)" }
+		    timeout                              { fail "(timeout) print unsigned short > (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned short > (~0)" }
+	    timeout                              { fail "(timeout) print unsigned short > (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned short > (~0)" }
+    timeout                                      { fail "(timeout) print unsigned short > (~0)" }
+}
+
+
+#
+# test expressions with "int" types
+#
+send "set variable v_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_int == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed int ==" }
+		    -re "$prompt $"                      { fail "print signed int ==" }
+		    timeout                              { fail "(timeout) print signed int ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int ==" }
+	    timeout                              { fail "(timeout) print signed int ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int ==" }
+    timeout                                      { fail "(timeout) print signed int ==" }
+}
+
+
+send "set variable v_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_int != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed int !=" }
+		    -re "$prompt $"                      { fail "print signed int !=" }
+		    timeout                              { fail "(timeout) print signed int !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int !=" }
+	    timeout                              { fail "(timeout) print signed int !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int !=" }
+    timeout                                      { fail "(timeout) print signed int !=" }
+}
+
+
+send "set variable v_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed int <" }
+		    -re "$prompt $"                      { fail "print signed int <" }
+		    timeout                              { fail "(timeout) print signed int <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int <" }
+	    timeout                              { fail "(timeout) print signed int <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int <" }
+    timeout                                      { fail "(timeout) print signed int <" }
+}
+
+
+send "set variable v_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed int >" }
+		    -re "$prompt $"                      { fail "print signed int >" }
+		    timeout                              { fail "(timeout) print signed int >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int >" }
+	    timeout                              { fail "(timeout) print signed int >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int >" }
+    timeout                                      { fail "(timeout) print signed int >" }
+}
+
+
+# make int a minus
+send "set variable v_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_int == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed int == (minus)" }
+		    -re "$prompt $"                      { fail "print signed int == (minus)" }
+		    timeout                              { fail "(timeout) print signed int == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int == (minus)" }
+	    timeout                              { fail "(timeout) print signed int == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int == (minus)" }
+    timeout                                      { fail "(timeout) print signed int == (minus)" }
+}
+
+
+send "set variable v_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_int != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed int != (minus)" }
+		    -re "$prompt $"                      { fail "print signed int != (minus)" }
+		    timeout                              { fail "(timeout) print signed int != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int != (minus)" }
+	    timeout                              { fail "(timeout) print signed int != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int != (minus)" }
+    timeout                                      { fail "(timeout) print signed int != (minus)" }
+}
+
+
+send "set variable v_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed int < (minus)" }
+		    -re "$prompt $"                      { fail "print signed int < (minus)" }
+		    timeout                              { fail "(timeout) print signed int < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int < (minus)" }
+	    timeout                              { fail "(timeout) print signed int < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int < (minus)" }
+    timeout                                      { fail "(timeout) print signed int < (minus)" }
+}
+
+
+send "set variable v_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed int > (minus)" }
+		    -re "$prompt $"                      { fail "print signed int > (minus)" }
+		    timeout                              { fail "(timeout) print signed int > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed int > (minus)" }
+	    timeout                              { fail "(timeout) print signed int > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed int > (minus)" }
+    timeout                                      { fail "(timeout) print signed int > (minus)" }
+}
+
+
+#
+# test expressions with "signed int" types
+#
+send "set variable v_signed_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_int == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed int ==" }
+		    -re "$prompt $"                      { fail "print signed signed int ==" }
+		    timeout                              { fail "(timeout) print signed signed int ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int ==" }
+	    timeout                              { fail "(timeout) print signed signed int ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int ==" }
+    timeout                                      { fail "(timeout) print signed signed int ==" }
+}
+
+
+send "set variable v_signed_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_int != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed int !=" }
+		    -re "$prompt $"                      { fail "print signed signed int !=" }
+		    timeout                              { fail "(timeout) print signed signed int !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int !=" }
+	    timeout                              { fail "(timeout) print signed signed int !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int !=" }
+    timeout                                      { fail "(timeout) print signed signed int !=" }
+}
+
+
+send "set variable v_signed_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed int <" }
+		    -re "$prompt $"                      { fail "print signed signed int <" }
+		    timeout                              { fail "(timeout) print signed signed int <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int <" }
+	    timeout                              { fail "(timeout) print signed signed int <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int <" }
+    timeout                                      { fail "(timeout) print signed signed int <" }
+}
+
+
+send "set variable v_signed_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed int >" }
+		    -re "$prompt $"                      { fail "print signed signed int >" }
+		    timeout                              { fail "(timeout) print signed signed int >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int >" }
+	    timeout                              { fail "(timeout) print signed signed int >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int >" }
+    timeout                                      { fail "(timeout) print signed signed int >" }
+}
+
+
+# make int a minus
+send "set variable v_signed_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_int == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed int == (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed int == (minus)" }
+		    timeout                              { fail "(timeout) print signed signed int == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int == (minus)" }
+	    timeout                              { fail "(timeout) print signed signed int == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int == (minus)" }
+    timeout                                      { fail "(timeout) print signed signed int == (minus)" }
+}
+
+
+send "set variable v_signed_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_int != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed int != (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed int != (minus)" }
+		    timeout                              { fail "(timeout) print signed signed int != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int != (minus)" }
+	    timeout                              { fail "(timeout) print signed signed int != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int != (minus)" }
+    timeout                                      { fail "(timeout) print signed signed int != (minus)" }
+}
+
+
+send "set variable v_signed_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed int < (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed int < (minus)" }
+		    timeout                              { fail "(timeout) print signed signed int < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int < (minus)" }
+	    timeout                              { fail "(timeout) print signed signed int < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int < (minus)" }
+    timeout                                      { fail "(timeout) print signed signed int < (minus)" }
+}
+
+
+send "set variable v_signed_int=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed int > (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed int > (minus)" }
+		    timeout                              { fail "(timeout) print signed signed int > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed int > (minus)" }
+	    timeout                              { fail "(timeout) print signed signed int > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed int > (minus)" }
+    timeout                                      { fail "(timeout) print signed signed int > (minus)" }
+}
+
+
+#
+# test expressions with "unsigned int" types
+#
+send "set variable v_unsigned_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_int == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned int ==" }
+		    -re "$prompt $"                      { fail "print unsigned int ==" }
+		    timeout                              { fail "(timeout) print unsigned int ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int ==" }
+	    timeout                              { fail "(timeout) print unsigned int ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int ==" }
+    timeout                                      { fail "(timeout) print unsigned int ==" }
+}
+
+
+send "set variable v_unsigned_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_int != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned int !=" }
+		    -re "$prompt $"                      { fail "print unsigned int !=" }
+		    timeout                              { fail "(timeout) print unsigned int !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int !=" }
+	    timeout                              { fail "(timeout) print unsigned int !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int !=" }
+    timeout                                      { fail "(timeout) print unsigned int !=" }
+}
+
+
+send "set variable v_unsigned_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned int <" }
+		    -re "$prompt $"                      { fail "print unsigned int <" }
+		    timeout                              { fail "(timeout) print unsigned int <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int <" }
+	    timeout                              { fail "(timeout) print unsigned int <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int <" }
+    timeout                                      { fail "(timeout) print unsigned int <" }
+}
+
+
+send "set variable v_unsigned_int=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned int >" }
+		    -re "$prompt $"                      { fail "print unsigned int >" }
+		    timeout                              { fail "(timeout) print unsigned int >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int >" }
+	    timeout                              { fail "(timeout) print unsigned int >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int >" }
+    timeout                                      { fail "(timeout) print unsigned int >" }
+}
+
+
+# make int a minus
+send "set variable v_unsigned_int=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_int == ~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+			send "print v_unsigned_int == (unsigned int)~0\n"
+			expect {
+			    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned int == (~0)" }
+			    -re "$prompt $"                      { fail "print unsigned int == (~0)" }
+			    timeout                              { fail "(timeout) print unsigned int == (~0)" }
+			}
+		    }
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+			fail "print unsigned int == (~0)"
+			send "print v_unsigned_int == (unsigned int)~0\n"
+			expect {
+			    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned int == (~0)" }
+			    -re "$prompt $"                      { fail "print unsigned int == (~0)" }
+			    timeout                              { fail "(timeout) print unsigned int == (~0)" }
+			}
+		    }
+		    -re "$prompt $"                      { fail "print unsigned int == (~0)" }
+		    timeout                              { fail "(timeout) print unsigned int == (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int == (~0)" }
+	    timeout                              { fail "(timeout) print unsigned int == (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int == (~0)" }
+    timeout                                      { fail "(timeout) print unsigned int == (~0)" }
+}
+
+
+send "set variable v_unsigned_int=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_int != (unsigned int)~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned int != (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned int != (~0)" }
+		    timeout                              { fail "(timeout) print unsigned int != (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int != (~0)" }
+	    timeout                              { fail "(timeout) print unsigned int != (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int != (~0)" }
+    timeout                                      { fail "(timeout) print unsigned int != (~0)" }
+}
+
+
+send "set variable v_unsigned_int=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_int < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned int < (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned int < (~0)" }
+		    timeout                              { fail "(timeout) print unsigned int < (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int < (~0)" }
+	    timeout                              { fail "(timeout) print unsigned int < (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int < (~0)" }
+    timeout                                      { fail "(timeout) print unsigned int < (~0)" }
+}
+
+
+send "set variable v_unsigned_int=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_int > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_int > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned int > (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned int > (~0)" }
+		    timeout                              { fail "(timeout) print unsigned int > (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned int > (~0)" }
+	    timeout                              { fail "(timeout) print unsigned int > (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned int > (~0)" }
+    timeout                                      { fail "(timeout) print unsigned int > (~0)" }
+}
+
+
+#
+# test expressions with "long" types
+#
+send "set variable v_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_long == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed long ==" }
+		    -re "$prompt $"                      { fail "print signed long ==" }
+		    timeout                              { fail "(timeout) print signed long ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long ==" }
+	    timeout                              { fail "(timeout) print signed long ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long ==" }
+    timeout                                      { fail "(timeout) print signed long ==" }
+}
+
+
+send "set variable v_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_long != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed long !=" }
+		    -re "$prompt $"                      { fail "print signed long !=" }
+		    timeout                              { fail "(timeout) print signed long !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long !=" }
+	    timeout                              { fail "(timeout) print signed long !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long !=" }
+    timeout                                      { fail "(timeout) print signed long !=" }
+}
+
+
+send "set variable v_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed long <" }
+		    -re "$prompt $"                      { fail "print signed long <" }
+		    timeout                              { fail "(timeout) print signed long <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long <" }
+	    timeout                              { fail "(timeout) print signed long <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long <" }
+    timeout                                      { fail "(timeout) print signed long <" }
+}
+
+
+send "set variable v_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed long >" }
+		    -re "$prompt $"                      { fail "print signed long >" }
+		    timeout                              { fail "(timeout) print signed long >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long >" }
+	    timeout                              { fail "(timeout) print signed long >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long >" }
+    timeout                                      { fail "(timeout) print signed long >" }
+}
+
+
+# make long a minus
+send "set variable v_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_long == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed long == (minus)" }
+		    -re "$prompt $"                      { fail "print signed long == (minus)" }
+		    timeout                              { fail "(timeout) print signed long == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long == (minus)" }
+	    timeout                              { fail "(timeout) print signed long == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long == (minus)" }
+    timeout                                      { fail "(timeout) print signed long == (minus)" }
+}
+
+
+send "set variable v_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_long != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed long != (minus)" }
+		    -re "$prompt $"                      { fail "print signed long != (minus)" }
+		    timeout                              { fail "(timeout) print signed long != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long != (minus)" }
+	    timeout                              { fail "(timeout) print signed long != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long != (minus)" }
+    timeout                                      { fail "(timeout) print signed long != (minus)" }
+}
+
+
+send "set variable v_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed long < (minus)" }
+		    -re "$prompt $"                      { fail "print signed long < (minus)" }
+		    timeout                              { fail "(timeout) print signed long < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long < (minus)" }
+	    timeout                              { fail "(timeout) print signed long < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long < (minus)" }
+    timeout                                      { fail "(timeout) print signed long < (minus)" }
+}
+
+
+send "set variable v_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed long > (minus)" }
+		    -re "$prompt $"                      { fail "print signed long > (minus)" }
+		    timeout                              { fail "(timeout) print signed long > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed long > (minus)" }
+	    timeout                              { fail "(timeout) print signed long > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed long > (minus)" }
+    timeout                                      { fail "(timeout) print signed long > (minus)" }
+}
+
+
+#
+# test expressions with "signed long" types
+#
+send "set variable v_signed_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_long == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed long ==" }
+		    -re "$prompt $"                      { fail "print signed signed long ==" }
+		    timeout                              { fail "(timeout) print signed signed long ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long ==" }
+	    timeout                              { fail "(timeout) print signed signed long ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long ==" }
+    timeout                                      { fail "(timeout) print signed signed long ==" }
+}
+
+
+send "set variable v_signed_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_long != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed long !=" }
+		    -re "$prompt $"                      { fail "print signed signed long !=" }
+		    timeout                              { fail "(timeout) print signed signed long !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long !=" }
+	    timeout                              { fail "(timeout) print signed signed long !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long !=" }
+    timeout                                      { fail "(timeout) print signed signed long !=" }
+}
+
+
+send "set variable v_signed_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed long <" }
+		    -re "$prompt $"                      { fail "print signed signed long <" }
+		    timeout                              { fail "(timeout) print signed signed long <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long <" }
+	    timeout                              { fail "(timeout) print signed signed long <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long <" }
+    timeout                                      { fail "(timeout) print signed signed long <" }
+}
+
+
+send "set variable v_signed_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed long >" }
+		    -re "$prompt $"                      { fail "print signed signed long >" }
+		    timeout                              { fail "(timeout) print signed signed long >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long >" }
+	    timeout                              { fail "(timeout) print signed signed long >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long >" }
+    timeout                                      { fail "(timeout) print signed signed long >" }
+}
+
+
+# make long a minus
+send "set variable v_signed_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_long == -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed long == (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed long == (minus)" }
+		    timeout                              { fail "(timeout) print signed signed long == (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long == (minus)" }
+	    timeout                              { fail "(timeout) print signed signed long == (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long == (minus)" }
+    timeout                                      { fail "(timeout) print signed signed long == (minus)" }
+}
+
+
+send "set variable v_signed_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_long != -1\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed long != (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed long != (minus)" }
+		    timeout                              { fail "(timeout) print signed signed long != (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long != (minus)" }
+	    timeout                              { fail "(timeout) print signed signed long != (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long != (minus)" }
+    timeout                                      { fail "(timeout) print signed signed long != (minus)" }
+}
+
+
+send "set variable v_signed_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_signed_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print signed signed long < (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed long < (minus)" }
+		    timeout                              { fail "(timeout) print signed signed long < (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long < (minus)" }
+	    timeout                              { fail "(timeout) print signed signed long < (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long < (minus)" }
+    timeout                                      { fail "(timeout) print signed signed long < (minus)" }
+}
+
+
+send "set variable v_signed_long=-1\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_signed_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_signed_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print signed signed long > (minus)" }
+		    -re "$prompt $"                      { fail "print signed signed long > (minus)" }
+		    timeout                              { fail "(timeout) print signed signed long > (minus)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print signed signed long > (minus)" }
+	    timeout                              { fail "(timeout) print signed signed long > (minus)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print signed signed long > (minus)" }
+    timeout                                      { fail "(timeout) print signed signed long > (minus)" }
+}
+
+
+#
+# test expressions with "unsigned long" types
+#
+send "set variable v_unsigned_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_long == 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned long ==" }
+		    -re "$prompt $"                      { fail "print unsigned long ==" }
+		    timeout                              { fail "(timeout) print unsigned long ==" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long ==" }
+	    timeout                              { fail "(timeout) print unsigned long ==" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long ==" }
+    timeout                                      { fail "(timeout) print unsigned long ==" }
+}
+
+
+send "set variable v_unsigned_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_long != 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned long !=" }
+		    -re "$prompt $"                      { fail "print unsigned long !=" }
+		    timeout                              { fail "(timeout) print unsigned long !=" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long !=" }
+	    timeout                              { fail "(timeout) print unsigned long !=" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long !=" }
+    timeout                                      { fail "(timeout) print unsigned long !=" }
+}
+
+
+send "set variable v_unsigned_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned long <" }
+		    -re "$prompt $"                      { fail "print unsigned long <" }
+		    timeout                              { fail "(timeout) print unsigned long <" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long <" }
+	    timeout                              { fail "(timeout) print unsigned long <" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long <" }
+    timeout                                      { fail "(timeout) print unsigned long <" }
+}
+
+
+send "set variable v_unsigned_long=0x7FFF\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned long >" }
+		    -re "$prompt $"                      { fail "print unsigned long >" }
+		    timeout                              { fail "(timeout) print unsigned long >" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long >" }
+	    timeout                              { fail "(timeout) print unsigned long >" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long >" }
+    timeout                                      { fail "(timeout) print unsigned long >" }
+}
+
+
+# make long a minus
+send "set variable v_unsigned_long=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long == 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_long == ~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+			send "print v_unsigned_long == (unsigned long)~0\n"
+			expect {
+			    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned long == (~0)" }
+			    -re "$prompt $"                      { fail "print unsigned long == (~0)" }
+			    timeout                              { fail "(timeout) print unsigned long == (~0)" }
+			}
+		    }
+		    -re "$prompt $"                      { fail "print unsigned long == (~0)" }
+		    timeout                              { fail "(timeout) print unsigned long == (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long == (~0)" }
+	    timeout                              { fail "(timeout) print unsigned long == (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long == (~0)" }
+    timeout                                      { fail "(timeout) print unsigned long == (~0)" }
+}
+
+
+send "set variable v_unsigned_long=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long != 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_long != (unsigned long)~0\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned long != (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned long != (~0)" }
+		    timeout                              { fail "(timeout) print unsigned long != (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long != (~0)" }
+	    timeout                              { fail "(timeout) print unsigned long != (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long != (~0)" }
+    timeout                                      { fail "(timeout) print unsigned long != (~0)" }
+}
+
+
+send "set variable v_unsigned_long=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long < 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 0.*$prompt $" {
+		send "print v_unsigned_long < 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 0.*$prompt $" { pass "print unsigned long < (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned long < (~0)" }
+		    timeout                              { fail "(timeout) print unsigned long < (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long < (~0)" }
+	    timeout                              { fail "(timeout) print unsigned long < (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long < (~0)" }
+    timeout                                      { fail "(timeout) print unsigned long < (~0)" }
+}
+
+
+send "set variable v_unsigned_long=~0\n"
+expect {
+    -re "set.*$prompt $" {
+	send "print v_unsigned_long > 0\n"
+	expect {
+	    -re "print.*.\[0-9\]* = 1.*$prompt $" {
+		send "print v_unsigned_long > 0x7FFF\n"
+		expect {
+		    -re "print.*.\[0-9\]* = 1.*$prompt $" { pass "print unsigned long > (~0)" }
+		    -re "$prompt $"                      { fail "print unsigned long > (~0)" }
+		    timeout                              { fail "(timeout) print unsigned long > (~0)" }
+		}
+	    }
+	    -re "$prompt $"                      { fail "print unsigned long > (~0)" }
+	    timeout                              { fail "(timeout) print unsigned long > (~0)" }
+	}
+    }
+    -re "$prompt $"                              { fail "print unsigned long > (~0)" }
+    timeout                                      { fail "(timeout) print unsigned long > (~0)" }
+}

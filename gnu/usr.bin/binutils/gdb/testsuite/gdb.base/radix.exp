@@ -1,0 +1,185 @@
+# Copyright (C) 1993 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+proc test_input_radix_2 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set input-radix 2" \
+	"Input radix now set to decimal 2, hex 2, octal 2."
+    gdb_test "show radix" \
+	"Input radix set to decimal 2, hex 2, octal 2.\r\nOutput radix set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"2"
+    gdb_test "p -101"		"-5"
+    gdb_test "p 101"		"5"
+    gdb_test "p 10101"		"21"
+    gdb_test "p 4"		"Invalid number \"4\"\\."
+    gdb_test "p -2"		"Invalid number \"2\"\\."
+}
+
+# Test input radix 3 (an non-typical radix)
+
+proc test_input_radix_3 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set input-radix 3" \
+	"Input radix now set to decimal 3, hex 3, octal 3."
+    gdb_test "show radix" \
+	"Input radix set to decimal 3, hex 3, octal 3.\r\nOutput radix set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"3"
+    gdb_test "p 0"		"0"
+    gdb_test "p 1"		"1"
+    gdb_test "p 2"		"2"
+    gdb_test "p 10"		"3"
+    gdb_test "p 20"		"6"
+    gdb_test "p 100"		"9"
+    gdb_test "p -100"		"-9"
+    gdb_test "p 3"		"Invalid number \"3\"."
+    gdb_test "p 30"		"Invalid number \"30\"."
+}
+
+proc test_input_radix_8 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set input-radix 8" \
+	"Input radix now set to decimal 8, hex 8, octal 10."
+    gdb_test "show radix" \
+	"Input radix set to decimal 8, hex 8, octal 10.\r\nOutput radix set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"8"
+    gdb_test "p 20"		"16"
+    gdb_test "p -20"		"-16"
+    gdb_test "p 100"		"64"
+    gdb_test "p 8"		"Invalid number \"8\"."
+    gdb_test "p -9"		"Invalid number \"9\"."
+}
+
+proc test_input_radix_10 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set input-radix 10" \
+	"Input radix now set to decimal 10, hex a, octal 12."
+    gdb_test "show radix" \
+	"Input and output radices set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"10"
+    gdb_test "p -12"		"-12"
+}
+
+proc test_input_radix_16 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set input-radix 16" \
+	"Input radix now set to decimal 16, hex 10, octal 20."
+    gdb_test "show radix" \
+	"Input radix set to decimal 16, hex 10, octal 20.\r\nOutput radix set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"16"
+    gdb_test "p 100"		"256"
+}
+
+proc test_output_radix_8 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set output-radix 8" \
+	"Output radix now set to decimal 8, hex 8, octal 10."
+    gdb_test "show radix" \
+	"Input radix set to decimal 10, hex a, octal 12.\r\nOutput radix set to decimal 8, hex 8, octal 10."
+    gdb_test "p 010"		"010"
+    # FIXME:  If gdb can't handle float printing in different radices, it
+    # should at least warn once the first time that is attempted.
+    setup_xfail "*-*-*"
+    gdb_test "p 20."		"24"	"Float printing when output radix is 8"
+    gdb_test "p (int) 20."	"24"
+    gdb_test "p 0xf"		"17"
+    gdb_test "p 10"		"12"
+    gdb_test "p 100"		"144"
+}
+
+proc test_output_radix_10 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set output-radix 10" \
+	"Output radix now set to decimal 10, hex a, octal 12."
+    gdb_test "show radix" \
+	"Input and output radices set to decimal 10, hex a, octal 12."
+    gdb_test "p 010"		"8"
+    gdb_test "p 20."		"20"
+    gdb_test "p (int) 20."	"20"
+    gdb_test "p 0xf"		"15"
+    gdb_test "p 10"		"10"
+    gdb_test "p 100"		"100"
+}
+
+proc test_output_radix_16 {} {
+    gdb_test "set radix" \
+	"Input and output radices now set to decimal 10, hex a, octal 12."
+    gdb_test "set output-radix 16" \
+	"Output radix now set to decimal 16, hex 10, octal 20."
+    gdb_test "show radix" \
+	"Input radix set to decimal 10, hex a, octal 12.\r\nOutput radix set to decimal 16, hex 10, octal 20."
+    gdb_test "p 010"		"8"
+    # FIXME:  If gdb can't handle float printing in different radices, it
+    # should at least warn once the first time that is attempted.
+    setup_xfail "*-*-*"
+    gdb_test "p 20."		"14"	"Float printing when output radix is 16"
+    gdb_test "p (int) 20."	"14"
+    gdb_test "p 0xf"		"f"
+    gdb_test "p 10"		"a"
+    gdb_test "p 100"		"64"
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+
+test_input_radix_2
+test_input_radix_3
+test_input_radix_8
+test_input_radix_10
+test_input_radix_16
+test_output_radix_8
+test_output_radix_10
+test_output_radix_16

@@ -26,9 +26,15 @@
 
 /BFD_H/s/^{BFD_H}/#{BFD_H}/
 
+# Add explicit srcdir paths to special files.
+/config.bfd/s/ config.bfd/ "{s}"config.bfd/g
+/targmatch.sed/s/ targmatch.sed/ "{s}"targmatch.sed/g
+
 # Point at include files that are always in the objdir.
 /bfd/s/"{s}"bfd\.h/"{o}"bfd.h/g
 /config/s/"{s}"config\.h/"{o}"config.h/g
+/targmatch/s/"{s}"targmatch\.h/"{o}"targmatch.h/g
+/targmatch/s/^targmatch\.h/"{o}"targmatch.h/
 /elf32-target/s/"{s}"elf32-target\.h/"{o}"elf32-target.h/g
 /elf32-target/s/^elf32-target\.h/"{o}"elf32-target.h/
 /elf64-target/s/"{s}"elf64-target\.h/"{o}"elf64-target.h/g

@@ -1,0 +1,63 @@
+#
+#   This file is part of the program psim.
+#
+#   Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+cache:RA:RA::
+cache:RA:rA:signed_word *:(cpu_registers(processor)->gpr + RA)
+cache:RA:RA_BITMASK:unsigned32:(1 << RA)
+cache:RT:RT::
+cache:RT:rT:signed_word *:(cpu_registers(processor)->gpr + RT)
+cache:RT:RT_BITMASK:unsigned32:(1 << RT)
+cache:RS:RS::
+cache:RS:rS:signed_word *:(cpu_registers(processor)->gpr + RS)
+cache:RS:RS_BITMASK:unsigned32:(1 << RS)
+cache:RB:RB::
+cache:RB:rB:signed_word *:(cpu_registers(processor)->gpr + RB)
+cache:RB:RB_BITMASK:unsigned32:(1 << RB)
+compute:FRA:FRA::
+cache:FRA:frA:unsigned64 *:(cpu_registers(processor)->fpr + FRA)
+cache:FRA:FRA_BITMASK:unsigned32:(1 << FRA)
+compute:FRB:FRB::
+cache:FRB:frB:unsigned64 *:(cpu_registers(processor)->fpr + FRB)
+cache:FRB:FRB_BITMASK:unsigned32:(1 << FRB)
+compute:FRC:FRC::
+cache:FRC:frC:unsigned64 *:(cpu_registers(processor)->fpr + FRC)
+cache:FRC:FRC_BITMASK:unsigned32:(1 << FRC)
+compute:FRS:FRS::
+cache:FRS:frS:unsigned64 *:(cpu_registers(processor)->fpr + FRS)
+cache:FRS:FRS_BITMASK:unsigned32:(1 << FRS)
+compute:FRT:FRT::
+cache:FRT:frT:unsigned64 *:(cpu_registers(processor)->fpr + FRT)
+cache:FRT:FRT_BITMASK:unsigned32:(1 << FRT)
+cache:SI:EXTS_SI:unsigned_word:((signed_word)(signed16)instruction)
+compute:BI:BI::
+cache:BI:BIT32_BI::BIT32(BI)
+cache:BF:BF::
+cache:BF:BF_BITMASK:unsigned32:(1 << BF)
+compute:BA:BA::
+cache:BA:BIT32_BA::BIT32(BA)
+cache:BA:BA_BITMASK:unsigned32:(1 << BA)
+compute:BB:BB::
+cache:BB:BIT32_BB::BIT32(BB)
+cache:BB:BB_BITMASK:unsigned32:(1 << BB)
+cache:BT:BT::
+cache:BT:BT_BITMASK:unsigned32:(1 << BT)
+cache:BD:EXTS_BD_0b00:unsigned_word:(((signed_word)(signed16)instruction) & ~3)
+cache:LI:EXTS_LI_0b00:unsigned_word:((((signed_word)(signed32)(instruction << 6)) >> 6) & ~0x3)
+cache:D:EXTS_D:unsigned_word:((signed_word)(signed16)(instruction))
+cache:DS:EXTS_DS_0b00:unsigned_word:(((signed_word)(signed16)instruction) & ~0x3)

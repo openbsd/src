@@ -1673,10 +1673,8 @@ elf32_sparc_merge_private_bfd_data (ibfd, obfd)
 {
   boolean error;
 
-  /* This function is selected based on the input vector.  We only
-     want to copy information over if the output BFD also uses Elf
-     format.  */
-  if (bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return true;
 
   error = false;

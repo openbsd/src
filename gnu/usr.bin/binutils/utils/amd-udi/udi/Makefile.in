@@ -1,0 +1,120 @@
+#
+# Makefile for utils/amd-udi/udi libraries
+#   Copyright (C) 1993 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
+#
+# 	$Id: Makefile.in,v 1.2 1996/11/23 04:11:10 niklas Exp $
+#
+# Written by Jeffrey Wheat (cassidy@cygnus.com)
+#
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+CC = @CC@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+DEFS = @DEFS@
+LIBS = @LIBS@
+RANLIB = @RANLIB@
+
+AR = ar
+AR_FLAGS = cq
+
+CFLAGS = -g
+
+LD = ld
+LDFLAGS = -g
+
+MV = mv
+RM = rm
+
+prefix = /usr/local
+exec_prefix = $(prefix)
+
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+
+mandir = $(prefix)/man
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+man8dir = $(mandir)/man8
+
+SHELL = /bin/sh
+
+INSTALL = install -c
+INSTALL_DATA = $(INSTALL)
+INSTALL_PROGRAM = $(INSTALL)
+
+#### End of system configuration section. ####
+
+INCLUDE = -I$(srcdir)/../udi -I$(srcdir)/../include
+
+LIBDFE_OBJS = udip2soc.o
+LIBTIP_OBJS = soc2udip.o
+SHARED_OBJS = udr.o
+
+all:	libtip.a libdfe.a
+
+libdfe.a: $(SHARED_OBJS) $(LIBDFE_OBJS)
+	$(AR) $(AR_FLAGS) $@ $(SHARED_OBJS) $(LIBDFE_OBJS)
+	$(RANLIB) $@
+
+libtip.a: $(SHARED_OBJS) $(LIBTIP_OBJS)
+	@$(RM) -f $@
+	@$(AR) $(AR_FLAGS) $@ $(SHARED_OBJS) $(LIBTIP_OBJS)
+	$(RANLIB) $@
+
+.c.o:
+	$(CC) $(INCLUDE) $(DEFS) $(CFLAGS) -c $<
+
+install: all
+
+mostlyclean clean:
+	$(RM) -f *.o libdfe.a libtip.a
+
+distclean maintainer-clean realclean: clean
+	$(RM) -f Makefile config.status
+
+.PHONY: check installcheck info install-info clean-info dvi
+
+check installcheck:
+
+info install-info clean-info dvi:
+
+# with the gnu make, this is done automatically.
+
+Makefile: Makefile.in 
+	$(SHELL) ./config.status
+
+config.status: configure
+	$(srcdir)/configure --no-create
+
+configure: configure.in
+	autoconf
+
+# Prevent GNU make v3 from overflowing arg limit on SysV.
+.NOEXPORT:

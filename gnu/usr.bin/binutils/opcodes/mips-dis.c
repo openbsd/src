@@ -25,6 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Mips instructions are never longer than this many bytes.  */
 #define MAXLEN 4
+
+static void print_insn_arg PARAMS ((const char *, unsigned long, bfd_vma,
+				    struct disassemble_info *));
+static int _print_insn_mips PARAMS ((bfd_vma, unsigned long int,
+				     struct disassemble_info *));
+
 
 /* FIXME: This should be shared with gdb somehow.  */
 #define REGISTER_NAMES 	\
@@ -180,12 +186,12 @@ print_insn_arg (d, l, pc, info)
       break;
 
     case 'N':
-      (*info->fprintf_func) (info->stream, "%d",
+      (*info->fprintf_func) (info->stream, "$fcc%d",
 			     (l >> OP_SH_BCC) & OP_MASK_BCC);
       break;
 
     case 'M':
-      (*info->fprintf_func) (info->stream, "%d",
+      (*info->fprintf_func) (info->stream, "$fcc%d",
 			     (l >> OP_SH_CCC) & OP_MASK_CCC);
       break;
 
@@ -204,8 +210,8 @@ print_insn_arg (d, l, pc, info)
 static int
 _print_insn_mips (memaddr, word, info)
      bfd_vma memaddr;
-     struct disassemble_info *info;
      unsigned long int word;
+     struct disassemble_info *info;
 {
   register const struct mips_opcode *op;
   static boolean init = 0;
@@ -245,9 +251,9 @@ _print_insn_mips (memaddr, word, info)
 	      (*info->fprintf_func) (info->stream, "%s", op->name);
 
 	      d = op->args;
-	      if (d != NULL)
+	      if (d != NULL && *d != '\0')
 		{
-		  (*info->fprintf_func) (info->stream, " ");
+		  (*info->fprintf_func) (info->stream, "\t");
 		  for (; *d != '\0'; d++)
 		    print_insn_arg (d, word, memaddr, info);
 		}

@@ -89,7 +89,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-#include "assert.h"
 
 #define WRITE_HEADERS(abfd, execp)					   \
   {									   \
@@ -453,7 +452,7 @@ MY(canonicalize_reloc)(abfd, section, relptr, symbols)
   for (count = 0; count++ < section->reloc_count;)
     {
       c = tblptr->howto - NAME(aout,std_howto_table);
-      assert (c < RISCIX_TABLE_SIZE);
+      BFD_ASSERT (c < RISCIX_TABLE_SIZE);
       tblptr->howto = &riscix_std_reloc_howto[c];
 
       *relptr++ = tblptr++;

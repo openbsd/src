@@ -1,0 +1,382 @@
+if $nosignals {
+	verbose "Skipping signals.exp because of nosignals."
+	continue
+	}
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile signals
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+execute_anywhere "rm -f ${binfile}.ci"
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci file"
+    return -1
+}
+source ${binfile}.ci
+
+proc signal_tests_1 {} {
+    global prompt
+    if [runto_main] then {
+	gdb_test "next" "signal \\(SIGUSR1.*" \
+		"next over signal (SIGALRM, handler)"
+	gdb_test "next" "alarm \\(.*" \
+		"next over signal (SIGUSR1, handler)"
+	gdb_test "next" "\\+\\+count; /\\* first \\*/" \
+		"next over alarm (1)"
+	# An alarm has been signaled, give the signal time to get delivered.
+	exec sleep 2
+
+	# i386 BSD currently fails the next test with a SIGTRAP.
+	setup_xfail "i*86-*-bsd*"
+	# But Dynix has a DECR_PC_AFTER_BREAK of zero, so the failure
+	# is shadowed by hitting the through_sigtramp_breakpoint.
+	clear_xfail "i*86-sequent-bsd*"
+	# Univel SVR4 i386 continues instead of stepping.
+	setup_xfail "i*86-univel-sysv4*"
+	# lynx fails with "next" acting like "continue"
+	setup_xfail "*-*-*lynx*"
+	# linux (aout versions) also fails with "next" acting like "continue"
+	# this is probably more dependant on the kernel version than on the
+	# object file format or utils.  (sigh)
+	setup_xfail "i*86-*-linuxaout" "i*86-*-linuxoldld"
+	send "next\n"
+	expect {
+	    -re "alarm .*$prompt $" { pass "next to 2nd alarm (1)" }
+	    -re "Program received signal SIGTRAP.*first.*$prompt $" {
+
+		# This can happen on machines that have a trace flag
+		# in their PS register.
+		# The trace flag in the PS register will be set due to
+		# the `next' command.
+		# Before calling the signal handler, the PS register
+		# is pushed along with the context on the user stack.
+		# When the signal handler has finished, it reenters the
+		# the kernel via a sigreturn syscall, which restores the
+		# PS register along with the context.
+		# If the kernel erroneously does not clear the trace flag
+		# in the pushed context, gdb will receive a SIGTRAP from
+		# the set trace flag in the restored context after the
+		# signal handler has finished.
+
+		# I do not yet understand why the SIGTRAP does not occur
+		# after stepping the instruction at the restored PC on
+		# i386 BSDI 1.0 systems.
+
+		# Note that the vax under Ultrix also exhibits
+		# this behaviour (it is uncovered by the `continue from
+		# a break in a signal handler' test below).
+		# With this test the failure is shadowed by hitting the
+		# through_sigtramp_breakpoint upon return from the signal
+		# handler.
+
+		fail "next to 2nd alarm (1) (probably kernel bug)"
+		gdb_test "next" "alarm.*" "next to 2nd alarm (1)"
+	    }
+	    -re "Program exited with code.*$prompt $" {
+
+		# This is apparently a bug in the UnixWare kernel (but
+		# has not been investigated beyond the
+		# resume/target_wait level, and has not been reported
+		# to Univel).  If it steps when a signal is pending,
+		# it does a continue instead.  I don't know whether
+		# there is a workaround.
+
+		# Perhaps this problem exists on other SVR4 systems;
+		# but (a) we have no reason to think so, and (b) if we
+		# put a wrong xfail here, we never get an XPASS to let
+		# us know that it was incorrect (and then if such a
+		# configuration regresses we have no way of knowing).
+		# Solaris is not a relevant data point either way
+		# because it lacks single stepping.
+
+		# fnf: I don't agree with the above philosophy.  We
+		# can never be sure that any particular XFAIL is
+		# specified 100% correctly in that no systems with
+		# the bug are missed and all systems without the bug
+		# are excluded.  If we include an XFAIL that isn't
+		# appropriate for a particular system, then when that
+		# system gets tested it will XPASS, and someone should
+		# investigate and fix the setup_xfail as appropriate,
+		# or more preferably, the actual bug.  Each such case
+		# adds more data to narrowing down the scope of the
+		# problem and ultimately fixing it.
+
+		setup_xfail "i*86-*-sysv4*"
+		fail "'next' behaved as 'continue (known SVR4 bug)'"
+		return 0
+	    }
+	    -re ".*$prompt $" { fail "next to 2nd alarm (1)" }
+	    timeout { fail "next to 2nd alarm (1); (timeout)" }
+	    eof { fail "next to 2nd alarm (1); (eof)" }
+	}
+
+	gdb_test "break handler" "Breakpoint \[0-9\]+ .*"
+	gdb_test "next" "\\+\\+count; /\\* second \\*/" \
+	    "next to 2nd ++count in signals_tests_1"
+	# An alarm has been signaled, give the signal time to get delivered.
+	exec sleep 2
+
+	set bash_bug 0
+	send "next\n"
+	setup_xfail "i*86-*-linux"
+	expect {
+	    -re "Breakpoint.*handler.*$prompt $" {
+		pass "next to handler in signals_tests_1"
+	    }
+	    -re "Program received signal SIGEMT.*$prompt $" {
+		# Bash versions before 1.13.5 cause this behaviour
+		# by blocking SIGTRAP.
+		fail "next to handler in signals_tests_1 (known problem with bash versions before 1.13.5)"
+		set bash_bug 1
+		gdb_test "signal 0" "Breakpoint.*handler.*"
+	    }
+	    -re ".*$prompt $" { fail "next to handler in signals_tests_1" }
+	    timeout { fail "next to handler in signals_tests_1 (timeout)" }
+	    eof { fail "next to handler in signals_tests_1 (eof)" }
+	}
+
+	# This doesn't test that main is frame #2, just that main is frame
+	# #2, #3, or higher.  At some point this should be fixed (but
+	# it quite possibly would introduce new FAILs on some systems).
+	setup_xfail "i*86-*-linux" "i*86-*-bsdi2.0"
+	gdb_test "backtrace" "#0.*handler.*#1.*#2.*main.*" \
+	    "backtrace in signals_tests_1"
+
+	gdb_test "break func1" "Breakpoint \[0-9\]+ .*"
+	gdb_test "break func2" "Breakpoint \[0-9\]+ .*"
+
+	# Vax Ultrix and i386 BSD currently fail the next test with
+	# a SIGTRAP, but with different symptoms.
+	setup_xfail "vax-*-ultrix*"
+	setup_xfail "i*86-*-bsd*"
+	setup_xfail "i*86-*-linux"
+	send "continue\n"
+	expect {
+	    -re "Breakpoint.*func1.*$prompt $" { pass "continue to func1" }
+	    -re "Program received signal SIGTRAP.*second.*$prompt $" {
+
+		# See explanation for `next to 2nd alarm (1)' fail above.
+		# We did step into the signal handler, hit a breakpoint
+		# in the handler and continued from the breakpoint.
+		# The set trace flag in the restored context is causing
+		# the SIGTRAP, without stepping an instruction.
+
+		fail "continue to func1 (probably kernel bug)"
+		gdb_test "continue" "Breakpoint.*func1.*" \
+		    "extra continue to func1"
+	    }
+	    -re "Program received signal SIGTRAP.*func1 ..;.*$prompt $" {
+
+		# On the vax under Ultrix the set trace flag in the restored
+		# context is causing the SIGTRAP, but after stepping one
+		# instruction, as expected.
+
+		fail "continue to func1 (probably kernel bug)"
+		gdb_test "continue" "Breakpoint.*func1.*" \
+		    "extra continue to func1"
+	    }
+	    -re ".*$prompt $" { fail "continue to func1" }
+	    default { fail "continue to func1" }
+	}
+
+	setup_xfail "*-*-irix*"
+	setup_xfail "i*86-*-linux"
+	send "signal SIGUSR1\n"
+	expect {
+	    -re "Breakpoint.*handler.*$prompt $" { pass "signal SIGUSR1" }
+	    -re "Program received signal SIGUSR1.*$prompt $" {
+		# This is what irix4 and irix5 do.
+		# It would appear to be a kernel bug.
+		fail "signal SIGUSR1"
+		gdb_test "continue" "Breakpoint.*handler.*" "pass it SIGUSR1"
+	    }
+	    -re ".*$prompt $" { fail "signal SIGUSR1" }
+	    default { fail "signal SIGUSR1" }
+	}
+
+	# Will tend to wrongly require an extra continue.
+
+	# The problem here is that the breakpoint at func1 will be
+	# inserted, and when the system finishes with the signal
+	# handler it will try to execute there.  For GDB to try to
+	# remember that it was going to step over a breakpoint when a
+	# signal happened, distinguish this case from the case where
+	# func1 is called from the signal handler, etc., seems
+	# exceedingly difficult.  So don't expect this to get fixed
+	# anytime soon.
+
+	setup_xfail "*-*-*"
+	send "continue\n"
+	expect {
+	    -re "Breakpoint.*func2.*$prompt $" { pass "continue to func2" }
+	    -re "Breakpoint.*func1.*$prompt $" {
+	    	fail "continue to func2"
+		gdb_test "continue" "Breakpoint.*func2.*" \
+		    "extra continue to func2"
+	    }
+	    -re ".*$prompt $" { fail "continue to func2" }
+	    default { fail "continue to func2" }
+	}
+
+	exec sleep 2
+
+        # GDB yanks out the breakpoints to step over the breakpoint it
+        # stopped at, which means the breakpoint at handler is yanked.
+	# But if NO_SINGLE_STEP, we won't get another chance to reinsert
+	# them (at least not with procfs, where we tell the kernel not
+	# to tell gdb about `pass' signals).  So the fix would appear to
+	# be to just yank that one breakpoint when we step over it.
+
+	setup_xfail "sparc*-*-*"
+	setup_xfail "rs6000-*-*"
+	setup_xfail "powerpc-*-*"
+
+	# A faulty bash will not step the inferior into sigtramp on sun3.
+	if {$bash_bug} then {
+	    setup_xfail "m68*-*-sunos4*"
+	}
+
+	setup_xfail "i*86-*-linux"
+	gdb_test "continue" "Breakpoint.*handler.*" "continue to handler"
+
+	# If the NO_SINGLE_STEP failure happened, we have already exited.
+	# If we succeeded a continue will return from the handler to func2.
+	# GDB now has `forgotten' that it intended to step over the
+	# breakpoint at func2 and will stop at func2.
+	setup_xfail "*-*-*"
+	# The sun3 with a faulty bash will also be `forgetful' but it
+	# already got the spurious stop at func2 and this continue will work.
+	if {$bash_bug} then {
+	     clear_xfail "m68*-*-sunos4*"
+	}
+	gdb_test "continue" "Program exited with code 010\\." \
+	    "continue to exit in signals_tests_1 "
+    }
+}
+
+# On a few losing systems, ptrace (PT_CONTINUE) or ptrace (PT_STEP)
+# causes pending signals to be cleared, which causes these tests to
+# get nowhere fast.  This is totally losing behavior (perhaps there
+# are cases in which is it useful but the user needs more control,
+# which they mostly have in GDB), but some people apparently think it
+# is a feature.  It is documented in the ptrace manpage on Motorola
+# Delta Series sysV68 R3V7.1 and on HPUX 9.0.  Even the non-HPUX PA
+# OSes (BSD and OSF/1) seem to have figured they had to copy this
+# braindamage.
+
+if {[ istarget "m68*-motorola-*" ] || [ istarget "hppa*-*-bsd*" ] ||
+    [ istarget "*-*-hpux*" ] || [ istarget "hppa*-*-osf*" ]} then {
+  setup_xfail "*-*-*"
+  fail "ptrace loses on signals on this target"
+  return 0
+}
+
+# lynx2.2.2 doesn't lose signals, instead it screws up the stack pointer
+# in some of these tests leading to massive problems.  I've
+# reported this to lynx, hopefully it'll be fixed in lynx2.3.
+# Severe braindamage.
+if [ istarget "*-*-*lynx*" ] then {
+  setup_xfail "*-*-*"
+  fail "kernel scroggs stack pointer in signal tests on this target"
+  return 0
+}
+
+gdb_exit
+gdb_start
+
+# This will need to be updated as the exact list of signals changes,
+# but I want to test that TARGET_SIGNAL_0, TARGET_SIGNAL_DEFAULT, and
+# TARGET_SIGNAL_UNKNOWN are skipped.
+proc test_handle_all_print {} {
+    global timeout
+    # Increase timeout and expect input buffer for large output from gdb.
+    # Allow blank or TAB as whitespace characters.
+    set oldtimeout $timeout
+    set timeout [expr "$timeout + 360"]
+    verbose "Timeout is now $timeout seconds" 2
+    match_max 10000
+    gdb_test "handle all print" "Signal\[ 	\]+Stop\[ 	\]+Print\[ 	\]+Pass to program\[ 	\]+Description\r\nSIGHUP\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Hangup.*SIG63\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Real-time event 63.*EXC_BREAKPOINT\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Breakpoint"
+    set timeout $oldtimeout
+    verbose "Timeout restored to $timeout seconds" 2
+}
+test_handle_all_print
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+signal_tests_1
+
+# Force a resync, so we're looking at the right prompt.  On SCO we
+# were getting out of sync (I don't understand why).
+send "p 1+1\n"
+expect {
+    -re "= 2.*$prompt $" {}
+    -re ".*$prompt $" { perror "sync trouble in signals.exp" }
+    default { perror "sync trouble in signals.exp" }
+}
+
+if [runto_main] then {
+    gdb_test "break handler if 0" "Breakpoint \[0-9\]+ .*"
+    gdb_test "set \$handler_breakpoint_number = \$bpnum" ""
+
+    # Get to the point where a signal is waiting to be delivered
+    gdb_test "next" "signal \\(SIGUSR1.*" "next to signal in signals.exp"
+    gdb_test "next" "alarm \\(.*" "next to alarm #1 in signals.exp"
+    gdb_test "next" "\\+\\+count; /\\* first \\*/" \
+	"next to ++count #1 in signals.exp"
+    # Give the signal time to get delivered
+    exec sleep 2
+
+    # Now call a function.  When GDB tries to run the stack dummy,
+    # it will hit the breakpoint at handler.  Provided it doesn't
+    # lose its cool, this is not a problem, it just has to note
+    # that the breakpoint condition is false and keep going.
+
+    gdb_test "p func1 ()" "^p func1 \\(\\)\r\n.\[0-9\]* = void" \
+	"p func1 () #1 in signals.exp"
+
+    # Make sure the count got incremented.
+
+    # Haven't investigated this xfail
+    setup_xfail "rs6000-*-*"
+    setup_xfail "powerpc-*-*"
+    gdb_test "p count" "= 2" "p count #1 in signals.exp"
+    if { [istarget "rs6000-*-*"] || [istarget "powerpc-*-*"] } { return 0 }
+
+    gdb_test "condition \$handler_breakpoint_number" "now unconditional\\."
+    gdb_test "next" "alarm \\(.*" "next to alarm #2 in signals.exp"
+    gdb_test "next" "\\+\\+count; /\\* second \\*/" \
+	"next to ++count #2 in signals.exp"
+    exec sleep 2
+
+    # This time we stop when GDB tries to run the stack dummy.
+    # So it is OK that we do not print the return value from the function.
+    gdb_test "p func1 ()" \
+"Breakpoint \[0-9\]*, handler.*
+The program being debugged stopped while in a function called from GDB.*" \
+	"p func1 () #2 in signals.exp"
+    # But we should be able to backtrace...
+    # On alpha-*-osf2.0 this test works when run manually but sometime fails when
+    # run under dejagnu, making it very hard to debug the problem.  Weird...
+    gdb_test "bt" "#0.*handler.*#1.*#2.*main.*" "bt in signals.exp"
+    # ...and continue...
+    gdb_test "continue" "Continuing\\." "continue in signals.exp"
+    # ...and then count should have been incremented
+    gdb_test "p count" "= 5" "p count #2 in signals.exp"
+}
+
+return 0

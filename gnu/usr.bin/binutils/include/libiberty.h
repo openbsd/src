@@ -101,30 +101,26 @@ typedef void libiberty_voidfn PARAMS ((int status));
 __volatile__ libiberty_voidfn xexit;
 #endif
 
-#ifndef PRIVATE_XMALLOC
-
 /* Set the program name used by xmalloc.  */
 
 extern void xmalloc_set_program_name PARAMS ((const char *));
 
 /* Allocate memory without fail.  If malloc fails, this will print a
    message to stderr (using the name set by xmalloc_set_program_name,
-   if any) and then call xexit.
+   if any) and then call xexit.  */
 
-   FIXME: We do not declare the parameter type (size_t) in order to
-   avoid conflicts with other declarations of xmalloc that exist in
-   programs which use libiberty.  */
-
-extern PTR xmalloc ();
+#ifdef ANSI_PROTOTYPES
+/* Get a definition for size_t.  */
+#include <stddef.h>
+#endif
+extern PTR xmalloc PARAMS ((size_t));
 
 /* Reallocate memory without fail.  This works like xmalloc.
 
    FIXME: We do not declare the parameter types for the same reason as
    xmalloc.  */
 
-extern PTR xrealloc ();
-
-#endif	/* PRIVATE_XMALLOC */
+extern PTR xrealloc PARAMS ((PTR, size_t));
 
 /* Copy a string into a memory buffer without fail.  */
 

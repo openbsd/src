@@ -67,6 +67,8 @@ struct hpux_core_struct
 #define core_signal(bfd) (core_hdr(bfd)->sig)
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
+static void swap_abort PARAMS ((void));
+
 static asection *
 make_bfd_asection (abfd, name, flags, _raw_size, vma, alignment_power)
      bfd *abfd;
@@ -211,7 +213,7 @@ hpux_core_core_file_matches_executable_p (core_bfd, exec_bfd)
 #define hpux_core_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
-void
+static void
 swap_abort()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */

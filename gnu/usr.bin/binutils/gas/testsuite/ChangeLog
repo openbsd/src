@@ -1,3 +1,119 @@
+Mon Nov 11 16:03:24 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/hppa/reloc/reloc.exp: Pass "--prefix-addresses" to objdump
+	as needed.
+	* gas/hppa/unsorted/unsorted.exp: Likewise.
+
+Thu Nov  7 00:27:52 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/basic.exp: Check opcode insertion for
+	extended instructions.
+	* gas/mn10300/extend.s: Tweak constants for better
+	testsuite coverage.
+
+Wed Nov  6 13:50:07 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/basic.exp: Test insertion of operands
+	into call and jmp instructions with 32bit offsets.
+	Fix typo in bit test patterns.
+	* gas/mn10300/other.s: Tweak constants to improve
+	testsuite coverage.
+
+	* gas/mn10300/basic.exp: Test insertion of 32bit operand
+	in calls, btst, bclr & bset instructions.
+
+	* gas/mn10300/*.s: Tweak constants in 32bit insns for
+	better testing coverage.
+	* gas/mn10300/basic.exp: Test insertion of most 32bit
+	operands.
+
+Tue Nov  5 13:33:12 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/basic.exp: Check bit patterns for indexed mov,
+	movbu, movhu instructions.  Check bit patterns for more bit
+	operations.  Check bit patterns for various 16bit call, retf
+	and ret instructions.
+	* gas/mn10300/other.s: Update operands for better test coverage.
+
+Mon Nov  4 12:55:11 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/basic.exp: Check bit patterns for a couple more
+	mov and cmp instructions.
+
+Tue Oct 29 17:05:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/*.d: Update for disassembler changes.
+
+Mon Oct 14 13:52:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips: Add symbols to several testsuites, since the ELF
+	assembler now always builds a symbol table, which means that
+	objdump will no longer report `No symbols in FILE'.  Change the
+	expected output accordingly.
+
+Thu Oct 10 13:11:48 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/basic.exp: Check bit patterns for instructions
+	with a single 8bit or 16bit immediate operand.
+
+	* gas/mn10300/basic.exp: Check bit patterns for many
+	instructions.  Add missing test in do_mov1.
+	* gas/mn10300/mov1.s: Add missing test.
+
+Wed Oct  9 14:15:18 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10300/{add.s, bcc.s, bit.s, cmp.s, ext.s}: New tests.
+	* gas/mn10300/{extend.s logical.s, loop.s, mov1.s}: Likewise.
+	* gas/mn10300/{mov2.s, mov3.s, mov4.s, movbu.s}: Likewise.
+	* gas/mn10300/{movhu.s, movm.s, muldiv.s, other.s}: Likewise.
+	* gas/mn10300/{shift.s, sub.s}: Likewise.
+	* gas/mn10300/basic.exp: Run them.
+
+Thu Oct  3 09:57:03 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/mn10200, gas/mn10300: New directories for Matsushita
+	mn10200 and mn10300 tests.
+
+Tue Oct  1 15:38:28 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/gas-defs.exp (gas_version): Fix for current version
+	printing.
+
+Sun Sep 29 07:55:58 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/splet.d: Fix typo in cpusha result.
+
+Mon Sep 23 12:33:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/fmoveml.s, gas/m68k/fmoveml.d: Add tests for fmovemx.
+
+Wed Sep 18 12:14:06 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/all/cofftag.s: Use .p2align rather than .align.
+
+Fri Sep 13 15:28:04 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/h8300/macs.s: Add "stmac" instructions.
+	* gas/h8300/basic.exp: Test them.
+
+Thu Sep 12 10:28:44 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/arm/thumb.s (back): Check assembly of Thumb BL.
+
+Mon Sep  9 14:37:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/mips4.s, gas/mips/mips4.d: Use $fccN for condition code
+	registers.
+
+Fri Sep  6 18:23:54 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/mips/dli.{s,d}: More test cases added.
+
+Wed Sep  4 11:47:29 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* gas/mips/mips.exp: Add check for dli macro instruction.
+	* gas/mips/dli.{s,d}: Added.
+
 Thu Aug 29 11:32:23 1996  James G. Smith  <jsmith@cygnus.co.uk>
 
 	* gas/arm/arm7t.d: Explicitly force little-endian assembly.

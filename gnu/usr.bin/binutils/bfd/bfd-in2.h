@@ -1146,7 +1146,7 @@ boolean
 bfd_copy_private_section_data PARAMS ((bfd *ibfd, asection *isec, bfd *obfd, asection *osec));
 
 #define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
-     BFD_SEND (ibfd, _bfd_copy_private_section_data, \
+     BFD_SEND (obfd, _bfd_copy_private_section_data, \
 		(ibfd, isection, obfd, osection))
 enum bfd_architecture 
 {
@@ -1213,6 +1213,8 @@ enum bfd_architecture
   bfd_arch_arm,        /* Advanced Risc Machines ARM */
   bfd_arch_ns32k,      /* National Semiconductors ns32000 */
   bfd_arch_w65,        /* WDC 65816 */
+  bfd_arch_mn10200,    /* Matsushita MN10200 */
+  bfd_arch_mn10300,    /* Matsushita MN10300 */
   bfd_arch_last
   };
 
@@ -1617,6 +1619,15 @@ section symbol.  The addend is ignored when writing, but is filled
 in with the file's GP value on reading, for convenience, as with the
 GPDISP_LO16 reloc.
 
+The LITERALSLEAZY reloc is a hack to allow larger offsets (4x) than
+LITERAL.
+
+The ELF_LITERAL reloc is somewhere between 16_GOTOFF and GPDISP_LO16.
+It should refer to the symbol to be referenced, as with 16_GOTOFF,
+but it generates output not based on the position within the .got
+section, but relative to the GP value chosen for the file during the
+final link stage.
+
 The LITUSE reloc, on the instruction using the loaded address, gives
 information to the linker that it might be able to use to optimize
 away some literal section references.  The symbol is ignored (read
@@ -1629,6 +1640,7 @@ of instruction using the register:
 The GNU linker currently doesn't do any of this optimizing. */
   BFD_RELOC_ALPHA_LITERAL,
   BFD_RELOC_ALPHA_LITERALSLEAZY,
+  BFD_RELOC_ALPHA_ELF_LITERAL,
   BFD_RELOC_ALPHA_LITUSE,
 
 /* The HINT relocation indicates a value that should be filled into the
@@ -1780,6 +1792,7 @@ not stored in the instruction. */
   BFD_RELOC_SH_CODE,
   BFD_RELOC_SH_DATA,
   BFD_RELOC_SH_LABEL,
+
 
 
 
@@ -1940,7 +1953,7 @@ boolean
 bfd_copy_private_symbol_data PARAMS ((bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym));
 
 #define bfd_copy_private_symbol_data(ibfd, isymbol, obfd, osymbol) \
-     BFD_SEND (ibfd, _bfd_copy_private_symbol_data, \
+     BFD_SEND (obfd, _bfd_copy_private_symbol_data, \
 		(ibfd, isymbol, obfd, osymbol))
 struct _bfd 
 {
@@ -2180,13 +2193,13 @@ boolean
 bfd_copy_private_bfd_data PARAMS ((bfd *ibfd, bfd *obfd));
 
 #define bfd_copy_private_bfd_data(ibfd, obfd) \
-     BFD_SEND (ibfd, _bfd_copy_private_bfd_data, \
+     BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
 		(ibfd, obfd))
 boolean 
 bfd_merge_private_bfd_data PARAMS ((bfd *ibfd, bfd *obfd));
 
 #define bfd_merge_private_bfd_data(ibfd, obfd) \
-     BFD_SEND (ibfd, _bfd_merge_private_bfd_data, \
+     BFD_SEND (obfd, _bfd_merge_private_bfd_data, \
 		(ibfd, obfd))
 boolean 
 bfd_set_private_flags PARAMS ((bfd *abfd, flagword flags));

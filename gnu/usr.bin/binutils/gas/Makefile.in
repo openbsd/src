@@ -263,7 +263,7 @@ as.new: $(OBJS) $(LIBDEPS)
 
 $(OBJS): config.h as.h targ-env.h obj-format.h targ-cpu.h flonum.h expr.h \
 	struc-symbol.h write.h frags.h hash.h read.h symbols.h tc.h obj.h \
-	listing.h bignum.h
+	listing.h bignum.h $(srcdir)/../include/libiberty.h
 
 gasp.new: $(GASPOBJS) ../libiberty/libiberty.a
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o gasp.new $(GASPOBJS) ../libiberty/libiberty.a $(LOADLIBES)

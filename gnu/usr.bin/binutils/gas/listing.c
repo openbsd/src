@@ -688,12 +688,7 @@ list_symbol_table ()
 		}
 #if defined (BFD64)
 	      else if (sizeof (val) > 4)
-		{
-		  char buf1[30];
-		  sprintf_vma (buf1, val);
-		  strcpy (buf, "00000000");
-		  strcpy (buf + 8 - strlen (buf1), buf1);
-		}
+		sprintf_vma (buf, val);
 #endif
 	      else
 		abort ();

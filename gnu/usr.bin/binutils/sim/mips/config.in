@@ -1,0 +1,22 @@
+/* config.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if you have the aint function.  */
+#undef HAVE_AINT
+
+/* Define if you have the anint function.  */
+#undef HAVE_ANINT
+
+/* Define if you have the sqrt function.  */
+#undef HAVE_SQRT
+
+/* Define if you have the <stdlib.h> header file.  */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
+/* Define if you have the <strings.h> header file.  */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the m library (-lm).  */
+#undef HAVE_LIBM

@@ -35,6 +35,10 @@ extern int ecoff_debugging_seen;
    obj_read_begin_hook.  */
 extern void ecoff_read_begin_hook PARAMS ((void));
 
+/* This function should be called when the assembler switches to a new
+   file.  */
+extern void ecoff_new_file PARAMS ((const char *));
+
 /* This function should be called when a new symbol is created, by
    obj_symbol_new_hook.  */
 extern void ecoff_symbol_new_hook PARAMS ((struct symbol *));

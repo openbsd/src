@@ -631,6 +631,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_ALPHA_GPDISP_LO16",
   "BFD_RELOC_ALPHA_GPDISP",
   "BFD_RELOC_ALPHA_LITERAL",
+  "BFD_RELOC_ALPHA_ELF_LITERAL",
   "BFD_RELOC_ALPHA_LITUSE",
   "BFD_RELOC_ALPHA_HINT",
   "BFD_RELOC_ALPHA_LINKAGE",
@@ -733,6 +734,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_SH_CODE",
   "BFD_RELOC_SH_DATA",
   "BFD_RELOC_SH_LABEL",
+
 
 
 

@@ -136,6 +136,7 @@ void *alloca ();
 #ifdef BFD_ASSEMBLER
 #include <bfd.h>
 #endif
+#include <libiberty.h>
 
 /* Define the standard progress macros.  */
 #include <progress.h>
@@ -496,6 +497,9 @@ COMMON unsigned char flag_always_generate_output; /* -Z */
 
 COMMON unsigned char flag_print_statistics;
 
+/* True if we are doing {Net,Open}BSD PIC.  */
+COMMON int flag_pic;
+
 /* name of emitted object file */
 COMMON char *out_file_name;
 
@@ -581,8 +585,6 @@ char *atof_ieee PARAMS ((char *str, int what_kind, LITTLENUM_TYPE * words));
 char *input_scrub_include_file PARAMS ((char *filename, char *position));
 char *input_scrub_new_file PARAMS ((char *filename));
 char *input_scrub_next_buffer PARAMS ((char **bufp));
-PTR xmalloc PARAMS ((unsigned long size));
-PTR xrealloc PARAMS ((PTR ptr, unsigned long n));
 int do_scrub_chars PARAMS ((int (*get) (char **), char *to, int tolen));
 int gen_to_words PARAMS ((LITTLENUM_TYPE * words, int precision,
 			  long exponent_bits));

@@ -6,8 +6,10 @@ TEXT_START_ADDR=0xa0020000
 DATA_ADDR=.
 MAXPAGESIZE=0x40000
 OTHER_READONLY_SECTIONS='.reginfo : { *(.reginfo) }'
+OTHER_GOT_SYMBOLS='
+  _gp = ALIGN(16) + 0x7ff0;
+'
 OTHER_READWRITE_SECTIONS='
-  _gp = . + 0x8000;
   .lit8 : { *(.lit8) }
   .lit4 : { *(.lit4) }
 '

@@ -1,0 +1,799 @@
+# Copyright (C) 1996 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# DejaGnu@cygnus.com
+
+# Written by Cygnus Support.
+
+proc do_add {} {
+    set testname "add.s: Add operations"
+    set x 0
+
+    gas_start "add.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 E6\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 F16B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 F17E\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 F159\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0007 2910\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 FAC20100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000d FCC30001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 2110\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0015 FAD20100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0019 FCD30001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001f F8FE10\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0022 FAFE0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 FCFE0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +14 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c F146\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==17] then { pass $testname } else { fail $testname }
+}
+
+proc do_bcc {} {
+    set testname "bcc.s: Bcc tests"
+    set x 0
+
+    gas_start "bcc.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 C800\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 C900\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 C100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 C200\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 C300\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000a C000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000c C500\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000e C600\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 C700\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0012 C400\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0014 F8E800\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0017 F8E900\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001a F8EA00\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001d F8EB00\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0020 CA00\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==15] then { pass $testname } else { fail $testname }
+}
+
+proc do_bit {} {
+    set testname "bit.s: bit tests"
+    set x 0
+
+    gas_start "bit.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F8ED40\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 FAEE2000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0007 FCEF0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +4 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000d FAF90840\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0011 FE020001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +6 +FFFF40\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0018 F086\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001a FAF10840\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001e FE000001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +9 +FFFF40\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0025 F096\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0027 FAF50840\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002b FE010001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +12 +FFFF40\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==15] then { pass $testname } else { fail $testname }
+}
+
+proc do_cmp {} {
+    set testname "cmp.s: cmp tests"
+    set x 0
+
+    gas_start "cmp.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 A6\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 F1AB\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 F19F\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 BE\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 AF10\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 FACA0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000c FCC90001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0012 BF10\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0014 FADA0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0018 FCD90001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==12] then { pass $testname } else { fail $testname }
+}
+
+proc do_ext {} {
+    set testname "ext.s: ext tests"
+    set x 0
+
+    gas_start "ext.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F2D1\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 12\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 17\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 1A\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 1D\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==5] then { pass $testname } else { fail $testname }
+}
+
+proc do_extend {} {
+    set testname "extend.s: extended instruction tests"
+    set x 0
+
+    gas_start "extend.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F505\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F6FA\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 F606\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 F90210\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 FB030100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000d FD030001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +7 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 F616\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0015 F91610\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0018 FB170100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c FD170001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0022 F64B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0024 F65E\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 F676\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==15] then { pass $testname } else { fail $testname }
+}
+
+proc do_logical {} {
+    set testname "logical.s: logical tests"
+    set x 0
+
+    gas_start "logical.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F206\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F8E27F\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 FAE37FFF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 FCE30001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000f FAFC7FFF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 F216\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0015 F8E67F\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0018 FAE77FFF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c FCE70001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +10 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0022 FAFD7FFF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 F226\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0028 FAEB7FFF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c FCEB0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +14 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0032 F233\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==17] then { pass $testname } else { fail $testname }
+}
+
+proc do_loop {} {
+    set testname "loop.s: loop tests"
+    set x 0
+
+    gas_start "loop.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 D8\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 D9\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 D1\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 D2\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 D3\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 D0\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 D5\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0007 D6\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 D7\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 D4\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000a DA\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000b DB\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==12] then { pass $testname } else { fail $testname }
+}
+
+proc do_mov1 {} {
+    set testname "mov1.s: mov1 tests"
+    set x 0
+
+    gas_start "mov1.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 86\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 F1E6\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 F1D9\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 99\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 3E\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0007 F2F4\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 F2FB\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000b F2E1\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000d F2FA\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000f 76\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 F80608\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 FA060100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0017 FC060001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +14 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001d 5908\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001f FAB50100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0023 F2E7\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==17] then { pass $testname } else { fail $testname }
+}
+
+proc do_mov2 {} {
+    set testname "mov2.s: mov2 tests"
+    set x 0
+
+    gas_start "mov2.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 FCB50001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +2 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 F325\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 318000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000b FCA50001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0011 F006\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 F82608\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0016 FA260100 \[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001a FC260001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +9 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0020 5D08\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0022 FAB10100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 FCB10001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +12 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c F3A5\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002e FAA18000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0032 FCA10001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +15 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0038 F8F120\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==20] then { pass $testname } else { fail $testname }
+}
+
+proc do_mov3 {} {
+    set testname "mov3.s: mov3 tests"
+    set x 0
+
+    gas_start "mov3.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 66\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 F81620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 FA160100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 FC160001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000e 4620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 FA958000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0014 FC950001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001a F35A\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c 050080\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001f FC850001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0025 F016\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0027 F83620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002a FA360100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002e FC360001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +15 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0034 4720\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==19] then { pass $testname } else { fail $testname }
+}
+
+proc do_mov4 {} {
+    set testname "mov4.s: mov4 tests"
+    set x 0
+
+    gas_start "mov4.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 FA948000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 FC940001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +3 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000a F3DA\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000c FA840080\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 FC840001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +6 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0016 F8F520\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0019 8508\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001b 2D0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001e FCCD0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +10 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0024 9508\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 250100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0029 FCDD0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +13 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==16] then { pass $testname } else { fail $testname }
+}
+
+proc do_movbu {} {
+    set testname "movbu.s: movbu tests"
+    set x 0
+
+    gas_start "movbu.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F046\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F84608\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 FA460100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 FC460001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000f F8B908\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0012 FAB90100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0016 FCB90001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c F425\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001e 358000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0021 FCA90001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0027 F056\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0029 F85620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c FA560100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0030 FC560001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +15 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0036 F89620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0039 FA968000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 003d FC960001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +18 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0043 F45A\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0045 060080\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0048 FC860001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +21 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==26] then { pass $testname } else { fail $testname }
+}
+
+proc do_movhu {} {
+    set testname "movhu.s: movhu tests"
+    set x 0
+
+    gas_start "movhu.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F066\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F86608\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 FA660100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 FC660001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +5 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000f F8BD08\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0012 FABD0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0016 FCBD0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c F4A5\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001e 398000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0021 FCAD0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +11 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0027 F076\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0029 F87620\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c FA760100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0030 FC760001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +15 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0036 F89720\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0039 FA978000\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 003d FC970001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +18 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0043 F4DA\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0045 070080\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0048 FC870001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +21 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==26] then { pass $testname } else { fail $testname }
+}
+
+proc do_movm {} {
+    set testname "movm.s: movm tests"
+    set x 0
+
+    gas_start "movm.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 CE00\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 CE0B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 CF00\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 CF0B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==4] then { pass $testname } else { fail $testname }
+}
+
+proc do_muldiv {} {
+    set testname "muldiv.s: muldiv tests"
+    set x 0
+
+    gas_start "muldiv.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F246\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F25B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 F26F\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 F27E\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==4] then { pass $testname } else { fail $testname }
+}
+
+proc do_other {} {
+    set testname "other.s: other tests"
+    set x 0
+
+    gas_start "other.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 08\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0001 44\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 49\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0003 53\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 F0F6\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 CC0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0009 DC0001FF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +8 +FF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000e CD010005\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +9 +09\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0013 DD0001FF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +10 +FF0920\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001a F0F2\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 001c FAFF0100\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0020 FCFF0001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +13 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0026 DF0F07\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0029 DE0905\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002c F0FC\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 002e F0FD\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0030 F0FE\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0032 CB\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0033 F0FF\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==23] then { pass $testname } else { fail $testname }
+}
+
+proc do_shift {} {
+    set testname "shift.s: shift tests"
+    set x 0
+
+    gas_start "shift.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F2B6\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F8CA04\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0005 F2AB\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0007 F8C704\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000a F29E\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000c F8C204\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000f 56\[^\n\]*\n"		{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0010 F285\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0012 F282\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==9] then { pass $testname } else { fail $testname }
+}
+
+proc do_sub {} {
+    set testname "sub.s: sub tests"
+    set x 0
+
+    gas_start "sub.s" "-al"
+
+    # Instead of having a variable for each match string just increment the
+    # total number of matches seen.  That's simpler when testing large numbers
+    # of instructions (as these tests to).
+    while 1 {
+	expect {
+	    -re "^ +\[0-9\]+ 0000 F106\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0002 F12B\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0004 F11F\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0006 F13E\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0008 FCC60001 \[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +6 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 000e FCD50001\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +7 +FFFF\[^\n\]*\n"			{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0014 F186\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "\[^\n\]*\n"				{ }
+	    timeout				{ perror "timeout\n"; break }
+	    eof					{ break }
+	}
+    }
+
+    # This was intended to do any cleanup necessary.  It kinda looks like it
+    # isn't needed, but just in case, please keep it in for now.
+    gas_finish
+
+    # Did we find what we were looking for?  If not, flunk it.
+    if [expr $x==9] then { pass $testname } else { fail $testname }
+}
+
+if [istarget mn10300*-*-*] then {
+    # Test the basic instruction parser.
+    do_add
+    do_bcc
+    do_bit
+    do_cmp
+    do_ext
+    do_extend
+    do_logical
+    do_loop
+    do_mov1
+    do_mov2
+    do_mov3
+    do_mov4
+    do_movbu
+    do_movhu
+    do_movm
+    do_muldiv
+    do_other
+    do_shift
+    do_sub
+}

@@ -1,0 +1,181 @@
+# This file is a Tcl script to test out the procedures in tkCanvas.c,
+# which implements generic code for canvases.  It is organized in the
+# standard fashion for Tcl tests.
+#
+# Copyright (c) 1995 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) canvas.test 1.8 96/02/16 10:56:03
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+# XXX - This test file is woefully incomplete.  At present, only a
+# few of the features are tested.
+
+canvas .c
+pack .c
+update
+set i 1
+foreach test {
+    {-background #ff0000 #ff0000 non-existent
+	    {unknown color name "non-existent"}}
+    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
+    {-bd 4 4 badValue {bad screen distance "badValue"}}
+    {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-closeenough 24 24.0 bogus {expected floating-point number but got "bogus"}}
+    {-confine true 1 silly {expected boolean value but got "silly"}}
+    {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
+    {-height 2.1 2 x42 {bad screen distance "x42"}}
+    {-highlightbackground #112233 #112233 ugly {unknown color name "ugly"}}
+    {-highlightcolor #110022 #110022 bogus {unknown color name "bogus"}}
+    {-highlightthickness 18 18 badValue {bad screen distance "badValue"}}
+    {-insertbackground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-insertborderwidth 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-insertofftime 100 100 3.2 {expected integer but got "3.2"}}
+    {-insertontime 100 100 3.2 {expected integer but got "3.2"}}
+    {-insertwidth 1.3 1 6x {bad screen distance "6x"}}
+    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, or sunken}}
+    {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-selectborderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-selectforeground #654321 #654321 bogus {unknown color name "bogus"}}
+    {-takefocus "any string" "any string" {} {}}
+    {-width 402 402 xyz {bad screen distance "xyz"}}
+    {-xscrollcommand {Some command} {Some command} {} {}}
+    {-yscrollcommand {Another command} {Another command} {} {}}
+} {
+    set name [lindex $test 0]
+    test canvas-1.$i {configuration options} {
+	.c configure $name [lindex $test 1]
+	lindex [.c configure $name] 4
+    } [lindex $test 2]
+    incr i
+    if {[lindex $test 3] != ""} {
+	test canvas-1.$i {configuration options} {
+	    list [catch {.c configure $name [lindex $test 3]} msg] $msg
+	} [list 1 [lindex $test 4]]
+    }
+    .c configure $name [lindex [.c configure $name] 3]
+    incr i
+}
+
+
+catch {destroy .c}
+canvas .c -width 60 -height 40 -scrollregion {0 0 200 150} -bd 0 \
+	-highlightthickness 0
+pack .c
+update
+test canvas-2.1 {CanvasWidgetCmd, xview option} {
+    .c configure -xscrollincrement 40 -yscrollincrement 5
+    .c xview moveto 0
+    update
+    set x [list [.c xview]]
+    .c xview scroll 2 units
+    update
+    lappend x [.c xview]
+} {{0 0.3} {0.4 0.7}}
+test canvas-2.2 {CanvasWidgetCmd, xview option} {nonPortable} {
+    # This test gives slightly different results on platforms such
+    # as NetBSD.  I don't know why...
+    .c configure -xscrollincrement 0 -yscrollincrement 5
+    .c xview moveto 0.6
+    update
+    set x [list [.c xview]]
+    .c xview scroll 2 units
+    update
+    lappend x [.c xview]
+} {{0.6 0.9} {0.66 0.96}}
+
+catch {destroy .c}
+canvas .c -width 60 -height 40 -scrollregion {0 0 200 80} \
+	-borderwidth 0 -highlightthickness 0
+pack .c
+update
+test canvas-3.1 {CanvasWidgetCmd, yview option} {
+    .c configure -xscrollincrement 40 -yscrollincrement 5
+    .c yview moveto 0
+    update
+    set x [list [.c yview]]
+    .c yview scroll 3 units
+    update
+    lappend x [.c yview]
+} {{0 0.5} {0.1875 0.6875}}
+test canvas-3.2 {CanvasWidgetCmd, yview option} {
+    .c configure -xscrollincrement 40 -yscrollincrement 0
+    .c yview moveto 0
+    update
+    set x [list [.c yview]]
+    .c yview scroll 2 units
+    update
+    lappend x [.c yview]
+} {{0 0.5} {0.1 0.6}}
+
+test canvas-4.1 {ButtonEventProc procedure} {
+    eval destroy [winfo children .]
+    canvas .c1 -bg #543210
+    rename .c1 .c2
+    set x {}
+    lappend x [winfo children .]
+    lappend x [.c2 cget -bg]
+    destroy .c1
+    lappend x [info command .c*] [winfo children .]
+} {.c1 #543210 {} {}}
+
+test canvas-5.1 {ButtonCmdDeletedProc procedure} {
+    eval destroy [winfo children .]
+    canvas .c1
+    rename .c1 {}
+    list [info command .c*] [winfo children .]
+} {{} {}}
+
+catch {destroy .c}
+canvas .c -width 100 -height 50 -scrollregion {-200 -100 305 102} \
+	-borderwidth 2 -highlightthickness 3
+pack .c
+update
+test canvas-6.1 {CanvasSetOrigin procedure} {
+    .c configure -xscrollincrement 0 -yscrollincrement 0
+    .c xview moveto 0
+    .c yview moveto 0
+    update
+    list [.c canvasx 0] [.c canvasy 0]
+} {-205.0 -105.0}
+test canvas-6.2 {CanvasSetOrigin procedure} {
+    .c configure -xscrollincrement 20 -yscrollincrement 10
+    set x ""
+    foreach i {.08 .10 .48 .50} {
+	.c xview moveto $i
+	update
+	lappend x [.c canvasx 0]
+    }
+    set x
+} {-165.0 -145.0 35.0 55.0}
+test canvas-6.3 {CanvasSetOrigin procedure} {
+    .c configure -xscrollincrement 20 -yscrollincrement 10
+    set x ""
+    foreach i {.06 .08 .70 .72} {
+	.c yview moveto $i
+	update
+	lappend x [.c canvasy 0]
+    }
+    set x
+} {-95.0 -85.0 35.0 45.0}
+test canvas-6.4 {CanvasSetOrigin procedure} {
+    .c configure -xscrollincrement 20 -yscrollincrement 10
+    .c xview moveto 1.0
+    .c canvasx 0
+} {215.0}
+test canvas-6.5 {CanvasSetOrigin procedure} {
+    .c configure -xscrollincrement 20 -yscrollincrement 10
+    .c yview moveto 1.0
+    .c canvasy 0
+} {55.0}

@@ -12,10 +12,9 @@ proc default_ld_version { ld } {
     
     catch "exec $ld --version" tmp
     set tmp [prune_system_crud $host_triplet $tmp]
-    regexp "version.*$" $tmp version
-    
-    if [info exists version] then {
-	clone_output "$ld $version\n"
+    regexp "\[^\n\]* (cygnus-|)(\[-0-9.a-zA-Z-\]+)\[\r\n\].*" $tmp version cyg number
+    if [info exists number] then {
+	clone_output "$ld $number\n"
     }
 }
 

@@ -5085,12 +5085,20 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 	{
 	  /* We are generating a relocateable output file, and must
 	     modify the reloc accordingly.  */
-	  if (r_extern)
+	  if (r_extern
+	      || r_type == RELOC_BASE10
+	      || r_type == RELOC_BASE13
+	      || r_type == RELOC_BASE22)
 	    {
 	      /* If we know the symbol this relocation is against,
 		 convert it into a relocation against a section.  This
 		 is what the native linker does.  */
-	      h = sym_hashes[r_index];
+	      if (r_type == RELOC_BASE10
+		  || r_type == RELOC_BASE13
+		  || r_type == RELOC_BASE22)
+		h = NULL;
+	      else
+		h = sym_hashes[r_index];
 	      if (h != (struct aout_link_hash_entry *) NULL
 		  && (h->root.type == bfd_link_hash_defined
 		      || h->root.type == bfd_link_hash_defweak))
@@ -5206,8 +5214,12 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 	    }
 
 	  /* As described above, we must always adjust a PC relative
-	     reloc by the change in VMA of the source.  */
-	  if (howto_table_ext[r_type].pc_relative)
+	     reloc by the change in VMA of the source.  However, if
+	     pcrel_offset is set, then the addend does not include the
+	     location within the section, in which case we don't need
+	     to adjust anything.  */
+	  if (howto_table_ext[r_type].pc_relative
+	      && ! howto_table_ext[r_type].pcrel_offset)
 	    relocation -= (input_section->output_section->vma
 			   + input_section->output_offset
 			   - input_section->vma);

@@ -327,7 +327,7 @@ EOF
 fi
 cat >>e${EMULATION_NAME}.c <<EOF
 
-      einfo ("%P: warning: %s, needed by %B, not found\n",
+      einfo ("%P: warning: %s, needed by %B, not found (try using --rpath)\n",
 	     l->name, l->by);
     }
 }

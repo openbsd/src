@@ -283,12 +283,18 @@ coff_link_add_symbols (abfd, info)
      struct bfd_link_info *info;
 {
   boolean (*sym_is_global) PARAMS ((bfd *, struct internal_syment *));
+  boolean keep_syms;
   boolean default_copy;
   bfd_size_type symcount;
   struct coff_link_hash_entry **sym_hash;
   bfd_size_type symesz;
   bfd_byte *esym;
   bfd_byte *esym_end;
+
+  /* Keep the symbols during this function, in case the linker needs
+     to read the generic symbols in order to report an error message.  */
+  keep_syms = obj_coff_keep_syms (abfd);
+  obj_coff_keep_syms (abfd) = true;
 
   sym_is_global = coff_backend_info (abfd)->_bfd_coff_sym_is_global;
 
@@ -306,7 +312,7 @@ coff_link_add_symbols (abfd, info)
 			 ((size_t) symcount
 			  * sizeof (struct coff_link_hash_entry *))));
   if (sym_hash == NULL && symcount != 0)
-    return false;
+    goto error_return;
   obj_coff_sym_hashes (abfd) = sym_hash;
   memset (sym_hash, 0,
 	  (size_t) symcount * sizeof (struct coff_link_hash_entry *));
@@ -335,7 +341,7 @@ coff_link_add_symbols (abfd, info)
 
 	  name = _bfd_coff_internal_syment_name (abfd, &sym, buf);
 	  if (name == NULL)
-	    return false;
+	    goto error_return;
 
 	  /* We must copy the name into memory if we got it from the
              syment itself, rather than the string table.  */
@@ -370,7 +376,7 @@ coff_link_add_symbols (abfd, info)
 		 (info, abfd, name, flags, section, value,
 		  (const char *) NULL, copy, false,
 		  (struct bfd_link_hash_entry **) sym_hash)))
-	    return false;
+	    goto error_return;
 
 	  if (info->hash->creator->flavour == bfd_get_flavour (abfd))
 	    {
@@ -381,7 +387,16 @@ coff_link_add_symbols (abfd, info)
 		      && (*sym_hash)->root.type != bfd_link_hash_defined))
 		{
 		  (*sym_hash)->class = sym.n_sclass;
-		  (*sym_hash)->type = sym.n_type;
+		  if (sym.n_type != T_NULL)
+		    {
+		      if ((*sym_hash)->type != T_NULL
+			  && (*sym_hash)->type != sym.n_type)
+			(*_bfd_error_handler)
+			  ("Warning: type of symbol `%s' changed from %d to %d in %s",
+			   name, (*sym_hash)->type, sym.n_type,
+			   bfd_get_filename (abfd));
+		      (*sym_hash)->type = sym.n_type;
+		    }
 		  (*sym_hash)->auxbfd = abfd;
 		  if (sym.n_numaux != 0)
 		    {
@@ -396,7 +411,7 @@ coff_link_add_symbols (abfd, info)
 						  (sym.n_numaux
 						   * sizeof (*alloc))));
 		      if (alloc == NULL)
-			return false;
+			goto error_return;
 		      for (i = 0, eaux = esym + symesz, iaux = alloc;
 			   i < sym.n_numaux;
 			   i++, eaux += symesz, iaux++)
@@ -439,7 +454,7 @@ coff_link_add_symbols (abfd, info)
 		    (PTR) bfd_zalloc (abfd,
 				      sizeof (struct coff_section_tdata));
 		  if (stab->used_by_bfd == NULL)
-		    return false;
+		    goto error_return;
 		  secdata = coff_section_data (abfd, stab);
 		}
 
@@ -448,12 +463,18 @@ coff_link_add_symbols (abfd, info)
 	      if (! _bfd_link_section_stabs (abfd, &table->stab_info,
 					     stab, stabstr,
 					     &secdata->stab_info))
-		return false;
+		goto error_return;
 	    }
 	}
     }
 
+  obj_coff_keep_syms (abfd) = keep_syms;
+
   return true;
+
+ error_return:
+  obj_coff_keep_syms (abfd) = keep_syms;
+  return false;
 }
 
 /* Do the final link step.  */
@@ -1505,7 +1526,13 @@ _bfd_coff_link_input_bfd (finfo, input_bfd)
 	      indx = ((esym - (bfd_byte *) obj_coff_external_syms (input_bfd))
 		      / isymesz);
 	      h = obj_coff_sym_hashes (input_bfd)[indx];
-	      BFD_ASSERT (h != NULL);
+	      if (h == NULL)
+		{
+		  /* This can happen if there were errors earlier in
+                     the link.  */
+		  bfd_set_error (bfd_error_bad_value);
+		  return false;
+		}
 	      h->indx = output_index;
 	    }
 

@@ -1,0 +1,38 @@
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile twice-tmp
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+execute_anywhere "echo #include \\\"twice.c\\\" > ${objdir}/${subdir}/${srcfile}"
+if  { [compile "${objdir}/${subdir}/${srcfile} -g  -I${srcdir}/${subdir} -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+if [runto_main] then {
+    # Test that GDB can still detect whether we have line numbers
+    # even if we're executing code in an include file.
+
+    # The bug was fixed by
+    #Tue Jun 29 11:02:58 1993  Jim Kingdon  (kingdon@lioth.cygnus.com)
+    #
+    #	* infrun.c (wait_for_inferior): Use find_pc_line not
+    #	find_pc_symtab to check whether there is line number
+    #	information.
+
+    gdb_test "step" "nothing \\(\\) at.*"
+}
+return 0

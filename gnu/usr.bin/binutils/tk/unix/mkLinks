@@ -1,0 +1,777 @@
+#!/bin/sh
+# This script is invoked when installing manual entries.  It generates
+# additional links to manual entries, corresponding to the procedure
+# and command names described by the manual entry.  For example, the
+# Tcl manual entry Hash.n describes procedures Tcl_InitHashTable,
+# Tcl_CreateHashEntry, and many more.  This script will make hard
+# links so that Tcl_InitHashTable.n, Tcl_CreateHashEntry.n, and so
+# on all refer to Hash.n in the installed directory.
+#
+# Because of the length of command and procedure names, this mechanism
+# only works on machines that support file names longer than 14 characters.
+# This script checks to see if long file names are supported, and it
+# doesn't make any links if they are not.
+#
+# The script takes one argument, which is the name of the directory
+# where the manual entries have been installed.
+
+if test $# != 1; then
+    echo "Usage: mkLinks dir"
+    exit 1
+fi
+
+echo foo >  xyzzyTestingAVeryLongFileName.foo
+x=`echo xyzzyTe*`
+rm xyzzyTe*
+if test "$x" != "xyzzyTestingAVeryLongFileName.foo"; then
+    exit
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_nDBorderColor.n
+    cp $1/nDBorder.n $1/Tk_nDBorderColor.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_nDBorderGC.n
+    cp $1/nDBorder.n $1/Tk_nDBorderGC.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_nDHorizontalBevel.n
+    cp $1/nDBorder.n $1/Tk_nDHorizontalBevel.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_nDVerticalBevel.n
+    cp $1/nDBorder.n $1/Tk_nDVerticalBevel.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Attributes.n
+    cp $1/WindowId.n $1/Tk_Attributes.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_BindEvent.n
+    cp $1/BindTable.n $1/Tk_BindEvent.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasDrawableCoords.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasDrawableCoords.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasEventuallyRedraw.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasEventuallyRedraw.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasGetCoord.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasGetCoord.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsBitmap.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsBitmap.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsColor.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsColor.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsFont.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsFont.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsPath.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsPath.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsStipple.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsStipple.n
+fi
+if test -r $1/CanvPsY.n; then
+    rm -f $1/Tk_CanvasPsY.n
+    cp $1/CanvPsY.n $1/Tk_CanvasPsY.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasSetStippleOrigin.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasSetStippleOrigin.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasTagsOption.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasTagsOption.n
+fi
+if test -r $1/CanvTxtInfo.n; then
+    rm -f $1/Tk_CanvasTextInfo.n
+    cp $1/CanvTxtInfo.n $1/Tk_CanvasTextInfo.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasTkwin.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasTkwin.n
+fi
+if test -r $1/CanvTkwin.n; then
+    rm -f $1/Tk_CanvasWindowCoords.n
+    cp $1/CanvTkwin.n $1/Tk_CanvasWindowCoords.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_ChangeWindowAttributes.n
+    cp $1/ConfigWind.n $1/Tk_ChangeWindowAttributes.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Changes.n
+    cp $1/WindowId.n $1/Tk_Changes.n
+fi
+if test -r $1/SetClass.n; then
+    rm -f $1/Tk_Class.n
+    cp $1/SetClass.n $1/Tk_Class.n
+fi
+if test -r $1/ClrSelect.n; then
+    rm -f $1/Tk_ClearSelection.n
+    cp $1/ClrSelect.n $1/Tk_ClearSelection.n
+fi
+if test -r $1/Clipboard.n; then
+    rm -f $1/Tk_ClipboardAppend.n
+    cp $1/Clipboard.n $1/Tk_ClipboardAppend.n
+fi
+if test -r $1/Clipboard.n; then
+    rm -f $1/Tk_ClipboardClear.n
+    cp $1/Clipboard.n $1/Tk_ClipboardClear.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Colormap.n
+    cp $1/WindowId.n $1/Tk_Colormap.n
+fi
+if test -r $1/ConfigWidg.n; then
+    rm -f $1/Tk_ConfigureInfo.n
+    cp $1/ConfigWidg.n $1/Tk_ConfigureInfo.n
+fi
+if test -r $1/ConfigWidg.n; then
+    rm -f $1/Tk_ConfigureValue.n
+    cp $1/ConfigWidg.n $1/Tk_ConfigureValue.n
+fi
+if test -r $1/ConfigWidg.n; then
+    rm -f $1/Tk_ConfigureWidget.n
+    cp $1/ConfigWidg.n $1/Tk_ConfigureWidget.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_ConfigureWindow.n
+    cp $1/ConfigWind.n $1/Tk_ConfigureWindow.n
+fi
+if test -r $1/CoordToWin.n; then
+    rm -f $1/Tk_CoordsToWindow.n
+    cp $1/CoordToWin.n $1/Tk_CoordsToWindow.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_CreateBinding.n
+    cp $1/BindTable.n $1/Tk_CreateBinding.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_CreateBindingTable.n
+    cp $1/BindTable.n $1/Tk_CreateBindingTable.n
+fi
+if test -r $1/CrtErrHdlr.n; then
+    rm -f $1/Tk_CreateErrorHandler.n
+    cp $1/CrtErrHdlr.n $1/Tk_CreateErrorHandler.n
+fi
+if test -r $1/EventHndlr.n; then
+    rm -f $1/Tk_CreateEventHandler.n
+    cp $1/EventHndlr.n $1/Tk_CreateEventHandler.n
+fi
+if test -r $1/CrtGenHdlr.n; then
+    rm -f $1/Tk_CreateGenericHandler.n
+    cp $1/CrtGenHdlr.n $1/Tk_CreateGenericHandler.n
+fi
+if test -r $1/CrtImgType.n; then
+    rm -f $1/Tk_CreateImageType.n
+    cp $1/CrtImgType.n $1/Tk_CreateImageType.n
+fi
+if test -r $1/CrtItemType.n; then
+    rm -f $1/Tk_CreateItemType.n
+    cp $1/CrtItemType.n $1/Tk_CreateItemType.n
+fi
+if test -r $1/CrtPhImgFmt.n; then
+    rm -f $1/Tk_CreatePhotoImageFormat.n
+    cp $1/CrtPhImgFmt.n $1/Tk_CreatePhotoImageFormat.n
+fi
+if test -r $1/CrtSelHdlr.n; then
+    rm -f $1/Tk_CreateSelHandler.n
+    cp $1/CrtSelHdlr.n $1/Tk_CreateSelHandler.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_DefineBitmap.n
+    cp $1/GetBitmap.n $1/Tk_DefineBitmap.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_DefineCursor.n
+    cp $1/ConfigWind.n $1/Tk_DefineCursor.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_DeleteAllBindings.n
+    cp $1/BindTable.n $1/Tk_DeleteAllBindings.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_DeleteBinding.n
+    cp $1/BindTable.n $1/Tk_DeleteBinding.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_DeleteBindingTable.n
+    cp $1/BindTable.n $1/Tk_DeleteBindingTable.n
+fi
+if test -r $1/CrtErrHdlr.n; then
+    rm -f $1/Tk_DeleteErrorHandler.n
+    cp $1/CrtErrHdlr.n $1/Tk_DeleteErrorHandler.n
+fi
+if test -r $1/EventHndlr.n; then
+    rm -f $1/Tk_DeleteEventHandler.n
+    cp $1/EventHndlr.n $1/Tk_DeleteEventHandler.n
+fi
+if test -r $1/CrtGenHdlr.n; then
+    rm -f $1/Tk_DeleteGenericHandler.n
+    cp $1/CrtGenHdlr.n $1/Tk_DeleteGenericHandler.n
+fi
+if test -r $1/DeleteImg.n; then
+    rm -f $1/Tk_DeleteImage.n
+    cp $1/DeleteImg.n $1/Tk_DeleteImage.n
+fi
+if test -r $1/CrtSelHdlr.n; then
+    rm -f $1/Tk_DeleteSelHandler.n
+    cp $1/CrtSelHdlr.n $1/Tk_DeleteSelHandler.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Depth.n
+    cp $1/WindowId.n $1/Tk_Depth.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Display.n
+    cp $1/WindowId.n $1/Tk_Display.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_DisplayName.n
+    cp $1/WindowId.n $1/Tk_DisplayName.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_DrawnDPolygon.n
+    cp $1/nDBorder.n $1/Tk_DrawnDPolygon.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_DrawnDRectangle.n
+    cp $1/nDBorder.n $1/Tk_DrawnDRectangle.n
+fi
+if test -r $1/DrawFocHlt.n; then
+    rm -f $1/Tk_DrawFocusHighlight.n
+    cp $1/DrawFocHlt.n $1/Tk_DrawFocusHighlight.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_FilcpDPolygon.n
+    cp $1/nDBorder.n $1/Tk_FilcpDPolygon.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_FilcpDRectangle.n
+    cp $1/nDBorder.n $1/Tk_FilcpDRectangle.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_FindPhoto.n
+    cp $1/FindPhoto.n $1/Tk_FindPhoto.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_FreenDBorder.n
+    cp $1/nDBorder.n $1/Tk_FreenDBorder.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_FreeBitmap.n
+    cp $1/GetBitmap.n $1/Tk_FreeBitmap.n
+fi
+if test -r $1/GetColor.n; then
+    rm -f $1/Tk_FreeColor.n
+    cp $1/GetColor.n $1/Tk_FreeColor.n
+fi
+if test -r $1/GetClrmap.n; then
+    rm -f $1/Tk_FreeColormap.n
+    cp $1/GetClrmap.n $1/Tk_FreeColormap.n
+fi
+if test -r $1/GetCursor.n; then
+    rm -f $1/Tk_FreeCursor.n
+    cp $1/GetCursor.n $1/Tk_FreeCursor.n
+fi
+if test -r $1/GetFontStr.n; then
+    rm -f $1/Tk_FreeFontStruct.n
+    cp $1/GetFontStr.n $1/Tk_FreeFontStruct.n
+fi
+if test -r $1/GetGC.n; then
+    rm -f $1/Tk_FreeGC.n
+    cp $1/GetGC.n $1/Tk_FreeGC.n
+fi
+if test -r $1/GetImage.n; then
+    rm -f $1/Tk_FreeImage.n
+    cp $1/GetImage.n $1/Tk_FreeImage.n
+fi
+if test -r $1/ConfigWidg.n; then
+    rm -f $1/Tk_FreeOptions.n
+    cp $1/ConfigWidg.n $1/Tk_FreeOptions.n
+fi
+if test -r $1/GetPixmap.n; then
+    rm -f $1/Tk_FreePixmap.n
+    cp $1/GetPixmap.n $1/Tk_FreePixmap.n
+fi
+if test -r $1/FreeXId.n; then
+    rm -f $1/Tk_FreeXId.n
+    cp $1/FreeXId.n $1/Tk_FreeXId.n
+fi
+if test -r $1/GeomReq.n; then
+    rm -f $1/Tk_GeometryRequest.n
+    cp $1/GeomReq.n $1/Tk_GeometryRequest.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_GetnDBorder.n
+    cp $1/nDBorder.n $1/Tk_GetnDBorder.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_GetAllBindings.n
+    cp $1/BindTable.n $1/Tk_GetAllBindings.n
+fi
+if test -r $1/GetAnchor.n; then
+    rm -f $1/Tk_GetAnchor.n
+    cp $1/GetAnchor.n $1/Tk_GetAnchor.n
+fi
+if test -r $1/InternAtom.n; then
+    rm -f $1/Tk_GetAtomName.n
+    cp $1/InternAtom.n $1/Tk_GetAtomName.n
+fi
+if test -r $1/BindTable.n; then
+    rm -f $1/Tk_GetBinding.n
+    cp $1/BindTable.n $1/Tk_GetBinding.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_GetBitmap.n
+    cp $1/GetBitmap.n $1/Tk_GetBitmap.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_GetBitmapFromData.n
+    cp $1/GetBitmap.n $1/Tk_GetBitmapFromData.n
+fi
+if test -r $1/GetCapStyl.n; then
+    rm -f $1/Tk_GetCapStyle.n
+    cp $1/GetCapStyl.n $1/Tk_GetCapStyle.n
+fi
+if test -r $1/GetColor.n; then
+    rm -f $1/Tk_GetColor.n
+    cp $1/GetColor.n $1/Tk_GetColor.n
+fi
+if test -r $1/GetColor.n; then
+    rm -f $1/Tk_GetColorByValue.n
+    cp $1/GetColor.n $1/Tk_GetColorByValue.n
+fi
+if test -r $1/GetClrmap.n; then
+    rm -f $1/Tk_GetColormap.n
+    cp $1/GetClrmap.n $1/Tk_GetColormap.n
+fi
+if test -r $1/GetCursor.n; then
+    rm -f $1/Tk_GetCursor.n
+    cp $1/GetCursor.n $1/Tk_GetCursor.n
+fi
+if test -r $1/GetCursor.n; then
+    rm -f $1/Tk_GetCursorFromData.n
+    cp $1/GetCursor.n $1/Tk_GetCursorFromData.n
+fi
+if test -r $1/GetFontStr.n; then
+    rm -f $1/Tk_GetFontStruct.n
+    cp $1/GetFontStr.n $1/Tk_GetFontStruct.n
+fi
+if test -r $1/GetGC.n; then
+    rm -f $1/Tk_GetGC.n
+    cp $1/GetGC.n $1/Tk_GetGC.n
+fi
+if test -r $1/GetImage.n; then
+    rm -f $1/Tk_GetImage.n
+    cp $1/GetImage.n $1/Tk_GetImage.n
+fi
+if test -r $1/CrtItemType.n; then
+    rm -f $1/Tk_GetItemTypes.n
+    cp $1/CrtItemType.n $1/Tk_GetItemTypes.n
+fi
+if test -r $1/GetJoinStl.n; then
+    rm -f $1/Tk_GetJoinStyle.n
+    cp $1/GetJoinStl.n $1/Tk_GetJoinStyle.n
+fi
+if test -r $1/GetJustify.n; then
+    rm -f $1/Tk_GetJustify.n
+    cp $1/GetJustify.n $1/Tk_GetJustify.n
+fi
+if test -r $1/GetOption.n; then
+    rm -f $1/Tk_GetOption.n
+    cp $1/GetOption.n $1/Tk_GetOption.n
+fi
+if test -r $1/GetPixels.n; then
+    rm -f $1/Tk_GetPixels.n
+    cp $1/GetPixels.n $1/Tk_GetPixels.n
+fi
+if test -r $1/GetPixmap.n; then
+    rm -f $1/Tk_GetPixmap.n
+    cp $1/GetPixmap.n $1/Tk_GetPixmap.n
+fi
+if test -r $1/GetRelief.n; then
+    rm -f $1/Tk_GetRelief.n
+    cp $1/GetRelief.n $1/Tk_GetRelief.n
+fi
+if test -r $1/GetRootCrd.n; then
+    rm -f $1/Tk_GetRootCoords.n
+    cp $1/GetRootCrd.n $1/Tk_GetRootCoords.n
+fi
+if test -r $1/GetPixels.n; then
+    rm -f $1/Tk_GetScreenMM.n
+    cp $1/GetPixels.n $1/Tk_GetScreenMM.n
+fi
+if test -r $1/GetScroll.n; then
+    rm -f $1/Tk_GetScrollInfo.n
+    cp $1/GetScroll.n $1/Tk_GetScrollInfo.n
+fi
+if test -r $1/GetSelect.n; then
+    rm -f $1/Tk_GetSelection.n
+    cp $1/GetSelect.n $1/Tk_GetSelection.n
+fi
+if test -r $1/GetUid.n; then
+    rm -f $1/Tk_GetUid.n
+    cp $1/GetUid.n $1/Tk_GetUid.n
+fi
+if test -r $1/GetVRoot.n; then
+    rm -f $1/Tk_GetVRootGeometry.n
+    cp $1/GetVRoot.n $1/Tk_GetVRootGeometry.n
+fi
+if test -r $1/GetVisual.n; then
+    rm -f $1/Tk_GetVisual.n
+    cp $1/GetVisual.n $1/Tk_GetVisual.n
+fi
+if test -r $1/HandleEvent.n; then
+    rm -f $1/Tk_HandleEvent.n
+    cp $1/HandleEvent.n $1/Tk_HandleEvent.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Height.n
+    cp $1/WindowId.n $1/Tk_Height.n
+fi
+if test -r $1/IdToWindow.n; then
+    rm -f $1/Tk_IdToWindow.n
+    cp $1/IdToWindow.n $1/Tk_IdToWindow.n
+fi
+if test -r $1/ImgChanged.n; then
+    rm -f $1/Tk_ImageChanged.n
+    cp $1/ImgChanged.n $1/Tk_ImageChanged.n
+fi
+if test -r $1/InternAtom.n; then
+    rm -f $1/Tk_InternAtom.n
+    cp $1/InternAtom.n $1/Tk_InternAtom.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_InternalBorderWidth.n
+    cp $1/WindowId.n $1/Tk_InternalBorderWidth.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_IsMapped.n
+    cp $1/WindowId.n $1/Tk_IsMapped.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_IsTopLevel.n
+    cp $1/WindowId.n $1/Tk_IsTopLevel.n
+fi
+if test -r $1/MainLoop.n; then
+    rm -f $1/Tk_MainLoop.n
+    cp $1/MainLoop.n $1/Tk_MainLoop.n
+fi
+if test -r $1/MainWin.n; then
+    rm -f $1/Tk_MainWindow.n
+    cp $1/MainWin.n $1/Tk_MainWindow.n
+fi
+if test -r $1/MaintGeom.n; then
+    rm -f $1/Tk_MaintainGeometry.n
+    cp $1/MaintGeom.n $1/Tk_MaintainGeometry.n
+fi
+if test -r $1/ManageGeom.n; then
+    rm -f $1/Tk_ManageGeometry.n
+    cp $1/ManageGeom.n $1/Tk_ManageGeometry.n
+fi
+if test -r $1/MapWindow.n; then
+    rm -f $1/Tk_MapWindow.n
+    cp $1/MapWindow.n $1/Tk_MapWindow.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_MoveResizeWindow.n
+    cp $1/ConfigWind.n $1/Tk_MoveResizeWindow.n
+fi
+if test -r $1/MoveToplev.n; then
+    rm -f $1/Tk_MoveToplevelWindow.n
+    cp $1/MoveToplev.n $1/Tk_MoveToplevelWindow.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_MoveWindow.n
+    cp $1/ConfigWind.n $1/Tk_MoveWindow.n
+fi
+if test -r $1/Name.n; then
+    rm -f $1/Tk_Name.n
+    cp $1/Name.n $1/Tk_Name.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_NameOfnDBorder.n
+    cp $1/nDBorder.n $1/Tk_NameOfnDBorder.n
+fi
+if test -r $1/GetAnchor.n; then
+    rm -f $1/Tk_NameOfAnchor.n
+    cp $1/GetAnchor.n $1/Tk_NameOfAnchor.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_NameOfBitmap.n
+    cp $1/GetBitmap.n $1/Tk_NameOfBitmap.n
+fi
+if test -r $1/GetCapStyl.n; then
+    rm -f $1/Tk_NameOfCapStyle.n
+    cp $1/GetCapStyl.n $1/Tk_NameOfCapStyle.n
+fi
+if test -r $1/GetColor.n; then
+    rm -f $1/Tk_NameOfColor.n
+    cp $1/GetColor.n $1/Tk_NameOfColor.n
+fi
+if test -r $1/GetCursor.n; then
+    rm -f $1/Tk_NameOfCursor.n
+    cp $1/GetCursor.n $1/Tk_NameOfCursor.n
+fi
+if test -r $1/GetFontStr.n; then
+    rm -f $1/Tk_NameOfFontStruct.n
+    cp $1/GetFontStr.n $1/Tk_NameOfFontStruct.n
+fi
+if test -r $1/NameOfImg.n; then
+    rm -f $1/Tk_NameOfImage.n
+    cp $1/NameOfImg.n $1/Tk_NameOfImage.n
+fi
+if test -r $1/GetJoinStl.n; then
+    rm -f $1/Tk_NameOfJoinStyle.n
+    cp $1/GetJoinStl.n $1/Tk_NameOfJoinStyle.n
+fi
+if test -r $1/GetJustify.n; then
+    rm -f $1/Tk_NameOfJustify.n
+    cp $1/GetJustify.n $1/Tk_NameOfJustify.n
+fi
+if test -r $1/GetRelief.n; then
+    rm -f $1/Tk_NameOfRelief.n
+    cp $1/GetRelief.n $1/Tk_NameOfRelief.n
+fi
+if test -r $1/Name.n; then
+    rm -f $1/Tk_NameToWindow.n
+    cp $1/Name.n $1/Tk_NameToWindow.n
+fi
+if test -r $1/ConfigWidg.n; then
+    rm -f $1/Tk_Offset.n
+    cp $1/ConfigWidg.n $1/Tk_Offset.n
+fi
+if test -r $1/OwnSelect.n; then
+    rm -f $1/Tk_OwnSelection.n
+    cp $1/OwnSelect.n $1/Tk_OwnSelection.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Parent.n
+    cp $1/WindowId.n $1/Tk_Parent.n
+fi
+if test -r $1/ParseArgv.n; then
+    rm -f $1/Tk_ParseArgv.n
+    cp $1/ParseArgv.n $1/Tk_ParseArgv.n
+fi
+if test -r $1/Name.n; then
+    rm -f $1/Tk_PathName.n
+    cp $1/Name.n $1/Tk_PathName.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoBlank.n
+    cp $1/FindPhoto.n $1/Tk_PhotoBlank.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoExpand.n
+    cp $1/FindPhoto.n $1/Tk_PhotoExpand.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoGetImage.n
+    cp $1/FindPhoto.n $1/Tk_PhotoGetImage.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoGetSize.n
+    cp $1/FindPhoto.n $1/Tk_PhotoGetSize.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoPutBlock.n
+    cp $1/FindPhoto.n $1/Tk_PhotoPutBlock.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoPutZoomedBlock.n
+    cp $1/FindPhoto.n $1/Tk_PhotoPutZoomedBlock.n
+fi
+if test -r $1/FindPhoto.n; then
+    rm -f $1/Tk_PhotoSetSize.n
+    cp $1/FindPhoto.n $1/Tk_PhotoSetSize.n
+fi
+if test -r $1/QWinEvent.n; then
+    rm -f $1/Tk_QueueWindowEvent.n
+    cp $1/QWinEvent.n $1/Tk_QueueWindowEvent.n
+fi
+if test -r $1/GetImage.n; then
+    rm -f $1/Tk_RedrawImage.n
+    cp $1/GetImage.n $1/Tk_RedrawImage.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_ReqHeight.n
+    cp $1/WindowId.n $1/Tk_ReqHeight.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_ReqWidth.n
+    cp $1/WindowId.n $1/Tk_ReqWidth.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_ResizeWindow.n
+    cp $1/ConfigWind.n $1/Tk_ResizeWindow.n
+fi
+if test -r $1/Restack.n; then
+    rm -f $1/Tk_RestackWindow.n
+    cp $1/Restack.n $1/Tk_RestackWindow.n
+fi
+if test -r $1/RestrictEv.n; then
+    rm -f $1/Tk_RestrictEvents.n
+    cp $1/RestrictEv.n $1/Tk_RestrictEvents.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Screen.n
+    cp $1/WindowId.n $1/Tk_Screen.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_ScreenNumber.n
+    cp $1/WindowId.n $1/Tk_ScreenNumber.n
+fi
+if test -r $1/SetAppName.n; then
+    rm -f $1/Tk_SetAppName.n
+    cp $1/SetAppName.n $1/Tk_SetAppName.n
+fi
+if test -r $1/nDBorder.n; then
+    rm -f $1/Tk_SetBackgroundFromBorder.n
+    cp $1/nDBorder.n $1/Tk_SetBackgroundFromBorder.n
+fi
+if test -r $1/SetClass.n; then
+    rm -f $1/Tk_SetClass.n
+    cp $1/SetClass.n $1/Tk_SetClass.n
+fi
+if test -r $1/SetGrid.n; then
+    rm -f $1/Tk_SetGrid.n
+    cp $1/SetGrid.n $1/Tk_SetGrid.n
+fi
+if test -r $1/GeomReq.n; then
+    rm -f $1/Tk_SetInternalBorder.n
+    cp $1/GeomReq.n $1/Tk_SetInternalBorder.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowBackground.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowBackground.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowBackgroundPixmap.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowBackgroundPixmap.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowBorder.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowBorder.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowBorderPixmap.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowBorderPixmap.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowBorderWidth.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowBorderWidth.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_SetWindowColormap.n
+    cp $1/ConfigWind.n $1/Tk_SetWindowColormap.n
+fi
+if test -r $1/SetVisual.n; then
+    rm -f $1/Tk_SetWindowVisual.n
+    cp $1/SetVisual.n $1/Tk_SetWindowVisual.n
+fi
+if test -r $1/GetBitmap.n; then
+    rm -f $1/Tk_SizeOfBitmap.n
+    cp $1/GetBitmap.n $1/Tk_SizeOfBitmap.n
+fi
+if test -r $1/GetImage.n; then
+    rm -f $1/Tk_SizeOfImage.n
+    cp $1/GetImage.n $1/Tk_SizeOfImage.n
+fi
+if test -r $1/StrictMotif.n; then
+    rm -f $1/Tk_StrictMotif.n
+    cp $1/StrictMotif.n $1/Tk_StrictMotif.n
+fi
+if test -r $1/GetUid.n; then
+    rm -f $1/Tk_Uid.n
+    cp $1/GetUid.n $1/Tk_Uid.n
+fi
+if test -r $1/ConfigWind.n; then
+    rm -f $1/Tk_UndefineCursor.n
+    cp $1/ConfigWind.n $1/Tk_UndefineCursor.n
+fi
+if test -r $1/MaintGeom.n; then
+    rm -f $1/Tk_UnmaintainGeometry.n
+    cp $1/MaintGeom.n $1/Tk_UnmaintainGeometry.n
+fi
+if test -r $1/MapWindow.n; then
+    rm -f $1/Tk_UnmapWindow.n
+    cp $1/MapWindow.n $1/Tk_UnmapWindow.n
+fi
+if test -r $1/SetGrid.n; then
+    rm -f $1/Tk_UnsetGrid.n
+    cp $1/SetGrid.n $1/Tk_UnsetGrid.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Visual.n
+    cp $1/WindowId.n $1/Tk_Visual.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Width.n
+    cp $1/WindowId.n $1/Tk_Width.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_WindowId.n
+    cp $1/WindowId.n $1/Tk_WindowId.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_X.n
+    cp $1/WindowId.n $1/Tk_X.n
+fi
+if test -r $1/WindowId.n; then
+    rm -f $1/Tk_Y.n
+    cp $1/WindowId.n $1/Tk_Y.n
+fi
+if test -r $1/menubar.n; then
+    rm -f $1/tk_bindForTraversal.n
+    cp $1/menubar.n $1/tk_bindForTraversal.n
+fi
+if test -r $1/palette.n; then
+    rm -f $1/tk_bisque.n
+    cp $1/palette.n $1/tk_bisque.n
+fi
+if test -r $1/dialog.n; then
+    rm -f $1/tk_dialog.n
+    cp $1/dialog.n $1/tk_dialog.n
+fi
+if test -r $1/focusNext.n; then
+    rm -f $1/tk_focusFollowsMouse.n
+    cp $1/focusNext.n $1/tk_focusFollowsMouse.n
+fi
+if test -r $1/focusNext.n; then
+    rm -f $1/tk_focusNext.n
+    cp $1/focusNext.n $1/tk_focusNext.n
+fi
+if test -r $1/focusNext.n; then
+    rm -f $1/tk_focusPrev.n
+    cp $1/focusNext.n $1/tk_focusPrev.n
+fi
+if test -r $1/menubar.n; then
+    rm -f $1/tk_menuBar.n
+    cp $1/menubar.n $1/tk_menuBar.n
+fi
+if test -r $1/optionMenu.n; then
+    rm -f $1/tk_optionMenu.n
+    cp $1/optionMenu.n $1/tk_optionMenu.n
+fi
+if test -r $1/popup.n; then
+    rm -f $1/tk_popup.n
+    cp $1/popup.n $1/tk_popup.n
+fi
+if test -r $1/palette.n; then
+    rm -f $1/tk_setPalette.n
+    cp $1/palette.n $1/tk_setPalette.n
+fi
+exit 0

@@ -234,9 +234,7 @@ static char desc_format[] = "%04x";
 
 /* IMPORT */
 extern char *program_name;
-extern char *program_version;
 extern char *target;
-extern int print_version;
 
 static struct option long_options[] =
 {
@@ -283,6 +281,8 @@ Usage: %s [-aABCDglnopPrsuvV] [-t radix] [--radix=radix] [--target=bfdname]\n\
        [file...]\n",
 	   program_name);
   list_supported_targets (program_name, stream);
+  if (status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (status);
 }
 
@@ -435,10 +435,7 @@ main (argc, argv)
     }
 
   if (show_version)
-    {
-      printf ("GNU %s version %s\n", program_name, program_version);
-      exit (0);
-    }
+    print_version ("nm");
 
   /* OK, all options now parsed.  If no filename specified, do a.out.  */
   if (optind == argc)

@@ -28,12 +28,11 @@ proc binutil_version { prog } {
     catch "exec $prog --version" tmp
     # Should find a way to discard constant parts, keep whatever's
     # left, so the version string could be almost anything at all...
-    regexp "version (cygnus-|)\[-0-9.a-zA-Z-\]+" $tmp version
-    if ![info exists version] then {
+    regexp "\[^\n\]* (cygnus-|)(\[-0-9.a-zA-Z-\]+)\[\r\n\].*" $tmp version cyg number
+    if ![info exists number] then {
         return "[which $prog] (no version number)\n"
     }
-    set tmp $version
-    return "[which $prog] $version\n"
+    return "[which $prog] $number\n"
 }
 
 #

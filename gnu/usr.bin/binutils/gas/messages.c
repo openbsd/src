@@ -19,7 +19,6 @@
    02111-1307, USA. */
 
 #include "as.h"
-#include "libiberty.h"
 
 #include <stdio.h>
 #ifdef HAVE_ERRNO_H
@@ -42,8 +41,6 @@ typedef int * va_list;
 #define va_start(ARGS)	ARGS = &REST
 #define va_end(ARGS)
 #endif
-
-extern char *xstrerror PARAMS ((int));	/* from libiberty */
 
 static void as_show_where PARAMS ((void));
 static void as_warn_internal PARAMS ((char *, unsigned int, char *));

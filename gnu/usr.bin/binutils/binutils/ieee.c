@@ -162,6 +162,8 @@ struct ieee_info
   struct ieee_vars *global_vars;
   /* The types.  */
   struct ieee_types types;
+  /* The global types, after a global typedef block.  */
+  struct ieee_types *global_types;
   /* The list of tagged structs.  */
   struct ieee_tag *tags;
 };
@@ -1015,6 +1017,18 @@ parse_ieee_bb (info, pp)
 	free (info->types.types);
       info->types.types = NULL;
       info->types.alloc = 0;
+
+      /* Initialize the types to the global types.  */
+      if (info->global_types != NULL)
+	{
+	  info->types.alloc = info->global_types->alloc;
+	  info->types.types = ((struct ieee_type *)
+			       xmalloc (info->types.alloc
+					* sizeof (*info->types.types)));
+	  memcpy (info->types.types, info->global_types->types,
+		  info->types.alloc * sizeof (*info->types.types));
+	}
+
       break;
 
     case 2:
@@ -1269,6 +1283,20 @@ parse_ieee_be (info, pp)
 					  * sizeof (*info->vars.vars)));
       memcpy (info->global_vars->vars, info->vars.vars,
 	      info->vars.alloc * sizeof (*info->vars.vars));
+
+      /* We also copy out the non builtin parts of info->types, since
+         the types are discarded when we start a new block.  */
+      info->global_types = ((struct ieee_types *)
+			    xmalloc (sizeof *info->global_types));
+      info->global_types->alloc = info->types.alloc;
+      info->global_types->types = ((struct ieee_type *)
+				   xmalloc (info->types.alloc
+					    * sizeof (*info->types.types)));
+      memcpy (info->global_types->types, info->types.types,
+	      info->types.alloc * sizeof (*info->types.types));
+      memset (info->global_types->builtins, 0,
+	      sizeof (info->global_types->builtins));
+
       break;
 
     case 4:
@@ -3763,6 +3791,8 @@ struct ieee_defined_enum
   struct ieee_defined_enum *next;
   /* Type index.  */
   unsigned int indx;
+  /* Whether this enum has been defined.  */
+  boolean defined;
   /* Tag.  */
   const char *tag;
   /* Names.  */
@@ -4702,7 +4732,18 @@ write_ieee_debugging_info (abfd, dhandle)
   /* Prepend the global typedef information to the other data.  */
   if (! ieee_buffer_emptyp (&info.global_types))
     {
+      /* The HP debugger seems to have a bug in which it ignores the
+         last entry in the global types, so we add a dummy entry.  */
       if (! ieee_change_buffer (&info, &info.global_types)
+	  || ! ieee_write_byte (&info, (int) ieee_nn_record)
+	  || ! ieee_write_number (&info, info.name_indx)
+	  || ! ieee_write_id (&info, "")
+	  || ! ieee_write_byte (&info, (int) ieee_ty_record_enum)
+	  || ! ieee_write_number (&info, info.type_indx)
+	  || ! ieee_write_byte (&info, 0xce)
+	  || ! ieee_write_number (&info, info.name_indx)
+	  || ! ieee_write_number (&info, 'P')
+	  || ! ieee_write_number (&info, (int) builtin_void + 32)
 	  || ! ieee_write_byte (&info, (int) ieee_be_record_enum))
 	return false;
 
@@ -5044,7 +5085,7 @@ ieee_finish_compilation_unit (info)
 
       /* Coalesce ranges if it seems reasonable.  */
       while (r->next != NULL
-	     && high + 64 >= r->next->low
+	     && high + 0x1000 >= r->next->low
 	     && (r->next->high
 		 <= (bfd_get_section_vma (info->abfd, s)
 		     + bfd_section_size (info->abfd, s))))
@@ -5113,7 +5154,8 @@ ieee_add_bb11_blocks (abfd, sec, data)
 	  return;
 	}
 
-      if (low < r->low)
+      if (low < r->low
+	  && r->low - low > 0x100)
 	{
 	  if (! ieee_add_bb11 (info, sec, low, r->low))
 	    {
@@ -5376,9 +5418,11 @@ ieee_enum_type (p, tag, names, vals)
   struct ieee_handle *info = (struct ieee_handle *) p;
   struct ieee_defined_enum *e;
   boolean localp, simple;
+  unsigned int indx;
   int i;
 
   localp = false;
+  indx = (unsigned int) -1;
   for (e = info->enums; e != NULL; e = e->next)
     {
       if (tag == NULL)
@@ -5392,6 +5436,13 @@ ieee_enum_type (p, tag, names, vals)
 	      || tag[0] != e->tag[0]
 	      || strcmp (tag, e->tag) != 0)
 	    continue;
+	}
+
+      if (! e->defined)
+	{
+	  /* This enum tag has been seen but not defined.  */
+	  indx = e->indx;
+	  break;
 	}
 
       if (names != NULL && e->names != NULL)
@@ -5441,8 +5492,8 @@ ieee_enum_type (p, tag, names, vals)
 	}
     }
 
-  if (! ieee_define_named_type (info, tag, (unsigned int) -1, 0,
-				true, localp, (struct ieee_buflist *) NULL)
+  if (! ieee_define_named_type (info, tag, indx, 0, true, localp,
+				(struct ieee_buflist *) NULL)
       || ! ieee_write_number (info, simple ? 'E' : 'N'))
     return false;
   if (simple)
@@ -5468,16 +5519,20 @@ ieee_enum_type (p, tag, names, vals)
 
   if (! localp)
     {
-      e = (struct ieee_defined_enum *) xmalloc (sizeof *e);
-      memset (e, 0, sizeof *e);
+      if (indx == (unsigned int) -1)
+	{
+	  e = (struct ieee_defined_enum *) xmalloc (sizeof *e);
+	  memset (e, 0, sizeof *e);
+	  e->indx = info->type_stack->type.indx;
+	  e->tag = tag;
 
-      e->indx = info->type_stack->type.indx;
-      e->tag = tag;
+	  e->next = info->enums;
+	  info->enums = e;
+	}
+
       e->names = names;
       e->vals = vals;
-
-      e->next = info->enums;
-      info->enums = e;
+      e->defined = true;
     }
 
   return true;
@@ -5668,13 +5723,20 @@ ieee_array_type (p, low, high, stringp)
   struct ieee_handle *info = (struct ieee_handle *) p;
   unsigned int eleindx;
   boolean localp;
+  unsigned int size;
   struct ieee_modified_type *m = NULL;
   struct ieee_modified_array_type *a;
 
   /* IEEE does not store the range, so we just ignore it.  */
   ieee_pop_unused_type (info);
   localp = info->type_stack->type.localp;
+  size = info->type_stack->type.size;
   eleindx = ieee_pop_type (info);
+
+  /* If we don't know the range, treat the size as exactly one
+     element.  */
+  if (low < high)
+    size *= (high - low) + 1;
 
   if (! localp)
     {
@@ -5685,11 +5747,11 @@ ieee_array_type (p, low, high, stringp)
       for (a = m->arrays; a != NULL; a = a->next)
 	{
 	  if (a->low == low && a->high == high)
-	    return ieee_push_type (info, a->indx, 0, false, false);
+	    return ieee_push_type (info, a->indx, size, false, false);
 	}
     }
 
-  if (! ieee_define_type (info, 0, false, localp)
+  if (! ieee_define_type (info, size, false, localp)
       || ! ieee_write_number (info, low == 0 ? 'Z' : 'C')
       || ! ieee_write_number (info, eleindx))
     return false;
@@ -6630,7 +6692,19 @@ ieee_tag_type (p, name, id, kind)
       for (e = info->enums; e != NULL; e = e->next)
 	if (e->tag != NULL && strcmp (e->tag, name) == 0)
 	  return ieee_push_type (info, e->indx, 0, true, false);
-      abort ();
+
+      e = (struct ieee_defined_enum *) xmalloc (sizeof *e);
+      memset (e, 0, sizeof *e);
+
+      e->indx = info->type_indx;
+      ++info->type_indx;
+      e->tag = name;
+      e->defined = false;
+
+      e->next = info->enums;
+      info->enums = e;
+
+      return ieee_push_type (info, e->indx, 0, true, false);
     }
 
   localp = false;

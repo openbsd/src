@@ -259,7 +259,7 @@ add_fix (width, exp, pc_rel, pc_fix)
      int pc_rel;
      int pc_fix;
 {
-  the_ins.reloc[the_ins.nrel].n = (((width)=='B')
+  the_ins.reloc[the_ins.nrel].n = ((width == 'B' || width == '3')
 				   ? (the_ins.numo*2-1)
 				   : (((width)=='b')
 				      ? (the_ins.numo*2+1)
@@ -3024,11 +3024,13 @@ static const struct init_entry init_table[] =
   { "dacr0", DTT0 },		/* Data Access Control Register 0 */
   { "dacr1", DTT1 },		/* Data Access Control Register 0 */
 
-  /* mcf5200 versions of same */
-  { "acr2", ITT0 },		/* Access Control Unit 2 */
-  { "acr3", ITT1 },		/* Access Control Unit 3 */
-  { "acr0", DTT0 },		/* Access Control Unit 0 */
-  { "acr1", DTT1 },		/* Access Control Unit 1 */
+  /* mcf5200 versions of same.  The ColdFire programmer's reference
+     manual indicated that the order is 2,3,0,1, but Ken Rose
+     <rose@netcom.com> says that 0,1,2,3 is the correct order.  */
+  { "acr0", ITT0 },		/* Access Control Unit 0 */
+  { "acr1", ITT1 },		/* Access Control Unit 1 */
+  { "acr2", DTT0 },		/* Access Control Unit 2 */
+  { "acr3", DTT1 },		/* Access Control Unit 3 */
 
   { "tc", TC },			/* MMU Translation Control Register */
   { "tcr", TC },
@@ -3208,7 +3210,7 @@ md_assemble (str)
 	      n = 1;
 	      break;
 	    case '3':
-	      n = 2;
+	      n = 1;
 	      break;
 	    case 'w':
 	      n = 2;
@@ -3499,6 +3501,39 @@ md_begin ()
 #endif
 }
 
+static void
+select_control_regs ()
+{
+  /* Note which set of "movec" control registers is available.  */
+  switch (cpu_of_arch (current_architecture))
+    {
+    case m68000:
+      control_regs = m68000_control_regs;
+      break;
+    case m68010:
+      control_regs = m68010_control_regs;
+      break;
+    case m68020:
+    case m68030:
+      control_regs = m68020_control_regs;
+      break;
+    case m68040:
+      control_regs = m68040_control_regs;
+      break;
+    case m68060:
+      control_regs = m68060_control_regs;
+      break;
+    case cpu32:
+      control_regs = cpu32_control_regs;
+      break;
+    case mcf5200:
+      control_regs = mcf5200_control_regs;
+      break;
+    default:
+      abort ();
+    }
+}
+
 void
 m68k_init_after_args ()
 {
@@ -3563,33 +3598,7 @@ m68k_init_after_args ()
 #endif
 
   /* Note which set of "movec" control registers is available.  */
-  switch (cpu_of_arch (current_architecture))
-    {
-    case m68000:
-      control_regs = m68000_control_regs;
-      break;
-    case m68010:
-      control_regs = m68010_control_regs;
-      break;
-    case m68020:
-    case m68030:
-      control_regs = m68020_control_regs;
-      break;
-    case m68040:
-      control_regs = m68040_control_regs;
-      break;
-    case m68060:
-      control_regs = m68060_control_regs;
-      break;
-    case cpu32:
-      control_regs = cpu32_control_regs;
-      break;
-    case mcf5200:
-      control_regs = mcf5200_control_regs;
-      break;
-    default:
-      abort ();
-    }
+  select_control_regs ();
 
   if (cpu_of_arch (current_architecture) < m68020)
     md_relax_table[TAB (PCINDEX, BYTE)].rlx_more = 0;
@@ -4638,6 +4647,9 @@ mri_chip ()
 	current_architecture |= m68851;
       *input_line_pointer = c;
     }
+
+  /* Update info about available control registers.  */
+  select_control_regs ();
 }
 
 /* The MRI CHIP pseudo-op.  */

@@ -1,0 +1,45 @@
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile mips_pro
+set srcfile ${srcdir}/$subdir/${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+execute_anywhere "rm -f ${binfile}.ci"
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c >> ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci"
+    return -1
+}
+source ${binfile}.ci
+
+# This test must be compiled with -O2 if using gcc.
+
+if {$gcc_compiled} then {
+    if  { [compile "${srcfile} -O2 -g -o ${binfile}"] != "" } {
+	perror "Couldn't compile ${srcfile} with -O2"
+	return -1
+    }
+} else {
+    if  { [compile "${srcfile} -g -o ${binfile}"] != "" } {
+	perror "Couldn't compile ${srcfile}"
+	return -1
+    }
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [runto middle] then {
+    # PR 3016
+    if {$gcc_compiled} then { setup_xfail "hppa*-*-*" "mips*-sgi-irix4*" }
+    gdb_test "backtrace" "#0.*middle.*#1.*top.*#2.*main.*"
+}
+return 0

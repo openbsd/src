@@ -39,83 +39,81 @@ int sys_nerr = 0;
 
 /* Debug flag for pathname hacking.  Set this to one and rebuild. */
 
-int DebugPI = 0;
+int DebugPI = -1;
 
 void
 mpwify_filename(char *unixname, char *macname)
 {
-  int i, j, in_middle, terminate = 0;
+  int i, j;
 
   /* (should truncate 255 chars from end of name, not beginning) */
   if (strlen (unixname) > 255)
     {
       fprintf (stderr, "Pathname \"%s\" is too long for Macs, truncating\n",
 	       unixname);
-      terminate = 1;
     }
-  /* Abs Unix path to abs Mac path. */
-  if (*unixname == '/')
-    {
-      if (strncmp (unixname, "/tmp/", 5) == 0)
-	{
-	  /* A temporary name, make a more Mac-flavored tmpname. */
-	  /* A better choice would be {Boot}Trash:foo, but that would
-	     require being able to identify the boot disk's and trashcan's
-	     name.  Another option would be to have an env var, so user
-	     can point it at a ramdisk. */
-	  strncpy (macname, unixname, 255);
-	  if (terminate)
-	    macname[255] = '\0';
-	  macname[0] = ':';
-	  macname[4] = '_';
-	}
-      else
-	{
-	  /* Assume that the leading component is a valid disk name. */
-	  strncpy (macname, unixname + 1, 255);
-	}
-    }
-  else
-    {
-      /* If this is a "Unix-only" pathname, assume relative. */
-      if (strchr (unixname, '/') && ! strchr (unixname, ':'))
-	{
-	  macname[0] = ':';
-	  strncpy (macname + 1, unixname, 255);
-	}
-      else
-	{
-	  /* Otherwise copy it verbatim. */
-	  /* ... but if of the form ":/foo", lose the extra colon;
-	     the slash will be made into a colon shortly. */
-	  if (unixname[0] == ':' && unixname[1] == '/')
-	    ++unixname;
-	  strncpy (macname, unixname, 255);
-	}
-    }
-  if (terminate)
-    macname[255] = '\0';
-  for (i = 0; macname[i] != '\0'; ++i)
-    {
-      if (macname[i] == '/')
-	macname[i] = ':';
-    }
-  in_middle = 0;
   j = 0;
-  for (i = 0; macname[i] != '\0'; ++i)
+  /* If you're going to end up with one or more colons in the middle of a
+     a path after an all-Unix relative path is translated, you must add a
+     colon on the front, so that the first component is not thought to be
+     a disk name.  */
+  if (unixname[0] != '/' && ! strchr (unixname, ':') && strchr (unixname, '/'))
     {
-      /* We're in the middle of the name when a char is not a colon. */
-      if (macname[i] != ':')
-	in_middle = 1;
-      /* Copy chars verbatim, *unless* the char is the first of a pair
-	 of colons in the middle of a pathname. */
-      if (!(in_middle && macname[i] == ':' && macname[i+1] == ':'))
-	macname[j++] = macname[i];
+      macname[j++] = ':';
+    }
+  for (i = 0; unixname[i] != '\0' && i < 255; ++i)
+    {
+      if (i == 0 && unixname[i] == '/')
+	{
+	  if (strncmp (unixname, "/tmp/", 5) == 0)
+	    {
+	      /* A temporary name, make a more Mac-flavored tmpname. */
+	      /* A better choice would be {Boot}Trash:foo, but
+		 that would require being able to identify the
+		 boot disk's and trashcan's name.  Another option
+		 would be to have an env var, so user can point it
+		 at a ramdisk. */
+	      macname[j++] = ':';
+	      macname[j++] = 't';
+	      macname[j++] = 'm';
+	      macname[j++] = 'p';
+	      macname[j++] = '_';
+	      i += 4;
+	    }
+	  else
+	    {
+	      /* Don't copy the leading slash. */
+	    }
+	}
+      else if (unixname[i] == ':' && unixname[i+1] == '/')
+	{
+	  macname[j++] = ':';
+	  i += 1;
+	}
+      else if (unixname[i] == '.' && unixname[i+1] == '/')
+	{
+	  macname[j++] = ':';
+	  i += 1;
+	}
+      else if (unixname[i] == '.' && unixname[i+1] == '.' && unixname[i+2] == '/')
+	{
+	  macname[j++] = ':';
+	  macname[j++] = ':';
+	  i += 2;
+	}
+      else if (unixname[i] == '/')
+	{
+	  macname[j++] = ':';
+	}
+      else
+	{
+	  macname[j++] = unixname[i];
+	}
     }
   macname[j] = '\0';
-  /* If we have a trailing ":.", make it into a ":". */
-  if (j >= 2 && macname[j-2] == ':' && macname[j-1] == '.')
-    macname[j-1] = '\0';
+  /* Allow for getting the debug flag from an env var; quite useful. */
+  if (DebugPI < 0)
+    DebugPI = (*(getenv ("DEBUG_PATHNAMES")) == '1' ? 1 : 0);
   if (DebugPI)
     {
       fprintf (stderr, "# Made \"%s\"\n", unixname);
@@ -611,6 +609,8 @@ fstat (int fd, struct stat *buf)
   long rslt, errnum;
   short err;
 
+  if (DebugPI < 0)
+    DebugPI = (*(getenv ("DEBUG_PATHNAMES")) == '1' ? 1 : 0);
   if (DebugPI)
     fprintf (stderr, "# fstat (%d, %x)", fd, buf);
   PROGRESS (1);
@@ -852,7 +852,7 @@ mpw_start_progress (char *str, int n, char *file, int line)
 	  if (strcmp (measure, "all") == 0)
 	    dump_spin_data = 1;
 	}
-      threshold = getenv ((const char *) "SPIN_WARN_THRESHOLD");
+      threshold = getenv ("SPIN_WARN_THRESHOLD");
       if (threshold != NULL && threshold[0] != '\0')
 	warning_threshold = atol (threshold);
       if (dump_spin_data)

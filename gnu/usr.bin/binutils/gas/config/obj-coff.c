@@ -22,7 +22,6 @@
 #include "as.h"
 #include "obstack.h"
 #include "subsegs.h"
-#include "libiberty.h"
 
 /* I think this is probably always correct.  */
 #ifndef KEEP_RELOC_INFO
@@ -620,11 +619,12 @@ obj_coff_endef (ignore)
       def_symbol_in_progress = symbolP;
 
       if (SF_GET_FUNCTION (def_symbol_in_progress)
-	  || SF_GET_TAG (def_symbol_in_progress))
+	  || SF_GET_TAG (def_symbol_in_progress)
+	  || S_GET_STORAGE_CLASS (def_symbol_in_progress) == C_STAT)
 	{
-	  /* For functions, and tags, the symbol *must* be where the
-	     debug symbol appears.  Move the existing symbol to the
-	     current place. */
+	  /* For functions, and tags, and static symbols, the symbol
+	     *must* be where the debug symbol appears.  Move the
+	     existing symbol to the current place. */
 	  /* If it already is at the end of the symbol list, do nothing */
 	  if (def_symbol_in_progress != symbol_lastP)
 	    {
@@ -1653,6 +1653,7 @@ do_relocs_for (abfd, h, file_cursor)
 		      /* Turn the segment of the symbol into an offset.  */
 		      if (symbol_ptr)
 			{
+			  resolve_symbol_value (symbol_ptr);
 			  if (! symbol_ptr->sy_resolved)
 			    {
 			      char *file;
@@ -2229,11 +2230,12 @@ obj_coff_endef (ignore)
       def_symbol_in_progress = symbolP;
 
       if (SF_GET_FUNCTION (def_symbol_in_progress)
-	  || SF_GET_TAG (def_symbol_in_progress))
+	  || SF_GET_TAG (def_symbol_in_progress)
+	  || S_GET_STORAGE_CLASS (def_symbol_in_progress) == C_STAT)
 	{
-	  /* For functions, and tags, the symbol *must* be where the
-	     debug symbol appears.  Move the existing symbol to the
-	     current place. */
+	  /* For functions, and tags, and static symbols, the symbol
+	     *must* be where the debug symbol appears.  Move the
+	     existing symbol to the current place. */
 	  /* If it already is at the end of the symbol list, do nothing */
 	  if (def_symbol_in_progress != symbol_lastP)
 	    {
@@ -3969,15 +3971,9 @@ fixup_segment (segP, this_segment_type)
 
 	      add_number += S_GET_VALUE (add_symbolP);
 	      add_number -= md_pcrel_from (fixP);
-#if defined (TC_I386) || defined (TE_LYNX) || defined (TC_I960)
+#if defined (TC_I386) || defined (TE_LYNX)
 	      /* On the 386 we must adjust by the segment vaddr as
-		 well.  Ian Taylor.  I changed the i960 to work this
-		 way as well.  This is compatible with the current GNU
-		 linker behaviour.  I do not know what other i960 COFF
-		 assemblers do.  This is not a common case: normally,
-		 only assembler code will contain a PC relative reloc,
-		 and only branches which do not originate in the .text
-		 section will have a non-zero address.  */
+		 well.  Ian Taylor.  */
 	      add_number -= segP->scnhdr.s_vaddr;
 #endif
 	      pcrel = 0;	/* Lie. Don't want further pcrel processing. */
@@ -4059,10 +4055,23 @@ fixup_segment (segP, this_segment_type)
 	    {
 	      fixP->fx_addsy = &abs_symbol;
 	    }			/* if there's an add_symbol */
-#if defined (TC_I386) || defined (TE_LYNX) || defined (TC_I960)
+#if defined (TC_I386) || defined (TE_LYNX) || defined (TC_I960) || defined (TC_M68K)
 	  /* On the 386 we must adjust by the segment vaddr as well.
-	     Ian Taylor.  As noted above, I made the i960 work this
-	     way as well.  */
+	     Ian Taylor.
+
+	     I changed the i960 to work this way as well.  This is
+	     compatible with the current GNU linker behaviour.  I do
+	     not know what other i960 COFF assemblers do.  This is not
+	     a common case: normally, only assembler code will contain
+	     a PC relative reloc, and only branches which do not
+	     originate in the .text section will have a non-zero
+	     address.
+
+	     I changed the m68k to work this way as well.  This will
+	     break existing PC relative relocs from sections which do
+	     not start at address 0, but it will make ld -r work.
+	     Ian Taylor, 4 Oct 96.  */
+
 	  add_number -= segP->scnhdr.s_vaddr;
 #endif
 	}			/* if pcrel */

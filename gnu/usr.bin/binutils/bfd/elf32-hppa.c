@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    Written by
 
@@ -296,7 +296,9 @@ static boolean elf32_hppa_link_output_symbol_hook
 static reloc_howto_type elf_hppa_howto_table[ELF_HOWTO_TABLE_SIZE] =
 {
   {R_PARISC_NONE, 0, 0, 0, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_NONE"},
-  {R_PARISC_DIR32, 0, 0, 32, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_DIR32"},
+  /* The values in DIR32 are to placate the check in
+     _bfd_stab_section_find_nearest_line.  */
+  {R_PARISC_DIR32, 0, 2, 32, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_DIR32", false, 0, 0xffffffff, false},
   {R_PARISC_DIR21L, 0, 0, 21, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_DIR21L"},
   {R_PARISC_DIR17R, 0, 0, 17, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_DIR17R"},
   {R_PARISC_DIR17F, 0, 0, 17, false, 0, complain_overflow_bitfield, hppa_elf_reloc, "R_PARISC_DIR17F"},

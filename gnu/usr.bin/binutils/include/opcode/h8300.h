@@ -301,7 +301,8 @@ struct h8_opcode
 #define O_MAC 84
 #define O_LDM 85
 #define O_STM 86
-#define O_LAST 87
+#define O_STMAC 87
+#define O_LAST 88
 #define SB 0
 #define SW 1
 #define SL 2
@@ -588,6 +589,7 @@ struct h8_opcode h8_opcodes[] =
   NEW_SOP(O(O_CLRMAC,SN),1,2,"clrmac"),{E, 0, 0},{0x0,0x1,0xa,0x0,E} EOP,
   NEW_SOP(O(O_MAC,SL),1,2,"mac"),{RSINC,RDINC,E},{0x0,0x1,0x6,0x0,0x6,0xd,B30|RSINC,B30|RDINC,E} EOP,
   NEW_SOP(O(O_LDMAC,SL),1,2,"ldmac"),{RS32,MACREG,E},{0x0,0x3,MACREG,RS32,E} EOP,
+  NEW_SOP(O(O_STMAC,SL),1,2,"stmac"),{MACREG,RD32,E},{0x0,0x2,MACREG,RD32,E} EOP,
   NEW_SOP(O(O_LDM,SL),0,6,"ldm.l"),{RSINC, RS32, E},{ 0x0,0x1,IGNORE,0x0,0x6,0xD,0x7,IGNORE,E}EOP,
   NEW_SOP(O(O_STM,SL),0,6,"stm.l"),{RS32, RDDEC, E},{0x0,0x1,IGNORE,0x0,0x6,0xD,0xF,IGNORE,E}EOP,
   0

@@ -456,7 +456,8 @@ get_emulation (argc, argv)
 	    }
 	  else if (strcmp (argv[i], "-mips1") == 0
 		   || strcmp (argv[i], "-mips2") == 0
-		   || strcmp (argv[i], "-mips3") == 0)
+		   || strcmp (argv[i], "-mips3") == 0
+		   || strcmp (argv[i], "-mips4") == 0)
 	    {
 	      /* FIXME: The arguments -mips1, -mips2 and -mips3 are
 		 passed to the linker by some MIPS compilers.  They

@@ -139,7 +139,7 @@ static definfo init[] =
   D(MajorSubsystemVersion,"__major_subsystem_version__", 4),
   D(MinorSubsystemVersion,"__minor_subsystem_version__", 0),
   D(Subsystem,"__subsystem__", 3),
-  D(SizeOfStackReserve,"__size_of_stack_reserve__", 0x100000),
+  D(SizeOfStackReserve,"__size_of_stack_reserve__", 0x2000000),
   D(SizeOfStackCommit,"__size_of_stack_commit__", 0x1000),
   D(SizeOfHeapReserve,"__size_of_heap_reserve__", 0x100000),
   D(SizeOfHeapCommit,"__size_of_heap_commit__", 0x1000),
@@ -171,27 +171,71 @@ set_pe_name (name, val)
 static void
 set_pe_subsystem ()
 {
+  const char *sver;
+  int len;
   int i;
-  static struct 
+  static const struct 
     {
-      char *name ;
-      int value;
+      const char *name;
+      const int value;
+      const char *entry;
     }
   v[] =
     {
-      {"native", 1},
-      {"windows",2},
-      {"console",3},
-      {"os2",5},
-      {"posix", 7},
-      {0,0}
+      { "native", 1, "_NtProcessStartup" },
+      { "windows", 2, "_WinMainCRTStartup" },
+      { "console", 3, "_mainCRTStartup" },
+#if 0
+      /* The Microsoft linker does not recognize this.  */
+      { "os2", 5, "" },
+#endif
+      { "posix", 7, "___PosixProcessStartup"},
+      { 0, 0, 0 }
     };
+
+  sver = strchr (optarg, ':');
+  if (sver == NULL)
+    len = strlen (optarg);
+  else
+    {
+      char *end;
+
+      len = sver - optarg;
+      set_pe_name ("__major_subsystem_version__",
+		   strtoul (sver + 1, &end, 0));
+      if (*end == '.')
+	set_pe_name ("__minor_subsystem_version__",
+		     strtoul (end + 1, &end, 0));
+      if (*end != '\0')
+	einfo ("%P: warning: bad version number in -subsystem option\n");
+    }
 
   for (i = 0; v[i].name; i++)
     {
-      if (!strcmp (optarg, v[i].name)) 
+      if (strncmp (optarg, v[i].name, len) == 0
+	  && v[i].name[len] == '\0')
 	{
 	  set_pe_name ("__subsystem__", v[i].value);
+
+	  /* If the subsystem is windows, we use a different entry
+	     point.  We also register the entry point as an undefined
+	     symbol.  The reason we do this is so that the user
+	     doesn't have to because they would have to use the -u
+	     switch if they were specifying an entry point other than
+	     _mainCRTStartup.  Specifically, if creating a windows
+	     application, entry point _WinMainCRTStartup must be
+	     specified.  What I have found for non console
+	     applications (entry not _mainCRTStartup) is that the .obj
+	     that contains mainCRTStartup is brought in since it is
+	     the first encountered in libc.lib and it has other
+	     symbols in it which will be pulled in by the link
+	     process.  To avoid this, adding -u with the entry point
+	     name specified forces the correct .obj to be used.  We
+	     can avoid making the user do this by always adding the
+	     entry point name as an undefined symbol.  */
+	  lang_add_entry (v[i].entry, 1);
+	  ldlang_add_undef (v[i].entry);
+
 	  return;
 	}
     }

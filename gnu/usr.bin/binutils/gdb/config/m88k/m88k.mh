@@ -1,0 +1,5 @@
+# Host: Motorola 88000 running DGUX
+XDEPFILES= 
+XM_FILE= xm-dgux.h
+NAT_FILE= nm-m88k.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o m88k-nat.o

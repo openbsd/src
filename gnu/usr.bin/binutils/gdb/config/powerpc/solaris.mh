@@ -1,0 +1,23 @@
+# Host: PowerPC, running Solaris 2
+
+XM_FILE= xm-solaris.h
+XDEPFILES= ser-tcp.o
+XM_CLIBS= -lsocket -lnsl
+
+NAT_FILE= nm-solaris.h
+NATDEPFILES= corelow.o core-sol2.o solib.o procfs.o fork-child.o
+
+# SVR4 comes standard with terminfo, and in some implementations, the
+# old termcap descriptions are incomplete.  So ensure that we use the
+# new terminfo interface and latest terminal descriptions.
+TERMCAP=-ltermlib
+
+# If you are compiling with Sun's compiler, add the -xs option to CC
+# (e.g. `make CC="cc -xs"').
+# Sun's compilers require the -xs option to produce debug information
+# in the final linked executable.  Otherwise they leave it in the .o
+# files only, with undocumented pointers to it in the linked executable.
+# This is commented out because we don't assume that the Sun compiler
+# is in use.
+#MH_CFLAGS=-xs
+HOST_IPC=-DBSD_IPC

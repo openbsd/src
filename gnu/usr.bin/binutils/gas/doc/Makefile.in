@@ -115,6 +115,8 @@ gasp.dvi: $(srcdir)/gasp.texi
 	$(TEXI2DVI) $(srcdir)/gasp.texi
 
 # This one isn't ready for prime time yet.  Not even a little bit.
+internals.info: $(srcdir)/internals.texi
+	$(MAKEINFO) -o internals.info $(srcdir)/internals.texi
 internals.dvi: $(srcdir)/internals.texi
 	$(TEXI2DVI) $(srcdir)/internals.texi
 internals.ps: internals.dvi

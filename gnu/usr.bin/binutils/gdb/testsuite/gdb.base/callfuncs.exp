@@ -1,0 +1,250 @@
+# Copyright (C) 1992 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set prototypes 0
+set testfile "callfuncs"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# build the first test case
+execute_anywhere "rm -f ${binfile}.ci"
+execute_anywhere "echo set prototypes 1 > ${binfile}.ci"
+if  { [compile "-g ${srcdir}/${subdir}/${srcfile} -o ${binfile} "] != "" } {
+    execute_anywhere "rm -f ${binfile}.ci"    
+    # built the second test case since we can't use prototypes
+    warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
+    execute_anywhere "echo set prototypes 0 > ${binfile}.ci"
+    if  { [compile "-g -DNO_PROTOTYPES ${srcdir}/${subdir}/${srcfile} -o ${binfile} "] != "" } {
+	perror "Couldn't compile ${testfile}.c"
+	return -1
+    }
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c >> ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci"
+    return -1
+}
+source ${binfile}.ci
+
+# The a29k can't call functions, so don't even bother with this test.
+if [istarget "a29k-*-udi"] then {
+    setup_xfail "a29k-*-udi" 2416
+    fail "a29k-*-udi can not call functions"
+    continue
+}
+
+# The h8300 simulator can't call functions, so don't even bother with this test.
+if [istarget "h8300*-*-*"] then {
+    setup_xfail "h8300*-*-*" 
+    fail "h8300*-*-* simulator can not call functions"
+    continue
+}
+# Set the current language to C.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_c {} {
+    global prompt
+
+    send "set language c\n"
+    expect {
+	-re ".*$prompt $" {}
+	timeout { fail "set language c (timeout)" ; return 0 }
+    }
+
+    send "show language\n"
+    expect {
+	-re ".* source language is \"c\".*$prompt $" {
+	    pass "set language to \"c\""
+	    return 1
+	}
+	-re ".*$prompt $" {
+	    fail "setting language to \"c\""
+	    return 0
+	}
+	timeout {
+	    fail "can't show language (timeout)"
+	    return 0
+	}
+    }
+}
+
+# FIXME:  Before calling this proc, we should probably verify that
+# we can call inferior functions and get a valid integral value
+# returned.
+# Note that it is OK to check for 0 or 1 as the returned values, because C
+# specifies that the numeric value of a relational or logical expression
+# (computed in the inferior) is 1 for true and 0 for false.
+
+proc do_function_calls {} {
+    global prototypes
+    global gcc_compiled
+
+    gdb_test "p t_char_values(0,0)" " = 0"
+    gdb_test "p t_char_values('a','b')" " = 1"
+    gdb_test "p t_char_values(char_val1,char_val2)" " = 1"
+    gdb_test "p t_char_values('a',char_val2)" " = 1"
+    gdb_test "p t_char_values(char_val1,'b')" " = 1"
+
+    gdb_test "p t_short_values(0,0)" " = 0"
+    gdb_test "p t_short_values(10,-23)" " = 1"
+    gdb_test "p t_short_values(short_val1,short_val2)" " = 1"
+    gdb_test "p t_short_values(10,short_val2)" " = 1"
+    gdb_test "p t_short_values(short_val1,-23)" " = 1"
+
+    gdb_test "p t_int_values(0,0)" " = 0"
+    gdb_test "p t_int_values(87,-26)" " = 1"
+    gdb_test "p t_int_values(int_val1,int_val2)" " = 1"
+    gdb_test "p t_int_values(87,int_val2)" " = 1"
+    gdb_test "p t_int_values(int_val1,-26)" " = 1"
+
+    gdb_test "p t_long_values(0,0)" " = 0"
+    gdb_test "p t_long_values(789,-321)" " = 1"
+    gdb_test "p t_long_values(long_val1,long_val2)" " = 1"
+    gdb_test "p t_long_values(789,long_val2)" " = 1"
+    gdb_test "p t_long_values(long_val1,-321)" " = 1"
+
+    gdb_test "p t_float_values(0.0,0.0)" " = 0"
+    gdb_test "p t_float_values(3.14159,-2.3765)" " = 1"
+    gdb_test "p t_float_values(float_val1,float_val2)" " = 1"
+    gdb_test "p t_float_values(3.14159,float_val2)" " = 1"
+    gdb_test "p t_float_values(float_val1,-2.3765)" " = 1"
+
+    # Test passing of arguments which might not be widened.
+    gdb_test "p t_float_values2(0.0,0.0)" " = 0"
+
+    # Although PR 5318 mentions SunOS specifically, this seems
+    # to be a generic problem on quite a few platforms.
+    if $prototypes then {
+        setup_xfail "hppa*-*-*" "sparc-*-*" "mips*-*-*" 5318
+	if {!$gcc_compiled} then {
+	    setup_xfail "alpha-dec-osf2*" "i*86-*-sysv4*" 5318
+	}
+    }
+    gdb_test "p t_float_values2(3.14159,float_val2)" " = 1"
+    gdb_test "p t_small_values(1,2,3,4,5,6,7,8,9,10)" " = 55"
+
+    gdb_test "p t_double_values(0.0,0.0)" " = 0"
+    gdb_test "p t_double_values(45.654,-67.66)" " = 1"
+    gdb_test "p t_double_values(double_val1,double_val2)" " = 1"
+    gdb_test "p t_double_values(45.654,double_val2)" " = 1"
+    gdb_test "p t_double_values(double_val1,-67.66)" " = 1"
+
+    gdb_test "p t_string_values(string_val2,string_val1)" " = 0"
+    gdb_test "p t_string_values(string_val1,string_val2)" " = 1"
+    gdb_test "p t_string_values(\"string 1\",\"string 2\")" " = 1"
+    gdb_test "p t_string_values(\"string 1\",string_val2)" " = 1"
+    gdb_test "p t_string_values(string_val1,\"string 2\")" " = 1"
+
+    gdb_test "p t_char_array_values(char_array_val2,char_array_val1)" " = 0"
+    gdb_test "p t_char_array_values(char_array_val1,char_array_val2)" " = 1"
+    gdb_test "p t_char_array_values(\"carray 1\",\"carray 2\")" " = 1"
+    gdb_test "p t_char_array_values(\"carray 1\",char_array_val2)" " = 1"
+    gdb_test "p t_char_array_values(char_array_val1,\"carray 2\")" " = 1"
+
+    gdb_test "p doubleit(4)" " = 8"
+    gdb_test "p add(4,5)" " = 9"
+    gdb_test "p t_func_values(func_val2,func_val1)" " = 0"
+    gdb_test "p t_func_values(func_val1,func_val2)" " = 1"
+
+    # On the rs6000, we need to pass the address of the trampoline routine,
+    # not the address of add itself.  I don't know how to go from add to
+    # the address of the trampoline.  Similar problems exist on the HPPA,
+    # and in fact can present an unsolvable problem as the stubs may not
+    # even exist in the user's program.  We've slightly recoded t_func_values
+    # to avoid such problems in the common case.  This may or may not help
+    # the RS6000.
+    setup_xfail "rs6000*-*-*"
+    setup_xfail "powerpc*-*-*"
+    gdb_test "p t_func_values(add,func_val2)" " = 1"
+
+    setup_xfail "rs6000*-*-*"
+    setup_xfail "powerpc*-*-*"
+    gdb_test "p t_func_values(func_val1,doubleit)" " = 1"
+
+    gdb_test "p t_call_add(func_val1,3,4)" " = 7"
+
+    setup_xfail "rs6000*-*-*"
+    setup_xfail "powerpc*-*-*"
+    gdb_test "p t_call_add(add,3,4)" " = 7"
+
+    gdb_test "p t_enum_value1(enumval1)" " = 1"
+    gdb_test "p t_enum_value1(enum_val1)" " = 1"
+    gdb_test "p t_enum_value1(enum_val2)" " = 0"
+
+    gdb_test "p t_enum_value2(enumval2)" " = 1"
+    gdb_test "p t_enum_value2(enum_val2)" " = 1"
+    gdb_test "p t_enum_value2(enum_val1)" " = 0"
+
+    gdb_test "p sum_args(1,{2})" " = 2"
+    gdb_test "p sum_args(2,{2,3})" " = 5"
+    gdb_test "p sum_args(3,{2,3,4})" " = 9"
+    gdb_test "p sum_args(4,{2,3,4,5})" " = 14"
+    gdb_test "p sum10 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)" " = 55"
+
+    gdb_test "p t_structs_c(struct_val1)" "= 120 'x'" \
+	"call inferior func with struct - returns char"
+    gdb_test "p t_structs_s(struct_val1)" "= 87" \
+	"call inferior func with struct -  returns short"
+    gdb_test "p t_structs_i(struct_val1)" "= 76" \
+	"call inferior func with struct - returns int"
+    gdb_test "p t_structs_l(struct_val1)" "= 51" \
+	"call inferior func with struct - returns long"
+    setup_xfail "i*86-*-*"
+    gdb_test "p t_structs_f(struct_val1)" "= 2.12.*" \
+	"call inferior func with struct - returns float"
+    setup_xfail "i*86-*-*"
+    gdb_test "p t_structs_d(struct_val1)" "= 9.87.*" \
+	"call inferior func with struct - returns double"
+    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?\"foo\"" \
+	"call inferior func with struct - returns char *"
+
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+send "set print sevenbit-strings\n" ; expect -re "$prompt $"
+send "set print address off\n" ; expect -re "$prompt $"
+send "set width 0\n" ; expect -re "$prompt $"
+
+if [set_lang_c] then {
+    if [runto_main] then {
+	do_function_calls
+    } else {
+	fail "C function calling tests suppressed"
+    }
+} else {
+    fail "C function calling tests suppressed"
+}
+return 0

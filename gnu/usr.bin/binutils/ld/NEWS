@@ -13,6 +13,9 @@ Changes since version 2.7:
 
 * The OVERLAY construct was added to the linker script language.
 
+* New option --warn-section-align to warn when the address of an output section
+  changes due to alignment of an input section.
+
 Changes since version 2.6:
 
 * New option --cref to print out a cross reference table.

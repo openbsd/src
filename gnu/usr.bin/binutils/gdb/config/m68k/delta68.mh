@@ -1,0 +1,6 @@
+# Motorola Delta Series sysV68 R3V7.1
+
+XM_FILE= xm-delta68.h
+
+NAT_FILE= nm-delta68.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o delta68-nat.o

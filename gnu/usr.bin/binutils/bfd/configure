@@ -1335,7 +1335,7 @@ done
 
 
 case "${host}" in
-i[345]86-*-msdos* | i[345]86-*-go32* | *-*-cygwin32)
+i[345]86-*-msdos* | i[345]86-*-go32* | *-*-cygwin32 | *-*-windows)
   cat >> confdefs.h <<\EOF
 #define USE_BINARY_FOPEN 1
 EOF
@@ -1524,6 +1524,53 @@ fi
 echo "$ac_t""$bfd_cv_decl_needed_free" 1>&6
 if test $bfd_cv_decl_needed_free = yes; then
   bfd_tr_decl=NEED_DECLARATION_`echo free | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+  cat >> confdefs.h <<EOF
+#define $bfd_tr_decl 1
+EOF
+
+fi
+
+echo $ac_n "checking whether getenv must be declared""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'bfd_cv_decl_needed_getenv'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1539 "configure"
+#include "confdefs.h"
+
+#include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+int main() { return 0; }
+int t() {
+char *(*pfn) = (char *(*)) getenv
+; return 0; }
+EOF
+if { (eval echo configure:1561: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  bfd_cv_decl_needed_getenv=no
+else
+  rm -rf conftest*
+  bfd_cv_decl_needed_getenv=yes
+fi
+rm -f conftest*
+
+fi
+
+echo "$ac_t""$bfd_cv_decl_needed_getenv" 1>&6
+if test $bfd_cv_decl_needed_getenv = yes; then
+  bfd_tr_decl=NEED_DECLARATION_`echo getenv | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
   cat >> confdefs.h <<EOF
 #define $bfd_tr_decl 1
 EOF
@@ -1800,7 +1847,7 @@ EOF
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1786 "configure"
+#line 1833 "configure"
 #include "confdefs.h"
 #include <sys/procfs.h>
 int main() { return 0; }
@@ -1808,7 +1855,7 @@ int t() {
 prstatus_t t;
 ; return 0; }
 EOF
-if { (eval echo configure:1794: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:1841: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   rm -rf conftest*
   bfd_cv_header_sys_procfs_h=yes
 else
@@ -1936,6 +1983,8 @@ do
 				target64=true ;;
     bfd_elf32_m68k_vec)		tb="$tb elf32-m68k.o elf32.o $elf" ;;
     bfd_elf32_m88k_vec)		tb="$tb elf32-m88k.o elf32.o $elf" ;;
+    bfd_elf32_mn10200_vec)	tb="$tb elf32-mn10200.o elf32.o $elf" ;;
+    bfd_elf32_mn10300_vec)	tb="$tb elf32-mn10300.o elf32.o $elf" ;;
     bfd_elf32_powerpc_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
     bfd_elf32_powerpcle_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
     bfd_elf32_sh_vec)		tb="$tb elf32-sh.o elf32.o $elf coff-sh.o" ;;
@@ -2057,9 +2106,13 @@ if test x${all_targets} = xtrue ; then
   bfd_backends="${bfd_backends}"' $(ALL_BACKENDS)'
   bfd_machines="${bfd_machines}"' $(ALL_MACHINES)'
   selvecs=
+  havevecs=
   selarchs=
 else	# all_targets is true
   # Only set these if they will be nonempty, for the clever echo.
+  havevecs=
+  test -n "$selvecs" &&
+    havevecs=`echo $selvecs | sed -e 's/^/-DHAVE_/' -e 's/ \(.\)/ -DHAVE_\1/g'`
   test -n "$selvecs" &&
     selvecs=`echo $selvecs | sed -e 's/^/\&/' -e 's/ \(.\)/,\&\1/g'`
   test -n "$selarchs" &&
@@ -2090,6 +2143,7 @@ tdefaults=""
 test -n "${defvec}" && tdefaults="${tdefaults} -DDEFAULT_VECTOR=${defvec}"
 test -n "${selvecs}" && tdefaults="${tdefaults} -DSELECT_VECS='${selvecs}'"
 test -n "${selarchs}" && tdefaults="${tdefaults} -DSELECT_ARCHITECTURES='${selarchs}'"
+test -n "${havevecs}" && tdefaults="${tdefaults} ${havevecs}"
 
 
 for ac_func in valloc getpagesize
@@ -2099,7 +2153,7 @@ if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2092 "configure"
+#line 2150 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -2123,7 +2177,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:2116: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
+if { (eval echo configure:2174: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else
@@ -2153,7 +2207,7 @@ else
   ac_cv_func_mmap=no
 else
 cat > conftest.$ac_ext <<EOF
-#line 2146 "configure"
+#line 2204 "configure"
 #include "confdefs.h"
 
 /* Thanks to Mike Haertel and Jim Avera for this test. */
@@ -2222,7 +2276,7 @@ main()
 }
 
 EOF
-{ (eval echo configure:2215: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }
+{ (eval echo configure:2273: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }
 if test -s conftest && (./conftest; exit) 2>/dev/null; then
   ac_cv_func_mmap=yes
 else
@@ -2247,7 +2301,7 @@ if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2240 "configure"
+#line 2298 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -2271,7 +2325,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:2264: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
+if { (eval echo configure:2322: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
   rm -rf conftest*
   eval "ac_cv_func_$ac_func=yes"
 else

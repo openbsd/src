@@ -1,0 +1,202 @@
+Thu Oct  3 16:14:08 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (mostlyclean): Don't remove config.log here.
+
+Wed Jun 26 12:23:39 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+        (docdir): Removed.
+        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
+        (AC_PROG_INSTALL): Added.
+        * configure: Rebuilt.
+
+Wed Feb 21 12:15:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate with autoconf 2.7.
+
+Fri Oct 13 15:03:48 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* compile.c (sim_set_callbacks): New.
+
+Tue Oct 10 11:10:36 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (BISON): Remove macro.
+
+Wed Sep 20 13:35:24 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+
+Fri Sep  8 12:38:31 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (install): Don't install in $(tooldir).
+
+	* configure.in: Call AC_CONFIG_HEADER.  Don't try to use
+	bfd/hosts/*.h file or bfd/config/*.mh file.  Call AC_PROG_CC and
+	AC_PROG_RANLIB.  Substitute in values for CFLAGS, HDEFINES and AR.
+	Call AC_CHECK_HEADERS for stdlib.h and time.h.  Touch stamp.h if
+	creating config.h.
+	* configure: Rebuild.
+	* config.in: New file, created by autoheader.
+	* Makefile.in (AR): Define as @AR@.
+	(CC): New variable, defined as @CC@.
+	(CFLAGS): Define as @CFLAGS@.
+	(RANLIB): Define as @RANLIB@.
+	(HDEFINES, TDEFINES): New variables.
+	(@host_makefile_frag@): Remove.
+	(compile.o, run.o): Depend upon config.h.
+	(mostlyclean): Make the same as clean, not distclean.
+	(clean): Remove config.log.
+	(distclean): Remove config.h and stamp-h.
+	(Makefile): Don't depend upon @frags@.  Just rebuild Makefile when
+	invoking config.status.
+	(config.h, stamp-h): New targets.
+	* compile.c: Include "config.h".  Don't include <sys/times.h>.
+	Include <time.h> and <stdlib.h> if they exist.  Don't include
+	"sysdep.h".
+	* run.c: Include "config.h".  Include <stdlib.h> if it exists.
+	Don't include "sysdep.h".  Include "bfd.h", not "../../bfd/bfd.h".
+
+Thu Aug 10 16:29:23 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* compile.c (trap): Watch for abort.
+	* run.c (main): Return non-zero exit code if we didn't
+	exit cleanly.
+
+Thu Aug 10 09:44:20 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* compile.c (find): Fix another thinko.
+	* sim_resume (O_JSR): Make sure all JSRs stay in the same page.
+
+Thu Aug 10 13:43:47 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (compile.o): Remove build rule.
+	(.c.o): Add generic build rule.
+
+Wed Aug  9 09:46:41 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* Makefile.in: Fix CSEARCH.
+	* compile.c (find): Handle ABS24 and ABS16 correctly.
+	Make JMP and JSR stay in right page.
+
+Thu Aug  3 10:45:37 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Update all FSF addresses except those in COPYING* files.
+
+Wed Jul  5 14:32:54 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* Makefile.in (clean): Remove run.
+	  (distclean): Remove Makefile.
+
+	* h8500.mt: Removed.
+
+	* Makefile.in, configure.in: converted to autoconf.
+	* configure: New file, generated with autconf 2.4.
+
+Fri Jun 30 16:50:56 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* compile.c (sim_do_command): New function.
+
+Wed May 24 16:31:38 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* configure.in: Fix typo in last change.
+
+Mon Mar 27 10:32:34 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* run.c: parse arguments with getopt().
+
+Tue Feb 28 17:30:29 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use ../../bfd/hosts/std-host.h if specific
+	host unavailable.
+
+Wed May 18 13:58:05 1994  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (sim_*): Change result to void where there isn't one.
+	(sim_resume): Fix subroutine calling (push return address).
+	(sim_set_pc): Delete.
+	(sim_info): Delete printf_fn arg, all callers changed.
+	Call printf_filtered instead.
+	(sim_create_inferior): Renamed from sim_set_args.
+	(sim_close): New function.
+	(sim_load): New function.
+	* run.c: #include <varargs.h>, "remote-sim.h".
+	(printf_filtered): New function.
+
+Sat Dec 11 16:35:34 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* compile.c (segforreg): New vector. (sim_resume): Get Z flag
+	right for bitops. (sim_store_register, sim_fetch_register,
+	sim_set_pc):  Use new register naming convention.
+
+Thu Oct 28 19:31:24 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c: #include "ansidecl.h" for remote-sim.h.
+
+Tue Oct 26 10:02:18 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* Makefile.in (CSEARCH): Add -I$(srcdir)/../../gdb.
+	* compile.c: #include "sysdep.h" and "remote-sim.h".
+	(SET_SEGREG): Protect arg `y' with parens.
+	(sim_resume): New arg `siggnal'.
+	(sim_write): Use SIM_ADDR for type of arg `addr', int result.
+	(sim_read): Ditto, use unsigned char * for arg `buf'.
+	(sim_store_register): int result, value passed by reference.
+	(sim_fetch_register): int result, use unsigned char * for arg `buf'.
+	(sim_trace): Update call to sim_resume.
+	(sim_stop_reason): Renamed from sim_stop_signal, new arg `reason',
+	int result (error code, currently always 0).
+	(sim_set_pc): Update calls to sim_store_register.
+	(sim_info): int result, new args `print_fn', `verbose'.
+	(sim_kill): int result.
+	(sim_open): Ditto, new arg `name'.
+	* run.c (main): Update call to sim_info.
+
+Sat Oct 23 15:06:10 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (sim_stop_signal): Result is now enum sim_stop.
+
+Fri Oct 15 23:52:55 1993  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* compile.c (sim_kill, sim_open, sim_set_args): New functions.
+
+Tue Aug 17 07:17:09 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c (sim_info): Don't work out simulation ration if
+	timetaken is zero.
+
+Mon Aug  2 14:08:24 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c (get_now, now_persec): Use time system call. (find) do
+	pjmps right.
+
+Tue Jul 13 12:20:19 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c (sim_set_pc): set cp at the same time. (sim_resume):
+	fix pjsr and pjmp.
+
+Tue Jun  8 14:34:37 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c: Remove endian.h dependency.
+
+Mon Apr  5 10:08:30 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* run.c (main): Now understands -v.
+	* compile.c: Passes all the tests in small model.
+
+Mon Mar 29 13:20:36 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* run.c, inst.h compile.c: bug fixes,
+
+Thu Mar 25 12:21:18 1993  Stu Grossman  (grossman@cygnus.com)
+
+	* compile.c (sim_store_register):  Use GDB names for registers to
+	avoid version skew problems.
+	* (sim_fetch_register):  Ditto, also return only bits that
+	actually exist.
+	* configure.in:  Fix srctrigger & srcname to reflect h8500, not h8300.
+
+Fri Mar 19 14:46:31 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* inst.h, compile.c, run.c: New files.
+

@@ -1,0 +1,770 @@
+# This file is a Tcl script to test out the "grid" command
+# of Tk.  It is (almost) organized in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) grid.test 1.14 96/04/18 13:48:07
+
+if {[string compare test [info procs test]] == 1} then \
+  {source defs}
+
+# Test Arguments:
+# name -                Name of test, in the form foo-1.2.
+# description -         Short textual description of the test, to
+#                       help humans understand what it does.
+# constraints -         A list of one or more keywords, each of
+#                       which must be the name of an element in
+#                       the array "testConfig".  If any of these
+#                       elements is zero, the test is skipped.
+#                       This argument may be omitted.
+# script -              Script to run to carry out the test.  It must
+#                       return a result that can be checked for
+#                       correctness.
+# answer -              Expected result from script.
+
+# helper routine to return "." to a sane state after a test
+# The variable GRID_VERBOSE can be used to "look" at the result
+# of one or all of the tests
+
+proc grid_reset {{test ?} {top .}} {
+    global GRID_VERBOSE
+    if {[info exists GRID_VERBOSE]} {
+	if {$GRID_VERBOSE=="" || $GRID_VERBOSE==$test} {
+	    puts -nonewline "grid test $test: "
+	    gets stdin
+	}
+    }
+    eval destroy [winfo children $top]
+}
+
+# This group of tests picks up all of the argument errors, in code order
+# None of these require a slave to pack
+
+grid_reset begin
+wm geometry . {}
+grid propagate . 1
+update
+
+test grid-1.1 {basic argument checking} {
+	list [catch grid msg] $msg
+} {1 {wrong # args: should be "grid option arg ?arg ...?"}}
+
+test grid-1.2 {basic argument checking} {
+	list [catch "grid bbox x" msg] $msg
+} {1 {Wrong number of arguments: must be "grid bbox <master> <column> <row>"}}
+
+test grid-1.3 {basic argument checking} {
+	list [catch "grid bbox .bad 0 0" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.4 {basic argument checking} {
+	list [catch "grid bbox . -1 0" msg] $msg
+} {0 {}}
+
+test grid-1.4a {basic argument checking} {
+	list [catch "grid bbox . x 0" msg] $msg
+} {1 {expected integer but got "x"}}
+
+test grid-1.4b {basic argument checking} {
+	list [catch "grid bbox . 0 x" msg] $msg
+} {1 {expected integer but got "x"}}
+
+test grid-1.5 {basic argument checking} {
+	list [catch "grid configure foo" msg] $msg
+} {1 {bad argument "foo": must be name of window}}
+
+test grid-1.5a {basic argument checking} {
+	list [catch "grid forget .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.6 {basic argument checking} {
+	list [catch "grid info x y" msg] $msg
+} {1 {wrong # args: should be "grid info window"}}
+
+test grid-1.7 {basic argument checking} {
+	list [catch "grid info .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.8 {basic argument checking} {
+	list [catch "grid propagate . x y" msg] $msg
+} {1 {wrong # args: should be "grid propagate window ?boolean?"}}
+
+test grid-1.9 {basic argument checking} {
+	list [catch "grid propagate .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.10 {basic argument checking} {
+	list [catch "grid size . x" msg] $msg
+} {1 {wrong # args: should be "grid size window"}}
+
+test grid-1.11 {basic argument checking} {
+	list [catch "grid size .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.12 {basic argument checking} {
+	list [catch "grid slaves . x" msg] $msg
+} {1 {wrong # args: should be "grid slaves window ?-option value...?"}}
+
+test grid-1.13 {basic argument checking} {
+	list [catch "grid slaves . x y" msg] $msg
+} {1 {Invalid args: should be "grid slaves window ?-option value...?"}}
+
+test grid-1.14 {basic argument checking} {
+	list [catch "grid slaves . -x y" msg] $msg
+} {1 {expected integer but got "y"}}
+
+test grid-1.15 {basic argument checking} {
+	list [catch "grid slaves . -x 0" msg] $msg
+} {1 {-x is an invalid option: should be "-row, -column"}}
+
+# this should propably not be an error
+test grid-1.16 {basic argument checking} {
+	list [catch "grid slaves . -row -1" msg] $msg
+} {1 {-row is an invalid value: should NOT be < 0}}
+
+test grid-1.17 {basic argument checking} {
+	list [catch "grid slaves .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.18 {basic argument checking} {
+	list [catch "grid columnconfigure ." msg] $msg
+} {1 {wrong # args: should be "grid columnconfigure master index ?-option value...?"}}
+
+test grid-1.19 {basic argument checking} {
+	list [catch "grid columnconfigure . 0 -option value -extra" msg] $msg
+} {1 {wrong # args: should be "grid columnconfigure master index ?-option value...?"}}
+
+test grid-1.20 {basic argument checking} {
+	list [catch "grid columnconfigure .bad 0 -option" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.21 {basic argument checking} {
+	list [catch "grid columnconfigure . foo -option value" msg] $msg
+} {1 {expected integer but got "foo"}}
+
+test grid-1.22 {basic argument checking} {
+	list [catch "grid columnconfigure . -10 -option value" msg] $msg
+} {1 {-10 is out of range}}
+
+# This tests arbitrary limits which should go away!
+test grid-1.23 {basic argument checking} {
+	list [catch "grid  columnconfigure . 99999 -option value" msg] $msg
+} {1 {99999 is out of range}}
+
+test grid-1.24 {basic argument checking} {
+	list [catch "grid columnconfigure . 0 -option" msg] $msg
+} {1 {-option is an invalid option: should be "-minsize, -weight"}}
+
+test grid-1.24a {basic argument checking} {
+	list [catch "grid columnconfigure . 0 -" msg] $msg
+} {1 {Invalid arg: "grid" expecting -minsize or -weight}}
+
+test grid-1.24b {basic argument checking} {
+	list [catch "grid columnconfigure . 0 -minsize x" msg] $msg
+} {1 {bad screen distance "x"}}
+
+test grid-1.25 {basic argument checking} {
+	list [catch "grid columnconfigure . 0 -weight x" msg] $msg
+} {1 {expected floating-point number but got "x"}}
+
+test grid-1.26 {basic argument checking} {
+	list [catch "grid location ." msg] $msg
+} {1 {wrong # args: should be "grid location master x y"}}
+
+test grid-1.27 {basic argument checking} {
+	list [catch "grid location .bad 0 0" msg] $msg
+} {1 {bad window path name ".bad"}}
+
+test grid-1.28 {basic argument checking} {
+	list [catch "grid location . x y" msg] $msg
+} {1 {bad screen distance "x"}}
+
+test grid-1.29 {basic argument checking} {
+	list [catch "grid location . 1c y" msg] $msg
+} {1 {bad screen distance "y"}}
+
+test grid-1.30 {basic argument checking} {
+	list [catch "grid bad ." msg] $msg
+} {1 {bad option "bad":  must be bbox, columnconfigure, configure, forget, info, location, propagate, rowconfigure, size, or slaves}}
+
+test grid-1.31 {basic argument checking} {
+	list [catch "grid configure ." msg] $msg
+} {1 {can't manage ".": it's a top-level window}}
+
+test grid-1.32 {basic argument checking} {
+	set a 0
+	foreach i {b c f i l p r s} {
+		incr a [catch "grid ${i}z ." msg]
+	}
+	set a
+} {8}
+
+# some window managers restrict the size that "." can grow/shrink to.
+# Try not to make the window too small or too big
+# Sub-command tests - bbox
+
+grid propagate . 1
+test grid-2.1 {testing bbox} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    list [grid bbox . 0 0] [grid bbox . 1 0] [grid bbox . 0 1]
+} {{0 0 200 100} {} {}}
+grid_reset 2.1
+
+test grid-2.2 {testing bbox} {
+    frame .a
+    grid .a
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    set a ""
+    grid propagate .a 0
+    grid .f -in .a
+    .a configure -width 220 -height 120
+    update
+    lappend a [grid bbox .a 0 0]
+    grid .f -sticky nsew
+    grid rowconfigure .a 0 -weight 1
+    grid columnconfigure .a 0 -weight 1
+    update
+    lappend a [grid bbox .a 0 0]
+} {{10 10 200 100} {0 0 220 120}}
+grid_reset 2.2
+grid propagate . 1
+
+test grid-2.3 {testing bbox} {
+	frame .a
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f -in .a
+    list [grid bbox .a 0 0]
+} {{0 0 200 100}}
+grid_reset 2.3
+
+# Configuration options
+
+test grid-3.0 {configuration argument checking} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -row 1 -column" msg] $msg
+} {1 {extra option "-column" (option with no value?)}}
+grid_reset 3.0
+
+test grid-3.0a {configuration argument checking} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -row 1 - 1" msg] $msg
+} {1 {unknown or ambiguous option "-": must be -in, -sticky, -row, -column, -rowspan, -columnspan, -ipadx, -ipady, -padx or -pady.}}
+grid_reset 3.0a
+
+test grid-3.0b {configuration argument checking} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -oops 1" msg] $msg
+} {1 {unknown or ambiguous option "-oops": must be -in, -sticky, -row, -column, -rowspan, -columnspan, -ipadx, -ipady, -padx or -pady.}}
+grid_reset 3.0b
+
+test grid-3.1 {-sticky} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    set a ""
+    grid .f
+    grid rowconfigure . 0 -weight 1
+    grid columnconfigure . 0 -weight 1
+    grid propagate . 0
+    . configure -width 250 -height 150
+    foreach i { {} n s e w ns ew nw ne se sw nse nsw sew new nsew} {
+	grid .f -sticky $i
+	update
+	lappend a "[winfo x .f] [winfo y .f] [winfo width .f] [winfo height .f]"
+    }
+    set a
+} {{25 25 200 100} {25 0 200 100} {25 50 200 100} {50 25 200 100} {0 25 200 100} {25 0 200 150} {0 25 250 100} {0 0 200 100} {50 0 200 100} {50 50 200 100} {0 50 200 100} {50 0 200 150} {0 0 200 150} {0 50 250 100} {0 0 250 100} {0 0 250 150}}
+grid_reset 3.1
+grid propagate . 1
+   
+test grid-3.1a {-sticky} {
+    frame .f -bg red
+    list [catch "grid .f -sticky glue" msg] $msg
+} {1 {bad stickyness value "glue": must be a string containing n, e, s, and/or w}}
+grid_reset 3.1a
+   
+test grid-3.2 {-in} {
+    frame .f -bg red
+    list [catch "grid .f -in .f" msg] $msg
+} {1 {Window can't be managed in itself}}
+grid_reset 3.2
+
+test grid-3.2a {-in} {
+    frame .f -bg red
+    list [catch "grid .f -in .bad" msg] $msg
+} {1 {bad window path name ".bad"}}
+grid_reset 3.2a
+
+test grid-3.2b {-in} {
+    frame .f -bg red
+    toplevel .top
+    list [catch "grid .f -in .top" msg] $msg
+} {1 {can't put .f inside .top}}
+destroy .top
+grid_reset 3.2b
+
+test grid-3.3 {-ipadx} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -ipadx x" msg] $msg
+} {1 {bad ipadx value "x": must be positive screen distance}}
+grid_reset 3.3
+
+test grid-3.4 {-ipadx} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set a [winfo width .f]
+    grid .f -ipadx 1
+    update
+    list $a [winfo width .f]
+} {200 202}
+grid_reset 3.4
+
+test grid-3.5 {-ipady} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -ipady x" msg] $msg
+} {1 {bad ipady value "x": must be positive screen distance}}
+grid_reset 3.5
+
+test grid-3.6 {-ipady} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set a [winfo height .f]
+    grid .f -ipady 1
+    update
+    list $a [winfo height .f]
+} {100 102}
+grid_reset 3.6
+
+test grid-3.7 {-padx} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -padx x" msg] $msg
+} {1 {bad padx value "x": must be positive screen distance}}
+grid_reset 3.7
+
+test grid-3.8 {-padx} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set a "[winfo width .f] [winfo width .]"
+    grid .f -padx 1
+    update
+    list $a "[winfo width .f] [winfo width .]"
+} {{200 200} {200 202}}
+grid_reset 3.8
+
+test grid-3.9 {-pady} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -pady x" msg] $msg
+} {1 {bad pady value "x": must be positive screen distance}}
+grid_reset 3.9
+
+test grid-3.10 {-pady} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set a "[winfo height .f] [winfo height .]"
+    grid .f -pady 1
+    update
+    list $a "[winfo height .f] [winfo height .]"
+} {{100 100} {100 102}}
+grid_reset 3.10
+
+test grid-3.11 {-row} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -row x" msg] $msg
+} {1 {bad grid value "x": must be a non-negative integer}}
+grid_reset 3.11
+
+test grid-3.12 {-column} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -column x" msg] $msg
+} {1 {bad column value "x": must be a non-negative integer}}
+grid_reset 3.12
+
+test grid-3.13 {-row and -column} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f -row 5 -column 5
+	update
+    list [grid slaves . -row 5 -column 5] \
+	[grid size .] \
+	[grid location . 0 0]
+} {.f {6 6} {5 5}}
+grid_reset 3.13
+
+test grid-3.14 {-columnspan} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -columnspan x" msg] $msg
+} {1 {bad columnspan value "x": must be a positive integer}}
+grid_reset 3.14
+
+test grid-3.15 {-rowspan} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    list [catch "grid .f -rowspan x" msg] $msg
+} {1 {bad rowspan value "x": must be a positive integer}}
+grid_reset 3.15
+
+# auto-placement tests
+
+test grid-4.1 {default widget placement} {
+    foreach i {1 2 3 4 5 6} {
+	frame .f$i -width 50 -height 50 -highlightthickness 0 -bg red
+    }
+    grid .f1 .f2 .f3 .f4
+    grid .f5   -  x  .f6 -sticky nsew
+    update
+    set a ""
+    foreach i {5 6} {
+	lappend a "[winfo x .f$i],[winfo y .f$i] \
+		[winfo width .f$i],[winfo height .f$i]"
+    }
+    set a
+} {{0,50  100,50} {150,50  50,50}}
+grid_reset 4.1
+
+test grid-4.2 {default widget placement} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    grid .f -row 5 -column 5
+    list [catch "grid .f x -" msg] $msg
+} {1 {Invalid grid combination: "-" can't follow "x"}}
+grid_reset 4.2
+
+test grid-4.2a {default widget placement} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    grid .f -row 5 -column 5
+    list [catch "grid .f ^ -" msg] $msg
+} {1 {Invalid grid combination: "-" can't follow "^"}}
+grid_reset 4.2a
+
+test grid-4.3 {default widget placement} {
+    frame .f -width 20 -height 20 -highlightthickness 0 -bg red
+    grid .f -row 5 -column 5
+    list [catch "grid .f x ^" msg] $msg
+} {1 {can't find slave to extend with "^" after .f}}
+grid_reset 4.3
+
+test grid-4.4 {default widget placement} {
+    foreach i {1 2 3} {
+		frame .f$i -width 100 -height 50 -highlightthickness 0 -bg red
+    }
+    grid .f1 .f2  -sticky nsew
+    grid .f3   ^  -sticky nsew
+    update
+    set a ""
+    foreach i {1 2 3} {
+	lappend a "[winfo x .f$i],[winfo y .f$i] \
+		[winfo width .f$i],[winfo height .f$i]"
+    }
+    set a
+} {{0,0  100,50} {100,0  100,100} {0,50  100,50}}
+grid_reset .4.4
+
+test grid-4.5 {default widget placement} {
+    foreach i {1 2 3 4 5 6 7 8 9 10 11 12} {
+		frame .f$i -width 50 -height 50 -highlightthickness 1 -highlightbackground black
+    }
+    grid .f1  .f2  .f3 .f4 -sticky nsew
+    grid .f5  .f6   -  .f7  -sticky nsew
+    grid .f8    ^   ^  .f9  -sticky nsew
+    grid .f10   ^   ^  .f11  -sticky nsew
+	grid .f12   -   -   - -sticky nsew
+    update
+    set a ""
+    foreach i {5 6 7 8 9 10 11 12 } {
+	lappend a "[winfo x .f$i],[winfo y .f$i] \
+		[winfo width .f$i],[winfo height .f$i]"
+    }
+    set a
+} {{0,50  50,50} {50,50  100,150} {150,50  50,50} {0,100  50,50} {150,100  50,50} {0,150  50,50} {150,150  50,50} {0,200  200,50}}
+grid_reset 4.5
+
+test grid-4.6 {default widget placement} {
+    foreach i {1 2 3 4} {
+		frame .f$i -width 75 -height 50 -highlightthickness 1 -highlightbackground black
+    }
+    grid .f1  .f2   .f3     -sticky nsew
+    grid .f4    ^           -sticky nsew
+    update
+    set a ""
+    foreach i {1 2 3 4} {
+		lappend a "[winfo x .f$i],[winfo y .f$i] \
+			[winfo width .f$i],[winfo height .f$i]"
+    }
+    grid .f4    ^   -column 1
+    update
+    foreach i {1 2 3 4} {
+		lappend a "[winfo x .f$i],[winfo y .f$i] \
+			[winfo width .f$i],[winfo height .f$i]"
+	}
+	set a
+} {{0,0  75,50} {75,0  75,100} {150,0  75,50} {0,50  75,50} {0,0  75,50} {75,0  75,100} {150,0  75,100} {75,50  75,50}}
+grid_reset 4.6
+
+test grid-4.7 {default widget placement} {
+    foreach i {1 2 3 4 5 6 7} {
+		frame .f$i -width 40 -height 50 -highlightthickness 1 -highlightbackground black
+    }
+    grid .f1  .f2  .f3 .f4 .f5 -sticky nsew
+    grid .f6    -  .f7         -sticky nsew -columnspan 2
+    update
+    set a ""
+    foreach i {6 7} {
+	lappend a "[winfo x .f$i],[winfo y .f$i] \
+		[winfo width .f$i],[winfo height .f$i]"
+    }
+    set a
+} {{0,50  120,50} {120,50  80,50}}
+grid_reset 4.7
+
+# grid size tests
+
+test grid-5.1 {grid size (columns)} {
+    frame .f
+    set a ""
+    lappend a [grid size .f]
+    grid columnconfigure .f 5 -minsize 1
+    update
+    lappend a [grid size .f]
+    grid columnconfigure .f 5 -minsize 0
+    update
+    lappend a [grid size .f]
+    grid columnconfigure .f 3 -weight 1.0
+    update
+    lappend a [grid size .f]
+    grid columnconfigure .f 5 -minsize 1
+    update
+    lappend a [grid size .f]
+    grid columnconfigure .f 5 -minsize 0
+    update
+    lappend a [grid size .f]
+    grid columnconfigure .f 3 -weight 0.0
+    update
+    lappend a [grid size .f]
+} {{0 0} {6 0} {0 0} {4 0} {6 0} {4 0} {0 0}}
+grid_reset 5.1
+
+test grid-5.2 {grid size (rows)} {
+    frame .f
+    set a ""
+    lappend a [grid size .f]
+    grid rowconfigure .f 5 -minsize 1
+    update
+    lappend a [grid size .f]
+    grid rowconfigure .f 5 -minsize 0
+    update
+    lappend a [grid size .f]
+    grid rowconfigure .f 3 -weight 1.0
+    update
+    lappend a [grid size .f]
+    grid rowconfigure .f 5 -minsize 1
+    update
+    lappend a [grid size .f]
+    grid rowconfigure .f 5 -minsize 0
+    update
+    lappend a [grid size .f]
+    grid rowconfigure .f 3 -weight 0.0
+    update
+    lappend a [grid size .f]
+} {{0 0} {0 6} {0 0} {0 4} {0 6} {0 4} {0 0}}
+grid_reset 5.2
+
+# -in tests
+
+test grid-6.1 {test -in} {
+    set colors {x red green blue yellow cyan magenta}
+    foreach i {1 2 3 4 5 6} {
+		frame .f$i -width 50 -height 40 -bg [lindex $colors $i]
+    }
+    grid .f1 .f2
+	grid .f2 .f3 .f4 -in .f1
+	grid .f4 .f5 -in .f3
+	grid .f6 -in .f1
+    update
+    set a ""
+    foreach i {1 2 3 4 5 6} {
+    lappend a "[winfo x .f$i],[winfo y .f$i] \
+        [winfo width .f$i],[winfo height .f$i]"
+    }
+    set a
+} {{0,0  150,160} {75,0  50,40} {50,40  100,80} {100,40  50,40} {50,80  50,40} {0,120  50,40}}
+grid_reset 6.1
+
+# test get/lost slave
+
+test grid-7.1 {lost and found} {
+	frame .f -width 20 -height 20
+	pack .f
+	grid .f
+	pack .f
+	grid slaves .
+} {}
+grid_reset 7.1
+
+test grid-7.1a {info} {
+	frame .f -width 20 -height 20
+	grid .f
+	grid info .f
+} {-in . -column 0 -row 0 -columnspan 1 -rowspan 1 -ipadx 0 -ipady 0 -padx 0 -pady 0 -sticky {}}
+grid_reset 7.1a
+
+test grid-7.2 {info} {
+	frame .f -width 20 -height 20
+	grid .f -columnspan 2 -rowspan 2 -row 2 -column 2 -ipadx 1 -ipady 1 \
+		-padx 2 -pady 2  -sticky n,s,e,w
+	grid info .f
+} {-in . -column 2 -row 2 -columnspan 2 -rowspan 2 -ipadx 1 -ipady 1 -padx 2 -pady 2 -sticky nesw}
+grid_reset 7.2
+
+test grid-7.3 {info} {
+	frame .f -width 20 -height 20
+	grid info .f
+} {}
+grid_reset 7.3
+
+# propagate 
+
+test grid-8.1 {propagate} {
+	list [catch "grid propagate . a b" msg] $msg
+} {1 {wrong # args: should be "grid propagate window ?boolean?"}}
+
+test grid-8.2 {propagate} {
+	list [catch "grid propagate . huh" msg] $msg
+} {1 {expected boolean value but got "huh"}}
+
+test grid-8.3 {propagate} {
+	grid propagate . 0
+	set a [grid propagate .]
+	grid propagate . 1
+	lappend  a [grid propagate .]
+} {0 1}
+
+# forget
+
+test grid-9.1 {forget} {
+	frame .f -width 20 -height 20
+	frame .g -width 20 -height 20
+	grid .f .g
+	grid forget .f .g
+	grid slaves .
+} {}
+grid_reset 9.1
+
+#slaves
+
+test grid-10.1 {slaves} {
+    foreach i {1 2 3 4 5 6 7 8 9} {
+	frame .f$i -width 20 -height 20 -highlightthickness 0 -bg red
+    }
+    grid .f1 .f2 .f3
+    grid .f4 .f5 .f6
+    grid .f7 .f8 .f9
+    list [grid slaves . -row 1 -column 1] [grid slaves . -row 1] \
+		[grid slaves . -column 1]
+} {.f5 {.f4 .f5 .f6} {.f2 .f5 .f8}}
+grid_reset 10.1
+
+# column/row configure
+
+test grid-11.1 {column/row configure} {
+	frame .f
+	grid .f
+	set a ""
+	lappend a [grid columnconfigure .f 0 -weight]
+	grid columnconfigure .f 0 -weight 1.0
+	lappend a [grid columnconfigure .f 0 -weight]
+	grid rowconfigure .f 0 -weight 0
+	lappend a [grid rowconfigure .f 0 -weight]
+	grid rowconfigure .f 0 -weight 1.0
+	lappend a [grid columnconfigure .f 0 -weight]
+	grid columnconfigure .f 0 -weight 0
+	set a
+} {0.00 1.00 0.00 1.00}
+grid_reset 11.1
+
+test grid-11.2 {column/row configure} {
+	frame .f
+	grid columnconfigure .f 0 -minsize 10 -weight 1.0
+	list [grid columnconfigure .f 0 -minsize] \
+		[grid columnconfigure .f 1 -minsize] \
+		[grid columnconfigure .f 0 -weight] \
+		[grid columnconfigure .f 1 -weight]
+}  {10 0 1.00 0.00}
+grid_reset 11.2
+
+test grid-13.1 {location (x)} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set got ""
+    set result ""
+    for {set x -10} { $x < 220} { incr x} {
+	set a [grid location . $x 0]
+	if {$a != $got} {
+	    lappend result $x->$a
+	    set got $a
+	}
+    }
+    set result
+} {{-10->-1 0} {0->0 0} {200->1 0}}
+grid_reset 13.1
+
+test grid-13.2 {location (y)} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f
+    update
+    set got ""
+    set result ""
+    for {set y -10} { $y < 110} { incr y} {
+	set a [grid location . 0 $y]
+	if {$a != $got} {
+	    lappend result $y->$a
+	    set got $a
+	}
+    }
+    set result
+} {{-10->0 -1} {0->0 0} {100->0 1}}
+grid_reset 13.2
+
+test grid-13.3 {location (weights)} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    frame .a
+    grid .a
+    grid .f -in .a
+    grid rowconfigure .f 0 -weight 1
+    grid columnconfigure .f 0 -weight 1
+    grid propagate .a 0
+    .a configure -width 110 -height 15
+    update
+    set got ""
+    set result ""
+    for {set y -10} { $y < 120} { incr y} {
+	set a [grid location . $y $y]
+	if {$a != $got} {
+	    lappend result $y->$a
+	    set got $a
+	}
+    }
+    set result
+} {{-10->-1 -1} {0->0 0} {15->0 1} {110->1 1}}
+grid_reset 13.3
+
+test grid-14.1 {structure notify} {
+    frame .f -width 200 -height 100 -highlightthickness 0 -bg red
+    frame .g -width 200 -height 100 -highlightthickness 0 -bg red
+    grid .f 
+    grid .g -in .f    
+    update
+    set a ""
+    lappend a "[winfo x .g],[winfo y .g] \
+        [winfo width .g],[winfo height .g]"
+    .f configure -bd 5 -relief raised
+    update
+    lappend a "[winfo x .g],[winfo y .g] \
+        [winfo width .g],[winfo height .g]"
+    set a
+} {{0,0  200,100} {5,5  200,100}}
+grid_reset 14.1

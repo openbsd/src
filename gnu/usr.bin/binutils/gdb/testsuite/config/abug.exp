@@ -1,0 +1,2 @@
+push_target mvme135
+load_lib ../config/monitor.exp

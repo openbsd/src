@@ -307,6 +307,8 @@ CODE_FRAGMENT
 #include "bfdlink.h"
 #include "aout/stab_gnu.h"
 
+static char coff_section_type PARAMS ((const char *));
+
 /*
 DOCDD
 INODE
@@ -504,7 +506,7 @@ static CONST struct section_to_type stt[] =
 
 static char
 coff_section_type (s)
-     char *s;
+     const char *s;
 {
   CONST struct section_to_type *t;
 
@@ -619,7 +621,7 @@ DESCRIPTION
 	Not enough memory exists to create private data for @var{osec}.
 
 .#define bfd_copy_private_symbol_data(ibfd, isymbol, obfd, osymbol) \
-.     BFD_SEND (ibfd, _bfd_copy_private_symbol_data, \
+.     BFD_SEND (obfd, _bfd_copy_private_symbol_data, \
 .		(ibfd, isymbol, obfd, osymbol))
 
 */

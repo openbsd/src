@@ -78,7 +78,8 @@ TARGETLIB = libopcodes.a
 
 ALL_MACHINES = a29k-dis.o alpha-dis.o alpha-opc.o h8300-dis.o h8500-dis.o \
 	hppa-dis.o i386-dis.o i960-dis.o m68k-dis.o m68k-opc.o \
-	m88k-dis.o mips-dis.o mips-opc.o sh-dis.o sparc-dis.o \
+	m88k-dis.o mn10200-dis.o mn10200-opc.o mn10300-dis.o \
+	mn10300-opc.o mips-dis.o mips-opc.o sh-dis.o sparc-dis.o \
 	sparc-opc.o z8k-dis.o ns32k-dis.o ppc-dis.o ppc-opc.o \
 	arm-dis.o w65-dis.o
 
@@ -224,14 +225,14 @@ tags etags: TAGS
 TAGS: force
 	etags $(INCDIR)/*.h $(srcdir)/*.h $(srcdir)/*.c
 
-MOSTLYCLEAN = *.o core *.E *.p *.ip config.log pic/*.o
+MOSTLYCLEAN = *.o core *.E *.p *.ip pic/*.o
 mostlyclean:
 	rm -rf $(MOSTLYCLEAN)
 clean:
 	rm -f *.a $(MOSTLYCLEAN) $(SHLIB) $(SHLINK) piclist stamp-piclist
 distclean: clean
 	rm -rf Makefile config.status TAGS config.cache config.h stamp-h \
-	       pic stamp-picdir
+	       pic stamp-picdir config.log
 clobber realclean maintainer-clean: distclean
 
 # Mark everything as depending on config.status, since the timestamp on

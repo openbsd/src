@@ -1,0 +1,300 @@
+# This file contains support code for the Tcl test suite.  It is
+# normally sourced by the individual files in the test suite before
+# they run their tests.  This improved approach to testing was designed
+# and initially implemented by Mary Ann May-Pumphrey of Sun Microsystems.
+#
+# Copyright (c) 1994-1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) defs 1.26 96/02/17 13:40:59
+
+if ![info exists srcdir] {
+    set srcdir .
+}
+
+if ![info exists VERBOSE] {
+    set VERBOSE 0
+}
+if ![info exists TESTS] {
+    set TESTS {}
+}
+
+tk appname tktest
+wm title . tktest
+
+# Check configuration information that will determine which tests
+# to run.  To do this, create an array testConfig.  Each element
+# has a 0 or 1 value, and the following elements are defined:
+#	unixOnly -	1 means this is a UNIX platform, so it's OK
+#			to run tests that only work under UNIX.
+#	macOnly -	1 means this is a Mac platform, so it's OK
+#			to run tests that only work on Macs.
+#	pcOnly -	1 means this is a PC platform, so it's OK to
+#			run tests that only work on PCs.
+#	nonPortable -	1 means this the tests are being running in
+#			the master Tcl/Tk development environment;
+#			Some tests are inherently non-portable because
+#			they depend on things like word length, file system
+#			configuration, window manager, etc.  These tests
+#			are only run in the main Tcl development directory
+#			where the configuration is well known.  The presence
+#			of the file "doAllTests" in this directory indicates
+#			that it is safe to run non-portable tests.
+#	fonts -		1 means that this platform uses fonts with
+#			well-know geometries, so it is safe to run
+#			tests that depend on particular font sizes.
+
+catch {unset testConfig}
+if {$tcl_platform(platform) == "unix"} {
+    set testConfig(unixOnly) 1
+} else {
+    set testConfig(unixOnly) 0
+} 
+if {$tcl_platform(platform) == "macintosh"} {
+    set testConfig(macOnly) 1
+} else {
+    set testConfig(macOnly) 0
+} 
+if {$tcl_platform(platform) == "windows"} {
+    set testConfig(pcOnly) 1
+} else {
+    set testConfig(pcOnly) 0
+}
+set testConfig(nonPortable) [file exists doAllTests]
+set testConfig(fonts) 1
+catch {destroy .e}
+entry .e -width 0
+.e insert end "a.bcd"
+if {([winfo reqwidth .e] != 40) || ([winfo reqheight .e] != 25)} {
+    set testConfig(fonts) 0
+}
+destroy .e
+catch {destroy .t}
+if [catch {text .t -width 80 -height 20 -font \
+	-adobe-times-medium-r-normal--14-140-75-75-p-*-iso8859-1}] {
+    set testConfig(fonts) 0
+} else {
+    pack .t
+    .t insert end "This is\na dot."
+    update
+    set x [list [.t bbox 1.3] [.t bbox 2.5]]
+    destroy .t
+    if {[string compare $x "{24 5 6 15} {33 20 3 15}"] != 0} {
+	set testConfig(fonts) 0
+    }
+}
+
+# If there is no "memory" command (because memory debugging isn't
+# enabled), generate a dummy command that does nothing.
+
+if {[info commands memory] == ""} {
+    proc memory args {}
+}
+
+proc print_verbose {name description script code answer} {
+    puts stdout "\n"
+    puts stdout "==== $name $description"
+    puts stdout "==== Contents of test case:"
+    puts stdout "$script"
+    if {$code != 0} {
+	if {$code == 1} {
+	    puts stdout "==== Test generated error:"
+	    puts stdout $answer
+	} elseif {$code == 2} {
+	    puts stdout "==== Test generated return exception;  result was:"
+	    puts stdout $answer
+	} elseif {$code == 3} {
+	    puts stdout "==== Test generated break exception"
+	} elseif {$code == 4} {
+	    puts stdout "==== Test generated continue exception"
+	} else {
+	    puts stdout "==== Test generated exception $code;  message was:"
+	    puts stdout $answer
+	}
+    } else {
+	puts stdout "==== Result was:"
+	puts stdout "$answer"
+    }
+}
+
+# test --
+# This procedure runs a test and prints an error message if the
+# test fails.  If VERBOSE has been set, it also prints a message
+# even if the test succeeds.  The test will be skipped if it
+# doesn't match the TESTS variable, or if one of the elements
+# of "constraints" turns out not to be true.
+#
+# Arguments:
+# name -		Name of test, in the form foo-1.2.
+# description -		Short textual description of the test, to
+#			help humans understand what it does.
+# constraints -		A list of one or more keywords, each of
+#			which must be the name of an element in
+#			the array "testConfig".  If any of these
+#			elements is zero, the test is skipped.
+#			This argument may be omitted.
+# script -		Script to run to carry out the test.  It must
+#			return a result that can be checked for
+#			correctness.
+# answer -		Expected result from script.
+
+proc test {name description script answer args} {
+    global VERBOSE TESTS testConfig
+    if {[string compare $TESTS ""] != 0} then {
+	set ok 0
+	foreach test $TESTS {
+	    if [string match $test $name] then {
+		set ok 1
+		break
+	    }
+        }
+	if !$ok then return
+    }
+    set i [llength $args]
+    if {$i == 0} {
+	# Empty body
+    } elseif {$i == 1} {
+	# "constraints" argument exists;  shuffle arguments down, then
+	# make sure that the constraints are satisfied.
+
+	set constraints $script
+	set script $answer
+	set answer [lindex $args 0]
+	foreach constraint $constraints {
+	    if {![info exists testConfig($constraint)]
+		    || !$testConfig($constraint)} {
+		return
+	    }
+	}
+    } else {
+	error "wrong # args: must be \"test name description ?constraints? script answer\""
+    }
+    memory tag $name
+    set code [catch {uplevel $script} result]
+    if {$code != 0} {
+	print_verbose $name $description $script \
+		$code $result
+    } elseif {[string compare $result $answer] == 0} then { 
+	if $VERBOSE then {
+	    print_verbose $name $description $script \
+		    $code $result
+	    puts stdout "++++ $name PASSED"
+	}
+    } else { 
+	print_verbose $name $description $script \
+		$code $result 
+	puts stdout "---- Result should have been:"
+	puts stdout "$answer"
+	puts stdout "---- $name FAILED" 
+    }
+}
+
+proc dotests {file args} {
+    global TESTS
+    set savedTests $TESTS
+    set TESTS $args
+    source $file
+    set TESTS $savedTests
+}
+
+# If the main window isn't already mapped (e.g. because the tests are
+# being run automatically) , specify a precise size for it so that the
+# user won't have to position it manually.
+
+if {![winfo ismapped .]} {
+    wm geometry . +0+0
+    update
+}
+
+# The following code can be used to perform tests involving a second
+# process running in the background.
+
+# Locate tktest executable
+
+set tktest [list [info nameofexecutable]]
+if {$tktest == "{}"} {
+    set tktest {}
+    puts "Unable to find tktest executable, skipping multiple process tests."
+}
+
+# Create background process
+
+proc setupbg {{args ""}} {
+    global tktest fd bgData
+    if {$tktest == ""} {
+        error "you're not running tktest so setupbg should not have been called"
+    }
+    if {[info exists fd] && ($fd != "")} {
+	cleanupbg
+    }
+    set fd [open "|$tktest -geometry +0+0 -name tktest $args" r+]
+    puts $fd "puts foo; flush stdout"
+    flush $fd
+    if {[gets $fd data] < 0} {
+        error "unexpected EOF from \"$tktest\""
+    }
+    if [string compare $data foo] {
+        error "unexpected output from background process \"$data\""
+    }
+    fileevent $fd readable bgReady
+}
+
+# Send a command to the background process, catching errors and
+# flushing I/O channels
+proc dobg {command} {
+    global fd bgData bgDone
+    puts $fd "catch [list $command] msg; update; puts \$msg; puts **DONE**; flush stdout"
+    flush $fd
+    set bgDone 0
+    set bgData {}
+    tkwait variable bgDone
+    set bgData
+}
+
+# Data arrived from background process.  Check for special marker
+# indicating end of data for this command, and make data available
+# to dobg procedure.
+proc bgReady {} {
+    global fd bgData bgDone
+    set x [gets $fd]
+    if [eof $fd] {
+	fileevent $fd readable {}
+	set bgDone 1
+    } elseif {$x == "**DONE**"} {
+	set bgDone 1
+    } else {
+	append bgData $x
+    }
+}
+
+# Exit the background process, and close the pipes
+proc cleanupbg {} {
+    global fd
+    catch {
+	puts $fd "exit"
+	close $fd
+    }
+    set fd ""
+}
+
+proc makeFile {contents name} {
+    set fd [open $name w]
+    fconfigure $fd -translation lf
+    if {[string index $contents [expr [string length $contents] - 1]] == "\n"} {
+	puts -nonewline $fd $contents
+    } else {
+	puts $fd $contents
+    }
+    close $fd
+}
+
+proc removeFile {name} {
+    global tcl_platform
+    if {$tcl_platform(platform) == "macintosh"} {
+	catch {rm -f $name}
+    } else {
+	catch {exec rm -f $name}
+    }
+}

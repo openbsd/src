@@ -1,0 +1,67 @@
+Mon Aug 19 13:40:21 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* config/default.exp (tcl_load): Use "verbose", not "$verbose".
+
+Tue Jul 30 15:05:42 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* tcl.tests/tcl-test.exp: Don't set srcdir in test program (done
+	elsewhere).
+
+	* config/default.exp (tcl_start): Set srcdir before sourcing
+	"defs".
+
+Thu Jun 20 15:56:04 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* tcl.tests/tcl-test.exp: Don't use lindex to extract name of
+	test.
+
+Thu Feb 29 13:57:58 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* tcl.tests/tcl-test.exp: Don't cd to srcdir when testing; instead
+	run in current directory and have Tcl read tests from srcdir.
+
+Fri Jan 19 10:40:53 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* config/default.exp (testdrv): Test program is unix/tcltest.
+
+Tue Dec 19 18:03:16 1995  Rob Savoye  <rob@chinadoll.cygnus.co>
+
+	* tcl.tests/tcl-test.exp: Make sure the test case sources
+	actually exist before sourcing them.
+
+Tue May 17 15:46:42 1994  Bill Cox  (bill@rtl.cygnus.com)
+
+	* config/default.exp, tcl.tests/tcl-test.exp: Replace error
+	  proc calls with perror calls.
+
+Sun Aug  1 17:37:04 1993  Rob Savoye  (rob@darkstar.cygnus.com)
+
+	* config/unix-tcl.exp: Check to see if "defs" exists.
+	* tcl.tests/tcl-test.exp: Tweak a few patterns.
+
+Tue Apr 27 07:34:17 1993  Mike Werner  (mtw@deneb.cygnus.com)
+
+	* config/unix-tcl.exp:
+	  In "tcl_version", initialized version to a null string.
+
+Mon Apr 12 14:32:14 1993  Rob Savoye  (rob@cygnus.com)
+
+	* tcl.tests/*.test, defs.tcl: Removed. Now tcl-test.exp sources
+	them from the tcl/tests directory.
+
+Mon Feb 22 07:54:03 1993  Mike Werner  (mtw@poseidon.cygnus.com)
+
+        * tcl/testsuite: made modifications to testcases, etc., to allow
+        them to work properly  given the reorganization of deja-gnu and the
+        relocation of the testcases from deja-gnu to a "tool" subdirectory.
+
+Sun Feb 21 10:55:55 1993  Mike Werner  (mtw@poseidon.cygnus.com)
+
+	* tcl/testsuite: Initial creation of tcl/testsuite.
+	Migrated dejagnu testcases and support files for testing nm to
+	tcl/testsuite from deja-gnu.  These files were moved "as is"
+	with no modifications.  This migration is part of a major overhaul
+	of dejagnu.  The modifications to these testcases, etc., which
+	will allow them to work with the new version of dejagnu will be
+	made in a future update.
+

@@ -1046,9 +1046,9 @@ ppc_insert_operand (insn, operand, val, file, line)
 
 	  sprint_value (buf, test);
 	  if (file == (char *) NULL)
-	    as_warn (err, buf, min, max);
+	    as_bad (err, buf, min, max);
 	  else
-	    as_warn_where (file, line, err, buf, min, max);
+	    as_bad_where (file, line, err, buf, min, max);
 	}
     }
 
@@ -1059,7 +1059,7 @@ ppc_insert_operand (insn, operand, val, file, line)
       errmsg = NULL;
       insn = (*operand->insert) (insn, (long) val, &errmsg);
       if (errmsg != (const char *) NULL)
-	as_warn (errmsg);
+	as_bad (errmsg);
     }
   else
     insn |= (((long) val & ((1 << operand->bits) - 1))
@@ -1362,8 +1362,8 @@ ppc_elf_validate_fix (fixp, seg)
       if ((seg->flags & (SEC_READONLY | SEC_CODE)) != 0
 	  || fixp->fx_r_type != BFD_RELOC_CTOR)
 	{
-	  as_warn_where (fixp->fx_file, fixp->fx_line,
-			 "Relocation cannot be done when using -mrelocatable");
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			"Relocation cannot be done when using -mrelocatable");
 	}
     }
 }
@@ -1600,7 +1600,7 @@ md_assemble (str)
 	{
 	  insn = (*operand->insert) (insn, 0L, &errmsg);
 	  if (errmsg != (const char *) NULL)
-	    as_warn (errmsg);
+	    as_bad (errmsg);
 	  continue;
 	}
 
@@ -1613,7 +1613,7 @@ md_assemble (str)
 	    {
 	      insn = (*operand->insert) (insn, 0L, &errmsg);
 	      if (errmsg != (const char *) NULL)
-		as_warn (errmsg);
+		as_bad (errmsg);
 	    }
 	  if ((operand->flags & PPC_OPERAND_NEXT) != 0)
 	    next_opindex = *opindex_ptr + 1;
@@ -1690,7 +1690,7 @@ md_assemble (str)
 		  assert (ex.X_add_symbol != NULL);
 		  if (ex.X_add_symbol->bsym->section != tocdata_section)
 		    {
-		      as_warn("[tocv] symbol is not a toc symbol");
+		      as_bad("[tocv] symbol is not a toc symbol");
 		    }
 		}
 
@@ -3052,7 +3052,7 @@ ppc_tc (ignore)
 	label = ppc_current_csect->sy_tc.within;
 	if (label->sy_tc.class != XMC_TC0)
 	  {
-	    as_warn (".tc with no label");
+	    as_bad (".tc with no label");
 	    ignore_rest_of_line ();
 	    return;
 	  }
@@ -3546,7 +3546,7 @@ ppc_pe_section (ignore)
 		{
 		  /* Section Contents */
 		case 'a': /* unknown */
-		  as_warn ("Unsupported section attribute -- 'a'");
+		  as_bad ("Unsupported section attribute -- 'a'");
 		  break;
 		case 'c': /* code section */
 		  flags |= SEC_CODE; 
@@ -3616,8 +3616,8 @@ ppc_pe_section (ignore)
 		  break;
 
 		default:
-		  as_warn("unknown section attribute '%c'",
-			  *input_line_pointer);
+		  as_bad("unknown section attribute '%c'",
+			 *input_line_pointer);
 		  break;
 		}
 	      ++input_line_pointer;
@@ -3634,9 +3634,9 @@ ppc_pe_section (ignore)
   if (flags != SEC_NO_FLAGS)
     {
       if (! bfd_set_section_flags (stdoutput, sec, flags))
-	as_warn ("error setting flags for \"%s\": %s",
-		 bfd_section_name (stdoutput, sec),
-		 bfd_errmsg (bfd_get_error ()));
+	as_bad ("error setting flags for \"%s\": %s",
+		bfd_section_name (stdoutput, sec),
+		bfd_errmsg (bfd_get_error ()));
     }
 
   bfd_set_section_alignment(stdoutput, sec, align);
@@ -3909,7 +3909,7 @@ ppc_frob_symbol (sym)
   if (SF_GET_FUNCTION (sym))
     {
       if (ppc_last_function != (symbolS *) NULL)
-	as_warn ("two .function pseudo-ops with no intervening .ef");
+	as_bad ("two .function pseudo-ops with no intervening .ef");
       ppc_last_function = sym;
       if (sym->sy_tc.size != (symbolS *) NULL)
 	{
@@ -3921,7 +3921,7 @@ ppc_frob_symbol (sym)
 	   && strcmp (S_GET_NAME (sym), ".ef") == 0)
     {
       if (ppc_last_function == (symbolS *) NULL)
-	as_warn (".ef with no preceding .function");
+	as_bad (".ef with no preceding .function");
       else
 	{
 	  set_end = ppc_last_function;
@@ -4582,8 +4582,17 @@ md_apply_fix3 (fixp, valuep, seg)
 	}
       else
 	{
-	  as_bad_where (fixp->fx_file, fixp->fx_line,
-			"unresolved expression that must be resolved");
+	  char *sfile;
+	  unsigned int sline;
+
+	  /* Use expr_symbol_where to see if this is an expression
+             symbol.  */
+	  if (expr_symbol_where (fixp->fx_addsy, &sfile, &sline))
+	    as_bad_where (fixp->fx_file, fixp->fx_line,
+			  "unresolved expression that must be resolved");
+	  else
+	    as_bad_where (fixp->fx_file, fixp->fx_line,
+			  "unsupported relocation type");
 	  fixp->fx_done = 1;
 	  return 1;
 	}

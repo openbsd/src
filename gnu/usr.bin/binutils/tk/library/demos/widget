@@ -1,0 +1,225 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
+
+# widget --
+# This script demonstrates the various widgets provided by Tk,
+# along with many of the features of the Tk toolkit.  This file
+# only contains code to generate the main window for the
+# application, which invokes individual demonstrations.  The
+# code for the actual demonstrations is contained in separate
+# ".tcl" files is this directory, which are sourced by this script
+# as needed.
+#
+# SCCS: @(#) widget 1.17 96/04/12 13:28:10
+
+eval destroy [winfo child .]
+wm title . "Widget Demonstration"
+
+#----------------------------------------------------------------
+# The code below create the main window, consisting of a menu bar
+# and a text widget that explains how to use the program, plus lists
+# all of the demos as hypertext items.
+#----------------------------------------------------------------
+
+set font -*-Helvetica-Medium-R-Normal--*-140-*-*-*-*-*-*
+frame .menuBar
+pack .menuBar -side top -fill x
+menubutton .menuBar.file -text File -menu .menuBar.file.m -underline 0
+menu .menuBar.file.m
+.menuBar.file.m add command -label "Quit" -command "exit" -underline 0
+pack .menuBar.file -side left
+
+scrollbar .s -orient vertical -command {.t yview}
+pack .s -side right -fill y
+text .t -yscrollcommand {.s set} -wrap word -width 60 -height 30 -font $font \
+	-setgrid 1
+pack .t -expand y -fill both
+
+# Create a bunch of tags to use in the text widget, such as those for
+# section titles and demo descriptions.  Also define the bindings for
+# tags.
+
+.t tag configure title -font -*-Helvetica-Bold-R-Normal--*-180-*-*-*-*-*-*
+.t tag configure demo -lmargin1 1c -lmargin2 1c
+if {[winfo depth .] == 1} {
+    .t tag configure hot -background black -foreground white
+} else {
+    .t tag configure hot -relief raised -borderwidth 1 -background SeaGreen3
+}
+.t tag bind demo <Button-1> {
+    invoke [.t index current]
+}
+set lastLine ""
+.t tag bind demo <Enter> {
+    set lastLine [.t index {@%x,%y linestart}]
+    .t tag add hot $lastLine "$lastLine lineend"
+}
+.t tag bind demo <Leave> {
+    .t tag remove hot 1.0 end
+}
+.t tag bind demo <Motion> {
+    set newLine [.t index {@%x,%y linestart}]
+    if {[string compare $newLine $lastLine] != 0} {
+	.t tag remove hot 1.0 end
+	set lastLine $newLine
+	.t tag add hot $lastLine "$lastLine lineend"
+    }
+}
+
+# Create the text for the text widget.
+
+.t insert end "Tk Widget Demonstrations\n" title
+.t insert end {
+This application provides a front end for several short scripts that demonstrate what you can do with Tk widgets.  Each of the numbered lines below describes a demonstration;  you can click on it to invoke the demonstration.  Once the demonstration window appears, you can click the "See Code" button to see the Tcl/Tk code that created the demonstration.  If you wish, you can edit the code and click the "Rerun Demo" button in the code window to reinvoke the demonstration with the modified code.
+
+}
+.t insert end "Labels, buttons, checkbuttons, and radiobuttons\n" title
+.t insert end "1. Labels (text and bitmaps).\n" {demo demo-label}
+.t insert end "2. Buttons.\n" {demo demo-button}
+.t insert end "3. Checkbuttons (select any of a group).\n" {demo demo-check}
+.t insert end "4. Radiobuttons (select one of a group).\n" {demo demo-radio}
+.t insert end "5. A 15-puzzle game made out of buttons.\n" {demo demo-puzzle}
+.t insert end "6. Iconic buttons that use bitmaps.\n" {demo demo-icon}
+.t insert end "7. Two labels displaying images.\n" {demo demo-image1}
+.t insert end "8. A simple user interface for viewing images.\n" {demo demo-image2}
+
+.t insert end \n {} "Listboxes\n" title
+.t insert end "1. 50 states.\n" {demo demo-states}
+.t insert end "2. Colors: change the color scheme for the application.\n" \
+	{demo demo-colors}
+.t insert end "3. A collection of famous sayings.\n" {demo demo-sayings}
+
+.t insert end \n {} "Entries\n" title
+.t insert end "1. Without scrollbars.\n" {demo demo-entry1}
+.t insert end "2. With scrollbars.\n" {demo demo-entry2}
+.t insert end "3. Simple Rolodex-like form.\n" {demo demo-form}
+
+.t insert end \n {} "Text\n" title
+.t insert end "1. Basic editable text.\n" {demo demo-text}
+.t insert end "2. Text display styles.\n" {demo demo-style}
+.t insert end "3. Hypertext (tag bindings).\n" {demo demo-bind}
+.t insert end "4. A text widget with embedded windows.\n" {demo demo-twind}
+.t insert end "5. A search tool built with a text widget.\n" {demo demo-search}
+
+.t insert end \n {} "Canvases\n" title
+.t insert end "1. The canvas item types.\n" {demo demo-items}
+.t insert end "2. A simple 2-D plot.\n" {demo demo-plot}
+.t insert end "3. Text items in canvases.\n" {demo demo-ctext}
+.t insert end "4. An editor for arrowheads on canvas lines.\n" {demo demo-arrow}
+.t insert end "5. A ruler with adjustable tab stops.\n" {demo demo-ruler}
+.t insert end "6. A building floor plan.\n" {demo demo-floor}
+.t insert end "7. A simple scrollable canvas.\n" {demo demo-cscroll}
+
+.t insert end \n {} "Scales\n" title
+.t insert end "1. Vertical scale.\n" {demo demo-vscale}
+.t insert end "2. Horizontal scale.\n" {demo demo-hscale}
+
+.t insert end \n {} "Menus\n" title
+.t insert end "1. A window containing several menus and cascades.\n" \
+	{demo demo-menu}
+
+.t insert end \n {} "Miscellaneous\n" title
+.t insert end "1. The built-in bitmaps.\n" {demo demo-bitmap}
+.t insert end "2. A dialog box with a local grab.\n" {demo demo-dialog1}
+.t insert end "3. A dialog box with a global grab.\n" {demo demo-dialog2}
+
+.t configure -state disabled
+
+# positionWindow --
+# This procedure is invoked by most of the demos to position a
+# new demo window.
+#
+# Arguments:
+# w -		The name of the window to position.
+
+proc positionWindow w {
+    wm geometry $w +300+300
+}
+
+# showVars --
+# Displays the values of one or more variables in a window, and
+# updates the display whenever any of the variables changes.
+#
+# Arguments:
+# w -		Name of new window to create for display.
+# args -	Any number of names of variables.
+
+proc showVars {w args} {
+    catch {destroy $w}
+    toplevel $w
+    wm title $w "Variable values"
+    label $w.title -text "Variable values:" -width 20 -anchor center \
+	    -font -Adobe-helvetica-medium-r-normal--*-180-*-*-*-*-*-*
+    pack $w.title -side top -fill x
+    foreach i $args {
+	frame $w.$i
+	label $w.$i.name -text "$i: "
+	label $w.$i.value -textvar $i -anchor w
+	pack $w.$i.name -side left
+	pack $w.$i.value -side left -expand 1 -fill x
+	pack $w.$i -side top -anchor w -fill x
+    }
+    button $w.ok -text OK -command "destroy $w"
+    pack $w.ok -side bottom -pady 2
+}
+
+# invoke --
+# This procedure is called when the user clicks on a demo description.
+# It is responsible for invoking the demonstration.
+#
+# Arguments:
+# index -	The index of the character that the user clicked on.
+
+proc invoke index {
+    global tk_library
+    set tags [.t tag names $index]
+    set i [lsearch -glob $tags demo-*]
+    if {$i < 0} {
+	return
+    }
+    .t configure -cursor watch
+    update
+    set demo [string range [lindex $tags $i] 5 end]
+    uplevel [list source [file join $tk_library demos $demo.tcl]]
+    update
+    .t configure -cursor xterm
+}
+
+# showCode --
+# This procedure creates a toplevel window that displays the code for
+# a demonstration and allows it to be edited and reinvoked.
+#
+# Arguments:
+# w -		The name of the demonstration's window, which can be
+#		used to derive the name of the file containing its code.
+
+proc showCode w {
+    global tk_library
+    set file [string range $w 1 end].tcl
+    if ![winfo exists .code] {
+	toplevel .code
+	frame .code.buttons
+	pack .code.buttons -side bottom -fill x
+	button .code.buttons.dismiss -text Dismiss -command "destroy .code"
+	button .code.buttons.rerun -text "Rerun Demo" -command {
+	    eval [.code.text get 1.0 end]
+	}
+	pack .code.buttons.dismiss .code.buttons.rerun -side left \
+		-expand 1
+	text .code.text -height 40 -yscrollcommand ".code.scroll set" -setgrid 1
+	pack .code.text -side left -expand 1 -fill both
+	scrollbar .code.scroll -command ".code.text yview"
+	pack .code.scroll -side right -fill y
+    } else {
+	wm deiconify .code
+	raise .code
+    }
+    wm title .code "Demo code: [file join $tk_library demos $file]"
+    wm iconname .code $file
+    set id [open [file join $tk_library demos $file]]
+    .code.text delete 1.0 end
+    .code.text insert 1.0 [read $id]
+    .code.text mark set insert 1.0
+    close $id
+}

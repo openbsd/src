@@ -189,13 +189,22 @@ read_section_stabs_debugging_info (abfd, syms, symcount, dhandle, pfound)
 		  while (s[strlen (s) - 1] == '\\'
 			 && stab + 12 < stabs + stabsize)
 		    {
+		      char *p;
+
 		      stab += 12;
-		      s[strlen (s) - 1] = '\0';
+		      p = s + strlen (s) - 1;
+		      *p = '\0';
 		      s = concat (s,
 				  ((char *) strings
 				   + stroff
 				   + bfd_get_32 (abfd, stab)),
 				  (const char *) NULL);
+
+		      /* We have to restore the backslash, because, if
+                         the linker is hashing stabs strings, we may
+                         see the same string more than once.  */
+		      *p = '\\';
+
 		      if (f != NULL)
 			free (f);
 		      f = s;

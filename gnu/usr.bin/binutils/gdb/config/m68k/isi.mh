@@ -1,0 +1,5 @@
+# Host: ISI Optimum V (3.05) under 4.3bsd.
+# corelow.o commented out because core dumps are broken on this machine,
+# as of GDB 4.8, according to lam@tfs.com
+XDEPFILES= infptrace.o inftarg.o fork-child.o core-aout.o isi-xdep.o
+XM_FILE= xm-isi.h

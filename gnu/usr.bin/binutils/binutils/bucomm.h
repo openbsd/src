@@ -114,6 +114,9 @@ extern char *program_name;
 /* filemode.c */
 void mode_string PARAMS ((unsigned long mode, char *buf));
 
+/* version.c */
+extern void print_version PARAMS ((const char *));
+
 /* libiberty */
 PTR xmalloc PARAMS ((size_t));
 

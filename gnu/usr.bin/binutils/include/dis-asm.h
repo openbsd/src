@@ -51,6 +51,9 @@ typedef struct disassemble_info {
   unsigned long mach;
   /* Endianness (for bi-endian cpus).  Mono-endian cpus can ignore this.  */
   enum bfd_endian endian;
+  /* The symbol at the start of the function being disassembled.  This
+     is not set reliably, but if it is not NULL, it is correct.  */
+  asymbol *symbol;
 
   /* For use by the disassembler.
      The top 16 bits are reserved for public use (and are documented here).
@@ -82,6 +85,12 @@ typedef struct disassemble_info {
   bfd_byte *buffer;
   bfd_vma buffer_vma;
   int buffer_length;
+
+  /* This variable may be set by the instruction decoder.  It suggests
+      the number of bytes objdump should display on a single line.  If
+      the instruction decoder sets this, it should always set it to
+      the same value in order to get reasonable looking output.  */
+  int bytes_per_line;
 
   /* Results from instruction decoders.  Not all decoders yet support
      this information.  This info is set each time an instruction is
@@ -128,6 +137,8 @@ extern int print_insn_sh		PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_shl		PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_hppa		PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_m88k		PARAMS ((bfd_vma, disassemble_info*));
+extern int print_insn_mn10200		PARAMS ((bfd_vma, disassemble_info*));
+extern int print_insn_mn10300		PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_ns32k		PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_big_powerpc	PARAMS ((bfd_vma, disassemble_info*));
 extern int print_insn_little_powerpc	PARAMS ((bfd_vma, disassemble_info*));
@@ -174,6 +185,7 @@ extern void generic_print_address
 #define INIT_DISASSEMBLE_INFO_NO_ARCH(INFO, STREAM, FPRINTF_FUNC) \
   (INFO).fprintf_func = (FPRINTF_FUNC), \
   (INFO).stream = (STREAM), \
+  (INFO).symbol = NULL, \
   (INFO).buffer = NULL, \
   (INFO).buffer_vma = 0, \
   (INFO).buffer_length = 0, \
@@ -181,6 +193,7 @@ extern void generic_print_address
   (INFO).memory_error_func = perror_memory, \
   (INFO).print_address_func = generic_print_address, \
   (INFO).flags = 0, \
+  (INFO).bytes_per_line = 0, \
   (INFO).insn_info_valid = 0
 
 #endif /* ! defined (DIS_ASM_H) */

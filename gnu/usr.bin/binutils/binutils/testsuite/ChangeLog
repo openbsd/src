@@ -1,3 +1,13 @@
+Wed Oct 16 22:57:59 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objdump.exp: Add mn10200 and mn10300 to expected
+	cpus list.
+
+Tue Oct  1 15:06:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/utils-lib.exp (binutil_version): Fix for current version
+	printing.
+
 Sun Aug  4 22:25:40 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* binutils-all/objcopy.exp: Fix end of line matching in srec tests

@@ -2342,6 +2342,20 @@ add_file (file_name, indx, fake)
 #endif
     }
 }
+
+/* This function is called when the assembler notices a preprocessor
+   directive switching to a new file.  This will not happen in
+   compiler output, only in hand coded assembler.  */
+
+void
+ecoff_new_file (name)
+     const char *name;
+{
+  if (cur_file_ptr != NULL && strcmp (cur_file_ptr->name, name) == 0)
+    return;
+  add_file (name, 0, 0);
+  generate_asm_lineno = 1;
+}
 
 #ifdef ECOFF_DEBUG
 
@@ -3598,8 +3612,7 @@ ecoff_stab (sec, what, string, type, other, desc)
 	    }
 	  else
 	    {
-	      as_bad (".stabs expression too complex");
-	      sym = NULL;
+	      sym = make_expr_symbol (&exp);
 	      value = 0;
 	      addend = 0;
 	    }

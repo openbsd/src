@@ -1,0 +1,510 @@
+# This file is a Tcl script to test out the "focus" command and the
+# other procedures in the file tkFocus.c.  It is organized in the
+# standard fashion for Tcl tests.
+#
+# Copyright (c) 1994-1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) focus.test 1.13 96/02/16 10:55:51
+
+if {$tcl_platform(platform) == "macintosh"} {
+    puts "focus tests currently do not run on Macintosh"
+    return
+}
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+if {[info commands testevent] != ""} {
+    set gotTestEvent 1
+} else {
+    set gotTestEvent 0
+}
+
+eval destroy [winfo children .]
+wm geometry . {}
+raise .
+
+button .b -text .b -relief raised -bd 2
+pack .b
+
+proc focusSetup {} {
+    catch {destroy .t}
+    toplevel .t
+    wm geom .t +0+0
+    foreach i {b1 b2 b3 b4} {
+	button .t.$i -text .t.$i -relief raised -bd 2
+	pack .t.$i
+    }
+}
+proc focusSetupAlt {} {
+    global env
+    catch {destroy .alt}
+    toplevel .alt -screen $env(TK_ALT_DISPLAY)
+    wm withdraw .alt
+    foreach i {a b c d} {
+	button .alt.$i -text .alt.$i -relief raised -bd 2
+	pack .alt.$i
+    }
+}
+
+# The following procedure ensures that there is no input focus
+# in this application.  It does it by arranging for another
+# application to grab the focus.  The "after" and "update" stuff
+# is needed to wait long enough for pending actions to get through
+# the X server and possibly also the window manager.
+
+setupbg
+proc focusClear {} {
+    global x;
+    after 200 {set x 1}
+    tkwait variable x
+    dobg {focus -force .; update}
+    update
+}
+
+focusSetup
+set altDisplay [info exists env(TK_ALT_DISPLAY)]
+if $altDisplay {
+    focusSetupAlt
+}
+update
+
+bind all <FocusIn> {
+    append focusInfo "in %W %d\n"
+}
+bind all <FocusOut> {
+    append focusInfo "out %W %d\n"
+}
+bind all <KeyPress> {
+    append focusInfo "press %W %K"
+}
+
+focus .t
+focusSetup
+update
+test focus-1.1 {Tk_FocusCmd procedure} {
+    focusClear
+    focus
+} {}
+if $altDisplay {
+    test focus-1.2 {Tk_FocusCmd procedure} {
+	focus .alt.b
+	focus
+    } {}
+}
+test focus-1.3 {Tk_FocusCmd procedure} {
+    focusClear
+    focus .t.b3
+    focus
+} {}
+test focus-1.4 {Tk_FocusCmd procedure} {
+    list [catch {focus ""} msg] $msg
+} {0 {}}
+test focus-1.5 {Tk_FocusCmd procedure} {
+    focusClear
+    focus -force .t
+    focus .t.b3
+    focus
+} {.t.b3}
+test focus-1.6 {Tk_FocusCmd procedure} {
+    list [catch {focus .gorp} msg] $msg
+} {1 {bad window path name ".gorp"}}
+test focus-1.7 {Tk_FocusCmd procedure} {
+    list [catch {focus .gorp a} msg] $msg
+} {1 {bad option ".gorp": must be -displayof, -force, or -lastfor}}
+test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} {
+    toplevel .t2
+    wm geom .t2 +10+10
+    frame .t2.f -width 200 -height 100 -bd 2 -relief raised
+    frame .t2.f2 -width 200 -height 100 -bd 2 -relief raised
+    pack .t2.f .t2.f2
+    bind .t2.f <Destroy> {focus .t2.f}
+    bind .t2.f2 <Destroy> {focus .t2}
+    focus -force .t2.f2
+    tkwait visibility .t2
+    update
+    set x [focus]
+    destroy .t2.f2
+    lappend x [focus]
+    destroy .t2.f
+    lappend x [focus]
+    destroy .t2
+    set x
+} {.t2.f2 .t2 .t2}
+test focus-1.9 {Tk_FocusCmd procedure, -displayof option} {
+    list [catch {focus -displayof} msg] $msg
+} {1 {wrong # args: should be "focus -displayof window"}}
+test focus-1.10 {Tk_FocusCmd procedure, -displayof option} {
+    list [catch {focus -displayof a b} msg] $msg
+} {1 {wrong # args: should be "focus -displayof window"}}
+test focus-1.11 {Tk_FocusCmd procedure, -displayof option} {
+    list [catch {focus -displayof .lousy} msg] $msg
+} {1 {bad window path name ".lousy"}}
+test focus-1.12 {Tk_FocusCmd procedure, -displayof option} {
+    focusClear
+    focus .t
+    focus -displayof .t.b3
+} {}
+test focus-1.13 {Tk_FocusCmd procedure, -displayof option} {
+    focusClear
+    focus -force .t
+    focus -displayof .t.b3
+} {.t}
+if $altDisplay {
+    test focus-1.14 {Tk_FocusCmd procedure, -displayof option} {
+	focus -force .alt.c
+	focus -displayof .alt
+    } {.alt.c}
+}
+test focus-1.15 {Tk_FocusCmd procedure, -force option} {
+    list [catch {focus -force} msg] $msg
+} {1 {wrong # args: should be "focus -force window"}}
+test focus-1.16 {Tk_FocusCmd procedure, -force option} {
+    list [catch {focus -force a b} msg] $msg
+} {1 {wrong # args: should be "focus -force window"}}
+test focus-1.17 {Tk_FocusCmd procedure, -force option} {
+    list [catch {focus -force foo} msg] $msg
+} {1 {bad window path name "foo"}}
+test focus-1.18 {Tk_FocusCmd procedure, -force option} {
+    list [catch {focus -force ""} msg] $msg
+} {0 {}}
+test focus-1.19 {Tk_FocusCmd procedure, -force option} {
+    focusClear
+    focus .t.b1
+    set x  [list [focus]]
+    focus -force .t.b1
+    lappend x [focus]
+} {{} .t.b1}
+test focus-1.20 {Tk_FocusCmd procedure, -lastfor option} {
+    list [catch {focus -lastfor} msg] $msg
+} {1 {wrong # args: should be "focus -lastfor window"}}
+test focus-1.21 {Tk_FocusCmd procedure, -lastfor option} {
+    list [catch {focus -lastfor 1 2} msg] $msg
+} {1 {wrong # args: should be "focus -lastfor window"}}
+test focus-1.22 {Tk_FocusCmd procedure, -lastfor option} {
+    list [catch {focus -lastfor who_knows?} msg] $msg
+} {1 {bad window path name "who_knows?"}}
+test focus-1.23 {Tk_FocusCmd procedure, -lastfor option} {
+    focus .b
+    focus .t.b1
+    list [focus -lastfor .] [focus -lastfor .t.b3]
+} {.b .t.b1}
+test focus-1.24 {Tk_FocusCmd procedure, -lastfor option} {
+    destroy .t
+    focusSetup
+    update
+    focus -lastfor .t.b2
+} {.t}
+test focus-1.25 {Tk_FocusCmd procedure} {
+    list [catch {focus -unknown} msg] $msg
+} {1 {bad option "-unknown": must be -displayof, -force, or -lastfor}}
+
+if $gotTestEvent {
+    test focus-2.1 {TkFocusFilterEvent procedure} {nonPortable} {
+	focus -force .b
+	destroy .t
+	focusSetup
+	update
+	set focusInfo {}
+	testevent .t FocusIn -detail NotifyAncestor -sendevent 0x54217567
+	list $focusInfo
+    } {{}}
+    test focus-2.2 {TkFocusFilterEvent procedure} {nonPortable} {
+	focus -force .b
+	destroy .t
+	focusSetup
+	update
+	set focusInfo {}
+	testevent .t FocusIn -detail NotifyAncestor -sendevent 0x547321ac
+	list $focusInfo [focus]
+    } {{in .t NotifyAncestor
+} .b}
+    test focus-2.3 {TkFocusFilterEvent procedure} {nonPortable} {
+	focus -force .b
+	destroy .t
+	focusSetup
+	update
+	set focusInfo {}
+	testevent .t FocusIn -detail NotifyAncestor
+	update
+	list $focusInfo [focus -lastfor .t]
+    } {{out .b NotifyNonlinear
+out . NotifyNonlinearVirtual
+in .t NotifyNonlinear
+} .t}
+    test focus-2.4 {TkFocusFilterEvent procedure, FocusIn events} {nonPortable} {
+	set result {}
+	focus .t.b1
+	foreach detail {NotifyAncestor NotifyNonlinear
+		NotifyNonlinearVirtual NotifyPointer NotifyPointerRoot
+		NotifyVirtual} {
+	    focus -force .
+	    update
+	    testevent .t FocusIn -detail $detail
+	    set focusInfo {}
+	    update
+	    lappend result $focusInfo
+	}
+	set result
+    } {{out . NotifyNonlinear
+in .t NotifyNonlinearVirtual
+in .t.b1 NotifyNonlinear
+} {out . NotifyNonlinear
+in .t NotifyNonlinearVirtual
+in .t.b1 NotifyNonlinear
+} {out . NotifyNonlinear
+in .t NotifyNonlinearVirtual
+in .t.b1 NotifyNonlinear
+} {} {} {out . NotifyNonlinear
+in .t NotifyNonlinearVirtual
+in .t.b1 NotifyNonlinear
+}}
+    test focus-2.5 {TkFocusFilterEvent procedure, creating FocusInfo struct} {nonPortable} {
+	destroy .t
+	focusSetup
+	update
+	testevent .t FocusIn -detail NotifyAncestor
+	list $focusInfo [focus]
+    } {{out . NotifyNonlinear
+in .t NotifyNonlinearVirtual
+in .t.b1 NotifyNonlinear
+} .t}
+    test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} {
+	focus .t.b1
+	focus .
+	update
+	testevent .t FocusIn -detail NotifyAncestor
+	set focusInfo {}
+	set x [focus]
+	testevent . KeyPress -keysym x
+	list $x $focusInfo
+    } {.t.b1 {press .t.b1 x}}
+    test focus-2.7 {TkFocusFilterEvent procedure, FocusOut events} {
+	set result {}
+	foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
+		NotifyNonlinearVirtual NotifyPointer NotifyPointerRoot
+		NotifyVirtual} {
+	    focus -force .t.b1
+	    testevent .t FocusOut -detail $detail
+	    update
+	    lappend result [focus]
+	}
+	set result
+    } {{} .t.b1 {} {} .t.b1 .t.b1 {}}
+    test focus-2.8 {TkFocusFilterEvent procedure, FocusOut events} {
+	focus -force .t.b1
+	testevent .t.b1 FocusOut -detail NotifyAncestor
+	focus
+    } {.t.b1}
+    test focus-2.9 {TkFocusFilterEvent procedure, FocusOut events} {
+	focus .t.b1
+	testevent . FocusOut -detail NotifyAncestor
+	focus
+    } {}
+    test focus-2.10 {TkFocusFilterEvent procedure, Enter events} {
+	set result {}
+	focus .t.b1
+	focusClear
+	foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
+		NotifyNonlinearVirtual NotifyVirtual} {
+	    testevent .t Enter -detail $detail -focus 1
+	    update
+	    lappend result [focus]
+	    testevent .t Leave -detail NotifyAncestor
+	}
+	set result
+    } {.t.b1 {} .t.b1 .t.b1 .t.b1}
+    test focus-2.11 {TkFocusFilterEvent procedure, Enter events} {
+	focusClear
+	set focusInfo {}
+	testevent .t Enter -detail NotifyAncestor
+	update
+	set focusInfo
+    } {}
+    test focus-2.12 {TkFocusFilterEvent procedure, Enter events} {
+	focus -force .b
+	update
+	set focusInfo {}
+	testevent .t Enter -detail NotifyAncestor -focus 1
+	update
+	set focusInfo
+    } {}
+    test focus-2.13 {TkFocusFilterEvent procedure, Enter events} {
+	focus .t.b1
+	focusClear
+	testevent .t Enter -detail NotifyAncestor -focus 1
+	set focusInfo {}
+	update
+	set focusInfo
+    } {in .t NotifyVirtual
+in .t.b1 NotifyAncestor
+}
+    test focus-2.14 {TkFocusFilterEvent procedure, Leave events} {
+	set result {}
+	focus .t.b1
+	foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
+		NotifyNonlinearVirtual NotifyVirtual} {
+	    focusClear
+	    testevent .t Enter -detail NotifyAncestor -focus 1
+	    update
+	    testevent .t Leave -detail $detail
+	    update
+	    lappend result [focus]
+	}
+	set result
+    } {{} .t.b1 {} {} {}}
+    test focus-2.15 {TkFocusFilterEvent procedure, Leave events} {
+	set result {}
+	focus .t.b1
+	testevent .t Enter -detail NotifyAncestor -focus 1
+	update
+	set focusInfo {}
+	testevent .t Leave -detail NotifyAncestor
+	update
+	set focusInfo
+    } {out .t.b1 NotifyAncestor
+out .t NotifyVirtual
+}
+    test focus-2.16 {TkFocusFilterEvent procedure, Leave events} {
+	set result {}
+	focus .t.b1
+	testevent .t Enter -detail NotifyAncestor -focus 1
+	update
+	set focusInfo {}
+	testevent .t.b1 Leave -detail NotifyAncestor
+	testevent . Leave -detail NotifyAncestor
+	update
+	list $focusInfo [focus]
+    } {{} .t.b1}
+}
+
+test focus-3.1 {SetFocus procedure, create record on focus} {
+    toplevel .t2 -width 250 -height 100
+    wm geometry .t2 +0+0
+    update
+    focus -force .t2
+    update
+    focus
+} {.t2}
+catch {destroy .t2}
+# This test produces no result, but it will generate a protocol
+# error if Tk forgets to make the window exist before focussing
+# on it.
+test focus-3.2 {SetFocus procedure, making window exist} {
+    update
+    button .b2 -text "Another button"
+    focus .b2
+    update
+} {}
+catch {destroy .b2}
+update
+# The following test doesn't produce a check-able result, but if
+# there are bugs it may generate an X protocol error.
+test focus-3.3 {SetFocus procedure, delaying claim of X focus} {
+    focusSetup
+    focus -force .t.b2
+    update
+} {}
+test focus-3.4 {SetFocus procedure, delaying claim of X focus} {
+    focusSetup
+    wm withdraw .t
+    focus -force .t.b2
+    toplevel .t2 -width 250 -height 100
+    wm geometry .t2 +10+10
+    focus -force .t2
+    wm withdraw .t2
+    update
+    wm deiconify .t2
+    wm deiconify .t
+} {}
+catch {destroy .t2}
+test focus-3.5 {SetFocus procedure, generating events} {
+    focusClear
+    focusSetup
+    set focusInfo {}
+    focus -force .t.b2
+    update
+    set focusInfo
+} {in .t NotifyVirtual
+in .t.b2 NotifyAncestor
+}
+test focus-3.6 {SetFocus procedure, generating events} {
+    focus -force .b
+    update
+    focusSetup
+    set focusInfo {}
+    focus .t.b2
+    update
+    set focusInfo
+} {out .b NotifyNonlinear
+out . NotifyNonlinearVirtual
+in .t NotifyNonlinearVirtual
+in .t.b2 NotifyNonlinear
+out .t.b2 NotifyAncestor
+out .t NotifyVirtual
+in .t NotifyVirtual
+in .t.b2 NotifyAncestor
+}
+test focus-3.7 {SetFocus procedure, generating events} {nonPortable} {
+    # Non-portable because some platforms generate extra events.
+
+    focusClear
+    focusSetup
+    set focusInfo {}
+    focus .t.b2
+    update
+    set focusInfo
+} {}
+
+test focus-4.1 {TkFocusDeadWindow procedure} {
+    focusSetup
+    update
+    focus -force .b
+    update
+    destroy .t
+    focus
+} {.b}
+test focus-4.2 {TkFocusDeadWindow procedure} {
+    focusSetup
+    update
+    focus -force .t.b2
+    focus .b
+    update
+    destroy .t.b2
+    update
+    focus
+} {.b}
+
+# Non-portable due to wm-specific redirection of input focus when
+# windows are deleted:
+
+test focus-4.3 {TkFocusDeadWindow procedure} {nonPortable} {
+    focusSetup
+    update
+    focus .t
+    update
+    destroy .t
+    update
+    focus
+} {}
+test focus-4.4 {TkFocusDeadWindow procedure} {
+    focusSetup
+    focus -force .t.b2
+    update
+    destroy .t.b2
+    focus
+} {.t}
+
+# I don't know how to test the remaining procedures of this file
+# explicitly;  they've already been exercised by the preceding
+# tests.
+
+catch {destroy .t}
+bind all <FocusIn> {}
+bind all <FocusOut> {}
+bind all <KeyPress> {}
+cleanupbg

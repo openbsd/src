@@ -773,15 +773,15 @@ const struct m68k_opcode m68k_opcodes[] =
 {"fmovecrx",	two(0xF000, 0x5C00), two(0xF1FF, 0xFC00), "Ii#CF7", mfloat },
 
 {"fmovemx",	two(0xF000, 0xF800), two(0xF1C0, 0xFF8F), "IiDk&s", mfloat },
+{"fmovemx",	two(0xF020, 0xE800), two(0xF1F8, 0xFF8F), "IiDk-s", mfloat },
 {"fmovemx",	two(0xF000, 0xD800), two(0xF1C0, 0xFF8F), "Ii&sDk", mfloat },
+{"fmovemx",	two(0xF018, 0xD800), two(0xF1F8, 0xFF8F), "Ii+sDk", mfloat },
 {"fmovemx",	two(0xF000, 0xF000), two(0xF1C0, 0xFF00), "Idl3&s", mfloat },
 {"fmovemx",	two(0xF000, 0xF000), two(0xF1C0, 0xFF00), "Id#3&s", mfloat },
 {"fmovemx",	two(0xF000, 0xD000), two(0xF1C0, 0xFF00), "Id&sl3", mfloat },
 {"fmovemx",	two(0xF000, 0xD000), two(0xF1C0, 0xFF00), "Id&s#3", mfloat },
-{"fmovemx",	two(0xF020, 0xE800), two(0xF1F8, 0xFF8F), "IiDk-s", mfloat },
 {"fmovemx",	two(0xF020, 0xE000), two(0xF1F8, 0xFF00), "IdL3-s", mfloat },
 {"fmovemx",	two(0xF020, 0xE000), two(0xF1F8, 0xFF00), "Id#3-s", mfloat },
-{"fmovemx",	two(0xF018, 0xD800), two(0xF1F8, 0xFF8F), "Ii+sDk", mfloat },
 {"fmovemx",	two(0xF018, 0xD000), two(0xF1F8, 0xFF00), "Id+sl3", mfloat },
 {"fmovemx",	two(0xF018, 0xD000), two(0xF1F8, 0xFF00), "Id+s#3", mfloat },
 
@@ -1405,8 +1405,8 @@ const struct m68k_opcode m68k_opcodes[] =
 
 {"pea",		one(0044100),		one(0177700), "!s", m68000up|mcf5200 },
 
-{"pflusha",	two(0xf000,0x2400), two(0xffff,0xffff), "", m68030 | m68851 },
 {"pflusha",	one(0xf518),		one(0xfff8), "", m68040up },
+{"pflusha",	two(0xf000,0x2400), two(0xffff,0xffff), "", m68030 | m68851 },
 
 {"pflush",   two(0xf000,0x3010), two(0xffc0,0xfe10), "T3T9", m68030|m68851 },
 {"pflush",   two(0xf000,0x3810), two(0xffc0,0xfe10), "T3T9&s", m68030|m68851 },

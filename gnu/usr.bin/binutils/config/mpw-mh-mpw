@@ -111,11 +111,20 @@ EXTRALIBS_MWC68K = \Option-d
 	"{Libraries}"ToolLibs.o \Option-d
 	"{MW68KLibraries}MPW ANSI (4i) C.68K.Lib"
 
-EXTRALIBS_PPC = \Option-d
+EXTRALIBS_PPC_XCOFF = \Option-d
 	"{PPCLibraries}"StdCRuntime.o \Option-d
 	"{PPCLibraries}"InterfaceLib.xcoff \Option-d
 	"{PPCLibraries}"MathLib.xcoff \Option-d
 	"{PPCLibraries}"StdCLib.xcoff \Option-d
+	"{PPCLibraries}"PPCToolLibs.o \Option-d
+	"{PPCLibraries}"PPCCRuntime.o \Option-d
+	"{GCCPPCLibraries}"libgcc.xcoff
+
+EXTRALIBS_PPC = \Option-d
+	"{PPCLibraries}"StdCRuntime.o \Option-d
+	"{SharedLibraries}"InterfaceLib \Option-d
+	"{SharedLibraries}"MathLib \Option-d
+	"{SharedLibraries}"StdCLib \Option-d
 	"{PPCLibraries}"PPCToolLibs.o \Option-d
 	"{PPCLibraries}"PPCCRuntime.o \Option-d
 	"{GCCPPCLibraries}"libgcc.xcoff

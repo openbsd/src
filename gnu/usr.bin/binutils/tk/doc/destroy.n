@@ -1,0 +1,31 @@
+'\"
+'\" Copyright (c) 1990 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) destroy.n 1.13 96/03/26 18:21:26
+'\" 
+.so man.macros
+.TH destroy n "" Tk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+destroy \- Destroy one or more windows
+.SH SYNOPSIS
+\fBdestroy \fR?\fIwindow window ...\fR?
+.BE
+
+.SH DESCRIPTION
+.PP
+This command deletes the windows given by the
+\fIwindow\fR arguments, plus all of their descendants.
+If a \fIwindow\fR ``.'' is deleted then the entire application
+will be destroyed.
+The \fIwindow\fRs are destroyed in order, and if an error occurs
+in destroying a window the command aborts without destroying the
+remaining windows.
+
+.SH KEYWORDS
+application, destroy, window

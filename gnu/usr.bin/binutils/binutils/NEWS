@@ -1,5 +1,16 @@
 -*- text -*-
 
+Changes since binutils 2.7
+
+* The objdump disassembly format has been changed, and hopefully improved.  Use
+  the new --prefix-addresses option to get the old format.
+
+* Formats may now be specified as configuration triplets.  For example,
+  objdump -b i386-pc-linux.  The triplets are not passed through config.sub,
+  so they must be in canonical form.
+
+* Added --change-leading-char argument to objcopy.
+
 Changes since binutils 2.6
 
 * Added --enable-shared and --enable-commonbfdlib options to configure.

@@ -1,3 +1,167 @@
+Fri Nov  1 12:08:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils.texi: Add section on reporting bugs.
+
+Thu Oct 31 18:20:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (struct stab_handle): Add bincl_list field.
+	(parse_stab): Pass value to push_bincl.  Call find_excl for
+	N_EXCL.
+	(struct bincl_file): Add hash, file and file_types fields.
+	(push_bincl): Add hash parameter.  Save it in the new hash field.
+	Save the file number in the new file field.
+	(pop_bincl): Put the bincl_file on bincl_list, rather than freeing
+	it.  Save the file types in the new file_types field.
+	(find_excl): New static function.
+
+	* ieee.c (ieee_lineno): Don't compare line number addresses to
+	info->highaddr (undo part of October 28 patch).
+
+Tue Oct 29 16:40:22 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (objdump_print_value): Don't print the empty string
+	for zero.
+
+Mon Oct 28 16:58:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (struct stab_handle): Add function_end field.
+	(start_stab): Initialize function_end.
+	(finish_stab): Pass info->function_end to debug_end_function.
+	(parse_stab): If info->function_end is set, use it as the address
+	which ends a function.
+
+	* ieee.c (ieee_array_type): Remember the correct size.
+
+	* ieee.c (ieee_finish_compilation_unit): Permit coalescing ranges
+	that are up to 0x1000 bytes apart, not just 64.
+	(ieee_add_bb11_blocks): Don't bother to emit a BB11 that is less
+	than 0x100 bytes.
+	(ieee_lineno): Only emit line numbers that are less than
+	info->highaddr.
+
+Fri Oct 25 12:12:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (struct ieee_defined_enum): Add defined field.
+	(ieee_enum_type): If the enum tag has been seen before but not
+	defined, reuse the same type index, and define it.
+	(ieee_tag_type): If this enum has not been defined, add an
+	undefined entry to the list of enums.
+
+	* objdump.c (disassemble_bytes): Let the disassembler override the
+	number of bytes printed on a line.
+
+Thu Oct 24 16:42:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objdump.c (prefix_addresses): New static variable.
+	(long_options): Add "prefix-addresses".
+	(compare_symbols): Sort BSF_FUNCTION symbols before other
+	symbols.
+	(find_symbol_for_address): New static function, broken out of
+	objdump_print_address.
+	(objdump_print_addr_with_sym): New static function, broken out of
+	objdump_print_address.
+	(objdump_print_address): Call new functions.
+	(disassemble_bytes): New static function, broken out of
+	disassemble_data.  Change disassembly format, unless
+	prefix_addresses is set.
+	(disassemble_data): Call disassemble_bytes.  Unless
+	prefix_addresses is set, disassemble in chunks headed by a
+	symbol.
+	* binutils.texi, objdump.1: Document --prefix-addresses.
+
+	* rddbg.c (read_section_stabs_debugging_info): Preserve the
+	backslash when concatenating multiple stabs strings.
+
+Thu Oct 10 11:36:31 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* dlltool.c (scan_open_obj_file): Fix loop exit test.
+	Add missing parameter to def_exports.
+
+Tue Oct  8 12:06:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (LEX_OPTIONS): Set to empty string.  -I -Cem is the
+	default for flex, and is not recognized by lex.
+
+Thu Oct  3 17:41:23 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils.texi (Target Selection): Document that you can now
+	specify targets using configuration triplets.
+
+	* ar.c (usage): Declare.  Make sure all callers pass an argument.
+
+Thu Oct  3 15:39:42 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (clean): Remove config.log.
+
+Wed Oct  2 15:49:16 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* makefile.vms: Bump version date.
+
+Tue Oct  1 15:00:59 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* version.c (print_version): New function.
+	* bucomm.h (print_version): Declare.
+	* ar.c (program_version): Don't declare.
+	(do_show_version): Remove.
+	(usage): Add help parameter.  Print bug report address.
+	(main): Set is_ranlib at start.  Check for --help and --version.
+	Call print_version, not do_show_version.
+	* nlmconv.c (program_version): Don't declare.
+	(main): Call print_version.
+	(show_usage): Print bug report address.
+	* nm.c (program_version, print_version): Don't declare.
+	(usage): Print bug report address.
+	(main): Call print_version.
+	* objcopy.c (program_version): Don't declare.
+	(copy_usage): Print bug report address.
+	(strip_usage): Likewise.
+	(strip_main): Call print_version.
+	(copy_main): Likewise.
+	* objdump.c (program_version): Don't declare.
+	(usage): Print bug report address.
+	(main): Call print_version.
+	* size.c (program_version): Don't declare.
+	(usage): Print bug report address.
+	(main): Call print_version.
+	* strings.c (program_version): Don't declare.
+	(main): Call print_version.
+	(usage): Print bug report address.
+	* Makefile.in: Update dependencies.
+
+Thu Sep 19 14:53:15 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c: Revert Monday's reflocalp patch, and apply this patch
+	instead:
+ 	(write_ieee_debugging_info): Write a dummy type at the end of the
+	global type block.
+
+Mon Sep 16 15:30:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ieee.c (struct ieee_write_type): Add reflocalp field.
+	(ieee_pointer_type): Set reflocalp after pushing type.
+	(ieee_function_type): If reflocalp is set, make this type local.
+	(ieee_range_type, ieee_array_type, ieee_set_type): Likewise.
+	(ieee_const_type, ieee_volatile_type): Likewise.
+	(ieee_struct_field, ieee_class_baseclass): Likewise.
+
+	* ieee.c (struct ieee_info): Add global_types field.
+	(parse_ieee_bb): When starting a BB1, initialize the types field
+	to the global_types field.
+	(parse_ieee_be): When ending a BB2, copy the types field to the
+	global_types field.
+
+Fri Sep 13 17:32:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* objcopy.c (change_leading_char): New static variable.
+	(OPTION_CHANGE_LEADING_CHAR): Define.
+	(copy_options): Add "change-leading-char".
+	(copy_usage): Mention --change-leading-char.
+	(filter_symbols): Add obfd parameter.  Change all callers.
+	Implement change_leading_char.
+	(copy_object): Call filter_symbols if change_leading_char.
+	(copy_main): Handle OPTION_CHANGE_LEADING_CHAR.
+	* binutils.texi, objcopy.1: Document --change-leading-char.
+
 Tue Sep  3 14:05:29 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* ieee.c (ieee_enum_type): Don't check index into a NULL names

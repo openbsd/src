@@ -1,3 +1,178 @@
+Thu Nov  7 00:26:05 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_opcodes): Use DN01 for putx and
+	getx operand.  Fix opcode for mulqu imm,dn.
+
+Wed Nov  6 13:42:32 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_operands): Hijack "bits" field
+	in MN10300_OPERAND_SPLIT operands for how many bits
+	appear in the basic insn word.  Add IMM32_HIGH24,
+	IMM32_HIGH24_LOWSHIFT8, IMM8E_SHIFT8.  
+	(mn10300_opcodes): Use new operands as needed.
+
+	* mn10300-opc.c (mn10300_operands): Add IMM32_LOWSHIFT8
+	for bset, bclr, btst instructions.
+	(mn10300_opcodes): Use new IMM32_LOWSHIFT8 as needed.
+
+	* mn10300-opc.c (mn10300_operands): Remove many redundant
+	operands.  Update opcode table as appropriate.
+	(IMM32): Add MN10300_OPERAND_SPLIT flag.
+	(mn10300_opcodes): Fix single bit error in mov imm32,dn insn.
+
+Tue Nov  5 13:26:58 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_operands): Add DN2, DM2, AN2, AM2
+	operands (for indexed load/stores).  Fix bitpos for DI
+	operand.  Add SN8N_SHIFT8, IMM8_SHIFT8, and D16_SHIFT for the
+	few instructions that insert immediates/displacements in the
+	middle of the instruction.  Add IMM8E for 8 bit immediate in
+	the extended part of an instruction.
+	(mn10300_operands): Use new opcodes as appropriate.
+
+Mon Nov  4 12:50:40 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_operands): Add DN01 and AN01 for
+	a data/address register that appears in register field 0
+	and register field 1.
+	(mn10300_opcodes): Use DN01 and AN01 for mov/cmp imm8,DN/AN
+
+Fri Nov  1 10:29:11 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha-dis.c (print_insn_alpha): Use new NOPAL mask for
+	standard disassembly.
+
+	* alpha-opc.c (alpha_operands): Rearrange flags slot.
+	(alpha_opcodes): Add new BWX, CIX, and MAX instructions.  
+	Recategorize PALcode instructions.
+
+Tue Oct 29 16:30:28 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips-dis.c (_print_insn_mips): Don't print a trailing tab if
+	there are no operand types.
+
+Fri Oct 25 12:12:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386-dis.c (print_insn_x86): Set info->bytes_per_line to 5.
+
+Thu Oct 24 17:21:20 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips-dis.c (_print_insn_mips): Use a tab between the instruction
+	and the arguments.
+
+Tue Oct 22 23:32:56 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ppc-opc.c (PPCPWR2): Define.
+	(powerpc_opcodes): Use PPCPWR2 for fsqrt, rather than duplicating
+	it.
+
+Fri Oct 11 16:03:49 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_opcodes): Fix typo in opcode
+	field for movhu instruction.
+
+Thu Oct 10 10:25:58 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_opcodes): Fix typo in opcode field
+	for mov (abs16),DN.
+
+	* mn10300-opc.c (FMT*): Remove definitions.
+
+	* mn10300-opc.c (mn10300_opcodes): Fix destination register
+	for shift-by-register opcodes.
+
+	* mn10300-opc.c (mn10300_operands): Break DN, DM, AN, AM
+	into [AD][MN][01] for encoding the position of the register
+	in the opcode.
+
+Wed Oct  9 11:19:26 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_opcodes): Add "extended" instructions,
+	"putx", "getx", "mulq", "mulqu", "sat16", "sat24", "bsch".
+	
+Tue Oct  8 11:55:35 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (mn10300_operands): Remove "REGS" operand.
+	Fix various typos.  Add "PAREN" operand.
+	(MEM, MEM2): Define.
+	(mn10300_opcodes): Surround all memory addresses with "PAREN"
+	operands.  Fix several typos.
+
+	* mn10300-opc.c (mn10300_opcodes): Fix typos in yesterday's
+	changes.
+
+Mon Oct  7 16:48:45 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300-opc.c (FMT_XX): Renumber starting at one.
+	(mn10300_operands): Rough cut.  Enough to parse "mov" instructions
+	at this time.
+	(mn10300_opcodes): Break opcode format out into its own field.
+	Update many operand fields to deal with signed vs unsigned
+	issues.  Fix one or two typos in the "mov" instruction
+	opcode, mask and/or operand fields.
+ 
+Mon Oct  7 11:39:49 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* m68k-opc.c (plusha): Prefer encoding for m68040up, in case
+	m68851 wasn't reset.
+
+Thu Oct  3 17:17:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mn10300-opc.c (mn10300_opcodes): Add opcode & masks for
+	all opcodes.  Very rough cut at operands for all opcodes.
+
+	* mn10300-opc.c (mn10300_opcodes): Start fleshing out the
+	opcode table.
+
+Thu Oct  3 10:06:07 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10200-opc.c, mn10300-opc.c: New files.
+	* mn10200-dis.c, mn10300-dis.c: New files.
+	* mn10x00-opc.c, mn10x00-dis.c: Deleted.
+	* disassemble.c: Break mn10x00 support into 10200 and 10300
+	support.
+	* configure.in: Likewise.
+	* configure: Rebuilt.
+
+Thu Oct  3 15:59:12 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (MOSTLYCLEAN): Move config.log to distclean.
+
+Wed Oct  2 23:28:42 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10x00-opc.c, mn10x00-dis.c: New files for Matsushita
+	MN10x00 processors.
+	* disassemble (ARCH_mn10x00): Define.
+	(disassembler): Handle bfd_arch_mn10x00.
+	* configure.in: Recognize bfd_mn10x00_arch.
+	* configure: Rebuilt.
+
+Tue Oct  1 10:49:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386-dis.c (op_rtn): Change to be a pointer.  Adjust uses
+	accordingly.  Don't declare functions using op_rtn.
+
+Mon Sep 23 12:32:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* m68k-opc.c: Move the fmovemx data register cases before the
+ 	other cases, so that they get recognized before the data register
+ 	does gets treated as a degenerate register list.
+
+Tue Sep 17 12:06:51 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips-opc.c: Add a case for "div" and "divu" with two registers
+	and a destination of $0.
+
+Tue Sep 10 16:12:39 1996  Fred Fish  <fnf@rtl.cygnus.com>
+
+	* mips-dis.c (print_insn_arg): Add prototype.
+	(_print_insn_mips): Ditto.
+
+Mon Sep  9 14:26:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips-dis.c (print_insn_arg): Print condition code registers as
+ 	$fccN.
+
 Tue Sep  3 12:09:46 1996  Doug Evans  <dje@canuck.cygnus.com>
 
 	* sparc-opc.c (sparc_opcodes): Add setuw, setsw, setx.

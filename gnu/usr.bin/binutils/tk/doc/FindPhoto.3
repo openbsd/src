@@ -1,0 +1,196 @@
+'\"
+'\" Copyright (c) 1994 The Australian National University
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" Author: Paul Mackerras (paulus@cs.anu.edu.au),
+'\"	    Department of Computer Science,
+'\"	    Australian National University.
+'\"
+'\" "@(#) FindPhoto.3 1.9 96/03/18 14:25:42"
+'\"
+.so man.macros
+.TH Tk_FindPhoto 3 4.0 Tk "Tk Library Procedures"
+.BS
+.SH NAME
+Tk_FindPhoto, Tk_PhotoPutBlock, Tk_PhotoPutZoomedBlock, Tk_PhotoGetImage, Tk_PhotoBlank, Tk_PhotoExpand, Tk_PhotoGetSize, Tk_PhotoSetSize \- manipulate the image data stored in a photo image.
+.SH SYNOPSIS
+.nf
+\fB#include <tk.h>\fR
+\fB#include <tkPhoto.h>\fR
+.sp
+Tk_PhotoHandle
+\fBTk_FindPhoto\fR(\fIimageName\fR)
+.sp
+void
+\fBTk_PhotoPutBlock\fR(\fIhandle, blockPtr, x, y, width, height\fR)
+.sp
+void
+\fBTk_PhotoPutZoomedBlock\fR(\fIhandle, blockPtr, x, y, width, height,\
+zoomX, zoomY, subsampleX, subsampleY\fR)
+.sp
+int
+\fBTk_PhotoGetImage\fR(\fIhandle, blockPtr\fR)
+.sp
+void
+\fBTk_PhotoBlank\fR(\fIhandle\fR)
+.sp
+void
+\fBTk_PhotoExpand\fR(\fIhandle, width, height\fR)
+.sp
+void
+\fBTk_PhotoGetSize\fR(\fIhandle, widthPtr, heightPtr\fR)
+.sp
+void
+\fBTk_PhotoSetSize\fR(\fIhandle, width, height\fR)
+.SH ARGUMENTS
+.AS Tk_PhotoImageBlock window_path
+.AP char *imageName in
+Name of the photo image.
+.AP Tk_PhotoHandle handle in
+Opaque handle identifying the photo image to be affected.
+.AP Tk_PhotoImageBlock *blockPtr in
+Specifies the address and storage layout of image data.
+.AP int x in
+Specifies the X coordinate where the top-left corner of the block is
+to be placed within the image.
+.AP int y in
+Specifies the Y coordinate where the top-left corner of the block is
+to be placed within the image.
+.AP int width in
+Specifies the width of the image area to be affected (for
+\fBTk_PhotoPutBlock\fR) or the desired image width (for
+\fBTk_PhotoExpand\fR and \fBTk_PhotoSetSize\fR).
+.AP int height in
+Specifies the height of the image area to be affected (for
+\fBTk_PhotoPutBlock\fR) or the desired image height (for
+\fBTk_PhotoExpand\fR and \fBTk_PhotoSetSize\fR).
+.AP int *widthPtr out
+Pointer to location in which to store the image width.
+.AP int *heightPtr out
+Pointer to location in which to store the image height.
+.AP int subsampleX in
+Specifies the subsampling factor in the X direction for input
+image data.
+.AP int subsampleY in
+Specifies the subsampling factor in the Y direction for input
+image data.
+.AP int zoomX in
+Specifies the zoom factor to be applied in the X direction to pixels
+being written to the photo image.
+.AP int zoomY in
+Specifies the zoom factor to be applied in the Y direction to pixels
+being written to the photo image.
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBTk_FindPhoto\fR returns an opaque handle that is used to identify a
+particular photo image to the other procedures.  The parameter is the
+name of the image, that is, the name specified to the \fBimage create
+photo\fR command, or assigned by that command if no name was specified.
+.PP
+\fBTk_PhotoPutBlock\fR is used to supply blocks of image data to be
+displayed.  The call affects an area of the image of size
+\fIwidth\fR x \fIheight\fR pixels, with its top-left corner at
+coordinates (\fIx\fR,\fIy\fR).  All of \fIwidth\fR, \fIheight\fR,
+\fIx\fR, and \fIy\fR must be non-negative.
+If part of this area lies outside the
+current bounds of the image, the image will be expanded to include the
+area, unless the user has specified an explicit image size with the
+\fB\-width\fR and/or \fB\-height\fR widget configuration options
+(see photo(n)); in that
+case the area is silently clipped to the image boundaries.
+.PP
+The \fIblock\fR parameter is a pointer to a
+\fBTk_PhotoImageBlock\fR structure, defined as follows:
+.CS
+typedef struct {
+	unsigned char *\fIpixelPtr\fR;
+	int \fIwidth\fR;
+	int \fIheight\fR;
+	int \fIpitch\fR;
+	int \fIpixelSize\fR;
+	int \fIoffset[3]\fR;
+} Tk_PhotoImageBlock;
+.CE
+The \fIpixelPtr\fR field points to the first pixel, that is, the
+top-left pixel in the block.
+The \fIwidth\fR and \fIheight\fR fields specify the dimensions of the
+block of pixels.  The \fIpixelSize\fR field specifies the address
+difference between two horizontally adjacent pixels.  Often it is 3
+or 4, but it can have any value.  The \fIpitch\fR field specifies the
+address difference between two vertically adjacent pixels.  The
+\fIoffset\fR array contains the offsets from the address of a pixel
+to the addresses of the bytes containing the red, green and blue
+components.  These are normally 0, 1 and 2, but can have other values,
+e.g., for images that are stored as separate red, green and blue
+planes.
+.PP
+The value given for the \fIwidth\fR and \fIheight\fR parameters to
+\fBTk_PhotoPutBlock\fR do not have to correspond to the values specified
+in \fIblock\fR.  If they are smaller, \fBTk_PhotoPutBlock\fR extracts a
+sub-block from the image data supplied.  If they are larger, the data
+given are replicated (in a tiled fashion) to fill the specified area.
+These rules operate independently in the horizontal and vertical
+directions.
+.PP
+\fBTk_PhotoPutZoomedBlock\fR works like \fBTk_PhotoPutBlock\fR except that
+the image can be reduced or enlarged for display.  The
+\fIsubsampleX\fR and \fIsubsampleY\fR parameters allow the size of the
+image to be reduced by subsampling.
+\fBTk_PhotoPutZoomedBlock\fR will use only pixels from the input image
+whose X coordinates are multiples of \fIsubsampleX\fR, and whose Y
+coordinates are multiples of \fIsubsampleY\fR.  For example, an image
+of 512x512 pixels can be reduced to 256x256 by setting
+\fIsubsampleX\fR and \fIsubsampleY\fR to 2.
+.PP
+The \fIzoomX\fR and \fIzoomY\fR parameters allow the image to be
+enlarged by pixel replication.  Each pixel of the (possibly subsampled)
+input image will be written to a block \fIzoomX\fR pixels wide and
+\fIzoomY\fR pixels high of the displayed image.  Subsampling and
+zooming can be used together for special effects.
+.PP
+\fBTk_PhotoGetImage\fR can be used to retrieve image data from a photo
+image.  \fBTk_PhotoGetImage\fR fills
+in the structure pointed to by the \fIblockPtr\fR parameter with values
+that describe the address and layout of the image data that the
+photo image has stored internally.  The values are valid
+until the image is destroyed or its size is changed.
+\fBTk_PhotoGetImage\fR returns 1 for compatibility with the
+corresponding procedure in the old photo widget.
+.PP
+\fBTk_PhotoBlank\fR blanks the entire area of the
+photo image.  Blank areas of a photo image are transparent.
+.PP
+\fBTk_PhotoExpand\fR requests that the widget's image be expanded to be
+at least \fIwidth\fR x \fIheight\fR pixels in size.  The width and/or
+height are unchanged if the user has specified an explicit image width
+or height with the \fB\-width\fR and/or \fB\-height\fR configuration
+options, respectively.
+If the image data
+are being supplied in many small blocks, it is more efficient to use
+\fBTk_PhotoExpand\fR or \fBTk_PhotoSetSize\fR at the beginning rather than
+allowing the image to expand in many small increments as image blocks
+are supplied.
+.PP
+\fBTk_PhotoSetSize\fR specifies the size of the image, as if the user
+had specified the given \fIwidth\fR and \fIheight\fR values to the
+\fB\-width\fR and \fB\-height\fR configuration options.  A value of
+zero for \fIwidth\fR or \fIheight\fR does not change the image's width
+or height, but allows the width or height to be changed by subsequent
+calls to \fBTk_PhotoPutBlock\fR, \fBTk_PhotoPutZoomedBlock\fR or
+\fBTk_PhotoExpand\fR.
+.PP
+\fBTk_PhotoGetSize\fR returns the dimensions of the image in
+*\fIwidthPtr\fR and *\fIheightPtr\fR.
+
+.SH CREDITS
+.PP
+The code for the photo image type was developed by Paul Mackerras,
+based on his earlier photo widget code.
+
+.SH KEYWORDS
+photo, image

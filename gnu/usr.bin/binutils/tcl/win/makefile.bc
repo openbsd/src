@@ -1,0 +1,304 @@
+# Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# SCCS: @(#) makefile.bc 1.51 96/04/18 17:19:31
+#
+# Borland C++ 4.5 makefile
+#
+
+#
+# Project directories
+#
+# ROOT = top of source tree
+# TMPDIR = location where .obj files should be stored during build
+# TOOLS = location of compiler and other development tools
+#
+
+ROOT	= ..
+TMPDIR	= .
+TOOLS	= d:\bc45
+
+# uncomment the following line to compile with symbols
+#DEBUG=1
+
+# uncomment the following two lines to compile with TCL_MEM_DEBUG
+#DEBUGDEFINES	=TCL_MEM_DEBUG
+
+#
+# Borland C++ tools
+#
+
+BORLAND = $(TOOLS)
+IMPLIB  = $(BORLAND)\bin\Implib
+BCC32   = $(BORLAND)\bin\Bcc32
+TLINK32 = $(BORLAND)\bin\tlink32
+RC	= $(BORLAND)\bin\brcc32
+BCC     = $(BORLAND)\bin\Bcc
+TLINK	= $(BORLAND)\bin\tlink
+RC16	= $(BORLAND)\bin\brcc32 -31
+CP      = copy
+RM      = del
+
+INCLUDES =	$(BORLAND)\include;$(ROOT)\generic;$(ROOT)\win
+LIBDIRS =	$(BORLAND)\lib;$(ROOT)\win
+
+
+!ifndef DEBUG
+
+# these macros cause maximum optimization and no symbols
+DEBUGLDFLAGS = 
+DEBUGCCFLAGS = -v- -vi- -O2
+DEBUGLDFLAGS16 = -Oc -Oi -Oa -Or
+!else
+
+# these macros enable debugging
+DEBUGLDFLAGS = -v
+DEBUGCCFLAGS = -k -Od -v
+DEBUGLDFLAGS16 = 
+
+!endif
+
+DEFINES = _RTLDLL;$(DEBUGDEFINES)
+PROJECTCCFLAGS= $(DEBUGCCFLAGS) -w-par -w-stu
+
+LNFLAGS_exe = -Tpe -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0w32
+LNFLAGS_CONSOLE_exe = -Tpe -ap -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0x32
+LNFLAGS_dll = -Tpd -aa -c $(DEBUGLDFLAGS) $(BORLAND)\lib\c0d32
+LNFLAGS16_dll = -Twd -c -C -A=16 $(DEBUGLDFLAGS16)
+LNLIBS_exe = $(TCLLIB) import32 cw32i
+LNLIBS_dll = import32 cw32i
+LNLIBS16_dll = import
+
+# 
+# Global makefile settings
+#
+
+.AUTODEPEND
+.CACHEAUTODEPEND
+
+.suffixes: .c .dll .lib .obj .exe
+
+.path.c=$(ROOT)\win;$(ROOT)\generic
+.path.obj=$(TMPDIR)
+.path.dll=$(ROOT)\win;$(WINDIR);$(WINDIR)\SYSTEM32;$(WINDIR)\SYSTEM
+
+TCLSHOBJS = \
+	$(TMPDIR)\tclAppInit.obj
+
+TCLTESTOBJS = \
+	$(TMPDIR)\tclTest.obj \
+	$(TMPDIR)\tclWinTest.obj \
+	$(TMPDIR)\testMain.obj
+
+TCLOBJS = \
+	$(TMPDIR)\panic.obj \
+	$(TMPDIR)\regexp.obj \
+	$(TMPDIR)\tclAsync.obj \
+	$(TMPDIR)\tclBasic.obj \
+	$(TMPDIR)\tclCkalloc.obj \
+	$(TMPDIR)\tclClock.obj \
+	$(TMPDIR)\tclCmdAH.obj \
+	$(TMPDIR)\tclCmdIL.obj \
+	$(TMPDIR)\tclCmdMZ.obj \
+	$(TMPDIR)\tclDate.obj \
+	$(TMPDIR)\tclEnv.obj \
+	$(TMPDIR)\tclEvent.obj \
+	$(TMPDIR)\tclExpr.obj \
+	$(TMPDIR)\tclFHandle.obj \
+	$(TMPDIR)\tclFileName.obj \
+	$(TMPDIR)\tclGet.obj \
+	$(TMPDIR)\tclHash.obj \
+	$(TMPDIR)\tclHistory.obj \
+	$(TMPDIR)\tclIO.obj \
+	$(TMPDIR)\tclIOCmd.obj \
+	$(TMPDIR)\tclIOSock.obj \
+	$(TMPDIR)\tclIOUtil.obj \
+	$(TMPDIR)\tclInterp.obj \
+	$(TMPDIR)\tclLink.obj \
+	$(TMPDIR)\tclLoad.obj \
+	$(TMPDIR)\tclMain.obj \
+	$(TMPDIR)\tclNotify.obj \
+	$(TMPDIR)\tclParse.obj \
+	$(TMPDIR)\tclPkg.obj \
+	$(TMPDIR)\tclPosixStr.obj \
+	$(TMPDIR)\tclPreserve.obj \
+	$(TMPDIR)\tclProc.obj \
+	$(TMPDIR)\tclUtil.obj \
+	$(TMPDIR)\tclVar.obj \
+	$(TMPDIR)\tclWin32Dll.obj \
+	$(TMPDIR)\tclWinChan.obj \
+	$(TMPDIR)\tclWinError.obj \
+	$(TMPDIR)\tclWinFile.obj \
+	$(TMPDIR)\tclWinInit.obj \
+	$(TMPDIR)\tclWinLoad.obj \
+	$(TMPDIR)\tclWinMtherr.obj \
+	$(TMPDIR)\tclWinNotify.obj \
+	$(TMPDIR)\tclWinPipe.obj \
+	$(TMPDIR)\tclWinSock.obj \
+	$(TMPDIR)\tclWinTime.obj \
+	$(TMPDIR)\tclWinUtil.obj \
+
+TCL16OBJS = $(TMPDIR)\tclWin16.obj
+
+DUMPEXTSOBJS = $(TMPDIR)\winDumpExts.obj
+
+TCLLIB = tcl75.lib
+TCLDLL = tcl75.dll
+TCL16DLL = tcl1675.dll
+TCLSH = tclsh75.exe
+TCLTEST = tcltest.exe
+DUMPEXTS = dumpexts.exe
+
+#
+# Targets
+#
+
+all:  cfgcln $(DUMPEXTS) cfgdll $(TCLDLL) cfg16dll $(TCL16DLL) cfgexe $(TCLSH) cfgcln
+test: cfgcln $(DUMPEXTS) cfgdll $(TCLDLL) cfg16dll $(TCL16DLL) cfgtest $(TCLTEST) cfgcln
+
+# Implicit Targets
+
+.c.obj:
+	@$(BCC32) {$< }
+
+.dll.lib:
+	$(IMPLIB) -c $@ $<
+
+.rc.res:
+	$(RC) -i$(INCLUDES) $<
+
+#
+# Special case object file targets
+#
+
+$(TMPDIR)\testMain.obj : $(ROOT)\win\tclAppInit.c
+	$(BCC32) -c -o$@ $(ROOT)\win\tclAppInit.c
+
+$(TMPDIR)\tclWin16.obj : $(ROOT)\win\tclWin16.c
+	$(BCC) -c -o$@ $(ROOT)\win\tclWin16.c
+
+#
+# Configuration file targets - these files are implicitly used by the compiler
+#
+
+cfgdll:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -WD
+		-D$(DEFINES) -3 -d -w $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfg16dll:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -WD
+		-D$(DEFINES) -3 -d -w $(PROJECTCCFLAGS)
+| turboc.cfg >NUL
+
+cfgexe:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -W
+		-D$(DEFINES) -3 -d -w $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgtest:
+	@$(CP) &&|
+		-n$(TMPDIR) -I$(INCLUDES) -c -W
+		-D$(DEFINES);TCL_TEST -3 -d -w $(PROJECTCCFLAGS)
+| bcc32.cfg >NUL
+
+cfgcln:
+	-@$(RM) *.cfg
+
+#
+# Executable targets
+#
+
+dumpexts.exe: winDumpExts.c
+	$(BCC32) -edumpexts.exe -tWC winDumpExts.c
+
+$(TCLDLL): $(TCLOBJS) tcl.def tcl.res
+	$(TLINK32) $(LNFLAGS_dll) @&&|
+		$(TCLOBJS)
+$@
+-x
+$(LNLIBS_dll)
+|, tcl.def, tcl.res
+
+$(TCL16DLL) : $(TCL16OBJS) tcl16.rc
+	$(RC16) -i$(INCLUDES) tcl16.rc
+	$(TLINK) @&&|
+		$(LNFLAGS16_dll) $(TCL16OBJS)
+$@
+-x
+$(LNLIBS16_dll)
+|, &&|
+LIBRARY $&;dll
+EXETYPE WINDOWS
+CODE PRELOAD MOVEABLE DISCARDABLE
+DATA PRELOAD MOVEABLE SINGLE
+HEAPSIZE 1024
+|, tcl16.res
+
+$(TCLSH): $(TCLSHOBJS) $(ROOT)\win\$(TCLLIB) tclsh.res
+	$(TLINK32) $(LNFLAGS_CONSOLE_exe) @&&|
+		$(TCLSHOBJS)
+$@
+-x
+$(LNLIBS_exe)
+|, &&|
+EXETYPE WINDOWS
+CODE PRELOAD MOVEABLE DISCARDABLE
+DATA PRELOAD MOVEABLE MULTIPLE
+|, tclsh.res
+
+$(TCLTEST): $(TCLTESTOBJS) $(ROOT)\win\$(TCLLIB)
+	$(TLINK32) $(LNFLAGS_CONSOLE_exe) @&&|
+		$(TCLTESTOBJS)
+$@
+-x
+$(LNLIBS_exe)
+|, &&|
+EXETYPE WINDOWS
+CODE PRELOAD MOVEABLE DISCARDABLE
+DATA PRELOAD MOVEABLE MULTIPLE
+|, 
+
+# The following rule automatically generates a tcl.def file containing
+# an export entry for every public symbol in the tcl.dll library.
+
+tcl.def: $(TCLOBJS)
+	$(DUMPEXTS) -o tcl.def $(TCLDLL) @&&|
+		$(TCLOBJS)
+|
+
+# the following two rules are a hack to get around the fact that the
+# 16-bit compiler doesn't handle long file names :-(
+
+$(ROOT)\win\tclWinIn.h: $(ROOT)\win\tclWinInt.h
+	$(CP) $(ROOT)\win\tclWinInt.h $(ROOT)\win\tclWinIn.h
+
+$(ROOT)\win\tclWin16.c: $(ROOT)\win\tclWinIn.h
+
+# debugging rules, the .dll and .exe files must be in the same
+# directory as the object files for debugging purposes
+
+$(TMPDIR)\$(TCLDLL): $(TCLDLL)
+	$(CP) $(TCLDLL) $(TMPDIR)
+
+$(TMPDIR)\$(TCLSH): $(TCLSH)
+	$(CP) $(TCLSH) $(TMPDIR)
+
+$(TMPDIR)\$(TCLTEST): $(TCLTEST)
+	$(CP) $(TCLTEST) $(TMPDIR)
+
+debug: $(TMPDIR)\$(TCLDLL) $(TMPDIR)\$(TCLTEST)
+
+
+# remove all generated files
+
+clean:
+	-@$(RM) *.exe
+	-@$(RM) *.lib
+	-@$(RM) *.dll
+	-@$(RM) *.res
+	-@$(RM) $(ROOT)\win\tclWinIn.h
+	-@$(RM) tcl.def
+	-@$(RM) $(TMPDIR)\*.obj
+	-@$(RM) *.cfg

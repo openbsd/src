@@ -51,6 +51,9 @@
 #define TRUE  !FALSE
 #endif
 
+#define obj_begin() elf_begin ()
+extern void elf_begin PARAMS ((void));
+
 /* should be conditional on address size! */
 #define elf_symbol(asymbol) ((elf_symbol_type *)(&(asymbol)->the_bfd))
 
@@ -64,11 +67,14 @@
 
 extern asection *gdb_section;
 
-#define obj_frob_file()	elf_frob_file()
-
+#define obj_frob_file  elf_frob_file
 extern void elf_frob_file PARAMS ((void));
-extern void elf_file_symbol PARAMS ((char *));
+
+#define obj_frob_file_after_relocs  elf_frob_file_after_relocs
+extern void elf_frob_file_after_relocs PARAMS ((void));
+
 #define obj_app_file elf_file_symbol
+extern void elf_file_symbol PARAMS ((char *));
 
 extern void obj_elf_section PARAMS ((int));
 extern void obj_elf_previous PARAMS ((int));

@@ -1,3 +1,161 @@
+Mon Nov 11 10:09:08 1996  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* install.sh (chmodcmd): Set to null if the DST directory already
+	exists.
+
+Mon Nov 11 10:43:41 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.in (powerpc*-{eabi,elf,linux,rtem,sysv,solaris}*): Do
+	not use mt-ppc target Makefile fragment any more.
+
+Sun Nov  3 19:17:07 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* configure.in (*-*-windows):  Exclude everything but those dirs
+	needed to build windows.
+
+Tue Oct 29 16:41:31 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* Makefile.in (all-target-winsup): Depend on all-target-librx.
+
+Mon Oct 28 17:32:46 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* configure.in:  Exclude mmalloc from i386-windows.
+	* config/mh-windows:  Add rules for building MSVC makefiles.
+
+Thu Oct 24 09:22:46 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* Undo my previous change.
+
+Thu Oct 24 12:12:04 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (EXTRA_GCC_FLAGS): Pass down GCC_FOR_TARGET
+	unconditionally.
+	(MAKEOVERRIDES): Define (revert this part of October 18 change).
+
+Thu Oct 24 09:02:07 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* Makefile.in (FLAGS_TO_PASS):  Add $(HOST_FLAGS) to allow the
+	host to add it's own flags.
+	* config/mh-windows (HOST_FLAGS):  Set srcroot, which is needed
+	for MSVC build procedure.
+
+Tue Oct 22 15:20:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Handle GCC_FOR_TARGET like CC_FOR_TARGET.
+
+Fri Oct 18 13:37:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (CC_FOR_TARGET): Check for xgcc, not Makefile.
+	(CXX_FOR_TARGET): Likewise.
+	(GCC_FOR_TARGET): Define.
+	(BASE_FLAGS_TO_PASS): Remove GCC_FOR_TARGET.
+	(EXTRA_GCC_FLAGS): Define GCC_FOR_TARGET based on whether
+	CC_FOR_TARGET was specified on the command line.
+	(MAKEOVERRIDES): Don't define.
+
+Thu Oct 10 10:37:17 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* config.sub (-apple*): Remove, now redundant.
+
+Thu Oct 10 12:30:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Don't get confused by CPU-VENDOR-linux-gnu.
+
+	* configure: Rework yesterday's sed script patch.
+
+	* config.sub: Merge with FSF.
+
+Wed Oct  9 17:24:59 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	* config.guess:  Merge from FSF.
+
+	1996-09-12  Richard Stallman  <rms@ethanol.gnu.ai.mit.edu>
+        * config.guess: Use pc instead of unknown, for pc clone systems.
+        Change linux to linux-gnu.
+
+	Mon Jul 15 23:51:11 1996  Karl Heuer  <kwzh@gnu.ai.mit.edu>
+        * config.guess: Avoid non-portable tr syntax.
+
+Wed Oct  9 06:06:46 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* test-build.mk (HOLES): Add "xargs" for gdb.
+
+	* configure: Avoid hpux10.20 sed bug.
+
+Tue Oct  8 08:32:48 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* configure.in config/mh-windows:  Add support for windows host
+	(that is a build done under the Microsoft build environment).
+
+Tue Oct  8 10:39:08 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in: Replace all uses of srcroot with s, to shrink
+	command line lengths.
+
+	Patches from Geoffrey Noer <noer@cygnus.com>:
+	* configure.in: If configuring for newlib, pass --with-newlib to
+	subdirectories.
+	* Makefile.in (CC_FOR_TARGET): If winsup/Makefile exists, pass a
+	-Bnewlib/ and -Lwinsup to gcc.
+	(CXX_FOR_TARGET): Likewise.
+
+Mon Oct  7 10:59:35 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (ETC_SUPPORT): Add configure.
+
+Fri Oct  4 12:22:58 1996  Angela Marie Thomas (angela@cygnus.com)
+
+	* configure.in: Use config/mh-dgux386 for i[345]86-dg-dgux 
+	host configuration file.
+
+Thu Oct  3 09:28:25 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in: Break mn10x00 support into separate
+	mn10200 and mn10300 configurations.
+	* config.sub: Likewise.
+
+Wed Oct  2 22:27:52 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in: Add lots of stuff to noconfigdirs for
+	the mn10x00 targets.
+
+	* config.sub, configure.in: Add mn10x00 support.
+
+Wed Oct  2 15:52:36 1996  Klaus Kaempf  <kkaempf@progis.de>
+
+	* make-all.com: Call conf-a-gas, not config-a-gas.
+
+Tue Oct  1 01:28:41 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* configure.in (noconfigdirs): Don't build libgloss for arm-coff
+ 	targets.
+
+Mon Sep 30 14:24:01 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-README: Add much more detail for native PowerMac.
+	* mpw-install: New file.
+	* mpw-configure: Add --norecursion and --help options.
+	* mpw-config.in: Translate readme and install files when
+	copying to objdir.
+	* mpw-build.in: Don't always depend on byacc and flex.
+	(install-only-top): New action.
+
+Tue Sep 17 12:15:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.sub: Recognize mips64vr5000.
+
+Mon Sep 16 17:00:52 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use a single line for host_tools and native_only.
+
+Thu Sep  5 13:52:47 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in (inet-install): Don't run install-gzip.
+
+Wed Sep  4 17:26:13 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* configure.in:  Don't config lots of things for *-*-windows*.
+
 Sat Aug 31 11:45:57 1996  Stan Shebs  <shebs@andros.cygnus.com>
 
 	* mpw-config.in: Test for mpw-true, true, and null-command scripts.

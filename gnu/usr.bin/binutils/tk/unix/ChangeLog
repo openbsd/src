@@ -1,0 +1,111 @@
+Mon Aug 26 09:44:57 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in: Use TK_SHARED_LIB_FILE, TK_UNSHARED_LIB_FILE.
+	* configure: Regenerated.
+	* configure.in: Introduct TK_SHARED_LIB_FILE and
+	TK_UNSHARED_LIB_FILE.
+
+	* configure: Regenerated.
+	* configure.in: AC_SUBST more variables so shared/unshared lib
+	targets can be separate.
+
+	* Makefile.in (libtk${TCL_SHARED_LIB_SUFFIX}): New target.
+	(libtk${TCL_SHARED_LIB_SUFFIX}): New target.
+
+Fri Aug 23 13:40:25 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure: Regenerated.
+	* configure.in: Suppress --enable-shared when statically linking
+	libX11.
+
+Wed Aug 14 09:21:16 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in (install-man): Man page permissions are 644, not
+	444.
+
+Mon Aug  5 10:47:45 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in (configure): Don't depend on configure.in.  Work
+	when not in srcdir.
+
+	* Makefile.in (config.status): New target.
+	(Makefile): Depend on config.status.
+
+Fri Aug  2 13:51:59 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure.in: Find Tcl source directory relative to $srcdir.
+	* configure: Regenerated.
+
+Wed Jun 26 12:51:49 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (TK_LIBRARY, LIB_INSTALL_DIR, BIN_INSTALL_DIR,
+	BIN_DIR, INCLUDE_INSTALL_DIR, MAN_INSTALL_DIR): Use autoconf-set
+	values.
+	(install-libraries, install-demos): Use @datadir@ instead of 
+	hard-coded dirname.
+	* configure.in (AC_PREREQ): autoconf 2.5 or higher.
+	* configure: Rebuilt.
+
+Mon Jun 10 16:22:12 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in (install-binaries): Don't add version info to
+	installed wish.
+
+Tue Jun  4 17:57:46 1996  Gordon Irlam  <gordoni@snuffle.cygnus.com>
+
+	* install-sh: Add MIT copyright.
+
+Thu May  9 10:01:48 1996  Tom Tromey  <tromey@snuffle.cygnus.com>
+
+	* Makefile.in (CFLAGS): Set to @CFLAGS@.
+
+Wed May  8 08:57:06 1996  Tom Tromey  <tromey@snuffle.cygnus.com>
+
+	* configure: Regenerated.
+	* configure.in: In Solaris case, must link against libX11 twice.
+
+Tue May  7 11:22:10 1996  Tom Tromey  <tromey@snuffle.cygnus.com>
+
+	* configure: Regenerated.
+	* configure.in: Run AC_PROG_CC.
+
+	* mkLinks: Find man pages in section 3, not section n.
+
+	* Makefile.in (install-man): Install man pages in section 3, not
+	section n.
+
+	* mkLinks: Use cp, not ln.
+
+Tue Apr 23 13:13:59 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in (CC_SWITCHES): Define TK_LIB_TRAILER.
+	(TK_LIB_TRAILER): New macro.
+
+	* tkUnixInit.c (TkPlatformInit): Handle location independence.
+
+Fri Mar 29 08:23:15 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* mkLinks: Exit with status 0.
+
+Fri Mar  1 11:49:57 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure: Regenerated.
+	* configure.in: Use AC_CANONICAL_SYSTEM.  Look in Cygnus build
+	tree for config.sub and config.guess.
+
+Wed Jan 24 12:39:28 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* Makefile.in: Use maintainer-clean, not realclean.
+
+Thu Jan 11 09:13:11 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure.in: Look in ../../tcl, not ../../tcl7.5a.
+
+Wed Jan 10 12:09:58 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure.in: Use AC_CHECK_HEADERS, not AC_HAVE_HEADERS.
+
+	* Makefile.in (TCL_DIR): Look in tcl, not tcl7.5a2.
+	(TCL_BIN_DIR): Ditto.
+	(TCLDIR): Ditto.
+

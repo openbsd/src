@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ECOFF_32
 #include "ecoffswap.h"
 
+static bfd_reloc_status_type mips32_64bit_reloc
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   PARAMS ((bfd *, bfd_reloc_code_real_type));
 static void mips_info_to_howto_rel
@@ -56,6 +58,7 @@ static boolean mips_elf_create_procedure_table
 	   struct ecoff_debug_info *));
 static int mips_elf_additional_program_headers PARAMS ((bfd *));
 static boolean mips_elf_modify_segment_map PARAMS ((bfd *));
+static INLINE int elf_mips_isa PARAMS ((flagword));
 static boolean mips_elf32_section_from_shdr
   PARAMS ((bfd *, Elf32_Internal_Shdr *, char *));
 static boolean mips_elf32_section_processing
@@ -537,8 +540,23 @@ static reloc_howto_type elf_mips_howto_table[] =
 	 0x000007c4,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* A 64 bit relocation.  Presumably not used in 32 bit ELF.  */
-  { R_MIPS_64 },
+  /* A 64 bit relocation.  This is used in 32 bit ELF when addresses
+     are 64 bits long; the upper 32 bits are simply a sign extension.
+     The fields of the howto should be the same as for R_MIPS_32,
+     other than the type, name, and special_function.  */
+  HOWTO (R_MIPS_64,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 mips32_64bit_reloc,	/* special_function */
+	 "R_MIPS_64",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
 
   /* Displacement in the global offset table.  */
   /* FIXME: Not handled correctly.  */
@@ -1225,6 +1243,53 @@ gprel32_with_gp (abfd, symbol, reloc_entry, input_section, relocateable, data,
   return bfd_reloc_ok;
 }
 
+/* Handle a 64 bit reloc in a 32 bit MIPS ELF file.  These are
+   generated when addreses are 64 bits.  The upper 32 bits are a simle
+   sign extension.  */
+
+static bfd_reloc_status_type
+mips32_64bit_reloc (abfd, reloc_entry, symbol, data, input_section,
+		    output_bfd, error_message)
+     bfd *abfd;
+     arelent *reloc_entry;
+     asymbol *symbol;
+     PTR data;
+     asection *input_section;
+     bfd *output_bfd;
+     char **error_message;
+{
+  bfd_reloc_status_type r;
+  arelent reloc32;
+  unsigned long val;
+  bfd_size_type addr;
+
+  r = bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
+			     input_section, output_bfd, error_message);
+  if (r != bfd_reloc_continue)
+    return r;
+
+  /* Do a normal 32 bit relocation on the lower 32 bits.  */
+  reloc32 = *reloc_entry;
+  if (bfd_big_endian (abfd))
+    reloc32.address += 4;
+  reloc32.howto = &elf_mips_howto_table[R_MIPS_32];
+  r = bfd_perform_relocation (abfd, &reloc32, data, input_section,
+			      output_bfd, error_message);
+
+  /* Sign extend into the upper 32 bits.  */
+  val = bfd_get_32 (abfd, (bfd_byte *) data + reloc32.address);
+  if ((val & 0x80000000) != 0)
+    val = 0xffffffff;
+  else
+    val = 0;
+  addr = reloc_entry->address;
+  if (bfd_little_endian (abfd))
+    addr += 4;
+  bfd_put_32 (abfd, val, (bfd_byte *) data + addr);
+
+  return r;
+}
+
 /* A mapping from BFD reloc types to MIPS ELF reloc types.  */
 
 struct elf_reloc_map {
@@ -1238,6 +1303,7 @@ static CONST struct elf_reloc_map mips_reloc_map[] =
   { BFD_RELOC_16, R_MIPS_16 },
   { BFD_RELOC_32, R_MIPS_32 },
   { BFD_RELOC_CTOR, R_MIPS_32 },
+  { BFD_RELOC_64, R_MIPS_64 },
   { BFD_RELOC_MIPS_JMP, R_MIPS_26 },
   { BFD_RELOC_HI16_S, R_MIPS_HI16 },
   { BFD_RELOC_LO16, R_MIPS_LO16 },
@@ -1648,10 +1714,8 @@ _bfd_mips_elf_copy_private_bfd_data (ibfd, obfd)
      bfd *ibfd;
      bfd *obfd;
 {
-  /* This function is selected based on the input vector.  We only
-     want to copy information over if the output BFD also uses Elf
-     format.  */
-  if (bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return true;
 
   BFD_ASSERT (!elf_flags_init (obfd)
@@ -1662,6 +1726,26 @@ _bfd_mips_elf_copy_private_bfd_data (ibfd, obfd)
   elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
   elf_flags_init (obfd) = true;
   return true;
+}
+
+/* Return the ISA for a MIPS e_flags value.  */
+
+static INLINE int
+elf_mips_isa (flags)
+     flagword flags;
+{
+  switch (flags & EF_MIPS_ARCH)
+    {
+    case E_MIPS_ARCH_1:
+      return 1;
+    case E_MIPS_ARCH_2:
+      return 2;
+    case E_MIPS_ARCH_3:
+      return 3;
+    case E_MIPS_ARCH_4:
+      return 4;
+    }
+  return 4;
 }
 
 /* Merge backend specific data from an object file to the output
@@ -1689,10 +1773,8 @@ _bfd_mips_elf_merge_private_bfd_data (ibfd, obfd)
       return false;
     }
 
-  /* This function is selected based on the input vector.  We only
-     want to copy information over if the output BFD also uses Elf
-     format.  */
-  if (bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return true;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
@@ -1716,6 +1798,7 @@ _bfd_mips_elf_merge_private_bfd_data (ibfd, obfd)
       if ((new_flags & EF_MIPS_PIC) != (old_flags & EF_MIPS_PIC))
 	{
 	  new_flags &= ~EF_MIPS_PIC;
+	  old_flags &= ~EF_MIPS_PIC;
 	  (*_bfd_error_handler)
 	    ("%s: needs all files compiled with -fPIC",
 	     bfd_get_filename (ibfd));
@@ -1724,9 +1807,30 @@ _bfd_mips_elf_merge_private_bfd_data (ibfd, obfd)
       if ((new_flags & EF_MIPS_CPIC) != (old_flags & EF_MIPS_CPIC))
 	{
 	  new_flags &= ~EF_MIPS_CPIC;
+	  old_flags &= ~EF_MIPS_CPIC;
 	  (*_bfd_error_handler)
 	    ("%s: needs all files compiled with -mabicalls",
 	     bfd_get_filename (ibfd));
+	}
+
+      /* Don't warn about mixing -mips1 and -mips2 code, or mixing
+         -mips3 and -mips4 code.  They will normally use the same data
+         sizes and calling conventions.  */
+      if ((new_flags & EF_MIPS_ARCH) != (old_flags & EF_MIPS_ARCH))
+	{
+	  int new_isa, old_isa;
+
+	  new_isa = elf_mips_isa (new_flags);
+	  old_isa = elf_mips_isa (old_flags);
+	  if ((new_isa == 1 || new_isa == 2)
+	      ? (old_isa != 1 && old_isa != 2)
+	      : (old_isa == 1 || old_isa == 2))
+	    (*_bfd_error_handler)
+	      ("%s: ISA mismatch (-mips%d) with previous modules (-mips%d)",
+	       bfd_get_filename (ibfd), new_isa, old_isa);
+
+	  new_flags &= ~ EF_MIPS_ARCH;
+	  old_flags &= ~ EF_MIPS_ARCH;
 	}
 
       /* Warn about any other mismatches */
@@ -4306,7 +4410,11 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		  /* If this is HI16 or GOT16 with an associated LO16,
 		     adjust the addend accordingly.  Otherwise, just
 		     relocate.  */
-		  if (r_type != R_MIPS_HI16 && r_type != R_MIPS_GOT16)
+		  if (r_type == R_MIPS_64 && bfd_big_endian (input_bfd))
+		    r = _bfd_relocate_contents (howto, input_bfd,
+						addend,
+						contents + rel->r_offset + 4);
+		  else if (r_type != R_MIPS_HI16 && r_type != R_MIPS_GOT16)
 		    r = _bfd_relocate_contents (howto, input_bfd,
 						addend,
 						contents + rel->r_offset);
@@ -4649,6 +4757,28 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		r = _bfd_final_link_relocate (howto, input_bfd, input_section,
 					      contents, rel->r_offset,
 					      relocation, addend);
+	    }
+	  else if (r_type == R_MIPS_64)
+	    {
+	      bfd_size_type addr;
+	      unsigned long val;
+
+	      /* Do a 32 bit relocation, and sign extend to 64 bits.  */
+	      addr = rel->r_offset;
+	      if (bfd_big_endian (input_bfd))
+		addr += 4;
+	      r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+					    contents, addr, relocation,
+					    addend);
+	      val = bfd_get_32 (input_bfd, contents + addr);
+	      if ((val & 0x80000000) != 0)
+		val = 0xffffffff;
+	      else
+		val = 0;
+	      addr = rel->r_offset;
+	      if (bfd_little_endian (input_bfd))
+		addr += 4;
+	      bfd_put_32 (input_bfd, val, contents + addr);
 	    }
 	  else
 	    r = _bfd_final_link_relocate (howto, input_bfd, input_section,

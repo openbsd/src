@@ -1,3 +1,33 @@
+Wed Oct 23 00:34:07 1996  Angela Marie Thomas (angela@cygnus.com)
+
+	* Lots of patches from progressive...
+ 	* Install.in: restore DDOPTS for AIX 4.x
+ 	* Install.in, subst-strings: add case for DG Aviion
+ 	* subst-strings: fix typo in INSTALLdir var setting
+ 	* comp-tools-verify: set SHLIB_PATH for shared libs
+ 	* Install.in, subst-strings:  add case for solaris2.5
+ 	* Install.in: fix regression for hppa1.1 check
+ 	* comp-tools-fix: set LD_LIBRARY_PATH
+ 	* comp-tools-fix: If fixincludes fixes /usr/include/limits.h,
+ 	install it as syslimits.h.
+
+Wed Oct 16 19:20:42 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* Install.in (guess_system): Treat powerpc-ibm-aix4.1 the same as
+	rs6000-ibm-aix4.1, since the compiler now uses common mode by
+	default.
+
+Wed Oct  2 15:39:07 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* configure.in (AC_PROG_INSTALL): Added.
+	* Makefile.in (distclean): Remove config.cache.
+
+Wed Oct  2 14:33:58 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* configure.in: Switch to autoconf configure.in.
+	* configure: New.
+	* Makefile.in: Use autoconf-substituted values.
+
 Tue Jun 25 18:56:08 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
 	* Makefile.in (datadir): Changed to $(prefix)/share.

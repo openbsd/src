@@ -1,0 +1,15 @@
+# Host: PowerPC, running Linux
+
+XM_FILE= xm-linux.h
+XDEPFILES= ser-tcp.o
+XM_CLIBS=
+
+NAT_FILE= ../nm-sysv4.h
+NATDEPFILES= solib.o corelow.o # infptrace.o inftarg.o fork-child.o core-aout.o core-regset.o
+
+GDBSERVER_DEPFILES= low-linux.o
+
+# SVR4 comes standard with terminfo, and in some implementations, the
+# old termcap descriptions are incomplete.  So ensure that we use the
+# new terminfo interface and latest terminal descriptions.
+TERMCAP=-lncurses

@@ -1,5 +1,5 @@
 /* ppc-opc.c -- PowerPC opcode list
-   Copyright 1994 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -1227,6 +1227,7 @@ extract_tbr (insn, invalid)
 #define PPC860	PPC
 #define	POWER   PPC_OPCODE_POWER | PPC_OPCODE_ANY
 #define	POWER2	PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_ANY
+#define PPCPWR2	PPC_OPCODE_PPC | PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_ANY
 #define	POWER32	PPC_OPCODE_POWER | PPC_OPCODE_ANY | PPC_OPCODE_32
 #define	COM     PPC_OPCODE_POWER | PPC_OPCODE_PPC | PPC_OPCODE_COMMON | PPC_OPCODE_ANY
 #define	COM32   PPC_OPCODE_POWER | PPC_OPCODE_PPC | PPC_OPCODE_COMMON | PPC_OPCODE_ANY | PPC_OPCODE_32
@@ -2761,10 +2762,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "fadd.",   A(63,21,1), AFRC_MASK,	PPCCOM,		{ FRT, FRA, FRB } },
 { "fa.",     A(63,21,1), AFRC_MASK,	PWRCOM,		{ FRT, FRA, FRB } },
 
-{ "fsqrt",   A(63,22,0), AFRAFRC_MASK,	POWER2,		{ FRT, FRB } },
-{ "fsqrt.",  A(63,22,1), AFRAFRC_MASK,	POWER2,		{ FRT, FRB } },
-{ "fsqrt",   A(63,22,0), AFRAFRC_MASK,	PPC,		{ FRT, FRB } },
-{ "fsqrt.",  A(63,22,1), AFRAFRC_MASK,	PPC,		{ FRT, FRB } },
+{ "fsqrt",   A(63,22,0), AFRAFRC_MASK,	PPCPWR2,	{ FRT, FRB } },
+{ "fsqrt.",  A(63,22,1), AFRAFRC_MASK,	PPCPWR2,	{ FRT, FRB } },
 
 { "fsel",    A(63,23,0), A_MASK,	PPC,		{ FRT,FRA,FRC,FRB } },
 { "fsel.",   A(63,23,1), A_MASK,	PPC,		{ FRT,FRA,FRC,FRB } },

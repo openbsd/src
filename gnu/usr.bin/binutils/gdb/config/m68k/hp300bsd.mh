@@ -1,0 +1,7 @@
+# Host: Hewlett-Packard 9000 series 300, running BSD
+
+XM_FILE= xm-hp300bsd.h
+XDEPFILES= 
+
+NAT_FILE= nm-hp300bsd.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o

@@ -1,0 +1,397 @@
+# This file is a Tcl script to test out the procedures in tkCanvImg.c,
+# which implement canvas "image" items.  It is organized in the standard
+# fashion for Tcl tests.
+#
+# Copyright (c) 1994 The Regents of the University of California.
+# Copyright (c) 1994-1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) canvImg.test 1.15 96/03/05 11:15:50
+
+if {[lsearch [image types] test] < 0} {
+    puts "This application hasn't been compiled with the \"test\" image"
+    puts "type, so I can't run this test.  Are you sure you're using"
+    puts "tktest instead of wish?"
+    return
+}
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+eval image delete [image names]
+canvas .c
+pack .c
+update
+image create test foo -variable x
+image create test foo2 -variable y
+foo2 changed 0 0 0 0 80 60
+test canvImg-1.1 {options for image items} {
+    .c delete all
+    .c create image 50 50 -anchor nw -tags i1
+    .c itemconfigure i1 -anchor
+} {-anchor {} {} center nw}
+test canvImg-1.2 {options for image items} {
+    .c delete all
+    list [catch {.c create image 50 50 -anchor gorp -tags i1} msg] $msg
+} {1 {bad anchor position "gorp": must be n, ne, e, se, s, sw, w, nw, or center}}
+test canvImg-1.3 {options for image items} {
+    .c delete all
+    .c create image 50 50 -image foo -tags i1
+    .c itemconfigure i1 -image
+} {-image {} {} {} foo}
+test canvImg-1.4 {options for image items} {
+    .c delete all
+    list [catch {.c create image 50 50 -image unknown -tags i1} msg] $msg
+} {1 {image "unknown" doesn't exist}}
+test canvImg-1.5 {options for image items} {
+    .c delete all
+    .c create image 50 50 -image foo -tags {i1 foo}
+    .c itemconfigure i1 -tags
+} {-tags {} {} {} {i1 foo}}
+
+test canvImg-2.1 {CreateImage procedure} {
+    list [catch {.c create image 40} msg] $msg
+} {1 {wrong # args: should be ".c create image x y ?options?"}}
+test canvImg-2.2 {CreateImage procedure} {
+    list [catch {.c create image 40 50 60} msg] $msg
+} {1 {unknown option "60"}}
+test canvImg-2.3 {CreateImage procedure} {
+    .c delete all
+    set i [.c create image 50 50]
+    list [lindex [.c itemconf $i -anchor] 4] \
+	    [lindex [.c itemconf $i -image] 4] \
+	    [lindex [.c itemconf $i -tags] 4]
+} {center {} {}}
+test canvImg-2.4 {CreateImage procedure} {
+    list [catch {.c create image xyz 40} msg] $msg
+} {1 {bad screen distance "xyz"}}
+test canvImg-2.5 {CreateImage procedure} {
+    list [catch {.c create image 50 qrs} msg] $msg
+} {1 {bad screen distance "qrs"}}
+test canvImg-2.6 {CreateImage procedure} {
+    list [catch {.c create image 50 50 -gorp foo} msg] $msg
+} {1 {unknown option "-gorp"}}
+
+test canvImg-3.1 {ImageCoords procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    .c coords i1
+} {50.0 100.0}
+test canvImg-3.2 {ImageCoords procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    list [catch {.c coords i1 dumb 100} msg] $msg
+} {1 {bad screen distance "dumb"}}
+test canvImg-3.3 {ImageCoords procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    list [catch {.c coords i1 250 dumb0} msg] $msg
+} {1 {bad screen distance "dumb0"}}
+test canvImg-3.4 {ImageCoords procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    list [catch {.c coords i1 250} msg] $msg
+} {1 {wrong # coordinates: expected 0 or 2, got 1}}
+test canvImg-3.5 {ImageCoords procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    list [catch {.c coords i1 250 300 400} msg] $msg
+} {1 {wrong # coordinates: expected 0 or 2, got 3}}
+
+test canvImg-4.1 {ConfiugreImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1
+    update
+    set x {}
+    .c itemconfigure i1 -image {}
+    update
+    list $x [.c bbox i1]
+} {{{foo free}} {}}
+test canvImg-4.2 {ConfiugreImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1 -anchor nw
+    update
+    set x {}
+    set y {}
+    .c itemconfigure i1 -image foo2
+    update
+    list $x $y [.c bbox i1]
+} {{{foo free}} {{foo2 get} {foo2 display 0 0 80 60 30 30}} {50 100 130 160}}
+test canvImg-4.3 {ConfiugreImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1 -anchor nw
+    update
+    set x {}
+    set y {}
+    list [catch {.c itemconfigure i1 -image lousy} msg] $msg
+} {1 {image "lousy" doesn't exist}}
+
+test canvImg-5.1 {DeleteImage procedure} {
+    image create test xyzzy -variable z
+    .c delete all
+    .c create image 50 100 -image xyzzy -tags i1
+    update
+    image delete xyzzy
+    set z {}
+    set names [lsort [image names]]
+    .c delete i1
+    update
+    list $names $z [lsort [image names]]
+} {{foo foo2 xyzzy} {} {foo foo2}}
+test canvImg-5.2 {DeleteImage procedure (don't delete non-existent image)} {
+    .c delete all
+    .c create image 50 100 -tags i1
+    update
+    .c delete i1
+    update
+} {}
+
+test canvImg-6.1 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 15.51 17.51 -image foo -tags i1 -anchor nw
+    .c bbox i1
+} {16 18 46 33}
+test canvImg-6.2 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 15.49 17.49 -image foo -tags i1 -anchor nw
+    .c bbox i1
+} {15 17 45 32}
+test canvImg-6.3 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -tags i1 -anchor nw
+    .c bbox i1
+} {}
+test canvImg-6.4 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor nw
+    .c bbox i1
+} {20 30 50 45}
+test canvImg-6.5 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor n
+    .c bbox i1
+} {5 30 35 45}
+test canvImg-6.6 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor ne
+    .c bbox i1
+} {-10 30 20 45}
+test canvImg-6.7 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor e
+    .c bbox i1
+} {-10 23 20 38}
+test canvImg-6.8 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor se
+    .c bbox i1
+} {-10 15 20 30}
+test canvImg-6.9 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor s
+    .c bbox i1
+} {5 15 35 30}
+test canvImg-6.10 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor sw
+    .c bbox i1
+} {20 15 50 30}
+test canvImg-6.11 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor w
+    .c bbox i1
+} {20 23 50 38}
+test canvImg-6.12 {ComputeImageBbox procedure} {
+    .c delete all
+    .c create image 20 30 -image foo -tags i1 -anchor center
+    .c bbox i1
+} {5 23 35 38}
+
+# The following test is non-portable because of differences in
+# coordinate rounding on some machines (does 0.5 round  up?).
+
+test canvImg-7.1 {DisplayImage procedure} {nonPortable} {
+    .c delete all
+    .c create image 50 100 -image foo -tags i1 -anchor nw
+    update
+    set x {}
+    .c create rect 55 110 65 115 -width 1 -outline black -fill white
+    update
+    set x
+} {{foo display 4 9 12 6 30 30}}
+test canvImg-7.2 {DisplayImage procedure, no image} {
+    .c delete all
+    .c create image 50 100 -tags i1
+    update
+    .c create rect 55 110 65 115 -width 1 -outline black -fill white
+    update
+} {}
+
+set i 1
+.c delete all
+.c create image 50 100 -image foo -tags image -anchor nw
+.c create rect 10 10 20 20 -tags rect -fill black -width 0 -outline {}
+foreach check {
+    {{50 70 80 81} {70 90} {rect}}
+    {{50 70 80 79} {70 90} {image}}
+    {{99 70 110 81} {90 90} {rect}}
+    {{101 70 110 79} {90 90} {image}}
+    {{99 100 110 115} {90 110} {rect}}
+    {{101 100 110 115} {90 110} {image}}
+    {{99 134 110 145} {90 125} {rect}}
+    {{101 136 110 145} {90 125} {image}}
+    {{50 134 80 145} {70 125} {rect}}
+    {{50 136 80 145} {70 125} {image}}
+    {{20 134 31 145} {40 125} {rect}}
+    {{20 136 29 145} {40 125} {image}}
+    {{20 100 31 115} {40 110} {rect}}
+    {{20 100 29 115} {40 110} {image}}
+    {{20 70 31 80} {40 90} {rect}}
+    {{20 70 29 79} {40 90} {image}}
+    {{60 70 69 109} {70 110} {image}}
+    {{60 70 71 111} {70 110} {rect}}
+} {
+    test canvImg-8.$i {ImageToPoint procedure} {
+	eval .c coords rect [lindex $check 0]
+	.c gettags [eval .c find closest [lindex $check 1]]
+    } [lindex $check 2]
+    incr i
+}
+
+.c delete all
+.c create image 50 100 -image foo -tags image -anchor nw
+test canvImg-8.1 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 0 70 99]
+} {}
+test canvImg-8.2 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 0 70 99.999]
+} {}
+test canvImg-8.3 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 0 70 101]
+} {image}
+test canvImg-8.4 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 81 105 120 115]
+} {}
+test canvImg-8.5 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 80.001 105 120 115]
+} {}
+test canvImg-8.6 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 79 105 120 115]
+} {image}
+test canvImg-8.7 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 116 70 150]
+} {}
+test canvImg-8.8 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 115.001 70 150]
+} {}
+test canvImg-8.9 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 60 114 70 150]
+} {image}
+test canvImg-8.10 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 105 49 115]
+} {}
+test canvImg-8.11 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 105 50 114.999]
+} {}
+test canvImg-8.12 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 105 51 115]
+} {image}
+test canvImg-8.13 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 0 49.999 99.999]
+} {}
+test canvImg-8.14 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 0 51 101]
+} {image}
+test canvImg-8.15 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 80 0 150 100]
+} {}
+test canvImg-8.16 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 79 0 150 101]
+} {image}
+test canvImg-8.17 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 80.001 115.001 150 180]
+} {}
+test canvImg-8.18 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 79 114 150 180]
+} {image}
+test canvImg-8.19 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 115 50 180]
+} {}
+test canvImg-8.20 {ImageToArea procedure} {
+    .c gettags [.c find overlapping 0 114 51 180]
+} {image}
+test canvImg-8.21 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 0 0 200 200]
+} {image}
+test canvImg-8.22 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 49.999 99.999 80.001 115.001]
+} {image}
+test canvImg-8.23 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 51 100 80 115]
+} {}
+test canvImg-8.24 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 50 101 80 115]
+} {}
+test canvImg-8.25 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 50 100 79 115]
+} {}
+test canvImg-8.26 {ImageToArea procedure} {
+    .c gettags [.c find enclosed 50 100 80 114]
+} {}
+
+test canvImg-9.1 {DisplayImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags image -anchor nw
+    .c scale image 25 0 2.0 1.5
+    .c bbox image
+} {75 150 105 165}
+
+test canvImg-10.1 {TranslateImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags image -anchor nw
+    update
+    set x {}
+    foo changed 2 4 6 8 30 15
+    update
+    set x
+} {{foo display 2 4 6 8 30 30}}
+
+test canvImg-11.1 {TranslateImage procedure} {
+    .c delete all
+    .c create image 50 100 -image foo -tags image -anchor nw
+    update
+    set x {}
+    foo changed 2 4 6 8 40 50
+    update
+    set x
+} {{foo display 0 0 40 50 30 30}}
+test canvImg-11.2 {ImageChangedProc procedure} {
+    .c delete all
+    image create test foo -variable x
+    .c create image 50 100 -image foo -tags image -anchor center
+    update
+    set x {}
+    foo changed 0 0 0 0 40 50
+    .c bbox image
+} {30 75 70 125}
+test canvImg-11.3 {ImageChangedProc procedure} {
+    .c delete all
+    image create test foo -variable x
+    foo changed 0 0 0 0 40 50
+    .c create image 50 100 -image foo -tags image -anchor nw
+    .c create image 70 110 -image foo2 -anchor nw
+    update
+    set y {}
+    image create test foo -variable x
+    update
+    set y
+} {{foo2 display 0 0 20 40 50 40}}

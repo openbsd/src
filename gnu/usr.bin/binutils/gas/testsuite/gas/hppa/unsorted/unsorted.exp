@@ -89,7 +89,7 @@ proc do_frchain_test {} {
     set x 0
 
     if [gas_test_old "fragbug.s" "" "Test bug in frag chaining (part1)"] {
-	objdump_start_no_subdir "a.out" "-d"
+	objdump_start_no_subdir "a.out" "--prefix-addresses -d"
 
 	while 1 {
 	    expect {
@@ -115,7 +115,7 @@ proc do_align3_test {} {
     set x 0
 
     if [gas_test_old "align3.s" "" "Test for alignment bug when switching subspaces (part1)"] {
-	objdump_start_no_subdir "a.out" "-d"
+	objdump_start_no_subdir "a.out" "--prefix-addresses -d"
 
 	while 1 {
 	    expect {

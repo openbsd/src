@@ -1,0 +1,38 @@
+> README.Cygnus
+-------------------------------------------------------------------------------
+
+The following are the main reasons for constructing the simulator as a
+generator:
+
+1) Avoid large fixed decode source file, with lots of #ifs controlling
+   the compilation. i.e. keep the source cleaner, smaller and easier
+   to parse.
+
+2) Allow optimum code to be created, without run-time checks on
+   instruction types. Ensure that the simulator engine only includes
+   code for the architecture being targetted. e.g. This avoids
+   run-time checks on ISA conformance, aswell as increasing
+   throughput.
+
+3) Allow updates to the instruction sets to be added quickly. Having a
+   table means that the information is together, and is easier to
+   manipulate. Having the table generate the engine, rather than the
+   run-time parse the table gives higher performance at simulation
+   time.
+
+4) Keep all the similar simulation code together. i.e. have a single
+   place where, for example, the addition code is held. This ensures that
+   updates to the simulation are not spread over a large flat source
+   file maintained by the developer.
+
+-------------------------------------------------------------------------------
+
+To keep the simulator simple (and to avoid the slight chance of
+mis-matched files) the manifests describing an engine, and the
+simulator engine itself, are held in the same source file.
+
+This means that the engine must be included twice, with the first pass
+controlled by the SIM_MANIFESTS definition.
+
+-------------------------------------------------------------------------------
+> EOF README.Cygnus

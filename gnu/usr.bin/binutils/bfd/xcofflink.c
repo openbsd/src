@@ -269,7 +269,9 @@ struct xcoff_link_hash_entry
   /* The .loader symbol table entry, if there is one.  */
   struct internal_ldsym *ldsym;
 
-  /* The .loader symbol table index.  */
+  /* If XCOFF_BUILT_LDSYM is set, this is the .loader symbol table
+     index.  If XCOFF_BUILD_LDSYM is clear, and XCOFF_IMPORT is set,
+     this is the l_ifile value.  */
   long ldindx;
 
   /* Some linker flags.  */
@@ -1408,6 +1410,8 @@ xcoff_link_add_symbols (abfd, info)
       bfd_byte *linenos;
     } *reloc_info = NULL;
 
+  keep_syms = obj_coff_keep_syms (abfd);
+
   if ((abfd->flags & DYNAMIC) != 0
       && ! info->static_link)
     {
@@ -1571,7 +1575,6 @@ xcoff_link_add_symbols (abfd, info)
     }
 
   /* Don't let the linker relocation routines discard the symbols.  */
-  keep_syms = obj_coff_keep_syms (abfd);
   obj_coff_keep_syms (abfd) = true;
 
   csect = NULL;
@@ -2944,16 +2947,12 @@ bfd_xcoff_import_symbol (output_bfd, info, harg, val, imppath, impfile,
       h->root.u.def.value = val;
     }
 
-  if (h->ldsym == NULL)
-    {
-      h->ldsym = ((struct internal_ldsym *)
-		  bfd_zalloc (output_bfd, sizeof (struct internal_ldsym)));
-      if (h->ldsym == NULL)
-	return false;
-    }
-
+  /* We overload the ldindx field to hold the l_ifile value for this
+     symbol.  */
+  BFD_ASSERT (h->ldsym == NULL);
+  BFD_ASSERT ((h->flags & XCOFF_BUILT_LDSYM) == 0);
   if (imppath == NULL)
-    h->ldsym->l_ifile = (bfd_size_type) -1;
+    h->ldindx = -1;
   else
     {
       unsigned int c;
@@ -2986,7 +2985,7 @@ bfd_xcoff_import_symbol (output_bfd, info, harg, val, imppath, impfile,
 	  *pp = n;
 	}
 
-      h->ldsym->l_ifile = c;
+      h->ldindx = c;
     }
 
   return true;
@@ -3672,19 +3671,18 @@ xcoff_build_ldsyms (h, p)
 
   /* We need to add this symbol to the .loader symbols.  */
 
-  /* h->ldsym will already have been allocated for an explicitly
-     imported symbol.  */
+  BFD_ASSERT (h->ldsym == NULL);
+  h->ldsym = ((struct internal_ldsym *)
+	      bfd_zalloc (ldinfo->output_bfd,
+			  sizeof (struct internal_ldsym)));
   if (h->ldsym == NULL)
     {
-      h->ldsym = ((struct internal_ldsym *)
-		  bfd_zalloc (ldinfo->output_bfd,
-			      sizeof (struct internal_ldsym)));
-      if (h->ldsym == NULL)
-	{
-	  ldinfo->failed = true;
-	  return false;
-	}
+      ldinfo->failed = true;
+      return false;
     }
+
+  if ((h->flags & XCOFF_IMPORT) != 0)
+    h->ldsym->l_ifile = h->ldindx;
 
   /* The first 3 symbol table indices are reserved to indicate the
      sections.  */
@@ -3860,7 +3858,6 @@ _bfd_xcoff_bfd_final_link (abfd, info)
 	  saw_contents = true;
 	  for (op = &abfd->sections; *op != NULL; op = &(*op)->next)
 	    {
-	      (*op)->target_index = indx;
 	      if (strcmp ((*op)->name, ".pad") == 0)
 		saw_contents = false;
 	      else if (((*op)->flags & SEC_HAS_CONTENTS) != 0

@@ -169,6 +169,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define PUT_SCNHDR_LNNOPTR bfd_h_put_32
 #endif
 
+static void coff_swap_aouthdr_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_aouthdr_out PARAMS ((bfd *, PTR, PTR));
+static void coff_swap_scnhdr_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_scnhdr_out PARAMS ((bfd *, PTR, PTR));
+static void coff_swap_filehdr_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_filehdr_out PARAMS ((bfd *, PTR, PTR));
+#ifndef NO_COFF_RELOCS
+static void coff_swap_reloc_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_reloc_out PARAMS ((bfd *, PTR, PTR));
+#endif /* NO_COFF_RELOCS */
+#ifndef NO_COFF_SYMBOLS
+static void coff_swap_sym_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_sym_out PARAMS ((bfd *, PTR, PTR));
+static void coff_swap_aux_in PARAMS ((bfd *, PTR, int, int, int, int, PTR));
+static unsigned int coff_swap_aux_out PARAMS ((bfd *, PTR, int, int, int, int, PTR));
+#endif /* NO_COFF_SYMBOLS */
+#ifndef NO_COFF_LINENOS
+static void coff_swap_lineno_in PARAMS ((bfd *, PTR, PTR));
+static unsigned int coff_swap_lineno_out PARAMS ((bfd *, PTR, PTR));
+#endif /* NO_COFF_LINENOS */
+
 #ifndef NO_COFF_RELOCS
 
 static void
@@ -195,7 +216,6 @@ coff_swap_reloc_in (abfd, src, dst)
 					     (bfd_byte *) reloc_src->r_offset);
 #endif
 }
-
 
 static unsigned int
 coff_swap_reloc_out (abfd, src, dst)
@@ -579,7 +599,6 @@ coff_swap_lineno_out (abfd, inp, outp)
 }
 
 #endif /* NO_COFF_LINENOS */
-
 
 static void
 coff_swap_aouthdr_in (abfd, aouthdr_ext1, aouthdr_int1)

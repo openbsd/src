@@ -239,9 +239,9 @@ _bfd_elf_create_linker_section (abfd, info, which, defaults)
 
       /* See if the sections already exist */
       lsect->section = s = bfd_get_section_by_name (dynobj, lsect->name);
-      if (!s)
+      if (!s || (s->flags & defaults->flags) != defaults->flags)
 	{
-	  lsect->section = s = bfd_make_section (dynobj, lsect->name);
+	  lsect->section = s = bfd_make_section_anyway (dynobj, lsect->name);
 
 	  if (s == NULL)
 	    return (elf_linker_section_t *)0;

@@ -1,0 +1,139 @@
+# Test that things still (sort of) work when compiled without -g.
+
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile nodebug
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# Get rid of any -g options (including -gstabs, -gdwarf, etc...
+if [info exists target_info(target,cflags)] {
+	set saved_cflags $target_info(target,cflags)
+	regsub -all -- {[ 	]-g[^ 	]*} $target_info(target,cflags) { } target_info(target,cflags)
+}
+
+if  { [compile "${srcdir}/${subdir}/${srcfile} -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+execute_anywhere "rm -f ${binfile}.ci"
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci file"
+    return -1
+}
+
+if [info exists target_info(target,cflags)] {
+	set target_info(target,cflags) $saved_cflags
+}
+
+source ${binfile}.ci
+
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+if [runto inner] then {
+    
+    # Expect to find global/local symbols in each of text/data/bss.
+    
+    # The exact format for some of this output is not necessarily
+    # ideal, particularly interpreting "p top" requires a fair bit of
+    # savvy about gdb's workings and the meaning of the "{}"
+    # construct.  So the details maybe could be tweaked.  But the
+    # basic purpose should be maintained, which is (a) users should be
+    # able to interact with these variables with some care (they have
+    # to know how to interpret them according to their real type,
+    # since gdb doesn't know the type), but (b) users should be able
+    # to detect that gdb does not know the type, rather than just
+    # being told they are ints or functions returning int like old
+    # versions of gdb used to do.
+    
+    # On alpha (and other ecoff systems) the native compilers put
+    # out debugging info for non-aggregate return values of functions
+    # even without -g, which should be accepted.
+    # Irix5, even though it is ELF, counts as "ecoff" because it
+    # encapsulates ecoff debugging info in a .mdebug section.
+    
+    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix5*" }
+    gdb_test "p top" \
+	"{(<(text variable|function), no debug info>|short \\(\\))} \[0-9a-fx]* <top>"
+    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix5*" }
+    gdb_test "whatis top" \
+	"(<(text variable|function), no debug info>|short \\(\\))"
+    gdb_test "ptype top" "(short|int) \\((|<non-float parameter>|<non-float parameter>, <non-float parameter>)\\)"
+    
+    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix5*" }
+    gdb_test "p middle" \
+	"{(<(text variable|function), no debug info>|short \\(\\))} \[0-9a-fx]* <middle>"
+    if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix5*" }
+    gdb_test "whatis middle" \
+	"(<(text variable|function), no debug info>|short \\(\\))"
+    gdb_test "ptype middle" "(short|int) \\((|<non-float parameter>|<non-float parameter>, <non-float parameter>)\\)"
+    
+    gdb_test "p dataglobal" "= 3"
+    gdb_test "whatis dataglobal" \
+	"<(data variable|variable), no debug info>"
+    gdb_test "ptype dataglobal" "<(data variable|variable), no debug info>"
+    
+    # The only symbol xcoff puts out for statics is for the TOC entry.
+    # Possible, but hairy, for gdb to deal.  Right now it doesn't, it
+    # doesn't know the variables exist at all.
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "p datalocal" "= 4"
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "whatis datalocal" "<(data variable|variable), no debug info>"
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "ptype datalocal" "<(data variable|variable), no debug info>"
+    
+    gdb_test "p bssglobal" "= 0"
+    gdb_test "whatis bssglobal" "<(data variable|variable), no debug info>"
+    gdb_test "ptype bssglobal" "<(data variable|variable), no debug info>"
+    
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "p bsslocal" "= 0"
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "whatis bsslocal" "<(data variable|variable), no debug info>"
+    setup_xfail "rs6000*-*-aix*"
+    setup_xfail "powerpc*-*-aix*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "ptype bsslocal" "<(data variable|variable), no debug info>"
+    
+    gdb_test "backtrace" "#0.*inner.*#1.*middle.*#2.*top.*#3.*main.*" \
+	"backtrace from inner in nodebug.exp"
+    # Or if that doesn't work, at least hope for the external symbols
+    # Commented out because if we aren't going to xfail the above test
+    # ever, why bother with a weaker test?
+    #gdb_test "backtrace" "#0.*inner.*#1.*#2.*top.*#3.*main.*" \
+	#    "backtrace from inner in nodebug.exp for externals"
+    
+    # This test is not as obscure as it might look.  `p getenv ("TERM")'
+    # is a real-world example, at least on many systems.
+    setup_xfail "h8300*-*-*"
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test {p/c array_index("abcdef",2)} " = 99 'c'"
+    
+    # Now, try that we can give names of file-local symbols which happen
+    # to be unique, and have it still work
+    if [runto middle] then {
+	setup_xfail "h8300*-*-*"
+	gdb_test "backtrace" "#0.*middle.*#1.*top.*#2.*main.*" \
+	    "backtrace from middle in nodebug.exp"
+    }
+}

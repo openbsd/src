@@ -130,6 +130,8 @@ DESCRIPTION
 .  bfd_arch_arm,       {* Advanced Risc Machines ARM *}
 .  bfd_arch_ns32k,     {* National Semiconductors ns32000 *}
 .  bfd_arch_w65,       {* WDC 65816 *}
+.  bfd_arch_mn10200,   {* Matsushita MN10200 *}
+.  bfd_arch_mn10300,   {* Matsushita MN10300 *}
 .  bfd_arch_last
 .  };
 
@@ -180,6 +182,8 @@ extern const bfd_arch_info_type bfd_i960_arch;
 extern const bfd_arch_info_type bfd_m68k_arch;
 extern const bfd_arch_info_type bfd_m88k_arch;
 extern const bfd_arch_info_type bfd_mips_arch;
+extern const bfd_arch_info_type bfd_mn10200_arch;
+extern const bfd_arch_info_type bfd_mn10300_arch;
 extern const bfd_arch_info_type bfd_powerpc_arch;
 extern const bfd_arch_info_type bfd_rs6000_arch;
 extern const bfd_arch_info_type bfd_sh_arch;
@@ -207,6 +211,8 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
   &bfd_m68k_arch,
   &bfd_m88k_arch,
   &bfd_mips_arch,
+  &bfd_mn10200_arch,
+  &bfd_mn10300_arch,
   &bfd_powerpc_arch,
   &bfd_rs6000_arch,
   &bfd_sh_arch,

@@ -1,0 +1,124 @@
+# Copyright 1993, 1994 Free Software Foundation, Inc.
+
+# This file is part of GNU CC.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+prefix = /usr/local
+
+program_transform_name =
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+tooldir = $(libdir)/$(target_alias)
+
+datadir = $(prefix)/share
+mandir = $(prefix)/man
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+man8dir = $(mandir)/man8
+man9dir = $(mandir)/man9
+infodir = $(prefix)/info
+includedir = $(prefix)/include
+
+SHELL = /bin/sh
+
+INSTALL = install -c
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL)
+
+AR = ar
+AR_FLAGS = qv
+RANLIB = ranlib
+
+# Directory containing source files.  Don't clean up the spacing,
+# this exact string is matched for by the "configure" script.
+srcdir = .
+
+# Where is the "include" directory?  Traditionally ../include or ./include
+
+INCLUDE_DIR =  ${srcdir}/../../include
+INCLUDE_DEP = $$(INCLUDE_DIR)
+
+# All the includes used for CFLAGS and for lint.
+# -I. for config files.
+# -I${srcdir} possibly for regex.h also.
+# -I${srcdir}/config for more generic config files.
+
+INCLUDE_CFLAGS = -I. -I${srcdir} -I${srcdir}/config -I$(INCLUDE_DIR)
+
+# CFLAGS is specifically reserved for setting from the command line
+# when running make.  I.E.  "make CFLAGS=-Wmissing-prototypes".
+
+CFLAGS = -g
+
+# ALL_CFLAGS is the aggregate of all other *CFLAGS macros.
+
+ALL_CFLAGS = $(CFLAGS) $(INCLUDE_CFLAGS)
+
+# None of the things in CFLAGS will do any harm, and on some systems
+#  (e.g. SunOS4) it is important to use the MH_CFLAGS.
+
+LDFLAGS = $(CFLAGS)
+
+# Where is the "-liberty" library, containing getopt and obstack?
+
+LIBIBERTY_DIR = ${srcdir}/../../libiberty
+LIBIBERTY = ./../../libiberty${subdir}/libiberty.a
+
+# Host and target-dependent makefile fragments come in here.
+####
+# End of host and target-dependent makefile fragments
+
+# Prevent Sun make from putting in the machine type.  Setting
+# TARGET_ARCH to nothing works for SunOS 3, 4.0, but not for 4.1.
+
+.c.o:
+	${CC} -c ${ALL_CFLAGS} $<
+
+OFILES = spu.o
+
+all: spu
+
+info:
+
+install:
+
+install-info:
+
+spu: ${OFILES}
+	$(CC) $(CFLAGS) -o spu spu.o
+
+spu.o: spu.c
+
+mostlyclean:
+
+clean:		mostlyclean
+	rm -f *.o spu
+
+distclean:	clean
+	rm -f Makefile config.status
+
+maintainer-clean realclean:	distclean
+
+Makefile: Makefile.in $(host_makefile_frag) $(target_makefile_frag)
+	$(SHELL) config.status
+
+force:

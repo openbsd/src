@@ -134,8 +134,11 @@ mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
 mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
 mips*vr4100el-*-elf*)	targ_emul=elf32l4300 ;;
 mips*vr4100-*-elf*)	targ_emul=elf32b4300 ;;
+mips*vr5000el-*-elf*)	targ_emul=elf32l4300 ;;
+mips*vr5000-*-elf*)	targ_emul=elf32b4300 ;;
 mips*el-*-elf*)		targ_emul=elf32elmip ;;
 mips*-*-elf*)		targ_emul=elf32ebmip ;;
+mips*-*-rtems*)		targ_emul=elf32ebmip ;;
 alpha-*-linuxecoff*)	targ_emul=alpha targ_extra_emuls=elf64alpha
 			tdir_elf64alpha=`echo ${targ_alias} | sed -e 's/ecoff//'`
 			;;
@@ -145,6 +148,7 @@ alpha-*-linux*)		targ_emul=elf64alpha targ_extra_emuls=alpha
 alpha-*-netbsd*)	targ_emul=alphabsd targ_extra_emuls="alpha elf64alpha";;
 alpha-*-openbsd*)	targ_emul=alphabsd targ_extra_emuls="alpha elf64alpha";;
 alpha-*-osf*)		targ_emul=alpha ;;
+alpha-*-gnu*)		targ_emul=elf64alpha ;;
 alpha-*-netware*)	targ_emul=alpha ;;
 z8k-*-coff) 		targ_emul=z8002; targ_extra_emuls=z8001 ;;
 ns32k-pc532-mach* | ns32k-pc532-ux*)	targ_emul=pc532macha ;;

@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "as.h"
-#include "libiberty.h"
 #include "obstack.h"
 
 static void floating_constant PARAMS ((expressionS * expressionP));
@@ -1519,7 +1518,12 @@ expr (rank, resultP)
 	    case O_divide:		resultP->X_add_number /= v; break;
 	    case O_modulus:		resultP->X_add_number %= v; break;
 	    case O_left_shift:		resultP->X_add_number <<= v; break;
-	    case O_right_shift:		resultP->X_add_number >>= v; break;
+	    case O_right_shift:
+	      /* We always use unsigned shifts, to avoid relying on
+                 characteristics of the compiler used to compile gas.  */
+	      resultP->X_add_number =
+		(offsetT) ((valueT) resultP->X_add_number >> (valueT) v);
+	      break;
 	    case O_bit_inclusive_or:	resultP->X_add_number |= v; break;
 	    case O_bit_or_not:		resultP->X_add_number |= ~v; break;
 	    case O_bit_exclusive_or:	resultP->X_add_number ^= v; break;

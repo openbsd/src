@@ -1,0 +1,90 @@
+This file contains a list of bugs to fix and minor feature changes
+needed in the Tk toolkit.  The list is ordered by the time when the
+idea for the change first arose;  no priority should be inferred from
+the order.
+
+sccsid = SCCS: @(#) ToDo 1.8 96/02/16 10:55:14
+
+106. Add feature to buttons for automatic defaulting, where button
+allocates extra space for default ring.
+
+136. Implement mechanism for using existing window as main window for
+application, support with command-line argument in wish.
+
+139. Change canvas Postscript generation to be smarter about font names
+that have been abbreviated:  use X to look up the full name.
+
+147. Add "window" entry to menus.
+
+148. Add an "initProc" and a "freeProc" to TK_CONFIG_CUSTOM config types.
+
+150. In SYNONYM options, specify a command-line switch for the other
+option, not a database name.
+
+153. Some fonts (e.g. Times) have underline characters that extend
+*below* the official descent of the font.  Right now the underline
+is invisible for these fonts in text widgets.  Find a way to make
+this work in text?
+
+150. Change the bindings for menubuttons to watch mouse motion events
+and map them to menu or menubutton windows "by hand", so as to eliminate
+the need for a menu to be a descendant of the menubutton.
+
+151. Create an I/O event handler so that Tk can continue after a server
+connection is lost.
+
+153. Allow Tk applications to be embedded inside other Tk applications:
+    - Allow the window for a widget to be specified explicitly, rather
+      than being created automatically by Tk.  This would allow the
+      main window for one application to use an internal window that
+      already exists in another application.
+    - Modify wish's main.c to allow a window id for the main window to
+      be specified as a command-line argument.
+    - Build a special widget for embedding other applications, which will
+      implement the window-manager side of the ICCCM protocols, e.g.,
+      feeding requested size information up from the embedded application
+      into the enclosing widget hierarchy.
+
+154. Improvements to canvases:
+    - Allow items to be rotated?
+    - Allow polygons to be outlined.
+    - Make "raise" of window items work correctly.
+    - In the "find" widget option, make it possible to restrict search
+      to a particular tag.
+    - Allow items to become visible/invisible.
+
+156. Add a "wm anchor" option to make it easier to center windows.
+
+157. Various improvements to option database:
+    - Allow patterns to be read from database or deleted from database.
+    - Allow database to be cleared without automatically reloading from
+      .Xdefaults files.
+    - Allow additional info to be read from various window properties.
+    - Support new wildcards from X11R5.
+    - Allow mechanism to extend to cover cases where there isn't even
+      a window, or even an application by the name used in the option
+      get command.
+    - Allow options in database to override those specified on Tcl
+      command lines?
+    - Revert to X conflict-resolution scheme?
+
+158. Make it possible for wish to run without a display.
+
+159. Change option tables to be arrays of pointers, rather than arrays of
+entries?  Makes it easier to keep separate named structures for particular
+options, e.g. so that you can tell when an option has changed.
+
+160. Change text scrolling so that the top of the window can fall in
+the middle of a text line.
+
+161. Allow text tabs to be specified in units of characters, rather
+than just inches.
+
+162. Fix tk_strictMotif to make it easier to turn on and off (e.g.
+conditionalize the binding scripts, rather than the creation of
+the bindings).
+
+163. Change text bindings so that Enter and Leave events occur when
+the mouse moves between disjoint ranges with the same tag.
+
+164. Provide block insertion cursor in text widgets.

@@ -142,6 +142,7 @@ static boolean ihex_write_object_contents PARAMS ((bfd *));
 static asymbol *ihex_make_empty_symbol PARAMS ((bfd *));
 static boolean ihex_set_arch_mach
   PARAMS ((bfd *, enum bfd_architecture, unsigned long));
+static int ihex_sizeof_headers PARAMS ((bfd *, boolean));
 
 /* The number of bytes we put on one line during output.  */
 

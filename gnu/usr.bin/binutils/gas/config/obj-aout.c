@@ -64,6 +64,7 @@ const segT N_TYPE_seg[N_TYPE + 2] =
 
 static void obj_aout_line PARAMS ((int));
 static void obj_aout_weak PARAMS ((int));
+static void obj_aout_type PARAMS ((int));
 
 const pseudo_typeS obj_pseudo_table[] =
 {
@@ -71,6 +72,8 @@ const pseudo_typeS obj_pseudo_table[] =
   {"ln", obj_aout_line, 0},	/* coff line number that we use anyway */
 
   {"weak", obj_aout_weak, 0},	/* mark symbol as weak.  */
+
+  {"type", obj_aout_type, 0},
 
   /* coff debug pseudos (ignored) */
   {"def", s_ignore, 0},
@@ -82,7 +85,6 @@ const pseudo_typeS obj_pseudo_table[] =
   {"scl", s_ignore, 0},
   {"size", s_ignore, 0},
   {"tag", s_ignore, 0},
-  {"type", s_ignore, 0},
   {"val", s_ignore, 0},
   {"version", s_ignore, 0},
 
@@ -386,6 +388,45 @@ obj_aout_weak (ignore)
   demand_empty_rest_of_line ();
 }
 
+/* Handle .type.  On NetBSD, this is used to set the n_other field,
+   which is then apparently used when doing dynamic linking.  Older
+   versions ogas ignored the .type pseudo-op, so we also ignore it if
+   we can't parse it.  */
+
+static void
+obj_aout_type (ignore)
+     int ignore;
+{
+  char *name;
+  int c;
+  symbolS *sym;
+
+  name = input_line_pointer;
+  c = get_symbol_end ();
+  sym = symbol_find (name);
+  *input_line_pointer = c;
+  if (sym != NULL)
+    {
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer == ',')
+	{
+	  ++input_line_pointer;
+	  SKIP_WHITESPACE ();
+	  if (*input_line_pointer == '@')
+	    {
+	      ++input_line_pointer;
+	      if (strncmp (input_line_pointer, "object", 6) == 0)
+		S_SET_OTHER (sym, 1);
+	      else if (strncmp (input_line_pointer, "function", 8) == 0)
+		S_SET_OTHER (sym, 2);
+	    }
+	}
+    }
+
+  /* Ignore everything else on the line.  */
+  s_ignore (0);
+}
+
 void
 obj_read_begin_hook ()
 {
@@ -436,6 +477,8 @@ obj_crawl_symbol_chain (headers)
 
 	 * symbols with no name (stabd's?)
 	 * symbols with debug info in their N_TYPE
+	 * symbols marked "forceout" (to force out local `L' symbols in NetBSD
+	                              PIC code)
 
 	 Symbols that don't are:
 	 * symbols that are registers
@@ -453,7 +496,15 @@ obj_crawl_symbol_chain (headers)
 	      || !S_IS_DEFINED (symbolP)
 	      || S_IS_EXTERNAL (symbolP)
 	      || (S_GET_NAME (symbolP)[0] != '\001'
-		  && (flag_keep_locals || !S_LOCAL_NAME (symbolP)))))
+		  && (flag_keep_locals || !S_LOCAL_NAME (symbolP))
+#ifdef TE_NetBSD
+	          || (flag_pic && symbolP->sy_forceout)
+#endif
+		  ))
+#ifdef TE_NetBSD
+	  && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
+#endif
+	  )
 	{
 	  symbolP->sy_number = symbol_number++;
 
@@ -471,7 +522,11 @@ obj_crawl_symbol_chain (headers)
 	}
       else
 	{
-	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
+	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP)
+#ifdef TE_NetBSD
+	      && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
+#endif
+	      )
 	    /* This warning should never get triggered any more.
 	       Well, maybe if you're doing twisted things with
 	       register names...  */

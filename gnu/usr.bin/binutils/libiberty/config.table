@@ -8,6 +8,7 @@ case "${host}" in
   m68k-apollo-sysv*)	frag=mh-apollo68 ;;
   i[3456]86-ncr-sysv4*)	frag=mh-ncr3000 ;;
   *-*-cxux7*)		frag=mh-cxux7 ;;
+  *-*-cygwin32)		frag=mh-cygwin32 ;;
   *-*-lynxos*)		frag=mh-lynxos ;;
   *-*-dgux*)		frag=mh-sysv ;;
   hppa*-hp-bsd*)	frag=mh-hpbsd ;;
@@ -20,6 +21,7 @@ case "${host}" in
   *-*-sysv4*)		frag=mh-sysv4 ;;
   *-*-sysv*)		frag=mh-sysv ;;
   *-*-go32)		frag=mh-go32 ;;
+  i[345]86-*-windows*)	frag=mh-windows ;;
 
   *-*-vxworks5*)
     # VxWorks 5 needs special action, because the usual

@@ -63,7 +63,9 @@ emulations=""
 
 for this_target in $target $canon_targets ; do
 
-    eval `echo $this_target | sed 's/^\(.*\)-\(.*\)-\(.*\)$/cpu=\1 vendor=\2 os=\3/'`
+changequote(,)dnl
+    eval `echo $this_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/cpu=\1 vendor=\2 os=\3/'`
+changequote([,])dnl
 
     # check for architecture variants
     case ${cpu} in
@@ -221,12 +223,15 @@ changequote([,])dnl
       mips-*-irix*)         fmt=ecoff targ=mips-big ;;
       mips-*-riscos*)       fmt=ecoff targ=mips-big ;;
       mips-*-sysv*)         fmt=ecoff targ=mips-big ;;
-      mips-*-elf*)          fmt=elf 
+      mips-*-elf* | mips-*-rtems*)
+			    fmt=elf 
 			    case "$endian" in
 			    big) targ=mips-big ;;
 			    *)   targ=mips-lit ;;
 			    esac
 			    ;;
+      mn10200-*-*)	    fmt=elf bfd_gas=yes ;;
+      mn10300-*-*)	    fmt=elf bfd_gas=yes ;;
       ppc-*-pe | ppc-*-cygwin32 | ppc-*-winnt*)
 		            fmt=coff em=pe 
 			    case "$endian" in
@@ -275,7 +280,7 @@ changequote([,])dnl
       sparc-*-rtems*)       fmt=aout ;;
       sparc-*-sunos4*)      fmt=aout em=sun3 ;;
       sparc-*-aout | sparc*-*-vxworks*)
-			    fmt=aout ;;
+			    fmt=aout em=sparcaout ;;
       sparc-*-coff)         fmt=coff ;;
       sparc-*-lynxos*)      fmt=coff em=lynx ;;
       sparc-fujitsu-none)   fmt=aout ;;

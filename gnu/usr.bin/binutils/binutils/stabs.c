@@ -75,10 +75,16 @@ struct stab_handle
   boolean n_opt_found;
   /* The main file name.  */
   char *main_filename;
-  /* A stack of N_BINCL files.  */
+  /* A stack of unfinished N_BINCL files.  */
   struct bincl_file *bincl_stack;
+  /* A list of finished N_BINCL files.  */
+  struct bincl_file *bincl_list;
   /* Whether we are inside a function or not.  */
   boolean within_function;
+  /* The address of the end of the function, used if we have seen an
+     N_FUN symbol while in a function.  This is -1 if we have not seen
+     an N_FUN (the normal case).  */
+  bfd_vma function_end;
   /* The depth of block nesting.  */
   int block_depth;
   /* List of pending variable definitions.  */
@@ -182,8 +188,10 @@ static boolean parse_stab_tilde_field
 	   debug_type *, boolean *));
 static debug_type parse_stab_array_type
   PARAMS ((PTR, struct stab_handle *, const char **, boolean));
-static void push_bincl PARAMS ((struct stab_handle *, const char *));
+static void push_bincl PARAMS ((struct stab_handle *, const char *, bfd_vma));
 static const char *pop_bincl PARAMS ((struct stab_handle *));
+static boolean find_excl
+  PARAMS ((struct stab_handle *, const char *, bfd_vma));
 static boolean stab_record_variable
   PARAMS ((PTR, struct stab_handle *, const char *, debug_type,
 	   enum debug_var_kind, bfd_vma));
@@ -366,6 +374,7 @@ start_stab (dhandle, abfd, sections, syms, symcount)
   ret->files = 1;
   ret->file_types = (struct stab_types **) xmalloc (sizeof *ret->file_types);
   ret->file_types[0] = NULL;
+  ret->function_end = (bfd_vma) -1;
   return (PTR) ret;
 }
 
@@ -383,9 +392,10 @@ finish_stab (dhandle, handle)
   if (info->within_function)
     {
       if (! stab_emit_pending_vars (dhandle, info)
-	  || ! debug_end_function (dhandle, (bfd_vma) -1))
+	  || ! debug_end_function (dhandle, info->function_end))
 	return false;
       info->within_function = false;
+      info->function_end = (bfd_vma) -1;
     }
 
   for (st = info->tags; st != NULL; st = st->next)
@@ -509,10 +519,18 @@ parse_stab (dhandle, handle, type, desc, value, string)
       /* This always ends a function.  */
       if (info->within_function)
 	{
+	  bfd_vma endval;
+
+	  endval = value;
+	  if (*string != '\0'
+	      && info->function_end != (bfd_vma) -1
+	      && info->function_end < endval)
+	    endval = info->function_end;
 	  if (! stab_emit_pending_vars (dhandle, info)
-	      || ! debug_end_function (dhandle, value))
+	      || ! debug_end_function (dhandle, endval))
 	    return false;
 	  info->within_function = false;
+	  info->function_end = (bfd_vma) -1;
 	}
 
       /* An empty string is emitted by gcc at the end of a compilation
@@ -550,7 +568,7 @@ parse_stab (dhandle, handle, type, desc, value, string)
 
     case N_BINCL:
       /* Start an include file which may be replaced.  */
-      push_bincl (info, string);
+      push_bincl (info, string, value);
       if (! debug_start_source (dhandle, string))
 	return false;
       break;
@@ -564,12 +582,8 @@ parse_stab (dhandle, handle, type, desc, value, string)
     case N_EXCL:
       /* This is a duplicate of a header file named by N_BINCL which
          was eliminated by the linker.  */
-      ++info->files;
-      info->file_types = ((struct stab_types **)
-			  xrealloc ((PTR) info->file_types,
-				    (info->files
-				     * sizeof *info->file_types)));
-      info->file_types[info->files - 1] = NULL;
+      if (! find_excl (info, string, value))
+	return false;
       break;
 
     case N_SLINE:
@@ -593,15 +607,28 @@ parse_stab (dhandle, handle, type, desc, value, string)
 	{
 	  if (info->within_function)
 	    {
+	      /* This always marks the end of a function; we don't
+                 need to worry about info->function_end.  */
 	      if (info->sections)
 		value += info->function_start_offset;
 	      if (! stab_emit_pending_vars (dhandle, info)
 		  || ! debug_end_function (dhandle, value))
 		return false;
 	      info->within_function = false;
+	      info->function_end = (bfd_vma) -1;
 	    }
 	  break;
 	}
+
+      /* A const static symbol in the .text section will have an N_FUN
+         entry.  We need to use these to mark the end of the function,
+         in case we are looking at gcc output before it was changed to
+         always emit an empty N_FUN.  We can't call debug_end_function
+         here, because it might be a local static symbol.  */
+      if (info->within_function
+	  && (info->function_end == (bfd_vma) -1
+	      || value < info->function_end))
+	info->function_end = value;
 
       /* Fall through.  */
       /* FIXME: gdb checks the string for N_STSYM, N_LCSYM or N_ROSYM
@@ -619,9 +646,16 @@ parse_stab (dhandle, handle, type, desc, value, string)
 	  {
 	    if (info->within_function)
 	      {
+		bfd_vma endval;
+
+		endval = value;
+		if (info->function_end != (bfd_vma) -1
+		    && info->function_end < endval)
+		  endval = info->function_end;
 		if (! stab_emit_pending_vars (dhandle, info)
-		    || ! debug_end_function (dhandle, value))
+		    || ! debug_end_function (dhandle, endval))
 		  return false;
+		info->function_end = (bfd_vma) -1;
 	      }
 	    /* For stabs in sections, line numbers and block addresses
                are offsets from the start of the function.  */
@@ -3109,26 +3143,38 @@ parse_stab_array_type (dhandle, info, pp, stringp)
 				upper, stringp);
 }
 
-/* Keep a stack of N_BINCL include files.  */
+/* This struct holds information about files we have seen using
+   N_BINCL.  */
 
 struct bincl_file
 {
+  /* The next N_BINCL file.  */
   struct bincl_file *next;
+  /* The file name.  */
   const char *name;
+  /* The hash value.  */
+  bfd_vma hash;
+  /* The file index.  */
+  unsigned int file;
+  /* The list of types defined in this file.  */
+  struct stab_types *file_types;
 };
 
 /* Start a new N_BINCL file, pushing it onto the stack.  */
 
 static void
-push_bincl (info, name)
+push_bincl (info, name, hash)
      struct stab_handle *info;
      const char *name;
+     bfd_vma hash;
 {
   struct bincl_file *n;
 
   n = (struct bincl_file *) xmalloc (sizeof *n);
   n->next = info->bincl_stack;
   n->name = name;
+  n->hash = hash;
+  n->file = info->files;
   info->bincl_stack = n;
 
   ++info->files;
@@ -3136,7 +3182,7 @@ push_bincl (info, name)
 		      xrealloc ((PTR) info->file_types,
 				(info->files
 				 * sizeof *info->file_types)));
-  info->file_types[info->files - 1] = NULL;
+  info->file_types[n->file] = NULL;
 }
 
 /* Finish an N_BINCL file, at an N_EINCL, popping the name off the
@@ -3152,10 +3198,46 @@ pop_bincl (info)
   if (o == NULL)
     return info->main_filename;
   info->bincl_stack = o->next;
-  free (o);
+
+  o->file_types = info->file_types[o->file];
+
+  o->next = info->bincl_list;
+  info->bincl_list = o;
+
   if (info->bincl_stack == NULL)
     return info->main_filename;
   return info->bincl_stack->name;
+}
+
+/* Handle an N_EXCL: get the types from the corresponding N_BINCL.  */
+
+static boolean
+find_excl (info, name, hash)
+     struct stab_handle *info;
+     const char *name;
+     bfd_vma hash;
+{
+  struct bincl_file *l;
+
+  ++info->files;
+  info->file_types = ((struct stab_types **)
+		      xrealloc ((PTR) info->file_types,
+				(info->files
+				 * sizeof *info->file_types)));
+
+  for (l = info->bincl_list; l != NULL; l = l->next)
+    if (l->hash == hash && strcmp (l->name, name) == 0)
+      break;
+  if (l == NULL)
+    {
+      warn_stab ("N_EXCL", "Undefined N_EXCL");
+      info->file_types[info->files - 1] = NULL;
+      return true;
+    }
+
+  info->file_types[info->files - 1] = l->file_types;
+
+  return true;
 }
 
 /* Handle a variable definition.  gcc emits variable definitions for a

@@ -1,0 +1,77 @@
+.\" t
+.\" The above line must be present to tell man to process through tbl.
+.\" @(#)dosudi.5	2.2, AMD
+.\"Copyright (c) 1989, 1990, 1991 by Advanced Micro Devices, Inc.
+.\"All rights reserved.  No part of this publication may be reproduced,
+.\"stored in a retrieval system, or transmitted in any form or by any
+.\"means, electronic, mechanical, photocopying, recording or otherwise,
+.\"without the prior written permission of Advanced Micro Devices, Inc.
+.\"
+.\"You must change the date in these files for a release!
+.\"The commands used to generate output from this input are:
+.\"    tbl udi.1 | nroff -man - > filename	(Goes to a unix file)
+.\"    tbl udi.1 | ptroff -man -		(Goes to PostScript printer)
+.\"
+.TH UDI 5 "27 Jan. 1992" "UDI Configuration Files for DOS hosts" 
+.UC 4
+.SH NAME
+\fBudi\fP \- UDI Configuration Files for DOS hosts.
+.sp
+.sp
+.SH DESCRIPTION
+A UDI conformant Debugger Front End (DFE) specifies the Target
+Interface Process (TIP) that it wishes to connect to and
+the options that it wishes to pass to that TIP by referencing
+a configuration in the "UDI configuration file".
+This man page explains the format of the UDI Configuration file
+for DOS hosts.
+.sp
+The search rules that the DFE uses to locate the UDI Configuration
+file are:
+.IP
+the complete filename specified by the environment variable, UDICONF.
+.IP
+the file udiconfs.txt in the current directory.
+.IP
+the file udiconfs.txt in each of the directories specified by the PATH environment
+variable.
+.sp
+.LP
+Each line of the udiconfs.txt file consists of the following fields:
+.IP
+tip_config_name  tip_executable  [tip_options]
+.TP 10
+.I tip_config_name
+An arbitrary name which the DFE will use to refer to this configuration.
+Each line in the udiconfs.txt file must have a different tip_config_name field.	
+.TP
+.I tip_executable
+The name of the TIP executable file.  The DFE will
+use the tip_executable filename to spawn
+the TIP if the TIP is not already running. If a full pathname is
+not specified, the PATH environment variable
+is used to locate the executable file.
+.sp
+.TP
+.I tip_options
+The rest of the line after the tip_executable name is passed
+to the TIP at connect time.
+.sp
+.SH EXAMPLES OF UDI CONFIGURATION FILE ENTRIES
+.sp
+The following is an exampleare examples of entries in the UDI configuration 
+file for DOS hosts. 
+.sp
+\fB iss050  isstip.exe -29050 -r osboot \fR
+.sp
+The above entry associates the TIP configuration name "iss050" with the
+\fBisstip.exe\fR executable with the parameters
+"-29050 -r osboot" being passed to isstip.exe
+when it is invoked.  If isstip.exe is not already running and
+needs to be spawned, the PATH environment variable will be used to
+locate the file isstip.exe.
+.sp
+.SH TRADEMARKS
+AMD is a registered trademark of Advanced Micro Devices, Inc.
+MiniMON29K, 29K, Am29000, Am29005, Am29030, Am29035, Am29200, 
+and Am29050 are trademarks of Advanced Micro Devices, Inc.

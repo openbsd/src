@@ -826,7 +826,9 @@ do_slurp_coff_armap (abfd)
      little, because our tools changed.  Here's a horrible hack to clean
      up the crap.  */
 
-  if (stringsize > 0xfffff)
+  if (stringsize > 0xfffff
+      && bfd_get_arch (abfd) == bfd_arch_i960
+      && bfd_get_flavour (abfd) == bfd_target_coff_flavour)
     {
       /* This looks dangerous, let's do it the other way around */
       nsymz = bfd_getl32 ((PTR) int_buf);

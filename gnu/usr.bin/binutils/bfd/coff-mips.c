@@ -112,6 +112,9 @@ static boolean mips_relax_pcrel16 PARAMS ((struct bfd_link_info *, bfd *,
 					   asection *,
 					   struct ecoff_link_hash_entry *,
 					   bfd_byte *, bfd_vma));
+static reloc_howto_type *mips_bfd_reloc_type_lookup
+  PARAMS ((bfd *, bfd_reloc_code_real_type));
+
 
 /* ECOFF has COFF sections, but the debugging information is stored in
    a completely different format.  ECOFF targets use some of the

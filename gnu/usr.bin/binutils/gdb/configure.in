@@ -1,0 +1,468 @@
+dnl Autoconf configure script for GDB, the GNU debugger.
+dnl Copyright 1995, 1996 Free Software Foundation, Inc.
+dnl
+dnl This file is part of GDB.
+dnl 
+dnl This program is free software; you can redistribute it and/or modify
+dnl it under the terms of the GNU General Public License as published by
+dnl the Free Software Foundation; either version 2 of the License, or
+dnl (at your option) any later version.
+dnl 
+dnl This program is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl GNU General Public License for more details.
+dnl 
+dnl You should have received a copy of the GNU General Public License
+dnl along with this program; if not, write to the Free Software
+dnl Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+dnl Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.5)dnl
+AC_INIT(main.c)
+AC_CONFIG_HEADER(config.h:config.in)
+
+AC_PROG_CC
+AC_AIX
+AC_MINIX
+AC_ISC_POSIX
+
+AC_CANONICAL_SYSTEM
+
+AC_PROG_INSTALL
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib, :)
+AC_PROG_YACC
+AC_PROG_AWK
+
+AC_CONFIG_AUX_DIR(`cd $srcdir;pwd`/..)
+AC_ARG_PROGRAM
+
+AC_HEADER_STDC
+AC_CHECK_HEADERS(limits.h memory.h string.h strings.h unistd.h termios.h termio.h sgtty.h stddef.h stdlib.h sys/procfs.h link.h endian.h)
+AC_HEADER_STAT
+
+AC_C_CONST
+
+AC_CHECK_FUNCS(setpgid sbrk select poll)
+
+# If we are configured native on Linux, work around problems with sys/procfs.h
+if test "${target}" = "${host}"; then
+  case "${host}" in
+  i[3456]86-*-linux*)
+	AC_DEFINE(START_INFERIOR_TRAPS_EXPECTED,"2")
+	AC_DEFINE(sys_quotactl)
+	;;
+  esac
+fi
+
+AC_MSG_CHECKING([for gregset_t type])
+AC_CACHE_VAL(gdb_cv_have_gregset_t,
+[AC_TRY_LINK([#include <sys/procfs.h>],[gregset_t *gregsetp = 0],
+gdb_cv_have_gregset_t=yes, gdb_cv_have_gregset_t=no)])
+AC_MSG_RESULT($gdb_cv_have_gregset_t)
+if test $gdb_cv_have_gregset_t = yes; then
+  AC_DEFINE(HAVE_GREGSET_T)
+fi
+
+AC_MSG_CHECKING([for fpregset_t type])
+AC_CACHE_VAL(gdb_cv_have_fpregset_t,
+[AC_TRY_LINK([#include <sys/procfs.h>],[fpregset_t *fpregsetp = 0],
+gdb_cv_have_fpregset_t=yes, gdb_cv_have_fpregset_t=no)])
+AC_MSG_RESULT($gdb_cv_have_fpregset_t)
+if test $gdb_cv_have_fpregset_t = yes; then
+  AC_DEFINE(HAVE_FPREGSET_T)
+fi
+
+dnl See if compiler supports "long long" type.
+
+AC_MSG_CHECKING(for long long support in compiler)
+AC_CACHE_VAL(gdb_cv_c_long_long,
+[AC_TRY_COMPILE(, [
+  extern long long foo;
+  switch (foo & 2) { case 0: return 1; }
+],
+gdb_cv_c_long_long=yes, gdb_cv_c_long_long=no)])
+AC_MSG_RESULT($gdb_cv_c_long_long)
+if test $gdb_cv_c_long_long = yes; then
+  AC_DEFINE(CC_HAS_LONG_LONG)
+fi
+
+dnl See if the compiler and runtime support printing long long
+
+AC_MSG_CHECKING(for long long support in printf)
+AC_CACHE_VAL(gdb_cv_printf_has_long_long,
+[AC_TRY_RUN([
+int main () {
+  char buf[16];
+  long long l = 0x12345;
+  sprintf (buf, "%llx", l);
+  return (strcmp ("12345", buf));
+}],
+gdb_cv_printf_has_long_long=yes,
+gdb_cv_printf_has_long_long=no,
+gdb_cv_printf_has_long_long=no)])
+if test $gdb_cv_printf_has_long_long = yes; then
+  AC_DEFINE(PRINTF_HAS_LONG_LONG)
+fi
+AC_MSG_RESULT($gdb_cv_printf_has_long_long)
+
+dnl See if compiler supports "long double" type.  Can't use AC_C_LONG_DOUBLE
+dnl because autoconf complains about cross-compilation issues.  However, this
+dnl code uses the same variables as the macro for compatibility.
+
+AC_MSG_CHECKING(for long double support in compiler)
+AC_CACHE_VAL(ac_cv_c_long_double,
+[AC_TRY_COMPILE(, [long double foo;],
+ac_cv_c_long_double=yes, ac_cv_c_long_double=no)])
+AC_MSG_RESULT($ac_cv_c_long_double)
+if test $ac_cv_c_long_double = yes; then
+  AC_DEFINE(HAVE_LONG_DOUBLE)
+fi
+
+dnl See if the compiler and runtime support printing long doubles
+
+AC_MSG_CHECKING(for long double support in printf)
+AC_CACHE_VAL(gdb_cv_printf_has_long_double,
+[AC_TRY_RUN([
+int main () {
+  char buf[16];
+  long double f = 3.141592653;
+  sprintf (buf, "%Lg", f);
+  return (strncmp ("3.14159", buf, 7));
+}],
+gdb_cv_printf_has_long_double=yes,
+gdb_cv_printf_has_long_double=no,
+gdb_cv_printf_has_long_double=no)])
+if test $gdb_cv_printf_has_long_double = yes; then
+  AC_DEFINE(PRINTF_HAS_LONG_DOUBLE)
+fi
+AC_MSG_RESULT($gdb_cv_printf_has_long_double)
+
+AC_FUNC_MMAP
+
+BFD_NEED_DECLARATION(malloc)
+BFD_NEED_DECLARATION(realloc)
+BFD_NEED_DECLARATION(free)
+
+dnl See if thread_db library is around for Solaris thread debugging.  Note that
+dnl we must explicitly test for version 1 of the library because version 0
+dnl (present on Solaris 2.4 or earlier) doesn't have the same API.
+
+dnl Note that we only want this if we are both native (host == target), and
+dnl not doing a canadian cross build (build == host).
+
+if test ${build} = ${host} -a ${host} = ${target} ; then
+	AC_MSG_CHECKING(for Solaris thread debugging library)
+	if test -f /usr/lib/libthread_db.so.1 ; then
+		AC_MSG_RESULT(yes)
+		THREAD_DB_OBS=sol-thread.o
+		AC_DEFINE(HAVE_THREAD_DB_LIB)
+		CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -Xlinker -export-dynamic"
+	else
+		AC_MSG_RESULT(no)
+	fi
+	case ${host_os} in
+	hpux*)
+		AC_MSG_CHECKING(for HPUX/OSF thread support)
+		if test -f /usr/include/dce/cma_config.h ; then
+			AC_MSG_RESULT(yes)
+			AC_DEFINE(HAVE_HPUX_THREAD_SUPPORT)
+			THREAD_DB_OBS=hpux-thread.o
+		else
+			AC_MSG_RESULT(no)
+		fi
+		;;
+	esac
+	AC_SUBST(THREAD_DB_OBS)
+	AC_SUBST(CONFIG_LDFLAGS)
+fi
+
+dnl Handle optional features that can be enabled.
+ENABLE_CFLAGS=
+ENABLE_CLIBS=
+ENABLE_OBS=
+
+AC_ARG_ENABLE(netrom,
+[  --enable-netrom ],
+[case "${enableval}" in
+yes)	enable_netrom=yes ;;
+no)	enable_netrom=no ;;
+*)	AC_MSG_ERROR(bad value ${enableval} given for netrom option) ;;
+esac])
+
+if test "${enable_netrom}" = "yes"; then
+	ENABLE_OBS="${ENABLE_OBS} remote-nrom.o" 
+fi
+
+
+AC_ARG_ENABLE(sim-powerpc,
+[  --enable-sim-powerpc ],
+[case "${enableval}" in
+yes)	powerpc_sim=yes ;;
+no)	powerpc_sim=no ;;
+*)	AC_MSG_ERROR(bad value ${enableval} given for sim-powerpc option) ;;
+esac],[if test x"$GCC" != x""; then powerpc_sim=yes; else powerpc_sim=no; fi])
+
+ENABLE_GDBTK=
+
+AC_ARG_ENABLE(gdbtk,
+[  --enable-gdbtk ],
+[case "${enableval}" in
+    yes)
+	case "$host" in
+	*go32*)
+	    AC_MSG_WARN([GDB does not support GDBtk on host ${host}.  GDBtk will be disabled.])
+	    enable_gdbtk=no ;;
+	*cygwin32* | *windows*)
+	    AC_MSG_WARN([GDB does not support GDBtk on host ${host}.  GDBtk will be disabled.])
+	    enable_gdbtk=no ;;
+	*)
+	    enable_gdbtk=yes ;;
+	esac ;;
+    no)
+	enable_gdbtk=no  ;;
+    *)
+	AC_MSG_ERROR(bad value ${enableval} given for gdbtk option) ;;
+esac],
+[
+# Default is on for everything but go32 and cygwin32
+case "$host" in
+    *go32* | *cygwin32* | *windows*)
+	;;
+    *)
+	enable_gdbtk=yes ;;
+    esac
+])
+
+if test "${enable_gdbtk}" = "yes"; then
+
+    CY_AC_PATH_TCLCONFIG
+    if test -z "${no_tcl}"; then
+	CY_AC_LOAD_TCLCONFIG
+	CY_AC_PATH_TKCONFIG
+
+	# If $no_tk is nonempty, then we can't do Tk, and there is no
+	# point to doing Tcl.
+	if test -z "${no_tk}"; then
+	   CY_AC_LOAD_TKCONFIG
+	   CY_AC_PATH_TCLH
+	   CY_AC_PATH_TKH
+
+	   # Include some libraries that Tcl and Tk want.
+	   LIBS="$LIBS $TK_LIBS"
+
+	   ENABLE_GDBTK=1
+
+	   TCL_LIBS='$(TCL) $(TK) $(X11_LDFLAGS) $(X11_LIBS)'
+	   ENABLE_CLIBS="${ENABLE_CLIBS} ${TCL_LIBS}"
+	   ENABLE_OBS="${ENABLE_OBS} gdbtk.o"
+	fi
+    fi
+fi
+
+AC_SUBST(ENABLE_GDBTK)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LDFLAGS)
+AC_SUBST(X_LIBS)
+
+AC_SUBST(ENABLE_CFLAGS)
+AC_SUBST(ENABLE_CLIBS)
+AC_SUBST(ENABLE_OBS)
+
+# Begin stuff to support --enable-shared
+AC_ARG_ENABLE(shared,
+[  --enable-shared         use shared libraries],
+[case "${enableval}" in
+  yes) shared=true ;;
+  no)  shared=false ;;
+  *) shared=true ;;
+esac])dnl
+
+HLDFLAGS=
+HLDENV=
+# If we have shared libraries, try to set rpath reasonably.
+if test "${shared}" = "true"; then
+  case "${host}" in
+  *-*-hpux*)
+    HLDFLAGS='-Wl,+s,+b,$(libdir)'
+    ;;
+  *-*-irix5* | *-*-irix6*)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-linux*aout*)
+    ;;
+  *-*-linux* | *-pc-linux-gnu)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-solaris*)
+    HLDFLAGS='-R $(libdir)'
+    ;;
+  *-*-sysv4*)
+    HLDENV='if test -z "$${LD_RUN_PATH}"; then LD_RUN_PATH=$(libdir); else LD_RUN_PATH=$${LD_RUN_PATH}:$(libdir); fi; export LD_RUN_PATH;'
+    ;;
+  esac
+fi
+
+# On SunOS, if the linker supports the -rpath option, use it to
+# prevent ../bfd and ../opcodes from being included in the run time
+# search path.
+case "${host}" in
+  *-*-sunos*)
+    echo 'main () { }' > conftest.c
+    ${CC} -o conftest -Wl,-rpath= conftest.c >/dev/null 2>conftest.t
+    if grep 'unrecognized' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'No such file' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'do not mix' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'some text already loaded' conftest.t >/dev/null 2>&1; then
+      :
+    elif test "${shared}" = "true"; then
+      HLDFLAGS='-Wl,-rpath=$(libdir)'
+    else
+      HLDFLAGS='-Wl,-rpath='
+    fi
+    rm -f conftest.t conftest.c conftest
+    ;;
+esac
+AC_SUBST(HLDFLAGS)
+AC_SUBST(HLDENV)
+# End stuff to support --enable-shared
+
+# target_subdir is used by the testsuite to find the target libraries.
+target_subdir=
+if test "${host}" != "${target}"; then
+    target_subdir="${target_alias}/"
+fi
+AC_SUBST(target_subdir)
+
+configdirs="doc testsuite"
+
+dnl
+changequote(,)dnl
+
+. ${srcdir}/configure.host
+
+. ${srcdir}/configure.tgt
+
+dnl
+changequote([,])dnl
+
+frags=
+host_makefile_frag=${srcdir}/config/${gdb_host_cpu}/${gdb_host}.mh
+if test ! -f ${host_makefile_frag}; then
+AC_MSG_ERROR("*** Gdb does not support host ${host}")
+fi
+frags="$frags $host_makefile_frag"
+
+target_makefile_frag=${srcdir}/config/${gdb_target_cpu}/${gdb_target}.mt
+if test ! -f ${target_makefile_frag}; then
+AC_MSG_ERROR("*** Gdb does not support target ${target}")
+fi
+frags="$frags $target_makefile_frag"
+
+AC_SUBST_FILE(host_makefile_frag)
+AC_SUBST_FILE(target_makefile_frag)
+AC_SUBST(frags)
+
+changequote(,)dnl
+hostfile=`sed -n '
+s/XM_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
+' ${host_makefile_frag}`
+
+targetfile=`sed -n '
+s/TM_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
+' ${target_makefile_frag}`
+
+# these really aren't orthogonal true/false values of the same condition,
+# but shells are slow enough that I like to reuse the test conditions
+# whenever possible
+if test "${target}" = "${host}"; then
+nativefile=`sed -n '
+s/NAT_FILE[ 	]*=[ 	]*\([^ 	]*\)/\1/p
+' ${host_makefile_frag}`
+else
+# GDBserver is only useful in a "native" enviroment
+configdirs=`echo $configdirs | sed 's/gdbserver//'`
+fi
+changequote([,])
+
+# If hostfile (XM_FILE) and/or targetfile (TM_FILE) and/or nativefile
+# (NAT_FILE) is not set in config/*/*.m[ht] files, we don't make the
+# corresponding links.  But we have to remove the xm.h files and tm.h
+# files anyway, e.g. when switching from "configure host" to
+# "configure none".
+
+files=
+links=
+rm -f xm.h
+if test "${hostfile}" != ""; then
+files="${files} config/${gdb_host_cpu}/${hostfile}"
+links="${links} xm.h"
+fi
+rm -f tm.h
+if test "${targetfile}" != ""; then
+files="${files} config/${gdb_target_cpu}/${targetfile}"
+links="${links} tm.h"
+fi
+rm -f nm.h
+if test "${nativefile}" != ""; then
+files="${files} config/${gdb_host_cpu}/${nativefile}"
+links="${links} nm.h"
+else
+# A cross-only configuration.
+files="${files} config/nm-empty.h"
+links="${links} nm.h"
+fi
+
+# Make it possible to use the GUI without doing a full install
+if test "${enable_gdbtk}" = "yes" -a ! -f gdbtk.tcl ; then
+files="${files} gdbtk.tcl"
+links="${links} gdbtk.tcl"
+fi
+
+AC_LINK_FILES($files, $links)
+
+AC_CONFIG_SUBDIRS($configdirs)
+AC_OUTPUT(Makefile, 
+[
+dnl Autoconf doesn't provide a mechanism for modifying definitions 
+dnl provided by makefile fragments.
+dnl
+if test "${nativefile}" = ""; then
+sed -e '/^NATDEPFILES[[ 	]]*=[[ 	]]*/s//# NATDEPFILES=/' \
+	< Makefile > Makefile.tem
+mv -f Makefile.tem Makefile
+fi
+
+changequote(,)dnl
+sed -e '/^TM_FILE[ 	]*=/s,^TM_FILE[ 	]*=[ 	]*,&config/'"${gdb_target_cpu}"'/,
+/^XM_FILE[ 	]*=/s,^XM_FILE[ 	]*=[ 	]*,&config/'"${gdb_host_cpu}"'/,
+/^NAT_FILE[ 	]*=/s,^NAT_FILE[ 	]*=[ 	]*,&config/'"${gdb_host_cpu}"'/,' <Makefile >Makefile.tmp
+mv -f Makefile.tmp Makefile
+changequote([,])dnl
+
+case ${srcdir} in
+.)
+;;
+*)
+grep "source ${srcdir}/.gdbinit" .gdbinit >/dev/null 2>/dev/null || \
+echo "source ${srcdir}/.gdbinit" >> .gdbinit
+esac
+
+case x$CONFIG_HEADERS in
+xconfig.h:config.in)
+echo > stamp-h ;;
+esac
+],
+[
+gdb_host_cpu=$gdb_host_cpu
+gdb_target_cpu=$gdb_target_cpu
+nativefile=$nativefile
+])
+
+exit 0
+

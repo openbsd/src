@@ -750,12 +750,15 @@ scan_open_obj_file (abfd)
 	      char *c;
 	      p += 8;
 	      name = p;
-	      while (*p != ' ' && *p != '-' && p < e)
+	      while (p < e && *p != ' ' && *p != '-')
 		p++;
 	      c = xmalloc (p - name + 1);
 	      memcpy (c, name, p - name);
 	      c[p - name] = 0;
-	      def_exports (c, 0, -1, 0);
+	      /* FIXME: The 5th arg is for the `constant' field.
+		 What should it be?  Not that it matters since it's not
+		 currently useful.  */
+	      def_exports (c, 0, -1, 0, 0);
 	    }
 	  else
 	    p++;
@@ -768,7 +771,6 @@ scan_open_obj_file (abfd)
   if (verbose)
     fprintf (stderr, "%s: Done readin\n",
 	     program_name);
-
 }
 
 
@@ -2323,7 +2325,6 @@ main (ac, av)
       scan_obj_file (av[optind]);
       optind++;
     }
-
 
   mangle_defs ();
 

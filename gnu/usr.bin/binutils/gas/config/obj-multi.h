@@ -6,6 +6,7 @@
 #define OUTPUT_FLAVOR		(this_format->flavor)
 #define obj_frob_symbol(S,P)	(this_format->frob_symbol)(S,&(P))
 #define obj_frob_file		(this_format->frob_file)
+#define obj_frob_file_after_relocs (this_format->frob_file_after_relocs)
 #define obj_ecoff_set_ext	(this_format->ecoff_set_ext)
 #define obj_pop_insert		(this_format->pop_insert)
 #define obj_read_begin_hook()	(this_format->read_begin_hook?this_format->read_begin_hook():(void)0)

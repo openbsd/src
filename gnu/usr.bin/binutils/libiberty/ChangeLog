@@ -1,3 +1,45 @@
+Fri Oct 11 15:42:12 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* config/mh-windows:  Add strcasecmp.o to EXTRA_OFILES.
+
+Fri Oct 11 11:16:31 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.c (mpwify_filename): Rewrite to simplify, and to handle
+	upward components correctly.
+
+Tue Oct  8 08:55:34 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* config.table, config/mh-windows:  Add support for building under
+	MSVC (the Microsoft build environment).
+
+Mon Oct  7 10:50:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.c: Undef const if not __STDC__.
+
+Thu Oct  3 13:46:39 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.c: New file.
+	* Makefile.in (CFILES): Add fnmatch.c.
+	(REQUIRED_OFILES): Add fnmatch.o.
+	(fnmatch.o): New target.
+
+Wed Sep 18 14:49:13 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* cplus-dem.c (demangle_template): Fix handling of address args.
+	(gnu_special): Handle type_info stuff.
+
+Fri Sep 13 17:52:55 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw.c (DebugPI): Make settable from the env var DEBUG_PATHNAMES.
+	(mpwify_filename): Handle "::/" case.
+
+Thu Sep 12 13:30:40 1996  Geoffrey Noer  <noer@cygnus.com>
+
+	* config/mh-cygwin32: new file (need -DNEED_basename and
+		-DNEED_sys_siglist for native NT rebuilding)
+	* config.table (*-*-cygwin32): new entry
+	* choose-temp.c: bring in sync with gcc (revert Aug 17 change)
+
 Thu Aug 29 16:48:45 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* config.table (i[345]86-*-*): Recognize i686 for pentium pro.

@@ -647,11 +647,12 @@ exp_init_os (exp)
 
 /*ARGSUSED*/
 static void
-section_already_linked (abfd, sec, ignore)
+section_already_linked (abfd, sec, data)
      bfd *abfd;
      asection *sec;
-     PTR ignore;
+     PTR data;
 {
+  lang_input_statement_type *entry = (lang_input_statement_type *) data;
   struct sec_link_once
     {
       struct sec_link_once *next;
@@ -661,6 +662,14 @@ section_already_linked (abfd, sec, ignore)
   flagword flags;
   const char *name;
   struct sec_link_once *l;
+
+  /* If we are only reading symbols from this object, then we want to
+     discard all sections.  */
+  if (entry->just_syms_flag)
+    {
+      sec->output_section = bfd_abs_section_ptr;
+      return;
+    }
 
   flags = bfd_get_section_flags (abfd, sec);
 
@@ -2064,7 +2073,15 @@ lang_size_sections (s, output_section_statement, prev, fill, dot, relax)
 	   }
 	   dot = os->region->current;
 	   if (os->section_alignment == -1)
-	     dot = align_power (dot, os->bfd_section->alignment_power);
+	     {
+	       bfd_vma olddot;
+
+	       olddot = dot;
+	       dot = align_power (dot, os->bfd_section->alignment_power);
+	       if (dot != olddot && config.warn_section_align)
+		 einfo ("%P: warning: changing start of section %s by %u bytes\n",
+			os->name, (unsigned int) (dot - olddot));
+	     }
 	 }
 	 else
 	 {
@@ -2928,7 +2945,7 @@ ldlang_add_file (entry)
      each backend which might set the SEC_LINK_ONCE flag.  If we do
      this, we should probably handle SEC_EXCLUDE in the same way.  */
 
-  bfd_map_over_sections (entry->the_bfd, section_already_linked, (PTR) NULL);
+  bfd_map_over_sections (entry->the_bfd, section_already_linked, (PTR) entry);
 }
 
 void

@@ -659,6 +659,9 @@ struct sunos_link_hash_table
   /* The list of dynamic objects needed by dynamic objects included in
      the link.  */
   struct bfd_link_needed_list *needed;
+
+  /* The offset of __GLOBAL_OFFSET_TABLE_ into the .got section.  */
+  bfd_vma got_base;
 };
 
 /* Routine to create an entry in an SunOS link hash table.  */
@@ -721,6 +724,7 @@ sunos_link_hash_table_create (abfd)
   ret->dynsymcount = 0;
   ret->bucketcount = 0;
   ret->needed = NULL;
+  ret->got_base = 0;
 
   return &ret->root.root;
 }
@@ -1241,6 +1245,9 @@ bfd_sunos_size_dynamic_sections (output_bfd, info, sdynptr, sneedptr,
   *sneedptr = NULL;
   *srulesptr = NULL;
 
+  if (info->relocateable)
+    return true;
+
   if (output_bfd->xvec != &MY(vec))
     return true;
 
@@ -1283,7 +1290,18 @@ bfd_sunos_size_dynamic_sections (output_bfd, info, sdynptr, sneedptr,
 	}
       h->root.root.type = bfd_link_hash_defined;
       h->root.root.u.def.section = bfd_get_section_by_name (dynobj, ".got");
-      h->root.root.u.def.value = 0;
+
+      /* If the .got section is more than 0x1000 bytes, we set
+         __GLOBAL_OFFSET_TABLE_ to be 0x1000 bytes into the section,
+         so that 13 bit relocations have a greater chance of working.  */
+      s = bfd_get_section_by_name (dynobj, ".got");
+      BFD_ASSERT (s != NULL);
+      if (s->_raw_size >= 0x1000)
+	h->root.root.u.def.value = 0x1000;
+      else
+	h->root.root.u.def.value = 0;
+
+      sunos_hash_table (info)->got_base = h->root.root.u.def.value;
     }
 
   /* The .dynamic section is always the same size.  */
@@ -2515,7 +2533,9 @@ sunos_check_dynamic_reloc (info, input_bfd, input_section, harg, reloc,
 	  *got_offsetp |= 1;
 	}
 
-      *relocationp = sgot->vma + (*got_offsetp &~ 1);
+      *relocationp = (sgot->vma
+		      + (*got_offsetp &~ 1)
+		      - sunos_hash_table (info)->got_base);
 
       /* There is nothing else to do for a base relative reloc.  */
       return true;

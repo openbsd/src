@@ -1,0 +1,217 @@
+# Visual C++ 2.x and 4.0 makefile
+#
+# Copyright (c) 1995-1996 by Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# 
+# SCCS: @(#) makefile.vc 1.26 96/04/12 18:07:53
+
+# Project directories
+#
+# ROOT = top of source tree
+# TMPDIR = location where .obj files should be stored during build
+# TCLDIR = location of top of Tcl source heirarchy
+# TOOLS32 = location of VC++ 32-bit development tools
+#
+
+ROOT	= ..
+TMPDIR	= .
+TOOLS32	= c:\msdev
+TCLDIR	= ..\..\tcl7.5
+
+# Comment the following line to compile with symbols
+NODEBUG=1
+
+# uncomment the following two lines to compile with TCL_MEM_DEBUG
+#DEBUGDEFINES	=-DTCL_MEM_DEBUG
+
+# Make sure the VC++ tools are at the head of the path
+PATH=$(TOOLS32)\bin;$(PATH)
+
+TCLLIBDIR       = $(TCLDIR)\win
+WINDIR          = $(ROOT)\win
+GENERICDIR	= $(ROOT)\generic
+XLIBDIR		= $(ROOT)\xlib
+
+cc32 = $(TOOLS32)\bin\cl -I$(TOOLS32)\include
+rc32 = $(TOOLS32)\bin\rc
+link32 = $(TOOLS32)\bin\link
+
+TK_INCLUDES = \
+        -I$(TOOLS32)\include -I$(ROOT)\win -I$(ROOT)\generic \
+	-I$(ROOT)\bitmaps -I$(ROOT)\xlib -I$(ROOT) -I$(TCLDIR)\generic
+
+TK_DEFINES = \
+        -nologo $(DEBUGDEFINES)
+
+WISHOBJS = \
+	$(TMPDIR)\tkConsole.obj \
+	$(TMPDIR)\winMain.obj
+
+TKTESTOBJS = \
+	$(TMPDIR)\tkConsole.obj \
+	$(TMPDIR)\tkTest.obj \
+	$(TMPDIR)\tkSquare.obj \
+	$(TMPDIR)\testMain.obj
+
+XLIBOBJS = \
+	$(TMPDIR)\xdraw.obj \
+	$(TMPDIR)\xgc.obj \
+	$(TMPDIR)\ximage.obj \
+	$(TMPDIR)\xutil.obj
+
+TKOBJS = \
+	$(XLIBOBJS) \
+	$(TMPDIR)\tkWin32Dll.obj \
+	$(TMPDIR)\tkWinClipboard.obj \
+	$(TMPDIR)\tkWinColor.obj \
+	$(TMPDIR)\tkWinCursor.obj \
+	$(TMPDIR)\tkWinDraw.obj \
+	$(TMPDIR)\tkWinFont.obj \
+	$(TMPDIR)\tkWinImage.obj \
+	$(TMPDIR)\tkWinInit.obj \
+	$(TMPDIR)\tkWinKey.obj \
+	$(TMPDIR)\tkWinPixmap.obj \
+	$(TMPDIR)\tkWinPointer.obj \
+	$(TMPDIR)\tkWinRegion.obj \
+	$(TMPDIR)\tkWinWindow.obj \
+	$(TMPDIR)\tkWinWm.obj \
+	$(TMPDIR)\tkWinX.obj \
+	$(TMPDIR)\stubs.obj \
+	$(TMPDIR)\tk3d.obj \
+	$(TMPDIR)\tkArgv.obj \
+	$(TMPDIR)\tkAtom.obj \
+	$(TMPDIR)\tkBind.obj \
+	$(TMPDIR)\tkBitmap.obj \
+	$(TMPDIR)\tkButton.obj \
+	$(TMPDIR)\tkCanvArc.obj \
+	$(TMPDIR)\tkCanvBmap.obj \
+	$(TMPDIR)\tkCanvImg.obj \
+	$(TMPDIR)\tkCanvLine.obj \
+	$(TMPDIR)\tkCanvPoly.obj \
+	$(TMPDIR)\tkCanvPs.obj \
+	$(TMPDIR)\tkCanvText.obj \
+	$(TMPDIR)\tkCanvUtil.obj \
+	$(TMPDIR)\tkCanvWind.obj \
+	$(TMPDIR)\tkCanvas.obj \
+	$(TMPDIR)\tkClipboard.obj \
+	$(TMPDIR)\tkCmds.obj \
+	$(TMPDIR)\tkColor.obj \
+	$(TMPDIR)\tkConfig.obj \
+	$(TMPDIR)\tkCursor.obj \
+	$(TMPDIR)\tkEntry.obj \
+	$(TMPDIR)\tkError.obj \
+	$(TMPDIR)\tkEvent.obj \
+	$(TMPDIR)\tkFocus.obj \
+	$(TMPDIR)\tkFont.obj \
+	$(TMPDIR)\tkFrame.obj \
+	$(TMPDIR)\tkGC.obj \
+	$(TMPDIR)\tkGeometry.obj \
+	$(TMPDIR)\tkGet.obj \
+	$(TMPDIR)\tkGrab.obj \
+	$(TMPDIR)\tkGrid.obj \
+	$(TMPDIR)\tkImage.obj \
+	$(TMPDIR)\tkImgBmap.obj \
+	$(TMPDIR)\tkImgGIF.obj \
+	$(TMPDIR)\tkImgPPM.obj \
+	$(TMPDIR)\tkImgPhoto.obj \
+	$(TMPDIR)\tkImgUtil.obj \
+	$(TMPDIR)\tkListbox.obj \
+	$(TMPDIR)\tkMain.obj \
+	$(TMPDIR)\tkMenu.obj \
+	$(TMPDIR)\tkMenubutton.obj \
+	$(TMPDIR)\tkMessage.obj \
+	$(TMPDIR)\tkOption.obj \
+	$(TMPDIR)\tkPack.obj \
+	$(TMPDIR)\tkPlace.obj \
+	$(TMPDIR)\tkRectOval.obj \
+	$(TMPDIR)\tkScale.obj \
+	$(TMPDIR)\tkScrollbar.obj \
+	$(TMPDIR)\tkSelect.obj \
+	$(TMPDIR)\tkSend.obj \
+	$(TMPDIR)\tkText.obj \
+	$(TMPDIR)\tkTextBTree.obj \
+	$(TMPDIR)\tkTextDisp.obj \
+	$(TMPDIR)\tkTextIndex.obj \
+	$(TMPDIR)\tkTextMark.obj \
+	$(TMPDIR)\tkTextTag.obj \
+	$(TMPDIR)\tkTextWind.obj \
+	$(TMPDIR)\tkTrig.obj \
+	$(TMPDIR)\tkUtil.obj \
+	$(TMPDIR)\tkVisual.obj \
+	$(TMPDIR)\tkWindow.obj \
+	$(TMPDIR)\tkXId.obj
+
+TCLLIB = tcl75.lib
+TKLIB = tk41.lib
+TCLDLL = tcl75.dll
+TKDLL = tk41.dll
+WISH = wish41.exe
+TKTEST = tktest.exe
+
+CP      = copy
+
+!include    <ntwin32.mak>
+
+all:    $(TKDLL) $(WISH)
+test:	$(TKDLL) $(TKTEST)
+
+tkvc.def: $(TKOBJS)
+	$(TCLLIBDIR)\dumpexts.exe -o $@ $(TKDLL) @<<
+		$(TKOBJS)
+<<
+
+$(TKDLL): $(TKOBJS) $(TMPDIR)\tk.res tkvc.def
+        $(link32) $(linkdebug) $(dlllflags) -def:tkvc.def \
+ 		$(TMPDIR)\tk.res $(TCLLIBDIR)\$(TCLLIB) $(guilibsdll) \
+		-out:$(TKDLL) @<<
+		$(TKOBJS)
+<<
+
+
+$(WISH): $(WISHOBJS) $(TKLIB) $(TMPDIR)\wish.res
+	$(link32) $(linkdebug) $(guilflags) \
+		$(WISHOBJS) $(TMPDIR)\wish.res $(TKLIB) \
+		$(TCLLIBDIR)\$(TCLLIB) $(guilibsdll) \
+		-out:$(WISH) 
+
+$(TKTEST): $(TKTESTOBJS) $(TKLIB) $(TMPDIR)\wish.res
+	$(link32) $(linkdebug) $(guilflags) \
+		$(TKTESTOBJS) $(TMPDIR)\wish.res $(TKLIB) \
+		$(TCLLIBDIR)\$(TCLLIB) $(guilibsdll) \
+		-out:$(TKTEST) 
+
+#
+# Special case object file targets
+#
+
+$(TMPDIR)\testMain.obj: $(ROOT)\win\winMain.c
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(TK_INCLUDES) \
+        	$(TK_DEFINES) -DTK_TEST -Fo$@ $?
+
+#
+# Implicit rules
+#
+
+{$(ROOT)\xlib}.c{$(TMPDIR)}.obj:
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(TK_INCLUDES) \
+		$(TK_DEFINES) -Fo$(TMPDIR)\ $<
+
+{$(ROOT)\generic}.c{$(TMPDIR)}.obj:
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(TK_INCLUDES) \
+		$(TK_DEFINES) -Fo$(TMPDIR)\ $<
+
+{$(ROOT)\win}.c{$(TMPDIR)}.obj:
+	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(TK_INCLUDES) \
+		$(TK_DEFINES) -Fo$(TMPDIR)\ $<
+
+{$(ROOT)\win\rc}.rc{$(TMPDIR)}.res:
+	$(rc32) -fo $@ -r -i $(ROOT)\generic $<
+
+clean:
+	-@del *.exp
+	-@del *.lib
+	-@del *.dll
+	-@del *.exe
+        -@del $(TMPDIR)\*.obj 

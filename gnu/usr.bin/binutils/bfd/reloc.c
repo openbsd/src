@@ -138,7 +138,7 @@ DESCRIPTION
         type which modifies the bottom two bytes of a four byte word
         would not touch the first byte pointed to in a big endian
         world.
-	
+
 	o <<addend>>
 
 	The <<addend>> is a value provided by the back end to be added (!)
@@ -872,20 +872,18 @@ space consuming.  For each target:
       break;
 
     case 1:
-      if (relocation)
-	{
-	  short x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
-	  DOIT (x);
-	  bfd_put_16 (abfd, x, (unsigned char *) data + addr);
-	}
+      {
+	short x = bfd_get_16 (abfd, (bfd_byte *) data + addr);
+	DOIT (x);
+	bfd_put_16 (abfd, x, (unsigned char *) data + addr);
+      }
       break;
     case 2:
-      if (relocation)
-	{
-	  long x = bfd_get_32 (abfd, (bfd_byte *) data + addr);
-	  DOIT (x);
-	  bfd_put_32 (abfd, x, (bfd_byte *) data + addr);
-	}
+      {
+	long x = bfd_get_32 (abfd, (bfd_byte *) data + addr);
+	DOIT (x);
+	bfd_put_32 (abfd, x, (bfd_byte *) data + addr);
+      }
       break;
     case -2:
       {
@@ -911,12 +909,11 @@ space consuming.  For each target:
 
     case 4:
 #ifdef BFD64
-      if (relocation)
-	{
-	  bfd_vma x = bfd_get_64 (abfd, (bfd_byte *) data + addr);
-	  DOIT (x);
-	  bfd_put_64 (abfd, x, (bfd_byte *) data + addr);
-	}
+      {
+	bfd_vma x = bfd_get_64 (abfd, (bfd_byte *) data + addr);
+	DOIT (x);
+	bfd_put_64 (abfd, x, (bfd_byte *) data + addr);
+      }
 #else
       abort ();
 #endif
@@ -1076,12 +1073,12 @@ bfd_install_relocation (abfd, reloc_entry, data_start, data_start_offset,
     {
       /* This is a partial relocation, but inplace, so modify the
 	 reloc record a bit.
-	 
+
 	 If we've relocated with a symbol with a section, change
 	 into a ref to the section belonging to the symbol.  */
-      
+
       reloc_entry->address += input_section->output_offset;
-      
+
       /* WTF?? */
       if (abfd->xvec->flavour == bfd_target_coff_flavour
 	  && strcmp (abfd->xvec->name, "aixcoff-rs6000") != 0
@@ -1093,10 +1090,10 @@ bfd_install_relocation (abfd, reloc_entry, data_start, data_start_offset,
 /* For m68k-coff, the addend was being subtracted twice during
    relocation with -r.  Removing the line below this comment
    fixes that problem; see PR 2953.
-	     
+
 However, Ian wrote the following, regarding removing the line below,
 which explains why it is still enabled:  --djm
-	     
+
 If you put a patch like that into BFD you need to check all the COFF
 linkers.  I am fairly certain that patch will break coff-i386 (e.g.,
 SCO); see coff_i386_reloc in coff-i386.c where I worked around the
@@ -1332,20 +1329,18 @@ space consuming.  For each target:
       break;
 
     case 1:
-      if (relocation)
-	{
-	  short x = bfd_get_16 (abfd, (bfd_byte *) data);
-	  DOIT (x);
-	  bfd_put_16 (abfd, x, (unsigned char *) data);
-	}
+      {
+	short x = bfd_get_16 (abfd, (bfd_byte *) data);
+	DOIT (x);
+	bfd_put_16 (abfd, x, (unsigned char *) data);
+      }
       break;
     case 2:
-      if (relocation)
-	{
-	  long x = bfd_get_32 (abfd, (bfd_byte *) data);
-	  DOIT (x);
-	  bfd_put_32 (abfd, x, (bfd_byte *) data);
-	}
+      {
+	long x = bfd_get_32 (abfd, (bfd_byte *) data);
+	DOIT (x);
+	bfd_put_32 (abfd, x, (bfd_byte *) data);
+      }
       break;
     case -2:
       {
@@ -1361,12 +1356,11 @@ space consuming.  For each target:
       break;
 
     case 4:
-      if (relocation)
-	{
-	  bfd_vma x = bfd_get_64 (abfd, (bfd_byte *) data);
-	  DOIT (x);
-	  bfd_put_64 (abfd, x, (bfd_byte *) data);
-	}
+      {
+	bfd_vma x = bfd_get_64 (abfd, (bfd_byte *) data);
+	DOIT (x);
+	bfd_put_64 (abfd, x, (bfd_byte *) data);
+      }
       break;
     default:
       return bfd_reloc_other;
@@ -1912,6 +1906,8 @@ ENUM
 ENUMX
   BFD_RELOC_ALPHA_LITERALSLEAZY
 ENUMX
+  BFD_RELOC_ALPHA_ELF_LITERAL
+ENUMX
   BFD_RELOC_ALPHA_LITUSE
 ENUMDOC
   The Alpha LITERAL/LITUSE relocs are produced by a symbol reference;
@@ -1922,6 +1918,15 @@ ENUMDOC
      section symbol.  The addend is ignored when writing, but is filled
      in with the file's GP value on reading, for convenience, as with the
      GPDISP_LO16 reloc.
+
+     The LITERALSLEAZY reloc is a hack to allow larger offsets (4x) than
+     LITERAL.
+
+     The ELF_LITERAL reloc is somewhere between 16_GOTOFF and GPDISP_LO16.
+     It should refer to the symbol to be referenced, as with 16_GOTOFF,
+     but it generates output not based on the position within the .got
+     section, but relative to the GP value chosen for the file during the
+     final link stage.
 
      The LITUSE reloc, on the instruction using the loaded address, gives
      information to the linker that it might be able to use to optimize
@@ -2201,6 +2206,8 @@ ENUMX
   BFD_RELOC_SH_LABEL
 ENUMDOC
   Hitachi SH relocs.  Not all of these appear in object files.
+
+COMMENT
 
 COMMENT
 

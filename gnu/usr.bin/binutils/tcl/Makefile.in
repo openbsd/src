@@ -1,0 +1,63 @@
+# Minimal top-level Makefile.  Just pass everything to the unix subdir.
+# Tom Tromey <tromey@cygnus.com>
+
+VPATH = @srcdir@
+SHELL = /bin/sh
+SRC_DIR = @srcdir@
+
+@SET_MAKE@
+
+all install test:
+	@cd unix && $(MAKE) $@
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@cd unix && $(MAKE) `echo $@ | sed 's/-recursive//'`
+
+configure:
+	cd $(SRC_DIR) && autoconf
+
+mostlyclean: mostlyclean-recursive
+
+clean: clean-recursive
+
+distclean-local:
+	rm -f Makefile config.status config.cache config.log
+
+distclean: distclean-recursive distclean-local
+
+maintainer-clean: distclean-local maintainer-clean-recursive
+
+
+#----------------------------------------------------------------
+# These let the DejaGnu test suite run when DejaGnu isn't 
+# installed yet, so run it from the srcdir and objdir.
+#----------------------------------------------------------------
+EXPECT = ` \
+  if [ -f $${rootme}/../expect/expect ] ; then \
+    echo $${rootme}/../expect/expect ; \
+  else echo expect ; fi`
+
+RUNTESTFLAGS =
+RUNTEST = ` \
+  if [ -f $(SRC_DIR)/../dejagnu/runtest ] ; then \
+    echo $(SRC_DIR)/../dejagnu/runtest ; \
+  else echo runtest ;  fi`
+
+check:
+	cd unix && $(MAKE) tcltest
+	rootme=`pwd`; export rootme; \
+	srcdir=${SRC_DIR}; export srcdir ; \
+	EXPECT=${EXPECT} ; export EXPECT ; \
+	if [ -f $${rootme}/../expect/expect ] ; then  \
+	   TCL_LIBRARY=`cd $${srcdir}/library && pwd` ; \
+	   export TCL_LIBRARY ; fi ; \
+	$(RUNTEST) $(RUNTESTFLAGS) --tool tcl --srcdir $(SRC_DIR)/testsuite
+
+install-info info installcheck:
+
+Makefile: Makefile.in config.status
+	CONFIG_FILES=Makefile CONFIG_HEADERS= $(SHELL) ./config.status
+
+config.status: configure
+	$(SHELL) config.status --recheck

@@ -35,7 +35,6 @@
  */
 
 #include "ansidecl.h"
-#include "libiberty.h"
 
 #define COMMON
 
@@ -139,6 +138,8 @@ Options:\n\
 -Z			generate object file even after errors\n");
 
   md_show_usage (stream);
+
+  fprintf (stream, "\nReport bugs to bug-gnu-utils@prep.ai.mit.edu\n");
 }
 
 #ifdef USE_EMULATIONS
@@ -369,7 +370,14 @@ parse_args (pargc, pargv)
 	  break;
 
 	case OPTION_VERSION:
-	  print_version_id ();
+	  /* This output is intended to follow the GNU standards document.  */
+	  printf ("GNU assembler %s\n", GAS_VERSION);
+	  printf ("Copyright 1996 Free Software Foundation, Inc.\n");
+	  printf ("\
+This program is free software; you may redistribute it under the terms of\n\
+the GNU General Public License.  This program has absolutely no warranty.\n");
+	  printf ("This assembler was configured for a target of `%s'.\n",
+		  TARGET_ALIAS);
 	  exit (EXIT_SUCCESS);
 
 	case OPTION_EMULATION:
@@ -510,6 +518,13 @@ parse_args (pargc, pargv)
 	case 'X':
 	  /* -X means treat warnings as errors */
 	  break;
+
+#ifdef TE_NetBSD
+	case 'k':
+	  flag_pic = 1;
+	  break;
+#endif
+
 	}
     }
 
@@ -778,6 +793,10 @@ perform_an_assembly_pass (argc, argv)
   /* This may add symbol table entries, which requires having an open BFD,
      and sections already created, in BFD_ASSEMBLER mode.  */
   md_begin ();
+
+#ifdef obj_begin
+  obj_begin ();
+#endif
 
   argv++;			/* skip argv[0] */
   argc--;			/* skip argv[0] */

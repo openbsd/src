@@ -1,0 +1,1217 @@
+# This file is a Tcl script to test entry widgets in Tk.  It is
+# organized in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1994 The Regents of the University of California.
+# Copyright (c) 1994-1996 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) entry.test 1.32 96/03/02 17:49:22
+
+if {[lsearch [image types] test] < 0} {
+    puts "This application hasn't been compiled with the \"test\""
+    puts "image, so I can't run this test.  Are you sure you're using"
+    puts "tktest instead of wish?"
+    return
+}
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+proc scroll args {
+    global scrollInfo
+    set scrollInfo $args
+}
+
+# Create additional widget that's used to hold the selection at times.
+
+entry .sel
+.sel insert end "This is some sample text"
+
+# Font names
+
+set big -adobe-helvetica-medium-r-normal--24-240-75-75-p-*-iso8859-1
+set fixed -adobe-courier-medium-r-normal--12-120-75-75-m-*-iso8859-1
+
+entry .e -bd 2 -relief sunken
+pack .e
+update
+set i 1
+foreach test {
+    {-background #ff0000 #ff0000 non-existent
+	    {unknown color name "non-existent"}}
+    {-bd 4 4 badValue {bad screen distance "badValue"}}
+    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
+    {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
+    {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
+    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
+    {-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* 
+	    -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* bogus
+	    {font "bogus" doesn't exist}}
+    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-highlightbackground #123456 #123456 ugly {unknown color name "ugly"}}
+    {-highlightcolor #123456 #123456 bogus {unknown color name "bogus"}}
+    {-highlightthickness 6 6 bogus {bad screen distance "bogus"}}
+    {-highlightthickness -2 0 {} {}}
+    {-insertbackground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-insertborderwidth 1.3 1 2.6x {bad screen distance "2.6x"}}
+    {-insertofftime 100 100 3.2 {expected integer but got "3.2"}}
+    {-insertontime 100 100 3.2 {expected integer but got "3.2"}}
+    {-justify right right bogus {bad justification "bogus": must be left, right, or center}}
+    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, or sunken}}
+    {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-selectborderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-selectforeground #654321 #654321 bogus {unknown color name "bogus"}}
+    {-show * * {} {}}
+    {-state normal normal bogus {bad state value "bogus": must be normal or disabled}}
+    {-takefocus "any string" "any string" {} {}}
+    {-textvariable i i {} {}}
+    {-width 402 402 3p {expected integer but got "3p"}}
+    {-xscrollcommand {Some command} {Some command} {} {}}
+} {
+    set name [lindex $test 0]
+    test entry-1.$i {configuration options} {
+	.e configure $name [lindex $test 1]
+	list [lindex [.e configure $name] 4] [.e cget $name]
+    } [list [lindex $test 2] [lindex $test 2]]
+    incr i
+    if {[lindex $test 3] != ""} {
+	test entry-1.$i {configuration options} {
+	    list [catch {.e configure $name [lindex $test 3]} msg] $msg
+	} [list 1 [lindex $test 4]]
+    }
+    .e configure $name [lindex [.e configure $name] 3]
+    incr i
+}
+
+test entry-2.1 {Tk_EntryCmd procedure} {
+    list [catch {entry} msg] $msg
+} {1 {wrong # args: should be "entry pathName ?options?"}}
+test entry-2.2 {Tk_EntryCmd procedure} {
+    list [catch {entry gorp} msg] $msg
+} {1 {bad window path name "gorp"}}
+test entry-2.3 {Tk_EntryCmd procedure} {
+    catch {destroy .e}
+    entry .e
+    list [winfo exists .e] [winfo class .e] [info commands .e]
+} {1 Entry .e}
+test entry-2.4 {Tk_EntryCmd procedure} {
+    catch {destroy .e}
+    list [catch {entry .e -gorp foo} msg] $msg [winfo exists .e] \
+	    [info commands .e]
+} {1 {unknown option "-gorp"} 0 {}}
+test entry-2.5 {Tk_EntryCmd procedure} {
+    catch {destroy .e}
+    entry .e
+} {.e}
+
+catch {destroy .e}
+entry .e -font fixed
+pack .e
+update
+test entry-3.1 {EntryWidgetCmd procedure} {
+    list [catch {.e} msg] $msg
+} {1 {wrong # args: should be ".e option ?arg arg ...?"}}
+test entry-3.2 {EntryWidgetCmd procedure, "bbox" widget command} {
+    list [catch {.e bbox} msg] $msg
+} {1 {wrong # args: should be ".e bbox index"}}
+test entry-3.3 {EntryWidgetCmd procedure, "bbox" widget command} {
+    list [catch {.e bbox a b} msg] $msg
+} {1 {wrong # args: should be ".e bbox index"}}
+test entry-3.4 {EntryWidgetCmd procedure, "bbox" widget command} {
+    list [catch {.e bbox bogus} msg] $msg
+} {1 {bad entry index "bogus"}}
+test entry-3.5 {EntryWidgetCmd procedure, "bbox" widget command} {fonts} {
+    .e delete 0 end
+    .e bbox 0
+} {5 5 0 13}
+test entry-3.6 {EntryWidgetCmd procedure, "bbox" widget command} {fonts} {
+    .e delete 0 end
+    .e insert 0 "abcdefghijklmnop"
+    list [.e bbox 0] [.e bbox 1] [.e bbox end]
+} {{5 5 6 13} {11 5 6 13} {95 5 6 13}}
+test entry-3.7 {EntryWidgetCmd procedure, "cget" widget command} {
+    list [catch {.e cget} msg] $msg
+} {1 {wrong # args: should be ".e cget option"}}
+test entry-3.8 {EntryWidgetCmd procedure, "cget" widget command} {
+    list [catch {.e cget a b} msg] $msg
+} {1 {wrong # args: should be ".e cget option"}}
+test entry-3.9 {EntryWidgetCmd procedure, "cget" widget command} {
+    list [catch {.e cget -gorp} msg] $msg
+} {1 {unknown option "-gorp"}}
+test entry-3.10 {EntryWidgetCmd procedure, "cget" widget command} {
+    .e configure -bd 4
+    .e cget -bd
+} {4}
+test entry-3.11 {EntryWidgetCmd procedure, "configure" widget command} {
+    llength [.e configure]
+} {28}
+test entry-3.12 {EntryWidgetCmd procedure, "configure" widget command} {
+    list [catch {.e configure -foo} msg] $msg
+} {1 {unknown option "-foo"}}
+test entry-3.13 {EntryWidgetCmd procedure, "configure" widget command} {
+    .e configure -bd 4
+    .e configure -bg #ffffff
+    lindex [.e configure -bd] 4
+} {4}
+test entry-3.14 {EntryWidgetCmd procedure, "delete" widget command} {
+    list [catch {.e delete} msg] $msg
+} {1 {wrong # args: should be ".e delete firstIndex ?lastIndex?"}}
+test entry-3.15 {EntryWidgetCmd procedure, "delete" widget command} {
+    list [catch {.e delete a b c} msg] $msg
+} {1 {wrong # args: should be ".e delete firstIndex ?lastIndex?"}}
+test entry-3.16 {EntryWidgetCmd procedure, "delete" widget command} {
+    list [catch {.e delete foo} msg] $msg
+} {1 {bad entry index "foo"}}
+test entry-3.17 {EntryWidgetCmd procedure, "delete" widget command} {
+    list [catch {.e delete 0 bar} msg] $msg
+} {1 {bad entry index "bar"}}
+test entry-3.18 {EntryWidgetCmd procedure, "delete" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e delete 2 4
+    .e get
+} {014567890}
+test entry-3.19 {EntryWidgetCmd procedure, "delete" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e delete 6
+    .e get
+} {0123457890}
+test entry-3.20 {EntryWidgetCmd procedure, "delete" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e delete 6 5
+    .e get
+} {01234567890}
+test entry-3.21 {EntryWidgetCmd procedure, "delete" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e configure -state disabled
+    .e delete 2 8
+    .e configure -state normal
+    .e get
+} {01234567890}
+test entry-3.22 {EntryWidgetCmd procedure, "get" widget command} {
+    list [catch {.e get foo} msg] $msg
+} {1 {wrong # args: should be ".e get"}}
+test entry-3.23 {EntryWidgetCmd procedure, "icursor" widget command} {
+    list [catch {.e icursor} msg] $msg
+} {1 {wrong # args: should be ".e icursor pos"}}
+test entry-3.24 {EntryWidgetCmd procedure, "icursor" widget command} {
+    list [catch {.e icursor foo} msg] $msg
+} {1 {bad entry index "foo"}}
+test entry-3.25 {EntryWidgetCmd procedure, "icursor" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e icursor 4
+    .e index insert
+} {4}
+test entry-3.26 {EntryWidgetCmd procedure, "index" widget command} {
+    list [catch {.e in} msg] $msg
+} {1 {bad option "in": must be bbox, cget, configure, delete, get, icursor, index, insert, scan, selection, or xview}}
+test entry-3.27 {EntryWidgetCmd procedure, "index" widget command} {
+    list [catch {.e index} msg] $msg
+} {1 {wrong # args: should be ".e index string"}}
+test entry-3.28 {EntryWidgetCmd procedure, "index" widget command} {
+    list [catch {.e index foo} msg] $msg
+} {1 {bad entry index "foo"}}
+test entry-3.29 {EntryWidgetCmd procedure, "index" widget command} {
+    list [catch {.e index 0} msg] $msg
+} {0 0}
+test entry-3.30 {EntryWidgetCmd procedure, "insert" widget command} {
+    list [catch {.e insert a} msg] $msg
+} {1 {wrong # args: should be ".e insert index text"}}
+test entry-3.31 {EntryWidgetCmd procedure, "insert" widget command} {
+    list [catch {.e insert a b c} msg] $msg
+} {1 {wrong # args: should be ".e insert index text"}}
+test entry-3.32 {EntryWidgetCmd procedure, "insert" widget command} {
+    list [catch {.e insert foo Text} msg] $msg
+} {1 {bad entry index "foo"}}
+test entry-3.33 {EntryWidgetCmd procedure, "insert" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e insert 3 xxx
+    .e get
+} {012xxx34567890}
+test entry-3.34 {EntryWidgetCmd procedure, "insert" widget command} {
+    .e delete 0 end
+    .e insert end "01234567890"
+    .e configure -state disabled
+    .e insert 3 xxx
+    .e configure -state normal
+    .e get
+} {01234567890}
+test entry-3.35 {EntryWidgetCmd procedure, "insert" widget command} {
+    list [catch {.e insert a b c} msg] $msg
+} {1 {wrong # args: should be ".e insert index text"}}
+test entry-3.36 {EntryWidgetCmd procedure, "scan" widget command} {
+    list [catch {.e scan a} msg] $msg
+} {1 {wrong # args: should be ".e scan mark|dragto x"}}
+test entry-3.37 {EntryWidgetCmd procedure, "scan" widget command} {
+    list [catch {.e scan a b c} msg] $msg
+} {1 {wrong # args: should be ".e scan mark|dragto x"}}
+test entry-3.38 {EntryWidgetCmd procedure, "scan" widget command} {
+    list [catch {.e scan foobar 20} msg] $msg
+} {1 {bad scan option "foobar": must be mark or dragto}}
+test entry-3.39 {EntryWidgetCmd procedure, "scan" widget command} {
+    list [catch {.e scan mark 20.1} msg] $msg
+} {1 {expected integer but got "20.1"}}
+# This test is non-portable because character sizes vary.
+
+test entry-3.40 {EntryWidgetCmd procedure, "scan" widget command} {fonts} {
+    .e delete 0 end
+    update
+    .e insert end "This is quite a long string, in fact a "
+    .e insert end "very very long string"
+    .e scan mark 30
+    .e scan dragto 28
+    .e index @0
+} {3}
+test entry-3.41 {EntryWidgetCmd procedure, "select" widget command} {
+    list [catch {.e select} msg] $msg
+} {1 {wrong # args: should be ".e select option ?index?"}}
+test entry-3.42 {EntryWidgetCmd procedure, "select" widget command} {
+    list [catch {.e select foo} msg] $msg
+} {1 {bad selection option "foo": must be adjust, clear, from, present, range, or to}}
+test entry-3.43 {EntryWidgetCmd procedure, "select clear" widget command} {
+    list [catch {.e select clear gorp} msg] $msg
+} {1 {wrong # args: should be ".e selection clear"}}
+test entry-3.44 {EntryWidgetCmd procedure, "select clear" widget command} {
+    .e delete 0 end
+    .e insert end "0123456789"
+    .e select from 1
+    .e select to 4
+    update
+    .e select clear
+    list [catch {selection get} msg] $msg [selection own]
+} {1 {PRIMARY selection doesn't exist or form "STRING" not defined} .e}
+test entry-3.45 {EntryWidgetCmd procedure, "selection present" widget command} {
+    list [catch {.e selection present foo} msg] $msg
+} {1 {wrong # args: should be ".e selection present"}}
+test entry-3.46 {EntryWidgetCmd procedure, "selection present" widget command} {
+    .e delete 0 end
+    .e insert end 0123456789
+    .e select from 3
+    .e select to 6
+    .e selection present
+} {1}
+test entry-3.47 {EntryWidgetCmd procedure, "selection present" widget command} {
+    .e delete 0 end
+    .e insert end 0123456789
+    .e select from 3
+    .e select to 6
+    .e configure -exportselection false
+    .e selection present
+} {1}
+.e configure -exportselection true
+test entry-3.48 {EntryWidgetCmd procedure, "selection present" widget command} {
+    .e delete 0 end
+    .e insert end 0123456789
+    .e select from 3
+    .e select to 6
+    .e delete 0 end
+    .e selection present
+} {0}
+test entry-3.49 {EntryWidgetCmd procedure, "selection adjust" widget command} {
+    list [catch {.e select adjust x} msg] $msg
+} {1 {bad entry index "x"}}
+test entry-3.50 {EntryWidgetCmd procedure, "selection adjust" widget command} {
+    list [catch {.e select adjust 2 3} msg] $msg
+} {1 {wrong # args: should be ".e selection adjust index"}}
+test entry-3.51 {EntryWidgetCmd procedure, "selection adjust" widget command} {
+    .e delete 0 end
+    .e insert end "0123456789"
+    .e select from 1
+    .e select to 5
+    update
+    .e select adjust 4
+    selection get
+} {123}
+test entry-3.52 {EntryWidgetCmd procedure, "selection adjust" widget command} {
+    .e delete 0 end
+    .e insert end "0123456789"
+    .e select from 1
+    .e select to 5
+    update
+    .e select adjust 2
+    selection get
+} {234}
+test entry-3.53 {EntryWidgetCmd procedure, "selection from" widget command} {
+    list [catch {.e select from 2 3} msg] $msg
+} {1 {wrong # args: should be ".e selection from index"}}
+test entry-3.54 {EntryWidgetCmd procedure, "selection range" widget command} {
+    list [catch {.e select range 2} msg] $msg
+} {1 {wrong # args: should be ".e selection range start end"}}
+test entry-3.55 {EntryWidgetCmd procedure, "selection range" widget command} {
+    list [catch {.e selection range 2 3 4} msg] $msg
+} {1 {wrong # args: should be ".e selection range start end"}}
+test entry-3.56 {EntryWidgetCmd procedure, "selection range" widget command} {
+    .e delete 0 end
+    .e insert end 0123456789
+    .e select from 1
+    .e select to 5
+    .e select range 4 4
+    list [catch {.e index sel.first} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-3.57 {EntryWidgetCmd procedure, "selection range" widget command} {
+    .e delete 0 end
+    .e insert end 0123456789
+    .e select from 3
+    .e select to 7
+    .e select range 2 9
+    list [.e index sel.first] [.e index sel.last] [.e index anchor]
+} {2 9 3}
+.e delete 0 end
+.e insert end "This is quite a long text string, so long that it "
+.e insert end "runs off the end of the window quite a bit."
+test entry-3.58 {EntryWidgetCmd procedure, "selection to" widget command} {
+    list [catch {.e select to 2 3} msg] $msg
+} {1 {wrong # args: should be ".e selection to index"}}
+test entry-3.59 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 5
+    .e xview
+} {0.0537634 0.268817}
+test entry-3.60 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview gorp} msg] $msg
+} {1 {bad entry index "gorp"}}
+test entry-3.61 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 0
+    .e icursor 10
+    .e xview insert
+    .e xview
+} {0.107527 0.322581}
+test entry-3.62 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview moveto foo bar} msg] $msg
+} {1 {wrong # args: should be ".e xview moveto fraction"}}
+test entry-3.63 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview moveto foo} msg] $msg
+} {1 {expected floating-point number but got "foo"}}
+test entry-3.64 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview moveto 0.5
+    .e xview
+} {0.505376 0.72043}
+test entry-3.65 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview scroll 24} msg] $msg
+} {1 {wrong # args: should be ".e xview scroll number units|pages"}}
+test entry-3.66 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview scroll gorp units} msg] $msg
+} {1 {expected integer but got "gorp"}}
+test entry-3.67 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview moveto 0
+    .e xview scroll 1 pages
+    .e xview
+} {0.193548 0.408602}
+test entry-3.68 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview moveto .9
+    update
+    .e xview scroll -2 p
+    .e xview
+} {0.397849 0.612903}
+test entry-3.69 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 30
+    update
+    .e xview scroll 2 units 
+    .e index @0
+} {32}
+test entry-3.70 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 30
+    update
+    .e xview scroll -1 units 
+    .e index @0
+} {29}
+test entry-3.71 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview scroll 23 foobars} msg] $msg
+} {1 {bad argument "foobars": must be units or pages}}
+test entry-3.72 {EntryWidgetCmd procedure, "xview" widget command} {
+    list [catch {.e xview eat 23 hamburgers} msg] $msg
+} {1 {unknown option "eat": must be moveto or scroll}}
+test entry-3.73 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 0
+    update
+    .e xview -4
+    .e index @0
+} {0}
+test entry-3.74 {EntryWidgetCmd procedure, "xview" widget command} {
+    .e xview 300
+    .e index @0
+} {73}
+test entry-3.75 {EntryWidgetCmd procedure} {
+    list [catch {.e gorp} msg] $msg
+} {1 {bad option "gorp": must be bbox, cget, configure, delete, get, icursor, index, insert, scan, selection, or xview}}
+
+# The test below doesn't actually check anything directly, but if run
+# with Purify or some other memory-allocation-checking program it will
+# ensure that resources get properly freed.
+
+test entry-4.1 {DestroyEntry procedure} {
+    catch {destroy .e}
+    entry .e -textvariable x -show *
+    pack .e
+    .e insert end "Sample text"
+    update
+    destroy .e
+} {}
+
+frame .f -width 200 -height 50 -relief raised -bd 2
+pack .f -side right
+test entry-5.1 {ConfigureEntry procedure, -textvariable} {
+    catch {destroy .e}
+    set x 12345
+    entry .e -textvariable x
+    .e get
+} {12345}
+test entry-5.2 {ConfigureEntry procedure, -textvariable} {
+    catch {destroy .e}
+    set x 12345
+    entry .e -textvariable x
+    set y abcde
+    .e configure -textvariable y
+    set x 54321
+    .e get
+} {abcde}
+test entry-5.3 {ConfigureEntry procedure, -textvariable} {
+    catch {destroy .e}
+    catch {unset x}
+    entry .e
+    .e insert 0 "Some text"
+    .e configure -textvariable x
+    set x
+} {Some text}
+test entry-5.4 {ConfigureEntry procedure, -textvariable} {
+    proc override args {
+	global x
+	set x 12345
+    }
+    catch {destroy .e}
+    catch {unset x}
+    trace variable x w override
+    entry .e
+    .e insert 0 "Some text"
+    .e configure -textvariable x
+    set result [list $x [.e get]]
+    unset x;  rename override {}
+    set result
+} {12345 12345}
+test entry-5.5 {ConfigureEntry procedure} {
+    catch {destroy .e}
+    entry .e -exportselection false
+    pack .e
+    .e insert end "0123456789"
+    .sel select from 0
+    .sel select to 10
+    set x {}
+    lappend x [selection get]
+    .e select from 1
+    .e select to 5
+    lappend x [selection get]
+    .e configure -exportselection 1
+    lappend x [selection get]
+    set x
+} {{This is so} {This is so} 1234}
+test entry-5.6 {ConfigureEntry procedure} {
+    catch {destroy .e}
+    entry .e
+    pack .e
+    .e insert end "0123456789"
+    .e select from 1
+    .e select to 5
+    .e configure -exportselection 0
+    list [catch {selection get} msg] $msg [.e index sel.first] \
+	    [.e index sel.last]
+} {1 {PRIMARY selection doesn't exist or form "STRING" not defined} 1 5}
+test entry-5.7 {ConfigureEntry procedure} {
+    catch {destroy .e}
+    entry .e -font $fixed -width 4 -xscrollcommand scroll
+    pack .e
+    .e insert end "01234567890"
+    update
+    .e configure -width 5
+    set scrollInfo
+} {0 0.363636}
+test entry-5.8 {ConfigureEntry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -width 0
+    pack .e
+    .e insert end "0123"
+    update
+    .e configure -font $big
+    update
+    winfo geom .e
+} {62x37+0+0}
+test entry-5.9 {ConfigureEntry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised
+    pack .e
+    .e insert end "0123"
+    update
+    list [.e index @10] [.e index @11] [.e index @12] [.e index @13]
+} {0 0 1 1}
+test entry-5.10 {ConfigureEntry procedure} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief flat
+    pack .e
+    .e insert end "0123"
+    update
+    list [.e index @10] [.e index @11] [.e index @12] [.e index @13]
+} {0 0 1 1}
+
+# No tests for DisplayEntry.
+
+test entry-6.1 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 20 -highlightthickness 3
+    pack .e
+    .e insert end 012\t45
+    update
+    list [.e index @61] [.e index @62]
+} {3 4}
+test entry-6.2 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 20 -justify center \
+	    -highlightthickness 3
+    pack .e
+    .e insert end 012\t45
+    update
+    list [.e index @96] [.e index @97]
+} {3 4}
+test entry-6.3 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 20 -justify right \
+	    -highlightthickness 3
+    pack .e
+    .e insert end 012\t45
+    update
+    list [.e index @131] [.e index @132]
+} {3 4}
+test entry-6.4 {EntryComputeGeometry procedure} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 5
+    pack .e
+    .e insert end "01234567890"
+    update
+    .e xview 6
+    .e index @0
+} {6}
+test entry-6.5 {EntryComputeGeometry procedure} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 5
+    pack .e
+    .e insert end "01234567890"
+    update
+    .e xview 7
+    .e index @0
+} {6}
+test entry-6.6 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -font $fixed -bd 2 -relief raised -width 10
+    pack .e
+    .e insert end "01234\t67890"
+    update
+    .e xview 3
+    list [.e index @39] [.e index @40]
+} {5 6}
+test entry-6.7 {EntryComputeGeometry procedure} {
+    catch {destroy .e}
+    entry .e -font $big -bd 3 -relief raised -width 5
+    pack .e
+    .e insert end "01234567"
+    update
+    list [winfo reqwidth .e] [winfo reqheight .e]
+} {77 39}
+test entry-6.8 {EntryComputeGeometry procedure} {
+    catch {destroy .e}
+    entry .e -font $big -bd 3 -relief raised -width 0
+    pack .e
+    .e insert end "01234567"
+    update
+    list [winfo reqwidth .e] [winfo reqheight .e]
+} {116 39}
+test entry-6.9 {EntryComputeGeometry procedure} {
+    catch {destroy .e}
+    entry .e -font $big -bd 3 -relief raised -width 0 -highlightthickness 2
+    pack .e
+    update
+    list [winfo reqwidth .e] [winfo reqheight .e]
+} {25 39}
+test entry-6.10 {EntryComputeGeometry procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -bd 1 -relief raised -width 0 -show .
+    .e insert 0 12345
+    pack .e
+    update
+    set x [winfo reqwidth .e]
+    .e configure -show X
+    lappend x [winfo reqwidth .e]
+    .e configure -show ""
+    lappend x [winfo reqwidth .e]
+} {23 48 43}
+
+catch {destroy .e}
+entry .e -width 10 -font $fixed -textvariable contents -xscrollcommand scroll
+pack .e
+focus .e
+test entry-7.1 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 abcde
+    .e insert 2 XXX
+    update
+    list [.e get] $contents $scrollInfo
+} {abXXXcde abXXXcde {0 1}}
+test entry-7.2 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 abcde
+    .e insert 500 XXX
+    update
+    list [.e get] $contents $scrollInfo
+} {abcdeXXX abcdeXXX {0 1}}
+test entry-7.3 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e select from 2
+    .e select to 6
+    .e insert 2 XXX
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 8
+    lappend x [.e index sel.first] [.e index sel.last]
+} {5 9 5 8}
+test entry-7.4 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e select from 2
+    .e select to 6
+    .e insert 3 XXX
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 8
+    lappend x [.e index sel.first] [.e index sel.last]
+} {2 9 2 8}
+test entry-7.5 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e select from 2
+    .e select to 6
+    .e insert 5 XXX
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 8
+    lappend x [.e index sel.first] [.e index sel.last]
+} {2 9 2 8}
+test entry-7.6 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e select from 2
+    .e select to 6
+    .e insert 6 XXX
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 5
+    lappend x [.e index sel.first] [.e index sel.last]
+} {2 6 2 5}
+test entry-7.7 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e icursor 4
+    .e insert 4 XXX
+    .e index insert
+} {7}
+test entry-7.8 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789
+    .e icursor 4
+    .e insert 5 XXX
+    .e index insert
+} {4}
+test entry-7.9 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 "This is a very long string"
+    update
+    .e xview 4
+    .e insert 3 XXX
+    .e index @0
+} {7}
+test entry-7.10 {InsertChars procedure} {
+    .e delete 0 end
+    .e insert 0 "This is a very long string"
+    update
+    .e xview 4
+    .e insert 4 XXX
+    .e index @0
+} {4}
+.e configure -width 0
+test entry-7.11 {InsertChars procedure} {fonts} {
+    .e delete 0 end
+    .e insert 0 "xyzzy"
+    update
+    .e insert 2 00
+    winfo reqwidth .e
+} {59}
+
+.e configure -width 10
+test entry-8.1 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 abcde
+    .e delete 2 4
+    update
+    list [.e get] $contents $scrollInfo
+} {abe abe {0 1}}
+test entry-8.2 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 abcde
+    .e delete -2 2
+    update
+    list [.e get] $contents $scrollInfo
+} {cde cde {0 1}}
+test entry-8.3 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 abcde
+    .e delete 3 1000
+    update
+    list [.e get] $contents $scrollInfo
+} {abc abc {0 1}}
+test entry-8.4 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 1 3
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 5
+    lappend x [.e index sel.first] [.e index sel.last]
+} {1 6 1 5}
+test entry-8.5 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 1 4
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 4
+    lappend x [.e index sel.first] [.e index sel.last]
+} {1 5 1 4}
+test entry-8.6 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 1 7
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 5
+    lappend x [.e index sel.first] [.e index sel.last]
+} {1 2 1 5}
+test entry-8.7 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 1 8
+    list [catch {.e index sel.first} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-8.8 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 3 7
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 8
+    lappend x [.e index sel.first] [.e index sel.last]
+} {3 4 3 8}
+test entry-8.9 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 3
+    .e select to 8
+    .e delete 3 8
+    list [catch {.e index sel.first} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-8.10 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 8
+    .e select to 3
+    .e delete 5 8
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 8
+    lappend x [.e index sel.first] [.e index sel.last]
+} {3 5 5 8}
+test entry-8.11 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e select from 8
+    .e select to 3
+    .e delete 8 10
+    update
+    set x "[.e index sel.first] [.e index sel.last]"
+    .e select to 4
+    lappend x [.e index sel.first] [.e index sel.last]
+} {3 8 4 8}
+test entry-8.12 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e icursor 4
+    .e delete 1 4
+    .e index insert
+} {1}
+test entry-8.13 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e icursor 4
+    .e delete 1 5
+    .e index insert
+} {1}
+test entry-8.14 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcde
+    .e icursor 4
+    .e delete 4 6
+    .e index insert
+} {4}
+test entry-8.15 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 "This is a very long string"
+    .e xview 4
+    .e delete 1 4
+    .e index @0
+} {1}
+test entry-8.16 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 "This is a very long string"
+    .e xview 4
+    .e delete 1 5
+    .e index @0
+} {1}
+test entry-8.17 {DeleteChars procedure} {
+    .e delete 0 end
+    .e insert 0 "This is a very long string"
+    .e xview 4
+    .e delete 4 6
+    .e index @0
+} {4}
+.e configure -width 0
+test entry-8.18 {DeleteChars procedure} {fonts} {
+    .e delete 0 end
+    .e insert 0 "xyzzy"
+    update
+    .e delete 2 4
+    winfo reqwidth .e
+} {31}
+
+test entry-9.1 {EntryValueChanged procedure} {
+    catch {destroy .e}
+    proc override args {
+	global x
+	set x 12345
+    }
+    catch {unset x}
+    trace variable x w override
+    entry .e -textvariable x
+    .e insert 0 foo
+    set result [list $x [.e get]]
+    unset x; rename override {}
+    set result
+} {12345 12345}
+
+catch {destroy .e}
+entry .e
+pack .e
+.e configure -width 0
+test entry-10.1 {EntrySetValue procedure} {fonts} {
+    set x abcde
+    set y ab
+    .e configure -textvariable x
+    update
+    .e configure -textvariable y
+    update
+    list [.e get] [winfo reqwidth .e]
+} {ab 24}
+test entry-10.2 {EntrySetValue procedure, updating selection} {
+    catch {destroy .e}
+    entry .e -textvariable x
+    .e insert 0 "abcdefghjklmnopqrstu"
+    .e selection range 4 10
+    set x "a"
+    list [catch {.e index sel.first} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-10.3 {EntrySetValue procedure, updating selection} {
+    catch {destroy .e}
+    entry .e -textvariable x
+    .e insert 0 "abcdefghjklmnopqrstu"
+    .e selection range 4 10
+    set x "abcdefg"
+    list [.e index sel.first] [.e index sel.last]
+} {4 7}
+test entry-10.4 {EntrySetValue procedure, updating selection} {
+    catch {destroy .e}
+    entry .e -textvariable x
+    .e insert 0 "abcdefghjklmnopqrstu"
+    .e selection range 4 10
+    set x "abcdefghijklmn"
+    list [.e index sel.first] [.e index sel.last]
+} {4 10}
+test entry-10.5 {EntrySetValue procedure, updating display position} {
+    catch {destroy .e}
+    entry .e -width 10 -font $fixed -textvariable x
+    pack .e
+    .e insert 0 "abcdefghjklmnopqrstuvwxyz"
+    .e xview 10
+    update
+    set x "abcdefg"
+    update
+    .e index @0
+} {0}
+test entry-10.6 {EntrySetValue procedure, updating display position} {
+    catch {destroy .e}
+    entry .e -width 10 -font $fixed -textvariable x
+    pack .e
+    .e insert 0 "abcdefghjklmnopqrstuvwxyz"
+    .e xview 10
+    update
+    set x "1234567890123456789012"
+    update
+    .e index @0
+} {10}
+test entry-10.7 {EntrySetValue procedure, updating insertion cursor} {
+    catch {destroy .e}
+    entry .e -width 10 -font $fixed -textvariable x
+    pack .e
+    .e insert 0 "abcdefghjklmnopqrstuvwxyz"
+    .e icursor 5
+    set x "123"
+    .e index insert
+} {3}
+test entry-10.8 {EntrySetValue procedure, updating insertion cursor} {
+    catch {destroy .e}
+    entry .e -width 10 -font $fixed -textvariable x
+    pack .e
+    .e insert 0 "abcdefghjklmnopqrstuvwxyz"
+    .e icursor 5
+    set x "123456"
+    .e index insert
+} {5}
+
+test entry-11.1 {EntryEventProc procedure} {
+    catch {destroy .e}
+    entry .e
+    .e insert 0 abcdefg
+    destroy .e
+    update
+} {}
+test entry-11.2 {EntryEventProc procedure} {
+    eval destroy [winfo children .]
+    entry .e1 -fg #112233
+    rename .e1 .e2
+    set x {}
+    lappend x [winfo children .]
+    lappend x [.e2 cget -fg]
+    destroy .e1
+    lappend x [info command .e*] [winfo children .]
+} {.e1 #112233 {} {}}
+
+test entry-12.1 {EntryCmdDeletedProc procedure} {
+    eval destroy [winfo children .]
+    button .e1 -text "xyz_123"
+    rename .e1 {}
+    list [info command .e*] [winfo children .]
+} {{} {}}
+
+catch {destroy .e}
+entry .e -font $fixed -width 5 -bd 2 -relief sunken
+pack .e
+.e insert 0 012345678901234567890
+.e xview 4
+update
+test entry-13.1 {GetEntryIndex procedure} {
+    .e index end
+} {21}
+test entry-13.2 {GetEntryIndex procedure} {
+    list [catch {.e index abogus} msg] $msg
+} {1 {bad entry index "abogus"}}
+test entry-13.3 {GetEntryIndex procedure} {
+    .e select from 1
+    .e select to 6
+    .e index anchor
+} {1}
+test entry-13.4 {GetEntryIndex procedure} {
+    .e select from 4
+    .e select to 1
+    .e index anchor
+} {4}
+test entry-13.5 {GetEntryIndex procedure} {
+    .e select from 3
+    .e select to 15
+    .e select adjust 4
+    .e index anchor
+} {15}
+test entry-13.6 {GetEntryIndex procedure} {
+    list [catch {.e index ebogus} msg] $msg
+} {1 {bad entry index "ebogus"}}
+test entry-13.7 {GetEntryIndex procedure} {
+    .e icursor 2
+    .e index insert
+} {2}
+test entry-13.8 {GetEntryIndex procedure} {
+    list [catch {.e index ibogus} msg] $msg
+} {1 {bad entry index "ibogus"}}
+test entry-13.9 {GetEntryIndex procedure} {
+    .e select from 1
+    .e select to 6
+    list [.e index sel.first] [.e index sel.last]
+} {1 6}
+selection clear .e
+test entry-13.10 {GetEntryIndex procedure} {
+    list [catch {.e index sel.first} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-13.11 {GetEntryIndex procedure} {
+    list [catch {.e index sbogus} msg] $msg
+} {1 {selection isn't in entry}}
+test entry-13.12 {GetEntryIndex procedure} {
+    list [catch {.e index @xyz} msg] $msg
+} {1 {bad entry index "@xyz"}}
+test entry-13.13 {GetEntryIndex procedure} {fonts} {
+    .e index @4
+} {4}
+test entry-13.14 {GetEntryIndex procedure} {fonts} {
+    .e index @11
+} {4}
+test entry-13.15 {GetEntryIndex procedure} {fonts} {
+    .e index @12
+} {5}
+test entry-13.16 {GetEntryIndex procedure} {fonts} {
+    .e index @[expr [winfo width .e] - 6]
+} {8}
+test entry-13.17 {GetEntryIndex procedure} {fonts} {
+    .e index @[expr [winfo width .e] - 5]
+} {9}
+test entry-13.18 {GetEntryIndex procedure} {
+    .e index @1000
+} {9}
+test entry-13.19 {GetEntryIndex procedure} {
+    list [catch {.e index 1xyz} msg] $msg
+} {1 {bad entry index "1xyz"}}
+test entry-13.20 {GetEntryIndex procedure} {
+    .e index -10
+} {0}
+test entry-13.21 {GetEntryIndex procedure} {
+    .e index 12
+} {12}
+test entry-13.22 {GetEntryIndex procedure} {
+    .e index 49
+} {21}
+test entry-13.23 {GetEntryIndex procedure} {fonts} {
+    catch {destroy .e}
+    entry .e -show .
+    .e insert 0 XXXYZZY
+    pack .e
+    update
+    list [.e index @7] [.e index @8]
+} {0 1}
+
+# XXX Still need to write tests for EntryScanTo and EntrySelectTo.
+
+set x {}
+for {set i 1} {$i <= 500} {incr i} {
+    append x "This is line $i, out of 500\n"
+}
+test entry-14.1 {EntryFetchSelection procedure} {
+    catch {destroy .e}
+    entry .e
+    .e insert end "This is a test string"
+    .e select from 1
+    .e select to 18
+    selection get
+} {his is a test str}
+test entry-14.2 {EntryFetchSelection procedure} {
+    catch {destroy .e}
+    entry .e -show *
+    .e insert end "This is a test string"
+    .e select from 1
+    .e select to 18
+    selection get
+} {*****************}
+test entry-14.3 {EntryFetchSelection procedure} {
+    catch {destroy .e}
+    entry .e
+    .e insert end $x
+    .e select from 0
+    .e select to end
+    string compare [selection get] $x
+} 0
+
+# No tests for EntryLostSelection or EventuallyRedraw.
+
+catch {destroy .e}
+entry .e -width 10 -xscrollcommand scroll
+pack .e
+update
+
+test entry-15.1 {EntryVisibleRange procedure} {fonts} {
+    .e delete 0 end
+    .e insert 0 .............................
+    .e xview
+} {0 0.793103}
+test entry-15.2 {EntryVisibleRange procedure} {fonts} {
+    .e configure -show X
+    .e delete 0 end
+    .e insert 0 .............................
+    .e xview
+} {0 0.275862}
+.e configure -show ""
+test entry-15.3 {EntryVisibleRange procedure} {
+    .e delete 0 end
+    .e xview
+} {0 1}
+
+catch {destroy .e}
+entry .e -width 10 -xscrollcommand scroll -font $fixed
+pack .e
+update
+test entry-16.1 {EntryUpdateScrollbar procedure} {
+    .e delete 0 end
+    .e insert 0 123
+    update
+    set scrollInfo
+} {0 1}
+test entry-16.2 {EntryUpdateScrollbar procedure} {
+    .e delete 0 end
+    .e insert 0 0123456789abcdef
+    .e xview 3
+    update
+    set scrollInfo
+} {0.1875 0.8125}
+test entry-16.3 {EntryUpdateScrollbar procedure} {
+    .e delete 0 end
+    .e insert 0 abcdefghijklmnopqrs
+    .e xview 6
+    update
+    set scrollInfo
+} {0.315789 0.842105}
+test entry-16.4 {EntryUpdateScrollbar procedure} {
+    catch {destroy .e}
+    proc bgerror msg {
+	global x
+	set x $msg
+    }
+    entry .e -width 5 -xscrollcommand bogus
+    pack .e
+    update
+    rename bgerror {}
+    list $x $errorInfo
+} {{invalid command name "bogus"} {invalid command name "bogus"
+    while executing
+"bogus 0 1"
+    (horizontal scrolling command executed by entry)}}
+
+# XXX Still need to write tests for EntryBlinkProc, EntryFocusProc,
+# and EntryTextVarProc.

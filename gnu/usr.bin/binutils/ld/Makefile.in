@@ -222,7 +222,6 @@ ALL_EMULATIONS = \
 	eelf32lmip.o \
 	eelf32lppc.o \
 	eelf32ppc.o \
-	eelf64alpha.o \
 	eelf64_sparc.o \
 	eelf_i386.o \
 	egld960.o \
@@ -292,20 +291,23 @@ ALL_EMULATIONS = \
 	ez8001.o \
 	ez8002.o
 
+ALL_64_EMULATIONS = \
+	eelf64alpha.o
+
 CFILES = ldctor.c ldemul.c ldexp.c ldfile.c ldlang.c \
 	ldmain.c ldmisc.c ldver.c ldwrite.c lexsup.c \
-	mri.c ldcref.c fnmatch.c
+	mri.c ldcref.c
 
 HFILES = config.h ld.h ldctor.h ldemul.h ldexp.h ldfile.h \
 	ldlang.h ldlex.h ldmain.h ldmisc.h ldver.h \
-	ldwrite.h mri.h fnmatch.h
+	ldwrite.h mri.h
 
 GENERATED_CFILES = ldgram.c ldlex.c
 GENERATED_HFILES = ldgram.h ldemul-list.h
 
 OFILES = ldgram.o ldlex.o lexsup.o ldlang.o mri.o ldctor.o ldmain.o \
 	ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o \
-	ldfile.o ldcref.o fnmatch.o ${EMULATION_OFILES}
+	ldfile.o ldcref.o ${EMULATION_OFILES}
 
 LINTSOURCES = $(CFILES) $(GENERATED_CFILES) e*.c
 
@@ -342,7 +344,7 @@ ldemul-list.h: Makefile
 	mv ldemul-tmp.h ldemul-list.h
 
 ldlex.c: ldlex.l
-	$(LEX) -I -Cem $(srcdir)/ldlex.l
+	$(LEX) $(srcdir)/ldlex.l
 	-sed -e '/^int.*free();/d' \
 	     -e '/^char.*malloc();/d' \
 	     -e 's/malloc/xmalloc/g' \
@@ -891,7 +893,7 @@ LDDISTSTUFF = ldgram.c ldgram.h ldlex.c
 diststuff: $(LDDISTSTUFF) info
 
 mostlyclean:
-	-rm -f $(STAGESTUFF) ld.?? ld.??? ldlex.[qp] config.log
+	-rm -f $(STAGESTUFF) ld.?? ld.??? ldlex.[qp]
 	-rm -f ld ld1 ld2 ld3 *.o y.output cdtest cdtest.out cdtest.tmp
 	-rm -f cdtest-ur cdtest-ur.out cdtest-ur.tmp crtbegin.o crtend.o
 	-rm -f ldemul-list.h
@@ -900,7 +902,7 @@ clean: mostlyclean
 	-rm -f $(LD_PROG) configdoc.texi
 distclean: clean
 	-rm -f Makefile config.status TAGS site.exp site.bak config.cache
-	-rm -f config.h stamp-h
+	-rm -f config.h stamp-h config.log
 	-rm -rf ldscripts
 maintainer-clean realclean: clean distclean
 	@echo "This command is intended for maintainers to use;"
@@ -1028,7 +1030,7 @@ ldlang.o: ldlang.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/libiberty.h $(INCDIR)/bfdlink.h ld.h ldmain.h \
   ldgram.h ldexp.h ldlang.h ldemul.h ldlex.h ldmisc.h \
-  ldctor.h ldfile.h fnmatch.h
+  ldctor.h ldfile.h $(INCDIR)/fnmatch.h
 ldmain.o: ldmain.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/libiberty.h $(INCDIR)/progress.h $(INCDIR)/bfdlink.h \
@@ -1057,7 +1059,6 @@ ldcref.o: ldcref.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/libiberty.h ld.h ldmain.h \
   ldmisc.h ldexp.h ldlang.h
-fnmatch.o: fnmatch.c
 ldgram.o: ldgram.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h sysdep.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/bfdlink.h ld.h ldexp.h ldver.h ldlang.h ldemul.h \

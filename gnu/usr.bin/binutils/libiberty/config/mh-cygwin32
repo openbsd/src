@@ -1,0 +1,1 @@
+HDEFINES=-DNEED_sys_siglist -DNEED_basename

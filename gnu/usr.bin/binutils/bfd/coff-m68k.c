@@ -143,6 +143,40 @@ m68k_reloc_type_lookup (abfd, code)
 
 #define coff_bfd_reloc_type_lookup m68k_reloc_type_lookup
 
+#ifndef coff_rtype_to_howto
+
+#define coff_rtype_to_howto m68kcoff_rtype_to_howto
+
+static reloc_howto_type *m68kcoff_rtype_to_howto
+  PARAMS ((bfd *, asection *, struct internal_reloc *,
+	   struct coff_link_hash_entry *, struct internal_syment *,
+	   bfd_vma *));
+
+/*ARGSUSED*/
+static reloc_howto_type *
+m68kcoff_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
+     bfd *abfd;
+     asection *sec;
+     struct internal_reloc *rel;
+     struct coff_link_hash_entry *h;
+     struct internal_syment *sym;
+     bfd_vma *addendp;
+{
+  arelent relent;
+  reloc_howto_type *howto;
+
+  RTYPE2HOWTO (&relent, rel);
+
+  howto = relent.howto;
+
+  if (howto->pc_relative)
+    *addendp += sec->vma;
+
+  return howto;
+}
+
+#endif /* ! defined (coff_rtype_to_howto) */
+
 #define coff_relocate_section _bfd_coff_generic_relocate_section
 
 #include "coffcode.h"

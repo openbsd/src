@@ -118,4 +118,8 @@ extern PTR realloc ();
 extern void free ();
 #endif
 
+#ifdef NEED_DECLARATION_GETENV
+extern char *getenv ();
+#endif
+
 #endif /* ! defined (BFD_SYSDEP_H) */

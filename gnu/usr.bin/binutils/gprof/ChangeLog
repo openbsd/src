@@ -1,3 +1,12 @@
+Wed Oct  2 15:23:16 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* sparc.c (find_call): Align p_lowpc to avoid bus error.
+
+Tue Oct  1 15:58:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gprof.c (usage): Print bug report address.
+	(main): Change version printing to match current GNU standards.
+
 Fri Aug 30 12:16:11 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gmon.h: Replace #elif with #else/#endif.

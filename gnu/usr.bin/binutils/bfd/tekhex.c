@@ -100,6 +100,33 @@ static char sum_block[256];
 (d)[0] = digs[((x)>>4)&0xf];
 #define	ISHEX(x)  hex_p(x)
 
+static void tekhex_print_symbol
+ PARAMS ((bfd *, PTR, asymbol *, bfd_print_symbol_type));
+static void tekhex_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
+static asymbol *tekhex_make_empty_symbol PARAMS ((bfd *));
+static int tekhex_sizeof_headers PARAMS ((bfd *, boolean));
+static boolean tekhex_write_object_contents PARAMS ((bfd *));
+static void out PARAMS ((bfd *, int, char *, char *));
+static void writesym PARAMS ((char **, CONST char *));
+static void writevalue PARAMS ((char **, bfd_vma));
+static boolean tekhex_set_section_contents
+ PARAMS ((bfd*, sec_ptr, PTR, file_ptr, bfd_size_type));
+static boolean tekhex_set_arch_mach
+ PARAMS ((bfd *, enum bfd_architecture, unsigned long));
+static boolean tekhex_get_section_contents
+ PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
+static void move_section_contents
+ PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type, boolean));
+static const bfd_target *tekhex_object_p PARAMS ((bfd *));
+static boolean tekhex_mkobject PARAMS ((bfd *));
+static long tekhex_get_symtab_upper_bound PARAMS ((bfd *));
+static long tekhex_get_symtab PARAMS ((bfd *, asymbol **));
+static void pass_over PARAMS ((bfd *, void (*)(bfd*, int, char *)));
+static void first_phase PARAMS ((bfd *, int, char *));
+static void insert_byte PARAMS ((bfd *, int, bfd_vma));
+static struct data_struct *find_chunk PARAMS ((bfd *, bfd_vma));
+static unsigned int getsym PARAMS ((char *, char **));
+
 /*
 Here's an example
 %3A6C6480004E56FFFC4E717063B0AEFFFC6D0652AEFFFC60F24E5E4E75
@@ -314,7 +341,7 @@ getsym (dstp, srcp)
   return len;
 }
 
-struct data_struct *
+static struct data_struct *
 find_chunk (abfd, vma)
      bfd *abfd;
      bfd_vma vma;
@@ -364,7 +391,7 @@ insert_byte (abfd, value, addr)
 static void
 first_phase (abfd, type, src)
      bfd *abfd;
-     char type;
+     int type;
      char *src;
 {
   asection *section = bfd_abs_section_ptr;
@@ -453,9 +480,9 @@ first_phase (abfd, type, src)
    record.  */
 
 static void
- pass_over (abfd, func)
+pass_over (abfd, func)
      bfd *abfd;
-     void (*func) ();
+     void (*func) PARAMS ((bfd *, int, char *));
 {
   unsigned int chars_on_line;
   boolean eof = false;
@@ -499,11 +526,10 @@ static void
 
 }
 
-long
+static long
 tekhex_get_symtab (abfd, table)
      bfd *abfd;
      asymbol **table;
-
 {
   tekhex_symbol_type *p = abfd->tdata.tekhex_data->symbols;
   unsigned int c = bfd_get_symcount (abfd);
@@ -518,7 +544,7 @@ tekhex_get_symtab (abfd, table)
   return bfd_get_symcount (abfd);
 }
 
-long
+static long
 tekhex_get_symtab_upper_bound (abfd)
      bfd *abfd;
 {
@@ -615,6 +641,7 @@ move_section_contents (abfd, section, locationp, offset, count, get)
     }
 
 }
+
 static boolean
 tekhex_get_section_contents (abfd, section, locationp, offset, count)
      bfd *abfd;
@@ -632,7 +659,7 @@ tekhex_get_section_contents (abfd, section, locationp, offset, count)
     return false;
 }
 
-boolean
+static boolean
 tekhex_set_arch_mach (abfd, arch, machine)
      bfd *abfd;
      enum bfd_architecture arch;
@@ -749,7 +776,7 @@ writesym (dst, sym)
 static void
 out (abfd, type, start, end)
      bfd *abfd;
-     char type;
+     int type;
      char *start;
      char *end;
 {
@@ -894,7 +921,7 @@ tekhex_write_object_contents (abfd)
 }
 
 static int
-  tekhex_sizeof_headers (abfd, exec)
+tekhex_sizeof_headers (abfd, exec)
      bfd *abfd;
      boolean exec;
 

@@ -1,3 +1,16 @@
+Tue Oct  8 11:31:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* mips.h (EF_MIPS_ABI2): Define.
+
+Thu Oct  3 10:01:40 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* common.h: Break mn10x00 support into mn10200 and mn10300.
+
+Wed Oct  2 21:26:43 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* common.h (EM_CYGNUS_MN10x00): Define.
+
+
 Fri Aug 30 17:06:21 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* common.h (EM_SH): Define.

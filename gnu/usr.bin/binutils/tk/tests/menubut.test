@@ -1,0 +1,314 @@
+# This file is a Tcl script to test menubuttons in Tk.  It is
+# organized in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1994 The Regents of the University of California.
+# Copyright (c) 1994-1995 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) menubut.test 1.15 96/02/16 10:55:45
+
+# XXX This test file is woefully incomplete right now.  If any part
+# XXX of a procedure has tests then the whole procedure has tests,
+# XXX but many procedures have no tests.
+
+if {[lsearch [image types] test] < 0} {
+    puts "This application hasn't been compiled with the \"test\" image"
+    puts "type, so I can't run this test.  Are you sure you're using"
+    puts "tktest instead of wish?"
+    return
+}
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+eval image delete [image names]
+image create test image1
+menubutton .mb -text "Test"
+pack .mb
+update
+set i 1
+foreach test {
+    {-activebackground #012345 #012345 non-existent
+	    {unknown color name "non-existent"}}
+    {-activeforeground #ff0000 #ff0000 non-existent
+	    {unknown color name "non-existent"}}
+    {-anchor nw nw bogus {bad anchor position "bogus": must be n, ne, e, se, s, sw, w, nw, or center}}
+    {-background #ff0000 #ff0000 non-existent
+	    {unknown color name "non-existent"}}
+    {-bd 4 4 badValue {bad screen distance "badValue"}}
+    {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
+    {-bitmap questhead questhead badValue {bitmap "badValue" not defined}}
+    {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
+    {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
+    {-disabledforeground #00ff00 #00ff00 xyzzy {unknown color name "xyzzy"}}
+    {-fg #110022 #110022 bogus {unknown color name "bogus"}}
+    {-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* 
+	    -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* bogus
+	    {font "bogus" doesn't exist}}
+    {-foreground #110022 #110022 bogus {unknown color name "bogus"}}
+    {-height 18 18 20.0 {expected integer but got "20.0"}}
+    {-highlightbackground #112233 #112233 ugly {unknown color name "ugly"}}
+    {-highlightcolor #110022 #110022 bogus {unknown color name "bogus"}}
+    {-highlightthickness 18 18 badValue {bad screen distance "badValue"}}
+    {-image image1 image1 bogus {image "bogus" doesn't exist}}
+    {-indicatoron yes 1 no_way {expected boolean value but got "no_way"}}
+    {-justify right right bogus {bad justification "bogus": must be left, right, or center}}
+    {-menu "any old string" "any old string" {} {}}
+    {-padx 12 12 420x {bad screen distance "420x"}}
+    {-pady 12 12 420x {bad screen distance "420x"}}
+    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, or sunken}}
+    {-state normal normal bogus {bad state value "bogus": must be normal, active, or disabled}}
+    {-takefocus "any string" "any string" {} {}}
+    {-text "Sample text" {Sample text} {} {}}
+    {-textvariable i i {} {}}
+    {-underline 5 5 3p {expected integer but got "3p"}}
+    {-width 402 402 3p {expected integer but got "3p"}}
+    {-wraplength 100 100 6x {bad screen distance "6x"}}
+} {
+    set name [lindex $test 0]
+    test menubutton-1.$i {configuration options} {
+	.mb configure $name [lindex $test 1]
+	lindex [.mb configure $name] 4
+    } [lindex $test 2]
+    incr i
+    if {[lindex $test 3] != ""} {
+	test menubutton-1.$i {configuration options} {
+	    list [catch {.mb configure $name [lindex $test 3]} msg] $msg
+	} [list 1 [lindex $test 4]]
+    }
+    .mb configure $name [lindex [.mb configure $name] 3]
+    incr i
+}
+
+test menubutton-2.1 {Tk_MenubuttonCmd procedure} {
+    list [catch {menubutton} msg] $msg
+} {1 {wrong # args: should be "menubutton pathName ?options?"}}
+test menubutton-2.2 {Tk_MenubuttonCmd procedure} {
+    list [catch {menubutton foo} msg] $msg
+} {1 {bad window path name "foo"}}
+test menubutton-2.3 {Tk_MenubuttonCmd procedure} {
+    catch {destroy .mb}
+    menubutton .mb
+    winfo class .mb
+} {Menubutton}
+test menubutton-2.4 {Tk_ButtonCmd procedure} {
+    catch {destroy .mb}
+    list [catch {menubutton .mb -gorp foo} msg] $msg [winfo exists .mb]
+} {1 {unknown option "-gorp"} 0}
+
+catch {destroy .mb}
+menubutton .mb -text "Test Menu"
+pack .mb
+test menubutton-3.1 {MenuButtonWidgetCmd procedure} {
+    list [catch {.mb} msg] $msg
+} {1 {wrong # args: should be ".mb option ?arg arg ...?"}}
+test menubutton-3.2 {ButtonWidgetCmd procedure, "cget" option} {
+    list [catch {.mb c} msg] $msg
+} {1 {bad option "c": must be cget or configure}}
+test menubutton-3.3 {ButtonWidgetCmd procedure, "cget" option} {
+    list [catch {.mb cget} msg] $msg
+} {1 {wrong # args: should be ".mb cget option"}}
+test menubutton-3.4 {ButtonWidgetCmd procedure, "cget" option} {
+    list [catch {.mb cget a b} msg] $msg
+} {1 {wrong # args: should be ".mb cget option"}}
+test menubutton-3.5 {ButtonWidgetCmd procedure, "cget" option} {
+    list [catch {.mb cget -gorp} msg] $msg
+} {1 {unknown option "-gorp"}}
+test menubutton-3.6 {ButtonWidgetCmd procedure, "cget" option} {
+    .mb configure -highlightthickness 3
+    .mb cget -highlightthickness
+} {3}
+test menubutton-3.7 {ButtonWidgetCmd procedure, "configure" option} {
+    llength [.mb configure]
+} {31}
+test menubutton-3.8 {ButtonWidgetCmd procedure, "configure" option} {
+    list [catch {.mb configure -gorp} msg] $msg
+} {1 {unknown option "-gorp"}}
+test menubutton-3.9 {ButtonWidgetCmd procedure, "configure" option} {
+    list [catch {.mb co -bg #ffffff -fg} msg] $msg
+} {1 {value for "-fg" missing}}
+test menubutton-3.10 {ButtonWidgetCmd procedure, "configure" option} {
+    .mb configure -fg #123456
+    .mb configure -bg #654321
+    lindex [.mb configure -fg] 4
+} {#123456}
+test menubutton-3.11 {ButtonWidgetCmd procedure, "configure" option} {
+    list [catch {.mb foobar} msg] $msg
+} {1 {bad option "foobar": must be cget or configure}}
+
+# XXX Need to add tests for several procedures here.   The tests for   XXX
+# XXX ConfigureMenuButton aren't complete either.                      XXX
+
+test menubutton-4.1 {ConfigureMenuButton procedure} {
+    catch {destroy .mb1}
+    button .mb1 -text "Menubutton 1"
+    list [catch {.mb1 configure -width 1i} msg] $msg $errorInfo
+} {1 {expected integer but got "1i"} {expected integer but got "1i"
+    (processing -width option)
+    invoked from within
+".mb1 configure -width 1i"}}
+test menubutton-4.2 {ConfigureMenuButton procedure} {
+    catch {destroy .mb1}
+    button .mb1 -text "Menubutton 1"
+    list [catch {.mb1 configure -height 0.5c} msg] $msg $errorInfo
+} {1 {expected integer but got "0.5c"} {expected integer but got "0.5c"
+    (processing -height option)
+    invoked from within
+".mb1 configure -height 0.5c"}}
+test menubutton-4.3 {ConfigureMenuButton procedure} {
+    catch {destroy .mb1}
+    button .mb1 -bitmap questhead
+    list [catch {.mb1 configure -width abc} msg] $msg $errorInfo
+} {1 {bad screen distance "abc"} {bad screen distance "abc"
+    (processing -width option)
+    invoked from within
+".mb1 configure -width abc"}}
+test menubutton-4.4 {ConfigureMenuButton procedure} {
+    catch {destroy .mb1}
+    eval image delete [image names]
+    image create test image1
+    button .mb1 -image image1
+    list [catch {.mb1 configure -height 0.5x} msg] $msg $errorInfo
+} {1 {bad screen distance "0.5x"} {bad screen distance "0.5x"
+    (processing -height option)
+    invoked from within
+".mb1 configure -height 0.5x"}}
+test menubutton-4.5 {ConfigureMenuButton procedure} {fonts} {
+    catch {destroy .mb1}
+    button .mb1 -text "Sample text" -width 10 -height 2
+    pack .mb1
+    set result "[winfo reqwidth .mb1] [winfo reqheight .mb1]"
+    .mb1 configure -bitmap questhead
+    lappend result [winfo reqwidth .mb1] [winfo reqheight .mb1]
+} {102 48 20 12}
+
+# XXX Need to add tests for several procedures here. XXX
+
+test button-5.1 {MenuButtonEventProc procedure} {
+    eval destroy [winfo children .]
+    menubutton .mb1 -bg #543210
+    rename .mb1 .mb2
+    set x {}
+    lappend x [winfo children .]
+    lappend x [.mb2 cget -bg]
+    destroy .mb1
+    lappend x [info command .mb*] [winfo children .]
+} {.mb1 #543210 {} {}}
+
+test button-6.1 {MenuButtonCmdDeletedProc procedure} {
+    eval destroy [winfo children .]
+    menubutton .mb1
+    rename .mb1 {}
+    list [info command .mb*] [winfo children .]
+} {{} {}}
+
+test menubutton-7.1 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 4 -highlightthickness 0
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {38 23}
+test menubutton-7.2 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 1 -highlightthickness 2
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {36 21}
+test menubutton-7.3 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 0 -highlightthickness 2 -padx 5 -pady 5
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {34 19}
+test menubutton-7.4 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 2 -relief raised -width 40 \
+	    -highlightthickness 2
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {48 23}
+test menubutton-7.5 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 2 -relief raised -height 30 \
+	    -highlightthickness 2
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {38 38}
+test menubutton-7.6 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -bitmap question -bd 2 -relief raised \
+	    -highlightthickness 2
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {25 35}
+test menubutton-7.7 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -bitmap question -bd 2 -relief raised -width 40 \
+	    -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {46 33}
+test menubutton-7.8 {ComputeMenuButtonGeometry procedure} {
+    catch {destroy .mb}
+    menubutton .mb -bitmap question -bd 2 -relief raised -height 50 \
+	    -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {23 56}
+test menubutton-7.9 {ComputeMenuButtonGeometry procedure} {fonts} {
+    catch {destroy .mb}
+    menubutton .mb -text String -bd 2 -relief raised -padx 0 -pady 0 \
+	    -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {40 21}
+test menubutton-7.10 {ComputeMenuButtonGeometry procedure} {fonts} {
+    catch {destroy .mb}
+    menubutton .mb -text String -bd 2 -relief raised -width 20 \
+	    -padx 0 -pady 0 -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {146 21}
+test menubutton-7.11 {ComputeMenuButtonGeometry procedure} {fonts} {
+    catch {destroy .mb}
+    menubutton .mb -text String -bd 2 -relief raised -height 2 \
+	    -padx 0 -pady 0 -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {40 36}
+test menubutton-7.12 {ComputeMenuButtonGeometry procedure} {fonts} {
+    catch {destroy .mb}
+    menubutton .mb -text String -bd 2 -relief raised -padx 10 -pady 5 \
+	    -highlightthickness 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {60 31}
+test menubutton-7.13 {ComputeMenuButtonGeometry procedure} {fonts} {
+    catch {destroy .mb}
+    menubutton .mb -text String -bd 2 -relief raised \
+	    -highlightthickness 1 -indicatoron 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {76 29}
+test menubutton-7.14 {ComputeMenuButtonGeometry procedure} {nonPortable} {
+    # The following test is non-portable because the indicator's pixel
+    # size varies to maintain constant absolute size.
+
+    catch {destroy .mb}
+    menubutton .mb -image image1 -bd 2 -relief raised \
+	    -highlightthickness 2 -indicatoron 1
+    pack .mb
+    list [winfo reqwidth .mb] [winfo reqheight .mb]
+} {64 23}
+
+eval image delete [image names]
+eval destroy [winfo children .]

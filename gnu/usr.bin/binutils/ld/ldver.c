@@ -26,12 +26,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "ldemul.h"
 #include "ldmain.h"
 
+const char *ld_program_version = "cygnus-2.7.1";
+
 void
 ldversion (noisy)
      int noisy;
 {
-  fprintf (stdout, "GNU ld version cygnus-2.7.1 (with BFD %s)\n",
-	   BFD_VERSION);
+  fprintf (stdout, "GNU ld version %s (with BFD %s)\n",
+	   ld_program_version, BFD_VERSION);
 
   if (noisy) 
     {

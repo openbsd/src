@@ -1,0 +1,3 @@
+# Support for testing against a Hitachi SH3 target rom
+
+load_lib ../config/monitor.exp

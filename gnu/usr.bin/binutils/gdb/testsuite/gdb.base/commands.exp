@@ -1,0 +1,225 @@
+#   Copyright (C) 1988, 1990, 1991, 1992 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test special commands (if, while, etc)
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "run"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+gdb_exit
+gdb_start
+delete_breakpoints
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+proc gdbvar_simple_if_test {} {
+    global prompt
+
+    gdb_test "set \$foo = 0" "" "set foo in gdbvar_simple_if_test"
+    # All this test should do is print 0xdeadbeef once.
+    gdb_test "if \$foo == 1\np/x 0xfeedface\nelse\np/x 0xdeadbeef\nend" "\\\$\[0-9\]* = 0xdeadbeef" "gdbvar_simple_if_test #1"
+    # All this test should do is print 0xfeedface once.
+    gdb_test "if \$foo == 0\np/x 0xfeedface\nelse\np/x 0xdeadbeef\nend" "\\\$\[0-9\]* = 0xfeedface" "gdbvar_simple_if_test #2"
+}
+
+proc gdbvar_simple_while_test {} {
+    global prompt
+
+    gdb_test "set \$foo = 5" "" "set foo in gdbvar_simple_while_test"
+    # This test should print 0xfeedface five times.
+    gdb_test "while \$foo > 0\np/x 0xfeedface\nset \$foo -= 1\nend" "\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "gdbvar_simple_while_test #1"
+}
+
+proc gdbvar_complex_if_while_test {} {
+    global prompt
+
+    gdb_test "set \$foo = 4" "" "set foo in gdbvar complex_if_while_test"
+    # This test should alternate between 0xdeadbeef and 0xfeedface two times.
+    gdb_test "while \$foo > 0\nset \$foo -= 1\nif \(\$foo % 2\) == 1\np/x 0xdeadbeef\nelse\np/x 0xfeedface\nend\nend" "\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "gdbvar_complex_if_while_test #1"
+}
+
+proc progvar_simple_if_test {} {
+    global prompt
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping progvar_simple_if_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 5" "" "set args in progvar_simple_if_test"
+    if { ![runto factorial] } then { return }
+    # All this test should do is print 0xdeadbeef once.
+    gdb_test "if value == 1\np/x 0xfeedface\nelse\np/x 0xdeadbeef\nend" "\\\$\[0-9\]* = 0xdeadbeef" "progvar_simple_if_test #1"
+    # All this test should do is print 0xfeedface once.
+    gdb_test "if value == 5\np/x 0xfeedface\nelse\np/x 0xdeadbeef\nend" "\\\$\[0-9\]* = 0xfeedface" "progvar_simple_if_test #2"
+}
+
+proc progvar_simple_while_test {} {
+    global prompt
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping progvar_simple_while_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 5" "" "set args in progvar_simple_while_test"
+    if { ![runto factorial] } then { return }
+    # This test should print 0xfeedface five times.
+    gdb_test "while value > 0\np/x 0xfeedface\nset value -= 1\nend" "\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "progvar_simple_while_test #1"
+}
+
+proc progvar_complex_if_while_test {} {
+    global prompt
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping progvar_simple_if_while_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 4" "" "set args in progvar_complex_if_while_test"
+    if { ![runto factorial] } then { return }
+    # This test should alternate between 0xdeadbeef and 0xfeedface two times.
+    gdb_test "while value > 0\nset value -= 1\nif \(value % 2\) == 1\np/x 0xdeadbeef\nelse\np/x 0xfeedface\nend\nend" "\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "progvar_complex_if_while_test #1"
+}
+
+proc if_while_breakpoint_command_test {} {
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping if_while_breakpoint_command_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 5" "" "set args in if_while_breakpoint_command_test"
+    if { ![runto factorial] } then { return }
+    delete_breakpoints
+    gdb_test "break factorial" "Breakpoint.*at.*"
+
+    send "commands\n"
+    expect {
+	-re "End with" {
+	    pass "commands in if_while_breakpoint_command_test"
+	}
+        default {
+	    fail "(timeout or eof) commands in if_while_breakpoint_command_test"
+	}
+    }
+    # This test should alternate between 0xdeadbeef and 0xfeedface two times.
+    gdb_test "while value > 0\nset value -= 1\nif \(value % 2\) == 1\np/x 0xdeadbeef\nelse\np/x 0xfeedface\nend\nend\nend" "" "commands part 2 in if_while_breakpoint_command_test"
+    gdb_test "continue" "\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "if_while_breakpoint_command_test #1"
+   gdb_test "info break" "while.*set.*if.*p/x.*else.*p/x.*end.*" "info break in if_while_breakpoint_command_test"
+}
+
+# Test that we can run the inferior from breakpoint commands.
+proc infrun_breakpoint_command_test {} {
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping infrun_breakpoint_command_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 6" "" "set args in progvar_simple_while_test"
+    if { ![runto factorial] } then { return }
+    delete_breakpoints
+    gdb_test "break factorial if value == 5" "Breakpoint.*at.*"
+    gdb_test "commands\nstep\nstep\nstep\nstep\nbt\nend" \
+	"End with.*" "commands in infrun_breakpoint_command_test"
+    gdb_test "continue" "Breakpoint \[0-9\]*, factorial \\(value=5\\).*at.*
+\[0-9\]*\[ 	\]*if \\(value > 1\\) \{.*
+\[0-9\]*\[ 	\]*value \\*= factorial \\(value - 1\\);.*
+factorial \\(value=4\\) at.*\[0-9\]*\[ 	\]*if \\(value > 1\\) \{.*
+\[0-9\]*\[ 	\]*value \\*= factorial \\(value - 1\\);.*
+factorial \\(value=3\\) at .*
+\[0-9\]*\[ 	\]*if \\(value > 1\\) \{.*
+#0  factorial \\(value=3\\).*
+#1  \[0-9a-fx\]* in factorial \\(value=4\\).*
+#2  \[0-9a-fx\]* in factorial \\(value=5\\).*
+#3  \[0-9a-fx\]* in factorial \\(value=6\\).*
+#4  \[0-9a-fx\]* in main \\(.*\\).*" \
+	"continue in infrun_breakpoint_command_test"
+}
+
+proc breakpoint_command_test {} {
+    global noargs
+
+    if $noargs { 
+        verbose "Skipping breakpoint_command_test because of noargs."
+        return
+    }
+
+    gdb_test "set args 6" "" "set args in progvar_simple_while_test"
+    if { ![runto factorial] } then { return }
+    delete_breakpoints
+    gdb_test "break factorial" "Breakpoint.*at.*"
+    gdb_test "commands\nprintf \"Now the value is %d\\n\", value\nend" \
+	"End with.*" "commands in breakpoint_command_test"
+    gdb_test "continue" "Breakpoint \[0-9\]*, factorial.*Now the value is 5" \
+	"continue in breakpoint_command_test"
+    gdb_test "print value" " = 5" "print value in breakpoint_command_test"
+}
+
+# Test a simple user defined command (with arguments)
+proc user_defined_command_test {} {
+    global prompt
+
+    gdb_test "set \$foo = 4" "" "set foo in user_defined_command_test"
+
+    send "define mycommand\n"
+    expect {
+	-re "End with"  {
+	    pass "define mycommand in user_defined_command_test"
+	}
+        default {
+	    fail "(timeout or eof) define mycommand in user_defined_command_test"
+	}
+    }
+    # This test should alternate between 0xdeadbeef and 0xfeedface two times.
+    gdb_test "while \$arg0 > 0\nset \$arg0 -= 1\nif \(\$arg0 % 2\) == 1\np/x 0xdeadbeef\nelse\np/x 0xfeedface\nend\nend\nend" "" "enter commands in user_defined_command_test"
+
+    gdb_test "mycommand \$foo" "\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" "execute user defined command in user_defined_command_test"
+   gdb_test "show user mycommand" "while.*set.*if.*p/x.*else.*p/x.*end.*" "display user command in user_defined_command_test"
+}
+
+gdbvar_simple_if_test
+gdbvar_simple_while_test
+gdbvar_complex_if_while_test
+progvar_simple_if_test
+progvar_simple_while_test
+progvar_complex_if_while_test
+if_while_breakpoint_command_test
+infrun_breakpoint_command_test
+breakpoint_command_test
+user_defined_command_test

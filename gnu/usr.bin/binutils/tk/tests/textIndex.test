@@ -1,0 +1,351 @@
+# This file is a Tcl script to test the code in the file tkTextIndex.c.
+# This file is organized in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1994 The Regents of the University of California.
+# Copyright (c) 1994 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) textIndex.test 1.8 96/02/16 10:55:28
+
+if {[string compare test [info procs test]] == 1} then \
+  {source defs}
+
+catch {destroy .t}
+if [catch {text .t \
+	-font -adobe-courier-medium-r-normal--12-120-75-75-m-70-iso8859-1 \
+	-width 20 -height 10}] {
+    puts "The font needed by these tests isn't available, so I'm"
+    puts "going to skip the tests."
+    return
+}
+pack append . .t {top expand fill}
+update
+.t debug on
+wm geometry . {}
+  
+# The statements below reset the main window;  it's needed if the window
+# manager is mwm to make mwm forget about a previous minimum size setting.
+
+wm withdraw .
+wm minsize . 1 1
+wm positionfrom . user
+wm deiconify .
+
+.t insert 1.0 "Line 1
+abcdefghijklm
+12345
+Line 4
+bOy GIrl .#@? x_yz
+!@#$%
+Line 7"
+
+test textIndex-1.1 {TkTextMakeIndex} {
+    .t index -1.3
+} 1.0
+test textIndex-1.2 {TkTextMakeIndex} {
+    .t index 0.3
+} 1.0
+test textIndex-1.3 {TkTextMakeIndex} {
+    .t index 1.3
+} 1.3
+test textIndex-1.4 {TkTextMakeIndex} {
+    .t index 3.-1
+} 3.0
+test textIndex-1.5 {TkTextMakeIndex} {
+    .t index 3.3
+} 3.3
+test textIndex-1.6 {TkTextMakeIndex} {
+    .t index 3.5
+} 3.5
+test textIndex-1.7 {TkTextMakeIndex} {
+    .t index 3.6
+} 3.5
+test textIndex-1.8 {TkTextMakeIndex} {
+    .t index 3.7
+} 3.5
+test textIndex-1.9 {TkTextMakeIndex} {
+    .t index 7.2
+} 7.2
+test textIndex-1.10 {TkTextMakeIndex} {
+    .t index 8.0
+} 8.0
+test textIndex-1.11 {TkTextMakeIndex} {
+    .t index 8.1
+} 8.0
+test textIndex-1.12 {TkTextMakeIndex} {
+    .t index 9.0
+} 8.0
+
+.t tag add x 2.3 2.6
+test textIndex-2.1 {TkTextIndexToSeg} {
+    .t get 2.0
+} a
+test textIndex-2.2 {TkTextIndexToSeg} {
+    .t get 2.2
+} c
+test textIndex-2.3 {TkTextIndexToSeg} {
+    .t get 2.3
+} d
+test textIndex-2.4 {TkTextIndexToSeg} {
+    .t get 2.6
+} g
+test textIndex-2.5 {TkTextIndexToSeg} {
+    .t get 2.7
+} h
+test textIndex-2.6 {TkTextIndexToSeg} {
+    .t get 2.12
+} m
+test textIndex-2.7 {TkTextIndexToSeg} {
+    .t get 2.13
+} \n
+test textIndex-2.8 {TkTextIndexToSeg} {
+    .t get 2.14
+} \n
+.t tag delete x
+
+.t mark set foo 3.2
+.t tag add x 2.8 2.11
+.t tag add x 6.0 6.2
+set weirdTag "funny . +- 22.1\n\t{"
+.t tag add $weirdTag 2.1  2.6
+set weirdMark "asdf \n{-+ 66.2\t"
+.t mark set $weirdMark 4.0
+.t tag config y -relief raised
+test textIndex-3.1 {TkTextGetIndex, weird mark names} {
+    list [catch {.t index $weirdMark} msg] $msg
+} {0 4.0}
+
+test textIndex-4.1 {TkTextGetIndex, tags} {
+    list [catch {.t index x.first} msg] $msg
+} {0 2.8}
+test textIndex-4.2 {TkTextGetIndex, tags} {
+    list [catch {.t index x.last} msg] $msg
+} {0 6.2}
+test textIndex-4.3 {TkTextGetIndex, weird tags} {
+    list [.t index $weirdTag.first+1c] [.t index $weirdTag.last+2c]
+} {2.2 2.8}
+test textIndex-4.4 {TkTextGetIndex, tags} {
+    list [catch {.t index x.gorp} msg] $msg
+} {1 {bad text index "x.gorp"}}
+test textIndex-4.5 {TkTextGetIndex, tags} {
+    list [catch {.t index foo.last} msg] $msg
+} {1 {bad text index "foo.last"}}
+test textIndex-4.6 {TkTextGetIndex, tags} {
+    list [catch {.t index y.first} msg] $msg
+} {1 {text doesn't contain any characters tagged with "y"}}
+test textIndex-4.7 {TkTextGetIndex, tags} {
+    list [catch {.t index x.last,} msg] $msg
+} {1 {bad text index "x.last,"}}
+test textIndex-4.8 {TkTextGetIndex, tags} {
+    .t tag add z 1.0
+    set result [list [.t index z.first] [.t index z.last]]
+    .t tag delete z
+    set result
+} {1.0 1.1}
+
+test textIndex-5.1 {TkTextGetIndex, "@"} {fonts} {
+    .t index @12,9
+} 1.1
+test textIndex-5.2 {TkTextGetIndex, "@"} {fonts} {
+    .t index @-2,7
+} 1.0
+test textIndex-5.3 {TkTextGetIndex, "@"} {fonts} {
+    .t index @10,-7
+} 1.0
+test textIndex-5.4 {TkTextGetIndex, "@"} {fonts} {
+    list [catch {.t index @x} msg] $msg
+} {1 {bad text index "@x"}}
+test textIndex-5.5 {TkTextGetIndex, "@"} {fonts} {
+    list [catch {.t index @10q} msg] $msg
+} {1 {bad text index "@10q"}}
+test textIndex-5.6 {TkTextGetIndex, "@"} {fonts} {
+    list [catch {.t index @10,} msg] $msg
+} {1 {bad text index "@10,"}}
+test textIndex-5.7 {TkTextGetIndex, "@"} {fonts} {
+    list [catch {.t index @10,a} msg] $msg
+} {1 {bad text index "@10,a"}}
+test textIndex-5.8 {TkTextGetIndex, "@"} {fonts} {
+    list [catch {.t index @10,9,} msg] $msg
+} {1 {bad text index "@10,9,"}}
+
+test textIndex-6.1 {TkTextGetIndex, numeric} {
+    list [catch {.t index 2.3} msg] $msg
+} {0 2.3}
+test textIndex-6.2 {TkTextGetIndex, numeric} {
+    list [catch {.t index -} msg] $msg
+} {1 {bad text index "-"}}
+test textIndex-6.3 {TkTextGetIndex, numeric} {
+    list [catch {.t index 2.end} msg] $msg
+} {0 2.13}
+test textIndex-6.4 {TkTextGetIndex, numeric} {
+    list [catch {.t index 2.x} msg] $msg
+} {1 {bad text index "2.x"}}
+test textIndex-6.5 {TkTextGetIndex, numeric} {
+    list [catch {.t index 2.3x} msg] $msg
+} {1 {bad text index "2.3x"}}
+
+test textIndex-7.1 {TkTextGetIndex, miscellaneous other bases} {
+    list [catch {.t index end} msg] $msg
+} {0 8.0}
+test textIndex-7.2 {TkTextGetIndex, miscellaneous other bases} {
+    list [catch {.t index foo} msg] $msg
+} {0 3.2}
+test textIndex-7.3 {TkTextGetIndex, miscellaneous other bases} {
+    list [catch {.t index foo+1c} msg] $msg
+} {0 3.3}
+
+test textIndex-8.1 {TkTextGetIndex, modifiers} {
+    list [catch {.t index 2.1+1char} msg] $msg
+} {0 2.2}
+test textIndex-8.2 {TkTextGetIndex, modifiers} {
+    list [catch {.t index "2.1  	+1char"} msg] $msg
+} {0 2.2}
+test textIndex-8.3 {TkTextGetIndex, modifiers} {
+    list [catch {.t index 2.1-1char} msg] $msg
+} {0 2.0}
+test textIndex-8.4 {TkTextGetIndex, modifiers} {
+    list [catch {.t index {2.1  }} msg] $msg
+} {0 2.1}
+test textIndex-8.5 {TkTextGetIndex, modifiers} {
+    list [catch {.t index {2.1+foo bar}} msg] $msg
+} {1 {bad text index "2.1+foo bar"}}
+test textIndex-8.6 {TkTextGetIndex, modifiers} {
+    list [catch {.t index {2.1 foo bar}} msg] $msg
+} {1 {bad text index "2.1 foo bar"}}
+
+test textIndex-9.1 {TkTextIndexCmp} {
+    list [.t compare 3.1 < 3.2] [.t compare 3.1 == 3.2]
+} {1 0}
+test textIndex-9.2 {TkTextIndexCmp} {
+    list [.t compare 3.2 < 3.2] [.t compare 3.2 == 3.2]
+} {0 1}
+test textIndex-9.3 {TkTextIndexCmp} {
+    list [.t compare 3.3 < 3.2] [.t compare 3.3 == 3.2]
+} {0 0}
+test textIndex-9.4 {TkTextIndexCmp} {
+    list [.t compare 2.1 < 3.2] [.t compare 2.1 == 3.2]
+} {1 0}
+test textIndex-9.5 {TkTextIndexCmp} {
+    list [.t compare 4.1 < 3.2] [.t compare 4.1 == 3.2]
+} {0 0}
+
+test textIndex-10.1 {ForwBack} {
+    list [catch {.t index {2.3 + x}} msg] $msg
+} {1 {bad text index "2.3 + x"}}
+test textIndex-10.2 {ForwBack} {
+    list [catch {.t index {2.3 + 2 chars}} msg] $msg
+} {0 2.5}
+test textIndex-10.3 {ForwBack} {
+    list [catch {.t index {2.3 + 2c}} msg] $msg
+} {0 2.5}
+test textIndex-10.4 {ForwBack} {
+    list [catch {.t index {2.3 - 3ch}} msg] $msg
+} {0 2.0}
+test textIndex-10.5 {ForwBack} {
+    list [catch {.t index {2.3 + 3 lines}} msg] $msg
+} {0 5.3}
+test textIndex-10.6 {ForwBack} {
+    list [catch {.t index {2.3 -1l}} msg] $msg
+} {0 1.3}
+test textIndex-10.7 {ForwBack} {
+    list [catch {.t index {2.3 -1 gorp}} msg] $msg
+} {1 {bad text index "2.3 -1 gorp"}}
+test textIndex-10.8 {ForwBack} {
+    list [catch {.t index {2.3 - 4 lines}} msg] $msg
+} {0 1.3}
+
+test textIndex-11.1 {TkTextIndexForwChars} {
+    .t index {2.3 + -7 chars}
+} 1.3
+test textIndex-11.2 {TkTextIndexForwChars} {
+    .t index {2.3 + 5 chars}
+} 2.8
+test textIndex-11.3 {TkTextIndexForwChars} {
+    .t index {2.3 + 10 chars}
+} 2.13
+test textIndex-11.4 {TkTextIndexForwChars} {
+    .t index {2.3 + 11 chars}
+} 3.0
+test textIndex-11.5 {TkTextIndexForwChars} {
+    .t index {2.3 + 55 chars}
+} 7.6
+test textIndex-11.6 {TkTextIndexForwChars} {
+    .t index {2.3 + 56 chars}
+} 8.0
+test textIndex-11.7 {TkTextIndexForwChars} {
+    .t index {2.3 + 57 chars}
+} 8.0
+
+test textIndex-12.1 {TkTextIndexBackChars} {
+    .t index {3.2 - -10 chars}
+} 4.6
+test textIndex-12.2 {TkTextIndexBackChars} {
+    .t index {3.2 - 2 chars}
+} 3.0
+test textIndex-12.3 {TkTextIndexBackChars} {
+    .t index {3.2 - 3 chars}
+} 2.13
+test textIndex-12.4 {TkTextIndexBackChars} {
+    .t index {3.2 - 22 chars}
+} 1.1
+test textIndex-12.5 {TkTextIndexBackChars} {
+    .t index {3.2 - 23 chars}
+} 1.0
+test textIndex-12.6 {TkTextIndexBackChars} {
+    .t index {3.2 - 24 chars}
+} 1.0
+
+proc getword index {
+    .t get [.t index "$index wordstart"] [.t index "$index wordend"]
+}
+test textIndex-13.1 {StartEnd} {
+    list [catch {.t index {2.3 lineend}} msg] $msg
+} {0 2.13}
+test textIndex-13.2 {StartEnd} {
+    list [catch {.t index {2.3 linee}} msg] $msg
+} {0 2.13}
+test textIndex-13.3 {StartEnd} {
+    list [catch {.t index {2.3 line}} msg] $msg
+} {1 {bad text index "2.3 line"}}
+test textIndex-13.4 {StartEnd} {
+    list [catch {.t index {2.3 linestart}} msg] $msg
+} {0 2.0}
+test textIndex-13.5 {StartEnd} {
+    list [catch {.t index {2.3 lines}} msg] $msg
+} {0 2.0}
+test textIndex-13.6 {StartEnd} {
+    getword 5.3
+} { }
+test textIndex-13.7 {StartEnd} {
+    getword 5.4
+} GIrl
+test textIndex-13.8 {StartEnd} {
+    getword 5.7
+} GIrl
+test textIndex-13.9 {StartEnd} {
+    getword 5.8
+} { }
+test textIndex-13.10 {StartEnd} {
+    getword 5.14
+} x_yz
+test textIndex-13.11 {StartEnd} {
+    getword 6.2
+} #
+test textIndex-13.12 {StartEnd} {
+    getword 3.4
+} 12345
+.t tag add x 2.8 2.11
+test textIndex-13.13 {StartEnd} {
+    list [catch {.t index {2.2 worde}} msg] $msg
+} {0 2.13}
+test textIndex-13.14 {StartEnd} {
+    list [catch {.t index {2.12 words}} msg] $msg
+} {0 2.0}
+test textIndex-13.15 {StartEnd} {
+    list [catch {.t index {2.12 word}} msg] $msg
+} {1 {bad text index "2.12 word"}}
+
+catch {destroy .t}
+concat

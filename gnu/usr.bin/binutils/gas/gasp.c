@@ -1,5 +1,5 @@
 /* gasp.c - Gnu assembler preprocessor main program.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 95, 1996 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -2638,7 +2638,7 @@ do_macro (idx, in)
   const char *err;
   int line = linecount ();
 
-  err = define_macro (idx, in, &label, get_line);
+  err = define_macro (idx, in, &label, get_line, (const char **) NULL);
   if (err != NULL)
     ERROR ((stderr, "macro at line %d: %s\n", line - 1, err));
 }
@@ -3549,6 +3549,8 @@ Usage: %s \n\
   [-Dname=value]                  create preprocessor variable called name, with value\n\
   [-Ipath]                        add to include path list\n\
   [in-file]\n");
+  if (status == 0)
+    printf ("\nReport bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (status);
 }
 
@@ -3634,7 +3636,12 @@ main (argc, argv)
 	  show_help ();
 	  /*NOTREACHED*/
 	case 'v':
-	  printf ("GNU %s version %s\n", program_name, program_version);
+	  /* This output is intended to follow the GNU standards document.  */
+	  printf ("GNU assembler pre-processor %s\n", program_version);
+	  printf ("Copyright 1996 Free Software Foundation, Inc.\n");
+	  printf ("\
+This program is free software; you may redistribute it under the terms of\n\
+the GNU General Public License.  This program has absolutely no warranty.\n");
 	  exit (0);
 	  /*NOTREACHED*/
 	case 0:

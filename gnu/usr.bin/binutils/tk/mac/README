@@ -1,0 +1,220 @@
+Tk 4.1 for Macintosh
+
+by Ray Johnson
+Sun Microsystems Laboratories
+rjohnson@eng.sun.com
+
+SCCS: @(#) README 1.14 96/04/20 15:38:44
+
+1. Introduction
+---------------
+
+This is the README file for the Macintosh version of the Tk
+extension for the Tcl scripting language.  The file consists of
+information specific to the Macintosh version of Tcl and Tk.  For more
+general information please read the README file in the main Tk
+directory.
+
+2. What's new?
+-------------
+
+This is the first ever official & final release of Tk on the
+Macintosh!  Most of your UNIX scripts should work just fine
+on the Macintosh.  However, some esoteric features of X may
+not work.
+
+The test suite:  Currently, Tk doesn't come close to passing the test
+suite.  This is mostly due to the test suite not being very cross
+platform rather than brokenness in the Mac port.
+
+3. The Distribution
+-------------------
+
+Macintosh Tk is distributed in two different forms.  This 
+should make it easier to only download what you need.  The 
+packages are as follows:
+
+mactk4.1.sea.hqx
+
+    This distribution is a "binary" only release.  It contains an
+    installer program that will install a 68k, PowerPC, or Fat
+    version of the "Wish" application.  In addition, in installs
+    the Tcl & Tk libraries in the Extensions folder inside your
+    System Folder.  (These are just text files - no inits are
+    installed.)
+
+mactcltk-full-4.1.sea.hqx
+
+    This release contains the full release of Tcl and Tk for the
+    Macintosh plus the GUSI and More Files packages which both
+    Macintosh Tcl and Tk rely on.
+
+mactk-source-4.1.sea.hqx
+
+    This release contains the complete source to Tk for the Macintosh
+    In addition, Metrowerks CodeWarrior libraries and project files
+    are included.  However, you must already have the More Files
+    package to compile this code.
+
+4. Documentation
+----------------
+
+Two books are currently available for Tcl.  Both provide a good
+introduction to the language.  It is a good way to get started
+if you haven't used the language before:
+
+    Title:			Tcl and the Tk Toolkit
+    Author:			John K. Ousterhout
+    Publisher:			Addison-Wesley
+    ISBN:			0-201-63337-X
+
+    Title:			Practical Programming in Tcl and Tk
+    Author:			Brent Welch
+    Publisher:			Prentice Hall
+    ISBN:			0-13-182007-9
+
+The "doc" subdirectory contains reference in documentation
+in the "man" format found on most UNIX machines.  Unfortunately,
+there is not a suitable way to view these pages on the Macintosh.  
+A version suitable for viewing on the Macintosh has yet to be
+developed.  We are working are having better documentation for
+the Macintosh platform in the future.  However, if you have WWW 
+access you may access the Man pages at the following URL:
+
+	http://www.smli.com/research/tcl/man/
+
+Other documentation and sample Tcl scripts can be found at
+the Tcl ftp site: 
+
+	ftp://ftp.aud.alcatel.com/tcl/
+
+The internet news group comp.lang.tcl is also a valuable
+source of information about Tcl.  A mailing list is also
+available (see below).
+
+5. Compiling Tk
+---------------
+
+In order to compile Macintosh Tk you must have the 
+following items:
+
+	CodeWarrior release 7 or higher
+	Mac Tcl 7.5 (source)
+	More Files 1.4.1 (or higher)
+
+The project  files included with the Mac Tcl source should work 
+fine.  The only thing you may need to update are the access paths.
+
+6. Test suite
+-------------
+
+The Macintosh version of Tk does not pass many of the tests in the
+test suite.  This is primarily due to dependencies in the test suite
+on the size of particular X fonts, and other X related features.  We
+will be working to develop a more general test suite for Tk under the
+Macintosh, but for now, you will not be able to pass many of the
+tests.  It is, however, much better than the alpha release!
+
+7. About Dialog
+---------------
+
+There is now a way to replace the default dialog box for the Wish
+application.  If you create the tcl procedure "tkAboutDialog" it will
+be called instead of creating the default dialog box.  Your procedure
+is then responsible for displaying a window, removing it, etc.  This
+interface is experimental and may change in the future - tell me what
+you think of it.
+
+8. Apple Events
+---------------
+
+Tcl/Tk currently doesn't have much in the way of support for Mac
+Apple Events.  There is no way to send an apple event (although you
+could write an extension to do this) and no general purpose way to
+recieve apple events.  However, there are a couple of hooks for
+dealing with some of the standard apple events.
+
+    exit - Generally, Tcl cleans up after it self when you exit.
+	However, your application may want to do application specifc
+	cleanup like saving a users data.  To do this you can rename
+	the exit command to something else.  Define your own exit
+	command to do whatever clean up you like and then call the
+	origional exit command.  For example,
+
+		rename exit __exit
+		proc exit {} {
+		  # Do your clean up hear
+		  __exit
+		}
+
+	Both incoming quit events and hitting the Quit menu item
+	will call the exit command.  However, don't expect you can
+	abort the exit.  Tk may exit anyway if the exit command it
+	calls does not actually quit the application.
+
+    open - The other apple event Tk supports is the open event.  The
+	open event is sent to Tk if, for example, you drop a file on
+	the Wish icon.  If you define a Tcl procedure with the name
+	"tkOpenDocument" it will be invoked on any Open Document
+	events that the application receives.  The a list of paths to
+	the various documents will be passed to the Tcl function.
+	Here is an example,
+
+		proc tkOpenDocument args {
+		  foreach file $args {
+		    # Deal with passed in file path
+		  }
+		}
+
+	Note: This isn't every thing you need to do to make your
+	application dropable.  You must still define a FREF resource
+	that makes sense for your application domain.  (Out of the
+	box, you will not be able to drop files on the Wish
+	application.  See the Inside Macintosh documentation for
+	details about the FREF resource.
+
+9. Tk Cursors
+-------------
+
+The Macintosh version of Tk supports all of the X cursors.  Tk on the
+Mac will also accept any of the standard Mac cursors including ibeam,
+crosshair, watch, plus, and arrow.  In addition, Tk will load
+cursor resources of the types 'crsr' (color) and 'CURS' (black and
+white) by the name of the of the resource.  The application and all
+it's open dynamic library's resource files will be searched for the
+named cursor.  If there are conlicts color cursors will always be
+loaded in preference to black and white cursors.
+
+10. Macintosh Tcl Mailing List
+-----------------------------
+
+A Mailing List has been set up to discuss Macintosh related Tcl & Tk
+issues including (but not limited to) MacTcl & the Tk port.  In order
+to use this Mailing List you must have access to the internet.  If you
+have access to the WWW the home page for this mailing list is located
+at the following URL:
+
+	http://www.smli.com/research/tcl/lists/mactcl-list.html
+
+The home page contains information about the list and an HTML archive
+of all the past messages on the list.  To subscribe send a message to:
+	
+	listserv@sunlabs.sun.com
+	
+In the body of the message (the subject will be ignored) put:
+	
+	subscribe mactcl Joe Blow
+	
+Replacing Joe Blow with your real name, of course.  If you would just
+like to receive more information about the list without subscribing
+but the line:
+
+	information mactcl
+	
+in the body instead.
+
+
+
+If you have comments or Bug reports send them to:
+Ray Johnson
+rjohnson@eng.sun.com

@@ -1,3 +1,38 @@
+Thu Oct 31 14:56:18 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* ansidecl.h (VPARAMS,VA_START): Define.
+
+Fri Oct 25 12:08:04 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dis-asm.h (disassemble_info): Add bytes_per_line field.
+	(INIT_DISASSEMBLE_INFO_NO_ARCH): Initialize bytes_per_line field.
+
+Thu Oct 24 17:10:01 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* dis-asm.h (disassemble_info): Add symbol field.
+	(INIT_DISASSEMBLE_INFO_NO_ARCH): Initialize symbol field.
+
+Mon Oct 14 23:56:52 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* libiberty.h: Declare parameter types for xmalloc and xrealloc.
+
+Thu Oct  3 13:45:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.h: New file.
+
+Thu Oct  3 10:33:14 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* dis-asm.h (print_insn_mn10x00): Delete declaration.
+	(print_insn_mn10200, print_insn_mn10300): Declare.
+
+Wed Oct  2 21:24:43 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* dis-asm.h (print_insn_mn10x00): Declare.
+
+Mon Sep 30 13:56:11 1996  Fred Fish  <fnf@cygnus.com>
+
+	* libiberty.h: Remove #ifndef PRIVATE_XMALLOC.
+
 Tue Aug 13 16:10:30 1996  Stu Grossman  (grossman@critters.cygnus.com)
 
 	* obstack.h:  Change bcopy to memcpy.  Works better on Posix

@@ -1,0 +1,225 @@
+'\"
+'\" Copyright (c) 1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) CrtImgType.3 1.8 96/03/26 18:06:42
+'\" 
+.so man.macros
+.TH Tk_CreateImageType 3 4.0 Tk "Tk Library Procedures"
+.BS
+.SH NAME
+Tk_CreateImageType \- define new kind of image
+.SH SYNOPSIS
+.nf
+\fB#include <tk.h>\fR
+.sp
+\fBTk_CreateImageType\fR(\fItypePtr\fR)
+.SH ARGUMENTS
+.AS Tk_ImageType *typePtr
+.AP Tk_ImageType *typePtr in
+Structure that defines the new type of image.
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBTk_CreateImageType\fR is invoked to define a new kind of image.
+An image type corresponds to a particular value of the \fItype\fR
+argument for the \fBimage create\fR command.  There may exist
+any number of different image types, and new types may be defined
+dynamically by calling \fBTk_CreateImageType\fR.
+For example, there might be one type for 2-color bitmaps,
+another for multi-color images, another for dithered images,
+another for video, and so on.
+.PP
+The code that implements a new image type is called an
+\fIimage manager\fR.
+It consists of a collection of procedures plus three different
+kinds of data structures.
+The first data structure is a Tk_ImageType structure, which contains
+the name of the image type and pointers to five procedures provided
+by the image manager to deal with images of this type:
+.CS
+typedef struct Tk_ImageType {
+	char *\fIname\fR;
+	Tk_ImageCreateProc *\fIcreateProc\fR;
+	Tk_ImageGetProc *\fIgetProc\fR;
+	Tk_ImageDisplayProc *\fIdisplayProc\fR;
+	Tk_ImageFreeProc *\fIfreeProc\fR;
+	Tk_ImageDeleteProc *\fIdeleteProc\fR;
+} Tk_ImageType;
+.CE
+The fields of this structure will be described in later subsections
+of this entry.
+.PP
+The second major data structure manipulated by an image manager
+is called an \fIimage master\fR;  it contains overall information
+about a particular image, such as the values of the configuration
+options specified in an \fBimage create\fR command.
+There will usually be one of these structures for each
+invocation of the \fBimage create\fR command.
+.PP
+The third data structure related to images is an \fIimage instance\fR.
+There will usually be one of these structures for each usage of an
+image in a particular widget.
+It is possible for a single image to appear simultaneously
+in multiple widgets, or even multiple times in the same widget.
+Furthermore, different instances may be on different screens
+or displays.
+The image instance data structure describes things that may
+vary from instance to instance, such as colors and graphics
+contexts for redisplay.
+There is usually one instance structure for each \fB\-image\fR
+option specified for a widget or canvas item.
+.PP
+The following subsections describe the fields of a Tk_ImageType
+in more detail.
+
+.SH NAME
+.PP
+\fItypePtr->name\fR provides a name for the image type.
+Once \fBTk_CreateImageType\fR returns, this name may be used
+in \fBimage create\fR commands to create images of the new
+type.
+If there already existed an image type by this name then
+the new image type replaces the old one.
+
+.SH CREATEPROC
+\fItypePtr->createProc\fR provides the address of a procedure for
+Tk to call whenever \fBimage create\fR is invoked to create
+an image of the new type.
+\fItypePtr->createProc\fR must match the following prototype:
+.CS
+typedef int Tk_ImageCreateProc(
+	Tcl_Interp *\fIinterp\fR,
+	char *\fIname\fR,
+	int \fIargc\fR,
+	char **\fIargv\fR,
+	Tk_ImageType *\fItypePtr\fR,
+	Tk_ImageMaster \fImaster\fR,
+	ClientData *\fImasterDataPtr\fR);
+.CE
+The \fIinterp\fR argument is the interpreter in which the \fBimage\fR
+command was invoked, and \fIname\fR is the name for the new image,
+which was either specified explicitly in the \fBimage\fR command
+or generated automatically by the \fBimage\fR command.
+The \fIargc\fR and \fIargv\fR arguments describe all the configuration
+options for the new image (everything after the name argument to
+\fBimage\fR).
+The \fImaster\fR argument is a token that refers to Tk's information
+about this image;  the image manager must return this token to
+Tk when invoking the \fBTk_ImageChanged\fR procedure.
+Typically \fIcreateProc\fR will parse \fIargc\fR and \fIargv\fR
+and create an image master data structure for the new image.
+\fIcreateProc\fR may store an arbitrary one-word value at
+*\fImasterDataPtr\fR, which will be passed back to the
+image manager when other callbacks are invoked.
+Typically the value is a pointer to the master data
+structure for the image.
+.PP
+If \fIcreateProc\fR encounters an error, it should leave an error
+message in \fIinterp->result\fR and return \fBTCL_ERROR\fR;  otherwise
+it should return \fBTCL_OK\fR.
+.PP
+\fIcreateProc\fR should call \fBTk_ImageChanged\fR in order to set the
+size of the image and request an initial redisplay.
+
+.SH GETPROC
+.PP
+\fItypePtr->getProc\fR is invoked by Tk whenever a widget
+calls \fBTk_GetImage\fR to use a particular image.
+This procedure must match the following prototype:
+.CS
+typedef ClientData Tk_ImageGetProc(
+	Tk_Window \fItkwin\fR,
+	ClientData \fImasterData\fR);
+.CE
+The \fItkwin\fR argument identifies the window in which the
+image will be used and \fImasterData\fR is the value
+returned by \fIcreateProc\fR when the image master was created.
+\fIgetProc\fR will usually create a data structure for the new
+instance, including such things as the resources needed to
+display the image in the given window.
+\fIgetProc\fR returns a one-word token for the instance, which
+is typically the address of the instance data structure.
+Tk will pass this value back to the image manager when invoking
+its \fIdisplayProc\fR and \fIfreeProc\fR procedures.
+
+.SH DISPLAYPROC
+.PP
+\fItypePtr->displayProc\fR is invoked by Tk whenever an image needs
+to be displayed (i.e., whenever a widget calls \fBTk_RedrawImage\fR).
+\fIdisplayProc\fR must match the following prototype:
+.CS
+typedef void Tk_ImageDisplayProc(
+	ClientData \fIinstanceData\fR,
+	Display *\fIdisplay\fR,
+	Drawable \fIdrawable\fR,
+	int \fIimageX\fR,
+	int \fIimageY\fR,
+	int \fIwidth\fR,
+	int \fIheight\fR,
+	int \fIdrawableX\fR,
+	int \fIdrawableY\fR);
+.CE
+The \fIinstanceData\fR will be the same as the value returned by
+\fIgetProc\fR when the instance was created.
+\fIdisplay\fR and \fIdrawable\fR indicate where to display the
+image;  \fIdrawable\fR may be a pixmap rather than
+the window specified to \fIgetProc\fR (this is usually the case,
+since most widgets double-buffer their redisplay to get smoother
+visual effects).
+\fIimageX\fR, \fIimageY\fR, \fIwidth\fR, and \fIheight\fR
+identify the region of the image that must be redisplayed.
+This region will always be within the size of the image
+as specified in the most recent call to \fBTk_ImageChanged\fR.
+\fIdrawableX\fR and \fIdrawableY\fR indicate where in \fIdrawable\fR
+the image should be displayed;  \fIdisplayProc\fR should display
+the given region of the image so that point (\fIimageX\fR, \fIimageY\fR)
+in the image appears at (\fIdrawableX\fR, \fIdrawableY\fR) in \fIdrawable\fR.
+
+.SH FREEPROC
+.PP
+\fItypePtr->freeProc\fR contains the address of a procedure that
+Tk will invoke when an image instance is released (i.e., when
+\fBTk_FreeImage\fR is invoked).
+This can happen, for example, when a widget is deleted or a image item
+in a canvas is deleted, or when the image displayed in a widget or
+canvas item is changed.
+\fIfreeProc\fR must match the following prototype:
+.CS
+typedef void Tk_ImageFreeProc(
+	ClientData \fIinstanceData\fR,
+	Display *\fIdisplay\fR);
+.CE
+The \fIinstanceData\fR will be the same as the value returned by
+\fIgetProc\fR when the instance was created, and \fIdisplay\fR
+is the display containing the window for the instance.
+\fIfreeProc\fR should release any resources associated with the
+image instance, since the instance will never be used again.
+
+.SH DELETEPROC
+.PP
+\fItypePtr->deleteProc\fR is a procedure that Tk invokes when an
+image is being deleted (i.e. when the \fBimage delete\fR command
+is invoked).
+Before invoking \fIdeleteProc\fR Tk will invoke \fIfreeProc\fR for
+each of the image's instances.
+\fIdeleteProc\fR must match the following prototype:
+.CS
+typedef void Tk_ImageDeleteProc(
+	ClientData \fImasterData\fR);
+.CE
+The \fImasterData\fR argument will be the same as the value
+stored in \fI*masterDataPtr\fR by \fIcreateProc\fR when the
+image was created.
+\fIdeleteProc\fR should release any resources associated with
+the image.
+
+.SH "SEE ALSO"
+Tk_ImageChanged, Tk_GetImage, Tk_FreeImage, Tk_RedrawImage, Tk_SizeOfImage
+
+.SH KEYWORDS
+image manager, image type, instance, master

@@ -1,0 +1,18 @@
+Tue Jun 25 23:19:38 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (datadir): Set to $(prefix)/share.
+	(docdir): Removed.
+
+Wed Sep 20 13:42:55 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+
+Sun Aug  6 11:47:49 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (distclean): Remove Makefile and config.status.
+
+Mon Jun 27 11:39:55 1994  Stan Shebs  (shebs@andros.cygnus.com)
+
+	* configure.in, Makefile.in, README, spu.c: New files.
+
+

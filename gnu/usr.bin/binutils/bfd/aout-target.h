@@ -212,7 +212,8 @@ MY_bfd_copy_private_section_data (ibfd, isec, obfd, osec)
      bfd *obfd;
      asection *osec;
 {
-  if (bfd_get_flavour (obfd) == bfd_target_aout_flavour)
+  if (bfd_get_flavour (ibfd) == bfd_target_aout_flavour
+      && bfd_get_flavour (obfd) == bfd_target_aout_flavour)
     obj_aout_subformat (obfd) = obj_aout_subformat (ibfd);
   return true;
 }

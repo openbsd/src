@@ -25,7 +25,6 @@
 #include "as.h"
 #include "config.h"
 #include "subsegs.h"
-#include "libiberty.h"
 
 #include <ctype.h>
 
@@ -49,6 +48,7 @@ static int mips_output_flavor () { return OUTPUT_FLAVOR; }
 #undef S_SET_SIZE
 #undef TARGET_SYMBOL_FIELDS
 #undef obj_frob_file
+#undef obj_frob_file_after_relocs
 #undef obj_frob_symbol
 #undef obj_pop_insert
 #undef obj_sec_sym_ok_for_reloc
@@ -661,6 +661,13 @@ md_begin ()
 	  if (mips_4010 == -1)
 	    mips_4010 = 1;
 	}
+      else if (strcmp (cpu, "r5000") == 0
+	       || strcmp (cpu, "mips64vr5000") == 0)
+	{
+	  mips_isa = 4;
+	  if (mips_cpu == -1)
+	    mips_cpu = 5000;
+	}
       else if (strcmp (cpu, "r8000") == 0
 	       || strcmp (cpu, "mips4") == 0)
 	{
@@ -1097,8 +1104,7 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	{
 	  /* The previous instruction reads the LO register; if the
 	     current instruction writes to the LO register, we must
-	     insert two NOPS.  The R4650, VR4100 and VR4300 have
-	     interlocks.  */
+	     insert two NOPS.  Some newer processors have interlocks.  */
 	  if (! interlocks
 	      && (mips_optimize == 0
 		  || (pinfo & INSN_WRITE_LO)))
@@ -1108,8 +1114,7 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	{
 	  /* The previous instruction reads the HI register; if the
 	     current instruction writes to the HI register, we must
-	     insert a NOP.  The R4650, VR4100 and VR4300 have
-	     interlocks.  */
+	     insert a NOP.  Some newer processors have interlocks.  */
 	  if (! interlocks
 	      && (mips_optimize == 0
 		  || (pinfo & INSN_WRITE_HI)))
@@ -1120,11 +1125,10 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	 instructions: 1) setting the condition codes using a move to
 	 coprocessor instruction which requires a general coprocessor
 	 delay and then reading the condition codes 2) reading the HI
-	 or LO register and then writing to it (except on the R4650,
-	 VR4100, and VR4300 which have interlocks).  If we are not
-	 already emitting a NOP instruction, we must check for these
-	 cases compared to the instruction previous to the previous
-	 instruction.  */
+	 or LO register and then writing to it (except on processors
+	 which have interlocks).  If we are not already emitting a NOP
+	 instruction, we must check for these cases compared to the
+	 instruction previous to the previous instruction.  */
       if (nops == 0
 	  && ((mips_isa < 4
 	       && (prev_prev_insn.insn_mo->pinfo & INSN_COPROC_MOVE_DELAY)
@@ -1207,6 +1211,9 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	      break;
 
 	    case BFD_RELOC_MIPS_JMP:
+	      ip->insn_opcode |= (address_expr->X_add_number >> 2) & 0x3ffffff;
+	      break;
+
 	    case BFD_RELOC_16_PCREL_S2:
 	      goto need_reloc;
 
@@ -1409,7 +1416,13 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 		  && insn_uses_reg (ip,
 				    ((prev_prev_insn.insn_opcode >> OP_SH_RT)
 				     & OP_MASK_RT),
-				    0)))
+				    0))
+	      /* If one instruction sets a condition code and the
+                 other one uses a condition code, we can not swap.  */
+	      || ((pinfo & INSN_READ_COND_CODE)
+		  && (prev_pinfo & INSN_WRITE_COND_CODE))
+	      || ((pinfo & INSN_WRITE_COND_CODE)
+		  && (prev_pinfo & INSN_READ_COND_CODE)))
 	    {
 	      /* We could do even better for unconditional branches to
 		 portions of this object file; we could pick up the
@@ -1864,6 +1877,82 @@ check_absolute_expr (ip, ex)
     as_warn ("Instruction %s requires absolute expression", ip->insn_mo->name);
 }
 
+/* Count the leading zeroes by performing a binary chop. This is a
+   bulky bit of source, but performance is a LOT better for the
+   majority of values than a simple loop to count the bits:
+       for (lcnt = 0; (lcnt < 32); lcnt++)
+         if ((v) & (1 << (31 - lcnt)))
+           break;
+  However it is not code size friendly, and the gain will drop a bit
+  on certain cached systems.
+*/
+#define COUNT_TOP_ZEROES(v)             \
+  (((v) & ~0xffff) == 0                 \
+   ? ((v) & ~0xff) == 0                 \
+     ? ((v) & ~0xf) == 0                \
+       ? ((v) & ~0x3) == 0              \
+         ? ((v) & ~0x1) == 0            \
+           ? !(v)                       \
+             ? 32                       \
+             : 31                       \
+           : 30                         \
+         : ((v) & ~0x7) == 0            \
+           ? 29                         \
+           : 28                         \
+       : ((v) & ~0x3f) == 0             \
+         ? ((v) & ~0x1f) == 0           \
+           ? 27                         \
+           : 26                         \
+         : ((v) & ~0x7f) == 0           \
+           ? 25                         \
+           : 24                         \
+     : ((v) & ~0xfff) == 0              \
+       ? ((v) & ~0x3ff) == 0            \
+         ? ((v) & ~0x1ff) == 0          \
+           ? 23                         \
+           : 22                         \
+         : ((v) & ~0x7ff) == 0          \
+           ? 21                         \
+           : 20                         \
+       : ((v) & ~0x3fff) == 0           \
+         ? ((v) & ~0x1fff) == 0         \
+           ? 19                         \
+           : 18                         \
+         : ((v) & ~0x7fff) == 0         \
+           ? 17                         \
+           : 16                         \
+   : ((v) & ~0xffffff) == 0             \
+     ? ((v) & ~0xfffff) == 0            \
+       ? ((v) & ~0x3ffff) == 0          \
+         ? ((v) & ~0x1ffff) == 0        \
+           ? 15                         \
+           : 14                         \
+         : ((v) & ~0x7ffff) == 0        \
+           ? 13                         \
+           : 12                         \
+       : ((v) & ~0x3fffff) == 0         \
+         ? ((v) & ~0x1fffff) == 0       \
+           ? 11                         \
+           : 10                         \
+         : ((v) & ~0x7fffff) == 0       \
+           ? 9                          \
+           : 8                          \
+     : ((v) & ~0xfffffff) == 0          \
+       ? ((v) & ~0x3ffffff) == 0        \
+         ? ((v) & ~0x1ffffff) == 0      \
+           ? 7                          \
+           : 6                          \
+         : ((v) & ~0x7ffffff) == 0      \
+           ? 5                          \
+           : 4                          \
+       : ((v) & ~0x3fffffff) == 0       \
+         ? ((v) & ~0x1fffffff) == 0     \
+           ? 3                          \
+           : 2                          \
+         : ((v) & ~0x7fffffff) == 0     \
+           ? 1                          \
+           : 0)
+
 /*			load_register()
  *  This routine generates the least number of instructions neccessary to load
  *  an absolute expression value into a register.
@@ -1910,8 +1999,8 @@ load_register (counter, reg, ep, dbl)
 		    || ! ep->X_unsigned
 		    || sizeof (ep->X_add_number) > 4
 		    || (ep->X_add_number & 0x80000000) == 0))
-	       || (mips_isa < 3
-		   && (ep->X_add_number &~ 0xffffffff) == 0))
+	       || ((mips_isa < 3 || !dbl)
+		   && (ep->X_add_number &~ (offsetT) 0xffffffff) == 0))
 	{
 	  /* 32 bit values require an lui.  */
 	  macro_build ((char *) NULL, counter, ep, "lui", "t,u", reg,
@@ -1920,19 +2009,6 @@ load_register (counter, reg, ep, dbl)
 	    macro_build ((char *) NULL, counter, ep, "ori", "t,r,i", reg, reg,
 			 (int) BFD_RELOC_LO16);
 	  return;
-	}
-      else
-	{
-	  /* 32 bit value with high bit set being loaded into a 64 bit
-             register.  We can't use lui, because that would
-             incorrectly set the 32 high bits.  */
-	  generic_bignum[3] = 0;
-	  generic_bignum[2] = 0;
-	  generic_bignum[1] = (ep->X_add_number >> 16) & 0xffff;
-	  generic_bignum[0] = ep->X_add_number & 0xffff;
-	  tmp.X_op = O_big;
-	  tmp.X_add_number = 4;
-	  ep = &tmp;
 	}
     }
 
@@ -1991,6 +2067,59 @@ load_register (counter, reg, ep, dbl)
               return;
             }
         }
+
+      /* Check for 16bit shifted constant: */
+      shift = 32;
+      tmp.X_add_number = hi32.X_add_number << shift | lo32.X_add_number;
+      /* We know that hi32 is non-zero, so start the mask on the first
+         bit of the hi32 value: */
+      shift = 17;
+      do
+       {
+         if ((tmp.X_add_number & ~((offsetT)0xffff << shift)) == 0)
+          {
+            tmp.X_op = O_constant;
+            tmp.X_add_number >>= shift;
+            macro_build ((char *) NULL, counter, &tmp, "ori", "t,r,i", reg, 0,
+                         (int) BFD_RELOC_LO16);
+            macro_build ((char *) NULL, counter, NULL,
+                         (shift >= 32) ? "dsll32" : "dsll",
+                         "d,w,<", reg, reg, (shift >= 32) ? shift - 32 : shift);
+            return;
+          }
+         shift++;
+       } while (shift <= (64 - 16));
+
+      freg = 0;
+      shift = 32;
+      tmp.X_add_number = hi32.X_add_number << shift | lo32.X_add_number;
+      while ((tmp.X_add_number & 1) == 0)
+        {
+          tmp.X_add_number >>= 1;
+          freg++;
+        }
+      if (((tmp.X_add_number + 1) & tmp.X_add_number) == 0) /* (power-of-2 - 1) */
+        {
+          shift = COUNT_TOP_ZEROES((unsigned int)hi32.X_add_number);
+	  if (shift != 0)
+            {
+              tmp.X_op = O_constant;
+              tmp.X_add_number = (offsetT)-1;
+              macro_build ((char *) NULL, counter, &tmp, "addiu", "t,r,j", reg, 0,
+                           (int) BFD_RELOC_LO16); /* set all ones */
+              if (freg != 0)
+                {
+                  freg += shift;
+                  macro_build ((char *) NULL, counter, NULL,
+                               (freg >= 32) ? "dsll32" : "dsll",
+                               "d,w,<", reg, reg,
+                               (freg >= 32) ? freg - 32 : freg);
+                }
+              macro_build ((char *) NULL, counter, NULL, (shift >= 32) ? "dsrl32" : "dsrl",
+                           "d,w,<", reg, reg, (shift >= 32) ? shift - 32 : shift);
+              return;
+            }
+        }
       load_register (counter, reg, &hi32, 0);
       freg = reg;
     }
@@ -2012,7 +2141,7 @@ load_register (counter, reg, ep, dbl)
 	  macro_build ((char *) NULL, counter, &lo32, "lui", "t,u", reg,
 		       (int) BFD_RELOC_HI16);
           macro_build ((char *) NULL, counter, NULL, "dsrl32", "d,w,<", reg,
-                       reg, 32);
+                       reg, 0);
           return;
         }
 
@@ -5106,7 +5235,15 @@ mips_ip (str, ip)
 	      ++insn;
 	      continue;
 	    }
-	  insn_error = "opcode not supported on this processor";
+	  if (insn_isa <= mips_isa)
+	    insn_error = "opcode not supported on this processor";
+	  else
+	    {
+	      static char buf[100];
+
+	      sprintf (buf, "opcode requires -mips%d or greater", insn_isa);
+	      insn_error = buf;
+	    }
 	  return;
 	}
 
@@ -5404,10 +5541,12 @@ mips_ip (str, ip)
 
 		  if ((regno & 1) != 0
 		      && mips_isa < 3
-		      && ! (strcmp (str, "mtc1") == 0 ||
-			    strcmp (str, "mfc1") == 0 ||
-			    strcmp (str, "lwc1") == 0 ||
-			    strcmp (str, "swc1") == 0))
+		      && ! (strcmp (str, "mtc1") == 0
+			    || strcmp (str, "mfc1") == 0
+			    || strcmp (str, "lwc1") == 0
+			    || strcmp (str, "swc1") == 0
+			    || strcmp (str, "l.s") == 0
+			    || strcmp (str, "s.s") == 0))
 		    as_warn ("Float register should be even, was %d",
 			     regno);
 
@@ -5759,20 +5898,23 @@ mips_ip (str, ip)
 
 	    case 'N':		/* 3 bit branch condition code */
 	    case 'M':		/* 3 bit compare condition code */
-	      my_getExpression (&imm_expr, s);
-	      check_absolute_expr (ip, &imm_expr);
-              if ((unsigned long) imm_expr.X_add_number > 7)
+	      if (strncmp (s, "$fcc", 4) != 0)
+		break;
+	      s += 4;
+	      regno = 0;
+	      do
 		{
-                  as_warn ("Condition code > 7 (%ld)",
-			   (long) imm_expr.X_add_number);
-                  imm_expr.X_add_number &= 7;
+		  regno *= 10;
+		  regno += *s - '0';
+		  ++s;
 		}
+	      while (isdigit (*s));
+	      if (regno > 7)
+		as_bad ("invalid condition code register $fcc%d", regno);
 	      if (*args == 'N')
-		ip->insn_opcode |= imm_expr.X_add_number << OP_SH_BCC;
+		ip->insn_opcode |= regno << OP_SH_BCC;
 	      else
-		ip->insn_opcode |= imm_expr.X_add_number << OP_SH_CCC;
-              imm_expr.X_op = O_absent;
-              s = expr_end;
+		ip->insn_opcode |= regno << OP_SH_CCC;
               continue;
 
 	    default:
@@ -6178,6 +6320,13 @@ md_parse_option (c, arg)
 		  }
 		break;
 
+	      case '5':
+		if (strcmp (p, "5000") == 0
+		    || strcmp (p, "5k") == 0
+		    || strcmp (p, "5K") == 0)
+		  mips_cpu = 5000;
+		break;
+
 	      case '6':
 		if (strcmp (p, "6000") == 0
 		    || strcmp (p, "6k") == 0
@@ -6198,7 +6347,7 @@ md_parse_option (c, arg)
 		break;
 	      }
 
-	    if (sv && mips_cpu != 4300 && mips_cpu != 4100)
+	    if (sv && mips_cpu != 4300 && mips_cpu != 4100 && mips_cpu != 5000)
 	      {
 		as_bad ("ignoring invalid leading 'v' in -mcpu=%s switch", arg);
 		return 0;
@@ -6403,6 +6552,7 @@ cons_fix_new_mips (frag, where, nbytes, exp)
      unsigned int nbytes;
      expressionS *exp;
 {
+#ifndef OBJ_ELF
   /* If we are assembling in 32 bit mode, turn an 8 byte reloc into a
      4 byte reloc.  */
   if (nbytes == 8 && ! mips_64)
@@ -6411,6 +6561,7 @@ cons_fix_new_mips (frag, where, nbytes, exp)
 	where += 4;
       nbytes = 4;
     }
+#endif
 
   if (nbytes != 2 && nbytes != 4 && nbytes != 8)
     as_bad ("Unsupported reloc size %d", nbytes);
@@ -6539,7 +6690,9 @@ md_apply_fix (fixP, valueP)
   unsigned char *buf;
   long insn, value;
 
-  assert (fixP->fx_size == 4 || fixP->fx_r_type == BFD_RELOC_16);
+  assert (fixP->fx_size == 4
+	  || fixP->fx_r_type == BFD_RELOC_16
+	  || fixP->fx_r_type == BFD_RELOC_64);
 
   value = *valueP;
   fixP->fx_addnumber = value;	/* Remember value for tc_gen_reloc */
@@ -6596,6 +6749,35 @@ md_apply_fix (fixP, valueP)
       if (byte_order == BIG_ENDIAN)
 	buf += 2;
       md_number_to_chars (buf, value, 2);
+      break;
+
+    case BFD_RELOC_64:
+      /* This is handled like BFD_RELOC_32, but we output a sign
+         extended value if we are only 32 bits.  */
+      if (fixP->fx_done
+	  || (mips_pic == EMBEDDED_PIC && SWITCH_TABLE (fixP)))
+	{
+	  if (8 <= sizeof (valueT))
+	    md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
+				value, 8);
+	  else
+	    {
+	      long w1, w2;
+	      long hiv;
+
+	      w1 = w2 = fixP->fx_where;
+	      if (byte_order == BIG_ENDIAN)
+		w1 += 4;
+	      else
+		w2 += 4;
+	      md_number_to_chars (fixP->fx_frag->fr_literal + w1, value, 4);
+	      if ((value & 0x80000000) != 0)
+		hiv = 0xffffffff;
+	      else
+		hiv = 0;
+	      md_number_to_chars (fixP->fx_frag->fr_literal + w2, hiv, 4);
+	    }
+	}
       break;
 
     case BFD_RELOC_32:
@@ -7675,9 +7857,13 @@ tc_gen_reloc (section, fixp)
 	case BFD_RELOC_32:
 	  code = BFD_RELOC_32_PCREL;
 	  break;
+	case BFD_RELOC_64:
+	  code = BFD_RELOC_64_PCREL;
+	  break;
 	case BFD_RELOC_8_PCREL:
 	case BFD_RELOC_16_PCREL:
 	case BFD_RELOC_32_PCREL:
+	case BFD_RELOC_64_PCREL:
 	case BFD_RELOC_16_PCREL_S2:
 	case BFD_RELOC_PCREL_HI16_S:
 	case BFD_RELOC_PCREL_LO16:

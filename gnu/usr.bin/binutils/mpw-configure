@@ -48,6 +48,10 @@ Set host_cc "mpwc"
 
 Set with_gnu_ld 0
 
+Set helpoutput 0
+
+Set recurse 1
+
 Set verify 0
 Set verifystr ""
 
@@ -73,9 +77,13 @@ Loop
 	Else If "{1}" =~ /--exec-prefix/
 		Set exec_prefix "{2}"
 		Shift 1
+	Else If "{1}" =~ /--help/
+		Set helpoutput 1
 	Else If "{1}" =~ /--host/
 		Set host_alias "{2}"
 		Shift 1
+	Else If "{1}" =~ /--norecursion/
+		Set recurse 0
 	Else If "{1}" =~ /--prefix/
 		Set prefix "{2}"
 		Shift 1
@@ -94,11 +102,34 @@ Loop
 	Else If "{1}" =~ /--with-gnu-ld/
 		Set with_gnu_ld 1
 	Else
-		Echo "{1}" is not a valid argument
+		Echo -n 'mpw-configure: Unrecognized option: "'
+		Echo -n "{1}"
+		Echo '"; use --help for usage.'
 		Exit 1
 	End If
 	Shift 1
 End Loop
+
+If {helpoutput} == 1
+	Echo "Usage: mpw-configure [OPTIONS]"
+	Echo ""
+	Echo "Options: [defaults in brackets]"
+	Echo "--bindir DIR      directory for binaries []"
+	Echo "--cc CC           use C compiler CC [mpwc]"
+	Echo "--disable-FOO     do not include feature FOO"
+	Echo "--enable-FOO      include feature FOO"
+	Echo "--exec-prefix DIR install host-dependent files into DIR []"
+	Echo "--help            print this message"
+	Echo "--host HOST       configure for HOST [m68k-apple-mpw]"
+	Echo "--norecursion     configure this directory only [recurse]"
+	Echo "--prefix DIR      install into DIR [{MPW}:GNUTools:]"
+	Echo "--srcdir DIR      find the sources in DIR [:]"
+	Echo "--srcroot DIR     find the toplevel sources in DIR [:]"
+	Echo "--target TARGET   configure for TARGET [TARGET=HOST]"
+	Echo "-v                verbose"
+	Echo "--with-gnu-ld     link using GNU ld [no]"
+	Exit 0
+End If
 
 Set Exit 0
 
@@ -264,7 +295,7 @@ End If
 # dependencies on config.status.
 
 Echo "# This directory was configured as follows:" >config.new
-Echo "{ThisScript} --host {host_alias} --target {target_alias} --srcdir {srcdir}  --srcroot {srcroot}  --prefix {prefix} --cc {host_cc} {verifystr} {enable_options} {disable_options}" >>config.new
+Echo "{ThisScript} --host {host_alias} --target {target_alias} --srcdir {srcdir}  --srcroot {srcroot}  --prefix {prefix} --cc {host_cc} {verifystr} {enable_options} {disable_options} --norecursion" >>config.new
 MoveIfChange config.new config.status
 
 If "`Exists "{srcdir}"mpw-config.in`" != ""
@@ -393,23 +424,25 @@ End If
 
 # Apply ourselves recursively to the list of subdirectories to configure.
 
-For subdir In {configdirs}
-	Set savedir "`Directory`"
-	If "`Exists "{srcdir}{subdir}:"`" == ""
-		If {verify} == 1
-			Echo No "{srcdir}{subdir}:" found, skipping
+If {recurse} == 1
+	For subdir In {configdirs}
+		Set savedir "`Directory`"
+		If "`Exists "{srcdir}{subdir}:"`" == ""
+			If {verify} == 1
+				Echo No "{srcdir}{subdir}:" found, skipping
+			End If
+			Continue
 		End If
-		Continue
-	End If
-	If {verify} == 1
-		Echo Configuring {subdir}...
-	End If
-	If "`Exists "{objdir}{subdir}:"`" == ""
-		NewFolder "{objdir}{subdir}"
-	End If
-	SetDirectory "{objdir}{subdir}:"
-	"{ThisScript}" --target "{target_canonical}" --srcdir "{srcdir}{subdir}:" --srcroot "{srcroot}" --prefix "{prefix}" --cc "{host_cc}" {verifystr} {enable_options} {disable_options}
-	SetDirectory "{savedir}"
-End For
+		If {verify} == 1
+			Echo Configuring {subdir}...
+		End If
+		If "`Exists "{objdir}{subdir}:"`" == ""
+			NewFolder "{objdir}{subdir}"
+		End If
+		SetDirectory "{objdir}{subdir}:"
+		"{ThisScript}" --target "{target_canonical}" --srcdir "{srcdir}{subdir}:" --srcroot "{srcroot}" --prefix "{prefix}" --cc "{host_cc}" {verifystr} {enable_options} {disable_options}
+		SetDirectory "{savedir}"
+	End For
+End If
 
 SetDirectory "{savedir}"

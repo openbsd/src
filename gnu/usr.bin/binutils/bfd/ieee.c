@@ -2059,7 +2059,7 @@ ieee_write_section_part (abfd)
 					((bfd_byte)
 					 (s->index
 					  + IEEE_SECTION_NUMBER_BASE)))
-		  || ! ieee_write_int (abfd, s->vma))
+		  || ! ieee_write_int (abfd, s->lma))
 		return false;
 	    }
 	}
@@ -2096,7 +2096,7 @@ do_with_relocs (abfd, s)
     return false;
   if ((abfd->flags & EXEC_P) != 0 && relocs_to_go == 0)
     {
-      if (! ieee_write_int (abfd, s->vma))
+      if (! ieee_write_int (abfd, s->lma))
 	return false;
     }
   else
@@ -2297,7 +2297,7 @@ do_as_repeat (abfd, s)
 	  || ! ieee_write_byte (abfd,
 				(bfd_byte) (s->index
 					    + IEEE_SECTION_NUMBER_BASE))
-	  || ! ieee_write_int (abfd, s->vma)
+	  || ! ieee_write_int (abfd, s->lma)
 	  || ! ieee_write_byte (abfd, ieee_repeat_data_enum)
 	  || ! ieee_write_int (abfd, s->_raw_size)
 	  || ! ieee_write_byte (abfd, ieee_load_constant_bytes_enum)
@@ -2517,7 +2517,7 @@ copy_expression ()
 	    s = ieee->section_table[section_number];
 	    if (s->output_section)
 	      {
-		value = s->output_section->vma;
+		value = s->output_section->lma;
 	      }
 	    else
 	      {
@@ -3202,7 +3202,6 @@ ieee_write_external_part (abfd)
       for (q = abfd->outsymbols; *q != (asymbol *) NULL; q++)
 	{
 	  asymbol *p = *q;
-	  hadone = true;
 	  if (bfd_is_und_section (p->section))
 	    {
 	      /* This must be a symbol reference .. */
@@ -3212,6 +3211,7 @@ ieee_write_external_part (abfd)
 		return false;
 	      p->value = reference_index;
 	      reference_index++;
+	      hadone = true;
 	    }
 	  else if (bfd_is_com_section (p->section))
 	    {
@@ -3226,6 +3226,7 @@ ieee_write_external_part (abfd)
 		return false;
 	      p->value = reference_index;
 	      reference_index++;
+	      hadone = true;
 	    }
 	  else if (p->flags & BSF_GLOBAL)
 	    {
@@ -3278,6 +3279,7 @@ ieee_write_external_part (abfd)
 		}
 	      p->value = public_index;
 	      public_index++;
+	      hadone = true;
 	    }
 	  else
 	    {
@@ -3750,7 +3752,7 @@ const bfd_target ieee_vec =
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
   (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
    | SEC_ALLOC | SEC_LOAD | SEC_RELOC),	/* section flags */
-  0,				/* leading underscore */
+  '_',				/* leading underscore */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,

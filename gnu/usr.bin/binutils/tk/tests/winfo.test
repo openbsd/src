@@ -1,0 +1,299 @@
+# This file is a Tcl script to test out the "winfo" command.  It is
+# organized in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1994 The Regents of the University of California.
+# Copyright (c) 1994-1995 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) winfo.test 1.13 96/02/16 10:55:35
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+# eatColors --
+# Creates a toplevel window and allocates enough colors in it to
+# use up all the slots in the colormap.
+#
+# Arguments:
+# w -		Name of toplevel window to create.
+# options -	Options for w, such as "-colormap new".
+
+proc eatColors {w {options ""}} {
+    catch {destroy $w}
+    eval toplevel $w $options
+    wm geom $w +0+0
+    canvas $w.c -width 400 -height 200 -bd 0
+    pack $w.c
+    for {set y 0} {$y < 8} {incr y} {
+	for {set x 0} {$x < 40} {incr x} {
+	    set color [format #%02x%02x%02x [expr $x*6] [expr $y*30] 0]
+	    $w.c create rectangle [expr 10*$x] [expr 20*$y] \
+		    [expr 10*$x + 10] [expr 20*$y + 20] -outline {} \
+		    -fill $color
+	}
+    }
+    update
+}
+
+# XXX - This test file is woefully incomplete.  At present, only a
+# few of the winfo options are tested.
+
+test winfo-1.1 {"winfo atom" command} {
+    list [catch {winfo atom} msg] $msg
+} {1 {wrong # args: should be "winfo atom ?-displayof window? name"}}
+test winfo-1.2 {"winfo atom" command} {
+    list [catch {winfo atom a b} msg] $msg
+} {1 {wrong # args: should be "winfo atom ?-displayof window? name"}}
+test winfo-1.3 {"winfo atom" command} {
+    list [catch {winfo atom a b c d} msg] $msg
+} {1 {wrong # args: should be "winfo atom ?-displayof window? name"}}
+test winfo-1.4 {"winfo atom" command} {
+    list [catch {winfo atom -displayof geek foo} msg] $msg
+} {1 {bad window path name "geek"}}
+test winfo-1.5 {"winfo atom" command} {
+    winfo atom PRIMARY
+} 1
+test winfo-1.6 {"winfo atom" command} {
+    winfo atom -displayof . PRIMARY
+} 1
+
+test winfo-2.1 {"winfo atomname" command} {
+    list [catch {winfo atomname} msg] $msg
+} {1 {wrong # args: should be "winfo atomname ?-displayof window? id"}}
+test winfo-2.2 {"winfo atomname" command} {
+    list [catch {winfo atomname a b} msg] $msg
+} {1 {wrong # args: should be "winfo atomname ?-displayof window? id"}}
+test winfo-2.3 {"winfo atomname" command} {
+    list [catch {winfo atomname a b c d} msg] $msg
+} {1 {wrong # args: should be "winfo atomname ?-displayof window? id"}}
+test winfo-2.4 {"winfo atomname" command} {
+    list [catch {winfo atomname -displayof geek foo} msg] $msg
+} {1 {bad window path name "geek"}}
+test winfo-2.5 {"winfo atomname" command} {
+    list [catch {winfo atomname 44215} msg] $msg
+} {1 {no atom exists with id "44215"}}
+test winfo-2.6 {"winfo atomname" command} {
+    winfo atomname 2
+} SECONDARY
+test winfo-2.7 {"winfo atom" command} {
+    winfo atomname -displayof . 2
+} SECONDARY
+
+if {([winfo depth .] == 8) && ([winfo visual .] == "pseudocolor")} {
+    test winfo-3.1 {"winfo colormapfull" command} {
+	list [catch {winfo colormapfull} msg] $msg
+    } {1 {wrong # arguments: must be "winfo colormapfull window"}}
+    test winfo-3.2 {"winfo colormapfull" command} {
+	list [catch {winfo colormapfull a b} msg] $msg
+    } {1 {wrong # arguments: must be "winfo colormapfull window"}}
+    test winfo-3.3 {"winfo colormapfull" command} {
+	list [catch {winfo colormapfull foo} msg] $msg
+    } {1 {bad window path name "foo"}}
+    test winfo-3.4 {"winfo colormapfull" command} {
+	eatColors .t {-colormap new}
+	set result [list [winfo colormapfull .] [winfo colormapfull .t]]
+	.t.c delete 34
+	lappend result [winfo colormapfull .t]
+	.t.c create rectangle 30 30 80 80 -fill #441739
+	lappend result [winfo colormapfull .t]
+	.t.c create rectangle 40 40 90 90 -fill #ffeedd
+	lappend result [winfo colormapfull .t]
+	destroy .t.c
+	lappend result [winfo colormapfull .t]
+    } {0 1 0 0 1 0}
+    catch {destroy .t}
+}
+
+catch {destroy .t}
+toplevel .t -width 550 -height 400
+frame .t.f -width 80 -height 60 -bd 2 -relief raised
+place .t.f -x 50 -y 50
+wm geom .t +0+0
+update
+test winfo-4.1 {"winfo containing" command} {
+    list [catch {winfo containing 22} msg] $msg
+} {1 {wrong # args: should be "winfo containing ?-displayof window? rootX rootY"}}
+test winfo-4.2 {"winfo containing" command} {
+    list [catch {winfo containing a b c} msg] $msg
+} {1 {wrong # args: should be "winfo containing ?-displayof window? rootX rootY"}}
+test winfo-4.3 {"winfo containing" command} {
+    list [catch {winfo containing a b c d e} msg] $msg
+} {1 {wrong # args: should be "winfo containing ?-displayof window? rootX rootY"}}
+test winfo-4.4 {"winfo containing" command} {
+    list [catch {winfo containing -displayof geek 25 30} msg] $msg
+} {1 {bad window path name "geek"}}
+test winfo-4.5 {"winfo containing" command} {
+    winfo containing [winfo rootx .t.f] [winfo rooty .t.f]
+} .t.f
+test winfo-4.6 {"winfo containing" command} {nonPortable} {
+    winfo containing [expr [winfo rootx .t.f]-1] [expr [winfo rooty .t.f]-1]
+} .t
+test winfo-4.7 {"winfo containing" command} {
+    set x [winfo containing -display .t.f [expr [winfo rootx .t]+600] \
+	    [expr [winfo rooty .t.f]+450]]
+    expr {($x == ".") || ($x == "")}
+} {1}
+destroy .t
+
+test winfo-5.1 {"winfo interps" command} {
+    list [catch {winfo interps a} msg] $msg
+} {1 {wrong # args: should be "winfo interps ?-displayof window?"}}
+test winfo-5.2 {"winfo interps" command} {
+    list [catch {winfo interps a b c} msg] $msg
+} {1 {wrong # args: should be "winfo interps ?-displayof window?"}}
+test winfo-5.3 {"winfo interps" command} {
+    list [catch {winfo interps -displayof geek} msg] $msg
+} {1 {bad window path name "geek"}}
+test winfo-5.4 {"winfo interps" command} {
+    expr [lsearch -exact [winfo interps] [tk appname]] >= 0
+} {1}
+test winfo-5.5 {"winfo interps" command} {
+    expr [lsearch -exact [winfo interps -displayof .] [tk appname]] >= 0
+} {1}
+
+test winfo-6.1 {"winfo exists" command} {
+    list [catch {winfo exists} msg] $msg
+} {1 {wrong # arguments: must be "winfo exists window"}}
+test winfo-6.2 {"winfo exists" command} {
+    list [catch {winfo exists a b} msg] $msg
+} {1 {wrong # arguments: must be "winfo exists window"}}
+test winfo-6.3 {"winfo exists" command} {
+    winfo exists gorp
+} {0}
+test winfo-6.4 {"winfo exists" command} {
+    winfo exists .
+} {1}
+test winfo-6.5 {"winfo exists" command} {
+    button .b -text "Test button"
+    set x [winfo exists .b]
+    pack .b
+    update
+    bind .b <Destroy> {lappend x [winfo exists .x]}
+    destroy .b
+    lappend x [winfo exists .x]
+} {1 0 0}
+
+catch {destroy .b}
+button .b -text "Help"
+update
+test winfo-7.1 {"winfo pathname" command} {
+    list [catch {winfo pathname} msg] $msg
+} {1 {wrong # args: should be "winfo pathname ?-displayof window? id"}}
+test winfo-7.2 {"winfo pathname" command} {
+    list [catch {winfo pathname a b} msg] $msg
+} {1 {wrong # args: should be "winfo pathname ?-displayof window? id"}}
+test winfo-7.3 {"winfo pathname" command} {
+    list [catch {winfo pathname a b c d} msg] $msg
+} {1 {wrong # args: should be "winfo pathname ?-displayof window? id"}}
+test winfo-7.4 {"winfo pathname" command} {
+    list [catch {winfo pathname -displayof geek 25} msg] $msg
+} {1 {bad window path name "geek"}}
+test winfo-7.5 {"winfo pathname" command} {
+    list [catch {winfo pathname xyz} msg] $msg
+} {1 {expected integer but got "xyz"}}
+test winfo-7.6 {"winfo pathname" command} {
+    list [catch {winfo pathname 224} msg] $msg
+} {1 {window id "224" doesn't exist in this application}}
+test winfo-7.7 {"winfo pathname" command} {
+    winfo pathname -displayof .b [winfo id .]
+} {.}
+
+test winfo-8.1 {"winfo pointerx" command} {
+    catch [winfo pointerx .b]
+} 1
+test winfo-8.2 {"winfo pointery" command} {
+    catch [winfo pointery .b]
+} 1
+test winfo-8.3 {"winfo pointerxy" command} {
+    catch [winfo pointerxy .b]
+} 1
+
+test winfo-9.1 {"winfo viewable" command} {
+    list [catch {winfo viewable} msg] $msg
+} {1 {wrong # arguments: must be "winfo viewable window"}}
+test winfo-9.2 {"winfo viewable" command} {
+    list [catch {winfo viewable foo} msg] $msg
+} {1 {bad window path name "foo"}}
+test winfo-9.3 {"winfo viewable" command} {
+    winfo viewable .
+} {1}
+test winfo-9.4 {"winfo viewable" command} {
+    wm iconify .
+    winfo viewable .
+} {0}
+wm deiconify .
+test winfo-9.5 {"winfo viewable" command} {
+    frame .f1 -width 100 -height 100 -relief raised -bd 2
+    place .f1 -x 0 -y 0
+    frame .f1.f2 -width 50 -height 50 -relief raised -bd 2
+    place .f1.f2 -x 0 -y 0
+    update
+    list [winfo viewable .f1] [winfo viewable .f1.f2]
+} {1 1}
+test winfo-9.6 {"winfo viewable" command} {
+    eval destroy [winfo child .]
+    frame .f1 -width 100 -height 100 -relief raised -bd 2
+    frame .f1.f2 -width 50 -height 50 -relief raised -bd 2
+    place .f1.f2 -x 0 -y 0
+    update
+    list [winfo viewable .f1] [winfo viewable .f1.f2]
+} {0 0}
+test winfo-9.7 {"winfo viewable" command} {
+    eval destroy [winfo child .]
+    frame .f1 -width 100 -height 100 -relief raised -bd 2
+    place .f1 -x 0 -y 0
+    frame .f1.f2 -width 50 -height 50 -relief raised -bd 2
+    place .f1.f2 -x 0 -y 0
+    update
+    wm iconify .
+    list [winfo viewable .f1] [winfo viewable .f1.f2]
+} {0 0}
+wm deiconify .
+eval destroy [winfo child .]
+
+test winfo-10.1 {"winfo visualid" command} {
+    list [catch {winfo visualid} msg] $msg
+} {1 {wrong # arguments: must be "winfo visualid window"}}
+test winfo-10.2 {"winfo visualid" command} {
+    list [catch {winfo visualid gorp} msg] $msg
+} {1 {bad window path name "gorp"}}
+test winfo-10.3 {"winfo visualid" command} {
+    expr 2+[winfo visualid .]-[winfo visualid .]
+} {2}
+
+test winfo-11.1 {"winfo visualid" command} {
+    list [catch {winfo visualsavailable} msg] $msg
+} {1 {wrong # args: should be "winfo visualsavailable window ?includeids?"}}
+test winfo-11.2 {"winfo visualid" command} {
+    list [catch {winfo visualsavailable gorp} msg] $msg
+} {1 {bad window path name "gorp"}}
+test winfo-11.3 {"winfo visualid" command} {
+    list [catch {winfo visualsavailable . includeids foo} msg] $msg
+} {1 {wrong # args: should be "winfo visualsavailable window ?includeids?"}}
+test winfo-11.4 {"winfo visualid" command} {
+    llength [lindex [winfo visualsa .] 0]
+} {2}
+test winfo-11.5 {"winfo visualid" command} {
+    llength [lindex [winfo visualsa . includeids] 0]
+} {3}
+test winfo-11.6 {"winfo visualid" command} {
+    set x [lindex [lindex [winfo visualsa . includeids] 0] 2]
+    expr $x + 2 - $x
+} {2}
+
+test winfo-12.1 {GetDisplayOf procedure} {
+    list [catch {winfo atom - foo x} msg] $msg
+} {1 {bad argument "-": must be -displayof}}
+test winfo-12.2 {GetDisplayOf procedure} {
+    list [catch {winfo atom -d bad_window x} msg] $msg
+} {1 {bad window path name "bad_window"}}
+

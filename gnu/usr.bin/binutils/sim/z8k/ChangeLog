@@ -1,0 +1,242 @@
+Thu Oct  3 16:19:07 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (mostlyclean): Don't remove config.log here.
+
+Wed Jun 26 12:32:29 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+        (docdir): Removed.
+        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
+        (AC_PROG_INSTALL): Added.
+        * configure: Rebuilt.
+
+Wed Feb 21 12:17:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate with autoconf 2.7.
+
+Thu Jan 11 16:59:07 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* writecode.c (info_args, case CLASS_DISP8): Sign extend using
+	shifts instead of char cast.
+	(shift): Likewise.
+
+Fri Jan  5 15:36:26 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* mem.c (get_page_and_offset): Allocate 16MB not 8MB.
+
+Fri Oct 13 15:02:45 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* iface.c (sim_set_callbacks): New.
+
+Tue Oct 10 11:13:55 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (BISON): Remove macro.
+
+Wed Sep 20 13:35:35 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+
+Fri Sep  8 13:16:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (install): Don't install in $(tooldir).
+
+	* configure.in: Call AC_CONFIG_HEADER.  Don't try to use
+	bfd/hosts/*.h file or bfd/config/*.mh file.  Call AC_PROG_CC and
+	AC_PROG_RANLIB.  Substitute in values for CFLAGS, HDEFINES, AR,
+	and CC_FOR_BUILD.  Call AC_CHECK_HEADERS for various header files.
+	Touch stamp.h if creating config.h.
+	* configure: Rebuild.
+	* config.in: New file, created by autoheader.
+	* Makefile.in (AR): Define as @AR@.
+	(CC): New variable, defined as @CC@.
+	(CFLAGS): Define as @CFLAGS@.
+	(CC_FOR_BUILD): New variable, defined as @CC_FOR_BUILD@.
+	(RANLIB): Define as @RANLIB@.
+	(HDEFINES, TDEFINES): New variables.
+	(@host_makefile_frag@): Remove.
+	(support.o, comped1.o, comped3.o): Depend upon config.h.
+	(compedb3.o, comped2.o): Likewise.
+	(mem.o): New target.
+	(tc-gen2.h): Depend upon writecode, not quick.c.
+	(writecode): Build using $(CC_FOR_BUILD).
+	(writecode.o, list.o, quick.o): New targets.
+	(mostlyclean): Make the same as clean, not distclean.
+	(clean): Remove config.log.
+	(distclean): Remove config.h and stamp-h.
+	(Makefile): Don't depend upon @frags@.  Just rebuild Makefile when
+	invoking config.status.
+	(config.h, stamp-h): New targets.
+	* comped1.c: Don't include "sysdep.h".
+	(INLINE): Define as inline, not static inline.
+	* comped3.c, compedb3.c, run.c: Don't include "sysdep.h".
+	* mem.c: Include "config.h".  Don't include "sysdep.h".  Include
+	<stdlib.h> if it exists.
+	* support.c: Include "config.h".  Don't include "sysdep.h".
+	Include <stdio.h>.  Include <time.h> and <sys/times.h> if they
+	exists.  Include <sys/types.h> and <sys/stat.h>.
+	(get_now): Only use times if <sys/times.h> exists; otherwise use
+	time.
+	* writecode.c: Include "config.h".  Include <stdio.h>.  Include
+	<stdlib.h> and <string.h> if they exist.  Include <strings.h> if
+	it exists and <string.h> does not.
+
+Thu Aug  3 10:45:37 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Update all FSF addresses except those in COPYING* files.
+
+Mon Jul 31 10:18:06 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* support.c (normal_flags_16): Calculate carry correctly.
+	(support_call): Return values in std regs too.
+
+Fri Jul 28 12:10:06 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* inlines.h (put_byte_mem_da): Moved.
+	* run.c (main): Return program result.
+	* support.c (support_call): Return exit argument.
+	* writecode.c (rotate): Fix a load of bugs.
+	(info_decode): Insert missing break after OPC_rrc.
+
+Wed Jul  5 16:13:43 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+  	* Makefile.in, configure.in: converted to autoconf.
+	* configure: New file, generated with autconf 2.4.
+
+	* z8k.mt: Removed.
+
+Fri Jun 30 16:53:09 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* iface.c (sim_do_command): New function.
+
+Wed May 24 16:31:38 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* configure.in: Fix typo in last change.
+
+Mon Mar 27 10:32:34 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* run.c: parse arguments with getopt().
+
+Tue Feb 28 17:31:00 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use ../../bfd/hosts/std-host.h if specific
+	host unavailable.
+
+Sun Feb 12 16:03:29 1995  Steve Chamberlain  <sac@splat>
+
+	* iface.c (sim_stop_reason): (Make a bad syscall give a SIGILL.
+	* writecode.c (adiv):  Divides are always signed.
+
+Wed Dec 28 21:30:09 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
+
+	* inlines.h: Make INLINES static.
+	* mem.c (sitoptr): New instance.
+	* support.c (normal_flags_[32|16|8]): New functions.
+	(optimize_normal_flags): Use new functions.
+	* writecode.c (info_special): Handle sbc. (optimize_normal_flags):
+	Always recalc flags.
+
+Wed May 18 14:38:49 1994  Doug Evans  (dje@canuck.cygnus.com)
+
+	* support.c (sim_open): Delete from here.
+	(sim_set_args): Delete from here.
+	(sim_kill): Delete from here.
+	* iface.c (sim_*): Make result void where there isn't one.
+	(sim_clear_breakpoints): Delete.
+	(sim_set_pc): Delete.
+	(sim_info): Delete printf_fn arg, all callers changed.
+	(sim_open): Define here.
+	(sim_close): New function.
+	(sim_load): New function.
+	(sim_create_inferior): Renamed from sim_set_args.
+	(sim_kill): Define here.
+	* run.c (printf): Delete declaration.
+	(main): Call sim_create_inferior instead of sim_set_pc.
+	* sim.h (sim_clear_breakpoints): Delete.
+
+Wed May 18 13:22:02 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
+
+	* writecode.c (main): Disable the chopping of large initializers.
+	GCC can now cope.
+
+Sat May  7 17:24:46 1994  Steve Chamberlain  (sac@cygnus.com)
+
+	* writecode.c (info_args): Add resflg and setflg.
+	* list.c : Regenerated.
+	* Makefile.in: First rule is now called 'all'
+
+Sat Dec 11 16:39:30 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* iface.c (sim_store_register): Get regval the right way up.
+	* writecode.c (info_args): Add lda.
+
+Tue Oct 26 13:01:46 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* Makefile.in (INCDIR): Fix definition.
+	(CSEARCH): Add -I$(srcdir)/../../gdb
+	(comped1.o, comped3.o, compedb3.o, comped2.o): Use CSEARCH, not INCDIR.
+	* iface.c: Replace #include "../include/wait.h" with "remote-sim.h".
+	(sim_set_pc): int result, use SIM_ADDR for type of arg `addr'.
+	(sim_store_register): int result, pass value by reference.
+	(sim_fetch_register): Use unsigned char * for arg `buf'.
+	(sim_write): int result, use SIM_ADDR for `where' arg,
+	use unsigned char * for `what' arg.
+	(sim_read): Ditto.
+	(sim_resume): int result.
+	(sim_stop_reason): Renamed from sim_stop_signal, int result,
+	new arg `reason'.
+	(sim_info): int result, merge sim_info_print into here.
+	(sim_info_print): Deleted.
+	* run.c: #include <stdio.h>
+	(main): Update call to sim_info.
+	* sim.h: Remove various prototypes defined in remote-sim.h.
+
+Sat Oct 23 15:16:45 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* iface.c (sim_stop_signal): Result is now enum sim_stop.
+
+Thu Oct  7 19:01:07 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* writecode.c (doset, info_docode): Understand set and res insns.
+
+Thu Sep 30 11:30:42 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* support.c (tm_info_print):  If no timetaken, don't divide by zero.
+
+Fri Jul 30 15:51:54 1993  david d `zoo' zuhn  (zoo@rtl.cygnus.com)
+
+	* writecode.c (div): rename to divide, to resolve conflict with
+	ANSI function div from <stdlib.h>
+
+Mon Mar 15 15:48:50 1993  Ian Lance Taylor  (ian@cygnus.com)
+
+	* z8k.mt (DO_INSTALL): Renamed from INSTALL.
+
+Tue Mar  9 12:32:29 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* writecode.c (main): Make the vector 'big' static, so that it
+	will compile on the apollo.
+	* support.c: Use the ANSI compilant __inline__.
+
+Fri Mar  5 07:54:18 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* writecode.c (main): When using gcc, split the tables into
+	sections so that it will compile.
+	* Makefile.in: Get ar args right.
+	* tm.h: Fix gcc prototypes.
+
+Wed Mar  3 15:04:48 1993  Steve Chamberlain  (sac@poseidon.cygnus.com)
+
+	* support.c (fail): Get the argument count right.
+	* tm.h: Lint.
+	* writecode.c (main): Pass all the arguments emit needs.
+
+Tue Feb  2 07:49:42 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* lint, prototypes
+
+Fri Jan 15 12:43:08 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* New
+
+

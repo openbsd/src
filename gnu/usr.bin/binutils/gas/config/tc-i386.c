@@ -2630,7 +2630,9 @@ md_apply_fix3 (fixP, valp, seg)
    */
   if (fixP->fx_r_type == BFD_RELOC_32_PCREL && fixP->fx_addsy)
     {
+#ifndef OBJ_AOUT
       value += fixP->fx_where + fixP->fx_frag->fr_address;
+#endif
 #ifdef OBJ_ELF
       if (S_GET_SEGMENT (fixP->fx_addsy) == seg
 	  || (fixP->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)

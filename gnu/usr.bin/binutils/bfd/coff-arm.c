@@ -44,7 +44,9 @@ aoutarm_fix_pcrel_26 PARAMS ((bfd *, arelent *, asymbol *, PTR,
 
 static bfd_reloc_status_type coff_arm_reloc 
   PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-
+static boolean coff_arm_adjust_symndx
+  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *,
+	   struct internal_reloc *, boolean *));
 
 /* Used by the assembler. */
 static bfd_reloc_status_type
@@ -216,7 +218,7 @@ static reloc_howto_type aoutarm_std_reloc_howto[] =
 	"ARM26D",
 	true,
 	0x00ffffff,
-	0x00ffffff, 
+	0x0,
 	false),
   {-1},
   HOWTO( 9,
@@ -419,6 +421,25 @@ arm_reloc_type_lookup(abfd,code)
 /* We use the special COFF backend linker.  */
 #define coff_relocate_section _bfd_coff_generic_relocate_section
 
+/* When doing a relocateable link, we want to convert ARM26 relocs
+   into ARM26D relocs.  */
+
+static boolean
+coff_arm_adjust_symndx (obfd, info, ibfd, sec, irel, adjustedp)
+     bfd *obfd;
+     struct bfd_link_info *info;
+     bfd *ibfd;
+     asection *sec;
+     struct internal_reloc *irel;
+     boolean *adjustedp;
+{
+  if (irel->r_type == 3)
+    irel->r_type = 7;
+  *adjustedp = false;
+  return true;
+}
+
+#define coff_adjust_symndx coff_arm_adjust_symndx
 
 #include "coffcode.h"
 

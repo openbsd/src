@@ -39,6 +39,7 @@ objcopy \- copy and translate object files
 .RB "[\|" \-\-no\-adjust\-warnings\fR "\|]"
 .RB "[\|" \-\-set\-section\-flags=\fIsection=flags\fR "\|]"
 .RB "[\|" \-\-add\-section=\fIsectionname=filename\fR "\|]"
+.RB "[\|" \-\-change\-leading\-char\fR "\|]"
 .RB "[\|" \-\-remove\-leading\-char\fR "\|]"
 .RB "[\|" \-v\ |\ \-\-verbose\fR "\|]" 
 .RB "[\|" \-V\ |\ \-\-version\fR "\|]" 
@@ -219,13 +220,26 @@ The size of the section will be the size of the file.  This option
 only works on file formats which can support sections with arbitrary
 names.
 .TP
+.B \-\-change\-leading\-char
+Some object file formats use special characters at the start of
+symbols.  The most common such character is underscore, which compilers
+often add before every symbol.  This option tells 
+.B objcopy
+to change the leading character of every symbol when it converts
+between object file formats.  If the object file formats use the same
+leading character, this option has no effect.  Otherwise, it will add
+a character, or remove a character, or change a character, as
+appropriate.
+.TP
 .B \-\-remove\-leading\-char
 If the first character of a global symbol is a special symbol leading
 character used by the object file format, remove the character.  The
 most common symbol leading character is underscore.  This option will
-remove a leading underscore from all global symbols.  This can be useful
-if you want to link together objects of different file formats with
-different conventions for symbol names.
+remove a leading underscore from all global symbols.  This can be
+useful if you want to link together objects of different file formats
+with different conventions for symbol names.  This is different from
+@code{--change-leading-char} because it always changes the symbol name
+when appropriate, regardless of the object file format of the output
 .TP
 .B \-v\fR, \fB\-\-verbose
 Verbose output: list all object files modified.  In the case of

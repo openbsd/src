@@ -39,6 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    position independent code.  */
 #define EF_MIPS_CPIC		0x00000004
 
+/* Code in file uses new ABI (-n32 on Irix 6).  */
+#define EF_MIPS_ABI2		0x00000020
+
 /* Four bit MIPS architecture field.  */
 #define EF_MIPS_ARCH		0xf0000000
 

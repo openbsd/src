@@ -1,0 +1,141 @@
+# Copyright (C) 1992, 1996 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Jeff Law. (law@cs.utah.edu)
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "recurse"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+proc recurse_tests {} {
+
+    if [runto recurse] then {
+	# First we need to step over the assignment of b, so it has a known
+	# value.
+	gdb_test "next" "if \\(a == 1\\)" "next over b = 0 in first instance"
+	gdb_test "watch b" ".*\[Ww\]atchpoint \[0-9]*: b" \
+	    "set first instance watchpoint"
+
+	# Continue until initial set of b.
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 10.*" \
+	    "continue to first instance watchpoint, first time"] then {
+	    return
+	}
+
+	# Continue inward for a few iterations
+	gdb_test "continue" "Breakpoint.* recurse \\(a=9\\).*" \
+	    "continue to recurse (a = 9)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=8\\).*" \
+	    "continue to recurse (a = 8)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=7\\).*" \
+	    "continue to recurse (a = 7)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=6\\).*" \
+	    "continue to recurse (a = 6)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=5\\).*" \
+	    "continue to recurse (a = 5)"
+
+	# Put a watchpoint on another instance of b
+	# First we need to step over the assignment of b, so it has a known
+	# value.
+	gdb_test "next" "if \\(a == 1\\)" "next over b = 0 in second instance"
+	gdb_test "watch b" ".*\[Ww\]atchpoint \[0-9]*: b" \
+	    "set second instance watchpoint"
+
+	# Continue until initial set of b (second instance).
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 5.*"\
+	    "continue to second instance watchpoint, first time"] then {
+	    return
+	}
+
+	# Continue inward for a few iterations
+	gdb_test "continue" "Breakpoint.* recurse \\(a=4\\).*" \
+	    "continue to recurse (a = 4)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=3\\).*" \
+	    "continue to recurse (a = 3)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=2\\).*" \
+	    "continue to recurse (a = 2)"
+	gdb_test "continue" "Breakpoint.* recurse \\(a=1\\).*" \
+	    "continue to recurse (a = 1)"
+
+	# Continue until second set of b (second instance).
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 5.*New value = 120.*return.*" \
+	    "continue to second instance watchpoint, second time"] then { 
+	    return
+	}
+
+	# Continue again.  We should have a watchpoint go out of scope now
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*deleted.*recurse \\(a=6\\) .*" \
+	    "second instance watchpoint deleted when leaving scope"] then {
+	    return
+	}
+
+	# Continue until second set of b (first instance).
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*b.*Old value = 10.*New value = 3628800.*return.*" \
+	    "continue to first instance watchpoint, second time"] then {
+	    return
+	}
+
+	# Continue again.  We should have a watchpoint go out of scope now
+	if [gdb_test "continue" \
+	    "Continuing.*\[Ww\]atchpoint.*deleted.*main \\(\\) .*" \
+	    "first instance watchpoint deleted when leaving scope"] then {
+	    return
+	}
+    }
+}
+
+# Only enabled for some targets merely because it has not been tested 
+# elsewhere.
+if {[istarget "sparc*-*-sunos4*"] || [istarget "hppa*-*-bsd*"]} then {
+
+    # Preserve the old timeout, and set a new one that should be
+    # sufficient to avoid timing out during this test.
+    set oldtimeout $timeout
+    set timeout [expr "$timeout + 60"]
+    verbose "Timeout is now $timeout seconds" 2
+
+    recurse_tests
+
+    # Restore the preserved old timeout value.
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+}

@@ -2217,8 +2217,14 @@ coff_compute_section_file_positions (abfd)
 #ifndef I960
       /* make sure that this section is of the right size too */
       if ((abfd->flags & EXEC_P) == 0)
-	current->_raw_size = BFD_ALIGN (current->_raw_size,
-					1 << current->alignment_power);
+	{
+	  bfd_size_type old_size;
+
+	  old_size = current->_raw_size;
+	  current->_raw_size = BFD_ALIGN (current->_raw_size,
+					  1 << current->alignment_power);
+	  sofar += current->_raw_size - old_size;
+	}
       else
 	{
 	  old_sofar = sofar;
@@ -3138,11 +3144,27 @@ coff_slurp_line_table (abfd, asect)
 
 	  if (cache_ptr->line_number == 0)
 	    {
-	      coff_symbol_type *sym =
-	      (coff_symbol_type *) (dst.l_addr.l_symndx
-		      + obj_raw_syments (abfd))->u.syment._n._n_n._n_zeroes;
+	      boolean warned;
+	      long symndx;
+	      coff_symbol_type *sym;
+
+	      warned = false;
+	      symndx = dst.l_addr.l_symndx;
+	      if (symndx < 0 || symndx >= obj_raw_syment_count (abfd))
+		{
+		  (*_bfd_error_handler)
+		    ("%s: warning: illegal symbol index %ld in line numbers",
+		     bfd_get_filename (abfd), dst.l_addr.l_symndx);
+		  symndx = 0;
+		  warned = true;
+		}
+	      /* FIXME: We should not be casting between ints and
+                 pointers like this.  */
+	      sym = ((coff_symbol_type *)
+		     ((symndx + obj_raw_syments (abfd))
+		      ->u.syment._n._n_n._n_zeroes));
 	      cache_ptr->u.sym = (asymbol *) sym;
-	      if (sym->lineno != NULL)
+	      if (sym->lineno != NULL && ! warned)
 		{
 		  (*_bfd_error_handler)
 		    ("%s: warning: duplicate line number information for `%s'",
@@ -3604,11 +3626,20 @@ coff_slurp_reloc_table (abfd, asect, symbols)
 
       if (dst.r_symndx != -1)
 	{
-	  /* @@ Should never be greater than count of symbols!  */
-	  if (dst.r_symndx >= obj_conv_table_size (abfd))
-	    abort ();
-	  cache_ptr->sym_ptr_ptr = symbols + obj_convert (abfd)[dst.r_symndx];
-	  ptr = *(cache_ptr->sym_ptr_ptr);
+	  if (dst.r_symndx < 0 || dst.r_symndx >= obj_conv_table_size (abfd))
+	    {
+	      (*_bfd_error_handler)
+		("%s: warning: illegal symbol index %ld in relocs",
+		 bfd_get_filename (abfd), dst.r_symndx);
+	      cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      ptr = 0;
+	    }
+	  else
+	    {
+	      cache_ptr->sym_ptr_ptr = (symbols
+					+ obj_convert (abfd)[dst.r_symndx]);
+	      ptr = *(cache_ptr->sym_ptr_ptr);
+	    }
 	}
       else
 	{
@@ -3633,6 +3664,14 @@ coff_slurp_reloc_table (abfd, asect, symbols)
       RTYPE2HOWTO (cache_ptr, &dst);
 #endif
 
+      if (cache_ptr->howto == NULL)
+	{
+	  (*_bfd_error_handler)
+	    ("%s: illegal relocation type %d at address 0x%lx",
+	     bfd_get_filename (abfd), dst.r_type, (long) dst.r_vaddr);
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
     }
 
   asect->relocation = reloc_cache;

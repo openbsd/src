@@ -142,6 +142,7 @@ Else If "{BuildTarget}" =~ /do-newlib/
 	SetDirectory :newlib:
 	::mpw-build all
 Else If "{BuildTarget}" =~ /install/
+	"{ThisScript}" install-only-top
 	"{ThisScript}" install-binutils
 	"{ThisScript}" install-gas
 	"{ThisScript}" install-gcc
@@ -166,6 +167,7 @@ Else If "{BuildTarget}" =~ /install-ld/
 	SetDirectory :ld:
 	::mpw-build install
 Else If "{BuildTarget}" =~ /install-only/
+	"{ThisScript}" install-only-top
 	"{ThisScript}" install-only-binutils
 	"{ThisScript}" install-only-gas
 	"{ThisScript}" install-only-gcc
@@ -189,6 +191,15 @@ Else If "{BuildTarget}" =~ /install-only-grez/
 Else If "{BuildTarget}" =~ /install-only-ld/
 	SetDirectory :ld:
 	::mpw-build install-only
+Else If "{BuildTarget}" =~ /install-only-top/
+	If "`Exists "{prefix}"`" == ""
+		Echo "{prefix}" does not exist, cannot install anything
+		Exit 1
+	End If
+	If "{prefix}" != "`Directory`"
+		Duplicate -y 'Read Me for MPW' "{prefix}"'Read Me for MPW'
+		Duplicate -y Install "{prefix}"Install
+	End If
 Else
 	Echo {BuildTarget} not understood, ignoring
 End If

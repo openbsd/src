@@ -111,7 +111,7 @@ print_insn_alpha (memaddr, info)
       if ((insn & opcode->mask) != opcode->opcode)
 	continue;
 
-      if (!(opcode->flags & AXP_OPCODE_ALL))
+      if (!(opcode->flags & AXP_OPCODE_NOPAL))
 	continue;
 
       /* Make two passes over the operands.  First see if any of them

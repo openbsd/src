@@ -777,10 +777,30 @@ resolve_symbol_value (symp)
 	      unsigned int line;
 
 	      if (expr_symbol_where (symp, &file, &line))
-		as_bad_where (file, line, "invalid section for operation");
+		{
+		  if (seg_left == undefined_section
+		      || seg_right == undefined_section)
+		    as_bad_where (file, line,
+				  "undefined symbol %s in operation",
+				  (seg_left == undefined_section
+				   ? S_GET_NAME (symp->sy_value.X_add_symbol)
+				   : S_GET_NAME (symp->sy_value.X_op_symbol)));
+		  else
+		    as_bad_where (file, line, "invalid section for operation");
+		}
 	      else
-		as_bad ("invalid section for operation setting %s",
-			S_GET_NAME (symp));
+		{
+		  if (seg_left == undefined_section
+		      || seg_right == undefined_section)
+		    as_bad ("undefined symbol %s in operation setting %s",
+			    (seg_left == undefined_section
+			     ? S_GET_NAME (symp->sy_value.X_add_symbol)
+			     : S_GET_NAME (symp->sy_value.X_op_symbol)),
+			    S_GET_NAME (symp));
+		  else
+		    as_bad ("invalid section for operation setting %s",
+			    S_GET_NAME (symp));
+		}
 	    }
 
 	  switch (symp->sy_value.X_op)

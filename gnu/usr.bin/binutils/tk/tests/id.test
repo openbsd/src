@@ -1,0 +1,107 @@
+# This file is a Tcl script to test out the procedures in the file
+# tkId.c, which recycle X resource identifiers.  It is organized in
+# the standard fashion for Tcl tests.
+#
+# Copyright (c) 1995 Sun Microsystems, Inc.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# SCCS: @(#) id.test 1.5 96/02/29 09:57:24
+
+if {[info procs test] != "test"} {
+    source defs
+}
+
+foreach i [winfo children .] {
+    destroy $i
+}
+wm geometry . {}
+raise .
+
+proc mkWindows count {
+    set maxId [winfo id .]
+    for {set i 1} {$i <= $count} {incr i} {
+	button .b$i -text "Button $i"
+	pack .b$i
+	if {[winfo id .b$i] > $maxId} {
+	    set maxId [winfo id .b$i]
+	}
+    }
+    return $maxId
+}
+
+test id-1.1 {WindowIdCleanup, delaying window release} {unixOnly} {
+    bind all <Destroy> {lappend x %W}
+    catch {unset map}
+    frame .f
+    set j 0
+    foreach i {a b c d e f g h i j k l m n o p q} {
+	toplevel .f.$i -height 50 -width 100
+	wm geometry .f.$i +$j+$j
+	incr j 10
+	set map([winfo id .f.$i]) .f.$i
+    }
+    update
+    set x {}
+    destroy .f
+
+    # Destroy events should have occurred for all windows.
+    set result [list [lsort $x]]
+
+    set x {}
+    update idletasks
+    set reused {}
+    foreach i {a b c d e} {
+	set w .${i}2
+	frame $w -height 20 -width 100 -bd 2 -relief raised
+	pack $w
+	if [info exists map([winfo id $w])] {
+	    lappend reused $map([winfo id $w])
+	}
+	set map([winfo id $w]) $w
+    }
+
+    # No window ids should have been reused: stale Destroy events still
+    # pending in queue.
+    lappend result [lsort $reused]
+
+    # Wait a few seconds, then try again;  ids should still not have
+    # been re-used.
+
+    set y 0
+    after 2000 {set y 1}
+    tkwait variable y
+    foreach i {a b c} {
+	set w .${i}3
+	frame $w -height 20 -width 100 -bd 2 -relief raised
+	pack $w
+	if [info exists map([winfo id $w])] {
+	    lappend reused $map([winfo id $w])
+	}
+	set map([winfo id $w])] $w
+    }
+
+    # Ids should not yet have been reused.
+    lappend result [lsort $reused]
+
+
+    # Wait a few more seconds, to give ids enough time to be recycled.
+    set y 0
+    after 6000 {set y 1}
+    tkwait variable y
+    foreach i {a b c d e f} {
+	set w .${i}4
+	frame $w -height 20 -width 100 -bd 2 -relief raised
+	pack $w
+	if [info exists map([winfo id $w])] {
+	    lappend reused $map([winfo id $w])
+	}
+	set map([winfo id $w])] $w
+    }
+
+    # Ids should be reused now, due to time delay.  Destroy events should
+    # have been discarded.
+    lappend result [lsort $reused] [lsort $x]
+} {{.f .f.a .f.b .f.c .f.d .f.e .f.f .f.g .f.h .f.i .f.j .f.k .f.l .f.m .f.n .f.o .f.p .f.q} {} {} {.f.m .f.n .f.o .f.p .f.q} {}}
+bind all <Destroy> {}

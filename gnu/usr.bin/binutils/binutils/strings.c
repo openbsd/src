@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993, 94 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -90,8 +90,6 @@ static boolean got_a_section;
 
 /* The BFD object file format.  */
 static char *target;
-
-extern char *program_version;
 
 static struct option long_options[] =
 {
@@ -188,8 +186,8 @@ main (argc, argv)
 	  break;
 
 	case 'v':
-	  printf ("GNU %s version %s\n", program_name, program_version);
-	  exit (0);
+	  print_version ("strings");
+	  break;
 
 	case '?':
 	  usage (stderr, 1);
@@ -498,5 +496,7 @@ Usage: %s [-afov] [-n min-len] [-min-len] [-t {o,x,d}] [-]\n\
        [--target=bfdname] [--help] [--version] file...\n",
 	   program_name);
   list_supported_targets (program_name, stream);
+  if (status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (status);
 }

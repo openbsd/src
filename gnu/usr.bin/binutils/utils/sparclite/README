@@ -1,0 +1,10 @@
+This directory contains minimal loader utilities that talk to Fujitsu's
+boot monitor.
+
+aload:	Download using a serial line.
+	Syntax is "aload <program> <device>", where <device> is the
+	serial port, such as /dev/ttya.
+
+eload:	Download using Ethernet.
+	Syntax is "eload <program> <host>", where <host> is a host name
+	or IP address.

@@ -1,0 +1,71 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) GetJustify.3 1.10 96/03/26 18:10:59
+'\" 
+.so man.macros
+.TH Tk_GetJustify 3 4.0 Tk "Tk Library Procedures"
+.BS
+.SH NAME
+Tk_GetJustify, Tk_NameOfJustify \- translate between strings and justification styles
+.SH SYNOPSIS
+.nf
+\fB#include <tk.h>\fR
+.sp
+Tk_Justify
+\fBTk_GetJustify(\fIinterp, string, justifyPtr\fB)\fR
+.sp
+char *
+\fBTk_NameOfJustify(\fIjustify\fB)\fR
+.SH ARGUMENTS
+.AS "Tk_Justify" *justifyPtr
+.AP Tcl_Interp *interp in
+Interpreter to use for error reporting.
+.AP char *string in
+.VS
+String containing name of justification style (``left'', ``right'', or
+``center'').
+.VE
+.AP int *justifyPtr out
+Pointer to location in which to store justify value corresponding to
+\fIstring\fR.
+.AP Tk_Justify justify in
+Justification style (one of the values listed below).
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBTk_GetJustify\fR places in \fI*justifyPtr\fR the justify value
+corresponding to \fIstring\fR.  This value will be one of the following:
+.TP
+\fBTK_JUSTIFY_LEFT\fR
+Means that the text on each line should start at the left edge of
+the line;  as a result, the right edges of lines may be ragged.
+.TP
+\fBTK_JUSTIFY_RIGHT\fR
+Means that the text on each line should end at the right edge of
+the line;  as a result, the left edges of lines may be ragged.
+.TP
+\fBTK_JUSTIFY_CENTER\fR
+Means that the text on each line should be centered;  as a result,
+both the left and right edges of lines may be ragged.
+.PP
+Under normal circumstances the return value is \fBTCL_OK\fR and
+\fIinterp\fR is unused.
+If \fIstring\fR doesn't contain a valid justification style
+or an abbreviation of one of these names, then an error message is
+stored in \fIinterp->result\fR, \fBTCL_ERROR\fR is returned, and
+\fI*justifyPtr\fR is unmodified.
+.PP
+\fBTk_NameOfJustify\fR is the logical inverse of \fBTk_GetJustify\fR.
+Given a justify value it returns a statically-allocated string
+corresponding to \fIjustify\fR.
+If \fIjustify\fR isn't a legal justify value, then
+``unknown justification style'' is returned.
+
+.SH KEYWORDS
+center, fill, justification, string

@@ -1,0 +1,137 @@
+#Copyright 1989, 1990, 1991, 1992, 1993, 1995 Free Software Foundation, Inc.
+
+# This file is part of GDB.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+host_alias = @host_alias@
+target_alias = @target_alias@
+program_transform_name = @program_transform_name@
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+tooldir = $(libdir)/$(target_alias)
+
+datadir = $(prefix)/share
+mandir = $(prefix)/man
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+man8dir = $(mandir)/man8
+man9dir = $(mandir)/man9
+infodir = $(prefix)/info
+includedir = $(prefix)/include
+
+SHELL = /bin/sh
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CC=@CC@
+
+# Directory containing source files.
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+# Where is the "include" directory?  Traditionally ../include or ./include
+INCLUDE_DIR =  ${srcdir}/../../include
+
+# Where is the "-liberty" library?  Typically in ../libiberty.
+LIBIBERTY = ../../libiberty/libiberty.a
+
+# Where is the BFD library?  Typically in ../../bfd.
+BFD_DIR =  ../../bfd
+BFD = $(BFD_DIR)/libbfd.a
+BFD_SRC = $(srcdir)/$(BFD_DIR)
+BFD_CFLAGS = -I$(BFD_DIR) -I(BFD_SRC)
+
+# All the includes used for CFLAGS and for lint.
+# -I. for config files.
+# -I${srcdir} possibly for regex.h also.
+INCLUDE_CFLAGS = -I. -I${srcdir} -I$(INCLUDE_DIR)
+
+# CFLAGS is specifically reserved for setting from the command line
+# when running make.  I.E.  "make USER_CFLAGS=-Wmissing-prototypes".
+CFLAGS = -g
+
+# INTERNAL_CFLAGS is the aggregate of all other *CFLAGS macros.
+INTERNAL_CFLAGS = $(CFLAGS) -I$(BFD_DIR) $(INCLUDE_CFLAGS) $(USER_CFLAGS) @DEFS@
+# None of the things in CFLAGS will do any harm, and on some systems
+#  (e.g. SunOS4) it is important to use the MH_CFLAGS.
+LDFLAGS = $(CFLAGS)
+
+# Libraries and corresponding dependencies for compiling gdb.
+CLIBS = ${BFD} ${LIBIBERTY}
+CDEPS = ${BFD} ${LIBIBERTY}
+
+# Prevent Sun make from putting in the machine type.  Setting
+# TARGET_ARCH to nothing works for SunOS 3, 4.0, but not for 4.1.
+.c.o:
+	${CC} -c ${INTERNAL_CFLAGS} $<
+
+PROGS = @PROGS@
+
+.PHONY: all info install install-info
+
+all: $(PROGS)
+
+info:
+
+# This does not use INSTALL_XFORM or anything of the sort because there
+# only needs to be one aload.  Even if aload ends up being useful for more
+# than one target, perhaps one aload binary can be useful with all of them.
+# FIXME: not true, there can be both aout and coff loaders.
+install: $(PROGS)
+	if [ "$(PROGS)" != "" ]; then \
+		for i in $(PROGS) ""; do \
+			$(INSTALL_PROGRAM) $$i $(bindir)/$$i; \
+		done; \
+	fi
+
+install-info:
+
+aload:	aload.o
+	$(CC) $(CFLAGS) -o aload aload.o $(CLIBS)
+
+eload:	eload.o
+	$(CC) $(CFLAGS) -o eload eload.o $(CLIBS) @NETLIBS@
+
+aload.o: aload.c
+
+eload.o: eload.c
+
+mostlyclean:
+
+clean:		mostlyclean
+	rm -f *.o $(PROGS)
+
+distclean:	clean
+	rm -f config.log config.cache
+
+maintainer-clean realclean:	distclean
+
+Makefile: Makefile.in config.status
+	$(SHELL) config.status
+
+config.status: configure
+	$(SHELL) config.status --recheck
+

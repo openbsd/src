@@ -1,0 +1,136 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) selection.n 1.17 96/03/26 18:27:46
+'\" 
+.so man.macros
+.TH selection n 4.0 Tk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+selection \- Manipulate the X selection
+.SH SYNOPSIS
+\fBselection \fIoption\fR ?\fIarg arg ...\fR?
+.BE
+
+.SH DESCRIPTION
+.PP
+This command provides a Tcl interface to the X selection mechanism and
+implements the full selection functionality described in the
+X Inter-Client Communication Conventions Manual (ICCCM).
+.PP
+The first argument to \fBselection\fR determines the format of the
+rest of the arguments and the behavior of the command.  The following
+forms are currently supported:
+.PP
+.VS
+.TP
+\fBselection clear\fR ?\fB\-displayof\fR \fIwindow\fR? ?\fB\-selection\fR \fIselection\fR?
+If \fIselection\fR exists anywhere on \fIwindow\fR's display, clear it
+so that no window owns the selection anymore.  \fISelection\fR
+specifies the X selection that should be cleared, and should be an
+atom name such as PRIMARY or CLIPBOARD; see the Inter-Client
+Communication Conventions Manual for complete details.
+\fISelection\fR defaults to PRIMARY and \fIwindow\fR defaults to ``.''.
+Returns an empty string. 
+.TP
+\fBselection get\fR ?\fB\-displayof\fR \fIwindow\fR? ?\fB\-selection\fR \fIselection\fR? ?\fB\-type\fR \fItype\fR?
+Retrieves the value of \fIselection\fR from \fIwindow\fR's display and
+returns it as a result.  \fISelection\fR defaults to PRIMARY and
+\fIwindow\fR defaults to ``.''. 
+.VE
+\fIType\fR specifies the form in which the selection is to be returned
+(the desired ``target'' for conversion, in ICCCM terminology), and
+should be an atom name such as STRING or FILE_NAME; see the
+Inter-Client Communication Conventions Manual for complete details.
+\fIType\fR defaults to STRING.  The selection owner may choose to
+return the selection in any of several different representation
+formats, such as STRING, ATOM, INTEGER, etc. (this format is different
+than the selection type; see the ICCCM for all the confusing details).
+If the selection is returned in a non-string format, such as INTEGER
+or ATOM, the \fBselection\fR command converts it to string format as a
+collection of fields separated by spaces: atoms are converted to their
+textual names, and anything else is converted to hexadecimal integers.
+.PP
+.VS
+.TP
+\fBselection handle\fR ?\fB\-selection\fR \fIselection\fR? ?\fB\-type\fR \fItype\fR? ?\fB\-format\fR \fIformat\fR? \fIwindow command\fR
+Creates a handler for selection requests, such that \fIcommand\fR will
+be executed whenever \fIselection\fR is owned by \fIwindow\fR and
+someone attempts to retrieve it in the form given by \fItype\fR
+(e.g. \fItype\fR is specified in the \fBselection get\fR command).
+\fISelection\fR defaults to PRIMARY, \fItype\fR defaults to STRING, and
+\fIformat\fR defaults to STRING.  If \fIcommand\fR is an empty string
+then any existing handler for \fIwindow\fR, \fItype\fR, and
+\fIselection\fR is removed.
+.RS
+.PP
+When \fIselection\fR is requested, \fIwindow\fR is the selection owner,
+and \fItype\fR is the requested type, \fIcommand\fR will be executed
+as a Tcl command with two additional numbers appended to it
+(with space separators).  
+.VE
+The two additional numbers
+are \fIoffset\fR and \fImaxBytes\fR:  \fIoffset\fR specifies a starting
+character position in the selection and \fImaxBytes\fR gives the maximum
+number of bytes to retrieve.  The command should return a value consisting
+of at most \fImaxBytes\fR of the selection, starting at position
+\fIoffset\fR.  For very large selections (larger than \fImaxBytes\fR)
+the selection will be retrieved using several invocations of \fIcommand\fR
+with increasing \fIoffset\fR values.  If \fIcommand\fR returns a string
+whose length is less than \fImaxBytes\fR, the return value is assumed to
+include all of the remainder of the selection;  if the length of
+\fIcommand\fR's result is equal to \fImaxBytes\fR then
+\fIcommand\fR will be invoked again, until it eventually
+returns a result shorter than \fImaxBytes\fR.  The value of \fImaxBytes\fR
+will always be relatively large (thousands of bytes).
+.PP
+If \fIcommand\fR returns an error then the selection retrieval is rejected
+just as if the selection didn't exist at all.
+.PP
+The \fIformat\fR argument specifies the representation that should be
+used to transmit the selection to the requester (the second column of
+Table 2 of the ICCCM), and defaults to STRING.  If \fIformat\fR is
+STRING, the selection is transmitted as 8-bit ASCII characters (i.e.
+just in the form returned by \fIcommand\fR).  If \fIformat\fR is
+ATOM, then the return value from \fIcommand\fR is divided into fields
+separated by white space;  each field is converted to its atom value,
+and the 32-bit atom value is transmitted instead of the atom name.
+For any other \fIformat\fR, the return value from \fIcommand\fR is
+divided into fields separated by white space and each field is
+converted to a 32-bit integer;  an array of integers is transmitted
+to the selection requester.
+.PP
+The \fIformat\fR argument is needed only for compatibility with
+selection requesters that don't use Tk.  If Tk is being
+used to retrieve the selection then the value is converted back to
+a string at the requesting end, so \fIformat\fR is
+irrelevant.
+.RE
+.PP
+.VS
+.TP
+\fBselection own\fR ?\fB\-displayof\fR \fIwindow\fR? ?\fB\-selection\fR \fIselection\fR?
+.TP
+\fBselection own\fR ?\fB\-command\fR \fIcommand\fR? ?\fB\-selection\fR \fIselection\fR? \fIwindow\fR
+The first form of \fBselection own\fR returns the path name of the
+window in this application that owns \fIselection\fR on the display
+containing \fIwindow\fR, or an empty string if no window in this
+application owns the selection.  \fISelection\fR defaults to PRIMARY and
+\fIwindow\fR defaults to ``.''.
+.PP
+The second form of \fBselection own\fR causes \fIwindow\fR to become
+the new owner of \fIselection\fR on \fIwindow\fR's display, returning
+an empty string as result. The existing owner, if any, is notified
+that it has lost the selection.
+If \fIcommand\fR is specified, it is a Tcl script to execute when
+some other window claims ownership of the selection away from
+\fIwindow\fR.  \fISelection\fR defaults to PRIMARY.
+.VE
+
+.SH KEYWORDS
+clear, format, handler, ICCCM, own, selection, target, type

@@ -44,7 +44,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #include "subsegs.h"
 #include "sb.h"
 #include "macro.h"
-#include "libiberty.h"
 #include "obstack.h"
 #include "listing.h"
 #include "ecoff.h"
@@ -975,6 +974,10 @@ read_a_source_file (name)
     }				/* while (more buffers to scan) */
 
  quit:
+
+#ifdef md_cleanup
+  md_cleanup();
+#endif
   input_scrub_close ();		/* Close the input file */
 }
 
@@ -2047,6 +2050,7 @@ s_macro (ignore)
   sb s;
   sb label;
   const char *err;
+  const char *name;
 
   as_where (&file, &line);
 
@@ -2058,7 +2062,7 @@ s_macro (ignore)
   if (line_label != NULL)
     sb_add_string (&label, S_GET_NAME (line_label));
 
-  err = define_macro (0, &s, &label, get_line_sb);
+  err = define_macro (0, &s, &label, get_line_sb, &name);
   if (err != NULL)
     as_bad_where (file, line, "%s", err);
   else
@@ -2069,6 +2073,18 @@ s_macro (ignore)
 	  S_SET_VALUE (line_label, 0);
 	  line_label->sy_frag = &zero_address_frag;
 	}
+
+      if (((flag_m68k_mri
+#ifdef NO_PSEUDO_DOT
+	    || 1
+#endif
+	    )
+	   && hash_find (po_hash, name) != NULL)
+	  || (! flag_m68k_mri
+	      && *name == '.'
+	      && hash_find (po_hash, name + 1) != NULL))
+	as_warn ("attempt to redefine pseudo-op `%s' ignored",
+		 name);
     }
 
   sb_kill (&s);
@@ -2516,6 +2532,43 @@ s_space (mult)
 
   if (flag_mri)
     stop = mri_comment_field (&stopc);
+
+  /* In m68k MRI mode, we need to align to a word boundary, unless
+     this is ds.b.  */
+  if (flag_m68k_mri && mult > 1)
+    {
+      if (now_seg == absolute_section)
+	{
+	  abs_section_offset += abs_section_offset & 1;
+	  if (line_label != NULL)
+	    S_SET_VALUE (line_label, abs_section_offset);
+	}
+      else if (mri_common_symbol != NULL)
+	{
+	  valueT val;
+
+	  val = S_GET_VALUE (mri_common_symbol);
+	  if ((val & 1) != 0)
+	    {
+	      S_SET_VALUE (mri_common_symbol, val + 1);
+	      if (line_label != NULL)
+		{
+		  know (line_label->sy_value.X_op == O_symbol);
+		  know (line_label->sy_value.X_add_symbol == mri_common_symbol);
+		  line_label->sy_value.X_add_number += 1;
+		}
+	    }
+	}
+      else
+	{
+	  do_align (1, (char *) NULL, 0);
+	  if (line_label != NULL)
+	    {
+	      line_label->sy_frag = frag_now;
+	      S_SET_VALUE (line_label, frag_now_fix ());
+	    }
+	}
+    }
 
   expression (&exp);
 
@@ -3618,6 +3671,10 @@ float_cons (float_type)
       demand_empty_rest_of_line ();
       return;
     }
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 
   do
     {

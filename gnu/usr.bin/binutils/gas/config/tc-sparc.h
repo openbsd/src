@@ -23,11 +23,23 @@
 #define LOCAL_LABELS_FB 1
 
 #define TARGET_ARCH bfd_arch_sparc
+
+/* This is used to set the default value for `target_big_endian'.  */
+#define TARGET_BYTES_BIG_ENDIAN 1
+
 #ifdef OBJ_AOUT
 #ifdef TE_NetBSD
 #define TARGET_FORMAT "a.out-sparc-netbsd"
 #else
+#ifdef TE_SPARCAOUT
+extern int target_big_endian;
+#define TARGET_FORMAT (target_big_endian ? "a.out-sunos-big" : "a.out-sparc-little")
+/* Bi-endian support may eventually be unconditional, but until things are
+   working well it's only provided for targets that need it.  */
+#define SPARC_BIENDIAN
+#else
 #define TARGET_FORMAT "a.out-sunos-big"
+#endif
 #endif
 #endif
 #ifdef OBJ_BOUT
@@ -103,10 +115,14 @@ extern void sparc_handle_align ();
    relocations against sections.  This is required for the dynamic
    linker to operate properly.  When generating PIC, we need to keep
    any non PC relative reloc.  */
-#define tc_fix_adjustable(FIX) \
-  (! S_IS_EXTERNAL ((FIX)->fx_addsy) \
-   && ! S_IS_WEAK ((FIX)->fx_addsy) \
-   && (! sparc_pic_code || (FIX)->fx_pcrel))
+#define tc_fix_adjustable(FIX)				\
+  (! S_IS_EXTERNAL ((FIX)->fx_addsy)			\
+   && ! S_IS_WEAK ((FIX)->fx_addsy)			\
+   && (! sparc_pic_code					\
+       || (FIX)->fx_pcrel				\
+       || ((FIX)->fx_subsy != NULL			\
+	   && (S_GET_SEGMENT ((FIX)->fx_subsy)		\
+	       == S_GET_SEGMENT ((FIX)->fx_addsy)))))
 #endif
 
 #ifdef OBJ_AOUT

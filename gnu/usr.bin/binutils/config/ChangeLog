@@ -1,3 +1,16 @@
+Mon Nov 11 10:29:51 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* mt-ppc: Delete file, options moved to newlib configure.
+
+Fri Oct  4 12:21:03 1996  Angela Marie Thomas (angela@cygnus.com)
+
+	* mh-dgux386: New file.  x86 dgux specific flags
+
+Mon Sep 30 15:10:07 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-mh-mpw (EXTRALIBS_PPC_XCOFF): New, was EXTRALIBS_PPC.
+	(EXTRALIBS_PPC): Use shared libraries instead of xcoff.
+
 Sat Aug 17 04:56:25 1996  Geoffrey Noer  <noer@skaro.cygnus.com>
 
 	* mh-cygwin32: don't -D_WIN32 here anymore

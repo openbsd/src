@@ -93,7 +93,8 @@ int parsing_defsym = 0;
 #define OPTION_WARN_CONSTRUCTORS	(OPTION_WARN_COMMON + 1)
 #define OPTION_WARN_MULTIPLE_GP		(OPTION_WARN_CONSTRUCTORS + 1)
 #define OPTION_WARN_ONCE		(OPTION_WARN_MULTIPLE_GP + 1)
-#define OPTION_SPLIT_BY_RELOC		(OPTION_WARN_ONCE + 1)
+#define OPTION_WARN_SECTION_ALIGN	(OPTION_WARN_ONCE + 1)
+#define OPTION_SPLIT_BY_RELOC		(OPTION_WARN_SECTION_ALIGN + 1)
 #define OPTION_SPLIT_BY_FILE 	    	(OPTION_SPLIT_BY_RELOC + 1)
 #define OPTION_WHOLE_ARCHIVE		(OPTION_SPLIT_BY_FILE + 1)
 #define OPTION_WRAP			(OPTION_WHOLE_ARCHIVE + 1)
@@ -262,7 +263,7 @@ static const struct ld_option ld_options[] =
   { {"rpath", required_argument, NULL, OPTION_RPATH},
       '\0', "PATH", "Set runtime shared library search path", ONE_DASH },
   { {"rpath-link", required_argument, NULL, OPTION_RPATH_LINK},
-      '\0', "PATH", "Set line time shared library search path", ONE_DASH },
+      '\0', "PATH", "Set link time shared library search path", ONE_DASH },
   { {"shared", no_argument, NULL, OPTION_SHARED},
       '\0', NULL, "Create a shared library", ONE_DASH },
   { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD.  */
@@ -289,7 +290,7 @@ static const struct ld_option ld_options[] =
       '\0', NULL, "Build global constructor/destructor tables", ONE_DASH },
   { {"verbose", no_argument, NULL, OPTION_VERBOSE},
       '\0', NULL, "Output lots of information during link", TWO_DASHES },
-  { {"dll-verbose", no_argument, NULL, OPTION_VERSION}, /* Linux.  */
+  { {"dll-verbose", no_argument, NULL, OPTION_VERBOSE}, /* Linux.  */
       '\0', NULL, NULL, NO_HELP },
   { {"warn-common", no_argument, NULL, OPTION_WARN_COMMON},
       '\0', NULL, "Warn about duplicate common symbols", TWO_DASHES },
@@ -300,6 +301,9 @@ static const struct ld_option ld_options[] =
       '\0', NULL, "Warn if the multiple GP values are used", TWO_DASHES },
   { {"warn-once", no_argument, NULL, OPTION_WARN_ONCE},
       '\0', NULL, "Warn only once per undefined symbol", TWO_DASHES },
+  { {"warn-section-align", no_argument, NULL, OPTION_WARN_SECTION_ALIGN},
+      '\0', NULL, "Warn if start of section changes due to alignment",
+      TWO_DASHES },
   { {"whole-archive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
       '\0', NULL, "Include all objects from following archives", TWO_DASHES },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
@@ -675,8 +679,23 @@ parse_args (argc, argv)
 	  version_printed = true;
 	  break;
 	case OPTION_VERSION:
-	  ldversion (0);
-	  version_printed = true;
+	  /* This output is intended to follow the GNU standards document.  */
+	  printf ("GNU ld %s\n", ld_program_version);
+	  printf ("Copyright 1996 Free Software Foundation, Inc.\n");
+	  printf ("\
+This program is free software; you may redistribute it under the terms of\n\
+the GNU General Public License.  This program has absolutely no warranty.\n");
+	  {
+	    ld_emulation_xfer_type **ptr = ld_emulations;
+    
+	    printf ("  Supported emulations:\n");
+	    while (*ptr) 
+	      {
+		printf ("   %s\n", (*ptr)->emulation_name);
+		ptr++;
+	      }
+	  }
+	  xexit (0);
 	  break;
 	case OPTION_WARN_COMMON:
 	  config.warn_common = true;
@@ -689,6 +708,9 @@ parse_args (argc, argv)
 	  break;
 	case OPTION_WARN_ONCE:
 	  config.warn_once = true;
+	  break;
+	case OPTION_WARN_SECTION_ALIGN:
+	  config.warn_section_align = true;
 	  break;
 	case OPTION_WHOLE_ARCHIVE:
 	  whole_archive = true;
@@ -884,4 +906,5 @@ help ()
   printf ("%s: supported emulations: ", program_name);
   ldemul_list_emulations (stdout);
   printf ("\n");
+  printf ("\nReport bugs to bug-gnu-utils@prep.ai.mit.edu\n");
 }

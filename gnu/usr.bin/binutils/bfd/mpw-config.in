@@ -5,37 +5,43 @@
 Set selarchs "&bfd_{target_cpu}_arch"
 Set defvec ""
 Set selvecs ""
+Set havevecs ""
 
 If "{target_canonical}" =~ /m68k-apple-macos/
 	Set BFD_BACKENDS '"{o}"coff-m68k.c.o "{o}"cofflink.c.o'
 	Set defvec m68kcoff_vec
 	Set selvecs '&m68kcoff_vec'
+	Set havevecs '-d HAVE_m68kcoff_vec'
 
 Else If "{target_canonical}" =~ /powerpc-apple-macos/
 	Set BFD_BACKENDS '"{o}"coff-pmac.c.o "{o}"xcofflink.c.o'
 	Set defvec pmac_xcoff_vec
 	Set selvecs '&pmac_xcoff_vec'
+	Set havevecs '-d HAVE_pmac_xcoff_vec'
 	Set selarchs "&bfd_powerpc_arch"
 
 Else If "{target_canonical}" =~ /i386-\Option-x-go32/
 	Set BFD_BACKENDS '"{o}"coff-i386.c.o'
 	Set defvec i386coff_vec
 	Set selvecs '&i386coff_vec'
+	Set havevecs '-d HAVE_i386coff_vec'
 
 Else If "{target_canonical}" =~ /mips-\Option-x-\Option-x/
 	Set BFD_BACKENDS '"{o}"coff-mips.c.o "{o}"ecoff.c.o "{o}"ecofflink.c.o "{o}"elf32.c.o "{o}"elf32-mips.c.o "{o}"elflink.c.o'
 	Set defvec ecoff_big_vec
 	Set selvecs '&ecoff_big_vec,&ecoff_little_vec,&bfd_elf32_bigmips_vec'
+	Set havevecs '-d HAVE_ecoff_big_vec -d HAVE_ecoff_little_vec -d HAVE_bfd_elf32_bigmips_vec'
 
 Else If "{target_canonical}" =~ /sh-\Option-x-hms/
 	Set BFD_BACKENDS '"{o}"coff-sh.c.o "{o}"cofflink.c.o'
 	Set defvec shcoff_vec
 	Set selvecs '&shcoff_vec,&shlcoff_vec'
+	Set havevecs '-d HAVE_shcoff_vec -d HAVE_shlcoff_vec'
 End If
 
 Set ta `echo {selarchs} | sed -e 's/&bfd_/{o}cpu-/g' -e 's/_arch/.c.o/g'`
 
-Set tdefaults "-d DEFAULT_VECTOR={defvec} -d SELECT_VECS={selvecs} -d SELECT_ARCHITECTURES={selarchs}"
+Set tdefaults "-d DEFAULT_VECTOR={defvec} -d SELECT_VECS={selvecs} -d SELECT_ARCHITECTURES={selarchs} {havevecs}"
 
 Echo '# From mpw-config.in'				 > "{o}"mk.tmp
 Echo 'WORDSIZE = 32'					>> "{o}"mk.tmp

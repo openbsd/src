@@ -134,7 +134,8 @@ Convert object code into a Netware Loadable Module
 * c++filt::			Filter to demangle encoded C++ symbols
 * nlmconv::                     Converts object code into an NLM
 * Selecting The Target System:: How these utilities determine the target.
-* Index::                       
+* Reporting Bugs::              Reporting Bugs
+* Index::                       Index
 @end menu
 
 @node ar
@@ -816,7 +817,7 @@ objcopy [ -F @var{bfdname} | --target=@var{bfdname} ]
         [ --adjust-warnings ] [ --no-adjust-warnings ]
         [ --set-section-flags=@var{section}=@var{flags} ]
         [ --add-section=@var{sectionname}=@var{filename} ]
-        [ --remove-leading-char ]
+        [ --change-leading-char ] [ --remove-leading-char ]
         [ -v | --verbose ] [ -V | --version ]  [ --help ]
         @var{infile} [@var{outfile}]
 @end smallexample
@@ -986,13 +987,26 @@ contents of the new section are taken from the file @var{filename}.  The
 size of the section will be the size of the file.  This option only
 works on file formats which can support sections with arbitrary names.
 
+@item --change-leading-char
+Some object file formats use special characters at the start of
+symbols.  The most common such character is underscore, which compilers
+often add before every symbol.  This option tells @code{objcopy} to
+change the leading character of every symbol when it converts between
+object file formats.  If the object file formats use the same leading
+character, this option has no effect.  Otherwise, it will add a
+character, or remove a character, or change a character, as
+appropriate.
+
 @item --remove-leading-char
 If the first character of a global symbol is a special symbol leading
 character used by the object file format, remove the character.  The
 most common symbol leading character is underscore.  This option will
 remove a leading underscore from all global symbols.  This can be useful
 if you want to link together objects of different file formats with
-different conventions for symbol names.
+different conventions for symbol names.  This is different from
+@code{--change-leading-char} because it always changes the symbol name
+when appropriate, regardless of the object file format of the output
+file.
 
 @item -V
 @itemx --version
@@ -1027,7 +1041,8 @@ objdump [ -a | --archive-headers ]
         [ -s | --full-contents ]  [ --stabs ]
         [ -t | --syms ] [ -T | --dynamic-syms ] [ -x | --all-headers ]
         [ -w | --wide ] [ --start-address=@var{address} ]
-        [ --stop-address=@var{address} ] [ --show-raw-insn ]
+        [ --stop-address=@var{address} ]
+        [ --prefix-addresses] [ --show-raw-insn ]
         [ --version ]  [ --help ]
         @var{objfile}@dots{}
 @end smallexample
@@ -1152,6 +1167,10 @@ can be useful when disasembling object files which do not describe
 architecture information, such as S-records.  You can list the available
 architectures with the @samp{-i} option.
 
+@item --prefix-addresses
+When disassembling, print the complete address on each line.  This is
+the older disassembly format.
+
 @item -r
 @itemx --reloc
 @cindex relocation entries, in object file
@@ -1181,7 +1200,8 @@ Display source code intermixed with disassembly, if possible.  Implies
 
 @item --show-raw-insn
 When disassembling instructions, print the instruction in hex as well as
-in symbolic form.  Not all targets handle this correctly yet.
+in symbolic form.  This is the default except when
+@code{--prefix-addresses} is used.
 
 @item --stabs
 @cindex stab
@@ -1753,6 +1773,16 @@ The command to list valid target values is @samp{objdump -i}
 Some sample values are: @samp{a.out-hp300bsd}, @samp{ecoff-littlemips},
 @samp{a.out-sunos-big}.
 
+You can also specify a target using a configuration triplet.  This is
+the same sort of name that is passed to configure to specify a target.
+When you use a configuration triplet as an argument, it must be fully
+canonicalized.  You can see the canonical version of a triplet by
+running the shell script @file{config.sub} which is included with the
+sources.
+
+Some sample configuration triplets are: @samp{m68k-hp-bsd},
+@samp{mips-dec-ultrix}, @samp{sparc-sun-sunos}.
+
 @subheading @code{objdump} Target
 
 Ways to specify:
@@ -1948,6 +1978,213 @@ environment variable @code{LDEMULATION}
 compiled-in @code{DEFAULT_EMULATION} from @file{Makefile},
 which comes from @code{EMUL} in @file{config/@var{target}.mt}
 @end enumerate
+
+@node Reporting Bugs
+@chapter Reporting Bugs
+@cindex bugs
+@cindex reporting bugs
+
+Your bug reports play an essential role in making the binary utilities
+reliable.
+
+Reporting a bug may help you by bringing a solution to your problem, or
+it may not.  But in any case the principal function of a bug report is
+to help the entire community by making the next version of the binary
+utilities work better.  Bug reports are your contribution to their
+maintenance.
+
+In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+@menu
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
+@end menu
+
+@node Bug Criteria
+@section Have you found a bug?
+@cindex bug criteria
+
+If you are not sure whether you have found a bug, here are some guidelines:
+
+@itemize @bullet
+@cindex fatal signal
+@cindex crash
+@item
+If a binary utility gets a fatal signal, for any input whatever, that is
+a bug.  Reliable utilities never crash.
+
+@cindex error on valid input
+@item
+If a binary utility produces an error message for valid input, that is a
+bug.
+
+@item
+If you are an experienced user of binary utilities, your suggestions for
+improvement are welcome in any case.
+@end itemize
+
+@node Bug Reporting
+@section How to report bugs
+@cindex bug reports
+@cindex bugs, reporting
+
+A number of companies and individuals offer support for @sc{gnu}
+products.  If you obtained the binary utilities from a support
+organization, we recommend you contact that organization first.
+
+You can find contact information for many support companies and
+individuals in the file @file{etc/SERVICE} in the @sc{gnu} Emacs
+distribution.
+
+In any event, we also recommend that you send bug reports for the binary
+utilities to @samp{bug-gnu-utils@@prep.ai.mit.edu}.
+
+The fundamental principle of reporting bugs usefully is this:
+@strong{report all the facts}.  If you are not sure whether to state a
+fact or leave it out, state it!
+
+Often people omit facts because they think they know what causes the
+problem and assume that some details do not matter.  Thus, you might
+assume that the name of a file you use in an example does not matter.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug is
+a stray memory reference which happens to fetch from the location where
+that pathname is stored in memory; perhaps, if the pathname were
+different, the contents of that location would fool the utility into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
+
+Keep in mind that the purpose of a bug report is to enable us to fix the bug if
+it is new to us.  Therefore, always write your bug reports on the assumption
+that the bug has not been reported previously.
+
+Sometimes people give a few sketchy facts and ask, ``Does this ring a
+bell?''  Those bug reports are useless, and we urge everyone to
+@emph{refuse to respond to them} except to chide the sender to report
+bugs properly.
+
+To enable us to fix the bug, you should include all these things:
+
+@itemize @bullet
+@item
+The version of the utility.  Each utility announces it if you start it
+with the @samp{--version} argument.
+
+Without this, we will not know whether there is any point in looking for
+the bug in the current version of the binary utilities.
+
+@item
+Any patches you may have applied to the source, including any patches
+made to the @code{BFD} library.
+
+@item
+The type of machine you are using, and the operating system name and
+version number.
+
+@item
+What compiler (and its version) was used to compile the utilities---e.g.
+``@code{gcc-2.7}''.
+
+@item
+The command arguments you gave the utility to observe the bug.  To
+guarantee you will not omit something important, list them all.  A copy
+of the Makefile (or the output from make) is sufficient.
+
+If we were to try to guess the arguments, we would probably guess wrong
+and then we might not encounter the bug.
+
+@item
+A complete input file, or set of input files, that will reproduce the
+bug.  If the utility is reading an object file or files, then it is
+generally most helpful to send the actual object files, uuencoded if
+necessary to get them through the mail system.  Making them available
+for anonymous FTP is not as good, but may be the only reasonable choice
+for large object files.
+
+If the source files were produced exclusively using @sc{gnu} programs
+(e.g., @code{gcc}, @code{gas}, and/or the @sc{gnu} @code{ld}), then it
+may be OK to send the source files rather than the object files.  In
+this case, be sure to say exactly what version of @code{gcc}, or
+whatever, was used to produce the object files.  Also say how
+@code{gcc}, or whatever, was configured.
+
+@item
+A description of what behavior you observe that you believe is
+incorrect.  For example, ``It gets a fatal signal.''
+
+Of course, if the bug is that the utility gets a fatal signal, then we
+will certainly notice it.  But if the bug is incorrect output, we might
+not notice unless it is glaringly wrong.  You might as well not give us
+a chance to make a mistake.
+
+Even if the problem you experience is a fatal signal, you should still
+say so explicitly.  Suppose something strange is going on, such as, your
+copy of the utility is out of synch, or you have encountered a bug in
+the C library on your system.  (This has happened!)  Your copy might
+crash and ours would not.  If you told us to expect a crash, then when
+ours fails to crash, we would know that the bug was not happening for
+us.  If you had not told us to expect a crash, then we would not be able
+to draw any conclusion from our observations.
+
+@item
+If you wish to suggest changes to the source, send us context diffs, as
+generated by @code{diff} with the @samp{-u}, @samp{-c}, or @samp{-p}
+option.  Always send diffs from the old file to the new file.  If you
+even discuss something in the @code{ld} source, refer to it by context,
+not by line number.
+
+The line numbers in our development sources will not match those in your
+sources.  Your line numbers would convey no useful information to us.
+@end itemize
+
+Here are some things that are not necessary:
+
+@itemize @bullet
+@item
+A description of the envelope of the bug.
+
+Often people who encounter a bug spend a lot of time investigating
+which changes to the input file will make the bug go away and which
+changes will not affect it.
+
+This is often time consuming and not very useful, because the way we
+will find the bug is by running a single example under the debugger
+with breakpoints, not by pure deduction from a series of examples.
+We recommend that you save your time for something else.
+
+Of course, if you can find a simpler example to report @emph{instead}
+of the original one, that is a convenience for us.  Errors in the
+output will be easier to spot, running under the debugger will take
+less time, and so on.
+
+However, simplification is not vital; if you do not want to do this,
+report the bug anyway and send us the entire test case you used.
+
+@item
+A patch for the bug.
+
+A patch for the bug does help us if it is a good one.  But do not omit
+the necessary information, such as the test case, on the assumption that
+a patch is all we need.  We might see problems with your patch and decide
+to fix the problem another way, or we might not understand it at all.
+
+Sometimes with programs as complicated as the binary utilities it is
+very hard to construct an example that will make the program follow a
+certain path through the code.  If you do not send us the example, we
+will not be able to construct one, so we will not be able to verify that
+the bug is fixed.
+
+And if we cannot understand what bug you are trying to fix, or why your
+patch should be an improvement, we will not install it.  A test case will
+help us to understand.
+
+@item
+A guess about what the bug is or what it depends on.
+
+Such guesses are usually wrong.  Even we cannot guess right about such
+things without first using the debugger to find the facts.
+@end itemize
 
 @node Index
 @unnumbered Index

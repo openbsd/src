@@ -1,0 +1,239 @@
+# Makefile for GNU binary-file utilities
+# Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+
+# This file is part of GNU binutils.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+host_alias = @host_alias@
+target_alias = @target_alias@
+program_transform_name = @program_transform_name@
+bindir = @bindir@
+libdir = @libdir@
+tooldir = $(exec_prefix)/$(target_alias)
+
+datadir = @datadir@
+mandir = @mandir@
+man1dir = $(mandir)/man1
+man2dir = $(mandir)/man2
+man3dir = $(mandir)/man3
+man4dir = $(mandir)/man4
+man5dir = $(mandir)/man5
+man6dir = $(mandir)/man6
+man7dir = $(mandir)/man7
+man8dir = $(mandir)/man8
+man9dir = $(mandir)/man9
+infodir = @infodir@
+includedir = @includedir@
+
+SHELL = /bin/sh
+
+INSTALL = `cd $(srcdir)/../..;pwd`/install.sh -c
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
+INSTALL_XFORM1 = $(INSTALL_XFORM) -b=.1
+
+AR = @AR@
+AR_FLAGS = qv
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKEINFO = makeinfo
+TEXI2DVI = texi2dvi
+RANLIB = @RANLIB@
+TEXI2ROFF=texi2roff
+MAKEOVERRIDES=
+CC_FOR_BUILD = @CC_FOR_BUILD@
+
+HDEFINES = @HDEFINES@
+TDEFINES =
+
+# Comment these out if using lex.
+# Distribution version
+
+# Distribution name
+
+# Where to find texinfo.tex to format docn with TeX
+TEXIDIR = $(srcdir)/../texinfo
+
+# These should all be the same program too.
+RUN_PROG=run
+SIM_LIB=libsim.a
+ADDL_LIBS=
+
+PROGS = $(RUN_PROG)
+LIBS= $(SIM_LIB)
+
+DISTSTUFF = $(PROGS) $(LIBS)
+
+BASEDIR = $(srcdir)/../..
+BFDDIR = $(BASEDIR)/bfd
+INCDIR	= $(BASEDIR)/include
+GDBDIR = $(BASEDIR)/gdb
+INCLUDES = -I. -I$(srcdir) -I../../bfd -I$(BFDDIR) -I$(INCDIR) -I$(GDBDIR)
+
+#### host and target dependant Makefile fragments come in here.
+###
+
+ALL_CFLAGS = $(INCLUDES) $(HDEFINES) $(TDEFINES) $(CFLAGS)
+
+.c.o:
+	$(CC) -c $(ALL_CFLAGS) $<
+
+LIBIBERTY = ../../libiberty/libiberty.a
+
+BFD = ../../bfd/libbfd.a
+
+RUNTEST = runtest
+RUNTESTFLAGS = 
+FLAGS_TO_PASS = \
+	"CC=$(CC)" \
+	"CFLAGS=$(CFLAGS)" \
+	"RUNTEST=$(RUNTEST)" \
+	"RUNTESTFLAGS=$(RUNTESTFLAGS)"
+
+#
+## The rules
+
+all: $(LIBS) $(PROGS)
+
+
+$(RUN_PROG): $(LIBS) run.o $(BFD)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(RUN_PROG) run.o $(SIM_LIB) $(BFD) $(LIBIBERTY)
+
+$(SIM_LIB): case.o interp.o
+	rm -f $(SIM_LIB)
+	$(AR) $(AR_FLAGS) $(SIM_LIB) case.o interp.o
+	$(RANLIB) $(SIM_LIB)
+
+case.c: gencode
+	./gencode -c >case.c                     ; \
+	if [ -x /usr/latest/bin/indent ] ; then    \
+		/usr/latest/bin/indent case.c    ; \
+	fi
+
+optable:gencode
+	./gencode >optable
+	./gencode -a >$(srcdir)/../../opcodes/w65-opc.h
+
+gencode:gencode.c
+	$(CC_FOR_BUILD) -o gencode $<
+
+run.o:run.c config.h
+interp.o:interp.c config.h
+
+
+######################################################################
+
+mostlyclean:
+	-rm -f *.o *~ \#* core binutils.?? binutils.??? case.c
+
+clean: mostlyclean
+	-rm -f $(PROGS) *.o *.a
+
+distclean:
+	-rm -f Makefile config.status sysdep.h *.o *~ \#* core y.* \
+		binutils.?? binutils.??s binutils.aux binutils.log \
+		binutils.toc gencode run config.log
+	-rm -f $(PROGS) config.h stamp-h
+
+maintainer-clean realclean: clean distclean
+	-rm -f $(DISTSTUFF) TAGS
+
+etags tags: TAGS
+
+TAGS: force
+	etags $(INCDIR)/*.h $(srcdir)/*.[hc] 
+
+install: all 
+	for i in $(PROGS) ; do \
+	  $(INSTALL_XFORM) $$i $(bindir)/`echo $$i | sed -e 's/.new//'` ; \
+	done
+
+install-info:
+
+clean-info:
+	-rm -rf *.info*
+
+# Making a dist:
+# cvs rtag binutils-x-yy ld+utils
+# cvs co -r binutils-x-yy ld+utils
+# cd {HERE}; make dist [-f Makefile.in]
+
+dist: $(DIST_NAME).tar.z
+
+diststuff: $(DISTSTUFF)
+
+$(DIST_NAME).tar.z:
+	cd ../..; rm -f $(DIST_NAME); ln -s devo $(DIST_NAME)
+	make diststuff -f Makefile.in
+	cd ../ld; make diststuff -f Makefile.in
+	cd ../gprof; make diststuff -f Makefile.in
+	cd ../texinfo; mv texinfo.tex ..; rm -rf *; mv ../texinfo.tex .
+	# Take out texinfo from configurable dirs
+	mv ../configure.in tmp; \
+	  sed -e '/^host_tools=/s/texinfo //' <tmp >../configure.in; rm tmp
+	cd ..; chmod og=u `find . -print`
+	cd ../..; tar chf - $(DIST_NAME) | gzip >$(DIST_NAME).tar.z
+	rm -rf ../../$(DIST_NAME)
+
+
+# Dummy target to force execution of dependent targets.
+#
+force:
+
+# Target to uncomment host-specific lines in this makefile.  Such lines must
+# have the following string beginning in column 1: #__<hostname>__#
+# Original Makefile is backed up as 'Makefile.old'.
+#
+# Invoke with:  make make HOST=xxx
+#
+make:
+	-@if test $(HOST)x = x ; then \
+		echo 'Specify "make make HOST=???"'; \
+		exit 1; \
+	fi ; \
+	grep -s "^#The next line was generated by 'make make'" Makefile; \
+	if test $$? = 0 ; then	\
+		echo "Makefile has already been processed with 'make make'";\
+		exit 1; \
+	fi ; \
+	mv -f Makefile Makefile.old; \
+	echo "#The next line was generated by 'make make'"	 >Makefile ; \
+	echo "HOST=$(HOST)"					>>Makefile ; \
+	echo							>>Makefile ; \
+	sed "s/^#__$(HOST)__#//" < Makefile.old			>>Makefile
+
+Makefile: Makefile.in config.status
+	CONFIG_FILES=Makefile CONFIG_HEADERS= $(SHELL) ./config.status
+
+config.h: stamp-h ; @true
+stamp-h: config.in config.status
+	CONFIG_FILES= CONFIG_HEADERS=config.h:config.in $(SHELL) ./config.status
+
+config.status: configure
+	$(SHELL) ./config.status --recheck
+
+### Local Variables: ***
+### mode:fundamental ***
+### page-delimiter: "^#" ***
+### End: ***
+### end of file

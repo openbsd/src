@@ -1,0 +1,5 @@
+load_lib ../config/monitor.exp
+
+# Hppro monitor is very slow...
+set timeout 540
+verbose "Timeout is now $timeout seconds" 2

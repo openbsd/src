@@ -177,6 +177,10 @@ SECTIONS
      section so we begin .debug at 0.  It's not clear yet what needs to happen
      for the others.   */
   .debug          0 : { *(.debug) }
+  .debug_info     0 : { *(.debug_info) }
+  .debug_abbrev   0 : { *(.debug_abbrev) }
+  .debug_line     0 : { *(.debug_line) }
+  .debug_frame    0 : { *(.debug_frame) }
   .debug_srcinfo  0 : { *(.debug_srcinfo) }
   .debug_aranges  0 : { *(.debug_aranges) }
   .debug_pubnames 0 : { *(.debug_pubnames) }

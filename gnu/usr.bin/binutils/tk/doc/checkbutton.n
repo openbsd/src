@@ -1,0 +1,237 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) checkbutton.n 1.38 96/03/26 18:21:01
+'\" 
+.so man.macros
+.TH checkbutton n 4.0 Tk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+checkbutton \- Create and manipulate checkbutton widgets
+.SH SYNOPSIS
+\fBcheckbutton\fI pathName \fR?\fIoptions\fR?
+.SO
+.VS
+\-activebackground	\-cursor	\-highlightthickness	\-takefocus
+\-activeforeground	\-disabledforeground	\-image	\-text
+\-anchor	\-font	\-justify	\-textvariable
+\-background	\-foreground	\-padx	\-underline
+\-bitmap	\-highlightbackground	\-pady	\-wraplength
+.VE
+\-borderwidth	\-highlightcolor	\-relief
+.SE
+.SH "WIDGET-SPECIFIC OPTIONS"
+.OP \-command command Command
+Specifies a Tcl command to associate with the button.  This command
+is typically invoked when mouse button 1 is released over the button
+window.  The button's global variable (\fB\-variable\fR option) will
+be updated before the command is invoked.
+.OP \-height height Height
+Specifies a desired height for the button.
+If an image or bitmap is being displayed in the button then the value is in
+screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
+for text it is in lines of text.
+If this option isn't specified, the button's desired height is computed
+from the size of the image or bitmap or text being displayed in it.
+.VS br
+.OP \-indicatoron indicatorOn IndicatorOn
+Specifies whether or not the indicator should be drawn.  Must be a
+proper boolean value.  If false, the \fBrelief\fR option is
+ignored and the widget's relief is always sunken if the widget is
+selected and raised otherwise.
+.VE
+.OP \-offvalue offValue Value
+Specifies value to store in the button's associated variable whenever
+this button is deselected.  Defaults to ``0''.
+.OP \-onvalue onValue Value
+Specifies value to store in the button's associated variable whenever
+this button is selected.  Defaults to ``1''.
+.VS br
+.OP \-selectcolor selectColor Background
+Specifies a background color to use when the button is selected.
+If \fBindicatorOn\fR is true then the color applicies to the indicator.
+If \fBindicatorOn\fR is false, this color is used as the background
+for the entire widget, in place of \fBbackground\fR or \fBactiveBackground\fR,
+whenever the widget is selected.
+If specified as an empty string then no special color is used for
+displaying when the widget is selected.
+.OP \-selectimage selectImage SelectImage
+Specifies an image to display (in place of the \fBimage\fR option)
+when the checkbutton is selected.
+This option is ignored unless the \fBimage\fR option has been
+specified.
+.VE
+.OP \-state state State
+Specifies one of three states for the checkbutton:  \fBnormal\fR, \fBactive\fR,
+or \fBdisabled\fR.  In normal state the checkbutton is displayed using the
+\fBforeground\fR and \fBbackground\fR options.  The active state is
+typically used when the pointer is over the checkbutton.  In active state
+the checkbutton is displayed using the \fBactiveForeground\fR and
+\fBactiveBackground\fR options.  Disabled state means that the checkbutton
+.VS
+should be insensitive:  the default bindings will refuse to activate
+the widget and will ignore mouse button presses.
+.VE
+In this state the \fBdisabledForeground\fR and
+\fBbackground\fR options determine how the checkbutton is displayed.
+.OP \-variable variable Variable
+Specifies name of global variable to set to indicate whether
+or not this button is selected.  Defaults to the name of the
+button within its parent (i.e. the last element of the button
+window's path name).
+.OP \-width width Width
+Specifies a desired width for the button.
+If an image or bitmap is being displayed in the button then the value is in
+screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
+for text it is in characters.
+If this option isn't specified, the button's desired width is computed
+from the size of the image or bitmap or text being displayed in it.
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBcheckbutton\fR command creates a new window (given by the
+\fIpathName\fR argument) and makes it into a checkbutton widget.
+Additional
+options, described above, may be specified on the command line
+or in the option database
+to configure aspects of the checkbutton such as its colors, font,
+text, and initial relief.  The \fBcheckbutton\fR command returns its
+\fIpathName\fR argument.  At the time this command is invoked,
+there must not exist a window named \fIpathName\fR, but
+\fIpathName\fR's parent must exist.
+.PP
+A checkbutton is a widget
+.VS
+that displays a textual string, bitmap or image
+and a square called an \fIindicator\fR.
+If text is displayed, it must all be in a single font, but it
+can occupy multiple lines on the screen (if it contains newlines
+or if wrapping occurs because of the \fBwrapLength\fR option) and
+one of the characters may optionally be underlined using the
+\fBunderline\fR option.
+.VE
+A checkbutton has
+all of the behavior of a simple button, including the
+following: it can display itself in either of three different
+ways, according to the \fBstate\fR option;
+it can be made to appear
+raised, sunken, or flat; it can be made to flash; and it invokes
+a Tcl command whenever mouse button 1 is clicked over the
+checkbutton.
+.PP
+.VS
+In addition, checkbuttons can be \fIselected\fR.
+If a checkbutton is selected then the indicator is normally
+drawn with a sunken relief and a special color, and
+a Tcl variable associated with the checkbutton is set to a particular
+value (normally 1).
+If the checkbutton is not selected, then the indicator is drawn with a
+raised relief and no special color, and the associated variable is
+set to a different value (typically 0).
+By default, the name of the variable associated with a checkbutton is the
+same as the \fIname\fR used to create the checkbutton.
+The variable name, and the ``on'' and ``off'' values stored in it,
+may be modified with options on the command line or in the option
+database.
+Configuration options may also be used to modify the way the
+indicator is displayed (or whether it is displayed at all).
+.VE
+By default a checkbutton is configured to select and deselect
+itself on alternate button clicks.
+In addition, each checkbutton monitors its associated variable and
+automatically selects and deselects itself when the variables value
+changes to and from the button's ``on'' value.
+
+.SH "WIDGET COMMAND"
+.PP
+The \fBcheckbutton\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+.CS
+\fIpathName option \fR?\fIarg arg ...\fR?
+.CE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for checkbutton widgets:
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+.VS
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBcheckbutton\fR
+command.
+.VE
+.TP
+\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBcheckbutton\fR
+command.
+.TP
+\fIpathName \fBdeselect\fR
+Deselects the checkbutton and sets the associated variable to its ``off''
+value.
+.TP
+\fIpathName \fBflash\fR
+Flashes the checkbutton.  This is accomplished by redisplaying the checkbutton
+several times, alternating between active and normal colors.  At
+the end of the flash the checkbutton is left in the same normal/active
+state as when the command was invoked.
+This command is ignored if the checkbutton's state is \fBdisabled\fR.
+.TP
+\fIpathName \fBinvoke\fR
+Does just what would have happened if the user invoked the checkbutton
+with the mouse: toggle the selection state of the button and invoke
+the Tcl command associated with the checkbutton, if there is one.
+The return value is the return value from the Tcl command, or an
+empty string if there is no command associated with the checkbutton.
+This command is ignored if the checkbutton's state is \fBdisabled\fR.
+.TP
+\fIpathName \fBselect\fR
+Selects the checkbutton and sets the associated variable to its ``on''
+value.
+.TP
+\fIpathName \fBtoggle\fR
+Toggles the selection state of the button, redisplaying it and
+modifying its associated variable to reflect the new state.
+
+.SH BINDINGS
+.PP
+Tk automatically creates class bindings for checkbuttons that give them
+the following default behavior:
+.IP [1]
+A checkbutton activates whenever the mouse passes over it and deactivates
+whenever the mouse leaves the checkbutton.
+.IP [2]
+.VS
+When mouse button 1 is pressed over a checkbutton it is invoked (its
+selection state toggles and the command associated with the button is
+invoked, if there is one).
+.IP [3]
+When a checkbutton has the input focus, the space key causes the checkbutton
+to be invoked.
+.VE
+.PP
+If the checkbutton's state is \fBdisabled\fR then none of the above
+actions occur:  the checkbutton is completely non-responsive.
+.PP
+The behavior of checkbuttons can be changed by defining new bindings for
+individual widgets or by redefining the class bindings.
+
+.SH KEYWORDS
+checkbutton, widget

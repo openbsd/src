@@ -106,6 +106,7 @@ End If
 forward-include "{srcroot}"bfd:libcoff.h "{edir}"'bfd/libcoff.h'
 forward-include "{srcroot}"bfd:libecoff.h "{edir}"'bfd/libecoff.h'
 
-# Make the README more visible.
+# Translate random files into MPW-only character set.
 
-Catenate "{srcdir}"mpw-README > "{objdir}Read Me for MPW"
+tr-7to8 "{srcdir}"mpw-README > "{objdir}Read Me for MPW"
+tr-7to8 "{srcdir}"mpw-install > "{objdir}"Install

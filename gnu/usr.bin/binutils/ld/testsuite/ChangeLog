@@ -1,3 +1,12 @@
+Tue Oct  1 15:52:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lib/ld.exp (default_ld_version): Fix for current version
+	printing.
+
+Fri Sep 13 15:51:45 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-scripts/crossref.exp: Define $global$ for hppa-elf.
+
 Thu Aug  8 14:29:32 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* ld-scripts/cross2.t: Map XCOFF sections to .text or .data.

@@ -1,6 +1,11 @@
 # Linker script for ARM COFF.
 # Based on i386coff.sc by Ian Taylor <ian@cygnus.com>.
 test -z "$ENTRY" && ENTRY=_start
+if test -z "${DATA_ADDR}"; then
+  if test "$LD_FLAG" = "N" || test "$LD_FLAG" = "n"; then
+    DATA_ADDR=.
+  fi
+fi
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 ${LIB_SEARCH_DIRS}
@@ -23,21 +28,21 @@ SECTIONS
     *(.fini)
     ${RELOCATING+ etext  =  .};
   }
-  .data ${RELOCATING+ 0x40000 + (. & 0xffc00fff)} : {
-    __data_start__ = . ;
+  .data ${RELOCATING+${DATA_ADDR-0x40000 + (. & 0xffc00fff)}} : {
+    ${RELOCATING+  __data_start__ = . ;}
     *(.data)
-    __data_end__ = . ;
+    ${RELOCATING+ __data_end__ = . ;}
     ${RELOCATING+ edata  =  .};
   }
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   { 					
-    __bss_start__ = . ;
+    ${RELOCATING+ __bss_start__ = . ;}
     *(.bss)
     *(COMMON)
-    __bss_end__ = . ;
+    ${RELOCATING+ __bss_end__ = . ;}
   }
 
-  ${RELOCATING+ __end__ = .};
+  ${RELOCATING+ __end__ = .;}
 
   .stab  0 ${RELOCATING+(NOLOAD)} : 
   {

@@ -1,0 +1,96 @@
+if $tracelevel then {
+	strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile langs
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "-g -c ${srcdir}/${subdir}/langs0.c"] != "" } {
+    perror "Couldn't compile langs0.c to object"
+    return -1
+}
+execute_anywhere "mv langs0.o ${binfile}0.o"
+if  { [compile "-g -c ${srcdir}/${subdir}/langs1.c"] != "" } {
+    perror "Couldn't compile langs1.c to object"
+    return -1
+}
+execute_anywhere "mv langs1.o ${binfile}1.o"
+if  { [compile "-g -c ${srcdir}/${subdir}/langs2.c"] != "" } {
+    perror "Couldn't compile langs2.c to object"
+    return -1
+}
+execute_anywhere "mv langs2.o ${binfile}2.o"
+if  { [compile "${binfile}0.o ${binfile}1.o ${binfile}2.o  -o ${binfile}"] != "" } {
+    perror "Couldn't link langs."
+    return -1
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+execute_anywhere "rm -f ${binfile}.ci"
+if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
+    perror "Couldn't make ${binfile}.ci file"
+    return -1
+}
+source ${binfile}.ci
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+gdb_test "b langs0" {Function "langs0" not defined\.} \
+    "break on nonexistent function in langs.exp"
+
+if [runto csub] then {
+    global noresults
+
+    gdb_test "show language" "currently c\".*" \
+	"show language at csub in langs.exp"
+    # On some machines, foo doesn't get demangled because the N_SOL for
+    # langs2.cxx is seen only after the function stab for foo.  So
+    # the following regexps are kludged to accept foo__Fi as well as foo,
+    # even though only the latter is correct.  I haven't tried to xfail it
+    # because it depends on details of the compiler.
+    
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "bt" "#0.*csub.*#1.*(foo|foo__Fi) \\(.*#2.*cppsub_ .*#3.*fsub.*#4.*langs0__2do \\(.*#5  \[0-9a-fx\]* in main.*" "backtrace in langs.exp"
+
+    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    gdb_test "up" ".* in (foo|foo__Fi) .* at langs2\\.cxx.*return csub \\(.*" \
+	"up to foo in langs.exp"
+    gdb_test "show language" "currently c\\+\\+.*" \
+	"show language at foo in langs.exp"
+
+    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    gdb_test "up" ".* in cppsub_ .* at langs2\\.cxx.*return foo \\(.*" \
+	"up to cppsub_ in langs.exp"
+    gdb_test "show language" "currently c\\+\\+.*" \
+	"show language at cppsub_ in langs.exp"
+
+    if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    gdb_test "up" ".* in fsub.* at langs1\\.f.*return \\(cppsub .*" \
+	"up to fsub in langs.exp"
+    gdb_test "show language" "currently fortran.*" \
+	"show language at fsub in langs.exp"
+
+    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "up" ".* in langs0__2do .* at .*langs0\\.c.*return fsub.*" \
+	"up to langs0__2do in langs.exp"
+    gdb_test "show language" "currently c\".*" \
+	"show language at langs0__2do in langs.exp"
+
+    gdb_test "up" ".* in main .* at .*langs0\\.c.*if \\(langs0__2do \\(.*" \
+	"up to main in langs.exp"
+    gdb_test "show language" "currently c\".*" \
+	"show language at main in langs.exp"
+
+    if $noresults==1 then { return }
+
+    gdb_test "cont" "Program exited normally\\." \
+	"continue to exit in langs.exp"
+}
+
+return 0

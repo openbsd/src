@@ -1,0 +1,254 @@
+# Copyright (C) 1996 Cygnus Support
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# This file was written by Tom Tromey <tromey@cygnus.com>
+
+set testdrv "unix/tktest"
+set tprompt "%"
+
+#
+# Extract and print the version number of wish.
+#
+proc tk_version {} {
+  global testdrv
+  if {! [catch {exec $testdrv -version} output]
+      && ! [regsub {^.*version } $output {} version]} then {
+    clone_output "Tk library is version\t$version\n"
+  }
+}
+
+#
+# Source a file.
+#
+proc tk_load {file} {
+  global exec_output subdir testdrv exec_output spawn_id
+
+  if {! [file exists $file]} then {
+    perror "$file does not exist."
+    return -1
+  }
+
+  verbose "Sourcing $file..."
+  send "source $file\n"
+  return 0
+}
+
+#
+# Exit the test driver.
+#
+proc tk_exit {} {
+  # If we started Xvfb, we should kill it.  This doesn't happen right
+  # now, so this proc does nothing.
+  # xvfb_exit
+}
+
+#
+# Find X display to use.  Return 0 if not found.  Set DISPLAY
+# environment variable if display found.
+#
+proc find_x_display {} {
+  global env
+
+  if {[info exists env(TEST_DISPLAY)]} then {
+    set env(DISPLAY) $env(TEST_DISPLAY)
+    return 1
+  }
+
+  return 0
+}
+
+#
+# Start the test driver.
+#
+proc tk_start {} {
+  global testdrv objdir subdir srcdir spawn_id tprompt
+
+  set testdrv "$objdir/$testdrv"
+  set defs "$srcdir/../tests/defs"
+
+  set timeout 100
+  set timetol 0
+
+  if {! [find_x_display]} then {
+    return -1
+  }
+
+  spawn $testdrv
+
+  if ![file exists ${srcdir}/../tests] {
+    perror "The source for the test cases is missing." 0
+    return -1
+  }
+
+  send "[list set srcdir ${srcdir}/../tests]\r"
+  expect {
+    -re "set VERBOSE 1\[\r\n\]*1\[\r\n\]*%" {
+      verbose "Set verbose flag for tests"
+      exp_continue
+    }
+    -re "${srcdir}/../tests\[\r\n\]*$tprompt" {
+      verbose "Set srcdir to $srcdir/../tests" 2
+    }
+    -re "no files matched glob pattern" {
+      warning "Didn't set srcdir to $srcdir/../tests"
+    }
+    timeout {
+      perror "Couldn't set srcdir"
+      return -1
+    }
+  }
+
+  if ![file exists $defs] then {
+    perror "$defs does not exist."
+    return -1
+  }
+
+  verbose "Sourcing $defs..."
+  send "source $defs\r\n"
+  
+  expect {
+    -re ".*source $defs.*$" {
+      verbose "Sourced $defs"
+    }
+    "Error: couldn't read file*" {
+      perror "Couldn't source $defs"
+      return -1
+    }
+    "%" {
+      verbose "Got prompt, sourced $defs"
+    }
+    timeout {
+      warning "Timed out sourcing $defs."
+      if { $timetol <= 3 } {
+	incr timetol
+	exp_continue
+      } else {
+	return -1
+      }
+    }
+  }
+
+  set timetol 0
+  sleep 2
+  send "set VERBOSE 1\n"
+  expect {
+    -re "% 1.*%" {
+      verbose "Set verbose flag for tests"
+    }
+    -re "set VERBOSE 1.*1.*%" {
+      verbose "Set verbose flag for tests"
+    }
+    timeout {
+      perror "Timed out setting verbose flag."
+      if { $timetol <= 3 } {
+	exp_continue
+      } else {
+	return -1
+      }
+    }
+  }
+  return $spawn_id
+}
+
+################################################################
+#
+# Utility functions.
+#
+
+proc read_file {name} {
+  set id [open $name r]
+  set contents [read $id]
+  close $id
+  return $contents
+}
+
+proc write_file {name contents} {
+  set id [open $name w]
+  puts -nonewline $id $contents
+  close $id
+}
+
+# NOTE that this fails to copy files with NULs in them.  Change
+# implementation to "exec cp" if required.
+proc copy_file {from to} {
+  write_file $to [read_file $from]
+}
+
+################################################################
+#
+# Start/stop Xvfb.  These procs aren't used right now; we assume Xvfb
+# is already running.
+#
+
+#
+# Stop Xvfb.
+#
+proc xvfb_exit {} {
+  global Xvfb_spawn_id
+
+  # Send C-c to kill it.
+  send -i $Xvfb_spawn_id "\003"
+}
+
+#
+# Start Xvfb.  Return 0 on error, 1 if started.  Set DISPLAY
+# environment variable on successful start.
+# 
+#
+proc xvfb_start {} {
+  global spawn_id Xvfb_spawn_id Xvfb_screen env
+
+  # FIXME should look for Xvfb in build directory.  Do this later,
+  # when we actually build Xvfb.
+
+  set Xvfb [which Xvfb]
+  # Why "0"?  I don't know, but that is what the manual says.
+  if {$Xvfb == 0} then {
+    perror "Couldn't find Xvfb"
+    return 0
+  }
+  verbose "Xvfb is $Xvfb"
+
+  # Pick a number at random...
+  set Xvfb_screen 23
+
+  while {$Xvfb_screen < 100} {
+    spawn $Xvfb :$Xvfb_screen
+
+    expect {
+      "Server is already active" {
+	incr Xvfb_screen
+      }
+
+      timeout {
+	break
+      }
+    }
+  }
+
+  if {$Xvfb_screen == 100} then {
+    perror "Xvfb screen is 100!"
+    return 0
+  }
+
+  set Xvfb_spawn_id $spawn_id
+  set env(DISPLAY) :$Xvfb_screen
+  verbose "Screen is :$Xvfb_screen"
+  return 1
+}

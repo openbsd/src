@@ -65,6 +65,29 @@ The name put into the target vector.
 /*SUPPRESS558*/
 /*SUPPRESS529*/
 
+/* Merge backend data into the output file.
+   This is necessary on sparclet-aout where we want the resultant machine
+   number to be M_SPARCLET if any input file is M_SPARCLET.  */
+
+#define MY_bfd_merge_private_bfd_data sunos_merge_private_bfd_data
+
+static boolean
+sunos_merge_private_bfd_data (ibfd, obfd)
+     bfd *ibfd, *obfd;
+{
+  if (bfd_get_flavour (ibfd) != bfd_target_aout_flavour
+      || bfd_get_flavour (obfd) != bfd_target_aout_flavour)
+    return true;
+
+  if (bfd_get_arch (obfd) == bfd_arch_sparc)
+    {
+      if (bfd_get_mach (obfd) < bfd_get_mach (ibfd))
+	bfd_set_arch_mach (obfd, bfd_arch_sparc, bfd_get_mach (ibfd));
+    }
+
+  return true;
+}
+
 static void
 #if ARCH_SIZE == 64
 sunos_64_set_arch_mach

@@ -1,0 +1,192 @@
+'\"
+'\" Copyright (c) 1991-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) wish.1 1.26 96/03/26 18:29:39
+'\" 
+.so man.macros
+.TH wish 1 4.1 Tk "Tk Applications"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+wish \- Simple windowing shell
+.SH SYNOPSIS
+\fBwish\fR ?\fIfileName arg arg ...\fR?
+.SH OPTIONS
+.VS br
+.IP "\fB\-colormap \fBnew\fR" 20
+Specifies that the window should have a new private colormap instead of
+using the default colormap for the screen.
+.VE
+.IP "\fB\-display \fIdisplay\fR" 20
+Display (and screen) on which to display window.
+.IP "\fB\-geometry \fIgeometry\fR" 20
+Initial geometry to use for window.  If this option is specified, its
+value is stored in the \fBgeometry\fR global variable of the application's
+Tcl interpreter.
+.IP "\fB\-name \fIname\fR" 20
+Use \fIname\fR as the title to be displayed in the window, and
+as the name of the interpreter for \fBsend\fR commands.
+.IP "\fB\-sync\fR" 20
+Execute all X server commands synchronously, so that errors
+are reported immediately.  This will result in much slower
+execution, but it is useful for debugging.
+.VS br
+.IP "\fB\-visual \fIvisual\fR" 20
+Specifies the visual to use for the window.
+\fIVisual\fR may have any of the forms supported by the \fBTk_GetVisual\fR
+procedure.
+.IP "\fB\-\|\-\fR" 20
+Pass all remaining arguments through to the script's \fBargv\fR
+variable without interpreting them.
+This provides a mechanism for passing arguments such as \fB\-name\fR
+to a script instead of having \fBwish\fR interpret them.
+.VE
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBWish\fR is a simple program consisting of the Tcl command
+language, the Tk toolkit, and a main program that reads commands
+from standard input or from a file.
+It creates a main window and then processes Tcl commands.
+.VS
+If \fBwish\fR is invoked with no arguments, or with a first argument
+that starts with ``\-'', then it reads Tcl commands interactively from
+standard input.
+It will continue processing commands until all windows have been
+deleted or until end-of-file is reached on standard input.
+If there exists a file \fB.wishrc\fR in the home directory of
+the user, \fBwish\fR evaluates the file as a Tcl script
+just before reading the first command from standard input.
+.PP
+If \fBwish\fR is invoked with an initial \fIfileName\fR argument, then 
+\fIfileName\fR is treated as the name of a script file.
+\fBWish\fR will evaluate the script in \fIfileName\fR (which
+presumably creates a user interface), then it will respond to events
+until all windows have been deleted.
+Commands will not be read from standard input.
+There is no automatic evaluation of \fB.wishrc\fR in this
+case, but the script file can always \fBsource\fR it if desired.
+.VE
+
+.SH "OPTIONS"
+.PP
+\fBWish\fR automatically processes all of the command-line options
+described in the \fBOPTIONS\fR summary above.
+Any other command-line arguments besides these are passed through
+to the application using the \fBargc\fR and \fBargv\fR variables
+described later.
+
+.SH "APPLICATION NAME AND CLASS"
+.PP
+.VS
+The name of the application, which is used for purposes such as
+\fBsend\fR commands, is taken from the \fB\-name\fR option,
+if it is specified;  otherwise it is taken from \fIfileName\fR,
+if it is specified, or from the command name by which
+\fBwish\fR was invoked.  In the last two cases, if the name contains a ``/''
+character, then only the characters after the last slash are used
+as the application name.
+.PP
+The class of the application, which is used for purposes such as
+specifying options with a \fBRESOURCE_MANAGER\fR property or .Xdefaults
+file, is the same as its name except that the first letter is
+capitalized.
+.VE
+
+.SH "VARIABLES"
+.PP
+\fBWish\fR sets the following Tcl variables:
+.TP 15
+\fBargc\fR
+Contains a count of the number of \fIarg\fR arguments (0 if none),
+not including the options described above.
+.TP 15
+\fBargv\fR
+Contains a Tcl list whose elements are the \fIarg\fR arguments
+.VS
+that follow a \fB\-\|\-\fR option or don't match any of the
+options described in OPTIONS above, in order, or an empty string
+.VE
+if there are no such arguments.
+.TP 15
+\fBargv0\fR
+Contains \fIfileName\fR if it was specified.
+Otherwise, contains the name by which \fBwish\fR was invoked.
+.TP 15
+\fBgeometry\fR
+.VS
+If the \fB\-geometry\fR option is specified, \fBwish\fR copies its
+value into this variable.  If the variable still exists after
+\fIfileName\fR has been evaluated, \fBwish\fR uses the value of
+the variable in a \fBwm geometry\fR command to set the main
+window's geometry.
+.VE
+.TP 15
+\fBtcl_interactive\fR
+Contains 1 if \fBwish\fR is reading commands interactively (\fIfileName\fR
+was not specified and standard input is a terminal-like
+device), 0 otherwise.
+
+.SH "SCRIPT FILES"
+.PP
+If you create a Tcl script in a file whose first line is
+.CS
+\fB#!/usr/local/bin/wish\fR
+.CE
+then you can invoke the script file directly from your shell if
+you mark it as executable.
+This assumes that \fBwish\fR has been installed in the default
+location in /usr/local/bin;  if it's installed somewhere else
+then you'll have to modify the above line to match.
+Many UNIX systems do not allow the \fB#!\fR line to exceed about
+30 characters in length, so be sure that the \fBwish\fR executable
+can be accessed with a short file name.
+.PP
+An even better approach is to start your script files with the
+.VS
+following three lines:
+.CS
+\fB#!/bin/sh
+# the next line restarts using wish \e
+exec wish "$0" "$@"\fR
+.CE
+This approach has three advantages over the approach in the previous
+paragraph.  First, the location of the \fBwish\fR binary doesn't have
+to be hard-wired into the script:  it can be anywhere in your shell
+search path.  Second, it gets around the 30-character file name limit
+in the previous approach.
+Third, this approach will work even if \fBwish\fR is
+itself a shell script (this is done on some systems in order to
+handle multiple architectures or operating systems:  the \fBwish\fR
+script selects one of several binaries to run).  The three lines
+cause both \fBsh\fR and \fBwish\fR to process the script, but the
+\fBexec\fR is only executed by \fBsh\fR.
+\fBsh\fR processes the script first;  it treats the second
+line as a comment and executes the third line.
+The \fBexec\fR statement cause the shell to stop processing and
+instead to start up \fBwish\fR to reprocess the entire script.
+When \fBwish\fR starts up, it treats all three lines as comments,
+since the backslash at the end of the second line causes the third
+line to be treated as part of the comment on the second line.
+.VE
+
+.SH PROMPTS
+.PP
+When \fBwish\fR is invoked interactively it normally prompts for each
+command with ``\fB% \fR''.  You can change the prompt by setting the
+variables \fBtcl_prompt1\fR and \fBtcl_prompt2\fR.  If variable
+\fBtcl_prompt1\fR exists then it must consist of a Tcl script
+to output a prompt;  instead of outputting a prompt \fBwish\fR
+will evaluate the script in \fBtcl_prompt1\fR.
+The variable \fBtcl_prompt2\fR is used in a similar way when
+a newline is typed but the current command isn't yet complete;
+if \fBtcl_prompt2\fR isn't set then no prompt is output for
+incomplete commands.
+
+.SH KEYWORDS
+shell, toolkit

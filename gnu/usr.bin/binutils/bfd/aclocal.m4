@@ -3,7 +3,7 @@ AC_DEFUN(BFD_BINARY_FOPEN,
 [AC_REQUIRE([AC_CANONICAL_SYSTEM])
 case "${host}" in
 changequote(,)dnl
-i[345]86-*-msdos* | i[345]86-*-go32* | *-*-cygwin32)
+i[345]86-*-msdos* | i[345]86-*-go32* | *-*-cygwin32 | *-*-windows)
 changequote([,])dnl
   AC_DEFINE(USE_BINARY_FOPEN) ;;
 esac])dnl

@@ -122,6 +122,8 @@ ALL_MACHINES = \
 	cpu-m68k.o \
 	cpu-m88k.o \
 	cpu-mips.o \
+	cpu-mn10200.o \
+	cpu-mn10300.o \
 	cpu-ns32k.o \
 	cpu-powerpc.o \
 	cpu-rs6000.o \
@@ -145,6 +147,8 @@ ALL_MACHINES_CFILES = \
 	cpu-m68k.c \
 	cpu-m88k.c \
 	cpu-mips.c \
+	cpu-mn10200.c \
+	cpu-mn10300.c \
 	cpu-ns32k.c \
 	cpu-powerpc.c \
 	cpu-rs6000.c \
@@ -159,7 +163,9 @@ ALL_MACHINES_CFILES = \
 # target_vector in targets.c if configured with --enable-targets=all.
 BFD32_BACKENDS = \
 	aout-adobe.o \
+	aout-arm.o \
 	aout-ns32k.o \
+	aout-sparcle.o \
 	aout0.o \
 	aout32.o \
 	bout.o \
@@ -197,15 +203,19 @@ BFD32_BACKENDS = \
 	elf32-m68k.o \
 	elf32-m88k.o \
 	elf32-mips.o \
+	elf32-mn10200.o \
+	elf32-mn10300.o \
 	elf32-ppc.o \
 	elf32-sh.o \
 	elf32-sparc.o \
 	elf32.o \
 	elflink.o \
+	hp300bsd.o \
 	hp300hpux.o \
 	som.o \
 	i386aout.o \
 	i386bsd.o \
+	i386dynix.o \
 	i386freebsd.o \
 	i386linux.o \
 	i386lynx.o \
@@ -214,6 +224,7 @@ BFD32_BACKENDS = \
 	i386mach3.o \
 	i386os9k.o \
 	ieee.o \
+	m68k4knetbsd.o \
 	m68klinux.o \
 	m68klynx.o \
 	m68knetbsd.o \
@@ -236,6 +247,7 @@ BFD32_BACKENDS = \
 	pei-ppc.o \
 	ppcboot.o \
 	reloc16.o \
+	riscix.o \
 	sparclynx.o \
 	sparcnetbsd.o \
 	sunos.o \
@@ -245,7 +257,9 @@ BFD32_BACKENDS = \
 
 BFD32_BACKENDS_CFILES = \
 	aout-adobe.c \
+	aout-arm.c \
 	aout-ns32k.c \
+	aout-sparcle.c \
 	aout0.c \
 	aout32.c \
 	bout.c \
@@ -283,15 +297,19 @@ BFD32_BACKENDS_CFILES = \
 	elf32-m68k.c \
 	elf32-m88k.c \
 	elf32-mips.c \
+	elf32-mn10200.c \
+	elf32-mn10300.c \
 	elf32-ppc.c \
 	elf32-sh.c \
 	elf32-sparc.c \
 	elf32.c \
 	elflink.c \
+	hp300bsd.c \
 	hp300hpux.c \
 	som.c \
 	i386aout.c \
 	i386bsd.c \
+	i386dynix.c \
 	i386freebsd.c \
 	i386linux.c \
 	i386lynx.c \
@@ -300,6 +318,7 @@ BFD32_BACKENDS_CFILES = \
 	i386mach3.c \
 	i386os9k.c \
 	ieee.c \
+	m68k4knetbsd.c \
 	m68klinux.c \
 	m68klynx.c \
 	m68knetbsd.c \
@@ -322,6 +341,7 @@ BFD32_BACKENDS_CFILES = \
 	pei-ppc.c \
 	ppcboot.c \
 	reloc16.c \
+	riscix.c \
 	sparclynx.c \
 	sparcnetbsd.c \
 	sunos.c \
@@ -427,14 +447,15 @@ CFILES = \
 	$(ALL_MACHINES_CFILES) \
 	$(BFD32_BACKENDS_CFILES) \
 	$(BFD64_BACKENDS_CFILES) \
-	$(OPTIONAL_BACKENDS_CFILES) \
-	i386dynix.c hp300bsd.c
+	$(OPTIONAL_BACKENDS_CFILES)
 
-HFILES = aout-target.h aoutf1.h aoutx.h coffcode.h \
-	 coffswap.h ecoffswap.h elf32-hppa.h elf32-target.h elf64-target.h \
-	 elfcode.h evax.h hppa_stubs.h libaout.h libbfd.h \
-	 libcoff.h libecoff.h elf-bfd.h libhppa.h libieee.h libnlm.h \
-	 liboasys.h nlm-target.h nlmcode.h som.h genlink.h netbsd.h ns32k.h
+HFILES = \
+	aout-target.h aoutf1.h aoutx.h coffcode.h coffswap.h \
+	ecoffswap.h elf32-hppa.h elf32-target.h elf64-target.h \
+	elfcode.h evax.h genlink.h hppa_stubs.h libaout.h libbfd.h \
+	libcoff.h libecoff.h elf-bfd.h libhppa.h libieee.h libnlm.h \
+	liboasys.h netbsd.h nlm-target.h nlmcode.h ns32k.h som.h \
+	targmatch.h
 
 all: Makefile $(ALLLIBS) @PICLIST@
 	@$(MAKE) subdir_do DO=all "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS)
@@ -525,6 +546,14 @@ stamp-tshlink: $(SHLIB)
 	else true; fi
 	touch stamp-tshlink
 
+# This file holds an array associating configuration triplets and
+# vector names.  It is built from config.bfd.  It is not compiled by
+# itself, but is included by targets.c.
+targmatch.h: config.bfd targmatch.sed
+	rm -f targmatch.h
+	sed -f $(srcdir)/targmatch.sed < $(srcdir)/config.bfd > targmatch.new
+	mv -f targmatch.new targmatch.h
+
 # When compiling archures.c and targets.c, supply the default target
 # info from configure.
 
@@ -565,14 +594,14 @@ TAGS: force
 	etags $(INCDIR)/*.h $(srcdir)/*.h $(srcdir)/*.c
 
 do_mostlyclean:
-	rm -f *.o *~ core *.E *.p *.ip aout-params.h gen-aout config.log \
-		pic/*.o
+	rm -f *.o *~ core *.E *.p *.ip aout-params.h gen-aout pic/*.o
 do_clean: do_mostlyclean
 	rm -f libbfd.a TAGS bfd.h stmp-bfd.h bfd-tmp.h ofiles stamp-ofiles \
 		elf32-target.h elf64-target.h $(SHLIB) $(SHLINK) \
-		piclist stamp-piclist
+		piclist stamp-piclist targmatch.h
 do_distclean: do_clean
-	rm -f Makefile config.status config.cache config.h stamp-h bfd-in3.h
+	rm -f Makefile config.status config.cache config.h config.log \
+		stamp-h bfd-in3.h
 	rm -rf pic stamp-picdir
 do_maintainer_clean: do_distclean
 	rm -f $(srcdir)/bfd-in2.h $(srcdir)/libbfd.h $(srcdir)/libcoff.h
@@ -789,6 +818,7 @@ bfd.ps:
 
 
 
+
 $(OFILES): stamp-picdir
 
 stamp-picdir:
@@ -819,7 +849,7 @@ reloc.o: reloc.c $(INCDIR)/bfdlink.h
 section.o: section.c
 syms.o: syms.c $(INCDIR)/bfdlink.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def
-targets.o: targets.c
+targets.o: targets.c $(INCDIR)/fnmatch.h targmatch.h
 hash.o: hash.c
 linker.o: linker.c $(INCDIR)/bfdlink.h genlink.h
 elf.o: elf.c $(INCDIR)/bfdlink.h elf-bfd.h $(INCDIR)/elf/common.h \
@@ -843,6 +873,8 @@ cpu-i960.o: cpu-i960.c
 cpu-m68k.o: cpu-m68k.c
 cpu-m88k.o: cpu-m88k.c
 cpu-mips.o: cpu-mips.c
+cpu-mn10200.o: cpu-mn10200.c
+cpu-mn10300.o: cpu-mn10300.c
 cpu-ns32k.o: cpu-ns32k.c ns32k.h
 cpu-powerpc.o: cpu-powerpc.c
 cpu-rs6000.o: cpu-rs6000.c
@@ -854,11 +886,15 @@ cpu-w65.o: cpu-w65.c
 cpu-z8k.o: cpu-z8k.c
 aout-adobe.o: aout-adobe.c $(INCDIR)/aout/adobe.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def libaout.h $(INCDIR)/bfdlink.h
+aout-arm.o: aout-arm.c libaout.h $(INCDIR)/bfdlink.h \
+  $(INCDIR)/aout/aout64.h aoutx.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
 aout-ns32k.o: aout-ns32k.c $(INCDIR)/aout/aout64.h \
   ns32k.h libaout.h $(INCDIR)/bfdlink.h
-aout-sparcle.o: aout-sparcle.c $(INCDIR)/bfdlink.h libaout.h aoutf1.h \
-  $(INCDIR)/aout/sun4.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
-  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
+aout-sparcle.o: aout-sparcle.c $(INCDIR)/bfdlink.h \
+  libaout.h aoutf1.h $(INCDIR)/aout/sun4.h $(INCDIR)/aout/aout64.h \
+  $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h \
+  aout-target.h
 aout0.o: aout0.c aoutf1.h $(INCDIR)/aout/sun4.h libaout.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
@@ -962,6 +998,12 @@ elf32-mips.o: elf32-mips.c $(INCDIR)/bfdlink.h genlink.h \
   $(INCDIR)/coff/symconst.h $(INCDIR)/coff/internal.h \
   $(INCDIR)/coff/ecoff.h $(INCDIR)/coff/mips.h ecoffswap.h \
   elf32-target.h
+elf32-mn10200.o: elf32-mn10200.c elf-bfd.h $(INCDIR)/elf/common.h \
+  $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
+  elf32-target.h
+elf32-mn10300.o: elf32-mn10300.c elf-bfd.h $(INCDIR)/elf/common.h \
+  $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
+  elf32-target.h
 elf32-ppc.o: elf32-ppc.c $(INCDIR)/bfdlink.h elf-bfd.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
   $(INCDIR)/elf/ppc.h elf32-target.h
@@ -976,6 +1018,9 @@ elf32.o: elf32.c elfcode.h $(INCDIR)/bfdlink.h elf-bfd.h \
   elfcore.h elflink.h
 elflink.o: elflink.c $(INCDIR)/bfdlink.h elf-bfd.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h
+hp300bsd.o: hp300bsd.c libaout.h $(INCDIR)/bfdlink.h \
+  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 hp300hpux.o: hp300hpux.c $(INCDIR)/aout/hp300hpux.h \
   aoutx.h $(INCDIR)/bfdlink.h libaout.h $(INCDIR)/aout/aout64.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h \
@@ -987,6 +1032,10 @@ i386aout.o: i386aout.c $(INCDIR)/aout/aout64.h libaout.h \
 i386bsd.o: i386bsd.c libaout.h $(INCDIR)/bfdlink.h \
   aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
+i386dynix.o: i386dynix.c $(INCDIR)/aout/dynix3.h aoutx.h \
+  $(INCDIR)/bfdlink.h libaout.h $(INCDIR)/aout/aout64.h \
+  $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h \
+  aout-target.h
 i386freebsd.o: i386freebsd.c freebsd.h libaout.h $(INCDIR)/bfdlink.h \
   aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
@@ -1006,6 +1055,9 @@ i386mach3.o: i386mach3.c $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
 i386os9k.o: i386os9k.c $(INCDIR)/bfdlink.h libaout.h \
   $(INCDIR)/os9k.h
 ieee.o: ieee.c $(INCDIR)/ieee.h libieee.h
+m68k4knetbsd.o: m68k4knetbsd.c netbsd.h libaout.h $(INCDIR)/bfdlink.h \
+  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 m68klinux.o: m68klinux.c $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h libaout.h \
   $(INCDIR)/bfdlink.h aout-target.h
@@ -1065,6 +1117,9 @@ pei-ppc.o: pei-ppc.c coff-ppc.c $(INCDIR)/coff/powerpc.h \
 ppcboot.o: ppcboot.c
 reloc16.o: reloc16.c $(INCDIR)/bfdlink.h genlink.h \
   $(INCDIR)/coff/internal.h libcoff.h
+riscix.o: riscix.c libaout.h $(INCDIR)/bfdlink.h $(INCDIR)/aout/aout64.h \
+  aout-target.h $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def \
+  $(INCDIR)/aout/ar.h
 sparclynx.o: sparclynx.c $(INCDIR)/aout/sun4.h libaout.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
   $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h aout-target.h
@@ -1126,11 +1181,4 @@ lynx-core.o: lynx-core.c
 osf-core.o: osf-core.c
 trad-core.o: trad-core.c libaout.h $(INCDIR)/bfdlink.h
 cisco-core.o: cisco-core.c
-i386dynix.o: i386dynix.c $(INCDIR)/aout/dynix3.h aoutx.h \
-  $(INCDIR)/bfdlink.h libaout.h $(INCDIR)/aout/aout64.h \
-  $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h \
-  aout-target.h
-hp300bsd.o: hp300bsd.c libaout.h $(INCDIR)/bfdlink.h \
-  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
-  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 # IF YOU PUT ANYTHING HERE IT WILL GO AWAY

@@ -121,6 +121,10 @@ typedef struct
      only).  */
   boolean warn_multiple_gp;
 
+  /* If true, warn if the starting address of an output section
+     changes due to the alignment of an input section.  */
+  boolean warn_section_align;
+
   boolean sort_common;
 
   boolean text_read_only;

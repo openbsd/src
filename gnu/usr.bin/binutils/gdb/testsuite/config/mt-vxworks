@@ -1,0 +1,2 @@
+CFLAGS = -g -Dvxworks
+LDFLAGS = -Xlinker -Ur

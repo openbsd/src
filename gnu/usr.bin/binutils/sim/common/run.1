@@ -1,0 +1,107 @@
+.\" Copyright (c) 1993 Free Software Foundation
+.\" See section COPYING for conditions for redistribution
+.TH run 1 "13oct1993" "GNU Tools" "GNU Tools"
+.de BP
+.sp
+.ti -.2i
+\(**
+..
+
+.SH NAME
+run\(em\&Simulator front-end
+
+.SH SYNOPSIS
+.hy 0
+.na
+.TP
+.B run
+.RB "[\|" \-v "\|]"
+." .RB "[\|" \-t "\|]"
+.RB "[\|" \-p
+.IR freq "\|]"
+.RB "[\|" \-m
+.IR memory "\|]"
+.I program
+.ad b
+.hy 1
+.SH DESCRIPTION
+
+Use `\|\c
+.BI run " program"\c
+\&\|' to execute a binary by interpreting machine instructions on your
+host computer.
+
+.B run
+is the same emulator used by GDB's `\|\c
+.B target sim\c
+\&\|' command.  You can run it directly by executing
+.B run
+if you just want to see your program execute, and do not need any
+debugger functionality.  You can also use
+.B run
+to generate profiling information for analysis with
+.BR gprof .
+
+.SH OPTIONS
+
+.TP
+.B \-v
+Verbose output.  Display the name of the program to run before
+execution; after execution, display the number of instructions
+executed, the number of machine cycles emulated, the number of
+pipeline stalls, the real time taken, the emulated execution time
+taken, and a summary of how much profiling information was generated.
+."
+." .TP
+." .B \-t
+." `trace', calls a sim_trace routine that does nothing.
+
+.TP
+.BI \-p " freq"
+Generate profile information (for use with
+.B gprof\c
+\&).
+.I freq
+is the profiling frequency.  Write the profiling information to a file called
+.BR gmon.out .
+
+.TP
+.BI \-m " memory"
+Set the memory size for the emulated machine to two to the power
+.IR memory .
+The default value is 19, emulating a board with 524288 bytes of memory.
+
+.PP
+
+.SH "SEE ALSO"
+.RB "`\|" gprof "\|'"
+entry in
+.B info\c
+\&;
+.RB "`\|" gdb "\|'"
+entry in
+.B info\c
+\&;
+.I 
+Using GDB: A Guide to the GNU Source-Level Debugger\c
+, Richard M. Stallman and Roland H. Pesch.
+
+.SH COPYING
+Copyright (c) 1993 Free Software Foundation, Inc.
+.PP
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+.PP
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+.PP
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+
+

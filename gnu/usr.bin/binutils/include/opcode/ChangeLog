@@ -1,3 +1,50 @@
+Wed Nov  6 13:41:08 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (MN10300_OPERAND_SPLIT): Define.
+
+Tue Nov  5 13:26:12 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (MN10300_OPERAND_EXTENDED): Define.
+
+Mon Nov  4 12:52:48 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (MN10300_OPERAND_REPEATED): Define.
+
+Fri Nov  1 10:31:02 1996  Richard Henderson  <rth@tamu.edu>
+
+	* alpha.h: Don't include "bfd.h"; private relocation types are now
+ 	negative to minimize problems with shared libraries.  Organize
+ 	instruction subsets by AMASK extensions and PALcode
+ 	implementation.
+	(struct alpha_operand): Move flags slot for better packing.
+
+Thu Oct 10 14:29:11 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (FMT_*): Move operand format definitions
+	here.
+
+Tue Oct  8 14:48:07 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (MN10300_OPERAND_PAREN): Define.
+
+Mon Oct  7 16:52:11 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (mn10300_opcode): Add "format" field.
+	(MN10300_OPERAND_*): Define.
+
+Thu Oct  3 10:33:46 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10x00.h: Delete.
+	* mn10200.h, mn10300.h: New files.
+
+Wed Oct  2 21:31:26 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10x00.h: New file.
+
+Fri Sep 13 14:58:13 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (stmac): Add missing instruction.
+
 Fri Aug 16 14:44:15 1996  James G. Smith  <jsmith@cygnus.co.uk>
 
 	* mips.h (OP_SH_LOCC, OP_SH_HICC, OP_MASK_CC, OP_SH_COP1NORM,

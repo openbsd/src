@@ -954,7 +954,7 @@ DESCRIPTION
 	Not enough memory exists to create private data for @var{obfd}.
 
 .#define bfd_copy_private_bfd_data(ibfd, obfd) \
-.     BFD_SEND (ibfd, _bfd_copy_private_bfd_data, \
+.     BFD_SEND (obfd, _bfd_copy_private_bfd_data, \
 .		(ibfd, obfd))
 
 */
@@ -975,7 +975,7 @@ DESCRIPTION
 	Not enough memory exists to create private data for @var{obfd}.
 
 .#define bfd_merge_private_bfd_data(ibfd, obfd) \
-.     BFD_SEND (ibfd, _bfd_merge_private_bfd_data, \
+.     BFD_SEND (obfd, _bfd_merge_private_bfd_data, \
 .		(ibfd, obfd))
 
 */

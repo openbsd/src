@@ -141,13 +141,28 @@ fetch_data (info, addr)
 #define fs OP_REG, fs_reg
 #define gs OP_REG, gs_reg
 
-typedef int op_rtn PARAMS ((int bytemode, int aflag, int dflag));
+typedef int (*op_rtn) PARAMS ((int bytemode, int aflag, int dflag));
 
-static op_rtn OP_E, OP_G, OP_I, OP_indirE, OP_sI, OP_REG, OP_J, OP_DIR, OP_OFF;
-static op_rtn OP_ESDI, OP_DSSI, OP_SEG, OP_C, OP_D, OP_T, OP_rm, OP_ST;
-static op_rtn OP_STi;
+static int OP_E PARAMS ((int, int, int));
+static int OP_G PARAMS ((int, int, int));
+static int OP_I PARAMS ((int, int, int));
+static int OP_indirE PARAMS ((int, int, int));
+static int OP_sI PARAMS ((int, int, int));
+static int OP_REG PARAMS ((int, int, int));
+static int OP_J PARAMS ((int, int, int));
+static int OP_DIR PARAMS ((int, int, int));
+static int OP_OFF PARAMS ((int, int, int));
+static int OP_ESDI PARAMS ((int, int, int));
+static int OP_DSSI PARAMS ((int, int, int));
+static int OP_SEG PARAMS ((int, int, int));
+static int OP_C PARAMS ((int, int, int));
+static int OP_D PARAMS ((int, int, int));
+static int OP_T PARAMS ((int, int, int));
+static int OP_rm PARAMS ((int, int, int));
+static int OP_ST PARAMS ((int, int, int));
+static int OP_STi  PARAMS ((int, int, int));
 #if 0
-static op_rtn OP_ONE;
+static int OP_ONE PARAMS ((int, int, int));
 #endif
 
 static void append_prefix PARAMS ((void));
@@ -223,11 +238,11 @@ static void ckprefix PARAMS ((void));
 
 struct dis386 {
   char *name;
-  op_rtn *op1;
+  op_rtn op1;
   int bytemode1;
-  op_rtn *op2;
+  op_rtn op2;
   int bytemode2;
-  op_rtn *op3;
+  op_rtn op3;
   int bytemode3;
 };
 
@@ -1061,6 +1076,10 @@ print_insn_x86 (pc, info, aflag, dflag)
 
   struct dis_private priv;
   bfd_byte *inbuf = priv.the_buffer;
+
+  /* The output looks better if we put 5 bytes on a line, since that
+     puts long word instructions on a single line.  */
+  info->bytes_per_line = 5;
 
   info->private_data = (PTR) &priv;
   priv.max_fetched = priv.the_buffer;

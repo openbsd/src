@@ -19,6 +19,13 @@ AC_ARG_ENABLE(shared,
   *bfd*) shared=true ;;
   *) shared=false ;;
 esac])dnl
+AC_ARG_ENABLE(64-bit-bfd,
+[  --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)],
+[case "${enableval}" in
+  yes)  want64=true  ;;
+  no)   want64=false ;;
+  *)    AC_MSG_ERROR(bad value ${enableval} for 64-bit-bfd option) ;;
+esac],[want64=false])dnl
 
 AC_CONFIG_HEADER(config.h:config.in)
 
@@ -128,8 +135,15 @@ done
 AC_SUBST(EMUL)
 AC_SUBST(TDIRS)
 
+dnl FIXME: We will build a 64 bit BFD for a 64 bit host or a 64 bit
+dnl target, and in those cases we should also build the 64 bit
+dnl emulations.
 if test x${all_targets} = xtrue; then
-  EMULATION_OFILES='$(ALL_EMULATIONS)'
+  if test x${want64} = xtrue; then
+    EMULATION_OFILES='$(ALL_EMULATIONS) $(ALL_64_EMULATIONS)'
+  else
+    EMULATION_OFILES='$(ALL_EMULATIONS)'
+  fi
 else
   EMULATION_OFILES=$all_emuls
 fi

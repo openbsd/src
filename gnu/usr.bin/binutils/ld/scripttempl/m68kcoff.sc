@@ -4,8 +4,9 @@ ${LIB_SEARCH_DIRS}
 PROVIDE (__stack = 0); 
 SECTIONS
 {
-  .text 0x1000000 : {
+  .text ${RELOCATING+ 0x1000000} : {
     *(.text)
+    ${CONSTRUCTING+ . = ALIGN(4);}
     ${RELOCATING+ etext  =  .;}
     ${CONSTRUCTING+ __CTOR_LIST__ = .;}
     ${CONSTRUCTING+ LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)}

@@ -10,17 +10,22 @@ Else If "{target_canonical}" =~ /powerpc-apple-macos/
 	forward-include "{srcdir}"mpw-eppcmac.c eppcmacos.c
 	Set emulation_ofiles "{o}"eppcmacos.c.o
 
-Else If "{target_canonical}" =~ /i386-unknown-go32/
+Else If "{target_canonical}" =~ /i386-\Option-x-go32/
 	Set emulname i386go32
 	forward-include "{srcdir}"mpw-ei386go32.c ei386go32.c
 	Set emulation_ofiles "{o}"ei386go32.c.o
 
-Else If "{target_canonical}" =~ /mips-\Option-x-\Option-x/
+Else If "{target_canonical}" =~ /mips-\Option-x-ecoff/
 	Set emulname mipsidt
-	forward-include "{srcdir}"mpw-emipsidt.c emipsidt.c
+	forward-include "{srcdir}"mpw-mipsidt.c emipsidt.c
 	Set emulation_ofiles "{o}"emipsidt.c.o
 
-Else If "{target_canonical}" =~ /sh-hitachi-hms/
+Else If "{target_canonical}" =~ /mips-\Option-x-\Option-x/
+	Set emulname elf32ebmip
+	forward-include "{srcdir}"mpw-mipself.c eelf32ebmip.c
+	Set emulation_ofiles "{o}"eelf32ebmip.c.o
+
+Else If "{target_canonical}" =~ /sh-\Option-x-hms/
 	Set emulname sh
 	forward-include "{srcdir}"mpw-esh.c esh.c
 	Set emulation_ofiles "{o}"esh.c.o

@@ -55,6 +55,7 @@ char *		trad_unix_core_file_failing_command PARAMS ((bfd *abfd));
 int		trad_unix_core_file_failing_signal PARAMS ((bfd *abfd));
 boolean		trad_unix_core_file_matches_executable_p
 			 PARAMS ((bfd *core_bfd, bfd *exec_bfd));
+static void	swap_abort PARAMS ((void));
 
 /* Handle 4.2-style (and perhaps also sysV-style) core dump file.  */
 
@@ -257,7 +258,7 @@ trad_unix_core_file_matches_executable_p  (core_bfd, exec_bfd)
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
-void
+static void
 swap_abort()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */

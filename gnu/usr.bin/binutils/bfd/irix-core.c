@@ -40,6 +40,16 @@ struct sgi_core_struct
 #define core_signal(bfd) (core_hdr(bfd)->sig)
 #define core_command(bfd) (core_hdr(bfd)->cmd)
 
+static asection *make_bfd_asection
+  PARAMS ((bfd *, CONST char *, flagword, bfd_size_type, bfd_vma, file_ptr));
+static const bfd_target *irix_core_core_file_p PARAMS ((bfd *));
+static char *irix_core_core_file_failing_command PARAMS ((bfd *));
+static int irix_core_core_file_failing_signal PARAMS ((bfd *));
+static boolean irix_core_core_file_matches_executable_p 
+  PARAMS ((bfd *, bfd *));
+static asymbol *irix_core_make_empty_symbol PARAMS ((bfd *));
+static void swap_abort PARAMS ((void));
+
 static asection *
 make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
      bfd *abfd;
@@ -130,8 +140,7 @@ irix_core_core_file_p (abfd)
 			      SEC_ALLOC+SEC_LOAD+SEC_HAS_CONTENTS,
 			      vmap.v_len,
 			      vmap.v_vaddr,
-			      vmap.v_offset,
-			      2))
+			      vmap.v_offset))
 	return NULL;
     }
 
@@ -202,7 +211,7 @@ irix_core_make_empty_symbol (abfd)
 #define irix_core_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
-void
+static void
 swap_abort()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */

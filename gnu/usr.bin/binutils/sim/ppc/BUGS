@@ -1,0 +1,34 @@
+	See the ChangeLog file looking for lines taged with the word FIXME.
+
+	COREFILE.C: The implementation of corefile.c (defined by
+	corefile.h) isn't the best.  It is intended to be functionaly
+	correct rather than fast.  One option being considered
+	is to add a data cache to reduce the overhead of the most
+	common case of data read/writes.
+
+	HTAB (page) code for OEA model untested.  Some of the vm code
+	instructions unimplemented.
+
+	Lacks PowerOpen (a.k.a. XCOFF a.k.a. AIX) and NT startups.  The
+	PowerOpen worked until I added the ELF one.
+
+	Missing VEA system calls.
+
+	Missing or commented out instructions.
+
+	64bit target untested.
+
+	64bit host broken.  For instance use of scanf "%x", &long long.
+
+	Event code for pending events from within signal handlers not
+	finished/tested.
+
+	Better and more devices.
+
+	PORTABILITY (Notes taken from Michael Meissner): Heavy use of the ##
+	operator - fix using the clasic X/**/Y hack; Use of the signed
+	keyword.  In particular, signed char has no analogue in classic C
+	(though most implementations of classic C use signed chars); Use of
+	long long which restricts the target compiler to be GCC.
+
+

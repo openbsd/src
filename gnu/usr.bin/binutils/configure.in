@@ -49,11 +49,7 @@ fi
 
 # these tools are built for the host environment
 #
-host_tools="texinfo byacc flex bison binutils ld gas gcc gdb make patch
-	    prms send-pr gprof gdbtest tgas etc expect dejagnu sim bash
-            m4 autoconf ispell grep diff rcs cvs fileutils shellutils time
-	    textutils wdiff find emacs emacs19 uudecode hello tar gzip indent
-	    recode release sed utils guile perl apache inet gawk"
+host_tools="texinfo byacc flex bison binutils ld gas gcc gdb make patch prms send-pr gprof gdbtest tgas etc expect dejagnu sim bash m4 autoconf ispell grep diff rcs cvs fileutils shellutils time textutils wdiff find emacs emacs19 uudecode hello tar gzip indent recode release sed utils guile perl apache inet gawk"
 
 
 # these libraries are built for the target environment, and are built after
@@ -81,10 +77,9 @@ target_tools="target-examples target-groff"
 
 # directories to be built in the native environment only
 #
-native_only="autoconf cvs emacs emacs19 fileutils find gawk grep gzip hello
-	     indent ispell m4 rcs recode sed shellutils tar textutils gash
-	     uudecode wdiff gprof target-groff guile perl apache inet time
-	     bash prms"
+# This must be a single line because of the way it is searched by grep in
+# the code below.
+native_only="autoconf cvs emacs emacs19 fileutils find gawk grep gzip hello indent ispell m4 rcs recode sed shellutils tar textutils gash uudecode wdiff gprof target-groff guile perl apache inet time bash prms"
 
 # directories to be built in a cross environment only
 #
@@ -127,7 +122,7 @@ case "${host}" in
   mips*-sgi-irix3*)       host_makefile_frag=config/mh-sysv ;;
   mips*-*-sysv4*)	  host_makefile_frag=config/mh-sysv4 ;;
   mips*-*-sysv*)	  host_makefile_frag=config/mh-riscos ;;
-  i[3456]86-*-dgux*)	  host_makefile_frag=config/mh-sysv4 ;;
+  i[3456]86-*-dgux*)	  host_makefile_frag=config/mh-dgux386 ;;
   i[3456]86-ncr-sysv4.3)  host_makefile_frag=config/mh-ncrsvr43 ;;
   i[3456]86-ncr-sysv4*)   host_makefile_frag=config/mh-ncr3000 ;;
   i[3456]86-*-sco3.2v5*)  host_makefile_frag=config/mh-sysv ;;
@@ -138,6 +133,7 @@ case "${host}" in
   i[3456]86-*-aix*)	  host_makefile_frag=config/mh-aix386 ;;
   i[3456]86-*-go32*)	  host_makefile_frag=config/mh-go32 ;;
   *-cygwin32*)	  	  host_makefile_frag=config/mh-cygwin32 ;;
+  *-windows*)	  	  host_makefile_frag=config/mh-windows ;;
   vax-*-ultrix2*)         host_makefile_frag=config/mh-vaxult2 ;;
   *-*-solaris2*)          host_makefile_frag=config/mh-solaris ;;
   m68k-sun-sunos*)	  host_makefile_frag=config/mh-sun3 ;;
@@ -215,12 +211,6 @@ case "${target}" in
   v810*)		target_makefile_frag=config/mt-v810 ;;
   i[3456]86-*-netware*) target_makefile_frag=config/mt-netware ;;
   powerpc-*-netware*)   target_makefile_frag=config/mt-netware ;;
-  powerpc*-*-eabi* | \
-  powerpc*-*-elf* | \
-  powerpc*-*-linux* | \
-  powerpc*-*-rtem* | \
-  powerpc*-*-sysv* | \
-  powerpc*-*-solaris*)	target_makefile_frag=config/mt-ppc ;;
 esac
 
 skipdirs=
@@ -385,6 +375,11 @@ case "${host}" in
   *-*-cygwin32)
      noconfigdirs="tk tcl expect dejagnu cvs autoconf bison send-pr gprof rcs guile perl texinfo apache inet"
     ;;
+  *-*-windows*)
+# This is only used to build WinGDB...
+     configdirs="bfd gdb libiberty opcodes readline sim"
+     target_configdirs=
+    ;;
   ppc*-*-pe)
      noconfigdirs="patch diff make tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs guile perl apache inet"
     ;;
@@ -412,6 +407,9 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   arm-*-pe*)
+    noconfigdirs="$noconfigdirs target-libgloss"
+    ;;
+  arm-*-coff*)
     noconfigdirs="$noconfigdirs target-libgloss"
     ;;
   arm-*-riscix*)
@@ -476,6 +474,12 @@ case "${target}" in
     esac
     # but that's okay since emacs doesn't work anyway
     noconfigdirs="$noconfigdirs emacs emacs19 target-libgloss"
+    ;;
+  mn10200-*-*)
+    noconfigdirs="$noconfigdirs ld gcc gdb target-libiberty target-libgloss target-newlib target-libio target-librx target-libstdc++ target-libg++"
+    ;;
+  mn10300-*-*)
+    noconfigdirs="$noconfigdirs ld gcc gdb target-libiberty target-libgloss target-newlib target-libio target-librx target-libstdc++ target-libg++"
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
@@ -721,6 +725,14 @@ if [ x${use_gnu_ld} = x ] ; then
     with_gnu_ld=yes
     withoptions="$withoptions --with-gnu-ld"
   fi
+fi
+
+# If using newlib, add --with-newlib to the withoptions so that gcc/configure
+# can detect this case.
+
+if [ x${with_newlib} != xno ] && echo " ${target_configdirs} " | grep " target-newlib " > /dev/null 2>&1 && [ -d ${srcdir}/newlib ] ; then
+  with_newlib=yes
+  withoptions="$withoptions --with-newlib"
 fi
 
 if [ x${shared} = xyes ]; then

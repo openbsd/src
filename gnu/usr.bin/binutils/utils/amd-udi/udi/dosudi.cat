@@ -1,0 +1,131 @@
+
+
+
+UDI(5)                    FILE FORMATS                     UDI(5)
+
+
+
+NAME
+     udi - UDI Configuration Files for DOS hosts.
+
+
+
+DESCRIPTION
+     A UDI conformant Debugger Front End (DFE) specifies the Tar-
+     get Interface Process (TIP) that it wishes to connect to and
+     the options that it wishes to pass to that TIP by  referenc-
+     ing  a  configuration in the "UDI configuration file".  This
+     man page explains the format of the UDI  Configuration  file
+     for DOS hosts.
+
+     The search rules that the DFE uses to locate the UDI  Confi-
+     guration file are:
+
+          the complete  filename  specified  by  the  environment
+          variable, UDICONF.
+
+          the file udiconfs.txt in the current directory.
+
+          the file udiconfs.txt in each of the directories speci-
+          fied by the PATH environment variable.
+
+
+     Each line of the udi_soc  file  consists  of  the  following
+     fields:
+
+          tip_config_name  tip_executable  [tip_options]
+
+     tip_config_name
+               An arbitrary name which the DFE will use to  refer
+               to  this  configuration.  Each line in the udi_soc
+               file must have a different tip_config_name field.
+
+     tip_executable
+               The name of the TIP executable file.  The DFE will
+               use  the  tip_executable filename to spawn the TIP
+               if the TIP is not already running. If a full path-
+               name  is not specified, the PATH environment vari-
+               able is used to locate the executable file.
+
+
+     tip_options
+               The rest of the line after the tip_executable name
+               is passed to the TIP at connect time.
+
+
+EXAMPLES OF UDI CONFIGURATION FILE ENTRIES
+     The following is an exampleare examples of  entries  in  the
+     UDI configuration file for DOS hosts.
+
+
+
+
+UDI Configuration Files for DOS hostsLast change: 27 Jan. 1992                   1
+
+
+
+
+
+
+UDI(5)                    FILE FORMATS                     UDI(5)
+
+
+
+      iss050  isstip.exe -29050 -r osboot
+
+     The  above  entry  associates  the  TIP  configuration  name
+     "iss050"  with the isstip.exe executable with the parameters
+     "-29050 -r osboot" being passed to  isstip.exe  when  it  is
+     invoked.   If isstip.exe is not already running and needs to
+     be spawned, the PATH environment variable will  be  used  to
+     locate the file isstip.exe.
+
+
+TRADEMARKS
+     AMD is a registered trademark  of  Advanced  Micro  Devices,
+     Inc.   MiniMON29K,  29K, Am29000, Am29005, Am29030, Am29035,
+     Am29200, and Am29050 are trademarks of Advanced  Micro  Dev-
+     ices, Inc.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+UDI Configuration Files for DOS hosts   Last change: 27 Jan. 1992          2
+
+

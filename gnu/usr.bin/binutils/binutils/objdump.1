@@ -42,6 +42,7 @@ objdump \- display information from object files.
 .RB " | " "\-\-architecture="\c
 .I machine\c
 \&\|] 
+.RB "[\|" \-\-prefix\-addresses "\|]" 
 .RB "[\|" \-r | \-\-reloc "\|]" 
 .RB "[\|" \-R | \-\-dynamic\-reloc "\|]" 
 .RB "[\|" \-s | \-\-full\-contents "\|]"
@@ -225,6 +226,11 @@ architecture information, such as S-records.  You can list the available
 architectures with the \fB\-i\fP option. 
 
 .TP
+.B \-\-prefix\-addresses
+When disassembling, print the complete address on each line.  This is
+the older disassembly format.
+
+.TP
 .B \-r
 .TP
 .B \-\-reloc
@@ -254,9 +260,11 @@ Display source code intermixed with disassembly, if possible.  Implies
 \fB-d\fP.
 
 .TP
-.B \-\-show-raw-insn
+.B \-\-show\-raw\-insn
 When disassembling instructions, print the instruction in hex as well as
-in symbolic form.  Not all targets handle this correctly yet.
+in symbolic form.  This is the default except when
+.B \-\-prefix\-addresses
+is used.
 
 .TP
 .B \-\-stabs

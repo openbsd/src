@@ -1,0 +1,350 @@
+Thu Oct  3 16:13:18 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (mostlyclean): Don't remove config.log here.
+
+Fri Aug  9 22:59:11 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): rts, sleep, bpt and nop have
+	no associated "size".
+
+Tue Jul  9 22:15:39 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Fix all rotate-by-2-bits insns.
+
+Tue Jul  2 23:08:45 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* run.c (main): Don't "load" sections which don't have
+	SEC_LOAD set.
+	* compile.c (sim_resume, case "O_NOT"): Use ONOT instead
+	of OSHIFTS.
+	(ONOT): Define.
+	(sim_resume, shift/rotate cases): Add support for shift/rotate
+	by two bits.
+	(OSHIFTS): Corresponding changes.
+
+Tue Jul  2 01:37:27 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Handle "ldm.l" and "stm.l".
+
+Wed Jun 26 08:58:53 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (h8300smode): Declare.
+
+Wed Jun 26 12:20:56 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+        (docdir): Removed.
+        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
+        (AC_PROG_INSTALL): Added.
+        * configure: Rebuilt.
+
+Tue Jun 18 16:31:10 1996  Jeffrey A. Law  <law@rtl.cygnus.com>
+
+	* compile.c (sim_load): Treat the H8/S like the H8/300H for now.
+	* run.c (main): Treat the H8/S like the H8/300H for now.
+	
+Fri May 24 10:35:25 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (SEXTCHAR): Clear upper bits when sign
+	bit is clear.
+
+Wed May 22 22:23:37 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Correctly handle divu.
+
+Tue May  7 02:13:05 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Never allow the PC to have an
+	odd value.
+
+Fri Apr 12 16:50:37 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* inst.h: Expand on comments regarding H8300H_MSIZE.  Note
+	separate memory is allocate for the 8-bit area.
+	(struct cpu_state_type): Add new "eightbit' field.
+	* compile.c (GET_MEMORY_L): Handle access into the 8-bit
+	area.
+	(GET_MEMORY_W, GET_MEMORY_B): Likewise.
+	(SET_MEMORY_L, SET_MEMORY_W, SET_MEMORY_B): Likewise.
+	(init_pointers): Initialize space for the 8-bit area.
+	(sim_write): Handle writing into the 8-bit area.
+	(sim_read): Handle reading from the 8-bit area.
+	(sim_load): Reallocate space for the 8-bit area.
+
+	* compile.c (sim_load): Re-allocate memory for the simulator
+	here.
+
+Fri Apr 12 09:39:56 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Fix and simplify overflow and carry
+	handling for 32bit ALU insns.
+
+Mon Apr  8 23:58:49 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (sim_resume): Fix overflow checks for ALU insns.
+
+Fri Apr  5 17:20:59 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (decode): Use "bit" to hold L_3 immediates instead
+	of holding them in "abs".  Handle ABS8MEM memory references aka
+	8-bit area.  Replace ABSMOV references with ABS8MEM.
+
+Wed Mar 13 17:43:56 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* compile.c (fetch): Handle accesses to the exception/function
+	vectors.
+
+Mon Mar 11 09:53:25 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* compile.c: #include "wait.h".
+ 	(sim_resume, sleep insn): Check program exit status in r0.
+	(sim_resume, shift insns): Fix setting of overflow flag for shal.
+	* run.c: #include <signal.h>.
+	(main): Abort if program got SIGILL.
+	Print error message if argument is invalid.
+	(usage): Improve text.
+
+Wed Feb 21 12:15:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate with autoconf 2.7.
+
+Thu Jan  4 11:52:53 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* inst.h (MPOWER,MSIZE): Deleted.
+	(H8300{,H}_MSIZE): Define.
+	* compile.c (memory_size): New static global.
+	(init_pointers): Set memory size from one of H8300{,H}_MSIZE.
+	(sim_write,sim_read): Use memory_size.
+
+Fri Oct 13 15:03:19 1995  steve chamberlain  <sac@slash.cygnus.com>
+
+	* compile.c (sim_set_callbacks): New.
+
+Tue Oct 10 11:11:26 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Makefile.in (BISON): Remove macro.
+
+Wed Sep 20 13:35:02 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (maintainer-clean): New synonym for realclean.
+
+Fri Sep  8 12:18:53 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (install): Don't install in $(tooldir).
+
+	* configure.in: Call AC_CONFIG_HEADER.  Don't try to use
+	bfd/hosts/*.h file or bfd/config/*.mh file.  Call AC_PROG_CC and
+	AC_PROG_RANLIB.  Substitute in values for CFLAGS, HDEFINES and AR.
+	Call AC_CHECK_HEADERS for stdlib.h and time.h.  Touch stamp.h if
+	creating config.h.
+	* configure: Rebuild.
+	* config.in: New file, created by autoheader.
+	* Makefile.in (AR): Define as @AR@.
+	(CC): New variable, defined as @CC@.
+	(CFLAGS): Define as @CFLAGS@.
+	(RANLIB): Define as @RANLIB@.
+	(HDEFINES, TDEFINES): New variables.
+	(@host_makefile_frag@): Remove.
+	(compile.o, run.o): Depend upon config.h.
+	(mostlyclean): Make the same as clean, not distclean.
+	(clean): Remove config.log.
+	(distclean): Remove config.h and stamp-h.
+	(Makefile): Don't depend upon @frags@.  Just rebuild Makefile when
+	invoking config.status.
+	(config.h, stamp-h): New targets.
+	* compile.c: Include "config.h".  Don't include <sys/times.h>.
+	Include <time.h> and <stdlib.h> if they exist.  Don't include
+	"sysdep.h".
+	(get_now): Remove unused local b.
+	* run.c: Include "config.h".  Include <stdlib.h> if it exists.
+	Don't include "sysdep.h".
+	* writecode.c: Don't include "bfd.h" or "sysdep.h".  Include
+	<stdio.h>.
+
+Thu Aug  3 10:45:37 1995  Fred Fish  <fnf@cygnus.com>
+
+	* Update all FSF addresses except those in COPYING* files.
+
+Wed Jul  5 14:32:54 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* Makefile.in (clean): Remove run.
+	(distclean): Remove Makefile.
+
+	* h8300.mt: Removed.
+
+	* Makefile.in, configure.in: converted to autoconf.
+	* configure: New file, generated with autconf 2.4.
+
+Fri Jun 30 16:50:24 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* compile.c (sim_do_command): New function.
+
+Tue Jun 20 16:18:13 1995  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* compile.c (get_now): Don't do if win32.
+	(sim_resume): Poll in win32 too.
+
+Wed May 24 16:31:38 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* configure.in: Fix typo in last change.
+
+Mon Mar 27 10:32:34 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* run.c: parse arguments with getopt().
+
+Tue Feb 28 17:30:08 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use ../../bfd/hosts/std-host.h if specific
+	host unavailable.
+
+Sun Jan 22 12:35:43 1995  Steve Chamberlain  <sac@splat>
+
+	* compile.c (sim_resume): Initialize cpu.mask.
+
+Thu Sep  8 16:53:00 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
+
+	* inst.h (MPOWER): Bump simulated memory size to 2^18 bytes.
+
+Wed May 18 13:47:58 1994  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c: #include "bfd.h".
+	(sim_*): Set result type to void where there isn't one.
+	(sim_resume, default case): Set cpu.exception to SIGILL.
+	(sim_trace): Delete.
+	(sim_set_pc): Delete.
+	(sim_info): Delete printf_fn arg, all callers changed.
+	Call printf_filtered.
+	(set_h8300h): New arg `flag', all callers changed.
+	(sim_close): New function.
+	(sim_load): New function.
+	(sim_create_inferior): Renamed from sim_set_args, all callers changed.
+	* run.c: #include <varargs.h>, "remote-sim.h".
+	(printf_filtered): New function.
+
+Fri May 13 18:32:27 1994  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (decode): Fix typo (16 bit branches).
+	(*): Some white space clean up.
+
+Fri May  6 13:44:01 1994  Steve Chamberlain  (sac@jonny.cygnus.com)
+
+	* compile.c (decode): Compile 16bit branches properly.
+
+Sat Dec 11 16:32:36 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* compile.c: Tidy up formatting. (sim_resume): Add orc, xorc,
+	andc.  Poll for interrupts.
+
+Thu Oct 28 19:29:34 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c: #include "ansidecl.h" for remote-sim.h.
+
+Tue Oct 26 09:43:36 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* Makefile.in (CSEARCH): Add -I$(srcdir)/../../gdb
+	* compile.c: #include "remote-sim.h".
+	(sim_resume): New arg siggnal.
+	(sim_write): Use SIM_ADDR for type of arg addr.
+	Always return a value.
+	(sim_read): Ditto.
+	(sim_store_register): Result is type int.
+	(sim_fetch_register): Ditto.
+	(sim_stop_reason): Renamed from sim_stop_signal.
+	(sim_set_pc): Use SIM_ADDR for type of arg pc.
+	(sim_info): int result, new arg printf_fn.
+	(sim_kill): int result.
+	(sim_open): int result, new arg name.
+	* run.c (main): Use sim_set_pc to set pc.
+	Update call to sim_info.
+
+Sat Oct 23 15:01:18 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (sim_stop_signal): Result is now enum sim_stop.
+
+Fri Oct 15 23:49:27 1993  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* compile.c (sim_kill, sim_open, sim_set_args): New functions.
+
+Thu Oct  7 16:24:10 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c (sim_set_pc): Write to the pc direcly.
+	(sim_store_register): Now value is passed by reference. (sim_read,
+	sim_write): Return number of bytes copied.
+
+Tue Aug 17 07:16:15 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c (mop): New function to do multiplies.
+
+Fri Jul 16 13:53:53 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (sim_resume): Add support for nop insn.
+
+Thu Jul 15 09:59:01 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c: Reset HMODE back to zero (accidently set it to 1).
+
+	* run.c (main): If h8/300h binary detected, call set_h8300h.
+	* compile.c (sim_resume): Fix O_NEG insn.
+
+Fri Jul  9 14:36:48 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* run.c (main): Add -h flag to enable h8/300h emulation.
+	* compile.c: Rename Hmode to HMODE (consistency with gdb).
+	(set_h8300h): New function.
+	(sim_resume): Add support for extu,exts insns.
+	(sim_resume): Fix logical right shifting.
+	(sim_resume, label alu32): Fix setting of carry flag.
+	
+Sun Jul  4 00:35:41 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* compile.c (sim_csize): Initialize cpu.cache.
+
+Fri Jul  2 17:42:59 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* Makefile.in: Add -I../../bfd to pick up bfd.h.
+
+Thu Jun 24 13:40:12 1993  Doug Evans  (dje@canuck.cygnus.com)
+
+	* run.c (main): Fix parsing of args.
+
+	* compile.c (sim_resume): Fix shll insn.
+
+Tue Jun  8 14:16:46 1993  Steve Chamberlain  (sac@phydeaux.cygnus.com)
+
+	* compile.c: New file, supports H8/300H.
+	* p1,p3, gencode.c, state.h, writecode.c All dead and obsolete.
+
+Tue Jun  1 11:14:59 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* run.c (main): Add -v to print info.
+	* p3.c (sim_info):  New function.
+
+Mon Mar 15 15:48:31 1993  Ian Lance Taylor  (ian@cygnus.com)
+
+	* h8300.mt (DO_INSTALL): Renamed from INSTALL.
+
+Wed Mar  3 15:06:53 1993  Steve Chamberlain  (sac@poseidon.cygnus.com)
+
+	* Makefile.in: Don't use cb or indent
+	* p1.c, state.h, writecode.c: lint
+
+Mon Feb  1 16:44:58 1993  John Gilmore  (gnu@cygnus.com)
+
+	* Makefile.in:  Make SunOS halfdone VPATH work.
+	* p1.c:  Lint picked up by HP native compiler.
+
+Mon Jan  4 12:32:35 1993  Steve Chamberlain  (sac@wahini.cygnus.com)
+
+	* p1.c (sim_resume): when running on dos, any character typed to
+	the keyboard will cause a simulated exception.
+
+Sun Jan  3 14:15:07 1993  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* p1.c, p3.c, run.c, writecode.c: all used h8/300 opcodes in and
+	running
+
+Tue Dec 22 13:56:48 1992  Steve Chamberlain  (sac@thepub.cygnus.com)
+
+	* new 
+

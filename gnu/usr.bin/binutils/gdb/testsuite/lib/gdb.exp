@@ -1,0 +1,739 @@
+# Copyright (C) 1992, 1994, 1995 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Fred Fish. (fnf@cygnus.com)
+
+# Generic gdb subroutines that should work for any target.  If these
+# need to be modified for any target, it can be done with a variable
+# or by passing arguments.
+
+load_lib libgloss.exp
+
+global GDB
+global CC
+global CXX
+global CFLAGS
+global CXXFLAGS
+global CHILL_LIB
+global CHILL_RT0
+
+if ![info exists CC] {
+    set CC [findfile $base_dir/../../gcc/xgcc "$base_dir/../../gcc/xgcc -B$base_dir/../../gcc/" [transform gcc]]
+}
+verbose "using CC = $CC" 2
+if ![info exists CXX] {
+    set CXX [findfile $base_dir/../../gcc/xgcc "$base_dir/../../gcc/xgcc -B$base_dir/../../gcc/" [transform g++]]
+}
+verbose "using CXX = $CXX" 2
+if ![info exists CHILL_LIB] {
+    set CHILL_LIB [findfile $base_dir/../../gcc/ch/runtime/libchill.a "$base_dir/../../gcc/ch/runtime/libchill.a" [transform -lchill]]
+}
+verbose "using CHILL_LIB = $CHILL_LIB" 2
+if ![info exists CHILL_RT0] {
+    set CHILL_RT0 [findfile $base_dir/../../gcc/ch/runtime/chillrt0.o "$base_dir/../../gcc/ch/runtime/chillrt0.o" ""]
+}
+verbose "using CHILL_RT0 = $CHILL_RT0" 2
+
+if ![info exists LDFLAGS] {
+    if [is3way] {
+	append LDFLAGS " [libgloss_flags] [newlib_flags]"
+    }
+    set LDFLAGS ""
+}
+verbose "using LDFLAGS = $LDFLAGS" 2
+
+if ![info exists GDB] then {
+    set GDB [findfile $base_dir/../../gdb/gdb "$base_dir/../../gdb/gdb" [transform gdb]]
+}
+verbose "using GDB = $GDB" 2
+
+global GDBFLAGS
+if ![info exists GDBFLAGS] then {
+    set GDBFLAGS "-nx"
+}
+verbose "using GDBFLAGS = $GDBFLAGS" 2
+
+# The variable prompt is a regexp which matches the gdb prompt.  Set it if it
+# is not already set.
+global prompt
+if ![info exists prompt] then {
+    set prompt "\\(gdb\\)"
+}
+
+global usestubs
+if [istarget "sparclite-*-*"] then {
+    set usestubs 1
+} else {
+    set usestubs 0
+}
+
+if ![info exists noargs] then {
+    set noargs 0
+}
+
+if ![info exists nosignals] then {
+    set nosignals 0
+}
+
+if ![info exists noinferiorio] then {
+    set noinferiorio 0
+}
+
+if ![info exists noresults] then {
+    set noresults 0
+}
+
+#
+# gdb_version -- extract and print the version number of GDB
+#
+proc default_gdb_version {} {
+    global GDB
+    global GDBFLAGS
+    if {[which $GDB] != 0} then {
+	set tmp [exec echo "q" | $GDB -nw $GDBFLAGS]
+	regexp " \[0-9\]\[^ \t\n\]+" $tmp version
+	clone_output "[which $GDB] version$version -nw $GDBFLAGS \n"
+    } else {
+	warning "$GDB does not exist"
+    }
+}
+
+#
+# gdb_unload -- unload a file if one is loaded
+#
+
+proc gdb_unload {} {
+    global verbose
+    global GDB
+    global prompt
+    send "file\n"
+    expect {
+	-re "No exec file now.*\r" { exp_continue }
+	-re "No symbol file now.*\r" { exp_continue }
+	-re "A program is being debugged already..*Kill it.*y or n. $"\
+	    { send "y\n"
+		verbose "\t\tKilling previous program being debugged"
+	    exp_continue
+	}
+	-re "Discard symbol table from .*y or n. $" {
+	    send "y\n"
+	    exp_continue
+	}
+	-re "$prompt $" {}
+	timeout {
+	    perror "couldn't unload file in $GDB (timed out)."
+	    return -1
+	}
+    }
+}
+
+# Many of the tests depend on setting breakpoints at various places and
+# running until that breakpoint is reached.  At times, we want to start
+# with a clean-slate with respect to breakpoints, so this utility proc 
+# lets us do this without duplicating this code everywhere.
+#
+
+proc delete_breakpoints {} {
+    global prompt
+
+    send "delete breakpoints\n"
+    expect {
+	-re "Delete all breakpoints.*y or n. $" {
+	    send "y\n"
+	    exp_continue
+	}
+	-re "y\r\n$prompt $" {}
+	-re ".*$prompt $" { # This happens if there were no breakpoints
+	    }
+	timeout { perror "Delete all breakpoints (timeout)" ; return }
+    }
+    send "info breakpoints\n"
+    expect {
+	-re "No breakpoints or watchpoints..*$prompt $" {}
+	-re ".*$prompt $" { perror "breakpoints not deleted" ; return }
+	timeout { perror "info breakpoints (timeout)" ; return }
+    }
+}
+
+
+#
+# Generic run command.
+#
+# The second pattern below matches up to the first newline *only*.
+# Using ``.*$'' could swallow up output that we attempt to match
+# elsewhere.
+#
+proc gdb_run_cmd {} {
+    global usestubs
+    global prompt
+
+    if $usestubs!=0 {
+	send "jump *start\n"
+	expect {
+	    -re "Line.* Jump anyway.*y or n. $" {
+		send "y\n"
+		expect {
+		    -re "Continuing.*$prompt $" {}
+		    timeout { perror "Jump to start() failed (timeout)"; return }
+		}
+            }
+	    timeout { perror "Jump to start() failed (timeout)"; return }
+	}
+	send "continue\n"
+	return
+    }
+    send "run\n"
+    expect {
+	-re "The program .* has been started already.*y or n. $" {
+	    send "y\n"
+	    exp_continue
+	}
+	-re "Starting program: \[^\n\]*" {}
+    }
+}
+
+
+# Set breakpoint at function and run gdb until it breaks there.
+# Since this is the only breakpoint that will be set, if it stops
+# at a breakpoint, we will assume it is the one we want.  We can't
+# just compare to "function" because it might be a fully qualified,
+# single quoted C++ function specifier.
+
+proc runto { function } {
+    global prompt
+    global decimal
+
+    send "delete\n"
+    expect {
+	-re "delete.*Delete all breakpoints.*y or n. $" {
+	    send "y\n"
+	    expect {
+		-re "$prompt $" {}
+		timeout { fail "deleting breakpoints (timeout)" ; return 0 }
+	    }
+	}
+	-re ".*$prompt $" {}
+	timeout { fail "deleting breakpoints (timeout)" ; return 0 }
+    }
+
+    send "break $function\n"
+    # The first two regexps are what we get with -g, the third is without -g.
+    expect {
+	-re "Breakpoint \[0-9\]* at .*: file .*, line $decimal.\r\n$prompt $" {}
+	-re "Breakpoint \[0-9\]*: file .*, line $decimal.\r\n$prompt $" {}
+	-re "Breakpoint \[0-9\]* at .*$prompt $" {}
+	-re "$prompt $" { fail "setting breakpoint at $function" ; return 0 }
+	timeout { fail "setting breakpoint at $function (timeout)" ; return 0 }
+    }
+
+    gdb_run_cmd
+    
+    # the "at foo.c:36" output we get with -g.
+    # the "in func" output we get without -g.
+    expect {
+	-re "Break.* at .*:$decimal.*$prompt $" {
+	    return 1
+	}
+	-re "Breakpoint \[0-9\]*, \[0-9xa-f\]* in $function.*$prompt $" { 
+	    return 1
+	}
+	-re "$prompt $" { 
+	    fail "running to $function"
+	    return 0
+	}
+	timeout { 
+	    fail "running to $function (timeout)"
+	    return 0
+	}
+    }
+}
+
+#
+# runto_main -- ask gdb to run and untill hit break point at main.
+#		if it uses stubs, assuming we hit breakpoint() and just
+#		step out of the function.
+#
+proc runto_main {} {
+    global prompt
+    global decimal
+    global usestubs
+
+    if $usestubs==0 {
+	return [runto main]
+    }			
+
+    send "delete\n"
+    expect {
+	-re "delete.*Delete all breakpoints.*y or n. $" {
+	    send "y\n"
+	    expect {
+		-re "$prompt $" {}
+		timeout { fail "deleting breakpoints (timeout)" ; return 0 }
+	    }
+	}
+	-re ".*$prompt $" {}
+	timeout { fail "deleting breakpoints (timeout)" ; return 0 }
+    }
+
+    send "step\n"
+    # if use stubs step out of the breakpoint() function.
+    expect {
+	-re "main.* at .*$prompt $" {}
+	timeout { fail "single step at breakpoint() (timeout)" ; return 0 }
+    }
+    return 1
+}
+
+#
+# gdb_test -- send a command to gdb and test the result.
+#             Takes three parameters.
+#             Parameters:
+#                First one is the command to execute.  If this is the null string
+#		   then no command is sent.
+#                Second one is the pattern to match for a PASS, and must NOT include
+#		   the \r\n sequence immediately before the gdb prompt.
+#                Third one is an optional message to be printed. If this
+#                  a null string "", then the pass/fail messages use the command
+#		   string as the message.
+#             Returns:
+#                1 if the test failed,
+#                0 if the test passes,
+#               -1 if there was an internal error.
+#
+proc gdb_test { args } {
+    global verbose
+    global prompt
+    global GDB
+    global spawn_id
+    global expect_out
+    upvar timeout timeout
+
+    if [llength $args]==3 then {
+	set message [lindex $args 2]
+    } else {
+	set message [lindex $args 0]
+    }
+    set command [lindex $args 0]
+    set pattern [lindex $args 1]
+
+    if $verbose>2 then {
+	send_user "Sending \"$command\" to gdb\n"
+	send_user "Looking to match \"$pattern\"\n"
+	send_user "Message is \"$message\"\n"
+    }
+
+    set result -1
+    if ![string match $command ""] {
+	send "$command\n"
+    }
+
+    expect {
+	-re ".*Ending remote debugging.*$prompt$" {
+	    if ![isnative] then {
+		warning "Can`t communicate to remote target."
+	    }
+	    gdb_exit
+	    gdb_start
+	    set result -1
+	}
+	-re "$pattern\r\n$prompt $" {
+	    if ![string match "" $message] then {
+		pass "$message"
+	    }
+	    set result 0
+	}
+	-re "Undefined command:.*$prompt" {
+	    perror "Undefined command \"$command\"."
+	    set result 1
+	}
+	-re "Ambiguous command.*$prompt $" {
+	    perror "\"$command\" is not a unique command name."
+	    set result 1
+	}
+	-re "(.*)(Program exited with code \[0-9\]+)(.*$prompt $)" {
+	    if ![string match "" $message] then {
+		set errmsg "$message: $expect_out(2,string)"
+	    } else {
+		set errmsg "$command: $expect_out(2,string)"
+	    }
+	    fail "$errmsg"
+	    return -1
+	}
+	-re "The program is not being run.*$prompt $" {
+	    if ![string match "" $message] then {
+		set errmsg "$message: the program is no longer running"
+	    } else {
+		set errmsg "$command: the program is no longer running"
+	    }
+	    fail "$errmsg"
+	    return -1
+	}
+	-re ".*$prompt $" {
+	    if ![string match "" $message] then {
+		fail "$message"
+	    }
+	    set result 1
+	}
+	"<return>" {
+	    send "\n"
+	    perror "Window too small."
+	}
+	-re "\\(y or n\\) " {
+	    send "n\n"
+	    perror "Got interactive prompt."
+	}
+	eof {
+	    perror "Process no longer exists"
+	    return -1
+	}
+	full_buffer {
+	    perror "internal buffer is full."
+	}
+	timeout	{
+	    if ![string match "" $message] then {
+		fail "(timeout) $message"
+	    }
+	    set result 1
+	}
+    }
+    return $result
+}
+
+# Test that a command gives an error.  For pass or fail, return
+# a 1 to indicate that more tests can proceed.  However a timeout
+# is a serious error, generates a special fail message, and causes
+# a 0 to be returned to indicate that more tests are likely to fail
+# as well.
+
+proc test_print_reject { args } {
+    global prompt
+    global verbose
+
+    if [llength $args]==2 then {
+	set expectthis [lindex $args 1]
+    } else {
+	set expectthis "should never match this bogus string"
+    }
+    set sendthis [lindex $args 0]
+    if $verbose>2 then {
+	send_user "Sending \"$sendthis\" to gdb\n"
+	send_user "Looking to match \"$expectthis\"\n"
+    }
+    send "$sendthis\n"
+    expect {
+	-re ".*A .* in expression.*\\.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*Invalid syntax in expression.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*Junk after end of expression.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*Invalid number.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*Invalid character constant.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*No symbol table is loaded.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*No symbol .* in current context.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*$expectthis.*$prompt $" {
+	    pass "reject $sendthis"
+	    return 1
+	}
+	-re ".*$prompt $" {
+	    fail "reject $sendthis"
+	    return 1
+	}
+	default {
+	    fail "reject $sendthis (eof or timeout)"
+	    return 0
+	}
+    }
+}
+
+# Given an input string, adds backslashes as needed to create a
+# regexp that will match the string.
+
+proc string_to_regexp {str} {
+    set result $str
+    regsub -all {[]*+.|()^$\[]} $str {\\&} result
+    return $result
+}
+
+# Same as gdb_test, but the second parameter is not a regexp,
+# but a string that must match exactly.
+
+proc gdb_test_exact { args } {
+    upvar timeout timeout
+
+    set command [lindex $args 0]
+
+    # This applies a special meaning to a null string pattern.  Without
+    # this, "$pattern\r\n$prompt $" will match anything, including error
+    # messages from commands that should have no output except a new
+    # prompt.  With this, only results of a null string will match a null
+    # string pattern.
+
+    set pattern [lindex $args 1]
+    if [string match $pattern ""] {
+	set pattern [string_to_regexp [lindex $args 0]]
+    } else {
+	set pattern [string_to_regexp [lindex $args 1]]
+    }
+
+    # It is most natural to write the pattern argument with only
+    # embedded \n's, especially if you are trying to avoid Tcl quoting
+    # problems.  But expect really wants to see \r\n in patterns.  So
+    # transform the pattern here.  First transform \r\n back to \n, in
+    # case some users of gdb_test_exact already do the right thing.
+    regsub -all "\r\n" $pattern "\n" pattern
+    regsub -all "\n" $pattern "\r\n" pattern
+    if [llength $args]==3 then {
+	set message [lindex $args 2]
+    } else {
+	set message $command
+    }
+
+    return [gdb_test $command $pattern $message]
+}
+
+proc gdb_reinitialize_dir { subdir } {
+    global prompt
+
+   send "dir\n"
+    expect {
+	-re "Reinitialize source path to empty.*y or n. " {
+	    send "y\n"
+	    expect {
+		-re "Source directories searched.*$prompt $" {
+		    send "dir $subdir\n"
+		    expect {
+			-re "Source directories searched.*$prompt $" {
+			    verbose "Dir set to $subdir"
+			}
+			-re ".*$prompt $" {
+			    perror "Dir \"$subdir\" failed."
+			}
+		    }
+		}
+		-re ".*$prompt $" {
+		    perror "Dir \"$subdir\" failed."
+		}
+	    }
+	}
+	-re ".*$prompt $" {
+	    perror "Dir \"$subdir\" failed."
+	}
+    }
+}
+
+#
+# gdb_exit -- exit the GDB, killing the target program if necessary
+#
+proc default_gdb_exit {} {
+    global GDB
+    global GDBFLAGS
+    global verbose
+
+    verbose "Quitting $GDB $GDBFLAGS"
+
+    # This used to be 1 for unix-gdb.exp
+    set timeout 5
+    verbose "Timeout is now $timeout seconds" 2
+
+    # We used to try to send "quit" to GDB, and wait for it to die.
+    # Dealing with all the cases and errors got pretty hairy.  Just close it, 
+    # that is simpler.
+    close
+
+    # Omitting this probably would cause strange timing-dependent failures.
+    wait
+}
+
+#
+# load a file into the debugger.
+# return a -1 if anything goes wrong.
+#
+proc gdb_file_cmd { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global prompt
+    global spawn_id
+    upvar timeout timeout
+
+    send "file $arg\n"
+    expect {
+        -re "Reading symbols from.*done.*$prompt $" {
+            verbose "\t\tLoaded $arg into the $GDB"
+            return 0
+        }
+        -re "has no symbol-table.*$prompt $" {
+            perror "$arg wasn't compiled with \"-g\""
+            return -1
+        }
+        -re "A program is being debugged already.*Kill it.*y or n. $" {
+            send "y\n"
+                verbose "\t\tKilling previous program being debugged"
+            exp_continue
+        }
+        -re "Load new symbol table from \".*\".*y or n. $" {
+            send "y\n"
+            expect {
+                -re "Reading symbols from.*done.*$prompt $" {
+                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
+                    return 0
+                }
+                timeout {
+                    perror "(timeout) Couldn't load $arg, other program already l
+oaded."
+                    return -1
+                }
+            }
+	}
+        -re ".*No such file or directory.*$prompt $" {
+            perror "($arg) No such file or directory\n"
+            return -1
+        }
+        -re "$prompt $" {
+            perror "couldn't load $arg into $GDB."
+            return -1
+            }
+        timeout {
+            perror "couldn't load $arg into $GDB (timed out)."
+            return -1
+        }
+        eof {
+            # This is an attempt to detect a core dump, but seems not to
+            # work.  Perhaps we need to match .* followed by eof, in which
+            # expect does not seem to have a way to do that.
+            perror "couldn't load $arg into $GDB (end of file)."
+            return -1
+        }
+    }
+}
+
+#
+# start gdb -- start gdb running, default procedure
+#
+# When running over NFS, particularly if running many simultaneous
+# tests on different hosts all using the same server, things can
+# get really slow.  Give gdb at least 3 minutes to start up.
+#
+proc default_gdb_start { } {
+    global verbose
+    global GDB
+    global GDBFLAGS
+    global prompt
+    global spawn_id
+    global timeout
+    verbose "Spawning $GDB -nw $GDBFLAGS"
+
+    if { [which $GDB] == 0 } then {
+	perror "$GDB does not exist."
+	exit 1
+    }
+    
+    set oldtimeout $timeout
+    set timeout [expr "$timeout + 180"]
+    verbose "Timeout increased to $timeout seconds" 2
+    eval "spawn $GDB -nw $GDBFLAGS"
+    expect {
+	-re ".*\r\n$prompt $" {
+	    verbose "GDB initialized."
+	}
+	-re "$prompt $"	{
+	    perror "GDB never initialized."
+	    set timeout $oldtimeout
+	    verbose "Timeout restored to $timeout seconds" 2
+	    return -1
+	}
+	timeout		{
+	    perror "(timeout) GDB never initialized after $timeout seconds."
+	    set timeout $oldtimeout
+	    verbose "Timeout restored to $timeout seconds" 2
+	    return -1
+	}
+    }
+    set timeout $oldtimeout
+    verbose "Timeout restored to $timeout seconds" 2
+    # force the height to "unlimited", so no pagers get used
+    send "set height 0\n"
+    expect {
+	-re ".*$prompt $" { 
+	    verbose "Setting height to 0." 2
+	}
+	timeout {
+	    warning "Couldn't set the height to 0."
+	}
+    }
+    # force the width to "unlimited", so no wraparound occurs
+    send "set width 0\n"
+    expect {
+	-re ".*$prompt $" {
+	    verbose "Setting width to 0." 2
+	}
+	timeout {
+	    warning "Couldn't set the width to 0."
+	}
+    }
+}
+
+#
+# FIXME: this is a copy of the new library procedure, but it's here too
+# till the new dejagnu gets installed everywhere. I'd hate to break the
+# gdb tests suite.
+#
+global argv0
+if ![info exists argv0] then {
+    proc exp_continue { } {
+	continue -expect
+    }
+}
+
+# * For crosses, the CHILL runtime doesn't build because it can't find
+# setjmp.h, stdio.h, etc.
+# * For AIX (as of 16 Mar 95), (a) there is no language code for
+# CHILL in output_epilog in gcc/config/rs6000/rs6000.c, (b) collect2
+# does not get along with AIX's too-clever linker.
+# * On Irix5, there is a bug whereby set of bool, etc., don't get
+# TYPE_LOW_BOUND for the bool right because force_to_range_type doesn't
+# work with stub types.
+# Lots of things seem to fail on the PA, and since it's not a supported
+# chill target at the moment, don't run the chill tests.
+
+proc skip_chill_tests {} {
+    eval set skip_chill [expr ![isnative] || [istarget "*-*-aix*"] || [istarget "*-*-irix5*"] || [istarget "alpha-*-osf*"] || [istarget "hppa*-*-*"]]
+    verbose "Skip chill tests is $skip_chill"
+    return $skip_chill
+}

@@ -1,5 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright 1991, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -94,6 +94,9 @@ ranlib_only PARAMS ((const char *archname));
 
 static void
 ranlib_touch PARAMS ((const char *archname));
+
+static void
+usage PARAMS ((int));
 
 /** Globals and flags */
 
@@ -207,28 +210,28 @@ map_over_members (arch, function, files, count)
 
 boolean operation_alters_arch = false;
 
-extern char *program_version;
-
-void
-do_show_version ()
+static void
+usage (help)
+     int help;
 {
-  printf ("GNU %s version %s\n", program_name, program_version);
-  xexit (0);
-}
+  FILE *s;
 
-void
-usage ()
-{
-  if (is_ranlib == 0)
-    fprintf (stderr, "\
+  s = help ? stdout : stderr;
+  if (! is_ranlib)
+    fprintf (s, "\
 Usage: %s [-]{dmpqrtx}[abcilosuvV] [member-name] archive-file file...\n\
        %s -M [<mri-script]\n",
 	     program_name, program_name);
   else
-    fprintf (stderr, "\
+    fprintf (s, "\
 Usage: %s [-vV] archive\n", program_name);
+
   list_supported_targets (program_name, stderr);
-  xexit (1);
+
+  if (help)
+    fprintf (s, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
+
+  xexit (help ? 0 : 1);
 }
 
 /* Normalize a file name specified on the command line into a file
@@ -300,11 +303,39 @@ main (argc, argv)
   int arg_index;
   char **files;
   char *inarch_filename;
-  char *temp;
   int show_version;
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
+
+  if (is_ranlib < 0)
+    {
+      char *temp;
+
+      temp = strrchr (program_name, '/');
+      if (temp == NULL)
+	temp = program_name;
+      else
+	++temp;
+      if (strlen (temp) >= 6
+	  && strcmp (temp + strlen (temp) - 6, "ranlib") == 0)
+	is_ranlib = 1;
+      else
+	is_ranlib = 0;
+    }
+
+  if (argc > 1 && argv[1][0] == '-')
+    {
+      if (strcmp (argv[1], "--help") == 0)
+	usage (1);
+      else if (strcmp (argv[1], "--version") == 0)
+	{
+	  if (is_ranlib)
+	    print_version ("ranlib");
+	  else
+	    print_version ("ar");
+	}
+    }
 
   START_PROGRESS (program_name, 0);
 
@@ -313,22 +344,16 @@ main (argc, argv)
 
   xatexit (remove_output);
 
-  temp = strrchr (program_name, '/');
-  if (temp == (char *) NULL)
-    temp = program_name;	/* shouldn't happen, but... */
-  else
-    ++temp;
-  if (is_ranlib > 0 || (is_ranlib < 0 && strcmp (temp, "ranlib") == 0))
+  if (is_ranlib)
     {
       boolean touch = false;
 
-      is_ranlib = 1;
-      if (argc < 2)
-	usage ();
+      if (argc < 2 || strcmp (argv[1], "--help") == 0)
+	usage (0);
       if (strcmp (argv[1], "-V") == 0
 	  || strcmp (argv[1], "-v") == 0
 	  || strncmp (argv[1], "--v", 3) == 0)
-	do_show_version ();
+	print_version ("ranlib");
       arg_index = 1;
       if (strcmp (argv[1], "-t") == 0)
 	{
@@ -345,8 +370,6 @@ main (argc, argv)
 	}
       xexit (0);
     }
-  else
-    is_ranlib = 0;
 
   if (argc == 2 && strcmp (argv[1], "-M") == 0)
     {
@@ -355,7 +378,7 @@ main (argc, argv)
     }
 
   if (argc < 2)
-    usage ();
+    usage (0);
 
   arg_ptr = argv[1];
 
@@ -440,15 +463,15 @@ main (argc, argv)
 	  break;
 	default:
 	  fprintf (stderr, "%s: illegal option -- %c\n", program_name, c);
-	  usage ();
+	  usage (0);
 	}
     }
 
   if (show_version)
-    do_show_version ();
+    print_version ("ar");
 
   if (argc < 3)
-    usage ();
+    usage (0);
 
   if (mri_mode)
     {

@@ -1928,6 +1928,10 @@ pe_bfd_copy_private_section_data (ibfd, isec, obfd, osec)
      bfd *obfd;
      asection *osec;
 {
+  if (bfd_get_flavour (ibfd) != bfd_target_coff_flavour
+      || bfd_get_flavour (obfd) != bfd_target_coff_flavour)
+    return true;
+
   if (coff_section_data (ibfd, isec) != NULL
       && pei_section_data (ibfd, isec) != NULL)
     {

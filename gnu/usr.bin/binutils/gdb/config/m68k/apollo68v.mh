@@ -1,0 +1,11 @@
+# Host: Apollo, System V mode (?)
+
+XM_FILE= xm-apollo68v.h
+XM_CLIBS= -lPW
+XDEPFILES= 
+
+NAT_FILE= nm-apollo68v.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o a68v-nat.o
+
+RANLIB=echo >/dev/null
+CC= cc -A ansi -A runtype,any -A systype,any -U__STDC__ -DNO_SYS_FILE

@@ -196,6 +196,16 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
       return true;
     }
 
+  if ((stabsec->output_section != NULL
+       && bfd_is_abs_section (stabsec->output_section))
+      || (stabstrsec->output_section != NULL
+	  && bfd_is_abs_section (stabstrsec->output_section)))
+    {
+      /* At least one of the sections is being discarded from the
+         link, so we should just ignore them.  */
+      return true;
+    }
+
   if (*psinfo == NULL)
     {
       /* Initialize the stabs information we need to keep track of.  */

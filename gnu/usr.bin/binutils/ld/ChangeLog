@@ -1,3 +1,158 @@
+Fri Nov  1 10:01:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo: Add section on reporting bugs.
+
+	* scripttempl/m68kcoff.sc: Make sure the etext and __CTOR_LIST__
+	symbols are correctly aligned.
+
+Mon Oct 28 15:37:00 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.tgt (sparclet*-*-aout*): Delete, use sparc*-*-aout*.
+
+Fri Oct 18 15:43:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (ALL_EMULATIONS): Remove eelf64alpha.o.
+	(ALL_64_EMULATIONS): New variable.
+	* configure.in: Accept --enable-64-bit-bfd option.  If it is set
+	with --enable-targets=all, include ALL_64_EMULATIONS in
+	EMULATION_OFILES.
+	* configure: Rebuild.
+
+Thu Oct 17 18:14:07 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo: Try to consistently use a single or a double dash
+	for each option.
+
+Thu Oct 10 17:57:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emulparams/elf32b4300.sh: Define _gp in OTHER_GOT_SYMBOLS, not
+	OTHER_READWRITE_SECTIONS.
+	* emulparams/elf32l4300.sh: Likewise.
+
+Wed Oct  9 14:36:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.h (ld_config_type): Add warn_section_align field.
+	* lexsup.c (OPTION_WARN_SECTION_ALIGN): Define.
+	(ld_options): Add --warn-section-align.
+	(parse_args): Handle --warn-section-align.
+	* ldlang.c (lang_size_sections): If warn_section_align, warn if
+	the start of a section changes due to alignment.
+	* ld.texinfo, ld.1: Document --warn-section-align.
+	* ld.texinfo: Change some single dashes to double dashes.
+
+	* emultempl/pe.em (set_pe_subsystem): Record entry symbol for each
+	subsystem type.  Ifdef out os2 type.  Recognize a version number.
+
+Tue Oct  8 12:07:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/pe.em (set_pe_subsystem): When setting the subsystem
+	to windows, set the entry point.
+
+	* Makefile.in (ldlex.c): Don't pass any options to $(LEX).
+
+Mon Oct  7 17:29:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo (Options): Mention .so extensions for shared
+	libraries.
+
+Sun Oct  6 22:35:36 1996  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* scripttempl/elf{,mips,ppc}.sc: Add DWARF 2 sections.
+
+Fri Oct  4 18:49:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/m68kcoff.sc: Only set the address of .text if
+	RELOCATING.
+
+Fri Oct  4 10:59:52 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* emulparams/sparcaout.sh ({BIG,LITTLE}_OUTPUT_FORMAT): Define.
+	* scripttempl/aout.sc ({BIG,LITTLE}_OUTPUT_FORMAT): Provide default.
+	(OUTPUT_FORMAT): Support bi-endian targets.
+
+Thu Oct  3 13:52:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* fnmatch.h, fnmatch.c: Remove (now in libiberty).
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Remove fnmatch.c.
+	(HFILES): Remove fnmatch.h.
+	(OFILES): Remove fnmatch.o.
+
+Thu Oct  3 15:41:24 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (mostlyclean): Move config.log to distclean.
+
+Wed Oct  2 23:45:25 1996  Geoffrey Noer  <noer@cygnus.com>
+
+        * emultmpl/pe.em: increase size of stack reserve to 0x2000000
+        (necessary in order to compile parse.c in gcc sources under NT)
+
+Wed Oct  2 14:49:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lexsup.c (ld_options): Fix typo in --rpath-link description.
+	* emultempl/elf32.em (gld${EMULATION_NAME}_after_open): Suggest
+	--rpath if a needed library is not found.
+
+Tue Oct  1 16:17:33 1996  Joel Sherrill  <joel@oarcorp.com>
+
+	* configure.tgt (mips*-*-rtems*): New target, like mips*-*-elf*.
+
+Tue Oct  1 15:50:34 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo (Options): Give more detail on -l option.
+
+	* scripttempl/elfmips.sc: Handle CREATE_SHLIB the same way that
+	elf.sc does, so that glibc works better.
+
+	* ldver.c (ld_program_version): New variable.
+	(ldversion): Use it.
+	* ldver.h (ld_program_version): Declare.
+	* lexsup.c (ld_options): Handle --dll-verbose like --verbose, not
+	--version.  Change --version handling to match current GNU
+	standards.
+	(help): Print bug report address.
+
+Thu Sep 26 13:58:47 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Add symbolic doublequoting to ldmain compile edit.
+	* mpw-config.in: Add mips-*-* case as mips-elf, and use more
+	wildcards in matching.
+	* mpw-emipself.c: New file, pregenerated mips elf emulation.
+
+Tue Sep 17 12:18:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldint.texinfo: Rewrote.
+
+	* configure.tgt: Add cases for MIPS 5000 like MIPS 4300.
+
+Mon Sep 16 17:55:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/armcoff.sc: Only define symbols if RELOCATING.  Fix
+	syntax error on __end__ line.
+
+	* scripttempl/armcoff.sc: For -N or -n, don't align .data.  From
+ 	Chris Hadley <Christopher.Hadley@cl.cam.ac.uk>
+
+Fri Sep 13 15:49:45 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlex.l (SYMBOLCHARN): Add $, _, and ~.
+
+Wed Sep 11 23:30:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmain.c (get_emulation): Check for -mips4 like -mips1, et. al.
+
+Thu Sep  5 15:24:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (section_already_linked): Accept a lang_input_statement
+	as the PTR argument.  If the file is symbols only, discard all
+	input sections.
+	(ldlang_add_file): Pass entry to bfd_map_over_sections.
+
+Wed Sep  4 15:53:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (alpha-*-gnu*): New target.  From Fila Kolodny
+	<fila@ibi.com>.
+
 Fri Aug 30 18:32:31 1996  Ian Lance Taylor  <ian@cygnus.com>
 
 	* configure.tgt (sh-*-elf*): New target.

@@ -147,6 +147,8 @@ Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
 	[--version] [--width=n] [--ignore-non-functions]\n\
 	[image-file] [profile-file...]\n",
 	   whoami);
+  if (status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   done (status);
 }
 
@@ -369,7 +371,12 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
 	  bsd_style_output = TRUE;
 	  break;
 	case 'v':
-	  printf ("%s version %s\n", whoami, VERSION);
+	  /* This output is intended to follow the GNU standards document.  */
+	  printf ("GNU gprof %s\n", VERSION);
+	  printf ("Copyright 1996 Free Software Foundation, Inc.\n");
+	  printf ("\
+This program is free software; you may redistribute it under the terms of\n\
+the GNU General Public License.  This program has absolutely no warranty.\n");
 	  done (0);
 	case 'w':
 	  output_width = atoi (optarg);

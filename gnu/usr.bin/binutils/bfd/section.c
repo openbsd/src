@@ -1010,6 +1010,6 @@ DESCRIPTION
 	Not enough memory exists to create private data for @var{osec}.
 
 .#define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
-.     BFD_SEND (ibfd, _bfd_copy_private_section_data, \
+.     BFD_SEND (obfd, _bfd_copy_private_section_data, \
 .		(ibfd, isection, obfd, osection))
 */

@@ -68,6 +68,8 @@ struct trad_core_struct {
   asection *sections[MAX_CORE_SEGS];
 };
 
+static void swap_abort PARAMS ((void));
+
 static const bfd_target *
 aix386_core_file_p (abfd)
      bfd *abfd;
@@ -234,7 +236,7 @@ aix386_core_file_matches_executable_p (core_bfd, exec_bfd)
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
-void
+static void
 swap_abort()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */

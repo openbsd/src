@@ -80,7 +80,7 @@ subdirs=
 target_alias=NOTARGET
 target_makefile_frag=
 undefs=NOUNDEFS
-version="$Revision: 1.3 $"
+version="$Revision: 1.4 $"
 x11=default
 
 ### we might need to use some other shell than /bin/sh for running subshells
@@ -573,9 +573,9 @@ esac
 case "${build_alias}" in
 "")
 	if result=`${config_shell} ${configsub} ${host_alias}` ; then
-	    build_cpu=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-	    build_vendor=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-	    build_os=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+	    build_cpu=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+	    build_vendor=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+	    build_os=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 	    build=${build_cpu}-${build_vendor}-${build_os}
 	    build_alias=${host_alias}
 	fi
@@ -583,9 +583,9 @@ case "${build_alias}" in
 *)
 	if result=`${config_shell} ${configsub} ${build_alias}` ; then
 	    buildopt="--build=${build_alias}"
-	    build_cpu=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-	    build_vendor=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-	    build_os=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+	    build_cpu=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+	    build_vendor=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+	    build_os=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 	    build=${build_cpu}-${build_vendor}-${build_os}
 	else
 	    echo "Unrecognized build system name ${build_alias}." 1>&2
@@ -600,9 +600,9 @@ else
     echo "Unrecognized host system name ${host_alias}." 1>&2
     exit 1
 fi
-host_cpu=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-host_vendor=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-host_os=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+host_cpu=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+host_vendor=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+host_os=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 host=${host_cpu}-${host_vendor}-${host_os}
 
 . ${tmpfile}.hst
@@ -613,9 +613,9 @@ else
     echo "Unrecognized target system name ${target_alias}." 1>&2
     exit 1
 fi
-target_cpu=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\1/'`
-target_vendor=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\2/'`
-target_os=`echo $result | sed 's/^\(.*\)-\(.*\)-\(.*\)$/\3/'`
+target_cpu=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
+target_vendor=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
+target_os=`echo $result | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 target=${target_cpu}-${target_vendor}-${target_os}
 
 . ${tmpfile}.tgt
@@ -673,8 +673,8 @@ fi
 if [ -z "${CC}" -a -r Makefile ]; then
   sed -n -e ':loop
 /\\$/ N
-/\\$/ b loop
 s/\\\n//g
+t loop
 /^CC[ 	]*=/ s/CC[ 	]*=[ 	]*\(.*\)/\1/p' < Makefile > Makefile.cc
   CC=`tail -1 Makefile.cc`
   rm -f Makefile.cc
@@ -683,8 +683,8 @@ fi
 if [ -z "${CXX}" -a -r Makefile ]; then
   sed -n -e ':loop
 /\\$/ N
-/\\$/ b loop
 s/\\\n//g
+t loop
 /^CXX[ 	]*=/ s/CXX[ 	]*=[ 	]*\(.*\)/\1/p' < Makefile > Makefile.cc
   CXX=`tail -1 Makefile.cc`
   rm -f Makefile.cc
@@ -734,7 +734,7 @@ if [ "${build}" != "${host}" ]; then
 
   tools="AR AR_FOR_TARGET AS AS_FOR_TARGET BISON CC_FOR_BUILD"
   tools="${tools} CC_FOR_TARGET CXX_FOR_TARGET"
-  tools="${tools} DLLTOOL DLLTOOL_FOR_TARGET HOST_PREFIX"
+  tools="${tools} DLLTOOL DLLTOOL_FOR_TARGET GCC_FOR_TARGET HOST_PREFIX"
   tools="${tools} HOST_PREFIX_1 LD LD_FOR_TARGET LEX MAKEINFO NM"
   tools="${tools} NM_FOR_TARGET RANLIB RANLIB_FOR_TARGET"
 
@@ -742,8 +742,8 @@ if [ "${build}" != "${host}" ]; then
     if [ -z "`eval 'echo $'"${var}"`" -a -r Makefile ]; then
       sed -n -e ':loop
 /\\$/ N
-/\\$/ b loop
 s/\\\n//g
+t loop
 /^'"${var}"'[ 	]*=/ s/'"${var}"'[ 	]*=[ 	]*\(.*\)/\1/p' \
 	< Makefile > Makefile.v
       t=`tail -1 Makefile.v`
@@ -765,6 +765,7 @@ s/\\\n//g
   CXX_FOR_TARGET=${CXX_FOR_TARGET-${target_alias}-gcc}
   DLLTOOL=${DLLTOOL-${host_alias}-dlltool}
   DLLTOOL_FOR_TARGET=${DLLTOOL_FOR_TARGET-${target_alias}-dlltool}
+  GCC_FOR_TARGET=${GCC_FOR_TARGET-${CC_FOR_TARGET-${target_alias}-gcc}}
   HOST_PREFIX=${build_alias}-
   HOST_PREFIX_1=${build_alias}-
   LD=${LD-${host_alias}-ld}
@@ -1108,15 +1109,15 @@ EOF
 		    -e "/^CC[ 	]*=/{
 			:loop1
 			/\\\\$/ N
-			/\\\\$/ b loop1
 			s/\\\\\\n//g
+			t loop1
 			s%^CC[ 	]*=.*$%CC = ${CC}%
 			}" \
 		    -e "/^CXX[ 	]*=/{
 			:loop2
 			/\\\\$/ N
-			/\\\\$/ b loop2
 			s/\\\\\\n//g
+			t loop2
 			s%^CXX[ 	]*=.*$%CXX = ${CXX}%
 			}" \
 		    -e "s:^SHELL[	 ]*=.*$:SHELL = ${config_shell}:" \

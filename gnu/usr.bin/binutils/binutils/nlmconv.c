@@ -1,5 +1,5 @@
 /* nlmconv.c -- NLM conversion program
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -78,9 +78,6 @@ extern char *getenv ();
 
 /* The name used to invoke the program.  */
 char *program_name;
-
-/* The version number.  */
-extern char *program_version;
 
 /* Local variables.  */
 
@@ -234,8 +231,7 @@ main (argc, argv)
 	  header_file = optarg;
 	  break;
 	case 'V':
-	  printf ("GNU %s version %s\n", program_name, program_version);
-	  exit (0);
+	  print_version ("nlmconv");
 	  /*NOTREACHED*/
 	case 0:
 	  break;
@@ -1125,6 +1121,8 @@ Usage: %s [-dhV] [-I bfdname] [-O bfdname] [-T header-file] [-l linker]\n\
        [--help] [--version]\n\
        [in-file [out-file]]\n",
 	   program_name);
+  if (status == 0)
+    fprintf (file, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (status);
 }
 

@@ -1,0 +1,101 @@
+#   Copyright (C) 1988, 1990, 1991, 1992 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-dejagnu@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+#
+# the initial work on the version of these tests from the tcl release was done
+# by Mary Ann May-Pumphrey of Sun Microsystems.
+#
+if $tracelevel then {
+    strace $tracelevel
+}
+
+expect_before buffer_full { perror "Buffer full" }
+if { [tcl_start] == "-1" } {
+    perror "Couldn't start the Tcl test shell" 0
+    return -1
+}
+
+set timeoutmsg "Timed out: Never got started, "
+set timeout 100
+set file all
+set timetol 0
+
+#
+# change to the dir where all the test live
+#
+
+set timetol 0
+if ![file exists ${srcdir}/../tests/${file}] {
+    perror "The source for the test case \"$file\" is missing" 0
+    return -1
+}
+send "source \$srcdir/${file}\n"
+expect {
+    -re "source \$srcdir/$file\[\r\n\]+\[$tprompt\]*" {
+	verbose "Sourced test $file ..."
+	set timeoutmsg "Never got to the end of "
+	exp_continue
+    }
+    "install Tcl or set your TCL_LIBRARY environment variable" {
+	perror "You need to set the TCL_LIBRARY environment variable"
+	return -1
+    }
+    -re "\[\r\n\]*\\+\\+\\+\\+ (\[a-z\]*-\[.0-9\]*) PASSED\[\r\n\]*" {
+	pass $expect_out(1,string)
+	set timetol 0
+	exp_continue
+    }
+    -re "\[\r\n\]*\\+* (\[a-z\]*-\[.0-9\]*) FAILED\[\r\n\]*" {
+	fail $expect_out(1,string)
+	exp_continue
+    }
+    -re "\[x\]+ \[a-i\]+ \[A-K\]+ \[0-9\]+ " {
+	verbose "Got standard output message from exec 8.1 test." 3
+	exp_continue
+    }
+    -re "Test generated error:\[\r\n\]*.*\[\r\n\]*" {
+	regsub "Test generated error:\[\r\n\]+" $expect_out(0,string) "" tmp
+	regsub -all "\[\r\n\]*\[a-z.\]test\[\r\n\]*" $tmp "" tmp
+	regsub -all "\[\r\n\]*" $tmp "" tmp
+	perror "Got a test case bug \"$tmp\""
+	exp_continue
+    }
+    "Tests all done" {
+	verbose "Done" 2
+    }
+    "*Error: bad option *" {
+	fail "Got a bad option"
+    }
+    eof {
+	verbose "Done" 2
+    }
+    timeout {
+	warning "Timed out executing test case"
+	if { $timetol <= 2 } {
+	    incr timetol
+	    exp_continue
+	} else {
+	    return -1
+	}
+    }
+}
+
+catch close

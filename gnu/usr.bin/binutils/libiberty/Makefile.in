@@ -144,7 +144,7 @@ HFILES =
 # NOTE: If you add new files to the library, add them to this list
 # (alphabetical), and add them to REQUIRED_OFILES or 'functions.def'.
 CFILES = alloca.c argv.c atexit.c basename.c bcmp.c bcopy.c bzero.c \
-	 choose-temp.c clock.c concat.c cplus-dem.c fdmatch.c \
+	 choose-temp.c clock.c concat.c cplus-dem.c fdmatch.c fnmatch.c \
 	 getcwd.c getopt.c getopt1.c getpagesize.c getruntime.c \
          floatformat.c hex.c index.c insque.c \
 	 memchr.c memcmp.c memcpy.c memmove.c memset.c \
@@ -156,7 +156,7 @@ CFILES = alloca.c argv.c atexit.c basename.c bcmp.c bcopy.c bzero.c \
 	 xatexit.c xexit.c xmalloc.c xstrdup.c xstrerror.c
 # These are always included in the library.
 REQUIRED_OFILES = argv.o basename.o choose-temp.o concat.o cplus-dem.o \
-  fdmatch.o getopt.o getopt1.o getruntime.o hex.o \
+  fdmatch.o fnmatch.o getopt.o getopt1.o getruntime.o hex.o \
   floatformat.o obstack.o spaces.o strerror.o strsignal.o \
   vasprintf.o xatexit.o xexit.o xmalloc.o xstrdup.o xstrerror.o
 
@@ -306,6 +306,7 @@ basename.o: $(INCDIR)/libiberty.h
 concat.o: $(INCDIR)/libiberty.h
 cplus-dem.o: $(INCDIR)/demangle.h
 fdmatch.o: $(INCDIR)/libiberty.h
+fnmatch.o: $(INCDIR)/fnmatch.h
 getopt.o: $(INCDIR)/getopt.h
 getopt1.o: $(INCDIR)/getopt.h
 getruntime.o: $(INCDIR)/libiberty.h

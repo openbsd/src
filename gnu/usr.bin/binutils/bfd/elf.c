@@ -47,6 +47,12 @@ static boolean assign_file_positions_except_relocs PARAMS ((bfd *));
 static boolean prep_headers PARAMS ((bfd *));
 static boolean swap_out_syms PARAMS ((bfd *, struct bfd_strtab_hash **));
 static boolean copy_private_bfd_data PARAMS ((bfd *, bfd *));
+static char *elf_read PARAMS ((bfd *, long, unsigned int));
+static void elf_fake_sections PARAMS ((bfd *, asection *, PTR));
+static boolean assign_section_numbers PARAMS ((bfd *));
+static INLINE int sym_is_global PARAMS ((bfd *, asymbol *));
+static boolean elf_map_symbols PARAMS ((bfd *));
+static bfd_size_type get_program_header_size PARAMS ((bfd *));
 
 /* Standard ELF hash function.  Do not change this function; you will
    cause invalid hash tables to be generated.  (Well, you would if this
@@ -2036,7 +2042,7 @@ assign_file_positions_for_segments (abfd)
 
       if (p->p_type == PT_LOAD
 	  && m->count > 0
-	  && (m->sections[0]->flags & SEC_LOAD) != 0)
+	  && (m->sections[0]->flags & SEC_ALLOC) != 0)
 	{
 	  if ((abfd->flags & D_PAGED) != 0)
 	    off += (m->sections[0]->vma - off) % bed->maxpagesize;
@@ -2500,6 +2506,12 @@ prep_headers (abfd)
     case bfd_arch_sh:
       i_ehdrp->e_machine = EM_SH;
       break;
+    case bfd_arch_mn10200:
+      i_ehdrp->e_machine = EM_CYGNUS_MN10200;
+      break;
+    case bfd_arch_mn10300:
+      i_ehdrp->e_machine = EM_CYGNUS_MN10300;
+      break;
       /* also note that EM_M32, AT&T WE32100 is unknown to bfd */
     default:
       i_ehdrp->e_machine = EM_NONE;
@@ -2904,6 +2916,10 @@ _bfd_elf_copy_private_symbol_data (ibfd, isymarg, obfd, osymarg)
      asymbol *osymarg;
 {
   elf_symbol_type *isym, *osym;
+
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return true;
 
   isym = elf_symbol_from (ibfd, isymarg);
   osym = elf_symbol_from (obfd, osymarg);

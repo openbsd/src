@@ -1,0 +1,156 @@
+# Test Framework Driver for GDB using the extended gdb remote protocol
+#   Copyright 1995 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+#
+# For this to function correctly, you need to set a number of variables
+# in your gdb/site.exp file
+#
+#	set noargs 1		-- we can't pass arguments (yet)
+#	set noinferiorio 1	-- we can't get io to/from the inferior
+#	set targethost <host>	-- name of the remote system (runs gdbserver)
+#	set debughost <host>	-- name of the system running gdb
+#	set port <number>	-- starting port number for communication
+#	set gdbserver <path>	-- path (on the remote side) to find
+#				   gdbserver
+#       set rsh <path>		-- path (on debughost side) to rsh
+#	set rcp <path>		-- path (on debughost side) to rcp
+#	
+# You will need to be able to spawn processes from gdbhost to run on
+# targethost via rsh (this is how we start gdbserver); similarly
+# you need to be able to rcp files from gdbhost to targethost.
+#
+# We don't do much error checking, if something goes wrong, you'll probably
+# just get a tcl error and everything will die.  FIXME
+#
+
+# Load the basic gdb testing library
+load_lib gdb.exp
+
+#
+# gdb_version -- extract and print the version number of gdb
+#
+proc gdb_version {} {
+    default_gdb_version
+}
+
+#
+# gdb_target_monitor
+# Set gdb to target the monitor
+#
+proc gdb_target_monitor { } {
+    global prompt
+    global exit_status
+    global targetname
+    global serialport
+    global baud
+
+    set timeout 60
+    verbose "Timeout is now $timeout seconds" 2
+    for {set i 1} {$i <= 3} {incr i} {
+	send "target $targetname $serialport\n"
+	expect {
+		-re "Remote debugging using $serialport.*$prompt $"	{
+		     verbose "Set target to $targetname"
+		     return
+		}
+		-re "Connection refused" {
+		    verbose "Connection refused by remote target.  Pausing, and trying again."
+		    sleep 30
+		    continue
+		}
+		timeout { 
+		    break
+		}
+	}
+    }
+
+    perror "Couldn't set target for $targetname."
+    cleanup
+    exit $exit_status
+}
+
+#
+# gdb_load -- load a file into the debugger.
+#             return a -1 if anything goes wrong.
+#
+# Loading a file in the gdbsrever framework is a little strange in that
+# we also create the inferior (which is stopped at the first instruction
+# in the program when we get control).
+#
+proc gdb_load { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global prompt
+    global serialport
+    global targethost
+    global debughost
+    global port
+    global gdbserver
+    global rsh
+    global rcp
+
+    # first load the file into gdb
+    if [gdb_file_cmd $arg] then { return -1 }
+
+    # bump the port number to avoid conflicts with hung ports
+    incr port
+    set serialport $targethost:$port
+
+     
+    # Copy the file down to the remote host.
+    exec $rcp [lindex $arg 0] $targethost:/tmp
+
+    # now start gdbserver on the remote side
+    exec $rsh $targethost $gdbserver $debughost:$port /tmp/[file tail [lindex $arg 0]] > /dev/null >& /dev/null < /dev/null &
+ 
+    # give it plenty of time to get going (lynx)
+    sleep 30
+
+    # tell gdb we are remote debugging
+    gdb_target_monitor
+
+    return 1
+}
+
+#
+# gdb_start -- start GDB running.
+#
+proc gdb_start { } {
+    global prompt
+
+    # do the usual stuff
+    catch default_gdb_start
+
+    # FIXME: This shouldn't be necessary, but lots of PA tests fail
+    # without it.
+    send "set remotecache 0\n"
+    expect {
+	-re "set remotecache 0\[\r\n\]+.*$prompt $" {}
+	default { fail "gdb_start"}
+    }
+}
+
+#
+# gdb_exit -- exit gdb
+#
+proc gdb_exit { } {
+    catch default_gdb_exit
+}
+
+gdb_start
+

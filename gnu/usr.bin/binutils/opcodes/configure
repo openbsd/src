@@ -1179,6 +1179,8 @@ if test x${all_targets} = xfalse ; then
 	bfd_m68k_arch)		ta="$ta m68k-dis.o m68k-opc.o" ;;
 	bfd_m88k_arch)		ta="$ta m88k-dis.o" ;;
 	bfd_mips_arch)		ta="$ta mips-dis.o mips-opc.o" ;;
+	bfd_mn10200_arch)	ta="$ta mn10200-dis.o mn10200-opc.o" ;;
+	bfd_mn10300_arch)	ta="$ta mn10300-dis.o mn10300-opc.o" ;;
 	bfd_ns32k_arch)		ta="$ta ns32k-dis.o" ;;
 	bfd_powerpc_arch)	ta="$ta ppc-dis.o ppc-opc.o" ;;
 	bfd_pyramid_arch)	;;

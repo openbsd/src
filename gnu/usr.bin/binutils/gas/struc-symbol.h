@@ -98,6 +98,11 @@ struct symbol
 
 typedef struct symbol symbolS;
 
+#ifdef TE_NetBSD
+symbolS *GOT_symbol;		/* Pre-defined "__GLOBAL_OFFSET_TABLE" */
+int	got_referenced;
+#endif
+
 #ifndef WORKING_DOT_WORD
 struct broken_word
   {

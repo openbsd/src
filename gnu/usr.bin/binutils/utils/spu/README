@@ -1,0 +1,39 @@
+This directory contains version 0.1 of the Software Productivity Unit
+(SPU, pronounced ``spew''), which is a random program generator.
+
+To configure, say `./configure'.
+
+To build, say `make'.
+
+To run, say `spu'.  This will produce a set of .h and .c files, plus a .mk
+file which is a Makefile.  All the generated files share a prefix, which
+defaults to "file", and can be set with the `--prefix' option.
+
+To compile the generated program, you can say either
+
+	make -f file.mk
+
+or
+
+	gcc file*.c
+
+By default, SPU does not generate a large program.  To generate larger
+programs, you can use the `--functions' option to set the number of
+functions that will be generated.  For instance, `--functions 10000'
+together with default values for the other options, will generate 600,000
+lines or about 10MB of source code.
+
+To find out about the other available options, use the `--help' option.
+
+TO DO
+
+Finish describing the command options.
+
+Generate more kinds of program constructs.
+
+Add more kinds of macro generation.
+
+Make the output code look more normal.
+
+Generate runnable programs.
+

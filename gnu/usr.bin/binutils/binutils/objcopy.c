@@ -35,7 +35,7 @@ static void add_strip_symbol PARAMS ((const char *));
 static boolean is_strip_symbol PARAMS ((const char *));
 static boolean is_strip_section PARAMS ((bfd *, asection *));
 static unsigned int filter_symbols
-  PARAMS ((bfd *, asymbol **, asymbol **, long));
+  PARAMS ((bfd *, bfd *, asymbol **, asymbol **, long));
 static void mark_symbols_used_in_relocations PARAMS ((bfd *, asection *, PTR));
 static boolean write_debugging_info PARAMS ((bfd *, PTR, long *, asymbol ***));
 
@@ -138,6 +138,10 @@ static struct section_add *add_sections;
 
 static boolean convert_debugging = false;
 
+/* Whether to change the leading character in symbol names.  */
+
+static boolean change_leading_char = false;
+
 /* Whether to remove the leading character from global symbol names.  */
 
 static boolean remove_leading_char = false;
@@ -149,7 +153,8 @@ static boolean remove_leading_char = false;
 #define OPTION_ADJUST_VMA (OPTION_ADJUST_START + 1)
 #define OPTION_ADJUST_SECTION_VMA (OPTION_ADJUST_VMA + 1)
 #define OPTION_ADJUST_WARNINGS (OPTION_ADJUST_SECTION_VMA + 1)
-#define OPTION_DEBUGGING (OPTION_ADJUST_WARNINGS + 1)
+#define OPTION_CHANGE_LEADING_CHAR (OPTION_ADJUST_WARNINGS + 1)
+#define OPTION_DEBUGGING (OPTION_CHANGE_LEADING_CHAR + 1)
 #define OPTION_GAP_FILL (OPTION_DEBUGGING + 1)
 #define OPTION_NO_ADJUST_WARNINGS (OPTION_GAP_FILL + 1)
 #define OPTION_PAD_TO (OPTION_NO_ADJUST_WARNINGS + 1)
@@ -192,6 +197,7 @@ static struct option copy_options[] =
   {"adjust-section-vma", required_argument, 0, OPTION_ADJUST_SECTION_VMA},
   {"adjust-warnings", no_argument, 0, OPTION_ADJUST_WARNINGS},
   {"byte", required_argument, 0, 'b'},
+  {"change-leading-char", no_argument, 0, OPTION_CHANGE_LEADING_CHAR},
   {"debugging", no_argument, 0, OPTION_DEBUGGING},
   {"discard-all", no_argument, 0, 'x'},
   {"discard-locals", no_argument, 0, 'X'},
@@ -222,7 +228,6 @@ static struct option copy_options[] =
 
 /* IMPORTS */
 extern char *program_name;
-extern char *program_version;
 
 /* This flag distinguishes between strip and objcopy:
    1 means this is 'strip'; 0 means this is 'objcopy'.
@@ -249,9 +254,11 @@ Usage: %s [-vVSgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-b byte]\n\
        [--adjust-warnings] [--no-adjust-warnings]\n\
        [--set-section-flags=section=flags] [--add-section=sectionname=filename]\n\
        [--keep-symbol symbol] [-K symbol] [--strip-symbol symbol] [-N symbol]\n\
-       [--remove-leading-char] [--verbose] [--version] [--help]\n\
-       in-file [out-file]\n");
+       [--change-leading-char] [--remove-leading-char] [--verbose]\n\
+       [--version] [--help] in-file [out-file]\n");
   list_supported_targets (program_name, stream);
+  if (exit_status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (exit_status);
 }
 
@@ -269,6 +276,8 @@ Usage: %s [-vVsSgxX] [-I bfdname] [-O bfdname] [-F bfdname] [-R section]\n\
        [-o file] [--verbose] [--version] [--help] file...\n",
 	   program_name);
   list_supported_targets (program_name, stream);
+  if (exit_status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (exit_status);
 }
 
@@ -422,8 +431,9 @@ is_strip_section (abfd, sec)
    Return the number of symbols to print.  */
 
 static unsigned int
-filter_symbols (abfd, osyms, isyms, symcount)
+filter_symbols (abfd, obfd, osyms, isyms, symcount)
      bfd *abfd;
+     bfd *obfd;
      asymbol **osyms, **isyms;
      long symcount;
 {
@@ -435,6 +445,29 @@ filter_symbols (abfd, osyms, isyms, symcount)
       asymbol *sym = from[src_count];
       flagword flags = sym->flags;
       int keep;
+
+      if (change_leading_char
+	  && (bfd_get_symbol_leading_char (abfd)
+	      != bfd_get_symbol_leading_char (obfd))
+	  && (bfd_get_symbol_leading_char (abfd) == '\0'
+	      || (bfd_asymbol_name (sym)[0]
+		  == bfd_get_symbol_leading_char (abfd))))
+	{
+	  if (bfd_get_symbol_leading_char (obfd) == '\0')
+	    bfd_asymbol_name (sym) = bfd_asymbol_name (sym) + 1;
+	  else
+	    {
+	      char *n;
+
+	      n = xmalloc (strlen (bfd_asymbol_name (sym)) + 2);
+	      n[0] = bfd_get_symbol_leading_char (obfd);
+	      if (bfd_get_symbol_leading_char (abfd) == '\0')
+		strcpy (n + 1, bfd_asymbol_name (sym));
+	      else
+		strcpy (n + 1, bfd_asymbol_name (sym) + 1);
+	      bfd_asymbol_name (sym) = n;
+	    }
+	}
 
       if (remove_leading_char
 	  && ((flags & BSF_GLOBAL) != 0
@@ -713,6 +746,7 @@ copy_object (ibfd, obfd)
 	  || strip_specific_list != NULL
 	  || sections_removed
 	  || convert_debugging
+	  || change_leading_char
 	  || remove_leading_char)
 	{
 	  /* Mark symbols used in output relocations so that they
@@ -727,7 +761,7 @@ copy_object (ibfd, obfd)
 				 mark_symbols_used_in_relocations,
 				 (PTR)isympp);
 	  osympp = (asymbol **) xmalloc ((symcount + 1) * sizeof (asymbol *));
-	  symcount = filter_symbols (ibfd, osympp, isympp, symcount);
+	  symcount = filter_symbols (ibfd, obfd, osympp, isympp, symcount);
 	}
 
       if (convert_debugging && dhandle != NULL)
@@ -1580,10 +1614,7 @@ strip_main (argc, argv)
     }
 
   if (show_version)
-    {
-      printf ("GNU %s version %s\n", program_name, program_version);
-      exit (0);
-    }
+    print_version ("strip");
 
   /* Default is to strip all symbols.  */
   if (strip_symbols == strip_undef
@@ -1826,6 +1857,9 @@ copy_main (argc, argv)
 	case OPTION_ADJUST_WARNINGS:
 	  adjust_warn = true;
 	  break;
+	case OPTION_CHANGE_LEADING_CHAR:
+	  change_leading_char = true;
+	  break;
 	case OPTION_DEBUGGING:
 	  convert_debugging = true;
 	  break;
@@ -1894,10 +1928,7 @@ copy_main (argc, argv)
     }
 
   if (show_version)
-    {
-      printf ("GNU %s version %s\n", program_name, program_version);
-      exit (0);
-    }
+    print_version ("objcopy");
 
   if (copy_byte >= interleave)
     {

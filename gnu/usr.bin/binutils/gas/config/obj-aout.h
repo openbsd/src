@@ -90,7 +90,8 @@ extern void obj_aout_frob_file PARAMS ((void));
 #define S_IS_EXTERNAL(s)	((s)->sy_symbol.n_type & N_EXT)
 
 /* True if symbol has been defined, ie is in N_{TEXT,DATA,BSS,ABS} or N_EXT */
-#define S_IS_DEFINED(s)		((S_GET_TYPE(s) != N_UNDF) || (S_GET_OTHER(s) != 0) || (S_GET_DESC(s) != 0))
+#define S_IS_DEFINED(s) \
+  (S_GET_TYPE (s) != N_UNDF || S_GET_DESC (s) != 0)
 
 #define S_IS_COMMON(s) \
   (S_GET_TYPE (s) == N_UNDF && S_GET_VALUE (s) != 0)

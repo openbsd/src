@@ -71,8 +71,7 @@ NM = $(NM_FOR_TARGET)
 SYMLINK = ln -s
 
 BISON = `if [ -f ../bison/bison ] ; then echo ../bison/bison -y -L../bison/bison ; else echo bison -y ; fi`
-# Comment these out if using lex.
-LEX_OPTIONS = -I -Cem 
+LEX_OPTIONS =
 LEX = `if [ -f ../flex/flex ] ; then echo ../flex/flex ; else echo flex ; fi`
 
 # Distribution version
@@ -520,7 +519,7 @@ binutils.me: $(srcdir)/binutils.texi
 ###
 
 mostlyclean:
-	-rm -f *.o *~ \#* core binutils.?? binutils.??? y.output config.log
+	-rm -f *.o *~ \#* core binutils.?? binutils.??? y.output
 	-rm -rf tmpdir
 clean: mostlyclean
 	-rm -f $(PROGS) $(DEMANGLER_PROG).1 stamp-under
@@ -733,7 +732,8 @@ strings.o: strings.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
 sysdump.o: sysdump.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h bucomm.h config.h $(INCDIR)/fopen-same.h \
   sysroff.h sysroff.c
-version.o: version.c
+version.o: version.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/obstack.h bucomm.h config.h $(INCDIR)/fopen-same.h
 wrstabs.o: wrstabs.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/obstack.h bucomm.h config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/libiberty.h debug.h budbg.h $(INCDIR)/aout/aout64.h \

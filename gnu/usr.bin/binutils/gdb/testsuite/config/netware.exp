@@ -1,0 +1,215 @@
+#   Copyright (C) 1988, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by J.T. Conklin. (jtc@cygnus.com)
+
+load_lib gdb.exp
+load_lib remote.exp
+
+global shell_id
+global passwd
+
+global LD
+if ![info exists LD] then {
+	set LD [findfile "$base_dir/../../ld/ld.new"]
+}
+
+global NLMCONV
+if ![info exists NLMCONV] then {
+	set NLMCONV [findfile "$base_dir/../../binutils/nlmconv"]
+}
+
+#
+# gdb_version -- extract and print the version number of gcc
+#
+proc gdb_version {} {
+    default_gdb_version
+}
+
+#
+# gdb_unload -- unload a file if one is loaded
+#
+
+#
+# gdb_load -- load a file into the debugger.
+#             return a -1 if anything goes wrong.
+#
+proc gdb_load { arg } {
+    global prompt
+    global LD
+    global NLMCONV
+    global errorCode
+    global targetname
+    global shell_id
+
+    set obj [file tail $arg]
+    set nlm "$obj.nlm"
+    set lnk "$obj.lnk"
+
+    # build *.lnk file
+    set fd [open $lnk w]
+    puts $fd "description \"[file tail $nlm]\""
+    puts $fd "screenname \"System Console\""
+    puts $fd "module clib.nlm"
+    puts $fd "module mathlib.nlm"
+    puts $fd "stack 32768"
+#    puts $fd "stack 64512"
+    puts $fd "debug"
+    # FIXME: don't hardcode location of prelude.o
+    puts $fd "input /s1/cygnus/dejagnu/i386-netware/lib/prelude.o"
+    puts $fd "input $arg"
+    puts $fd "output $nlm"
+    close $fd
+
+    # run nlmconv
+    verbose "Executing: $NLMCONV -l$LD -T$lnk" 1
+    catch "exec $NLMCONV -l$LD -T$lnk" output
+    if ![string match "" $output] then {
+	verbose $output 1
+    }
+    if ![string match "NONE" $errorCode] {
+	warning "Can't link $arg"
+
+	return -1
+    }
+    catch "exec rm -f $lnk"
+
+    # download
+    verbose "Downloading $nlm" 1
+    catch "exec cp $nlm /.NetWare/$targetname.nws/sys.nwv/tmp/x.nlm" output
+    if ![string match "" $output] then {
+	verbose $output 1
+	return -1
+    }
+
+    gdb_file_cmd $nlm
+}
+
+proc gdb_start { } {
+    default_gdb_start
+}
+  
+proc gdb_exit { } {
+    catch default_gdb_exit
+}
+
+proc gdb_run_cmd { } {
+    global shell_id
+    global prompt
+    global baud serialport
+    global targetname
+    global timeout
+
+    send "kill\n"
+    expect {
+	-re ".*Kill the program being debugged.*y or n. $" {
+	    send "y\n"
+	    exp_continue
+	}
+	-re ".*$prompt $" {}
+    }
+
+    verbose "Starting GDB stub on $targetname" 1
+    send -i $shell_id "load nlmstub BAUD=$baud x.nlm\r\n"
+
+    send "set remotebaud $baud\n"
+    expect {
+	-re "$prompt" {}
+	timeout {
+	    perror "Couldn't set remote baud rate"
+	    return
+	}
+    }
+
+    set otimeout $timeout
+    set timeout 60
+    verbose "Timeout is now $timeout seconds" 2
+    send "target remote $serialport\n"
+    expect {
+	-re "Couldn't establish connection to remote target" {
+	    send "target remote $serialport\n"
+	    exp_continue
+	}
+	-re "$prompt" {}
+	timeout {
+	    set timeout $otimeout
+	    verbose "Timeout restored to $timeout seconds" 2
+	    perror "Couldn't set remote target"
+	    return
+	}
+    }
+    set timeout $otimeout
+    verbose "Timeout restored to $timeout seconds" 2
+
+    send "continue\n"
+    expect {
+	"Continuing.$" {}
+    }
+
+    return
+}
+
+
+
+#
+# start the remote shell
+#
+
+set shell_prompt "Password:"
+set shell_id [ eval $connectmode "$targetname" ]
+
+if $shell_id<0 then {
+    warning "Couldn't connect to target"
+    return -1
+}
+
+if [string match "" $passwd] then {
+    stty -echo
+    send_user "Password: "
+    expect_user -re "(.*)\n"
+    send_user "\n"
+    set passwd "$expect_out(1,string)"
+    stty echo
+}
+
+send -i $shell_id "$passwd\n"
+expect {
+    -i $shell_id ":" {
+	verbose "Got termtype prompt" 0
+    }
+
+    -i $shell_id timeout {
+	warning "Connection timed out"
+	return -1
+    }
+}
+
+
+set shell_prompt "[string toupper $targetname]:"
+send -i $shell_id "1\n"
+
+expect {
+    -i $shell_id -re "$shell_prompt" {}
+    -i $shell_id timeout {
+	warning "Connection timed out"
+	return -1
+    }
+}
+
+gdb_start

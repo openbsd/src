@@ -64,6 +64,13 @@ extern valueT alpha_gp_value;
 #define FAKE_LABEL_NAME "$L0\001"
 /* This field keeps the symbols position in the link section.  */
 #define OBJ_SYMFIELD_TYPE valueT
+
+#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) \
+      fix_new_exp (FRAG, OFF, (int)LEN, EXP, 0, \
+	LEN == 2 ? BFD_RELOC_16 \
+	: LEN == 4 ? BFD_RELOC_32 \
+	: LEN == 8 ? BFD_RELOC_64 \
+	: BFD_RELOC_ALPHA_LINKAGE);
 #endif
 
 #define md_number_to_chars		number_to_chars_littleendian

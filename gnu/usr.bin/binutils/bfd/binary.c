@@ -255,6 +255,12 @@ binary_set_section_contents (abfd, sec, data, offset, size)
      file_ptr offset;
      bfd_size_type size;
 {
+  /* We don't want to output anything for a section that is neither
+     loaded nor allocated.  The contents of such a section are not
+     meaningful in the binary format.  */
+  if ((sec->flags & (SEC_LOAD | SEC_ALLOC)) == 0)
+    return true;
+
   if (! abfd->output_has_begun)
     {
       bfd_vma low;
@@ -265,7 +271,8 @@ binary_set_section_contents (abfd, sec, data, offset, size)
          sections.  */
       low = abfd->sections->lma;
       for (s = abfd->sections->next; s != NULL; s = s->next)
-	if ((s->flags & SEC_HAS_CONTENTS) != 0
+	if (((s->flags & (SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC))
+	     ==  (SEC_HAS_CONTENTS | SEC_LOAD | SEC_ALLOC))
 	    && s->lma < low)
 	  low = s->lma;
 

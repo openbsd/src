@@ -42,7 +42,7 @@ extern char *xmalloc ();
 #else
 #include "ansidecl.h"
 #include "libiberty.h"
-#if (defined (__MSDOS__) || defined (_WIN32)) && ! defined (__CYGWIN32__)
+#if defined (__MSDOS__) || defined (_WIN32)
 #define DIR_SEPARATOR '\\'
 #endif
 #endif

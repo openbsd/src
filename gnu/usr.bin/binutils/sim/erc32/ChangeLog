@@ -1,0 +1,187 @@
+Thu Oct  3 16:12:03 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (clean): Move config.log to distclean.
+
+Wed Oct  2 16:57:57 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+	* Makefile.in (clean): Also remove config.log.
+
+Sat Sep 14 00:00:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (CC_FOR_BUILD): New variable.
+	(AR, AR_FLAGS, BISON, MAKEINFO): Remove duplicate variables.
+	(RANLIB, CC): Likewise.
+	(end): Use $(CC_FOR_BUILD), not $(CC).
+	* configure.in: Set CC_FOR_BUILD.
+	* configure: Rebuild.
+
+Sun Sep  8 14:04:37 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c (port_init):  Disable this for __GO32__ (got no pty's
+	there either...).
+
+Mon Aug 12 17:04:58 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c:  Don't include sys/ioctl.h or sys/file.h.  They aren't
+	necessary.
+	* (port_init):  Don't even *try* to open pty's under _WIN32.
+	* Use SIM_ADDR, not caddr_t for declaring vars that hold addresses.
+	* float.c:  Get rid of #warning.  Makes Microsoft C barf.
+	* interf.c (sim_open):  Cast fprintf to (fprintf_ftype) to fix
+	compiler warning.
+	* (sim_load sim_create_inferior sim_read):  Use prototypes only in
+	decls, not defs.
+	* Get rid of enum sim_stop.  It's defined in remote-sim.h.
+	* (sim_stop_reason):  Define SIGTRAP if _WIN32.
+	* sis.h:  Include ansidecl.h and remote-sim.h.
+
+Wed Jul  3 16:05:23 1996  Stu Grossman  (grossman@critters.cygnus.com)
+
+	* erc32.c (mec_reset mec_read mec_write memory_read memory_write),
+	sis.h:  Get rid of all uses of long long's.
+	* (close_port read_uart write_uart uarta_tx):  Don't seg fault
+	when can't open pty's.
+	* exec.c:  Add two new instructions: smul, and divscc.
+	* interf.c (flush_windows):  New routine to flush the register
+	windows out to the stack just before returning to GDB.  Makes
+	backtraces work much better.
+
+Wed Jun 26 12:19:11 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
+
+        * Makefile.in (bindir, libdir, datadir, mandir, infodir, includedir,
+        INSTALL_PROGRAM, INSTALL_DATA): Use autoconf-set values.
+        (docdir, oldincludedir): Removed.
+        * configure.in (AC_PREREQ): autoconf 2.5 or higher.
+        (AC_PROG_INSTALL): Added.
+        * configure: Rebuilt.
+
+Mon Jun 24 14:19:07 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Call AC_PROG_CC before running configure.host.
+	* configure: Rebuild with autoconf 2.10.
+
+Tue Jun  4 10:37:12 1996  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Makefile.in (install): Don't check to see if tooldir exists.
+	Make $(tooldir) and $(tooldir)/bin.
+
+Mon Jun  3 12:33:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (end.h): Use explicit ./ when running end.
+
+Sun May 19 21:05:31 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* func.c(bfd_load): Don't try to print the filename if the pfbd is
+	NULL.
+	* interf.c(sim_load): Pass the whole string, not just the first
+	byte.
+
+Version 2.1 26-02-96
+--------------------
+ 
+* Fixed bug in "go" command.
+ 
+version 2.0 05-02-96
+--------------------
+
+* Fixed bug in interrupt force register (erc32.c).
+
+* Change file load function to use bfd_openr.
+
+* SIS should now be endian independent.
+
+version 1.8 24-11-95
+--------------------
+
+* Fixed FPU timing - some sequences of FPU instructions did not calculate
+  the resource dependencies right.
+
+* Corrected STDFQ when qne = 0 (again!). The ftt is set to sequence_error
+  but no FPU trap is generated.
+
+version 1.7.1 31-10-95
+--------------------
+
+* Corrected STDFQ when qne = 0. Now, a trap is immidiately generated but
+  the FPU stays in execute mode.
+
+* Corrected JMPL and RETT timing (these instructions takes two cycles).
+
+
+version 1.7 25-10-95
+--------------------
+
+* Interrupt during annuled instruction corrupted return address - fixed.
+
+
+version 1.6.2 25-10-95
+--------------------
+
+* Added -DFAST_UART to Makefile
+ 
+
+version 1.6.1 24-10-95
+--------------------
+ 
+* Fixed bug in STDFQ which caused bus error
+
+
+version 1.6 02-10-95
+--------------------
+ 
+* Modified srt0.s to include code that initiates registers in IU and FPU
+  and initializes the data segment. The simulator 'load' command does not
+  longer initialize the data segment!
+
+* Corrected MEC timer operation; scalers now divide the frequency by 
+  (scaler_value + 1).
+
+* MEC breakpoints are not checked during store operation
+
+
+version 1.5 14-09-95
+--------------------
+
+* Fixed some bugs in the cycle counting for IU & FPU instructions.
+
+* Fixed bug that allowed an annuled instruction to cause memory exception.
+
+* The *ws parameter in mem.c should now contain the number of waitstates
+  required by the memory access (was total number of cycles).
+
+* The supplied srt0.s now clears the BSS (thanks Joel).
+
+version 1.4 22-08-95
+--------------------
+
+* Added a '-g' switch to enable/disable the GNU readline(), which cause
+some problems on solaris 2.x machines.
+
+* Enabled MEC watchpoint and breakpoint function to mem.c. Performance 
+may suffer a bit ...
+
+NOTE: The UARTs are now connected to /dev/ttypc and /dev/ttypd.
+
+version 1.3 26-07-95
+--------------------
+
+* Fixed bug in mulscc instruction (how could that ever have worked?)
+
+* Fixed bug in UART B (flushed characters on UART A), thanks Paul.
+
+version 1.2 13-07-95
+--------------------
+
+* Fixed bug in interrupt handling (wrong interrupt selected when more that
+one interrupt pending)
+
+* Fixed updating of condition codes during logical instructions (carry and
+overflow were not reset)
+
+* Fixed bug in WRTBR (tt field was wrongly over-written)
+
+version 1.1 07-07-95
+--------------------
+
+* Fixed several bugs in the interrupt handler and callback routines.
+(reported by Paul Warren, Alsys)

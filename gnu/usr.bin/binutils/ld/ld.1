@@ -123,6 +123,7 @@ ld \- the GNU linker
 .RB "[\|" \-warn\-constructors "\|]" 
 .RB "[\|" \-warn\-multiple\-gp "\|]" 
 .RB "[\|" \-warn\-once "\|]" 
+.RB "[\|" \-warn\-section\-align "\|]" 
 .RB "[\|" \-\-whole\-archive "\|]" 
 .RB "[\|" \-\-no\-whole\-archive "\|]" 
 .RB "[\|" "\-\-wrap\ "\c
@@ -930,6 +931,14 @@ option is only meaningful for certain processors, such as the Alpha.
 .B \-warn\-once
 Only warn once for each undefined symbol, rather than once per module
 which refers to it.
+
+.TP
+.B \-warn\-section\-align
+Warn if the address of an output section is changed because of
+alignment.  Typically, the alignment will be set by an input section.
+The address will only be changed if it not explicitly specified; that
+is, if the SECTIONS command does not specify a start address for the
+section.
 
 .TP
 .B \-\-whole\-archive

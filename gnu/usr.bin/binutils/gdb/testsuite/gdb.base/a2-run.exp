@@ -1,0 +1,248 @@
+#   Copyright (C) 1988, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+# These tests don't work for targets can't take arguments...
+
+if $noargs then {
+	verbose "Skipping a2-run.exp because of noargs."
+	return
+	}
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "run"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
+    perror "Couldn't compile ${srcfile}"
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# Run with no arguments.
+# On VxWorks this justs make sure the program was run.
+send "run\n"
+expect -re "run\[\r\n\]+" {}
+if [istarget "*-*-vxworks*"] then {
+    set timeout 120
+    verbose "Timeout is now $timeout seconds" 2
+    expect {
+	-i $shell_id "Program exited normally" {
+	    unresolved "run \"$testfile\" with no args"
+	}
+	-i $shell_id -re "usage:  factorial <number>" {
+	    pass "run \"$testfile\" with no args"
+	}
+	timeout	{
+	    fail "(timeout) run \"$testfile\" with no args"
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    expect -re "$prompt $" {}
+} else {
+    expect {
+	-re "Starting program.*usage:  factorial <number>.*Program exited with code 01.*$prompt $" {
+	    pass "run \"$testfile\" with no args"
+	}
+	-re ".*$prompt $" {
+	    fail "run \"$testfile\" with no args"
+	}
+	timeout	{
+	    fail "(timeout) run \"$testfile\" no args"
+	}
+    }
+}
+
+# Now run with some arguments
+if [istarget "*-*-vxworks*"] then {
+    send "run vxmain \"5\"\n"
+    expect -re "run vxmain \"5\"\r\n" {}
+    set timeout 120
+    verbose "Timeout is now $timeout seconds" 2
+    expect {
+	-i $shell_id "Program exited normally" {
+	    unresolved "run \"$testfile\" with arg"
+	}
+	-i $shell_id "120" {
+	    pass "run \"$testfile\" with arg"
+	}
+	timeout {
+	    fail "(timeout) run \"$testfile\" with arg"
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    expect -re "$prompt $" {}
+} else {
+	setup_xfail "mips-idt-*"
+	send "run 5\n"
+	expect {
+	    -re "Starting program.*$testfile.*120.*$prompt $"\
+				{ pass "run \"$testfile\" with arg" }
+	    -re ".*$prompt $"	{ fail "run \"$testfile\" with arg" }
+	    timeout		{ fail "(timeout) run \"$testfile\" with arg" }
+	}
+}
+
+# Run again with same arguments.
+setup_xfail "mips-idt-*"
+send "run\n"
+expect -re "run\[\r\n\]+" {}
+if [istarget "*-*-vxworks*"] then {
+    set timeout 120
+    verbose "Timeout is now $timeout seconds" 2
+    expect {
+	-i $shell_id "Program exited normally" {
+	    unresolved "run \"$testfile\" again with same args"
+	}
+	-i $shell_id "120" { pass "run \"$testfile\" again with same args" }
+	timeout { fail "(timeout) run \"$testfile\" again with same args" }
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    expect -re "$prompt $" {}
+} else {
+    expect {
+	    -re "Starting program.*120.*$prompt $"\
+				{ pass "run \"$testfile\" again with same args" }
+	    -re ".*$prompt $"	{ fail "run \"$testfile\" again with same args" }
+	    timeout		{ fail "(timeout) run \"$testfile\" again with same args" }
+	}
+}
+
+# Use "set args" command to specify no arguments as default and run again.
+if [istarget "*-*-vxworks*"] then {
+    send "set args main\n"
+} else {
+    send "set args\n"
+}
+expect -re "$prompt $"
+
+send "run\n"
+expect -re "run\[\r\n\]+" {}
+if [istarget "*-*-vxworks*"] then {
+    set timeout 120
+    verbose "Timeout is now $timeout seconds" 2
+    expect {
+	-i $shell_id "Program exited normally" {
+	    unresolved "run after setting args to nil"
+	}
+	-i $shell_id "usage:  factorial <number>" {
+	    pass "run after setting args to nil"
+	}
+	timeout {
+	    fail "(timeout) run after setting args to nil"
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    expect -re "$prompt $" {}
+} else {
+    expect {
+	-re "Starting program.*usage:  factorial <number>.*$prompt $" {
+	    pass "run after setting args to nil"
+	}
+	-re ".*$prompt $" {
+	    fail "run after setting args to nil"
+	}
+	timeout {
+	    fail "(timeout) run after setting args to nil"
+	}
+    }
+}
+
+# Use "set args" command to specify an argument and run again.
+setup_xfail "mips-idt-*"
+if [istarget "*-*-vxworks*"] then {
+   send "set args vxmain \"6\"\n"
+} else {
+	send "set args 6\n"
+}
+expect -re "$prompt $"
+send "run\n"
+expect -re "run\[\r\n\]+" {}
+if [istarget "*-*-vxworks*"] then {
+    set timeout 120
+    verbose "Timeout is now $timeout seconds" 2
+    expect {
+	-i $shell_id "Program exited normally" {
+	    unresolved "run \"$testfile\" again after setting args"
+	}
+	-i $shell_id "720" {
+	    pass "run \"$testfile\" again after setting args"
+	}
+	timeout {
+	    fail "(timeout) run \"$testfile\" again after setting args"
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+    expect -re "$prompt $" {}
+} else {
+    expect {
+	    -re "Starting program.*720.*$prompt $" {
+		pass "run \"$testfile\" again after setting args"
+	    }
+	    -re ".*$prompt $" {
+		fail "run \"$testfile\" again after setting args"
+	    }
+	    timeout {
+		fail "(timeout) run \"$testfile\" again after setting args"
+	    }
+	}
+}
+
+# GOAL: Test that shell is being used with "run".  For remote debugging
+# targets, there is no guarantee that a "shell" (whatever that is) is used.
+if [isnative] then {
+    send "run `echo 8`\n"
+    expect {
+	-re "Starting program.*40320.*$prompt $" {
+	    pass "run \"$testfile\" with shell"
+	}
+	-re ".*$prompt $" {
+	    fail "run \"$testfile\" with shell"
+	}
+	timeout	{
+	    fail "(timeout) run \"$testfile\" with shell"
+	}
+    }
+}
+
+# Reset the default arguments for VxWorks
+if [istarget "*-*-vxworks*"] then {
+    send "set args main\n"
+    expect -re ".*$prompt $" {}
+}
+

@@ -57,6 +57,7 @@ char *		ptrace_unix_core_file_failing_command PARAMS ((bfd *abfd));
 int		ptrace_unix_core_file_failing_signal PARAMS ((bfd *abfd));
 boolean		ptrace_unix_core_file_matches_executable_p
 			 PARAMS ((bfd *core_bfd, bfd *exec_bfd));
+static void	swap_abort PARAMS ((void));
 
 /* ARGSUSED */
 const bfd_target *
@@ -172,7 +173,7 @@ ptrace_unix_core_file_matches_executable_p  (core_bfd, exec_bfd)
 }
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
-void
+static void
 swap_abort()
 {
   abort(); /* This way doesn't require any declaration for ANSI to fuck up */

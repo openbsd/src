@@ -143,6 +143,7 @@ BFD_NEED_DECLARATION(strstr)
 BFD_NEED_DECLARATION(malloc)
 BFD_NEED_DECLARATION(realloc)
 BFD_NEED_DECLARATION(free)
+BFD_NEED_DECLARATION(getenv)
 
 # If we are configured native, pick a core file support file.
 COREFILE=
@@ -463,6 +464,8 @@ do
 				target64=true ;;
     bfd_elf32_m68k_vec)		tb="$tb elf32-m68k.o elf32.o $elf" ;;
     bfd_elf32_m88k_vec)		tb="$tb elf32-m88k.o elf32.o $elf" ;;
+    bfd_elf32_mn10200_vec)	tb="$tb elf32-mn10200.o elf32.o $elf" ;;
+    bfd_elf32_mn10300_vec)	tb="$tb elf32-mn10300.o elf32.o $elf" ;;
     bfd_elf32_powerpc_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
     bfd_elf32_powerpcle_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
     bfd_elf32_sh_vec)		tb="$tb elf32-sh.o elf32.o $elf coff-sh.o" ;;
@@ -584,9 +587,13 @@ if test x${all_targets} = xtrue ; then
   bfd_backends="${bfd_backends}"' $(ALL_BACKENDS)'
   bfd_machines="${bfd_machines}"' $(ALL_MACHINES)'
   selvecs=
+  havevecs=
   selarchs=
 else	# all_targets is true
   # Only set these if they will be nonempty, for the clever echo.
+  havevecs=
+  test -n "$selvecs" &&
+    havevecs=`echo $selvecs | sed -e 's/^/-DHAVE_/' -e 's/ \(.\)/ -DHAVE_\1/g'`
   test -n "$selvecs" &&
     selvecs=`echo $selvecs | sed -e 's/^/\&/' -e 's/ \(.\)/,\&\1/g'`
   test -n "$selarchs" &&
@@ -617,6 +624,7 @@ tdefaults=""
 test -n "${defvec}" && tdefaults="${tdefaults} -DDEFAULT_VECTOR=${defvec}"
 test -n "${selvecs}" && tdefaults="${tdefaults} -DSELECT_VECS='${selvecs}'"
 test -n "${selarchs}" && tdefaults="${tdefaults} -DSELECT_ARCHITECTURES='${selarchs}'"
+test -n "${havevecs}" && tdefaults="${tdefaults} ${havevecs}"
 AC_SUBST(tdefaults)
 
 dnl AC_CHECK_HEADERS(sys/mman.h)

@@ -112,8 +112,6 @@ aout_adobe_object_p (abfd)
      take just about any a.out file as an Adobe a.out file.  FIXME!  */
 
   if (N_BADMAG (anexec)) {
-    extern char *getenv ();
-
     targ = getenv ("GNUTARGET");
     if (targ && !strcmp (targ, a_out_adobe_vec.name))
       ;		/* Just continue anyway, if specifically set to this format */

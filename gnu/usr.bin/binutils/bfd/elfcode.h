@@ -154,10 +154,7 @@ static void elf_swap_shdr_out
 
 #define elf_stringtab_init _bfd_elf_stringtab_init
 
-extern struct bfd_strtab_hash *_bfd_elf_stringtab_init PARAMS ((void));
 #define section_from_elf_index bfd_section_from_elf_index
-extern boolean bfd_section_from_phdr PARAMS ((bfd *, Elf_Internal_Phdr *,
-					      int));
 
 static boolean elf_slurp_reloc_table PARAMS ((bfd *, asection *, asymbol **));
 

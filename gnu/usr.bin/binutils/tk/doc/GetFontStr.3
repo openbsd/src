@@ -1,0 +1,79 @@
+'\"
+'\" Copyright (c) 1990-1992 The Regents of the University of California.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" SCCS: @(#) GetFontStr.3 1.10 96/03/26 18:10:03
+'\" 
+.so man.macros
+.TH Tk_GetFontStruct 3 "" Tk "Tk Library Procedures"
+.BS
+.SH NAME
+Tk_GetFontStruct, Tk_NameOfFontStruct, Tk_FreeFontStruct \- maintain database of fonts
+.SH SYNOPSIS
+.nf
+\fB#include <tk.h>\fR
+.sp
+XFontStruct *
+\fBTk_GetFontStruct(\fIinterp, tkwin, nameId\fB)\fR
+.sp
+char *
+\fBTk_NameOfFontStruct(\fIfontStructPtr\fB)\fR
+.sp
+\fBTk_FreeFontStruct(\fIfontStructPtr\fB)\fR
+.SH ARGUMENTS
+.AS "XFontStruct" *fontStructPtr
+.AP Tcl_Interp *interp in
+Interpreter to use for error reporting.
+.AP Tk_Window tkwin in
+Token for window in which font will be used.
+.AP Tk_Uid nameId in
+Name of desired font.
+.AP XFontStruct *fontStructPtr in
+Font structure to return name for or delete.
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBTk_GetFont\fR loads the font indicated
+by \fInameId\fR and returns a pointer to information about the
+font.  The pointer returned by \fBTk_GetFont\fR
+will remain valid until \fBTk_FreeFont\fR
+is called to release it.
+\fINameId\fR can be either a font name or pattern;  any
+value that could be passed to \fBXLoadQueryFont\fR may be
+passed to \fBTk_GetFont\fR.  If \fBTk_GetFont\fR is unsuccessful
+(because, for example, there is no font corresponding to
+\fInameId\fR) then it returns \fBNULL\fR and stores an error
+message in \fIinterp->result\fR.
+.PP
+\fBTk_GetFont\fR maintains a database of all fonts it has allocated.
+If the same \fInameId\fR is requested multiple times (e.g. by
+different windows or for different purposes), then additional
+calls for the same \fInameId\fR will be handled very quickly, without
+involving the X server.  For this reason, it is generally better
+to use \fBTk_GetFont\fR in place of X library procedures like
+\fBXLoadQueryFont\fR.
+.PP
+The procedure \fBTk_NameOfFontStruct\fR is roughly the inverse of
+\fBTk_GetFontStruct\fR.  If its \fIfontStructPtr\fR argument was created
+by \fBTk_GetFontStruct\fR, then the return value is the \fInameId\fR
+argument that was passed to \fBTk_GetFontStruct\fR to create the
+font.  If \fIfontStructPtr\fR was not created by a call
+to \fBTk_GetFontStruct\fR, then the return value is a hexadecimal string
+giving the X identifier for the associated font.
+Note:  the string returned by \fBTk_NameOfFontStruct\fR is
+only guaranteed to persist until the next call to \fBTk_NameOfFontStruct\fR.
+.PP
+When a font returned by \fBTk_GetFont\fR is no longer
+needed, \fBTk_FreeFont\fR should be called to release it.
+There should be exactly one call to \fBTk_FreeFont\fR for
+each call to \fBTk_GetFont\fR.  When a font is no longer in
+use anywhere (i.e. it has been freed as many times as it has been gotten)
+\fBTk_FreeFont\fR will release it to the X server and delete it from
+the database.
+
+.SH KEYWORDS
+font

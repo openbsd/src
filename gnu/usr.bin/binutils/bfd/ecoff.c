@@ -1859,10 +1859,10 @@ _bfd_ecoff_bfd_copy_private_bfd_data (ibfd, obfd)
   size_t c;
   boolean local;
 
-  /* This function is selected based on the input vector.  We only
-     want to copy information over if the output BFD also uses ECOFF
+  /* We only want to copy information over if both BFD's use ECOFF
      format.  */
-  if (bfd_get_flavour (obfd) != bfd_target_ecoff_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_ecoff_flavour
+      || bfd_get_flavour (obfd) != bfd_target_ecoff_flavour)
     return true;
 
   /* Copy the GP value and the register masks.  */

@@ -2040,6 +2040,8 @@ proc do_h8300s_mac {} {
 	    -re " +\[0-9\]+ 0002 0320\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0004 0331\[^\n\]*\n"   { set x [expr $x+1] }
 	    -re " +\[0-9\]+ 0006 01606D01\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000a 0220\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000c 0231\[^\n\]*\n"   { set x [expr $x+1] }
 	    eof					{ break }
 	}
     }
@@ -2049,7 +2051,7 @@ proc do_h8300s_mac {} {
     gas_finish
 
     # Did we find what we were looking for?  If not, flunk it.
-    if [expr $x == 4] then { pass $testname } else { fail $testname }
+    if [expr $x == 6] then { pass $testname } else { fail $testname }
 }
 
 proc do_h8300s_multiple {} {
