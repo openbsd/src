@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.79 1999/08/20 17:00:38 downsj Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.80 1999/09/22 03:10:47 csapuntz Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1213,6 +1213,11 @@ wgrisc
 # ./usr/share/man/cat9
 cat9
 # ./usr/share/man/cat9
+..
+
+# ./usr/share/man/cat9/i386
+i386
+# ./usr/share/man/cat9/i386
 ..
 
 # ./usr/share/man/man1
