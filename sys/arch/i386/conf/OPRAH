@@ -69,7 +69,7 @@ options		UNION		# union file system
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 
-config		netbsd	swap generic
+config		bsd	swap generic
 options		GENERIC
 
 mainbus0	at root
