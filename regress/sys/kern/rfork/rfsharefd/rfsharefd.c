@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfsharefd.c,v 1.1 2002/02/17 05:44:07 art Exp $	*/
+/*	$OpenBSD: rfsharefd.c,v 1.2 2002/02/17 18:32:09 deraadt Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org>, 2002 Public Domain.
  */
@@ -14,16 +14,17 @@ int
 main()
 {
 	int status;
+	int fd;
 
 	/* Make sure that at least fd 0 is allocated. */
-	if (open("/dev/null", O_RDONLY) < 0)
+	if ((fd = open("/dev/null", O_RDONLY)) < 0)
 		err(1, "open(/dev/null)");
 
 	switch(rfork(RFPROC)) {
 	case -1:
 		err(1, "fork");
 	case 0:
-		if (close(0) < 0)
+		if (close(fd) < 0)
 			_exit(1);
 		_exit(0);
 	}
@@ -34,7 +35,7 @@ main()
 	if (!WIFEXITED(status))
 		err(1, "child error");
 
-	if (close(0) == 0)
+	if (close(fd) == 0)
 		errx(1, "fd 0 not closed");
 
 	return WEXITSTATUS(status) != 0;
