@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.43 1999/12/31 19:36:12 provos Exp $
+.\"	$OpenBSD: options.4,v 1.44 2000/01/03 19:06:56 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -564,22 +564,6 @@ Includes support for the TCP/IP protocol stack.
 This option is currently required.  See
 .Xr inet 4
 for details.
-.It Cd option MCLSHIFT=value
-This option is the base-2 logarithm of the size of mbuf clusters.  The
-BSD networking stack keeps network packets in a linked list, or chain,
-of kernel buffer objects called mbufs.  The system provides larger mbuf
-clusters as an optimization for large packets, instead of using long
-chains for large packets.  The mbuf cluster size, or
-.Em MCLBYTES,
-must be a power of two, and is computed as two raised to the power
-.Em MCLSHIFT.
-On systems with Ethernet network adaptors,
-.Em	MCLSHIFT
-is often set to 11, giving 2048-byte mbuf clusters, large enough to
-hold a 1500-byte Ethernet frame in a single cluster.  Systems with
-networks supporting larger frame sizes like ATM, FDDI, or HIPPI may
-perform better with MCLSHIFT set to 12 or 13, giving mbuf cluster
-sizes of 4096 and 8192 bytes, respectively.
 .It Cd option NS
 Include support for the Xerox XNS protocol stack.  See
 .Xr ns 4
