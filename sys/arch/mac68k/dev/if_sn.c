@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.34 2004/11/26 21:21:24 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.35 2005/01/04 19:53:37 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -270,7 +270,6 @@ snioctl(ifp, cmd, data)
 	struct ifreq *ifr;
 	struct sn_softc *sc = ifp->if_softc;
 	int	s = splnet(), err = 0;
-	int	temp;
 
 	switch (cmd) {
 
@@ -311,9 +310,7 @@ snioctl(ifp, cmd, data)
 			 * reset the interface to pick up any other changes
 			 * in flags
 			 */
-			temp = ifp->if_flags & IFF_UP;
 			snreset(sc);
-			ifp->if_flags |= temp;
 			snstart(ifp);
 		}
 		break;
@@ -331,9 +328,8 @@ snioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			temp = ifp->if_flags & IFF_UP;
-			snreset(sc);
-			ifp->if_flags |= temp;
+			if (ifp->if_flags & IFF_RUNNING)
+				snreset(sc);
 			err = 0;
 		}
 		break;
@@ -510,7 +506,7 @@ snstop(sc)
 	}
 
 	sc->sc_if.if_timer = 0;
-	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_UP);
+	sc->sc_if.if_flags &= ~IFF_RUNNING;
 
 	splx(s);
 	return (0);
@@ -527,7 +523,6 @@ snwatchdog(ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	struct mtd *mtd;
-	int	temp;
 
 	if (sc->mtd_hw != sc->mtd_free) {
 		/* something still pending for transmit */
@@ -538,9 +533,7 @@ snwatchdog(ifp)
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
 			    sc->sc_dev.dv_xname);
-		temp = ifp->if_flags & IFF_UP;
 		snreset(sc);
-		ifp->if_flags |= temp;
 	}
 }
 
