@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.4 1999/08/23 21:54:39 fgsch Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.5 1999/09/27 18:07:58 fgsch Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ int	ohci_pci_match __P((struct device *, void *, void *));
 void	ohci_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ohci_pci_ca = {
-	sizeof(struct ohci_softc), ohci_pci_match, ohci_pci_attach
+	sizeof(struct ohci_softc), ohci_pci_match, ohci_pci_attach,
+	ohci_detach, ohci_activate
 };
 
 int
@@ -100,10 +101,6 @@ ohci_pci_attach(parent, self, aux)
 	pcireg_t csr;
 	usbd_status r;
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_4(sc->iot, sc->ioh, 
-			  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
-
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->iot, &sc->ioh, NULL, NULL)) {
@@ -111,7 +108,11 @@ ohci_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_dmatag = pa->pa_dmat;
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_4(sc->iot, sc->ioh, 
+			  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
+
+	sc->sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -144,5 +145,5 @@ ohci_pci_attach(parent, self, aux)
 	}
 
 	/* Attach usb device. */
-	config_found((void *)sc, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
 }

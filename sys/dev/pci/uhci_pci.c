@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.3 1999/08/23 21:54:40 fgsch Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.4 1999/09/27 18:07:59 fgsch Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.7 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -61,7 +61,8 @@ int	uhci_pci_match __P((struct device *, void *, void *));
 void	uhci_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uhci_pci_ca = {
-	sizeof(uhci_softc_t), uhci_pci_match, uhci_pci_attach
+	sizeof(uhci_softc_t), uhci_pci_match, uhci_pci_attach,
+	uhci_detach, uhci_activate
 };
 
 int
@@ -94,8 +95,6 @@ uhci_pci_attach(parent, self, aux)
 	char *typestr;
 	usbd_status r;
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_2(sc->iot, sc->ioh, UHCI_INTR, 0);
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -104,7 +103,10 @@ uhci_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_dmatag = pa->pa_dmat;
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_2(sc->iot, sc->ioh, UHCI_INTR, 0);
+
+	sc->sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -117,7 +119,6 @@ uhci_pci_attach(parent, self, aux)
 		printf(": couldn't map interrupt\n");
 		return;
 	}
-
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
 	    sc->sc_bus.bdev.dv_xname);
@@ -151,5 +152,5 @@ uhci_pci_attach(parent, self, aux)
 	}
 
 	/* Attach usb device. */
-	config_found((void *)sc, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
 }
