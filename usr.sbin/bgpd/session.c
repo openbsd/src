@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.118 2004/02/18 00:30:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.119 2004/02/21 15:45:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -745,6 +745,7 @@ session_accept(int listenfd)
 			close(connfd);
 			return;
 		}
+		session_socket_blockmode(connfd, BM_NONBLOCK);
 		bgp_fsm(p, EVNT_CON_OPEN);
 	} else {
 		log_conn_attempt(p, cliaddr.sin_addr);
@@ -871,7 +872,6 @@ session_tcp_established(struct peer *peer)
 {
 	socklen_t	len;
 
-	session_socket_blockmode(peer->sock, BM_NORMAL);
 	len = sizeof(peer->sa_local);
 	if (getsockname(peer->sock, (struct sockaddr *)&peer->sa_local,
 	    &len) == -1)
