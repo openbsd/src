@@ -1,3 +1,6 @@
+#	$OpenBSD: proto-mismatch.sh,v 1.2 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="protocol version mismatch"
 
 mismatch ()

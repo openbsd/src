@@ -1,3 +1,6 @@
+#	$OpenBSD: try-ciphers.sh,v 1.3 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="try ciphers"
 
 ciphers="aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc aes256-cbc"

@@ -1,4 +1,5 @@
-#	$OpenBSD: test-exec.sh,v 1.4 2002/02/16 00:27:34 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.5 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
 
 PORT=4242
 USER=`id -un`

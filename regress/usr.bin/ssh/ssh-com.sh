@@ -1,3 +1,6 @@
+#	$OpenBSD: ssh-com.sh,v 1.2 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="connect to ssh.com server"
 
 #TEST_COMBASE=/path/to/ssh/com/binaries

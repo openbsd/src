@@ -1,3 +1,6 @@
+#	$OpenBSD: exit-status.sh,v 1.3 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="remote exit status"
 
 for p in 1 2; do

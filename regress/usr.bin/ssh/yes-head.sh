@@ -1,3 +1,6 @@
+#	$OpenBSD: yes-head.sh,v 1.3 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="yes pipe head"
 
 for p in 1 2; do

@@ -1,3 +1,6 @@
+#	$OpenBSD: agent.sh,v 1.4 2002/02/16 01:09:47 markus Exp $
+#	Placed in the Public Domain.
+
 tid="simple agent test"
 
 SSH_AUTH_SOCK=/nonexistant ssh-add -l > /dev/null 2>&1
