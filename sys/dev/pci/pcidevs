@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.344 2000/11/08 18:04:41 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.345 2000/11/16 01:10:12 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -619,6 +619,7 @@ product ACC 2051_ISA		0x5842	2051 Host-ISA
 
 /* Accton products */
 product ACCTON 5030		0x1211	MPX 5030/5038
+product ACCTON EN2242		0x1216	EN2242
 product ACCTON EN1217		0x1217	EN1217
 
 /* Addtron products */
