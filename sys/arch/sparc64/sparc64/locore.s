@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.20 2002/07/20 22:30:35 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.21 2002/07/20 22:39:00 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3375,7 +3375,7 @@ slowtrap:
 #ifdef DIAGNOSTIC
 	/* Make sure kernel stack is aligned */
 	btst	0x03, %sp		! 32-bit stack OK?
-	 and	%sp, 0x07, %g4		! 64-bit stack OK?
+	and	%sp, 0x07, %g4		! 64-bit stack OK?
 	bz,pt	%icc, 1f
 	cmp	%g4, 0x1		! Must end in 0b001
 	be,pt	%icc, 1f
