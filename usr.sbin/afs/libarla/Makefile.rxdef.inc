@@ -9,7 +9,8 @@ CLEANFILES 	+= vldb.ss.c vldb.cs.c vldb.ydr.c vldb.ss.h vldb.cs.h vldb.h \
 		   pts.ss.c pts.cs.c pts.ydr.c pts.cs.h pts.ss.h pts.h \
 		   volumeserver.ss.c volumeserver.cs.c volumeserver.ydr.c \
 		   volumeserver.ss.h volumeserver.cs.h volumeserver.h \
-		   ubik.ss.c ubik.cs.c ubik.ydr.c ubik.cs.h ubik.ss.h ubik.h
+		   ubik.ss.c ubik.cs.c ubik.ydr.c ubik.cs.h ubik.ss.h ubik.h \
+		   vldb.td.c fs.td.c cb.td.c pts.td.c volumeserver.td.c ubik.td.c
 
 CFLAGS		+= -I${.CURDIR}/../src/rxdef -I${.CURDIR}/../src/arlad
 
