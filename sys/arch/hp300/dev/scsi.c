@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi.c,v 1.6 1997/02/03 04:47:44 downsj Exp $	*/
-/*	$NetBSD: scsi.c,v 1.15 1997/01/30 09:08:55 thorpej Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.7 1997/03/11 09:54:09 downsj Exp $	*/
+/*	$NetBSD: scsi.c,v 1.16 1997/03/10 08:37:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -299,6 +299,8 @@ scsiattach(parent, self, aux)
 		return;
 	}
 	ipl = DIO_IPL(hd);
+
+	printf(" ipl %d", ipl);
 
 	hs->sc_regs = hd;
 
