@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.8 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.9 2001/05/23 23:29:48 mickey Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -21,7 +21,7 @@
 
 #ifndef NO_DPROMPT
 #define PROMPTL 80
-char	 prompt[PROMPTL], *promptp;
+char	 prompt[PROMPTL] = "", *promptp = prompt;
 #endif /* !NO_DPROMPT */
 
 static int	 use_metakey = TRUE;
@@ -117,7 +117,8 @@ getkey(flag)
 #endif /* DO_METAKEY */
 #ifndef NO_DPROMPT
 	if (flag && promptp < &prompt[PROMPTL - 5]) {
-		promptp = keyname(promptp, c);
+		promptp = keyname(promptp,
+		    sizeof(prompt) - (promptp - prompt) - 1, c);
 		*promptp++ = '-';
 		*promptp = '\0';
 	}

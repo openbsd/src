@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.16 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.17 2001/05/23 23:29:47 mickey Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -412,7 +412,7 @@ int	 quit			__P((int, int));
 void     panic			__P((char *));
 
 /* cinfo.c */
-char    *keyname		__P((char  *, int));
+char    *keyname		__P((char  *, size_t, int));
 
 /* basic.c */
 int	 gotobol		__P((int, int));
@@ -574,12 +574,11 @@ extern int	 tthue;
 extern int	 nmaps;
 extern int	 defb_nmodes;
 extern int	 defb_flag;
-extern char	 cinfo[];
+extern const char cinfo[];
 extern char	*keystrings[];
 extern char	 pat[];
 #ifndef NO_DPROMPT
 extern char	 prompt[];
-extern char	*promptp;
 #endif	/* !NO_DPROMPT */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.5 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.6 2001/05/23 23:29:47 mickey Exp $	*/
 
 /*
  *		Character class tables.
@@ -17,7 +17,7 @@
  * character set, and lets me ask some questions that the
  * standard "ctype" macros cannot ask.
  */
-char cinfo[256] = {
+const char cinfo[256] = {
 	_C, _C, _C, _C,		/* 0x0X */
 	_C, _C, _C, _C,
 	_C, _C, _C, _C,
@@ -90,9 +90,10 @@ char cinfo[256] = {
  * '\0'.
  */
 char *
-keyname(cp, k)
-	char  *cp;
-	int    k;
+keyname(cp, len, k)
+	char	*cp;
+	size_t	len;
+	int	k;
 {
 	char  *np;
 
@@ -145,6 +146,5 @@ keyname(cp, k)
 		*cp = '\0';
 		return cp;
 	}
-	strcpy(cp, np);
-	return cp + strlen(cp);
+	return cp + strlcpy(cp, np, len);
 }

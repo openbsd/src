@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.11 2001/05/23 22:23:55 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.12 2001/05/23 23:29:47 mickey Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -611,11 +611,10 @@ ewprintf(const char *fmt, ...)
 static void
 eformat(fp, ap)
 	const char *fp;
-	va_list     ap;
+	va_list ap;
 {
-	int	 c;
-	char	 kname[NKNAME];
-	char	*cp;
+	char	kname[NKNAME], *cp;
+	int	c;
 
 	while ((c = *fp++) != '\0') {
 		if (c != '%')
@@ -624,17 +623,17 @@ eformat(fp, ap)
 			c = *fp++;
 			switch (c) {
 			case 'c':
-				(void)keyname(kname, va_arg(ap, int));
+				keyname(kname, sizeof(kname), va_arg(ap, int));
 				eputs(kname);
 				break;
 
 			case 'k':
-				cp = kname;
-				for (c = 0; c < key.k_count; c++) {
-					cp = keyname(cp, key.k_chars[c]);
-					*cp++ = ' ';
+				for (cp = kname, c = 0; c < key.k_count; c++) {
+					if (c)
+						*cp++ = ' ';
+					cp = keyname(cp, sizeof(kname) -
+					    (cp - kname) - 1, key.k_chars[c]);
 				}
-				*--cp = '\0';
 				eputs(kname);
 				break;
 

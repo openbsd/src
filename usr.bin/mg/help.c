@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.10 2001/05/23 22:20:35 art Exp $	*/
+/*	$OpenBSD: help.c,v 1.11 2001/05/23 23:29:47 mickey Exp $	*/
 
 /*
  * Help functions for Mg 2 
@@ -14,7 +14,7 @@
 #endif /* !NO_MACRO */
 
 static int	showall(BUFFER *, KEYMAP *, char *);
-static int	findbind(KEYMAP *, PF, char *);
+static int	findbind(KEYMAP *, PF, char *, size_t);
 
 /*
  * Read a key from the keyboard, and look it up in the keymap.
@@ -35,8 +35,7 @@ desckey(f, n)
 	if (inmacro)
 		return TRUE;	/* ignore inside keyboard macro */
 #endif /* !NO_MACRO */
-	strcpy(prompt, "Describe key briefly: ");
-	pep = prompt + strlen(prompt);
+	pep = prompt + strlcpy(prompt, "Describe key briefly: ", sizeof(prompt));
 	key.k_count = 0;
 	m = curbp->b_nmodes;
 	curmap = curbp->b_modes[m]->p_map;
@@ -44,8 +43,8 @@ desckey(f, n)
 		for (;;) {
 			ewprintf("%s", prompt);
 			pep[-1] = ' ';
-			pep = keyname(pep, key.k_chars[key.k_count++] =
-			    c = getkey(FALSE));
+			pep = keyname(pep, sizeof(prompt) - (pep - prompt),
+			    key.k_chars[key.k_count++] = c = getkey(FALSE));
 			if ((funct = doscan(curmap, c, &curmap)) != NULL)
 				break;
 			*pep++ = '-';
@@ -136,7 +135,7 @@ showall(BUFFER *bp, KEYMAP *map, char *prefix)
 		fun = doscan(map, c, &newmap);
 		if (fun == rescan || fun == selfinsert)
 			continue;
-		keyname(buf, c);
+		keyname(buf, c, sizeof(buf));
 		sprintf(key, "%s%s ", prefix, buf);
 		if (fun == NULL) {
 			if (showall(bp, newmap, key) == FALSE)
@@ -195,7 +194,8 @@ apropos_command(f, n)
 			continue;
 
 		buf[0] = '\0';
-		findbind(fundamental_map, name_function(el->l_name), buf);
+		findbind(fundamental_map, name_function(el->l_name),
+		    buf, sizeof(buf));
 
 		if (addlinef(bp, "%-32s%s", el->l_name,  buf) == FALSE) {
 			free_file_list(fnames);
@@ -207,7 +207,7 @@ apropos_command(f, n)
 }
 
 static int
-findbind(KEYMAP *map, PF fun, char *buf)
+findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 {
 	KEYMAP *newmap;
 	PF nfun;
@@ -218,13 +218,13 @@ findbind(KEYMAP *map, PF fun, char *buf)
 	for (c = 0; c < 256; c++) {
 		nfun = doscan(map, c, &newmap);
 		if (nfun == fun) {
-			keyname(buf, c);
+			keyname(buf, c, len);
 			return TRUE;
 		}
 		if (nfun == NULL) {
-			if (findbind(newmap, fun, buf2) == TRUE) {
-				keyname(key, c);
-				sprintf(buf, "%s %s", key, buf2);
+			if (findbind(newmap, fun, buf2, sizeof(buf2)) == TRUE) {
+				keyname(key, c, sizeof(key));
+				snprintf(buf, len, "%s %s", key, buf2);
 				return TRUE;
 			}
 		}

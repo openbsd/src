@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2001/05/23 22:36:15 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/05/23 23:29:48 mickey Exp $	*/
 
 /*
  *	Mainline.
@@ -61,7 +61,6 @@ main(argc, argv)
 	thisflag = 0;
 	for (;;) {
 #ifndef NO_DPROMPT
-		*(promptp = prompt) = '\0';
 		if (epresf == KPROMPT)
 			eerase();
 #endif	/* !NO_DPROMPT */
