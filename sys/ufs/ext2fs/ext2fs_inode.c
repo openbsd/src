@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.12 2001/06/27 04:58:47 art Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.13 2001/07/16 02:56:48 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ ext2fs_inactive(v)
 		goto out;
 
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		error = ext2fs_truncate(ip, (off_t)0, 0, NOCRED);
+		(void) ext2fs_truncate(ip, (off_t)0, 0, NOCRED);
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -182,6 +182,11 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	off_t osize;
 
 	if (length < 0)
+		return (EINVAL);
+
+	if (ovp->v_type != VREG &&
+	    ovp->v_type != VDIR &&
+	    ovp->v_type != VLNK)
 		return (EINVAL);
 
 	if (ovp->v_type == VLNK &&

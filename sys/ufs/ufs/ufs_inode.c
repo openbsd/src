@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.8 2001/06/23 02:07:57 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.9 2001/07/16 02:56:48 csapuntz Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ ufs_inactive(v)
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
-		error = UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
+		(void) UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
